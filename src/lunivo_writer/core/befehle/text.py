@@ -59,6 +59,8 @@ class TextBefehle:
             m.addAction(t, lambda _=False, k=k: self.ed and self.ed._merge(unter_format(k)))
         m.addSeparator()
         m.addAction("Keine Unterstreichung", lambda: self.ed and self.ed._merge(unter_format("")))
+        m.addSeparator()
+        m.addAction("Weitere Unterstreichungen …", self.schriftartMehr)             # das Fenster „Schriftart“ mit Art und Farbe der Linie
         return m
 
 
@@ -196,14 +198,41 @@ class TextBefehle:
 
 
     def schreibweise(self, k=None):
-        if self.ed: self.ed.change_case("upper")
+        """Wendet die zuletzt gewählte Art an (zu Beginn GROSSBUCHSTABEN); das Zeichen auf dem Knopf zeigt sie."""
+        if self.ed: self.ed.change_case(getattr(self, "_schreibweise", "upper"))
+
+
+    def symboltext_schreibweise(self) -> str:
+        from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
+        art = getattr(self, "_schreibweise", "upper")
+        return next(z for key, _t, z in SCHREIBWEISEN if key == art)
+
+
+    def _schreibweise_waehlen(self, art: str) -> None:
+        self._schreibweise = art
+        if self.ed: self.ed.change_case(art)
+        self.w.band.aktualisieren()
 
 
     def menue_schreibweiseKlappe(self):
+        from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
         m = QMenu()
-        for t, mode in (("GROSSBUCHSTABEN", "upper"), ("kleinbuchstaben", "lower"), ("Jedes Wort Groß", "title")):
-            m.addAction(t, lambda _=False, md=mode: self.ed and self.ed.change_case(md))
+        for art, t, _z in SCHREIBWEISEN:
+            m.addAction(t, lambda _=False, a=art: self._schreibweise_waehlen(a))
+        m.addSeparator()
+        m.addAction("Groß-/Kleinschreibung …", self.schreibweiseFenster)
         return m
+
+
+    def schreibweiseFenster(self, k=None):
+        """Dasselbe als Fenster (Zusatzfenster in der Seitenleiste); die gewählte Art wird zur Art des Knopfes."""
+        if not self.ed:
+            return
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.schreibweise_dialog import SchreibweiseDialog
+        d = SchreibweiseDialog(self.w, getattr(self, "_schreibweise", "upper"))
+        if ausfuehren(d):
+            self._schreibweise_waehlen(d.art())
 
 
     def _farbmenue(self, setzen, ohne_text, vorschau=None):
@@ -393,6 +422,7 @@ class TextBefehle:
 
 
     def sortieren(self, k=None):
+        """Sortiert die markierten Absätze; das Fenster „Sortieren“ fragt Art und Reihenfolge, „Optionen …“ die Sortieroptionen."""
         e = self.ed
         if not e:
             return
@@ -408,9 +438,13 @@ class TextBefehle:
             blocks.append(bl); bl = bl.next()
         if len(blocks) < 2:
             return
-        texte = [x.text() for x in blocks]
-        auf = texte != sorted(texte, key=str.lower)
-        neu = sorted(texte, key=str.lower, reverse=not auf)
+        from lunivo_writer.editor.schreibweise import sortiert
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.sortieren_dialog import SortierenDialog
+        d = SortierenDialog(self.w)
+        if not ausfuehren(d):
+            return
+        neu = sortiert([x.text() for x in blocks], **d.werte())
         c.beginEditBlock()
         for blk, t in zip(blocks, neu):
             cc = QTextCursor(blk)

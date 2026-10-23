@@ -64,6 +64,13 @@ class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle,
         return bool(f()) if callable(f) else None
 
 
+    def symboltext(self, name: str) -> str | None:
+        """Zeichen auf einem Knopf, das sich mit der Wahl ändert (Befehl ``symboltext_<name>``); ``None``: der Knopf behält seins."""
+        basis, _ = self._teile(name)
+        f = getattr(self, "symboltext_" + basis, None)
+        return f() if callable(f) else None
+
+
     def haken_wert(self, item: dict) -> bool | None:
         """Haken eines Menüpunkts: Zustandsfrage des Menüeintrags (z. B. w.randVorgabeJetzt) gegen sein Argument."""
         g = item.get("haken")

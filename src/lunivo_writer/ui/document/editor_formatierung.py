@@ -107,7 +107,8 @@ class FormatierungBaustein:
         if not cur.hasSelection():
             cur.select(QTextCursor.WordUnderCursor)
         txt = cur.selectedText()
-        new = {"upper": txt.upper(), "lower": txt.lower(), "title": txt.title()}[mode]
+        from lunivo_writer.editor.schreibweise import umwandeln
+        new = umwandeln(txt, mode)
         if new != txt:
             cur.insertText(new)
 
