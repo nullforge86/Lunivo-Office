@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import re
 
-# Schlüssel, Text im Menü und Fenster, Zeichen auf dem Knopf (der Knopf zeigt die zuletzt gewählte Art)
-SCHREIBWEISEN = (("satz", "Erster Buchstabe im Satz groß", "Aa"), ("lower", "kleinbuchstaben", "aa"), ("upper", "GROSSBUCHSTABEN", "AA"),
-                 ("title", "Jedes Wort groß", "Ab"), ("toggle", "gROSS/kLEIN", "aA"))
+# Schlüssel und Text im Fenster „Groß-/Kleinschreibung“ — in der Reihenfolge und mit den Worten der Vorlage
+SCHREIBWEISEN = (("satz", "Ersten Buchstaben im Satz groß schreiben"), ("lower", "Kleinbuchstaben"), ("upper", "Großbuchstaben"),
+                 ("toggle", "gROSS-/kLEINSCHREIBUNG umkehren"), ("title", "Erster Buchstabe groß"))
 
 
 def umwandeln(text: str, art: str) -> str:

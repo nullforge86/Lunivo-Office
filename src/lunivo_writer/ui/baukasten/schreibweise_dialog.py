@@ -20,9 +20,9 @@ class SchreibweiseDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Groß-/Kleinschreibung")
         v = QVBoxLayout(self)
-        v.addWidget(abschnittstitel("Auswahl umwandeln in"))
+        v.addWidget(abschnittstitel("Groß-/Kleinschreibung"))
         self._gruppe = QButtonGroup(self)
-        for i, (k, text, _z) in enumerate(SCHREIBWEISEN):
+        for i, (k, text) in enumerate(SCHREIBWEISEN):
             r = QRadioButton(text); r.setChecked(k == art); self._gruppe.addButton(r, i); v.addWidget(r)
         v.addStretch(1)
         fussleiste(self, v)

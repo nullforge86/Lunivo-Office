@@ -232,5 +232,8 @@
 "kanteAussen": "M3.2 3.2h17.6v17.6H3.2z M7 12h10",
 "kanteInnen": "M4 4h16v16H4z M4 12h16 M12 4v16",
 "kanteWaage": "M4 4h16v16H4z M3.2 12h17.6",
-"kanteSenk": "M4 4h16v16H4z M12 3.2v17.6"
+"kanteSenk": "M4 4h16v16H4z M12 3.2v17.6",
+"schreibweise": "M2 16 l4.039-9.69a.5.5 0 0 1 .923 0L11 16 M22 9v7 M3.304 13h6.392 M15 12.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0",
+"umschlossen": "M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M14 9.5v5 M14 12a2.25 2.25 0 1 0 -4.5 0 2.25 2.25 0 1 0 4.5 0",
+"phonetisch": "M5 8 l6 6 M4 14 l6-6 2-3 M2 5h12 M7 2h1 M22 22 l-5-10-5 10 M14 18h6"
 }

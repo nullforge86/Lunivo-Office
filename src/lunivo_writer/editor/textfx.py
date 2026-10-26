@@ -20,9 +20,10 @@ import json
 import math
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QTransform
+from PySide6.QtGui import QBrush, QColor, QFontMetricsF, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QPolygonF, QTransform
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.editor import zeichenzusatz
 PX = 96 / 72                                    # Punkt → Bildpunkt
 
 MATERIAL = (("matt", "Matt"), ("plastik", "Plastik"), ("metall", "Metall"), ("dunkel", "Dunkle Kanten"), ("weich", "Weicher Rand"), ("hell", "Hell"))
@@ -348,6 +349,7 @@ def _P(name: str):
 def hat_zeichen_effekt(cf) -> bool:
     """Hat dieses Zeichenformat etwas, das Lunivo selbst zeichnet: Effekte, doppelt durchgestrichen oder Betonungszeichen?"""
     return bool(cf.stringProperty(_P("P_EFFEKT")) or cf.stringProperty(_P("P_BETONUNG")) or cf.stringProperty(_P("P_UNTER"))
+                or cf.stringProperty(_P("P_UMSCHLOSSEN")) or cf.stringProperty(_P("P_RUBY"))
                 or (cf.hasProperty(_P("P_DOPPELT")) and cf.property(_P("P_DOPPELT"))))
 
 
@@ -397,6 +399,55 @@ def _stueck(p: QPainter, b, tl, von: int, laenge: int, cf, fx: dict) -> None:
         betonung = cf.stringProperty(_P("P_BETONUNG"))
         if betonung:
             _betonung(p, glyphen, betonung, grundlinie, groesse, farbe)
+        umschlossen = zeichenzusatz.umschlossen_lesen(cf.stringProperty(_P("P_UMSCHLOSSEN")))
+        if umschlossen and glyphen:
+            _umschlossen(p, QRectF(tl.position().x() + z.cursorToX(a)[0], ursprung.y(), z.cursorToX(e)[0] - z.cursorToX(a)[0], z.height()),
+                         umschlossen, farbe, groesse)
+        ruby = zeichenzusatz.ruby_lesen(cf.stringProperty(_P("P_RUBY")))
+        if ruby:
+            _ruby(p, tl.position().x() + z.cursorToX(a)[0], tl.position().x() + z.cursorToX(e)[0], grundlinie, groesse, ruby, farbe)
+
+
+def _umschlossen(p: QPainter, kasten: QRectF, wie: tuple[str, str], farbe: QColor, groesse: float) -> None:
+    """Die Form um die Zeichen: „reduzieren“ legt sie eng an, „erweitern“ lässt dem Symbol Raum."""
+    form, vorlage = wie
+    rand = groesse * (0.08 if vorlage == "reduzieren" else 0.22)
+    r = kasten.adjusted(-rand, 0, rand, 0)
+    if form in ("kreis", "raute"):
+        r = r.adjusted(-groesse * 0.1, 0, groesse * 0.1, 0)
+    p.save(); p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(QPen(farbe, max(0.6, groesse * 0.06))); p.setBrush(Qt.NoBrush)
+    if form == "kreis":
+        p.drawEllipse(r)
+    elif form == "quadrat":
+        p.drawRect(r)
+    elif form == "dreieck":
+        p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.bottom()), QPointF(r.left(), r.bottom())]))
+    else:
+        p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.center().y()), QPointF(r.center().x(), r.bottom()),
+                                 QPointF(r.left(), r.center().y())]))
+    p.restore()
+
+
+def _ruby(p: QPainter, x0: float, x1: float, grundlinie: float, groesse: float, ruby: dict, farbe: QColor) -> None:
+    """Der Leittext über dem Basistext, in kleinerer Schrift, nach der gewählten Ausrichtung."""
+    f = p.font(); f.setPixelSize(max(4, int(ruby["groesse"] * PX))); p.save(); p.setFont(f); p.setPen(farbe)
+    fm = QFontMetricsF(f)
+    breite = fm.horizontalAdvance(ruby["ruby"])
+    y = grundlinie - groesse * 0.95 - ruby["abstand"] * PX
+    if ruby["ausrichtung"] == "links":
+        x = x0
+    elif ruby["ausrichtung"] == "rechts":
+        x = x1 - breite
+    else:
+        x = (x0 + x1 - breite) / 2
+    if ruby["ausrichtung"] == "verteilt" and len(ruby["ruby"]) > 1 and x1 - x0 > breite:
+        schritt = (x1 - x0 - breite) / (len(ruby["ruby"]) - 1)
+        for i, ch in enumerate(ruby["ruby"]):
+            p.drawText(QPointF(x0 + fm.horizontalAdvance(ruby["ruby"][:i]) + schritt * i, y), ch)
+    else:
+        p.drawText(QPointF(max(x0, x) if breite < x1 - x0 else x, y), ruby["ruby"])
+    p.restore()
 
 
 # ---- Voreinstellungen der Auswahlen im Fenster „Texteffekte formatieren“ ---------------------------------------------------

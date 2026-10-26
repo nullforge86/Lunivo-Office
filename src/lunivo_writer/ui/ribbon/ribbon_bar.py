@@ -131,7 +131,7 @@ class RegisterBand(QWidget):
         self.b = befehle
         self.daten = daten or lade_register()
         self.schalter: list[tuple[QToolButton, str]] = []     # (Knopf, Aktionsname) für Haken
-        self.wechsler: list[tuple[QToolButton, str]] = []     # Knöpfe, deren Zeichen sich mit der Wahl ändert (Aa → AA)
+        self.wechsler: list[tuple[QToolButton, str]] = []     # Knöpfe, deren Symbol dem zuletzt gewählten Menüeintrag folgt (Groß-/Kleinschreibung)
         self.knoepfe: list[tuple[QToolButton, str | None, bool]] = []   # (Knopf, Name, braucht Dokument)
         self.felder: dict[str, QWidget] = {}
         self.fehlend: list[str] = []
@@ -691,9 +691,9 @@ class RegisterBand(QWidget):
             akt.triggered.connect(lambda _=False, t=tun, kk=k: (self.b.tun(t, kk), self.aktualisieren()))
         elif not menu:
             ok = False
-        if tun and not icons.hat(sym) and self.b.symboltext(tun) is not None:
+        if tun and self.b.symbolname(tun) is not None:
             self.wechsler.append((k, tun))
-            akt.setText(self.b.symboltext(tun))
+            akt.setIcon(icons.icon(self.b.symbolname(tun), k.iconSize().width()))
         if e.get("haken") or (tun and self.b.zustand(tun) is not None):
             akt.setCheckable(True)
             self.schalter.append((k, tun))
@@ -755,9 +755,9 @@ class RegisterBand(QWidget):
     # ---- Zustand -----------------------------------------------------------------------------------------------
     def aktualisieren(self, hat_dokument: bool | None = None):
         for k, name in self.wechsler:
-            z = self.b.symboltext(name)
-            if z:
-                k.defaultAction().setText(z)
+            n = self.b.symbolname(name)
+            if n:
+                k.defaultAction().setIcon(icons.icon(n, k.iconSize().width()))
         for k, name in self.schalter:
             z = self.b.zustand(name) if name else None
             a = k.defaultAction()

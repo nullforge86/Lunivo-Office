@@ -64,10 +64,10 @@ class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle,
         return bool(f()) if callable(f) else None
 
 
-    def symboltext(self, name: str) -> str | None:
-        """Zeichen auf einem Knopf, das sich mit der Wahl ändert (Befehl ``symboltext_<name>``); ``None``: der Knopf behält seins."""
+    def symbolname(self, name: str) -> str | None:
+        """Symbol, das ein Knopf nach seiner letzten Wahl zeigt (Befehl ``symbolname_<name>``); ``None``: der Knopf behält seins."""
         basis, _ = self._teile(name)
-        f = getattr(self, "symboltext_" + basis, None)
+        f = getattr(self, "symbolname_" + basis, None)
         return f() if callable(f) else None
 
 

@@ -197,42 +197,91 @@ class TextBefehle:
     def an_tief(self): return self._fmt().verticalAlignment() == QTextCharFormat.AlignSubScript
 
 
+    # Menü „Groß-/Kleinschreibung“: vier Einträge; der Knopf zeigt das Symbol des zuletzt gewählten und führt ihn beim Klicken wieder aus
+    _AA = (("umwandeln", "Groß-/Kleinschreibung umwandeln …", "schreibweise", "schreibweiseFenster"),
+           ("umschlossen", "Eingeschlossene Zeichen …", "umschlossen", "umschlosseneZeichen"),
+           ("umriss", "Zeichenumriss", "umriss", "zeichenumriss"),
+           ("phonetisch", "Phonetisches Leitzeichen …", "phonetisch", "phonetischesLeitzeichen"))
+
+
     def schreibweise(self, k=None):
-        """Wendet die zuletzt gewählte Art an (zu Beginn GROSSBUCHSTABEN); das Zeichen auf dem Knopf zeigt sie."""
-        if self.ed: self.ed.change_case(getattr(self, "_schreibweise", "upper"))
+        wahl = getattr(self, "_aa", "umwandeln")
+        getattr(self, next(b for a, _t, _s, b in self._AA if a == wahl))()
 
 
-    def symboltext_schreibweise(self) -> str:
-        from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
-        art = getattr(self, "_schreibweise", "upper")
-        return next(z for key, _t, z in SCHREIBWEISEN if key == art)
+    def symbolname_schreibweise(self) -> str:
+        wahl = getattr(self, "_aa", "umwandeln")
+        return next(s for a, _t, s, _b in self._AA if a == wahl)
 
 
-    def _schreibweise_waehlen(self, art: str) -> None:
-        self._schreibweise = art
-        if self.ed: self.ed.change_case(art)
+    def _aa_waehlen(self, wahl: str) -> None:
+        self._aa = wahl
         self.w.band.aktualisieren()
+        self.schreibweise()
 
 
     def menue_schreibweiseKlappe(self):
-        from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
+        from lunivo_writer.ui.widgets import icons
         m = QMenu()
-        for art, t, _z in SCHREIBWEISEN:
-            m.addAction(t, lambda _=False, a=art: self._schreibweise_waehlen(a))
-        m.addSeparator()
-        m.addAction("Groß-/Kleinschreibung …", self.schreibweiseFenster)
+        for wahl, text, symbol, _b in self._AA:
+            m.addAction(icons.icon(symbol, 16), text, lambda _=False, w=wahl: self._aa_waehlen(w))
         return m
 
 
     def schreibweiseFenster(self, k=None):
-        """Dasselbe als Fenster (Zusatzfenster in der Seitenleiste); die gewählte Art wird zur Art des Knopfes."""
+        """Das Fenster „Groß-/Kleinschreibung“ (Zusatzfenster in der Seitenleiste)."""
         if not self.ed:
             return
         from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
         from lunivo_writer.ui.baukasten.schreibweise_dialog import SchreibweiseDialog
-        d = SchreibweiseDialog(self.w, getattr(self, "_schreibweise", "upper"))
+        d = SchreibweiseDialog(self.w, getattr(self, "_schreibweise", "satz"))
         if ausfuehren(d):
-            self._schreibweise_waehlen(d.art())
+            self._schreibweise = d.art()
+            self.ed.change_case(self._schreibweise)
+
+
+    def umschlosseneZeichen(self, k=None):
+        """Das Fenster „Eingeschlossene Zeichen“: der gewählte Text bekommt Kreis, Quadrat, Dreieck oder Raute."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import zeichenzusatz as Z
+        from lunivo_writer.editor.zusatz import P_UMSCHLOSSEN
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.umschlossen_dialog import UmschlosseneZeichenDialog
+        c = self.ed.textCursor()
+        d = UmschlosseneZeichenDialog(self.w, c.selectedText().replace("\u2029", " "))
+        if not ausfuehren(d):
+            return
+        w = d.werte()
+        if not w["text"]:
+            return
+        f = QTextCharFormat(c.charFormat()); f.setProperty(P_UMSCHLOSSEN, Z.umschlossen_text(w["form"], w["vorlage"]))
+        c.beginEditBlock(); c.insertText(w["text"], f); c.endEditBlock()
+
+
+    def phonetischesLeitzeichen(self, k=None):
+        """Das Fenster „Phonetisches Leitzeichen“: Leittext über dem gewählten Text."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import zeichenzusatz as Z
+        from lunivo_writer.editor.zusatz import P_RUBY
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.ruby_dialog import RubyDialog
+        c = self.ed.textCursor()
+        text = c.selectedText().replace("\u2029", " ")
+        if not text:
+            self.w.statusBar().showMessage("Phonetisches Leitzeichen: erst den Text markieren.", 4000)
+            return
+        d = RubyDialog(self.w, [(ch, "") for ch in text], self.ed.currentCharFormat().font().family())
+        if not ausfuehren(d):
+            return
+        basis_format = c.charFormat()
+        c.beginEditBlock()
+        c.removeSelectedText()
+        for basis, ruby, wie in d.zeilen():
+            f = QTextCharFormat(basis_format); f.setProperty(P_RUBY, Z.ruby_text(ruby, wie["ausrichtung"], wie["abstand"], wie["groesse"]))
+            c.insertText(basis, f)
+        c.endEditBlock()
 
 
     def _farbmenue(self, setzen, ohne_text, vorschau=None):

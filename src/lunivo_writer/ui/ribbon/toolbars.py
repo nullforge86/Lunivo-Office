@@ -42,7 +42,7 @@ UNTEN_A = [("groesserA", "Schrift vergrößern", "schriftGroesser"), ("kleinerA"
            ("F", "Fett (Strg+B)", "fett"), ("K", "Kursiv (Strg+I)", "kursiv"), ("U", "Unterstrichen (Strg+U)", "unter"),
            ("S", "Durchgestrichen", "durch"), ("hoch", "Hochgestellt", "hoch"), ("tief", "Tiefgestellt", "tief"),
            ("marker", "Hervorheben", "hervorhebenJetzt"), ("farbe", "Schriftfarbe", "schriftfarbeJetzt"),
-           ("Aa", "Groß-/Kleinschreibung", "schreibweise"), ("unterart", "Unterstreichungsart", "unterstrichArt"),
+           ("schreibweise", "Groß-/Kleinschreibung", "schreibweise"), ("unterart", "Unterstreichungsart", "unterstrichArt"),
            ("texteffekt", "Texteffekte", "texteffekte"), T,
            ("punkte", "Aufzählung", "punkte"), ("zahlen", "Nummerierung", "zahlen"), ("weniger", "Einzug verringern", "einzugWeniger"),
            ("mehr", "Einzug vergrößern", "einzugMehr"), ("ebeneHoch", "Listenebene erhöhen", "ebeneHoeher"),
