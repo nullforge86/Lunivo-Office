@@ -245,7 +245,7 @@ davon ab, wer rechnet. Die neun Dateien sind einmal sauber gerechnet und bleiben
 ## Herkunft
 
 Die Prüfung stammt aus der **Schreibhilfe**
-(<https://github.com/kaysiebke-cell/schreibhilfe>) und ist dort über viele
+(<https://github.com/nullforge86/schreibhilfe>) und ist dort über viele
 Fassungen gewachsen. Sie liegt hier als eigene Kopie: Dieses Programm ist
 eigenständig und braucht jenes Projekt nicht, um zu laufen.
 

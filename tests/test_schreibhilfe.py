@@ -186,7 +186,7 @@ def test_ki_ohne_schluessel_oeffnet_nichts_nach_aussen(app, tmp_path, monkeypatc
 
 def test_rechtschreib_ignorieren_schalter(app, tmp_path, monkeypatch):
     from lunivo_writer.proofing import pruefung
-    text = "Das Wiederspruch gegen WIEDERSPRUCH und kaysiebke-cell/wiederspruch."
+    text = "Das Wiederspruch gegen WIEDERSPRUCH und nullforge86/wiederspruch."
     an = {f["alt"] for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": True, "rsPfadeIgnorieren": True})}
     aus = {f["alt"] for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": False, "rsPfadeIgnorieren": False})}
     assert "WIEDERSPRUCH" not in an and "WIEDERSPRUCH" in aus

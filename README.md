@@ -228,7 +228,7 @@ Wie das alles entstanden ist, steht in
 [ENTSTEHUNG.md](docs/ENTSTEHUNG.md) — siehe oben.
 
 Die Prüfung und der Wortschatz stammen aus der
-[Schreibhilfe](https://github.com/kaysiebke-cell/schreibhilfe) und sind dort
+[Schreibhilfe](https://github.com/nullforge86/schreibhilfe) und sind dort
 über viele Fassungen gewachsen. Sie liegen hier als eigene Kopie: Dieses
 Programm ist eigenständig und braucht jenes Projekt nicht, um zu laufen.
 
