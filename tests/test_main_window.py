@@ -41,7 +41,12 @@ def test_pdf_export_and_status(app, tmp_path, monkeypatch):
     w._sync_status()
     assert " von 3" in w.lbl_page.text() or " von 2" in w.lbl_page.text()
     out = str(tmp_path / "x.pdf")
-    monkeypatch.setattr(FENSTER, lambda *a, **k: (out, ".pdf"))
+    from lunivo_writer.ui.baukasten import pdf_export as PF
+
+    def ok_klicken(fenster):
+        fenster.pfad.setText(out); fenster.ok.click()
+        return 0
+    monkeypatch.setattr(PF.PdfExportFenster, "exec", ok_klicken)
     w.export_pdf_dialog()
     assert os.path.getsize(out) > 500
 

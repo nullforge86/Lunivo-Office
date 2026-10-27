@@ -67,7 +67,7 @@ kleinem Pfeil ▸ zeigt rechts seine Auswahl; die übrigen führen sofort aus. E
 | **Neu** ▸ | Leeres Dokument und alle Vorlagen mit ihren Vorschauen. |
 | **Öffnen**, **Speichern** | Sofort. |
 | **Speichern unter** ▸ | Speichern unter, Kopie speichern, alle Ausgabeformate; dazu Informationen und Eigenschaften, Öffnen mit … und der Dateispeicherort. |
-| **Als PDF exportieren** | Mit dem Speichern-Fenster. |
+| **Als PDF exportieren** | Fenster **PDF-Datei exportieren**. Reiter **Allgemein**: Speichern unter (mit „Durchsuchen …“), Seitenbereich (Alles, Aktuelle Seite, Markierung, Seite(n) von–an) und Exportoptionen (Zusammenfassungsinformationen, Kommentare, Hyperlinks, Fußnoten-Verknüpfung, Textmarken und Formatvorlagen als Lesezeichen). Reiter **Berechtigungseinstellungen**: Datei verschlüsseln (AES-256), Kennwort für die Rechte, Ändern, Kopieren und Kommentieren erlauben, Druckberechtigung, Kennwort zum Öffnen. Kennwörter werden nie gespeichert. Ist „Nach Abschluss des Exports schließen“ aus, bleibt das Fenster für den nächsten Export offen. |
 | **Als Bild exportieren** | **Jede Seite** als eigene Datei oder ein **langes Bild** mit allen Seiten untereinander; dazu Wasserzeichen, Qualität (96 bis 300 dpi), Format (JPG, PNG, BMP, TIF) und Zielordner. Vorhandene Dateien werden nicht überschrieben, ein neuer Name bekommt „(2)“. Danach: Öffnen oder Ordner öffnen. |
 | **Drucken** ▸ | Das Druckfenster mit Vorschau — siehe Drucken. |
 | **Dokumentverschlüsselung** ▸ | Kennwort und Bearbeitungsschutz. |

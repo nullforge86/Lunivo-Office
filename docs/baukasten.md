@@ -17,6 +17,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `dialog_rahmen.py` | `DialogRahmen`: Formular, optionale Vorschau, OK/Abbrechen, Zusatzknöpfe („Entfernen“) | `ergebnis()` |
 | `speichern_fenster.py` | `SpeichernFenster` / `speicherort_waehlen()` / `Dateifenster` (gleiche Aufrufe wie `QFileDialog.get…`, das ein Test im Code verbietet): das eine Datei-Fenster — Orte links, Ordner mit Pfadleiste, Liste/Kacheln, unten Dateiname + Speichern, Dateityp + Abbrechen; fragt vor dem Ersetzen. Dasselbe Fenster öffnet (`datei_waehlen()`, Filter im Qt-Stil, auch mehrere Dateien) und wählt Ordner (`ordner_waehlen()`) | `(Pfad, Endung)` · Liste der Dateien · Ordner · `None` |
 | `bild_export.py` | `BildExportFenster`: „Als Bild exportieren“ — Karten „Jede Seite“ / „Langes Bild“, Wasserzeichen, Qualität, Format, Zielordner; `ErfolgFenster` danach mit Öffnen / Ordner öffnen. Geschrieben wird in `services/bild_export.py` | `BildWahl` oder `None` |
+| `pdf_export.py` | `PdfExportFenster`: „PDF-Datei exportieren“ — Reiter Allgemein (Speichern unter, Seitenbereich, Exportoptionen) und Berechtigungseinstellungen (Verschlüsseln, Kennwörter, Rechte, Druck); unten „Nach Abschluss des Exports schließen“. Schreibt nichts selbst: der Aufrufer gibt `exportieren(PdfWahl) -> bool` mit, Seitenbereich, Markierung und Verschlüsselung stecken in `services/pdf_export.py` | `PdfWahl` oder `None` |
 
 ## Regeln
 
