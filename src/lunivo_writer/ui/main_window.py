@@ -545,7 +545,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
 
     def show_options(self, seite: str | None = None):
-        """Die Optionen stehen in der Datei-Ansicht („☰ Menü ▸ Erweiterte Einstellungen“); ohne Register-Band als Fenster."""
+        """Die Optionen stehen in der Datei-Ansicht („☰ Menü ▸ Optionen“); ohne Register-Band als Fenster."""
         if hasattr(self.band, "reiter") and hasattr(self.band, "stapel"):
             self.backstage_oeffnen("optionen", seite)
             return

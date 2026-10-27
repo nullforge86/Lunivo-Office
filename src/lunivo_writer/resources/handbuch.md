@@ -16,10 +16,10 @@ Der zuletzt geschriebene Text wird laufend gemerkt und beim nächsten Start wied
 
 |  |  |
 |---|---|
-| `☰ Menü → Neues Dokument erstellen` | Ein leeres Blatt in einem **neuen Reiter**. Das, woran gerade geschrieben wurde, bleibt offen — siehe Mehrere Dokumente. |
+| `☰ Menü → Neu → Leeres Dokument` | Ein leeres Blatt in einem **neuen Reiter**. Das, woran gerade geschrieben wurde, bleibt offen — siehe Mehrere Dokumente. |
 | `☰ Menü → Öffnen` | Eine vorhandene Datei: `.docx`, `.odt`, `.rtf` oder `.txt` (auch Word-Vorlagen `.dotx`). Das alte Word-97-Format `.doc` öffnet Lunivo nicht. Steht im vordersten Reiter schon etwas, bekommt die Datei einen eigenen. |
-| `☰ Menü → Zuletzt benutzte Dokumente öffnen` | Die Dateien, an denen zuletzt gearbeitet wurde, mit einem Knopf, der die Liste leert. Die Dateien selbst bleiben liegen. |
-| `☰ Menü → Von Vorlage erstellen` | Die Seite **Neu** mit allen Vorlagen — siehe Vorlagen. |
+| `☰ Menü` (rechte Seite) | Die Liste zuletzt verwendeter Dateien mit Ordner und Datum. ✕ nimmt eine Datei aus der Liste; die Datei selbst bleibt liegen. |
+| `☰ Menü → Neu` | Die Seite **Neu** mit leerem Dokument und allen Vorlagen — siehe Vorlagen. |
 
 Gefragt wird nur dort, wo wirklich etwas weggehen könnte: beim **Schließen** eines Reiters mit ungesicherten Änderungen und beim **Beenden**. „Neu" und „Öffnen" verwerfen nichts — sie legen daneben.
 
@@ -59,23 +59,22 @@ Hell oder dunkel: im Register `Ansicht` die Gruppe **Helligkeit**.
 
 ### Das ☰ Menü
 
-Links vor den Registern steht `☰ Menü`. Es öffnet eine Ansicht mit zwei Spalten: links die Befehle, rechts die Seite zum gewählten Befehl. **← Zurück zum Dokument** führt wieder ins Blatt; `Esc` tut dasselbe.
+Links vor den Registern steht `☰ Menü`. Links stehen die Befehle, rechts zuerst die Liste zuletzt verwendeter Dateien. Ein Eintrag mit
+kleinem Pfeil ▸ zeigt rechts seine Auswahl; die übrigen führen sofort aus. Ein zweiter Klick auf `☰ Menü` oder `Esc` führt zurück ins Blatt.
 
 |  |  |
 |---|---|
-| **Neues Dokument erstellen**, **Öffnen** | Starten sofort. |
-| **Von Vorlage erstellen** | Die Seite **Neu** mit allen Vorlagen und ihren Vorschauen. |
-| **Zuletzt benutzte Dokumente öffnen** | Die Liste der letzten Dateien. |
-| **Speichern** | Speichert sofort. |
-| **Speichern als** | Speichern unter, Kopie speichern und alle Ausgabeformate. |
-| **Drucken** | Das Druckfenster mit Vorschau — siehe Drucken. |
-| **Schützen** | Kennwort und Bearbeitungsschutz. |
-| **Info** | Angaben zum Dokument. |
-| **Öffnen mit …** | Das Dokument in einem anderen Programm öffnen. |
-| **Dateispeicherort öffnen** | Der Ordner, in dem die Datei liegt. |
-| **Schließen** | Dieses Dokument schließen. |
-| **Erweiterte Einstellungen** | Die Optionen (`F9`). |
-| **Hilfe** | Handbuch, Tastenkürzel, Erweiterungen und die Angaben zum Programm. |
+| **Neu** ▸ | Leeres Dokument und alle Vorlagen mit ihren Vorschauen. |
+| **Öffnen**, **Speichern** | Sofort. |
+| **Speichern unter** ▸ | Speichern unter, Kopie speichern, alle Ausgabeformate; dazu Informationen und Eigenschaften, Öffnen mit … und der Dateispeicherort. |
+| **Als PDF exportieren**, **Als Bild exportieren** | Sofort, mit dem Speichern-Fenster. |
+| **Drucken** ▸ | Das Druckfenster mit Vorschau — siehe Drucken. |
+| **Dokumentverschlüsselung** ▸ | Kennwort und Bearbeitungsschutz. |
+| **Hilfe** ▸ | Handbuch, Tastenkürzel, Erweiterungen und die Angaben zum Programm. |
+| **Optionen** | Die Optionen (`F9`). |
+| **Beenden** | Lunivo schließen; bei ungesicherten Änderungen wird gefragt. |
+
+Ein einzelnes Dokument schließt das ✕ an seinem Reiter oder `Strg+W`.
 
 Gleich neben dem ☰ liegt der **Schnellzugriff**: Öffnen, Neu aus Vorlage, Speichern, Als PDF, Drucken, Druckvorschau, Rückgängig, Wiederholen. Welche Knöpfe dort stehen, stellt man unter `Optionen → Symbolleiste für den Schnellzugriff` ein.
 

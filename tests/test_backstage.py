@@ -40,8 +40,8 @@ def test_seiten_und_befehle(app, tmp_path):
     assert t.meta["author"] == "Kay"
     # Eintrag mit Befehl schließt die Ansicht und führt ihn aus
     gerufen = []
-    w.befehle.schliessen = lambda k=None: gerufen.append(1)
-    b._gewaehlt(b.zeilen["schliessen"])
+    w.befehle.beenden = lambda k=None: gerufen.append(1)
+    b._gewaehlt(b.zeilen["beenden"])
     assert gerufen and not b.isVisible()
     w.backstage_zu()
 
@@ -81,9 +81,9 @@ def test_dateisymbole_in_zuletzt_und_speichern_als(app, tmp_path, monkeypatch):
     datei = tmp_path / "brief.docx"; datei.write_bytes(b"x")
     w.settings.add_recent(str(datei))
     w.backstage.oeffnen("zuletzt")
-    k = next(b for b in w.backstage.findChildren(QPushButton) if b.text().startswith("brief.docx"))
+    k = next(b for b in w.backstage.findChildren(QPushButton) if b.accessibleName() == "brief.docx")
     assert k.icon().cacheKey() == marke.cacheKey() and str(datei) in gefragt
-    assert k.text() == "brief.docx" and k.toolTip() == str(datei)                            # nur der Name; der Pfad steht im Tooltip
+    assert k.toolTip() == str(datei)                                                          # Name und Ordner stehen als Zeilen im Knopf
     w.backstage.oeffnen("speichern_als")
     assert {".pdf", ".docx", ".odt", ".rtf", ".txt"} <= set(gefragt)
     knoepfe = [b for b in w.backstage.findChildren(QPushButton) if b.text().startswith("Word-Dokument")]

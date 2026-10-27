@@ -45,6 +45,7 @@ Comment=Textverarbeitung
 Exec=$HIER/starten-qt.sh %F
 Icon=$HIER/assets/symbole/varianten/Abstrakt/icon-256.png
 Terminal=false
+StartupWMClass=Lunivo Writer
 Categories=Office;WordProcessor;
 MimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document;text/plain;
 D
