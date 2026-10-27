@@ -533,11 +533,13 @@ def test_notenfeld_unten_schreibt_in_dieselbe_note_wie_das_feld_links(app, tmp_p
 
 def test_ein_speichern_fenster_fuer_alle_formate(app, tmp_path, monkeypatch):
     """„Speichern unter“ und „Speichern unter ▸ Format“ führen in dasselbe Fenster mit allen Dateitypen."""
+    from PySide6.QtWidgets import QFileDialog
     w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
     gefragt = []
 
-    def fenster(parent, titel, start, filter_liste, vorwahl=""):
+    def fenster(parent, titel, start, filter_liste, vorwahl="", optionen=None):
         gefragt.append((filter_liste, vorwahl))
+        assert optionen == QFileDialog.DontUseNativeDialog                 # eigenes Fenster: Dateityp immer sichtbar
         return str(tmp_path / "brief"), "Textdatei (*.txt)"           # ohne Endung, Dateityp im Fenster gewählt
 
     monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName", fenster)
@@ -557,3 +559,14 @@ def test_speichern_unter_pdf_behaelt_die_dokumentdatei(app, tmp_path, monkeypatc
     assert w.save_as()
     assert os.path.getsize(tmp_path / "brief.pdf") > 500
     assert w.current_tab().path is None and w.current_editor().document().isModified()
+
+
+def test_gewaehlter_dateityp_gilt_trotz_alter_endung(app, tmp_path, monkeypatch):
+    """Name „brief.docx“ vorbelegt, im Fenster ODT gewählt → gespeichert wird „brief.odt“, nicht DOCX."""
+    w = win(tmp_path); w.new_document()
+    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
+                        lambda *a, **k: (str(tmp_path / "brief.docx"), "Textdatei (*.txt)"))
+    assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.txt")
+    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
+                        lambda *a, **k: (str(tmp_path / "brief.v2"), "OpenDocument-Text (*.odt)"))
+    assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.v2.odt")
