@@ -6,7 +6,7 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox, QProgressDialog
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.models.report import DocumentIOError, IOReport, PasswortNoetig
@@ -106,44 +106,40 @@ class DateienBaustein:
 
 
     def save_as_format(self, ext: str) -> bool:
-        """Speichern unter mit festem Dateiformat (Untermenü „Speichern unter ▸“); das Dokument gehört danach zur neuen Datei."""
+        """Speichern unter mit vorgewähltem Dateiformat (Untermenü „Speichern unter ▸“) — dasselbe Fenster wie „Speichern unter“."""
         t = self.current_tab()
-        if not t:
-            return False
-        path = self._ask_path(t, "Speichern unter", only=ext)
-        if not path or not self._write(t, path):
-            return False
-        t.set_path(path)
-        self.settings.add_recent(path)
-        self._update_tab_titles()
-        return True
+        return self._save_tab_as(t, ext) if t else False
+
+
+    # Reihenfolge der Dateitypen im Speichern-Fenster
+    SPEICHER_FORMATE = (".docx", ".odt", ".doc", ".rtf", ".txt", ".pdf")
 
 
     def _ask_path(self, tab: DocumentTab, title: str, only: str | None = None) -> str | None:
+        """Das eine Speichern-Fenster: Dateiname und Dateityp. `only` wählt den Dateityp vor, alle anderen bleiben wählbar."""
         folder = os.path.dirname(tab.path) if tab.path else (self.settings.get("speichern/ordner", "") or
                                                              self.settings.get("last_dir", os.path.expanduser("~")))
         base = os.path.splitext(tab.title)[0] or "Unbenannt"
-        if only:
-            flt = formats.SAVE_FILTERS[only]; default = only
-        else:
-            standard = self.settings.get("speichern/standard", ".docx")
-            flt = ("Word-Dokument (*.docx);;Textdatei (*.txt)" if standard != ".txt"
-                   else "Textdatei (*.txt);;Word-Dokument (*.docx)")
-            default = standard if standard in (".docx", ".txt") else ".docx"
-        path, chosen = QFileDialog.getSaveFileName(self, title, os.path.join(folder, base + default), flt)
+        default = only or self.settings.get("speichern/standard", ".docx")
+        if default not in self.SPEICHER_FORMATE:
+            default = ".docx"
+        filter_von = lambda e: formats.PDF_FILTER if e == ".pdf" else formats.SAVE_FILTERS[e]
+        flt = ";;".join(filter_von(e) for e in self.SPEICHER_FORMATE)
+        path, chosen = QFileDialog.getSaveFileName(self, title, os.path.join(folder, base + default), flt, filter_von(default))
         if not path:
             return None
-        if not os.path.splitext(path)[1]:
-            path += ".txt" if "txt" in chosen else default
+        gewaehlt = formats.endung_zum_filter(chosen) or default
+        if formats.ext(path) not in self.SPEICHER_FORMATE:      # ohne oder mit fremder Endung: die des gewählten Dateityps
+            path += gewaehlt
         return path
 
 
-    def _save_tab_as(self, tab: DocumentTab) -> bool:
-        path = self._ask_path(tab, "Speichern unter")
-        if not path:
+    def _save_tab_as(self, tab: DocumentTab, only: str | None = None) -> bool:
+        path = self._ask_path(tab, "Speichern unter", only=only)
+        if not path or not self._write(tab, path):
             return False
-        if not self._write(tab, path):
-            return False
+        if formats.ext(path) == ".pdf":                        # PDF ist eine Ausgabe; das Dokument bleibt bei seiner Datei
+            return True
         tab.set_path(path)
         self.settings.add_recent(path)
         self._update_tab_titles()
@@ -151,10 +147,29 @@ class DateienBaustein:
 
 
     def _write(self, tab: DocumentTab, path: str, mark_saved: bool = True) -> bool:
+        if formats.ext(path) == ".pdf":
+            return self._pdf_schreiben(tab, path)
+        fortschritt = None
+
+        def warten() -> bool:
+            """Während der Umwandlung über das Umwandlungsprogramm: Fenster bleibt gezeichnet, Abbrechen ist möglich."""
+            nonlocal fortschritt
+            if fortschritt is None:
+                fortschritt = QProgressDialog("Das Dokument wird umgewandelt …", "Abbrechen", 0, 0, self)
+                fortschritt.setWindowTitle("Speichern")
+                fortschritt.setWindowModality(Qt.WindowModal)
+                fortschritt.setMinimumDuration(0)
+                fortschritt.show()
+            QApplication.processEvents()
+            return not fortschritt.wasCanceled()
+
         try:
-            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta)
+            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta, warten)
         except DocumentIOError as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", str(e)); return False
+        finally:
+            if fortschritt is not None:
+                fortschritt.close(); fortschritt.deleteLater()
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
@@ -177,17 +192,10 @@ class DateienBaustein:
 
 
     def export_pdf_dialog(self):
-        t = self.current_tab()
-        if not t:
-            return
-        folder = os.path.dirname(t.path) if t.path else os.path.expanduser("~")
-        path, _ = QFileDialog.getSaveFileName(self, "Als PDF exportieren",
-                                              os.path.join(folder, os.path.splitext(t.title)[0] + ".pdf"),
-                                              "PDF-Dokument (*.pdf)")
-        if not path:
-            return
-        if not path.lower().endswith(".pdf"):
-            path += ".pdf"
+        self.export_as(".pdf", "Als PDF exportieren")
+
+
+    def _pdf_schreiben(self, t: DocumentTab, path: str) -> bool:
         try:
             autor = self.dokumente.meta_fuer_speichern(t.meta).get("author", "") if self.settings.get_bool("pdf/eigenschaften", True) else ""
             lz = None
@@ -204,12 +212,13 @@ class DateienBaustein:
                             if k in ("versteckt", "felder_code", "zeichnungen", "balken", "hervorhebungen", "textmarken", "textgrenzen", "zuschnitt",
                                      "notenlinks", "blasen", "nur_formular")})
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
-            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", str(e)); return
+            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", str(e)); return False
         self.statusBar().showMessage(f"PDF gespeichert ({n} Seiten): {path}", 5000)
         if self.settings.get_bool("pdf/oeffnen", False):
             from PySide6.QtCore import QUrl
             from PySide6.QtGui import QDesktopServices
             QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+        return True
 
 
     def druck_start(self) -> dict:

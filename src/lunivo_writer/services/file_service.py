@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import tempfile
 from dataclasses import dataclass
+from typing import Callable
 
 from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument, QTextDocumentWriter
 
@@ -21,6 +22,14 @@ SAVE_FILTERS = {
     ".doc": "Word 97–2003 (*.doc)",
     ".rtf": "Rich Text (*.rtf)",
 }
+PDF_FILTER = "PDF-Dokument (*.pdf)"
+
+
+def endung_zum_filter(filter_text: str) -> str | None:
+    """Filtertext aus dem Speichern-Fenster → Endung (z. B. „OpenDocument-Text (*.odt)“ → „.odt“)."""
+    if filter_text == PDF_FILTER:
+        return ".pdf"
+    return next((e for e, f in SAVE_FILTERS.items() if f == filter_text), None)
 
 
 @dataclass
@@ -145,7 +154,9 @@ def _has_rich_content(doc: QTextDocument) -> bool:
     return doc.rootFrame().childFrames() != []
 
 
-def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None) -> IOReport:
+def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None,
+         warten: Callable[[], bool] | None = None) -> IOReport:
+    """Speichert nach Endung. `warten` wird während einer Umwandlung über das Umwandlungsprogramm regelmäßig gerufen."""
     from lunivo_writer.editor import lese_zeilenluft
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
         doc = lese_zeilenluft.bereinigte_kopie(doc)
@@ -181,7 +192,7 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
             with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
                 zwischen = os.path.join(tmp, "dokument.docx")
                 docx_writer.write_docx(zwischen, doc, page, meta)
-                libreoffice.aus_docx(zwischen, path)
+                libreoffice.aus_docx(zwischen, path, warten)
             rep.warn(f"{e[1:].upper()} wurde über das Umwandlungsprogramm aus der DOCX-Fassung erzeugt. "
                      "Die Treue zum Original hängt vom Umwandlungsprogramm ab.")
             return rep

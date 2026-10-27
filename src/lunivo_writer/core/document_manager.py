@@ -33,9 +33,9 @@ class DocumentManager:
             m["author"] = self.settings.get("benutzer/name", "")
         return m
 
-    def speichern(self, path: str, dokument, seite, meta: dict):
+    def speichern(self, path: str, dokument, seite, meta: dict, warten=None):
         """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück."""
-        return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta))
+        return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta), warten)
 
     # ---- Zuletzt benutzt -------------------------------------------------------------------------------
     def zuletzt(self) -> list[str]:
