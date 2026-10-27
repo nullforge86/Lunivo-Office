@@ -1,44 +1,104 @@
 """Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
 
-Befehle ohne eigene Seite (Neu, Öffnen, Speichern, Schließen …) führen sofort aus und schließen die Ansicht; Seiten gibt es für
-Zuletzt benutzte Dokumente, Speichern als (alle Ausgabeformate), Drucken, Schützen, Info und Öffnen mit …
+Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Öffnen, Speichern, PDF, Bild, Beenden)
+führen sofort aus und schließen die Ansicht; Seiten gibt es für Neu (Vorlagen), Speichern unter (alle Ausgabeformate, Info, Öffnen mit …),
+Drucken, Dokumentverschlüsselung, Hilfe und Optionen. Rechts steht zuerst die Liste zuletzt verwendeter Dateien.
 """
 from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QSize, Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
+from datetime import datetime
+
+from PySide6.QtCore import QPointF, QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QPolygonF, QShortcut
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
-    QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget, QStyle,
+    QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
 from lunivo_writer.ui.widgets import icons
 
-# (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Befehl)
 from lunivo_writer.core.farben import Farbe
+
+# Das Menü links nach Kays Vorbild (WPS-Bildschirmfoto „Menü“): große Zeilen mit Liniensymbol, Pfeil bei Einträgen mit eigener Seite.
+# (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Seite bzw. Befehl)
 EINTRAEGE = [
-    ("neu", "Neues Dokument erstellen", "neu", "tun", "neu"),
-    ("vorlage", "Von Vorlage erstellen", "vorlage", "seite", None),
+    ("neu", "Neu", "neu", "seite", "vorlage"),
     ("oeffnen", "Öffnen", "oeffnen", "tun", "oeffnen"),
-    ("zuletzt", "Zuletzt benutzte Dokumente öffnen", "zuletzt", "seite", None),
-    ("-1", "", "", "trenner", None),
     ("speichern", "Speichern", "speichern", "tun", "speichern"),
-    ("speichern_als", "Speichern als", "speichern", "seite", None),
-    ("drucken", "Drucken", "drucken", "seite", None),
-    ("schuetzen", "Schützen", "sperren", "seite", None),
+    ("speichern_als", "Speichern unter", "speichern_unter", "seite", "speichern_als"),
+    ("pdf", "Als PDF exportieren", "pdf", "tun", "speichernPdf"),
+    ("bild", "Als Bild exportieren", "bild", "tun", "exportierenPng"),
+    ("drucken", "Drucken", "drucken", "seite", "drucken"),
+    ("-1", "", "", "trenner", None),
+    ("schuetzen", "Dokumentverschlüsselung", "schutz", "seite", "schuetzen"),
     ("-2", "", "", "trenner", None),
-    ("info", "Info", "inhalt", "seite", None),
-    ("oeffnen_mit", "Öffnen mit …", "buch", "seite", None),
-    ("ort", "Dateispeicherort öffnen", "oeffnen", "ort", None),
-    ("-3", "", "", "trenner", None),
-    ("schliessen", "Schließen", "schliessen", "tun", "schliessen"),
-    ("-4", "", "", "trenner", None),
-    ("optionen", "Erweiterte Einstellungen", "zahnrad", "seite", None),
-    ("hilfe", "Hilfe", "buch", "seite", None),
+    ("hilfe", "Hilfe", "hilfe", "seite", "hilfe"),
+    ("optionen", "Optionen", "optionen", "seite", "optionen"),
+    ("beenden", "Beenden", "beenden", "tun", "beenden"),
 ]
+MIT_DOKUMENT = ("speichern", "speichern_als", "pdf", "bild", "drucken", "schuetzen")
+
+# Liniensymbole (24er-Raster; teils nach Lucide, ISC-Lizenz, siehe assets/icons/LIZENZ-LUCIDE.txt)
+SYMBOLE = {
+    "neu": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M9 15h6 M12 12v6",
+    "oeffnen": "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9"
+               "a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
+    "speichern": "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z "
+                 "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7 M7 3v4a1 1 0 0 0 1 1h7",
+    "speichern_unter": "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5 M14 2v4a2 2 0 0 0 2 2h4 "
+                       "M13.38 15.63a1 1 0 1 0-3-3l-5.01 5.01a2 2 0 0 0-.51.85l-.84 2.87a.5.5 0 0 0 .62.62l2.87-.84a2 2 0 0 0 .85-.51z",
+    "pdf": "M4 11V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1 M14 2v6h6 M2 15h9 M8 12l3 3-3 3",
+    "bild": "M10 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7 M21 15l-5-5L5 21 "
+            "M13.5 7.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0 M2 6h6 M5.5 3.5 8 6l-2.5 2.5",
+    "drucken": "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2 M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6 "
+               "M7 14h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z",
+    "schutz": "M4 9V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2h-5 M14 2v6h6 M3 15h8v6H3z M5 15v-2a2 2 0 0 1 4 0v2",
+    "hilfe": "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20 M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3 M12 17h.01",
+    "optionen": "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38"
+                "a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38"
+                "a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18"
+                "a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08"
+                "a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08"
+                "a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
+    "beenden": "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
+    "datei": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M8 13h8 M8 17h8",
+    "neu_laden": "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8 M21 3v5h-5",
+    "weg": "M18 6 6 18 M6 6l12 12",
+}
+
+
+def symbol(name: str, px: int = 24):
+    return icons.icon_aus_pfad(SYMBOLE[name], px)
+
+
+class _Zeile(QStyledItemDelegate):
+    """Zeichnet die Trennlinien quer über die Liste und den kleinen Pfeil rechts bei Einträgen mit eigener Seite."""
+
+    def paint(self, p: QPainter, opt, idx):
+        art = idx.data(ART)
+        if art == "trenner":
+            p.save()
+            p.setPen(QPen(opt.palette.color(QPalette.Mid).lighter(130), 1))
+            y = opt.rect.center().y()
+            p.drawLine(opt.rect.left(), y, opt.rect.right(), y)
+            p.restore()
+            return
+        super().paint(p, opt, idx)
+        if idx.data(PFEIL):
+            p.save()
+            p.setRenderHint(QPainter.Antialiasing)
+            p.setPen(Qt.NoPen)
+            p.setBrush(opt.palette.color(QPalette.WindowText if opt.state & QStyle.State_Enabled else QPalette.Mid))
+            x, y = opt.rect.right() - 16, opt.rect.center().y()
+            p.drawPolygon(QPolygonF([QPointF(x, y - 4), QPointF(x + 4, y), QPointF(x, y + 4)]))
+            p.restore()
+
+
+ART, PFEIL = Qt.UserRole + 1, Qt.UserRole + 2
+MIT_PFEIL = ("neu", "speichern_als", "drucken", "schuetzen", "hilfe")      # wie im Vorbild: Pfeil, wo eine Auswahl folgt
 
 EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "exportierenDocx"),
            ("OpenDocument-Text (.odt)", "exportierenOdt"),
@@ -50,7 +110,7 @@ EXPORT_ENDUNG = {"speichernPdf": ".pdf", "exportierenDocx": ".docx", "exportiere
 
 BREITE = 460
 
-STIL = ('\nQWidget#bsLinks { background: palette(window); }\nQListWidget#bsListe { background: transparent; border: none; outline: none; }\nQListWidget#bsListe::item { padding: 10px 14px; border-left: 3px solid transparent; }\nQListWidget#bsListe::item:selected { background: palette(midlight); color: palette(window-text); border-left: 3px solid palette(highlight); }\nQListWidget#bsListe::item:hover:!selected { background: palette(midlight); }\nQWidget#bsRechts, QScrollArea#bsSeite, QScrollArea#bsSeite > QWidget > QWidget { background: palette(base); }\nQLabel#bsTitel { font-size: 17pt; }\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQWidget#optKopf { border: none; }\nQPushButton#optZurueck { border: none; background: transparent; font-size: 14pt; font-weight: 600; text-align: left; padding: 4px 6px; }\nQPushButton#optFertig { background: ' + Farbe.AKZENT + '; color: white; border: none; border-radius: 6px; padding: 9px 30px; font-weight: 600; }\nQPushButton#optFertig:hover { background: ' + Farbe.AKZENT_DUNKEL + '; }\nQLabel#bsGruppe { font-size: 11pt; font-weight: 600; }\nQLabel#bsHinweis { color: palette(mid); }\nQPushButton#bsKnopf { border: none; background: transparent; padding: 9px 12px; text-align: left; border-radius: 6px; }\nQPushButton#bsKnopf:hover:enabled { background: palette(midlight); }\nQPushButton#bsKnopf:disabled { color: palette(mid); }\n')
+STIL = ('\nQWidget#bsLinks { background: palette(window); }\nQListWidget#bsListe { background: transparent; border: none; outline: none; }\nQListWidget#bsListe { font-size: 11pt; }\nQListWidget#bsListe::item { padding-left: 18px; border: none; }\nQListWidget#bsListe::item:selected, QListWidget#bsListe::item:hover:enabled { background: palette(midlight); color: palette(window-text); }\nQListWidget#bsListe::item:disabled { color: palette(mid); }\nQLabel#bsZuletzt { font-size: 11pt; }\nQPushButton#bsDatei { border: none; background: transparent; text-align: left; padding: 8px 10px; border-radius: 4px; }\nQPushButton#bsDatei:hover:enabled { background: palette(midlight); }\nQToolButton#bsKlein { border: none; background: transparent; border-radius: 4px; }\nQToolButton#bsKlein:hover { background: palette(midlight); }\nQWidget#bsRechts, QScrollArea#bsSeite, QScrollArea#bsSeite > QWidget > QWidget { background: palette(base); }\nQLabel#bsTitel { font-size: 17pt; }\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQWidget#optKopf { border: none; }\nQPushButton#optZurueck { border: none; background: transparent; font-size: 14pt; font-weight: 600; text-align: left; padding: 4px 6px; }\nQPushButton#optFertig { background: ' + Farbe.AKZENT + '; color: white; border: none; border-radius: 6px; padding: 9px 30px; font-weight: 600; }\nQPushButton#optFertig:hover { background: ' + Farbe.AKZENT_DUNKEL + '; }\nQLabel#bsGruppe { font-size: 11pt; font-weight: 600; }\nQLabel#bsHinweis { color: palette(mid); }\nQPushButton#bsKnopf { border: none; background: transparent; padding: 9px 12px; text-align: left; border-radius: 6px; }\nQPushButton#bsKnopf:hover:enabled { background: palette(midlight); }\nQPushButton#bsKnopf:disabled { color: palette(mid); }\n')
 
 
 class Backstage(QWidget):
@@ -65,18 +125,16 @@ class Backstage(QWidget):
         lay.setSpacing(0)
         links = QWidget()
         links.setObjectName("bsLinks")
-        links.setFixedWidth(340)
+        links.setFixedWidth(310)
         ll = QVBoxLayout(links)
-        ll.setContentsMargins(0, 8, 0, 8)
-        zurueck = QPushButton("  Zurück zum Dokument"); icons.setze(zurueck, "voriges", 18)
-        zurueck.setObjectName("bsKnopf")
-        zurueck.setCursor(Qt.PointingHandCursor)
-        zurueck.clicked.connect(self.schliessen)
-        ll.addWidget(zurueck)
+        ll.setContentsMargins(0, 10, 0, 10)
         self.liste = QListWidget()
         self.liste.setObjectName("bsListe")
-        self.liste.setIconSize(QSize(20, 20))
+        self.liste.setIconSize(QSize(24, 24))
         self.liste.setFocusPolicy(Qt.NoFocus)
+        self.liste.setItemDelegate(_Zeile(self.liste))
+        self.liste.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         ll.addWidget(self.liste, 1)
         lay.addWidget(links)
         self._links = links                                          # bei den Optionen ausgeblendet
@@ -90,12 +148,15 @@ class Backstage(QWidget):
         self.zeilen: dict[str, QListWidgetItem] = {}
         for schl, text, sym, art, _b in EINTRAEGE:
             it = QListWidgetItem(text)
-            if sym:
-                it.setIcon(icons.icon(sym if icons.hat(sym) else "zahnrad", 20))
+            it.setData(ART, art)
+            it.setData(PFEIL, schl in MIT_PFEIL)
             if art == "trenner":
                 it.setFlags(Qt.NoItemFlags)
-                it.setSizeHint(QSize(10, 14))
+                it.setSizeHint(QSize(10, 16))
                 it.setText("")
+            else:
+                it.setIcon(symbol(sym))
+                it.setSizeHint(QSize(10, 54))
             self.zeilen[schl] = it
             self.liste.addItem(it)
         self.liste.itemClicked.connect(self._gewaehlt)
@@ -114,7 +175,7 @@ class Backstage(QWidget):
             w.deleteLater()
         self.seiten.clear()
         haben_dok = self.w.current_tab() is not None
-        for schl in ("speichern", "speichern_als", "drucken", "schuetzen", "info", "oeffnen_mit", "ort", "schliessen"):
+        for schl in MIT_DOKUMENT:
             self.zeilen[schl].setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable if haben_dok else Qt.NoItemFlags)
         bauer = {"zuletzt": self._zuletzt, "speichern_als": self._speichern_als, "drucken": self._drucken, "vorlage": self._vorlage,
                  "hilfe": self._hilfe, "schuetzen": self._schuetzen, "info": self._info, "oeffnen_mit": self._oeffnen_mit, "optionen": self._optionen}
@@ -178,22 +239,28 @@ class Backstage(QWidget):
         elif schl == "vorlage":
             self._vorlage_zeigen()
         self.stapel.setCurrentWidget(self.seiten[schl])
-        self.liste.setCurrentItem(self.zeilen[schl])
+        zeile = next((self.zeilen[e[0]] for e in EINTRAEGE if e[3] == "seite" and e[4] == schl), None)
+        if zeile is None:
+            self.liste.clearSelection()
+            self.liste.setCurrentItem(None)
+        else:
+            self.liste.setCurrentItem(zeile)
 
     def _gewaehlt(self, it: QListWidgetItem):
         schl = next(k for k, v in self.zeilen.items() if v is it)
-        art, befehl = next((e[3], e[4]) for e in EINTRAEGE if e[0] == schl)
+        art, ziel = next((e[3], e[4]) for e in EINTRAEGE if e[0] == schl)
         if art == "seite":
-            self._zeigen(schl)
+            self._zeigen(ziel)
         elif art == "tun":
             self.schliessen.emit()
-            self.w.befehle.tun(befehl)
-        elif art == "ort":
-            t = self.w.current_tab()
-            if t and t.path and os.path.exists(t.path):
-                QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(os.path.abspath(t.path))))
-            else:
-                self.w.statusBar().showMessage("Das Dokument ist noch nicht gespeichert — es gibt noch keinen Speicherort.", 5000)
+            self.w.befehle.tun(ziel)
+
+    def _speicherort(self):
+        t = self.w.current_tab()
+        if t and t.path and os.path.exists(t.path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(os.path.abspath(t.path))))
+        else:
+            self.w.statusBar().showMessage("Das Dokument ist noch nicht gespeichert — es gibt noch keinen Speicherort.", 5000)
 
     # ---- Bausteine -------------------------------------------------------------------------------------------
     def _seite(self, titel: str) -> tuple[QScrollArea, QVBoxLayout]:
@@ -205,10 +272,11 @@ class Backstage(QWidget):
         v = QVBoxLayout(inh)
         v.setContentsMargins(44, 36, 44, 24)
         v.setSpacing(8)
-        t = QLabel(titel)
-        t.setObjectName("bsTitel")
-        v.addWidget(t)
-        v.addSpacing(14)
+        if titel:
+            t = QLabel(titel)
+            t.setObjectName("bsTitel")
+            v.addWidget(t)
+            v.addSpacing(14)
         sa.setWidget(inh)
         return sa, v
 
@@ -242,30 +310,60 @@ class Backstage(QWidget):
 
     # ---- Seiten ------------------------------------------------------------------------------------------------
     def _zuletzt(self):
-        sa, v = self._seite("Zuletzt verwendete öffnen")
+        """Rechts neben dem Menü: die zuletzt verwendeten Dateien (Name, Ordner, Datum; ✕ nimmt sie aus der Liste)."""
+        sa, v = self._seite("")
+        v.setContentsMargins(22, 14, 22, 14)
+        v.setSpacing(2)
+        kopf = QHBoxLayout()
+        t = QLabel("Liste zuletzt verwendeter Dateien"); t.setObjectName("bsZuletzt")
+        neu = QToolButton(); neu.setObjectName("bsKlein"); neu.setIcon(symbol("neu_laden", 16)); neu.setIconSize(QSize(16, 16))
+        neu.setToolTip("Liste neu laden"); neu.setCursor(Qt.PointingHandCursor)
+        neu.clicked.connect(lambda: self.oeffnen("zuletzt"))
+        kopf.addWidget(t); kopf.addWidget(neu); kopf.addStretch(1)
+        v.addLayout(kopf)
+        v.addSpacing(6)
         pfade = self.w.settings.recent()
         if not pfade:
             h = QLabel("Noch keine Dokumente geöffnet.")
             h.setObjectName("bsHinweis")
             v.addWidget(h)
+        heim = os.path.expanduser("~")
         for p in pfade:
+            zeile = QHBoxLayout(); zeile.setSpacing(4)
             k = QPushButton()
-            k.setObjectName("bsKnopf")
+            k.setObjectName("bsDatei")
             k.setCursor(Qt.PointingHandCursor)
-            k.setText(os.path.basename(p))
-            k.setToolTip(p)                                          # den Pfad zeigt nur der Tooltip
+            ordner = os.path.dirname(p)
+            ordner = ("~" + ordner[len(heim):] if ordner.startswith(heim) else ordner) + "/"
+            k.setAccessibleName(os.path.basename(p))               # sichtbar sind Name, Ordner und Datum als eigene Zeilen
+            k.setToolTip(p)
             sym = datei_symbol(p)                                    # Symbol des Dateiformats aus dem Icon-Theme des Systems
-            k.setIcon(sym if not sym.isNull() else icons.icon("ausdatei", 28))
-            k.setIconSize(QSize(28, 28))
+            k.setIcon(sym if not sym.isNull() else symbol("datei", 32))
+            k.setIconSize(QSize(32, 32))
             k.setEnabled(os.path.exists(p))
             k.clicked.connect(lambda _=False, p=p: (self.schliessen.emit(), self.w.open_path(p)))
-            v.addWidget(k)
-        if pfade:
-            leer = QPushButton("Liste leeren")
-            leer.setObjectName("bsKnopf")
-            leer.setFixedWidth(BREITE)
-            leer.clicked.connect(lambda: (self.w._clear_recent(), self.oeffnen("zuletzt")))
-            v.addSpacing(8); v.addWidget(leer)
+            text = QVBoxLayout(); text.setSpacing(0); text.setContentsMargins(0, 0, 0, 0)
+            name = QLabel(os.path.basename(p)); name.setAttribute(Qt.WA_TransparentForMouseEvents)
+            ort = QLabel(ordner); ort.setObjectName("bsHinweis"); ort.setAttribute(Qt.WA_TransparentForMouseEvents)
+            ort.setMaximumWidth(380)
+            ort.setText(ort.fontMetrics().elidedText(ordner, Qt.ElideRight, 380))
+            text.addWidget(name); text.addWidget(ort)
+            innen = QHBoxLayout(k); innen.setContentsMargins(52, 6, 12, 6)
+            innen.addLayout(text); innen.addStretch(1)
+            try:
+                datum = datetime.fromtimestamp(os.path.getmtime(p))
+                heute = datetime.now().date() == datum.date()
+                d = QLabel(("Heute " + datum.strftime("%H:%M")) if heute else datum.strftime("%d.%m. %H:%M"))
+            except OSError:
+                d = QLabel("")
+            d.setObjectName("bsHinweis"); d.setAttribute(Qt.WA_TransparentForMouseEvents)
+            innen.addWidget(d)
+            k.setMinimumHeight(56)
+            weg = QToolButton(); weg.setObjectName("bsKlein"); weg.setIcon(symbol("weg", 14)); weg.setIconSize(QSize(14, 14))
+            weg.setToolTip("Aus der Liste nehmen"); weg.setCursor(Qt.PointingHandCursor)
+            weg.clicked.connect(lambda _=False, p=p: (self.w.settings.remove_recent(p), self.oeffnen("zuletzt")))
+            zeile.addWidget(k, 1); zeile.addWidget(weg)
+            v.addLayout(zeile)
         v.addStretch(1)
         return sa
 
@@ -277,6 +375,15 @@ class Backstage(QWidget):
         self._gruppe(v, "Exportieren", "Die Ausgabe wird als Datei geschrieben; das geöffnete Dokument bleibt unverändert.")
         for text, b in EXPORTE:
             self._knopf(v, text, b, "pdf" if b == "speichernPdf" else "ausdatei", datei=EXPORT_ENDUNG.get(b))
+        self._gruppe(v, "Weiteres")
+        for text, ziel, sym in (("Informationen und Eigenschaften", "info", "inhalt"), ("Öffnen mit …", "oeffnen_mit", "buch")):
+            k = QPushButton(text); k.setObjectName("bsKnopf"); k.setFixedWidth(BREITE); k.setCursor(Qt.PointingHandCursor)
+            icons.setze(k, sym, 18)
+            k.clicked.connect(lambda _=False, z=ziel: self._zeigen(z))
+            v.addWidget(k)
+        ort = QPushButton("Dateispeicherort öffnen"); ort.setObjectName("bsKnopf"); ort.setFixedWidth(BREITE)
+        icons.setze(ort, "oeffnen", 18); ort.setCursor(Qt.PointingHandCursor); ort.clicked.connect(self._speicherort)
+        v.addWidget(ort)
         v.addStretch(1)
         return sa
 

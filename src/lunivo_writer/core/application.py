@@ -1,12 +1,26 @@
 """Anwendungsstart: QApplication einrichten, Einstellungen und Theme laden, Hauptfenster zeigen, sauber beenden."""
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QLibraryInfo, QTranslator
+from PySide6.QtCore import QEvent, QLibraryInfo, QSize, QTranslator
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from lunivo_writer.services.settings_service import APP_NAME, APP_ORG, Settings
 from lunivo_writer.ui.main_window import MainWindow
 from lunivo_writer.ui.theme import apply_theme
+
+
+def programm_symbol() -> QIcon:
+    """Lunivos Programmsymbol (assets/symbole/varianten/Abstrakt) in allen vorhandenen Größen."""
+    import os
+    from lunivo_writer.core.paths import ASSETS
+    ordner = os.path.join(ASSETS, "symbole", "varianten", "Abstrakt")
+    ic = QIcon()
+    for px in (16, 24, 32, 48, 128, 256):
+        datei = os.path.join(ordner, f"icon-{px}.png")
+        if os.path.exists(datei):
+            ic.addFile(datei, QSize(px, px))
+    return ic
 
 
 class LunivoApplication:
@@ -16,6 +30,7 @@ class LunivoApplication:
         self.app.setApplicationName(APP_NAME)
         self.app.setOrganizationName(APP_ORG)
         self.app.setDesktopFileName("lunivo-writer")
+        self.app.setWindowIcon(programm_symbol())                       # Fenster, Leiste und Alt+Tab zeigen Lunivos Symbol
         self._uebersetzer = []                                           # Standardknöpfe und Menüs von Qt auf Deutsch („Abbrechen“ statt „Cancel“)
         for name in ("qtbase_de", "qt_de"):
             t = QTranslator()

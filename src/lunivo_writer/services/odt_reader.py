@@ -280,17 +280,7 @@ class _Leser:
             if k.tail:
                 cur.insertText(k.tail, cf)
 
-    def rahmen(self, frame: ET.Element, cur: QTextCursor) -> None:
-        bild = frame.find(_q("draw:image"))
-        if bild is None:
-            if frame.find(_q("draw:text-box")) is not None:
-                self.report.warn("Textrahmen aus der ODT-Datei wurden als Text übernommen.")
-                for k in frame.find(_q("draw:text-box")).iter():
-                    if k.tag in (_q("text:p"), _q("text:h")):
-                        cur.insertText(_text_von(k) + " ")
-            else:
-                self.report.warn("Zeichnungen und Formen aus der ODT-Datei wurden nicht übernommen.")
-            return
+    def _bild_laden(self, bild: ET.Element) -> QImage:
         daten = None
         href = bild.get(_q("xlink:href"), "")
         binaer = bild.find(_q("office:binary-data"))
@@ -305,8 +295,48 @@ class _Leser:
         if not daten or not img.loadFromData(daten):
             from lunivo_writer.editor.freie_bilder import bild_aus_daten
             img = bild_aus_daten(daten) if daten else QImage()
+        return img
+
+    def _frei_angabe(self, frame: ET.Element) -> dict | None:
+        """Ein Rahmen am Absatz oder an der Seite, den kein Text umfließt → Angabe wie in editor/freie_bilder.py, sonst None."""
+        from lunivo_writer.services.odt_writer import AUSR_H, AUSR_V, BEZUG_H, BEZUG_V
+        anker = frame.get(_q("text:anchor-type"), "as-char")
+        if anker not in ("paragraph", "char", "page"):
+            return None
+        g = self.stile.eigenschaften("graphic", frame.get(_q("draw:style-name")), "graphic")
+        if g.get("style:wrap") != "run-through":                # umflossene Bilder bleiben Bilder im Text
+            return None
+        zurueck = lambda tab, wert, standard: next((k for k, v in tab.items() if v == wert), standard)   # noqa: E731
+        hpos, vpos = g.get("style:horizontal-pos", "from-left"), g.get("style:vertical-pos", "from-top")
+        return {"b": _px(frame.get(_q("svg:width")), 0.0) or None, "h": _px(frame.get(_q("svg:height")), 0.0) or None,
+                "hinter": g.get("style:run-through") == "background",
+                "bh": "seite" if anker == "page" else zurueck(BEZUG_H, g.get("style:horizontal-rel", "paragraph"), "spalte"),
+                "bv": "seite" if anker == "page" else zurueck(BEZUG_V, g.get("style:vertical-rel", "paragraph"), "absatz"),
+                "ah": zurueck(AUSR_H, hpos, ""), "av": zurueck(AUSR_V, vpos, ""),
+                "xh": _px(frame.get(_q("svg:x")), 0.0), "yv": _px(frame.get(_q("svg:y")), 0.0), "ellipse": False}
+
+    def rahmen(self, frame: ET.Element, cur: QTextCursor) -> None:
+        bild = frame.find(_q("draw:image"))
+        if bild is None:
+            if frame.find(_q("draw:text-box")) is not None:
+                self.report.warn("Textrahmen aus der ODT-Datei wurden als Text übernommen.")
+                for k in frame.find(_q("draw:text-box")).iter():
+                    if k.tag in (_q("text:p"), _q("text:h")):
+                        cur.insertText(_text_von(k) + " ")
+            else:
+                self.report.warn("Zeichnungen und Formen aus der ODT-Datei wurden nicht übernommen.")
+            return
+        img = self._bild_laden(bild)
         if img.isNull():
             self.report.warn("Ein Bild aus der ODT-Datei war nicht lesbar und wurde übersprungen.")
+            return
+        angabe = self._frei_angabe(frame)
+        if angabe is not None:                                 # frei auf dem Blatt (am Absatz): als Bildanker des Absatzes
+            from lunivo_writer.editor import freie_bilder as FB
+            name = FB.neuer_name(self.doc)
+            self.doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
+            angabe.update(n=name, b=angabe["b"] or img.width(), h=angabe["h"] or img.height())
+            FB.an_absatz(cur, angabe)
             return
         self.bild_n += 1
         name = f"odt-bild-{self.bild_n}"
@@ -485,8 +515,19 @@ class _Leser:
             page.diff_first = True
             page.first_header = self._kopf_fuss(erste_kopf)
             page.first_footer = self._kopf_fuss(erste_fuss)
-        if any(k.find(".//" + _q("draw:frame")) is not None for k in master):
-            self.report.warn("Bilder in Kopf- und Fußzeile aus der ODT-Datei wurden nicht übernommen.")
+        for tag, ort in (("header", "kopf"), ("footer", "fuss"), ("header-first", "kopf1"), ("footer-first", "fuss1")):
+            teil = master.find(_q("style:" + tag))
+            if teil is None:
+                continue
+            for fr in teil.iter(_q("draw:frame")):
+                bild = fr.find(_q("draw:image"))
+                img = self._bild_laden(bild) if bild is not None else QImage()
+                angabe = self._frei_angabe(fr) if not img.isNull() else None
+                if angabe is None:
+                    self.report.warn("Ein Bild in der Kopf- oder Fußzeile der ODT-Datei wurde nicht übernommen.")
+                    continue
+                angabe.update(ort=ort, bild=img, b=angabe["b"] or img.width(), h=angabe["h"] or img.height())
+                page.bilder.append(angabe)
         return page
 
     def _kopf_fuss(self, el: ET.Element | None) -> HeaderFooter:

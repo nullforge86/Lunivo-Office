@@ -8,7 +8,7 @@ Erzeugt von `werkzeug/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 B
 | | Punkt | Beleg / Grenze |
 |---|---|---|
 | ✅ | Neu: Leeres Dokument · Aus Vorlage erstellen · Vorlagen durchsuchen | Backstage ▸ Neues Dokument / Von Vorlage; zehn Vorlagen |
-| ✅ | Öffnen · Zuletzt verwendete Dokumente | Backstage ▸ Öffnen, Zuletzt benutzte Dokumente |
+| ✅ | Öffnen · Zuletzt verwendete Dokumente | Menü ▸ Öffnen, Liste zuletzt verwendeter Dateien |
 | ✅ | Speichern · Speichern unter · Kopie speichern | Backstage ▸ Speichern, Speichern als |
 | ✅ | Exportieren: PDF · DOCX · DOC (optional) · RTF · TXT | Speichern als; dazu ODT und PNG; DOC entfällt (altes Binärformat), alles andere schreibt Lunivo selbst |
 | ✅ | Drucken: Druckvorschau · Drucker auswählen | Backstage ▸ Drucken |
@@ -16,7 +16,7 @@ Erzeugt von `werkzeug/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 B
 | ✅ | Dokumentinformationen | Backstage ▸ Info (Statistik, Verfasser, Titel) |
 | ✅ | Dokument schützen | Backstage ▸ Schützen (Kennwort, Bearbeitung sperren) |
 | ⬜ | Dokument teilen (optional) | Knopf vorhanden, ausgegraut; keine Freigabe-Funktion |
-| ✅ | Optionen / Einstellungen · Schließen | Backstage ▸ Erweiterte Einstellungen, Schließen |
+| ✅ | Optionen / Einstellungen · Schließen | Menü ▸ Optionen, Beenden; Reiter-✕ schließt |
 
 ## 2. Start
 

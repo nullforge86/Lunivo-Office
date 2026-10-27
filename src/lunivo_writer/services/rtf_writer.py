@@ -273,4 +273,7 @@ def rtf_daten(doc: QTextDocument, page: PageSettings, meta: dict | None = None) 
     w = _Rtf(doc, page)
     daten = w.run()
     _verluste_melden(w.report, page, meta or {}, "RTF")
+    from lunivo_writer.editor.freie_bilder import hat_bilder
+    if hat_bilder(doc):
+        w.report.warn("Frei positionierte Bilder werden in RTF nicht gespeichert (in DOCX und ODT schon).")
     return daten, w.report

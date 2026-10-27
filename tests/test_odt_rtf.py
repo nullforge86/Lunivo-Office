@@ -162,3 +162,28 @@ def test_schnell_auch_bei_grossem_dokument(app, tmp_path, ext):
     assert "Absatz 2999" in back.doc.toPlainText()
     assert gespeichert < 5 and gesamt < 15, (gespeichert, gesamt)
     print(f"{ext}: speichern {gespeichert:.2f} s, mit Öffnen {gesamt:.2f} s", file=sys.stderr)
+
+
+def test_odt_freie_bilder_kopf_fuss_und_text(app, tmp_path):
+    """Bilder in Kopf- und Fußzeile und frei positionierte Bilder im Text gehen in ODT mit, ohne Hinweisfenster."""
+    from PySide6.QtCore import QUrl
+    from PySide6.QtGui import QImage
+    from lunivo_writer.editor import freie_bilder as FB
+    doc = QTextDocument(); cur = QTextCursor(doc); cur.insertText("Brief")
+    rot = QImage(40, 20, QImage.Format_RGB32); rot.fill(QColor("red"))
+    doc.addResource(QTextDocument.ImageResource, QUrl("frei-1"), rot)
+    FB.an_absatz(cur, {"n": "frei-1", "b": 80, "h": 40, "bh": "seite", "bv": "seite", "xh": 100, "yv": 50, "ah": "", "av": "", "hinter": True})
+    p = PageSettings(); p.header = HeaderFooter("Kopf", "center")
+    logo = QImage(30, 30, QImage.Format_RGB32); logo.fill(QColor("blue"))
+    p.bilder = [{"ort": "kopf", "bild": logo, "b": 60, "h": 60, "bh": "seite", "bv": "seite", "ah": "right", "av": "", "xh": 0, "yv": 20},
+                {"ort": "fuss", "bild": logo, "b": 30, "h": 30, "bh": "rand", "bv": "seite", "ah": "center", "av": "bottom", "xh": 0, "yv": 0}]
+    out = str(tmp_path / "bilder.odt")
+    assert not formats.save(out, doc, p, {}).warnings
+    back = formats.load(out)
+    assert not back.report.warnings
+    frei = FB.aus_absatz(back.doc.firstBlock().blockFormat())
+    assert len(frei) == 1 and frei[0]["hinter"] and frei[0]["bh"] == "seite" and round(frei[0]["xh"]) == 100
+    assert FB.bild_im_dokument(back.doc, frei[0]["n"]) is not None
+    orte = sorted((a["ort"], a["ah"], a["av"]) for a in back.page.bilder)
+    assert orte == [("fuss", "center", "bottom"), ("kopf", "right", "")]
+    assert all(not a["bild"].isNull() for a in back.page.bilder)

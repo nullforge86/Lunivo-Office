@@ -15,6 +15,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QUrl, Qt
 from PySide6.QtGui import (QImage, QPixmap, QTextBlock, QTextBlockFormat, QTextCharFormat, QTextDocument, QTextFormat, QTextLength,
                            QTextListFormat, QTextTable)
 
+from lunivo_writer.editor.zusatz import B_BILDANKER
 from lunivo_writer.models.page import HeaderFooter, PageSettings
 from lunivo_writer.models.report import IOReport
 
@@ -37,8 +38,9 @@ def _mm(wert: float) -> str:
     return f"{max(0.0, float(wert)):.2f}mm"
 
 
-def _absatz(hf: HeaderFooter, stil: str) -> str:
-    """Kopf-/Fußzeilentext als ODF-Absätze; {PAGE} und {PAGES} werden zu Feldern."""
+def _absatz(hf: HeaderFooter, stil: str, rahmen: str = "") -> str:
+    """Kopf-/Fußzeilentext als ODF-Absätze; {PAGE} und {PAGES} werden zu Feldern. ``rahmen`` (frei positionierte Bilder) hängt am
+    ersten Absatz."""
     zeilen = []
     for zeile in hf.text.split("\n"):
         teile, rest = [], zeile
@@ -51,13 +53,22 @@ def _absatz(hf: HeaderFooter, stil: str) -> str:
             teile.append("<text:page-number text:select-page=\"current\">1</text:page-number>" if t == "{PAGE}"
                          else "<text:page-count>1</text:page-count>")
             rest = rest[i + len(t):]
-        zeilen.append(f'<text:p text:style-name="{stil}">{"".join(teile)}</text:p>')
+        zeilen.append(f'<text:p text:style-name="{stil}">{"" if zeilen else rahmen}{"".join(teile)}</text:p>')
     return "".join(zeilen)
 
 
-def _styles_xml(page: PageSettings, doc: QTextDocument | None = None) -> str:
-    kopf = not page.header.is_empty() or (page.diff_first and not page.first_header.is_empty())
-    fuss = not page.footer.is_empty() or (page.diff_first and not page.first_footer.is_empty())
+def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: dict[str, bytes] | None = None) -> str:
+    bilder = {} if bilder is None else bilder
+    rahmen, rahmen_stile = {}, []
+    for a in page.bilder or []:
+        if a.get("bild") is None or a.get("bild").isNull() or a.get("ort") not in ("kopf", "fuss", "kopf1", "fuss1"):
+            continue
+        nr = len(rahmen_stile) + 1
+        rahmen_stile.append(_frei_stil(f"KF{nr}", a))
+        rahmen[a["ort"]] = rahmen.get(a["ort"], "") + _frei_rahmen(a, a["bild"], 100 + nr, f"KF{nr}", bilder)
+    da = lambda hf, ort: not hf.is_empty() or ort in rahmen                 # noqa: E731
+    kopf = da(page.header, "kopf") or (page.diff_first and da(page.first_header, "kopf1"))
+    fuss = da(page.footer, "fuss") or (page.diff_first and da(page.first_footer, "fuss1"))
     # ODF misst den oberen Rand bis zur Kopfzeile; Lunivo (wie Word) bis zum Text. Mit Kopfzeile: Rand = Kopfabstand,
     # Kopfzeilenbereich = Rest bis zum Text.
     rand_oben = min(page.kopf_abstand_mm, page.margin_top_mm) if kopf else page.margin_top_mm
@@ -72,18 +83,18 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None) -> str:
         stile.append(f'<style:style style:name="Lunivo{name}" style:family="paragraph"><style:paragraph-properties '
                      f'fo:text-align="{_AUSRICHTUNG.get(hf.align, "center")}"/></style:style>')
     seite = []
-    if not page.header.is_empty():
-        seite.append(f"<style:header>{_absatz(page.header, 'LunivoKopf')}</style:header>")
+    if da(page.header, "kopf"):
+        seite.append(f"<style:header>{_absatz(page.header, 'LunivoKopf', rahmen.get('kopf', ''))}</style:header>")
     if page.diff_first and kopf:
-        seite.append(f"<style:header-first>{_absatz(page.first_header, 'LunivoKopfErste')}</style:header-first>")
-    if not page.footer.is_empty():
-        seite.append(f"<style:footer>{_absatz(page.footer, 'LunivoFuss')}</style:footer>")
+        seite.append(f"<style:header-first>{_absatz(page.first_header, 'LunivoKopfErste', rahmen.get('kopf1', ''))}</style:header-first>")
+    if da(page.footer, "fuss"):
+        seite.append(f"<style:footer>{_absatz(page.footer, 'LunivoFuss', rahmen.get('fuss', ''))}</style:footer>")
     if page.diff_first and fuss:
-        seite.append(f"<style:footer-first>{_absatz(page.first_footer, 'LunivoFussErste')}</style:footer-first>")
+        seite.append(f"<style:footer-first>{_absatz(page.first_footer, 'LunivoFussErste', rahmen.get('fuss1', ''))}</style:footer-first>")
     return ('<?xml version="1.0" encoding="UTF-8"?>'
             f'<office:document-styles {_NS} office:version="1.3">'
             f'<office:styles>{_standard(doc)}{"".join(stile)}</office:styles>'
-            '<office:automatic-styles><style:page-layout style:name="LunivoSeite">'
+            f'<office:automatic-styles>{"".join(rahmen_stile)}<style:page-layout style:name="LunivoSeite">'
             f'<style:page-layout-properties fo:page-width="{_mm(page.width_mm)}" fo:page-height="{_mm(page.height_mm)}" '
             f'style:print-orientation="{"landscape" if page.landscape else "portrait"}" '
             f'fo:margin-top="{_mm(rand_oben)}" fo:margin-bottom="{_mm(rand_unten)}" '
@@ -165,6 +176,38 @@ def _laenge(px: float) -> str:
     return f"{px * 25.4 / 96:.2f}mm"
 
 
+# Frei positionierte Bilder (editor/freie_bilder.py) ↔ ODF-Rahmen am Absatz: Bezug und Ausrichtung je Achse.
+BEZUG_H = {"seite": "page", "rand": "page-content", "spalte": "paragraph"}
+BEZUG_V = {"seite": "page", "rand": "page-content", "absatz": "paragraph"}
+AUSR_H = {"left": "left", "center": "center", "right": "right", "inside": "inside", "outside": "outside"}
+AUSR_V = {"top": "top", "center": "middle", "bottom": "bottom"}
+
+
+def _frei_stil(name: str, a: dict) -> str:
+    """Rahmenvorlage (Familie „graphic“) für ein frei positioniertes Bild: ohne Textumfluss, vor oder hinter dem Text."""
+    return (f'<style:style style:name="{name}" style:family="graphic"><style:graphic-properties style:wrap="run-through" '
+            f'style:run-through="{"background" if a.get("hinter") else "foreground"}" '
+            f'style:horizontal-pos="{AUSR_H.get(a.get("ah") or "", "from-left")}" '
+            f'style:horizontal-rel="{BEZUG_H.get(a.get("bh"), "paragraph")}" '
+            f'style:vertical-pos="{AUSR_V.get(a.get("av") or "", "from-top")}" '
+            f'style:vertical-rel="{BEZUG_V.get(a.get("bv"), "paragraph")}"/></style:style>')
+
+
+def _frei_rahmen(a: dict, img: QImage, nr: int, stil: str, bilder: dict[str, bytes]) -> str:
+    """Ein frei positioniertes Bild als draw:frame am Absatz; die Bilddaten kommen nach ``bilder`` (Pictures/…)."""
+    name = f"Pictures/frei{nr}.png"
+    bilder[name] = _png(img)
+    b, h = float(a.get("b") or img.width()), float(a.get("h") or img.height())
+    lage = ""
+    if not AUSR_H.get(a.get("ah") or ""):
+        lage += f' svg:x="{_laenge(float(a.get("xh") or 0))}"'
+    if not AUSR_V.get(a.get("av") or ""):
+        lage += f' svg:y="{_laenge(float(a.get("yv") or 0))}"'
+    return (f'<draw:frame draw:style-name="{stil}" draw:name="Frei{nr}" text:anchor-type="paragraph"{lage} '
+            f'svg:width="{_laenge(b)}" svg:height="{_laenge(h)}" draw:z-index="{0 if a.get("hinter") else nr}">'
+            f'<draw:image xlink:href="{name}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame>')
+
+
 class _Inhalt:
     """Baut content.xml aus dem QTextDocument: Absätze, Überschriften, Zeichenformat, Listen, Tabellen, Bilder."""
 
@@ -176,6 +219,7 @@ class _Inhalt:
         self.schriften: set[str] = set()
         self.bilder: dict[str, bytes] = {}
         self.tabellen = 0
+        self.rahmen_stile: list[str] = []
 
     # ---- Formate ---------------------------------------------------------------------------------------------------------
     def _absatz_stil(self, bf: QTextBlockFormat) -> str:
@@ -265,9 +309,24 @@ class _Inhalt:
                 f'svg:height="{_laenge(h)}"><draw:image xlink:href="{name}" xlink:type="simple" xlink:show="embed" '
                 'xlink:actuate="onLoad"/></draw:frame>')
 
+    def _freie_bilder(self, bf: QTextBlockFormat) -> list[str]:
+        if not bf.hasProperty(B_BILDANKER):
+            return []
+        from lunivo_writer.editor import freie_bilder as FB
+        out = []
+        for a in FB.aus_absatz(bf):
+            img = FB.bild_im_dokument(self.doc, a.get("n", ""))
+            if img is None:
+                self.rep.warn("Ein Bild war nicht lesbar und fehlt in der ODT-Datei.")
+                continue
+            nr = len(self.rahmen_stile) + 1
+            self.rahmen_stile.append(_frei_stil(f"Fr{nr}", a))
+            out.append(_frei_rahmen(a, img, nr, f"Fr{nr}", self.bilder))
+        return out
+
     def absatz(self, block: QTextBlock) -> str:
         bf = block.blockFormat()
-        inhalt = []
+        inhalt = self._freie_bilder(bf)
         it = block.begin()
         while not it.atEnd():
             frag = it.fragment()
@@ -388,6 +447,7 @@ class _Inhalt:
         stile.append('<style:style style:name="Zelle" style:family="table-cell"><style:table-cell-properties '
                      'fo:padding="1mm" fo:border="0.5pt solid #000000"/></style:style>')
         stile.extend(x for _n, x in self.listen_stile.values())
+        stile.extend(self.rahmen_stile)
         schriften = "".join(f'<style:font-face style:name="{escape(n, {chr(34): "&quot;"})}" '
                             f'svg:font-family="{escape(n, {chr(34): "&quot;"})}"/>' for n in sorted(self.schriften))
         return ('<?xml version="1.0" encoding="UTF-8"?>'
@@ -412,9 +472,11 @@ def odt_daten(doc: QTextDocument, page: PageSettings, meta: dict | None = None) 
     """Baut die ODT-Datei im Speicher. → (Inhalt, Bericht über nicht Übernommenes)."""
     rep = IOReport()
     inhalt = _Inhalt(doc, rep)
-    teile = {"content.xml": inhalt.xml().encode("utf-8"), "styles.xml": _styles_xml(page, doc).encode("utf-8"),
+    kf_bilder: dict[str, bytes] = {}
+    teile = {"content.xml": inhalt.xml().encode("utf-8"), "styles.xml": _styles_xml(page, doc, kf_bilder).encode("utf-8"),
              "meta.xml": _meta_xml(meta or {}).encode("utf-8")}
     teile.update(inhalt.bilder)
+    teile.update(kf_bilder)
     aus = io.BytesIO()
     with zipfile.ZipFile(aus, "w") as z:
         z.writestr(zipfile.ZipInfo("mimetype"), MIMETYPE, compress_type=zipfile.ZIP_STORED)
@@ -438,5 +500,5 @@ def _verluste_melden(rep: IOReport, page: PageSettings, meta: dict, fmt: str) ->
         rep.warn(f"Der Seitenrahmen wird in {fmt} nicht gespeichert.")
     if int(page.spalten or 1) > 1:
         rep.warn(f"Textspalten werden in {fmt} nicht gespeichert.")
-    if page.bilder:
+    if page.bilder and fmt != "ODT":
         rep.warn(f"Bilder in Kopf- und Fußzeile werden in {fmt} nicht gespeichert.")

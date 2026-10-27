@@ -592,3 +592,10 @@ def test_gewaehlter_dateityp_gilt_trotz_alter_endung(app, tmp_path, monkeypatch)
     assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.txt")
     monkeypatch.setattr(FENSTER, lambda *a, **k: (str(tmp_path / "brief.v2"), ".odt"))
     assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.v2.odt")
+
+
+def test_programm_symbol_fuer_fenster_und_leiste(app):
+    """Das Fenster trägt Lunivos eigenes Symbol (sonst zeigt die Leiste unter Cinnamon ein leeres Standardsymbol)."""
+    from lunivo_writer.core.application import programm_symbol
+    ic = programm_symbol()
+    assert not ic.isNull() and {s.width() for s in ic.availableSizes()} >= {16, 32, 48, 256}

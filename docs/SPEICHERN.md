@@ -40,10 +40,11 @@ DOC ist ein geschlossenes Binärformat; ohne fremdes Programm lässt es sich nic
 | Listen mit Punkten oder Nummern, mehrere Ebenen | ja | ja (`\pn` und angezeigter Listentext) |
 | Tabellen, auch verbundene Zellen | ja | ja (verbundene Zellen beim Lesen getrennt) |
 | Bilder im Text | PNG in `Pictures/` | PNG (`\pngblip`); beim Lesen auch JPEG und EMF mit Bitmap |
+| Frei positionierte Bilder (im Text und in Kopf-/Fußzeile) | ja, Rahmen am Absatz (Lage, vor/hinter dem Text) | **nein**, mit Hinweis |
 | Seitengröße, Ränder, Querformat | ja (`styles.xml`) | ja |
 | Kopf- und Fußzeile mit Seitenzahl und Seitenanzahl, „Erste Seite anders“ | ja | ja |
 | Titel, Autor | `meta.xml` | `\info` |
-| Fuß- und Endnoten, Kommentare, Wasserzeichen, Seitenrahmen, Textspalten, Bilder in Kopf-/Fußzeile | **nein**, mit Hinweis | **nein**, mit Hinweis |
+| Fuß- und Endnoten, Kommentare, Wasserzeichen, Seitenrahmen, Textspalten | **nein**, mit Hinweis | **nein**, mit Hinweis |
 
 ### Bekannte Einschränkungen
 

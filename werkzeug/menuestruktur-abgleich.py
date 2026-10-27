@@ -17,7 +17,7 @@ def bereich(titel, *zeilen):
 
 bereich("1. Datei",
     ("Neu: Leeres Dokument · Aus Vorlage erstellen · Vorlagen durchsuchen", OK, "Backstage ▸ Neues Dokument / Von Vorlage; zehn Vorlagen"),
-    ("Öffnen · Zuletzt verwendete Dokumente", OK, "Backstage ▸ Öffnen, Zuletzt benutzte Dokumente"),
+    ("Öffnen · Zuletzt verwendete Dokumente", OK, "Menü ▸ Öffnen, Liste zuletzt verwendeter Dateien"),
     ("Speichern · Speichern unter · Kopie speichern", OK, "Backstage ▸ Speichern, Speichern als"),
     ("Exportieren: PDF · DOCX · DOC (optional) · RTF · TXT", OK, "Speichern als; dazu ODT und PNG; DOC entfällt (altes Binärformat), alles andere schreibt Lunivo selbst"),
     ("Drucken: Druckvorschau · Drucker auswählen", OK, "Backstage ▸ Drucken"),
@@ -25,7 +25,7 @@ bereich("1. Datei",
     ("Dokumentinformationen", OK, "Backstage ▸ Info (Statistik, Verfasser, Titel)"),
     ("Dokument schützen", OK, "Backstage ▸ Schützen (Kennwort, Bearbeitung sperren)"),
     ("Dokument teilen (optional)", FEHLT, "Knopf vorhanden, ausgegraut; keine Freigabe-Funktion"),
-    ("Optionen / Einstellungen · Schließen", OK, "Backstage ▸ Erweiterte Einstellungen, Schließen"))
+    ("Optionen / Einstellungen · Schließen", OK, "Menü ▸ Optionen, Beenden; Reiter-✕ schließt"))
 
 bereich("2. Start",
     ("Zwischenablage: Einfügen · Einfügen ohne Formatierung · Ausschneiden · Kopieren · Format übertragen", OK, "Reiter Start ▸ Zwischenablage"),
