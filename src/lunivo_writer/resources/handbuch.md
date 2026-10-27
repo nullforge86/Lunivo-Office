@@ -67,7 +67,8 @@ kleinem Pfeil ▸ zeigt rechts seine Auswahl; die übrigen führen sofort aus. E
 | **Neu** ▸ | Leeres Dokument und alle Vorlagen mit ihren Vorschauen. |
 | **Öffnen**, **Speichern** | Sofort. |
 | **Speichern unter** ▸ | Speichern unter, Kopie speichern, alle Ausgabeformate; dazu Informationen und Eigenschaften, Öffnen mit … und der Dateispeicherort. |
-| **Als PDF exportieren**, **Als Bild exportieren** | Sofort, mit dem Speichern-Fenster. |
+| **Als PDF exportieren** | Mit dem Speichern-Fenster. |
+| **Als Bild exportieren** | **Jede Seite** als eigene Datei oder ein **langes Bild** mit allen Seiten untereinander; dazu Wasserzeichen, Qualität (96 bis 300 dpi), Format (JPG, PNG, BMP, TIF) und Zielordner. Vorhandene Dateien werden nicht überschrieben, ein neuer Name bekommt „(2)“. Danach: Öffnen oder Ordner öffnen. |
 | **Drucken** ▸ | Das Druckfenster mit Vorschau — siehe Drucken. |
 | **Dokumentverschlüsselung** ▸ | Kennwort und Bearbeitungsschutz. |
 | **Hilfe** ▸ | Handbuch, Tastenkürzel, Erweiterungen und die Angaben zum Programm. |
@@ -326,7 +327,7 @@ Unten auf der Seite:
 | `Strg+S` | Speichern — `.docx`, `.odt`, `.rtf` und `.txt` direkt in die Datei; ein neues Dokument fragt nach Name und Ort. |
 | `☰ Menü → Speichern unter` | Ein Fenster für alles: links die Orte, rechts der Ordner, unten **Dateiname** und **Dateityp** (`.docx`, `.odt`, `.rtf`, `.txt`, `.pdf`). |
 
-PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, das Dokument bleibt bei seiner Datei. Als Bild der Seite (`.png`) geht es über **Exportieren**.
+PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, das Dokument bleibt bei seiner Datei. Als Bild geht es über `☰ Menü → Als Bild exportieren`.
 
 Alle Formate schreibt und liest Lunivo selbst, ohne ein anderes Programm im Hintergrund. `.odt` und `.rtf` nehmen Text, Schrift,
 Absätze, Listen, Tabellen, Bilder, Seitenränder sowie Kopf- und Fußzeile mit. Was nur `.docx` kann (Fuß- und Endnoten, Kommentare,

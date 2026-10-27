@@ -10,6 +10,7 @@ Der Baustein liefert nur den Pfad und die Endung (``speicherort_waehlen``); was 
 from __future__ import annotations
 
 import os
+import re
 
 from PySide6.QtCore import QDir, QFileInfo, QModelIndex, QSize, QStandardPaths, QStorageInfo, Qt
 from PySide6.QtGui import QIcon
@@ -86,15 +87,22 @@ def _ordner(art) -> str:
 
 
 class SpeichernFenster(QDialog):
-    """``typen``: Liste (Endung, Filtertext) wie („.docx“, „Word-Dokument (*.docx)“). ``ergebnis()`` → (Pfad, Endung)."""
+    """``typen``: Liste (Endung, Filtertext) wie („.docx“, „Word-Dokument (*.docx)“). ``ergebnis()`` → (Pfad, Endung).
+    Ohne ``typen`` wählt das Fenster einen Ordner (siehe ``ordner_waehlen``); mit ``oeffnen=True`` eine vorhandene Datei
+    (siehe ``datei_waehlen``), dann sind ``typen`` Paare (Muster-Liste, Beschriftung)."""
 
-    def __init__(self, parent, titel: str, startpfad: str, typen: list[tuple[str, str]], vorwahl: str):
+    def __init__(self, parent, titel: str, startpfad: str, typen: list[tuple], vorwahl: str, oeffnen: bool = False,
+                 mehrere: bool = False):
         super().__init__(parent)
         self.setWindowTitle(titel)
         self.setObjectName("speichernFenster")
         self.setStyleSheet(STIL)
         self.resize(1040, 660)
         self.typen = list(typen)
+        self.nur_ordner = not self.typen
+        self.oeffnen = oeffnen
+        self._muster = [list(e) if oeffnen else [f"*{e}"] for e, _f in self.typen]
+        self._dateien: list[str] = []
         self._zurueck: list[str] = []
         self._vor: list[str] = []
         self._ergebnis: tuple[str, str] | None = None
@@ -181,7 +189,7 @@ class SpeichernFenster(QDialog):
         self.name.setEditText(name)
         self.typ = QComboBox()
         for endung, filtertext in self.typen:
-            self.typ.addItem(filtertext, endung)
+            self.typ.addItem(filtertext, None if oeffnen else endung)
         self.typ.setCurrentIndex(max(0, next((i for i, (e, _f) in enumerate(self.typen) if e == vorwahl), 0)))
         self.k_speichern = QPushButton("&Speichern"); self.k_speichern.setObjectName("sfSpeichern"); self.k_speichern.setDefault(True)
         self.k_abbrechen = QPushButton("Abbrechen")
@@ -193,6 +201,16 @@ class SpeichernFenster(QDialog):
         unten.addWidget(l2, 1, 0); unten.addWidget(self.typ, 1, 1); unten.addWidget(self.k_abbrechen, 1, 2)
         unten.setColumnStretch(1, 1)
         rv.addLayout(unten)
+        if oeffnen:
+            self.k_speichern.setText("Ö&ffnen")
+            if mehrere:
+                for ansicht in (self.liste, self.kacheln):
+                    ansicht.setSelectionMode(QAbstractItemView.ExtendedSelection)
+                    ansicht.selectionModel().selectionChanged.connect(self._auswahl_geaendert)
+        if self.nur_ordner:                                         # Ordner wählen: kein Dateityp, der Ordner steht im Namensfeld
+            l1.setText("&Ordner:"); l2.hide(); self.typ.hide()
+            self.k_speichern.setText("&Auswählen")
+            self.modell.setFilter(QDir.AllDirs | QDir.NoDotAndDotDot)
         haupt.addWidget(rechts, 1)
 
         self.k_speichern.clicked.connect(self.speichern)
@@ -227,7 +245,7 @@ class SpeichernFenster(QDialog):
 
     @property
     def endung(self) -> str:
-        return self.typ.currentData()
+        return self.typ.currentData() or ""
 
     # ---- Navigation --------------------------------------------------------------------------------------------------------
     def gehe_zu(self, pfad: str, merken: bool = True) -> None:
@@ -245,6 +263,8 @@ class SpeichernFenster(QDialog):
         self.k_zurueck.setEnabled(bool(self._zurueck))
         self.k_vor.setEnabled(bool(self._vor))
         self.k_hoch.setEnabled(pfad != os.path.dirname(pfad))
+        if self.nur_ordner:
+            self.name.setEditText(pfad)
         for i in range(self.orte.count()):
             it = self.orte.item(i)
             it.setSelected(it.data(Qt.UserRole) == pfad)
@@ -303,18 +323,31 @@ class SpeichernFenster(QDialog):
 
     # ---- Dateien -----------------------------------------------------------------------------------------------------------
     def _filter_setzen(self) -> None:
-        self.modell.setNameFilters([f"*{self.endung}"] if self.endung else [])
+        if self.nur_ordner:
+            return
+        muster = self._muster[self.typ.currentIndex()] if 0 <= self.typ.currentIndex() < len(self._muster) else []
+        self.modell.setNameFilters([] if "*" in muster else muster)
 
     def _typ_gewechselt(self) -> None:
         self._filter_setzen()
+        if self.oeffnen:
+            return
         text = self.name.currentText().strip()
         stamm, alte = os.path.splitext(text)
         if text and alte.lower() in {e for e, _f in self.typen}:
             self.name.setEditText(stamm + self.endung)
 
     def _angeklickt(self, idx: QModelIndex) -> None:
-        if not self.modell.isDir(idx):
+        if self.nur_ordner:
+            self.name.setEditText(self.modell.filePath(idx))
+        elif not self.modell.isDir(idx):
             self.name.setEditText(self.modell.fileName(idx))
+
+    def _auswahl_geaendert(self, *_a) -> None:
+        ansicht = self.ansichten.currentWidget()
+        namen = [self.modell.fileName(i) for i in ansicht.selectionModel().selectedRows() if not self.modell.isDir(i)]
+        if len(namen) > 1:
+            self.name.setEditText(" ".join(f"\"{n}\"" for n in namen))
 
     def _doppelklick(self, idx: QModelIndex) -> None:
         if self.modell.isDir(idx):
@@ -336,6 +369,29 @@ class SpeichernFenster(QDialog):
     def speichern(self) -> None:
         text = self.name.currentText().strip()
         if not text:
+            return
+        if self.oeffnen:
+            namen = re.findall(r'"([^"]+)"', text) or [text]
+            pfade = [os.path.join(self.ordner, os.path.expanduser(n)) if not os.path.isabs(os.path.expanduser(n)) else os.path.expanduser(n)
+                     for n in namen]
+            if len(pfade) == 1 and os.path.isdir(pfade[0]):
+                self.gehe_zu(pfade[0]); self.name.setEditText("")
+                return
+            fehlt = [p for p in pfade if not os.path.isfile(p)]
+            if fehlt:
+                QMessageBox.warning(self, self.windowTitle(), f"„{os.path.basename(fehlt[0])}“ gibt es in diesem Ordner nicht.")
+                return
+            self._dateien = pfade
+            self._ergebnis = (pfade[0], "")
+            self.accept()
+            return
+        if self.nur_ordner:
+            ziel = os.path.expanduser(text) if os.path.isabs(os.path.expanduser(text)) else os.path.join(self.ordner, text)
+            if not os.path.isdir(ziel):
+                QMessageBox.warning(self, self.windowTitle(), f"Den Ordner „{ziel}“ gibt es nicht.")
+                return
+            self._ergebnis = (os.path.abspath(ziel), "")
+            self.accept()
             return
         ziel = os.path.join(self.ordner, os.path.expanduser(text)) if not os.path.isabs(text) else text
         if os.path.isdir(ziel):                                     # Ordnername eingegeben: hineingehen
@@ -361,8 +417,33 @@ class SpeichernFenster(QDialog):
     def ergebnis(self) -> tuple[str, str] | None:
         return self._ergebnis
 
+    def dateien(self) -> list[str]:
+        return list(self._dateien)
+
 
 def speicherort_waehlen(parent, titel: str, startpfad: str, typen: list[tuple[str, str]], vorwahl: str) -> tuple[str, str] | None:
     """Öffnet das Speichern-Fenster. → (Pfad mit Endung, Endung) oder None bei Abbruch."""
     f = SpeichernFenster(parent, titel, startpfad, typen, vorwahl)
     return f.ergebnis() if f.exec() == QDialog.Accepted else None
+
+
+def ordner_waehlen(parent, titel: str, startordner: str) -> str | None:
+    """Dasselbe Fenster zum Wählen eines Ordners. → Ordner oder None bei Abbruch."""
+    f = SpeichernFenster(parent, titel, os.path.join(startordner, ""), [], "")
+    return f.ergebnis()[0] if f.exec() == QDialog.Accepted else None
+
+
+def datei_waehlen(parent, titel: str, start: str, filter_text: str, mehrere: bool = False) -> list[str]:
+    """Dasselbe Fenster zum Öffnen. ``filter_text`` im Qt-Stil („Dokumente (*.docx *.odt);;Alle Dateien (*)“).
+    → die gewählten Dateien (leer bei Abbruch)."""
+    typen = []
+    for teil in filter_text.split(";;"):
+        m = re.match(r"\s*(.*?)\s*\(([^)]*)\)\s*$", teil)
+        if m:
+            typen.append((m.group(2).split(), teil.strip()))
+    if not typen:
+        typen = [(["*"], "Alle Dateien (*)")]
+    start = os.path.expanduser(start or "~")
+    startpfad = os.path.join(start, "") if os.path.isdir(start) else start
+    f = SpeichernFenster(parent, titel, startpfad, typen, "", oeffnen=True, mehrere=mehrere)
+    return f.dateien() if f.exec() == QDialog.Accepted else []

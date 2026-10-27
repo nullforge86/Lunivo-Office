@@ -6,7 +6,7 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMenu, QMessageBox
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben
@@ -44,7 +44,8 @@ class DateienBaustein:
 
     def open_dialog(self):
         start = self.settings.get("last_dir", os.path.expanduser("~"))
-        paths, _ = QFileDialog.getOpenFileNames(self, "Dokument öffnen", start, formats.OPEN_FILTER)
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        paths = datei_waehlen(self, "Öffnen", start, formats.OPEN_FILTER, mehrere=True)
         for p in paths:
             self.open_path(p)
 

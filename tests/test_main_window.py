@@ -577,6 +577,37 @@ def test_speichern_fenster_dateityp_und_name(app, tmp_path, monkeypatch):
     assert h.ergebnis() is None
 
 
+def test_oeffnen_und_ordner_im_selben_fenster(app, tmp_path, monkeypatch):
+    """„Öffnen“ und die Ordnerwahl benutzen dasselbe Fenster wie „Speichern unter“ (kein fremder Dateidialog)."""
+    from lunivo_writer.services import file_service as formats
+    from lunivo_writer.ui.baukasten import speichern_fenster as SF
+    (tmp_path / "a.docx").write_bytes(b"x"); (tmp_path / "b.odt").write_bytes(b"x"); (tmp_path / "unter").mkdir()
+    gesehen = {}
+
+    def exec_(self):
+        gesehen["knopf"] = self.k_speichern.text(); gesehen["typ"] = self.typ.isVisibleTo(self)
+        gesehen["filter"] = self.modell.nameFilters()
+        self.name.setEditText('"a.docx" "b.odt"'); self.speichern()
+        return self.result()
+    monkeypatch.setattr(SF.SpeichernFenster, "exec", exec_)
+    wahl = SF.datei_waehlen(None, "Öffnen", str(tmp_path), formats.OPEN_FILTER, mehrere=True)
+    assert wahl == [str(tmp_path / "a.docx"), str(tmp_path / "b.odt")]
+    assert gesehen["knopf"] == "Ö&ffnen" and gesehen["typ"] and "*.odt" in gesehen["filter"]
+
+    def exec_ordner(self):
+        gesehen["ordnerknopf"] = self.k_speichern.text(); self.name.setEditText(str(tmp_path / "unter")); self.speichern()
+        return self.result()
+    monkeypatch.setattr(SF.SpeichernFenster, "exec", exec_ordner)
+    assert SF.ordner_waehlen(None, "Ordner", str(tmp_path)) == str(tmp_path / "unter")
+    assert gesehen["ordnerknopf"] == "&Auswählen"
+    w = win(tmp_path)
+    geoeffnet = []
+    monkeypatch.setattr(SF, "datei_waehlen", lambda *a, **k: [str(tmp_path / "a.docx")])
+    monkeypatch.setattr(w, "open_path", lambda p: geoeffnet.append(p))
+    w.open_dialog()
+    assert geoeffnet == [str(tmp_path / "a.docx")]
+
+
 def test_speichern_unter_pdf_behaelt_die_dokumentdatei(app, tmp_path, monkeypatch):
     w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
     monkeypatch.setattr(FENSTER, lambda *a, **k: (str(tmp_path / "brief"), ".pdf"))

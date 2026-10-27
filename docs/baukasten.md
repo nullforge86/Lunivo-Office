@@ -15,7 +15,8 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
 | `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
 | `dialog_rahmen.py` | `DialogRahmen`: Formular, optionale Vorschau, OK/Abbrechen, Zusatzknöpfe („Entfernen“) | `ergebnis()` |
-| `speichern_fenster.py` | `SpeichernFenster` / `speicherort_waehlen()`: das eine Speichern-Fenster — Orte links, Ordner mit Pfadleiste, Liste/Kacheln, unten Dateiname + Speichern, Dateityp + Abbrechen; fragt vor dem Ersetzen | `(Pfad, Endung)` oder `None` |
+| `speichern_fenster.py` | `SpeichernFenster` / `speicherort_waehlen()`: das eine Datei-Fenster — Orte links, Ordner mit Pfadleiste, Liste/Kacheln, unten Dateiname + Speichern, Dateityp + Abbrechen; fragt vor dem Ersetzen. Dasselbe Fenster öffnet (`datei_waehlen()`, Filter im Qt-Stil, auch mehrere Dateien) und wählt Ordner (`ordner_waehlen()`) | `(Pfad, Endung)` · Liste der Dateien · Ordner · `None` |
+| `bild_export.py` | `BildExportFenster`: „Als Bild exportieren“ — Karten „Jede Seite“ / „Langes Bild“, Wasserzeichen, Qualität, Format, Zielordner; `ErfolgFenster` danach mit Öffnen / Ordner öffnen. Geschrieben wird in `services/bild_export.py` | `BildWahl` oder `None` |
 
 ## Regeln
 
