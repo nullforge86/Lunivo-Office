@@ -132,7 +132,7 @@ hier, mit Bildern und Tastenkürzeln.
 
 | Weiteres                                            |                                                   |
 | --------------------------------------------------- | ------------------------------------------------- |
-| [Was zusätzlich geholt wird](docs/erweiterungen.md) | LibreOffice, LanguageTool, Stimmen, Schriften     |
+| [Was zusätzlich geholt wird](docs/erweiterungen.md) | LanguageTool, Stimmen, Schriften                  |
 | [Der Aufbau des Projekts](docs/README.md)           | Welche Datei was tut                              |
 | [Die lange Fassung](docs/LIESMICH.md)               | Alles ausführlich, auf Deutsch                    |
 | [Wie es entstanden ist](docs/ENTSTEHUNG.md)         | Die Geschichte dahinter                           |
@@ -241,8 +241,8 @@ deshalb wie der übrige Code unter MIT.
 [MIT](LICENSE) — benutzen, ändern und weitergeben ist erlaubt, auch
 gewerblich. Der Urhebervermerk muss mitgehen.
 
-LanguageTool und LibreOffice stehen unter eigenen Lizenzen (LGPL-2.1 und
-MPL-2.0) und werden als eigene Prozesse aufgerufen, nicht eingebunden.
+LanguageTool steht unter einer eigenen Lizenz (LGPL-2.1) und wird als
+eigener Prozess aufgerufen, nicht eingebunden.
 
 Die Zeichnungen der Knöpfe stammen größtenteils aus
 [Lucide](https://lucide.dev) und stehen unter der ISC-Lizenz; der

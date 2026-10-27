@@ -36,12 +36,3 @@ def oeffnen(pfad: str) -> bool:
         return False
     subprocess.Popen([p, pfad], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     return True
-
-
-def mit_libreoffice_oeffnen(pfad: str) -> bool:
-    from lunivo_writer.services.integrations import libreoffice
-    s = libreoffice.finde_soffice()
-    if not s:
-        return False
-    subprocess.Popen([s, "--writer", pfad], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-    return True

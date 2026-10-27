@@ -2,7 +2,12 @@
 
 Zentrale Übersicht, was Lunivo Writer mit welchen Formaten tatsächlich kann, wie gespeichert wird und welche Grenzen bekannt sind.
 Code: `services/file_service.py` (Formate), `services/sicher_schreiben.py` (sicherer Schreibweg), `services/docx_writer.py` /
-`docx_reader.py` (DOCX), `services/integrations/libreoffice.py` (Umwandlung), `ui/hauptfenster/dateien.py` (Oberfläche).
+`docx_reader.py` (DOCX), `odt_writer.py` / `odt_reader.py` (ODT, FODT), `rtf_writer.py` / `rtf_reader.py` (RTF),
+`ui/hauptfenster/dateien.py` (Oberfläche), `ui/baukasten/speichern_fenster.py` (das Speichern-Fenster).
+
+**Lunivo liest und schreibt jedes Format selbst.** Es startet beim Öffnen und Speichern kein anderes Programm (geprüft:
+`tests/test_odt_rtf.py::test_kein_fremdes_programm_beim_speichern_und_oeffnen`). Bis Oktober 2026 liefen ODT, DOC und RTF über ein
+fremdes Umwandlungsprogramm im Hintergrund; das hängte auf manchen Rechnern minutenlang und ist entfernt.
 
 ## Formate
 
@@ -13,28 +18,42 @@ Dateikopf); eine falsche oder beschädigte Datei wird als Fehler gemeldet, nicht
 | Format | Öffnen und Lesen | Bearbeiten | Speichern im selben Format (`Strg+S`) | Speichern unter | Export |
 |---|---|---|---|---|---|
 | DOCX (Office Open XML, ECMA-376) | ja, eigener Leser (python-docx); mit Kennwort über msoffcrypto | ja | ja | ja | – |
+| DOTX, DOCM (Word-Vorlage, Word mit Makros) | ja, wie DOCX; Makros werden nicht ausgeführt und nicht übernommen | ja | nein, öffnet „Speichern unter“ | als DOCX/ODT/… | – |
+| ODT (OpenDocument 1.3) | ja, eigener Leser | ja | ja | ja, eigener Schreiber | – |
+| FODT (flaches ODT, eine XML-Datei) | ja, eigener Leser | ja | nein, öffnet „Speichern unter“ | als DOCX/ODT/… | – |
+| RTF | ja, eigener Leser | ja | ja | ja, eigener Schreiber | – |
 | TXT (UTF-8) | ja; UTF-8, sonst cp1252, sonst Latin-1 | ja | ja | ja | – |
-| ODT (OpenDocument) | über LibreOffice → DOCX | ja | nein, öffnet „Speichern unter“ | ja, über LibreOffice; ohne LibreOffice Notweg über Qt | – |
-| DOC (Word 97–2003) | über LibreOffice → DOCX | ja | nein, öffnet „Speichern unter“ | ja, nur mit LibreOffice | – |
-| RTF | über LibreOffice → DOCX | ja | nein, öffnet „Speichern unter“ | ja, nur mit LibreOffice | – |
-| DOT, DOTX, DOCM, WPS, FODT | über LibreOffice → DOCX | ja | nein | als DOCX/ODT/… | – |
+| DOC, DOT (Word 97–2003), WPS (Works) | **nein**, klare Meldung mit dem Rat, im Ursprungsprogramm als DOCX zu speichern | – | – | – | – |
 | PDF | **nein** | – | – | im selben Fenster wählbar, ist aber eine Ausgabe | ja (`QPdfWriter`) |
 | PNG (Bild der Seite) | nein | – | – | – | ja, je Seite eine Datei |
 
-DOCX und ODT sind verschiedene Formate (Office Open XML bzw. OpenDocument); Lunivo arbeitet intern mit einem Qt-Dokument
-und schreibt DOCX selbst. ODT, DOC und RTF entstehen aus der DOCX-Fassung durch LibreOffice (`soffice --headless --convert-to`).
+DOC ist ein geschlossenes Binärformat; ohne fremdes Programm lässt es sich nicht verlässlich schreiben. Auf Wunsch des Eigentümers
+(2026-10-27) ist es ganz entfernt statt halb unterstützt.
+
+### Was ODT und RTF mitnehmen
+
+| | ODT | RTF |
+|---|---|---|
+| Absätze: Ausrichtung, Einzüge, Abstände, Seitenumbruch davor | ja | ja |
+| Überschriften (Ebene 1–9) | `text:h` mit Ebene | `\outlinelevel` und Vorlage „heading N“ |
+| Zeichen: Schrift, Größe, fett, kursiv, unterstrichen, durchgestrichen, hoch/tief, Farbe, Hintergrund | ja | ja |
+| Listen mit Punkten oder Nummern, mehrere Ebenen | ja | ja (`\pn` und angezeigter Listentext) |
+| Tabellen, auch verbundene Zellen | ja | ja (verbundene Zellen beim Lesen getrennt) |
+| Bilder im Text | PNG in `Pictures/` | PNG (`\pngblip`); beim Lesen auch JPEG und EMF mit Bitmap |
+| Seitengröße, Ränder, Querformat | ja (`styles.xml`) | ja |
+| Kopf- und Fußzeile mit Seitenzahl und Seitenanzahl, „Erste Seite anders“ | ja | ja |
+| Titel, Autor | `meta.xml` | `\info` |
+| Fuß- und Endnoten, Kommentare, Wasserzeichen, Seitenrahmen, Textspalten, Bilder in Kopf-/Fußzeile | **nein**, mit Hinweis | **nein**, mit Hinweis |
 
 ### Bekannte Einschränkungen
 
-- **Umwandlung über LibreOffice:** Was LibreOffice beim Umwandeln anders darstellt, hängt von LibreOffice ab. Was schon beim Schreiben
-  der DOCX-Fassung nicht übernommen werden kann, meldet der Bericht „Hinweise zum Speichern“. Ein allgemeiner Hinweis bei jedem
-  Speichern entfällt auf Wunsch des Eigentümers; die Statusleiste nennt die Umwandlung.
-- **Öffnen über LibreOffice:** Inhalte, die LibreOffice nicht nach DOCX überträgt (z. B. Makros aus DOCM), sind danach nicht mehr im
-  Dokument. Beim Öffnen sagt ein Hinweis, dass umgewandelt wurde.
-- **ODT ohne LibreOffice:** Text, Formatierung, Tabellen und Bilder; Seitenrand, Kopf- und Fußzeile fehlen (Hinweis beim Speichern).
+- **ODT/RTF:** siehe Tabelle; was fehlt, meldet der Bericht „Hinweise zum Speichern“ bzw. beim Öffnen. Formvorlagen werden als direkte
+  Formatierung geschrieben (das Aussehen bleibt, die Vorlagennamen nicht).
 - **TXT:** nur Text; Formatierung, Listen, Tabellen, Bilder, Kopf-/Fußzeile gehen verloren (Hinweis beim Speichern).
 - **PDF:** Export ist eine Einbahnstraße. Ein PDF lässt sich in Lunivo nicht wieder öffnen oder bearbeiten.
 - Was DOCX selbst nicht abdeckt (Textfelder, Formeln, Formen, Wasserzeichen u. a.), steht im Bericht über nicht Übernommenes.
+- Schutz beim Öffnen: ZIP-Pakete über 512 MB entpackt und RTF-Dateien über 512 MB werden abgelehnt; wiederholte Tabellenzeilen und
+  -spalten sind auf 1000 begrenzt.
 
 ### Strukturprüfung nach dem Schreiben
 
@@ -42,7 +61,6 @@ und schreibt DOCX selbst. ODT, DOC und RTF entstehen aus der DOCX-Fassung durch 
 |---|---|
 | DOCX | ZIP-Paket, alle Prüfsummen, `[Content_Types].xml` und `word/document.xml` vorhanden und wohlgeformtes XML; verschlüsselt: OLE-Kopf |
 | ODT | ZIP-Paket, Prüfsummen, erster Eintrag `mimetype` unkomprimiert = `application/vnd.oasis.opendocument.text`, `content.xml` und `META-INF/manifest.xml` wohlgeformt |
-| DOC | OLE-Container-Kopf |
 | RTF | Kopf `{\rtf`, Klammern ausgeglichen |
 | PDF | Kopf `%PDF-`, Abschluss `%%EOF` |
 | TXT | gültiges UTF-8 |
@@ -53,7 +71,7 @@ nicht erreichbar und sind nicht ausgewertet.
 
 ## Sicherer Schreibweg
 
-Jeder Speichervorgang — DOCX, TXT, ODT, DOC, RTF, PDF, auch Vorlagen — läuft über `sicher_schreiben.schreiben`:
+Jeder Speichervorgang — DOCX, TXT, ODT, RTF, PDF, auch Vorlagen — läuft über `sicher_schreiben.schreiben`:
 
 1. **Sperre:** Dieselbe Datei kann nicht gleichzeitig zweimal gespeichert werden — im Programm (Sperre je Pfad) und zwischen
    Lunivo-Fenstern (`flock` auf eine Sperrdatei in `$XDG_RUNTIME_DIR/lunivo-sperren`). Der zweite Versuch bekommt eine klare Meldung.
@@ -72,7 +90,7 @@ Jeder Speichervorgang — DOCX, TXT, ODT, DOC, RTF, PDF, auch Vorlagen — läuf
 - die Datei seit dem Öffnen oder letzten Speichern **außerhalb von Lunivo geändert** wurde (Änderungszeit oder Größe weichen ab) —
   etwa durch ein anderes Programm oder die Synchronisierung eines Cloud-Ordners. Abbrechen lässt die Datei unberührt; Überschreiben
   legt die fremde Fassung in die Sicherungskopien.
-- ein anderes Office-Programm die Datei offen hat (LibreOffice-Sperrdatei `.~lock.<name>#`).
+- ein anderes Office-Programm die Datei offen hat (Sperrdatei `.~lock.<name>#`, wie sie LibreOffice und andere anlegen).
 
 **Erfolg** meldet die Statusleiste erst nach dem Ersetzen. Bei einem Fehler erscheint eine verständliche Meldung (z. B. „Auf dem
 Datenträger ist nicht genug Platz. Die bisherige Datei ist unverändert.“), das Dokument bleibt geöffnet, bearbeitbar und als geändert markiert.
@@ -96,7 +114,7 @@ Die **automatische Sicherung** (Wiederherstellung nach Absturz, `<Datenordner>/r
 Automatisch:
 
 ```bash
-.venv/bin/python -m pytest tests/test_speichern_sicher.py tests/test_umwandler_schutz.py tests/test_formats.py tests/test_libreoffice.py
+.venv/bin/python -m pytest tests/test_speichern_sicher.py tests/test_formats.py tests/test_odt_rtf.py
 .venv/bin/python werkzeug/speicherpruefung.py          # alle Formate speichern, prüfen, öffnen; Protokoll in SQLite
 ```
 
@@ -105,9 +123,9 @@ Größe, SHA-256 und Fehlerkategorie — keine Dokumentinhalte. Abfrage z. B. `s
 
 Von Hand (in einem eigenen Testordner, nicht mit echten Dokumenten):
 
-1. Neues Dokument mit Umlauten schreiben, `Speichern unter` → Dateityp nacheinander DOCX, ODT, RTF, DOC, TXT, PDF. Jede Datei wieder öffnen
+1. Neues Dokument mit Umlauten schreiben, `Speichern unter` → Dateityp nacheinander DOCX, ODT, RTF, TXT, PDF. Jede Datei wieder öffnen
    (PDF in einem PDF-Betrachter) und den Text vergleichen.
 2. Eine DOCX öffnen, ändern, `Strg+S` dreimal. `Optionen → Speichern → Sicherungskopien öffnen …` zeigt die Vorfassungen.
-3. Datei öffnen, in LibreOffice (oder mit `touch`) ändern, in Lunivo `Strg+S` → Rückfrage erscheint; „Abbrechen“ lässt die Datei unverändert.
+3. Datei öffnen, in einem anderen Programm (oder mit `touch`) ändern, in Lunivo `Strg+S` → Rückfrage erscheint; „Abbrechen“ lässt die Datei unverändert.
 4. Ordner schreibschützen (`chmod a-w ordner`) und speichern → Meldung „Keine Schreibrechte …“, Dokument bleibt offen. Danach `chmod u+w ordner`.
 5. Nach dem Test: `ls -la ordner` zeigt keine `.lunivo-*.tmp`-Reste.

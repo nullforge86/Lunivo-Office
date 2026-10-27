@@ -1,5 +1,6 @@
 """Ein von LibreOffice erzeugtes DOCX (nicht von uns geschrieben) lässt sich lesen: Ausrichtung „start“, Fußnote, Kommentar,
 nachverfolgte Änderungen, Textmarke, Tabelle."""
+import shutil
 import subprocess
 
 import pytest
@@ -7,7 +8,6 @@ import pytest
 from lunivo_writer.services import docx_reader
 from lunivo_writer.editor import verweise
 from lunivo_writer.ui.document.document_editor import DocumentEditor
-from lunivo_writer.services.integrations import libreoffice
 
 FODT = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
@@ -26,10 +26,11 @@ FODT = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 def test_von_libreoffice_erzeugtes_docx_lesen(app, tmp_path):
-    if not libreoffice.verfuegbar():
+    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    if not soffice:                                   # nur ein Prüfwerkzeug für fremde Dateien; Lunivo selbst braucht es nicht
         pytest.skip("LibreOffice nicht installiert")
     (tmp_path / "t.fodt").write_text(FODT, encoding="utf-8")
-    subprocess.run([libreoffice.finde_soffice(), "--headless", "--convert-to", "docx", "--outdir", str(tmp_path), str(tmp_path / "t.fodt")],
+    subprocess.run([soffice, "--headless", "--convert-to", "docx", "--outdir", str(tmp_path), str(tmp_path / "t.fodt")],
                    capture_output=True, timeout=120)
     d, p, meta, rep = docx_reader.read_docx(str(tmp_path / "t.docx"))          # früher: ValueError wegen w:jc="start"
     t = d.toPlainText()

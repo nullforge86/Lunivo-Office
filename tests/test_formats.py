@@ -33,8 +33,7 @@ def test_odt_export_is_valid_zip(app, tmp_path):
     d = QTextDocument(); QTextCursor(d).insertText("Hallo ODT")
     out = tmp_path / "x.odt"
     rep = formats.save(str(out), d, PageSettings())
-    from lunivo_writer.services.integrations import libreoffice
-    assert bool(rep.warnings) != libreoffice.verfuegbar()      # nur der Qt-Notweg verliert Seitenrand und Kopfzeile und sagt es
+    assert not rep.warnings                                   # Lunivo schreibt ODT selbst, mit Seite und Kopf-/Fußzeile
     with zipfile.ZipFile(out) as z:
         assert b"Hallo ODT" in z.read("content.xml")
 

@@ -15,6 +15,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
 | `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
 | `dialog_rahmen.py` | `DialogRahmen`: Formular, optionale Vorschau, OK/Abbrechen, Zusatzknöpfe („Entfernen“) | `ergebnis()` |
+| `speichern_fenster.py` | `SpeichernFenster` / `speicherort_waehlen()`: das eine Speichern-Fenster — Orte links, Ordner mit Pfadleiste, Liste/Kacheln, unten Dateiname + Speichern, Dateityp + Abbrechen; fragt vor dem Ersetzen | `(Pfad, Endung)` oder `None` |
 
 ## Regeln
 

@@ -8,6 +8,8 @@ from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ui.main_window import MainWindow
 
 
+FENSTER = "lunivo_writer.ui.hauptfenster.dateien.speicherort_waehlen"
+
 def win(tmp_path):
     return MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
 
@@ -22,7 +24,7 @@ def test_new_edit_save_reopen(app, tmp_path, monkeypatch):
     assert e.document().isModified() and "●" in w.tabs.tabText(w.tabs.currentIndex())
     assert e.textCursor().charFormat().fontWeight() >= 600
     target = str(tmp_path / "doc.docx")
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName", lambda *a, **k: (target, ""))
+    monkeypatch.setattr(FENSTER, lambda *a, **k: (target, ".docx"))
     assert w.save()
     assert not e.document().isModified()
     assert docx.Document(target).paragraphs[0].runs[0].bold
@@ -39,7 +41,7 @@ def test_pdf_export_and_status(app, tmp_path, monkeypatch):
     w._sync_status()
     assert " von 3" in w.lbl_page.text() or " von 2" in w.lbl_page.text()
     out = str(tmp_path / "x.pdf")
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName", lambda *a, **k: (out, ""))
+    monkeypatch.setattr(FENSTER, lambda *a, **k: (out, ".pdf"))
     w.export_pdf_dialog()
     assert os.path.getsize(out) > 500
 
@@ -533,29 +535,51 @@ def test_notenfeld_unten_schreibt_in_dieselbe_note_wie_das_feld_links(app, tmp_p
 
 def test_ein_speichern_fenster_fuer_alle_formate(app, tmp_path, monkeypatch):
     """„Speichern unter“ und „Speichern unter ▸ Format“ führen in dasselbe Fenster mit allen Dateitypen."""
-    from PySide6.QtWidgets import QFileDialog
     w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
     gefragt = []
 
-    def fenster(parent, titel, start, filter_liste, vorwahl="", optionen=None):
-        gefragt.append((filter_liste, vorwahl))
-        assert optionen == QFileDialog.DontUseNativeDialog                 # eigenes Fenster: Dateityp immer sichtbar
-        return str(tmp_path / "brief"), "Textdatei (*.txt)"           # ohne Endung, Dateityp im Fenster gewählt
+    def fenster(parent, titel, start, typen, vorwahl):
+        gefragt.append((typen, vorwahl))
+        return str(tmp_path / "brief"), ".txt"                          # ohne Endung, Dateityp im Fenster gewählt
 
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName", fenster)
+    monkeypatch.setattr(FENSTER, fenster)
     assert w.save_as()
     assert w.save_as_format(".odt")                                     # vorgewählt ODT, im Fenster aber Text gewählt
     (alle, v1), (alle2, v2) = gefragt
-    assert alle == alle2 and v1 == "Word-Dokument (*.docx)" and v2 == "OpenDocument-Text (*.odt)"
-    for e in ("*.docx", "*.odt", "*.doc", "*.rtf", "*.txt", "*.pdf"):
-        assert e in alle
+    assert alle == alle2 and v1 == ".docx" and v2 == ".odt"
+    assert [e for e, _f in alle] == [".docx", ".odt", ".rtf", ".txt", ".pdf"]      # kein .doc mehr
     assert (tmp_path / "brief.txt").read_text(encoding="utf-8") == "Hallo"
+
+
+def test_speichern_fenster_dateityp_und_name(app, tmp_path, monkeypatch):
+    """Lunivos eigenes Speichern-Fenster: Dateityp wechselt die Endung, filtert die Liste, fragt vor dem Ersetzen."""
+    from PySide6.QtWidgets import QMessageBox
+    from lunivo_writer.ui.baukasten.speichern_fenster import SpeichernFenster
+    typen = [(".docx", "Word-Dokument (*.docx)"), (".odt", "OpenDocument-Text (*.odt)"), (".pdf", "PDF-Dokument (*.pdf)")]
+    (tmp_path / "unter").mkdir()
+    f = SpeichernFenster(None, "Speichern unter", str(tmp_path / "Brief.docx"), typen, ".docx")
+    assert f.ordner == str(tmp_path) and f.name.currentText() == "Brief.docx" and f.typ.currentText() == "Word-Dokument (*.docx)"
+    assert f.typ.isVisibleTo(f)                                                     # Dateityp steht sichtbar im Fenster
+    f.typ.setCurrentIndex(1)
+    assert f.name.currentText() == "Brief.odt" and f.modell.nameFilters() == ["*.odt"]
+    f.speichern()
+    assert f.ergebnis() == (str(tmp_path / "Brief.odt"), ".odt")
+    # Ordnername eingeben: hineingehen statt speichern
+    g = SpeichernFenster(None, "Speichern unter", str(tmp_path / "x.docx"), typen, ".docx")
+    g.name.setEditText("unter"); g.speichern()
+    assert g.ordner == str(tmp_path / "unter") and g.ergebnis() is None
+    g.zurueck(); assert g.ordner == str(tmp_path)
+    # vorhandene Datei: erst fragen; „Abbrechen“ speichert nicht
+    (tmp_path / "da.pdf").write_bytes(b"%PDF")
+    h = SpeichernFenster(None, "Exportieren", str(tmp_path / "da.pdf"), typen, ".pdf")
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.Cancel)
+    h.speichern()
+    assert h.ergebnis() is None
 
 
 def test_speichern_unter_pdf_behaelt_die_dokumentdatei(app, tmp_path, monkeypatch):
     w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
-                        lambda *a, **k: (str(tmp_path / "brief"), "PDF-Dokument (*.pdf)"))
+    monkeypatch.setattr(FENSTER, lambda *a, **k: (str(tmp_path / "brief"), ".pdf"))
     assert w.save_as()
     assert os.path.getsize(tmp_path / "brief.pdf") > 500
     assert w.current_tab().path is None and w.current_editor().document().isModified()
@@ -564,9 +588,7 @@ def test_speichern_unter_pdf_behaelt_die_dokumentdatei(app, tmp_path, monkeypatc
 def test_gewaehlter_dateityp_gilt_trotz_alter_endung(app, tmp_path, monkeypatch):
     """Name „brief.docx“ vorbelegt, im Fenster ODT gewählt → gespeichert wird „brief.odt“, nicht DOCX."""
     w = win(tmp_path); w.new_document()
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
-                        lambda *a, **k: (str(tmp_path / "brief.docx"), "Textdatei (*.txt)"))
+    monkeypatch.setattr(FENSTER, lambda *a, **k: (str(tmp_path / "brief.docx"), ".txt"))
     assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.txt")
-    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
-                        lambda *a, **k: (str(tmp_path / "brief.v2"), "OpenDocument-Text (*.odt)"))
+    monkeypatch.setattr(FENSTER, lambda *a, **k: (str(tmp_path / "brief.v2"), ".odt"))
     assert w._ask_path(w.current_tab(), "Speichern unter") == str(tmp_path / "brief.v2.odt")

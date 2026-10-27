@@ -1,1 +1,1 @@
-"""Optionale Anbindungen: LibreOffice, LanguageTool, WPS."""
+"""Optionale Anbindungen: LanguageTool, WPS."""

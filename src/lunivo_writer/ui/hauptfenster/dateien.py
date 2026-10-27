@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from PySide6.QtCore import QEventLoop, QTimer, QUrl, Qt
+from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
 from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
@@ -14,6 +14,7 @@ from lunivo_writer.models.report import DocumentIOError, IOReport, PasswortNoeti
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.editor.pagination import export_pdf
 from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.baukasten.speichern_fenster import speicherort_waehlen
 
 
 class DateienBaustein:
@@ -97,7 +98,7 @@ class DateienBaustein:
 
 
     def _save_tab(self, tab: DocumentTab) -> bool:
-        if tab.path is None or formats.ext(tab.path) not in (".docx", ".txt"):
+        if tab.path is None or formats.ext(tab.path) not in (".docx", ".odt", ".rtf", ".txt"):
             return self._save_tab_as(tab)
         return self._write(tab, tab.path)
 
@@ -114,7 +115,7 @@ class DateienBaustein:
 
 
     # Reihenfolge der Dateitypen im Speichern-Fenster
-    SPEICHER_FORMATE = (".docx", ".odt", ".doc", ".rtf", ".txt", ".pdf")
+    SPEICHER_FORMATE = (".docx", ".odt", ".rtf", ".txt", ".pdf")
 
 
     def _ask_path(self, tab: DocumentTab, title: str, only: str | None = None) -> str | None:
@@ -126,14 +127,13 @@ class DateienBaustein:
         if default not in self.SPEICHER_FORMATE:
             default = ".docx"
         filter_von = lambda e: formats.PDF_FILTER if e == ".pdf" else formats.SAVE_FILTERS[e]
-        flt = ";;".join(filter_von(e) for e in self.SPEICHER_FORMATE)
         # Lunivos eigenes Fenster statt des Systemdialogs: Der Dateiauswahldialog des Desktops (Portal/Dateimanager)
         # blendet die Dateityp-Auswahl je nach System aus — hier stehen Dateiname und Dateityp immer sichtbar da.
-        path, chosen = QFileDialog.getSaveFileName(self, title, os.path.join(folder, base + default), flt, filter_von(default),
-                                                   QFileDialog.DontUseNativeDialog)
-        if not path:
+        wahl = speicherort_waehlen(self, title, os.path.join(folder, base + default),
+                                   [(e, filter_von(e)) for e in self.SPEICHER_FORMATE], default)
+        if not wahl:
             return None
-        gewaehlt = formats.endung_zum_filter(chosen)
+        path, gewaehlt = wahl
         e = formats.ext(path)
         if gewaehlt and e in self.SPEICHER_FORMATE and e != gewaehlt:  # der gewählte Dateityp gilt, auch wenn der Name noch die alte Endung trägt
             path = path[: -len(e)]
@@ -189,29 +189,15 @@ class DateienBaustein:
             return False
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
-        umwandeln = formats.ext(path) in (".odt", ".doc", ".rtf")
-        if umwandeln:
-            self.statusBar().showMessage(f"Wird gespeichert: {path}")
-            QApplication.setOverrideCursor(Qt.BusyCursor)
-
-        def warten() -> bool:
-            """Während der Umwandlung im Hintergrund: Fenster bleibt gezeichnet, Eingaben warten bis zum Ende."""
-            QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-            return True
-
         try:
-            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta, warten)
+            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta)
         except DocumentIOError as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", str(e)); return False
-        finally:
-            if umwandeln:
-                QApplication.restoreOverrideCursor()
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
             tab.datei_stand = sicher_schreiben.stand(path)
-        hinweis = " (über das Umwandlungsprogramm erzeugt; Grenzen siehe Hilfe ▸ Speichern)" if umwandeln else ""
-        self.statusBar().showMessage(f"Gespeichert: {path}{hinweis}", 6000 if umwandeln else 4000)
+        self.statusBar().showMessage(f"Gespeichert: {path}", 4000)
         self._show_report(rep, "Hinweise zum Speichern", "beim Speichern")
         return True
 
@@ -537,12 +523,10 @@ class DateienBaustein:
         from lunivo_writer.editor import vorlagen
         ordner = ordner or vorlagen.vorlagenordner(self.settings)
         os.makedirs(ordner, exist_ok=True)
-        pfad, _ = QFileDialog.getSaveFileName(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),
-                                              "Word-Dokument (*.docx)", "", QFileDialog.DontUseNativeDialog)
-        if pfad:
-            if not pfad.lower().endswith(".docx"):
-                pfad += ".docx"
-            self._write(t, pfad, mark_saved=False)
+        wahl = speicherort_waehlen(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),
+                                   [(".docx", formats.SAVE_FILTERS[".docx"])], ".docx")
+        if wahl:
+            self._write(t, wahl[0], mark_saved=False)
 
 
     # ==== Wiederherstellung ================================================================

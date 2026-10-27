@@ -17,7 +17,7 @@ Der zuletzt geschriebene Text wird laufend gemerkt und beim nächsten Start wied
 |  |  |
 |---|---|
 | `☰ Menü → Neues Dokument erstellen` | Ein leeres Blatt in einem **neuen Reiter**. Das, woran gerade geschrieben wurde, bleibt offen — siehe Mehrere Dokumente. |
-| `☰ Menü → Öffnen` | Eine vorhandene Datei: `.docx`, `.odt`, `.doc`, `.rtf` oder `.txt`. Steht im vordersten Reiter schon etwas, bekommt die Datei einen eigenen. |
+| `☰ Menü → Öffnen` | Eine vorhandene Datei: `.docx`, `.odt`, `.rtf` oder `.txt` (auch Word-Vorlagen `.dotx`). Das alte Word-97-Format `.doc` öffnet Lunivo nicht. Steht im vordersten Reiter schon etwas, bekommt die Datei einen eigenen. |
 | `☰ Menü → Zuletzt benutzte Dokumente öffnen` | Die Dateien, an denen zuletzt gearbeitet wurde, mit einem Knopf, der die Liste leert. Die Dateien selbst bleiben liegen. |
 | `☰ Menü → Von Vorlage erstellen` | Die Seite **Neu** mit allen Vorlagen — siehe Vorlagen. |
 
@@ -324,14 +324,14 @@ Unten auf der Seite:
 
 |  |  |
 |---|---|
-| `Strg+S` | Speichern — `.docx` und `.txt` direkt; bei anderen Formaten öffnet sich das Speichern-Fenster. |
-| `☰ Menü → Speichern unter` | Ein Fenster für alles: Dateiname und **Dateityp** (`.docx`, `.odt`, `.doc`, `.rtf`, `.txt`, `.pdf`). |
+| `Strg+S` | Speichern — `.docx`, `.odt`, `.rtf` und `.txt` direkt in die Datei; ein neues Dokument fragt nach Name und Ort. |
+| `☰ Menü → Speichern unter` | Ein Fenster für alles: links die Orte, rechts der Ordner, unten **Dateiname** und **Dateityp** (`.docx`, `.odt`, `.rtf`, `.txt`, `.pdf`). |
 
 PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, das Dokument bleibt bei seiner Datei. Als Bild der Seite (`.png`) geht es über **Exportieren**.
 
-Für `.odt`, `.doc` und `.rtf` braucht das Programm ein Umwandlungsprogramm auf dem Rechner. Es wandelt aus der Word-Fassung um;
-was dabei anders aussieht, hängt vom Umwandlungsprogramm ab (z. B. Formularfelder, Formen, besondere Rahmen). `.docx` und
-`.txt` gehen immer. In `.txt` bleiben nur Buchstaben — Formatierung, Tabellen und Bilder gehen verloren, das Programm sagt es.
+Alle Formate schreibt und liest Lunivo selbst, ohne ein anderes Programm im Hintergrund. `.odt` und `.rtf` nehmen Text, Schrift,
+Absätze, Listen, Tabellen, Bilder, Seitenränder sowie Kopf- und Fußzeile mit. Was nur `.docx` kann (Fuß- und Endnoten, Kommentare,
+Wasserzeichen, Seitenrahmen, Textspalten), meldet das Programm, wenn es fehlen würde. In `.txt` bleiben nur Buchstaben — das Programm sagt es.
 
 **So schützt Lunivo die Datei:** Die neue Fassung wird erst neben der alten geschrieben und geprüft; erst dann ersetzt sie die alte.
 Geht dabei etwas schief (Datenträger voll, keine Rechte, Absturz), bleibt die bisherige Datei unverändert. Die letzten fünf
@@ -405,9 +405,9 @@ Eigene Textbausteine liegen im Speicher des Programms, nicht in einer Datei ande
 
 Die **Statuszeile unten links** ist die Stelle, an der das Programm antwortet. Dort steht, was zuletzt geschehen ist — auch dann, wenn im Blatt nichts zu sehen war, weil es nichts zu tun gab.
 
-### ODT, DOC oder RTF gehen nicht
+### Eine `.doc`-Datei geht nicht auf
 
-Diese Formate werden über ein Umwandlungsprogramm gelesen und geschrieben. Fehlt es, meldet das Programm es. `.docx` und `.txt` kommen ohne aus.
+Das alte Word-97-Format `.doc` unterstützt Lunivo nicht. Im Programm, aus dem die Datei stammt, als `.docx` speichern, dann öffnen.
 
 ### Eine Vorlage taucht nicht auf
 

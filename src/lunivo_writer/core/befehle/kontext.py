@@ -478,4 +478,3 @@ class KontextBefehle:
 
     def exportierenRtf(self, k=None): self.w.export_as(".rtf")
 
-    def exportierenDoc(self, k=None): self.w.export_as(".doc")

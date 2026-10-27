@@ -96,8 +96,9 @@ def test_stichwoerter_und_zitate_roundtrip(app, tmp_path):
 
 
 def test_datei_mit_verweisen_oeffnet_in_libreoffice(app, tmp_path):
-    from lunivo_writer.services.integrations import libreoffice
-    if not libreoffice.verfuegbar():
+    import shutil
+    soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
+    if not soffice:
         pytest.skip("LibreOffice nicht installiert")
     e = ed("Kapitel\nText")
     c = e.textCursor(); c.setPosition(0); e.setTextCursor(c); e.apply_style("Überschrift 1")
@@ -109,6 +110,6 @@ def test_datei_mit_verweisen_oeffnet_in_libreoffice(app, tmp_path):
     e.quellen.append(q)
     out = str(tmp_path / "l.docx")
     docx_writer.write_docx(out, e.document(), e.page, dict(e._meta))
-    r = subprocess.run([libreoffice.finde_soffice(), "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
+    r = subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
                        capture_output=True, timeout=120)
     assert os.path.exists(str(tmp_path / "l.pdf")), r.stderr
