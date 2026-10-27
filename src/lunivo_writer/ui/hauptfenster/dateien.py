@@ -127,12 +127,19 @@ class DateienBaustein:
             default = ".docx"
         filter_von = lambda e: formats.PDF_FILTER if e == ".pdf" else formats.SAVE_FILTERS[e]
         flt = ";;".join(filter_von(e) for e in self.SPEICHER_FORMATE)
-        path, chosen = QFileDialog.getSaveFileName(self, title, os.path.join(folder, base + default), flt, filter_von(default))
+        # Lunivos eigenes Fenster statt des Systemdialogs: Der Dateiauswahldialog des Desktops (Portal/Dateimanager)
+        # blendet die Dateityp-Auswahl je nach System aus — hier stehen Dateiname und Dateityp immer sichtbar da.
+        path, chosen = QFileDialog.getSaveFileName(self, title, os.path.join(folder, base + default), flt, filter_von(default),
+                                                   QFileDialog.DontUseNativeDialog)
         if not path:
             return None
-        gewaehlt = formats.endung_zum_filter(chosen) or default
-        if formats.ext(path) not in self.SPEICHER_FORMATE:      # ohne oder mit fremder Endung: die des gewählten Dateityps
-            path += gewaehlt
+        gewaehlt = formats.endung_zum_filter(chosen)
+        e = formats.ext(path)
+        if gewaehlt and e in self.SPEICHER_FORMATE and e != gewaehlt:  # der gewählte Dateityp gilt, auch wenn der Name noch die alte Endung trägt
+            path = path[: -len(e)]
+            e = ""
+        if e not in self.SPEICHER_FORMATE:                       # ohne oder mit fremder Endung: die des gewählten Dateityps
+            path += gewaehlt or default
         return path
 
 
@@ -531,7 +538,7 @@ class DateienBaustein:
         ordner = ordner or vorlagen.vorlagenordner(self.settings)
         os.makedirs(ordner, exist_ok=True)
         pfad, _ = QFileDialog.getSaveFileName(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),
-                                              "Word-Dokument (*.docx)")
+                                              "Word-Dokument (*.docx)", "", QFileDialog.DontUseNativeDialog)
         if pfad:
             if not pfad.lower().endswith(".docx"):
                 pfad += ".docx"
