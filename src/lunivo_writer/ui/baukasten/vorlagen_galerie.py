@@ -12,8 +12,9 @@ import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
-from PySide6.QtWidgets import (QTabBar, QFileDialog, QFrame, QGridLayout, QInputDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
+from PySide6.QtWidgets import (QTabBar, QFrame, QGridLayout, QInputDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
                                QWidget)
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import vorlagen
 from lunivo_writer.ui.widgets import icons
@@ -291,7 +292,7 @@ class VorlagenGalerie(QWidget):
         self.neu_lesen(); self.rubrik_oeffnen(next((n for n in self.rubriken if n.lower() == name.lower()), name))
 
     def _ordner_waehlen(self) -> None:
-        p = QFileDialog.getExistingDirectory(self, "Vorlagenordner", vorlagen.vorlagenordner(self.settings))
+        p = Dateifenster.getExistingDirectory(self, "Vorlagenordner", vorlagen.vorlagenordner(self.settings))
         if p:
             self.settings.set("vorlagen/ordner", p); self.neu_lesen()
 

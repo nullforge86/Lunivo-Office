@@ -146,7 +146,7 @@ class SpeichernFenster(QDialog):
         self.k_hoch = self._knopf(_symbol("hoch"), "Übergeordneter Ordner", self.hoch)
         for k in (self.k_zurueck, self.k_vor, self.k_hoch):
             leiste.addWidget(k)
-        self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad")
+        self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad"); self.pfad_leiste.setMinimumHeight(36)
         self.pfad_layout = QHBoxLayout(self.pfad_leiste); self.pfad_layout.setContentsMargins(4, 1, 4, 1); self.pfad_layout.setSpacing(0)
         leiste.addWidget(self.pfad_leiste, 1)
         leiste.addSpacing(8)
@@ -194,7 +194,9 @@ class SpeichernFenster(QDialog):
         self.k_speichern = QPushButton("&Speichern"); self.k_speichern.setObjectName("sfSpeichern"); self.k_speichern.setDefault(True)
         self.k_abbrechen = QPushButton("Abbrechen")
         for k in (self.k_speichern, self.k_abbrechen):
-            k.setMinimumWidth(110)
+            k.setMinimumWidth(120)
+        for feld in (self.name, self.typ, self.k_speichern, self.k_abbrechen):
+            feld.setMinimumHeight(36)                                 # Felder in der Höhe des Vorbilds, nicht schmal
         l1 = QLabel("Datei&name:"); l1.setBuddy(self.name)
         l2 = QLabel("Datei&typ:"); l2.setBuddy(self.typ)
         unten.addWidget(l1, 0, 0); unten.addWidget(self.name, 0, 1); unten.addWidget(self.k_speichern, 0, 2)
@@ -447,3 +449,38 @@ def datei_waehlen(parent, titel: str, start: str, filter_text: str, mehrere: boo
     startpfad = os.path.join(start, "") if os.path.isdir(start) else start
     f = SpeichernFenster(parent, titel, startpfad, typen, "", oeffnen=True, mehrere=mehrere)
     return f.dateien() if f.exec() == QDialog.Accepted else []
+
+
+def datei_speichern(parent, titel: str, startpfad: str, filter_text: str) -> str | None:
+    """Speichern mit einem Filter im Qt-Stil („JSON (*.json)“) — für Lunivos eigene Dateien (Sicherungen, Gelerntes …)."""
+    typen = []
+    for teil in filter_text.split(";;"):
+        m = re.match(r"\s*(.*?)\s*\(\*(\.[^ )]+)[^)]*\)\s*$", teil)
+        if m:
+            typen.append((m.group(2), teil.strip()))
+    if not typen:
+        return (speicherort_waehlen(parent, titel, startpfad, [("", "Alle Dateien (*)")], "") or (None,))[0]
+    erg = speicherort_waehlen(parent, titel, os.path.expanduser(startpfad), typen, typen[0][0])
+    return erg[0] if erg else None
+
+
+class Dateifenster:
+    """Dieselben Aufrufe wie ``QFileDialog.get…`` (Rückgabe wie dort), aber mit Lunivos eigenem Fenster.
+    So bleibt jeder Aufruf eine Zeile, und überall erscheint dasselbe Fenster."""
+
+    @staticmethod
+    def getOpenFileName(parent, titel: str = "", start: str = "", filter_text: str = "Alle Dateien (*)", *_a, **_k):
+        wahl = datei_waehlen(parent, titel or "Öffnen", start, filter_text)
+        return (wahl[0], "") if wahl else ("", "")
+
+    @staticmethod
+    def getOpenFileNames(parent, titel: str = "", start: str = "", filter_text: str = "Alle Dateien (*)", *_a, **_k):
+        return datei_waehlen(parent, titel or "Öffnen", start, filter_text, mehrere=True), ""
+
+    @staticmethod
+    def getSaveFileName(parent, titel: str = "", start: str = "", filter_text: str = "Alle Dateien (*)", *_a, **_k):
+        return datei_speichern(parent, titel or "Speichern unter", start, filter_text) or "", ""
+
+    @staticmethod
+    def getExistingDirectory(parent, titel: str = "", start: str = "", *_a, **_k):
+        return ordner_waehlen(parent, titel or "Ordner wählen", os.path.expanduser(start or "~")) or ""

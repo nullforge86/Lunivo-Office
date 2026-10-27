@@ -115,7 +115,7 @@ class BildExportFenster(QDialog):
         self.k_seite.setChecked(True)
         v.addLayout(karten)
 
-        g = QGridLayout(); g.setHorizontalSpacing(14); g.setVerticalSpacing(12)
+        g = QGridLayout(); g.setHorizontalSpacing(14); g.setVerticalSpacing(14)
         self.wasser = QLineEdit(); self.wasser.setPlaceholderText("Vertraulich, Nicht kopieren, Original, Muster …")
         self.wasser.setMinimumWidth(390)
         self.qualitaet = QComboBox()
@@ -129,7 +129,7 @@ class BildExportFenster(QDialog):
             self.format.addItem(name)
         self.format.setCurrentText("PNG")
         for c in (self.qualitaet, self.format):
-            c.setFixedWidth(180)
+            c.setFixedWidth(220)
         self.ordner = QLineEdit(startordner or _bilder_ordner())
         from lunivo_writer.ui.widgets import icons
         waehlen = self.ordner.addAction(icons.icon_aus_pfad(PUNKTE, 18), QLineEdit.TrailingPosition)
@@ -143,6 +143,8 @@ class BildExportFenster(QDialog):
             l = QLabel(text); l.setBuddy(feld)
             g.addWidget(l, zeile, 0)
             g.addWidget(feld, zeile, 1, Qt.AlignLeft if feld in (self.qualitaet, self.format) else Qt.Alignment())
+        for feld in (self.wasser, self.qualitaet, self.format, self.ordner, self.k_export):
+            feld.setMinimumHeight(36)                                 # Felder in der Höhe des Vorbilds, nicht schmal
         g.addWidget(self.k_export, 3, 2)
         g.setColumnStretch(1, 1)
         g.setColumnMinimumWidth(2, 140)

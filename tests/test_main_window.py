@@ -630,3 +630,30 @@ def test_programm_symbol_fuer_fenster_und_leiste(app):
     from lunivo_writer.core.application import programm_symbol
     ic = programm_symbol()
     assert not ic.isNull() and {s.width() for s in ic.availableSizes()} >= {16, 32, 48, 256}
+
+
+def test_kein_fremdes_dateifenster():
+    """Überall dasselbe Datei-Fenster (ui/baukasten/speichern_fenster.py) — kein QFileDialog und kein Systemdialog."""
+    wurzel = os.path.join(os.path.dirname(__file__), "..", "src", "lunivo_writer")
+    treffer = []
+    for ordner, _d, dateien in os.walk(wurzel):
+        for n in dateien:
+            if n.endswith(".py"):
+                pfad = os.path.join(ordner, n)
+                with open(pfad, encoding="utf-8") as fh:
+                    for nr, zeile in enumerate(fh, 1):
+                        if "QFileDialog" in zeile and not n == "speichern_fenster.py":
+                            treffer.append(f"{os.path.relpath(pfad, wurzel)}:{nr}")
+    assert not treffer, "\n".join(treffer)
+
+
+def test_dateifenster_speichern_mit_filter(app, tmp_path, monkeypatch):
+    from lunivo_writer.ui.baukasten import speichern_fenster as SF
+    gesehen = {}
+
+    def exec_(self):
+        gesehen["typ"] = self.typ.currentText(); gesehen["name"] = self.name.currentText()
+        self.speichern(); return self.result()
+    monkeypatch.setattr(SF.SpeichernFenster, "exec", exec_)
+    pfad, _f = SF.Dateifenster.getSaveFileName(None, "Sichern", str(tmp_path / "lunivo-sicherung.zip"), "ZIP (*.zip)")
+    assert pfad == str(tmp_path / "lunivo-sicherung.zip") and gesehen == {"typ": "ZIP (*.zip)", "name": "lunivo-sicherung.zip"}
