@@ -16,7 +16,7 @@ from PySide6.QtCore import QDir, QFileInfo, QModelIndex, QSize, QStandardPaths, 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileIconProvider, QFileSystemModel, QFrame, QGridLayout,
                                QHBoxLayout, QHeaderView,
-                               QInputDialog, QLabel, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
+                               QLabel, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
                                QStackedWidget, QToolButton, QTreeView, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
@@ -309,9 +309,8 @@ class SpeichernFenster(QDialog):
         self.k_kacheln.setChecked(nr == 1)
 
     def neuer_ordner(self) -> None:
-        name, ok = QInputDialog.getText(self, "Neuer Ordner", "Name des Ordners:", text="Neuer Ordner")
-        name = name.strip()
-        if not ok or not name:
+        name = _ordner_name_fragen(self)
+        if not name:
             return
         if os.sep in name or name in (".", ".."):
             QMessageBox.warning(self, "Neuer Ordner", "Der Name darf keinen Schrägstrich enthalten.")
@@ -484,3 +483,24 @@ class Dateifenster:
     @staticmethod
     def getExistingDirectory(parent, titel: str = "", start: str = "", *_a, **_k):
         return ordner_waehlen(parent, titel or "Ordner wählen", os.path.expanduser(start or "~")) or ""
+
+
+def _ordner_name_fragen(parent) -> str:
+    """Kleines Fenster „Neuer Ordner“ in der Größe der übrigen Felder (statt des winzigen Eingabefensters von Qt)."""
+    d = QDialog(parent)
+    d.setWindowTitle("Neuer Ordner")
+    d.setStyleSheet(STIL)
+    d.setMinimumWidth(440)
+    v = QVBoxLayout(d); v.setContentsMargins(24, 20, 24, 20); v.setSpacing(10)
+    feld = QLineEdit("Neuer Ordner"); feld.setMinimumHeight(36); feld.selectAll()
+    l = QLabel("&Name des Ordners:"); l.setBuddy(feld)
+    v.addWidget(l); v.addWidget(feld); v.addSpacing(10)
+    knoepfe = QHBoxLayout(); knoepfe.addStretch(1)
+    ok = QPushButton("&Anlegen"); ok.setObjectName("sfSpeichern"); ok.setDefault(True)
+    ab = QPushButton("Abbrechen")
+    for k in (ok, ab):
+        k.setMinimumSize(120, 36); knoepfe.addWidget(k)
+    v.addLayout(knoepfe)
+    ok.clicked.connect(d.accept); ab.clicked.connect(d.reject)
+    feld.textChanged.connect(lambda t: ok.setEnabled(bool(t.strip())))
+    return feld.text().strip() if d.exec() == QDialog.Accepted else ""
