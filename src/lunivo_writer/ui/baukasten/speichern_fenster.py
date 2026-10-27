@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QDir, QModelIndex, QSize, QStandardPaths, QStorageInfo, Qt
+from PySide6.QtCore import QDir, QFileInfo, QModelIndex, QSize, QStandardPaths, QStorageInfo, Qt
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QFileSystemModel, QFrame, QGridLayout, QHBoxLayout,
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileIconProvider, QFileSystemModel, QFrame, QGridLayout,
+                               QHBoxLayout, QHeaderView,
                                QInputDialog, QLabel, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
-                               QStackedWidget, QStyle, QToolButton, QTreeView, QVBoxLayout, QWidget)
+                               QStackedWidget, QToolButton, QTreeView, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
 
@@ -23,7 +24,8 @@ STIL = """
 QWidget#sfLinks { background: palette(window); border-right: 1px solid palette(midlight); }
 QLabel#sfTitel { font-size: 17pt; font-weight: 600; padding: 4px 6px 14px 6px; }
 QListWidget#sfOrte { background: transparent; border: none; outline: none; }
-QListWidget#sfOrte::item { padding: 9px 10px; border-radius: 6px; }
+QListWidget#sfOrte { font-size: 11pt; }
+QListWidget#sfOrte::item { padding-left: 10px; border-radius: 6px; }
 QListWidget#sfOrte::item:selected { background: palette(midlight); color: palette(highlight); }
 QListWidget#sfOrte::item:hover:!selected { background: palette(midlight); }
 QFrame#sfPfad { border: 1px solid palette(mid); border-radius: 4px; }
@@ -36,10 +38,46 @@ QPushButton#sfSpeichern:disabled { background: palette(mid); }
 """ % {"akzent": Farbe.AKZENT, "akzent_d": Farbe.AKZENT_DUNKEL}
 
 
-def _theme(name: str, ersatz: QStyle.StandardPixmap) -> QIcon:
-    """Symbol aus dem Icon-Theme des Systems (Mint-Y, Papirus …), sonst das passende Standardsymbol von Qt."""
-    ic = QIcon.fromTheme(name)
-    return ic if not ic.isNull() else QApplication.style().standardIcon(ersatz)
+# Liniensymbole im Stil der übrigen Lunivo-Symbole (Pfade nach Lucide, ISC-Lizenz, siehe assets/icons/LIZENZ-LUCIDE.txt):
+# gleich stark, in der Schriftfarbe der Palette — auf hellem und dunklem Grund gut zu erkennen.
+_PFADE = {
+    "haus": "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9"
+            "a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+    "bildschirm": "M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M8 21h8 M12 17v4",
+    "dokumente": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M10 9H8 M16 13H8 M16 17H8",
+    "laufwerk": "M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+                " M6 16h.01 M10 16h.01",
+    "mehr": "M12 12h.01 M19 12h.01 M5 12h.01 M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20z",
+    "links": "M12 19l-7-7 7-7 M19 12H5",
+    "rechts": "M5 12h14 M12 5l7 7-7 7",
+    "hoch": "M12 19V5 M5 12l7-7 7 7",
+    "ordner_neu": "M12 10v6 M9 13h6 M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13"
+                  "a2 2 0 0 0 2 2Z",
+    "ordner": "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+    "datei": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4",
+    "liste": "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01",
+    "kacheln": "M4 3h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M15 3h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V4"
+               "a1 1 0 0 1 1-1z M15 14h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1z M4 14h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"
+               "H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1z",
+}
+
+
+def _symbol(name: str, px: int = 20) -> QIcon:
+    from lunivo_writer.ui.widgets import icons
+    return icons.icon_aus_pfad(_PFADE[name], px)
+
+
+class _Symbole(QFileIconProvider):
+    """Ordner und Dateien in der Liste mit denselben Liniensymbolen wie der Rest des Fensters."""
+
+    def __init__(self):
+        super().__init__()
+        self._ordner, self._datei = _symbol("ordner", 18), _symbol("datei", 18)
+
+    def icon(self, info):
+        if isinstance(info, QFileInfo):
+            return self._ordner if info.isDir() else self._datei
+        return self._ordner
 
 
 def _ordner(art) -> str:
@@ -74,18 +112,19 @@ class SpeichernFenster(QDialog):
         lv = QVBoxLayout(links); lv.setContentsMargins(18, 22, 12, 12)
         t = QLabel(titel); t.setObjectName("sfTitel"); t.setWordWrap(True)
         lv.addWidget(t)
-        self.orte = QListWidget(); self.orte.setObjectName("sfOrte"); self.orte.setIconSize(QSize(18, 18))
+        self.orte = QListWidget(); self.orte.setObjectName("sfOrte"); self.orte.setIconSize(QSize(20, 20))
+        self.orte.setSpacing(2)
         self.orte.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.orte.setTextElideMode(Qt.ElideMiddle)
-        for text, pfad, ic in (("Persönlicher Ordner", QDir.homePath(), _theme("user-home", QStyle.SP_DirHomeIcon)),
-                               ("Schreibtisch", _ordner(QStandardPaths.DesktopLocation), _theme("user-desktop", QStyle.SP_DesktopIcon)),
-                               ("Dokumente", _ordner(QStandardPaths.DocumentsLocation), _theme("folder-documents", QStyle.SP_DirIcon))):
+        for text, pfad, ic in (("Persönlicher Ordner", QDir.homePath(), _symbol("haus")),
+                               ("Schreibtisch", _ordner(QStandardPaths.DesktopLocation), _symbol("bildschirm")),
+                               ("Dokumente", _ordner(QStandardPaths.DocumentsLocation), _symbol("dokumente"))):
             if pfad:
                 self._ort(text, pfad, ic)
         for vol in QStorageInfo.mountedVolumes():                   # eingehängte Laufwerke (USB-Stick, zweite Platte)
             wurzel = vol.rootPath()
             if vol.isValid() and vol.isReady() and wurzel.startswith(("/media/", "/run/media/")):
-                self._ort(os.path.basename(wurzel) or vol.displayName(), wurzel, _theme("drive-removable-media", QStyle.SP_DriveHDIcon))
-        self._ort("Rechner", "/", _theme("computer", QStyle.SP_ComputerIcon))
+                self._ort(os.path.basename(wurzel) or vol.displayName(), wurzel, _symbol("laufwerk"))
+        self._ort("Andere Orte", "/", _symbol("mehr"))
         self.orte.itemClicked.connect(lambda it: self.gehe_zu(it.data(Qt.UserRole)))
         lv.addWidget(self.orte, 1)
         haupt.addWidget(links)
@@ -94,24 +133,24 @@ class SpeichernFenster(QDialog):
         rechts = QWidget()
         rv = QVBoxLayout(rechts); rv.setContentsMargins(16, 14, 16, 16); rv.setSpacing(10)
         leiste = QHBoxLayout(); leiste.setSpacing(4)
-        self.k_zurueck = self._knopf(_theme("go-previous", QStyle.SP_ArrowBack), "Zurück", self.zurueck)
-        self.k_vor = self._knopf(_theme("go-next", QStyle.SP_ArrowForward), "Vor", self.vor)
-        self.k_hoch = self._knopf(_theme("go-up", QStyle.SP_FileDialogToParent), "Übergeordneter Ordner", self.hoch)
+        self.k_zurueck = self._knopf(_symbol("links"), "Zurück", self.zurueck)
+        self.k_vor = self._knopf(_symbol("rechts"), "Vor", self.vor)
+        self.k_hoch = self._knopf(_symbol("hoch"), "Übergeordneter Ordner", self.hoch)
         for k in (self.k_zurueck, self.k_vor, self.k_hoch):
             leiste.addWidget(k)
         self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad")
         self.pfad_layout = QHBoxLayout(self.pfad_leiste); self.pfad_layout.setContentsMargins(4, 1, 4, 1); self.pfad_layout.setSpacing(0)
         leiste.addWidget(self.pfad_leiste, 1)
         leiste.addSpacing(8)
-        leiste.addWidget(self._knopf(_theme("folder-new", QStyle.SP_FileDialogNewFolder), "Neuer Ordner", self.neuer_ordner))
-        self.k_liste = self._knopf(_theme("view-list-details", QStyle.SP_FileDialogDetailedView), "Liste", lambda: self.ansicht(0),
-                                   pruefbar=True)
-        self.k_kacheln = self._knopf(_theme("view-list-icons", QStyle.SP_FileDialogListView), "Kacheln", lambda: self.ansicht(1),
-                                     pruefbar=True)
+        leiste.addWidget(self._knopf(_symbol("ordner_neu"), "Neuer Ordner", self.neuer_ordner))
+        self.k_liste = self._knopf(_symbol("liste"), "Liste", lambda: self.ansicht(0), pruefbar=True)
+        self.k_kacheln = self._knopf(_symbol("kacheln"), "Kacheln", lambda: self.ansicht(1), pruefbar=True)
         leiste.addWidget(self.k_liste); leiste.addWidget(self.k_kacheln)
         rv.addLayout(leiste)
 
         self.modell = QFileSystemModel(self)
+        self._symbole = _Symbole()
+        self.modell.setIconProvider(self._symbole)
         self.modell.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
         self.modell.setNameFilterDisables(False)
         self.modell.setRootPath("")
@@ -122,8 +161,12 @@ class SpeichernFenster(QDialog):
         kopf = self.liste.header()
         kopf.moveSection(kopf.visualIndex(3), 1)                    # Name, Geändert, Typ, Größe (wie im Vorbild)
         kopf.moveSection(kopf.visualIndex(2), 2)
-        kopf.resizeSection(0, 360); kopf.resizeSection(3, 150); kopf.resizeSection(2, 170)
-        kopf.setStretchLastSection(True)
+        kopf.setStretchLastSection(False)
+        kopf.setSectionResizeMode(0, QHeaderView.Stretch)                # der Name bekommt den Platz, die übrigen Spalten bleiben ganz
+        for spalte, breite in ((3, 150), (2, 170), (1, 100)):
+            kopf.setSectionResizeMode(spalte, QHeaderView.Interactive)
+            kopf.resizeSection(spalte, breite)
+        self.liste.setIconSize(QSize(18, 18))
         self.kacheln = QListView(); self.kacheln.setModel(self.modell)
         self.kacheln.setViewMode(QListView.IconMode); self.kacheln.setResizeMode(QListView.Adjust)
         self.kacheln.setGridSize(QSize(110, 90)); self.kacheln.setIconSize(QSize(40, 40)); self.kacheln.setWordWrap(True)
@@ -168,14 +211,15 @@ class SpeichernFenster(QDialog):
 
     # ---- Bausteine ---------------------------------------------------------------------------------------------------------
     def _ort(self, text: str, pfad: str, ic: QIcon) -> None:
-        it = QListWidgetItem(ic, text)
+        it = QListWidgetItem(ic, "  " + text)
+        it.setSizeHint(QSize(0, 40))                              # feste Zeilenhöhe: nichts überlappt, egal welches Thema
         it.setData(Qt.UserRole, pfad)
         it.setToolTip(pfad)
         self.orte.addItem(it)
 
     def _knopf(self, ic: QIcon, tipp: str, aktion, pruefbar: bool = False) -> QToolButton:
-        k = QToolButton(); k.setIcon(ic); k.setToolTip(tipp); k.setAutoRaise(True); k.setIconSize(QSize(18, 18))
-        k.setFixedSize(32, 30); k.setCheckable(pruefbar)
+        k = QToolButton(); k.setIcon(ic); k.setToolTip(tipp); k.setAutoRaise(True); k.setIconSize(QSize(20, 20))
+        k.setFixedSize(36, 34); k.setCheckable(pruefbar)
         if ic.isNull():
             k.setText(tipp[:1])
         k.clicked.connect(lambda _=False: aktion())

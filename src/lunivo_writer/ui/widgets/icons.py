@@ -208,6 +208,27 @@ def icon(name: str, px: int = 20) -> QIcon:
     return ic
 
 
+def icon_aus_pfad(pfad: str, px: int = 20) -> QIcon:
+    """Ein Liniensymbol aus einem Pfad (24er-Raster, Strichstil wie die übrigen Symbole) in den Farben der Palette."""
+    px = max(10, int(round(px * FAKTOR)))
+    pal = QApplication.palette()
+    normal = pal.color(QPalette.ButtonText).name()
+    if QColor(normal).lightness() > 128:
+        normal = "#f4f6f8"
+    off = pal.color(QPalette.Disabled, QPalette.ButtonText).name()
+    ic = QIcon()
+    for farbe, modus in ((normal, QIcon.Normal), (off, QIcon.Disabled)):
+        img = QImage(px * 2, px * 2, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        p = QPainter(img)
+        QSvgRenderer(QByteArray(_svg(pfad, farbe))).render(p, QRectF(0, 0, px * 2, px * 2))
+        p.end()
+        pm = QPixmap.fromImage(img)
+        pm.setDevicePixelRatio(2)
+        ic.addPixmap(pm, modus)
+    return ic
+
+
 def leeren() -> None:
     _CACHE.clear()
 
