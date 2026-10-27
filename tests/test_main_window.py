@@ -529,3 +529,31 @@ def test_notenfeld_unten_schreibt_in_dieselbe_note_wie_das_feld_links(app, tmp_p
     assert w.noten_feld.isVisible()
     w.befehle.endnote()
     assert w.noten_feld.titel.text() == "Endnote i"
+
+
+def test_ein_speichern_fenster_fuer_alle_formate(app, tmp_path, monkeypatch):
+    """„Speichern unter“ und „Speichern unter ▸ Format“ führen in dasselbe Fenster mit allen Dateitypen."""
+    w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
+    gefragt = []
+
+    def fenster(parent, titel, start, filter_liste, vorwahl=""):
+        gefragt.append((filter_liste, vorwahl))
+        return str(tmp_path / "brief"), "Textdatei (*.txt)"           # ohne Endung, Dateityp im Fenster gewählt
+
+    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName", fenster)
+    assert w.save_as()
+    assert w.save_as_format(".odt")                                     # vorgewählt ODT, im Fenster aber Text gewählt
+    (alle, v1), (alle2, v2) = gefragt
+    assert alle == alle2 and v1 == "Word-Dokument (*.docx)" and v2 == "OpenDocument-Text (*.odt)"
+    for e in ("*.docx", "*.odt", "*.doc", "*.rtf", "*.txt", "*.pdf"):
+        assert e in alle
+    assert (tmp_path / "brief.txt").read_text(encoding="utf-8") == "Hallo"
+
+
+def test_speichern_unter_pdf_behaelt_die_dokumentdatei(app, tmp_path, monkeypatch):
+    w = win(tmp_path); w.new_document(); w.current_editor().insertPlainText("Hallo")
+    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
+                        lambda *a, **k: (str(tmp_path / "brief"), "PDF-Dokument (*.pdf)"))
+    assert w.save_as()
+    assert os.path.getsize(tmp_path / "brief.pdf") > 500
+    assert w.current_tab().path is None and w.current_editor().document().isModified()

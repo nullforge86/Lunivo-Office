@@ -77,16 +77,22 @@ class DateiBefehle:
         t = self.w.current_tab()
         if not t:
             return
+        import itertools
         import os
         from lunivo_writer.editor.pagination import seiten_bilder
         pfad, _ = QFileDialog.getSaveFileName(self.w, "Als Bild exportieren", os.path.splitext(t.title)[0] + ".png", "PNG-Bild (*.png)")
         if not pfad:
             return
         basis, _e = os.path.splitext(pfad)
-        bilder = list(seiten_bilder(t.editor.document(), t.page, t.editor.noten, self.w.ausgabe_ppi() / 96))
-        n = len(bilder)
-        for i, img, _ps in bilder:
-            img.save(basis + (f"-{i}" if n > 1 else "") + ".png", "PNG")
+        # Seite für Seite schreiben: Bei hoher Auflösung belegt ein Seitenbild Dutzende MB — alle auf einmal
+        # im Speicher zu halten, kann bei langen Dokumenten den Arbeitsspeicher füllen.
+        bilder = seiten_bilder(t.editor.document(), t.page, t.editor.noten, self.w.ausgabe_ppi() / 96)
+        erstes, zweites = next(bilder, None), next(bilder, None)
+        mehrere = zweites is not None
+        n = 0
+        for i, img, _ps in itertools.chain(filter(None, (erstes, zweites)), bilder):
+            img.save(basis + (f"-{i}" if mehrere else "") + ".png", "PNG")
+            n += 1
         self.w.statusBar().showMessage(f"{n} Seite{'n' if n != 1 else ''} als PNG gespeichert: {basis}…", 6000)
 
 

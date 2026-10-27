@@ -49,3 +49,20 @@ def test_kaputte_datei(app, tmp_path):
     bad = tmp_path / "kaputt.odt"; bad.write_bytes(b"kein odt")
     with pytest.raises(DocumentIOError):
         formats.load(str(bad))
+
+
+def test_speichern_unter_odt_im_fenster(app, tmp_path, monkeypatch):
+    """Die Umwandlung läuft mit Fortschrittsfenster; danach gehört das Dokument zur ODT-Datei."""
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QMessageBox
+    from lunivo_writer.services.settings_service import Settings
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
+    w.new_document(); w.current_editor().insertPlainText("Hallo ODT")
+    ziel = str(tmp_path / "brief.odt")
+    monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
+                        lambda *a, **k: (ziel, "OpenDocument-Text (*.odt)"))
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    assert w.save_as_format(".odt")
+    assert os.path.getsize(ziel) > 500 and w.current_tab().path == ziel
+    assert "Hallo ODT" in formats.load(ziel).doc.toPlainText()
