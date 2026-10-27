@@ -15,7 +15,6 @@ DATEI = {"name": "Datei", "gruppen": [
                                       _k("kopie", "Kopie speichern", "kopieSpeichern")]},
     {"name": "Exportieren", "knoepfe": [_k("pdf", "Als PDF exportieren", "speichernPdf", True),
                                         _k("ausdatei", "Als DOCX exportieren", "exportierenDocx"),
-                                        _k("ausdatei", "Als DOC exportieren (optional)", "exportierenDoc"),
                                         _k("//", "x"),
                                         _k("ausdatei", "Als RTF exportieren", "exportierenRtf"),
                                         _k("notiz", "Als TXT exportieren", "exportierenTxt"),

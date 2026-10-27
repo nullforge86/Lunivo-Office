@@ -59,7 +59,7 @@ def _db_pfad() -> str:
 def _kategorie(e: BaseException) -> str:
     text = str(e)
     for schluessel, kat in (("Platz", "speicherplatz"), ("Schreibrechte", "rechte"), ("beschädigt", "struktur"),
-                            ("Umwandl", "umwandler"), ("gespeichert", "sperre")):
+                            ("gespeichert", "sperre")):
         if schluessel in text:
             return kat
     return type(e).__name__
@@ -71,7 +71,6 @@ def pruefen(formate: list[str], db: str) -> list[tuple]:
     from lunivo_writer.models.page import PageSettings
     from lunivo_writer.services import file_service as formats
     from lunivo_writer.services import sicher_schreiben as S
-    from lunivo_writer.services.integrations import libreoffice
 
     app = QApplication.instance() or QApplication([])  # noqa: F841 — QTextDocument braucht eine Anwendung
     lauf = uuid.uuid4().hex[:12]
@@ -79,10 +78,6 @@ def pruefen(formate: list[str], db: str) -> list[tuple]:
     with tempfile.TemporaryDirectory(prefix="lunivo-speicherpruefung-") as ordner:
         S.sicherungs_ordner = lambda: os.path.join(ordner, "_sicherungen")   # Sicherungskopien bleiben im Temp-Ordner
         for endung in formate:
-            if endung in (".doc", ".rtf") and not libreoffice.verfuegbar():
-                zeilen.append((uuid.uuid4().hex[:12], lauf, time.strftime("%Y-%m-%dT%H:%M:%S"), endung, "alle", 0, None, None,
-                               None, None, None, "umwandler", "LibreOffice nicht installiert"))
-                continue
             for fall, text in list(FALLE.items()) + [("mehrfach", "Fassung 5")]:
                 name = ("Übersicht ✓ " if fall == "unicode" else "") + fall + endung
                 pfad = os.path.join(ordner, name)
@@ -134,7 +129,7 @@ def bericht(zeilen: list[tuple]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--db", default=_db_pfad(), help="SQLite-Datei für das Prüfprotokoll")
-    ap.add_argument("--formate", default=".docx,.txt,.odt,.rtf,.doc", help="Komma-Liste der Endungen")
+    ap.add_argument("--formate", default=".docx,.txt,.odt,.rtf", help="Komma-Liste der Endungen")
     a = ap.parse_args()
     zeilen = pruefen([f.strip() for f in a.formate.split(",") if f.strip()], a.db)
     print(bericht(zeilen))

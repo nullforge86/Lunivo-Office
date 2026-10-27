@@ -307,9 +307,6 @@ def pruefe_format(path: str, endung: str) -> None:
                 raise _defekt("„mimetype“ fehlt am Anfang oder ist falsch")
         finally:
             z.close()
-    elif endung == ".doc":
-        if kopf != OLE_KOPF:
-            raise _defekt("kein Word-97-Container")
     elif endung == ".rtf":
         with open(path, "rb") as fh:
             daten = fh.read()

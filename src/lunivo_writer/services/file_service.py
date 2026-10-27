@@ -2,25 +2,23 @@
 from __future__ import annotations
 
 import os
-import shutil
 import tempfile
 from dataclasses import dataclass
-from typing import Callable
 
-from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument, QTextDocumentWriter
+from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument
 
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import docx_reader, docx_writer
 from lunivo_writer.models.report import DocumentIOError, IOReport
 
-OPEN_FILTER = ("Dokumente (*.docx *.odt *.doc *.rtf *.txt);;Word-Dokument (*.docx);;OpenDocument-Text (*.odt);;"
-               "Word 97–2003 (*.doc);;Rich Text (*.rtf);;Textdatei (*.txt);;Alle Dateien (*)")
-LIBREOFFICE_FORMATE = (".odt", ".doc", ".rtf", ".dot", ".dotx", ".docm", ".wps", ".fodt")
+OPEN_FILTER = ("Dokumente (*.docx *.dotx *.docm *.odt *.fodt *.rtf *.txt);;Word-Dokument (*.docx);;OpenDocument-Text (*.odt);;"
+               "Rich Text (*.rtf);;Textdatei (*.txt);;Alle Dateien (*)")
+# Alle Formate liest und schreibt Lunivo selbst — kein fremdes Programm im Hintergrund.
+NICHT_UNTERSTUETZT = {".doc": "Word 97–2003 (.doc)", ".dot": "Word-97–2003-Vorlage (.dot)", ".wps": "Microsoft Works (.wps)"}
 SAVE_FILTERS = {
     ".docx": "Word-Dokument (*.docx)",
     ".txt": "Textdatei (*.txt)",
     ".odt": "OpenDocument-Text (*.odt)",
-    ".doc": "Word 97–2003 (*.doc)",
     ".rtf": "Rich Text (*.rtf)",
 }
 PDF_FILTER = "PDF-Dokument (*.pdf)"
@@ -107,27 +105,34 @@ def load(path: str, kennwort: str | None = None) -> Loaded:
         QTextCursor(doc).insertText(text.replace("\r\n", "\n"))
         doc.setModified(False)
         return Loaded(doc, PageSettings(), {}, IOReport())
-    if e in LIBREOFFICE_FORMATE:
+    if e in (".odt", ".fodt", ".rtf"):
         _kopf_pruefen(path, e)
-        from lunivo_writer.services.integrations import libreoffice
-        docx_pfad, tmp = libreoffice.in_docx(path)
-        try:
-            doc, page, meta, rep = docx_reader.read_docx(docx_pfad)
-        finally:
-            tmp.cleanup()
-        rep.warn(f"„{os.path.basename(path)}“ wurde über das Umwandlungsprogramm nach DOCX umgewandelt und dann gelesen; "
-                 "beim Speichern als DOCX gilt das umgewandelte Format.")
+        if e == ".rtf":
+            from lunivo_writer.services.rtf_reader import read_rtf
+            doc, page, meta, rep = read_rtf(path)
+        else:
+            from lunivo_writer.services import odt_reader
+            doc, page, meta, rep = (odt_reader.read_odt if e == ".odt" else odt_reader.read_fodt)(path)
         return Loaded(doc, page, meta, rep)
+    if e in (".dotx", ".docm"):
+        _kopf_pruefen(path, e)
+        with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
+            doc, page, meta, rep = docx_reader.read_docx(_als_docx(path, os.path.join(tmp, "dokument.docx")))
+        if e == ".docm":
+            rep.warn("Makros aus der DOCM-Datei werden nicht ausgeführt und beim Speichern nicht übernommen.")
+        return Loaded(doc, page, meta, rep)
+    if e in NICHT_UNTERSTUETZT:
+        raise DocumentIOError(f"Das alte Format {NICHT_UNTERSTUETZT[e]} wird nicht mehr unterstützt. Bitte die Datei im "
+                              "ursprünglichen Programm als DOCX speichern und dann in Lunivo öffnen.")
     raise DocumentIOError(
-        f"Das Format „{e or 'ohne Endung'}“ kann nicht geöffnet werden. Unterstützt: DOCX, ODT, DOC, RTF, TXT.")
+        f"Das Format „{e or 'ohne Endung'}“ kann nicht geöffnet werden. Unterstützt: DOCX, ODT, RTF, TXT.")
 
 
-_MAGIC = {".odt": b"PK", ".dotx": b"PK", ".docm": b"PK", ".fodt": b"<?xml", ".doc": b"\xd0\xcf\x11\xe0",
-          ".dot": b"\xd0\xcf\x11\xe0", ".rtf": b"{\\rtf"}
+_MAGIC = {".odt": b"PK", ".dotx": b"PK", ".docm": b"PK", ".fodt": b"<?xml", ".rtf": b"{\\rtf"}
 
 
 def _kopf_pruefen(path: str, e: str) -> None:
-    """LibreOffice öffnet notfalls alles als Text — ein kaputtes Dokument soll aber als kaputt gemeldet werden."""
+    """Ein falsch benanntes oder kaputtes Dokument wird als solches gemeldet, nicht „irgendwie“ geöffnet."""
     soll = _MAGIC.get(e)
     if not soll:
         return
@@ -155,11 +160,9 @@ def _has_rich_content(doc: QTextDocument) -> bool:
     return doc.rootFrame().childFrames() != []
 
 
-def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None,
-         warten: Callable[[], bool] | None = None, sicherung: bool = True) -> IOReport:
+def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None, sicherung: bool = True) -> IOReport:
     """Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
-    Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. `warten` wird während einer Umwandlung über das
-    Umwandlungsprogramm regelmäßig gerufen."""
+    Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. Jedes Format schreibt Lunivo selbst."""
     from lunivo_writer.editor import lese_zeilenluft
     from lunivo_writer.services import sicher_schreiben
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
@@ -180,28 +183,38 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
             rep.warn("Kopf- und Fußzeile werden in der Textdatei nicht gespeichert.")
         sicher_schreiben.bytes_schreiben(path, doc.toPlainText().replace("\u2028", "\n").encode("utf-8"), sicherung=sicherung)
         return rep
-    if e in (".odt", ".doc", ".rtf"):
-        from lunivo_writer.services.integrations import libreoffice
-        if libreoffice.verfuegbar():
-            data, rep = docx_writer.docx_daten(doc, page, meta)          # meldet, was schon in DOCX nicht passt
-            with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
-                zwischen = os.path.join(tmp, "dokument.docx")
-                with open(zwischen, "wb") as fh:
-                    fh.write(data)
-                fertig = libreoffice.konvertiere(zwischen, e[1:], tmp, warten)
-                sicher_schreiben.schreiben(path, lambda t: shutil.copyfile(fertig, t), sicherung=sicherung)
-            return rep
-        if e != ".odt":
-            raise DocumentIOError(f"{e[1:].upper()} braucht das Umwandlungsprogramm; es ist nicht installiert.")
-        rep.warn("ODT wurde ohne Umwandlungsprogramm über Qt geschrieben (Text, Formatierung, Tabellen, Bilder). "
-                 "Seitenrand, Kopf- und Fußzeile sind darin nicht enthalten.")
-
-        def qt_odt(t: str) -> None:
-            if not QTextDocumentWriter(t, b"ODF").write(doc):
-                raise DocumentIOError("Die ODT-Datei konnte nicht geschrieben werden.")
-        sicher_schreiben.schreiben(path, qt_odt, sicherung=sicherung)
+    if e in (".odt", ".rtf"):
+        if e == ".odt":
+            from lunivo_writer.services.odt_writer import odt_daten as daten_bauen
+        else:
+            from lunivo_writer.services.rtf_writer import rtf_daten as daten_bauen
+        data, rep = daten_bauen(doc, page, meta)
+        sicher_schreiben.bytes_schreiben(path, data, endung=e, sicherung=sicherung)
         return rep
     raise DocumentIOError(f"Das Format „{e}“ kann nicht gespeichert werden.")
+
+
+_DOCX_HAUPTTEIL = b"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
+
+
+def _als_docx(path: str, ziel: str) -> str:
+    """DOTX (Vorlage) und DOCM (mit Makros) sind DOCX-Pakete mit anderem Inhaltstyp des Hauptteils; für den DOCX-Leser wird nur
+    dieser Eintrag umgeschrieben und das Makroprojekt weggelassen."""
+    import re
+    import zipfile
+    try:
+        with zipfile.ZipFile(path) as z, zipfile.ZipFile(ziel, "w", zipfile.ZIP_DEFLATED) as aus:
+            for info in z.infolist():
+                if info.filename.lower().endswith("vbaproject.bin") or info.filename.lower().endswith("vbadata.xml"):
+                    continue
+                daten = z.read(info.filename)
+                if info.filename == "[Content_Types].xml":
+                    daten = re.sub(rb'application/vnd\.(?:openxmlformats-officedocument\.wordprocessingml\.template|'
+                                   rb'ms-word\.(?:document|template)\.macroEnabled)(?:\.main)?\+xml', _DOCX_HAUPTTEIL, daten)
+                aus.writestr(info, daten)
+    except (zipfile.BadZipFile, OSError, KeyError) as ex:
+        raise DocumentIOError("Die Datei ist kein gültiges Word-Dokument oder beschädigt.") from ex
+    return ziel
 
 
 def _verschluesseln(data: bytes, kennwort: str) -> bytes:

@@ -181,8 +181,9 @@ def _bl(doc):
 def test_docx_mit_rahmen_und_schattierung_oeffnet_in_libreoffice(app, tmp_path):
     import subprocess
     from PySide6.QtGui import QBrush
-    from lunivo_writer.services.integrations import libreoffice
-    if not libreoffice.verfuegbar():
+    import shutil
+    soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
+    if not soffice:
         pytest.skip("LibreOffice nicht installiert")
     e = DocumentEditor(); e.setPlainText("Rahmen und Schatten"); e.zusatz_binden({})
     e.select_range(0, 5)
@@ -191,7 +192,7 @@ def test_docx_mit_rahmen_und_schattierung_oeffnet_in_libreoffice(app, tmp_path):
     e.set_alignment(__import__("PySide6.QtCore", fromlist=["Qt"]).Qt.AlignHCenter)
     out = str(tmp_path / "x.docx")
     docx_writer.write_docx(out, e.document(), e.page, {})
-    subprocess.run([libreoffice.finde_soffice(), "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
+    subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
                    capture_output=True, timeout=120)
     assert "Rahmen und Schatten" in " ".join(pypdf.PdfReader(str(tmp_path / "x.pdf")).pages[0].extract_text().split())
     # Reihenfolge der pPr-Kinder entspricht dem Schema (pBdr vor shd vor spacing/ind/jc)

@@ -85,7 +85,7 @@ def test_hilfe_dialoge_und_kuerzel(app, tmp_path):
     from PySide6.QtWidgets import QLabel
     assert "F7" in " ".join(x.text() for x in hilfe_dialoge.tastenkuerzel(w).findChildren(QLabel))
     t = " ".join(x.text() for x in hilfe_dialoge.erweiterungen(w).findChildren(QLabel))
-    assert "LanguageTool" in t and "Umwandlungsprogramm" in t
+    assert "LanguageTool" in t and "Umwandlungsprogramm" not in t          # Lunivo liest und schreibt alle Formate selbst
     # alle in der Hilfe genannten F-Tasten sind wirklich belegt
     belegt = {sc.key().toString() for sc in w._kuerzel} | {a.shortcut().toString() for a in w.findChildren(__import__("PySide6.QtGui", fromlist=["QAction"]).QAction)}
     for taste in ("F3", "F4", "F5", "F6", "F7", "F8", "F9", "F11"):

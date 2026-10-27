@@ -19,10 +19,8 @@ from lunivo_writer.models.page import PageSettings
 from lunivo_writer.models.report import DocumentIOError
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben as S
-from lunivo_writer.services.integrations import libreoffice
 
 ALS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0
-MIT_LO = pytest.mark.skipif(not libreoffice.verfuegbar(), reason="LibreOffice nicht installiert")
 
 
 @pytest.fixture(autouse=True)
@@ -46,9 +44,7 @@ def _temp_reste(ordner) -> list[str]:
 
 
 # ---- Speichern und erneut öffnen -------------------------------------------------------------------------------------------------
-@pytest.mark.parametrize("endung", [".docx", ".txt",
-                                    pytest.param(".odt", marks=MIT_LO), pytest.param(".rtf", marks=MIT_LO),
-                                    pytest.param(".doc", marks=MIT_LO)])
+@pytest.mark.parametrize("endung", [".docx", ".txt", ".odt", ".rtf"])
 def test_neu_speichern_und_oeffnen(app, tmp_path, endung):
     p = str(tmp_path / ("neu" + endung))
     formats.save(p, _doc("Erste Zeile\nZweite Zeile"), PageSettings())
@@ -57,13 +53,12 @@ def test_neu_speichern_und_oeffnen(app, tmp_path, endung):
     assert not _temp_reste(tmp_path)
 
 
-def test_odt_ohne_umwandler_ist_gueltig(app, tmp_path, monkeypatch):
-    monkeypatch.setattr(libreoffice, "verfuegbar", lambda: False)
-    p = str(tmp_path / "qt.odt")
-    formats.save(p, _doc("Qt-ODT"), PageSettings())
+def test_odt_hat_seite_und_text(app, tmp_path):
+    p = str(tmp_path / "eigen.odt")
+    formats.save(p, _doc("Eigenes ODT"), PageSettings())
     S.pruefe_format(p, ".odt")
     with zipfile.ZipFile(p) as z:
-        assert b"Qt-ODT" in z.read("content.xml")
+        assert b"Eigenes ODT" in z.read("content.xml") and b"style:page-layout" in z.read("styles.xml")
 
 
 def test_bestehendes_aendern_speichern_oeffnen(app, tmp_path):
@@ -105,7 +100,7 @@ def test_speichern_unter_neuem_namen_laesst_original(app, tmp_path):
     assert _text(a) == "Original" and _text(b) == "Neu"
 
 
-@pytest.mark.parametrize("endung", [".docx", ".txt", pytest.param(".odt", marks=MIT_LO)])
+@pytest.mark.parametrize("endung", [".docx", ".txt", ".odt", ".rtf"])
 def test_unicode_in_text_und_dateiname(app, tmp_path, endung):
     text = "Grüße aus Köln – „Ärger“ 𝄞 ✓ 日本語 Ωmega"
     p = str(tmp_path / f"Übersicht ß – 日本 ✓{endung}")
@@ -113,7 +108,7 @@ def test_unicode_in_text_und_dateiname(app, tmp_path, endung):
     assert _text(p) == text
 
 
-@pytest.mark.parametrize("endung", [".docx", ".txt"])
+@pytest.mark.parametrize("endung", [".docx", ".txt", ".odt", ".rtf"])
 def test_leeres_dokument(app, tmp_path, endung):
     p = str(tmp_path / ("leer" + endung))
     formats.save(p, QTextDocument(), PageSettings())
@@ -121,7 +116,8 @@ def test_leeres_dokument(app, tmp_path, endung):
     assert _text(p) == ""
 
 
-def test_grosses_dokument_mit_tabelle_bild_format_umbruch(app, tmp_path):
+@pytest.mark.parametrize("endung", [".docx", ".odt", ".rtf"])
+def test_grosses_dokument_mit_tabelle_bild_format_umbruch(app, tmp_path, endung):
     d = QTextDocument(); c = QTextCursor(d)
     fett = QTextCharFormat(); fett.setFontWeight(700)
     c.insertText("Fetter Anfang", fett); c.insertText("\n", QTextCharFormat())
@@ -139,16 +135,24 @@ def test_grosses_dokument_mit_tabelle_bild_format_umbruch(app, tmp_path):
     d.addResource(QTextDocument.ImageResource, "mem://rot.png", bild)
     fmt = QTextImageFormat(); fmt.setName("mem://rot.png"); fmt.setWidth(40); fmt.setHeight(30)
     c.insertBlock(); c.insertImage(fmt)
-    p = str(tmp_path / "gross.docx")
+    p = str(tmp_path / ("gross" + endung))
     formats.save(p, d, PageSettings())
-    S.pruefe_format(p, ".docx")
+    S.pruefe_format(p, endung)
     back = formats.load(p).doc
     txt = back.toPlainText()
     assert "Absatz 2999" in txt and "Nach dem Umbruch" in txt and "Z1S1" in txt
     assert back.find("Fetter Anfang").charFormat().fontWeight() >= 600
     assert back.findBlock(back.find("Nach dem Umbruch").position()).blockFormat().pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore
-    with zipfile.ZipFile(p) as z:
-        assert any(n.startswith("word/media/") for n in z.namelist())     # das Bild ist im Paket
+    bilder = []
+    b = back.begin()
+    while b.isValid():
+        it = b.begin()
+        while not it.atEnd():
+            if it.fragment().charFormat().isImageFormat():
+                bilder.append(it.fragment().charFormat().toImageFormat())
+            it += 1
+        b = b.next()
+    assert len(bilder) == 1 and round(bilder[0].width()) == 40               # das Bild kommt wieder an
 
 
 # ---- Beschädigte Quelldateien ----------------------------------------------------------------------------------------------------
@@ -174,7 +178,7 @@ def test_abgeschnittene_docx_wird_gemeldet(app, tmp_path):
 # ---- Strukturprüfung vor dem Ersetzen --------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("endung,daten", [
     (".docx", b"PK\x03\x04kaputt"), (".odt", b""), (".pdf", b"%PDF-1.7\nohne Ende"), (".rtf", b"{\\rtf1 offen"),
-    (".doc", b"kein OLE"), (".txt", b"\xff\xfe\xfa"),
+    (".txt", b"\xff\xfe\xfa"),
 ])
 def test_ungueltige_neue_fassung_ersetzt_nichts(tmp_path, endung, daten):
     p = tmp_path / ("ziel" + endung); p.write_bytes(b"BISHER")

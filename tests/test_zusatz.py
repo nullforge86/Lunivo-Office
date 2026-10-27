@@ -66,14 +66,15 @@ def test_zusatz_roundtrip(app, tmp_path):
 
 
 def test_zusatz_datei_oeffnet_in_libreoffice(app, tmp_path):
-    from lunivo_writer.services.integrations import libreoffice
-    if not libreoffice.verfuegbar():
+    import shutil
+    soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
+    if not soffice:
         pytest.skip("LibreOffice nicht installiert")
     out = str(tmp_path / "z.docx")
     docx_writer.write_docx(out, _dokument(), PageSettings(), META)
     pdf = str(tmp_path / "z.pdf")
     import subprocess
-    r = subprocess.run([libreoffice.finde_soffice(), "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
+    r = subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
                        capture_output=True, timeout=120)
     assert os.path.exists(pdf), r.stderr
     import pypdf

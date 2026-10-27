@@ -9,7 +9,6 @@ Geschriebene und Gelernte:
 
 | | wofür | Größe | nötig? |
 |---|---|---|---|
-| | Word-Dateien, PDF, EPUB | ~700 MB | nur dafür |
 | [LanguageTool](https://languagetool.org/) | „Gründlich prüfen" | ~400 MB | nein, freiwillig |
 | [Piper](https://github.com/rhasspy/piper) + Thorsten | eine Stimme, die nicht nach Maschine klingt | ~90 MB | nein, `./stimme-holen.sh` |
 | Schriften zum leichteren Lesen | OpenDyslexic, Lexend, Atkinson Hyperlegible | ~4 MB | nein, `./schrift-holen.sh` |

@@ -23,8 +23,3 @@ class ExternBefehle:
     def mitWpsOeffnen(self, k=None):
         from lunivo_writer.services.integrations import wps
         self._extern(wps.oeffnen, "WPS Writer")
-
-
-    def mitLibreOfficeOeffnen(self, k=None):
-        from lunivo_writer.services.integrations import wps
-        self._extern(wps.mit_libreoffice_oeffnen, "LibreOffice")

@@ -41,11 +41,11 @@ EINTRAEGE = [
 ]
 
 EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "exportierenDocx"),
-           ("Word 97–2003 (.doc, optional)", "exportierenDoc"), ("OpenDocument-Text (.odt)", "exportierenOdt"),
+           ("OpenDocument-Text (.odt)", "exportierenOdt"),
            ("Rich-Text-Format (.rtf)", "exportierenRtf"), ("Nur Text (.txt)", "exportierenTxt"),
            ("Bild der Seite (.png)", "exportierenPng")]
 
-EXPORT_ENDUNG = {"speichernPdf": ".pdf", "exportierenDocx": ".docx", "exportierenDoc": ".doc", "exportierenOdt": ".odt",
+EXPORT_ENDUNG = {"speichernPdf": ".pdf", "exportierenDocx": ".docx", "exportierenOdt": ".odt",
                  "exportierenRtf": ".rtf", "exportierenTxt": ".txt", "exportierenPng": ".png"}
 
 BREITE = 460

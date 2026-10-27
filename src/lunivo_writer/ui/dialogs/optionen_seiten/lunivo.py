@@ -266,7 +266,7 @@ class LunivoSeiten:
 
 
     def _erweitert(self, titel):
-        from lunivo_writer.services.integrations import languagetool, libreoffice
+        from lunivo_writer.services.integrations import languagetool
         from lunivo_writer.services.settings_service import data_dir
         p = _Seite(self.w, titel)
 
@@ -284,15 +284,12 @@ class LunivoSeiten:
             mb = gesamt / 1048576
             return "" if not gesamt else (f"{mb:.0f} MB" if mb >= 10 else f"{mb:.1f} MB".replace(".", ","))
 
-        soffice = libreoffice.finde_soffice()
-        lo_pfad = os.path.dirname(os.path.realpath(soffice)) if soffice else ""
         lt = languagetool.jar_finden()
         _prog, piper = vorlesen.piper_programm()
         stimmen = vorlesen.piper_stimmen() if piper else []
         schriften = [n for n in LESESCHRIFTEN if n in QFontDatabase.families()]
         schr_ordner = os.path.expanduser("~/.local/share/fonts/lunivo-office")
         karten = [
-            ("Umwandlungsprogramm", "ODT, DOC, RTF und EPUB", bool(soffice), lo_pfad, "nicht installiert"),
             ("LanguageTool", "„Gründlich prüfen“ — Grammatik über die eigenen Regeln hinaus", bool(lt), languagetool.ordner(), "./… holen"),
             (f"Stimmen zum Vorlesen ({len(stimmen)})", "aufgenommene Stimmen statt der blechernen des Systems", bool(stimmen), piper, "stimme-holen.sh"),
             (f"Schriften zum leichteren Lesen ({len(schriften)})", ", ".join(schriften) or "OpenDyslexic, Lexend, Atkinson Hyperlegible",

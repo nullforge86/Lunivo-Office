@@ -35,7 +35,7 @@ src/lunivo_writer/
  statusbar/ status_bar.py
  editor/ Dokumentlogik: pagination (Seiten, PDF, Druck), stile, umbruch, formular, verzeichnis, verweise, …
  models/ page.py (Seiteneinrichtung), report.py (Bericht über nicht Übernommenes)
- services/ file_service.py (DOCX/ODT/DOC/RTF/TXT), docx_reader/writer, settings_service.py, recovery.py,
+ services/ file_service.py (DOCX/ODT/RTF/TXT), docx_reader/writer, odt_reader/writer, rtf_reader/writer, settings_service.py, recovery.py,
  bausteine.py, gelernt.py, vorlesen.py, integrations/ (, LanguageTool, )
  ai/ ki.py (Anbieter, Aufgaben), ai_service.py (Dienst für die Oberfläche)
  proofing/ pruefung.py (Regeln), proofing_service.py (Schreibhilfe), vorhersage, autokorrektur, barrierefreiheit, silben_de

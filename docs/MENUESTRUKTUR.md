@@ -10,7 +10,7 @@ Erzeugt von `werkzeug/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 B
 | ✅ | Neu: Leeres Dokument · Aus Vorlage erstellen · Vorlagen durchsuchen | Backstage ▸ Neues Dokument / Von Vorlage; zehn Vorlagen |
 | ✅ | Öffnen · Zuletzt verwendete Dokumente | Backstage ▸ Öffnen, Zuletzt benutzte Dokumente |
 | ✅ | Speichern · Speichern unter · Kopie speichern | Backstage ▸ Speichern, Speichern als |
-| ✅ | Exportieren: PDF · DOCX · DOC (optional) · RTF · TXT | Speichern als; dazu ODT und PNG; DOC/ODT/RTF brauchen |
+| ✅ | Exportieren: PDF · DOCX · DOC (optional) · RTF · TXT | Speichern als; dazu ODT und PNG; DOC entfällt (altes Binärformat), alles andere schreibt Lunivo selbst |
 | ✅ | Drucken: Druckvorschau · Drucker auswählen | Backstage ▸ Drucken |
 | ◐ | Drucken: Seitenbereich · Druckeinstellungen | im Druckfenster des Systems; was gedruckt wird: Optionen ▸ Drucken |
 | ✅ | Dokumentinformationen | Backstage ▸ Info (Statistik, Verfasser, Titel) |
