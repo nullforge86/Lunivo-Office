@@ -72,7 +72,7 @@ Jeder Speichervorgang — DOCX, TXT, ODT, DOC, RTF, PDF, auch Vorlagen — läuf
 - die Datei seit dem Öffnen oder letzten Speichern **außerhalb von Lunivo geändert** wurde (Änderungszeit oder Größe weichen ab) —
   etwa durch ein anderes Programm oder die Synchronisierung eines Cloud-Ordners. Abbrechen lässt die Datei unberührt; Überschreiben
   legt die fremde Fassung in die Sicherungskopien.
-- LibreOffice die Datei offen hat (Sperrdatei `.~lock.<name>#`).
+- ein anderes Office-Programm die Datei offen hat (LibreOffice-Sperrdatei `.~lock.<name>#`).
 
 **Erfolg** meldet die Statusleiste erst nach dem Ersetzen. Bei einem Fehler erscheint eine verständliche Meldung (z. B. „Auf dem
 Datenträger ist nicht genug Platz. Die bisherige Datei ist unverändert.“), das Dokument bleibt geöffnet, bearbeitbar und als geändert markiert.

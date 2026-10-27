@@ -337,7 +337,7 @@ def test_libreoffice_sperrdatei_wird_erkannt(tmp_path):
     p = tmp_path / "offen.odt"; p.write_bytes(b"x")
     assert S.fremd_geoeffnet(str(p)) is None
     (tmp_path / ".~lock.offen.odt#").write_text("kay,host,...")
-    assert S.fremd_geoeffnet(str(p)) == "LibreOffice"
+    assert S.fremd_geoeffnet(str(p)) == "einem anderen Office-Programm"
 
 
 # ---- Oberfläche: fremde Änderung (Synchronisierung), PDF, Statusmeldung ---------------------------------------------------------

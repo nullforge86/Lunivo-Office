@@ -329,8 +329,8 @@ Unten auf der Seite:
 
 PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, das Dokument bleibt bei seiner Datei. Als Bild der Seite (`.png`) geht es über **Exportieren**.
 
-Für `.odt`, `.doc` und `.rtf` braucht das Programm LibreOffice auf dem Rechner (`sudo apt install libreoffice-writer`). Es wandelt aus der
-Word-Fassung um; was dabei anders aussieht, hängt von LibreOffice ab (z. B. Formularfelder, Formen, besondere Rahmen). `.docx` und
+Für `.odt`, `.doc` und `.rtf` braucht das Programm ein Umwandlungsprogramm auf dem Rechner. Es wandelt aus der Word-Fassung um;
+was dabei anders aussieht, hängt vom Umwandlungsprogramm ab (z. B. Formularfelder, Formen, besondere Rahmen). `.docx` und
 `.txt` gehen immer. In `.txt` bleiben nur Buchstaben — Formatierung, Tabellen und Bilder gehen verloren, das Programm sagt es.
 
 **So schützt Lunivo die Datei:** Die neue Fassung wird erst neben der alten geschrieben und geprüft; erst dann ersetzt sie die alte.

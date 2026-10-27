@@ -167,7 +167,7 @@ class DateienBaustein:
         programm = sicher_schreiben.fremd_geoeffnet(path) if jetzt else None
         if programm:
             box = QMessageBox(QMessageBox.Warning, "Datei ist geöffnet",
-                              f"„{name}“ ist gerade in {programm} geöffnet. Speichert {programm} danach, überschreibt es diese Fassung.",
+                              f"„{name}“ ist gerade in {programm} geöffnet. Speichert es die Datei danach, überschreibt es diese Fassung.",
                               QMessageBox.Cancel, self)
             weiter = box.addButton("Trotzdem speichern", QMessageBox.AcceptRole)
             box.setDefaultButton(QMessageBox.Cancel)
@@ -203,7 +203,7 @@ class DateienBaustein:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
             tab.datei_stand = sicher_schreiben.stand(path)
-        hinweis = " (über LibreOffice umgewandelt; Grenzen siehe Hilfe ▸ Speichern)" if umwandeln else ""
+        hinweis = " (über das Umwandlungsprogramm erzeugt; Grenzen siehe Hilfe ▸ Speichern)" if umwandeln else ""
         self.statusBar().showMessage(f"Gespeichert: {path}{hinweis}", 6000 if umwandeln else 4000)
         self._show_report(rep, "Hinweise zum Speichern", "beim Speichern")
         return True
