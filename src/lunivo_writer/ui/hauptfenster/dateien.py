@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from PySide6.QtCore import QTimer, QUrl, Qt
+from PySide6.QtCore import QEventLoop, QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox, QProgressDialog
+from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.models.report import DocumentIOError, IOReport, PasswortNoetig
@@ -149,27 +149,23 @@ class DateienBaustein:
     def _write(self, tab: DocumentTab, path: str, mark_saved: bool = True) -> bool:
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
-        fortschritt = None
+        umwandeln = formats.ext(path) in (".odt", ".doc", ".rtf")
+        if umwandeln:
+            self.statusBar().showMessage(f"Wird gespeichert: {path}")
+            QApplication.setOverrideCursor(Qt.BusyCursor)
 
         def warten() -> bool:
-            """Während der Umwandlung über das Umwandlungsprogramm: Fenster bleibt gezeichnet, Abbrechen ist möglich."""
-            nonlocal fortschritt
-            if fortschritt is None:
-                fortschritt = QProgressDialog("Das Dokument wird umgewandelt …", "Abbrechen", 0, 0, self)
-                fortschritt.setWindowTitle("Speichern")
-                fortschritt.setWindowModality(Qt.WindowModal)
-                fortschritt.setMinimumDuration(0)
-                fortschritt.show()
-            QApplication.processEvents()
-            return not fortschritt.wasCanceled()
+            """Während der Umwandlung im Hintergrund: Fenster bleibt gezeichnet, Eingaben warten bis zum Ende."""
+            QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+            return True
 
         try:
             rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta, warten)
         except DocumentIOError as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", str(e)); return False
         finally:
-            if fortschritt is not None:
-                fortschritt.close(); fortschritt.deleteLater()
+            if umwandeln:
+                QApplication.restoreOverrideCursor()
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
