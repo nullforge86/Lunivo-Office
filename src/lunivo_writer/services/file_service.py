@@ -191,10 +191,8 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
         if libreoffice.verfuegbar():
             with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
                 zwischen = os.path.join(tmp, "dokument.docx")
-                docx_writer.write_docx(zwischen, doc, page, meta)
+                rep = docx_writer.write_docx(zwischen, doc, page, meta)        # meldet, was schon in DOCX nicht passt
                 libreoffice.aus_docx(zwischen, path, warten)
-            rep.warn(f"{e[1:].upper()} wurde über das Umwandlungsprogramm aus der DOCX-Fassung erzeugt. "
-                     "Die Treue zum Original hängt vom Umwandlungsprogramm ab.")
             return rep
         if e != ".odt":
             raise DocumentIOError(f"{e[1:].upper()} braucht das Umwandlungsprogramm; es ist nicht installiert.")

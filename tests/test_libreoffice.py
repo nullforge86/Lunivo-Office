@@ -25,7 +25,7 @@ def test_roundtrip_ueber_libreoffice(app, tmp_path, ext):
     l = formats.load(_beispiel(tmp_path))
     out = str(tmp_path / ("x" + ext))
     rep = formats.save(out, l.doc, l.page, l.meta)
-    assert os.path.getsize(out) > 500 and any("Umwandlungsprogramm" in w for w in rep.warnings)
+    assert os.path.getsize(out) > 500 and not rep.warnings          # Speichern in ein anderes Format ohne Hinweisfenster
     back = formats.load(out)
     txt = back.doc.toPlainText()
     assert "Überschrift" in txt and "Normaler Text mit Fett" in txt and "Punkt" in txt
@@ -52,7 +52,7 @@ def test_kaputte_datei(app, tmp_path):
 
 
 def test_speichern_unter_odt_im_fenster(app, tmp_path, monkeypatch):
-    """Die Umwandlung läuft mit Fortschrittsfenster; danach gehört das Dokument zur ODT-Datei."""
+    """Speichern als ODT ohne Zusatzfenster; danach gehört das Dokument zur ODT-Datei."""
     from PySide6.QtCore import QSettings
     from PySide6.QtWidgets import QMessageBox
     from lunivo_writer.services.settings_service import Settings
@@ -62,7 +62,8 @@ def test_speichern_unter_odt_im_fenster(app, tmp_path, monkeypatch):
     ziel = str(tmp_path / "brief.odt")
     monkeypatch.setattr("lunivo_writer.ui.hauptfenster.dateien.QFileDialog.getSaveFileName",
                         lambda *a, **k: (ziel, "OpenDocument-Text (*.odt)"))
-    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
-    assert w.save_as_format(".odt")
+    hinweise = []
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: hinweise.append(a))
+    assert w.save_as_format(".odt") and not hinweise
     assert os.path.getsize(ziel) > 500 and w.current_tab().path == ziel
     assert "Hallo ODT" in formats.load(ziel).doc.toPlainText()
