@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import io
 import os
-import tempfile
 from typing import Optional
 
 import docx
@@ -1273,19 +1272,19 @@ class _CellBox:
         return self.cell.add_table(r, c)
 
 
-def write_docx(path: str, qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None) -> IOReport:
-    """Schreibt atomar (Temp-Datei, dann umbenennen). Wirft DocumentIOError."""
+def docx_daten(qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None) -> tuple[bytes, IOReport]:
+    """Baut die DOCX-Datei im Speicher. → (Inhalt, Bericht). Wirft DocumentIOError."""
     w = _Writer(qdoc, page, meta or {})
     try:
         data = w.run()
     except Exception as e:
         raise DocumentIOError(f"Das Dokument konnte nicht als DOCX aufgebaut werden: {e}") from e
-    folder = os.path.dirname(os.path.abspath(path))
-    try:
-        fd, tmp = tempfile.mkstemp(dir=folder, suffix=".tmp")
-        with os.fdopen(fd, "wb") as fh:
-            fh.write(data)
-        os.replace(tmp, path)
-    except OSError as e:
-        raise DocumentIOError(f"Speichern nicht möglich: {e.strerror or e}") from e
-    return w.report
+    return data, w.report
+
+
+def write_docx(path: str, qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None, sicherung: bool = True) -> IOReport:
+    """Schreibt über den sicheren Schreibweg (Temp-Datei, Prüfung, Umbenennen). Wirft DocumentIOError."""
+    from lunivo_writer.services import sicher_schreiben
+    data, report = docx_daten(qdoc, page, meta)
+    sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung)
+    return report
