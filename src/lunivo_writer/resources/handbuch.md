@@ -324,12 +324,19 @@ Unten auf der Seite:
 
 |  |  |
 |---|---|
-| `Strg+S` | Speichern — in dem Format, in dem die Datei kam. |
-| `☰ Menü → Speichern als` | Speichern unter, Kopie speichern und die Ausgabeformate. |
+| `Strg+S` | Speichern — `.docx` und `.txt` direkt; bei anderen Formaten öffnet sich das Speichern-Fenster. |
+| `☰ Menü → Speichern unter` | Ein Fenster für alles: Dateiname und **Dateityp** (`.docx`, `.odt`, `.doc`, `.rtf`, `.txt`, `.pdf`). |
 
-Gespeichert wird als `.docx` oder `.txt`. Als Ausgabe gibt es außerdem **PDF**, **ODT**, **RTF**, **DOC** (optional) und **Bild der Seite** (`.png`). PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, nicht gespeichert.
+PDF ist kein Format zum Weiterschreiben: Es wird ausgegeben, das Dokument bleibt bei seiner Datei. Als Bild der Seite (`.png`) geht es über **Exportieren**.
 
-Für die Formate `.odt`, `.doc` und `.rtf` braucht das Programm ein Umwandlungsprogramm auf dem Rechner. Fehlt es, meldet das Programm es; `.docx` und `.txt` gehen immer.
+Für `.odt`, `.doc` und `.rtf` braucht das Programm LibreOffice auf dem Rechner (`sudo apt install libreoffice-writer`). Es wandelt aus der
+Word-Fassung um; was dabei anders aussieht, hängt von LibreOffice ab (z. B. Formularfelder, Formen, besondere Rahmen). `.docx` und
+`.txt` gehen immer. In `.txt` bleiben nur Buchstaben — Formatierung, Tabellen und Bilder gehen verloren, das Programm sagt es.
+
+**So schützt Lunivo die Datei:** Die neue Fassung wird erst neben der alten geschrieben und geprüft; erst dann ersetzt sie die alte.
+Geht dabei etwas schief (Datenträger voll, keine Rechte, Absturz), bleibt die bisherige Datei unverändert. Die letzten fünf
+Vorfassungen jedes Dokuments liegen 30 Tage lang unter `Optionen → Speichern → Sicherungskopien öffnen …`. Hat ein anderes Programm oder
+die Synchronisierung eines Cloud-Ordners die Datei inzwischen geändert, fragt Lunivo vor dem Überschreiben.
 
 ## Drucken
 

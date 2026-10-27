@@ -9,6 +9,7 @@ from PySide6.QtPrintSupport import QPrintDialog, QPrinter
 from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
+from lunivo_writer.services import sicher_schreiben
 from lunivo_writer.models.report import DocumentIOError, IOReport, PasswortNoetig
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.editor.pagination import export_pdf
@@ -72,6 +73,7 @@ class DateienBaustein:
             self.dokumente.vergessen(path)
             return False
         tab = DocumentTab(loaded, path)
+        tab.datei_stand = sicher_schreiben.stand(path)
         self._add_tab(tab)
         if not self.settings.get_bool("sicherheit/markup_oeffnen", True):
             tab.editor.set_markup(False)
@@ -146,7 +148,38 @@ class DateienBaustein:
         return True
 
 
+    def _darf_ueberschreiben(self, tab: DocumentTab, path: str) -> bool:
+        """Fragt nach, bevor eine Datei überschrieben wird, die außerhalb von Lunivo geändert wurde oder offen ist."""
+        name = os.path.basename(path)
+        bekannt = getattr(tab, "datei_stand", None)
+        jetzt = sicher_schreiben.stand(path)
+        if tab.path and os.path.abspath(tab.path) == os.path.abspath(path) and bekannt and jetzt and jetzt != bekannt:
+            box = QMessageBox(QMessageBox.Warning, "Datei wurde geändert",
+                              f"„{name}“ wurde seit dem Öffnen oder letzten Speichern außerhalb von Lunivo geändert "
+                              "(z. B. durch ein anderes Programm oder die Synchronisierung eines Cloud-Ordners).\n\n"
+                              "Beim Überschreiben gehen diese Änderungen verloren. Die bisherige Fassung kommt in die Sicherungskopien.",
+                              QMessageBox.Cancel, self)
+            ueber = box.addButton("Trotzdem überschreiben", QMessageBox.DestructiveRole)
+            box.setDefaultButton(QMessageBox.Cancel)
+            box.exec()
+            if box.clickedButton() is not ueber:
+                return False
+        programm = sicher_schreiben.fremd_geoeffnet(path) if jetzt else None
+        if programm:
+            box = QMessageBox(QMessageBox.Warning, "Datei ist geöffnet",
+                              f"„{name}“ ist gerade in {programm} geöffnet. Speichert {programm} danach, überschreibt es diese Fassung.",
+                              QMessageBox.Cancel, self)
+            weiter = box.addButton("Trotzdem speichern", QMessageBox.AcceptRole)
+            box.setDefaultButton(QMessageBox.Cancel)
+            box.exec()
+            if box.clickedButton() is not weiter:
+                return False
+        return True
+
+
     def _write(self, tab: DocumentTab, path: str, mark_saved: bool = True) -> bool:
+        if not self._darf_ueberschreiben(tab, path):
+            return False
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
         umwandeln = formats.ext(path) in (".odt", ".doc", ".rtf")
@@ -169,7 +202,9 @@ class DateienBaustein:
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
-        self.statusBar().showMessage(f"Gespeichert: {path}", 4000)
+            tab.datei_stand = sicher_schreiben.stand(path)
+        hinweis = " (über LibreOffice umgewandelt; Grenzen siehe Hilfe ▸ Speichern)" if umwandeln else ""
+        self.statusBar().showMessage(f"Gespeichert: {path}{hinweis}", 6000 if umwandeln else 4000)
         self._show_report(rep, "Hinweise zum Speichern", "beim Speichern")
         return True
 
@@ -202,11 +237,12 @@ class DateienBaustein:
             komm = None
             if sg("pdf/kommentare", False):
                 komm = {kid: f'{k.get("autor", "")}: {k.get("text", "")}'.strip(": ") for kid, k in t.editor.kommentare.items()}
-            n = export_pdf(path, t.editor.document(), t.page, os.path.splitext(t.title)[0], autor, t.editor.noten, lz,
-                           self._silben_fuer_druck(), komm,
-                           {k: v for k, v in self.druckoptionen().items()
-                            if k in ("versteckt", "felder_code", "zeichnungen", "balken", "hervorhebungen", "textmarken", "textgrenzen", "zuschnitt",
-                                     "notenlinks", "blasen", "nur_formular")})
+            extra = {k: v for k, v in self.druckoptionen().items()
+                     if k in ("versteckt", "felder_code", "zeichnungen", "balken", "hervorhebungen", "textmarken", "textgrenzen", "zuschnitt",
+                              "notenlinks", "blasen", "nur_formular")}
+            n = sicher_schreiben.schreiben(path, lambda tmp: export_pdf(
+                tmp, t.editor.document(), t.page, os.path.splitext(t.title)[0], autor, t.editor.noten, lz,
+                self._silben_fuer_druck(), komm, extra), endung=".pdf")
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
             QMessageBox.critical(self, "PDF-Export fehlgeschlagen", str(e)); return False
         self.statusBar().showMessage(f"PDF gespeichert ({n} Seiten): {path}", 5000)

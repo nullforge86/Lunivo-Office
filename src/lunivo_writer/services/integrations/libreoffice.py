@@ -104,15 +104,9 @@ def in_docx(pfad: str) -> tuple[str, tempfile.TemporaryDirectory]:
 
 
 def aus_docx(docx_pfad: str, ziel_pfad: str, warten: Callable[[], bool] | None = None) -> None:
-    """DOCX → ODT/DOC/RTF nach `ziel_pfad` (atomar kopiert)."""
+    """DOCX → ODT/DOC/RTF nach `ziel_pfad` (über den sicheren Schreibweg)."""
+    from lunivo_writer.services import sicher_schreiben
     ext = os.path.splitext(ziel_pfad)[1].lstrip(".").lower()
     with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
         fertig = konvertiere(docx_pfad, ext, tmp, warten)
-        folder = os.path.dirname(os.path.abspath(ziel_pfad))
-        try:
-            fd, t = tempfile.mkstemp(dir=folder, suffix=".tmp")
-            os.close(fd)
-            shutil.copyfile(fertig, t)
-            os.replace(t, ziel_pfad)
-        except OSError as e:
-            raise DocumentIOError(f"Speichern nicht möglich: {e.strerror or e}") from e
+        sicher_schreiben.schreiben(ziel_pfad, lambda t: shutil.copyfile(fertig, t))

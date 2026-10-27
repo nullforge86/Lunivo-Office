@@ -58,7 +58,7 @@ class DocumentManager:
                 continue
             docx_path, _ = recovery.paths(t.token)
             try:
-                formats.save(docx_path, t.editor.document(), t.page, t.meta)
+                formats.save(docx_path, t.editor.document(), t.page, t.meta, sicherung=False)
                 recovery.write_meta(t.token, t.path or "", t.title)
                 if self.settings.get_bool("sicherung/staende", False):
                     recovery.zwischenstand(t.token, t.title, self.settings.get_int("sicherung/tage", 7))

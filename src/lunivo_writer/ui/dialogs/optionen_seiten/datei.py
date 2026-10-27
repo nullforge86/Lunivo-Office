@@ -100,6 +100,8 @@ class DateiSeiten:
         f = p.unter(e, "Zwischenstände")
         p.zahl(f, "sicherung/tage", "Aufbewahren (Tage)", 1, 365, 7, " Tage")
         p.aktion("Zwischenstände löschen", "Zwischenstände löschen", self._zwischenstaende_loeschen)
+        p.aktion("Vorfassungen gespeicherter Dokumente (je Dokument die letzten fünf, höchstens 30 Tage)", "Sicherungskopien öffnen …",
+                 self._sicherungskopien_oeffnen)
         f = p.unter(e, "Gedächtnis und Wörterbuch sichern")
         p.aktion("Sichern und zurückholen", "Sichern …", self._daten_sichern)
         zb = QPushButton("Einspielen …"); zb.clicked.connect(self._daten_zurueckholen)
@@ -128,6 +130,15 @@ class DateiSeiten:
             except OSError:
                 pass
         QMessageBox.information(self, "Zwischenstände löschen", f"{n} Zwischenstände gelöscht.")
+
+
+    def _sicherungskopien_oeffnen(self):
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+        from lunivo_writer.services import sicher_schreiben
+        ordner = sicher_schreiben.sicherungs_ordner()
+        os.makedirs(ordner, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(ordner))
 
 
     def _daten_sichern(self):

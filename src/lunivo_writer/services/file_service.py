@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 from dataclasses import dataclass
 from typing import Callable
@@ -155,28 +156,21 @@ def _has_rich_content(doc: QTextDocument) -> bool:
 
 
 def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None,
-         warten: Callable[[], bool] | None = None) -> IOReport:
-    """Speichert nach Endung. `warten` wird während einer Umwandlung über das Umwandlungsprogramm regelmäßig gerufen."""
+         warten: Callable[[], bool] | None = None, sicherung: bool = True) -> IOReport:
+    """Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
+    Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. `warten` wird während einer Umwandlung über das
+    Umwandlungsprogramm regelmäßig gerufen."""
     from lunivo_writer.editor import lese_zeilenluft
+    from lunivo_writer.services import sicher_schreiben
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
         doc = lese_zeilenluft.bereinigte_kopie(doc)
     e = ext(path)
     if e == ".docx":
+        data, rep = docx_writer.docx_daten(doc, page, meta)
         kw = (meta or {}).get("kennwort")
-        if not kw:
-            return docx_writer.write_docx(path, doc, page, meta)
-        try:
-            import msoffcrypto
-        except ImportError as ex:
-            raise DocumentIOError("Zum Verschlüsseln wird das Paket „msoffcrypto-tool“ gebraucht.") from ex
-        with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
-            klar = os.path.join(tmp, "klar.docx")
-            rep = docx_writer.write_docx(klar, doc, page, meta)
-            enc = os.path.join(tmp, "enc.docx")
-            with open(klar, "rb") as fh, open(enc, "wb") as out:
-                msoffcrypto.OfficeFile(fh).encrypt(kw, out)
-            with open(enc, "rb") as fh:
-                _atomic_write(path, fh.read())
+        if kw:
+            data = _verschluesseln(data, kw)
+        sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung)
         return rep
     rep = IOReport()
     if e == ".txt":
@@ -184,33 +178,41 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
             rep.warn("Als Textdatei gehen Formatierung, Listen, Tabellen und Bilder verloren.")
         if not page.header.is_empty() or not page.footer.is_empty():
             rep.warn("Kopf- und Fußzeile werden in der Textdatei nicht gespeichert.")
-        _atomic_write(path, doc.toPlainText().replace(" ", "\n").encode("utf-8"))
+        sicher_schreiben.bytes_schreiben(path, doc.toPlainText().replace("\u2028", "\n").encode("utf-8"), sicherung=sicherung)
         return rep
     if e in (".odt", ".doc", ".rtf"):
         from lunivo_writer.services.integrations import libreoffice
         if libreoffice.verfuegbar():
+            data, rep = docx_writer.docx_daten(doc, page, meta)          # meldet, was schon in DOCX nicht passt
             with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
                 zwischen = os.path.join(tmp, "dokument.docx")
-                rep = docx_writer.write_docx(zwischen, doc, page, meta)        # meldet, was schon in DOCX nicht passt
-                libreoffice.aus_docx(zwischen, path, warten)
+                with open(zwischen, "wb") as fh:
+                    fh.write(data)
+                fertig = libreoffice.konvertiere(zwischen, e[1:], tmp, warten)
+                sicher_schreiben.schreiben(path, lambda t: shutil.copyfile(fertig, t), sicherung=sicherung)
             return rep
         if e != ".odt":
             raise DocumentIOError(f"{e[1:].upper()} braucht das Umwandlungsprogramm; es ist nicht installiert.")
         rep.warn("ODT wurde ohne Umwandlungsprogramm über Qt geschrieben (Text, Formatierung, Tabellen, Bilder). "
                  "Seitenrand, Kopf- und Fußzeile sind darin nicht enthalten.")
-        w = QTextDocumentWriter(path, b"ODF")
-        if not w.write(doc):
-            raise DocumentIOError("Die ODT-Datei konnte nicht geschrieben werden.")
+
+        def qt_odt(t: str) -> None:
+            if not QTextDocumentWriter(t, b"ODF").write(doc):
+                raise DocumentIOError("Die ODT-Datei konnte nicht geschrieben werden.")
+        sicher_schreiben.schreiben(path, qt_odt, sicherung=sicherung)
         return rep
     raise DocumentIOError(f"Das Format „{e}“ kann nicht gespeichert werden.")
 
 
-def _atomic_write(path: str, data: bytes) -> None:
-    folder = os.path.dirname(os.path.abspath(path))
+def _verschluesseln(data: bytes, kennwort: str) -> bytes:
     try:
-        fd, tmp = tempfile.mkstemp(dir=folder, suffix=".tmp")
-        with os.fdopen(fd, "wb") as fh:
-            fh.write(data)
-        os.replace(tmp, path)
-    except OSError as ex:
-        raise DocumentIOError(f"Speichern nicht möglich: {ex.strerror or ex}") from ex
+        import msoffcrypto
+    except ImportError as ex:
+        raise DocumentIOError("Zum Verschlüsseln wird das Paket „msoffcrypto-tool“ gebraucht.") from ex
+    import io
+    out = io.BytesIO()
+    try:
+        msoffcrypto.OfficeFile(io.BytesIO(data)).encrypt(kennwort, out)
+    except Exception as ex:
+        raise DocumentIOError(f"Das Dokument konnte nicht verschlüsselt werden: {ex}") from ex
+    return out.getvalue()
