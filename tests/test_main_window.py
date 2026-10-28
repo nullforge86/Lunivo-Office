@@ -662,3 +662,30 @@ def test_dateifenster_speichern_mit_filter(app, tmp_path, monkeypatch):
     monkeypatch.setattr(SF.SpeichernFenster, "exec", exec_)
     pfad, _f = SF.Dateifenster.getSaveFileName(None, "Sichern", str(tmp_path / "lunivo-sicherung.zip"), "ZIP (*.zip)")
     assert pfad == str(tmp_path / "lunivo-sicherung.zip") and gesehen == {"typ": "ZIP (*.zip)", "name": "lunivo-sicherung.zip"}
+
+
+def test_dateifenster_spaltenkoepfe_deutsch(app, tmp_path):
+    from PySide6.QtCore import Qt
+    from lunivo_writer.ui.baukasten.speichern_fenster import SpeichernFenster
+    f = SpeichernFenster(None, "Dateiobjekt einfügen", str(tmp_path / "a.docx"), [(".docx", "Word-Dokument (*.docx)")], ".docx")
+    koepfe = [f.modell.headerData(i, Qt.Horizontal) for i in range(4)]
+    assert koepfe == ["Name", "Größe", "Typ", "Geändert"]
+
+
+def test_suchoption_zaehlt_treffer_neu(app, tmp_path):
+    w = win(tmp_path); w.new_document(); w.show()
+    e = w.current_editor(); e.setPlainText("abc ABC abc Abc")
+    nav = w.navigation; nav.suche_zeigen("abc")
+    vorher = nav.treffer.text()
+    nav.gross.setChecked(True)
+    assert nav.treffer.text() != vorher and "2" in nav.treffer.text()
+    assert len(e._such_bereiche) == 2
+
+
+def test_kommentar_im_leeren_absatz_erscheint_in_der_seitenleiste(app, tmp_path):
+    w = win(tmp_path); w.new_document(); w.show()
+    e = w.current_editor()
+    kid = e.kommentar_neu("Im leeren Absatz")                 # bei geschlossener Leiste angelegt
+    assert kid is not None and e.kommentar_bereiche()
+    w._links_klick("kommentare")
+    assert w.navigation.anzahl("kommentare") == 1
