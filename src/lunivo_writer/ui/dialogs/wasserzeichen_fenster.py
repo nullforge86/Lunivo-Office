@@ -13,7 +13,7 @@ import os
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPen
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFontComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox, QVBoxLayout,
+    QCheckBox, QComboBox, QDialog, QFontComboBox, QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox, QVBoxLayout,
 )
 
 from lunivo_writer.editor import wasserzeichen as WZ
