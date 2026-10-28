@@ -32,6 +32,25 @@ _ZEILEN = (("faktor", 1.0, "Einfach"), ("faktor", 1.5, "1,5 Zeilen"), ("faktor",
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+
+
+def aus_block(bf: QTextBlockFormat) -> dict:
+    """Die Werte eines Absatzformats für das Fenster (Gegenstück zu ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
+    from lunivo_writer.editor import seitenfluss
+    from lunivo_writer.editor.zusatz import abstand_davor_px
+    from lunivo_writer.models.page import px_to_mm
+    from lunivo_writer.ui.baukasten.tabstopp_dialog import aus_block as tabs_aus_block
+    lh = bf.lineHeight() / 100 if bf.lineHeightType() == 1 and bf.lineHeight() else 1.0
+    lart = {2: "genau", 3: "mindestens"}.get(int(bf.lineHeightType()), "faktor")
+    lpt = round(bf.lineHeight() * 0.75, 1) if lart != "faktor" else 12.0
+    al = bf.alignment()
+    return {"ausr": "mitte" if al & Qt.AlignHCenter else "rechts" if al & Qt.AlignRight else "block" if al & Qt.AlignJustify else "links",
+            "rtl": bf.layoutDirection() == Qt.RightToLeft, "einzug": px_to_mm(bf.leftMargin()), "rechts": px_to_mm(bf.rightMargin()),
+            "erste": px_to_mm(bf.textIndent()), "vor": abstand_davor_px(bf) * 0.75, "nach": bf.bottomMargin() * 0.75, "zeilen": lh,
+            "zeilen_art": lart, "zeilen_pt": lpt, "ebene": bf.headingLevel(), "opt": absatzopt.lesen(bf),
+            "umbruch": seitenfluss.ist_manuell(bf), "tabs": tabs_aus_block(bf)}
+
+
 class AbsatzDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None, *, umfang: str = "text"):
         super().__init__(parent)

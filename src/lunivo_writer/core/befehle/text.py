@@ -52,16 +52,101 @@ class TextBefehle:
     def an_unter(self): return self._fmt().underlineStyle() != QTextCharFormat.NoUnderline
 
 
+    # Linien im Menü am Knopf „Unterstrichen“ — dieselben acht wie in der Vorlage, als Bild
+    UNTER_MENUE = ("einfach", "doppelt", "dick", "gepunktet", "gestrichelt", "strichpunkt", "strichpunktpunkt", "wellig")
+
+
     def menue_unterstrichKlappe(self):
-        from lunivo_writer.ui.baukasten.text_format import UNTERSTREICHUNG, unter_format
-        m = QMenu()
-        for k, t in UNTERSTREICHUNG[1:]:                              # dieselben Arten wie im Fenster „Schriftart“
-            m.addAction(t, lambda _=False, k=k: self.ed and self.ed._merge(unter_format(k)))
-        m.addSeparator()
-        m.addAction("Keine Unterstreichung", lambda: self.ed and self.ed._merge(unter_format("")))
-        m.addSeparator()
-        m.addAction("Weitere Unterstreichungen …", self.schriftartMehr)             # das Fenster „Schriftart“ mit Art und Farbe der Linie
+        """Wie in der Vorlage: die Linienarten als Bild, „Mehr Unterstreichungen …“ (Fenster Schriftart) und „Unterstreichungsfarbe“ mit der
+        gemeinsamen Farbpalette."""
+        from lunivo_writer.editor.textfx import unter_zeichnen
+        from lunivo_writer.ui.baukasten.linien import linien_menue_zeile
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.text_format import unter_format
+        m = MenueListe()
+        for art in self.UNTER_MENUE:
+            linien_menue_zeile(m, "", art, 1.0, lambda a=art: self.ed and self.ed._merge(unter_format(a)),
+                               maler=lambda p, x0, y, x1, farbe, a=art: unter_zeichnen(p, x0, y, x1, a, farbe))
+        m.trenner()
+        m.eintrag("Mehr Unterstreichungen …", self.schriftartMehr)                  # das Fenster „Schriftart“ mit allen Arten und der Farbe der Linie
+        pal = FarbPalette(m, keine_text="Automatisch", weitere_text="Weitere Unterstreichungsfarben …", titel="Unterstreichungsfarbe")
+        pal.setTitle("Unterstreichungsfarbe")
+        pal.gewaehlt.connect(lambda c: self.ed and self._unterfarbe(c))
+        m.addMenu(pal)
         return m
+
+
+    def _unterfarbe(self, farbe) -> None:
+        """Farbe der Unterstreichung; ist der Text noch nicht unterstrichen, wird er es einfach (wie in der Vorlage)."""
+        from lunivo_writer.ui.baukasten.text_format import unter_format
+        f = QTextCharFormat() if self.an_unter() else unter_format("einfach")
+        f.setUnderlineColor(farbe if farbe is not None else QColor())
+        self.ed._merge(f)
+
+
+    # Knopf „Durchgestrichen“ mit Klappe wie in der Vorlage: Durchgestrichen oder Betonungszeichen; der Knopf führt das zuletzt Gewählte aus
+    _DURCH = (("durch", "Durchgestrichen", "durchgestrichen"), ("betonung", "Betonungszeichen", "betonung"))
+
+
+    def durchJetzt(self, k=None):
+        self.betonung() if getattr(self, "_durch_art", "durch") == "betonung" else self.durch()
+
+
+    def an_durchJetzt(self):
+        return self.an_betonung() if getattr(self, "_durch_art", "durch") == "betonung" else self.an_durch()
+
+
+    def symbolname_durchJetzt(self) -> str:
+        return next(s for a, _t, s in self._DURCH if a == getattr(self, "_durch_art", "durch"))
+
+
+    def menue_durchKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.widgets import icons
+        m = MenueListe()
+        for art, text, symbol in self._DURCH:
+            m.eintrag(text, lambda a=art: self._durch_waehlen(a), symbol=icons.icon(symbol, 16))
+        return m
+
+
+    def _durch_waehlen(self, art: str) -> None:
+        self._durch_art = art
+        self.durchJetzt()
+        self.w.band.aktualisieren()
+
+
+    def betonung(self, k=None):
+        """Betonungszeichen (Punkt über jedem Buchstaben) an- oder ausschalten; andere Zeichen wählt das Fenster „Schriftart“."""
+        from lunivo_writer.editor.zusatz import P_BETONUNG
+        if self.ed:
+            f = QTextCharFormat(); f.setProperty(P_BETONUNG, "" if self.an_betonung() else "punkt")
+            self.ed._merge(f)
+
+
+    def an_betonung(self):
+        from lunivo_writer.editor.zusatz import P_BETONUNG
+        f = self._fmt()
+        return bool(f.hasProperty(P_BETONUNG) and f.stringProperty(P_BETONUNG))
+
+
+    def menue_einstellungenKlappe(self):
+        """Knopf „Einstellungen“ wie in der Vorlage: die Fenster des Reiters Start."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.widgets import icons
+        m = MenueListe()
+        m.eintrag("Schriftart …", self.schriftartMehr, symbol=icons.icon("schriftFenster", 16), kuerzel="Strg+D")
+        m.eintrag("Absatz …", self.einzugGenau, symbol=icons.icon("absatzFenster", 16))
+        m.eintrag("Formatvorlagen und Formatierung …", self.formatvorlagenBereich, symbol=icons.icon("pinsel", 16))
+        return m
+
+
+    def formatvorlagenBereich(self, k=None):
+        """„Formatvorlagen und Formatierung“: die Liste aller Formatvorlagen in der rechten Seitenleiste (wie der Bereich der Vorlage)."""
+        if not self.ed:
+            return
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatvorlagen_bereich import FormatvorlagenBereich
+        ausfuehren(FormatvorlagenBereich(self.w, self.w.current_editor, self.w.stil_anwenden, self.neueFormatvorlage))
 
 
     def objekteWaehlen(self, k=None):
@@ -471,36 +556,25 @@ class TextBefehle:
 
 
     def sortieren(self, k=None):
-        """Sortiert die markierten Absätze; das Fenster „Sortieren“ fragt Art und Reihenfolge, „Optionen …“ die Sortieroptionen."""
+        """Sortiert die markierten Absätze (ohne Markierung das ganze Dokument); „Text sortieren“ fragt Schlüssel, Typ und Richtung,
+        „Option …“ Feldtrenner, Groß-/Kleinschreibung und Sortiersprache."""
         e = self.ed
         if not e:
             return
-        c = e.textCursor()
-        if not c.hasSelection():
-            QMessageBox.information(self.w, "Sortieren", "Bitte zuerst mehrere Absätze markieren.")
-            return
-        a, b = sorted((c.anchor(), c.position()))
-        doc = e.document()
-        bl = doc.findBlock(a)
-        blocks = []
-        while bl.isValid() and bl.position() <= b:
-            blocks.append(bl); bl = bl.next()
-        if len(blocks) < 2:
-            return
-        from lunivo_writer.editor.schreibweise import sortiert
+        from lunivo_writer.editor import schreibweise as S
         from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
         from lunivo_writer.ui.baukasten.sortieren_dialog import SortierenDialog
-        d = SortierenDialog(self.w)
+        c = e.textCursor()
+        doc = e.document()
+        bloecke = S.absaetze(doc, c.selectionStart(), c.selectionEnd()) if c.hasSelection() else S.absaetze(doc)
+        if len(bloecke) < 2:
+            self.w.statusBar().showMessage("Zum Sortieren braucht es mindestens zwei Absätze außerhalb von Tabellen.", 5000)
+            return
+        texte = [b.text() for b in bloecke]
+        d = SortierenDialog(self.w, texte)
         if not ausfuehren(d):
             return
-        neu = sortiert([x.text() for x in blocks], **d.werte())
-        c.beginEditBlock()
-        for blk, t in zip(blocks, neu):
-            cc = QTextCursor(blk)
-            cc.movePosition(QTextCursor.StartOfBlock)
-            cc.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
-            cc.insertText(t)
-        c.endEditBlock()
+        S.umstellen(doc, bloecke, S.reihenfolge(texte, **d.werte()))
 
 
     def menue_absatzSchattierung(self):

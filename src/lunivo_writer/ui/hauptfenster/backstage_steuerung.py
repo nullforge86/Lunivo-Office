@@ -408,7 +408,7 @@ class BackstageBaustein:
         t.editor.page_settings_changed(page)
 
 
-    def find_dialog_show(self):
-        """Strg+F / Strg+H: „Suchen und ersetzen“ als Feld in der linken Seitenleiste."""
+    def find_dialog_show(self, reiter: str = "Suchen", element: str = ""):
+        """Strg+F, Strg+H, Strg+G: „Suchen und ersetzen“ als Feld in der linken Seitenleiste (Reiter Suchen, Ersetzen oder Gehe zu)."""
         if self.current_editor():
-            self.navigation.suche_zeigen()
+            self.navigation.suche_zeigen(reiter=reiter, element=element)

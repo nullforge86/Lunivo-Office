@@ -464,7 +464,7 @@ class DateienBaustein:
         tabelle = [("F3", b.schnellbaustein), ("F4", b.vorlesen), ("F5", self.toggle_sidebar), ("F6", b.welcheHilfe),
                    ("F7", lambda: self.assistant.pruefen(True)), ("F8", b.kiKorrektur),
                    ("Ctrl++", b.groesser), ("Ctrl+-", b.kleiner), ("Ctrl+0", b.normal),
-                   ("Ctrl+D", b.schriftartMehr), ("Ctrl+Alt+V", b.inhalteEinfuegen),
+                   ("Ctrl+D", b.schriftartMehr), ("Ctrl+Alt+V", b.inhalteEinfuegen), ("Ctrl+Alt+T", b.einfuegenUnformatiert),
                    ("Ctrl+Alt+F", b.fussnote), ("Ctrl+Alt+D", b.endnote),
                    ("Ctrl+Shift+H", b.ausblenden), ("Ctrl+Tab", lambda: self._tab_weiter(1)), ("Ctrl+Shift+Tab", lambda: self._tab_weiter(-1))]
         self._kuerzel = []

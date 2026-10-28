@@ -179,6 +179,26 @@ def ausfuehren_in(seite: ZusatzPanel, d: QDialog, vorher: Callable, nachher: Cal
     return bool(ergebnis) and ergebnis[0] == QDialog.Accepted
 
 
+def ausfuehren_im_stapel(stapel: QStackedWidget, d: QDialog, breite: int, hoehe: int) -> bool:
+    """``d`` als Seite in einem anderen Stapel zeigen und warten (wie ``d.exec()``) — zum Beispiel in der linken Seitenleiste, damit ein
+    Unterfenster dort bleibt, wo man arbeitet, und sich nicht die rechte Seitenleiste öffnet. Ist schon eine Seite offen, legt sich ``d`` darüber."""
+    offen = getattr(stapel, "_zusatz_seite", None)
+    if offen is not None:
+        return offen.unter_ausfuehren(d)
+    seite = ZusatzPanel()
+    seite.verfuegbar, seite.verfuegbar_hoehe = breite, hoehe
+    vorher = stapel.currentWidget()
+    stapel.addWidget(seite)
+    stapel._zusatz_seite = seite
+
+    def zurueck() -> None:
+        if vorher is not None:
+            stapel.setCurrentWidget(vorher)
+        stapel.removeWidget(seite); seite.deleteLater()
+        stapel._zusatz_seite = None
+    return ausfuehren_in(seite, d, lambda: stapel.setCurrentWidget(seite), zurueck)
+
+
 def leiste_fuer(d: QDialog):
     """Die Seitenleiste, in der ``d`` sich zeigen soll — oder None (dann wie bisher als Fenster): Panels aus, kein Hauptfenster, oder ein anderes Fenster hält schon den Fokus."""
     from PySide6.QtWidgets import QApplication

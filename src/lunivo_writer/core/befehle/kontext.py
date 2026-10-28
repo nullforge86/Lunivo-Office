@@ -330,13 +330,27 @@ class KontextBefehle:
 
     def wortExtras(self, k=None):
         """Wort-Extras: Absätze aufräumen (Markierung, sonst das ganze Dokument)."""
+        if self.ed:
+            self._popup(self.menue_wortExtrasKlappe())
+
+
+    def menue_wortExtrasKlappe(self):
+        """Das Menü „Wort-Extras“ wie in der Vorlage, mit dem Untermenü „Löschen“; jeder Eintrag ist ein Schritt für Rückgängig."""
         from lunivo_writer.editor import wortextras as W
-        if not self.ed:
-            return
-        m = QMenu()
-        for text, f in W.AKTIONEN:
-            m.addAction(text, lambda _=False, t=text, f=f: self._wort_extra(t, f))
-        self._popup(m)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.widgets import icons
+
+        def fuellen(m, zeilen):
+            for z in zeilen:
+                if z == "-":
+                    m.trenner()
+                elif isinstance(z[2], list):
+                    fuellen(m.untermenue(z[0], icons.icon(z[1], 16)), z[2])
+                else:
+                    m.eintrag(z[0], lambda t=z[0], f=z[2]: self.ed and self._wort_extra(t, f), symbol=icons.icon(z[1], 16))
+        m = MenueListe()
+        fuellen(m, W.MENUE)
+        return m
 
 
     def _wort_extra(self, text, f):

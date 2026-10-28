@@ -13,18 +13,16 @@ def bauen(start: dict) -> dict:
         _k("schere", "Ausschneiden", "ausschneiden", text=True),
         _k("kopie", "Kopieren", "kopieren", text=True),
         _k("pinsel", "Format übertragen", "formatUebertragen", True)]}
-    schrift = dict(alt["Schriftart"], felder="zeile")
+    schrift = dict(alt["Schriftart"], felder="zeile", knoepfe=[
+        dict(e, tun="durchJetzt", klappe="durchKlappe") if e.get("name") == "Durchgestrichen" else e for e in alt["Schriftart"]["knoepfe"]])
     absatz = dict(alt["Absatz"])
     extras = {"name": "Extras", "reihenfolge": True, "knoepfe": [
-        _k("wortextras", "Wort-Extras", "wortExtras", True)]}
+        _k("wortextras", "Wort-Extras", gross=True, klappe="wortExtrasKlappe")]}
     suchen = {"name": "Suchen", "reihenfolge": True, "knoepfe": [
-        _k("lupe", "Suchen oder ersetzen", gross=True, menue=[{"name": "Suchen …", "tun": "suchen"},
-                                                              {"name": "Ersetzen …", "tun": "ersetzen"},
-                                                              {"name": "Gehe zu …", "tun": "geheZu"}])]}
+        _k("lupe", "Suchen oder ersetzen", gross=True, klappe="suchenKlappe")]}
     waehlen = {"name": "Auswählen", "reihenfolge": True, "knoepfe": [
-        _k("objekte", "Auswählen", gross=True, menue=[{"name": "Alles auswählen", "tun": "allesMarkieren"},
-                                                      {"name": "Objekte auswählen", "tun": "objekteWaehlen"}])]}
+        _k("objekte", "Auswählen", gross=True, klappe="auswaehlenKlappe")]}
     einst = {"name": "Einstellungen", "reihenfolge": True, "knoepfe": [
-        _k("zahnrad", "Einstellungen", gross=True, menue=[{"name": "Optionen …", "tun": "w.optionenOeffnen"}])]}
+        _k("zahnrad", "Einstellungen", gross=True, klappe="einstellungenKlappe")]}
     return dict(start, gruppen=[ablage, schrift, absatz, alt["Stile"], extras, suchen, waehlen, einst])
 
