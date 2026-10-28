@@ -121,25 +121,52 @@ class _Writer:
             s.start_type = {"naechste": WD_SECTION.NEW_PAGE, "fortlaufend": WD_SECTION.CONTINUOUS,
                             "gerade": WD_SECTION.EVEN_PAGE, "ungerade": WD_SECTION.ODD_PAGE}.get(typ, WD_SECTION.NEW_PAGE)
         self._seitenschmuck(s, p)
+        from lunivo_writer.editor import seitenzahl as SZ
         paare = [(s.header, p.header, p.kopf_verknuepft, "kopf"), (s.footer, p.footer, p.fuss_verknuepft, "fuss")]
         if p.diff_first:
             s.different_first_page_header_footer = True
             paare += [(s.first_page_header, p.first_header, p.kopf_verknuepft, "kopf1"), (s.first_page_footer, p.first_footer, p.fuss_verknuepft, "fuss1")]
-        for part, hf, verknuepft, ort in paare:
+        # „außen“/„innen“ brauchen getrennte Kopf-/Fußzeilen für gerade Seiten (w:evenAndOddHeaders gilt für das ganze Dokument)
+        gerade = any(h.align in ("aussen", "innen") for _t, ps in self.abschnitte for h in (ps.header, ps.footer))
+        if gerade:
+            self.d.settings.odd_and_even_pages_header_footer = True
+            paare += [(s.even_page_header, p.header, p.kopf_verknuepft, "kopf", 2), (s.even_page_footer, p.footer, p.fuss_verknuepft, "fuss", 2)]
+        for part, hf, verknuepft, ort, *seite in paare:
             if nr > 0 and verknuepft:
                 continue                                            # bleibt „mit vorherigem verknüpft“
             bilder = [a for a in (getattr(p, "bilder", None) or []) if a.get("ort") == ort and a.get("bild") is not None]
             if hf.is_empty() and nr == 0 and not bilder:
                 continue
             part.is_linked_to_previous = False
+            ausr = SZ.ausrichtung(hf.align, seite[0] if seite else 1)
             lines = hf.text.split("\n")
             for i, line in enumerate(lines):
                 para = part.paragraphs[0] if i == 0 else part.add_paragraph()
                 para.alignment = {"center": WD_ALIGN_PARAGRAPH.CENTER,
-                                  "right": WD_ALIGN_PARAGRAPH.RIGHT}.get(hf.align, WD_ALIGN_PARAGRAPH.LEFT)
+                                  "right": WD_ALIGN_PARAGRAPH.RIGHT}.get(ausr, WD_ALIGN_PARAGRAPH.LEFT)
                 self._text_with_fields(para, line)
             for a in bilder:
                 self._frei_bild(part.paragraphs[0], a, a["bild"])
+        self._seitenzahl_art(s, p)
+
+    def _seitenzahl_art(self, s, p) -> None:
+        """Zahlenart, „Beginnen mit“ und Kapitelnummer der Seitenzahl als w:pgNumType."""
+        from lunivo_writer.editor import seitenzahl as SZ
+        sp = s._sectPr
+        for alt in sp.findall(qn("w:pgNumType")):
+            sp.remove(alt)
+        if p.seiten_format == "dezimal" and not p.seiten_start and not p.kapitel_ebene:
+            return
+        e = OxmlElement("w:pgNumType")
+        if p.seiten_format != "dezimal":
+            e.set(qn("w:fmt"), SZ.DOCX_FORMAT.get(p.seiten_format, "decimal"))
+        if p.seiten_start:
+            e.set(qn("w:start"), str(int(p.seiten_start)))
+        if p.kapitel_ebene:
+            e.set(qn("w:chapStyle"), str(int(p.kapitel_ebene)))
+            e.set(qn("w:chapSep"), next((d for z, _t, d in SZ.TRENNER if z == p.kapitel_trenner), "hyphen"))
+        sp.insert_element_before(e, "w:cols", "w:formProt", "w:vAlign", "w:noEndnote", "w:titlePg", "w:textDirection", "w:bidi", "w:rtlGutter",
+                                 "w:docGrid", "w:printerSettings", "w:sectPrChange")
 
     def _abschnitt_ende(self, para) -> None:
         """Am Ende des Absatzes, der einen Abschnitt beschließt: dessen Einrichtung als w:sectPr in den Absatz schreiben."""

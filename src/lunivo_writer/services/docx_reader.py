@@ -1204,6 +1204,8 @@ class _Reader:
         ps.fuss_verknuepft = (not erster) and s.footer.is_linked_to_previous
         ps.header = self._hf(s.header)
         ps.footer = self._hf(s.footer)
+        self._aussen_innen(s, ps)
+        self._seitenzahl_art(s, ps)
         ps.bilder = self._hf_bilder(s.header, "kopf", s, ps) + self._hf_bilder(s.footer, "fuss", s, ps)
         if s.different_first_page_header_footer:
             ps.diff_first = True
@@ -1314,6 +1316,32 @@ class _Reader:
                 ps.border["kopf"] = st.find(qn("w:bordersDoNotSurroundHeader")) is None
                 ps.border["fuss"] = st.find(qn("w:bordersDoNotSurroundFooter")) is None
                 ps.border["ausrichten"] = st.find(qn("w:alignBordersAndEdges")) is not None
+
+    def _aussen_innen(self, s, ps: PageSettings) -> None:
+        """Gerade Seiten mit gespiegelter Ausrichtung bei gleichem Text: das ist „außen“ (ungerade rechts) bzw. „innen“ (ungerade links)."""
+        try:
+            if not self.d.settings.odd_and_even_pages_header_footer:
+                return
+            for attr, teil in (("header", s.even_page_header), ("footer", s.even_page_footer)):
+                hf, gerade = getattr(ps, attr), self._hf(teil)
+                if hf.text and gerade.text == hf.text and {hf.align, gerade.align} == {"left", "right"}:
+                    hf.align = "aussen" if hf.align == "right" else "innen"
+        except Exception:                                                  # noqa: BLE001
+            pass
+
+    def _seitenzahl_art(self, s, ps: PageSettings) -> None:
+        """w:pgNumType: Zahlenart, „Beginnen mit“, Kapitelnummer."""
+        from lunivo_writer.editor import seitenzahl as SZ
+        e = s._sectPr.find(qn("w:pgNumType"))
+        if e is None:
+            return
+        ps.seiten_format = {v: k for k, v in SZ.DOCX_FORMAT.items()}.get(e.get(qn("w:fmt")) or "decimal", "dezimal")
+        try:
+            ps.seiten_start = max(0, int(e.get(qn("w:start")) or 0))
+            ps.kapitel_ebene = max(0, min(9, int(e.get(qn("w:chapStyle")) or 0)))
+        except ValueError:
+            pass
+        ps.kapitel_trenner = next((z for z, _t, d in SZ.TRENNER if d == e.get(qn("w:chapSep"))), "-")
 
     def _hf(self, part) -> HeaderFooter:
         if part.is_linked_to_previous or not part.paragraphs:

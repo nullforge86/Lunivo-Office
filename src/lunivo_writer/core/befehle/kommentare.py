@@ -15,13 +15,10 @@ class KommentarBefehle:
 
 
     def kommentar(self, k=None):
-        """Neuer Kommentar: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld; ohne Markierung oder Wort gibt es keinen Anker."""
+        """Neuer Kommentar wie in WPS: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
+        arbeiten mit denselben Kommentaren des Dokuments. Ohne Markierung hängt er am Wort, sonst an der Schreibmarke."""
         if self.ed:
             if self._geschuetzt("lesen"):
-                return
-            c = self.ed.textCursor()
-            if not c.hasSelection() and not self.ed.document().findBlock(c.position()).text().strip():
-                self.w.statusBar().showMessage("Zum Kommentieren Text markieren oder in ein Wort klicken.", 4000)
                 return
             self.w.navigation._neu_zeigen()
 

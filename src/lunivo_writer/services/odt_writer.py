@@ -32,6 +32,7 @@ _NS = ('xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
        'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" '
        'xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"')
 _AUSRICHTUNG = {"left": "start", "center": "center", "right": "end", "justify": "justify"}
+ODF_ZAHL = {"dezimal": "1", "klein": "a", "gross": "A", "roem_klein": "i", "roem_gross": "I"}       # Zahlenart der Seitenzahl
 
 
 def _mm(wert: float) -> str:
@@ -79,16 +80,24 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
                  f'fo:margin-top="5mm"/></style:footer-style>') if fuss else "<style:footer-style/>"
     hintergrund = f' fo:background-color="{escape(page.color)}"' if page.color else ""
     stile = []
-    for name, hf in (("Kopf", page.header), ("Fuss", page.footer), ("KopfErste", page.first_header), ("FussErste", page.first_footer)):
+    from lunivo_writer.editor import seitenzahl as SZ
+    # „außen“/„innen“: rechte (ungerade) Seiten in style:header, linke (gerade) in style:header-left mit gespiegelter Ausrichtung
+    for name, hf, n in (("Kopf", page.header, 1), ("Fuss", page.footer, 1), ("KopfErste", page.first_header, 1),
+                        ("FussErste", page.first_footer, 1), ("KopfLinks", page.header, 2), ("FussLinks", page.footer, 2)):
         stile.append(f'<style:style style:name="Lunivo{name}" style:family="paragraph"><style:paragraph-properties '
-                     f'fo:text-align="{_AUSRICHTUNG.get(hf.align, "center")}"/></style:style>')
+                     f'fo:text-align="{_AUSRICHTUNG.get(SZ.ausrichtung(hf.align, n), "center")}"/></style:style>')
+    gespiegelt = lambda hf: hf.align in ("aussen", "innen") and not hf.is_empty()          # noqa: E731
     seite = []
     if da(page.header, "kopf"):
         seite.append(f"<style:header>{_absatz(page.header, 'LunivoKopf', rahmen.get('kopf', ''))}</style:header>")
+    if gespiegelt(page.header):
+        seite.append(f"<style:header-left>{_absatz(page.header, 'LunivoKopfLinks', rahmen.get('kopf', ''))}</style:header-left>")
     if page.diff_first and kopf:
         seite.append(f"<style:header-first>{_absatz(page.first_header, 'LunivoKopfErste', rahmen.get('kopf1', ''))}</style:header-first>")
     if da(page.footer, "fuss"):
         seite.append(f"<style:footer>{_absatz(page.footer, 'LunivoFuss', rahmen.get('fuss', ''))}</style:footer>")
+    if gespiegelt(page.footer):
+        seite.append(f"<style:footer-left>{_absatz(page.footer, 'LunivoFussLinks', rahmen.get('fuss', ''))}</style:footer-left>")
     if page.diff_first and fuss:
         seite.append(f"<style:footer-first>{_absatz(page.first_footer, 'LunivoFussErste', rahmen.get('fuss1', ''))}</style:footer-first>")
     return ('<?xml version="1.0" encoding="UTF-8"?>'
@@ -98,7 +107,8 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
             f'<style:page-layout-properties fo:page-width="{_mm(page.width_mm)}" fo:page-height="{_mm(page.height_mm)}" '
             f'style:print-orientation="{"landscape" if page.landscape else "portrait"}" '
             f'fo:margin-top="{_mm(rand_oben)}" fo:margin-bottom="{_mm(rand_unten)}" '
-            f'fo:margin-left="{_mm(page.margin_left_mm)}" fo:margin-right="{_mm(page.margin_right_mm)}"{hintergrund}/>'
+            f'fo:margin-left="{_mm(page.margin_left_mm)}" fo:margin-right="{_mm(page.margin_right_mm)}"{hintergrund}'
+            f' style:num-format="{ODF_ZAHL.get(page.seiten_format, "1")}"/>'
             f"{kopf_stil}{fuss_stil}</style:page-layout></office:automatic-styles>"
             '<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="LunivoSeite">'
             f'{"".join(seite)}</style:master-page></office:master-styles></office:document-styles>')

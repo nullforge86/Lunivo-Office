@@ -1,8 +1,7 @@
 """Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen."""
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout,
@@ -10,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.models.page import PAPER_MM, HeaderFooter, PageSettings
-from lunivo_writer.ui.baukasten import DialogRahmen, FarbFeld, Linie, LinienWahl
+from lunivo_writer.ui.baukasten import Linie, LinienWahl
 from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
@@ -67,8 +66,8 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         self.setWindowTitle(title)
         self.text = QPlainTextEdit(hf.text)
         self.text.setPlaceholderText("Text eingeben. {PAGE} = Seitenzahl, {PAGES} = Seitenanzahl")
-        self.align = QComboBox(); self.align.addItems(["Links", "Zentriert", "Rechts"])
-        self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2}.get(hf.align, 1))
+        self.align = QComboBox(); self.align.addItems(["Links", "Zentriert", "Rechts", "Außen", "Innen"])
+        self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2, "aussen": 3, "innen": 4}.get(hf.align, 1))
         b = QPushButton("Seitenzahl einfügen")
         b.clicked.connect(lambda: self.text.insertPlainText("{PAGE}"))
         lay = QVBoxLayout(self)
@@ -80,20 +79,46 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
 
     def value(self) -> HeaderFooter:
         return HeaderFooter(self.text.toPlainText().strip("\n"),
-                            ["left", "center", "right"][self.align.currentIndex()])
+                            ["left", "center", "right", "aussen", "innen"][self.align.currentIndex()])
 
 
 class TableDialog(PanelFaehig, QDialog):
-    def __init__(self, parent=None):
+    """„Tabelle einfügen“ wie in WPS: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
+    ``vorgabe``: (Spalten, Zeilen) aus den Einstellungen; ``speichern.isChecked()`` sagt dem Aufrufer, ob er sie merken soll."""
+
+    def __init__(self, parent=None, vorgabe: tuple[int, int] = (5, 2)):
+        from PySide6.QtWidgets import QButtonGroup, QRadioButton
         super().__init__(parent)
         self.setWindowTitle("Tabelle einfügen")
-        self.rows = QSpinBox(); self.rows.setRange(1, 200); self.rows.setValue(3)
-        self.cols = QSpinBox(); self.cols.setRange(1, 30); self.cols.setValue(3)
-        self.borders = QCheckBox("Rahmenlinien"); self.borders.setChecked(True)
-        form = QFormLayout(); form.addRow("Zeilen", self.rows); form.addRow("Spalten", self.cols)
-        form.addRow("", self.borders)
-        bb = knopfzeile(self)
-        lay = QVBoxLayout(self); lay.addLayout(form); lay.addWidget(bb)
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Tabellengröße"))
+        self.cols = QSpinBox(); self.cols.setRange(1, 63); self.cols.setValue(vorgabe[0])
+        self.rows = QSpinBox(); self.rows.setRange(1, 500); self.rows.setValue(vorgabe[1])
+        g = QGridLayout(); g.setContentsMargins(8, 0, 0, 0)
+        for i, (text, feld) in enumerate((("Spaltenan&zahl:", self.cols), ("Zeilenan&zahl:", self.rows))):
+            feld.setMinimumHeight(36); feld.setMinimumWidth(140)
+            t = QLabel(text); t.setBuddy(feld)
+            g.addWidget(t, i, 0); g.addWidget(feld, i, 1)
+        g.setColumnStretch(0, 1)
+        lay.addLayout(g)
+        lay.addWidget(QLabel("Einstellung für optimale Breite"))
+        self.fest = QRadioButton("Feste Spalten&breite:")
+        self.auto = QRadioButton("Spaltenbreite automatisch anpassen (&S)"); self.auto.setChecked(True)
+        gruppe = QButtonGroup(self); gruppe.addButton(self.fest); gruppe.addButton(self.auto)
+        self.breite = _spin(30.0, 2.0, 500.0); self.breite.setMinimumHeight(36); self.breite.setMinimumWidth(140)
+        self.breite.setAccessibleName("Feste Spaltenbreite")
+        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.fest); z.addStretch(1); z.addWidget(self.breite)
+        lay.addLayout(z)
+        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.auto); lay.addLayout(z)
+        self.fest.toggled.connect(self.breite.setEnabled); self.breite.setEnabled(False)
+        self.speichern = QCheckBox("Ab&messungen für neue Tabellen speichern")
+        lay.addWidget(self.speichern)
+        lay.addStretch(1)
+        lay.addWidget(knopfzeile(self))
+
+    def spaltenbreite_px(self) -> float | None:
+        """Feste Breite jeder Spalte in Bildpunkten; None: automatisch (Seitenbreite)."""
+        return self.breite.value() * 96 / 25.4 if self.fest.isChecked() else None
 
 
 class BildGroesseDialog(PanelFaehig, QDialog):
@@ -162,31 +187,4 @@ class ZoomDialog(PanelFaehig, QDialog):
         return self._art[i]
 
 
-class WasserzeichenDialog(PanelFaehig, DialogRahmen):
-    def __init__(self, parent, aktuell: dict | None):
-        a = aktuell or {}
-        super().__init__(parent, "Wasserzeichen", self._male)
-        self.text = QLineEdit(a.get("text", "ENTWURF"))
-        self.knopf = FarbFeld(a.get("farbe", "#c0c0c0"), "Farbe")
-        self.winkel = QSpinBox(); self.winkel.setRange(-90, 90); self.winkel.setValue(int(a.get("winkel", -45)))
-        self.groesse = QSpinBox(); self.groesse.setRange(10, 300); self.groesse.setSuffix(" pt"); self.groesse.setValue(int(a.get("groesse_pt", 80)))
-        for beschr, w in (("Text", self.text), ("Farbe", self.knopf), ("Drehung (Grad)", self.winkel), ("Größe", self.groesse)):
-            self.zeile(beschr, w)
-        self.entfernt = False
-        self.zusatzknopf("Entfernen", lambda: setattr(self, "entfernt", True))
-        self.text.textChanged.connect(self.aktualisieren); self.winkel.valueChanged.connect(self.aktualisieren)
-        self.groesse.valueChanged.connect(self.aktualisieren); self.knopf.farbeGeaendert.connect(self.aktualisieren)
-
-    @property
-    def farbe(self) -> str:
-        return self.knopf.farbe
-
-    def _male(self, p, r) -> None:
-        p.setPen(QColor(self.farbe)); f = p.font(); f.setPointSizeF(max(8.0, self.groesse.value() / 4)); f.setBold(True); p.setFont(f)
-        p.translate(r.center()); p.rotate(self.winkel.value())
-        p.drawText(QRect(-r.width() // 2, -r.height() // 2, r.width(), r.height()), Qt.AlignCenter, self.text.text())
-
-    def ergebnis(self) -> dict | None:
-        if self.entfernt or not self.text.text().strip():
-            return None
-        return {"text": self.text.text().strip(), "farbe": self.farbe, "winkel": self.winkel.value(), "groesse_pt": self.groesse.value()}
+from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog  # noqa: E402,F401  (früher hier)

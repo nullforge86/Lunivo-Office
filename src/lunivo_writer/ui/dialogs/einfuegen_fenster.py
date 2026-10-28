@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
-    QVBoxLayout,
+    QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
+    QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -65,40 +65,213 @@ class ZahlDialog(PanelFaehig, QDialog):
 
 
 class FelderDialog(PanelFaehig, QDialog):
-    """Links die Feldnamen, rechts Beschreibung, Feldanweisung und Ergebnis."""
+    """„Felder“ wie in der Vorlage: links „Feld auswählen“ mit den Feldnamen, rechts „Feldeigenschaften“ mit Feldfunktionen,
+    Assistent (je Feld eigene Felder), Beschreibung und „Formatierung bei Aktualisierung beibehalten“. OK ist grau, solange die
+    Feldfunktion nichts ergibt (z. B. eine Formel nur aus „=“)."""
 
     def __init__(self, parent=None, kontext: dict | None = None):
         super().__init__(parent)
         self.setWindowTitle("Felder")
         self.kontext = kontext or {}
+        self._sperre = False
         v = QVBoxLayout(self)
-        g = QGridLayout(); g.setHorizontalSpacing(12)
+        h = QHBoxLayout(); h.setSpacing(16)
+        links = QVBoxLayout()
+        links.addWidget(self._kopf("Feld auswählen"))
         self.liste = QListWidget(); self.liste.setAccessibleName("Feldnamen"); self.liste.addItems(list(F.FELDER))
         self.liste.setMinimumWidth(170)
-        g.addWidget(_titel("&Feldnamen:", self.liste), 0, 0); g.addWidget(self.liste, 1, 0, 3, 1)
-        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
-        self.anweisung = QLineEdit(); self.anweisung.setReadOnly(True); self.anweisung.setMinimumHeight(34); self.anweisung.setMinimumWidth(240)
-        self.ergebnis_text = QLineEdit(); self.ergebnis_text.setReadOnly(True); self.ergebnis_text.setMinimumHeight(34)
-        g.addWidget(self.beschreibung, 1, 1)
+        links.addWidget(_titel("Feldna&men:", self.liste)); links.addWidget(self.liste, 1)
+        h.addLayout(links)
         rechts = QVBoxLayout()
-        rechts.addWidget(_titel("Feld&anweisung:", self.anweisung)); rechts.addWidget(self.anweisung)
-        rechts.addWidget(_titel("&Ergebnis:", self.ergebnis_text)); rechts.addWidget(self.ergebnis_text); rechts.addStretch(1)
-        g.addLayout(rechts, 2, 1)
-        g.setColumnStretch(1, 1)
-        v.addLayout(g)
-        fussleiste(self, v)
+        rechts.addWidget(self._kopf("Feldeigenschaften"))
+        self.anweisung = QLineEdit(); self.anweisung.setMinimumHeight(36); self.anweisung.setMinimumWidth(260)
+        self.anweisung.setAccessibleName("Feldfunktionen")
+        rechts.addWidget(_titel("&Feldfunktionen:", self.anweisung)); rechts.addWidget(self.anweisung)
+        rechts.addWidget(QLabel("Assistent:"))
+        self._assistent = QGridLayout(); self._assistent.setHorizontalSpacing(10); self._assistent.setVerticalSpacing(6)
+        self._assistent.setProperty("schmal_nein", True)                  # wird je Feld neu gefüllt
+        self._assistent.setColumnStretch(1, 1)
+        rechts.addLayout(self._assistent)
+        rechts.addStretch(1)
+        rechts.addWidget(QLabel("Beschreibung:"))
+        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True); self.beschreibung.setStyleSheet("color: palette(mid);")
+        rechts.addWidget(self.beschreibung)
+        self.formatierung = QCheckBox("Formatierung bei Aktualisierung &beibehalten"); self.formatierung.setChecked(True)
+        rechts.addWidget(self.formatierung)
+        h.addLayout(rechts, 1)
+        v.addLayout(h, 1)
+        self.ok = fussleiste(self, v)
+        self._felder: dict[str, QWidget] = {}
         self.liste.currentTextChanged.connect(self._zeigen)
-        self.liste.itemDoubleClicked.connect(lambda _i: self.accept())
+        self.liste.itemDoubleClicked.connect(lambda _i: self.ok.isEnabled() and self.accept())
+        self.anweisung.textChanged.connect(self._pruefen)
         self.liste.setCurrentRow(0)
-        self.resize(520, 300)
+
+    @staticmethod
+    def _kopf(text: str) -> QLabel:
+        t = QLabel(text); f = t.font(); f.setBold(True); t.setFont(f)
+        return t
+
+    def kompakt_machen(self) -> None:
+        """In der Seitenleiste: Feldnamen über den Eigenschaften."""
+        from PySide6.QtWidgets import QBoxLayout
+        self.layout().itemAt(0).layout().setDirection(QBoxLayout.TopToBottom)
+        self.liste.setMinimumWidth(0); self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * 7 + 8)
+        self.anweisung.setMinimumWidth(0)
+
+    # ---- Assistent je Feld ----------------------------------------------------------------------------------------------
+    def _zeile(self, schl: str, text: str, w: QWidget, aktiv: bool = True) -> QWidget:
+        n = self._assistent.rowCount()
+        lab = _titel(text, w)
+        w.setMinimumHeight(36); w.setEnabled(aktiv); lab.setEnabled(aktiv)
+        self._assistent.addWidget(lab, n, 0); self._assistent.addWidget(w, n, 1)
+        self._felder[schl] = w
+        return w
+
+    def _box(self, eintraege, bearbeitbar: bool = False, daten=None) -> QComboBox:
+        b = QComboBox(); b.setEditable(bearbeitbar)
+        for i, t in enumerate(eintraege):
+            b.addItem(t, (daten[i] if daten else t))
+        return b
 
     def _zeigen(self, name: str) -> None:
-        text, anweisung = F.FELDER.get(name, ("", ""))
-        self.beschreibung.setText(text); self.anweisung.setText(anweisung); self.anweisung.setCursorPosition(0)
-        self.ergebnis_text.setText(F.ergebnis(name, self.kontext)); self.ergebnis_text.setCursorPosition(0)
+        while self._assistent.count():
+            w = self._assistent.takeAt(0).widget()
+            if w is not None:
+                w.deleteLater()
+        self._felder = {}
+        self.name = name
+        k = self.kontext
+        marken = list(k.get("textmarken", []))
+        if name == "Formel":
+            fmt = self._zeile("format", "&Zahlenformat:", self._box([""] + F.ZAHLENFORMATE, bearbeitbar=True))
+            fkt = self._zeile("funktion", "Funktion &einfügen:", self._box([""] + F.FUNKTIONEN))
+            ber = self._zeile("bereich", "&Tabellenbereich:", self._box([""] + F.BEREICHE), bool(k.get("in_tabelle")))
+            mrk = self._zeile("marke", "Textmar&ke einfügen:", self._box([""] + marken), bool(marken))
+            fmt.currentTextChanged.connect(self._formel_format)
+            for box in (fkt, ber, mrk):
+                box.activated.connect(lambda _i, box=box: self._formel_einsetzen(box))
+        elif name == "Hyperlink":
+            self._zeile("text", "&Adresse:", QLineEdit())
+        elif name in ("Seite", "NumPages", "SectionPages"):
+            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
+        elif name == "PageRef":
+            self._zeile("text", "&Textmarke:", self._box(marken), bool(marken))
+        elif name == "Seq":
+            self._zeile("text", "&Kategorie:", self._box(F.SEQ_KATEGORIEN, bearbeitbar=True))
+            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
+        elif name == "TC":
+            self._zeile("text", "&Eintragstext:", QLineEdit())
+            e = QSpinBox(); e.setRange(1, 9); self._zeile("ebene", "E&bene:", e)
+        elif name in ("Uhrzeit", "PrintDate"):
+            vorgabe = "HH:mm" if name == "Uhrzeit" else "dd.MM.yyyy"
+            box = self._box(F.DATUMSFORMATE, bearbeitbar=True); box.setCurrentText(vorgabe)
+            self._zeile("datum", "&Datumsformat:", box)
+        elif name == "TOC":
+            von, bis = QSpinBox(), QSpinBox(); von.setRange(1, 9); bis.setRange(1, 9); bis.setValue(3)
+            self._zeile("von", "Ebenen &von:", von); self._zeile("bis", "Ebenen &bis:", bis)
+        elif name == "Dokumentvariable":
+            self._zeile("text", "&Name:", QLineEdit())
+        elif name == "Seriendruckfeld":
+            self._zeile("text", "&Feldname:", self._box(list(k.get("serienfelder", [])), bearbeitbar=True))
+        elif name == "StyleRef":
+            self._zeile("text", "&Formatvorlage:", self._box([f"Überschrift {i}" for i in range(1, 10)] + ["Titel", "Untertitel"],
+                                                             bearbeitbar=True))
+        for w in self._felder.values():
+            for sig in ("textChanged", "currentTextChanged", "valueChanged"):
+                if name != "Formel" and hasattr(w, sig):
+                    getattr(w, sig).connect(self._bauen)
+        self.beschreibung.setText(F.FELDER.get(name, ("", ""))[0])
+        self._sperre = True
+        self.anweisung.setText(F.vorgabe(name))
+        self._sperre = False
+        self._bauen()
+
+    def _wert(self, schl: str):
+        w = self._felder.get(schl)
+        if isinstance(w, QComboBox):
+            return w.currentData() if not w.isEditable() and w.currentData() is not None else w.currentText()
+        if isinstance(w, QSpinBox):
+            return w.value()
+        return w.text() if w is not None else ""
+
+    def _bauen(self, *_):
+        """Feldfunktion aus dem Assistenten (außer bei Formel, die man selbst schreibt)."""
+        n = self.name
+        if n == "Formel":
+            self._pruefen(); return
+        art = self._wert("art")
+        sw = f" \\* {art}" if art and art != "ARABIC" else ""
+        text = str(self._wert("text") or "").strip()
+        neu = {"Hyperlink": f'HYPERLINK "{text}"', "Seite": "PAGE" + sw, "NumPages": "NUMPAGES" + sw,
+               "SectionPages": "SECTIONPAGES" + sw, "PageRef": f"PAGEREF {text}".strip(),
+               "Seq": f"SEQ {text.replace(' ', '_') or 'Abbildung'} \\* {art or 'ARABIC'}",
+               "TC": f'TC "{text}" \\l {self._wert("ebene")}', "Uhrzeit": f'TIME \\@ "{self._wert("datum")}"',
+               "PrintDate": f'PRINTDATE \\@ "{self._wert("datum")}"', "TOC": f'TOC \\o "{self._wert("von")}-{self._wert("bis")}" \\h',
+               "Dokumentvariable": f"DOCVARIABLE {text}".strip(), "Seriendruckfeld": f"MERGEFIELD {text}".strip(),
+               "StyleRef": f'STYLEREF "{text}"'}.get(n)
+        if neu is not None and not self._sperre:
+            self.anweisung.setText(neu)
+        self._pruefen()
+
+    def _formel_format(self, muster: str) -> None:
+        import re
+        ohne = re.sub(r'\s*\\#\s*"[^"]*"', "", self.anweisung.text()).rstrip()
+        self.anweisung.setText(ohne + (f' \\# "{muster}"' if muster.strip() else ""))
+
+    def _formel_einsetzen(self, box: QComboBox) -> None:
+        t = box.currentText()
+        if not t:
+            return
+        if box is self._felder.get("funktion"):
+            t += "()"
+        pos = self.anweisung.cursorPosition() or len(self.anweisung.text())
+        alt = self.anweisung.text()
+        self.anweisung.setText(alt[:pos] + t + alt[pos:])
+        self.anweisung.setCursorPosition(pos + (len(t) - 1 if t.endswith("()") else len(t)))
+        box.setCurrentIndex(0)
+
+    def _gueltig(self) -> bool:
+        a = self.anweisung.text().strip()
+        if not a:
+            return False
+        if a.startswith("="):
+            try:
+                F.formel(a[1:], self.kontext)
+            except ValueError:
+                return False
+            return True
+        wort = a.split()[0].upper()
+        return not (wort in ("PAGEREF", "DOCVARIABLE", "MERGEFIELD") and len(a.split()) < 2) and a != 'HYPERLINK ""'
+
+    def _pruefen(self, *_):
+        self.ok.setEnabled(self._gueltig())
 
     def feld(self) -> tuple[str, str]:
-        return self.anweisung.text(), self.ergebnis_text.text()
+        """(Feldanweisung, Ergebnis); mit „Formatierung beibehalten“ trägt die Anweisung ``\\* MERGEFORMAT``."""
+        a = self.anweisung.text().strip()
+        text = self._wert("text") if self.name == "TC" else F.ergebnis(a, self.kontext)
+        if self.formatierung.isChecked() and F.MERGEFORMAT not in a:
+            a += " " + F.MERGEFORMAT
+        return a, text
+
+
+class AutoTextDialog(PanelFaehig, QDialog):
+    """„AutoText erstellen“: Name für die Markierung (Vorschlag: ihre ersten Wörter)."""
+
+    def __init__(self, parent=None, markierung: str = ""):
+        super().__init__(parent)
+        self.setWindowTitle("AutoText erstellen")
+        v = QVBoxLayout(self)
+        self.feld = QLineEdit(" ".join(markierung.split()[:4])[:40]); self.feld.setMinimumHeight(36)
+        t = _titel("Bitte geben Sie einen &Namen für den AutoText-Eintrag an:", self.feld); t.setWordWrap(True)
+        v.addWidget(t); v.addWidget(self.feld); v.addStretch(1)
+        self.ok = fussleiste(self, v)
+        self.feld.textChanged.connect(lambda x: self.ok.setEnabled(bool(x.strip())))
+        self.ok.setEnabled(bool(self.feld.text().strip()))
+
+    def name(self) -> str:
+        return self.feld.text().strip()
 
 
 class TrennerDialog(PanelFaehig, QDialog):
@@ -117,29 +290,37 @@ class TrennerDialog(PanelFaehig, QDialog):
             g.addWidget(QLabel("Zeilenanzahl:"), 1, 0); g.addWidget(self._zeilen, 1, 1)
             g.setColumnStretch(2, 1)
             v.addLayout(g)
-        t = QLabel("Text trennen bei" if zu_tabelle else "Zellen trennen durch"); f = t.font(); f.setBold(True); t.setFont(f)
+        t = QLabel("Text trennen bei"); f = t.font(); f.setBold(True); t.setFont(f)
         v.addWidget(t)
+        # Tabelle → Text wie in WPS: Absätze, Tabstopps, Kommata, Andere (untereinander)
+        self._liste = TT.TRENNER if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
+        spalten = 3 if zu_tabelle else 1
         self._gruppe = QButtonGroup(self)
         g = QGridLayout()
-        for i, (_z, text) in enumerate(TT.TRENNER):
-            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r, i // 3, i % 3)
-        andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(TT.TRENNER))
+        for i, (_z, text) in enumerate(self._liste):
+            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r, i // spalten, i % spalten)
+        andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(self._liste))
         self.andere = QLineEdit("-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(48); self.andere.setMinimumHeight(34)
         self.andere.setAlignment(Qt.AlignCenter); self.andere.setAccessibleName("Anderes Trennzeichen")
         z = QHBoxLayout(); z.addWidget(andere); z.addWidget(self.andere); z.addStretch(1)
-        g.addLayout(z, 2, 0, 1, 3)
+        g.addLayout(z, (len(self._liste) + spalten - 1) // spalten, 0, 1, spalten)
         v.addLayout(g)
+        if not zu_tabelle:
+            self.geschachtelt = QCheckBox("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
+            self.geschachtelt.setToolTip("Ohne Haken bleiben Tabellen in Zellen Tabellen und stehen hinter dem Text.")
+            v.addWidget(self.geschachtelt)
         self.andere.textEdited.connect(lambda _t: andere.setChecked(True))
         vorgabe = "\t" if any("\t" in s for s in self.texte) or not zu_tabelle else "\n"
-        self._gruppe.button([k for k, _t in TT.TRENNER].index(vorgabe)).setChecked(True)
+        self._gruppe.button([k for k, _t in self._liste].index(vorgabe)).setChecked(True)
         self._gruppe.idToggled.connect(lambda _i, an: an and self._zaehlen())
         self.andere.textChanged.connect(lambda _t: self._zaehlen())
+        v.addStretch(1)
         fussleiste(self, v)
         self._zaehlen()
 
     def trenner(self) -> str:
         i = self._gruppe.checkedId()
-        return TT.TRENNER[i][0] if i < len(TT.TRENNER) else (self.andere.text() or "-")
+        return self._liste[i][0] if i < len(self._liste) else (self.andere.text() or "-")
 
     def spalten(self) -> int | None:
         return self._spalten.value() if self.zu_tabelle else None
@@ -153,40 +334,104 @@ class TrennerDialog(PanelFaehig, QDialog):
 
 
 class SeitenzahlDialog(PanelFaehig, QDialog):
-    """„Seitenzahl einfügen“: Position (Kopf-/Fußzeile), Ausrichtung und Schreibweise, mit kleinem Seitenbild."""
+    """„Seitenzahl einfügen“ wie in der Vorlage: Format und Position, Kapitelnummer einbeziehen (Formatvorlage, Trennzeichen, Beispiele),
+    Seitennummerierung (fortsetzen oder beginnen mit) und „Übernehmen für“ (gesamtes Dokument, von aktueller Seite, aktueller Abschnitt).
 
-    def __init__(self, parent=None):
+        d = SeitenzahlDialog(parent, page)     # page: Einrichtung des aktuellen Abschnitts (Vorbelegung)
+        if d.exec(): d.werte()   # {"ort", "ausrichtung", "muster", "format", "start", "kapitel": (Ebene, Zeichen), "bereich"}
+    """
+
+    BEREICHE = (("dokument", "Gesamtes &Dokument"), ("seite", "Von aktueller Seite (&p)"), ("abschnitt", "Aktueller Abschnit&t"))
+
+    def __init__(self, parent=None, page=None):
         super().__init__(parent)
+        from PySide6.QtWidgets import QFrame
         from lunivo_writer.editor import seitenzahl as SZ
-        from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche
         self.setWindowTitle("Seitenzahl einfügen")
         v = QVBoxLayout(self)
+
+        def linie() -> None:
+            l = QFrame(); l.setFrameShape(QFrame.HLine); l.setStyleSheet("color: palette(midlight);"); v.addWidget(l)
+
         g = QGridLayout(); g.setHorizontalSpacing(12)
-        self.muster = QComboBox(); self.ort = QComboBox(); self.ausrichtung = QComboBox()
-        for k, t in SZ.MUSTER:
-            self.muster.addItem(t, k)
-        for k, t in (("kopf", "Kopfzeile"), ("fuss", "Fußzeile")):
-            self.ort.addItem(t, k)
-        for k, t in (("left", "Links"), ("center", "Mitte"), ("right", "Rechts")):
-            self.ausrichtung.addItem(t, k)
-        self.ort.setCurrentIndex(1); self.ausrichtung.setCurrentIndex(1)
-        for i, (text, feld) in enumerate((("&Format:", self.muster), ("&Position:", self.ort), ("&Ausrichtung:", self.ausrichtung))):
-            feld.setMinimumHeight(34); feld.setMinimumWidth(180)
+        self.muster = QComboBox(); self.position = QComboBox()
+        for muster, fmt, t in SZ.MUSTER:
+            self.muster.addItem(t, (muster, fmt))
+        for ort, ausr, t in SZ.POSITIONEN:
+            self.position.addItem(t, (ort, ausr))
+        self.position.setCurrentIndex(6)                                    # „Unten zentriert“
+        for i, (text, feld) in enumerate((("&Format:", self.muster), ("Position (&s):", self.position))):
+            feld.setMinimumHeight(34); feld.setMinimumWidth(220)
             g.addWidget(_titel(text, feld), i, 0); g.addWidget(feld, i, 1)
-        self.vorschau = VorschauFlaeche(self._male, 140, flaeche=False); self.vorschau.setFixedSize(110, 140)
-        g.addWidget(self.vorschau, 0, 2, 4, 1)
-        g.setRowStretch(3, 1)
+        g.setColumnStretch(1, 1)
         v.addLayout(g)
+        linie()
+        self.kapitel = QCheckBox("&Kapitelnummer einbeziehen"); v.addWidget(self.kapitel)
+        k = QGridLayout(); k.setHorizontalSpacing(12); k.setContentsMargins(18, 0, 0, 0)
+        self.ebene = QComboBox(); self.trenner = QComboBox()
+        for n in range(1, 10):
+            self.ebene.addItem(f"Überschrift {n}", n)
+        for z, t, _docx in SZ.TRENNER:
+            self.trenner.addItem(t, z)
+        self.beispiel = QLabel()
+        self._kapitel_teile = []
+        for i, (text, feld) in enumerate((("Kapitel beginnt mit Formatvorlage (&C):", self.ebene), ("Trennzeichen &verwenden:", self.trenner),
+                                          ("Beispiele:", self.beispiel))):
+            if isinstance(feld, QComboBox):
+                feld.setMinimumHeight(34); feld.setMinimumWidth(200)
+            t = _titel(text, feld)
+            k.addWidget(t, i, 0); k.addWidget(feld, i, 1)
+            self._kapitel_teile += [t, feld]
+        k.setColumnStretch(1, 1)
+        v.addLayout(k)
+        linie()
+        v.addWidget(QLabel("Seitennummerierung:"))
+        self.fortsetzen = QRadioButton("Fortsetzen vom vorherigen Abschnitt (&o)"); self.beginnen = QRadioButton("&Beginnen mit:")
+        self.start = QSpinBox(); self.start.setRange(1, 9999); self.start.setMinimumHeight(34); self.start.setMinimumWidth(80)
+        self.start.setAccessibleName("Beginnen mit")
+        n = QVBoxLayout(); n.setContentsMargins(18, 0, 0, 0)
+        n.addWidget(self.fortsetzen)
+        z = QHBoxLayout(); z.addWidget(self.beginnen); z.addWidget(self.start); z.addStretch(1); n.addLayout(z)
+        v.addLayout(n)
+        linie()
+        v.addWidget(QLabel("Übernehmen für:"))
+        self.bereich = QButtonGroup(self)
+        u = QHBoxLayout(); u.setContentsMargins(18, 0, 0, 0)
+        for i, (_k, t) in enumerate(self.BEREICHE):
+            r = QRadioButton(t); self.bereich.addButton(r, i); u.addWidget(r)
+        u.addStretch(1)
+        v.addLayout(u)
+        self.bereich.button(0).setChecked(True)
         fussleiste(self, v)
-        for c in (self.muster, self.ort, self.ausrichtung):
-            c.currentIndexChanged.connect(lambda _i: self.vorschau.update())
+        if page is not None:                                                  # Vorbelegung aus der Einrichtung
+            for i, (_m, fmt, _t) in enumerate(SZ.MUSTER):
+                if fmt == page.seiten_format:
+                    self.muster.setCurrentIndex(i); break
+            self.kapitel.setChecked(bool(page.kapitel_ebene))
+            self.ebene.setCurrentIndex(max(0, (page.kapitel_ebene or 1) - 1))
+            self.trenner.setCurrentIndex(max(0, self.trenner.findData(page.kapitel_trenner)))
+            if page.seiten_start > 0:
+                self.beginnen.setChecked(True); self.start.setValue(page.seiten_start)
+        if not self.beginnen.isChecked():
+            self.fortsetzen.setChecked(True)
+        self.kapitel.toggled.connect(self._zustand); self.beginnen.toggled.connect(self._zustand)
+        self.trenner.currentIndexChanged.connect(self._zustand)
+        self._zustand()
 
-    def _male(self, p, r) -> None:
-        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
-        seitenzahl_zeichner(self.ort.currentData(), self.ausrichtung.currentData())(p, r)
+    def _zustand(self, *_a) -> None:
+        for w in self._kapitel_teile:
+            w.setEnabled(self.kapitel.isChecked())
+        tr = self.trenner.currentData()
+        self.beispiel.setText(f"1{tr}1, 1{tr}A")
+        self.start.setEnabled(self.beginnen.isChecked())
 
-    def werte(self) -> tuple[str, str, str]:
-        return self.ort.currentData(), self.ausrichtung.currentData(), self.muster.currentData()
+    def werte(self) -> dict:
+        muster, fmt = self.muster.currentData()
+        ort, ausr = self.position.currentData()
+        return {"ort": ort, "ausrichtung": ausr, "muster": muster, "format": fmt,
+                "start": self.start.value() if self.beginnen.isChecked() else 0,
+                "kapitel": (self.ebene.currentData() if self.kapitel.isChecked() else 0, self.trenner.currentData()),
+                "bereich": self.BEREICHE[self.bereich.checkedId()][0]}
 
 
 class HyperlinkDialog(PanelFaehig, QDialog):

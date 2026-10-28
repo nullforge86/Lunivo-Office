@@ -529,9 +529,24 @@ class SpaltenBaustein:
         return [(int(self.blatt_oben(k)), int(self.blatt_oben(k) + g["H"])) for k in range(self._blatt_anzahl())]
 
 
+    def _wasserzeichen_je_blatt(self) -> list | None:
+        """Wasserzeichen je Blatt, wenn ein Abschnitt ein eigenes hat („Übernehmen für: Aktueller Abschnitt“); sonst None."""
+        from lunivo_writer.editor import abschnitte as AB
+        doc = self.document()
+        schl = (doc.revision(), id(self.page.watermark), tuple(self.seitenwechsel))
+        if getattr(self, "_wz_schl", None) != schl:
+            eigene = {i + 1: ps.watermark for i, (_n, _t, ps) in enumerate(AB.umbrueche(doc)) if (ps.watermark or {}).get("abschnitt")}
+            liste = None
+            if eigene:
+                anfaenge = [0] + list(self.seitenwechsel)
+                liste = [eigene.get(AB.index_bei(doc, a), self.page.watermark) for a in anfaenge]
+            self._wz_schl, self._wz_liste = schl, liste
+        return self._wz_liste
+
     def _schmuck_zeichnen(self, p: QPainter) -> None:
         pg, z = self.page, self.zoom
-        if self.web or not (pg.border or pg.watermark):
+        je_blatt = None if self.web else self._wasserzeichen_je_blatt()
+        if self.web or not (pg.border or pg.watermark or je_blatt):
             return
         from lunivo_writer.editor.pagination import seitenschmuck
         vp = self.viewport()
@@ -540,9 +555,12 @@ class SpaltenBaustein:
             if b < 0 or a > vp.height():
                 continue
             bk = self._blatt(k) if quer else {"x": 0.0, "W": vp.width(), "pg": pg}
+            bp = bk["pg"]
+            if je_blatt:
+                bp = bp.copy(); bp.watermark = je_blatt[min(k, len(je_blatt) - 1)]
             p.save()
             p.scale(z, z)
-            seitenschmuck(p, bk["pg"], False, QRectF(bk["x"] / z, a / z, bk["W"] / z, (b - a) / z), "vorn")
+            seitenschmuck(p, bp, False, QRectF(bk["x"] / z, a / z, bk["W"] / z, (b - a) / z), "vorn")
             p.restore()
 
 

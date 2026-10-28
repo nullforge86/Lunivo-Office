@@ -100,22 +100,8 @@ class SeitenBaustein:
 
     def _seitenwechsel(self, d: QTextDocument) -> list[int]:
         """Zeichenstellen, an denen eine neue Seite beginnt (erste Zeile der Seiten 2, 3, …)."""
-        ch = self.page.content_height_px
-        lay = d.documentLayout()
-        stellen, seite = [], 0
-        b = d.firstBlock()
-        while b.isValid():
-            tl = b.layout()
-            if tl is not None and tl.lineCount():
-                top = lay.blockBoundingRect(b).top()
-                for i in range(tl.lineCount()):
-                    ln = tl.lineAt(i)
-                    k = int((top + ln.y() + 0.5) // ch)
-                    if k > seite:
-                        seite = k
-                        stellen.append(b.position() + ln.textStart())
-            b = b.next()
-        return stellen
+        from lunivo_writer.editor.seitenzahl import seitenwechsel
+        return seitenwechsel(d, self.page.content_height_px)
 
 
     @property

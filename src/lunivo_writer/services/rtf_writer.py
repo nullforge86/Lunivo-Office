@@ -223,14 +223,16 @@ class _Rtf:
         return teile
 
     # ---- Seite, Kopf- und Fußzeile ---------------------------------------------------------------------------------------------
-    def kopf_fuss(self, art: str, hf: HeaderFooter) -> str:
+    def kopf_fuss(self, art: str, hf: HeaderFooter, seite: int = 1) -> str:
+        """``seite`` 2 für die Kopf-/Fußzeile linker (gerader) Seiten: „außen“/„innen“ werden dort gespiegelt."""
+        from lunivo_writer.editor.seitenzahl import ausrichtung
         if hf.is_empty():
             return ""
         zeilen = []
         for zeile in hf.text.split("\n"):
             t = _text(zeile).replace("{PAGES}", r"{\field{\*\fldinst NUMPAGES}{\fldrslt 1}}").replace("{PAGE}", r"\chpgn ")
             zeilen.append(t)
-        return ("{\\" + art + r"\pard\plain" + _AUSRICHTUNG.get(hf.align, r"\qc") + " " + r"\par ".join(zeilen) + r"\par}" + "\n")
+        return ("{\\" + art + r"\pard\plain" + _AUSRICHTUNG.get(ausrichtung(hf.align, seite), r"\qc") + " " + r"\par ".join(zeilen) + r"\par}" + "\n")
 
     def run(self) -> bytes:
         teile = self.rahmen(self.doc.rootFrame())
@@ -245,7 +247,16 @@ class _Rtf:
                  f"\\margt{_mm(p.margin_top_mm)}\\margb{_mm(p.margin_bottom_mm)}\\headery{_mm(p.kopf_abstand_mm)}"
                  f"\\footery{_mm(p.fuss_abstand_mm)}" + (r"\landscape" if p.landscape else "")
                  + (r"\titlepg" if p.diff_first else ""))
-        kopf = self.kopf_fuss("header", p.header) + self.kopf_fuss("footer", p.footer)
+        seite += {"klein": r"\pgnlcltr", "gross": r"\pgnucltr", "roem_klein": r"\pgnlcrm", "roem_gross": r"\pgnucrm"}.get(p.seiten_format, "")
+        if p.seiten_start:
+            seite += f"\\pgnstarts{int(p.seiten_start)}\\pgnrestart"
+        if any(h.align in ("aussen", "innen") and not h.is_empty() for h in (p.header, p.footer)):
+            # rechte (ungerade) und linke (gerade) Seiten getrennt
+            seite = r"\facingp" + seite
+            kopf = (self.kopf_fuss("headerr", p.header) + self.kopf_fuss("headerl", p.header, 2)
+                    + self.kopf_fuss("footerr", p.footer) + self.kopf_fuss("footerl", p.footer, 2))
+        else:
+            kopf = self.kopf_fuss("header", p.header) + self.kopf_fuss("footer", p.footer)
         if p.diff_first:
             kopf += self.kopf_fuss("headerf", p.first_header) + self.kopf_fuss("footerf", p.first_footer)
         schriften = "".join(f"{{\\f{i}\\fnil\\fcharset0 {_text(n)};}}" for i, n in enumerate(self.schriften or ["Liberation Sans"]))
