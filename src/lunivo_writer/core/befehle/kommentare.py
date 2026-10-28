@@ -17,6 +17,8 @@ class KommentarBefehle:
     def kommentar(self, k=None):
         """Neuer Kommentar: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld; ohne Markierung oder Wort gibt es keinen Anker."""
         if self.ed:
+            if self._geschuetzt("lesen"):
+                return
             c = self.ed.textCursor()
             if not c.hasSelection() and not self.ed.document().findBlock(c.position()).text().strip():
                 self.w.statusBar().showMessage("Zum Kommentieren Text markieren oder in ein Wort klicken.", 4000)
@@ -71,8 +73,18 @@ class KommentarBefehle:
             self.w.noten_feld.oeffnen(art, nid)
 
 
+    def _geschuetzt(self, *arten) -> bool:
+        """Steht ein Dokumentschutz dieser Art (Überprüfen ▸ Bearbeitung einschränken), Hinweis in der Statusleiste und True."""
+        t = self.w.current_tab()
+        art = getattr(t, "schutz", None) if t else None
+        if art is not None and art in arten:
+            self.w.statusBar().showMessage("Das Dokument ist geschützt (Überprüfen ▸ Bearbeitung einschränken).", 4000)
+            return True
+        return False
+
+
     def verfolgen(self, k=None):
-        if self.ed:
+        if self.ed and not self._geschuetzt("aenderungen"):
             self.ed.set_verfolgen(not self.ed.verfolgen)
             self.w.statusBar().showMessage("Änderungen werden verfolgt." if self.ed.verfolgen else "Verfolgung beendet.", 3000)
 
@@ -95,7 +107,7 @@ class KommentarBefehle:
 
 
     def _aend_am_cursor(self, annehmen):
-        if not self.ed:
+        if not self.ed or self._geschuetzt("aenderungen", "lesen", "kommentare"):
             return
         b = self.ed.aenderung_am_cursor() or self.ed.aenderung_springen(1)
         if b:
@@ -112,8 +124,10 @@ class KommentarBefehle:
 
 
     def aenderungenUebernehmen(self, k=None):
-        if self.ed: self.w.statusBar().showMessage(f"{self.ed.alle_aenderungen(True)} Änderungen angenommen.", 4000)
+        if self.ed and not self._geschuetzt("aenderungen", "lesen", "kommentare"):
+            self.w.statusBar().showMessage(f"{self.ed.alle_aenderungen(True)} Änderungen angenommen.", 4000)
 
 
     def aenderungenVerwerfen(self, k=None):
-        if self.ed: self.w.statusBar().showMessage(f"{self.ed.alle_aenderungen(False)} Änderungen abgelehnt.", 4000)
+        if self.ed and not self._geschuetzt("aenderungen", "lesen", "kommentare"):
+            self.w.statusBar().showMessage(f"{self.ed.alle_aenderungen(False)} Änderungen abgelehnt.", 4000)

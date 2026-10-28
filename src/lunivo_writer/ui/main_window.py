@@ -522,14 +522,8 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
     # ==== Sonstiges ===============================================================================
     def word_count(self):
-        e = self.current_editor()
-        if not e:
-            return
-        txt = e.document().toPlainText()
-        QMessageBox.information(self, "Wortanzahl",
-                                f"Wörter: {len(txt.split())}\nZeichen (mit Leerzeichen): {len(txt)}\n"
-                                f"Zeichen (ohne Leerzeichen): {len(''.join(txt.split()))}\n"
-                                f"Absätze: {e.document().blockCount()}\nSeiten: {e.page_count}")
+        """Wörter zählen (Fenster wie Überprüfen ▸ Wörter zählen)."""
+        self.befehle.woerterZaehlen()
 
 
     def show_info(self):

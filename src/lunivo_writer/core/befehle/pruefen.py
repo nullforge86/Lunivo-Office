@@ -13,7 +13,15 @@ class PruefenBefehle:
 
     # ---- Überprüfen / Schreibhilfe --------------------------------------------------------------------------------------------
     def woerterZaehlen(self, k=None):
-        self.w.word_count()
+        """Wörter zählen wie in der Vorlage: Statistiken des Dokuments, auf Wunsch samt Fuß- und Endnoten."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import statistik as S
+        from lunivo_writer.ui.dialogs.ueberpruefen_fenster import WoerterDialog
+        texte = S.texte_des_dokuments(self.ed.document())
+        noten = [t for art in ("f", "e") for t in self.ed.noten.get(art, {}).values()]
+        seiten = self.ed.page_count
+        WoerterDialog(self.w, S.zaehlen(texte, seiten), S.zaehlen(texte + noten, seiten)).exec()
 
 
     def _jetzt_pruefen(self) -> None:

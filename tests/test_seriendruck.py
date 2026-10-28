@@ -73,7 +73,7 @@ def test_naechster_datensatz_und_zuordnung(app):
 def test_quelle_empfaenger_vorschau_und_zusammenfuehren(fenster, liste, monkeypatch, tmp_path):
     from lunivo_writer.ui.baukasten import speichern_fenster
     from lunivo_writer.ui.dialogs import serien_fenster as SF
-    from lunivo_writer.ui.document import serien_vorschau
+    from lunivo_writer.ui.document import vorschau_ansicht
     b, e = fenster.befehle, fenster.current_editor()
     e.insertPlainText("Hallo "); S.feld_einfuegen(e, "Name"); e.insertPlainText(" aus "); S.feld_einfuegen(e, "Stadt")
     monkeypatch.setattr(speichern_fenster, "datei_waehlen", lambda *a, **k: [liste])
@@ -88,15 +88,15 @@ def test_quelle_empfaenger_vorschau_und_zusammenfuehren(fenster, liste, monkeypa
     b.serienEmpfaenger()
     t = fenster.current_tab()
     b.serienVorschau()
-    assert serien_vorschau.aktiv(t) and t._serien_vorschau.toPlainText() == "Hallo Anna aus Kiel" and t._serien_vorschau.isReadOnly()
+    assert vorschau_ansicht.aktiv(t) and t._vorschau_ansicht.toPlainText() == "Hallo Anna aus Kiel" and t._vorschau_ansicht.isReadOnly()
     assert fenster.band.felder["datensatz"].text() == "1"
     b.serienLetzter()
-    assert t._serien_vorschau.toPlainText() == "Hallo Carla aus Ulm" and fenster.band.felder["datensatz"].text() == "2"
+    assert t._vorschau_ansicht.toPlainText() == "Hallo Carla aus Ulm" and fenster.band.felder["datensatz"].text() == "2"
     b.serienVorheriger(); b.serienVorheriger()                                          # bleibt beim ersten
-    assert t._serien_vorschau.toPlainText().startswith("Hallo Anna")
+    assert t._vorschau_ansicht.toPlainText().startswith("Hallo Anna")
     assert "{{Name}}" in e.toPlainText()                                                 # die Vorlage bleibt unverändert
     b.serienVorschau()
-    assert not serien_vorschau.aktiv(t) and not e.isHidden()
+    assert not vorschau_ansicht.aktiv(t) and not e.isHidden()
     # In neuem Dokument zusammenführen
     neu = b.serienNeuesDokument()
     assert neu.editor.toPlainText().splitlines() == ["Hallo Anna aus Kiel", "Hallo Carla aus Ulm"]

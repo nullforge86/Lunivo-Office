@@ -779,3 +779,7 @@ class RegisterBand(QWidget):
                 frei = self.b.kann(name)
                 if frei is not None:
                     k.setEnabled(bool(frei) and hat_dokument is not False)
+        for f in self.felder.values():                            # Felder aus band_feld ziehen ihren Zustand selbst nach (auffrischen)
+            auf = getattr(f, "auffrischen", None)
+            if callable(auf):
+                auf()
