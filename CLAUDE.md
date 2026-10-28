@@ -85,3 +85,40 @@ Niemals behaupten, Tests seien erfolgreich gewesen, wenn sie nicht tatsächlich 
 
 **Oberste Priorität:** Modular entwickeln. Nur betroffene Bereiche prüfen. Volltests risikobasiert und gezielt einsetzen. Keine unnötigen
 Wiederholungen, keine unnötigen Umbauten, keine Änderungen außerhalb des erforderlichen Umfangs.
+
+## Multi-Agent-Aufbau (`.claude/agents/`)
+
+Spezialisten mit getrennten Zuständigkeiten. Für einfache Aufgaben genügt der zuständige Spezialist; nicht alle Agenten starten.
+
+| Agent | Zuständig für | Schreibt? |
+|---|---|---|
+| `coordinator` | Plan, Arbeitspakete, Routing, Integration, Konflikte, Abschlussbericht | nein (delegiert) |
+| `coding-agent` | Geschäftslogik, Funktionen, Fehlerbehebung, zugehörige Tests | ja |
+| `design-agent` | UI/UX: Layout, Optik, Farben, Abstände, Barrierefreiheit | ja (nur UI) |
+| `architektur-agent` | Struktur, Abhängigkeiten, Schnittstellen; Empfehlung vor Umbau | nein |
+| `qa-agent` | Unabhängige Prüfung, Tests, Regression, Reproduktionsschritte | nein |
+| `security-agent` | Sicherheit, Datenschutz, Code-Review | nein |
+
+Regeln:
+- UI/Design → design-agent · Geschäftslogik → coding-agent · Architektur/Abhängigkeiten → architektur-agent (Freigabe vor Umsetzung) ·
+  Tests/Qualitätskontrolle → qa-agent · Sicherheit → security-agent · Integration und Konflikte → coordinator.
+- Berührt ein Paket mehrere Bereiche, teilt der Coordinator es auf und benennt die Übergabepunkte.
+- Gemeinsame Dateien oder abhängige Ergebnisse: nacheinander. Nur unabhängige Pakete parallel. Niemand überschreibt Änderungen anderer stillschweigend.
+- Reihenfolge: Plan → Untersuchung (lesend) → Umsetzungsentscheidung → Umsetzung → unabhängige QA → Integration/Bericht.
+- Rückfrage beim Eigentümer vor größeren Umbauten, neuen Abhängigkeiten, kostenpflichtigen Diensten, nicht umkehrbaren Aktionen.
+- Berichte kurz: Ergebnis, geänderte Dateien, Tests, offene Probleme.
+- Aufruf: `claude --agent coordinator` (Coordinator als Hauptagent), oder gezielt „Nutze den coding-agent für …“ / `@coding-agent`. `/agents` zeigt die Liste.
+- Hinweis: Subagenten können keine weiteren Subagenten starten; Delegation läuft deshalb über den Hauptagenten (Coordinator).
+
+## Ergänzende Eigentümer-Regeln (2026-10-25 bis 2026-10-28)
+
+Gelten für alle Agenten zusätzlich zu den Regeln oben; bei Widerspruch gilt die jüngere Regel.
+
+- **Keine lokalen Volltests** (2026-10-28, ersetzt „komplette Suite vor Abschluss“ in §3): Ein Volltest dauert über 30 Minuten und
+  verbraucht das Sitzungslimit. Lokal nur die Tests der gerade gebauten Funktion (`pytest <datei> -k <name>`); die Gesamtprüfung macht die CI.
+- **Eigenständig:** keine Abhängigkeit von LibreOffice oder anderen externen Programmen, auch nicht für Dateiformate — Formate selbst schreiben.
+- **WPS-Vorlagen eng nachbauen:** Kays Bildschirmfotos (PC: `~/Bilder/wps-vorlage`) sind das Aussehens-Vorbild; keine freien
+  Interpretationen, klar erkennbare Symbole, Felder/Knöpfe nicht schmaler als ~36 px. Fertig erst nach Bildvergleich mit der Vorlage.
+- **Paketierung (Ziel):** genau eine `.deb`; Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter
+  `/usr/share/applications/stevie-lunivo-office.desktop`, Symlink `/usr/bin/lunivo-office`; Benutzerdaten nur in XDG-Verzeichnissen.
+- **Kurz berichten:** Der Eigentümer schreibt mit eingeschränkter Hand; Berichte knapp halten, keine Testläufe per Subagent ohne Grund.
