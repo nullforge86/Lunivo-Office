@@ -30,14 +30,17 @@ FENSTER = {
 }
 
 
+@pytest.mark.parametrize("breite", [444, 300])
 @pytest.mark.parametrize("name", list(FENSTER))
-def test_fenster_in_der_seitenleiste_und_passt(app, name):
-    p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = 444, 587; p.resize(480, 727)
+def test_fenster_in_der_seitenleiste_und_passt(app, name, breite):
+    """Auch in der schmalsten Seitenleiste (300 px) ragt nichts links oder rechts hinaus (Kay, 2026-10-28)."""
+    p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = breite, 587; p.resize(breite + 36, 727)
     d = FENSTER[name]()
     assert isinstance(d, PanelFaehig), name
     p.oeffne(d); p.show(); app.processEvents(); app.processEvents()
     sa = p.stapel.currentWidget().sa
-    h = sa.widget()
-    rechts = max((c.mapTo(h, c.rect().topRight()).x() for c in d.findChildren(QWidget) if c.isVisible()), default=0)
-    assert rechts <= sa.viewport().width(), (name, rechts)
+    vp = sa.viewport()
+    zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0
+          and (c.mapTo(vp, c.rect().topLeft()).x() < -1 or c.mapTo(vp, c.rect().topRight()).x() > vp.width())]
+    assert not zu, (name, breite, zu)
     p.close()

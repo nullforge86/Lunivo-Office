@@ -13,13 +13,14 @@ import os
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPen
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox, QVBoxLayout,
+    QCheckBox, QComboBox, QDialog, QFontComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox, QVBoxLayout,
 )
 
 from lunivo_writer.editor import wasserzeichen as WZ
 from lunivo_writer.models.page import PageSettings, mm_to_px
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.mass_feld import MassSpin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
@@ -31,8 +32,10 @@ def _titel(text: str, feld) -> QLabel:
     return t
 
 
-def _feld(w, breite: int = 130):
-    w.setMinimumHeight(34); w.setMinimumWidth(breite)
+def _feld(w, breite: int = 0):
+    w.setMinimumHeight(34)
+    if breite:
+        w.setMinimumWidth(breite)
     return w
 
 
@@ -48,58 +51,50 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self.entfernt = False
         self.setWindowTitle("Wasserzeichen")
         haupt = QVBoxLayout(self)
-        haupt.addWidget(QLabel("Wasserzeichen einstellen"))
-        h = QHBoxLayout(); haupt.addLayout(h, 1)
-        links = QVBoxLayout(); h.addLayout(links, 3)
-        g = QGridLayout(); g.setHorizontalSpacing(8); links.addLayout(g)
-        g.setProperty("schmal_nein", True)                            # Raster bleibt auch in der Seitenleiste ein Raster
-        z = 0
+        g = FormularGitter()                                           # passt sich der Breite an: in der Seitenleiste eine Spalte, nichts abgeschnitten
+        g.breit(QLabel("Wasserzeichen einstellen"))
         # ---- Bildwasserzeichen ----
-        self.mit_bild = QCheckBox("&Bildwasserzeichen"); g.addWidget(self.mit_bild, z, 0, 1, 4); z += 1
-        self.bild_knopf = _feld(QPushButton("Bild a&uswählen"), 120); self.bild_name = QLabel("(Keine Grafik)")
-        g.addWidget(self.bild_knopf, z, 0); g.addWidget(self.bild_name, z, 1, 1, 3); z += 1
+        self.mit_bild = UmbruchSchalter("&Bildwasserzeichen"); g.breit(self.mit_bild)
+        self.bild_knopf = _feld(QPushButton("Bild a&uswählen")); self.bild_name = QLabel("(Keine Grafik)")
+        self.bild_name.setWordWrap(True)
+        bz = FlussLayout(10); bz.addWidget(self.bild_knopf); bz.addWidget(self.bild_name); g.breit(bz)
         self.zoom = _feld(QComboBox()); self.zoom.addItem(AUTOMATISCH, 0)
         for n in WZ.ZOOMS:
             self.zoom.addItem(f"{n} %", n)
-        self.auswaschen = QCheckBox("Aus&waschen")
-        g.addWidget(_titel("&Zoom:", self.zoom), z, 0); g.addWidget(self.zoom, z, 1); g.addWidget(self.auswaschen, z, 2, 1, 2); z += 1
-        self.bild_format, self.bild_h, self.bild_h_mm, self.bild_v, self.bild_v_mm = self._lage_felder(g, z, "")
-        z += 3
+        self.auswaschen = UmbruchSchalter("Aus&waschen")
+        g.zeile(_titel("&Zoom:", self.zoom), self.zoom); g.breit(self.auswaschen)
+        self.bild_format, self.bild_h, self.bild_h_mm, self.bild_v, self.bild_v_mm = self._lage_felder(g, "")
         self._bild_teile = [self.bild_knopf, self.bild_name, self.zoom, self.auswaschen, self.bild_format, self.bild_h, self.bild_h_mm,
                             self.bild_v, self.bild_v_mm]
         # ---- Textwasserzeichen ----
-        self.mit_text = QCheckBox("Te&xtwasserzeichen"); g.addWidget(self.mit_text, z, 0, 1, 4); z += 1
-        self.inhalt = _feld(QComboBox(), 180); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
-        self.schrift = _feld(QFontComboBox(), 180); self.schrift.setMaximumWidth(260)
-        self.groesse = _feld(QComboBox(), 120); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
+        self.mit_text = UmbruchSchalter("Te&xtwasserzeichen"); g.breit(self.mit_text)
+        self.inhalt = _feld(QComboBox()); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
+        self.schrift = _feld(QFontComboBox()); self.schrift.setMinimumContentsLength(8)
+        self.groesse = _feld(QComboBox()); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
         for n in WZ.GROESSEN:
             self.groesse.addItem(str(n))
-        self.farbe = _feld(FarbFeld(a.get("farbe") or WZ.STANDARD_FARBE, "Farbe"), 120)
+        self.farbe = _feld(FarbFeld(a.get("farbe") or WZ.STANDARD_FARBE, "Farbe"))
         for text, feld in (("&Inhalt:", self.inhalt), ("&Schriftart:", self.schrift), ("&Größe:", self.groesse), ("&Farbe:", self.farbe)):
-            g.addWidget(_titel(text, feld), z, 0); g.addWidget(feld, z, 1, 1, 2); z += 1
-        self.text_format, self.text_h, self.text_h_mm, self.text_v, self.text_v_mm = self._lage_felder(g, z, "t")
-        z += 3
+            g.zeile(_titel(text, feld), feld)
+        self.text_format, self.text_h, self.text_h_mm, self.text_v, self.text_v_mm = self._lage_felder(g, "t")
         self._text_teile = [self.inhalt, self.schrift, self.groesse, self.farbe, self.text_format, self.text_h, self.text_h_mm,
                             self.text_v, self.text_v_mm]
         # ---- Transparenz ----
-        self.transparenz = QSlider(Qt.Horizontal); self.transparenz.setRange(0, 100)
+        self.transparenz = QSlider(Qt.Horizontal); self.transparenz.setRange(0, 100); self.transparenz.setMinimumWidth(80)
         self.transparenz_zahl = _feld(QSpinBox(), 80); self.transparenz_zahl.setRange(0, 100); self.transparenz_zahl.setSuffix(" %")
-        g.addWidget(_titel("&Transparenz:", self.transparenz), z, 0); g.addWidget(self.transparenz, z, 1, 1, 2)
-        g.addWidget(self.transparenz_zahl, z, 3)
+        tz = QHBoxLayout(); tz.addWidget(self.transparenz, 1); tz.addWidget(self.transparenz_zahl)
+        g.zeile(_titel("&Transparenz:", self.transparenz), tz)
         for t, f in ((self.transparenz, self.transparenz_zahl), (self.transparenz_zahl, self.transparenz)):
             t.valueChanged.connect(f.setValue)
-        g.setColumnStretch(1, 1)
-        links.addStretch(1)
-        # ---- rechts: Vorschau, Übernehmen für ----
-        rechts = QVBoxLayout(); h.addLayout(rechts, 2)
-        rechts.addWidget(QLabel("Vorschau"))
+        # ---- Vorschau, Übernehmen für (in der Vorlage rechts, in der Seitenleiste darunter) ----
+        g.breit(abschnittstitel("Vorschau"))
         self.vorschau = VorschauFlaeche(self._male, 280)
-        self.vorschau.setMinimumWidth(200)
-        rechts.addWidget(self.vorschau, 1)
-        self.bereich_wahl = _feld(QComboBox(), 200)
+        g.breit(self.vorschau)
+        self.bereich_wahl = _feld(QComboBox())
         for k, t in self.BEREICHE:
             self.bereich_wahl.addItem(t, k)
-        rechts.addWidget(_titel("Ü&bernehmen für:", self.bereich_wahl)); rechts.addWidget(self.bereich_wahl)
+        g.zeile(_titel("Ü&bernehmen für:", self.bereich_wahl), self.bereich_wahl)
+        haupt.addLayout(g); haupt.addStretch(1)
         fussleiste(self, haupt)
         self._vorbelegen(a)
         # Verbindungen
@@ -115,20 +110,20 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self.schrift.currentFontChanged.connect(self._zustand); self.farbe.farbeGeaendert.connect(self._zustand)
         self._zustand()
 
-    def _lage_felder(self, g: QGridLayout, z: int, kuerzel: str):
-        """Format, Horizontal und Vertikal (je Liste und Abstand vom Rand) ab Zeile ``z``."""
+    def _lage_felder(self, g: FormularGitter, kuerzel: str):
+        """Format, Horizontal und Vertikal (je Liste und Abstand vom Rand)."""
         fmt = _feld(QComboBox())
         for w, t in WZ.FORMATE:
             fmt.addItem(t, w)
         felder = [fmt]
-        g.addWidget(_titel("F&ormat:" if kuerzel else "Fo&rmat:", fmt), z, 0); g.addWidget(fmt, z, 1)
-        for i, (titel, werte) in enumerate((("&Horizontal:" if not kuerzel else "Hori&zontal:", WZ.HORIZONTAL),
-                                             ("Verti&kal:" if not kuerzel else "&Vertikal:", WZ.VERTIKAL))):
+        g.zeile(_titel("F&ormat:" if kuerzel else "Fo&rmat:", fmt), fmt)
+        for titel, werte in (("&Horizontal:" if not kuerzel else "Hori&zontal:", WZ.HORIZONTAL),
+                             ("Verti&kal:" if not kuerzel else "&Vertikal:", WZ.VERTIKAL)):
             c = _feld(QComboBox())
             for k, t in werte:
                 c.addItem(t, k)
             m = _feld(MassSpin(), 90); m.setRange(0, 300); m.setDecimals(1); m.setAccessibleName(titel.replace("&", "") + " Abstand")
-            g.addWidget(_titel(titel, c), z + 1 + i, 0); g.addWidget(c, z + 1 + i, 1); g.addWidget(m, z + 1 + i, 2, 1, 2)
+            g.reihe((_titel(titel, c), c), ("Abstand:", m))
             felder += [c, m]
         return tuple(felder)
 
