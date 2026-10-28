@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QLabel, QMenu, QVBoxLayout, QWidget, QWidgetAction
 
 
 class _Gitter(QWidget):
-    def __init__(self, raster: "ZellenRaster", zeilen: int, spalten: int, zelle: int = 20):
+    def __init__(self, raster: "ZellenRaster", zeilen: int, spalten: int, zelle: int = 23):
         super().__init__()
         self._r, self.zeilen, self.spalten, self.zelle = raster, zeilen, spalten, zelle
         self.an = (0, 0)                                  # (Zeilen, Spalten) unter der Maus; (0, 0) = keine
@@ -41,7 +41,7 @@ class _Gitter(QWidget):
             for s in range(self.spalten):
                 r = QRectF(s * self.zelle + 1, z * self.zelle + 1, self.zelle - 2, self.zelle - 2)
                 an = z < self.an[0] and s < self.an[1]
-                p.setPen(QPen(pal.highlight().color() if an else pal.mid().color(), 1))
+                p.setPen(QPen(pal.highlight().color() if an else pal.windowText().color(), 1))   # dunkle Ränder wie die Vorlage
                 p.setBrush(pal.highlight().color().lighter(170) if an else pal.base())
                 p.drawRect(r)
 

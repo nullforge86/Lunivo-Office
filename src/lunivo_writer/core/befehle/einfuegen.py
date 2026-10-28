@@ -316,14 +316,14 @@ class EinfuegenBefehle:
         """Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Seitenumbruch", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
-        m.eintrag("Spaltenumbruch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
-        m.eintrag("Textflussumbruch", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
+        m.eintrag("Seitenumbruch(&P)", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
+        m.eintrag("Spaltenumbr&uch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
+        m.eintrag("Textflussumbruch(&W)", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
         m.trenner()
-        for art, text, sym in (("NextPage", "Abschnittsumbruch auf nächster Seite", "abschnitt"),
-                               ("Continuous", "Fortlaufender Abschnittsumbruch", "abschnittlaufend"),
-                               ("EvenPage", "Abschnittsumbruch auf gerader Seite", "abschnittgerade"),
-                               ("OddPage", "Abschnittsumbruch auf ungerader Seite", "abschnittungerade")):
+        for art, text, sym in (("NextPage", "Abschnittsumbruch von &nächster Seite", "abschnitt"),
+                               ("Continuous", "Fortlaufenden Abschni&ttsumbruch", "abschnittlaufend"),
+                               ("EvenPage", "Abschnittsumbruch von &gerader Seite", "abschnittgerade"),
+                               ("OddPage", "Abschnittsumbruch v&on ungerader Seite", "abschnittungerade")):
             m.eintrag(text, lambda a=art: self.abschnittsumbruch(None, a), symbol=self._sym(sym))
         return m
 
@@ -331,8 +331,8 @@ class EinfuegenBefehle:
     def menue_leereSeiteKlappe(self):
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
-        m.eintrag("Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
+        m.eintrag("&Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
+        m.eintrag("&Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
         return m
 
 
@@ -343,10 +343,10 @@ class EinfuegenBefehle:
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
-        m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
-        m.addAction(self._sym("stift"), "Tabelle zeichnen", self.tabelleZeichnen)
-        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
-        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
+        m.addAction(self._sym("tabelle"), "Tabelle e&infügen", self.tabelleRaster)
+        m.addAction(self._sym("tabelleZeichnen"), "Tabelle zeichnen(&W)", self.tabelleZeichnen)
+        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln...", self.textInTabelle)
+        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren...", self.tabelleInText)
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None
