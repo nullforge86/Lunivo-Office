@@ -11,6 +11,21 @@ class SeitenBaustein:
     """Abschnitte, Seitenzählung, Paginierung. Baustein von ``DocumentEditor`` (siehe ``lunivo_writer/ui/document/document_editor.py``)."""
 
 
+    def seite_letzter_block(self):
+        """Der letzte Absatz, der auf dem Blatt der Schreibmarke beginnt (für „Leere Seite“: das neue Blatt kommt dahinter)."""
+        g = self._sp_geo()
+        ch, n = g["ch"], max(1, g["n"])
+        lay = self.document().documentLayout()
+
+        def blatt(b) -> int:
+            return int((lay.blockBoundingRect(b).top() + 1.0) // ch) // n if ch > 0 else 0
+        b = self.textCursor().block()
+        jetzt = blatt(b)
+        while b.next().isValid() and blatt(b.next()) == jetzt:
+            b = b.next()
+        return b
+
+
     # ---- Abschnitte ----------------------------------------------------------------------------------------------------
     def abschnitt_nr(self) -> int:
         from lunivo_writer.editor import abschnitte as AB

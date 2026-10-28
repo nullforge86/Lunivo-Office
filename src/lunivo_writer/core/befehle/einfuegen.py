@@ -223,22 +223,17 @@ class EinfuegenBefehle:
 
     # ==== Einfügen ===========================================================================================================
     def leereSeite(self, k=None, quer=None):
-        """Leere Seite (Vertikal/Horizontal; ohne Angabe wie die Seite davor). Hat sie eine andere Ausrichtung als die Seite davor, steht sie
-        in einem eigenen Abschnitt."""
+        """Leere Seite: ein neues Blatt hinter der Seite der Schreibmarke (Vertikal/Horizontal; ohne Angabe wie die Seite davor).
+        Der Text wird nicht geteilt; ein Blatt in anderer Ausrichtung steht in einem eigenen Abschnitt."""
+        from lunivo_writer.editor.leere_seite import leere_seite
         e = self.ed
         if not e:
             return
-        if quer is None or bool(quer) == e.abschnitt_seite().landscape:
-            e.insert_page_break(); e.insert_page_break()
-            return
-        alt = e.abschnitt_seite().landscape
-        e.abschnitt_einfuegen("naechste")
-        e.abschnitt_einfuegen("naechste")
-        c = e.textCursor(); c.movePosition(QTextCursor.PreviousBlock); e.setTextCursor(c)
-        self.w.set_orientation(bool(quer))
-        c = e.textCursor(); c.movePosition(QTextCursor.NextBlock); e.setTextCursor(c)
-        if e.abschnitt_seite().landscape != alt:
-            self.w.set_orientation(alt)
+        c = leere_seite(e.document(), e.seite_letzter_block(), e.abschnitt_seite(), quer)
+        e.setTextCursor(c)
+        e.document().setModified(True)
+        e._recount()
+        e.ensureCursorVisible()
 
 
     def sonderzeichen(self, k=None):
