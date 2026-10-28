@@ -5,7 +5,7 @@ from typing import Callable
 
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import QGridLayout, QLabel, QMenu, QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction
+from PySide6.QtWidgets import QApplication, QGridLayout, QLabel, QMenu, QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction
 
 
 def _symbol(bild, groesse: QSize) -> QIcon:
@@ -23,14 +23,23 @@ def _symbol(bild, groesse: QSize) -> QIcon:
     return QIcon(pm)
 
 
+def textkachel(text: str, pixel: int = 17) -> Callable:
+    """Zeichenfunktion für eine Kachel, die nur ein Zeichen oder kurzes Wort zeigt (Symbole, Einheiten)."""
+    def f(p: QPainter, r: QRectF) -> None:
+        schrift = p.font(); schrift.setPixelSize(pixel if len(text) == 1 else max(9, pixel - 5)); p.setFont(schrift)
+        p.setPen(QApplication.palette().text().color()); p.drawText(r, Qt.AlignCenter, text)
+    return f
+
+
 class RasterAuswahl(QMenu):
     """Meldet den Schlüssel der gewählten Kachel."""
 
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(56, 56)):
+    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(56, 56), beschriftet: bool = False):
+        """``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp."""
         super().__init__(parent)
-        self._spalten, self._groesse = spalten, groesse
+        self._spalten, self._groesse, self._beschriftet = spalten, groesse, beschriftet
         self._wid = QWidget()
         self._v = QVBoxLayout(self._wid)
         self._v.setContentsMargins(6, 6, 6, 6); self._v.setSpacing(4)
@@ -38,6 +47,7 @@ class RasterAuswahl(QMenu):
             t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
             self._v.addWidget(t)
         self._gitter = QGridLayout(); self._gitter.setSpacing(4)
+        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
         self._v.addLayout(self._gitter)
         self._n = 0
         self.knoepfe: dict[str, QToolButton] = {}
@@ -46,13 +56,31 @@ class RasterAuswahl(QMenu):
     def kachel(self, schluessel: str, beschriftung: str = "", bild=None, *, aktuell: bool = False) -> QToolButton:
         b = QToolButton()
         b.setIcon(_symbol(bild, self._groesse)); b.setIconSize(self._groesse)
-        b.setToolTip(beschriftung or schluessel); b.setCheckable(True); b.setChecked(aktuell)
+        b.setToolTip(beschriftung or schluessel); b.setAccessibleName(beschriftung or schluessel); b.setCheckable(True); b.setChecked(aktuell)
         b.setFixedSize(self._groesse + QSize(10, 10))
+        if self._beschriftet:
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            b.setText(b.fontMetrics().elidedText(beschriftung or schluessel, Qt.ElideRight, self._groesse.width() + 4))
+            b.setFixedSize(self._groesse + QSize(10, 10 + b.fontMetrics().height() + 4))
         b.clicked.connect(lambda _c=False, k=schluessel: self._klick(k))
         self._gitter.addWidget(b, self._n // self._spalten, self._n % self._spalten)
         self._n += 1
         self.knoepfe[schluessel] = b
         return b
+
+    def bild_setzen(self, schluessel: str, bild, beschriftung: str = "") -> None:
+        """Bild und Tipp einer vorhandenen Kachel wechseln (z. B. „zuletzt verwendet“ vor dem Aufklappen)."""
+        b = self.knoepfe[schluessel]
+        b.setIcon(_symbol(bild, self._groesse)); b.setToolTip(beschriftung or schluessel); b.setAccessibleName(beschriftung or schluessel)
+
+    def abschnitt(self, titel: str) -> None:
+        """Neuer Abschnitt mit eigener Überschrift und eigenem Raster darunter (z. B. „Benutzerdefinierte Symbole:“)."""
+        t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
+        self._v.addWidget(t)
+        self._gitter = QGridLayout(); self._gitter.setSpacing(4)
+        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
+        self._v.addLayout(self._gitter)
+        self._n = 0
 
     def kacheln(self, eintraege, aktuell: str | None = None) -> None:
         """``eintraege``: Liste aus (schluessel, beschriftung, bild)."""

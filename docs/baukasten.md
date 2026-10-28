@@ -10,7 +10,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `farbpalette.py` | `FarbPalette` (Popup), `FarbFeld` (Knopf für Dialoge), `FarbKnopf` (geteilter Knopf fürs Band), `weitere_farben()` (Fenster „Farben“, siehe `farbwaehler.py`: Standard · Benutzerdefiniert · Erweitert, Farbmodell RGB/HSV/HSL, Hex, Neu/Aktuell) | `gewaehlt(QColor \| None)`, `ueberfahren`, `verlassen` |
 | `linien.py` | `Linie` (Farbe, pt, Art), `LinienWahl` (Zeile aus Art, Stärke, Farbe), `RahmenMenue` (unten, oben, links, rechts, kein, alle, außen, innen) | `geaendert(Linie)`, `gewaehlt(RahmenSeiten, schluessel)` |
 | `menue_liste.py` | `MenueListe`: Zeilen mit Symbol, Kürzel, Haken, Untermenü, auch aus einer Beschreibung (`aus_liste`) | `triggered` je Zeile |
-| `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter) | `gewaehlt(schluessel)` |
+| `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter, Symbole); `abschnitt(titel)` beginnt ein zweites Raster, `bild_setzen` wechselt eine Kachel vor dem Aufklappen, `textkachel(text)` zeichnet ein Zeichen als Kachel | `gewaehlt(schluessel)` |
 | `zellen_raster.py` | `ZellenRaster`: Zellen überfahren, „3 × 4 Tabelle“ lesen, klicken; mit `fuss()` weitere Einträge darunter | `gewaehlt(zeilen, spalten)` |
 | `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
 | `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
@@ -120,6 +120,23 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Wort-Extras | `editor/wortextras.py` | `MENUE`: verschachtelte Liste (Text, Symbol, Funktion) für das Menü; jede Funktion ein Rückgängig-Schritt |
 | Unterstreichungen | `ui/baukasten/linien.py`, `editor/textfx.py` | `LinienZeile(…, maler=)` / `linien_menue_zeile(…, maler=unter_zeichnen)`: Menüzeilen mit gezeichneter Unterstreichung |
 | Absatzwerte | `ui/baukasten/absatz_dialog.py` | `aus_block(bf)`: die Werte des Absatz-Fensters aus einem `QTextBlockFormat` |
+
+## Bausteine des Reiters Einfügen
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Klappmenüs | `core/befehle/einfuegen.py` | `menue_…Klappe` für Leere Seite, Umbrüche, Tabelle (10 × 10, Text ↔ Tabelle), Bild, Textfeld, Schnellbausteine, Symbol (zuletzt verwendet + eigene Symbole) — aus `MenueListe`, `ZellenRaster`, `RasterAuswahl` |
+| Zahlschreibweisen | `editor/zahlformat.py` | `TYPEN`, `zahl_text(n, typ)` (1,2,3 · A,B,C · I,II,III · ①②③ · Zahlwort), `zahlwort`. Keine Oberfläche |
+| Text ↔ Tabelle | `editor/tabelle_text.py` | `markierte_absaetze`, `zellen`, `text_zu_tabelle`, `tabelle_zu_text` (je ein Rückgängig-Schritt), `TRENNER` |
+| Felder | `editor/felder.py` | `FELDER` (Name → Beschreibung, Feldanweisung), `ergebnis`, `feld_einfuegen` (Text mit `P_FELD`, im DOCX ein echtes Feld) |
+| Galerien | `core/befehle/einfuegen.py` | `menue_…Klappe` für Deckblatt, Formen, Seitenzahl, Wasserzeichen (eigene + Voreinstellung), WordArt, Gleichung — alle aus `RasterAuswahl` |
+| Seitenbildchen | `ui/baukasten/seiten_bildchen.py` | `seitenzahl_zeichner`, `wasserzeichen_zeichner`, `deckblatt_zeichner`, `plus_zeichner` — Zeichner `f(QPainter, QRectF)` für Kacheln und Vorschauen |
+| Seitenzahlen | `editor/seitenzahl.py` | `VORGABEN`, `MUSTER`, `seitenzahl_setzen(page, ort, ausrichtung, muster)`, `seitenzahlen_entfernen` (arbeiten auf `PageSettings`) |
+| Formenkatalog | `editor/formen_katalog.py` | `KATEGORIEN` (Linie … Legenden), `pfad(name, r)`, `ist_linie`, `namen`; `editor.einfuegen.form_bild` zeichnet damit |
+| Gleichungen, WordArt | `editor/einfuegen.py` | `GLEICHUNGEN`, `formel_bild`, `WORDART_VORGABEN`, `DECKBLATT_VORLAGEN` |
+| Diagramme | `editor/diagramm.py` | `TYPEN` (Säule … Kombination, Gruppe ohne Untertyp bleibt grau), `bild(untertyp, titel, kategorien, reihen)` → `QImage` über QtCharts in einer eigenen `QGraphicsScene`; `ALT` für frühere Namen |
+| Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog`, `HyperlinkDialog` (Datei/Webseite, Stelle im Dokument, E-Mail; `ergebnis()`), `ObjektDialog` (aus Datei, als Symbol; `art()`) — ändern das Dokument nicht selbst |
+| Fenster (Daten) | `ui/dialogs/einfuegen_dialoge.py` | `DiagrammDialog` mit `DiagrammDatenDialog`, `DatumDialog` (Formate, Sprache, „Automatisch aktualisieren“ → Feld), `WordArtDialog`, `FormelDialog` |
 
 ## Befehle nach Aufgaben
 
