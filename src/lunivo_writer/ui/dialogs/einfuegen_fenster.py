@@ -11,7 +11,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
-    QVBoxLayout,
+    QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -65,40 +65,213 @@ class ZahlDialog(PanelFaehig, QDialog):
 
 
 class FelderDialog(PanelFaehig, QDialog):
-    """Links die Feldnamen, rechts Beschreibung, Feldanweisung und Ergebnis."""
+    """„Felder“ wie in der Vorlage: links „Feld auswählen“ mit den Feldnamen, rechts „Feldeigenschaften“ mit Feldfunktionen,
+    Assistent (je Feld eigene Felder), Beschreibung und „Formatierung bei Aktualisierung beibehalten“. OK ist grau, solange die
+    Feldfunktion nichts ergibt (z. B. eine Formel nur aus „=“)."""
 
     def __init__(self, parent=None, kontext: dict | None = None):
         super().__init__(parent)
         self.setWindowTitle("Felder")
         self.kontext = kontext or {}
+        self._sperre = False
         v = QVBoxLayout(self)
-        g = QGridLayout(); g.setHorizontalSpacing(12)
+        h = QHBoxLayout(); h.setSpacing(16)
+        links = QVBoxLayout()
+        links.addWidget(self._kopf("Feld auswählen"))
         self.liste = QListWidget(); self.liste.setAccessibleName("Feldnamen"); self.liste.addItems(list(F.FELDER))
         self.liste.setMinimumWidth(170)
-        g.addWidget(_titel("&Feldnamen:", self.liste), 0, 0); g.addWidget(self.liste, 1, 0, 3, 1)
-        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
-        self.anweisung = QLineEdit(); self.anweisung.setReadOnly(True); self.anweisung.setMinimumHeight(34); self.anweisung.setMinimumWidth(240)
-        self.ergebnis_text = QLineEdit(); self.ergebnis_text.setReadOnly(True); self.ergebnis_text.setMinimumHeight(34)
-        g.addWidget(self.beschreibung, 1, 1)
+        links.addWidget(_titel("Feldna&men:", self.liste)); links.addWidget(self.liste, 1)
+        h.addLayout(links)
         rechts = QVBoxLayout()
-        rechts.addWidget(_titel("Feld&anweisung:", self.anweisung)); rechts.addWidget(self.anweisung)
-        rechts.addWidget(_titel("&Ergebnis:", self.ergebnis_text)); rechts.addWidget(self.ergebnis_text); rechts.addStretch(1)
-        g.addLayout(rechts, 2, 1)
-        g.setColumnStretch(1, 1)
-        v.addLayout(g)
-        fussleiste(self, v)
+        rechts.addWidget(self._kopf("Feldeigenschaften"))
+        self.anweisung = QLineEdit(); self.anweisung.setMinimumHeight(36); self.anweisung.setMinimumWidth(260)
+        self.anweisung.setAccessibleName("Feldfunktionen")
+        rechts.addWidget(_titel("&Feldfunktionen:", self.anweisung)); rechts.addWidget(self.anweisung)
+        rechts.addWidget(QLabel("Assistent:"))
+        self._assistent = QGridLayout(); self._assistent.setHorizontalSpacing(10); self._assistent.setVerticalSpacing(6)
+        self._assistent.setProperty("schmal_nein", True)                  # wird je Feld neu gefüllt
+        self._assistent.setColumnStretch(1, 1)
+        rechts.addLayout(self._assistent)
+        rechts.addStretch(1)
+        rechts.addWidget(QLabel("Beschreibung:"))
+        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True); self.beschreibung.setStyleSheet("color: palette(mid);")
+        rechts.addWidget(self.beschreibung)
+        self.formatierung = QCheckBox("Formatierung bei Aktualisierung &beibehalten"); self.formatierung.setChecked(True)
+        rechts.addWidget(self.formatierung)
+        h.addLayout(rechts, 1)
+        v.addLayout(h, 1)
+        self.ok = fussleiste(self, v)
+        self._felder: dict[str, QWidget] = {}
         self.liste.currentTextChanged.connect(self._zeigen)
-        self.liste.itemDoubleClicked.connect(lambda _i: self.accept())
+        self.liste.itemDoubleClicked.connect(lambda _i: self.ok.isEnabled() and self.accept())
+        self.anweisung.textChanged.connect(self._pruefen)
         self.liste.setCurrentRow(0)
-        self.resize(520, 300)
+
+    @staticmethod
+    def _kopf(text: str) -> QLabel:
+        t = QLabel(text); f = t.font(); f.setBold(True); t.setFont(f)
+        return t
+
+    def kompakt_machen(self) -> None:
+        """In der Seitenleiste: Feldnamen über den Eigenschaften."""
+        from PySide6.QtWidgets import QBoxLayout
+        self.layout().itemAt(0).layout().setDirection(QBoxLayout.TopToBottom)
+        self.liste.setMinimumWidth(0); self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * 7 + 8)
+        self.anweisung.setMinimumWidth(0)
+
+    # ---- Assistent je Feld ----------------------------------------------------------------------------------------------
+    def _zeile(self, schl: str, text: str, w: QWidget, aktiv: bool = True) -> QWidget:
+        n = self._assistent.rowCount()
+        lab = _titel(text, w)
+        w.setMinimumHeight(36); w.setEnabled(aktiv); lab.setEnabled(aktiv)
+        self._assistent.addWidget(lab, n, 0); self._assistent.addWidget(w, n, 1)
+        self._felder[schl] = w
+        return w
+
+    def _box(self, eintraege, bearbeitbar: bool = False, daten=None) -> QComboBox:
+        b = QComboBox(); b.setEditable(bearbeitbar)
+        for i, t in enumerate(eintraege):
+            b.addItem(t, (daten[i] if daten else t))
+        return b
 
     def _zeigen(self, name: str) -> None:
-        text, anweisung = F.FELDER.get(name, ("", ""))
-        self.beschreibung.setText(text); self.anweisung.setText(anweisung); self.anweisung.setCursorPosition(0)
-        self.ergebnis_text.setText(F.ergebnis(name, self.kontext)); self.ergebnis_text.setCursorPosition(0)
+        while self._assistent.count():
+            w = self._assistent.takeAt(0).widget()
+            if w is not None:
+                w.deleteLater()
+        self._felder = {}
+        self.name = name
+        k = self.kontext
+        marken = list(k.get("textmarken", []))
+        if name == "Formel":
+            fmt = self._zeile("format", "&Zahlenformat:", self._box([""] + F.ZAHLENFORMATE, bearbeitbar=True))
+            fkt = self._zeile("funktion", "Funktion &einfügen:", self._box([""] + F.FUNKTIONEN))
+            ber = self._zeile("bereich", "&Tabellenbereich:", self._box([""] + F.BEREICHE), bool(k.get("in_tabelle")))
+            mrk = self._zeile("marke", "Textmar&ke einfügen:", self._box([""] + marken), bool(marken))
+            fmt.currentTextChanged.connect(self._formel_format)
+            for box in (fkt, ber, mrk):
+                box.activated.connect(lambda _i, box=box: self._formel_einsetzen(box))
+        elif name == "Hyperlink":
+            self._zeile("text", "&Adresse:", QLineEdit())
+        elif name in ("Seite", "NumPages", "SectionPages"):
+            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
+        elif name == "PageRef":
+            self._zeile("text", "&Textmarke:", self._box(marken), bool(marken))
+        elif name == "Seq":
+            self._zeile("text", "&Kategorie:", self._box(F.SEQ_KATEGORIEN, bearbeitbar=True))
+            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
+        elif name == "TC":
+            self._zeile("text", "&Eintragstext:", QLineEdit())
+            e = QSpinBox(); e.setRange(1, 9); self._zeile("ebene", "E&bene:", e)
+        elif name in ("Uhrzeit", "PrintDate"):
+            vorgabe = "HH:mm" if name == "Uhrzeit" else "dd.MM.yyyy"
+            box = self._box(F.DATUMSFORMATE, bearbeitbar=True); box.setCurrentText(vorgabe)
+            self._zeile("datum", "&Datumsformat:", box)
+        elif name == "TOC":
+            von, bis = QSpinBox(), QSpinBox(); von.setRange(1, 9); bis.setRange(1, 9); bis.setValue(3)
+            self._zeile("von", "Ebenen &von:", von); self._zeile("bis", "Ebenen &bis:", bis)
+        elif name == "Dokumentvariable":
+            self._zeile("text", "&Name:", QLineEdit())
+        elif name == "Seriendruckfeld":
+            self._zeile("text", "&Feldname:", self._box(list(k.get("serienfelder", [])), bearbeitbar=True))
+        elif name == "StyleRef":
+            self._zeile("text", "&Formatvorlage:", self._box([f"Überschrift {i}" for i in range(1, 10)] + ["Titel", "Untertitel"],
+                                                             bearbeitbar=True))
+        for w in self._felder.values():
+            for sig in ("textChanged", "currentTextChanged", "valueChanged"):
+                if name != "Formel" and hasattr(w, sig):
+                    getattr(w, sig).connect(self._bauen)
+        self.beschreibung.setText(F.FELDER.get(name, ("", ""))[0])
+        self._sperre = True
+        self.anweisung.setText(F.vorgabe(name))
+        self._sperre = False
+        self._bauen()
+
+    def _wert(self, schl: str):
+        w = self._felder.get(schl)
+        if isinstance(w, QComboBox):
+            return w.currentData() if not w.isEditable() and w.currentData() is not None else w.currentText()
+        if isinstance(w, QSpinBox):
+            return w.value()
+        return w.text() if w is not None else ""
+
+    def _bauen(self, *_):
+        """Feldfunktion aus dem Assistenten (außer bei Formel, die man selbst schreibt)."""
+        n = self.name
+        if n == "Formel":
+            self._pruefen(); return
+        art = self._wert("art")
+        sw = f" \\* {art}" if art and art != "ARABIC" else ""
+        text = str(self._wert("text") or "").strip()
+        neu = {"Hyperlink": f'HYPERLINK "{text}"', "Seite": "PAGE" + sw, "NumPages": "NUMPAGES" + sw,
+               "SectionPages": "SECTIONPAGES" + sw, "PageRef": f"PAGEREF {text}".strip(),
+               "Seq": f"SEQ {text.replace(' ', '_') or 'Abbildung'} \\* {art or 'ARABIC'}",
+               "TC": f'TC "{text}" \\l {self._wert("ebene")}', "Uhrzeit": f'TIME \\@ "{self._wert("datum")}"',
+               "PrintDate": f'PRINTDATE \\@ "{self._wert("datum")}"', "TOC": f'TOC \\o "{self._wert("von")}-{self._wert("bis")}" \\h',
+               "Dokumentvariable": f"DOCVARIABLE {text}".strip(), "Seriendruckfeld": f"MERGEFIELD {text}".strip(),
+               "StyleRef": f'STYLEREF "{text}"'}.get(n)
+        if neu is not None and not self._sperre:
+            self.anweisung.setText(neu)
+        self._pruefen()
+
+    def _formel_format(self, muster: str) -> None:
+        import re
+        ohne = re.sub(r'\s*\\#\s*"[^"]*"', "", self.anweisung.text()).rstrip()
+        self.anweisung.setText(ohne + (f' \\# "{muster}"' if muster.strip() else ""))
+
+    def _formel_einsetzen(self, box: QComboBox) -> None:
+        t = box.currentText()
+        if not t:
+            return
+        if box is self._felder.get("funktion"):
+            t += "()"
+        pos = self.anweisung.cursorPosition() or len(self.anweisung.text())
+        alt = self.anweisung.text()
+        self.anweisung.setText(alt[:pos] + t + alt[pos:])
+        self.anweisung.setCursorPosition(pos + (len(t) - 1 if t.endswith("()") else len(t)))
+        box.setCurrentIndex(0)
+
+    def _gueltig(self) -> bool:
+        a = self.anweisung.text().strip()
+        if not a:
+            return False
+        if a.startswith("="):
+            try:
+                F.formel(a[1:], self.kontext)
+            except ValueError:
+                return False
+            return True
+        wort = a.split()[0].upper()
+        return not (wort in ("PAGEREF", "DOCVARIABLE", "MERGEFIELD") and len(a.split()) < 2) and a != 'HYPERLINK ""'
+
+    def _pruefen(self, *_):
+        self.ok.setEnabled(self._gueltig())
 
     def feld(self) -> tuple[str, str]:
-        return self.anweisung.text(), self.ergebnis_text.text()
+        """(Feldanweisung, Ergebnis); mit „Formatierung beibehalten“ trägt die Anweisung ``\\* MERGEFORMAT``."""
+        a = self.anweisung.text().strip()
+        text = self._wert("text") if self.name == "TC" else F.ergebnis(a, self.kontext)
+        if self.formatierung.isChecked() and F.MERGEFORMAT not in a:
+            a += " " + F.MERGEFORMAT
+        return a, text
+
+
+class AutoTextDialog(PanelFaehig, QDialog):
+    """„AutoText erstellen“: Name für die Markierung (Vorschlag: ihre ersten Wörter)."""
+
+    def __init__(self, parent=None, markierung: str = ""):
+        super().__init__(parent)
+        self.setWindowTitle("AutoText erstellen")
+        v = QVBoxLayout(self)
+        self.feld = QLineEdit(" ".join(markierung.split()[:4])[:40]); self.feld.setMinimumHeight(36)
+        t = _titel("Bitte geben Sie einen &Namen für den AutoText-Eintrag an:", self.feld); t.setWordWrap(True)
+        v.addWidget(t); v.addWidget(self.feld); v.addStretch(1)
+        self.ok = fussleiste(self, v)
+        self.feld.textChanged.connect(lambda x: self.ok.setEnabled(bool(x.strip())))
+        self.ok.setEnabled(bool(self.feld.text().strip()))
+
+    def name(self) -> str:
+        return self.feld.text().strip()
 
 
 class TrennerDialog(PanelFaehig, QDialog):

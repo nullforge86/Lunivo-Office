@@ -335,7 +335,7 @@ class EinfuegenBefehle:
 
 
     def menue_schnellbausteineKlappe(self):
-        """Schnellbausteine wie in WPS: AutoText-Liste ▸ (die Textbausteine) und Felder …"""
+        """Schnellbausteine wie in WPS: AutoText-Liste ▸ und Felder …"""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         liste = m.untermenue("AutoText-Liste", self._sym("baustein"))
@@ -344,8 +344,17 @@ class EinfuegenBefehle:
         return m
 
 
+    # Seitenzahl-AutoTexte der Vorlage: (Name, [Text oder (Feldanweisung)])
+    AUTOTEXTE_SEITE = [("- Seite -", ["- ", ("PAGE",), " -"]), ("Seite X", ["Seite ", ("PAGE",)]),
+                       ("Gesamtmenge von Y Seite", ["Gesamt ", ("NUMPAGES",), " Seiten"]),
+                       ("Seite X von Y", ["Seite ", ("PAGE",), " von ", ("NUMPAGES",)])]
+
     def _bausteine_fuellen(self, m) -> None:
+        """AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
+        „AutoText hinzufügen …“ (nur mit Markierung)."""
         from lunivo_writer.services import bausteine
+        for name, teile in self.AUTOTEXTE_SEITE:
+            m.addAction(name, lambda _=False, teile=teile: self._autotext_seite(teile))
         for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
             if not liste:
                 continue
@@ -354,7 +363,37 @@ class EinfuegenBefehle:
                 m.addAction(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
                             lambda _=False, b=b: self.ed and (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
         m.addSeparator()
+        neu = m.addAction(self._sym("baustein"), "AutoText hinzufügen …", self.autotextHinzufuegen)
+        neu.setEnabled(bool(self.ed and self.ed.textCursor().hasSelection()))
         m.addAction("Textbausteine verwalten …", self.textbaustein)
+
+
+    def _autotext_seite(self, teile) -> None:
+        if not self.ed:
+            return
+        from lunivo_writer.editor import felder as F
+        kontext = F.kontext_sammeln(self.ed)
+        c = self.ed.textCursor(); c.beginEditBlock()
+        for t in teile:
+            if isinstance(t, tuple):
+                F.feld_einfuegen(self.ed, t[0], F.ergebnis(t[0], kontext))
+            else:
+                self.ed.textCursor().insertText(t)
+        c.endEditBlock()
+        self.ed.document().setModified(True)
+
+
+    def autotextHinzufuegen(self, k=None):
+        """Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“."""
+        if not self.ed or not self.ed.textCursor().hasSelection():
+            return
+        from lunivo_writer.services import bausteine
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import AutoTextDialog
+        c = self.ed.textCursor()
+        d = AutoTextDialog(self.w, c.selectedText().replace("\u2029", " "))
+        if d.exec() and d.name():
+            bausteine.hinzufuegen(d.name(), c.selection())
+            self.w.statusBar().showMessage(f"AutoText „{d.name()}“ gespeichert.", 4000)
 
 
     def schnellbausteine(self, k=None):
@@ -362,16 +401,26 @@ class EinfuegenBefehle:
 
 
     def felder(self, k=None):
+        """Fenster „Felder“ (Schnellbausteine ▸ Felder …). TOC fügt ein echtes Inhaltsverzeichnis ein, TC einen ausgeblendeten
+        Eintrag; alle anderen Felder stehen mit Ergebnis und Feldanweisung im Text."""
         if not self.ed:
             return
+        import re
         from lunivo_writer.editor import felder as F
         from lunivo_writer.ui.dialogs.einfuegen_fenster import FelderDialog
         t = self.w.current_tab()
-        kontext = {"seiten": getattr(self.ed, "_pages", 1), "woerter": len(self.ed.toPlainText().split()),
-                   "autor": self.w.settings.get("benutzer/name", ""), "pfad": getattr(t, "path", "") or ""}
+        kontext = F.kontext_sammeln(self.ed, self.w.settings.get("benutzer/name", ""), getattr(t, "path", "") or "")
+        kontext["serienfelder"] = list((getattr(t, "serie", None) or {}).get("spalten", []))
         d = FelderDialog(self.w, kontext)
-        if d.exec():
-            F.feld_einfuegen(self.ed, *d.feld())
+        if not d.exec():
+            return
+        anweisung, text = d.feld()
+        if anweisung.upper().startswith("TOC"):
+            from lunivo_writer.editor import verzeichnis as V
+            m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
+            V.verzeichnis_einfuegen(self.ed, "toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
+            return
+        F.feld_einfuegen(self.ed, anweisung, text, versteckt=anweisung.upper().startswith("TC"))
 
 
     def menue_symbolKlappe(self):

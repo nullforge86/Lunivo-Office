@@ -14,7 +14,7 @@ from lunivo_writer.ui.dialogs import ueberpruefen_fenster as UF
 from lunivo_writer.ui.dialogs import verweise_fenster as VF
 
 FENSTER = {
-    "Zahl": lambda: EF.ZahlDialog(None), "Felder": lambda: EF.FelderDialog(None, {}),
+    "Zahl": lambda: EF.ZahlDialog(None), "Felder": lambda: EF.FelderDialog(None, {}), "AutoText": lambda: EF.AutoTextDialog(None, "x"),
     "Trenner": lambda: EF.TrennerDialog(None, zu_tabelle=True, texte=["a;b"]), "Seitenzahl": lambda: EF.SeitenzahlDialog(None),
     "Hyperlink": lambda: EF.HyperlinkDialog(None), "Objekt": lambda: EF.ObjektDialog(None),
     "Inhaltsverzeichnis": lambda: VF.InhaltsverzeichnisDialog(None, dict(TOC_VORGABE)), "Index": lambda: VF.IndexeintragDialog(None, "Apfel", []),

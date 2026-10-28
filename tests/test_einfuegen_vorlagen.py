@@ -86,14 +86,63 @@ def test_felder_einfuegen(fenster):
     from lunivo_writer.editor.zusatz import P_FELD
     from lunivo_writer.ui.dialogs.einfuegen_fenster import FelderDialog
     e = fenster.current_editor()
-    d = FelderDialog(fenster, {"autor": "Kay"})
-    d.liste.setCurrentRow(list(F.FELDER).index("Autor"))
-    assert d.feld() == ("AUTHOR", "Kay")
+    d = FelderDialog(fenster, {"seite": 2, "seiten": 5})
+    assert [d.liste.item(i).text() for i in range(d.liste.count())] == [
+        "Formel", "Hyperlink", "Seite", "PageRef", "SectionPages", "Seq", "TC", "Uhrzeit", "PrintDate", "TOC", "NumPages",
+        "Dokumentvariable", "Seriendruckfeld", "StyleRef"]
+    # Formel wie in der Vorlage: „=“, Assistent mit Zahlenformat, Funktion, Tabellenbereich (grau außerhalb), Textmarke
+    assert d.anweisung.text() == "=" and not d.ok.isEnabled() and not d._felder["bereich"].isEnabled()
+    assert d.formatierung.isChecked()
+    d.anweisung.setText("=")
+    d._felder["funktion"].setCurrentText("SUM"); d._formel_einsetzen(d._felder["funktion"])
+    assert d.anweisung.text() == "=SUM()"
+    d.anweisung.setText("=SUM(2;3)*2"); d._felder["format"].setCurrentText("0,00")
+    assert d.ok.isEnabled() and d.feld() == ('=SUM(2;3)*2 \\# "0,00" \\* MERGEFORMAT', "10,00")
+    d.liste.setCurrentRow(2)                                            # Seite, römisch
+    d._felder["art"].setCurrentIndex(1)
+    assert d.feld() == ("PAGE \\* ROMAN \\* MERGEFORMAT", "II")
+    d.formatierung.setChecked(False)
     F.feld_einfuegen(e, *d.feld()); e.insertPlainText(" danach")
-    c = QTextCursor(e.document()); c.setPosition(2)
-    assert c.charFormat().stringProperty(P_FELD) == "AUTHOR"
+    c = QTextCursor(e.document()); c.setPosition(1)
+    assert c.charFormat().stringProperty(P_FELD) == "PAGE \\* ROMAN"
     c.movePosition(QTextCursor.End)
     assert not c.charFormat().hasProperty(P_FELD)
+
+
+def test_formel_und_tabellenbereiche(fenster):
+    from lunivo_writer.editor import felder as F
+    assert F.formel("2+3*4", {}) == 14 and F.formel("ROUND(10/3;2)", {}) == 3.33 and F.formel("IF(1>2;5;7)", {}) == 7
+    assert F.formel("AVERAGE(ABOVE)", {"bereiche": {"ABOVE": [2, 4]}}) == 3
+    assert F.zahl_formatieren(1234.5, "#.##0,00") == "1.234,50" and F.zahl_formatieren(0.25, "0 %") == "25 %"
+    with pytest.raises(ValueError):
+        F.formel("2+", {})
+    e = fenster.current_editor()
+    e.insert_table(3, 1)
+    t = e.textCursor().currentTable()
+    t.cellAt(0, 0).firstCursorPosition().insertText("4")
+    t.cellAt(1, 0).firstCursorPosition().insertText("1,5")
+    e.setTextCursor(t.cellAt(2, 0).firstCursorPosition())
+    k = F.kontext_sammeln(e)
+    assert k["in_tabelle"] and k["bereiche"]["ABOVE"] == [4.0, 1.5]
+    assert F.ergebnis("=SUM(ABOVE)", k) == "5,5"
+
+
+def test_autotext_liste_wie_vorlage(fenster):
+    from lunivo_writer.editor.zusatz import P_FELD
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import AutoTextDialog
+    b, e = fenster.befehle, fenster.current_editor()
+    m = b.klappe("schnellbausteineKlappe")
+    assert _texte(m) == ["AutoText-Liste", "Felder …"]
+    liste = m.actions()[0].menu(); liste.aboutToShow.emit()
+    texte = _texte(liste)
+    assert texte[:4] == ["- Seite -", "Seite X", "Gesamtmenge von Y Seite", "Seite X von Y"] and "AutoText hinzufügen …" in texte
+    assert not next(a for a in liste.actions() if a.text() == "AutoText hinzufügen …").isEnabled()     # ohne Markierung grau
+    next(a for a in liste.actions() if a.text() == "Seite X von Y").trigger()
+    assert e.toPlainText() == "Seite 1 von 1"
+    c = QTextCursor(e.document()); c.setPosition(7)
+    assert c.charFormat().stringProperty(P_FELD) == "PAGE"
+    d = AutoTextDialog(None, "Mit freundlichen Grüßen und so weiter")
+    assert d.name() == "Mit freundlichen Grüßen und" and d.ok.isEnabled()
 
 
 def test_text_in_tabelle_und_zurueck(fenster):
