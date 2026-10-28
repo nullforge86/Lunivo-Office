@@ -40,7 +40,7 @@ def bauen(register: dict) -> dict:
             nimm("Stichwortverzeichnis", name="Index einfügen", symbol="indexbuch", text=True),
             _k("aktualisieren", "Index aktualisieren", "indexAktualisieren", text=True)]},
         {"name": "Seriendruck", "reihenfolge": True, "knoepfe": [
-            _k("serie", "Seriendruck", "seriendruck", True)]},
+            _k("serie", "Seriendruck", "serienReiter", True)]},
         dict(zitate, reihenfolge=True, knoepfe=[dict(e, gross=(i == 0), text=(i > 0)) for i, e in enumerate(zitate["knoepfe"])]),
     ]
     benutzt.update(("Nächste Note", "Vorige Note"))         # ersetzt durch Vorherige/Nächste Fußnote und Endnote

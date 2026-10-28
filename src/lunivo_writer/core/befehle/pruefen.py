@@ -242,22 +242,6 @@ class PruefenBefehle:
         self.w.statusBar().showMessage(f"{n} Briefe erzeugt (neues Dokument; die Vorlage bleibt unverändert).", 6000)
 
 
-    def serienVorschau(self, k=None):
-        if not self.ed:
-            return
-        from lunivo_writer.editor import sendungen as S
-        roh = self.w.settings.get("serien/liste", "")
-        tab = S.tabelle_lesen(roh) if roh else None
-        if not tab:
-            QMessageBox.information(self.w, "Vorschau", "Erst die Empfänger eingeben — Sendungen ▸ Seriendruck-Assistent.")
-            return
-        namen = [f"{i + 1}. " + ", ".join(list(s.values())[:2]) for i, s in enumerate(tab[1])]
-        n, ok = QInputDialog.getItem(self.w, "Vorschau auf Ergebnisse", f"{len(namen)} Empfänger. Die Vorschau ersetzt den Text nicht:", namen, 0, False)
-        if ok:
-            d = S.brief_fuer(self.ed.document(), tab[1][namen.index(n)])
-            QMessageBox.information(self.w, "Vorschau: " + n, d.toPlainText().strip()[:1200])
-
-
     def _form_dialog(self, art: str):
         if not self.ed:
             return

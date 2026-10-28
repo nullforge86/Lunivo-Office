@@ -162,6 +162,17 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Beschriftung, Querverweis | `editor/verweise.py` | `beschriftung_einfuegen(…, nach, ohne_bezeichnung, zahl)` mit SEQ-Schreibweise (`SEQ_FORMAT`), `naechste_nummer`; `VERWEISTYPEN`, `verweisen_auf(art)`, `querverweis_ziele`, `querverweis_einfuegen(ed, ziel, wie, link, oben_unten)` — Ziel bekommt eine verborgene Textmarke „_Ref…“ |
 | Klappe | `core/befehle/verweise.py` | `menue_inhaltsverzeichnisKlappe`: Ebene 1–9 und Textkörper (Formatvorlage „Überschrift N“ / „Standard“); Fuß- und Endnoten einzeln mit `note_springen(delta, art)` |
 
+## Bausteine des Reiters Mailings (Seriendruck)
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/contextual/serien_tools.py` | Kontext-Reiter `SERIENDRUCK` („Mailings“), erscheint über Verweise ▸ Seriendruck (`serienReiter`), weg mit `serienSchliessen` |
+| Befehle | `core/befehle/serien.py` | Datenquelle je Dokumentfenster (`tab.serie`, nicht gespeichert); `kann_<Befehl>` macht Knöpfe ohne Datenquelle grau; `feld_datensatz` ist das Nummernfeld im Band |
+| Datenquelle, Felder | `editor/sendungen.py` | `quelle_lesen` (CSV/TSV/TXT), `zugeordnet`, `NAECHSTER`/`naechster_einfuegen`, `gruppen`, `brief_fuer(vorlage, [Sätze])`, `felder_hervorheben` |
+| Vorschau | `ui/document/serien_vorschau.py` | schreibgeschützter Editor mit dem Brief eines Datensatzes statt der Vorlage; die Vorlage bleibt unverändert |
+| Fenster | `ui/dialogs/serien_fenster.py` | `EmpfaengerDialog`, `FeldDialog` (Signal `einfuegen`, bleibt offen), `ZuordnenDialog` |
+| Band | `ui/ribbon/ribbon_bar.py` | allgemein: `kann_<Befehl>` (Knopf frei/grau) und Einträge `{"feld": name}` (Eingabefeld aus `feld_<name>`) |
+
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
