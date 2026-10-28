@@ -143,7 +143,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             h = int(self.document().size().height()) + 4
         else:
             g = self._sp_geo()
-            h = int(g["top"] + self._blatt_anzahl() * (g["H"] + g["gap"]))
+            n = self._blatt_anzahl()
+            h = int(self.blatt_oben(n - 1) + (self._blatt(n - 1)["H"] if getattr(self, "_qplan", None) else g["H"]) + g["gap"])
         if h != self.height():
             self.setFixedHeight(h)
         self.pageApplied.emit()
@@ -220,7 +221,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                 setze(0)
             ff.setTopMargin(page.erste_seite_versatz_px())       # lange Kopfzeile: Text der ersten Seite beginnt darunter
             root.setFrameFormat(ff)
-            self.setFixedWidth(int(mm_to_px(page.width_mm) * self.zoom))
+            self.setFixedWidth(int(getattr(self, "_qbreite", mm_to_px(page.width_mm)) * self.zoom))
             self._sp_einrichten()
 
         self._blasen_einrichten()
@@ -445,11 +446,15 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             g = self._sp_geo()
             L = 14
             p.setPen(QPen(line_color, 1))
+            quer = bool(getattr(self, "_qplan", None))
             for k in range(self._blatt_anzahl()):
-                oben = int(self.blatt_oben(k) + g["mt"])
-                unten = int(self.blatt_oben(k) + g["H"] - g["mb"])
+                bk = self._blatt(k) if quer else None
+                oben = int(self.blatt_oben(k) + (bk or g)["mt"])
+                unten = int(self.blatt_oben(k) + (bk or g)["H"] - (bk or g)["mb"])
+                links = bk["x"] + bk["ml"] if bk else g["ml"]
+                rechts = links + bk["cw"] if bk else g["ml"] + g["cb"] * g["n"] + g["g"] * (g["n"] - 1)
                 # Eckmarken liegen außerhalb der Textfläche und zeigen von ihrer Ecke nach außen (wie in Word)
-                for x, ox in ((int(g["ml"]), -1), (int(g["ml"] + g["cb"] * g["n"] + g["g"] * (g["n"] - 1)), 1)):
+                for x, ox in ((int(links), -1), (int(rechts), 1)):
                     for y, oy in ((oben, -1), (unten, 1)):
                         p.drawLine(x, y, x + ox * L, y)
                         p.drawLine(x, y, x, y + oy * L)

@@ -87,8 +87,9 @@ def _seitenanfang(doc, ch: float) -> bool:
     return geaendert
 
 
-def anwenden(doc, ch: float) -> bool:
-    """Umbruchregeln auf das Dokument anwenden (``ch`` = Höhe der Textfläche einer Seite in Bildpunkten). → True, wenn sich etwas geändert hat."""
+def anwenden(doc, ch: float, weitere=None) -> bool:
+    """Umbruchregeln auf das Dokument anwenden (``ch`` = Höhe der Textfläche einer Seite in Bildpunkten). → True, wenn sich etwas geändert hat.
+    ``weitere()`` nennt zusätzlich Absätze, vor die ein eigener Umbruch gehört (z. B. ``querblatt.grenzen`` für Blätter anderer Größe)."""
     from lunivo_writer.editor import absatzopt
     from lunivo_writer.editor.zusatz import B_ABSATZOPT, B_AUTOUMBRUCH
     if ch <= 0:
@@ -104,7 +105,7 @@ def anwenden(doc, ch: float) -> bool:
                 bf = b.blockFormat(); bf.clearProperty(B_AUTOUMBRUCH); bf.setPageBreakPolicy(QTextBlockFormat.PageBreak_Auto)
                 QTextCursor(b).setBlockFormat(bf); aenderung = True
             b = b.next()
-        for _ in range(MAX_DURCHGAENGE):
+        for _ in range(MAX_DURCHGAENGE if weitere is None else 3 * MAX_DURCHGAENGE):
             neue = []
             b = doc.firstBlock()
             while b.isValid():
@@ -117,6 +118,11 @@ def anwenden(doc, ch: float) -> bool:
                     if z and (z[0][1] % ch) > 1.0:        # steht schon ganz oben auf der Seite: nichts zu gewinnen
                         neue.append(b)
                 b = b.next()
+            if weitere is not None:
+                schon = {x.blockNumber() for x in neue}
+                for x in weitere():
+                    if x.blockNumber() not in schon and not (x.blockFormat().pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore):
+                        neue.append(x); schon.add(x.blockNumber())
             if not neue:
                 break
             for b in neue:

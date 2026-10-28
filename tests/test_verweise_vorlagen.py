@@ -181,3 +181,78 @@ def test_fussnoten_und_endnoten_einzeln(fenster):
     assert e.textCursor().selectionStart() == e.noten_stellen()[0]["von"]
     b.indexAktualisieren()
     assert "keinen Index" in fenster.statusBar().currentMessage()
+
+
+def test_fenster_beschriftung(app):
+    from lunivo_writer.ui.dialogs.verweise_fenster import BeschriftungDialog
+    d = BeschriftungDialog(None, ["Bild"], lambda label, zahl: "II" if zahl == "roemisch" else "3", objekt=False, label="Tabelle")
+    assert d.text.text() == "Tabelle 3" and not d.pos.isEnabled() and not d.loeschen.isEnabled()
+    d.text.setText("Tabelle 3: Preise")
+    d.label.setCurrentText("Gleichung")                                                   # der geschriebene Rest bleibt
+    assert d.text.text() == "Gleichung 3: Preise"
+    d.zahl = "roemisch"; d.ohne.setChecked(True)
+    assert d.text.text() == "II: Preise"
+    assert d.ergebnis() == {"label": "Gleichung", "nach": ": Preise", "oben": False, "ohne": True, "zahl": "roemisch"}
+    d.label.setCurrentText("Bild"); assert d.loeschen.isEnabled()
+    d.loeschen.click()
+    assert d.eigene == [] and d.label.findText("Bild") < 0
+
+
+def test_beschriftung_roemisch_ohne_bezeichnung_und_querverweis(app):
+    from lunivo_writer.editor.zusatz import P_FELD
+    e = _ed("Erstes Bild", "Zweites Bild", "Text")
+    _gehe(e, "Erstes")
+    verweise.beschriftung_einfuegen(e, "Abbildung", "", nach=": Sonne", zahl="roemisch")
+    _gehe(e, "Zweites")
+    assert verweise.naechste_nummer(e, "Abbildung", "roemisch") == "II"
+    verweise.beschriftung_einfuegen(e, "Abbildung", "", nach=" Mond", ohne_bezeichnung=True, zahl="roemisch")
+    texte = [k["text"] for k in verweise.beschriftungen_liste(e)]
+    assert texte == ["Abbildung I: Sonne", "II Mond"]
+    assert any("ROMAN" in f.charFormat().stringProperty(P_FELD) for f in e._fragmente())
+    ziele = [z for z in verweise.querverweis_ziele(e) if z["art"] == "Abbildung"]
+    assert [z["nummer"] for z in ziele] == ["Abbildung I", "II"] and ziele[0]["inhalt"] == "Sonne"
+    c = e.textCursor(); c.movePosition(QTextCursor.End); e.setTextCursor(c)
+    verweise.querverweis_einfuegen(e, ziele[0], "nummer", oben_unten=True)
+    verweise.querverweis_einfuegen(e, ziele[0], "nur_text", link=False)
+    assert e.toPlainText().endswith("Abbildung I oben Sonne ")
+    href = next(f.charFormat().anchorHref() for f in e._fragmente() if f.charFormat().anchorHref())
+    assert href.startswith("#_Ref") and verweise.intern_springen(e, href)
+    assert all(not d["name"].startswith("_") for d in verweise.lesezeichen_liste(e, versteckte=False))
+
+
+def test_fenster_querverweis_bleibt_offen(app):
+    from lunivo_writer.ui.dialogs.verweise_fenster import QuerverweisDialog
+    e = _ed("Kapitel", "Text")
+    _gehe(e, "Kapitel"); e.apply_style("Überschrift 1")
+    d = QuerverweisDialog(None, verweise.querverweis_ziele(e))
+    assert d.art.currentText() == "Nummeriertes Element" and d.auf.currentData() == "seite" and not d.zeile.ok.isEnabled()
+    d.art.setCurrentText("Überschrift")
+    assert d.liste.count() == 1 and d.fuer.text() == "Für welche Überschrift:"
+    d.liste.setCurrentRow(0); d.auf.setCurrentIndex(d.auf.findData("text"))
+    assert not d.oben_unten.isEnabled() and d.zeile.ok.isEnabled()
+    gemeldet = []
+    d.einfuegen.connect(lambda z, wie, link, ou: gemeldet.append((z["text"], wie, link, ou)))
+    d.zeile.ok.click()
+    assert gemeldet == [("Kapitel", "text", True, False)] and d.zeile.abbrechen.text() == "Schließen"
+    assert [x for x in verweise.VERWEISTYPEN if x not in [d.art.itemText(i) for i in range(d.art.count())]] == []
+
+
+def test_befehle_beschriftung_und_querverweis(fenster, monkeypatch):
+    from PySide6.QtWidgets import QDialog
+    from lunivo_writer.ui.dialogs import verweise_fenster as VF
+    e = fenster.current_editor()
+    e.insertPlainText("Bild")
+
+    def beschriftung_exec(self):
+        self.text.setText(self.text.text() + ": Hund"); return QDialog.Accepted
+    monkeypatch.setattr(VF.BeschriftungDialog, "exec", beschriftung_exec)
+    fenster.befehle.beschriftung()
+    assert "Abbildung 1: Hund" in e.toPlainText()
+
+    def querverweis_exec(self):
+        self.art.setCurrentText("Abbildung"); self.liste.setCurrentRow(0)
+        self.auf.setCurrentIndex(self.auf.findData("nummer")); self.zeile.ok.click(); return QDialog.Rejected
+    monkeypatch.setattr(VF.QuerverweisDialog, "exec", querverweis_exec)
+    c = e.textCursor(); c.movePosition(QTextCursor.End); e.setTextCursor(c); e.insertPlainText("\nSiehe ")
+    fenster.befehle.querverweis()
+    assert e.toPlainText().endswith("Siehe Abbildung 1 ")

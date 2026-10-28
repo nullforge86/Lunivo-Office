@@ -164,7 +164,8 @@ class FormatierungBaustein:
 
     def set_indents(self, left_mm: float, right_mm: float, first_mm: float) -> None:
         def f(bf):
-            bf.setLeftMargin(mm_to_px(left_mm)); bf.setRightMargin(mm_to_px(right_mm))
+            from lunivo_writer.editor.querblatt import rechts_setzen
+            bf.setLeftMargin(mm_to_px(left_mm)); rechts_setzen(bf, mm_to_px(right_mm))
             bf.setTextIndent(mm_to_px(first_mm))
         self._block_merge(f)
 
@@ -302,7 +303,8 @@ class FormatierungBaustein:
         elif d.get("zeilen"):
             bf.setLineHeight(d["zeilen"] * 100, LH_PROPORTIONAL)
         if d.get("rechts"):
-            bf.setRightMargin(mm_to_px(d["rechts"]))
+            from lunivo_writer.editor.querblatt import rechts_setzen
+            rechts_setzen(bf, mm_to_px(d["rechts"]))
         if d.get("erste"):
             bf.setTextIndent(mm_to_px(d["erste"]))
         if d.get("rtl"):
@@ -564,7 +566,8 @@ class FormatierungBaustein:
         """Die Felder des Fensters „Absatz“ (außer Ausrichtung, Einzug links, Abstände), als Felder einer Formatvorlage."""
         from lunivo_writer.editor import absatzopt, seitenfluss
         lart = {2: "genau", 3: "mindestens"}.get(int(bf.lineHeightType()), "faktor")
-        return {"rechts": round(px_to_mm(bf.rightMargin()), 1), "erste": round(px_to_mm(bf.textIndent()), 1), "rtl": bf.layoutDirection() == Qt.RightToLeft,
+        from lunivo_writer.editor.querblatt import rechts_px
+        return {"rechts": round(px_to_mm(rechts_px(bf)), 1), "erste": round(px_to_mm(bf.textIndent()), 1), "rtl": bf.layoutDirection() == Qt.RightToLeft,
                 "umbruch": seitenfluss.ist_manuell(bf), "zeilen_art": lart, "zeilen_pt": round(bf.lineHeight() * 0.75, 1) if lart != "faktor" else 12.0,
                 "gliederung": 0, "opt": absatzopt.als_text(absatzopt.lesen(bf))}
 

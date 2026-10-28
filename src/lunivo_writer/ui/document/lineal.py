@@ -58,7 +58,8 @@ class LinealH(_Lineal):
 
     def _einzuege(self):
         bf = self.e.textCursor().blockFormat()
-        return px_to_mm(bf.leftMargin()), px_to_mm(bf.rightMargin()), px_to_mm(bf.textIndent())
+        from lunivo_writer.editor.querblatt import rechts_px
+        return px_to_mm(bf.leftMargin()), px_to_mm(rechts_px(bf)), px_to_mm(bf.textIndent())
 
     def _x0(self) -> float:
         """x des linken Blattrandes im Lineal."""
