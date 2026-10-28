@@ -68,12 +68,17 @@ class EinfuegenBefehle:
         e = self.ed
         if not e:
             return
-        import os
         from lunivo_writer.ui.dialogs.einfuegen_fenster import ObjektDialog
         d = ObjektDialog(self.w, als_symbol=bool(als_symbol), ordner=self.w.settings.get("last_dir", ""))
         if not d.exec():
             return
-        pfad, art = d.datei.text().strip(), d.art()
+        self._datei_einsetzen(d.datei.text().strip(), d.art())
+
+
+    def _datei_einsetzen(self, pfad: str, art: str) -> None:
+        """Bild ins Dokument, Text (DOCX, ODT, RTF, TXT, MD) mit seinem Inhalt, alles andere als Dateisymbol mit Link."""
+        import os
+        e = self.ed
         if art == "bild" and e.insert_image(pfad):
             return
         if art == "text":
@@ -94,8 +99,27 @@ class EinfuegenBefehle:
         c.mergeCharFormat(f)
 
 
+    # Dateitypen im Fenster „Dateiobjekt einfügen“ (wie die Reiter ALL / WPS / ET / WPP / PDF der Vorlage)
+    DATEIOBJEKT_TYPEN = [("Alle Dateien", "*"), ("Dokumente", "*.docx *.doc *.odt *.rtf *.txt *.md"),
+                         ("Tabellen", "*.xlsx *.xls *.ods *.csv"), ("Präsentationen", "*.pptx *.ppt *.odp"), ("PDF", "*.pdf"),
+                         ("Bilder", "*.png *.jpg *.jpeg *.gif *.bmp *.webp *.svg")]
+
     def dateiObjekt(self, k=None):
-        self.objekt(k, als_symbol=True)
+        """„Datei-Objekt“ wie in WPS: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
+        ins Dokument — Text und Bilder mit Inhalt, andere Dateien als Symbol mit Link."""
+        if not self.ed:
+            return
+        import os
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        filter_text = ";;".join(f"{n} ({m})" for n, m in self.DATEIOBJEKT_TYPEN)
+        gewaehlt = datei_waehlen(self.w, "Dateiobjekt einfügen", self.w.settings.get("last_dir", ""), filter_text)
+        if not gewaehlt:
+            return
+        pfad = gewaehlt[0]
+        endung = os.path.splitext(pfad)[1].lower()
+        art = ("bild" if endung in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg")
+               else "text" if endung in (".docx", ".odt", ".rtf", ".txt", ".md") else "symbol")
+        self._datei_einsetzen(pfad, art)
 
 
     def menue_objektKlappe(self):

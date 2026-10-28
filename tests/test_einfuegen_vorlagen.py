@@ -163,6 +163,27 @@ def test_text_in_tabelle_und_zurueck(fenster):
     assert e.toPlainText() == "vorher\na;b;c\nd;e;\nnachher"
 
 
+def test_datei_objekt_wie_vorlage(fenster, tmp_path, monkeypatch):
+    from lunivo_writer.ui.baukasten import speichern_fenster as SF
+    datei = tmp_path / "notiz.txt"; datei.write_text("Aus der Datei", encoding="utf-8")
+    gefragt = []
+    monkeypatch.setattr(SF, "datei_waehlen", lambda p, titel, start, filt, mehrere=False: gefragt.append((titel, filt)) or [str(datei)])
+    fenster.befehle.dateiObjekt()
+    assert gefragt[0][0] == "Dateiobjekt einfügen" and "PDF (*.pdf)" in gefragt[0][1]
+    assert "Aus der Datei" in fenster.current_editor().toPlainText()
+
+
+def test_kommentar_knopf_und_seitenleiste_gleiche_daten(fenster):
+    """Prüfkatalog: Kommentar aus dem Band (auch im leeren Dokument) erscheint in der Kommentar-Seitenleiste und umgekehrt."""
+    b, e, nav = fenster.befehle, fenster.current_editor(), fenster.navigation
+    e.clear()
+    b.kommentar()
+    assert not nav.isHidden() and not nav.neu_feld.isHidden()
+    nav.neu_text.setPlainText("Erster Gedanke"); nav._neu_speichern()
+    assert [k["text"] for k in e.kommentare.values()] == ["Erster Gedanke"] and len(nav._karten) == 1
+    assert e.kommentar_bereiche()
+
+
 def test_zeichenbereich_nimmt_formen_auf(fenster):
     import json
     from lunivo_writer.editor import formen as F
@@ -428,7 +449,7 @@ def test_objekt_und_hyperlink_befehle(fenster, tmp_path, monkeypatch):
         self.datei.setText(str(zip_))
         return True
     monkeypatch.setattr(EF.ObjektDialog, "exec", objekt_ok)
-    fenster.befehle.dateiObjekt()
+    fenster.befehle.objekt(als_symbol=True)
     c = e.textCursor(); c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
     assert c.charFormat().isImageFormat() and c.charFormat().anchorHref().endswith("paket.zip")
     e.insertPlainText("\nKapitel")

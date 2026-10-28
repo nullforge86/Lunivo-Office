@@ -141,8 +141,14 @@ class ZusatzMixin:
         c = self.textCursor()
         if not c.hasSelection():
             c.select(QTextCursor.WordUnderCursor)
-            if not c.hasSelection():
-                return None
+        if not c.hasSelection():                                      # kein Wort: das Zeichen daneben trägt den Kommentar
+            c = self.textCursor()
+            if not c.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor) or c.selectedText() == "\u2029":
+                c = self.textCursor()
+                if not c.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor) or c.selectedText() == "\u2029":
+                    c = self.textCursor()                             # leerer Absatz (wie in WPS: Kommentar an der Schreibmarke)
+                    c.insertText("\u200b")                           # unsichtbarer Anker
+                    c.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
         kid = neue_id(self.kommentare)
         name, init = self.autor()
         self.kommentare[kid] = {"autor": name, "initialen": init, "datum": datetime.datetime.now(datetime.timezone.utc)
