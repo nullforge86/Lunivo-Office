@@ -331,8 +331,8 @@ class EinfuegenBefehle:
     def menue_leereSeiteKlappe(self):
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
-        m.eintrag("Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
+        m.eintrag("&Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
+        m.eintrag("&Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
         return m
 
 

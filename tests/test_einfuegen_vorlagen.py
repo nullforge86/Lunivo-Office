@@ -19,7 +19,7 @@ def fenster(app, tmp_path):
 
 
 def _texte(m):
-    return [a.text() for a in m.actions() if a.text()]
+    return [a.text().replace("&", "") for a in m.actions() if a.text()]
 
 
 def test_klappmenues_wie_vorlage(fenster):
