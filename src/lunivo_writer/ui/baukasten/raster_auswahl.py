@@ -137,6 +137,25 @@ class RasterAuswahl(QMenu):
         l = QFrame(); l.setFrameShape(QFrame.HLine); l.setStyleSheet("color: palette(midlight);")
         self._fuss_v.addWidget(l)
 
+    def kopf(self, widget: QWidget) -> None:
+        """Eine Leiste über den Kacheln (z. B. „Stil | Hochformat | Querformat“ bei den Deckblättern)."""
+        self._v.insertWidget(0, widget)
+
+    def leeren(self, groesse: QSize | None = None) -> None:
+        """Alle Kacheln entfernen (auf Wunsch mit neuer Kachelgröße), um sie neu zu füllen; Kopf und Fuß bleiben."""
+        for b in self.knoepfe.values():
+            self._gitter.removeWidget(b); b.hide(); b.deleteLater()
+        self.knoepfe = {}
+        self._n = 0
+        if groesse is not None:
+            self._groesse = groesse
+
+    def neu_messen(self) -> None:
+        """Nach ``leeren`` und neuem Füllen bei offenem Menü: Größe an die neuen Kacheln anpassen."""
+        if self._rollen is not None:
+            self._rollen_masse()
+        self.adjustSize()
+
     def _klick(self, schluessel: str) -> None:
         self.gewaehlt.emit(schluessel)
         self.close()

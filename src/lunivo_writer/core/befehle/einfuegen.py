@@ -746,27 +746,62 @@ class EinfuegenBefehle:
 
 
     def menue_deckblattKlappe(self):
-        """Deckblätter als Seitenbilder; ein Klick setzt das Deckblatt mit Platzhaltern an den Anfang des Dokuments."""
-        from PySide6.QtCore import QSize
-        from lunivo_writer.editor import einfuegen as E
+        """Deckblätter wie in der Vorlage: Kopf „Stil“ mit Hochformat/Querformat, darunter die Gestaltungen als Seitenbilder in vier Spalten
+        (rollend). Ein Klick setzt das Deckblatt als ersten Abschnitt an den Anfang (ersetzt ein vorhandenes)."""
+        from PySide6.QtCore import QRectF, QSize
+        from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+        from PySide6.QtWidgets import QButtonGroup, QHBoxLayout, QLabel, QToolButton, QWidget
+        from lunivo_writer.core.farben import Farbe
+        from lunivo_writer.editor import deckblatt as DB
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        from lunivo_writer.ui.baukasten.seiten_bildchen import deckblatt_zeichner
-        m = RasterAuswahl(self.w, titel="Integriert", spalten=4, groesse=QSize(96, 130), beschriftet=True)
-        for v in E.DECKBLATT_VORLAGEN:
-            m.kachel(v, v, deckblatt_zeichner(v)).setCheckable(False)
-        m.gewaehlt.connect(self.deckblattVorlage)
-        m.fuss("Deckblatt mit eigenen Angaben …", self.deckblatt)
+        HOCH, QUER = QSize(130, 184), QSize(184, 130)
+        m = RasterAuswahl(self.w, spalten=4, groesse=HOCH, hoehe_max=640)
+
+        def zeichner(name):
+            def f(p: QPainter, r: QRectF) -> None:
+                p.setPen(QColor("#c8c8c8")); p.drawRect(r.adjusted(0.5, 0.5, -0.5, -0.5))
+                DB.zeichnen(p, name, r.adjusted(1, 1, -1, -1))
+            return f
+
+        def fuellen(quer: bool) -> None:
+            m.leeren(QUER if quer else HOCH)
+            m.quer = quer
+            for name in DB.NAMEN:
+                m.kachel(name, f"{name} ({DB.gestaltung(name).gruppe})", zeichner(name)).setCheckable(False)
+            if m.isVisible():
+                m.neu_messen()
+
+        def symbol(senkrecht: bool) -> QIcon:
+            pm = QPixmap(16, 16); pm.fill(Qt.transparent)
+            p = QPainter(pm); p.setPen(QColor(Farbe.AKZENT))
+            for i in range(3):
+                (p.drawLine(4 + i * 4, 2, 4 + i * 4, 13) if senkrecht else p.drawLine(2, 4 + i * 4, 13, 4 + i * 4))
+            p.end()
+            return QIcon(pm)
+        kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(2, 0, 2, 4)
+        h.addWidget(QLabel("Stil")); h.addStretch(1)
+        gruppe = QButtonGroup(kopf)
+        for text, quer in (("Hochformat", False), ("Querformat", True)):
+            k = QToolButton(); k.setText(text); k.setIcon(symbol(not quer)); k.setCheckable(True); k.setAutoRaise(True)
+            k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setChecked(not quer); k.setAccessibleName(f"Deckblätter im {text}")
+            k.clicked.connect(lambda _c=False, q=quer: fuellen(q))
+            gruppe.addButton(k); h.addWidget(k)
+        m.kopf(kopf)
+        fuellen(False)
+        m.gewaehlt.connect(lambda name: self.deckblattVorlage(name, quer=m.quer))
         return m
 
 
-    def deckblattVorlage(self, k=None, vorlage=None):
-        """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Farbband"]``."""
+    def deckblattVorlage(self, k=None, vorlage=None, quer=False):
+        """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Sonne"]``."""
         if not self.ed:
             return
-        from lunivo_writer.editor import einfuegen as E
-        name = vorlage or (k if isinstance(k, str) and k in E.DECKBLATT_VORLAGEN else "Schlicht")
-        E.deckblatt_einfuegen(self.ed, name, "[Titel des Dokuments]", "[Untertitel]", self.w.settings.get("benutzer/name", "") or "[Autor]",
-                              E.datum_text("d. MMMM yyyy"))
+        from lunivo_writer.editor import deckblatt as DB
+        name = vorlage or (k if isinstance(k, str) and k in DB.NAMEN else DB.NAMEN[0])
+        DB.einfuegen(self.ed, name, quer)
+        self.ed._recount(); self.ed.viewport().update()
+        c = self.ed.textCursor(); c.setPosition(0); self.ed.setTextCursor(c)
+        self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
 
 
     def diagramm(self, k=None):

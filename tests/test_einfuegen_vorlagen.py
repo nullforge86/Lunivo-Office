@@ -514,9 +514,6 @@ def test_gleichungen_formen_deckblatt(fenster):
     vorher = e.document().characterCount()
     m.gewaehlt.emit("Fünfeck")
     assert e.document().characterCount() == vorher + 1
-    assert set(b.klappe("deckblattKlappe").knoepfe) == set(E.DECKBLATT_VORLAGEN)
-    b.deckblattVorlage("Farbband")
-    assert e.document().firstBlock().next().text() == "[Titel des Dokuments]"
     assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)
 
 
@@ -625,3 +622,52 @@ def test_objekt_und_hyperlink_befehle(fenster, tmp_path, monkeypatch):
     assert "a@b.de" in e.toPlainText()
     assert "a@b.de" in fenster.settings.get("einfuegen/mail_zuletzt", "")
     assert verweise.lesezeichen_liste(e) == []
+
+
+def test_deckblatt_wie_vorlage(fenster):
+    """Einfügen ▸ Deckblatt wie die Vorlage: „Stil“ mit Hoch-/Querformat, 17 Gestaltungen; das Deckblatt ist ein eigener erster Abschnitt mit
+    ganzseitiger Grafik, ersetzt ein vorhandenes und lässt sich entfernen; das Dokument danach behält Einrichtung und Text."""
+    from PySide6.QtWidgets import QToolButton
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor import deckblatt as DB
+    b, e = fenster.befehle, fenster.current_editor()
+    e.setPlainText("Mein Text.")
+    e.page.header.text = "Kopf {PAGE}"
+    m = b.menue_deckblattKlappe()
+    assert list(m.knoepfe) == DB.NAMEN and len(DB.NAMEN) == 17
+    quer = [k for k in m.findChildren(QToolButton) if k.text() == "Querformat"][0]
+    quer.click()
+    assert m.quer and m.knoepfe["Segel"].iconSize().width() > m.knoepfe["Segel"].iconSize().height()
+    m.gewaehlt.emit("Segel")                                               # Querformat-Deckblatt
+    doc = e.document()
+    assert e.page.landscape and e.page.watermark["ganzseitig"] and not e.page.header.text
+    assert AB.anzahl(doc) == 2 and not AB.einrichtung(doc, e.page, 1).landscape
+    assert AB.einrichtung(doc, e.page, 1).header.text == "Kopf {PAGE}"
+    assert "LEBENSLAUF" in doc.toPlainText() and doc.findBlock(AB.beginn(doc, 1)).text() == "Mein Text."
+    b.deckblattVorlage("Sonne")                                            # ersetzt das vorhandene
+    assert AB.anzahl(doc) == 2 and "LEBENSLAUF" not in doc.toPlainText() and not e.page.landscape
+    assert doc.toPlainText().count("Mein Text.") == 1
+    assert DB.entfernen(e)
+    assert doc.toPlainText().strip() == "Mein Text." and AB.anzahl(doc) == 1
+    assert e.page.header.text == "Kopf {PAGE}" and e.page.watermark is None
+
+
+def test_deckblatt_ausgabe_mit_grafik(fenster, tmp_path):
+    """Im PDF steht die Grafik hinter dem Text, der Titel unten (Gestaltung „Sonne“), danach der Text auf Seite 2."""
+    from PySide6.QtCore import QSizeF
+    from PySide6.QtGui import QPageSize, QPdfWriter
+    from lunivo_writer.editor import deckblatt as DB
+    from lunivo_writer.editor.pagination import render_dokument
+    e = fenster.current_editor()
+    e.setPlainText("Mein Text.")
+    DB.einfuegen(e, "Sonne")
+    pw = QPdfWriter(str(tmp_path / "d.pdf")); pw.setResolution(96)
+    pw.setPageSize(QPageSize(QSizeF(210, 297), QPageSize.Millimeter))
+    assert render_dokument(e.document(), e.page, pw) == 2
+    del pw
+    lay = e.document().documentLayout()
+    titel = e.document().firstBlock().next()
+    assert titel.text() == "[Titel des Artikels]"
+    assert lay.blockBoundingRect(titel).top() > e.page.content_height_px * 0.6     # unten auf dem Blatt wie in der Vorlage
+    for n in DB.NAMEN:                                                     # jede Gestaltung lässt sich zeichnen, hoch und quer
+        assert not DB.grafik_bild(n, 60, 85).isNull() and not DB.grafik_bild(n, 85, 60).isNull()

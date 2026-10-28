@@ -5,7 +5,8 @@ Ein Wasserzeichen ist ein Wörterbuch in ``PageSettings.watermark``:
     {"text": "VERTRAULICH", "schrift": "Liberation Sans", "groesse_pt": 0 (= automatisch), "farbe": "#c0c0c0", "winkel": -45 | 0,
      "bild": PNG als Base64, "zoom": 0 (= automatisch) | Prozent, "auswaschen": True,
      "h": "mitte" | "links" | "rechts", "h_mm": Abstand vom Rand, "v": "mitte" | "oben" | "unten", "v_mm": …,
-     "transparenz": 0…100, "abschnitt": True (gilt nur für diesen Abschnitt)}
+     "transparenz": 0…100, "abschnitt": True (gilt nur für diesen Abschnitt),
+     "ganzseitig": True (das Bild füllt das ganze Blatt: Grafik eines Deckblatts)}
 
 Ältere Einträge haben nur text, farbe, winkel, groesse_pt; für sie gelten die bisherigen Werte (Mitte, 57 % Deckkraft).
 
@@ -98,7 +99,12 @@ def zeichnen(p: QPainter, w: dict | None, r: QRectF) -> None:
     p.save()
     p.setOpacity(p.opacity() * _deckkraft(w))
     winkel = float(w.get("winkel", -45) or 0)
-    if w.get("bild"):
+    if w.get("bild") and w.get("ganzseitig"):                       # Grafik eines Deckblatts: füllt das ganze Blatt (editor/deckblatt.py)
+        img = bild_aus_text(w["bild"])
+        if not img.isNull():
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.drawImage(r, img)
+    elif w.get("bild"):
         img = bild_aus_text(w["bild"])
         if not img.isNull():
             if w.get("auswaschen", True):
