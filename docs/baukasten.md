@@ -10,7 +10,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `farbpalette.py` | `FarbPalette` (Popup), `FarbFeld` (Knopf für Dialoge), `FarbKnopf` (geteilter Knopf fürs Band), `weitere_farben()` (Fenster „Farben“, siehe `farbwaehler.py`: Standard · Benutzerdefiniert · Erweitert, Farbmodell RGB/HSV/HSL, Hex, Neu/Aktuell) | `gewaehlt(QColor \| None)`, `ueberfahren`, `verlassen` |
 | `linien.py` | `Linie` (Farbe, pt, Art), `LinienWahl` (Zeile aus Art, Stärke, Farbe), `RahmenMenue` (unten, oben, links, rechts, kein, alle, außen, innen) | `geaendert(Linie)`, `gewaehlt(RahmenSeiten, schluessel)` |
 | `menue_liste.py` | `MenueListe`: Zeilen mit Symbol, Kürzel, Haken, Untermenü, auch aus einer Beschreibung (`aus_liste`) | `triggered` je Zeile |
-| `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter, Symbole); `abschnitt(titel)` beginnt ein zweites Raster, `bild_setzen` wechselt eine Kachel vor dem Aufklappen, `textkachel(text)` zeichnet ein Zeichen als Kachel | `gewaehlt(schluessel)` |
+| `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter, Symbole); `abschnitt(titel)` beginnt ein zweites Raster, `bild_setzen` wechselt eine Kachel vor dem Aufklappen, `kopf(widget)` setzt eine Leiste über die Kacheln, `leeren(groesse)` + `neu_messen()` füllen neu (Deckblatt: Hoch-/Querformat), `textkachel(text)` zeichnet ein Zeichen als Kachel | `gewaehlt(schluessel)` |
 | `zellen_raster.py` | `ZellenRaster`: Zellen überfahren, „3 × 4 Tabelle“ lesen, klicken; mit `fuss()` weitere Einträge darunter | `gewaehlt(zeilen, spalten)` |
 | `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
 | `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
@@ -137,6 +137,7 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Zahlschreibweisen | `editor/zahlformat.py` | `TYPEN`, `zahl_text(n, typ)` (1,2,3 · A,B,C · I,II,III · ①②③ · Zahlwort), `zahlwort`. Keine Oberfläche |
 | Text ↔ Tabelle | `editor/tabelle_text.py` | `markierte_absaetze`, `zellen`, `text_zu_tabelle`, `tabelle_zu_text` (je ein Rückgängig-Schritt), `TRENNER` |
 | Felder | `editor/felder.py` | `FELDER` (Name → Beschreibung, Feldanweisung), `ergebnis`, `feld_einfuegen` (Text mit `P_FELD`, im DOCX ein echtes Feld) |
+| Deckblatt | `editor/deckblatt.py` | 17 Gestaltungen (Artikel, Firma, Lebenslauf, Abschlussarbeit), hoch und quer; eigener erster Abschnitt, Grafik als ganzseitiges Abschnitts-Wasserzeichen hinter dem Text (`"ganzseitig"` in `editor/wasserzeichen.py`), `einfuegen`, `entfernen` |
 | Galerien | `core/befehle/einfuegen.py` | `menue_…Klappe` für Deckblatt, Formen, Seitenzahl, Wasserzeichen (eigene + Voreinstellung), WordArt, Gleichung — alle aus `RasterAuswahl` |
 | Seitenbildchen | `ui/baukasten/seiten_bildchen.py` | `seitenzahl_zeichner`, `wasserzeichen_zeichner`, `deckblatt_zeichner`, `plus_zeichner` — Zeichner `f(QPainter, QRectF)` für Kacheln und Vorschauen |
 | Seitenzahlen | `editor/seitenzahl.py` | `VORGABEN`, `MUSTER`, `seitenzahl_setzen(page, ort, ausrichtung, muster)`, `seitenzahlen_entfernen` (arbeiten auf `PageSettings`) |
