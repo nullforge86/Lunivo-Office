@@ -14,12 +14,13 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QVBoxLayout,
 )
 
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
 
 OHNE = "(nicht zugeordnet)"
 
 
-class EmpfaengerDialog(QDialog):
+class EmpfaengerDialog(PanelFaehig, QDialog):
     """„Seriendruckempfänger“: alle Sätze der Datenquelle als Tabelle, je Zeile ein Haken; „Alle“ und „Keine“."""
 
     def __init__(self, parent=None, spalten: list[str] | None = None, saetze: list[dict] | None = None, aktiv: list[bool] | None = None):
@@ -56,7 +57,7 @@ class EmpfaengerDialog(QDialog):
         return [self.tabelle.item(z, 0).checkState() == Qt.Checked for z in range(self.tabelle.rowCount())]
 
 
-class FeldDialog(QDialog):
+class FeldDialog(PanelFaehig, QDialog):
     """„Seriendruckfeld einfügen“: die Spalten der Datenquelle; ohne Datenquelle ein Name zum Eintippen. „Einfügen“ meldet
     ``einfuegen(name)`` und lässt das Fenster offen."""
 
@@ -90,7 +91,7 @@ class FeldDialog(QDialog):
             self.zeile.abbrechen.setText("Schließen")
 
 
-class ZuordnenDialog(QDialog):
+class ZuordnenDialog(PanelFaehig, QDialog):
     """„Übereinstimmende Felder festlegen“: zu jedem Feld im Text die Spalte der Datenquelle, aus der es seinen Wert bekommt."""
 
     def __init__(self, parent=None, felder: list[str] | None = None, spalten: list[str] | None = None, zuordnung: dict | None = None):

@@ -1,9 +1,11 @@
 """Reiter „Einfügen“ in der Anordnung von WPS Office (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
 Bild ▾, Formen, Diagramm, Kommentar, Kopf- und Fußzeile, Textfeld ▾, Schnellbausteine ▾, Symbol ▾, Gleichung, Zahl, Hyperlink.
-Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Was WPS dort nicht hat, steht in „Weitere“."""
+Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Keine Gruppe „Weitere“: was WPS nicht im Band hat, steht in
+den Klappen (Bildschirmfoto und Piktogramm unter Bild, Schnelltabelle unter Tabelle, Text aus Datei unter Objekt, eigene Form unter
+Formen); die Tabellen-Eigenschaften im Kontext-Reiter Tabelle."""
 from __future__ import annotations
 
-from lunivo_writer.ui.ribbon.tabs.baustein import alle, k as _k, uebrige
+from lunivo_writer.ui.ribbon.tabs.baustein import alle, k as _k
 
 
 def bauen(register: dict) -> dict:
@@ -44,10 +46,7 @@ def bauen(register: dict) -> dict:
             nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True, klappe="gleichungKlappe"),
             _k("zahl", "Zahl", "zahl", True)]},
         {"name": "Links", "reihenfolge": True, "knoepfe": [
-            nimm("Hyperlink", gross=True), nimm("Querverweis", text=True), nimm("Lesezeichen / Textmarke", text=True)]},
+            nimm("Hyperlink", gross=True), nimm("Querverweis", text=True), nimm("Lesezeichen / Textmarke", name="Lesezeichen", text=True)]},
         {"name": "Formulare", "reihenfolge": True, "knoepfe": [formulare]},
     ]
-    rest = [dict(e, gross=False, text=True) for e in uebrige(tab, benutzt)]
-    if rest:
-        gruppen.append({"name": "Weitere", "reihenfolge": True, "knoepfe": rest})
     return dict(tab, gruppen=gruppen)

@@ -28,7 +28,7 @@ def test_klappmenues_wie_vorlage(fenster):
     assert _texte(b.klappe("umbruecheKlappe")) == [
         "Seitenumbruch\tStrg+Enter", "Spaltenumbruch", "Textflussumbruch\tUmschalt+Enter", "Abschnittsumbruch auf nächster Seite",
         "Fortlaufender Abschnittsumbruch", "Abschnittsumbruch auf gerader Seite", "Abschnittsumbruch auf ungerader Seite"]
-    assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …"]
+    assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
     assert not tf.actions()[1].isEnabled()                  # grau sichtbar statt versteckt
@@ -44,8 +44,9 @@ def test_band_einfuegen_reihenfolge(fenster):
     for a, z in (("Deckblatt", "Leere Seite"), ("Leere Seite", "Umbrüche"), ("Umbrüche", "Tabelle"), ("Tabelle", "Bild"),
                  ("Textfeld", "WordArt"), ("Symbol", "Gleichung"), ("Gleichung", "Zahl"), ("Zahl", "Hyperlink")):
         assert namen.index(a) < namen.index(z)
-    weitere = [e["name"] for g in tab["gruppen"] if g["name"] == "Weitere" for e in g["knoepfe"]]
-    assert {"Schnelltabelle", "Text aus Datei"} <= set(weitere)   # nichts geht verloren
+    assert all(g["name"] != "Weitere" for g in tab["gruppen"])     # nicht länger als die WPS-Vorlage (Kay, 2026-10-28)
+    # nichts geht verloren: was WPS nicht im Band hat, steht in den Klappen
+    assert "Text aus Datei …" in _texte(fenster.befehle.klappe("objektKlappe"))
 
 
 def test_symbol_zuletzt_verwendet(fenster):

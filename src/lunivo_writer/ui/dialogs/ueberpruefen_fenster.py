@@ -22,7 +22,7 @@ SCHUTZ_ARTEN = (("lesen", "Schreibgeschützt"), ("aenderungen", "Nachverfolgte �
                 ("formulare", "Ausfüllen von Formularen"))
 
 
-class WoerterDialog(QDialog):
+class WoerterDialog(PanelFaehig, QDialog):
     """„Wörter zählen“: die Statistiken untereinander, Werte rechtsbündig; der Haken nimmt Fuß- und Endnoten dazu."""
 
     def __init__(self, parent=None, ohne: dict | None = None, mit: dict | None = None):

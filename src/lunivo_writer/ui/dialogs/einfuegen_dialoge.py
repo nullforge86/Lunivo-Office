@@ -37,7 +37,7 @@ class VorschauMixin:
         self.vorschau.setPixmap(pm)
 
 
-class FormDialog(QDialog, VorschauMixin):
+class FormDialog(PanelFaehig, QDialog, VorschauMixin):
     def __init__(self, parent, form: str | None = None):
         super().__init__(parent)
         self.setWindowTitle("Form einfügen")
@@ -72,7 +72,7 @@ class FormDialog(QDialog, VorschauMixin):
         self._zeige(self.bild())
 
 
-class SmartArtDialog(QDialog, VorschauMixin):
+class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
     """SmartArt anlegen oder bearbeiten: Layout, Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer)."""
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
@@ -108,7 +108,7 @@ class SmartArtDialog(QDialog, VorschauMixin):
         self._zeige(self.SA.zeichnen(self.daten()))
 
 
-class WordArtDialog(QDialog, VorschauMixin):
+class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
     def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT):
         """``stil`` und ``farbe`` kommen aus der Galerie (``E.WORDART_VORGABEN``)."""
         super().__init__(parent)
@@ -181,7 +181,7 @@ class DiagrammDatenDialog(QDialog):
         return self.titel.text(), kat, reihen
 
 
-class DiagrammDialog(QDialog):
+class DiagrammDialog(PanelFaehig, QDialog):
     """„Diagramm einfügen“ wie in der Vorlage: links die Diagrammarten, oben die Untertypen als Bildchen, darunter Name und große Vorschau.
     „Daten bearbeiten …“ öffnet Titel und Werte als Unterfenster."""
 
@@ -215,6 +215,7 @@ class DiagrammDialog(QDialog):
         rechts.addWidget(self.vorschau, 1)
         h.addLayout(rechts, 1)
         v.addWidget(rahmen, 1)
+        self._teile = h
         daten = QPushButton("&Daten bearbeiten …"); daten.setMinimumHeight(34); daten.clicked.connect(self._daten)
         fussleiste(self, v, daten)
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
@@ -222,6 +223,15 @@ class DiagrammDialog(QDialog):
         self.untertyp = "saeule_gruppiert"
         self.arten.currentRowChanged.connect(self._gruppe)
         self.arten.setCurrentRow(0)
+
+    def kompakt_machen(self) -> None:
+        """In der Seitenleiste: die Diagrammarten über der Vorschau, die Vorschau so breit wie die Seitenleiste."""
+        from PySide6.QtWidgets import QBoxLayout
+        self._teile.setDirection(QBoxLayout.TopToBottom)
+        self.arten.setFixedWidth(16777215); self.arten.setMinimumWidth(0); self.arten.setFixedHeight(130)
+        self.vorschau.setMinimumSize(0, 240)
+        self._vorschau_breite = 380
+        self.aktualisieren()
 
     def _gruppe(self, zeile: int) -> None:
         from PySide6.QtCore import QSize
@@ -266,11 +276,12 @@ class DiagrammDialog(QDialog):
 
     def aktualisieren(self, *_):
         from PySide6.QtGui import QPixmap
-        img = self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen, 620, 360)
+        breite = getattr(self, "_vorschau_breite", 620)
+        img = self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen, breite, int(breite * 0.58))
         self.vorschau.setPixmap(QPixmap.fromImage(img))
 
 
-class PiktogrammDialog(QDialog):
+class PiktogrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Piktogramm einfügen")
@@ -309,7 +320,7 @@ class PiktogrammDialog(QDialog):
         return (it.data(Qt.UserRole), self.farbe.farbe) if it else (None, None)
 
 
-class FormelDialog(QDialog):
+class FormelDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Formel")
@@ -328,7 +339,7 @@ class FormelDialog(QDialog):
         self.vorschau.setPixmap(pm)
 
 
-class DeckblattDialog(QDialog):
+class DeckblattDialog(PanelFaehig, QDialog):
     def __init__(self, parent, autor: str = ""):
         super().__init__(parent)
         self.setWindowTitle("Deckblatt")
@@ -388,7 +399,7 @@ class DatumDialog(PanelFaehig, QDialog):
         return E.datum_feldanweisung(it.data(Qt.UserRole)) if it and self.auto.isChecked() else None
 
 
-class BausteinDialog(QDialog):
+class BausteinDialog(PanelFaehig, QDialog):
     """Textbausteine: links die Liste (mitgelieferte und eigene), rechts die Vorschau; Name und Kürzel oben. „Aus Markierung …“ merkt den markierten Text
     samt Formatierung, „Einfügen“ setzt den Baustein an die Schreibmarke. Das Kürzel plus F3 setzt ihn direkt ein."""
 
