@@ -26,8 +26,9 @@ def test_klappmenues_wie_vorlage(fenster):
     b = fenster.befehle
     assert _texte(b.klappe("leereSeiteKlappe")) == ["Vertikal", "Horizontal"]
     assert _texte(b.klappe("umbruecheKlappe")) == [
-        "Seitenumbruch\tStrg+Enter", "Spaltenumbruch", "Textflussumbruch\tUmschalt+Enter", "Abschnittsumbruch auf nächster Seite",
-        "Fortlaufender Abschnittsumbruch", "Abschnittsumbruch auf gerader Seite", "Abschnittsumbruch auf ungerader Seite"]
+        "Seitenumbruch(P)\tStrg+Enter", "Spaltenumbruch", "Textflussumbruch(W)\tUmschalt+Enter",
+        "Abschnittsumbruch von nächster Seite", "Fortlaufenden Abschnittsumbruch", "Abschnittsumbruch von gerader Seite",
+        "Abschnittsumbruch von ungerader Seite"]
     assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
@@ -671,3 +672,28 @@ def test_deckblatt_ausgabe_mit_grafik(fenster, tmp_path):
     assert lay.blockBoundingRect(titel).top() > e.page.content_height_px * 0.6     # unten auf dem Blatt wie in der Vorlage
     for n in DB.NAMEN:                                                     # jede Gestaltung lässt sich zeichnen, hoch und quer
         assert not DB.grafik_bild(n, 60, 85).isNull() and not DB.grafik_bild(n, 85, 60).isNull()
+
+
+def test_umbrueche_wirken(fenster):
+    """Alle sieben Einträge der Umbrüche-Klappe wirken im Dokument (WPS-Vorlage ``einfuegen/03-umbrueche.png``)."""
+    from PySide6.QtGui import QTextFormat
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor.zusatz import B_SPALTE
+    for i in range(7):
+        fenster.new_document()
+        ed = fenster.current_tab().editor
+        ed.insertPlainText("Vorher")
+        menue = fenster.befehle.klappe("umbruecheKlappe")              # Verweis halten, sonst räumt Python das Menü weg
+        aktionen = [a for a in menue.actions() if a.text()]
+        assert len(aktionen) == 7
+        aktionen[i].trigger()
+        doc = ed.document()
+        if i < 2:                                                    # Seiten- und Spaltenumbruch
+            b = doc.lastBlock()
+            assert doc.blockCount() == 2
+            assert b.blockFormat().pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore
+            assert bool(b.blockFormat().property(B_SPALTE)) == (i == 1)
+        elif i == 2:                                                 # Textflussumbruch = Zeilenumbruch im Absatz
+            assert doc.blockCount() == 1 and "\u2028" in doc.toRawText()
+        else:
+            assert [u[1] for u in AB.umbrueche(doc)] == [["naechste", "fortlaufend", "gerade", "ungerade"][i - 3]]

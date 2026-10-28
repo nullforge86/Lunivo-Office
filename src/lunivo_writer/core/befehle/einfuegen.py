@@ -316,14 +316,14 @@ class EinfuegenBefehle:
         """Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Seitenumbruch", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
-        m.eintrag("Spaltenumbruch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
-        m.eintrag("Textflussumbruch", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
+        m.eintrag("Seitenumbruch(&P)", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
+        m.eintrag("Spaltenumbr&uch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
+        m.eintrag("Textflussumbruch(&W)", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
         m.trenner()
-        for art, text, sym in (("NextPage", "Abschnittsumbruch auf nächster Seite", "abschnitt"),
-                               ("Continuous", "Fortlaufender Abschnittsumbruch", "abschnittlaufend"),
-                               ("EvenPage", "Abschnittsumbruch auf gerader Seite", "abschnittgerade"),
-                               ("OddPage", "Abschnittsumbruch auf ungerader Seite", "abschnittungerade")):
+        for art, text, sym in (("NextPage", "Abschnittsumbruch von &nächster Seite", "abschnitt"),
+                               ("Continuous", "Fortlaufenden Abschni&ttsumbruch", "abschnittlaufend"),
+                               ("EvenPage", "Abschnittsumbruch von &gerader Seite", "abschnittgerade"),
+                               ("OddPage", "Abschnittsumbruch v&on ungerader Seite", "abschnittungerade")):
             m.eintrag(text, lambda a=art: self.abschnittsumbruch(None, a), symbol=self._sym(sym))
         return m
 
