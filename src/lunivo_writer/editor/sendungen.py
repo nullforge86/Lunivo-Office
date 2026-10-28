@@ -93,8 +93,13 @@ def felder_im_text(doc: QTextDocument) -> list[str]:
 
 
 def feld_einfuegen(ed, name: str) -> None:
-    f = QTextCharFormat(); f.setBackground(QBrush(QColor(FELD_FARBE)))
-    ed.textCursor().insertText("{{" + name + "}}", f)
+    c = ed.textCursor()
+    vorher = QTextCharFormat(c.charFormat())
+    vorher.clearBackground()
+    f = QTextCharFormat(vorher); f.setBackground(QBrush(QColor(FELD_FARBE)))
+    c.insertText("{{" + name + "}}", f)
+    ed.setTextCursor(c)
+    ed.setCurrentCharFormat(vorher)                      # dahinter geht es ohne Feldfarbe weiter
     ed.document().setModified(True)
 
 
@@ -126,7 +131,9 @@ def regel_einfuegen(ed, feld: str, wert: str, dann: str, sonst: str) -> None:
     ed.document().setModified(True)
 
 
-def _satz_einsetzen(doc: QTextDocument, satz: dict) -> None:
+def _satz_einsetzen(doc: QTextDocument, satz: dict, von_bis: tuple[int, int] | None = None) -> None:
+    """Felder und Regeln mit den Werten von ``satz`` füllen (``von_bis``: nur in diesem Bereich)."""
+    lo, hi = von_bis if von_bis else (0, 1 << 30)
     # Regeln zuerst: sie entscheiden anhand eines Feldes, welcher Text stehen bleibt
     stuecke = []
     b = doc.firstBlock()
@@ -134,7 +141,7 @@ def _satz_einsetzen(doc: QTextDocument, satz: dict) -> None:
         it = b.begin()
         while not it.atEnd():
             f = it.fragment()
-            if f.isValid() and f.charFormat().hasProperty(P_REGEL):
+            if f.isValid() and f.charFormat().hasProperty(P_REGEL) and lo <= f.position() < hi:
                 stuecke.append((f.position(), f.position() + f.length(), f.charFormat().stringProperty(P_REGEL), f.charFormat()))
             it += 1
         b = b.next()
@@ -146,34 +153,103 @@ def _satz_einsetzen(doc: QTextDocument, satz: dict) -> None:
         nf = QTextCharFormat(cf)
         nf.setBackground(QBrush(Qt.NoBrush)); nf.clearProperty(P_REGEL)
         c.insertText(text, nf)
+        hi += len(text) - (bis - von)
     for name, wert in satz.items():
         c = QTextCursor(doc)
         muster = re.compile(r"\{\{\s*" + re.escape(name) + r"\s*\}\}")
         text = doc.toPlainText()
         for m in reversed(list(muster.finditer(text))):
+            if not (lo <= m.start() < hi):
+                continue
+            hi += len(str(wert)) - (m.end() - m.start())
             c.setPosition(m.start()); c.setPosition(m.end(), QTextCursor.KeepAnchor)
             nf = c.charFormat(); nf.setBackground(QBrush(Qt.NoBrush))
             c.insertText(str(wert), nf)
 
 
-def brief_fuer(vorlage: QTextDocument, satz: dict) -> QTextDocument:
+def brief_fuer(vorlage: QTextDocument, satz: dict | list[dict]) -> QTextDocument:
+    """Ein Brief. Steht „Nächster Datensatz“ im Text, gilt hinter jeder solchen Stelle der nächste Satz der Liste ``satz``."""
+    saetze = satz if isinstance(satz, list) else [satz]
     d = vorlage.clone()
-    _satz_einsetzen(d, satz)
+    muster = re.compile(r"\{\{\s*" + re.escape(NAECHSTER) + r"\s*\}\}")
+    stellen = [(m.start(), m.end()) for m in muster.finditer(d.toPlainText())]
+    anfang = [0] + [e for _a, e in stellen]                 # Stück k: hinter dem (k-1)-ten bis vor das k-te Feld „Nächster Datensatz“
+    ende = [a for a, _e in stellen] + [1 << 30]
+    for k in range(len(anfang) - 1, -1, -1):               # von hinten: vordere Stellen verschieben sich nicht
+        if k < len(saetze):
+            _satz_einsetzen(d, saetze[k], (anfang[k], ende[k]))
+        if k:                                               # das Feld „Nächster Datensatz“ vor diesem Stück selbst verschwindet
+            c = QTextCursor(d); c.setPosition(stellen[k - 1][0]); c.setPosition(stellen[k - 1][1], QTextCursor.KeepAnchor)
+            c.removeSelectedText()
     return d
 
 
+def saetze_je_brief(vorlage: QTextDocument) -> int:
+    """Wie viele Datensätze ein Brief verbraucht (1 + Zahl der Felder „Nächster Datensatz“)."""
+    return 1 + len(re.findall(r"\{\{\s*" + re.escape(NAECHSTER) + r"\s*\}\}", vorlage.toPlainText()))
+
+
+def gruppen(vorlage: QTextDocument, saetze: list[dict]) -> list[list[dict]]:
+    n = saetze_je_brief(vorlage)
+    return [saetze[i:i + n] for i in range(0, len(saetze), n)]
+
+
 def serienbrief_erzeugen(quelle: QTextDocument, saetze: list[dict], ziel: QTextDocument) -> int:
-    """Alle Briefe in EIN Dokument, durch Seitenumbrüche getrennt."""
+    """Alle Briefe in EIN Dokument, durch Seitenumbrüche getrennt. → Zahl der Briefe."""
     ziel.clear()
     c = QTextCursor(ziel)
-    for i, satz in enumerate(saetze):
-        d = brief_fuer(quelle, satz)
+    briefe = gruppen(quelle, saetze)
+    for i, gruppe in enumerate(briefe):
+        d = brief_fuer(quelle, gruppe)
         _ressourcen(d, ziel)
         if i:
             bf = QTextBlockFormat(); bf.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
             c.insertBlock(bf, QTextCharFormat())
         c.insertFragment(QTextDocumentFragment(d))
-    return len(saetze)
+    return len(briefe)
+
+
+# ---- Datenquelle des Seriendrucks -------------------------------------------------------------------------------------
+NAECHSTER = "Nächster Datensatz"
+
+
+def quelle_lesen(pfad: str):
+    """Empfängerliste aus einer Textdatei (CSV mit ; oder , oder Tabulator; erste Zeile = Spaltennamen). → (Spalten, Sätze) oder None."""
+    for enc in ("utf-8-sig", "cp1252"):
+        try:
+            with open(pfad, encoding=enc) as fh:
+                return tabelle_lesen(fh.read())
+        except UnicodeDecodeError:
+            continue
+    return None
+
+
+def zugeordnet(satz: dict, zuordnung: dict) -> dict:
+    """Satz mit den Namen der Felder im Text: ``zuordnung`` {Feld im Text: Spalte der Quelle}; ohne Eintrag gilt der gleiche Name."""
+    aus = dict(satz)
+    for feld, spalte in zuordnung.items():
+        if spalte in satz:
+            aus[feld] = satz[spalte]
+    return aus
+
+
+def felder_hervorheben(doc: QTextDocument, an: bool) -> None:
+    """Hintergrund der Felder {{…}} an oder aus. Gehört zum letzten Bearbeitungsschritt und lässt „geändert“ wie es war."""
+    war = doc.isModified()
+    c = QTextCursor(doc)
+    c.joinPreviousEditBlock()
+    for m in FELD.finditer(doc.toPlainText()):
+        c.setPosition(m.start()); c.setPosition(m.end(), QTextCursor.KeepAnchor)
+        f = QTextCharFormat()
+        f.setBackground(QBrush(QColor(FELD_FARBE)) if an else QBrush(Qt.NoBrush))
+        c.mergeCharFormat(f)
+    c.endEditBlock()
+    doc.setModified(war)
+
+
+def naechster_einfuegen(ed) -> None:
+    """Feld „Nächster Datensatz“: dahinter füllt der nächste Satz die Felder (z. B. mehrere Etiketten auf einem Blatt)."""
+    feld_einfuegen(ed, NAECHSTER)
 
 
 def _ressourcen(quelle: QTextDocument, ziel: QTextDocument) -> None:

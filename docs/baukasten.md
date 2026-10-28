@@ -102,6 +102,11 @@ Jeder Baustein macht genau eine Sache:
 Ein Fenster, das aus einem offenen Zusatzfenster heraus aufgerufen wird (zum Beispiel „Farben“ aus „Rahmen und Schattierung“), legt sich als weitere Seite darüber (mit „←“); das darunter bleibt offen.
 
 Neues Fenster: `class MeinDialog(PanelFaehig, QDialog)`, Felder in `FormularGitter`-Gruppen. Fertig umgebaut (alle Fenster der Seitenleiste außer Rahmen und Schattierung): Farben, Absatz, Schriftart, Tabstopps, Layout, Nummerierung, Gliederung, Texteffekte, Formatvorlage. Dazu KI-Einstellungen (`KIEinstellungenDialog`, `kompakt_machen()` kürzt die Reiternamen, die Sprachlisten stehen untereinander).
+Ebenso die Fenster der Reiter Einfügen, Verweise, Sendungen und Überprüfen (Zahl, Felder, Umbruch, Seitenzahl, Hyperlink, Objekt,
+Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inhaltsverzeichnis, Indexeintrag, Nummerierung,
+Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen). Breite Fenster (Hyperlink,
+Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander. Prüfung: `tests/test_fenster_seitenleiste.py`.
+Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
 
 Platz in der Seitenleiste: Wer Größen der Seitenleiste braucht, bietet `passe_an(breite, hoehe)` an (`ZusatzPanel` ruft es mit `verfuegbar` und `verfuegbar_hoehe` auf, die die Seitenleiste aus ihrer echten Größe setzt); Beispiele: Farbraster, Rahmenvorschau, Kachelzahl der Nummerierung, Texteffekte. `AngepassteReiter` und der Stapel der KI-Einstellungen richten die Höhe nach der gewählten Seite. Prüfung: `test_seitenleisten_seiten_passen_in_echte_groesse`.
 Auf dem Notbehelf nur noch: Rahmen und Schattierung (bewusst: Spalten mit Vorschau, `schmal_nein` schützt die Kantenknöpfe) und die kleinen Fenster mit `QFormLayout`.
@@ -162,11 +167,34 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Beschriftung, Querverweis | `editor/verweise.py` | `beschriftung_einfuegen(…, nach, ohne_bezeichnung, zahl)` mit SEQ-Schreibweise (`SEQ_FORMAT`), `naechste_nummer`; `VERWEISTYPEN`, `verweisen_auf(art)`, `querverweis_ziele`, `querverweis_einfuegen(ed, ziel, wie, link, oben_unten)` — Ziel bekommt eine verborgene Textmarke „_Ref…“ |
 | Klappe | `core/befehle/verweise.py` | `menue_inhaltsverzeichnisKlappe`: Ebene 1–9 und Textkörper (Formatvorlage „Überschrift N“ / „Standard“); Fuß- und Endnoten einzeln mit `note_springen(delta, art)` |
 
+## Bausteine des Reiters Mailings (Seriendruck)
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/contextual/serien_tools.py` | Kontext-Reiter `SERIENDRUCK` („Mailings“), erscheint über Verweise ▸ Seriendruck (`serienReiter`), weg mit `serienSchliessen` |
+| Befehle | `core/befehle/serien.py` | Datenquelle je Dokumentfenster (`tab.serie`, nicht gespeichert); `kann_<Befehl>` macht Knöpfe ohne Datenquelle grau; `feld_datensatz` ist das Nummernfeld im Band |
+| Datenquelle, Felder | `editor/sendungen.py` | `quelle_lesen` (CSV/TSV/TXT), `zugeordnet`, `NAECHSTER`/`naechster_einfuegen`, `gruppen`, `brief_fuer(vorlage, [Sätze])`, `felder_hervorheben` |
+| Vorschau | `ui/document/vorschau_ansicht.py` | schreibgeschützter Editor mit dem Brief eines Datensatzes statt der Vorlage (`art="serien"`); die Vorlage bleibt unverändert |
+| Fenster | `ui/dialogs/serien_fenster.py` | `EmpfaengerDialog`, `FeldDialog` (Signal `einfuegen`, bleibt offen), `ZuordnenDialog` |
+| Band | `ui/ribbon/ribbon_bar.py` | allgemein: `kann_<Befehl>` (Knopf frei/grau) und Einträge `{"feld": name}` (Eingabefeld aus `feld_<name>`; hat es `auffrischen()`, ruft `aktualisieren` es auf) |
+
+## Bausteine des Reiters Überprüfen
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/ribbon/tabs/review_tab.py` | Anordnung nach den Vorlagen ueberpruefen/01–10 |
+| Befehle | `core/befehle/ueberpruefen.py` | Klappen (Rechtschreibprüfung, Löschen, Nachverfolgen, Markup, Überprüfen, Annehmen, Ablehnen, Vergleichen), `feld_anzeige` (Fassung + „Markup anzeigen“), `bearbeitungEinschraenken`/`schutz_setzen` (`tab.schutz`, nur für die Sitzung) |
+| Zählen | `editor/statistik.py` | `zaehlen(texte, seiten)`: Wörter, Zeichen mit/ohne Leerzeichen, Absätze, asiatische Zeichen |
+| Fassungen | `editor/fassungen.py` | `original(doc)` (Kopie ohne Einfügungen, Löschungen als Text), `bearbeiter(doc)`, `zeiten(doc)` |
+| Markup-Auswahl | `ui/document/zusatz_editor.py` | `markup_filter` (Kommentare, Einfügungen, Bearbeiter, Tag), `aenderung_sichtbar`, `angezeigte_aenderungen`; Sprechblasen folgen der Auswahl |
+| Original | `ui/document/vorschau_ansicht.py` | dieselbe Vorschau mit `art="original"` |
+| Fenster | `ui/dialogs/ueberpruefen_fenster.py` | `WoerterDialog`, `SchutzDialog` (Seitenleiste) |
+
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
 `core/befehle/`, je Aufgabe ein Baustein: `text` (Zeichen und Absatz), `bearbeiten`, `einfuegen`, `seite` (Seite, Abschnitte, Spalten),
-`pruefen` (Schreibhilfe, Vergleichen), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
+`pruefen` (Schreibhilfe, Vergleichen), `ueberpruefen` (Reiter Überprüfen), `serien` (Mailings), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
 Ein neuer Befehl kommt in den Baustein seiner Aufgabe; `Befehle` setzt sie zusammen. Kein Baustein importiert `commands.py`.
 
 ## Aufbau der großen Klassen

@@ -22,12 +22,14 @@ from lunivo_writer.core.befehle.kommentare import KommentarBefehle
 from lunivo_writer.core.befehle.kontext import KontextBefehle
 from lunivo_writer.core.befehle.pruefen import PruefenBefehle
 from lunivo_writer.core.befehle.seite import SeiteBefehle
+from lunivo_writer.core.befehle.serien import SerienBefehle
 from lunivo_writer.core.befehle.text import TextBefehle
+from lunivo_writer.core.befehle.ueberpruefen import UeberpruefenBefehle
 from lunivo_writer.core.befehle.verweise import VerweiseBefehle
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 
-class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle, ExternBefehle, KIBefehle, KommentarBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, TextBefehle, VerweiseBefehle):
+class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle, ExternBefehle, KIBefehle, KommentarBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, TextBefehle, UeberpruefenBefehle, VerweiseBefehle):
     """Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``."""
 
     def __init__(self, win):
@@ -62,6 +64,19 @@ class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle,
         basis, _ = self._teile(name)
         f = getattr(self, "an_" + basis, None)
         return bool(f()) if callable(f) else None
+
+
+    def kann(self, name: str):
+        """Ob der Befehl gerade geht (Befehl ``kann_<name>``); ``None``: keine eigene Bedingung."""
+        basis, _ = self._teile(name)
+        f = getattr(self, "kann_" + basis, None)
+        return bool(f()) if callable(f) else None
+
+
+    def band_feld(self, name: str):
+        """Ein Eingabefeld fürs Band (Befehl ``feld_<name>``), z. B. die Nummer des Datensatzes im Seriendruck."""
+        f = getattr(self, "feld_" + name, None)
+        return f() if callable(f) else None
 
 
     def symbolname(self, name: str) -> str | None:

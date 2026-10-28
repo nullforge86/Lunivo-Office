@@ -330,7 +330,13 @@ class RegisterBand(QWidget):
                 inhalt.addWidget(host, 0, Qt.AlignTop)
             lauf.clear()
         for e in g["knoepfe"]:
-            if e.get("gross"):
+            if e.get("feld"):                                     # ein Eingabefeld, das der Befehls-Baustein liefert (band_feld)
+                spalte()
+                w = self.b.band_feld(e["feld"])
+                if w is not None:
+                    self.felder[e["feld"]] = w
+                    inhalt.addWidget(w, 0, Qt.AlignVCenter)
+            elif e.get("gross"):
                 spalte()
                 inhalt.addWidget(self._knopf(e, True))
             else:
@@ -768,3 +774,12 @@ class RegisterBand(QWidget):
             for k, name, braucht in self.knoepfe:
                 if braucht and not k.property("fehlt"):
                     k.setEnabled(hat_dokument)
+        for k, name, _braucht in self.knoepfe:                    # Befehle mit eigener Bedingung (kann_<Befehl>) bleiben sonst grau
+            if name and not k.property("fehlt"):
+                frei = self.b.kann(name)
+                if frei is not None:
+                    k.setEnabled(bool(frei) and hat_dokument is not False)
+        for f in self.felder.values():                            # Felder aus band_feld ziehen ihren Zustand selbst nach (auffrischen)
+            auf = getattr(f, "auffrischen", None)
+            if callable(auf):
+                auf()

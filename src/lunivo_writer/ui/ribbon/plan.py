@@ -1,5 +1,5 @@
 """Die Reiterleiste nach der Struktur „LUNIVO WRITER“: Datei, Start, Einfügen, Seitenlayout, Verweise, Überprüfen,
-Schreibhilfe, Ansicht (+ „Sendungen“ nach Register anpassen) und die Kontext-Reiter für Tabellen, Bilder/Formen und Kopf-/Fußzeile.
+Schreibhilfe, Ansicht (+ „Sendungen“ nach Register anpassen) und die Kontext-Reiter für Tabellen, Bilder/Formen, Kopf-/Fußzeile und Seriendruck („Mailings“).
 
 Jeder Reiter hat sein Modul unter ribbon/tabs/ bzw. contextual/; hier werden sie in der Reihenfolge der Struktur zusammengesetzt.
 Die Prüfungen der Schreibhilfe stehen zusätzlich in der rechten Seitenleiste.
@@ -7,6 +7,7 @@ Die Prüfungen der Schreibhilfe stehen zusätzlich in der rechten Seitenleiste.
 from __future__ import annotations
 
 from lunivo_writer.ui.contextual.header_footer_tools import KOPFFUSS
+from lunivo_writer.ui.contextual.serien_tools import SERIENDRUCK
 from lunivo_writer.ui.contextual.image_tools import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
 from lunivo_writer.ui.ribbon.tabs import (ai_tab, file_tab, home_tab, insert_tab, layout_tab, mailings_tab, references_tab,
@@ -19,4 +20,4 @@ def plan(register: dict) -> list[dict]:
     reiter = [file_tab.bauen(register), start, insert_tab.bauen(register), layout_tab.bauen(register),
               references_tab.bauen(register), review_tab.bauen(register), ai_tab.bauen(register), view_tab.bauen(register),
               section_tab.bauen(register), mailings_tab.bauen(register)]
-    return reiter + [TABELLENTOOLS, BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS, KOPFFUSS]
+    return reiter + [TABELLENTOOLS, BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS, KOPFFUSS, SERIENDRUCK]

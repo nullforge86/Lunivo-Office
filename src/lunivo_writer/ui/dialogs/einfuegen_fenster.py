@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.editor import felder as F
 from lunivo_writer.editor import tabelle_text as TT
 from lunivo_writer.editor import zahlformat as Z
@@ -25,7 +26,7 @@ def _titel(text: str, feld) -> QLabel:
     return t
 
 
-class ZahlDialog(QDialog):
+class ZahlDialog(PanelFaehig, QDialog):
     """Feld „Zahl“, darunter die Liste „Zahlentyp“ (wie die Vorlage „Zahl“)."""
 
     def __init__(self, parent=None):
@@ -63,7 +64,7 @@ class ZahlDialog(QDialog):
         self.accept()
 
 
-class FelderDialog(QDialog):
+class FelderDialog(PanelFaehig, QDialog):
     """Links die Feldnamen, rechts Beschreibung, Feldanweisung und Ergebnis."""
 
     def __init__(self, parent=None, kontext: dict | None = None):
@@ -100,7 +101,7 @@ class FelderDialog(QDialog):
         return self.anweisung.text(), self.ergebnis_text.text()
 
 
-class TrennerDialog(QDialog):
+class TrennerDialog(PanelFaehig, QDialog):
     """„Text in Tabelle umwandeln“ (mit Spaltenzahl) oder „Tabelle in Text konvertieren“: woran getrennt wird."""
 
     def __init__(self, parent=None, *, zu_tabelle: bool = True, texte: list[str] | None = None):
@@ -151,7 +152,7 @@ class TrennerDialog(QDialog):
         self._zeilen.setText(str(len(z)))
 
 
-class SeitenzahlDialog(QDialog):
+class SeitenzahlDialog(PanelFaehig, QDialog):
     """„Seitenzahl einfügen“: Position (Kopf-/Fußzeile), Ausrichtung und Schreibweise, mit kleinem Seitenbild."""
 
     def __init__(self, parent=None):
@@ -188,7 +189,7 @@ class SeitenzahlDialog(QDialog):
         return self.ort.currentData(), self.ausrichtung.currentData(), self.muster.currentData()
 
 
-class HyperlinkDialog(QDialog):
+class HyperlinkDialog(PanelFaehig, QDialog):
     """„Hyperlink“ wie in der Vorlage: links „Link zu“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse), oben „Anzuzeigender Text“
     und „QuickInfo …“, darunter je Ziel eine Seite. Das Fenster fügt nichts ein; ``ergebnis()`` liefert, was der Aufrufer braucht.
 
@@ -226,6 +227,7 @@ class HyperlinkDialog(QDialog):
         quick = QPushButton("&QuickInfo …"); quick.setMinimumHeight(34); quick.clicked.connect(self._quickinfo)
         z.addWidget(_titel("Anzuzeigender &Text:", self.text)); z.addWidget(self.text, 1); z.addWidget(quick)
         rechts.addLayout(z)
+        self._teile = (h, leiste, lv, z)
         self.seiten = QStackedWidget(); rechts.addWidget(self.seiten, 1)
         # Seite 1: Datei oder Webseite
         s1 = QWidget(); v1 = QVBoxLayout(s1); v1.setContentsMargins(0, 0, 0, 0)
@@ -291,6 +293,18 @@ class HyperlinkDialog(QDialog):
         self._ordner_zeigen(self.ordner.currentText())
         self._pruefen()
         self.resize(820, 470)
+
+    def kompakt_machen(self) -> None:
+        """In der Seitenleiste: „Link zu“ als Reihe oben, die Felder darunter in voller Breite."""
+        from PySide6.QtWidgets import QBoxLayout, QToolButton
+        h, leiste, lv, z = self._teile
+        h.setDirection(QBoxLayout.TopToBottom)
+        lv.setDirection(QBoxLayout.LeftToRight)
+        leiste.setMinimumWidth(0); leiste.setMaximumWidth(16777215)
+        for b in leiste.findChildren(QToolButton):
+            b.setMinimumSize(0, 60)
+        z.setDirection(QBoxLayout.TopToBottom)
+        self.dateien.setMinimumSize(0, 180)
 
     def _ordner_setzen(self, pfad: str) -> None:
         if self.ordner.findText(pfad) < 0:
@@ -360,7 +374,7 @@ class HyperlinkDialog(QDialog):
         return r
 
 
-class ObjektDialog(QDialog):
+class ObjektDialog(PanelFaehig, QDialog):
     """„Objekt einfügen“ wie in der Vorlage. „Neu“ (ein eingebettetes Office-Objekt anlegen) kann Lunivo nicht und bleibt grau;
     „Aus Datei erstellen“ fügt Text, Dokument oder Bild ein, mit „Als Symbol anzeigen“ ein Dateisymbol mit Link auf die Datei."""
 

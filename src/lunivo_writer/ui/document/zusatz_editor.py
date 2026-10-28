@@ -35,6 +35,8 @@ class ZusatzMixin:
         self._meta: dict = {}
         self.verfolgen = False
         self.markup = True
+        # Was das Markup zeigt (Überprüfen ▸ Markup anzeigen / Überprüfen): nur Anzeige, ändert das Dokument nicht
+        self.markup_filter: dict = {"kommentare": True, "einfuegungen": True, "bearbeiter": None, "zeit": None}
         self.autor = lambda: ("Unbekannt", "")
         self._zus_intern = False
         self._hat_zusatz = False
@@ -350,7 +352,9 @@ class ZusatzMixin:
             bis = min(pos + hinzu, doc.characterCount() - 1)
             if bis > pos:
                 c.setPosition(pos); c.setPosition(bis, QTextCursor.KeepAnchor)
-                if not c.charFormat().hasProperty(P_AENDERUNG) and not c.charFormat().hasProperty(P_NOTE):
+                cf = c.charFormat()
+                eigen = cf.stringProperty(P_AENDERUNG) == "ins" and cf.stringProperty(P_AUTOR) == name
+                if not eigen and not cf.hasProperty(P_NOTE):     # auch hinter fremder Einfügung oder in einer Löschung: neue Einfügung
                     c.joinPreviousEditBlock()
                     self._bereich_format(pos, bis, {P_AENDERUNG: "ins", P_AUTOR: name, P_DATUM: self._jetzt()})
                     c.endEditBlock()
@@ -383,6 +387,30 @@ class ZusatzMixin:
             self.aenderung_annehmen(b, annehmen)
             n += 1
         return n
+
+    def aenderung_sichtbar(self, b: dict) -> bool:
+        """Ob eine Änderung zum gewählten Markup gehört (Bearbeiter, Tag)."""
+        f = self.markup_filter
+        if not f["einfuegungen"]:
+            return False
+        if f["bearbeiter"] is not None and b["cf"].stringProperty(P_AUTOR) not in f["bearbeiter"]:
+            return False
+        return f["zeit"] is None or b["cf"].stringProperty(P_DATUM)[:10] == f["zeit"]
+
+    def angezeigte_aenderungen(self, annehmen: bool) -> int:
+        """Nur die Änderungen annehmen oder ablehnen, die das Markup gerade zeigt."""
+        n = 0
+        for b in reversed(self.aenderungen()):
+            if self.aenderung_sichtbar(b):
+                self.aenderung_annehmen(b, annehmen)
+                n += 1
+        return n
+
+    def markup_filter_setzen(self, **werte) -> None:
+        self.markup_filter.update(werte)
+        if hasattr(self, "apply_page"):
+            self.apply_page(self.page)                      # die Blasenfläche kommt oder geht mit dem, was gezeigt wird
+        self._overlays_neu()
 
     def aenderung_springen(self, delta: int):
         return self._springe(self.aenderungen(), delta)
@@ -455,7 +483,7 @@ class ZusatzMixin:
                 e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
                 sel.append(e)
         if self.markup and (self._hat_zusatz or self.verfolgen):
-            for b in self.kommentar_bereiche():
+            for b in (self.kommentar_bereiche() if self.markup_filter["kommentare"] else []):
                 c = QTextCursor(doc)
                 c.setPosition(b["von"]); c.setPosition(b["bis"], QTextCursor.KeepAnchor)
                 geloest = bool((self.kommentare.get(int(b["wert"])) or {}).get("geloest"))
@@ -467,6 +495,8 @@ class ZusatzMixin:
             del_stil = self.opt_text("aenderungen/del_stil", "Durchgestrichen")
             farb_wahl = self.opt_text("aenderungen/farbe", "Nach Autor")
             for b in self.aenderungen():
+                if not self.aenderung_sichtbar(b):
+                    continue
                 c = QTextCursor(doc)
                 c.setPosition(b["von"]); c.setPosition(b["bis"], QTextCursor.KeepAnchor)
                 farbe = autor_farbe(b["cf"].stringProperty(P_AUTOR))

@@ -31,9 +31,10 @@ class AnzeigeBaustein:
         k = self.blasen_konfig()
         if self.web or not SB.aktiv(k):
             return False
-        if self.kommentare:
+        f = getattr(self, "markup_filter", {})                     # Überprüfen ▸ Markup anzeigen: was ausgeblendet ist, braucht keine Blase
+        if self.kommentare and f.get("kommentare", True):
             return True
-        return k["verwenden"] == "Immer" and bool(self.aenderungen())
+        return k["verwenden"] == "Immer" and f.get("einfuegungen", True) and bool(self.aenderungen())
 
 
     def _blasen_einrichten(self) -> None:
@@ -67,11 +68,15 @@ class AnzeigeBaustein:
 
     def blasen_layout(self, breite: float) -> list:
         """[(Blase, Rechteck in der Blasenfläche, y der Textzeile)] — gestapelt, ohne sich zu überlappen."""
-        rev = (self.document().revision(), id(self.kommentare), len(self.kommentare), round(breite), self.zoom)
+        f = getattr(self, "markup_filter", {})
+        rev = (self.document().revision(), id(self.kommentare), len(self.kommentare), round(breite), self.zoom, repr(sorted(f.items())))
         if self._blasen_cache[0] == rev:
             return self._blasen_cache[1]
         k = self.blasen_konfig()
         blasen = SB.sammeln(self.document(), self.kommentare, k["verwenden"])
+        blasen = [bl for bl in blasen if (f.get("kommentare", True) if bl.art == "kommentar"            # Markup anzeigen / Bearbeiter / Zeit
+                                          else f.get("einfuegungen", True) and (f.get("bearbeiter") is None or bl.autor in f["bearbeiter"])
+                                          and (f.get("zeit") is None or bl.datum[:10] == f["zeit"]))]
         font = QFont(self.font()); font.setPixelSize(max(7, int(SB.blasen_px(self.opt_text("kommentare/schrift", "mittel")) * self.zoom)))
         w = max(60.0, breite - 12)
         anker, hoehen = [], []
