@@ -343,10 +343,10 @@ class EinfuegenBefehle:
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
-        m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
-        m.addAction(self._sym("stift"), "Tabelle zeichnen", self.tabelleZeichnen)
-        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
-        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
+        m.addAction(self._sym("tabelle"), "Tabelle e&infügen", self.tabelleRaster)
+        m.addAction(self._sym("tabelleZeichnen"), "Tabelle zeichnen(&W)", self.tabelleZeichnen)
+        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln...", self.textInTabelle)
+        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren...", self.tabelleInText)
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None
