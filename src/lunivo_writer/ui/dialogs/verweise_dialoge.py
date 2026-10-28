@@ -1,15 +1,14 @@
-"""Dialoge zu Verweisen: Beschriftung, Textmarken, Querverweis, Quellen."""
+"""Dialoge zu Verweisen: Textmarken, Quellen. (Beschriftung und Querverweis: ``verweise_fenster.py``.)"""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QPushButton, QRadioButton, QVBoxLayout,
+    QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QMessageBox, QPushButton, QVBoxLayout,
 )
 
 from lunivo_writer.editor import verweise
 from lunivo_writer.editor.literatur import TYPEN, ZITIERWEISEN, eintrag
-from lunivo_writer.editor.zusatz import BESCHRIFTUNGEN
 
 
 def _knoepfe(dlg):
@@ -18,18 +17,6 @@ def _knoepfe(dlg):
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-class BeschriftungDialog(PanelFaehig, QDialog):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setWindowTitle("Beschriftung einfügen")
-        f = QFormLayout(self)
-        self.label = QComboBox(); self.label.addItems(BESCHRIFTUNGEN)
-        self.text = QLineEdit()
-        self.pos = QComboBox(); self.pos.addItems(["Unter dem Objekt", "Über dem Objekt"])
-        f.addRow("Bezeichnung", self.label); f.addRow("Text (nach der Nummer)", self.text); f.addRow("Position", self.pos)
-        f.addRow(_knoepfe(self))
-
-
 class TextmarkeDialog(PanelFaehig, QDialog):
     def __init__(self, parent, ed):
         super().__init__(parent)
@@ -71,34 +58,6 @@ class TextmarkeDialog(PanelFaehig, QDialog):
         it = self.liste.currentItem()
         if it:
             verweise.lesezeichen_gehe(self.ed, it.text())
-
-
-class QuerverweisDialog(PanelFaehig, QDialog):
-    def __init__(self, parent, ed):
-        super().__init__(parent)
-        self.setWindowTitle("Querverweis")
-        self.ziele = verweise.querverweis_ziele(ed)
-        v = QVBoxLayout(self)
-        self.art = QComboBox(); self.art.addItems(["Überschrift", "Abbildung", "Tabelle", "Gleichung", "Textmarke"])
-        self.art.currentTextChanged.connect(self._fuellen)
-        v.addWidget(self.art)
-        self.liste = QListWidget(); v.addWidget(self.liste)
-        self.wie = QButtonGroup(self)
-        for i, t in enumerate(("Text / Überschrift", "Nur Bezeichnung und Nummer", "Seitenzahl")):
-            r = QRadioButton(t); self.wie.addButton(r, i); v.addWidget(r)
-            r.setChecked(i == 0)
-        v.addWidget(_knoepfe(self))
-        self._fuellen("Überschrift")
-
-    def _fuellen(self, art):
-        self.liste.clear()
-        for z in self.ziele:
-            if z["art"] == art:
-                it = QListWidgetItem(z["text"][:80]); it.setData(Qt.UserRole, z); self.liste.addItem(it)
-
-    def ergebnis(self):
-        it = self.liste.currentItem()
-        return (it.data(Qt.UserRole), ["text", "nummer", "seite"][self.wie.checkedId()]) if it else (None, None)
 
 
 class QuelleDialog(PanelFaehig, QDialog):

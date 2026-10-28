@@ -157,7 +157,9 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 |---|---|---|
 | Inhaltsverzeichnis | `editor/verzeichnis.py` | `TOC_VORGABE`, `toc_optionen(doc)`: Füllzeichen, Ebenen 1–9, Seitenzahlen anzeigen/rechtsbündig, Verknüpfungen (verborgene Textmarken „_Toc…“) — am Kopf als `B_TOC_OPT`; `verzeichnis_aktualisieren(ed, nur)`, `vorhanden(doc, art)` |
 | Indexeinträge | `editor/indexeintrag.py` | `Eintrag` (Haupt/Unter, Sortierung, „Siehe“, Seitenbereich über Textmarke, fett/kursiv), `feld`/`aus_feld` (Word-Feld XE); am Text `P_INDEX` + `P_INDEX_OPT`; `verweise.index_eintragen(ed, e, alle)` |
-| Fenster | `ui/dialogs/verweise_fenster.py` | `InhaltsverzeichnisDialog` (mit Seitenansicht; `ergebnis()`), `IndexeintragDialog` (Signal `markieren(Eintrag, alle)`) — ändern das Dokument nicht selbst |
+| Fenster | `ui/dialogs/verweise_fenster.py` | `InhaltsverzeichnisDialog` (mit Seitenansicht; `ergebnis()`), `IndexeintragDialog` (Signal `markieren(Eintrag, alle)`), `BeschriftungDialog` (Nummer steht im Feld; eigene Bezeichnungen in `verweise/beschriftungen`; `NummerierungDialog`), `QuerverweisDialog` (Signal `einfuegen(ziel, wie, link, oben_unten)`, bleibt offen) — ändern das Dokument nicht selbst |
+
+| Beschriftung, Querverweis | `editor/verweise.py` | `beschriftung_einfuegen(…, nach, ohne_bezeichnung, zahl)` mit SEQ-Schreibweise (`SEQ_FORMAT`), `naechste_nummer`; `VERWEISTYPEN`, `verweisen_auf(art)`, `querverweis_ziele`, `querverweis_einfuegen(ed, ziel, wie, link, oben_unten)` — Ziel bekommt eine verborgene Textmarke „_Ref…“ |
 | Klappe | `core/befehle/verweise.py` | `menue_inhaltsverzeichnisKlappe`: Ebene 1–9 und Textkörper (Formatvorlage „Überschrift N“ / „Standard“); Fuß- und Endnoten einzeln mit `note_springen(delta, art)` |
 
 ## Befehle nach Aufgaben

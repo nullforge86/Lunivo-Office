@@ -10,8 +10,32 @@ from lunivo_writer.editor.zusatz import B_CAP, P_FELD, P_INDEX, P_ZITAT
 
 
 # ---- Beschriftungen ---------------------------------------------------------------------------------------
-def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False) -> None:
-    doc = ed.document()
+# Zahlschreibweise der Beschriftung (editor/zahlformat.py) ↔ Schalter des Word-Felds SEQ
+SEQ_FORMAT = {"arabisch": "ARABIC", "gross": "ALPHABETIC", "klein": "alphabetic", "roemisch": "ROMAN", "roemisch_klein": "roman"}
+
+
+def seq_format(anweisung: str) -> str:
+    """Zahlschreibweise aus einer Feldanweisung ``SEQ Abbildung \\* ROMAN`` (Vorgabe arabisch)."""
+    m = re.search(r"\\\*\s*(\w+)", anweisung)
+    if m:
+        for k, v in SEQ_FORMAT.items():
+            if v == m.group(1):
+                return k
+    return "arabisch"
+
+
+def naechste_nummer(ed, label: str, zahl: str = "arabisch") -> str:
+    """Nummer, die eine neue Beschriftung ``label`` an der Schreibmarke bekäme (für die Anzeige im Fenster)."""
+    from lunivo_writer.editor.zahlformat import zahl_text
+    pos = ed.textCursor().position()
+    n = 1 + sum(1 for k in beschriftungen_liste(ed) if k["label"] == label and k["pos"] < pos)
+    return zahl_text(n, zahl)
+
+
+def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False, *, nach: str | None = None,
+                           ohne_bezeichnung: bool = False, zahl: str = "arabisch") -> None:
+    """Beschriftung „Abbildung 1: Text“ unter (``oben``: über) dem Objekt oder Absatz. ``nach`` ersetzt „: Text“ durch genau diesen
+    Text hinter der Nummer, ``ohne_bezeichnung`` lässt „Abbildung “ weg, ``zahl`` ist die Schreibweise der Nummer."""
     c = ed.textCursor()
     c.beginEditBlock()
     tab = c.currentTable()
@@ -24,8 +48,6 @@ def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False) -> Non
             c.movePosition(QTextCursor.EndOfBlock)
             if c.block().text():
                 c.insertBlock()
-            else:
-                pass
     else:
         c.movePosition(QTextCursor.EndOfBlock)
     bf = QTextBlockFormat()
@@ -37,11 +59,15 @@ def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False) -> Non
         c.insertBlock(bf, cf)
     else:
         c.setBlockFormat(bf); c.setBlockCharFormat(cf)
-    c.insertText(label + " ", cf)
+    if not ohne_bezeichnung:
+        c.insertText(label + " ", cf)
     nf = QTextCharFormat(cf)
-    nf.setProperty(P_FELD, f"SEQ {label} \\* ARABIC")
+    nf.setProperty(P_FELD, f"SEQ {label.replace(' ', '_')} \\* {SEQ_FORMAT.get(zahl, 'ARABIC')}")
     c.insertText("0", nf)
-    if text:
+    if nach is not None:
+        if nach:
+            c.insertText(nach, cf)
+    elif text:
         c.insertText(": " + text, cf)
     c.endEditBlock()
     ed.setTextCursor(c)
@@ -50,6 +76,7 @@ def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False) -> Non
 
 
 def beschriftungen_nummerieren(ed) -> None:
+    from lunivo_writer.editor.zahlformat import zahl_text
     zaehler: dict[str, int] = {}
     doc = ed.document()
     arbeit = []
@@ -62,8 +89,12 @@ def beschriftungen_nummerieren(ed) -> None:
             while not it.atEnd():
                 f = it.fragment()
                 if f.isValid() and f.charFormat().hasProperty(P_FELD) and f.charFormat().stringProperty(P_FELD).upper().startswith("SEQ"):
-                    if f.text() != str(zaehler[label]):
-                        arbeit.append((f.position(), f.position() + f.length(), str(zaehler[label]), f.charFormat()))
+                    try:
+                        soll = zahl_text(zaehler[label], seq_format(f.charFormat().stringProperty(P_FELD)))
+                    except ValueError:
+                        soll = str(zaehler[label])
+                    if f.text() != soll:
+                        arbeit.append((f.position(), f.position() + f.length(), soll, f.charFormat()))
                     break
                 it += 1
         b = b.next()
@@ -185,55 +216,142 @@ def intern_springen(ed, href: str) -> bool:
 
 
 # ---- Querverweise -----------------------------------------------------------------------------------------------
+# Verweistyp → was eingefügt werden kann („Verweisen auf“), in der Reihenfolge des Fensters
+VERWEISTYPEN = ["Nummeriertes Element", "Überschrift", "Textmarke", "Fußnote", "Endnote", "Abbildung", "Tabelle", "Gleichung"]
+VERWEISEN_AUF = {
+    "Nummeriertes Element": [("seite", "Seitenzahl"), ("nummer", "Absatznummer"), ("text", "Absatztext"), ("obenunten", "Oben/unten")],
+    "Überschrift": [("text", "Überschriftentext"), ("seite", "Seitenzahl"), ("nummer", "Überschriftennummer"), ("obenunten", "Oben/unten")],
+    "Textmarke": [("text", "Textmarkeninhalt"), ("seite", "Seitenzahl"), ("obenunten", "Oben/unten")],
+    "Fußnote": [("nummer", "Fußnotennummer"), ("seite", "Seitenzahl"), ("obenunten", "Oben/unten")],
+    "Endnote": [("nummer", "Endnotennummer"), ("seite", "Seitenzahl"), ("obenunten", "Oben/unten")],
+}
+_BESCHRIFTUNG_AUF = [("text", "Vollständige Beschriftung"), ("nummer", "Nur Bezeichnung und Nummer"), ("nur_text", "Nur Beschriftungstext"),
+                     ("seite", "Seitenzahl"), ("obenunten", "Oben/unten")]
+
+
+def verweisen_auf(art: str) -> list[tuple[str, str]]:
+    return VERWEISEN_AUF.get(art, _BESCHRIFTUNG_AUF)
+
+
 def querverweis_ziele(ed) -> list[dict]:
-    """Mögliche Ziele: Überschriften, Beschriftungen, Textmarken."""
+    """Mögliche Ziele: nummerierte Absätze, Überschriften, Textmarken, Fuß- und Endnoten, Beschriftungen.
+    Jedes Ziel: art, text (Anzeige), pos, von/bis (Bereich für die Textmarke), nummer (wenn es eine hat)."""
+    from lunivo_writer.editor.zusatz import roemisch
     z = []
     b = ed.document().firstBlock()
     while b.isValid():
         lv = b.blockFormat().headingLevel()
+        lst = b.textList()
+        nummer = lst.itemText(b).strip() if lst is not None else ""
         if lv and b.text().strip():
-            z.append({"art": "Überschrift", "text": b.text().strip(), "pos": b.position(), "block": b.blockNumber()})
+            z.append({"art": "Überschrift", "text": b.text().strip(), "pos": b.position(), "block": b.blockNumber(),
+                      "von": b.position(), "bis": b.position() + len(b.text()), "nummer": nummer})
+        elif lst is not None and nummer and not nummer.startswith(("•", "◦", "▪", "–", "-")) and b.text().strip():
+            z.append({"art": "Nummeriertes Element", "text": f"{nummer} {b.text().strip()}", "pos": b.position(), "block": b.blockNumber(),
+                      "von": b.position(), "bis": b.position() + len(b.text()), "nummer": nummer, "inhalt": b.text().strip()})
         b = b.next()
     for k in beschriftungen_liste(ed):
-        z.append({"art": k["label"], "text": k["text"], "pos": k["pos"], "block": k["block"].blockNumber()})
+        blk = k["block"]
+        z.append({"art": k["label"], "text": k["text"], "pos": k["pos"], "block": blk.blockNumber(), "von": blk.position(),
+                  "bis": blk.position() + len(blk.text()), "nummer": _bezeichnung_nummer(blk) or k["text"],
+                  "inhalt": _beschriftungstext(blk)})
     for d in lesezeichen_liste(ed, versteckte=False):
-        z.append({"art": "Textmarke", "text": d["name"], "pos": d["von"], "name": d["name"]})
+        doc_text = ed.document().toPlainText()
+        z.append({"art": "Textmarke", "text": d["name"], "pos": d["von"], "name": d["name"],
+                  "inhalt": doc_text[d["von"]:d["bis"]].replace("\u2029", " ")})
+    zaehler = {"f": 0, "e": 0}
+    for n in ed.noten_stellen() if hasattr(ed, "noten_stellen") else []:
+        zaehler[n["art"]] += 1
+        nr = str(zaehler[n["art"]]) if n["art"] == "f" else roemisch(zaehler[n["art"]])
+        text = ((getattr(ed, "noten", {}) or {}).get(n["art"], {}) or {}).get(n["id"], "")
+        z.append({"art": "Fußnote" if n["art"] == "f" else "Endnote", "text": f"{nr} {text}".strip(), "pos": n["von"],
+                  "von": n["von"], "bis": n["bis"], "nummer": nr})
     return z
 
 
+def _seq_fragment(blk):
+    it = blk.begin()
+    while not it.atEnd():
+        f = it.fragment()
+        if f.isValid() and f.charFormat().hasProperty(P_FELD) and f.charFormat().stringProperty(P_FELD).upper().startswith("SEQ"):
+            return f
+        it += 1
+    return None
+
+
+def _bezeichnung_nummer(blk) -> str:
+    """„Abbildung 2“ — der Text der Beschriftung bis einschließlich der Nummer."""
+    f = _seq_fragment(blk)
+    return blk.text()[:f.position() + f.length() - blk.position()].strip() if f else ""
+
+
+def _beschriftungstext(blk) -> str:
+    """Der Text hinter der Nummer, ohne Doppelpunkt."""
+    f = _seq_fragment(blk)
+    rest = blk.text()[f.position() + f.length() - blk.position():] if f else blk.text()
+    return re.sub(r"^\s*[:.–-]?\s*", "", rest).strip()
+
+
 def marke_sichern(ed, ziel: dict) -> str:
-    """Name der Textmarke am Ziel (eine Überschrift bekommt dafür eine Textmarke „Ziel_<Absatz>“)."""
+    """Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“ (wie in Word)."""
     if "name" in ziel:
         return ziel["name"]
-    blk = ed.document().findBlockByNumber(ziel["block"])
-    name = f"Ziel_{ziel['block']}"
-    if not any(d["name"] == name for d in lesezeichen_liste(ed)):
-        c = QTextCursor(blk)
-        c.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
-        keep = ed.textCursor()
-        ed.setTextCursor(c)
-        lesezeichen_setzen(ed, name)
-        ed.setTextCursor(keep)
+    doc = ed.document()
+    if "von" in ziel:
+        von, bis = ziel["von"], ziel["bis"]
+    else:
+        blk = doc.findBlockByNumber(ziel["block"]) if "block" in ziel else doc.findBlock(ziel["pos"])
+        von, bis = blk.position(), blk.position() + len(blk.text())
+    if bis <= von:
+        bis = von + 1
+    vorhanden = set()
+    for d in lesezeichen_liste(ed):
+        vorhanden.add(d["name"])
+        if d["von"] == von and d["bis"] == bis and d["name"].startswith(("_Ref", "Ziel_")):
+            return d["name"]
+    n = 1
+    while f"_Ref{n:06d}" in vorhanden:
+        n += 1
+    name = f"_Ref{n:06d}"
+    keep = QTextCursor(ed.textCursor())
+    c = QTextCursor(doc); c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor)
+    ed.setTextCursor(c)
+    lesezeichen_setzen(ed, name)
+    ed.setTextCursor(keep)
     return name
 
 
-def querverweis_einfuegen(ed, ziel: dict, wie: str) -> None:
-    """wie: "text" (Überschrift/Beschriftung als Text), "nummer" (Bezeichnung und Nummer) oder "seite" (Seitenzahl)."""
-    name = marke_sichern(ed, ziel)
+def querverweis_text(ed, ziel: dict, wie: str, oben_unten: bool = False) -> str:
+    """Der Text, den der Querverweis zeigt. wie: "text", "nummer", "nur_text", "seite" oder "obenunten"."""
+    richtung = "oben" if ziel["pos"] < ed.textCursor().position() else "unten"
+    if wie == "obenunten":
+        return richtung
     if wie == "seite":
         from lunivo_writer.editor.verzeichnis import _seiten
-        text = "Seite " + str(_seiten(ed, [ziel["pos"]])[0])
-    elif wie == "nummer" and ziel["art"] in ("Abbildung", "Tabelle", "Gleichung"):
-        m = re.match(r"^(\S+\s+\d+)", ziel["text"])
-        text = m.group(1) if m else ziel["text"]
+        text = str(_seiten(ed, [ziel["pos"]])[0])
+    elif wie == "nummer":
+        text = ziel.get("nummer") or ziel["text"]
+    elif wie == "nur_text":
+        text = ziel.get("inhalt", ziel["text"])
     else:
-        text = ziel["text"]
+        text = ziel.get("inhalt", ziel["text"]) if ziel["art"] in ("Textmarke", "Nummeriertes Element") else ziel["text"]
+    if oben_unten and wie in ("seite", "nummer"):
+        text += " " + richtung
+    return text
+
+
+def querverweis_einfuegen(ed, ziel: dict, wie: str, *, link: bool = True, oben_unten: bool = False) -> None:
+    """Querverweis an der Schreibmarke (siehe ``querverweis_text``); ``link`` macht ihn zum internen Hyperlink (Strg+Klick)."""
+    text = querverweis_text(ed, ziel, wie, oben_unten)
+    name = marke_sichern(ed, ziel) if link else ""
     c = ed.textCursor()
-    cf = QTextCharFormat()
-    cf.setAnchor(True); cf.setAnchorHref("#" + name)
-    cf.setForeground(QBrush(QColor("#0563C1"))); cf.setFontUnderline(True)
+    schlicht = QTextCharFormat(c.charFormat())          # Schrift an der Schreibmarke behalten, nur ohne Verknüpfung
+    schlicht.setAnchor(False); schlicht.setAnchorHref("")
+    cf = QTextCharFormat(schlicht)
+    if name:
+        cf.setAnchor(True); cf.setAnchorHref("#" + name)
     c.insertText(text, cf)
-    c.insertText(" ", QTextCharFormat())
+    c.insertText(" ", schlicht)
     ed.setTextCursor(c)
     ed.document().setModified(True)
 
