@@ -14,7 +14,7 @@ from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpi
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
 class PageSetupDialog(PanelFaehig, QDialog):
     def __init__(self, page: PageSettings, parent=None):
         super().__init__(parent)
@@ -188,3 +188,48 @@ class ZoomDialog(PanelFaehig, QDialog):
 
 
 from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog  # noqa: E402,F401  (früher hier)
+
+
+class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
+    """„Tabelleneigenschaften“: Breite, Ausrichtung, Rahmenstärke, Zellenabstand, Kopfzeile. Ändert die Tabelle nicht selbst; der Aufrufer liest die Felder."""
+    AUSRICHTUNGEN = ("Links", "Zentriert", "Rechts")
+
+    def __init__(self, parent, breite_prozent: int, ausrichtung: int, rand: float, abstand: float, kopfzeile: bool):
+        super().__init__(parent)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter
+        self.setWindowTitle("Tabelleneigenschaften")
+        v = QVBoxLayout(self)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
+        self.breite = QSpinBox(); self.breite.setRange(10, 100); self.breite.setSuffix(" % der Textbreite"); self.breite.setValue(breite_prozent)
+        self.ausr = QComboBox(); self.ausr.addItems(self.AUSRICHTUNGEN); self.ausr.setCurrentIndex(ausrichtung)
+        self.rand = QDoubleSpinBox(); self.rand.setRange(0, 10); self.rand.setSingleStep(0.25); self.rand.setValue(rand); self.rand.setSuffix(" pt")
+        self.pad = QDoubleSpinBox(); self.pad.setRange(0, 30); self.pad.setValue(abstand); self.pad.setSuffix(" px")
+        self.kopf = UmbruchSchalter("Erste Zeile ist Kopfzeile (wiederholt sich auf jeder Seite)"); self.kopf.setChecked(kopfzeile)
+        g.zeile("Breite", self.breite); g.zeile("Ausrichtung", self.ausr)
+        g.reihe(("Rahmenstärke", self.rand), ("Zellenabstand innen", self.pad))
+        g.breit(self.kopf)
+        v.addWidget(inhalt)
+        fussleiste(self, v)
+
+
+class BildZuschneidenDialog(PanelFaehig, QDialog):
+    """„Bild zuschneiden“: wie viele Bildpunkte links, oben, rechts und unten abgeschnitten werden."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        self.setWindowTitle("Bild zuschneiden")
+        v = QVBoxLayout(self)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
+        self.felder: dict[str, QSpinBox] = {}
+        for name in ("Links", "Oben", "Rechts", "Unten"):
+            w = QSpinBox(); w.setRange(0, 5000); w.setSuffix(" px"); self.felder[name] = w
+        g.reihe(("Links abschneiden", self.felder["Links"]), ("Oben abschneiden", self.felder["Oben"]),
+                ("Rechts abschneiden", self.felder["Rechts"]), ("Unten abschneiden", self.felder["Unten"]))
+        v.addWidget(inhalt)
+        fussleiste(self, v)
+
+    def werte(self) -> tuple[int, int, int, int]:
+        """(links, oben, rechts, unten) in Bildpunkten."""
+        f = self.felder
+        return f["Links"].value(), f["Oben"].value(), f["Rechts"].value(), f["Unten"].value()

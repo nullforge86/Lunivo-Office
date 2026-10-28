@@ -25,19 +25,31 @@ def lade_json(settings, key: str, standard):
         return standard
 
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-class RegisterAnpassenDialog(QDialog):
+from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+
+
+def _satz(text: str, gedaempft: bool = False) -> QLabel:
+    """Erklärung über den Feldern: bricht um."""
+    t = QLabel(text); t.setWordWrap(True)
+    if gedaempft:
+        t.setStyleSheet("color: palette(mid);")
+    return t
+
+
+class RegisterAnpassenDialog(PanelFaehig, QDialog):
     """Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“ in WPS."""
 
     def __init__(self, parent, settings, daten: dict):
         super().__init__(parent)
         self.settings = settings
         self.setWindowTitle("Register anpassen")
-        self.resize(420, 460)
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Haken = Reiter wird gezeigt. Mit den Pfeilen ändern Sie die Reihenfolge."))
-        self.liste = QListWidget()
-        v.addWidget(self.liste)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
+        g.breit(_satz("Haken = Reiter wird gezeigt. Mit den Pfeilen ändern Sie die Reihenfolge."))
+        self.liste = QListWidget(); self.liste.setMinimumHeight(260); self.liste.setAccessibleName("Reiter")
+        g.breit(self.liste)
         namen = [r["name"] for r in plan(daten) if not r.get("kontext")]
         cfg = lade_json(settings, "ui/register_plan", {})
         reihenfolge = [n for n in cfg.get("reihenfolge", []) if n in namen] + [n for n in namen if n not in cfg.get("reihenfolge", [])]
@@ -50,11 +62,12 @@ class RegisterAnpassenDialog(QDialog):
             if n in IMMER:
                 it.setFlags(it.flags() & ~Qt.ItemIsUserCheckable)
             self.liste.addItem(it)
-        z = QHBoxLayout()
+        z = FlussLayout(6)
         for text, d in (("▲ Nach oben", -1), ("▼ Nach unten", 1)):
             b = QPushButton(text); b.clicked.connect(lambda _=False, d=d: self._schieben(d)); z.addWidget(b)
-        v.addLayout(z)
-        v.addWidget(knopfzeile(self, bei_ok=self._speichern))
+        g.breit(z)
+        v.addWidget(inhalt)
+        fussleiste(self, v, bei_ok=self._speichern)
 
     def _schieben(self, d: int):
         i = self.liste.currentRow(); j = i + d
@@ -72,17 +85,16 @@ class RegisterAnpassenDialog(QDialog):
         self.accept()
 
 
-class SchnellzugriffDialog(QDialog):
+class SchnellzugriffDialog(PanelFaehig, QDialog):
     """Welche Knöpfe in der Schnellzugriffsleiste neben dem ☰-Menü stehen."""
 
     def __init__(self, parent, settings, alle: list[tuple[str, str, str]], aktuell: list[str]):
         super().__init__(parent)
         self.settings = settings
         self.setWindowTitle("Symbolleiste für den Schnellzugriff")
-        self.resize(420, 480)
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Haken = Knopf steht in der Schnellzugriffsleiste."))
-        self.liste = QListWidget()
+        v.addWidget(_satz("Haken = Knopf steht in der Schnellzugriffsleiste."))
+        self.liste = QListWidget(); self.liste.setMinimumHeight(280); self.liste.setAccessibleName("Knöpfe")
         v.addWidget(self.liste)
         for sym, name, aktion in alle:
             it = QListWidgetItem(icons.icon(sym, 18), name)
@@ -90,7 +102,7 @@ class SchnellzugriffDialog(QDialog):
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
             it.setCheckState(Qt.Checked if aktion in aktuell else Qt.Unchecked)
             self.liste.addItem(it)
-        v.addWidget(knopfzeile(self, bei_ok=self._speichern))
+        fussleiste(self, v, bei_ok=self._speichern)
 
     def _speichern(self):
         gewaehlt = [self.liste.item(i).data(Qt.UserRole) for i in range(self.liste.count())
@@ -99,7 +111,7 @@ class SchnellzugriffDialog(QDialog):
         self.accept()
 
 
-class EigeneZeichnungDialog(QDialog):
+class EigeneZeichnungDialog(PanelFaehig, QDialog):
     """„Eigene Zeichnung …“: eine SVG-Datei oder nur Pfaddaten hineinkopieren; die Vorschau zeichnet beim Tippen mit."""
 
     def __init__(self, parent):
@@ -107,26 +119,22 @@ class EigeneZeichnungDialog(QDialog):
         self.setWindowTitle("Eigene Zeichnung")
         self.wert: str | None = None
         v = QVBoxLayout(self)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
         t = QLabel("Eigene Zeichnung"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 2); t.setFont(f)
-        v.addWidget(t)
-        satz = QLabel("Eine SVG-Datei hier hineinkopieren — oder nur die Pfaddaten. Sie wird auf 24 × 24 gebracht und mittig eingepasst.")
-        satz.setWordWrap(True); v.addWidget(satz)
-        z = QHBoxLayout(); v.addLayout(z)
+        g.breit(t)
+        g.breit(_satz("Eine SVG-Datei hier hineinkopieren — oder nur die Pfaddaten. Sie wird auf 24 × 24 gebracht und mittig eingepasst."))
         self.feld = QPlainTextEdit(); self.feld.setPlaceholderText('<svg viewBox="0 0 24 24">…</svg>')
-        self.feld.setMinimumSize(460, 170)
-        z.addWidget(self.feld, 1)
-        rechts = QVBoxLayout(); z.addLayout(rechts)
+        self.feld.setMinimumHeight(150); self.feld.setAccessibleName("SVG oder Pfaddaten")
+        g.breit(self.feld)
         self.bild = QLabel(); self.bild.setFixedSize(96, 96); self.bild.setAlignment(Qt.AlignCenter)
         self.bild.setStyleSheet("border: 1px solid palette(midlight); border-radius: 8px;")
-        self.wort = QLabel("Noch nichts"); self.wort.setAlignment(Qt.AlignCenter); self.wort.setWordWrap(True); self.wort.setMaximumWidth(110)
-        rechts.addWidget(self.bild); rechts.addWidget(self.wort); rechts.addStretch(1)
-        self.gefuellt = QCheckBox("Gefüllt zeichnen (für Zeichnungen aus Flächen statt Strichen)")
-        v.addWidget(self.gefuellt)
-        zu = QHBoxLayout(); zu.addStretch(1)
-        ab = QPushButton("Abbrechen"); ok = QPushButton("Übernehmen"); ok.setDefault(True)
-        ab.clicked.connect(self.reject); ok.clicked.connect(self._ok)
-        zu.addWidget(ab); zu.addWidget(ok)
-        v.addLayout(zu)
+        self.wort = QLabel("Noch nichts"); self.wort.setWordWrap(True)
+        vorschau = FlussLayout(10); vorschau.addWidget(self.bild); vorschau.addWidget(self.wort)
+        g.breit(vorschau)
+        self.gefuellt = UmbruchSchalter("Gefüllt zeichnen (für Zeichnungen aus Flächen statt Strichen)")
+        g.breit(self.gefuellt)
+        v.addWidget(inhalt)
+        fussleiste(self, v, bei_ok=self._ok, ok_text="Übernehmen")
         self.feld.textChanged.connect(self._schau); self.gefuellt.toggled.connect(self._schau)
         self._schau()
 
@@ -147,59 +155,64 @@ class EigeneZeichnungDialog(QDialog):
         self.accept()
 
 
-class SymbolTauschenDialog(QDialog):
+class SymbolTauschenDialog(PanelFaehig, QDialog):
     """Ein Symbol austauschen — wie in der ersten Fassung: Getauscht wird die Zeichnung, nicht der Knopf; sie ändert sich überall,
     wo sie benutzt wird. Oben steht, wo das ist. Dazu Suche, 1800 Zeichnungen, eigene Zeichnung und Zurücksetzen."""
     GRENZE = 240
     SPALTEN = 7
+    spalten = 7
 
     def __init__(self, parent, settings, name: str | None = None):
         super().__init__(parent)
         self.w, self.settings = parent, settings
         self.setWindowTitle("Symbol austauschen")
-        self.setMinimumSize(520, 560)
         self.tausch = lade_json(settings, "ui/symbol_tausch", {})
         self._anfang = dict(self.tausch)
         self.geaendert = False
         namen = icons.pfade_original()
         self.welches = name if name in namen else next(iter(namen))
         v = QVBoxLayout(self)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
         t = QLabel("Symbol austauschen"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 2); t.setFont(f)
-        v.addWidget(t)
-        satz = QLabel("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.")
-        satz.setWordWrap(True); satz.setStyleSheet("color: palette(mid);"); v.addWidget(satz)
+        g.breit(t)
+        g.breit(_satz("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.", True))
         kopf = QFrame(); kopf.setObjectName("tauschKopf")
         kopf.setStyleSheet("QFrame#tauschKopf { border: 1px solid palette(midlight); border-radius: 8px; }")
         kh = QHBoxLayout(kopf)
         self.jetzt = QLabel(); self.jetzt.setFixedSize(40, 40); self.jetzt.setAlignment(Qt.AlignCenter)
         self.wo = QLabel(); self.wo.setWordWrap(True)
         kh.addWidget(self.jetzt); kh.addWidget(self.wo, 1)
-        v.addWidget(kopf)
-        self.suche = QLineEdit(); self.suche.setClearButtonEnabled(True)
+        g.breit(kopf)
+        self.suche = QLineEdit(); self.suche.setClearButtonEnabled(True); self.suche.setAccessibleName("Zeichnung suchen")
         self.suche.setPlaceholderText("Zeichnung suchen … (englisch: table, clock, save)")
-        v.addWidget(self.suche)
-        sc = QScrollArea(); sc.setWidgetResizable(True)
+        g.breit(self.suche)
+        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        sc.setMinimumHeight(180)
         self.gitter_halter = QWidget(); self.gitter = QGridLayout(self.gitter_halter)
         self.gitter.setSpacing(4); self.gitter.setAlignment(Qt.AlignTop)
         sc.setWidget(self.gitter_halter)
-        v.addWidget(sc, 1)
-        fuss = QHBoxLayout(); v.addLayout(fuss)
+        g.breit(sc)
+        fuss = FlussLayout(6)
         self.b_eigene = QPushButton("Eigene Zeichnung …"); self.b_dieses = QPushButton("Dieses zurücksetzen"); self.b_alle = QPushButton("Alle zurücksetzen")
         for b in (self.b_eigene, self.b_dieses, self.b_alle):
             fuss.addWidget(b)
-        fuss.addStretch(1)
-        self.meldung = QLabel(); self.meldung.setStyleSheet("color: palette(mid);"); v.addWidget(self.meldung)
-        zu = QHBoxLayout(); zu.addStretch(1)
-        ab = QPushButton("Abbrechen"); fertig = QPushButton("Fertig"); fertig.setDefault(True)
-        ab.clicked.connect(self._abbrechen); fertig.clicked.connect(self.accept)
-        zu.addWidget(ab); zu.addWidget(fertig)
-        v.addLayout(zu)
+        g.breit(fuss)
+        self.meldung = QLabel(); self.meldung.setStyleSheet("color: palette(mid);"); self.meldung.setWordWrap(True); g.breit(self.meldung)
+        v.addWidget(inhalt)
+        fussleiste(self, v, ok_text="Fertig")
         self.suche.textChanged.connect(self._gitter_zeigen)
         self.b_eigene.clicked.connect(self._eigene)
         self.b_dieses.clicked.connect(self._dieses_zurueck)
         self.b_alle.clicked.connect(self._alle_zurueck)
         self._kopf_zeigen()
         self._gitter_zeigen()
+
+    def passe_an(self, breite: int, hoehe: int) -> None:
+        """In der Seitenleiste so viele Zeichnungen nebeneinander, wie in die Breite passen."""
+        n = max(3, min(self.SPALTEN, (breite - 40) // 56))
+        if n != self.spalten:
+            self.spalten = n
+            self._gitter_zeigen()
 
     # ---- Kopf: welches Symbol, und wo es steht --------------------------------------------------------------------
     def _befehle(self) -> list[str]:
@@ -224,8 +237,9 @@ class SymbolTauschenDialog(QDialog):
     def _gitter_zeigen(self) -> None:
         while self.gitter.count():
             it = self.gitter.takeAt(0)
-            if it.widget():
-                it.widget().hide(); it.widget().setParent(None); it.widget().deleteLater()
+            w = it.widget()
+            if w is not None:
+                w.hide(); w.setParent(None); w.deleteLater()
         wort = self.suche.text().strip().lower()
         gezeigt = gefunden = 0
         farbe = self.palette().color(self.foregroundRole()).name()
@@ -238,13 +252,13 @@ class SymbolTauschenDialog(QDialog):
             k = QToolButton(); k.setFixedSize(52, 52); k.setToolTip(n); k.setAutoRaise(True)
             k.setIcon(QIcon(QPixmap.fromImage(icons.pfad_bild(pfad, 56, farbe)))); k.setIconSize(QSize(28, 28))
             k.clicked.connect(lambda _=False, n=n: self._waehle(n))
-            self.gitter.addWidget(k, gezeigt // self.SPALTEN, gezeigt % self.SPALTEN)
+            self.gitter.addWidget(k, gezeigt // self.spalten, gezeigt % self.spalten)
             gezeigt += 1
         if not gefunden:
-            self.gitter.addWidget(QLabel("Keine Zeichnung mit diesem Namen."), 0, 0, 1, self.SPALTEN)
+            self.gitter.addWidget(QLabel("Keine Zeichnung mit diesem Namen."), 0, 0, 1, self.spalten)
         elif gefunden > self.GRENZE:
             self.gitter.addWidget(QLabel(f"{gefunden} gefunden, {self.GRENZE} gezeigt — die Suche genauer machen."),
-                                  gezeigt // self.SPALTEN + 1, 0, 1, self.SPALTEN)
+                                  gezeigt // self.spalten + 1, 0, 1, self.spalten)
 
     # ---- Wirkung --------------------------------------------------------------------------------------------------
     def _anwenden(self, meldung: str) -> None:
@@ -272,30 +286,33 @@ class SymbolTauschenDialog(QDialog):
         self.tausch = {}
         self._anwenden("Alle Symbole wieder wie ausgeliefert.")
 
-    def _abbrechen(self) -> None:
-        """Abbrechen nimmt zurück, was in diesem Fenster getauscht wurde."""
+    def reject(self) -> None:
+        """Abbrechen (auch Esc und ✕) nimmt zurück, was in diesem Fenster getauscht wurde."""
         if self.tausch != self._anfang:
             self.tausch = dict(self._anfang)
             self.settings.set("ui/symbol_tausch", json.dumps(self.tausch))
             icons.uebersteuern(self.tausch)
             self.geaendert = True
-        self.reject()
+        super().reject()
 
 
-class OberflaecheDialog(QDialog):
+class OberflaecheDialog(PanelFaehig, QDialog):
     def __init__(self, parent, settings):
         super().__init__(parent)
         self.setWindowTitle("Benutzeroberfläche")
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Wie sollen die Befehle angeordnet sein?"))
+        inhalt = QWidget(); g = FormularGitter(inhalt)
+        g.breit(_satz("Wie sollen die Befehle angeordnet sein?"))
         self.reg = QRadioButton("Register (Menüband mit Reitern)")
         self.sym = QRadioButton("Symbolleisten (zwei Zeilen mit Knöpfen)")
         (self.sym if settings.get("ui/oberflaeche", "register") == "symbolleisten" else self.reg).setChecked(True)
-        v.addWidget(self.reg); v.addWidget(self.sym)
-        self.menue = QCheckBox("Menüleiste zusätzlich anzeigen")
+        wahl = FlussLayout(6); wahl.addWidget(self.reg); wahl.addWidget(self.sym)
+        g.breit(wahl)
+        self.menue = UmbruchSchalter("Menüleiste zusätzlich anzeigen")
         self.menue.setChecked(settings.get_bool("ui/menueleiste", False))
-        v.addWidget(self.menue)
-        bb = knopfzeile(self); v.addWidget(bb)
+        g.breit(self.menue)
+        v.addWidget(inhalt)
+        fussleiste(self, v)
 
     def wahl(self) -> str:
         return "symbolleisten" if self.sym.isChecked() else "register"

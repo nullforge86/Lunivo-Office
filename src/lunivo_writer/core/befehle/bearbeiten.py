@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import QApplication, QMenu
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 
 
 class BearbeitenBefehle:
@@ -48,7 +47,7 @@ class BearbeitenBefehle:
         """„Inhalte einfügen …“: aus den Formaten der Zwischenablage eines wählen (mit Formatierung, nur Text, Bild)."""
         if not self.ed:
             return
-        from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QListWidget, QVBoxLayout, QLabel
+        from PySide6.QtWidgets import QApplication
         md = QApplication.clipboard().mimeData()
         optionen = []
         if md.hasText() or md.hasUrls() or md.formats():
@@ -59,16 +58,11 @@ class BearbeitenBefehle:
             optionen.append(("Bild", "bild"))
         if not optionen:
             return
-        d = QDialog(self.w); d.setWindowTitle("Inhalte einfügen"); d.resize(320, 220)
-        v = QVBoxLayout(d); v.addWidget(QLabel("Als:"))
-        liste = QListWidget(); v.addWidget(liste, 1)
-        for text, art in optionen:
-            liste.addItem(text); liste.item(liste.count() - 1).setData(0x100, art)
-        liste.setCurrentRow(0); liste.itemDoubleClicked.connect(lambda _: d.accept())
-        bb = knopfzeile(d); v.addWidget(bb)
-        if not d.exec() or liste.currentItem() is None:
+        from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+        text, ok = EingabeFenster.getItem(self.w, "Inhalte einfügen", "Als:", [t for t, _a in optionen], 0)
+        if not ok:
             return
-        art = liste.currentItem().data(0x100)
+        art = dict(optionen)[text]
         if art == "text":
             self.w.paste_plain()
         elif art == "bild":

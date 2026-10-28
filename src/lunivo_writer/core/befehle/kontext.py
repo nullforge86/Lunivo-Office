@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QBrush, QCursor, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QInputDialog, QMenu
 from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld
 
@@ -34,16 +33,11 @@ class KontextBefehle:
         if f is None:
             return
         from lunivo_writer.editor import einfuegen as E
-        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QSpinBox
-        d = QDialog(self.w); d.setWindowTitle("Bild zuschneiden")
-        form = QFormLayout(d)
-        sp = {}
-        for name in ("Links", "Oben", "Rechts", "Unten"):
-            w = QSpinBox(); w.setRange(0, 5000); w.setSuffix(" px"); sp[name] = w; form.addRow(name + " abschneiden", w)
-        bb = knopfzeile(d)
-        form.addRow(bb)
+        from lunivo_writer.ui.dialogs.dokument_dialoge import BildZuschneidenDialog
+        d = BildZuschneidenDialog(self.w)
         if d.exec():
-            E.bild_ersetzen(e, lambda img: E.zuschneiden(img, sp["Links"].value(), sp["Oben"].value(), sp["Rechts"].value(), sp["Unten"].value()))
+            l, o, r, u = d.werte()
+            E.bild_ersetzen(e, lambda img: E.zuschneiden(img, l, o, r, u))
 
 
     def objektDrehen(self, k=None):

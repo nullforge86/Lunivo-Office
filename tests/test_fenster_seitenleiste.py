@@ -34,6 +34,7 @@ FENSTER = {
     "Form": lambda: ED.FormDialog(None), "SmartArt": lambda: ED.SmartArtDialog(None), "WordArt": lambda: ED.WordArtDialog(None),
     "Diagramm": lambda: ED.DiagrammDialog(None), "Piktogramm": lambda: ED.PiktogrammDialog(None), "Formel": lambda: ED.FormelDialog(None),
     "Deckblatt": lambda: ED.DeckblattDialog(None, "Kay"),
+    "Symbol": lambda: __import__("lunivo_writer.ui.dialogs.sonderzeichen", fromlist=["x"]).SonderzeichenDialog(None, lambda z: None),
     "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
 }
 

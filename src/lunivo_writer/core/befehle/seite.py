@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from lunivo_writer.models.page import HeaderFooter
 from PySide6.QtWidgets import QInputDialog, QMenu
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.core.farben import Farbe
 
 
@@ -689,26 +688,17 @@ class SeiteBefehle:
         t = self.ed.textCursor().currentTable() if self.ed else None
         if t is None:
             return
-        from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout, QSpinBox
         from PySide6.QtGui import QTextLength
+        from lunivo_writer.ui.dialogs.dokument_dialoge import TabellenEigenschaftenDialog
         fm = t.format()
-        d = QDialog(self.w); d.setWindowTitle("Tabelleneigenschaften")
-        form = QFormLayout(d)
-        breite = QSpinBox(); breite.setRange(10, 100); breite.setSuffix(" % der Textbreite"); breite.setValue(int(fm.width().rawValue()) if fm.width().type() == QTextLength.PercentageLength else 100)
-        ausr = QComboBox(); ausr.addItems(["Links", "Zentriert", "Rechts"])
-        ausr.setCurrentIndex(1 if fm.alignment() & Qt.AlignHCenter else 2 if fm.alignment() & Qt.AlignRight else 0)
-        rand = QDoubleSpinBox(); rand.setRange(0, 10); rand.setSingleStep(0.25); rand.setValue(fm.border()); rand.setSuffix(" pt")
-        pad = QDoubleSpinBox(); pad.setRange(0, 30); pad.setValue(fm.cellPadding()); pad.setSuffix(" px")
-        kopf = QCheckBox("Erste Zeile ist Kopfzeile (wiederholt sich auf jeder Seite)"); kopf.setChecked(fm.headerRowCount() > 0)
-        for lab, w in (("Breite", breite), ("Ausrichtung", ausr), ("Rahmenstärke", rand), ("Zellenabstand innen", pad)):
-            form.addRow(lab, w)
-        form.addRow(kopf)
-        bb = knopfzeile(d)
-        form.addRow(bb)
+        d = TabellenEigenschaftenDialog(
+            self.w, int(fm.width().rawValue()) if fm.width().type() == QTextLength.PercentageLength else 100,
+            1 if fm.alignment() & Qt.AlignHCenter else 2 if fm.alignment() & Qt.AlignRight else 0,
+            fm.border(), fm.cellPadding(), fm.headerRowCount() > 0)
         if d.exec():
-            fm.setWidth(QTextLength(QTextLength.PercentageLength, breite.value()))
-            fm.setAlignment([Qt.AlignLeft, Qt.AlignHCenter, Qt.AlignRight][ausr.currentIndex()])
-            fm.setBorder(rand.value()); fm.setCellPadding(pad.value()); fm.setHeaderRowCount(1 if kopf.isChecked() else 0)
+            fm.setWidth(QTextLength(QTextLength.PercentageLength, d.breite.value()))
+            fm.setAlignment([Qt.AlignLeft, Qt.AlignHCenter, Qt.AlignRight][d.ausr.currentIndex()])
+            fm.setBorder(d.rand.value()); fm.setCellPadding(d.pad.value()); fm.setHeaderRowCount(1 if d.kopf.isChecked() else 0)
             t.setFormat(fm)
             self.ed.document().setModified(True)
 

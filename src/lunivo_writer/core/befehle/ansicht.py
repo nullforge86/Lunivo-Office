@@ -204,8 +204,8 @@ class AnsichtBefehle:
     def lesehilfe(self, k=None):
         from lunivo_writer.ui.dialogs.lesehilfe_dialog import LesehilfeDialog
         d = LesehilfeDialog(self.w)
-        d.zeige_unter(k if hasattr(k, "mapToGlobal") else None)
         self._lh = d
+        d.zeige(k if hasattr(k, "mapToGlobal") else None)
 
 
     def ausblenden(self, k=None):

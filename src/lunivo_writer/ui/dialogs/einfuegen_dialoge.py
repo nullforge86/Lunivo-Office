@@ -160,23 +160,28 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self._zeige(self.bild())
 
 
-class DiagrammDatenDialog(QDialog):
+class DiagrammDatenDialog(PanelFaehig, QDialog):
     """Titel und Daten des Diagramms (Unterfenster von „Diagramm einfügen“): erste Spalte Rubriken, weitere Spalten Datenreihen."""
 
     def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
         super().__init__(parent)
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from PySide6.QtWidgets import QWidget
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
         self.setWindowTitle("Daten bearbeiten")
         v = QVBoxLayout(self)
-        f = QFormLayout(); self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); f.addRow("&Titel:", self.titel); v.addLayout(f)
+        kopf = QWidget(); g = FormularGitter(kopf)
+        self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); g.zeile("&Titel:", self.titel)
+        v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
+        self.tab.setMinimumHeight(180)
         for r, k in enumerate(kategorien):
             self.tab.setItem(r, 0, QTableWidgetItem(k))
             for c, werte in enumerate(reihen.values(), 1):
                 self.tab.setItem(r, c, QTableWidgetItem(f"{werte[r]:g}" if r < len(werte) else "0"))
         v.addWidget(self.tab)
-        z = QHBoxLayout()
+        z = FlussLayout(6)
         for text, fn in (("Zeile hinzufügen", lambda: self.tab.setRowCount(self.tab.rowCount() + 1)),
                          ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
                          ("Reihe hinzufügen", self._reihe_dazu),
@@ -337,31 +342,30 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Textbausteine")
         self.resize(840, 600)
         v = QVBoxLayout(self)
-        titel = QLabel("Textbausteine"); tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 3); titel.setFont(tf)
-        v.addWidget(titel)
-        kopf = QHBoxLayout()
-        kopf.addWidget(QLabel("Name:"))
-        self.name = QLineEdit(); kopf.addWidget(self.name, 1)
-        kopf.addWidget(QLabel("Kürzel:"))
-        self.kuerzel = QLineEdit(); self.kuerzel.setFixedWidth(110); kopf.addWidget(self.kuerzel)
-        v.addLayout(kopf)
-        z = QHBoxLayout()
+        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+        felder = FormularGitter(); v.addLayout(felder)
+        self.name = QLineEdit(); self.kuerzel = QLineEdit()
+        felder.zeile("Name:", self.name)
+        felder.zeile("Kürzel:", self.kuerzel)
+        v.addWidget(abschnittstitel("Bausteine"))
         self.liste = QListWidget(); self.liste.itemDoubleClicked.connect(lambda _: self._einfuegen())
         self.liste.currentItemChanged.connect(lambda *_: self._zeigen())
-        z.addWidget(self.liste, 1)
+        self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.liste.setWordWrap(True)
+        self.liste.setTextElideMode(Qt.ElideNone); self.liste.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self.liste.setMinimumHeight(150)
+        v.addWidget(self.liste, 3)
+        v.addWidget(abschnittstitel("Vorschau"))
         self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
-        z.addWidget(self.vorschau, 1)
-        v.addLayout(z, 1)
+        self.vorschau.document().setDocumentMargin(12); self.vorschau.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.vorschau.setMinimumHeight(150)
+        v.addWidget(self.vorschau, 4)
         h = QLabel("Eigene kommen aus dem Markierten, die übrigen sind mitgeliefert. «So gesetzte Stellen» sind Lücken: Tab springt von einer zur nächsten, Tippen ersetzt sie.")
-        h.setWordWrap(True); h.setStyleSheet("color: palette(mid); font-size: 9pt;")
+        h.setWordWrap(True); h.setStyleSheet("color: palette(mid); font-size: 9pt;"); h.setContentsMargins(0, 4, 0, 4)
         v.addWidget(h)
-        u = QHBoxLayout()
         self.aus_markierung = QPushButton("Aus Markierung …"); self.aus_markierung.clicked.connect(self._neu)
         self.loeschen = QPushButton("Löschen"); self.loeschen.clicked.connect(self._weg)
-        self.einfuegen_knopf = QPushButton("Einfügen"); self.einfuegen_knopf.setDefault(True); self.einfuegen_knopf.clicked.connect(self._einfuegen)
-        schliessen = QPushButton("Schließen"); schliessen.clicked.connect(self.reject)
-        u.addWidget(self.aus_markierung); u.addWidget(self.loeschen); u.addStretch(1); u.addWidget(schliessen); u.addWidget(self.einfuegen_knopf)
-        v.addLayout(u)
+        self.einfuegen_knopf = fussleiste(self, v, self.aus_markierung, self.loeschen, nur_ok=True, ok_text="Einfügen", bei_ok=self._einfuegen)
         self._fuellen()
 
     def _fuellen(self, wahl: str | None = None) -> None:

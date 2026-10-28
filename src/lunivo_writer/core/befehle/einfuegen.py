@@ -291,12 +291,32 @@ class EinfuegenBefehle:
 
 
     def sonderzeichen(self, k=None):
+        """Fenster „Symbol“ (Weitere Symbole …) in der Seitenleiste; „Einfügen“ setzt das Zeichen an die Schreibmarke."""
         from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
         e = self.ed
         if e:
-            d = SonderzeichenDialog(self.w, lambda z: (e.insertPlainText(z), self._symbol_merken(z)))
-            d.show()
-            self._sz = d
+            SonderzeichenDialog(self.w, e.insertPlainText, self._symbol_daten(), bei_tasten=self.symbol_tasten_anwenden).exec()
+
+
+    def _symbol_daten(self):
+        """Die eine Datenbasis von Klappe und Fenster „Symbol“: zuletzt verwendet, benutzerdefinierte Liste, Tastenkombinationen."""
+        from lunivo_writer.ui.dialogs.sonderzeichen import SymbolDaten
+        return SymbolDaten(self.w.settings, self.BENUTZER_SYMBOLE, self.ZULETZT_ANZAHL)
+
+
+    def symbol_tasten_anwenden(self) -> None:
+        """Tastenkombinationen der benutzerdefinierten Symbole als Kürzel des Hauptfensters setzen (alte werden ersetzt)."""
+        from PySide6.QtGui import QKeySequence, QShortcut
+        for sc in getattr(self, "_symbol_kuerzel", []):
+            sc.setEnabled(False); sc.deleteLater()
+        self._symbol_kuerzel = []
+        daten = self._symbol_daten()
+        sichtbar = set(daten.sichtbar())
+        for z, t in daten.tasten().items():
+            if z in sichtbar and t:
+                sc = QShortcut(QKeySequence(t), self.w)
+                sc.activated.connect(lambda z=z: self._symbol_einfuegen(z))
+                self._symbol_kuerzel.append(sc)
 
 
     # ---- Klappmenüs nach den WPS-Vorlagen (Ordner einfuegen/) ------------------------------------------------------------
@@ -487,10 +507,12 @@ class EinfuegenBefehle:
         for i in range(self.ZULETZT_ANZAHL):
             m.kachel(f"zuletzt{i}")
         m.abschnitt("Benutzerdefinierte Symbole:")
-        m.kacheln([(z, f"„{z}“ einfügen", textkachel(z)) for z in self.BENUTZER_SYMBOLE])
+        m.kacheln([(z, f"„{z}“ einfügen", textkachel(z)) for z in self._symbol_daten().sichtbar()])
         m.fuss("Weitere Symbole …", self.sonderzeichen)
         for b in m.knoepfe.values():
             b.setCheckable(False)
+        if not hasattr(self, "_symbol_kuerzel"):
+            self.symbol_tasten_anwenden()                        # Tastenkombinationen der Symbole gelten ab dem ersten Öffnen der Klappe
         belegt: dict[str, str] = {}
 
         def auffrischen():
@@ -510,18 +532,11 @@ class EinfuegenBefehle:
 
 
     def _symbole_zuletzt(self) -> list[str]:
-        import json
-        try:
-            liste = json.loads(str(self.w.settings.get(self.ZULETZT_SYMBOLE, "") or "[]"))
-        except ValueError:
-            return []
-        return [z for z in liste if isinstance(z, str) and z] if isinstance(liste, list) else []
+        return self._symbol_daten().zuletzt()
 
 
     def _symbol_merken(self, z: str) -> None:
-        liste = [z] + [x for x in self._symbole_zuletzt() if x != z]
-        import json
-        self.w.settings.set(self.ZULETZT_SYMBOLE, json.dumps(liste[:self.ZULETZT_ANZAHL], ensure_ascii=False))
+        self._symbol_daten().merken(z)
 
 
     def _symbol_einfuegen(self, z: str) -> None:
