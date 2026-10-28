@@ -113,3 +113,26 @@ def test_start_klappmenues(app, tmp_path):
     for t in w._doc_tabs():
         t.editor.document().setModified(False)
     w.close()
+
+
+def test_suchen_feld_aufgeraeumt(app):
+    """Unter dem Suchfeld: Pfeile und Trefferzahl, Optionen und Werkzeuge eingeklappt; Eingabe sucht weiter, Umschalt+Eingabe zurück."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.suchen_feld import SuchenFeld
+    ed = DocumentEditor(); ed.setPlainText("eins zwei eins drei eins")
+    f = SuchenFeld(lambda: ed, lambda d: False); f.resize(320, 600); f.show()
+    assert not f.optionen_gruppe.ist_offen() and not f.werkzeuge.ist_offen()
+    f.suchfeld.setText("eins"); f.zaehlen()
+    QTest.keyClick(f.suchfeld, Qt.Key_Return)
+    erst = ed.textCursor().selectionStart()
+    QTest.keyClick(f.suchfeld, Qt.Key_Return)
+    assert ed.textCursor().selectionStart() > erst
+    QTest.keyClick(f.suchfeld, Qt.Key_Return, Qt.ShiftModifier)
+    assert ed.textCursor().selectionStart() == erst
+    assert f.vorherige.accessibleName() and f.weiter.accessibleName()
+    f.zeige("Ersetzen"); assert f.ersatz_bereich.isVisible()
+    f.zeige("Suchen"); assert not f.ersatz_bereich.isVisible()
+    zu = []; f.schliessen.connect(lambda: zu.append(1))
+    QTest.keyClick(f, Qt.Key_Escape); assert zu
