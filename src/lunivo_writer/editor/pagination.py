@@ -839,7 +839,7 @@ def zeichne_seite(p: QPainter, d: QTextDocument, page: PageSettings, n: int, tot
         p.save()
         p.translate(ml, mt)
         p.translate(0, -(n - 1) * ch)
-        _zeilennummern(p, d, n, ch, base)
+        _zeilennummern(p, d, n, ch, base, page.zeilennummern_neu)
         p.restore()
     fuss = getattr(d, "_fussnoten", None)
     if fuss and n in fuss and int(page.spalten) <= 1:                  # Fußnoten am Seitenfuß, mit kurzem Trennstrich
@@ -942,25 +942,16 @@ def absatzrahmen_zeichnen(p: QPainter, d: QTextDocument, faktor: float = 1.0, po
         linie.rahmen_zeichnen(p, rr, 96 / 72 * faktor, zwischen)
 
 
-def _zeilennummern(p: QPainter, d: QTextDocument, n: int, ch: float, base: QFont) -> None:
-    """Fortlaufende Zeilennummern am linken Rand der Seite n (Koordinaten: Textfläche, auf die Seite verschoben)."""
+def _zeilennummern(p: QPainter, d: QTextDocument, n: int, ch: float, base: QFont, art: str = "") -> None:
+    """Zeilennummern am linken Rand der Seite n (Koordinaten: Textfläche, auf die Seite verschoben)."""
+    from lunivo_writer.editor.zeilennummern import nummern
     f = QFont(base)
     f.setPixelSize(9)
     p.setFont(f)
     p.setPen(Qt.gray)
-    lay = d.documentLayout()
-    nr = 0
-    b = d.firstBlock()
-    while b.isValid():
-        if b.isVisible() and b.layout() is not None:
-            top = lay.blockBoundingRect(b).top()
-            for i in range(b.layout().lineCount()):
-                nr += 1
-                zeile = b.layout().lineAt(i)
-                y = top + zeile.y()
-                if (n - 1) * ch <= y < n * ch:
-                    p.drawText(QRectF(-48, y, 42, zeile.height()), Qt.AlignRight | Qt.AlignVCenter, str(nr))
-        b = b.next()
+    for _b, zeile, y, nr in nummern(d, ch, art):
+        if (n - 1) * ch <= y < n * ch:
+            p.drawText(QRectF(-48, y, 42, zeile.height()), Qt.AlignRight | Qt.AlignVCenter, str(nr))
 
 
 def seite_als_bild(qdoc: QTextDocument, page: PageSettings, n: int, faktor: float = 1.0, d: QTextDocument | None = None,

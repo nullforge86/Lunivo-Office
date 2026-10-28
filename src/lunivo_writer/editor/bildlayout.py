@@ -207,6 +207,14 @@ def format_lesen(ed, z) -> dict | None:
     return w
 
 
+def fx_alle(ed, fx: dict) -> int:
+    """Seitenlayout ▸ Effekte: dieselben Effekte an alle frei liegenden Bilder und Formen des Dokuments (``{}`` nimmt sie weg). → Anzahl."""
+    n = 0
+    for key, a, bild, _r, _hinten, _blatt in list(ed._frei_liste()):
+        n += format_setzen(ed, ("frei", key, a, bild), fx=dict(fx))
+    return n
+
+
 def format_aus_panel(ed, z, werte: dict) -> bool:
     """Wendet die Werte des Panels an: Füllung, Kontur und alle Effekte (fehlende Effekte sind ausgeschaltet)."""
     if z is None or z[0] != "frei":

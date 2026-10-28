@@ -117,3 +117,69 @@ def deckblatt_zeichner(vorlage: str) -> Zeichner:
             balken(0.74 + i * 0.05, w * (0.34 - i * 0.04), b.height() * 0.018, Farbe.GRAU_HELL)
         p.restore()
     return f
+
+
+def raender_zeichner(oben: float, unten: float, links: float, rechts: float) -> Zeichner:
+    """Blatt mit dem Satzspiegel als Rahmen (Seitenlayout ▸ Ränder); die Maße in mm, Blatt A4."""
+    def f(p: QPainter, r: QRectF) -> None:
+        p.save(); p.setRenderHint(QPainter.Antialiasing)
+        b = _blatt(p, r)
+        sx, sy = b.width() / 210, b.height() / 297
+        innen = QRectF(b.left() + links * sx, b.top() + oben * sy, b.width() - (links + rechts) * sx, b.height() - (oben + unten) * sy)
+        p.setPen(QPen(_LINIE, 1)); p.setBrush(Qt.NoBrush); p.drawRect(innen)
+        p.restore()
+    return f
+
+
+def format_zeichner(quer: bool) -> Zeichner:
+    """Hoch- oder Querformat: ein Blatt mit gestrichelter Mittellinie."""
+    def f(p: QPainter, r: QRectF) -> None:
+        p.save(); p.setRenderHint(QPainter.Antialiasing)
+        h = r.height() - 2
+        b = QRectF(0, 0, h * 1.36, h * 0.82) if quer else QRectF(0, 0, h / 1.36, h)
+        b.moveCenter(r.center())
+        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawRoundedRect(b, 2, 2)
+        p.setPen(QPen(_LINIE, 1, Qt.DashLine))
+        if quer:
+            p.drawLine(QPointF(b.left() + 4, b.center().y()), QPointF(b.right() - 4, b.center().y()))
+        else:
+            p.drawLine(QPointF(b.center().x(), b.top() + 4), QPointF(b.center().x(), b.bottom() - 4))
+        p.restore()
+    return f
+
+
+def papier_zeichner() -> Zeichner:
+    """Blatt mit Eselsohr (Seitenlayout ▸ Größe)."""
+    def f(p: QPainter, r: QRectF) -> None:
+        from PySide6.QtGui import QPolygonF
+        p.save(); p.setRenderHint(QPainter.Antialiasing)
+        h = r.height() - 4; w = h / 1.36
+        x, y = r.center().x() - w / 2, r.top() + 2
+        e = w * 0.3
+        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS))
+        p.drawPolygon(QPolygonF([QPointF(x, y), QPointF(x + w - e, y), QPointF(x + w, y + e), QPointF(x + w, y + h), QPointF(x, y + h)]))
+        p.drawPolyline(QPolygonF([QPointF(x + w - e, y), QPointF(x + w - e, y + e), QPointF(x + w, y + e)]))
+        p.restore()
+    return f
+
+
+def textrichtung_zeichner(art: str) -> Zeichner:
+    """Kästchen mit „ABC“ in der jeweiligen Richtung: "waagerecht", "senkrecht_rl", "senkrecht_lr", "dreh90", "dreh270", "asiatisch270"."""
+    def f(p: QPainter, r: QRectF) -> None:
+        p.save(); p.setRenderHint(QPainter.Antialiasing)
+        k = QRectF(0, 0, r.height() - 2, r.height() - 2); k.moveCenter(r.center())
+        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawRect(k)
+        schrift = p.font(); schrift.setPixelSize(max(7, int(k.height() * 0.3))); p.setFont(schrift)
+        p.setPen(QColor(Farbe.TINTE_DUNKEL))
+        if art == "waagerecht":
+            p.drawText(k, Qt.AlignCenter, "ABC")
+        elif art in ("senkrecht_rl", "senkrecht_lr"):
+            spalten = ("AB", "CD") if art == "senkrecht_lr" else ("CD", "AB")
+            for i, s in enumerate(spalten):
+                sp = QRectF(k.left() + k.width() * (0.18 + i * 0.36), k.top() + 2, k.width() * 0.3, k.height() - 4)
+                p.drawText(sp, Qt.AlignCenter, "\n".join(s))
+        else:
+            p.translate(k.center()); p.rotate(90 if art == "dreh90" else -90)
+            p.drawText(QRectF(-k.width() / 2, -k.height() / 2, k.width(), k.height()), Qt.AlignCenter, "ABC" if art != "asiatisch270" else "A文")
+        p.restore()
+    return f

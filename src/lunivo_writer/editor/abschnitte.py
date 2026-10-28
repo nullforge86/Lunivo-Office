@@ -211,5 +211,9 @@ def teile(qdoc, basis: PageSettings) -> tuple[list[tuple[object, PageSettings, s
             if blk.blockFormat().hasProperty(B_ABSCHNITT):
                 cc = QTextCursor(blk); _setze(cc, None)
             blk = blk.next()
+        erster = QTextCursor(d.firstBlock())                 # ein Teil beginnt ohnehin auf einer neuen Seite; ein Umbruch davor gäbe ein leeres Blatt
+        bf = erster.blockFormat()
+        if bf.pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore:
+            bf.setPageBreakPolicy(bf.pageBreakPolicy() & ~QTextFormat.PageBreak_AlwaysBefore); erster.setBlockFormat(bf)
         out.append((d, ps, typ))
     return out, hinweise

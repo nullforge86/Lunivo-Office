@@ -112,10 +112,10 @@ class EinfuegenBefehle:
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
         for schl, text, ort, ausr in SZ.VORGABEN:
-            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr))
+            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr), aktiv=ausr not in ("aussen", "innen"))
             b.setCheckable(False)
             if ausr in ("aussen", "innen"):
-                b.setEnabled(False); b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
+                b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
         m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
         m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
         m.fuss("Seitenzahlen entfernen", self.seitenzahlenEntfernen)
@@ -223,22 +223,17 @@ class EinfuegenBefehle:
 
     # ==== Einfügen ===========================================================================================================
     def leereSeite(self, k=None, quer=None):
-        """Leere Seite (Vertikal/Horizontal; ohne Angabe wie die Seite davor). Hat sie eine andere Ausrichtung als die Seite davor, steht sie
-        in einem eigenen Abschnitt."""
+        """Leere Seite: ein neues Blatt hinter der Seite der Schreibmarke (Vertikal/Horizontal; ohne Angabe wie die Seite davor).
+        Der Text wird nicht geteilt; ein Blatt in anderer Ausrichtung steht in einem eigenen Abschnitt."""
+        from lunivo_writer.editor.leere_seite import leere_seite
         e = self.ed
         if not e:
             return
-        if quer is None or bool(quer) == e.abschnitt_seite().landscape:
-            e.insert_page_break(); e.insert_page_break()
-            return
-        alt = e.abschnitt_seite().landscape
-        e.abschnitt_einfuegen("naechste")
-        e.abschnitt_einfuegen("naechste")
-        c = e.textCursor(); c.movePosition(QTextCursor.PreviousBlock); e.setTextCursor(c)
-        self.w.set_orientation(bool(quer))
-        c = e.textCursor(); c.movePosition(QTextCursor.NextBlock); e.setTextCursor(c)
-        if e.abschnitt_seite().landscape != alt:
-            self.w.set_orientation(alt)
+        c = leere_seite(e.document(), e.seite_letzter_block(), e.abschnitt_seite(), quer)
+        e.setTextCursor(c)
+        e.document().setModified(True)
+        e._recount()
+        e.ensureCursorVisible()
 
 
     def sonderzeichen(self, k=None):

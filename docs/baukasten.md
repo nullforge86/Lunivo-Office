@@ -138,6 +138,19 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog`, `HyperlinkDialog` (Datei/Webseite, Stelle im Dokument, E-Mail; `ergebnis()`), `ObjektDialog` (aus Datei, als Symbol; `art()`) — ändern das Dokument nicht selbst |
 | Fenster (Daten) | `ui/dialogs/einfuegen_dialoge.py` | `DiagrammDialog` mit `DiagrammDatenDialog`, `DatumDialog` (Formate, Sprache, „Automatisch aktualisieren“ → Feld), `WordArtDialog`, `FormelDialog` |
 
+## Bausteine des Reiters Seitenlayout
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Designs | `editor/designs.py` | `FARBSCHEMEN` (8 Farben: dunkel, hell, Akzent 1–6), `SCHRIFTPAARE` (Überschrift, Text), `EFFEKTE` (fx wie `bildeffekte`), `DESIGNS` (Farbschema + Schriftpaar), `design(name)`. Alles eigene Namen und Farben |
+| Designbildchen | `ui/baukasten/design_bildchen.py` | `design_zeichner`, `farbreihe_zeichner`, `schriftpaar_zeichner`, `effekt_zeichner` für die Galerien |
+| Seitenbildchen | `ui/baukasten/seiten_bildchen.py` | dazu `raender_zeichner`, `format_zeichner` (hoch/quer), `papier_zeichner`, `textrichtung_zeichner` |
+| Listenzeile | `ui/baukasten/raster_auswahl.py` | `zeilenkachel(bild, titel, angaben, spalten)`: Bildchen + fetter Titel + Angaben (Ränder, Größe, Orientierung, Textrichtung); `RasterAuswahl(hoehe_max=…)` rollt lange Galerien, `trenner()` im Fuß, `kachel(aktiv=False)` bleibt blass sichtbar |
+| Klappmenüs | `core/befehle/seite.py` | `menue_…Klappe` für Designs, Farben, Schriftarten, Effekte, Ränder, Orientierung, Größe, Spalten, Textrichtung, Zeilennummern, Seitenfarbe (mit Wasserzeichen), Ausrichten; Haken werden in `aboutToShow` aufgefrischt |
+| Effekte für alle | `editor/bildlayout.py` | `fx_alle(ed, fx)`: Effekt an alle freien Bilder und Formen (sonst nur an das markierte) |
+| Zeilennummern | `editor/zeilennummern.py` | `nummern(doc, ch, art)`: fortlaufend oder je Seite neu; Absätze mit `absatzopt` „ohne_zeilennr“ (DOCX `w:suppressLineNumbers`) zählen nicht. `PageSettings.zeilennummern_neu`, DOCX `w:lnNumType w:restart` |
+| Leere Seite | `editor/leere_seite.py` | `leere_seite(doc, letzter_block, einrichtung, quer)`: neues Blatt hinter der Seite (`DocumentEditor.seite_letzter_block`), quer als eigener Abschnitt |
+
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in

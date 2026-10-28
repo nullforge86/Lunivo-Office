@@ -7,12 +7,13 @@ Am Absatz steht ``B_ABSATZOPT`` als ``"Schlüssel=Wert;…"``, aber nur, was von
 from __future__ import annotations
 
 VORGABE = {"kontrolle": True, "nicht_trennen": False, "zusammen": False, "asiat": True, "mitten": False, "haengend": True, "kompr": False,
-           "ade": True, "adn": True, "textausr": "auto", "rest_einzug": True, "raster": True}
+           "ade": True, "adn": True, "textausr": "auto", "rest_einzug": True, "raster": True, "ohne_zeilennr": False}
 # Schlüssel → (DOCX-Element, Art): "an" = Element mit w:val (aus = "0"); "keep" = Element nur, wenn an; "text" = w:val mit Text
 _DOCX = {"kontrolle": ("w:widowControl", "an"), "nicht_trennen": ("w:keepNext", "keep"), "zusammen": ("w:keepLines", "keep"),
          "asiat": ("w:kinsoku", "an"), "mitten": ("w:wordWrap", "umgekehrt"), "haengend": ("w:overflowPunct", "an"),
          "kompr": ("w:topLinePunct", "keep"), "ade": ("w:autoSpaceDE", "an"), "adn": ("w:autoSpaceDN", "an"),
-         "textausr": ("w:textAlignment", "text"), "rest_einzug": ("w:adjustRightInd", "an"), "raster": ("w:snapToGrid", "an")}
+         "textausr": ("w:textAlignment", "text"), "rest_einzug": ("w:adjustRightInd", "an"), "raster": ("w:snapToGrid", "an"),
+         "ohne_zeilennr": ("w:suppressLineNumbers", "keep")}         # Seitenlayout ▸ Zeilennummern ▸ Für aktuellen Absatz unterdrücken
 _FOLGE = ("w:pStyle", "w:keepNext", "w:keepLines", "w:pageBreakBefore", "w:framePr", "w:widowControl", "w:numPr", "w:suppressLineNumbers",
           "w:pBdr", "w:shd", "w:tabs", "w:suppressAutoHyphens", "w:kinsoku", "w:wordWrap", "w:overflowPunct", "w:topLinePunct", "w:autoSpaceDE",
           "w:autoSpaceDN", "w:bidi", "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents",

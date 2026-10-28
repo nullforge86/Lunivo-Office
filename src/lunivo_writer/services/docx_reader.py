@@ -1259,8 +1259,10 @@ class _Reader:
             c = bg.get(qn("w:color"))
             if c and c.lower() not in ("auto", "ffffff"):
                 ps.color = "#" + c.lower()
-        if sect._sectPr.find(qn("w:lnNumType")) is not None:
+        ln = sect._sectPr.find(qn("w:lnNumType"))
+        if ln is not None:
             ps.zeilennummern = True
+            ps.zeilennummern_neu = "seite" if ln.get(qn("w:restart")) == "newPage" else ""
         co = sect._sectPr.find(qn("w:cols"))
         if co is not None:
             try:

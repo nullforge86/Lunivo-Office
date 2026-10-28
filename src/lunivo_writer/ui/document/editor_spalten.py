@@ -266,24 +266,15 @@ class SpaltenBaustein:
 
 
     def _zeilennummern_zeichnen(self, p: QPainter) -> None:
+        from lunivo_writer.editor.zeilennummern import nummern
         vp = self.viewport()
-        lay = self.document().documentLayout()
         f = p.font(); f.setPixelSize(max(7, int(9 * self.zoom))); p.setFont(f)
         p.setPen(QColor(Farbe.GRAU))
         ml = mm_to_px(self.page.margin_left_mm) * self.zoom
-        oben = self.verticalScrollBar().value()
-        nr = 0
-        b = self.document().firstBlock()
-        while b.isValid():
-            if b.isVisible() and b.layout() is not None:
-                top = lay.blockBoundingRect(b).top()
-                for i in range(b.layout().lineCount()):
-                    nr += 1
-                    z = b.layout().lineAt(i)
-                    y = self._sp_view(0, top + z.y())[1]
-                    if -20 < y < vp.height():
-                        p.drawText(QRectF(ml - 52, y, 44, z.height()), Qt.AlignRight | Qt.AlignVCenter, str(nr))
-            b = b.next()
+        for _b, z, y_fluss, nr in nummern(self.document(), self._sp_geo()["ch"], self.page.zeilennummern_neu):
+            y = self._sp_view(0, y_fluss)[1]
+            if -20 < y < vp.height():
+                p.drawText(QRectF(ml - 52, y, 44, z.height()), Qt.AlignRight | Qt.AlignVCenter, str(nr))
 
 
     def apply_design(self, fliess: str | None = None, kopf: str | None = None, farbe: str | None = None) -> None:

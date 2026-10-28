@@ -113,12 +113,62 @@ def test_text_in_tabelle_und_zurueck(fenster):
     assert e.toPlainText() == "vorher\na;b;c\nd;e;\nnachher"
 
 
+def _seitentext(e, n):
+    """n Seiten Text, jede mit eigenem Seitenumbruch davor; die Schreibmarke steht mitten auf Seite 1."""
+    from PySide6.QtGui import QTextBlockFormat
+    for i in range(n):
+        if i:
+            e.insert_page_break()
+        for j, t in enumerate(("Anfang", "Mitte", "Ende")):
+            c = e.textCursor()
+            if j:
+                c.insertBlock(QTextBlockFormat())
+            c.insertText(f"Seite {i + 1} {t}"); e.setTextCursor(c)
+    c = e.textCursor(); c.setPosition(10); e.setTextCursor(c)
+
+
+def test_leere_seite_kommt_als_ganzes_blatt_hinter_die_seite(fenster):
+    """Kay: kein Blatt im Blatt — das neue Blatt steht hinter der Seite, der Text wird nicht geteilt."""
+    from PySide6.QtGui import QTextFormat
+    from PySide6.QtWidgets import QApplication
+    e = fenster.current_editor(); _seitentext(e, 2)
+    texte = [e.document().findBlockByNumber(i).text() for i in range(e.document().blockCount())]
+    fenster.befehle.leereSeite(None, None)
+    QApplication.processEvents()
+    nachher = [e.document().findBlockByNumber(i).text() for i in range(e.document().blockCount())]
+    assert nachher == texte[:3] + [""] + texte[3:]                     # nichts geteilt, das leere Blatt nach „Seite 1 Ende“
+    assert e.textCursor().block().text() == "" and e.textCursor().blockNumber() == 3
+    assert e._blatt_anzahl() == 3
+    assert e.document().findBlockByNumber(4).blockFormat().pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore          # Seite 2 beginnt weiter auf eigenem Blatt
+
+
+def test_enter_auf_neuem_blatt_macht_kein_weiteres_blatt(fenster):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    e = fenster.current_editor(); e.insertPlainText("x")
+    fenster.befehle.leereSeite(None, None)
+    for t in ("a", None, "b", None, "c"):
+        QTest.keyClick(e, Qt.Key_Return) if t is None else QTest.keyClicks(e, t)
+    assert e._blatt_anzahl() == 2
+    assert [e.document().findBlockByNumber(i).text() for i in range(e.document().blockCount())] == ["x", "a", "b", "c"]
+
+
 def test_leere_seite_horizontal_eigener_abschnitt(fenster):
     from lunivo_writer.editor import abschnitte as AB
-    e = fenster.current_editor(); e.insertPlainText("x")
+    e = fenster.current_editor(); _seitentext(e, 2)
     fenster.befehle.leereSeite(None, True)
     n = AB.anzahl(e.document())
     assert [e.abschnitt_seite(i).landscape for i in range(n)] == [False, True, False]
+    assert e.textCursor().block().text() == "" and e.abschnitt_seite().landscape
+    assert e.document().findBlockByNumber(2).text() == "Seite 1 Ende"
+
+
+def test_leere_seite_am_ende_ohne_extra_abschnitt(fenster):
+    from lunivo_writer.editor import abschnitte as AB
+    e = fenster.current_editor(); e.insertPlainText("x")
+    fenster.befehle.leereSeite(None, True)
+    assert [e.abschnitt_seite(i).landscape for i in range(AB.anzahl(e.document()))] == [False, True]
+    assert [e.document().findBlockByNumber(i).text() for i in range(e.document().blockCount())] == ["x", ""]
 
 
 def test_seitenzahl_vorgaben_und_entfernen(fenster):
