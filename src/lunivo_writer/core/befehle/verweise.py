@@ -58,14 +58,79 @@ class VerweiseBefehle:
 
 
     def indexEintrag(self, k=None):
+        """Fenster „Indexeintrag festlegen“: „Markieren“ setzt den Eintrag an die Markierung, „Alles markieren“ an jede Stelle
+        mit demselben Text; das Fenster bleibt offen, bis „Schließen“."""
         if not self.ed:
             return
         from lunivo_writer.editor import verweise
+        from lunivo_writer.ui.dialogs.verweise_fenster import IndexeintragDialog
         c = self.ed.textCursor()
-        vorschlag = c.selectedText() if c.hasSelection() else ""
-        t, ok = QInputDialog.getText(self.w, "Indexeintrag", "Stichwort:", text=vorschlag)
-        if ok and t.strip() and not verweise.index_markieren(self.ed, t.strip()):
-            self.w.statusBar().showMessage("Bitte Text markieren oder in ein Wort klicken.", 4000)
+        d = IndexeintragDialog(self.w, c.selectedText().strip() if c.hasSelection() else "",
+                               [m["name"] for m in verweise.lesezeichen_liste(self.ed, versteckte=False)], c.hasSelection())
+
+        def markieren(eintrag, alle):
+            n = verweise.index_eintragen(self.ed, eintrag, alle)
+            self.w.statusBar().showMessage(f"{n} Indexeintrag markiert." if n == 1 else f"{n} Indexeinträge markiert."
+                                           if n else "Bitte Text markieren oder in ein Wort klicken.", 4000)
+        d.markieren.connect(markieren)
+        d.exec()
+
+
+    def indexAktualisieren(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import verzeichnis as V
+        if not V.vorhanden(self.ed.document(), "index"):
+            self.w.statusBar().showMessage("Im Dokument gibt es noch keinen Index (Verweise ▸ Index einfügen).", 4000)
+            return
+        V.verzeichnis_aktualisieren(self.ed, "index")
+
+
+    def inhaltsverzeichnisAktualisieren(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import verzeichnis as V
+        if not V.vorhanden(self.ed.document(), "toc"):
+            self.w.statusBar().showMessage("Im Dokument gibt es noch kein Inhaltsverzeichnis (Verweise ▸ TOC einfügen).", 4000)
+            return
+        V.verzeichnis_aktualisieren(self.ed, "toc")
+
+
+    # ---- Klappe „Inhaltsverzeichnis“: Gliederungsebene des Absatzes ------------------------------------------------------
+    def menue_inhaltsverzeichnisKlappe(self):
+        """Ebene 1–9 und Textkörper wie in der Vorlage. In Lunivo trägt die Ebene die Formatvorlage „Überschrift N“
+        (Textkörper: „Standard“); das Inhaltsverzeichnis nimmt diese Absätze auf. Der Haken zeigt die Ebene am Zeiger."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        eintraege = [m.eintrag(f"Ebene &{n}", lambda n=n: self.inhaltsEbene(None, n), haken=False) for n in range(1, 10)]
+        eintraege.append(m.eintrag("Textkörper(&B)", lambda: self.inhaltsEbene(None, 0), haken=False))
+
+        def auffrischen():
+            jetzt = self.ed.textCursor().blockFormat().headingLevel() if self.ed else -1
+            for i, a in enumerate(eintraege):
+                a.setEnabled(self.ed is not None)
+                a.setChecked((i + 1 if i < 9 else 0) == jetzt)
+        m.aboutToShow.connect(auffrischen)
+        return m
+
+
+    def inhaltsEbene(self, k=None, ebene: int = 0):
+        if self.ed:
+            self.ed.apply_style(f"Überschrift {ebene}" if ebene else "Standard")
+
+
+    # ---- Fuß- und Endnoten einzeln durchgehen ---------------------------------------------------------------------------
+    def _note_gehe(self, delta, art, titel):
+        if self.ed and self.ed.note_springen(delta, art) is None:
+            self.w.statusBar().showMessage(f"Im Dokument gibt es keine {titel}.", 3000)
+
+    def fussnoteZurueck(self, k=None): self._note_gehe(-1, "f", "Fußnoten")
+
+    def fussnoteWeiter(self, k=None): self._note_gehe(1, "f", "Fußnoten")
+
+    def endnoteZurueck(self, k=None): self._note_gehe(-1, "e", "Endnoten")
+
+    def endnoteWeiter(self, k=None): self._note_gehe(1, "e", "Endnoten")
 
 
     def quelleNeu(self, k=None):

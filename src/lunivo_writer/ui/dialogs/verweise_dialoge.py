@@ -49,7 +49,7 @@ class TextmarkeDialog(PanelFaehig, QDialog):
 
     def _fuellen(self):
         self.liste.clear()
-        for d in verweise.lesezeichen_liste(self.ed):
+        for d in verweise.lesezeichen_liste(self.ed, versteckte=False):
             self.liste.addItem(d["name"])
 
     def _add(self):

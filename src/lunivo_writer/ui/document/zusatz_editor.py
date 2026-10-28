@@ -279,8 +279,9 @@ class ZusatzMixin:
             self._noten_timer.timeout.connect(lambda: self._recount() if hasattr(self, "_recount") else None)
         self._noten_timer.start()
 
-    def note_springen(self, delta: int):
-        return self._springe(self.noten_stellen(), delta)
+    def note_springen(self, delta: int, art: str | None = None):
+        """Zur nächsten (delta 1) oder vorigen (-1) Note springen; ``art`` "f" oder "e" nur Fuß- bzw. Endnoten."""
+        return self._springe([n for n in self.noten_stellen() if art is None or n["art"] == art], delta)
 
     # ---- Änderungsverfolgung -----------------------------------------------------------------------------
     def set_verfolgen(self, an: bool) -> None:

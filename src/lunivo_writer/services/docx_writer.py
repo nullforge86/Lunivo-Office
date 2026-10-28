@@ -383,7 +383,7 @@ class _Writer:
             art = bf.property(B_ART) if bf.hasProperty(B_ART) else "toc"
             name = ("TOC Heading" if kind == "kopf" else
                     {"toc": f"TOC {kind[-1]}", "abb": "Table of Figures", "tab": "Table of Figures",
-                     "index": "Index 1", "lit": "Bibliography"}.get(art, "TOC 1"))
+                     "index": f"Index {kind[-1]}", "lit": "Bibliography"}.get(art, "TOC 1"))
             para.style = self._stil(name)
         elif bf.hasProperty(B_CAP):
             para.style = self.d.styles["Caption"]
@@ -621,8 +621,10 @@ class _Writer:
             self._format_run(run, cf, in_head, bool(href))
             self._zusatz_anwenden(run, cf)
         if cf.hasProperty(P_INDEX) and cf.stringProperty(P_INDEX):
+            from lunivo_writer.editor.indexeintrag import aus_text, feld
+            from lunivo_writer.editor.zusatz import P_INDEX_OPT
             self._fldchar(para, "begin")
-            self._instr(para, 'XE "' + cf.stringProperty(P_INDEX).replace('"', "'") + '"')
+            self._instr(para, feld(aus_text(cf.stringProperty(P_INDEX), cf.stringProperty(P_INDEX_OPT) if cf.hasProperty(P_INDEX_OPT) else "")))
             self._fldchar(para, "end")
 
     def _textmarken(self, para, namen: list) -> None:

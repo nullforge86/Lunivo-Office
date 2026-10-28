@@ -45,7 +45,7 @@ def test_reiter_einfuegen_verweise_ansicht_wie_wps(app, tmp_path):
     r = w.band.reiter
     erwartet = {
         "Einfügen": ["SEITEN", "TABELLEN", "ILLUSTRATIONEN", "KOMMENTAR", "KOPF- UND FUSSZEILE", "TEXT", "SYMBOLE", "LINKS", "FORMULARE"],
-        "Verweise": ["INHALTSVERZEICHNIS", "FUSSNOTEN", "BESCHRIFTUNGEN", "INDEX", "ZITATE UND LITERATUR", "SERIENDRUCK"],
+        "Verweise": ["INHALTSVERZEICHNIS", "FUSSNOTEN", "BESCHRIFTUNGEN", "INDEX", "SERIENDRUCK", "ZITATE UND LITERATUR"],
         "Ansicht": ["DOKUMENTANSICHTEN", "ANZEIGEN", "ZOOM", "HELLIGKEIT", "FENSTER", "OBERFLÄCHE"],
     }
     for name, soll in erwartet.items():

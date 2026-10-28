@@ -463,12 +463,16 @@ class EinfuegenBefehle:
 
 
     def inhaltsverzeichnis(self, k=None):
-        if self.ed:
-            from lunivo_writer.editor.verzeichnis import verzeichnis_einfuegen
-            n = verzeichnis_einfuegen(self.ed)
-            if not n:
-                QMessageBox.information(self.w, "Inhaltsverzeichnis", "Im Dokument gibt es keine Überschriften. "
-                                        "Formatieren Sie Überschriften mit den Stilen „Überschrift 1–3“.")
+        """Fenster „Inhaltsverzeichnis“ (Füllzeichen, Ebenen, Seitenzahlen, Verknüpfungen); OK fügt es ein oder schreibt das
+        vorhandene mit den neuen Einstellungen neu."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import verzeichnis as V
+        from lunivo_writer.ui.dialogs.verweise_fenster import InhaltsverzeichnisDialog
+        d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.document()) or V.TOC_VORGABE)
+        if d.exec() and not V.verzeichnis_einfuegen(self.ed, "toc", d.ergebnis()):
+            self.w.statusBar().showMessage("Im Dokument gibt es keine Überschriften. Legen Sie sie mit Verweise ▸ Inhaltsverzeichnis "
+                                           "(Ebene 1–9) oder den Formatvorlagen „Überschrift 1–9“ fest.", 6000)
 
 
     def verzeichnisseAktualisieren(self, k=None):
