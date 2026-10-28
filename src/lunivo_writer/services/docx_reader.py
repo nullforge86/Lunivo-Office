@@ -710,10 +710,16 @@ class _Reader:
             return
         teile = f["instr"].split()
         if teile and teile[0].upper() == "XE" and self._letzter:
-            term = f["instr"].split('"')[1] if '"' in f["instr"] else " ".join(teile[1:])
+            from lunivo_writer.editor.indexeintrag import aus_feld
+            from lunivo_writer.editor.zusatz import P_INDEX_OPT
+            e = aus_feld(f["instr"])
+            if e is None:
+                return
             c = QTextCursor(self.doc)
             c.setPosition(self._letzter[0]); c.setPosition(self._letzter[1], QTextCursor.KeepAnchor)
-            nf = QTextCharFormat(); nf.setProperty(P_INDEX, term)
+            nf = QTextCharFormat(); nf.setProperty(P_INDEX, e.text())
+            if e.schalter():
+                nf.setProperty(P_INDEX_OPT, e.schalter())
             c.mergeCharFormat(nf)
 
     def _form_meta(self, sdt) -> str:
@@ -769,8 +775,8 @@ class _Reader:
             cfmt.setAnchor(True)
             cfmt.setAnchorNames(namen)
 
-    _TOC_STILE = {"TOC Heading": "kopf", "TOC 1": "zeile1", "TOC 2": "zeile2", "TOC 3": "zeile3", "Table of Figures": "zeile1",
-                  "Index 1": "zeile1", "Bibliography": "zeile1"}
+    _TOC_STILE = {"TOC Heading": "kopf", **{f"TOC {i}": f"zeile{i}" for i in range(1, 10)}, "Table of Figures": "zeile1",
+                  "Index 1": "zeile1", "Index 2": "zeile2", "Bibliography": "zeile1"}
 
     def _block_zusatz(self, bfmt: QTextBlockFormat, para: Paragraph) -> None:
         """Verzeichnis- und Beschriftungsabsätze an ihrer Formatvorlage wiedererkennen; Absatzrahmen aus w:pBdr."""
@@ -793,7 +799,7 @@ class _Reader:
         except Exception:
             return
         if name in self._TOC_STILE:
-            art = {"TOC 1": "toc", "TOC 2": "toc", "TOC 3": "toc", "Index 1": "index", "Bibliography": "lit"}.get(name)
+            art = "toc" if name.startswith("TOC ") else {"Index 1": "index", "Index 2": "index", "Bibliography": "lit"}.get(name)
             if name == "Table of Figures":
                 art = "tab" if para.text.strip().lower().startswith(("tabelle", "table")) else "abb"
             elif name == "TOC Heading":

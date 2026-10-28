@@ -87,8 +87,9 @@ def beschriftungen_liste(ed) -> list[dict]:
 
 
 # ---- Textmarken ------------------------------------------------------------------------------------------------
-def lesezeichen_liste(ed) -> list[dict]:
-    """[{name, von, bis}] — zusammenhängende Textstücke mit demselben Namen."""
+def lesezeichen_liste(ed, versteckte: bool = True) -> list[dict]:
+    """[{name, von, bis}] — zusammenhängende Textstücke mit demselben Namen. ``versteckte=False`` lässt die Marken weg, die mit
+    „_“ beginnen (z. B. „_Toc…“ des Inhaltsverzeichnisses; Word blendet sie ebenso aus)."""
     out: dict[str, dict] = {}
     b = ed.document().firstBlock()
     while b.isValid():
@@ -102,7 +103,7 @@ def lesezeichen_liste(ed) -> list[dict]:
                     d["von"] = min(d["von"], f.position())
             it += 1
         b = b.next()
-    return sorted(out.values(), key=lambda d: d["von"])
+    return sorted((d for d in out.values() if versteckte or not d["name"].startswith("_")), key=lambda d: d["von"])
 
 
 _NAME = re.compile(r"^[A-Za-zÄÖÜäöüß][A-Za-z0-9ÄÖÜäöüß_]{0,39}$")
@@ -195,7 +196,7 @@ def querverweis_ziele(ed) -> list[dict]:
         b = b.next()
     for k in beschriftungen_liste(ed):
         z.append({"art": k["label"], "text": k["text"], "pos": k["pos"], "block": k["block"].blockNumber()})
-    for d in lesezeichen_liste(ed):
+    for d in lesezeichen_liste(ed, versteckte=False):
         z.append({"art": "Textmarke", "text": d["name"], "pos": d["von"], "name": d["name"]})
     return z
 
@@ -238,6 +239,36 @@ def querverweis_einfuegen(ed, ziel: dict, wie: str) -> None:
 
 
 # ---- Stichwörter -------------------------------------------------------------------------------------------------------
+def index_eintragen(ed, e, alle: bool = False) -> int:
+    """Indexeintrag ``e`` (``editor.indexeintrag.Eintrag``) an die Markierung setzen (ohne Markierung: das Wort an der
+    Schreibmarke); ``alle`` markiert jede Stelle im Dokument mit demselben Text. Gibt die Zahl der markierten Stellen zurück."""
+    from lunivo_writer.editor.zusatz import P_INDEX_OPT
+    c = ed.textCursor()
+    if not c.hasSelection():
+        c.select(QTextCursor.WordUnderCursor)
+    if not c.hasSelection() or not e.haupt:
+        return 0
+    f = QTextCharFormat()
+    f.setProperty(P_INDEX, e.text())
+    f.setProperty(P_INDEX_OPT, e.schalter())
+    stellen = [(c.selectionStart(), c.selectionEnd())]
+    if alle:
+        from PySide6.QtGui import QTextDocument
+        such, stellen = c.selectedText(), []
+        t = ed.document().find(such, 0, QTextDocument.FindCaseSensitively)
+        while not t.isNull():
+            stellen.append((t.selectionStart(), t.selectionEnd()))
+            t = ed.document().find(such, t.selectionEnd(), QTextDocument.FindCaseSensitively)
+    k = QTextCursor(ed.document())
+    k.beginEditBlock()
+    for von, bis in stellen:
+        k.setPosition(von); k.setPosition(bis, QTextCursor.KeepAnchor)
+        k.mergeCharFormat(f)
+    k.endEditBlock()
+    ed.document().setModified(True)
+    return len(stellen)
+
+
 def index_markieren(ed, term: str) -> bool:
     c = ed.textCursor()
     if not c.hasSelection():

@@ -58,7 +58,7 @@ def ziele(ed, art: str) -> list[tuple[str, int]]:
     if art == "Überschrift":
         return [(z["text"], z["pos"]) for z in verweise.querverweis_ziele(ed) if z["art"] == "Überschrift"]
     if art == "Textmarke":
-        return [(d["name"], d["von"]) for d in verweise.lesezeichen_liste(ed)]
+        return [(d["name"], d["von"]) for d in verweise.lesezeichen_liste(ed, versteckte=False)]
     if art == "Beschriftung":
         return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in verweise.beschriftungen_liste(ed)]
     if art == "Kommentar":

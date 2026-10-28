@@ -43,7 +43,7 @@ P_VERSTECKT = QTextFormat.UserProperty + 32      # 1: ausgeblendeter Text (DOCX 
 P_OBJEKT = QTextFormat.UserProperty + 33         # am Bild: JSON {"art": "form|wordart|diagramm|smartart|formel|piktogramm", "daten": {…}}
 
 # Absatz-Eigenschaften (QTextBlockFormat); STYLE_PROP = UserProperty + 1 gehört den Formatvorlagen
-B_TOC = QTextFormat.UserProperty + 2             # "kopf" | "zeile1".."zeile3" — Teil eines Verzeichnisses
+B_TOC = QTextFormat.UserProperty + 2             # "kopf" | "zeile1".."zeile9" — Teil eines Verzeichnisses
 B_ART = QTextFormat.UserProperty + 3             # "toc" | "abb" | "tab" | "index" | "lit"
 B_CAP = QTextFormat.UserProperty + 4             # Beschriftung: Bezeichnung ("Abbildung", "Tabelle", …)
 
@@ -66,6 +66,8 @@ P_BETONUNG = QTextFormat.UserProperty + 44       # Betonungszeichen über/unter 
 P_UNTER = QTextFormat.UserProperty + 45          # Zeichenformat: Art der Unterstreichung, die Qt nicht kennt (doppelt, dick, lang, nur Wörter …); Lunivo zeichnet sie (siehe editor/textfx.py)
 P_UMSCHLOSSEN = QTextFormat.UserProperty + 50    # Eingeschlossene Zeichen: "kreis|reduzieren" (Form und Vorlage; siehe editor/zeichenzusatz.py, Lunivo zeichnet die Form)
 P_RUBY = QTextFormat.UserProperty + 51           # Phonetisches Leitzeichen über dem Text: "Ruby|zentriert|0|7" (siehe editor/zeichenzusatz.py)
+B_TOC_OPT = QTextFormat.UserProperty + 52        # Kopf eines Inhaltsverzeichnisses: "fuell|ebenen|seitenzahlen|rechts|links", z. B. "punkt|3|1|1|1" (siehe editor/verzeichnis.py)
+P_INDEX_OPT = QTextFormat.UserProperty + 53      # Schalter eines Indexeintrags wie im Word-Feld XE: \t „Siehe …“, \r Textmarke, \b, \i, \y Lesung (siehe editor/verweise.py)
 P_RASTER = QTextFormat.UserProperty + 46        # 0: „am Raster ausrichten“ ist aus (Fenster Schriftart, Zeichenabstand); nur gesetzt, wenn abweichend (DOCX w:snapToGrid)
 B_BILDANKER = QTextFormat.UserProperty + 47       # Absatz mit frei positionierten Bildern (DOCX wp:anchor ohne Textumbruch): JSON-Liste, siehe editor/freie_bilder.py
 B_VORHER = QTextFormat.UserProperty + 48           # Absatz am Seitenanfang: der unterdrückte Abstand davor in Bildpunkten (wird nicht gespeichert; siehe editor/seitenfluss.py)
