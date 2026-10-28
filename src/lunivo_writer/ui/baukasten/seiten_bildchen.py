@@ -61,6 +61,20 @@ def seitenzahl_zeichner(ort: str, ausrichtung: str) -> Zeichner:
     return f
 
 
+def wasserzeichen_vorschau(w: dict) -> Zeichner:
+    """Blatt mit einem beliebigen Wasserzeichen (Text oder Bild, Lage, Transparenz) wie in der Ausgabe (``editor/wasserzeichen.py``)."""
+    def f(p: QPainter, r: QRectF) -> None:
+        from lunivo_writer.editor import wasserzeichen as WZ
+        from lunivo_writer.models.page import mm_to_px
+        p.save(); p.setRenderHint(QPainter.Antialiasing)
+        b = _blatt(p, r)
+        pw, ph = mm_to_px(210), mm_to_px(297)
+        p.translate(b.topLeft()); p.scale(b.width() / pw, b.height() / ph)
+        WZ.zeichnen(p, w, QRectF(0, 0, pw, ph))
+        p.restore()
+    return f
+
+
 def wasserzeichen_zeichner(text: str, winkel: float = -45, farbe: str = "#b4b9be") -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)

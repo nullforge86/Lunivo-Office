@@ -487,6 +487,7 @@ class _Leser:
             page.height_mm = mm(a.get("fo:page-height"), page.height_mm)
             page.margin_left_mm = mm(a.get("fo:margin-left"), page.margin_left_mm)
             page.margin_right_mm = mm(a.get("fo:margin-right"), page.margin_right_mm)
+            page.seiten_format = {"a": "klein", "A": "gross", "i": "roem_klein", "I": "roem_gross"}.get(a.get("style:num-format", "1"), "dezimal")
             oben = mm(a.get("fo:margin-top"), page.margin_top_mm)
             unten = mm(a.get("fo:margin-bottom"), page.margin_bottom_mm)
             hg = a.get("fo:background-color")
@@ -510,6 +511,10 @@ class _Leser:
                     page.margin_bottom_mm = unten + max(extra, 5.0)
         page.header = self._kopf_fuss(master.find(_q("style:header")))
         page.footer = self._kopf_fuss(master.find(_q("style:footer")))
+        for attr, tag in (("header", "header-left"), ("footer", "footer-left")):          # gespiegelt auf linken Seiten: „außen“/„innen“
+            hf, links = getattr(page, attr), self._kopf_fuss(master.find(_q("style:" + tag)))
+            if hf.text and links.text == hf.text and {hf.align, links.align} == {"left", "right"}:
+                hf.align = "aussen" if hf.align == "right" else "innen"
         erste_kopf, erste_fuss = master.find(_q("style:header-first")), master.find(_q("style:footer-first"))
         if erste_kopf is not None or erste_fuss is not None:
             page.diff_first = True

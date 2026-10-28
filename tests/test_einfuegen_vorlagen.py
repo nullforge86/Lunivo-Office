@@ -316,10 +316,100 @@ def test_seitenzahl_vorgaben_und_entfernen(fenster):
     assert p.footer.text == "{PAGE}" and p.header.text == "Bericht"          # nicht doppelt
     assert SZ.seitenzahlen_entfernen(p) and p.footer.text == "" and not SZ.seitenzahlen_entfernen(p)
     m = fenster.befehle.klappe("seitenzahlKlappe")
-    assert len(m.knoepfe) == 10 and not m.knoepfe["kopf_aussen"].isEnabled() and m.knoepfe["fuss_rechts"].isEnabled()
+    assert len(m.knoepfe) == 10 and all(k.isEnabled() for k in m.knoepfe.values())        # außen/innen wie in WPS wählbar
     m.gewaehlt.emit("fuss_rechts")
     s = fenster.current_editor().abschnitt_seite()
     assert (s.footer.text, s.footer.align) == ("{PAGE}", "right")
+
+
+def test_seitenzahl_zahlenart_aussen_kapitel():
+    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.models.page import PageSettings
+    p = PageSettings(); p.seiten_format = "roem_gross"
+    assert SZ.text("Seite {PAGE} von {PAGES}", 4, 9, p) == "Seite IV von 9"
+    p.kapitel_ebene, p.kapitel_trenner, p.seiten_format = 1, ".", "dezimal"
+    assert SZ.nummer(3, p, "2") == "2.3" and SZ.nummer(3, p, "") == "3"
+    assert [SZ.ausrichtung("aussen", n) for n in (1, 2)] == ["right", "left"]
+    assert [SZ.ausrichtung("innen", n) for n in (1, 2)] == ["left", "right"] and SZ.ausrichtung("center", 2) == "center"
+
+
+def test_kapitel_je_seite(app):
+    from PySide6.QtGui import QTextBlockFormat, QTextListFormat
+    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("Einleitung\nText\nMethode\nMehr")
+    doc = ed.document()
+    lf = QTextListFormat(); lf.setStyle(QTextListFormat.ListDecimal)
+    liste = None
+    for nr in (0, 2):
+        c = QTextCursor(doc.findBlockByNumber(nr))
+        bf = QTextBlockFormat(c.blockFormat()); bf.setHeadingLevel(1); c.setBlockFormat(bf)
+        if liste is None:
+            liste = c.createList(lf)
+        else:
+            liste.add(c.block())
+    wechsel = [doc.findBlockByNumber(2).position(), doc.findBlockByNumber(3).position()]       # drei Seiten
+    assert SZ.kapitel_je_seite(doc, 1, wechsel) == ["1", "2", "2"]
+
+
+def test_seitenzahl_fenster_wie_vorlage(app):
+    from lunivo_writer.models.page import PageSettings
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import SeitenzahlDialog
+    d = SeitenzahlDialog(None, PageSettings())
+    assert d.muster.count() == 9 and d.position.count() == 10 and d.position.currentText() == "Unten zentriert"
+    assert [d.ebene.itemText(i) for i in (0, 8)] == ["Überschrift 1", "Überschrift 9"]
+    assert not d.ebene.isEnabled() and not d.start.isEnabled() and d.fortsetzen.isChecked()       # grau wie in der Vorlage
+    assert [b.text() for b in d.bereich.buttons()] == ["Gesamtes &Dokument", "Von aktueller Seite (&p)", "Aktueller Abschnit&t"]
+    d.kapitel.setChecked(True); d.trenner.setCurrentIndex(1); d.beginnen.setChecked(True); d.start.setValue(5)
+    d.muster.setCurrentIndex(5); d.position.setCurrentIndex(3)
+    assert d.ebene.isEnabled() and d.beispiel.text() == "1.1, 1.A"
+    assert d.werte() == {"ort": "kopf", "ausrichtung": "aussen", "muster": "{PAGE}", "format": "roem_gross", "start": 5,
+                         "kapitel": (1, "."), "bereich": "dokument"}
+
+
+def test_seitenzahl_von_aktueller_seite(fenster, monkeypatch):
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.ui.dialogs import einfuegen_fenster as EF
+    ed = fenster.current_editor()
+    ed.setPlainText("\n".join(f"Zeile {i}" for i in range(120)))
+    ed._recount()
+    assert ed.seitenwechsel
+    c = ed.textCursor(); c.setPosition(ed.seitenwechsel[0] + 3); ed.setTextCursor(c)
+
+    def exec_(self):
+        self.bereich.button(1).setChecked(True); self.beginnen.setChecked(True); self.start.setValue(7)
+        return 1
+    monkeypatch.setattr(EF.SeitenzahlDialog, "exec", exec_)
+    fenster.befehle.seitenzahlEinfuegen()
+    doc = ed.document()
+    assert AB.anzahl(doc) == 2 and AB.beginn(doc, 1) == ed.seitenwechsel[0]
+    assert ed.abschnitt_seite(0).footer.is_empty() and ed.abschnitt_seite(1).footer.text == "{PAGE}"
+    assert ed.abschnitt_seite(1).seiten_start == 7
+
+
+def test_seitenzahl_ausgabe_und_docx(app, tmp_path, monkeypatch):
+    from lunivo_writer.editor import pagination as PG
+    from lunivo_writer.models.page import HeaderFooter, PageSettings
+    from lunivo_writer.services.docx_reader import read_docx
+    from lunivo_writer.services.docx_writer import write_docx
+    from lunivo_writer.services.odt_reader import read_odt
+    from lunivo_writer.services.odt_writer import odt_daten
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("\n".join(f"Zeile {i}" for i in range(120)))
+    p = PageSettings(); p.footer = HeaderFooter("{PAGE}", "aussen"); p.seiten_format = "roem_klein"; p.seiten_start = 3
+    gezeichnet = []
+    echt = PG._draw_hf
+    monkeypatch.setattr(PG, "_draw_hf", lambda pa, hf, r, n, t, b, page=None, kapitel="":
+                        (gezeichnet.append((PG._expand(hf.text, n, t, page, kapitel), n)) if not hf.is_empty() else None, echt(pa, hf, r, n, t, b, page, kapitel)))
+    PG.export_pdf(str(tmp_path / "a.pdf"), ed.document(), p)
+    assert gezeichnet[:2] == [("iii", 3), ("iv", 4)]
+    p.kapitel_ebene, p.kapitel_trenner = 2, ":"
+    write_docx(str(tmp_path / "a.docx"), ed.document(), p)
+    _d, q, _m, _r = read_docx(str(tmp_path / "a.docx"))
+    assert (q.footer.align, q.seiten_format, q.seiten_start, q.kapitel_ebene, q.kapitel_trenner) == ("aussen", "roem_klein", 3, 2, ":")
+    (tmp_path / "a.odt").write_bytes(odt_daten(ed.document(), p)[0])
+    _d, q, _m, _r = read_odt(str(tmp_path / "a.odt"))
+    assert (q.footer.align, q.seiten_format) == ("aussen", "roem_klein")
 
 
 def test_wasserzeichen_galerie(fenster):
@@ -333,6 +423,59 @@ def test_wasserzeichen_galerie(fenster):
     assert not m.knoepfe["eigen0"].isHidden() and m.knoepfe["eigen0"].toolTip() == "ENTWURF"
     m.gewaehlt.emit("eigen0")
     assert fenster.current_editor().abschnitt_seite().watermark["text"] == "ENTWURF"
+
+
+def test_wasserzeichen_fenster_wie_vorlage(app, tmp_path):
+    from PySide6.QtGui import QColor, QImage
+    from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog
+    d = WasserzeichenDialog(None, None)
+    assert not d.mit_bild.isChecked() and not d.mit_text.isChecked() and d.ergebnis() is None
+    assert not d.zoom.isEnabled() and not d.inhalt.isEnabled() and not d.transparenz.isEnabled()      # grau wie in der Vorlage
+    assert d.inhalt.itemText(1) == "NICHT KOPIEREN" and d.groesse.itemText(0) == "Automatisch" and d.transparenz.value() == 50
+    assert [d.bereich_wahl.itemText(i) for i in range(2)] == ["Gesamtes Dokument", "Aktueller Abschnitt"]
+    d.mit_text.setChecked(True); d.inhalt.setCurrentText("MUSTER"); d.text_format.setCurrentIndex(1); d.text_v.setCurrentIndex(1)
+    assert d.inhalt.isEnabled() and d.text_v_mm.isEnabled() and not d.text_h_mm.isEnabled()
+    w = d.ergebnis()
+    assert (w["text"], w["winkel"], w["v"], w["groesse_pt"], w["transparenz"]) == ("MUSTER", -45, "oben", 0, 50)
+    img = QImage(40, 20, QImage.Format_RGB32); img.fill(QColor("red")); img.save(str(tmp_path / "b.png"))
+    d.mit_bild.setChecked(True)
+    assert not d.mit_text.isChecked()                                                      # nur eine Art
+    assert d.bild_laden(str(tmp_path / "b.png")) and d.bild_name.text() == "b.png"
+    d.bereich_wahl.setCurrentIndex(1)
+    w = d.ergebnis()
+    assert w["bild"] and w["auswaschen"] and w["zoom"] == 0 and w["abschnitt"] and d.bereich() == "abschnitt"
+    d2 = WasserzeichenDialog(None, w)                                                       # Vorbelegung
+    assert d2.mit_bild.isChecked() and d2.bereich() == "abschnitt" and d2.ergebnis()["bild"] == w["bild"]
+
+
+def test_wasserzeichen_zeichnen_und_abschnitt(fenster):
+    from PySide6.QtCore import QRectF
+    from PySide6.QtGui import QColor, QImage, QPainter
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor import wasserzeichen as WZ
+
+    def bild(w):
+        img = QImage(200, 280, QImage.Format_RGB32); img.fill(QColor("white"))
+        p = QPainter(img); WZ.zeichnen(p, w, QRectF(0, 0, 200, 280)); p.end()
+        return img
+    rot = QImage(10, 10, QImage.Format_RGB32); rot.fill(QColor("red"))
+    img = bild({"bild": WZ.bild_zu_text(rot), "auswaschen": False, "transparenz": 0})
+    assert img.pixelColor(100, 140) == QColor("red")
+    oben = bild({"text": "X", "winkel": 0, "v": "oben", "groesse_pt": 40, "farbe": "#000000", "transparenz": 0})
+    assert any(oben.pixelColor(x, y) != QColor("white") for x in range(80, 120) for y in range(0, 50))
+    assert all(oben.pixelColor(x, 240) == QColor("white") for x in range(200))
+    ed = fenster.current_editor()
+    ed.setPlainText("eins\nzwei")
+    c = ed.textCursor(); c.setPosition(4); ed.setTextCursor(c); ed.abschnitt_einfuegen("naechste")
+    b = fenster.befehle
+    b._wasserzeichen_setzen({"text": "EILT"})
+    c = ed.textCursor(); c.setPosition(ed.document().characterCount() - 1); ed.setTextCursor(c)
+    b._wasserzeichen_setzen({"text": "MUSTER"}, "abschnitt")
+    teile, _h = AB.teile(ed.document(), ed.page)
+    assert [ps.watermark["text"] for _d, ps, _t in teile] == ["EILT", "MUSTER"]
+    b._wasserzeichen_setzen(None)
+    teile, _h = AB.teile(ed.document(), ed.page)
+    assert [ps.watermark for _d, ps, _t in teile] == [None, None]
 
 
 def test_gleichungen_formen_deckblatt(fenster):

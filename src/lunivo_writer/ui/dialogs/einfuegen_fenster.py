@@ -334,40 +334,104 @@ class TrennerDialog(PanelFaehig, QDialog):
 
 
 class SeitenzahlDialog(PanelFaehig, QDialog):
-    """„Seitenzahl einfügen“: Position (Kopf-/Fußzeile), Ausrichtung und Schreibweise, mit kleinem Seitenbild."""
+    """„Seitenzahl einfügen“ wie in der Vorlage: Format und Position, Kapitelnummer einbeziehen (Formatvorlage, Trennzeichen, Beispiele),
+    Seitennummerierung (fortsetzen oder beginnen mit) und „Übernehmen für“ (gesamtes Dokument, von aktueller Seite, aktueller Abschnitt).
 
-    def __init__(self, parent=None):
+        d = SeitenzahlDialog(parent, page)     # page: Einrichtung des aktuellen Abschnitts (Vorbelegung)
+        if d.exec(): d.werte()   # {"ort", "ausrichtung", "muster", "format", "start", "kapitel": (Ebene, Zeichen), "bereich"}
+    """
+
+    BEREICHE = (("dokument", "Gesamtes &Dokument"), ("seite", "Von aktueller Seite (&p)"), ("abschnitt", "Aktueller Abschnit&t"))
+
+    def __init__(self, parent=None, page=None):
         super().__init__(parent)
+        from PySide6.QtWidgets import QFrame
         from lunivo_writer.editor import seitenzahl as SZ
-        from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche
         self.setWindowTitle("Seitenzahl einfügen")
         v = QVBoxLayout(self)
+
+        def linie() -> None:
+            l = QFrame(); l.setFrameShape(QFrame.HLine); l.setStyleSheet("color: palette(midlight);"); v.addWidget(l)
+
         g = QGridLayout(); g.setHorizontalSpacing(12)
-        self.muster = QComboBox(); self.ort = QComboBox(); self.ausrichtung = QComboBox()
-        for k, t in SZ.MUSTER:
-            self.muster.addItem(t, k)
-        for k, t in (("kopf", "Kopfzeile"), ("fuss", "Fußzeile")):
-            self.ort.addItem(t, k)
-        for k, t in (("left", "Links"), ("center", "Mitte"), ("right", "Rechts")):
-            self.ausrichtung.addItem(t, k)
-        self.ort.setCurrentIndex(1); self.ausrichtung.setCurrentIndex(1)
-        for i, (text, feld) in enumerate((("&Format:", self.muster), ("&Position:", self.ort), ("&Ausrichtung:", self.ausrichtung))):
-            feld.setMinimumHeight(34); feld.setMinimumWidth(180)
+        self.muster = QComboBox(); self.position = QComboBox()
+        for muster, fmt, t in SZ.MUSTER:
+            self.muster.addItem(t, (muster, fmt))
+        for ort, ausr, t in SZ.POSITIONEN:
+            self.position.addItem(t, (ort, ausr))
+        self.position.setCurrentIndex(6)                                    # „Unten zentriert“
+        for i, (text, feld) in enumerate((("&Format:", self.muster), ("Position (&s):", self.position))):
+            feld.setMinimumHeight(34); feld.setMinimumWidth(220)
             g.addWidget(_titel(text, feld), i, 0); g.addWidget(feld, i, 1)
-        self.vorschau = VorschauFlaeche(self._male, 140, flaeche=False); self.vorschau.setFixedSize(110, 140)
-        g.addWidget(self.vorschau, 0, 2, 4, 1)
-        g.setRowStretch(3, 1)
+        g.setColumnStretch(1, 1)
         v.addLayout(g)
+        linie()
+        self.kapitel = QCheckBox("&Kapitelnummer einbeziehen"); v.addWidget(self.kapitel)
+        k = QGridLayout(); k.setHorizontalSpacing(12); k.setContentsMargins(18, 0, 0, 0)
+        self.ebene = QComboBox(); self.trenner = QComboBox()
+        for n in range(1, 10):
+            self.ebene.addItem(f"Überschrift {n}", n)
+        for z, t, _docx in SZ.TRENNER:
+            self.trenner.addItem(t, z)
+        self.beispiel = QLabel()
+        self._kapitel_teile = []
+        for i, (text, feld) in enumerate((("Kapitel beginnt mit Formatvorlage (&C):", self.ebene), ("Trennzeichen &verwenden:", self.trenner),
+                                          ("Beispiele:", self.beispiel))):
+            if isinstance(feld, QComboBox):
+                feld.setMinimumHeight(34); feld.setMinimumWidth(200)
+            t = _titel(text, feld)
+            k.addWidget(t, i, 0); k.addWidget(feld, i, 1)
+            self._kapitel_teile += [t, feld]
+        k.setColumnStretch(1, 1)
+        v.addLayout(k)
+        linie()
+        v.addWidget(QLabel("Seitennummerierung:"))
+        self.fortsetzen = QRadioButton("Fortsetzen vom vorherigen Abschnitt (&o)"); self.beginnen = QRadioButton("&Beginnen mit:")
+        self.start = QSpinBox(); self.start.setRange(1, 9999); self.start.setMinimumHeight(34); self.start.setMinimumWidth(80)
+        self.start.setAccessibleName("Beginnen mit")
+        n = QVBoxLayout(); n.setContentsMargins(18, 0, 0, 0)
+        n.addWidget(self.fortsetzen)
+        z = QHBoxLayout(); z.addWidget(self.beginnen); z.addWidget(self.start); z.addStretch(1); n.addLayout(z)
+        v.addLayout(n)
+        linie()
+        v.addWidget(QLabel("Übernehmen für:"))
+        self.bereich = QButtonGroup(self)
+        u = QHBoxLayout(); u.setContentsMargins(18, 0, 0, 0)
+        for i, (_k, t) in enumerate(self.BEREICHE):
+            r = QRadioButton(t); self.bereich.addButton(r, i); u.addWidget(r)
+        u.addStretch(1)
+        v.addLayout(u)
+        self.bereich.button(0).setChecked(True)
         fussleiste(self, v)
-        for c in (self.muster, self.ort, self.ausrichtung):
-            c.currentIndexChanged.connect(lambda _i: self.vorschau.update())
+        if page is not None:                                                  # Vorbelegung aus der Einrichtung
+            for i, (_m, fmt, _t) in enumerate(SZ.MUSTER):
+                if fmt == page.seiten_format:
+                    self.muster.setCurrentIndex(i); break
+            self.kapitel.setChecked(bool(page.kapitel_ebene))
+            self.ebene.setCurrentIndex(max(0, (page.kapitel_ebene or 1) - 1))
+            self.trenner.setCurrentIndex(max(0, self.trenner.findData(page.kapitel_trenner)))
+            if page.seiten_start > 0:
+                self.beginnen.setChecked(True); self.start.setValue(page.seiten_start)
+        if not self.beginnen.isChecked():
+            self.fortsetzen.setChecked(True)
+        self.kapitel.toggled.connect(self._zustand); self.beginnen.toggled.connect(self._zustand)
+        self.trenner.currentIndexChanged.connect(self._zustand)
+        self._zustand()
 
-    def _male(self, p, r) -> None:
-        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
-        seitenzahl_zeichner(self.ort.currentData(), self.ausrichtung.currentData())(p, r)
+    def _zustand(self, *_a) -> None:
+        for w in self._kapitel_teile:
+            w.setEnabled(self.kapitel.isChecked())
+        tr = self.trenner.currentData()
+        self.beispiel.setText(f"1{tr}1, 1{tr}A")
+        self.start.setEnabled(self.beginnen.isChecked())
 
-    def werte(self) -> tuple[str, str, str]:
-        return self.ort.currentData(), self.ausrichtung.currentData(), self.muster.currentData()
+    def werte(self) -> dict:
+        muster, fmt = self.muster.currentData()
+        ort, ausr = self.position.currentData()
+        return {"ort": ort, "ausrichtung": ausr, "muster": muster, "format": fmt,
+                "start": self.start.value() if self.beginnen.isChecked() else 0,
+                "kapitel": (self.ebene.currentData() if self.kapitel.isChecked() else 0, self.trenner.currentData()),
+                "bereich": self.BEREICHE[self.bereich.checkedId()][0]}
 
 
 class HyperlinkDialog(PanelFaehig, QDialog):

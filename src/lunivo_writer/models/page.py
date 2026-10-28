@@ -28,7 +28,8 @@ def px_to_mm(px: float) -> float:
 
 @dataclass
 class HeaderFooter:
-    """Text mit Platzhalter {PAGE} und {PAGES}. Ausrichtung: left|center|right."""
+    """Text mit Platzhalter {PAGE} und {PAGES}. Ausrichtung: left|center|right, dazu aussen|innen (ungerade Seiten rechts bzw. links,
+    gerade Seiten umgekehrt — wie bei gebundenen Büchern)."""
     text: str = ""
     align: str = "center"
 
@@ -64,6 +65,11 @@ class PageSettings:
     kopf_abstand_mm: float = 12.7            # Abstand der Kopfzeile vom oberen Blattrand (DOCX w:header)
     fuss_abstand_mm: float = 12.7            # Abstand der Fußzeile vom unteren Blattrand (DOCX w:footer)
     fuss_verknuepft: bool = False
+    # Seitenzahl (Einfügen ▸ Seitenzahl ▸ Seitenzahl einfügen …; DOCX w:pgNumType)
+    seiten_format: str = "dezimal"           # Zahlenart von {PAGE}: dezimal, klein, gross, roem_klein, roem_gross (mehrstufig.nummer_text)
+    seiten_start: int = 0                    # 0 = fortsetzen vom vorherigen Abschnitt, sonst „Beginnen mit“
+    kapitel_ebene: int = 0                   # Kapitelnummer voranstellen: Nummer der letzten Überschrift dieser Ebene (0 = nein)
+    kapitel_trenner: str = "-"
 
     @property
     def landscape(self) -> bool:

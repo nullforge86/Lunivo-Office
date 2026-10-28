@@ -312,10 +312,40 @@ class SeiteBefehle:
     def wasserzeichen(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.ui.dialogs.dokument_dialoge import WasserzeichenDialog
-        d = WasserzeichenDialog(self.w, self.ed.page.watermark)
+        from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog
+        e = self.ed
+        d = WasserzeichenDialog(self.w, e.abschnitt_seite().watermark or e.page.watermark, e.abschnitt_seite(),
+                                str(self.w.settings.get("last_dir", "") or ""))
         if d.exec():
-            self._seite_aendern(watermark=d.ergebnis())
+            self._wasserzeichen_setzen(d.ergebnis(), d.bereich())
+
+
+    def _wasserzeichen_setzen(self, w: dict | None, bereich: str = "dokument") -> None:
+        """Wasserzeichen für das ganze Dokument oder nur den Abschnitt mit der Schreibmarke („Übernehmen für“)."""
+        e = self.ed
+        if not e:
+            return
+        from lunivo_writer.editor import abschnitte as AB
+        doc = e.document()
+        nr = e.abschnitt_nr()
+        alt = e.page.watermark
+        w = {k: v for k, v in (w or {}).items() if k != "abschnitt"} or None
+        for i, (_n, _t, ps) in enumerate(AB.umbrueche(doc), start=1):
+            eigen = (ps.watermark or {}).get("abschnitt")
+            if bereich == "abschnitt" and i == nr:
+                ps.watermark = dict(w or {}, abschnitt=True)
+            elif bereich == "abschnitt" and nr == 0 and not eigen:
+                ps.watermark = dict(alt or {}, abschnitt=True)          # die anderen Abschnitte behalten, was sie bisher zeigten
+            elif bereich == "dokument":
+                ps.watermark = None
+            else:
+                continue
+            AB.setzen(doc, i, ps)
+        if bereich == "dokument" or nr == 0:
+            pg = e.page.copy(); pg.watermark = w
+            e.apply_page(pg)
+        e.document().setModified(True)
+        e.viewport().update()
 
 
     def seitenrahmen(self, k=None):

@@ -1,8 +1,7 @@
 """Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen."""
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout,
@@ -10,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.models.page import PAPER_MM, HeaderFooter, PageSettings
-from lunivo_writer.ui.baukasten import DialogRahmen, FarbFeld, Linie, LinienWahl
+from lunivo_writer.ui.baukasten import Linie, LinienWahl
 from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
@@ -67,8 +66,8 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         self.setWindowTitle(title)
         self.text = QPlainTextEdit(hf.text)
         self.text.setPlaceholderText("Text eingeben. {PAGE} = Seitenzahl, {PAGES} = Seitenanzahl")
-        self.align = QComboBox(); self.align.addItems(["Links", "Zentriert", "Rechts"])
-        self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2}.get(hf.align, 1))
+        self.align = QComboBox(); self.align.addItems(["Links", "Zentriert", "Rechts", "Außen", "Innen"])
+        self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2, "aussen": 3, "innen": 4}.get(hf.align, 1))
         b = QPushButton("Seitenzahl einfügen")
         b.clicked.connect(lambda: self.text.insertPlainText("{PAGE}"))
         lay = QVBoxLayout(self)
@@ -80,7 +79,7 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
 
     def value(self) -> HeaderFooter:
         return HeaderFooter(self.text.toPlainText().strip("\n"),
-                            ["left", "center", "right"][self.align.currentIndex()])
+                            ["left", "center", "right", "aussen", "innen"][self.align.currentIndex()])
 
 
 class TableDialog(PanelFaehig, QDialog):
@@ -188,31 +187,4 @@ class ZoomDialog(PanelFaehig, QDialog):
         return self._art[i]
 
 
-class WasserzeichenDialog(PanelFaehig, DialogRahmen):
-    def __init__(self, parent, aktuell: dict | None):
-        a = aktuell or {}
-        super().__init__(parent, "Wasserzeichen", self._male)
-        self.text = QLineEdit(a.get("text", "ENTWURF"))
-        self.knopf = FarbFeld(a.get("farbe", "#c0c0c0"), "Farbe")
-        self.winkel = QSpinBox(); self.winkel.setRange(-90, 90); self.winkel.setValue(int(a.get("winkel", -45)))
-        self.groesse = QSpinBox(); self.groesse.setRange(10, 300); self.groesse.setSuffix(" pt"); self.groesse.setValue(int(a.get("groesse_pt", 80)))
-        for beschr, w in (("Text", self.text), ("Farbe", self.knopf), ("Drehung (Grad)", self.winkel), ("Größe", self.groesse)):
-            self.zeile(beschr, w)
-        self.entfernt = False
-        self.zusatzknopf("Entfernen", lambda: setattr(self, "entfernt", True))
-        self.text.textChanged.connect(self.aktualisieren); self.winkel.valueChanged.connect(self.aktualisieren)
-        self.groesse.valueChanged.connect(self.aktualisieren); self.knopf.farbeGeaendert.connect(self.aktualisieren)
-
-    @property
-    def farbe(self) -> str:
-        return self.knopf.farbe
-
-    def _male(self, p, r) -> None:
-        p.setPen(QColor(self.farbe)); f = p.font(); f.setPointSizeF(max(8.0, self.groesse.value() / 4)); f.setBold(True); p.setFont(f)
-        p.translate(r.center()); p.rotate(self.winkel.value())
-        p.drawText(QRect(-r.width() // 2, -r.height() // 2, r.width(), r.height()), Qt.AlignCenter, self.text.text())
-
-    def ergebnis(self) -> dict | None:
-        if self.entfernt or not self.text.text().strip():
-            return None
-        return {"text": self.text.text().strip(), "farbe": self.farbe, "winkel": self.winkel.value(), "groesse_pt": self.groesse.value()}
+from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog  # noqa: E402,F401  (früher hier)

@@ -136,17 +136,14 @@ class EinfuegenBefehle:
 
     def menue_seitenzahlKlappe(self):
         """Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
-        „außen“ und „innen“ bleiben grau, solange Lunivo gerade und ungerade Seiten nicht unterscheidet."""
+        „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import seitenzahl as SZ
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
         for schl, text, ort, ausr in SZ.VORGABEN:
-            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr), aktiv=ausr not in ("aussen", "innen"))
-            b.setCheckable(False)
-            if ausr in ("aussen", "innen"):
-                b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
+            m.kachel(schl, text, seitenzahl_zeichner(ort, ausr)).setCheckable(False)
         m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
         m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
         m.fuss("Seitenzahlen entfernen", self.seitenzahlenEntfernen)
@@ -161,14 +158,36 @@ class EinfuegenBefehle:
 
 
     def seitenzahlEinfuegen(self, k=None):
+        """Fenster „Seitenzahl einfügen“; „Übernehmen für“ entscheidet, welche Abschnitte es trifft. „Von aktueller Seite“ beginnt am
+        Anfang der Seite mit der Schreibmarke einen neuen Abschnitt (wie in WPS)."""
         if not self.ed:
             return
+        from lunivo_writer.editor import abschnitte as AB
         from lunivo_writer.editor import seitenzahl as SZ
         from lunivo_writer.ui.dialogs.einfuegen_fenster import SeitenzahlDialog
-        d = SeitenzahlDialog(self.w)
-        if d.exec():
-            ort, ausr, muster = d.werte()
-            self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr, muster))
+        ed = self.ed
+        d = SeitenzahlDialog(self.w, ed.abschnitt_seite())
+        if not d.exec():
+            return
+        w = d.werte()
+        doc = ed.document()
+        if w["bereich"] == "dokument":
+            ziele = list(range(AB.anzahl(doc)))
+        elif w["bereich"] == "seite":
+            pos = ed.textCursor().position()
+            anfang = max([AB.beginn(doc, ed.abschnitt_nr())] + [s for s in ed.seitenwechsel if s <= pos])
+            ziele = [AB.einfuegen_an(doc, anfang, "naechste", ed.page)]
+        else:
+            ziele = [ed.abschnitt_nr()]
+        for i, nr in enumerate(ziele):
+            ps = SZ.seitenzahl_setzen(ed.abschnitt_seite(nr), w["ort"], w["ausrichtung"], w["muster"], w["format"],
+                                      w["start"] if i == 0 else 0, w["kapitel"])
+            if nr == 0:
+                ed.apply_page(ps)
+            else:
+                AB.setzen(doc, nr, ps)
+        ed._recount()
+        doc.setModified(True)
 
 
     def seitenzahlenEntfernen(self, k=None):
@@ -190,12 +209,13 @@ class EinfuegenBefehle:
 
 
     def _eigene_wasserzeichen(self) -> list[dict]:
+        """Eigene Wasserzeichen (Text oder Bild) aus den Einstellungen."""
         import json
         try:
             d = json.loads(str(self.w.settings.get(self.EIGENE_WASSERZEICHEN, "") or "[]"))
         except ValueError:
             return []
-        return [x for x in d if isinstance(x, dict) and x.get("text")] if isinstance(d, list) else []
+        return [x for x in d if isinstance(x, dict) and (x.get("text") or x.get("bild"))] if isinstance(d, list) else []
 
 
     def menue_wasserzeichenKlappe(self):
@@ -203,7 +223,7 @@ class EinfuegenBefehle:
         import json
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_zeichner
+        from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_vorschau, wasserzeichen_zeichner
         m = RasterAuswahl(self.w, titel="Benutzerdefiniertes Wasserzeichen", spalten=3, groesse=QSize(84, 112), beschriftet=True)
         for i in range(self.EIGENE_ANZAHL):
             m.kachel(f"eigen{i}")
@@ -214,7 +234,7 @@ class EinfuegenBefehle:
         for b in m.knoepfe.values():
             b.setCheckable(False)
         m.fuss("Wasserzeichen einfügen …", self.wasserzeichen)
-        m.fuss("Wasserzeichen entfernen", lambda: self._seite_aendern(watermark=None))
+        m.fuss("Wasserzeichen entfernen", lambda: self._wasserzeichen_setzen(None))
 
         def auffrischen():
             eigene = self._eigene_wasserzeichen()
@@ -223,25 +243,28 @@ class EinfuegenBefehle:
                 b.setVisible(i < len(eigene))
                 if i < len(eigene):
                     w = eigene[i]
-                    m.bild_setzen(f"eigen{i}", wasserzeichen_zeichner(w["text"], w.get("winkel", -45), w.get("farbe", "#c0c0c0")), w["text"])
-                    b.setText(b.fontMetrics().elidedText(w["text"], Qt.ElideRight, 88))
+                    name = w.get("text") or w.get("bild_name") or "Bild"
+                    m.bild_setzen(f"eigen{i}", wasserzeichen_vorschau(w), name)
+                    b.setText(b.fontMetrics().elidedText(name, Qt.ElideRight, 88))
 
         def gewaehlt(schl: str):
             if schl == "neu":
-                from lunivo_writer.ui.dialogs.dokument_dialoge import WasserzeichenDialog
-                d = WasserzeichenDialog(self.w, None)
+                from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog
+                d = WasserzeichenDialog(self.w, {"text": "VERTRAULICH", "winkel": -45, "transparenz": 50},
+                                        self.ed.abschnitt_seite() if self.ed else None, str(self.w.settings.get("last_dir", "") or ""))
                 if d.exec() and d.ergebnis():
-                    eigene = [d.ergebnis()] + self._eigene_wasserzeichen()
+                    neu = {k: v for k, v in d.ergebnis().items() if k != "abschnitt"}
+                    eigene = [neu] + self._eigene_wasserzeichen()
                     self.w.settings.set(self.EIGENE_WASSERZEICHEN, json.dumps(eigene[:self.EIGENE_ANZAHL], ensure_ascii=False))
-                    self._seite_aendern(watermark=d.ergebnis())
+                    self._wasserzeichen_setzen(neu, d.bereich())
             elif schl.startswith("eigen"):
                 eigene = self._eigene_wasserzeichen()
                 i = int(schl[5:])
                 if i < len(eigene):
-                    self._seite_aendern(watermark=dict(eigene[i]))
+                    self._wasserzeichen_setzen(dict(eigene[i]))
             else:
                 winkel = dict(self.WASSERZEICHEN_VORGABEN)[schl]
-                self._seite_aendern(watermark={"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 80 if winkel else 96})
+                self._wasserzeichen_setzen({"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 0, "transparenz": 50})
         m.aboutToShow.connect(auffrischen)
         m.gewaehlt.connect(gewaehlt)
         auffrischen()

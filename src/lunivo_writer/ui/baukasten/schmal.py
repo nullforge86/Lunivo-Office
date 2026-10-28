@@ -125,6 +125,7 @@ class _Umbruchtext(QLabel):
     def __init__(self, knopf: QAbstractButton, text: str):
         super().__init__(text)
         self._knopf = knopf
+        self.setBuddy(knopf)                                      # „&“ bleibt Kürzel (unterstrichen) statt als Zeichen sichtbar
         self.setWordWrap(True)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.setMinimumWidth(40)
