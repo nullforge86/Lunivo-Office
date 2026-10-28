@@ -181,106 +181,6 @@ class DiagrammDatenDialog(QDialog):
         return self.titel.text(), kat, reihen
 
 
-class DiagrammDialog(PanelFaehig, QDialog):
-    """„Diagramm einfügen“ wie in der Vorlage: links die Diagrammarten, oben die Untertypen als Bildchen, darunter Name und große Vorschau.
-    „Daten bearbeiten …“ öffnet Titel und Werte als Unterfenster."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        from PySide6.QtCore import QSize
-        from PySide6.QtWidgets import QButtonGroup, QFrame, QToolButton
-        from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-        from lunivo_writer.ui.widgets import icons
-        self.D = D
-        self.setWindowTitle("Diagramm einfügen")
-        self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
-        v = QVBoxLayout(self)
-        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
-        self.arten = QListWidget(); self.arten.setIconSize(QSize(20, 20)); self.arten.setFixedWidth(170); self.arten.setAccessibleName("Diagrammart")
-        for gruppe, sym, unter in D.TYPEN:
-            it = QListWidgetItem(icons.icon(sym, 20), gruppe if gruppe != "Kombination" else "Kombination …")
-            if not unter:
-                it.setFlags(Qt.NoItemFlags); it.setToolTip("Kursdiagramme kann Lunivo noch nicht zeichnen.")
-            self.arten.addItem(it)
-        h.addWidget(self.arten)
-        rechts = QVBoxLayout(); rechts.setContentsMargins(12, 10, 12, 10)
-        self.unter_zeile = QHBoxLayout(); self.unter_zeile.setSpacing(6); self.unter_zeile.addStretch(1)
-        rechts.addLayout(self.unter_zeile)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setStyleSheet("color: palette(midlight);"); rechts.addWidget(linie)
-        self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
-        rechts.addWidget(self.name)
-        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumSize(560, 340)
-        self.vorschau.setStyleSheet("background: white; border: 1px solid " + Farbe.GRAU_HELL + ";")
-        rechts.addWidget(self.vorschau, 1)
-        h.addLayout(rechts, 1)
-        v.addWidget(rahmen, 1)
-        self._teile = h
-        daten = QPushButton("&Daten bearbeiten …"); daten.setMinimumHeight(34); daten.clicked.connect(self._daten)
-        fussleiste(self, v, daten)
-        self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
-        self._QToolButton = QToolButton
-        self.untertyp = "saeule_gruppiert"
-        self.arten.currentRowChanged.connect(self._gruppe)
-        self.arten.setCurrentRow(0)
-
-    def kompakt_machen(self) -> None:
-        """In der Seitenleiste: die Diagrammarten über der Vorschau, die Vorschau so breit wie die Seitenleiste."""
-        from PySide6.QtWidgets import QBoxLayout
-        self._teile.setDirection(QBoxLayout.TopToBottom)
-        self.arten.setFixedWidth(16777215); self.arten.setMinimumWidth(0); self.arten.setFixedHeight(130)
-        self.vorschau.setMinimumSize(0, 240)
-        self._vorschau_breite = 380
-        self.aktualisieren()
-
-    def _gruppe(self, zeile: int) -> None:
-        from PySide6.QtCore import QSize
-        from PySide6.QtGui import QIcon, QPixmap
-        while self.unter_zeile.count() > 1:
-            w = self.unter_zeile.takeAt(0).widget()
-            if w is not None:
-                self._knoepfe.removeButton(w); w.deleteLater()
-        unter = self.D.TYPEN[zeile][2] if 0 <= zeile < len(self.D.TYPEN) else []
-        for i, (schl, name) in enumerate(unter):
-            img = self.D.bild(schl, "", self.kategorien, self.reihen, 150, 110, legende=False)
-            b = self._QToolButton(); b.setCheckable(True); b.setToolTip(name); b.setAccessibleName(name)
-            b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(QSize(64, 48)); b.setFixedSize(76, 60)
-            b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
-            self._knoepfe.addButton(b); self.unter_zeile.insertWidget(i, b)
-        if unter:
-            self._knoepfe.buttons()[0].setChecked(True)
-            self._waehle(unter[0][0])
-
-    def _waehle(self, untertyp: str) -> None:
-        self.untertyp = untertyp
-        self.name.setText(self.D.NAMEN.get(untertyp, ""))
-        self.aktualisieren()
-
-    def _daten(self) -> None:
-        from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
-        d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
-
-        def fertig():
-            self.titel_text, self.kategorien, self.reihen = d.daten()
-            self._gruppe(self.arten.currentRow())
-            for b in self._knoepfe.buttons():
-                b.setChecked(b.toolTip() == self.D.NAMEN.get(self.untertyp))
-            self._waehle(self.untertyp)
-        zeige_unter(self, d, fertig)
-
-    def bild(self):
-        return self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen)
-
-    def daten(self) -> dict:
-        return {"art": self.untertyp, "titel": self.titel_text, "kategorien": self.kategorien, "reihen": self.reihen}
-
-    def aktualisieren(self, *_):
-        from PySide6.QtGui import QPixmap
-        breite = getattr(self, "_vorschau_breite", 620)
-        img = self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen, breite, int(breite * 0.58))
-        self.vorschau.setPixmap(QPixmap.fromImage(img))
-
-
 class PiktogrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -503,3 +403,6 @@ class BausteinDialog(PanelFaehig, QDialog):
         b = self._aktuell()
         if b:
             bausteine.einfuegen(self.ed.textCursor(), b); self.ed.document().setModified(True); self.accept()
+
+
+from lunivo_writer.ui.dialogs.diagramm_fenster import DiagrammDialog  # noqa: E402,F401  eigenes Modul, hier für ältere Aufrufer

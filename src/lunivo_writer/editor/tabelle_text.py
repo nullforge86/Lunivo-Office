@@ -63,11 +63,28 @@ def text_zu_tabelle(ed, trenner: str = "\t", spalten: int | None = None) -> bool
     return True
 
 
-def tabelle_zu_text(ed, trenner: str = "\t") -> bool:
-    c = ed.textCursor()
-    t = c.currentTable()
-    if t is None:
-        return False
+def _zelle_text(zelle, trenner: str, geschachtelt: bool, bleiben: list) -> str:
+    """Text einer Zelle. Eine Tabelle darin wird mit umgewandelt (``geschachtelt``) oder als Kopie in ``bleiben`` gemerkt und
+    durch nichts ersetzt; sie kommt nach der Zeile wieder als Tabelle hinein."""
+    from PySide6.QtGui import QTextDocumentFragment, QTextTable
+    teile = []
+    it = zelle.begin()
+    while not it.atEnd():
+        rahmen, block = it.currentFrame(), it.currentBlock()
+        if isinstance(rahmen, QTextTable):
+            if geschachtelt:
+                teile.extend(_tabelle_zeilen(rahmen, trenner, True, bleiben))
+            else:
+                k = QTextCursor(rahmen.document()); k.setPosition(rahmen.firstPosition() - 1)
+                k.setPosition(rahmen.lastPosition() + 1, QTextCursor.KeepAnchor)
+                bleiben.append(QTextDocumentFragment(k))
+        elif block.isValid():
+            teile.append(block.text())
+        it += 1
+    return " ".join(t for t in teile if t)
+
+
+def _tabelle_zeilen(t, trenner: str, geschachtelt: bool, bleiben: list) -> list[str]:
     zeilen = []
     for r in range(t.rows()):
         teile = []
@@ -75,15 +92,27 @@ def tabelle_zu_text(ed, trenner: str = "\t") -> bool:
             z = t.cellAt(r, s)
             if z.column() != s or z.row() != r:            # verbundene Zelle: nur einmal
                 continue
-            a, e = QTextCursor(z.firstCursorPosition()), z.lastCursorPosition()
-            a.setPosition(e.position(), QTextCursor.KeepAnchor)
-            teile.append(a.selectedText().replace(" ", " ").replace(" ", " "))
+            teile.append(_zelle_text(z, trenner, geschachtelt, bleiben).replace("\u2028", " ").replace("\u00a0", " "))
         zeilen.append(trenner.join(teile) if trenner != "\n" else "\n".join(teile))
+    return zeilen
+
+
+def tabelle_zu_text(ed, trenner: str = "\t", geschachtelt: bool = True) -> bool:
+    """Die Tabelle an der Schreibmarke zu Text. ``geschachtelt``: Tabellen in Zellen ebenfalls zu Text; sonst bleiben sie Tabellen
+    und stehen hinter dem Text der Tabelle."""
+    c = ed.textCursor()
+    t = c.currentTable()
+    if t is None:
+        return False
+    bleiben: list = []
+    zeilen = _tabelle_zeilen(t, trenner, geschachtelt, bleiben)
     c.beginEditBlock()
     c.setPosition(t.firstPosition() - 1)
     c.setPosition(t.lastPosition() + 1, QTextCursor.KeepAnchor)
     c.removeSelectedText()
     c.insertText("\n".join(zeilen))
+    for frag in bleiben:                                     # nicht umgewandelte innere Tabellen hinter den Text
+        c.insertBlock(); c.insertFragment(frag)
     if not c.atBlockEnd():                                  # stand direkt ein Absatz hinter der Tabelle, bleibt er ein eigener
         c.insertBlock(); c.movePosition(QTextCursor.PreviousBlock); c.movePosition(QTextCursor.EndOfBlock)
     c.endEditBlock()

@@ -18,7 +18,7 @@ def objekte(ed) -> list[tuple[str, int, int]]:
     import json
     from lunivo_writer.editor import gehe_zu as G
     from lunivo_writer.editor.zusatz import P_OBJEKT
-    namen = {"form": "Form", "wordart": "WordArt", "diagramm": "Diagramm", "smartart": "SmartArt", "formel": "Formel", "piktogramm": "Piktogramm"}
+    namen = {"form": "Form", "zeichenbereich": "Zeichenbereich", "wordart": "WordArt", "diagramm": "Diagramm", "smartart": "SmartArt", "formel": "Formel", "piktogramm": "Piktogramm"}
     out, zaehler = [], {}
     for f in G._fragmente(ed.document()):
         cf = f.charFormat()

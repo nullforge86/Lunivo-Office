@@ -114,12 +114,46 @@ def test_text_in_tabelle_und_zurueck(fenster):
     assert e.toPlainText() == "vorher\na;b;c\nd;e;\nnachher"
 
 
+def test_zeichenbereich_nimmt_formen_auf(fenster):
+    import json
+    from lunivo_writer.editor import formen as F
+    from lunivo_writer.editor.zusatz import P_OBJEKT
+    b, e = fenster.befehle, fenster.current_editor()
+    m = b.menue_formenKlappe()
+    assert any(x.text().replace("&", "") == "Neuer Zeichenbereich" for x in m.findChildren(__import__("PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton))
+    b.zeichenbereich()
+    assert F.in_zeichenbereich(e, "Rechteck") and F.in_zeichenbereich(e, "Ellipse")
+    o = json.loads(e.bild_format().property(P_OBJEKT))
+    assert o["art"] == "zeichenbereich" and [k["form"] for k in o["daten"]["kinder"]] == ["Rechteck", "Ellipse"]
+    assert (e.bild_format().width(), e.bild_format().height()) == (o["daten"]["breite"], F.ZEICHENBEREICH[1])
+
+
 def test_tabelle_in_text_fenster_wie_vorlage():
     from lunivo_writer.ui.dialogs.einfuegen_fenster import TrennerDialog
     from PySide6.QtWidgets import QRadioButton
     d = TrennerDialog(None, zu_tabelle=False)
     assert [r.text().replace("&", "") for r in d.findChildren(QRadioButton)] == ["Absätze", "Tabstopps", "Kommata", "Andere:"]
-    assert d.trenner() == "\t" and d.geschachtelt.isChecked() and not d.geschachtelt.isEnabled()
+    assert d.trenner() == "\t" and d.geschachtelt.isChecked() and d.geschachtelt.isEnabled()
+
+
+@pytest.mark.parametrize("geschachtelt", [True, False])
+def test_tabelle_in_text_mit_innerer_tabelle(fenster, geschachtelt):
+    from lunivo_writer.editor import tabelle_text as TT
+    e = fenster.current_editor()
+    e.insert_table(1, 2)
+    e.insertPlainText("a")
+    c = e.textCursor(); c.movePosition(QTextCursor.NextCell); e.setTextCursor(c)
+    e.insert_table(1, 2); e.insertPlainText("x")
+    c = e.textCursor(); c.movePosition(QTextCursor.NextCell); c.insertText("y")
+    aussen = e.document().rootFrame().childFrames()[0]
+    c.setPosition(aussen.firstPosition()); e.setTextCursor(c)
+    assert TT.tabelle_zu_text(e, ";", geschachtelt)
+    if geschachtelt:
+        assert e.toPlainText().strip() == "a;x;y"
+    else:
+        tabellen = [f for f in e.document().rootFrame().childFrames()]
+        assert e.document().findBlockByNumber(0).text() == "a;" and len(tabellen) == 1
+        assert tabellen[0].rows() == 1 and tabellen[0].columns() == 2
 
 
 def test_tabelle_einfuegen_fenster_und_stift(fenster):
@@ -260,11 +294,22 @@ def test_diagramm_alle_arten_und_fenster(app):
             img = D.bild(u, "T", D.BEISPIEL_KATEGORIEN, D.BEISPIEL_REIHEN, 200, 140)
             assert not img.isNull() and img.pixelColor(100, 70).name() != "#000000"
     d = DiagrammDialog(None)
-    kurs = d.arten.item([g for g, _s, _u in D.TYPEN].index("Kurs"))
-    assert not kurs.flags() & __import__("PySide6.QtCore", fromlist=["Qt"]).Qt.ItemIsEnabled      # grau, nicht versteckt
+    gruppen = [g for g, _s, _u in D.TYPEN]
+    assert gruppen == ["Säule", "Linie", "Kreis", "Balken", "Fläche", "X Y (Punkt)", "Kurs", "Netz", "Kombination", "Vorlagen"]
     d.arten.setCurrentRow(1)                                               # Linie
     assert d.untertyp == "linie" and d.name.text() == "Linie" and len(d._knoepfe.buttons()) == 3
-    assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN
+    assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN and d.kombi_teil.isHidden()
+    d.arten.setCurrentRow(gruppen.index("Kurs"))
+    assert d.untertyp == "kurs_hts" and len(d._knoepfe.buttons()) == 2
+    # Kombination wie in der Vorlage: vier Untertypen und die Tabelle Datenreihen / Diagrammtyp / Sekundärachse
+    d.arten.setCurrentRow(gruppen.index("Kombination"))
+    assert len(d._knoepfe.buttons()) == 4 and not d.kombi_teil.isHidden() and len(d._kombi_felder) == 3
+    assert d.kombi == [("saeule", False), ("saeule", False), ("linie", False)]
+    _l, box, kasten = d._kombi_felder[2]
+    kasten.setChecked(True)
+    assert d.untertyp == "kombi_eigen" and d.daten()["kombi"][2] == ["linie", True]
+    d.arten.setCurrentRow(gruppen.index("Vorlagen"))
+    assert d.daten()["farben"] == D.VORLAGEN[d.untertyp][1] and not d.bild().isNull()
 
 
 def test_datum_fenster_mit_feld(app):

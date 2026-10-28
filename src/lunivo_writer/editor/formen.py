@@ -155,3 +155,57 @@ def gruppe_aufheben(ed) -> str:
         E.qimage_einfuegen(ed, _zeichnen(k), "Form: " + k["form"], "form", k)
     c.endEditBlock()
     return ""
+
+
+# ---- Zeichenbereich (Einfügen ▸ Formen ▸ Neuer Zeichenbereich) -------------------------------------------------------------------
+# Ein Bild der Größe 15 × 8 cm, das Formen aufnimmt: ist es markiert (oder steht die Schreibmarke direkt davor), kommt eine Form aus
+# der Formen-Klappe hinein statt in den Text. Die Formen stehen als ``kinder`` (Form, Lage x/y, Größe) am Bild und werden bei
+# jeder Änderung neu gezeichnet; der gestrichelte Rand zeigt den Bereich.
+ZEICHENBEREICH = (567, 302)
+ZB_VERSATZ = 24                                                   # jede neue Form etwas rechts unterhalb der vorigen
+
+
+def zeichenbereich_bild(d: dict) -> QImage:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPen
+    b, h = int(d.get("breite", ZEICHENBEREICH[0])), int(d.get("hoehe", ZEICHENBEREICH[1]))
+    img = E._leer(b, h)
+    p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1, Qt.DashLine)); p.drawRect(QRectF(0.5, 0.5, b - 1, h - 1))
+    for k in d.get("kinder", []):
+        p.drawImage(int(k["x"]), int(k["y"]), _zeichnen(dict(STANDARD, **k)))
+    p.end()
+    return img
+
+
+def zeichenbereich_einfuegen(ed) -> None:
+    d = {"breite": min(ZEICHENBEREICH[0], int(ed.page.content_width_px)), "hoehe": ZEICHENBEREICH[1], "kinder": []}
+    E.qimage_einfuegen(ed, zeichenbereich_bild(d), "Zeichenbereich", "zeichenbereich", d)
+
+
+def in_zeichenbereich(ed, form: str) -> bool:
+    """Form in den markierten Zeichenbereich setzen; False, wenn keiner markiert ist (dann kommt die Form in den Text)."""
+    c = ed._bild_cursor()
+    if c is None:
+        return False
+    f = c.charFormat().toImageFormat()
+    o = objekt(f)
+    if not o or o.get("art") != "zeichenbereich":
+        return False
+    d = dict(o.get("daten", {}))
+    kinder = list(d.get("kinder", []))
+    b, h = int(d.get("breite", ZEICHENBEREICH[0])), int(d.get("hoehe", ZEICHENBEREICH[1]))
+    kb, kh = (min(240, b - 16), 60) if E_ist_linie(form) else (min(160, b - 16), min(120, h - 16))
+    n = len(kinder)
+    x = 8 + (n * ZB_VERSATZ) % max(1, b - kb - 16)
+    y = 8 + (n * ZB_VERSATZ) % max(1, h - kh - 16)
+    kinder.append({"form": form, "x": x, "y": y, "breite": kb, "hoehe": kh})
+    d["kinder"] = kinder
+    o["daten"] = d
+    _ersetzen(ed, c, zeichenbereich_bild(d), o, f, f.width(), f.height())
+    return True
+
+
+def E_ist_linie(form: str) -> bool:
+    from lunivo_writer.editor import formen_katalog as K
+    return K.ist_linie(form)

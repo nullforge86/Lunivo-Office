@@ -463,7 +463,7 @@ class EinfuegenBefehle:
             return
         d = TrennerDialog(self.w, zu_tabelle=False)
         if d.exec():
-            TT.tabelle_zu_text(self.ed, d.trenner())
+            TT.tabelle_zu_text(self.ed, d.trenner(), d.geschachtelt.isChecked())
 
 
     def inhaltsverzeichnis(self, k=None):
@@ -517,11 +517,24 @@ class EinfuegenBefehle:
                 m.kachel(name, name, zeichne).setCheckable(False)
 
         def einfuegen(f):
-            if self.ed:
+            from lunivo_writer.editor import formen as F
+            if self.ed and not F.in_zeichenbereich(self.ed, f):
                 self._bild_einfuegen(E.form_bild(f, *((240, 60) if K.ist_linie(f) else (160, 120))), f"Form: {f}", "form", {"form": f})
         m.gewaehlt.connect(einfuegen)
         m.fuss("Weitere Formen und Farben …", self.zeichnen)
+        m.trenner()
+        bereich = m.fuss("Neuer &Zeichenbereich", self.zeichenbereich)
+        bereich.setIcon(self._sym("textrahmen"))
+        bereich.setToolTip("Fügt einen Bereich ein, der Formen aufnimmt: Bereich markieren, dann eine Form wählen.")
         return m
+
+
+    def zeichenbereich(self, k=None):
+        """Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/formen.py``)."""
+        if self.ed and not self.ed.isReadOnly():
+            from lunivo_writer.editor import formen as F
+            F.zeichenbereich_einfuegen(self.ed)
+            c = self.ed.textCursor(); c.movePosition(c.MoveOperation.PreviousCharacter, c.MoveMode.KeepAnchor); self.ed.setTextCursor(c)
 
 
     def zeichnen(self, k=None):

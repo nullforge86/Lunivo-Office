@@ -134,8 +134,7 @@ class TrennerDialog(PanelFaehig, QDialog):
         v.addLayout(g)
         if not zu_tabelle:
             self.geschachtelt = QCheckBox("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
-            self.geschachtelt.setEnabled(False)
-            self.geschachtelt.setToolTip("Lunivo wandelt Tabellen in Zellen immer mit in Text um.")
+            self.geschachtelt.setToolTip("Ohne Haken bleiben Tabellen in Zellen Tabellen und stehen hinter dem Text.")
             v.addWidget(self.geschachtelt)
         self.andere.textEdited.connect(lambda _t: andere.setChecked(True))
         vorgabe = "\t" if any("\t" in s for s in self.texte) or not zu_tabelle else "\n"
