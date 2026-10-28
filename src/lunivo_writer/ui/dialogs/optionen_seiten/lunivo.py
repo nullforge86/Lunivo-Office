@@ -190,7 +190,8 @@ class LunivoSeiten:
 
 
     def _gedaechtnis(self, titel):
-        from PySide6.QtWidgets import QFileDialog, QListWidget
+        from PySide6.QtWidgets import QListWidget
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         p = _Seite(self.w, titel)
         g = self.w.assistant.gelernt
         f = p.gruppe("Gelernte Schreibweisen")
@@ -232,7 +233,7 @@ class LunivoSeiten:
         vergessen.clicked.connect(weg)
 
         def sichern():
-            pfad, _ = QFileDialog.getSaveFileName(self, "Gelerntes sichern", "gelernt.json", "JSON (*.json)")
+            pfad, _ = Dateifenster.getSaveFileName(self, "Gelerntes sichern", "gelernt.json", "JSON (*.json)")
             if pfad:
                 try:
                     with open(pfad, "w", encoding="utf-8") as fh:
@@ -241,7 +242,7 @@ class LunivoSeiten:
                     QMessageBox.warning(self, "Sichern", f"Das ging nicht: {ex}")
 
         def einspielen():
-            pfad, _ = QFileDialog.getOpenFileName(self, "Gelerntes einspielen", "", "JSON (*.json)")
+            pfad, _ = Dateifenster.getOpenFileName(self, "Gelerntes einspielen", "", "JSON (*.json)")
             if not pfad:
                 return
             try:

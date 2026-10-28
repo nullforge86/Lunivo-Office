@@ -143,9 +143,9 @@ class DateiSeiten:
 
     def _daten_sichern(self):
         import zipfile
-        from PySide6.QtWidgets import QFileDialog
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         from lunivo_writer.services.settings_service import data_dir
-        pfad, _ = QFileDialog.getSaveFileName(self, "Sichern", "lunivo-sicherung.zip", "ZIP (*.zip)")
+        pfad, _ = Dateifenster.getSaveFileName(self, "Sichern", "lunivo-sicherung.zip", "ZIP (*.zip)")
         if not pfad:
             return
         with zipfile.ZipFile(pfad, "w", zipfile.ZIP_DEFLATED) as z:
@@ -158,9 +158,9 @@ class DateiSeiten:
 
     def _daten_zurueckholen(self):
         import zipfile
-        from PySide6.QtWidgets import QFileDialog
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         from lunivo_writer.services.settings_service import data_dir
-        pfad, _ = QFileDialog.getOpenFileName(self, "Zurückholen", "", "ZIP (*.zip)")
+        pfad, _ = Dateifenster.getOpenFileName(self, "Zurückholen", "", "ZIP (*.zip)")
         if not pfad:
             return
         try:
