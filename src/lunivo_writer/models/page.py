@@ -50,6 +50,7 @@ class PageSettings:
     border: dict | None = None           # {"farbe": Farbe.SCHWARZ, "breite_pt": 1.0, "art": Linienart (editor/linie.py), "abstand_mm": 8.0, "seiten": "tblr"}
     watermark: dict | None = None        # {"text": …, "farbe": "#c0c0c0", "winkel": -45, "groesse_pt": 80}
     zeilennummern: bool = False
+    zeilennummern_neu: str = ""          # "" fortlaufend, "seite" auf jeder Seite neu (siehe editor/zeilennummern.py)
     diff_first: bool = False                 # „Erste Seite anders“
     first_header: HeaderFooter = field(default_factory=HeaderFooter)
     first_footer: HeaderFooter = field(default_factory=HeaderFooter)

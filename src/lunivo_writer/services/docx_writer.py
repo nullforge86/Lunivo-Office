@@ -241,7 +241,7 @@ class _Writer:
             sp.remove(alt)
         if p.zeilennummern:
             ln = OxmlElement("w:lnNumType")
-            ln.set(qn("w:countBy"), "1"); ln.set(qn("w:restart"), "continuous")
+            ln.set(qn("w:countBy"), "1"); ln.set(qn("w:restart"), "newPage" if p.zeilennummern_neu == "seite" else "continuous")
             anker = sp.find(qn("w:pgBorders"))
             if anker is None:
                 anker = sp.find(qn("w:pgMar"))

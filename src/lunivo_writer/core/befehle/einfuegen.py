@@ -112,10 +112,10 @@ class EinfuegenBefehle:
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
         for schl, text, ort, ausr in SZ.VORGABEN:
-            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr))
+            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr), aktiv=ausr not in ("aussen", "innen"))
             b.setCheckable(False)
             if ausr in ("aussen", "innen"):
-                b.setEnabled(False); b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
+                b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
         m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
         m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
         m.fuss("Seitenzahlen entfernen", self.seitenzahlenEntfernen)

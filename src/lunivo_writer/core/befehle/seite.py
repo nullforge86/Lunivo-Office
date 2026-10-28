@@ -111,6 +111,168 @@ class SeiteBefehle:
         return self.w.settings.get("theme", "system")
 
 
+    # ---- Klappmenüs wie in der Vorlage: Ränder, Ausrichtung, Größe, Spalten, Textrichtung, Zeilennummern, Ausrichten ----------------
+    RAND_NAMEN = {"normal": "Normal", "schmal": "Schmal", "moderat": "Moderat", "breit": "Breit"}
+    PAPIER_NAMEN = {"a4": "A4", "a3": "A3", "a5": "A5", "b5": "B5", "letter": "Letter", "legal": "Legal", "dinlang": "Umschlag DIN lang",
+                    "c5": "Umschlag C5", "c6": "Umschlag C6"}
+
+
+    @staticmethod
+    def _haken_auffrischen(m, jetzt) -> None:
+        """Vor dem Aufklappen die aktuelle Kachel markieren (die Menüs werden nur einmal gebaut)."""
+        m.aboutToShow.connect(lambda: [k.setChecked(s == jetzt()) for s, k in m.knoepfe.items()])
+
+
+    def menue_raenderKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.seiten_bildchen import raender_zeichner
+        m = RasterAuswahl(self.w, spalten=1, groesse=QSize(320, 70))
+        for art, (o, u, l, r) in self.RAND.items():
+            m.kachel(art, self.RAND_NAMEN[art], zeilenkachel(raender_zeichner(o, u, l, r), self.RAND_NAMEN[art],
+                                                            [f"Oben: {o} mm", f"Unten: {u} mm", f"Links: {l} mm", f"Rechts: {r} mm"], 2))
+        m.trenner()
+        m.fuss("Benutzerdefinierte Seitenränder …", self.w.page_setup)
+        m.gewaehlt.connect(lambda art: self.w_setzeRandVorgabe(None, art))
+        self._haken_auffrischen(m, self.w_randVorgabeJetzt)
+        return m
+
+
+    def menue_ausrichtungKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.seiten_bildchen import format_zeichner
+        m = RasterAuswahl(self.w, spalten=1, groesse=QSize(170, 40))
+        m.kachel("hoch", "Hochformat", zeilenkachel(format_zeichner(False), "Hochformat", bild_breite=34))
+        m.kachel("quer", "Querformat", zeilenkachel(format_zeichner(True), "Querformat", bild_breite=34))
+        m.gewaehlt.connect(lambda art: self.w_setzeQuer(None, art == "quer"))
+        self._haken_auffrischen(m, lambda: "quer" if self.w_querJetzt() else "hoch")
+        return m
+
+
+    def menue_groesseKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.seiten_bildchen import papier_zeichner
+        m = RasterAuswahl(self.w, spalten=1, groesse=QSize(240, 48), hoehe_max=620)
+        for art, (b, h) in self.PAPIER.items():
+            m.kachel(art, self.PAPIER_NAMEN[art], zeilenkachel(papier_zeichner(), self.PAPIER_NAMEN[art], [f"{b} mm × {h} mm"], bild_breite=34))
+        m.trenner()
+        m.fuss("Weitere Papierformate …", self.w.page_setup)
+        m.gewaehlt.connect(lambda art: self.w_setzePapier(None, art))
+        self._haken_auffrischen(m, self.w_papierJetzt)
+        return m
+
+
+    def menue_spaltenKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.widgets import icons
+        m = MenueListe()
+        eintraege = [m.eintrag(t, lambda n=n: self.spaltenSetzen(None, n), symbol=icons.icon(f"spalte{n}", 18), haken=False)
+                     for n, t in ((1, "Eins"), (2, "Zwei"), (3, "Drei"))]
+        m.eintrag("Mehr Spalten …", self.spalten, symbol=icons.icon("spalten", 18))
+        m.aboutToShow.connect(lambda: [a.setChecked(i + 1 == self.w_spaltenJetzt()) for i, a in enumerate(eintraege)])
+        return m
+
+
+    TEXTRICHTUNGEN = [("waagerecht", "Horizontal"), ("senkrecht_rl", "Vertikal von rechts nach links"),
+                      ("senkrecht_lr", "Vertikal von links nach rechts"), ("dreh90", "Gesamten Text um 90 Grad drehen"),
+                      ("dreh270", "Gesamten Text um 270 Grad drehen"), ("asiatisch270", "Asiatische Zeichen um 270 Grad drehen")]
+
+
+    def menue_textrichtungKlappe(self):
+        """Textrichtung wie in der Vorlage. Lunivo setzt Text nur waagerecht; die senkrechten Richtungen bleiben grau."""
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
+        m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
+        for art, text in self.TEXTRICHTUNGEN:
+            m.kachel(art, text, zeilenkachel(textrichtung_zeichner(art), text, bild_breite=40), aktiv=art == "waagerecht")
+        m.trenner()
+        m.fuss("Textrichtung ändern …", lambda: None).setEnabled(False)
+        m.gewaehlt.connect(lambda art: self.textrichtungLinks())
+        self._haken_auffrischen(m, lambda: "" if self.an_textrichtung() else "waagerecht")
+        return m
+
+
+    def menue_zeilennummernKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        keine = m.eintrag("Keine", lambda: self.zeilennummernArt(None, None), haken=False)
+        fort = m.eintrag("Fortlaufend", lambda: self.zeilennummernArt(None, ""), haken=False)
+        seite = m.eintrag("Jede Seite neu beginnen", lambda: self.zeilennummernArt(None, "seite"), haken=False)
+        m.eintrag("Jeden Abschnitt neu beginnen", aktiv=False)
+        m.trenner()
+        unter = m.eintrag("Für aktuellen Absatz unterdrücken", self.zeilennummernUnterdruecken, haken=False)
+        m.eintrag("Zeilennummern für leere Zeilen verstecken", aktiv=False)
+        m.trenner()
+        m.eintrag("Zeilennummerierungs-Einstellungen …", aktiv=False)
+
+        def auffrischen():
+            pg = self.ed.page if self.ed else None
+            an = bool(pg and pg.zeilennummern)
+            keine.setChecked(not an); fort.setChecked(an and not pg.zeilennummern_neu); seite.setChecked(an and pg.zeilennummern_neu == "seite")
+            unter.setEnabled(an); unter.setChecked(bool(self.ed) and self._ohne_zeilennr())
+        m.aboutToShow.connect(auffrischen)
+        return m
+
+
+    def zeilennummernArt(self, k=None, art=""):
+        """``art``: None = keine, "" = fortlaufend, "seite" = jede Seite neu."""
+        if not self.ed:
+            return
+        pg = self.ed.page
+        pg.zeilennummern_neu = art or ""
+        self.ed.set_zeilennummern(art is not None)
+        self.ed.document().setModified(True)
+
+
+    def _ohne_zeilennr(self) -> bool:
+        from lunivo_writer.editor import absatzopt
+        return absatzopt.lesen(self.ed.textCursor().blockFormat())["ohne_zeilennr"]
+
+
+    def zeilennummernUnterdruecken(self, k=None):
+        """Der Absatz an der Schreibmarke (oder die markierten) bekommt keine Zeilennummern — oder wieder welche."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import absatzopt
+        neu = not self._ohne_zeilennr()
+        self.ed._block_merge(lambda bf: absatzopt.setzen(bf, {**absatzopt.lesen(bf), "ohne_zeilennr": neu}))
+        self.ed.viewport().update()
+
+
+    def menue_ausrichtenKlappe(self):
+        """Ausrichten wie in der Vorlage: die Form oder das freie Bild am Blatt ausrichten; was eine Mehrfachauswahl braucht, bleibt grau."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.widgets import icons
+        m = MenueListe()
+        objekt = [m.eintrag(t, lambda w=w: self.zeichenAusrichten(None, w), symbol=icons.icon(sym, 18))
+                  for w, t, sym in (("links", "Linksbündig", "kanteLinks"), ("mitte", "Zentriert ausrichten", "mitte"),
+                                    ("rechts", "Rechtsbündig", "kanteRechts"), ("oben", "Oben ausrichten", "kanteOben"),
+                                    ("mittig", "Mittig ausrichten", "mitte"), ("unten", "Untenbündig ausrichten", "kanteUnten"))]
+        m.trenner()
+        for t in ("Horizontal verteilen", "Vertikal verteilen"):
+            m.eintrag(t, aktiv=False, tip="Braucht mehrere markierte Objekte.")
+        m.trenner()
+        for t in ("Gleiche Höhe", "Gleiche Breite", "Gleiche Größe"):
+            m.eintrag(t, aktiv=False, tip="Braucht mehrere markierte Objekte.")
+        m.trenner()
+        m.eintrag("Relativ zur Seite", haken=True, aktiv=False, tip="Lunivo richtet am Blatt aus.")
+        m.trenner()
+        netz = m.eintrag("Gitternetzlinien", self.netzlinien, symbol=icons.icon("netz", 18), haken=False)
+        m.eintrag("Raster …", aktiv=False)
+
+        def auffrischen():
+            from lunivo_writer.editor import bildlayout as BL
+            z = BL.ziel(self.ed) if self.ed else None
+            for a in objekt:
+                a.setEnabled(z is not None and z[0] == "frei")
+            netz.setChecked(self.an_netzlinien())
+        m.aboutToShow.connect(auffrischen)
+        return m
+
+
     # ---- Seitenhintergrund -------------------------------------------------------------------
     def _seite_aendern(self, **felder):
         e = self.ed
@@ -123,8 +285,22 @@ class SeiteBefehle:
 
 
     def menue_seitenfarbe(self):
-        from PySide6.QtGui import QColor
         m = self._farbmenue(lambda c: self._seite_aendern(color=c.name() if c else ""), "Keine Farbe")
+        return m
+
+
+    def menue_seitenfarbeKlappe(self):
+        """Seitenfarbe wie in der Vorlage: Palette, darunter Hintergrundbild und anderer Hintergrund (in Lunivo noch grau) und das
+        Untermenü Wasserzeichen (dieselbe Galerie wie Einfügen ▸ Wasserzeichen)."""
+        m = self.menue_seitenfarbe()
+        m.addSeparator()
+        m.addAction("Hintergrundbild …").setEnabled(False)
+        anders = m.addMenu("Anderer Hintergrund"); anders.setEnabled(False)
+        m.addSeparator()
+        w = self.menue_wasserzeichenKlappe(); w.setTitle("Wasserzeichen")
+        from lunivo_writer.ui.widgets import icons
+        w.setIcon(icons.icon("wasserzeichen", 18))
+        m.addMenu(w)
         return m
 
 
@@ -239,44 +415,104 @@ class SeiteBefehle:
         return bool(self.ed and self.ed.textCursor().blockFormat().layoutDirection() == Qt.RightToLeft)
 
 
-    DESIGNS = {"Office": ("Liberation Sans", "Liberation Sans", "#1f3864"),
-               "Klassisch": ("Liberation Serif", "Liberation Serif", Farbe.SCHWARZ),
-               "Modern": ("DejaVu Sans", "DejaVu Sans", Farbe.AKZENT),
-               "Zeitung": ("Liberation Serif", "Liberation Sans", "#222222"),
-               "Dezent": ("Liberation Sans", "Liberation Sans", "#555555")}
-
-    FARBSCHEMEN = {"Blau": Farbe.AKZENT, "Grün": "#2f9e75", "Rot": Farbe.ROT, "Violett": "#7048a8", "Orange": Farbe.ORANGE, "Grau": "#495057"}
-
-    SCHRIFTPAARE = {"Sans / Sans": ("Liberation Sans", "Liberation Sans"), "Serif / Serif": ("Liberation Serif", "Liberation Serif"),
-                    "Serif / Sans (Überschrift)": ("Liberation Serif", "Liberation Sans"),
-                    "Sans / Serif (Überschrift)": ("Liberation Sans", "Liberation Serif"), "Mono": ("DejaVu Sans Mono", "DejaVu Sans Mono")}
-
-
-    def _wahl(self, titel, namen):
-        n, ok = QInputDialog.getItem(self.w, titel, titel + ":", list(namen), 0, False)
-        return n if ok else None
+    # Designs, Farben, Schriftarten, Effekte: Galerien wie in der Vorlage; die Werte stehen in editor/designs.py
+    def menue_designsKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import designs as D
+        from lunivo_writer.ui.baukasten.design_bildchen import design_zeichner
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = RasterAuswahl(self.w, spalten=4, groesse=QSize(72, 50), hoehe_max=620)
+        for name, (schema, paar) in D.DESIGNS.items():
+            m.kachel(name, name, design_zeichner(D.FARBSCHEMEN[schema], D.SCHRIFTPAARE[paar][0]))
+        m.gewaehlt.connect(lambda n: self.designSetzen(None, n))
+        return m
 
 
-    def designs(self, k=None):
-        if self.ed and (n := self._wahl("Design", self.DESIGNS)):
-            f, h, c = self.DESIGNS[n]
-            self.ed.apply_design(f, h, c)
+    def designSetzen(self, k=None, name="Lunivo"):
+        """Design: Schrift der Überschriften und des Textes, Farbe der Überschriften — für das ganze Dokument (ein Schritt)."""
+        from lunivo_writer.editor import designs as D
+        if self.ed and name in D.DESIGNS:
+            d = D.design(name)
+            self.ed.apply_design(d["text"], d["kopf"], d["farbe"])
 
 
-    def farbschema(self, k=None):
-        if self.ed and (n := self._wahl("Farben", self.FARBSCHEMEN)):
-            self.ed.apply_design(None, None, self.FARBSCHEMEN[n])
+    def menue_farbenKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import designs as D
+        from lunivo_writer.ui.baukasten.design_bildchen import farbreihe_zeichner
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = RasterAuswahl(self.w, titel="Farbschemen", spalten=1, groesse=QSize(310, 24), hoehe_max=620)
+        for name, farben in D.FARBSCHEMEN.items():
+            m.kachel(name, name, farbreihe_zeichner(farben, name))
+        m.trenner()
+        m.fuss("Benutzerdefinierte Farbe …", self._farbe_eigen)
+        m.gewaehlt.connect(lambda n: self.farbschemaSetzen(None, n))
+        return m
 
 
-    def designEffekte(self, k=None):
-        """Effekte des Designs: die Texteffekte (Schatten, Leuchten, Spiegelung …) für den markierten Text."""
-        self.texteffekte(k)
+    def farbschemaSetzen(self, k=None, name="Lunivo"):
+        from lunivo_writer.editor import designs as D
+        if self.ed and name in D.FARBSCHEMEN:
+            self.ed.apply_design(None, None, D.ueberschrift_farbe(name))
 
 
-    def designSchriften(self, k=None):
-        if self.ed and (n := self._wahl("Schriftarten", self.SCHRIFTPAARE)):
-            f, h = self.SCHRIFTPAARE[n]
-            self.ed.apply_design(f, h, None)
+    def _farbe_eigen(self):
+        from lunivo_writer.ui.baukasten.farbpalette import weitere_farben
+        if self.ed and (c := weitere_farben(self.w, titel="Farbe der Überschriften")) is not None:
+            self.ed.apply_design(None, None, c.name())
+
+
+    def menue_schriftartenKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import designs as D
+        from lunivo_writer.ui.baukasten.design_bildchen import schriftpaar_zeichner
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = RasterAuswahl(self.w, spalten=1, groesse=QSize(290, 70), hoehe_max=640)
+        for name, (kopf, text) in D.SCHRIFTPAARE.items():
+            m.kachel(name, f"{name}: Überschriften {kopf}, Text {text}", schriftpaar_zeichner(name, kopf, text))
+        m.gewaehlt.connect(lambda n: self.schriftpaarSetzen(None, n))
+        return m
+
+
+    def schriftpaarSetzen(self, k=None, name="Lunivo"):
+        from lunivo_writer.editor import designs as D
+        if self.ed and name in D.SCHRIFTPAARE:
+            kopf, text = D.SCHRIFTPAARE[name]
+            self.ed.apply_design(text, kopf, None)
+
+
+    def menue_effekteKlappe(self):
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import designs as D
+        from lunivo_writer.ui.baukasten.design_bildchen import effekt_zeichner
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = RasterAuswahl(self.w, spalten=4, groesse=QSize(112, 60), beschriftet=True, hoehe_max=640)
+        for name, fx in D.EFFEKTE.items():
+            m.kachel(name, name, effekt_zeichner(fx))
+        m.gewaehlt.connect(lambda n: self.effektSetzen(None, n))
+        return m
+
+
+    def effektSetzen(self, k=None, name="Schlicht"):
+        """Effekt an die markierte Form bzw. das markierte freie Bild; ist nichts markiert, an alle im Dokument."""
+        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor import designs as D
+        if not self.ed or name not in D.EFFEKTE:
+            return
+        z = BL.ziel(self.ed)
+        if z is not None and z[0] == "frei":
+            BL.format_setzen(self.ed, z, fx=dict(D.EFFEKTE[name]))
+        elif not BL.fx_alle(self.ed, D.EFFEKTE[name]):
+            self.w.statusBar().showMessage("Effekte gelten für Formen und frei liegende Bilder — im Dokument gibt es keine.", 5000)
+
+
+    def designs(self, k=None): self._popup(self.menue_designsKlappe())
+
+    def farbschema(self, k=None): self._popup(self.menue_farbenKlappe())
+
+    def designSchriften(self, k=None): self._popup(self.menue_schriftartenKlappe())
+
+    def designEffekte(self, k=None): self._popup(self.menue_effekteKlappe())
 
 
     # ---- Abschnitte ------------------------------------------------------------------------------------------------------

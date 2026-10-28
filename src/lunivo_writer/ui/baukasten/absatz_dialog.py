@@ -151,6 +151,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         self.zeilen.setValue(z)
         self.umbruch.setChecked(bool(w["umbruch"]))
         o = {**absatzopt.VORGABE, **w["opt"]}
+        self._opt_alt = dict(o)                              # Optionen ohne Feld im Fenster (z. B. Zeilennummern unterdrücken) bleiben erhalten
         for k, c in self.cb.items():
             c.setChecked(o[k])
         self.rest_einzug.setChecked(o["rest_einzug"]); self.raster.setChecked(o["raster"])
@@ -179,7 +180,8 @@ class AbsatzDialog(PanelFaehig, QDialog):
                 "zeilen_pt": self.zeilen_pt.value(), "opt": self._opt(), "umbruch": self.umbruch.isChecked(), "tabs": list(self._tabs)}
 
     def _opt(self) -> dict:
-        o = {k: c.isChecked() for k, c in self.cb.items()}
+        o = dict(getattr(self, "_opt_alt", {}))
+        o.update({k: c.isChecked() for k, c in self.cb.items()})
         o.update(rest_einzug=self.rest_einzug.isChecked(), raster=self.raster.isChecked(), textausr=self.textausr.currentData())
         return o
 
