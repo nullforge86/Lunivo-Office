@@ -17,7 +17,9 @@ from PySide6.QtGui import (
 from lunivo_writer.services.docx_reader import STYLE_PROP
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.editor import formen_katalog as K
 FORMEN = ["Rechteck", "Abgerundetes Rechteck", "Ellipse", "Dreieck", "Raute", "Pfeil nach rechts", "Stern", "Sprechblase", "Linie"]
+FORMEN += [n for n in K.namen() if n not in FORMEN]           # die ganze Galerie (Einfügen ▸ Formen), auch im Fenster „Form“
 
 
 def qimage_einfuegen(ed, img: QImage, alt: str = "", art: str | None = None, daten: dict | None = None) -> None:
@@ -92,6 +94,10 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
         p.drawPath(pfad.united(spitze))
     elif art == "Linie":
         p.drawLine(QPointF(r.left(), r.center().y()), QPointF(r.right(), r.center().y()))
+    elif K.hat(art):
+        if K.ist_linie(art):
+            p.setBrush(Qt.NoBrush)
+        p.drawPath(K.pfad(art, r))
     if text:
         p.setPen(QColor(Farbe.WEISS if QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
         f = p.font(); f.setPointSizeF(12); p.setFont(f)
@@ -102,6 +108,12 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
 
 # ---- WordArt --------------------------------------------------------------------------------------------------------
 WORDART_STILE = ["Verlauf", "Schatten", "Umriss", "Regenbogen", "Welle"]
+# Galerie „Formatvorlage“ (Einfügen ▸ WordArt ▾): (Name, Stil, Farbe) — eigene Zusammenstellung aus Lunivos Farben
+WORDART_VORGABEN = [("Schwarz", "Verlauf", Farbe.TINTE_DUNKEL), ("Blau, Verlauf", "Verlauf", Farbe.AKZENT_DUNKEL),
+                    ("Orange, Umriss", "Umriss", Farbe.ORANGE), ("Blau, Umriss", "Umriss", Farbe.BLAU), ("Gold", "Verlauf", "#f2b705"),
+                    ("Grau", "Verlauf", Farbe.GRAU), ("Grau mit Schatten", "Schatten", Farbe.GRAU), ("Schwarz mit Schatten", "Schatten", Farbe.TINTE_DUNKEL),
+                    ("Dunkelblau mit Schatten", "Schatten", "#1f3864"), ("Blau mit Schatten", "Schatten", Farbe.BLAU),
+                    ("Rot, Umriss", "Umriss", Farbe.ROT), ("Regenbogen", "Regenbogen", Farbe.AKZENT)]
 
 
 def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT) -> QImage:
@@ -143,53 +155,9 @@ DIAGRAMMARTEN = ["Säulen", "Balken", "Linie", "Kreis"]
 
 
 def diagramm_bild(art: str, titel: str, kategorien: list[str], reihen: dict[str, list[float]], b: int = 640, h: int = 400) -> QImage:
-    from PySide6.QtCharts import (
-        QBarCategoryAxis, QBarSeries, QBarSet, QChart, QChartView, QHorizontalBarSeries, QLineSeries, QPieSeries, QValueAxis,
-    )
-    ch = QChart()
-    ch.setTitle(titel)
-    ch.setAnimationOptions(QChart.NoAnimation)
-    if art == "Kreis":
-        s = QPieSeries()
-        erste = next(iter(reihen.values()), [])
-        for k, v in zip(kategorien, erste):
-            sl = s.append(f"{k} ({v:g})", float(v))
-            sl.setLabelVisible(True)
-        ch.addSeries(s)
-    elif art in ("Säulen", "Balken"):
-        s = QBarSeries() if art == "Säulen" else QHorizontalBarSeries()
-        for name, werte in reihen.items():
-            bs = QBarSet(name)
-            for v in werte:
-                bs.append(float(v))
-            s.append(bs)
-        ch.addSeries(s)
-        ax = QBarCategoryAxis(); ax.append(kategorien)
-        ay = QValueAxis()
-        from PySide6.QtCore import Qt as _Qt
-        ch.addAxis(ax, _Qt.AlignBottom if art == "Säulen" else _Qt.AlignLeft)
-        ch.addAxis(ay, _Qt.AlignLeft if art == "Säulen" else _Qt.AlignBottom)
-        s.attachAxis(ax); s.attachAxis(ay)
-    else:
-        from PySide6.QtCore import Qt as _Qt
-        ax = QBarCategoryAxis(); ax.append(kategorien); ay = QValueAxis()
-        ch.addAxis(ax, _Qt.AlignBottom); ch.addAxis(ay, _Qt.AlignLeft)
-        for name, werte in reihen.items():
-            ls = QLineSeries(); ls.setName(name)
-            for i, v in enumerate(werte):
-                ls.append(i, float(v))
-            ch.addSeries(ls)
-            ls.attachAxis(ax); ls.attachAxis(ay)
-    ch.legend().setVisible(art != "Kreis" or True)
-    view = QChartView(ch)
-    view.resize(b, h)
-    view.setRenderHint(QPainter.Antialiasing)
-    img = QImage(b, h, QImage.Format_ARGB32)
-    img.fill(QColor("white"))
-    p = QPainter(img)
-    view.render(p)
-    p.end()
-    return img
+    """``art``: Untertyp aus ``editor.diagramm.TYPEN`` oder einer der früheren Namen (Säulen, Balken, Linie, Kreis)."""
+    from lunivo_writer.editor import diagramm as D
+    return D.bild(art, titel, kategorien, reihen, b, h)
 
 
 # ---- Piktogramm -------------------------------------------------------------------------------------------------------
@@ -232,6 +200,32 @@ def formel_teile(text: str) -> list[tuple[str, str]]:
     if puffer:
         teile.append((puffer, "normal"))
     return teile
+
+
+# Galerie „Integriert“ (Einfügen ▸ Gleichung ▾): (Name, Formel in der einfachen Schreibweise von ``formel_teile``)
+GLEICHUNGEN = [("Kreisfläche", "A = \\pi r^2"),
+               ("Binomischer Lehrsatz", "(x + a)^n = \\sum_{k=0}^{n} C(n,k) x^k a^{n−k}"),
+               ("Summenentwicklung", "(1 + x)^n = 1 + nx/1! + n(n − 1)x^2/2! + …"),
+               ("Fourier-Reihe", "f(x) = a_0 + \\sum_{n=1}^{\\infty} (a_n cos(n\\pi x/L) + b_n sin(n\\pi x/L))"),
+               ("Satz des Pythagoras", "a^2 + b^2 = c^2"),
+               ("Quadratische Formel", "x = (−b \\pm sqrt(b^2 − 4ac)) / 2a"),
+               ("Taylor-Entwicklung", "e^x = 1 + x/1! + x^2/2! + x^3/3! + …,  −\\infty < x < \\infty")]
+
+
+def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
+    """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie)."""
+    d = QTextDocument(); d.setDefaultFont(QFont("DejaVu Serif", pt)); c = QTextCursor(d)
+    for t, a in formel_teile(text):
+        cf = QTextCharFormat(); cf.setFontItalic(True); cf.setForeground(QColor(farbe))
+        if a == "hoch":
+            cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
+        elif a == "tief":
+            cf.setVerticalAlignment(QTextCharFormat.AlignSubScript)
+        c.insertText(t, cf)
+    d.setDocumentMargin(2); d.setTextWidth(-1)
+    img = _leer(int(d.idealWidth()) + 8, int(d.size().height()) + 4)
+    p = QPainter(img); p.translate(4, 2); d.drawContents(p); p.end()
+    return img
 
 
 def formel_einfuegen(ed, text: str) -> None:
@@ -299,7 +293,7 @@ def schnelltabelle(ed, name: str) -> None:
 
 
 # ---- Deckblatt ----------------------------------------------------------------------------------------------------------------
-DECKBLATT_VORLAGEN = ["Schlicht", "Mit Linie", "Zentriert"]
+DECKBLATT_VORLAGEN = ["Schlicht", "Mit Linie", "Zentriert", "Farbband"]
 
 
 def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: str, datum: str) -> None:
@@ -314,6 +308,9 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
         bf.setAlignment(Qt.AlignHCenter if zentriert else Qt.AlignLeft)
         cf = QTextCharFormat()
         cf.setFontPointSize(pt); cf.setFontWeight(QFont.Bold if fett else QFont.Normal)
+        if vorlage == "Farbband" and fett:                  # Titel weiß auf farbigem Band über die ganze Breite
+            bf.setBackground(QColor(Farbe.AKZENT)); bf.setTopMargin(abstand); bf.setBottomMargin(18)
+            cf.setForeground(QColor(Farbe.WEISS))
         c.insertBlock(bf, cf)
         c.insertText(text, cf)
         if vorlage == "Mit Linie" and fett:
@@ -323,6 +320,21 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
     c.insertBlock(bf, QTextCharFormat())
     c.endEditBlock()
     ed.document().setModified(True)
+
+
+# ---- Objekt als Symbol ----------------------------------------------------------------------------------------------------------
+def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
+    """Dateisymbol mit Namen darunter (Einfügen ▸ Objekt ▸ Als Symbol anzeigen)."""
+    f = QFont(); f.setPointSizeF(9)
+    fm = QFontMetricsF(f)
+    zeilen = [fm.elidedText(name, Qt.ElideMiddle, breite - 8)]
+    img = _leer(breite, symbol.height() + 12 + int(fm.height()) * len(zeilen))
+    p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+    p.drawImage((breite - symbol.width()) // 2, 4, symbol)
+    p.setFont(f); p.setPen(QColor(Farbe.TINTE_DUNKEL))
+    p.drawText(QRectF(0, symbol.height() + 8, breite, fm.height() + 2), Qt.AlignHCenter, zeilen[0])
+    p.end()
+    return img
 
 
 # ---- Text aus Datei ---------------------------------------------------------------------------------------------------------------
@@ -352,8 +364,27 @@ def text_aus_datei(ed, pfad: str):
 
 
 # ---- Datum und Uhrzeit ----------------------------------------------------------------------------------------------------------------
-DATUMSFORMATE = ["dd.MM.yyyy", "d. MMMM yyyy", "dddd, d. MMMM yyyy", "dd.MM.yy", "yyyy-MM-dd", "HH:mm", "HH:mm:ss",
-                 "dd.MM.yyyy HH:mm", "d. MMMM yyyy, HH:mm 'Uhr'"]
+DATUMSFORMATE = ["dd.MM.yyyy", "dddd, d. MMMM yyyy", "d. MMMM yyyy", "dd.MM.yy", "yyyy-MM-dd", "d. MMM yy", "dd.MM.", "MMMM yy",
+                 "MMM yy", "dd.MM.yyyy HH:mm", "dd.MM.yyyy HH:mm:ss", "HH:mm", "HH:mm:ss", "d. MMMM yyyy, HH:mm 'Uhr'"]
+# Sprache → (Beschriftung, Formate) für das Fenster „Datum und Uhrzeit“
+DATUM_SPRACHEN = {
+    "de_DE": ("Deutsch (Deutschland)", DATUMSFORMATE),
+    "de_AT": ("Deutsch (Österreich)", DATUMSFORMATE),
+    "de_CH": ("Deutsch (Schweiz)", DATUMSFORMATE),
+    "en_US": ("Englisch (USA)", ["M/d/yyyy", "dddd, MMMM d, yyyy", "MMMM d, yyyy", "M/d/yy", "yyyy-MM-dd", "d-MMM-yy", "M.d.yyyy",
+                                 "MMM. d, yy", "d MMMM yyyy", "MMMM yy", "MMM-yy", "M/d/yyyy h:mm AP", "M/d/yyyy h:mm:ss AP", "h:mm AP",
+                                 "h:mm:ss AP", "HH:mm"]),
+    "en_GB": ("Englisch (Großbritannien)", ["dd/MM/yyyy", "dddd, d MMMM yyyy", "d MMMM yyyy", "dd/MM/yy", "yyyy-MM-dd", "d-MMM-yy",
+                                            "dd.MM.yyyy", "d MMM. yy", "MMMM yy", "MMM-yy", "dd/MM/yyyy HH:mm", "dd/MM/yyyy HH:mm:ss",
+                                            "HH:mm", "HH:mm:ss"]),
+}
+
+
+def datum_feldanweisung(fmt: str) -> str:
+    """Qt-Datumsformat → Word-Feld (DATE, bei reinen Uhrzeiten TIME) für „Automatisch aktualisieren“."""
+    bild = fmt.replace("AP", "AM/PM").replace('"', "'")
+    art = "TIME" if not any(z in fmt for z in "dMy") else "DATE"
+    return f'{art} \\@ "{bild}"'
 
 
 def datum_text(fmt: str, sprache: str = "de_DE") -> str:
@@ -377,11 +408,11 @@ def initiale(ed, zeilen: int = 3) -> bool:
     return True
 
 
-def textfeld(ed, text: str = "Text hier eingeben") -> None:
+def textfeld(ed, text: str = "Text hier eingeben", breite: int = 50) -> None:
     """Ein Textfeld als einzellige Tabelle mit Rahmen (frei schwebende Textfelder kennt Qt nicht)."""
     tf = QTextTableFormat()
     tf.setCellPadding(8); tf.setCellSpacing(0); tf.setBorder(1.5); tf.setBorderCollapse(True)
-    tf.setWidth(QTextLength(QTextLength.PercentageLength, 50))
+    tf.setWidth(QTextLength(QTextLength.PercentageLength, breite))
     tf.setBorderBrush(QBrush(QColor("#1f3864")))
     t = ed.textCursor().insertTable(1, 1, tf)
     t.cellAt(0, 0).firstCursorPosition().insertText(text)

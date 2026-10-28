@@ -200,7 +200,8 @@ def querverweis_ziele(ed) -> list[dict]:
     return z
 
 
-def _marke_sichern(ed, ziel: dict) -> str:
+def marke_sichern(ed, ziel: dict) -> str:
+    """Name der Textmarke am Ziel (eine Überschrift bekommt dafür eine Textmarke „Ziel_<Absatz>“)."""
     if "name" in ziel:
         return ziel["name"]
     blk = ed.document().findBlockByNumber(ziel["block"])
@@ -217,7 +218,7 @@ def _marke_sichern(ed, ziel: dict) -> str:
 
 def querverweis_einfuegen(ed, ziel: dict, wie: str) -> None:
     """wie: "text" (Überschrift/Beschriftung als Text), "nummer" (Bezeichnung und Nummer) oder "seite" (Seitenzahl)."""
-    name = _marke_sichern(ed, ziel)
+    name = marke_sichern(ed, ziel)
     if wie == "seite":
         from lunivo_writer.editor.verzeichnis import _seiten
         text = "Seite " + str(_seiten(ed, [ziel["pos"]])[0])

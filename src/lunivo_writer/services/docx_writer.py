@@ -241,7 +241,7 @@ class _Writer:
             sp.remove(alt)
         if p.zeilennummern:
             ln = OxmlElement("w:lnNumType")
-            ln.set(qn("w:countBy"), "1"); ln.set(qn("w:restart"), "continuous")
+            ln.set(qn("w:countBy"), "1"); ln.set(qn("w:restart"), "newPage" if p.zeilennummern_neu == "seite" else "continuous")
             anker = sp.find(qn("w:pgBorders"))
             if anker is None:
                 anker = sp.find(qn("w:pgMar"))
@@ -600,7 +600,7 @@ class _Writer:
         href = cf.anchorHref() if cf.isAnchor() else ""
         self._textmarken(para, [] if href else (list(cf.anchorNames()) if cf.isAnchor() else []))
         if href:
-            hl = self._hyperlink(para, href)
+            hl = self._hyperlink(para, href, cf.toolTip())
             parent = hl
         note = cf.stringProperty(P_NOTE) if cf.hasProperty(P_NOTE) else ""
         if note:
@@ -719,8 +719,10 @@ class _Writer:
         parent.append(r)
         return Run(r, para)
 
-    def _hyperlink(self, para, href: str):
+    def _hyperlink(self, para, href: str, tipp: str = ""):
         h = OxmlElement("w:hyperlink")
+        if tipp:
+            h.set(qn("w:tooltip"), tipp)                        # QuickInfo aus dem Fenster „Hyperlink“
         if href.startswith("#"):
             h.set(qn("w:anchor"), href[1:])
         else:

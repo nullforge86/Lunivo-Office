@@ -11,25 +11,24 @@ def bauen(register: dict) -> dict:
     alt = {g["name"]: g for g in tab["gruppen"]}
     knopf = {k["name"]: k for g in tab["gruppen"] for k in g.get("knoepfe", [])}
 
-    def mit(name, **kw):
-        return dict(knopf[name], **kw)
-
-    spalten = mit("Spalten", gross=True)
-    menue = list(spalten["menue"])
-    if not any(e.get("name") == "Vier" for e in menue):                  # 1 bis 4 Spalten
-        menue.insert(3, {"name": "Vier", "tun": "spaltenSetzen:[4]", "haken": "w.spaltenJetzt"})
-    spalten["menue"] = menue
+    def mit(_name, **kw):
+        return {s: w for s, w in dict(knopf[_name], **kw).items() if w is not None}         # None nimmt einen Schlüssel weg
 
     designs = {"name": "Designs", "reihenfolge": True, "knoepfe": [
-        mit("Designs", gross=True), mit("Farben", text=True), mit("Schriftarten", symbol="Stil", text=True), mit("Effekte", gross=True)]}
-    raender = {"name": "Ränder", "felder": "raender", "reihenfolge": True, "knoepfe": [mit("Ränder", gross=True)]}
+        mit("Designs", gross=True, tun=None, klappe="designsKlappe"), mit("Farben", text=True, tun=None, klappe="farbenKlappe"),
+        mit("Schriftarten", symbol="Stil", text=True, tun=None, klappe="schriftartenKlappe"),
+        mit("Effekte", gross=True, tun=None, klappe="effekteKlappe")]}
+    raender = {"name": "Ränder", "felder": "raender", "reihenfolge": True, "knoepfe": [mit("Ränder", gross=True, menue=None, klappe="raenderKlappe")]}
     einrichten = {"name": "Seite einrichten", "pfeil": alt["Seite einrichten"].get("pfeil"), "reihenfolge": True, "knoepfe": [
-        mit("Ausrichtung", gross=True), mit("Größe", gross=True), spalten, mit("Textrichtung", gross=True),
-        mit("Umbrüche", text=True), mit("Zeilennummern", text=True)]}
+        mit("Ausrichtung", name="Orientierung", gross=True, menue=None, klappe="ausrichtungKlappe"),
+        mit("Größe", gross=True, menue=None, klappe="groesseKlappe"), mit("Spalten", gross=True, menue=None, klappe="spaltenKlappe"),
+        mit("Textrichtung", gross=True, tun=None, klappe="textrichtungKlappe"),
+        mit("Umbrüche", text=True, menue=None, klappe="umbruecheKlappe"), mit("Zeilennummern", text=True, tun=None, klappe="zeilennummernKlappe")]}
     hintergrund = {"name": "Seitenhintergrund", "reihenfolge": True, "knoepfe": [
-        mit("Seitenfarbe", gross=True), mit("Seitenränder", gross=True), mit("Wasserzeichen", gross=True)]}
+        mit("Seitenfarbe", gross=True, tun=None, klappe="seitenfarbeKlappe"), mit("Seitenränder", gross=True, tun="seitenrahmen"),
+        _k("netz", "Genko-Einstellung", "genkoEinstellung", True)]}         # Wasserzeichen: im Menü Seitenfarbe; Genko (japanisches Manuskriptraster) fehlt Lunivo noch und bleibt grau
     anordnen = {"name": "Anordnen", "reihenfolge": True, "knoepfe": [
-        mit("Textfluss", gross=True), mit("Ausrichten", gross=True), mit("Gruppieren", text=True), mit("Drehen", text=True),
+        mit("Textfluss", gross=True), mit("Ausrichten", gross=True, tun=None, klappe="ausrichtenKlappe"), mit("Gruppieren", text=True), mit("Drehen", text=True),
         _k("objekte", "Auswahlbereich", "objekteWaehlen", True)]}
     absatz = {"name": "Absatz", "pfeil": alt["Absatz"].get("pfeil"), "reihenfolge": True, "knoepfe": [
         mit("Einzug", text=True), mit("Absatzabstand", text=True)]}                 # die Silbentrennung steht unter Schreibhilfe

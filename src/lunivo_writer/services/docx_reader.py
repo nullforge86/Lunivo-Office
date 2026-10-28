@@ -664,7 +664,9 @@ class _Reader:
             elif tag == qn("w:hyperlink"):
                 h = Hyperlink(el, para)
                 url = h.url or ("#" + h.fragment if h.fragment else "")
+                alt_tipp, self._link_tipp = getattr(self, "_link_tipp", ""), el.get(qn("w:tooltip")) or ""
                 had |= self._laufe(el, para, cursor, href=url)
+                self._link_tipp = alt_tipp
             elif tag in (qn("w:ins"), qn("w:del")):
                 alt = self._aend
                 self._aend = ("ins" if tag == qn("w:ins") else "del", el.get(qn("w:author")) or "", el.get(qn("w:date")) or "")
@@ -827,6 +829,8 @@ class _Reader:
         if href:
             cfmt.setAnchor(True)
             cfmt.setAnchorHref(href)
+            if getattr(self, "_link_tipp", ""):
+                cfmt.setToolTip(self._link_tipp)
             cfmt.setForeground(QBrush(QColor("#0563C1")))
             cfmt.setFontUnderline(True)
         for child in run._r:
@@ -1255,8 +1259,10 @@ class _Reader:
             c = bg.get(qn("w:color"))
             if c and c.lower() not in ("auto", "ffffff"):
                 ps.color = "#" + c.lower()
-        if sect._sectPr.find(qn("w:lnNumType")) is not None:
+        ln = sect._sectPr.find(qn("w:lnNumType"))
+        if ln is not None:
             ps.zeilennummern = True
+            ps.zeilennummern_neu = "seite" if ln.get(qn("w:restart")) == "newPage" else ""
         co = sect._sectPr.find(qn("w:cols"))
         if co is not None:
             try:

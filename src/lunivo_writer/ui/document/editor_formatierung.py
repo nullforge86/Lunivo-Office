@@ -645,10 +645,13 @@ class FormatierungBaustein:
         return True
 
 
-    def insert_link(self, url: str, text: str | None = None) -> None:
+    def insert_link(self, url: str, text: str | None = None, tipp: str = "") -> None:
+        """Link an der Schreibmarke; mit Markierung wird sie zum Link. ``tipp``: QuickInfo beim Überfahren."""
         cur = self.textCursor()
         f = QTextCharFormat()
         f.setAnchor(True); f.setAnchorHref(url)
+        if tipp:
+            f.setToolTip(tipp)
         f.setForeground(QBrush(QColor("#0563C1"))); f.setFontUnderline(True)
         if cur.hasSelection():
             cur.mergeCharFormat(f)

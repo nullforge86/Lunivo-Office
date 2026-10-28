@@ -484,9 +484,42 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if self._frei_taste(e):
             return
         folge = self._folge_vorher(e)
+        teilen = self._teilen_vorher(e)
         self._taste(e)
+        if teilen is not None:
+            self._teilen_danach(teilen)
         if folge:
             self._folge_danach(*folge)
+
+
+    def _teilen_vorher(self, e):
+        """Enter teilt einen Absatz: Absatznummer, wenn der Absatz einen Seiten-/Spaltenumbruch davor oder ein Abschnittsende trägt."""
+        from lunivo_writer.editor.abschnitte import B_ABSCHNITT
+        from lunivo_writer.editor.zusatz import B_SPALTE
+        if e.key() not in (Qt.Key_Return, Qt.Key_Enter) or self.isReadOnly() or (e.modifiers() & ~Qt.KeypadModifier):
+            return None
+        bf = self.textCursor().blockFormat()
+        if bf.pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore or bf.hasProperty(B_SPALTE) or bf.hasProperty(B_ABSCHNITT):
+            return self.textCursor().blockNumber()
+        return None
+
+
+    def _teilen_danach(self, nr: int) -> None:
+        """Qt kopiert das Absatzformat in den neuen Absatz. Der Umbruch davor gilt nur für den ersten Teil (sonst macht jedes Enter ein
+        neues Blatt), das Abschnittsende nur für den letzten (sonst entstünde ein zweiter Abschnitt)."""
+        from lunivo_writer.editor.abschnitte import B_ABSCHNITT
+        from lunivo_writer.editor.zusatz import B_SPALTE
+        doc = self.document()
+        erster, zweiter = doc.findBlockByNumber(nr), doc.findBlockByNumber(nr + 1)
+        if not zweiter.isValid() or self.textCursor().blockNumber() != nr + 1:
+            return
+        c2 = QTextCursor(zweiter); c2.joinPreviousEditBlock()
+        bf = zweiter.blockFormat()
+        bf.setPageBreakPolicy(bf.pageBreakPolicy() & ~QTextFormat.PageBreak_AlwaysBefore); bf.clearProperty(B_SPALTE)
+        c2.setBlockFormat(bf)
+        if erster.blockFormat().hasProperty(B_ABSCHNITT) and zweiter.blockFormat().hasProperty(B_ABSCHNITT):
+            c1 = QTextCursor(erster); bf1 = erster.blockFormat(); bf1.clearProperty(B_ABSCHNITT); c1.setBlockFormat(bf1)
+        c2.endEditBlock()
 
 
     def focusOutEvent(self, e) -> None:
