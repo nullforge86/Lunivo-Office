@@ -311,6 +311,8 @@ class EinfuegenBefehle:
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Bild aus Datei einfügen …", self.bild, symbol=self._sym("bild"))
+        m.eintrag("Bildschirmfoto …", self.screenshot, symbol=self._sym("bildfoto"))
+        m.eintrag("Piktogramm …", self.piktogramm, symbol=self._sym("piktogramm"))
         return m
 
 

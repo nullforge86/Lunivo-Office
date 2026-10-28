@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QVBoxLayout,
 )
 
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.editor import tabfuell
 from lunivo_writer.editor.indexeintrag import Eintrag
 from lunivo_writer.editor.verzeichnis import TOC_FUELL, TOC_VORGABE
@@ -30,7 +31,7 @@ def _titel(text: str, feld) -> QLabel:
     return t
 
 
-class InhaltsverzeichnisDialog(QDialog):
+class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
     """Links Füllzeichen, Ebenen anzeigen, Seitenzahlen anzeigen/rechtsbündig, Hyperlinks verwenden; rechts die Seitenansicht."""
 
     def __init__(self, parent=None, opt: dict | None = None):
@@ -63,11 +64,18 @@ class InhaltsverzeichnisDialog(QDialog):
         rechts.addWidget(self.vorschau, 1)
         h.addLayout(rechts, 1)
         v.addWidget(box)
+        self._teile = h
         fussleiste(self, v)
         for w in (self.seitenzahlen, self.rechts, self.links):
             w.toggled.connect(self._auffrischen)
         self.fuell.currentIndexChanged.connect(self._auffrischen); self.ebenen.valueChanged.connect(self._auffrischen)
         self._auffrischen()
+
+    def kompakt_machen(self) -> None:
+        """In der Seitenleiste: die Seitenansicht unter den Einstellungen."""
+        from PySide6.QtWidgets import QBoxLayout
+        self._teile.setDirection(QBoxLayout.TopToBottom)
+        self.vorschau.setMinimumWidth(0)
 
     def ergebnis(self) -> dict:
         return {"fuell": self.fuell.currentData() or "", "ebenen": self.ebenen.value(), "seitenzahlen": self.seitenzahlen.isChecked(),
@@ -101,7 +109,7 @@ class InhaltsverzeichnisDialog(QDialog):
             y += fm.height() + 6
 
 
-class IndexeintragDialog(QDialog):
+class IndexeintragDialog(PanelFaehig, QDialog):
     """Haupt- und Untereintrag mit Sortierung, Optionen (Querverweis „Siehe“, aktuelle Seite, Seitenbereich über eine Textmarke),
     Seitenzahlenformat fett/kursiv; „Markieren“, „Alles markieren“, „Schließen“. Meldet jeden Klick mit ``markieren``."""
 
@@ -174,7 +182,7 @@ class IndexeintragDialog(QDialog):
         self.knopf_markieren.setEnabled(bool(self.haupt.text().strip()))
 
 
-class NummerierungDialog(QDialog):
+class NummerierungDialog(PanelFaehig, QDialog):
     """„Beschriftungsnummerierung“: Schreibweise der Nummer. Kapitelnummern kennt Lunivo noch nicht (grau)."""
 
     def __init__(self, parent=None, zahl: str = "arabisch"):
@@ -196,7 +204,7 @@ class NummerierungDialog(QDialog):
         return self.format.currentData()
 
 
-class BeschriftungDialog(QDialog):
+class BeschriftungDialog(PanelFaehig, QDialog):
     """„Beschriftung“ wie die Vorlage: Feld mit „Tabelle 1“ zum Weiterschreiben, Bezeichnung, Position (nur bei markiertem Objekt),
     „Bezeichnung nicht in der Beschriftung verwenden“, Neues Etikett / Bezeichnung löschen / Nummerierung.
 
@@ -273,7 +281,7 @@ class BeschriftungDialog(QDialog):
                 "ohne": self.ohne.isChecked(), "zahl": self.zahl}
 
 
-class QuerverweisDialog(QDialog):
+class QuerverweisDialog(PanelFaehig, QDialog):
     """„Querverweis“ wie die Vorlage: Verweistyp, Verweisen auf, „Als Hyperlink einfügen“, „Oben/unten einschließen“, die Liste
     „Für welche …“; „Einfügen“ meldet ``einfuegen(ziel, wie, link, oben_unten)`` und lässt das Fenster offen, „Abbrechen“ wird
     danach zu „Schließen“."""
