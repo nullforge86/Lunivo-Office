@@ -132,7 +132,9 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Seitenzahlen | `editor/seitenzahl.py` | `VORGABEN`, `MUSTER`, `seitenzahl_setzen(page, ort, ausrichtung, muster)`, `seitenzahlen_entfernen` (arbeiten auf `PageSettings`) |
 | Formenkatalog | `editor/formen_katalog.py` | `KATEGORIEN` (Linie … Legenden), `pfad(name, r)`, `ist_linie`, `namen`; `editor.einfuegen.form_bild` zeichnet damit |
 | Gleichungen, WordArt | `editor/einfuegen.py` | `GLEICHUNGEN`, `formel_bild`, `WORDART_VORGABEN`, `DECKBLATT_VORLAGEN` |
-| Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog` — ändern das Dokument nicht selbst |
+| Diagramme | `editor/diagramm.py` | `TYPEN` (Säule … Kombination, Gruppe ohne Untertyp bleibt grau), `bild(untertyp, titel, kategorien, reihen)` → `QImage` über QtCharts in einer eigenen `QGraphicsScene`; `ALT` für frühere Namen |
+| Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog`, `HyperlinkDialog` (Datei/Webseite, Stelle im Dokument, E-Mail; `ergebnis()`), `ObjektDialog` (aus Datei, als Symbol; `art()`) — ändern das Dokument nicht selbst |
+| Fenster (Daten) | `ui/dialogs/einfuegen_dialoge.py` | `DiagrammDialog` mit `DiagrammDatenDialog`, `DatumDialog` (Formate, Sprache, „Automatisch aktualisieren“ → Feld), `WordArtDialog`, `FormelDialog` |
 
 ## Befehle nach Aufgaben
 

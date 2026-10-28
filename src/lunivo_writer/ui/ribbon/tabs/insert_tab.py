@@ -38,6 +38,7 @@ def bauen(register: dict) -> dict:
         {"name": "Text", "reihenfolge": True, "knoepfe": [
             nimm("Textfeld", gross=True, klappe="textfeldKlappe"), nimm("WordArt", gross=True, tun=None, klappe="wordartKlappe"),
             nimm("Datum und Uhrzeit", gross=True),
+            _k("objekte", "Objekt", "objekt", text=True, klappe="objektKlappe"), _k("ausdatei", "Datei-Objekt", "dateiObjekt", text=True),
             nimm("Initiale", text=True), _k("baustein", "Schnellbausteine", text=True, klappe="schnellbausteineKlappe")]},
         {"name": "Symbole", "reihenfolge": True, "knoepfe": [
             nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True, klappe="gleichungKlappe"),

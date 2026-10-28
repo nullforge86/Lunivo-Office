@@ -134,52 +134,140 @@ class WordArtDialog(QDialog, VorschauMixin):
         self._zeige(self.bild())
 
 
-class DiagrammDialog(QDialog, VorschauMixin):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setWindowTitle("Diagramm")
-        self.resize(560, 640)
-        v = QVBoxLayout(self); f = QFormLayout(); v.addLayout(f)
-        self.art = QComboBox(); self.art.addItems(E.DIAGRAMMARTEN); self.titel = QLineEdit("Diagramm")
-        f.addRow("Art", self.art); f.addRow("Titel", self.titel)
-        self.tab = QTableWidget(4, 3)
-        self.tab.setHorizontalHeaderLabels(["Kategorie", "Reihe 1", "Reihe 2"])
-        for r, (k, a, b) in enumerate((("Nord", 12, 9), ("Süd", 7, 11), ("Ost", 15, 6), ("West", 9, 13))):
-            for c, val in enumerate((k, a, b)):
-                self.tab.setItem(r, c, QTableWidgetItem(str(val)))
-        v.addWidget(QLabel("Daten (Zeilen und Spalten lassen sich überschreiben):")); v.addWidget(self.tab)
-        z = QHBoxLayout()
-        for text, fn in (("Zeile +", lambda: self.tab.setRowCount(self.tab.rowCount() + 1)),
-                         ("Zeile −", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1)))):
-            b = QPushButton(text); b.clicked.connect(fn); b.clicked.connect(self.aktualisieren); z.addWidget(b)
-        v.addLayout(z)
-        self._vorschau_bauen(v); self.vorschau.setMinimumHeight(220); v.addWidget(_ok(self))
-        self.art.currentTextChanged.connect(self.aktualisieren); self.titel.textChanged.connect(self.aktualisieren)
-        self.tab.itemChanged.connect(self.aktualisieren)
-        self.aktualisieren()
+class DiagrammDatenDialog(QDialog):
+    """Titel und Daten des Diagramms (Unterfenster von „Diagramm einfügen“): erste Spalte Rubriken, weitere Spalten Datenreihen."""
 
-    def daten(self):
-        kat, reihen = [], {"Reihe 1": [], "Reihe 2": []}
+    def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
+        super().__init__(parent)
+        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        self.setWindowTitle("Daten bearbeiten")
+        v = QVBoxLayout(self)
+        f = QFormLayout(); self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); f.addRow("&Titel:", self.titel); v.addLayout(f)
+        self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
+        self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
+        for r, k in enumerate(kategorien):
+            self.tab.setItem(r, 0, QTableWidgetItem(k))
+            for c, werte in enumerate(reihen.values(), 1):
+                self.tab.setItem(r, c, QTableWidgetItem(f"{werte[r]:g}" if r < len(werte) else "0"))
+        v.addWidget(self.tab)
+        z = QHBoxLayout()
+        for text, fn in (("Zeile hinzufügen", lambda: self.tab.setRowCount(self.tab.rowCount() + 1)),
+                         ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
+                         ("Reihe hinzufügen", self._reihe_dazu),
+                         ("Reihe entfernen", lambda: self.tab.setColumnCount(max(2, self.tab.columnCount() - 1)))):
+            b = QPushButton(text); b.setMinimumHeight(34); b.clicked.connect(fn); z.addWidget(b)
+        v.addLayout(z)
+        fussleiste(self, v)
+        self.resize(520, 360)
+
+    def _reihe_dazu(self) -> None:
+        n = self.tab.columnCount()
+        self.tab.setColumnCount(n + 1); self.tab.setHorizontalHeaderItem(n, QTableWidgetItem(f"Datenreihe {n}"))
+
+    def daten(self) -> tuple[str, list[str], dict[str, list[float]]]:
+        kat, reihen = [], {}
+        for c in range(1, self.tab.columnCount()):
+            kopf = self.tab.horizontalHeaderItem(c)
+            reihen[kopf.text() if kopf else f"Datenreihe {c}"] = []
         for r in range(self.tab.rowCount()):
             k = self.tab.item(r, 0)
             kat.append(k.text() if k else "")
-            for c, name in ((1, "Reihe 1"), (2, "Reihe 2")):
+            for c, name in enumerate(reihen, 1):
                 it = self.tab.item(r, c)
                 try:
                     reihen[name].append(float((it.text() if it else "0").replace(",", ".")))
                 except ValueError:
                     reihen[name].append(0.0)
-        return kat, reihen
+        return self.titel.text(), kat, reihen
+
+
+class DiagrammDialog(QDialog):
+    """„Diagramm einfügen“ wie in der Vorlage: links die Diagrammarten, oben die Untertypen als Bildchen, darunter Name und große Vorschau.
+    „Daten bearbeiten …“ öffnet Titel und Werte als Unterfenster."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        from PySide6.QtCore import QSize
+        from PySide6.QtWidgets import QButtonGroup, QFrame, QToolButton
+        from lunivo_writer.editor import diagramm as D
+        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.widgets import icons
+        self.D = D
+        self.setWindowTitle("Diagramm einfügen")
+        self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
+        v = QVBoxLayout(self)
+        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        self.arten = QListWidget(); self.arten.setIconSize(QSize(20, 20)); self.arten.setFixedWidth(170); self.arten.setAccessibleName("Diagrammart")
+        for gruppe, sym, unter in D.TYPEN:
+            it = QListWidgetItem(icons.icon(sym, 20), gruppe if gruppe != "Kombination" else "Kombination …")
+            if not unter:
+                it.setFlags(Qt.NoItemFlags); it.setToolTip("Kursdiagramme kann Lunivo noch nicht zeichnen.")
+            self.arten.addItem(it)
+        h.addWidget(self.arten)
+        rechts = QVBoxLayout(); rechts.setContentsMargins(12, 10, 12, 10)
+        self.unter_zeile = QHBoxLayout(); self.unter_zeile.setSpacing(6); self.unter_zeile.addStretch(1)
+        rechts.addLayout(self.unter_zeile)
+        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setStyleSheet("color: palette(midlight);"); rechts.addWidget(linie)
+        self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
+        rechts.addWidget(self.name)
+        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumSize(560, 340)
+        self.vorschau.setStyleSheet("background: white; border: 1px solid " + Farbe.GRAU_HELL + ";")
+        rechts.addWidget(self.vorschau, 1)
+        h.addLayout(rechts, 1)
+        v.addWidget(rahmen, 1)
+        daten = QPushButton("&Daten bearbeiten …"); daten.setMinimumHeight(34); daten.clicked.connect(self._daten)
+        fussleiste(self, v, daten)
+        self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
+        self._QToolButton = QToolButton
+        self.untertyp = "saeule_gruppiert"
+        self.arten.currentRowChanged.connect(self._gruppe)
+        self.arten.setCurrentRow(0)
+
+    def _gruppe(self, zeile: int) -> None:
+        from PySide6.QtCore import QSize
+        from PySide6.QtGui import QIcon, QPixmap
+        while self.unter_zeile.count() > 1:
+            w = self.unter_zeile.takeAt(0).widget()
+            if w is not None:
+                self._knoepfe.removeButton(w); w.deleteLater()
+        unter = self.D.TYPEN[zeile][2] if 0 <= zeile < len(self.D.TYPEN) else []
+        for i, (schl, name) in enumerate(unter):
+            img = self.D.bild(schl, "", self.kategorien, self.reihen, 150, 110, legende=False)
+            b = self._QToolButton(); b.setCheckable(True); b.setToolTip(name); b.setAccessibleName(name)
+            b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(QSize(64, 48)); b.setFixedSize(76, 60)
+            b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
+            self._knoepfe.addButton(b); self.unter_zeile.insertWidget(i, b)
+        if unter:
+            self._knoepfe.buttons()[0].setChecked(True)
+            self._waehle(unter[0][0])
+
+    def _waehle(self, untertyp: str) -> None:
+        self.untertyp = untertyp
+        self.name.setText(self.D.NAMEN.get(untertyp, ""))
+        self.aktualisieren()
+
+    def _daten(self) -> None:
+        from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
+        d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
+
+        def fertig():
+            self.titel_text, self.kategorien, self.reihen = d.daten()
+            self._gruppe(self.arten.currentRow())
+            for b in self._knoepfe.buttons():
+                b.setChecked(b.toolTip() == self.D.NAMEN.get(self.untertyp))
+            self._waehle(self.untertyp)
+        zeige_unter(self, d, fertig)
 
     def bild(self):
-        kat, reihen = self.daten()
-        return E.diagramm_bild(self.art.currentText(), self.titel.text(), kat, reihen)
+        return self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen)
+
+    def daten(self) -> dict:
+        return {"art": self.untertyp, "titel": self.titel_text, "kategorien": self.kategorien, "reihen": self.reihen}
 
     def aktualisieren(self, *_):
-        try:
-            self._zeige(self.bild())
-        except Exception:
-            pass
+        from PySide6.QtGui import QPixmap
+        img = self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen, 620, 360)
+        self.vorschau.setPixmap(QPixmap.fromImage(img))
 
 
 class PiktogrammDialog(QDialog):
@@ -254,30 +342,50 @@ class DeckblattDialog(QDialog):
 
 
 class DatumDialog(PanelFaehig, QDialog):
-    def __init__(self, parent):
+    """Wie die Vorlage: links „Verfügbare Formate“, rechts „Sprache“, darunter „Automatisch aktualisieren“ (dann als Datumsfeld)."""
+
+    def __init__(self, parent, sprache: str = "de_DE"):
         super().__init__(parent)
+        from PySide6.QtWidgets import QCheckBox, QGridLayout
+        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         self.setWindowTitle("Datum und Uhrzeit")
         v = QVBoxLayout(self)
-        self.sprache = QComboBox(); self.sprache.addItems(["Deutsch", "Englisch"])
-        v.addWidget(QLabel("Sprache:")); v.addWidget(self.sprache)
-        self.liste = QListWidget(); v.addWidget(self.liste)
+        g = QGridLayout(); g.setHorizontalSpacing(12)
+        self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate"); self.liste.setMinimumWidth(220)
+        self.sprache = QComboBox(); self.sprache.setMinimumHeight(34); self.sprache.setAccessibleName("Sprache")
+        for k, (t, _f) in E.DATUM_SPRACHEN.items():
+            self.sprache.addItem(t, k)
+        self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))
+        self.auto = QCheckBox("&Automatisch aktualisieren")
+        self.auto.setToolTip("Das Datum wird als Feld gespeichert; Textprogramme rechnen es beim Öffnen neu (in DOCX).")
+        t1 = QLabel("&Verfügbare Formate:"); t1.setBuddy(self.liste)
+        t2 = QLabel("&Sprache:"); t2.setBuddy(self.sprache)
+        g.addWidget(t1, 0, 0); g.addWidget(self.liste, 1, 0, 2, 1)
+        g.addWidget(t2, 0, 1); g.addWidget(self.sprache, 1, 1, Qt.AlignTop); g.addWidget(self.auto, 2, 1, Qt.AlignBottom)
+        g.setRowStretch(2, 1)
+        v.addLayout(g)
+        fussleiste(self, v)
         self.sprache.currentIndexChanged.connect(self._fuellen)
         self.liste.itemDoubleClicked.connect(lambda _: self.accept())
-        v.addWidget(_ok(self))
         self._fuellen()
 
-    def _loc(self):
-        return "de_DE" if self.sprache.currentIndex() == 0 else "en_GB"
+    def _loc(self) -> str:
+        return self.sprache.currentData()
 
-    def _fuellen(self):
+    def _fuellen(self, *_):
         self.liste.clear()
-        for fmt in E.DATUMSFORMATE:
+        for fmt in E.DATUM_SPRACHEN[self._loc()][1]:
             it = QListWidgetItem(E.datum_text(fmt, self._loc())); it.setData(Qt.UserRole, fmt); self.liste.addItem(it)
         self.liste.setCurrentRow(0)
 
     def ergebnis(self) -> str:
         it = self.liste.currentItem()
         return it.text() if it else ""
+
+    def feldanweisung(self) -> str | None:
+        """Bei „Automatisch aktualisieren“ die Feldanweisung (DATE/TIME), sonst None."""
+        it = self.liste.currentItem()
+        return E.datum_feldanweisung(it.data(Qt.UserRole)) if it and self.auto.isChecked() else None
 
 
 class BausteinDialog(QDialog):

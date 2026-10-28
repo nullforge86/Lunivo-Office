@@ -25,7 +25,78 @@ class EinfuegenBefehle:
 
 
     def hyperlink(self, k=None):
-        self.w.insert_link()
+        """Fenster „Hyperlink“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse)."""
+        e = self.ed
+        if not e:
+            return
+        import json
+        from lunivo_writer.editor import verweise
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import HyperlinkDialog
+        try:
+            adressen = json.loads(str(self.w.settings.get("einfuegen/mail_zuletzt", "") or "[]"))
+        except ValueError:
+            adressen = []
+        markiert = e.textCursor().selectedText().replace("\u2029", " ").strip()
+        d = HyperlinkDialog(self.w, text=markiert, ziele=verweise.querverweis_ziele(e), ordner=self.w.settings.get("last_dir", ""),
+                            adressen=[a for a in adressen if isinstance(a, str)])
+        if not d.exec():
+            return
+        r = d.ergebnis()
+        if r["art"] == "dokument":
+            href = "#" + verweise.marke_sichern(e, r["ziel"])
+        else:
+            href = r["href"]
+        if r["art"] == "mail":
+            liste = [r["adresse"]] + [a for a in adressen if a != r["adresse"]]
+            self.w.settings.set("einfuegen/mail_zuletzt", json.dumps(liste[:10], ensure_ascii=False))
+        c = e.textCursor()
+        if c.hasSelection() and r["text"] != markiert:
+            c.removeSelectedText(); e.setTextCursor(c)
+        e.insert_link(href, r["text"], r["tipp"])
+        e.document().setModified(True)
+
+
+    def objekt(self, k=None, als_symbol=False):
+        """Fenster „Objekt einfügen“: Inhalt einer Datei (Text, Bild) oder ein Dateisymbol mit Link."""
+        e = self.ed
+        if not e:
+            return
+        import os
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import ObjektDialog
+        d = ObjektDialog(self.w, als_symbol=bool(als_symbol), ordner=self.w.settings.get("last_dir", ""))
+        if not d.exec():
+            return
+        pfad, art = d.datei.text().strip(), d.art()
+        if art == "bild" and e.insert_image(pfad):
+            return
+        if art == "text":
+            from lunivo_writer.editor import einfuegen as E
+            from lunivo_writer.models.report import DocumentIOError
+            try:
+                self.w._show_report(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
+                return
+            except DocumentIOError:
+                pass                                            # nicht lesbar: dann als Symbol
+        from PySide6.QtCore import QFileInfo, QUrl
+        from PySide6.QtWidgets import QFileIconProvider
+        from lunivo_writer.editor import einfuegen as E
+        symbol = QFileIconProvider().icon(QFileInfo(pfad)).pixmap(48, 48).toImage()
+        self._bild_einfuegen(E.datei_symbol_bild(os.path.basename(pfad), symbol), f"Datei: {os.path.basename(pfad)}")
+        c = e.textCursor(); c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
+        f = c.charFormat(); f.setAnchor(True); f.setAnchorHref(QUrl.fromLocalFile(pfad).toString()); f.setToolTip(pfad)
+        c.mergeCharFormat(f)
+
+
+    def dateiObjekt(self, k=None):
+        self.objekt(k, als_symbol=True)
+
+
+    def menue_objektKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Objekt …", self.objekt, symbol=self._sym("objekte"))
+        m.eintrag("Text aus Datei …", self.textAusDatei, symbol=self._sym("ausdatei"))
+        return m
 
 
     def kopfFussZeigen(self, k=None):
@@ -583,7 +654,7 @@ class EinfuegenBefehle:
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDialog
             d = DiagrammDialog(self.w)
             if d.exec():
-                self._bild_einfuegen(d.bild(), f"{d.art.currentText()}diagramm: {d.titel.text()}", "diagramm", {"art": d.art.currentText(), "titel": d.titel.text()})
+                self._bild_einfuegen(d.bild(), f"Diagramm ({d.name.text()}): {d.titel_text}", "diagramm", d.daten())
 
 
     def piktogramm(self, k=None):
@@ -696,11 +767,16 @@ class EinfuegenBefehle:
 
     def datumUhrzeit(self, k=None):
         if self.ed:
+            from lunivo_writer.editor import felder as F
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import DatumDialog
-            d = DatumDialog(self.w)
+            d = DatumDialog(self.w, self.w.settings.get("einfuegen/datum_sprache", "de_DE") or "de_DE")
             if d.exec() and d.ergebnis():
-                self.ed.textCursor().insertText(d.ergebnis())
-                self.ed.document().setModified(True)
+                self.w.settings.set("einfuegen/datum_sprache", d.sprache.currentData())
+                if d.feldanweisung():
+                    F.feld_einfuegen(self.ed, d.feldanweisung(), d.ergebnis())
+                else:
+                    self.ed.textCursor().insertText(d.ergebnis())
+                    self.ed.document().setModified(True)
 
 
     def textbaustein(self, k=None):

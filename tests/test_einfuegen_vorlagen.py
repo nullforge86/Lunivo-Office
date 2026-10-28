@@ -169,3 +169,99 @@ def test_gleichungen_formen_deckblatt(fenster):
     b.deckblattVorlage("Farbband")
     assert e.document().firstBlock().next().text() == "[Titel des Dokuments]"
     assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)
+
+
+def test_diagramm_alle_arten_und_fenster(app):
+    from lunivo_writer.editor import diagramm as D
+    from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDialog
+    for _g, _s, unter in D.TYPEN:
+        for u, _n in unter:
+            img = D.bild(u, "T", D.BEISPIEL_KATEGORIEN, D.BEISPIEL_REIHEN, 200, 140)
+            assert not img.isNull() and img.pixelColor(100, 70).name() != "#000000"
+    d = DiagrammDialog(None)
+    kurs = d.arten.item([g for g, _s, _u in D.TYPEN].index("Kurs"))
+    assert not kurs.flags() & __import__("PySide6.QtCore", fromlist=["Qt"]).Qt.ItemIsEnabled      # grau, nicht versteckt
+    d.arten.setCurrentRow(1)                                               # Linie
+    assert d.untertyp == "linie" and d.name.text() == "Linie" and len(d._knoepfe.buttons()) == 3
+    assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN
+
+
+def test_datum_fenster_mit_feld(app):
+    from lunivo_writer.ui.dialogs.einfuegen_dialoge import DatumDialog
+    d = DatumDialog(None, "en_US")
+    assert d.sprache.currentData() == "en_US" and "/" in d.ergebnis()
+    assert d.feldanweisung() is None
+    d.auto.setChecked(True)
+    assert d.feldanweisung() == 'DATE \\@ "M/d/yyyy"'
+    d.sprache.setCurrentIndex(0); d.liste.setCurrentRow(d.liste.count() - 3)          # HH:mm
+    assert d.feldanweisung().startswith("TIME")
+
+
+def test_hyperlink_fenster(app, tmp_path):
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import HyperlinkDialog
+    H = HyperlinkDialog
+    assert H.adresse_zu_href("www.beispiel.de") == "https://www.beispiel.de"
+    assert H.adresse_zu_href("/tmp/a b.pdf") == "file:///tmp/a b.pdf"
+    d = H(None, text="hier", ziele=[{"art": "Überschrift", "text": "Kapitel 1", "pos": 0, "block": 3}], ordner=str(tmp_path))
+    assert not d.ok.isEnabled()
+    d.adresse.setText("www.beispiel.de"); d.tipp = "Zur Seite"
+    assert d.ok.isEnabled() and d.ergebnis() == {"art": "datei", "href": "https://www.beispiel.de", "text": "hier", "tipp": "Zur Seite"}
+    d.art_waehlen(2); assert not d.ok.isEnabled()
+    d.mail.setText("kay@example.org"); d.betreff.setText("Hallo Welt")
+    r = d.ergebnis()
+    assert r["href"].startswith("mailto:kay@example.org?subject=Hallo") and d.ok.isEnabled()
+    d.art_waehlen(1)
+    kapitel = d.stellen.topLevelItem(1).child(0)
+    d.stellen.setCurrentItem(kapitel)
+    assert d.ergebnis()["ziel"]["block"] == 3
+
+
+def test_link_quickinfo_bleibt_im_docx(app, tmp_path):
+    from PySide6.QtGui import QTextDocument
+    from lunivo_writer.models.page import PageSettings
+    from lunivo_writer.services.docx_reader import read_docx
+    from lunivo_writer.services.docx_writer import write_docx
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    e = DocumentEditor()
+    e.insert_link("https://example.org", "Beispiel", "Mehr dazu")
+    out = str(tmp_path / "l.docx")
+    write_docx(out, e.document(), PageSettings(), {})
+    qd, _p, _m, _r = read_docx(out)
+    c = QTextCursor(qd); c.setPosition(3)
+    assert c.charFormat().anchorHref() == "https://example.org" and c.charFormat().toolTip() == "Mehr dazu"
+    assert isinstance(qd, QTextDocument)
+
+
+def test_objekt_fenster(app, tmp_path):
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import ObjektDialog
+    txt = tmp_path / "notiz.txt"; txt.write_text("Hallo")
+    zip_ = tmp_path / "paket.zip"; zip_.write_bytes(b"PK")
+    d = ObjektDialog(None)
+    assert not d.neu.isEnabled() and not d.ok.isEnabled()
+    d.datei.setText(str(txt)); assert d.art() == "text" and d.ok.isEnabled()
+    d.datei.setText(str(zip_)); assert d.art() == "symbol"
+    d.datei.setText(str(txt)); d.symbol.setChecked(True); assert d.art() == "symbol"
+
+
+def test_objekt_und_hyperlink_befehle(fenster, tmp_path, monkeypatch):
+    from lunivo_writer.editor import verweise
+    from lunivo_writer.ui.dialogs import einfuegen_fenster as EF
+    e = fenster.current_editor()
+    zip_ = tmp_path / "paket.zip"; zip_.write_bytes(b"PK")
+
+    def objekt_ok(self):
+        self.datei.setText(str(zip_))
+        return True
+    monkeypatch.setattr(EF.ObjektDialog, "exec", objekt_ok)
+    fenster.befehle.dateiObjekt()
+    c = e.textCursor(); c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
+    assert c.charFormat().isImageFormat() and c.charFormat().anchorHref().endswith("paket.zip")
+    e.insertPlainText("\nKapitel")
+    def link_ok(self):
+        self.art_waehlen(2); self.mail.setText("a@b.de")
+        return True
+    monkeypatch.setattr(EF.HyperlinkDialog, "exec", link_ok)
+    fenster.befehle.hyperlink()
+    assert "a@b.de" in e.toPlainText()
+    assert "a@b.de" in fenster.settings.get("einfuegen/mail_zuletzt", "")
+    assert verweise.lesezeichen_liste(e) == []

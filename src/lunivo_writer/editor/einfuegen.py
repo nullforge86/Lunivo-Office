@@ -155,53 +155,9 @@ DIAGRAMMARTEN = ["Säulen", "Balken", "Linie", "Kreis"]
 
 
 def diagramm_bild(art: str, titel: str, kategorien: list[str], reihen: dict[str, list[float]], b: int = 640, h: int = 400) -> QImage:
-    from PySide6.QtCharts import (
-        QBarCategoryAxis, QBarSeries, QBarSet, QChart, QChartView, QHorizontalBarSeries, QLineSeries, QPieSeries, QValueAxis,
-    )
-    ch = QChart()
-    ch.setTitle(titel)
-    ch.setAnimationOptions(QChart.NoAnimation)
-    if art == "Kreis":
-        s = QPieSeries()
-        erste = next(iter(reihen.values()), [])
-        for k, v in zip(kategorien, erste):
-            sl = s.append(f"{k} ({v:g})", float(v))
-            sl.setLabelVisible(True)
-        ch.addSeries(s)
-    elif art in ("Säulen", "Balken"):
-        s = QBarSeries() if art == "Säulen" else QHorizontalBarSeries()
-        for name, werte in reihen.items():
-            bs = QBarSet(name)
-            for v in werte:
-                bs.append(float(v))
-            s.append(bs)
-        ch.addSeries(s)
-        ax = QBarCategoryAxis(); ax.append(kategorien)
-        ay = QValueAxis()
-        from PySide6.QtCore import Qt as _Qt
-        ch.addAxis(ax, _Qt.AlignBottom if art == "Säulen" else _Qt.AlignLeft)
-        ch.addAxis(ay, _Qt.AlignLeft if art == "Säulen" else _Qt.AlignBottom)
-        s.attachAxis(ax); s.attachAxis(ay)
-    else:
-        from PySide6.QtCore import Qt as _Qt
-        ax = QBarCategoryAxis(); ax.append(kategorien); ay = QValueAxis()
-        ch.addAxis(ax, _Qt.AlignBottom); ch.addAxis(ay, _Qt.AlignLeft)
-        for name, werte in reihen.items():
-            ls = QLineSeries(); ls.setName(name)
-            for i, v in enumerate(werte):
-                ls.append(i, float(v))
-            ch.addSeries(ls)
-            ls.attachAxis(ax); ls.attachAxis(ay)
-    ch.legend().setVisible(art != "Kreis" or True)
-    view = QChartView(ch)
-    view.resize(b, h)
-    view.setRenderHint(QPainter.Antialiasing)
-    img = QImage(b, h, QImage.Format_ARGB32)
-    img.fill(QColor("white"))
-    p = QPainter(img)
-    view.render(p)
-    p.end()
-    return img
+    """``art``: Untertyp aus ``editor.diagramm.TYPEN`` oder einer der früheren Namen (Säulen, Balken, Linie, Kreis)."""
+    from lunivo_writer.editor import diagramm as D
+    return D.bild(art, titel, kategorien, reihen, b, h)
 
 
 # ---- Piktogramm -------------------------------------------------------------------------------------------------------
@@ -366,6 +322,21 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
     ed.document().setModified(True)
 
 
+# ---- Objekt als Symbol ----------------------------------------------------------------------------------------------------------
+def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
+    """Dateisymbol mit Namen darunter (Einfügen ▸ Objekt ▸ Als Symbol anzeigen)."""
+    f = QFont(); f.setPointSizeF(9)
+    fm = QFontMetricsF(f)
+    zeilen = [fm.elidedText(name, Qt.ElideMiddle, breite - 8)]
+    img = _leer(breite, symbol.height() + 12 + int(fm.height()) * len(zeilen))
+    p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+    p.drawImage((breite - symbol.width()) // 2, 4, symbol)
+    p.setFont(f); p.setPen(QColor(Farbe.TINTE_DUNKEL))
+    p.drawText(QRectF(0, symbol.height() + 8, breite, fm.height() + 2), Qt.AlignHCenter, zeilen[0])
+    p.end()
+    return img
+
+
 # ---- Text aus Datei ---------------------------------------------------------------------------------------------------------------
 def text_aus_datei(ed, pfad: str):
     from lunivo_writer.services import file_service as formats
@@ -393,8 +364,27 @@ def text_aus_datei(ed, pfad: str):
 
 
 # ---- Datum und Uhrzeit ----------------------------------------------------------------------------------------------------------------
-DATUMSFORMATE = ["dd.MM.yyyy", "d. MMMM yyyy", "dddd, d. MMMM yyyy", "dd.MM.yy", "yyyy-MM-dd", "HH:mm", "HH:mm:ss",
-                 "dd.MM.yyyy HH:mm", "d. MMMM yyyy, HH:mm 'Uhr'"]
+DATUMSFORMATE = ["dd.MM.yyyy", "dddd, d. MMMM yyyy", "d. MMMM yyyy", "dd.MM.yy", "yyyy-MM-dd", "d. MMM yy", "dd.MM.", "MMMM yy",
+                 "MMM yy", "dd.MM.yyyy HH:mm", "dd.MM.yyyy HH:mm:ss", "HH:mm", "HH:mm:ss", "d. MMMM yyyy, HH:mm 'Uhr'"]
+# Sprache → (Beschriftung, Formate) für das Fenster „Datum und Uhrzeit“
+DATUM_SPRACHEN = {
+    "de_DE": ("Deutsch (Deutschland)", DATUMSFORMATE),
+    "de_AT": ("Deutsch (Österreich)", DATUMSFORMATE),
+    "de_CH": ("Deutsch (Schweiz)", DATUMSFORMATE),
+    "en_US": ("Englisch (USA)", ["M/d/yyyy", "dddd, MMMM d, yyyy", "MMMM d, yyyy", "M/d/yy", "yyyy-MM-dd", "d-MMM-yy", "M.d.yyyy",
+                                 "MMM. d, yy", "d MMMM yyyy", "MMMM yy", "MMM-yy", "M/d/yyyy h:mm AP", "M/d/yyyy h:mm:ss AP", "h:mm AP",
+                                 "h:mm:ss AP", "HH:mm"]),
+    "en_GB": ("Englisch (Großbritannien)", ["dd/MM/yyyy", "dddd, d MMMM yyyy", "d MMMM yyyy", "dd/MM/yy", "yyyy-MM-dd", "d-MMM-yy",
+                                            "dd.MM.yyyy", "d MMM. yy", "MMMM yy", "MMM-yy", "dd/MM/yyyy HH:mm", "dd/MM/yyyy HH:mm:ss",
+                                            "HH:mm", "HH:mm:ss"]),
+}
+
+
+def datum_feldanweisung(fmt: str) -> str:
+    """Qt-Datumsformat → Word-Feld (DATE, bei reinen Uhrzeiten TIME) für „Automatisch aktualisieren“."""
+    bild = fmt.replace("AP", "AM/PM").replace('"', "'")
+    art = "TIME" if not any(z in fmt for z in "dMy") else "DATE"
+    return f'{art} \\@ "{bild}"'
 
 
 def datum_text(fmt: str, sprache: str = "de_DE") -> str:
