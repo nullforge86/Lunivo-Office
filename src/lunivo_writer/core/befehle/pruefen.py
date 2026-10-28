@@ -279,9 +279,9 @@ class PruefenBefehle:
 
 
     def geheZu(self, k=None, art="Seite"):
+        """„Gehe zu“ (Strg+G): der Reiter im Feld „Suchen und ersetzen“ der linken Seitenleiste."""
         if self.ed:
-            from lunivo_writer.ui.dialogs.gehe_zu_dialog import GeheZuDialog
-            GeheZuDialog(self.w, self.ed, art).exec()
+            self.w.find_dialog_show("Gehe zu", art)
 
 
     def vollbild(self, k=None): self.w.a_fullscreen.trigger()

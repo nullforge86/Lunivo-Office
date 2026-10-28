@@ -1,11 +1,9 @@
 """Bearbeiten, Einfügen, Seite."""
 from __future__ import annotations
 
-from lunivo_writer.editor.zusatz import abstand_davor_px
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QApplication, QInputDialog, QMessageBox
-from lunivo_writer.models.page import px_to_mm
 from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.dialogs.dokument_dialoge import PageSetupDialog
 from lunivo_writer.core.farben import Farbe
@@ -41,21 +39,10 @@ class BearbeitenBaustein:
         e = self.current_editor()
         if not e:
             return
-        from lunivo_writer.editor import absatzopt, seitenfluss
-        from lunivo_writer.ui.baukasten.absatz_dialog import AbsatzDialog
-        from lunivo_writer.ui.baukasten.tabstopp_dialog import aus_block
+        from lunivo_writer.ui.baukasten.absatz_dialog import AbsatzDialog, aus_block
         bf = e.textCursor().blockFormat()
-        lh = bf.lineHeight() / 100 if bf.lineHeightType() == 1 and bf.lineHeight() else 1.0
-        lart = {2: "genau", 3: "mindestens"}.get(int(bf.lineHeightType()), "faktor")
-        lpt = round(bf.lineHeight() * 0.75, 1) if lart != "faktor" else 12.0
-        al = bf.alignment()
         rtl = bf.layoutDirection() == Qt.RightToLeft
-        d = AbsatzDialog(self, {
-            "ausr": "mitte" if al & Qt.AlignHCenter else "rechts" if al & Qt.AlignRight else "block" if al & Qt.AlignJustify else "links",
-            "rtl": rtl, "einzug": px_to_mm(bf.leftMargin()), "rechts": px_to_mm(bf.rightMargin()),
-            "erste": px_to_mm(bf.textIndent()), "vor": abstand_davor_px(bf) * 0.75, "nach": bf.bottomMargin() * 0.75, "zeilen": lh,
-            "zeilen_art": lart, "zeilen_pt": lpt, "ebene": bf.headingLevel(), "opt": absatzopt.lesen(bf),
-            "umbruch": seitenfluss.ist_manuell(bf), "tabs": aus_block(bf)})
+        d = AbsatzDialog(self, aus_block(bf))
         from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
         if ausfuehren(d):
             w = d.werte()

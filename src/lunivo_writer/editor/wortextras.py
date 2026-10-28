@@ -126,7 +126,76 @@ def smart_anordnen(ed) -> int:
     return leerzeichen_bereinigen(ed) + leere_loeschen(ed) + einzug_zwei_zeichen(ed)
 
 
-AKTIONEN = [("Absätze neu anordnen", absaetze_neu_anordnen), ("Smart-Anordnen", smart_anordnen),
-            ("Zeilenumbruch in Absatz (Return) umwandeln", zeilenumbruch_in_return),
-            ("Absatzeinzug um 2 Zeichen", einzug_zwei_zeichen), ("Leerzeichen bereinigen", leerzeichen_bereinigen),
-            ("Leere Absätze einfügen", leere_einfuegen), ("Leere Absätze löschen", leere_loeschen)]
+def fuehrende_leerzeichen_loeschen(ed) -> int:
+    """Leerzeichen und Tabs am Anfang der Absätze entfernen."""
+    def arbeit(doc, bloecke):
+        n = 0
+        for b in reversed(bloecke):
+            t = b.text()
+            k = len(t) - len(t.lstrip(" \t\u00a0\u3000"))
+            if k and t.strip():
+                c = QTextCursor(doc); c.setPosition(b.position()); c.setPosition(b.position() + k, QTextCursor.KeepAnchor)
+                c.removeSelectedText(); n += 1
+        return n
+    return _schritt(ed, arbeit)
+
+
+def zeilenumbrueche_loeschen(ed) -> int:
+    """Manuelle Zeilenumbrüche (Umschalt+Enter) entfernen; die Zeilen laufen zusammen, zwischen zwei Wörtern bleibt ein Leerzeichen."""
+    def arbeit(doc, bloecke):
+        n = 0
+        for b in reversed(bloecke):
+            while (i := b.text().rfind(ZEILENUMBRUCH)) >= 0:
+                t = b.text()
+                luecke = 0 < i < len(t) - 1 and not t[i - 1].isspace() and not t[i + 1].isspace()
+                c = QTextCursor(doc); c.setPosition(b.position() + i); c.setPosition(b.position() + i + 1, QTextCursor.KeepAnchor)
+                c.insertText(" " if luecke else ""); n += 1
+                b = doc.findBlock(b.position())
+        return n
+    return _schritt(ed, arbeit)
+
+
+def leerabsatz_modus_wechseln(ed) -> int:
+    """Trennung durch leere Absätze umschalten: Stehen zwischen den Absätzen leere Absätze, verschwinden sie; sonst kommt zwischen
+    je zwei Absätze einer."""
+    bloecke = _bloecke(ed)
+    zwischen = any(_leer(b) and b.previous().isValid() and not _leer(b.previous()) and b.next().isValid() and not _leer(b.next())
+                   for b in bloecke)
+    return leere_loeschen(ed) if zwischen else leere_einfuegen(ed)
+
+
+def einzug_in_leerzeichen(ed) -> int:
+    """Den Erstzeileneinzug eines Absatzes in Leerzeichen am Absatzanfang umwandeln (gleich breit), der Einzug selbst wird 0."""
+    from PySide6.QtGui import QFontMetricsF
+
+    def arbeit(doc, bloecke):
+        n = 0
+        for b in bloecke:
+            bf = b.blockFormat()
+            if bf.textIndent() <= 0 or _leer(b):
+                continue
+            c = QTextCursor(b)
+            c.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
+            breite = QFontMetricsF(c.charFormat().font()).horizontalAdvance(" ") or 4.0
+            anzahl = max(1, round(bf.textIndent() / breite))
+            bf.setTextIndent(0); QTextCursor(b).setBlockFormat(bf)
+            c = QTextCursor(b); c.insertText(" " * anzahl); n += 1
+        return n
+    return _schritt(ed, arbeit)
+
+
+# Das Menü am Knopf „Wort-Extras“ in der Anordnung der Vorlage: (Text, Symbol, Funktion), "-" = Trennlinie,
+# („Löschen“, Symbol, [Untereinträge]) = Untermenü
+MENUE = [("Absätze neu anordnen", "weNeu", absaetze_neu_anordnen),
+         ("Smart-Anordnen", "weSmart", smart_anordnen),
+         ("Leerabsatz-Trennung umschalten", "weLeerModus", leerabsatz_modus_wechseln),
+         "-",
+         ("Löschen", "weLoeschen", [("Leere Absätze löschen", "weLeerWeg", leere_loeschen),
+                                    ("Führende Leerzeichen löschen", "weFuehrend", fuehrende_leerzeichen_loeschen),
+                                    ("Leerzeichen löschen", "weLeerz", leerzeichen_bereinigen),
+                                    ("Zeilenumbrüche löschen", "weZeilenWeg", zeilenumbrueche_loeschen)]),
+         ("Zeilenumbruch in Absatzmarke umwandeln", "weReturn", zeilenumbruch_in_return),
+         "-",
+         ("Absatzeinzug um 2 Zeichen", "weEinzug", einzug_zwei_zeichen),
+         ("Absatzeinzug in Leerzeichen umwandeln", "weEinzugLeer", einzug_in_leerzeichen),
+         ("Leere Absätze einfügen", "weLeerEin", leere_einfuegen)]

@@ -28,9 +28,10 @@ class LinienZeile(QWidget):
 
     angeklickt = Signal()
 
-    def __init__(self, text: str, art: str = "einfach", breite_pt: float = 1.5, farbe: str | None = None, parent=None):
+    def __init__(self, text: str, art: str = "einfach", breite_pt: float = 1.5, farbe: str | None = None, parent=None, maler=None):
+        """``maler(painter, x0, y, x1, farbe)`` zeichnet statt einer Rahmenlinie etwas anderes, zum Beispiel eine Unterstreichungsart."""
         super().__init__(parent)
-        self._text, self._art, self._breite, self._farbe = text, art, breite_pt, farbe
+        self._text, self._art, self._breite, self._farbe, self._maler = text, art, breite_pt, farbe, maler
         self.setMouseTracking(True); self.setCursor(Qt.PointingHandCursor)
         self.setMinimumHeight(30); self.setMinimumWidth(190 if text else 150)
         self._hover = False
@@ -56,13 +57,16 @@ class LinienZeile(QWidget):
             p.drawText(QRectF(rand, 0, 70, self.height()), Qt.AlignVCenter | Qt.AlignLeft, self._text)
         x1 = rand + (80 if self._text else 0)
         farbe = self._farbe or pal.color(QPalette.WindowText).name()
+        if self._maler is not None:
+            self._maler(p, x1, self.height() / 2, self.width() - rand, farbe)
+            return
         Linie(farbe, self._breite, self._art).zeichne(p, x1, self.height() / 2, self.width() - rand, self.height() / 2, 96 / 72)
 
 
-def linien_menue_zeile(menue, text: str, art: str, breite_pt: float, aktion) -> LinienZeile:
+def linien_menue_zeile(menue, text: str, art: str, breite_pt: float, aktion, maler=None) -> LinienZeile:
     """Hängt eine ``LinienZeile`` als Eintrag in ein Menü; ein Klick ruft ``aktion`` und schließt das Menü."""
     from PySide6.QtWidgets import QWidgetAction
-    z = LinienZeile(text, art, breite_pt)
+    z = LinienZeile(text, art, breite_pt, maler=maler)
     a = QWidgetAction(menue); a.setDefaultWidget(z); menue.addAction(a)
     z.angeklickt.connect(lambda: (aktion(), menue.hide(), [m.hide() for m in QApplication.topLevelWidgets() if m.isVisible() and m.inherits("QMenu")]))
     return z

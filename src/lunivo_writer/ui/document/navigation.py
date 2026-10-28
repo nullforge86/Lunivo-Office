@@ -7,10 +7,10 @@ from __future__ import annotations
 import datetime
 
 from PySide6.QtCore import QTimer, Qt, Signal
-from PySide6.QtGui import QActionGroup, QFont, QTextDocument
+from PySide6.QtGui import QActionGroup, QFont
 from PySide6.QtWidgets import (
-    QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, QPlainTextEdit, QPushButton, QScrollArea,
-    QStackedWidget, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu, QPlainTextEdit, QPushButton, QScrollArea,
+    QStackedWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen
@@ -24,7 +24,6 @@ SORTIERUNG = (("neu", "Neueste zuerst"), ("alt", "Älteste zuerst"), ("az", "Ver
               ("oben", "Von oben"), ("unten", "Von unten"))
 ANZEIGE = (("offen", "Offen"), ("geloest", "Gelöst"), ("alle", "Alle"))
 SCHRIFT = (("klein", "Klein", 9.0), ("mittel", "Mittelgroß", 10.5), ("gross", "Groß", 13.0))
-GRENZE = 5000                                                              # mehr Treffer zählen wir nicht
 
 
 def _datum(iso: str) -> str:
@@ -149,105 +148,44 @@ class NavigationPanel(QWidget):
         return {"kommentare": lambda: len(self._karten), "aenderungen": lambda: len(self._aend_karten),
                 "noten": lambda: len(self._noten_karten)}.get(key, lambda: 0)()
 
-    # ---- Suchen und ersetzen ----------------------------------------------------------------------------------------
+    # ---- Suchen und ersetzen (Reiter Suchen, Ersetzen, Gehe zu — siehe suchen_feld.py) ----------------------------------------------------
     def _bau_suche(self) -> PanelRahmen:
+        from lunivo_writer.ui.document.suchen_feld import SuchenFeld
         r = PanelRahmen(TITEL["suche"])
-        self.suchfeld = QLineEdit(); self.suchfeld.setPlaceholderText("Suchen"); self.suchfeld.setClearButtonEnabled(True)
-        self.ersatzfeld = QLineEdit(); self.ersatzfeld.setPlaceholderText("Ersetzen durch")
-        for f in (self.suchfeld, self.ersatzfeld):
-            f.setMinimumHeight(34); r.inhalt.addWidget(f)
-        zeile = QHBoxLayout()
-        self.treffer = QLabel("Keine Suchergebnisse"); self.treffer.setStyleSheet("color: palette(mid);")
-        zeile.addWidget(self.treffer, 1)
-        self.hoch = QToolButton(); self.hoch.setText("▲"); self.hoch.setToolTip("Vorheriger Treffer"); self.hoch.setAutoRaise(True)
-        self.runter = QToolButton(); self.runter.setText("▼"); self.runter.setToolTip("Nächster Treffer"); self.runter.setAutoRaise(True)
-        for b in (self.hoch, self.runter):
-            b.setFixedSize(30, 30); zeile.addWidget(b)
-        r.inhalt.addLayout(zeile)
-        knoepfe = QHBoxLayout()
-        self.ersetzen = QPushButton("Ersetzen"); self.alle_ersetzen = QPushButton("Alle ersetzen")
-        for b in (self.ersetzen, self.alle_ersetzen):
-            b.setMinimumHeight(32); knoepfe.addWidget(b)
-        knoepfe.addStretch(1)
-        r.inhalt.addLayout(knoepfe)
-        self.gross = QCheckBox("Groß-/Kleinschreibung beachten"); self.ganz = QCheckBox("Nur ganze Wörter")
-        r.inhalt.addWidget(self.gross); r.inhalt.addWidget(self.ganz)
-        r.inhalt.addStretch(1)
-        self.suchfeld.textChanged.connect(lambda _t: self._zaehlen())
-        self.gross.toggled.connect(lambda _a: self._zaehlen()); self.ganz.toggled.connect(lambda _a: self._zaehlen())
-        self.suchfeld.returnPressed.connect(lambda: self._weiter(False))
-        self.runter.clicked.connect(lambda: self._weiter(False)); self.hoch.clicked.connect(lambda: self._weiter(True))
-        self.ersetzen.clicked.connect(self._ersetzen_eins); self.alle_ersetzen.clicked.connect(self._ersetzen_alle)
+        self.suchen_feld = SuchenFeld(self.get_editor, self.unterfenster)
+        self.suchen_feld.schliessen.connect(self.hide)
+        r.inhalt.addWidget(self.suchen_feld, 1)
+        # Kurznamen für Hauptfenster und Tests
+        f = self.suchen_feld
+        self.suchfeld, self.ersatzfeld, self.treffer, self.gross, self.ganz = f.suchfeld, f.ersatzfeld, f.treffer, f.gross, f.ganz
         return r
 
-    def suche_zeigen(self, text: str = "") -> None:
-        """Das Feld öffnen, die Markierung (oder ``text``) einsetzen und in das Suchfeld springen."""
+    def unterfenster(self, d) -> bool:
+        """Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu."""
+        from lunivo_writer.ui.baukasten.zusatz_panel import ausfuehren_im_stapel
+        return ausfuehren_im_stapel(self.stapel, d, self.width() - 36, max(300, self.height() - 140))
+
+    def suche_zeigen(self, text: str = "", reiter: str = "Suchen", element: str = "") -> None:
+        """Das Feld öffnen, die Markierung (oder ``text``) einsetzen und in das Suchfeld springen; ``reiter``: Suchen, Ersetzen oder Gehe zu."""
         ed = self.get_editor()
-        if not text and ed is not None and ed.textCursor().hasSelection():
-            text = ed.textCursor().selectedText().replace(" ", " ")
+        if not text and reiter != "Gehe zu" and ed is not None and ed.textCursor().hasSelection():
+            text = ed.textCursor().selectedText().replace("\u2029", " ")
         if text:
             self.suchfeld.setText(text)
         self.show(); self.zeige_tab("suche")
-        self.suchfeld.setFocus(); self.suchfeld.selectAll()
-
-    def _treffer_starts(self, ed) -> list[int]:
-        text = self.suchfeld.text()
-        if not text:
-            return []
-        flags = QTextDocument.FindFlag(0)
-        if self.gross.isChecked():
-            flags |= QTextDocument.FindCaseSensitively
-        if self.ganz.isChecked():
-            flags |= QTextDocument.FindWholeWords
-        doc, pos, out = ed.document(), 0, []
-        while len(out) < GRENZE:
-            c = doc.find(text, pos, flags)
-            if c.isNull():
-                break
-            out.append(c.selectionStart())
-            pos = max(c.selectionEnd(), pos + 1)
-        return out
+        self.suchen_feld.zeige(reiter, element)
 
     def _zaehlen(self) -> None:
-        ed = self.get_editor()
-        if ed is None or not self.suchfeld.text():
-            self.treffer.setText("Keine Suchergebnisse")
-            if ed is not None:
-                ed.set_suchtreffer([])
-            return
-        starts = self._treffer_starts(ed)
-        n = len(self.suchfeld.text())
-        ed.set_suchtreffer([(s, s + n) for s in starts])                # alle Treffer im Text farbig
-        if not starts:
-            self.treffer.setText("Keine Suchergebnisse"); return
-        sel = ed.textCursor()
-        nr = sum(1 for s in starts if s < sel.selectionStart()) + (1 if sel.hasSelection() and sel.selectionStart() in starts else 0)
-        self.treffer.setText(f"{nr} von {len(starts)}" if nr else f"{len(starts)} Treffer")
+        self.suchen_feld.zaehlen()
 
     def _weiter(self, rueckwaerts: bool) -> None:
-        ed = self.get_editor()
-        if ed is None or not self.suchfeld.text():
-            return
-        ok = ed.find_text(self.suchfeld.text(), rueckwaerts, self.gross.isChecked(), self.ganz.isChecked())
-        if ok:
-            ed.ensureCursorVisible()
-            self._zaehlen()
-        else:
-            self.treffer.setText("Keine Suchergebnisse")
+        self.suchen_feld.weitersuchen(rueckwaerts)
 
     def _ersetzen_eins(self) -> None:
-        ed = self.get_editor()
-        if ed is not None and self.suchfeld.text():
-            if not ed.replace_current(self.suchfeld.text(), self.ersatzfeld.text(), self.gross.isChecked()):
-                self._weiter(False)                       # nichts Passendes markiert: erst zum nächsten Treffer
-                return
-            self._weiter(False)
+        self.suchen_feld.ersetzen_eins()
 
     def _ersetzen_alle(self) -> None:
-        ed = self.get_editor()
-        if ed is not None and self.suchfeld.text():
-            n = ed.replace_all(self.suchfeld.text(), self.ersatzfeld.text(), self.gross.isChecked(), self.ganz.isChecked())
-            self.treffer.setText(f"{n} Ersetzung(en)" if n else "Keine Suchergebnisse")
+        self.suchen_feld.ersetzen_alle()
 
     # ---- Kommentare --------------------------------------------------------------------------------------------------
     def _bau_kommentare(self) -> PanelRahmen:

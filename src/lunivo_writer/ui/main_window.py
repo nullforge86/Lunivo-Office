@@ -172,7 +172,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         self.a_paste_plain = A("Einfügen ohne Formatierung", self.paste_plain, "Ctrl+Shift+V")
         self.a_select_all = A("Alles auswählen", lambda: self._ed(lambda e: e.selectAll()), "Ctrl+A")
         self.a_find = A("Suchen …", self.find_dialog_show, "Ctrl+F")
-        self.a_replace = A("Ersetzen …", self.find_dialog_show, "Ctrl+H")
+        self.a_replace = A("Ersetzen …", lambda: self.find_dialog_show("Ersetzen"), "Ctrl+H")
         self.a_tabs = A("Tabstopps …", self.tabstopp_dialog)
         self.a_goto = A("Gehe zu …", self.befehle.geheZu, "Ctrl+G")
 

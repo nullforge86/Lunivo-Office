@@ -1,6 +1,5 @@
 import pytest
 from lunivo_writer.editor import gehe_zu as G
-from lunivo_writer.ui.dialogs.gehe_zu_dialog import GeheZuDialog
 from lunivo_writer.ui.document.document_editor import DocumentEditor
 
 
@@ -12,10 +11,10 @@ def ed(app):
 def test_zeile_und_ueberschrift(ed):
     ed.setPlainText("Eins\nZwei\nDrei")
     assert G.zeilenstart(ed, 2) == 5
-    d = GeheZuDialog(None, ed, "Zeile")
-    d.nummer.setValue(3)
-    d.springen()
+    G.springen(ed, G.ziel(ed, "Zeile", "3"))
     assert ed.textCursor().blockNumber() == 2
+    assert G.ziel(ed, "Zeile", "-1") == G.zeilenstart(ed, 2) and G.ziel(ed, "Zeile", "", -1) == G.zeilenstart(ed, 2)
+    assert G.ziel(ed, "Zeile", "9") is None
 
 
 def test_listen_leer(ed):

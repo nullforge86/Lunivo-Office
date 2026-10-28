@@ -263,6 +263,11 @@ def _unterstrich(p: QPainter, strecken: list[tuple[float, float]], art: str, gru
     p.restore()
 
 
+def unter_zeichnen(p: QPainter, x0: float, y: float, x1: float, art: str, farbe, groesse: float = 11.0) -> None:
+    """Eine Unterstreichungsart als Linie von ``x0`` bis ``x1`` in Höhe ``y`` (für Auswahllisten wie das Menü am Knopf „Unterstrichen“)."""
+    _unterstrich(p, [(x0, x1)], art, y - max(1.5, groesse * 0.12), groesse, QColor(farbe))
+
+
 def unter_symbol(art: str, groesse=(70, 16), farbe: str = "#e6e9ec"):
     """Bildchen einer Unterstreichungsart für Auswahllisten (dieselbe Zeichnung wie im Text)."""
     from PySide6.QtGui import QIcon, QPixmap

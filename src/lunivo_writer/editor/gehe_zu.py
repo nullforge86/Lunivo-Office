@@ -1,5 +1,5 @@
 """„Gehe zu“: Sprungziele im Dokument — Seite, Zeile (Absatz), Überschrift, Textmarke, Kommentar, Fußnote, Endnote, Tabelle, Bild,
-Beschriftung, Abschnitt. Die Dialogoberfläche steht in ui/dialogs/gehe_zu_dialog.py."""
+Beschriftung, Abschnitt. Die Oberfläche ist der Reiter „Gehe zu“ im Feld „Suchen und ersetzen“ (ui/document/suchen_feld.py)."""
 from __future__ import annotations
 
 from PySide6.QtGui import QTextTable
@@ -97,3 +97,85 @@ def springen(ed, pos: int) -> None:
     ed.setTextCursor(c)
     ed.ensureCursorVisible()
     ed.setFocus()
+
+
+# ---- „Gehe zu“ in der linken Seitenleiste (Reiter des Feldes „Suchen und ersetzen“), Elemente wie in der Vorlage -----------------------------
+ELEMENTE = ("Seite", "Abschnitt", "Zeile", "Textmarke", "Kommentar", "Fußnote", "Endnote", "Feld", "Tabelle", "Grafik", "Formel", "Objekt",
+            "Überschrift")
+EINGABE = {"Seite": "Seitenzahl eingeben:", "Abschnitt": "Abschnittsnummer eingeben:", "Zeile": "Zeilennummer eingeben:",
+           "Textmarke": "Textmarkenname eingeben:", "Kommentar": "Kommentarnummer eingeben:", "Fußnote": "Fußnotennummer eingeben:",
+           "Endnote": "Endnotennummer eingeben:", "Feld": "Feldnummer eingeben:", "Tabelle": "Tabellennummer eingeben:",
+           "Grafik": "Grafiknummer eingeben:", "Formel": "Formelnummer eingeben:", "Objekt": "Objektnummer eingeben:",
+           "Überschrift": "Überschriftnummer eingeben:"}
+
+
+def _objekte(doc, nur_art: str | None = None) -> list[int]:
+    import json
+    from lunivo_writer.editor.zusatz import P_OBJEKT
+    out = []
+    for f in _fragmente(doc):
+        cf = f.charFormat()
+        if cf.isImageFormat() and cf.hasProperty(P_OBJEKT):
+            try:
+                art = json.loads(cf.stringProperty(P_OBJEKT)).get("art", "")
+            except ValueError:
+                art = ""
+            if nur_art is None or art == nur_art:
+                out.append(f.position())
+    return out
+
+
+def positionen(ed, element: str) -> list[int]:
+    """Die Anfänge aller Elemente einer Art, der Reihe nach."""
+    doc = ed.document()
+    if element == "Seite":
+        return [seitenstart(ed, n) for n in range(1, max(1, ed.page_count) + 1)]
+    if element == "Zeile":
+        b, out = doc.firstBlock(), []
+        while b.isValid():
+            out.append(b.position()); b = b.next()
+        return out
+    if element == "Feld":
+        from lunivo_writer.editor.zusatz import P_FELD
+        out, ende = [], -1
+        for f in _fragmente(doc):
+            if f.charFormat().hasProperty(P_FELD):
+                if f.position() != ende:
+                    out.append(f.position())
+                ende = f.position() + f.length()
+        return out
+    if element == "Formel":
+        return _objekte(doc, "formel")
+    if element == "Objekt":
+        return _objekte(doc)
+    return sorted({p for _t, p in ziele(ed, "Bild" if element == "Grafik" else element)})
+
+
+def ziel(ed, element: str, eingabe: str = "", richtung: int = 1) -> int | None:
+    """Wohin „Weiter“ (``richtung`` 1) oder „Zurück“ (-1) springt. ``eingabe``: leer = nächstes/voriges Element, „4“ = das vierte,
+    „+2“/„-2“ = zwei weiter/zurück; bei Textmarken auch der Name."""
+    alle = positionen(ed, element)
+    if not alle:
+        return None
+    hier = ed.textCursor().position()
+    i = max((k for k, p in enumerate(alle) if p <= hier), default=-1)          # das Element, in dem die Schreibmarke steht
+    if element == "Seite":
+        i = max(0, min(len(alle), ed.current_page()) - 1)
+    t = (eingabe or "").strip().replace("–", "-")
+    if not t:
+        if element == "Seite":
+            n = i + richtung
+        elif richtung > 0:
+            n = next((k for k, p in enumerate(alle) if p > hier), len(alle))
+        else:
+            n = max((k for k, p in enumerate(alle) if p < hier), default=-1)
+    elif t[0] in "+-" and t[1:].isdigit():
+        n = i + int(t)
+    elif t.isdigit():
+        n = int(t) - 1
+    elif element == "Textmarke":
+        treffer = [p for name, p in ziele(ed, "Textmarke") if name.casefold() == t.casefold()]
+        return treffer[0] if treffer else None
+    else:
+        return None
+    return alle[n] if 0 <= n < len(alle) else None

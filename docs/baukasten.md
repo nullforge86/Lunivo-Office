@@ -94,6 +94,7 @@ Jeder Baustein macht genau eine Sache:
 | `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
 | `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
 | `FlussLayout` | `formular_gitter.py` | Reihe von Feldern, die wie Text umbricht (Beschriftung und Feld bleiben beisammen) |
+| `ausfuehren_im_stapel` | `zusatz_panel.py` | ein `PanelFaehig`-Fenster in einem beliebigen `QStackedWidget` zeigen (z. B. die Fenster der Suche in der **linken** Seitenleiste, ohne dass sich die rechte öffnet) |
 | `schmal_machen` | `schmal.py` | **Notbehelf** für Fenster, die noch nicht aus Bausteinen gebaut sind: bricht zu breite Zeilen nachträglich um. Neue Fenster bauen mit `FormularGitter`, nicht darauf verlassen |
 
 Ein Fenster, das aus einem offenen Zusatzfenster heraus aufgerufen wird (zum Beispiel „Farben“ aus „Rahmen und Schattierung“), legt sich als weitere Seite darüber (mit „←“); das darunter bleibt offen.
@@ -103,6 +104,20 @@ Neues Fenster: `class MeinDialog(PanelFaehig, QDialog)`, Felder in `FormularGitt
 Platz in der Seitenleiste: Wer Größen der Seitenleiste braucht, bietet `passe_an(breite, hoehe)` an (`ZusatzPanel` ruft es mit `verfuegbar` und `verfuegbar_hoehe` auf, die die Seitenleiste aus ihrer echten Größe setzt); Beispiele: Farbraster, Rahmenvorschau, Kachelzahl der Nummerierung, Texteffekte. `AngepassteReiter` und der Stapel der KI-Einstellungen richten die Höhe nach der gewählten Seite. Prüfung: `test_seitenleisten_seiten_passen_in_echte_groesse`.
 Auf dem Notbehelf nur noch: Rahmen und Schattierung (bewusst: Spalten mit Vorschau, `schmal_nein` schützt die Kantenknöpfe) und die kleinen Fenster mit `QFormLayout`.
 Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Seitenleiste finden (`tests/test_smoke_befehle.py`).
+
+## Bausteine des Reiters Start
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Suchmaschine | `editor/suche.py` | `Suchauftrag` (Groß/klein, ganzes Wort, Platzhalter wie Word, Präfix, Suffix, Satz- und Leerzeichen übergehen, Zeichen- und Absatzformat), Sonderzeichen-Codes (`SPEZIAL`, `^p ^t ^l …`), `naechster`, `treffer`, `ersatz_text`, `alle_ersetzen` (ein Rückgängig-Schritt). Keine Oberfläche |
+| Gehe zu | `editor/gehe_zu.py` | `ELEMENTE` (Seite, Abschnitt, Zeile, Textmarke, …), `positionen`, `ziel(ed, element, eingabe, richtung)` |
+| Suchen-Feld | `ui/document/suchen_feld.py` | `SuchenFeld`: Reiter Suchen/Ersetzen/Gehe zu, Erweitern/Reduzieren, Format ▾ (Schriftart, Absatz, Tabstopps, Formatvorlage, Hervorheben), Spezial ▾, Lesehervorhebung, Suchen in. Sitzt in der linken Seitenleiste (`navigation.py`), Unterfenster über `ausfuehren_im_stapel` |
+| Auswählen | `editor/auswahl.py`, `ui/baukasten/auswahl_bereich.py` | Tabelle ohne Rahmen, ähnliche Formatierung (hervorgehoben, da Qt nur eine Markierung kennt); `AuswahlBereich` listet alle Objekte |
+| Formatvorlagen und Formatierung | `ui/baukasten/formatvorlagen_bereich.py` | `FormatvorlagenBereich`, `vorlagen_namen`, `vorlagen_schrift` |
+| Text sortieren | `ui/baukasten/sortieren_dialog.py`, `editor/schreibweise.py` | `SortierenDialog` (drei Schlüssel, Überschriftenzeile) mit `SortierOptionenDialog` (Feldtrenner, Groß/klein, Sortiersprache); `reihenfolge` (QCollator), `absaetze`, `umstellen` (behält Formate) |
+| Wort-Extras | `editor/wortextras.py` | `MENUE`: verschachtelte Liste (Text, Symbol, Funktion) für das Menü; jede Funktion ein Rückgängig-Schritt |
+| Unterstreichungen | `ui/baukasten/linien.py`, `editor/textfx.py` | `LinienZeile(…, maler=)` / `linien_menue_zeile(…, maler=unter_zeichnen)`: Menüzeilen mit gezeichneter Unterstreichung |
+| Absatzwerte | `ui/baukasten/absatz_dialog.py` | `aus_block(bf)`: die Werte des Absatz-Fensters aus einem `QTextBlockFormat` |
 
 ## Befehle nach Aufgaben
 
