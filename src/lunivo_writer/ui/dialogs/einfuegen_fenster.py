@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
+    QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
     QVBoxLayout,
 )
 
@@ -117,29 +117,38 @@ class TrennerDialog(PanelFaehig, QDialog):
             g.addWidget(QLabel("Zeilenanzahl:"), 1, 0); g.addWidget(self._zeilen, 1, 1)
             g.setColumnStretch(2, 1)
             v.addLayout(g)
-        t = QLabel("Text trennen bei" if zu_tabelle else "Zellen trennen durch"); f = t.font(); f.setBold(True); t.setFont(f)
+        t = QLabel("Text trennen bei"); f = t.font(); f.setBold(True); t.setFont(f)
         v.addWidget(t)
+        # Tabelle → Text wie in WPS: Absätze, Tabstopps, Kommata, Andere (untereinander)
+        self._liste = TT.TRENNER if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
+        spalten = 3 if zu_tabelle else 1
         self._gruppe = QButtonGroup(self)
         g = QGridLayout()
-        for i, (_z, text) in enumerate(TT.TRENNER):
-            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r, i // 3, i % 3)
-        andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(TT.TRENNER))
+        for i, (_z, text) in enumerate(self._liste):
+            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r, i // spalten, i % spalten)
+        andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(self._liste))
         self.andere = QLineEdit("-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(48); self.andere.setMinimumHeight(34)
         self.andere.setAlignment(Qt.AlignCenter); self.andere.setAccessibleName("Anderes Trennzeichen")
         z = QHBoxLayout(); z.addWidget(andere); z.addWidget(self.andere); z.addStretch(1)
-        g.addLayout(z, 2, 0, 1, 3)
+        g.addLayout(z, (len(self._liste) + spalten - 1) // spalten, 0, 1, spalten)
         v.addLayout(g)
+        if not zu_tabelle:
+            self.geschachtelt = QCheckBox("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
+            self.geschachtelt.setEnabled(False)
+            self.geschachtelt.setToolTip("Lunivo wandelt Tabellen in Zellen immer mit in Text um.")
+            v.addWidget(self.geschachtelt)
         self.andere.textEdited.connect(lambda _t: andere.setChecked(True))
         vorgabe = "\t" if any("\t" in s for s in self.texte) or not zu_tabelle else "\n"
-        self._gruppe.button([k for k, _t in TT.TRENNER].index(vorgabe)).setChecked(True)
+        self._gruppe.button([k for k, _t in self._liste].index(vorgabe)).setChecked(True)
         self._gruppe.idToggled.connect(lambda _i, an: an and self._zaehlen())
         self.andere.textChanged.connect(lambda _t: self._zaehlen())
+        v.addStretch(1)
         fussleiste(self, v)
         self._zaehlen()
 
     def trenner(self) -> str:
         i = self._gruppe.checkedId()
-        return TT.TRENNER[i][0] if i < len(TT.TRENNER) else (self.andere.text() or "-")
+        return self._liste[i][0] if i < len(self._liste) else (self.andere.text() or "-")
 
     def spalten(self) -> int | None:
         return self._spalten.value() if self.zu_tabelle else None

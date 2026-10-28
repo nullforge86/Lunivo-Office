@@ -337,7 +337,7 @@ def test_tabellenmenue_fuegt_tabelle_ein(app, tmp_path):
     t = e.textCursor().currentTable()
     assert t is not None and t.rows() == 2 and t.columns() == 3
     assert [a.text() for a in m.actions() if a.text()] == ["Tabelle einfügen …", "Tabelle zeichnen", "Text in Tabelle umwandeln …",
-                                                           "Tabelle in Text konvertieren …", "Schnelltabelle"]
+                                                           "Tabelle in Text konvertieren …"]
     assert (m.gitter.zeilen, m.gitter.spalten) == (10, 10)
     _zu(w)
 

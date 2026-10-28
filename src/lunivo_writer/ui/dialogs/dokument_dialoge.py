@@ -84,16 +84,42 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
 
 
 class TableDialog(PanelFaehig, QDialog):
-    def __init__(self, parent=None):
+    """„Tabelle einfügen“ wie in WPS: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
+    ``vorgabe``: (Spalten, Zeilen) aus den Einstellungen; ``speichern.isChecked()`` sagt dem Aufrufer, ob er sie merken soll."""
+
+    def __init__(self, parent=None, vorgabe: tuple[int, int] = (5, 2)):
+        from PySide6.QtWidgets import QButtonGroup, QRadioButton
         super().__init__(parent)
         self.setWindowTitle("Tabelle einfügen")
-        self.rows = QSpinBox(); self.rows.setRange(1, 200); self.rows.setValue(3)
-        self.cols = QSpinBox(); self.cols.setRange(1, 30); self.cols.setValue(3)
-        self.borders = QCheckBox("Rahmenlinien"); self.borders.setChecked(True)
-        form = QFormLayout(); form.addRow("Zeilen", self.rows); form.addRow("Spalten", self.cols)
-        form.addRow("", self.borders)
-        bb = knopfzeile(self)
-        lay = QVBoxLayout(self); lay.addLayout(form); lay.addWidget(bb)
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Tabellengröße"))
+        self.cols = QSpinBox(); self.cols.setRange(1, 63); self.cols.setValue(vorgabe[0])
+        self.rows = QSpinBox(); self.rows.setRange(1, 500); self.rows.setValue(vorgabe[1])
+        g = QGridLayout(); g.setContentsMargins(8, 0, 0, 0)
+        for i, (text, feld) in enumerate((("Spaltenan&zahl:", self.cols), ("Zeilenan&zahl:", self.rows))):
+            feld.setMinimumHeight(36); feld.setMinimumWidth(140)
+            t = QLabel(text); t.setBuddy(feld)
+            g.addWidget(t, i, 0); g.addWidget(feld, i, 1)
+        g.setColumnStretch(0, 1)
+        lay.addLayout(g)
+        lay.addWidget(QLabel("Einstellung für optimale Breite"))
+        self.fest = QRadioButton("Feste Spalten&breite:")
+        self.auto = QRadioButton("Spaltenbreite automatisch anpassen (&S)"); self.auto.setChecked(True)
+        gruppe = QButtonGroup(self); gruppe.addButton(self.fest); gruppe.addButton(self.auto)
+        self.breite = _spin(30.0, 2.0, 500.0); self.breite.setMinimumHeight(36); self.breite.setMinimumWidth(140)
+        self.breite.setAccessibleName("Feste Spaltenbreite")
+        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.fest); z.addStretch(1); z.addWidget(self.breite)
+        lay.addLayout(z)
+        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.auto); lay.addLayout(z)
+        self.fest.toggled.connect(self.breite.setEnabled); self.breite.setEnabled(False)
+        self.speichern = QCheckBox("Ab&messungen für neue Tabellen speichern")
+        lay.addWidget(self.speichern)
+        lay.addStretch(1)
+        lay.addWidget(knopfzeile(self))
+
+    def spaltenbreite_px(self) -> float | None:
+        """Feste Breite jeder Spalte in Bildpunkten; None: automatisch (Seitenbreite)."""
+        return self.breite.value() * 96 / 25.4 if self.fest.isChecked() else None
 
 
 class BildGroesseDialog(PanelFaehig, QDialog):

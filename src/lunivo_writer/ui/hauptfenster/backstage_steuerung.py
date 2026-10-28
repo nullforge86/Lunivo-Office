@@ -339,9 +339,11 @@ class BackstageBaustein:
     def insert_table(self):
         if not self.current_editor():
             return
-        d = TableDialog(self)
+        d = TableDialog(self, (self.settings.get_int("tabelle/spalten", 5), self.settings.get_int("tabelle/zeilen", 2)))
         if d.exec():
-            self._ed(lambda e: e.insert_table(d.rows.value(), d.cols.value(), d.borders.isChecked()))
+            if d.speichern.isChecked():
+                self.settings.set("tabelle/spalten", d.cols.value()); self.settings.set("tabelle/zeilen", d.rows.value())
+            self._ed(lambda e: e.insert_table(d.rows.value(), d.cols.value(), spaltenbreite=d.spaltenbreite_px()))
 
 
     def insert_image(self):

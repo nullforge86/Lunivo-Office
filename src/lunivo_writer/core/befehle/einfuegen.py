@@ -20,6 +20,13 @@ class EinfuegenBefehle:
         self.w.insert_table()
 
 
+    def tabelleZeichnen(self, k=None):
+        """Stift: Rechteck aufziehen, die Tabelle kommt dorthin (siehe ``ui/document/tabelle_stift.py``)."""
+        if self.ed and not self.ed.isReadOnly():
+            from lunivo_writer.ui.document.tabelle_stift import TabellenStift
+            TabellenStift(self.ed)
+
+
     def bild(self, k=None):
         self.w.insert_image()
 
@@ -283,21 +290,16 @@ class EinfuegenBefehle:
 
 
     def menue_tabelleKlappe(self):
-        """Tabelle wie in WPS: 10 × 10 Zellen, darunter Einfügen, Zeichnen, Text ↔ Tabelle; was nicht passt, bleibt grau."""
-        from lunivo_writer.editor import einfuegen as E
+        """Tabelle wie in WPS: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
+        was nicht passt, bleibt grau."""
         from lunivo_writer.ui.baukasten.zellen_raster import ZellenRaster
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
         m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
-        zeichnen = m.addAction(self._sym("stift"), "Tabelle zeichnen")
-        zeichnen.setEnabled(False); zeichnen.setToolTip("Tabellen mit dem Stift zeichnen kann Lunivo noch nicht.")
+        m.addAction(self._sym("stift"), "Tabelle zeichnen", self.tabelleZeichnen)
         zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
         zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
-        m.addSeparator()
-        schnell = m.addMenu(self._sym("schnelltab"), "Schnelltabelle")
-        for n in E.SCHNELLTABELLEN:
-            schnell.addAction(n, lambda n=n: self.ed and E.schnelltabelle(self.ed, n))
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None

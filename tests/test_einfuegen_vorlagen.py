@@ -114,6 +114,36 @@ def test_text_in_tabelle_und_zurueck(fenster):
     assert e.toPlainText() == "vorher\na;b;c\nd;e;\nnachher"
 
 
+def test_tabelle_in_text_fenster_wie_vorlage():
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import TrennerDialog
+    from PySide6.QtWidgets import QRadioButton
+    d = TrennerDialog(None, zu_tabelle=False)
+    assert [r.text().replace("&", "") for r in d.findChildren(QRadioButton)] == ["Absätze", "Tabstopps", "Kommata", "Andere:"]
+    assert d.trenner() == "\t" and d.geschachtelt.isChecked() and not d.geschachtelt.isEnabled()
+
+
+def test_tabelle_einfuegen_fenster_und_stift(fenster):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtGui import QTextLength
+    from PySide6.QtTest import QTest
+    from lunivo_writer.ui.dialogs.dokument_dialoge import TableDialog
+    from lunivo_writer.ui.document import tabelle_stift as TS
+    d = TableDialog(None, (5, 2))
+    assert (d.cols.value(), d.rows.value()) == (5, 2) and d.spaltenbreite_px() is None and not d.breite.isEnabled()
+    d.fest.setChecked(True)
+    assert d.breite.isEnabled() and d.spaltenbreite_px() > 0
+    # Stift: Rechteck aufziehen → Tabelle mit Zeilen × Spalten nach Größe, feste Spaltenbreite
+    assert TS.groesse(3 * TS.ZELLE_B, 6 * TS.ZELLE_H) == (6, 3)
+    e = fenster.current_editor(); e.insertPlainText("x")
+    e.set_zoom(1.0)
+    stift = TS.TabellenStift(e)
+    a = QPoint(40, 40); b = a + QPoint(2 * TS.ZELLE_B, 6 * TS.ZELLE_H)
+    QTest.mousePress(stift, Qt.LeftButton, pos=a); QTest.mouseMove(stift, b); QTest.mouseRelease(stift, Qt.LeftButton, pos=b)
+    t = e.textCursor().currentTable()
+    assert t is not None and (t.rows(), t.columns()) == (6, 2)
+    assert t.format().columnWidthConstraints()[0].type() == QTextLength.FixedLength
+
+
 def _seitentext(e, n):
     """n Seiten Text, jede mit eigenem Seitenumbruch davor; die Schreibmarke steht mitten auf Seite 1."""
     from PySide6.QtGui import QTextBlockFormat
