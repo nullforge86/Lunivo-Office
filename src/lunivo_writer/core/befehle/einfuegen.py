@@ -369,10 +369,18 @@ class EinfuegenBefehle:
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Horizontal", self.textfeld, symbol=self._sym("textrahmen"))
-        m.eintrag("Vertikal", None, symbol=self._sym("textrichtung"), aktiv=False,
-                  tip="Senkrecht laufender Text in Textfeldern ist in Lunivo noch nicht möglich.")
+        m.eintrag("Vertikal", self.textfeldVertikal, symbol=self._sym("textrichtung"))
         m.eintrag("Mehrzeiliger Text", self.textfeldMehrzeilig, symbol=self._sym("block"))
         return m
+
+
+    def textfeldVertikal(self, k=None):
+        """Textfeld mit senkrecht laufendem Text: eine Form (weiß, dunkler Rahmen); Text, Füllung und Kontur über die Formwerkzeuge."""
+        if self.ed:
+            from lunivo_writer.editor import einfuegen as E
+            daten = {"form": E.TEXTFELD_VERTIKAL, "fuell": "#ffffff", "linie": "#1f3864", "strich": 1.5, "text": "Text hier eingeben"}
+            self._bild_einfuegen(E.form_bild(E.TEXTFELD_VERTIKAL, 70, 180, "#ffffff", "#1f3864", 1.5, daten["text"]),
+                                 "Textfeld (vertikal)", "form", daten)
 
 
     def textfeldMehrzeilig(self, k=None):

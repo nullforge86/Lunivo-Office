@@ -49,6 +49,9 @@ def _leer(w: int, h: int) -> QImage:
 
 
 # ---- Formen ---------------------------------------------------------------------------------------------------
+TEXTFELD_VERTIKAL = "Textfeld vertikal"
+
+
 def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.AKZENT_DUNKEL, linie: str = "#1f3864",
               strich: float = 2.0, text: str = "") -> QImage:
     img = _leer(breite, hoehe)
@@ -98,10 +101,17 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
         if K.ist_linie(art):
             p.setBrush(Qt.NoBrush)
         p.drawPath(K.pfad(art, r))
+    if art == TEXTFELD_VERTIKAL:                                     # Textfeld mit senkrecht laufendem Text (90° gedreht)
+        p.drawRect(r)
     if text:
-        p.setPen(QColor(Farbe.WEISS if QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
+        p.setPen(QColor(Farbe.WEISS if fuell and QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
         f = p.font(); f.setPointSizeF(12); p.setFont(f)
-        p.drawText(r, Qt.AlignCenter | Qt.TextWordWrap, text)
+        if art == TEXTFELD_VERTIKAL:
+            p.translate(r.center()); p.rotate(90)
+            p.drawText(QRectF(-r.height() / 2 + 6, -r.width() / 2 + 6, r.height() - 12, r.width() - 12),
+                       Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, text)
+        else:
+            p.drawText(r, Qt.AlignCenter | Qt.TextWordWrap, text)
     p.end()
     return img
 

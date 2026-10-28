@@ -31,9 +31,26 @@ def test_klappmenues_wie_vorlage(fenster):
     assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
-    assert not tf.actions()[1].isEnabled()                  # grau sichtbar statt versteckt
+    assert all(a.isEnabled() for a in tf.actions() if a.text())          # wie in WPS: alle drei wählbar
     assert _texte(b.klappe("schnellbausteineKlappe")) == ["AutoText-Liste", "Felder …"]
     assert b.hat("textflussumbruch")                        # auch im Seitenlayout-Menü nicht mehr grau
+
+
+def test_textfeld_vertikal_ist_form_mit_text(fenster):
+    from lunivo_writer.editor import formen as F
+    ed = fenster.current_editor()
+    fenster.befehle.textfeldVertikal()
+    b = ed.document().firstBlock()
+    it = b.begin()
+    f = None
+    while not it.atEnd():
+        cf = it.fragment().charFormat()
+        if cf.isImageFormat():
+            f = cf.toImageFormat()
+        it += 1
+    o = F.objekt(f)
+    assert o["art"] == "form" and o["daten"]["form"] == "Textfeld vertikal" and o["daten"]["text"] == "Text hier eingeben"
+    assert f.height() > f.width()                                          # hochkant wie in der Vorlage
 
 
 def test_band_einfuegen_reihenfolge(fenster):
@@ -230,6 +247,7 @@ def test_tabelle_einfuegen_fenster_und_stift(fenster):
     from PySide6.QtCore import QPoint, Qt
     from PySide6.QtGui import QTextLength
     from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication
     from lunivo_writer.ui.dialogs.dokument_dialoge import TableDialog
     from lunivo_writer.ui.document import tabelle_stift as TS
     d = TableDialog(None, (5, 2))
@@ -242,7 +260,10 @@ def test_tabelle_einfuegen_fenster_und_stift(fenster):
     e.set_zoom(1.0)
     stift = TS.TabellenStift(e)
     a = QPoint(40, 40); b = a + QPoint(2 * TS.ZELLE_B, 6 * TS.ZELLE_H)
-    QTest.mousePress(stift, Qt.LeftButton, pos=a); QTest.mouseMove(stift, b); QTest.mouseRelease(stift, Qt.LeftButton, pos=b)
+    vp = e.viewport()                                   # die Maus geht an den Sichtbereich; der Stift fängt sie programmweit ab
+    assert QApplication.overrideCursor() is not None                            # Stift-Mauszeiger überall sichtbar
+    QTest.mousePress(vp, Qt.LeftButton, pos=a); QTest.mouseMove(vp, b); QTest.mouseRelease(vp, Qt.LeftButton, pos=b)
+    assert QApplication.overrideCursor() is None                                # nach dem Zeichnen wieder normal
     t = e.textCursor().currentTable()
     assert t is not None and (t.rows(), t.columns()) == (6, 2)
     assert t.format().columnWidthConstraints()[0].type() == QTextLength.FixedLength
