@@ -14,7 +14,7 @@ from lunivo_writer.ui.dialogs import ueberpruefen_fenster as UF
 from lunivo_writer.ui.dialogs import verweise_fenster as VF
 
 FENSTER = {
-    "Zahl": lambda: EF.ZahlDialog(None), "Felder": lambda: EF.FelderDialog(None, {}),
+    "Zahl": lambda: EF.ZahlDialog(None), "Felder": lambda: EF.FelderDialog(None, {}), "AutoText": lambda: EF.AutoTextDialog(None, "x"),
     "Trenner": lambda: EF.TrennerDialog(None, zu_tabelle=True, texte=["a;b"]), "Seitenzahl": lambda: EF.SeitenzahlDialog(None),
     "Hyperlink": lambda: EF.HyperlinkDialog(None), "Objekt": lambda: EF.ObjektDialog(None),
     "Inhaltsverzeichnis": lambda: VF.InhaltsverzeichnisDialog(None, dict(TOC_VORGABE)), "Index": lambda: VF.IndexeintragDialog(None, "Apfel", []),
@@ -26,17 +26,21 @@ FENSTER = {
     "Form": lambda: ED.FormDialog(None), "SmartArt": lambda: ED.SmartArtDialog(None), "WordArt": lambda: ED.WordArtDialog(None),
     "Diagramm": lambda: ED.DiagrammDialog(None), "Piktogramm": lambda: ED.PiktogrammDialog(None), "Formel": lambda: ED.FormelDialog(None),
     "Deckblatt": lambda: ED.DeckblattDialog(None, "Kay"),
+    "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
 }
 
 
+@pytest.mark.parametrize("breite", [444, 300])
 @pytest.mark.parametrize("name", list(FENSTER))
-def test_fenster_in_der_seitenleiste_und_passt(app, name):
-    p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = 444, 587; p.resize(480, 727)
+def test_fenster_in_der_seitenleiste_und_passt(app, name, breite):
+    """Auch in der schmalsten Seitenleiste (300 px) ragt nichts links oder rechts hinaus (Kay, 2026-10-28)."""
+    p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = breite, 587; p.resize(breite + 36, 727)
     d = FENSTER[name]()
     assert isinstance(d, PanelFaehig), name
     p.oeffne(d); p.show(); app.processEvents(); app.processEvents()
     sa = p.stapel.currentWidget().sa
-    h = sa.widget()
-    rechts = max((c.mapTo(h, c.rect().topRight()).x() for c in d.findChildren(QWidget) if c.isVisible()), default=0)
-    assert rechts <= sa.viewport().width(), (name, rechts)
+    vp = sa.viewport()
+    zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0
+          and (c.mapTo(vp, c.rect().topLeft()).x() < -1 or c.mapTo(vp, c.rect().topRight()).x() > vp.width())]
+    assert not zu, (name, breite, zu)
     p.close()

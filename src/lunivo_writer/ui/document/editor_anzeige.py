@@ -277,6 +277,16 @@ class AnzeigeBaustein:
         return self._zeilen_cache[1]
 
 
+    def _kapitel_je_blatt(self, pg) -> list[str]:
+        """Kapitelnummer je Blatt für die Seitenzahl („2-1“), nur wenn die Einrichtung sie verlangt; gemerkt je Textstand."""
+        if not pg.kapitel_ebene:
+            return []
+        schl = (self.document().revision(), pg.kapitel_ebene, tuple(self.seitenwechsel))
+        if getattr(self, "_kapitel_schl", None) != schl:
+            from lunivo_writer.editor import seitenzahl as SZ
+            self._kapitel_schl, self._kapitel_liste = schl, SZ.kapitel_je_seite(self.document(), pg.kapitel_ebene, self.seitenwechsel)
+        return self._kapitel_liste
+
     def _extras_zeichnen(self, p: QPainter, sp: bool) -> None:
         """Objektanker, Änderungsbalken, Kopf- und Fußzeile im Rand der Seite."""
         if self.web:
@@ -352,6 +362,9 @@ class AnzeigeBaustein:
             base = QFont(self.font())
             p.setPen(line_color)
             quer = bool(getattr(self, "_qplan", None))
+            from lunivo_writer.editor import seitenzahl as SZ
+            start = SZ.erste_nummer(pg)
+            kapitel = self._kapitel_je_blatt(pg)
             for k in range(self._blatt_anzahl()):
                 oben = self.blatt_oben(k)
                 bk = self._blatt(k) if quer else {"x": 0.0, "H": g["H"], "pg": pg}
@@ -362,7 +375,9 @@ class AnzeigeBaustein:
                 p.save()
                 p.translate(bk["x"], oben)
                 p.scale(z, z)
-                _draw_hf(p, kopf, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(8), bp.content_width_px, mm_to_px(10)), k + 1, self._pages, base)
+                kap = kapitel[min(k, len(kapitel) - 1)] if kapitel else ""
+                _draw_hf(p, kopf, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(8), bp.content_width_px, mm_to_px(10)), k + start, self._pages,
+                         base, bp, kap)
                 _draw_hf(p, fuss, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(bp.height_mm) - mm_to_px(18), bp.content_width_px, mm_to_px(10)),
-                         k + 1, self._pages, base)
+                         k + start, self._pages, base, bp, kap)
                 p.restore()

@@ -311,18 +311,21 @@ def page_count(qdoc: QTextDocument, page: PageSettings) -> int:
     return ausgabe_seiten(paginated_copy(qdoc, page).pageCount(), page)
 
 
-def _expand(text: str, n: int, total: int) -> str:
-    return text.replace("{PAGE}", str(n)).replace("{PAGES}", str(total))
+def _expand(text: str, n: int, total: int, page: PageSettings | None = None, kapitel: str = "") -> str:
+    from lunivo_writer.editor import seitenzahl as SZ
+    return SZ.text(text, n, total, page, kapitel)
 
 
-def _draw_hf(p: QPainter, hf, rect: QRectF, n: int, total: int, base: QFont) -> None:
+def _draw_hf(p: QPainter, hf, rect: QRectF, n: int, total: int, base: QFont, page: PageSettings | None = None, kapitel: str = "") -> None:
+    """Kopf- oder Fußzeile einer Seite; ``n`` ist die angezeigte Seitennummer (bestimmt auch „außen“/„innen“)."""
     if hf.is_empty():
         return
+    from lunivo_writer.editor import seitenzahl as SZ
     f = QFont(base)
     f.setPixelSize(13)
     p.setFont(f)
-    flag = {"center": Qt.AlignHCenter, "right": Qt.AlignRight}.get(hf.align, Qt.AlignLeft)
-    p.drawText(rect, int(flag | Qt.AlignVCenter | Qt.TextWordWrap), _expand(hf.text, n, total))
+    flag = {"center": Qt.AlignHCenter, "right": Qt.AlignRight}.get(SZ.ausrichtung(hf.align, n), Qt.AlignLeft)
+    p.drawText(rect, int(flag | Qt.AlignVCenter | Qt.TextWordWrap), _expand(hf.text, n, total, page, kapitel))
 
 
 def _ohne_hintergruende(d: QTextDocument) -> None:
@@ -442,18 +445,9 @@ def seitenschmuck(p: QPainter, page: PageSettings, hintergrund: bool = True, fla
     if b and (rahmen == "immer" or (rahmen == "vorn") == bool(b.get("vordergrund", True))):
         from lunivo_writer.editor import seitenrahmen
         seitenrahmen.zeichnen(p, b, page, QRectF(r))
-    w = page.watermark
-    if wasserzeichen and w and w.get("text"):
-        f = QFont("Liberation Sans")
-        f.setPixelSize(max(8, int(w.get("groesse_pt", 80) * 96 / 72)))
-        f.setBold(True)
-        p.setFont(f)
-        c = QColor(w.get("farbe", "#c0c0c0"))
-        c.setAlpha(110)
-        p.setPen(c)
-        p.translate(r.center())
-        p.rotate(w.get("winkel", -45))
-        p.drawText(_R(-r.width(), -r.height() / 2, 2 * r.width(), r.height()), Qt.AlignCenter, w["text"])
+    if wasserzeichen and page.watermark:
+        from lunivo_writer.editor import wasserzeichen as WZ
+        WZ.zeichnen(p, page.watermark, r)
     p.restore()
 
 
@@ -534,6 +528,12 @@ def render(qdoc: QTextDocument, page: PageSettings, device, first: int = 1, last
         liste = [n for n in liste if n not in leer] or liste[:1]
     geo = blasen_geometrie(page, opt)
     pro_seite = _blasen_pro_seite(d, page, liste, opt["blasen"]) if geo else {}
+    # angezeigte Seitennummer: im Abschnitt fortlaufend („nummer“) oder ab „Beginnen mit“
+    nr = ab["nummer"] if "nummer" in ab else (page.seiten_start - 1 if page.seiten_start > 0 else 0)
+    kapitel = []
+    if page.kapitel_ebene:
+        from lunivo_writer.editor import seitenzahl as SZ
+        kapitel = SZ.kapitel_je_seite(d, page.kapitel_ebene, SZ.seitenwechsel(d, ch))
     for n in liste:
         if not first_page:
             device.newPage()
@@ -544,7 +544,8 @@ def render(qdoc: QTextDocument, page: PageSettings, device, first: int = 1, last
             p.save()
             p.translate(geo["x_page"], 0)
             p.scale(geo["f"], geo["f"])
-        zeichne_seite(p, d, page, n, total, base, opt.get("hintergrund") is not False, balken, ab.get("offset", 0), ab.get("gesamt"))
+        kap = kapitel[min(len(kapitel) - 1, n * spalten - 1)] if kapitel else ""
+        zeichne_seite(p, d, page, n, total, base, opt.get("hintergrund") is not False, balken, nr, ab.get("gesamt"), kap)
         if opt.get("textgrenzen") or opt.get("zuschnitt"):
             _druckmarken(p, page, bool(opt.get("textgrenzen")), bool(opt.get("zuschnitt")))
         if geo:
@@ -575,10 +576,13 @@ def render_dokument(qdoc: QTextDocument, page: PageSettings, device, first: int 
     if len(teile) == 1:
         return render(qdoc, page, device, first, last, dpi, opt)
     zaehl = [render(d, ps, device, opt=dict(opt, nur_zaehlen=True)) for d, ps, _t in teile]
-    offsets, leer, gesamt = [], [], 0
-    for i, ((_d, _ps, typ), z) in enumerate(zip(teile, zaehl)):
+    offsets, nummern, leer, gesamt = [], [], [], 0
+    for i, ((_d, ps, typ), z) in enumerate(zip(teile, zaehl)):
         b = 1 if i and ((typ == "gerade" and (gesamt + 1) % 2 == 1) or (typ == "ungerade" and (gesamt + 1) % 2 == 0)) else 0
-        offsets.append(gesamt + b); leer.append(b); gesamt += b + z
+        offsets.append(gesamt + b); leer.append(b)
+        # angezeigte Nummern: „Beginnen mit“ setzt neu an, sonst geht es nach der letzten Nummer des vorigen Teils weiter
+        nummern.append(ps.seiten_start - 1 if ps.seiten_start > 0 else (nummern[-1] + zaehl[i - 1] + b if i else 0))
+        gesamt += b + z
     last = gesamt if last is None else min(last, gesamt)
     # erster Teil, der wirklich gedruckt wird: sein Papier gilt schon beim Start
     start = next((i for i, ((_d, _ps, _t), z) in enumerate(zip(teile, zaehl))
@@ -601,7 +605,7 @@ def render_dokument(qdoc: QTextDocument, page: PageSettings, device, first: int 
             continue
         if i != start and layout:
             layout(ps)
-        sub = dict(opt, painter=painter, abschnitt={"offset": o, "gesamt": gesamt, "weiter": gedruckt > 0})
+        sub = dict(opt, painter=painter, abschnitt={"offset": o, "nummer": nummern[i], "gesamt": gesamt, "weiter": gedruckt > 0})
         if opt.get("nur_seiten") is not None:
             sub["nur_seiten"] = {n - o for n in opt["nur_seiten"]}
         render(d, ps, device, lo, hi, dpi, sub)
@@ -821,8 +825,10 @@ def _inhalt_zeichnen(p: QPainter, d: QTextDocument, rect: QRectF) -> None:
 
 
 def zeichne_seite(p: QPainter, d: QTextDocument, page: PageSettings, n: int, total: int, base: QFont,
-                  hintergrund: bool = True, balken: tuple | None = None, nr_offset: int = 0, gesamt: int | None = None) -> None:
-    """Eine Seite (Nummer n, 1-basiert) mit Seitenschmuck, Kopf-/Fußzeile und Text; Maßstab 96 dpi, Ursprung links oben."""
+                  hintergrund: bool = True, balken: tuple | None = None, nr_offset: int = 0, gesamt: int | None = None,
+                  kapitel: str = "") -> None:
+    """Eine Seite (Nummer n, 1-basiert) mit Seitenschmuck, Kopf-/Fußzeile und Text; Maßstab 96 dpi, Ursprung links oben.
+    ``nr_offset`` verschiebt die angezeigte Seitennummer, ``kapitel`` ist die Kapitelnummer davor."""
     cw, ch = page.content_width_px, page.content_height_px
     ml, mt = mm_to_px(page.margin_left_mm), mm_to_px(page.margin_top_mm)
     ph = mm_to_px(page.height_mm)
@@ -835,8 +841,8 @@ def zeichne_seite(p: QPainter, d: QTextDocument, page: PageSettings, n: int, tot
     for a, bild, r in FB.vorne_hinten(frei, True):                  # Bilder hinter dem Text (zum Beispiel ein Band im Briefkopf)
         FB.bild_zeichnen(p, bild, r, bool(a.get("ellipse")), a.get("rand"), float(a.get("dreh", 0.0)), a.get("fuell"), a.get("_fuellbild") or (a.get("fuell") or {}).get("bild"), a.get("fx"))
     kopf, fuss = (page.first_header, page.first_footer) if (n == 1 and page.diff_first) else (page.header, page.footer)
-    _draw_hf(p, kopf, QRectF(ml, mm_to_px(8), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base)
-    _draw_hf(p, fuss, QRectF(ml, ph - mm_to_px(18), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base)
+    _draw_hf(p, kopf, QRectF(ml, mm_to_px(8), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base, page, kapitel)
+    _draw_hf(p, fuss, QRectF(ml, ph - mm_to_px(18), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base, page, kapitel)
     if page.zeilennummern and page.spalten <= 1:
         p.save()
         p.translate(ml, mt)
@@ -957,9 +963,11 @@ def _zeilennummern(p: QPainter, d: QTextDocument, n: int, ch: float, base: QFont
 
 
 def seite_als_bild(qdoc: QTextDocument, page: PageSettings, n: int, faktor: float = 1.0, d: QTextDocument | None = None,
-                   noten: dict | None = None, nr_offset: int = 0, gesamt: int | None = None) -> QImage:
-    """Seite n als Bild (für die Zwei-Seiten-Ansicht und „Als Bild exportieren“)."""
+                   noten: dict | None = None, nr_offset: int | None = None, gesamt: int | None = None) -> QImage:
+    """Seite n als Bild (für die Zwei-Seiten-Ansicht und „Als Bild exportieren“). Ohne ``nr_offset`` gilt „Beginnen mit“ der Einrichtung."""
     d = d or paginated_copy(qdoc, page, noten)
+    if nr_offset is None:
+        nr_offset = page.seiten_start - 1 if page.seiten_start > 0 else 0
     total = ausgabe_seiten(d.pageCount(), page)
     w, h = int(mm_to_px(page.width_mm) * faktor), int(mm_to_px(page.height_mm) * faktor)
     img = QImage(w, h, QImage.Format_RGB32)
@@ -968,7 +976,12 @@ def seite_als_bild(qdoc: QTextDocument, page: PageSettings, n: int, faktor: floa
     p.setRenderHint(QPainter.Antialiasing)
     p.setRenderHint(QPainter.TextAntialiasing)
     p.scale(faktor, faktor)
-    zeichne_seite(p, d, page, n, total, qdoc.defaultFont(), nr_offset=nr_offset, gesamt=gesamt)
+    kap = ""
+    if page.kapitel_ebene:
+        from lunivo_writer.editor import seitenzahl as SZ
+        liste = SZ.kapitel_je_seite(d, page.kapitel_ebene, SZ.seitenwechsel(d, page.content_height_px))
+        kap = liste[min(len(liste) - 1, n * max(1, int(page.spalten)) - 1)]
+    zeichne_seite(p, d, page, n, total, qdoc.defaultFont(), nr_offset=nr_offset, gesamt=gesamt, kapitel=kap)
     p.end()
     return img
 

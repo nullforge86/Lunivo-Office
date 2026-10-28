@@ -13,7 +13,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetricsF, QPainter
 from PySide6.QtWidgets import (
-    QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton,
+    QButtonGroup, QCheckBox, QComboBox, QDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton,
     QSpinBox, QVBoxLayout,
 )
 
@@ -123,36 +123,30 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         def feld(name, text=""):
             e = QLineEdit(text); e.setMinimumHeight(34); e.setMinimumWidth(130); e.setAccessibleName(name)
             return e
-        index = QGroupBox("Index"); g = QGridLayout(index); g.setHorizontalSpacing(10)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
+        g = FormularGitter()                                                   # breit: zwei Paare nebeneinander wie die Vorlage; schmal: untereinander
+        g.breit(abschnittstitel("Index"))
         self.haupt, self.lesung = feld("Haupteintrag", vorschlag), feld("Sortieren als (Haupteintrag)")
         self.unter, self.lesung_unter = feld("Untereintrag"), feld("Sortieren als (Untereintrag)")
-        g.addWidget(_titel("Haupteintrag (&e):", self.haupt), 0, 0); g.addWidget(self.haupt, 0, 1)
-        g.addWidget(_titel("Sortieren als (&H):", self.lesung), 0, 2); g.addWidget(self.lesung, 0, 3)
-        g.addWidget(_titel("Untereintrag (&S):", self.unter), 1, 0); g.addWidget(self.unter, 1, 1)
-        g.addWidget(_titel("Sortieren als (&g):", self.lesung_unter), 1, 2); g.addWidget(self.lesung_unter, 1, 3)
-        v.addWidget(index)
-
-        opt = QGroupBox("Optionen"); og = QGridLayout(opt)
+        for text, f in (("Haupteintrag (&e):", self.haupt), ("Sortieren als (&H):", self.lesung), ("Untereintrag (&S):", self.unter),
+                        ("Sortieren als (&g):", self.lesung_unter)):
+            f.setMinimumWidth(0)
+            g.zeile(_titel(text, f), f)
+        g.breit(abschnittstitel("Optionen"))
         self.art = QButtonGroup(self)
         self.r_siehe, self.r_seite, self.r_bereich = (QRadioButton("Querverweis (&r):"), QRadioButton("Aktuelle Seite (&p)"),
                                                       QRadioButton("Seitenbereich (&n)"))
         for i, r in enumerate((self.r_siehe, self.r_seite, self.r_bereich)):
             self.art.addButton(r, i)
         self.r_seite.setChecked(True)
-        self.siehe = feld("Querverweis"); self.siehe.setPlaceholderText("Siehe")
+        self.siehe = feld("Querverweis"); self.siehe.setPlaceholderText("Siehe"); self.siehe.setMinimumWidth(0)
         self.marke = QComboBox(); self.marke.addItems(marken or []); self.marke.setMinimumHeight(34); self.marke.setAccessibleName("Textmarke")
         self.marke_titel = _titel("Textmarke:", self.marke)
-        og.addWidget(self.r_siehe, 0, 0); og.addWidget(self.siehe, 0, 1, 1, 2)
-        og.addWidget(self.r_seite, 1, 0, 1, 3)
-        og.addWidget(self.r_bereich, 2, 0, 1, 3)
-        og.addWidget(self.marke_titel, 3, 0, Qt.AlignRight); og.addWidget(self.marke, 3, 1, 1, 2)
-        og.setColumnStretch(2, 1)
-        v.addWidget(opt)
-
-        fmt = QGroupBox("Seitenzahlenformat"); fv = QVBoxLayout(fmt)
-        self.fett, self.kursiv = QCheckBox("&Fett"), QCheckBox("&Kursiv")
-        fv.addWidget(self.fett); fv.addWidget(self.kursiv)
-        v.addWidget(fmt)
+        g.zeile(self.r_siehe, self.siehe); g.breit(self.r_seite); g.breit(self.r_bereich); g.zeile(self.marke_titel, self.marke)
+        g.breit(abschnittstitel("Seitenzahlenformat"))
+        self.fett, self.kursiv = UmbruchSchalter("&Fett"), UmbruchSchalter("&Kursiv")
+        g.breit(self.fett); g.breit(self.kursiv)
+        v.addLayout(g); v.addStretch(1)
 
         self.knopf_markieren, self.knopf_alle = QPushButton("Markieren (&M)"), QPushButton("Alles markieren (&a)")
         self.knopf_alle.setEnabled(auswahl and bool(vorschlag))       # nur mit markiertem Text: jede Stelle mit demselben Text
@@ -219,25 +213,26 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         self.eigene = list(eigene or [])
         self.zahl = "arabisch"
         self._vorne = ""
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
         v = QVBoxLayout(self)
-        self.text = QLineEdit(); self.text.setMinimumHeight(34); self.text.setMinimumWidth(380); self.text.setAccessibleName("Beschriftung")
-        v.addWidget(_titel("&Beschriftung:", self.text)); v.addWidget(self.text)
-        g = QGridLayout(); g.setHorizontalSpacing(10)
+        g = FormularGitter()                                                   # passt sich der Breite an (Seitenleiste), nichts abgeschnitten
+        self.text = QLineEdit(); self.text.setMinimumHeight(34); self.text.setAccessibleName("Beschriftung")
+        g.breit(_titel("&Beschriftung:", self.text)); g.breit(self.text)
         self.label = QComboBox(); self.label.setMinimumHeight(34); self.label.setAccessibleName("Bezeichnung")
         self.label.addItems(list(BESCHRIFTUNGEN) + [x for x in self.eigene if x not in BESCHRIFTUNGEN])
         self.label.setCurrentText(label)
         self.pos = QComboBox(); self.pos.addItems(["Unter dem ausgewählten Element", "Über dem ausgewählten Element"])
         self.pos.setMinimumHeight(34); self.pos.setEnabled(objekt); self.pos.setAccessibleName("Position")
-        g.addWidget(_titel("B&ezeichnung:", self.label), 0, 0); g.addWidget(self.label, 0, 1)
-        g.addWidget(_titel("&Position:", self.pos), 1, 0); g.addWidget(self.pos, 1, 1)
-        g.setColumnStretch(1, 1)
-        v.addLayout(g)
-        self.ohne = QCheckBox("Be&zeichnung nicht in der Beschriftung verwenden"); v.addWidget(self.ohne)
-        z = QHBoxLayout()
+        self.pos.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.pos.setMinimumContentsLength(12)
+        g.zeile(_titel("B&ezeichnung:", self.label), self.label)
+        g.zeile(_titel("&Position:", self.pos), self.pos)
+        self.ohne = UmbruchSchalter("Be&zeichnung nicht in der Beschriftung verwenden"); g.breit(self.ohne)
+        z = FlussLayout(8)
         self.neu, self.loeschen, self.nummerierung = QPushButton("Neues &Etikett…"), QPushButton("Bezeichnung &löschen"), QPushButton("N&ummerierung…")
         for k in (self.neu, self.loeschen, self.nummerierung):
             k.setMinimumHeight(36); z.addWidget(k)
-        v.addLayout(z)
+        g.breit(z)
+        v.addLayout(g); v.addStretch(1)
         fussleiste(self, v)
         self.neu.clicked.connect(self._neu); self.loeschen.clicked.connect(self._loeschen); self.nummerierung.clicked.connect(self._nummerierung)
         self.label.currentTextChanged.connect(lambda _t: self._vorspann())
@@ -299,14 +294,15 @@ class QuerverweisDialog(PanelFaehig, QDialog):
         self.ziele = list(ziele or [])
         self.setWindowTitle("Querverweis")
         v = QVBoxLayout(self)
-        g = QGridLayout(); g.setHorizontalSpacing(10)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter
+        g = FormularGitter()                                                   # breit: nebeneinander wie die Vorlage, Seitenleiste: untereinander
         self.art = QComboBox(); self.art.addItems(VW.VERWEISTYPEN); self.art.setMinimumHeight(34); self.art.setAccessibleName("Verweistyp")
-        self.auf = QComboBox(); self.auf.setMinimumHeight(34); self.auf.setMinimumWidth(200); self.auf.setAccessibleName("Verweisen auf")
-        g.addWidget(_titel("&Verweistyp:", self.art), 0, 0); g.addWidget(_titel("Verweisen &auf:", self.auf), 0, 1)
-        g.addWidget(self.art, 1, 0); g.addWidget(self.auf, 1, 1)
-        self.link = QCheckBox("Als &Hyperlink einfügen"); self.link.setChecked(True)
-        self.oben_unten = QCheckBox("Oben/unten einschließen (&O)")
-        g.addWidget(self.link, 2, 0); g.addWidget(self.oben_unten, 2, 1)
+        self.auf = QComboBox(); self.auf.setMinimumHeight(34); self.auf.setAccessibleName("Verweisen auf")
+        self.auf.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.auf.setMinimumContentsLength(12)
+        g.reihe((_titel("&Verweistyp:", self.art), self.art), (_titel("Verweisen &auf:", self.auf), self.auf))
+        self.link = UmbruchSchalter("Als &Hyperlink einfügen"); self.link.setChecked(True)
+        self.oben_unten = UmbruchSchalter("Oben/unten einschließen (&O)")
+        g.breit(self.link); g.breit(self.oben_unten)
         v.addLayout(g)
         self.liste = QListWidget(); self.liste.setMinimumHeight(190); self.liste.setAccessibleName("Ziel")
         self.fuer = _titel("", self.liste)

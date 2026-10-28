@@ -8,7 +8,7 @@ Zeilen, die zu breit sind, brechen um: eine Reihe aus Feldern (``QHBoxLayout``) 
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt
-from PySide6.QtWidgets import QAbstractButton, QCheckBox, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
+from PySide6.QtWidgets import QAbstractButton, QBoxLayout, QCheckBox, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
 
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 
@@ -125,6 +125,7 @@ class _Umbruchtext(QLabel):
     def __init__(self, knopf: QAbstractButton, text: str):
         super().__init__(text)
         self._knopf = knopf
+        self.setBuddy(knopf)                                      # „&“ bleibt Kürzel (unterstrichen) statt als Zeichen sichtbar
         self.setWordWrap(True)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.setMinimumWidth(40)
@@ -192,6 +193,8 @@ def schmal_machen(d: QWidget, breite: int) -> None:
         if isinstance(l, QGridLayout):
             if max(_breite_gitter(l), l.minimumSize().width()) > breite:
                 _tabelle_umbrechen(l, breite)
+        elif isinstance(l, QHBoxLayout) and l.direction() in (QBoxLayout.TopToBottom, QBoxLayout.BottomToTop):
+            continue                                                         # schon senkrecht gestellt (kompakt_machen): steht untereinander
         elif isinstance(l, QHBoxLayout) and l.parent() is not None and max(_breite(l), l.minimumSize().width()) > breite:
             _zeile_zu_fluss(l)
 

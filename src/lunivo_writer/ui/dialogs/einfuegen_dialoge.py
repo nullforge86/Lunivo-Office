@@ -6,11 +6,12 @@ from PySide6.QtGui import QColor, QFont, QPixmap
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem,
-    QVBoxLayout,
+    QSizePolicy, QVBoxLayout,
 )
 
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.ui.baukasten import FarbFeld
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.services import bausteine
 
 
@@ -24,24 +25,48 @@ _Farbknopf = FarbFeld
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+class _Vorschau(QLabel):
+    """Vorschaubild, das sich der Breite anpasst (in der Seitenleiste kleiner, nie breiter als 460 px)."""
+
+    def __init__(self):
+        super().__init__()
+        self._bild = None
+        self.setMinimumHeight(120); self.setAlignment(Qt.AlignCenter)
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.setStyleSheet(('background: white; border: 1px solid ' + Farbe.GRAU_HELL + ';'))
+
+    def setze(self, img) -> None:
+        self._bild = img
+        self._neu()
+
+    def _neu(self) -> None:
+        if self._bild is None:
+            return
+        pm = QPixmap.fromImage(self._bild)
+        b = min(460, max(40, self.width() - 8))
+        if pm.width() > b:
+            pm = pm.scaledToWidth(b, Qt.SmoothTransformation)
+        self.setPixmap(pm)
+
+    def resizeEvent(self, ev) -> None:
+        super().resizeEvent(ev)
+        self._neu()
+
+
 class VorschauMixin:
     def _vorschau_bauen(self, layout):
-        self.vorschau = QLabel(); self.vorschau.setMinimumHeight(120); self.vorschau.setAlignment(Qt.AlignCenter)
-        self.vorschau.setStyleSheet(('background: white; border: 1px solid ' + Farbe.GRAU_HELL + ';'))
-        layout.addWidget(self.vorschau)
+        self.vorschau = _Vorschau()
+        layout.addWidget(self.vorschau) if not isinstance(layout, FormularGitter) else layout.breit(self.vorschau)
 
     def _zeige(self, img):
-        pm = QPixmap.fromImage(img)
-        if pm.width() > 460:
-            pm = pm.scaledToWidth(460, Qt.SmoothTransformation)
-        self.vorschau.setPixmap(pm)
+        self.vorschau.setze(img)
 
 
 class FormDialog(PanelFaehig, QDialog, VorschauMixin):
     def __init__(self, parent, form: str | None = None):
         super().__init__(parent)
         self.setWindowTitle("Form einfügen")
-        v = QVBoxLayout(self); f = QFormLayout(); v.addLayout(f)
+        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.art = QComboBox(); self.art.addItems(E.FORMEN)
         if form:
             self.art.setCurrentText(form)
@@ -52,7 +77,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.text = QLineEdit()
         for lab, w in (("Form", self.art), ("Füllfarbe", self.fuell), ("Linienfarbe", self.linie), ("Breite (px)", self.breite),
                        ("Höhe (px)", self.hoehe), ("Linienstärke", self.strich), ("Text in der Form", self.text)):
-            f.addRow(lab, w)
+            f.zeile(lab, w)
         self._vorschau_bauen(v)
         v.addWidget(_ok(self))
         for w in (self.art, self.breite, self.hoehe, self.strich, self.text):
@@ -79,7 +104,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         from lunivo_writer.editor import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt")
-        v = QVBoxLayout(self); f = QFormLayout(); v.addLayout(f)
+        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         daten = daten or {}
         self.layout_ = QComboBox(); self.layout_.addItems(SA.LAYOUTS)
         self.layout_.setCurrentText(daten.get("layout", "Prozess"))
@@ -87,7 +112,8 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.farben.setCurrentText(daten.get("farben", "Blau"))
         self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[self.layout_.currentText()])
         self.text.setMinimumHeight(110)
-        f.addRow("Layout", self.layout_); f.addRow("Farben", self.farben); f.addRow("Text (eine Zeile je Punkt)", self.text)
+        f.zeile("Layout", self.layout_); f.zeile("Farben", self.farben)
+        f.breit(QLabel("Text (eine Zeile je Punkt)")); f.breit(self.text)
         self._vorschau_bauen(v)
         v.addWidget(_ok(self))
         self.layout_.currentTextChanged.connect(self._layout)
@@ -113,13 +139,13 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         """``stil`` und ``farbe`` kommen aus der Galerie (``E.WORDART_VORGABEN``)."""
         super().__init__(parent)
         self.setWindowTitle("WordArt")
-        v = QVBoxLayout(self); f = QFormLayout(); v.addLayout(f)
+        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
         self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
         for lab, w in (("Text", self.text), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
-            f.addRow(lab, w)
+            f.zeile(lab, w)
         self._vorschau_bauen(v); v.addWidget(_ok(self))
         self.text.textChanged.connect(self.aktualisieren); self.stil.currentTextChanged.connect(self.aktualisieren)
         self.schrift.textChanged.connect(self.aktualisieren); self.pt.valueChanged.connect(self.aktualisieren)
@@ -181,106 +207,6 @@ class DiagrammDatenDialog(QDialog):
         return self.titel.text(), kat, reihen
 
 
-class DiagrammDialog(PanelFaehig, QDialog):
-    """„Diagramm einfügen“ wie in der Vorlage: links die Diagrammarten, oben die Untertypen als Bildchen, darunter Name und große Vorschau.
-    „Daten bearbeiten …“ öffnet Titel und Werte als Unterfenster."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        from PySide6.QtCore import QSize
-        from PySide6.QtWidgets import QButtonGroup, QFrame, QToolButton
-        from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-        from lunivo_writer.ui.widgets import icons
-        self.D = D
-        self.setWindowTitle("Diagramm einfügen")
-        self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
-        v = QVBoxLayout(self)
-        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
-        self.arten = QListWidget(); self.arten.setIconSize(QSize(20, 20)); self.arten.setFixedWidth(170); self.arten.setAccessibleName("Diagrammart")
-        for gruppe, sym, unter in D.TYPEN:
-            it = QListWidgetItem(icons.icon(sym, 20), gruppe if gruppe != "Kombination" else "Kombination …")
-            if not unter:
-                it.setFlags(Qt.NoItemFlags); it.setToolTip("Kursdiagramme kann Lunivo noch nicht zeichnen.")
-            self.arten.addItem(it)
-        h.addWidget(self.arten)
-        rechts = QVBoxLayout(); rechts.setContentsMargins(12, 10, 12, 10)
-        self.unter_zeile = QHBoxLayout(); self.unter_zeile.setSpacing(6); self.unter_zeile.addStretch(1)
-        rechts.addLayout(self.unter_zeile)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setStyleSheet("color: palette(midlight);"); rechts.addWidget(linie)
-        self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
-        rechts.addWidget(self.name)
-        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumSize(560, 340)
-        self.vorschau.setStyleSheet("background: white; border: 1px solid " + Farbe.GRAU_HELL + ";")
-        rechts.addWidget(self.vorschau, 1)
-        h.addLayout(rechts, 1)
-        v.addWidget(rahmen, 1)
-        self._teile = h
-        daten = QPushButton("&Daten bearbeiten …"); daten.setMinimumHeight(34); daten.clicked.connect(self._daten)
-        fussleiste(self, v, daten)
-        self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
-        self._QToolButton = QToolButton
-        self.untertyp = "saeule_gruppiert"
-        self.arten.currentRowChanged.connect(self._gruppe)
-        self.arten.setCurrentRow(0)
-
-    def kompakt_machen(self) -> None:
-        """In der Seitenleiste: die Diagrammarten über der Vorschau, die Vorschau so breit wie die Seitenleiste."""
-        from PySide6.QtWidgets import QBoxLayout
-        self._teile.setDirection(QBoxLayout.TopToBottom)
-        self.arten.setFixedWidth(16777215); self.arten.setMinimumWidth(0); self.arten.setFixedHeight(130)
-        self.vorschau.setMinimumSize(0, 240)
-        self._vorschau_breite = 380
-        self.aktualisieren()
-
-    def _gruppe(self, zeile: int) -> None:
-        from PySide6.QtCore import QSize
-        from PySide6.QtGui import QIcon, QPixmap
-        while self.unter_zeile.count() > 1:
-            w = self.unter_zeile.takeAt(0).widget()
-            if w is not None:
-                self._knoepfe.removeButton(w); w.deleteLater()
-        unter = self.D.TYPEN[zeile][2] if 0 <= zeile < len(self.D.TYPEN) else []
-        for i, (schl, name) in enumerate(unter):
-            img = self.D.bild(schl, "", self.kategorien, self.reihen, 150, 110, legende=False)
-            b = self._QToolButton(); b.setCheckable(True); b.setToolTip(name); b.setAccessibleName(name)
-            b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(QSize(64, 48)); b.setFixedSize(76, 60)
-            b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
-            self._knoepfe.addButton(b); self.unter_zeile.insertWidget(i, b)
-        if unter:
-            self._knoepfe.buttons()[0].setChecked(True)
-            self._waehle(unter[0][0])
-
-    def _waehle(self, untertyp: str) -> None:
-        self.untertyp = untertyp
-        self.name.setText(self.D.NAMEN.get(untertyp, ""))
-        self.aktualisieren()
-
-    def _daten(self) -> None:
-        from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
-        d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
-
-        def fertig():
-            self.titel_text, self.kategorien, self.reihen = d.daten()
-            self._gruppe(self.arten.currentRow())
-            for b in self._knoepfe.buttons():
-                b.setChecked(b.toolTip() == self.D.NAMEN.get(self.untertyp))
-            self._waehle(self.untertyp)
-        zeige_unter(self, d, fertig)
-
-    def bild(self):
-        return self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen)
-
-    def daten(self) -> dict:
-        return {"art": self.untertyp, "titel": self.titel_text, "kategorien": self.kategorien, "reihen": self.reihen}
-
-    def aktualisieren(self, *_):
-        from PySide6.QtGui import QPixmap
-        breite = getattr(self, "_vorschau_breite", 620)
-        img = self.D.bild(self.untertyp, self.titel_text, self.kategorien, self.reihen, breite, int(breite * 0.58))
-        self.vorschau.setPixmap(QPixmap.fromImage(img))
-
-
 class PiktogrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -325,9 +251,10 @@ class FormelDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Formel")
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times"))
+        hilfe = QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times")
+        hilfe.setWordWrap(True); v.addWidget(hilfe)
         self.eingabe = QLineEdit("E = m c^2"); v.addWidget(self.eingabe)
-        self.vorschau = QLabel(); self.vorschau.setStyleSheet("background: white; color: black; padding: 8px; font-size: 16pt; font-family: 'DejaVu Serif';")
+        self.vorschau = _Vorschau()                                            # verkleinert lange Formeln auf die Breite
         v.addWidget(self.vorschau); v.addWidget(_ok(self))
         self.eingabe.textChanged.connect(self._zeige); self._zeige()
 
@@ -336,7 +263,7 @@ class FormelDialog(PanelFaehig, QDialog):
         img = E.formel_bild(self.eingabe.text())
         pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor("white"))
         p = QPainter(pm); p.drawImage(8, 6, img); p.end()
-        self.vorschau.setPixmap(pm)
+        self.vorschau.setze(pm.toImage())
 
 
 class DeckblattDialog(PanelFaehig, QDialog):
@@ -503,3 +430,6 @@ class BausteinDialog(PanelFaehig, QDialog):
         b = self._aktuell()
         if b:
             bausteine.einfuegen(self.ed.textCursor(), b); self.ed.document().setModified(True); self.accept()
+
+
+from lunivo_writer.ui.dialogs.diagramm_fenster import DiagrammDialog  # noqa: E402,F401  eigenes Modul, hier für ältere Aufrufer

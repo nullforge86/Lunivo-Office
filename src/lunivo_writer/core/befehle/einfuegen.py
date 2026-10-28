@@ -20,6 +20,13 @@ class EinfuegenBefehle:
         self.w.insert_table()
 
 
+    def tabelleZeichnen(self, k=None):
+        """Stift: Rechteck aufziehen, die Tabelle kommt dorthin (siehe ``ui/document/tabelle_stift.py``)."""
+        if self.ed and not self.ed.isReadOnly():
+            from lunivo_writer.ui.document.tabelle_stift import TabellenStift
+            TabellenStift(self.ed)
+
+
     def bild(self, k=None):
         self.w.insert_image()
 
@@ -61,12 +68,17 @@ class EinfuegenBefehle:
         e = self.ed
         if not e:
             return
-        import os
         from lunivo_writer.ui.dialogs.einfuegen_fenster import ObjektDialog
         d = ObjektDialog(self.w, als_symbol=bool(als_symbol), ordner=self.w.settings.get("last_dir", ""))
         if not d.exec():
             return
-        pfad, art = d.datei.text().strip(), d.art()
+        self._datei_einsetzen(d.datei.text().strip(), d.art())
+
+
+    def _datei_einsetzen(self, pfad: str, art: str) -> None:
+        """Bild ins Dokument, Text (DOCX, ODT, RTF, TXT, MD) mit seinem Inhalt, alles andere als Dateisymbol mit Link."""
+        import os
+        e = self.ed
         if art == "bild" and e.insert_image(pfad):
             return
         if art == "text":
@@ -87,8 +99,27 @@ class EinfuegenBefehle:
         c.mergeCharFormat(f)
 
 
+    # Dateitypen im Fenster „Dateiobjekt einfügen“ (wie die Reiter ALL / WPS / ET / WPP / PDF der Vorlage)
+    DATEIOBJEKT_TYPEN = [("Alle Dateien", "*"), ("Dokumente", "*.docx *.doc *.odt *.rtf *.txt *.md"),
+                         ("Tabellen", "*.xlsx *.xls *.ods *.csv"), ("Präsentationen", "*.pptx *.ppt *.odp"), ("PDF", "*.pdf"),
+                         ("Bilder", "*.png *.jpg *.jpeg *.gif *.bmp *.webp *.svg")]
+
     def dateiObjekt(self, k=None):
-        self.objekt(k, als_symbol=True)
+        """„Datei-Objekt“ wie in WPS: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
+        ins Dokument — Text und Bilder mit Inhalt, andere Dateien als Symbol mit Link."""
+        if not self.ed:
+            return
+        import os
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        filter_text = ";;".join(f"{n} ({m})" for n, m in self.DATEIOBJEKT_TYPEN)
+        gewaehlt = datei_waehlen(self.w, "Dateiobjekt einfügen", self.w.settings.get("last_dir", ""), filter_text)
+        if not gewaehlt:
+            return
+        pfad = gewaehlt[0]
+        endung = os.path.splitext(pfad)[1].lower()
+        art = ("bild" if endung in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg")
+               else "text" if endung in (".docx", ".odt", ".rtf", ".txt", ".md") else "symbol")
+        self._datei_einsetzen(pfad, art)
 
 
     def menue_objektKlappe(self):
@@ -105,17 +136,14 @@ class EinfuegenBefehle:
 
     def menue_seitenzahlKlappe(self):
         """Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
-        „außen“ und „innen“ bleiben grau, solange Lunivo gerade und ungerade Seiten nicht unterscheidet."""
+        „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import seitenzahl as SZ
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
         for schl, text, ort, ausr in SZ.VORGABEN:
-            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr), aktiv=ausr not in ("aussen", "innen"))
-            b.setCheckable(False)
-            if ausr in ("aussen", "innen"):
-                b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
+            m.kachel(schl, text, seitenzahl_zeichner(ort, ausr)).setCheckable(False)
         m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
         m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
         m.fuss("Seitenzahlen entfernen", self.seitenzahlenEntfernen)
@@ -130,14 +158,36 @@ class EinfuegenBefehle:
 
 
     def seitenzahlEinfuegen(self, k=None):
+        """Fenster „Seitenzahl einfügen“; „Übernehmen für“ entscheidet, welche Abschnitte es trifft. „Von aktueller Seite“ beginnt am
+        Anfang der Seite mit der Schreibmarke einen neuen Abschnitt (wie in WPS)."""
         if not self.ed:
             return
+        from lunivo_writer.editor import abschnitte as AB
         from lunivo_writer.editor import seitenzahl as SZ
         from lunivo_writer.ui.dialogs.einfuegen_fenster import SeitenzahlDialog
-        d = SeitenzahlDialog(self.w)
-        if d.exec():
-            ort, ausr, muster = d.werte()
-            self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr, muster))
+        ed = self.ed
+        d = SeitenzahlDialog(self.w, ed.abschnitt_seite())
+        if not d.exec():
+            return
+        w = d.werte()
+        doc = ed.document()
+        if w["bereich"] == "dokument":
+            ziele = list(range(AB.anzahl(doc)))
+        elif w["bereich"] == "seite":
+            pos = ed.textCursor().position()
+            anfang = max([AB.beginn(doc, ed.abschnitt_nr())] + [s for s in ed.seitenwechsel if s <= pos])
+            ziele = [AB.einfuegen_an(doc, anfang, "naechste", ed.page)]
+        else:
+            ziele = [ed.abschnitt_nr()]
+        for i, nr in enumerate(ziele):
+            ps = SZ.seitenzahl_setzen(ed.abschnitt_seite(nr), w["ort"], w["ausrichtung"], w["muster"], w["format"],
+                                      w["start"] if i == 0 else 0, w["kapitel"])
+            if nr == 0:
+                ed.apply_page(ps)
+            else:
+                AB.setzen(doc, nr, ps)
+        ed._recount()
+        doc.setModified(True)
 
 
     def seitenzahlenEntfernen(self, k=None):
@@ -159,12 +209,13 @@ class EinfuegenBefehle:
 
 
     def _eigene_wasserzeichen(self) -> list[dict]:
+        """Eigene Wasserzeichen (Text oder Bild) aus den Einstellungen."""
         import json
         try:
             d = json.loads(str(self.w.settings.get(self.EIGENE_WASSERZEICHEN, "") or "[]"))
         except ValueError:
             return []
-        return [x for x in d if isinstance(x, dict) and x.get("text")] if isinstance(d, list) else []
+        return [x for x in d if isinstance(x, dict) and (x.get("text") or x.get("bild"))] if isinstance(d, list) else []
 
 
     def menue_wasserzeichenKlappe(self):
@@ -172,7 +223,7 @@ class EinfuegenBefehle:
         import json
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_zeichner
+        from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_vorschau, wasserzeichen_zeichner
         m = RasterAuswahl(self.w, titel="Benutzerdefiniertes Wasserzeichen", spalten=3, groesse=QSize(84, 112), beschriftet=True)
         for i in range(self.EIGENE_ANZAHL):
             m.kachel(f"eigen{i}")
@@ -183,7 +234,7 @@ class EinfuegenBefehle:
         for b in m.knoepfe.values():
             b.setCheckable(False)
         m.fuss("Wasserzeichen einfügen …", self.wasserzeichen)
-        m.fuss("Wasserzeichen entfernen", lambda: self._seite_aendern(watermark=None))
+        m.fuss("Wasserzeichen entfernen", lambda: self._wasserzeichen_setzen(None))
 
         def auffrischen():
             eigene = self._eigene_wasserzeichen()
@@ -192,25 +243,28 @@ class EinfuegenBefehle:
                 b.setVisible(i < len(eigene))
                 if i < len(eigene):
                     w = eigene[i]
-                    m.bild_setzen(f"eigen{i}", wasserzeichen_zeichner(w["text"], w.get("winkel", -45), w.get("farbe", "#c0c0c0")), w["text"])
-                    b.setText(b.fontMetrics().elidedText(w["text"], Qt.ElideRight, 88))
+                    name = w.get("text") or w.get("bild_name") or "Bild"
+                    m.bild_setzen(f"eigen{i}", wasserzeichen_vorschau(w), name)
+                    b.setText(b.fontMetrics().elidedText(name, Qt.ElideRight, 88))
 
         def gewaehlt(schl: str):
             if schl == "neu":
-                from lunivo_writer.ui.dialogs.dokument_dialoge import WasserzeichenDialog
-                d = WasserzeichenDialog(self.w, None)
+                from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog
+                d = WasserzeichenDialog(self.w, {"text": "VERTRAULICH", "winkel": -45, "transparenz": 50},
+                                        self.ed.abschnitt_seite() if self.ed else None, str(self.w.settings.get("last_dir", "") or ""))
                 if d.exec() and d.ergebnis():
-                    eigene = [d.ergebnis()] + self._eigene_wasserzeichen()
+                    neu = {k: v for k, v in d.ergebnis().items() if k != "abschnitt"}
+                    eigene = [neu] + self._eigene_wasserzeichen()
                     self.w.settings.set(self.EIGENE_WASSERZEICHEN, json.dumps(eigene[:self.EIGENE_ANZAHL], ensure_ascii=False))
-                    self._seite_aendern(watermark=d.ergebnis())
+                    self._wasserzeichen_setzen(neu, d.bereich())
             elif schl.startswith("eigen"):
                 eigene = self._eigene_wasserzeichen()
                 i = int(schl[5:])
                 if i < len(eigene):
-                    self._seite_aendern(watermark=dict(eigene[i]))
+                    self._wasserzeichen_setzen(dict(eigene[i]))
             else:
                 winkel = dict(self.WASSERZEICHEN_VORGABEN)[schl]
-                self._seite_aendern(watermark={"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 80 if winkel else 96})
+                self._wasserzeichen_setzen({"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 0, "transparenz": 50})
         m.aboutToShow.connect(auffrischen)
         m.gewaehlt.connect(gewaehlt)
         auffrischen()
@@ -283,21 +337,16 @@ class EinfuegenBefehle:
 
 
     def menue_tabelleKlappe(self):
-        """Tabelle wie in WPS: 10 × 10 Zellen, darunter Einfügen, Zeichnen, Text ↔ Tabelle; was nicht passt, bleibt grau."""
-        from lunivo_writer.editor import einfuegen as E
+        """Tabelle wie in WPS: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
+        was nicht passt, bleibt grau."""
         from lunivo_writer.ui.baukasten.zellen_raster import ZellenRaster
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
         m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
-        zeichnen = m.addAction(self._sym("stift"), "Tabelle zeichnen")
-        zeichnen.setEnabled(False); zeichnen.setToolTip("Tabellen mit dem Stift zeichnen kann Lunivo noch nicht.")
+        m.addAction(self._sym("stift"), "Tabelle zeichnen", self.tabelleZeichnen)
         zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
         zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
-        m.addSeparator()
-        schnell = m.addMenu(self._sym("schnelltab"), "Schnelltabelle")
-        for n in E.SCHNELLTABELLEN:
-            schnell.addAction(n, lambda n=n: self.ed and E.schnelltabelle(self.ed, n))
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None
@@ -320,10 +369,18 @@ class EinfuegenBefehle:
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Horizontal", self.textfeld, symbol=self._sym("textrahmen"))
-        m.eintrag("Vertikal", None, symbol=self._sym("textrichtung"), aktiv=False,
-                  tip="Senkrecht laufender Text in Textfeldern ist in Lunivo noch nicht möglich.")
+        m.eintrag("Vertikal", self.textfeldVertikal, symbol=self._sym("textrichtung"))
         m.eintrag("Mehrzeiliger Text", self.textfeldMehrzeilig, symbol=self._sym("block"))
         return m
+
+
+    def textfeldVertikal(self, k=None):
+        """Textfeld mit senkrecht laufendem Text: eine Form (weiß, dunkler Rahmen); Text, Füllung und Kontur über die Formwerkzeuge."""
+        if self.ed:
+            from lunivo_writer.editor import einfuegen as E
+            daten = {"form": E.TEXTFELD_VERTIKAL, "fuell": "#ffffff", "linie": "#1f3864", "strich": 1.5, "text": "Text hier eingeben"}
+            self._bild_einfuegen(E.form_bild(E.TEXTFELD_VERTIKAL, 70, 180, "#ffffff", "#1f3864", 1.5, daten["text"]),
+                                 "Textfeld (vertikal)", "form", daten)
 
 
     def textfeldMehrzeilig(self, k=None):
@@ -333,7 +390,7 @@ class EinfuegenBefehle:
 
 
     def menue_schnellbausteineKlappe(self):
-        """Schnellbausteine wie in WPS: AutoText-Liste ▸ (die Textbausteine) und Felder …"""
+        """Schnellbausteine wie in WPS: AutoText-Liste ▸ und Felder …"""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         liste = m.untermenue("AutoText-Liste", self._sym("baustein"))
@@ -342,8 +399,17 @@ class EinfuegenBefehle:
         return m
 
 
+    # Seitenzahl-AutoTexte der Vorlage: (Name, [Text oder (Feldanweisung)])
+    AUTOTEXTE_SEITE = [("- Seite -", ["- ", ("PAGE",), " -"]), ("Seite X", ["Seite ", ("PAGE",)]),
+                       ("Gesamtmenge von Y Seite", ["Gesamt ", ("NUMPAGES",), " Seiten"]),
+                       ("Seite X von Y", ["Seite ", ("PAGE",), " von ", ("NUMPAGES",)])]
+
     def _bausteine_fuellen(self, m) -> None:
+        """AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
+        „AutoText hinzufügen …“ (nur mit Markierung)."""
         from lunivo_writer.services import bausteine
+        for name, teile in self.AUTOTEXTE_SEITE:
+            m.addAction(name, lambda _=False, teile=teile: self._autotext_seite(teile))
         for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
             if not liste:
                 continue
@@ -352,7 +418,37 @@ class EinfuegenBefehle:
                 m.addAction(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
                             lambda _=False, b=b: self.ed and (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
         m.addSeparator()
+        neu = m.addAction(self._sym("baustein"), "AutoText hinzufügen …", self.autotextHinzufuegen)
+        neu.setEnabled(bool(self.ed and self.ed.textCursor().hasSelection()))
         m.addAction("Textbausteine verwalten …", self.textbaustein)
+
+
+    def _autotext_seite(self, teile) -> None:
+        if not self.ed:
+            return
+        from lunivo_writer.editor import felder as F
+        kontext = F.kontext_sammeln(self.ed)
+        c = self.ed.textCursor(); c.beginEditBlock()
+        for t in teile:
+            if isinstance(t, tuple):
+                F.feld_einfuegen(self.ed, t[0], F.ergebnis(t[0], kontext))
+            else:
+                self.ed.textCursor().insertText(t)
+        c.endEditBlock()
+        self.ed.document().setModified(True)
+
+
+    def autotextHinzufuegen(self, k=None):
+        """Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“."""
+        if not self.ed or not self.ed.textCursor().hasSelection():
+            return
+        from lunivo_writer.services import bausteine
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import AutoTextDialog
+        c = self.ed.textCursor()
+        d = AutoTextDialog(self.w, c.selectedText().replace("\u2029", " "))
+        if d.exec() and d.name():
+            bausteine.hinzufuegen(d.name(), c.selection())
+            self.w.statusBar().showMessage(f"AutoText „{d.name()}“ gespeichert.", 4000)
 
 
     def schnellbausteine(self, k=None):
@@ -360,16 +456,26 @@ class EinfuegenBefehle:
 
 
     def felder(self, k=None):
+        """Fenster „Felder“ (Schnellbausteine ▸ Felder …). TOC fügt ein echtes Inhaltsverzeichnis ein, TC einen ausgeblendeten
+        Eintrag; alle anderen Felder stehen mit Ergebnis und Feldanweisung im Text."""
         if not self.ed:
             return
+        import re
         from lunivo_writer.editor import felder as F
         from lunivo_writer.ui.dialogs.einfuegen_fenster import FelderDialog
         t = self.w.current_tab()
-        kontext = {"seiten": getattr(self.ed, "_pages", 1), "woerter": len(self.ed.toPlainText().split()),
-                   "autor": self.w.settings.get("benutzer/name", ""), "pfad": getattr(t, "path", "") or ""}
+        kontext = F.kontext_sammeln(self.ed, self.w.settings.get("benutzer/name", ""), getattr(t, "path", "") or "")
+        kontext["serienfelder"] = list((getattr(t, "serie", None) or {}).get("spalten", []))
         d = FelderDialog(self.w, kontext)
-        if d.exec():
-            F.feld_einfuegen(self.ed, *d.feld())
+        if not d.exec():
+            return
+        anweisung, text = d.feld()
+        if anweisung.upper().startswith("TOC"):
+            from lunivo_writer.editor import verzeichnis as V
+            m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
+            V.verzeichnis_einfuegen(self.ed, "toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
+            return
+        F.feld_einfuegen(self.ed, anweisung, text, versteckt=anweisung.upper().startswith("TC"))
 
 
     def menue_symbolKlappe(self):
@@ -461,7 +567,7 @@ class EinfuegenBefehle:
             return
         d = TrennerDialog(self.w, zu_tabelle=False)
         if d.exec():
-            TT.tabelle_zu_text(self.ed, d.trenner())
+            TT.tabelle_zu_text(self.ed, d.trenner(), d.geschachtelt.isChecked())
 
 
     def inhaltsverzeichnis(self, k=None):
@@ -515,11 +621,24 @@ class EinfuegenBefehle:
                 m.kachel(name, name, zeichne).setCheckable(False)
 
         def einfuegen(f):
-            if self.ed:
+            from lunivo_writer.editor import formen as F
+            if self.ed and not F.in_zeichenbereich(self.ed, f):
                 self._bild_einfuegen(E.form_bild(f, *((240, 60) if K.ist_linie(f) else (160, 120))), f"Form: {f}", "form", {"form": f})
         m.gewaehlt.connect(einfuegen)
         m.fuss("Weitere Formen und Farben …", self.zeichnen)
+        m.trenner()
+        bereich = m.fuss("Neuer &Zeichenbereich", self.zeichenbereich)
+        bereich.setIcon(self._sym("textrahmen"))
+        bereich.setToolTip("Fügt einen Bereich ein, der Formen aufnimmt: Bereich markieren, dann eine Form wählen.")
         return m
+
+
+    def zeichenbereich(self, k=None):
+        """Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/formen.py``)."""
+        if self.ed and not self.ed.isReadOnly():
+            from lunivo_writer.editor import formen as F
+            F.zeichenbereich_einfuegen(self.ed)
+            c = self.ed.textCursor(); c.movePosition(c.MoveOperation.PreviousCharacter, c.MoveMode.KeepAnchor); self.ed.setTextCursor(c)
 
 
     def zeichnen(self, k=None):

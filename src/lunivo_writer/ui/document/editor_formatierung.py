@@ -621,11 +621,15 @@ class FormatierungBaustein:
         cur.insertBlock(bf)
 
 
-    def insert_table(self, rows: int, cols: int, borders: bool = True) -> None:
+    def insert_table(self, rows: int, cols: int, borders: bool = True, spaltenbreite: float | None = None) -> None:
+        """Tabelle an der Schreibmarke; ``spaltenbreite`` (Bildpunkte): feste Spalten, sonst passt sie sich der Seitenbreite an."""
         tf = QTextTableFormat()
         tf.setCellPadding(4); tf.setCellSpacing(0)
         tf.setBorder(0.5 if borders else 0); tf.setBorderCollapse(True)
-        tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
+        if spaltenbreite:
+            tf.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, spaltenbreite)] * cols)
+        else:
+            tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
         t = self.textCursor().insertTable(rows, cols, tf)
         self.setTextCursor(t.cellAt(0, 0).firstCursorPosition())
 

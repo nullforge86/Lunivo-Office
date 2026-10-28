@@ -39,11 +39,11 @@ class UmbruchSchalter(QCheckBox):
 
     def heightForWidth(self, breite: int) -> int:
         rand = self._indikator()
-        r = self.fontMetrics().boundingRect(QRect(0, 0, max(40, breite - rand), 10000), Qt.TextWordWrap, self.text())
+        r = self.fontMetrics().boundingRect(QRect(0, 0, max(40, breite - rand), 10000), Qt.TextWordWrap | Qt.TextShowMnemonic, self.text())
         return max(self.fontMetrics().height() + 6, r.height() + 6)
 
     def sizeHint(self) -> QSize:
-        return QSize(self._indikator() + self.fontMetrics().horizontalAdvance(self.text()), self.heightForWidth(10000))
+        return QSize(self._indikator() + self.fontMetrics().horizontalAdvance(self.text().replace("&", "")), self.heightForWidth(10000))
 
     def minimumSizeHint(self) -> QSize:
         return QSize(self._indikator() + 60, self.heightForWidth(self._indikator() + 60))
@@ -57,7 +57,7 @@ class UmbruchSchalter(QCheckBox):
         p.setPen(self.palette().color(self.foregroundRole() if self.isEnabled() else self.palette().ColorRole.WindowText))
         if not self.isEnabled():
             p.setPen(self.palette().color(self.palette().ColorGroup.Disabled, self.palette().ColorRole.WindowText))
-        p.drawText(QRect(rand, 2, self.width() - rand, self.height() - 2), Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, self.text())
+        p.drawText(QRect(rand, 2, self.width() - rand, self.height() - 2), Qt.TextWordWrap | Qt.TextShowMnemonic | Qt.AlignTop | Qt.AlignLeft, self.text())
 
 
 class FlussLayout(QLayout):

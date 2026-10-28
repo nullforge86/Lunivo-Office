@@ -31,9 +31,26 @@ def test_klappmenues_wie_vorlage(fenster):
     assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
-    assert not tf.actions()[1].isEnabled()                  # grau sichtbar statt versteckt
+    assert all(a.isEnabled() for a in tf.actions() if a.text())          # wie in WPS: alle drei wählbar
     assert _texte(b.klappe("schnellbausteineKlappe")) == ["AutoText-Liste", "Felder …"]
     assert b.hat("textflussumbruch")                        # auch im Seitenlayout-Menü nicht mehr grau
+
+
+def test_textfeld_vertikal_ist_form_mit_text(fenster):
+    from lunivo_writer.editor import formen as F
+    ed = fenster.current_editor()
+    fenster.befehle.textfeldVertikal()
+    b = ed.document().firstBlock()
+    it = b.begin()
+    f = None
+    while not it.atEnd():
+        cf = it.fragment().charFormat()
+        if cf.isImageFormat():
+            f = cf.toImageFormat()
+        it += 1
+    o = F.objekt(f)
+    assert o["art"] == "form" and o["daten"]["form"] == "Textfeld vertikal" and o["daten"]["text"] == "Text hier eingeben"
+    assert f.height() > f.width()                                          # hochkant wie in der Vorlage
 
 
 def test_band_einfuegen_reihenfolge(fenster):
@@ -86,14 +103,63 @@ def test_felder_einfuegen(fenster):
     from lunivo_writer.editor.zusatz import P_FELD
     from lunivo_writer.ui.dialogs.einfuegen_fenster import FelderDialog
     e = fenster.current_editor()
-    d = FelderDialog(fenster, {"autor": "Kay"})
-    d.liste.setCurrentRow(list(F.FELDER).index("Autor"))
-    assert d.feld() == ("AUTHOR", "Kay")
+    d = FelderDialog(fenster, {"seite": 2, "seiten": 5})
+    assert [d.liste.item(i).text() for i in range(d.liste.count())] == [
+        "Formel", "Hyperlink", "Seite", "PageRef", "SectionPages", "Seq", "TC", "Uhrzeit", "PrintDate", "TOC", "NumPages",
+        "Dokumentvariable", "Seriendruckfeld", "StyleRef"]
+    # Formel wie in der Vorlage: „=“, Assistent mit Zahlenformat, Funktion, Tabellenbereich (grau außerhalb), Textmarke
+    assert d.anweisung.text() == "=" and not d.ok.isEnabled() and not d._felder["bereich"].isEnabled()
+    assert d.formatierung.isChecked()
+    d.anweisung.setText("=")
+    d._felder["funktion"].setCurrentText("SUM"); d._formel_einsetzen(d._felder["funktion"])
+    assert d.anweisung.text() == "=SUM()"
+    d.anweisung.setText("=SUM(2;3)*2"); d._felder["format"].setCurrentText("0,00")
+    assert d.ok.isEnabled() and d.feld() == ('=SUM(2;3)*2 \\# "0,00" \\* MERGEFORMAT', "10,00")
+    d.liste.setCurrentRow(2)                                            # Seite, römisch
+    d._felder["art"].setCurrentIndex(1)
+    assert d.feld() == ("PAGE \\* ROMAN \\* MERGEFORMAT", "II")
+    d.formatierung.setChecked(False)
     F.feld_einfuegen(e, *d.feld()); e.insertPlainText(" danach")
-    c = QTextCursor(e.document()); c.setPosition(2)
-    assert c.charFormat().stringProperty(P_FELD) == "AUTHOR"
+    c = QTextCursor(e.document()); c.setPosition(1)
+    assert c.charFormat().stringProperty(P_FELD) == "PAGE \\* ROMAN"
     c.movePosition(QTextCursor.End)
     assert not c.charFormat().hasProperty(P_FELD)
+
+
+def test_formel_und_tabellenbereiche(fenster):
+    from lunivo_writer.editor import felder as F
+    assert F.formel("2+3*4", {}) == 14 and F.formel("ROUND(10/3;2)", {}) == 3.33 and F.formel("IF(1>2;5;7)", {}) == 7
+    assert F.formel("AVERAGE(ABOVE)", {"bereiche": {"ABOVE": [2, 4]}}) == 3
+    assert F.zahl_formatieren(1234.5, "#.##0,00") == "1.234,50" and F.zahl_formatieren(0.25, "0 %") == "25 %"
+    with pytest.raises(ValueError):
+        F.formel("2+", {})
+    e = fenster.current_editor()
+    e.insert_table(3, 1)
+    t = e.textCursor().currentTable()
+    t.cellAt(0, 0).firstCursorPosition().insertText("4")
+    t.cellAt(1, 0).firstCursorPosition().insertText("1,5")
+    e.setTextCursor(t.cellAt(2, 0).firstCursorPosition())
+    k = F.kontext_sammeln(e)
+    assert k["in_tabelle"] and k["bereiche"]["ABOVE"] == [4.0, 1.5]
+    assert F.ergebnis("=SUM(ABOVE)", k) == "5,5"
+
+
+def test_autotext_liste_wie_vorlage(fenster):
+    from lunivo_writer.editor.zusatz import P_FELD
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import AutoTextDialog
+    b, e = fenster.befehle, fenster.current_editor()
+    m = b.klappe("schnellbausteineKlappe")
+    assert _texte(m) == ["AutoText-Liste", "Felder …"]
+    liste = m.actions()[0].menu(); liste.aboutToShow.emit()
+    texte = _texte(liste)
+    assert texte[:4] == ["- Seite -", "Seite X", "Gesamtmenge von Y Seite", "Seite X von Y"] and "AutoText hinzufügen …" in texte
+    assert not next(a for a in liste.actions() if a.text() == "AutoText hinzufügen …").isEnabled()     # ohne Markierung grau
+    next(a for a in liste.actions() if a.text() == "Seite X von Y").trigger()
+    assert e.toPlainText() == "Seite 1 von 1"
+    c = QTextCursor(e.document()); c.setPosition(7)
+    assert c.charFormat().stringProperty(P_FELD) == "PAGE"
+    d = AutoTextDialog(None, "Mit freundlichen Grüßen und so weiter")
+    assert d.name() == "Mit freundlichen Grüßen und" and d.ok.isEnabled()
 
 
 def test_text_in_tabelle_und_zurueck(fenster):
@@ -112,6 +178,95 @@ def test_text_in_tabelle_und_zurueck(fenster):
     assert d.findBlock(t.firstPosition() - 2).text() == "vorher" and d.findBlock(t.lastPosition() + 1).text() == "nachher"
     assert TT.tabelle_zu_text(e, ";")
     assert e.toPlainText() == "vorher\na;b;c\nd;e;\nnachher"
+
+
+def test_datei_objekt_wie_vorlage(fenster, tmp_path, monkeypatch):
+    from lunivo_writer.ui.baukasten import speichern_fenster as SF
+    datei = tmp_path / "notiz.txt"; datei.write_text("Aus der Datei", encoding="utf-8")
+    gefragt = []
+    monkeypatch.setattr(SF, "datei_waehlen", lambda p, titel, start, filt, mehrere=False: gefragt.append((titel, filt)) or [str(datei)])
+    fenster.befehle.dateiObjekt()
+    assert gefragt[0][0] == "Dateiobjekt einfügen" and "PDF (*.pdf)" in gefragt[0][1]
+    assert "Aus der Datei" in fenster.current_editor().toPlainText()
+
+
+def test_kommentar_knopf_und_seitenleiste_gleiche_daten(fenster):
+    """Prüfkatalog: Kommentar aus dem Band (auch im leeren Dokument) erscheint in der Kommentar-Seitenleiste und umgekehrt."""
+    b, e, nav = fenster.befehle, fenster.current_editor(), fenster.navigation
+    e.clear()
+    b.kommentar()
+    assert not nav.isHidden() and not nav.neu_feld.isHidden()
+    nav.neu_text.setPlainText("Erster Gedanke"); nav._neu_speichern()
+    assert [k["text"] for k in e.kommentare.values()] == ["Erster Gedanke"] and len(nav._karten) == 1
+    assert e.kommentar_bereiche()
+
+
+def test_zeichenbereich_nimmt_formen_auf(fenster):
+    import json
+    from lunivo_writer.editor import formen as F
+    from lunivo_writer.editor.zusatz import P_OBJEKT
+    b, e = fenster.befehle, fenster.current_editor()
+    m = b.menue_formenKlappe()
+    assert any(x.text().replace("&", "") == "Neuer Zeichenbereich" for x in m.findChildren(__import__("PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton))
+    b.zeichenbereich()
+    assert F.in_zeichenbereich(e, "Rechteck") and F.in_zeichenbereich(e, "Ellipse")
+    o = json.loads(e.bild_format().property(P_OBJEKT))
+    assert o["art"] == "zeichenbereich" and [k["form"] for k in o["daten"]["kinder"]] == ["Rechteck", "Ellipse"]
+    assert (e.bild_format().width(), e.bild_format().height()) == (o["daten"]["breite"], F.ZEICHENBEREICH[1])
+
+
+def test_tabelle_in_text_fenster_wie_vorlage():
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import TrennerDialog
+    from PySide6.QtWidgets import QRadioButton
+    d = TrennerDialog(None, zu_tabelle=False)
+    assert [r.text().replace("&", "") for r in d.findChildren(QRadioButton)] == ["Absätze", "Tabstopps", "Kommata", "Andere:"]
+    assert d.trenner() == "\t" and d.geschachtelt.isChecked() and d.geschachtelt.isEnabled()
+
+
+@pytest.mark.parametrize("geschachtelt", [True, False])
+def test_tabelle_in_text_mit_innerer_tabelle(fenster, geschachtelt):
+    from lunivo_writer.editor import tabelle_text as TT
+    e = fenster.current_editor()
+    e.insert_table(1, 2)
+    e.insertPlainText("a")
+    c = e.textCursor(); c.movePosition(QTextCursor.NextCell); e.setTextCursor(c)
+    e.insert_table(1, 2); e.insertPlainText("x")
+    c = e.textCursor(); c.movePosition(QTextCursor.NextCell); c.insertText("y")
+    aussen = e.document().rootFrame().childFrames()[0]
+    c.setPosition(aussen.firstPosition()); e.setTextCursor(c)
+    assert TT.tabelle_zu_text(e, ";", geschachtelt)
+    if geschachtelt:
+        assert e.toPlainText().strip() == "a;x;y"
+    else:
+        tabellen = [f for f in e.document().rootFrame().childFrames()]
+        assert e.document().findBlockByNumber(0).text() == "a;" and len(tabellen) == 1
+        assert tabellen[0].rows() == 1 and tabellen[0].columns() == 2
+
+
+def test_tabelle_einfuegen_fenster_und_stift(fenster):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtGui import QTextLength
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication
+    from lunivo_writer.ui.dialogs.dokument_dialoge import TableDialog
+    from lunivo_writer.ui.document import tabelle_stift as TS
+    d = TableDialog(None, (5, 2))
+    assert (d.cols.value(), d.rows.value()) == (5, 2) and d.spaltenbreite_px() is None and not d.breite.isEnabled()
+    d.fest.setChecked(True)
+    assert d.breite.isEnabled() and d.spaltenbreite_px() > 0
+    # Stift: Rechteck aufziehen → Tabelle mit Zeilen × Spalten nach Größe, feste Spaltenbreite
+    assert TS.groesse(3 * TS.ZELLE_B, 6 * TS.ZELLE_H) == (6, 3)
+    e = fenster.current_editor(); e.insertPlainText("x")
+    e.set_zoom(1.0)
+    stift = TS.TabellenStift(e)
+    a = QPoint(40, 40); b = a + QPoint(2 * TS.ZELLE_B, 6 * TS.ZELLE_H)
+    vp = e.viewport()                                   # die Maus geht an den Sichtbereich; der Stift fängt sie programmweit ab
+    assert QApplication.overrideCursor() is not None                            # Stift-Mauszeiger überall sichtbar
+    QTest.mousePress(vp, Qt.LeftButton, pos=a); QTest.mouseMove(vp, b); QTest.mouseRelease(vp, Qt.LeftButton, pos=b)
+    assert QApplication.overrideCursor() is None                                # nach dem Zeichnen wieder normal
+    t = e.textCursor().currentTable()
+    assert t is not None and (t.rows(), t.columns()) == (6, 2)
+    assert t.format().columnWidthConstraints()[0].type() == QTextLength.FixedLength
 
 
 def _seitentext(e, n):
@@ -182,10 +337,100 @@ def test_seitenzahl_vorgaben_und_entfernen(fenster):
     assert p.footer.text == "{PAGE}" and p.header.text == "Bericht"          # nicht doppelt
     assert SZ.seitenzahlen_entfernen(p) and p.footer.text == "" and not SZ.seitenzahlen_entfernen(p)
     m = fenster.befehle.klappe("seitenzahlKlappe")
-    assert len(m.knoepfe) == 10 and not m.knoepfe["kopf_aussen"].isEnabled() and m.knoepfe["fuss_rechts"].isEnabled()
+    assert len(m.knoepfe) == 10 and all(k.isEnabled() for k in m.knoepfe.values())        # außen/innen wie in WPS wählbar
     m.gewaehlt.emit("fuss_rechts")
     s = fenster.current_editor().abschnitt_seite()
     assert (s.footer.text, s.footer.align) == ("{PAGE}", "right")
+
+
+def test_seitenzahl_zahlenart_aussen_kapitel():
+    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.models.page import PageSettings
+    p = PageSettings(); p.seiten_format = "roem_gross"
+    assert SZ.text("Seite {PAGE} von {PAGES}", 4, 9, p) == "Seite IV von 9"
+    p.kapitel_ebene, p.kapitel_trenner, p.seiten_format = 1, ".", "dezimal"
+    assert SZ.nummer(3, p, "2") == "2.3" and SZ.nummer(3, p, "") == "3"
+    assert [SZ.ausrichtung("aussen", n) for n in (1, 2)] == ["right", "left"]
+    assert [SZ.ausrichtung("innen", n) for n in (1, 2)] == ["left", "right"] and SZ.ausrichtung("center", 2) == "center"
+
+
+def test_kapitel_je_seite(app):
+    from PySide6.QtGui import QTextBlockFormat, QTextListFormat
+    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("Einleitung\nText\nMethode\nMehr")
+    doc = ed.document()
+    lf = QTextListFormat(); lf.setStyle(QTextListFormat.ListDecimal)
+    liste = None
+    for nr in (0, 2):
+        c = QTextCursor(doc.findBlockByNumber(nr))
+        bf = QTextBlockFormat(c.blockFormat()); bf.setHeadingLevel(1); c.setBlockFormat(bf)
+        if liste is None:
+            liste = c.createList(lf)
+        else:
+            liste.add(c.block())
+    wechsel = [doc.findBlockByNumber(2).position(), doc.findBlockByNumber(3).position()]       # drei Seiten
+    assert SZ.kapitel_je_seite(doc, 1, wechsel) == ["1", "2", "2"]
+
+
+def test_seitenzahl_fenster_wie_vorlage(app):
+    from lunivo_writer.models.page import PageSettings
+    from lunivo_writer.ui.dialogs.einfuegen_fenster import SeitenzahlDialog
+    d = SeitenzahlDialog(None, PageSettings())
+    assert d.muster.count() == 9 and d.position.count() == 10 and d.position.currentText() == "Unten zentriert"
+    assert [d.ebene.itemText(i) for i in (0, 8)] == ["Überschrift 1", "Überschrift 9"]
+    assert not d.ebene.isEnabled() and not d.start.isEnabled() and d.fortsetzen.isChecked()       # grau wie in der Vorlage
+    assert [b.text() for b in d.bereich.buttons()] == ["Gesamtes &Dokument", "Von aktueller Seite (&p)", "Aktueller Abschnit&t"]
+    d.kapitel.setChecked(True); d.trenner.setCurrentIndex(1); d.beginnen.setChecked(True); d.start.setValue(5)
+    d.muster.setCurrentIndex(5); d.position.setCurrentIndex(3)
+    assert d.ebene.isEnabled() and d.beispiel.text() == "1.1, 1.A"
+    assert d.werte() == {"ort": "kopf", "ausrichtung": "aussen", "muster": "{PAGE}", "format": "roem_gross", "start": 5,
+                         "kapitel": (1, "."), "bereich": "dokument"}
+
+
+def test_seitenzahl_von_aktueller_seite(fenster, monkeypatch):
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.ui.dialogs import einfuegen_fenster as EF
+    ed = fenster.current_editor()
+    ed.setPlainText("\n".join(f"Zeile {i}" for i in range(120)))
+    ed._recount()
+    assert ed.seitenwechsel
+    c = ed.textCursor(); c.setPosition(ed.seitenwechsel[0] + 3); ed.setTextCursor(c)
+
+    def exec_(self):
+        self.bereich.button(1).setChecked(True); self.beginnen.setChecked(True); self.start.setValue(7)
+        return 1
+    monkeypatch.setattr(EF.SeitenzahlDialog, "exec", exec_)
+    fenster.befehle.seitenzahlEinfuegen()
+    doc = ed.document()
+    assert AB.anzahl(doc) == 2 and AB.beginn(doc, 1) == ed.seitenwechsel[0]
+    assert ed.abschnitt_seite(0).footer.is_empty() and ed.abschnitt_seite(1).footer.text == "{PAGE}"
+    assert ed.abschnitt_seite(1).seiten_start == 7
+
+
+def test_seitenzahl_ausgabe_und_docx(app, tmp_path, monkeypatch):
+    from lunivo_writer.editor import pagination as PG
+    from lunivo_writer.models.page import HeaderFooter, PageSettings
+    from lunivo_writer.services.docx_reader import read_docx
+    from lunivo_writer.services.docx_writer import write_docx
+    from lunivo_writer.services.odt_reader import read_odt
+    from lunivo_writer.services.odt_writer import odt_daten
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("\n".join(f"Zeile {i}" for i in range(120)))
+    p = PageSettings(); p.footer = HeaderFooter("{PAGE}", "aussen"); p.seiten_format = "roem_klein"; p.seiten_start = 3
+    gezeichnet = []
+    echt = PG._draw_hf
+    monkeypatch.setattr(PG, "_draw_hf", lambda pa, hf, r, n, t, b, page=None, kapitel="":
+                        (gezeichnet.append((PG._expand(hf.text, n, t, page, kapitel), n)) if not hf.is_empty() else None, echt(pa, hf, r, n, t, b, page, kapitel)))
+    PG.export_pdf(str(tmp_path / "a.pdf"), ed.document(), p)
+    assert gezeichnet[:2] == [("iii", 3), ("iv", 4)]
+    p.kapitel_ebene, p.kapitel_trenner = 2, ":"
+    write_docx(str(tmp_path / "a.docx"), ed.document(), p)
+    _d, q, _m, _r = read_docx(str(tmp_path / "a.docx"))
+    assert (q.footer.align, q.seiten_format, q.seiten_start, q.kapitel_ebene, q.kapitel_trenner) == ("aussen", "roem_klein", 3, 2, ":")
+    (tmp_path / "a.odt").write_bytes(odt_daten(ed.document(), p)[0])
+    _d, q, _m, _r = read_odt(str(tmp_path / "a.odt"))
+    assert (q.footer.align, q.seiten_format) == ("aussen", "roem_klein")
 
 
 def test_wasserzeichen_galerie(fenster):
@@ -199,6 +444,59 @@ def test_wasserzeichen_galerie(fenster):
     assert not m.knoepfe["eigen0"].isHidden() and m.knoepfe["eigen0"].toolTip() == "ENTWURF"
     m.gewaehlt.emit("eigen0")
     assert fenster.current_editor().abschnitt_seite().watermark["text"] == "ENTWURF"
+
+
+def test_wasserzeichen_fenster_wie_vorlage(app, tmp_path):
+    from PySide6.QtGui import QColor, QImage
+    from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog
+    d = WasserzeichenDialog(None, None)
+    assert not d.mit_bild.isChecked() and not d.mit_text.isChecked() and d.ergebnis() is None
+    assert not d.zoom.isEnabled() and not d.inhalt.isEnabled() and not d.transparenz.isEnabled()      # grau wie in der Vorlage
+    assert d.inhalt.itemText(1) == "NICHT KOPIEREN" and d.groesse.itemText(0) == "Automatisch" and d.transparenz.value() == 50
+    assert [d.bereich_wahl.itemText(i) for i in range(2)] == ["Gesamtes Dokument", "Aktueller Abschnitt"]
+    d.mit_text.setChecked(True); d.inhalt.setCurrentText("MUSTER"); d.text_format.setCurrentIndex(1); d.text_v.setCurrentIndex(1)
+    assert d.inhalt.isEnabled() and d.text_v_mm.isEnabled() and not d.text_h_mm.isEnabled()
+    w = d.ergebnis()
+    assert (w["text"], w["winkel"], w["v"], w["groesse_pt"], w["transparenz"]) == ("MUSTER", -45, "oben", 0, 50)
+    img = QImage(40, 20, QImage.Format_RGB32); img.fill(QColor("red")); img.save(str(tmp_path / "b.png"))
+    d.mit_bild.setChecked(True)
+    assert not d.mit_text.isChecked()                                                      # nur eine Art
+    assert d.bild_laden(str(tmp_path / "b.png")) and d.bild_name.text() == "b.png"
+    d.bereich_wahl.setCurrentIndex(1)
+    w = d.ergebnis()
+    assert w["bild"] and w["auswaschen"] and w["zoom"] == 0 and w["abschnitt"] and d.bereich() == "abschnitt"
+    d2 = WasserzeichenDialog(None, w)                                                       # Vorbelegung
+    assert d2.mit_bild.isChecked() and d2.bereich() == "abschnitt" and d2.ergebnis()["bild"] == w["bild"]
+
+
+def test_wasserzeichen_zeichnen_und_abschnitt(fenster):
+    from PySide6.QtCore import QRectF
+    from PySide6.QtGui import QColor, QImage, QPainter
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor import wasserzeichen as WZ
+
+    def bild(w):
+        img = QImage(200, 280, QImage.Format_RGB32); img.fill(QColor("white"))
+        p = QPainter(img); WZ.zeichnen(p, w, QRectF(0, 0, 200, 280)); p.end()
+        return img
+    rot = QImage(10, 10, QImage.Format_RGB32); rot.fill(QColor("red"))
+    img = bild({"bild": WZ.bild_zu_text(rot), "auswaschen": False, "transparenz": 0})
+    assert img.pixelColor(100, 140) == QColor("red")
+    oben = bild({"text": "X", "winkel": 0, "v": "oben", "groesse_pt": 40, "farbe": "#000000", "transparenz": 0})
+    assert any(oben.pixelColor(x, y) != QColor("white") for x in range(80, 120) for y in range(0, 50))
+    assert all(oben.pixelColor(x, 240) == QColor("white") for x in range(200))
+    ed = fenster.current_editor()
+    ed.setPlainText("eins\nzwei")
+    c = ed.textCursor(); c.setPosition(4); ed.setTextCursor(c); ed.abschnitt_einfuegen("naechste")
+    b = fenster.befehle
+    b._wasserzeichen_setzen({"text": "EILT"})
+    c = ed.textCursor(); c.setPosition(ed.document().characterCount() - 1); ed.setTextCursor(c)
+    b._wasserzeichen_setzen({"text": "MUSTER"}, "abschnitt")
+    teile, _h = AB.teile(ed.document(), ed.page)
+    assert [ps.watermark["text"] for _d, ps, _t in teile] == ["EILT", "MUSTER"]
+    b._wasserzeichen_setzen(None)
+    teile, _h = AB.teile(ed.document(), ed.page)
+    assert [ps.watermark for _d, ps, _t in teile] == [None, None]
 
 
 def test_gleichungen_formen_deckblatt(fenster):
@@ -230,11 +528,22 @@ def test_diagramm_alle_arten_und_fenster(app):
             img = D.bild(u, "T", D.BEISPIEL_KATEGORIEN, D.BEISPIEL_REIHEN, 200, 140)
             assert not img.isNull() and img.pixelColor(100, 70).name() != "#000000"
     d = DiagrammDialog(None)
-    kurs = d.arten.item([g for g, _s, _u in D.TYPEN].index("Kurs"))
-    assert not kurs.flags() & __import__("PySide6.QtCore", fromlist=["Qt"]).Qt.ItemIsEnabled      # grau, nicht versteckt
+    gruppen = [g for g, _s, _u in D.TYPEN]
+    assert gruppen == ["Säule", "Linie", "Kreis", "Balken", "Fläche", "X Y (Punkt)", "Kurs", "Netz", "Kombination", "Vorlagen"]
     d.arten.setCurrentRow(1)                                               # Linie
     assert d.untertyp == "linie" and d.name.text() == "Linie" and len(d._knoepfe.buttons()) == 3
-    assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN
+    assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN and d.kombi_teil.isHidden()
+    d.arten.setCurrentRow(gruppen.index("Kurs"))
+    assert d.untertyp == "kurs_hts" and len(d._knoepfe.buttons()) == 2
+    # Kombination wie in der Vorlage: vier Untertypen und die Tabelle Datenreihen / Diagrammtyp / Sekundärachse
+    d.arten.setCurrentRow(gruppen.index("Kombination"))
+    assert len(d._knoepfe.buttons()) == 4 and not d.kombi_teil.isHidden() and len(d._kombi_felder) == 3
+    assert d.kombi == [("saeule", False), ("saeule", False), ("linie", False)]
+    _l, box, kasten = d._kombi_felder[2]
+    kasten.setChecked(True)
+    assert d.untertyp == "kombi_eigen" and d.daten()["kombi"][2] == ["linie", True]
+    d.arten.setCurrentRow(gruppen.index("Vorlagen"))
+    assert d.daten()["farben"] == D.VORLAGEN[d.untertyp][1] and not d.bild().isNull()
 
 
 def test_datum_fenster_mit_feld(app):
@@ -304,7 +613,7 @@ def test_objekt_und_hyperlink_befehle(fenster, tmp_path, monkeypatch):
         self.datei.setText(str(zip_))
         return True
     monkeypatch.setattr(EF.ObjektDialog, "exec", objekt_ok)
-    fenster.befehle.dateiObjekt()
+    fenster.befehle.objekt(als_symbol=True)
     c = e.textCursor(); c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
     assert c.charFormat().isImageFormat() and c.charFormat().anchorHref().endswith("paket.zip")
     e.insertPlainText("\nKapitel")

@@ -146,6 +146,28 @@ def einfuegen(doc, cursor: QTextCursor, typ: str, basis: PageSettings) -> int:
     return index + 1
 
 
+def einfuegen_an(doc, position: int, typ: str, basis: PageSettings) -> int:
+    """Abschnitt ab ``position`` beginnen lassen (z. B. am Anfang der aktuellen Seite). Steht die Stelle am Anfang eines Absatzes, beschließt
+    der Absatz davor den alten Abschnitt (kein leerer Absatz dazwischen); beginnt dort schon ein Abschnitt, bleibt alles. → Nummer des
+    Abschnitts, der an ``position`` beginnt."""
+    b = doc.findBlock(position)
+    if position == b.position():
+        vor = b.previous()
+        if not vor.isValid():
+            return 0
+        index = index_bei(doc, position)
+        if lesen(vor.blockFormat()):
+            return index
+        c = QTextCursor(vor)
+        c.beginEditBlock()
+        _setze(c, eintrag(typ, einrichtung(doc, basis, index)))
+        c.endEditBlock()
+        return index + 1
+    c = QTextCursor(doc)
+    c.setPosition(position)
+    return einfuegen(doc, c, typ, basis)
+
+
 def entfernen(doc, index: int) -> bool:
     """Den Umbruch am Ende von Abschnitt `index` entfernen (ist es der letzte, den davor): die beiden Abschnitte werden einer
     und behalten die Einrichtung des früheren."""
@@ -191,7 +213,9 @@ def teile(qdoc, basis: PageSettings) -> tuple[list[tuple[object, PageSettings, s
     einr = alle_einrichtungen(qdoc, basis)
     ranges: list[list] = []                              # [Beginn, Einrichtung, von-Abschnitt, bis-Abschnitt]
     for i, (typ, ps) in enumerate(einr):
-        ps.color, ps.silbentrennung, ps.watermark = basis.color, basis.silbentrennung, basis.watermark
+        ps.color, ps.silbentrennung = basis.color, basis.silbentrennung
+        if not (ps.watermark or {}).get("abschnitt"):           # Wasserzeichen „nur dieser Abschnitt“ bleibt, sonst gilt das des Dokuments
+            ps.watermark = basis.watermark
         if i and typ == "fortlaufend":
             if _gleiche_geometrie(ranges[-1][1], ps):
                 ranges[-1][3] = i
