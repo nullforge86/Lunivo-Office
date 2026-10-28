@@ -401,10 +401,10 @@ class ObjektDialog(QDialog):
         self.resize(640, 0)
 
     def _suchen(self) -> None:
-        from PySide6.QtWidgets import QFileDialog
-        pfad, _ = QFileDialog.getOpenFileName(self, "Datei für das Objekt wählen", self.datei.text() or self._ordner)
-        if pfad:
-            self.datei.setText(pfad)
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        pfade = datei_waehlen(self, "Datei für das Objekt wählen", self.datei.text() or self._ordner, "Alle Dateien (*)")
+        if pfade:
+            self.datei.setText(pfade[0])
 
     def art(self) -> str:
         """"symbol" | "bild" | "text" | "" (keine Datei)."""
