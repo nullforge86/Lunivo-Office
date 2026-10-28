@@ -25,11 +25,14 @@ class SpaltenBaustein:
 
 
     def _sp_geo(self) -> dict:
+        """Maße des Textflusses und (bei gleich großen Blättern) jedes Blattes. Bei verschieden großen Blättern (``_qplan``) sind
+        ``cb``/``ch`` die größte Textbreite und -höhe; die Maße eines Blattes liefert ``_blatt(k)``."""
         z, pg = self.zoom, self.page
         n = max(1, int(pg.spalten))
         gap = max(10.0, BLATT_ABSTAND_PX * z)
-        return {"n": n, "cb": round(pg.spalten_breite_px * z), "g": mm_to_px(pg.spalten_abstand_mm) * z if n > 1 else 0.0,
-                "ch": pg.content_height_px * z, "ml": mm_to_px(pg.margin_left_mm) * z, "mt": mm_to_px(pg.margin_top_mm) * z,
+        q = getattr(self, "_qmasse", None)
+        return {"n": n, "cb": round((q[0] if q else pg.spalten_breite_px) * z), "g": mm_to_px(pg.spalten_abstand_mm) * z if n > 1 else 0.0,
+                "ch": (q[1] if q else pg.content_height_px) * z, "ml": mm_to_px(pg.margin_left_mm) * z, "mt": mm_to_px(pg.margin_top_mm) * z,
                 "mb": mm_to_px(pg.margin_bottom_mm) * z,
                 "H": mm_to_px(pg.height_mm) * z,              # Höhe eines Blattes
                 "gap": gap,                                    # grauer Zwischenraum zwischen zwei Blättern
@@ -39,12 +42,75 @@ class SpaltenBaustein:
     def blatt_oben(self, nr: int = 0) -> float:
         """y des oberen Randes von Blatt `nr` (0-basiert) im Editor — die Lineale richten sich danach."""
         g = self._sp_geo()
+        if getattr(self, "_qplan", None):
+            oben = self._q_oben()
+            if nr < len(oben):
+                return oben[nr]
+            return oben[-1] + (nr - len(oben) + 1) * (self._blatt(len(oben) - 1)["H"] + g["gap"])
         return g["top"] + nr * (g["H"] + g["gap"])
+
+
+    # ---- Blätter verschiedener Größe (editor/querblatt.py) ---------------------------------------------------------
+    def _blatt(self, k: int) -> dict:
+        """Maße von Blatt `k` im Editor (mit Zoom): x (linker Blattrand), W, H, ml, mt, mb, cw (Textbreite), ch (Texthöhe), pg."""
+        z = self.zoom
+        plan = getattr(self, "_qplan", None)
+        pg = (plan[min(k, len(plan) - 1)] if plan else self.page)
+        breite = getattr(self, "_qbreite", mm_to_px(self.page.width_mm))
+        return {"x": (breite - mm_to_px(pg.width_mm)) * z / 2 if plan else 0.0, "W": mm_to_px(pg.width_mm) * z,
+                "H": mm_to_px(pg.height_mm) * z, "ml": mm_to_px(pg.margin_left_mm) * z, "mt": mm_to_px(pg.margin_top_mm) * z,
+                "mb": mm_to_px(pg.margin_bottom_mm) * z, "cw": pg.content_width_px * z, "ch": pg.content_height_px * z, "pg": pg}
+
+
+    def _q_oben(self) -> list[float]:
+        """Obere Blattränder bei verschieden großen Blättern (zwischengespeichert je Plan und Zoom)."""
+        schl = (id(self._qplan), len(self._qplan), self.zoom)
+        if getattr(self, "_qoben_schl", None) != schl:
+            g = self._sp_geo()
+            y, oben = g["top"], []
+            for k in range(len(self._qplan)):
+                oben.append(y)
+                y += self._blatt(k)["H"] + g["gap"]
+            self._qoben, self._qoben_schl = oben, schl
+        return self._qoben
+
+
+    def _quer_auffrischen(self) -> bool:
+        """Plan der Blattgrößen neu bestimmen (nur einspaltig, nicht im Weblayout). → True, wenn sich Breite oder Fluss geändert haben."""
+        from lunivo_writer.editor import querblatt
+        doc = self.document()
+        an = (not self.web) and querblatt.aktiv(doc, self.page)
+        alt = getattr(self, "_qmasse", None)
+        if an:
+            self._qmasse = querblatt.masse(doc, self.page)
+            self._qbreite = max(mm_to_px(p.width_mm) for _n, p in querblatt.einrichtungen(doc, self.page))
+            self._qplan = querblatt.blattplan(doc, self.page, self._qmasse[1] * self.zoom)
+        else:
+            self._qmasse, self._qplan = None, None
+            self._qbreite = mm_to_px(self.page.width_mm)
+        if alt != self._qmasse and not self.web:
+            self._sp_einrichten()
+            breite = int(self._qbreite * self.zoom) + getattr(self, "_blasen_extra", 0)
+            if self.width() != breite:
+                self.setFixedWidth(breite)
+            return True
+        return False
+
+
+    def _blatt_bei_y(self, vy: float) -> int:
+        if getattr(self, "_qplan", None):
+            import bisect
+            return max(0, bisect.bisect_right(self._q_oben(), vy) - 1)
+        g = self._sp_geo()
+        return max(0, int((vy - g["top"]) // (g["H"] + g["gap"])))
 
 
     def _sp_ursprung(self, lp: int) -> tuple[float, float]:
         """Ecke links oben der Textspalte, in der die logische Seite `lp` des Textflusses steht (Editorkoordinaten)."""
         g = self._sp_geo()
+        if getattr(self, "_qplan", None):
+            b = self._blatt(lp)
+            return b["x"] + b["ml"], self.blatt_oben(lp) + b["mt"]
         s, j = divmod(lp, g["n"])
         return g["ml"] + j * (g["cb"] + g["g"]), self.blatt_oben(s) + g["mt"]
 
@@ -70,7 +136,15 @@ class SpaltenBaustein:
     def _sp_doc(self, vx: float, vy: float) -> tuple[float, float]:
         """Punkt auf dem Blatt → Dokumentkoordinate; Punkte in Rändern und Lücken landen in der nächsten Spalte."""
         g = self._sp_geo()
-        s = max(0, int((vy - g["top"]) // (g["H"] + g["gap"])))
+        s = self._blatt_bei_y(vy)
+        if getattr(self, "_qplan", None):
+            b = self._blatt(s)
+            letzte = max(0, self.document().pageCount() - 1)
+            if s > letzte:
+                return 0.0, self.document().size().height() - 1
+            y_in = min(max(vy - self.blatt_oben(s) - b["mt"], 0.0), b["ch"] - 1)
+            dx = min(max(vx - b["x"] - b["ml"], 0.0), b["cw"])
+            return dx, s * g["ch"] + y_in
         y_in = min(max(vy - self.blatt_oben(s) - g["mt"], 0.0), g["ch"] - 1)      # Ränder und Lücken: nächste Textzeile
         j = min(g["n"] - 1, max(0, int((vx - g["ml"] + g["g"] / 2) // (g["cb"] + g["g"]))))
         dx = min(max(vx - (g["ml"] + j * (g["cb"] + g["g"])), 0.0), g["cb"])
@@ -144,13 +218,14 @@ class SpaltenBaustein:
         g = self._sp_geo()
         if y < g["top"]:
             return ""
-        s = int((y - g["top"]) // (g["H"] + g["gap"]))
+        s = self._blatt_bei_y(y)
+        b = self._blatt(s) if getattr(self, "_qplan", None) else g
         rel = y - self.blatt_oben(s)
-        if rel > g["H"]:                                 # grauer Zwischenraum
+        if rel > b["H"]:                                 # grauer Zwischenraum
             return ""
-        if rel < g["mt"] - 4:
+        if rel < b["mt"] - 4:
             return "kopf"
-        if rel > g["H"] - g["mb"] + 4:
+        if rel > b["H"] - b["mb"] + 4:
             return "fuss"
         return ""
 
@@ -169,8 +244,13 @@ class SpaltenBaustein:
         p.fillRect(e.rect(), self._arbeitsflaeche())
         papier = QColor(self._lese_papier or self.page.color or "white")
         sicht = QRectF(e.rect())
+        quer = bool(getattr(self, "_qplan", None))
         for k in range(self._blatt_anzahl()):
-            blatt = QRectF(0, self.blatt_oben(k), vp.width(), g["H"])
+            if quer:
+                bk = self._blatt(k)
+                blatt = QRectF(bk["x"], self.blatt_oben(k), bk["W"], bk["H"])
+            else:
+                blatt = QRectF(0, self.blatt_oben(k), vp.width(), g["H"])
             if not blatt.adjusted(-2, -2, 6, 8).intersects(sicht):
                 continue
             # weicher, mehrstufiger Schatten wie bei modernen Office-Programmen: nur nach unten, zu den Seiten hin ausblendend
@@ -185,9 +265,10 @@ class SpaltenBaustein:
             z = self.zoom
             for k in range(self._blatt_anzahl()):
                 a = self.blatt_oben(k)
-                if QRectF(0, a, vp.width(), g["H"]).intersects(sicht):
+                bk = self._blatt(k) if quer else {"x": 0.0, "W": vp.width(), "H": g["H"], "pg": self.page}
+                if QRectF(bk["x"], a, bk["W"], bk["H"]).intersects(sicht):
                     p.save(); p.scale(z, z)
-                    seitenschmuck(p, self.page, False, QRectF(0, a / z, vp.width() / z, g["H"] / z), "hinten", False)
+                    seitenschmuck(p, bk["pg"], False, QRectF(bk["x"] / z, a / z, bk["W"] / z, bk["H"] / z), "hinten", False)
                     p.restore()
         self._frei_zeichnen(p, sicht, True)                                  # frei positionierte Bilder hinter dem Text
         doc = self.document()
@@ -213,13 +294,14 @@ class SpaltenBaustein:
                                               and not self.isReadOnly()) else -1
         for lp in range(max(1, doc.pageCount())):
             x0, y0 = self._sp_ursprung(lp)
-            feld = QRectF(x0 - 6, y0, g["cb"] + 12, g["ch"])
+            hoehe = self._blatt(lp)["ch"] + 1 if quer else g["ch"]
+            feld = QRectF(x0 - 6, y0, g["cb"] + 12, hoehe)
             if not feld.intersects(sicht):
                 continue
             p.save()
             p.setClipRect(feld)
             p.translate(x0, y0 - lp * g["ch"])
-            ctx.clip = QRectF(-6, lp * g["ch"], g["cb"] + 12, g["ch"])
+            ctx.clip = QRectF(-6, lp * g["ch"], g["cb"] + 12, hoehe)
             lay.draw(p, ctx)
             p.restore()
         self._frei_zeichnen(p, sicht, False)                                 # … und davor (Foto, Unterschrift)
@@ -368,10 +450,16 @@ class SpaltenBaustein:
         """Umbruchregeln (Zusammenhalten, nicht vom nächsten Absatz trennen, Absatzkontrolle) auf die Seiten anwenden."""
         if self.web or self._fluss_laeuft:
             return
-        from lunivo_writer.editor import seitenfluss
+        from lunivo_writer.editor import querblatt, seitenfluss
         self._fluss_laeuft = True
         try:
-            if seitenfluss.anwenden(self.document(), self.page.content_height_px):
+            doc = self.document()
+            self._quer_auffrischen()
+            quer = bool(getattr(self, "_qplan", None))
+            neu = querblatt.breite_anwenden(doc, self.page, self.zoom, an=quer)       # schmalere Blätter: Einzug nur in der Anzeige
+            weitere = (lambda: querblatt.grenzen(doc, self.page, self._sp_geo()["ch"], self.zoom)) if quer else None
+            if seitenfluss.anwenden(doc, self.page.content_height_px, weitere) or neu:
+                self._quer_auffrischen()
                 self.viewport().update()
         finally:
             self._fluss_laeuft = False
@@ -436,6 +524,8 @@ class SpaltenBaustein:
             h = self.viewport().height() + self.verticalScrollBar().value()
             return [(0, max(h, int(self.document().size().height())))]
         g = self._sp_geo()
+        if getattr(self, "_qplan", None):
+            return [(int(self.blatt_oben(k)), int(self.blatt_oben(k) + self._blatt(k)["H"])) for k in range(self._blatt_anzahl())]
         return [(int(self.blatt_oben(k)), int(self.blatt_oben(k) + g["H"])) for k in range(self._blatt_anzahl())]
 
 
@@ -445,12 +535,14 @@ class SpaltenBaustein:
             return
         from lunivo_writer.editor.pagination import seitenschmuck
         vp = self.viewport()
-        for a, b in self.seitenspannen():
+        quer = bool(getattr(self, "_qplan", None))
+        for k, (a, b) in enumerate(self.seitenspannen()):
             if b < 0 or a > vp.height():
                 continue
+            bk = self._blatt(k) if quer else {"x": 0.0, "W": vp.width(), "pg": pg}
             p.save()
             p.scale(z, z)
-            seitenschmuck(p, pg, False, QRectF(0, a / z, vp.width() / z, (b - a) / z), "vorn")
+            seitenschmuck(p, bk["pg"], False, QRectF(bk["x"] / z, a / z, bk["W"] / z, (b - a) / z), "vorn")
             p.restore()
 
 

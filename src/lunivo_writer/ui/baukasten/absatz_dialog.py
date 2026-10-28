@@ -37,6 +37,7 @@ from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLa
 def aus_block(bf: QTextBlockFormat) -> dict:
     """Die Werte eines Absatzformats für das Fenster (Gegenstück zu ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
     from lunivo_writer.editor import seitenfluss
+    from lunivo_writer.editor.querblatt import rechts_px
     from lunivo_writer.editor.zusatz import abstand_davor_px
     from lunivo_writer.models.page import px_to_mm
     from lunivo_writer.ui.baukasten.tabstopp_dialog import aus_block as tabs_aus_block
@@ -45,7 +46,7 @@ def aus_block(bf: QTextBlockFormat) -> dict:
     lpt = round(bf.lineHeight() * 0.75, 1) if lart != "faktor" else 12.0
     al = bf.alignment()
     return {"ausr": "mitte" if al & Qt.AlignHCenter else "rechts" if al & Qt.AlignRight else "block" if al & Qt.AlignJustify else "links",
-            "rtl": bf.layoutDirection() == Qt.RightToLeft, "einzug": px_to_mm(bf.leftMargin()), "rechts": px_to_mm(bf.rightMargin()),
+            "rtl": bf.layoutDirection() == Qt.RightToLeft, "einzug": px_to_mm(bf.leftMargin()), "rechts": px_to_mm(rechts_px(bf)),
             "erste": px_to_mm(bf.textIndent()), "vor": abstand_davor_px(bf) * 0.75, "nach": bf.bottomMargin() * 0.75, "zeilen": lh,
             "zeilen_art": lart, "zeilen_pt": lpt, "ebene": bf.headingLevel(), "opt": absatzopt.lesen(bf),
             "umbruch": seitenfluss.ist_manuell(bf), "tabs": tabs_aus_block(bf)}

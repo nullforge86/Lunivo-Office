@@ -585,7 +585,8 @@ def _absatz_format(w: dict) -> QTextBlockFormat:
     if "einzug" in w:
         bf.setLeftMargin(mm_to_px(w["einzug"]))
     if "rechts" in w:
-        bf.setRightMargin(mm_to_px(w["rechts"]))
+        from lunivo_writer.editor.querblatt import rechts_setzen
+        rechts_setzen(bf, mm_to_px(w["rechts"]))
     if "erste" in w:
         bf.setTextIndent(mm_to_px(w["erste"]))
     if "vor" in w:
