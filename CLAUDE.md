@@ -27,6 +27,10 @@ nur kleiner werden, nie größer.
 
 - Aufbau des Projekts: `docs/README.md`. Gemeinsame Oberflächen-Bausteine (Farbpalette, Linien, Menüs, Dialoggerüst):
   `src/lunivo_writer/ui/baukasten/` und `docs/baukasten.md` — dort nachsehen, bevor etwas Neues gebaut wird.
+- **Fensterbau (Pflicht):** Fenster öffnen in der rechten Seitenleiste. Felder immer mit `FormularGitter` (`zeile`, `reihe`, `breit`),
+  `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/formular_gitter.py` bauen — Muster `ui/baukasten/absatz_dialog.py`.
+  Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der WPS-Vorlage rechts steht (Vorschau), kommt darunter.
+  Bei 300 px Breite darf nichts herausragen.
 - Tests: `.venv/bin/python -m pytest` (laufen ohne Bildschirm). Funktionsprüfung des Bandes: `werkzeug/funktionspruefung.py`.
 - Das Projekt liegt nicht unter Git. Vor größeren Löschungen oder Umbauten eine Sicherung anlegen.
 - WPS Office ist nur ein Aussehens-Vorbild (Bildschirmfotos). Keine WPS-Dateien, -Grafiken oder -Farbtabellen übernehmen.

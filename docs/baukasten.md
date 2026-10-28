@@ -104,8 +104,11 @@ Ein Fenster, das aus einem offenen Zusatzfenster heraus aufgerufen wird (zum Bei
 Neues Fenster: `class MeinDialog(PanelFaehig, QDialog)`, Felder in `FormularGitter`-Gruppen. Fertig umgebaut (alle Fenster der Seitenleiste außer Rahmen und Schattierung): Farben, Absatz, Schriftart, Tabstopps, Layout, Nummerierung, Gliederung, Texteffekte, Formatvorlage. Dazu KI-Einstellungen (`KIEinstellungenDialog`, `kompakt_machen()` kürzt die Reiternamen, die Sprachlisten stehen untereinander).
 Ebenso die Fenster der Reiter Einfügen, Verweise, Sendungen und Überprüfen (Zahl, Felder, Umbruch, Seitenzahl, Hyperlink, Objekt,
 Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inhaltsverzeichnis, Indexeintrag, Nummerierung,
-Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen). Breite Fenster (Hyperlink,
-Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander. Prüfung: `tests/test_fenster_seitenleiste.py`.
+Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
+Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
+`schmal_machen` in Ruhe). Was in der WPS-Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
+Vorschaubilder verkleinern sich mit der Breite. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
+nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
 Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
 
 Platz in der Seitenleiste: Wer Größen der Seitenleiste braucht, bietet `passe_an(breite, hoehe)` an (`ZusatzPanel` ruft es mit `verfuegbar` und `verfuegbar_hoehe` auf, die die Seitenleiste aus ihrer echten Größe setzt); Beispiele: Farbraster, Rahmenvorschau, Kachelzahl der Nummerierung, Texteffekte. `AngepassteReiter` und der Stapel der KI-Einstellungen richten die Höhe nach der gewählten Seite. Prüfung: `test_seitenleisten_seiten_passen_in_echte_groesse`.
