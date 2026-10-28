@@ -109,3 +109,16 @@ Regeln:
 - Berichte kurz: Ergebnis, geänderte Dateien, Tests, offene Probleme.
 - Aufruf: `claude --agent coordinator` (Coordinator als Hauptagent), oder gezielt „Nutze den coding-agent für …“ / `@coding-agent`. `/agents` zeigt die Liste.
 - Hinweis: Subagenten können keine weiteren Subagenten starten; Delegation läuft deshalb über den Hauptagenten (Coordinator).
+
+## Ergänzende Eigentümer-Regeln (2026-10-25 bis 2026-10-28)
+
+Gelten für alle Agenten zusätzlich zu den Regeln oben; bei Widerspruch gilt die jüngere Regel.
+
+- **Keine lokalen Volltests** (2026-10-28, ersetzt „komplette Suite vor Abschluss“ in §3): Ein Volltest dauert über 30 Minuten und
+  verbraucht das Sitzungslimit. Lokal nur die Tests der gerade gebauten Funktion (`pytest <datei> -k <name>`); die Gesamtprüfung macht die CI.
+- **Eigenständig:** keine Abhängigkeit von LibreOffice oder anderen externen Programmen, auch nicht für Dateiformate — Formate selbst schreiben.
+- **WPS-Vorlagen eng nachbauen:** Kays Bildschirmfotos (PC: `~/Bilder/wps-vorlage`) sind das Aussehens-Vorbild; keine freien
+  Interpretationen, klar erkennbare Symbole, Felder/Knöpfe nicht schmaler als ~36 px. Fertig erst nach Bildvergleich mit der Vorlage.
+- **Paketierung (Ziel):** genau eine `.deb`; Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter
+  `/usr/share/applications/stevie-lunivo-office.desktop`, Symlink `/usr/bin/lunivo-office`; Benutzerdaten nur in XDG-Verzeichnissen.
+- **Kurz berichten:** Der Eigentümer schreibt mit eingeschränkter Hand; Berichte knapp halten, keine Testläufe per Subagent ohne Grund.

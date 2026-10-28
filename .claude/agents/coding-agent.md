@@ -1,6 +1,6 @@
 ---
 name: coding-agent
-description: Implementiert Geschäftslogik, Funktionen und Fehlerbehebungen in Lunivo Writer (editor/, services/, core/, models/, ai/, proofing/) und schreibt dazu passende pytest-Tests. Nicht für Optik/Layout oder Architekturentscheidungen.
+description: "Implementiert Geschäftslogik, Funktionen und Fehlerbehebungen in Lunivo Writer (editor/, services/, core/, models/, ai/, proofing/) und schreibt dazu passende pytest-Tests. Nicht für Optik/Layout oder Architekturentscheidungen."
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---

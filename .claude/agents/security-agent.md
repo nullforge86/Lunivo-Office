@@ -1,6 +1,6 @@
 ---
 name: security-agent
-description: Sicherheits- und Code-Review-Agent: prüft Eingabevalidierung, Dateiformat-Parser, Berechtigungen, Datenschutz (Schlüssel, Netzwerkzugriffe), typische Sicherheitsfehler und Codequalität. Arbeitet nur lesend.
+description: "Sicherheits- und Code-Review-Agent: prüft Eingabevalidierung, Dateiformat-Parser, Berechtigungen, Datenschutz (Schlüssel, Netzwerkzugriffe), typische Sicherheitsfehler und Codequalität. Arbeitet nur lesend."
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
