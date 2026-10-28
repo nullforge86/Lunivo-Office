@@ -10,13 +10,28 @@ class VerweiseBefehle:
 
     # ---- Verweise: Beschriftungen, Textmarken, Querverweise, Index, Zitate -------------------------------------
     def beschriftung(self, k=None):
-        if not self.ed:
+        """Fenster „Beschriftung“: die Nummer steht schon im Feld („Tabelle 1“), dahinter schreibt man weiter. Eigene Bezeichnungen
+        merkt sich Lunivo in den Einstellungen."""
+        e = self.ed
+        if not e:
             return
+        import json
         from lunivo_writer.editor import verweise
-        from lunivo_writer.ui.dialogs.verweise_dialoge import BeschriftungDialog
-        d = BeschriftungDialog(self.w)
-        if d.exec():
-            verweise.beschriftung_einfuegen(self.ed, d.label.currentText(), d.text.text().strip(), oben=d.pos.currentIndex() == 1)
+        from lunivo_writer.ui.dialogs.verweise_fenster import BeschriftungDialog
+        try:
+            eigene = [str(x) for x in json.loads(self.w.settings.get("verweise/beschriftungen", "[]") or "[]")]
+        except (ValueError, TypeError):
+            eigene = []
+        c = e.textCursor()
+        objekt = c.currentTable() is not None or (c.hasSelection() and "\ufffc" in c.selectedText())
+        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: verweise.naechste_nummer(e, label, zahl), objekt=objekt,
+                               label="Tabelle" if c.currentTable() is not None else "Abbildung")
+        ok = d.exec()
+        if d.eigene != eigene:
+            self.w.settings.set("verweise/beschriftungen", json.dumps(d.eigene, ensure_ascii=False))
+        if ok:
+            r = d.ergebnis()
+            verweise.beschriftung_einfuegen(e, r["label"], "", r["oben"], nach=r["nach"], ohne_bezeichnung=r["ohne"], zahl=r["zahl"])
 
 
     def _verzeichnis(self, art, titel, leer):
@@ -46,15 +61,16 @@ class VerweiseBefehle:
 
 
     def querverweis(self, k=None):
-        if not self.ed:
+        """Fenster „Querverweis“: „Einfügen“ setzt den Verweis an die Schreibmarke, das Fenster bleibt offen."""
+        e = self.ed
+        if not e:
             return
         from lunivo_writer.editor import verweise
-        from lunivo_writer.ui.dialogs.verweise_dialoge import QuerverweisDialog
-        d = QuerverweisDialog(self.w, self.ed)
-        if d.exec():
-            ziel, wie = d.ergebnis()
-            if ziel:
-                verweise.querverweis_einfuegen(self.ed, ziel, wie)
+        from lunivo_writer.ui.dialogs.verweise_fenster import QuerverweisDialog
+        d = QuerverweisDialog(self.w, verweise.querverweis_ziele(e))
+        d.einfuegen.connect(lambda ziel, wie, link, oben_unten: verweise.querverweis_einfuegen(e, ziel, wie, link=link,
+                                                                                               oben_unten=oben_unten))
+        d.exec()
 
 
     def indexEintrag(self, k=None):
