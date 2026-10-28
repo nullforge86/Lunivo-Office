@@ -151,6 +151,15 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Zeilennummern | `editor/zeilennummern.py` | `nummern(doc, ch, art)`: fortlaufend oder je Seite neu; Absätze mit `absatzopt` „ohne_zeilennr“ (DOCX `w:suppressLineNumbers`) zählen nicht. `PageSettings.zeilennummern_neu`, DOCX `w:lnNumType w:restart` |
 | Leere Seite | `editor/leere_seite.py` | `leere_seite(doc, letzter_block, einrichtung, quer)`: neues Blatt hinter der Seite (`DocumentEditor.seite_letzter_block`), quer als eigener Abschnitt |
 
+## Bausteine des Reiters Verweise
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Inhaltsverzeichnis | `editor/verzeichnis.py` | `TOC_VORGABE`, `toc_optionen(doc)`: Füllzeichen, Ebenen 1–9, Seitenzahlen anzeigen/rechtsbündig, Verknüpfungen (verborgene Textmarken „_Toc…“) — am Kopf als `B_TOC_OPT`; `verzeichnis_aktualisieren(ed, nur)`, `vorhanden(doc, art)` |
+| Indexeinträge | `editor/indexeintrag.py` | `Eintrag` (Haupt/Unter, Sortierung, „Siehe“, Seitenbereich über Textmarke, fett/kursiv), `feld`/`aus_feld` (Word-Feld XE); am Text `P_INDEX` + `P_INDEX_OPT`; `verweise.index_eintragen(ed, e, alle)` |
+| Fenster | `ui/dialogs/verweise_fenster.py` | `InhaltsverzeichnisDialog` (mit Seitenansicht; `ergebnis()`), `IndexeintragDialog` (Signal `markieren(Eintrag, alle)`) — ändern das Dokument nicht selbst |
+| Klappe | `core/befehle/verweise.py` | `menue_inhaltsverzeichnisKlappe`: Ebene 1–9 und Textkörper (Formatvorlage „Überschrift N“ / „Standard“); Fuß- und Endnoten einzeln mit `note_springen(delta, art)` |
+
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
