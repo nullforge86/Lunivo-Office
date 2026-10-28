@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton,
+    QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton,
     QVBoxLayout,
 )
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import sendungen as S
 
@@ -59,7 +60,7 @@ class SeriendruckDialog(PanelFaehig, QDialog):
         v.addWidget(_ok(self, "Briefe erzeugen"))
 
     def _laden(self):
-        pfad, _ = QFileDialog.getOpenFileName(self, "Empfängerliste", "", "Tabellen (*.csv *.txt *.tsv);;Alle Dateien (*)")
+        pfad, _ = Dateifenster.getOpenFileName(self, "Empfängerliste", "", "Tabellen (*.csv *.txt *.tsv);;Alle Dateien (*)")
         if pfad:
             for enc in ("utf-8-sig", "cp1252"):
                 try:

@@ -377,7 +377,7 @@ class FreieBilderMixin:
 
     def frei_fuell_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from PySide6.QtWidgets import QFileDialog
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         from PySide6.QtGui import QImage
         from lunivo_writer.editor import bildlayout as BL
         from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue
@@ -389,7 +389,7 @@ class FreieBilderMixin:
         m.textur_gewaehlt.connect(lambda k: E()._frei_wirken(fuell={"art": "textur", "key": k}))
 
         def bild():
-            pfad, _ = QFileDialog.getOpenFileName(E().window(), "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
+            pfad, _ = Dateifenster.getOpenFileName(E().window(), "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
             if pfad:
                 BL.fuellbild_setzen(E(), BL.ziel(E()), QImage(pfad))
         m.bild_gewaehlt.connect(bild)

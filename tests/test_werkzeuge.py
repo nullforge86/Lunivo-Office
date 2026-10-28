@@ -93,16 +93,51 @@ def test_bild_farbe_zuschneiden_drehen_original(app, tmp_path):
 
 
 def test_png_export_pro_seite(app, tmp_path, monkeypatch):
+    from lunivo_writer.services.bild_export import BildWahl
+    from lunivo_writer.ui.baukasten import bild_export as BE
     w = win(tmp_path)
     w.current_editor().insertPlainText("\n".join(f"Zeile {i}" for i in range(140)))
-    ziel = str(tmp_path / "seiten.png")
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (ziel, "")))
+    w.current_tab().title = "seiten"
+    gezeigt = []
+    monkeypatch.setattr(BE, "bild_export_fragen", lambda *a: BildWahl(ordner=str(tmp_path), dpi=150, format="PNG"))
+    monkeypatch.setattr(BE, "erfolg_zeigen", lambda _p, d: gezeigt.extend(d))
     w.befehle.exportierenPng()
     dateien = sorted(f for f in os.listdir(tmp_path) if f.startswith("seiten") and f.endswith(".png"))
-    assert len(dateien) >= 2 and dateien[0] == "seiten-1.png"
+    assert len(dateien) >= 2 and dateien[0] == "seiten-1.png" and len(gezeigt) == len(dateien)
     b = QImage(str(tmp_path / dateien[0]))
     assert not b.isNull() and b.width() > 1000
     fertig(w)
+
+
+def test_bild_export_langes_bild_wasserzeichen_und_formate(app, tmp_path):
+    """„Langes Bild“ legt alle Seiten untereinander in eine Datei; JPG, BMP und TIF werden geschrieben, nichts wird überschrieben."""
+    from PySide6.QtGui import QTextDocument
+    from lunivo_writer.models.page import PageSettings
+    from lunivo_writer.services.bild_export import BildWahl, bilder_schreiben
+    doc = QTextDocument(); doc.setPlainText("\n".join(f"Zeile {i}" for i in range(140)))
+    page = PageSettings()
+    einzeln = bilder_schreiben(doc, page, None, "Brief.docx", BildWahl(ordner=str(tmp_path), dpi=96, format="PNG"))
+    assert len(einzeln) >= 2
+    lang = bilder_schreiben(doc, page, None, "Brief.docx", BildWahl(lang=True, wasserzeichen="Muster", ordner=str(tmp_path), dpi=96,
+                                                                    format="JPG"))
+    img = QImage(lang[0])
+    assert lang[0].endswith("Brief.jpg") and img.height() > QImage(einzeln[0]).height() * 2
+    for fmt in ("BMP", "TIF"):
+        d = bilder_schreiben(doc, page, None, "kurz", BildWahl(lang=True, ordner=str(tmp_path), dpi=96, format=fmt))
+        assert not QImage(d[0]).isNull()
+    zweit = bilder_schreiben(doc, page, None, "Brief.docx", BildWahl(lang=True, ordner=str(tmp_path), dpi=96, format="JPG"))
+    assert zweit[0].endswith("Brief (2).jpg")
+
+
+def test_bild_export_fenster(app, tmp_path):
+    from lunivo_writer.ui.baukasten.bild_export import BildExportFenster
+    f = BildExportFenster(None, str(tmp_path), 220)
+    assert f.k_seite.isChecked() and not f.k_lang.isChecked() and f.qualitaet.currentData() == 220
+    assert [f.format.itemText(i) for i in range(f.format.count())] == ["JPG", "PNG", "BMP", "TIF"]
+    f.k_lang.click(); f.wasser.setText("Vertraulich"); f.format.setCurrentText("JPG")
+    f.k_export.click()
+    w = f.wahl()
+    assert w.lang and w.wasserzeichen == "Vertraulich" and w.format == "JPG" and w.ordner == str(tmp_path) and w.dpi == 220
 
 
 def test_eigener_assistent_speichern_und_ausfuehren(app, tmp_path, monkeypatch):

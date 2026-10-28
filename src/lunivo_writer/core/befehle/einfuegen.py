@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QApplication, QFileDialog, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from lunivo_writer.core.befehle.hilfen import _farbfeld
 
 
@@ -220,9 +220,11 @@ class EinfuegenBefehle:
         from lunivo_writer.services import file_service as formats
         from lunivo_writer.models.report import DocumentIOError
         from lunivo_writer.editor import einfuegen as E
-        pfad, _ = QFileDialog.getOpenFileName(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", ""), formats.OPEN_FILTER)
-        if not pfad:
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.OPEN_FILTER)
+        if not wahl:
             return
+        pfad = wahl[0]
         try:
             rep = E.text_aus_datei(self.ed, pfad)
         except DocumentIOError as e:

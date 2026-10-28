@@ -163,8 +163,8 @@ class _Seite(QWidget):
         k = QPushButton("Wählen …")
 
         def waehle():
-            from PySide6.QtWidgets import QFileDialog
-            ordner = QFileDialog.getExistingDirectory(self, text, e.text() or os.path.expanduser("~"))
+            from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+            ordner = Dateifenster.getExistingDirectory(self, text, e.text() or os.path.expanduser("~"))
             if ordner:
                 e.setText(ordner)
         k.clicked.connect(waehle)
