@@ -85,3 +85,27 @@ Niemals behaupten, Tests seien erfolgreich gewesen, wenn sie nicht tatsächlich 
 
 **Oberste Priorität:** Modular entwickeln. Nur betroffene Bereiche prüfen. Volltests risikobasiert und gezielt einsetzen. Keine unnötigen
 Wiederholungen, keine unnötigen Umbauten, keine Änderungen außerhalb des erforderlichen Umfangs.
+
+## Multi-Agent-Aufbau (`.claude/agents/`)
+
+Spezialisten mit getrennten Zuständigkeiten. Für einfache Aufgaben genügt der zuständige Spezialist; nicht alle Agenten starten.
+
+| Agent | Zuständig für | Schreibt? |
+|---|---|---|
+| `coordinator` | Plan, Arbeitspakete, Routing, Integration, Konflikte, Abschlussbericht | nein (delegiert) |
+| `coding-agent` | Geschäftslogik, Funktionen, Fehlerbehebung, zugehörige Tests | ja |
+| `design-agent` | UI/UX: Layout, Optik, Farben, Abstände, Barrierefreiheit | ja (nur UI) |
+| `architektur-agent` | Struktur, Abhängigkeiten, Schnittstellen; Empfehlung vor Umbau | nein |
+| `qa-agent` | Unabhängige Prüfung, Tests, Regression, Reproduktionsschritte | nein |
+| `security-agent` | Sicherheit, Datenschutz, Code-Review | nein |
+
+Regeln:
+- UI/Design → design-agent · Geschäftslogik → coding-agent · Architektur/Abhängigkeiten → architektur-agent (Freigabe vor Umsetzung) ·
+  Tests/Qualitätskontrolle → qa-agent · Sicherheit → security-agent · Integration und Konflikte → coordinator.
+- Berührt ein Paket mehrere Bereiche, teilt der Coordinator es auf und benennt die Übergabepunkte.
+- Gemeinsame Dateien oder abhängige Ergebnisse: nacheinander. Nur unabhängige Pakete parallel. Niemand überschreibt Änderungen anderer stillschweigend.
+- Reihenfolge: Plan → Untersuchung (lesend) → Umsetzungsentscheidung → Umsetzung → unabhängige QA → Integration/Bericht.
+- Rückfrage beim Eigentümer vor größeren Umbauten, neuen Abhängigkeiten, kostenpflichtigen Diensten, nicht umkehrbaren Aktionen.
+- Berichte kurz: Ergebnis, geänderte Dateien, Tests, offene Probleme.
+- Aufruf: `claude --agent coordinator` (Coordinator als Hauptagent), oder gezielt „Nutze den coding-agent für …“ / `@coding-agent`. `/agents` zeigt die Liste.
+- Hinweis: Subagenten können keine weiteren Subagenten starten; Delegation läuft deshalb über den Hauptagenten (Coordinator).
