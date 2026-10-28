@@ -169,15 +169,27 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Reiter | `ui/contextual/serien_tools.py` | Kontext-Reiter `SERIENDRUCK` („Mailings“), erscheint über Verweise ▸ Seriendruck (`serienReiter`), weg mit `serienSchliessen` |
 | Befehle | `core/befehle/serien.py` | Datenquelle je Dokumentfenster (`tab.serie`, nicht gespeichert); `kann_<Befehl>` macht Knöpfe ohne Datenquelle grau; `feld_datensatz` ist das Nummernfeld im Band |
 | Datenquelle, Felder | `editor/sendungen.py` | `quelle_lesen` (CSV/TSV/TXT), `zugeordnet`, `NAECHSTER`/`naechster_einfuegen`, `gruppen`, `brief_fuer(vorlage, [Sätze])`, `felder_hervorheben` |
-| Vorschau | `ui/document/serien_vorschau.py` | schreibgeschützter Editor mit dem Brief eines Datensatzes statt der Vorlage; die Vorlage bleibt unverändert |
+| Vorschau | `ui/document/vorschau_ansicht.py` | schreibgeschützter Editor mit dem Brief eines Datensatzes statt der Vorlage (`art="serien"`); die Vorlage bleibt unverändert |
 | Fenster | `ui/dialogs/serien_fenster.py` | `EmpfaengerDialog`, `FeldDialog` (Signal `einfuegen`, bleibt offen), `ZuordnenDialog` |
-| Band | `ui/ribbon/ribbon_bar.py` | allgemein: `kann_<Befehl>` (Knopf frei/grau) und Einträge `{"feld": name}` (Eingabefeld aus `feld_<name>`) |
+| Band | `ui/ribbon/ribbon_bar.py` | allgemein: `kann_<Befehl>` (Knopf frei/grau) und Einträge `{"feld": name}` (Eingabefeld aus `feld_<name>`; hat es `auffrischen()`, ruft `aktualisieren` es auf) |
+
+## Bausteine des Reiters Überprüfen
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/ribbon/tabs/review_tab.py` | Anordnung nach den Vorlagen ueberpruefen/01–10 |
+| Befehle | `core/befehle/ueberpruefen.py` | Klappen (Rechtschreibprüfung, Löschen, Nachverfolgen, Markup, Überprüfen, Annehmen, Ablehnen, Vergleichen), `feld_anzeige` (Fassung + „Markup anzeigen“), `bearbeitungEinschraenken`/`schutz_setzen` (`tab.schutz`, nur für die Sitzung) |
+| Zählen | `editor/statistik.py` | `zaehlen(texte, seiten)`: Wörter, Zeichen mit/ohne Leerzeichen, Absätze, asiatische Zeichen |
+| Fassungen | `editor/fassungen.py` | `original(doc)` (Kopie ohne Einfügungen, Löschungen als Text), `bearbeiter(doc)`, `zeiten(doc)` |
+| Markup-Auswahl | `ui/document/zusatz_editor.py` | `markup_filter` (Kommentare, Einfügungen, Bearbeiter, Tag), `aenderung_sichtbar`, `angezeigte_aenderungen`; Sprechblasen folgen der Auswahl |
+| Original | `ui/document/vorschau_ansicht.py` | dieselbe Vorschau mit `art="original"` |
+| Fenster | `ui/dialogs/ueberpruefen_fenster.py` | `WoerterDialog`, `SchutzDialog` (Seitenleiste) |
 
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
 `core/befehle/`, je Aufgabe ein Baustein: `text` (Zeichen und Absatz), `bearbeiten`, `einfuegen`, `seite` (Seite, Abschnitte, Spalten),
-`pruefen` (Schreibhilfe, Vergleichen), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
+`pruefen` (Schreibhilfe, Vergleichen), `ueberpruefen` (Reiter Überprüfen), `serien` (Mailings), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
 Ein neuer Befehl kommt in den Baustein seiner Aufgabe; `Befehle` setzt sie zusammen. Kein Baustein importiert `commands.py`.
 
 ## Aufbau der großen Klassen

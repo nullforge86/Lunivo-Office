@@ -34,9 +34,9 @@ class SerienBefehle:
     kann_serienNeuesDokument = kann_serienEinzeln = kann_serienDrucker = _hat_quelle
 
     def an_serienVorschau(self) -> bool:
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         t = self.w.current_tab()
-        return bool(t) and serien_vorschau.aktiv(t)
+        return bool(t) and vorschau_ansicht.aktiv(t, "serien")
 
     def an_serienHervorheben(self) -> bool:
         s = self._serie()
@@ -53,10 +53,10 @@ class SerienBefehle:
         self._datensatz_anzeigen()
 
     def serienSchliessen(self, k=None):
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         t = self.w.current_tab()
         if t is not None:
-            serien_vorschau.beenden(t)
+            vorschau_ansicht.beenden(t)
         self.w.band.kontext("serien", False)
 
     # ---- Datenquelle -------------------------------------------------------------------------------------------
@@ -84,13 +84,13 @@ class SerienBefehle:
         self._vorschau_auffrischen()
 
     def serienQuelleSchliessen(self, k=None):
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         s = self._serie()
         if s is None:
             return
         s.update(pfad="", spalten=[], saetze=[], aktiv=[], zuordnung={}, nr=0)
         t = self.w.current_tab()
-        serien_vorschau.beenden(t)
+        vorschau_ansicht.beenden(t)
         self._datensatz_anzeigen()
 
     def menue_serienQuelleKlappe(self):
@@ -159,43 +159,43 @@ class SerienBefehle:
 
     def _vorschau_auffrischen(self) -> None:
         from lunivo_writer.editor import sendungen as S
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         t = self.w.current_tab()
-        if t is not None and serien_vorschau.aktiv(t):
+        if t is not None and vorschau_ansicht.aktiv(t, "serien"):
             briefe = self._briefe()
             s = self._serie()
             if not briefe:
-                serien_vorschau.beenden(t)
+                vorschau_ansicht.beenden(t)
             else:
                 s["nr"] = max(0, min(s["nr"], len(briefe) - 1))
-                serien_vorschau.zeigen(t, S.brief_fuer(t.editor.document(), briefe[s["nr"]]))
+                vorschau_ansicht.zeigen(t, S.brief_fuer(t.editor.document(), briefe[s["nr"]]))
         self._datensatz_anzeigen()
 
     def serienVorschau(self, k=None):
         """Seriendruck-Vorschau an/aus: zeigt den Brief des gewählten Datensatzes; die Vorlage bleibt unverändert."""
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         t = self.w.current_tab()
         if t is None:
             return
-        if serien_vorschau.aktiv(t):
-            serien_vorschau.beenden(t)
+        if vorschau_ansicht.aktiv(t, "serien"):
+            vorschau_ansicht.beenden(t)
             self._datensatz_anzeigen()
             return
         if not self._briefe():
             self.w.statusBar().showMessage("Keine Empfänger: Datenquelle öffnen und Empfänger anhaken.", 5000)
             return
-        serien_vorschau.zeigen(t, t.editor.document().clone())
+        vorschau_ansicht.zeigen(t, t.editor.document().clone())
         self._vorschau_auffrischen()
 
     def _gehe_satz(self, wohin) -> None:
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         s = self._serie()
         n = len(self._briefe())
         if not s or not n:
             return
         s["nr"] = max(0, min(n - 1, wohin(s["nr"], n)))
         t = self.w.current_tab()
-        if not serien_vorschau.aktiv(t):
+        if not vorschau_ansicht.aktiv(t, "serien"):
             self.serienVorschau()
         else:
             self._vorschau_auffrischen()
@@ -216,13 +216,13 @@ class SerienBefehle:
         return f
 
     def _datensatz_anzeigen(self) -> None:
-        from lunivo_writer.ui.document import serien_vorschau
+        from lunivo_writer.ui.document import vorschau_ansicht
         f = getattr(self.w.band, "felder", {}).get("datensatz")
         if f is None:
             return
         s = self._serie()
         t = self.w.current_tab()
-        an = bool(s and s["saetze"]) and t is not None and serien_vorschau.aktiv(t)
+        an = bool(s and s["saetze"]) and t is not None and vorschau_ansicht.aktiv(t, "serien")
         f.setEnabled(an)
         f.setText(str(s["nr"] + 1) if an else "")
 
