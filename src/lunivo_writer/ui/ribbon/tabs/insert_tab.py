@@ -1,5 +1,6 @@
-"""Reiter „Einfügen“ in der Anordnung von WPS Office: Seiten, Tabelle, Bild/Formen/Diagramm, Kommentar, Kopf- und Fußzeile,
-Text, Symbole, Hyperlink mit Querverweis und Lesezeichen, Formulare. Was WPS dort nicht hat, steht in „Weitere“."""
+"""Reiter „Einfügen“ in der Anordnung von WPS Office (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
+Bild ▾, Formen, Diagramm, Kommentar, Kopf- und Fußzeile, Textfeld ▾, Schnellbausteine ▾, Symbol ▾, Gleichung, Zahl, Hyperlink.
+Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Was WPS dort nicht hat, steht in „Weitere“."""
 from __future__ import annotations
 
 from lunivo_writer.ui.ribbon.tabs.baustein import alle, k as _k, uebrige
@@ -10,9 +11,9 @@ def bauen(register: dict) -> dict:
     kn = alle(tab)
     benutzt: set = set()
 
-    def nimm(name, **kw):
-        benutzt.add(name)
-        return dict(kn[name], **kw)
+    def nimm(_name, **kw):
+        benutzt.add(_name)
+        return {s: w for s, w in dict(kn[_name], **kw).items() if w is not None}
 
     kommentar = next(e for t in register["register"] if t["name"] == "Überprüfen" for g in t["gruppen"]
                      for e in g["knoepfe"] if e.get("tun") == "kommentar")
@@ -22,19 +23,22 @@ def bauen(register: dict) -> dict:
         {"name": "Schaltfläche", "tun": "formKnopf"}, {"trenner": True}, {"name": "Felder zurücksetzen", "tun": "formLeeren"}])
     gruppen = [
         {"name": "Seiten", "reihenfolge": True, "knoepfe": [
-            nimm("Deckblatt", gross=True), nimm("Leere Seite", gross=True), nimm("Seitenumbruch", gross=True)]},
+            nimm("Deckblatt", gross=True), nimm("Leere Seite", gross=True, tun="leereSeite", klappe="leereSeiteKlappe", menue=None),
+            nimm("Seitenumbruch", name="Umbrüche", gross=True, klappe="umbruecheKlappe")]},
         {"name": "Tabellen", "reihenfolge": True, "knoepfe": [
-            nimm("Tabelle einfügen", gross=True), nimm("Schnelltabelle", text=True), nimm("Eigenschaften", text=True)]},
+            nimm("Tabelle einfügen", name="Tabelle", gross=True)]},
         {"name": "Illustrationen", "reihenfolge": True, "knoepfe": [
-            nimm("Bild", gross=True), nimm("Formen", gross=True), nimm("Diagramm", text=True), nimm("SmartArt", text=True)]},
+            nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True), nimm("Diagramm", text=True), nimm("SmartArt", text=True)]},
         {"name": "Kommentar", "reihenfolge": True, "knoepfe": [dict(kommentar, name="Kommentar", gross=True)]},
         {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
             nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=True),
             _k("wasserzeichen", "Wasserzeichen", "wasserzeichen", True)]},
         {"name": "Text", "reihenfolge": True, "knoepfe": [
-            nimm("Textfeld", gross=True), nimm("WordArt", gross=True), nimm("Datum und Uhrzeit", gross=True),
-            nimm("Initiale", text=True), nimm("Text aus Datei", text=True)]},
-        {"name": "Symbole", "reihenfolge": True, "knoepfe": [nimm("Sonderzeichen", gross=True), nimm("Formel", gross=True)]},
+            nimm("Textfeld", gross=True, klappe="textfeldKlappe"), nimm("WordArt", gross=True), nimm("Datum und Uhrzeit", gross=True),
+            nimm("Initiale", text=True), _k("baustein", "Schnellbausteine", text=True, klappe="schnellbausteineKlappe")]},
+        {"name": "Symbole", "reihenfolge": True, "knoepfe": [
+            nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True),
+            _k("zahl", "Zahl", "zahl", True)]},
         {"name": "Links", "reihenfolge": True, "knoepfe": [
             nimm("Hyperlink", gross=True), nimm("Querverweis", text=True), nimm("Lesezeichen / Textmarke", text=True)]},
         {"name": "Formulare", "reihenfolge": True, "knoepfe": [formulare]},

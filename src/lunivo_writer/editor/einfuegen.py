@@ -377,11 +377,11 @@ def initiale(ed, zeilen: int = 3) -> bool:
     return True
 
 
-def textfeld(ed, text: str = "Text hier eingeben") -> None:
+def textfeld(ed, text: str = "Text hier eingeben", breite: int = 50) -> None:
     """Ein Textfeld als einzellige Tabelle mit Rahmen (frei schwebende Textfelder kennt Qt nicht)."""
     tf = QTextTableFormat()
     tf.setCellPadding(8); tf.setCellSpacing(0); tf.setBorder(1.5); tf.setBorderCollapse(True)
-    tf.setWidth(QTextLength(QTextLength.PercentageLength, 50))
+    tf.setWidth(QTextLength(QTextLength.PercentageLength, breite))
     tf.setBorderBrush(QBrush(QColor("#1f3864")))
     t = ed.textCursor().insertTable(1, 1, tf)
     t.cellAt(0, 0).firstCursorPosition().insertText(text)

@@ -42,18 +42,249 @@ class EinfuegenBefehle:
 
 
     # ==== Einfügen ===========================================================================================================
-    def leereSeite(self, k=None, quer=False):
-        if self.ed:
-            self.ed.insert_page_break(); self.ed.insert_page_break()
+    def leereSeite(self, k=None, quer=None):
+        """Leere Seite (Vertikal/Horizontal; ohne Angabe wie die Seite davor). Hat sie eine andere Ausrichtung als die Seite davor, steht sie
+        in einem eigenen Abschnitt."""
+        e = self.ed
+        if not e:
+            return
+        if quer is None or bool(quer) == e.abschnitt_seite().landscape:
+            e.insert_page_break(); e.insert_page_break()
+            return
+        alt = e.abschnitt_seite().landscape
+        e.abschnitt_einfuegen("naechste")
+        e.abschnitt_einfuegen("naechste")
+        c = e.textCursor(); c.movePosition(QTextCursor.PreviousBlock); e.setTextCursor(c)
+        self.w.set_orientation(bool(quer))
+        c = e.textCursor(); c.movePosition(QTextCursor.NextBlock); e.setTextCursor(c)
+        if e.abschnitt_seite().landscape != alt:
+            self.w.set_orientation(alt)
 
 
     def sonderzeichen(self, k=None):
         from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
         e = self.ed
         if e:
-            d = SonderzeichenDialog(self.w, lambda z: e.insertPlainText(z))
+            d = SonderzeichenDialog(self.w, lambda z: (e.insertPlainText(z), self._symbol_merken(z)))
             d.show()
             self._sz = d
+
+
+    # ---- Klappmenüs nach den WPS-Vorlagen (Ordner einfuegen/) ------------------------------------------------------------
+    BENUTZER_SYMBOLE = ("—", "+", "-", "×", "÷", "kg", "mm", "cm", "m²", "α", "g", "β", "θ", "℃", "〖", "{", "©", "®", "@", "&", "*", "#",
+                        "%", "‰", "$", "¥", "§", "¦", "※", "◎", "≈", "…", "≤", "≥", "≦", "≧")
+    ZULETZT_SYMBOLE = "einfuegen/symbole_zuletzt"
+    ZULETZT_ANZAHL = 24
+
+
+    @staticmethod
+    def _sym(name):
+        from lunivo_writer.ui.widgets import icons
+        return icons.icon(name, 18)
+
+
+    def menue_umbruecheKlappe(self):
+        """Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Seitenumbruch", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
+        m.eintrag("Spaltenumbruch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
+        m.eintrag("Textflussumbruch", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
+        m.trenner()
+        for art, text, sym in (("NextPage", "Abschnittsumbruch auf nächster Seite", "abschnitt"),
+                               ("Continuous", "Fortlaufender Abschnittsumbruch", "abschnittlaufend"),
+                               ("EvenPage", "Abschnittsumbruch auf gerader Seite", "abschnittgerade"),
+                               ("OddPage", "Abschnittsumbruch auf ungerader Seite", "abschnittungerade")):
+            m.eintrag(text, lambda a=art: self.abschnittsumbruch(None, a), symbol=self._sym(sym))
+        return m
+
+
+    def menue_leereSeiteKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
+        m.eintrag("Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
+        return m
+
+
+    def menue_tabelleKlappe(self):
+        """Tabelle wie in WPS: 10 × 10 Zellen, darunter Einfügen, Zeichnen, Text ↔ Tabelle; was nicht passt, bleibt grau."""
+        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.ui.baukasten.zellen_raster import ZellenRaster
+        m = ZellenRaster(self.w, 10, 10)
+        m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
+        m.addSeparator()
+        m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
+        zeichnen = m.addAction(self._sym("stift"), "Tabelle zeichnen")
+        zeichnen.setEnabled(False); zeichnen.setToolTip("Tabellen mit dem Stift zeichnen kann Lunivo noch nicht.")
+        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
+        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
+        m.addSeparator()
+        schnell = m.addMenu(self._sym("schnelltab"), "Schnelltabelle")
+        for n in E.SCHNELLTABELLEN:
+            schnell.addAction(n, lambda n=n: self.ed and E.schnelltabelle(self.ed, n))
+
+        def zustand():
+            c = self.ed.textCursor() if self.ed else None
+            zu_tab.setEnabled(bool(c and c.hasSelection() and c.currentTable() is None))
+            zu_text.setEnabled(bool(c and c.currentTable() is not None))
+        m.aboutToShow.connect(zustand)
+        return m
+
+
+    def menue_bildKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Bild aus Datei einfügen …", self.bild, symbol=self._sym("bild"))
+        return m
+
+
+    def menue_textfeldKlappe(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Horizontal", self.textfeld, symbol=self._sym("textrahmen"))
+        m.eintrag("Vertikal", None, symbol=self._sym("textrichtung"), aktiv=False,
+                  tip="Senkrecht laufender Text in Textfeldern ist in Lunivo noch nicht möglich.")
+        m.eintrag("Mehrzeiliger Text", self.textfeldMehrzeilig, symbol=self._sym("block"))
+        return m
+
+
+    def textfeldMehrzeilig(self, k=None):
+        if self.ed:
+            from lunivo_writer.editor import einfuegen as E
+            E.textfeld(self.ed, "Text hier eingeben\n\n", breite=100)
+
+
+    def menue_schnellbausteineKlappe(self):
+        """Schnellbausteine wie in WPS: AutoText-Liste ▸ (die Textbausteine) und Felder …"""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        liste = m.untermenue("AutoText-Liste", self._sym("baustein"))
+        liste.aboutToShow.connect(lambda: (liste.clear(), self._bausteine_fuellen(liste)))
+        m.eintrag("Felder …", self.felder, symbol=self._sym("feld"))
+        return m
+
+
+    def _bausteine_fuellen(self, m) -> None:
+        from lunivo_writer.services import bausteine
+        for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
+            if not liste:
+                continue
+            m.addSection(titel)
+            for b in liste:
+                m.addAction(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
+                            lambda _=False, b=b: self.ed and (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
+        m.addSeparator()
+        m.addAction("Textbausteine verwalten …", self.textbaustein)
+
+
+    def schnellbausteine(self, k=None):
+        self._popup(self.menue_schnellbausteineKlappe())
+
+
+    def felder(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import felder as F
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import FelderDialog
+        t = self.w.current_tab()
+        kontext = {"seiten": getattr(self.ed, "_pages", 1), "woerter": len(self.ed.toPlainText().split()),
+                   "autor": self.w.settings.get("benutzer/name", ""), "pfad": getattr(t, "path", "") or ""}
+        d = FelderDialog(self.w, kontext)
+        if d.exec():
+            F.feld_einfuegen(self.ed, *d.feld())
+
+
+    def menue_symbolKlappe(self):
+        """Symbol wie in WPS: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
+        Die zuletzt verwendeten werden bei jedem Aufklappen neu gesetzt (das Menü entsteht nur einmal)."""
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, textkachel
+        m = RasterAuswahl(self.w, titel="Aktuell verwendete Symbole:", spalten=12, groesse=QSize(24, 24))
+        for i in range(self.ZULETZT_ANZAHL):
+            m.kachel(f"zuletzt{i}")
+        m.abschnitt("Benutzerdefinierte Symbole:")
+        m.kacheln([(z, f"„{z}“ einfügen", textkachel(z)) for z in self.BENUTZER_SYMBOLE])
+        m.fuss("Weitere Symbole …", self.sonderzeichen)
+        for b in m.knoepfe.values():
+            b.setCheckable(False)
+        belegt: dict[str, str] = {}
+
+        def auffrischen():
+            zuletzt = self._symbole_zuletzt()
+            belegt.clear()
+            for i in range(self.ZULETZT_ANZAHL):
+                schl = f"zuletzt{i}"
+                z = zuletzt[i] if i < len(zuletzt) else ""
+                m.knoepfe[schl].setVisible(bool(z))
+                if z:
+                    belegt[schl] = z
+                    m.bild_setzen(schl, textkachel(z), f"„{z}“ einfügen")
+        m.aboutToShow.connect(auffrischen)
+        m.gewaehlt.connect(lambda schl: self._symbol_einfuegen(belegt.get(schl, schl)))
+        auffrischen()
+        return m
+
+
+    def _symbole_zuletzt(self) -> list[str]:
+        import json
+        try:
+            liste = json.loads(str(self.w.settings.get(self.ZULETZT_SYMBOLE, "") or "[]"))
+        except ValueError:
+            return []
+        return [z for z in liste if isinstance(z, str) and z] if isinstance(liste, list) else []
+
+
+    def _symbol_merken(self, z: str) -> None:
+        liste = [z] + [x for x in self._symbole_zuletzt() if x != z]
+        import json
+        self.w.settings.set(self.ZULETZT_SYMBOLE, json.dumps(liste[:self.ZULETZT_ANZAHL], ensure_ascii=False))
+
+
+    def _symbol_einfuegen(self, z: str) -> None:
+        if self.ed:
+            self.ed.insertPlainText(z)
+            self._symbol_merken(z)
+
+
+    def symbol(self, k=None):
+        self._popup(self.menue_symbolKlappe())
+
+
+    def zahl(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import ZahlDialog
+        d = ZahlDialog(self.w)
+        if d.exec():
+            self.ed.insertPlainText(d.ergebnis())
+
+
+    def textInTabelle(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import tabelle_text as TT
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import TrennerDialog
+        texte = TT.markierte_absaetze(self.ed)
+        if not texte:
+            self.w.statusBar().showMessage("Bitte zuerst den Text markieren, der eine Tabelle werden soll.", 5000)
+            return
+        d = TrennerDialog(self.w, zu_tabelle=True, texte=texte)
+        if d.exec():
+            TT.text_zu_tabelle(self.ed, d.trenner(), d.spalten())
+
+
+    def tabelleInText(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import tabelle_text as TT
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import TrennerDialog
+        if self.ed.textCursor().currentTable() is None:
+            self.w.statusBar().showMessage("Die Schreibmarke steht in keiner Tabelle.", 5000)
+            return
+        d = TrennerDialog(self.w, zu_tabelle=False)
+        if d.exec():
+            TT.tabelle_zu_text(self.ed, d.trenner())
 
 
     def inhaltsverzeichnis(self, k=None):
@@ -293,13 +524,5 @@ class EinfuegenBefehle:
                 w.removeSelectedText(); bausteine.einfuegen(w, b); self.ed.document().setModified(True)
                 return
         m = QMenu()
-        for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
-            if not liste:
-                continue
-            m.addSection(titel)
-            for b in liste:
-                m.addAction(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
-                            lambda _=False, b=b: (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
-        m.addSeparator()
-        m.addAction("Textbausteine verwalten …", self.textbaustein)
+        self._bausteine_fuellen(m)
         self._popup(m)

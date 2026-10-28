@@ -232,6 +232,9 @@ class SeiteBefehle:
             self.ed.setTextCursor(c)
 
 
+    textflussumbruch = zeilenumbruch                       # WPS: „Textflussumbruch“ (Umschalt+Enter) ist bei Lunivo der Zeilenumbruch
+
+
     def an_textrichtung(self):
         return bool(self.ed and self.ed.textCursor().blockFormat().layoutDirection() == Qt.RightToLeft)
 

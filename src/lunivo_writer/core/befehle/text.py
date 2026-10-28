@@ -5,7 +5,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QTextListFormat
 from PySide6.QtWidgets import QMenu, QMessageBox
 from lunivo_writer.editor.linie import Linie
-from lunivo_writer.ui.baukasten import FarbPalette, RahmenMenue, RasterAuswahl, ZellenRaster
+from lunivo_writer.ui.baukasten import FarbPalette, RahmenMenue, RasterAuswahl
 from lunivo_writer.core.farben import Farbe
 
 
@@ -458,15 +458,6 @@ class TextBefehle:
 
     def menue_nummerierungKlappe(self):
         return self._listenraster("number", "Nummerierung")
-
-
-    def menue_tabelleKlappe(self):
-        """Tabelle einfügen wie bei WPS: Zellen überfahren, klicken; darunter der Dialog und die Schnelltabellen."""
-        m = ZellenRaster(self.w)
-        m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
-        m.fuss("Tabelle einfügen …", self.tabelleRaster)
-        m.addAction("Schnelltabelle …", self.schnelltabelle)
-        return m
 
 
     def einzugMehr(self, k=None):
