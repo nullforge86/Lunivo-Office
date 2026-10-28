@@ -36,9 +36,10 @@ class RasterAuswahl(QMenu):
 
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(56, 56)):
+    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(56, 56), beschriftet: bool = False):
+        """``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp."""
         super().__init__(parent)
-        self._spalten, self._groesse = spalten, groesse
+        self._spalten, self._groesse, self._beschriftet = spalten, groesse, beschriftet
         self._wid = QWidget()
         self._v = QVBoxLayout(self._wid)
         self._v.setContentsMargins(6, 6, 6, 6); self._v.setSpacing(4)
@@ -46,6 +47,7 @@ class RasterAuswahl(QMenu):
             t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
             self._v.addWidget(t)
         self._gitter = QGridLayout(); self._gitter.setSpacing(4)
+        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
         self._v.addLayout(self._gitter)
         self._n = 0
         self.knoepfe: dict[str, QToolButton] = {}
@@ -56,6 +58,10 @@ class RasterAuswahl(QMenu):
         b.setIcon(_symbol(bild, self._groesse)); b.setIconSize(self._groesse)
         b.setToolTip(beschriftung or schluessel); b.setAccessibleName(beschriftung or schluessel); b.setCheckable(True); b.setChecked(aktuell)
         b.setFixedSize(self._groesse + QSize(10, 10))
+        if self._beschriftet:
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            b.setText(b.fontMetrics().elidedText(beschriftung or schluessel, Qt.ElideRight, self._groesse.width() + 4))
+            b.setFixedSize(self._groesse + QSize(10, 10 + b.fontMetrics().height() + 4))
         b.clicked.connect(lambda _c=False, k=schluessel: self._klick(k))
         self._gitter.addWidget(b, self._n // self._spalten, self._n % self._spalten)
         self._n += 1
@@ -72,6 +78,7 @@ class RasterAuswahl(QMenu):
         t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
         self._v.addWidget(t)
         self._gitter = QGridLayout(); self._gitter.setSpacing(4)
+        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
         self._v.addLayout(self._gitter)
         self._n = 0
 

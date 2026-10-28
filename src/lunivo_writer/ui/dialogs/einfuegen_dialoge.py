@@ -109,13 +109,15 @@ class SmartArtDialog(QDialog, VorschauMixin):
 
 
 class WordArtDialog(QDialog, VorschauMixin):
-    def __init__(self, parent):
+    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT):
+        """``stil`` und ``farbe`` kommen aus der Galerie (``E.WORDART_VORGABEN``)."""
         super().__init__(parent)
         self.setWindowTitle("WordArt")
         v = QVBoxLayout(self); f = QFormLayout(); v.addLayout(f)
-        self.text = QLineEdit("Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
+        self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
+        self.stil.setCurrentText(stil)
         self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
-        self.farbe = _Farbknopf(Farbe.AKZENT)
+        self.farbe = _Farbknopf(farbe)
         for lab, w in (("Text", self.text), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
             f.addRow(lab, w)
         self._vorschau_bauen(v); v.addWidget(_ok(self))
@@ -231,18 +233,10 @@ class FormelDialog(QDialog):
         self.eingabe.textChanged.connect(self._zeige); self._zeige()
 
     def _zeige(self, *_):
-        from PySide6.QtGui import QColor, QFont, QPainter, QPixmap, QTextCharFormat, QTextCursor, QTextDocument
-        d = QTextDocument(); d.setDefaultFont(QFont("DejaVu Serif", 16)); c = QTextCursor(d)
-        for t, a in E.formel_teile(self.eingabe.text()):
-            cf = QTextCharFormat(); cf.setFontItalic(True); cf.setForeground(QColor("black"))
-            if a == "hoch":
-                cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
-            elif a == "tief":
-                cf.setVerticalAlignment(QTextCharFormat.AlignSubScript)
-            c.insertText(t, cf)
-        d.setTextWidth(-1)
-        pm = QPixmap(int(d.idealWidth()) + 20, int(d.size().height()) + 16); pm.fill(QColor("white"))
-        p = QPainter(pm); p.translate(10, 8); d.drawContents(p); p.end()
+        from PySide6.QtGui import QColor, QPainter, QPixmap
+        img = E.formel_bild(self.eingabe.text())
+        pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor("white"))
+        p = QPainter(pm); p.drawImage(8, 6, img); p.end()
         self.vorschau.setPixmap(pm)
 
 

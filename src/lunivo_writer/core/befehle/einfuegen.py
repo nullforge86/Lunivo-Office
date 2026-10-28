@@ -1,6 +1,7 @@
 """Befehle: Einfügen."""
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication, QFileDialog, QMenu, QMessageBox
 from lunivo_writer.core.befehle.hilfen import _farbfeld
@@ -32,8 +33,116 @@ class EinfuegenBefehle:
 
 
     def menue_seitenzahlKlappe(self):
-        m = QMenu()
-        m.addAction("Seitenzahl in die Fußzeile", self.w.insert_page_number)
+        """Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
+        „außen“ und „innen“ bleiben grau, solange Lunivo gerade und ungerade Seiten nicht unterscheidet."""
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
+        m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
+        for schl, text, ort, ausr in SZ.VORGABEN:
+            b = m.kachel(schl, text, seitenzahl_zeichner(ort, ausr))
+            b.setCheckable(False)
+            if ausr in ("aussen", "innen"):
+                b.setEnabled(False); b.setToolTip(text + " — braucht unterschiedliche gerade und ungerade Seiten, die Lunivo noch nicht kennt.")
+        m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
+        m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
+        m.fuss("Seitenzahlen entfernen", self.seitenzahlenEntfernen)
+        return m
+
+
+    def _seitenzahl_vorgabe(self, schl: str) -> None:
+        from lunivo_writer.editor import seitenzahl as SZ
+        _s, _t, ort, ausr = next(v for v in SZ.VORGABEN if v[0] == schl)
+        if self.ed:
+            self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr))
+
+
+    def seitenzahlEinfuegen(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.ui.dialogs.einfuegen_fenster import SeitenzahlDialog
+        d = SeitenzahlDialog(self.w)
+        if d.exec():
+            ort, ausr, muster = d.werte()
+            self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr, muster))
+
+
+    def seitenzahlenEntfernen(self, k=None):
+        if not self.ed:
+            return
+        from lunivo_writer.editor import seitenzahl as SZ
+        page = self.ed.abschnitt_seite()
+        if SZ.seitenzahlen_entfernen(page):
+            self.ed.page_settings_changed(page)
+        else:
+            self.w.statusBar().showMessage("In Kopf- und Fußzeile steht keine Seitenzahl.", 4000)
+
+
+    # ---- Wasserzeichen-Galerie --------------------------------------------------------------------------------------------
+    WASSERZEICHEN_VORGABEN = (("VERTRAULICH", -45), ("NICHT KOPIEREN", -45), ("ORIGINAL", 0), ("BEISPIEL", 0), ("STRENG GEHEIM", -45),
+                              ("EILT", 0))
+    EIGENE_WASSERZEICHEN = "einfuegen/wasserzeichen_eigene"
+    EIGENE_ANZAHL = 6
+
+
+    def _eigene_wasserzeichen(self) -> list[dict]:
+        import json
+        try:
+            d = json.loads(str(self.w.settings.get(self.EIGENE_WASSERZEICHEN, "") or "[]"))
+        except ValueError:
+            return []
+        return [x for x in d if isinstance(x, dict) and x.get("text")] if isinstance(d, list) else []
+
+
+    def menue_wasserzeichenKlappe(self):
+        """Wasserzeichen wie in WPS: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen."""
+        import json
+        from PySide6.QtCore import QSize
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_zeichner
+        m = RasterAuswahl(self.w, titel="Benutzerdefiniertes Wasserzeichen", spalten=3, groesse=QSize(84, 112), beschriftet=True)
+        for i in range(self.EIGENE_ANZAHL):
+            m.kachel(f"eigen{i}")
+        m.kachel("neu", "Hinzufügen", plus_zeichner())
+        m.abschnitt("Voreinstellung")
+        for text, winkel in self.WASSERZEICHEN_VORGABEN:
+            m.kachel(text, text, wasserzeichen_zeichner(text, winkel))
+        for b in m.knoepfe.values():
+            b.setCheckable(False)
+        m.fuss("Wasserzeichen einfügen …", self.wasserzeichen)
+        m.fuss("Wasserzeichen entfernen", lambda: self._seite_aendern(watermark=None))
+
+        def auffrischen():
+            eigene = self._eigene_wasserzeichen()
+            for i in range(self.EIGENE_ANZAHL):
+                b = m.knoepfe[f"eigen{i}"]
+                b.setVisible(i < len(eigene))
+                if i < len(eigene):
+                    w = eigene[i]
+                    m.bild_setzen(f"eigen{i}", wasserzeichen_zeichner(w["text"], w.get("winkel", -45), w.get("farbe", "#c0c0c0")), w["text"])
+                    b.setText(b.fontMetrics().elidedText(w["text"], Qt.ElideRight, 88))
+
+        def gewaehlt(schl: str):
+            if schl == "neu":
+                from lunivo_writer.ui.dialogs.dokument_dialoge import WasserzeichenDialog
+                d = WasserzeichenDialog(self.w, None)
+                if d.exec() and d.ergebnis():
+                    eigene = [d.ergebnis()] + self._eigene_wasserzeichen()
+                    self.w.settings.set(self.EIGENE_WASSERZEICHEN, json.dumps(eigene[:self.EIGENE_ANZAHL], ensure_ascii=False))
+                    self._seite_aendern(watermark=d.ergebnis())
+            elif schl.startswith("eigen"):
+                eigene = self._eigene_wasserzeichen()
+                i = int(schl[5:])
+                if i < len(eigene):
+                    self._seite_aendern(watermark=dict(eigene[i]))
+            else:
+                winkel = dict(self.WASSERZEICHEN_VORGABEN)[schl]
+                self._seite_aendern(watermark={"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 80 if winkel else 96})
+        m.aboutToShow.connect(auffrischen)
+        m.gewaehlt.connect(gewaehlt)
+        auffrischen()
         return m
 
 
@@ -309,15 +418,36 @@ class EinfuegenBefehle:
 
 
     def formenGalerie(self, k=None):
-        if not self.ed:
-            return
+        if self.ed:
+            self._popup(self.menue_formenKlappe())
+
+
+    def menue_formenKlappe(self):
+        """Formen wie in WPS: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
+        from PySide6.QtCore import QRectF, QSize
+        from PySide6.QtGui import QColor, QPen
+        from lunivo_writer.core.farben import Farbe
         from lunivo_writer.editor import einfuegen as E
-        m = QMenu()
-        for f in E.FORMEN:
-            m.addAction(f, lambda _=False, f=f: self._bild_einfuegen(E.form_bild(f), f"Form: {f}", "form", {"form": f}))
-        m.addSeparator()
-        m.addAction("Weitere Formen und Farben …", self.zeichnen)
-        self._popup(m)
+        from lunivo_writer.editor import formen_katalog as K
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = None
+        for gruppe, formen in K.KATEGORIEN:
+            if m is None:
+                m = RasterAuswahl(self.w, titel=gruppe, spalten=16, groesse=QSize(22, 22))
+            else:
+                m.abschnitt(gruppe)
+            for name in formen:
+                def zeichne(p, r, name=name):
+                    p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
+                    p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
+                m.kachel(name, name, zeichne).setCheckable(False)
+
+        def einfuegen(f):
+            if self.ed:
+                self._bild_einfuegen(E.form_bild(f, *((240, 60) if K.ist_linie(f) else (160, 120))), f"Form: {f}", "form", {"form": f})
+        m.gewaehlt.connect(einfuegen)
+        m.fuss("Weitere Formen und Farben …", self.zeichnen)
+        return m
 
 
     def zeichnen(self, k=None):
@@ -373,6 +503,79 @@ class EinfuegenBefehle:
             d = WordArtDialog(self.w)
             if d.exec():
                 self._bild_einfuegen(d.bild(), "WordArt: " + d.text.text(), "wordart", {"text": d.text.text()})
+
+
+    def wordartVorgabe(self, k=None, nr=0):
+        """WordArt aus der Galerie: das Fenster öffnet mit Stil und Farbe der Vorlage (und dem markierten Text)."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.ui.dialogs.einfuegen_dialoge import WordArtDialog
+        _n, stil, farbe = E.WORDART_VORGABEN[nr]
+        markiert = self.ed.textCursor().selectedText().replace("\u2029", " ").strip()
+        d = WordArtDialog(self.w, markiert, stil, farbe)
+        if d.exec():
+            self._bild_einfuegen(d.bild(), "WordArt: " + d.text.text(), "wordart", {"text": d.text.text()})
+
+
+    def menue_wordartKlappe(self):
+        from PySide6.QtCore import QSize
+        from PySide6.QtGui import QPixmap
+        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=6, groesse=QSize(44, 44))
+        for i, (name, stil, farbe) in enumerate(E.WORDART_VORGABEN):
+            img = E.wordart_bild("A", stil, pt=110, farbe=farbe)
+            b = m.kachel(str(i), name, QPixmap.fromImage(img).scaled(44, 44, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            b.setCheckable(False)
+        m.gewaehlt.connect(lambda schl: self.wordartVorgabe(None, int(schl)))
+        return m
+
+
+    def menue_gleichungKlappe(self):
+        """Gleichung wie in WPS: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“."""
+        from PySide6.QtCore import QSize
+        from PySide6.QtGui import QPainter, QPixmap
+        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        groesse = QSize(380, 54)
+        m = RasterAuswahl(self.w, titel="Integriert", spalten=1, groesse=groesse, beschriftet=True)
+        for i, (name, formel) in enumerate(E.GLEICHUNGEN):
+            img = E.formel_bild(formel, 13)
+            pm = QPixmap(groesse); pm.fill(Qt.white)
+            p = QPainter(pm); p.setPen(Qt.lightGray); p.drawRect(0, 0, groesse.width() - 1, groesse.height() - 1)
+            bild = img.scaled(groesse.width() - 12, groesse.height() - 8, Qt.KeepAspectRatio, Qt.SmoothTransformation) \
+                if img.width() > groesse.width() - 12 or img.height() > groesse.height() - 8 else img
+            p.drawImage((groesse.width() - bild.width()) // 2, (groesse.height() - bild.height()) // 2, bild); p.end()
+            b = m.kachel(str(i), name, pm)
+            b.setCheckable(False)
+        m.gewaehlt.connect(lambda schl: self.ed and E.formel_einfuegen(self.ed, E.GLEICHUNGEN[int(schl)][1]))
+        m.fuss("Neue Gleichung einfügen …", self.formel)
+        return m
+
+
+    def menue_deckblattKlappe(self):
+        """Deckblätter als Seitenbilder; ein Klick setzt das Deckblatt mit Platzhaltern an den Anfang des Dokuments."""
+        from PySide6.QtCore import QSize
+        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.seiten_bildchen import deckblatt_zeichner
+        m = RasterAuswahl(self.w, titel="Integriert", spalten=4, groesse=QSize(96, 130), beschriftet=True)
+        for v in E.DECKBLATT_VORLAGEN:
+            m.kachel(v, v, deckblatt_zeichner(v)).setCheckable(False)
+        m.gewaehlt.connect(self.deckblattVorlage)
+        m.fuss("Deckblatt mit eigenen Angaben …", self.deckblatt)
+        return m
+
+
+    def deckblattVorlage(self, k=None, vorlage=None):
+        """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Farbband"]``."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import einfuegen as E
+        name = vorlage or (k if isinstance(k, str) and k in E.DECKBLATT_VORLAGEN else "Schlicht")
+        E.deckblatt_einfuegen(self.ed, name, "[Titel des Dokuments]", "[Untertitel]", self.w.settings.get("benutzer/name", "") or "[Autor]",
+                              E.datum_text("d. MMMM yyyy"))
 
 
     def diagramm(self, k=None):

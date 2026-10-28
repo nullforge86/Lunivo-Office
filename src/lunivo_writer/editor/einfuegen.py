@@ -17,7 +17,9 @@ from PySide6.QtGui import (
 from lunivo_writer.services.docx_reader import STYLE_PROP
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.editor import formen_katalog as K
 FORMEN = ["Rechteck", "Abgerundetes Rechteck", "Ellipse", "Dreieck", "Raute", "Pfeil nach rechts", "Stern", "Sprechblase", "Linie"]
+FORMEN += [n for n in K.namen() if n not in FORMEN]           # die ganze Galerie (Einfügen ▸ Formen), auch im Fenster „Form“
 
 
 def qimage_einfuegen(ed, img: QImage, alt: str = "", art: str | None = None, daten: dict | None = None) -> None:
@@ -92,6 +94,10 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
         p.drawPath(pfad.united(spitze))
     elif art == "Linie":
         p.drawLine(QPointF(r.left(), r.center().y()), QPointF(r.right(), r.center().y()))
+    elif K.hat(art):
+        if K.ist_linie(art):
+            p.setBrush(Qt.NoBrush)
+        p.drawPath(K.pfad(art, r))
     if text:
         p.setPen(QColor(Farbe.WEISS if QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
         f = p.font(); f.setPointSizeF(12); p.setFont(f)
@@ -102,6 +108,12 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
 
 # ---- WordArt --------------------------------------------------------------------------------------------------------
 WORDART_STILE = ["Verlauf", "Schatten", "Umriss", "Regenbogen", "Welle"]
+# Galerie „Formatvorlage“ (Einfügen ▸ WordArt ▾): (Name, Stil, Farbe) — eigene Zusammenstellung aus Lunivos Farben
+WORDART_VORGABEN = [("Schwarz", "Verlauf", Farbe.TINTE_DUNKEL), ("Blau, Verlauf", "Verlauf", Farbe.AKZENT_DUNKEL),
+                    ("Orange, Umriss", "Umriss", Farbe.ORANGE), ("Blau, Umriss", "Umriss", Farbe.BLAU), ("Gold", "Verlauf", "#f2b705"),
+                    ("Grau", "Verlauf", Farbe.GRAU), ("Grau mit Schatten", "Schatten", Farbe.GRAU), ("Schwarz mit Schatten", "Schatten", Farbe.TINTE_DUNKEL),
+                    ("Dunkelblau mit Schatten", "Schatten", "#1f3864"), ("Blau mit Schatten", "Schatten", Farbe.BLAU),
+                    ("Rot, Umriss", "Umriss", Farbe.ROT), ("Regenbogen", "Regenbogen", Farbe.AKZENT)]
 
 
 def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT) -> QImage:
@@ -234,6 +246,32 @@ def formel_teile(text: str) -> list[tuple[str, str]]:
     return teile
 
 
+# Galerie „Integriert“ (Einfügen ▸ Gleichung ▾): (Name, Formel in der einfachen Schreibweise von ``formel_teile``)
+GLEICHUNGEN = [("Kreisfläche", "A = \\pi r^2"),
+               ("Binomischer Lehrsatz", "(x + a)^n = \\sum_{k=0}^{n} C(n,k) x^k a^{n−k}"),
+               ("Summenentwicklung", "(1 + x)^n = 1 + nx/1! + n(n − 1)x^2/2! + …"),
+               ("Fourier-Reihe", "f(x) = a_0 + \\sum_{n=1}^{\\infty} (a_n cos(n\\pi x/L) + b_n sin(n\\pi x/L))"),
+               ("Satz des Pythagoras", "a^2 + b^2 = c^2"),
+               ("Quadratische Formel", "x = (−b \\pm sqrt(b^2 − 4ac)) / 2a"),
+               ("Taylor-Entwicklung", "e^x = 1 + x/1! + x^2/2! + x^3/3! + …,  −\\infty < x < \\infty")]
+
+
+def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
+    """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie)."""
+    d = QTextDocument(); d.setDefaultFont(QFont("DejaVu Serif", pt)); c = QTextCursor(d)
+    for t, a in formel_teile(text):
+        cf = QTextCharFormat(); cf.setFontItalic(True); cf.setForeground(QColor(farbe))
+        if a == "hoch":
+            cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
+        elif a == "tief":
+            cf.setVerticalAlignment(QTextCharFormat.AlignSubScript)
+        c.insertText(t, cf)
+    d.setDocumentMargin(2); d.setTextWidth(-1)
+    img = _leer(int(d.idealWidth()) + 8, int(d.size().height()) + 4)
+    p = QPainter(img); p.translate(4, 2); d.drawContents(p); p.end()
+    return img
+
+
 def formel_einfuegen(ed, text: str) -> None:
     c = ed.textCursor()
     c.beginEditBlock()
@@ -299,7 +337,7 @@ def schnelltabelle(ed, name: str) -> None:
 
 
 # ---- Deckblatt ----------------------------------------------------------------------------------------------------------------
-DECKBLATT_VORLAGEN = ["Schlicht", "Mit Linie", "Zentriert"]
+DECKBLATT_VORLAGEN = ["Schlicht", "Mit Linie", "Zentriert", "Farbband"]
 
 
 def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: str, datum: str) -> None:
@@ -314,6 +352,9 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
         bf.setAlignment(Qt.AlignHCenter if zentriert else Qt.AlignLeft)
         cf = QTextCharFormat()
         cf.setFontPointSize(pt); cf.setFontWeight(QFont.Bold if fett else QFont.Normal)
+        if vorlage == "Farbband" and fett:                  # Titel weiß auf farbigem Band über die ganze Breite
+            bf.setBackground(QColor(Farbe.AKZENT)); bf.setTopMargin(abstand); bf.setBottomMargin(18)
+            cf.setForeground(QColor(Farbe.WEISS))
         c.insertBlock(bf, cf)
         c.insertText(text, cf)
         if vorlage == "Mit Linie" and fett:

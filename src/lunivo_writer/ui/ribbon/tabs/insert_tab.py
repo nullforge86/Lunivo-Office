@@ -23,21 +23,24 @@ def bauen(register: dict) -> dict:
         {"name": "Schaltfläche", "tun": "formKnopf"}, {"trenner": True}, {"name": "Felder zurücksetzen", "tun": "formLeeren"}])
     gruppen = [
         {"name": "Seiten", "reihenfolge": True, "knoepfe": [
-            nimm("Deckblatt", gross=True), nimm("Leere Seite", gross=True, tun="leereSeite", klappe="leereSeiteKlappe", menue=None),
+            nimm("Deckblatt", gross=True, klappe="deckblattKlappe", tun=None),
+            nimm("Leere Seite", gross=True, tun="leereSeite", klappe="leereSeiteKlappe", menue=None),
             nimm("Seitenumbruch", name="Umbrüche", gross=True, klappe="umbruecheKlappe")]},
         {"name": "Tabellen", "reihenfolge": True, "knoepfe": [
             nimm("Tabelle einfügen", name="Tabelle", gross=True)]},
         {"name": "Illustrationen", "reihenfolge": True, "knoepfe": [
-            nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True), nimm("Diagramm", text=True), nimm("SmartArt", text=True)]},
+            nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True, tun=None, klappe="formenKlappe"),
+            nimm("Diagramm", text=True), nimm("SmartArt", text=True)]},
         {"name": "Kommentar", "reihenfolge": True, "knoepfe": [dict(kommentar, name="Kommentar", gross=True)]},
         {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
-            nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=True),
-            _k("wasserzeichen", "Wasserzeichen", "wasserzeichen", True)]},
+            nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=True, tun=None),
+            _k("wasserzeichen", "Wasserzeichen", gross=True, klappe="wasserzeichenKlappe")]},
         {"name": "Text", "reihenfolge": True, "knoepfe": [
-            nimm("Textfeld", gross=True, klappe="textfeldKlappe"), nimm("WordArt", gross=True), nimm("Datum und Uhrzeit", gross=True),
+            nimm("Textfeld", gross=True, klappe="textfeldKlappe"), nimm("WordArt", gross=True, tun=None, klappe="wordartKlappe"),
+            nimm("Datum und Uhrzeit", gross=True),
             nimm("Initiale", text=True), _k("baustein", "Schnellbausteine", text=True, klappe="schnellbausteineKlappe")]},
         {"name": "Symbole", "reihenfolge": True, "knoepfe": [
-            nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True),
+            nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True, klappe="gleichungKlappe"),
             _k("zahl", "Zahl", "zahl", True)]},
         {"name": "Links", "reihenfolge": True, "knoepfe": [
             nimm("Hyperlink", gross=True), nimm("Querverweis", text=True), nimm("Lesezeichen / Textmarke", text=True)]},

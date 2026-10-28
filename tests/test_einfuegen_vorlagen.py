@@ -119,3 +119,53 @@ def test_leere_seite_horizontal_eigener_abschnitt(fenster):
     fenster.befehle.leereSeite(None, True)
     n = AB.anzahl(e.document())
     assert [e.abschnitt_seite(i).landscape for i in range(n)] == [False, True, False]
+
+
+def test_seitenzahl_vorgaben_und_entfernen(fenster):
+    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.models.page import HeaderFooter, PageSettings
+    p = PageSettings(); p.header = HeaderFooter("Bericht", "left")
+    SZ.seitenzahl_setzen(p, "kopf", "right", "Seite {PAGE} von {PAGES}")
+    assert (p.header.text, p.header.align) == ("Bericht Seite {PAGE} von {PAGES}", "right")
+    SZ.seitenzahl_setzen(p, "fuss", "center")
+    assert p.footer.text == "{PAGE}" and p.header.text == "Bericht"          # nicht doppelt
+    assert SZ.seitenzahlen_entfernen(p) and p.footer.text == "" and not SZ.seitenzahlen_entfernen(p)
+    m = fenster.befehle.klappe("seitenzahlKlappe")
+    assert len(m.knoepfe) == 10 and not m.knoepfe["kopf_aussen"].isEnabled() and m.knoepfe["fuss_rechts"].isEnabled()
+    m.gewaehlt.emit("fuss_rechts")
+    s = fenster.current_editor().abschnitt_seite()
+    assert (s.footer.text, s.footer.align) == ("{PAGE}", "right")
+
+
+def test_wasserzeichen_galerie(fenster):
+    import json
+    m = fenster.befehle.klappe("wasserzeichenKlappe")
+    assert {"VERTRAULICH", "EILT", "neu"} <= set(m.knoepfe) and m.knoepfe["eigen0"].isHidden()
+    m.gewaehlt.emit("EILT")
+    assert fenster.current_editor().abschnitt_seite().watermark["text"] == "EILT"
+    fenster.settings.set(fenster.befehle.EIGENE_WASSERZEICHEN, json.dumps([{"text": "ENTWURF", "winkel": 0}]))
+    m.aboutToShow.emit()
+    assert not m.knoepfe["eigen0"].isHidden() and m.knoepfe["eigen0"].toolTip() == "ENTWURF"
+    m.gewaehlt.emit("eigen0")
+    assert fenster.current_editor().abschnitt_seite().watermark["text"] == "ENTWURF"
+
+
+def test_gleichungen_formen_deckblatt(fenster):
+    from lunivo_writer.editor import einfuegen as E
+    from lunivo_writer.editor import formen_katalog as K
+    b = fenster.befehle
+    e = fenster.current_editor()
+    assert len(b.klappe("gleichungKlappe").knoepfe) == len(E.GLEICHUNGEN)
+    b.klappe("gleichungKlappe").gewaehlt.emit("4")                        # Satz des Pythagoras
+    assert "a2 + b2 = c2" in e.toPlainText()
+    for n in K.namen():                                                    # jede Form lässt sich zeichnen
+        assert not E.form_bild(n, 60, 40).isNull()
+    m = b.klappe("formenKlappe")
+    assert set(K.namen()) <= set(m.knoepfe)
+    vorher = e.document().characterCount()
+    m.gewaehlt.emit("Fünfeck")
+    assert e.document().characterCount() == vorher + 1
+    assert set(b.klappe("deckblattKlappe").knoepfe) == set(E.DECKBLATT_VORLAGEN)
+    b.deckblattVorlage("Farbband")
+    assert e.document().firstBlock().next().text() == "[Titel des Dokuments]"
+    assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)

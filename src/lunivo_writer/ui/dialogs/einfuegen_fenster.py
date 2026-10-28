@@ -148,3 +148,41 @@ class TrennerDialog(QDialog):
         z = TT.zellen(self.texte, self.trenner())
         self._spalten.setValue(max((len(r) for r in z), default=1))
         self._zeilen.setText(str(len(z)))
+
+
+class SeitenzahlDialog(QDialog):
+    """„Seitenzahl einfügen“: Position (Kopf-/Fußzeile), Ausrichtung und Schreibweise, mit kleinem Seitenbild."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        from PySide6.QtWidgets import QComboBox
+        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche
+        self.setWindowTitle("Seitenzahl einfügen")
+        v = QVBoxLayout(self)
+        g = QGridLayout(); g.setHorizontalSpacing(12)
+        self.muster = QComboBox(); self.ort = QComboBox(); self.ausrichtung = QComboBox()
+        for k, t in SZ.MUSTER:
+            self.muster.addItem(t, k)
+        for k, t in (("kopf", "Kopfzeile"), ("fuss", "Fußzeile")):
+            self.ort.addItem(t, k)
+        for k, t in (("left", "Links"), ("center", "Mitte"), ("right", "Rechts")):
+            self.ausrichtung.addItem(t, k)
+        self.ort.setCurrentIndex(1); self.ausrichtung.setCurrentIndex(1)
+        for i, (text, feld) in enumerate((("&Format:", self.muster), ("&Position:", self.ort), ("&Ausrichtung:", self.ausrichtung))):
+            feld.setMinimumHeight(34); feld.setMinimumWidth(180)
+            g.addWidget(_titel(text, feld), i, 0); g.addWidget(feld, i, 1)
+        self.vorschau = VorschauFlaeche(self._male, 140, flaeche=False); self.vorschau.setFixedSize(110, 140)
+        g.addWidget(self.vorschau, 0, 2, 4, 1)
+        g.setRowStretch(3, 1)
+        v.addLayout(g)
+        fussleiste(self, v)
+        for c in (self.muster, self.ort, self.ausrichtung):
+            c.currentIndexChanged.connect(lambda _i: self.vorschau.update())
+
+    def _male(self, p, r) -> None:
+        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
+        seitenzahl_zeichner(self.ort.currentData(), self.ausrichtung.currentData())(p, r)
+
+    def werte(self) -> tuple[str, str, str]:
+        return self.ort.currentData(), self.ausrichtung.currentData(), self.muster.currentData()
