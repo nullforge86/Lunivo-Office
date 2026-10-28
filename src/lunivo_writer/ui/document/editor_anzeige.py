@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPalette, QPen, QTextCharFormat, QTextCursor, QTextOption
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPalette, QPen, QTextCharFormat, QTextCursor, QTextOption
 from PySide6.QtWidgets import QTextEdit
 from lunivo_writer.editor import sprechblasen as SB
 from lunivo_writer.editor.anzeige_extra import aenderungszeilen
@@ -44,7 +44,7 @@ class AnzeigeBaustein:
         links = k["rand"] == "Links"
         self.setViewportMargins(extra if links else 0, 0, 0 if links else extra, 0)
         if not self.web:
-            self.setFixedWidth(int(mm_to_px(self.page.width_mm) * self.zoom) + extra)
+            self.setFixedWidth(int(getattr(self, "_qbreite", mm_to_px(self.page.width_mm)) * self.zoom) + extra)
         if extra and self._blasen_flaeche is None:
             from lunivo_writer.ui.document.blasen_flaeche import BlasenFlaeche
             self._blasen_flaeche = BlasenFlaeche(self)
@@ -302,13 +302,19 @@ class AnzeigeBaustein:
                 if r.bottom() < -20 or r.top() > vp.height():
                     continue
                 y = r.bottom() + int(3 * z)
-                x0, x1 = int(mm_to_px(pg.margin_left_mm) * z), vp.width() - int(mm_to_px(pg.margin_right_mm) * z)
+                if getattr(self, "_qplan", None):
+                    bk = self._blatt(self._blatt_bei_y(y))
+                    x0, x1 = int(bk["x"] + bk["ml"]), int(bk["x"] + bk["ml"] + bk["cw"])
+                else:
+                    x0, x1 = int(mm_to_px(pg.margin_left_mm) * z), vp.width() - int(mm_to_px(pg.margin_right_mm) * z)
                 p.setPen(QPen(accent_color, 1, Qt.DashLine))
                 p.drawLine(x0, y, x1, y)
                 f = QFont(p.font()); f.setPointSizeF(max(6.5, 8 * z)); p.setFont(f)
                 txt = f"Abschnittsumbruch ({AB.TYPEN.get(typ, typ)})"
                 p.setPen(accent_color)
-                p.drawText(x0 + int(8 * z), y - int(2 * z), txt)
+                # bei Umbruch auf eine neue Seite steht unter der Linie nichts mehr: dort beschriften, sonst darüber
+                unten = typ != "fortlaufend"
+                p.drawText(x0 + int(8 * z), y + (QFontMetrics(f).ascent() + int(2 * z) if unten else -int(2 * z)), txt)
         # Geänderte Zeilen
         seite = self.opt_text("aenderungen/balken", "links")
         if seite in ("links", "rechts", "außen"):
@@ -338,18 +344,20 @@ class AnzeigeBaustein:
         if self.opt("ui/kopffuss_anzeigen", True):
             from lunivo_writer.editor.pagination import _draw_hf
             g = self._sp_geo()
-            ml, cw = mm_to_px(pg.margin_left_mm), pg.content_width_px
-            ph = mm_to_px(pg.height_mm)
             base = QFont(self.font())
             p.setPen(line_color)
+            quer = bool(getattr(self, "_qplan", None))
             for k in range(self._blatt_anzahl()):
                 oben = self.blatt_oben(k)
-                if oben > vp.height() or oben + g["H"] < 0:
+                bk = self._blatt(k) if quer else {"x": 0.0, "H": g["H"], "pg": pg}
+                if oben > vp.height() or oben + bk["H"] < 0:
                     continue
-                kopf, fuss = (pg.first_header, pg.first_footer) if (k == 0 and pg.diff_first) else (pg.header, pg.footer)
+                bp = bk["pg"]
+                kopf, fuss = (bp.first_header, bp.first_footer) if (k == 0 and bp.diff_first) else (bp.header, bp.footer)
                 p.save()
-                p.translate(0, oben)
+                p.translate(bk["x"], oben)
                 p.scale(z, z)
-                _draw_hf(p, kopf, QRectF(ml, mm_to_px(8), cw, mm_to_px(10)), k + 1, self._pages, base)
-                _draw_hf(p, fuss, QRectF(ml, ph - mm_to_px(18), cw, mm_to_px(10)), k + 1, self._pages, base)
+                _draw_hf(p, kopf, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(8), bp.content_width_px, mm_to_px(10)), k + 1, self._pages, base)
+                _draw_hf(p, fuss, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(bp.height_mm) - mm_to_px(18), bp.content_width_px, mm_to_px(10)),
+                         k + 1, self._pages, base)
                 p.restore()

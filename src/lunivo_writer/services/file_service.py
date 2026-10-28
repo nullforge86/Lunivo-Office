@@ -167,6 +167,9 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
     from lunivo_writer.services import sicher_schreiben
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
         doc = lese_zeilenluft.bereinigte_kopie(doc)
+    from lunivo_writer.editor import querblatt
+    if querblatt.hat_zusatz(doc):                        # ebenso der Einzug, mit dem der Editor verschieden große Blätter zeigt
+        doc = querblatt.bereinigte_kopie(doc)
     e = ext(path)
     if e == ".docx":
         data, rep = docx_writer.docx_daten(doc, page, meta)

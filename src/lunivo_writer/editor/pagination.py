@@ -143,6 +143,8 @@ def ausgabe_seiten(logisch: int, page: PageSettings) -> int:
 def paginated_copy(qdoc: QTextDocument, page: PageSettings, noten: dict | None = None, silben: bool | None = None,
                    einspaltig: bool = False, versteckt: bool = False, fussnoten: bool | str = True, lese_luft: bool = False) -> QTextDocument:
     d = qdoc.clone()
+    from lunivo_writer.editor import querblatt
+    querblatt.zuruecknehmen(d)                          # der Zusatz für verschieden große Blätter gilt nur in der Anzeige
     if not lese_luft:                                   # Druck, PDF, Seitenzahl: ohne den Zusatzabstand der Lesehilfe (nur die Anzeige im Editor behält ihn)
         from lunivo_writer.editor import lese_zeilenluft
         lese_zeilenluft.zuruecknehmen(d)

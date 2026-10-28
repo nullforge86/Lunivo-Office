@@ -92,6 +92,7 @@ class SeitenBaustein:
                 druck = max(1, seitenzahl(self.document(), self.page, self.noten))
             self._extra_seiten = max(0, druck - live)
             self._pages = live + self._extra_seiten
+        self._quer_auffrischen()
         self._passe_hoehe_an()
         self.viewport().update()
         self._cursor_moved()
