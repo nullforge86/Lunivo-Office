@@ -251,9 +251,10 @@ class FormelDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Formel")
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times"))
+        hilfe = QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times")
+        hilfe.setWordWrap(True); v.addWidget(hilfe)
         self.eingabe = QLineEdit("E = m c^2"); v.addWidget(self.eingabe)
-        self.vorschau = QLabel(); self.vorschau.setStyleSheet("background: white; color: black; padding: 8px; font-size: 16pt; font-family: 'DejaVu Serif';")
+        self.vorschau = _Vorschau()                                            # verkleinert lange Formeln auf die Breite
         v.addWidget(self.vorschau); v.addWidget(_ok(self))
         self.eingabe.textChanged.connect(self._zeige); self._zeige()
 
@@ -262,7 +263,7 @@ class FormelDialog(PanelFaehig, QDialog):
         img = E.formel_bild(self.eingabe.text())
         pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor("white"))
         p = QPainter(pm); p.drawImage(8, 6, img); p.end()
-        self.vorschau.setPixmap(pm)
+        self.vorschau.setze(pm.toImage())
 
 
 class DeckblattDialog(PanelFaehig, QDialog):

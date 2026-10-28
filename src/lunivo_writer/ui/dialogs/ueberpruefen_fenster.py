@@ -8,7 +8,7 @@ Die Fenster ändern das Dokument nicht; der Aufrufer (``Befehle``) setzt das Erg
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QButtonGroup, QCheckBox, QDialog, QGridLayout, QLabel, QPushButton, QRadioButton, QVBoxLayout
+from PySide6.QtWidgets import QButtonGroup, QDialog, QGridLayout, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -22,6 +22,8 @@ SCHUTZ_ARTEN = (("lesen", "Schreibgeschützt"), ("aenderungen", "Nachverfolgte �
                 ("formulare", "Ausfüllen von Formularen"))
 
 
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter  # noqa: E402
+
 class WoerterDialog(PanelFaehig, QDialog):
     """„Wörter zählen“: die Statistiken untereinander, Werte rechtsbündig; der Haken nimmt Fuß- und Endnoten dazu."""
 
@@ -31,7 +33,7 @@ class WoerterDialog(PanelFaehig, QDialog):
         self.ohne, self.mit = dict(ohne or {}), dict(mit or ohne or {})
         v = QVBoxLayout(self)
         v.addWidget(QLabel("Statistiken:"))
-        g = QGridLayout(); g.setContentsMargins(6, 8, 6, 8); g.setHorizontalSpacing(60); g.setVerticalSpacing(6)
+        g = QGridLayout(); g.setContentsMargins(6, 8, 6, 8); g.setHorizontalSpacing(16); g.setVerticalSpacing(6)
         self.werte: dict[str, QLabel] = {}
         for i, (key, text) in enumerate(ZEILEN):
             wert = QLabel(); wert.setAlignment(Qt.AlignRight | Qt.AlignVCenter); wert.setAccessibleName(text)
@@ -39,7 +41,7 @@ class WoerterDialog(PanelFaehig, QDialog):
             self.werte[key] = wert
         g.setColumnStretch(0, 1)
         v.addLayout(g)
-        self.noten = QCheckBox("Textfelder, Fußnoten und Endnoten einbeziehen(&F)")
+        self.noten = UmbruchSchalter("Textfelder, Fußnoten und Endnoten einbeziehen(&F)")
         self.noten.setToolTip("Textfelder stehen in Lunivo im Text und zählen immer; der Haken nimmt Fuß- und Endnoten dazu.")
         self.noten.toggled.connect(self._zeigen)
         v.addWidget(self.noten)
@@ -61,12 +63,12 @@ class SchutzDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Bearbeitung einschränken")
         self.art = art
         v = QVBoxLayout(self)
-        self.formate = QCheckBox("Formatierungen auf eine Auswahl von Formatvorlagen beschränken")
+        self.formate = UmbruchSchalter("Formatierungen auf eine Auswahl von Formatvorlagen beschränken")
         self.formate.setEnabled(False); self.formate.setToolTip("Das kann Lunivo noch nicht.")
         v.addWidget(self.formate)
         einst = QPushButton("Einstellungen …"); einst.setEnabled(False); einst.setMinimumHeight(36)
         v.addWidget(einst, 0, Qt.AlignLeft)
-        self.schutz = QCheckBox("Dokumentschutz einstellen")
+        self.schutz = UmbruchSchalter("Dokumentschutz einstellen")
         self.schutz.setChecked(art is not None)
         v.addWidget(self.schutz)
         self.gruppe = QButtonGroup(self)

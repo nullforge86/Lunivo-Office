@@ -170,7 +170,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._teile.setDirection(QBoxLayout.TopToBottom)
         a = self.arten
         a.setFlow(QListView.LeftToRight); a.setWrapping(True); a.setResizeMode(QListView.Adjust); a.setSpacing(0)
-        a.setGridSize(QSize(196, 34)); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        a.setGridSize(QSize(140, 34)); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(34 * ((a.count() + 1) // 2) + 6)
         self.vorschau.setMinimumSize(0, 230)
         self._vorschau_breite, self._bild_groesse = 390, QSize(70, 54)

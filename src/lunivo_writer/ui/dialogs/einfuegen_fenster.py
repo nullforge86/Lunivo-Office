@@ -281,34 +281,32 @@ class TrennerDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.zu_tabelle, self.texte = zu_tabelle, list(texte or [])
         self.setWindowTitle("Text in Tabelle umwandeln" if zu_tabelle else "Tabelle in Text konvertieren")
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
         v = QVBoxLayout(self)
+        fg = FormularGitter()                                                  # passt sich der Breite an (Seitenleiste)
+        v.addLayout(fg)
         if zu_tabelle:
-            g = QGridLayout()
             self._spalten = QSpinBox(); self._spalten.setRange(1, 63); self._spalten.setMinimumHeight(34); self._spalten.setMinimumWidth(90)
             self._zeilen = QLabel()
-            g.addWidget(_titel("&Spaltenanzahl:", self._spalten), 0, 0); g.addWidget(self._spalten, 0, 1)
-            g.addWidget(QLabel("Zeilenanzahl:"), 1, 0); g.addWidget(self._zeilen, 1, 1)
-            g.setColumnStretch(2, 1)
-            v.addLayout(g)
+            fg.zeile(_titel("&Spaltenanzahl:", self._spalten), self._spalten)
+            fg.zeile("Zeilenanzahl:", self._zeilen)
         t = QLabel("Text trennen bei"); f = t.font(); f.setBold(True); t.setFont(f)
-        v.addWidget(t)
+        fg.breit(t)
         # Tabelle → Text wie in WPS: Absätze, Tabstopps, Kommata, Andere (untereinander)
         self._liste = TT.TRENNER if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
-        spalten = 3 if zu_tabelle else 1
         self._gruppe = QButtonGroup(self)
-        g = QGridLayout()
+        g = FlussLayout(14) if zu_tabelle else QVBoxLayout()                   # Text → Tabelle: Reihe, die umbricht; Tabelle → Text: untereinander
         for i, (_z, text) in enumerate(self._liste):
-            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r, i // spalten, i % spalten)
+            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r)
         andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(self._liste))
         self.andere = QLineEdit("-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(48); self.andere.setMinimumHeight(34)
         self.andere.setAlignment(Qt.AlignCenter); self.andere.setAccessibleName("Anderes Trennzeichen")
         z = QHBoxLayout(); z.addWidget(andere); z.addWidget(self.andere); z.addStretch(1)
-        g.addLayout(z, (len(self._liste) + spalten - 1) // spalten, 0, 1, spalten)
-        v.addLayout(g)
+        fg.breit(g); fg.breit(z)
         if not zu_tabelle:
-            self.geschachtelt = QCheckBox("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
+            self.geschachtelt = UmbruchSchalter("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
             self.geschachtelt.setToolTip("Ohne Haken bleiben Tabellen in Zellen Tabellen und stehen hinter dem Text.")
-            v.addWidget(self.geschachtelt)
+            fg.breit(self.geschachtelt)
         self.andere.textEdited.connect(lambda _t: andere.setChecked(True))
         vorgabe = "\t" if any("\t" in s for s in self.texte) or not zu_tabelle else "\n"
         self._gruppe.button([k for k, _t in self._liste].index(vorgabe)).setChecked(True)
@@ -617,30 +615,26 @@ class ObjektDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, *, als_symbol: bool = False, ordner: str = ""):
         super().__init__(parent)
-        from PySide6.QtWidgets import QCheckBox, QFrame, QPushButton
+        from PySide6.QtWidgets import QFrame, QPushButton
         self.setWindowTitle("Objekt einfügen")
         self._ordner = ordner
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
         v = QVBoxLayout(self)
-        g = QGridLayout(); g.setHorizontalSpacing(14)
+        g = FormularGitter()                                                   # in der Seitenleiste untereinander: Art, Objekttyp, Datei, Symbol
         self.neu = QRadioButton("&Neu"); self.aus_datei = QRadioButton("&Aus Datei erstellen")
         self.neu.setEnabled(False); self.neu.setToolTip("Eingebettete Office-Objekte kann Lunivo nicht anlegen.")
         self.aus_datei.setChecked(True)
-        links = QVBoxLayout(); links.addWidget(self.neu); links.addWidget(self.aus_datei); links.addStretch(1)
-        g.addLayout(links, 0, 0)
-        mitte = QVBoxLayout()
+        links = FlussLayout(14); links.addWidget(self.neu); links.addWidget(self.aus_datei)
+        g.breit(links)
         self.typen = QListWidget(); self.typen.addItems(list(self.TYPEN)); self.typen.setEnabled(False); self.typen.setMaximumHeight(110)
-        mitte.addWidget(_titel("Objekt&typ:", self.typen)); mitte.addWidget(self.typen)
-        dz = QHBoxLayout()
+        g.breit(_titel("Objekt&typ:", self.typen)); g.breit(self.typen)
         self.datei = QLineEdit(); self.datei.setMinimumHeight(34); self.datei.setAccessibleName("Datei")
         such = QPushButton("&Durchsuchen …"); such.setMinimumHeight(34); such.clicked.connect(self._suchen)
-        dz.addWidget(self.datei, 1); dz.addWidget(such)
-        mitte.addWidget(_titel("&Datei:", self.datei)); mitte.addLayout(dz)
-        g.addLayout(mitte, 0, 1)
-        self.symbol = QCheckBox("Als Sym&bol anzeigen"); self.symbol.setChecked(als_symbol)
-        g.addWidget(self.symbol, 0, 2, Qt.AlignTop)
-        g.setColumnStretch(1, 1)
+        g.zeile(_titel("&Datei:", self.datei), self.datei); g.breit(such)
+        self.symbol = UmbruchSchalter("Als Sym&bol anzeigen"); self.symbol.setChecked(als_symbol)
+        g.breit(self.symbol)
+        g.breit(abschnittstitel("Ergebnis"))
         v.addLayout(g)
-        v.addWidget(QLabel("Ergebnis"))
         kasten = QFrame(); kasten.setFrameShape(QFrame.StyledPanel); kh = QHBoxLayout(kasten)
         self.ergebnis_text = QLabel(); self.ergebnis_text.setWordWrap(True); kh.addWidget(self.ergebnis_text)
         v.addWidget(kasten)

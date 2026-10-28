@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QAbstractItemView, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget,
+    QAbstractItemView, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget,
     QTableWidgetItem, QVBoxLayout,
 )
 
@@ -30,7 +30,8 @@ class EmpfaengerDialog(PanelFaehig, QDialog):
         spalten, saetze = list(spalten or []), list(saetze or [])
         aktiv = list(aktiv) if aktiv is not None and len(aktiv) == len(saetze) else [True] * len(saetze)
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Diese Empfänger bekommen einen Brief. Haken entfernen, um einen Empfänger auszulassen."))
+        hinweis = QLabel("Diese Empfänger bekommen einen Brief. Haken entfernen, um einen Empfänger auszulassen."); hinweis.setWordWrap(True)
+        v.addWidget(hinweis)
         self.tabelle = QTableWidget(len(saetze), len(spalten)); self.tabelle.setAccessibleName("Empfänger")
         self.tabelle.setHorizontalHeaderLabels(spalten)
         self.tabelle.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -100,21 +101,22 @@ class ZuordnenDialog(PanelFaehig, QDialog):
         zuordnung = dict(zuordnung or {})
         spalten = list(spalten or [])
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Hat ein Feld im Text einen anderen Namen als die Spalte der Empfängerliste, hier die Spalte wählen."))
-        g = QGridLayout(); g.setHorizontalSpacing(12)
-        g.addWidget(QLabel("Feld im Text"), 0, 0)
-        g.addWidget(QLabel("Spalte der Empfängerliste"), 0, 1)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        hinweis = QLabel("Hat ein Feld im Text einen anderen Namen als die Spalte der Empfängerliste, hier die Spalte wählen.")
+        hinweis.setWordWrap(True); v.addWidget(hinweis)
+        g = FormularGitter()                                                   # schmal: Spalte unter dem Feldnamen
+        kopf = QLabel("Spalte der Empfängerliste"); kopf.setWordWrap(True)
+        g.zeile(QLabel("Feld im Text"), kopf)
         self.wahl: dict[str, QComboBox] = {}
         for i, f in enumerate(felder or [], 1):
-            cb = QComboBox(); cb.addItem(OHNE, ""); cb.setMinimumHeight(34); cb.setMinimumWidth(220); cb.setAccessibleName(f)
+            cb = QComboBox(); cb.addItem(OHNE, ""); cb.setMinimumHeight(34); cb.setAccessibleName(f)
             for s in spalten:
                 cb.addItem(s, s)
             soll = zuordnung.get(f, f if f in spalten else "")
             cb.setCurrentIndex(max(0, cb.findData(soll)))
             titel = QLabel(f); titel.setBuddy(cb)
-            g.addWidget(titel, i, 0); g.addWidget(cb, i, 1)
+            g.zeile(titel, cb)
             self.wahl[f] = cb
-        g.setColumnStretch(1, 1)
         v.addLayout(g)
         v.addStretch(1)
         fussleiste(self, v)
