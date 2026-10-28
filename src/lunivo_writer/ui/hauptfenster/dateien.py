@@ -6,7 +6,7 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMenu, QMessageBox
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben
@@ -44,7 +44,8 @@ class DateienBaustein:
 
     def open_dialog(self):
         start = self.settings.get("last_dir", os.path.expanduser("~"))
-        paths, _ = QFileDialog.getOpenFileNames(self, "Dokument öffnen", start, formats.OPEN_FILTER)
+        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        paths = datei_waehlen(self, "Öffnen", start, formats.OPEN_FILTER, mehrere=True)
         for p in paths:
             self.open_path(p)
 
@@ -215,27 +216,74 @@ class DateienBaustein:
             self._write(t, path, mark_saved=False)
 
 
+    # Exportoptionen im Fenster „PDF-Datei exportieren“ ↔ gemerkte Einstellung (dieselben Schlüssel wie unter Optionen ▸ Drucken)
+    PDF_SCHLUESSEL = {"eigenschaften": ("pdf/eigenschaften", True), "kommentare": ("pdf/kommentare", False),
+                      "hyperlinks": ("pdf/hyperlinks", True), "notenlinks": ("pdf/notenlinks", True),
+                      "textmarken": ("pdf/lz_textmarken", False), "ueberschriften": ("pdf/lz_ueberschriften", False),
+                      "andere": ("pdf/lz_andere", False), "eigene": ("pdf/lz_eigene", False),
+                      "aendern": ("pdf/recht_aendern", True), "kopieren": ("pdf/recht_kopieren", True),
+                      "kommentieren": ("pdf/recht_kommentieren", True), "schliessen": ("pdf/dlg_schliessen", True)}
+
+
+    def pdf_wahl_start(self, t: DocumentTab):
+        """Die Vorgaben für das PDF-Fenster und den PDF-Weg über „Speichern unter“ (Kennwörter werden nie gemerkt)."""
+        from lunivo_writer.services.pdf_export import PdfWahl
+        ordner = os.path.dirname(t.path) if t.path else (self.settings.get("pdf/ordner", "") or self.settings.get("speichern/ordner", "")
+                                                          or self.settings.get("last_dir", os.path.expanduser("~")))
+        w = PdfWahl(pfad=os.path.join(ordner, (os.path.splitext(t.title)[0] or "Unbenannt") + ".pdf"),
+                    druck=self.settings.get("pdf/recht_druck", "frei") or "frei")
+        for feld, (schl, vorgabe) in self.PDF_SCHLUESSEL.items():
+            setattr(w, feld, self.settings.get_bool(schl, vorgabe))
+        return w
+
+
     def export_pdf_dialog(self):
-        self.export_as(".pdf", "Als PDF exportieren")
+        """„Als PDF exportieren“: Lunivos Fenster „PDF-Datei exportieren“ (Seitenbereich, Exportoptionen, Berechtigungen)."""
+        t = self.current_tab()
+        if not t:
+            return
+        from lunivo_writer.ui.baukasten.pdf_export import pdf_export_fragen
+
+        def exportieren(wahl) -> bool:
+            if not self._darf_ueberschreiben(t, wahl.pfad) or not self._pdf_schreiben(t, wahl.pfad, wahl):
+                return False
+            for feld, (schl, _v) in self.PDF_SCHLUESSEL.items():
+                self.settings.set(schl, getattr(wahl, feld))
+            self.settings.set("pdf/recht_druck", wahl.druck)
+            self.settings.set("pdf/ordner", os.path.dirname(wahl.pfad))
+            return True
+
+        e = t.editor
+        pdf_export_fragen(self, self.pdf_wahl_start(t), max(1, e.page_count), e.current_page(), e.textCursor().hasSelection(), exportieren)
 
 
-    def _pdf_schreiben(self, t: DocumentTab, path: str) -> bool:
+    def _pdf_schreiben(self, t: DocumentTab, path: str, wahl=None) -> bool:
+        """Schreibt die PDF. Ohne ``wahl`` (Weg über „Speichern unter“) gelten die gemerkten Exportoptionen, ganzes Dokument, ohne Kennwort."""
+        from lunivo_writer.services import pdf_export as PE
+        if wahl is None:
+            wahl = self.pdf_wahl_start(t); wahl.pfad = path
         try:
-            autor = self.dokumente.meta_fuer_speichern(t.meta).get("author", "") if self.settings.get_bool("pdf/eigenschaften", True) else ""
-            lz = None
-            sg = self.settings.get_bool
-            if sg("pdf/lz_ueberschriften", False) or sg("pdf/lz_textmarken", False) or sg("pdf/lz_andere", False):
-                lz = {"ueberschriften": sg("pdf/lz_ueberschriften", False), "textmarken": sg("pdf/lz_textmarken", False),
-                      "andere": sg("pdf/lz_andere", False)}
+            autor = self.dokumente.meta_fuer_speichern(t.meta).get("author", "") if wahl.eigenschaften else ""
+            titel = os.path.splitext(t.title)[0] if wahl.eigenschaften else ""
             komm = None
-            if sg("pdf/kommentare", False):
+            if wahl.kommentare:
                 komm = {kid: f'{k.get("autor", "")}: {k.get("text", "")}'.strip(": ") for kid, k in t.editor.kommentare.items()}
             extra = {k: v for k, v in self.druckoptionen().items()
                      if k in ("versteckt", "felder_code", "zeichnungen", "balken", "hervorhebungen", "textmarken", "textgrenzen", "zuschnitt",
-                              "notenlinks", "blasen", "nur_formular")}
-            n = sicher_schreiben.schreiben(path, lambda tmp: export_pdf(
-                tmp, t.editor.document(), t.page, os.path.splitext(t.title)[0], autor, t.editor.noten, lz,
-                self._silben_fuer_druck(), komm, extra), endung=".pdf")
+                              "blasen", "nur_formular")}
+            extra.update(notenlinks=wahl.notenlinks, hyperlinks=wahl.hyperlinks)
+            doc = t.editor.document()
+            erste, letzte = PE.seiten(wahl, t.editor.current_page())
+            if wahl.bereich == "markierung" and t.editor.textCursor().hasSelection():
+                c = t.editor.textCursor()
+                doc = PE.nur_markierung(doc, c.selectionStart(), c.selectionEnd())
+
+            def erzeugen(tmp):
+                n = export_pdf(tmp, doc, t.page, titel, autor, t.editor.noten, PE.lesezeichen(wahl),
+                               self._silben_fuer_druck(), komm, extra, erste, letzte)
+                PE.verschluesseln(tmp, wahl)
+                return n
+            n = sicher_schreiben.schreiben(path, erzeugen, endung=".pdf")
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
             QMessageBox.critical(self, "PDF-Export fehlgeschlagen", str(e)); return False
         self.statusBar().showMessage(f"PDF gespeichert ({n} Seiten): {path}", 5000)

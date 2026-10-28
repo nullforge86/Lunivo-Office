@@ -4,7 +4,8 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+from PySide6.QtWidgets import QInputDialog, QMessageBox
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
 from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
 from lunivo_writer.ui.ribbon.menue_tafel import MenueTafel
@@ -225,7 +226,7 @@ class BackstageBaustein:
     def objektformat_seitenleiste(self, reiter: int = 0, fuellung: str | None = None) -> None:
         """Den Bereich „Formatierung“ für das markierte Bild in der Seitenleiste öffnen (Füllung und Linie, Effekte); Änderungen gelten sofort."""
         from PySide6.QtGui import QImage
-        from PySide6.QtWidgets import QFileDialog
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         from lunivo_writer.editor import bildlayout as BL
         e = self.current_editor()
         z = BL.ziel(e) if e is not None else None
@@ -242,7 +243,7 @@ class BackstageBaustein:
 
         def bild():
             ed = self.current_editor()
-            pfad, _ = QFileDialog.getOpenFileName(self, "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
+            pfad, _ = Dateifenster.getOpenFileName(self, "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
             if ed is not None and pfad:
                 BL.fuellbild_setzen(ed, BL.ziel(ed), QImage(pfad))
         self.sidebar.zeige_objektformat(w, anwenden, reiter, bild)
@@ -347,7 +348,7 @@ class BackstageBaustein:
         e = self.current_editor()
         if not e:
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Bild einfügen", self.settings.get("last_dir", os.path.expanduser("~")),
+        path, _ = Dateifenster.getOpenFileName(self, "Bild einfügen", self.settings.get("last_dir", os.path.expanduser("~")),
                                               "Bilder (*.png *.jpg *.jpeg *.gif *.bmp *.webp);;Alle Dateien (*)")
         if path and not e.insert_image(path):
             QMessageBox.warning(self, "Bild einfügen", "Die Datei ist kein lesbares Bild.")

@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+from PySide6.QtWidgets import QInputDialog, QMessageBox
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 
 class PruefenBefehle:
@@ -123,7 +124,7 @@ class PruefenBefehle:
         if not t:
             return
         from lunivo_writer.editor import vergleich as V
-        pfad, _ = QFileDialog.getOpenFileName(self.w, "Mit welchem Dokument vergleichen?", self.w.settings.get("last_dir", os.path.expanduser("~")),
+        pfad, _ = Dateifenster.getOpenFileName(self.w, "Mit welchem Dokument vergleichen?", self.w.settings.get("last_dir", os.path.expanduser("~")),
                                               "Dokumente (*.docx *.odt *.txt *.md);;Alle Dateien (*)")
         if not pfad:
             return
@@ -143,7 +144,7 @@ class PruefenBefehle:
         if not t:
             return
         from lunivo_writer.editor import vergleich as V
-        pfade, _ = QFileDialog.getOpenFileNames(self.w, "Überarbeitete Fassungen auswählen (jede Datei ist ein Autor)",
+        pfade, _ = Dateifenster.getOpenFileNames(self.w, "Überarbeitete Fassungen auswählen (jede Datei ist ein Autor)",
                                                 self.w.settings.get("last_dir", os.path.expanduser("~")),
                                                 "Dokumente (*.docx *.odt *.txt *.md);;Alle Dateien (*)")
         fassungen = []

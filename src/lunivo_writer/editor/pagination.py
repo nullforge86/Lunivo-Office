@@ -378,6 +378,26 @@ def _ohne_hervorhebungen(d: QTextDocument) -> None:
         b = b.next()
 
 
+def _ohne_links(d: QTextDocument) -> None:
+    """PDF ohne Hyperlinks: der Text bleibt, nur das Linkziel entfällt (Qt schreibt sonst für jedes Linkziel einen PDF-Link)."""
+    from PySide6.QtGui import QTextCursor
+    b = d.firstBlock()
+    while b.isValid():
+        it = b.begin()
+        stuecke = []
+        while not it.atEnd():
+            f = it.fragment()
+            if f.isValid() and f.charFormat().anchorHref():
+                stuecke.append((f.position(), f.position() + f.length(), f.charFormat()))
+            it += 1
+        for von, bis, fm in stuecke:
+            fm.clearProperty(QTextCharFormat.AnchorHref)
+            if not fm.anchorNames():
+                fm.setAnchor(False)
+            c = QTextCursor(d); c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor); c.setCharFormat(fm)
+        b = b.next()
+
+
 def _textmarken_klammern(d: QTextDocument) -> None:
     """„Textmarken drucken“: jede Textmarke steht in eckigen Klammern im Ausdruck."""
     from PySide6.QtGui import QTextCursor
@@ -481,6 +501,8 @@ def render(qdoc: QTextDocument, page: PageSettings, device, first: int = 1, last
         _ohne_hervorhebungen(d)
     if opt.get("textmarken"):
         _textmarken_klammern(d)
+    if opt.get("hyperlinks") is False:
+        _ohne_links(d)
     if opt.get("silbenfarben"):
         from lunivo_writer.editor.silbenfarben import SilbenFarben
         _hl = SilbenFarben(d, opt["silbenfarben"])             # bleibt bis zum Zeichnen am Leben (lokale Variable)
@@ -694,9 +716,9 @@ def lesezeichen_sammeln(d: QTextDocument, ch: float, liste: list[int], was: dict
             lv = b.blockFormat().headingLevel()
             if was.get("ueberschriften", True) and lv and b.text().strip():
                 out.append((lv, b.text().strip(), liste.index(seite), b.position()))
-            if was.get("andere") and b.text().strip() and b.blockFormat().hasProperty(STYLE_PROP) \
-                    and (b.blockFormat().property(STYLE_PROP) in ("title", "subtitle", "quote", "Title", "Subtitle", "Quote")
-                                                                          or str(b.blockFormat().property(STYLE_PROP)).startswith("x:")):
+            stil = str(b.blockFormat().property(STYLE_PROP)) if b.blockFormat().hasProperty(STYLE_PROP) else ""
+            if b.text().strip() and stil and ((was.get("andere") and stil in ("title", "subtitle", "quote", "Title", "Subtitle", "Quote"))
+                                              or (was.get("eigene") and stil.startswith("x:"))):
                 out.append((1, b.text().strip()[:120], liste.index(seite), b.position()))
             if was.get("textmarken"):
                 it = b.begin()
@@ -1071,7 +1093,8 @@ def _page_layout(page: PageSettings, quer: bool = False) -> QPageLayout:
 
 def export_pdf(path: str, qdoc: QTextDocument, page: PageSettings, title: str = "", author: str = "", noten: dict | None = None,
                lesezeichen: dict | None = None, silben: dict | None = None, kommentare: list | None = None,
-               extra: dict | None = None) -> int:
+               extra: dict | None = None, erste: int = 1, letzte: int | None = None) -> int:
+    """Schreibt die Seiten ``erste`` bis ``letzte`` (``None``: bis zum Ende) als PDF. → Seitenzahl des Dokuments."""
     from PySide6.QtCore import QByteArray
     w = QPdfWriter(path)
     w.setResolution(300)
@@ -1093,7 +1116,7 @@ def export_pdf(path: str, qdoc: QTextDocument, page: PageSettings, title: str = 
         opt["silbenfarben"] = silben
     if kommentare:
         opt["kommentare"] = kommentare
-    n = render_dokument(qdoc, page, w, opt=opt, layout=lambda ps: w.setPageLayout(_page_layout(ps, bool(geo and geo['quer']))))
+    n = render_dokument(qdoc, page, w, erste, letzte, opt=opt, layout=lambda ps: w.setPageLayout(_page_layout(ps, bool(geo and geo['quer']))))
     if opt.get("lesezeichen_ergebnis") or opt.get("kommentare_ergebnis") or opt.get("notenlinks_ergebnis"):
         del w                                  # Datei schließen, bevor sie noch einmal geöffnet wird
         gliederung_schreiben(path, opt.get("lesezeichen_ergebnis") or [], opt.get("kommentare_ergebnis"), page,

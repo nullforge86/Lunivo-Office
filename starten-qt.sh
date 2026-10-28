@@ -28,7 +28,7 @@ if [ ! -x "$VENV/bin/python" ]; then
   echo "Lege die Python-Umgebung an (einmalig) …"
   python3 -m venv "$VENV"
 fi
-if ! "$VENV/bin/python" -c 'import PySide6, docx' 2>/dev/null; then
+if ! "$VENV/bin/python" -c 'import PySide6, docx, pypdf' 2>/dev/null; then
   echo "Installiere Abhängigkeiten …"
   "$VENV/bin/pip" install --quiet --upgrade pip
   "$VENV/bin/pip" install --quiet -r "$HIER/requirements.txt" \
