@@ -102,3 +102,25 @@ def test_feld_zeigt_zahl_und_speichert_platzhalter(app, tmp_path):
     b.speichern()
     assert e.abschnitt_seite().footer.text == "Seite {PAGE} von"  or e.abschnitt_seite().footer.text == "Seite {PAGE} von "
     b.beende()
+
+
+def test_feld_hintergrund_ist_im_dunklen_thema_hell(app, tmp_path):
+    """Das Feld sitzt auf dem weißen Papier: Palette hell/schwarz, auch wenn das Programm dunkel ist."""
+    from PySide6.QtGui import QPalette
+    w = _fenster(app, tmp_path)
+    w.befehle.tun("kopfFussZeigen")
+    f = w.current_editor().kopffuss().feld
+    assert f.palette().color(QPalette.Base).lightness() > 200
+    assert f.palette().color(QPalette.Text).lightness() < 60
+    w.befehle.tun("kopfFussSchliessen")
+
+
+def test_ohne_seitenzahl_nur_einfuegen_knopf_und_einfuegen_setzt_zahl(app, tmp_path):
+    w = _fenster(app, tmp_path)
+    w.befehle.tun("kopfFussZeigen")
+    b = w.current_editor().kopffuss()
+    assert b.leiste.knopf["einfuegen"].isVisibleTo(b.leiste) and not b.leiste.knopf["neu"].isVisibleTo(b.leiste)
+    b.seitenzahl_einfuegen("center", "{PAGE}", "dezimal", "abschnitt")
+    assert "{PAGE}" in b.hf().text and b.hf().align == "center"
+    assert b.leiste.knopf["neu"].isVisibleTo(b.leiste) and not b.leiste.knopf["einfuegen"].isVisibleTo(b.leiste)
+    w.befehle.tun("kopfFussSchliessen")

@@ -177,24 +177,49 @@ class KopfFussBefehle:
 
 
     # ---- Felder: Abstand des Kopf-/Fußbereichs ---------------------------------------------------------------------
-    def _kf_abstand(self, attr: str, name: str):
-        f = QDoubleSpinBox(); f.setDecimals(1); f.setRange(0.0, 100.0); f.setSingleStep(0.5); f.setSuffix(" mm")
-        f.setAccessibleName(name); f.setToolTip(name)
+    # Lunivo zeichnet Kopf und Fuß fest 8 mm vom Blattrand (editor_anzeige.py / pagination.py); das gilt, solange kein Abstand gesetzt ist.
+    WIRKSAMER_ABSTAND_MM = 8.0
+
+    def _kf_abstand(self, attr: str, name: str, symbol: str):
+        from PySide6.QtCore import QLocale, QSize
+        from PySide6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
+        from lunivo_writer.ui.widgets import icons
+        from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
+        class _Zeile(QWidget):
+            neu_laden = None
+
+            def showEvent(self, ev):                       # beim Einblenden den aktuellen Wert des Abschnitts holen
+                if self.neu_laden:
+                    self.neu_laden()
+                super().showEvent(ev)
+        host = _Zeile(); h = QHBoxLayout(host); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(3)
+        bild = QLabel(); bild.setPixmap(icons.icon(symbol, 16).pixmap(QSize(16, 16))); h.addWidget(bild)
+        h.addWidget(QLabel(name + ":"))
+        f = SchrittFeld(0.0, 100.0, " mm", 0.5, 1)
+        f.feld.setLocale(QLocale(QLocale.German, QLocale.Germany)); f.feld.setButtonSymbols(f.feld.ButtonSymbols.UpDownArrows); f.feld.setMinimumWidth(72)   # „NoButtons“ lässt im Thema kein Textfeld übrig
+        f.feld.setStyleSheet("QDoubleSpinBox { padding: 0px 3px; } QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 0px; border: none; }")
+        f.feld.setAccessibleName(name); f.setToolTip(name)
+        for k in f.findChildren(QToolButton):
+            k.setFixedSize(22, 22)
+        f.feld.setFixedHeight(22)
+        h.addWidget(f)
 
         def laden():
             e = self.ed
             if e is not None:
-                f.blockSignals(True); f.setValue(getattr(e.abschnitt_seite(), attr)); f.blockSignals(False)
+                wert = float(getattr(e.abschnitt_seite(), attr) or 0.0)
+                f.feld.blockSignals(True); f.setValue(wert if wert > 0 else self.WIRKSAMER_ABSTAND_MM); f.feld.blockSignals(False)
 
         def setzen(wert):
             e = self.ed
             if e is not None:
                 pg = e.abschnitt_seite(); setattr(pg, attr, float(wert)); e.page_settings_changed(pg)
-        laden()
+        laden(); host.neu_laden = laden
         f.valueChanged.connect(setzen)
-        return f
+        host.feld = f
+        return host
 
 
-    def feld_kopfHoehe(self): return self._kf_abstand("kopf_abstand_mm", "Kopfzeilenhöhe")
+    def feld_kopfHoehe(self): return self._kf_abstand("kopf_abstand_mm", "Kopfzeilenhöhe", "kopfz")
 
-    def feld_fussHoehe(self): return self._kf_abstand("fuss_abstand_mm", "Fußzeilenhöhe")
+    def feld_fussHoehe(self): return self._kf_abstand("fuss_abstand_mm", "Fußzeilenhöhe", "fussz")
