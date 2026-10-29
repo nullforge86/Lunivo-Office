@@ -333,7 +333,7 @@ class RegisterBand(QWidget):
             self._knoepfe(g, inhalt)
         fuss = QHBoxLayout()
         fuss.setContentsMargins(0, 0, 0, 0)
-        t = QLabel(g["name"].upper())
+        t = QLabel("" if g.get("ohne_titel") else g["name"].upper())     # Kontext-Reiter wie WPS: Gruppen ohne Unterschrift
         t.setAlignment(Qt.AlignCenter)
         t.setStyleSheet("font-size: 7pt; color: palette(mid); letter-spacing: 1px;")
         fuss.addStretch(1)

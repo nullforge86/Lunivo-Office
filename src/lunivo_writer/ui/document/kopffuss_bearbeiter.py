@@ -478,10 +478,18 @@ class KopfFussBearbeiter(QObject):
     def _menue_neu(self, m: MenueListe) -> None:
         m.clear()
         page = self.ed.abschnitt_seite()
-        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setPrefix("Seitennummerierung: ")
+        # Wie die Vorlage: Beschriftung und kleines Zahlfeld nebeneinander, hell wie das übrige Aufklappfeld auf dem Papier
+        zeile = QWidget(); zeile.setObjectName("seitennummerierung")
+        zeile.setStyleSheet("#seitennummerierung { background: #ffffff; } QLabel { color: #333333; background: transparent; }"
+                            " QDoubleSpinBox { background: #ffffff; color: #000000; border: 1px solid #b8b8b8; border-radius: 2px;"
+                            " padding: 1px 2px; selection-background-color: #3e78d0; selection-color: #ffffff; }")
+        lay = QHBoxLayout(zeile); lay.setContentsMargins(8, 4, 8, 4); lay.setSpacing(6)
+        lay.addWidget(QLabel("Seitennummerierung:"))
+        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setFixedWidth(64)
         sp.setAccessibleName("Seitennummerierung")
         sp.editingFinished.connect(lambda: self._start_setzen(int(sp.value())))
-        a = QWidgetAction(m); a.setDefaultWidget(sp); m.addAction(a)
+        lay.addWidget(sp); lay.addStretch(1)
+        a = QWidgetAction(m); a.setDefaultWidget(zeile); m.addAction(a)
         m.eintrag("Nummerierung fortsetzen", lambda: self._start_setzen(0), aktiv=page.seiten_start > 0)
 
     def seitenzahl_einfuegen(self, ausr: str, muster: str, zahl: str, bereich: str) -> None:
