@@ -13,6 +13,7 @@ class LiveVorschau:
         self.w = fenster
         self._ed = None
         self._schritte = 0
+        self._vorher = 0
         self._modified = False
         self._format = None
 
@@ -30,6 +31,7 @@ class LiveVorschau:
             return
         doc = ed.document()
         vorher = doc.availableUndoSteps()
+        self._vorher = vorher
         self._ed, self._modified, self._format = ed, doc.isModified(), ed.currentCharFormat()
         try:
             anwenden(ed)
@@ -45,7 +47,10 @@ class LiveVorschau:
             return
         try:
             doc = ed.document()
-            for _ in range(self._schritte):
+            # availableUndoSteps() zählt Teilschritte, nicht Befehle: ein Befehl (z. B. eine Formatvorlage) kann mehrere zählen und wird mit
+            # EINEM undo() ganz zurückgenommen. Darum nicht „n-mal“ zurücknehmen, sondern bis der Stand vor der Vorschau erreicht ist —
+            # sonst verschwindet auch der zuvor getippte Text.
+            while self._schritte and doc.isUndoAvailable() and doc.availableUndoSteps() > self._vorher:
                 doc.undo()
             if self._schritte:
                 doc.clearUndoRedoStacks(QTextDocument.RedoStack)   # sonst würde Strg+Y die Vorschau „wiederholen“

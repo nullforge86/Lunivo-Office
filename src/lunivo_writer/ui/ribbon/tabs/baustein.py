@@ -10,6 +10,29 @@ def k(symbol, name, tun=None, gross=False, **kw):
     return e
 
 
+# Die gemeinsamen Knöpfe der Gruppe „Anordnen“ (Bild-, Zeichen- und SmartArt-Tools): einmal beschrieben (Symbol, Standardname, Befehl, feste Angaben).
+_ANORDNEN = {
+    "drehen": ("objektdrehen", "Drehen", None, {"klappe": "zeichenDrehen"}),
+    "gruppieren": ("gruppieren", "Gruppieren", "gruppieren", {}),
+    "ausrichten": ("ausrichten", "Ausrichten", None, {"klappe": "zeichenAusrichten"}),
+    "umbruch": ("textflussumbruch", "Textumbruch Stil", "zeichenUmbruch", {}),
+    "vorn": ("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", {}),
+    "hinten": ("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", {}),
+    "auswahlbereich": ("auswahlbereich", "Auswahlbereich", "auswahlbereich", {}),
+}
+
+
+def anordnen_knopf(art: str, name: str | None = None, **kw) -> dict:
+    """Ein Knopf der Gruppe „Anordnen“ (``art``: drehen, gruppieren, ausrichten, umbruch, vorn, hinten, auswahlbereich); ``name`` und ``gross``/``text`` je Reiter."""
+    symbol, standard, tun, fest = _ANORDNEN[art]
+    return k(symbol, name or standard, tun, **{**fest, **kw})
+
+
+def anordnen_gruppe(*knoepfe: dict) -> dict:
+    """Die Gruppe „Anordnen“ der Kontext-Reiter."""
+    return {"name": "Anordnen", "reihenfolge": True, "ohne_titel": True, "knoepfe": list(knoepfe)}
+
+
 def alle(tab: dict) -> dict:
     """Alle Knöpfe eines Reiters aus register.json nach Namen."""
     return {e["name"]: e for g in tab["gruppen"] for e in g.get("knoepfe", []) if e.get("name")}

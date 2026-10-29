@@ -291,10 +291,14 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.o_min, self.o_max, self.o_intervall = _AutoWert(0.0), _AutoWert(10.0), _AutoWert(1.0)
         self.o_umkehren = UmbruchSchalter("Werte in umgekehrter Reihenfolge")
         self.o_beschr = _combo((("neben", "Neben der Achse"), ("keine", "Keine")))
+        self.o_neben = _AutoWert(0.5)
+        self.o_format = QLineEdit(); self.o_format.setPlaceholderText("Automatisch, z. B. %.1f oder %d"); self.o_format.setToolTip("Muster der Zahlen an der Achse (printf: %.2f, %d, %.0f %%)")
         self.a_achse.zeile("Minimum:", self.o_min); self.a_achse.zeile("Maximum:", self.o_max); self.a_achse.zeile("Hauptintervall:", self.o_intervall)
-        self._wert_zeilen = (self.o_min, self.o_max, self.o_intervall)
+        self.a_achse.zeile("Nebenintervall:", self.o_neben); self.a_achse.zeile("Zahlenformat (Muster):", self.o_format)
+        self._wert_zeilen = (self.o_min, self.o_max, self.o_intervall, self.o_neben, self.o_format)
         self.a_achse.breit(self.o_umkehren); self.a_achse.zeile("Beschriftungsposition:", self.o_beschr)
-        for sig in (self.o_min.geaendert, self.o_max.geaendert, self.o_intervall.geaendert, self.o_umkehren.toggled, self.o_beschr.currentIndexChanged):
+        for sig in (self.o_min.geaendert, self.o_max.geaendert, self.o_intervall.geaendert, self.o_neben.geaendert, self.o_format.editingFinished,
+                    self.o_umkehren.toggled, self.o_beschr.currentIndexChanged):
             sig.connect(lambda *_: self._achse_melden())
         self.a_reihe = Abschnitt("Reihenoptionen")
         self.o_luecke = SchiebeFeld(0, 500, " %", 5, 0, 100)
@@ -312,6 +316,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
 
     def _achse_melden(self) -> None:
         self._melde(achse={"min": self.o_min.wert(), "max": self.o_max.wert(), "intervall": self.o_intervall.wert(),
+                           "neben": self.o_neben.wert(), "format": self.o_format.text().strip() or None,
                            "umkehren": True if self.o_umkehren.isChecked() else None,
                            "beschriftung": self.o_beschr.currentData() if self.o_beschr.currentData() != "neben" else None})
 
@@ -464,7 +469,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.f_trans.setValue(float(d.get("transparenz", 0))); self.v_winkel.setValue(float(d.get("winkel", 90)))
         li = li or {}
         self.k_farbe.keine_text = "Automatisch"
-        self.k_wahl.setLinie(Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), li.get("art", "einfach")))
+        _still(self.k_wahl, Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), li.get("art", "einfach")), "setLinie")      # still: sonst wählt die Änderung „Durchgezogene Linie“
         self.k_trans.setValue(float(li.get("transparenz", 0)))
         for c, k, vorgabe in ((self.l_kombi, "kombiniert", "einfach"), (self.l_abschluss, "abschluss", "flach"), (self.l_verknuepfung, "verknuepfung", "rund"),
                               (self.p_anfang, "pfeil_anfang", "keiner"), (self.p_ende, "pfeil_ende", "keiner")):
@@ -526,6 +531,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         _still(self.o_lage, max(0, self.o_lage.findData(o.get("legende_pos", "unten"))), "setCurrentIndex")
         a = f.get("achse") or {}
         self.o_min.setze(a.get("min")); self.o_max.setze(a.get("max")); self.o_intervall.setze(a.get("intervall"))
+        self.o_neben.setze(a.get("neben")); _still(self.o_format, a.get("format") or "", "setText")
         _still(self.o_umkehren, bool(a.get("umkehren")), "setChecked")
         _still(self.o_beschr, max(0, self.o_beschr.findData(a.get("beschriftung", "neben"))), "setCurrentIndex")
         r = f.get("reihe") or {}

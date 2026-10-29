@@ -279,6 +279,7 @@ class SchreibhilfePanel(QWidget):
         "texteffekte": ("texteffekt_dialog", "TexteffektPanel", "Texteffekte formatieren", ("geaendert",)),
         "objekt": ("objektformat_panel", "ObjektFormatPanel", "Objekt formatieren", ("geaendert", "bild_gewuenscht")),
         "diagramm": ("diagramm_format_panel", "DiagrammFormatPanel", "Diagramm formatieren", ("geaendert", "alt_geaendert", "bild_gewuenscht", "teil_gewaehlt")),
+        "smartart": ("smartart_format_panel", "SmartArtFormatPanel", "SmartArt formatieren", ("geaendert", "bild_gewuenscht")),
     }
 
     def _format_zustand(self) -> dict:
@@ -373,6 +374,9 @@ class SchreibhilfePanel(QWidget):
 
     def aktualisiere_diagrammformat(self, werte: dict) -> None:
         self.aktualisiere_format("diagramm", werte)
+
+    def zeige_smartartformat(self, werte: dict, anwenden, bild_wunsch=None) -> None:
+        self.zeige_format("smartart", werte, geaendert=anwenden, bild_gewuenscht=bild_wunsch)
 
     def zusatz_ausfuehren(self, d) -> bool:
         """Ein Zusatzfenster als Seite hier in der Seitenleiste zeigen, solange man es bearbeitet (wie ``d.exec()``). Die Breite bleibt."""

@@ -83,7 +83,7 @@ class LinienWahl(QWidget):
         self._frei = frei
         linie = linie or Linie()
         h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0)
-        self.art = QComboBox(); self.art.setIconSize(QSize(56, 14))
+        self.art = QComboBox(); self.art.setIconSize(QSize(44, 14))
         for k in arten:
             self.art.addItem(linien_symbol(k), LINIENARTEN[k][0], k)
         self.breite = QComboBox()
@@ -91,8 +91,9 @@ class LinienWahl(QWidget):
             self.breite.addItem(f"{b:g}".replace(".", ",") + " pt", b)
         self._n_liste = self.breite.count()
         self.farbe = FarbFeld(linie.farbe, "Linienfarbe")
-        for w in (self.art, self.breite, self.farbe):
-            h.addWidget(w)
+        for c, n in ((self.art, 1), (self.breite, 3)):                    # die Zeile darf schmal werden (300 px): Art und Stärke geben nach, die Farbe bleibt sichtbar
+            c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(n)
+        h.addWidget(self.art, 3); h.addWidget(self.breite, 2); h.addWidget(self.farbe, 0)
         self.setLinie(linie)
         self.art.currentIndexChanged.connect(self._aend)
         self.breite.currentIndexChanged.connect(self._aend)

@@ -215,3 +215,13 @@ def test_panel_meldet_verlauf_linie_effekte_text_und_optionen(fenster, app):
     assert FO.ziel(ed)[3]["dreh"] == 15
     p.reiter.setCurrentIndex(1); p.s_farbe.setFarbe("#112233"); p.s_farbe.farbeGeaendert.emit("#112233"); app.processEvents()
     assert FO.ziel(ed)[3]["fx"]["schatten"]["farbe"] == "#112233"
+
+
+def test_achse_nebenintervall_und_zahlenformat(app):
+    """Nebenintervall (Hilfsstriche) und Zahlenformat-Muster wirken auf die Wertachse."""
+    from PySide6.QtCharts import QValueAxis
+    a = QValueAxis(); a.setRange(0, 20)
+    F.achse_anwenden(a, {"intervall": 10, "neben": 2, "format": "%.1f"}, True)
+    assert a.minorTickCount() == 4 and a.labelFormat() == "%.1f" and a.tickInterval() == 10
+    ohne = _bild({})
+    assert _bild({"achse_vertikal": {"achse": {"min": 0, "max": 20, "intervall": 10, "neben": 2, "format": "%.2f"}}}) != ohne
