@@ -25,13 +25,15 @@ nur kleiner werden, nie größer.
 
 ## Arbeitsweise
 
+- Ablauf für jede Aufgabe: relevante Dateien und Regeln prüfen → kleinste nötige Änderung umsetzen → nur bei geändertem Verhalten die direkt passende Prüfung ausführen → knapp berichten. Bei reiner Doku/Optik keine Funktionstests.
+- Nur Kontext laden, der für den Auftrag gebraucht wird. Keine umfassende Bestandsaufnahme, langen Pläne oder Wiederholung bereits bekannter Regeln.
 - Aufbau des Projekts: `docs/README.md`. Gemeinsame Oberflächen-Bausteine (Farbpalette, Linien, Menüs, Dialoggerüst):
   `src/lunivo_writer/ui/baukasten/` und `docs/baukasten.md` — dort nachsehen, bevor etwas Neues gebaut wird.
 - **Fensterbau (Pflicht):** Fenster öffnen in der rechten Seitenleiste. Felder immer mit `FormularGitter` (`zeile`, `reihe`, `breit`),
   `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/formular_gitter.py` bauen — Muster `ui/baukasten/absatz_dialog.py`.
   Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der WPS-Vorlage rechts steht (Vorschau), kommt darunter.
   Bei 300 px Breite darf nichts herausragen.
-- Tests: `.venv/bin/python -m pytest` (laufen ohne Bildschirm). Funktionsprüfung des Bandes: `werkzeug/funktionspruefung.py`.
+- Gezielter Test bei relevanter Verhaltensänderung: `.venv/bin/python -m pytest <testdatei> -k <testname>`. Nie `pytest` ohne Auswahl starten. Bandprüfung nur bei Änderungen am Band: `werkzeug/funktionspruefung.py`.
 - Das Projekt liegt nicht unter Git. Vor größeren Löschungen oder Umbauten eine Sicherung anlegen.
 - WPS Office ist nur ein Aussehens-Vorbild (Bildschirmfotos). Keine WPS-Dateien, -Grafiken oder -Farbtabellen übernehmen.
 
@@ -47,65 +49,52 @@ darf nicht durch unnötige Änderungen, Vermischung von Zuständigkeiten oder ü
 - Bestehende Module und gemeinsame Bausteine wiederverwenden. Keine parallelen Lösungen erfinden, wenn passende Komponenten vorhanden sind.
 
 ### 2. Vor jeder Änderung
-- Zuerst die vorhandene Projektstruktur und die betroffenen Module untersuchen; die relevanten Anweisungen und Dokumentationen lesen.
-- Ermitteln, welche Dateien, Schnittstellen und Abhängigkeiten tatsächlich betroffen sind. Die Änderung auf den erforderlichen Umfang begrenzen.
+- Nur betroffene Module, Schnittstellen und nötige Dokumentation untersuchen.
+- Änderung auf den nötigen Umfang begrenzen; bestehende Funktionen und Schnittstellen bewahren.
 - Keine unabhängigen Module ändern und keine umfassenden Refactorings ohne sachlichen Grund starten.
-- Bestehende Funktionen und Schnittstellen bewahren, sofern eine Änderung nicht ausdrücklich erforderlich ist.
 
-### 3. Teststrategie: nach Risiko, nicht nach Gewohnheit
-Nicht nach jeder kleinen Änderung die komplette Testsuite ausführen. Den Umfang am tatsächlichen Risiko ausrichten:
+### 3. Prüfungen: nur passend zur Änderung
+- Keine Tests für reine Dokumentation oder Änderungen ohne Auswirkung auf ausführbares Verhalten.
+- Bei Verhaltensänderungen nur den direkt passenden Test ausführen, sofern vorhanden und aussagekräftig. Direkte Abhängigkeiten nur prüfen, wenn die Änderung sie betreffen kann.
+- Bei Schnittstellen oder gemeinsam genutzten Bausteinen gezielt deren betroffene Integrationen prüfen. Umfang am Risiko ausrichten; keine lokale Vollsuite.
+- Neue Tests nur ergänzen, wenn sie die geänderte Funktion direkt absichern. Keine Tests „vorsorglich“ oder nur zur Erhöhung der Abdeckung.
+- Keine lokalen Volltests: sie dauern über 30 Minuten und verbrauchen das Sitzungslimit; die Gesamtprüfung macht die CI.
 
-1. **Kleine, isolierte Änderung:** nur die unmittelbar relevanten Tests. Reine Dokumentationsänderungen und Änderungen ohne Auswirkung auf
-   ausführbares Verhalten brauchen keine Funktionstests. Keine Volltests ohne konkreten Grund.
-2. **Änderung innerhalb eines Moduls:** die gezielten Tests dieses Moduls. Direkte Abhängigkeiten nur, wenn die Änderung sie betreffen kann.
-3. **Schnittstellen oder gemeinsame Bausteine:** das geänderte Modul und die unmittelbar abhängigen Module. Beim gemeinsamen UI-Baukasten die
-   tatsächlich betroffenen Komponenten und Integrationen.
-4. **Architekturänderung oder hohes Risiko** (Modulgrenzen, zentrale Schnittstellen, globale Konfiguration, mehrere abhängige Bereiche):
-   umfassendere Tests. Die komplette Suite insbesondere vor einem größeren Abschluss, einer relevanten Zusammenführung oder Veröffentlichung.
-
-### 4. Keine unnötigen Testwiederholungen
+### 4. Keine unnötigen Wiederholungen
 - Erfolgreiche Tests nicht wiederholen, wenn sich der getestete Code seitdem nicht relevant geändert hat; gültige Ergebnisse weiterverwenden.
 - Fehlgeschlagene Tests nur wiederholen, wenn der Fehler behoben wurde, die Ursache untersucht wird oder die Wiederholung fachlich begründet ist.
-- Nicht aus Gewohnheit nach jedem Bearbeitungsschritt die ganze Suite starten. Bei mehreren zusammengehörigen kleinen Änderungen zuerst die
-  erforderlichen gezielten Tests, nicht nach jeder einzelnen einen Volltest.
+- Zusammengehörige Änderungen gemeinsam prüfen, nicht nach jedem Zwischenschritt.
 
 ### 5. Projektregeln und technische Grenzen
 - Bei der vorhandenen Python-/PySide6-Architektur bleiben; den bestehenden UI-Baukasten und die dokumentierten Konventionen verwenden.
 - Keine Webtechnologien oder Architekturen einführen, die den Projektregeln widersprechen (siehe „Kein HTML“).
 - Die CI-Konfiguration nicht ändern, nur um lokal weniger zu testen. Die automatische Gesamtprüfung bei Push und Pull Request bleibt als Sicherheitsnetz.
 
-### 6. Transparenz: nach jeder Aufgabe kurz angeben
-1. Welche Module oder Dateien geändert wurden.
-2. Warum die Änderung in die vorhandene Architektur passt.
-3. Welche gezielten Tests ausgeführt wurden und weshalb.
-4. Ob ein Volltest erforderlich war; falls nicht, knapp warum die gezielten Prüfungen genügen.
-5. Welche bekannten Risiken oder offenen Punkte bleiben.
-
-Niemals behaupten, Tests seien erfolgreich gewesen, wenn sie nicht tatsächlich ausgeführt wurden.
+### 6. Knapp berichten
+Nenne Ergebnis und geänderte Dateien. Tests, Architekturbegründung, Risiken und offene Punkte nur erwähnen, wenn sie für diese Änderung relevant sind. Tatsächliche Prüfergebnisse korrekt wiedergeben; nichts als geprüft ausgeben, was nicht geprüft wurde.
 
 **Oberste Priorität:** Modular entwickeln. Nur betroffene Bereiche prüfen. Volltests risikobasiert und gezielt einsetzen. Keine unnötigen
 Wiederholungen, keine unnötigen Umbauten, keine Änderungen außerhalb des erforderlichen Umfangs.
 
-## Multi-Agent-Aufbau (`.claude/agents/`)
+## Agenten (`.claude/agents/`)
 
-Spezialisten mit getrennten Zuständigkeiten. Für einfache Aufgaben genügt der zuständige Spezialist; nicht alle Agenten starten.
+| Bereich | Agent |
+|---|---|
+| Qt-Oberfläche | `design-agent` |
+| Geschäftslogik/Verhalten | `coding-agent` |
+| Architekturfragen | `architektur-agent` (liest und empfiehlt) |
+| Sicherheit/Datenschutz | `security-agent` (liest und meldet) |
+| Unabhängige QA | `qa-agent` (nur bei Bedarf) |
+| Mehrere Zuständigkeiten/Abhängigkeiten | `coordinator` |
 
-| Agent | Zuständig für | Schreibt? |
-|---|---|---|
-| `coordinator` | Plan, Arbeitspakete, Routing, Integration, Konflikte, Abschlussbericht | nein (delegiert) |
-| `coding-agent` | Geschäftslogik, Funktionen, Fehlerbehebung, zugehörige Tests | ja |
-| `design-agent` | UI/UX: Layout, Optik, Farben, Abstände, Barrierefreiheit | ja (nur UI) |
-| `architektur-agent` | Struktur, Abhängigkeiten, Schnittstellen; Empfehlung vor Umbau | nein |
-| `qa-agent` | Unabhängige Prüfung, Tests, Regression, Reproduktionsschritte | nein |
-| `security-agent` | Sicherheit, Datenschutz, Code-Review | nein |
+Ein klarer Einzelauftrag braucht keinen Coordinator. Delegierte Pakete enthalten nur Ziel, relevante Dateien, Grenzen und erwartetes Ergebnis. Abhängiges nacheinander bearbeiten; parallel nur bei unabhängigen Paketen. Nie gleichzeitig an derselben Datei schreiben. QA nur auf ausdrücklichen Wunsch oder bei konkret erhöhtem Risiko. Jeder Agent liest nur nötigen Kontext und berichtet knapp; der Coordinator fasst einmal zusammen. Vor größeren Umbauten, neuen Abhängigkeiten, kostenpflichtigen Diensten oder nicht umkehrbaren Aktionen Zustimmung einholen.
 
-Regeln:
-- UI/Design → design-agent · Geschäftslogik → coding-agent · Architektur/Abhängigkeiten → architektur-agent (Freigabe vor Umsetzung) ·
-  Tests/Qualitätskontrolle → qa-agent · Sicherheit → security-agent · Integration und Konflikte → coordinator.
-- Berührt ein Paket mehrere Bereiche, teilt der Coordinator es auf und benennt die Übergabepunkte.
-- Gemeinsame Dateien oder abhängige Ergebnisse: nacheinander. Nur unabhängige Pakete parallel. Niemand überschreibt Änderungen anderer stillschweigend.
-- Reihenfolge: Plan → Untersuchung (lesend) → Umsetzungsentscheidung → Umsetzung → unabhängige QA → Integration/Bericht.
-- Rückfrage beim Eigentümer vor größeren Umbauten, neuen Abhängigkeiten, kostenpflichtigen Diensten, nicht umkehrbaren Aktionen.
-- Berichte kurz: Ergebnis, geänderte Dateien, Tests, offene Probleme.
-- Aufruf: `claude --agent coordinator` (Coordinator als Hauptagent), oder gezielt „Nutze den coding-agent für …“ / `@coding-agent`. `/agents` zeigt die Liste.
-- Hinweis: Subagenten können keine weiteren Subagenten starten; Delegation läuft deshalb über den Hauptagenten (Coordinator).
+## Ergänzende Eigentümer-Regeln (2026-10-25 bis 2026-10-28)
+
+Gelten für alle Agenten zusätzlich zu den Regeln oben; bei Widerspruch gilt die jüngere Regel.
+
+- **Eigenständig:** keine Abhängigkeit von LibreOffice oder anderen externen Programmen, auch nicht für Dateiformate — Formate selbst schreiben.
+- **WPS-Vorlagen eng nachbauen:** Kays Bildschirmfotos (PC: `~/Bilder/wps-vorlage`) sind das Aussehens-Vorbild; keine freien
+  Interpretationen, klar erkennbare Symbole, Felder/Knöpfe nicht schmaler als ~36 px. Fertig erst nach Bildvergleich mit der Vorlage.
+- **Paketierung (Ziel):** genau eine `.deb`; Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter
+  `/usr/share/applications/stevie-lunivo-office.desktop`, Symlink `/usr/bin/lunivo-office`; Benutzerdaten nur in XDG-Verzeichnissen.

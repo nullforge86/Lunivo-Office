@@ -3,36 +3,162 @@
     b = editor.kopffuss()                 # der Bearbeiter des Editors (wird beim ersten Aufruf angelegt)
     b.starte("kopf")                      # oder "fuss"; ``b.aktiv``, ``b.beende()``, ``b.wechseln()``, ``b.abschnitt_springen(+1)``
 
-Gespeichert wird weiter in ``PageSettings.header`` / ``footer`` (Text mit {PAGE}); die Seite wird nicht anders gezeichnet. Über dem Kopf-
-bereich des Blattes liegt ein randloses Textfeld (gestrichelter Rahmen), darunter die schwebende Leiste mit „Kopfzeile“, „Seitenzahl neu
-aufbauen“, „Seitenzahlenformat“ und „Seitenzahl löschen“, links das Absatz-Symbol. Esc oder Doppelklick in den Text beenden. Kein HTML."""
+Gespeichert wird weiter in ``PageSettings.header`` / ``footer`` (Text mit {PAGE}); die Seite wird nicht anders gezeichnet. Wie in der
+Vorlage liegen gleichzeitig zwei randlose Textfelder (gestrichelter Rahmen) über Kopf- und Fußbereich des Blattes: oben darunter Linie,
+Etikett „Kopfzeile“ und die Seitenzahl-Knöpfe, unten Etikett „Fußzeile“ über der Linie. Nur eine Leiste (``b.leiste``) hängt am aktiven
+Bereich (``b.zone``, ``b.feld``); ein Klick in den anderen Bereich oder ``wechseln()`` verschiebt sie. Esc oder Doppelklick in den Text
+beenden. Kein HTML."""
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QObject, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QTimer, Signal
 import re
 
-from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor, QTextFormat
-from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QLabel, QPlainTextEdit, QToolButton, QWidget, QWidgetAction
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap, QTextCharFormat, QTextCursor, QTextFormat
+from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QMenu, QPlainTextEdit, QPushButton,
+                               QRadioButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from lunivo_writer.editor import seitenzahl as SZ
 from lunivo_writer.models.page import HeaderFooter, mm_to_px
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
 
+ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
 FELD_EIGENSCHAFT = int(QTextFormat.UserProperty) + 1          # in der Zeichenformatierung: "PAGE" oder "PAGES" (das Feld, das die Zahl zeigt)
 _FELDER = re.compile(r"\{(PAGES|PAGE)\}")
 FORMATE = [("dezimal", "1, 2, 3 …"), ("klein", "a, b, c …"), ("gross", "A, B, C …"), ("roem_klein", "i, ii, iii …"), ("roem_gross", "I, II, III …")]
 
 
-class _Feld(QPlainTextEdit):
-    """Das Textfeld über dem Kopfbereich: randlos, gestrichelter Rahmen, Esc beendet."""
-    schliessen = Signal()
+LEISTE_STIL = """
+#kfLeiste QToolButton { background: #f5f5f5; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 2px 6px; }
+#kfLeiste QToolButton:hover { background: #e6e6e6; }
+#kfLeiste QToolButton::menu-indicator { image: none; width: 0px; }
+#kfLeiste QMenu, #kfAbsatz QMenu { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; }
+#kfLeiste QMenu::item:selected, #kfAbsatz QMenu::item:selected { background: #e8f0fe; color: #333333; }
+#kfLeiste QMenu::item:disabled { color: #9a9a9a; }
+"""
+ABSATZ_STIL = ("QToolButton { background: #f5f5f5; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 1px 4px; }"
+               "QToolButton:hover { background: #e6e6e6; } QToolButton::menu-indicator { image: none; width: 0px; }"
+               "QMenu { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; } QMenu::item:selected { background: #e8f0fe; color: #333333; }")
+ETIKETT_STIL = "QLabel { background: #f5f5f5; color: #777777; border: 1px dashed #9a9a9a; }"
+PANEL_STIL = """
+QWidget#kfPanel { background: #ffffff; color: #333333; }
+#kfPanel QLabel, #kfPanel QRadioButton { color: #333333; background: transparent; }
+#kfPanel QComboBox { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 2px 6px; }
+#kfPanel QComboBox QAbstractItemView { background: #ffffff; color: #333333; selection-background-color: #cfe0fb; selection-color: #333333; }
+#kfPanel QToolButton { background: #f7f7f7; color: #333333; border: 1px solid transparent; padding: 3px; }
+#kfPanel QToolButton:checked { background: #cfe0fb; }
+#kfPanel QToolButton:hover { border: 1px solid #c8c8c8; }
+#kfPanel QRadioButton::indicator { width: 12px; height: 12px; border: 1px solid #8a8a8a; border-radius: 7px; background: #ffffff; }
+#kfPanel QRadioButton::indicator:checked { background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 #3e78d0, stop:0.5 #3e78d0, stop:0.6 #ffffff, stop:1 #ffffff); border-color: #3e78d0; }
+#kfPanel QPushButton { background: #3e78d0; color: #ffffff; border: none; border-radius: 2px; padding: 3px 22px; }
+"""
+
+
+def _symbol(art: str) -> QIcon:
+    """Kleines, selbst gezeichnetes Symbol (14 px) vor dem Knopftext: Seitenbild oder rotes Kreuz."""
+    pm = QPixmap(14, 14); pm.fill(Qt.transparent)
+    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
+    if art == "x":
+        p.setPen(QPen(QColor("#d9363e"), 1.8)); p.drawLine(3, 3, 11, 11); p.drawLine(11, 3, 3, 11)
+    else:
+        p.setPen(QPen(QColor("#4a5a70"), 1.1)); p.drawRect(QRectF(2.5, 1.5, 9, 11))
+        p.drawLine(5, 4, 9, 4)
+        if art == "neu":
+            p.drawLine(5, 7, 9, 7)
+        else:
+            p.drawLine(5, 7, 9, 7); p.drawLine(5, 9.5, 9, 9.5)
+    p.end()
+    return QIcon(pm)
+
+
+class _Linie(QWidget):
+    """Gestrichelte graue Linie über die ganze Blattbreite, an der der Kopf-/Fußbereich endet."""
 
     def __init__(self, eltern):
         super().__init__(eltern)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        pen = QPen(QColor("#9a9a9a")); pen.setStyle(Qt.DashLine); p.setPen(pen)
+        p.drawLine(0, self.height() // 2, self.width(), self.height() // 2)
+
+
+class _EinfuegenPanel(QMenu):
+    """Aufklappfeld „Seitenzahl einfügen“: Format, Position (fünf Kacheln mit Seitenbildchen), Übernehmen für, OK."""
+    uebernommen = Signal(str, str, str, str)          # Ausrichtung, Muster, Zahlenart, Bereich (dokument | seite | abschnitt)
+    POS = [("left", "Links"), ("center", "Zentriert"), ("right", "Rechts"), ("aussen", "Außen"), ("innen", "Innen")]
+
+    def __init__(self, eltern):
+        super().__init__(eltern)
+        self.ort = "kopf"
+        self.setStyleSheet("QMenu { background: #ffffff; border: 1px solid #c8c8c8; }")
+        w = QWidget(); w.setObjectName("kfPanel"); w.setStyleSheet(PANEL_STIL)
+        v = QVBoxLayout(w); v.setContentsMargins(10, 8, 10, 10); v.setSpacing(6)
+        self.format = QComboBox(); self.format.setAccessibleName("Format")
+        for muster, zahl, text in SZ.MUSTER:
+            self.format.addItem("Format: " + text, (muster, zahl))
+        v.addWidget(self.format)
+        v.addWidget(QLabel("Position:"))
+        g = QGridLayout(); g.setSpacing(2)
+        self.gruppe = QButtonGroup(self); self.gruppe.setExclusive(True)
+        self.kacheln = {}
+        for i, (schl, text) in enumerate(self.POS):
+            k = QToolButton(); k.setCheckable(True); k.setText(text); k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            k.setIconSize(QSize(40, 50)); k.setMinimumSize(92, 80); k.setAccessibleName(text)
+            self.gruppe.addButton(k); self.kacheln[schl] = k
+            g.addWidget(k, i // 3, i % 3)
+        self.kacheln["center"].setChecked(True)
+        v.addLayout(g)
+        v.addWidget(QLabel("Übernehmen für:"))
+        r = QHBoxLayout(); r.setSpacing(10)
+        self.bereich = {}
+        for schl, text in (("dokument", "Gesamtes Dokument"), ("seite", "Von aktueller Seite"), ("abschnitt", "Aktueller Abschnitt")):
+            b = QRadioButton(text); self.bereich[schl] = b; r.addWidget(b)
+        self.bereich["dokument"].setChecked(True)
+        v.addLayout(r)
+        ok = QPushButton("OK"); ok.clicked.connect(self._ok)
+        z = QHBoxLayout(); z.addStretch(1); z.addWidget(ok); v.addLayout(z)
+        a = QWidgetAction(self); a.setDefaultWidget(w); self.addAction(a)
+
+    def ort_setzen(self, ort: str) -> None:
+        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
+        self.ort = ort
+        for schl, k in self.kacheln.items():
+            pm = QPixmap(40, 50); pm.fill(Qt.transparent)
+            p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
+            seitenzahl_zeichner(ort, schl)(p, QRectF(0, 0, 40, 50)); p.end()
+            k.setIcon(QIcon(pm))
+
+    def _ok(self) -> None:
+        pos = next(s for s, k in self.kacheln.items() if k.isChecked())
+        bereich = next(s for s, b in self.bereich.items() if b.isChecked())
+        muster, zahl = self.format.currentData()
+        self.close()
+        self.uebernommen.emit(pos, muster, zahl, bereich)
+
+
+class _Feld(QPlainTextEdit):
+    """Das Textfeld über dem Kopf- bzw. Fußbereich: randlos, gestrichelter Rahmen, Esc beendet."""
+    schliessen = Signal()
+    fokus = Signal(str)                                           # bekommt die Schreibmarke: "kopf" oder "fuss"
+
+    def __init__(self, eltern, zone: str = "kopf"):
+        super().__init__(eltern)
+        self.zone = zone
         self.setFrameShape(QPlainTextEdit.NoFrame)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setAccessibleName("Kopf- und Fußzeile")
+        self.setAccessibleName("Kopfzeile" if zone == "kopf" else "Fußzeile")
+        # Das Feld steht auf dem weißen Papier: Farben unabhängig vom Programm-Thema (Papier, schwarzer Text, sichtbare Schreibmarke)
+        pal = QPalette(self.palette())
+        for gr in (QPalette.Active, QPalette.Inactive, QPalette.Disabled):
+            pal.setColor(gr, QPalette.Base, QColor("#ffffff")); pal.setColor(gr, QPalette.Window, QColor("#ffffff"))
+            pal.setColor(gr, QPalette.Text, QColor("#000000")); pal.setColor(gr, QPalette.WindowText, QColor("#000000"))
+            pal.setColor(gr, QPalette.Highlight, QColor("#3e78d0")); pal.setColor(gr, QPalette.HighlightedText, QColor("#ffffff"))
+        self.setPalette(pal)
+        self.setStyleSheet("QPlainTextEdit { background: #ffffff; color: #000000; border: none; selection-background-color: #3e78d0; selection-color: #ffffff; }")
+        self.setCursorWidth(1)
 
     # ---- Felder: {PAGE}/{PAGES} stehen als Zahl mit Hintergrund im Text und werden beim Speichern wieder zu {PAGE}/{PAGES} ----
     @staticmethod
@@ -93,6 +219,10 @@ class _Feld(QPlainTextEdit):
                 res[seite] = (a, e)
         return res
 
+    def focusInEvent(self, e):
+        super().focusInEvent(e)
+        self.fokus.emit(self.zone)
+
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
             self.schliessen.emit()
@@ -114,24 +244,41 @@ class _Feld(QPlainTextEdit):
     def paintEvent(self, e):
         super().paintEvent(e)
         p = QPainter(self.viewport())
-        pen = QPen(QColor("#8a8a8a")); pen.setStyle(Qt.DashLine); pen.setWidth(1)
+        pen = QPen(QColor("#9a9a9a")); pen.setStyle(Qt.DashLine); pen.setWidth(1)
         p.setPen(pen)
         p.drawRect(self.viewport().rect().adjusted(0, 0, -1, -1))
 
 
 class _Leiste(QWidget):
-    """Die schwebende Leiste: Etikett und drei Knöpfe mit Auswahl."""
+    """Die schwebende Leiste neben dem Etikett des aktiven Bereichs: mit Seitenzahl drei Knöpfe, ohne nur „Seitenzahl einfügen“."""
 
     def __init__(self, eltern):
         super().__init__(eltern)
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(4)
-        self.etikett = QLabel("Kopfzeile"); self.etikett.setContentsMargins(6, 2, 6, 2)
-        h.addWidget(self.etikett)
+        self.setObjectName("kfLeiste")
+        h = self.h = FlussLayout(4); self.setLayout(h); h.setContentsMargins(0, 0, 0, 0)    # bricht um, wenn das Blatt zu schmal ist
         self.knopf = {}
-        for schl, text in (("neu", "Seitenzahl neu aufbauen"), ("format", "Seitenzahlenformat"), ("loeschen", "Seitenzahl löschen")):
-            k = QToolButton(); k.setText(text); k.setPopupMode(QToolButton.InstantPopup); k.setAutoRaise(True)
-            h.addWidget(k); self.knopf[schl] = k
-        self.adjustSize()
+        for schl, text, sym in (("neu", "Seitenzahl neu aufbauen", "neu"), ("format", "Seitenzahlenformat", "format"),
+                                ("loeschen", "Seitenzahl löschen", "x"), ("einfuegen", "Seitenzahl einfügen", "neu")):
+            k = QToolButton(); k.setText(text + " ▾"); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            k.setPopupMode(QToolButton.InstantPopup)
+            k.setParent(self); self.knopf[schl] = k
+        self.setStyleSheet(LEISTE_STIL)                        # sitzt auf dem weißen Papier: unabhängig vom Thema
+        self.zahl_zeigen(True)
+
+    def zahl_zeigen(self, mit: bool) -> None:
+        """Mit Seitenzahl: drei Knöpfe; ohne: nur „Seitenzahl einfügen“ (beides linksbündig, direkt neben dem Etikett)."""
+        while self.h.count():
+            self.h.takeAt(0)
+        for schl in ("neu", "format", "loeschen"):
+            self.knopf[schl].setVisible(mit)
+        self.knopf["einfuegen"].setVisible(not mit)
+        for k in self.knopf.values():                           # nur Sichtbares im Fluss, sonst entstehen Lücken
+            if not k.isHidden():
+                self.h.addWidget(k)
+
+    def natuerliche_breite(self) -> int:
+        ks = [self.h.itemAt(i).widget() for i in range(self.h.count())]
+        return sum(k.sizeHint().width() for k in ks) + 4 * max(0, len(ks) - 1)
 
 
 class KopfFussBearbeiter(QObject):
@@ -143,9 +290,18 @@ class KopfFussBearbeiter(QObject):
         self.aktiv = False
         self.zone = "kopf"
         self.blatt = 0
-        self.feld = self.leiste = self.absatz = None
+        self.leiste = self.absatz = self.panel = None
+        self.felder, self.linien, self.etiketten = {}, {}, {}
         self._laedt = False
         self._zeit = QTimer(self); self._zeit.setSingleShot(True); self._zeit.setInterval(200); self._zeit.timeout.connect(self.speichern)
+
+    @property
+    def feld(self):
+        """Das Feld des aktiven Bereichs (``zone``); None, solange noch nie gestartet."""
+        return self.felder.get(self.zone)
+
+    def _teile(self) -> list:
+        return [w for z in ZONEN for w in (self.linien.get(z), self.felder.get(z), self.etiketten.get(z))] + [self.leiste, self.absatz]
 
     # ---- Start und Ende ------------------------------------------------------------------------------------------
     def starte(self, zone: str = "kopf", blatt: int | None = None) -> bool:
@@ -156,19 +312,23 @@ class KopfFussBearbeiter(QObject):
             self.speichern()
         self.zone = "fuss" if zone == "fuss" else "kopf"
         self.blatt = self._cursor_blatt() if blatt is None else blatt
-        if self.feld is None:
+        if not self.felder:
             vp = ed.viewport()
-            self.feld = _Feld(vp); self.feld.schliessen.connect(self.beende)
-            self.feld.textChanged.connect(self._geaendert)
+            for z in ZONEN:
+                f = self.felder[z] = _Feld(vp, z)
+                f.schliessen.connect(self.beende); f.textChanged.connect(self._geaendert); f.fokus.connect(self._fokus)
+                self.linien[z] = _Linie(vp)
+                et = self.etiketten[z] = QLabel("Kopfzeile" if z == "kopf" else "Fußzeile", vp)
+                et.setStyleSheet(ETIKETT_STIL); et.setContentsMargins(6, 2, 6, 2)
             self.leiste = _Leiste(vp)
-            self.absatz = QToolButton(vp); self.absatz.setText("¶"); self.absatz.setAutoRaise(True)
+            self.absatz = QToolButton(vp); self.absatz.setText("¶ ▾"); self.absatz.setStyleSheet(ABSATZ_STIL); self.absatz.setObjectName("kfAbsatz")
             self.absatz.setPopupMode(QToolButton.InstantPopup); self.absatz.setToolTip("Absatz")
             vp.installEventFilter(self)
             self._menues()
         self.aktiv = True
         self._laden()
         self._platzieren()
-        for w in (self.feld, self.leiste, self.absatz):
+        for w in self._teile():
             w.show(); w.raise_()
         self.feld.setFocus()
         self.gestartet.emit()
@@ -179,7 +339,7 @@ class KopfFussBearbeiter(QObject):
             return
         self.speichern()
         self.aktiv = False
-        for w in (self.feld, self.leiste, self.absatz):
+        for w in self._teile():
             if w is not None:
                 w.hide()
         self.ed.viewport().update()
@@ -187,6 +347,7 @@ class KopfFussBearbeiter(QObject):
         self.beendet.emit()
 
     def wechseln(self) -> None:
+        """Zwischen Kopf- und Fußzeile springen: Schreibmarke ins andere Feld, die Leiste zieht mit."""
         if self.aktiv:
             self.starte("fuss" if self.zone == "kopf" else "kopf", self.blatt)
 
@@ -203,6 +364,14 @@ class KopfFussBearbeiter(QObject):
             self.starte(self.zone)
         return True
 
+    def _fokus(self, zone: str) -> None:
+        """Klick/Schreibmarke in den anderen Bereich: die Leiste und das Absatz-Symbol ziehen dorthin."""
+        if not self.aktiv or self._laedt or zone == self.zone:
+            return
+        self.zone = zone
+        self._leiste_laden(self.ed.abschnitt_seite())
+        self._platzieren()
+
     # ---- Seite und Text --------------------------------------------------------------------------------------------
     def _cursor_blatt(self) -> int:
         ed = self.ed
@@ -216,36 +385,44 @@ class KopfFussBearbeiter(QObject):
         """"first", "even" oder "": welche Kopf-/Fußzeile das Blatt trägt (siehe ``PageSettings.kopf_fuss_art``)."""
         return page.kopf_fuss_art(self.blatt + 1, SZ.erste_nummer(page) + self.blatt)
 
-    def _name(self, page) -> str:
+    def _name(self, page, zone: str | None = None) -> str:
         art = self._art(page)
-        return (art + "_" if art else "") + ("header" if self.zone == "kopf" else "footer")
+        return (art + "_" if art else "") + ("header" if (zone or self.zone) == "kopf" else "footer")
 
-    def _etikett(self, page) -> str:
-        name = "Kopfzeile" if self.zone == "kopf" else "Fußzeile"
+    def _etikett(self, page, zone: str) -> str:
+        name = "Kopfzeile" if zone == "kopf" else "Fußzeile"
         if page.diff_even:
             return f"{name} {'gerader' if self._art(page) == 'even' else 'ungerader'} Seiten"
         return name
 
-    def hf(self, page=None) -> HeaderFooter:
+    def hf(self, page=None, zone: str | None = None) -> HeaderFooter:
         page = page or self.ed.abschnitt_seite()
-        return getattr(page, self._name(page))
+        return getattr(page, self._name(page, zone))
 
     def _laden(self) -> None:
+        """Beide Felder (Kopf und Fuß) des aktuellen Blatts füllen."""
         page = self.ed.abschnitt_seite()
-        hf = self.hf(page)
-        self._laedt = True
         n = SZ.erste_nummer(page) + self.blatt
-        self.feld.felder_setzen(hf.text, {"PAGE": SZ.nummer(n, page), "PAGES": str(max(1, int(getattr(self.ed, "_pages", 1) or 1)))})
-        self._laedt = False
-        self._ausrichten(hf.align)
-        self.leiste.etikett.setText(self._etikett(page))
-        self.leiste.etikett.setAccessibleName(self.leiste.etikett.text())
+        zahlen = {"PAGE": SZ.nummer(n, page), "PAGES": str(max(1, int(getattr(self.ed, "_pages", 1) or 1)))}
+        for z in ZONEN:
+            hf = self.hf(page, z)
+            self._laedt = True
+            self.felder[z].felder_setzen(hf.text, zahlen)
+            self._laedt = False
+            self._ausrichten(z, hf.align)
+            et = self.etiketten[z]
+            et.setText(self._etikett(page, z)); et.setAccessibleName(et.text()); et.adjustSize()
+        self._leiste_laden(page)
 
-    def _ausrichten(self, align: str) -> None:
+    def _leiste_laden(self, page) -> None:
+        self.leiste.zahl_zeigen("{PAGE" in self.hf(page).text)
+
+    def _ausrichten(self, zone: str, align: str) -> None:
+        feld = self.felder[zone]
         al = _FLAG.get(SZ.ausrichtung(align, self.blatt + 1), Qt.AlignLeft)
-        o = self.feld.document().defaultTextOption(); o.setAlignment(al | Qt.AlignVCenter)
-        self.feld.document().setDefaultTextOption(o)
-        c = self.feld.textCursor(); c.select(c.SelectionType.Document)
+        o = feld.document().defaultTextOption(); o.setAlignment(al | Qt.AlignVCenter)
+        feld.document().setDefaultTextOption(o)
+        c = feld.textCursor(); c.select(c.SelectionType.Document)
         bf = c.blockFormat(); bf.setAlignment(al); c.setBlockFormat(bf)
 
     def _geaendert(self) -> None:
@@ -255,15 +432,17 @@ class KopfFussBearbeiter(QObject):
     def speichern(self) -> None:
         """Den Text des Feldes in die Seiteneinrichtung des Abschnitts schreiben (sofort; sonst nach kurzer Pause beim Tippen)."""
         self._zeit.stop()
-        if not self.aktiv or self.feld is None:
+        if not self.aktiv or not self.felder:
             return
         page = self.ed.abschnitt_seite()
-        hf = self.hf(page)
-        text = self.feld.text_lesen().strip("\n")
-        if text == hf.text:
-            return
-        setattr(page, self._name(page), HeaderFooter(text, hf.align))
-        self.ed.page_settings_changed(page)
+        geaendert = False
+        for z in ZONEN:
+            hf = self.hf(page, z)
+            text = self.felder[z].text_lesen().strip("\n")
+            if text != hf.text:
+                setattr(page, self._name(page, z), HeaderFooter(text, hf.align)); geaendert = True
+        if geaendert:
+            self.ed.page_settings_changed(page)
 
     def aendern(self, aendere, neu_laden: bool = True) -> None:
         """``aendere(page)`` auf die Einrichtung des aktuellen Abschnitts anwenden und speichern; → danach das Feld neu füllen."""
@@ -287,28 +466,49 @@ class KopfFussBearbeiter(QObject):
             self.feld.insertPlainText("\t"); self.feld.setFocus()
 
     # ---- Lage ----------------------------------------------------------------------------------------------------
-    def _rect(self) -> QRectF:
+    def _rect(self, zone: str) -> QRectF:
         ed = self.ed
         z = ed.zoom
         b = ed._blatt(self.blatt)
         oben = ed.blatt_oben(self.blatt)
         h = mm_to_px(10) * z
-        y = oben + mm_to_px(8) * z if self.zone == "kopf" else oben + b["H"] - mm_to_px(18) * z
+        y = oben + mm_to_px(8) * z if zone == "kopf" else oben + b["H"] - mm_to_px(18) * z       # wie ``editor_anzeige`` die Zeilen zeichnet
         return QRectF(b["x"] + b["ml"], y, b["cw"], h)
 
     def _platzieren(self) -> None:
         if not self.aktiv:
             return
-        r = self._rect()
-        g = r.toRect()
-        if self.feld.geometry() != g:
-            self.feld.setGeometry(g)
+        b = self.ed._blatt(self.blatt)
         f = QFont(self.ed.font()); f.setPixelSize(max(6, round(13 * self.ed.zoom)))
-        if self.feld.font() != f:
-            self.feld.setFont(f)
-        self.leiste.adjustSize()
-        ly = g.bottom() + 3 if self.zone == "kopf" else g.top() - self.leiste.height() - 3
-        self.leiste.move(g.left(), max(0, ly))
+        geo = {}
+        for z in ZONEN:
+            g = geo[z] = self._rect(z).toRect()
+            feld = self.felder[z]
+            if feld.geometry() != g:
+                feld.setGeometry(g)
+            if feld.font() != f:
+                feld.setFont(f)
+            ly_linie = g.bottom() + 6 if z == "kopf" else g.top() - 6
+            self.linien[z].setGeometry(round(b["x"]), ly_linie - 1, round(b["W"]), 3)
+            et = self.etiketten[z]
+            et.adjustSize()
+            # Kopf: Etikett unter der Linie; Fuß: Etikett über der Linie
+            ey = ly_linie + 4 if z == "kopf" else ly_linie - et.height() - 4
+            et.move(g.left(), max(0, ey))
+        g, et = geo[self.zone], self.etiketten[self.zone].geometry()
+        links, rechts = round(b["x"]) + 4, round(b["x"] + b["W"]) - 4
+        lw = self.leiste.natuerliche_breite()
+        if et.right() + 6 + lw <= rechts:                       # passt neben das Etikett
+            lh = self.leiste.h.heightForWidth(lw)
+            self.leiste.setFixedSize(lw, lh)
+            self.leiste.move(et.right() + 6, max(0, et.center().y() - lh // 2))
+        else:                                                   # sonst unter (Kopf) bzw. über (Fuß) das Etikett, umbrechend, nie über den Blattrand
+            lw = min(lw, rechts - links)
+            lh = self.leiste.h.heightForWidth(lw)
+            self.leiste.setFixedSize(lw, lh)
+            x = max(links, min(et.left(), rechts - lw))
+            y = et.bottom() + 4 if self.zone == "kopf" else et.top() - lh - 4
+            self.leiste.move(x, max(0, y))
         self.absatz.adjustSize()
         self.absatz.move(max(0, g.left() - self.absatz.width() - 4), g.top())
 
@@ -326,6 +526,9 @@ class KopfFussBearbeiter(QObject):
         m = MenueListe(self.leiste); k["neu"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_neu(m))
         m = MenueListe(self.leiste); k["format"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_format(m))
         m = MenueListe(self.leiste); k["loeschen"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_loeschen(m))
+        self.panel = _EinfuegenPanel(self.leiste); k["einfuegen"].setMenu(self.panel)
+        self.panel.aboutToShow.connect(lambda: self.panel.ort_setzen(self.zone))
+        self.panel.uebernommen.connect(self.seitenzahl_einfuegen)
         m = MenueListe(self.absatz); self.absatz.setMenu(m)
         m.eintrag("Absatzformat zurücksetzen", lambda: self.ausrichtung_setzen("center"))
         m.eintrag("Symbol vom Absatz-Layout ausblenden", self.absatz.hide)
@@ -333,11 +536,43 @@ class KopfFussBearbeiter(QObject):
     def _menue_neu(self, m: MenueListe) -> None:
         m.clear()
         page = self.ed.abschnitt_seite()
-        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setPrefix("Seitennummerierung: ")
+        # Wie die Vorlage: Beschriftung und kleines Zahlfeld nebeneinander, hell wie das übrige Aufklappfeld auf dem Papier
+        zeile = QWidget(); zeile.setObjectName("seitennummerierung")
+        zeile.setStyleSheet("#seitennummerierung { background: #ffffff; } QLabel { color: #333333; background: transparent; }"
+                            " QDoubleSpinBox { background: #ffffff; color: #000000; border: 1px solid #b8b8b8; border-radius: 2px;"
+                            " padding: 1px 2px; selection-background-color: #3e78d0; selection-color: #ffffff; }")
+        lay = QHBoxLayout(zeile); lay.setContentsMargins(8, 4, 8, 4); lay.setSpacing(6)
+        lay.addWidget(QLabel("Seitennummerierung:"))
+        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setFixedWidth(64)
         sp.setAccessibleName("Seitennummerierung")
         sp.editingFinished.connect(lambda: self._start_setzen(int(sp.value())))
-        a = QWidgetAction(m); a.setDefaultWidget(sp); m.addAction(a)
+        lay.addWidget(sp); lay.addStretch(1)
+        a = QWidgetAction(m); a.setDefaultWidget(zeile); m.addAction(a)
         m.eintrag("Nummerierung fortsetzen", lambda: self._start_setzen(0), aktiv=page.seiten_start > 0)
+
+    def seitenzahl_einfuegen(self, ausr: str, muster: str, zahl: str, bereich: str) -> None:
+        """Seitenzahl in die Zeile setzen, die gerade bearbeitet wird („Seitenzahl einfügen ▾“); ``bereich``: dokument | seite | abschnitt."""
+        from lunivo_writer.editor import abschnitte as AB
+        self.speichern()
+        ed = self.ed
+        doc = ed.document()
+        if bereich == "dokument":
+            ziele = list(range(AB.anzahl(doc)))
+        elif bereich == "seite":
+            pos = ed.textCursor().position()
+            anfang = max([AB.beginn(doc, ed.abschnitt_nr())] + [x for x in ed.seitenwechsel if x <= pos])
+            ziele = [AB.einfuegen_an(doc, anfang, "naechste", ed.page)]
+        else:
+            ziele = [ed.abschnitt_nr()]
+        for nr in ziele:
+            ps = SZ.seitenzahl_setzen(ed.abschnitt_seite(nr), self.zone, ausr, muster, zahl)
+            if nr == 0:
+                ed.apply_page(ps)
+            else:
+                AB.setzen(doc, nr, ps)
+        ed._recount(); doc.setModified(True)
+        if self.aktiv:
+            self._laden(); self._platzieren()
 
     def _start_setzen(self, n: int) -> None:
         self.aendern(lambda p: setattr(p, "seiten_start", max(0, n)))

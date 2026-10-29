@@ -109,6 +109,17 @@ def test_symbol_fenster_einfuegen_und_benutzerdefiniert(fenster):
     assert [z for z, _ in b._symbol_daten().benutzer()] == list(b.BENUTZER_SYMBOLE)
 
 
+def test_symbol_sonderzeichen_rollt_und_fuegt_ein(fenster):
+    """Reiter „Sonderzeichen“: Liste rollt über zwölf Zeilen hinaus; das Zeichen des gewählten Eintrags (auch unsichtbare) wird eingefügt."""
+    from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
+    e = fenster.current_editor()
+    d = SonderzeichenDialog(None, e.insertPlainText, fenster.befehle._symbol_daten())
+    assert d.sonder.topLevelItemCount() > 12
+    d.reiter.setCurrentIndex(1)
+    d.sonder.setCurrentItem(d.sonder.topLevelItem(d.sonder.topLevelItemCount() - 1)); d.ok.click()
+    assert e.toPlainText().endswith("’")
+
+
 def test_zahl_typen():
     from lunivo_writer.editor.zahlformat import zahl_text
     assert [zahl_text(14, "roemisch"), zahl_text(28, "gross"), zahl_text(3, "klein"), zahl_text(5, "kreis"), zahl_text(7, "null")] == \
@@ -553,6 +564,7 @@ def test_wordart_galerie_fuegt_sofort_ein(fenster):
     e = fenster.current_editor()
     m = b.klappe("wordartKlappe")
     assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
+    assert m._spalten == 9                                                 # wie in WPS: neun Stile oben, sechs darunter
     m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
     f = e.bild_format()
     o = formen.objekt(f)
