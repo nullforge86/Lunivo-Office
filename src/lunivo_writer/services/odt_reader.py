@@ -494,8 +494,10 @@ class _Leser:
             if hg and hg != "transparent":
                 page.color = hg
             # ODF misst den Rand bis zur Kopfzeile; Lunivo (wie Word) bis zum Text: Kopfzeilenhöhe und Abstand kommen dazu.
-            kopf_da = master.find(_q("style:header")) is not None or master.find(_q("style:header-first")) is not None
-            fuss_da = master.find(_q("style:footer")) is not None or master.find(_q("style:footer-first")) is not None
+            kopf_da = master.find(_q("style:header")) is not None or master.find(_q("style:header-first")) is not None \
+                or master.find(_q("style:header-left")) is not None
+            fuss_da = master.find(_q("style:footer")) is not None or master.find(_q("style:footer-first")) is not None \
+                or master.find(_q("style:footer-left")) is not None
             page.margin_top_mm, page.margin_bottom_mm = oben, unten
             for teil, da, kante in (("header", kopf_da, "bottom"), ("footer", fuss_da, "top")):
                 hp = layout.find(f"{_q('style:' + teil + '-style')}/{_q('style:header-footer-properties')}")
@@ -515,6 +517,9 @@ class _Leser:
             hf, links = getattr(page, attr), self._kopf_fuss(master.find(_q("style:" + tag)))
             if hf.text and links.text == hf.text and {hf.align, links.align} == {"left", "right"}:
                 hf.align = "aussen" if hf.align == "right" else "innen"
+            elif links.text and (links.text != hf.text or links.align != hf.align):
+                page.diff_even = True                                  # eigene Zeilen für gerade Seiten
+                setattr(page, "even_" + attr, links)
         erste_kopf, erste_fuss = master.find(_q("style:header-first")), master.find(_q("style:footer-first"))
         if erste_kopf is not None or erste_fuss is not None:
             page.diff_first = True

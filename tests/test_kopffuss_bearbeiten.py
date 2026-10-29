@@ -60,3 +60,45 @@ def test_esc_beendet(app, tmp_path):
     b = w.current_editor().kopffuss()
     QTest.keyClick(b.feld, __import__("PySide6.QtCore", fromlist=["Qt"]).Qt.Key_Escape)
     assert not b.aktiv
+
+
+def test_gerade_seite_zeigt_eigene_kopfzeile(app, tmp_path):
+    w = _fenster(app, tmp_path)
+    e = w.current_editor()
+    pg = e.abschnitt_seite(); pg.header = HeaderFooter("Ungerade", "center")
+    e.page_settings_changed(pg)
+    w.befehle.tun("geradeUngerade")
+    pg = e.abschnitt_seite()
+    assert pg.diff_even and pg.even_header.text == "Ungerade"              # zuerst eine Kopie
+    pg.even_header = HeaderFooter("Gerade", "center"); e.page_settings_changed(pg)
+    b = e.kopffuss()
+    b.starte("kopf", 1)                                                     # Blatt 2 = gerade Seite
+    assert b.feld.text_lesen() == "Gerade" and b.leiste.etikett.text() == "Kopfzeile gerader Seiten"
+    b.starte("kopf", 0)
+    assert b.feld.text_lesen() == "Ungerade" and b.leiste.etikett.text() == "Kopfzeile ungerader Seiten"
+    b.starte("kopf", 1)
+    b.feld.felder_setzen("Neu gerade", {}); b.speichern()
+    assert e.abschnitt_seite().even_header.text == "Neu gerade" and e.abschnitt_seite().header.text == "Ungerade"
+    b.beende()
+
+
+def test_feld_zeigt_zahl_und_speichert_platzhalter(app, tmp_path):
+    from PySide6.QtCore import Qt
+    w = _fenster(app, tmp_path)
+    e = w.current_editor()
+    pg = e.abschnitt_seite(); pg.footer = HeaderFooter("Seite {PAGE} von {PAGES}", "center")
+    e.page_settings_changed(pg)
+    w.befehle.tun("fusszeileBearbeiten")
+    b = e.kopffuss()
+    assert b.feld.toPlainText() == "Seite 1 von 1"
+    assert b.feld.text_lesen() == "Seite {PAGE} von {PAGES}"
+    # Tippen direkt hinter dem Feld erbt den Feld-Hintergrund nicht
+    c = b.feld.textCursor(); c.movePosition(c.MoveOperation.End); b.feld.setTextCursor(c)
+    QTest.keyClicks(b.feld, "x")
+    assert b.feld.text_lesen() == "Seite {PAGE} von {PAGES}x"
+    QTest.keyClick(b.feld, Qt.Key_Backspace)
+    QTest.keyClick(b.feld, Qt.Key_Backspace)                                # löscht das Feld {PAGES} als Ganzes
+    assert b.feld.text_lesen() == "Seite {PAGE} von "
+    b.speichern()
+    assert e.abschnitt_seite().footer.text == "Seite {PAGE} von"  or e.abschnitt_seite().footer.text == "Seite {PAGE} von "
+    b.beende()

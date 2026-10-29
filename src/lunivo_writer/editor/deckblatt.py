@@ -320,7 +320,7 @@ def einfuegen(ed, name: str, quer: bool = False) -> None:
     rest.watermark = {**(alt.watermark or {}), "abschnitt": True} if alt.watermark else {"abschnitt": True, "deckblatt_leer": True}
     deck = copy.deepcopy(alt)
     deck.set_orientation(quer)
-    for hf in ("header", "footer", "first_header", "first_footer"):
+    for hf in ("header", "footer", "first_header", "first_footer", "even_header", "even_footer"):
         getattr(deck, hf).text = ""
     deck.diff_first = False
     bw, bh = mm_to_px(deck.width_mm), mm_to_px(deck.height_mm)

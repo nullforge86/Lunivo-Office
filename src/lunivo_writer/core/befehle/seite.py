@@ -676,6 +676,26 @@ class SeiteBefehle:
         t.editor.page_settings_changed(pg)
 
 
+    def geradeUngerade(self, k=None):
+        """„Gerade und ungerade Seiten sind unterschiedlich“: gerade Seiten bekommen eine eigene Kopf-/Fußzeile (zuerst eine Kopie der gewöhnlichen)."""
+        t = self.w.current_tab()
+        if not t:
+            return
+        pg = t.editor.abschnitt_seite()
+        pg.diff_even = not pg.diff_even
+        if pg.diff_even and pg.even_header.is_empty() and pg.even_footer.is_empty():
+            pg.even_header = HeaderFooter(pg.header.text, pg.header.align); pg.even_footer = HeaderFooter(pg.footer.text, pg.footer.align)
+        t.editor.page_settings_changed(pg)
+        b = t.editor.kopffuss()
+        if b is not None and b.aktiv:
+            b._laden()
+
+
+    def an_geradeUngerade(self):
+        t = self.w.current_tab()
+        return bool(t and t.editor.abschnitt_seite().diff_even)
+
+
     def an_ersteSeiteAnders(self):
         t = self.w.current_tab()
         return bool(t and t.editor.abschnitt_seite().diff_first)

@@ -127,10 +127,13 @@ class _Writer:
             s.different_first_page_header_footer = True
             paare += [(s.first_page_header, p.first_header, p.kopf_verknuepft, "kopf1"), (s.first_page_footer, p.first_footer, p.fuss_verknuepft, "fuss1")]
         # „außen“/„innen“ brauchen getrennte Kopf-/Fußzeilen für gerade Seiten (w:evenAndOddHeaders gilt für das ganze Dokument)
-        gerade = any(h.align in ("aussen", "innen") for _t, ps in self.abschnitte for h in (ps.header, ps.footer))
+        # „Gerade und ungerade Seiten unterschiedlich“ (diff_even) schreibt die eigenen Zeilen für gerade Seiten
+        gerade = any(h.align in ("aussen", "innen") for _t, ps in self.abschnitte for h in (ps.header, ps.footer)) \
+            or any(ps.diff_even for _t, ps in self.abschnitte)
         if gerade:
             self.d.settings.odd_and_even_pages_header_footer = True
-            paare += [(s.even_page_header, p.header, p.kopf_verknuepft, "kopf", 2), (s.even_page_footer, p.footer, p.fuss_verknuepft, "fuss", 2)]
+            kopf_g, fuss_g = (p.even_header, p.even_footer) if p.diff_even else (p.header, p.footer)
+            paare += [(s.even_page_header, kopf_g, p.kopf_verknuepft, "kopf", 2), (s.even_page_footer, fuss_g, p.fuss_verknuepft, "fuss", 2)]
         for part, hf, verknuepft, ort, *seite in paare:
             if nr > 0 and verknuepft:
                 continue                                            # bleibt „mit vorherigem verknüpft“

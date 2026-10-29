@@ -56,7 +56,7 @@ class KopfFussBefehle:
         m = MenueListe()
         m.eintrag("Kopfzeile entfernen", lambda: self._kf_leeren(("header",)))
         m.eintrag("Fußzeile entfernen", lambda: self._kf_leeren(("footer",)))
-        m.eintrag("Kopf- und Fußzeile entfernen", lambda: self._kf_leeren(("header", "footer", "first_header", "first_footer")))
+        m.eintrag("Kopf- und Fußzeile entfernen", lambda: self._kf_leeren(("header", "footer", "first_header", "first_footer", "even_header", "even_footer")))
         return m
 
 
@@ -147,7 +147,7 @@ class KopfFussBefehle:
 
 
     def kfOptionen(self, k=None):
-        """Seitenleistenfenster: Erste Seite anders; Gerade/ungerade Seiten unterschiedlich (im Modell noch nicht vorhanden → grau)."""
+        """Seitenleistenfenster: Erste Seite anders; Gerade und ungerade Seiten unterschiedlich."""
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
         from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -163,12 +163,14 @@ class KopfFussBefehle:
         d.setWindowTitle("Optionen für Kopf- und Fußzeile")
         v = QVBoxLayout(d)
         erste = QCheckBox("Erste Seite anders"); erste.setChecked(pg.diff_first)
-        gu = QCheckBox("Gerade und ungerade Seiten sind unterschiedlich"); gu.setEnabled(False)
-        gu.setToolTip("In der nativen Fassung noch nicht vorhanden (Ausrichtung „außen/innen“ wechselt schon je Seite).")
+        gu = QCheckBox("Gerade und ungerade Seiten sind unterschiedlich"); gu.setChecked(pg.diff_even)
         v.addWidget(erste); v.addWidget(gu); v.addStretch(1)
         fussleiste(d, v)
-        if ausfuehren(d) and erste.isChecked() != pg.diff_first:
-            self.ersteSeiteAnders()
+        if ausfuehren(d):
+            if erste.isChecked() != pg.diff_first:
+                self.ersteSeiteAnders()
+            if gu.isChecked() != pg.diff_even:
+                self.geradeUngerade()
             b = self._kf()
             if b is not None:
                 b._laden()

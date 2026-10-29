@@ -67,7 +67,7 @@ def seitenzahl_setzen(page: PageSettings, ort: str, ausrichtung: str, muster: st
 def seitenzahlen_entfernen(page: PageSettings) -> bool:
     """Seitenzahl (mit „Seite … von …“) aus Kopf- und Fußzeile entfernen. → ob es eine gab."""
     gab = False
-    for feld in ("header", "footer", "first_header", "first_footer"):
+    for feld in ("header", "footer", "first_header", "first_footer", "even_header", "even_footer"):
         hf = getattr(page, feld)
         if "{PAGE" in hf.text:
             setattr(page, feld, HeaderFooter(_ohne_zahl(hf.text).replace("{PAGES}", "").strip(), hf.align))

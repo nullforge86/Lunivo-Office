@@ -9,7 +9,9 @@ aufbauen“, „Seitenzahlenformat“ und „Seitenzahl löschen“, links das A
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+import re
+
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor, QTextFormat
 from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QLabel, QPlainTextEdit, QToolButton, QWidget, QWidgetAction
 
 from lunivo_writer.editor import seitenzahl as SZ
@@ -17,6 +19,8 @@ from lunivo_writer.models.page import HeaderFooter, mm_to_px
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
+FELD_EIGENSCHAFT = int(QTextFormat.UserProperty) + 1          # in der Zeichenformatierung: "PAGE" oder "PAGES" (das Feld, das die Zahl zeigt)
+_FELDER = re.compile(r"\{(PAGES|PAGE)\}")
 FORMATE = [("dezimal", "1, 2, 3 …"), ("klein", "a, b, c …"), ("gross", "A, B, C …"), ("roem_klein", "i, ii, iii …"), ("roem_gross", "I, II, III …")]
 
 
@@ -29,12 +33,82 @@ class _Feld(QPlainTextEdit):
         self.setFrameShape(QPlainTextEdit.NoFrame)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setAccessibleName("Kopf- und Fußzeile")
-        self.setPlaceholderText("{PAGE} = Seitenzahl, {PAGES} = Seitenanzahl")
+
+    # ---- Felder: {PAGE}/{PAGES} stehen als Zahl mit Hintergrund im Text und werden beim Speichern wieder zu {PAGE}/{PAGES} ----
+    @staticmethod
+    def _feld_format(art: str) -> QTextCharFormat:
+        f = QTextCharFormat()
+        f.setProperty(FELD_EIGENSCHAFT, art)
+        f.setBackground(QColor("#d9d9d9"))
+        return f
+
+    def felder_setzen(self, text: str, zahlen: dict) -> None:
+        """Den Text mit {PAGE}/{PAGES} ins Feld schreiben; die Felder erscheinen als ``zahlen["PAGE"]`` bzw. ``zahlen["PAGES"]``."""
+        self.clear()
+        c = QTextCursor(self.document())
+        for i, zeile in enumerate(text.split("\n")):
+            if i:
+                c.insertBlock()
+            rest = 0
+            for m in _FELDER.finditer(zeile):
+                c.insertText(zeile[rest:m.start()], QTextCharFormat())
+                c.insertText(zahlen.get(m.group(1), m.group(1)), self._feld_format(m.group(1)))
+                rest = m.end()
+            c.insertText(zeile[rest:], QTextCharFormat())
+
+    def text_lesen(self) -> str:
+        """Der Text, in dem jedes Feld wieder als {PAGE}/{PAGES} steht."""
+        zeilen = []
+        b = self.document().begin()
+        while b.isValid():
+            teile = []
+            it = b.begin()
+            while not it.atEnd():
+                fr = it.fragment()
+                art = fr.charFormat().property(FELD_EIGENSCHAFT)
+                teile.append("{" + art + "}" if art else fr.text())
+                it += 1
+            zeilen.append("".join(teile))
+            b = b.next()
+        return "\n".join(zeilen)
+
+    def _feld_bei(self, pos: int):
+        """(Anfang, Ende) des Feldes, das die Zeichen vor/hinter ``pos`` berührt, sonst None — getrennt nach 'davor' und 'dahinter'."""
+        c = QTextCursor(self.document())
+        res = {}
+        for seite, p in (("davor", pos - 1), ("dahinter", pos)):
+            if p < 0 or p >= self.document().characterCount() - 1:
+                continue
+            c.setPosition(p); c.setPosition(p + 1, QTextCursor.KeepAnchor)
+            if c.charFormat().property(FELD_EIGENSCHAFT):
+                b = self.document().findBlock(p)
+                a = e = None
+                it = b.begin()
+                while not it.atEnd():
+                    fr = it.fragment()
+                    if fr.position() <= p < fr.position() + fr.length():
+                        a, e = fr.position(), fr.position() + fr.length()
+                        break
+                    it += 1
+                res[seite] = (a, e)
+        return res
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
             self.schliessen.emit()
             return
+        c = self.textCursor()
+        if e.key() in (Qt.Key_Backspace, Qt.Key_Delete) and not c.hasSelection():
+            f = self._feld_bei(c.position()).get("davor" if e.key() == Qt.Key_Backspace else "dahinter")
+            if f:                                                     # das Feld ganz löschen
+                c.setPosition(f[0]); c.setPosition(f[1], QTextCursor.KeepAnchor); c.removeSelectedText()
+                self.setCurrentCharFormat(QTextCharFormat())
+                return
+        elif e.text() and e.text().isprintable() and not (e.modifiers() & (Qt.ControlModifier | Qt.AltModifier)) and not c.hasSelection():
+            nah = self._feld_bei(c.position())
+            if "davor" in nah and "dahinter" in nah and nah["davor"] == nah["dahinter"]:     # mitten im Feld: dahinter schreiben
+                c.setPosition(nah["davor"][1]); self.setTextCursor(c)
+            self.setCurrentCharFormat(QTextCharFormat())              # Tippen neben dem Feld erbt dessen Hintergrund nicht
         super().keyPressEvent(e)
 
     def paintEvent(self, e):
@@ -138,9 +212,19 @@ class KopfFussBearbeiter(QObject):
         except Exception:
             return 0
 
+    def _art(self, page) -> str:
+        """"first", "even" oder "": welche Kopf-/Fußzeile das Blatt trägt (siehe ``PageSettings.kopf_fuss_art``)."""
+        return page.kopf_fuss_art(self.blatt + 1, SZ.erste_nummer(page) + self.blatt)
+
     def _name(self, page) -> str:
-        erste = self.blatt == 0 and page.diff_first
-        return ("first_" if erste else "") + ("header" if self.zone == "kopf" else "footer")
+        art = self._art(page)
+        return (art + "_" if art else "") + ("header" if self.zone == "kopf" else "footer")
+
+    def _etikett(self, page) -> str:
+        name = "Kopfzeile" if self.zone == "kopf" else "Fußzeile"
+        if page.diff_even:
+            return f"{name} {'gerader' if self._art(page) == 'even' else 'ungerader'} Seiten"
+        return name
 
     def hf(self, page=None) -> HeaderFooter:
         page = page or self.ed.abschnitt_seite()
@@ -150,10 +234,11 @@ class KopfFussBearbeiter(QObject):
         page = self.ed.abschnitt_seite()
         hf = self.hf(page)
         self._laedt = True
-        self.feld.setPlainText(hf.text)
+        n = SZ.erste_nummer(page) + self.blatt
+        self.feld.felder_setzen(hf.text, {"PAGE": SZ.nummer(n, page), "PAGES": str(max(1, int(getattr(self.ed, "_pages", 1) or 1)))})
         self._laedt = False
         self._ausrichten(hf.align)
-        self.leiste.etikett.setText("Kopfzeile" if self.zone == "kopf" else "Fußzeile")
+        self.leiste.etikett.setText(self._etikett(page))
         self.leiste.etikett.setAccessibleName(self.leiste.etikett.text())
 
     def _ausrichten(self, align: str) -> None:
@@ -174,7 +259,7 @@ class KopfFussBearbeiter(QObject):
             return
         page = self.ed.abschnitt_seite()
         hf = self.hf(page)
-        text = self.feld.toPlainText().strip("\n")
+        text = self.feld.text_lesen().strip("\n")
         if text == hf.text:
             return
         setattr(page, self._name(page), HeaderFooter(text, hf.align))
