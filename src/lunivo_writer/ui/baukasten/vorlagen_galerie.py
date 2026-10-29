@@ -258,8 +258,8 @@ class VorlagenGalerie(QWidget):
         if self._rubrik is not None:
             return [k for k in self.rubriken.get(self._rubrik, {}).get("kacheln", []) if text in k.name.lower()]
         wahl = {"geruest": ("geruest", "gemischt"), "eigene": ("eigene", "gemischt")}[self._reiter]
-        if text:
-            return [k for k in self.suche_alle if text in k.name.lower() and k.gruppe in wahl]
+        if text:                                            # die Reiter sind beim Suchen ausgeblendet: die Suche gilt für alle Vorlagen, auch in Rubriken
+            return [k for k in self.suche_alle if text in k.name.lower()]
         return [k for k in self._kacheln if k.gruppe in wahl]
 
     def _anordnen(self, *_a) -> None:

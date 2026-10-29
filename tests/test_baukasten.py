@@ -1207,11 +1207,11 @@ def test_vorlagen_galerie_zeigt_eigene_vorlagen(app, tmp_path):
     (tmp_path / "Mein Brief.txt").write_text("Hallo\nVorlage\n", encoding="utf-8")
     g = VorlagenGalerie(s, True); g.resize(1200, 800); g.show()
     namen = [k.name for k in g._kacheln]
-    assert namen[0] == "Leeres Dokument" and "Mein Brief" in namen and "Brief" in namen
-    assert g.reiter_w.tabText(2).endswith("1")
-    g._reiter_setzen("eigene"); assert [k.name for k in g._kacheln if k.isVisible()] == ["Mein Brief"]
+    assert "Mein Brief" in namen and "Brief" in namen        # „Leeres Dokument“ ist keine Kachel der Vorlagen mehr (eigene Auswahl auf der Seite „Neu“)
+    assert g.reiter_w.tabText(1).endswith("1")                # Reiter „Meine Vorlagen  1“ (es gibt zwei Reiter)
+    g._reiter_setzen("eigene"); app.processEvents(); assert [k.name for k in g._kacheln if k.isVisible()] == ["Mein Brief"]
     g.suche.setText("xyz"); assert not [k for k in g._kacheln if k.isVisible()]
-    g.suche.setText(""); g._reiter_setzen("alle")
+    g.suche.setText(""); g._reiter_setzen("eigene")                # es gibt nur noch „Standardvorlagen“ und „Meine Vorlagen“
     gewaehlt = []
     g.gewaehlt.connect(lambda a, w: gewaehlt.append((a, w)))
     next(k for k in g._kacheln if k.name == "Mein Brief").click()
