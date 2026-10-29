@@ -151,3 +151,18 @@ def test_fussfeld_tippen_wechseln_und_leiste_zieht_mit(app, tmp_path):
     assert b.zone == "fuss" and fuss.hasFocus() and b.leiste.y() < fuss.geometry().top()
     b.beende()
     assert not fuss.isVisible() and not b.etiketten["fuss"].isVisible()
+
+
+def test_leiste_ragt_nie_ueber_den_blattrand(app, tmp_path):
+    w = _fenster(app, tmp_path)
+    e = w.current_editor()
+    pg = e.abschnitt_seite(); pg.header = HeaderFooter("{PAGE}", "right"); e.page_settings_changed(pg)
+    w.befehle.tun("kopfFussZeigen")
+    b = e.kopffuss()
+    for zoom in (0.6, 0.8, 1.0):
+        e.set_zoom(zoom); app.processEvents(); b._platzieren()
+        blatt = e._blatt(b.blatt)
+        g = b.leiste.geometry()
+        assert blatt["x"] <= g.left() and g.right() <= blatt["x"] + blatt["W"], zoom
+        assert all(b.leiste.rect().contains(k.geometry()) for k in b.leiste.knopf.values() if not k.isHidden()), zoom
+    b.beende()
