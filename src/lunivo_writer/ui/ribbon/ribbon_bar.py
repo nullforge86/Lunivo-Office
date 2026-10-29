@@ -357,8 +357,23 @@ class RegisterBand(QWidget):
     def _knoepfe_geordnet(self, g: dict, inhalt: QHBoxLayout):
         """Knöpfe in der Reihenfolge der Liste: große stehen allein, aufeinanderfolgende kleine bilden eine Spalte aus zwei Zeilen."""
         lauf: list[dict] = []
+        felder: list = []                                     # aufeinanderfolgende Eingabefelder stehen übereinander (wie die Kleinknöpfe)
 
-        def spalte():
+        def feldspalte():
+            if felder:
+                host = QWidget()
+                v = QVBoxLayout(host)
+                v.setContentsMargins(0, 0, 0, 0)
+                v.setSpacing(1)
+                for w in felder:
+                    v.addWidget(w)
+                v.addStretch(1)
+                inhalt.addWidget(host, 0, Qt.AlignTop)
+                felder.clear()
+
+        def spalte(felder_behalten=False):
+            if not felder_behalten:
+                feldspalte()
             for i in range(0, len(lauf), 2):                    # je Spalte zwei Zeilen
                 host = QWidget()
                 v = QVBoxLayout(host)
@@ -371,15 +386,16 @@ class RegisterBand(QWidget):
             lauf.clear()
         for e in g["knoepfe"]:
             if e.get("feld"):                                     # ein Eingabefeld, das der Befehls-Baustein liefert (band_feld)
-                spalte()
+                spalte(felder_behalten=True)
                 w = self.b.band_feld(e["feld"])
                 if w is not None:
                     self.felder[e["feld"]] = w
-                    inhalt.addWidget(w, 0, Qt.AlignVCenter)
+                    felder.append(w)
             elif e.get("gross"):
                 spalte()
                 inhalt.addWidget(self._knopf(e, True))
             else:
+                feldspalte()
                 lauf.append(e)
         spalte()
 

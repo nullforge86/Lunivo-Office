@@ -27,3 +27,16 @@ def test_kontext_reiter_ist_abgesetzt(app):
     band.kontext("kopffuss", True)
     breit = band.reiter.tabSizeHint(i).width()
     assert breit >= band.reiter.fontMetrics().horizontalAdvance("Kopf- und Fußzeile") + 2 * band.reiter.LUECKE
+
+
+def test_hoehenfelder_beschriftet_und_nicht_null(app):
+    from PySide6.QtWidgets import QLabel
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow()
+    w.new_document()
+    w.befehle.tun("kopfFussZeigen")
+    for schl, text in (("kopfHoehe", "Kopfzeilenhöhe:"), ("fussHoehe", "Fußzeilenhöhe:")):
+        f = w.band.felder[schl]; f.neu_laden()
+        assert text in [l.text() for l in f.findChildren(QLabel)]
+        assert f.feld.feld.value() != 0
+        assert "," in f.feld.feld.text() and f.feld.feld.text().endswith("mm")
