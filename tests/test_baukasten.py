@@ -1026,7 +1026,8 @@ def test_texteffekte_knopf_im_band_oeffnet_die_seitenleiste(app, tmp_path):
     from lunivo_writer.ui.main_window import MainWindow
     w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
     w.show(); w.new_document(); w.current_editor().setPlainText("Text")
-    knoepfe = [b for b in w.findChildren(QToolButton) if b.toolTip() in ("Texteffekte", "Texteffekte formatieren")]
+    # Es gibt zwei Knöpfe mit diesem Namen; der unsichtbare öffnet nur sein Menü (das blockiert im Test). Gemeint ist der sichtbare im Band.
+    knoepfe = [b for b in w.findChildren(QToolButton) if b.toolTip() in ("Texteffekte", "Texteffekte formatieren") and b.isVisible()]
     assert knoepfe, "der Knopf „Texteffekte“ fehlt im Band"
     w.sidebar.hide()
     knoepfe[0].click()
@@ -1451,7 +1452,8 @@ def test_objekt_menues_und_bildformat_roundtrip(app, tmp_path):
     from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue, KonturMenue, formstil_werte, formstile
     assert len(formstile().knoepfe) == 42 and formstil_werte("z12")["fuell"]["art"] == "farbe"
     f, k = FuellMenue(), KonturMenue()
-    assert [a.text() for a in f.actions() if not a.menu()][-5:] == ["Graduell", "Textur", "Muster(N)", "Fülleffekte…", "Bild(P)"] and any(a.text() == "Bild(P)" for a in f.actions())
+    # Graduell, Textur und Muster sind Untermenüs mit Kacheln (mit „Weitere …“ darunter); „Fülleffekte…“ gibt es nicht mehr als eigene Zeile
+    assert [a.text() for a in f.actions() if a.text()][-4:] == ["Graduell", "Textur", "Muster(N)", "Bild(P)"] and any(a.text() == "Bild(P)" for a in f.actions())
     assert [a.text() for a in k.actions() if a.menu()] == ["Linienart(W)", "Strichart", "Pfeilart"]
     from lunivo_writer.ui.document.document_editor import DocumentEditor
     ed = DocumentEditor(); ed.resize(900, 700); ed.show(); ed.setPlainText("Text")
@@ -1530,8 +1532,11 @@ def test_fuelleffekte_graduell_textur_muster_oeffnen_die_seitenleiste(app, tmp_p
                                                           "hinter": False, "ellipse": False, "ah": "", "av": ""})
     ed._frei_liste(); ed._frei_sel = ("t", 0, 0)
     m = ed.frei_fuell_menue(ed)
-    for text, radio in (("Textur", "r_textur"), ("Muster(N)", "r_muster"), ("Graduell", "r_verlauf")):
-        next(a for a in m.actions() if a.text() == text).trigger()
+    from PySide6.QtWidgets import QPushButton
+    for text, radio, weitere in (("Textur", "r_textur", "Weitere Texturen…"), ("Muster(N)", "r_muster", "Weitere Muster…"),
+                                 ("Graduell", "r_verlauf", "Weitere Farbverläufe…")):
+        untermenue = next(a for a in m.actions() if a.text() == text).menu()      # Untermenü mit Kacheln; „Weitere …“ öffnet die Seitenleiste
+        next(b for b in untermenue.findChildren(QPushButton) if b.text() == weitere).click()
         assert w.sidebar.objektformat_sichtbar() and getattr(w.sidebar.objekt_panel, radio).isChecked()
         app.processEvents()
         assert FB.aus_absatz(ed.document().firstBlock().blockFormat())[0]["fuell"]["art"] in ("textur", "muster", "graduell", "verlauf")
