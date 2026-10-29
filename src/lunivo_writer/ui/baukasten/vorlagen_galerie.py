@@ -1,4 +1,4 @@
-"""Die Seite „Neu“: alle Vorlagen als Blätter mit kleiner Vorschau, darüber Reiter (Alle · Mitgeliefert · Meine Vorlagen) und ein Suchfeld.
+"""Die Seite „Neu“: leeres Dokument direkt starten oder Standard- und eigene Vorlagen getrennt durchsuchen.
 
     g = VorlagenGalerie(settings, kann_speichern=True)
     g.gewaehlt.connect(lambda art, wert: ...)      # art: "leer" | "geruest" (wert = Muster) | "datei" (wert = Pfad)
@@ -97,7 +97,7 @@ class VorlagenGalerie(QWidget):
     def __init__(self, settings, kann_speichern: bool, benutzer: dict | None = None, parent=None):
         super().__init__(parent)
         self.settings, self._benutzer = settings, benutzer or {}
-        self._reiter, self._rubrik = "alle", None
+        self._reiter, self._rubrik = "geruest", None
         self._offen: list[_Kachel] = []
         v = QVBoxLayout(self); v.setContentsMargins(36, 28, 36, 0); v.setSpacing(10)
         kopf = QHBoxLayout(); kopf.setSpacing(10)
@@ -105,13 +105,20 @@ class VorlagenGalerie(QWidget):
         self.zurueck.clicked.connect(lambda: self.rubrik_oeffnen(None)); kopf.addWidget(self.zurueck)
         self.titel = QLabel("Neu"); f = self.titel.font(); f.setPointSizeF(f.pointSizeF() + 8); f.setBold(True); self.titel.setFont(f)
         kopf.addWidget(self.titel); kopf.addStretch(1)
-        self.neue_rubrik = QPushButton("Neue Rubrik …"); self.neue_rubrik.clicked.connect(self._rubrik_anlegen); kopf.addWidget(self.neue_rubrik)
+        self.leer_knopf = QPushButton("Neues leeres Dokument")
+        self.leer_knopf.setIcon(icons.icon("file-plus", 18)); self.leer_knopf.setIconSize(QSize(18, 18))
+        self.leer_knopf.setMinimumHeight(34)
+        self.leer_knopf.clicked.connect(lambda: self.gewaehlt.emit("leer", None))
+        kopf.addWidget(self.leer_knopf)
+        self.neue_rubrik = QPushButton("Neue Rubrik …")
+        self.neue_rubrik.clicked.connect(self._rubrik_anlegen)
+        kopf.addWidget(self.neue_rubrik)
         v.addLayout(kopf)
         self.reiter_w = QTabBar(); self.reiter_w.setObjectName("bandReiter")            # dieselbe Gestalt wie die Register des Bandes
         self.reiter_w.setDrawBase(False); self.reiter_w.setExpanding(False); self.reiter_w.setCursor(Qt.PointingHandCursor)
         self.reiter_w.setFocusPolicy(Qt.NoFocus)
-        self._schluessel = ("alle", "geruest", "eigene")
-        for text in ("Alle", "Mitgeliefert", "Meine Vorlagen"):
+        self._schluessel = ("geruest", "eigene")
+        for text in ("Standardvorlagen", "Meine Vorlagen"):
             self.reiter_w.addTab(text)
         self.reiter_w.currentChanged.connect(lambda i: self._reiter_setzen(self._schluessel[i]))
         v.addWidget(self.reiter_w, 0, Qt.AlignLeft)
@@ -134,13 +141,14 @@ class VorlagenGalerie(QWidget):
         oeffnen = QPushButton("Vorlagenordner öffnen"); oeffnen.clicked.connect(self._ordner_oeffnen)
         for k in (self.speichern, waehlen, oeffnen):
             k.setMinimumHeight(32); fuss.addWidget(k)
+        self.vorlagen_aktionen = (self.speichern, waehlen, oeffnen)
         v.addLayout(fuss)
 
         self._kacheln: list[_Kachel] = []
         self._timer = QTimer(self); self._timer.setInterval(15); self._timer.timeout.connect(self._naechstes_bild)
         self._daten_lesen()
         self._bauen()
-        self._reiter_setzen("alle")
+        self._reiter_setzen("geruest")
 
     # ---- Daten: Rubriken aus Gerüsten und Unterordnern ---------------------------------------------------------------------
     def _daten_lesen(self) -> None:
@@ -183,8 +191,6 @@ class VorlagenGalerie(QWidget):
             k.deleteLater()
         self._kacheln = []
         self.suche_alle: list[_Kachel] = []                 # alle Vorlagen flach (für die Suche)
-        leer = _Kachel("Leeres Dokument", "leer", None, ("leer",)); leer.clicked.connect(lambda: self.gewaehlt.emit("leer", None))
-        self._kacheln.append(leer)
         n_g = n_e = 0
         for name, r in self.rubriken.items():
             n = len(r["geruest"]) + len(r["dateien"])
@@ -198,9 +204,9 @@ class VorlagenGalerie(QWidget):
             self.suche_alle += r["kacheln"]
         for p in self.lose:
             k = self._datei_kachel(p); self._kacheln.append(k); self.suche_alle.append(k); n_e += 1
-        for i, text in enumerate((f"Alle  {len(self.rubriken) + len(self.lose) + 1}", f"Mitgeliefert  {n_g}", f"Meine Vorlagen  {n_e}")):
+        for i, text in enumerate((f"Standardvorlagen  {n_g}", f"Meine Vorlagen  {n_e}")):
             self.reiter_w.setTabText(i, text)
-        self._offen = [k for k in self._kacheln + self.suche_alle if k.art != "leer"]
+        self._offen = self._kacheln + self.suche_alle
         self._timer.start()
 
     def _naechstes_bild(self) -> None:
@@ -239,6 +245,10 @@ class VorlagenGalerie(QWidget):
 
     def _reiter_setzen(self, schl: str) -> None:
         self._reiter = schl
+        eigene = schl == "eigene"
+        self.neue_rubrik.setVisible(eigene)
+        for knopf in self.vorlagen_aktionen:
+            knopf.setVisible(eigene)
         i = self._schluessel.index(schl)
         if self.reiter_w.currentIndex() != i:
             self.reiter_w.setCurrentIndex(i)
@@ -249,10 +259,10 @@ class VorlagenGalerie(QWidget):
         text = self.suche.text().strip().lower()
         if self._rubrik is not None:
             return [k for k in self.rubriken.get(self._rubrik, {}).get("kacheln", []) if text in k.name.lower()]
-        if text:                                                  # Suche im Überblick: alle Vorlagen, auch die in Rubriken
-            return [k for k in self.suche_alle if text in k.name.lower()]
-        wahl = {"alle": ("geruest", "eigene", "gemischt"), "geruest": ("geruest", "gemischt"), "eigene": ("eigene", "gemischt")}[self._reiter]
-        return [k for k in self._kacheln if (k.art == "leer" and self._reiter == "alle") or (k.art != "leer" and k.gruppe in wahl)]
+        wahl = {"geruest": ("geruest", "gemischt"), "eigene": ("eigene", "gemischt")}[self._reiter]
+        if text:
+            return [k for k in self.suche_alle if text in k.name.lower() and k.gruppe in wahl]
+        return [k for k in self._kacheln if k.gruppe in wahl]
 
     def _anordnen(self, *_a) -> None:
         sicht = self._sichtbar()
@@ -266,7 +276,7 @@ class VorlagenGalerie(QWidget):
             self.raster.addWidget(k, i // spalten, i % spalten)
         in_rubrik = self._rubrik is not None
         self.zurueck.setVisible(in_rubrik); self.reiter_w.setVisible(not in_rubrik and not self.suche.text().strip())
-        self.neue_rubrik.setVisible(not in_rubrik)
+        self.neue_rubrik.setVisible(not in_rubrik and self._reiter == "eigene")
         self.titel.setText(self._rubrik if in_rubrik else "Neu")
         if sicht:
             self.leer.clear()
