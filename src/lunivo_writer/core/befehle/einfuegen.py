@@ -755,7 +755,7 @@ class EinfuegenBefehle:
         from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=8, groesse=QSize(40, 40))
+        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=9, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
             img = E.wordart_bild("A", vorlage=i, pt=80)
             pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)

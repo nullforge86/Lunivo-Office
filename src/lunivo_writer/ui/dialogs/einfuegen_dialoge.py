@@ -456,7 +456,7 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.liste.currentItemChanged.connect(lambda *_: self._zeigen())
         self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.liste.setWordWrap(True)
         self.liste.setTextElideMode(Qt.ElideNone); self.liste.setVerticalScrollMode(QListWidget.ScrollPerPixel)
-        self.liste.setMinimumHeight(150)
+        self.liste.setMinimumHeight(200)
         v.addWidget(self.liste, 3)
         v.addWidget(abschnittstitel("Vorschau"))
         self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
