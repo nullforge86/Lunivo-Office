@@ -14,7 +14,11 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetricsF, QImage, QLinear
 from lunivo_writer.editor import freie_bilder as FB
 from lunivo_writer.editor.mehrstufig import nummer_text
 
-ARTEN = ("wordart", "textfeld")
+ARTEN = ("wordart", "textfeld", "form")
+FORM_STANDARD = {"form": "Rechteck", "fuell": {"art": "farbe", "farbe": "#4a8fd8"}, "rand": {"b": 2.0, "farbe": "#1f3864", "art": "einfach"}, "text": ""}
+FORM_MASS = (95, 95)                                                 # Standardgröße wie in WPS: etwa 2,5 cm
+ZEICHENBEREICH_DATEN = {"form": "Rechteck", "fuell": None, "rand": {"b": 1.0, "farbe": "#adb5bd", "art": "gestrichelt"}, "text": "", "kinder": []}
+ZB_VERSATZ = 24                                                      # jede neue Form im Zeichenbereich etwas rechts unterhalb der vorigen
 TEXTFELD_STANDARD = {"text": "", "schrift": "Liberation Sans", "pt": 11, "farbe": "#1f1f1f"}
 TEXTFELD_FUELL = {"art": "farbe", "farbe": "#ffffff"}
 TEXTFELD_RAND = {"b": 1.5, "farbe": "#1f3864", "art": "einfach"}
@@ -416,13 +420,90 @@ def textfeld_zeichnen(d: dict, b: float, h: float) -> QImage:
     return richtung_anwenden(img, richt, bander)
 
 
+def form_stil(d: dict) -> tuple[dict | None, dict | None]:
+    """(Füllung, Kontur) einer Form als Wörterbücher wie bei den anderen freien Objekten (siehe ``freie_bilder.fuell_pinsel``/``_stift``)."""
+    f = d.get("fuell")
+    return ({"art": "farbe", "farbe": f} if isinstance(f, str) and f else (f or None)), (d.get("rand") or None)
+
+
+def form_zeichnen(d: dict, b: float, h: float) -> QImage:
+    """Die Form (Galerie ``editor/formen_katalog.py``) in b × h Bildpunkten mit Füllung (Farbe, Verlauf, Muster, Textur), Kontur samt Strichart und
+    Text; ein Zeichenbereich (``kinder``) zeichnet seine Formen hinein."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QPainter
+    from lunivo_writer.editor import formen_katalog as K
+    b, h = max(2, int(round(b))), max(2, int(round(h)))
+    img = QImage(b, h, QImage.Format_ARGB32_Premultiplied); img.fill(0)
+    fuell, rand = form_stil(d)
+    name = d.get("form", "Rechteck")
+    p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+    m = (float(rand.get("b", 1.0)) if rand else 0.0) / 2 + 1
+    r = QRectF(m, m, b - 2 * m, h - 2 * m)
+    if K.hat(name):
+        pen = FB._stift(rand) if rand else Qt.NoPen
+        pen.setJoinStyle(Qt.RoundJoin) if rand else None
+        p.setPen(pen)
+        pinsel = None if K.ist_linie(name) else FB.fuell_pinsel(fuell, r)
+        p.setBrush(pinsel if pinsel is not None else Qt.NoBrush)
+        p.drawPath(K.pfad(name, r))
+    else:                                                            # ältere Namen (Textfeld, Sprechblase …): wie bisher
+        p.end()
+        from lunivo_writer.editor import einfuegen as E
+        img = E.form_bild(name, b, h, (fuell or {}).get("farbe", ""), (rand or {}).get("farbe", "#00000000"), float((rand or {}).get("b", 2.0)), "")
+        p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+    for k in d.get("kinder", []):
+        kd = {x: y for x, y in k.items() if x not in ("x", "y", "breite", "hoehe")}
+        p.drawImage(int(k["x"]), int(k["y"]), form_zeichnen(kd, k["breite"], k["hoehe"]))
+    if d.get("text"):
+        hell = fuell and fuell.get("art", "farbe") == "farbe" and QColor(fuell["farbe"]).lightness() < 140
+        p.setPen(QColor("#ffffff" if hell else "#000000")); f = p.font(); f.setPointSizeF(12); p.setFont(f)
+        p.drawText(r, Qt.AlignCenter | Qt.TextWordWrap, d["text"])
+    p.end()
+    return img
+
+
 def zeichnen(art: str, d: dict, b: float = 0, h: float = 0) -> QImage:
+    if art == "form":
+        return form_zeichnen(d, b, h)
     return wordart_zeichnen(d) if art == "wordart" else textfeld_zeichnen(d, b, h)
 
 
 def _anzeige_mass(art: str, img: QImage, b: float, h: float) -> tuple[float, float]:
     """Größe auf dem Blatt in Bildpunkten: WordArt aus dem Bild (ohne Überbreite), Textfeld wie vorgegeben."""
     return (img.width() / _SS, img.height() / _SS) if art == "wordart" else (b, h)
+
+
+def form_einfuegen(ed, name: str, b: float = 0, h: float = 0, **daten) -> tuple | None:
+    """Einfügen ▸ Formen: ist ein Zeichenbereich ausgewählt, kommt die Form hinein; sonst als freies Objekt in Standardgröße (wie ein Klick in WPS),
+    ausgewählt, mit Griffen."""
+    if not (b or h or daten) and in_zeichenbereich(ed, name):
+        return ed._frei_sel
+    return einfuegen(ed, "form", dict(FORM_STANDARD, form=name, **daten), b or FORM_MASS[0], h or FORM_MASS[1])
+
+
+def zeichenbereich_einfuegen(ed) -> tuple | None:
+    """Einfügen ▸ Formen ▸ Neuer Zeichenbereich: freies Objekt (15 × 8 cm) ohne Füllung mit gestricheltem grauem Rand, das Formen aufnimmt."""
+    from lunivo_writer.editor import formen as F
+    return einfuegen(ed, "form", {**ZEICHENBEREICH_DATEN, "kinder": []}, min(F.ZEICHENBEREICH[0], ed.page.content_width_px), F.ZEICHENBEREICH[1])
+
+
+def ist_zeichenbereich(ed) -> bool:
+    d = daten_lesen(ed, "form")
+    return d is not None and "kinder" in d
+
+
+def in_zeichenbereich(ed, name: str) -> bool:
+    """Form in den ausgewählten Zeichenbereich setzen (sie bewegt sich mit ihm); False, wenn keiner ausgewählt ist."""
+    from lunivo_writer.editor import formen_katalog as K
+    z = ziel(ed)
+    if z is None or z[0] != "form" or "kinder" not in z[1]:
+        return False
+    d, a = z[1], z[3]
+    kinder = list(d["kinder"]); n = len(kinder)
+    kb, kh = (min(FORM_MASS[0], a["b"] - 16), min(FORM_MASS[1], a["h"] - 16))
+    x = 8 + (n * ZB_VERSATZ) % max(1, int(a["b"] - kb - 16)); y = 8 + (n * ZB_VERSATZ) % max(1, int(a["h"] - kh - 16))
+    kinder.append(dict(FORM_STANDARD, form=name, x=x, y=y, breite=kb, hoehe=kh))
+    return _aendern_innen(ed, "form", kinder=kinder)
 
 
 # ---- Einfügen -----------------------------------------------------------------------------------------------------------
@@ -507,6 +588,8 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
     if z is None or z[0] != art:
         return False
     _art, d, key, a, bild = z
+    if art == "form":
+        return _form_aendern(ed, d, key, a, kw)
     neu = dict(a)
     b, h = float(a["b"]), float(a["h"])
     if kw.get("vorlage") is not None:                                # eine Vorlage setzt Füllung, Kontur und Effekt neu
@@ -561,12 +644,63 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
     return True
 
 
+def _form_neu_zeichnen(ed, neu: dict, d: dict) -> dict:
+    n = FB.neuer_name(ed.document())
+    ed.document().addResource(QTextDocument.ImageResource, QUrl(n), form_zeichnen(d, neu["b"], neu["h"]))
+    neu["n"], neu["daten"] = n, d
+    return neu
+
+
+def _form_aendern(ed, d: dict, key, a: dict, kw: dict) -> bool:
+    """Form ändern: ``form`` (Art der Form), ``text``, ``fuell``, ``rand``, ``kinder`` gehören zu ``daten``; ``form_fuell``/``form_linie`` (Farbe),
+    ``form_strich`` (pt)/``form_effekt`` wie bei den anderen freien Objekten; ``breite``/``hoehe`` ändern die Größe."""
+    from lunivo_writer.editor import bildlayout as BL
+    neu = dict(a)
+    for k, v in kw.items():
+        if k == "breite":
+            neu["b"] = float(v)
+        elif k == "hoehe":
+            neu["h"] = float(v)
+        elif k == "form_fuell":
+            d["fuell"] = {"art": "farbe", "farbe": v} if v else None
+        elif k == "form_linie":
+            d["rand"] = {**(form_stil(d)[1] or FORM_STANDARD["rand"]), "farbe": v} if v else None
+        elif k == "form_strich":
+            d["rand"] = {**(form_stil(d)[1] or FORM_STANDARD["rand"]), "b": float(v) * 96 / 72}
+        elif k == "form_effekt":
+            if v:
+                neu["fx"] = v
+            else:
+                neu.pop("fx", None)
+        elif v is not None:
+            d[k] = v
+    BL._speichern_frei(ed, key, _form_neu_zeichnen(ed, neu, d))
+    return True
+
+
+def form_format_uebernehmen(neu: dict, ed) -> dict:
+    """Füllung und Kontur aus den allgemeinen Menüs (``bildlayout.format_setzen``): bei einer Form gehören sie in ``daten`` (die Form wird mit Verlauf,
+    Muster, Textur und Strichart neu gezeichnet), nicht als Rechteck hinter das Bild."""
+    d = dict(neu.get("daten", {}))
+    if "fuell" in neu:
+        d["fuell"] = neu.pop("fuell")
+    if "rand" in neu:
+        d["rand"] = neu.pop("rand")
+    return _form_neu_zeichnen(ed, neu, d)
+
+
+def form_format_lesen(a: dict) -> tuple[dict | None, dict | None]:
+    return form_stil(a.get("daten", {}))
+
+
 def nach_groesse(ed, neu: dict) -> dict:
-    """Nach dem Ziehen der Griffe: ein Textfeld wird in der neuen Größe frisch gesetzt (Zeilenumbruch folgt der Breite)."""
+    """Nach dem Ziehen der Griffe: eine Form wird in der neuen Größe frisch gezeichnet, ein Textfeld in der neuen Größe frisch gesetzt (Zeilenumbruch folgt der Breite)."""
     if neu.get("art") == "textfeld" and neu.get("n"):
         n = FB.neuer_name(ed.document())
         ed.document().addResource(QTextDocument.ImageResource, QUrl(n), textfeld_zeichnen(neu.get("daten", {}), neu["b"], neu["h"]))
         neu = dict(neu, n=n)
+    elif neu.get("art") == "form" and neu.get("n"):
+        neu = _form_neu_zeichnen(ed, dict(neu), dict(neu.get("daten", {})))
     return neu
 
 

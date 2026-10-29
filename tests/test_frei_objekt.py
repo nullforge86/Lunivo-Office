@@ -414,3 +414,66 @@ def test_oeffnen_verteilt_den_text_der_kette(fenster, tmp_path):
     felder = dict(FO._textfelder(neu))
     gezeigt = [x["daten"].get("gezeigt") for x in felder.values()]
     assert len(felder) == 2 and all(gezeigt) and " ".join(gezeigt).split() == [f"Wort{i}" for i in range(60)]
+
+
+def test_form_als_freies_objekt(fenster):
+    """Einfügen ▸ Formen: Klick = freies Objekt in Standardgröße (~2,5 cm), ausgewählt, ohne Seitenleiste und ohne Markier-Block im Text."""
+    from PySide6.QtGui import QColor
+    ed = _ed(fenster)
+    FO.form_einfuegen(ed, "Fünfeck")
+    assert FO.art_gewaehlt(ed) == "form" and not ed._bild_cursor() and not ed.textCursor().hasSelection()
+    a = FO.ziel(ed)[3]
+    assert (a["b"], a["h"]) == FO.FORM_MASS and a["daten"]["form"] == "Fünfeck"
+    assert set(ed._frei_knopf_rects(_rect(ed))) >= {"layout", "formstile", "fuell", "kontur"}
+    m = ed.frei_fuell_menue(ed); m.gewaehlt.emit(QColor("#ff0000"))                    # Füllung wirkt auf die Form selbst, nicht als Rechteck dahinter
+    a = FO.ziel(ed)[3]
+    assert a["daten"]["fuell"]["farbe"].lower() == "#ffff0000" and not a.get("fuell")
+    k = ed.frei_kontur_menue(ed); k.breite_gewaehlt.emit(3.0); k.strich_gewaehlt.emit("gestrichelt")
+    assert abs(FO.ziel(ed)[3]["daten"]["rand"]["b"] - 4.0) < 0.01 and FO.ziel(ed)[3]["daten"]["rand"]["art"] == "gestrichelt"
+    m.verlauf_gewaehlt.emit(QColor("#1971c2")); img = FO.ziel(ed)[4]                      # Verlauf: oben heller als unten
+    assert img.pixelColor(img.width() // 2, int(img.height() * 0.35)).lightness() > img.pixelColor(img.width() // 2, int(img.height() * 0.85)).lightness()
+    assert FO.aendern(ed, "form", text="Hallo", breite=190.0) and FO.ziel(ed)[3]["b"] == 190.0 and FO.daten_lesen(ed, "form")["text"] == "Hallo"
+    assert FO.aendern(ed, "form", form_effekt={"schatten": {"farbe": "#000000"}}) and FO.ziel(ed)[3].get("fx")
+
+
+def test_neuer_zeichenbereich_ohne_blaue_toenung(fenster):
+    ed = _ed(fenster)
+    fenster.befehle.zeichenbereich(None)
+    assert FO.art_gewaehlt(ed) == "form" and not FO.daten_lesen(ed, "form")["fuell"] and FO.ist_zeichenbereich(ed)
+    img = FO.ziel(ed)[4]
+    assert img.pixelColor(img.width() // 2, img.height() // 2).alpha() == 0           # innen durchsichtig
+
+
+def test_formen_klappe_galerie_und_klick(fenster):
+    from lunivo_writer.editor import formen_katalog as K
+    ed = _ed(fenster)
+    m = fenster.befehle.menue_formenKlappe()
+    assert [g for g, _f in K.KATEGORIEN] == ["Linie", "Rechteck", "Standardformen", "Blockpfeile", "Formelformen", "Flussdiagramm", "Sterne und Banner",
+                                              "Legenden"] or len(K.KATEGORIEN) >= 7
+    m.gewaehlt.emit("Ellipse")
+    assert FO.art_gewaehlt(ed) == "form" and FO.daten_lesen(ed, "form")["form"] == "Ellipse"
+
+
+def test_zeichenbereich_nimmt_formen_auf_und_bewegt_sie_mit(fenster):
+    ed = _ed(fenster); b = fenster.befehle
+    b.zeichenbereich(None)
+    m = b.menue_formenKlappe()
+    m.gewaehlt.emit("Rechteck"); m.gewaehlt.emit("Ellipse")
+    d = FO.daten_lesen(ed, "form")
+    assert [k["form"] for k in d["kinder"]] == ["Rechteck", "Ellipse"] and FO.art_gewaehlt(ed) == "form"
+    img = FO.ziel(ed)[4]; k = d["kinder"][0]                                          # die Form steckt im Bild des Bereichs: sie bewegt sich mit
+    assert img.pixelColor(k["x"] + k["breite"] // 2, k["y"] + k["hoehe"] // 2).alpha() > 0
+    m.gewaehlt.emit("Raute")                                                          # Bereich weiter ausgewählt: Form kommt ebenfalls hinein
+    assert len(FO.daten_lesen(ed, "form")["kinder"]) == 3
+
+
+def test_zeichentools_form_bearbeiten_textfeld_einstellungen(fenster):
+    ed = _ed(fenster); b = fenster.befehle
+    FO.form_einfuegen(ed, "Rechteck")
+    g = b.menue_zeichenFormBearbeiten(); g.gewaehlt.emit("Dreieck")
+    assert FO.daten_lesen(ed, "form")["form"] == "Dreieck"
+    b.zeichenTextfeld(None); assert getattr(ed, "_frei_edit", None) is not None
+    FO.bearbeiten_beenden(ed)
+    assert callable(b.zeichenAuswahlbereich) and callable(b.zeichenEinstellungen)
+    from lunivo_writer.editor import formen_katalog as K
+    assert K.VOREINSTELLUNG and "Linienlegende 1" in K.namen() and K.ist_linie("Kreispfeil")

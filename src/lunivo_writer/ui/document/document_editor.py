@@ -304,6 +304,12 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             from lunivo_writer.editor import frei_objekt as FO
             if FO.bearbeiten_starten(self):                                   # direkt im Objekt schreiben
                 return
+        href = self.anchorAt(e.position().toPoint())
+        if href.startswith("file:") and e.button() == Qt.LeftButton:       # Dateiobjekt (Symbol mit Link): Doppelklick öffnet die Datei
+            from PySide6.QtCore import QUrl as _U
+            from PySide6.QtGui import QDesktopServices
+            QDesktopServices.openUrl(_U(href))
+            return
         super().mouseDoubleClickEvent(self._maus_abgebildet(e))
 
 

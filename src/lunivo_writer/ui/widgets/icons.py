@@ -192,6 +192,12 @@ def _pixmap(name: str, farbe: str, px: int) -> QPixmap:
     return pm
 
 
+def symbolfarbe() -> QColor:
+    """Farbe der Symbole in der aktuellen Palette: Schriftfarbe der Knöpfe, im dunklen Thema fast weiß (wie ``icon``)."""
+    farbe = QApplication.palette().color(QPalette.ButtonText)
+    return QColor("#f4f6f8") if farbe.lightness() > 128 else farbe
+
+
 def icon(name: str, px: int = 20) -> QIcon:
     px = max(10, int(round(px * FAKTOR)))
     """Symbol in den Farben der aktuellen Palette (hell/dunkel), ausgegraut wenn deaktiviert."""

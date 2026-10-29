@@ -614,7 +614,7 @@ class EinfuegenBefehle:
             self._popup(self.menue_formenKlappe())
 
 
-    def menue_formenKlappe(self):
+    def menue_formenKlappe(self, aendern=False):
         """Formen wie in WPS: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPen
@@ -622,23 +622,32 @@ class EinfuegenBefehle:
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.editor import formen_katalog as K
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        m = None
-        for gruppe, formen in K.KATEGORIEN:
-            if m is None:
-                m = RasterAuswahl(self.w, titel=gruppe, spalten=16, groesse=QSize(22, 22))
-            else:
+        from lunivo_writer.ui.widgets.icons import symbolfarbe
+        m = RasterAuswahl(self.w, titel="Voreinstellung", spalten=16, groesse=QSize(22, 22))
+        gruppen = [("Voreinstellung", K.VOREINSTELLUNG)] + [(g, list(f)) for g, f in K.KATEGORIEN]
+        for i, (gruppe, formen) in enumerate(gruppen):
+            if i:
                 m.abschnitt(gruppe)
             for name in formen:
                 def zeichne(p, r, name=name):
-                    p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
+                    p.setPen(QPen(symbolfarbe(), 1.3)); p.setBrush(Qt.NoBrush)      # wie die übrigen Symbole: im dunklen Thema hell
                     p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
-                m.kachel(name, name, zeichne).setCheckable(False)
+                m.kachel(f"{gruppe}|{name}", name, zeichne).setCheckable(False)
 
         def einfuegen(f):
-            from lunivo_writer.editor import formen as F
-            if self.ed and not F.in_zeichenbereich(self.ed, f):
-                self._bild_einfuegen(E.form_bild(f, *((240, 60) if K.ist_linie(f) else (160, 120))), f"Form: {f}", "form", {"form": f})
+            f = f.split("|", 1)[-1]
+            K.zuletzt(f)
+            if aendern:                                                     # Zeichentools ▸ Form bearbeiten: Art der gewählten Form tauschen
+                from lunivo_writer.editor import frei_objekt as FO
+                if self.ed and FO.art_gewaehlt(self.ed) == "form":
+                    FO.aendern(self.ed, "form", form=f)
+                return
+            from lunivo_writer.editor import formen as F, frei_objekt as FO
+            if self.ed and not self.ed.isReadOnly() and not F.in_zeichenbereich(self.ed, f):
+                FO.form_einfuegen(self.ed, f)
         m.gewaehlt.connect(einfuegen)
+        if aendern:
+            return m
         m.fuss("Weitere Formen und Farben …", self.zeichnen)
         m.trenner()
         bereich = m.fuss("Neuer &Zeichenbereich", self.zeichenbereich)
@@ -650,9 +659,8 @@ class EinfuegenBefehle:
     def zeichenbereich(self, k=None):
         """Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/formen.py``)."""
         if self.ed and not self.ed.isReadOnly():
-            from lunivo_writer.editor import formen as F
-            F.zeichenbereich_einfuegen(self.ed)
-            c = self.ed.textCursor(); c.movePosition(c.MoveOperation.PreviousCharacter, c.MoveMode.KeepAnchor); self.ed.setTextCursor(c)
+            from lunivo_writer.editor import frei_objekt as FO
+            FO.zeichenbereich_einfuegen(self.ed)
 
 
     def zeichnen(self, k=None):

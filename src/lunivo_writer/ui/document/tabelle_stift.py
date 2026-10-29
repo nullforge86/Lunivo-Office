@@ -98,6 +98,11 @@ class TabellenStift(QWidget):
         r = self._rechteck()
         return groesse(r.width(), r.height(), getattr(self.ed, "zoom", 1.0))
 
+    def schild_text(self) -> str:
+        """Beschriftung wie in WPS: Zeilen, kleines „x“, Spalten (6 Zeilen, 2 Spalten → „6x2“)."""
+        zeilen, spalten = self.zellen()
+        return f"{zeilen}x{spalten}"
+
     def beenden(self) -> None:
         if not getattr(self, "_aktiv", False):
             return
@@ -120,7 +125,8 @@ class TabellenStift(QWidget):
             x = r.left() + r.width() * i // spalten; p.drawLine(x, r.top(), x, r.bottom())
         for i in range(1, zeilen):
             y = r.top() + r.height() * i // zeilen; p.drawLine(r.left(), y, r.right(), y)
-        text = f"{zeilen}x{spalten}"
+        text = self.schild_text()
+        f = p.font(); f.setFeature("calt", 0); p.setFont(f)       # sonst macht die Schrift aus „6x2“ ein „6×2“
         fm = p.fontMetrics()
         schild = QRect(r.right() + 8, r.bottom() - fm.height() - 4, fm.horizontalAdvance(text) + 12, fm.height() + 4)
         p.fillRect(schild, QColor(Farbe.BLAU))

@@ -226,6 +226,9 @@ def format_lesen(ed, z) -> dict | None:
         return None
     a = z[2]
     w = {"fuell": a.get("fuell"), "rand": a.get("rand")}
+    if a.get("art") == "form":
+        from lunivo_writer.editor import frei_objekt as FO
+        w["fuell"], w["rand"] = FO.form_format_lesen(a)
     w.update({k: dict(v) for k, v in (a.get("fx") or {}).items() if k in FX_SCHLUESSEL})
     return w
 
@@ -255,6 +258,10 @@ def format_setzen(ed, z, fuell="__nicht__", rand="__nicht__", rand_teil: dict | 
         return False
     _k, key, a, _bild = z
     neu = dict(a)
+    form = a.get("art") == "form"
+    if form and rand_teil and rand == "__nicht__":                   # eine Form trägt ihre Kontur in den Daten: von dort ausgehen
+        from lunivo_writer.editor import frei_objekt as FO
+        neu["rand"] = FO.form_format_lesen(a)[1] or {"b": 2.0, "farbe": Farbe.SCHWARZ, "art": "einfach"}
     if fuell != "__nicht__":
         neu["fuell"] = fuell
     if rand != "__nicht__":
@@ -268,6 +275,9 @@ def format_setzen(ed, z, fuell="__nicht__", rand="__nicht__", rand_teil: dict | 
         alt = dict(neu.get("rand") or {"b": 2.0, "farbe": Farbe.SCHWARZ, "art": "einfach"})
         alt.update(rand_teil)
         neu["rand"] = alt
+    if form:
+        from lunivo_writer.editor import frei_objekt as FO
+        neu = FO.form_format_uebernehmen(neu, ed)
     _speichern_frei(ed, key, neu)
     return True
 

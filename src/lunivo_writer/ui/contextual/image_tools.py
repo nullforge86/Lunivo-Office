@@ -28,7 +28,9 @@ FORMTOOLS = {"name": "Zeichentools", "kontext": "form", "gruppen": [
 
 
 ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
-    {"name": "Formen", "knoepfe": [_k("stift", "Formen einfügen", klappe="formenKlappe", gross=True)]},
+    {"name": "Formen", "knoepfe": [_k("stift", "Formen einfügen", klappe="formenKlappe", gross=True),
+                                   _k("textrahmen", "Textfeld", "zeichenTextfeld", text=True),
+                                   _k("stift", "Form bearbeiten", klappe="zeichenFormBearbeiten", text=True)]},
     {"name": "Formstile", "knoepfe": [_k("stift", "Formstile", klappe="zeichenFormstile", gross=True),
                                       _k("toenung", "Formfüllung", klappe="zeichenFuellung", text=True),
                                       _k("linie", "Gliederung", klappe="zeichenGliederung", text=True),
@@ -39,8 +41,10 @@ ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
                                      _k("objektdrehen", "Drehen", klappe="zeichenDrehen", text=True),
                                      _k("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", text=True),
                                      _k("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", text=True),
-                                     _k("textflussumbruch", "Textumbruch", "zeichenUmbruch", text=True)]},
+                                     _k("textflussumbruch", "Textumbruch", "zeichenUmbruch", text=True),
+                                     _k("objekte", "Auswahlbereich", "zeichenAuswahlbereich", True)]},
     {"name": "Größe", "felder": "masse", "pfeil": "zeichenLayout", "knoepfe": []},
+    {"name": "Einstellungen", "knoepfe": [_k("einstellungen", "Einstellungen", "zeichenEinstellungen", True)]},
 ]}
 
 

@@ -233,18 +233,13 @@ def test_kommentar_knopf_und_seitenleiste_gleiche_daten(fenster):
     assert e.kommentar_bereiche()
 
 
-def test_zeichenbereich_nimmt_formen_auf(fenster):
-    import json
-    from lunivo_writer.editor import formen as F
-    from lunivo_writer.editor.zusatz import P_OBJEKT
+def test_zeichenbereich_ist_freies_objekt(fenster):
+    from lunivo_writer.editor import frei_objekt as FO, formen as F
     b, e = fenster.befehle, fenster.current_editor()
     m = b.menue_formenKlappe()
     assert any(x.text().replace("&", "") == "Neuer Zeichenbereich" for x in m.findChildren(__import__("PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton))
     b.zeichenbereich()
-    assert F.in_zeichenbereich(e, "Rechteck") and F.in_zeichenbereich(e, "Ellipse")
-    o = json.loads(e.bild_format().property(P_OBJEKT))
-    assert o["art"] == "zeichenbereich" and [k["form"] for k in o["daten"]["kinder"]] == ["Rechteck", "Ellipse"]
-    assert (e.bild_format().width(), e.bild_format().height()) == (o["daten"]["breite"], F.ZEICHENBEREICH[1])
+    assert FO.art_gewaehlt(e) == "form" and not e._bild_cursor() and FO.ziel(e)[3]["h"] == F.ZEICHENBEREICH[1]
 
 
 def test_tabelle_in_text_fenster_wie_vorlage():
@@ -298,6 +293,10 @@ def test_tabelle_einfuegen_fenster_und_stift(fenster):
     assert QApplication.overrideCursor() is None                                # nach dem Zeichnen wieder normal
     t = e.textCursor().currentTable()
     assert t is not None and (t.rows(), t.columns()) == (6, 2)
+    stift2 = TS.TabellenStift(e); pass
+    stift2._start, stift2._ende = QPoint(1, 1), QPoint(1 + 2 * TS.ZELLE_B, 1 + 6 * TS.ZELLE_H)
+    assert stift2.schild_text() == "6x2"                                        # wie WPS: Zeilen, „x“, Spalten
+    stift2.beenden()
     assert t.format().columnWidthConstraints()[0].type() == QTextLength.FixedLength
 
 
@@ -743,3 +742,36 @@ def test_umbrueche_wirken(fenster):
             assert doc.blockCount() == 1 and "\u2028" in doc.toRawText()
         else:
             assert [u[1] for u in AB.umbrueche(doc)] == [["naechste", "fortlaufend", "gerade", "ungerade"][i - 3]]
+
+
+def test_datei_objekt_symbol_doppelklick_oeffnet(fenster, tmp_path, monkeypatch):
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QDesktopServices, QMouseEvent
+    from PySide6.QtCore import QUrl
+    datei = tmp_path / "daten.bin"; datei.write_bytes(b"\x00\x01")
+    e = fenster.current_editor(); e.clear()
+    fenster.befehle._datei_einsetzen(str(datei), "symbol")
+    geoeffnet = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda u: geoeffnet.append(u.toLocalFile()) or True)
+    c = e.textCursor(); c.setPosition(1); pos = e.cursorRect(c).center() - __import__("PySide6.QtCore", fromlist=["QPoint"]).QPoint(6, 0)
+    monkeypatch.setattr(type(e), "anchorAt", lambda self, p: QUrl.fromLocalFile(str(datei)).toString())
+    ev = QMouseEvent(QEvent.MouseButtonDblClick, QPointF(pos), QPointF(pos), Qt.LeftButton, Qt.LeftButton, Qt.NoModifier)
+    e.mouseDoubleClickEvent(ev)
+    assert geoeffnet == [str(datei)]
+
+
+def test_formen_klappe_symbole_im_dunklen_thema_hell(fenster, app):
+    """Die Umrissbilder der Formen-Klappe (Neuer Zeichenbereich) folgen der Symbolfarbe: im dunklen Thema weiß, nicht Akzentblau."""
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QToolButton
+    alt = QPalette(app.palette())
+    dunkel = QPalette(alt); dunkel.setColor(QPalette.ButtonText, QColor("#e8eaed")); app.setPalette(dunkel)
+    try:
+        m = fenster.befehle.menue_formenKlappe()
+        farben = set()
+        for k in m.findChildren(QToolButton)[:6]:
+            img = k.icon().pixmap(22, 22).toImage()
+            farben |= {QColor(img.pixel(x, y)).name() for x in range(img.width()) for y in range(img.height()) if QColor(img.pixel(x, y)).alpha() > 200}
+        assert farben and max(QColor(f).lightness() for f in farben) > 200, farben       # Akzentblau ergäbe höchstens ~130
+    finally:
+        app.setPalette(alt)

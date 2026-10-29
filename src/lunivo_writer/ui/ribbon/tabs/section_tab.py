@@ -1,7 +1,8 @@
 """Reiter „Abschnitt“ in der Anordnung von WPS Office.
 
 Abschnitte (editor/abschnitte.py): hinzufügen (nächste Seite, fortlaufend, gerade, ungerade), löschen, vor/zurück, Navigation, eigene
-Orientierung, Größe, Ränder, Spalten und Kopf-/Fußzeilen je Abschnitt, Kopf-/Fußzeile mit dem Vorgänger verknüpfen. Orientierung, Größe,
+Orientierung, Größe, Ränder, Spalten und Kopf-/Fußzeilen je Abschnitt, Kopf-/Fußzeile mit dem Vorgänger verknüpfen.
+Einstellungen: dieselbe Klappe wie im Reiter Start (Schriftart, Absatz, Formatvorlagen und Formatierung). Orientierung, Größe,
 Ränder und Spalten gelten für den Abschnitt, in dem die Schreibmarke steht.
 """
 from __future__ import annotations
@@ -34,6 +35,6 @@ def bauen(register: dict) -> dict:
             _k("kette", "Link zu vorheriger Kopfzeile", "kopfVerknuepfen", text=True, haken=True),
             _k("kette", "Mit voriger Fußzeile verknüpfen", "fussVerknuepfen", text=True, haken=True)]},
         {"name": "Einstellungen", "reihenfolge": True, "knoepfe": [
-            _k("zahnrad", "Einstellungen", gross=True, menue=[{"name": "Optionen …", "tun": "w.optionenOeffnen"}])]},
+            _k("zahnrad", "Einstellungen", gross=True, klappe="einstellungenKlappe")]},
     ]
     return {"name": "Abschnitt", "gruppen": gruppen}

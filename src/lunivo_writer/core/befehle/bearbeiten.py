@@ -120,7 +120,7 @@ class BearbeitenBefehle:
         m.eintrag("Objekte auswählen", self.objekteWaehlen, symbol=icons.icon("objekte", 16))
         m.eintrag("Tabelle mit gestricheltem Rahmen auswählen", self.tabelleOhneRahmen, symbol=icons.icon("tabelleWahl", 16))
         m.eintrag("Text mit ähnlicher Formatierung auswählen", self.aehnlicheFormatierung, symbol=icons.icon("aehnlich", 16))
-        m.eintrag("Auswahlbereich …", self.auswahlbereich, symbol=icons.icon("auswahlbereich", 16))
+        m.eintrag("Auswahlbereich(&J)", self.auswahlbereich, symbol=icons.icon("auswahlbereich", 16))
         return m
 
 

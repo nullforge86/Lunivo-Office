@@ -1,7 +1,7 @@
 """„Suchen und Ersetzen“ in der linken Seitenleiste — aufgebaut wie das Fenster der Vorlage, aber als Feld neben dem Text:
 Reiter Suchen, Ersetzen und Gehe zu. Oben das Suchfeld mit Pfeilen für vorherigen/nächsten Treffer und der Trefferzahl, im Reiter Ersetzen
 das Ersatzfeld mit „Ersetzen“ und „Alle ersetzen“; darunter zwei einklappbare Abschnitte: „Suchoptionen“ (Richtung, Groß/klein …) und
-„Weitere Werkzeuge“ (Format, Sonderzeichen, Hervorheben, Suchen in). Eingabe sucht weiter, Umschalt+Eingabe zurück, Esc schließt.
+„Weitere Werkzeuge“ (Format, Spezial, Lesehervorhebung, Suchen in). Eingabe sucht weiter, Umschalt+Eingabe zurück, Esc schließt.
 
 Unterfenster (Schriftart, Absatz, Tabstopps, Formatvorlage für „Format“) öffnen sich als Seite in derselben linken Leiste — die rechte
 Seitenleiste bleibt, wie sie ist. Die Suche selbst steht ohne Oberfläche in ``editor/suche.py``, die Sprungziele in ``editor/gehe_zu.py``.
@@ -166,7 +166,7 @@ class SuchenFeld(QWidget):
         v.addWidget(_linie())
         # 3. Suchoptionen (eingeklappt; die Zusammenfassung zeigt, was gerade gilt)
         self.optionen_gruppe = EinklappGruppe("Suchoptionen")
-        self.erweitern = self.optionen_gruppe.knopf
+        self.erweitern = self.optionen_gruppe.knopf; self.erweitern.setText("Erweitern")      # wie in der Vorlage: Erweitern / Reduzieren
         self.optionen_text = QLabel(); self.optionen_text.setWordWrap(True); self.optionen_text.setStyleSheet("color: palette(mid);")
         self.optionen = self.optionen_gruppe.inhalt
         ov = self.optionen_gruppe.innen; ov.setSpacing(4)
@@ -182,26 +182,26 @@ class SuchenFeld(QWidget):
             c.setMinimumHeight(28); ov.addWidget(c); c.toggled.connect(lambda _a: (self._optionen_neu(), self.zaehlen()))
         v.addWidget(self.optionen_gruppe)
         v.addWidget(self.optionen_text)
-        self.erweitern.toggled.connect(lambda offen: self.optionen_text.setVisible(not offen))   # eingeklappt: kurz, was gilt
+        self.erweitern.toggled.connect(lambda offen: (self.optionen_text.setVisible(not offen), self.erweitern.setText("Reduzieren" if offen else "Erweitern")))   # eingeklappt: kurz, was gilt
         # 4. Weitere Werkzeuge: Format, Spezial, Lesehervorhebung, Suchen in — zwei Reihen zu je zwei Knöpfen
-        self.werkzeuge = EinklappGruppe("Weitere Werkzeuge")
+        self.werkzeuge = QWidget(); wv = QVBoxLayout(self.werkzeuge); wv.setContentsMargins(0, 0, 0, 0)
         g = QGridLayout(); g.setSpacing(6)
         self.format_menue = MenueListe(self); self.format_menue.aboutToShow.connect(self._format_menue_fuellen)
         self.spezial_menue = MenueListe(self); self.spezial_menue.aboutToShow.connect(self._spezial_menue_fuellen)
-        self.format_knopf = self._knopf("Format", self.format_menue); self.spezial_knopf = self._knopf("Sonderzeichen", self.spezial_menue)
+        self.format_knopf = self._knopf("Format", self.format_menue); self.spezial_knopf = self._knopf("Spezial", self.spezial_menue)
         self.format_knopf.setToolTip("Nach Schrift, Absatz, Tabstopps, Formatvorlage oder Hervorhebung suchen")
         self.spezial_knopf.setToolTip("Absatzmarke, Tabstopp, Platzhalter und andere Sonderzeichen einfügen")
         lese = MenueListe(self)
         lese.eintrag("Alle hervorheben", lambda: self._hervorheben(True))
         lese.eintrag("Hervorhebung löschen", lambda: self._hervorheben(False))
         self.suchen_in = MenueListe(self); self.suchen_in.aboutToShow.connect(self._suchen_in_fuellen)
-        self.lese_knopf = self._knopf("Hervorheben", lese); self.in_knopf = self._knopf("Suchen in", self.suchen_in)
+        self.lese_knopf = self._knopf("Lesehervorhebung", lese); self.in_knopf = self._knopf("Suchen in", self.suchen_in)
         self.lese_knopf.setToolTip("Lesehervorhebung: alle Treffer farbig hinterlegen oder die Hervorhebung löschen")
         self.in_knopf.setToolTip("Im ganzen Dokument oder nur in der aktuellen Auswahl suchen")
         g.addWidget(self.format_knopf, 0, 0); g.addWidget(self.spezial_knopf, 0, 1)
         g.addWidget(self.lese_knopf, 1, 0); g.addWidget(self.in_knopf, 1, 1)
         self.lese_zeile = self.lese_knopf
-        self.werkzeuge.innen.addLayout(g)
+        wv.addLayout(g)
         v.addWidget(self.werkzeuge)
         v.addStretch(1)
         # Verbindungen
@@ -215,7 +215,7 @@ class SuchenFeld(QWidget):
         # Tab-Reihenfolge wie die Leserichtung: Feld, Pfeile, Ersatzfeld, Ersetzen-Knöpfe, Abschnitte
         kette = [self.such_combo, self.vorherige, self.weiter, self.ersatz_combo, self.ersetzen, self.alle_ersetzen, self.erweitern,
                  self.richtung, self.gross, self.ganz, self.platzhalter, self.praefix, self.suffix, self.satzzeichen, self.leerzeichen,
-                 self.werkzeuge.knopf, self.format_knopf, self.spezial_knopf, self.lese_knopf, self.in_knopf]
+                 self.format_knopf, self.spezial_knopf, self.lese_knopf, self.in_knopf]
         for x, y in zip(kette, kette[1:]):
             QWidget.setTabOrder(x, y)
         self._optionen_neu()

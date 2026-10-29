@@ -401,10 +401,10 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         if frei_art:
             art, bf = frei_art, True
         self.band.kontext("bild", bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld"))
-        self.band.kontext("form", art in ("form", "gruppe"))
+        self.band.kontext("form", art in ("form", "gruppe") and not frei_art)       # frei liegende Form: nur „zeichen“
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
-        self.band.kontext("text", frei_art is not None)             # Texttools: WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
+        self.band.kontext("text", frei_art in ("wordart", "textfeld"))           # Texttools: WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
         if frei_art != getattr(self, "_frei_art_alt", None):          # neu gewählt: WordArt öffnet Texttools, Textfeld Zeichentools
             self._frei_art_alt = frei_art
             if frei_art:

@@ -406,6 +406,30 @@ class KontextBefehle:
             e.bild_layout_dialog()
 
 
+    def zeichenTextfeld(self, k=None):
+        """Zeichentools ▸ Textfeld: in der gewählten Form schreiben; ist keine Form gewählt, ein neues Textfeld einfügen."""
+        from lunivo_writer.editor import frei_objekt as FO
+        if self.ed and FO.art_gewaehlt(self.ed) == "form":
+            FO.bearbeiten_starten(self.ed)
+        else:
+            self.textfeld()
+
+
+    def menue_zeichenFormBearbeiten(self):
+        """Zeichentools ▸ Form bearbeiten: dieselbe Galerie wie Einfügen ▸ Formen, die Wahl tauscht die Art der gewählten Form."""
+        return self.menue_formenKlappe(aendern=True)
+
+
+    def zeichenAuswahlbereich(self, k=None):
+        self.auswahlbereich()
+
+
+    def zeichenEinstellungen(self, k=None):
+        """Zeichentools ▸ Einstellungen: die Seitenleiste „Formatierung“ des Objekts."""
+        if hasattr(self.w, "objektformat_seitenleiste"):
+            self.w.objektformat_seitenleiste(0)
+
+
     def zeichenMasse(self, breite_mm=None, hoehe_mm=None):
         from lunivo_writer.editor import bildlayout as BL
         e, z = self._zeichen()

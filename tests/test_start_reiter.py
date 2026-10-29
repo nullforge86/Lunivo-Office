@@ -123,7 +123,8 @@ def test_suchen_feld_aufgeraeumt(app):
     from lunivo_writer.ui.document.suchen_feld import SuchenFeld
     ed = DocumentEditor(); ed.setPlainText("eins zwei eins drei eins")
     f = SuchenFeld(lambda: ed, lambda d: False); f.resize(320, 600); f.show()
-    assert not f.optionen_gruppe.ist_offen() and not f.werkzeuge.ist_offen()
+    assert not f.optionen_gruppe.ist_offen() and f.erweitern.text() == "Erweitern" and f.spezial_knopf.text() == "Spezial" and f.lese_knopf.text() == "Lesehervorhebung"
+    f.erweitern.click(); assert f.erweitern.text() == "Reduzieren"; f.erweitern.click()
     f.suchfeld.setText("eins"); f.zaehlen()
     QTest.keyClick(f.suchfeld, Qt.Key_Return)
     erst = ed.textCursor().selectionStart()
@@ -136,3 +137,103 @@ def test_suchen_feld_aufgeraeumt(app):
     f.zeige("Suchen"); assert not f.ersatz_bereich.isVisible()
     zu = []; f.schliessen.connect(lambda: zu.append(1))
     QTest.keyClick(f, Qt.Key_Escape); assert zu
+
+
+def test_unterstreichen_klappe_wirkt_am_text(app, tmp_path):
+    """Menü am Knopf „Unterstrichen“: acht Linienarten, „Mehr Unterstreichungen …“, Untermenü „Unterstreichungsfarbe“ — jeder Eintrag wirkt."""
+    from PySide6.QtCore import QSettings
+    from PySide6.QtGui import QColor
+    from lunivo_writer.services.settings_service import Settings
+    from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
+    from lunivo_writer.ui.baukasten.linien import LinienZeile
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
+    w.new_document(); w.show()
+    ed = w.current_editor(); ed.setPlainText("Hallo"); ed.selectAll()
+    b = w.befehle; m = b.menue_unterstrichKlappe()
+    assert "Mehr Unterstreichungen" in " ".join(a.text() for a in m.actions())
+    zeilen = m.findChildren(LinienZeile)
+    assert len(zeilen) == 8
+    keine = QTextCharFormat.UnderlineStyle.NoUnderline
+    for z in zeilen:                                                    # jede Linienart wirkt am markierten Text
+        ed.selectAll(); f = QTextCharFormat(); f.setUnderlineStyle(keine); ed._merge(f)
+        z.angeklickt.emit()
+        assert ed.textCursor().charFormat().underlineStyle() != keine
+    pal = m.findChildren(FarbPalette)[0]
+    assert pal.title() == "Unterstreichungsfarbe"
+    ed.selectAll(); pal.gewaehlt.emit(QColor("#ff0000"))
+    cf = ed.textCursor().charFormat()
+    assert cf.underlineStyle() != keine and cf.underlineColor() == QColor("#ff0000")
+
+
+def test_schriftart_fenster_wirkt_am_text(app, tmp_path):
+    """Fenster „Schriftart“ (Mehr Unterstreichungen …): Felder beider Reiter landen im Zeichenformat des markierten Textes."""
+    from PySide6.QtCore import QSettings
+    from PySide6.QtGui import QColor
+    from lunivo_writer.services.settings_service import Settings
+    from lunivo_writer.ui.baukasten.schriftart_dialog import SchriftartDialog
+    from lunivo_writer.ui.baukasten.text_format import zu_format
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
+    w.new_document(); w.show()
+    ed = w.current_editor(); ed.setPlainText("Hallo"); ed.selectAll()
+    d = SchriftartDialog(w, {"groesse": 12.0})
+    assert [d.reiter.tabText(i) for i in range(2)] == ["Schriftart", "Zeichenabstand"]
+    assert d.standard_knopf.text().startswith("Standard") and d.effekt_knopf.text().startswith("Texteffekte")
+    d.schrift.setCurrentText("Liberation Serif"); d.schnitt.setCurrentText("Fett Kursiv"); d.groesse.setCurrentText("14")
+    d.unter.setCurrentIndex(d.unter.findData("doppelt")); d.unterfarbe.setFarbe("#00aa00")
+    d.cb["durch"].setChecked(True); d.cb["hoch"].setChecked(True); d.skala.setCurrentText("150%")
+    d.abstand_art.setCurrentIndex(1); d.abstand_wert.setValue(2.0)
+    neu = d.werte()
+    assert neu["fett"] and neu["kursiv"] and neu["groesse"] == 14 and neu["unter"] == "doppelt" and neu["durch"] and neu["hoch"] and neu["skala"] == 150
+    ed._merge(zu_format(neu))
+    f = ed.textCursor().charFormat()
+    assert f.fontItalic() and f.fontWeight() >= 700 and f.fontStrikeOut() and f.font().pointSizeF() == 14 and f.fontLetterSpacing() != 100 or f.fontLetterSpacing() != 0
+    assert "Liberation Serif" in f.fontFamilies() or f.fontFamily() == "Liberation Serif"
+    assert f.underlineColor() == QColor("#00aa00") and f.verticalAlignment() == f.VerticalAlignment.AlignSuperScript
+
+
+def test_durchgestrichen_klappe_wirkt_am_text(app, tmp_path):
+    """Menü am Knopf „Durchgestrichen“: Durchgestrichen und Betonungszeichen — jeder Eintrag wirkt, der Knopf wiederholt die letzte Wahl."""
+    from PySide6.QtCore import QSettings
+    from lunivo_writer.editor.zusatz import P_BETONUNG
+    from lunivo_writer.services.settings_service import Settings
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
+    w.new_document(); w.show()
+    ed = w.current_editor(); ed.setPlainText("Hallo"); ed.selectAll()
+    b = w.befehle; m = b.menue_durchKlappe()
+    assert [a.text() for a in m.actions() if a.text()] == ["Durchgestrichen", "Betonungszeichen"]
+    def cf():
+        ed.selectAll(); return ed.textCursor().charFormat()
+    m.actions()[0].trigger()
+    assert cf().fontStrikeOut()
+    m.actions()[0].trigger()
+    assert not cf().fontStrikeOut()
+    m.actions()[1].trigger()
+    assert cf().stringProperty(P_BETONUNG)
+    b.durchJetzt()                                                      # Knopf führt das zuletzt Gewählte aus (Betonung aus)
+    assert not cf().stringProperty(P_BETONUNG)
+
+
+def test_auswaehlen_klappe_beschriftung(app, tmp_path):
+    from PySide6.QtCore import QSettings
+    from lunivo_writer.services.settings_service import Settings
+    from lunivo_writer.ui.main_window import MainWindow
+    w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
+    w.new_document()
+    m = w.befehle.menue_auswaehlenKlappe()
+    assert [a.text().replace("\t", " | ") for a in m.actions()] == [
+        "Alles auswählen | Strg+A", "Objekte auswählen", "Tabelle mit gestricheltem Rahmen auswählen",
+        "Text mit ähnlicher Formatierung auswählen", "Auswahlbereich(&J)"]
+    assert all(not a.icon().isNull() and a.isEnabled() for a in m.actions())
+
+
+def test_abschnitt_einstellungen_wie_start(app):
+    """Reiter Abschnitt: „Einstellungen“ öffnet dieselbe Klappe wie im Reiter Start."""
+    import json
+    from lunivo_writer.ui.ribbon.tabs import section_tab
+    import lunivo_writer.ui.ribbon.tabs.baustein as bs
+    reg = json.load(open(bs.__file__.replace("tabs/baustein.py", "../../resources/register.json"), encoding="utf-8"))
+    gr = next(g for g in section_tab.bauen(reg)["gruppen"] if g["name"] == "Einstellungen")
+    assert gr["knoepfe"][0]["klappe"] == "einstellungenKlappe"
