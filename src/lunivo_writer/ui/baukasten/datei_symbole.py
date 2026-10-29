@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 
 from lunivo_writer.ui.widgets import icons
 
@@ -36,5 +37,48 @@ def icon_namen(name: str) -> list[str]:
 
 
 def datei_symbol(name: str) -> QIcon:
-    """Dateisymbol aus Lucide; gleichbleibend auf allen Desktop-Umgebungen."""
-    return icons.icon(icon_namen(name)[0], 24)
+    """Lucide-Dateisymbol mit kleiner, formatbezogener Kennzeichnung."""
+    ext = os.path.splitext(os.path.basename(name))[1].lower()
+    if name.startswith(".") and name.count(".") == 1:
+        ext = name.lower()
+    symbol = icon_namen(name)[0]
+    kennung = {
+        ".doc": ("DOC", "#2b579a"), ".docx": ("DOCX", "#2b579a"),
+        ".odt": ("ODT", "#4b8b3b"), ".rtf": ("RTF", "#687b91"),
+        ".txt": ("TXT", "#687b91"), ".md": ("MD", "#687b91"),
+        ".pdf": ("PDF", "#d73535"),
+        ".xls": ("XLS", "#217346"), ".xlsx": ("XLSX", "#217346"),
+        ".ods": ("ODS", "#4b8b3b"), ".csv": ("CSV", "#217346"),
+        ".ppt": ("PPT", "#c43e1c"), ".pptx": ("PPTX", "#c43e1c"),
+        ".odp": ("ODP", "#c43e1c"),
+        ".png": ("PNG", "#8b5cf6"), ".jpg": ("JPG", "#8b5cf6"),
+        ".jpeg": ("JPG", "#8b5cf6"), ".gif": ("GIF", "#8b5cf6"),
+        ".bmp": ("BMP", "#8b5cf6"), ".webp": ("WEBP", "#8b5cf6"),
+        ".svg": ("SVG", "#8b5cf6"),
+        ".zip": ("ZIP", "#8a6d3b"), ".7z": ("7Z", "#8a6d3b"),
+        ".rar": ("RAR", "#8a6d3b"),
+    }.get(ext, (ext.lstrip(".").upper()[:4] or "DATEI", "#687b91"))
+
+    # Das Grundpiktogramm kommt weiter aus Lucide; die Marke trägt nur die
+    # Dateiendung und macht ansonsten gleiche Dateitypen schnell erkennbar.
+    dpr = 2
+    bild = QPixmap(64, 64)
+    bild.fill(Qt.transparent)
+    bild.setDevicePixelRatio(dpr)
+    p = QPainter(bild)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.drawPixmap(QRectF(0, 0, 32, 32), icons.icon(symbol, 32).pixmap(32, 32), QRectF(0, 0, 32, 32))
+    text, farbe = kennung
+    schrift = QFont()
+    schrift.setBold(True)
+    schrift.setPointSizeF(5.0 if len(text) > 3 else 5.5)
+    p.setFont(schrift)
+    breite = min(24.0, max(13.0, p.fontMetrics().horizontalAdvance(text) + 5.0))
+    marke = QRectF(32 - breite, 22, breite, 9)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(farbe))
+    p.drawRoundedRect(marke, 2, 2)
+    p.setPen(Qt.white)
+    p.drawText(marke, Qt.AlignCenter, text)
+    p.end()
+    return QIcon(bild)
