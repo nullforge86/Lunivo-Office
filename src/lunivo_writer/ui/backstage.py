@@ -273,8 +273,8 @@ class Backstage(QWidget):
         k = QPushButton(text)
         k.setObjectName("bsKnopf")
         sym = datei_symbol(datei) if datei else None
-        if sym is not None and not sym.isNull():                       # Dateiformat: Symbol des Systems statt unseres
-            k.setIcon(sym); k.setIconSize(QSize(22, 22))
+        if sym is not None and not sym.isNull():                       # eigenes, vollständiges Dateiformatblatt
+            k.setIcon(sym); k.setIconSize(QSize(28, 28))
         elif icon and icons.hat(icon):
             icons.setze(k, icon, 18)
         k.setEnabled(self.w.befehle.hat(befehl))
@@ -313,7 +313,7 @@ class Backstage(QWidget):
             ordner = ("~" + ordner[len(heim):] if ordner.startswith(heim) else ordner) + "/"
             k.setAccessibleName(os.path.basename(p))               # sichtbar sind Name, Ordner und Datum als eigene Zeilen
             k.setToolTip(p)
-            sym = datei_symbol(p)                                    # Symbol des Dateiformats aus dem Icon-Theme des Systems
+            sym = datei_symbol(p)                                    # vollständiges, formatspezifisches Blatt
             k.setIcon(sym if not sym.isNull() else symbol("datei", 32))
             k.setIconSize(QSize(32, 32))
             k.setEnabled(os.path.exists(p))

@@ -142,8 +142,8 @@ class MenueTafel(QFrame):
             if u.get("trenner"):
                 continue
             b = QPushButton(u["name"])
-            if u.get("datei"):                                     # Dateiformat: Symbol aus dem Icon-Theme des Systems
-                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(24, 24))
+            if u.get("datei"):                                     # passendes, lokal gebündeltes Dateiformat-SVG
+                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(28, 28))
             b.setFlat(True)
             b.setStyleSheet("text-align: left; padding: 4px 8px;")
             ok = bool(u.get("tun")) and self.b.hat(u["tun"])

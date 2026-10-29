@@ -1,83 +1,61 @@
-"""Einheitliche Lucide-Symbole für Dateien, ohne Abhängigkeit vom Desktop-Theme."""
+"""Lokale, vollständige Dateityp-Symbole aus der zentralen Iconsammlung."""
 from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QByteArray, QRectF, Qt
+from PySide6.QtGui import QIcon, QImage, QPainter, QPixmap
+from PySide6.QtSvg import QSvgRenderer
 
-from lunivo_writer.ui.widgets import icons
+from lunivo_writer.core import paths
+
+
+_DATEITYP = {
+    ".doc": "docx", ".docx": "docx", ".docm": "docx",
+    ".pdf": "pdf",
+    ".odt": "rtf", ".rtf": "rtf", ".epub": "rtf",
+    ".txt": "txt", ".md": "code",
+    ".xls": "xlsx", ".xlsx": "xlsx", ".ods": "spreadsheet", ".csv": "csv",
+    ".ppt": "pptx", ".pptx": "pptx", ".odp": "presentation",
+    ".png": "photo", ".jpg": "photo", ".jpeg": "photo", ".gif": "photo",
+    ".bmp": "photo", ".webp": "photo", ".svg": "photo",
+    ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video",
+    ".zip": "zip", ".7z": "archive", ".rar": "archive", ".tar": "archive",
+    ".py": "code", ".js": "code", ".html": "html", ".xml": "xml", ".json": "code",
+}
 
 
 def icon_namen(name: str) -> list[str]:
-    """Liefert ein formatspezifisches Lucide-Symbol und einen stabilen Rückfall."""
+    """Liefert den passenden lokalen Dateityp und den generischen Rückfall."""
     ext = os.path.splitext(os.path.basename(name))[1].lower()
     if name.startswith(".") and name.count(".") == 1:
         ext = name.lower()
-    symbol = {
-        # Textdokumente und Austauschformate
-        ".doc": "file-text", ".docx": "file-text", ".odt": "file-type",
-        ".rtf": "file-pen-line", ".txt": "file-text", ".md": "file-code",
-        ".pdf": "file-type",
-        # Tabellen und Präsentationen
-        ".xls": "file-spreadsheet", ".xlsx": "file-chart-column",
-        ".ods": "table", ".csv": "table",
-        ".ppt": "presentation", ".pptx": "file-chart-column-increasing",
-        ".odp": "presentation",
-        # Medien, Code und Archive
-        ".png": "file-image", ".jpg": "file-image", ".jpeg": "file-image",
-        ".gif": "file-image", ".bmp": "file-image", ".webp": "file-image",
-        ".svg": "file-code", ".mp3": "file-music", ".wav": "file-music",
-        ".mp4": "file-video-camera", ".mov": "file-video-camera",
-        ".zip": "file-archive", ".7z": "file-archive", ".rar": "file-archive",
-        ".py": "file-code", ".js": "file-code", ".html": "file-code",
-        ".json": "file-braces", ".xml": "file-code",
-    }.get(ext, "file")
-    return [symbol, "file"]
+    symbol = _DATEITYP.get(ext, "genericfile")
+    return [symbol, "genericfile"]
 
 
 def datei_symbol(name: str) -> QIcon:
-    """Lucide-Dateisymbol mit kleiner, formatbezogener Kennzeichnung."""
-    ext = os.path.splitext(os.path.basename(name))[1].lower()
-    if name.startswith(".") and name.count(".") == 1:
-        ext = name.lower()
-    symbol = icon_namen(name)[0]
-    kennung = {
-        ".doc": ("W", "#2b579a"), ".docx": ("W", "#2b579a"),
-        ".odt": ("O", "#4b8b3b"), ".rtf": ("R", "#687b91"),
-        ".txt": ("T", "#687b91"), ".md": ("M", "#687b91"),
-        ".pdf": ("PDF", "#d73535"),
-        ".xls": ("X", "#217346"), ".xlsx": ("X", "#217346"),
-        ".ods": ("O", "#4b8b3b"), ".csv": ("CSV", "#217346"),
-        ".ppt": ("P", "#c43e1c"), ".pptx": ("P", "#c43e1c"),
-        ".odp": ("O", "#c43e1b"),
-        ".png": ("IMG", "#8b5cf6"), ".jpg": ("IMG", "#8b5cf6"),
-        ".jpeg": ("IMG", "#8b5cf6"), ".gif": ("GIF", "#8b5cf6"),
-        ".bmp": ("IMG", "#8b5cf6"), ".webp": ("IMG", "#8b5cf6"),
-        ".svg": ("SVG", "#8b5cf6"),
-        ".zip": ("ZIP", "#8a6d3b"), ".7z": ("7Z", "#8a6d3b"),
-        ".rar": ("RAR", "#8a6d3b"),
-    }.get(ext, ((ext.lstrip(".").upper()[:3] or "?"), "#687b91"))
-
-    # Das Grundpiktogramm kommt weiter aus Lucide; die Marke trägt nur die
-    # Dateiendung und macht ansonsten gleiche Dateitypen schnell erkennbar.
-    dpr = 2
-    bild = QPixmap(64, 64)
-    bild.fill(Qt.transparent)
-    bild.setDevicePixelRatio(dpr)
-    p = QPainter(bild)
-    p.setRenderHint(QPainter.Antialiasing)
-    p.drawPixmap(QRectF(0, 0, 32, 32), icons.icon(symbol, 32).pixmap(32, 32), QRectF(0, 0, 32, 32))
-    text, farbe = kennung
-    schrift = QFont()
-    schrift.setBold(True)
-    schrift.setPointSizeF(6.0 if len(text) > 1 else 9.0)
-    p.setFont(schrift)
-    marke = QRectF(8, 12, 16, 9)
-    p.setPen(Qt.NoPen)
-    p.setBrush(QColor(farbe))
-    p.drawRoundedRect(marke, 2, 2)
-    p.setPen(Qt.white)
-    p.drawText(marke, Qt.AlignCenter, text)
-    p.end()
-    return QIcon(bild)
+    """Rendert ein vollständiges farbiges Dateiblatt aus einem gebündelten SVG."""
+    ordner = os.path.join(paths.ASSETS, "icons", "filetypes")
+    for symbol in icon_namen(name):
+        pfad = os.path.join(ordner, f"{symbol}.svg")
+        try:
+            with open(pfad, "rb") as fh:
+                renderer = QSvgRenderer(QByteArray(fh.read()))
+        except OSError:
+            continue
+        if not renderer.isValid():
+            continue
+        ratio = 2
+        px = 48
+        bild = QImage(px * ratio, px * ratio, QImage.Format_ARGB32_Premultiplied)
+        bild.fill(Qt.transparent)
+        p = QPainter(bild)
+        p.setRenderHint(QPainter.Antialiasing)
+        renderer.render(p, QRectF(0, 0, px * ratio, px * ratio))
+        p.end()
+        bild.setDevicePixelRatio(ratio)
+        icon = QIcon()
+        icon.addPixmap(QPixmap.fromImage(bild))
+        return icon
+    return QIcon()
