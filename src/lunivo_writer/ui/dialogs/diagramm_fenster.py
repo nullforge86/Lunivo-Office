@@ -11,13 +11,13 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
-    QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QListView, QListWidget,
+    QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QListView, QListWidget,
     QListWidgetItem, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm as D
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
 _BLAU, _ORANGE, _GRAU = QColor("#4a8fd8"), QColor("#ef8a3c"), QColor("#7a8086")
@@ -92,6 +92,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.kombi: list[tuple[str, bool]] = []
         v = QVBoxLayout(self)
         rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        self._kompakt = False
         self.arten = QListWidget(); self.arten.setIconSize(QSize(22, 22)); self.arten.setFixedWidth(180)
         self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(2)
         for gruppe, sym, _unter in D.TYPEN:
@@ -124,22 +125,25 @@ class DiagrammDialog(PanelFaehig, QDialog):
     def _kombi_tabelle(self) -> QWidget:
         w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 8, 0, 0)
         v.addWidget(QLabel("Kombinationsdiagramme erstellen."))
-        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel)
-        self._kombi_gitter = QGridLayout(rahmen); self._kombi_gitter.setHorizontalSpacing(12); self._kombi_gitter.setVerticalSpacing(6)
-        self._kombi_gitter.setProperty("schmal_nein", True)               # Tabelle wie in der Vorlage, Zeilen werden neu gefüllt
-        for s, text in enumerate(("Datenreihenname", "Diagrammtyp", "Sekundärachse")):
-            t = QLabel(text); t.setAlignment(Qt.AlignCenter); self._kombi_gitter.addWidget(t, 0, s)
-        self._kombi_gitter.setColumnStretch(0, 1); self._kombi_gitter.setColumnStretch(1, 2)
-        v.addWidget(rahmen)
+        self._kombi_rahmen = QFrame(); self._kombi_rahmen.setFrameShape(QFrame.StyledPanel)
+        self._kombi_box = QVBoxLayout(self._kombi_rahmen); self._kombi_box.setContentsMargins(8, 6, 8, 6)
+        self._kombi_gitter = None
+        v.addWidget(self._kombi_rahmen)
         self._kombi_felder: list[tuple[QLabel, QComboBox, QCheckBox]] = []
         return w
 
     def _kombi_fuellen(self) -> None:
         """Eine Zeile je Datenreihe; Werte aus ``self.kombi``."""
-        for lab, box, kasten in self._kombi_felder:
-            for x in (lab, box, kasten):
-                self._kombi_gitter.removeWidget(x); x.deleteLater()
+        if self._kombi_gitter is not None:                                   # altes Gitter samt Feldern abbauen
+            alt = self._kombi_box.takeAt(0)
+            for lab, box, kasten in self._kombi_felder:
+                for x in (lab, box, kasten):
+                    x.hide(); x.deleteLater()
+            if alt is not None and alt.widget() is not None:
+                alt.widget().deleteLater()
         self._kombi_felder = []
+        gitterteil = QWidget(); self._kombi_gitter = FormularGitter(gitterteil)
+        self._kombi_box.addWidget(gitterteil)
         for i, name in enumerate(self.reihen):
             typ, sek = self.kombi[i] if i < len(self.kombi) else ("saeule", False)
             box = QComboBox(); box.setMinimumHeight(36); box.setAccessibleName(f"Diagrammtyp {name}")
@@ -150,8 +154,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             kasten = QCheckBox(); kasten.setChecked(sek); kasten.setAccessibleName(f"Sekundärachse {name}")
             box.currentIndexChanged.connect(self._kombi_geaendert); kasten.toggled.connect(self._kombi_geaendert)
             lab = QLabel(name)
-            self._kombi_gitter.addWidget(lab, i + 1, 0); self._kombi_gitter.addWidget(box, i + 1, 1)
-            self._kombi_gitter.addWidget(kasten, i + 1, 2, Qt.AlignCenter)
+            self._kombi_gitter.reihe(("Datenreihenname", lab), ("Diagrammtyp", box), ("Sekundärachse", kasten), gewichte=(3, 4, 2))
             self._kombi_felder.append((lab, box, kasten))
 
     def _kombi_geaendert(self, *_):
@@ -165,21 +168,23 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
     # ---- Seitenleiste ---------------------------------------------------------------------------------------------------
     def kompakt_machen(self) -> None:
-        """In der Seitenleiste: die Diagrammarten in zwei Spalten über der Vorschau (alle sichtbar, ohne Rollbalken), Untertypen
-        als Raster, die Vorschau so breit wie die Seitenleiste."""
+        """In der Seitenleiste: die Diagrammarten wie in WPS in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
+        Untertypen als Raster, die Vorschau so breit wie die Seitenleiste und nie abgeschnitten."""
+        self._kompakt = True
         self._teile.setDirection(QBoxLayout.TopToBottom)
         a = self.arten
-        a.setFlow(QListView.LeftToRight); a.setWrapping(True); a.setResizeMode(QListView.Adjust); a.setSpacing(0)
-        a.setGridSize(QSize(140, 34)); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(34 * ((a.count() + 1) // 2) + 6)
-        self.vorschau.setMinimumSize(0, 230)
+        a.setFlow(QListView.TopToBottom); a.setWrapping(False); a.setResizeMode(QListView.Adjust); a.setSpacing(0)
+        a.setUniformItemSizes(True); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); a.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(32 * a.count() + 6)
+        for i in range(a.count()):
+            a.item(i).setSizeHint(QSize(0, 32))
+        self.vorschau.setMinimumSize(0, 0)
         self._vorschau_breite, self._bild_groesse = 390, QSize(70, 54)
         self._gruppe(self.arten.currentRow())
 
     def passe_an(self, breite: int, _hoehe: int) -> None:
         """Auf die echte Breite der Seitenleiste: zwei Spalten Diagrammarten, Vorschau so breit wie der Platz."""
         innen = max(200, breite - 30)
-        self.arten.setGridSize(QSize(innen // 2, 34))
         self._vorschau_breite = innen - 24
         self.aktualisieren()
 
@@ -245,4 +250,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         b = self._vorschau_breite
         r = max(b, 420)                                                      # schmal: groß zeichnen und verkleinern, damit Beschriftungen lesbar bleiben
         pm = QPixmap.fromImage(self.bild(r, int(r * 0.58)))
-        self.vorschau.setPixmap(pm if r == b else pm.scaledToWidth(b, Qt.SmoothTransformation))
+        pm = pm if r == b else pm.scaledToWidth(b, Qt.SmoothTransformation)
+        self.vorschau.setPixmap(pm)
+        if self._kompakt:
+            self.vorschau.setFixedHeight(pm.height() + 2)                    # genau so hoch wie das Bild: nichts abgeschnitten

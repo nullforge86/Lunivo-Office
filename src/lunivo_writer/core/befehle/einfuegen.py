@@ -851,6 +851,15 @@ class EinfuegenBefehle:
         self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
 
 
+    def menue_diagrammKlappe(self):
+        """Klappe am Diagramm-Knopf: Diagramm … (Fenster) und Neuer Zeichenbereich."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Diagramm …", self.diagramm, symbol=self._sym("saeule"))
+        m.eintrag("Neuer Zeichenbereich", self.zeichenbereich, symbol=self._sym("textrahmen"))
+        return m
+
+
     def diagramm(self, k=None):
         if self.ed:
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDialog

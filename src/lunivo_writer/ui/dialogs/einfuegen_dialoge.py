@@ -1,17 +1,19 @@
 """Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Datum, Textbausteine."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont, QPixmap
+import math
+
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFont, QPalette, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem,
-    QSizePolicy, QVBoxLayout,
+    QSizePolicy, QVBoxLayout, QApplication, QWidget,
 )
 
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.ui.baukasten import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
 from lunivo_writer.services import bausteine
 
 
@@ -97,30 +99,137 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self._zeige(self.bild())
 
 
+class _LayoutGalerie(QWidget):
+    """Galerie der SmartArt-Layouts: Bildchen (selbst gezeichnet) in einem KachelFeld, die Spaltenzahl folgt der Breite."""
+    gewaehlt = Signal(str)
+    KACHEL = 52
+
+    def __init__(self, namen, zeichner, aktuell):
+        super().__init__()
+        self._namen, self._zeichner, self._aktuell, self._spalten = list(namen), zeichner, aktuell, 0
+        self._v = QVBoxLayout(self); self._v.setContentsMargins(0, 0, 0, 0)
+        self.feld = None
+        self._bauen(3)
+
+    def _bauen(self, spalten: int) -> None:
+        from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
+        if self.feld is not None:
+            self._v.removeWidget(self.feld); self.feld.deleteLater()
+        self._spalten = spalten
+        self.feld = KachelFeld(spalten=spalten, groesse=QSize(self.KACHEL, self.KACHEL * 3 // 4), mit_text=False)
+        for n in self._namen:
+            self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
+            self.feld.knoepfe[n].setAccessibleName(n)
+        self.feld.gewaehlt.connect(self._klick)
+        self.feld.setze(self._aktuell)
+        self._v.addWidget(self.feld)
+        self.updateGeometry()
+
+    def _klick(self, name: str) -> None:
+        self._aktuell = name
+        self.gewaehlt.emit(name)
+
+    def setze(self, name: str) -> None:
+        self._aktuell = name; self.feld.setze(name)
+
+    def aktuell(self) -> str:
+        return self._aktuell
+
+    def resizeEvent(self, ev) -> None:
+        super().resizeEvent(ev)
+        s = max(1, min(len(self._namen), (self.width() + 4) // (self.KACHEL + 14)))
+        if s != self._spalten:
+            self._bauen(s)
+
+
+def _layout_bildchen(p, r, name: str) -> None:
+    """Kleines Bild eines SmartArt-Layouts (nur Umrisse in Palettenfarben)."""
+    from PySide6.QtGui import QBrush, QPen
+    pal = QApplication.palette()
+    f = pal.color(QPalette.Highlight); f.setAlpha(170)
+    p.setPen(QPen(pal.color(QPalette.Mid), 1)); p.setBrush(QBrush(f))
+    r = r.adjusted(3, 3, -3, -3)
+    w, h = r.width(), r.height()
+
+    def kasten(x, y, bw, bh):
+        p.drawRoundedRect(QRectF(r.left() + x * w, r.top() + y * h, bw * w, bh * h), 2, 2)
+    if name == "Liste":
+        for i in range(3):
+            kasten(0.0 + i * 0.08, i * 0.36, 1 - i * 0.08, 0.26)
+    elif name == "Prozess":
+        for i in range(3):
+            kasten(i * 0.37, 0.3, 0.26, 0.4)
+            if i < 2:
+                p.drawLine(QPointF(r.left() + (i * 0.37 + 0.27) * w, r.center().y()), QPointF(r.left() + (i * 0.37 + 0.36) * w, r.center().y()))
+    elif name == "Hierarchie":
+        kasten(0.33, 0.0, 0.34, 0.26)
+        p.drawLine(QPointF(r.center().x(), r.top() + 0.26 * h), QPointF(r.center().x(), r.top() + 0.5 * h))
+        p.drawLine(QPointF(r.left() + 0.15 * w, r.top() + 0.5 * h), QPointF(r.left() + 0.85 * w, r.top() + 0.5 * h))
+        for x in (0.0, 0.35, 0.7):
+            p.drawLine(QPointF(r.left() + (x + 0.15) * w, r.top() + 0.5 * h), QPointF(r.left() + (x + 0.15) * w, r.top() + 0.64 * h))
+            kasten(x, 0.64, 0.3, 0.26)
+    elif name == "Zyklus":
+        for i in range(4):
+            a = math.radians(i * 90 - 90)
+            c = QPointF(r.center().x() + math.cos(a) * w * 0.3, r.center().y() + math.sin(a) * h * 0.32)
+            p.drawEllipse(c, w * 0.12, w * 0.12)
+    elif name == "Pyramide":
+        for i in range(3):
+            y0, y1 = i / 3 + 0.02, (i + 1) / 3 - 0.02
+            b0, b1 = y0 * 0.5, y1 * 0.5
+            p.drawPolygon(QPolygonF([QPointF(r.center().x() - b0 * w, r.top() + y0 * h), QPointF(r.center().x() + b0 * w, r.top() + y0 * h),
+                                     QPointF(r.center().x() + b1 * w, r.top() + y1 * h), QPointF(r.center().x() - b1 * w, r.top() + y1 * h)]))
+    else:
+        kasten(0.1, 0.1, 0.8, 0.8)
+
+
 class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    """SmartArt anlegen oder bearbeiten: Layout, Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer)."""
+    """SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
+    Beim Bearbeiten (``daten`` gegeben) kommen Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer) dazu."""
+    BESCHREIBUNG = {
+        "Liste": "Zeigt nicht aufeinanderfolgende Informationen oder Gruppen von Informationen untereinander. Eingerückte Zeilen bilden Unterpunkte.",
+        "Prozess": "Zeigt die Schritte eines Ablaufs oder einer Zeitachse nacheinander, durch Pfeile verbunden.",
+        "Hierarchie": "Stellt hierarchische Informationen oder Berichtsbeziehungen dar, etwa den Aufbau einer Organisation. Eingerückte Zeilen sind untergeordnet.",
+        "Zyklus": "Zeigt einen fortlaufenden Prozess, dessen Schritte im Kreis wieder von vorn beginnen.",
+        "Pyramide": "Zeigt Beziehungen, die nach oben schmaler werden, etwa Grundlagen unten und Spitze oben.",
+    }
+
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
         from lunivo_writer.editor import smartart as SA
         self.SA = SA
-        self.setWindowTitle("SmartArt")
-        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
+        self.setWindowTitle("SmartArt-Grafik auswählen")
+        v = QVBoxLayout(self)
+        bearbeiten = bool(daten)
         daten = daten or {}
-        self.layout_ = QComboBox(); self.layout_.addItems(SA.LAYOUTS)
-        self.layout_.setCurrentText(daten.get("layout", "Prozess"))
+        start = daten.get("layout", "Prozess")
+        self.galerie = _LayoutGalerie(SA.LAYOUTS, _layout_bildchen, start)
+        v.addWidget(abschnittstitel("Layout")); v.addWidget(self.galerie)
+        self.name = QLabel(); self.name.setStyleSheet("font-weight: 600;")
+        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
+        self.beschreibung.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
+        v.addWidget(self.name); v.addWidget(self.beschreibung)
+        self._vorschau_bauen(v)
         self.farben = QComboBox(); self.farben.addItems(list(SA.FARBEN))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
-        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[self.layout_.currentText()])
+        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
         self.text.setMinimumHeight(110)
-        f.zeile("Layout", self.layout_); f.zeile("Farben", self.farben)
+        self.bearbeiten = QWidget()
+        f = FormularGitter(); b = QVBoxLayout(self.bearbeiten); b.setContentsMargins(0, 0, 0, 0); b.addLayout(f)
+        f.zeile("Farben", self.farben)
         f.breit(QLabel("Text (eine Zeile je Punkt)")); f.breit(self.text)
-        self._vorschau_bauen(v)
+        v.addWidget(self.bearbeiten); self.bearbeiten.setVisible(bearbeiten)
+        v.addStretch(1)
         v.addWidget(_ok(self))
-        self.layout_.currentTextChanged.connect(self._layout)
+        self.galerie.gewaehlt.connect(self._layout)
         self.farben.currentTextChanged.connect(self.aktualisieren)
         self.text.textChanged.connect(self.aktualisieren)
         self._eigener_text = bool(daten.get("text"))
         self.aktualisieren()
+
+    @property
+    def layout_(self):
+        return self.galerie
 
     def _layout(self, name):
         if not self._eigener_text or self.text.toPlainText() in self.SA.MUSTER.values():
@@ -128,10 +237,12 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.aktualisieren()
 
     def daten(self):
-        return {"layout": self.layout_.currentText(), "farben": self.farben.currentText(), "text": self.text.toPlainText()}
+        return {"layout": self.galerie.aktuell(), "farben": self.farben.currentText(), "text": self.text.toPlainText()}
 
     def aktualisieren(self, *_):
-        self._zeige(self.SA.zeichnen(self.daten()))
+        d = self.daten()
+        self.name.setText(d["layout"]); self.beschreibung.setText(self.BESCHREIBUNG.get(d["layout"], ""))
+        self._zeige(self.SA.zeichnen(d))
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
