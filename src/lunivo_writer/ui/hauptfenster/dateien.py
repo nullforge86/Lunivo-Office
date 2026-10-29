@@ -6,7 +6,7 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox, QWidget
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
@@ -217,7 +217,7 @@ class DateienBaustein:
             self._write(t, path, mark_saved=False)
 
 
-    # Exportoptionen im Fenster „PDF-Datei exportieren“ ↔ gemerkte Einstellung (dieselben Schlüssel wie unter Optionen ▸ Drucken)
+    # PDF-Exportoptionen ↔ gemerkte Einstellungen (dieselben Schlüssel wie unter Optionen ▸ Drucken)
     PDF_SCHLUESSEL = {"eigenschaften": ("pdf/eigenschaften", True), "kommentare": ("pdf/kommentare", False),
                       "hyperlinks": ("pdf/hyperlinks", True), "notenlinks": ("pdf/notenlinks", True),
                       "textmarken": ("pdf/lz_textmarken", False), "ueberschriften": ("pdf/lz_ueberschriften", False),
@@ -239,12 +239,18 @@ class DateienBaustein:
 
 
     def export_pdf_dialog(self):
-        """„Als PDF exportieren“: Lunivos Fenster „PDF-Datei exportieren“ (Seitenbereich, Exportoptionen, Berechtigungen)."""
+        """Öffnet den PDF-Export als Seite in der zweiten Spalte des Datei-Menüs."""
         t = self.current_tab()
         if not t:
             return
-        from lunivo_writer.ui.baukasten.pdf_export import pdf_export_fragen
+        self.backstage_oeffnen("pdf")
 
+    def pdf_export_widget(self):
+        """Baut die PDF-Exportseite des Datei-Menüs; alle Exportwahloptionen bleiben erhalten."""
+        from lunivo_writer.ui.baukasten.pdf_export import PdfExportAnsicht
+        t = self.current_tab()
+        if not t:
+            return QWidget()
         def exportieren(wahl) -> bool:
             if not self._darf_ueberschreiben(t, wahl.pfad) or not self._pdf_schreiben(t, wahl.pfad, wahl):
                 return False
@@ -255,7 +261,26 @@ class DateienBaustein:
             return True
 
         e = t.editor
-        pdf_export_fragen(self, self.pdf_wahl_start(t), max(1, e.page_count), e.current_page(), e.textCursor().hasSelection(), exportieren)
+        return PdfExportAnsicht(self.backstage, self.pdf_wahl_start(t), max(1, e.page_count), e.current_page(),
+                                e.textCursor().hasSelection(), exportieren, self.backstage_schliessen)
+
+    def bild_export_widget(self):
+        """Baut die Bildexportseite des Datei-Menüs; schreibt Bilder ohne ein separates Exportfenster."""
+        from lunivo_writer.services.bild_export import bilder_schreiben
+        from lunivo_writer.ui.baukasten.bild_export import BildExportAnsicht
+        t = self.current_tab()
+        if not t:
+            return QWidget()
+
+        def exportieren(wahl):
+            bilder = bilder_schreiben(t.editor.document(), t.page, t.editor.noten, t.title, wahl)
+            self.settings.set("export/bild_ordner", wahl.ordner)
+            if bilder:
+                self.statusBar().showMessage(f"{len(bilder)} Bild{'er' if len(bilder) != 1 else ''} exportiert.", 5000)
+            return bilder
+
+        return BildExportAnsicht(self.backstage, self.settings.get("export/bild_ordner", "") or "",
+                                 self.ausgabe_ppi(), exportieren, self.backstage_schliessen)
 
 
     def _pdf_schreiben(self, t: DocumentTab, path: str, wahl=None) -> bool:

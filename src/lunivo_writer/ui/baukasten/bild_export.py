@@ -1,4 +1,4 @@
-"""„Als Bild exportieren“: das Fenster nach Kays Vorbild (WPS-Bildschirmfoto „Export Image“) und die Meldung danach.
+"""„Als Bild exportieren“: die Bildlayoutkarten und Einstellungen in der rechten Spalte des Datei-Menüs.
 
 Oben zwei Karten — **Jede Seite** (eine Datei je Seite) und **Langes Bild** (alle Seiten untereinander) —, darunter Wasserzeichen,
 Qualität, Format und Zielordner, rechts unten **Exportieren**. Die Bildchen auf den Karten zeichnet ``QPainter``; geschrieben wird
@@ -7,11 +7,12 @@ in ``services/bild_export.py``.
 from __future__ import annotations
 
 import os
+from typing import Callable
 
 from PySide6.QtCore import QPointF, QRectF, QSize, QStandardPaths, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPalette, QPen
-from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
-                               QPushButton, QVBoxLayout)
+from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+                               QLayout, QPushButton, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.services.bild_export import FORMATE, QUALITAET, BildWahl
@@ -96,15 +97,20 @@ class _Karte(QAbstractButton):
             p.fillRect(QRectF(x + 10, y + 90, 14, 14), linie)
 
 
-class BildExportFenster(QDialog):
-    def __init__(self, parent, startordner: str = "", dpi: int = 150):
+class BildExportAnsicht(QWidget):
+    """Bildexport als Seite in der zweiten Spalte des Datei-Menüs."""
+
+    def __init__(self, parent, startordner: str, dpi: int, exportieren: Callable[[BildWahl], list[str]], zurueck: Callable[[], None]):
         super().__init__(parent)
-        self.setWindowTitle("Als Bild exportieren")
         self.setStyleSheet(STIL)
-        v = QVBoxLayout(self)
-        v.setContentsMargins(36, 28, 36, 28)
-        v.setSpacing(18)
-        karten = QHBoxLayout(); karten.setSpacing(36)
+        self._exportieren_cb = exportieren
+        self._zurueck = zurueck
+        v = QVBoxLayout(self); v.setContentsMargins(30, 20, 30, 16); v.setSpacing(8)
+        titel = QLabel("Als Bild exportieren"); titel.setObjectName("bsTitel"); v.addWidget(titel)
+        intro = QLabel("Wähle das Bildlayout, die Qualität und den Speicherort. Jede Seite kann einzeln oder als langes Bild gespeichert werden.")
+        intro.setWordWrap(True); intro.setObjectName("bsHinweis"); v.addWidget(intro)
+
+        karten = QHBoxLayout(); karten.setSpacing(24)
         self.k_seite = _Karte("Jede Seite", False)
         self.k_lang = _Karte("Langes Bild", True)
         gruppe = QButtonGroup(self); gruppe.setExclusive(True)
@@ -112,10 +118,10 @@ class BildExportFenster(QDialog):
             gruppe.addButton(k); karten.addWidget(k)
         karten.addStretch(1)
         self.k_seite.setChecked(True)
-        v.addLayout(karten)
+        v.addWidget(_abschnitt("1. Bildlayout", "Wähle eine Bilddatei pro Seite oder ein langes Bild mit allen Seiten untereinander.", karten))
 
         g = QGridLayout(); g.setHorizontalSpacing(14); g.setVerticalSpacing(14)
-        self.wasser = QLineEdit(); self.wasser.setPlaceholderText("Vertraulich, Nicht kopieren, Original, Muster …")
+        self.wasser = QLineEdit(); self.wasser.setPlaceholderText("Zum Beispiel: Vertraulich")
         self.wasser.setMinimumWidth(390)
         self.qualitaet = QComboBox()
         for name, wert in QUALITAET:
@@ -137,6 +143,9 @@ class BildExportFenster(QDialog):
         self.k_export = QPushButton("Exportieren"); self.k_export.setObjectName("beHaupt"); self.k_export.setDefault(True)
         self.k_export.setCursor(Qt.PointingHandCursor); self.k_export.setMinimumWidth(120)
         self.k_export.clicked.connect(self._exportieren)
+        self.wasser.setToolTip("Optionaler, blasser Schriftzug auf jeder exportierten Seite.")
+        self.qualitaet.setToolTip("Höhere Auflösung ergibt schärfere, aber größere Bilddateien.")
+        self.format.setToolTip("Wähle PNG, JPG, BMP oder TIF.")
         for zeile, (text, feld) in enumerate((("&Wasserzeichen", self.wasser), ("&Qualität", self.qualitaet),
                                               ("&Format", self.format), ("Speichern &in", self.ordner))):
             l = QLabel(text); l.setBuddy(feld)
@@ -144,11 +153,32 @@ class BildExportFenster(QDialog):
             g.addWidget(feld, zeile, 1, Qt.AlignLeft if feld in (self.qualitaet, self.format) else Qt.Alignment())
         for feld in (self.wasser, self.qualitaet, self.format, self.ordner, self.k_export):
             feld.setMinimumHeight(36)                                 # Felder in der Höhe des Vorbilds, nicht schmal
-        g.addWidget(self.k_export, 3, 2)
         g.setColumnStretch(1, 1)
-        g.setColumnMinimumWidth(2, 140)
-        v.addLayout(g)
+        v.addWidget(_abschnitt("2. Ausgabe festlegen", "Lege Wasserzeichen, Bildqualität, Dateiformat und Zielordner fest.", g))
+        self.k_export.setText("Bilder exportieren")
+        self.ordner.setAccessibleName("Ordner für die exportierten Bilder")
+        self.wasser.setAccessibleName("Wasserzeichen, optional")
+        self.qualitaet.setAccessibleName("Bildqualität")
+        self.format.setAccessibleName("Bildformat")
         self._wahl: BildWahl | None = None
+        self._dateien: list[str] = []
+
+        self.meldung = QLabel(); self.meldung.setWordWrap(True); self.meldung.setObjectName("bsHinweis"); self.meldung.hide()
+        v.addWidget(self.meldung)
+        aktionen = QHBoxLayout(); aktionen.addStretch(1)
+        self._datei_oeffnen = QPushButton("Bild öffnen"); self._datei_oeffnen.setEnabled(False)
+        self._ordner_oeffnen = QPushButton("Ordner öffnen"); self._ordner_oeffnen.setEnabled(False)
+        self._datei_oeffnen.hide(); self._ordner_oeffnen.hide()
+        self._datei_oeffnen.clicked.connect(self._erstes_bild_oeffnen)
+        self._ordner_oeffnen.clicked.connect(self._zielordner_oeffnen)
+        aktionen.addWidget(self._datei_oeffnen); aktionen.addWidget(self._ordner_oeffnen)
+        v.addLayout(aktionen)
+        v.addStretch(1)
+        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 8, 0, 0)
+        self.zurueck_knopf = QPushButton("Zurück zum Dokument"); self.zurueck_knopf.clicked.connect(self._zurueck)
+        self.k_export.setMinimumHeight(38); self.k_export.setMinimumWidth(160)
+        fuss.addStretch(1); fuss.addWidget(self.zurueck_knopf); fuss.addWidget(self.k_export)
+        v.addLayout(fuss)
 
     def _ordner_waehlen(self) -> None:
         from lunivo_writer.ui.baukasten.speichern_fenster import ordner_waehlen
@@ -159,68 +189,55 @@ class BildExportFenster(QDialog):
     def _exportieren(self) -> None:
         ordner = os.path.expanduser(self.ordner.text().strip())
         if not os.path.isdir(ordner):
-            from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, self.windowTitle(), f"Den Ordner „{ordner}“ gibt es nicht.")
+            self.meldung.setText(f"Der gewählte Ordner „{ordner}“ ist nicht vorhanden.")
+            self.meldung.show(); self.ordner.setFocus()
             return
         self._wahl = BildWahl(lang=self.k_lang.isChecked(), wasserzeichen=self.wasser.text(), dpi=int(self.qualitaet.currentData()),
                               format=self.format.currentText(), ordner=ordner)
-        self.accept()
+        self._dateien = []
+        self._datei_oeffnen.setEnabled(False); self._datei_oeffnen.hide()
+        self._ordner_oeffnen.setEnabled(False); self._ordner_oeffnen.hide()
+        self.meldung.setStyleSheet("")
+        self.k_export.setEnabled(False); self.meldung.setText("Bilder werden erstellt …"); self.meldung.show()
+        from PySide6.QtWidgets import QApplication
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            dateien = self._exportieren_cb(self._wahl)
+        except OSError as e:
+            self.meldung.setText(f"Export nicht möglich: {e}")
+            self.meldung.setStyleSheet("color: #e88b8b;")
+            self.ordner.setFocus()
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+            self.k_export.setEnabled(True)
+        self._dateien = dateien
+        if not dateien:
+            self.meldung.setText("Es wurden keine Seiten zum Exportieren gefunden.")
+            return
+        self.meldung.setStyleSheet("")
+        self.meldung.setText(f"{len(dateien)} Bild{'er' if len(dateien) != 1 else ''} gespeichert.")
+        self.meldung.show()
+        self._datei_oeffnen.setEnabled(True)
+        self._ordner_oeffnen.setEnabled(True)
+        self._datei_oeffnen.show(); self._ordner_oeffnen.show()
 
-    def wahl(self) -> BildWahl | None:
-        return self._wahl
+    def _erstes_bild_oeffnen(self) -> None:
+        if self._dateien:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(self._dateien[0]))
+
+    def _zielordner_oeffnen(self) -> None:
+        if self._dateien:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(self._dateien[0])))
 
 
-class ErfolgFenster(QDialog):
-    """Nach dem Export: Datei öffnen oder Ordner zeigen."""
-
-    def __init__(self, parent, dateien: list[str]):
-        super().__init__(parent)
-        self.setWindowTitle("Export erfolgreich")
-        self.setStyleSheet(STIL)
-        self.dateien = dateien
-        v = QVBoxLayout(self); v.setContentsMargins(24, 20, 24, 20); v.setSpacing(14)
-        kopf = QHBoxLayout()
-        haken = QLabel(); haken.setFixedSize(28, 28); haken.setPixmap(_haken(28))
-        titel = QLabel("Export erfolgreich"); titel.setObjectName("beText")
-        kopf.addWidget(haken); kopf.addWidget(titel); kopf.addStretch(1)
-        v.addLayout(kopf)
-        n = len(dateien)
-        text = QLabel(f"{n} Bild{'er' if n != 1 else ''} gespeichert. Öffnen Sie die Datei oder den Ordner, um es anzusehen."
-                      if n == 1 else f"{n} Bilder gespeichert. Öffnen Sie die erste Datei oder den Ordner, um sie anzusehen.")
-        text.setWordWrap(True)
-        v.addWidget(text)
-        v.addSpacing(16)
-        knoepfe = QHBoxLayout(); knoepfe.addStretch(1)
-        oeffnen = QPushButton("Ö&ffnen"); oeffnen.setObjectName("beHaupt"); oeffnen.setDefault(True)
-        ordner = QPushButton("&Ordner öffnen")
-        oeffnen.clicked.connect(lambda: (QDesktopServices.openUrl(QUrl.fromLocalFile(dateien[0])), self.accept()))
-        ordner.clicked.connect(lambda: (QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(dateien[0]))), self.accept()))
-        for k in (oeffnen, ordner):
-            k.setMinimumWidth(130); k.setCursor(Qt.PointingHandCursor); knoepfe.addWidget(k)
-        v.addLayout(knoepfe)
-        self.setMinimumWidth(480)
-
-
-def _haken(px: int):
-    from PySide6.QtGui import QPixmap
-    pm = QPixmap(px * 2, px * 2); pm.setDevicePixelRatio(2); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(Qt.NoPen); p.setBrush(QColor(Farbe.GRUEN)); p.drawEllipse(QRectF(0, 0, px, px))
-    p.setPen(QPen(QColor(Farbe.WEISS), 2.6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    p.drawPolyline([QPointF(px * 0.28, px * 0.52), QPointF(px * 0.44, px * 0.68), QPointF(px * 0.74, px * 0.36)])
-    p.end()
-    return pm
+def _abschnitt(titel: str, hilfe: str, layout: QLayout) -> QWidget:
+    w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 6, 0, 6); v.setSpacing(5)
+    t = QLabel(titel); t.setStyleSheet("font-weight: 600; font-size: 11pt;")
+    h = QLabel(hilfe); h.setObjectName("bsHinweis"); h.setWordWrap(True)
+    v.addWidget(t); v.addWidget(h); v.addLayout(layout)
+    return w
 
 
 def _bilder_ordner() -> str:
     return QStandardPaths.writableLocation(QStandardPaths.PicturesLocation) or os.path.expanduser("~")
-
-
-def bild_export_fragen(parent, startordner: str, dpi: int) -> BildWahl | None:
-    f = BildExportFenster(parent, startordner, dpi)
-    return f.wahl() if f.exec() == QDialog.Accepted else None
-
-
-def erfolg_zeigen(parent, dateien: list[str]) -> None:
-    if dateien:
-        ErfolgFenster(parent, dateien).exec()

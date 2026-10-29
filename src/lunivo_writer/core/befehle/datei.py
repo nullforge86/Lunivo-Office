@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import os
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QLineEdit, QMenu, QMessageBox
 
 
 class DateiBefehle:
@@ -76,25 +75,9 @@ class DateiBefehle:
 
 
     def exportierenPng(self, k=None):
-        """Als Bild exportieren: das Fenster nach Kays Vorbild (jede Seite / langes Bild, Wasserzeichen, Qualität, Format, Ordner)."""
-        t = self.w.current_tab()
-        if not t:
-            return
-        from lunivo_writer.services.bild_export import bilder_schreiben
-        from lunivo_writer.ui.baukasten import bild_export as BE
-        wahl = BE.bild_export_fragen(self.w, self.w.settings.get("export/bild_ordner", "") or "", self.w.ausgabe_ppi())
-        if wahl is None:
-            return
-        self.w.settings.set("export/bild_ordner", wahl.ordner)
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            dateien = bilder_schreiben(t.editor.document(), t.page, t.editor.noten, t.title, wahl)
-        except OSError as e:
-            QApplication.restoreOverrideCursor()
-            QMessageBox.warning(self.w, "Als Bild exportieren", str(e))
-            return
-        QApplication.restoreOverrideCursor()
-        BE.erfolg_zeigen(self.w, dateien)
+        """Öffnet den Bildexport in der rechten Spalte des Datei-Menüs."""
+        if self.w.current_tab():
+            self.w.backstage_oeffnen("bild")
 
 
     # ==== Datei (Reiter) =======================================================================================================

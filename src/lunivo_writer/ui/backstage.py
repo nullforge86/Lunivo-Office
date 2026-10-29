@@ -1,8 +1,8 @@
 """Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
 
-Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, PDF, Bild, Beenden)
-führen sofort aus und schließen die Ansicht; Seiten gibt es für Neu (Vorlagen), Öffnen (Zuletzt verwendet und Dateiauswahl), Speichern unter (alle Ausgabeformate, Info, Öffnen mit …),
-Drucken, Dokumentverschlüsselung, Hilfe und Optionen. Rechts steht zuerst die Liste zuletzt verwendeter Dateien.
+Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, Beenden)
+führen sofort aus und schließen die Ansicht; PDF- und Bildexport, Neu (Vorlagen), Öffnen (Zuletzt verwendet und Dateiauswahl),
+Speichern unter, Drucken, Dokumentverschlüsselung, Hilfe und Optionen zeigen ihre Seite rechts.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from datetime import datetime
 from PySide6.QtCore import QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
+    QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -29,8 +29,8 @@ EINTRAEGE = [
     ("oeffnen", "Öffnen", "oeffnen", "seite", "zuletzt"),
     ("speichern", "Speichern", "speichern", "tun", "speichern"),
     ("speichern_als", "Speichern unter", "speichern_unter", "seite", "speichern_als"),
-    ("pdf", "Als PDF exportieren", "pdf", "tun", "speichernPdf"),
-    ("bild", "Als Bild exportieren", "bild", "tun", "exportierenPng"),
+    ("pdf", "Als PDF exportieren", "pdf", "seite", "pdf"),
+    ("bild", "Als Bild exportieren", "bild", "seite", "bild"),
     ("drucken", "Drucken", "drucken", "seite", "drucken"),
     ("-1", "", "", "trenner", None),
     ("schuetzen", "Dokumentverschlüsselung", "schutz", "seite", "schuetzen"),
@@ -74,7 +74,7 @@ class _Zeile(QStyledItemDelegate):
 
 
 ART, PFEIL = Qt.UserRole + 1, Qt.UserRole + 2
-MIT_PFEIL = ("neu", "oeffnen", "speichern_als", "drucken", "schuetzen", "hilfe")
+MIT_PFEIL = ("neu", "oeffnen", "speichern_als", "pdf", "bild", "drucken", "schuetzen", "hilfe")
 
 EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "exportierenDocx"),
            ("OpenDocument-Text (.odt)", "exportierenOdt"),
@@ -153,8 +153,8 @@ class Backstage(QWidget):
         haben_dok = self.w.current_tab() is not None
         for schl in MIT_DOKUMENT:
             self.zeilen[schl].setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable if haben_dok else Qt.NoItemFlags)
-        bauer = {"zuletzt": self._zuletzt, "speichern_als": self._speichern_als, "drucken": self._drucken, "vorlage": self._vorlage,
-                 "hilfe": self._hilfe, "schuetzen": self._schuetzen, "info": self._info, "oeffnen_mit": self._oeffnen_mit, "optionen": self._optionen}
+        bauer = {"zuletzt": self._zuletzt, "speichern_als": self._speichern_als, "drucken": self._drucken, "vorlage": self._vorlage, "pdf": self._pdf,
+                 "bild": self._bild, "hilfe": self._hilfe, "schuetzen": self._schuetzen, "info": self._info, "oeffnen_mit": self._oeffnen_mit, "optionen": self._optionen}
         for schl, f in bauer.items():
             seite_w = f()
             self.seiten[schl] = seite_w
@@ -214,6 +214,10 @@ class Backstage(QWidget):
             self._drucken_zeigen()
         elif schl == "vorlage":
             self._vorlage_zeigen()
+        elif schl == "pdf":
+            self._pdf_zeigen()
+        elif schl == "bild":
+            self._bild_zeigen()
         self.stapel.setCurrentWidget(self.seiten[schl])
         zeile = next((self.zeilen[e[0]] for e in EINTRAEGE if e[3] == "seite" and e[4] == schl), None)
         if zeile is None:
@@ -394,6 +398,36 @@ class Backstage(QWidget):
         ph._ansicht = None
         return ph
 
+    def _pdf(self) -> QWidget:
+        """Platzhalter für den eingebetteten PDF-Export, frisch je Öffnen des Datei-Menüs."""
+        ph = QScrollArea()
+        ph.setObjectName("bsSeite")
+        ph.setWidgetResizable(True)
+        ph.setFrameShape(QFrame.NoFrame)
+        ph._ansicht = None
+        return ph
+
+    def _pdf_zeigen(self) -> None:
+        ph = self.seiten["pdf"]
+        if ph._ansicht is None:
+            ph._ansicht = self.w.pdf_export_widget()
+            ph.setWidget(ph._ansicht)
+
+    def _bild(self) -> QWidget:
+        """Platzhalter für den Bildexport in der rechten Menüspalte."""
+        ph = QScrollArea()
+        ph.setObjectName("bsSeite")
+        ph.setWidgetResizable(True)
+        ph.setFrameShape(QFrame.NoFrame)
+        ph._ansicht = None
+        return ph
+
+    def _bild_zeigen(self) -> None:
+        ph = self.seiten["bild"]
+        if ph._ansicht is None:
+            ph._ansicht = self.w.bild_export_widget()
+            ph.setWidget(ph._ansicht)
+
     def _drucken_zeigen(self) -> None:
         ph = self.seiten["drucken"]
         t = self.w.current_tab()
@@ -421,12 +455,72 @@ class Backstage(QWidget):
         return sa
 
     def _schuetzen(self):
-        sa, v = self._seite("Datei schützen")
-        self._gruppe(v, "Mit Kennwort", "Verschlüsseln Sie dieses Dokument mit einem Kennwort. Das Kennwort wird beim nächsten Speichern wirksam.")
-        self._knopf(v, "Kennwort hinzufügen / ändern …", "dokumentSchuetzen", "sperren")
+        sa, v = self._seite("Dokumentverschlüsselung")
+        t = self.w.current_tab()
+        self._gruppe(v, "Kennwortschutz", "Das Kennwort schützt das Öffnen der DOCX-Datei. Die Verschlüsselung wird beim nächsten Speichern angewendet.")
+        kennwort_form = QWidget(); kg = QGridLayout(kennwort_form); kg.setContentsMargins(0, 4, 0, 4); kg.setHorizontalSpacing(10); kg.setVerticalSpacing(8)
+        kennwort = QLineEdit(); kennwort.setEchoMode(QLineEdit.Password); kennwort.setPlaceholderText("Dokumentkennwort")
+        bestaetigung = QLineEdit(); bestaetigung.setEchoMode(QLineEdit.Password); bestaetigung.setPlaceholderText("Kennwort erneut eingeben")
+        kennwort.setAccessibleName("Dokumentkennwort"); bestaetigung.setAccessibleName("Bestätigung des Dokumentkennworts")
+        kennwort.setEnabled(t is not None); bestaetigung.setEnabled(t is not None)
+        kg.addWidget(QLabel("Dokumentkennwort:"), 0, 0); kg.addWidget(kennwort, 0, 1)
+        kg.addWidget(QLabel("Erneut eingeben:"), 1, 0); kg.addWidget(bestaetigung, 1, 1)
+        kg.setColumnStretch(1, 1); v.addWidget(kennwort_form)
+
+        hinweis = QLabel("Ein vergessenes Kennwort kann nicht wiederhergestellt werden. Bewahre es an einem sicheren Ort auf.")
+        hinweis.setWordWrap(True); hinweis.setObjectName("bsHinweis"); v.addWidget(hinweis)
+        status = QLabel(); status.setWordWrap(True); status.setObjectName("bsHinweis")
+        if t is None:
+            status.setText("Kein Dokument geöffnet.")
+        elif t.meta.get("kennwort"):
+            status.setText("Dieses Dokument wird beim nächsten Speichern mit einem Kennwort verschlüsselt.")
+        else:
+            status.setText("Dieses Dokument ist derzeit nicht kennwortgeschützt.")
+        v.addWidget(status)
+
+        aktionen = QHBoxLayout()
+        setzen = QPushButton("Kennwort setzen / ändern"); setzen.setObjectName("optFertig"); setzen.setEnabled(t is not None)
+        entfernen = QPushButton("Kennwort entfernen"); entfernen.setEnabled(bool(t and t.meta.get("kennwort")))
+        aktionen.addWidget(setzen); aktionen.addWidget(entfernen); aktionen.addStretch(1); v.addLayout(aktionen)
+
+        def setze_kennwort():
+            if not kennwort.text():
+                status.setText("Bitte gib ein Dokumentkennwort ein."); kennwort.setFocus(); return
+            if kennwort.text() != bestaetigung.text():
+                status.setText("Die beiden Kennworteingaben stimmen nicht überein."); bestaetigung.setFocus(); return
+            t.meta["kennwort"] = kennwort.text(); t.editor.document().setModified(True)
+            kennwort.clear(); bestaetigung.clear(); entfernen.setEnabled(True)
+            status.setText("Kennwort gesetzt. Die DOCX-Datei wird beim nächsten Speichern verschlüsselt.")
+
+        def entferne_kennwort():
+            t.meta.pop("kennwort", None); t.editor.document().setModified(True)
+            kennwort.clear(); bestaetigung.clear(); entfernen.setEnabled(False)
+            status.setText("Kennwort entfernt. Die Änderung gilt ab dem nächsten Speichern.")
+
+        setzen.clicked.connect(setze_kennwort); entfernen.clicked.connect(entferne_kennwort)
+
+        self._gruppe(v, "Datenschutzoptionen", "Diese Einstellungen gelten für das Öffnen und Speichern in Lunivo.")
+        for key, label, default in (
+            ("sicherheit/markup_oeffnen", "Ausgeblendete Markups beim Öffnen oder Speichern anzeigen", True),
+            ("sicherheit/personendaten_weg", "Beim Speichern persönliche Daten aus Dateieigenschaften entfernen", False),
+        ):
+            box = QCheckBox(label); box.setChecked(self.w.settings.get_bool(key, default))
+            box.toggled.connect(lambda an, k=key: self.w.settings.set(k, an))
+            v.addWidget(box)
+
+        self._gruppe(v, "Dokument", "Weitere Dokumentaktionen")
+        eigenschaften = QPushButton("Eigenschaften …")
+        eigenschaften.setObjectName("bsKnopf"); eigenschaften.setFixedWidth(BREITE)
+        eigenschaften.setCursor(Qt.PointingHandCursor); icons.setze(eigenschaften, "info", 18)
+        eigenschaften.setToolTip("Dokumentangaben wie Titel und Verfasser anzeigen und bearbeiten.")
+        eigenschaften.clicked.connect(lambda: self._zeigen("info"))
+        v.addWidget(eigenschaften)
         self._gruppe(v, "Bearbeitung", "Bearbeitung sperren oder freigeben — wirkt in diesem Fenster.")
-        self._knopf(v, "Bearbeitung sperren / freigeben", "dokumentSchuetzen", "sperren")
-        self._gruppe(v, "Mit Signatur", "Digitale Signaturen sind in dieser Fassung nicht enthalten.")
+        sperren = QCheckBox("Bearbeitung sperren")
+        sperren.setChecked(bool(t and getattr(t, "gesperrt", False))); sperren.setEnabled(t is not None)
+        sperren.toggled.connect(lambda an: t and an != bool(getattr(t, "gesperrt", False)) and self.w.toggle_sperre())
+        v.addWidget(sperren)
+        self._gruppe(v, "Mit Signatur", "Digitale Signaturen sind in dieser Fassung noch nicht verfügbar.")
         k = QPushButton("Digitale Signatur hinzufügen")
         k.setObjectName("bsKnopf")
         k.setEnabled(False)
