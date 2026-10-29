@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPalette, QPixmap, QPolygonF
+from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem,
@@ -142,51 +142,35 @@ class _LayoutGalerie(QWidget):
             self._bauen(s)
 
 
-def _layout_bildchen(p, r, name: str) -> None:
-    """Kleines Bild eines SmartArt-Layouts (nur Umrisse in Palettenfarben)."""
-    from PySide6.QtGui import QBrush, QPen
-    pal = QApplication.palette()
-    f = pal.color(QPalette.Highlight); f.setAlpha(170)
-    p.setPen(QPen(pal.color(QPalette.Mid), 1)); p.setBrush(QBrush(f))
-    r = r.adjusted(3, 3, -3, -3)
-    w, h = r.width(), r.height()
+_BILDCHEN: dict = {}
 
-    def kasten(x, y, bw, bh):
-        p.drawRoundedRect(QRectF(r.left() + x * w, r.top() + y * h, bw * w, bh * h), 2, 2)
-    if name == "Liste":
-        for i in range(3):
-            kasten(0.0 + i * 0.08, i * 0.36, 1 - i * 0.08, 0.26)
-    elif name == "Prozess":
-        for i in range(3):
-            kasten(i * 0.37, 0.3, 0.26, 0.4)
-            if i < 2:
-                p.drawLine(QPointF(r.left() + (i * 0.37 + 0.27) * w, r.center().y()), QPointF(r.left() + (i * 0.37 + 0.36) * w, r.center().y()))
-    elif name == "Hierarchie":
-        kasten(0.33, 0.0, 0.34, 0.26)
-        p.drawLine(QPointF(r.center().x(), r.top() + 0.26 * h), QPointF(r.center().x(), r.top() + 0.5 * h))
-        p.drawLine(QPointF(r.left() + 0.15 * w, r.top() + 0.5 * h), QPointF(r.left() + 0.85 * w, r.top() + 0.5 * h))
-        for x in (0.0, 0.35, 0.7):
-            p.drawLine(QPointF(r.left() + (x + 0.15) * w, r.top() + 0.5 * h), QPointF(r.left() + (x + 0.15) * w, r.top() + 0.64 * h))
-            kasten(x, 0.64, 0.3, 0.26)
-    elif name == "Zyklus":
-        for i in range(4):
-            a = math.radians(i * 90 - 90)
-            c = QPointF(r.center().x() + math.cos(a) * w * 0.3, r.center().y() + math.sin(a) * h * 0.32)
-            p.drawEllipse(c, w * 0.12, w * 0.12)
-    elif name == "Pyramide":
-        for i in range(3):
-            y0, y1 = i / 3 + 0.02, (i + 1) / 3 - 0.02
-            b0, b1 = y0 * 0.5, y1 * 0.5
-            p.drawPolygon(QPolygonF([QPointF(r.center().x() - b0 * w, r.top() + y0 * h), QPointF(r.center().x() + b0 * w, r.top() + y0 * h),
-                                     QPointF(r.center().x() + b1 * w, r.top() + y1 * h), QPointF(r.center().x() - b1 * w, r.top() + y1 * h)]))
-    else:
-        kasten(0.1, 0.1, 0.8, 0.8)
+
+def _layout_bildchen(p, r, name: str) -> None:
+    """Kleines Bild eines SmartArt-Layouts: die echte Zeichnung (``SA.zeichnen``) mit dem Mustertext, verkleinert."""
+    from PySide6.QtGui import QImage
+    from lunivo_writer.editor import smartart as SA
+    img = _BILDCHEN.get(name)
+    if img is None:
+        img = _BILDCHEN[name] = SA.zeichnen({"layout": name, "farben": "Blau", "text": SA.MUSTER.get(name, "")})
+    s = min((r.width() - 4) / img.width(), (r.height() - 4) / img.height())
+    w, h = img.width() * s, img.height() * s
+    p.setRenderHint(QPainter.SmoothPixmapTransform)
+    p.drawImage(QRectF(r.center().x() - w / 2, r.center().y() - h / 2, w, h), img)
 
 
 class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
     """SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
     Beim Bearbeiten (``daten`` gegeben) kommen Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer) dazu."""
     BESCHREIBUNG = {
+        "Spalten": "Zeigt Gruppen mit ihren Unterpunkten nebeneinander in Spalten.",
+        "Gruppen": "Fasst zusammengehörige Punkte in umrahmten Gruppen zusammen.",
+        "Matrix": "Zeigt vier Teile in einem Quadrat, etwa für eine Stärken-Schwächen-Analyse.",
+        "Chevron": "Zeigt einen Ablauf als Reihe von Pfeilen, die nach rechts weisen.",
+        "Radial": "Zeigt Beziehungen zu einem zentralen Kern, um den die übrigen Punkte angeordnet sind.",
+        "Zielscheibe": "Zeigt Ebenen, die sich wie Ringe um ein Ziel in der Mitte legen.",
+        "Trichter": "Zeigt, wie sich Mengen in Stufen verringern, etwa vom Interesse zum Auftrag.",
+        "Zeitachse": "Zeigt Ereignisse oder Zeitpunkte entlang einer Linie.",
+        "Stufen": "Zeigt Schritte, die treppenartig aufeinander aufbauen.",
         "Liste": "Zeigt nicht aufeinanderfolgende Informationen oder Gruppen von Informationen untereinander. Eingerückte Zeilen bilden Unterpunkte.",
         "Prozess": "Zeigt die Schritte eines Ablaufs oder einer Zeitachse nacheinander, durch Pfeile verbunden.",
         "Hierarchie": "Stellt hierarchische Informationen oder Berichtsbeziehungen dar, etwa den Aufbau einer Organisation. Eingerückte Zeilen sind untergeordnet.",
