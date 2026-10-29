@@ -178,7 +178,7 @@ class KopfFussBefehle:
 
     # ---- Felder: Abstand des Kopf-/Fußbereichs ---------------------------------------------------------------------
     def _kf_abstand(self, attr: str, name: str):
-        f = QDoubleSpinBox(); f.setDecimals(1); f.setRange(0.0, 100.0); f.setSingleStep(0.5); f.setSuffix(" mm")
+        f = QDoubleSpinBox(); f.setDecimals(1); f.setRange(0.0, 100.0); f.setSingleStep(0.5); f.setSuffix(" mm"); f.setPrefix(name + ": ")
         f.setAccessibleName(name); f.setToolTip(name)
 
         def laden():

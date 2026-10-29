@@ -9,7 +9,7 @@ import os
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import QPropertyAnimation, QSize, Qt, Signal
-from PySide6.QtGui import QAction, QColor, QFont
+from PySide6.QtGui import QAction, QColor, QFont, QPainter
 from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
     QSizePolicy, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
@@ -115,10 +115,50 @@ STANDARD_VERSTECKT = ("Sendungen",)
 
 class _ReiterLeiste(QTabBar):
     doppelt = Signal()
+    LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
 
     def mouseDoubleClickEvent(self, ev):
         self.doppelt.emit()
         super().mouseDoubleClickEvent(ev)
+
+    def ist_kontext(self, i: int) -> bool:
+        return self.tabData(i) == "kontext"
+
+    def tabSizeHint(self, i):
+        sz = super().tabSizeHint(i)
+        if self.ist_kontext(i):
+            sz.setWidth(sz.width() + 2 * self.LUECKE)
+        return sz
+
+    def paintEvent(self, ev):
+        super().paintEvent(ev)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        dunkel = self.palette().window().color().lightness() < 128
+        akzent = QColor(Farbe.AKZENT_DUNKEL if dunkel else Farbe.AKZENT)
+        erster = True
+        for i in range(self.count()):
+            if not self.isTabVisible(i) or not self.ist_kontext(i):
+                continue
+            tr = self.tabRect(i)
+            p.fillRect(tr.adjusted(0, tr.height() - 4, 0, 0), self.parentWidget().palette().window())   # Stylesheet-Unterstrich weg
+            r = tr.adjusted(self.LUECKE, 3, -self.LUECKE, -3)
+            if erster:                       # Trenner zwischen normalen und Kontext-Reitern
+                x = self.tabRect(i).left() + 2
+                p.setPen(self.palette().mid().color())
+                p.drawLine(x, r.top() + 2, x, r.bottom() - 2)
+                erster = False
+            aktiv = i == self.currentIndex()
+            if aktiv:
+                p.setPen(Qt.NoPen); p.setBrush(akzent)
+            else:
+                fl = QColor(akzent); fl.setAlpha(40)
+                p.setPen(akzent); p.setBrush(fl)
+            p.drawRoundedRect(r, r.height() / 2, r.height() / 2)
+            f = QFont(self.font()); f.setBold(aktiv); p.setFont(f)
+            p.setPen(QColor("#ffffff") if aktiv else (QColor("#9cc4f0") if dunkel else akzent))
+            p.drawText(r, Qt.AlignCenter, self.tabText(i))
+        p.end()
 
 
 class RegisterBand(QWidget):
@@ -274,7 +314,7 @@ class RegisterBand(QWidget):
         if r.get("kontext"):
             self.kontext_index[r["kontext"]] = i
             self.reiter.setTabVisible(i, False)
-            self.reiter.setTabTextColor(i, QColor(Farbe.ORANGE))
+            self.reiter.setTabData(i, "kontext")
 
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
