@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 _PFADE: dict | None = None
 _CACHE: dict = {}
-STRICH = 1.9          # klare Kontur bei kleinen Menübandsymbolen
+STRICH = 1.35         # feinere Office-Kontur bei typischen Symbolgrößen von 16–20 px
 FAKTOR = 1.0          # Größe der Symbole (Optionen ▸ Darstellung)
 
 
@@ -64,7 +64,7 @@ def katalog() -> dict:
     return _KATALOG
 
 
-def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = 1.7) -> QImage:
+def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = STRICH) -> QImage:
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     d = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{strich}" '
@@ -135,7 +135,7 @@ def _svg(pfad: str, farbe: str) -> bytes:
             return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path {zug} fill="{farbe}" d="{e["d"]}"/></svg>').encode()
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{STRICH / s:.4f}" '
                 f'stroke-linecap="round" stroke-linejoin="round"><path {zug} d="{e["d"]}"/></svg>').encode()
-    strich = STRICH + (0.35 if QColor(farbe).lightness() > 220 else 0)      # auf Dunkel etwas kräftiger gezeichnet
+    strich = STRICH + (0.1 if QColor(farbe).lightness() > 220 else 0)       # kleiner Ausgleich für helle Symbole auf dunklem Grund
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" '
             f'stroke-width="{strich}" stroke-linecap="round" stroke-linejoin="round"><path d="{pfad}"/></svg>').encode()
 
