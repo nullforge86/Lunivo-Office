@@ -71,10 +71,9 @@ def datei_symbol(name: str) -> QIcon:
     text, farbe = kennung
     schrift = QFont()
     schrift.setBold(True)
-    schrift.setPointSizeF(5.0 if len(text) > 3 else 5.5)
+    schrift.setPointSizeF(6.5 if len(text) > 3 else 7.0)
     p.setFont(schrift)
-    breite = min(24.0, max(13.0, p.fontMetrics().horizontalAdvance(text) + 5.0))
-    marke = QRectF(32 - breite, 22, breite, 9)
+    marke = QRectF(2, 20, 28, 11)
     p.setPen(Qt.NoPen)
     p.setBrush(QColor(farbe))
     p.drawRoundedRect(marke, 2, 2)
