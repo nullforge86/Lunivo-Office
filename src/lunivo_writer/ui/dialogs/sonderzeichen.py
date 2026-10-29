@@ -32,12 +32,13 @@ KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
 KEY_TASTEN = "einfuegen/symbole_tasten"
 
-# Zeichen und Name wie in der Vorlage; ein Leerzeichen-Zeichen steht dort ohne Bild (leer), das geschützte Leerzeichen als „°“.
+# Zeichen und Name wie in der Vorlage (die Bildlaufleiste dort zeigt genau einen Eintrag mehr: das schließende einfache Anführungszeichen); ein Leerzeichen-Zeichen steht dort ohne Bild (leer), das geschützte Leerzeichen als „°“.
 SONDERZEICHEN = (
     ("—", "Geviertstrich", "—"), ("–", "Halbgeviertstrich", "–"), ("", "Geviertabstand", " "),
     ("", "Halbgeviertabstand", " "), ("°", "Geschützte Leerzeichen", " "), ("©", "Copyright", "©"),
     ("®", "Registriert", "®"), ("™", "Markenzeichen", "™"), ("§", "Abschnitt", "§"),
     ("¶", "Absatz", "¶"), ("…", "Ellipse", "…"), ("‘", "Einfaches Anführungszeichen", "‘"),
+    ("’", "Einfaches Anführungszeichen, rechts", "’"),
 )
 VON = (("Symbol(DEC)", 10), ("Unicode(HEX)", 16))
 NORMAL = "(Normaler Text)"
@@ -323,7 +324,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.liste = QTreeWidget(); self.liste.setColumnCount(2); self.liste.setRootIsDecorated(False); self.liste.setUniformRowHeights(True)
         self.liste.setHeaderLabels(["Benutzerdefinierte Symbole:", "Tastenkombinationen:"]); self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.liste.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.liste.setFixedHeight(12 * 27 + 24); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.liste.setFixedHeight(8 * 27 + 24); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         kopf = self.liste.header(); kopf.setStretchLastSection(True); kopf.setSectionResizeMode(0, QHeaderView.Fixed)
         kopf.setTextElideMode(Qt.ElideRight)
         self.liste.itemChanged.connect(self._haken); self.liste.currentItemChanged.connect(lambda *_: self._liste_knoepfe())
