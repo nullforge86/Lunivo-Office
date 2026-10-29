@@ -387,20 +387,14 @@ def test_dunkles_system_nutzt_die_lunivo_palette(app, monkeypatch):
         app.setPalette(alt)
 
 
-def test_dateisymbole_aus_dem_icon_theme(app, monkeypatch):
-    from PySide6.QtGui import QIcon, QPixmap
+def test_dateisymbole_aus_mitgelieferten_svgs(app):
+    """Die Dateisymbole kommen aus den mitgelieferten SVGs (assets/icons/filetypes), nicht aus dem Icon-Theme des Systems."""
     from lunivo_writer.ui.baukasten import datei_symbole as D
-    namen = D.icon_namen(".pdf")
-    assert namen[0] == "application-pdf" and "x-office-document" in namen              # MIME-Typ zuerst, dann Rückfälle
-    assert D.icon_namen("/home/x/brief.txt")[0] == "text-plain" and D.icon_namen(".odt")[0].startswith("application-vnd.oasis")
-    # Das Symbol kommt aus dem Theme des Systems: der erste Name, den es kennt, gewinnt
-    pm = QPixmap(8, 8); pm.fill("red"); da = QIcon(pm)
-    gefragt = []
-    def theme(n):
-        gefragt.append(n)
-        return da if n == "x-office-document" else QIcon()
-    monkeypatch.setattr(QIcon, "fromTheme", staticmethod(theme))
-    assert not D.datei_symbol(".pdf").isNull() and gefragt[0] == "application-pdf" and gefragt[-1] == "x-office-document"
+    assert D.icon_namen(".pdf") == ["pdf", "genericfile"]                          # Dateityp zuerst, dann der allgemeine Rückfall
+    assert D.icon_namen("/home/x/brief.txt")[0] == "txt" and D.icon_namen(".odt")[0] == "rtf"
+    assert D.icon_namen("unbekannt.xyz") == ["genericfile", "genericfile"]
+    for name in ("a.pdf", "b.docx", "c.txt", "d.unbekannt"):
+        assert not D.datei_symbol(name).isNull(), name
 
 
 def test_speichern_unter_untermenue_mit_formaten(app, tmp_path):
