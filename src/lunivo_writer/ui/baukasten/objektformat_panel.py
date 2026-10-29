@@ -1,20 +1,30 @@
-"""„Formatierung“ für ein Bild oder eine Form in der rechten Seitenleiste: Reiter „Füllung und Linie“ und „Effekte“ (nach der Vorlage).
+"""„Formatierung“ für ein Bild, eine Form, ein Textfeld oder WordArt in der rechten Seitenleiste (nach der Vorlage).
 
-Der Baustein erbt vom Panel der Texteffekte: die Effekte (Schatten, Reflektion, Leuchten mit denselben Reglern und Voreinstellungen) sind dieselben,
-nur Füllung und Linie gehören dem Objekt, und es kommen „Weiche Kanten“ dazu. ``werte()`` liefert
+Oben der Umschalter FORMOPTIONEN / TEXTOPTIONEN. Formoptionen: Reiter „Füllung und Linie“ und „Effekte“ (Schatten, Reflektion, Leuchten, Weiche Kanten,
+3D-Format, 3D-Drehung). Textoptionen: derselbe Aufbau für den Text im Objekt (``text_panel``, ein ``TexteffektPanel``).
 
-    {"fuell": {…} | None, "rand": {…} | None, "schatten": {…}, "reflektion": {…}, "leuchten": {…}, "weich": {"radius": pt}}
+Der Baustein erbt vom Panel der Texteffekte: Schatten, Reflektion, Leuchten und 3D-Format sind dieselben Regler und Voreinstellungen,
+nur Füllung und Linie gehören dem Objekt, und es kommen „Weiche Kanten“ und „3D-Drehung“ dazu. ``werte()`` liefert
 
-— genau die Angaben, die ``editor/freie_bilder.py`` am Bild kennt; wer das Panel einsetzt (``editor/bildlayout.py``), schreibt sie zurück.
+    {"fuell": {…} | None, "rand": {…} | None, "schatten": {…}, "reflektion": {…}, "leuchten": {…}, "weich": {"radius": pt},
+     "d3": {"tiefe", "tiefe_farbe", "kontur", "kontur_farbe", "material", "beleuchtung", "winkel"}, "drehung": {"x", "y", "z", "persp"}}
+
+— die Angaben, die ``editor/freie_bilder.py`` am Objekt kennt (gezeichnet von ``editor/bildeffekte.py``); wer das Panel einsetzt
+(``editor/bildlayout.py``), schreibt sie zurück. Die Textoptionen melden über ``text_geaendert(werte)`` (Format wie ``editor/texteffekt.py``);
+``setze_text(werte)`` füllt sie.
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Signal
-from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QHBoxLayout, QPushButton, QRadioButton, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.editor import muster as M
+from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor.linie import LINIENARTEN
+from lunivo_writer.editor import bildeffekte as BE
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
 from lunivo_writer.ui.baukasten.linien import linien_symbol
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld
@@ -28,9 +38,127 @@ WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
 
 
-class ObjektFormatPanel(TexteffektPanel):
+class _DreiDUntereinander:
+    """Für beide Seiten der Effekte (Objekt und Text): Zahlenfelder als Regler mit Wert darüber (ein Schrittfeld zeigt seine Zahl im dunklen Thema nicht)
+    und das 3D-Format mit den Feldern untereinander im ``FormularGitter`` — die Zweierreihen des Text-Panels sind für 300 px zu breit."""
+
+    @staticmethod
+    def _schritt_feld(lo: float, hi: float, suffix: str, schritt: float, nk: int) -> QWidget:
+        return SchiebeFeld(lo, hi, suffix, schritt, nk)
+
+    MIT_ABSCHLUSS = False                      # Oberer/Unterer Abschluss gibt es nur für Objekte (der Text-Effekt kennt sie nicht)
+
+    def _seite_effekte(self, w: dict) -> QWidget:
+        seite = super()._seite_effekte(w)
+        # 3D-Format neu ordnen: die Felder untereinander im FormularGitter (die Zweierreihen des Text-Panels sind für 300 px zu breit)
+        alt = self.a_3d
+        self.a_3d = Abschnitt("3D-Format")
+        zr3 = QPushButton("Zurücksetzen"); zr3.clicked.connect(self._d3_zuruecksetzen)
+        self._ab_stumm = True
+        self.ab_art, self.ab_knopf, self.ab_breite, self.ab_hoehe = {}, {}, {}, {}
+        if self.MIT_ABSCHLUSS:
+            for k, titel in (("oben", "Oberer Abschluss"), ("unten", "Unterer Abschluss")):
+                self.ab_art[k] = "keine"
+                self.ab_knopf[k] = QPushButton("Keine"); self.ab_knopf[k].setMinimumWidth(110)
+                self.ab_breite[k], self.ab_hoehe[k] = SchiebeFeld(0, 20, " pt", 0.5, 1, 4.0), SchiebeFeld(0, 20, " pt", 0.5, 1, 6.0)
+                self.a_3d.zeile(titel + ":", self.ab_knopf[k]); self.a_3d.zeile("Breite:", self.ab_breite[k]); self.a_3d.zeile("Höhe:", self.ab_hoehe[k])
+                self.ab_knopf[k].clicked.connect(lambda _=False, k=k: self._abschluss_menue(k))
+                for f in (self.ab_breite[k], self.ab_hoehe[k]):
+                    f.valueChanged.connect(lambda *_, k=k: self._abschluss_regler(k))
+        for t, f in (("Tiefe:", self.d_tiefe_f), ("Größe der Tiefe:", self.d_tiefe), ("Kontur:", self.d_kontur_f), ("Größe der Kontur:", self.d_kontur),
+                     ("Material:", self.d_material), ("Beleuchtung:", self.d_licht), ("Winkel:", self.d_winkel)):
+            self.a_3d.zeile(t, f)
+        self.a_3d.breit(zr3)
+        seite.layout().replaceWidget(alt, self.a_3d); alt.hide(); alt.setParent(None); alt.deleteLater()
+        self._ab_stumm = False
+        return seite
+
+    # ---- Oberer / Unterer Abschluss: Auswahl der Art (Bildchen), Breite und Höhe
+    def _abschluss_menue(self, k: str) -> None:
+        m = VoreinstellungMenue(self, keine=("Kein Abschluss", QIcon(BE.abschluss_symbol("keine"))), kachel=QSize(40, 40))
+        m.abschnitt("Abschluss", [(a, QIcon(BE.abschluss_symbol(a)), n) for a, n in BE.ABSCHLUSS], 3)
+        m.gewaehlt.connect(lambda a: self._abschluss_setzen(k, a or "keine"))
+        m.exec(self.ab_knopf[k].mapToGlobal(self.ab_knopf[k].rect().bottomLeft()))
+
+    def _abschluss_setzen(self, k: str, art: str) -> None:
+        self.ab_art[k] = art
+        self.ab_knopf[k].setText("Keine" if art == "keine" else dict(BE.ABSCHLUSS)[art])
+        self._neu()
+
+    def _abschluss_regler(self, k: str) -> None:
+        """Wer Breite oder Höhe bewegt, schaltet den Abschluss ein (Rund), wenn er aus war."""
+        if getattr(self, "_ab_stumm", True):
+            return
+        if self.ab_art[k] == "keine":
+            self._abschluss_setzen(k, "rund")
+        else:
+            self._neu()
+
+    def _setze_effekte(self, w: dict) -> None:
+        super()._setze_effekte(w)
+        if self.MIT_ABSCHLUSS:
+            self._ab_stumm = True
+            d3 = w.get("d3") or {}
+            for k in ("oben", "unten"):
+                ab = d3.get(k) or {}
+                self.ab_art[k] = ab.get("art", "keine")
+                self.ab_knopf[k].setText("Keine" if self.ab_art[k] == "keine" else dict(BE.ABSCHLUSS).get(self.ab_art[k], "Eigene"))
+                self.ab_breite[k].setValue(ab.get("breite", 4.0)); self.ab_hoehe[k].setValue(ab.get("hoehe", 6.0))
+            self._ab_stumm = False
+
+    def _werte_effekte(self) -> dict:
+        fx = super()._werte_effekte()
+        if self.MIT_ABSCHLUSS and any(a != "keine" for a in self.ab_art.values()):
+            d3 = fx.get("d3") or {"tiefe": 0.0, "tiefe_farbe": self.d_tiefe_f.farbe or Farbe.GRAU, "kontur": 0.0, "kontur_farbe": self.d_kontur_f.farbe or Farbe.TINTE,
+                                  "material": self._material, "beleuchtung": self._licht, "winkel": self.d_winkel.value()}
+            for k, a in self.ab_art.items():
+                if a != "keine":
+                    d3[k] = {"art": a, "breite": self.ab_breite[k].value(), "hoehe": self.ab_hoehe[k].value()}
+            fx["d3"] = d3
+        return fx
+
+
+class _TextPanel(_DreiDUntereinander, TexteffektPanel):
+    """Die Textoptionen: das Panel der Texteffekte mit dem schmalen 3D-Format."""
+
+
+class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
+    MIT_ABSCHLUSS = True
     TITEL = ("FÜLLUNG UND LINIE", "EFFEKTE")
     bild_gewuenscht = Signal()                    # „Bild …“ als Füllung: der Aufrufer fragt nach der Datei
+    text_geaendert = Signal(dict)                 # Änderung in den Textoptionen (Format von ``editor/texteffekt.py``)
+
+    def __init__(self, parent=None, werte: dict | None = None):
+        super().__init__(parent, werte)
+        v = self.layout()
+        v.removeWidget(self.reiter)
+        self.optionen = QStackedWidget()
+        self.text_panel = _TextPanel(self)                                 # TEXTOPTIONEN: derselbe Aufbau, wirkt auf den Text im Objekt
+        self.optionen.addWidget(self.reiter); self.optionen.addWidget(self.text_panel)
+        kopf = QHBoxLayout(); kopf.setContentsMargins(0, 0, 0, 0); kopf.setSpacing(0)
+        self.umschalter = QButtonGroup(self); self.umschalter.setExclusive(True)
+        for i, titel in enumerate(("FORMOPTIONEN", "TEXTOPTIONEN")):
+            k = QToolButton(); k.setText(titel); k.setCheckable(True); k.setAutoRaise(True); k.setToolButtonStyle(Qt.ToolButtonTextOnly)
+            k.setStyleSheet("QToolButton { border: none; border-bottom: 2px solid transparent; padding: 5px 6px; color: palette(window-text); font-weight: 600; }"
+                            "QToolButton:checked { color: palette(highlight); border-bottom: 2px solid palette(highlight); }")
+            self.umschalter.addButton(k, i); kopf.addWidget(k, 1)
+            k.setObjectName(f"optionen_{i}")
+        self.umschalter.button(0).setChecked(True)
+        self.umschalter.idClicked.connect(self.optionen_waehlen)
+        v.addLayout(kopf); v.addWidget(self.optionen, 1)
+        self.text_panel.geaendert.connect(self.text_geaendert)
+
+    def optionen_waehlen(self, i: int) -> None:
+        """0 = Formoptionen (Füllung und Linie, Effekte des Objekts), 1 = Textoptionen (Text im Objekt)."""
+        self.optionen.setCurrentIndex(i)
+        self.umschalter.button(i).setChecked(True)
+
+    def setze_text(self, werte: dict) -> None:
+        """Die Textoptionen mit den Werten des Textes im Objekt füllen (meldet nichts)."""
+        self.text_panel.setze({**T.EFFEKT, **werte})
+
+    def text_werte(self) -> dict:
+        return self.text_panel.werte()
 
     @staticmethod
     def _tab_icon(t: str, unterstrichen: bool):
@@ -178,10 +306,9 @@ class ObjektFormatPanel(TexteffektPanel):
                                                          "art": self.k_art.currentData() or "einfach"}
         return {"fuell": fuell, "rand": rand}, {}
 
-    # ---- Seite 2: Effekte (dieselben wie beim Text, dazu Weiche Kanten; 3D gibt es für Bilder nicht) -----------------------------------
+    # ---- Seite 2: Effekte (dieselben wie beim Text, dazu Weiche Kanten und 3D-Drehung) ------------------------------------------------
     def _seite_effekte(self, w: dict) -> QWidget:
         seite = super()._seite_effekte(w)
-        self.a_3d.setVisible(False)                                             # Extrusion lässt sich nur an Text zeichnen
         self.weich_knopf = self._voreinstellungs_knopf()
         self.a_weich = Abschnitt("Weiche Kanten", self.weich_knopf)
         self.w_radius = SchiebeFeld(0, 50, " pt", 0.5, 1)
@@ -190,7 +317,27 @@ class ObjektFormatPanel(TexteffektPanel):
         self._weich_an = False
         self.w_radius.valueChanged.connect(lambda *_: self._weich_einschalten())
         self.weich_knopf.clicked.connect(self._weich_menue)
+        # 3D-Drehung (nach dem 3D-Format): Drehung um X, Y, Z, Perspektive, Zurücksetzen
+        self.a_dreh = Abschnitt("3D-Drehung")
+        self.dr_x, self.dr_y, self.dr_z = (self._schritt_feld(-180, 180, "°", 5, 1) for _ in range(3))
+        self.dr_pers = self._schritt_feld(0, 120, "°", 5, 1)
+        for t, f in (("X-Drehung", self.dr_x), ("Y-Drehung", self.dr_y), ("Z-Drehung", self.dr_z), ("Perspektive", self.dr_pers)):
+            self.a_dreh.zeile(t, f)
+        self.dr_boden = self._schritt_feld(0, 100, " pt", 1, 1)
+        self.dr_text = UmbruchSchalter("Text nicht drehen")
+        self.a_dreh.breit(self.dr_text); self.a_dreh.zeile("Abstand vom Boden", self.dr_boden)
+        zr = QPushButton("Zurücksetzen"); zr.clicked.connect(self._drehung_zuruecksetzen); self.a_dreh.breit(zr)
+        self.dr_pers.setValue(45)
+        seite.layout().insertWidget(seite.layout().indexOf(self.a_3d) + 1, self.a_dreh)
+        for f in (self.dr_x, self.dr_y, self.dr_z, self.dr_pers, self.dr_boden):
+            f.valueChanged.connect(lambda *_: self._neu())
+        self.dr_text.toggled.connect(lambda *_: self._neu())
         return seite
+
+    def _drehung_zuruecksetzen(self) -> None:
+        for f in (self.dr_x, self.dr_y, self.dr_z):
+            f.setValue(0)
+        self.dr_pers.setValue(45); self.dr_boden.setValue(0); self.dr_text.setChecked(False)
 
     def _weich_einschalten(self) -> None:
         if not self._weich_an:
@@ -218,10 +365,15 @@ class ObjektFormatPanel(TexteffektPanel):
         self._weich_an = bool(wk)
         self.weich_knopf.setText("Keine" if not wk else "Eigene")
         self.w_radius.setValue((wk or {}).get("radius", 6.0))
+        dr = w.get("drehung") or {}
+        self.dr_x.setValue(dr.get("x", 0.0)); self.dr_y.setValue(dr.get("y", 0.0)); self.dr_z.setValue(dr.get("z", 0.0)); self.dr_pers.setValue(dr.get("persp", 45.0))
+        self.dr_boden.setValue(dr.get("boden", 0.0)); self.dr_text.blockSignals(True); self.dr_text.setChecked(bool(dr.get("text_gerade"))); self.dr_text.blockSignals(False)
 
     def _werte_effekte(self) -> dict:
         fx = super()._werte_effekte()
-        fx.pop("d3", None)
         if getattr(self, "_weich_an", False):
             fx["weich"] = {"radius": self.w_radius.value()}
+        if any(abs(f.value()) > 0.01 for f in (self.dr_x, self.dr_y, self.dr_z, self.dr_boden)):
+            fx["drehung"] = {"x": self.dr_x.value(), "y": self.dr_y.value(), "z": self.dr_z.value(), "persp": self.dr_pers.value(),
+                             "text_gerade": self.dr_text.isChecked(), "boden": self.dr_boden.value()}
         return fx

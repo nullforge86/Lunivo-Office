@@ -209,3 +209,17 @@ def in_zeichenbereich(ed, form: str) -> bool:
 def E_ist_linie(form: str) -> bool:
     from lunivo_writer.editor import formen_katalog as K
     return K.ist_linie(form)
+
+
+# ---- WordArt (freies Objekt, siehe frei_objekt.py) ---------------------------------------------------------------------------
+def wordart_daten(ed) -> dict | None:
+    """Die Parameter des gewählten WordArt (Kopie) oder None."""
+    from lunivo_writer.editor import frei_objekt as FO
+    return FO.daten_lesen(ed, "wordart")
+
+
+def wordart_aendern(ed, **kw) -> bool:
+    """Parameter des gewählten WordArt ändern (None entfernt den Schlüssel) und neu zeichnen; ``form_fuell``/``form_linie``/``form_strich``/
+    ``form_effekt`` wirken auf die Form hinter dem Text."""
+    from lunivo_writer.editor import frei_objekt as FO
+    return FO.aendern(ed, "wordart", **kw)

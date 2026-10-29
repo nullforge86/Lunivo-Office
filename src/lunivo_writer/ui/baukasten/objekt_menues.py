@@ -78,10 +78,24 @@ class FuellMenue(FarbPalette):
         super().__init__(parent, keine_text="Keine Farbe", start=start, titel="Füllfarbe", verlauf=True, verlauf_titel="Farbverlauf",
                          weitere_text="Weitere Füllfarben(M)…", automatisch="Automatisch", zuletzt=False)
         self.addSeparator()
-        for text, art in (("Graduell", "verlauf"), ("Textur", "textur"), ("Muster(N)", "muster")):     # öffnen die Seitenleiste „Formatierung“
-            self.addAction(text).triggered.connect(lambda _=False, a=art: (self.close(), self.weitere_fuellung.emit(a)))
-        self.addAction("Fülleffekte…").triggered.connect(lambda: (self.close(), self.weitere_fuellung.emit("verlauf")))
+        self._raster_untermenue("Graduell", "verlauf", "Weitere Farbverläufe…", [
+            (f"{d}|{h}", "Graduell", graduell_pixmap(d, h)) for d, h in GRADUELL], QSize(34, 24), 4,
+            lambda k: self.graduell_gewaehlt.emit(*k.split("|")))
+        self._raster_untermenue("Textur", "textur", "Weitere Texturen…", [(k, n, _textur(k, 30)) for k, n in TEXTUREN], QSize(30, 30), 6,
+                                self.textur_gewaehlt.emit)
+        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in M.MUSTER if k != "loeschen"]
+        self._raster_untermenue("Muster(N)", "muster", "Weitere Muster…", muster, QSize(30, 30), 8, self.muster_gewaehlt.emit)
         self.addAction("Bild(P)").triggered.connect(lambda: (self.close(), self.bild_gewaehlt.emit()))
+
+    def _raster_untermenue(self, text: str, art: str, weitere: str, kacheln: list, groesse: QSize, spalten: int, gewaehlt) -> RasterAuswahl:
+        """Ein Untermenü mit Kacheln (Graduell, Textur, Muster) und darunter „Weitere …“, das die Seitenleiste „Formatierung“ öffnet."""
+        r = RasterAuswahl(self, spalten=spalten, groesse=groesse)
+        for schl, name, bild in kacheln:
+            r.kachel(schl, name, bild)
+        r.gewaehlt.connect(lambda k: (self.close(), gewaehlt(k)))
+        r.fuss(weitere, lambda: (self.close(), self.weitere_fuellung.emit(art)))
+        self.addAction(text).setMenu(r)
+        return r
 
     def _untermenue(self, text: str, icon: str) -> QMenu:
         m = self.addMenu(text)

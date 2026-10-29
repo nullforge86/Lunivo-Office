@@ -21,7 +21,11 @@ class SchrittFeld(QWidget):
         super().__init__()
         h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
         self.feld = QDoubleSpinBox(); self.feld.setRange(lo, hi); self.feld.setDecimals(nachkomma); self.feld.setSingleStep(schritt)
-        self.feld.setSuffix(suffix); self.feld.setButtonSymbols(QDoubleSpinBox.NoButtons); self.feld.setAlignment(Qt.AlignCenter); self.feld.setMinimumWidth(80)
+        self.feld.setSuffix(suffix); self.feld.setAlignment(Qt.AlignCenter)
+        # „NoButtons“ nimmt dem Feld unter dem Stylesheet des Themas die ganze Textfläche (die Zahl bliebe unsichtbar): die Knöpfe bleiben, nur ohne Breite
+        self.feld.setStyleSheet("QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 0px; border: none; }"
+                                "QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow { width: 0px; height: 0px; }")
+        self.feld.setMinimumWidth(80)
         minus, plus = _knopf("−"), _knopf("+")
         minus.clicked.connect(lambda: self.feld.stepBy(-1)); plus.clicked.connect(lambda: self.feld.stepBy(1))
         h.addWidget(minus); h.addWidget(self.feld, 1); h.addWidget(plus)

@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Bildtools“ und „Form- und WordArt-Tools“."""
+"""Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``form``; für freie Objekte inkl. WordArt/Textfeld: ``zeichen``)."""
 from __future__ import annotations
 
 from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
@@ -16,18 +16,19 @@ BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
                                        _k("textflussumbruch", "Textumbruch / Position", "anordnen")]},
 ]}
 
-FORMTOOLS = {"name": "Form- und WordArt-Tools", "kontext": "form", "gruppen": [
+FORMTOOLS = {"name": "Zeichentools", "kontext": "form", "gruppen": [
+    {"name": "Formen", "knoepfe": [_k("stift", "Formen einfügen", klappe="formenKlappe", gross=True)]},
     {"name": "Formvorlagen", "knoepfe": [_k("stift", "Formvorlagen", klappe="formVorlagen", gross=True)]},
     {"name": "Formenstile", "knoepfe": [_k("toenung", "Formfüllung", klappe="formFuellung", text=True),
                                          _k("linie", "Formkontur", klappe="formKontur", text=True),
                                          _k("notiz", "Text in der Form …", "formText", text=True)]},
-    {"name": "WordArt", "knoepfe": [_k("texteffekt", "WordArt bearbeiten …", "wordartBearbeiten", text=True)]},
     {"name": "Anordnen", "knoepfe": [_k("gruppieren", "Gruppieren", "gruppieren", text=True),
                                      _k("gruppieren", "Gruppierung aufheben", "gruppeAufheben", text=True),
                                      _k("textflussumbruch", "Textumbruch / Position", "anordnen", text=True)]}]}
 
 
 ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
+    {"name": "Formen", "knoepfe": [_k("stift", "Formen einfügen", klappe="formenKlappe", gross=True)]},
     {"name": "Formstile", "knoepfe": [_k("stift", "Formstile", klappe="zeichenFormstile", gross=True),
                                       _k("toenung", "Formfüllung", klappe="zeichenFuellung", text=True),
                                       _k("linie", "Gliederung", klappe="zeichenGliederung", text=True),
