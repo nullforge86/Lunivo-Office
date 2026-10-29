@@ -1,30 +1,26 @@
 # Die Einstellungen
 
-Das Optionen-Fenster, die Sprachen, das Kennwort, die Einstellungsdatei.
+Öffne **Optionen** über `☰ Menü → Optionen` oder mit **F9**. Links stehen Suche und sechs Bereiche; die ausgewählte Seite erscheint rechts. Änderungen werden direkt übernommen.
 
-**Optionen** — *☰ Menü ▸ Optionen*, oder **F9**. Links die Suche und eine flache Liste mit sechs Seiten
-(*Lesen, Anzeige, Schreiben, Speichern, Drucken und PDF, Name und KI*), rechts die Seite. Jede Seite zeigt das Häufige; der Rest
-steht unter *Weitere Einstellungen*. Aufbau: [aufbau-optionen.md](aufbau-optionen.md).
+| Seite | Inhalt |
+|---|---|
+| **Lesen** | Lesestufe, Papierton, Abstände, Zeilenfokus und Silbenfarben |
+| **Anzeige** | Oberfläche, Lineale, Hilfszeichen, Schrift- und Symbolgröße |
+| **Schreiben** | Standardschrift, Sprache, Prüfung und AutoKorrektur |
+| **Speichern** | Standardformat, Ordner, Sicherung und Wiederherstellung |
+| **Drucken und PDF** | Druckverhalten und PDF-Ausgabe |
+| **Name und KI** | Benutzerdaten, KI-Anbieter und gelernte Schreibweisen |
 
-**Hell oder Dunkel** — ganz oben unter *Anzeige*, oder mit **Strg+Umschalt+D**, im Menü *Ansicht* und über den Knopf in der Statusleiste.
+Mit der Suche findest du auch Einstellungen in eingeklappten Gruppen. Weitere Details zur Seitenstruktur stehen in [aufbau-optionen.md](aufbau-optionen.md).
 
-*Menüband anpassen* und *Symbolleiste für den Schnellzugriff* öffnen als eigenes Fenster (*Anzeige ▸ Weitere Einstellungen*):
-links die Befehle mit Klappliste, Suchfeld und ihren Zeichnungen, in der Mitte Hinzufügen und Entfernen, rechts das
-Ziel — beim Menüband ein Baum aus Registerkarten und Gruppen, bei der Leiste ihr Inhalt. Neue Registerkarten und Gruppen lassen sich
-anlegen und umbenennen.
+## Dokumentkennwort
 
-**Das Dokumentkennwort** verschlüsselt wirklich: AES-256, den Schlüssel
-mit PBKDF2 aus dem Kennwort, beides vom Programm selbst gerechnet. Ohne das
-Kennwort ist der Inhalt nicht mehr zu lesen, auch nicht von Lunivo — und
-ein vergessenes kann niemand wiederherstellen.
+Der Kennwortschutz wird pro DOCX-Dokument eingerichtet. Lunivo verschlüsselt die Datei; ohne das Kennwort kann auch Lunivo sie nicht wieder öffnen. Ein vergessenes Kennwort lässt sich nicht zurücksetzen.
 
-**Die Einstellungen liegen in einer Datei**, lesbar, eine Zeile je
-Einstellung: `~/.config/lunivo-office/einstellungen.conf` — dort, wo auch
- seine ablegt. Sie lässt sich sichern, auf einen zweiten Rechner
-mitnehmen und von Hand ändern. Der Speicher des Fensters bleibt, was er
-war; die Datei ist sein Abbild, beim Start gelesen und nach jeder
-Änderung neu geschrieben.
+## Speicherorte
+
+Qt speichert Einstellungen unter `~/.config/Lunivo/Lunivo Writer.conf`. Anwendungsdaten wie gelernte Schreibweisen, KI-Konfiguration und Wiederherstellungsdateien liegen unter `~/.local/share/Lunivo/Lunivo Writer/`. Dokumente bleiben am gewählten Speicherort.
 
 ---
 
-[← Zurück zum README](../README.md)
+[Zurück zur README](../README.md)

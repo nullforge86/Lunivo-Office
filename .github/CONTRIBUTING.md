@@ -2,7 +2,7 @@
 
 Dieses Projekt sucht Leute. Nicht in erster Linie Programmierer.
 
-Wohin es soll, steht in [RICHTUNG.md](../doku/RICHTUNG.md). Wer etwas vorschlägt,
+Wohin es soll, steht in [RICHTUNG.md](../docs/RICHTUNG.md). Wer etwas vorschlägt,
 sollte die eine Seite gelesen haben — dann reden wir über dasselbe.
 
 ## Am meisten hilft: erzählen, woran du hängenbleibst
@@ -38,8 +38,8 @@ läuft dort. Auf Fedora? Auf Arch? Mit Wayland? Ohne PulseAudio? Jede
 Rückmeldung „bei mir startet es nicht, hier ist die Fehlermeldung" ist
 brauchbar.
 
-**Verpacken.** Es gibt kein Flatpak, kein AppImage, kein `.deb`. Wer so
-etwas kann, hilft damit allen, die `./starten.sh` nicht zumutbar finden.
+**Verpacken.** Das Ziel ist eine einzelne `.deb`; derzeit lässt sich Lunivo
+über `./starten-qt.sh` starten. Hilfe beim Paketieren ist willkommen.
 
 **Schriften und Lesbarkeit.** Die Bedienung lässt sich größer stellen, das
 Blatt auch. Ob das reicht, weiß ich nicht — ich sehe mit meinen Augen.
@@ -65,8 +65,10 @@ Drei Bitten:
    Qt-Anwendung in Python (PySide6, Qt Widgets) — keine Web-Technik, nichts wird
    nachgeladen. Wer das ändert, sollte einen guten Grund nennen.
 
-Es gibt keinen Testlauf und keine Formatvorschrift. Prüf, ob es tut, was du
-willst, und ob es das Übrige nicht kaputt macht.
+Führe die gezielten Tests für die geänderte Funktion aus, zum Beispiel
+`QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_formats.py -k testname`.
+Lokale Volltests sind nicht vorgesehen; die vollständige Prüfung übernimmt
+die CI.
 
 ## Der Ton hier
 

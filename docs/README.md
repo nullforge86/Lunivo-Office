@@ -1,58 +1,51 @@
-# Lunivo Writer — native Qt-Fassung
+# Projektaufbau
 
-Eine Textverarbeitung für Linux Mint in **Python 3 + PySide6 (Qt 6 Widgets)**. Eine native Oberfläche aus Qt-Widgets,
-ohne WebView und ohne lokalen Webserver. Startpfad: `starten-qt.sh` → `python -m lunivo_writer`.
-Ein Test (`tests/test_main_window.py::test_no_web_modules_loaded`) prüft in einem frischen Prozess, dass weder
-QtWebEngine/WebKit noch ein Webserver geladen wird.
+Lunivo Writer ist eine native Desktop-Anwendung mit Python 3 und PySide6/Qt Widgets. Das Programm startet über `./starten-qt.sh` oder mit `python -m lunivo_writer`; es verwendet keine Weboberfläche.
 
-## Starten
-```bash
-./starten-qt.sh # legt beim ersten Mal .venv an, installiert PySide6 + python-docx, startet das Programm
-./starten-qt.sh brief.docx # Datei direkt öffnen
-./starten-qt.sh --test # Tests ausführen
-./starten-qt.sh --eintrag # Menüeintrag anlegen
-```
-Weiteres: [INSTALLATION.md](INSTALLATION.md). Was fertig ist und was fehlt: [BERICHT.md](BERICHT.md). Speichern, Formate, Datensicherheit: [SPEICHERN.md](SPEICHERN.md).
+## Verzeichnisübersicht
 
-## Aufbau
-```
-main.py, pyproject.toml, requirements*.txt, starten-qt.sh Start (python3 main.py | ./starten-qt.sh)
-assets/ icons/ (Fluent- und Lucide-Symbole + Lizenzen), images/ (Logos), fonts/
-docs/ diese Dokumentation (BERICHT, INSTALLATION, PRUEFBOGEN, pruefbogen/, pruefkatalog/)
+```text
 src/lunivo_writer/
- app.py Einstieg (python -m lunivo_writer)
- core/ application.py (QApplication, Theme, Start/Ende), document_manager.py (Laden, Speichern, Sicherung,
- Wiederherstellung, zuletzt benutzt), commands.py (Aktionsname → Funktion), paths.py
- ui/ main_window.py (koordiniert nur), theme.py, backstage.py (Reiter „Datei“), kuerzel.py
- ribbon/ ribbon_bar.py (Band aus resources/register.json), plan.py (Reihenfolge), tabs/ (ein Modul je Reiter),
- toolbars.py (zweite Oberfläche), menubar.py, menue_tafel.py
- document/ document_editor.py (QTextEdit), document_area.py (Seitenfläche), document_tabs.py (Dokumentreiter),
- lineal.py, navigation.py, seiten_ansicht.py, start_page.py, blasen_flaeche.py, zusatz_editor.py
- sidebar/ sidebar.py (Seitenleiste), panels/ (ai_panel = KI-Chat, writing_panel = Funde/Vorschläge/Hinweise)
- contextual/ table_tools.py, image_tools.py (Bild, Form), header_footer_tools.py
- widgets/ icons.py, flow_layout.py, live_vorschau.py, mini_leiste.py
- dialogs/ Optionen, Seite einrichten, Einfügen, KI, Hilfe, Formulare, …
- statusbar/ status_bar.py
- editor/ Dokumentlogik: pagination (Seiten, PDF, Druck), stile, umbruch, formular, verzeichnis, verweise, …
- models/ page.py (Seiteneinrichtung), report.py (Bericht über nicht Übernommenes)
- services/ file_service.py (DOCX/ODT/RTF/TXT), docx_reader/writer, odt_reader/writer, rtf_reader/writer, settings_service.py, recovery.py,
- bausteine.py, gelernt.py, vorlesen.py, integrations/ (, LanguageTool, )
- ai/ ki.py (Anbieter, Aufgaben), ai_service.py (Dienst für die Oberfläche)
- proofing/ pruefung.py (Regeln), proofing_service.py (Schreibhilfe), vorhersage, autokorrektur, barrierefreiheit, silben_de
- resources/ register.json, vorlagenmuster.json, handbuch.md, daten/ (regeln.json, themenwoerter.json, woerter.txt)
-tests/ pytest (ohne Bildschirm: QT_QPA_PLATFORM=offscreen)
-werkzeug/ Abgleich-Skripte (Prüfbogen ↔ Programm)
+  app.py, __main__.py       Einstiegspunkte
+  core/                     Anwendung, Dokumentverwaltung und Befehlssteuerung
+  ui/                       Fenster und Qt-Oberfläche
+    main_window.py          Hauptfenster
+    backstage.py            Datei-Menü und Dokumentaktionen
+    ribbon/                 Registerband, Symbolleisten und Menüleiste
+    document/               Dokumenteditor, Seitenfläche, Lineale und Dokumentreiter
+    sidebar/                 Schreibhilfe- und KI-Seitenleisten
+    dialogs/                 Dialoge und Optionen
+    baukasten/               Gemeinsame Oberflächenbausteine
+    statusbar/               Statusleiste
+  editor/                   Dokumentoperationen und Textlogik
+  models/                   Dokument- und Seitendaten
+  services/                 Datei-, Einstellungs-, Wiederherstellungs- und Exportdienste
+  ai/                       KI-Anbieter und KI-Aufgaben
+  proofing/                 Rechtschreibprüfung, Vorhersage und Barrierefreiheit
+  resources/                Handbuch, Registerdefinitionen und Wörterdaten
+assets/                     Symbole, Logos und weitere Laufzeitressourcen
+docs/                       Projekt- und Benutzerdokumentation
+tests/                      Gezielte pytest-Tests
+werkzeug/                   Entwicklungs- und Prüfhilfen
 ```
 
-Zuständigkeit in einem Satz: **core** steuert, **ui** zeigt, **editor** kennt das Dokument, **models** hält Daten, **services**
-liest/schreibt Dateien und Einstellungen, **ai** und **proofing** sind die Schreibhilfe-Schicht (ohne Oberfläche).
+## Zuständigkeiten
 
-## Grundsätze
-* **Keine stille Abweichung:** Das Band wird aus `resources/register.json` *erzeugt*. Ein Knopf, den es nativ noch nicht gibt,
- steht ausgegraut da (Hinweis im Tooltip) — nicht fehlend, nicht als Attrappe.
-* **Keine stillen Verluste:** Beim Öffnen/Speichern meldet ein Bericht alles, was nicht übernommen werden konnte
- (Textfelder, Formeln, Formen, mehrere Abschnitte, Wasserzeichen …). Fußnoten, Kommentare und nachverfolgte Änderungen werden
- seit dieser Fassung gelesen und geschrieben.
-* **Privat:** Schlüssel nie im Quelltext, sondern in `ki.json` (0600) im Datenordner. Vor jedem Weg ins Internet fragt das
- Programm nach. Ollama läuft lokal.
-* **Optional bleibt optional:** Ohne , LanguageTool, Piper, Ollama startet der Kern trotzdem.
+- **core** steuert den Programmablauf und vermittelt Befehle.
+- **ui** zeigt Dokumente, Register, Seitenleisten und Dialoge.
+- **editor** führt Dokumentänderungen aus.
+- **models** hält Dokument- und Seitendaten.
+- **services** liest und schreibt Dateien, Einstellungen und Sicherungen.
+- **proofing** prüft und erklärt Textstellen; **ai** stellt optionale KI-Aufgaben bereit.
+
+Die Richtung der Abhängigkeiten bleibt einfach: Oberfläche und core verwenden editor, models und services. Fachlogik liegt nicht in den Widgets.
+
+## Einstiegspunkte
+
+- Banddefinition und Reiter: `src/lunivo_writer/resources/register.json` und `src/lunivo_writer/ui/ribbon/tabs/`.
+- Gemeinsame Qt-Bausteine: `src/lunivo_writer/ui/baukasten/`; Konventionen stehen in [baukasten.md](baukasten.md).
+- Dokumentformate: `src/lunivo_writer/services/`.
+- Eingebautes Handbuch: `src/lunivo_writer/resources/handbuch.md`.
+- Abhängigkeiten und Start: `pyproject.toml`, `requirements.txt` und `starten-qt.sh`.
+
+Die wichtigsten Benutzerfunktionen sind in der [Oberfläche](oberflaeche.md), den [Einstellungen](einstellungen.md) und unter [Speichern und Dateiformate](SPEICHERN.md) beschrieben.

@@ -1,40 +1,19 @@
-# Was zusätzlich geholt wird
+# Optionale Erweiterungen
 
-Drei Dinge liegen außerhalb des Programms, weil sie zu groß sind. Ohne sie läuft alles Übrige weiter.
+Lunivo startet und funktioniert auch ohne zusätzliche Stimmen, Schriften, LanguageTool oder KI-Anbieter. Externe Erweiterungen werden getrennt installiert und liegen außerhalb des Projektordners.
 
-Zwei Dinge liegen **nicht** in diesem Verzeichnis, weil sie zu groß sind, und
-werden bei Bedarf nach `~/.local/share/schreibprogramm/` gelegt — der
-Ordner behält seinen alten Namen mit Absicht, denn dort liegt auch alles
-Geschriebene und Gelernte:
+| Erweiterung | Zweck | Einrichtung |
+|---|---|---|
+| **LanguageTool** | Zusätzliche Grammatikprüfung über „Gründlich prüfen“ | LanguageTool mit Java unter `~/.local/share/Lunivo/Lunivo Writer/languagetool/` ablegen |
+| **Piper-Stimmen** | Aufgenommene Stimmen zum Vorlesen | `./stimme-holen.sh`; Stimmen arbeiten offline |
+| **Leseschriften** | OpenDyslexic, Lexend und Atkinson Hyperlegible | `./schrift-holen.sh`; installiert benutzerspezifisch |
+| **Ollama** | KI-Aufgaben mit einem lokalen Modell | Ollama und ein Modell selbst installieren, dann in Lunivo auswählen |
+| **Online-KI** | Korrektur, Vorschläge und Übersetzung über einen Anbieter | Anbieter und persönlichen API-Schlüssel in den KI-Einstellungen einrichten |
 
-| | wofür | Größe | nötig? |
-|---|---|---|---|
-| [LanguageTool](https://languagetool.org/) | „Gründlich prüfen" | ~400 MB | nein, freiwillig |
-| [Piper](https://github.com/rhasspy/piper) + Thorsten | eine Stimme, die nicht nach Maschine klingt | ~90 MB | nein, `./stimme-holen.sh` |
-| Schriften zum leichteren Lesen | OpenDyslexic, Lexend, Atkinson Hyperlegible | ~4 MB | nein, `./schrift-holen.sh` |
+LanguageTool wird als eigener Prozess auf dem Rechner gestartet und sendet den Text nicht an einen externen Dienst. Bei Online-KI wird der Text an den ausgewählten Anbieter übertragen.
 
-Ist im System installiert, genügt das auch. LanguageTool läuft
-als **eigener Prozess** — seine LGPL-Lizenz berührt dieses Programm nicht.
-
-Schreiben, Prüfen, Vorlesen und die ODF-Formate gehen ohne alles davon.
-
-**Die Schriften** landen unter `~/.local/share/fonts/lunivo-office` und
-stehen danach oben in der Schriftliste unter *Leichter zu lesen*:
-
- ./schrift-holen.sh OpenDyslexic
- ./schrift-holen.sh lexend atkinson weitere dazu
- ./schrift-holen.sh --alle alle drei (~4 MB)
- ./schrift-holen.sh --liste zeigen, was es gibt
- ./schrift-holen.sh --weg wieder entfernen
-
-**OpenDyslexic** macht die Buchstaben unten schwerer als oben. Das gibt
-ihnen ein Gewicht, und ein Gewicht hat eine Richtung — b und d, p und q
-lassen sich dann nicht mehr so leicht verwechseln. **Lexend** ist nicht
-gegen das Verwechseln gemacht, sondern für das Tempo: weite Buchstaben,
-viel Luft dazwischen. **Atkinson Hyperlegible** kommt vom Braille Institute
-und unterscheidet, was einander ähnelt — I, l und 1; O und 0. Alle drei
-stehen unter der SIL Open Font License.
+Die Stimmen und Schriften lassen sich über die Skripte im Projekt ergänzen. Vor dem Download zeigen diese Skripte Ziel und Auswahl an; zum Entfernen bieten sie jeweils `--weg`.
 
 ---
 
-[← Zurück zum README](../README.md)
+[Zurück zur README](../README.md)

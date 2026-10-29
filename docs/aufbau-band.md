@@ -1,10 +1,10 @@
 # Der Aufbau des Bandes
 
 Quelle des Bandes: `src/lunivo_writer/resources/register.json` und die Reiter-Module unter
-`src/lunivo_writer/ui/ribbon/tabs/`. Was davon wirklich tut, was es soll, steht in
-[funktionsstand.md](funktionsstand.md) (geschrieben von `werkzeug/funktionspruefung.py`).
+`src/lunivo_writer/ui/ribbon/tabs/`. Eine lokale Funktionsprüfung lässt sich mit
+`werkzeug/funktionspruefung.py` gezielt für einzelne Reiter ausführen.
 
-Neun Reiter. Das Band zeigt einen davon; welchen, sagt die Reiterzeile.
+Das Band hat acht Reiter. Es zeigt einen davon; welchen, sagt die Reiterzeile.
 Dieselben Befehle stehen auch in der Menüleiste und in den beiden
 Symbolleisten — welche Oberfläche sichtbar ist, sagt
 *Ansicht ▸ Darstellung ▸ Benutzeroberfläche*.
