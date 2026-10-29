@@ -1,7 +1,7 @@
 """Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
 
-Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Öffnen, Speichern, PDF, Bild, Beenden)
-führen sofort aus und schließen die Ansicht; Seiten gibt es für Neu (Vorlagen), Speichern unter (alle Ausgabeformate, Info, Öffnen mit …),
+Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, PDF, Bild, Beenden)
+führen sofort aus und schließen die Ansicht; Seiten gibt es für Neu (Vorlagen), Öffnen (Zuletzt verwendet und Dateiauswahl), Speichern unter (alle Ausgabeformate, Info, Öffnen mit …),
 Drucken, Dokumentverschlüsselung, Hilfe und Optionen. Rechts steht zuerst die Liste zuletzt verwendeter Dateien.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ from lunivo_writer.core.farben import Farbe
 # (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Seite bzw. Befehl)
 EINTRAEGE = [
     ("neu", "Neu", "neu", "seite", "vorlage"),
-    ("oeffnen", "Öffnen", "oeffnen", "tun", "oeffnen"),
+    ("oeffnen", "Öffnen", "oeffnen", "seite", "zuletzt"),
     ("speichern", "Speichern", "speichern", "tun", "speichern"),
     ("speichern_als", "Speichern unter", "speichern_unter", "seite", "speichern_als"),
     ("pdf", "Als PDF exportieren", "pdf", "tun", "speichernPdf"),
@@ -74,7 +74,7 @@ class _Zeile(QStyledItemDelegate):
 
 
 ART, PFEIL = Qt.UserRole + 1, Qt.UserRole + 2
-MIT_PFEIL = ("neu", "speichern_als", "drucken", "schuetzen", "hilfe")      # wie im Vorbild: Pfeil, wo eine Auswahl folgt
+MIT_PFEIL = ("neu", "oeffnen", "speichern_als", "drucken", "schuetzen", "hilfe")
 
 EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "exportierenDocx"),
            ("OpenDocument-Text (.odt)", "exportierenOdt"),
@@ -291,11 +291,17 @@ class Backstage(QWidget):
         v.setContentsMargins(22, 14, 22, 14)
         v.setSpacing(2)
         kopf = QHBoxLayout()
-        t = QLabel("Liste zuletzt verwendeter Dateien"); t.setObjectName("bsZuletzt")
+        t = QLabel("Zuletzt verwendete Dokumente"); t.setObjectName("bsZuletzt")
+        oeffnen = QPushButton("Weitere Dokumente öffnen …")
+        oeffnen.setObjectName("bsKnopf")
+        oeffnen.setIcon(symbol("oeffnen", 18)); oeffnen.setIconSize(QSize(18, 18))
+        oeffnen.setCursor(Qt.PointingHandCursor)
+        oeffnen.setToolTip("Datei im Dateiauswahldialog suchen")
+        oeffnen.clicked.connect(lambda: (self.schliessen.emit(), self.w.open_dialog()))
         neu = QToolButton(); neu.setObjectName("bsKlein"); neu.setIcon(symbol("neu_laden", 16)); neu.setIconSize(QSize(16, 16))
         neu.setToolTip("Liste neu laden"); neu.setCursor(Qt.PointingHandCursor)
         neu.clicked.connect(lambda: self.oeffnen("zuletzt"))
-        kopf.addWidget(t); kopf.addWidget(neu); kopf.addStretch(1)
+        kopf.addWidget(t); kopf.addStretch(1); kopf.addWidget(oeffnen); kopf.addWidget(neu)
         v.addLayout(kopf)
         v.addSpacing(6)
         pfade = self.w.settings.recent()
