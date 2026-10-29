@@ -61,7 +61,7 @@ class DateiSeiten:
         f = p.unter(e, "Bearbeiten und Einfügen")
         p.haken(f, "bearbeiten/wortweise", "Wortweise markieren", True)
         p.haken(f, "bearbeiten/ziehen", "Text mit der Maus verschieben", True, lambda _: self.w.lesehilfe_anwenden())
-        p.haken(f, "bearbeiten/tippen_ersetzt", "Tippen ersetzt die Auswahl", True)
+        p.haken(f, "bearbeiten/tippen_ersetzt", "Tippen ersetzt die Auswahl", False)
         p.haken(f, "bearbeiten/einfuegen_schaltflaeche", "Schaltfläche nach dem Einfügen", True)
         p.haken(f, "bearbeiten/mittlere_taste", "Mittlere Maustaste fügt ein", True)
         from lunivo_writer.ui.document.document_editor import EINFUEGE_MODI
