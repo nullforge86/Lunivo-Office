@@ -247,8 +247,6 @@ class VorlagenGalerie(QWidget):
         self._reiter = schl
         eigene = schl == "eigene"
         self.neue_rubrik.setVisible(eigene)
-        for knopf in self.vorlagen_aktionen:
-            knopf.setVisible(eigene)
         i = self._schluessel.index(schl)
         if self.reiter_w.currentIndex() != i:
             self.reiter_w.setCurrentIndex(i)
