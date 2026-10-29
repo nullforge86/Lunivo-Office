@@ -4,7 +4,8 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QInputDialog, QMessageBox
+from PySide6.QtWidgets import QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
 from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
@@ -304,7 +305,7 @@ class BackstageBaustein:
         if not t or not t.path:
             QMessageBox.information(self, "Umbenennen", "Das Dokument ist noch nicht gespeichert.")
             return
-        neu, ok = QInputDialog.getText(self, "Umbenennen", "Neuer Dateiname:", text=os.path.basename(t.path))
+        neu, ok = EingabeFenster.getText(self, "Umbenennen", "Neuer Dateiname:", text=os.path.basename(t.path))
         if not ok or not neu.strip() or neu == os.path.basename(t.path):
             return
         ziel = os.path.join(os.path.dirname(t.path), neu.strip())
@@ -360,7 +361,7 @@ class BackstageBaustein:
         e = self.current_editor()
         if not e:
             return
-        url, ok = QInputDialog.getText(self, "Hyperlink", "Adresse (z. B. https://…):")
+        url, ok = EingabeFenster.getText(self, "Hyperlink", "Adresse (z. B. https://…):")
         if ok and url.strip():
             e.insert_link(url.strip())
 
@@ -376,8 +377,7 @@ class BackstageBaustein:
         page = t.editor.abschnitt_seite()
         erste = False
         if page.diff_first:
-            from PySide6.QtWidgets import QInputDialog
-            w, ok = QInputDialog.getItem(self, "Kopf- und Fußzeile", "Welche Seiten?", ["Erste Seite", "Übrige Seiten"], 0, False)
+            w, ok = EingabeFenster.getItem(self, "Kopf- und Fußzeile", "Welche Seiten?", ["Erste Seite", "Übrige Seiten"], 0, False)
             if not ok:
                 return
             erste = w == "Erste Seite"

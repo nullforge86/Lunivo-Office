@@ -6,7 +6,8 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben
@@ -61,9 +62,9 @@ class DateienBaustein:
                 loaded = self.dokumente.laden(path, kennwort)
                 break
             except PasswortNoetig as e:
-                kennwort, ok = QInputDialog.getText(
+                kennwort, ok = EingabeFenster.getText(
                     self, "Kennwort", ("Falsches Kennwort. " if e.falsch else "") +
-                    f"„{os.path.basename(path)}“ ist geschützt.\nKennwort:", QLineEdit.Password)
+                    f"„{os.path.basename(path)}“ ist geschützt.\nKennwort:", kennwort=True)
                 if not ok:
                     return False
                 continue

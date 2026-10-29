@@ -304,12 +304,12 @@ def test_absatzdialog_und_objekte_waehlen(app, tmp_path):
 
 
 def test_kommentar_note_verfolgen_ueber_befehle(app, tmp_path, monkeypatch):
-    from PySide6.QtWidgets import QInputDialog
+    from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
     w = win(tmp_path)
     w.new_document(); w.show()
     e = w.current_editor()
     e.insertPlainText("Ein Satz zum Prüfen.")
-    monkeypatch.setattr(QInputDialog, "getMultiLineText", staticmethod(lambda *a, **k: ("Mein Text", True)))      # für die Fußnote weiter unten
+    monkeypatch.setattr(EingabeFenster, "getMultiLineText", staticmethod(lambda *a, **k: ("Mein Text", True)))      # für die Fußnote weiter unten
     e.select_range(0, 3)
     w.befehle.kommentar()                                     # öffnet das Feld „Kommentare“ links mit dem Eingabefeld
     assert w.navigation.isVisible() and not w.navigation.neu_feld.isHidden()
@@ -460,13 +460,13 @@ def test_geoeffnetes_dokument_zeigt_kommentar_blasen_sofort(app, tmp_path):
 
 def test_aenderungen_und_noten_im_feld_links_sind_echte_funktionen(app, tmp_path, monkeypatch):
     """Änderungen: verfolgen ein/aus, Karten mit Zeigen/Annehmen/Ablehnen, alle auf einmal. Noten: Fußnote/Endnote anlegen, Karten mit Zeigen/Bearbeiten/Löschen."""
-    from PySide6.QtWidgets import QInputDialog
+    from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
     w = win(tmp_path)
     w.new_document(); w.show()
     e = w.current_editor()
     e.setPlainText("Ein Satz zum Prüfen.")
     nav = w.navigation
-    monkeypatch.setattr(QInputDialog, "getMultiLineText", staticmethod(lambda *a, **k: ("Notiztext", True)))
+    monkeypatch.setattr(EingabeFenster, "getMultiLineText", staticmethod(lambda *a, **k: ("Notiztext", True)))
     # --- Änderungen
     nav.zeige_tab("aenderungen"); nav.show()
     assert nav.anzahl("aenderungen") == 0 and not nav._aend_leer.isHidden()
@@ -499,12 +499,12 @@ def test_aenderungen_und_noten_im_feld_links_sind_echte_funktionen(app, tmp_path
 
 def test_tastenkuerzel_fuer_fussnote_und_endnote(app, tmp_path, monkeypatch):
     """Strg+Alt+F setzt eine Fußnote, Strg+Alt+D eine Endnote (wie in der Hilfe beschrieben)."""
-    from PySide6.QtWidgets import QInputDialog
+    from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
     w = win(tmp_path)
     w.new_document(); w.show()
     e = w.current_editor()
     e.insertPlainText("Ein Satz mit Quelle.")
-    monkeypatch.setattr(QInputDialog, "getMultiLineText", staticmethod(lambda *a, **k: ("Beleg", True)))
+    monkeypatch.setattr(EingabeFenster, "getMultiLineText", staticmethod(lambda *a, **k: ("Beleg", True)))
     kuerzel = {sc.key().toString(): sc for sc in w._kuerzel}
     kuerzel["Ctrl+Alt+F"].activated.emit()
     kuerzel["Ctrl+Alt+D"].activated.emit()

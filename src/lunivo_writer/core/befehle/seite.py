@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.models.page import HeaderFooter
-from PySide6.QtWidgets import QInputDialog, QMenu
+from PySide6.QtWidgets import QMenu
 from lunivo_writer.core.farben import Farbe
 
 
@@ -591,7 +592,7 @@ class SeiteBefehle:
         if nr > 0:
             namen = list(AB.TYPEN.values())
             ab = AB.umbrueche(e.document())[nr - 1]
-            gewaehlt, ok = QInputDialog.getItem(self.w, f"Abschnitt {nr + 1}", "Der Abschnitt beginnt:", namen,
+            gewaehlt, ok = EingabeFenster.getItem(self.w, f"Abschnitt {nr + 1}", "Der Abschnitt beginnt:", namen,
                                                 list(AB.TYPEN).index(ab[1]), False)
             if ok:
                 typ = list(AB.TYPEN)[namen.index(gewaehlt)]
@@ -710,10 +711,10 @@ class SeiteBefehle:
             return
         cell = t.cellAt(c)
         namen = [f"Spalte {i + 1}" for i in range(t.columns())]
-        n, ok = QInputDialog.getItem(self.w, "Tabelle sortieren", "Nach welcher Spalte?", namen, cell.column(), False)
+        n, ok = EingabeFenster.getItem(self.w, "Tabelle sortieren", "Nach welcher Spalte?", namen, cell.column(), False)
         if not ok:
             return
-        auf, ok = QInputDialog.getItem(self.w, "Tabelle sortieren", "Reihenfolge:", ["Aufsteigend", "Absteigend"], 0, False)
+        auf, ok = EingabeFenster.getItem(self.w, "Tabelle sortieren", "Reihenfolge:", ["Aufsteigend", "Absteigend"], 0, False)
         if not ok:
             return
         spalte = namen.index(n)

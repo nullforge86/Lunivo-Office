@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
-from PySide6.QtWidgets import QApplication, QInputDialog, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.dialogs.dokument_dialoge import PageSetupDialog
 from lunivo_writer.core.farben import Farbe
@@ -236,7 +237,7 @@ class BearbeitenBaustein:
             QMessageBox.information(self, "Stimme", "Es ist keine Stimme eingerichtet. Siehe docs/INSTALLATION.md.")
             return
         namen = [s["name"] for s in liste]
-        n, ok = QInputDialog.getItem(self, "Stimme wählen", "Stimme:", namen, 0, False)
+        n, ok = EingabeFenster.getItem(self, "Stimme wählen", "Stimme:", namen, 0, False)
         if ok:
             self.settings.set("vorlesen/stimme", liste[namen.index(n)]["kennung"])
 

@@ -11,6 +11,7 @@ import json
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat
 
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.core.farben import Farbe
 P_FORM = QTextFormat.UserProperty + 34
 ARTEN = ("text", "auswahl", "datum", "kasten", "knopf")
@@ -20,7 +21,6 @@ DATUMSFORMAT = "dd.MM.yyyy"
 PLATZHALTER_FARBE = Farbe.GRAU
 
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 def meta(art: str, name: str = "", **kw) -> dict:
     m = {"art": art, "name": name}
     m.update({k: v for k, v in kw.items() if v not in (None, "")})
@@ -124,7 +124,7 @@ def wert_von(doc: QTextDocument, v: int, e: int) -> str:
 def klick(ed, pos: int, fenster=None) -> bool:
     """Klick in ein Feld: Kontrollkästchen wechselt, Auswahl zeigt die Liste, Text und Datum fragen nach dem Wert, die Schaltfläche löst
     ihre Aktion aus. → True, wenn der Klick ein Feld getroffen hat."""
-    from PySide6.QtWidgets import QInputDialog, QMenu
+    from PySide6.QtWidgets import QMenu
     treffer = feld_an(ed.document(), pos)
     if treffer is None:
         return False
@@ -141,19 +141,13 @@ def klick(ed, pos: int, fenster=None) -> bool:
             menu.exec(ed.viewport().mapToGlobal(ed.cursorRect(_c(ed, v)).bottomLeft()))
     elif art == "datum":
         from PySide6.QtCore import QDate
-        from PySide6.QtWidgets import QCalendarWidget, QDialog, QVBoxLayout
-        d = QDialog(ed.window())
-        d.setWindowTitle(m.get("name") or "Datum")
-        kal = QCalendarWidget()
         aktuell = QDate.fromString(wert_von(ed.document(), v, e), DATUMSFORMAT)
-        kal.setSelectedDate(aktuell if aktuell.isValid() else QDate.currentDate())
-        bb = knopfzeile(d)
-        lay = QVBoxLayout(d); lay.addWidget(kal); lay.addWidget(bb)
-        if d.exec():
-            _ersetzen(ed, v, e, m, kal.selectedDate().toString(DATUMSFORMAT))
+        tag, ok = EingabeFenster.getDatum(ed.window(), m.get("name") or "Datum", "Datum:", aktuell)
+        if ok:
+            _ersetzen(ed, v, e, m, tag.toString(DATUMSFORMAT))
     elif art == "text":
         alt = "" if _ist_leer(ed.document(), v) else wert_von(ed.document(), v, e)
-        t, ok = QInputDialog.getText(ed.window(), m.get("name") or "Textfeld", m.get("name") or "Wert:", text=alt)
+        t, ok = EingabeFenster.getText(ed.window(), m.get("name") or "Textfeld", m.get("name") or "Wert:", text=alt)
         if ok:
             if t:
                 _ersetzen(ed, v, e, m, t)

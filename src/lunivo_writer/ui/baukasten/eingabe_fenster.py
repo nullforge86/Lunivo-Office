@@ -9,8 +9,8 @@ Das Fenster ändert nichts selbst; der Aufrufer wertet das Ergebnis aus. Als ``P
 """
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtCore import QDate, Qt
+from PySide6.QtWidgets import QCalendarWidget, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
@@ -20,10 +20,12 @@ from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 class EingabeFenster(PanelFaehig, QDialog):
     """Frage mit Auswahlliste (``eintraege``) oder, ohne Einträge, mit einem Textfeld."""
 
-    def __init__(self, parent, titel: str, frage: str, eintraege: list[str] | None = None, aktuell: int = 0, text: str = ""):
+    def __init__(self, parent, titel: str, frage: str, eintraege: list[str] | None = None, aktuell: int = 0, text: str = "",
+                 kennwort: bool = False, mehrzeilig: bool = False, datum: QDate | None = None):
         super().__init__(parent)
         self.setWindowTitle(titel)
         self._ist_liste = eintraege is not None
+        self.kalender = None
         v = QVBoxLayout(self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
         f = QLabel(frage); f.setWordWrap(True)
@@ -41,8 +43,23 @@ class EingabeFenster(PanelFaehig, QDialog):
             f.setBuddy(self.liste)
             g.breit(self.liste)
             self.feld = None
+        elif datum is not None:
+            self.kalender = QCalendarWidget(); self.kalender.setSelectedDate(datum); self.kalender.setAccessibleName(titel)
+            self.kalender.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)      # ohne Wochennummern: passt in 300 px
+            f.setBuddy(self.kalender)
+            g.breit(self.kalender)
+            self.feld = self.liste = None
+        elif mehrzeilig:
+            self.feld = QPlainTextEdit(text); self.feld.setMinimumHeight(110); self.feld.setAccessibleName(titel)
+            self.feld.selectAll()
+            f.setBuddy(self.feld)
+            g.breit(self.feld)
+            self.liste = None
         else:
-            self.feld = QLineEdit(text); self.feld.setMinimumHeight(30); self.feld.setAccessibleName(titel); self.feld.selectAll()
+            self.feld = QLineEdit(text)
+            if kennwort:
+                self.feld.setEchoMode(QLineEdit.Password)
+            self.feld.setMinimumHeight(30); self.feld.setAccessibleName(titel); self.feld.selectAll()
             self.feld.returnPressed.connect(self.accept)
             f.setBuddy(self.feld)
             g.breit(self.feld)
@@ -56,7 +73,9 @@ class EingabeFenster(PanelFaehig, QDialog):
         if self._ist_liste:
             it = self.liste.currentItem()
             return it.text() if it is not None else ""
-        return self.feld.text()
+        if self.kalender is not None:
+            return self.kalender.selectedDate().toString(Qt.ISODate)
+        return self.feld.toPlainText() if isinstance(self.feld, QPlainTextEdit) else self.feld.text()
 
     @staticmethod
     def getItem(parent, titel: str, frage: str, eintraege: list[str], aktuell: int = 0, bearbeitbar: bool = False) -> tuple[str, bool]:
@@ -66,8 +85,22 @@ class EingabeFenster(PanelFaehig, QDialog):
         return (d.wert() if ok else ""), ok
 
     @staticmethod
-    def getText(parent, titel: str, frage: str, text: str = "") -> tuple[str, bool]:
-        """Wie ``QInputDialog.getText``."""
-        d = EingabeFenster(parent, titel, frage, None, text=text)
+    def getText(parent, titel: str, frage: str, text: str = "", kennwort: bool = False) -> tuple[str, bool]:
+        """Wie ``QInputDialog.getText``; ``kennwort=True`` zeigt Punkte statt der Zeichen."""
+        d = EingabeFenster(parent, titel, frage, None, text=text, kennwort=kennwort)
         ok = bool(d.exec())
         return (d.wert() if ok else ""), ok
+
+    @staticmethod
+    def getMultiLineText(parent, titel: str, frage: str, text: str = "") -> tuple[str, bool]:
+        """Wie ``QInputDialog.getMultiLineText``."""
+        d = EingabeFenster(parent, titel, frage, None, text=text, mehrzeilig=True)
+        ok = bool(d.exec())
+        return (d.wert() if ok else ""), ok
+
+    @staticmethod
+    def getDatum(parent, titel: str, frage: str = "Datum:", datum: QDate | None = None) -> tuple[QDate, bool]:
+        """Ein Datum aus dem Kalender wählen; Rückgabe ``(QDate, ok)``."""
+        d = EingabeFenster(parent, titel, frage, None, datum=datum if datum is not None and datum.isValid() else QDate.currentDate())
+        ok = bool(d.exec())
+        return d.kalender.selectedDate(), ok

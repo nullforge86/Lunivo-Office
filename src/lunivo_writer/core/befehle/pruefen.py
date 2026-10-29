@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QInputDialog, QMessageBox
+from PySide6.QtWidgets import QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 
@@ -304,7 +305,7 @@ class PruefenBefehle:
             return
 
         def danach(wort, lst, von, bis):
-            n, ok = QInputDialog.getItem(self.w, f"Wörter für „{wort}“", "Statt dessen:", lst, 0, False)
+            n, ok = EingabeFenster.getItem(self.w, f"Wörter für „{wort}“", "Statt dessen:", lst, 0, False)
             if ok:
                 self.ed.replace_range(von, bis, self._wie_geschrieben(wort, n))
         ki.thesaurus(danach)

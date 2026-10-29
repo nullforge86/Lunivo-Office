@@ -31,7 +31,7 @@ def test_barrierefreiheit_findet_alle_vier_klassen(app):
 
 
 def test_thesaurus_ersetzt_wort_mit_grossschreibung(app, tmp_path, monkeypatch):
-    from PySide6.QtWidgets import QInputDialog
+    from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
     w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
     w.new_document(); w.show()
     e = w.current_editor(); e.insertPlainText("Das ist ein schönes Haus.")
@@ -39,7 +39,7 @@ def test_thesaurus_ersetzt_wort_mit_grossschreibung(app, tmp_path, monkeypatch):
     monkeypatch.setattr(K.KI, "verfuegbar", lambda self: True)
     monkeypatch.setattr(K.KI, "schickt_nach_aussen", lambda self, m=None: None)
     monkeypatch.setattr(K.KI, "synonyme", lambda self, wort, umg="": {"woerter": ["hübsches", "nettes"], "cent": None})
-    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(lambda *a, **k: ("hübsches", True)))
+    monkeypatch.setattr(EingabeFenster, "getItem", staticmethod(lambda *a, **k: ("hübsches", True)))
     w.befehle.thesaurus()
     w.ki._pool.waitForDone(5000)
     for _ in range(50):
