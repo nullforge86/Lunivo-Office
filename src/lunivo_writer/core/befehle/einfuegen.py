@@ -395,18 +395,17 @@ class EinfuegenBefehle:
 
 
     def textfeldVertikal(self, k=None):
-        """Textfeld mit senkrecht laufendem Text: eine Form (weiß, dunkler Rahmen); Text, Füllung und Kontur über die Formwerkzeuge."""
+        """Textfeld mit senkrecht laufendem Text: dasselbe freie Objekt wie das waagerechte (Rahmen, Griffe, Schnellleiste), Richtung vertikal."""
         if self.ed:
-            from lunivo_writer.editor import einfuegen as E
-            daten = {"form": E.TEXTFELD_VERTIKAL, "fuell": "#ffffff", "linie": "#1f3864", "strich": 1.5, "text": "Text hier eingeben"}
-            self._bild_einfuegen(E.form_bild(E.TEXTFELD_VERTIKAL, 70, 180, "#ffffff", "#1f3864", 1.5, daten["text"]),
-                                 "Textfeld (vertikal)", "form", daten)
+            from lunivo_writer.editor import frei_objekt as FO
+            FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "richtung": "senkrecht_rl"}, 70, 180)
 
 
     def textfeldMehrzeilig(self, k=None):
         if self.ed:
             from lunivo_writer.editor import einfuegen as E
-            E.textfeld(self.ed, "Text hier eingeben\n\n", breite=100)
+            from lunivo_writer.editor import frei_objekt as FO
+            FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "text": "Text hier eingeben\n\n"}, 400, 110)
 
 
     def menue_schnellbausteineKlappe(self):
@@ -705,48 +704,49 @@ class EinfuegenBefehle:
 
     def wordart(self, k=None):
         if self.ed:
+            from lunivo_writer.editor import frei_objekt as FO
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import WordArtDialog
-            d = WordArtDialog(self.w)
+            d = WordArtDialog(self.w, self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or "Ihr Text")
             if d.exec():
-                self._bild_einfuegen(d.bild(), "WordArt: " + d.text.text(), "wordart", {"text": d.text.text()})
+                daten = {"text": d.text.text() or " ", "vorlage": d.vorlage_nr(), "schrift": d.schrift.text() or "Liberation Sans",
+                         "pt": d.pt.value(), "stil": d.stil.currentText(), "farbe": d.farbe.farbe}
+                FO.einfuegen(self.ed, "wordart", daten)
 
 
     def wordartVorgabe(self, k=None, nr=0):
-        """WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil ein, markiert es und zeigt die
-        Form- und WordArt-Tools; der Text ändert sich über „WordArt bearbeiten …“ (oder Einfügen ▸ WordArt …)."""
+        """WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil als freies Objekt ein — ausgewählt (Rahmen, acht Griffe,
+        Drehgriff, Schnellleiste), der Text grau hinterlegt; Text ändern: Doppelklick oder „WordArt bearbeiten …“."""
         if not self.ed:
             return
-        from lunivo_writer.editor import einfuegen as E
-        from PySide6.QtGui import QTextCursor
-        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or E.WORDART_STANDARDTEXT
-        self._bild_einfuegen(E.wordart_bild(text, vorlage=nr, pt=36), "WordArt: " + text, "wordart",
-                             {"text": text, "vorlage": nr, "pt": 36})
-        c = self.ed.textCursor()
-        c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)       # das eben eingefügte Bild markieren
-        self.ed.setTextCursor(c)
+        from lunivo_writer.editor import frei_objekt as FO
+        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FO.WORDART_STANDARD["text"]
+        FO.einfuegen(self.ed, "wordart", {**FO.WORDART_STANDARD, "text": text, "vorlage": nr})
         self.w._sync_format()
 
 
     def wordartBearbeiten(self, k=None):
-        """Text und Stil des markierten WordArt-Objekts im Fenster „WordArt“ ändern."""
+        """Text und Stil des gewählten WordArt-Objekts im Fenster „WordArt“ ändern."""
         if not self.ed:
             return
-        from lunivo_writer.editor import einfuegen as E, formen
+        from lunivo_writer.editor import frei_objekt as FO
         from lunivo_writer.ui.dialogs.einfuegen_dialoge import WordArtDialog
-        c = self.ed._bild_cursor()
-        f = c.charFormat().toImageFormat() if c is not None else None
-        o = formen.objekt(f)
-        if not o or o.get("art") != "wordart":
+        d0 = FO.daten_lesen(self.ed, "wordart")
+        if d0 is None:
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt-Objekt markieren.")
             return
-        daten = o.get("daten", {})
-        d = WordArtDialog(self.w, daten.get("text", E.WORDART_STANDARDTEXT), vorlage=daten.get("vorlage"))
+        d = WordArtDialog(self.w, d0.get("text", ""), d0.get("stil", "Verlauf"), d0.get("farbe", "#2f78bd"), d0.get("vorlage"))
         if d.exec():
-            img = d.bild()
-            neu = {"art": "wordart", "daten": {"text": d.text.text(), "vorlage": d.vorlage_nr()}}
-            maxw = self.ed.page.content_width_px
-            formen._ersetzen(self.ed, c, img, neu, f, img.width() * min(1.0, maxw / img.width()), img.height() * min(1.0, maxw / img.width()))
+            FO.aendern(self.ed, "wordart", text=d.text.text() or " ", vorlage=d.vorlage_nr(), schrift=d.schrift.text() or "Liberation Sans",
+                       pt=d.pt.value(), stil=d.stil.currentText(), farbe=d.farbe.farbe)
             self.w._sync_format()
+
+
+    def textfeldBearbeiten(self, k=None):
+        """Im gewählten Textfeld direkt schreiben (Doppelklick, Enter oder F2 auf das Textfeld)."""
+        if self.ed:
+            from lunivo_writer.editor import frei_objekt as FO
+            if not FO.bearbeiten_starten(self.ed):
+                self.w.lbl_msg.setText("Bitte zuerst ein Textfeld markieren.")
 
 
     def menue_wordartKlappe(self):
@@ -919,8 +919,8 @@ class EinfuegenBefehle:
 
     def textfeld(self, k=None):
         if self.ed:
-            from lunivo_writer.editor import einfuegen as E
-            E.textfeld(self.ed)
+            from lunivo_writer.editor import frei_objekt as FO
+            FO.einfuegen(self.ed, "textfeld", dict(FO.TEXTFELD_STANDARD), 240, 60)
 
 
     def initiale(self, k=None):

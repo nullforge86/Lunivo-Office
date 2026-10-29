@@ -62,6 +62,8 @@ def lesen(ed, z) -> dict:
         w["h"].update(_achse_lesen(a, True, page.width_mm)); w["v"].update(_achse_lesen(a, False, page.height_mm))
         w["breite"].update(modus="abs", mm=px_to_mm(a["b"])); w["hoehe"].update(modus="abs", mm=px_to_mm(a["h"]))
         w["drehung"] = float(a.get("dreh", 0.0))
+        if a.get("abstand"):
+            w["abstand"] = dict(a["abstand"])
         w["mit_text"], w["ueberlappen"], w["verankern"] = bool(a.get("mit_text", False)), bool(a.get("ueberlappen", True)), bool(a.get("verankern", False))
         w["original"] = (px_to_mm(bild.width()), px_to_mm(bild.height()))
         return w
@@ -71,6 +73,11 @@ def lesen(ed, z) -> dict:
     w["umbruch"] = "quadrat" if seite else "textfluss"
     if seite:
         w["zeilen"] = "links" if seite == "rechts" else "rechts"
+        rahmen = U.schwebende_rahmen(ed.document()).get(c.selectionStart())
+        if rahmen is not None:
+            ff = rahmen.frameFormat()
+            w["abstand"] = {"oben": px_to_mm(ff.topMargin()), "unten": px_to_mm(ff.bottomMargin()),
+                            "links": px_to_mm(ff.leftMargin()), "rechts": px_to_mm(ff.rightMargin())}
     img = ed.document().resource(QTextDocument.ImageResource, QUrl(f.name()))
     ob, oh = (img.width(), img.height()) if isinstance(img, QImage) and not img.isNull() else (f.width() or 100, f.height() or 100)
     w["breite"].update(mm=px_to_mm(f.width() or ob)); w["hoehe"].update(mm=px_to_mm(f.height() or oh)); w["original"] = (px_to_mm(ob), px_to_mm(oh))
@@ -118,6 +125,7 @@ def anwenden(ed, z, werte: dict) -> None:
             _achse_schreiben(neu, w["h"], ed.page, True); _achse_schreiben(neu, w["v"], ed.page, False)
             neu["b"] = _mass(w["breite"], ed.page, True, a["b"]); neu["h"] = _mass(w["hoehe"], ed.page, False, a["h"])
             neu["dreh"] = float(w["drehung"])
+            neu["abstand"] = dict(w["abstand"])                    # Abstand zum Text (mm), gilt beim Umbruch im Text
             neu["mit_text"], neu["ueberlappen"], neu["verankern"] = bool(w["mit_text"]), bool(w["ueberlappen"]), bool(w["verankern"])
             _speichern_frei(ed, key, neu)
         elif key[0] == "t":                                       # frei → in den Text zurück
@@ -134,6 +142,21 @@ def anwenden(ed, z, werte: dict) -> None:
     if modus is None:                                              # Quadrat, Passend, Transparent: das Bild steht links oder rechts, der Text läuft daneben
         modus = "links" if w["zeilen"] == "rechts" else "rechts"
     U.umbruch_setzen(ed, modus)
+    _abstand_setzen(ed, w["abstand"])
+
+
+def _abstand_setzen(ed, abstand: dict) -> None:
+    """„Abstand zum Text“ (oben/unten/links/rechts, mm): die Ränder des Rahmens, in dem das umflossene Bild schwebt."""
+    c = ed._bild_cursor()
+    if c is None or not abstand:
+        return
+    rahmen = U.schwebende_rahmen(ed.document()).get(c.selectionStart())
+    if rahmen is None:
+        return
+    ff = rahmen.frameFormat()
+    ff.setTopMargin(mm_to_px(abstand.get("oben", 0.0))); ff.setBottomMargin(mm_to_px(abstand.get("unten", 0.0)))
+    ff.setLeftMargin(mm_to_px(abstand.get("links", 0.0))); ff.setRightMargin(mm_to_px(abstand.get("rechts", 0.0)))
+    rahmen.setFrameFormat(ff)
 
 
 def _speichern_frei(ed, key, neu: dict) -> None:
@@ -190,11 +213,11 @@ def _frei_zu_text(ed, key, a: dict, bild: QImage, w: dict) -> None:
     sel = QTextCursor(doc); sel.setPosition(b.position()); sel.setPosition(b.position() + 1, QTextCursor.KeepAnchor)
     ed.setTextCursor(sel)
     ed._frei_sel = None
-    anwenden(ed, ("text", ed._bild_cursor()), {"umbruch": w["umbruch"], "zeilen": w["zeilen"]})
+    anwenden(ed, ("text", ed._bild_cursor()), {"umbruch": w["umbruch"], "zeilen": w["zeilen"], "abstand": w["abstand"]})
 
 
 # ---- Füllung und Kontur ---------------------------------------------------------------------------------------------------
-FX_SCHLUESSEL = ("schatten", "reflektion", "leuchten", "weich")
+FX_SCHLUESSEL = ("schatten", "reflektion", "leuchten", "weich", "d3", "drehung")
 
 
 def format_lesen(ed, z) -> dict | None:

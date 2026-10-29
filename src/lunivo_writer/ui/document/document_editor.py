@@ -299,6 +299,11 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if zone and hasattr(fenster, "edit_header_footer"):
             fenster.edit_header_footer(zone == "kopf")
             return
+        t = self._frei_bild_bei(e.position(), True) if hasattr(self, "_frei_treffer") else None
+        if t is not None and t[0] == getattr(self, "_frei_sel", None) and hasattr(fenster, "befehle"):        # Doppelklick auf WordArt/Textfeld: bearbeiten
+            from lunivo_writer.editor import frei_objekt as FO
+            if FO.bearbeiten_starten(self):                                   # direkt im Objekt schreiben
+                return
         super().mouseDoubleClickEvent(self._maus_abgebildet(e))
 
 

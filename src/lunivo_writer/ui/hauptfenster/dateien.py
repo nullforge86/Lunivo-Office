@@ -78,6 +78,9 @@ class DateienBaustein:
         tab = DocumentTab(loaded, path)
         tab.datei_stand = sicher_schreiben.stand(path)
         self._add_tab(tab)
+        from lunivo_writer.editor import frei_objekt as FO
+        FO.kette_aktualisieren(tab.editor)                         # verknüpfte Textfelder: der Text läuft von Feld zu Feld
+        tab.editor.document().setModified(False)
         if not self.settings.get_bool("sicherheit/markup_oeffnen", True):
             tab.editor.set_markup(False)
         if stile.als_json_neu() != self.settings.get("stile/eigene", ""):       # das Dokument brachte eigene Formatvorlagen mit

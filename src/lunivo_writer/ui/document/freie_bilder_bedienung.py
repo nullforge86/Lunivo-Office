@@ -79,16 +79,33 @@ class FreieBilderMixin:
     def _frei_zeichnen(self, p: QPainter, sicht: QRectF, hinter: bool) -> None:
         """Bilder der sichtbaren Blätter, hinter (``hinter``) oder vor dem Text; die vorderen zeichnen auch die Auswahl."""
         z = self.zoom
+        if getattr(self, "_frei_edit", None) is not None:
+            from lunivo_writer.editor import frei_objekt as FO
+            FO.edit_platzieren(self)
         for key, a, bild, r, hinten, n in self._frei_liste():
             if hinten != hinter or not r.intersects(sicht):
                 continue
+            if getattr(self, "_frei_edit", None) is not None and key == self._frei_edit_key:      # wird gerade im Objekt geschrieben: das Eingabefeld zeigt den Text
+                from PySide6.QtGui import QImage
+                bild = QImage(1, 1, QImage.Format_ARGB32); bild.fill(0)
             p.save(); p.translate(r.x(), r.y()); p.scale(z, z)
             FB.bild_zeichnen(p, bild, QRectF(0, 0, r.width() / z, r.height() / z), bool(a.get("ellipse")), a.get("rand"), float(a.get("dreh", 0.0)), a.get("fuell"), a.get("_fuellbild") or (a.get("fuell") or {}).get("bild"), a.get("fx"))
             p.restore()
         if not hinter and self._frei_sel is not None:
             for key, a, bild, r, hinten, n in self._frei_liste():
                 if key == self._frei_sel and r.intersects(sicht):
+                    self._frei_text_markieren(p, r, a, bild)
                     self._frei_auswahl_zeichnen(p, r)
+
+    @staticmethod
+    def _frei_text_markieren(p: QPainter, r: QRectF, a: dict, bild) -> None:
+        """WordArt wie in WPS: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt)."""
+        from lunivo_writer.editor import frei_objekt as FO
+        t = FO.text_bereich(a, bild)
+        if t is not None:
+            p.save(); p.setPen(Qt.NoPen); p.setBrush(QColor(110, 110, 110, 95))
+            p.drawRect(QRectF(r.x() + t.x() * r.width(), r.y() + t.y() * r.height(), t.width() * r.width(), t.height() * r.height()))
+            p.restore()
 
     def _frei_rechteck(self, a: dict, n: int):
         from lunivo_writer.models.page import mm_to_px
@@ -98,12 +115,22 @@ class FreieBilderMixin:
         return r.x(), r.y(), r.width(), r.height()
 
     KNOPF = 30.0                                              # Kantenlänge einer Schaltfläche neben dem Bild
+    KNOPF_TIPPS = {"layout": "Layoutoptionen", "formstile": "Formeffekte", "fuell": "Formfüllung", "minus": "Schnellleiste einklappen",
+                   "anker": "Absatz-Layout",
+                   "kontur": "Formkontur\n\nFarbe, Breite und Linienart für die Konturlinie der ausgewählten Form auswählen.\n\n"
+                             "Auf den Pfeil klicken, um detaillierte Einstellungen für die Konturlinie auszuwählen."}
     KNOEPFE = ("layout", "formstile", "fuell", "kontur")         # von oben nach unten, wie in der Vorlage
 
     def _frei_knopf_rects(self, r: QRectF) -> dict[str, QRectF]:
         """Die Schaltflächen rechts neben dem Bild: oben der Minus-Knopf (klappt sie ein), darunter Layoutoptionen, Formstile, Füllung, Kontur."""
         x = r.right() + 12
         out = {"minus": QRectF(x + 5, r.top(), 20, 20)}
+        if getattr(self, "_frei_anker_zeigen", True):              # das Absatz-Symbol links vom Rahmen
+            from lunivo_writer.editor import frei_objekt as FO
+            if FO.art_gewaehlt(self) == "textfeld":                  # beim Textfeld neben dem Drehgriff (wie in der Vorlage)
+                out["anker"] = QRectF(r.center().x() + 16, r.top() - ROT_ABSTAND - 10, 30, 20)
+            else:
+                out["anker"] = QRectF(r.left() - 46, r.center().y() - 10, 30, 20)
         if getattr(self, "_frei_knoepfe_offen", True):
             for i, k in enumerate(self.KNOEPFE):
                 out[k] = QRectF(x, r.top() + 32 + i * 40, self.KNOPF, self.KNOPF)
@@ -116,6 +143,13 @@ class FreieBilderMixin:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         for name, k in self._frei_knopf_rects(r).items():
             p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(QColor("white"))
+            if name == "anker":                                    # Seite mit Pfeil nach unten (Menü)
+                p.drawRoundedRect(k, 3, 3); p.setPen(QPen(QColor("#4c6ef5"), 1.3)); p.setBrush(Qt.NoBrush)
+                p.drawRect(QRectF(k.left() + 5, k.top() + 4, 10, 12)); p.drawLine(QPointF(k.left() + 7, k.top() + 8), QPointF(k.left() + 13, k.top() + 8))
+                p.drawLine(QPointF(k.left() + 7, k.top() + 11), QPointF(k.left() + 13, k.top() + 11))
+                p.setPen(QPen(QColor("#495057"), 1.3)); c = k.center().x() + 8
+                p.drawLine(QPointF(c - 3, k.center().y() - 1), QPointF(c, k.center().y() + 2)); p.drawLine(QPointF(c, k.center().y() + 2), QPointF(c + 3, k.center().y() - 1))
+                continue
             if name == "minus":
                 p.drawEllipse(k); p.setPen(QPen(QColor("#495057"), 1.6))
                 p.drawLine(int(k.left() + 5), int(k.center().y()), int(k.right() - 5), int(k.center().y()))
@@ -138,10 +172,11 @@ class FreieBilderMixin:
         pen = QPen(QColor("#1c7ed6"), 1.5, Qt.DashLine)
         p.setPen(pen); p.setBrush(Qt.NoBrush)
         p.drawRect(r)
-        p.setPen(QPen(QColor("#1c7ed6"), 1)); p.setBrush(QColor("white"))
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(QPen(QColor("#8c8c8c"), 1.2)); p.setBrush(QColor("white"))          # runde Griffe wie in WPS: weiße Kreise, grauer Rand
         for name in GRIFFE:
             c = self._frei_griff_mitte(r, name)
-            p.drawRect(QRectF(c.x() - GRIFF / 2, c.y() - GRIFF / 2, GRIFF, GRIFF))
+            p.drawEllipse(c, GRIFF / 2, GRIFF / 2)
         rc = self._frei_griff_mitte(r, "rot")                     # der Drehgriff über der Mitte der Oberkante
         p.setPen(QPen(QColor("#1c7ed6"), 1)); p.drawLine(QPointF(rc.x(), r.top()), QPointF(rc.x(), rc.y() + GRIFF / 2))
         p.setBrush(QColor("white")); p.drawEllipse(rc, GRIFF / 2 + 1, GRIFF / 2 + 1)
@@ -240,6 +275,13 @@ class FreieBilderMixin:
             if self._frei_zug is not None and e.buttons() & Qt.LeftButton:
                 self._frei_ziehen(e)
                 return True
+            if self._frei_sel is not None:
+                for key, a, r, hinten, n in self._frei_treffer:
+                    if key == self._frei_sel:
+                        for name, k in self._frei_knopf_rects(r).items():
+                            if k.contains(pos) and name in self.KNOPF_TIPPS:
+                                from PySide6.QtWidgets import QToolTip
+                                QToolTip.showText(e.globalPosition().toPoint(), self.KNOPF_TIPPS[name], self.viewport(), k.toRect())
             griff, treffer = self._frei_griff_bei(pos)
             if griff:
                 self.viewport().setCursor(CURSOR[griff]); self._frei_cursor_gesetzt = True
@@ -301,6 +343,8 @@ class FreieBilderMixin:
         self._frei_vorlaeufig.clear()
         if neu is None:
             return                                                           # nur angeklickt
+        from lunivo_writer.editor import frei_objekt as FO
+        neu = FO.nach_groesse(self, neu)                                      # Textfeld: Text in der neuen Größe setzen
         if self._frei_sel[0] == "k":
             for a in self.page.bilder:
                 if id(a) == self._frei_sel[1]:
@@ -309,6 +353,8 @@ class FreieBilderMixin:
             self.pageApplied.emit()
         else:
             self._frei_absatz_aendern(neu["_blk"], neu["_idx"], FB.ohne_hilfsangaben(neu))
+            if neu.get("art") == "textfeld":
+                FO.kette_aktualisieren(self)                                  # verknüpfte Textfelder: der Text läuft neu von Feld zu Feld
         self.viewport().update()
 
     def _frei_absatz_aendern(self, blk: int, idx: int, neu: dict | None) -> None:
@@ -337,7 +383,9 @@ class FreieBilderMixin:
 
     # ---- Schaltflächen neben dem Bild -------------------------------------------------------------------------------------------
     def _frei_knopf(self, name: str, pos) -> None:
-        if name == "minus":
+        if name == "anker":
+            self._frei_anker_menue(pos)
+        elif name == "minus":
             self._frei_knoepfe_offen = not getattr(self, "_frei_knoepfe_offen", True)
             self.viewport().update()
         elif name == "layout":
@@ -348,6 +396,33 @@ class FreieBilderMixin:
             self._frei_fuell(pos)
         elif name == "kontur":
             self._frei_kontur(pos)
+
+    def _frei_anker_menue(self, pos) -> None:
+        """Menü des Absatz-Symbols links vom Rahmen: Absatzformat zurücksetzen, Symbol ausblenden."""
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("Absatzformat zurücksetzen", self._frei_absatz_zuruecksetzen)
+        m.addAction("Symbol vom Absatz-Layout ausblenden", self._frei_anker_ausblenden)
+        m.popup(pos); self._frei_menue = m
+
+    def _frei_anker_ausblenden(self) -> None:
+        self._frei_anker_zeigen = False
+        self.viewport().update()
+
+    def _frei_absatz_zuruecksetzen(self) -> None:
+        """Der Absatz, an dem das Objekt hängt, bekommt Ausrichtung, Einzüge und Abstände zurück (das Objekt bleibt)."""
+        sel = self._frei_sel
+        if sel is None or sel[0] != "t":
+            return
+        b = self.document().findBlockByNumber(sel[1])
+        if not b.isValid():
+            return
+        from PySide6.QtGui import QTextBlockFormat
+        alt = b.blockFormat(); neu = QTextBlockFormat()
+        if alt.hasProperty(B_BILDANKER):
+            neu.setProperty(B_BILDANKER, alt.stringProperty(B_BILDANKER))
+        QTextCursor(b).setBlockFormat(neu)
+        self.document().setModified(True); self._frei_rev = None; self.viewport().update()
 
     def _frei_wirken(self, **teile) -> None:
         from lunivo_writer.editor import bildlayout as BL
@@ -382,8 +457,8 @@ class FreieBilderMixin:
         from lunivo_writer.editor import bildlayout as BL
         from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue
         m = FuellMenue(parent)
-        m.gewaehlt.connect(lambda c: E()._frei_wirken(fuell=None if c is None else {"art": "farbe", "farbe": c.name()}))
-        m.verlauf_gewaehlt.connect(lambda c: E()._frei_wirken(fuell={"art": "verlauf", "farbe": c.name()}))
+        m.gewaehlt.connect(lambda c: E()._frei_wirken(fuell=None if c is None else {"art": "farbe", "farbe": c.name(QColor.HexArgb)}))
+        m.verlauf_gewaehlt.connect(lambda c: E()._frei_wirken(fuell={"art": "verlauf", "farbe": c.name(QColor.HexArgb)}))
         m.graduell_gewaehlt.connect(lambda d, h: E()._frei_wirken(fuell={"art": "graduell", "dunkel": d, "hell": h, "farbe": d}))
         m.muster_gewaehlt.connect(lambda k: E()._frei_wirken(fuell={"art": "muster", "key": k, "farbe": Farbe.TINTE, "grund": Farbe.WEISS}))
         m.textur_gewaehlt.connect(lambda k: E()._frei_wirken(fuell={"art": "textur", "key": k}))
@@ -410,7 +485,7 @@ class FreieBilderMixin:
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
         from lunivo_writer.ui.baukasten.objekt_menues import KonturMenue
         m = KonturMenue(parent)
-        m.gewaehlt.connect(lambda c: E()._frei_wirken(rand=None) if c is None else E()._frei_wirken(rand_teil={"farbe": c.name()}))
+        m.gewaehlt.connect(lambda c: E()._frei_wirken(rand=None) if c is None else E()._frei_wirken(rand_teil={"farbe": c.name(QColor.HexArgb)}))
         m.breite_gewaehlt.connect(lambda pt: E()._frei_wirken(rand_teil={"b": pt * 96 / 72}))
         m.strich_gewaehlt.connect(lambda a: E()._frei_wirken(rand_teil={"art": a}))
         m.weitere_linien.connect(lambda: E()._frei_linien_fenster())
@@ -460,6 +535,9 @@ class FreieBilderMixin:
         if e.key() == Qt.Key_Escape:
             self._frei_sel = None; self.viewport().update()
             return True
+        if e.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_F2):          # im Objekt schreiben
+            from lunivo_writer.editor import frei_objekt as FO
+            return FO.bearbeiten_starten(self)
         if e.key() in (Qt.Key_Delete, Qt.Key_Backspace):
             key, self._frei_sel = self._frei_sel, None
             if key[0] == "k":

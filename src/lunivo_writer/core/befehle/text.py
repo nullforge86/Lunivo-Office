@@ -9,6 +9,9 @@ from lunivo_writer.ui.baukasten import FarbPalette, RahmenMenue, RasterAuswahl
 from lunivo_writer.core.farben import Farbe
 
 
+ZEILENABSTAENDE = (1.0, 1.5, 2.0, 2.5, 3.0)     # die Zeilenabstände der Klappe (Start und Texttools)
+
+
 class TextBefehle:
     """Befehle des Bandes: Zeichen und Absatz. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``)."""
 
@@ -510,7 +513,7 @@ class TextBefehle:
 
     def menue_zeilenabstandKlappe(self):
         m = QMenu()
-        for f in (1.0, 1.5, 2.0, 2.5, 3.0):                         # wie in der Vorlage; alles andere im Fenster Absatz (dort auch „Tabstopps …“)
+        for f in ZEILENABSTAENDE:                                   # wie in der Vorlage; alles andere im Fenster Absatz (dort auch „Tabstopps …“)
             m.addAction(f"{f:g}".replace(".", ","), lambda _=False, f=f: self.ed and self.ed.set_line_spacing(f))
         m.addAction("Mehr …", self.w.paragraph_dialog)
         return m

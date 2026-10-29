@@ -9,7 +9,7 @@ import os
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import QPropertyAnimation, QSize, Qt, Signal
-from PySide6.QtGui import QAction, QColor, QFont, QPainter
+from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
     QSizePolicy, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
@@ -442,6 +442,74 @@ class RegisterBand(QWidget):
         v.addStretch(1)
         inhalt.addLayout(v)
 
+    def _knoepfe_tt_schrift(self, g: dict, inhalt: QHBoxLayout):
+        """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start."""
+        font = schrift_feld(QFontComboBox())
+        groesse = groesse_feld()
+        font.activated.connect(lambda _i: self.b.ttSchriftart(font.currentText()))
+        groesse.activated.connect(lambda _i: self.b.ttGroesse(groesse.currentText()))
+        groesse.lineEdit().returnPressed.connect(lambda: self.b.ttGroesse(groesse.currentText()))
+        self.felder.update(tt_font=font, tt_groesse=groesse)
+        zeilen, aktuell = [], []
+        for e in g["knoepfe"]:
+            if e.get("zeilenumbruch"):
+                zeilen.append(aktuell)
+                aktuell = []
+            else:
+                aktuell.append(e)
+        zeilen.append(aktuell)
+        v = QVBoxLayout()
+        v.setSpacing(2)
+        v.setContentsMargins(0, 0, 0, 0)
+        for i, zeile in enumerate(zeilen):
+            h = QHBoxLayout()
+            h.setSpacing(1)
+            h.setContentsMargins(0, 0, 0, 0)
+            if i == 0:
+                h.addWidget(font)
+                h.addWidget(groesse)
+                h.addSpacing(3)
+            for e in zeile:
+                h.addWidget(self._knopf(e, False))
+            h.addStretch(1)
+            v.addLayout(h)
+        v.addStretch(1)
+        inhalt.addLayout(v)
+
+    def _knoepfe_galerie(self, g: dict, inhalt: QHBoxLayout):
+        """Eine Galerie wie in WPS: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``)."""
+        spec = getattr(self.b, "galerie_" + g["galerie"], None)
+        if spec is None:
+            self.fehlend.append("galerie_" + g["galerie"])
+            return
+        spec = spec()
+        rahmen = QFrame()
+        rahmen.setFrameShape(QFrame.StyledPanel)
+        h = QHBoxLayout(rahmen)
+        h.setContentsMargins(3, 3, 3, 3)
+        h.setSpacing(2)
+        for tipp, pm, tun in spec["kacheln"]:
+            k = QToolButton()
+            k.setAutoRaise(True)
+            k.setIcon(QIcon(pm))
+            k.setIconSize(pm.size())
+            k.setFixedSize(pm.width() + 8, pm.height() + 8)
+            k.setToolTip(tipp)
+            k.clicked.connect(lambda _=False, f=tun: (f(), self.aktualisieren()))
+            h.addWidget(k)
+            self.knoepfe.append((k, None, True))
+        mehr = QToolButton()
+        mehr.setAutoRaise(True)
+        mehr.setArrowType(Qt.DownArrow)
+        mehr.setToolTip(spec["name"])
+        mehr.setPopupMode(QToolButton.InstantPopup)
+        spec["menue"].setParent(mehr, Qt.Popup)
+        mehr.setMenu(spec["menue"])
+        mehr.setFixedWidth(16)
+        h.addWidget(mehr)
+        self.knoepfe.append((mehr, None, True))
+        inhalt.addWidget(rahmen, 0, Qt.AlignTop)
+
     def _knoepfe_raender(self, g: dict, inhalt: QHBoxLayout):
         """Der Rand-Knopf und daneben wie bei WPS die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit)."""
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
@@ -514,6 +582,10 @@ class RegisterBand(QWidget):
             return self._knoepfe_masse(g, inhalt)
         if g.get("felder") == "zeile":
             return self._knoepfe_schrift(g, inhalt)
+        if g.get("felder") == "tt_zeile":
+            return self._knoepfe_tt_schrift(g, inhalt)
+        if g.get("galerie"):
+            return self._knoepfe_galerie(g, inhalt)
         if g.get("reihenfolge"):
             return self._knoepfe_geordnet(g, inhalt)
         eintraege = g["knoepfe"]

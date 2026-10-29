@@ -248,8 +248,25 @@ class BackstageBaustein:
             if ed is not None and pfad:
                 BL.fuellbild_setzen(ed, BL.ziel(ed), QImage(pfad))
         self.sidebar.zeige_objektformat(w, anwenden, reiter, bild)
+        self._objekt_text_verbinden()
         if fuellung:
             self.sidebar.objekt_panel.fuellung_waehlen(fuellung)
+
+
+    def _objekt_text_verbinden(self) -> None:
+        """Die Textoptionen der Seitenleiste wirken auf den Text im gewählten WordArt oder Textfeld (``editor/frei_objekt.py``)."""
+        from lunivo_writer.editor import frei_objekt as FO
+        panel = self.sidebar.objekt_panel
+        if panel is None:
+            return
+        if getattr(panel, "_objekt_text_verbunden", False):
+            panel.text_geaendert.disconnect()
+        panel._objekt_text_verbunden = True
+        panel.text_geaendert.connect(lambda w: FO.text_werte_anwenden(self.current_editor(), w) if self.current_editor() is not None else None)
+        e = self.current_editor()
+        w = FO.text_werte_lesen(e) if e is not None else None
+        if w is not None:
+            panel.setze_text(w)
 
 
     def _zeichen_masse(self, e) -> None:

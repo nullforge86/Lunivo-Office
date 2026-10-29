@@ -239,6 +239,11 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
     ``dreh``: Grad um die Mitte; ``fuell``: Füllung hinter dem Bild (siehe ``fuell_pinsel``)."""
     if bild is None or bild.isNull() or r.width() <= 0 or r.height() <= 0:
         return
+    if dreh and ((fx or {}).get("drehung") or {}).get("text_gerade"):      # „Text nicht drehen“: Form und Füllung gedreht, der Text bleibt aufrecht
+        leer = QImage(1, 1, QImage.Format_ARGB32); leer.fill(0)
+        bild_zeichnen(p, leer, r, ellipse, rand, dreh, fuell, fuellbild, None)
+        bild_zeichnen(p, bild, r, ellipse, None, 0.0, None, None, {k: v for k, v in fx.items() if k not in ("drehung", "d3")} or None)
+        return
     if dreh:                                                       # um die Mitte gedreht
         p.save(); p.translate(r.center()); p.rotate(dreh); p.translate(-r.center())
         bild_zeichnen(p, bild, r, ellipse, rand, 0.0, fuell, fuellbild, fx)
@@ -249,6 +254,8 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
         E.unter_zeichnen(p, bild, r, ellipse, fx)
         if fx.get("weich"):
             bild = E.weiche_kanten(bild, r, ellipse, float(fx["weich"].get("radius", 6.0)))
+        if E.hat_nachbearbeitung(fx):                              # 3D-Format (oberer Abschluss) und 3D-Drehung am Bild selbst
+            bild = E.bild_nachbearbeiten(bild, r, ellipse, fx); ellipse = False
     p.save()
     p.setRenderHint(QPainter.SmoothPixmapTransform)
     p.setRenderHint(QPainter.Antialiasing)
