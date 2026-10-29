@@ -147,7 +147,9 @@ def svg_datei(name: str, farbe: str) -> str:
         return ""
     ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-icons")
     os.makedirs(ordner, exist_ok=True)
-    datei = os.path.join(ordner, f"{name}_{farbe.lstrip('#')}.svg")
+    # Strichstärke im Cache-Schlüssel halten: alte SVGs aus früheren Starts
+    # dürfen nach einer Stiländerung nicht weiter in Qt-Stylesheets auftauchen.
+    datei = os.path.join(ordner, f"{name}_{farbe.lstrip('#')}_{STRICH:g}.svg")
     if not os.path.exists(datei):
         with open(datei, "wb") as fh:
             fh.write(_svg(pfad, farbe))
