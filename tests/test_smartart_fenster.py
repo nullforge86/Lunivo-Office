@@ -15,15 +15,15 @@ def test_nichts_ragt_heraus(app, breite):
         if w.isVisible():
             r = w.mapTo(d, w.rect().bottomRight())
             assert r.x() <= d.width() + 1, (type(w).__name__, r.x(), d.width())
-    assert set(d.galerie.feld.knoepfe) == set(SA.LAYOUTS)
+    assert list(d.galerie.feld.knoepfe) == SA.KATALOG_LAYOUTS and len(d.galerie.feld.knoepfe) == 15
     p.close()
 
 
 def test_auswahl_liefert_layout(app):
     d = SmartArtDialog(None)
-    d.galerie.feld.knoepfe["Zyklus"].click()
-    assert d.daten()["layout"] == "Zyklus" and d.name.text() == "Zyklus" and d.beschreibung.text()
-    assert d.daten()["text"] == SA.MUSTER["Zyklus"]
+    d.galerie.feld.knoepfe["Segmentzyklus"].click()
+    assert d.daten()["layout"] == "Segmentzyklus" and d.name.text() == SA.ANZEIGENAMEN["Segmentzyklus"] and d.beschreibung.text()
+    assert d.daten()["text"] == SA.MUSTER["Segmentzyklus"]
     assert not d.bearbeiten.isVisibleTo(d)
     e = SmartArtDialog(None, {"layout": "Pyramide", "farben": "Grün", "text": "A\nB"})
     assert e.bearbeiten.isVisibleTo(e) and e.daten() == {"layout": "Pyramide", "farben": "Grün", "text": "A\nB"}

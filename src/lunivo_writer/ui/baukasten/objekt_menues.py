@@ -2,7 +2,7 @@
 
     FuellMenue()    → gewaehlt(QColor | None), verlauf_gewaehlt(QColor), muster_gewaehlt(str)
     KonturMenue()   → gewaehlt(QColor | None), breite_gewaehlt(float pt), strich_gewaehlt(str), weitere_linien()
-    formstile()     → RasterAuswahl mit 7 × 6 Stilen; gewaehlt(Schlüssel); ``formstil_werte(schluessel)`` übersetzt in Füllung und Kontur
+    formstile()     → RasterAuswahl mit 6 × 7 Stilen (Raster aus editor/formen_stile.py); gewaehlt(Schlüssel); ``formstil_werte(schluessel)`` übersetzt in Füllung und Kontur
 
 Die Menüs bauen auf den vorhandenen Bausteinen auf (``FarbPalette``, ``RasterAuswahl``, ``Linie``, ``muster``) und ändern nichts am Objekt:
 sie melden die Wahl, ``editor/bildlayout.py`` schreibt sie ins Bild.
@@ -21,8 +21,6 @@ from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
 
 from lunivo_writer.editor.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/linie.py)
 from lunivo_writer.core.farben import Farbe
-STIL_FARBEN = [Farbe.TINTE_DUNKEL, "#4c9be8", "#f08c00", Farbe.GRAU, "#fcc419", "#3b5bdb", "#51cf66"]       # sieben Spalten der Vorlage
-STIL_ZEILEN = ["hell", "voll", "voll2", "getoent", "kante", "dunkel"]
 
 
 def _linien_symbol(art: str, breite: float, groesse: QSize = QSize(120, 16)) -> QIcon:
@@ -78,10 +76,24 @@ class FuellMenue(FarbPalette):
         super().__init__(parent, keine_text="Keine Farbe", start=start, titel="Füllfarbe", verlauf=True, verlauf_titel="Farbverlauf",
                          weitere_text="Weitere Füllfarben(M)…", automatisch="Automatisch", zuletzt=False)
         self.addSeparator()
-        for text, art in (("Graduell", "verlauf"), ("Textur", "textur"), ("Muster(N)", "muster")):     # öffnen die Seitenleiste „Formatierung“
-            self.addAction(text).triggered.connect(lambda _=False, a=art: (self.close(), self.weitere_fuellung.emit(a)))
-        self.addAction("Fülleffekte…").triggered.connect(lambda: (self.close(), self.weitere_fuellung.emit("verlauf")))
+        self._raster_untermenue("Graduell", "verlauf", "Weitere Farbverläufe…", [
+            (f"{d}|{h}", "Graduell", graduell_pixmap(d, h)) for d, h in GRADUELL], QSize(34, 24), 4,
+            lambda k: self.graduell_gewaehlt.emit(*k.split("|")))
+        self._raster_untermenue("Textur", "textur", "Weitere Texturen…", [(k, n, _textur(k, 30)) for k, n in TEXTUREN], QSize(30, 30), 6,
+                                self.textur_gewaehlt.emit)
+        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in M.MUSTER if k != "loeschen"]
+        self._raster_untermenue("Muster(N)", "muster", "Weitere Muster…", muster, QSize(30, 30), 8, self.muster_gewaehlt.emit)
         self.addAction("Bild(P)").triggered.connect(lambda: (self.close(), self.bild_gewaehlt.emit()))
+
+    def _raster_untermenue(self, text: str, art: str, weitere: str, kacheln: list, groesse: QSize, spalten: int, gewaehlt) -> RasterAuswahl:
+        """Ein Untermenü mit Kacheln (Graduell, Textur, Muster) und darunter „Weitere …“, das die Seitenleiste „Formatierung“ öffnet."""
+        r = RasterAuswahl(self, spalten=spalten, groesse=groesse)
+        for schl, name, bild in kacheln:
+            r.kachel(schl, name, bild)
+        r.gewaehlt.connect(lambda k: (self.close(), gewaehlt(k)))
+        r.fuss(weitere, lambda: (self.close(), self.weitere_fuellung.emit(art)))
+        self.addAction(text).setMenu(r)
+        return r
 
     def _untermenue(self, text: str, icon: str) -> QMenu:
         m = self.addMenu(text)
@@ -116,53 +128,49 @@ class KonturMenue(FarbPalette):
         pfeil = self.addMenu("Pfeilart"); pfeil.setEnabled(False)                # wie in der Vorlage: nur für Linien und Pfeile, nicht für Bilder
 
 
-# ---- Formstile ----------------------------------------------------------------------------------------------------------------
+# ---- Formstile (das eine Raster: editor/formen_stile.py, 6 Zeilen × 7 Spalten) -----------------------------------------------------------
 def formstil_werte(schluessel: str) -> dict:
-    """Füllung und Kontur des Stils ``z{Zeile}{Spalte}``: {"fuell": …, "rand": …} (leer = nicht ändern)."""
-    zeile, spalte = int(schluessel[1]), int(schluessel[2])
-    farbe = QColor(STIL_FARBEN[spalte])
-    hell = QColor(farbe.red() + (255 - farbe.red()) * 0.8, farbe.green() + (255 - farbe.green()) * 0.8, farbe.blue() + (255 - farbe.blue()) * 0.8)
-    if zeile == 0:                                         # weiß, Rand in der Farbe
-        return {"fuell": None, "rand": {"b": 2.0, "farbe": farbe.name(), "art": "einfach"}}
-    if zeile == 1:                                         # Fläche in der Farbe
-        return {"fuell": {"art": "farbe", "farbe": farbe.name()}, "rand": None}
-    if zeile == 2:                                         # Fläche und gleiche Kante, dicker
-        return {"fuell": {"art": "farbe", "farbe": farbe.name()}, "rand": {"b": 3.0, "farbe": farbe.darker(130).name(), "art": "einfach"}}
-    if zeile == 3:                                         # hell getönt
-        return {"fuell": {"art": "farbe", "farbe": hell.name()}, "rand": {"b": 1.0, "farbe": farbe.name(), "art": "einfach"}}
-    if zeile == 4:                                         # Verlauf
-        return {"fuell": {"art": "verlauf", "farbe": farbe.name()}, "rand": None}
-    return {"fuell": {"art": "farbe", "farbe": farbe.darker(160).name()}, "rand": {"b": 1.5, "farbe": farbe.name(), "art": "einfach"}}
+    """Füllung und Kontur des Stils ``z{Zeile}{Spalte}`` für Bilder und Textfelder: {"fuell": …, "rand": …} (``None`` = keine). Die Werte kommen aus
+    ``formen_stile.formstil`` (dasselbe Raster wie ``formStilRaster`` bei Formen); Effekte (3D) und Glanz gelten nur bei Formen."""
+    from lunivo_writer.editor import formen_stile as S
+    w = S.formstil(int(schluessel[1]), int(schluessel[2]))
+    fuell = None
+    if w["fuell"]:
+        fuell = {"art": "verlauf" if w["fuell_art"] in ("verlauf", "glanz") else "farbe", "farbe": w["fuell"]}
+    return {"fuell": fuell, "rand": {"b": w["strich"] * 96 / 72, "farbe": w["linie"], "art": "einfach"}}
 
 
 def formstil_zeichner(schluessel: str):
+    """Zeichnet die Kachel „Abc“ des Stils: Füllung (auch Verlauf), Rand und Schrift in passender Farbe."""
+    from lunivo_writer.editor import formen_stile as S
+
     def zeichne(p: QPainter, r: QRectF) -> None:
-        w = formstil_werte(schluessel)
+        w = S.formstil(int(schluessel[1]), int(schluessel[2]))
         kachel = r.adjusted(2, 2, -2, -2)
         p.save(); p.setRenderHint(QPainter.Antialiasing)
-        f = w["fuell"]
-        if f:
-            if f["art"] == "verlauf":
+        if w["fuell"]:
+            c = QColor(w["fuell"])
+            if w["fuell_art"]:
                 from PySide6.QtGui import QLinearGradient
-                g = QLinearGradient(kachel.topLeft(), kachel.bottomLeft()); g.setColorAt(0, QColor(f["farbe"]).lighter(150)); g.setColorAt(1, QColor(f["farbe"]))
+                g = QLinearGradient(kachel.topLeft(), kachel.bottomLeft()); g.setColorAt(0, c.lighter(135)); g.setColorAt(1, c.darker(115) if w["fuell_art"] != "abgestuft" else c)
                 p.setBrush(g)
             else:
-                p.setBrush(QColor(f["farbe"]))
+                p.setBrush(c)
         else:
             p.setBrush(QColor("white"))
-        p.setPen(QPen(QColor(w["rand"]["farbe"]), min(3.0, w["rand"]["b"])) if w["rand"] else Qt.NoPen)
-        p.drawRoundedRect(kachel, 4, 4)
-        light = f is None or (f["art"] == "farbe" and QColor(f["farbe"]).lightness() > 170)
-        p.setPen(QColor(Farbe.TINTE_DUNKEL) if light else QColor("white")); p.drawText(kachel, Qt.AlignCenter, "Abc")
+        p.setPen(QPen(QColor(w["linie"]), min(2.5, max(1.0, w["strich"] * 0.6))))
+        p.drawRoundedRect(kachel, 5, 5)
+        hell = not w["fuell"] or QColor(w["fuell"]).lightness() > 150
+        p.setPen(QColor(Farbe.TINTE_DUNKEL) if hell else QColor("white")); p.drawText(kachel, Qt.AlignCenter, "Abc")
         p.restore()
     return zeichne
 
 
 def formstile(parent=None) -> RasterAuswahl:
-    """Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}``."""
-    m = RasterAuswahl(parent, spalten=len(STIL_FARBEN), groesse=QSize(46, 32))
-    for z in range(len(STIL_ZEILEN)):
-        for s in range(len(STIL_FARBEN)):
-            k = f"z{z}{s}"
-            m.kachel(k, "Abc", formstil_zeichner(k))
-    return m                                               # darunter steht „Weitere Effekte(O)…“ (``m.fuss``), wie in der Vorlage
+    """Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“."""
+    from lunivo_writer.editor import formen_stile as S
+    m = RasterAuswahl(parent, spalten=len(S.SPALTEN), groesse=QSize(46, 32))
+    for z in range(len(S.ZEILEN)):
+        for s in range(len(S.SPALTEN)):
+            m.kachel(f"z{z}{s}", f"{S.ZEILEN[z]} – {S.SPALTEN[s][0]}", formstil_zeichner(f"z{z}{s}"))
+    return m

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QStyleFactory
+from lunivo_writer.ui.widgets import icons
 
 
 _FUSION = False
@@ -93,7 +94,7 @@ QSlider::handle:horizontal { background: %(karte)s; border: 2px solid %(akzent)s
 QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid %(grau)s; border-radius: 4px; background: %(karte)s; }
 QCheckBox::indicator:checked { background: %(akzent)s; border-color: %(akzent)s; }
 QRadioButton::indicator { width: 14px; height: 14px; border: 1px solid %(grau)s; border-radius: 8px; background: %(feld)s; }
-QRadioButton::indicator:checked { border: 4px solid %(akzent)s; background: white; }
+QRadioButton::indicator:checked { border: 1px solid %(akzent)s; background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 %(akzent)s, stop:0.5 %(akzent)s, stop:0.56 %(feld)s, stop:1 %(feld)s); }
 QRadioButton { spacing: 8px; padding: 3px 0; }
 QGroupBox { border: 1px solid %(rand)s; border-radius: 8px; margin-top: 12px; padding-top: 8px; }
 QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; color: %(grau)s; }
@@ -125,33 +126,12 @@ SchreibhilfePanel, SchreibhilfePanel QScrollArea, SchreibhilfePanel QScrollArea 
 
 
 def _pfeile(farbe: str) -> tuple[str, str]:
-    """Kleine Pfeile als SVG-Dateien (QSS kann nur Dateien einbinden)."""
-    import os
-    import tempfile
-    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-theme")
-    os.makedirs(ordner, exist_ok=True)
-    pfade = []
-    for name, d in (("unten", "M2 4 L6 8 L10 4"), ("oben", "M2 8 L6 4 L10 8")):
-        p = os.path.join(ordner, f"pfeil_{name}_{farbe.lstrip('#')}.svg")
-        if not os.path.exists(p):
-            with open(p, "w", encoding="utf-8") as fh:
-                fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="{d}" fill="none" '
-                         f'stroke="{farbe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-        pfade.append(p.replace("\\", "/"))
-    return pfade[0], pfade[1]
+    """Dropdown-Pfeile aus dem zentralen Lucide-Katalog für Qt-Stylesheets."""
+    return icons.svg_datei("chevron-down", farbe), icons.svg_datei("chevron-up", farbe)
 
 
 def _kreuz(farbe: str) -> str:
-    import os
-    import tempfile
-    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-theme")
-    os.makedirs(ordner, exist_ok=True)
-    p = os.path.join(ordner, f"kreuz_{farbe.lstrip('#')}.svg")
-    if not os.path.exists(p):
-        with open(p, "w", encoding="utf-8") as fh:
-            fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M3 3 L9 9 M9 3 L3 9" fill="none" '
-                     f'stroke="{farbe}" stroke-width="1.6" stroke-linecap="round"/></svg>')
-    return p.replace("\\", "/")
+    return icons.svg_datei("x", farbe)
 
 
 def _stil(app: QApplication) -> None:

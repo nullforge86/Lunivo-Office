@@ -141,18 +141,9 @@ def fussleiste(dialog: QDialog, layout, *links: QPushButton, bei_ok: Callable | 
 
 
 def _symbol(art: str):
-    """Das Symbol auf „Abbrechen“ (Kreuz) und „OK“ (Haken)."""
-    from PySide6.QtGui import QColor, QIcon, QPixmap
-    pm = QPixmap(16, 16); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    pal = QApplication.palette().color(QPalette.ButtonText)
-    p.setPen(QPen(pal, 2.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    if art == "kreuz":
-        p.drawLine(3, 3, 13, 13); p.drawLine(13, 3, 3, 13)
-    else:
-        p.drawLine(2, 9, 6, 13); p.drawLine(6, 13, 14, 3)
-    p.end()
-    return QIcon(pm)
+    """Lucide-Symbol für Abbrechen oder Bestätigen."""
+    from lunivo_writer.ui.widgets import icons
+    return icons.icon("x" if art == "kreuz" else "check", 16)
 
 
 class VorschauFlaeche(QWidget):

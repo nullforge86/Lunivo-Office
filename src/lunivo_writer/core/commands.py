@@ -25,12 +25,17 @@ from lunivo_writer.core.befehle.pruefen import PruefenBefehle
 from lunivo_writer.core.befehle.seite import SeiteBefehle
 from lunivo_writer.core.befehle.serien import SerienBefehle
 from lunivo_writer.core.befehle.text import TextBefehle
+from lunivo_writer.core.befehle.bildtools import BildToolsBefehle
+from lunivo_writer.core.befehle.diagrammtools import DiagrammToolsBefehle
+from lunivo_writer.core.befehle.formtools import FormToolsBefehle
+from lunivo_writer.core.befehle.smartarttools import SmartArtToolsBefehle
+from lunivo_writer.core.befehle.texttools import TextToolsBefehle
 from lunivo_writer.core.befehle.ueberpruefen import UeberpruefenBefehle
 from lunivo_writer.core.befehle.verweise import VerweiseBefehle
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 
-class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle, ExternBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, TextBefehle, UeberpruefenBefehle, VerweiseBefehle):
+class Befehle(AnsichtBefehle, BearbeitenBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, ExternBefehle, FormToolsBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, UeberpruefenBefehle, VerweiseBefehle):
     """Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``."""
 
     def __init__(self, win):

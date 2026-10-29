@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSpinBox, QStyle, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.widgets import icons
 ANSICHTEN = [("Eine Seite", 1), ("Zwei Seiten", 2), ("Alle Seiten", 0)]
 
 
@@ -26,17 +27,15 @@ class DruckVorschau(QDialog):
         druck = QPushButton("Drucken…"); druck.setObjectName("optFertig"); druck.setMinimumHeight(32)
         druck.clicked.connect(lambda: (self.accept(), self.drucken.emit()))
         leiste.addWidget(druck); leiste.addSpacing(12)
-        st = self.style()
-
-        def knopf(sp, tip, f):
-            k = QPushButton(); k.setIcon(st.standardIcon(sp)); k.setToolTip(tip); k.setFlat(True); k.setFixedWidth(32); k.clicked.connect(f)
+        def knopf(sym, tip, f):
+            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.setFlat(True); k.setFixedWidth(32); k.clicked.connect(f)
             leiste.addWidget(k); return k
-        knopf(QStyle.SP_MediaSkipBackward, "Erste Seite", lambda: self._gehe(1))
-        knopf(QStyle.SP_MediaSeekBackward, "Vorige Seite", lambda: self._gehe(self._n - self._schritt()))
+        knopf("chevron-first", "Erste Seite", lambda: self._gehe(1))
+        knopf("chevron-left", "Vorige Seite", lambda: self._gehe(self._n - self._schritt()))
         self.nr = QSpinBox(); self.nr.setRange(1, self._gesamt); self.nr.valueChanged.connect(self._gehe)
         leiste.addWidget(self.nr); leiste.addWidget(QLabel(f"/ {self._gesamt}"))
-        knopf(QStyle.SP_MediaSeekForward, "Nächste Seite", lambda: self._gehe(self._n + self._schritt()))
-        knopf(QStyle.SP_MediaSkipForward, "Letzte Seite", lambda: self._gehe(self._gesamt))
+        knopf("chevron-right", "Nächste Seite", lambda: self._gehe(self._n + self._schritt()))
+        knopf("chevron-last", "Letzte Seite", lambda: self._gehe(self._gesamt))
         leiste.addSpacing(12)
         self.ansicht = QComboBox()
         for t, w in ANSICHTEN:

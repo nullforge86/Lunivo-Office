@@ -37,22 +37,13 @@ def test_klappmenues_wie_vorlage(fenster):
     assert b.hat("textflussumbruch")                        # auch im Seitenlayout-Menü nicht mehr grau
 
 
-def test_textfeld_vertikal_ist_form_mit_text(fenster):
-    from lunivo_writer.editor import formen as F
+def test_textfeld_vertikal_ist_freies_textfeld(fenster):
+    from lunivo_writer.editor import frei_objekt as FO
     ed = fenster.current_editor()
     fenster.befehle.textfeldVertikal()
-    b = ed.document().firstBlock()
-    it = b.begin()
-    f = None
-    while not it.atEnd():
-        cf = it.fragment().charFormat()
-        if cf.isImageFormat():
-            f = cf.toImageFormat()
-        it += 1
-    o = F.objekt(f)
-    assert o["art"] == "form" and o["daten"]["form"] == "Textfeld vertikal" and o["daten"]["text"] == "Text hier eingeben"
-    assert f.height() > f.width()                                          # hochkant wie in der Vorlage
-
+    z = FO.ziel(ed)
+    assert z[0] == "textfeld" and z[1]["richtung"] == "senkrecht_rl"                 # Form mit Text, senkrecht gesetzt
+    assert z[3]["h"] > z[3]["b"]
 
 def test_band_einfuegen_reihenfolge(fenster):
     from lunivo_writer.ui.ribbon.plan import plan
@@ -566,11 +557,11 @@ def test_wordart_galerie_fuegt_sofort_ein(fenster):
     assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
     assert m._spalten == 9                                                 # wie in WPS: neun Stile oben, sechs darunter
     m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
-    f = e.bild_format()
-    o = formen.objekt(f)
-    assert o["art"] == "wordart" and o["daten"] == {"text": "Hier Text einfügen", "vorlage": 3, "pt": 36}
+    d = formen.wordart_daten(e)                                            # freies Objekt, ausgewählt (siehe test_frei_objekt.py)
+    assert d["text"] == "Hier Text einfügen" and d["vorlage"] == 3 and d["pt"] == 36 and e.bild_format() is None
     band = fenster.band
-    assert band.reiter.isTabVisible(band.kontext_index["form"]) and not band.reiter.isTabVisible(band.kontext_index["bild"])
+    assert band.reiter.isTabVisible(band.kontext_index["zeichen"]) and band.reiter.isTabVisible(band.kontext_index["text"])   # Zeichentools + Texttools
+    assert not band.reiter.isTabVisible(band.kontext_index["bild"])
 
 
 def test_diagramm_alle_arten_und_fenster(app):

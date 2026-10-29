@@ -290,6 +290,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
 
     def mouseDoubleClickEvent(self, e) -> None:
+        if self.__dict__.get("_fp_key") is not None and self._frei_maus(e, "doppel"):          # Doppelklick auf eine Kante: Punkt einfügen
+            return
         zone = self._kopffuss_zone(e.position().y())
         kf = getattr(self, "_kopffuss", None)
         if kf is not None and kf.aktiv and not zone:                   # Doppelklick in den Text beendet das Bearbeiten der Kopfzeile
@@ -299,6 +301,15 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if zone and hasattr(fenster, "edit_header_footer"):
             fenster.edit_header_footer(zone == "kopf")
             return
+        t = self._frei_bild_bei(e.position(), True) if hasattr(self, "_frei_treffer") else None
+        if t is not None and t[0] == getattr(self, "_frei_sel", None) and t[1].get("art") == "smartart":        # Doppelklick auf einen SmartArt-Knoten: im Knoten schreiben
+            from lunivo_writer.editor import smartart as SA
+            if SA.knoten_bei(self, e.position()) is not None and self.frei_knoten_edit_starten():
+                return
+        if t is not None and t[0] == getattr(self, "_frei_sel", None) and hasattr(fenster, "befehle"):        # Doppelklick auf WordArt/Textfeld: bearbeiten
+            from lunivo_writer.editor import frei_objekt as FO
+            if FO.bearbeiten_starten(self):                                   # direkt im Objekt schreiben
+                return
         super().mouseDoubleClickEvent(self._maus_abgebildet(e))
 
 
@@ -324,6 +335,9 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
 
     def contextMenuEvent(self, e) -> None:
+        if self.__dict__.get("_fp_key") is not None:                                           # Punkte bearbeiten: Rechtsklick löscht einen Punkt
+            e.accept()
+            return
         from lunivo_writer.ui.widgets.kontextmenue import menue_bauen
         fenster = self.window()
         m = menue_bauen(self, fenster) if hasattr(fenster, "befehle") else self.createStandardContextMenu()
@@ -333,6 +347,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         from lunivo_writer.editor import bildlayout as BL
         if BL.ziel(self) is not None and not self.isReadOnly():
             m.addSeparator()
+            if BL.ziel(self)[0] == "frei":
+                m.addAction("Formatieren …", self._frei_formatierung)         # dieselbe Seitenleiste „Formatierung“ wie das Zahnrad der Schnellleiste
             m.addAction("Layout …", self.bild_layout_dialog)
         if self._bild_cursor() is not None and not self.isReadOnly():
             from lunivo_writer.editor import umbruch as U
@@ -584,7 +600,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         b = getattr(self, "_paste_btn", None)
         if b is None:
             b = self._paste_btn = QToolButton(self.viewport())
-            b.setText("Einfügen ▾")
+            from lunivo_writer.ui.widgets import icons
+            b.setText("Einfügen"); b.setIcon(icons.icon("clipboard-paste", 14))
             b.setCursor(Qt.ArrowCursor)
             b.setPopupMode(QToolButton.InstantPopup)
             b.setStyleSheet("QToolButton { border: 1px solid palette(mid); border-radius: 4px; padding: 2px 6px; "

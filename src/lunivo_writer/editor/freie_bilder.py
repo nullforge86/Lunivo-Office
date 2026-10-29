@@ -11,7 +11,7 @@ Sie kommen an zwei Orten vor:
 Eine Angabe (alle Maße in Bildpunkten, 96 dpi):
 ``b``, ``h`` Größe · ``bh`` Bezug waagerecht (``seite`` | ``rand`` | ``spalte``), ``xh`` Versatz, ``ah`` Ausrichtung (``left`` | ``center`` ·
 ``right`` | ``inside`` | ``outside`` oder leer) · ``bv`` Bezug senkrecht (``seite`` | ``rand`` | ``absatz``), ``yv``, ``av`` (``top`` | ``center`` |
-``bottom``) · ``hinter`` hinter dem Text · ``ellipse`` Bild in einer Ellipse beschnitten.
+``bottom``) · ``hinter`` hinter dem Text · ``ellipse`` Bild in einer Ellipse beschnitten · ``zu`` Zuschnitt, ``maske`` Zuschneideform (``bildzuschnitt``).
 Gezeichnet wird in Blattkoordinaten (Ursprung links oben); der Editor, der Druck, das PDF und die Vorschau benutzen dieselben Funktionen.
 """
 from __future__ import annotations
@@ -239,6 +239,11 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
     ``dreh``: Grad um die Mitte; ``fuell``: Füllung hinter dem Bild (siehe ``fuell_pinsel``)."""
     if bild is None or bild.isNull() or r.width() <= 0 or r.height() <= 0:
         return
+    if dreh and ((fx or {}).get("drehung") or {}).get("text_gerade"):      # „Text nicht drehen“: Form und Füllung gedreht, der Text bleibt aufrecht
+        leer = QImage(1, 1, QImage.Format_ARGB32); leer.fill(0)
+        bild_zeichnen(p, leer, r, ellipse, rand, dreh, fuell, fuellbild, None)
+        bild_zeichnen(p, bild, r, ellipse, None, 0.0, None, None, {k: v for k, v in fx.items() if k not in ("drehung", "d3")} or None)
+        return
     if dreh:                                                       # um die Mitte gedreht
         p.save(); p.translate(r.center()); p.rotate(dreh); p.translate(-r.center())
         bild_zeichnen(p, bild, r, ellipse, rand, 0.0, fuell, fuellbild, fx)
@@ -249,6 +254,8 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
         E.unter_zeichnen(p, bild, r, ellipse, fx)
         if fx.get("weich"):
             bild = E.weiche_kanten(bild, r, ellipse, float(fx["weich"].get("radius", 6.0)))
+        if E.hat_nachbearbeitung(fx):                              # 3D-Format (oberer Abschluss) und 3D-Drehung am Bild selbst
+            bild = E.bild_nachbearbeiten(bild, r, ellipse, fx); ellipse = False
     p.save()
     p.setRenderHint(QPainter.SmoothPixmapTransform)
     p.setRenderHint(QPainter.Antialiasing)
@@ -313,6 +320,12 @@ def objekte_der_seite(page, d: QTextDocument, n: int, index: dict) -> list[tuple
     for a, y, spalte in index.get(n, []):
         bild = bild_im_dokument(d, a.get("n", ""))
         if bild is not None:
+            if a.get("zu") or a.get("maske"):                                                          # nicht zerstörend zugeschnitten (editor/bildzuschnitt.py)
+                from lunivo_writer.editor import bildzuschnitt as BZ
+                bild = BZ.anzeige(bild, a)
+            if a.get("hell") or a.get("kontrast"):                                                     # Helligkeit/Kontrast: nicht zerstörend (editor/bildwerkzeuge.py)
+                from lunivo_writer.editor import bildwerkzeuge as BW
+                bild = BW.korrigiert(bild, *BW.werte(a))
             x = ml + spalte * (cb + luecke)
             a = dict(a, _ay=mt + y, _sx=x)
             if (a.get("fuell") or {}).get("art") == "bild":

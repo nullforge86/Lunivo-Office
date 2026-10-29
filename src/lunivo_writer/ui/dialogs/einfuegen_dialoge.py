@@ -102,7 +102,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
 class _LayoutGalerie(QWidget):
     """Galerie der SmartArt-Layouts: Bildchen (selbst gezeichnet) in einem KachelFeld, die Spaltenzahl folgt der Breite."""
     gewaehlt = Signal(str)
-    KACHEL = 52
+    KACHEL = 64
 
     def __init__(self, namen, zeichner, aktuell):
         super().__init__()
@@ -120,6 +120,8 @@ class _LayoutGalerie(QWidget):
         for n in self._namen:
             self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
             self.feld.knoepfe[n].setAccessibleName(n)
+            self.feld.knoepfe[n].setFixedSize(self.KACHEL + 10, self.KACHEL * 3 // 4 + 10)
+            self.feld.knoepfe[n].setStyleSheet(f"QToolButton:checked {{ background: #dbe7f7; border: 1px solid {Farbe.AKZENT}; }}")      # die gewählte Kachel ist blau hinterlegt
         self.feld.gewaehlt.connect(self._klick)
         self.feld.setze(self._aktuell)
         self._v.addWidget(self.feld)
@@ -146,16 +148,9 @@ _BILDCHEN: dict = {}
 
 
 def _layout_bildchen(p, r, name: str) -> None:
-    """Kleines Bild eines SmartArt-Layouts: die echte Zeichnung (``SA.zeichnen``) mit dem Mustertext, verkleinert."""
-    from PySide6.QtGui import QImage
-    from lunivo_writer.editor import smartart as SA
-    img = _BILDCHEN.get(name)
-    if img is None:
-        img = _BILDCHEN[name] = SA.zeichnen({"layout": name, "farben": "Blau", "text": SA.MUSTER.get(name, "")})
-    s = min((r.width() - 4) / img.width(), (r.height() - 4) / img.height())
-    w, h = img.width() * s, img.height() * s
-    p.setRenderHint(QPainter.SmoothPixmapTransform)
-    p.drawImage(QRectF(r.center().x() - w / 2, r.center().y() - h / 2, w, h), img)
+    """Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``ui/baukasten/smartart_menues.py``)."""
+    from lunivo_writer.ui.baukasten.smartart_menues import zeichne_miniatur
+    zeichne_miniatur(p, r.adjusted(3, 3, -3, -3), name, True)
 
 
 class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
@@ -185,9 +180,10 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = QVBoxLayout(self)
         bearbeiten = bool(daten)
+        self._bearbeiten = bearbeiten
         daten = daten or {}
-        start = daten.get("layout", "Prozess")
-        self.galerie = _LayoutGalerie(SA.LAYOUTS, _layout_bildchen, start)
+        start = daten.get("layout", SA.STANDARD_LAYOUT)
+        self.galerie = _LayoutGalerie([e["schluessel"] for e in SA.LAYOUT_KATALOG], _layout_bildchen, start)
         v.addWidget(abschnittstitel("Layout")); v.addWidget(self.galerie)
         self.name = QLabel(); self.name.setStyleSheet("font-weight: 600;")
         self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
@@ -225,8 +221,13 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def aktualisieren(self, *_):
         d = self.daten()
-        self.name.setText(d["layout"]); self.beschreibung.setText(self.BESCHREIBUNG.get(d["layout"], ""))
-        self._zeige(self.SA.zeichnen(d))
+        self.name.setText(self.SA.ANZEIGENAMEN.get(d["layout"], d["layout"]))
+        self.beschreibung.setText(self.SA.BESCHREIBUNGEN.get(d["layout"]) or self.BESCHREIBUNG.get(d["layout"], ""))
+        if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
+            self._zeige(self.SA.zeichnen(d))
+        else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
+            from lunivo_writer.ui.baukasten.smartart_menues import miniatur
+            self._zeige(miniatur(d["layout"], False, QSize(360, 240)).toImage())
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):

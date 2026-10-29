@@ -33,6 +33,7 @@ from PySide6.QtCore import QSettings, QStandardPaths, QTimer  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QTextCursor, QTextDocumentFragment  # noqa: E402
 
 from lunivo_writer.editor.textdaten import fragment_zu_daten  # noqa: E402
+from pruefhilfen import DialogWaechter, menue_eintraege  # noqa: E402  (gemeinsame Hilfen in werkzeug/)
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QMenu, QMessageBox, QStackedWidget, QTabBar,  # noqa: E402
                                QToolButton, QWidget)
 
@@ -50,11 +51,11 @@ class Pruefer:
         from lunivo_writer.services.settings_service import Settings
         from lunivo_writer.ui.main_window import MainWindow
         self.E, self.Befehle = E, Befehle
-        self.fenster_log: list[str] = []
+        self.waechter = DialogWaechter()
+        self.fenster_log: list[str] = self.waechter.fenster_log      # dieselbe Liste: der Wächter trägt dort ein
         self.menue_log: list[list[str]] = []
         self.befehle_log: list[str] = []
         self.fehler_log: list[str] = []
-        self.modus_ok = False                                   # Wächter: Dialoge mit OK (True) oder Abbrechen (False) schließen
 
         orig_tun = Befehle.tun
         pruefer = self
@@ -70,42 +71,19 @@ class Pruefer:
 
         self.w = MainWindow(Settings(QSettings(os.path.join(tmp, "s.ini"), QSettings.IniFormat)))
         self.w.new_document(); self.w.resize(1500, 900); self.w.show()
-        self.uhr = QTimer(); self.uhr.setInterval(30); self.uhr.timeout.connect(self._waechter); self.uhr.start()
+        self.uhr = QTimer(); self.uhr.setInterval(30); self.uhr.timeout.connect(self.waechter.takt); self.uhr.start()
         QApplication.instance().processEvents()
 
-    # ---- Wächter für Fenster, die auf Eingaben warten -----------------------------------------------------------------------
-    def _waechter(self):
-        # Dialoge, die nach OK noch offen sind (etwa weil sie eine Warnung zeigten), werden nach einigen Takten abgebrochen
-        for x in QApplication.topLevelWidgets():
-            if isinstance(x, QDialog) and x.isVisible() and x.property("geprueft"):
-                n = int(x.property("takte") or 0) + 1
-                x.setProperty("takte", n)
-                if n == 5:
-                    self.fenster_log.append(f"{type(x).__name__}: {x.windowTitle()} (blieb nach OK offen)")
-                    QTimer.singleShot(0, x.reject)
-        sichtbar = [x for x in QApplication.topLevelWidgets() if isinstance(x, QDialog) and x.isVisible() and not x.property("geprueft")]
-        fremd = [x for x in sichtbar if not type(x).__module__.startswith("lunivo_writer")]
-        for x in (fremd or sichtbar):                              # zuerst Meldungs- und Dateifenster, erst dann Lunivos eigene Dialoge
-            x.setProperty("geprueft", True)
-            self.fenster_log.append(f"{type(x).__name__}: {x.windowTitle()}" + (f" — {x.text()[:80]}" if isinstance(x, QMessageBox) else ""))
-            if self.modus_ok and x in sichtbar and x not in fremd:
-                QTimer.singleShot(0, x.accept)                     # nicht im Wächter selbst: eine Warnung dabei muss er schließen können
-            else:
-                QTimer.singleShot(0, x.reject)
-        for x in QApplication.topLevelWidgets():
-            if isinstance(x, QMenu) and x.isVisible() and x.parent() is None:
-                x.close()
+    # ---- Wächter für Fenster, die auf Eingaben warten (gemeinsamer Baustein: pruefhilfen.DialogWaechter) ------------------------------
+    @property
+    def modus_ok(self) -> bool:
+        return self.waechter.modus_ok
 
-    @staticmethod
-    def _eintraege(m: QMenu, tiefe: int = 0) -> list[str]:
-        out = []
-        for a in m.actions():
-            if a.isSeparator() or not a.text().strip():
-                continue
-            out.append(a.text().replace("&", "").split("\t")[0])
-            if a.menu() is not None and tiefe < 3:
-                out += ["  " + t for t in Pruefer._eintraege(a.menu(), tiefe + 1)]
-        return out
+    @modus_ok.setter
+    def modus_ok(self, wert: bool) -> None:
+        self.waechter.modus_ok = wert
+
+    _eintraege = staticmethod(menue_eintraege)
 
     # ---- Beispieldokument und Lagen --------------------------------------------------------------------------------------
     @property

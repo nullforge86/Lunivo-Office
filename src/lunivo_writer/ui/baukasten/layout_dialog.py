@@ -189,13 +189,15 @@ class LayoutDialog(PanelFaehig, QDialog):
         v.addWidget(s)
         o = QGroupBox("Originalgröße"); og = FormularGitter(o); og.setContentsMargins(0, 6, 0, 2)
         self._orig_b, self._orig_h = w["original"]
+        self._start_b, self._start_h = self.breite["mm"].value(), self.hoehe["mm"].value()      # Größe beim Öffnen: Bezug, wenn „Relativ zur Originalbildgröße“ aus ist
         self.orig_text = QLabel(); og.breit(self.orig_text)
         zur = QPushButton("Zurücksetzen"); zur.clicked.connect(self._zuruecksetzen); og.breit(zur)
         v.addWidget(o); v.addStretch(1)
         self.reiter.addTab(seite, "Größe")
         self._skal_nachziehen(); self._orig_anzeigen()
-        for e in (self.hoehe["mm"], self.breite["mm"]):
-            e.valueChanged.connect(lambda _=0: self._groesse_geaendert())
+        self.hoehe["mm"].valueChanged.connect(lambda _=0: self._groesse_geaendert(True))
+        self.breite["mm"].valueChanged.connect(lambda _=0: self._groesse_geaendert(False))
+        self.skal_original.toggled.connect(lambda _=False: self._skal_nachziehen())
         self.skal_h.valueChanged.connect(lambda _=0: self._skal_geaendert(True)); self.skal_b.valueChanged.connect(lambda _=0: self._skal_geaendert(False))
 
     def _orig_anzeigen(self) -> None:
@@ -205,16 +207,28 @@ class LayoutDialog(PanelFaehig, QDialog):
 
     def _skal_nachziehen(self) -> None:
         """Die Skalierung in Prozent aus der aktuellen Größe im Verhältnis zur Originalgröße."""
+        bb, bh = self._skal_bezug()
         self._block = True
-        self.skal_h.setValue(round(self.hoehe["mm"].value() / max(0.1, self._orig_h) * 100, 1))
-        self.skal_b.setValue(round(self.breite["mm"].value() / max(0.1, self._orig_b) * 100, 1))
+        self.skal_h.setValue(round(self.hoehe["mm"].value() / max(0.1, bh) * 100, 1))
+        self.skal_b.setValue(round(self.breite["mm"].value() / max(0.1, bb) * 100, 1))
         self._block = False
+
+    def _skal_bezug(self) -> tuple[float, float]:
+        """Wovon die Prozente gelten: die Originalgröße des Bildes — oder die Größe beim Öffnen, wenn „Relativ zur Originalbildgröße“ aus ist."""
+        return (self._orig_b, self._orig_h) if self.skal_original.isChecked() else (self._start_b, self._start_h)
 
     _block = False
 
-    def _groesse_geaendert(self) -> None:
-        if not self._block:
-            self._skal_nachziehen()
+    def _groesse_geaendert(self, hoehe: bool = True) -> None:
+        """Höhe oder Breite getippt: bei gesperrtem Seitenverhältnis zieht das andere Maß mit."""
+        if self._block:
+            return
+        if self.sperren.isChecked():
+            quelle, ziel = (self.hoehe["mm"], self.breite["mm"]) if hoehe else (self.breite["mm"], self.hoehe["mm"])
+            verh = (self._orig_b / max(0.1, self._orig_h)) if self.skal_original.isChecked() else (self._start_b / max(0.1, self._start_h))
+            ziel_mm = quelle.value() * (verh if hoehe else 1 / verh)
+            self._block = True; ziel.setValue(ziel_mm); self._block = False
+        self._skal_nachziehen()
 
     def _skal_geaendert(self, hoehe: bool) -> None:
         if self._block:
@@ -222,14 +236,15 @@ class LayoutDialog(PanelFaehig, QDialog):
         self._block = True
         if self.sperren.isChecked():
             (self.skal_b if hoehe else self.skal_h).setValue((self.skal_h if hoehe else self.skal_b).value())
-        self.hoehe["mm"].setValue(self._orig_h * self.skal_h.value() / 100); self.breite["mm"].setValue(self._orig_b * self.skal_b.value() / 100)
+        bb, bh = self._skal_bezug()
+        self.hoehe["mm"].setValue(bh * self.skal_h.value() / 100); self.breite["mm"].setValue(bb * self.skal_b.value() / 100)
         self._block = False
 
     def _zuruecksetzen(self) -> None:
         self._block = True
         self.hoehe["mm"].setValue(self._orig_h); self.breite["mm"].setValue(self._orig_b); self.drehung.setValue(0)
-        self.skal_h.setValue(100); self.skal_b.setValue(100)
         self._block = False
+        self._skal_nachziehen()
 
     def _pruefen(self) -> None:
         """Zeilenumbruch und Abstand zum Text gelten nur bei Quadrat, Passend und Transparent."""

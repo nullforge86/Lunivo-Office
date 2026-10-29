@@ -160,9 +160,11 @@ class SchreibhilfeBaustein:
                 self.change_indent(10); e.accept(); return
             if bf.leftMargin() > 0:
                 self.change_indent(-10); e.accept(); return
-        # Tippen ersetzt die Auswahl — ist das abgeschaltet, wird hinter die Auswahl geschrieben
+        # Tippen ersetzt die Auswahl nur, wenn die Option an ist (Standard: aus, Markieren löscht nichts) — sonst wird hinter die Auswahl
+        # geschrieben. Ausnahme: eine Lücke «…» wird immer ersetzt.
         if c0.hasSelection() and e.text() and e.text().isprintable() and not (e.modifiers() & (Qt.ControlModifier | Qt.AltModifier)) \
-                and not self.opt("bearbeiten/tippen_ersetzt", True):
+                and not self.opt("bearbeiten/tippen_ersetzt", False) \
+                and not (c0.selectedText().startswith("«") and c0.selectedText().endswith("»")):
             c0.setPosition(max(c0.anchor(), c0.position())); self.setTextCursor(c0)
         if k in (Qt.Key_Return, Qt.Key_Enter) and self.opt("schreibhilfe/akRechtsLeer", False) and not c0.hasSelection() \
                 and (c0.blockFormat().alignment() & Qt.AlignRight):

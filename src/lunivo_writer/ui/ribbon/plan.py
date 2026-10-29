@@ -6,10 +6,12 @@ Die Prüfungen der Schreibhilfe stehen zusätzlich in der rechten Seitenleiste.
 """
 from __future__ import annotations
 
+from lunivo_writer.ui.contextual.diagramm_tools import DIAGRAMMTOOLS
 from lunivo_writer.ui.contextual.header_footer_tools import KOPFFUSS
 from lunivo_writer.ui.contextual.serien_tools import SERIENDRUCK
 from lunivo_writer.ui.contextual.image_tools import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
+from lunivo_writer.ui.contextual.text_tools import TEXTTOOLS
 from lunivo_writer.ui.ribbon.tabs import (ai_tab, file_tab, home_tab, insert_tab, layout_tab, mailings_tab, references_tab,
                                           review_tab, section_tab, view_tab)
 
@@ -20,4 +22,4 @@ def plan(register: dict) -> list[dict]:
     reiter = [file_tab.bauen(register), start, insert_tab.bauen(register), layout_tab.bauen(register),
               references_tab.bauen(register), review_tab.bauen(register), ai_tab.bauen(register), view_tab.bauen(register),
               section_tab.bauen(register), mailings_tab.bauen(register)]
-    return reiter + [TABELLENTOOLS, BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS, KOPFFUSS, SERIENDRUCK]
+    return reiter + [TABELLENTOOLS, BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, DIAGRAMMTOOLS, ZEICHENTOOLS, TEXTTOOLS, KOPFFUSS, SERIENDRUCK]

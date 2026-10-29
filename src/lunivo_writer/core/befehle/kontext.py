@@ -15,30 +15,60 @@ class KontextBefehle:
 
 
     # ---- Bild, Tabelle, Schrift, Seite: der Rest der Werkzeug-Reiter ----------------------------------------------
+    def _bild_frei(self):
+        """(Editor, Ziel) des gewählten frei positionierten Bildes (Datei, Bildschirmfoto, Piktogramm …) oder (Editor, None)."""
+        from lunivo_writer.editor import bildlayout as BL
+        e = self.ed
+        z = BL.ziel(e) if e else None
+        return e, (z if z is not None and z[0] == "frei" else None)
+
+
     def bildFarbe(self, k=None):
-        e, f = self._bild()
-        if f is None:
-            return
+        e, z = self._bild_frei()
+        if z is None:
+            e, f = self._bild()
+            if f is None:
+                return
+        from lunivo_writer.editor import bildlayout as BL
         from lunivo_writer.editor import einfuegen as E
         modi = ["Original", "Graustufen", "Schwarzweiß", "Sepia", "Heller", "Dunkler"]
         n, ok = EingabeFenster.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
         if ok:
             if n == "Original":
-                E.bild_original(e)
+                if z is not None:
+                    from lunivo_writer.editor import bildwerkzeuge as BW
+                    BW.korrektur_setzen(e, z, 0, 0)                               # Helligkeit/Kontrast zurück (nicht zerstörend)
+                    z = BL.ziel(e)
+                    BL.frei_original(e, z)
+                else:
+                    E.bild_original(e)
+            elif z is not None and n in ("Heller", "Dunkler"):                    # derselbe Weg wie die Knöpfe „Heller/Dunkler“ der Bildtools
+                self.bildHelligkeit(None, 10 if n == "Heller" else -10)
+            elif z is not None:
+                BL.frei_bild_ersetzen(e, z, lambda img, n=n: E.farbe_anwenden(img, n))
             else:
                 E.bild_ersetzen(e, lambda img, n=n: E.farbe_anwenden(img, n))
 
 
     def bildZuschneiden(self, k=None):
-        e, f = self._bild()
-        if f is None:
-            return
+        e, z = self._bild_frei()
+        if z is None:
+            e, f = self._bild()
+            if f is None:
+                return
+        from lunivo_writer.editor import bildlayout as BL
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.ui.dialogs.dokument_dialoge import BildZuschneidenDialog
         d = BildZuschneidenDialog(self.w)
         if d.exec():
             l, o, r, u = d.werte()
-            E.bild_ersetzen(e, lambda img: E.zuschneiden(img, l, o, r, u))
+            if z is not None:                                            # freies Bild: nicht zerstörend als Anteil (editor/bildzuschnitt.py)
+                from lunivo_writer.editor import bildzuschnitt as BZ
+                q = BZ._quelle(e, z[2])
+                if q is not None:
+                    BZ.setzen(e, z, (l / q.width(), o / q.height(), r / q.width(), u / q.height()))
+            else:
+                E.bild_ersetzen(e, lambda img: E.zuschneiden(img, l, o, r, u))
 
 
     def objektDrehen(self, k=None):
@@ -265,12 +295,16 @@ class KontextBefehle:
 
 
     def formText(self, k=None):
-        e, f = self._bild()
-        if f is None:
-            return
         from lunivo_writer.editor import formen
-        o = formen.objekt(f) or {}
-        akt = o.get("daten", {}).get("text", "")
+        frei = formen.frei_daten(self.ed) if self.ed else None            # als freies Objekt gewählte Form
+        if frei is not None:
+            akt = frei.get("text", "")
+        else:
+            e, f = self._bild()
+            if f is None:
+                return
+            o = formen.objekt(f) or {}
+            akt = o.get("daten", {}).get("text", "")
         t, ok = EingabeFenster.getText(self.w, "Text in der Form", "Text:", text=akt)
         if ok:
             self._form_aendern(text=t)
@@ -427,6 +461,14 @@ class KontextBefehle:
 
 
     def bildGroesse(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor import bildlayout as BL
+            from lunivo_writer.ui.dialogs.dokument_dialoge import BildGroesseDialog
+            d = BildGroesseDialog(z[2]["b"], z[2]["h"], self.w)
+            if d.exec():
+                BL.frei_aendern(e, z, b=float(d.breite_px()), h=float(d.hoehe_px()))
+            return
         e, f = self._bild()
         if f is None:
             return
@@ -437,6 +479,12 @@ class KontextBefehle:
 
 
     def bildBreite(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:                                                # auf Inhaltsbreite, Seitenverhältnis bleibt
+            from lunivo_writer.editor import bildlayout as BL
+            b = e.page.content_width_px
+            BL.frei_aendern(e, z, b=b, h=b * z[2]["h"] / max(1.0, z[2]["b"]))
+            return
         e, f = self._bild()
         if f is not None and f.width():
             r = f.height() / f.width()
@@ -462,6 +510,11 @@ class KontextBefehle:
 
 
     def bildOriginal(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor import bildlayout as BL
+            BL.frei_original_groesse(e, z)
+            return
         e, f = self._bild()
         if f is not None:
             img = e.document().resource(2, QUrl(f.name()))
@@ -470,6 +523,13 @@ class KontextBefehle:
 
 
     def bildAltText(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor import bildlayout as BL
+            t, ok = EingabeFenster.getText(self.w, "Alternativtext", "Beschreibung des Bildes:", text=z[2].get("alt", ""))
+            if ok:
+                BL.frei_aendern(e, z, alt=t)
+            return
         e, f = self._bild()
         if f is None:
             return
@@ -480,6 +540,11 @@ class KontextBefehle:
 
 
     def bildEntfernen(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor import bildlayout as BL
+            BL.frei_entfernen(e)
+            return
         e, f = self._bild()
         if f is not None:
             e.textCursor().removeSelectedText()

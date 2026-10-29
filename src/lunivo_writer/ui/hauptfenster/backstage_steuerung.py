@@ -10,6 +10,7 @@ from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
 from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
 from lunivo_writer.ui.ribbon.menue_tafel import MenueTafel
+from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
@@ -34,7 +35,7 @@ class BackstageBaustein:
             k.clicked.disconnect()
         except (RuntimeError, TypeError):
             pass
-        k.setText("☰ Menü"); k.setCheckable(True); k.setToolTip("Menü: Neu, Öffnen, Speichern, Exportieren, Drucken, Optionen, Hilfe")
+        k.setText("Menü"); k.setIcon(icons.icon("menu", 16)); k.setIconSize(QSize(16, 16)); k.setCheckable(True); k.setToolTip("Menü: Neu, Öffnen, Speichern, Exportieren, Drucken, Optionen, Hilfe")
         k.setStyleSheet(('QToolButton { font-weight: 600; padding: 4px 12px; } QToolButton:checked { color: ' + Farbe.AKZENT_DUNKEL + '; }'))
         k.clicked.connect(self._menue_geklickt)
         r.currentChanged.connect(lambda i, kk=k: kk.setChecked(self._ist_datei(i)))
@@ -209,13 +210,18 @@ class BackstageBaustein:
             b.setChecked(an)
 
 
+    def _seitenleiste_oeffnen(self) -> None:
+        """Gemeinsam für alle Bereiche „Formatierung“: die Seitenleiste einblenden, falls sie zu ist."""
+        if self.sidebar.isHidden():
+            self.toggle_sidebar()
+
+
     def texteffekte_seitenleiste(self):
         """Den Bereich „Texteffekte formatieren“ in der Seitenleiste öffnen; Änderungen gelten sofort für die Markierung."""
         from lunivo_writer.editor import texteffekt
         if self.current_editor() is None:
             return
-        if self.sidebar.isHidden():
-            self.toggle_sidebar()
+        self._seitenleiste_oeffnen()
 
         def anwenden(w: dict):
             e = self.current_editor()
@@ -234,8 +240,7 @@ class BackstageBaustein:
         w = BL.format_lesen(e, z) if z is not None else None
         if w is None:
             return
-        if self.sidebar.isHidden():
-            self.toggle_sidebar()
+        self._seitenleiste_oeffnen()
 
         def anwenden(neu: dict):
             ed = self.current_editor()
@@ -248,41 +253,145 @@ class BackstageBaustein:
             if ed is not None and pfad:
                 BL.fuellbild_setzen(ed, BL.ziel(ed), QImage(pfad))
         self.sidebar.zeige_objektformat(w, anwenden, reiter, bild)
+        self._objekt_text_verbinden()
         if fuellung:
             self.sidebar.objekt_panel.fuellung_waehlen(fuellung)
 
 
+    def formatierung_seitenleiste(self, reiter: int = 0) -> None:
+        """Zahnrad der Schnellleiste und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt."""
+        from lunivo_writer.editor import frei_objekt as FO
+        art = FO.art_gewaehlt(self.current_editor()) if self.current_editor() is not None else None
+        if art == "diagramm":
+            self.diagrammformat_seitenleiste()
+        elif art == "smartart" and hasattr(self, "smartartformat_seitenleiste"):
+            self.smartartformat_seitenleiste()
+        else:
+            self.objektformat_seitenleiste(reiter)
+
+
+    def _diagramm_werte(self, e) -> dict | None:
+        """Die Werte für die Seitenleiste „Formatierung“ des gewählten Diagrammteils (None ohne markiertes Diagramm)."""
+        from lunivo_writer.editor import diagramm as D
+        from lunivo_writer.editor import diagramm_teile as T
+        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.models.page import px_to_mm
+        z = FO.ziel(e) if e is not None else None
+        d = FO.daten_lesen(e, "diagramm") if e is not None else None
+        if d is None or z is None:
+            return None
+        teil = T.teil_gewaehlt(e) or "diagrammbereich"
+        art = D._art(d)
+        reihe = teil.startswith("reihe_")
+        return {"teil": teil, "teile": self.befehle.diagrammTeile(), "name": T.teil_name(e) or "Diagrammbereich", "format": T.diagramm_teil_format_lesen(e, teil),
+                "linienreihe": reihe and art.startswith(("linie", "punkte_linien")), "saeulen": reihe and art.startswith(("saeule", "balken")),
+                "wertachse": (art.startswith("punkte") or (teil == "achse_horizontal") == art.startswith("balken")) if teil.startswith("achse_") else True,
+                "objekt": {"legende_pos": d.get("legende_pos", "unten"), "breite_mm": px_to_mm(float(z[3]["b"])), "hoehe_mm": px_to_mm(float(z[3]["h"])),
+                           "dreh": float(z[3].get("dreh", 0.0) or 0.0)},
+                "alt_titel": d.get("alt_titel") or "", "alt_beschreibung": d.get("alt_beschreibung") or ""}
+
+
+    def diagrammformat_seitenleiste(self) -> None:
+        """„Formatieren“ in den Diagrammtools: die Seitenleiste „Formatierung“ für den gewählten Diagrammteil öffnen; Änderungen gelten sofort."""
+        from PySide6.QtGui import QImage
+        from lunivo_writer.editor import diagramm_format as F
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+        w = self._diagramm_werte(self.current_editor())
+        if w is None:
+            self.statusBar().showMessage("Bitte zuerst ein Diagramm auswählen.", 4000)
+            return
+        self._seitenleiste_oeffnen()
+
+        def anwenden(angaben: dict):
+            from lunivo_writer.editor import bildlayout as BL
+            from lunivo_writer.editor import frei_objekt as FO
+            from lunivo_writer.models.page import mm_to_px
+            angaben = dict(angaben)
+            ed = self.current_editor()
+            obj, gr, dreh = angaben.pop("objekt", None), angaben.pop("groesse", None), angaben.pop("dreh", None)
+            if ed is not None and obj:
+                self.befehle._dg_set(**obj)
+            if ed is not None and gr:
+                FO.aendern(ed, "diagramm", breite=mm_to_px(gr["breite_mm"]), hoehe=mm_to_px(gr["hoehe_mm"]))
+            if ed is not None and dreh is not None:
+                BL.frei_aendern(ed, BL.ziel(ed), dreh=float(dreh) % 360.0)
+            if angaben:
+                self.befehle.diagrammTeilFormat(None, angaben)
+
+        def alt(titel: str, beschreibung: str):
+            self.befehle.diagrammAltText(None, titel, beschreibung)
+
+        def bild():
+            pfad, _ = Dateifenster.getOpenFileName(self, "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
+            b64 = F.bild_kodieren(QImage(pfad)) if pfad else ""
+            if b64:
+                self.befehle.diagrammTeilFormat(None, {"fuell": {"art": "bild", "bild_b64": b64}})
+                self.diagrammformat_folgen()
+        def teil(schluessel: str):
+            self.befehle.diagrammTeilWaehlen(None, schluessel)
+            self.diagrammformat_folgen()
+        self.sidebar.zeige_diagrammformat(w, anwenden, alt, bild, teil)
+
+
+    def _format_folgen(self, schluessel: str, lesen) -> None:
+        """Gemeinsam für alle Bereiche „Formatierung“: ist er offen, zeigt er die Werte des neu gewählten Objekts (``lesen(editor)`` -> Werte oder None)."""
+        e = self.current_editor()
+        if e is not None and self.sidebar.format_sichtbar(schluessel):
+            w = lesen(e)
+            if w is not None:
+                self.sidebar.aktualisiere_format(schluessel, w)
+
+    def diagrammformat_folgen(self) -> None:
+        """Wählt der Benutzer einen anderen Diagrammteil, zeigt der offene Bereich dessen Format."""
+        self._format_folgen("diagramm", self._diagramm_werte)
+
+
+    def _objekt_text_verbinden(self) -> None:
+        """Die Textoptionen der Seitenleiste wirken auf den Text im gewählten WordArt oder Textfeld (``editor/frei_objekt.py``)."""
+        from lunivo_writer.editor import frei_objekt as FO
+        panel = self.sidebar.objekt_panel
+        if panel is None:
+            return
+        if getattr(panel, "_objekt_text_verbunden", False):
+            panel.text_geaendert.disconnect()
+        panel._objekt_text_verbunden = True
+        panel.text_geaendert.connect(lambda w: FO.text_werte_anwenden(self.current_editor(), w) if self.current_editor() is not None else None)
+        e = self.current_editor()
+        w = FO.text_werte_lesen(e) if e is not None else None
+        if w is not None:
+            panel.setze_text(w)
+
+
     def _zeichen_masse(self, e) -> None:
-        """Höhe und Breite im Reiter Zeichentools mit dem markierten Bild abgleichen."""
+        """Höhe und Breite im Reiter Zeichentools (``bild_…``) und Bildtools (``bt_…``) mit dem markierten Bild abgleichen."""
         f = self.band.felder
-        if e is None or "bild_breite" not in f or getattr(e, "_frei_sel", None) is None:
+        if e is None or getattr(e, "_frei_sel", None) is None:
             return
         from lunivo_writer.editor import bildlayout as BL
-        m = BL.masse_lesen(e, BL.ziel(e))
-        if m is None:
-            return
-        for schl, wert in (("bild_breite", m[0]), ("bild_hoehe", m[1])):
-            sp = f[schl]
-            if not sp.hasFocus() and abs(sp.value() - wert) > 0.05:
-                sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
-        f["bild_verhaeltnis"][0] = m[0] / max(0.1, m[1])
+        m = None
+        for vor in ("bild_", "bt_", "sa_"):
+            if vor + "breite" not in f:
+                continue
+            m = m or BL.masse_lesen(e, BL.ziel(e))
+            if m is None:
+                return
+            for schl, wert in ((vor + "breite", m[0]), (vor + "hoehe", m[1])):
+                sp = f[schl]
+                if not sp.hasFocus() and abs(sp.value() - wert) > 0.05:
+                    sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
+            f[vor + "verhaeltnis"][0] = m[0] / max(0.1, m[1])
 
 
     def objektformat_folgen(self) -> None:
         """Wählt der Benutzer ein anderes Bild, zeigt der offene Bereich dessen Werte."""
-        e = self.current_editor()
-        if self.sidebar.objektformat_sichtbar() and e is not None:
-            from lunivo_writer.editor import bildlayout as BL
-            w = BL.format_lesen(e, BL.ziel(e))
-            if w is not None:
-                self.sidebar.aktualisiere_objektformat(w)
+        from lunivo_writer.editor import bildlayout as BL
+        self._format_folgen("objekt", lambda e: BL.format_lesen(e, BL.ziel(e)))
 
 
     def _effekt_sync(self):
         """Folgt die Markierung einer anderen Formatierung, zeigt der offene Bereich „Texteffekte“ deren Werte."""
-        if self.sidebar.texteffekte_sichtbar() and self.current_editor() is not None:
-            from lunivo_writer.editor import texteffekt
-            self.sidebar.aktualisiere_texteffekte(texteffekt.aus_format(self.befehle._fmt()))
+        from lunivo_writer.editor import texteffekt
+        self._format_folgen("texteffekte", lambda e: texteffekt.aus_format(self.befehle._fmt()))
 
 
     def toggle_sidebar(self):

@@ -1,8 +1,8 @@
 """Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
 
-Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Öffnen, Speichern, PDF, Bild, Beenden)
-führen sofort aus und schließen die Ansicht; Seiten gibt es für Neu (Vorlagen), Speichern unter (alle Ausgabeformate, Info, Öffnen mit …),
-Drucken, Dokumentverschlüsselung, Hilfe und Optionen. Rechts steht zuerst die Liste zuletzt verwendeter Dateien.
+Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, Beenden)
+führen sofort aus und schließen die Ansicht; PDF- und Bildexport, Neu (Vorlagen), Öffnen (Zuletzt verwendet und Dateiauswahl),
+Speichern unter, Drucken, Dokumentverschlüsselung, Hilfe und Optionen zeigen ihre Seite rechts.
 """
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ import os
 
 from datetime import datetime
 
-from PySide6.QtCore import QPointF, QSize, Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QPolygonF, QShortcut
+from PySide6.QtCore import QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget, QStyle,
+    QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -26,11 +26,11 @@ from lunivo_writer.core.farben import Farbe
 # (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Seite bzw. Befehl)
 EINTRAEGE = [
     ("neu", "Neu", "neu", "seite", "vorlage"),
-    ("oeffnen", "Öffnen", "oeffnen", "tun", "oeffnen"),
+    ("oeffnen", "Öffnen", "oeffnen", "seite", "zuletzt"),
     ("speichern", "Speichern", "speichern", "tun", "speichern"),
     ("speichern_als", "Speichern unter", "speichern_unter", "seite", "speichern_als"),
-    ("pdf", "Als PDF exportieren", "pdf", "tun", "speichernPdf"),
-    ("bild", "Als Bild exportieren", "bild", "tun", "exportierenPng"),
+    ("pdf", "Als PDF exportieren", "pdf", "seite", "pdf"),
+    ("bild", "Als Bild exportieren", "bild", "seite", "bild"),
     ("drucken", "Drucken", "drucken", "seite", "drucken"),
     ("-1", "", "", "trenner", None),
     ("schuetzen", "Dokumentverschlüsselung", "schutz", "seite", "schuetzen"),
@@ -41,38 +41,17 @@ EINTRAEGE = [
 ]
 MIT_DOKUMENT = ("speichern", "speichern_als", "pdf", "bild", "drucken", "schuetzen")
 
-# Liniensymbole (24er-Raster; teils nach Lucide, ISC-Lizenz, siehe assets/icons/LIZENZ-LUCIDE.txt)
+# Symbolnamen aus dem zentralen Lucide-Katalog.
 SYMBOLE = {
-    "neu": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M9 15h6 M12 12v6",
-    "oeffnen": "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9"
-               "a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
-    "speichern": "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z "
-                 "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7 M7 3v4a1 1 0 0 0 1 1h7",
-    "speichern_unter": "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5 M14 2v4a2 2 0 0 0 2 2h4 "
-                       "M13.38 15.63a1 1 0 1 0-3-3l-5.01 5.01a2 2 0 0 0-.51.85l-.84 2.87a.5.5 0 0 0 .62.62l2.87-.84a2 2 0 0 0 .85-.51z",
-    "pdf": "M4 11V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1 M14 2v6h6 M2 15h9 M8 12l3 3-3 3",
-    "bild": "M10 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7 M21 15l-5-5L5 21 "
-            "M13.5 7.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0 M2 6h6 M5.5 3.5 8 6l-2.5 2.5",
-    "drucken": "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2 M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6 "
-               "M7 14h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z",
-    "schutz": "M4 9V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2h-5 M14 2v6h6 M3 15h8v6H3z M5 15v-2a2 2 0 0 1 4 0v2",
-    "hilfe": "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20 M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3 M12 17h.01",
-    "optionen": "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38"
-                "a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38"
-                "a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18"
-                "a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08"
-                "a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08"
-                "a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
-    "beenden": "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
-    "datei": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M8 13h8 M8 17h8",
-    "neu_laden": "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8 M21 3v5h-5",
-    "weg": "M18 6 6 18 M6 6l12 12",
+    "neu": "file-plus", "oeffnen": "folder-open", "speichern": "save",
+    "speichern_unter": "file-pen", "pdf": "file-text", "bild": "image", "drucken": "printer",
+    "schutz": "file-lock", "hilfe": "circle-question-mark", "optionen": "settings",
+    "beenden": "log-out", "datei": "file-text", "neu_laden": "refresh-cw", "weg": "x",
 }
 
 
 def symbol(name: str, px: int = 24):
-    return icons.icon_aus_pfad(SYMBOLE[name], px)
-
+    return icons.icon(SYMBOLE[name], px)
 
 class _Zeile(QStyledItemDelegate):
     """Zeichnet die Trennlinien quer über die Liste und den kleinen Pfeil rechts bei Einträgen mit eigener Seite."""
@@ -89,16 +68,13 @@ class _Zeile(QStyledItemDelegate):
         super().paint(p, opt, idx)
         if idx.data(PFEIL):
             p.save()
-            p.setRenderHint(QPainter.Antialiasing)
-            p.setPen(Qt.NoPen)
-            p.setBrush(opt.palette.color(QPalette.WindowText if opt.state & QStyle.State_Enabled else QPalette.Mid))
-            x, y = opt.rect.right() - 16, opt.rect.center().y()
-            p.drawPolygon(QPolygonF([QPointF(x, y - 4), QPointF(x + 4, y), QPointF(x, y + 4)]))
+            pm = icons.icon("chevron-right", 14).pixmap(14, 14)
+            p.drawPixmap(opt.rect.right() - 18, opt.rect.center().y() - 7, pm)
             p.restore()
 
 
 ART, PFEIL = Qt.UserRole + 1, Qt.UserRole + 2
-MIT_PFEIL = ("neu", "speichern_als", "drucken", "schuetzen", "hilfe")      # wie im Vorbild: Pfeil, wo eine Auswahl folgt
+MIT_PFEIL = ("neu", "oeffnen", "speichern_als", "pdf", "bild", "drucken", "schuetzen", "hilfe")
 
 EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "exportierenDocx"),
            ("OpenDocument-Text (.odt)", "exportierenOdt"),
@@ -177,8 +153,8 @@ class Backstage(QWidget):
         haben_dok = self.w.current_tab() is not None
         for schl in MIT_DOKUMENT:
             self.zeilen[schl].setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable if haben_dok else Qt.NoItemFlags)
-        bauer = {"zuletzt": self._zuletzt, "speichern_als": self._speichern_als, "drucken": self._drucken, "vorlage": self._vorlage,
-                 "hilfe": self._hilfe, "schuetzen": self._schuetzen, "info": self._info, "oeffnen_mit": self._oeffnen_mit, "optionen": self._optionen}
+        bauer = {"zuletzt": self._zuletzt, "speichern_als": self._speichern_als, "drucken": self._drucken, "vorlage": self._vorlage, "pdf": self._pdf,
+                 "bild": self._bild, "hilfe": self._hilfe, "schuetzen": self._schuetzen, "info": self._info, "oeffnen_mit": self._oeffnen_mit, "optionen": self._optionen}
         for schl, f in bauer.items():
             seite_w = f()
             self.seiten[schl] = seite_w
@@ -211,7 +187,7 @@ class Backstage(QWidget):
             kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(250)         # die linke Fläche beginnt schon in der Kopfzeile
             kopf_links.setAttribute(Qt.WA_StyledBackground, True)
             kl = QHBoxLayout(kopf_links); kl.setContentsMargins(14, 10, 14, 10)
-            zurueck = QPushButton("←   Optionen")
+            zurueck = QPushButton("Optionen"); zurueck.setIcon(icons.icon("arrow-left", 16))
             zurueck.setObjectName("optZurueck"); zurueck.setFlat(True); zurueck.setCursor(Qt.PointingHandCursor)
             zurueck.setToolTip("Optionen verlassen")
             zurueck.clicked.connect(self.schliessen)
@@ -238,6 +214,10 @@ class Backstage(QWidget):
             self._drucken_zeigen()
         elif schl == "vorlage":
             self._vorlage_zeigen()
+        elif schl == "pdf":
+            self._pdf_zeigen()
+        elif schl == "bild":
+            self._bild_zeigen()
         self.stapel.setCurrentWidget(self.seiten[schl])
         zeile = next((self.zeilen[e[0]] for e in EINTRAEGE if e[3] == "seite" and e[4] == schl), None)
         if zeile is None:
@@ -297,8 +277,8 @@ class Backstage(QWidget):
         k = QPushButton(text)
         k.setObjectName("bsKnopf")
         sym = datei_symbol(datei) if datei else None
-        if sym is not None and not sym.isNull():                       # Dateiformat: Symbol des Systems statt unseres
-            k.setIcon(sym); k.setIconSize(QSize(22, 22))
+        if sym is not None and not sym.isNull():                       # eigenes, vollständiges Dateiformatblatt
+            k.setIcon(sym); k.setIconSize(QSize(28, 28))
         elif icon and icons.hat(icon):
             icons.setze(k, icon, 18)
         k.setEnabled(self.w.befehle.hat(befehl))
@@ -315,11 +295,17 @@ class Backstage(QWidget):
         v.setContentsMargins(22, 14, 22, 14)
         v.setSpacing(2)
         kopf = QHBoxLayout()
-        t = QLabel("Liste zuletzt verwendeter Dateien"); t.setObjectName("bsZuletzt")
+        t = QLabel("Zuletzt verwendete Dokumente"); t.setObjectName("bsZuletzt")
+        oeffnen = QPushButton("Weitere Dokumente öffnen …")
+        oeffnen.setObjectName("bsKnopf")
+        oeffnen.setIcon(symbol("oeffnen", 18)); oeffnen.setIconSize(QSize(18, 18))
+        oeffnen.setCursor(Qt.PointingHandCursor)
+        oeffnen.setToolTip("Datei im Dateiauswahldialog suchen")
+        oeffnen.clicked.connect(lambda: (self.schliessen.emit(), self.w.open_dialog()))
         neu = QToolButton(); neu.setObjectName("bsKlein"); neu.setIcon(symbol("neu_laden", 16)); neu.setIconSize(QSize(16, 16))
         neu.setToolTip("Liste neu laden"); neu.setCursor(Qt.PointingHandCursor)
         neu.clicked.connect(lambda: self.oeffnen("zuletzt"))
-        kopf.addWidget(t); kopf.addWidget(neu); kopf.addStretch(1)
+        kopf.addWidget(t); kopf.addStretch(1); kopf.addWidget(oeffnen); kopf.addWidget(neu)
         v.addLayout(kopf)
         v.addSpacing(6)
         pfade = self.w.settings.recent()
@@ -337,7 +323,7 @@ class Backstage(QWidget):
             ordner = ("~" + ordner[len(heim):] if ordner.startswith(heim) else ordner) + "/"
             k.setAccessibleName(os.path.basename(p))               # sichtbar sind Name, Ordner und Datum als eigene Zeilen
             k.setToolTip(p)
-            sym = datei_symbol(p)                                    # Symbol des Dateiformats aus dem Icon-Theme des Systems
+            sym = datei_symbol(p)                                    # vollständiges, formatspezifisches Blatt
             k.setIcon(sym if not sym.isNull() else symbol("datei", 32))
             k.setIconSize(QSize(32, 32))
             k.setEnabled(os.path.exists(p))
@@ -412,6 +398,36 @@ class Backstage(QWidget):
         ph._ansicht = None
         return ph
 
+    def _pdf(self) -> QWidget:
+        """Platzhalter für den eingebetteten PDF-Export, frisch je Öffnen des Datei-Menüs."""
+        ph = QScrollArea()
+        ph.setObjectName("bsSeite")
+        ph.setWidgetResizable(True)
+        ph.setFrameShape(QFrame.NoFrame)
+        ph._ansicht = None
+        return ph
+
+    def _pdf_zeigen(self) -> None:
+        ph = self.seiten["pdf"]
+        if ph._ansicht is None:
+            ph._ansicht = self.w.pdf_export_widget()
+            ph.setWidget(ph._ansicht)
+
+    def _bild(self) -> QWidget:
+        """Platzhalter für den Bildexport in der rechten Menüspalte."""
+        ph = QScrollArea()
+        ph.setObjectName("bsSeite")
+        ph.setWidgetResizable(True)
+        ph.setFrameShape(QFrame.NoFrame)
+        ph._ansicht = None
+        return ph
+
+    def _bild_zeigen(self) -> None:
+        ph = self.seiten["bild"]
+        if ph._ansicht is None:
+            ph._ansicht = self.w.bild_export_widget()
+            ph.setWidget(ph._ansicht)
+
     def _drucken_zeigen(self) -> None:
         ph = self.seiten["drucken"]
         t = self.w.current_tab()
@@ -439,12 +455,72 @@ class Backstage(QWidget):
         return sa
 
     def _schuetzen(self):
-        sa, v = self._seite("Datei schützen")
-        self._gruppe(v, "Mit Kennwort", "Verschlüsseln Sie dieses Dokument mit einem Kennwort. Das Kennwort wird beim nächsten Speichern wirksam.")
-        self._knopf(v, "Kennwort hinzufügen / ändern …", "dokumentSchuetzen", "sperren")
+        sa, v = self._seite("Dokumentverschlüsselung")
+        t = self.w.current_tab()
+        self._gruppe(v, "Kennwortschutz", "Das Kennwort schützt das Öffnen der DOCX-Datei. Die Verschlüsselung wird beim nächsten Speichern angewendet.")
+        kennwort_form = QWidget(); kg = QGridLayout(kennwort_form); kg.setContentsMargins(0, 4, 0, 4); kg.setHorizontalSpacing(10); kg.setVerticalSpacing(8)
+        kennwort = QLineEdit(); kennwort.setEchoMode(QLineEdit.Password); kennwort.setPlaceholderText("Dokumentkennwort")
+        bestaetigung = QLineEdit(); bestaetigung.setEchoMode(QLineEdit.Password); bestaetigung.setPlaceholderText("Kennwort erneut eingeben")
+        kennwort.setAccessibleName("Dokumentkennwort"); bestaetigung.setAccessibleName("Bestätigung des Dokumentkennworts")
+        kennwort.setEnabled(t is not None); bestaetigung.setEnabled(t is not None)
+        kg.addWidget(QLabel("Dokumentkennwort:"), 0, 0); kg.addWidget(kennwort, 0, 1)
+        kg.addWidget(QLabel("Erneut eingeben:"), 1, 0); kg.addWidget(bestaetigung, 1, 1)
+        kg.setColumnStretch(1, 1); v.addWidget(kennwort_form)
+
+        hinweis = QLabel("Ein vergessenes Kennwort kann nicht wiederhergestellt werden. Bewahre es an einem sicheren Ort auf.")
+        hinweis.setWordWrap(True); hinweis.setObjectName("bsHinweis"); v.addWidget(hinweis)
+        status = QLabel(); status.setWordWrap(True); status.setObjectName("bsHinweis")
+        if t is None:
+            status.setText("Kein Dokument geöffnet.")
+        elif t.meta.get("kennwort"):
+            status.setText("Dieses Dokument wird beim nächsten Speichern mit einem Kennwort verschlüsselt.")
+        else:
+            status.setText("Dieses Dokument ist derzeit nicht kennwortgeschützt.")
+        v.addWidget(status)
+
+        aktionen = QHBoxLayout()
+        setzen = QPushButton("Kennwort setzen / ändern"); setzen.setObjectName("optFertig"); setzen.setEnabled(t is not None)
+        entfernen = QPushButton("Kennwort entfernen"); entfernen.setEnabled(bool(t and t.meta.get("kennwort")))
+        aktionen.addWidget(setzen); aktionen.addWidget(entfernen); aktionen.addStretch(1); v.addLayout(aktionen)
+
+        def setze_kennwort():
+            if not kennwort.text():
+                status.setText("Bitte gib ein Dokumentkennwort ein."); kennwort.setFocus(); return
+            if kennwort.text() != bestaetigung.text():
+                status.setText("Die beiden Kennworteingaben stimmen nicht überein."); bestaetigung.setFocus(); return
+            t.meta["kennwort"] = kennwort.text(); t.editor.document().setModified(True)
+            kennwort.clear(); bestaetigung.clear(); entfernen.setEnabled(True)
+            status.setText("Kennwort gesetzt. Die DOCX-Datei wird beim nächsten Speichern verschlüsselt.")
+
+        def entferne_kennwort():
+            t.meta.pop("kennwort", None); t.editor.document().setModified(True)
+            kennwort.clear(); bestaetigung.clear(); entfernen.setEnabled(False)
+            status.setText("Kennwort entfernt. Die Änderung gilt ab dem nächsten Speichern.")
+
+        setzen.clicked.connect(setze_kennwort); entfernen.clicked.connect(entferne_kennwort)
+
+        self._gruppe(v, "Datenschutzoptionen", "Diese Einstellungen gelten für das Öffnen und Speichern in Lunivo.")
+        for key, label, default in (
+            ("sicherheit/markup_oeffnen", "Ausgeblendete Markups beim Öffnen oder Speichern anzeigen", True),
+            ("sicherheit/personendaten_weg", "Beim Speichern persönliche Daten aus Dateieigenschaften entfernen", False),
+        ):
+            box = QCheckBox(label); box.setChecked(self.w.settings.get_bool(key, default))
+            box.toggled.connect(lambda an, k=key: self.w.settings.set(k, an))
+            v.addWidget(box)
+
+        self._gruppe(v, "Dokument", "Weitere Dokumentaktionen")
+        eigenschaften = QPushButton("Eigenschaften …")
+        eigenschaften.setObjectName("bsKnopf"); eigenschaften.setFixedWidth(BREITE)
+        eigenschaften.setCursor(Qt.PointingHandCursor); icons.setze(eigenschaften, "info", 18)
+        eigenschaften.setToolTip("Dokumentangaben wie Titel und Verfasser anzeigen und bearbeiten.")
+        eigenschaften.clicked.connect(lambda: self._zeigen("info"))
+        v.addWidget(eigenschaften)
         self._gruppe(v, "Bearbeitung", "Bearbeitung sperren oder freigeben — wirkt in diesem Fenster.")
-        self._knopf(v, "Bearbeitung sperren / freigeben", "dokumentSchuetzen", "sperren")
-        self._gruppe(v, "Mit Signatur", "Digitale Signaturen sind in dieser Fassung nicht enthalten.")
+        sperren = QCheckBox("Bearbeitung sperren")
+        sperren.setChecked(bool(t and getattr(t, "gesperrt", False))); sperren.setEnabled(t is not None)
+        sperren.toggled.connect(lambda an: t and an != bool(getattr(t, "gesperrt", False)) and self.w.toggle_sperre())
+        v.addWidget(sperren)
+        self._gruppe(v, "Mit Signatur", "Digitale Signaturen sind in dieser Fassung noch nicht verfügbar.")
         k = QPushButton("Digitale Signatur hinzufügen")
         k.setObjectName("bsKnopf")
         k.setEnabled(False)

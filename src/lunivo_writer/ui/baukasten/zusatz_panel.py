@@ -12,6 +12,7 @@ from typing import Callable
 
 from PySide6.QtCore import QEventLoop, Qt
 from PySide6.QtWidgets import QDialog, QFrame, QSizePolicy, QHBoxLayout, QLabel, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.widgets import icons
 
 
 class _Seite(QWidget):
@@ -57,6 +58,35 @@ class _Seite(QWidget):
             halter.deleteLater()
 
 
+FLACHE_REITER = (                                                             # flach: Reiter ohne Rahmen um die Seite, nur eine Linie unter dem gewählten Reiter (kein Rahmen im Rahmen)
+    "QTabWidget::pane { border: none; border-top: 1px solid palette(midlight); }"
+    "QTabBar::tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 5px 10px; margin-right: 2px; color: palette(text); }"
+    "QTabBar::tab:selected { font-weight: 600; border-bottom: 2px solid palette(highlight); }"
+    "QTabBar::tab:hover:!selected { border-bottom: 2px solid palette(midlight); }")
+
+
+def zusatz_knopf(symbol: str, tipp: str, aktion: Callable | None, name: str = "") -> QToolButton:
+    """Ein Knopf der Titelzeile (Zurück, Schließen, Anheften): flach, mit Symbol aus ``icons``."""
+    k = QToolButton(); k.setIcon(icons.icon(symbol, 16)); k.setToolTip(tipp); k.setAccessibleName(name or tipp)
+    k.setAutoRaise(True); k.setFixedSize(30, 30)
+    if aktion is not None:
+        k.clicked.connect(aktion)
+    return k
+
+
+def zusatz_kopf(*teile: QWidget) -> QWidget:
+    """Die Titelzeile der Seitenleistenfenster samt Linie darunter: ``teile`` von links nach rechts; das erste QLabel/der Titel nimmt den freien Platz.
+    Gemeinsam benutzt von ``ZusatzPanel`` und dem Bereich „Formatierung“ der Seitenleiste."""
+    ganz = QWidget(); gv = QVBoxLayout(ganz); gv.setContentsMargins(0, 0, 0, 0); gv.setSpacing(0)
+    kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(10, 8, 8, 8); h.setSpacing(4)
+    for t in teile:
+        h.addWidget(t, 1 if isinstance(t, QLabel) else 0)
+    gv.addWidget(kopf)
+    linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Plain); linie.setStyleSheet("color: palette(midlight);")
+    gv.addWidget(linie)
+    return ganz
+
+
 class ZusatzPanel(QWidget):
     """Die Seite in der Seitenleiste. Unterfenster (``zeige_unter``) legen sich als weitere Seite darüber, mit „← Zurück“."""
     ist_stapel = True
@@ -68,23 +98,13 @@ class ZusatzPanel(QWidget):
         self.verfuegbar = 360                                                          # Breite für den Inhalt in Pixeln (setzt die Seitenleiste)
         self.verfuegbar_hoehe = 520                                                    # Höhe für den Inhalt in Pixeln (setzt die Seitenleiste)
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(10, 8, 8, 8); h.setSpacing(4)
-        self.zurueck = QToolButton(); self.zurueck.setText("←"); self.zurueck.setToolTip("Zurück"); self.zurueck.setAccessibleName("Zurück")
-        self.zurueck.setAutoRaise(True); self.zurueck.setFixedSize(30, 30); self.zurueck.clicked.connect(self._zurueck)
+        self.zurueck = zusatz_knopf("arrow-left", "Zurück", self._zurueck)
         self.titel = QLabel(); self.titel.setWordWrap(True)
         f = self.titel.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 1); self.titel.setFont(f)
-        zu = QToolButton(); zu.setText("✕"); zu.setToolTip("Schließen (Esc)"); zu.setAccessibleName("Schließen"); zu.setAutoRaise(True)
-        zu.setFixedSize(30, 30); zu.clicked.connect(self._schliessen)
-        h.addWidget(self.zurueck); h.addWidget(self.titel, 1); h.addWidget(zu)
-        v.addWidget(kopf)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Plain); linie.setStyleSheet("color: palette(midlight);")
-        v.addWidget(linie)
+        zu = zusatz_knopf("x", "Schließen (Esc)", self._schliessen, "Schließen")
+        v.addWidget(zusatz_kopf(self.zurueck, self.titel, zu))
         self.stapel = QStackedWidget(); v.addWidget(self.stapel, 1)
-        self.setStyleSheet(                                                           # flach: Reiter ohne Rahmen um die Seite, nur eine Linie unter dem gewählten Reiter (kein Rahmen im Rahmen)
-            "QTabWidget::pane { border: none; border-top: 1px solid palette(midlight); }"
-            "QTabBar::tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 5px 10px; margin-right: 2px; color: palette(text); }"
-            "QTabBar::tab:selected { font-weight: 600; border-bottom: 2px solid palette(highlight); }"
-            "QTabBar::tab:hover:!selected { border-bottom: 2px solid palette(midlight); }")
+        self.setStyleSheet(FLACHE_REITER)
         self._seiten: list[tuple[QDialog, Callable | None]] = []
 
     # ---- Seiten

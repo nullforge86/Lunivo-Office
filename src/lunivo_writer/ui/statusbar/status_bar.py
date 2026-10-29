@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QSlider, QStatusBar, QToolButton
+from lunivo_writer.ui.widgets import icons
 
 
 class StatusBar(QStatusBar):
@@ -27,8 +28,8 @@ class StatusBar(QStatusBar):
         self.thema.setAccessibleName("Zwischen hell und dunkel wechseln")
         self.thema.clicked.connect(self.thema_wechseln)
         self.addPermanentWidget(self.thema)
-        self.zoom_minus = QToolButton(); self.zoom_minus.setText("−"); self.zoom_minus.setAutoRaise(True)
-        self.zoom_plus = QToolButton(); self.zoom_plus.setText("+"); self.zoom_plus.setAutoRaise(True)
+        self.zoom_minus = QToolButton(); self.zoom_minus.setIcon(icons.icon("minus", 14)); self.zoom_minus.setAutoRaise(True); self.zoom_minus.setToolTip("Verkleinern")
+        self.zoom_plus = QToolButton(); self.zoom_plus.setIcon(icons.icon("plus", 14)); self.zoom_plus.setAutoRaise(True); self.zoom_plus.setToolTip("Vergrößern")
         self.zoom_regler = QSlider(Qt.Horizontal); self.zoom_regler.setRange(10, 500); self.zoom_regler.setValue(100)
         self.zoom_regler.setFixedWidth(120)
         self.lbl_zoom = QToolButton(); self.lbl_zoom.setText("100 %"); self.lbl_zoom.setAutoRaise(True)

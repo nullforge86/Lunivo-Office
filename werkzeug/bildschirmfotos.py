@@ -158,7 +158,7 @@ def zusatzbilder(app):
     c = QTextCursor(ed.document()); c.setPosition(ed.document().toPlainText().index("\ufffc")); ed.setTextCursor(c)
     formen.vorlage(ed, "Orange")
     w._sync_format()
-    reiter(w, "Form- und WordArt-Tools")
+    reiter(w, "Zeichentools")
     warte(400)
     foto(w, "qt-formtools.png")
     schliessen(w)

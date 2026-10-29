@@ -5,13 +5,14 @@ from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (QCheckBox, QComboBox,
     QButtonGroup, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QScrollArea,
-    QStackedWidget, QToolButton, QMenu, QVBoxLayout, QWidget,
+    QStackedWidget, QToolButton, QMenu, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
 from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte, VorschlagKarte
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 WERK_REITER = (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: 4px 6px; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid ' + Farbe.AKZENT + '; }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid ' + Farbe.AKZENT + '; }'))
@@ -272,83 +273,106 @@ class SchreibhilfePanel(QWidget):
         m.setStyleSheet("color: palette(mid); padding: 8px;")
         self.liste.insertWidget(0, m)
 
-    # ---- Texteffekte formatieren (Eigenschaften-Bereich, nur sichtbar, solange der Benutzer ihn gerufen hat)
-    effekt_panel = None
+    # ---- Bereich „Formatierung“: ein Register für Texteffekte, Objekt (Bild, Form …) und Diagrammteil ---------------------------------
+    # schluessel -> (Modul, Panel-Klasse, Menütext, Signale des Panels). Ein neues Panel = ein Eintrag hier.
+    FORMATE = {
+        "texteffekte": ("texteffekt_dialog", "TexteffektPanel", "Texteffekte formatieren", ("geaendert",)),
+        "objekt": ("objektformat_panel", "ObjektFormatPanel", "Objekt formatieren", ("geaendert", "bild_gewuenscht")),
+        "diagramm": ("diagramm_format_panel", "DiagrammFormatPanel", "Diagramm formatieren", ("geaendert", "alt_geaendert", "bild_gewuenscht", "teil_gewaehlt")),
+    }
+
+    def _format_zustand(self) -> dict:
+        return self.__dict__.setdefault("_format_zustand_", {})
+
+    def format_panel(self, schluessel: str):
+        z = self._format_zustand().get(schluessel)
+        return z[0] if z else None
+
+    effekt_panel = property(lambda self: self.format_panel("texteffekte"))
+    objekt_panel = property(lambda self: self.format_panel("objekt"))
+    diagramm_panel = property(lambda self: self.format_panel("diagramm"))
 
     def _formatierung_host(self, panel_klasse, menue_text: str, werte: dict):
         """Der gemeinsame Rahmen der Bereiche „Formatierung“: Kopf mit „Formatierung ▾“, Anheften und Schließen, darunter das Panel."""
-        host = QWidget()
-        v = QVBoxLayout(host); v.setContentsMargins(12, 10, 12, 10); v.setSpacing(8)
-        kopf = QHBoxLayout(); kopf.setSpacing(4) # wie in der Vorlage: „Formatierung ▾“, rechts Anheften und Schließen
+        from lunivo_writer.ui.baukasten.zusatz_panel import FLACHE_REITER, zusatz_knopf, zusatz_kopf
+        host = QWidget(); host.setStyleSheet(FLACHE_REITER)        # dieselben flachen Reiter wie in den anderen Seitenleistenfenstern
+        v = QVBoxLayout(host); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
         titel = QToolButton(); titel.setText("Formatierung"); titel.setPopupMode(QToolButton.InstantPopup); titel.setAutoRaise(True)
         titel.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 1); titel.setFont(tf)       # Titel wie in der Titelzeile der anderen Seitenleistenfenster
         menue = QMenu(titel); menue.addAction(menue_text); titel.setMenu(menue)
-        kopf.addWidget(titel); kopf.addStretch(1)
-        anheften = QToolButton(); anheften.setText("⚲"); anheften.setCheckable(True); anheften.setAutoRaise(True)
-        anheften.setToolTip("Anheften: der Bereich folgt der Markierung und bleibt offen")
-        zu = QToolButton(); zu.setText("✕"); zu.setAutoRaise(True); zu.setToolTip("Schließen"); zu.clicked.connect(lambda: self.zeige_bereich(0))
-        kopf.addWidget(anheften); kopf.addWidget(zu)
-        v.addLayout(kopf)
-        panel = panel_klasse(host, werte)
-        v.addWidget(panel, 1)
+        anheften = zusatz_knopf("pin", "Anheften: der Bereich folgt der Markierung und bleibt offen", None, "Anheften"); anheften.setCheckable(True)
+        zu = zusatz_knopf("x", "Schließen", lambda: self.zeige_bereich(0))
+        stretch = QWidget(); stretch.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        v.addWidget(zusatz_kopf(titel, stretch, anheften, zu))
+        rumpf = QWidget(); rv = QVBoxLayout(rumpf); rv.setContentsMargins(12, 8, 12, 10); v.addWidget(rumpf, 1)
+        panel = panel_klasse(rumpf, werte)
+        rv.addWidget(panel, 1)
         return host, panel, anheften
 
-    def zeige_texteffekte(self, werte: dict, anwenden) -> None:
-        """„Texteffekte formatieren“ in der Seitenleiste zeigen. ``anwenden(werte)`` wird bei jeder Änderung gerufen — die Wirkung ist sofort sichtbar."""
-        from lunivo_writer.ui.baukasten.texteffekt_dialog import TexteffektPanel
-        if self.effekt_panel is None:
-            host, self.effekt_panel, self.effekt_anheften = self._formatierung_host(TexteffektPanel, "Texteffekte formatieren", werte)
-            self._effekt_seite = host
-            self._effekt_index = self.stapel.addWidget(host)
+    def zeige_format(self, schluessel: str, werte: dict, **verbindungen) -> None:
+        """Den Bereich „Formatierung“ für ``schluessel`` zeigen. ``verbindungen``: Signalname des Panels -> Empfänger (``None`` wird übergangen)."""
+        import importlib
+        modul, klasse, menue_text, signale = self.FORMATE[schluessel]
+        zustand = self._format_zustand()
+        if schluessel not in zustand:
+            panel_klasse = getattr(importlib.import_module(f"lunivo_writer.ui.baukasten.{modul}"), klasse)
+            host, panel, anheften = self._formatierung_host(panel_klasse, menue_text, werte)
+            zustand[schluessel] = (panel, anheften, self.stapel.addWidget(host))
         else:
-            try:
-                self.effekt_panel.geaendert.disconnect()
-            except (RuntimeError, TypeError):
-                pass
-            self.effekt_panel.setze({**werte})
-        self.effekt_panel.geaendert.connect(anwenden)
-        self.zeige_bereich(self._effekt_index)
-
-    # ---- Formatierung eines Bildes oder einer Form (Reiter „Füllung und Linie“, „Effekte“) ----------------------------------------------
-    objekt_panel = None
-
-    def zeige_objektformat(self, werte: dict, anwenden, reiter: int = 0, bild_wunsch=None) -> None:
-        """„Formatierung“ für das markierte Bild zeigen; ``reiter``: 0 = Füllung und Linie, 1 = Effekte. ``anwenden(werte)`` kommt bei jeder Änderung."""
-        from lunivo_writer.ui.baukasten.objektformat_panel import ObjektFormatPanel
-        if self.objekt_panel is None:
-            host, self.objekt_panel, self.objekt_anheften = self._formatierung_host(ObjektFormatPanel, "Objekt formatieren", werte)
-            self._objekt_index = self.stapel.addWidget(host)
-        else:
-            for sig in (self.objekt_panel.geaendert, self.objekt_panel.bild_gewuenscht):
+            panel = zustand[schluessel][0]
+            for name in signale:
                 try:
-                    sig.disconnect()
+                    getattr(panel, name).disconnect()
                 except (RuntimeError, TypeError):
                     pass
-            self.objekt_panel.setze({**werte})
-        self.objekt_panel.geaendert.connect(anwenden)
-        if bild_wunsch is not None:
-            self.objekt_panel.bild_gewuenscht.connect(bild_wunsch)
-        self.objekt_panel.reiter.setCurrentIndex(reiter)
-        self.zeige_bereich(self._objekt_index)
+            panel.setze({**werte})
+        for name, empfaenger in verbindungen.items():
+            if empfaenger is not None:
+                getattr(panel, name).connect(empfaenger)
+        self.zeige_bereich(zustand[schluessel][2])
 
-    def objektformat_sichtbar(self) -> bool:
-        return self.objekt_panel is not None and self.stapel.currentIndex() == self._objekt_index and not self.isHidden()
+    def format_sichtbar(self, schluessel: str) -> bool:
+        z = self._format_zustand().get(schluessel)
+        return z is not None and self.stapel.currentIndex() == z[2] and not self.isHidden()
 
-    def aktualisiere_objektformat(self, werte: dict) -> None:
-        from PySide6.QtWidgets import QApplication
-        f = QApplication.focusWidget()
-        if self.objekt_panel is not None and not (f is not None and self.objekt_panel.isAncestorOf(f)):
-            self.objekt_panel.setze(werte)
-
-    def texteffekte_sichtbar(self) -> bool:
-        return self.effekt_panel is not None and self.stapel.currentIndex() == self._effekt_index and not self.isHidden()
-
-    def aktualisiere_texteffekte(self, werte: dict) -> None:
+    def aktualisiere_format(self, schluessel: str, werte: dict) -> None:
         """Die Werte des Panels an die Markierung anpassen (wenn der Benutzer gerade nicht darin bedient)."""
         from PySide6.QtWidgets import QApplication
+        panel = self.format_panel(schluessel)
         f = QApplication.focusWidget()
-        if self.effekt_panel is not None and not (f is not None and self.effekt_panel.isAncestorOf(f)):
-            self.effekt_panel.setze(werte)
+        if panel is not None and not (f is not None and panel.isAncestorOf(f)):
+            panel.setze(werte)
+
+    # Die bisherigen Namen bleiben als dünne Aufrufer.
+    def zeige_texteffekte(self, werte: dict, anwenden) -> None:
+        self.zeige_format("texteffekte", werte, geaendert=anwenden)
+
+    def texteffekte_sichtbar(self) -> bool:
+        return self.format_sichtbar("texteffekte")
+
+    def aktualisiere_texteffekte(self, werte: dict) -> None:
+        self.aktualisiere_format("texteffekte", werte)
+
+    def zeige_objektformat(self, werte: dict, anwenden, reiter: int = 0, bild_wunsch=None) -> None:
+        """``reiter``: 0 = Füllung und Linie, 1 = Effekte."""
+        self.zeige_format("objekt", werte, geaendert=anwenden, bild_gewuenscht=bild_wunsch)
+        self.objekt_panel.reiter.setCurrentIndex(reiter)
+
+    def objektformat_sichtbar(self) -> bool:
+        return self.format_sichtbar("objekt")
+
+    def aktualisiere_objektformat(self, werte: dict) -> None:
+        self.aktualisiere_format("objekt", werte)
+
+    def zeige_diagrammformat(self, werte: dict, anwenden, alt_anwenden, bild_wunsch=None, teil_wunsch=None) -> None:
+        self.zeige_format("diagramm", werte, geaendert=anwenden, alt_geaendert=alt_anwenden, bild_gewuenscht=bild_wunsch, teil_gewaehlt=teil_wunsch)
+
+    def diagrammformat_sichtbar(self) -> bool:
+        return self.format_sichtbar("diagramm")
+
+    def aktualisiere_diagrammformat(self, werte: dict) -> None:
+        self.aktualisiere_format("diagramm", werte)
 
     def zusatz_ausfuehren(self, d) -> bool:
         """Ein Zusatzfenster als Seite hier in der Seitenleiste zeigen, solange man es bearbeitet (wie ``d.exec()``). Die Breite bleibt."""

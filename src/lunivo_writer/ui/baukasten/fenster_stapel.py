@@ -13,6 +13,7 @@ from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.widgets import icons
 
 
 class FensterStapel(QDialog):
@@ -24,7 +25,7 @@ class FensterStapel(QDialog):
         self.setWindowTitle(wurzel.windowTitle())
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
         self.kopf = QWidget(); kh = QHBoxLayout(self.kopf); kh.setContentsMargins(10, 6, 10, 6); kh.setSpacing(10)
-        self.zurueck = QToolButton(); self.zurueck.setText("←  Zurück"); self.zurueck.setAutoRaise(True)
+        self.zurueck = QToolButton(); self.zurueck.setText("Zurück"); self.zurueck.setIcon(icons.icon("arrow-left", 16)); self.zurueck.setAutoRaise(True)
         self.zurueck.clicked.connect(self._zurueck)
         self.pfad = QLabel(); self.pfad.setStyleSheet("color: palette(mid);")
         kh.addWidget(self.zurueck); kh.addWidget(self.pfad, 1)
@@ -77,7 +78,7 @@ class FensterStapel(QDialog):
 
     def _kopf_neu(self) -> None:
         self.zurueck.setVisible(len(self._seiten) > 1)
-        self.pfad.setText("  ›  ".join(s[0].windowTitle() for s in self._seiten) if len(self._seiten) > 1 else "")
+        self.pfad.setText("  /  ".join(s[0].windowTitle() for s in self._seiten) if len(self._seiten) > 1 else "")
         self.kopf.setVisible(len(self._seiten) > 1)
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 
 from PySide6.QtCore import QTimer, Signal
-from PySide6.QtGui import QAction, QActionGroup, QFont, QKeySequence, QPalette
+from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QWidget
 
 from lunivo_writer import __version__
@@ -25,6 +25,7 @@ from lunivo_writer.ui.hauptfenster.dateien import DateienBaustein
 from lunivo_writer.ui.hauptfenster.bearbeiten import BearbeitenBaustein
 from lunivo_writer.ui.hauptfenster.oberflaeche import OberflaecheBaustein
 from lunivo_writer.ui.hauptfenster.backstage_steuerung import BackstageBaustein
+from lunivo_writer.ui.widgets import icons
 MARGIN_PRESETS = {
     "Normal (2,5 cm)": (25, 25, 25, 25),
     "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),
@@ -131,8 +132,10 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
 
     # ==== Aktionen =======================================================
-    def _act(self, text, slot=None, shortcut=None, checkable=False, tip=None) -> QAction:
+    def _act(self, text, slot=None, shortcut=None, checkable=False, tip=None, symbol=None) -> QAction:
         a = QAction(text, self)
+        if symbol:
+            a.setIcon(icons.icon(symbol, 16))
         if shortcut:
             a.setShortcut(QKeySequence(shortcut))
         a.setCheckable(checkable)
@@ -164,8 +167,8 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         self.a_close = A("Schließen", lambda: self.close_tab(self.tabs.currentIndex()), "Ctrl+W")
         self.a_quit = A("Beenden", self.close, "Ctrl+Q")
 
-        self.a_undo = A("↶", lambda: self._ed(lambda e: e.undo()), "Ctrl+Z", tip="Rückgängig")
-        self.a_redo = A("↷", lambda: self._ed(lambda e: e.redo()), "Ctrl+Y", tip="Wiederholen")
+        self.a_undo = A("Rückgängig", lambda: self._ed(lambda e: e.undo()), "Ctrl+Z", tip="Rückgängig", symbol="undo")
+        self.a_redo = A("Wiederholen", lambda: self._ed(lambda e: e.redo()), "Ctrl+Y", tip="Wiederholen", symbol="redo")
         self.a_cut = A("Ausschneiden", lambda: self._ed(lambda e: e.cut()), "Ctrl+X")
         self.a_copy = A("Kopieren", lambda: self._ed(lambda e: e.copy()), "Ctrl+C")
         self.a_paste = A("Einfügen", lambda: self._ed(lambda e: e.paste()), "Ctrl+V")
@@ -176,31 +179,30 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         self.a_tabs = A("Tabstopps …", self.tabstopp_dialog)
         self.a_goto = A("Gehe zu …", self.befehle.geheZu, "Ctrl+G")
 
-        self.a_bold = A("F", self.befehle.fett, "Ctrl+B")
-        self.a_italic = A("K", self.befehle.kursiv, "Ctrl+I")
-        self.a_under = A("U", self.befehle.unter, "Ctrl+U")
-        self.a_strike = A("S̶", self.befehle.durch, None)
-        self.a_sup = A("x²", self.befehle.hoch, "Ctrl+Shift+=")
-        self.a_sub = A("x₂", self.befehle.tief, "Ctrl+=")
-        f = self.a_bold.font() if False else None
-        self.a_grow = A("A▲", lambda: self._ed(lambda e: e.grow_font(1)), "Ctrl+]", tip="Schrift vergrößern")
-        self.a_shrink = A("A▼", lambda: self._ed(lambda e: e.grow_font(-1)), "Ctrl+[", tip="Schrift verkleinern")
-        self.a_clear = A("Formatierung löschen", lambda: self._ed(lambda e: e.clear_formatting()))
-        self.a_color = A("A", self.choose_color, tip="Schriftfarbe")
-        self.a_highlight = A("Hervorheben", self.choose_highlight, tip="Texthervorhebungsfarbe")
-        self.a_bullets = A("• Liste", lambda: self._ed(lambda e: e.toggle_list("bullet")), tip="Aufzählung")
-        self.a_numbers = A("1. Liste", lambda: self._ed(lambda e: e.toggle_list("number")), tip="Nummerierung")
-        self.a_indent_less = A("⇤", lambda: self._ed(lambda e: e.change_indent(-10)), tip="Einzug verkleinern")
-        self.a_indent_more = A("⇥", lambda: self._ed(lambda e: e.change_indent(10)), tip="Einzug vergrößern")
+        self.a_bold = A("Fett", self.befehle.fett, "Ctrl+B", symbol="bold")
+        self.a_italic = A("Kursiv", self.befehle.kursiv, "Ctrl+I", symbol="italic")
+        self.a_under = A("Unterstrichen", self.befehle.unter, "Ctrl+U", symbol="underline")
+        self.a_strike = A("Durchgestrichen", self.befehle.durch, symbol="strikethrough")
+        self.a_sup = A("Hochgestellt", self.befehle.hoch, "Ctrl+Shift+=", symbol="superscript")
+        self.a_sub = A("Tiefgestellt", self.befehle.tief, "Ctrl+=", symbol="subscript")
+        self.a_grow = A("Schrift vergrößern", lambda: self._ed(lambda e: e.grow_font(1)), "Ctrl+]", tip="Schrift vergrößern", symbol="a-arrow-up")
+        self.a_shrink = A("Schrift verkleinern", lambda: self._ed(lambda e: e.grow_font(-1)), "Ctrl+[", tip="Schrift verkleinern", symbol="a-arrow-down")
+        self.a_clear = A("Formatierung löschen", lambda: self._ed(lambda e: e.clear_formatting()), symbol="remove-formatting")
+        self.a_color = A("Schriftfarbe", self.choose_color, tip="Schriftfarbe", symbol="paint-bucket")
+        self.a_highlight = A("Hervorheben", self.choose_highlight, tip="Texthervorhebungsfarbe", symbol="highlighter")
+        self.a_bullets = A("Aufzählung", lambda: self._ed(lambda e: e.toggle_list("bullet")), tip="Aufzählung", symbol="list")
+        self.a_numbers = A("Nummerierung", lambda: self._ed(lambda e: e.toggle_list("number")), tip="Nummerierung", symbol="list-ordered")
+        self.a_indent_less = A("Einzug verkleinern", lambda: self._ed(lambda e: e.change_indent(-10)), tip="Einzug verkleinern", symbol="list-indent-decrease")
+        self.a_indent_more = A("Einzug vergrößern", lambda: self._ed(lambda e: e.change_indent(10)), tip="Einzug vergrößern", symbol="list-indent-increase")
         self.align_group = QActionGroup(self)
-        self.a_left = A("⯇", self.befehle.links, "Ctrl+L")
-        self.a_center = A("☰", self.befehle.mitte, "Ctrl+E")
-        self.a_right = A("⯈", self.befehle.rechts, "Ctrl+R")
-        self.a_justify = A("≣", self.befehle.block, "Ctrl+J")
+        self.a_left = A("Linksbündig", self.befehle.links, "Ctrl+L", symbol="text-align-start")
+        self.a_center = A("Zentriert", self.befehle.mitte, "Ctrl+E", symbol="text-align-center")
+        self.a_right = A("Rechtsbündig", self.befehle.rechts, "Ctrl+R", symbol="text-align-end")
+        self.a_justify = A("Blocksatz", self.befehle.block, "Ctrl+J", symbol="text-align-justify")
         for a in (self.a_left, self.a_center, self.a_right, self.a_justify):
             self.align_group.addAction(a)
         self.a_para = A("Absatz …", self.paragraph_dialog)
-        self.a_marks = A("¶", self.toggle_marks, "Ctrl+Shift+8", True, "Formatierungszeichen ein-/ausblenden")
+        self.a_marks = A("Formatierungszeichen", self.toggle_marks, "Ctrl+Shift+8", True, "Formatierungszeichen ein-/ausblenden", symbol="pilcrow")
 
         self.a_pagebreak = A("Seitenumbruch", lambda: self._ed(lambda e: e.insert_page_break()), "Ctrl+Return")
         self.a_table = A("Tabelle …", self.insert_table)
@@ -306,7 +308,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
 
     def _tab_title(self, tab: DocumentTab) -> str:
-        return ("● " if tab.is_modified() else "") + tab.title
+        return tab.title
 
 
     def _update_tab_titles(self):
@@ -314,6 +316,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
             w = self.tabs.widget(i)
             if isinstance(w, DocumentTab):
                 self.tabs.setTabText(i, self._tab_title(w))
+                self.tabs.setTabIcon(i, icons.icon("circle", 10) if w.is_modified() else QIcon())
                 self.tabs.setTabToolTip(i, w.path or "Noch nicht gespeichert")
         self._update_window_title()
 
@@ -396,10 +399,24 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         bf = e.bild_format() if e else None
         from lunivo_writer.editor import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None
-        self.band.kontext("bild", bf is not None and art not in ("form", "gruppe", "smartart", "wordart"))
-        self.band.kontext("form", art in ("form", "gruppe", "wordart"))
+        from lunivo_writer.editor import frei_objekt as FO
+        frei_art = FO.art_gewaehlt(e) if e else None                  # WordArt, Textfeld, Form, Diagramm oder SmartArt als freies Objekt gewählt
+        text_art = frei_art if frei_art in FO.TEXT_ARTEN else None
+        if frei_art:
+            art, bf = frei_art, True
+        frei_bild = bool(e) and getattr(e, "_frei_sel", None) is not None and frei_art in (None, "piktogramm")   # Bild, Bildschirmfoto, Piktogramm
+        self.band.kontext("bild", frei_bild or (bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld", "diagramm", "piktogramm")))
+        self.band.kontext("form", art in ("form", "gruppe"))
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
+        self.band.kontext("text", text_art is not None)             # Texttools: nur WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
+        self.band.kontext("diagramm", frei_art == "diagramm")       # Diagrammtools (der Reiter selbst kommt aus der Reiter-Definition)
+        frei_wahl = frei_art or ("bild" if frei_bild else None)
+        if frei_wahl != getattr(self, "_frei_art_alt", None):         # neu gewählt: WordArt öffnet Texttools, SmartArt/Diagramm/Bild ihre Tools, sonst Zeichentools
+            self._frei_art_alt = frei_wahl
+            if frei_wahl:
+                ziel_reiter = {"wordart": "text", "smartart": "smartart", "diagramm": "diagramm", "piktogramm": "bild", "bild": "bild"}.get(frei_wahl, "zeichen")
+                self.band.kontext(ziel_reiter, True, aktivieren=True)
         self._zeichen_masse(e)
         f = self.band.felder
         if e is None or not f:
@@ -416,6 +433,11 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
                 sp = f["rand_" + schl]
                 if not sp.hasFocus():
                     sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
+        if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
+            d = FO.ziel(e)[1]
+            f["tt_font"].blockSignals(True); f["tt_font"].setCurrentFont(QFont(d.get("schrift", "Liberation Sans"))); f["tt_font"].blockSignals(False)
+            if not f["tt_groesse"].hasFocus():
+                f["tt_groesse"].blockSignals(True); f["tt_groesse"].setEditText(f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}"); f["tt_groesse"].blockSignals(False)
         st = e.current_style()
         f["stil"].blockSignals(True); f["stil"].setCurrentText("Fließtext" if st == "Standard" else st); f["stil"].blockSignals(False)
 

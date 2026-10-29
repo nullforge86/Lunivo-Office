@@ -9,7 +9,7 @@ Das Fenster ändert das Dokument nicht. „Daten bearbeiten …“ öffnet Titel
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QListView, QListWidget,
     QListWidgetItem, QPushButton, QToolButton, QVBoxLayout, QWidget,
@@ -20,71 +20,20 @@ from lunivo_writer.editor import diagramm as D
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
-_BLAU, _ORANGE, _GRAU = QColor("#4a8fd8"), QColor("#ef8a3c"), QColor("#7a8086")
-
-
 def art_symbol(sym: str, px: int = 22) -> QIcon:
-    """Eigenes, gut erkennbares Bildchen je Diagrammart (Säulen, Linienzug, Torte, Balken, Fläche, Punkte, Kurs, Netz,
-    Säulen mit Linie, Vorlagenblatt)."""
-    pm = QPixmap(px, px); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    s = px / 22.0
-    p.scale(s, s)
-    linie = QPen(QColor("#3c4043"), 1.4)
-    p.setPen(linie)
-    p.drawLine(3, 19, 20, 19)
-    if sym in ("saeule", "kombination"):
-        for x, h, c in ((5, 9, _BLAU), (10, 13, _ORANGE), (15, 7, _BLAU)):
-            p.fillRect(QRectF(x, 19 - h, 3.5, h), c)
-        if sym == "kombination":
-            p.setPen(QPen(_GRAU.darker(130), 1.6)); p.drawPolyline(QPolygonF([QPointF(4, 12), QPointF(10, 9), QPointF(18, 3)]))
-    elif sym == "linie":
-        p.setPen(QPen(_BLAU, 1.8)); p.drawPolyline(QPolygonF([QPointF(3, 15), QPointF(8, 9), QPointF(13, 12), QPointF(19, 4)]))
-    elif sym == "kreis":
-        r = QRectF(3, 2, 16, 16)
-        p.setPen(QPen(Qt.white, 1)); p.setBrush(_BLAU); p.drawPie(r, 90 * 16, 220 * 16)
-        p.setBrush(_ORANGE); p.drawPie(r, 310 * 16, 80 * 16); p.setBrush(_GRAU); p.drawPie(r, 30 * 16, 60 * 16)
-    elif sym == "balkenquer":
-        p.drawLine(3, 2, 3, 19)
-        for y, w, c in ((4, 12, _BLAU), (9, 16, _ORANGE), (14, 8, _BLAU)):
-            p.fillRect(QRectF(4, y, w, 3.5), c)
-    elif sym == "flaeche":
-        pfad = QPainterPath(QPointF(3, 19)); pfad.lineTo(3, 12); pfad.lineTo(9, 7); pfad.lineTo(14, 11); pfad.lineTo(20, 4)
-        pfad.lineTo(20, 19); pfad.closeSubpath()
-        p.setPen(QPen(_BLAU.darker(120), 1)); p.setBrush(QColor(74, 143, 216, 160)); p.drawPath(pfad)
-    elif sym == "punktwolke":
-        p.drawLine(3, 2, 3, 19)
-        p.setPen(Qt.NoPen)
-        for x, y, c in ((6, 14, _BLAU), (9, 9, _ORANGE), (12, 12, _BLAU), (15, 6, _ORANGE), (18, 9, _BLAU)):
-            p.setBrush(c); p.drawEllipse(QPointF(x, y), 1.8, 1.8)
-    elif sym == "kurs":
-        for x, hoch, tief, a, b in ((6, 4, 16, 7, 12), (11, 3, 14, 5, 10), (16, 6, 17, 9, 14)):
-            p.setPen(QPen(QColor("#3c4043"), 1.2)); p.drawLine(QPointF(x, hoch), QPointF(x, tief))
-            p.setBrush(_BLAU); p.drawRect(QRectF(x - 2, a, 4, b - a))
-    elif sym == "netz":
-        p.eraseRect(0, 18, 22, 4)
-        mitte, punkte = QPointF(11, 11), []
-        import math
-        for i in range(5):
-            w = -math.pi / 2 + i * 2 * math.pi / 5
-            punkte.append(QPointF(11 + 8.5 * math.cos(w), 11 + 8.5 * math.sin(w)))
-        p.setPen(QPen(_GRAU, 1)); p.setBrush(Qt.NoBrush); p.drawPolygon(QPolygonF(punkte))
-        for q in punkte:
-            p.drawLine(mitte, q)
-        innen = [mitte + (q - mitte) * f for q, f in zip(punkte, (0.8, 0.5, 0.7, 0.4, 0.6))]
-        p.setPen(QPen(_BLAU, 1.6)); p.setBrush(QColor(74, 143, 216, 90)); p.drawPolygon(QPolygonF(innen))
-    elif sym == "vorlagen":
-        p.eraseRect(0, 18, 22, 4)
-        p.setPen(QPen(QColor("#3c4043"), 1.2)); p.setBrush(Qt.white); p.drawRoundedRect(QRectF(3, 2, 16, 18), 2, 2)
-        for x, h, c in ((6, 6, _BLAU), (10, 10, _ORANGE), (14, 4, _BLAU)):
-            p.fillRect(QRectF(x, 17 - h, 3, h), c)
-        p.drawLine(5, 5, 17, 5)
-    p.end()
-    return QIcon(pm)
-
+    """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
+    namen = {
+        "saeule": "chart-column", "linie": "chart-line", "kreis": "chart-pie",
+        "balkenquer": "chart-bar", "flaeche": "chart-area", "punktwolke": "chart-scatter",
+        "kurs": "chart-candlestick", "netz": "radar", "kombination": "chart-no-axes-combined",
+        "vorlagen": "palette",
+    }
+    from lunivo_writer.ui.widgets import icons
+    return icons.icon(namen.get(sym, "chart-column"), px)
 
 class DiagrammDialog(PanelFaehig, QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, vorhanden: dict | None = None):
+        """``vorhanden``: Daten eines vorhandenen Diagramms (Diagrammart, Titel, Rubriken, Reihen, Kombination) — dann öffnet das Fenster damit."""
         super().__init__(parent)
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         self.setWindowTitle("Diagramm einfügen")
@@ -118,8 +67,18 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
         self.untertyp = "saeule_gruppiert"
         self._vorschau_breite, self._bild_groesse = 620, QSize(84, 64)
+        zeile = 0
+        if vorhanden:
+            self.titel_text = vorhanden.get("titel", self.titel_text)
+            self.kategorien = list(vorhanden.get("kategorien") or self.kategorien)
+            self.reihen = {k: list(v) for k, v in (vorhanden.get("reihen") or self.reihen).items()}
+            self.kombi = [(k[0], bool(k[1])) for k in vorhanden.get("kombi") or []]
+            u = D.ALT.get(vorhanden.get("art"), vorhanden.get("art"))
+            for i, (_g, _s, unter) in enumerate(D.TYPEN):
+                if any(schl == u for schl, _n in unter):
+                    self.untertyp, zeile = u, i
         self.arten.currentRowChanged.connect(self._gruppe)
-        self.arten.setCurrentRow(0)
+        self.arten.setCurrentRow(zeile)
 
     # ---- Kombinationstabelle ----------------------------------------------------------------------------------------------
     def _kombi_tabelle(self) -> QWidget:

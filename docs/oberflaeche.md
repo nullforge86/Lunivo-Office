@@ -95,6 +95,11 @@ wird, dazu ein Suchfeld und eine große Auswahl an Zeichnungen. Ein Klick, und
 sie ist getauscht; „Zurücksetzen" holt die alte zurück. kann
 das für seine Symbolleisten, für sein Symbolband nicht — hier geht beides.
 
+**Einheitliche Symbolsprache.** Funktionssymbole kommen aus dem zentralen
+Lucide-Katalog und werden über denselben Renderer ausgegeben: im 24er-Raster,
+mit konsistenter Kontur und abgerundeten Linienenden. Das gilt auch für Datei-,
+Druck- und Seitenleistenaktionen und bleibt unabhängig vom Desktop-Theme.
+
 ---
 
 [← Zurück zum README](../README.md)

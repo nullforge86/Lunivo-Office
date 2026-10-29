@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QTabBar, QToolButton, QWidget
+from lunivo_writer.ui.widgets import icons
 
 
 class DocTabs(QObject):
@@ -29,7 +30,7 @@ class DocTabs(QObject):
         h.setSpacing(2)
         h.addWidget(self.bar)
         plus = QToolButton()
-        plus.setText("+")
+        plus.setIcon(icons.icon("plus", 16))
         plus.setAutoRaise(True)
         plus.setToolTip("Neues Dokument (Strg+N)")
         plus.clicked.connect(self.newRequested)
@@ -63,6 +64,7 @@ class DocTabs(QObject):
     def setCurrentIndex(self, i): self.bar.setCurrentIndex(i)
     def setCurrentWidget(self, w): self.bar.setCurrentIndex(self._w.index(w))
     def setTabText(self, i, t): self.bar.setTabText(i, t)
+    def setTabIcon(self, i, icon): self.bar.setTabIcon(i, icon)
     def tabText(self, i): return self.bar.tabText(i)
     def setTabToolTip(self, i, t): self.bar.setTabToolTip(i, t)
 

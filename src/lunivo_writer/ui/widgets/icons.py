@@ -1,9 +1,10 @@
-"""Symbole: 24×24-Strichzeichnungen (Lucide, ISC) und Fluent-Symbole (Microsoft, MIT), mit Qt gerendert."""
+"""Einheitliche Office-Symbole: 24×24-Strichzeichnungen aus Lucide, mit Qt gerendert."""
 from __future__ import annotations
 
 import json
 import os
 import re
+import tempfile
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import QByteArray, QRectF, Qt
@@ -13,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 _PFADE: dict | None = None
 _CACHE: dict = {}
-STRICH = 1.7
+STRICH = 1.05         # schlanke Office-Kontur bei typischen Symbolgrößen von 16–20 px
 FAKTOR = 1.0          # Größe der Symbole (Optionen ▸ Darstellung)
 
 
@@ -63,7 +64,7 @@ def katalog() -> dict:
     return _KATALOG
 
 
-def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = 1.7) -> QImage:
+def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = STRICH) -> QImage:
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     d = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{strich}" '
@@ -89,49 +90,13 @@ def pfad_bild(pfad: str, px: int = 48, farbe: str = "#1f2328") -> QImage:
 # Farbstriche unter Symbolen wie in Word: Name → Farbe (Schriftfarbe rot, Hervorheben gelb, Tönung blau, Rahmen/Schatten bleiben neutral)
 AKZENT = {"schriftfarbe": "#e03131", "marker": "#fcc419", "absatztoenung": "#74c0fc", "toenung": "#74c0fc"}
 
-_FLUENT: dict | None = None
-_SVG_TEXT: dict = {}
-
-
-def fluent_zuordnung() -> dict:
-    """Symbolname → Name der Fluent-UI-System-Icons-Datei (Microsoft, MIT; siehe assets/icons/fluent/LIZENZ.txt)."""
-    global _FLUENT
-    if _FLUENT is None:
-        try:
-            with open(os.path.join(paths.SYMBOLE, "fluent", "zuordnung.json"), encoding="utf-8") as fh:
-                _FLUENT = json.load(fh)
-        except OSError:
-            _FLUENT = {}
-    return _FLUENT
-
-
-def _fluent_svg(name: str, px: int, farbe: str) -> bytes | None:
-    """Das Fluent-Symbol in Palettenfarbe; None, wenn es keines gibt oder der Nutzer das Symbol ausgetauscht hat."""
-    f = fluent_zuordnung().get(name)
-    if f is None or pfade().get(name) != pfade_original().get(name):
-        return None
-    art = "g" if px >= 24 else "k"
-    key = (f, art)
-    if key not in _SVG_TEXT:
-        try:
-            with open(os.path.join(paths.SYMBOLE, "fluent", f"{f}_{art}.svg"), encoding="utf-8") as fh:
-                _SVG_TEXT[key] = fh.read()
-        except OSError:
-            _SVG_TEXT[key] = ""
-    t = _SVG_TEXT[key]
-    if not t:
-        return None
-    t = t.replace("<svg ", f'<svg fill="{farbe}" ', 1)
-    if name in AKZENT:                                       # Farbstrich am unteren Rand; das Symbol selbst steht darüber
-        gr = 20 if art == "k" else 28
-        h = gr * 0.15
-        t = t.replace("</svg>", f'<rect x="{gr * 0.14:.2f}" y="{gr - h - gr * 0.02:.2f}" width="{gr * 0.72:.2f}" height="{h:.2f}" '
-                                f'rx="{h / 3:.2f}" fill="{AKZENT[name]}"/></svg>')
-    return t.encode()
-
-
 def hat(name: str) -> bool:
-    return name in pfade()
+    return name in pfade() or name in katalog()
+
+
+def _symbolpfad(name: str) -> str | None:
+    """Gibt zuerst das semantische Standardsymbol, sonst das Lucide-Katalogsymbol zurück."""
+    return pfade().get(name) or katalog().get(name)
 
 
 EIGEN = "#e#"          # Vorsatz einer eigenen Zeichnung im Austausch: #e# + JSON {d, s, x, y, f}
@@ -170,9 +135,25 @@ def _svg(pfad: str, farbe: str) -> bytes:
             return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path {zug} fill="{farbe}" d="{e["d"]}"/></svg>').encode()
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{STRICH / s:.4f}" '
                 f'stroke-linecap="round" stroke-linejoin="round"><path {zug} d="{e["d"]}"/></svg>').encode()
-    strich = STRICH + (0.35 if QColor(farbe).lightness() > 220 else 0)      # auf Dunkel etwas kräftiger gezeichnet
+    strich = STRICH + (0.05 if QColor(farbe).lightness() > 220 else 0)      # minimaler Ausgleich für helle Symbole auf dunklem Grund
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" '
             f'stroke-width="{strich}" stroke-linecap="round" stroke-linejoin="round"><path d="{pfad}"/></svg>').encode()
+
+
+def svg_datei(name: str, farbe: str) -> str:
+    """Lucide-SVG als Datei für Qt-Stylesheets, die SVG-Daten nicht direkt annehmen."""
+    pfad = _symbolpfad(name)
+    if pfad is None:
+        return ""
+    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-icons")
+    os.makedirs(ordner, exist_ok=True)
+    # Strichstärke im Cache-Schlüssel halten: alte SVGs aus früheren Starts
+    # dürfen nach einer Stiländerung nicht weiter in Qt-Stylesheets auftauchen.
+    datei = os.path.join(ordner, f"{name}_{farbe.lstrip('#')}_{STRICH:g}.svg")
+    if not os.path.exists(datei):
+        with open(datei, "wb") as fh:
+            fh.write(_svg(pfad, farbe))
+    return datei.replace("\\", "/")
 
 
 def _pixmap(name: str, farbe: str, px: int) -> QPixmap:
@@ -182,7 +163,11 @@ def _pixmap(name: str, farbe: str, px: int) -> QPixmap:
     ratio = 2
     img = QImage(px * ratio, px * ratio, QImage.Format_ARGB32_Premultiplied)
     img.fill(Qt.transparent)
-    r = QSvgRenderer(QByteArray(_fluent_svg(name, px, farbe) or _svg(pfade()[name], farbe)))
+    # Auch Katalognamen und semantische Namen werden durch denselben Renderer gezeichnet.
+    pfad = _symbolpfad(name)
+    if pfad is None:
+        return QPixmap()
+    r = QSvgRenderer(QByteArray(_svg(pfad, farbe)))
     p = QPainter(img)
     r.render(p, QRectF(0, 0, px * ratio, px * ratio))
     p.end()
@@ -195,7 +180,8 @@ def _pixmap(name: str, farbe: str, px: int) -> QPixmap:
 def icon(name: str, px: int = 20) -> QIcon:
     px = max(10, int(round(px * FAKTOR)))
     """Symbol in den Farben der aktuellen Palette (hell/dunkel), ausgegraut wenn deaktiviert."""
-    if not hat(name):
+    pfad = _symbolpfad(name)
+    if pfad is None:
         return QIcon()
     pal = QApplication.palette()
     normal = pal.color(QPalette.ButtonText).name()

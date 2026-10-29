@@ -11,6 +11,7 @@ from typing import Callable
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QFrame, QGridLayout, QLabel, QMenu, QPushButton, QScrollArea, QVBoxLayout, QWidget, QWidgetAction
+from lunivo_writer.ui.widgets import icons
 
 
 class _Kachel(QWidget):
@@ -131,9 +132,4 @@ class GalerieAuswahl(QMenu):
 
     @staticmethod
     def _haken_symbol() -> QIcon:
-        pm = QPixmap(18, 18); pm.fill(Qt.transparent)
-        p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-        p.drawLine(3, 9, 7, 13); p.drawLine(7, 13, 15, 4)
-        p.end()
-        return QIcon(pm)
+        return icons.icon("check", 18)

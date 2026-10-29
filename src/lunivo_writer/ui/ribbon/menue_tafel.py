@@ -12,22 +12,23 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
+from lunivo_writer.ui.widgets import icons
 
 
-# Symbole der Menüpunkte aus dem Icon-Theme des Systems (Freedesktop-Namen); was das Theme nicht kennt, bleibt ohne Symbol
+# Symbolnamen aus dem zentralen Lucide-Katalog.
 _MENUE_SYMBOLE = {
-    "Neu": "document-new", "Neu aus Vorlage": "document-new", "Öffnen": "document-open", "Speichern": "document-save",
-    "Speichern unter": "document-save-as", "Drucken": "document-print", "Druckvorschau": "document-print-preview",
-    "Druckereinstellungen": "document-page-setup", "Dokumenteigenschaften": "document-properties", "Umbenennen": "document-edit",
-    "Schließen": "window-close", "Hilfe": "help-browser", "Optionen": "preferences-system", "Beenden": "application-exit",
-    "Vorlagenordner": "folder-templates", "Zuletzt geöffnet": "document-open-recent",
+    "Neu": "file-plus", "Neu aus Vorlage": "files", "Öffnen": "folder-open", "Speichern": "save",
+    "Speichern unter": "file-plus", "Drucken": "printer", "Druckvorschau": "panels-top-left",
+    "Druckereinstellungen": "settings-2", "Dokumenteigenschaften": "info", "Umbenennen": "file-pen",
+    "Schließen": "x", "Hilfe": "circle-question-mark", "Optionen": "settings", "Beenden": "log-out",
+    "Vorlagenordner": "folder-open", "Zuletzt geöffnet": "clock-arrow-up",
 }
 
 
 def _menue_symbol(name: str) -> QIcon:
     if name == "Als PDF exportieren":
         return datei_symbol(".pdf")
-    return QIcon.fromTheme(_MENUE_SYMBOLE.get(name, ""))
+    return icons.icon(_MENUE_SYMBOLE.get(name, "file"), 22)
 
 
 def _datum(pfad: str) -> str:
@@ -65,7 +66,7 @@ class MenueTafel(QFrame):
                 continue
             name = p["name"]
             taste = p.get("taste", "")
-            b = QPushButton(f"{name}" + ("   ›" if p.get("unter") or name == "Zuletzt geöffnet" else ""))
+            b = QPushButton(name)
             sym = _menue_symbol(name)
             if not sym.isNull():
                 b.setIcon(sym); b.setIconSize(QSize(22, 22))
@@ -141,8 +142,8 @@ class MenueTafel(QFrame):
             if u.get("trenner"):
                 continue
             b = QPushButton(u["name"])
-            if u.get("datei"):                                     # Dateiformat: Symbol aus dem Icon-Theme des Systems
-                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(24, 24))
+            if u.get("datei"):                                     # passendes, lokal gebündeltes Dateiformat-SVG
+                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(28, 28))
             b.setFlat(True)
             b.setStyleSheet("text-align: left; padding: 4px 8px;")
             ok = bool(u.get("tun")) and self.b.hat(u["tun"])

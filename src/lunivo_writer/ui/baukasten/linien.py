@@ -77,8 +77,10 @@ class LinienWahl(QWidget):
 
     geaendert = Signal(object)
 
-    def __init__(self, linie: Linie | None = None, *, arten=tuple(LINIENARTEN), breiten=LINIENBREITEN, parent=None):
+    def __init__(self, linie: Linie | None = None, *, arten=tuple(LINIENARTEN), breiten=LINIENBREITEN, frei: bool = False, parent=None):
+        """``frei``: eine Stärke, die nicht in der Liste steht, kommt als eigener Eintrag dazu (statt auf die nächste zu runden)."""
         super().__init__(parent)
+        self._frei = frei
         linie = linie or Linie()
         h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0)
         self.art = QComboBox(); self.art.setIconSize(QSize(56, 14))
@@ -87,6 +89,7 @@ class LinienWahl(QWidget):
         self.breite = QComboBox()
         for b in breiten:
             self.breite.addItem(f"{b:g}".replace(".", ",") + " pt", b)
+        self._n_liste = self.breite.count()
         self.farbe = FarbFeld(linie.farbe, "Linienfarbe")
         for w in (self.art, self.breite, self.farbe):
             h.addWidget(w)
@@ -97,6 +100,13 @@ class LinienWahl(QWidget):
 
     def setLinie(self, linie: Linie) -> None:
         i = self.art.findData(linie.art); self.art.setCurrentIndex(max(0, i))
+        self.breite.blockSignals(True)
+        if self._frei:
+            while self.breite.count() > self._n_liste:                   # ein früherer freier Wert fällt weg
+                self.breite.removeItem(self.breite.count() - 1)
+            if self.breite.findData(linie.breite_pt) < 0:
+                self.breite.addItem(f"{linie.breite_pt:g}".replace(".", ",") + " pt", linie.breite_pt)
+        self.breite.blockSignals(False)
         j = min(range(self.breite.count()), key=lambda k: abs(self.breite.itemData(k) - linie.breite_pt))
         self.breite.setCurrentIndex(j)
         self.farbe.setFarbe(linie.farbe)

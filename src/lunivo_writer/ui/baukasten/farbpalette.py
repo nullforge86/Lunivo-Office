@@ -15,6 +15,7 @@ from lunivo_writer.ui.baukasten import farben as F
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.widgets import icons
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
     from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog
@@ -104,7 +105,7 @@ class FarbPalette(QMenu):
     def __init__(self, parent=None, *, keine_text: str | None = "Keine Farbe", start=None, titel: str = "Farbe",
                  zuletzt: bool = True, weitere: bool = True, verlauf: bool = False, verlauf_titel: str = "Graduelle Füllung",
                  weitere_text: str = "Weitere Farben …", automatisch: str | None = None,
-                 pipette: bool = True):
+                 pipette: bool = True, standard: bool = True):
         super().__init__(parent)
         self._start, self._titel = start, titel
         wid = QWidget()
@@ -116,8 +117,9 @@ class FarbPalette(QMenu):
             v.addWidget(keine)
         v.addWidget(self._titel_zeile("Themenfarben"))
         v.addLayout(self._raster(F.thema_raster()))
-        v.addWidget(self._titel_zeile("Standardfarben"))
-        v.addLayout(self._raster([list(F.STANDARD_FARBEN)]))
+        if standard:
+            v.addWidget(self._titel_zeile("Standardfarben"))
+            v.addLayout(self._raster([list(F.STANDARD_FARBEN)]))
         if verlauf: # „Graduelle Füllung“ wie in der Vorlage: dieselben Farben als Verläufe
             v.addWidget(self._titel_zeile(verlauf_titel))
             g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0); g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -160,9 +162,7 @@ class FarbPalette(QMenu):
 
     @staticmethod
     def _keine_symbol() -> QIcon:
-        pm = QPixmap(14, 14); pm.fill(Qt.transparent)
-        p = QPainter(pm); p.setPen(QPen(QColor(Farbe.ROT), 1.5)); p.drawRect(1, 1, 11, 11); p.drawLine(1, 12, 12, 1); p.end()
-        return QIcon(pm)
+        return icons.icon("ban", 14)
 
     def _raster(self, zeilen: list[list[str]]) -> QGridLayout:
         g = QGridLayout()

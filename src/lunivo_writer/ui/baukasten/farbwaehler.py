@@ -15,7 +15,7 @@ from PySide6.QtGui import (
     QBrush, QColor, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
 )
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QStyle, QTabWidget, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider, QSpinBox, QStyle, QTabWidget, QVBoxLayout, QWidget,
 )
 
 MODELLE = ("RGB", "HSV", "HSL")
@@ -33,6 +33,7 @@ class Modell(QObject):
         super().__init__()
         self.modus = "RGB"
         self.h, self.s, self.v = 0.0, 0.0, 0.0
+        self.deckkraft = 100                                       # Transparenz-Feld: 100 % = deckend, 0 % = unsichtbar
         self.setze(start, melden=False)
 
     def farbe(self) -> QColor:
@@ -45,6 +46,12 @@ class Modell(QObject):
             self.h = h
         self.s, self.v = s, v
         if melden:
+            self.geaendert.emit()
+
+    def setze_deckkraft(self, prozent: int) -> None:
+        prozent = min(max(int(prozent), 0), 100)
+        if prozent != self.deckkraft:
+            self.deckkraft = prozent
             self.geaendert.emit()
 
     def setze_hsv(self, h: float | None = None, s: float | None = None, v: float | None = None) -> None:
@@ -354,7 +361,11 @@ class _Proben(QWidget):
     def paintEvent(self, _e):
         p = QPainter(self)
         h = self.height() // 2
-        p.fillRect(0, 0, self.width(), h, self.m.farbe())
+        for y in range(0, self.height(), 6):                      # Schachbrett: durch eine durchscheinende Farbe sieht man es
+            for x in range(0, self.width(), 6):
+                p.fillRect(x, y, 6, 6, QColor("#ffffff") if (x // 6 + y // 6) % 2 == 0 else QColor("#c8c8c8"))
+        neu = self.m.farbe(); neu.setAlphaF(self.m.deckkraft / 100)
+        p.fillRect(0, 0, self.width(), h, neu)
         p.fillRect(0, h, self.width(), self.height() - h, self.alt)
         p.setPen(QPen(self.palette().mid().color(), 1)); p.setBrush(Qt.NoBrush); p.drawRect(0, 0, self.width() - 1, self.height() - 1)
         p.end()
@@ -368,6 +379,7 @@ class FarbenDialog(PanelFaehig, QDialog):
         self.setWindowTitle(titel if titel not in ("", "Farbe") else "Farben")
         ausgang = QColor(start) if start is not None and QColor(start).isValid() else QColor(Qt.black)
         self.m = Modell(ausgang)
+        self.m.deckkraft = round(ausgang.alphaF() * 100)
         v = QVBoxLayout(self)
         self.reiter = AngepassteReiter()                                  # Standard braucht weniger Platz als Erweitert
         v.addWidget(self.reiter, 1)
@@ -395,16 +407,41 @@ class FarbenDialog(PanelFaehig, QDialog):
         namen = QVBoxLayout(); namen.addWidget(QLabel("Neu")); namen.addStretch(1); namen.addWidget(QLabel("Aktuell"))
         probe.addLayout(namen); probe.addStretch(1)
         v.addLayout(probe)
+        v.addWidget(self._transparenz_zeile())
         v.addWidget(knopfzeile(self))
+
+    def _transparenz_zeile(self) -> QWidget:
+        """„Transparenz“: Schieber und Zahlenfeld in Prozent (100 % = deckend) — beide halten dieselbe Zahl."""
+        z = QWidget(); zv = QVBoxLayout(z); zv.setContentsMargins(6, 0, 6, 0); zv.setSpacing(2)
+        zv.addWidget(QLabel("Transparenz"))
+        reihe = QHBoxLayout(); reihe.setSpacing(6)
+        self.schieber = QSlider(Qt.Horizontal); self.schieber.setRange(0, 100); self.schieber.setValue(self.m.deckkraft)
+        self.prozent = QSpinBox(); self.prozent.setRange(0, 100); self.prozent.setSuffix(" %"); self.prozent.setValue(self.m.deckkraft)
+        self.schieber.setToolTip("100 % = deckend, 0 % = unsichtbar"); self.prozent.setToolTip(self.schieber.toolTip())
+        self.schieber.valueChanged.connect(self.m.setze_deckkraft); self.prozent.valueChanged.connect(self.m.setze_deckkraft)
+        self.m.geaendert.connect(self._deckkraft_zeigen)
+        reihe.addWidget(self.schieber, 1); reihe.addWidget(self.prozent)
+        zv.addLayout(reihe)
+        return z
+
+    def _deckkraft_zeigen(self) -> None:
+        for w in (self.schieber, self.prozent):
+            if w.value() != self.m.deckkraft:
+                w.blockSignals(True); w.setValue(self.m.deckkraft); w.blockSignals(False)
 
     def passe_an(self, breite: int, hoehe: int) -> None:
         """Das Standard-Raster so groß machen, wie die Seitenleiste Platz hat (Breite für 17 Spalten, Höhe für 18 Zeilen samt Reitern und Probe)."""
         k = self._kacheln
-        zelle = min((breite - 24) // k.SPALTEN - 1, (hoehe - 190) // (k.ZEILEN + 2) - 1)
+        zelle = min((breite - 24) // k.SPALTEN - 1, (hoehe - 250) // (k.ZEILEN + 2) - 1)
         k.skaliere(max(12, min(24, zelle)))
-        h = max(150, min(340, hoehe - 235))                                         # Farbfläche und Leiste: die Höhe, die nach den zwei Reihen Felder und der Probe übrig bleibt
+        h = max(150, min(340, hoehe - 295))                                         # Farbfläche und Leiste: die Höhe, die nach den zwei Reihen Felder und der Probe übrig bleibt
         self._leiste.setFixedHeight(h); self._flaeche.setGroesse(max(200, min(380, breite - 70)), h)
-        self._ring.skaliere(max(0.7, min(1.5, (hoehe - 235) / 250, (breite - 24) / 270)))
+        self._ring.skaliere(max(0.7, min(1.5, (hoehe - 295) / 250, (breite - 24) / 270)))
 
     def farbe(self) -> QColor:
-        return self.m.farbe()
+        """Die gewählte Farbe samt Transparenz (Alpha); ohne Änderung am Schieber ist sie deckend."""
+        c = self.m.farbe(); c.setAlphaF(self.m.deckkraft / 100)
+        return c
+
+    def deckkraft(self) -> int:
+        return self.m.deckkraft

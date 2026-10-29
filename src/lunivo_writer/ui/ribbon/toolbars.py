@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.contextual.image_tools import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
+from lunivo_writer.ui.contextual.text_tools import TEXTTOOLS
 from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
 from lunivo_writer.ui.ribbon.ribbon_bar import NICHT_DA, STILE_KATALOG
 
@@ -69,7 +70,9 @@ class Symbolleisten(QWidget):
         v.setContentsMargins(6, 2, 6, 2)
         v.setSpacing(2)
         self.menue_knopf = QToolButton()
-        self.menue_knopf.setText("☰ Menü ▾")
+        self.menue_knopf.setText("Menü")
+        self.menue_knopf.setIcon(icons.icon("menu", 16)); self.menue_knopf.setIconSize(QSize(16, 16))
+        self.menue_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.menue_knopf.setAutoRaise(True)
         z1 = self._zeile(v)
         z1.addWidget(self.menue_knopf)
@@ -170,7 +173,7 @@ class Symbolleisten(QWidget):
 
     # ---- gleiche Schnittstelle wie RegisterBand ----------------------------------------------
     def kontext(self, name: str, sichtbar: bool, aktivieren: bool = False) -> None:
-        if name not in ("tabelle", "bild", "form", "smartart", "zeichen"):
+        if name not in ("tabelle", "bild", "form", "smartart", "zeichen", "text"):
             return
         if sichtbar and self._kontext_name != name:
             self._kontext_name = name
@@ -178,7 +181,7 @@ class Symbolleisten(QWidget):
                 it = self.z3.takeAt(0)
                 if it.widget():
                     it.widget().deleteLater()
-            plan = TABELLENTOOLS if name == "tabelle" else FORMTOOLS if name == "form" else ZEICHENTOOLS if name == "zeichen" else SMARTARTTOOLS if name == "smartart" else BILDTOOLS
+            plan = TABELLENTOOLS if name == "tabelle" else FORMTOOLS if name == "form" else ZEICHENTOOLS if name == "zeichen" else TEXTTOOLS if name == "text" else SMARTARTTOOLS if name == "smartart" else BILDTOOLS
             for g in plan["gruppen"]:
                 for e in g["knoepfe"]:
                     if e.get("symbol") == "//":
@@ -202,6 +205,8 @@ class Symbolleisten(QWidget):
             self.zusammenhang.hide()
 
     def aktualisieren(self, hat_dokument: bool | None = None) -> None:
+        import shiboken6
+        self.schalter = [e for e in self.schalter if shiboken6.isValid(e[0])]              # abgebaute Knöpfe der Kontext-Leiste
         for k, name in self.schalter:
             a = k.defaultAction()
             a.blockSignals(True)
