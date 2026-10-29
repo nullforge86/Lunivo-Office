@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 _PFADE: dict | None = None
 _CACHE: dict = {}
-STRICH = 1.35         # feinere Office-Kontur bei typischen Symbolgrößen von 16–20 px
+STRICH = 1.05         # schlanke Office-Kontur bei typischen Symbolgrößen von 16–20 px
 FAKTOR = 1.0          # Größe der Symbole (Optionen ▸ Darstellung)
 
 
@@ -135,7 +135,7 @@ def _svg(pfad: str, farbe: str) -> bytes:
             return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path {zug} fill="{farbe}" d="{e["d"]}"/></svg>').encode()
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{STRICH / s:.4f}" '
                 f'stroke-linecap="round" stroke-linejoin="round"><path {zug} d="{e["d"]}"/></svg>').encode()
-    strich = STRICH + (0.1 if QColor(farbe).lightness() > 220 else 0)       # kleiner Ausgleich für helle Symbole auf dunklem Grund
+    strich = STRICH + (0.05 if QColor(farbe).lightness() > 220 else 0)      # minimaler Ausgleich für helle Symbole auf dunklem Grund
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" '
             f'stroke-width="{strich}" stroke-linecap="round" stroke-linejoin="round"><path d="{pfad}"/></svg>').encode()
 
