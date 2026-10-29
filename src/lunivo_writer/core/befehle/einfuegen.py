@@ -712,27 +712,59 @@ class EinfuegenBefehle:
 
 
     def wordartVorgabe(self, k=None, nr=0):
-        """WordArt aus der Galerie: das Fenster öffnet mit Stil und Farbe der Vorlage (und dem markierten Text)."""
+        """WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil ein, markiert es und zeigt die
+        Form- und WordArt-Tools; der Text ändert sich über „WordArt bearbeiten …“ (oder Einfügen ▸ WordArt …)."""
         if not self.ed:
             return
         from lunivo_writer.editor import einfuegen as E
+        from PySide6.QtGui import QTextCursor
+        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or E.WORDART_STANDARDTEXT
+        self._bild_einfuegen(E.wordart_bild(text, vorlage=nr, pt=36), "WordArt: " + text, "wordart",
+                             {"text": text, "vorlage": nr, "pt": 36})
+        c = self.ed.textCursor()
+        c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)       # das eben eingefügte Bild markieren
+        self.ed.setTextCursor(c)
+        self.w._sync_format()
+
+
+    def wordartBearbeiten(self, k=None):
+        """Text und Stil des markierten WordArt-Objekts im Fenster „WordArt“ ändern."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import einfuegen as E, formen
         from lunivo_writer.ui.dialogs.einfuegen_dialoge import WordArtDialog
-        _n, stil, farbe = E.WORDART_VORGABEN[nr]
-        markiert = self.ed.textCursor().selectedText().replace("\u2029", " ").strip()
-        d = WordArtDialog(self.w, markiert, stil, farbe)
+        c = self.ed._bild_cursor()
+        f = c.charFormat().toImageFormat() if c is not None else None
+        o = formen.objekt(f)
+        if not o or o.get("art") != "wordart":
+            self.w.lbl_msg.setText("Bitte zuerst ein WordArt-Objekt markieren.")
+            return
+        daten = o.get("daten", {})
+        d = WordArtDialog(self.w, daten.get("text", E.WORDART_STANDARDTEXT), vorlage=daten.get("vorlage"))
         if d.exec():
-            self._bild_einfuegen(d.bild(), "WordArt: " + d.text.text(), "wordart", {"text": d.text.text()})
+            img = d.bild()
+            neu = {"art": "wordart", "daten": {"text": d.text.text(), "vorlage": d.vorlage_nr()}}
+            maxw = self.ed.page.content_width_px
+            formen._ersetzen(self.ed, c, img, neu, f, img.width() * min(1.0, maxw / img.width()), img.height() * min(1.0, maxw / img.width()))
+            self.w._sync_format()
 
 
     def menue_wordartKlappe(self):
-        from PySide6.QtCore import QSize
-        from PySide6.QtGui import QPixmap
+        """Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in WPS, auch im dunklen Thema gut zu erkennen)."""
+        from PySide6.QtCore import QRectF, QSize
+        from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=6, groesse=QSize(44, 44))
-        for i, (name, stil, farbe) in enumerate(E.WORDART_VORGABEN):
-            img = E.wordart_bild("A", stil, pt=110, farbe=farbe)
-            b = m.kachel(str(i), name, QPixmap.fromImage(img).scaled(44, 44, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=8, groesse=QSize(40, 40))
+        for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
+            img = E.wordart_bild("A", vorlage=i, pt=80)
+            pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
+            p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.setBrush(QColor("#f3f4f6")); p.setPen(QPen(QColor("#d0d4d9"), 1)); p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 4, 4)
+            z = img.scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            p.drawImage((40 - z.width()) // 2, (40 - z.height()) // 2, z)
+            p.end()
+            b = m.kachel(str(i), name, pm)
             b.setCheckable(False)
         m.gewaehlt.connect(lambda schl: self.wordartVorgabe(None, int(schl)))
         return m

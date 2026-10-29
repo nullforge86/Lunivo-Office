@@ -135,26 +135,34 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT):
-        """``stil`` und ``farbe`` kommen aus der Galerie (``E.WORDART_VORGABEN``)."""
+    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT, vorlage: int | None = None):
+        """``vorlage``: Nummer eines Galerie-Stils (``E.WORDART_VORLAGEN``); ohne sie gelten ``stil`` und ``farbe``."""
         super().__init__(parent)
         self.setWindowTitle("WordArt")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
+        self.vorlage = QComboBox(); self.vorlage.addItem("(eigener Stil)")
+        self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
+        self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
         self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
-        for lab, w in (("Text", self.text), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
+        for lab, w in (("Text", self.text), ("Formatvorlage", self.vorlage), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
             f.zeile(lab, w)
         self._vorschau_bauen(v); v.addWidget(_ok(self))
         self.text.textChanged.connect(self.aktualisieren); self.stil.currentTextChanged.connect(self.aktualisieren)
+        self.vorlage.currentIndexChanged.connect(self.aktualisieren)
         self.schrift.textChanged.connect(self.aktualisieren); self.pt.valueChanged.connect(self.aktualisieren)
         self.farbe.clicked.connect(self.aktualisieren)
         self.aktualisieren()
 
+    def vorlage_nr(self) -> int | None:
+        i = self.vorlage.currentIndex() - 1
+        return i if i >= 0 else None
+
     def bild(self):
         return E.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
-                              self.pt.value(), self.farbe.farbe)
+                              self.pt.value(), self.farbe.farbe, self.vorlage_nr())
 
     def aktualisieren(self, *_):
         self._zeige(self.bild())

@@ -547,6 +547,20 @@ def test_gleichungen_formen_deckblatt(fenster):
     assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)
 
 
+def test_wordart_galerie_fuegt_sofort_ein(fenster):
+    from lunivo_writer.editor import einfuegen as E, formen
+    b = fenster.befehle
+    e = fenster.current_editor()
+    m = b.klappe("wordartKlappe")
+    assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
+    m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
+    f = e.bild_format()
+    o = formen.objekt(f)
+    assert o["art"] == "wordart" and o["daten"] == {"text": "Hier Text einfügen", "vorlage": 3, "pt": 36}
+    band = fenster.band
+    assert band.reiter.isTabVisible(band.kontext_index["form"]) and not band.reiter.isTabVisible(band.kontext_index["bild"])
+
+
 def test_diagramm_alle_arten_und_fenster(app):
     from lunivo_writer.editor import diagramm as D
     from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDialog

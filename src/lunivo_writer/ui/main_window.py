@@ -396,8 +396,8 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         bf = e.bild_format() if e else None
         from lunivo_writer.editor import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None
-        self.band.kontext("bild", bf is not None and art not in ("form", "gruppe", "smartart"))
-        self.band.kontext("form", art in ("form", "gruppe"))
+        self.band.kontext("bild", bf is not None and art not in ("form", "gruppe", "smartart", "wordart"))
+        self.band.kontext("form", art in ("form", "gruppe", "wordart"))
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
         self._zeichen_masse(e)

@@ -21,6 +21,7 @@ FORMTOOLS = {"name": "Form- und WordArt-Tools", "kontext": "form", "gruppen": [
     {"name": "Formenstile", "knoepfe": [_k("toenung", "Formfüllung", klappe="formFuellung", text=True),
                                          _k("linie", "Formkontur", klappe="formKontur", text=True),
                                          _k("notiz", "Text in der Form …", "formText", text=True)]},
+    {"name": "WordArt", "knoepfe": [_k("texteffekt", "WordArt bearbeiten …", "wordartBearbeiten", text=True)]},
     {"name": "Anordnen", "knoepfe": [_k("gruppieren", "Gruppieren", "gruppieren", text=True),
                                      _k("gruppieren", "Gruppierung aufheben", "gruppeAufheben", text=True),
                                      _k("textflussumbruch", "Textumbruch / Position", "anordnen", text=True)]}]}
