@@ -33,7 +33,7 @@ def seite_aus_dict(d: dict) -> PageSettings:
         if f.name not in d:
             continue
         v = d[f.name]
-        if f.name in ("header", "footer", "first_header", "first_footer") and isinstance(v, dict):
+        if f.name in ("header", "footer", "first_header", "first_footer", "even_header", "even_footer") and isinstance(v, dict):
             v = HeaderFooter(v.get("text", ""), v.get("align", "center"))
         setattr(ps, f.name, v)
     return ps
@@ -85,8 +85,10 @@ def einrichtung(doc, basis: PageSettings, index: int) -> PageSettings:
         if neu.kopf_verknuepft:
             neu.header, neu.first_header, neu.diff_first = ps.header.__class__(ps.header.text, ps.header.align), \
                 HeaderFooter(ps.first_header.text, ps.first_header.align), ps.diff_first
+            neu.even_header, neu.diff_even = HeaderFooter(ps.even_header.text, ps.even_header.align), ps.diff_even
         if neu.fuss_verknuepft:
             neu.footer, neu.first_footer = HeaderFooter(ps.footer.text, ps.footer.align), HeaderFooter(ps.first_footer.text, ps.first_footer.align)
+            neu.even_footer = HeaderFooter(ps.even_footer.text, ps.even_footer.align)
         ps = neu
     return ps
 

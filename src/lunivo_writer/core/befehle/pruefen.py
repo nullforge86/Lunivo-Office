@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QInputDialog, QMessageBox
+from PySide6.QtWidgets import QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 
@@ -206,7 +207,8 @@ class PruefenBefehle:
     def seriendruckfeld(self, k=None):
         if self.ed:
             from lunivo_writer.editor import sendungen as S
-            n, ok = QInputDialog.getText(self.w, "Seriendruckfeld", "Feldname (muss in der Kopfzeile der Empfängerliste stehen):", text="Name")
+            from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+            n, ok = EingabeFenster.getText(self.w, "Seriendruckfeld", "Feldname (muss in der Kopfzeile der Empfängerliste stehen):", text="Name")
             if ok and n.strip():
                 S.feld_einfuegen(self.ed, n.strip().replace("{", "").replace("}", ""))
 
@@ -215,7 +217,8 @@ class PruefenBefehle:
         if self.ed:
             from lunivo_writer.editor import sendungen as S
             namen = {"Adressblock (Name, Straße, Ort)": "adresse", "Grußzeile (Anrede + Name)": "gruss", "Adressblock und Grußzeile": "beides"}
-            n, ok = QInputDialog.getItem(self.w, "Adressblock und Grußzeile", "Einfügen:", list(namen), 0, False)
+            from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+            n, ok = EingabeFenster.getItem(self.w, "Adressblock und Grußzeile", "Einfügen:", list(namen), 0, False)
             if ok:
                 S.adressblock_einfuegen(self.ed, namen[n])
 
@@ -302,7 +305,7 @@ class PruefenBefehle:
             return
 
         def danach(wort, lst, von, bis):
-            n, ok = QInputDialog.getItem(self.w, f"Wörter für „{wort}“", "Statt dessen:", lst, 0, False)
+            n, ok = EingabeFenster.getItem(self.w, f"Wörter für „{wort}“", "Statt dessen:", lst, 0, False)
             if ok:
                 self.ed.replace_range(von, bis, self._wie_geschrieben(wort, n))
         ki.thesaurus(danach)
@@ -334,7 +337,8 @@ class PruefenBefehle:
         aktuell = self.w.current_tab().meta.get("sprache") or self.w.settings.get("pruefsprache", "de-DE")
         namen = [n for _k, n in self.SPRACHEN]
         start = next((i for i, (kk, _n) in enumerate(self.SPRACHEN) if kk == aktuell), 0)
-        n, ok = QInputDialog.getItem(self.w, "Sprache für die Korrekturhilfen", "Sprache des Dokuments (wird in der Datei vermerkt).\n"
+        from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+        n, ok = EingabeFenster.getItem(self.w, "Sprache für die Korrekturhilfen", "Sprache des Dokuments (wird in der Datei vermerkt).\n"
                                      "Die Schreibhilfe selbst prüft weiter auf Deutsch.", namen, start, False)
         if ok:
             self.pruefsprache_setzen(self.SPRACHEN[namen.index(n)][0])

@@ -14,6 +14,7 @@ from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_la
 from lunivo_writer.ai import ki as K
 from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
 
 
@@ -679,7 +680,7 @@ ERGEBNIS_ARTEN = (("ersetzen", "Ersetzen (ersetzt den markierten Text durch das 
                   ("hinweis", "Als Hinweis zeigen (Karte in der Seitenleiste)"))
 
 
-class SchnelleAktionDialog(QDialog):
+class SchnelleAktionDialog(PanelFaehig, QDialog):
     """„Schnelle KI-Aktion erstellen“: eine einmalige KI-Aufgabe mit Name, Anweisung, Ergebnisart und Zugriff.
 
     Speichert als „Eigener Assistent“ (``KIKonfig.assistenten``) — dieselbe Liste wie im Band und in den Optionen."""
@@ -688,9 +689,9 @@ class SchnelleAktionDialog(QDialog):
         super().__init__(fenster)
         from PySide6.QtWidgets import QPlainTextEdit, QRadioButton
         self.setWindowTitle("Schnelle KI-Aktion erstellen")
-        self.setMinimumWidth(560)
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Eine schnelle KI-Aktion führt einmalige KI-Aufgaben aus."))
+        kopf = QLabel("Eine schnelle KI-Aktion führt einmalige KI-Aufgaben aus."); kopf.setWordWrap(True)
+        v.addWidget(kopf)
         v.addWidget(text_label("Mit einer Vorlage beginnen", fett=True))
         fl = QWidget(); fll = FlowLayout(fl)
         self.chipfeld = fl
@@ -747,7 +748,7 @@ class SchnelleAktionDialog(QDialog):
         return (self.name.text(), self.prompt.toPlainText(), self.ergebnis.currentData(), "schnell" if self.r_schnell.isChecked() else "kontext")
 
 
-class ErgebnisseDialog(QDialog):
+class ErgebnisseDialog(PanelFaehig, QDialog):
     """„Alle Ergebnisse anzeigen“: die KI-Antworten dieser Sitzung; Kopieren oder an der Schreibmarke einfügen."""
 
     def __init__(self, fenster):
@@ -755,17 +756,15 @@ class ErgebnisseDialog(QDialog):
         from PySide6.QtWidgets import QApplication, QPlainTextEdit
         self.fenster = fenster
         self.setWindowTitle("Alle Ergebnisse")
-        self.setMinimumSize(640, 420)
         self.liste_daten = list(reversed(fenster.ki.ergebnisse))                     # neueste oben
         v = QVBoxLayout(self)
-        z = QHBoxLayout()
         self.liste = QListWidget()
+        self.liste.setMaximumHeight(130)
         for e in self.liste_daten:
             self.liste.addItem(f"{e['zeit']}  {e['titel']}")
-        z.addWidget(self.liste, 1)
-        self.text = QPlainTextEdit(); self.text.setReadOnly(True)
-        z.addWidget(self.text, 2)
-        v.addLayout(z, 1)
+        v.addWidget(self.liste)
+        self.text = QPlainTextEdit(); self.text.setReadOnly(True); self.text.setMinimumHeight(160)
+        v.addWidget(self.text, 1)
         if not self.liste_daten:
             v.addWidget(QLabel("In dieser Sitzung hat die KI noch nichts geliefert."))
         bb = knopfzeile(self, schliessen=True)

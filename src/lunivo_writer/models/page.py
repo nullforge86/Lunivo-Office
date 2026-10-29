@@ -55,6 +55,9 @@ class PageSettings:
     diff_first: bool = False                 # „Erste Seite anders“
     first_header: HeaderFooter = field(default_factory=HeaderFooter)
     first_footer: HeaderFooter = field(default_factory=HeaderFooter)
+    diff_even: bool = False                  # „Gerade und ungerade Seiten sind unterschiedlich“: gerade Seiten haben eine eigene Kopf-/Fußzeile
+    even_header: HeaderFooter = field(default_factory=HeaderFooter)
+    even_footer: HeaderFooter = field(default_factory=HeaderFooter)
     spalten: int = 1                         # Textspalten (Seitenansicht, Druck, PDF; die Bearbeitungsansicht bleibt einspaltig)
     spalten_abstand_mm: float = 10.0
     spalten_linie: bool = False              # Trennlinie zwischen den Spalten
@@ -102,6 +105,22 @@ class PageSettings:
 
     ZEILE_KOPF_PX = 16.0                       # Höhe einer Zeile in Kopf-/Fußzeile (Schrift 11 pt mit Zeilenabstand)
 
+    def kopf_fuss_art(self, blatt: int, nummer: int) -> str:
+        """Welche Kopf-/Fußzeile ein Blatt trägt: "first" (Blatt 1 bei „Erste Seite anders“), "even" (gerade angezeigte Seitenzahl bei
+        „Gerade und ungerade Seiten unterschiedlich“) oder "" (die gewöhnliche). ``blatt`` ist 1-basiert, ``nummer`` die angezeigte Seitenzahl."""
+        if blatt == 1 and self.diff_first:
+            return "first"
+        if self.diff_even and nummer % 2 == 0:
+            return "even"
+        return ""
+
+    def kopf_fuss(self, blatt: int, nummer: int) -> tuple:
+        """(Kopfzeile, Fußzeile) für das Blatt, siehe ``kopf_fuss_art``."""
+        art = self.kopf_fuss_art(blatt, nummer)
+        if art:
+            return getattr(self, art + "_header"), getattr(self, art + "_footer")
+        return self.header, self.footer
+
     def erste_seite_versatz_px(self) -> float:
         """Wie weit der Text der ersten Seite nach unten rückt, weil die Kopfzeile länger ist als der obere Rand: Der Text beginnt erst unter der
         Kopfzeile (so machen es Word und andere). Gilt für die Kopfzeile der ersten Seite, bei „Erste Seite anders“ für die eigene."""
@@ -117,7 +136,9 @@ class PageSettings:
             self, header=HeaderFooter(self.header.text, self.header.align), footer=HeaderFooter(self.footer.text, self.footer.align),
             border=dict(self.border) if self.border else None, watermark=dict(self.watermark) if self.watermark else None,
             first_header=HeaderFooter(self.first_header.text, self.first_header.align),
-            first_footer=HeaderFooter(self.first_footer.text, self.first_footer.align), bilder=list(self.bilder))
+            first_footer=HeaderFooter(self.first_footer.text, self.first_footer.align),
+            even_header=HeaderFooter(self.even_header.text, self.even_header.align),
+            even_footer=HeaderFooter(self.even_footer.text, self.even_footer.align), bilder=list(self.bilder))
 
     @property
     def spalten_breite_px(self) -> float:

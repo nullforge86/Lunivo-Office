@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QVBoxLayout,
 )
 
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.editor import tabfuell
 from lunivo_writer.editor.indexeintrag import Eintrag
@@ -249,8 +250,7 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         self.loeschen.setEnabled(self.label.currentText() not in BESCHRIFTUNGEN)
 
     def _neu(self) -> None:
-        from PySide6.QtWidgets import QInputDialog
-        t, ok = QInputDialog.getText(self, "Neue Bezeichnung", "&Bezeichnung:")
+        t, ok = EingabeFenster.getText(self, "Neue Bezeichnung", "&Bezeichnung:")
         t = " ".join(t.split())
         if ok and t:
             if self.label.findText(t) < 0:

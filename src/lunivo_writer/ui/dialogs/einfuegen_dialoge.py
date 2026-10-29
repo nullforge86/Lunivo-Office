@@ -1,17 +1,19 @@
 """Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Datum, Textbausteine."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont, QPixmap
+import math
+
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem,
-    QSizePolicy, QVBoxLayout,
+    QSizePolicy, QVBoxLayout, QApplication, QWidget,
 )
 
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.ui.baukasten import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
 from lunivo_writer.services import bausteine
 
 
@@ -97,30 +99,121 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self._zeige(self.bild())
 
 
+class _LayoutGalerie(QWidget):
+    """Galerie der SmartArt-Layouts: Bildchen (selbst gezeichnet) in einem KachelFeld, die Spaltenzahl folgt der Breite."""
+    gewaehlt = Signal(str)
+    KACHEL = 52
+
+    def __init__(self, namen, zeichner, aktuell):
+        super().__init__()
+        self._namen, self._zeichner, self._aktuell, self._spalten = list(namen), zeichner, aktuell, 0
+        self._v = QVBoxLayout(self); self._v.setContentsMargins(0, 0, 0, 0)
+        self.feld = None
+        self._bauen(3)
+
+    def _bauen(self, spalten: int) -> None:
+        from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
+        if self.feld is not None:
+            self._v.removeWidget(self.feld); self.feld.deleteLater()
+        self._spalten = spalten
+        self.feld = KachelFeld(spalten=spalten, groesse=QSize(self.KACHEL, self.KACHEL * 3 // 4), mit_text=False)
+        for n in self._namen:
+            self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
+            self.feld.knoepfe[n].setAccessibleName(n)
+        self.feld.gewaehlt.connect(self._klick)
+        self.feld.setze(self._aktuell)
+        self._v.addWidget(self.feld)
+        self.updateGeometry()
+
+    def _klick(self, name: str) -> None:
+        self._aktuell = name
+        self.gewaehlt.emit(name)
+
+    def setze(self, name: str) -> None:
+        self._aktuell = name; self.feld.setze(name)
+
+    def aktuell(self) -> str:
+        return self._aktuell
+
+    def resizeEvent(self, ev) -> None:
+        super().resizeEvent(ev)
+        s = max(1, min(len(self._namen), (self.width() + 4) // (self.KACHEL + 14)))
+        if s != self._spalten:
+            self._bauen(s)
+
+
+_BILDCHEN: dict = {}
+
+
+def _layout_bildchen(p, r, name: str) -> None:
+    """Kleines Bild eines SmartArt-Layouts: die echte Zeichnung (``SA.zeichnen``) mit dem Mustertext, verkleinert."""
+    from PySide6.QtGui import QImage
+    from lunivo_writer.editor import smartart as SA
+    img = _BILDCHEN.get(name)
+    if img is None:
+        img = _BILDCHEN[name] = SA.zeichnen({"layout": name, "farben": "Blau", "text": SA.MUSTER.get(name, "")})
+    s = min((r.width() - 4) / img.width(), (r.height() - 4) / img.height())
+    w, h = img.width() * s, img.height() * s
+    p.setRenderHint(QPainter.SmoothPixmapTransform)
+    p.drawImage(QRectF(r.center().x() - w / 2, r.center().y() - h / 2, w, h), img)
+
+
 class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    """SmartArt anlegen oder bearbeiten: Layout, Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer)."""
+    """SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
+    Beim Bearbeiten (``daten`` gegeben) kommen Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer) dazu."""
+    BESCHREIBUNG = {
+        "Spalten": "Zeigt Gruppen mit ihren Unterpunkten nebeneinander in Spalten.",
+        "Gruppen": "Fasst zusammengehörige Punkte in umrahmten Gruppen zusammen.",
+        "Matrix": "Zeigt vier Teile in einem Quadrat, etwa für eine Stärken-Schwächen-Analyse.",
+        "Chevron": "Zeigt einen Ablauf als Reihe von Pfeilen, die nach rechts weisen.",
+        "Radial": "Zeigt Beziehungen zu einem zentralen Kern, um den die übrigen Punkte angeordnet sind.",
+        "Zielscheibe": "Zeigt Ebenen, die sich wie Ringe um ein Ziel in der Mitte legen.",
+        "Trichter": "Zeigt, wie sich Mengen in Stufen verringern, etwa vom Interesse zum Auftrag.",
+        "Zeitachse": "Zeigt Ereignisse oder Zeitpunkte entlang einer Linie.",
+        "Stufen": "Zeigt Schritte, die treppenartig aufeinander aufbauen.",
+        "Liste": "Zeigt nicht aufeinanderfolgende Informationen oder Gruppen von Informationen untereinander. Eingerückte Zeilen bilden Unterpunkte.",
+        "Prozess": "Zeigt die Schritte eines Ablaufs oder einer Zeitachse nacheinander, durch Pfeile verbunden.",
+        "Hierarchie": "Stellt hierarchische Informationen oder Berichtsbeziehungen dar, etwa den Aufbau einer Organisation. Eingerückte Zeilen sind untergeordnet.",
+        "Zyklus": "Zeigt einen fortlaufenden Prozess, dessen Schritte im Kreis wieder von vorn beginnen.",
+        "Pyramide": "Zeigt Beziehungen, die nach oben schmaler werden, etwa Grundlagen unten und Spitze oben.",
+    }
+
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
         from lunivo_writer.editor import smartart as SA
         self.SA = SA
-        self.setWindowTitle("SmartArt")
-        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
+        self.setWindowTitle("SmartArt-Grafik auswählen")
+        v = QVBoxLayout(self)
+        bearbeiten = bool(daten)
         daten = daten or {}
-        self.layout_ = QComboBox(); self.layout_.addItems(SA.LAYOUTS)
-        self.layout_.setCurrentText(daten.get("layout", "Prozess"))
+        start = daten.get("layout", "Prozess")
+        self.galerie = _LayoutGalerie(SA.LAYOUTS, _layout_bildchen, start)
+        v.addWidget(abschnittstitel("Layout")); v.addWidget(self.galerie)
+        self.name = QLabel(); self.name.setStyleSheet("font-weight: 600;")
+        self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
+        self.beschreibung.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
+        v.addWidget(self.name); v.addWidget(self.beschreibung)
+        self._vorschau_bauen(v)
         self.farben = QComboBox(); self.farben.addItems(list(SA.FARBEN))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
-        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[self.layout_.currentText()])
+        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
         self.text.setMinimumHeight(110)
-        f.zeile("Layout", self.layout_); f.zeile("Farben", self.farben)
+        self.bearbeiten = QWidget()
+        f = FormularGitter(); b = QVBoxLayout(self.bearbeiten); b.setContentsMargins(0, 0, 0, 0); b.addLayout(f)
+        f.zeile("Farben", self.farben)
         f.breit(QLabel("Text (eine Zeile je Punkt)")); f.breit(self.text)
-        self._vorschau_bauen(v)
+        v.addWidget(self.bearbeiten); self.bearbeiten.setVisible(bearbeiten)
+        v.addStretch(1)
         v.addWidget(_ok(self))
-        self.layout_.currentTextChanged.connect(self._layout)
+        self.galerie.gewaehlt.connect(self._layout)
         self.farben.currentTextChanged.connect(self.aktualisieren)
         self.text.textChanged.connect(self.aktualisieren)
         self._eigener_text = bool(daten.get("text"))
         self.aktualisieren()
+
+    @property
+    def layout_(self):
+        return self.galerie
 
     def _layout(self, name):
         if not self._eigener_text or self.text.toPlainText() in self.SA.MUSTER.values():
@@ -128,55 +221,70 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.aktualisieren()
 
     def daten(self):
-        return {"layout": self.layout_.currentText(), "farben": self.farben.currentText(), "text": self.text.toPlainText()}
+        return {"layout": self.galerie.aktuell(), "farben": self.farben.currentText(), "text": self.text.toPlainText()}
 
     def aktualisieren(self, *_):
-        self._zeige(self.SA.zeichnen(self.daten()))
+        d = self.daten()
+        self.name.setText(d["layout"]); self.beschreibung.setText(self.BESCHREIBUNG.get(d["layout"], ""))
+        self._zeige(self.SA.zeichnen(d))
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT):
-        """``stil`` und ``farbe`` kommen aus der Galerie (``E.WORDART_VORGABEN``)."""
+    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT, vorlage: int | None = None):
+        """``vorlage``: Nummer eines Galerie-Stils (``E.WORDART_VORLAGEN``); ohne sie gelten ``stil`` und ``farbe``."""
         super().__init__(parent)
         self.setWindowTitle("WordArt")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
+        self.vorlage = QComboBox(); self.vorlage.addItem("(eigener Stil)")
+        self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
+        self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
         self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
-        for lab, w in (("Text", self.text), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
+        for lab, w in (("Text", self.text), ("Formatvorlage", self.vorlage), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
             f.zeile(lab, w)
         self._vorschau_bauen(v); v.addWidget(_ok(self))
         self.text.textChanged.connect(self.aktualisieren); self.stil.currentTextChanged.connect(self.aktualisieren)
+        self.vorlage.currentIndexChanged.connect(self.aktualisieren)
         self.schrift.textChanged.connect(self.aktualisieren); self.pt.valueChanged.connect(self.aktualisieren)
         self.farbe.clicked.connect(self.aktualisieren)
         self.aktualisieren()
 
+    def vorlage_nr(self) -> int | None:
+        i = self.vorlage.currentIndex() - 1
+        return i if i >= 0 else None
+
     def bild(self):
         return E.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
-                              self.pt.value(), self.farbe.farbe)
+                              self.pt.value(), self.farbe.farbe, self.vorlage_nr())
 
     def aktualisieren(self, *_):
         self._zeige(self.bild())
 
 
-class DiagrammDatenDialog(QDialog):
+class DiagrammDatenDialog(PanelFaehig, QDialog):
     """Titel und Daten des Diagramms (Unterfenster von „Diagramm einfügen“): erste Spalte Rubriken, weitere Spalten Datenreihen."""
 
     def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
         super().__init__(parent)
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from PySide6.QtWidgets import QWidget
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
         self.setWindowTitle("Daten bearbeiten")
         v = QVBoxLayout(self)
-        f = QFormLayout(); self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); f.addRow("&Titel:", self.titel); v.addLayout(f)
+        kopf = QWidget(); g = FormularGitter(kopf)
+        self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); g.zeile("&Titel:", self.titel)
+        v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
+        self.tab.setMinimumHeight(180)
         for r, k in enumerate(kategorien):
             self.tab.setItem(r, 0, QTableWidgetItem(k))
             for c, werte in enumerate(reihen.values(), 1):
                 self.tab.setItem(r, c, QTableWidgetItem(f"{werte[r]:g}" if r < len(werte) else "0"))
         v.addWidget(self.tab)
-        z = QHBoxLayout()
+        z = FlussLayout(6)
         for text, fn in (("Zeile hinzufügen", lambda: self.tab.setRowCount(self.tab.rowCount() + 1)),
                          ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
                          ("Reihe hinzufügen", self._reihe_dazu),
@@ -337,31 +445,30 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Textbausteine")
         self.resize(840, 600)
         v = QVBoxLayout(self)
-        titel = QLabel("Textbausteine"); tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 3); titel.setFont(tf)
-        v.addWidget(titel)
-        kopf = QHBoxLayout()
-        kopf.addWidget(QLabel("Name:"))
-        self.name = QLineEdit(); kopf.addWidget(self.name, 1)
-        kopf.addWidget(QLabel("Kürzel:"))
-        self.kuerzel = QLineEdit(); self.kuerzel.setFixedWidth(110); kopf.addWidget(self.kuerzel)
-        v.addLayout(kopf)
-        z = QHBoxLayout()
+        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+        felder = FormularGitter(); v.addLayout(felder)
+        self.name = QLineEdit(); self.kuerzel = QLineEdit()
+        felder.zeile("Name:", self.name)
+        felder.zeile("Kürzel:", self.kuerzel)
+        v.addWidget(abschnittstitel("Bausteine"))
         self.liste = QListWidget(); self.liste.itemDoubleClicked.connect(lambda _: self._einfuegen())
         self.liste.currentItemChanged.connect(lambda *_: self._zeigen())
-        z.addWidget(self.liste, 1)
+        self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.liste.setWordWrap(True)
+        self.liste.setTextElideMode(Qt.ElideNone); self.liste.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self.liste.setMinimumHeight(150)
+        v.addWidget(self.liste, 3)
+        v.addWidget(abschnittstitel("Vorschau"))
         self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
-        z.addWidget(self.vorschau, 1)
-        v.addLayout(z, 1)
+        self.vorschau.document().setDocumentMargin(12); self.vorschau.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.vorschau.setMinimumHeight(150)
+        v.addWidget(self.vorschau, 4)
         h = QLabel("Eigene kommen aus dem Markierten, die übrigen sind mitgeliefert. «So gesetzte Stellen» sind Lücken: Tab springt von einer zur nächsten, Tippen ersetzt sie.")
-        h.setWordWrap(True); h.setStyleSheet("color: palette(mid); font-size: 9pt;")
+        h.setWordWrap(True); h.setStyleSheet("color: palette(mid); font-size: 9pt;"); h.setContentsMargins(0, 4, 0, 4)
         v.addWidget(h)
-        u = QHBoxLayout()
         self.aus_markierung = QPushButton("Aus Markierung …"); self.aus_markierung.clicked.connect(self._neu)
         self.loeschen = QPushButton("Löschen"); self.loeschen.clicked.connect(self._weg)
-        self.einfuegen_knopf = QPushButton("Einfügen"); self.einfuegen_knopf.setDefault(True); self.einfuegen_knopf.clicked.connect(self._einfuegen)
-        schliessen = QPushButton("Schließen"); schliessen.clicked.connect(self.reject)
-        u.addWidget(self.aus_markierung); u.addWidget(self.loeschen); u.addStretch(1); u.addWidget(schliessen); u.addWidget(self.einfuegen_knopf)
-        v.addLayout(u)
+        self.einfuegen_knopf = fussleiste(self, v, self.aus_markierung, self.loeschen, nur_ok=True, ok_text="Einfügen", bei_ok=self._einfuegen)
         self._fuellen()
 
     def _fuellen(self, wahl: str | None = None) -> None:

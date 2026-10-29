@@ -260,6 +260,7 @@ class SpaltenBaustein:
                 alpha = int(26 * (1 - t) ** 2 + 2)
                 p.fillRect(QRectF(blatt.left() + i * 0.5, blatt.bottom(), blatt.width() - i, i), QColor(16, 24, 40, alpha))
             p.fillRect(blatt, papier)
+            self._deckblatt_grafik(p, k, blatt)                              # Grafik eines Deckblatts liegt hinter dem Text
         if self.page.border and not self.page.border.get("vordergrund", True):      # Seitenrahmen hinter dem Text
             from lunivo_writer.editor.pagination import seitenschmuck
             z = self.zoom
@@ -543,6 +544,16 @@ class SpaltenBaustein:
             self._wz_schl, self._wz_liste = schl, liste
         return self._wz_liste
 
+    def _deckblatt_grafik(self, p: QPainter, k: int, blatt: QRectF) -> None:
+        """Ganzseitiges Bild (Deckblatt, ``editor/deckblatt.py``) des Blattes ``k`` auf die Blattfläche, vor dem Text."""
+        if self.web:
+            return
+        je_blatt = self._wasserzeichen_je_blatt()
+        w = je_blatt[min(k, len(je_blatt) - 1)] if je_blatt else self.page.watermark
+        if (w or {}).get("ganzseitig"):
+            from lunivo_writer.editor import wasserzeichen as WZ
+            WZ.zeichnen(p, w, blatt)
+
     def _schmuck_zeichnen(self, p: QPainter) -> None:
         pg, z = self.page, self.zoom
         je_blatt = None if self.web else self._wasserzeichen_je_blatt()
@@ -558,6 +569,8 @@ class SpaltenBaustein:
             bp = bk["pg"]
             if je_blatt:
                 bp = bp.copy(); bp.watermark = je_blatt[min(k, len(je_blatt) - 1)]
+            if (bp.watermark or {}).get("ganzseitig"):                       # schon hinter dem Text gezeichnet (_deckblatt_grafik)
+                bp = bp.copy(); bp.watermark = None
             p.save()
             p.scale(z, z)
             seitenschmuck(p, bp, False, QRectF(bk["x"] / z, a / z, bk["W"] / z, (b - a) / z), "vorn")

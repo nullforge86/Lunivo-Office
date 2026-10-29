@@ -291,12 +291,32 @@ class EinfuegenBefehle:
 
 
     def sonderzeichen(self, k=None):
+        """Fenster „Symbol“ (Weitere Symbole …) in der Seitenleiste; „Einfügen“ setzt das Zeichen an die Schreibmarke."""
         from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
         e = self.ed
         if e:
-            d = SonderzeichenDialog(self.w, lambda z: (e.insertPlainText(z), self._symbol_merken(z)))
-            d.show()
-            self._sz = d
+            SonderzeichenDialog(self.w, e.insertPlainText, self._symbol_daten(), bei_tasten=self.symbol_tasten_anwenden).exec()
+
+
+    def _symbol_daten(self):
+        """Die eine Datenbasis von Klappe und Fenster „Symbol“: zuletzt verwendet, benutzerdefinierte Liste, Tastenkombinationen."""
+        from lunivo_writer.ui.dialogs.sonderzeichen import SymbolDaten
+        return SymbolDaten(self.w.settings, self.BENUTZER_SYMBOLE, self.ZULETZT_ANZAHL)
+
+
+    def symbol_tasten_anwenden(self) -> None:
+        """Tastenkombinationen der benutzerdefinierten Symbole als Kürzel des Hauptfensters setzen (alte werden ersetzt)."""
+        from PySide6.QtGui import QKeySequence, QShortcut
+        for sc in getattr(self, "_symbol_kuerzel", []):
+            sc.setEnabled(False); sc.deleteLater()
+        self._symbol_kuerzel = []
+        daten = self._symbol_daten()
+        sichtbar = set(daten.sichtbar())
+        for z, t in daten.tasten().items():
+            if z in sichtbar and t:
+                sc = QShortcut(QKeySequence(t), self.w)
+                sc.activated.connect(lambda z=z: self._symbol_einfuegen(z))
+                self._symbol_kuerzel.append(sc)
 
 
     # ---- Klappmenüs nach den WPS-Vorlagen (Ordner einfuegen/) ------------------------------------------------------------
@@ -316,14 +336,14 @@ class EinfuegenBefehle:
         """Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Seitenumbruch", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
-        m.eintrag("Spaltenumbruch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
-        m.eintrag("Textflussumbruch", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
+        m.eintrag("Seitenumbruch(&P)", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
+        m.eintrag("Spaltenumbr&uch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
+        m.eintrag("Textflussumbruch(&W)", self.textflussumbruch, symbol=self._sym("textflussumbruch"), kuerzel="Umschalt+Enter")
         m.trenner()
-        for art, text, sym in (("NextPage", "Abschnittsumbruch auf nächster Seite", "abschnitt"),
-                               ("Continuous", "Fortlaufender Abschnittsumbruch", "abschnittlaufend"),
-                               ("EvenPage", "Abschnittsumbruch auf gerader Seite", "abschnittgerade"),
-                               ("OddPage", "Abschnittsumbruch auf ungerader Seite", "abschnittungerade")):
+        for art, text, sym in (("NextPage", "Abschnittsumbruch von &nächster Seite", "abschnitt"),
+                               ("Continuous", "Fortlaufenden Abschni&ttsumbruch", "abschnittlaufend"),
+                               ("EvenPage", "Abschnittsumbruch von &gerader Seite", "abschnittgerade"),
+                               ("OddPage", "Abschnittsumbruch v&on ungerader Seite", "abschnittungerade")):
             m.eintrag(text, lambda a=art: self.abschnittsumbruch(None, a), symbol=self._sym(sym))
         return m
 
@@ -331,8 +351,8 @@ class EinfuegenBefehle:
     def menue_leereSeiteKlappe(self):
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
-        m.eintrag("Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
-        m.eintrag("Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
+        m.eintrag("&Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
+        m.eintrag("&Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
         return m
 
 
@@ -343,10 +363,10 @@ class EinfuegenBefehle:
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
-        m.addAction(self._sym("tabelle"), "Tabelle einfügen …", self.tabelleRaster)
-        m.addAction(self._sym("stift"), "Tabelle zeichnen", self.tabelleZeichnen)
-        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln …", self.textInTabelle)
-        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren …", self.tabelleInText)
+        m.addAction(self._sym("tabelle"), "Tabelle e&infügen", self.tabelleRaster)
+        m.addAction(self._sym("tabelleZeichnen"), "Tabelle zeichnen(&W)", self.tabelleZeichnen)
+        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln...", self.textInTabelle)
+        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren...", self.tabelleInText)
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None
@@ -487,10 +507,12 @@ class EinfuegenBefehle:
         for i in range(self.ZULETZT_ANZAHL):
             m.kachel(f"zuletzt{i}")
         m.abschnitt("Benutzerdefinierte Symbole:")
-        m.kacheln([(z, f"„{z}“ einfügen", textkachel(z)) for z in self.BENUTZER_SYMBOLE])
+        m.kacheln([(z, f"„{z}“ einfügen", textkachel(z)) for z in self._symbol_daten().sichtbar()])
         m.fuss("Weitere Symbole …", self.sonderzeichen)
         for b in m.knoepfe.values():
             b.setCheckable(False)
+        if not hasattr(self, "_symbol_kuerzel"):
+            self.symbol_tasten_anwenden()                        # Tastenkombinationen der Symbole gelten ab dem ersten Öffnen der Klappe
         belegt: dict[str, str] = {}
 
         def auffrischen():
@@ -510,18 +532,11 @@ class EinfuegenBefehle:
 
 
     def _symbole_zuletzt(self) -> list[str]:
-        import json
-        try:
-            liste = json.loads(str(self.w.settings.get(self.ZULETZT_SYMBOLE, "") or "[]"))
-        except ValueError:
-            return []
-        return [z for z in liste if isinstance(z, str) and z] if isinstance(liste, list) else []
+        return self._symbol_daten().zuletzt()
 
 
     def _symbol_merken(self, z: str) -> None:
-        liste = [z] + [x for x in self._symbole_zuletzt() if x != z]
-        import json
-        self.w.settings.set(self.ZULETZT_SYMBOLE, json.dumps(liste[:self.ZULETZT_ANZAHL], ensure_ascii=False))
+        self._symbol_daten().merken(z)
 
 
     def _symbol_einfuegen(self, z: str) -> None:
@@ -697,27 +712,59 @@ class EinfuegenBefehle:
 
 
     def wordartVorgabe(self, k=None, nr=0):
-        """WordArt aus der Galerie: das Fenster öffnet mit Stil und Farbe der Vorlage (und dem markierten Text)."""
+        """WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil ein, markiert es und zeigt die
+        Form- und WordArt-Tools; der Text ändert sich über „WordArt bearbeiten …“ (oder Einfügen ▸ WordArt …)."""
         if not self.ed:
             return
         from lunivo_writer.editor import einfuegen as E
+        from PySide6.QtGui import QTextCursor
+        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or E.WORDART_STANDARDTEXT
+        self._bild_einfuegen(E.wordart_bild(text, vorlage=nr, pt=36), "WordArt: " + text, "wordart",
+                             {"text": text, "vorlage": nr, "pt": 36})
+        c = self.ed.textCursor()
+        c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)       # das eben eingefügte Bild markieren
+        self.ed.setTextCursor(c)
+        self.w._sync_format()
+
+
+    def wordartBearbeiten(self, k=None):
+        """Text und Stil des markierten WordArt-Objekts im Fenster „WordArt“ ändern."""
+        if not self.ed:
+            return
+        from lunivo_writer.editor import einfuegen as E, formen
         from lunivo_writer.ui.dialogs.einfuegen_dialoge import WordArtDialog
-        _n, stil, farbe = E.WORDART_VORGABEN[nr]
-        markiert = self.ed.textCursor().selectedText().replace("\u2029", " ").strip()
-        d = WordArtDialog(self.w, markiert, stil, farbe)
+        c = self.ed._bild_cursor()
+        f = c.charFormat().toImageFormat() if c is not None else None
+        o = formen.objekt(f)
+        if not o or o.get("art") != "wordart":
+            self.w.lbl_msg.setText("Bitte zuerst ein WordArt-Objekt markieren.")
+            return
+        daten = o.get("daten", {})
+        d = WordArtDialog(self.w, daten.get("text", E.WORDART_STANDARDTEXT), vorlage=daten.get("vorlage"))
         if d.exec():
-            self._bild_einfuegen(d.bild(), "WordArt: " + d.text.text(), "wordart", {"text": d.text.text()})
+            img = d.bild()
+            neu = {"art": "wordart", "daten": {"text": d.text.text(), "vorlage": d.vorlage_nr()}}
+            maxw = self.ed.page.content_width_px
+            formen._ersetzen(self.ed, c, img, neu, f, img.width() * min(1.0, maxw / img.width()), img.height() * min(1.0, maxw / img.width()))
+            self.w._sync_format()
 
 
     def menue_wordartKlappe(self):
-        from PySide6.QtCore import QSize
-        from PySide6.QtGui import QPixmap
+        """Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in WPS, auch im dunklen Thema gut zu erkennen)."""
+        from PySide6.QtCore import QRectF, QSize
+        from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=6, groesse=QSize(44, 44))
-        for i, (name, stil, farbe) in enumerate(E.WORDART_VORGABEN):
-            img = E.wordart_bild("A", stil, pt=110, farbe=farbe)
-            b = m.kachel(str(i), name, QPixmap.fromImage(img).scaled(44, 44, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=8, groesse=QSize(40, 40))
+        for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
+            img = E.wordart_bild("A", vorlage=i, pt=80)
+            pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
+            p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.setBrush(QColor("#f3f4f6")); p.setPen(QPen(QColor("#d0d4d9"), 1)); p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 4, 4)
+            z = img.scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            p.drawImage((40 - z.width()) // 2, (40 - z.height()) // 2, z)
+            p.end()
+            b = m.kachel(str(i), name, pm)
             b.setCheckable(False)
         m.gewaehlt.connect(lambda schl: self.wordartVorgabe(None, int(schl)))
         return m
@@ -746,27 +793,71 @@ class EinfuegenBefehle:
 
 
     def menue_deckblattKlappe(self):
-        """Deckblätter als Seitenbilder; ein Klick setzt das Deckblatt mit Platzhaltern an den Anfang des Dokuments."""
-        from PySide6.QtCore import QSize
-        from lunivo_writer.editor import einfuegen as E
+        """Deckblätter wie in der Vorlage: Kopf „Stil“ mit Hochformat/Querformat, darunter die Gestaltungen als Seitenbilder in vier Spalten
+        (rollend). Ein Klick setzt das Deckblatt als ersten Abschnitt an den Anfang (ersetzt ein vorhandenes)."""
+        from PySide6.QtCore import QRectF, QSize
+        from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+        from PySide6.QtWidgets import QButtonGroup, QHBoxLayout, QLabel, QToolButton, QWidget
+        from lunivo_writer.core.farben import Farbe
+        from lunivo_writer.editor import deckblatt as DB
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        from lunivo_writer.ui.baukasten.seiten_bildchen import deckblatt_zeichner
-        m = RasterAuswahl(self.w, titel="Integriert", spalten=4, groesse=QSize(96, 130), beschriftet=True)
-        for v in E.DECKBLATT_VORLAGEN:
-            m.kachel(v, v, deckblatt_zeichner(v)).setCheckable(False)
-        m.gewaehlt.connect(self.deckblattVorlage)
-        m.fuss("Deckblatt mit eigenen Angaben …", self.deckblatt)
+        HOCH, QUER = QSize(130, 184), QSize(184, 130)
+        m = RasterAuswahl(self.w, spalten=4, groesse=HOCH, hoehe_max=640)
+
+        def zeichner(name):
+            def f(p: QPainter, r: QRectF) -> None:
+                p.setPen(QColor("#c8c8c8")); p.drawRect(r.adjusted(0.5, 0.5, -0.5, -0.5))
+                DB.zeichnen(p, name, r.adjusted(1, 1, -1, -1))
+            return f
+
+        def fuellen(quer: bool) -> None:
+            m.leeren(QUER if quer else HOCH)
+            m.quer = quer
+            for name in DB.NAMEN:
+                m.kachel(name, f"{name} ({DB.gestaltung(name).gruppe})", zeichner(name)).setCheckable(False)
+            if m.isVisible():
+                m.neu_messen()
+
+        def symbol(senkrecht: bool) -> QIcon:
+            pm = QPixmap(16, 16); pm.fill(Qt.transparent)
+            p = QPainter(pm); p.setPen(QColor(Farbe.AKZENT))
+            for i in range(3):
+                (p.drawLine(4 + i * 4, 2, 4 + i * 4, 13) if senkrecht else p.drawLine(2, 4 + i * 4, 13, 4 + i * 4))
+            p.end()
+            return QIcon(pm)
+        kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(2, 0, 2, 4)
+        h.addWidget(QLabel("Stil")); h.addStretch(1)
+        gruppe = QButtonGroup(kopf)
+        for text, quer in (("Hochformat", False), ("Querformat", True)):
+            k = QToolButton(); k.setText(text); k.setIcon(symbol(not quer)); k.setCheckable(True); k.setAutoRaise(True)
+            k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setChecked(not quer); k.setAccessibleName(f"Deckblätter im {text}")
+            k.clicked.connect(lambda _c=False, q=quer: fuellen(q))
+            gruppe.addButton(k); h.addWidget(k)
+        m.kopf(kopf)
+        fuellen(False)
+        m.gewaehlt.connect(lambda name: self.deckblattVorlage(name, quer=m.quer))
         return m
 
 
-    def deckblattVorlage(self, k=None, vorlage=None):
-        """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Farbband"]``."""
+    def deckblattVorlage(self, k=None, vorlage=None, quer=False):
+        """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Sonne"]``."""
         if not self.ed:
             return
-        from lunivo_writer.editor import einfuegen as E
-        name = vorlage or (k if isinstance(k, str) and k in E.DECKBLATT_VORLAGEN else "Schlicht")
-        E.deckblatt_einfuegen(self.ed, name, "[Titel des Dokuments]", "[Untertitel]", self.w.settings.get("benutzer/name", "") or "[Autor]",
-                              E.datum_text("d. MMMM yyyy"))
+        from lunivo_writer.editor import deckblatt as DB
+        name = vorlage or (k if isinstance(k, str) and k in DB.NAMEN else DB.NAMEN[0])
+        DB.einfuegen(self.ed, name, quer)
+        self.ed._recount(); self.ed.viewport().update()
+        c = self.ed.textCursor(); c.setPosition(0); self.ed.setTextCursor(c)
+        self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
+
+
+    def menue_diagrammKlappe(self):
+        """Klappe am Diagramm-Knopf: Diagramm … (Fenster) und Neuer Zeichenbereich."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Diagramm …", self.diagramm, symbol=self._sym("saeule"))
+        m.eintrag("Neuer Zeichenbereich", self.zeichenbereich, symbol=self._sym("textrahmen"))
+        return m
 
 
     def diagramm(self, k=None):

@@ -5,7 +5,7 @@ import os
 import pytest
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QImage, QTextCursor
-from PySide6.QtWidgets import QColorDialog, QDialog, QFileDialog, QInputDialog, QMenu, QMessageBox
+from PySide6.QtWidgets import QColorDialog, QDialog, QFileDialog, QMenu, QMessageBox
 
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.services.settings_service import Settings

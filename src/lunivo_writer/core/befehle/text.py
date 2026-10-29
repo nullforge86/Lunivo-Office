@@ -69,7 +69,7 @@ class TextBefehle:
                                maler=lambda p, x0, y, x1, farbe, a=art: unter_zeichnen(p, x0, y, x1, a, farbe))
         m.trenner()
         m.eintrag("Mehr Unterstreichungen …", self.schriftartMehr)                  # das Fenster „Schriftart“ mit allen Arten und der Farbe der Linie
-        pal = FarbPalette(m, keine_text="Automatisch", weitere_text="Weitere Unterstreichungsfarben …", titel="Unterstreichungsfarbe")
+        pal = FarbPalette(m, keine_text="Automatisch", weitere_text="Weitere Unterstreichungsfarben …", titel="Unterstreichungsfarbe", pipette=False)
         pal.setTitle("Unterstreichungsfarbe")
         pal.gewaehlt.connect(lambda c: self.ed and self._unterfarbe(c))
         m.addMenu(pal)

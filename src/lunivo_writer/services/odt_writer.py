@@ -68,8 +68,10 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
         rahmen_stile.append(_frei_stil(f"KF{nr}", a))
         rahmen[a["ort"]] = rahmen.get(a["ort"], "") + _frei_rahmen(a, a["bild"], 100 + nr, f"KF{nr}", bilder)
     da = lambda hf, ort: not hf.is_empty() or ort in rahmen                 # noqa: E731
-    kopf = da(page.header, "kopf") or (page.diff_first and da(page.first_header, "kopf1"))
-    fuss = da(page.footer, "fuss") or (page.diff_first and da(page.first_footer, "fuss1"))
+    kopf = da(page.header, "kopf") or (page.diff_first and da(page.first_header, "kopf1")) \
+        or (page.diff_even and not page.even_header.is_empty())
+    fuss = da(page.footer, "fuss") or (page.diff_first and da(page.first_footer, "fuss1")) \
+        or (page.diff_even and not page.even_footer.is_empty())
     # ODF misst den oberen Rand bis zur Kopfzeile; Lunivo (wie Word) bis zum Text. Mit Kopfzeile: Rand = Kopfabstand,
     # Kopfzeilenbereich = Rest bis zum Text.
     rand_oben = min(page.kopf_abstand_mm, page.margin_top_mm) if kopf else page.margin_top_mm
@@ -83,20 +85,25 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
     from lunivo_writer.editor import seitenzahl as SZ
     # „außen“/„innen“: rechte (ungerade) Seiten in style:header, linke (gerade) in style:header-left mit gespiegelter Ausrichtung
     for name, hf, n in (("Kopf", page.header, 1), ("Fuss", page.footer, 1), ("KopfErste", page.first_header, 1),
-                        ("FussErste", page.first_footer, 1), ("KopfLinks", page.header, 2), ("FussLinks", page.footer, 2)):
+                        ("FussErste", page.first_footer, 1), ("KopfLinks", page.header, 2), ("FussLinks", page.footer, 2),
+                        ("KopfGerade", page.even_header, 2), ("FussGerade", page.even_footer, 2)):
         stile.append(f'<style:style style:name="Lunivo{name}" style:family="paragraph"><style:paragraph-properties '
                      f'fo:text-align="{_AUSRICHTUNG.get(SZ.ausrichtung(hf.align, n), "center")}"/></style:style>')
     gespiegelt = lambda hf: hf.align in ("aussen", "innen") and not hf.is_empty()          # noqa: E731
     seite = []
     if da(page.header, "kopf"):
         seite.append(f"<style:header>{_absatz(page.header, 'LunivoKopf', rahmen.get('kopf', ''))}</style:header>")
-    if gespiegelt(page.header):
+    if page.diff_even and not page.even_header.is_empty():
+        seite.append(f"<style:header-left>{_absatz(page.even_header, 'LunivoKopfGerade', '')}</style:header-left>")
+    elif gespiegelt(page.header):
         seite.append(f"<style:header-left>{_absatz(page.header, 'LunivoKopfLinks', rahmen.get('kopf', ''))}</style:header-left>")
     if page.diff_first and kopf:
         seite.append(f"<style:header-first>{_absatz(page.first_header, 'LunivoKopfErste', rahmen.get('kopf1', ''))}</style:header-first>")
     if da(page.footer, "fuss"):
         seite.append(f"<style:footer>{_absatz(page.footer, 'LunivoFuss', rahmen.get('fuss', ''))}</style:footer>")
-    if gespiegelt(page.footer):
+    if page.diff_even and not page.even_footer.is_empty():
+        seite.append(f"<style:footer-left>{_absatz(page.even_footer, 'LunivoFussGerade', '')}</style:footer-left>")
+    elif gespiegelt(page.footer):
         seite.append(f"<style:footer-left>{_absatz(page.footer, 'LunivoFussLinks', rahmen.get('fuss', ''))}</style:footer-left>")
     if page.diff_first and fuss:
         seite.append(f"<style:footer-first>{_absatz(page.first_footer, 'LunivoFussErste', rahmen.get('fuss1', ''))}</style:footer-first>")

@@ -1326,6 +1326,9 @@ class _Reader:
                 hf, gerade = getattr(ps, attr), self._hf(teil)
                 if hf.text and gerade.text == hf.text and {hf.align, gerade.align} == {"left", "right"}:
                     hf.align = "aussen" if hf.align == "right" else "innen"
+                elif not teil.is_linked_to_previous and (gerade.text != hf.text or gerade.align != hf.align):
+                    ps.diff_even = True                          # eigene Zeilen für gerade Seiten
+                    setattr(ps, "even_" + attr, gerade)
         except Exception:                                                  # noqa: BLE001
             pass
 
@@ -1349,9 +1352,21 @@ class _Reader:
         lines, align = [], "left"
         for i, p in enumerate(part.paragraphs):
             txt = ""
+            seite_feld = ueberspringen = False                       # der zwischengespeicherte Wert eines Seitenzahlfeldes ist kein Text
             for el in p._p.iter():
+                if el.tag == qn("w:fldChar"):
+                    art = el.get(qn("w:fldCharType"))
+                    if art == "begin":
+                        seite_feld = ueberspringen = False
+                    elif art == "separate":
+                        ueberspringen = seite_feld
+                    elif art == "end":
+                        seite_feld = ueberspringen = False
+                elif el.tag == qn("w:instrText") and "PAGE" in (el.text or "").upper():
+                    seite_feld = True
                 if el.tag == qn("w:t"):
-                    txt += el.text or ""
+                    if not ueberspringen:
+                        txt += el.text or ""
                 elif el.tag == qn("w:tab"):
                     txt += "\t"
                 elif el.tag == qn("w:instrText") and "PAGE" in (el.text or "").upper() \

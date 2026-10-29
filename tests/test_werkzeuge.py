@@ -6,7 +6,8 @@ import pypdf
 import pytest
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QColor, QImage, QTextCursor, QTextDocument
-from PySide6.QtWidgets import QFileDialog, QInputDialog
+from PySide6.QtWidgets import QFileDialog
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 
 from lunivo_writer.services import docx_reader, docx_writer
 from lunivo_writer.editor import einfuegen as E
@@ -58,7 +59,7 @@ def test_tabelle_sortieren_und_eigenschaften(app, tmp_path, monkeypatch):
     t.setFormat(_mit_kopf(t))
     c = t.cellAt(1, 0).firstCursorPosition(); e.setTextCursor(c)
     antworten = iter([("Spalte 2", True), ("Aufsteigend", True)])
-    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(lambda *a, **k: next(antworten)))
+    monkeypatch.setattr(EingabeFenster, "getItem", staticmethod(lambda *a, **k: next(antworten)))
     w.befehle.tabelleSortieren()
     spalte2 = [t.cellAt(r, 1).firstCursorPosition().block().text() for r in range(4)]
     assert spalte2 == ["Zahl", "9", "10", "100"]                     # numerisch, Kopfzeile bleibt oben
@@ -168,8 +169,8 @@ def test_dokument_schuetzen_und_abschnittsumbruch(app, tmp_path, monkeypatch):
     w = win(tmp_path)
     t = w.current_tab()
     wahl = iter([("Kennwort zum Öffnen setzen / ändern …", True)])
-    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(lambda *a, **k: next(wahl)))
-    monkeypatch.setattr(QInputDialog, "getText", staticmethod(lambda *a, **k: ("geheim", True)))
+    monkeypatch.setattr(EingabeFenster, "getItem", staticmethod(lambda *a, **k: next(wahl)))
+    monkeypatch.setattr(EingabeFenster, "getText", staticmethod(lambda *a, **k: ("geheim", True)))
     w.befehle.dokumentSchuetzen()
     assert t.meta["kennwort"] == "geheim"
     w.befehle.abschnittsumbruch(None, "NextPage")

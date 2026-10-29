@@ -32,7 +32,7 @@ def bauen(register: dict) -> dict:
             nimm("Tabelle einfügen", name="Tabelle", gross=True)]},
         {"name": "Illustrationen", "reihenfolge": True, "knoepfe": [
             nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True, tun=None, klappe="formenKlappe"),
-            nimm("Diagramm", text=True), nimm("SmartArt", text=True)]},
+            nimm("Diagramm", text=True, klappe="diagrammKlappe"), nimm("SmartArt", text=True)]},
         {"name": "Kommentar", "reihenfolge": True, "knoepfe": [dict(kommentar, name="Kommentar", gross=True)]},
         {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
             nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=True, tun=None),

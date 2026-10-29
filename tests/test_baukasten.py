@@ -336,8 +336,10 @@ def test_tabellenmenue_fuegt_tabelle_ein(app, tmp_path):
     m.waehle(2, 3)
     t = e.textCursor().currentTable()
     assert t is not None and t.rows() == 2 and t.columns() == 3
-    assert [a.text() for a in m.actions() if a.text()] == ["Tabelle einfügen …", "Tabelle zeichnen", "Text in Tabelle umwandeln …",
-                                                           "Tabelle in Text konvertieren …"]
+    assert [a.text().replace("&", "") for a in m.actions() if a.text()] == [
+        "Tabelle einfügen", "Tabelle zeichnen(W)", "Text in Tabelle umwandeln...", "Tabelle in Text konvertieren..."]
+    m.aboutToShow.emit()                                     # in der Tabelle: nur „Tabelle in Text“ wählbar, wie in WPS
+    assert [a.isEnabled() for a in m.actions() if a.text()][2:] == [False, True]
     assert (m.gitter.zeilen, m.gitter.spalten) == (10, 10)
     _zu(w)
 
@@ -1625,3 +1627,22 @@ def test_seitenleisten_seiten_passen_in_echte_groesse(app):
             assert unten <= sa.viewport().height(), (type(d).__name__, i, unten, sa.viewport().height())
             assert rechts <= sa.viewport().width(), (type(d).__name__, i, rechts)
         p.close()
+
+
+def test_smart_anordnen_ist_ein_rueckgaengig_schritt(app):
+    from lunivo_writer.editor import wortextras as W
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("Zweiter  Absatz.\n\n\nDritter.")
+    vorher = ed.toPlainText()
+    W.smart_anordnen(ed)
+    assert ed.toPlainText() != vorher
+    ed.document().undo()
+    assert ed.toPlainText() == vorher
+    assert not ed.document().firstBlock().blockFormat().textIndent()           # auch der Einzug ist mit einem Schritt weg
+
+
+def test_farbpalette_pipette_abschaltbar(app):
+    from PySide6.QtWidgets import QPushButton
+    namen = lambda p: [b.text() for b in p.findChildren(QPushButton)]          # noqa: E731
+    assert "Pipette" in namen(FarbPalette())
+    assert "Pipette" not in namen(FarbPalette(pipette=False))

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.models.page import HeaderFooter
-from PySide6.QtWidgets import QInputDialog, QMenu
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from PySide6.QtWidgets import QMenu
 from lunivo_writer.core.farben import Farbe
 
 
@@ -592,7 +592,7 @@ class SeiteBefehle:
         if nr > 0:
             namen = list(AB.TYPEN.values())
             ab = AB.umbrueche(e.document())[nr - 1]
-            gewaehlt, ok = QInputDialog.getItem(self.w, f"Abschnitt {nr + 1}", "Der Abschnitt beginnt:", namen,
+            gewaehlt, ok = EingabeFenster.getItem(self.w, f"Abschnitt {nr + 1}", "Der Abschnitt beginnt:", namen,
                                                 list(AB.TYPEN).index(ab[1]), False)
             if ok:
                 typ = list(AB.TYPEN)[namen.index(gewaehlt)]
@@ -665,10 +665,6 @@ class SeiteBefehle:
     def fusszeileBearbeiten(self, k=None): self.w.edit_header_footer(False)
 
 
-    def kopfFussSchliessen(self, k=None):
-        self.w.statusBar().showMessage("Kopf- und Fußzeile werden über Dialoge bearbeitet — es gibt nichts zu schließen.", 4000)
-
-
     def ersteSeiteAnders(self, k=None):
         t = self.w.current_tab()
         if not t:
@@ -680,6 +676,26 @@ class SeiteBefehle:
         t.editor.page_settings_changed(pg)
 
 
+    def geradeUngerade(self, k=None):
+        """„Gerade und ungerade Seiten sind unterschiedlich“: gerade Seiten bekommen eine eigene Kopf-/Fußzeile (zuerst eine Kopie der gewöhnlichen)."""
+        t = self.w.current_tab()
+        if not t:
+            return
+        pg = t.editor.abschnitt_seite()
+        pg.diff_even = not pg.diff_even
+        if pg.diff_even and pg.even_header.is_empty() and pg.even_footer.is_empty():
+            pg.even_header = HeaderFooter(pg.header.text, pg.header.align); pg.even_footer = HeaderFooter(pg.footer.text, pg.footer.align)
+        t.editor.page_settings_changed(pg)
+        b = t.editor.kopffuss()
+        if b is not None and b.aktiv:
+            b._laden()
+
+
+    def an_geradeUngerade(self):
+        t = self.w.current_tab()
+        return bool(t and t.editor.abschnitt_seite().diff_even)
+
+
     def an_ersteSeiteAnders(self):
         t = self.w.current_tab()
         return bool(t and t.editor.abschnitt_seite().diff_first)
@@ -689,26 +705,17 @@ class SeiteBefehle:
         t = self.ed.textCursor().currentTable() if self.ed else None
         if t is None:
             return
-        from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout, QSpinBox
         from PySide6.QtGui import QTextLength
+        from lunivo_writer.ui.dialogs.dokument_dialoge import TabellenEigenschaftenDialog
         fm = t.format()
-        d = QDialog(self.w); d.setWindowTitle("Tabelleneigenschaften")
-        form = QFormLayout(d)
-        breite = QSpinBox(); breite.setRange(10, 100); breite.setSuffix(" % der Textbreite"); breite.setValue(int(fm.width().rawValue()) if fm.width().type() == QTextLength.PercentageLength else 100)
-        ausr = QComboBox(); ausr.addItems(["Links", "Zentriert", "Rechts"])
-        ausr.setCurrentIndex(1 if fm.alignment() & Qt.AlignHCenter else 2 if fm.alignment() & Qt.AlignRight else 0)
-        rand = QDoubleSpinBox(); rand.setRange(0, 10); rand.setSingleStep(0.25); rand.setValue(fm.border()); rand.setSuffix(" pt")
-        pad = QDoubleSpinBox(); pad.setRange(0, 30); pad.setValue(fm.cellPadding()); pad.setSuffix(" px")
-        kopf = QCheckBox("Erste Zeile ist Kopfzeile (wiederholt sich auf jeder Seite)"); kopf.setChecked(fm.headerRowCount() > 0)
-        for lab, w in (("Breite", breite), ("Ausrichtung", ausr), ("Rahmenstärke", rand), ("Zellenabstand innen", pad)):
-            form.addRow(lab, w)
-        form.addRow(kopf)
-        bb = knopfzeile(d)
-        form.addRow(bb)
+        d = TabellenEigenschaftenDialog(
+            self.w, int(fm.width().rawValue()) if fm.width().type() == QTextLength.PercentageLength else 100,
+            1 if fm.alignment() & Qt.AlignHCenter else 2 if fm.alignment() & Qt.AlignRight else 0,
+            fm.border(), fm.cellPadding(), fm.headerRowCount() > 0)
         if d.exec():
-            fm.setWidth(QTextLength(QTextLength.PercentageLength, breite.value()))
-            fm.setAlignment([Qt.AlignLeft, Qt.AlignHCenter, Qt.AlignRight][ausr.currentIndex()])
-            fm.setBorder(rand.value()); fm.setCellPadding(pad.value()); fm.setHeaderRowCount(1 if kopf.isChecked() else 0)
+            fm.setWidth(QTextLength(QTextLength.PercentageLength, d.breite.value()))
+            fm.setAlignment([Qt.AlignLeft, Qt.AlignHCenter, Qt.AlignRight][d.ausr.currentIndex()])
+            fm.setBorder(d.rand.value()); fm.setCellPadding(d.pad.value()); fm.setHeaderRowCount(1 if d.kopf.isChecked() else 0)
             t.setFormat(fm)
             self.ed.document().setModified(True)
 
@@ -720,10 +727,10 @@ class SeiteBefehle:
             return
         cell = t.cellAt(c)
         namen = [f"Spalte {i + 1}" for i in range(t.columns())]
-        n, ok = QInputDialog.getItem(self.w, "Tabelle sortieren", "Nach welcher Spalte?", namen, cell.column(), False)
+        n, ok = EingabeFenster.getItem(self.w, "Tabelle sortieren", "Nach welcher Spalte?", namen, cell.column(), False)
         if not ok:
             return
-        auf, ok = QInputDialog.getItem(self.w, "Tabelle sortieren", "Reihenfolge:", ["Aufsteigend", "Absteigend"], 0, False)
+        auf, ok = EingabeFenster.getItem(self.w, "Tabelle sortieren", "Reihenfolge:", ["Aufsteigend", "Absteigend"], 0, False)
         if not ok:
             return
         spalte = namen.index(n)

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import os
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox
 
 
 class DateiBefehle:
@@ -55,7 +56,7 @@ class DateiBefehle:
         if not t:
             return
         wahl = ["Kennwort zum Öffnen setzen / ändern …", "Kennwort entfernen", "Bearbeitung sperren / freigeben"]
-        n, ok = QInputDialog.getItem(self.w, "Dokument schützen", "Was soll geschehen?", wahl, 0, False)
+        n, ok = EingabeFenster.getItem(self.w, "Dokument schützen", "Was soll geschehen?", wahl, 0, False)
         if not ok:
             return
         if n == wahl[2]:
@@ -64,9 +65,9 @@ class DateiBefehle:
             t.meta.pop("kennwort", None); t.editor.document().setModified(True)
             self.w.statusBar().showMessage("Kennwort entfernt — gilt ab dem nächsten Speichern.", 5000)
         else:
-            a, ok = QInputDialog.getText(self.w, "Kennwort", "Neues Kennwort:", QLineEdit.Password)
+            a, ok = EingabeFenster.getText(self.w, "Kennwort", "Neues Kennwort:", kennwort=True)
             if ok and a:
-                b, ok = QInputDialog.getText(self.w, "Kennwort", "Zur Bestätigung noch einmal:", QLineEdit.Password)
+                b, ok = EingabeFenster.getText(self.w, "Kennwort", "Zur Bestätigung noch einmal:", kennwort=True)
                 if ok and a == b:
                     t.meta["kennwort"] = a; t.editor.document().setModified(True)
                     self.w.statusBar().showMessage("Das Dokument wird beim Speichern verschlüsselt (DOCX).", 5000)

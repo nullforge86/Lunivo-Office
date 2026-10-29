@@ -103,7 +103,8 @@ class FarbPalette(QMenu):
 
     def __init__(self, parent=None, *, keine_text: str | None = "Keine Farbe", start=None, titel: str = "Farbe",
                  zuletzt: bool = True, weitere: bool = True, verlauf: bool = False, verlauf_titel: str = "Graduelle Füllung",
-                 weitere_text: str = "Weitere Farben …", automatisch: str | None = None):
+                 weitere_text: str = "Weitere Farben …", automatisch: str | None = None,
+                 pipette: bool = True):
         super().__init__(parent)
         self._start, self._titel = start, titel
         wid = QWidget()
@@ -136,7 +137,7 @@ class FarbPalette(QMenu):
             mehr.clicked.connect(self._weitere)
             v.addWidget(mehr)
             from lunivo_writer.ui.baukasten import pipette as _pip
-            if _pip.AKTIV:
+            if _pip.AKTIV and pipette:
                 pip = QPushButton("Pipette"); pip.setFlat(True); pip.setStyleSheet("text-align: left; padding: 4px 6px;")
                 pip.clicked.connect(self._pipette)
                 v.addWidget(pip)

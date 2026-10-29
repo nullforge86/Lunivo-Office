@@ -474,6 +474,7 @@ def render(qdoc: QTextDocument, page: PageSettings, device, first: int = 1, last
         page = page.copy()
         page.border = None; page.watermark = None; page.color = ""
         page.header = HeaderFooter(); page.footer = HeaderFooter(); page.first_header = HeaderFooter(); page.first_footer = HeaderFooter()
+        page.even_header = HeaderFooter(); page.even_footer = HeaderFooter()
         opt = dict(opt, hintergrund=False, textgrenzen=False, zuschnitt=False, balken=None, blasen=None)
     d = paginated_copy(qdoc, page, opt.get("noten"), versteckt=bool(opt.get("versteckt")), fussnoten="spaeter")
     from lunivo_writer.editor import anzeige_extra as AX
@@ -840,7 +841,7 @@ def zeichne_seite(p: QPainter, d: QTextDocument, page: PageSettings, n: int, tot
     frei = FB.objekte_der_seite(page, d, n, idx)
     for a, bild, r in FB.vorne_hinten(frei, True):                  # Bilder hinter dem Text (zum Beispiel ein Band im Briefkopf)
         FB.bild_zeichnen(p, bild, r, bool(a.get("ellipse")), a.get("rand"), float(a.get("dreh", 0.0)), a.get("fuell"), a.get("_fuellbild") or (a.get("fuell") or {}).get("bild"), a.get("fx"))
-    kopf, fuss = (page.first_header, page.first_footer) if (n == 1 and page.diff_first) else (page.header, page.footer)
+    kopf, fuss = page.kopf_fuss(n, n + nr_offset)
     _draw_hf(p, kopf, QRectF(ml, mm_to_px(8), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base, page, kapitel)
     _draw_hf(p, fuss, QRectF(ml, ph - mm_to_px(18), cw, mm_to_px(10)), n + nr_offset, gesamt or total, base, page, kapitel)
     if page.zeilennummern and page.spalten <= 1:

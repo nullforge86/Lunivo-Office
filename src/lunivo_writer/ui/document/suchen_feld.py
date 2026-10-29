@@ -179,7 +179,7 @@ class SuchenFeld(QWidget):
         self.platzhalter = QCheckBox("Platzhalter verwenden"); self.praefix = QCheckBox("Präfix beachten"); self.suffix = QCheckBox("Suffix beachten")
         self.satzzeichen = QCheckBox("Interpunktionszeichen ignorieren"); self.leerzeichen = QCheckBox("Leerzeichen ignorieren")
         for c in (self.gross, self.ganz, self.platzhalter, self.praefix, self.suffix, self.satzzeichen, self.leerzeichen):
-            c.setMinimumHeight(28); ov.addWidget(c); c.toggled.connect(lambda _a: self._optionen_neu())
+            c.setMinimumHeight(28); ov.addWidget(c); c.toggled.connect(lambda _a: (self._optionen_neu(), self.zaehlen()))
         v.addWidget(self.optionen_gruppe)
         v.addWidget(self.optionen_text)
         self.erweitern.toggled.connect(lambda offen: self.optionen_text.setVisible(not offen))   # eingeklappt: kurz, was gilt
@@ -209,7 +209,7 @@ class SuchenFeld(QWidget):
         self.ersatzfeld.returnPressed.connect(self.ersetzen_eins)
         for feld, name in ((self.suchfeld, "suchen"), (self.ersatzfeld, "ersetzen")):
             feld.installEventFilter(self); feld.setProperty("such_rolle", name)
-        self.richtung.currentIndexChanged.connect(lambda _i: self._optionen_neu())
+        self.richtung.currentIndexChanged.connect(lambda _i: (self._optionen_neu(), self.zaehlen()))
         self.vorherige.clicked.connect(lambda: self.weitersuchen(True)); self.weiter.clicked.connect(lambda: self.weitersuchen(False))
         self.ersetzen.clicked.connect(self.ersetzen_eins); self.alle_ersetzen.clicked.connect(self.ersetzen_alle)
         # Tab-Reihenfolge wie die Leserichtung: Feld, Pfeile, Ersatzfeld, Ersetzen-Knöpfe, Abschnitte

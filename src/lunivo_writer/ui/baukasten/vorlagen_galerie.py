@@ -12,8 +12,9 @@ import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
-from PySide6.QtWidgets import (QTabBar, QFrame, QGridLayout, QInputDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
+from PySide6.QtWidgets import (QTabBar, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
                                QWidget)
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import vorlagen
@@ -284,7 +285,7 @@ class VorlagenGalerie(QWidget):
 
     # ---- Ordner ----------------------------------------------------------------------------------------------------
     def _rubrik_anlegen(self) -> None:
-        name, ok = QInputDialog.getText(self, "Neue Rubrik", "Name der Rubrik (zum Beispiel „Lebenslauf“):")
+        name, ok = EingabeFenster.getText(self, "Neue Rubrik", "Name der Rubrik (zum Beispiel „Lebenslauf“):")
         name = name.strip().replace("/", "-").replace("\\", "-") if ok else ""
         if not name or name.startswith("."):
             return

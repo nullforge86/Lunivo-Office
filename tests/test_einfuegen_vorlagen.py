@@ -19,15 +19,16 @@ def fenster(app, tmp_path):
 
 
 def _texte(m):
-    return [a.text() for a in m.actions() if a.text()]
+    return [a.text().replace("&", "") for a in m.actions() if a.text()]
 
 
 def test_klappmenues_wie_vorlage(fenster):
     b = fenster.befehle
     assert _texte(b.klappe("leereSeiteKlappe")) == ["Vertikal", "Horizontal"]
     assert _texte(b.klappe("umbruecheKlappe")) == [
-        "Seitenumbruch\tStrg+Enter", "Spaltenumbruch", "Textflussumbruch\tUmschalt+Enter", "Abschnittsumbruch auf nächster Seite",
-        "Fortlaufender Abschnittsumbruch", "Abschnittsumbruch auf gerader Seite", "Abschnittsumbruch auf ungerader Seite"]
+        "Seitenumbruch(P)\tStrg+Enter", "Spaltenumbruch", "Textflussumbruch(W)\tUmschalt+Enter",
+        "Abschnittsumbruch von nächster Seite", "Fortlaufenden Abschnittsumbruch", "Abschnittsumbruch von gerader Seite",
+        "Abschnittsumbruch von ungerader Seite"]
     assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
@@ -77,6 +78,35 @@ def test_symbol_zuletzt_verwendet(fenster):
     assert not m.knoepfe["zuletzt0"].isHidden() and m.knoepfe["zuletzt0"].toolTip() == "„§“ einfügen"
     m.gewaehlt.emit("zuletzt0")
     assert e.toPlainText().endswith("§§")
+
+
+def test_symbol_fenster_einfuegen_und_benutzerdefiniert(fenster):
+    """Fenster „Symbol“: Einfügen setzt das Zeichen und merkt es; die benutzerdefinierte Liste (gleiche Daten wie die Klappe) lässt sich
+    verschieben, abhaken, entfernen und zurücksetzen."""
+    from PySide6.QtCore import Qt
+    from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
+    b = fenster.befehle
+    e = fenster.current_editor()
+    d = SonderzeichenDialog(None, e.insertPlainText, b._symbol_daten())
+    d.zeichencode.setText("167"); d._code_getippt("167")                     # Reiter Symbole: Zeichencode 167 = §
+    d.ok.click()
+    assert e.toPlainText().endswith("§") and b._symbole_zuletzt()[0] == "§"
+    d.reiter.setCurrentIndex(1); d.sonder.setCurrentItem(d.sonder.topLevelItem(0)); d.ok.click()   # Reiter Sonderzeichen: Geviertstrich
+    assert e.toPlainText().endswith("—") and d.abbrechen.text() == "Abbrechen"
+    d.reiter.setCurrentIndex(2)
+    assert d.abbrechen.text() == "Schließen" and not d.bei_benutzer.isEnabled()
+    erste = [z for z, _ in b._symbol_daten().benutzer()]
+    assert d.liste.topLevelItemCount() == len(erste) and not d.hoch.isEnabled()
+    d.liste.setCurrentItem(d.liste.topLevelItem(0)); d.runter.click()
+    assert [z for z, _ in b._symbol_daten().benutzer()][:2] == [erste[1], erste[0]]
+    d.liste.topLevelItem(0).setCheckState(0, Qt.Unchecked)
+    assert erste[1] not in b._symbol_daten().sichtbar() and erste[1] not in b.klappe("symbolKlappe").knoepfe
+    d.liste.setCurrentItem(d.liste.topLevelItem(1)); d.entfernen.click()
+    assert erste[0] not in [z for z, _ in b._symbol_daten().benutzer()]
+    d.reiter.setCurrentIndex(0); d.zeichencode.setText("A"); d.von.setCurrentIndex(1); d._code_getippt("21"); d.bei_benutzer.click()
+    assert b._symbol_daten().benutzer()[-1] == ("!", True)
+    d.reiter.setCurrentIndex(2); d.zurueck.click()
+    assert [z for z, _ in b._symbol_daten().benutzer()] == list(b.BENUTZER_SYMBOLE)
 
 
 def test_zahl_typen():
@@ -514,10 +544,21 @@ def test_gleichungen_formen_deckblatt(fenster):
     vorher = e.document().characterCount()
     m.gewaehlt.emit("Fünfeck")
     assert e.document().characterCount() == vorher + 1
-    assert set(b.klappe("deckblattKlappe").knoepfe) == set(E.DECKBLATT_VORLAGEN)
-    b.deckblattVorlage("Farbband")
-    assert e.document().firstBlock().next().text() == "[Titel des Dokuments]"
     assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)
+
+
+def test_wordart_galerie_fuegt_sofort_ein(fenster):
+    from lunivo_writer.editor import einfuegen as E, formen
+    b = fenster.befehle
+    e = fenster.current_editor()
+    m = b.klappe("wordartKlappe")
+    assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
+    m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
+    f = e.bild_format()
+    o = formen.objekt(f)
+    assert o["art"] == "wordart" and o["daten"] == {"text": "Hier Text einfügen", "vorlage": 3, "pt": 36}
+    band = fenster.band
+    assert band.reiter.isTabVisible(band.kontext_index["form"]) and not band.reiter.isTabVisible(band.kontext_index["bild"])
 
 
 def test_diagramm_alle_arten_und_fenster(app):
@@ -625,3 +666,77 @@ def test_objekt_und_hyperlink_befehle(fenster, tmp_path, monkeypatch):
     assert "a@b.de" in e.toPlainText()
     assert "a@b.de" in fenster.settings.get("einfuegen/mail_zuletzt", "")
     assert verweise.lesezeichen_liste(e) == []
+
+
+def test_deckblatt_wie_vorlage(fenster):
+    """Einfügen ▸ Deckblatt wie die Vorlage: „Stil“ mit Hoch-/Querformat, 17 Gestaltungen; das Deckblatt ist ein eigener erster Abschnitt mit
+    ganzseitiger Grafik, ersetzt ein vorhandenes und lässt sich entfernen; das Dokument danach behält Einrichtung und Text."""
+    from PySide6.QtWidgets import QToolButton
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor import deckblatt as DB
+    b, e = fenster.befehle, fenster.current_editor()
+    e.setPlainText("Mein Text.")
+    e.page.header.text = "Kopf {PAGE}"
+    m = b.menue_deckblattKlappe()
+    assert list(m.knoepfe) == DB.NAMEN and len(DB.NAMEN) == 17
+    quer = [k for k in m.findChildren(QToolButton) if k.text() == "Querformat"][0]
+    quer.click()
+    assert m.quer and m.knoepfe["Segel"].iconSize().width() > m.knoepfe["Segel"].iconSize().height()
+    m.gewaehlt.emit("Segel")                                               # Querformat-Deckblatt
+    doc = e.document()
+    assert e.page.landscape and e.page.watermark["ganzseitig"] and not e.page.header.text
+    assert AB.anzahl(doc) == 2 and not AB.einrichtung(doc, e.page, 1).landscape
+    assert AB.einrichtung(doc, e.page, 1).header.text == "Kopf {PAGE}"
+    assert "LEBENSLAUF" in doc.toPlainText() and doc.findBlock(AB.beginn(doc, 1)).text() == "Mein Text."
+    b.deckblattVorlage("Sonne")                                            # ersetzt das vorhandene
+    assert AB.anzahl(doc) == 2 and "LEBENSLAUF" not in doc.toPlainText() and not e.page.landscape
+    assert doc.toPlainText().count("Mein Text.") == 1
+    assert DB.entfernen(e)
+    assert doc.toPlainText().strip() == "Mein Text." and AB.anzahl(doc) == 1
+    assert e.page.header.text == "Kopf {PAGE}" and e.page.watermark is None
+
+
+def test_deckblatt_ausgabe_mit_grafik(fenster, tmp_path):
+    """Im PDF steht die Grafik hinter dem Text, der Titel unten (Gestaltung „Sonne“), danach der Text auf Seite 2."""
+    from PySide6.QtCore import QSizeF
+    from PySide6.QtGui import QPageSize, QPdfWriter
+    from lunivo_writer.editor import deckblatt as DB
+    from lunivo_writer.editor.pagination import render_dokument
+    e = fenster.current_editor()
+    e.setPlainText("Mein Text.")
+    DB.einfuegen(e, "Sonne")
+    pw = QPdfWriter(str(tmp_path / "d.pdf")); pw.setResolution(96)
+    pw.setPageSize(QPageSize(QSizeF(210, 297), QPageSize.Millimeter))
+    assert render_dokument(e.document(), e.page, pw) == 2
+    del pw
+    lay = e.document().documentLayout()
+    titel = e.document().firstBlock().next()
+    assert titel.text() == "[Titel des Artikels]"
+    assert lay.blockBoundingRect(titel).top() > e.page.content_height_px * 0.6     # unten auf dem Blatt wie in der Vorlage
+    for n in DB.NAMEN:                                                     # jede Gestaltung lässt sich zeichnen, hoch und quer
+        assert not DB.grafik_bild(n, 60, 85).isNull() and not DB.grafik_bild(n, 85, 60).isNull()
+
+
+def test_umbrueche_wirken(fenster):
+    """Alle sieben Einträge der Umbrüche-Klappe wirken im Dokument (WPS-Vorlage ``einfuegen/03-umbrueche.png``)."""
+    from PySide6.QtGui import QTextFormat
+    from lunivo_writer.editor import abschnitte as AB
+    from lunivo_writer.editor.zusatz import B_SPALTE
+    for i in range(7):
+        fenster.new_document()
+        ed = fenster.current_tab().editor
+        ed.insertPlainText("Vorher")
+        menue = fenster.befehle.klappe("umbruecheKlappe")              # Verweis halten, sonst räumt Python das Menü weg
+        aktionen = [a for a in menue.actions() if a.text()]
+        assert len(aktionen) == 7
+        aktionen[i].trigger()
+        doc = ed.document()
+        if i < 2:                                                    # Seiten- und Spaltenumbruch
+            b = doc.lastBlock()
+            assert doc.blockCount() == 2
+            assert b.blockFormat().pageBreakPolicy() & QTextFormat.PageBreak_AlwaysBefore
+            assert bool(b.blockFormat().property(B_SPALTE)) == (i == 1)
+        elif i == 2:                                                 # Textflussumbruch = Zeilenumbruch im Absatz
+            assert doc.blockCount() == 1 and "\u2028" in doc.toRawText()
+        else:
+            assert [u[1] for u in AB.umbrueche(doc)] == [["naechste", "fortlaufend", "gerade", "ungerade"][i - 3]]

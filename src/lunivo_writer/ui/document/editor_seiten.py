@@ -38,6 +38,14 @@ class SeitenBaustein:
         return AB.einrichtung(self.document(), self.page, self.abschnitt_nr() if nr is None else nr)
 
 
+    def kopffuss(self):
+        """Der Bearbeiter für Kopf- und Fußzeile direkt auf der Seite (siehe ``kopffuss_bearbeiter``)."""
+        if getattr(self, "_kopffuss", None) is None:
+            from lunivo_writer.ui.document.kopffuss_bearbeiter import KopfFussBearbeiter
+            self._kopffuss = KopfFussBearbeiter(self)
+        return self._kopffuss
+
+
     def abschnitt_einfuegen(self, typ: str = "naechste") -> int:
         from lunivo_writer.editor import abschnitte as AB
         c = self.textCursor()
