@@ -19,3 +19,7 @@ class Farbe:
     ROT = "#c92a2a"
     ORANGE = "#e8590c"
     GRUEN = "#2f9e44"
+    BLAU_DUNKEL = "#1864ab"         # Standardfarbe 2 von Verläufen
+    BLAU_HELL = "#d0ebff"
+    AUSWAHL = "#1c7ed6"             # Auswahlrahmen und Drehgriff freier Objekte
+    GRIFF_RAND = "#8c8c8c"          # Rand der weißen Griffe

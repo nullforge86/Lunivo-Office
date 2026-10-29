@@ -179,9 +179,9 @@ class FreieBilderMixin:
         offen = getattr(self, "_frei_knoepfe_offen", True)
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         for name, k in self._frei_knopf_rects(r).items():
-            p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(QColor("white"))
+            p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(QColor(Farbe.WEISS))
             if name == "anker":                                    # Seite mit Pfeil nach unten (Menü)
-                p.drawRoundedRect(k, 3, 3); p.setPen(QPen(QColor("#4c6ef5"), 1.3)); p.setBrush(Qt.NoBrush)
+                p.drawRoundedRect(k, 3, 3); p.setPen(QPen(QColor(Farbe.BLAU), 1.3)); p.setBrush(Qt.NoBrush)
                 p.drawRect(QRectF(k.left() + 5, k.top() + 4, 10, 12)); p.drawLine(QPointF(k.left() + 7, k.top() + 8), QPointF(k.left() + 13, k.top() + 8))
                 p.drawLine(QPointF(k.left() + 7, k.top() + 11), QPointF(k.left() + 13, k.top() + 11))
                 p.setPen(QPen(QColor("#495057"), 1.3)); c = k.center().x() + 8
@@ -208,7 +208,7 @@ class FreieBilderMixin:
                 p.setPen(QPen(QColor("#1c3faa"), 2)); p.setBrush(Qt.NoBrush); p.drawRoundedRect(inner.adjusted(1, 1, -1, -1), 2, 2)
         p.restore()
         p.save()
-        pen = QPen(QColor("#1c7ed6"), 1.5, Qt.DashLine)
+        pen = QPen(QColor(Farbe.AUSWAHL), 1.5, Qt.DashLine)
         p.setPen(pen); p.setBrush(Qt.NoBrush)
         p.drawRect(r)
         p.setRenderHint(QPainter.Antialiasing)
@@ -218,7 +218,7 @@ class FreieBilderMixin:
             p.restore()
             return
         if self.__dict__.get("_frei_zuschnitt"):                   # Zuschneiden: schwarze Eckwinkel und Kantenstriche statt der runden Griffe
-            p.setPen(QPen(QColor("black"), 3, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin)); p.setBrush(Qt.NoBrush)
+            p.setPen(QPen(QColor(Farbe.SCHWARZ), 3, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin)); p.setBrush(Qt.NoBrush)
             lg = 16.0
             for name in GRIFFE:
                 c = self._frei_griff_mitte(r, name)
@@ -232,18 +232,18 @@ class FreieBilderMixin:
                     p.drawLine(QPointF(c.x(), c.y() - lg / 2), QPointF(c.x(), c.y() + lg / 2))
             p.restore()
             return
-        p.setPen(QPen(QColor("#8c8c8c"), 1.2)); p.setBrush(QColor("white"))          # runde Griffe wie in WPS: weiße Kreise, grauer Rand
+        p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1.2)); p.setBrush(QColor(Farbe.WEISS))          # runde Griffe wie in WPS: weiße Kreise, grauer Rand
         for name in GRIFFE:
             c = self._frei_griff_mitte(r, name)
             p.drawEllipse(c, GRIFF / 2, GRIFF / 2)
         rc = self._frei_griff_mitte(r, "rot")                     # der Drehgriff über der Mitte der Oberkante
-        p.setPen(QPen(QColor("#1c7ed6"), 1)); p.drawLine(QPointF(rc.x(), r.top()), QPointF(rc.x(), rc.y() + GRIFF / 2))
-        p.setBrush(QColor("white")); p.drawEllipse(rc, GRIFF / 2 + 1, GRIFF / 2 + 1)
-        p.setPen(QPen(QColor("#1c7ed6"), 1.4)); p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(Farbe.AUSWAHL), 1)); p.drawLine(QPointF(rc.x(), r.top()), QPointF(rc.x(), rc.y() + GRIFF / 2))
+        p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(rc, GRIFF / 2 + 1, GRIFF / 2 + 1)
+        p.setPen(QPen(QColor(Farbe.AUSWAHL), 1.4)); p.setBrush(Qt.NoBrush)
         p.drawArc(QRectF(rc.x() - 2.5, rc.y() - 2.5, 5, 5), 40 * 16, 280 * 16)
         for c in self._frei_adj_lagen(r, a).values():             # Anpassungsgriff der Form: eine gelbe Raute
             raute = QPolygonF([QPointF(c.x(), c.y() - 6), QPointF(c.x() + 6, c.y()), QPointF(c.x(), c.y() + 6), QPointF(c.x() - 6, c.y())])
-            p.setPen(QPen(QColor("#8c8c8c"), 1)); p.setBrush(QColor("#ffe45c")); p.drawPolygon(raute)
+            p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1)); p.setBrush(QColor("#ffe45c")); p.drawPolygon(raute)
         p.restore()
         if a is not None:
             self._frei_teile_zeichnen(p, r, a)
@@ -307,10 +307,10 @@ class FreieBilderMixin:
         dreh = float(a.get("dreh", 0.0) or 0.0)
         if dreh:
             p.translate(r.center()); p.rotate(dreh); p.translate(-r.center())
-        p.setPen(QPen(QColor("#1c7ed6"), 1, Qt.DotLine if a.get("art") == "smartart" else Qt.SolidLine)); p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(Farbe.AUSWAHL), 1, Qt.DotLine if a.get("art") == "smartart" else Qt.SolidLine)); p.setBrush(Qt.NoBrush)
         for x in rects:
             p.drawRect(x)
-        p.setPen(QPen(QColor("#8c8c8c"), 1)); p.setBrush(QColor("white"))
+        p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1)); p.setBrush(QColor(Farbe.WEISS))
         klein = GRIFF * 0.75 / 2
         for x in rects:
             if achse == "kein":

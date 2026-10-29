@@ -140,6 +140,19 @@ def abschnittstitel(text: str) -> QLabel:
     return l
 
 
+def reiter_knopf_stil(knopf: QWidget) -> None:
+    """Der Reiterknopf (``QToolButton``, ``checkable``) mit Unterstrich in der Hervorhebungsfarbe — für selbst gebaute Reiterleisten."""
+    knopf.setStyleSheet("QToolButton, QToolButton:hover { border: none; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; padding: 4px 6px; color: palette(window-text); }"
+                        "QToolButton:checked { color: palette(highlight); border-bottom: 2px solid palette(highlight); background: transparent; }")
+
+
+def abschnittsband(text: str) -> QLabel:
+    """Eine Überschrift als graues Band über einer Gruppe von Kacheln (Menüs mit mehreren Gruppen); Schriftgröße der Oberfläche."""
+    t = QLabel(text)
+    t.setStyleSheet("background: palette(midlight); padding: 5px 8px;")
+    return t
+
+
 def mittig(widget: QWidget) -> QWidget:
     """Ein Element fester Größe (Vorschau, Farbraster …) in der Mitte der Breite."""
     host = QWidget()

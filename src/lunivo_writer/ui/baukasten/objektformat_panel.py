@@ -21,11 +21,10 @@ from PySide6.QtWidgets import QButtonGroup, QComboBox, QHBoxLayout, QPushButton,
 
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.editor.linie import LINIENARTEN
 from lunivo_writer.editor import bildeffekte as BE
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
-from lunivo_writer.ui.baukasten.linien import linien_symbol
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.linien import Linie, LinienWahl
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt, TexteffektPanel
@@ -36,6 +35,20 @@ from lunivo_writer.core.farben import Farbe
 STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/linie.py)
 WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
+
+
+class _Felder(QWidget):
+    """Eine Gruppe von Feldern im ``FormularGitter`` (Beschriftung über dem Feld), die nur bei passender Füllungs- oder Linienart zu sehen ist."""
+
+    def __init__(self):
+        super().__init__()
+        self.gitter = FormularGitter(self)
+
+    def zeile(self, text: str, widget: QWidget) -> None:
+        self.gitter.zeile(text, widget)
+
+    def breit(self, widget: QWidget) -> None:
+        self.gitter.breit(widget)
 
 
 class _DreiDUntereinander:
@@ -125,7 +138,7 @@ class _TextPanel(_DreiDUntereinander, TexteffektPanel):
 class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     MIT_ABSCHLUSS = True
     TEXT_KLASSE = _TextPanel                      # die Textoptionen; ein Panel mit mehr Feldern (Diagramm) setzt eine eigene Klasse
-    TITEL = ("FÜLLUNG UND LINIE", "EFFEKTE")
+    TITEL = ("Füllung und Linie", "Effekte")
     bild_gewuenscht = Signal()                    # „Bild …“ als Füllung: der Aufrufer fragt nach der Datei
     text_geaendert = Signal(dict)                 # Änderung in den Textoptionen (Format von ``editor/texteffekt.py``)
 
@@ -133,27 +146,15 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         super().__init__(parent, werte)
         v = self.layout()
         v.removeWidget(self.reiter)
-        self.optionen = QStackedWidget()
         self.text_panel = self.TEXT_KLASSE(self)                               # TEXTOPTIONEN: derselbe Aufbau, wirkt auf den Text im Objekt
-        self.optionen.addWidget(self.reiter); self.optionen.addWidget(self.text_panel)
-        kopf = QHBoxLayout(); kopf.setContentsMargins(0, 0, 0, 0); kopf.setSpacing(0)
-        self.umschalter = QButtonGroup(self); self.umschalter.setExclusive(True)
-        for i, titel in enumerate(("FORMOPTIONEN", "TEXTOPTIONEN")):
-            k = QToolButton(); k.setText(titel); k.setCheckable(True); k.setAutoRaise(True); k.setToolButtonStyle(Qt.ToolButtonTextOnly)
-            k.setStyleSheet("QToolButton { border: none; border-bottom: 2px solid transparent; padding: 5px 6px; color: palette(window-text); font-weight: 600; }"
-                            "QToolButton:checked { color: palette(highlight); border-bottom: 2px solid palette(highlight); }")
-            self.umschalter.addButton(k, i); kopf.addWidget(k, 1)
-            k.setObjectName(f"optionen_{i}")
-        self.umschalter.button(0).setChecked(True)
-        self.umschalter.idClicked.connect(self.optionen_waehlen)
-        self.kopf_zeile = kopf                                                  # die Hauptreiter; ein Panel darauf kann Knöpfe (Teilliste) anfügen
-        v.addLayout(kopf); v.addWidget(self.optionen, 1)
+        self.optionen = AngepassteReiter()                                      # die Hauptreiter: Formoptionen / Textoptionen (ein Panel darauf kann ein Eckelement anfügen)
+        self.optionen.addTab(self.reiter, "Formoptionen"); self.optionen.addTab(self.text_panel, "Textoptionen")
+        v.addWidget(self.optionen, 1)
         self.text_panel.geaendert.connect(self.text_geaendert)
 
     def optionen_waehlen(self, i: int) -> None:
         """0 = Formoptionen (Füllung und Linie, Effekte des Objekts), 1 = Textoptionen (Text im Objekt)."""
         self.optionen.setCurrentIndex(i)
-        self.umschalter.button(i).setChecked(True)
 
     def setze_text(self, werte: dict) -> None:
         """Die Textoptionen mit den Werten des Textes im Objekt füllen (meldet nichts)."""
@@ -164,20 +165,9 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
 
     @staticmethod
     def _tab_icon(t: str, unterstrichen: bool):
-        """Die Reiter-Bildchen: Farbeimer (Füllung und Linie) und ein Quadrat mit Funken (Effekte)."""
-        from PySide6.QtCore import QRectF, Qt
-        from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
+        """Die Reiter-Symbole aus dem Katalog (gut sichtbar in beiden Designs): Farbeimer (Füllung und Linie) und Funken (Effekte)."""
         from lunivo_writer.ui.widgets import icons
-        pm = QPixmap(26, 26); pm.fill(Qt.transparent)
-        p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-        if unterstrichen:
-            p.drawPixmap(2, 0, icons.icon("farbe", 22).pixmap(22, 22))
-            p.setPen(QColor(Farbe.BLAU)); p.drawLine(5, 24, 21, 24)
-        else:
-            p.setPen(QPen(QColor(Farbe.GRAU), 1.6)); p.drawRect(QRectF(4, 6, 14, 14))
-            p.setPen(QPen(QColor(Farbe.BLAU), 1.6)); p.drawLine(18, 2, 18, 8); p.drawLine(15, 5, 21, 5)
-        p.end()
-        return QIcon(pm)
+        return icons.icon("farbe" if unterstrichen else "sparkles", 16)
 
     # ---- Erweiterungen für Panels, die auf diesem aufbauen (Diagramm): zusätzliche Auswahlpunkte und Felder in „Füllung“ und „Linie“
     def _zusatz_radios(self, abschnitt: str) -> list:
@@ -187,87 +177,72 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     def _zusatz_felder(self, abschnitt: str, a: Abschnitt) -> None:
         """Weitere Felder am Ende des Abschnitts („fuell“ oder „linie“)."""
 
-    def _kopf_klasse(self):
-        """Die Klasse des Farbknopfs im Kopf von „Füllung“ (ein Panel darauf kann ein eigenes Popup einsetzen)."""
-        return FarbFeld
-
     # ---- Seite 1: Füllung und Linie ------------------------------------------------------------------------------------------
     def _seite_fuellung(self, w: dict) -> QWidget:
         seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10)
-        self.fuell_farbe_kopf = self._kopf_klasse()(Farbe.BLAU, "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
-        self.fuell_farbe_kopf.setMinimumWidth(110)
-        self.a_fuell = Abschnitt("Füllung", self.fuell_farbe_kopf)
+        self.a_fuell = Abschnitt("Füllung")
         self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
         self.r_textur, self.r_muster = QRadioButton("Strukturfüllung"), QRadioButton("Musterfüllung")
         self.r_bild = QRadioButton("Bildfüllung")
         for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, *self._zusatz_radios("fuell")):
             self.a_fuell.breit(r)
+        self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild = (_Felder() for _ in range(5))     # je Füllungsart nur ihre Felder
         self.farbe = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Automatisch")
-        self.a_fuell.zeile("Farbe:", self.farbe)
+        self.g_farbe.zeile("Farbe:", self.farbe)
         self.v1, self.v2 = FarbFeld("#1864ab", "Dunkle Farbe"), FarbFeld("#d0ebff", "Helle Farbe")
-        self.a_fuell.zeile("Farbe 1:", self.v1); self.a_fuell.zeile("Farbe 2:", self.v2)
+        self.g_verlauf.zeile("Farbe 1:", self.v1); self.g_verlauf.zeile("Farbe 2:", self.v2)
         self.textur = QComboBox()
         for schl, name in TEXTUREN:
             self.textur.addItem(name, schl)
-        self.a_fuell.zeile("Struktur:", self.textur)
+        self.g_textur.zeile("Struktur:", self.textur)
         self.muster = QComboBox()
         for schl, name, _o in M.MUSTER:
             if schl != "loeschen":
                 self.muster.addItem(M.name_von(schl), schl)
         self.m_farbe = FarbFeld(Farbe.TINTE, "Musterfarbe")
-        self.a_fuell.zeile("Muster:", self.muster); self.a_fuell.zeile("Musterfarbe:", self.m_farbe)
+        self.g_muster.zeile("Muster:", self.muster); self.g_muster.zeile("Musterfarbe:", self.m_farbe)
         self.bild_knopf = QPushButton("Bild wählen …"); self.bild_knopf.clicked.connect(self.bild_gewuenscht)
-        self.a_fuell.zeile("Bild:", self.bild_knopf)
+        self.g_bild.zeile("Bild:", self.bild_knopf)
         self._zusatz_felder("fuell", self.a_fuell)
+        for g in (self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild):
+            self.a_fuell.breit(g)
         v.addWidget(self.a_fuell)
         # Linie
-        self.linie_knopf = QPushButton("Keine"); self.linie_knopf.setMinimumWidth(110)
-        self.a_kontur = Abschnitt("Linie", self.linie_knopf)
+        self.a_kontur = Abschnitt("Linie")
         self.k_keine, self.k_linie = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie")
         for r in (self.k_keine, self.k_linie, *self._zusatz_radios("linie")):
             self.a_kontur.breit(r)
-        self.k_farbe = FarbFeld(Farbe.SCHWARZ, "Linienfarbe")
-        self.k_breite = SchiebeFeld(0.25, 20, " pt", 0.25, 2)
-        self.k_art = QComboBox(); self.k_art.setIconSize(QSize(86, 14))
-        for k in STRICHE:                                          # die Strichlinien des Bausteins „Linie“ als Bildchen, nicht als Text
-            self.k_art.addItem(linien_symbol(k, QSize(86, 14)), "", k)
-        self.a_kontur.zeile("Farbe:", self.k_farbe); self.a_kontur.zeile("Breite:", self.k_breite); self.a_kontur.zeile("Strichart:", self.k_art)
+        self.g_lin_wahl, self.g_lin_verlauf, self.g_lin_form = _Felder(), _Felder(), _Felder()        # Art · Stärke · Farbe in einer Zeile · Farbverlauf · weitere Form
+        self.k_wahl = LinienWahl(Linie(Farbe.SCHWARZ, 1.0, "einfach"), arten=STRICHE, frei=True)
+        self.k_farbe, self.k_art = self.k_wahl.farbe, self.k_wahl.art
+        self.g_lin_wahl.breit(self.k_wahl)
         self._zusatz_felder("linie", self.a_kontur)
+        for g in (self.g_lin_wahl, self.g_lin_verlauf, self.g_lin_form):
+            self.a_kontur.breit(g)
         v.addWidget(self.a_kontur)
         v.addStretch(1)
-        self.linie_knopf.clicked.connect(self._linien_menue)
-        self.fuell_farbe_kopf.farbeGeaendert.connect(self._kopffarbe)
-        self.fuell_farbe_kopf.verlaufGewaehlt.connect(self._kopf_verlauf)
         for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, self.k_keine, self.k_linie):
             r.toggled.connect(self._neu)
         # Jedes Feld ist bedienbar: wer es ändert, wählt damit die dazugehörige Füllung bzw. Linie
-        for sig, radio in ((self.farbe.farbeGeaendert, self.r_farbe), (self.v1.farbeGeaendert, self.r_verlauf), (self.v2.farbeGeaendert, self.r_verlauf),
+        for sig, radio in ((self.v1.farbeGeaendert, self.r_verlauf), (self.v2.farbeGeaendert, self.r_verlauf),
                            (self.textur.currentIndexChanged, self.r_textur), (self.muster.currentIndexChanged, self.r_muster),
                            (self.m_farbe.farbeGeaendert, self.r_muster)):
             sig.connect(lambda *_, r=radio: (r.setChecked(True), self._neu()))
-        for sig in (self.k_farbe.farbeGeaendert, self.k_breite.valueChanged, self.k_art.currentIndexChanged):
-            sig.connect(lambda *_: (self.k_linie.setChecked(True), self._neu()))
+        self.farbe.farbeGeaendert.connect(self._farbe_gewaehlt)
+        self.k_wahl.geaendert.connect(lambda *_: (self.k_linie.setChecked(True), self._neu()))
         return seite
 
-    def _kopffarbe(self, c: str) -> None:
-        if not c:
-            self.r_keine.setChecked(True)
-        else:
-            self.r_farbe.setChecked(True); self.farbe.setFarbe(c)
+    def _farbe_gewaehlt(self, c: str) -> None:
+        """„Keine Farbe“ in der Palette wählt die Füllungsart ohne Farbe (Keine bzw. Automatische Füllung)."""
+        (self.r_farbe if c else getattr(self, "r_auto", self.r_keine)).setChecked(True)
         self._neu()
 
-    def _kopf_verlauf(self, farbe: str) -> None:
-        from PySide6.QtGui import QColor
-        c = QColor(farbe)
-        self.v1.setFarbe(c.name()); self.v2.setFarbe(c.lighter(170).name()); self.r_verlauf.setChecked(True)
-        self._neu()
+    # Linienstärke in pt: die Stärke steht in der Auswahlzeile (``LinienWahl``), nach außen bleibt der Wert in pt
+    def _k_breite(self) -> float:
+        return float(self.k_wahl.breite.currentData())
 
-    def _linien_menue(self) -> None:
-        m = VoreinstellungMenue(self, keine=("Keine Linie", None), kachel=QSize(86, 14))
-        m._kopf("Keine Linie")
-        m.abschnitt("Strichart", [(k, linien_symbol(k, QSize(86, 14)), LINIENARTEN[k][0]) for k in STRICHE], 2)
-        m.gewaehlt.connect(lambda k: self.k_keine.setChecked(True) if not k else (self.k_linie.setChecked(True), self.k_art.setCurrentIndex(self.k_art.findData(k))))
-        m.exec(self.linie_knopf.mapToGlobal(self.linie_knopf.rect().bottomLeft()))
+    def _k_breite_setzen(self, pt: float) -> None:
+        self.k_wahl.setLinie(Linie(self.k_farbe.farbe or Farbe.SCHWARZ, float(pt), str(self.k_art.currentData() or "einfach")))
 
     def fuellung_waehlen(self, art: str) -> None:
         """Die Füllungsart wählen („verlauf“, „textur“, „muster“, „bild“ …); die Füllung gilt sofort, die Felder dazu sind bedienbar."""
@@ -278,7 +253,21 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
 
     def _neu(self, *_) -> None:
         super()._neu()
-        self.linie_knopf.setText("Keine" if self.k_keine.isChecked() else LINIENARTEN[self.k_art.currentData() or "einfach"][0])
+        self._felder_zeigen()
+
+    def _felder_zeigen(self) -> None:
+        """Nur die Felder zur gewählten Füllungs- und Linienart zeigen (Keine und Automatisch haben keine weiteren Felder)."""
+        if not hasattr(self, "g_lin_form"):
+            return
+        r = self.r_bild.isChecked() or (self.r_bild.isHidden() and self.r_textur.isChecked())      # Panel mit „Bild- oder Texturfüllung“: Struktur und Bild zusammen
+        for g, an in ((self.g_farbe, self.r_farbe.isChecked()), (self.g_verlauf, self.r_verlauf.isChecked()), (self.g_textur, self.r_textur.isChecked()),
+                      (self.g_muster, self.r_muster.isChecked()), (self.g_bild, r)):
+            g.setVisible(an)
+        verlauf = getattr(self, "k_verlauf", None) is not None and self.k_verlauf.isChecked()
+        self.k_farbe.setVisible(not verlauf); self.g_lin_wahl.setVisible(self.k_linie.isChecked() or verlauf); self.g_lin_verlauf.setVisible(verlauf)
+        self.g_lin_form.setVisible(self.k_linie.isChecked() or verlauf)
+        for a in (self.a_fuell, self.a_kontur):
+            a.updateGeometry()
 
     def _setze_fuellung(self, w: dict) -> None:
         f, r = w.get("fuell"), w.get("rand")
@@ -300,10 +289,9 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
                 self.textur.setCurrentIndex(max(0, self.textur.findData(f.get("key"))))
             elif art == "muster":
                 self.muster.setCurrentIndex(max(0, self.muster.findData(f.get("key")))); self.m_farbe.setFarbe(f.get("farbe", Farbe.TINTE))
-        self.fuell_farbe_kopf.setFarbe(f.get("farbe", "") if art == "farbe" else "")
         if r:
-            self.k_farbe.setFarbe(r.get("farbe", Farbe.SCHWARZ)); self.k_breite.setValue(r.get("b", 2.0) * 72 / 96)
-            self.k_art.setCurrentIndex(max(0, self.k_art.findData(r.get("art", "einfach"))))
+            self.k_wahl.setLinie(Linie(r.get("farbe", Farbe.SCHWARZ), round(r.get("b", 2.0) * 72 / 96, 2), r.get("art", "einfach")))
+        self._felder_zeigen()
 
     def _werte_fuellung(self) -> tuple[dict, dict]:
         if self.r_keine.isChecked():
@@ -318,7 +306,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
             fuell = {"art": "bild", "unveraendert": True}                       # das Bild bleibt, wie es ist (der Aufrufer behält es)
         else:
             fuell = {"art": "farbe", "farbe": self.farbe.farbe or Farbe.BLAU}
-        rand = None if self.k_keine.isChecked() else {"b": self.k_breite.value() * 96 / 72, "farbe": self.k_farbe.farbe or Farbe.SCHWARZ,
+        rand = None if self.k_keine.isChecked() else {"b": self._k_breite() * 96 / 72, "farbe": self.k_farbe.farbe or Farbe.SCHWARZ,
                                                          "art": self.k_art.currentData() or "einfach"}
         return {"fuell": fuell, "rand": rand}, {}
 

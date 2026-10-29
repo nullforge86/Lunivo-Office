@@ -10,6 +10,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPen, QTransform
 
+from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import freiform as FF
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
@@ -101,7 +102,7 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
     rl = FF.rollen(punkte)
     sel = ed.__dict__.get("_fp_sel")
     p.save()
-    p.setPen(QPen(QColor("#8c8c8c"), 1, Qt.DotLine))
+    p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1, Qt.DotLine))
     for i, e in enumerate(punkte):                                            # Haltelinien der Kurven
         if rl[i] == "steuer":
             nachbar = i - 1 if punkte[i][0] == FF.C else i + 1                  # erster Steuerpunkt: zum Anfang, zweiter: zum Ende der Kurve
@@ -112,9 +113,9 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
             continue
         c = abb.zu_schirm(e[1], e[2])
         if rl[i] == "steuer":
-            p.setPen(QPen(QColor("#1c7ed6"), 1.2)); p.setBrush(QColor("white")); p.drawEllipse(c, 3.5, 3.5)
+            p.setPen(QPen(QColor(Farbe.AUSWAHL), 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(c, 3.5, 3.5)
         else:
-            p.setPen(QPen(QColor("black"), 1.2)); p.setBrush(QColor("#1c7ed6") if i == sel else QColor("white"))
+            p.setPen(QPen(QColor(Farbe.SCHWARZ), 1.2)); p.setBrush(QColor(Farbe.AUSWAHL) if i == sel else QColor(Farbe.WEISS))
             p.drawRect(QRectF(c.x() - 4, c.y() - 4, 8, 8))
     p.restore()
 

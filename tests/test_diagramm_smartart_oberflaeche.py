@@ -108,7 +108,7 @@ def test_formatierung_diagrammteil_wirkt(fenster, app):
     T.teil_waehlen(ed, "legende")
     w.diagrammformat_seitenleiste()
     p = w.sidebar.diagramm_panel
-    assert p.hauptreiter[0].text() == "LEGENDE OPTIONEN"
+    assert p.optionen.tabText(0) == "Legendenoptionen"
     p.farbe.setFarbe("#ff0000"); p.farbe.farbeGeaendert.emit("#ff0000"); app.processEvents()
     assert T.diagramm_teil_format_lesen(ed)["fuell"] == "#ff0000"
     p.s_farbe.farbeGeaendert.emit("#112233"); app.processEvents()                 # ein Regler des Schattens schaltet ihn ein

@@ -6,7 +6,7 @@ abgerundete Ecke, bei Linienreihen Pfeile) und die Effekte (Schatten, Reflektion
 die Auswahlpunkte „Automatisch“ und die Felder der Linie kommen über die Erweiterungspunkte ``_zusatz_radios`` und ``_zusatz_felder`` dazu. Die Textoptionen sind das
 Panel der Texteffekte (Textfüllung und -kontur, Effekte), ergänzt um Schrift und „Textfeld“.
 
-Oben die zwei Hauptreiter „<TEIL> OPTIONEN“ (der Name folgt dem gewählten Teil) und „TEXTOPTIONEN“; darunter die Reiter mit Symbol: „Füllung und Linie“, „Effekte“ und —
+Oben die zwei Hauptreiter „<Teil>optionen“ (der Name folgt dem gewählten Teil) und „Textoptionen“ als Reiter; darunter die Reiter mit Symbol: „Füllung und Linie“, „Effekte“ und —
 je nach Teil — „Größe und Eigenschaften“ (Diagrammbereich), „Legendenoptionen“, „Achsenoptionen“ oder „Reihenoptionen“.
 
 ``setze(werte)`` füllt das Panel (meldet nichts); ``werte`` = {"teil", "name", "format" (``diagramm_teile.diagramm_teil_format_lesen``), "linienreihe" (bool),
@@ -25,9 +25,10 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import muster as M
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld, FarbPalette
+from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.linien import Linie
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN, _textur
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
 from lunivo_writer.ui.baukasten.objektformat_panel import ObjektFormatPanel, _TextPanel
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
@@ -46,11 +47,11 @@ _OHNE = object()                                       # „Bildfüllung ohne Bi
 
 def _optionen_name(teil: str) -> str:
     if teil.startswith("reihe_"):
-        return "REIHE OPTIONEN"
+        return "Reihenoptionen"
     if teil.startswith("legendeneintrag_"):
-        return "LEGENDENEINTRAG OPTIONEN"
-    return {"titel": "TITEL OPTIONEN", "legende": "LEGENDE OPTIONEN", "achse_horizontal": "ACHSE OPTIONEN", "achse_vertikal": "ACHSE OPTIONEN",
-            "zeichnungsbereich": "ZEICHNUNGSBEREICH OPTIONEN", "datenbeschriftung": "DATENBESCHRIFTUNG OPTIONEN"}.get(teil, "DIAGRAMM OPTIONEN")
+        return "Legendeneintragoptionen"
+    return {"titel": "Titeloptionen", "legende": "Legendenoptionen", "achse_horizontal": "Achsenoptionen", "achse_vertikal": "Achsenoptionen",
+            "zeichnungsbereich": "Zeichnungsbereichoptionen", "datenbeschriftung": "Datenbeschriftungoptionen"}.get(teil, "Diagrammoptionen")
 
 
 def _text_teil(teil: str) -> bool:
@@ -58,7 +59,7 @@ def _text_teil(teil: str) -> bool:
 
 
 def _combo(eintraege) -> QComboBox:
-    c = QComboBox(); c.setMinimumHeight(36)
+    c = QComboBox()
     for k, n in eintraege:
         c.addItem(n, k)
     return c
@@ -66,30 +67,6 @@ def _combo(eintraege) -> QComboBox:
 
 def _still(x, wert, setter: str = "setValue") -> None:
     x.blockSignals(True); getattr(x, setter)(wert); x.blockSignals(False)
-
-
-class _FuellKopf(FarbFeld):
-    """Der Farbknopf im Kopf von „Füllung“: Keine Füllung · Designfarben · Graduelle Füllung · Musterfüllung (6 Kacheln) · Strukturfüllung (5 Kacheln),
-    ohne Standardfarben (so die Vorlage). Dieselben Kacheln wie ``objekt_menues.FuellMenue``."""
-    musterGewaehlt = Signal(str)
-    texturGewaehlt = Signal(str)
-
-    def _waehle(self) -> None:
-        pal = FarbPalette(self, keine_text="Keine Füllung", start=self.farbe or None, titel=self.titel, verlauf=True, weitere=False, zuletzt=False, standard=False)
-        pal.gewaehlt.connect(self._uebernehmen)
-        pal.verlauf_gewaehlt.connect(lambda c: self.verlaufGewaehlt.emit(c.name()))
-        muster = [(k, QIcon(M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(28, 28))) for k, _n, _o in M.MUSTER if k != "loeschen"][:6]
-        textur = [(k, QIcon(_textur(k, 28))) for k, _n in TEXTUREN][:5]
-        for titel, kacheln, sig in (("Musterfüllung", muster, self.musterGewaehlt), ("Strukturfüllung", textur, self.texturGewaehlt)):
-            pal._spalte.addWidget(pal._titel_zeile(titel))
-            g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0)
-            for i, (k, ic) in enumerate(kacheln):
-                b = QToolButton(); b.setIcon(ic); b.setIconSize(QSize(28, 28)); b.setAutoRaise(True); b.setToolTip(k)
-                b.clicked.connect(lambda _=False, k=k, sig=sig: (pal.close(), sig.emit(k)))
-                g.addWidget(b, 0, i)
-            g.setAlignment(Qt.AlignLeft)
-            pal._spalte.addLayout(g)
-        self._zeige_popup(pal)
 
 
 class _AutoWert(QWidget):
@@ -101,7 +78,7 @@ class _AutoWert(QWidget):
         h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(6)
         self.auto = QCheckBox("Auto"); self.auto.setChecked(True)
         self.feld = QDoubleSpinBox(); self.feld.setRange(-1e9, 1e9); self.feld.setDecimals(2); self.feld.setValue(vorgabe); self.feld.setEnabled(False)
-        self.feld.setMinimumHeight(36); self.feld.setMinimumWidth(70)
+        self.feld.setMinimumWidth(70)
         h.addWidget(self.auto); h.addWidget(self.feld, 1)
         self.auto.toggled.connect(lambda an: (self.feld.setEnabled(not an), self.geaendert.emit()))
         self.feld.valueChanged.connect(lambda *_: self.geaendert.emit())
@@ -128,7 +105,7 @@ class DiagrammTextPanel(_TextPanel):
         self._stumm = True
         # Schrift vor der Textfüllung
         self.a_schrift = Abschnitt("Schrift")
-        self.s_name = QFontComboBox(); self.s_name.setMinimumHeight(36)
+        self.s_name = QFontComboBox()
         self.s_groesse = SchrittFeld(6, 96, " pt", 1, 0, 10)
         self.s_fett, self.s_kursiv, self.s_unter = UmbruchSchalter("Fett"), UmbruchSchalter("Kursiv"), UmbruchSchalter("Unterstrichen")
         self.s_gesetzt = {"name": False, "groesse": False}
@@ -148,7 +125,7 @@ class DiagrammTextPanel(_TextPanel):
             self.a_feld.zeile(t, f)
         self.a_feld.breit(self.f_anpassen); self.a_feld.breit(self.f_umbruch)
         feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(10); v.addWidget(self.a_feld); v.addStretch(1)
-        self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "TEXTFELD")
+        self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "Textfeld")
         for a in (self.a_schrift, self.a_feld, self.a_fuell, self.a_kontur):
             a.knopf.setChecked(True)
         self.s_name.currentFontChanged.connect(lambda *_: (self.s_gesetzt.update(name=True), self._neu()))
@@ -213,24 +190,15 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self._luecke_an = False
         super().__init__(parent, werte)
         self._stumm = True
-        self.hauptreiter = [self.umschalter.button(0), self.umschalter.button(1)]
-        self.teil_pfeil = QToolButton(); self.teil_pfeil.setArrowType(Qt.DownArrow); self.teil_pfeil.setAutoRaise(True)
-        self.teil_pfeil.setToolTip("Diagrammteil wählen"); self.teil_pfeil.setPopupMode(QToolButton.InstantPopup)
-        self.teil_menue = QMenu(self.teil_pfeil); self.teil_pfeil.setMenu(self.teil_menue)
-        self.kopf_zeile.insertWidget(1, self.teil_pfeil)
-        self.fuell_farbe_kopf.musterGewaehlt.connect(lambda k: (self.fuellung_waehlen("muster"), self.muster.setCurrentIndex(max(0, self.muster.findData(k))), self._neu()))
-        self.fuell_farbe_kopf.texturGewaehlt.connect(lambda k: (self.fuellung_waehlen("textur"), self.textur.setCurrentIndex(max(0, self.textur.findData(k))), self._neu()))
+        self.teil_wahl = QComboBox(); self.teil_wahl.setToolTip("Diagrammteil wählen")           # „TEIL [Diagrammbereich ▾]“ über den Reitern, wie „FÜR“ im Standardfenster
+        self.teil_wahl.activated.connect(lambda _i: self.teil_gewaehlt.emit(str(self.teil_wahl.currentData())))
+        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(abschnittstitel("Teil:"), 0, Qt.AlignVCenter); kopf.addWidget(self.teil_wahl, 1)
+        self.layout().insertLayout(0, kopf)
         self.text_panel.geaendert.connect(lambda t: self._melde(text=t))
         self.optionen_seite = self._seite_optionen()
-        self.reiter.addTab(self._scroll(self.optionen_seite), icons.icon("sliders-horizontal", 22), "OPTIONEN")
+        self.reiter.addTab(self._scroll(self.optionen_seite), icons.icon("sliders-horizontal", 22), "Optionen")
         self.eigenschaften_seite = self._seite_eigenschaften()
-        self.reiter.addTab(self._scroll(self.eigenschaften_seite), icons.icon("scaling", 22), "GRÖSSE UND\nEIGENSCHAFTEN")
-        for i, name in enumerate(("FÜLLUNG\nUND LINIE", "EFFEKTE")):
-            self.reiter.tabKnopf(i).setText(name)
-        self.text_panel.reiter.tabKnopf(0).setText("TEXTFÜLLUNG\nUND -KONTUR")
-        for k in self.reiter._gruppe.buttons() + self.text_panel.reiter._gruppe.buttons():        # vier Reiter müssen in 300 Bildpunkte passen
-            k.setStyleSheet("QToolButton { border: none; border-bottom: 2px solid transparent; padding: 4px 6px; color: palette(window-text); }"
-                            "QToolButton:checked { color: palette(highlight); border-bottom: 2px solid palette(highlight); }")
+        self.reiter.addTab(self._scroll(self.eigenschaften_seite), icons.icon("scaling", 22), "Größe und Eigenschaften")
         for a in (self.a_fuell, self.a_kontur, self.a_schatten):         # wie in der Vorlage: die wichtigsten Abschnitte stehen offen
             a.knopf.setChecked(True)
         self._alt_timer = QTimer(self); self._alt_timer.setSingleShot(True); self._alt_timer.setInterval(400)
@@ -238,9 +206,6 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self._fertig = True
         self._stumm = False
         self.setze(werte or {})
-
-    def _kopf_klasse(self):
-        return _FuellKopf
 
     # ---- Erweiterungen der Seite „Füllung und Linie“ ----------------------------------------------------------------------------
     def _zusatz_radios(self, abschnitt: str) -> list:
@@ -259,19 +224,20 @@ class DiagrammFormatPanel(ObjektFormatPanel):
             self.textur.currentIndexChanged.connect(lambda *_: setattr(self, "_bild_modus", False))      # vor dem Verbinden der Basis: die Struktur gilt dann
             self.f_trans = SchiebeFeld(0, 100, " %")
             self.v_winkel = SchiebeFeld(0, 360, "°", 5, 0, 90)
-            a.zeile("Transparenz:", self.f_trans); a.zeile("Winkel des Verlaufs:", self.v_winkel)
+            self.g_farbe.zeile("Transparenz:", self.f_trans); self.g_verlauf.zeile("Winkel des Verlaufs:", self.v_winkel)
             self.f_trans.valueChanged.connect(lambda *_: (self._farbe_waehlen(), self._neu()))
             self.v_winkel.valueChanged.connect(lambda *_: (self.r_verlauf.setChecked(True), self._neu()))
             return
-        self.kv1, self.kv2 = FarbFeld("#c92a2a", "Farbe 1"), FarbFeld("#1864ab", "Farbe 2")
+        self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Farbe 1"), FarbFeld(Farbe.BLAU_DUNKEL, "Farbe 2")
         self.kv_winkel = SchiebeFeld(0, 360, "°", 5)
         self.k_trans = SchiebeFeld(0, 100, " %")
         self.l_kombi = _combo(T.KONTUR_FORMEN)
         self.l_abschluss, self.l_verknuepfung = _combo(ABSCHLUSS), _combo(VERKNUEPFUNG)
         self.l_rund = UmbruchSchalter("Abgerundete Ecke")
-        a.zeile("Farbe 1:", self.kv1); a.zeile("Farbe 2:", self.kv2); a.zeile("Winkel:", self.kv_winkel)
-        a.zeile("Transparenz:", self.k_trans); a.zeile("Kombinierter Typ:", self.l_kombi); a.zeile("Abschlusstyp:", self.l_abschluss)
-        a.zeile("Verknüpfungstyp:", self.l_verknuepfung); a.breit(self.l_rund)
+        g, f = self.g_lin_verlauf, self.g_lin_form
+        g.zeile("Farbe 1:", self.kv1); g.zeile("Farbe 2:", self.kv2); g.zeile("Winkel:", self.kv_winkel)
+        f.zeile("Transparenz:", self.k_trans); f.zeile("Kombinierter Typ:", self.l_kombi); f.zeile("Abschlusstyp:", self.l_abschluss)
+        f.zeile("Verknüpfungstyp:", self.l_verknuepfung); f.breit(self.l_rund)
         for sig in (self.kv1.farbeGeaendert, self.kv2.farbeGeaendert, self.kv_winkel.valueChanged):
             sig.connect(lambda *_: (self.k_verlauf.setChecked(True), self._neu()))
         for sig in (self.k_trans.valueChanged, self.l_kombi.currentIndexChanged, self.l_abschluss.currentIndexChanged, self.l_verknuepfung.currentIndexChanged,
@@ -311,8 +277,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.bild_knopf.clicked.connect(self._bild_waehlen)
         v = seite.layout()
         v.insertWidget(v.count() - 1, self.a_pfeile)
-        for sig in (self.k_farbe.farbeGeaendert, self.k_breite.valueChanged, self.k_art.currentIndexChanged):
-            sig.connect(lambda *_: self._linie_waehlen())
+        self.k_wahl.geaendert.connect(lambda *_: self._linie_waehlen())
         return seite
 
     # ---- Seite „Optionen“ (Legende, Achse, Reihe) ---------------------------------------------------------------------------------
@@ -367,7 +332,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.g_hoehe.valueChanged.connect(lambda *_: self._groesse_melden(True)); self.g_breite.valueChanged.connect(lambda *_: self._groesse_melden(False))
         self.g_dreh.valueChanged.connect(lambda *_: self._melde(dreh=self.g_dreh.value()))
         self.a_alt = Abschnitt("Alternativtext")
-        self.alt_titel = QLineEdit(); self.alt_titel.setMinimumHeight(36)
+        self.alt_titel = QLineEdit()
         self.alt_text = QPlainTextEdit(); self.alt_text.setMinimumHeight(110)
         self.a_alt.zeile("Titel:", self.alt_titel); self.a_alt.zeile("Beschreibung:", self.alt_text)
         self.alt_titel.textChanged.connect(lambda *_: self._alt_start()); self.alt_text.textChanged.connect(self._alt_start)
@@ -420,7 +385,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
             return ""
         tr = int(self.f_trans.value())
         if self.r_verlauf.isChecked():
-            d = {"art": "graduell", "dunkel": self.v1.farbe or "#1864ab", "hell": self.v2.farbe or "#ffffff", "winkel": self.v_winkel.value()}
+            d = {"art": "graduell", "dunkel": self.v1.farbe or Farbe.BLAU_DUNKEL, "hell": self.v2.farbe or Farbe.WEISS, "winkel": self.v_winkel.value()}
             d["farbe"] = d["dunkel"]
         elif self.r_textur.isChecked() and self._bild_modus:
             if not self._bild_b64:
@@ -450,13 +415,13 @@ class DiagrammFormatPanel(ObjektFormatPanel):
                 "rund": None, "verlauf": None, "pfeil_anfang": None, "pfeil_ende": None, "pfeil_groesse": None}
         if self.k_keine.isChecked():
             return {**voll, "keine": True}
-        voll.update(farbe=self.k_farbe.farbe or Farbe.GRAU, breite=self.k_breite.value(), art=self.k_art.currentData() or "einfach",
+        voll.update(farbe=self.k_farbe.farbe or Farbe.GRAU, breite=self._k_breite(), art=self.k_art.currentData() or "einfach",
                     transparenz=int(self.k_trans.value()) or None, kombiniert=self.l_kombi.currentData() if self.l_kombi.currentData() != "einfach" else None,
                     abschluss=self.l_abschluss.currentData() if self.l_abschluss.currentData() != "flach" else None,
                     verknuepfung=self.l_verknuepfung.currentData() if self.l_verknuepfung.currentData() != "rund" else None,
                     rund=True if self.l_rund.isChecked() else None)
         if self.k_verlauf.isChecked():
-            voll["verlauf"] = {"farbe1": self.kv1.farbe or "#c92a2a", "farbe2": self.kv2.farbe or "#1864ab", "winkel": self.kv_winkel.value()}
+            voll["verlauf"] = {"farbe1": self.kv1.farbe or Farbe.ROT, "farbe2": self.kv2.farbe or Farbe.BLAU_DUNKEL, "winkel": self.kv_winkel.value()}
         if not self.a_pfeile.isHidden():
             voll.update(pfeil_anfang=self.p_anfang.currentData() if self.p_anfang.currentData() != "keiner" else None,
                         pfeil_ende=self.p_ende.currentData() if self.p_ende.currentData() != "keiner" else None,
@@ -487,19 +452,19 @@ class DiagrammFormatPanel(ObjektFormatPanel):
             x.blockSignals(False)
         self._bild_b64 = (d or {}).get("bild_b64", "") if art == "bild" else ""
         d = d or {}
+        self.farbe.setFarbe("")                                             # leere Farbe = „Automatisch“ (wie überall: gesetzte Farben zeigen ihre Hex-Zahl)
         if art == "farbe":
             self.farbe.setFarbe(d.get("farbe", Farbe.BLAU))
         elif art in ("graduell", "verlauf"):
-            self.v1.setFarbe(d.get("dunkel", d.get("farbe", "#1864ab"))); self.v2.setFarbe(d.get("hell", "#d0ebff"))
+            self.v1.setFarbe(d.get("dunkel", d.get("farbe", Farbe.BLAU_DUNKEL))); self.v2.setFarbe(d.get("hell", Farbe.BLAU_HELL))
         elif art == "textur":
             self.textur.setCurrentIndex(max(0, self.textur.findData(d.get("key"))))
         elif art == "muster":
             self.muster.setCurrentIndex(max(0, self.muster.findData(d.get("key")))); self.m_farbe.setFarbe(d.get("farbe", Farbe.TINTE))
         self.f_trans.setValue(float(d.get("transparenz", 0))); self.v_winkel.setValue(float(d.get("winkel", 90)))
-        self.fuell_farbe_kopf.setFarbe(d.get("farbe", "") if art == "farbe" else "")
         li = li or {}
-        self.k_farbe.setFarbe(li.get("farbe", Farbe.GRAU)); self.k_breite.setValue(float(li.get("breite", 1.0)))
-        self.k_art.setCurrentIndex(max(0, self.k_art.findData(li.get("art", "einfach"))))
+        self.k_farbe.keine_text = "Automatisch"
+        self.k_wahl.setLinie(Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), li.get("art", "einfach")))
         self.k_trans.setValue(float(li.get("transparenz", 0)))
         for c, k, vorgabe in ((self.l_kombi, "kombiniert", "einfach"), (self.l_abschluss, "abschluss", "flach"), (self.l_verknuepfung, "verknuepfung", "rund"),
                               (self.p_anfang, "pfeil_anfang", "keiner"), (self.p_ende, "pfeil_ende", "keiner")):
@@ -507,12 +472,8 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         _still(self.l_rund, bool(li.get("rund")), "setChecked")
         self.p_groesse.setValue(float(li.get("pfeil_groesse", 1.0)))
         v = li.get("verlauf") or {}
-        self.kv1.setFarbe(v.get("farbe1", "#c92a2a")); self.kv2.setFarbe(v.get("farbe2", "#1864ab")); self.kv_winkel.setValue(float(v.get("winkel", 0)))
-
-    def _neu(self, *_) -> None:
-        super()._neu()
-        if hasattr(self, "k_auto"):
-            self.linie_knopf.setText("Keine" if self.k_keine.isChecked() else "Automatisch" if self.k_auto.isChecked() else self.linie_knopf.text())
+        self.kv1.setFarbe(v.get("farbe1", Farbe.ROT)); self.kv2.setFarbe(v.get("farbe2", Farbe.BLAU_DUNKEL)); self.kv_winkel.setValue(float(v.get("winkel", 0)))
+        self._felder_zeigen()
 
     def setze(self, werte: dict) -> None:
         """Die Felder mit dem Format des Teils füllen; meldet nichts."""
@@ -522,6 +483,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         alt, self._stumm = self._stumm, True
         try:
             self._teil = werte.get("teil") or "diagrammbereich"
+            self._teile_zeigen(werte)
             self._teil_einrichten(werte)
             super().setze(werte)
             f = werte.get("format") or {}
@@ -530,17 +492,27 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         finally:
             self._stumm = alt
 
+    def _teile_zeigen(self, werte: dict) -> None:
+        """Die Liste „Teil“ mit den Teilen des Diagramms (``werte["teile"]``, sonst nur der gewählte) und dem gewählten Eintrag."""
+        teile = list(werte.get("teile") or [(self._teil, werte.get("name") or "Diagrammbereich")])
+        self.teil_wahl.blockSignals(True)
+        self.teil_wahl.clear()
+        for schl, name in teile:
+            self.teil_wahl.addItem(name, schl)
+        self.teil_wahl.setCurrentIndex(max(0, self.teil_wahl.findData(self._teil)))
+        self.teil_wahl.blockSignals(False)
+
     def _teil_einrichten(self, werte: dict) -> None:
         teil = self._teil
-        self.hauptreiter[0].setText(_optionen_name(teil))
+        self.optionen.setTabText(0, _optionen_name(teil))
         text_ok = _text_teil(teil)
-        self.hauptreiter[1].setEnabled(text_ok)
-        self.hauptreiter[0].setEnabled(teil != "datenbeschriftung")
+        self.optionen.setTabEnabled(1, text_ok)
+        self.optionen.setTabEnabled(0, teil != "datenbeschriftung")
         if (not text_ok and self.optionen.currentIndex() == 1) or (teil == "datenbeschriftung" and self.optionen.currentIndex() == 0):
             self.optionen_waehlen(1 if teil == "datenbeschriftung" else 0)
         legende, achse, reihe, bereich = teil == "legende", teil.startswith("achse_"), teil.startswith("reihe_"), teil == "diagrammbereich"
         self.reiter.setTabVisible(2, legende or achse or reihe)
-        self.reiter.tabKnopf(2).setText("LEGENDEN-\nOPTIONEN" if legende else "ACHSEN-\nOPTIONEN" if achse else "REIHEN-\nOPTIONEN")
+        self.reiter.setTabText(2, "Legendenoptionen" if legende else "Achsenoptionen" if achse else "Reihenoptionen")
         self.reiter.setTabVisible(3, bereich)
         self._luecke_an = reihe and bool(werte.get("saeulen"))
         for a, an in ((self.a_legende, legende), (self.a_achse, achse), (self.a_reihe, self._luecke_an),

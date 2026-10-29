@@ -94,7 +94,7 @@ QSlider::handle:horizontal { background: %(karte)s; border: 2px solid %(akzent)s
 QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid %(grau)s; border-radius: 4px; background: %(karte)s; }
 QCheckBox::indicator:checked { background: %(akzent)s; border-color: %(akzent)s; }
 QRadioButton::indicator { width: 14px; height: 14px; border: 1px solid %(grau)s; border-radius: 8px; background: %(feld)s; }
-QRadioButton::indicator:checked { border: 4px solid %(akzent)s; background: white; }
+QRadioButton::indicator:checked { border: 1px solid %(akzent)s; background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 %(akzent)s, stop:0.5 %(akzent)s, stop:0.56 %(feld)s, stop:1 %(feld)s); }
 QRadioButton { spacing: 8px; padding: 3px 0; }
 QGroupBox { border: 1px solid %(rand)s; border-radius: 8px; margin-top: 12px; padding-top: 8px; }
 QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; color: %(grau)s; }

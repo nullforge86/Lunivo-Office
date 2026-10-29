@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QGrid
                                QSizePolicy, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
 
 KACHEL = 36
@@ -28,8 +29,7 @@ def _dg(b) -> dict:
 
 def _kopfknopf(text: str, i: int, gruppe: QButtonGroup) -> QToolButton:
     t = QToolButton(); t.setText(text); t.setCheckable(True); t.setAutoRaise(True); t.setMinimumHeight(KACHEL)
-    t.setStyleSheet(f"QToolButton {{ padding: 4px 10px; border: none; border-bottom: 2px solid transparent; }}"
-                    f"QToolButton:checked {{ color: {Farbe.AKZENT}; border-bottom: 2px solid {Farbe.AKZENT}; }}")
+    reiter_knopf_stil(t)
     gruppe.addButton(t, i)
     return t
 
@@ -40,8 +40,7 @@ def _linie() -> QFrame:
 
 
 def _ueberschrift(text: str) -> QLabel:
-    t = QLabel(text); t.setStyleSheet("background: palette(midlight); padding: 5px 8px; font-size: 12px;")
-    return t
+    return abschnittsband(text)
 
 
 # ---- Kacheln -------------------------------------------------------------------------------------------------------------------------
@@ -49,10 +48,10 @@ def layout_bild(nr: int, groesse: QSize = QSize(64, 46)) -> QPixmap:
     """Schematisches Bild von „Layout 1 bis 6“: Titel oben, Legende (Lage), Datenbeschriftungen (Punkte auf den Säulen)."""
     from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
     kw = SCHNELLLAYOUTS[nr][1]
-    pm = QPixmap(groesse); pm.fill(QColor("white"))
+    pm = QPixmap(groesse); pm.fill(QColor(Farbe.WEISS))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     w, h = groesse.width(), groesse.height()
-    grau, blau = QColor("#9aa0a6"), QColor(Farbe.AKZENT)
+    grau, blau = QColor(Farbe.GRAU_HELL), QColor(Farbe.AKZENT)
     fl = QRectF(4, 4, w - 8, h - 8)
     if kw.get("titel_an"):
         p.setPen(Qt.NoPen); p.setBrush(grau); p.drawRect(QRectF(w * 0.35, 5, w * 0.30, 3)); fl.setTop(11)
@@ -74,7 +73,7 @@ def layout_bild(nr: int, groesse: QSize = QSize(64, 46)) -> QPixmap:
         r = QRectF(x, fl.bottom() - fl.height() * hh, (fl.width() - 4) / n * 0.6, fl.height() * hh)
         p.drawRect(r)
         if kw.get("labels"):
-            p.setBrush(QColor("white")); p.drawRect(QRectF(r.center().x() - 2, r.top() + 2, 4, 2)); p.setBrush(blau)
+            p.setBrush(QColor(Farbe.WEISS)); p.drawRect(QRectF(r.center().x() - 2, r.top() + 2, 4, 2)); p.setBrush(blau)
     p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(Qt.NoBrush); p.drawRect(QRectF(0.5, 0.5, w - 1, h - 1))
     p.end()
     return pm

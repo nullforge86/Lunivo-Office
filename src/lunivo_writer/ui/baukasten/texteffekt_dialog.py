@@ -18,14 +18,36 @@ from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import textfx as X
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.icon_reiter import IconReiter
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
+class _Pfeil(QToolButton):
+    """Der Pfeil vor einer Abschnittsüberschrift: schaltet um wie ein Umschaltknopf (``setChecked``, ``toggled``), zeigt aber keinen Knopfrahmen."""
+    toggled = Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self._an = False
+        self.setAutoRaise(True); self.setArrowType(Qt.RightArrow)
+        self.clicked.connect(self.toggle)
+
+    def isChecked(self) -> bool:
+        return self._an
+
+    def setChecked(self, an: bool) -> None:
+        if an != self._an:
+            self._an = bool(an)
+            self.setArrowType(Qt.DownArrow if self._an else Qt.RightArrow)
+            self.toggled.emit(self._an)
+
+    def toggle(self) -> None:
+        self.setChecked(not self._an)
+
+
 class Abschnitt(QWidget):
     """Aufklappbarer Abschnitt: Pfeil und Überschrift in Großbuchstaben links, optional ein Bedienelement rechts (z. B. die Voreinstellung)."""
 
@@ -33,14 +55,15 @@ class Abschnitt(QWidget):
         super().__init__()
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(6)
         kopf = QHBoxLayout()
-        self.knopf = QToolButton(); self.knopf.setText(titel.upper()); self.knopf.setCheckable(True); self.knopf.setArrowType(Qt.RightArrow)
-        self.knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); self.knopf.setAutoRaise(True)
-        self.knopf.setStyleSheet("QToolButton { font-weight: 600; color: palette(highlight); border: none; padding: 2px 0; }")
-        kopf.addWidget(self.knopf); kopf.addStretch(1)
+        self.knopf = _Pfeil()                                            # nur der Pfeil
+        self.knopf.setAccessibleName(titel); self.knopf.setToolTip(titel)
+        self.titel = abschnittstitel(titel)                              # die Überschrift wie überall (kleine graue Großbuchstaben); ein Klick klappt auf und zu
+        self.titel.setCursor(Qt.PointingHandCursor); self.titel.mousePressEvent = lambda e: self.knopf.toggle()
+        kopf.addWidget(self.knopf); kopf.addWidget(self.titel); kopf.addStretch(1)
         if rechts is not None:
             kopf.addWidget(rechts)
         v.addLayout(kopf)
-        self.inhalt = QWidget(); self.gitter = FormularGitter(self.inhalt); self.gitter.setContentsMargins(18, 0, 0, 6)
+        self.inhalt = QWidget(); self.gitter = FormularGitter(self.inhalt); self.gitter.setContentsMargins(0, 0, 0, 6)
         v.addWidget(self.inhalt); self.inhalt.setVisible(False)
         self.knopf.toggled.connect(self._umschalten)
 
@@ -75,7 +98,7 @@ def _linien_icon(art: str, form: str, groesse: QSize = QSize(86, 14)) -> QIcon:
 
 
 class TexteffektPanel(QWidget):
-    TITEL = ("TEXTFÜLLUNG UND -KONTUR", "EFFEKTE")                  # die Reiter; ein Objekt-Panel (objektformat_panel.py) setzt eigene
+    TITEL = ("Textfüllung und -kontur", "Effekte")                  # die Reiter; ein Objekt-Panel (objektformat_panel.py) setzt eigene
     """Der Inhalt von „Texteffekte formatieren“ als eigenes Widget: Reiter, Abschnitte, Regler. Es steckt im Fenster ``TexteffektDialog`` und in der rechten
     Seitenleiste. ``geaendert(werte)`` kommt bei jeder Änderung durch den Benutzer (nicht bei ``setze``), damit die Seitenleiste sofort anwenden kann."""
     geaendert = Signal(dict)
@@ -86,7 +109,7 @@ class TexteffektPanel(QWidget):
         self._fx = {k: dict(w[k]) for k in ("verlauf", "kontur_verlauf", "schatten", "reflektion", "leuchten", "d3") if w.get(k)}
         self._stumm = True
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0)
-        self.reiter = IconReiter(); v.addWidget(self.reiter, 1)
+        self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         self.reiter.addTab(self._scroll(self._seite_fuellung(w)), self._tab_icon("A", True), self.TITEL[0])
         self.reiter.addTab(self._scroll(self._seite_effekte(w)), self._tab_icon("A", False), self.TITEL[1])
         self.setze(w)
@@ -101,14 +124,8 @@ class TexteffektPanel(QWidget):
 
     @staticmethod
     def _tab_icon(t: str, unterstrichen: bool) -> QIcon:
-        pm = QPixmap(26, 26); pm.fill(Qt.transparent)
-        p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-        f = QFont(); f.setPixelSize(18); p.setFont(f); p.setPen(QColor(Farbe.GRAU))
-        p.drawText(QRectF(0, 0, 26, 22), Qt.AlignCenter, t)
-        if unterstrichen:
-            p.setPen(QColor(Farbe.BLAU)); p.drawLine(5, 24, 21, 24)
-        p.end()
-        return QIcon(pm)
+        from lunivo_writer.ui.widgets import icons
+        return icons.icon("baseline" if unterstrichen else "sparkles", 16)
 
     # ---- Seite 1: Füllung und Kontur
     def _seite_fuellung(self, w: dict) -> QWidget:
@@ -449,7 +466,8 @@ class TexteffektPanel(QWidget):
         self._sichtbar()
         if not self._stumm:
             QTimer.singleShot(0, self._melden)
-        self.linie_knopf.setText("Keine" if self.k_keine.isChecked() else T.KONTUR_ARTEN[self.k_art.currentData()][0])
+        if hasattr(self, "linie_knopf"):
+            self.linie_knopf.setText("Keine" if self.k_keine.isChecked() else T.KONTUR_ARTEN[self.k_art.currentData()][0])
 
     def _melden(self) -> None:
         try:

@@ -24,15 +24,15 @@ def _leer(w=240, h=200) -> QImage:
 
 def test_aufbau_nach_der_vorlage(app):
     p = ObjektFormatPanel(None, {"fuell": None, "rand": None})
-    assert [p.umschalter.button(i).text() for i in (0, 1)] == ["FORMOPTIONEN", "TEXTOPTIONEN"]
+    assert [p.optionen.tabText(i) for i in (0, 1)] == ["Formoptionen", "Textoptionen"]
     assert p.reiter.count() == 2
     p.reiter.setCurrentIndex(1)
     seite = p.reiter.currentWidget()
     lay = seite.widget().layout()
-    namen = [lay.itemAt(i).widget().knopf.text() for i in range(lay.count()) if isinstance(lay.itemAt(i).widget(), Abschnitt)]
+    namen = [lay.itemAt(i).widget().titel.text() for i in range(lay.count()) if isinstance(lay.itemAt(i).widget(), Abschnitt)]
     assert namen == ["SCHATTEN", "REFLEKTION", "LEUCHTEN", "WEICHE KANTEN", "3D-FORMAT", "3D-DREHUNG"], namen
     p.optionen_waehlen(1)
-    assert p.optionen.currentWidget() is p.text_panel and p.umschalter.button(1).isChecked()
+    assert p.optionen.currentWidget() is p.text_panel and p.optionen.currentIndex() == 1
 
 
 def test_werte_mit_3d_und_drehung(app):
@@ -64,7 +64,8 @@ def test_textoptionen_melden_und_nehmen_werte(app):
 
 @pytest.mark.parametrize("breite", [300, 444])
 def test_passt_in_die_seitenleiste(app, breite):
-    p = ObjektFormatPanel(None, {"fuell": None, "rand": None})
+    from lunivo_writer.ui.baukasten.zusatz_panel import FLACHE_REITER
+    p = ObjektFormatPanel(None, {"fuell": None, "rand": None}); p.setStyleSheet(FLACHE_REITER)       # wie im Rahmen der Seitenleiste
     p.resize(breite - 24, 800); p.show()
     for optionen in (0, 1):
         p.optionen_waehlen(optionen)

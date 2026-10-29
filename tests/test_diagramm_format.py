@@ -133,12 +133,12 @@ def test_panel_ragt_bei_jedem_teil_nicht_heraus(app, breite, teil):
     from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
     p = DiagrammFormatPanel(None, _teile_werte(teil, "linie" if teil == "reihe_0" else "saeule_gruppiert")); p.resize(breite, 700); p.show(); app.processEvents()
     for haupt in (0, 1):
-        if not p.hauptreiter[haupt].isEnabled():
+        if not p.optionen.isTabEnabled(haupt):
             continue
         p.optionen_waehlen(haupt); app.processEvents()
         reiter = p.reiter if haupt == 0 else p.text_panel.reiter
         for i in range(reiter.count()):
-            if not reiter.tabKnopf(i).isVisibleTo(p):
+            if not reiter.isTabVisible(i):
                 continue
             reiter.setCurrentIndex(i); app.processEvents()
             for wdg in p.findChildren(QWidget):
@@ -151,16 +151,16 @@ def test_panel_ragt_bei_jedem_teil_nicht_heraus(app, breite, teil):
 def test_reiter_und_abschnitte_folgen_dem_teil(app):
     from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
     p = DiagrammFormatPanel(None, _teile_werte("diagrammbereich")); p.show(); app.processEvents()
-    sichtbar = lambda: [p.reiter.tabKnopf(i).isVisibleTo(p) for i in range(4)]       # noqa: E731
+    sichtbar = lambda: [p.reiter.isTabVisible(i) for i in range(4)]       # noqa: E731
     assert sichtbar() == [True, True, False, True]
-    for teil, namen, haupt in (("titel", [True, True, False, False], "TITEL OPTIONEN"), ("legende", [True, True, True, False], "LEGENDE OPTIONEN"),
-                               ("achse_horizontal", [True, True, True, False], "ACHSE OPTIONEN"), ("reihe_1", [True, True, True, False], "REIHE OPTIONEN")):
+    for teil, namen, haupt in (("titel", [True, True, False, False], "Titeloptionen"), ("legende", [True, True, True, False], "Legendenoptionen"),
+                               ("achse_horizontal", [True, True, True, False], "Achsenoptionen"), ("reihe_1", [True, True, True, False], "Reihenoptionen")):
         p.setze(_teile_werte(teil)); app.processEvents()
-        assert sichtbar() == namen and p.hauptreiter[0].text() == haupt, teil
+        assert sichtbar() == namen and p.optionen.tabText(0) == haupt, teil
     p.setze({**_teile_werte("reihe_0", "linie"), "linienreihe": True}); assert not p.a_pfeile.isHidden() and not p.a_reihe_linie.isHidden() and p.a_reihe.isHidden()
     p.setze({**_teile_werte("reihe_0"), "saeulen": True}); assert p.a_pfeile.isHidden() and not p.a_reihe.isHidden()
-    p.setze(_teile_werte("zeichnungsbereich")); assert not p.hauptreiter[1].isEnabled()
-    p.setze(_teile_werte("datenbeschriftung")); assert p.hauptreiter[1].isEnabled() and not p.hauptreiter[0].isEnabled() and p.optionen.currentIndex() == 1
+    p.setze(_teile_werte("zeichnungsbereich")); assert not p.optionen.isTabEnabled(1)
+    p.setze(_teile_werte("datenbeschriftung")); assert p.optionen.isTabEnabled(1) and not p.optionen.isTabEnabled(0) and p.optionen.currentIndex() == 1
 
 
 def test_panel_meldet_verlauf_linie_effekte_text_und_optionen(fenster, app):

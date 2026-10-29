@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QHBoxLayout, Q
                                QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
 
@@ -48,9 +49,7 @@ def _skala_bild(b: int, h: int) -> QIcon:
 
 
 def _abschnittsleiste(text: str) -> QLabel:
-    t = QLabel(text)
-    t.setStyleSheet("background: palette(midlight); padding: 5px 6px; font-size: 11px;")
-    return t
+    return abschnittsband(text)
 
 
 def zuschneiden_menue(b) -> QMenu:
@@ -65,7 +64,7 @@ def zuschneiden_menue(b) -> QMenu:
     for i, text in enumerate(("Nach Form zuschneiden", "Nach Skala zuschneiden")):
         t = QToolButton(); t.setText(text); t.setCheckable(True); t.setAutoExclusive(True); t.setChecked(i == 0)
         t.setMinimumHeight(KACHEL - 4); t.setAutoRaise(True)
-        t.setStyleSheet(f"QToolButton {{ padding: 4px 8px; border: none; }} QToolButton:checked {{ color: {Farbe.AKZENT}; }}")
+        reiter_knopf_stil(t)
         t.clicked.connect(lambda _=False, i=i: stapel.setCurrentIndex(i))
         kopf.addWidget(t); reiter.append(t)
     kopf.addStretch(1)

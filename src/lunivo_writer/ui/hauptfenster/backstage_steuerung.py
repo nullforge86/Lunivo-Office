@@ -210,13 +210,18 @@ class BackstageBaustein:
             b.setChecked(an)
 
 
+    def _seitenleiste_oeffnen(self) -> None:
+        """Gemeinsam für alle Bereiche „Formatierung“: die Seitenleiste einblenden, falls sie zu ist."""
+        if self.sidebar.isHidden():
+            self.toggle_sidebar()
+
+
     def texteffekte_seitenleiste(self):
         """Den Bereich „Texteffekte formatieren“ in der Seitenleiste öffnen; Änderungen gelten sofort für die Markierung."""
         from lunivo_writer.editor import texteffekt
         if self.current_editor() is None:
             return
-        if self.sidebar.isHidden():
-            self.toggle_sidebar()
+        self._seitenleiste_oeffnen()
 
         def anwenden(w: dict):
             e = self.current_editor()
@@ -235,8 +240,7 @@ class BackstageBaustein:
         w = BL.format_lesen(e, z) if z is not None else None
         if w is None:
             return
-        if self.sidebar.isHidden():
-            self.toggle_sidebar()
+        self._seitenleiste_oeffnen()
 
         def anwenden(neu: dict):
             ed = self.current_editor()
@@ -279,7 +283,7 @@ class BackstageBaustein:
         teil = T.teil_gewaehlt(e) or "diagrammbereich"
         art = D._art(d)
         reihe = teil.startswith("reihe_")
-        return {"teil": teil, "name": T.teil_name(e) or "Diagrammbereich", "format": T.diagramm_teil_format_lesen(e, teil),
+        return {"teil": teil, "teile": self.befehle.diagrammTeile(), "name": T.teil_name(e) or "Diagrammbereich", "format": T.diagramm_teil_format_lesen(e, teil),
                 "linienreihe": reihe and art.startswith(("linie", "punkte_linien")), "saeulen": reihe and art.startswith(("saeule", "balken")),
                 "wertachse": (art.startswith("punkte") or (teil == "achse_horizontal") == art.startswith("balken")) if teil.startswith("achse_") else True,
                 "objekt": {"legende_pos": d.get("legende_pos", "unten"), "breite_mm": px_to_mm(float(z[3]["b"])), "hoehe_mm": px_to_mm(float(z[3]["h"])),
@@ -296,8 +300,7 @@ class BackstageBaustein:
         if w is None:
             self.statusBar().showMessage("Bitte zuerst ein Diagramm auswählen.", 4000)
             return
-        if self.sidebar.isHidden():
-            self.toggle_sidebar()
+        self._seitenleiste_oeffnen()
 
         def anwenden(angaben: dict):
             from lunivo_writer.editor import bildlayout as BL
@@ -324,16 +327,23 @@ class BackstageBaustein:
             if b64:
                 self.befehle.diagrammTeilFormat(None, {"fuell": {"art": "bild", "bild_b64": b64}})
                 self.diagrammformat_folgen()
-        self.sidebar.zeige_diagrammformat(w, anwenden, alt, bild)
+        def teil(schluessel: str):
+            self.befehle.diagrammTeilWaehlen(None, schluessel)
+            self.diagrammformat_folgen()
+        self.sidebar.zeige_diagrammformat(w, anwenden, alt, bild, teil)
 
+
+    def _format_folgen(self, schluessel: str, lesen) -> None:
+        """Gemeinsam für alle Bereiche „Formatierung“: ist er offen, zeigt er die Werte des neu gewählten Objekts (``lesen(editor)`` -> Werte oder None)."""
+        e = self.current_editor()
+        if e is not None and self.sidebar.format_sichtbar(schluessel):
+            w = lesen(e)
+            if w is not None:
+                self.sidebar.aktualisiere_format(schluessel, w)
 
     def diagrammformat_folgen(self) -> None:
         """Wählt der Benutzer einen anderen Diagrammteil, zeigt der offene Bereich dessen Format."""
-        e = self.current_editor()
-        if e is not None and self.sidebar.diagrammformat_sichtbar():
-            w = self._diagramm_werte(e)
-            if w is not None:
-                self.sidebar.aktualisiere_diagrammformat(w)
+        self._format_folgen("diagramm", self._diagramm_werte)
 
 
     def _objekt_text_verbinden(self) -> None:
@@ -374,19 +384,14 @@ class BackstageBaustein:
 
     def objektformat_folgen(self) -> None:
         """Wählt der Benutzer ein anderes Bild, zeigt der offene Bereich dessen Werte."""
-        e = self.current_editor()
-        if self.sidebar.objektformat_sichtbar() and e is not None:
-            from lunivo_writer.editor import bildlayout as BL
-            w = BL.format_lesen(e, BL.ziel(e))
-            if w is not None:
-                self.sidebar.aktualisiere_objektformat(w)
+        from lunivo_writer.editor import bildlayout as BL
+        self._format_folgen("objekt", lambda e: BL.format_lesen(e, BL.ziel(e)))
 
 
     def _effekt_sync(self):
         """Folgt die Markierung einer anderen Formatierung, zeigt der offene Bereich „Texteffekte“ deren Werte."""
-        if self.sidebar.texteffekte_sichtbar() and self.current_editor() is not None:
-            from lunivo_writer.editor import texteffekt
-            self.sidebar.aktualisiere_texteffekte(texteffekt.aus_format(self.befehle._fmt()))
+        from lunivo_writer.editor import texteffekt
+        self._format_folgen("texteffekte", lambda e: texteffekt.aus_format(self.befehle._fmt()))
 
 
     def toggle_sidebar(self):

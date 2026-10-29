@@ -98,7 +98,7 @@ def layout_menue(b) -> MenueListe:
 
 
 # ---- Stile ---------------------------------------------------------------------------------------------------------------------------
-def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str = "#4a8fd8") -> QPixmap:
+def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str = Farbe.AKZENT_DUNKEL) -> QPixmap:
     """Zwei übereinanderstehende Kästen im Formenstil ``nr`` (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D)."""
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
@@ -142,8 +142,8 @@ def stile_galerie(b) -> dict:
 def _farben(grau: bool) -> tuple[QColor, QColor, QColor]:
     """(Fläche, Rand, Strich für Text) — grau im Raster des Dialogs, blau in der großen Vorschau."""
     if grau:
-        return QColor("#c9c9c9"), QColor("#7a7a7a"), QColor("#555555")
-    return QColor("#4a8fd8"), QColor("#2f6fb5"), QColor("#ffffff")
+        return QColor(Farbe.GRAU_HELL), QColor(Farbe.GRAU), QColor(Farbe.TINTE)
+    return QColor(Farbe.AKZENT_DUNKEL), QColor(Farbe.AKZENT), QColor(Farbe.WEISS)
 
 
 def _kasten(p: QPainter, r: QRectF, fl: QColor, rand: QColor, strich: QColor, text: bool = True, rund: float = 0) -> None:
@@ -220,7 +220,7 @@ def _m_spalten(p, W, H, c):
     for i in range(3):
         x = W * (0.08 + i * 0.3)
         _kasten(p, QRectF(x, H * 0.1, W * 0.26, H * 0.18), fl, ra, st)
-        p.setBrush(QColor("white")); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(x, H * 0.28, W * 0.26, H * 0.6))
+        p.setBrush(QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(x, H * 0.28, W * 0.26, H * 0.6))
         p.setPen(QPen(st if c[0].lightness() > 150 else fl, 1))
         for j in range(2):
             y = H * (0.42 + j * 0.16)
@@ -235,7 +235,7 @@ def _m_gruppen(p, W, H, c):
         p.drawRect(r)
         _kasten(p, QRectF(r.left() + 3, r.top() + 3, r.width() - 6, H * 0.18), fl, ra, st)
         for j in range(2):
-            _kasten(p, QRectF(r.left() + 6, r.top() + H * 0.28 + j * H * 0.22, r.width() - 12, H * 0.16), QColor("white") if st.lightness() < 150 else fl, ra, st)
+            _kasten(p, QRectF(r.left() + 6, r.top() + H * 0.28 + j * H * 0.22, r.width() - 12, H * 0.16), QColor(Farbe.WEISS) if st.lightness() < 150 else fl, ra, st)
 
 
 def _m_matrix(p, W, H, c):
@@ -268,7 +268,7 @@ def _m_zielscheibe(p, W, H, c):
     fl, ra, st = c
     mx, my = W / 2, H / 2
     for i, f in enumerate((0.44, 0.31, 0.18)):
-        p.setBrush(fl if i % 2 == 0 else QColor("white")); p.setPen(QPen(ra, 1))
+        p.setBrush(fl if i % 2 == 0 else QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1))
         r = min(W, H) * f
         p.drawEllipse(QPointF(mx, my), r, r)
 
@@ -318,7 +318,7 @@ def _m_balkenliste(p, W, H, c):
     fl, ra, st = c
     for i in range(3):
         y = H * (0.08 + i * 0.3)
-        p.setBrush(QColor("white")); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.08, y + H * 0.02, W * 0.84, H * 0.16))
+        p.setBrush(QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.08, y + H * 0.02, W * 0.84, H * 0.16))
         _kasten(p, QRectF(W * 0.08, y, W * 0.56, H * 0.2), fl, ra, st)
 
 
@@ -326,14 +326,14 @@ def _m_beschreibungsliste(p, W, H, c):
     fl, ra, st = c
     for i in range(3):
         y = H * (0.08 + i * 0.3)
-        p.setBrush(QColor("white")); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.42, y, W * 0.5, H * 0.2))
+        p.setBrush(QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.42, y, W * 0.5, H * 0.2))
         _kasten(p, QRectF(W * 0.08, y, W * 0.3, H * 0.2), fl, ra, st)
         _zeile(p, W * 0.46, y + H * 0.06, W * 0.2, ra); _zeile(p, W * 0.46, y + H * 0.14, W * 0.3, ra)
 
 
 def _m_spaltenrahmen(p, W, H, c):
     fl, ra, st = c
-    p.setBrush(QColor("white")); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.08, H * 0.1, W * 0.84, H * 0.8))
+    p.setBrush(QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.08, H * 0.1, W * 0.84, H * 0.8))
     _kasten(p, QRectF(W * 0.08, H * 0.1, W * 0.84, H * 0.16), fl, ra, st)
     _kasten(p, QRectF(W * 0.08, H * 0.76, W * 0.84, H * 0.14), fl, ra, st, text=False)
     p.setPen(QPen(ra, 1))
@@ -346,7 +346,7 @@ def _m_bildliste(p, W, H, c):
     for i in range(3):
         y = H * (0.08 + i * 0.3)
         _kasten(p, QRectF(W * 0.08, y, W * 0.84, H * 0.24), fl, ra, st, text=False)
-        p.setBrush(QColor("white")); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.1, y + H * 0.03, H * 0.18, H * 0.18))
+        p.setBrush(QColor(Farbe.WEISS)); p.setPen(QPen(ra, 1)); p.drawRect(QRectF(W * 0.1, y + H * 0.03, H * 0.18, H * 0.18))
         _zeile(p, W * 0.4, y + H * 0.07, W * 0.3, st); _zeile(p, W * 0.4, y + H * 0.15, W * 0.2, st)
 
 
@@ -377,7 +377,7 @@ def _m_kartenprozess(p, W, H, c):
         x = W * (0.12 + i * 0.3)
         for d in (2, 1, 0):
             r = QRectF(x - d * W * 0.025, H * 0.38 - d * H * 0.06, W * 0.17, H * 0.28)
-            p.setBrush(QColor("white") if d else fl); p.setPen(QPen(ra, 1)); p.drawRect(r)
+            p.setBrush(QColor(Farbe.WEISS) if d else fl); p.setPen(QPen(ra, 1)); p.drawRect(r)
         if i < 2:
             _pfeil(p, QPointF(x + W * 0.18, H * 0.52), QPointF(x + W * 0.245, H * 0.52), ra)
 
@@ -387,7 +387,7 @@ def _m_kreisbeziehung(p, W, H, c):
     mx, my, r = W / 2, H / 2, min(W, H) * 0.3
     p.setBrush(fl); p.setPen(QPen(ra, 1)); p.drawEllipse(QPointF(mx, my), r, r)
     k = r * 0.52
-    p.setBrush(QColor("white"))
+    p.setBrush(QColor(Farbe.WEISS))
     for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
         p.drawEllipse(QPointF(mx + dx * r, my + dy * r), k, k)
     p.setPen(QPen(st, 1)); p.drawLine(QPointF(mx - r * 0.3, my), QPointF(mx + r * 0.3, my))
@@ -400,10 +400,10 @@ def _m_segmentzyklus(p, W, H, c):
     mx, my, r = W / 2, H / 2, min(W, H) * 0.3
     p.setBrush(fl); p.setPen(QPen(ra, 1)); p.drawEllipse(QPointF(mx, my), r, r)
     p.drawLine(QPointF(mx - r, my), QPointF(mx + r, my)); p.drawLine(QPointF(mx, my - r), QPointF(mx, my + r))
-    p.setBrush(QColor("white")); p.drawEllipse(QPointF(mx, my), r * 0.38, r * 0.38)
+    p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(QPointF(mx, my), r * 0.38, r * 0.38)
     p.setBrush(Qt.NoBrush); p.drawArc(QRectF(mx - r * 0.2, my - r * 0.2, r * 0.4, r * 0.4), 30 * 16, 290 * 16)
     for x, y in ((0.02, 0.08), (0.76, 0.08), (0.02, 0.72), (0.76, 0.72)):
-        _kasten(p, QRectF(W * x, H * y, W * 0.22, H * 0.2), QColor("white"), ra, st)
+        _kasten(p, QRectF(W * x, H * y, W * 0.22, H * 0.2), QColor(Farbe.WEISS), ra, st)
 
 
 _MINIATUR = {"Organigramm": _m_organigramm, "Hierarchie": _m_organigramm, "Liste": _m_liste, "Prozess": _m_prozess, "Zyklus": _m_zyklus,
