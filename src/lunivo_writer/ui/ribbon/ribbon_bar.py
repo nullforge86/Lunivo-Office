@@ -739,10 +739,16 @@ class RegisterBand(QWidget):
                         self.fehlend.append(t)
         return ok
 
-    def kontext(self, name: str, sichtbar: bool) -> None:
-        """Kontext-Register (Tabellentools, Bildtools …) ein- oder ausblenden."""
+    def kontext(self, name: str, sichtbar: bool, aktivieren: bool = False) -> None:
+        """Kontext-Register (Tabellentools, Bildtools …) ein- oder ausblenden; ``aktivieren``: gleich öffnen."""
         i = self.kontext_index.get(name)
-        if i is None or self.reiter.isTabVisible(i) == sichtbar:
+        if i is None:
+            return
+        if sichtbar and aktivieren:
+            self.reiter.setTabVisible(i, True)
+            self.reiter.setCurrentIndex(i)
+            return
+        if self.reiter.isTabVisible(i) == sichtbar:
             return
         self.reiter.setTabVisible(i, sichtbar)
         if not sichtbar and self.reiter.currentIndex() == i:

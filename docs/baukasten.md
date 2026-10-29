@@ -96,6 +96,7 @@ Jeder Baustein macht genau eine Sache:
 | `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
 | `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
 | `FlussLayout` | `formular_gitter.py` | Reihe von Feldern, die wie Text umbricht (Beschriftung und Feld bleiben beisammen) |
+| `EingabeFenster` | `eingabe_fenster.py` | kleine Abfrage in der Seitenleiste (Frage + Auswahlliste oder Textfeld): `getItem(parent, titel, frage, eintraege, aktuell)` / `getText(...)` wie `QInputDialog`, Rückgabe `(Text, ok)` |
 | `ausfuehren_im_stapel` | `zusatz_panel.py` | ein `PanelFaehig`-Fenster in einem beliebigen `QStackedWidget` zeigen (z. B. die Fenster der Suche in der **linken** Seitenleiste, ohne dass sich die rechte öffnet) |
 | `schmal_machen` | `schmal.py` | **Notbehelf** für Fenster, die noch nicht aus Bausteinen gebaut sind: bricht zu breite Zeilen nachträglich um. Neue Fenster bauen mit `FormularGitter`, nicht darauf verlassen |
 
@@ -107,7 +108,7 @@ Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inha
 Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
 Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
 `schmal_machen` in Ruhe). Was in der WPS-Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
-Vorschaubilder verkleinern sich mit der Breite. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
+Vorschaubilder verkleinern sich mit der Breite. Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
 nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
 Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
 

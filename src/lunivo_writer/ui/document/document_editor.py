@@ -291,6 +291,10 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
     def mouseDoubleClickEvent(self, e) -> None:
         zone = self._kopffuss_zone(e.position().y())
+        kf = getattr(self, "_kopffuss", None)
+        if kf is not None and kf.aktiv and not zone:                   # Doppelklick in den Text beendet das Bearbeiten der Kopfzeile
+            kf.beende()
+            return
         fenster = self.window()
         if zone and hasattr(fenster, "edit_header_footer"):
             fenster.edit_header_footer(zone == "kopf")

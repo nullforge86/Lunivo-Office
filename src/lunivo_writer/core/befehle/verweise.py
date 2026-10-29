@@ -1,7 +1,7 @@
 """Befehle: Verweise."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QInputDialog, QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 
 class VerweiseBefehle:
@@ -175,7 +175,8 @@ class VerweiseBefehle:
             QMessageBox.information(self.w, "Zitat", "Es sind noch keine Quellen angelegt. Verwenden Sie „Neue Quelle“.")
             return
         namen = [eintrag(q, self.ed.zitierweise) for q in self.ed.quellen]
-        n, ok = QInputDialog.getItem(self.w, "Zitat einfügen", "Quelle:", namen, 0, False)
+        from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+        n, ok = EingabeFenster.getItem(self.w, "Zitat einfügen", "Quelle:", namen, 0, False)
         if ok:
             verweise.zitat_einfuegen(self.ed, self.ed.quellen[namen.index(n)])
 
@@ -184,7 +185,8 @@ class VerweiseBefehle:
         if not self.ed:
             return
         from lunivo_writer.editor.literatur import ZITIERWEISEN
-        n, ok = QInputDialog.getItem(self.w, "Zitierweise", "Zitierweise:", ZITIERWEISEN, ZITIERWEISEN.index(self.ed.zitierweise) if self.ed.zitierweise in ZITIERWEISEN else 0, False)
+        from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+        n, ok = EingabeFenster.getItem(self.w, "Zitierweise", "Zitierweise:", ZITIERWEISEN, ZITIERWEISEN.index(self.ed.zitierweise) if self.ed.zitierweise in ZITIERWEISEN else 0, False)
         if ok:
             self.ed.zitierweise = n
             self.ed._meta["zitierweise"] = n

@@ -68,6 +68,16 @@ def _symbol(name: str, px: int = 20) -> QIcon:
     return icons.icon_aus_pfad(_PFADE[name], px)
 
 
+class _DateiModell(QFileSystemModel):
+    """Dateimodell mit deutschen Spaltenköpfen (Qt liefert sie sonst englisch)."""
+    KOEPFE = {0: "Name", 1: "Größe", 2: "Typ", 3: "Geändert"}
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole and section in self.KOEPFE:
+            return self.KOEPFE[section]
+        return super().headerData(section, orientation, role)
+
+
 class _Symbole(QFileIconProvider):
     """Ordner und Dateien in der Liste mit denselben Liniensymbolen wie der Rest des Fensters."""
 
@@ -156,7 +166,7 @@ class SpeichernFenster(QDialog):
         leiste.addWidget(self.k_liste); leiste.addWidget(self.k_kacheln)
         rv.addLayout(leiste)
 
-        self.modell = QFileSystemModel(self)
+        self.modell = _DateiModell(self)
         self._symbole = _Symbole()
         self.modell.setIconProvider(self._symbole)
         self.modell.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)

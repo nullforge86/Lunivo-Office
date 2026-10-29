@@ -169,7 +169,7 @@ class Symbolleisten(QWidget):
             self.b.ed.set_line_spacing(float(w))
 
     # ---- gleiche Schnittstelle wie RegisterBand ----------------------------------------------
-    def kontext(self, name: str, sichtbar: bool) -> None:
+    def kontext(self, name: str, sichtbar: bool, aktivieren: bool = False) -> None:
         if name not in ("tabelle", "bild", "form", "smartart", "zeichen"):
             return
         if sichtbar and self._kontext_name != name:

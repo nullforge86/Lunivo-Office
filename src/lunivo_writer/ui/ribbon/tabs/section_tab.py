@@ -2,7 +2,7 @@
 
 Abschnitte (editor/abschnitte.py): hinzufügen (nächste Seite, fortlaufend, gerade, ungerade), löschen, vor/zurück, Navigation, eigene
 Orientierung, Größe, Ränder, Spalten und Kopf-/Fußzeilen je Abschnitt, Kopf-/Fußzeile mit dem Vorgänger verknüpfen. Orientierung, Größe,
-Ränder und Spalten gelten für den Abschnitt, in dem die Schreibmarke steht. Noch ausgegraut: „Gerade und ungerade Seiten unterschiedlich“.
+Ränder und Spalten gelten für den Abschnitt, in dem die Schreibmarke steht.
 """
 from __future__ import annotations
 

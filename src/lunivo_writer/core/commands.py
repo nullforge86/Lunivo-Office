@@ -19,6 +19,7 @@ from lunivo_writer.core.befehle.einfuegen import EinfuegenBefehle
 from lunivo_writer.core.befehle.extern import ExternBefehle
 from lunivo_writer.core.befehle.ki import KIBefehle
 from lunivo_writer.core.befehle.kommentare import KommentarBefehle
+from lunivo_writer.core.befehle.kopffuss import KopfFussBefehle
 from lunivo_writer.core.befehle.kontext import KontextBefehle
 from lunivo_writer.core.befehle.pruefen import PruefenBefehle
 from lunivo_writer.core.befehle.seite import SeiteBefehle
@@ -29,7 +30,7 @@ from lunivo_writer.core.befehle.verweise import VerweiseBefehle
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 
-class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle, ExternBefehle, KIBefehle, KommentarBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, TextBefehle, UeberpruefenBefehle, VerweiseBefehle):
+class Befehle(AnsichtBefehle, BearbeitenBefehle, DateiBefehle, EinfuegenBefehle, ExternBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, TextBefehle, UeberpruefenBefehle, VerweiseBefehle):
     """Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``."""
 
     def __init__(self, win):

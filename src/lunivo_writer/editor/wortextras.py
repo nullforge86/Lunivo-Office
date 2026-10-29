@@ -123,7 +123,12 @@ def einzug_zwei_zeichen(ed) -> int:
 
 def smart_anordnen(ed) -> int:
     """Leerzeichen bereinigen, leere Absätze löschen, Erstzeileneinzug um zwei Zeichen."""
-    return leerzeichen_bereinigen(ed) + leere_loeschen(ed) + einzug_zwei_zeichen(ed)
+    c = QTextCursor(ed.document())
+    c.beginEditBlock()                                               # die drei Schritte sind zusammen ein Schritt für Rückgängig
+    try:
+        return leerzeichen_bereinigen(ed) + leere_loeschen(ed) + einzug_zwei_zeichen(ed)
+    finally:
+        c.endEditBlock()
 
 
 def fuehrende_leerzeichen_loeschen(ed) -> int:

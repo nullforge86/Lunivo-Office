@@ -1627,3 +1627,22 @@ def test_seitenleisten_seiten_passen_in_echte_groesse(app):
             assert unten <= sa.viewport().height(), (type(d).__name__, i, unten, sa.viewport().height())
             assert rechts <= sa.viewport().width(), (type(d).__name__, i, rechts)
         p.close()
+
+
+def test_smart_anordnen_ist_ein_rueckgaengig_schritt(app):
+    from lunivo_writer.editor import wortextras as W
+    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    ed = DocumentEditor(); ed.setPlainText("Zweiter  Absatz.\n\n\nDritter.")
+    vorher = ed.toPlainText()
+    W.smart_anordnen(ed)
+    assert ed.toPlainText() != vorher
+    ed.document().undo()
+    assert ed.toPlainText() == vorher
+    assert not ed.document().firstBlock().blockFormat().textIndent()           # auch der Einzug ist mit einem Schritt weg
+
+
+def test_farbpalette_pipette_abschaltbar(app):
+    from PySide6.QtWidgets import QPushButton
+    namen = lambda p: [b.text() for b in p.findChildren(QPushButton)]          # noqa: E731
+    assert "Pipette" in namen(FarbPalette())
+    assert "Pipette" not in namen(FarbPalette(pipette=False))

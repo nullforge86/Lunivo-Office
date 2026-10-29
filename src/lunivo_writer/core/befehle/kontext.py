@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QBrush, QCursor, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import QInputDialog, QMenu
+from PySide6.QtWidgets import QMenu
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld
 
@@ -21,7 +21,7 @@ class KontextBefehle:
             return
         from lunivo_writer.editor import einfuegen as E
         modi = ["Original", "Graustufen", "Schwarzweiß", "Sepia", "Heller", "Dunkler"]
-        n, ok = QInputDialog.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
+        n, ok = EingabeFenster.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
         if ok:
             if n == "Original":
                 E.bild_original(e)
@@ -34,16 +34,11 @@ class KontextBefehle:
         if f is None:
             return
         from lunivo_writer.editor import einfuegen as E
-        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QSpinBox
-        d = QDialog(self.w); d.setWindowTitle("Bild zuschneiden")
-        form = QFormLayout(d)
-        sp = {}
-        for name in ("Links", "Oben", "Rechts", "Unten"):
-            w = QSpinBox(); w.setRange(0, 5000); w.setSuffix(" px"); sp[name] = w; form.addRow(name + " abschneiden", w)
-        bb = knopfzeile(d)
-        form.addRow(bb)
+        from lunivo_writer.ui.dialogs.dokument_dialoge import BildZuschneidenDialog
+        d = BildZuschneidenDialog(self.w)
         if d.exec():
-            E.bild_ersetzen(e, lambda img: E.zuschneiden(img, sp["Links"].value(), sp["Oben"].value(), sp["Rechts"].value(), sp["Unten"].value()))
+            l, o, r, u = d.werte()
+            E.bild_ersetzen(e, lambda img: E.zuschneiden(img, l, o, r, u))
 
 
     def objektDrehen(self, k=None):
@@ -52,7 +47,7 @@ class KontextBefehle:
             return
         from lunivo_writer.editor import einfuegen as E
         namen = {"90° nach rechts": "rechts", "90° nach links": "links", "Horizontal spiegeln": "horizontal", "Vertikal spiegeln": "vertikal"}
-        n, ok = QInputDialog.getItem(self.w, "Drehen", "Bild:", list(namen), 0, False)
+        n, ok = EingabeFenster.getItem(self.w, "Drehen", "Bild:", list(namen), 0, False)
         if ok:
             E.bild_ersetzen(e, lambda img: E.drehen(img, namen[n]))
 
@@ -62,7 +57,7 @@ class KontextBefehle:
         if f is None:
             return
         namen = {"Links": Qt.AlignLeft, "Zentriert": Qt.AlignHCenter, "Rechts": Qt.AlignRight}
-        n, ok = QInputDialog.getItem(self.w, "Ausrichten", "Bild im Text:", list(namen), 0, False)
+        n, ok = EingabeFenster.getItem(self.w, "Ausrichten", "Bild im Text:", list(namen), 0, False)
         if ok:
             e.set_alignment(namen[n])
 
@@ -276,7 +271,7 @@ class KontextBefehle:
         from lunivo_writer.editor import formen
         o = formen.objekt(f) or {}
         akt = o.get("daten", {}).get("text", "")
-        t, ok = QInputDialog.getText(self.w, "Text in der Form", "Text:", text=akt)
+        t, ok = EingabeFenster.getText(self.w, "Text in der Form", "Text:", text=akt)
         if ok:
             self._form_aendern(text=t)
 
@@ -479,7 +474,7 @@ class KontextBefehle:
         if f is None:
             return
         akt = f.property(0x100000 + 0x101 + 1) if f.hasProperty(0x100000 + 0x101 + 1) else ""
-        t, ok = QInputDialog.getText(self.w, "Alternativtext", "Beschreibung des Bildes:", text=akt or "")
+        t, ok = EingabeFenster.getText(self.w, "Alternativtext", "Beschreibung des Bildes:", text=akt or "")
         if ok:
             e.bild_setzen(alt=t)
 

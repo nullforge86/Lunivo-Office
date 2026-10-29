@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QTabWidget, QTextEdit, QWidget
 
 from lunivo_writer.editor.verzeichnis import TOC_VORGABE
+from lunivo_writer.ui.baukasten.absatz_dialog import AbsatzDialog
+from lunivo_writer.ui.baukasten.auswahl_bereich import AuswahlBereich
+from lunivo_writer.ui.baukasten.schriftart_dialog import SchriftartDialog
+from lunivo_writer.ui.baukasten.sortieren_dialog import SortierenDialog, SortierOptionenDialog
+from lunivo_writer.ui.baukasten.tabstopp_dialog import TabstoppDialog
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig, ZusatzPanel
 from lunivo_writer.ui.dialogs import einfuegen_dialoge as ED
 from lunivo_writer.ui.dialogs import einfuegen_fenster as EF
@@ -14,6 +19,9 @@ from lunivo_writer.ui.dialogs import ueberpruefen_fenster as UF
 from lunivo_writer.ui.dialogs import verweise_fenster as VF
 
 FENSTER = {
+    # Reiter Start
+    "Absatz": lambda: AbsatzDialog(None), "Sortieren": lambda: SortierenDialog(None, ["a;b", "c;d"]), "Sortieroptionen": lambda: SortierOptionenDialog(None),
+    "Schriftart": lambda: SchriftartDialog(None), "Tabstopps": lambda: TabstoppDialog(None, []), "Auswahlbereich": lambda: AuswahlBereich(None, QTextEdit()),
     "Zahl": lambda: EF.ZahlDialog(None), "Felder": lambda: EF.FelderDialog(None, {}), "AutoText": lambda: EF.AutoTextDialog(None, "x"),
     "Trenner": lambda: EF.TrennerDialog(None, zu_tabelle=True, texte=["a;b"]), "Seitenzahl": lambda: EF.SeitenzahlDialog(None),
     "Hyperlink": lambda: EF.HyperlinkDialog(None), "Objekt": lambda: EF.ObjektDialog(None),
@@ -26,6 +34,7 @@ FENSTER = {
     "Form": lambda: ED.FormDialog(None), "SmartArt": lambda: ED.SmartArtDialog(None), "WordArt": lambda: ED.WordArtDialog(None),
     "Diagramm": lambda: ED.DiagrammDialog(None), "Piktogramm": lambda: ED.PiktogrammDialog(None), "Formel": lambda: ED.FormelDialog(None),
     "Deckblatt": lambda: ED.DeckblattDialog(None, "Kay"),
+    "Symbol": lambda: __import__("lunivo_writer.ui.dialogs.sonderzeichen", fromlist=["x"]).SonderzeichenDialog(None, lambda z: None),
     "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
 }
 
@@ -38,9 +47,15 @@ def test_fenster_in_der_seitenleiste_und_passt(app, name, breite):
     d = FENSTER[name]()
     assert isinstance(d, PanelFaehig), name
     p.oeffne(d); p.show(); app.processEvents(); app.processEvents()
-    sa = p.stapel.currentWidget().sa
-    vp = sa.viewport()
-    zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0
-          and (c.mapTo(vp, c.rect().topLeft()).x() < -1 or c.mapTo(vp, c.rect().topRight()).x() > vp.width())]
-    assert not zu, (name, breite, zu)
+    reiter = [w for w in d.findChildren(QTabWidget)]
+    seiten = max([r.count() for r in reiter], default=1)
+    for i in range(seiten):                                           # alle Reiter durchschalten: jeder muss passen
+        for r in reiter:
+            if i < r.count():
+                r.setCurrentIndex(i)
+        app.processEvents(); app.processEvents()
+        vp = p.stapel.currentWidget().sa.viewport()
+        zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0
+              and (c.mapTo(vp, c.rect().topLeft()).x() < -1 or c.mapTo(vp, c.rect().topRight()).x() > vp.width())]
+        assert not zu, (name, breite, i, zu)
     p.close()

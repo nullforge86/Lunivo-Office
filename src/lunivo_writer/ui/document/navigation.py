@@ -123,7 +123,9 @@ class NavigationPanel(QWidget):
         return next((k for k, r in self._seiten.items() if r is self.stapel.currentWidget()), "")
 
     def showEvent(self, e) -> None:
-        super().showEvent(e); self.zustandGeaendert.emit()
+        super().showEvent(e)
+        self.aktualisieren()                                             # Kommentare, die bei geschlossenem Feld entstanden, sofort zeigen
+        self.zustandGeaendert.emit()
 
     def hideEvent(self, e) -> None:
         super().hideEvent(e)

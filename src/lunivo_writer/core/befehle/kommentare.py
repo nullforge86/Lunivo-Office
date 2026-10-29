@@ -1,7 +1,8 @@
 """Befehle: Kommentare, Noten, Änderungen."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QInputDialog, QMessageBox
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from PySide6.QtWidgets import QMessageBox
 
 
 class KommentarBefehle:
@@ -10,7 +11,7 @@ class KommentarBefehle:
 
     # ---- Kommentare, Noten, Änderungen ---------------------------------------------------------------
     def _text_abfragen(self, titel, frage, vorgabe=""):
-        t, ok = QInputDialog.getMultiLineText(self.w, titel, frage, vorgabe)
+        t, ok = EingabeFenster.getMultiLineText(self.w, titel, frage, vorgabe)
         return t.strip() if ok and t.strip() else None
 
 

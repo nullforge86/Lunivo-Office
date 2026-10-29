@@ -187,3 +187,19 @@ def test_odt_freie_bilder_kopf_fuss_und_text(app, tmp_path):
     orte = sorted((a["ort"], a["ah"], a["av"]) for a in back.page.bilder)
     assert orte == [("fuss", "center", "bottom"), ("kopf", "right", "")]
     assert all(not a["bild"].isNull() for a in back.page.bilder)
+
+
+@pytest.mark.parametrize("ext", [".odt", ".docx"])
+def test_gerade_kopfzeile_hin_und_zurueck(app, tmp_path, ext):
+    d = QTextDocument(); QTextCursor(d).insertText("Inhalt")
+    page = PageSettings()
+    page.header = HeaderFooter("Ungerade Kopf", "right"); page.footer = HeaderFooter("Fuß {PAGE}", "center")
+    page.diff_even = True
+    page.even_header = HeaderFooter("Gerade Kopf", "left"); page.even_footer = HeaderFooter("Fuß gerade {PAGE}", "center")
+    out = str(tmp_path / ("g" + ext))
+    formats.save(out, d, page)
+    p = formats.load(out).page
+    assert p.diff_even and p.header.text == "Ungerade Kopf"
+    assert p.even_header.text == "Gerade Kopf" and p.even_header.align == "left"
+    assert p.even_footer.text == "Fuß gerade {PAGE}"
+    assert p.kopf_fuss(2, 2)[0].text == "Gerade Kopf" and p.kopf_fuss(1, 1)[0].text == "Ungerade Kopf"

@@ -118,15 +118,60 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
 
 # ---- WordArt --------------------------------------------------------------------------------------------------------
 WORDART_STILE = ["Verlauf", "Schatten", "Umriss", "Regenbogen", "Welle"]
-# Galerie „Formatvorlage“ (Einfügen ▸ WordArt ▾): (Name, Stil, Farbe) — eigene Zusammenstellung aus Lunivos Farben
-WORDART_VORGABEN = [("Schwarz", "Verlauf", Farbe.TINTE_DUNKEL), ("Blau, Verlauf", "Verlauf", Farbe.AKZENT_DUNKEL),
-                    ("Orange, Umriss", "Umriss", Farbe.ORANGE), ("Blau, Umriss", "Umriss", Farbe.BLAU), ("Gold", "Verlauf", "#f2b705"),
-                    ("Grau", "Verlauf", Farbe.GRAU), ("Grau mit Schatten", "Schatten", Farbe.GRAU), ("Schwarz mit Schatten", "Schatten", Farbe.TINTE_DUNKEL),
-                    ("Dunkelblau mit Schatten", "Schatten", "#1f3864"), ("Blau mit Schatten", "Schatten", Farbe.BLAU),
-                    ("Rot, Umriss", "Umriss", Farbe.ROT), ("Regenbogen", "Regenbogen", Farbe.AKZENT)]
+# Galerie „Formatvorlage“ (Einfügen ▸ WordArt ▾): 15 eigene Stile, angelehnt an die Vorlage (Neun oben, sechs darunter).
+# (Name, Füllung oben, Füllung unten oder None = nur Kontur, Kontur oder None, Konturbreite, Schatten oder None)
+WORDART_VORLAGEN = [
+    ("Schwarz mit Schatten", "#111111", "#111111", None, 0, "#9aa0a6"),
+    ("Blau, Verlauf", "#8fc1ec", "#2f78bd", None, 0, None),
+    ("Orange, Verlauf", "#f6a96a", "#d9601a", None, 0, None),
+    ("Blaue Kontur", "#ffffff", "#ffffff", "#4f93d1", 2.0, None),
+    ("Gold", "#ffc933", "#f0a500", None, 0, None),
+    ("Grau", "#9a9a9a", "#7c7c7c", None, 0, None),
+    ("Dunkelblau, Verlauf", "#5b86d6", "#1f3f8f", None, 0, "#b8c4dc"),
+    ("Gelb mit heller Kontur", "#ffe27a", "#ffd23f", "#fff3c4", 1.6, None),
+    ("Hellblaue Kontur", "#ffffff", "#e8f1fb", "#9cc3ea", 2.0, None),
+    ("Grau mit Schatten", "#8a8a8a", "#6e6e6e", None, 0, "#2b2b2b"),
+    ("Schwarz, blauer Rand", "#141414", "#141414", "#5b86d6", 1.6, "#b8c4dc"),
+    ("Dunkle Kontur, blauer Schatten", "#ffffff", "#eef2f8", "#1f2d4d", 2.0, "#5b86d6"),
+    ("Blau mit heller Kontur", "#3b7fcf", "#2461a8", "#b9d6f2", 1.8, None),
+    ("Orange Kontur", "#ffffff", "#fdeadb", "#e8803a", 2.0, "#f4c9a5"),
+    ("Hellgrau, verblasst", "#e6e6e6", "#c4c4c4", "#d9d9d9", 1.2, None),
+]
+WORDART_VORGABEN = [(n, "Vorlage", Farbe.AKZENT) for n, *_r in WORDART_VORLAGEN]    # bleibt für ältere Aufrufer (Name, Stil, Farbe)
+WORDART_STANDARDTEXT = "Hier Text einfügen"
 
 
-def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT) -> QImage:
+def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
+    """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten."""
+    _n, f1, f2, kontur, kb, schatten = WORDART_VORLAGEN[nr]
+    f = QFont(schrift); f.setPointSizeF(pt); f.setBold(True)
+    fm = QFontMetricsF(f)
+    b, h = int(fm.horizontalAdvance(text)) + 40, int(fm.height()) + 40
+    img = _leer(b, h)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    pfad = QPainterPath()
+    pfad.addText(20, 20 + fm.ascent(), f, text)
+    if schatten:
+        d = max(2.0, pt / 14)
+        p.setPen(Qt.NoPen); p.setBrush(QColor(schatten))
+        p.translate(d, d); p.drawPath(pfad); p.translate(-d, -d)
+    g = QLinearGradient(0, 20, 0, h - 20)
+    g.setColorAt(0, QColor(f1)); g.setColorAt(1, QColor(f2))
+    if kontur:
+        pen = QPen(QColor(kontur)); pen.setWidthF(kb * max(1.0, pt / 36)); pen.setJoinStyle(Qt.RoundJoin); p.setPen(pen)
+    else:
+        p.setPen(Qt.NoPen)
+    p.setBrush(QBrush(g))
+    p.drawPath(pfad)
+    p.end()
+    return img
+
+
+def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT,
+                 vorlage: int | None = None) -> QImage:
+    if vorlage is not None:
+        return wordart_vorlage_bild(text, vorlage, schrift, pt)
     f = QFont(schrift); f.setPointSizeF(pt); f.setBold(True)
     fm = QFontMetricsF(f)
     b, h = int(fm.horizontalAdvance(text)) + 40, int(fm.height()) + 40

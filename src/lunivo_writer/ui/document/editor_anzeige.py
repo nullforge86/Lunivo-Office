@@ -371,7 +371,7 @@ class AnzeigeBaustein:
                 if oben > vp.height() or oben + bk["H"] < 0:
                     continue
                 bp = bk["pg"]
-                kopf, fuss = (bp.first_header, bp.first_footer) if (k == 0 and bp.diff_first) else (bp.header, bp.footer)
+                kopf, fuss = bp.kopf_fuss(k + 1, k + start)
                 p.save()
                 p.translate(bk["x"], oben)
                 p.scale(z, z)

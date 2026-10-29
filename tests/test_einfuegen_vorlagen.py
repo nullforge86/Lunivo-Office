@@ -80,6 +80,35 @@ def test_symbol_zuletzt_verwendet(fenster):
     assert e.toPlainText().endswith("§§")
 
 
+def test_symbol_fenster_einfuegen_und_benutzerdefiniert(fenster):
+    """Fenster „Symbol“: Einfügen setzt das Zeichen und merkt es; die benutzerdefinierte Liste (gleiche Daten wie die Klappe) lässt sich
+    verschieben, abhaken, entfernen und zurücksetzen."""
+    from PySide6.QtCore import Qt
+    from lunivo_writer.ui.dialogs.sonderzeichen import SonderzeichenDialog
+    b = fenster.befehle
+    e = fenster.current_editor()
+    d = SonderzeichenDialog(None, e.insertPlainText, b._symbol_daten())
+    d.zeichencode.setText("167"); d._code_getippt("167")                     # Reiter Symbole: Zeichencode 167 = §
+    d.ok.click()
+    assert e.toPlainText().endswith("§") and b._symbole_zuletzt()[0] == "§"
+    d.reiter.setCurrentIndex(1); d.sonder.setCurrentItem(d.sonder.topLevelItem(0)); d.ok.click()   # Reiter Sonderzeichen: Geviertstrich
+    assert e.toPlainText().endswith("—") and d.abbrechen.text() == "Abbrechen"
+    d.reiter.setCurrentIndex(2)
+    assert d.abbrechen.text() == "Schließen" and not d.bei_benutzer.isEnabled()
+    erste = [z for z, _ in b._symbol_daten().benutzer()]
+    assert d.liste.topLevelItemCount() == len(erste) and not d.hoch.isEnabled()
+    d.liste.setCurrentItem(d.liste.topLevelItem(0)); d.runter.click()
+    assert [z for z, _ in b._symbol_daten().benutzer()][:2] == [erste[1], erste[0]]
+    d.liste.topLevelItem(0).setCheckState(0, Qt.Unchecked)
+    assert erste[1] not in b._symbol_daten().sichtbar() and erste[1] not in b.klappe("symbolKlappe").knoepfe
+    d.liste.setCurrentItem(d.liste.topLevelItem(1)); d.entfernen.click()
+    assert erste[0] not in [z for z, _ in b._symbol_daten().benutzer()]
+    d.reiter.setCurrentIndex(0); d.zeichencode.setText("A"); d.von.setCurrentIndex(1); d._code_getippt("21"); d.bei_benutzer.click()
+    assert b._symbol_daten().benutzer()[-1] == ("!", True)
+    d.reiter.setCurrentIndex(2); d.zurueck.click()
+    assert [z for z, _ in b._symbol_daten().benutzer()] == list(b.BENUTZER_SYMBOLE)
+
+
 def test_zahl_typen():
     from lunivo_writer.editor.zahlformat import zahl_text
     assert [zahl_text(14, "roemisch"), zahl_text(28, "gross"), zahl_text(3, "klein"), zahl_text(5, "kreis"), zahl_text(7, "null")] == \
@@ -516,6 +545,20 @@ def test_gleichungen_formen_deckblatt(fenster):
     m.gewaehlt.emit("Fünfeck")
     assert e.document().characterCount() == vorher + 1
     assert len(b.klappe("wordartKlappe").knoepfe) == len(E.WORDART_VORGABEN)
+
+
+def test_wordart_galerie_fuegt_sofort_ein(fenster):
+    from lunivo_writer.editor import einfuegen as E, formen
+    b = fenster.befehle
+    e = fenster.current_editor()
+    m = b.klappe("wordartKlappe")
+    assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
+    m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
+    f = e.bild_format()
+    o = formen.objekt(f)
+    assert o["art"] == "wordart" and o["daten"] == {"text": "Hier Text einfügen", "vorlage": 3, "pt": 36}
+    band = fenster.band
+    assert band.reiter.isTabVisible(band.kontext_index["form"]) and not band.reiter.isTabVisible(band.kontext_index["bild"])
 
 
 def test_diagramm_alle_arten_und_fenster(app):

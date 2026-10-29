@@ -1,3 +1,5 @@
+import pytest
+
 from PySide6.QtGui import QTextCursor
 
 from lunivo_writer.editor import formen
@@ -19,6 +21,18 @@ def test_jedes_layout_zeichnet(app):
             assert img.width() > 100 and img.height() > 40
             # nicht leer: irgendwo ein deckendes Pixel
             assert any(img.pixelColor(x, y).alpha() > 200 for x in range(0, img.width(), 7) for y in range(0, img.height(), 7))
+
+
+@pytest.mark.parametrize("lay", SA.LAYOUTS)
+def test_layout_zeichnet_und_laesst_sich_einfuegen(app, lay):
+    assert lay in SA.MUSTER
+    for text in (SA.MUSTER[lay], "Nur einer", ""):
+        img = SA.zeichnen({"layout": lay, "text": text})
+        assert img.width() > 100 and img.height() > 40
+    ed = DocumentEditor()
+    SA.einfuegen(ed, {"layout": lay, "farben": "Bunt", "text": SA.MUSTER[lay]})
+    c = QTextCursor(ed.document()); c.setPosition(0); ed.setTextCursor(c)
+    assert SA.daten_der_auswahl(ed)["layout"] == lay
 
 
 def test_hoehe_waechst_mit_punkten(app):

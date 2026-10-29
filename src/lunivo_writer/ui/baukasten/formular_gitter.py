@@ -134,7 +134,7 @@ class FlussLayout(QLayout):
 
 def abschnittstitel(text: str) -> QLabel:
     """Die Überschrift eines Abschnitts: klein, gedämpft, Großbuchstaben — überall gleich (Gruppen, Spalten, Bereiche in Fenstern)."""
-    l = QLabel(text.rstrip(":").upper())
+    l = QLabel(text.rstrip(":").replace("ß", "ẞ").upper())          # ß groß als ẞ, nicht „SS“
     l.setObjectName("abschnittTitel")
     l.setStyleSheet("color: palette(mid); font-size: 8pt; font-weight: 600;")
     return l
@@ -334,6 +334,9 @@ class AngepassteReiter(QTabWidget):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.currentChanged.connect(self._aktuelle_seite)
+        self.setUsesScrollButtons(False)
+        self.tabBar().setExpanding(False)
+        self.tabBar().setElideMode(Qt.ElideRight)          # zu schmal: die Reiternamen kürzen sich, die Leiste macht das Fenster nie breiter
 
     def _aktuelle_seite(self, _i: int = 0) -> None:
         """Nur die gewählte Seite bestimmt die Höhe: die anderen zählen für das Layout nicht mit (sonst bleibt unter kürzeren Reitern leerer Platz)."""
@@ -352,6 +355,7 @@ class AngepassteReiter(QTabWidget):
     def tabInserted(self, index: int) -> None:
         super().tabInserted(index)
         self._aktuelle_seite()
+        self.tabBar().setTabToolTip(index, self.tabText(index))
 
     def _mass(self, minimum: bool) -> QSize:
         w = self.currentWidget()
@@ -363,7 +367,7 @@ class AngepassteReiter(QTabWidget):
             h = min(h, w.maximumHeight())
         ws = QSize(ws.width(), h)
         tb = self.tabBar().sizeHint()
-        return QSize(max(ws.width(), tb.width()) + 6, ws.height() + tb.height() + 8)
+        return QSize(ws.width() + 6, ws.height() + tb.height() + 8)               # die Leiste kürzt ihre Namen, sie bestimmt die Breite nicht
 
     def hasHeightForWidth(self) -> bool:
         w = self.currentWidget()
