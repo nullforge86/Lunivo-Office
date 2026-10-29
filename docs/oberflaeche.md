@@ -54,7 +54,7 @@ und verschwinden wieder; dazu Zeichentools, Diagrammtools, SmartArt-Tools,
 Gleichungswerkzeuge und Kopf- und Fußzeilenwerkzeuge. Die Gruppen folgen
 dem Menüband von Word: *Start* trägt Zwischenablage, Schriftart, Absatz,
 Formatvorlagen und Bearbeiten, *Ansicht* beginnt mit den Ansichten und
-nicht mit dem Zoom. Jeder der 191 Befehle ist von dort erreichbar. Auf *Start* steht der
+nicht mit dem Zoom. Die Befehle sind über Register, Menü und Symbolleisten erreichbar. Auf *Start* steht der
 
 **Formatvorlagen-Katalog**: Er zeigt die Vorlage, statt sie zu benennen —
 acht Kacheln in zwei Zeilen. Der Pfeil daneben klappt sie groß auf — an
@@ -91,7 +91,7 @@ stehen, damit man es zurückholen kann.
 
 **Ein Symbol austauschen.** Rechtsklick auf einen Knopf — im Band wie in
 den Symbolleisten. Ein Fenster zeigt, wo die Zeichnung überall benutzt
-wird, dazu ein Suchfeld und **1801 Zeichnungen** zur Wahl. Ein Klick, und
+wird, dazu ein Suchfeld und eine große Auswahl an Zeichnungen. Ein Klick, und
 sie ist getauscht; „Zurücksetzen" holt die alte zurück. kann
 das für seine Symbolleisten, für sein Symbolband nicht — hier geht beides.
 

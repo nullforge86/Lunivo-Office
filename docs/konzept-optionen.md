@@ -1,6 +1,6 @@
 # Konzept: Das Optionen-Fenster, leicht und barrierefrei
 
-Stand: umgesetzt (Rahmen, sechs Seiten, Suche, Hell/Dunkel). Aufbau im Einzelnen: [aufbau-optionen.md](aufbau-optionen.md).
+**Einordnung:** Historischer Entwurf. Der Rahmen mit sechs Seiten, Suche und Hell/Dunkel ist umgesetzt. Diese Datei hält die ursprünglichen Ziele und Begründungen fest; für die aktuelle Bedienung siehe [aufbau-optionen.md](aufbau-optionen.md) und [einstellungen.md](einstellungen.md).
 Abweichungen vom Entwurf: Das Gedächtnis (gelernte Schreibweisen) steht unter *Schreiben ▸ Weitere Einstellungen*; Kennwort und
 Änderungsverfolgung öffnen vorerst als Fenster aus *Speichern ▸ Weitere Einstellungen* (der Umzug nach *Datei ▸ Dokument schützen*
 und in den Reiter *Überprüfen* steht noch aus).
@@ -82,8 +82,4 @@ Heute (siehe Bildschirmfoto): „Thema der Benutzeroberfläche“ als Klappliste
 - Reihenfolge: (1) Schalter-Inventur mit Entscheidung behalten/streichen/verschieben, (2) Rahmen mit 6 Seiten und Suche, (3) Seiten nacheinander umziehen, (4) Barrierefreiheits-Prüfung per Tastatur und mit großer Schrift, (5) `docs/aufbau-optionen.md` und `docs/einstellungen.md` nachziehen.
 - Tests nur gezielt: Optionen-Dialog, Suche, Speicher-Schlüssel unverändert; Volltest erst am Schluss wegen der Änderung an einer zentralen Oberfläche.
 
-## Entscheidungen, die bei Ihnen liegen
-
-1. Soll die Streichliste (ohne AutoKorrektur, die bleibt) so gelten, oder bleibt etwas davon (z. B. Duplexdruck)?
-2. Dürfen Kennwort und Änderungsverfolgung aus den Optionen wandern?
-3. Soll KI als eigene Seite sichtbar bleiben, auch wenn sie ausgeschaltet ist?
+Die Fragen am Ende des ursprünglichen Entwurfs sind durch die aktuelle Implementierung überholt. Die bestehenden Einstellungen sind in den verlinkten Übersichten beschrieben.

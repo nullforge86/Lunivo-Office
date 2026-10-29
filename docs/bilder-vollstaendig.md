@@ -1,4 +1,6 @@
-# Alles, was Writer zu Bildern kennt
+# Referenzinventar: Bildbefehle in WPS Writer
+
+Diese Datei ist eine historische Sammlung von Beschriftungen aus WPS Writer. Sie dokumentiert die damalige Recherchequelle und ist **keine** Liste der in Lunivo verfügbaren Bildfunktionen.
 
 **Wiederholbar:** `python3 werkzeug/befehle-lesen.py`
 

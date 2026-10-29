@@ -1,311 +1,54 @@
-# Lunivo-Office
+# Lunivo Writer – ausführlicher Überblick
 
-*Ein Raum für Worte.*
+Lunivo Writer ist eine native Textverarbeitung für Linux. Die Anwendung ist mit Python 3 und PySide6/Qt Widgets gebaut. Dokumente werden lokal bearbeitet; die Speicherorte wählst du selbst.
 
-Ein Schreibprogramm wie Writer oder Word — mit einem
-Unterschied: Die Schreibhilfe sitzt fest an der Seite und sucht die Fehler,
-die ein Rechtschreibprüfer **nicht** finden kann.
+Die Schreibhilfe prüft Text auf häufige Rechtschreib-, Grammatik- und Zeichensetzungsfehler. Funde erscheinen mit Erklärung und Vorschlag neben dem Dokument. Sie werden nicht automatisch übernommen.
 
- das / dass seit / seid wider / wieder
- „wir hat" → „wir haben" „größer wie" → „größer als"
- fehlende Kommas vor weil, dass, wenn, aber
- zusammengetippte Wörter, doppelte Wörter, Satzanfänge
+## Schreiben und Prüfen
 
-Kein Konto, keine Anmeldung, kein Internet. Was geschrieben wird, bleibt
-auf dem eigenen Rechner — nichts geht hinaus, ohne dass man es selbst
-schickt.
+Der Reiter **Schreibhilfe** bündelt Prüfung, Wortvorhersage, AutoKorrektur, Vorlesen, Silbentrennung, Übersetzung und Thesaurus. Die rechte Seitenleiste lässt sich mit **F5** öffnen oder schließen. **F6** zeigt, welche Hilfe sich für den jeweiligen Arbeitsschritt eignet.
 
-## Starten
+KI-Korrektur und Textvorschläge sind optional. Sie können mit einem lokalen Modell über Ollama oder mit einem eingerichteten Online-Anbieter verwendet werden. Bei Online-KI wird der gewählte Text an diesen Anbieter übertragen.
 
- ./starten-qt.sh
+## Dokumente und Formate
 
-Das legt beim ersten Mal auch den Menüeintrag an. Danach steht
-*Lunivo-Office* im Startmenü unter „Büro". Einen alten Eintrag
-*Schreibprogramm* räumt der Start still mit weg.
+Lunivo öffnet DOCX, DOTX, DOCM, ODT, FODT, RTF und TXT. Es speichert DOCX, ODT, RTF und TXT; PDF und PNG sind Exportformate. Alte DOC/DOT-Dateien, Tabellenkalkulationen und Präsentationen werden nicht unterstützt. Einzelheiten und Grenzen stehen unter [Speichern und Dateiformate](SPEICHERN.md).
 
-Gebraucht wird Python 3 mit PySide6 (Qt 6). `./starten-qt.sh` legt dafür beim ersten Start eine eigene Umgebung an.
+Ein Dokument kann Tabellen, Bilder, Formen, Diagramme, Formeln, Formatvorlagen, Kopf- und Fußzeilen, Notizen, Verzeichnisse und Seriendruck enthalten. Beim Öffnen oder Speichern weist Lunivo auf Inhalte hin, die ein Format nicht vollständig übernehmen kann.
 
-## Was es kann
+## Oberfläche und Einstellungen
 
-**Schreiben.** Ein Blatt in A4, A5, A3, Letter oder Legal, hoch oder quer,
-mit Seitenrändern nach Vorgabe oder auf den Millimeter. Überschriften, Titel
-und Untertitel, fett, kursiv, unterstrichen (in fünf Linienstilen),
-durchgestrichen, hoch- und tiefgestellt, Schrift- und Hervorhebungsfarbe.
-Alle Schriften dieses Rechners — mit Vorschau und Suchfeld, jeder Name in
-seiner eigenen Schrift. Links, zentriert, rechts und Blocksatz, Zeilen- und
-Absatzabstand, Einzüge, Aufzählungen und Nummerierungen über mehrere Ebenen,
-Sortieren, Schattierung und Rahmenlinien, Spalten, Silbentrennung und
-Zeilennummern.
+Das Programm bietet acht Register sowie zusätzliche kontextabhängige Register für ausgewählte Dokumentobjekte. Die Oberfläche lässt sich als Registerband oder Symbolleisten anzeigen. Eine rechte Seitenleiste zeigt die Schreibhilfe und optionale KI-Funktionen.
 
-Dazu Tabellen mit Zeilen und Spalten zum Einfügen und Löschen, Bilder,
-Diagramme (Balken, Linie, Kreis), gezeichnete Formen, Formeln, Textrahmen,
-Kopf- und Fußzeilen mit Seitenzahl, Hyperlinks, Textmarken und Querverweise,
-Fußnoten, Kommentare, Deckblatt, Wasserzeichen und Seitenrahmen.
+Die sechs Optionsseiten heißen **Lesen**, **Anzeige**, **Schreiben**, **Speichern**, **Drucken und PDF** sowie **Name und KI**. Öffnen mit **F9**; Änderungen werden unmittelbar übernommen.
 
-Rückgängig und Wiederholen für alles — auch für das, was die Schreibhilfe
-oder die KI geändert hat. Über einen Reiterwechsel hinaus reicht es nicht:
-Es hängt am Schreibfeld, nicht am Text.
+## Tastenkürzel
 
-**Mehrere Dokumente.** Ein Fenster trägt mehrere; oben steht für jedes ein
-Reiter. Strg+N legt eins an, Strg+W schließt es, Strg+Tab wechselt, Ziehen
-ordnet um. Jedes bringt seine ganze Seite mit — Papier, Ränder, Kopf- und
-Fußzeile, Abschnitte, Formatvorlagen. Was dem Menschen gehört, wechselt
-nicht mit: Vergrößerung, Helligkeit, welche Leisten er mag.
-
-Auch mehrere **Fenster** kommen einander nicht ins Gehege, obwohl sie sich
-denselben Server teilen: Jedes nimmt beim Aufgehen einen Platz und schreibt
-nur dort hinein.
-
-**Prüfen.** Der Knopf *Prüfen* (oder F7) legt jeden Fund als eigene Karte in
-die Seitenleiste. Drei Sorten, und welche es ist, steht als Wort auf der
-Karte — eine Farbe allein müsste man erst lernen:
-
-* **Sicher falsch** — „Wir hat" wird zu „Wir haben".
-* **Kommt drauf an** — das fehlende Komma, „dass" aus „das". Noch einmal lesen.
-* **Zum Nachdenken** — ein Satz mit 45 Wörtern. Hier gibt es nichts zu
- ersetzen und deshalb auch keinen Knopf dafür.
-
-*Zeigen* springt an die Stelle im Text, *Ändern* setzt sie ein. Nichts ändert
-sich von allein.
-
-Lieber eine Lücke als ein falscher Alarm: Regeln, die auch richtige Sätze
-anmeckern würden, stehen mit Absicht nicht drin. „Das Buch, das ich gelesen
-habe" bleibt deshalb in Ruhe.
-
-**Speichern.** Vier Formate, und für jedes einen Grund:
-
-| Format | wofür |
+| Taste | Funktion |
 |---|---|
-| `.odt` | das Format von und OpenOffice — der Normalfall |
-| `.fodt` | dasselbe als eine einzige XML-Datei, zum Hineinsehen |
-| `.docx` | Word — für alle, die etwas anderes nicht öffnen können |
-| `.pdf` | zum Verschicken und Ausdrucken, unveränderlich |
-| `.txt` | nur die Wörter — für Formulare im Netz |
+| `Strg+N`, `Strg+O`, `Strg+S` | Neues Dokument, Öffnen, Speichern |
+| `Strg+Umschalt+S` | Speichern unter |
+| `Strg+P` | Drucken |
+| `Strg+W`, `Strg+Tab` | Dokument schließen, zum nächsten Dokument wechseln |
+| `Strg+Z`, `Strg+Y` | Rückgängig, Wiederholen |
+| `Strg+F`, `Strg+H` | Suchen, Ersetzen |
+| `F3` | Textbaustein einfügen |
+| `F4` | Vorlesen |
+| `F5` | Seitenleiste ein- oder ausblenden |
+| `F6` | Hilfe zur Wahl der Schreibhilfe öffnen |
+| `F7` | Dokument prüfen |
+| `F8` | KI-Korrektur |
+| `F9` | Optionen öffnen |
 
-Schriftart und Schriftgröße stehen mit in der Datei und kommen beim Öffnen
-zurück — auch aus Word.
+## Dokumentation
 
-**Verzeichnisse.** Ein Inhaltsverzeichnis baut sich aus den Überschriften,
-ein Abbildungsverzeichnis aus den Beschriftungen, ein Stichwortverzeichnis
-aus den festgelegten Einträgen. Alle drei erneuern sich über *Referenzen →
-Verzeichnisse aktualisieren*; dabei werden auch die Fußnoten und
-Beschriftungen neu durchnummeriert.
+- [Installation](INSTALLATION.md)
+- [Lesen und Schreiben](lesen-und-schreiben.md)
+- [Prüfung, Vorhersage und KI](pruefung-und-ki.md)
+- [Schreiben und Dokumente](schreiben-und-dokumente.md)
+- [Einstellungen](einstellungen.md)
+- [Oberfläche](oberflaeche.md)
 
-**Überarbeiten.** *Änderungen verfolgen* schreibt mit: Neues steht
-unterstrichen, Gelöschtes durchgestrichen und bleibt stehen, bis jemand
-entscheidet. Einzeln annehmen oder ablehnen, vor und zurück, oder alles auf
-einmal. Kommentare lassen sich durchgehen und löschen.
+---
 
-**Seriendruck.** Platzhalter wie `{{Name}}` in den Text, die Empfänger als
-Tabelle daneben — daraus entsteht für jede Zeile ein Brief, getrennt durch
-Seitenumbrüche.
-
-## Wie die Menüs aufgebaut sind
-
-Neun Menüs, und sie tragen dieselben Namen wie die Reiter im Register —
-die Vorlage dafür ist Writer. Was zusammengehört, steht in einem
-Untermenü statt untereinander: Das *Format*-Menü hatte zwischenzeitlich
-einunddreißig Zeilen, und darin sucht man, statt zu finden.
-
- Datei · Start · Einfügen · Seitenlayout · Referenzen
- Überprüfen · Schreibhilfe · Sendungen · Ansicht
-
-Makros gibt es nicht. In einem Textdokument wird nicht programmiert —
-alles, was damit zu tun hatte, ist wieder heraus.
-
-## Der Motor für Word und PDF
-
-Word-Dateien und PDF macht dieses Programm nicht selbst. Die Filter, die eine
-Word-Datei richtig lesen, sind das Ergebnis von Jahrzehnten; sie nachzubauen
-wäre aussichtslos. Also erledigt es ** im Hintergrund** — ohne
-Fenster, ohne dass man es merkt.
-
-Das Programm bringt seinen eigenen mit. Er liegt ausgepackt unter
-
- ~/.local/share/schreibprogramm//
-
-und wird bevorzugt benutzt. Ist er nicht da, nimmt das Programm das
- des Systems. Ist auch das nicht da, sagen die beiden Menüpunkte
-das — statt stillschweigend eine kaputte Datei zu schreiben.
-
-Der eigene Motor hat einen Grund: So hängt das Programm nicht daran, was
-gerade installiert ist, und ein Update des Systems nimmt ihm nichts weg.
-Er belegt allerdings gut 700 MB. Wer das nicht will, löscht den Ordner —
-dann übernimmt das des Systems.
-
-Gebraucht wird der Motor nur für `.docx`, `.doc`, `.rtf` und PDF. Alles
-andere — schreiben, prüfen, `.odt`, `.fodt`, `.txt` — läuft ohne ihn.
-
-Geöffnet werden alle vier. *Drucken* (Strg+P) druckt das Blatt ohne Menü,
-Leiste und Seitenleiste — und über „In Datei drucken" wird daraus ein PDF.
-
-## Tasten
-
-| | |
-|---|---|
-| Strg+N / O / S / P | Neues Dokument, Öffnen, Speichern, Drucken |
-| Strg+W | Dokument schließen |
-| Strg+Tab | Nächstes Dokument (mit Umschalt das vorige) |
-| Strg+Umschalt+S | Speichern unter (mit Formatauswahl) |
-| Strg+Z / Y | Rückgängig, Wiederholen |
-| Strg+B / I / U | Fett, Kursiv, Unterstrichen |
-| Strg+F, Strg+H | Suchen und Ersetzen |
-| Strg+K | Hyperlink einfügen |
-| Strg + + / − / 0 | Größer, kleiner, Normalgröße |
-| Strg+Enter | Seitenumbruch |
-| F7 | Prüfen |
-| F8 | KI-Korrektur |
-| F9 | Einstellungen |
-| F5 | Seitenleiste ein und aus |
-| F6 | Welche Hilfe wann |
-| F4 | Vorlesen |
-
-## Was wo liegt
-
-Der Aufbau des Projekts steht in [README.md](README.md) in diesem Ordner. Die gemeinsamen Bausteine der Oberfläche
-(Farbpalette, Linien, Menüs, Dialoggerüst) sind in [baukasten.md](baukasten.md) beschrieben.
-
-## Prüfläufe
-
- .venv/bin/python -m pytest alle Tests (Fenster laufen ohne Bildschirm)
- .venv/bin/python werkzeug/funktionspruefung.py jeden Knopf des Bandes ausprobieren
-
-## Namen prüfen, bevor man sich wundert
-
- ./werkzeug/namen-pruefen.py
-
-In JavaScript ist das hier kein Fehler, den irgendwer meldet:
-
- function aenderungen() { ... } // die Liste der Änderungen
- function aenderungen(alt, neu) { ... } // die Rechnung, die vergleicht
-
-Die spätere Deklaration gewinnt stillschweigend. Genau so waren „Nächste
-Änderung", „Annehmen" und „Ablehnen" monatelang kaputt: Sie riefen die
-Vergleichsrechnung ohne Argumente auf, und die warf jedes Mal — in die
-Konsole, wo es niemand sieht.
-
-Bei `const` und `let` fällt so etwas auf, weil das Programm gar nicht
-erst lädt. Bei `function` und `var` nicht. Und über Dateigrenzen hinweg
-fällt gar nichts auf: Klassische Skripte teilen sich einen Namensraum,
-also kann eine Datei einer anderen einen Namen wegnehmen.
-
-Der Prüfer geht den Quelltext Zeichen für Zeichen durch und zählt die
-Klammertiefe mit — Zeichenketten, Kommentare und reguläre Ausdrücke
-werden übersprungen. Er meldet, was zweimal im selben Block steht, und
-sagt dazu, ob es beim Laden auffällt oder eben nicht. Er gibt 1 zurück,
-wenn er etwas findet.
-
-Er kann sich irren, und zwar zugunsten von zu viel: Wer einen Treffer
-nicht versteht, sieht sich die genannten Zeilen an.
-
-### Vor jedem Commit von selbst
-
- ./werkzeug/haken-an.sh
-
-Danach läuft die Prüfung bei jedem `git commit`. Findet sie etwas, wird
-nicht committet, und die Fundstellen stehen da. Wenn es Absicht ist:
-`git commit --no-verify`. Abschalten mit `./werkzeug/haken-an.sh --weg`.
-
-Geprüft wird der Stand, der **wirklich committet wird** — nicht der, der
-gerade auf der Platte liegt. Wer nur die Hälfte seiner Änderungen mit
-`git add` vormerkt, bekäme sonst grünes Licht für etwas, das so nie
-geprüft wurde.
-
-Der Haken liegt in `werkzeug/git-haken/` und damit im Projekt. Git sucht
-seine Haken sonst in `.git/hooks`, und was dort liegt, hat nur der eine
-Rechner, auf dem es angelegt wurde — deshalb der Umweg über
-`core.hooksPath`. Wer mitarbeitet, ruft `haken-an.sh` einmal auf.
-
-Ein Commit ohne JavaScript kostet nichts: Dann läuft die Prüfung gar
-nicht erst an.
-
-## Das Symbol
-
-Die Glühbirne mit der Federspitze aus dem Logo, freigestellt, auf einer
-dunkelblauen Kachel — dasselbe Zeichen, das auch den Schriftzug trägt.
-
-Die Kachel ist nicht Zierde. Die Linien des Zeichens sind hell, und auf einer
-hellen Fensterleiste bliebe bei 16 Bildpunkten davon kaum etwas übrig. Auf dem
-Dunkelblau des Schriftzugs bleiben sie sichtbar, gleich ob die Leiste hell oder
-dunkel ist, und das Symbol sieht überall gleich aus.
-
-Das Zeichen liegt als Bild in der Datei, nicht als Pfade. Das Logo ist gemalt,
-nicht konstruiert — es in Kurven nachzubauen hieße, es neu zu erfinden. Die
-freigestellte Vorlage liegt als `bilder/marke.png` dabei; daraus lässt sich der
-ganze Satz jederzeit neu rechnen.
-
-Es liegt in neun Größen bereit statt nur in einer. Eine große Datei würde
-überall heruntergerechnet, und was bei 16 Bildpunkten dabei herauskommt, hängt
-davon ab, wer rechnet. Die neun Dateien sind einmal sauber gerechnet und bleiben
-überall dieselben.
-
-`./starten-qt.sh` legt alle Größen unter `~/.local/share/icons/hicolor/` ab.
-`./starten-qt.sh --weg` räumt sie wieder fort.
-
-## Herkunft
-
-Die Prüfung stammt aus der **Schreibhilfe**
-(<https://github.com/nullforge86/schreibhilfe>) und ist dort über viele
-Fassungen gewachsen. Sie liegt hier als eigene Kopie: Dieses Programm ist
-eigenständig und braucht jenes Projekt nicht, um zu laufen.
-
-**Die KI.** Drei Knöpfe unter den Funden, und sie können etwas, das kein
-Wörterbuch kann: den Satz verstehen.
-
-* **KI-Korrektur** (F8) liest den ganzen Text und stellt Rechtschreibung,
- Grammatik und Kommas richtig. Eingesetzt wird Wort für Wort — was fett,
- kursiv oder eine Überschrift war, bleibt es.
-* **Vorschläge** sucht umständliche Sätze und legt für jeden eine Karte an.
- Jeder einzeln anzunehmen oder liegenzulassen. Der Text gehört dir.
-* **Nach Englisch** übersetzt den ganzen Text. Die Sprache steht in den
- Einstellungen — vierzehn zur Wahl.
-
-Alle drei richten sich nach **Für wen?** und dem Zettel **Worum geht's?**:
-Ein Brief ans Amt wird anders korrigiert als eine Nachricht an einen Freund.
-Strg+Z holt jede KI-Änderung zurück.
-
-Zwei Wege stehen offen, beide in den Einstellungen (F9):
-
-| | |
-|---|---|
-| **Claude im Netz** | braucht einen Schlüssel und Guthaben, antwortet in Sekunden |
-| **Ollama auf diesem Rechner** | kostenlos, ohne Internet, der Text bleibt hier — dauert länger |
-
-Was verbraucht wurde, zählt das Programm selbst mit und zeigt es in den
-Einstellungen. Ohne Schlüssel bleiben die Knöpfe blass, führen beim Drücken
-aber genau dorthin, wo er hingehört.
-
-**Das Gedächtnis.** Jedes „Ändern" bringt dem Programm etwas bei: „Halloch →
-Hallo" steht beim nächsten Mal sofort da, ohne KI und ohne Internet. Wörter,
-deren Kasten fünfmal stehen blieb — der Nachname, ein Wort aus der Gegend —
-werden künftig in Ruhe gelassen. Was gelernt wurde, steht in den
-Einstellungen und lässt sich einzeln nachsehen und wieder vergessen.
-
-**Sichern und Einspielen.** Handy, App und Lunivo-Office lernen jedes für
-sich. Der Sicherungs-Text ist die Brücke: hier kopieren, dort einsetzen.
-Er hat dasselbe Format wie in der Schreibhilfe-App — was dort gelernt wurde,
-kommt hier an. Eingespielt wird zusammengeführt, nicht ersetzt. Der Schlüssel
-bleibt bewusst draußen; er gehört nicht in einen Text, den man verschickt.
-
-## Einstellungen
-
-Über **Schreibhilfe → Einstellungen** oder **F9**. Vier Gruppen: KI-Werkzeuge
-(Schlüssel, Modell, Verbrauch, Zielsprache), Beim Schreiben
-(Textbegrenzungen, rote Wellenlinien), Gedächtnis und Darstellung
-(Schriftgröße, hell/dunkel).
-
-## Was noch fehlt
-
-Der Zurück-Eimer der App — dort landet gelöschter Text und lässt sich
-zurückholen. Hier tut das Strg+Z, aber nur solange das Fenster offen ist.
-
-Kopf- und Fußzeile erscheinen im Blatt und im Druck, gehen aber noch nicht
-in die `.odt`.
-
-Aus dem Funktionsumfang von Word fehlen mit Absicht: SmartArt, Piktogramme,
-3D-Modelle, Screenshots und eingebettete Tabellenblätter; Design-Themes; das
-Anordnen von Bildern mit Textumbruch und Ebenen; Zitate und
-Literaturverzeichnis nach APA oder MLA; Endnoten; Umschläge und Etiketten;
-die Barrierefreiheitsprüfung; der Dokumentschutz; die Gliederungsansicht;
-Fenster teilen und nebeneinander mit Synchronscrollen. Bei den meisten wäre
-der Aufwand groß und der Nutzen für einen Brief gering.
+[Zurück zur README](../README.md)
