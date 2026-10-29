@@ -1,6 +1,6 @@
 """WPS Office — nur die ehrliche Stufe: ein installiertes Programm aufrufen.
 
-Geprüft (Stand der Recherche, siehe docs/BERICHT.md): Für WPS Writer unter Linux habe ich keine offiziell
+Geprüft (Stand der damaligen Recherche): Für WPS Writer unter Linux habe ich keine offiziell
 dokumentierte, englischsprachige Automatisierungsschnittstelle gefunden. Es gibt (a) JSAPI-Erweiterungen laut
 Entwicklerdokumentation auf open.wps.cn (chinesisch) und (b) das Drittprojekt „pywpsrpc“ (Python-Anbindung an eine
 RPC-Schnittstelle von WPS, nur Linux). Beides wurde hier NICHT eingebaut: WPS ist auf dem Testrechner nicht

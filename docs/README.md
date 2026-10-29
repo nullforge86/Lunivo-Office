@@ -12,7 +12,7 @@ QtWebEngine/WebKit noch ein Webserver geladen wird.
 ./starten-qt.sh --test # Tests ausführen
 ./starten-qt.sh --eintrag # Menüeintrag anlegen
 ```
-Weiteres: [INSTALLATION.md](INSTALLATION.md). Was fertig ist und was fehlt: [BERICHT.md](BERICHT.md). Speichern, Formate, Datensicherheit: [SPEICHERN.md](SPEICHERN.md).
+Weiteres: [INSTALLATION.md](INSTALLATION.md). Speichern, Formate, Datensicherheit: [SPEICHERN.md](SPEICHERN.md).
 
 ## Aufbau
 ```
