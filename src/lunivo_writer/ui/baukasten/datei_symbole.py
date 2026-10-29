@@ -1,27 +1,31 @@
-"""Symbole für Dateiformate aus dem Icon-Theme des Systems (Freedesktop): Dateiname → MIME-Typ → Icon-Name."""
+"""Einheitliche Lucide-Symbole für Dateien, ohne Abhängigkeit vom Desktop-Theme."""
 from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QMimeDatabase
 from PySide6.QtGui import QIcon
 
-RUECKFALL = ("x-office-document", "text-x-generic", "application-octet-stream")
+from lunivo_writer.ui.widgets import icons
 
 
 def icon_namen(name: str) -> list[str]:
-    """Die Namen, in der Reihenfolge, in der sie im Theme gesucht werden: der des MIME-Typs, sein allgemeiner, dann Rückfälle.
-    ``name`` ist ein Dateiname („brief.docx“, ein Pfad) oder nur die Endung („.docx“)."""
+    """Liefert den Lucide-Namen für die Dateiendung und einen stabilen Rückfall."""
+    ext = os.path.splitext(os.path.basename(name))[1].lower()
     if name.startswith(".") and name.count(".") == 1:
-        name = "datei" + name
-    mt = QMimeDatabase().mimeTypeForFile(os.path.basename(name), QMimeDatabase.MatchMode.MatchExtension)
-    return [n for n in (mt.iconName(), mt.genericIconName(), *RUECKFALL) if n]
+        ext = name.lower()
+    if ext == ".pdf":
+        return ["file-text", "file"]
+    if ext in {".doc", ".docx", ".odt", ".rtf", ".txt", ".md"}:
+        return ["file-text", "file"]
+    if ext in {".xls", ".xlsx", ".ods", ".csv"}:
+        return ["table", "file"]
+    if ext in {".ppt", ".pptx", ".odp"}:
+        return ["presentation", "file"]
+    if ext in {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg"}:
+        return ["image", "file"]
+    return ["file"]
 
 
 def datei_symbol(name: str) -> QIcon:
-    """Das Symbol des Dateiformats im aktuellen Icon-Theme (Mint-Y, Papirus …); leer, wenn das Theme keines kennt."""
-    for n in icon_namen(name):
-        ic = QIcon.fromTheme(n)
-        if not ic.isNull():
-            return ic
-    return QIcon()
+    """Dateisymbol aus Lucide; gleichbleibend auf allen Desktop-Umgebungen."""
+    return icons.icon(icon_namen(name)[0], 24)

@@ -101,7 +101,7 @@ class VorlagenGalerie(QWidget):
         self._offen: list[_Kachel] = []
         v = QVBoxLayout(self); v.setContentsMargins(36, 28, 36, 0); v.setSpacing(10)
         kopf = QHBoxLayout(); kopf.setSpacing(10)
-        self.zurueck = QPushButton("←  Neu"); self.zurueck.setFlat(True); self.zurueck.setCursor(Qt.PointingHandCursor)
+        self.zurueck = QPushButton("Neu"); self.zurueck.setIcon(icons.icon("arrow-left", 16)); self.zurueck.setFlat(True); self.zurueck.setCursor(Qt.PointingHandCursor)
         self.zurueck.clicked.connect(lambda: self.rubrik_oeffnen(None)); kopf.addWidget(self.zurueck)
         self.titel = QLabel("Neu"); f = self.titel.font(); f.setPointSizeF(f.pointSizeF() + 8); f.setBold(True); self.titel.setFont(f)
         kopf.addWidget(self.titel); kopf.addStretch(1)

@@ -584,7 +584,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         b = getattr(self, "_paste_btn", None)
         if b is None:
             b = self._paste_btn = QToolButton(self.viewport())
-            b.setText("Einfügen ▾")
+            from lunivo_writer.ui.widgets import icons
+            b.setText("Einfügen"); b.setIcon(icons.icon("clipboard-paste", 14))
             b.setCursor(Qt.ArrowCursor)
             b.setPopupMode(QToolButton.InstantPopup)
             b.setStyleSheet("QToolButton { border: 1px solid palette(mid); border-radius: 4px; padding: 2px 6px; "

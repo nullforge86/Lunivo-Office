@@ -56,20 +56,9 @@ QWidget#kfPanel { background: #ffffff; color: #333333; }
 
 
 def _symbol(art: str) -> QIcon:
-    """Kleines, selbst gezeichnetes Symbol (14 px) vor dem Knopftext: Seitenbild oder rotes Kreuz."""
-    pm = QPixmap(14, 14); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    if art == "x":
-        p.setPen(QPen(QColor("#d9363e"), 1.8)); p.drawLine(3, 3, 11, 11); p.drawLine(11, 3, 3, 11)
-    else:
-        p.setPen(QPen(QColor("#4a5a70"), 1.1)); p.drawRect(QRectF(2.5, 1.5, 9, 11))
-        p.drawLine(5, 4, 9, 4)
-        if art == "neu":
-            p.drawLine(5, 7, 9, 7)
-        else:
-            p.drawLine(5, 7, 9, 7); p.drawLine(5, 9.5, 9, 9.5)
-    p.end()
-    return QIcon(pm)
+    """Aktionssymbol aus dem zentralen Lucide-Katalog."""
+    from lunivo_writer.ui.widgets import icons
+    return icons.icon({"x": "x", "neu": "file-plus", "format": "file-text"}.get(art, "file"), 16)
 
 
 class _Linie(QWidget):
@@ -259,7 +248,7 @@ class _Leiste(QWidget):
         self.knopf = {}
         for schl, text, sym in (("neu", "Seitenzahl neu aufbauen", "neu"), ("format", "Seitenzahlenformat", "format"),
                                 ("loeschen", "Seitenzahl löschen", "x"), ("einfuegen", "Seitenzahl einfügen", "neu")):
-            k = QToolButton(); k.setText(text + " ▾"); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            k = QToolButton(); k.setText(text); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setPopupMode(QToolButton.InstantPopup)
             k.setParent(self); self.knopf[schl] = k
         self.setStyleSheet(LEISTE_STIL)                        # sitzt auf dem weißen Papier: unabhängig vom Thema
@@ -321,7 +310,8 @@ class KopfFussBearbeiter(QObject):
                 et = self.etiketten[z] = QLabel("Kopfzeile" if z == "kopf" else "Fußzeile", vp)
                 et.setStyleSheet(ETIKETT_STIL); et.setContentsMargins(6, 2, 6, 2)
             self.leiste = _Leiste(vp)
-            self.absatz = QToolButton(vp); self.absatz.setText("¶ ▾"); self.absatz.setStyleSheet(ABSATZ_STIL); self.absatz.setObjectName("kfAbsatz")
+            from lunivo_writer.ui.widgets import icons
+            self.absatz = QToolButton(vp); self.absatz.setText("Absatz"); self.absatz.setIcon(icons.icon("pilcrow", 16)); self.absatz.setStyleSheet(ABSATZ_STIL); self.absatz.setObjectName("kfAbsatz")
             self.absatz.setPopupMode(QToolButton.InstantPopup); self.absatz.setToolTip("Absatz")
             vp.installEventFilter(self)
             self._menues()

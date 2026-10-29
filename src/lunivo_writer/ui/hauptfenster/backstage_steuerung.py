@@ -10,6 +10,7 @@ from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
 from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
 from lunivo_writer.ui.ribbon.menue_tafel import MenueTafel
+from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
@@ -34,7 +35,7 @@ class BackstageBaustein:
             k.clicked.disconnect()
         except (RuntimeError, TypeError):
             pass
-        k.setText("☰ Menü"); k.setCheckable(True); k.setToolTip("Menü: Neu, Öffnen, Speichern, Exportieren, Drucken, Optionen, Hilfe")
+        k.setText("Menü"); k.setIcon(icons.icon("menu", 16)); k.setIconSize(QSize(16, 16)); k.setCheckable(True); k.setToolTip("Menü: Neu, Öffnen, Speichern, Exportieren, Drucken, Optionen, Hilfe")
         k.setStyleSheet(('QToolButton { font-weight: 600; padding: 4px 12px; } QToolButton:checked { color: ' + Farbe.AKZENT_DUNKEL + '; }'))
         k.clicked.connect(self._menue_geklickt)
         r.currentChanged.connect(lambda i, kk=k: kk.setChecked(self._ist_datei(i)))

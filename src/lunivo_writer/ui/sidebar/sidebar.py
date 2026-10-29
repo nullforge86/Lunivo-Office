@@ -12,6 +12,7 @@ from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_la
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
 from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte, VorschlagKarte
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 WERK_REITER = (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: 4px 6px; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid ' + Farbe.AKZENT + '; }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid ' + Farbe.AKZENT + '; }'))
@@ -284,9 +285,9 @@ class SchreibhilfePanel(QWidget):
         titel.setToolButtonStyle(Qt.ToolButtonTextOnly)
         menue = QMenu(titel); menue.addAction(menue_text); titel.setMenu(menue)
         kopf.addWidget(titel); kopf.addStretch(1)
-        anheften = QToolButton(); anheften.setText("⚲"); anheften.setCheckable(True); anheften.setAutoRaise(True)
+        anheften = QToolButton(); anheften.setIcon(icons.icon("pin", 16)); anheften.setCheckable(True); anheften.setAutoRaise(True)
         anheften.setToolTip("Anheften: der Bereich folgt der Markierung und bleibt offen")
-        zu = QToolButton(); zu.setText("✕"); zu.setAutoRaise(True); zu.setToolTip("Schließen"); zu.clicked.connect(lambda: self.zeige_bereich(0))
+        zu = QToolButton(); zu.setIcon(icons.icon("x", 16)); zu.setAutoRaise(True); zu.setToolTip("Schließen"); zu.clicked.connect(lambda: self.zeige_bereich(0))
         kopf.addWidget(anheften); kopf.addWidget(zu)
         v.addLayout(kopf)
         panel = panel_klasse(host, werte)

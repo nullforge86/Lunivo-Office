@@ -15,6 +15,7 @@ from lunivo_writer.ui.baukasten import farben as F
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.widgets import icons
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
     from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog
@@ -160,9 +161,7 @@ class FarbPalette(QMenu):
 
     @staticmethod
     def _keine_symbol() -> QIcon:
-        pm = QPixmap(14, 14); pm.fill(Qt.transparent)
-        p = QPainter(pm); p.setPen(QPen(QColor(Farbe.ROT), 1.5)); p.drawRect(1, 1, 11, 11); p.drawLine(1, 12, 12, 1); p.end()
-        return QIcon(pm)
+        return icons.icon("ban", 14)
 
     def _raster(self, zeilen: list[list[str]]) -> QGridLayout:
         g = QGridLayout()

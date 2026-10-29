@@ -302,11 +302,12 @@ class AnzeigeBaustein:
             from lunivo_writer.editor.umbruch import schwebende_rahmen
             ankern = schwebende_rahmen(self.document())
             if ankern:
-                f = QFont(p.font()); f.setPointSizeF(max(7.0, 10 * z)); p.setFont(f)
-                p.setPen(accent_color)
+                from lunivo_writer.ui.widgets import icons
+                px = max(12, int(16 * z))
                 for pos in ankern:
                     r = self.cursorRect(self._cursor_at(pos))
-                    p.drawText(max(0, r.x() - int(18 * z)), r.y() + r.height() // 2, "⚓")
+                    img = icons.katalog_bild("anchor", px, accent_color.name())
+                    p.drawImage(max(0, r.x() - px - int(2 * z)), r.y() + (r.height() - px) // 2, img)
         # Abschnittsumbrüche: gestrichelte Linie mit Beschriftung unter dem letzten Absatz des Abschnitts
         if not self._mehrspaltig():
             from lunivo_writer.editor import abschnitte as AB

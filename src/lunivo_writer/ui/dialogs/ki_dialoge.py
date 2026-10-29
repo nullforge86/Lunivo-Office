@@ -16,6 +16,7 @@ from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
@@ -209,9 +210,9 @@ class ModellListe(QWidget):
         self.liste = QListWidget()
         z.addWidget(self.liste, 1)
         s = QVBoxLayout()
-        self.neu = QToolButton(); self.neu.setText("+"); self.neu.setToolTip("Anbieter hinzufügen")
-        self.bearb = QToolButton(); self.bearb.setText("✎"); self.bearb.setToolTip("Bearbeiten")
-        self.weg = QToolButton(); self.weg.setText("🗑"); self.weg.setToolTip("Entfernen")
+        self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", 16)); self.neu.setToolTip("Anbieter hinzufügen")
+        self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", 16)); self.bearb.setToolTip("Bearbeiten")
+        self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", 16)); self.weg.setToolTip("Entfernen")
         for b in (self.neu, self.bearb, self.weg):
             s.addWidget(b)
         s.addStretch(1)
@@ -476,9 +477,9 @@ class McpListe(QWidget):
         z = QHBoxLayout()
         self.liste = QListWidget(); z.addWidget(self.liste, 1)
         s = QVBoxLayout()
-        self.neu = QToolButton(); self.neu.setText("+"); self.neu.setToolTip("Server hinzufügen")
-        self.bearb = QToolButton(); self.bearb.setText("✎"); self.bearb.setToolTip("Bearbeiten")
-        self.weg = QToolButton(); self.weg.setText("🗑"); self.weg.setToolTip("Entfernen")
+        self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", 16)); self.neu.setToolTip("Server hinzufügen")
+        self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", 16)); self.bearb.setToolTip("Bearbeiten")
+        self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", 16)); self.weg.setToolTip("Entfernen")
         for b in (self.neu, self.bearb, self.weg):
             s.addWidget(b)
         s.addStretch(1); z.addLayout(s); v.addLayout(z, 1)

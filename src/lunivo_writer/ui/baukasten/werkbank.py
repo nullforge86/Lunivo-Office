@@ -52,7 +52,7 @@ class FunktionsZeile(QFrame):
         if f.art == "schalter":
             h.addWidget(self.zustand)
         elif f.art == "menue":
-            pf = QLabel("▾"); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf)
+            pf = QLabel(); pf.setPixmap(icons.icon("chevron-down", 14).pixmap(14, 14)); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf)
         self.setToolTip(f.hinweis or f.name)
         self.clicked.connect(self._los)
         self.aktualisieren()

@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
-    QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat,
+    QColor, QFont, QIcon, QPainter, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat,
 )
-from PySide6.QtWidgets import QApplication, QButtonGroup, QComboBox, QFontComboBox, QFrame, QHBoxLayout, QToolButton, QWidget
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QFontComboBox, QFrame, QHBoxLayout, QToolButton, QWidget
 
 from lunivo_writer.ui.widgets import icons
 
@@ -54,43 +54,16 @@ def ausrichtung_knoepfe() -> dict[str, QToolButton]:
     return gruppe
 
 
-def _symbol(zeichne) -> QIcon:
-    pm = QPixmap(20, 20); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QApplication.palette().color(QPalette.ButtonText), 1.6, Qt.SolidLine, Qt.RoundCap))
-    zeichne(p)
-    p.end()
-    return QIcon(pm)
-
-
 def _zeilen_symbol(abstand: float) -> QIcon:
-    def z(p):
-        n = 3
-        for i in range(n):
-            y = 4 + i * (6 + (abstand - 1) * 2.4)
-            p.drawLine(7, int(y), 18, int(y))
-        p.drawLine(3, 4, 3, int(4 + (n - 1) * (6 + (abstand - 1) * 2.4))); p.drawLine(1, 6, 3, 4); p.drawLine(5, 6, 3, 4)
-    return _symbol(z)
+    return icons.icon({1.0: "list-start", 1.5: "list", 2.0: "list-chevrons-up-down"}.get(abstand, "list"), 20)
 
 
 def _abstand_symbol(mehr: bool) -> QIcon:
-    def z(p):
-        p.drawLine(3, 4, 17, 4); p.drawLine(3, 16, 17, 16)
-        if mehr:
-            p.drawLine(10, 8, 10, 12); p.drawLine(8, 10, 10, 8); p.drawLine(12, 10, 10, 8); p.drawLine(8, 10, 12, 10)
-        else:
-            p.drawLine(8, 10, 12, 10)
-    return _symbol(z)
+    return icons.icon("list-plus" if mehr else "list-minus", 20)
 
 
 def _einzug_symbol(mehr: bool) -> QIcon:
-    def z(p):
-        for y in (4, 16):
-            p.drawLine(3, y, 17, y)
-        p.drawLine(10, 8, 17, 8); p.drawLine(10, 12, 17, 12)
-        x0, x1 = (3, 7) if mehr else (7, 3)
-        p.drawLine(x0, 10, x1, 10); p.drawLine(x1, 10, x1 + (-2 if mehr else 2), 8); p.drawLine(x1, 10, x1 + (-2 if mehr else 2), 12)
-    return _symbol(z)
+    return icons.icon("list-indent-increase" if mehr else "list-indent-decrease", 20)
 
 
 class TextFormatLeiste(QWidget):

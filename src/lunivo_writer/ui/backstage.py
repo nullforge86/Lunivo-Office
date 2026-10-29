@@ -10,10 +10,10 @@ import os
 
 from datetime import datetime
 
-from PySide6.QtCore import QPointF, QSize, Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QPolygonF, QShortcut
+from PySide6.QtCore import QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget, QStyle,
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -41,38 +41,17 @@ EINTRAEGE = [
 ]
 MIT_DOKUMENT = ("speichern", "speichern_als", "pdf", "bild", "drucken", "schuetzen")
 
-# Liniensymbole (24er-Raster; teils nach Lucide, ISC-Lizenz, siehe assets/icons/LIZENZ-LUCIDE.txt)
+# Symbolnamen aus dem zentralen Lucide-Katalog.
 SYMBOLE = {
-    "neu": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M9 15h6 M12 12v6",
-    "oeffnen": "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9"
-               "a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
-    "speichern": "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z "
-                 "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7 M7 3v4a1 1 0 0 0 1 1h7",
-    "speichern_unter": "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5 M14 2v4a2 2 0 0 0 2 2h4 "
-                       "M13.38 15.63a1 1 0 1 0-3-3l-5.01 5.01a2 2 0 0 0-.51.85l-.84 2.87a.5.5 0 0 0 .62.62l2.87-.84a2 2 0 0 0 .85-.51z",
-    "pdf": "M4 11V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1 M14 2v6h6 M2 15h9 M8 12l3 3-3 3",
-    "bild": "M10 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7 M21 15l-5-5L5 21 "
-            "M13.5 7.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0 M2 6h6 M5.5 3.5 8 6l-2.5 2.5",
-    "drucken": "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2 M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6 "
-               "M7 14h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z",
-    "schutz": "M4 9V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2h-5 M14 2v6h6 M3 15h8v6H3z M5 15v-2a2 2 0 0 1 4 0v2",
-    "hilfe": "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20 M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3 M12 17h.01",
-    "optionen": "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38"
-                "a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38"
-                "a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18"
-                "a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08"
-                "a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08"
-                "a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
-    "beenden": "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
-    "datei": "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M8 13h8 M8 17h8",
-    "neu_laden": "M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8 M21 3v5h-5",
-    "weg": "M18 6 6 18 M6 6l12 12",
+    "neu": "file-plus", "oeffnen": "folder-open", "speichern": "save",
+    "speichern_unter": "file-pen", "pdf": "file-text", "bild": "image", "drucken": "printer",
+    "schutz": "file-lock", "hilfe": "circle-question-mark", "optionen": "settings",
+    "beenden": "log-out", "datei": "file-text", "neu_laden": "refresh-cw", "weg": "x",
 }
 
 
 def symbol(name: str, px: int = 24):
-    return icons.icon_aus_pfad(SYMBOLE[name], px)
-
+    return icons.icon(SYMBOLE[name], px)
 
 class _Zeile(QStyledItemDelegate):
     """Zeichnet die Trennlinien quer über die Liste und den kleinen Pfeil rechts bei Einträgen mit eigener Seite."""
@@ -89,11 +68,8 @@ class _Zeile(QStyledItemDelegate):
         super().paint(p, opt, idx)
         if idx.data(PFEIL):
             p.save()
-            p.setRenderHint(QPainter.Antialiasing)
-            p.setPen(Qt.NoPen)
-            p.setBrush(opt.palette.color(QPalette.WindowText if opt.state & QStyle.State_Enabled else QPalette.Mid))
-            x, y = opt.rect.right() - 16, opt.rect.center().y()
-            p.drawPolygon(QPolygonF([QPointF(x, y - 4), QPointF(x + 4, y), QPointF(x, y + 4)]))
+            pm = icons.icon("chevron-right", 14).pixmap(14, 14)
+            p.drawPixmap(opt.rect.right() - 18, opt.rect.center().y() - 7, pm)
             p.restore()
 
 
@@ -211,7 +187,7 @@ class Backstage(QWidget):
             kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(250)         # die linke Fläche beginnt schon in der Kopfzeile
             kopf_links.setAttribute(Qt.WA_StyledBackground, True)
             kl = QHBoxLayout(kopf_links); kl.setContentsMargins(14, 10, 14, 10)
-            zurueck = QPushButton("←   Optionen")
+            zurueck = QPushButton("Optionen"); zurueck.setIcon(icons.icon("arrow-left", 16))
             zurueck.setObjectName("optZurueck"); zurueck.setFlat(True); zurueck.setCursor(Qt.PointingHandCursor)
             zurueck.setToolTip("Optionen verlassen")
             zurueck.clicked.connect(self.schliessen)

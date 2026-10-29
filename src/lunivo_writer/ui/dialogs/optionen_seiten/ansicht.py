@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QRadioButton, QPushButton, QSlider, QVBoxLayout, QWidget
 from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
+from lunivo_writer.ui.widgets import icons
 
 
 class AnsichtSeiten:
@@ -87,7 +89,8 @@ class AnsichtSeiten:
             jetzt = p.s.get("theme", "system")
             for schl, b in knoepfe.items():
                 b.blockSignals(True); b.setChecked(schl == jetzt)
-                b.setText(("✓  " if schl == jetzt else "") + dict(self.THEMEN)[schl]); b.blockSignals(False)
+                aktiv = schl == jetzt
+                b.setText(dict(self.THEMEN)[schl]); b.setIcon(icons.icon("check", 16) if aktiv else QIcon()); b.blockSignals(False)
         for schl, b in knoepfe.items():
             b.clicked.connect(lambda _c=False, k=schl: (self.w.set_theme(k), zeigen()))
         zeigen()

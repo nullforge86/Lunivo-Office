@@ -89,10 +89,10 @@ class EinfuegenBefehle:
                 return
             except DocumentIOError:
                 pass                                            # nicht lesbar: dann als Symbol
-        from PySide6.QtCore import QFileInfo, QUrl
-        from PySide6.QtWidgets import QFileIconProvider
+        from PySide6.QtCore import QUrl
         from lunivo_writer.editor import einfuegen as E
-        symbol = QFileIconProvider().icon(QFileInfo(pfad)).pixmap(48, 48).toImage()
+        from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
+        symbol = datei_symbol(os.path.basename(pfad)).pixmap(48, 48).toImage()
         self._bild_einfuegen(E.datei_symbol_bild(os.path.basename(pfad), symbol), f"Datei: {os.path.basename(pfad)}")
         c = e.textCursor(); c.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
         f = c.charFormat(); f.setAnchor(True); f.setAnchorHref(QUrl.fromLocalFile(pfad).toString()); f.setToolTip(pfad)

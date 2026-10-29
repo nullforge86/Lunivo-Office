@@ -19,7 +19,6 @@ from lunivo_writer.services.bild_export import FORMATE, QUALITAET, BildWahl
 STIL = ("QPushButton#beHaupt { background: " + Farbe.AKZENT + "; color: white; border: none; border-radius: 4px; padding: 8px 28px; }"
         "QPushButton#beHaupt:hover { background: " + Farbe.AKZENT_DUNKEL + "; }"
         "QLabel#beText { font-size: 11pt; }")
-PUNKTE = "M5 12h.01 M12 12h.01 M19 12h.01"
 
 
 class _Karte(QAbstractButton):
@@ -132,7 +131,7 @@ class BildExportFenster(QDialog):
             c.setFixedWidth(220)
         self.ordner = QLineEdit(startordner or _bilder_ordner())
         from lunivo_writer.ui.widgets import icons
-        waehlen = self.ordner.addAction(icons.icon_aus_pfad(PUNKTE, 18), QLineEdit.TrailingPosition)
+        waehlen = self.ordner.addAction(icons.icon("ellipsis", 18), QLineEdit.TrailingPosition)
         waehlen.setToolTip("Ordner wählen …")
         waehlen.triggered.connect(self._ordner_waehlen)
         self.k_export = QPushButton("Exportieren"); self.k_export.setObjectName("beHaupt"); self.k_export.setDefault(True)

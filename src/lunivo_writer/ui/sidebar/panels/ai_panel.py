@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.ai import ki as K
 from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
+from lunivo_writer.ui.widgets import icons
 
 
 
@@ -53,8 +54,8 @@ class ChatPanel(QWidget):
         kopf = QHBoxLayout()
         kopf.addWidget(text_label("KI-Chat", fett=True, pt=12, umbruch=False))
         kopf.addStretch(1)
-        for zeichen, tipp, fn in (("⚙", "KI-Einstellungen", self._einstellungen), ("✕", "Zur Schreibhilfe", self.zurueck.emit)):
-            b = QToolButton(); b.setText(zeichen); b.setAutoRaise(True); b.setToolTip(tipp)
+        for symbol, tipp, fn in (("settings", "KI-Einstellungen", self._einstellungen), ("x", "Zur Schreibhilfe", self.zurueck.emit)):
+            b = QToolButton(); b.setIcon(icons.icon(symbol, 16)); b.setAutoRaise(True); b.setToolTip(tipp)
             b.clicked.connect(lambda _=False, f=fn: f())
             kopf.addWidget(b)
         v.addLayout(kopf)
@@ -143,7 +144,8 @@ class ChatPanel(QWidget):
 
         def umschalten(an: bool) -> None:
             self.erweitert.setVisible(an)
-            self.mehr.setText("Erweiterte Einstellungen ausblenden ▴" if an else "Erweiterte Einstellungen anzeigen ▾")
+            self.mehr.setText("Erweiterte Einstellungen ausblenden" if an else "Erweiterte Einstellungen anzeigen")
+            self.mehr.setIcon(icons.icon("chevron-up" if an else "chevron-down", 16))
         self.mehr.clicked.connect(lambda: umschalten(not self.erweitert.isVisible()))
         umschalten(False)
         self.d.geaendert.connect(self._modelle_neu)

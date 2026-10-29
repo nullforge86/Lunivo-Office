@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QStyleFactory
+from lunivo_writer.ui.widgets import icons
 
 
 _FUSION = False
@@ -125,33 +126,12 @@ SchreibhilfePanel, SchreibhilfePanel QScrollArea, SchreibhilfePanel QScrollArea 
 
 
 def _pfeile(farbe: str) -> tuple[str, str]:
-    """Kleine Pfeile als SVG-Dateien (QSS kann nur Dateien einbinden)."""
-    import os
-    import tempfile
-    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-theme")
-    os.makedirs(ordner, exist_ok=True)
-    pfade = []
-    for name, d in (("unten", "M2 4 L6 8 L10 4"), ("oben", "M2 8 L6 4 L10 8")):
-        p = os.path.join(ordner, f"pfeil_{name}_{farbe.lstrip('#')}.svg")
-        if not os.path.exists(p):
-            with open(p, "w", encoding="utf-8") as fh:
-                fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="{d}" fill="none" '
-                         f'stroke="{farbe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-        pfade.append(p.replace("\\", "/"))
-    return pfade[0], pfade[1]
+    """Dropdown-Pfeile aus dem zentralen Lucide-Katalog für Qt-Stylesheets."""
+    return icons.svg_datei("chevron-down", farbe), icons.svg_datei("chevron-up", farbe)
 
 
 def _kreuz(farbe: str) -> str:
-    import os
-    import tempfile
-    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-theme")
-    os.makedirs(ordner, exist_ok=True)
-    p = os.path.join(ordner, f"kreuz_{farbe.lstrip('#')}.svg")
-    if not os.path.exists(p):
-        with open(p, "w", encoding="utf-8") as fh:
-            fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M3 3 L9 9 M9 3 L3 9" fill="none" '
-                     f'stroke="{farbe}" stroke-width="1.6" stroke-linecap="round"/></svg>')
-    return p.replace("\\", "/")
+    return icons.svg_datei("x", farbe)
 
 
 def _stil(app: QApplication) -> None:

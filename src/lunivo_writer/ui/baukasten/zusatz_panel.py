@@ -12,6 +12,7 @@ from typing import Callable
 
 from PySide6.QtCore import QEventLoop, Qt
 from PySide6.QtWidgets import QDialog, QFrame, QSizePolicy, QHBoxLayout, QLabel, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.widgets import icons
 
 
 class _Seite(QWidget):
@@ -69,11 +70,11 @@ class ZusatzPanel(QWidget):
         self.verfuegbar_hoehe = 520                                                    # Höhe für den Inhalt in Pixeln (setzt die Seitenleiste)
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
         kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(10, 8, 8, 8); h.setSpacing(4)
-        self.zurueck = QToolButton(); self.zurueck.setText("←"); self.zurueck.setToolTip("Zurück"); self.zurueck.setAccessibleName("Zurück")
+        self.zurueck = QToolButton(); self.zurueck.setIcon(icons.icon("arrow-left", 16)); self.zurueck.setToolTip("Zurück"); self.zurueck.setAccessibleName("Zurück")
         self.zurueck.setAutoRaise(True); self.zurueck.setFixedSize(30, 30); self.zurueck.clicked.connect(self._zurueck)
         self.titel = QLabel(); self.titel.setWordWrap(True)
         f = self.titel.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 1); self.titel.setFont(f)
-        zu = QToolButton(); zu.setText("✕"); zu.setToolTip("Schließen (Esc)"); zu.setAccessibleName("Schließen"); zu.setAutoRaise(True)
+        zu = QToolButton(); zu.setIcon(icons.icon("x", 16)); zu.setToolTip("Schließen (Esc)"); zu.setAccessibleName("Schließen"); zu.setAutoRaise(True)
         zu.setFixedSize(30, 30); zu.clicked.connect(self._schliessen)
         h.addWidget(self.zurueck); h.addWidget(self.titel, 1); h.addWidget(zu)
         v.addWidget(kopf)

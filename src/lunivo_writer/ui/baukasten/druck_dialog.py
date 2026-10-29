@@ -14,10 +14,11 @@ from typing import Callable
 from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                               QRadioButton, QSpinBox, QStyle, QTabWidget, QVBoxLayout, QWidget)
+                               QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
 from lunivo_writer.editor.druck import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
+from lunivo_writer.ui.widgets import icons
 
 KEIN_DRUCKER = "Kein Drucker eingerichtet"
 KEIN_DRUCKER_HINWEIS = "Kein Drucker eingerichtet — es wird das Fenster des Systems geöffnet."
@@ -74,16 +75,15 @@ class DruckAnsicht(QWidget):
         self.zeigen = QCheckBox("Vorschau"); self.zeigen.setChecked(bool(s.get("vorschau", True)))
         unten.addWidget(self.zeigen); unten.addStretch(1)
         self.nav = []
-        st = self.style()
-        for sp, tip, f in ((QStyle.SP_MediaSkipBackward, "Erstes Blatt", lambda: self._gehe(0)),
-                           (QStyle.SP_MediaSeekBackward, "Voriges Blatt", lambda: self._gehe(self._blatt - 1))):
-            k = QPushButton(); k.setIcon(st.standardIcon(sp)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
+        for sym, tip, f in (("chevron-first", "Erstes Blatt", lambda: self._gehe(0)),
+                            ("chevron-left", "Voriges Blatt", lambda: self._gehe(self._blatt - 1))):
+            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
         self.nr = QSpinBox(); self.nr.setMinimum(1); self.nr.valueChanged.connect(lambda n: self._gehe(n - 1))
         self.von = QLabel("/ 1")
         unten.addWidget(self.nr); unten.addWidget(self.von)
-        for sp, tip, f in ((QStyle.SP_MediaSeekForward, "Nächstes Blatt", lambda: self._gehe(self._blatt + 1)),
-                           (QStyle.SP_MediaSkipForward, "Letztes Blatt", lambda: self._gehe(10 ** 6))):
-            k = QPushButton(); k.setIcon(st.standardIcon(sp)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
+        for sym, tip, f in (("chevron-right", "Nächstes Blatt", lambda: self._gehe(self._blatt + 1)),
+                            ("chevron-last", "Letztes Blatt", lambda: self._gehe(10 ** 6))):
+            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
         for k in self.nav:
             k.setFlat(True); k.setFixedWidth(30)
         links.addLayout(unten)
