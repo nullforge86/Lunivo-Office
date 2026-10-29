@@ -43,21 +43,21 @@ def datei_symbol(name: str) -> QIcon:
         ext = name.lower()
     symbol = icon_namen(name)[0]
     kennung = {
-        ".doc": ("DOC", "#2b579a"), ".docx": ("DOCX", "#2b579a"),
-        ".odt": ("ODT", "#4b8b3b"), ".rtf": ("RTF", "#687b91"),
-        ".txt": ("TXT", "#687b91"), ".md": ("MD", "#687b91"),
+        ".doc": ("W", "#2b579a"), ".docx": ("W", "#2b579a"),
+        ".odt": ("O", "#4b8b3b"), ".rtf": ("R", "#687b91"),
+        ".txt": ("T", "#687b91"), ".md": ("M", "#687b91"),
         ".pdf": ("PDF", "#d73535"),
-        ".xls": ("XLS", "#217346"), ".xlsx": ("XLSX", "#217346"),
-        ".ods": ("ODS", "#4b8b3b"), ".csv": ("CSV", "#217346"),
-        ".ppt": ("PPT", "#c43e1c"), ".pptx": ("PPTX", "#c43e1c"),
-        ".odp": ("ODP", "#c43e1c"),
-        ".png": ("PNG", "#8b5cf6"), ".jpg": ("JPG", "#8b5cf6"),
-        ".jpeg": ("JPG", "#8b5cf6"), ".gif": ("GIF", "#8b5cf6"),
-        ".bmp": ("BMP", "#8b5cf6"), ".webp": ("WEBP", "#8b5cf6"),
+        ".xls": ("X", "#217346"), ".xlsx": ("X", "#217346"),
+        ".ods": ("O", "#4b8b3b"), ".csv": ("CSV", "#217346"),
+        ".ppt": ("P", "#c43e1c"), ".pptx": ("P", "#c43e1c"),
+        ".odp": ("O", "#c43e1b"),
+        ".png": ("IMG", "#8b5cf6"), ".jpg": ("IMG", "#8b5cf6"),
+        ".jpeg": ("IMG", "#8b5cf6"), ".gif": ("GIF", "#8b5cf6"),
+        ".bmp": ("IMG", "#8b5cf6"), ".webp": ("IMG", "#8b5cf6"),
         ".svg": ("SVG", "#8b5cf6"),
         ".zip": ("ZIP", "#8a6d3b"), ".7z": ("7Z", "#8a6d3b"),
         ".rar": ("RAR", "#8a6d3b"),
-    }.get(ext, (ext.lstrip(".").upper()[:4] or "DATEI", "#687b91"))
+    }.get(ext, ((ext.lstrip(".").upper()[:3] or "?"), "#687b91"))
 
     # Das Grundpiktogramm kommt weiter aus Lucide; die Marke trägt nur die
     # Dateiendung und macht ansonsten gleiche Dateitypen schnell erkennbar.
@@ -71,9 +71,9 @@ def datei_symbol(name: str) -> QIcon:
     text, farbe = kennung
     schrift = QFont()
     schrift.setBold(True)
-    schrift.setPointSizeF(6.5 if len(text) > 3 else 7.0)
+    schrift.setPointSizeF(6.0 if len(text) > 1 else 9.0)
     p.setFont(schrift)
-    marke = QRectF(2, 20, 28, 11)
+    marke = QRectF(8, 12, 16, 9)
     p.setPen(Qt.NoPen)
     p.setBrush(QColor(farbe))
     p.drawRoundedRect(marke, 2, 2)
