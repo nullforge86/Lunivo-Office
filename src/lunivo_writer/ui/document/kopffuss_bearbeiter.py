@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QGridLay
 from lunivo_writer.editor import seitenzahl as SZ
 from lunivo_writer.models.page import HeaderFooter, mm_to_px
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
 
 ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
@@ -254,22 +255,30 @@ class _Leiste(QWidget):
     def __init__(self, eltern):
         super().__init__(eltern)
         self.setObjectName("kfLeiste")
-        h = self.h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(4)
+        h = self.h = FlussLayout(4); self.setLayout(h); h.setContentsMargins(0, 0, 0, 0)    # bricht um, wenn das Blatt zu schmal ist
         self.knopf = {}
         for schl, text, sym in (("neu", "Seitenzahl neu aufbauen", "neu"), ("format", "Seitenzahlenformat", "format"),
                                 ("loeschen", "Seitenzahl löschen", "x"), ("einfuegen", "Seitenzahl einfügen", "neu")):
             k = QToolButton(); k.setText(text + " ▾"); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setPopupMode(QToolButton.InstantPopup)
-            h.addWidget(k); self.knopf[schl] = k
-        h.addStretch(1)
+            k.setParent(self); self.knopf[schl] = k
         self.setStyleSheet(LEISTE_STIL)                        # sitzt auf dem weißen Papier: unabhängig vom Thema
         self.zahl_zeigen(True)
 
     def zahl_zeigen(self, mit: bool) -> None:
         """Mit Seitenzahl: drei Knöpfe; ohne: nur „Seitenzahl einfügen“ (beides linksbündig, direkt neben dem Etikett)."""
+        while self.h.count():
+            self.h.takeAt(0)
         for schl in ("neu", "format", "loeschen"):
             self.knopf[schl].setVisible(mit)
         self.knopf["einfuegen"].setVisible(not mit)
+        for k in self.knopf.values():                           # nur Sichtbares im Fluss, sonst entstehen Lücken
+            if not k.isHidden():
+                self.h.addWidget(k)
+
+    def natuerliche_breite(self) -> int:
+        ks = [self.h.itemAt(i).widget() for i in range(self.h.count())]
+        return sum(k.sizeHint().width() for k in ks) + 4 * max(0, len(ks) - 1)
 
 
 class KopfFussBearbeiter(QObject):
@@ -487,8 +496,19 @@ class KopfFussBearbeiter(QObject):
             ey = ly_linie + 4 if z == "kopf" else ly_linie - et.height() - 4
             et.move(g.left(), max(0, ey))
         g, et = geo[self.zone], self.etiketten[self.zone].geometry()
-        self.leiste.setFixedWidth(self.leiste.layout().sizeHint().width()); self.leiste.adjustSize()
-        self.leiste.move(et.right() + 6, max(0, et.center().y() - self.leiste.height() // 2))
+        links, rechts = round(b["x"]) + 4, round(b["x"] + b["W"]) - 4
+        lw = self.leiste.natuerliche_breite()
+        if et.right() + 6 + lw <= rechts:                       # passt neben das Etikett
+            lh = self.leiste.h.heightForWidth(lw)
+            self.leiste.setFixedSize(lw, lh)
+            self.leiste.move(et.right() + 6, max(0, et.center().y() - lh // 2))
+        else:                                                   # sonst unter (Kopf) bzw. über (Fuß) das Etikett, umbrechend, nie über den Blattrand
+            lw = min(lw, rechts - links)
+            lh = self.leiste.h.heightForWidth(lw)
+            self.leiste.setFixedSize(lw, lh)
+            x = max(links, min(et.left(), rechts - lw))
+            y = et.bottom() + 4 if self.zone == "kopf" else et.top() - lh - 4
+            self.leiste.move(x, max(0, y))
         self.absatz.adjustSize()
         self.absatz.move(max(0, g.left() - self.absatz.width() - 4), g.top())
 
