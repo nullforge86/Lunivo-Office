@@ -400,18 +400,23 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         from lunivo_writer.editor import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None
         from lunivo_writer.editor import frei_objekt as FO
-        frei_art = FO.art_gewaehlt(e) if e else None                  # WordArt/Textfeld als freies Objekt gewählt
+        frei_art = FO.art_gewaehlt(e) if e else None                  # WordArt, Textfeld, Form, Diagramm oder SmartArt als freies Objekt gewählt
+        text_art = frei_art if frei_art in FO.TEXT_ARTEN else None
         if frei_art:
             art, bf = frei_art, True
-        self.band.kontext("bild", bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld"))
+        frei_bild = bool(e) and getattr(e, "_frei_sel", None) is not None and frei_art in (None, "piktogramm")   # Bild, Bildschirmfoto, Piktogramm
+        self.band.kontext("bild", frei_bild or (bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld", "diagramm", "piktogramm")))
         self.band.kontext("form", art in ("form", "gruppe"))
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
-        self.band.kontext("text", frei_art is not None)             # Texttools: WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
-        if frei_art != getattr(self, "_frei_art_alt", None):          # neu gewählt: WordArt öffnet Texttools, Textfeld Zeichentools
-            self._frei_art_alt = frei_art
-            if frei_art:
-                self.band.kontext("text" if frei_art == "wordart" else "zeichen", True, aktivieren=True)
+        self.band.kontext("text", text_art is not None)             # Texttools: nur WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
+        self.band.kontext("diagramm", frei_art == "diagramm")       # Diagrammtools (der Reiter selbst kommt aus der Reiter-Definition)
+        frei_wahl = frei_art or ("bild" if frei_bild else None)
+        if frei_wahl != getattr(self, "_frei_art_alt", None):         # neu gewählt: WordArt öffnet Texttools, SmartArt/Diagramm/Bild ihre Tools, sonst Zeichentools
+            self._frei_art_alt = frei_wahl
+            if frei_wahl:
+                ziel_reiter = {"wordart": "text", "smartart": "smartart", "diagramm": "diagramm", "piktogramm": "bild", "bild": "bild"}.get(frei_wahl, "zeichen")
+                self.band.kontext(ziel_reiter, True, aktivieren=True)
         self._zeichen_masse(e)
         f = self.band.felder
         if e is None or not f:
@@ -428,11 +433,11 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
                 sp = f["rand_" + schl]
                 if not sp.hasFocus():
                     sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
-        if "tt_font" in f and frei_art:                              # Schrift und Größe des markierten WordArt/Textfelds
+        if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
             d = FO.ziel(e)[1]
             f["tt_font"].blockSignals(True); f["tt_font"].setCurrentFont(QFont(d.get("schrift", "Liberation Sans"))); f["tt_font"].blockSignals(False)
             if not f["tt_groesse"].hasFocus():
-                f["tt_groesse"].blockSignals(True); f["tt_groesse"].setEditText(f"{float(d.get('pt', 36 if frei_art == 'wordart' else 11)):g}"); f["tt_groesse"].blockSignals(False)
+                f["tt_groesse"].blockSignals(True); f["tt_groesse"].setEditText(f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}"); f["tt_groesse"].blockSignals(False)
         st = e.current_style()
         f["stil"].blockSignals(True); f["stil"].setCurrentText("Fließtext" if st == "Standard" else st); f["stil"].blockSignals(False)
 

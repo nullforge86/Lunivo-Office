@@ -78,7 +78,7 @@ def test_table_image_pagebreak_roundtrip(app, tmp_path):
     out = str(tmp_path / "t.docx"); formats.save(out, e.document(), e.page)
     d = docx.Document(out)
     assert len(d.tables) == 1 and len(d.tables[0].rows) == 2 and len(d.tables[0].columns) == 3
-    assert len(d.inline_shapes) == 1
+    assert len(d.element.body.xpath(".//pic:pic")) == 1                  # das Bild ist ein freies Bild (verankert)
     assert any(p.paragraph_format.page_break_before for p in d.paragraphs)
     # und wieder einlesen
     l = formats.load(out)

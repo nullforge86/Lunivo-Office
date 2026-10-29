@@ -11,7 +11,7 @@ Sie kommen an zwei Orten vor:
 Eine Angabe (alle Maße in Bildpunkten, 96 dpi):
 ``b``, ``h`` Größe · ``bh`` Bezug waagerecht (``seite`` | ``rand`` | ``spalte``), ``xh`` Versatz, ``ah`` Ausrichtung (``left`` | ``center`` ·
 ``right`` | ``inside`` | ``outside`` oder leer) · ``bv`` Bezug senkrecht (``seite`` | ``rand`` | ``absatz``), ``yv``, ``av`` (``top`` | ``center`` |
-``bottom``) · ``hinter`` hinter dem Text · ``ellipse`` Bild in einer Ellipse beschnitten.
+``bottom``) · ``hinter`` hinter dem Text · ``ellipse`` Bild in einer Ellipse beschnitten · ``zu`` Zuschnitt, ``maske`` Zuschneideform (``bildzuschnitt``).
 Gezeichnet wird in Blattkoordinaten (Ursprung links oben); der Editor, der Druck, das PDF und die Vorschau benutzen dieselben Funktionen.
 """
 from __future__ import annotations
@@ -320,6 +320,12 @@ def objekte_der_seite(page, d: QTextDocument, n: int, index: dict) -> list[tuple
     for a, y, spalte in index.get(n, []):
         bild = bild_im_dokument(d, a.get("n", ""))
         if bild is not None:
+            if a.get("zu") or a.get("maske"):                                                          # nicht zerstörend zugeschnitten (editor/bildzuschnitt.py)
+                from lunivo_writer.editor import bildzuschnitt as BZ
+                bild = BZ.anzeige(bild, a)
+            if a.get("hell") or a.get("kontrast"):                                                     # Helligkeit/Kontrast: nicht zerstörend (editor/bildwerkzeuge.py)
+                from lunivo_writer.editor import bildwerkzeuge as BW
+                bild = BW.korrigiert(bild, *BW.werte(a))
             x = ml + spalte * (cb + luecke)
             a = dict(a, _ay=mt + y, _sx=x)
             if (a.get("fuell") or {}).get("art") == "bild":

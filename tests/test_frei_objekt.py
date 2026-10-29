@@ -45,7 +45,7 @@ def test_wordart_ohne_auswahlkasten_mit_griffen(fenster):
     assert formen.wordart_daten(ed)["vorlage"] == 1
     r = _rect(ed)
     assert ed._frei_griff_bei(ed._frei_griff_mitte(r, "se"))[0] == "se" and ed._frei_griff_bei(ed._frei_griff_mitte(r, "rot"))[0] == "rot"
-    assert set(ed._frei_knopf_rects(r)) == {"anker", "minus", "layout", "formstile", "fuell", "kontur"}
+    assert set(ed._frei_knopf_rects(r)) == {"anker", "minus", "layout", "formstile", "fuell", "kontur", "zahnrad"}
 
 
 def test_griffe_groesse_und_drehen(fenster):
@@ -414,3 +414,259 @@ def test_oeffnen_verteilt_den_text_der_kette(fenster, tmp_path):
     felder = dict(FO._textfelder(neu))
     gezeigt = [x["daten"].get("gezeigt") for x in felder.values()]
     assert len(felder) == 2 and all(gezeigt) and " ".join(gezeigt).split() == [f"Wort{i}" for i in range(60)]
+
+
+# ---- Form, Diagramm und SmartArt als freie Objekte --------------------------------------------------------------------------------
+def _docx_rundweg(ed, tmp_path):
+    """Speichert als DOCX, liest wieder und gibt die freien Angaben (art == Form/Diagramm/SmartArt) in Lesereihenfolge zurück."""
+    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.services import docx_reader, docx_writer
+    pfad = str(tmp_path / "f.docx")
+    docx_writer.write_docx(pfad, ed.document(), ed.page, {})
+    doc = docx_reader.read_docx(pfad)[0]
+    out, blk = [], doc.firstBlock()
+    while blk.isValid():
+        out += [x for x in FB.aus_absatz(blk.blockFormat()) if x.get("art") in ("form", "diagramm", "smartart")]
+        blk = blk.next()
+    return out
+
+
+def test_form_als_freies_objekt_aendern_und_docx(fenster, tmp_path):
+    ed = _ed(fenster)
+    FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Ellipse"}, 200, 100)
+    assert FO.art_gewaehlt(ed) == "form" and fenster.befehle.tt_art() is None            # keine Texttools für Formen
+    assert formen.aendern(ed, fuell="#ff0000", linie="#00ff00", strich=3.0, text="Hallo")
+    d = FO.daten_lesen(ed, "form")
+    assert d["fuell"] == "#ff0000" and d["linie"] == "#00ff00" and d["strich"] == 3.0 and d["text"] == "Hallo"
+    assert formen.vorlage(ed, "Grün") and FO.daten_lesen(ed, "form")["fuell"] == "#6bbf59"
+    assert FO.aendern(ed, "form", form_fuell="#0000ff") and FO.daten_lesen(ed, "form")["fuell"] == "#0000ff"
+    z = FO.ziel(ed)
+    assert z[3].get("fuell") is None                                                       # kein Kasten ums Bild
+    neu = FO.nach_groesse(ed, dict(z[3], b=300, h=150))                                    # neue Größe: frisch gezeichnet, scharf (doppelt)
+    bild = ed.document().resource(3, __import__("PySide6.QtCore", fromlist=["QUrl"]).QUrl(neu["n"]))
+    assert bild.width() == 300 * FO._SS and bild.height() == 150 * FO._SS
+    (a,) = _docx_rundweg(ed, tmp_path)
+    assert a["art"] == "form" and a["daten"]["fuell"] == "#0000ff" and a["daten"]["form"] == "Ellipse"
+
+
+def test_diagramm_als_freies_objekt_und_diagrammtools(fenster, tmp_path):
+    from lunivo_writer.editor import diagramm as D
+    ed = _ed(fenster); b = fenster.befehle
+    daten = {"art": "saeule_gruppiert", "titel": "Umsatz", "kategorien": list(D.BEISPIEL_KATEGORIEN), "reihen": dict(D.BEISPIEL_REIHEN)}
+    FO.einfuegen(ed, "diagramm", daten, 480, 300)
+    assert FO.art_gewaehlt(ed) == "diagramm" and b.tt_art() is None
+    fenster._sync_format()                                                                 # Kontext „diagramm“ ohne vorhandenen Reiter: kein Absturz
+    b.diagrammStil(3); assert FO.daten_lesen(ed, "diagramm")["stil"] == 3
+    b.diagrammSchnelllayout(3); d = FO.daten_lesen(ed, "diagramm")
+    assert d["labels"] is True and d["legende"] is False
+    mf = b.menue_diagrammFarben(); mf.actions()[1].trigger()
+    assert FO.daten_lesen(ed, "diagramm")["farben"][0] == D.VORLAGEN["vorlage_blau"][1][0]
+    m = b.menue_diagrammElement(); assert [a.text() for a in m.actions()][:2] == ["Diagrammtitel", "Legende"]
+    b.diagrammTitel(); assert FO.daten_lesen(ed, "diagramm")["titel_an"] is False and not b.an_diagrammTitel()
+    ms = b.menue_diagrammSchnelllayout(); assert len(ms.actions()) >= 4
+    FO.aendern(ed, "diagramm", untertyp="kreis", reihen={"A": [1.0, 2.0, 3.0, 4.0]})
+    assert FO.daten_lesen(ed, "diagramm")["art"] == "kreis"
+    b.diagrammZuruecksetzen(); d = FO.daten_lesen(ed, "diagramm")
+    assert not ({"farben", "labels", "stil", "legende", "titel_an"} & set(d)) and d["titel"] == "Umsatz"
+    (a,) = _docx_rundweg(ed, tmp_path)
+    assert a["art"] == "diagramm" and a["daten"] == d
+
+
+def test_smartart_und_form_ohne_auswahl_aendern_nichts(fenster):
+    ed = _ed(fenster); b = fenster.befehle
+    b.diagrammStil(1)                                                                      # kein Diagramm gewählt: Hinweis, kein Absturz
+    assert "Diagramm" in fenster.lbl_msg.text() and not formen.aendern(ed, fuell="#fff")
+
+
+def test_smartart_als_freies_objekt_menues(fenster, tmp_path):
+    from lunivo_writer.editor import smartart as SA
+    ed = _ed(fenster); b = fenster.befehle
+    FO.einfuegen(ed, "smartart", {"layout": "Prozess", "farben": "Blau", "text": "A\nB\nC"})
+    assert FO.art_gewaehlt(ed) == "smartart"
+    ml = b.menue_smartartLayout(); ml.actions()[2].trigger(); mc = b.menue_smartartFarben(); mc.actions()[1].trigger()
+    d = SA.daten_der_auswahl(ed)
+    assert d["layout"] == SA.LAYOUT_KATALOG[2]["schluessel"] == "Punktliste" and d["farben"] == list(SA.FARBEN)[1]
+    (a,) = _docx_rundweg(ed, tmp_path)
+    assert a["art"] == "smartart" and a["daten"] == d
+
+
+def test_bild_und_piktogramm_als_freies_bild(fenster, tmp_path):
+    from PySide6.QtGui import QColor, QImage
+    from lunivo_writer.editor import bildlayout as BL, freie_bilder as FB
+    from lunivo_writer.services import docx_reader, docx_writer
+    ed = _ed(fenster); b = fenster.befehle
+    img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red")); pfad = str(tmp_path / "r.png"); img.save(pfad)
+    assert ed.insert_image(pfad)
+    assert ed._frei_sel is not None and FO.art_gewaehlt(ed) is None and ed.bild_format() is None      # freies Bild ohne Parameter
+    z = BL.ziel(ed); assert z[0] == "frei" and z[2]["b"] == 400
+    BL.frei_aendern(ed, z, alt="Rotes Feld")
+    z = BL.ziel(ed)
+    assert BL.frei_bild_ersetzen(ed, z, lambda i: i.copy(0, 0, 100, 100)); z = BL.ziel(ed)
+    assert z[2]["h"] == 400 and z[2].get("orig")                                                         # Breite bleibt, Höhe folgt dem Zuschnitt
+    assert BL.frei_original(ed, z); z = BL.ziel(ed); assert z[2]["h"] == 200
+    assert BL.frei_original_groesse(ed, BL.ziel(ed))
+    FO.einfuegen(ed, "piktogramm", {"name": "heart", "farbe": "#ff0000"}, 96, 96)
+    assert FO.art_gewaehlt(ed) == "piktogramm" and b.tt_art() is None
+    fenster._sync_format()
+    pfad2 = str(tmp_path / "p.docx")
+    docx_writer.write_docx(pfad2, ed.document(), ed.page, {})
+    doc = docx_reader.read_docx(pfad2)[0]
+    angaben, blk = [], doc.firstBlock()
+    while blk.isValid():
+        angaben += FB.aus_absatz(blk.blockFormat()); blk = blk.next()
+    assert [x.get("art") for x in angaben] == [None, "piktogramm"] and angaben[0].get("alt") == "Rotes Feld"
+    assert BL.frei_entfernen(ed) and ed._frei_sel is None
+
+
+def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
+    from PySide6.QtGui import QColor, QImage
+    from lunivo_writer.editor import bildlayout as BL, bildwerkzeuge as BW, bildzuschnitt as BZ, freie_bilder as FB
+    from lunivo_writer.services import docx_reader, docx_writer
+    ed = _ed(fenster); b = fenster.befehle
+    b.bildZuschneidenModus(); assert not b.an_bildZuschneidenModus()                                      # ohne Bild: nur Hinweis
+    img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red")); pfad = str(tmp_path / "r.png"); img.save(pfad)
+    assert ed.insert_image(pfad)
+    b.bildZuschneidenModus(); assert b.an_bildZuschneidenModus()
+    # Ziehen am rechten Mittelgriff im Zuschneiden-Modus schneidet ab, das Bild selbst bleibt unverändert
+    r = _rect(ed); start = QPointF(r.right(), r.center().y())
+    _maus(ed, QEvent.MouseButtonPress, start); _maus(ed, QEvent.MouseMove, start - QPointF(r.width() / 4, 0)); _maus(ed, QEvent.MouseButtonRelease, start - QPointF(r.width() / 4, 0))
+    z = BL.ziel(ed); l, o, rr, u = BZ.lesen(z[2])
+    assert abs(rr - 0.25) < 0.02 and l == o == u == 0 and abs(z[2]["b"] - 300) < 8
+    assert FB.bild_im_dokument(ed.document(), z[2]["n"]).width() == 400 and z[3].width() == 300
+    # Nach Skala 1:1: mittiger Ausschnitt 200 x 200 der Quelle, Breite des Rahmens bleibt
+    b.bildZuschneidenSkala(None, "1:1"); z = BL.ziel(ed)
+    assert abs(z[2]["h"] - z[2]["b"]) < 0.5 and z[3].width() == z[3].height() == 200
+    b.bildZuschneidenForm(None, "Ellipse"); z = BL.ziel(ed)
+    assert z[2]["maske"] == "Ellipse" and z[3].pixelColor(0, 0).alpha() == 0 and z[3].pixelColor(100, 100).alpha() == 255
+    assert any(n == "Herz" for _k, ns in BZ.formen_kategorien() for n in ns) and not any(BZ.formen_kategorien()[0][0] == "Linie" for _ in [0])
+    m = b.menue_bildZuschneiden(); assert m is not None
+    pfad2 = str(tmp_path / "z.docx")
+    docx_writer.write_docx(pfad2, ed.document(), ed.page, {})
+    doc = docx_reader.read_docx(pfad2)[0]
+    angaben, blk = [], doc.firstBlock()
+    while blk.isValid():
+        angaben += FB.aus_absatz(blk.blockFormat()); blk = blk.next()
+    assert angaben and abs(BZ.lesen(angaben[0])[0] - BZ.lesen(z[2])[0]) < 0.001 and angaben[0].get("maske") == "Ellipse"
+    b.bildZuschneidenZuruecksetzen(); z = BL.ziel(ed)
+    assert not BZ.hat(z[2]) and abs(z[2]["h"] / z[2]["b"] - 0.5) < 0.01 and not b.an_bildZuschneidenModus()
+    # Bildtools am freien Bild
+    b.bildSeitenverhaeltnis(); assert b.an_bildSeitenverhaeltnis()
+    BW.transparent(ed, BL.ziel(ed), QColor("red")); assert BL.ziel(ed)[3].pixelColor(5, 5).alpha() == 0
+    BW.zuruecksetzen(ed, BL.ziel(ed)); z = BL.ziel(ed); assert z[3].pixelColor(5, 5).alpha() == 255 and "sperre" not in z[2]
+    img2 = QImage(100, 100, QImage.Format_RGB32); img2.fill(QColor("blue")); p2 = str(tmp_path / "b.png"); img2.save(p2)
+    b.bildAendern(None, p2); z = BL.ziel(ed); assert z[3].width() == 100 and abs(z[2]["h"] - z[2]["b"]) < 0.5
+    BZ.skala(ed, z, 2, 1); z = BL.ziel(ed)
+    assert BW.komprimieren(ed, z) is not None and not BL.ziel(ed)[2].get("zu")
+    b.bildGroesseZuruecksetzen(); assert BL.ziel(ed)[2]["b"] > 0
+    b.bildZuruecksetzen()
+
+
+def test_diagrammbefehle_mit_bandangabe(fenster):
+    ed = _ed(fenster); b = fenster.befehle
+    FO.einfuegen(ed, "diagramm", {"art": "saeule_gruppiert", "titel": "T", "kategorien": ["a", "b"], "reihen": {"R": [1, 2]}}, 300, 200)
+    b.tun("diagrammStil:[2]"); assert FO.daten_lesen(ed, "diagramm")["stil"] == 2                  # (Knopf, Nummer) wie vom Band
+    b.tun("diagrammSchnelllayout:[5]"); assert FO.daten_lesen(ed, "diagramm")["legende"] is False
+    b.tun("diagrammZuruecksetzen"); assert "stil" not in FO.daten_lesen(ed, "diagramm")
+    fenster.band.kontext("diagramm", True)                                                        # ohne Reiter kein Absturz
+
+
+# ---- Diagramm: Teile, Elemente, Filter, Teilformate; Formstil-Raster und Anpassungsgriff ------------------------------------------------
+def _dg(fenster, **zusatz):
+    ed = _ed(fenster)
+    FO.einfuegen(ed, "diagramm", {"art": "saeule_gruppiert", "titel": "Umsatz", "kategorien": ["A", "B", "C"],
+                                  "reihen": {"X": [1, 2, 3], "Y": [3, 1, 2]}, **zusatz}, 400, 260)
+    return ed, fenster.befehle
+
+
+def test_diagramm_teile_rechtecke_und_treffer(fenster):
+    from lunivo_writer.editor import diagramm as D, diagramm_teile as T
+    ed, b = _dg(fenster)
+    d = FO.daten_lesen(ed, "diagramm")
+    schl = [k for k, _n in D.teile(d)]
+    assert schl[:4] == ["diagrammbereich", "zeichnungsbereich", "titel", "legende"] and "reihe_1" in schl and "legendeneintrag_0" in schl
+    r = D.teil_rechtecke(d, 400, 260)
+    assert set(r) == set(schl) and all(0 <= v.x() and v.right() <= 401 and v.bottom() <= 261 for v in r.values())
+    b.tun('diagrammTeilWaehlen:["reihe_0"]')
+    assert T.teil_gewaehlt(ed) == "reihe_0" and b.feld_diagrammTeil() == "Reihe „X“"
+    bal = D.teil_geo(d, 400, 260)["balken_1"][0]
+    ed._frei_liste(); rr = _rect(ed)
+    mitte = QPointF(rr.x() + bal.center().x() * rr.width() / 400, rr.y() + bal.center().y() * rr.height() / 260)
+    assert T.teil_bei(ed, mitte) == "reihe_1"
+    assert T.teil_bei(ed, QPointF(rr.x() + 3, rr.y() + 3)) == "diagrammbereich"
+    assert T.teil_bei(ed, QPointF(rr.x() - 50, rr.y() - 50)) is None
+
+
+def test_diagramm_elemente_filter_format_und_zuruecksetzen(fenster):
+    from lunivo_writer.editor import diagramm as D, diagramm_teile as T
+    ed, b = _dg(fenster)
+    glatt = D.bild_aus_daten(FO.daten_lesen(ed, "diagramm"), 400, 260)
+    for name in ("achsentitel", "datentabelle", "fehlerindikatoren", "trendlinie", "gitter"):
+        b.tun(f'diagrammElement:["{name}"]')
+        erwartet = name != "gitter"                                                                  # Gitternetzlinien sind von Haus aus an
+        assert FO.daten_lesen(ed, "diagramm")["elemente"][name] is erwartet and getattr(b, "an_diagrammElement_" + name)() is erwartet
+    assert D.bild_aus_daten(FO.daten_lesen(ed, "diagramm"), 400, 260) != glatt
+    b.tun('diagrammElement:["legende", "rechts"]'); d = FO.daten_lesen(ed, "diagramm")
+    assert d["legende"] is True and d["legende_pos"] == "rechts"
+    b.tun('diagrammElement:["titel"]'); assert not b.an_diagrammElement_titel() and "titel" not in dict(D.teile(FO.daten_lesen(ed, "diagramm")))
+    b.diagrammTitel(); assert b.an_diagrammElement_titel()                                       # alter Umschalter wirkt weiter
+    # Filter
+    assert b.diagrammFilterDaten()["reihen"] == [("X", True), ("Y", True)]
+    b.tun('diagrammFilterSetzen:[{"reihen": ["Y"], "rubriken": ["B"]}]')
+    assert b.diagrammFilterDaten() == {"reihen": [("X", True), ("Y", False)], "rubriken": [("A", True), ("B", False), ("C", True)]}
+    assert [k for k, _n in D.teile(FO.daten_lesen(ed, "diagramm")) if k.startswith("reihe_")] == ["reihe_0"]
+    # Teilformat
+    b.diagrammTeilWaehlen(None, "titel")
+    assert T.diagramm_teil_format_setzen(ed, text={"groesse": 18, "fett": True}, fuell="#ffeeee") and T.diagramm_teil_format_setzen(ed, text={"farbe": "#aa0000"})
+    assert T.diagramm_teil_format_lesen(ed) == {"text": {"groesse": 18, "fett": True, "farbe": "#aa0000"}, "fuell": "#ffeeee"}
+    b.tun('diagrammTeilFormat:[{"teil": "reihe_0", "fuell": "#ff0000", "schatten": true}]')
+    assert FO.daten_lesen(ed, "diagramm")["teil_format"]["reihe_0"]["fuell"] == "#ff0000"
+    img = D.bild_aus_daten(FO.daten_lesen(ed, "diagramm"), 400, 260)
+    assert not img.isNull()
+    b.diagrammAltText(None, "T", "Beschreibung"); assert FO.daten_lesen(ed, "diagramm")["alt_beschreibung"] == "Beschreibung"
+    b.diagrammZuruecksetzen(); d = FO.daten_lesen(ed, "diagramm")
+    assert not ({"elemente", "ausgeblendet", "teil_format", "teil", "stil"} & set(d)) and d["alt_titel"] == "T" and d["reihen"]
+
+
+def test_diagramm_stile_und_farbschemen():
+    from lunivo_writer.editor import diagramm as D
+    assert len(D.STILE) >= 12 and D.STILE[0][0] == "Standard" and D.STILE[3][0] == "Dunkel" and len(D.stile_liste()) == len(D.STILE)
+    assert len({(s[1], s[2], s[3]) for s in D.STILE}) >= 10                                            # gut unterscheidbar
+    g = dict(D.farbschemen_gruppen())
+    assert set(g) == {"Farbig", "Monochrom"} and len(g["Farbig"]) >= 3 and all(len(f) == 6 for _n, f in g["Farbig"] + g["Monochrom"])
+    for i in range(len(D.STILE)):
+        assert not D.bild("saeule_gruppiert", "T", ["a", "b"], {"R": [1, 2]}, 200, 140, stil=i).isNull()
+
+
+def test_diagramm_docx_rundweg_mit_elementen_und_filter(fenster, tmp_path):
+    ed, b = _dg(fenster)
+    b.tun('diagrammElement:["datentabelle"]'); b.tun('diagrammFilterSetzen:[{"rubriken": ["B"]}]')
+    b.tun('diagrammTeilFormat:[{"fuell": "#ddeeff"}]'); b.diagrammTeilWaehlen(None, "legende"); b.diagrammAltText(None, "", "Alt")
+    d = FO.daten_lesen(ed, "diagramm")
+    (a,) = _docx_rundweg(ed, tmp_path)
+    assert a["daten"] == {k: v for k, v in d.items() if k != "teil"}
+
+
+def test_formstil_raster_und_anpassungsgriff(fenster):
+    from PySide6.QtCore import QRectF
+    from lunivo_writer.editor import formen_anpassen as A, formen_katalog as K, formen_stile as S
+    ed = _ed(fenster); b = fenster.befehle
+    raster = b.formstileRaster(); assert len(raster) == 6 and all(len(z) == 7 for z in raster)
+    FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Stern mit 5 Zacken"}, 160, 120)
+    for zeile in range(6):
+        b.tun(f"formStilRaster:[{zeile}, 1]")
+        d = FO.daten_lesen(ed, "form"); w = S.formstil(zeile, 1)
+        assert d["fuell"] == w["fuell"] and d["linie"] == w["linie"] and (d.get("fuell_art") or "") == w["fuell_art"]
+    assert FO.ziel(ed)[3].get("fx") and not b.zeichenFuellungDaten()["thema"][0][0] == ""
+    r = QRectF(0, 0, 160, 120)
+    g = A.griffe("Stern mit 5 Zacken", r)[0]
+    assert formen.anpass_griff("Stern mit 5 Zacken", r, [0.5]) is not None and formen.anpass_griff("Linie", r) is None
+    assert abs(formen.anpass_wert("Stern mit 5 Zacken", r, g) - 0.42) < 1e-6
+    assert formen.anpassen("Stern mit 5 Zacken", 2.0) == [0.95]                                         # begrenzt
+    standard = K.pfad("Pfeil nach rechts", r).boundingRect(); schmal = K.pfad("Pfeil nach rechts", r, [0.2, 0.2])
+    assert schmal != K.pfad("Pfeil nach rechts", r) and abs(schmal.boundingRect().width() - standard.width()) < 1e-6
+    assert b.kann_formAnpassen() and b.formAnpassen(None, 0.8, 0) and FO.daten_lesen(ed, "form")["adj"] == [0.8]
+    before = FO.ziel(ed)[3]["b"]
+    b.tun('formAendern:["Pfeil nach rechts"]'); d = FO.daten_lesen(ed, "form")
+    assert d["form"] == "Pfeil nach rechts" and "adj" not in d and FO.ziel(ed)[3]["b"] == before and d["fuell"]
+    b.formAnpassen(None, 0.3, 1); assert FO.daten_lesen(ed, "form")["adj"] == [0.5, 0.3]
+    assert b.formPunkteBearbeiten() and ed.__dict__.get("_fp_key") is not None and FO.daten_lesen(ed, "form")["form"] == "Freiform"      # Punkte bearbeiten: Freiform

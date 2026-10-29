@@ -26,7 +26,7 @@ src/lunivo_writer/
 assets/                     Symbole, Logos und weitere Laufzeitressourcen
 docs/                       Projekt- und Benutzerdokumentation
 tests/                      Gezielte pytest-Tests
-werkzeug/                   Entwicklungs- und Prüfhilfen
+werkzeug/                   Entwicklungs- und Prüfhilfen (funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken, Bericht docs/seitenleistenstand.md)
 ```
 
 ## Zuständigkeiten

@@ -33,6 +33,18 @@ class IconReiter(QWidget):
             self._kopf.addStretch(1) if False else None
         return i
 
+    def setTabVisible(self, i: int, sichtbar: bool) -> None:
+        """Den Reiter-Knopf zeigen oder verbergen (die Seite bleibt); ist der gewählte verborgen, wird der erste sichtbare gewählt."""
+        b = self._gruppe.button(i)
+        if b is not None:
+            b.setVisible(sichtbar)
+        if not sichtbar and self.currentIndex() == i:
+            frei = next((k for k in range(self.count()) if self._gruppe.button(k).isVisibleTo(self)), 0)
+            self.setCurrentIndex(frei)
+
+    def tabKnopf(self, i: int):
+        return self._gruppe.button(i)
+
     def setCurrentIndex(self, i: int) -> None:
         self._seiten.setCurrentIndex(i)
         b = self._gruppe.button(i)

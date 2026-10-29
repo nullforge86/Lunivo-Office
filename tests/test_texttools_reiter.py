@@ -64,11 +64,12 @@ def test_jeder_knopf_hat_einen_befehl(app, tmp_path):
     for plan in (TEXTTOOLS, ZEICHENTOOLS):
         for g, e in _knoepfe(plan):
             tun, klappe = e.get("tun"), e.get("klappe")
-            assert (tun and b.hat(tun)) or (klappe and b.klappe(klappe) is not None), (plan["name"], e["name"])
+            assert (tun and b.hat(tun)) or (klappe and w.band._klappe(klappe) is not None), (plan["name"], e["name"])
         for g in plan["gruppen"]:
             if g.get("galerie"):
-                spec = getattr(b, "galerie_" + g["galerie"])()
-                assert len(spec["kacheln"]) == 3 and spec["menue"] is not None
+                from lunivo_writer.ui.baukasten.bild_diagramm_menues import GALERIEN
+                spec = GALERIEN[g["galerie"]](b) if g["galerie"] in GALERIEN else getattr(b, "galerie_" + g["galerie"])()
+                assert len(spec["kacheln"]) in (3, 6, 10) and spec["menue"] is not None
             if g.get("pfeil"):
                 assert b.hat(g["pfeil"])
     # im gebauten Band ist keiner dieser Knöpfe ausgegraut und kein Befehl fehlt

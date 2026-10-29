@@ -634,17 +634,22 @@ class EinfuegenBefehle:
                     p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
                 m.kachel(name, name, zeichne).setCheckable(False)
 
-        def einfuegen(f):
-            from lunivo_writer.editor import formen as F
-            if self.ed and not F.in_zeichenbereich(self.ed, f):
-                self._bild_einfuegen(E.form_bild(f, *((240, 60) if K.ist_linie(f) else (160, 120))), f"Form: {f}", "form", {"form": f})
-        m.gewaehlt.connect(einfuegen)
+        m.gewaehlt.connect(lambda f: self.formEinfuegen(None, f))
         m.fuss("Weitere Formen und Farben …", self.zeichnen)
         m.trenner()
         bereich = m.fuss("Neuer &Zeichenbereich", self.zeichenbereich)
         bereich.setIcon(self._sym("textrahmen"))
         bereich.setToolTip("Fügt einen Bereich ein, der Formen aufnimmt: Bereich markieren, dann eine Form wählen.")
         return m
+
+
+    def formEinfuegen(self, k=None, name=None):
+        """Die Form ``name`` (Katalog ``formen_katalog``, auch Linien und Pfeile) einfügen: im Zeichenbereich dort, sonst als freies Objekt."""
+        from lunivo_writer.editor import formen as F
+        from lunivo_writer.editor import formen_katalog as K
+        from lunivo_writer.editor import frei_objekt as FO
+        if self.ed and name and K.hat(name) and not F.in_zeichenbereich(self.ed, name):
+            return FO.einfuegen(self.ed, "form", {**FO.FORM_STANDARD, "form": name}, *((240, 60) if K.ist_linie(name) else (160, 120)))
 
 
     def zeichenbereich(self, k=None):
@@ -660,7 +665,8 @@ class EinfuegenBefehle:
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import FormDialog
             d = FormDialog(self.w)
             if d.exec():
-                self._bild_einfuegen(d.bild(), f"Form: {d.art.currentText()}", "form", d.daten())
+                from lunivo_writer.editor import frei_objekt as FO
+                FO.einfuegen(self.ed, "form", d.daten(), d.breite.value(), d.hoehe.value())
 
 
     def smartart(self, k=None):
@@ -689,8 +695,8 @@ class EinfuegenBefehle:
     def menue_smartartLayout(self):
         from lunivo_writer.editor import smartart as SA
         m = QMenu()
-        for n in SA.LAYOUTS:
-            m.addAction(n, lambda _=False, n=n: self.ed and SA.aendern(self.ed, layout=n))
+        for e in SA.LAYOUT_KATALOG:
+            m.addAction(e["name"], lambda _=False, n=e["schluessel"]: self.ed and SA.aendern(self.ed, layout=n))
         return m
 
 
@@ -865,7 +871,8 @@ class EinfuegenBefehle:
             from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDialog
             d = DiagrammDialog(self.w)
             if d.exec():
-                self._bild_einfuegen(d.bild(), f"Diagramm ({d.name.text()}): {d.titel_text}", "diagramm", d.daten())
+                from lunivo_writer.editor import frei_objekt as FO
+                FO.einfuegen(self.ed, "diagramm", d.daten(), *FO.STANDARD_MASS["diagramm"])
 
 
     def piktogramm(self, k=None):
@@ -876,7 +883,8 @@ class EinfuegenBefehle:
             if d.exec():
                 n, farbe = d.ergebnis()
                 if n:
-                    self._bild_einfuegen(E.piktogramm_bild(n, 96, farbe), f"Piktogramm: {n}", "piktogramm", {"name": n, "farbe": farbe})
+                    from lunivo_writer.editor import frei_objekt as FO
+                    FO.einfuegen(self.ed, "piktogramm", {"name": n, "farbe": farbe}, 96, 96)
 
 
     def screenshot(self, k=None):
@@ -914,7 +922,9 @@ class EinfuegenBefehle:
 
     def _foto_einfuegen(self, pm):
         if pm is not None and not pm.isNull() and self.ed:
-            self._bild_einfuegen(pm.toImage(), "Bildschirmfoto")
+            from lunivo_writer.editor import frei_objekt as FO
+            img = pm.toImage()
+            FO.bild_einfuegen(self.ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
 
 
     def textfeld(self, k=None):

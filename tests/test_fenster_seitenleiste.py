@@ -34,9 +34,21 @@ FENSTER = {
     "Form": lambda: ED.FormDialog(None), "SmartArt": lambda: ED.SmartArtDialog(None), "WordArt": lambda: ED.WordArtDialog(None),
     "Diagramm": lambda: ED.DiagrammDialog(None), "Piktogramm": lambda: ED.PiktogrammDialog(None), "Formel": lambda: ED.FormelDialog(None),
     "Deckblatt": lambda: ED.DeckblattDialog(None, "Kay"),
+    "Vergrößern": lambda: __import__("lunivo_writer.ui.baukasten.bild_zoom", fromlist=["x"]).BildZoomFenster(None, __import__("PySide6.QtGui", fromlist=["x"]).QImage(500, 300, __import__("PySide6.QtGui", fromlist=["x"]).QImage.Format_ARGB32)),
     "Symbol": lambda: __import__("lunivo_writer.ui.dialogs.sonderzeichen", fromlist=["x"]).SonderzeichenDialog(None, lambda z: None),
     "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
 }
+
+
+def _in_eigenem_rollbereich(c, d) -> bool:
+    """Inhalt eines Rollbereichs im Fenster (zum Beispiel die Bildansicht von „Vergrößern“) darf breiter sein: er rollt."""
+    from PySide6.QtWidgets import QAbstractScrollArea
+    w = c.parentWidget()
+    while w is not None and w is not d:
+        if isinstance(w, QAbstractScrollArea):
+            return True
+        w = w.parentWidget()
+    return False
 
 
 @pytest.mark.parametrize("breite", [444, 300])
@@ -55,7 +67,7 @@ def test_fenster_in_der_seitenleiste_und_passt(app, name, breite):
                 r.setCurrentIndex(i)
         app.processEvents(); app.processEvents()
         vp = p.stapel.currentWidget().sa.viewport()
-        zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0
+        zu = [type(c).__name__ for c in d.findChildren(QWidget) if c.isVisible() and c.width() > 0 and not _in_eigenem_rollbereich(c, d)
               and (c.mapTo(vp, c.rect().topLeft()).x() < -1 or c.mapTo(vp, c.rect().topRight()).x() > vp.width())]
         assert not zu, (name, breite, i, zu)
     p.close()

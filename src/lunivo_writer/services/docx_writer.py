@@ -928,6 +928,9 @@ class _Writer:
         b, h = float(a.get("b") or img.width()), float(a.get("h") or img.height())
         run = para.add_run()
         run.add_picture(io.BytesIO(bytes(buf.data())), width=Emu(int(b * EMU_PER_PX)), height=Emu(int(h * EMU_PER_PX)))
+        if a.get("alt"):
+            for dp in run._r.xpath(".//wp:docPr"):
+                dp.set("descr", str(a["alt"]))
         for inline in run._r.xpath(".//wp:inline"):
             anker = OxmlElement("wp:anchor")
             for k, v in (("distT", "0"), ("distB", "0"), ("distL", "0"), ("distR", "0"), ("simplePos", "0"),
@@ -955,9 +958,29 @@ class _Writer:
                 if k is not extent and k.tag != qn("wp:effectExtent"):
                     anker.append(k)
             inline.getparent().replace(inline, anker)
-        if a.get("ellipse"):
+        if a.get("ellipse") or a.get("maske") == "Ellipse":
             for geom in run._r.xpath(".//a:prstGeom"):
                 geom.set("prst", "ellipse")
+        zu = a.get("zu")
+        if zu and len(zu) == 4 and any(zu):                                                   # Zuschnitt als a:srcRect (Tausendstel Prozent)
+            for bf in run._r.xpath(".//pic:blipFill"):
+                sr = OxmlElement("a:srcRect")
+                for k, v in zip(("l", "t", "r", "b"), zu):
+                    if v:
+                        sr.set(k, str(int(round(float(v) * 100000))))
+                blip = bf.find(qn("a:blip"))
+                (blip.addnext(sr) if blip is not None else bf.insert(0, sr))
+        if (a.get("hell") or a.get("kontrast")) and not a.get("art"):                          # Helligkeit/Kontrast als a:lum (Tausendstel Prozent)
+            for blip in run._r.xpath(".//pic:blipFill/a:blip"):
+                lum = OxmlElement("a:lum")
+                for k, schl in (("bright", "hell"), ("contrast", "kontrast")):
+                    if a.get(schl):
+                        lum.set(k, str(int(a[schl]) * 1000))
+                blip.append(lum)
+        if a.get("maske") and not a.get("art"):                                              # Zuschneideform: nur in Lunivo, im Titel gemerkt
+            import json
+            for dp in run._r.xpath(".//wp:docPr"):
+                dp.set("title", "lunivo:" + json.dumps({"maske": a["maske"]}, ensure_ascii=False, separators=(",", ":")))
         if a.get("dreh"):
             for xf in run._r.xpath(".//pic:spPr/a:xfrm"):
                 xf.set("rot", str(int(round(float(a["dreh"]) * 60000))))
@@ -997,6 +1020,13 @@ class _Writer:
                     sppr.append(lst)
         if a.get("art") == "textfeld":
             self._textfeld_xml(run, a)
+        elif a.get("art") in ("form", "diagramm", "smartart", "piktogramm"):          # Bild mit den Parametern im Titel („lunivo:“), damit Lunivo es wieder lesen kann
+            import json
+            for dp in run._r.xpath(".//wp:docPr"):
+                daten = {k: v for k, v in a.get("daten", {}).items() if k != "teil"}                      # die Auswahl eines Diagrammteils wird nicht gespeichert
+                dp.set("title", "lunivo:" + json.dumps({"art": a["art"], "daten": daten}, ensure_ascii=False, separators=(",", ":")))
+                if a["art"] == "diagramm" and daten.get("alt_beschreibung"):
+                    dp.set("descr", str(daten["alt_beschreibung"]))
 
     _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
     _MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"

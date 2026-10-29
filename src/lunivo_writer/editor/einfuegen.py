@@ -52,16 +52,44 @@ def _leer(w: int, h: int) -> QImage:
 TEXTFELD_VERTIKAL = "Textfeld vertikal"
 
 
+def form_pinsel(fuell: str, art: str, r: QRectF) -> QBrush:
+    """Füllung einer Form: ``art`` leer = einfarbig, ``verlauf`` (hell nach Farbe), ``abgestuft`` (drei Stufen), ``glanz`` (obere Hälfte heller)."""
+    c = QColor(fuell)
+    if art not in ("verlauf", "abgestuft", "glanz"):
+        return QBrush(c)
+    g = QLinearGradient(r.topLeft(), r.bottomLeft())
+    if art == "verlauf":
+        g.setColorAt(0, c.lighter(170)); g.setColorAt(1, c)
+    elif art == "abgestuft":
+        for pos, f in ((0, 150), (0.33, 150), (0.34, 115), (0.66, 115), (0.67, 100), (1, 100)):
+            g.setColorAt(pos, c.lighter(f))
+    else:
+        g.setColorAt(0, c.lighter(165)); g.setColorAt(0.49, c.lighter(125)); g.setColorAt(0.5, c.darker(108)); g.setColorAt(1, c)
+    return QBrush(g)
+
+
 def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.AKZENT_DUNKEL, linie: str = "#1f3864",
-              strich: float = 2.0, text: str = "") -> QImage:
-    img = _leer(breite, hoehe)
+              strich: float = 2.0, text: str = "", skala: float = 1.0, adj=None, fuell_art: str = "", punkte=None) -> QImage:
+    """``skala``: Bild in dieser Auflösung (Maße und Strich bleiben logisch, das Bild ist ``skala``-mal so groß) — für scharfe freie Formen.
+    ``adj``: Parameter der Anpassungsgriffe (``formen_anpassen``); ``fuell_art``: Verlauf der Füllung (``form_pinsel``).
+    ``punkte``: Punktliste einer Freiform (``editor/freiform.py``); sie ersetzt den Pfad der Form."""
+    img = _leer(max(1, round(breite * skala)), max(1, round(hoehe * skala)))
     p = QPainter(img)
     p.setRenderHint(QPainter.Antialiasing)
+    if skala != 1.0:
+        p.scale(skala, skala)
     pen = QPen(QColor(linie)); pen.setWidthF(strich); pen.setJoinStyle(Qt.RoundJoin)
     p.setPen(pen)
-    p.setBrush(QBrush(QColor(fuell)) if fuell else Qt.NoBrush)
     r = QRectF(strich, strich, breite - 2 * strich, hoehe - 2 * strich)
-    if art == "Rechteck":
+    p.setBrush(form_pinsel(fuell, fuell_art, r) if fuell else Qt.NoBrush)
+    if punkte:
+        from lunivo_writer.editor import freiform as FF
+        if not FF.geschlossen(punkte):
+            p.setBrush(Qt.NoBrush)
+        p.drawPath(FF.pfad(punkte, r))
+    elif adj and K.anpassbar(art):
+        p.drawPath(K.pfad(art, r, adj))
+    elif art == "Rechteck":
         p.drawRect(r)
     elif art == "Abgerundetes Rechteck":
         p.drawRoundedRect(r, 16, 16)

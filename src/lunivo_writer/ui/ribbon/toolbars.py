@@ -205,6 +205,8 @@ class Symbolleisten(QWidget):
             self.zusammenhang.hide()
 
     def aktualisieren(self, hat_dokument: bool | None = None) -> None:
+        import shiboken6
+        self.schalter = [e for e in self.schalter if shiboken6.isValid(e[0])]              # abgebaute Knöpfe der Kontext-Leiste
         for k, name in self.schalter:
             a = k.defaultAction()
             a.blockSignals(True)

@@ -56,6 +56,22 @@ def _linie(*punkte: tuple[float, float], pfeil_ende: bool = False, pfeil_anfang:
     return f
 
 
+def _kurve(pfeil_ende: bool = False, pfeil_anfang: bool = False) -> Pfad:
+    """S-förmige Kurvenverbindung von links oben nach rechts unten (waagerechte Enden), auf Wunsch mit Pfeilspitzen."""
+    def f(r: QRectF) -> QPainterPath:
+        a, b = QPointF(r.left(), r.top() + 0.15 * r.height()), QPointF(r.right(), r.top() + 0.85 * r.height())
+        p = QPainterPath(a)
+        p.cubicTo(QPointF(r.center().x(), a.y()), QPointF(r.center().x(), b.y()), b)
+        lg = min(r.width(), r.height()) * 0.18 + 4
+        for spitze, richtung in ((b, 0.0) if pfeil_ende else (None, 0), (a, math.pi) if pfeil_anfang else (None, 0)):
+            if spitze is None:
+                continue
+            for d in (2.6, -2.6):
+                p.moveTo(spitze); p.lineTo(spitze.x() + lg * math.cos(richtung + d), spitze.y() + lg * math.sin(richtung + d))
+        return p
+    return f
+
+
 def _bogen(start: float, spanne: float) -> Pfad:
     def f(r: QRectF) -> QPainterPath:
         p = QPainterPath(); p.arcMoveTo(r, start); p.arcTo(r, start, spanne)
@@ -154,6 +170,9 @@ _LINIEN = {"Linie": _linie((0, 0.5), (1, 0.5)), "Pfeil": _linie((0, 0.5), (1, 0.
            "Doppelpfeil": _linie((0, 0.5), (1, 0.5), pfeil_ende=True, pfeil_anfang=True),
            "Gewinkelte Verbindung": _linie((0, 0.15), (0.5, 0.15), (0.5, 0.85), (1, 0.85)),
            "Gewinkelte Pfeilverbindung": _linie((0, 0.15), (0.5, 0.15), (0.5, 0.85), (1, 0.85), pfeil_ende=True),
+           "Gewinkelte Doppelpfeilverbindung": _linie((0, 0.15), (0.5, 0.15), (0.5, 0.85), (1, 0.85), pfeil_ende=True, pfeil_anfang=True),
+           "Kurvenverbindung": _kurve(), "Kurvenpfeilverbindung": _kurve(pfeil_ende=True),
+           "Kurvendoppelpfeilverbindung": _kurve(pfeil_ende=True, pfeil_anfang=True),
            "Bogen": _bogen(0, 180)}
 
 KATEGORIEN: list[tuple[str, dict[str, Pfad]]] = [
@@ -226,5 +245,15 @@ def ist_linie(name: str) -> bool:
     return name in _LINIEN
 
 
-def pfad(name: str, r: QRectF) -> QPainterPath:
+def anpassbar(name: str) -> bool:
+    """Hat die Form Anpassungsgriffe (siehe ``formen_anpassen``)?"""
+    from lunivo_writer.editor import formen_anpassen as A
+    return name in _ALLE and A.anpassbar(name)
+
+
+def pfad(name: str, r: QRectF, adj=None) -> QPainterPath:
+    """Der Pfad der Form in ``r``; ``adj`` = Parameter der Anpassungsgriffe (fehlt er oder hat die Form keine, gilt die Standardform)."""
+    if adj and anpassbar(name):
+        from lunivo_writer.editor import formen_anpassen as A
+        return A.pfad(name, r, adj)
     return _ALLE[name](r)

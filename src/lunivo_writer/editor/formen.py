@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QRectF, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter, QTextCursor, QTextDocument, QTextImageFormat
 
 from lunivo_writer.editor import einfuegen as E
@@ -43,7 +43,8 @@ def form_daten(o: dict, breite: float, hoehe: float) -> dict:
 
 
 def _zeichnen(d: dict) -> QImage:
-    return E.form_bild(d["form"], d["breite"], d["hoehe"], d["fuell"], d["linie"], d["strich"], d["text"])
+    return E.form_bild(d["form"], d["breite"], d["hoehe"], d["fuell"], d["linie"], d["strich"], d["text"], adj=d.get("adj"),
+                       fuell_art=d.get("fuell_art") or "", punkte=d.get("punkte"))
 
 
 def _gruppe_zeichnen(kinder: list[dict]) -> QImage:
@@ -70,8 +71,23 @@ def _ersetzen(ed, c: QTextCursor, img: QImage, o: dict, f: QTextImageFormat, bre
     ed.document().setModified(True)
 
 
+_FO_SCHLUESSEL = {"fuell": "form_fuell", "linie": "form_linie", "strich": "form_strich", "text": "text", "form": "form",
+                  "breite": "breite", "hoehe": "hoehe"}
+
+
+def frei_daten(ed) -> dict | None:
+    """Die Parameter der gewählten Form als freies Objekt (Kopie) oder None."""
+    from lunivo_writer.editor import frei_objekt as FO
+    return FO.daten_lesen(ed, "form")
+
+
 def aendern(ed, **felder) -> bool:
-    """Parameter der markierten Form ändern (fuell, linie, strich, text, form, breite, hoehe) und neu zeichnen."""
+    """Parameter der markierten Form ändern (fuell, linie, strich, text, form, breite, hoehe) und neu zeichnen. Eine als freies Objekt
+    gewählte Form (``editor/frei_objekt.py``) geht vor; sonst gilt das Bild im Text (ältere Dokumente)."""
+    from lunivo_writer.editor import frei_objekt as FO
+    if FO.art_gewaehlt(ed) == "form":
+        kw = {_FO_SCHLUESSEL[k]: v for k, v in felder.items() if v is not None and k in _FO_SCHLUESSEL}
+        return FO.aendern(ed, "form", **kw) if kw else True
     c = ed._bild_cursor()
     if c is None:
         return False
@@ -223,3 +239,47 @@ def wordart_aendern(ed, **kw) -> bool:
     ``form_effekt`` wirken auf die Form hinter dem Text."""
     from lunivo_writer.editor import frei_objekt as FO
     return FO.aendern(ed, "wordart", **kw)
+
+
+# ---- Anpassungsgriff (die gelbe Raute) und Formwechsel ----------------------------------------------------------------------------
+def anpass_griffe(form: str, rect, adj=None) -> list:
+    """Lage aller Anpassungsgriffe der Form im Rechteck ``rect`` (QRectF, beliebiges Koordinatensystem; Ergebnis im selben) — leer, wenn die Form
+    keine hat. ``adj`` = Parameterliste aus ``daten["adj"]`` (fehlt sie: Standardwerte)."""
+    from lunivo_writer.editor import formen_anpassen as A
+    return A.griffe(form, rect, adj)
+
+
+def anpass_griff(form: str, rect, adj=None, index: int = 0):
+    """Lage des Griffs ``index`` (QPointF) oder None, wenn die Form keinen hat."""
+    g = anpass_griffe(form, rect, adj)
+    return g[index] if 0 <= index < len(g) else None
+
+
+def anpassen(form: str, wert: float, adj=None, index: int = 0) -> list[float]:
+    """Neue Parameterliste für ``daten["adj"]``: Parameter ``index`` = ``wert`` (begrenzt), die übrigen bleiben; leer bei einer Form ohne Griff."""
+    from lunivo_writer.editor import formen_anpassen as A
+    return A.setzen(form, wert, adj, index)
+
+
+def anpass_wert(form: str, rect, punkt, index: int = 0) -> float:
+    """Der Parameter, den der gezogene Griff ``index`` an ``punkt`` ergibt (für das Ziehen mit der Maus; mit ``anpassen`` speichern)."""
+    from lunivo_writer.editor import formen_anpassen as A
+    return A.wert_aus_punkt(form, rect, punkt, index)
+
+
+def anpass_setzen(ed, wert: float, index: int = 0) -> bool:
+    """Parameter ``index`` der gewählten freien Form setzen und neu zeichnen."""
+    from lunivo_writer.editor import frei_objekt as FO
+    d = FO.daten_lesen(ed, "form")
+    if d is None or not anpass_griffe(d.get("form", "Rechteck"), QRectF(0, 0, 1, 1)):
+        return False
+    return FO.aendern(ed, "form", adj=anpassen(d["form"], wert, d.get("adj"), index))
+
+
+def form_wechseln(ed, name: str) -> bool:
+    """Die gewählte freie Form durch ``name`` ersetzen; Größe, Füllung und Kontur bleiben, die Anpassung (``adj``) fällt weg."""
+    from lunivo_writer.editor import formen_katalog as K
+    from lunivo_writer.editor import frei_objekt as FO
+    if FO.daten_lesen(ed, "form") is None or not (K.hat(name) or name in ("Rechteck", "Textfeld")):
+        return False
+    return FO.aendern(ed, "form", form=name, adj=None, punkte=None)

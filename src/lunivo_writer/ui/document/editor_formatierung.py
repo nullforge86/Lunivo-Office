@@ -638,17 +638,8 @@ class FormatierungBaustein:
         img = QImage(path)
         if img.isNull():
             return False
-        name = f"bild-{id(img)}-{self.document().revision()}"
-        self.document().addResource(QTextDocument.ImageResource, QUrl(name), img)
-        w = float(img.width())
-        maxw = self.page.content_width_px
-        if w > maxw:
-            scale = maxw / w
-        else:
-            scale = 1.0
-        f = QTextImageFormat(); f.setName(name)
-        f.setWidth(img.width() * scale); f.setHeight(img.height() * scale)
-        self.textCursor().insertImage(f)
+        from lunivo_writer.editor import frei_objekt as FO
+        FO.bild_einfuegen(self, img, float(img.width()), float(img.height()))        # freies Bild: Rahmen, Griffe, Schnellleiste
         return True
 
 

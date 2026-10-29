@@ -27,13 +27,14 @@ class TextToolsBefehle:
     def tt_art(self) -> str | None:
         """Welches freie Textobjekt ist markiert? ``wordart`` | ``textfeld`` | None."""
         from lunivo_writer.editor import frei_objekt as FO
-        return FO.art_gewaehlt(self.ed) if self.ed else None
+        art = FO.art_gewaehlt(self.ed) if self.ed else None
+        return art if art in FO.TEXT_ARTEN else None
 
 
     def _wa(self) -> dict:
         from lunivo_writer.editor import frei_objekt as FO
         z = FO.ziel(self.ed) if self.ed else None
-        return z[1] if z else {}
+        return z[1] if z and z[0] in FO.TEXT_ARTEN else {}
 
 
     def _wa_set(self, **kw) -> bool:
@@ -547,7 +548,7 @@ class TextToolsBefehle:
         e = self.ed
         if not e:
             return
-        schluessel = [key for key, a, *_r in e._frei_liste() if a.get("art") in FO.ARTEN]
+        schluessel = [key for key, a, *_r in e._frei_liste() if a.get("art") in FO.TEXT_ARTEN]
         if not schluessel:
             self.w.lbl_msg.setText("Im Dokument gibt es kein WordArt und kein Textfeld.")
             return

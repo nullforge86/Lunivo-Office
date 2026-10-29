@@ -1000,8 +1000,36 @@ class _Reader:
         fx = self._effekte_lesen(drawing)
         if fx:
             angabe["fx"] = fx
+        beschr = _xp(drawing, ".//wp:docPr/@descr")
+        if beschr and beschr[0]:
+            angabe["alt"] = beschr[0]
         if tf_daten is not None:
             angabe["art"], angabe["daten"] = "textfeld", tf_daten
+        else:
+            obj = self._frei_objekt_daten(drawing)
+            if obj:
+                angabe["art"], angabe["daten"] = obj
+            else:
+                maske = self._frei_maske(drawing)
+                if maske:
+                    angabe["maske"] = maske
+        sr = _xp(drawing, ".//pic:blipFill/a:srcRect")                  # Zuschnitt (Tausendstel Prozent)
+        if sr:
+            try:
+                zu = [max(0.0, min(0.95, int(sr[0].get(k) or 0) / 100000.0)) for k in ("l", "t", "r", "b")]
+            except ValueError:
+                zu = []
+            if any(zu):
+                angabe["zu"] = zu
+        lum = _xp(drawing, ".//pic:blipFill/a:blip/a:lum")                  # Helligkeit/Kontrast (Tausendstel Prozent)
+        if lum:
+            for schl, k in (("hell", "bright"), ("kontrast", "contrast")):
+                try:
+                    w = int(lum[0].get(k) or 0) // 1000
+                except ValueError:
+                    w = 0
+                if w:
+                    angabe[schl] = max(-100, min(100, w))
         fl = _xp(drawing, ".//pic:spPr/a:solidFill/* | .//wps:spPr/a:solidFill/*")  # Füllung der Form hinter dem Bild
         if fl:
             try:
@@ -1029,6 +1057,32 @@ class _Reader:
             elif off:
                 angabe["xh" if achse == "h" else "yv"] = emu_zu_px(off[0])
         return angabe, img
+
+    @staticmethod
+    def _frei_maske(drawing) -> str:
+        """Die Zuschneideform eines Bildes (``{"maske": …}`` im Titel, „lunivo:“), sonst leer."""
+        import json
+        titel = _xp(drawing, ".//wp:docPr/@title")
+        if titel and titel[0].startswith("lunivo:"):
+            try:
+                return str(json.loads(titel[0][len("lunivo:"):]).get("maske") or "")
+            except (ValueError, AttributeError):
+                return ""
+        return ""
+
+    @staticmethod
+    def _frei_objekt_daten(drawing) -> tuple[str, dict] | None:
+        """(Art, Daten) eines freien Objekts Form, Diagramm oder SmartArt aus dem Titel („lunivo:“) des Bildes, sonst None."""
+        import json
+        titel = _xp(drawing, ".//wp:docPr/@title")
+        if titel and titel[0].startswith("lunivo:"):
+            try:
+                o = json.loads(titel[0][len("lunivo:"):])
+            except ValueError:
+                return None
+            if o.get("art") in ("form", "diagramm", "smartart", "piktogramm") and isinstance(o.get("daten"), dict):
+                return o["art"], o["daten"]
+        return None
 
     @staticmethod
     def _textfeld_daten(drawing, wsp) -> dict:

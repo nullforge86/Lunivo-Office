@@ -14,7 +14,10 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetricsF, QImage, QLinear
 from lunivo_writer.editor import freie_bilder as FB
 from lunivo_writer.editor.mehrstufig import nummer_text
 
-ARTEN = ("wordart", "textfeld")
+ARTEN = ("wordart", "textfeld", "form", "diagramm", "smartart", "piktogramm")
+TEXT_ARTEN = ("wordart", "textfeld")                                 # Arten mit Text zum Schreiben (Texttools, Eingabefeld im Objekt)
+STANDARD_MASS = {"form": (160, 120), "diagramm": (480, 300)}         # Größe in Bildpunkten, wenn beim Einfügen keine angegeben ist
+FORM_STANDARD = {"form": "Rechteck", "fuell": "#4a8fd8", "linie": "#1f3864", "strich": 2.0, "text": ""}
 TEXTFELD_STANDARD = {"text": "", "schrift": "Liberation Sans", "pt": 11, "farbe": "#1f1f1f"}
 TEXTFELD_FUELL = {"art": "farbe", "farbe": "#ffffff"}
 TEXTFELD_RAND = {"b": 1.5, "farbe": "#1f3864", "art": "einfach"}
@@ -416,13 +419,51 @@ def textfeld_zeichnen(d: dict, b: float, h: float) -> QImage:
     return richtung_anwenden(img, richt, bander)
 
 
+def _form_zeichnen(d: dict, b: float, h: float) -> QImage:
+    """Eine Form (``editor/formen.py``/``einfuegen.py``) in b × h Bildpunkten, in doppelter Auflösung."""
+    from lunivo_writer.editor import einfuegen as E
+    k = {**FORM_STANDARD, **d}
+    b, h = (b, h) if b and h else STANDARD_MASS["form"]
+    return E.form_bild(k["form"], max(2, round(b)), max(2, round(h)), k["fuell"] or "", k["linie"] or "#00000000",
+                       float(k["strich"]), k["text"], skala=_SS, adj=k.get("adj"), fuell_art=k.get("fuell_art") or "",
+                       punkte=k.get("punkte"))
+
+
+def _diagramm_zeichnen(d: dict, b: float, h: float) -> QImage:
+    """Ein Diagramm (``editor/diagramm.py``) aus den gespeicherten Daten, in b × h Bildpunkten, in doppelter Auflösung."""
+    from lunivo_writer.editor import diagramm as D
+    b, h = (b, h) if b and h else STANDARD_MASS["diagramm"]
+    return D.bild_aus_daten(d, b, h, _SS)
+
+
+def _smartart_zeichnen(d: dict, _b: float, _h: float) -> QImage:
+    from lunivo_writer.editor import smartart as SA
+    return SA.zeichnen(d)
+
+
+def _piktogramm_zeichnen(d: dict, _b: float, _h: float) -> QImage:
+    from lunivo_writer.editor import einfuegen as E
+    return E.piktogramm_bild(d.get("name", "star"), 96, d.get("farbe", "#1f2328"))
+
+
+# Art → Funktion(daten, breite, höhe) → Bild. Neue Art = ein Eintrag hier (und in ARTEN).
+ZEICHNER = {"wordart": lambda d, b, h: wordart_zeichnen(d), "textfeld": textfeld_zeichnen, "form": _form_zeichnen,
+            "diagramm": _diagramm_zeichnen, "smartart": _smartart_zeichnen, "piktogramm": _piktogramm_zeichnen}
+NEU_ZEICHNEN = ("textfeld", "form", "diagramm")                      # Arten, die nach einer Größenänderung in der neuen Größe frisch gezeichnet werden
+
+
 def zeichnen(art: str, d: dict, b: float = 0, h: float = 0) -> QImage:
-    return wordart_zeichnen(d) if art == "wordart" else textfeld_zeichnen(d, b, h)
+    return ZEICHNER[art](d, b, h)
 
 
 def _anzeige_mass(art: str, img: QImage, b: float, h: float) -> tuple[float, float]:
-    """Größe auf dem Blatt in Bildpunkten: WordArt aus dem Bild (ohne Überbreite), Textfeld wie vorgegeben."""
-    return (img.width() / _SS, img.height() / _SS) if art == "wordart" else (b, h)
+    """Größe auf dem Blatt in Bildpunkten: WordArt aus dem Bild (ohne Überbreite), SmartArt wie das Bild (sofern keine Größe vorgegeben),
+    Textfeld, Form und Diagramm wie vorgegeben (sonst die Standardgröße)."""
+    if art == "wordart":
+        return img.width() / _SS, img.height() / _SS
+    if art in ("smartart", "piktogramm"):
+        return (b, h) if b and h else (float(img.width()), float(img.height()))
+    return (b, h) if b and h else STANDARD_MASS.get(art, (b, h))
 
 
 # ---- Einfügen -----------------------------------------------------------------------------------------------------------
@@ -430,8 +471,22 @@ def einfuegen(ed, art: str, daten: dict, b: float = 0, h: float = 0) -> tuple | 
     """Fügt das Objekt als freies Bild am Absatz der Schreibmarke ein (steht dort Text, in einem neuen Absatz darunter), wählt es aus —
     mit Rahmen, Griffen und Schnellleiste — und lässt keine Textmarkierung zurück. → Schlüssel des Objekts."""
     doc = ed.document()
+    if art in STANDARD_MASS and not (b and h):
+        b, h = STANDARD_MASS[art]
     img = zeichnen(art, daten, b, h)
     bb, hh = _anzeige_mass(art, img, b, h)
+    key = bild_einfuegen(ed, img, bb, hh, art, daten)
+    if art == "textfeld":                                            # wie in WPS: die Schreibmarke steht gleich im leeren Textfeld
+        bearbeiten_starten(ed)
+    return key
+
+
+def bild_einfuegen(ed, img: QImage, bb: float, hh: float, art: str | None = None, daten: dict | None = None, alt: str = "") -> tuple:
+    """Der gemeinsame Weg aller freien Bilder: ``img`` als Ressource, die Angabe am Absatz der Schreibmarke (steht dort Text, in einem neuen
+    Absatz darunter), Größe auf die Inhaltsbreite begrenzt, danach ausgewählt (Rahmen, Griffe, Schnellleiste) ohne Textmarkierung.
+    ``art``/``daten`` nur bei Objekten mit Parametern (siehe ``ZEICHNER``); ein gewöhnliches Bild (Datei, Bildschirmfoto) hat keine.
+    → Schlüssel des Objekts."""
+    doc = ed.document()
     maxw = ed.page.content_width_px
     if bb > maxw:
         hh, bb = hh * maxw / bb, maxw
@@ -443,7 +498,11 @@ def einfuegen(ed, art: str, daten: dict, b: float = 0, h: float = 0) -> tuple | 
     name = FB.neuer_name(doc)
     doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
     a = {"n": name, "b": bb, "h": hh, "bh": "spalte", "xh": 0.0, "bv": "absatz", "yv": 0.0, "ah": "", "av": "", "hinter": False,
-         "ellipse": False, "dreh": 0.0, "art": art, "daten": dict(daten)}
+         "ellipse": False, "dreh": 0.0}
+    if art:
+        a["art"], a["daten"] = art, dict(daten or {})
+    if alt:
+        a["alt"] = alt
     if art == "textfeld":
         a["fuell"], a["rand"] = dict(TEXTFELD_FUELL), dict(TEXTFELD_RAND)
     FB.an_absatz(QTextCursor(c.block()), a)
@@ -457,14 +516,12 @@ def einfuegen(ed, art: str, daten: dict, b: float = 0, h: float = 0) -> tuple | 
     ed.viewport().update()
     if hasattr(ed.window(), "_sync_format"):
         ed.window()._sync_format()
-    if art == "textfeld":                                            # wie in WPS: die Schreibmarke steht gleich im leeren Textfeld
-        bearbeiten_starten(ed)
     return ed._frei_sel
 
 
 # ---- Lesen und Ändern ---------------------------------------------------------------------------------------------------------
 def ziel(ed):
-    """(Art, Daten, Schlüssel, Angabe, Bild) des gewählten Objekts oder None."""
+    """(Art, Daten, Schlüssel, Angabe, Bild) des gewählten Objekts (WordArt, Textfeld, Form, Diagramm, SmartArt) oder None."""
     sel = getattr(ed, "_frei_sel", None)
     if sel is None:
         return None
@@ -530,6 +587,15 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
             b = float(v)
         elif k == "hoehe":
             h = float(v)
+        elif art == "form" and k in ("form_fuell", "form_linie", "form_strich"):     # bei einer Form: Farben der Form selbst, kein Kasten ums Bild
+            if k == "form_fuell":
+                d["fuell"] = v or ""
+            elif k == "form_linie":
+                d["linie"] = v or ""
+            else:
+                d["strich"] = float(v)
+        elif k == "untertyp":                                          # Diagramm: Diagrammart (in den Daten unter „art“)
+            d["art"] = v
         elif k == "form_fuell":
             neu["fuell"] = {"art": "farbe", "farbe": v} if v else None
         elif k == "form_strich":
@@ -545,13 +611,18 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
             d.pop(k, None)
         else:
             d[k] = v
-    if set(kw) - {"form_fuell", "form_linie", "form_strich", "form_effekt"}:
-        if art == "wordart":                                         # die Größe folgt dem Bild: gleicher Maßstab wie vorher
+    neu_zeichnen = set(kw) - {"form_fuell", "form_linie", "form_strich", "form_effekt"} or (
+        art == "form" and set(kw) & {"form_fuell", "form_linie", "form_strich"})
+    if neu_zeichnen:
+        if art == "smartart":                                        # Breite bleibt, die Höhe folgt dem neuen Bild
+            img = zeichnen(art, d, b, h)
+            h = b * img.height() / max(1, img.width())
+        elif art == "wordart":                                         # die Größe folgt dem Bild: gleicher Maßstab wie vorher
             faktor = a["b"] / max(1.0, bild.width() / _SS)
             img = wordart_zeichnen(d)
             b, h = img.width() / _SS * faktor, img.height() / _SS * faktor
         else:
-            img = textfeld_zeichnen(d, b, h)
+            img = zeichnen(art, d, b, h)
         n = FB.neuer_name(ed.document())
         ed.document().addResource(QTextDocument.ImageResource, QUrl(n), img)
         neu["n"], neu["b"], neu["h"], neu["daten"] = n, b, h, d
@@ -561,11 +632,28 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
     return True
 
 
+def daten_still(ed, art: str, **kw) -> bool:
+    """Daten des gewählten Objekts ändern, ohne das Bild neu zu zeichnen (z. B. die Auswahl eines Diagrammteils); None entfernt den Schlüssel."""
+    from lunivo_writer.editor import bildlayout as BL
+    z = ziel(ed)
+    if z is None or z[0] != art:
+        return False
+    _art, d, key, a, _bild = z
+    for k, v in kw.items():
+        if v is None:
+            d.pop(k, None)
+        else:
+            d[k] = v
+    BL._speichern_frei(ed, key, dict(a, daten=d))
+    return True
+
+
 def nach_groesse(ed, neu: dict) -> dict:
-    """Nach dem Ziehen der Griffe: ein Textfeld wird in der neuen Größe frisch gesetzt (Zeilenumbruch folgt der Breite)."""
-    if neu.get("art") == "textfeld" and neu.get("n"):
+    """Nach dem Ziehen der Griffe: Textfeld, Form und Diagramm werden in der neuen Größe frisch gezeichnet (Zeilenumbruch folgt der Breite,
+    Linien und Schrift bleiben scharf); SmartArt skaliert nur."""
+    if neu.get("art") in NEU_ZEICHNEN and neu.get("n"):
         n = FB.neuer_name(ed.document())
-        ed.document().addResource(QTextDocument.ImageResource, QUrl(n), textfeld_zeichnen(neu.get("daten", {}), neu["b"], neu["h"]))
+        ed.document().addResource(QTextDocument.ImageResource, QUrl(n), zeichnen(neu["art"], neu.get("daten", {}), neu["b"], neu["h"]))
         neu = dict(neu, n=n)
     return neu
 
@@ -730,7 +818,7 @@ def bearbeiten_starten(ed) -> bool:
     ohne Markierung auf das ganze Objekt (``aendern``)."""
     from PySide6.QtWidgets import QTextEdit
     z = ziel(ed)
-    if z is None:
+    if z is None or z[0] not in TEXT_ARTEN:
         return False
     bearbeiten_beenden(ed)
     art, d, key, _a, _b = z
@@ -809,7 +897,7 @@ def bearbeiten_beenden(ed) -> None:
 def text_werte_lesen(ed) -> dict | None:
     """Die Textoptionen (Format von ``texteffekt.py``) des gewählten Objekts."""
     z = ziel(ed)
-    if z is None:
+    if z is None or z[0] not in TEXT_ARTEN:
         return None
     d = z[1]
     w = {"fuell": "farbe", "farbe": d.get("fuell") or d.get("farbe") or "", "transparenz": 0, "kontur": bool(d.get("kontur")),
@@ -822,7 +910,7 @@ def text_werte_lesen(ed) -> dict | None:
 def text_werte_anwenden(ed, werte: dict) -> bool:
     """Die Textoptionen der Seitenleiste wirken auf den Text im gewählten Objekt: Füllung (Farbe, Transparenz), Kontur (Farbe, Breite)."""
     art = art_gewaehlt(ed)
-    if art is None:
+    if art not in TEXT_ARTEN:
         return False
     kw: dict = {}
     if werte.get("fuell") == "keine":

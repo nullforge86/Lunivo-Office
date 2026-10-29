@@ -32,7 +32,8 @@ def art_symbol(sym: str, px: int = 22) -> QIcon:
     return icons.icon(namen.get(sym, "chart-column"), px)
 
 class DiagrammDialog(PanelFaehig, QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, vorhanden: dict | None = None):
+        """``vorhanden``: Daten eines vorhandenen Diagramms (Diagrammart, Titel, Rubriken, Reihen, Kombination) — dann öffnet das Fenster damit."""
         super().__init__(parent)
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         self.setWindowTitle("Diagramm einfügen")
@@ -66,8 +67,18 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
         self.untertyp = "saeule_gruppiert"
         self._vorschau_breite, self._bild_groesse = 620, QSize(84, 64)
+        zeile = 0
+        if vorhanden:
+            self.titel_text = vorhanden.get("titel", self.titel_text)
+            self.kategorien = list(vorhanden.get("kategorien") or self.kategorien)
+            self.reihen = {k: list(v) for k, v in (vorhanden.get("reihen") or self.reihen).items()}
+            self.kombi = [(k[0], bool(k[1])) for k in vorhanden.get("kombi") or []]
+            u = D.ALT.get(vorhanden.get("art"), vorhanden.get("art"))
+            for i, (_g, _s, unter) in enumerate(D.TYPEN):
+                if any(schl == u for schl, _n in unter):
+                    self.untertyp, zeile = u, i
         self.arten.currentRowChanged.connect(self._gruppe)
-        self.arten.setCurrentRow(0)
+        self.arten.setCurrentRow(zeile)
 
     # ---- Kombinationstabelle ----------------------------------------------------------------------------------------------
     def _kombi_tabelle(self) -> QWidget:

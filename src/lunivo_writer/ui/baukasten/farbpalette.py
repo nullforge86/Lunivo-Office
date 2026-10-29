@@ -105,7 +105,7 @@ class FarbPalette(QMenu):
     def __init__(self, parent=None, *, keine_text: str | None = "Keine Farbe", start=None, titel: str = "Farbe",
                  zuletzt: bool = True, weitere: bool = True, verlauf: bool = False, verlauf_titel: str = "Graduelle Füllung",
                  weitere_text: str = "Weitere Farben …", automatisch: str | None = None,
-                 pipette: bool = True):
+                 pipette: bool = True, standard: bool = True):
         super().__init__(parent)
         self._start, self._titel = start, titel
         wid = QWidget()
@@ -117,8 +117,9 @@ class FarbPalette(QMenu):
             v.addWidget(keine)
         v.addWidget(self._titel_zeile("Themenfarben"))
         v.addLayout(self._raster(F.thema_raster()))
-        v.addWidget(self._titel_zeile("Standardfarben"))
-        v.addLayout(self._raster([list(F.STANDARD_FARBEN)]))
+        if standard:
+            v.addWidget(self._titel_zeile("Standardfarben"))
+            v.addLayout(self._raster([list(F.STANDARD_FARBEN)]))
         if verlauf: # „Graduelle Füllung“ wie in der Vorlage: dieselben Farben als Verläufe
             v.addWidget(self._titel_zeile(verlauf_titel))
             g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0); g.setAlignment(Qt.AlignLeft | Qt.AlignTop)

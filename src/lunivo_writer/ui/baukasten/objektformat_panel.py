@@ -124,6 +124,7 @@ class _TextPanel(_DreiDUntereinander, TexteffektPanel):
 
 class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     MIT_ABSCHLUSS = True
+    TEXT_KLASSE = _TextPanel                      # die Textoptionen; ein Panel mit mehr Feldern (Diagramm) setzt eine eigene Klasse
     TITEL = ("FÜLLUNG UND LINIE", "EFFEKTE")
     bild_gewuenscht = Signal()                    # „Bild …“ als Füllung: der Aufrufer fragt nach der Datei
     text_geaendert = Signal(dict)                 # Änderung in den Textoptionen (Format von ``editor/texteffekt.py``)
@@ -133,7 +134,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         v = self.layout()
         v.removeWidget(self.reiter)
         self.optionen = QStackedWidget()
-        self.text_panel = _TextPanel(self)                                 # TEXTOPTIONEN: derselbe Aufbau, wirkt auf den Text im Objekt
+        self.text_panel = self.TEXT_KLASSE(self)                               # TEXTOPTIONEN: derselbe Aufbau, wirkt auf den Text im Objekt
         self.optionen.addWidget(self.reiter); self.optionen.addWidget(self.text_panel)
         kopf = QHBoxLayout(); kopf.setContentsMargins(0, 0, 0, 0); kopf.setSpacing(0)
         self.umschalter = QButtonGroup(self); self.umschalter.setExclusive(True)
@@ -145,6 +146,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
             k.setObjectName(f"optionen_{i}")
         self.umschalter.button(0).setChecked(True)
         self.umschalter.idClicked.connect(self.optionen_waehlen)
+        self.kopf_zeile = kopf                                                  # die Hauptreiter; ein Panel darauf kann Knöpfe (Teilliste) anfügen
         v.addLayout(kopf); v.addWidget(self.optionen, 1)
         self.text_panel.geaendert.connect(self.text_geaendert)
 
@@ -177,16 +179,28 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         p.end()
         return QIcon(pm)
 
+    # ---- Erweiterungen für Panels, die auf diesem aufbauen (Diagramm): zusätzliche Auswahlpunkte und Felder in „Füllung“ und „Linie“
+    def _zusatz_radios(self, abschnitt: str) -> list:
+        """Weitere Auswahlpunkte am Ende der Liste („fuell“ oder „linie“)."""
+        return []
+
+    def _zusatz_felder(self, abschnitt: str, a: Abschnitt) -> None:
+        """Weitere Felder am Ende des Abschnitts („fuell“ oder „linie“)."""
+
+    def _kopf_klasse(self):
+        """Die Klasse des Farbknopfs im Kopf von „Füllung“ (ein Panel darauf kann ein eigenes Popup einsetzen)."""
+        return FarbFeld
+
     # ---- Seite 1: Füllung und Linie ------------------------------------------------------------------------------------------
     def _seite_fuellung(self, w: dict) -> QWidget:
         seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10)
-        self.fuell_farbe_kopf = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
+        self.fuell_farbe_kopf = self._kopf_klasse()(Farbe.BLAU, "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
         self.fuell_farbe_kopf.setMinimumWidth(110)
         self.a_fuell = Abschnitt("Füllung", self.fuell_farbe_kopf)
         self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
         self.r_textur, self.r_muster = QRadioButton("Strukturfüllung"), QRadioButton("Musterfüllung")
         self.r_bild = QRadioButton("Bildfüllung")
-        for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild):
+        for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, *self._zusatz_radios("fuell")):
             self.a_fuell.breit(r)
         self.farbe = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Automatisch")
         self.a_fuell.zeile("Farbe:", self.farbe)
@@ -204,12 +218,13 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         self.a_fuell.zeile("Muster:", self.muster); self.a_fuell.zeile("Musterfarbe:", self.m_farbe)
         self.bild_knopf = QPushButton("Bild wählen …"); self.bild_knopf.clicked.connect(self.bild_gewuenscht)
         self.a_fuell.zeile("Bild:", self.bild_knopf)
+        self._zusatz_felder("fuell", self.a_fuell)
         v.addWidget(self.a_fuell)
         # Linie
         self.linie_knopf = QPushButton("Keine"); self.linie_knopf.setMinimumWidth(110)
         self.a_kontur = Abschnitt("Linie", self.linie_knopf)
         self.k_keine, self.k_linie = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie")
-        for r in (self.k_keine, self.k_linie):
+        for r in (self.k_keine, self.k_linie, *self._zusatz_radios("linie")):
             self.a_kontur.breit(r)
         self.k_farbe = FarbFeld(Farbe.SCHWARZ, "Linienfarbe")
         self.k_breite = SchiebeFeld(0.25, 20, " pt", 0.25, 2)
@@ -217,6 +232,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         for k in STRICHE:                                          # die Strichlinien des Bausteins „Linie“ als Bildchen, nicht als Text
             self.k_art.addItem(linien_symbol(k, QSize(86, 14)), "", k)
         self.a_kontur.zeile("Farbe:", self.k_farbe); self.a_kontur.zeile("Breite:", self.k_breite); self.a_kontur.zeile("Strichart:", self.k_art)
+        self._zusatz_felder("linie", self.a_kontur)
         v.addWidget(self.a_kontur)
         v.addStretch(1)
         self.linie_knopf.clicked.connect(self._linien_menue)
@@ -344,19 +360,32 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
             self._weich_an = True; self.weich_knopf.setText("Eigene")
         self._neu()
 
-    def _weich_menue(self) -> None:
-        from PySide6.QtGui import QIcon
-        m = VoreinstellungMenue(self, keine=("Keine weichen Kanten", None))
-        m._kopf("Keine weichen Kanten")
-        m.abschnitt("Weiche Kanten", [(f"{s:g}", QIcon(), f"{s:g} pt") for s in WEICH_STUFEN], 3)
+    @staticmethod
+    def _weich_symbol(radius: float) -> "QIcon":
+        """Das Bildchen der Liste: ein Quadrat, dessen Rand mit der Größe weicher wird."""
+        from PySide6.QtGui import QColor, QPainter, QPixmap, QRadialGradient
+        pm = QPixmap(28, 28); pm.fill(Qt.transparent)
+        p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
+        k = min(10.0, radius / 5.0)
+        g = QRadialGradient(14, 14, 14 * 1.4)
+        g.setColorAt(max(0.0, 0.62 - k / 24), QColor(Farbe.BLAU)); g.setColorAt(min(1.0, 0.62 + k / 24), Qt.transparent)
+        p.setPen(Qt.NoPen); p.setBrush(g if radius else QColor(Farbe.BLAU)); p.drawRect(3, 3, 22, 22); p.end()
+        return QIcon(pm)
 
-        def waehle(k: str) -> None:
+    def _weich_menue(self) -> None:
+        """Voreinstellungen als Liste mit Bild und Text: Keine weichen Kanten · 1 · 2,5 · 5 · 10 · 25 · 50 Punkt."""
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+
+        def waehle(k: float) -> None:
             self._weich_an = bool(k)
-            self.weich_knopf.setText(f"{k} pt" if k else "Keine")
+            self.weich_knopf.setText(f"{k:g} pt" if k else "Keine")
             if k:
                 self.w_radius.setValue(float(k))
             self._neu()
-        m.gewaehlt.connect(waehle)
+        m = MenueListe(self)
+        m.eintrag("Keine weichen Kanten", lambda: waehle(0), symbol=self._weich_symbol(0))
+        for s in WEICH_STUFEN:
+            m.eintrag(f"{s:g} Punkt".replace(".", ","), lambda s=s: waehle(s), symbol=self._weich_symbol(s))
         m.exec(self.weich_knopf.mapToGlobal(self.weich_knopf.rect().bottomLeft()))
 
     def _setze_effekte(self, w: dict) -> None:

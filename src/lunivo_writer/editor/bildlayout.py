@@ -11,7 +11,7 @@ selbst kennt davon nichts; diese Datei ist die einzige Stelle, die Werte und Bil
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QImage, QTextCursor, QTextDocument, QTextImageFormat
 
 from lunivo_writer.editor import freie_bilder as FB
@@ -358,3 +358,59 @@ def format_uebertragen(ed, z, merk: dict) -> bool:
     neu.update({k: v for k, v in merk.items() if k != "_leer"})
     _speichern_frei(ed, z[1], neu)
     return True
+
+
+# ---- Bildtools für frei positionierte Bilder (Zuschneiden, Farbe, Originalgröße, Alternativtext, Entfernen) ----------------------------
+def _hoehe_je_breite(img: QImage, a: dict) -> float:
+    """Höhe je Breite des sichtbaren Ausschnitts von ``img`` (mit Zuschnitt ``zu`` der Angabe)."""
+    from lunivo_writer.editor import bildzuschnitt as BZ
+    l, o, r, u = BZ.lesen(a)
+    return img.height() * (1 - o - u) / max(1.0, img.width() * (1 - l - r))
+
+
+def frei_bild_ersetzen(ed, z, wandle) -> bool:
+    """``wandle(QImage) → QImage``: das Bild des markierten freien Bildes wird durch das Ergebnis ersetzt (Anzeigebreite bleibt, die Höhe
+    folgt dem Seitenverhältnis); das Original bleibt für „Original“ erhalten."""
+    if z is None or z[0] != "frei":
+        return False
+    a = z[2]
+    img = FB.bild_im_dokument(ed.document(), a.get("n", ""))
+    if img is None:
+        return False
+    neu = wandle(QImage(img))
+    if neu is None or neu.isNull():
+        return False
+    name = FB.neuer_name(ed.document())
+    ed.document().addResource(QTextDocument.ImageResource, QUrl(name), neu)
+    b = float(a["b"])
+    return frei_aendern(ed, z, n=name, h=b * _hoehe_je_breite(neu, a), orig=a.get("orig") or a.get("n"))
+
+
+def frei_original(ed, z) -> bool:
+    """Farbänderung und Zuschnitt zurücknehmen (das ursprüngliche Bild, gleiche Anzeigebreite)."""
+    if z is None or z[0] != "frei" or not z[2].get("orig"):
+        return False
+    img = FB.bild_im_dokument(ed.document(), z[2]["orig"])
+    if img is None:
+        return False
+    b = float(z[2]["b"])
+    teile = {"n": z[2]["orig"], "h": b * _hoehe_je_breite(img, z[2])}
+    frei_aendern(ed, z, **teile)
+    return True
+
+
+def frei_original_groesse(ed, z) -> bool:
+    """Das Bild in seiner Pixelgröße."""
+    img = FB.bild_im_dokument(ed.document(), z[2].get("n", "")) if z is not None and z[0] == "frei" else None
+    if img is None:
+        return False
+    from lunivo_writer.editor import bildzuschnitt as BZ
+    l, o, r, u = BZ.lesen(z[2])                                      # der sichtbare Ausschnitt in Bildpunkten
+    return frei_aendern(ed, z, b=float(img.width()) * (1 - l - r), h=float(img.height()) * (1 - o - u))
+
+
+def frei_entfernen(ed) -> bool:
+    """Das gewählte freie Bild löschen (wie die Entf-Taste)."""
+    from PySide6.QtCore import QEvent
+    from PySide6.QtGui import QKeyEvent
+    return bool(getattr(ed, "_frei_sel", None) is not None and ed._frei_taste(QKeyEvent(QEvent.KeyPress, Qt.Key_Delete, Qt.NoModifier)))

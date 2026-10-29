@@ -341,6 +341,38 @@ class SchreibhilfePanel(QWidget):
         if self.objekt_panel is not None and not (f is not None and self.objekt_panel.isAncestorOf(f)):
             self.objekt_panel.setze(werte)
 
+    # ---- Formatierung eines Diagrammteils (Titel, Legende, Achse, Reihe …) ---------------------------------------------------------------
+    diagramm_panel = None
+
+    def zeige_diagrammformat(self, werte: dict, anwenden, alt_anwenden, bild_wunsch=None) -> None:
+        """„Formatierung“ für den gewählten Diagrammteil zeigen. ``anwenden(angaben)`` kommt bei jeder Änderung, ``alt_anwenden(titel, beschreibung)`` beim
+        Alternativtext, ``bild_wunsch()`` bei „Bild wählen …“ der Bildfüllung."""
+        from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
+        if self.diagramm_panel is None:
+            host, self.diagramm_panel, self.diagramm_anheften = self._formatierung_host(DiagrammFormatPanel, "Diagramm formatieren", werte)
+            self._diagramm_index = self.stapel.addWidget(host)
+        else:
+            for sig in (self.diagramm_panel.geaendert, self.diagramm_panel.alt_geaendert, self.diagramm_panel.bild_gewuenscht):
+                try:
+                    sig.disconnect()
+                except (RuntimeError, TypeError):
+                    pass
+            self.diagramm_panel.setze({**werte})
+        self.diagramm_panel.geaendert.connect(anwenden)
+        self.diagramm_panel.alt_geaendert.connect(alt_anwenden)
+        if bild_wunsch is not None:
+            self.diagramm_panel.bild_gewuenscht.connect(bild_wunsch)
+        self.zeige_bereich(self._diagramm_index)
+
+    def diagrammformat_sichtbar(self) -> bool:
+        return self.diagramm_panel is not None and self.stapel.currentIndex() == self._diagramm_index and not self.isHidden()
+
+    def aktualisiere_diagrammformat(self, werte: dict) -> None:
+        from PySide6.QtWidgets import QApplication
+        f = QApplication.focusWidget()
+        if self.diagramm_panel is not None and not (f is not None and self.diagramm_panel.isAncestorOf(f)):
+            self.diagramm_panel.setze(werte)
+
     def texteffekte_sichtbar(self) -> bool:
         return self.effekt_panel is not None and self.stapel.currentIndex() == self._effekt_index and not self.isHidden()
 

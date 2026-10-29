@@ -564,3 +564,19 @@ def test_schwebendes_bild_text_fliesst_herum_und_pdf(app, tmp_path):
     pdf = str(tmp_path / "u.pdf")
     export_pdf(pdf, doc, PageSettings(), "t")
     assert "Dritter." in " ".join(pypdf.PdfReader(pdf).pages[0].extract_text().split())
+
+
+def test_seitenleistenpruefung_schreibt_bericht_und_endet(tmp_path):
+    """Das Werkzeug klickt die Seitenleiste durch, hält das Zeitlimit ein, schreibt den Bericht und beendet sich sauber."""
+    import subprocess
+    import sys
+    wurzel = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ziel = tmp_path / "stand.md"
+    bilder = tmp_path / "bilder"
+    r = subprocess.run([sys.executable, os.path.join(wurzel, "werkzeug", "seitenleistenpruefung.py"), "--teile", "titel", "--limit", "20",
+                        "--ziel", str(ziel), "--behalten", str(bilder)],
+                       capture_output=True, text=True, timeout=180, env={**os.environ, "QT_QPA_PLATFORM": "offscreen"}, cwd=wurzel)
+    assert r.returncode == 0, r.stderr[-800:]
+    text = ziel.read_text(encoding="utf-8")
+    assert "## Zusammenfassung" in text and "Diagrammtitel" in text and "| wirkt |" in text
+    assert "<html" not in text.lower() and any(bilder.glob("*_panel.png"))

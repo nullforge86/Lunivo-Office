@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
 from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
 from lunivo_writer.ui.document.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
@@ -387,7 +388,8 @@ class RegisterBand(QWidget):
         for e in g["knoepfe"]:
             if e.get("feld"):                                     # ein Eingabefeld, das der Befehls-Baustein liefert (band_feld)
                 spalte(felder_behalten=True)
-                w = self.b.band_feld(e["feld"])
+                bau = FELDER.get(e["feld"])                    # erst die Felder der Oberfläche, sonst ``feld_<name>`` des Befehlsbausteins
+                w = bau(self.b) if bau else self.b.band_feld(e["feld"])
                 if w is not None:
                     self.felder[e["feld"]] = w
                     felder.append(w)
@@ -478,7 +480,8 @@ class RegisterBand(QWidget):
 
     def _knoepfe_galerie(self, g: dict, inhalt: QHBoxLayout):
         """Eine Galerie wie in WPS: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``)."""
-        spec = getattr(self.b, "galerie_" + g["galerie"], None)
+        bau = GALERIEN.get(g["galerie"])                          # erst die Bausteine der Oberfläche, sonst ``galerie_<name>`` des Befehlsbausteins
+        spec = (lambda: bau(self.b)) if bau else getattr(self.b, "galerie_" + g["galerie"], None)
         if spec is None:
             self.fehlend.append("galerie_" + g["galerie"])
             return
@@ -488,7 +491,13 @@ class RegisterBand(QWidget):
         h = QHBoxLayout(rahmen)
         h.setContentsMargins(3, 3, 3, 3)
         h.setSpacing(2)
-        for tipp, pm, tun in spec["kacheln"]:
+        zeilen = int(g.get("zeilen") or 1)                       # ``"zeilen": 2``: Kacheln in mehreren Reihen (Linien und Pfeile)
+        raster = QGridLayout() if zeilen > 1 else None
+        if raster is not None:
+            raster.setContentsMargins(0, 0, 0, 0); raster.setSpacing(2)
+            h.addLayout(raster)
+        spalten = -(-len(spec["kacheln"]) // zeilen)
+        for nr, (tipp, pm, tun) in enumerate(spec["kacheln"]):
             k = QToolButton()
             k.setAutoRaise(True)
             k.setIcon(QIcon(pm))
@@ -496,7 +505,10 @@ class RegisterBand(QWidget):
             k.setFixedSize(pm.width() + 8, pm.height() + 8)
             k.setToolTip(tipp)
             k.clicked.connect(lambda _=False, f=tun: (f(), self.aktualisieren()))
-            h.addWidget(k)
+            if raster is not None:
+                raster.addWidget(k, nr // spalten, nr % spalten)
+            else:
+                h.addWidget(k)
             self.knoepfe.append((k, None, True))
         mehr = QToolButton()
         mehr.setAutoRaise(True)
@@ -538,27 +550,43 @@ class RegisterBand(QWidget):
         inhalt.addWidget(host, 0, Qt.AlignTop)
 
     def _knoepfe_masse(self, g: dict, inhalt: QHBoxLayout):
-        """Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern."""
+        """Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern.
+        ``"sperre": "bild"`` (Bildtools): Breite oben, Höhe unten; rechts daneben stehen die ersten beiden Knöpfe der Gruppe
+        (Sperre = Schalter ``bildSeitenverhaeltnis``, dann „Größe zurücksetzen“)."""
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
         from PySide6.QtWidgets import QCheckBox
+        bild = g.get("sperre") == "bild"
+        vor = g.get("praefix") or ("bt_" if bild else "bild_")   # eigene Feldnamen: Bildtools, Zeichentools und SmartArt-Design haben je ein Paar
         host = QWidget()
         gitter = QGridLayout(host)
         gitter.setContentsMargins(0, 0, 0, 0); gitter.setHorizontalSpacing(4); gitter.setVerticalSpacing(2)
         spins = {}
-        for zeile, schl, name in ((0, "hoehe", "Höhe:"), (1, "breite", "Breite:")):
+        if bild:                                                  # große Knöpfe (Zuschneiden) stehen links vor den Feldern
+            for e in (e for e in g["knoepfe"] if e.get("gross")):
+                inhalt.addWidget(self._knopf(e, True))
+        zeilen = (("breite", "Breite:"), ("hoehe", "Höhe:")) if bild else (("hoehe", "Höhe:"), ("breite", "Breite:"))
+        for zeile, (schl, name) in enumerate(zeilen):
             sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(90)
             gitter.addWidget(QLabel(name), zeile, 0); gitter.addWidget(sp, zeile, 1)
             spins[schl] = sp
-            self.felder["bild_" + schl] = sp
+            self.felder[vor + schl] = sp
             self.knoepfe.append((sp, None, True))
-        sperre = QCheckBox("Seitenverhältnis sperren"); sperre.setChecked(True)
-        gitter.addWidget(sperre, 2, 0, 1, 2)
-        self.felder["bild_sperre"] = sperre
+        sperre = None
+        if bild:
+            for zeile, e in enumerate([e for e in g["knoepfe"] if not e.get("gross")][:2]):
+                gitter.addWidget(self._knopf(e, False), zeile, 2)
+        else:
+            sperre = QCheckBox("Seitenverhältnis sperren"); sperre.setChecked(True)
+            gitter.addWidget(sperre, 2, 0, 1, 2)
+            self.felder[vor + "sperre"] = sperre
         verhaeltnis = [1.0]
+
+        def gesperrt() -> bool:
+            return bool(self.b.an_bildSeitenverhaeltnis()) if bild else sperre.isChecked()
 
         def geaendert(wer: str):
             b, h = spins["breite"].value(), spins["hoehe"].value()
-            if sperre.isChecked() and verhaeltnis[0] > 0:
+            if gesperrt() and verhaeltnis[0] > 0:
                 for sp in spins.values():
                     sp.blockSignals(True)
                 if wer == "breite":
@@ -572,7 +600,7 @@ class RegisterBand(QWidget):
             self.b.zeichenMasse(b, h)
         spins["breite"].valueChanged.connect(lambda _v: geaendert("breite"))
         spins["hoehe"].valueChanged.connect(lambda _v: geaendert("hoehe"))
-        self.felder["bild_verhaeltnis"] = verhaeltnis
+        self.felder[vor + "verhaeltnis"] = verhaeltnis
         inhalt.addWidget(host, 0, Qt.AlignTop)
 
     def _knoepfe(self, g: dict, inhalt: QHBoxLayout):
@@ -809,8 +837,7 @@ class RegisterBand(QWidget):
             ok = self._menue_fuellen(menu, menue)
             k.setPopupMode(QToolButton.MenuButtonPopup)             # Symbol und Pfeil getrennt: der Pfeil sitzt nicht im Symbol
             akt.triggered.connect(lambda _=False, kk=k: kk.showMenu())
-        elif klappe and self.b.klappe(klappe) is not None:
-            menu = self.b.klappe(klappe)
+        elif klappe and (menu := self._klappe(klappe)) is not None:
             menu.setParent(k, Qt.Popup)
             k.setPopupMode(QToolButton.MenuButtonPopup)
             if not tun:
@@ -832,7 +859,7 @@ class RegisterBand(QWidget):
             akt.setCheckable(True)
             self.schalter.append((k, tun))
         for n in (tun, klappe):
-            if n and not self.b.hat(n) and not (n == klappe and self.b.klappe(n) is not None):
+            if n and not self.b.hat(n) and not (n == klappe and (n in KLAPPEN or self.b.klappe(n) is not None)):
                 self.fehlend.append(n)
         if not ok:
             k.setProperty("fehlt", True)
@@ -840,6 +867,11 @@ class RegisterBand(QWidget):
             k.setToolTip(NICHT_DA.format(name))
         self.knoepfe.append((k, tun, True))
         return k
+
+    def _klappe(self, name: str):
+        """Das Menü einer Klappe: erst die Bausteine der Oberfläche (``KLAPPEN``), sonst ``menue_<name>`` des Befehlsbausteins."""
+        bau = KLAPPEN.get(name)
+        return bau(self.b) if bau else self.b.klappe(name)
 
     def _menue_fuellen(self, menu: QMenu, items: list) -> bool:
         ok = False
