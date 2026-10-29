@@ -374,6 +374,9 @@ class BackstageBaustein:
         t = self.current_tab()
         if not t:
             return
+        if not t.editor.web:                                  # Bearbeiten direkt auf der Seite, dazu der Kontext-Reiter
+            self.kopffuss_starten(t.editor, header)
+            return
         page = t.editor.abschnitt_seite()
         erste = False
         if page.diff_first:
@@ -397,6 +400,19 @@ class BackstageBaustein:
             else:
                 page.footer = d.value()
             t.editor.page_settings_changed(page)
+
+
+    def kopffuss_starten(self, editor, header: bool = True):
+        """Kopf- oder Fußzeile auf der Seite bearbeiten: Textfeld über dem Rand, Kontext-Reiter „Kopf- und Fußzeile“ eingeblendet und aktiv."""
+        from PySide6.QtCore import Qt
+        b = editor.kopffuss()
+        b.beendet.connect(self._kopffuss_aus, Qt.UniqueConnection)
+        if b.starte("kopf" if header else "fuss"):
+            self.band.kontext("kopffuss", True, True)
+
+
+    def _kopffuss_aus(self):
+        self.band.kontext("kopffuss", False)
 
 
     def insert_page_number(self):

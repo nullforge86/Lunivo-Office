@@ -665,10 +665,6 @@ class SeiteBefehle:
     def fusszeileBearbeiten(self, k=None): self.w.edit_header_footer(False)
 
 
-    def kopfFussSchliessen(self, k=None):
-        self.w.statusBar().showMessage("Kopf- und Fußzeile werden über Dialoge bearbeitet — es gibt nichts zu schließen.", 4000)
-
-
     def ersteSeiteAnders(self, k=None):
         t = self.w.current_tab()
         if not t:

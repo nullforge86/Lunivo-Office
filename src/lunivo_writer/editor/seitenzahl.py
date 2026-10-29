@@ -75,6 +75,38 @@ def seitenzahlen_entfernen(page: PageSettings) -> bool:
     return gab
 
 
+def seitenzahl_loeschen_bereich(page: PageSettings, art: str, blatt: int = 0) -> bool | None:
+    """Seitenzahl nur auf einem Teil der Seiten eines Abschnitts entfernen (Seitenzahl löschen ▾ in der Kopf-/Fußzeilenleiste).
+    ``art``: "aktuelle" (nur Blatt ``blatt``), "auf" (bis einschließlich), "von" (ab dem Blatt), "abschnitt" (alle). ``blatt`` ist 0-basiert.
+    Darstellbar ist, was „Erste Seite anders“ trägt: die erste Seite getrennt von den übrigen. → True: geändert, False: gab keine
+    Seitenzahl, None: so nicht darstellbar."""
+    if art == "abschnitt" or (art == "von" and blatt == 0):
+        return seitenzahlen_entfernen(page)
+    if blatt == 0 and art in ("aktuelle", "auf"):
+        erste_hat = "{PAGE" in (page.first_header.text + page.first_footer.text) if page.diff_first else "{PAGE" in (page.header.text + page.footer.text)
+        if not page.diff_first:
+            page.first_header = HeaderFooter(page.header.text, page.header.align)
+            page.first_footer = HeaderFooter(page.footer.text, page.footer.align)
+            page.diff_first = True
+        for feld in ("first_header", "first_footer"):
+            hf = getattr(page, feld)
+            if "{PAGE" in hf.text:
+                setattr(page, feld, HeaderFooter(_ohne_zahl(hf.text).replace("{PAGES}", "").strip(), hf.align))
+        return erste_hat
+    if art == "von" and blatt == 1:                            # alle außer der ersten Seite
+        hatte = any("{PAGE" in getattr(page, f).text for f in ("header", "footer"))
+        if not page.diff_first:
+            page.first_header = HeaderFooter(page.header.text, page.header.align)
+            page.first_footer = HeaderFooter(page.footer.text, page.footer.align)
+            page.diff_first = True
+        for feld in ("header", "footer"):
+            hf = getattr(page, feld)
+            if "{PAGE" in hf.text:
+                setattr(page, feld, HeaderFooter(_ohne_zahl(hf.text).replace("{PAGES}", "").strip(), hf.align))
+        return hatte
+    return None
+
+
 # ---- beim Zeichnen ---------------------------------------------------------------------------------------------------
 def nummer(n: int, page: PageSettings | None = None, kapitel: str = "") -> str:
     """Die Seitennummer ``n`` in der Zahlenart der Einrichtung, mit Kapitelnummer davor („2-1“)."""
