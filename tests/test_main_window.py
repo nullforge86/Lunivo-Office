@@ -21,7 +21,7 @@ def test_new_edit_save_reopen(app, tmp_path, monkeypatch):
     e.insertPlainText("Erster Absatz\nZweiter Absatz")
     c = e.textCursor(); c.select(QTextCursor.Document); e.setTextCursor(c)
     w.befehle.fett()
-    assert e.document().isModified() and "●" in w.tabs.tabText(w.tabs.currentIndex())
+    assert e.document().isModified() and w.current_tab().is_modified()      # geändert: der Tab zeigt ein Kreis-Symbol (kein „●“ im Text mehr)
     assert e.textCursor().charFormat().fontWeight() >= 600
     target = str(tmp_path / "doc.docx")
     monkeypatch.setattr(FENSTER, lambda *a, **k: (target, ".docx"))
@@ -123,7 +123,7 @@ def test_kein_html_im_projekt():
     auch nicht als Datei-, Daten- oder Zwischenformat (Textbausteine, Hilfe, Berichte, Werkzeuge)."""
     import pathlib, re
     wurzel = pathlib.Path(__file__).resolve().parent.parent
-    ohne = {".venv", ".git", ".pytest_cache", "__pycache__", "node_modules"}
+    ohne = {".venv", ".git", ".claude", ".pytest_cache", "__pycache__", "node_modules"}      # .claude: Arbeitskopien (Worktrees), nicht Quelltext
     projektdateien = [p for p in wurzel.rglob("*") if p.is_file() and not (ohne & set(p.relative_to(wurzel).parts))]
     web = [str(p.relative_to(wurzel)) for p in projektdateien if p.suffix.lower() in {".html", ".htm", ".js", ".mjs", ".css", ".ts"}]
     assert web == [], "Web-Dateien im Projekt: " + ", ".join(web)

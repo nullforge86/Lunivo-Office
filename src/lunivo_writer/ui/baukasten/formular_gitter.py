@@ -298,7 +298,8 @@ class FormularGitter(QLayout):
 
     def _plan(self, breite: int):
         """→ ([(Element, x, y, Breite, Höhe)], Gesamthöhe) bei dieser Breite."""
-        paare = [e for e in self._einheiten if e.b is not None]
+        einheiten = [e for e in self._einheiten if not e.f.isEmpty()]            # ausgeblendete Felder (und Feldgruppen) lassen keinen Abstand stehen
+        paare = [e for e in einheiten if e.b is not None]
         bw = max((_natuerlich(e.b) for e in paare), default=0)                    # Breite der Beschriftungen
         fw = max((_natuerlich(e.f) for e in paare), default=0)                    # Breite, die ein Feld gern hätte
         wunsch = bw + ABSTAND + fw
@@ -306,9 +307,9 @@ class FormularGitter(QLayout):
         gestapelt = bool(paare) and wunsch > breite                               # zu eng für „Beschriftung links“: darüber
         out, y = [], 0
         i = 0
-        n = len(self._einheiten)
+        n = len(einheiten)
         while i < n:
-            e = self._einheiten[i]
+            e = einheiten[i]
             if e.reihe is not None:
                 y = self._reihe_legen(e, breite, y, out); i += 1
                 continue
@@ -317,8 +318,8 @@ class FormularGitter(QLayout):
                 out.append((e.f, 0, y, breite, h)); y += h + ABSTAND; i += 1
                 continue
             zeile = [e]
-            while spalten == 2 and len(zeile) < 2 and i + len(zeile) < n and self._einheiten[i + len(zeile)].b is not None:
-                zeile.append(self._einheiten[i + len(zeile)])
+            while spalten == 2 and len(zeile) < 2 and i + len(zeile) < n and einheiten[i + len(zeile)].b is not None:
+                zeile.append(einheiten[i + len(zeile)])
             sp = (breite - (len(zeile) - 1) * SPALTEN_ABSTAND) // len(zeile) if len(zeile) > 1 else breite
             hmax = 0
             plaetze = []

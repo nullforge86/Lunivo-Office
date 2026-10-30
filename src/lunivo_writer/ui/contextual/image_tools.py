@@ -1,7 +1,7 @@
 """Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``form``; für freie Objekte inkl. WordArt/Textfeld: ``zeichen``)."""
 from __future__ import annotations
 
-from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
+from lunivo_writer.ui.ribbon.tabs.baustein import anordnen_gruppe as _gruppe, anordnen_knopf as _a, k as _k
 
 
 BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
@@ -27,13 +27,8 @@ BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
         _k("sparkles", "Bildeffekte", "zeichenEffekte", True),
         _k("frame", "Rahmen", None, text=True, klappe="zeichenGliederung"),
         _k("undo-2", "Bild zurücksetzen", "bildZuruecksetzen", text=True)]},
-    {"name": "Anordnen", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("objektdrehen", "Frei drehen", None, True, klappe="zeichenDrehen"),
-        _k("gruppieren", "Gruppieren", "gruppieren", text=True),
-        _k("ausrichten", "Ausrichten", None, text=True, klappe="zeichenAusrichten"),
-        _k("textflussumbruch", "Textumbruch Stil", "zeichenUmbruch", True),
-        _k("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", text=True),
-        _k("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", text=True)]},
+    _gruppe(_a("drehen", "Frei drehen", gross=True), _a("gruppieren", text=True), _a("ausrichten", text=True), _a("umbruch", gross=True),
+            _a("vorn", text=True), _a("hinten", text=True)),
     {"name": "Weitere", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         _k("ruler", "Größe und Seitenverhältnis …", "bildGroesse", text=True),
         _k("einpassen", "Auf Seitenbreite", "bildBreite", text=True),
@@ -66,14 +61,8 @@ ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
         _k("linie", "Gliederung", klappe="zeichenGliederung", gross=True),
         _k("pinselchen", "Format übertragen", "zeichenFormatUebertragen", text=True),
         _k("texteffekt", "Formeffekte", "zeichenEffekte", text=True)]},
-    {"name": "Anordnen", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("ausrichten", "Ausrichten", klappe="zeichenAusrichten", gross=True),
-        _k("gruppieren", "Gruppieren", "gruppieren", text=True),
-        _k("objektdrehen", "Drehen", klappe="zeichenDrehen", text=True),
-        _k("textflussumbruch", "Textumbruch Stil", "zeichenUmbruch", gross=True),
-        _k("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", text=True),
-        _k("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", text=True),
-        _k("auswahlbereich", "Auswahlbereich", "auswahlbereich", gross=True)]},
+    _gruppe(_a("ausrichten", gross=True), _a("gruppieren", text=True), _a("drehen", text=True), _a("umbruch", gross=True),
+            _a("vorn", text=True), _a("hinten", text=True), _a("auswahlbereich", gross=True)),
     {"name": "Größe", "felder": "masse", "pfeil": "zeichenLayout", "knoepfe": []},
 ]}
 
@@ -92,11 +81,7 @@ SMARTARTTOOLS = {"name": "SmartArt-Design", "kontext": "smartart", "gruppen": [
         _k("layout-template", "Layout ändern", None, True, klappe="smartartLayout"),
         _k("palette", "Farben ändern", None, True, klappe="smartartFarben")]},
     {"name": "SmartArt-Stile", "ohne_titel": True, "galerie": "smartartStile", "knoepfe": []},
-    {"name": "Anordnen", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("textflussumbruch", "Textfluss", "zeichenUmbruch", gross=True),
-        _k("ausrichten", "Ausrichten", None, True, klappe="zeichenAusrichten"),
-        _k("auswahlbereich", "Auswahlbereich", "auswahlbereich", gross=True),
-        _k("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", text=True),
-        _k("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", text=True)]},
+    _gruppe(_a("umbruch", "Textfluss", gross=True), _a("ausrichten", gross=True), _a("auswahlbereich", gross=True),
+            _a("vorn", text=True), _a("hinten", text=True)),
     {"name": "Größe", "felder": "masse", "praefix": "sa_", "pfeil": "zeichenLayout", "knoepfe": []},
 ]}

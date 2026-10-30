@@ -30,7 +30,7 @@ def test_seiten_und_befehle(app, tmp_path):
     w.new_document()
     w.backstage_oeffnen()
     b = w.backstage
-    assert set(b.seiten) == {"zuletzt", "vorlage", "speichern_als", "drucken", "schuetzen", "info", "oeffnen_mit", "optionen", "hilfe"}
+    assert set(b.seiten) == {"zuletzt", "vorlage", "speichern_als", "pdf", "bild", "drucken", "schuetzen", "info", "oeffnen_mit", "optionen", "hilfe"}
     b._zeigen("info")
     t = w.current_tab()
     # Eigenschaften werden ins Dokument übernommen
@@ -56,11 +56,11 @@ def test_ohne_dokument_nur_zuletzt(app, tmp_path):
 
 
 def test_menue_knopf_links_oeffnet_die_datei_ansicht(app, tmp_path):
-    """„☰ Menü“ steht ganz links vor dem Schnellzugriff und ersetzt den sichtbaren Reiter „Datei“."""
+    """„Menü“ (mit Symbol davor) steht ganz links vor dem Schnellzugriff und ersetzt den sichtbaren Reiter „Datei“."""
     w = fenster(tmp_path)
     w.new_document()
     k, r = w.band.menue_knopf, w.band.reiter
-    assert k.isVisible() and k.text() == "☰ Menü" and w.band.kopf.indexOf(k) == 0
+    assert k.isVisible() and k.text() == "Menü" and w.band.kopf.indexOf(k) == 0
     assert [r.tabText(i) for i in range(r.count()) if r.isTabVisible(i)][0] == "Start"      # kein Reiter „Datei“ mehr zu sehen
     k.click()
     assert w.backstage.isVisible() and k.isChecked() and not w.arbeit.isVisible()

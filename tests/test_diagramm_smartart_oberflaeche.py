@@ -160,7 +160,13 @@ def test_knotenklick_waehlt_knoten_und_tippen_schreibt(fenster):
     _maus(ed, QEvent.MouseButtonPress, pos); _maus(ed, QEvent.MouseButtonRelease, pos)
     assert SA.knoten_gewaehlt(ed) == ident
     assert "sa_form" in ed._frei_knopf_rects(_rect(ed))
-    assert ed.frei_knoten_edit_starten("Neu")
+    bisher = SA.knoten_text(ed, ident)
+    assert bisher
+    assert ed.frei_knoten_edit_starten(" ")                         # Standard: Tippen löscht den Knotentext nicht, es hängt an
+    ed._sa_edit[0].editingFinished.emit()
+    assert SA.knoten_text(ed, ident).startswith(bisher)
+    ed.opt = lambda name, std=True: True if name == "bearbeiten/tippen_ersetzt" else std
+    assert ed.frei_knoten_edit_starten("Neu")                       # nur mit der Option „Tippen ersetzt die Auswahl“ wird ersetzt
     ed._sa_edit[0].editingFinished.emit()
     assert SA.knoten_text(ed, ident) == "Neu"
     ed.viewport().grab()
@@ -187,3 +193,21 @@ def test_zahnrad_oeffnet_formatierung_je_objektart(fenster):
     assert "zahnrad" in ed._frei_knopf_rects(_rect(ed)) and "dg_einst" not in ed._frei_knopf_rects(_rect(ed))
     ed._frei_knopf("zahnrad", QPointF(0, 0))
     assert w.sidebar.diagrammformat_sichtbar()
+
+
+@pytest.mark.parametrize("breite", [300, 444])
+def test_smartart_formatpanel_baut_und_ragt_nicht_heraus(app, breite):
+    from lunivo_writer.ui.baukasten.smartart_format_panel import SmartArtFormatPanel
+    p = SmartArtFormatPanel(None, {"format": {"fuell": "#ff0000"}}); p.resize(breite, 700); p.show(); app.processEvents()
+    assert not p.teil_wahl.isVisible() and not p.reiter.isTabVisible(2) and not p.reiter.isTabVisible(3) and p.optionen.tabText(0) == "Formoptionen"
+    assert p.werte()["fuell"] == "#ff0000"
+    p.close()
+
+
+def test_zahnrad_smartart_oeffnet_formatierung_und_wirkt(fenster):
+    w = fenster; ed = w.current_editor()
+    SA.einfuegen(ed, "Matrix"); ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
+    ed._frei_knopf("zahnrad", QPointF(0, 0))
+    assert w.sidebar.format_sichtbar("smartart")
+    w.sidebar.format_panel("smartart").geaendert.emit({"fuell": "#ff0000", "linie": None})
+    assert FO.daten_lesen(ed, "smartart")["format"]["fuell"] == "#ff0000"

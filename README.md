@@ -46,6 +46,8 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 - [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
 - [Oberfläche](docs/oberflaeche.md)
 - [Projektaufbau](docs/README.md)
+- [UI-Technologie](docs/ui-technologie.md)
+- [Interne Funktionen (Inventar)](docs/interne-funktionen.md)
 - [Erweiterungen](docs/erweiterungen.md)
 - [Entstehung](docs/ENTSTEHUNG.md)
 - [Wohin Lunivo gehen soll](docs/RICHTUNG.md)

@@ -26,7 +26,7 @@ from docx.text.paragraph import Paragraph
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import (
     QBrush, QColor, QFont, QImage, QTextBlockFormat, QTextCharFormat,
-    QTextCursor, QTextDocument, QTextFormat, QTextImageFormat,
+    QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat, QTextImageFormat,
     QTextLength, QTextListFormat, QTextTableFormat,
 )
 
@@ -1305,7 +1305,8 @@ class _Reader:
         tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
         grid = table._tbl.xpath("w:tblPr/w:tblBorders") or (
             [1] if table.style is not None and "Grid" in (table.style.name or "") else [])
-        tf.setBorder(0.5 if grid else 0)
+        tf.setBorder(1 if grid else 0)
+        tf.setBorderBrush(QColor('#333333')); tf.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
         tf.setBorderCollapse(True)
         qt = self.cur.insertTable(rows, cols, tf)
 

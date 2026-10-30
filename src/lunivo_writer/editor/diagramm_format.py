@@ -13,7 +13,8 @@ Schlüssel eines Teils (jeder darf fehlen = Automatisch):
                "abstand"}`` / ``{"farbe", "radius"}`` werden gelesen)
 ``text``       ``{"farbe", "groesse", "fett", "kursiv", "unter", "name", "effekt": {Werte der Texteffekte}, "feld": {"vertikal", "richtung", "winkel", "raender",
                "anpassen", "umbruch"}}``
-``achse``      ``{"min", "max", "intervall", "umkehren", "beschriftung": "neben"|"keine"}`` (Wertachse: alles, Rubrikenachse: umkehren, beschriftung)
+``achse``      ``{"min", "max", "intervall", "neben" (Nebenintervall), "format" (printf-Muster der Beschriftung), "umkehren", "beschriftung": "neben"|"keine"}``
+               (Wertachse: alles, Rubrikenachse: umkehren, beschriftung)
 ``reihe``      ``{"luecke": %, "glatt": bool, "punkte": bool}``
 """
 from __future__ import annotations
@@ -355,6 +356,12 @@ def achse_anwenden(achse, opt: dict | None, wert: bool) -> None:
         if opt.get("intervall") and hasattr(achse, "setTickInterval") and float(opt["intervall"]) > 0:
             achse.setTickType(achse.TickType.TicksDynamic)
             achse.setTickAnchor(achse.min()); achse.setTickInterval(float(opt["intervall"]))
+        neben = opt.get("neben")                                     # Nebenintervall → Anzahl der Hilfsstriche zwischen zwei Hauptstrichen
+        if neben and float(neben) > 0 and hasattr(achse, "setMinorTickCount"):
+            haupt = float(opt["intervall"]) if opt.get("intervall") else (achse.max() - achse.min()) / max(1, achse.tickCount() - 1)
+            achse.setMinorTickCount(max(0, int(round(haupt / float(neben))) - 1))
+        if opt.get("format") and hasattr(achse, "setLabelFormat"):   # QtCharts kennt nur printf-Muster („%.1f“, „%d“), keine Excel-Formatcodes
+            achse.setLabelFormat(str(opt["format"]))
     if opt.get("umkehren") and hasattr(achse, "setReverse"):
         achse.setReverse(True)
     if opt.get("beschriftung") == "keine":

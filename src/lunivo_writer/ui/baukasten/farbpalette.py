@@ -236,7 +236,7 @@ class FarbFeld(QPushButton):
             pm = QPixmap(14, 14); pm.fill(QColor(self.farbe))
             p = QPainter(pm); p.setPen(QPen(QColor(Farbe.GRAU), 1)); p.setBrush(Qt.NoBrush); p.drawRect(0, 0, 13, 13); p.end()
             self.setIcon(QIcon(pm))
-        self.setStyleSheet("QPushButton { text-align: left; padding: 3px 10px; min-width: 120px; }")
+        self.setStyleSheet("QPushButton { text-align: left; padding: 3px 10px; min-width: 72px; }")
 
 
 class FarbKnopf(QToolButton):

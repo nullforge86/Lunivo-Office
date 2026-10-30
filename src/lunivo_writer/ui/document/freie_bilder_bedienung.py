@@ -612,6 +612,8 @@ class FreieBilderMixin:
             fenster.band.aktualisieren()
         if hasattr(fenster, "diagrammformat_folgen"):
             fenster.diagrammformat_folgen()
+        if hasattr(fenster, "smartartformat_folgen"):
+            fenster.smartartformat_folgen()
         self.viewport().update()
 
     def _frei_teilwahl_aufheben(self) -> None:
@@ -645,7 +647,8 @@ class FreieBilderMixin:
 
     # ---- Text im SmartArt-Knoten schreiben -------------------------------------------------------------------------------------------
     def frei_knoten_edit_starten(self, text: str | None = None) -> bool:
-        """Ein Eingabefeld über dem gewählten SmartArt-Knoten (Doppelklick, Enter oder Tippen). ``text``: bereits getippte Zeichen ersetzen den Text."""
+        """Ein Eingabefeld über dem gewählten SmartArt-Knoten (Doppelklick, Enter oder Tippen). ``text``: bereits getippte Zeichen werden hinter den
+        Knotentext geschrieben; sie ersetzen ihn nur, wenn „Tippen ersetzt die Auswahl“ an ist (Standard: aus, Markieren löscht nichts)."""
         kn = self._frei_knoten_rect()
         a = self._frei_angabe()
         if kn is None or a is None:
@@ -655,7 +658,9 @@ class FreieBilderMixin:
         self._frei_knoten_edit_ende(True)
         ident = (a.get("daten") or {}).get("auswahl")
         w = QLineEdit(self.viewport())
-        w.setText(text if text is not None else (SA.knoten_text(self, ident) or ""))
+        bisher = SA.knoten_text(self, ident) or ""
+        ersetzt = bool(self.opt("bearbeiten/tippen_ersetzt", False)) if callable(getattr(self, "opt", None)) else False
+        w.setText(text if (text is not None and ersetzt) else bisher + (text or ""))
         w.setAlignment(Qt.AlignCenter)
         f = w.font(); f.setPixelSize(max(8, int(kn.height() * 0.3))); w.setFont(f)
         w.setStyleSheet("QLineEdit { background: white; color: #1f1f1f; border: 1px solid #1c7ed6; }")
@@ -667,7 +672,7 @@ class FreieBilderMixin:
         w.editingFinished.connect(fertig)
         w.show(); w.setFocus(); w.deselect() if text is not None else w.selectAll()
         if text is not None:
-            w.setCursorPosition(len(text))
+            w.setCursorPosition(len(w.text()))
         return True
 
     def _frei_knoten_edit_ende(self, verwerfen: bool = False) -> None:

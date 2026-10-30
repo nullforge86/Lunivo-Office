@@ -635,7 +635,7 @@ def teile(daten: dict) -> list[tuple[str, str]]:
 
 
 def teil_geo(daten: dict, b: float, h: float) -> dict:
-    """Wie ``teil_rechtecke``, aber mit allen Angaben der Geometrie (auch ``balken_<i>`` = Liste der einzelnen Balken einer Reihe)."""
+    """Wie ``teil_rechtecke``, aber mit allen Angaben der Geometrie (auch ``balken_<n>`` = Liste der einzelnen Balken einer Reihe)."""
     geo: dict = {}
     bild_aus_daten(daten, b, h, 1.0, geo)
     return geo

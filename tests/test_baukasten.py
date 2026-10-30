@@ -387,20 +387,14 @@ def test_dunkles_system_nutzt_die_lunivo_palette(app, monkeypatch):
         app.setPalette(alt)
 
 
-def test_dateisymbole_aus_dem_icon_theme(app, monkeypatch):
-    from PySide6.QtGui import QIcon, QPixmap
+def test_dateisymbole_aus_mitgelieferten_svgs(app):
+    """Die Dateisymbole kommen aus den mitgelieferten SVGs (assets/icons/filetypes), nicht aus dem Icon-Theme des Systems."""
     from lunivo_writer.ui.baukasten import datei_symbole as D
-    namen = D.icon_namen(".pdf")
-    assert namen[0] == "application-pdf" and "x-office-document" in namen              # MIME-Typ zuerst, dann Rückfälle
-    assert D.icon_namen("/home/x/brief.txt")[0] == "text-plain" and D.icon_namen(".odt")[0].startswith("application-vnd.oasis")
-    # Das Symbol kommt aus dem Theme des Systems: der erste Name, den es kennt, gewinnt
-    pm = QPixmap(8, 8); pm.fill("red"); da = QIcon(pm)
-    gefragt = []
-    def theme(n):
-        gefragt.append(n)
-        return da if n == "x-office-document" else QIcon()
-    monkeypatch.setattr(QIcon, "fromTheme", staticmethod(theme))
-    assert not D.datei_symbol(".pdf").isNull() and gefragt[0] == "application-pdf" and gefragt[-1] == "x-office-document"
+    assert D.icon_namen(".pdf") == ["pdf", "genericfile"]                          # Dateityp zuerst, dann der allgemeine Rückfall
+    assert D.icon_namen("/home/x/brief.txt")[0] == "txt" and D.icon_namen(".odt")[0] == "rtf"
+    assert D.icon_namen("unbekannt.xyz") == ["genericfile", "genericfile"]
+    for name in ("a.pdf", "b.docx", "c.txt", "d.unbekannt"):
+        assert not D.datei_symbol(name).isNull(), name
 
 
 def test_speichern_unter_untermenue_mit_formaten(app, tmp_path):
@@ -1026,7 +1020,8 @@ def test_texteffekte_knopf_im_band_oeffnet_die_seitenleiste(app, tmp_path):
     from lunivo_writer.ui.main_window import MainWindow
     w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
     w.show(); w.new_document(); w.current_editor().setPlainText("Text")
-    knoepfe = [b for b in w.findChildren(QToolButton) if b.toolTip() in ("Texteffekte", "Texteffekte formatieren")]
+    # Es gibt zwei Knöpfe mit diesem Namen; der unsichtbare öffnet nur sein Menü (das blockiert im Test). Gemeint ist der sichtbare im Band.
+    knoepfe = [b for b in w.findChildren(QToolButton) if b.toolTip() in ("Texteffekte", "Texteffekte formatieren") and b.isVisible()]
     assert knoepfe, "der Knopf „Texteffekte“ fehlt im Band"
     w.sidebar.hide()
     knoepfe[0].click()
@@ -1206,11 +1201,11 @@ def test_vorlagen_galerie_zeigt_eigene_vorlagen(app, tmp_path):
     (tmp_path / "Mein Brief.txt").write_text("Hallo\nVorlage\n", encoding="utf-8")
     g = VorlagenGalerie(s, True); g.resize(1200, 800); g.show()
     namen = [k.name for k in g._kacheln]
-    assert namen[0] == "Leeres Dokument" and "Mein Brief" in namen and "Brief" in namen
-    assert g.reiter_w.tabText(2).endswith("1")
-    g._reiter_setzen("eigene"); assert [k.name for k in g._kacheln if k.isVisible()] == ["Mein Brief"]
+    assert "Mein Brief" in namen and "Brief" in namen        # „Leeres Dokument“ ist keine Kachel der Vorlagen mehr (eigene Auswahl auf der Seite „Neu“)
+    assert g.reiter_w.tabText(1).endswith("1")                # Reiter „Meine Vorlagen  1“ (es gibt zwei Reiter)
+    g._reiter_setzen("eigene"); app.processEvents(); assert [k.name for k in g._kacheln if k.isVisible()] == ["Mein Brief"]
     g.suche.setText("xyz"); assert not [k for k in g._kacheln if k.isVisible()]
-    g.suche.setText(""); g._reiter_setzen("alle")
+    g.suche.setText(""); g._reiter_setzen("eigene")                # es gibt nur noch „Standardvorlagen“ und „Meine Vorlagen“
     gewaehlt = []
     g.gewaehlt.connect(lambda a, w: gewaehlt.append((a, w)))
     next(k for k in g._kacheln if k.name == "Mein Brief").click()
@@ -1451,7 +1446,8 @@ def test_objekt_menues_und_bildformat_roundtrip(app, tmp_path):
     from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue, KonturMenue, formstil_werte, formstile
     assert len(formstile().knoepfe) == 42 and formstil_werte("z12")["fuell"]["art"] == "farbe"
     f, k = FuellMenue(), KonturMenue()
-    assert [a.text() for a in f.actions() if not a.menu()][-5:] == ["Graduell", "Textur", "Muster(N)", "Fülleffekte…", "Bild(P)"] and any(a.text() == "Bild(P)" for a in f.actions())
+    # Graduell, Textur und Muster sind Untermenüs mit Kacheln (mit „Weitere …“ darunter); „Fülleffekte…“ gibt es nicht mehr als eigene Zeile
+    assert [a.text() for a in f.actions() if a.text()][-4:] == ["Graduell", "Textur", "Muster(N)", "Bild(P)"] and any(a.text() == "Bild(P)" for a in f.actions())
     assert [a.text() for a in k.actions() if a.menu()] == ["Linienart(W)", "Strichart", "Pfeilart"]
     from lunivo_writer.ui.document.document_editor import DocumentEditor
     ed = DocumentEditor(); ed.resize(900, 700); ed.show(); ed.setPlainText("Text")
@@ -1530,8 +1526,11 @@ def test_fuelleffekte_graduell_textur_muster_oeffnen_die_seitenleiste(app, tmp_p
                                                           "hinter": False, "ellipse": False, "ah": "", "av": ""})
     ed._frei_liste(); ed._frei_sel = ("t", 0, 0)
     m = ed.frei_fuell_menue(ed)
-    for text, radio in (("Textur", "r_textur"), ("Muster(N)", "r_muster"), ("Graduell", "r_verlauf")):
-        next(a for a in m.actions() if a.text() == text).trigger()
+    from PySide6.QtWidgets import QPushButton
+    for text, radio, weitere in (("Textur", "r_textur", "Weitere Texturen…"), ("Muster(N)", "r_muster", "Weitere Muster…"),
+                                 ("Graduell", "r_verlauf", "Weitere Farbverläufe…")):
+        untermenue = next(a for a in m.actions() if a.text() == text).menu()      # Untermenü mit Kacheln; „Weitere …“ öffnet die Seitenleiste
+        next(b for b in untermenue.findChildren(QPushButton) if b.text() == weitere).click()
         assert w.sidebar.objektformat_sichtbar() and getattr(w.sidebar.objekt_panel, radio).isChecked()
         app.processEvents()
         assert FB.aus_absatz(ed.document().firstBlock().blockFormat())[0]["fuell"]["art"] in ("textur", "muster", "graduell", "verlauf")

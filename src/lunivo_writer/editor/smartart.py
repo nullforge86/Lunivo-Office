@@ -22,6 +22,7 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QImage, QLinearGradient, QPain
 from lunivo_writer.editor.zusatz import P_OBJEKT
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.editor import diagramm_format as F
 # Die 15 Layouts des Dialogs „SmartArt-Grafik auswählen“ in der Reihenfolge der Galerie (Zeile für Zeile, vier Spalten) …
 KATALOG_LAYOUTS = ["Organigramm", "Blockraster", "Punktliste", "Balkenliste", "Beschreibungsliste", "Spaltenrahmen", "Spalten", "Bildliste",
                    "Perspektive", "Radial", "Prozess", "Konvergenz", "Kartenprozess", "Kreisbeziehung", "Segmentzyklus"]
@@ -130,7 +131,8 @@ def knoten_von(daten: dict) -> list[dict]:
     kn = daten.get("knoten")
     if isinstance(kn, list) and kn:
         out = [{"id": str(k.get("id") or f"k{i + 1}"), "text": str(k.get("text", "")), "ebene": int(k.get("ebene", 0)),
-                "bullets": [str(b) for b in k.get("bullets") or []], **({"assistent": True} if k.get("assistent") else {})} for i, k in enumerate(kn)]
+                "bullets": [str(b) for b in k.get("bullets") or []], **({"assistent": True} if k.get("assistent") else {}),
+                **({"format": copy.deepcopy(k["format"])} if k.get("format") else {})} for i, k in enumerate(kn)]
         return _glatt(out)
     return knoten_aus_text(daten.get("text", ""))
 
@@ -275,7 +277,20 @@ def aufzaehlung(kn: list[dict], ident, text: str = "Text") -> list[dict] | None:
 
 
 # ---- Zeichnen: gemeinsamer Zustand, Hilfen ---------------------------------------------------------------------------------------------
-_ZU: dict = {"stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "knoten": [], "hier": "standard"}
+_ZU: dict = {"stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "knoten": [], "hier": "standard", "fmt": [], "fmt_alle": {}}
+
+
+def _format_von(nr) -> dict | None:
+    """Das Format des Knotens Nummer ``nr`` (Format wie ``teil_format`` des Diagramms): das des Knotens über dem von allen Knoten (``daten["format"]``)."""
+    alle = _ZU.get("fmt_alle") or {}
+    eigen = _ZU["fmt"][nr] if nr is not None and 0 <= nr < len(_ZU["fmt"]) else None
+    if not alle and not eigen:
+        return None
+    f = {**alle, **(eigen or {})}
+    for k in ("linie", "text"):
+        if alle.get(k) and (eigen or {}).get(k):
+            f[k] = {**alle[k], **eigen[k]}
+    return f
 
 
 def _spiegel(r: QRectF) -> QRectF:
@@ -332,13 +347,33 @@ def _schrift(p: QPainter, text: str, groesse: float) -> None:
 
 
 def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=None) -> None:
+    fm = _format_von(nr)
     _fuellen(p, c, r)
+    if fm:                                                                   # eigenes Format (Füllung, Linie, Effekte, Text) über dem Formenstil
+        fu, li, fx = fm.get("fuell"), fm.get("linie"), F.fx_normal(fm)
+        if fx:
+            F.teil_zeichnen(p, r, {"fuell": fu if fu is not None else c.name(), **fx}, c); p.setBrush(Qt.NoBrush)
+        elif fu is not None:
+            br, opaz = F.pinsel(fu, r)
+            if br is None:
+                p.setBrush(Qt.NoBrush)
+            else:
+                if opaz < 1 and br.style() == Qt.SolidPattern:
+                    col = QColor(br.color()); col.setAlphaF(opaz); br = QBrush(col)
+                p.setBrush(br)
+        if li:
+            p.setPen(Qt.NoPen if F.linie_keine(li) else F.stift(li, c.darker(125).name(), r))
     p.drawRoundedRect(r, rund, rund)
     if _ZU["stil"] == 4:                                                    # Glanz: die obere Hälfte heller
         p.setPen(Qt.NoPen); p.setBrush(QColor(255, 255, 255, 55))
         p.drawRoundedRect(QRectF(r.left() + 2, r.top() + 2, r.width() - 4, r.height() / 2 - 2), rund, rund)
     p.setPen(_text_farbe(_stilfarbe(c)))
     _schrift(p, text, 11)
+    t = (fm or {}).get("text")
+    if t:
+        p.setFont(F.schrift_aus(p.font(), t))
+        if t.get("farbe") or t.get("effekt"):
+            p.setPen(F.textfarbe(t, p.pen().color().name()))
     _text_zeichnen(p, r.adjusted(6, 3, -6, -3), Qt.AlignCenter | Qt.TextWordWrap, text)
     _merke(nr, r)
 
@@ -964,7 +999,7 @@ def zeichnen_mit_knoten(daten: dict) -> tuple[QImage, dict[str, QRectF]]:
     kn = knoten_von(daten)
     pts = [(k["ebene"], _knotentext(k)) for k in kn] or [(0, "…")]
     _ZU.update(stil=int(daten.get("stil", 1)), rtl=bool(daten.get("rtl")), b=520, reg={}, ids=[k["id"] for k in kn], knoten=kn,
-               hier=daten.get("hierarchie", "standard"))
+               hier=daten.get("hierarchie", "standard"), fmt=[k.get("format") for k in kn], fmt_alle=daten.get("format") or {})
     img = _ZEICHNER.get(daten.get("layout", "Liste"), _pyramide)(daten, pts, 520)
     reg, letzt = dict(_ZU["reg"]), QRectF(0, 0, img.width(), img.height())
     for ident in _ZU["ids"]:                                                 # jeder Knoten hat ein Rechteck: sonst das des Knotens davor
@@ -1029,7 +1064,7 @@ def aendern(ed, **felder) -> bool:
     """Daten des gewählten SmartArt ändern und neu zeichnen (Breite bleibt, Seitenverhältnis folgt). Ein neuer ``text`` (anders als der zu den
     Knoten gehörende) ersetzt die Knoten; ``knoten=None``, ``auswahl=None``, ``hierarchie=None`` und ``rtl=None`` entfernen die Angabe."""
     from lunivo_writer.editor import frei_objekt as FO
-    neu = {k: v for k, v in felder.items() if v is not None or k in ("knoten", "auswahl", "hierarchie", "rtl")}
+    neu = {k: v for k, v in felder.items() if v is not None or k in ("knoten", "auswahl", "hierarchie", "rtl", "format")}
     if "text" in neu and "knoten" not in neu:
         d0 = daten_der_auswahl(ed) or {}
         if d0.get("knoten") and neu["text"] != text_aus_knoten(knoten_von(d0)):
@@ -1126,6 +1161,62 @@ def knoten_text_setzen(ed, ident, text: str) -> bool:
 
 def _knoten_schreiben(ed, kn: list[dict], auswahl) -> bool:
     return aendern(ed, knoten=kn, text=text_aus_knoten(kn), auswahl=auswahl)
+
+
+# ---- Formatierung (Seitenleiste „Formatierung“): Füllung, Linie, Effekte, Text — im Format des Diagramm-Teilformats --------------------------------
+FORMAT_SCHLUESSEL = ("fuell", "linie", "schatten", "leuchten", "reflektion", "weich", "d3", "drehung", "text")
+
+
+def _format_mischen(fmt: dict, kw: dict) -> dict:
+    """Angaben in ein Format einarbeiten: None/False entfernt, ``linie``/``text`` werden mit den vorhandenen Angaben zusammengeführt."""
+    for k, v in kw.items():
+        if k not in FORMAT_SCHLUESSEL:
+            continue
+        if v is None or v is False:
+            fmt.pop(k, None)
+        elif k in ("linie", "text") and isinstance(v, dict):
+            neu = {a: b for a, b in {**(fmt.get(k) or {}), **v}.items() if b is not None}
+            fmt[k] = neu
+            if not neu:
+                fmt.pop(k)
+        else:
+            fmt[k] = v
+    return fmt
+
+
+def format_lesen(ed) -> dict | None:
+    """Werte für die Seitenleiste: ``{"format": …, "gewaehlt": Id | None}`` — das Format des gewählten Knotens, ohne Auswahl das von allen Knoten."""
+    d = daten_der_auswahl(ed)
+    if d is None:
+        return None
+    ident = knoten_gewaehlt(ed)
+    if ident:
+        kn = knoten_von(d)
+        return {"teil": "diagrammbereich", "format": kn[_index(kn, ident)].get("format") or {}, "gewaehlt": ident}
+    return {"teil": "diagrammbereich", "format": d.get("format") or {}, "gewaehlt": None}
+
+
+def format_setzen(ed, **kw) -> bool:
+    """Format des gewählten Knotens (ohne Auswahl: aller Knoten) ändern; ``kw`` wie ``teil_format`` des Diagramms (``fuell``, ``linie``, ``schatten`` …, ``text``)."""
+    d = daten_der_auswahl(ed)
+    if d is None or not (set(kw) & set(FORMAT_SCHLUESSEL)):
+        return False
+    ident = knoten_gewaehlt(ed)
+    kn = knoten_von(d)
+    if ident:
+        k = kn[_index(kn, ident)]
+        fmt = _format_mischen(dict(k.get("format") or {}), kw)
+        k.pop("format", None)
+        if fmt:
+            k["format"] = fmt
+        return _knoten_schreiben(ed, kn, ident)
+    fmt = _format_mischen(dict(d.get("format") or {}), kw)
+    for k in kn:                                                             # „alle Knoten“ gilt: gleiche Angaben einzelner Knoten fallen weg
+        eigen = {a: b for a, b in (k.get("format") or {}).items() if a not in kw}
+        k.pop("format", None)
+        if eigen:
+            k["format"] = eigen
+    return aendern(ed, format=fmt or None, knoten=kn, text=text_aus_knoten(kn), auswahl=d.get("auswahl"))
 
 
 def befehl_form(ed, wie: str) -> bool:

@@ -10,7 +10,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QUrl
 from PySide6.QtGui import (
     QBrush, QColor, QFont, QFontMetricsF, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
-    QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextDocumentFragment, QTextFormat, QTextImageFormat, QTextLength,
+    QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextDocumentFragment, QTextFormat, QTextFrameFormat, QTextImageFormat, QTextLength,
     QTextTableFormat,
 )
 
@@ -331,7 +331,8 @@ def formel_einfuegen(ed, text: str) -> None:
 # ---- Schnelltabellen -----------------------------------------------------------------------------------------------------------
 def _tabelle(ed, zeilen: list[list[str]], kopf: bool = True, breit: bool = True):
     tf = QTextTableFormat()
-    tf.setCellPadding(4); tf.setCellSpacing(0); tf.setBorder(0.5); tf.setBorderCollapse(True)
+    tf.setCellPadding(4); tf.setCellSpacing(0); tf.setBorder(1); tf.setBorderCollapse(True)
+    tf.setBorderBrush(QColor('#333333')); tf.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
     tf.setWidth(QTextLength(QTextLength.PercentageLength, 100 if breit else 60))
     if kopf:
         tf.setHeaderRowCount(1)

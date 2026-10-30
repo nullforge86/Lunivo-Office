@@ -270,6 +270,40 @@ class BackstageBaustein:
             self.objektformat_seitenleiste(reiter)
 
 
+    def _smartart_werte(self, e) -> dict | None:
+        from lunivo_writer.editor import smartart as SA
+        return SA.format_lesen(e)
+
+    def smartartformat_seitenleiste(self) -> None:
+        """Zahnrad am SmartArt: die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort."""
+        from PySide6.QtGui import QImage
+        from lunivo_writer.editor import diagramm_format as F
+        from lunivo_writer.editor import smartart as SA
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+        w = self._smartart_werte(self.current_editor())
+        if w is None:
+            self.statusBar().showMessage("Bitte zuerst ein SmartArt auswählen.", 4000)
+            return
+        self._seitenleiste_oeffnen()
+
+        def anwenden(angaben: dict):
+            ed = self.current_editor()
+            if ed is not None:
+                SA.format_setzen(ed, **dict(angaben))
+                self.band.aktualisieren()
+
+        def bild():
+            pfad, _ = Dateifenster.getOpenFileName(self, "Bild als Füllung", "", "Bilder (*.png *.jpg *.jpeg *.bmp *.gif)")
+            b64 = F.bild_kodieren(QImage(pfad)) if pfad else ""
+            if b64 and self.current_editor() is not None:
+                SA.format_setzen(self.current_editor(), fuell={"art": "bild", "bild_b64": b64})
+                self.smartartformat_folgen()
+        self.sidebar.zeige_smartartformat(w, anwenden, bild)
+
+    def smartartformat_folgen(self) -> None:
+        """Wählt der Benutzer einen anderen Knoten, zeigt der offene Bereich dessen Format."""
+        self._format_folgen("smartart", self._smartart_werte)
+
     def _diagramm_werte(self, e) -> dict | None:
         """Die Werte für die Seitenleiste „Formatierung“ des gewählten Diagrammteils (None ohne markiertes Diagramm)."""
         from lunivo_writer.editor import diagramm as D

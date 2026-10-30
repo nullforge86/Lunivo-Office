@@ -2,7 +2,7 @@
 
 ``geometrie`` füllt ein Wörterbuch Schlüssel → QRectF (Bildpunkte, logische Maße ``b`` × ``h``) und liefert zu jeder Reihe die Punkte
 (``punkte``) für Fehlerindikatoren und Effekte. Schlüssel: ``diagrammbereich``, ``zeichnungsbereich``, ``titel``, ``legende``,
-``achse_horizontal``, ``achse_vertikal``, ``reihe_<i>``, ``legendeneintrag_<i>``; ``balken_<i>`` = Liste der einzelnen Balken einer Reihe.
+``achse_horizontal``, ``achse_vertikal``, ``reihe_<n>``, ``legendeneintrag_<n>``; ``balken_<n>`` = Liste der einzelnen Balken einer Reihe.
 Die Nummer ``i`` ist die Stelle der Reihe in den gespeicherten Daten (nicht die Stelle nach dem Filtern)."""
 from __future__ import annotations
 

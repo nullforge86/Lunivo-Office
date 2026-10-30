@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QBrush, QColor, QFont, QImage, QPen, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat, QTextImageFormat, QTextListFormat, QTextTableFormat, QTextLength
+from PySide6.QtGui import QBrush, QColor, QFont, QImage, QPen, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat, QTextImageFormat, QTextListFormat, QTextTableFormat, QTextLength
 from lunivo_writer.services.docx_reader import LH_PROPORTIONAL, STYLE_PROP
 from lunivo_writer.editor.zusatz import P_VERSTECKT
 from lunivo_writer.models.page import mm_to_px, px_to_mm
@@ -625,7 +625,8 @@ class FormatierungBaustein:
         """Tabelle an der Schreibmarke; ``spaltenbreite`` (Bildpunkte): feste Spalten, sonst passt sie sich der Seitenbreite an."""
         tf = QTextTableFormat()
         tf.setCellPadding(4); tf.setCellSpacing(0)
-        tf.setBorder(0.5 if borders else 0); tf.setBorderCollapse(True)
+        tf.setBorder(1 if borders else 0); tf.setBorderCollapse(True)
+        tf.setBorderBrush(QColor('#333333')); tf.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
         if spaltenbreite:
             tf.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, spaltenbreite)] * cols)
         else:

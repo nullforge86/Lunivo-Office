@@ -153,3 +153,30 @@ def fenster_sa(app, tmp_path):
     for t in w._doc_tabs():
         t.editor.document().setModified(False)
     w.close()
+
+
+def test_formatierung_zeichnen_knoten_und_alle_und_docx(app, tmp_path):
+    """Format pro Knoten / für alle Knoten wirkt aufs Bild, bleibt bei Knotenbefehlen erhalten und übersteht den DOCX-Rundweg."""
+    from lunivo_writer.editor import frei_objekt as FO
+    ed = DocumentEditor()
+    SA.einfuegen(ed, {"layout": "Prozess", "farben": "Blau", "text": "Eins\nZwei\nDrei"})
+    d0 = SA.daten_der_auswahl(ed)
+    vorher = SA.zeichnen(d0)
+    assert SA.format_setzen(ed, fuell="#ff0000", linie={"farbe": "#00ff00", "breite": 3})            # keine Auswahl: alle Knoten
+    d = SA.daten_der_auswahl(ed)
+    assert d["format"]["fuell"] == "#ff0000" and SA.zeichnen(d) != vorher
+    ident = SA.knoten_von(d)[1]["id"]
+    SA.knoten_waehlen(ed, ident)
+    assert SA.format_lesen(ed)["gewaehlt"] == ident
+    assert SA.format_setzen(ed, fuell="#0000ff", text={"groesse": 18, "fett": True})
+    d = SA.daten_der_auswahl(ed)
+    assert SA.knoten_von(d)[1]["format"]["fuell"] == "#0000ff" and "format" not in SA.knoten_von(d)[0]
+    einzeln = SA.zeichnen(d)
+    assert einzeln != SA.zeichnen({**d, "knoten": [{k: v for k, v in n.items() if k != "format"} for n in d["knoten"]]})
+    assert SA.befehl_form(ed, "nach") and SA.knoten_von(SA.daten_der_auswahl(ed))[1]["format"]["fuell"] == "#0000ff"    # Knotenbefehle behalten das Format
+    pfad = str(tmp_path / "f.docx")
+    formats.save(pfad, ed.document(), PageSettings())
+    neu = DocumentEditor(); neu.setDocument(formats.load(pfad).doc)
+    neu._frei_liste(); neu._frei_sel = neu._frei_treffer[0][0]
+    d2 = SA.daten_der_auswahl(neu)
+    assert d2["format"]["fuell"] == "#ff0000" and SA.knoten_von(d2)[1]["format"]["text"]["groesse"] == 18
