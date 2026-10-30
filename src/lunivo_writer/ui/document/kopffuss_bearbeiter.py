@@ -14,7 +14,7 @@ from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QTimer, Signal
 import re
 
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap, QTextCharFormat, QTextCursor, QTextFormat
-from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QMenu, QPlainTextEdit, QPushButton,
+from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QMenu, QTextEdit, QPushButton,
                                QRadioButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from lunivo_writer.editor import seitenzahl as SZ
@@ -128,7 +128,7 @@ class _EinfuegenPanel(QMenu):
         self.uebernommen.emit(pos, muster, zahl, bereich)
 
 
-class _Feld(QPlainTextEdit):
+class _Feld(QTextEdit):
     """Das Textfeld über dem Kopf- bzw. Fußbereich: randlos, gestrichelter Rahmen, Esc beendet."""
     schliessen = Signal()
     fokus = Signal(str)                                           # bekommt die Schreibmarke: "kopf" oder "fuss"
@@ -136,7 +136,7 @@ class _Feld(QPlainTextEdit):
     def __init__(self, eltern, zone: str = "kopf"):
         super().__init__(eltern)
         self.zone = zone
-        self.setFrameShape(QPlainTextEdit.NoFrame)
+        self.setFrameShape(QTextEdit.NoFrame)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setAccessibleName("Kopfzeile" if zone == "kopf" else "Fußzeile")
         # Das Feld steht auf dem weißen Papier: Farben unabhängig vom Programm-Thema (Papier, schwarzer Text, sichtbare Schreibmarke)
@@ -146,7 +146,7 @@ class _Feld(QPlainTextEdit):
             pal.setColor(gr, QPalette.Text, QColor("#000000")); pal.setColor(gr, QPalette.WindowText, QColor("#000000"))
             pal.setColor(gr, QPalette.Highlight, QColor("#3e78d0")); pal.setColor(gr, QPalette.HighlightedText, QColor("#ffffff"))
         self.setPalette(pal)
-        self.setStyleSheet("QPlainTextEdit { background: #ffffff; color: #000000; border: none; selection-background-color: #3e78d0; selection-color: #ffffff; }")
+        self.setStyleSheet("QTextEdit { background: #ffffff; color: #000000; border: none; selection-background-color: #3e78d0; selection-color: #ffffff; }")
         self.setCursorWidth(1)
 
     # ---- Felder: {PAGE}/{PAGES} stehen als Zahl mit Hintergrund im Text und werden beim Speichern wieder zu {PAGE}/{PAGES} ----
@@ -186,6 +186,36 @@ class _Feld(QPlainTextEdit):
             zeilen.append("".join(teile))
             b = b.next()
         return "\n".join(zeilen)
+
+    def formatierung_lesen(self) -> list[dict]:
+        """Liefert den Inhalt absatzweise mit Zeichenformaten; unabhängig von HTML."""
+        abschnitte = []
+        block = self.document().begin()
+        while block.isValid():
+            zeichen = []
+            it = block.begin()
+            while not it.atEnd():
+                fragment = it.fragment()
+                fmt = fragment.charFormat()
+                vordergrund = fmt.foreground()
+                zeichen.append({
+                    "text": fragment.text(),
+                    "feld": fmt.property(FELD_EIGENSCHAFT) or None,
+                    "schriftart": fmt.fontFamily() or None,
+                    "schriftgroesse": fmt.fontPointSize() or None,
+                    "fett": fmt.fontWeight() >= QFont.Bold,
+                    "kursiv": fmt.fontItalic(),
+                    "unterstrichen": fmt.fontUnderline(),
+                    "farbe": vordergrund.color().name()
+                        if vordergrund.style() != Qt.NoBrush else None,
+                })
+                it += 1
+            abschnitte.append({
+                "ausrichtung": int(block.blockFormat().alignment()),
+                "zeichen": zeichen,
+            })
+            block = block.next()
+        return abschnitte
 
     def _feld_bei(self, pos: int):
         """(Anfang, Ende) des Feldes, das die Zeichen vor/hinter ``pos`` berührt, sonst None — getrennt nach 'davor' und 'dahinter'."""
