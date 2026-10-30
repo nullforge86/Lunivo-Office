@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QBrush, QCursor, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QBrush, QColor, QCursor, QTextFrameFormat, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QMenu
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
@@ -160,7 +160,7 @@ class KontextBefehle:
     def tabelleRahmen(self, k=None):
         e, c, t = self._tab()
         if t:
-            f = t.format(); f.setBorder(0 if f.border() > 0 else 0.5); t.setFormat(f)
+            f = t.format(); f.setBorder(0 if f.border() > 0 else 1); f.setBorderBrush(QColor('#333333')); f.setBorderStyle(QTextFrameFormat.BorderStyle_Solid); t.setFormat(f)
 
 
     def an_tabelleRahmen(self):

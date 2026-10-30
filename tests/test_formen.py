@@ -77,4 +77,4 @@ def test_tabellenvorlage_docx(app, tmp_path):
     assert n.cellAt(0, 0).format().background().color().name() == "#2f6fb5"
     assert n.cellAt(2, 0).format().background().color().name() == "#e7f0fa"
     assert n.cellAt(2, 1).format().toTableCellFormat().verticalAlignment() == QTextCharFormat.AlignMiddle
-    assert n.format().border() == 0.5
+    assert n.format().border() == 1

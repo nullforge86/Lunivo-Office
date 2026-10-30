@@ -21,7 +21,7 @@ _DATEITYP = {
     ".bmp": "photo", ".webp": "photo", ".svg": "photo",
     ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video",
     ".zip": "zip", ".7z": "archive", ".rar": "archive", ".tar": "archive",
-    ".py": "code", ".js": "code", ".html": "html", ".xml": "xml", ".json": "code",
+    ".py": "code", ".js": "code", ".xml": "xml", ".json": "code",
 }
 
 

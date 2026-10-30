@@ -10,7 +10,7 @@ die Vorschau auf einer durchsichtigen Fläche über dem Sichtbereich; das Dokume
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt
-from PySide6.QtGui import QColor, QCursor, QPainter, QPen
+from PySide6.QtGui import QColor, QCursor, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
 from lunivo_writer.core.farben import Farbe
@@ -24,9 +24,24 @@ def groesse(breite: float, hoehe: float, zoom: float = 1.0) -> tuple[int, int]:
 
 
 def _stift_cursor() -> QCursor:
+    """Stift in Dunkel mit weißem Rand: auf weißem Blatt wie auf dunklem Grund gut zu sehen (Spitze oben links)."""
     from lunivo_writer.ui.widgets import icons
-    pm = icons.icon("stift", 24).pixmap(24, 24)
-    return QCursor(pm, 2, pm.height() - 2) if not pm.isNull() else QCursor(Qt.CrossCursor)
+    px = 32
+    hell, dunkel = (icons._pixmap("stift", f, px).scaled(px, px, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+                    for f in ("#ffffff", "#111111"))
+    if hell.isNull():
+        return QCursor(Qt.CrossCursor)
+    bild = QImage(px + 8, px + 8, QImage.Format_ARGB32_Premultiplied)
+    bild.fill(Qt.transparent)
+    p = QPainter(bild)
+    for dx in range(-2, 4):
+        for dy in range(-2, 4):
+            p.drawPixmap(3 + dx, 3 + dy, hell)             # weißer Rand um den verstärkten Strich
+    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        p.drawPixmap(3 + dx, 3 + dy, dunkel)
+    p.end()
+    pm = QPixmap.fromImage(bild)
+    return QCursor(pm, 6, 6)
 
 
 class TabellenStift(QWidget):

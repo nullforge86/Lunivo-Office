@@ -5,17 +5,17 @@ einzelnen Zellen bleiben erhalten, bis die Vorlage erneut angewendet wird. Alles
 Fettschrift gespeichert, geht also bei DOCX nicht verloren."""
 from __future__ import annotations
 
-from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextTable
+from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextFrameFormat, QTextTable
 
 # Name: (Kopf-Füllung, Kopf-Schrift, Streifen-Füllung, Rahmen)
 from lunivo_writer.core.farben import Farbe
 VORLAGEN = {
-    "Gitternetz": (None, None, None, 0.5),
+    "Gitternetz": (None, None, None, 1),
     "Einfach": (None, None, None, 0),
-    "Blau": (Farbe.AKZENT, Farbe.WEISS, "#e7f0fa", 0.5),
-    "Grün": ("#2d8a4e", Farbe.WEISS, "#e6f4ea", 0.5),
-    "Orange": ("#e67700", Farbe.WEISS, "#fff0e0", 0.5),
-    "Grau": ("#495057", Farbe.WEISS, "#f1f3f5", 0.5),
+    "Blau": (Farbe.AKZENT, Farbe.WEISS, "#e7f0fa", 1),
+    "Grün": ("#2d8a4e", Farbe.WEISS, "#e6f4ea", 1),
+    "Orange": ("#e67700", Farbe.WEISS, "#fff0e0", 1),
+    "Grau": ("#495057", Farbe.WEISS, "#f1f3f5", 1),
     "Hell": ("#dee2e6", Farbe.SCHWARZ, "#f8f9fa", 0),
 }
 
@@ -45,7 +45,8 @@ def anwenden(t: QTextTable, name: str, kopf: bool = True, streifen: bool = True,
     if name not in VORLAGEN:
         return False
     kopf_fill, kopf_schrift, streifen_fill, rahmen = VORLAGEN[name]
-    fmt = t.format(); fmt.setBorder(rahmen); t.setFormat(fmt)
+    fmt = t.format(); fmt.setBorder(rahmen)
+    fmt.setBorderBrush(QColor('#333333')); fmt.setBorderStyle(QTextFrameFormat.BorderStyle_Solid); t.setFormat(fmt)
     for r, c, cell in _zellen(t):
         cf = cell.format().toTableCellFormat()
         ist_kopf = kopf and r == 0

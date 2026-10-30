@@ -26,7 +26,7 @@ src/lunivo_writer/
 assets/                     Symbole, Logos und weitere Laufzeitressourcen
 docs/                       Projekt- und Benutzerdokumentation
 tests/                      Gezielte pytest-Tests
-werkzeug/                   Entwicklungs- und Prüfhilfen (funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken, Bericht docs/seitenleistenstand.md)
+werkzeug/                   Entwicklungs- und Prüfhilfen (inventar-bauen.py: docs/interne-funktionen.md neu erzeugen; funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken, Bericht docs/seitenleistenstand.md)
 ```
 
 ## Zuständigkeiten
@@ -49,3 +49,8 @@ Die Richtung der Abhängigkeiten bleibt einfach: Oberfläche und core verwenden 
 - Abhängigkeiten und Start: `pyproject.toml`, `requirements.txt` und `starten-qt.sh`.
 
 Die wichtigsten Benutzerfunktionen sind in der [Oberfläche](oberflaeche.md), den [Einstellungen](einstellungen.md) und unter [Speichern und Dateiformate](SPEICHERN.md) beschrieben.
+
+## Weitere Dokumentation
+
+- [UI-Technologie](ui-technologie.md): Qt Widgets, Zeichnung der Seiten, Theme, Symbole, Formate, Abhängigkeiten.
+- [Interne Funktionen](interne-funktionen.md): vollständiges Inventar der Module, Klassen, Funktionen und Methoden. Wird mit `werkzeug/inventar-bauen.py` aus dem Quelltext erzeugt.
