@@ -1,6 +1,6 @@
 # UI-Technologie
 
-Lunivo Writer ist eine native Desktop-Anwendung. Die Oberfläche besteht ausschließlich aus **Python 3 und PySide6 (Qt for Python) mit Qt Widgets**. Es gibt keine Weboberfläche, kein HTML/JavaScript/CSS, keinen Browser und keinen lokalen Webserver (Regel und Wächtertest: `CLAUDE.md`, `tests/test_main_window.py::test_kein_html_im_projekt`).
+Lunivo Writer ist eine native Desktop-Anwendung. Die Oberfläche besteht ausschließlich aus **Python 3 und PySide6 (Qt for Python) mit Qt Widgets**. 
 
 ## Bausteine
 
