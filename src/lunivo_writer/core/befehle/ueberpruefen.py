@@ -1,4 +1,4 @@
-"""Befehle: Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10) — Klappen, Anzeige der Fassung, Markup-Auswahl,
+"""Befehle: Reiter „Überprüfen“ nach den Vorlagen (ueberpruefen/01–10) — Klappen, Anzeige der Fassung, Markup-Auswahl,
 Annehmen/Ablehnen der angezeigten Änderungen, Bearbeitung einschränken."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""„Diagramm einfügen“ nach Kays Vorlage (einfuegen/07 und Prüfkatalog): links die Diagrammarten mit eigenen Bildchen, oben die
+"""„Diagramm einfügen“ nach der Vorlage (einfuegen/07 und Prüfkatalog): links die Diagrammarten mit eigenen Bildchen, oben die
 Untertypen als Bildchen, darunter Name und Vorschau. Bei „Kombination …“ steht unter der Vorschau die Tabelle Datenreihenname /
 Diagrammtyp / Sekundärachse; wer dort etwas ändert, wählt „Benutzerdefinierte Kombination“.
 

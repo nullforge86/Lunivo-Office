@@ -1087,7 +1087,7 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
 
 ### `core/befehle/ueberpruefen.py`
 
-Befehle: Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10) — Klappen, Anzeige der Fassung, Markup-Auswahl,
+Befehle: Reiter „Überprüfen“ nach den Vorlagen (ueberpruefen/01–10) — Klappen, Anzeige der Fassung, Markup-Auswahl,
 
 - **class `UeberpruefenBefehle`** — Befehle des Reiters „Überprüfen“. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
   - `_sym(name)`
@@ -1494,7 +1494,7 @@ Fassungen eines Dokuments mit verfolgten Änderungen, für die Anzeige „Origin
 
 ### `editor/felder.py`
 
-Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
+Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in der WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
 
 - `vorgabe(name)`
 - `_schalter(anweisung, zeichen)`
@@ -4510,7 +4510,7 @@ Bildschirmfoto: ganzer Bildschirm oder aufgezogener Bereich.
 
 ### `ui/dialogs/diagramm_fenster.py`
 
-„Diagramm einfügen“ nach Kays Vorlage (einfuegen/07 und Prüfkatalog): links die Diagrammarten mit eigenen Bildchen, oben die
+„Diagramm einfügen“ nach der Vorlage (einfuegen/07 und Prüfkatalog): links die Diagrammarten mit eigenen Bildchen, oben die
 
 - `art_symbol(sym, px)` — Diagrammart-Symbol aus dem zentralen Lucide-Katalog.
 - **class `DiagrammDialog`**(PanelFaehig, QDialog)
@@ -4952,7 +4952,7 @@ Das Fenster „Symbol“ (Einfügen › Symbol › Weitere Symbole …) in der S
 
 ### `ui/dialogs/ueberpruefen_fenster.py`
 
-Fenster des Reiters „Überprüfen“ nach Kays Vorlagen (ueberpruefen/02, 10).
+Fenster des Reiters „Überprüfen“ nach den Vorlagen (ueberpruefen/02, 10).
 
 - **class `WoerterDialog`**(PanelFaehig, QDialog) — „Wörter zählen“: die Statistiken untereinander, Werte rechtsbündig; der Haken nimmt Fuß- und Endnoten dazu.
   - `__init__(parent, ohne, mit)`
@@ -6157,7 +6157,7 @@ Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von W
 
 ### `ui/ribbon/tabs/review_tab.py`
 
-Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10): Rechtschreibprüfung, Wörter zählen, Kommentare, Änderungen
+Reiter „Überprüfen“ nach den Vorlagen (ueberpruefen/01–10): Rechtschreibprüfung, Wörter zählen, Kommentare, Änderungen
 
 - `bauen(register)`
 

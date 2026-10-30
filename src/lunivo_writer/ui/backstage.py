@@ -1,6 +1,6 @@
 """Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
 
-Das Menü links folgt Kays Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, Beenden)
+Das Menü links folgt dem Vorbild (WPS-Bildschirmfoto „Menü“). Befehle ohne eigene Seite (Speichern, Beenden)
 führen sofort aus und schließen die Ansicht; PDF- und Bildexport, Neu (Vorlagen), Öffnen (Zuletzt verwendet und Dateiauswahl),
 Speichern unter, Drucken, Dokumentverschlüsselung, Hilfe und Optionen zeigen ihre Seite rechts.
 """
@@ -22,7 +22,7 @@ from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 
-# Das Menü links nach Kays Vorbild (WPS-Bildschirmfoto „Menü“): große Zeilen mit Liniensymbol, Pfeil bei Einträgen mit eigener Seite.
+# Das Menü links nach dem Vorbild (WPS-Bildschirmfoto „Menü“): große Zeilen mit Liniensymbol, Pfeil bei Einträgen mit eigener Seite.
 # (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Seite bzw. Befehl)
 EINTRAEGE = [
     ("neu", "Neu", "neu", "seite", "vorlage"),

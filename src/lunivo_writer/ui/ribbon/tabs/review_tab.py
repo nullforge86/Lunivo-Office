@@ -1,4 +1,4 @@
-"""Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10): Rechtschreibprüfung, Wörter zählen, Kommentare, Änderungen
+"""Reiter „Überprüfen“ nach den Vorlagen (ueberpruefen/01–10): Rechtschreibprüfung, Wörter zählen, Kommentare, Änderungen
 nachverfolgen mit Anzeige und Markup, Überprüfen, Annehmen/Ablehnen, Vergleichen, Freihand, Bearbeitung einschränken.
 
 Gründliche Prüfung, Thesaurus und KI stehen im Reiter „Schreibhilfe“ (Menü „Dokumentprüfung“) und in der Seitenleiste.

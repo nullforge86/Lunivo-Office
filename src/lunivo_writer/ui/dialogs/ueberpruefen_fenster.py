@@ -1,4 +1,4 @@
-"""Fenster des Reiters „Überprüfen“ nach Kays Vorlagen (ueberpruefen/02, 10).
+"""Fenster des Reiters „Überprüfen“ nach den Vorlagen (ueberpruefen/02, 10).
 
     d = WoerterDialog(parent, ohne, mit)        # Statistiken; ohne/mit: Werte aus editor/statistik.zaehlen, mit = samt Noten
     d = SchutzDialog(parent, art)               # Bearbeitung einschränken (Seitenleiste); if d.exec(): d.ergebnis() → art | None

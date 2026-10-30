@@ -1,11 +1,11 @@
-"""Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
+"""Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in der WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
 Der Text ist das Feldergebnis, die Feldanweisung steht in ``P_FELD`` und geht als echtes Feld ins DOCX (Word rechnet es dort neu).
 Keine Oberfläche.
 
     anweisung = vorgabe("Seite")                         # "PAGE"
     text = ergebnis(anweisung, kontext)                  # "3"
     feld_einfuegen(ed, anweisung, text)
-    kontext = kontext_sammeln(ed, autor="Kay")           # Seite, Seitenzahlen, Textmarken, Tabellenzahlen, Formatvorlagen …
+    kontext = kontext_sammeln(ed, autor="Autor")           # Seite, Seitenzahlen, Textmarken, Tabellenzahlen, Formatvorlagen …
 
 Formel (``= …``): + − * / ^, Klammern, Zahlen (Komma oder Punkt), Textmarken, ABOVE/BELOW/LEFT/RIGHT in Tabellen und die Funktionen
 aus ``FUNKTIONEN``; ``\\# "0,00"`` gibt das Zahlenformat vor.
