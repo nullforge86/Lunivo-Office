@@ -50,7 +50,7 @@ Diese Richtung prüft `tests/test_schichten.py`: `editor/`, `services/`, `models
 - **Python:** ab 3.10. **Fehlerprüfung:** `ruff check .` (nur echte Fehler). **Tests:** gezielt, `python -m pytest <Datei> -k <Name>`; die Gesamtprüfung macht die CI.
 - **Plattformen:** Linux ist getestet. Windows und macOS sind vorbereitet (Pfade, Dateisperre, Start); ob sie laufen, zeigt erst der CI-Job „Prüfen (windows/macos, Auswahl)“, der noch nicht blockiert.
 - **Protokoll:** Fehler beim Laden, Speichern und Prüfen stehen in `logs/lunivo.log` im Zwischenspeicher-Ordner des Benutzers.
-- **Bekannte offene Punkte:** zwei Ausnahmen in `tests/test_schichten.py`; ein Importzyklus in `ui/baukasten` (`farbpalette`, `linien`); die großen Dateien `services/docx_reader.py` und `docx_writer.py` sind ungeteilt, weil die Absicherung des DOCX-Roundtrips noch nicht gemessen ist.
+- **Bekannte offene Punkte:** zwei Ausnahmen in `tests/test_schichten.py`; die großen Dateien `services/docx_reader.py` und `docx_writer.py` sind ungeteilt, weil die Absicherung des DOCX-Roundtrips noch nicht gemessen ist.
 
 ## Einstiegspunkte
 

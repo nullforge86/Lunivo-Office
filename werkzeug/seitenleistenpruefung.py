@@ -165,7 +165,16 @@ class Anbindung:
     def hauptreiter(self):
         """[(Name, Knopf, IconReiter)] — die Hauptreiter des Panels mit ihren Icon-Reitern."""
         p = self.panel
-        return [(k.text().replace("\n", " "), k, r) for k, r in zip(p.umschalter.buttons(), (p.reiter, p.text_panel.reiter))]
+        class _Haupt:                                    # Formoptionen / Textoptionen sind die Reiter von p.optionen
+            def __init__(self, i):
+                self.i = i
+
+            def text(self):
+                return p.optionen.tabText(self.i)
+
+            def isEnabled(self):
+                return p.optionen.isTabEnabled(self.i)
+        return [(_Haupt(i).text().replace("\n", " "), _Haupt(i), r) for i, r in enumerate((p.reiter, p.text_panel.reiter))]
 
     def haupt_waehlen(self, i: int) -> None:
         self.panel.optionen_waehlen(i)
@@ -696,9 +705,8 @@ class Pruefer:
             ereignisse()
             for i in range(reiter.count()):
                 self.uhr.pruefen()
-                rk = reiter.tabKnopf(i)
-                rname = re.sub(r"\s+", " ", rk.text().replace("\n", " ")).strip().title()
-                if not rk.isVisibleTo(reiter):
+                rname = re.sub(r"\s+", " ", reiter.tabText(i).replace("\n", " ")).strip().title()
+                if not reiter.isTabVisible(i):
                     self.seiten.append({"teil": name, "haupt": hname, "reiter": rname, "info": "Reiter für diesen Teil nicht sichtbar", "foto": "", "uebersprungen": []})
                     continue
                 reiter.setCurrentIndex(i)
