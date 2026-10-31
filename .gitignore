@@ -1,0 +1,33 @@
+
+# LibreOffice (rund 700 MB) und LanguageTool (rund 400 MB) liegen unter
+# Persönliches
+# Was beim Arbeiten nebenbei entsteht
+# Was das Programm sich zur Laufzeit holt und was nicht ins Verzeichnis gehört:
+# ~/.local/share/schreibprogramm/ und werden bei Bedarf dorthin gelegt.
+*.doc
+*.docx
+*.epub
+*.fodt
+*.local
+*.odt
+*.pdf
+*.pyc
+*.rtf
+.DS_Store
+.pytest_cache/
+.venv/
+__pycache__/
+bilder/üBERARBEITUNG VON ICON lOGO/
+geheim*
+languagetool/
+libreoffice/
+Lunivo Writer.desktop
+/docs/funktionsstand.md
+/docs/pruefstand-*.md
+/docs/menue-abgleich.md
+/docs/reiter-abgleich.md
+/docs/bildabgleich-ansicht.md
+/docs/MENUESTRUKTUR.md
+
+# Mitgelieferte Testdatei (siehe tests/test_lo_dokument.py)
+!tests/daten/*.docx

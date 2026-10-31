@@ -1,0 +1,220 @@
+# Der Baukasten der Oberfläche
+
+`src/lunivo_writer/ui/baukasten/` — Bausteine, die an vielen Stellen wiederkehren. **Ein Baustein, viele Aufrufer:**
+Er kennt nur seinen eigenen Wert und meldet ihn (Signal oder Rückgabewert). Was damit geschieht — Schriftfarbe,
+Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
+
+| Datei | Baustein | Meldet |
+|---|---|---|
+| `farben.py` | Daten: 10 Themenfarben mit je 5 Abstufungen, 10 Standardfarben, „zuletzt benutzt“ (QSettings) | — |
+| `farbpalette.py` | `FarbPalette` (Popup), `FarbFeld` (Knopf für Dialoge), `FarbKnopf` (geteilter Knopf fürs Band), `weitere_farben()` (Fenster „Farben“, siehe `farbwaehler.py`: Standard · Benutzerdefiniert · Erweitert, Farbmodell RGB/HSV/HSL, Hex, Neu/Aktuell) | `gewaehlt(QColor \| None)`, `ueberfahren`, `verlassen` |
+| `linien.py` | `Linie` (Farbe, pt, Art), `LinienWahl` (Zeile aus Art, Stärke, Farbe), `RahmenMenue` (unten, oben, links, rechts, kein, alle, außen, innen) | `geaendert(Linie)`, `gewaehlt(RahmenSeiten, schluessel)` |
+| `menue_liste.py` | `MenueListe`: Zeilen mit Symbol, Kürzel, Haken, Untermenü, auch aus einer Beschreibung (`aus_liste`) | `triggered` je Zeile |
+| `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter, Symbole); `abschnitt(titel)` beginnt ein zweites Raster, `bild_setzen` wechselt eine Kachel vor dem Aufklappen, `kopf(widget)` setzt eine Leiste über die Kacheln, `leeren(groesse)` + `neu_messen()` füllen neu (Deckblatt: Hoch-/Querformat), `textkachel(text)` zeichnet ein Zeichen als Kachel | `gewaehlt(schluessel)` |
+| `bild_diagramm_menues.py` | `zuschneiden_menue(b)` (Klappe „Zuschneiden“: Reiter Nach Form / Nach Skala, Formen nach Gruppen, „Form und Größe zurücksetzen“), `diagramm_stile_galerie(b)` / `diagramm_stile_menue(b)` (vier Stilkacheln, mit QPainter gezeichnet); `KLAPPEN` / `GALERIEN` melden sie dem Band | der Aufruf der Befehle `bildZuschneiden…`, `diagrammStil` |
+| `zellen_raster.py` | `ZellenRaster`: Zellen überfahren, „3 × 4 Tabelle“ lesen, klicken; mit `fuss()` weitere Einträge darunter | `gewaehlt(zeilen, spalten)` |
+| `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
+| `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
+| `dialog_rahmen.py` | `DialogRahmen`: Formular, optionale Vorschau, OK/Abbrechen, Zusatzknöpfe („Entfernen“) | `ergebnis()` |
+| `speichern_fenster.py` | `SpeichernFenster` / `speicherort_waehlen()` / `Dateifenster` (gleiche Aufrufe wie `QFileDialog.get…`, das ein Test im Code verbietet): das eine Datei-Fenster — Orte links, Ordner mit Pfadleiste, Liste/Kacheln, unten Dateiname + Speichern, Dateityp + Abbrechen; fragt vor dem Ersetzen. Dasselbe Fenster öffnet (`datei_waehlen()`, Filter im Qt-Stil, auch mehrere Dateien) und wählt Ordner (`ordner_waehlen()`) | `(Pfad, Endung)` · Liste der Dateien · Ordner · `None` |
+| `bild_export.py` | `BildExportFenster`: „Als Bild exportieren“ — Karten „Jede Seite“ / „Langes Bild“, Wasserzeichen, Qualität, Format, Zielordner; `ErfolgFenster` danach mit Öffnen / Ordner öffnen. Geschrieben wird in `services/bild_export.py` | `BildWahl` oder `None` |
+| `pdf_export.py` | `PdfExportFenster`: „PDF-Datei exportieren“ — Reiter Allgemein (Speichern unter, Seitenbereich, Exportoptionen) und Berechtigungseinstellungen (Verschlüsseln, Kennwörter, Rechte, Druck); unten „Nach Abschluss des Exports schließen“. Schreibt nichts selbst: der Aufrufer gibt `exportieren(PdfWahl) -> bool` mit, Seitenbereich, Markierung und Verschlüsselung stecken in `services/pdf_export.py` | `PdfWahl` oder `None` |
+
+## Regeln
+
+1. **Ein Popup liefert einen Wert** — `QColor` oder `None` („Keine Farbe“). Es kennt den Aufrufer nicht.
+2. **Popups wirken sofort, Dialoge haben Vorschau und OK/Abbrechen.**
+3. **„Keine“ und „Zuletzt benutzt“ stehen immer an derselben Stelle.**
+4. **Nicht Mögliches bleibt grau sichtbar**, statt zu fehlen.
+5. **Nichts nachbauen:** Wer eine Farbe braucht, nimmt `FarbPalette`/`FarbFeld`/`weitere_farben`, wer eine Linie braucht,
+   `LinienWahl`/`Linie`, wer ein Maß braucht, `MassSpin`.
+
+## Wer den Baukasten benutzt
+
+- **Band** (`core/commands.py`): Schriftfarbe, Hervorheben, Seitenfarbe, Absatz- und Tabellenschattierung, Formfüllung,
+  Formkontur — alle über `_farbmenue()` bzw. `FarbPalette`. Die Live-Vorschau hängt an `ueberfahren`/`verlassen`.
+- **Dialoge:** Wasserzeichen und Seitenrahmen (`DialogRahmen`, `FarbFeld`, `LinienWahl`, mit Vorschau), Formen/WordArt
+  (`FarbFeld`), Silben farbig, Seite einrichten und Absatz (`MassSpin`).
+
+## Neues Fenster oder neue Farbstelle
+
+```python
+from lunivo_writer.ui.baukasten import DialogRahmen, FarbFeld, LinienWahl, Linie
+
+class MeinDialog(DialogRahmen):
+    def __init__(self, parent):
+        super().__init__(parent, "Mein Dialog", vorschau=self._male)
+        self.farbe = FarbFeld("#1971c2", "Füllfarbe", keine_text="Keine Füllung")
+        self.linie = LinienWahl(Linie("#000000", 1.0, "einfach"))
+        self.zeile("Füllung", self.farbe); self.zeile("Linie", self.linie)
+        self.farbe.farbeGeaendert.connect(self.aktualisieren); self.linie.geaendert.connect(self.aktualisieren)
+
+    def _male(self, painter, rect): ...
+    def ergebnis(self): return {"fuell": self.farbe.farbe, "linie": self.linie.linie().text()}
+```
+
+## Absatzrahmen
+
+Der Rahmen eines Absatzes steht als Text `farbe|pt|art` am Absatz (`B_RAHMEN`); ein vierter Teil nennt die Seiten, wenn nicht alle
+vier gemeint sind: `t` oben, `b` unten, `l` links, `r` rechts, `h` zwischen zwei Absätzen (`editor/linie.py`, Klasse `Linie`).
+Ohne vierten Teil gelten alle Seiten, ältere Dateien bleiben also gültig. Gezeichnet wird in `editor/pagination.py`, nach Word
+gespeichert und gelesen als `w:pBdr` (`top`, `left`, `bottom`, `right`, `between`; Linienarten einfach, doppelt, gestrichelt,
+gepunktet, Strich-Punkt).
+
+- **Menü** (`RahmenMenue`): schaltet einzelne Seiten ein/aus, „Alle“, „Außen“, „Kein“; neue Rahmen übernehmen die zuletzt
+  eingestellte Linie.
+- **Fenster „Rahmen und Schattierung“** (`ui/baukasten/rahmen_schattierung.py`, Muster in `editor/muster.py`): Reiter Rahmen (Einstellung, Linienart, Farbe, Breite, Vorschau mit Kantenknöpfen), Seitenrand und Schattierung (Füllfarbe, 37 Muster, Musterfarbe). Gespeichert wird das Muster am Absatz (`B_MUSTER`) und in DOCX als `w:shd`.
+
+## Fenster für Absatz, Schrift, Listen, Tasten und Effekte
+
+Alle Fenster liefern Werte und formatieren selbst nichts; der Aufrufer (Band, Editor, Formatvorlage) setzt das Ergebnis. Die Knopfzeile
+unten kommt überall von `fussleiste` (`dialog_rahmen.py`), Maße von `EinheitFeld` / `MassSpin` (`mass_feld.py`).
+
+| Baustein | Datei | Was dahinter steckt |
+|---|---|---|
+| Absatz | `absatz_dialog.py` | Einzüge, Abstände, Zeilenabstand (Faktor, Mindestens, Genau), Gliederungsebene, Seitenumbruch, Absatzoptionen (`editor/absatzopt.py`); Umbruchregeln wirkt `editor/seitenfluss.py` |
+| Tabstopps | `tabstopp_dialog.py` | Position, Ausrichtung, Füllzeichen (`editor/tabfuell.py`, gezeichnet), Standardtabstopps (`w:defaultTabStop`) |
+| Schriftart | `schriftart_dialog.py` | alle Felder wie im WPS: asiatisch/westlich/komplex, Unterstreichungsarten, Betonungszeichen, Effekte, Zeichenabstand; Zeichnen der Extras in `editor/textfx.py` |
+| Texteffekte | `texteffekt_dialog.py` | Füllung (Farbe, Verlauf), Kontur, Schatten, Reflektion, Leuchten, 3D; Zeichnen in `editor/textfx.py`, DOCX als `w14:*` in `editor/texteffekt.py` |
+| Nummerierung | `liste_dialog.py` | Aufzählung, Nummerierung, mehrstufige Gliederung (`editor/mehrstufig.py`, selbst gezeichnet), Anpassen-Fenster |
+| Tastenkombination | `tasten_dialog.py` | eine Tastenkombination aufnehmen, Belegung prüfen |
+| Formatvorlage | `formatvorlage_dialog.py` | Name, Basis, Folgevorlage, Leiste, Format ▾ mit Schriftart, Absatz, Tabstopps, Rahmen, Nummerierung, Texteffekte, Verknüpfung |
+| Hilfen | `schiebe_feld.py`, `voreinstellung_menue.py`, `pipette.py` | Regler mit Feld, Popup mit Bildchen in Abschnitten, Farbe vom Bildschirm |
+
+Tests: `tests/test_baukasten.py`.
+
+## Zusatzfenster in der Seitenleiste
+
+Seltene Einstellungen (Absatz, Schriftart, Rahmen, Listen, Seite einrichten …) öffnen sich nicht über dem Text, sondern als Seite in der
+Seitenleiste — nur solange man sie bearbeitet. Die Breite der Seitenleiste ändert sich nie; der Inhalt passt sich an.
+Jeder Baustein macht genau eine Sache:
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| `PanelFaehig` | `zusatz_panel.py` | Markierung für ein Fenster: `exec()` zeigt es in der Seitenleiste (sonst wie bisher als Fenster) |
+| `ZusatzPanel` | `zusatz_panel.py` | die Seite in der Seitenleiste: Kopf mit Titel und ✕, Rollbereich ohne seitliche Leiste, Unterfenster mit „←“ |
+| `FormularGitter` | `formular_gitter.py` | Felder, die sich der Breite anpassen: `zeile(Beschriftung, Feld)`, `breit(Feld)`, `reihe((Beschr., Feld), …)`. Breit: zwei Paare nebeneinander; schmal: eines je Zeile; sehr schmal: Beschriftung über dem Feld |
+| `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
+| `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
+| `FlussLayout` | `formular_gitter.py` | Reihe von Feldern, die wie Text umbricht (Beschriftung und Feld bleiben beisammen) |
+| `EingabeFenster` | `eingabe_fenster.py` | kleine Abfrage in der Seitenleiste (Frage + Auswahlliste oder Textfeld): `getItem(parent, titel, frage, eintraege, aktuell)` / `getText(...)` wie `QInputDialog`, Rückgabe `(Text, ok)` |
+| `ausfuehren_im_stapel` | `zusatz_panel.py` | ein `PanelFaehig`-Fenster in einem beliebigen `QStackedWidget` zeigen (z. B. die Fenster der Suche in der **linken** Seitenleiste, ohne dass sich die rechte öffnet) |
+| `schmal_machen` | `schmal.py` | **Notbehelf** für Fenster, die noch nicht aus Bausteinen gebaut sind: bricht zu breite Zeilen nachträglich um. Neue Fenster bauen mit `FormularGitter`, nicht darauf verlassen |
+
+Ein Fenster, das aus einem offenen Zusatzfenster heraus aufgerufen wird (zum Beispiel „Farben“ aus „Rahmen und Schattierung“), legt sich als weitere Seite darüber (mit „←“); das darunter bleibt offen.
+
+Neues Fenster: `class MeinDialog(PanelFaehig, QDialog)`, Felder in `FormularGitter`-Gruppen. Fertig umgebaut (alle Fenster der Seitenleiste außer Rahmen und Schattierung): Farben, Absatz, Schriftart, Tabstopps, Layout, Nummerierung, Gliederung, Texteffekte, Formatvorlage. Dazu KI-Einstellungen (`KIEinstellungenDialog`, `kompakt_machen()` kürzt die Reiternamen, die Sprachlisten stehen untereinander).
+Ebenso die Fenster der Reiter Einfügen, Verweise, Sendungen und Überprüfen (Zahl, Felder, Umbruch, Seitenzahl, Hyperlink, Objekt,
+Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inhaltsverzeichnis, Indexeintrag, Nummerierung,
+Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
+Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
+`schmal_machen` in Ruhe). Was in der WPS-Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
+Vorschaubilder verkleinern sich mit der Breite. Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
+nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
+Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
+
+Platz in der Seitenleiste: Wer Größen der Seitenleiste braucht, bietet `passe_an(breite, hoehe)` an (`ZusatzPanel` ruft es mit `verfuegbar` und `verfuegbar_hoehe` auf, die die Seitenleiste aus ihrer echten Größe setzt); Beispiele: Farbraster, Rahmenvorschau, Kachelzahl der Nummerierung, Texteffekte. `AngepassteReiter` und der Stapel der KI-Einstellungen richten die Höhe nach der gewählten Seite. Prüfung: `test_seitenleisten_seiten_passen_in_echte_groesse`.
+Auf dem Notbehelf nur noch: Rahmen und Schattierung (bewusst: Spalten mit Vorschau, `schmal_nein` schützt die Kantenknöpfe) und die kleinen Fenster mit `QFormLayout`.
+Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Seitenleiste finden (`tests/test_smoke_befehle.py`).
+
+## Bausteine des Reiters Start
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Suchmaschine | `editor/suche.py` | `Suchauftrag` (Groß/klein, ganzes Wort, Platzhalter wie Word, Präfix, Suffix, Satz- und Leerzeichen übergehen, Zeichen- und Absatzformat), Sonderzeichen-Codes (`SPEZIAL`, `^p ^t ^l …`), `naechster`, `treffer`, `ersatz_text`, `alle_ersetzen` (ein Rückgängig-Schritt). Keine Oberfläche |
+| Gehe zu | `editor/gehe_zu.py` | `ELEMENTE` (Seite, Abschnitt, Zeile, Textmarke, …), `positionen`, `ziel(ed, element, eingabe, richtung)` |
+| Suchen-Feld | `ui/document/suchen_feld.py` | `SuchenFeld`: Reiter Suchen/Ersetzen/Gehe zu, Erweitern/Reduzieren, Format ▾ (Schriftart, Absatz, Tabstopps, Formatvorlage, Hervorheben), Spezial ▾, Lesehervorhebung, Suchen in. Sitzt in der linken Seitenleiste (`navigation.py`), Unterfenster über `ausfuehren_im_stapel` |
+| Auswählen | `editor/auswahl.py`, `ui/baukasten/auswahl_bereich.py` | Tabelle ohne Rahmen, ähnliche Formatierung (hervorgehoben, da Qt nur eine Markierung kennt); `AuswahlBereich` listet alle Objekte |
+| Formatvorlagen und Formatierung | `ui/baukasten/formatvorlagen_bereich.py` | `FormatvorlagenBereich`, `vorlagen_namen`, `vorlagen_schrift` |
+| Text sortieren | `ui/baukasten/sortieren_dialog.py`, `editor/schreibweise.py` | `SortierenDialog` (drei Schlüssel, Überschriftenzeile) mit `SortierOptionenDialog` (Feldtrenner, Groß/klein, Sortiersprache); `reihenfolge` (QCollator), `absaetze`, `umstellen` (behält Formate) |
+| Wort-Extras | `editor/wortextras.py` | `MENUE`: verschachtelte Liste (Text, Symbol, Funktion) für das Menü; jede Funktion ein Rückgängig-Schritt |
+| Unterstreichungen | `ui/baukasten/linien.py`, `editor/textfx.py` | `LinienZeile(…, maler=)` / `linien_menue_zeile(…, maler=unter_zeichnen)`: Menüzeilen mit gezeichneter Unterstreichung |
+| Absatzwerte | `ui/baukasten/absatz_dialog.py` | `aus_block(bf)`: die Werte des Absatz-Fensters aus einem `QTextBlockFormat` |
+
+## Bausteine des Reiters Einfügen
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Klappmenüs | `core/befehle/einfuegen.py` | `menue_…Klappe` für Leere Seite, Umbrüche, Tabelle (10 × 10, Text ↔ Tabelle), Bild, Textfeld, Schnellbausteine, Symbol (zuletzt verwendet + eigene Symbole) — aus `MenueListe`, `ZellenRaster`, `RasterAuswahl` |
+| Zahlschreibweisen | `editor/zahlformat.py` | `TYPEN`, `zahl_text(n, typ)` (1,2,3 · A,B,C · I,II,III · ①②③ · Zahlwort), `zahlwort`. Keine Oberfläche |
+| Text ↔ Tabelle | `editor/tabelle_text.py` | `markierte_absaetze`, `zellen`, `text_zu_tabelle`, `tabelle_zu_text` (je ein Rückgängig-Schritt), `TRENNER` |
+| Felder | `editor/felder.py` | `FELDER` (Name → Beschreibung, Feldanweisung), `ergebnis`, `feld_einfuegen` (Text mit `P_FELD`, im DOCX ein echtes Feld) |
+| Deckblatt | `editor/deckblatt.py` | 17 Gestaltungen (Artikel, Firma, Lebenslauf, Abschlussarbeit), hoch und quer; eigener erster Abschnitt, Grafik als ganzseitiges Abschnitts-Wasserzeichen hinter dem Text (`"ganzseitig"` in `editor/wasserzeichen.py`), `einfuegen`, `entfernen` |
+| Galerien | `core/befehle/einfuegen.py` | `menue_…Klappe` für Deckblatt, Formen, Seitenzahl, Wasserzeichen (eigene + Voreinstellung), WordArt, Gleichung — alle aus `RasterAuswahl` |
+| Seitenbildchen | `ui/baukasten/seiten_bildchen.py` | `seitenzahl_zeichner`, `wasserzeichen_zeichner`, `deckblatt_zeichner`, `plus_zeichner` — Zeichner `f(QPainter, QRectF)` für Kacheln und Vorschauen |
+| Seitenzahlen | `editor/seitenzahl.py` | `VORGABEN`, `MUSTER`, `seitenzahl_setzen(page, ort, ausrichtung, muster)`, `seitenzahlen_entfernen` (arbeiten auf `PageSettings`) |
+| Formenkatalog | `editor/formen_katalog.py` | `KATEGORIEN` (Linie … Legenden), `pfad(name, r)`, `ist_linie`, `namen`; `editor.einfuegen.form_bild` zeichnet damit |
+| Gleichungen, WordArt | `editor/einfuegen.py` | `GLEICHUNGEN`, `formel_bild`, `WORDART_VORGABEN`, `DECKBLATT_VORLAGEN` |
+| Diagramme | `editor/diagramm.py` | `TYPEN` (Säule … Kombination, Gruppe ohne Untertyp bleibt grau), `bild(untertyp, titel, kategorien, reihen)` → `QImage` über QtCharts in einer eigenen `QGraphicsScene`; `ALT` für frühere Namen |
+| Diagramm formatieren | `ui/baukasten/diagramm_format_panel.py`, `editor/diagramm_format.py` | Seitenleiste „Formatierung“ je Diagrammteil: baut auf `ObjektFormatPanel` (Füllung, Linie, Effekte; Erweiterungspunkte `_zusatz_radios`/`_zusatz_felder`) und `TexteffektPanel` (Textoptionen + Schrift + Textfeld) auf; Optionen von Legende, Achse (Skala), Reihe (Lückenbreite, Glättung, Pfeile); Größe/Drehung/Alternativtext beim Diagrammbereich. Gezeichnet mit `freie_bilder` (Pinsel, Stift), `bildeffekte`, `textfx`; Datenmodell `daten["teil_format"][teil]` siehe Kopf von `diagramm_format.py` |
+| Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog`, `HyperlinkDialog` (Datei/Webseite, Stelle im Dokument, E-Mail; `ergebnis()`), `ObjektDialog` (aus Datei, als Symbol; `art()`) — ändern das Dokument nicht selbst |
+| Fenster (Daten) | `ui/dialogs/einfuegen_dialoge.py` | `DiagrammDialog` mit `DiagrammDatenDialog`, `DatumDialog` (Formate, Sprache, „Automatisch aktualisieren“ → Feld), `WordArtDialog`, `FormelDialog` |
+
+## Bausteine des Reiters Seitenlayout
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Designs | `editor/designs.py` | `FARBSCHEMEN` (8 Farben: dunkel, hell, Akzent 1–6), `SCHRIFTPAARE` (Überschrift, Text), `EFFEKTE` (fx wie `bildeffekte`), `DESIGNS` (Farbschema + Schriftpaar), `design(name)`. Alles eigene Namen und Farben |
+| Designbildchen | `ui/baukasten/design_bildchen.py` | `design_zeichner`, `farbreihe_zeichner`, `schriftpaar_zeichner`, `effekt_zeichner` für die Galerien |
+| Seitenbildchen | `ui/baukasten/seiten_bildchen.py` | dazu `raender_zeichner`, `format_zeichner` (hoch/quer), `papier_zeichner`, `textrichtung_zeichner` |
+| Listenzeile | `ui/baukasten/raster_auswahl.py` | `zeilenkachel(bild, titel, angaben, spalten)`: Bildchen + fetter Titel + Angaben (Ränder, Größe, Orientierung, Textrichtung); `RasterAuswahl(hoehe_max=…)` rollt lange Galerien, `trenner()` im Fuß, `kachel(aktiv=False)` bleibt blass sichtbar |
+| Klappmenüs | `core/befehle/seite.py` | `menue_…Klappe` für Designs, Farben, Schriftarten, Effekte, Ränder, Orientierung, Größe, Spalten, Textrichtung, Zeilennummern, Seitenfarbe (mit Wasserzeichen), Ausrichten; Haken werden in `aboutToShow` aufgefrischt |
+| Effekte für alle | `editor/bildlayout.py` | `fx_alle(ed, fx)`: Effekt an alle freien Bilder und Formen (sonst nur an das markierte) |
+| Zeilennummern | `editor/zeilennummern.py` | `nummern(doc, ch, art)`: fortlaufend oder je Seite neu; Absätze mit `absatzopt` „ohne_zeilennr“ (DOCX `w:suppressLineNumbers`) zählen nicht. `PageSettings.zeilennummern_neu`, DOCX `w:lnNumType w:restart` |
+| Leere Seite | `editor/leere_seite.py` | `leere_seite(doc, letzter_block, einrichtung, quer)`: neues Blatt hinter der Seite (`DocumentEditor.seite_letzter_block`), quer als eigener Abschnitt |
+
+## Bausteine des Reiters Verweise
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Inhaltsverzeichnis | `editor/verzeichnis.py` | `TOC_VORGABE`, `toc_optionen(doc)`: Füllzeichen, Ebenen 1–9, Seitenzahlen anzeigen/rechtsbündig, Verknüpfungen (verborgene Textmarken „_Toc…“) — am Kopf als `B_TOC_OPT`; `verzeichnis_aktualisieren(ed, nur)`, `vorhanden(doc, art)` |
+| Indexeinträge | `editor/indexeintrag.py` | `Eintrag` (Haupt/Unter, Sortierung, „Siehe“, Seitenbereich über Textmarke, fett/kursiv), `feld`/`aus_feld` (Word-Feld XE); am Text `P_INDEX` + `P_INDEX_OPT`; `verweise.index_eintragen(ed, e, alle)` |
+| Fenster | `ui/dialogs/verweise_fenster.py` | `InhaltsverzeichnisDialog` (mit Seitenansicht; `ergebnis()`), `IndexeintragDialog` (Signal `markieren(Eintrag, alle)`), `BeschriftungDialog` (Nummer steht im Feld; eigene Bezeichnungen in `verweise/beschriftungen`; `NummerierungDialog`), `QuerverweisDialog` (Signal `einfuegen(ziel, wie, link, oben_unten)`, bleibt offen) — ändern das Dokument nicht selbst |
+
+| Beschriftung, Querverweis | `editor/verweise.py` | `beschriftung_einfuegen(…, nach, ohne_bezeichnung, zahl)` mit SEQ-Schreibweise (`SEQ_FORMAT`), `naechste_nummer`; `VERWEISTYPEN`, `verweisen_auf(art)`, `querverweis_ziele`, `querverweis_einfuegen(ed, ziel, wie, link, oben_unten)` — Ziel bekommt eine verborgene Textmarke „_Ref…“ |
+| Klappe | `core/befehle/verweise.py` | `menue_inhaltsverzeichnisKlappe`: Ebene 1–9 und Textkörper (Formatvorlage „Überschrift N“ / „Standard“); Fuß- und Endnoten einzeln mit `note_springen(delta, art)` |
+
+## Bausteine des Reiters Mailings (Seriendruck)
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/contextual/serien_tools.py` | Kontext-Reiter `SERIENDRUCK` („Mailings“), erscheint über Verweise ▸ Seriendruck (`serienReiter`), weg mit `serienSchliessen` |
+| Befehle | `core/befehle/serien.py` | Datenquelle je Dokumentfenster (`tab.serie`, nicht gespeichert); `kann_<Befehl>` macht Knöpfe ohne Datenquelle grau; `feld_datensatz` ist das Nummernfeld im Band |
+| Datenquelle, Felder | `editor/sendungen.py` | `quelle_lesen` (CSV/TSV/TXT), `zugeordnet`, `NAECHSTER`/`naechster_einfuegen`, `gruppen`, `brief_fuer(vorlage, [Sätze])`, `felder_hervorheben` |
+| Vorschau | `ui/document/vorschau_ansicht.py` | schreibgeschützter Editor mit dem Brief eines Datensatzes statt der Vorlage (`art="serien"`); die Vorlage bleibt unverändert |
+| Fenster | `ui/dialogs/serien_fenster.py` | `EmpfaengerDialog`, `FeldDialog` (Signal `einfuegen`, bleibt offen), `ZuordnenDialog` |
+| Band | `ui/ribbon/ribbon_bar.py` | allgemein: `kann_<Befehl>` (Knopf frei/grau) und Einträge `{"feld": name}` (Eingabefeld aus `feld_<name>`; hat es `auffrischen()`, ruft `aktualisieren` es auf) |
+
+## Bausteine des Reiters Überprüfen
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Reiter | `ui/ribbon/tabs/review_tab.py` | Anordnung nach den Vorlagen ueberpruefen/01–10 |
+| Befehle | `core/befehle/ueberpruefen.py` | Klappen (Rechtschreibprüfung, Löschen, Nachverfolgen, Markup, Überprüfen, Annehmen, Ablehnen, Vergleichen), `feld_anzeige` (Fassung + „Markup anzeigen“), `bearbeitungEinschraenken`/`schutz_setzen` (`tab.schutz`, nur für die Sitzung) |
+| Zählen | `editor/statistik.py` | `zaehlen(texte, seiten)`: Wörter, Zeichen mit/ohne Leerzeichen, Absätze, asiatische Zeichen |
+| Fassungen | `editor/fassungen.py` | `original(doc)` (Kopie ohne Einfügungen, Löschungen als Text), `bearbeiter(doc)`, `zeiten(doc)` |
+| Markup-Auswahl | `ui/document/zusatz_editor.py` | `markup_filter` (Kommentare, Einfügungen, Bearbeiter, Tag), `aenderung_sichtbar`, `angezeigte_aenderungen`; Sprechblasen folgen der Auswahl |
+| Original | `ui/document/vorschau_ansicht.py` | dieselbe Vorschau mit `art="original"` |
+| Fenster | `ui/dialogs/ueberpruefen_fenster.py` | `WoerterDialog`, `SchutzDialog` (Seitenleiste) |
+
+## Befehle nach Aufgaben
+
+`core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
+`core/befehle/`, je Aufgabe ein Baustein: `text` (Zeichen und Absatz), `bearbeiten`, `einfuegen`, `seite` (Seite, Abschnitte, Spalten),
+`pruefen` (Schreibhilfe, Vergleichen), `ueberpruefen` (Reiter Überprüfen), `serien` (Mailings), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
+Ein neuer Befehl kommt in den Baustein seiner Aufgabe; `Befehle` setzt sie zusammen. Kein Baustein importiert `commands.py`.
+
+## Aufbau der großen Klassen
+
+Die drei großen Klassen sind nach Aufgaben in Bausteine (Mixins) geteilt. Die Hauptdatei behält Aufbau, Signale und Qt-Ereignisse
+(`…Event`), die Bausteine die Aufgaben:
+
+| Klasse | Hauptdatei | Bausteine |
+|---|---|---|
+| `Befehle` | `core/commands.py` (Grundfunktionen) | `core/befehle/*.py` |
+| `MainWindow` | `ui/main_window.py` | `ui/hauptfenster/`: `dateien`, `bearbeiten`, `oberflaeche`, `backstage_steuerung` |
+| `DocumentEditor` | `ui/document/document_editor.py` | `ui/document/editor_*.py`: `anzeige`, `spalten`, `seiten`, `formatierung`, `bilder`, `schreibhilfe` |
+| `OptionenAnsicht` | `ui/dialogs/optionen.py` | `ui/dialogs/optionen_seiten/`: `lesen`, `ansicht`, `datei`, `befehle`, `lunivo` |
+
+Regel: Ein neuer Befehl, eine neue Editor-Funktion oder eine neue Optionen-Seite kommt in den Baustein ihrer Aufgabe, nicht in die Hauptdatei.
+Bausteine kennen die Hauptdatei nicht (kein Import zurück); Werte, die mehrere brauchen, stehen in `gemeinsam.py` des jeweiligen Ordners.

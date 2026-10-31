@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lunivo-writer"
+version = "0.1.0"
+description = "Lunivo Writer — native Textverarbeitung für Linux (Python 3, PySide6/Qt Widgets)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["PySide6>=6.6,<7", "python-docx>=1.1", "msoffcrypto-tool>=5", "pyphen>=0.14", "pypdf>=4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+lunivo-writer = "lunivo_writer.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lunivo_writer = ["resources/*", "resources/daten/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+extend-exclude = ["bilder", "assets"]
+
+[tool.ruff.lint]
+# Nur echte Fehler (Syntax, nicht definierte Namen, Falschverwendung); kein Stilzwang, keine Formatierung.
+select = ["E9", "F63", "F7", "F82"]

@@ -1,0 +1,534 @@
+"""Die linke Seitenleiste: Suchen und ersetzen, Kommentare, Überschriften, Änderungen, Noten und Vorlesen — jedes als Feld mit Titel, Menü und ✕.
+
+Die schmale Leiste mit den Symbolen links davon baut das Hauptfenster (``_leiste_links``); ein Klick auf ein Symbol zeigt das Feld, ein zweiter schließt es.
+Alles, was hier geschieht, ruft die Funktionen des Editors (Suchen, Kommentare, Änderungen, Noten) und dieselben Befehle wie das Band (Vorlesen)."""
+from __future__ import annotations
+
+import datetime
+
+from PySide6.QtCore import QTimer, Qt, Signal
+from PySide6.QtGui import QActionGroup, QFont
+from PySide6.QtWidgets import (
+    QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu, QPlainTextEdit, QPushButton, QScrollArea,
+    QStackedWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+)
+
+from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen
+
+from lunivo_writer.core.farben import Farbe
+SEITEN = ("suche", "kommentare", "ueberschriften", "aenderungen", "noten", "vorlesen")
+TABS = SEITEN                                                             # alter Name
+TITEL = {"suche": "Suchen und ersetzen", "kommentare": "Kommentare", "ueberschriften": "Überschriften", "aenderungen": "Änderungen",
+         "noten": "Noten", "vorlesen": "Vorlesen"}
+SORTIERUNG = (("neu", "Neueste zuerst"), ("alt", "Älteste zuerst"), ("az", "Verfasser (A–Z)"), ("za", "Verfasser (Z–A)"),
+              ("oben", "Von oben"), ("unten", "Von unten"))
+ANZEIGE = (("offen", "Offen"), ("geloest", "Gelöst"), ("alle", "Alle"))
+SCHRIFT = (("klein", "Klein", 9.0), ("mittel", "Mittelgroß", 10.5), ("gross", "Groß", 13.0))
+
+
+def _datum(iso: str) -> str:
+    try:
+        return datetime.datetime.fromisoformat(iso).astimezone().strftime("%Y-%m-%d %H:%M")
+    except (ValueError, TypeError):
+        return iso or ""
+
+
+class KommentarKarte(QFrame):
+    """Ein Kommentar: Verfasser, Datum, Text und Zeigen / Bearbeiten / Gelöst / Löschen; beim Bearbeiten steht der Text in einem Eingabefeld."""
+
+    def __init__(self, b: dict, k: dict, ed, aktualisieren, pt: float = 11.5, bearbeiten: bool = False, speichern=None, abbrechen=None, bearbeite_los=None):
+        super().__init__()
+        from lunivo_writer.editor.zusatz import kommentar_farbe
+        from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+        self.setObjectName("kommentarKarte")
+        geloest = bool(k.get("geloest"))
+        farbe = kommentar_farbe(geloest)                                  # orange Kreis wie in der alten Fassung, gelöste grau
+        self.setStyleSheet("QFrame#kommentarKarte { border: 1px solid palette(midlight); border-radius: 8px; background: rgba(128,128,128,0.06); }"
+                           "QFrame#kommentarKarte QLabel { border: none; background: transparent; }")
+        v = QVBoxLayout(self); v.setContentsMargins(10, 8, 10, 8); v.setSpacing(6)
+        kopf = QHBoxLayout(); kopf.setSpacing(8)
+        ini = QLabel((k.get("initialen") or (k.get("autor") or "?")[:1]).upper()[:2]); ini.setAlignment(Qt.AlignCenter); ini.setFixedSize(26, 26)
+        ini.setStyleSheet(f"background: {farbe}; color: white; font-weight: bold; border-radius: 13px;")
+        kopf.addWidget(ini)
+        name = QLabel(k.get("autor", "?")); f = name.font(); f.setBold(True); f.setPointSizeF(pt); name.setFont(f)
+        kopf.addWidget(name, 1)
+        datum = QLabel(_datum(k.get("datum", ""))); datum.setStyleSheet("color: palette(mid);"); fd = datum.font(); fd.setPointSizeF(max(8.0, pt - 3)); datum.setFont(fd)
+        kopf.addWidget(datum)
+        v.addLayout(kopf)
+        kid = int(b["wert"])
+        self.kid = kid
+        if bearbeiten:
+            self.eingabe = QPlainTextEdit(k.get("text", "")); self.eingabe.setMinimumHeight(90)
+            fe = self.eingabe.font(); fe.setPointSizeF(pt); self.eingabe.setFont(fe)
+            v.addWidget(self.eingabe)
+            z = QHBoxLayout(); z.setSpacing(6)
+            ok = QPushButton("Speichern"); ok.clicked.connect(lambda: speichern(kid, self.eingabe.toPlainText().strip()))
+            ab = QPushButton("Abbrechen"); ab.clicked.connect(lambda: abbrechen())
+            z.addWidget(ok); z.addWidget(ab); z.addStretch(1)
+            v.addLayout(z)
+            return
+        text = QLabel(k.get("text", "")); text.setWordWrap(True); text.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        ft = text.font(); ft.setPointSizeF(pt); text.setFont(ft)
+        if geloest:
+            text.setStyleSheet("color: palette(mid); text-decoration: line-through;")
+        v.addWidget(text)
+        feld = QWidget(); z = QHBoxLayout(feld); z.setContentsMargins(0, 0, 0, 0); z.setSpacing(5)                  # eine Zeile, die Knöpfe knapp geschnitten
+        feld.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 9pt; }")
+        zeigen = QPushButton("Zeigen"); zeigen.clicked.connect(lambda: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus()))
+        bearb = QPushButton("Bearbeiten"); bearb.clicked.connect(lambda: bearbeite_los(kid))
+        loesen = QPushButton("Wieder öffnen" if geloest else "Gelöst")
+        loesen.clicked.connect(lambda: (ed.kommentar_geloest(kid, not geloest), aktualisieren()))
+        weg = QPushButton("Löschen"); weg.clicked.connect(lambda: (ed.kommentar_loeschen(kid), aktualisieren()))
+        for b_ in (zeigen, bearb, loesen, weg):
+            z.addWidget(b_)
+        z.addStretch(1)
+        v.addWidget(feld)
+
+
+class NavigationPanel(QWidget):
+    zustandGeaendert = Signal()                  # sichtbar/unsichtbar oder anderes Feld — die Leiste links zeigt es an
+
+    def __init__(self, get_editor, fenster=None):
+        super().__init__()
+        self.get_editor, self.fenster = get_editor, fenster
+        self.settings = getattr(fenster, "settings", None)
+        self.setFixedWidth(340)
+        self.aktion = None                                                  # Rückruf (name, daten) → Hauptfenster
+        self.zuletzt = "kommentare"
+        self.sortierung = "neu"
+        self.anzeige = "alle"
+        self._bearbeite = None                                               # Kennung des Kommentars, der gerade bearbeitet wird
+        self.liste: dict[str, QListWidget] = {}
+        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0)
+        self.stapel = QStackedWidget(); v.addWidget(self.stapel)
+        self._seiten: dict[str, PanelRahmen] = {}
+        for key in SEITEN:
+            r = getattr(self, "_bau_" + key)()
+            r.schliessen.connect(self.hide)
+            self._seiten[key] = r
+            self.stapel.addWidget(r)
+        self._t = QTimer(self); self._t.setSingleShot(True); self._t.setInterval(300); self._t.timeout.connect(self.aktualisieren)
+
+    # ---- Steuerung ---------------------------------------------------------------------------------------------
+    def zeige_tab(self, key: str) -> None:
+        if key not in SEITEN:
+            return
+        self.zuletzt = key
+        self.stapel.setCurrentWidget(self._seiten[key])
+        self.aktualisieren()
+        self.zustandGeaendert.emit()
+
+    @property
+    def aktuelle_seite(self) -> str:
+        return next((k for k, r in self._seiten.items() if r is self.stapel.currentWidget()), "")
+
+    def showEvent(self, e) -> None:
+        super().showEvent(e)
+        self.aktualisieren()                                             # Kommentare, die bei geschlossenem Feld entstanden, sofort zeigen
+        self.zustandGeaendert.emit()
+
+    def hideEvent(self, e) -> None:
+        super().hideEvent(e)
+        ed = self.get_editor()
+        if ed is not None:
+            ed.set_suchtreffer([])                                       # die Suchmarkierung verschwindet mit dem Feld
+        self.zustandGeaendert.emit()
+
+    def spaeter(self) -> None:
+        if self.isVisible():
+            self._t.start()
+
+    def aktualisieren(self) -> None:
+        if self.aktuelle_seite == "suche" and self.suchfeld.text():
+            self._zaehlen()
+        self._ueberschriften()
+        self._kommentare()
+        self._aenderungen_und_noten()
+
+    def anzahl(self, key: str) -> int:
+        """Wie viele Einträge ein Feld gerade zeigt (für Tests und die Zähler)."""
+        return {"kommentare": lambda: len(self._karten), "aenderungen": lambda: len(self._aend_karten),
+                "noten": lambda: len(self._noten_karten)}.get(key, lambda: 0)()
+
+    # ---- Suchen und ersetzen (Reiter Suchen, Ersetzen, Gehe zu — siehe suchen_feld.py) ----------------------------------------------------
+    def _bau_suche(self) -> PanelRahmen:
+        from lunivo_writer.ui.document.suchen_feld import SuchenFeld
+        r = PanelRahmen(TITEL["suche"])
+        self.suchen_feld = SuchenFeld(self.get_editor, self.unterfenster)
+        self.suchen_feld.schliessen.connect(self.hide)
+        r.inhalt.addWidget(self.suchen_feld, 1)
+        # Kurznamen für Hauptfenster und Tests
+        f = self.suchen_feld
+        self.suchfeld, self.ersatzfeld, self.treffer, self.gross, self.ganz = f.suchfeld, f.ersatzfeld, f.treffer, f.gross, f.ganz
+        return r
+
+    def unterfenster(self, d) -> bool:
+        """Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu."""
+        from lunivo_writer.ui.baukasten.zusatz_panel import ausfuehren_im_stapel
+        return ausfuehren_im_stapel(self.stapel, d, self.width() - 36, max(300, self.height() - 140))
+
+    def suche_zeigen(self, text: str = "", reiter: str = "Suchen", element: str = "") -> None:
+        """Das Feld öffnen, die Markierung (oder ``text``) einsetzen und in das Suchfeld springen; ``reiter``: Suchen, Ersetzen oder Gehe zu."""
+        ed = self.get_editor()
+        if not text and reiter != "Gehe zu" and ed is not None and ed.textCursor().hasSelection():
+            text = ed.textCursor().selectedText().replace("\u2029", " ")
+        if text:
+            self.suchfeld.setText(text)
+        self.show(); self.zeige_tab("suche")
+        self.suchen_feld.zeige(reiter, element)
+
+    def _zaehlen(self) -> None:
+        self.suchen_feld.zaehlen()
+
+    def _weiter(self, rueckwaerts: bool) -> None:
+        self.suchen_feld.weitersuchen(rueckwaerts)
+
+    def _ersetzen_eins(self) -> None:
+        self.suchen_feld.ersetzen_eins()
+
+    def _ersetzen_alle(self) -> None:
+        self.suchen_feld.ersetzen_alle()
+
+    # ---- Kommentare --------------------------------------------------------------------------------------------------
+    def _bau_kommentare(self) -> PanelRahmen:
+        m = QMenu(self)
+        gs = QActionGroup(m); gs.setExclusive(True)
+        for key, text in SORTIERUNG:
+            a = m.addAction(text); a.setCheckable(True); a.setChecked(key == self.sortierung); gs.addAction(a)
+            a.triggered.connect(lambda _=False, k=key: self._sortieren(k))
+        m.addSeparator()
+        sub = m.addMenu("Kommentare anzeigen")
+        ga = QActionGroup(sub); ga.setExclusive(True)
+        for key, text in ANZEIGE:
+            a = sub.addAction(text); a.setCheckable(True); a.setChecked(key == self.anzeige); ga.addAction(a)
+            a.triggered.connect(lambda _=False, k=key: self._anzeigen(k))
+        m.addSeparator()
+        sg2 = m.addMenu("Schriftgröße")
+        gz = QActionGroup(sg2); gz.setExclusive(True)
+        aktuell_k = self._einstellung("kommentare/schrift", "mittel")
+        for key, text, _pt in SCHRIFT:
+            a = sg2.addAction(text); a.setCheckable(True); a.setChecked(key == aktuell_k); gz.addAction(a)
+            a.triggered.connect(lambda _=False, k=key: self._kommentar_schrift(k))
+        m.addSeparator()
+        m.addAction("Kommentar zum Dokument hinzufügen", self._neu_zeigen)
+        r = PanelRahmen(TITEL["kommentare"], "ellipsis", m, knoepfe=(("plus", "Kommentar hinzufügen", self._neu_zeigen),))
+        self._karten: list[KommentarKarte] = []
+        host = QWidget(); self._karten_layout = QVBoxLayout(host); self._karten_layout.setContentsMargins(0, 0, 0, 0); self._karten_layout.setSpacing(8)
+        self._karten_layout.addStretch(1)
+        self.kommentar_leer = QLabel("Das Dokument enthält keine Kommentare."); self.kommentar_leer.setWordWrap(True)
+        self.kommentar_leer.setStyleSheet("color: palette(mid);")
+        self._karten_layout.insertWidget(0, self.kommentar_leer)
+        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setFrameShape(QFrame.NoFrame); sc.setWidget(host)
+        sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        r.inhalt.addWidget(sc, 1)
+        # Eingabe eines neuen Kommentars
+        self.neu_feld = QFrame(); nv = QVBoxLayout(self.neu_feld); nv.setContentsMargins(0, 0, 0, 0); nv.setSpacing(6)
+        self.neu_text = QPlainTextEdit(); self.neu_text.setPlaceholderText("Geben Sie Ihren Kommentar hier ein"); self.neu_text.setFixedHeight(80)
+        nv.addWidget(self.neu_text)
+        nz = QHBoxLayout()
+        self.neu_ok = QPushButton("Kommentar hinzufügen"); self.neu_ok.setEnabled(False)
+        ab = QPushButton("Abbrechen")
+        nz.addWidget(self.neu_ok); nz.addWidget(ab); nz.addStretch(1)
+        nv.addLayout(nz)
+        self.neu_feld.hide()
+        r.inhalt.addWidget(self.neu_feld)
+        self.neu_text.textChanged.connect(lambda: self.neu_ok.setEnabled(bool(self.neu_text.toPlainText().strip())))
+        self.neu_ok.clicked.connect(self._neu_speichern)
+        ab.clicked.connect(self._neu_schliessen)
+        return r
+
+    def _kommentar_schrift(self, key: str) -> None:
+        """Schriftgröße der Kommentare: in den Karten hier und in den Blasen am Seitenrand."""
+        self._merke("kommentare/schrift", key)
+        if self.fenster is not None:
+            for t in self.fenster._doc_tabs():
+                t.editor._blasen_cache = (None, [])
+                t.editor.viewport().update()
+                fl = getattr(t.editor, "_blasen_flaeche", None)
+                if fl is not None:
+                    fl.update()
+        self._kommentare()
+
+    def kommentar_bearbeiten(self, kid: int) -> None:
+        """Den Kommentar in seiner Karte bearbeiten (Doppelklick auf die Blase oder „Bearbeiten“)."""
+        self._bearbeite = kid
+        self.show(); self.zeige_tab("kommentare")
+        self._kommentare()
+        for k in self._karten:
+            if k.kid == kid and hasattr(k, "eingabe"):
+                k.eingabe.setFocus()
+
+    def _bearbeiten_speichern(self, kid: int, text: str) -> None:
+        ed = self.get_editor()
+        if ed is not None and text:
+            ed.kommentar_text_setzen(kid, text)
+        self._bearbeite = None
+        self._kommentare()
+
+    def _bearbeiten_abbrechen(self) -> None:
+        self._bearbeite = None
+        self._kommentare()
+
+    def _sortieren(self, key: str) -> None:
+        self.sortierung = key; self._kommentare()
+
+    def _anzeigen(self, key: str) -> None:
+        self.anzeige = key; self._kommentare()
+
+    def _neu_zeigen(self) -> None:
+        self.show(); self.zeige_tab("kommentare")
+        self.neu_feld.show(); self.neu_text.setFocus()
+
+    def _neu_schliessen(self) -> None:
+        self.neu_text.clear(); self.neu_feld.hide()
+
+    def _neu_speichern(self) -> None:
+        ed = self.get_editor()
+        text = self.neu_text.toPlainText().strip()
+        if ed is None or not text:
+            return
+        if ed.kommentar_neu(text) is None:
+            if self.fenster is not None:
+                self.fenster.statusBar().showMessage("Zum Kommentieren Text markieren oder in ein Wort klicken.", 5000)
+            return
+        self._neu_schliessen()
+        self._kommentare()
+
+    def _kommentare(self) -> None:
+        for k in self._karten:
+            self._karten_layout.removeWidget(k); k.hide(); k.setParent(None); k.deleteLater()
+        self._karten = []
+        ed = self.get_editor()
+        eintraege = []
+        if ed is not None:
+            for b in ed.kommentar_bereiche():
+                k = ed.kommentare.get(int(b["wert"]))
+                if k is None:
+                    continue
+                if self.anzeige == "offen" and k.get("geloest") or self.anzeige == "geloest" and not k.get("geloest"):
+                    continue
+                eintraege.append((b, k))
+        schluessel = {"neu": (lambda e: e[1].get("datum", ""), True), "alt": (lambda e: e[1].get("datum", ""), False),
+                      "az": (lambda e: e[1].get("autor", "").lower(), False), "za": (lambda e: e[1].get("autor", "").lower(), True),
+                      "oben": (lambda e: e[0]["von"], False), "unten": (lambda e: e[0]["von"], True)}[self.sortierung]
+        eintraege.sort(key=schluessel[0], reverse=schluessel[1])
+        for i, (b, k) in enumerate(eintraege):
+            from lunivo_writer.editor.sprechblasen import karten_pt
+            karte = KommentarKarte(b, k, ed, self.aktualisieren, karten_pt(self._einstellung("kommentare/schrift", "mittel")),
+                                   bearbeiten=int(b["wert"]) == self._bearbeite, speichern=self._bearbeiten_speichern,
+                                   abbrechen=self._bearbeiten_abbrechen, bearbeite_los=self.kommentar_bearbeiten)
+            self._karten_layout.insertWidget(i, karte)
+            self._karten.append(karte)
+        gesamt = len(ed.kommentare) if ed is not None else 0
+        self.kommentar_leer.setVisible(not self._karten)
+        self.kommentar_leer.setText("Das Dokument enthält keine Kommentare." if not gesamt else "Keine Kommentare in dieser Ansicht.")
+
+    # ---- Überschriften -----------------------------------------------------------------------------------------------
+    def _bau_ueberschriften(self) -> PanelRahmen:
+        m = QMenu(self)
+        m.addAction("Alle ausklappen", lambda: self.baum.expandAll())
+        m.addAction("Alle einklappen", lambda: self.baum.collapseAll())
+        ebene = m.addMenu("Auf Ebene erweitern")
+        for n in range(1, 10):
+            ebene.addAction(str(n), lambda _=False, n=n: self._ebene(n))
+        m.addSeparator()
+        sg = m.addMenu("Schriftgröße")
+        grp = QActionGroup(sg); grp.setExclusive(True)
+        aktuell = self._einstellung("navigation/schrift", "mittel")
+        for key, text, _pt in SCHRIFT:
+            a = sg.addAction(text); a.setCheckable(True); a.setChecked(key == aktuell); grp.addAction(a)
+            a.triggered.connect(lambda _=False, k=key: self._schrift(k))
+        self._umbruch = m.addAction("Lange Überschriften umbrechen"); self._umbruch.setCheckable(True)
+        self._umbruch.setChecked(str(self._einstellung("navigation/umbrechen", "1")) in ("1", "true", "True"))
+        self._umbruch.toggled.connect(self._umbrechen)
+        r = PanelRahmen(TITEL["ueberschriften"], "settings", m)
+        self.baum = QTreeWidget(); self.baum.setHeaderHidden(True); self.baum.setFrameShape(QFrame.NoFrame)
+        self.baum.itemClicked.connect(self._klick)
+        self.baum.setUniformRowHeights(False)
+        self._schrift(aktuell, speichern=False); self._umbrechen(self._umbruch.isChecked(), speichern=False)
+        r.inhalt.addWidget(self.baum, 1)
+        self.leer = QLabel("Dieses Dokument enthält keine Überschriften. Wenden Sie ein Überschriftenformat auf den Text an, damit er hier angezeigt wird.")
+        self.leer.setWordWrap(True); self.leer.setStyleSheet("color: palette(mid);")
+        r.inhalt.addWidget(self.leer)
+        return r
+
+    def _einstellung(self, key: str, std):
+        return self.settings.get(key, std) if self.settings is not None else std
+
+    def _merke(self, key: str, wert) -> None:
+        if self.settings is not None:
+            self.settings.set(key, wert)
+
+    def _schrift(self, key: str, speichern: bool = True) -> None:
+        pt = next((p for k, _t, p in SCHRIFT if k == key), 10.5)
+        f = QFont(self.baum.font()); f.setPointSizeF(pt); self.baum.setFont(f)
+        if speichern:
+            self._merke("navigation/schrift", key)
+
+    def _umbrechen(self, an: bool, speichern: bool = True) -> None:
+        self.baum.setWordWrap(bool(an))
+        self.baum.setTextElideMode(Qt.ElideNone if an else Qt.ElideRight)
+        self.baum.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff if an else Qt.ScrollBarAsNeeded)
+        if speichern:
+            self._merke("navigation/umbrechen", "1" if an else "0")
+
+    def _ebene(self, n: int) -> None:
+        """Alles bis zur Ebene ``n`` aufklappen, tiefere Ebenen zuklappen."""
+        def lauf(it, tiefe):
+            for i in range(it.childCount()):
+                kind = it.child(i)
+                kind.setExpanded(tiefe + 1 < n)
+                lauf(kind, tiefe + 1)
+        wurzel = self.baum.invisibleRootItem()
+        for i in range(wurzel.childCount()):
+            top = wurzel.child(i); top.setExpanded(n > 1); lauf(top, 1)
+
+    def _ueberschriften(self) -> None:
+        self.baum.clear()
+        ed = self.get_editor()
+        if ed is None:
+            self.leer.show()
+            return
+        eltern = {0: self.baum.invisibleRootItem()}
+        b = ed.document().firstBlock()
+        n = 0
+        while b.isValid():
+            lvl = b.blockFormat().headingLevel()
+            if lvl and b.text().strip():
+                it = QTreeWidgetItem([b.text().strip()])
+                it.setData(0, Qt.UserRole, b.position())
+                p = eltern.get(lvl - 1) or eltern[max(k for k in eltern if k < lvl)]
+                p.addChild(it)
+                eltern[lvl] = it
+                for k in [k for k in eltern if k > lvl]:
+                    del eltern[k]
+                n += 1
+            b = b.next()
+        self.baum.expandAll()
+        self.leer.setVisible(n == 0)
+
+    def _klick(self, item, _col) -> None:
+        ed = self.get_editor()
+        if ed is not None:
+            pos = item.data(0, Qt.UserRole)
+            ed.select_range(pos, pos)
+            ed.ensureCursorVisible()
+
+    # ---- Änderungen und Noten ------------------------------------------------------------------------------------------
+    @staticmethod
+    def _kartenfeld(r: PanelRahmen, leer_text: str):
+        """Ein Feld mit Karten in einer Rolle (ohne seitliches Rollen) und einem Hinweis für den leeren Zustand. → (Layout, Hinweis)"""
+        host = QWidget(); lay = QVBoxLayout(host); lay.setContentsMargins(0, 0, 0, 0); lay.setSpacing(8); lay.addStretch(1)
+        leer = QLabel(leer_text); leer.setWordWrap(True); leer.setStyleSheet("color: palette(mid);")
+        lay.insertWidget(0, leer)
+        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setFrameShape(QFrame.NoFrame); sc.setWidget(host)
+        sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        r.inhalt.addWidget(sc, 1)
+        return lay, leer
+
+    def _bau_aenderungen(self) -> PanelRahmen:
+        m = QMenu(self)
+        m.addAction("Alle Änderungen annehmen", lambda: self._befehl("aenderungenUebernehmen"))
+        m.addAction("Alle Änderungen ablehnen", lambda: self._befehl("aenderungenVerwerfen"))
+        r = PanelRahmen(TITEL["aenderungen"], "ellipsis", m)
+        zeile = QHBoxLayout()
+        zeile.addWidget(QLabel("Änderungen verfolgen"), 1)
+        self.verfolgen_knopf = QPushButton(); self.verfolgen_knopf.setCheckable(True); self.verfolgen_knopf.setFixedWidth(64)
+        self.verfolgen_knopf.setToolTip("Jede Änderung am Text wird festgehalten; Sie nehmen sie hier an oder lehnen sie ab")
+        self.verfolgen_knopf.clicked.connect(lambda: (self._befehl("verfolgen"), self._verfolgen_zeigen()))
+        zeile.addWidget(self.verfolgen_knopf)
+        r.inhalt.addLayout(zeile)
+        self._aend_layout, self._aend_leer = self._kartenfeld(r, "Keine Änderungen. Schalten Sie „Änderungen verfolgen“ ein: Dann erscheint hier jede Änderung am Text, und Sie nehmen sie an oder lehnen sie ab.")
+        self._aend_karten: list[QFrame] = []
+        return r
+
+    def _befehl(self, name: str) -> None:
+        if self.fenster is not None:
+            self.fenster.befehle.tun(name)
+            self.aktualisieren()
+
+    def _verfolgen_zeigen(self) -> None:
+        an = bool(self.fenster.befehle.zustand("verfolgen")) if self.fenster is not None else False
+        self.verfolgen_knopf.setChecked(an)
+        self.verfolgen_knopf.setText("an" if an else "aus")
+        self.verfolgen_knopf.setStyleSheet("QPushButton:checked { background: #2f9e75; color: white; border-color: #2f9e75; font-weight: bold; }")
+
+    def _bau_noten(self) -> PanelRahmen:
+        r = PanelRahmen(TITEL["noten"])
+        zeile = QHBoxLayout()
+        for text, befehl in (("＋ Fußnote", "fussnote"), ("＋ Endnote", "endnote")):
+            b = QPushButton(text); b.setMinimumHeight(32)
+            b.setToolTip("Fügt an der Schreibmarke eine " + text[2:] + " ein")
+            b.clicked.connect(lambda _=False, n=befehl: self._befehl(n))
+            zeile.addWidget(b)
+        zeile.addStretch(1)
+        r.inhalt.addLayout(zeile)
+        self._noten_layout, self._noten_leer = self._kartenfeld(r, "Keine Noten. Setzen Sie die Schreibmarke an die Stelle im Text und klicken Sie auf „＋ Fußnote“ oder „＋ Endnote“.")
+        self._noten_karten: list[QFrame] = []
+        return r
+
+    @staticmethod
+    def _karte(titel: str, text: str, farbe: str, kopf_rechts: str = "") -> tuple[QFrame, QVBoxLayout]:
+        k = QFrame(); k.setObjectName("sKarte")
+        k.setStyleSheet("QFrame#sKarte { border: 1px solid palette(midlight); border-radius: 8px; background: rgba(128,128,128,0.06); }"
+                        "QFrame#sKarte QLabel { border: none; background: transparent; }")
+        v = QVBoxLayout(k); v.setContentsMargins(10, 8, 10, 8); v.setSpacing(6)
+        kopf = QHBoxLayout()
+        chip = QLabel(titel); chip.setStyleSheet(f"background: {farbe}; color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px; border-radius: 3px;")
+        kopf.addWidget(chip); kopf.addStretch(1)
+        if kopf_rechts:
+            d = QLabel(kopf_rechts); d.setStyleSheet("color: palette(mid); font-size: 8pt;"); kopf.addWidget(d)
+        v.addLayout(kopf)
+        t = QLabel(text); t.setWordWrap(True); t.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        v.addWidget(t)
+        return k, v
+
+    def _aenderungen_und_noten(self) -> None:
+        for kk in self._aend_karten + self._noten_karten:
+            kk.hide(); kk.setParent(None); kk.deleteLater()
+        self._aend_karten, self._noten_karten = [], []
+        self._verfolgen_zeigen()
+        ed = self.get_editor()
+        if ed is None:
+            self._aend_leer.show(); self._noten_leer.show()
+            return
+        from lunivo_writer.editor.zusatz import P_AUTOR, P_DATUM
+        text_ges = ed.document().toPlainText()
+        for i, b in enumerate(ed.aenderungen()):
+            ins = b["wert"] == "ins"
+            autor, datum = b["cf"].stringProperty(P_AUTOR) or "?", b["cf"].stringProperty(P_DATUM) or ""
+            k, v = self._karte("Eingefügt" if ins else "Gelöscht", f"„{text_ges[b['von']:b['bis']][:120]}“", "#2f9e75" if ins else Farbe.ROT,
+                               f"{autor} · {_datum(datum)}")
+            z = QHBoxLayout(); z.setSpacing(6)
+            for text, fn in (("Zeigen", lambda b=b: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
+                             ("Annehmen", lambda b=b: self._aend_aktion("aenderung_an", b)), ("Ablehnen", lambda b=b: self._aend_aktion("aenderung_ab", b))):
+                kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
+            z.addStretch(1); v.addLayout(z)
+            self._aend_layout.insertWidget(i, k); self._aend_karten.append(k)
+        self._aend_leer.setVisible(not self._aend_karten)
+        zaehler = {"f": 0, "e": 0}
+        for i, st in enumerate(ed.noten_stellen()):
+            zaehler[st["art"]] += 1
+            txt = ed.noten[st["art"]].get(st["id"], "")
+            k, v = self._karte(("Fußnote " if st["art"] == "f" else "Endnote ") + str(zaehler[st["art"]]), txt or "(leer)", Farbe.AKZENT if st["art"] == "f" else "#7048a8")
+            z = QHBoxLayout(); z.setSpacing(6)
+            for text, fn in (("Zeigen", lambda st=st: (ed.select_range(st["von"], st["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
+                             ("Bearbeiten", lambda st=st: self._aend_aktion("note_bearbeiten", st)), ("Löschen", lambda st=st: self._aend_aktion("note_weg", st))):
+                kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
+            z.addStretch(1); v.addLayout(z)
+            self._noten_layout.insertWidget(i, k); self._noten_karten.append(k)
+        self._noten_leer.setVisible(not self._noten_karten)
+
+    def _aend_aktion(self, name: str, daten: dict) -> None:
+        if self.aktion is not None:
+            self.aktion(name, daten)
+
+    # ---- Vorlesen ------------------------------------------------------------------------------------------------------
+    def _bau_vorlesen(self) -> PanelRahmen:
+        r = PanelRahmen(TITEL["vorlesen"])
+        if self.fenster is not None:
+            from lunivo_writer.ui.baukasten.werkbank import Werkbank
+            wb = Werkbank(self.fenster, "Lesen", nur={"vorlesen", "vorlesenAbSatz", "vorlesenStopp", "stimmeWaehlen"})
+            r.inhalt.addWidget(wb, 1)
+            self.vorlesen_zeilen = wb
+        return r
