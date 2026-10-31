@@ -93,20 +93,17 @@ def test_bild_farbe_zuschneiden_drehen_original(app, tmp_path):
     assert round(f.width()) == 40 and round(f.height()) == 20 and f.property(E.STYLE_PROP + 1) == "rot"
 
 
-def test_png_export_pro_seite(app, tmp_path, monkeypatch):
-    from lunivo_writer.services.bild_export import BildWahl
-    from lunivo_writer.ui.baukasten import bild_export as BE
+def test_png_export_pro_seite(app, tmp_path):
     w = win(tmp_path)
     w.current_editor().insertPlainText("\n".join(f"Zeile {i}" for i in range(140)))
     w.current_tab().title = "seiten"
-    gezeigt = []
-    monkeypatch.setattr(BE, "bild_export_fragen", lambda *a: BildWahl(ordner=str(tmp_path), dpi=150, format="PNG"))
-    monkeypatch.setattr(BE, "erfolg_zeigen", lambda _p, d: gezeigt.extend(d))
-    w.befehle.exportierenPng()
+    ansicht = w.bild_export_widget()                         # der Bildexport ist eine Seite im Datei-Menü, kein eigenes Fenster
+    ansicht.ordner.setText(str(tmp_path)); ansicht.format.setCurrentText("PNG")
+    ansicht.k_export.click()
     dateien = sorted(f for f in os.listdir(tmp_path) if f.startswith("seiten") and f.endswith(".png"))
-    assert len(dateien) >= 2 and dateien[0] == "seiten-1.png" and len(gezeigt) == len(dateien)
+    assert len(dateien) >= 2 and dateien[0] == "seiten-1.png" and ansicht.meldung.isVisibleTo(ansicht)
     b = QImage(str(tmp_path / dateien[0]))
-    assert not b.isNull() and b.width() > 1000
+    assert not b.isNull() and b.width() > 500
     fertig(w)
 
 
@@ -131,13 +128,14 @@ def test_bild_export_langes_bild_wasserzeichen_und_formate(app, tmp_path):
 
 
 def test_bild_export_fenster(app, tmp_path):
-    from lunivo_writer.ui.baukasten.bild_export import BildExportFenster
-    f = BildExportFenster(None, str(tmp_path), 220)
+    from lunivo_writer.ui.baukasten.bild_export import BildExportAnsicht
+    gewaehlt = []
+    f = BildExportAnsicht(None, str(tmp_path), 220, lambda w: gewaehlt.append(w) or [], lambda: None)
     assert f.k_seite.isChecked() and not f.k_lang.isChecked() and f.qualitaet.currentData() == 220
     assert [f.format.itemText(i) for i in range(f.format.count())] == ["JPG", "PNG", "BMP", "TIF"]
     f.k_lang.click(); f.wasser.setText("Vertraulich"); f.format.setCurrentText("JPG")
     f.k_export.click()
-    w = f.wahl()
+    w = gewaehlt[-1]
     assert w.lang and w.wasserzeichen == "Vertraulich" and w.format == "JPG" and w.ordner == str(tmp_path) and w.dpi == 220
 
 

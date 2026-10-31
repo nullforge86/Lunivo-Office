@@ -5,13 +5,16 @@ Summary: Lunivo Writer — native Textverarbeitung für Linux (Python 3, PySide6
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: PySide6<7,>=6.6
+Requires-Dist: PySide6-Essentials<7,>=6.6
+Requires-Dist: PySide6-Addons<7,>=6.6
+Requires-Dist: PySide6-Pdf>=6.6
 Requires-Dist: python-docx>=1.1
 Requires-Dist: msoffcrypto-tool>=5
 Requires-Dist: pyphen>=0.14
 Requires-Dist: pypdf>=4
 Provides-Extra: dev
 Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
 Dynamic: license-file
 
 ![Lunivo Office](bilder/lunivo-office.png)

@@ -17,12 +17,13 @@ jobs:
           python-version: '3.12'
       - name: Systempakete für Qt
         run: sudo apt-get update && sudo apt-get install -y libegl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libgl1
-      - name: Abhängigkeiten
-        run: pip install -r requirements-dev.txt
+      - uses: astral-sh/setup-uv@v5
+      - name: Abhängigkeiten (aus uv.lock)
+        run: uv sync --frozen --extra dev
       - name: Fehlerprüfung (ruff, nur echte Fehler)
-        run: pip install ruff && ruff check .
+        run: uv run --frozen ruff check .
       - name: Tests
-        run: python -m pytest -q tests
+        run: uv run --frozen python -m pytest -q tests
 
   plattformen:
     name: Prüfen (${{ matrix.os }}, Auswahl)

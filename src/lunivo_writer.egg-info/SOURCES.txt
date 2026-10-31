@@ -99,7 +99,9 @@ src/lunivo_writer/editor/tabfuell.py
 src/lunivo_writer/editor/textdaten.py
 src/lunivo_writer/editor/texteffekt.py
 src/lunivo_writer/editor/textfx.py
+src/lunivo_writer/editor/textur.py
 src/lunivo_writer/editor/umbruch.py
+src/lunivo_writer/editor/unterstreichung.py
 src/lunivo_writer/editor/vergleich.py
 src/lunivo_writer/editor/verweise.py
 src/lunivo_writer/editor/verzeichnis.py
@@ -324,6 +326,7 @@ src/lunivo_writer/ui/widgets/lese_ende_knopf.py
 src/lunivo_writer/ui/widgets/live_vorschau.py
 src/lunivo_writer/ui/widgets/mini_leiste.py
 src/lunivo_writer/ui/widgets/schweb_knopf.py
+tests/test_abhaengigkeiten.py
 tests/test_abschnitte.py
 tests/test_anzeige_extra.py
 tests/test_ausgabe.py
@@ -373,6 +376,7 @@ tests/test_proofing_positionen.py
 tests/test_proofing_pruefer.py
 tests/test_pruefen_tools.py
 tests/test_querblatt.py
+tests/test_schichten.py
 tests/test_schreibhilfe.py
 tests/test_schreibweise.py
 tests/test_seitenlayout_vorlagen.py

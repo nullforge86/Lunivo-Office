@@ -178,9 +178,16 @@ class WritingAssistant(QObject):
             self._zeigen()                               # nichts geändert — nichts zu prüfen
             return
         self._laeuft = True
-        schalter = {k: self.settings.get_bool(k, True) for k in ("rsGrossIgnorieren", "rsZahlenIgnorieren", "rsPfadeIgnorieren", "rsGrammatik")}
+        schalter = self.pruef_schalter()
         pruef_text = text[self._region[0]:self._region[1]] if self._region else text
         self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, schalter))
+
+    def pruef_schalter(self) -> dict:
+        """Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“."""
+        schalter = {k: self.settings.get_bool(k, True) for k in ("rsGrossIgnorieren", "rsZahlenIgnorieren", "rsPfadeIgnorieren", "rsGrammatik")}
+        for n in pruefung.PRUEFER_NAMEN:
+            schalter["pruefer_" + n] = self.settings.get_bool("schreibhilfe/pruefer_" + n, True)
+        return schalter
 
     def _fertig(self, rev: int, roh: list) -> None:
         self._laeuft = False

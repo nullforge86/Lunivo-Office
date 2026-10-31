@@ -43,3 +43,15 @@ def test_grammatik_schalter_nimmt_alle_grammatikpruefer_weg():
     nur_rechtschreibung = pruefung.finde_probleme(TEXT, None, {"rsGrammatik": False})
     aus = {"pruefer_" + n: False for n in pruefung.GRAMMATIK_PRUEFER}
     assert _schluessel(nur_rechtschreibung) == _schluessel(pruefung.finde_probleme(TEXT, None, aus))
+
+
+def test_schreibhilfe_gibt_prueferschalter_aus_den_einstellungen_weiter(app, tmp_path):
+    from PySide6.QtCore import QSettings
+    from lunivo_writer.proofing.proofing_service import WritingAssistant
+    from lunivo_writer.services.settings_service import Settings
+    s = Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat))
+    s.set("schreibhilfe/pruefer_komma", False)
+    a = WritingAssistant(s)
+    schalter = a.pruef_schalter()
+    assert schalter["pruefer_komma"] is False and schalter["pruefer_zeichen"] is True and schalter["rsGrammatik"] is True
+    assert not pruefung.pruefer_aktiv("komma", schalter) and pruefung.pruefer_aktiv("zeichen", schalter)

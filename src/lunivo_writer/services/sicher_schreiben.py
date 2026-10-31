@@ -110,7 +110,7 @@ def _umask() -> int:
 
 
 def _fsync_datei(path: str) -> None:
-    fd = os.open(path, os.O_RDONLY)
+    fd = os.open(path, os.O_RDWR if os.name == "nt" else os.O_RDONLY)          # Windows: fsync braucht einen schreibenden Zugriff
     try:
         os.fsync(fd)
     finally:

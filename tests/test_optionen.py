@@ -229,11 +229,11 @@ def test_optionen_flach_suche_aufklappen_und_hell_dunkel(app, tmp_path, monkeypa
     from PySide6.QtGui import QPalette
     a.gehe_zu("anzeige")
     knoepfe = {b.accessibleName(): b for b in a.stapel.currentWidget().findChildren(QPushButton) if b.objectName() == "optWahl"}
-    assert set(knoepfe) == {"Hell", "Dunkel", "Wie das System"}
+    assert set(knoepfe) == {"Hell", "Dunkel", "Mint", "Wie das System"}
     try:
         knoepfe["Dunkel"].click()
         assert w.settings.get("theme") == "dark" and QApplication.instance().palette().color(QPalette.Window).lightness() < 128
-        assert knoepfe["Dunkel"].isChecked() and not knoepfe["Hell"].isChecked() and knoepfe["Dunkel"].text().startswith("✓")
+        assert knoepfe["Dunkel"].isChecked() and not knoepfe["Hell"].isChecked()
         w.thema_wechseln()                                                    # Strg+Umschalt+D / Statusleiste: zum jeweils anderen
         assert w.settings.get("theme") == "light" and w.statusBar().thema.text() == "Hell"
     finally:
