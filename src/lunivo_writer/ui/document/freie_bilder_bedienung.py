@@ -108,7 +108,7 @@ class FreieBilderMixin:
 
     @staticmethod
     def _frei_text_markieren(p: QPainter, r: QRectF, a: dict, bild) -> None:
-        """WordArt wie in WPS: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt)."""
+        """WordArt wie in Office-Programm: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt)."""
         from lunivo_writer.editor import frei_objekt as FO
         t = FO.text_bereich(a, bild)
         if t is not None:
@@ -232,7 +232,7 @@ class FreieBilderMixin:
                     p.drawLine(QPointF(c.x(), c.y() - lg / 2), QPointF(c.x(), c.y() + lg / 2))
             p.restore()
             return
-        p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1.2)); p.setBrush(QColor(Farbe.WEISS))          # runde Griffe wie in WPS: weiße Kreise, grauer Rand
+        p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1.2)); p.setBrush(QColor(Farbe.WEISS))          # runde Griffe wie in Office-Programm: weiße Kreise, grauer Rand
         for name in GRIFFE:
             c = self._frei_griff_mitte(r, name)
             p.drawEllipse(c, GRIFF / 2, GRIFF / 2)
