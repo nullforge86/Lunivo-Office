@@ -26,12 +26,10 @@ def test_png_export_nutzt_ppi(app, tmp_path, monkeypatch):
     w.new_document()
     t = w.current_tab(); t.editor.setPlainText("Hallo")
     w.settings.set("ausgabe/ppi", "220 ppi (Druck)")
-    from lunivo_writer.ui.baukasten import bild_export as BE
-    from lunivo_writer.services.bild_export import BildWahl
+    from lunivo_writer.services.bild_export import BildWahl, bilder_schreiben
     t.title = "x"
-    monkeypatch.setattr(BE, "bild_export_fragen", lambda _p, _o, dpi: BildWahl(ordner=str(tmp_path), dpi=dpi, format="PNG"))
-    monkeypatch.setattr(BE, "erfolg_zeigen", lambda *a: None)
-    w.befehle.exportierenPng()
+    wahl = BildWahl(ordner=str(tmp_path), dpi=w.ausgabe_ppi(), format="PNG")
+    bilder_schreiben(t.editor.document(), t.page, t.editor.noten, t.title, wahl)
     img = QImage(str(tmp_path / "x.png"))
     breite = round(210 / 25.4 * 220)
     assert abs(img.width() - breite) <= 2

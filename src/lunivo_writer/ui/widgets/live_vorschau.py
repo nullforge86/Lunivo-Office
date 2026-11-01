@@ -70,11 +70,14 @@ class Ueberfahren(QObject):
         self.v, self.f = vorschau, anwenden
 
     def eventFilter(self, o, e):
-        t = e.type()
-        if t == QEvent.Enter:
-            self.v.zeigen(self.f)
-        elif t in (QEvent.Leave, QEvent.MouseButtonPress, QEvent.Hide):
-            self.v.ende()
+        try:
+            t = e.type()
+            if t == QEvent.Enter:
+                self.v.zeigen(self.f)
+            elif t in (QEvent.Leave, QEvent.MouseButtonPress, QEvent.Hide):
+                self.v.ende()
+        except (RuntimeError, NotImplementedError):    # Knopf oder Editor wird gerade abgebaut
+            pass
         return False
 
 

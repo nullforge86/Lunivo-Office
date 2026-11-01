@@ -36,7 +36,10 @@ def _mint_stil(w) -> None:
 class _MintFilter(QObject):
     def eventFilter(self, obj, ev):
         if _MINT and ev.type() == QEvent.Polish and hasattr(obj, "styleSheet"):
-            _mint_stil(obj)
+            try:
+                _mint_stil(obj)
+            except (RuntimeError, NotImplementedError):   # Objekt wird gerade abgebaut (Layout-Wrapper schon weg)
+                pass
         return False
 
 
