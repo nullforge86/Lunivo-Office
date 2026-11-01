@@ -17,8 +17,8 @@ def bauen(register: dict) -> dict:
         {"name": "Kommentare", "reihenfolge": True, "knoepfe": [
             _k("kommentarneu", "Kommentar einfügen", "kommentar", True),
             _k("kommentarloeschen", "Löschen", "kommentarWeg", True, klappe="kommentarLoeschenKlappe"),
-            _k("zurueck", "Vorherige", "kommentarZurueck", text=True),
-            _k("vor", "Weiter", "kommentarWeiter", text=True)]},
+            _k("vorherSatz", "Vorherige", "kommentarZurueck", text=True),
+            _k("weiterSatz", "Weiter", "kommentarWeiter", text=True)]},
         {"name": "Nachverfolgung", "reihenfolge": True, "knoepfe": [
             _k("nachverfolgen", "Änderungen nachverfolgen", "verfolgen", True, klappe="verfolgenKlappe"),
             {"feld": "anzeige", "name": "Anzeige zur Überprüfung"},
@@ -26,8 +26,8 @@ def bauen(register: dict) -> dict:
         {"name": "Änderungen", "reihenfolge": True, "knoepfe": [
             _k("aenderungannehmen", "Annehmen", "aenderungAnnehmen", True, klappe="annehmenKlappe"),
             _k("aenderungablehnen", "Ablehnen", "aenderungAblehnen", True, klappe="ablehnenKlappe"),
-            _k("zurueck", "Vorherige", "aenderungZurueck", text=True),
-            _k("vor", "Weiter", "aenderungWeiter", text=True)]},
+            _k("vorherSatz", "Vorherige", "aenderungZurueck", text=True),
+            _k("weiterSatz", "Weiter", "aenderungWeiter", text=True)]},
         {"name": "Vergleichen", "reihenfolge": True, "knoepfe": [
             _k("vergleichen", "Vergleichen", "dokumenteVergleichen", True, klappe="vergleichenKlappe")]},
         {"name": "Freihand", "reihenfolge": True, "knoepfe": [

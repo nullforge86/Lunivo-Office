@@ -26,7 +26,7 @@ def bauen(register: dict) -> dict:
         mit("Umbrüche", text=True, menue=None, klappe="umbruecheKlappe"), mit("Zeilennummern", text=True, tun=None, klappe="zeilennummernKlappe")]}
     hintergrund = {"name": "Seitenhintergrund", "reihenfolge": True, "knoepfe": [
         mit("Seitenfarbe", gross=True, tun=None, klappe="seitenfarbeKlappe"), mit("Seitenränder", gross=True, tun="seitenrahmen"),
-        _k("netz", "Genko-Einstellung", "genkoEinstellung", True)]}         # Wasserzeichen: im Menü Seitenfarbe; Genko (japanisches Manuskriptraster) fehlt Lunivo noch und bleibt grau
+        _k("kacheln", "Genko-Einstellung", "genkoEinstellung", True)]}         # Wasserzeichen: im Menü Seitenfarbe; Genko (japanisches Manuskriptraster) fehlt Lunivo noch und bleibt grau
     anordnen = {"name": "Anordnen", "reihenfolge": True, "knoepfe": [
         mit("Textfluss", gross=True), mit("Ausrichten", gross=True, tun=None, klappe="ausrichtenKlappe"), mit("Gruppieren", text=True), mit("Drehen", text=True),
         _k("objekte", "Auswahlbereich", "objekteWaehlen", True)]}

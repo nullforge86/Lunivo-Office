@@ -21,7 +21,7 @@ def bauen(register: dict) -> dict:
         benutzt.add(e["name"])
     gruppen = [
         {"name": "Inhaltsverzeichnis", "reihenfolge": True, "knoepfe": [
-            nimm("Inhaltsverzeichnis", name="TOC einfügen", gross=True),
+            nimm("Inhaltsverzeichnis", name="TOC einfügen", symbol="ebenen", gross=True),
             nimm("Verzeichnisse aktualisieren", name="Inhaltsverzeichnis aktualisieren", symbol="aktualisieren", gross=True,
                  tun="inhaltsverzeichnisAktualisieren"),
             _k("ebenen", "Inhaltsverzeichnis", None, True, klappe="inhaltsverzeichnisKlappe")]},
