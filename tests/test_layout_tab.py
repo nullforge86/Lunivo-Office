@@ -1,4 +1,4 @@
-"""Reiter Seitenlayout (Anordnung wie WPS): Maßfelder für die Ränder, Spalten 1 bis 4."""
+"""Reiter Seitenlayout (Anordnung wie Office-Programm): Maßfelder für die Ränder, Spalten 1 bis 4."""
 from PySide6.QtCore import QSettings
 
 from lunivo_writer.services.settings_service import Settings
