@@ -11,7 +11,7 @@
 | **Drucken und PDF** | Druckverhalten und PDF-Ausgabe |
 | **Name und KI** | Benutzerdaten, KI-Anbieter und gelernte Schreibweisen |
 
-Mit der Suche findest du auch Einstellungen in eingeklappten Gruppen. Weitere Details zur Seitenstruktur stehen in [aufbau-optionen.md](aufbau-optionen.md).
+Mit der Suche findest du auch Einstellungen in eingeklappten Gruppen. Weitere Details zur Seitenstruktur stehen in [aufbau-optionen.md](entwicklung/aufbau-optionen.md).
 
 ## Dokumentkennwort
 

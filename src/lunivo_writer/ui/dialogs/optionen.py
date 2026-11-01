@@ -1,7 +1,7 @@
 """Optionen — das Fenster hinter „☰ Menü ▸ Optionen“ (F9): sechs Seiten in einer flachen Liste, oben eine Suche.
 
 Lesen · Anzeige · Schreiben · Speichern · Drucken und PDF · Name und KI. Jede Seite zeigt nur das Häufige; der Rest steht unter
-„Weitere Einstellungen“ (eingeklappt, mit der Tastatur erreichbar). Werte gelten sofort. Konzept: ``docs/konzept-optionen.md``.
+„Weitere Einstellungen“ (eingeklappt, mit der Tastatur erreichbar). Werte gelten sofort. Konzept: ``docs/entwicklung/konzept-optionen.md``.
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-![Lunivo Office](bilder/lunivo-office.png)
+![Lunivo Office](assets/images/lunivo-office.png)
 
 # Lunivo Writer
 
@@ -20,7 +20,7 @@ Denn Schwierigkeiten mit der Rechtschreibung bedeuten nicht, weniger Ideen, Fant
 
 ## Installation und Start
 
-Voraussetzung ist Python 3.9 oder neuer. Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten:
+Voraussetzung ist Python 3.10 oder neuer (Linux). Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten (PySide6, python-docx, pyphen, pypdf, msoffcrypto-tool):
 
 ```bash
 ./starten-qt.sh
@@ -44,33 +44,38 @@ Mit `./starten-qt.sh --eintrag` wird ein Menüeintrag angelegt. `./starten-qt.sh
 
 XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Die bekannte Formatunterstützung und ihre Grenzen stehen in [Speichern und Dateiformate](docs/SPEICHERN.md).
 
+## Offline und online
+
+- **Offline:** Schreiben, Formatieren, Rechtschreib- und Grammatikprüfung, Wortvorhersage, Silbentrennung, Öffnen, Speichern und Exportieren.
+- **Nur mit Internet und eigener Einrichtung:** optionale KI-Anbieter und externe Schreibhilfen; Zusatzdaten wie Schriften oder Stimmen holen `schrift-holen.sh` und `stimme-holen.sh`.
+
+## Tests
+
+```bash
+.venv/bin/python -m pytest tests/test_formats.py
+```
+
+Eine gezielte Auswahl genügt lokal; die Gesamtprüfung läuft bei Push und Pull Request über GitHub Actions.
+
 ## Datenschutz
 
 Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwendungsdaten liegen in den XDG-Verzeichnissen des Benutzers. Optionale KI-Anbieter und Online-Dienste brauchen eine eigene Einrichtung; lokale Funktionen laufen ohne sie weiter.
 
 ## Dokumentation
 
-- [Lies mich](docs/LIESMICH.md)
+**Für Nutzer**
+
 - [Installation](docs/INSTALLATION.md)
+- [Überblick](docs/LIESMICH.md)
 - [Lesen und Schreiben](docs/lesen-und-schreiben.md)
 - [Prüfung, Vorhersage und KI](docs/pruefung-und-ki.md)
 - [Schreiben und Dokumente](docs/schreiben-und-dokumente.md)
 - [Einstellungen](docs/einstellungen.md)
 - [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
 - [Oberfläche](docs/oberflaeche.md)
-- [Projektaufbau](docs/README.md)
-- [Aufbau: Registerband](docs/aufbau-band.md)
-- [Aufbau: Ist-Stand](docs/aufbau-ist-stand.md)
-- [Aufbau: Optionen](docs/aufbau-optionen.md)
-- [Baukasten](docs/baukasten.md)
-- [Bilder – vollständige Übersicht](docs/bilder-vollstaendig.md)
-- [Konzept: Optionen](docs/konzept-optionen.md)
-- [Tabellen und Steuerung](docs/tabellen-und-steuerung.md)
-- [UI-Technologie](docs/ui-technologie.md)
-- [Interne Funktionen (Inventar)](docs/interne-funktionen.md)
-- [Erweiterungen](docs/erweiterungen.md)
-- [Entstehung](docs/ENTSTEHUNG.md)
-- [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
+- [Entstehung](docs/ENTSTEHUNG.md) und [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
+
+**Für Entwickler:** Projektaufbau, Baukasten, Registerband und Funktionsinventar stehen in [docs/entwicklung](docs/entwicklung/README.md).
 
 Weitere Hilfe gibt es im Programm unter **☰ Menü → Hilfe → Handbuch**.
 

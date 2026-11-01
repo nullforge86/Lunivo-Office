@@ -1,35 +1,49 @@
+# Persönlich und lokal
+Lunivo Writer.desktop
+*.local
+geheim*
+.claude/
+.codex/
+.venv/
+*.bundle
+.env
+.env.*
+*.log
+*.bak
+*.swp
+.DS_Store
+bilder/üBERARBEITUNG VON ICON lOGO/
 
-# LibreOffice (rund 700 MB) und LanguageTool (rund 400 MB) liegen unter
-# Persönliches
-# Was beim Arbeiten nebenbei entsteht
-# Was das Programm sich zur Laufzeit holt und was nicht ins Verzeichnis gehört:
-# ~/.local/share/schreibprogramm/ und werden bei Bedarf dorthin gelegt.
+# Entsteht beim Arbeiten und Bauen
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+*.egg-info/
+dist/
+
+# Wird zur Laufzeit geholt (liegt unter ~/.local/share/schreibprogramm/, nicht im Verzeichnis)
+languagetool/
+libreoffice/
+
+# Dokumente: nur die mitgelieferte Testdatei (siehe tests/test_lo_dokument.py) gehört ins Repository
 *.doc
 *.docx
 *.epub
 *.fodt
-*.local
 *.odt
 *.pdf
-*.pyc
 *.rtf
-.DS_Store
-.pytest_cache/
-.venv/
-__pycache__/
-bilder/üBERARBEITUNG VON ICON lOGO/
-geheim*
-languagetool/
-libreoffice/
-Lunivo Writer.desktop
+!tests/daten/*.docx
+
+# Lokale Prüfberichte
 /docs/funktionsstand.md
 /docs/pruefstand-*.md
-/docs/menue-abgleich.md
 /docs/reiter-abgleich.md
 /docs/bildabgleich-ansicht.md
-/docs/MENUESTRUKTUR.md
 
-# Mitgelieferte Testdatei (siehe tests/test_lo_dokument.py)
-!tests/daten/*.docx
-.claude/
-.codex/
+# Interne KI-Arbeitsanweisungen (lokal)
+CLAUDE.md
+AGENTS.md
+CLOUD-KI-ANWEISUNGEN.md

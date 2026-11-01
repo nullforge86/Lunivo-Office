@@ -6,7 +6,7 @@ Lunivo bündelt Lesehilfen und Schreibhilfe neben dem Dokument. Die Hinweise ers
 
 Unter **Optionen → Lesen** lassen sich Lesestufe, Papierton, Buchstaben- und Wortabstand, Zeilenluft und Zeilenfokus einstellen. Die Änderungen wirken direkt auf die Ansicht. Für den Ausdruck bleiben Papierfarbe und Bildschirmhilfen außen vor.
 
-Als Schriften zum leichteren Lesen können **OpenDyslexic**, **Lexend** und **Atkinson Hyperlegible** installiert werden. Ohne sie verwendet Lunivo die verfügbaren Systemschriften. Details und Installationsbefehle stehen in [Erweiterungen](erweiterungen.md).
+Als Schriften zum leichteren Lesen können **OpenDyslexic**, **Lexend** und **Atkinson Hyperlegible** installiert werden. Ohne sie verwendet Lunivo die verfügbaren Systemschriften. Details und Installationsbefehle stehen in [Erweiterungen](entwicklung/erweiterungen.md).
 
 ## Schreibhilfe
 

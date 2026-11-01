@@ -16,4 +16,4 @@ Die Stimmen und Schriften lassen sich über die Skripte im Projekt ergänzen. Vo
 
 ---
 
-[Zurück zur README](../README.md)
+[Zurück zur README](../../README.md)

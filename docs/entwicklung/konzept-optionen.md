@@ -1,6 +1,6 @@
 # Konzept: Das Optionen-Fenster, leicht und barrierefrei
 
-**Einordnung:** Historischer Entwurf. Der Rahmen mit sechs Seiten, Suche und Hell/Dunkel ist umgesetzt. Diese Datei hält die ursprünglichen Ziele und Begründungen fest; für die aktuelle Bedienung siehe [aufbau-optionen.md](aufbau-optionen.md) und [einstellungen.md](einstellungen.md).
+**Einordnung:** Historischer Entwurf. Der Rahmen mit sechs Seiten, Suche und Hell/Dunkel ist umgesetzt. Diese Datei hält die ursprünglichen Ziele und Begründungen fest; für die aktuelle Bedienung siehe [aufbau-optionen.md](aufbau-optionen.md) und [einstellungen.md](../einstellungen.md).
 Abweichungen vom Entwurf: Das Gedächtnis (gelernte Schreibweisen) steht unter *Schreiben ▸ Weitere Einstellungen*; Kennwort und
 Änderungsverfolgung öffnen vorerst als Fenster aus *Speichern ▸ Weitere Einstellungen* (der Umzug nach *Datei ▸ Dokument schützen*
 und in den Reiter *Überprüfen* steht noch aus).
@@ -79,7 +79,7 @@ Heute (siehe Bildschirmfoto): „Thema der Benutzeroberfläche“ als Klappliste
 
 - Rahmen und Seiten bleiben in `ui/dialogs/optionen.py` und `ui/dialogs/optionen_seiten/`; die Seiten werden zusammengelegt, Schalter behalten ihre Schlüssel im Speicher (Einstellungsdatei bleibt kompatibel, nichts geht verloren, auch Gestrichenes behält seinen Standardwert).
 - Eingeklappte Gruppe, Erklärzeile und Suchfeld als neue Bausteine in `ui/baukasten/`, damit auch andere Dialoge sie nutzen.
-- Reihenfolge: (1) Schalter-Inventur mit Entscheidung behalten/streichen/verschieben, (2) Rahmen mit 6 Seiten und Suche, (3) Seiten nacheinander umziehen, (4) Barrierefreiheits-Prüfung per Tastatur und mit großer Schrift, (5) `docs/aufbau-optionen.md` und `docs/einstellungen.md` nachziehen.
+- Reihenfolge: (1) Schalter-Inventur mit Entscheidung behalten/streichen/verschieben, (2) Rahmen mit 6 Seiten und Suche, (3) Seiten nacheinander umziehen, (4) Barrierefreiheits-Prüfung per Tastatur und mit großer Schrift, (5) `docs/entwicklung/aufbau-optionen.md` und `docs/einstellungen.md` nachziehen.
 - Tests nur gezielt: Optionen-Dialog, Suche, Speicher-Schlüssel unverändert; Volltest erst am Schluss wegen der Änderung an einer zentralen Oberfläche.
 
 Die Fragen am Ende des ursprünglichen Entwurfs sind durch die aktuelle Implementierung überholt. Die bestehenden Einstellungen sind in den verlinkten Übersichten beschrieben.

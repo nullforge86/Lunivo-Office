@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 _PFADE: dict | None = None
 _CACHE: dict = {}
-STRICH = 1.05         # schlanke Office-Kontur bei typischen Symbolgrößen von 16–20 px
+STRICH = 1.5          # kräftige Kontur: bleibt bei 16–24 px gut erkennbar (vorher 1,05, siehe docs/entwicklung/icon-konzept.md)
 FAKTOR = 1.0          # Größe der Symbole (Optionen ▸ Darstellung)
 
 
