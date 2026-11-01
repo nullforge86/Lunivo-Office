@@ -424,35 +424,35 @@ Befehle: Einfügen.
   - `hyperlink(k)` — Fenster „Hyperlink“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse).
   - `objekt(k, als_symbol)` — Fenster „Objekt einfügen“: Inhalt einer Datei (Text, Bild) oder ein Dateisymbol mit Link.
   - `_datei_einsetzen(pfad, art)` — Bild ins Dokument, Text (DOCX, ODT, RTF, TXT, MD) mit seinem Inhalt, alles andere als Dateisymbol mit Link.
-  - `dateiObjekt(k)` — „Datei-Objekt“ wie in WPS: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
+  - `dateiObjekt(k)` — „Datei-Objekt“ wie in Office-Programm: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
   - `menue_objektKlappe()`
   - `kopfFussZeigen(k)`
-  - `menue_seitenzahlKlappe()` — Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
+  - `menue_seitenzahlKlappe()` — Seitenzahl wie in Office-Programm: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
   - `_seitenzahl_vorgabe(schl)`
   - `seitenzahlEinfuegen(k)` — Fenster „Seitenzahl einfügen“; „Übernehmen für“ entscheidet, welche Abschnitte es trifft. „Von aktueller Seite“ beginnt am
   - `seitenzahlenEntfernen(k)`
   - `_eigene_wasserzeichen()` — Eigene Wasserzeichen (Text oder Bild) aus den Einstellungen.
-  - `menue_wasserzeichenKlappe()` — Wasserzeichen wie in WPS: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen.
+  - `menue_wasserzeichenKlappe()` — Wasserzeichen wie in Office-Programm: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen.
   - `seitenzahlKlappe(k)`
   - `leereSeite(k, quer)` — Leere Seite: ein neues Blatt hinter der Seite der Schreibmarke (Vertikal/Horizontal; ohne Angabe wie die Seite davor).
   - `sonderzeichen(k)` — Fenster „Symbol“ (Weitere Symbole …) in der Seitenleiste; „Einfügen“ setzt das Zeichen an die Schreibmarke.
   - `_symbol_daten()` — Die eine Datenbasis von Klappe und Fenster „Symbol“: zuletzt verwendet, benutzerdefinierte Liste, Tastenkombinationen.
   - `symbol_tasten_anwenden()` — Tastenkombinationen der benutzerdefinierten Symbole als Kürzel des Hauptfensters setzen (alte werden ersetzt).
   - `_sym(name)`
-  - `menue_umbruecheKlappe()` — Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche.
+  - `menue_umbruecheKlappe()` — Umbrüche wie in Office-Programm: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche.
   - `menue_leereSeiteKlappe()`
-  - `menue_tabelleKlappe()` — Tabelle wie in WPS: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
+  - `menue_tabelleKlappe()` — Tabelle wie in Office-Programm: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
   - `menue_bildKlappe()`
   - `menue_textfeldKlappe()`
   - `textfeldVertikal(k)` — Textfeld mit senkrecht laufendem Text: dasselbe freie Objekt wie das waagerechte (Rahmen, Griffe, Schnellleiste), Richtung vertikal.
   - `textfeldMehrzeilig(k)`
-  - `menue_schnellbausteineKlappe()` — Schnellbausteine wie in WPS: AutoText-Liste ▸ und Felder …
+  - `menue_schnellbausteineKlappe()` — Schnellbausteine wie in Office-Programm: AutoText-Liste ▸ und Felder …
   - `_bausteine_fuellen(m)` — AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
   - `_autotext_seite(teile)`
   - `autotextHinzufuegen(k)` — Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“.
   - `schnellbausteine(k)`
   - `felder(k)` — Fenster „Felder“ (Schnellbausteine ▸ Felder …). TOC fügt ein echtes Inhaltsverzeichnis ein, TC einen ausgeblendeten
-  - `menue_symbolKlappe()` — Symbol wie in WPS: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
+  - `menue_symbolKlappe()` — Symbol wie in Office-Programm: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
   - `_symbole_zuletzt()`
   - `_symbol_merken(z)`
   - `_symbol_einfuegen(z)`
@@ -464,7 +464,7 @@ Befehle: Einfügen.
   - `verzeichnisseAktualisieren(k)`
   - `_bild_einfuegen(img, alt, art, daten)`
   - `formenGalerie(k)`
-  - `menue_formenKlappe()` — Formen wie in WPS: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern.
+  - `menue_formenKlappe()` — Formen wie in Office-Programm: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern.
   - `formEinfuegen(k, name)` — Die Form ``name`` (Katalog ``formen_katalog``, auch Linien und Pfeile) einfügen: im Zeichenbereich dort, sonst als freies Objekt.
   - `zeichenbereich(k)` — Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/formen.py``).
   - `zeichnen(k)`
@@ -476,8 +476,8 @@ Befehle: Einfügen.
   - `wordartVorgabe(k, nr)` — WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil als freies Objekt ein — ausgewählt (Rahmen, acht Griffe,
   - `wordartBearbeiten(k)` — Text und Stil des gewählten WordArt-Objekts im Fenster „WordArt“ ändern.
   - `textfeldBearbeiten(k)` — Im gewählten Textfeld direkt schreiben (Doppelklick, Enter oder F2 auf das Textfeld).
-  - `menue_wordartKlappe()` — Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in WPS, auch im dunklen Thema gut zu erkennen).
-  - `menue_gleichungKlappe()` — Gleichung wie in WPS: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“.
+  - `menue_wordartKlappe()` — Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in Office-Programm, auch im dunklen Thema gut zu erkennen).
+  - `menue_gleichungKlappe()` — Gleichung wie in Office-Programm: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“.
   - `menue_deckblattKlappe()` — Deckblätter wie in der Vorlage: Kopf „Stil“ mit Hochformat/Querformat, darunter die Gestaltungen als Seitenbilder in vier Spalten
   - `deckblattVorlage(k, vorlage, quer)` — Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Sonne"]``.
   - `menue_diagrammKlappe()` — Klappe am Diagramm-Knopf: Diagramm … (Fenster) und Neuer Zeichenbereich.
@@ -570,7 +570,7 @@ Befehle: Kommentare, Noten, Änderungen.
 
 - **class `KommentarBefehle`** — Befehle des Bandes: Kommentare, Noten, Änderungen. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
   - `_text_abfragen(titel, frage, vorgabe)`
-  - `kommentar(k)` — Neuer Kommentar wie in WPS: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
+  - `kommentar(k)` — Neuer Kommentar wie in Office-Programm: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
   - `kommentarWeiter(k)`
   - `kommentarZurueck(k)`
   - `kommentarWeg(k)`
@@ -840,7 +840,7 @@ Befehle: Seite, Abschnitte, Spalten.
 
 ### `core/befehle/serien.py`
 
-Befehle: Seriendruck (Reiter „Mailings“ nach der WPS-Vorlage).
+Befehle: Seriendruck (Reiter „Mailings“ nach der Gestaltungsvorlage).
 
 - **class `SerienBefehle`** — Befehle des Kontext-Reiters „Mailings“. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
   - `_serie()`
@@ -875,7 +875,7 @@ Befehle: Seriendruck (Reiter „Mailings“ nach der WPS-Vorlage).
 
 ### `core/befehle/smartarttools.py`
 
-Befehle: Kontext-Reiter „WPSArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
+Befehle: Kontext-Reiter „SmartArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
 
 - **class `SmartArtToolsBefehle`**
   - `_sa()`
@@ -1045,7 +1045,7 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
   - `ttEinzugMehr(k)`
   - `ttEinzugWeniger(k)`
   - `ttSortieren(k)` — Zeilen des WordArt-Textes sortieren (A–Z, beim nächsten Mal Z–A).
-  - `menue_ttTextrichtung()` — Textrichtung wie in WPS (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt.
+  - `menue_ttTextrichtung()` — Textrichtung wie in Office-Programm (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt.
   - `_tt_ausr(wie)`
   - `ttLinks(k)`
   - `ttMitte(k)`
@@ -1079,7 +1079,7 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
   - `menue_ttVerknuepfung()` — Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen.
   - `ttVerknuepfen(k, ziel)` — Das markierte Textfeld mit ``ziel`` verknüpfen: was nicht mehr hineinpasst, läuft dort weiter.
   - `ttVerknuepfungLoesen(k)`
-  - `menue_ttEinstellungen()` — Einstellungen wie in WPS: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text).
+  - `menue_ttEinstellungen()` — Einstellungen wie in Office-Programm: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text).
   - `ttTextBearbeiten(k)`
   - `_tt_gehe(richtung)` — Das vorige/nächste WordArt oder Textfeld des Dokuments markieren (am Ende springt es an den Anfang).
   - `ttVoriges(k)`
@@ -1494,7 +1494,7 @@ Fassungen eines Dokuments mit verfolgten Änderungen, für die Anzeige „Origin
 
 ### `editor/felder.py`
 
-Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
+Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays Gestaltungsvorlage: Feldnamen, Feldfunktionen und Assistent.
 
 - `vorgabe(name)`
 - `_schalter(anweisung, zeichen)`
@@ -1652,7 +1652,7 @@ Freie Objekte mit Parametern (WordArt, Textfeld): EIN gemeinsamer Baustein.
 - `_aendern_innen(ed, art, **kw)` — Parameter des gewählten Objekts ändern und neu zeichnen. ``breite``/``hoehe`` (px) ändern die Größe; ``form_fuell`` (Farbe oder ``""``)
 - `daten_still(ed, art, **kw)` — Daten des gewählten Objekts ändern, ohne das Bild neu zu zeichnen (z. B. die Auswahl eines Diagrammteils); None entfernt den Schlüssel.
 - `nach_groesse(ed, neu)` — Nach dem Ziehen der Griffe: Textfeld, Form und Diagramm werden in der neuen Größe frisch gezeichnet (Zeilenumbruch folgt der Breite,
-- `text_bereich(a, bild)` — Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in WPS (nur WordArt).
+- `text_bereich(a, bild)` — Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in Office-Programm (nur WordArt).
 - `_format_aus_kw(kw)` — Zeichenformat für das Eingabefeld aus Schlüsseln der Texttools (nur die genannten).
 - `_lauf_aus_format(cf, basis)` — Die Zeichenschlüssel, die ein Format ausdrücklich setzt und die vom Objekt abweichen.
 - `_basis(d, art)`
@@ -1828,7 +1828,7 @@ Mehrstufige Nummerierung („Gliederung nummeriert“: 1. / 1.1. / 1.1.1.), von 
 
 ### `editor/muster.py`
 
-Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster, wie Word und WPS sie kennen.
+Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster, wie Word und Office-Programm sie kennen.
 
 - `_pct_name(p)`
 - `name_von(schluessel)`
@@ -3003,7 +3003,7 @@ Vorlesen: Piper (offline, gute Stimme) wenn eingerichtet, sonst speech-dispatche
 
 ### `services/integrations/__init__.py`
 
-Optionale Anbindungen: LanguageTool, WPS.
+Optionale Anbindungen: LanguageTool, Office-Programm.
 
 
 ### `services/integrations/languagetool.py`
@@ -3021,11 +3021,11 @@ LanguageTool als zweite Meinung (eigener Java-Prozess, nur auf diesem Rechner, 1
 
 ### `services/integrations/wps.py`
 
-WPS Office — nur die ehrliche Stufe: ein installiertes Programm aufrufen.
+gängigen Office-Programmen — nur die ehrliche Stufe: ein installiertes Programm aufrufen.
 
 - `finde_wps()`
 - `verfuegbar()`
-- `oeffnen(pfad)` — Öffnet die Datei in WPS Writer (eigener Prozess). False, wenn WPS nicht installiert ist.
+- `oeffnen(pfad)` — Öffnet die Datei in Textverarbeitungsprogramm (eigener Prozess). False, wenn Office-Programm nicht installiert ist.
 
 ## `ui`
 
@@ -3688,7 +3688,7 @@ Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die 
 
 ### `ui/baukasten/layout_dialog.py`
 
-Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage (WPS).
+Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage (Office-Programm).
 
 - `_combo(eintraege, aktuell)`
 - `_zeile(g, _r, radio, *rest)` — Eine Wahlzeile: der Knopf mit seinem Feld, dahinter (falls da) „Beschriftung + Feld“ — nebeneinander oder untereinander, je nach Breite.
@@ -3819,7 +3819,7 @@ Zahlenfeld mit Maßeinheit: intern immer Millimeter, angezeigt in der gewählten
   - `valueFromText(text)`
   - `validate(text, pos)`
 - `spin(value, lo, hi, suffix, step, decimals)`
-- **class `EinheitFeld`**(QWidget) — Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ im WPS): der Wert ist immer in Millimetern, angezeigt wird er in der
+- **class `EinheitFeld`**(QWidget) — Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ im Office-Programm): der Wert ist immer in Millimetern, angezeigt wird er in der
   - `__init__(wert_mm, lo, hi, einheiten, start, leer_bei_null)`
   - `_faktor()`
   - `_zeige()`
@@ -4306,7 +4306,7 @@ Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung u
   - `_linie_gewaehlt(schluessel)`
   - `_voreinstellungs_knopf(text)`
   - `_seite_effekte(w)`
-  - `_schritt_feld(lo, hi, suffix, schritt, nk)` — Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format des WPS).
+  - `_schritt_feld(lo, hi, suffix, schritt, nk)` — Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format des Office-Programm).
   - `_zweier(*teile)`
   - `_d3_zuruecksetzen()`
   - `_menue_zeigen(m, knopf)`
@@ -4337,7 +4337,7 @@ Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung u
 
 ### `ui/baukasten/umbruch_symbole.py`
 
-Die Bildchen für den Textumbruch um ein Bild (wie im WPS): Textzeilen in Grau, das Bild als blaues Feld.
+Die Bildchen für den Textumbruch um ein Bild (wie im Office-Programm): Textzeilen in Grau, das Bild als blaues Feld.
 
 - `umbruch_zeichner(art)`
 
@@ -4410,7 +4410,7 @@ Werkbank: die Funktionen eines Reiters der Schreibhilfe als große, selbsterklä
 
 ### `ui/baukasten/zellen_raster.py`
 
-Zellenraster: wie bei WPS die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
+Zellenraster: wie bei Office-Programm die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
 
 - **class `_Gitter`**(QWidget)
   - `__init__(raster, zeilen, spalten, zelle)`
@@ -4460,12 +4460,12 @@ Kontextabhängige Reiter: Tabellen, Bilder/Formen, Kopf-/Fußzeile, Formulare.
 
 ### `ui/contextual/diagramm_tools.py`
 
-Kontext-Reiter „Diagrammtools“ nach der WPS-Vorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
+Kontext-Reiter „Diagrammtools“ nach der Gestaltungsvorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
 
 
 ### `ui/contextual/header_footer_tools.py`
 
-Kontext-Reiter „Kopf- und Fußzeile“ nach der WPS-Vorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
+Kontext-Reiter „Kopf- und Fußzeile“ nach der Gestaltungsvorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
 
 
 ### `ui/contextual/image_tools.py`
@@ -4475,7 +4475,7 @@ Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``fo
 
 ### `ui/contextual/serien_tools.py`
 
-Kontext-Reiter „Mailings“ (Seriendruck) nach der WPS-Vorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
+Kontext-Reiter „Mailings“ (Seriendruck) nach der Gestaltungsvorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
 
 
 ### `ui/contextual/table_tools.py`
@@ -4485,7 +4485,7 @@ Kontext-Reiter „Tabellentools“ (erscheint, wenn die Schreibmarke in einer Ta
 
 ### `ui/contextual/text_tools.py`
 
-Kontext-Reiter „Texttools“ nach der WPS-Vorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
+Kontext-Reiter „Texttools“ nach der Gestaltungsvorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
 
 
 ## `ui/dialogs`
@@ -4518,7 +4518,7 @@ Bildschirmfoto: ganzer Bildschirm oder aufgezogener Bereich.
   - `_kombi_tabelle()`
   - `_kombi_fuellen()` — Eine Zeile je Datenreihe; Werte aus ``self.kombi``.
   - `_kombi_geaendert(*_)`
-  - `kompakt_machen()` — In der Seitenleiste: die Diagrammarten wie in WPS in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
+  - `kompakt_machen()` — In der Seitenleiste: die Diagrammarten wie in Office-Programm in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
   - `passe_an(breite, _hoehe)` — Auf die echte Breite der Seitenleiste: zwei Spalten Diagrammarten, Vorschau so breit wie der Platz.
   - `_gruppe(zeile)`
   - `_waehle(untertyp)`
@@ -4539,7 +4539,7 @@ Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Erset
 - **class `HeaderFooterDialog`**(PanelFaehig, QDialog)
   - `__init__(title, hf, parent)`
   - `value()`
-- **class `TableDialog`**(PanelFaehig, QDialog) — „Tabelle einfügen“ wie in WPS: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
+- **class `TableDialog`**(PanelFaehig, QDialog) — „Tabelle einfügen“ wie in Office-Programm: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
   - `__init__(parent, vorgabe)`
   - `spaltenbreite_px()` — Feste Breite jeder Spalte in Bildpunkten; None: automatisch (Seitenbreite).
 - **class `BildGroesseDialog`**(PanelFaehig, QDialog)
@@ -4583,7 +4583,7 @@ Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt,
   - `aktuell()`
   - `resizeEvent(ev)`
 - `_layout_bildchen(p, r, name)` — Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``ui/baukasten/smartart_menues.py``).
-- **class `SmartArtDialog`**(PanelFaehig, QDialog, VorschauMixin) — SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
+- **class `SmartArtDialog`**(PanelFaehig, QDialog, VorschauMixin) — SmartArt auswählen (wie Office-Programm „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
   - `__init__(parent, daten)`
   - `layout_()`
   - `_layout(name)`
@@ -4624,7 +4624,7 @@ Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt,
 
 ### `ui/dialogs/einfuegen_fenster.py`
 
-Kleine Fenster des Reiters Einfügen nach den WPS-Vorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
+Kleine Fenster des Reiters Einfügen nach den Gestaltungsvorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
 
 - `_titel(text, feld)`
 - **class `ZahlDialog`**(PanelFaehig, QDialog) — Feld „Zahl“, darunter die Liste „Zahlentyp“ (wie die Vorlage „Zahl“).
@@ -4795,7 +4795,7 @@ Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, S
 
 - `lade_json(settings, key, standard)`
 - `_satz(text, gedaempft)` — Erklärung über den Feldern: bricht um.
-- **class `RegisterAnpassenDialog`**(PanelFaehig, QDialog) — Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“ in WPS.
+- **class `RegisterAnpassenDialog`**(PanelFaehig, QDialog) — Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“ in Office-Programm.
   - `__init__(parent, settings, daten)`
   - `_schieben(d)`
   - `_speichern()`
@@ -4987,7 +4987,7 @@ Dialoge zu Verweisen: Textmarken, Quellen. (Beschriftung und Querverweis: ``verw
 
 ### `ui/dialogs/verweise_fenster.py`
 
-Fenster des Reiters Verweise nach den WPS-Vorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
+Fenster des Reiters Verweise nach den Gestaltungsvorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
 
 - `_titel(text, feld)`
 - **class `InhaltsverzeichnisDialog`**(PanelFaehig, QDialog) — Links Füllzeichen, Ebenen anzeigen, Seitenzahlen anzeigen/rechtsbündig, Hyperlinks verwenden; rechts die Seitenansicht.
@@ -5032,7 +5032,7 @@ Neu aus Vorlage: die mitgelieferten Gerüste und die Dateien aus dem Vorlagenord
 
 ### `ui/dialogs/wasserzeichen_fenster.py`
 
-Fenster „Wasserzeichen“ nach der WPS-Vorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
+Fenster „Wasserzeichen“ nach der Gestaltungsvorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
 
 - `_titel(text, feld)`
 - `_feld(w, breite)`
@@ -5476,7 +5476,7 @@ Frei positionierte Bilder im Editor: zeichnen, anklicken, verschieben, in der Gr
   - `_frei_schluessel(a)`
   - `_frei_liste()` — Alle frei positionierten Bilder aller Blätter: (Schlüssel, Angabe, Bild, Rechteck im Editor, hinter, Blatt-Nr.). Unabhängig davon, was
   - `_frei_zeichnen(p, sicht, hinter)` — Bilder der sichtbaren Blätter, hinter (``hinter``) oder vor dem Text; die vorderen zeichnen auch die Auswahl.
-  - `_frei_text_markieren(p, r, a, bild)` — WordArt wie in WPS: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt).
+  - `_frei_text_markieren(p, r, a, bild)` — WordArt wie in Office-Programm: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt).
   - `_frei_rechteck(a, n)`
   - `_frei_leiste()` — Die Schaltflächen neben dem markierten Objekt: für Bilder und Diagramme eigene, sonst die der Formen und WordArt.
   - `_frei_knopf_rects(r)` — Die Schaltflächen rechts neben dem Bild: oben der Minus-Knopf (klappt sie ein), darunter Layoutoptionen, Formstile, Füllung, Kontur.
@@ -6061,10 +6061,10 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
   - `_reiter(r)`
   - `_gruppe(g)`
   - `_knoepfe_geordnet(g, inhalt)` — Knöpfe in der Reihenfolge der Liste: große stehen allein, aufeinanderfolgende kleine bilden eine Spalte aus zwei Zeilen.
-  - `_knoepfe_schrift(g, inhalt)` — Wie WPS: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate.
+  - `_knoepfe_schrift(g, inhalt)` — Wie Office-Programm: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate.
   - `_knoepfe_tt_schrift(g, inhalt)` — Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
-  - `_knoepfe_galerie(g, inhalt)` — Eine Galerie wie in WPS: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``).
-  - `_knoepfe_raender(g, inhalt)` — Der Rand-Knopf und daneben wie bei WPS die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit).
+  - `_knoepfe_galerie(g, inhalt)` — Eine Galerie wie in Office-Programm: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``).
+  - `_knoepfe_raender(g, inhalt)` — Der Rand-Knopf und daneben wie bei Office-Programm die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit).
   - `_knoepfe_masse(g, inhalt)` — Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern.
   - `_knoepfe(g, inhalt)`
   - `_stile()`
@@ -6127,19 +6127,19 @@ Reiter „Datei“ (die Backstage-Ansicht ersetzt das Band; die Gruppen bleiben 
 
 ### `ui/ribbon/tabs/home_tab.py`
 
-Reiter „Start“ in der Anordnung von WPS Office.
+Reiter „Start“ in der Anordnung von gängigen Office-Programmen.
 
-- `bauen(start)` — Reiter Start in der Anordnung von WPS Office: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
+- `bauen(start)` — Reiter Start in der Anordnung von gängigen Office-Programmen: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
 
 ### `ui/ribbon/tabs/insert_tab.py`
 
-Reiter „Einfügen“ in der Anordnung von WPS Office (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
+Reiter „Einfügen“ in der Anordnung von gängigen Office-Programmen (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
 
 - `bauen(register)`
 
 ### `ui/ribbon/tabs/layout_tab.py`
 
-Reiter „Seitenlayout“ in der Anordnung von WPS Office: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
+Reiter „Seitenlayout“ in der Anordnung von gängigen Office-Programmen: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
 
 - `bauen(register)`
 
@@ -6151,7 +6151,7 @@ Reiter „Sendungen“ (nur nach „Register anpassen“ sichtbar): Serienbriefe
 
 ### `ui/ribbon/tabs/references_tab.py`
 
-Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von WPS Office: TOC einfügen, Inhaltsverzeichnis
+Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von gängigen Office-Programmen: TOC einfügen, Inhaltsverzeichnis
 
 - `bauen(register)`
 
@@ -6163,13 +6163,13 @@ Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10): Rechtschrei
 
 ### `ui/ribbon/tabs/section_tab.py`
 
-Reiter „Abschnitt“ in der Anordnung von WPS Office.
+Reiter „Abschnitt“ in der Anordnung von gängigen Office-Programmen.
 
 - `bauen(register)`
 
 ### `ui/ribbon/tabs/view_tab.py`
 
-Reiter „Ansicht“ in der Anordnung von WPS Office: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
+Reiter „Ansicht“ in der Anordnung von gängigen Office-Programmen: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
 
 - `bauen(register)`
 
