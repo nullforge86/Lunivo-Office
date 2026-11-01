@@ -1,4 +1,4 @@
-"""Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von WPS Office: TOC einfügen, Inhaltsverzeichnis
+"""Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von gängigen Office-Programmen: TOC einfügen, Inhaltsverzeichnis
 aktualisieren, Klappe „Inhaltsverzeichnis“ (Ebene 1–9, Textkörper); Fußnote und Endnote je mit Vorherige/Nächste und der
 Trennlinie; Beschriftung mit Abbildungsverzeichnis und Querverweis; Eintrag festlegen, Index einfügen und aktualisieren;
 Seriendruck. Lunivos Zitate und Literatur stehen dahinter."""
