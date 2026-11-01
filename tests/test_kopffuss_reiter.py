@@ -1,4 +1,4 @@
-"""Struktur des Kontext-Reiters „Kopf- und Fußzeile“: Knöpfe und Befehlsnamen in der WPS-Reihenfolge."""
+"""Struktur des Kontext-Reiters „Kopf- und Fußzeile“: Knöpfe und Befehlsnamen in der Office-Programm-Reihenfolge."""
 from lunivo_writer.ui.contextual.header_footer_tools import KOPFFUSS
 
 
