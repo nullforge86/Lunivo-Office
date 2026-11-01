@@ -35,6 +35,6 @@ Folgerung: eingeübte Motive übernehmen (Schere, Lupe, Drucker, Diskette …), 
 - Verständlichkeit wird mit einer Prüfliste bewertet (Erkennbar ohne Überlegung? Unterscheidbar? 16 px? Hell/Dunkel?), nicht pauschal behauptet.
 
 ## 5. Vorschlag für den ersten Schritt (nach deiner Freigabe)
-1. `STRICH` testweise auf 1,5 und Übersicht neu erzeugen — kleinste Änderung mit größter Wirkung.
+1. ~~`STRICH` auf 1,5~~ — umgesetzt (2026-11-01), im Vergleich bei 16 px deutlich besser lesbar.
 2. Die 8 Problemgruppen aus Abschnitt 2 neu zeichnen (ca. 40 Symbole), Muster-Übersicht zur Abnahme.
 3. Erst danach restliche Symbole angleichen.
