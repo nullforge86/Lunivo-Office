@@ -23,7 +23,7 @@ Dateikopf); eine falsche oder beschädigte Datei wird als Fehler gemeldet, nicht
 | FODT (flaches ODT, eine XML-Datei) | ja, eigener Leser | ja | nein, öffnet „Speichern unter“ | als DOCX/ODT/… | – |
 | RTF | ja, eigener Leser | ja | ja | ja, eigener Schreiber | – |
 | TXT (UTF-8) | ja; UTF-8, sonst cp1252, sonst Latin-1 | ja | ja | ja | – |
-| DOC, DOT (Word 97–2003), WPS (Works) | **nein**, klare Meldung mit dem Rat, im Ursprungsprogramm als DOCX zu speichern | – | – | – | – |
+| DOC, DOT (Word 97–2003), Office-Programm (Works) | **nein**, klare Meldung mit dem Rat, im Ursprungsprogramm als DOCX zu speichern | – | – | – | – |
 | PDF | **nein** | – | – | im selben Fenster wählbar, ist aber eine Ausgabe | ja (`QPdfWriter`) |
 | PNG (Bild der Seite) | nein | – | – | – | ja, je Seite eine Datei |
 
