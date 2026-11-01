@@ -1,4 +1,4 @@
-"""Reiter „Ansicht“ in der Anordnung von WPS Office: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
+"""Reiter „Ansicht“ in der Anordnung von gängigen Office-Programmen: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
 mit den Anzeige-Schaltern, Zoom, Fenster; dazu Helligkeit und Oberfläche."""
 from __future__ import annotations
 

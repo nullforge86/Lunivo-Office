@@ -283,7 +283,7 @@ class TexteffektPanel(QWidget):
 
     @staticmethod
     def _schritt_feld(lo: float, hi: float, suffix: str, schritt: float, nk: int) -> QWidget:
-        """Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format des WPS)."""
+        """Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format des Office-Programm)."""
         return SchrittFeld(lo, hi, suffix, schritt, nk)
 
     @staticmethod

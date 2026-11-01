@@ -1,4 +1,4 @@
-"""Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage (WPS).
+"""Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage (Office-Programm).
 
     d = LayoutDialog(parent, werte)
     if d.exec(): neu = d.werte()

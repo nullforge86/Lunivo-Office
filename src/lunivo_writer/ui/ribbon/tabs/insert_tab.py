@@ -1,6 +1,6 @@
-"""Reiter „Einfügen“ in der Anordnung von WPS Office (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
+"""Reiter „Einfügen“ in der Anordnung von gängigen Office-Programmen (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
 Bild ▾, Formen, Diagramm, Kommentar, Kopf- und Fußzeile, Textfeld ▾, Schnellbausteine ▾, Symbol ▾, Gleichung, Zahl, Hyperlink.
-Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Keine Gruppe „Weitere“: was WPS nicht im Band hat, steht in
+Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Keine Gruppe „Weitere“: was Office-Programm nicht im Band hat, steht in
 den Klappen (Bildschirmfoto und Piktogramm unter Bild, Text aus Datei unter Objekt, eigene Form unter
 Formen); die Tabellen-Eigenschaften im Kontext-Reiter Tabelle."""
 from __future__ import annotations

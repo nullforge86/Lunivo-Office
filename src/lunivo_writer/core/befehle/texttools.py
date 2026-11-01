@@ -249,7 +249,7 @@ class TextToolsBefehle:
 
 
     def menue_ttTextrichtung(self):
-        """Textrichtung wie in WPS (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt."""
+        """Textrichtung wie in Office-Programm (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt."""
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
@@ -466,7 +466,7 @@ class TextToolsBefehle:
     def an_ttFormatUebertragen(self): return getattr(self, "_tt_pinsel", None) is not None
 
 
-    # ---- Verknüpfung erstellen: Textfelder verketten (Text läuft von A nach B), wie in WPS ---------------------------------------------
+    # ---- Verknüpfung erstellen: Textfelder verketten (Text läuft von A nach B), wie in Office-Programm ---------------------------------------------
     def _tt_felder(self):
         """Die Textfelder, mit denen das markierte verknüpft werden kann (Schlüssel, Anzeigename): nicht es selbst, keins mit Vorgänger."""
         from lunivo_writer.editor import frei_objekt as FO
@@ -521,7 +521,7 @@ class TextToolsBefehle:
 
 
     def menue_ttEinstellungen(self):
-        """Einstellungen wie in WPS: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text)."""
+        """Einstellungen wie in Office-Programm: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text)."""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Formatierung: Füllung und Linie …", lambda: self.ed and self.ed._frei_linien_fenster())

@@ -1,4 +1,4 @@
-"""Kleine Fenster des Reiters Einfügen nach den WPS-Vorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
+"""Kleine Fenster des Reiters Einfügen nach den Gestaltungsvorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
 
     d = ZahlDialog(parent)                 # if d.exec(): d.ergebnis() → "XIV"
     d = FelderDialog(parent, kontext)      # if d.exec(): d.feld() → (Anweisung, Ergebnis)
@@ -292,7 +292,7 @@ class TrennerDialog(PanelFaehig, QDialog):
             fg.zeile("Zeilenanzahl:", self._zeilen)
         t = QLabel("Text trennen bei"); f = t.font(); f.setBold(True); t.setFont(f)
         fg.breit(t)
-        # Tabelle → Text wie in WPS: Absätze, Tabstopps, Kommata, Andere (untereinander)
+        # Tabelle → Text wie in Office-Programm: Absätze, Tabstopps, Kommata, Andere (untereinander)
         self._liste = TT.TRENNER if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
         self._gruppe = QButtonGroup(self)
         g = FlussLayout(14) if zu_tabelle else QVBoxLayout()                   # Text → Tabelle: Reihe, die umbricht; Tabelle → Text: untereinander

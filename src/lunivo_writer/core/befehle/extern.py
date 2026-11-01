@@ -18,8 +18,3 @@ class ExternBefehle:
             return
         if not fn(t.path):
             QMessageBox.information(self.w, name, f"{name} ist auf diesem Rechner nicht installiert.")
-
-
-    def mitWpsOeffnen(self, k=None):
-        from lunivo_writer.services.integrations import wps
-        self._extern(wps.oeffnen, "WPS Writer")

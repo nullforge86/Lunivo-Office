@@ -7,7 +7,7 @@ den Qt-Sprachdateien `mui/en_US/qm-datei.qm` und `qmtips.qm` — als UTF-16
 zwischen den Daten. Die Auswertung lässt sich wiederholen:
 
 ```
-python3 werkzeug/wps-befehle-lesen.py
+python3 werkzeug/Befehlsinventar-Werkzeug
 ```
 
 Kay hat darauf bestanden, und er hatte recht: Aus den beiden Dateien
@@ -110,7 +110,7 @@ Sonderfall aus dem chinesischen Formularwesen.
 
 Kay: *„warum hast du nicht zu diesem Thema der Bildbearbeitung alles aus
 dem -Ordner?"* — Berechtigt. Das Werkzeug lag da, ich hatte es nur
-für Tabellen benutzt. `werkzeug/wps-befehle-lesen.py` kennt jetzt auch
+für Tabellen benutzt. `werkzeug/Befehlsinventar-Werkzeug` kennt jetzt auch
 die Gruppe **BILDER UND OBJEKTE**.
 
 ### Was Lunivo hat

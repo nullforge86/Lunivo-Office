@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Diagrammtools“ nach der WPS-Vorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
+"""Kontext-Reiter „Diagrammtools“ nach der Gestaltungsvorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
 
 Gruppen von links nach rechts: Diagrammelement hinzufügen ▾ · Schnelllayout ▾ · Farbe ändern ▾ · Galerie der vier Diagrammstile ·
 Diagrammtyp ändern (Fenster, aktuelle Art vorgewählt) mit zehn kleinen Typ-Knöpfen (Klick ändert die Art direkt, Pfeil: Untertypen) · Daten auswählen · Daten bearbeiten · Formatieren und Formatvorlage zurücksetzen.

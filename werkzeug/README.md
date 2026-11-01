@@ -17,4 +17,4 @@ Entwicklungs- und Prüfhilfen. Sie gehören nicht zur ausgelieferten Anwendung; 
 | `stapel-demo.py` | Vorführung: „Neue Formatvorlage“ mit allen Unterfenstern in EINEM Fenster (Fenster-Stapel), ohne die Anwendung. |
 | `svg-zu-pfad.py` | Rechnet ein Lucide-SVG in einen einzigen Pfad um. |
 | `symbol-uebersicht.py` | Kontaktübersicht der Funktionssymbole als PNG:  python3 werkzeug/symbol-uebersicht.py [Ziel.png] [--dunkel] |
-| `wps-befehle-lesen.py` | Die Befehle des WPS Writer auslesen. |
+| `Befehlsinventar-Werkzeug` | Die Befehle des Textverarbeitungsprogramm auslesen. |

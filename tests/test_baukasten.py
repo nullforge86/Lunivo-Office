@@ -263,7 +263,7 @@ def test_rahmenfenster_liefert_linie_schattierung_und_seitenrand(app):
     d.p_schatt.art.setCurrentIndex(d.p_schatt.art.findData("pct25"))
     assert d.schattierung() == ("#fff3bf", ("pct25", "#000000"))
     d.p_rand.einstellung["kontur"].click()
-    assert d.seitenrand()["art"] == "einfach" and d.seitenrand()["messen"] == "text" and d.seitenrand()["abstand"] == "1,1,4,4"      # Vorgabe wie im WPS
+    assert d.seitenrand()["art"] == "einfach" and d.seitenrand()["messen"] == "text" and d.seitenrand()["abstand"] == "1,1,4,4"      # Vorgabe wie im Office-Programm
     d2 = RahmenSchattierungDialog(None, rahmen=Linie("#000000", 1.0, "einfach", "lr"), fuell="#d0ebff", seite="schattierung")
     assert d2.rahmen().seiten == "lr" and d2.schattierung() == ("#d0ebff", None) and d2.reiter.currentIndex() == 2
     d.show(); app.processEvents()
@@ -338,7 +338,7 @@ def test_tabellenmenue_fuegt_tabelle_ein(app, tmp_path):
     assert t is not None and t.rows() == 2 and t.columns() == 3
     assert [a.text().replace("&", "") for a in m.actions() if a.text()] == [
         "Tabelle einfügen", "Tabelle zeichnen(W)", "Text in Tabelle umwandeln...", "Tabelle in Text konvertieren..."]
-    m.aboutToShow.emit()                                     # in der Tabelle: nur „Tabelle in Text“ wählbar, wie in WPS
+    m.aboutToShow.emit()                                     # in der Tabelle: nur „Tabelle in Text“ wählbar, wie in Office-Programm
     assert [a.isEnabled() for a in m.actions() if a.text()][2:] == [False, True]
     assert (m.gitter.zeilen, m.gitter.spalten) == (10, 10)
     _zu(w)
