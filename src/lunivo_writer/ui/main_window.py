@@ -410,7 +410,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         self.band.kontext("form", art in ("form", "gruppe"))
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
-        self.band.kontext("text", text_art is not None)             # Texttools: nur WordArt und Textfeld (WPS zeigt dazu auch Zeichentools)
+        self.band.kontext("text", text_art is not None)             # Texttools: nur WordArt und Textfeld (Office-Programm zeigt dazu auch Zeichentools)
         self.band.kontext("diagramm", frei_art == "diagramm")       # Diagrammtools (der Reiter selbst kommt aus der Reiter-Definition)
         frei_wahl = frei_art or ("bild" if frei_bild else None)
         if frei_wahl != getattr(self, "_frei_art_alt", None):         # neu gewählt: WordArt öffnet Texttools, SmartArt/Diagramm/Bild ihre Tools, sonst Zeichentools
