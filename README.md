@@ -75,7 +75,20 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 - [Oberfläche](docs/oberflaeche.md)
 - [Entstehung](docs/ENTSTEHUNG.md) und [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
 
-**Für Entwickler:** Projektaufbau, Baukasten, Registerband und Funktionsinventar stehen in [docs/entwicklung](docs/entwicklung/README.md).
+**Aufbau und Entwicklung**
+
+- [Projektaufbau](docs/entwicklung/README.md)
+- [Aufbau: Registerband](docs/entwicklung/aufbau-band.md)
+- [Aufbau: Ist-Stand](docs/entwicklung/aufbau-ist-stand.md)
+- [Aufbau: Optionen](docs/entwicklung/aufbau-optionen.md)
+- [Baukasten](docs/entwicklung/baukasten.md)
+- [Bilder – vollständige Übersicht](docs/entwicklung/bilder-vollstaendig.md)
+- [Konzept: Optionen](docs/entwicklung/konzept-optionen.md)
+- [Tabellen und Steuerung](docs/entwicklung/tabellen-und-steuerung.md)
+- [UI-Technologie](docs/entwicklung/ui-technologie.md)
+- [Interne Funktionen (Inventar)](docs/entwicklung/interne-funktionen.md)
+- [Erweiterungen](docs/entwicklung/erweiterungen.md)
+- [Icon-Konzept](docs/entwicklung/icon-konzept.md)
 
 Weitere Hilfe gibt es im Programm unter **☰ Menü → Hilfe → Handbuch**.
 
