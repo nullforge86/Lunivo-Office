@@ -476,7 +476,7 @@ def einfuegen(ed, art: str, daten: dict, b: float = 0, h: float = 0) -> tuple | 
     img = zeichnen(art, daten, b, h)
     bb, hh = _anzeige_mass(art, img, b, h)
     key = bild_einfuegen(ed, img, bb, hh, art, daten)
-    if art == "textfeld":                                            # wie in WPS: die Schreibmarke steht gleich im leeren Textfeld
+    if art == "textfeld":                                            # wie in Office-Programm: die Schreibmarke steht gleich im leeren Textfeld
         bearbeiten_starten(ed)
     return key
 
@@ -659,7 +659,7 @@ def nach_groesse(ed, neu: dict) -> dict:
 
 
 def text_bereich(a: dict, bild: QImage) -> QRectF | None:
-    """Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in WPS (nur WordArt)."""
+    """Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in Office-Programm (nur WordArt)."""
     if a.get("art") != "wordart" or bild is None or bild.isNull():
         return None
     w, h = bild.width() / _SS, bild.height() / _SS
@@ -953,7 +953,7 @@ def _neu_setzen(ed, key: tuple, a: dict) -> dict:
 
 def verknuepfen(ed, von_key: tuple, nach_key: tuple) -> bool:
     """Textfeld ``von`` mit Textfeld ``nach`` verknüpfen: was in ``von`` nicht mehr passt, läuft in ``nach`` weiter (wie „Verknüpfung erstellen“ in
-    WPS). Der Text von ``nach`` wird an den von ``von`` gehängt. Nicht möglich: gleiche Felder, ``von`` hat schon einen Nachfolger, ``nach`` einen
+    Office-Programm). Der Text von ``nach`` wird an den von ``von`` gehängt. Nicht möglich: gleiche Felder, ``von`` hat schon einen Nachfolger, ``nach`` einen
     Vorgänger, Kreisverknüpfung. → True bei Erfolg."""
     import uuid
     felder = dict(_textfelder(ed))
