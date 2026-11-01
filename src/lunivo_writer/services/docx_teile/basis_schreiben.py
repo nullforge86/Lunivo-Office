@@ -22,7 +22,7 @@ from PySide6.QtGui import (
 )
 
 from lunivo_writer.models.page import PageSettings
-from lunivo_writer.services.docx_reader import LH_FIXED, LH_PROPORTIONAL, STYLE_PROP
+from lunivo_writer.services.docx_teile.basis_lesen import LH_FIXED, LH_PROPORTIONAL, STYLE_PROP
 from lunivo_writer.models.report import DocumentIOError, IOReport
 
 from lunivo_writer.core.farben import Farbe
