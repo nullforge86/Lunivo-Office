@@ -47,3 +47,11 @@ Folgerung: eingeübte Motive übernehmen (Schere, Lupe, Drucker, Diskette …), 
 - **Verworfen:** `ebeneHoch/Tief` als Punkt-Treppe — Punkte zerfallen bei 16 px; die alten Pfeil-Symbole bleiben.
 - Offen: `mehr/weniger` (gleich mit `einzug`), übrige `we*`, `punkte/zeilennr/gliederung`, `kopfhoehe2/fusshoehe2`, `drucker2`; mögliche Fehldeutungen sind dort am größten.
 - Nicht geprüft: Verständlichkeit mit Menschen (nur Sichtprüfung bei 16/20/24 px, hell/dunkel).
+
+## 7. Möglicherweise missverständliche Symbole (nur Sichtprüfung, keine Tests mit Menschen)
+- `weFuehrend` — durchgestrichenes Leerzeichen vor Text; bei 16 px unruhig, Bedeutung „führende Leerzeichen löschen“ erschließt sich nur mit Beschriftung.
+- `weLeerModus`, `weNeu`, `weSmart` — abstrakt (zwei Kästen mit Pfeil, Pfeil mit Linien, Zauberstab); nur mit Tooltip verständlich.
+- `ueberprog`, `assistent`, `automatisch`, `trefferHoch/Runter`, `ebenen`, `ecken` — Motiv weniger konkret als die Funktion.
+- `mehr`, `einzug`: dasselbe Symbol für „Einzug vergrößern“ an zwei Stellen (gewollt, gleiche Funktion).
+- `kopfhoehe2`, `fusshoehe2`: im Programm nicht benutzt (nicht angefasst, Aufräumkandidat).
+- Stand 3. Runde: `weEinzugLeer` (Leerzeichen-Klammer vor Textzeile) und `weFuehrend` neu gezeichnet.
