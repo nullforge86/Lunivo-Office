@@ -38,3 +38,10 @@ Folgerung: eingeübte Motive übernehmen (Schere, Lupe, Drucker, Diskette …), 
 1. ~~`STRICH` auf 1,5~~ — umgesetzt (2026-11-01), im Vergleich bei 16 px deutlich besser lesbar.
 2. Die 8 Problemgruppen aus Abschnitt 2 neu zeichnen (ca. 40 Symbole), Muster-Übersicht zur Abnahme.
 3. Erst danach restliche Symbole angleichen.
+
+## 6. Stand der Umsetzung (2026-11-01)
+- Strichstärke 1,5 umgesetzt.
+- Neu gezeichnet: `kopfz`, `fussz` (Seitenumriss + Trennlinie oben/unten) und `spalte1/2/3` (Seitenumriss + 0/1/2 Trennlinien).
+- **Verworfen:** `kante*` als gepunktetes Quadrat mit durchgezogener Seite — bei 16 px zerfallen die Punkte, die Seite geht unter. Alte Symbole bleiben.
+- Offen: `ebeneHoch/Tief`, `mehr/weniger`, `we*`, `punkte/zeilennr/gliederung`, `kopfhoehe2/fusshoehe2`, `drucker2`; mögliche Fehldeutungen sind dort am größten.
+- Nicht geprüft: Verständlichkeit mit Menschen (nur Sichtprüfung bei 16/20/24 px, hell/dunkel).
