@@ -176,12 +176,12 @@ class RegisterBand(QWidget):
         self.knoepfe: list[tuple[QToolButton, str | None, bool]] = []   # (Knopf, Name, braucht Dokument)
         self.felder: dict[str, QWidget] = {}
         self.fehlend: list[str] = []
-        self._compact = False
+        self._compact = True
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         self.kopf = QHBoxLayout()
-        self.kopf.setContentsMargins(6, 1, 6, 0)
+        self.kopf.setContentsMargins(4, 1, 4, 0)
         self.kopf.setSpacing(2)
         self.menue_knopf = QToolButton()
         self.menue_knopf.setText("Menü")
@@ -197,12 +197,12 @@ class RegisterBand(QWidget):
         self.reiter.setObjectName("bandReiter")
         self.reiter.setDrawBase(False)
         self.reiter.setExpanding(False)
-        self.reiter.setStyleSheet("QTabBar { min-height: 24px; } QTabBar::tab { min-width: 72px; padding: 4px 10px 3px 10px; margin: 0 2px; }")
+        self.reiter.setStyleSheet("QTabBar { min-height: 22px; } QTabBar::tab { min-width: 54px; padding: 2px 7px; margin: 0 1px; }")
         self.kopf.addWidget(self.reiter, 1)
         lay.addLayout(self.kopf)
         self.stapel = QStackedWidget()
         self.stapel.setObjectName("bandStapel")
-        self.stapel.setFixedHeight(112)
+        self.stapel.setFixedHeight(94)
         lay.addWidget(self.stapel)
         linie = self.linie = QFrame()
         linie.setFrameShape(QFrame.HLine)
@@ -217,16 +217,16 @@ class RegisterBand(QWidget):
         self.reiter.doppelt.connect(self.einklappen_umschalten)
         self.reiter.setCurrentIndex(self._start_index())          # Start
         self.bandfehler = sorted(set(self.fehlend))
-        self.set_compact(False)
+        self.set_compact(True)
 
     einklappbar = True          # Optionen ▸ Doppelklick blendet das Band aus
     _eingeklappt = False
 
     def set_compact(self, compact: bool) -> None:
         self._compact = bool(compact)
-        self.stapel.setFixedHeight(86 if self._compact else 112)
+        self.stapel.setFixedHeight(94 if self._compact else 112)
         self.reiter.setStyleSheet(
-            "QTabBar { min-height: 22px; } QTabBar::tab { min-width: 60px; padding: 2px 8px 2px 8px; margin: 0 2px; }"
+            "QTabBar { min-height: 22px; } QTabBar::tab { min-width: 54px; padding: 2px 7px; margin: 0 1px; }"
             if self._compact else
             "QTabBar { min-height: 24px; } QTabBar::tab { min-width: 72px; padding: 4px 10px 3px 10px; margin: 0 2px; }"
         )
@@ -235,8 +235,11 @@ class RegisterBand(QWidget):
                 continue
             gross = bool(k.property("ribbon_gross"))
             if gross:
-                k.setFixedHeight(54 if self._compact else 68)
-                k.setMinimumWidth(max(42, k.minimumWidth()) if self._compact else max(48, k.minimumWidth()))
+                k.setFixedHeight(58 if self._compact else 68)
+                k.setIconSize(QSize(22 if self._compact else 28, 22 if self._compact else 28))
+                f = k.font()
+                f.setPointSize(8 if self._compact else 9)
+                k.setFont(f)
             else:
                 k.setIconSize(QSize(16 if self._compact else 18, 16 if self._compact else 18))
                 if k.defaultAction() is not None and k.defaultAction().icon().isNull():
@@ -343,7 +346,7 @@ class RegisterBand(QWidget):
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
         v = QVBoxLayout(rahmen)
-        v.setContentsMargins(3, 1, 3, 0)
+        v.setContentsMargins(2, 1, 2, 0)
         v.setSpacing(0)
         inhalt = QHBoxLayout()
         inhalt.setSpacing(1)
@@ -704,7 +707,7 @@ class RegisterBand(QWidget):
         sa.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         sa.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         host.adjustSize()
-        sa.setFixedWidth(3 * 85 + 4)
+        sa.setFixedWidth(3 * 77 + 4)
         sa.setFixedHeight(host.sizeHint().height() + 2)
         sa.setStyleSheet("QScrollArea#stileGalerie, QScrollArea#stileGalerie > QWidget > QWidget { background: transparent; }")
         pfeil = QToolButton(); pfeil.setIcon(icons.icon("klappe", 14)); pfeil.setIconSize(QSize(14, 14)); pfeil.setAutoRaise(True); pfeil.setFixedWidth(18)
@@ -780,7 +783,7 @@ class RegisterBand(QWidget):
             if name in ("Untertitel", "Zitat") or (stile.ist_eigen(name) and d["kursiv"]):
                 f.setItalic(True)
             k.setFont(f)
-            k.setFixedWidth(84)
+            k.setFixedWidth(76)
             k.setToolTip(name + (" (eigene Vorlage)" if stile.ist_eigen(name) else ""))
             k.clicked.connect(lambda _=False, n=name: self.b.w.stil_anwenden(n))
             fl = Ueberfahren(self.b.w.vorschau, lambda e, n=name: e.apply_style("Standard" if n == "Fließtext" else n))
@@ -827,7 +830,7 @@ class RegisterBand(QWidget):
         akt.setToolTip(name)
         if icons.hat(sym):
             akt.setIcon(icons.icon(sym, 28 if gross else 18))
-            k.setIconSize(QSize(28 if not self._compact else 22, 28 if not self._compact else 22) if gross else QSize(18 if not self._compact else 16, 18 if not self._compact else 16))
+            k.setIconSize(QSize(22 if self._compact else 28, 22 if self._compact else 28) if gross else QSize(16 if self._compact else 18, 16 if self._compact else 18))
         k.setDefaultAction(akt)
         k.setToolTip(name)
         self._tausch_rechtsklick(k, sym)
@@ -845,8 +848,8 @@ class RegisterBand(QWidget):
             k.setText(_zweizeilig(name))
             akt.setText(_zweizeilig(name))                      # der Knopf übernimmt später den Text der Aktion
             breit = max(k.fontMetrics().horizontalAdvance(z) for z in _zweizeilig(name).split("\n"))
-            k.setMinimumWidth(max(42 if self._compact else 48, breit + 8))
-            k.setFixedHeight(54 if self._compact else 68)
+            k.setMinimumWidth(max(40 if self._compact else 48, breit + (6 if self._compact else 10)))
+            k.setFixedHeight(58 if self._compact else 68)
         elif icons.hat(sym) and e.get("text"):
             k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setText(name)

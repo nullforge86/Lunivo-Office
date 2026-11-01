@@ -684,3 +684,17 @@ def test_kommentar_im_leeren_absatz_erscheint_in_der_seitenleiste(app, tmp_path)
     assert kid is not None and e.kommentar_bereiche()
     w._links_klick("kommentare")
     assert w.navigation.anzahl("kommentare") == 1
+
+
+def test_band_startet_kompakt_und_modus_ist_umstellbar(app, tmp_path):
+    w = win(tmp_path)
+    band = w.band
+    assert band._compact is True
+    assert band.stapel.minimumHeight() == 94
+    band.set_compact(False)
+    assert band._compact is False
+    assert band.stapel.minimumHeight() == 112
+    band.set_compact(True)
+    assert band._compact is True
+    assert band.stapel.minimumHeight() == 94
+    w.close()
