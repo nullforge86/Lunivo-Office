@@ -33,3 +33,5 @@ Lunivo Writer.desktop
 !tests/daten/*.docx
 .claude/
 .codex/
+
+dist/

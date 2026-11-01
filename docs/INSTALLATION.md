@@ -42,3 +42,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_formats.py
 ```
 
 Die vollständige lokale Testausführung über `./starten-qt.sh --test` installiert bei Bedarf die Entwicklungsabhängigkeiten und startet pytest.
+
+## Paket bauen (.deb)
+
+`python3 werkzeug/deb_bauen.py` erzeugt `dist/stevie-lunivo-office_<Version>_amd64.deb` (Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter `stevie-lunivo-office.desktop`, Symlink `/usr/bin/lunivo-office`). Gebaut und entpackt geprüft; Installation und Start unter Windows/Mac-VM stehen noch aus.

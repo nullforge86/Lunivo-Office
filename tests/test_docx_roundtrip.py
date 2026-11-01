@@ -180,3 +180,16 @@ def test_unterstreichungsart_umriss_zeichenabstand_roundtrip(tmp_path):
     assert at(13).textOutline().style().value != 0
     assert abs(at(20).fontLetterSpacing() - 4.0) < 0.2
     assert at(14).underlineStyle() == QTextCharFormat.NoUnderline
+
+
+def test_kopf_und_fusszeile_mit_seitenzahlfeldern_roundtrip(app, tmp_path):
+    from PySide6.QtGui import QTextDocument
+    from lunivo_writer.services import docx_reader, docx_writer
+    from lunivo_writer.models.page import HeaderFooter, PageSettings
+    d = QTextDocument(); d.setPlainText("Inhalt")
+    pg = PageSettings(header=HeaderFooter("Kopf", "left"), footer=HeaderFooter("Seite {PAGE} von {PAGES}", "right"))
+    out = str(tmp_path / "k.docx")
+    docx_writer.write_docx(out, d, pg, {})
+    _, p2, _, _ = docx_reader.read_docx(out)
+    assert p2.header.text == "Kopf" and p2.header.align == "left"
+    assert p2.footer.text == "Seite {PAGE} von {PAGES}" and p2.footer.align == "right"
