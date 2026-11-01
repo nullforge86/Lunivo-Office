@@ -193,3 +193,68 @@ def test_kopf_und_fusszeile_mit_seitenzahlfeldern_roundtrip(app, tmp_path):
     _, p2, _, _ = docx_reader.read_docx(out)
     assert p2.header.text == "Kopf" and p2.header.align == "left"
     assert p2.footer.text == "Seite {PAGE} von {PAGES}" and p2.footer.align == "right"
+
+
+def _lies_schreibe_lies(app, pfad, tmp_path):
+    qd, page, meta, _ = read_docx(pfad)
+    out = str(tmp_path / "rt.docx")
+    write_docx(out, qd, page, meta)
+    return read_docx(out)
+
+
+def test_tabelle_verbunden_schattiert_roundtrip(app, tmp_path):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    d = docx.Document()
+    t = d.add_table(rows=3, cols=3); t.style = "Table Grid"
+    t.cell(0, 0).merge(t.cell(0, 1))
+    t.cell(0, 0).text = "Kopf"
+    t.cell(1, 0).text = "x"; t.cell(2, 2).text = "z"
+    shd = OxmlElement("w:shd"); shd.set(qn("w:val"), "clear"); shd.set(qn("w:fill"), "FFCC00")
+    t.cell(1, 0)._tc.get_or_add_tcPr().append(shd)
+    p = str(tmp_path / "t.docx"); d.save(p)
+    qd, _, _, _ = _lies_schreibe_lies(app, p, tmp_path)
+    assert "Kopf" in qd.toPlainText() and "z" in qd.toPlainText()
+    t2 = docx.Document(str(tmp_path / "rt.docx")).tables[0]
+    assert len(t2.rows) == 3 and t2.cell(2, 2).text == "z"
+    assert t2.cell(0, 0).text == "Kopf"
+    assert "FFCC00" in t2.cell(1, 0)._tc.xml.upper()
+
+
+def test_hyperlink_und_absatzformate_roundtrip(app, tmp_path):
+    from docx.enum.text import WD_LINE_SPACING
+    d = docx.Document()
+    p = d.add_paragraph("Vor ")
+    rid = d.part.relate_to("https://example.org/", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    h = OxmlElement("w:hyperlink"); h.set(qn("r:id"), rid)
+    r = OxmlElement("w:r"); t = OxmlElement("w:t"); t.text = "Link"; r.append(t); h.append(r); p._p.append(h)
+    q = d.add_paragraph("Abstand")
+    q.paragraph_format.space_before, q.paragraph_format.space_after = Pt(12), Pt(6)
+    q.paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
+    q.paragraph_format.first_line_indent = Mm(8)
+    q.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    f = str(tmp_path / "h.docx"); d.save(f)
+    _lies_schreibe_lies(app, f, tmp_path)
+    d2 = docx.Document(str(tmp_path / "rt.docx"))
+    assert "https://example.org/" in [r.target_ref for r in d2.part.rels.values() if r.is_external]
+    assert "Link" in d2.paragraphs[0].text
+    pf = d2.paragraphs[1].paragraph_format
+    assert pf.alignment == WD_ALIGN_PARAGRAPH.JUSTIFY
+    assert abs(pf.space_before.pt - 12) < 0.6 and abs(pf.space_after.pt - 6) < 0.6
+    assert pf.first_line_indent is not None and abs(pf.first_line_indent.mm - 8) < 0.6
+
+
+def test_hochformat_querformat_und_ränder_roundtrip(app, tmp_path):
+    from docx.enum.section import WD_ORIENT
+    d = docx.Document()
+    s = d.sections[0]
+    s.orientation = WD_ORIENT.LANDSCAPE
+    s.page_width, s.page_height = Mm(297), Mm(210)
+    s.top_margin, s.bottom_margin, s.right_margin = Mm(15), Mm(20), Mm(25)
+    d.add_paragraph("quer")
+    f = str(tmp_path / "q.docx"); d.save(f)
+    _, page, _, _ = _lies_schreibe_lies(app, f, tmp_path)
+    assert page.width_mm > page.height_mm
+    assert abs(page.margin_top_mm - 15) < 0.2 and abs(page.margin_bottom_mm - 20) < 0.2 and abs(page.margin_right_mm - 25) < 0.2
