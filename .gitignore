@@ -4,6 +4,13 @@ Lunivo Writer.desktop
 geheim*
 .claude/
 .codex/
+.venv/
+*.bundle
+.env
+.env.*
+*.log
+*.bak
+*.swp
 .DS_Store
 bilder/üBERARBEITUNG VON ICON lOGO/
 
@@ -37,3 +44,8 @@ libreoffice/
 /docs/reiter-abgleich.md
 /docs/bildabgleich-ansicht.md
 /docs/MENUESTRUKTUR.md
+
+# Interne KI-Arbeitsanweisungen (lokal)
+CLAUDE.md
+AGENTS.md
+CLOUD-KI-ANWEISUNGEN.md

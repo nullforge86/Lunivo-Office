@@ -47,7 +47,7 @@ Auf einem Wort sieht das Programm auch dann nach, wenn noch gar nicht
 geprüft wurde: Wer auf *garnicht* klickt, bekommt *gar nicht* — nicht eine
 Liste ähnlich klingender Wörter.
 
-![Rechtsklick auf „garnicht“: oben die schwebende Formatleiste mit Schriftart, Größe und fett/kursiv/unterstrichen, darunter das Menü mit dem Vorschlag „gar nicht“ und den Befehlen samt Tastenkombinationen](../bilder/rechtsklick.png)
+![Rechtsklick auf „garnicht“: oben die schwebende Formatleiste mit Schriftart, Größe und fett/kursiv/unterstrichen, darunter das Menü mit dem Vorschlag „gar nicht“ und den Befehlen samt Tastenkombinationen](../assets/images/rechtsklick.png)
 
 **Tabellenwerkzeuge** erscheinen, sobald der Zeiger in einer Tabelle steht,
 und verschwinden wieder; dazu Zeichentools, Diagrammtools, SmartArt-Tools,

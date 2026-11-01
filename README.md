@@ -1,4 +1,4 @@
-![Lunivo Office](bilder/lunivo-office.png)
+![Lunivo Office](assets/images/lunivo-office.png)
 
 # Lunivo Writer
 
@@ -20,7 +20,7 @@ Denn Schwierigkeiten mit der Rechtschreibung bedeuten nicht, weniger Ideen, Fant
 
 ## Installation und Start
 
-Voraussetzung ist Python 3.9 oder neuer. Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten:
+Voraussetzung ist Python 3.10 oder neuer (Linux). Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten (PySide6, python-docx, pyphen, pypdf, msoffcrypto-tool):
 
 ```bash
 ./starten-qt.sh
@@ -43,6 +43,19 @@ Mit `./starten-qt.sh --eintrag` wird ein Menüeintrag angelegt. `./starten-qt.sh
 - Eine native Qt-Oberfläche mit Seitenleiste, Dokumentreitern und wahlweise Registerband oder Symbolleisten.
 
 XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Die bekannte Formatunterstützung und ihre Grenzen stehen in [Speichern und Dateiformate](docs/SPEICHERN.md).
+
+## Offline und online
+
+- **Offline:** Schreiben, Formatieren, Rechtschreib- und Grammatikprüfung, Wortvorhersage, Silbentrennung, Öffnen, Speichern und Exportieren.
+- **Nur mit Internet und eigener Einrichtung:** optionale KI-Anbieter und externe Schreibhilfen; Zusatzdaten wie Schriften oder Stimmen holen `schrift-holen.sh` und `stimme-holen.sh`.
+
+## Tests
+
+```bash
+.venv/bin/python -m pytest tests/test_formats.py
+```
+
+Eine gezielte Auswahl genügt lokal; die Gesamtprüfung läuft bei Push und Pull Request über GitHub Actions.
 
 ## Datenschutz
 
