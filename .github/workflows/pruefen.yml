@@ -5,6 +5,11 @@ name: Prüfen
 
 on: [push, pull_request]
 
+# Ein neuer Push auf denselben Zweig bricht den noch laufenden Lauf ab: es zählt immer nur der letzte Stand.
+concurrency:
+  group: pruefen-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pruefen:
     runs-on: ubuntu-latest
