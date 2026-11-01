@@ -43,5 +43,7 @@ Folgerung: eingeübte Motive übernehmen (Schere, Lupe, Drucker, Diskette …), 
 - Strichstärke 1,5 umgesetzt.
 - Neu gezeichnet: `kopfz`, `fussz` (Seitenumriss + Trennlinie oben/unten) und `spalte1/2/3` (Seitenumriss + 0/1/2 Trennlinien).
 - **Verworfen:** `kante*` als gepunktetes Quadrat mit durchgezogener Seite — bei 16 px zerfallen die Punkte, die Seite geht unter. Alte Symbole bleiben.
-- Offen: `ebeneHoch/Tief`, `mehr/weniger`, `we*`, `punkte/zeilennr/gliederung`, `kopfhoehe2/fusshoehe2`, `drucker2`; mögliche Fehldeutungen sind dort am größten.
+- Neu gezeichnet (2. Runde): `weEinzug` (Pfeil an erster Zeile, vorher identisch mit `mehr`/`einzug`), `weLeerEin`/`weLeerWeg` (großes Plus/Minus zwischen zwei Linien).
+- **Verworfen:** `ebeneHoch/Tief` als Punkt-Treppe — Punkte zerfallen bei 16 px; die alten Pfeil-Symbole bleiben.
+- Offen: `mehr/weniger` (gleich mit `einzug`), übrige `we*`, `punkte/zeilennr/gliederung`, `kopfhoehe2/fusshoehe2`, `drucker2`; mögliche Fehldeutungen sind dort am größten.
 - Nicht geprüft: Verständlichkeit mit Menschen (nur Sichtprüfung bei 16/20/24 px, hell/dunkel).
