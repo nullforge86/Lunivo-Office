@@ -1,347 +1,1068 @@
-"""Eine Stelle für alle Dateiformate: laden und speichern nach Endung."""
+"""DOCX → QTextDocument (python-docx).
+
+Gelesen werden: Absätze mit Formatvorlage, Überschriften, Zeichenformat
+(Schrift, Größe, Fett, Kursiv, Unterstrichen, Durchgestrichen, Hoch/Tief,
+Farbe, Hervorhebung), Ausrichtung, Einzüge, Abstände, Zeilenabstand,
+Aufzählungen und Nummerierungen, Seitenumbrüche, Tabellen (mit verbundenen
+Zellen), Bilder im Text, Hyperlinks, Seitengröße, Ränder, Kopf- und Fußzeile.
+
+Alles, was nicht gelesen wird, landet im IOReport — nichts verschwindet still.
+ """
 from __future__ import annotations
+from lunivo_writer.services.docx_teile.basis_lesen import (  # noqa: F401
+    BESCHRIFTUNGEN,
+    B_ART,
+    B_CAP,
+    B_MUSTER,
+    B_RAHMEN,
+    B_SPALTE,
+    B_TOC,
+    DocumentIOError,
+    EMU_PER_PX,
+    Farbe,
+    HEADING_DEFAULT_PT,
+    HeaderFooter,
+    Hyperlink,
+    IOReport,
+    LH_FIXED,
+    LH_PROPORTIONAL,
+    Linie,
+    NAMED_STYLE_DEFAULT,
+    Optional,
+    PT_PER_PX,
+    P_AENDERUNG,
+    P_AUTOR,
+    P_DATUM,
+    P_FELD,
+    P_FORM,
+    P_INDEX,
+    P_KOMMENTAR,
+    P_NOTE,
+    P_OBJEKT,
+    P_VERSTECKT,
+    P_ZITAT,
+    PageSettings,
+    Paragraph,
+    QBrush,
+    QColor,
+    QFont,
+    QImage,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QTextCursor,
+    QTextDocument,
+    QTextFormat,
+    QTextFrameFormat,
+    QTextImageFormat,
+    QTextLength,
+    QTextListFormat,
+    QTextTableFormat,
+    QUrl,
+    Qt,
+    Run,
+    STYLE_PROP,
+    Table,
+    WD_ALIGN_PARAGRAPH,
+    WD_STYLE_TYPE,
+    _Document,
+    _MC_ALT,
+    _MC_CHOICE,
+    _NS,
+    _NS_DOCX,
+    _NoRun,
+    _QT_ALIGN,
+    _UNSUPPORTED,
+    _WPS,
+    _doc_defaults,
+    _emu_to_px,
+    _pt_to_px,
+    _style_chain,
+    _xp,
+    art_aus_docx,
+    docx,
+    docx_wert,
+    io,
+    leere_meta,
+    logging,
+    muster,
+    px_to_mm,
+    qn,
+    zipfile,
+)
+from lunivo_writer.services.docx_teile.seite_lesen import SeiteLesen
+from lunivo_writer.services.docx_teile.frei_lesen import FreiLesen
 
-import os
-import tempfile
-import logging
-from dataclasses import dataclass
 
-from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument
+class _Reader(SeiteLesen, FreiLesen):
+    def __init__(self, path: str):
+        self.path = path
+        self.report = IOReport()
+        try:
+            self.d = docx.Document(path)
+        except (zipfile.BadZipFile, KeyError, ValueError) as e:
+            raise DocumentIOError(
+                "Die Datei ist kein gültiges DOCX-Dokument oder beschädigt.") from e
+        except Exception as e:  # python-docx wirft viele Typen bei kaputten Paketen
+            logging.getLogger("lunivo.dateien").exception("DOCX nicht lesbar: %s", path)
+            raise DocumentIOError(f"Die Datei konnte nicht gelesen werden: {e}") from e
+        self.doc = QTextDocument()
+        self.doc.setDocumentMargin(0)
+        self.cur = QTextCursor(self.doc)
+        self.fresh = True                 # aktueller Block ist leer und noch frei
+        self.last_list = None             # (key, QTextList)
+        self.pending_break = False
+        self._ab_zaehler = 0
+        self.neue_vorlagen: list[str] = []
+        self._erste_seite = None
+        self.deferred_break = False       # Seitenumbruch im Absatz, danach folgt noch nichts
+        self.img_n = 0
+        self.zus = leere_meta()
+        self._komm_offen: list[int] = []
+        self._lz_offen: dict[str, str] = {}
+        self._lz_pos: dict[str, int] = {}
+        self._lz_wartend: list[str] = []
+        self._aend = None                 # (art, autor, datum) innerhalb w:ins / w:del
+        self._form = None                 # JSON-Text des Formularfelds innerhalb w:sdt
+        self._note_n = {"f": 0, "e": 0}
+        self._feld = None                 # {"instr", "phase": "i"|"r"} innerhalb eines Feldes
+        self._letzter = None              # (von, bis) des zuletzt eingefügten Textstücks (für XE-Felder)
+        self._laden_zusatz()
+        self._stile_id = {st.style_id: st for st in self.d.styles}          # Zwischenspeicher: python-docx sucht sonst bei jedem Zugriff per XPath
+        self._standard_absatz = self._standard_stil(WD_STYLE_TYPE.PARAGRAPH)
+        self._standard_zeichen = self._standard_stil(WD_STYLE_TYPE.CHARACTER)
+        self._basis: dict[int, object] = {}
+        self._ketten: dict[int, list] = {}
+        self._attr_cache: dict[tuple, object] = {}
+        self.def_font, self.def_size = _doc_defaults(self.d)
+        normal = self.d.styles["Normal"] if "Normal" in [s.name for s in self.d.styles] else None
+        self.normal = normal
 
-from lunivo_writer.models.page import PageSettings
-from lunivo_writer.services import docx_reader, docx_writer
-from lunivo_writer.models.report import DocumentIOError, IOReport
+    def _laden_zusatz(self) -> None:
+        """Kommentare (python-docx) und Fuß-/Endnoten (Teile footnotes.xml / endnotes.xml) einlesen."""
+        try:
+            for c in self.d.comments:
+                self.zus["kommentare"][int(c.comment_id)] = {
+                    "autor": c.author or "", "initialen": c.initials or "",
+                    "datum": c.timestamp.isoformat() if c.timestamp else "",
+                    "text": "\n".join(p.text for p in c.paragraphs)}
+        except Exception:
+            self.report.warn("Kommentare konnten nicht gelesen werden.")
+        self._kommentare_geloest_lesen()
+        self._quellen_lesen()
+        for art, rel in (("f", "footnotes"), ("e", "endnotes")):
+            for r in self.d.part.rels.values():
+                if r.reltype.endswith("/" + rel) and not r.is_external:
+                    from lxml import etree
+                    wurzel = etree.fromstring(r.target_part.blob)
+                    tag = qn("w:footnote") if art == "f" else qn("w:endnote")
+                    for n in wurzel.iterchildren(tag):
+                        if n.get(qn("w:type")) in ("separator", "continuationSeparator", "continuationNotice"):
+                            continue
+                        zeilen = []
+                        for p in n.iterchildren(qn("w:p")):
+                            zeilen.append("".join(t.text or "" for t in p.iter(qn("w:t"))).strip())
+                        self.zus["noten"][art][int(n.get(qn("w:id")))] = "\n".join(zeilen)
 
-try:
-    from lxml import etree as lxml_etree
-except Exception:  # pragma: no cover
-    lxml_etree = None
+    def _kommentare_geloest_lesen(self) -> None:
+        """Welche Kommentare Word als gelöst markiert hat (Teil commentsExtended: w15:done je Absatzkennung)."""
+        try:
+            from lxml import etree
+            W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}paraId"
+            W15 = "{http://schemas.microsoft.com/office/word/2012/wordml}"
+            fertig = set()
+            for r in self.d.part.rels.values():
+                if r.reltype.endswith("/commentsExtended") and not r.is_external:
+                    for e in etree.fromstring(r.target_part.blob).iter(W15 + "commentEx"):
+                        if e.get(W15 + "done") in ("1", "true"):
+                            fertig.add(e.get(W15 + "paraId"))
+            if not fertig:
+                return
+            for c in self.d.comments:
+                ps = c.paragraphs
+                if ps and ps[0]._p.get(W14) in fertig and int(c.comment_id) in self.zus["kommentare"]:
+                    self.zus["kommentare"][int(c.comment_id)]["geloest"] = True
+        except Exception:                                              # noqa: BLE001 — ein unlesbarer Zusatzteil darf das Laden nicht verhindern
+            pass
 
-_log = logging.getLogger("lunivo.dateien")
-OPEN_FILTER = ("Dokumente (*.docx *.dotx *.docm *.odt *.fodt *.rtf *.txt);;Word-Dokument (*.docx);;OpenDocument-Text (*.odt);;"
-                "Rich Text (*.rtf);;Textdatei (*.txt);;Alle Dateien (*)")
-# Alle Formate liest und schreibt Lunivo selbst — kein fremdes Programm im Hintergrund.
-NICHT_UNTERSTUETZT = {".doc": "Word 97–2003 (.doc)", ".dot": "Word-97–2003-Vorlage (.dot)", ".wps": "Microsoft Works (.wps)"}
-SAVE_FILTERS = {
-    ".docx": "Word-Dokument (*.docx)",
-    ".txt": "Textdatei (*.txt)",
-    ".odt": "OpenDocument-Text (*.odt)",
-    ".rtf": "Rich Text (*.rtf)",
-}
-PDF_FILTER = "PDF-Dokument (*.pdf)"
-MAX_DOCX_FILE_BYTES = 128 * 1024 * 1024
-MAX_DOCX_ZIP_ENTRIES = 5000
-MAX_DOCX_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
-MAX_XML_BYTES = 20 * 1024 * 1024
-MAX_MEDIA_BYTES = 20 * 1024 * 1024
-MAX_MEDIA_TOTAL_BYTES = 200 * 1024 * 1024
+    def _quellen_lesen(self) -> None:
+        """Literaturquellen aus dem Word-Bibliografieteil (customXml, Namensraum …/bibliography)."""
+        from lxml import etree
+        B = "{http://schemas.openxmlformats.org/officeDocument/2006/bibliography}"
+        for r in self.d.part.rels.values():
+            if r.is_external or not r.reltype.endswith("/customXml"):
+                continue
+            try:
+                w = etree.fromstring(r.target_part.blob)
+            except Exception:
+                continue
+            if w.tag != B + "Sources":
+                continue
+            self.zus["zitierweise"] = (w.get("StyleName") or "APA")
+            for q in w.iterchildren(B + "Source"):
+                def t(n):
+                    e = q.find(B + n)
+                    return (e.text or "") if e is not None else ""
+                personen = []
+                for pe in q.iter(B + "Person"):
+                    last = (pe.findtext(B + "Last") or "").strip(); first = (pe.findtext(B + "First") or "").strip()
+                    personen.append(f"{last}, {first}" if first else last)
+                corp = q.find(f"{B}Author/{B}Author/{B}Corporate")
+                if corp is not None and corp.text:
+                    personen.append(corp.text)
+                typ = {"Book": "Buch", "JournalArticle": "Aufsatz", "InternetSite": "Webseite", "Report": "Bericht"}.get(t("SourceType"), "Sonstiges")
+                self.zus["quellen"].append({"tag": t("Tag"), "typ": typ, "autor": "; ".join(personen), "titel": t("Title"),
+                                            "jahr": t("Year"), "verlag": t("Publisher"), "ort": t("City"), "url": t("URL")})
 
+    def _standard_stil(self, art):
+        try:
+            return self.d.styles.default(art)
+        except Exception:
+            return None
 
-def endung_zum_filter(filter_text: str) -> str | None:
-    """Filtertext aus dem Speichern-Fenster → Endung (z. B. „OpenDocument-Text (*.odt)“ → „.odt“)."""
-    if filter_text == PDF_FILTER:
-        return ".pdf"
-    return next((e for e, f in SAVE_FILTERS.items() if f == filter_text), None)
+    def _ps(self, para):
+        """Absatzvorlage (mit Zwischenspeicher)."""
+        ppr = para._p.pPr
+        sid = ppr.pStyle.val if ppr is not None and ppr.pStyle is not None else None
+        return self._stile_id.get(sid) or self._standard_absatz
 
+    def _rs(self, run):
+        rpr = run._r.rPr
+        sid = rpr.rStyle.val if rpr is not None and rpr.rStyle is not None else None
+        return self._stile_id.get(sid) if sid else None
 
-@dataclass
-class Loaded:
-    doc: QTextDocument
-    page: PageSettings
-    meta: dict
-    report: IOReport
+    def _kette(self, style):
+        k = self._ketten.get(id(style.element))
+        if k is None:
+            k, gesehen, s = [], set(), style
+            while s is not None and id(s.element) not in gesehen:
+                gesehen.add(id(s.element)); k.append(s)
+                b = self._basis.get(id(s.element), False)
+                if b is False:
+                    b = s.base_style
+                    self._basis[id(s.element)] = b
+                s = b
+            self._ketten[id(style.element)] = k
+        return k
 
+    def _style_attr(self, style, getter):
+        for s in self._kette(style):
+            v = getter(s)
+            if v is not None:
+                return v
+        return None
 
-def ext(path: str) -> str:
-    return os.path.splitext(path)[1].lower()
+    def _stil_font(self, style, attr):
+        key = (id(style.element), attr)
+        if key not in self._attr_cache:
+            self._attr_cache[key] = self._style_attr(style, lambda s: getattr(s.font, attr) if attr != "name" else s.font.name)
+        return self._attr_cache[key]
 
+    def _font_name(self, run, para) -> str:
+        v = run.font.name
+        rs = self._rs(run) if hasattr(run, "_r") else None
+        if v is None and rs is not None:
+            v = self._stil_font(rs, "name")
+        if v is None and para is not None:
+            v = self._stil_font(self._ps(para), "name")
+        if v is None and self.normal is not None:
+            v = self.normal.font.name
+        return v or self.def_font or "Calibri"
 
-def _verschluesselt(path: str) -> bool:
-    try:
-        with open(path, "rb") as fh:
-            return fh.read(4) == b"\xd0\xcf\x11\xe0"
-    except OSError:
+    def _font_size_pt(self, run, para) -> float:
+        v = run.font.size
+        rs = self._rs(run) if hasattr(run, "_r") else None
+        if v is None and rs is not None:
+            v = self._stil_font(rs, "size")
+        if v is None and para is not None:
+            v = self._stil_font(self._ps(para), "size")
+        if v is not None:
+            return v.pt
+        if para is not None:
+            lvl = self._heading_level(para)
+            if lvl:
+                return HEADING_DEFAULT_PT[lvl]
+            nm = NAMED_STYLE_DEFAULT.get(self._ps(para).name)
+            if nm and nm[0]:
+                return nm[0]
+        if self.normal is not None and self.normal.font.size is not None:
+            return self.normal.font.size.pt
+        return self.def_size or 11.0
+
+    def _flag(self, run, para, attr):
+        v = getattr(run.font, attr)
+        rs = self._rs(run) if hasattr(run, "_r") else None
+        if v is None and rs is not None:
+            v = self._stil_font(rs, attr)
+        if v is None and para is not None:
+            v = self._stil_font(self._ps(para), attr)
+        return v
+
+    def _heading_level(self, para) -> int:
+        st = self._ps(para)
+        n = st.name if st is not None else ""
+        if n.startswith("Heading ") and n[8:].isdigit():
+            return max(1, min(9, int(n[8:])))
+        return 0
+
+    # ---- Zeichenformat -----------------------------------------------
+    def _char_format(self, run, para) -> QTextCharFormat:
+        f = QTextCharFormat()
+        f.setFontFamilies([self._font_name(run, para)])
+        f.setFontPointSize(self._font_size_pt(run, para))
+        lvl = self._heading_level(para) if para is not None else 0
+        named = NAMED_STYLE_DEFAULT.get(self._ps(para).name) if para is not None else None
+        bold = self._flag(run, para, "bold")
+        if bold is None and lvl:
+            bold = True
+        f.setFontWeight(QFont.Bold if bold else QFont.Normal)
+        ital = self._flag(run, para, "italic")
+        if ital is None and named:
+            ital = named[2]
+        f.setFontItalic(bool(ital))
+        ul = self._flag(run, para, "underline")
+        f.setFontUnderline(bool(ul))
+        raw = run.font.underline
+        if raw not in (None, True, False):
+            from docx.enum.text import WD_UNDERLINE as U
+            from lunivo_writer.editor.unterstreichung import unter_format
+            art = {U.WORDS: "woerter", U.DOUBLE: "doppelt", U.THICK: "dick", U.DOTTED: "gepunktet", U.DOTTED_HEAVY: "dick_gepunktet", U.DASH: "gestrichelt",
+                   U.DASH_HEAVY: "dick_gestrichelt", U.DASH_LONG: "lang", U.DASH_LONG_HEAVY: "dick_lang", U.DOT_DASH: "strichpunkt",
+                   U.DOT_DASH_HEAVY: "dick_strichpunkt", U.DOT_DOT_DASH: "strichpunktpunkt", U.DOT_DOT_DASH_HEAVY: "dick_strichpunktpunkt",
+                   U.WAVY: "wellig", U.WAVY_HEAVY: "dick_wellig", U.WAVY_DOUBLE: "doppelwellig"}.get(raw)
+            if art:
+                f.merge(unter_format(art))
+        if run.font.outline:
+            from PySide6.QtGui import QPen
+            f.setTextOutline(QPen(QColor(Farbe.SCHWARZ)))
+        if run.font.hidden:
+            f.setProperty(P_VERSTECKT, 1)
+        rpr = run._r.rPr
+        sp = rpr.find(qn("w:spacing")) if rpr is not None else None
+        if sp is not None and sp.get(qn("w:val")):
+            f.setFontLetterSpacingType(QFont.AbsoluteSpacing)
+            f.setFontLetterSpacing(int(sp.get(qn("w:val"))) / 20 / 0.75)
+        f.setFontStrikeOut(bool(self._flag(run, para, "strike")))
+        if self._flag(run, para, "superscript"):
+            f.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
+        elif self._flag(run, para, "subscript"):
+            f.setVerticalAlignment(QTextCharFormat.AlignSubScript)
+        col = run.font.color
+        if col is not None and col.rgb is not None:
+            f.setForeground(QBrush(QColor("#" + str(col.rgb))))
+        hl = self._highlight(run)
+        if hl:
+            f.setBackground(QBrush(QColor(hl)))
+        if self._flag(run, para, "all_caps"):
+            f.setFontCapitalization(QFont.AllUppercase)
+        elif self._flag(run, para, "small_caps"):
+            f.setFontCapitalization(QFont.SmallCaps)
+        self._schrift_zusatz(run._r.rPr, f)
+        from lunivo_writer.editor import texteffekt
+        texteffekt.aus_rpr(run._r.rPr, f)
+        return f
+
+    def _schrift_zusatz(self, rpr, f: QTextCharFormat) -> None:
+        """Schrift für asiatische und komplexe Zeichen, Betonungszeichen und doppeltes Durchstreichen (Fenster „Schriftart“)."""
+        from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+        if rpr is None:
+            return
+        rf = rpr.find(qn("w:rFonts"))
+        haupt = f.fontFamilies()[0] if f.fontFamilies() else ""
+        if rf is not None:
+            fam = [haupt]
+            for attr, prop in (("w:eastAsia", P_FONT_ASIEN), ("w:cs", P_FONT_KOMPLEX)):
+                n = rf.get(qn(attr))
+                if n and n != haupt:
+                    schnitt = ""; gr = ""
+                    if attr == "w:cs":
+                        bcs, ics = rpr.find(qn("w:bCs")), rpr.find(qn("w:iCs"))
+                        schnitt = ("Fett " if bcs is not None and bcs.get(qn("w:val")) not in ("0", "false") else "") + \
+                                  ("Kursiv" if ics is not None and ics.get(qn("w:val")) not in ("0", "false") else "")
+                        sz = rpr.find(qn("w:szCs"))
+                        gr = f"{int(sz.get(qn('w:val'))) / 2:g}" if sz is not None and sz.get(qn("w:val")) else ""
+                    f.setProperty(prop, f"{n}|{schnitt.strip()}|{gr}")
+                    fam.append(n)
+            if len(fam) > 1:
+                f.setFontFamilies(list(dict.fromkeys(fam)))
+        w_ = rpr.find(qn("w:w"))
+        if w_ is not None and w_.get(qn("w:val")) and w_.get(qn("w:val")).isdigit():
+            f.setFontStretch(int(w_.get(qn("w:val"))))                                    # Skalieren
+        pos = rpr.find(qn("w:position"))
+        if pos is not None and pos.get(qn("w:val")) not in (None, "0"):
+            try:                                                                          # Position in Halbpunkten → Prozent der Schriftgröße
+                gr = f.fontPointSize() or 11.0
+                f.setBaselineOffset(int(pos.get(qn("w:val"))) / 2 / gr * 100)
+            except ValueError:
+                pass
+        sg = rpr.find(qn("w:snapToGrid"))
+        if sg is not None and sg.get(qn("w:val")) in ("0", "false", "off"):
+            from lunivo_writer.editor.zusatz import P_RASTER
+            f.setProperty(P_RASTER, 0)
+        if rpr.find(qn("w:dstrike")) is not None and rpr.find(qn("w:dstrike")).get(qn("w:val")) not in ("0", "false"):
+            f.setProperty(P_DOPPELT, 1); f.setFontStrikeOut(True)
+        em = rpr.find(qn("w:em"))
+        if em is not None and em.get(qn("w:val")) not in (None, "none"):
+            f.setProperty(P_BETONUNG, {"dot": "punkt", "circle": "kreis", "comma": "komma", "underDot": "unten"}.get(em.get(qn("w:val")), "punkt"))
+
+    _HL = {"yellow": "#FFFF00", "green": "#00FF00", "cyan": "#00FFFF", "magenta": "#FF00FF",
+           "blue": "#0000FF", "red": "#FF0000", "darkBlue": "#000080", "darkCyan": "#008080",
+           "darkGreen": "#008000", "darkMagenta": "#800080", "darkRed": "#800000",
+           "darkYellow": "#808000", "darkGray": "#808080", "lightGray": "#C0C0C0",
+           "black": Farbe.SCHWARZ}
+
+    def _highlight(self, run) -> Optional[str]:
+        rpr = run._r.rPr
+        if rpr is None:
+            return None
+        h = rpr.find(qn("w:highlight"))
+        if h is not None:
+            return self._HL.get(h.get(qn("w:val")))
+        shd = rpr.find(qn("w:shd"))
+        if shd is not None:
+            fill = shd.get(qn("w:fill"))
+            if fill and fill.lower() not in ("auto", "ffffff"):
+                return "#" + fill
+        return None
+
+    # ---- Absatzformat ------------------------------------------------
+    _JC = {"left": Qt.AlignLeft, "start": Qt.AlignLeft, "right": Qt.AlignRight, "end": Qt.AlignRight, "center": Qt.AlignHCenter,
+           "both": Qt.AlignJustify, "distribute": Qt.AlignJustify, "justify": Qt.AlignJustify}
+
+    def _ausrichtung(self, para: Paragraph, st):
+        """w:jc roh lesen — python-docx kennt „start“/„end“ nicht und bricht sonst ab."""
+        def roh(ppr):
+            if ppr is None:
+                return None
+            jc = ppr.find(qn("w:jc"))
+            return jc.get(qn("w:val")) if jc is not None else None
+        v = roh(para._p.pPr)
+        s = st
+        while v is None and s is not None:
+            v = roh(s.element.pPr)
+            s = s.base_style
+        return self._JC.get(v, Qt.AlignLeft)
+
+    def _block_format(self, para: Paragraph) -> QTextBlockFormat:
+        pf = para.paragraph_format
+        st = self._ps(para)
+        b = QTextBlockFormat()
+
+        def sicher(fn, *a):
+            try:
+                return fn(*a)
+            except (ValueError, KeyError, AttributeError):        # ungewöhnliche Werte (z. B. jc="start" von LibreOffice)
+                return None
+
+        def eff(getter):
+            v = sicher(getter, pf)
+            if v is None and st is not None:
+                v = self._style_attr(st, lambda s: sicher(getter, s.paragraph_format))
+            return v
+
+        ppr = para._p.pPr
+        if ppr is not None and ppr.find(qn("w:bidi")) is not None:
+            b.setLayoutDirection(Qt.RightToLeft)
+        b.setAlignment(self._ausrichtung(para, st))
+        left = eff(lambda p: p.left_indent)
+        right = eff(lambda p: p.right_indent)
+        first = eff(lambda p: p.first_line_indent)
+        if left is not None:
+            lpx = _emu_to_px(left)
+            info = self._list_info(para)
+            if info is not None and lpx > 0:
+                lpx = max(0.0, lpx - 40.0 * (info[1] + 1))
+            b.setLeftMargin(lpx)
+        if right is not None:
+            b.setRightMargin(_emu_to_px(right))
+        if first is not None:
+            hanging_liste = first < 0 and self._list_info(para) is not None
+            b.setTextIndent(0 if hanging_liste else _emu_to_px(first))
+        sb = eff(lambda p: p.space_before)
+        sa = eff(lambda p: p.space_after)
+        b.setTopMargin(_pt_to_px(sb.pt) if sb is not None else 0)
+        b.setBottomMargin(_pt_to_px(sa.pt) if sa is not None else 0)
+        sp = ppr.find(qn("w:spacing")) if ppr is not None else None
+        leer = not "".join(para._p.xpath(".//w:t/text()") if hasattr(para._p, "xpath") else []).strip()
+        if sp is not None and not leer:
+            wahr = ("1", "true", "on")
+            if (sp.get(qn("w:beforeAutospacing")) or "").lower() in wahr:
+                b.setTopMargin(_pt_to_px(14.0))
+            if (sp.get(qn("w:afterAutospacing")) or "").lower() in wahr:
+                b.setBottomMargin(_pt_to_px(14.0))
+        ls = eff(lambda p: p.line_spacing)
+        if ls is not None:
+            if isinstance(ls, float) or (isinstance(ls, int) and ls < 100):
+                b.setLineHeight(float(ls) * 100, LH_PROPORTIONAL)
+            else:
+                pt = ls.pt
+                b.setLineHeight(pt / PT_PER_PX, LH_FIXED)
+        if eff(lambda p: p.page_break_before) or self.pending_break:
+            b.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
+            if self.pending_break and getattr(self, "pending_col", False):
+                b.setProperty(B_SPALTE, 1)
+            self.pending_break = False
+            self.pending_col = False
+        shd = para._p.xpath("w:pPr/w:shd")
+        art = muster.schluessel_von_ooxml(shd[0].get(qn("w:val"))) if shd else None
+        if shd and art and art != "loeschen":
+            farbe = shd[0].get(qn("w:color"))
+            fill = shd[0].get(qn("w:fill"))
+            mf = "#" + farbe if farbe not in (None, "auto") else Farbe.SCHWARZ
+            ff = "#" + fill if fill not in (None, "auto") else None
+            b.setBackground(muster.pinsel(art, mf, ff))
+            b.setProperty(B_MUSTER, muster.als_text(art, mf, ff))
+        elif shd and shd[0].get(qn("w:fill")) not in (None, "auto"):
+            b.setBackground(QBrush(QColor("#" + shd[0].get(qn("w:fill")))))
+        from lunivo_writer.editor import absatzopt
+        opt = absatzopt.aus_ppr(para._p.pPr)
+        if opt:
+            absatzopt.setzen(b, {**absatzopt.VORGABE, **opt})
+        stops = list(pf.tab_stops)
+        if stops:
+            from docx.enum.text import WD_TAB_ALIGNMENT
+            from PySide6.QtGui import QTextOption
+            art = {WD_TAB_ALIGNMENT.RIGHT: QTextOption.RightTab, WD_TAB_ALIGNMENT.CENTER: QTextOption.CenterTab,
+                   WD_TAB_ALIGNMENT.DECIMAL: QTextOption.DelimiterTab}
+            b.setTabPositions([QTextOption.Tab(_emu_to_px(t.position), art.get(t.alignment, QTextOption.LeftTab))
+                               for t in stops])
+            from docx.enum.text import WD_TAB_LEADER
+            from lunivo_writer.editor import tabfuell
+            lk = {WD_TAB_LEADER.DOTS: "punkt", WD_TAB_LEADER.DASHES: "strich", WD_TAB_LEADER.LINES: "linie", WD_TAB_LEADER.MIDDLE_DOT: "mitte"}
+            tabfuell.setzen(b, {round(_emu_to_px(t.position), 2): lk[t.leader] for t in stops if t.leader in lk})
+        lvl = self._heading_level(para)
+        if lvl:
+            b.setHeadingLevel(lvl)
+        if st is not None and st.name in ("Title", "Subtitle", "Quote", "No Spacing"):
+            b.setProperty(STYLE_PROP, st.name)
+        elif st is not None and not lvl and not st.builtin and st.name != "Normal":
+            self._eigene_vorlage(st, b)
+        if para._p.xpath("w:pPr/w:sectPr"):
+            from lunivo_writer.editor import abschnitte as AB
+            k, secs = self._ab_zaehler, self.d.sections
+            self._ab_zaehler += 1
+            if k + 1 < len(secs):
+                nxt = secs[k + 1]
+                b.setProperty(AB.B_ABSCHNITT, AB.eintrag(self._abschnitt_beginn(nxt), self._section_page(nxt, basis=self._erste_seite)))
+        return b
+
+    def _list_info(self, para: Paragraph):
+        """→ (numId, ilvl, 'bullet'|'decimal'|…) oder None."""
+        ppr = para._p.pPr
+        numpr = ppr.numPr if ppr is not None else None
+        num_id = ilvl = None
+        if numpr is not None:
+            num_id = numpr.numId.val if numpr.numId is not None else None
+            ilvl = numpr.ilvl.val if numpr.ilvl is not None else 0
+        if num_id is None and self._ps(para) is not None:
+            for s in self._kette(self._ps(para)):
+                sp = s.element.pPr
+                if sp is not None and sp.numPr is not None and sp.numPr.numId is not None:
+                    num_id = sp.numPr.numId.val
+                    ilvl = sp.numPr.ilvl.val if sp.numPr.ilvl is not None else 0
+                    break
+        if not num_id:
+            return None
+        fmt = self._num_format(num_id, ilvl or 0)
+        return num_id, ilvl or 0, fmt
+
+    def _num_format(self, num_id, ilvl) -> str:
+        try:
+            numbering = self.d.part.numbering_part.element
+        except Exception:
+            return "bullet"
+        num = numbering.xpath(f'w:num[@w:numId="{num_id}"]')
+        if not num:
+            return "bullet"
+        abs_id = num[0].xpath("w:abstractNumId/@w:val")
+        if not abs_id:
+            return "bullet"
+        lv = numbering.xpath(
+            f'w:abstractNum[@w:abstractNumId="{abs_id[0]}"]/w:lvl[@w:ilvl="{ilvl}"]/w:numFmt/@w:val')
+        return lv[0] if lv else "decimal"
+
+    _QT_LIST = {
+        "bullet": QTextListFormat.ListDisc,
+        "decimal": QTextListFormat.ListDecimal,
+        "lowerLetter": QTextListFormat.ListLowerAlpha,
+        "upperLetter": QTextListFormat.ListUpperAlpha,
+        "lowerRoman": QTextListFormat.ListLowerRoman,
+        "upperRoman": QTextListFormat.ListUpperRoman,
+    }
+
+    def add_paragraph(self, para: Paragraph, cursor: QTextCursor, reuse: bool, in_table=False):
+        bfmt = self._block_format(para)
+        self._block_zusatz(bfmt, para)
+        base_cfmt = QTextCharFormat()
+        base_cfmt.setFontFamilies([self._font_name(_NoRun(), para)])
+        base_cfmt.setFontPointSize(self._font_size_pt(_NoRun(), para))
+        sz = _xp(para._p, "w:pPr/w:rPr/w:sz/@w:val")
+        if sz and sz[0].isdigit():
+            base_cfmt.setFontPointSize(int(sz[0]) / 2.0)
+        self._start_block(bfmt, base_cfmt, cursor, reuse)
+
+        info = None if in_table else self._list_info(para)
+        if info is not None:
+            num_id, ilvl, kind = info
+            lf = QTextListFormat()
+            lf.setStyle(self._QT_LIST.get(kind, QTextListFormat.ListDisc))
+            lf.setIndent(ilvl + 1)
+            key = (num_id, ilvl)
+            if self.last_list and self.last_list[0] == key:
+                self.last_list[1].add(cursor.block())
+            else:
+                self.last_list = (key, cursor.createList(lf))
+        else:
+            self.last_list = None
+
+        self.deferred_break = False
+        had_content = False
+        had_content |= self._laufe(para._p, para, cursor)
+        if self.deferred_break:
+            self.deferred_break = False
+            self.pending_break = True
+            self.pending_col = getattr(self, "deferred_col", False)
+            return not had_content
         return False
 
+    def _laufe(self, eltern, para, cursor: QTextCursor, href: Optional[str] = None) -> bool:
+        had = False
+        for el in eltern:
+            tag = el.tag
+            if tag == qn("w:r"):
+                had |= self._add_run(Run(el, para), para, cursor, href=href)
+            elif tag == qn("w:hyperlink"):
+                h = Hyperlink(el, para)
+                url = h.url or ("#" + h.fragment if h.fragment else "")
+                alt_tipp, self._link_tipp = getattr(self, "_link_tipp", ""), el.get(qn("w:tooltip")) or ""
+                had |= self._laufe(el, para, cursor, href=url)
+                self._link_tipp = alt_tipp
+            elif tag in (qn("w:ins"), qn("w:del")):
+                alt = self._aend
+                self._aend = ("ins" if tag == qn("w:ins") else "del", el.get(qn("w:author")) or "", el.get(qn("w:date")) or "")
+                had |= self._laufe(el, para, cursor, href=href)
+                self._aend = alt
+            elif tag == qn("w:commentRangeStart"):
+                self._komm_offen.append(int(el.get(qn("w:id"))))
+            elif tag == qn("w:commentRangeEnd"):
+                i = int(el.get(qn("w:id")))
+                if i in self._komm_offen:
+                    self._komm_offen.remove(i)
+            elif tag == qn("w:bookmarkStart"):
+                n = el.get(qn("w:name")) or ""
+                if n and not n.startswith("_"):
+                    self._lz_offen[el.get(qn("w:id"))] = n
+                    self._lz_pos[el.get(qn("w:id"))] = cursor.position()
+            elif tag == qn("w:bookmarkEnd"):
+                i = el.get(qn("w:id"))
+                n = self._lz_offen.pop(i, None)
+                if n is not None and self._lz_pos.pop(i, None) == cursor.position():
+                    self._lz_wartend.append(n)
+            elif tag in (qn("w:sdt"),):
+                inhalt = el.find(qn("w:sdtContent"))
+                if inhalt is not None:
+                    alt_form, self._form = self._form, self._form_meta(el) or self._form
+                    had |= self._laufe(inhalt, para, cursor, href=href)
+                    self._form = alt_form
+            elif tag == qn("w:fldSimple"):
+                self._feld = {"instr": el.get(qn("w:instr")) or "", "phase": "r"}
+                had |= self._laufe(el, para, cursor, href=href)
+                self._feld_ende()
+            elif tag == qn("w:smartTag"):
+                had |= self._laufe(el, para, cursor, href=href)
+        return had
 
-def _entschluesseln(path: str, kennwort: str | None, ziel: str) -> None:
-    from lunivo_writer.models.report import PasswortNoetig
-    if not kennwort:
-        raise PasswortNoetig()
-    try:
-        import msoffcrypto
-    except ImportError as ex:
-        raise DocumentIOError("Zum Öffnen kennwortgeschützter Dokumente wird das Paket „msoffcrypto-tool“ gebraucht "
-                              "(pip install msoffcrypto-tool).") from ex
-    try:
-        with open(path, "rb") as fh, open(ziel, "wb") as out:
-            f = msoffcrypto.OfficeFile(fh)
-            f.load_key(password=kennwort)
-            f.decrypt(out)
-    except Exception as ex:                      # falsches Kennwort oder beschädigt
-        _log.warning("Entschlüsseln fehlgeschlagen: %s", ex)
-        raise PasswortNoetig(falsch=True) from ex
+    FELDER_BEHALTEN = ("SEQ", "CITATION")
 
+    def _feld_ende(self) -> None:
+        f, self._feld = self._feld, None
+        if not f:
+            return
+        teile = f["instr"].split()
+        if teile and teile[0].upper() == "XE" and self._letzter:
+            from lunivo_writer.editor.indexeintrag import aus_feld
+            from lunivo_writer.editor.zusatz import P_INDEX_OPT
+            e = aus_feld(f["instr"])
+            if e is None:
+                return
+            c = QTextCursor(self.doc)
+            c.setPosition(self._letzter[0]); c.setPosition(self._letzter[1], QTextCursor.KeepAnchor)
+            nf = QTextCharFormat(); nf.setProperty(P_INDEX, e.text())
+            if e.schalter():
+                nf.setProperty(P_INDEX_OPT, e.schalter())
+            c.mergeCharFormat(nf)
 
-def _xml_parser():
-    if lxml_etree is None:
-        return None
-    return lxml_etree.XMLParser(
-        resolve_entities=False,
-        no_network=True,
-        recover=False,
-        huge_tree=False,
-    )
+    def _form_meta(self, sdt) -> str:
+        """Inhaltssteuerelement → Formularfeld-Daten (JSON); eigene Felder tragen sie im Tag, fremde (Word) werden aus der Art abgeleitet."""
+        from lunivo_writer.editor import formular as FO
+        pr = sdt.find(qn("w:sdtPr"))
+        if pr is None:
+            return ""
+        tag = pr.find(qn("w:tag"))
+        t = tag.get(qn("w:val")) if tag is not None else ""
+        if t and t.startswith("lunivo:"):
+            m = FO.meta_lesen(t[len("lunivo:"):])
+            if m:
+                return FO.meta_text(m)
+        al = pr.find(qn("w:alias"))
+        name = al.get(qn("w:val")) if al is not None else ""
+        leer = pr.find(qn("w:showingPlcHdr")) is not None
+        if pr.find(qn("w:dropDownList")) is not None or pr.find(qn("w:comboBox")) is not None:
+            liste = pr.find(qn("w:dropDownList"))
+            if liste is None:
+                liste = pr.find(qn("w:comboBox"))
+            opt = [li.get(qn("w:displayText")) or li.get(qn("w:value")) or "" for li in liste.findall(qn("w:listItem"))]
+            m = FO.meta("auswahl", name, optionen=[o for o in opt if o])
+        elif pr.find(qn("w:date")) is not None:
+            m = FO.meta("datum", name)
+        elif any(el.tag.endswith("}checkbox") for el in pr):
+            m = FO.meta("kasten", name)
+        elif pr.find(qn("w:text")) is not None:
+            m = FO.meta("text", name)
+        else:
+            return ""
+        if leer:
+            m["leer"] = True
+        return FO.meta_text(m)
 
+    def _zusatz_formate(self, cfmt: QTextCharFormat) -> None:
+        if self._feld and self._feld["phase"] == "r":
+            teile = self._feld["instr"].split()
+            if teile and teile[0].upper() in self.FELDER_BEHALTEN:
+                cfmt.setProperty(P_FELD, self._feld["instr"].strip())
+                if teile[0].upper() == "CITATION" and len(teile) > 1:
+                    cfmt.setProperty(P_ZITAT, teile[1])
+        if self._komm_offen:
+            cfmt.setProperty(P_KOMMENTAR, self._komm_offen[-1])
+        if self._form:
+            cfmt.setProperty(P_FORM, self._form)
+        if self._aend:
+            cfmt.setProperty(P_AENDERUNG, self._aend[0])
+            cfmt.setProperty(P_AUTOR, self._aend[1])
+            cfmt.setProperty(P_DATUM, self._aend[2])
+        namen = list(self._lz_offen.values()) + self._lz_wartend
+        if namen and not cfmt.isAnchor():
+            cfmt.setAnchor(True)
+            cfmt.setAnchorNames(namen)
 
-def pruefe_docx_eingabe(path: str) -> None:
-    if not os.path.isfile(path):
-        raise DocumentIOError(f"Die Datei „{path}“ existiert nicht.")
+    _TOC_STILE = {"TOC Heading": "kopf", **{f"TOC {i}": f"zeile{i}" for i in range(1, 10)}, "Table of Figures": "zeile1",
+                   "Index 1": "zeile1", "Index 2": "zeile2", "Bibliography": "zeile1"}
 
-    size = os.path.getsize(path)
-    if size <= 0 or size > MAX_DOCX_FILE_BYTES:
-        raise DocumentIOError("Die DOCX-Datei ist leer oder über dem erlaubten Größenlimit.")
-
-    try:
-        with __import__("zipfile").ZipFile(path) as z:
-            infos = z.infolist()
-            if len(infos) > MAX_DOCX_ZIP_ENTRIES:
-                raise DocumentIOError("Die DOCX-Datei enthält zu viele ZIP-Einträge.")
-
-            total_uncompressed = 0
-            total_media = 0
-
-            for info in infos:
-                if info.filename.startswith("__MACOSX/"):
-                    continue
-                total_uncompressed += info.file_size
-
-                if info.filename.lower().startswith("word/media/"):
-                    total_media += info.file_size
-                    if info.file_size > MAX_MEDIA_BYTES:
-                        raise DocumentIOError("Ein eingebettetes Bild in der DOCX-Datei ist zu groß.")
-
-                if info.filename.lower().endswith((".xml", ".rels")) and info.file_size > MAX_XML_BYTES:
-                    raise DocumentIOError("Eine XML-Datei in der DOCX-Datei ist zu groß.")
-
-                if info.compress_size and info.file_size:
-                    ratio = info.file_size / max(1, info.compress_size)
-                    if ratio > 200.0 and info.file_size > 50 * 1024 * 1024:
-                        raise DocumentIOError("Die DOCX-Datei weist ein zu starkes Kompressionsverhältnis auf.")
-
-            if total_uncompressed > MAX_DOCX_UNCOMPRESSED_BYTES:
-                raise DocumentIOError("Die DOCX-Datei entpackt zu viel Daten.")
-
-            if total_media > MAX_MEDIA_TOTAL_BYTES:
-                raise DocumentIOError("Die DOCX-Datei enthält zu viel Bildmaterial.")
-
-            required = {"[Content_Types].xml", "word/document.xml"}
-            missing = required - set(z.namelist())
-            if missing:
-                raise DocumentIOError("Die DOCX-Datei fehlt erforderlichen Paketbestandteilen.")
-
-            for name in z.namelist():
-                if not name.lower().endswith((".xml", ".rels")):
-                    continue
-                data = z.read(name)
-                if len(data) > MAX_XML_BYTES:
-                    raise DocumentIOError("Eine XML-Datei in der DOCX-Datei ist zu groß.")
-                if lxml_etree is None:
-                    continue
-                try:
-                    lxml_etree.fromstring(data, parser=_xml_parser())
-                except Exception as e:  # noqa: BLE001
-                    raise DocumentIOError("Die DOCX-Datei enthält ungültige oder suspekte XML-Inhalte.") from e
-    except zipfile.BadZipFile as e:
-        raise DocumentIOError("Die Datei ist kein gültiges DOCX-Dokument oder beschädigt.") from e
-    except OSError as e:
-        raise DocumentIOError(f"Die DOCX-Datei konnte nicht gelesen werden: {e}") from e
-
-
-def pruefe_ressourcen_archive(path: str, endung: str) -> None:
-    if endung.lower() not in {".docx", ".docm", ".dotx", ".odt", ".fodt", ".rtf"}:
-        return
-
-    try:
-        with zipfile.ZipFile(path) as z:
-            total = 0
-            for info in z.infolist():
-                total += info.file_size
-                if info.filename.lower().endswith((".xml", ".rels", ".manifest")) and info.file_size > MAX_XML_BYTES:
-                    raise DocumentIOError("Eine XML-Ressource in der Datei ist zu groß.")
-                if info.filename.lower().startswith(("word/media/", "Pictures/")) and info.file_size > MAX_MEDIA_BYTES:
-                    raise DocumentIOError("Eine Bilddatei in der Dokumentdatei ist zu groß.")
-            if total > MAX_DOCX_UNCOMPRESSED_BYTES:
-                raise DocumentIOError("Die importierte Datei enthält zu viel unkomprimierte Daten.")
-    except zipfile.BadZipFile as e:
-        raise DocumentIOError("Die Datei ist kein gültiges Archiv oder beschädigt.") from e
-
-
-def load(path: str, kennwort: str | None = None) -> Loaded:
-    if not os.path.isfile(path):
-        raise DocumentIOError(f"Die Datei „{path}“ existiert nicht.")
-    e = ext(path)
-    if e == ".docx":
-        if _verschluesselt(path):
-            with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
-                klar = os.path.join(tmp, "klar.docx")
-                _entschluesseln(path, kennwort, klar)
-                pruefe_docx_eingabe(klar)
-                doc, page, meta, rep = docx_reader.read_docx(klar)
-            meta["kennwort"] = kennwort
-            return Loaded(doc, page, meta, rep)
-        pruefe_docx_eingabe(path)
-        doc, page, meta, rep = docx_reader.read_docx(path)
-        return Loaded(doc, page, meta, rep)
-    if e in (".txt", ".text", ""):
+    def _block_zusatz(self, bfmt: QTextBlockFormat, para: Paragraph) -> None:
+        ppr = para._p.pPr
+        bdr = ppr.find(qn("w:pBdr")) if ppr is not None else None
+        if bdr is not None:
+            da = [(kurz, bdr.find(qn(f"w:{x}"))) for x, kurz in (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h"))]
+            da = [(k, e) for k, e in da if e is not None and e.get(qn("w:val"), "nil") not in ("nil", "none")]
+            if da:
+                e = da[0][1]
+                col = e.get(qn("w:color")) or "000000"
+                art = art_aus_docx(e.get(qn("w:val")))
+                li = Linie(f"#{col.lower() if col.lower() != 'auto' else '000000'}", int(e.get(qn("w:sz")) or 8) / 8, art).mit_seiten("".join(k for k, _e in da))
+                abst = {k: e2.get(qn("w:space")) for k, e2 in da}
+                if any(v not in (None, "4") for v in abst.values()):
+                    li.abstand = ",".join(str(int(abst.get(k) or 4)) for k in "tblr")
+                bfmt.setProperty(B_RAHMEN, li.text())
         try:
-            with open(path, "rb") as fh:
-                raw = fh.read()
-        except OSError as ex:
-            raise DocumentIOError(f"Datei nicht lesbar: {ex.strerror or ex}") from ex
-        for enc in ("utf-8-sig", "cp1252"):
-            try:
-                text = raw.decode(enc)
-                break
-            except UnicodeDecodeError:
+            name = self._ps(para).name
+        except Exception:
+            return
+        if name in self._TOC_STILE:
+            art = "toc" if name.startswith("TOC ") else {"Index 1": "index", "Index 2": "index", "Bibliography": "lit"}.get(name)
+            if name == "Table of Figures":
+                art = "tab" if para.text.strip().lower().startswith(("tabelle", "table")) else "abb"
+            elif name == "TOC Heading":
+                nxt = para._p.getnext()
+                art = "toc"
+                if nxt is not None and nxt.tag == qn("w:p"):
+                    nn = Paragraph(nxt, para._parent).style.name
+                    art = {"Table of Figures": "abb", "Index 1": "index", "Bibliography": "lit"}.get(nn, "toc")
+                    if nn == "Table of Figures" and Paragraph(nxt, para._parent).text.strip().lower().startswith(("tabelle", "table")):
+                        art = "tab"
+            bfmt.setProperty(B_TOC, self._TOC_STILE[name])
+            bfmt.setProperty(B_ART, art or "toc")
+        elif name == "Caption":
+            erstes = para.text.strip().split(" ")[0] if para.text.strip() else ""
+            bfmt.setProperty(B_CAP, erstes if erstes in BESCHRIFTUNGEN else (erstes or "Abbildung"))
+
+    def _flush_break(self, cursor: QTextCursor):
+        if self.deferred_break:
+            self.deferred_break = False
+            cursor.insertBlock()
+            bf = cursor.blockFormat()
+            bf.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
+            if getattr(self, "deferred_col", False):
+                bf.setProperty(B_SPALTE, 1)
+                self.deferred_col = False
+            cursor.setBlockFormat(bf)
+
+    def _add_run(self, run, para, cursor: QTextCursor, href: Optional[str] = None) -> bool:
+        added = False
+        cfmt = self._char_format(run, para)
+        self._zusatz_formate(cfmt)
+        if href:
+            cfmt.setAnchor(True)
+            cfmt.setAnchorHref(href)
+            if getattr(self, "_link_tipp", ""):
+                cfmt.setToolTip(self._link_tipp)
+            cfmt.setForeground(QBrush(QColor("#0563C1")))
+            cfmt.setFontUnderline(True)
+        for child in run._r:
+            tag = child.tag
+            if tag == qn("w:fldChar"):
+                typ = child.get(qn("w:fldCharType"))
+                if typ == "begin":
+                    self._feld = {"instr": "", "phase": "i"}
+                elif typ == "separate" and self._feld:
+                    self._feld["phase"] = "r"
+                    cfmt = self._char_format(run, para)
+                    self._zusatz_formate(cfmt)
+                elif typ == "end":
+                    self._feld_ende()
                 continue
-        else:
-            text = raw.decode("latin-1")
-        doc = QTextDocument()
-        doc.setDocumentMargin(0)
-        f = QFont("Liberation Sans")
-        f.setPointSizeF(11)
-        doc.setDefaultFont(f)
-        QTextCursor(doc).insertText(text.replace("\r\n", "\n"))
-        doc.setModified(False)
-        return Loaded(doc, PageSettings(), {}, IOReport())
-    if e in (".odt", ".fodt", ".rtf"):
-        _kopf_pruefen(path, e)
-        pruefe_ressourcen_archive(path, e)
-        if e == ".rtf":
-            from lunivo_writer.services.rtf_reader import read_rtf
-            doc, page, meta, rep = read_rtf(path)
-        else:
-            from lunivo_writer.services import odt_reader
-            doc, page, meta, rep = (odt_reader.read_odt if e == ".odt" else odt_reader.read_fodt)(path)
-        return Loaded(doc, page, meta, rep)
-    if e in (".dotx", ".docm"):
-        _kopf_pruefen(path, e)
-        with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
-            doc, page, meta, rep = docx_reader.read_docx(_als_docx(path, os.path.join(tmp, "dokument.docx")))
-        if e == ".docm":
-            rep.warn("Makros aus der DOCM-Datei werden nicht ausgeführt und beim Speichern nicht übernommen.")
-        return Loaded(doc, page, meta, rep)
-    if e in NICHT_UNTERSTUETZT:
-        raise DocumentIOError(f"Das alte Format {NICHT_UNTERSTUETZT[e]} wird nicht mehr unterstützt. Bitte die Datei im "
-                              "ursprünglichen Programm als DOCX speichern und dann in Lunivo öffnen.")
-    raise DocumentIOError(
-        f"Das Format „{e or 'ohne Endung'}“ kann nicht geöffnet werden. Unterstützt: DOCX, ODT, RTF, TXT.")
+            if tag == qn("w:instrText"):
+                if self._feld and self._feld["phase"] == "i":
+                    self._feld["instr"] += child.text or ""
+                continue
+            if self._feld and self._feld["phase"] == "i":
+                continue
+            if tag == qn("w:t") or tag == qn("w:delText"):
+                if child.text:
+                    self._flush_break(cursor)
+                    von = cursor.position()
+                    cursor.insertText(child.text, cfmt)
+                    self._letzter = (von, cursor.position())
+                    self._lz_wartend = []
+                    added = True
+            elif tag == qn("w:tab"):
+                self._flush_break(cursor)
+                cursor.insertText("\t", cfmt)
+                added = True
+            elif tag in (qn("w:br"), qn("w:cr")):
+                if child.get(qn("w:type")) in ("page", "column"):
+                    self.deferred_break = True
+                    self.deferred_col = child.get(qn("w:type")) == "column"
+                else:
+                    self._flush_break(cursor)
+                    cursor.insertText("\u2028", cfmt)
+            elif tag == qn("w:noBreakHyphen"):
+                self._flush_break(cursor)
+                cursor.insertText("\u2011", cfmt)
+                added = True
+            elif tag == qn("w:drawing"):
+                self._flush_break(cursor)
+                self._add_image(child, cursor, cfmt)
+                added = True
+            elif tag == _MC_ALT:
+                wahl = child.find(_MC_CHOICE)
+                for dr in (wahl.iter(qn("w:drawing")) if wahl is not None else []):
+                    self._flush_break(cursor)
+                    self._add_image(dr, cursor, cfmt)
+                    added = True
+            elif tag in (qn("w:footnoteReference"), qn("w:endnoteReference")):
+                self._flush_break(cursor)
+                art = "f" if tag == qn("w:footnoteReference") else "e"
+                nid = int(child.get(qn("w:id")))
+                self._note_n[art] += 1
+                nf = QTextCharFormat(cfmt)
+                nf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
+                nf.setProperty(P_NOTE, f"{art}:{nid}")
+                cursor.insertText(self._note_marke(art, self._note_n[art]), nf)
+                added = True
+        return added
+
+    @staticmethod
+    def _note_marke(art: str, n: int) -> str:
+        from lunivo_writer.editor.zusatz import roemisch
+        return str(n) if art == "f" else roemisch(n)
+
+    @staticmethod
+    def _effekte_lesen(drawing) -> dict:
+        """``a:effectLst`` am Bild → ``fx`` (Schatten, Leuchten, Spiegelung, weiche Kanten) in den Werten des Programms."""
+        from lunivo_writer.editor.freie_bilder import farbe_aus_element
+        pt = 12700.0
+        fx: dict = {}
+
+        def farbe(el):
+            c = _xp(el, "a:srgbClr")
+            if not c:
+                return Farbe.SCHWARZ, 0
+            al = _xp(c[0], "a:alpha/@val")
+            return farbe_aus_element(c[0], _NS).name(), 100 - (int(al[0]) / 1000 if al else 100)
+        try:
+            for el in _xp(drawing, ".//pic:spPr/a:effectLst/a:glow"):
+                f, t = farbe(el); fx["leuchten"] = {"farbe": f, "groesse": int(el.get("rad") or 0) / pt, "transparenz": t}
+            for el in _xp(drawing, ".//pic:spPr/a:effectLst/a:outerShdw"):
+                f, t = farbe(el)
+                fx["schatten"] = {"farbe": f, "transparenz": t, "groesse": 100, "weich": int(el.get("blurRad") or 0) / pt,
+                                  "abstand": int(el.get("dist") or 0) / pt, "winkel": int(el.get("dir") or 0) / 60000}
+            for el in _xp(drawing, ".//pic:spPr/a:effectLst/a:reflection"):
+                fx["reflektion"] = {"groesse": int(el.get("endPos") or 50000) / 1000, "transparenz": 100 - int(el.get("stA") or 50000) / 1000,
+                                    "weich": int(el.get("blurRad") or 0) / pt, "abstand": int(el.get("dist") or 0) / pt}
+            for el in _xp(drawing, ".//pic:spPr/a:effectLst/a:softEdge"):
+                fx["weich"] = {"radius": int(el.get("rad") or 0) / pt}
+        except Exception:                                              # noqa: BLE001 — ein ungewöhnlicher Effekt darf das Laden nicht verhindern
+            return {}
+        return fx
+
+    def _umbruch_seite(self, drawing, breite_px: float) -> str:
+        """„links“/„rechts“, wenn das Bild den Text umfließt (wrapSquare/Tight/Through); sonst leer."""
+        anker = drawing.xpath("wp:anchor")
+        if not anker or not _xp(anker[0], "wp:wrapSquare | wp:wrapTight | wp:wrapThrough"):
+            return ""
+        h = _xp(anker[0], "wp:positionH")
+        if h:
+            al = _xp(h[0], "wp:align/text()")
+            if al:
+                return "rechts" if al[0] in ("right", "outside") else "links"
+            off = _xp(h[0], "wp:posOffset/text()")
+            if off:
+                try:
+                    sec = self.d.sections[0]
+                    inhalt = _emu_to_px(sec.page_width - sec.left_margin - sec.right_margin)
+                except Exception:                                                      # noqa: BLE001
+                    inhalt = 600.0
+                return "rechts" if _emu_to_px(off[0]) + breite_px / 2 > inhalt / 2 else "links"
+        return "links"
+
+    EIGENE_MAX = 20
+
+    def _eigene_vorlage(self, st, b) -> None:
+        """Eine selbst angelegte Absatzvorlage des Dokuments: der Absatz behält ihren Namen; fehlt sie im Katalog, wird sie übernommen."""
+        from docx.enum.style import WD_STYLE_TYPE
+        from lunivo_writer.editor import stile
+        if st.type != WD_STYLE_TYPE.PARAGRAPH or not st.name or "|" in st.name:
+            return
+        if not stile.ist_eigen(st.name):
+            if st.name in stile.VORGABE or len(stile._NEU) >= self.EIGENE_MAX:
+                return
+            f, pf = st.font, st.paragraph_format
+            try:
+                farbe = ("#" + str(f.color.rgb)) if f.color is not None and f.color.type is not None and f.color.rgb is not None else ""
+            except Exception:
+                farbe = ""
+            ausr = {WD_ALIGN_PARAGRAPH.LEFT: "links", WD_ALIGN_PARAGRAPH.CENTER: "mitte", WD_ALIGN_PARAGRAPH.RIGHT: "rechts",
+                    WD_ALIGN_PARAGRAPH.JUSTIFY: "block"}.get(pf.alignment, "")
+            stile.anlegen(st.name, groesse=f.size.pt if f.size else 0, fett=bool(f.bold), kursiv=bool(f.italic), farbe=farbe,
+                          schrift=f.name or "", vor=pf.space_before.pt if pf.space_before is not None else 0,
+                          nach=pf.space_after.pt if pf.space_after is not None else 0, ausr=ausr,
+                          zeilen=float(pf.line_spacing) if isinstance(pf.line_spacing, float) else 0,
+                          einzug=round(pf.left_indent.mm, 1) if pf.left_indent is not None else 0)
+            self.neue_vorlagen.append(st.name)
+        if stile.ist_eigen(st.name):
+            b.setProperty(STYLE_PROP, stile.PRAEFIX + st.name)
+
+    @staticmethod
+    def _zelle_format(qcell, cell) -> None:
+        """Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) aus der DOCX-Zelle."""
+        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT as V
+        cf = qcell.format().toTableCellFormat()
+        geaendert = False
+        shd = cell._tc.xpath("w:tcPr/w:shd")
+        if shd and shd[0].get(qn("w:fill")) not in (None, "auto"):
+            cf.setBackground(QBrush(QColor("#" + shd[0].get(qn("w:fill")))))
+            geaendert = True
+        va = cell.vertical_alignment
+        if va in (V.CENTER, V.BOTTOM):
+            cf.setVerticalAlignment(QTextCharFormat.AlignMiddle if va == V.CENTER else QTextCharFormat.AlignBottom)
+            geaendert = True
+        if geaendert:
+            qcell.setFormat(cf)
+
+    def add_table(self, table: Table):
+        rows, cols = len(table.rows), len(table.columns)
+        if rows == 0 or cols == 0:
+            return
+        tf = QTextTableFormat()
+        tf.setCellPadding(4)
+        tf.setCellSpacing(0)
+        tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
+        grid = table._tbl.xpath("w:tblPr/w:tblBorders") or (
+            [1] if table.style is not None and "Grid" in (table.style.name or "") else [])
+        tf.setBorder(1 if grid else 0)
+        tf.setBorderBrush(QColor('#333333')); tf.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
+        tf.setBorderCollapse(True)
+        qt = self.cur.insertTable(rows, cols, tf)
+
+        placed: dict[int, list] = {}
+        for r in range(rows):
+            for c in range(cols):
+                tc = table.cell(r, c)._tc
+                e = placed.setdefault(id(tc), [r, c, r, c, table.cell(r, c)])
+                e[2] = max(e[2], r)
+                e[3] = max(e[3], c)
+        for r0, c0, r1, c1, cell in placed.values():
+            if r1 > r0 or c1 > c0:
+                qt.mergeCells(r0, c0, r1 - r0 + 1, c1 - c0 + 1)
+        for r0, c0, _r1, _c1, cell in placed.values():
+            ccur = qt.cellAt(r0, c0).firstCursorPosition()
+            first = True
+            for item in cell.iter_inner_content():
+                if isinstance(item, Paragraph):
+                    self.add_paragraph(item, ccur, reuse=first, in_table=True)
+                    first = False
+                else:
+                    self.report.warn("Verschachtelte Tabellen werden nicht dargestellt.")
+        for r0, c0, _r1, _c1, cell in placed.values():
+            self._zelle_format(qt.cellAt(r0, c0), cell)
+        self.cur = QTextCursor(self.doc)
+        self.cur.movePosition(QTextCursor.End)
+        self.fresh = True
+        self.last_list = None
+
+    def run(self):
+        body = self.d.element.body
+        for pat, msg in _UNSUPPORTED:
+            try:
+                if _xp(body, pat):
+                    self.report.warn(msg)
+            except Exception:
+                pass
+        def kinder(eltern):
+            for c in eltern.iterchildren():
+                if c.tag == qn("w:sdt"):
+                    inhalt = c.find(qn("w:sdtContent"))
+                    if inhalt is not None:
+                        yield from kinder(inhalt)
+                else:
+                    yield c
+        self._erste_seite = self.read_page()
+        for child in kinder(body):
+            if child.tag == qn("w:p"):
+                self.fresh = self.add_paragraph(Paragraph(child, self.d._body), self.cur, reuse=self.fresh)
+            elif child.tag == qn("w:tbl"):
+                self.add_table(Table(child, self.d._body))
+        self._ketten_bereinigen()
+        page = self._erste_seite
+        df = QFont(self.def_font or "Calibri")
+        df.setPointSizeF(self.def_size or 11.0)
+        self.doc.setDefaultFont(df)
+        props = self.d.core_properties
+        meta = {"title": props.title or "", "author": props.author or ""}
+        meta.update(self.zus)
+        lang = self.d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:rPrDefault") + "/" + qn("w:rPr") + "/" + qn("w:lang"))
+        if lang is not None and lang.get(qn("w:val")):
+            meta["sprache"] = lang.get(qn("w:val"))
+        self.doc.setModified(False)
+        return self.doc, page, meta, self.report
 
 
-_MAGIC = {".odt": b"PK", ".dotx": b"PK", ".docm": b"PK", ".fodt": b"<?xml", ".rtf": b"{\\rtf"}
+_ERSETZ = {"Calibri Light": ["Carlito"], "Calibri": ["Carlito"], "Cambria": ["Caladea"], "Segoe UI": ["Noto Sans"]}
 
 
-def _kopf_pruefen(path: str, e: str) -> None:
-    """Ein falsch benanntes oder kaputtes Dokument wird als solches gemeldet, nicht „irgendwie“ geöffnet."""
-    soll = _MAGIC.get(e)
-    if not soll:
-        return
-    try:
-        with open(path, "rb") as fh:
-            kopf = fh.read(len(soll))
-    except OSError as ex:
-        raise DocumentIOError(f"Datei nicht lesbar: {ex.strerror or ex}") from ex
-    if kopf != soll:
-        raise DocumentIOError(f"Die Datei ist kein gültiges {e[1:].upper()}-Dokument oder beschädigt.")
+def _schriften_ersatz() -> None:
+    """Word-Schriften ohne Entsprechung im System ersetzt Qt sonst durch irgendeine breite Schrift (so wurde aus „Calibri Light“ Noto Sans).
+    Die metrikgleichen Schriften (Carlito, Caladea) halten Zeilenhöhe und Umbruch gleich — wie es LibreOffice mit seiner Ersetzungstabelle tut."""
+    from PySide6.QtGui import QFont, QFontDatabase
+    vorhanden = set(QFontDatabase.families())
+    for name, ersatz in _ERSETZ.items():
+        wahl = [e for e in ersatz if e in vorhanden]
+        if wahl and name not in vorhanden:
+            QFont.insertSubstitutions(name, wahl)
 
 
-def _has_rich_content(doc: QTextDocument) -> bool:
-    b = doc.firstBlock()
-    while b.isValid():
-        if b.textList() is not None or b.blockFormat().headingLevel():
-            return True
-        it = b.begin()
-        while not it.atEnd():
-            cf = it.fragment().charFormat()
-            if cf.isImageFormat() or cf.fontWeight() > 400 or cf.fontItalic() or cf.underlineStyle() != cf.UnderlineStyle.NoUnderline:
-                return True
-            it += 1
-        b = b.next()
-    return doc.rootFrame().childFrames() != []
-
-
-def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None, sicherung: bool = True,
-         erwarteter_stand: tuple[int, int] | None = None) -> IOReport:
-    """Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
-    Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. Jedes Format schreibt Lunivo selbst."""
-    from lunivo_writer.editor import lese_zeilenluft
-    from lunivo_writer.services import sicher_schreiben
-    if lese_zeilenluft.aktiv(doc):
-        doc = lese_zeilenluft.bereinigte_kopie(doc)
-    from lunivo_writer.editor import querblatt
-    if querblatt.hat_zusatz(doc):
-        doc = querblatt.bereinigte_kopie(doc)
-    e = ext(path)
-    if e == ".docx":
-        data, rep = docx_writer.docx_daten(doc, page, meta)
-        kw = (meta or {}).get("kennwort")
-        if kw:
-            data = _verschluesseln(data, kw)
-        sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung, erwarteter_stand=erwarteter_stand)
-        return rep
-    rep = IOReport()
-    if e == ".txt":
-        if _has_rich_content(doc):
-            rep.warn("Als Textdatei gehen Formatierung, Listen, Tabellen und Bilder verloren.")
-        if not page.header.is_empty() or not page.footer.is_empty():
-            rep.warn("Kopf- und Fußzeile werden in der Textdatei nicht gespeichert.")
-        sicher_schreiben.bytes_schreiben(path, doc.toPlainText().replace("\u2028", "\n").encode("utf-8"),
-                                         sicherung=sicherung, erwarteter_stand=erwarteter_stand)
-        return rep
-    if e in (".odt", ".rtf"):
-        if e == ".odt":
-            from lunivo_writer.services.odt_writer import odt_daten as daten_bauen
-        else:
-            from lunivo_writer.services.rtf_writer import rtf_daten as daten_bauen
-        data, rep = daten_bauen(doc, page, meta)
-        sicher_schreiben.bytes_schreiben(path, data, endung=e, sicherung=sicherung, erwarteter_stand=erwarteter_stand)
-        return rep
-    raise DocumentIOError(f"Das Format „{e}“ kann nicht gespeichert werden.")
-
-
-_DOCX_HAUPTTEIL = b"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
-
-
-def _als_docx(path: str, ziel: str) -> str:
-    """DOTX (Vorlage) und DOCM (mit Makros) sind DOCX-Pakete mit anderem Inhaltstyp des Hauptteils; für den DOCX-Leser wird nur
-    dieser Eintrag umgeschrieben und das Makroprojekt weggelassen."""
-    import re
-    import zipfile
-    try:
-        with zipfile.ZipFile(path) as z, zipfile.ZipFile(ziel, "w", zipfile.ZIP_DEFLATED) as aus:
-            for info in z.infolist():
-                if info.filename.lower().endswith("vbaproject.bin") or info.filename.lower().endswith("vbadata.xml"):
-                    continue
-                daten = z.read(info.filename)
-                if info.filename == "[Content_Types].xml":
-                    daten = re.sub(rb'application/vnd\.(?:openxmlformats-officedocument\.wordprocessingml\.template|'
-                                   rb'ms-word\.(?:document|template)\.macroEnabled)(?:\.main)?\+xml', _DOCX_HAUPTTEIL, daten)
-                aus.writestr(info, daten)
-    except (zipfile.BadZipFile, OSError, KeyError) as ex:
-        raise DocumentIOError("Die Datei ist kein gültiges Word-Dokument oder beschädigt.") from ex
-    return ziel
-
-
-def _verschluesseln(data: bytes, kennwort: str) -> bytes:
-    try:
-        import msoffcrypto
-    except ImportError as ex:
-        raise DocumentIOError("Zum Verschlüsseln wird das Paket „msoffcrypto-tool“ gebraucht.") from ex
-    import io
-    out = io.BytesIO()
-    try:
-        msoffcrypto.OfficeFile(io.BytesIO(data)).encrypt(kennwort, out)
-    except Exception as ex:
-        raise DocumentIOError(f"Das Dokument konnte nicht verschlüsselt werden: {ex}") from ex
-    return out.getvalue()
+def read_docx(path: str):
+    """→ (QTextDocument, PageSettings, meta-dict, IOReport). Wirft DocumentIOError."""
+    from lunivo_writer.services.file_service import pruefe_docx_eingabe
+    pruefe_docx_eingabe(path)
+    _schriften_ersatz()
+    return _Reader(path).run()
