@@ -1,4 +1,4 @@
-"""Befehle: Kontext-Reiter „WPSArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
+"""Befehle: Kontext-Reiter „SmartArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
 
 Die Knoten stehen als Baum in den Daten (``editor/smartart.py``); die Befehle wirken auf den gewählten Knoten (``daten["auswahl"]``, gesetzt über
 ``smartartKnotenWaehlen`` oder die Mausbedienung). Zum Ausgrauen gibt es zu jedem Befehl mit Richtung einen eigenen Namen samt ``kann_…``.
@@ -33,7 +33,7 @@ class SmartArtToolsBefehle:
         """Den Text eines Knotens setzen (Eintippen im Knoten)."""
         return self._sa_tun("knoten_text_setzen", ident, text)
 
-    # ---- WPSArt-Design -------------------------------------------------------------------------------------------------------------------
+    # ---- SmartArt-Design -------------------------------------------------------------------------------------------------------------------
     def smartartFormEinfuegen(self, k=None, wie="nach"):
         """„Form einfügen“: ``nach`` | ``vor`` | ``unter`` | ``ueber`` | ``assistent`` relativ zum gewählten Knoten (ohne Auswahl: hinter den letzten);
         der neue Knoten wird gewählt."""
