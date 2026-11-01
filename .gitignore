@@ -31,3 +31,5 @@ Lunivo Writer.desktop
 
 # Mitgelieferte Testdatei (siehe tests/test_lo_dokument.py)
 !tests/daten/*.docx
+.claude/
+.codex/
