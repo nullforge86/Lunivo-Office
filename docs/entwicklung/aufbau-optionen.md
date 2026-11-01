@@ -343,4 +343,4 @@ Alphabetisch, mit Seite und Gruppe. Oder in den Optionen oben in die Suche tippe
 
 ---
 
-[← Zurück zum README](../README.md) · [Der Aufbau des Bandes](aufbau-band.md)
+[← Zurück zum README](../../README.md) · [Der Aufbau des Bandes](aufbau-band.md)

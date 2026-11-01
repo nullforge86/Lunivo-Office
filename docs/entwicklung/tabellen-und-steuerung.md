@@ -102,7 +102,7 @@ Sonderfall aus dem chinesischen Formularwesen.
 
 ---
 
-[← Zurück zum README](../README.md) · [Der Aufbau der Optionen](aufbau-optionen.md)
+[← Zurück zum README](../../README.md) · [Der Aufbau der Optionen](aufbau-optionen.md)
 
 ---
 

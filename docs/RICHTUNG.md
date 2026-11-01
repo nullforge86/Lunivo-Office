@@ -17,7 +17,7 @@ Lunivo ist ein Schreibprogramm und ersetzt weder eine fachliche Prüfung noch di
 
 Die Entwicklung konzentriert sich auf Textverarbeitung und Schreibhilfe. Tabellenkalkulationen, Präsentationen und umfangreiche Spezialfunktionen anderer Office-Programme sind kein Ziel.
 
-Der aktuelle Funktionsumfang steht in der [README](../README.md); Bedienung und Dateiformate sind in der [Dokumentation](README.md) verlinkt. Diese Seite beschreibt die Leitlinien, keinen verbindlichen Zeitplan.
+Der aktuelle Funktionsumfang steht in der [README](../README.md); Bedienung und Dateiformate sind in der [Dokumentation](entwicklung/README.md) verlinkt. Diese Seite beschreibt die Leitlinien, keinen verbindlichen Zeitplan.
 
 ---
 

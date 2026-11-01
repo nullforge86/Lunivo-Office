@@ -523,4 +523,4 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 
 ---
 
-[← Zurück zum README](../README.md) · [Der Aufbau der Optionen](aufbau-optionen.md)
+[← Zurück zum README](../../README.md) · [Der Aufbau der Optionen](aufbau-optionen.md)

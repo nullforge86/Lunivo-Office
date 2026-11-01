@@ -63,27 +63,19 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 
 ## Dokumentation
 
-- [Lies mich](docs/LIESMICH.md)
+**Für Nutzer**
+
 - [Installation](docs/INSTALLATION.md)
+- [Überblick](docs/LIESMICH.md)
 - [Lesen und Schreiben](docs/lesen-und-schreiben.md)
 - [Prüfung, Vorhersage und KI](docs/pruefung-und-ki.md)
 - [Schreiben und Dokumente](docs/schreiben-und-dokumente.md)
 - [Einstellungen](docs/einstellungen.md)
 - [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
 - [Oberfläche](docs/oberflaeche.md)
-- [Projektaufbau](docs/README.md)
-- [Aufbau: Registerband](docs/aufbau-band.md)
-- [Aufbau: Ist-Stand](docs/aufbau-ist-stand.md)
-- [Aufbau: Optionen](docs/aufbau-optionen.md)
-- [Baukasten](docs/baukasten.md)
-- [Bilder – vollständige Übersicht](docs/bilder-vollstaendig.md)
-- [Konzept: Optionen](docs/konzept-optionen.md)
-- [Tabellen und Steuerung](docs/tabellen-und-steuerung.md)
-- [UI-Technologie](docs/ui-technologie.md)
-- [Interne Funktionen (Inventar)](docs/interne-funktionen.md)
-- [Erweiterungen](docs/erweiterungen.md)
-- [Entstehung](docs/ENTSTEHUNG.md)
-- [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
+- [Entstehung](docs/ENTSTEHUNG.md) und [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
+
+**Für Entwickler:** Projektaufbau, Baukasten, Registerband und Funktionsinventar stehen in [docs/entwicklung](docs/entwicklung/README.md).
 
 Weitere Hilfe gibt es im Programm unter **☰ Menü → Hilfe → Handbuch**.
 

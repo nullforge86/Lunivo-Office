@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Schreibt docs/interne-funktionen.md: Inventar aller Module, Klassen, Funktionen und Methoden von ``src/lunivo_writer``.
+"""Schreibt docs/entwicklung/interne-funktionen.md: Inventar aller Module, Klassen, Funktionen und Methoden von ``src/lunivo_writer``.
 
     .venv/bin/python werkzeug/inventar-bauen.py
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 WURZEL = Path(__file__).resolve().parent.parent
 QUELLE = WURZEL / "src" / "lunivo_writer"
-ZIEL = WURZEL / "docs" / "interne-funktionen.md"
+ZIEL = WURZEL / "docs" / "entwicklung" / "interne-funktionen.md"
 
 
 def _kurz(knoten) -> str:

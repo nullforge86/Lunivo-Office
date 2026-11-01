@@ -1,6 +1,6 @@
 # Konzept: Das Optionen-Fenster, leicht und barrierefrei
 
-**Einordnung:** Historischer Entwurf. Der Rahmen mit sechs Seiten, Suche und Hell/Dunkel ist umgesetzt. Diese Datei hält die ursprünglichen Ziele und Begründungen fest; für die aktuelle Bedienung siehe [aufbau-optionen.md](aufbau-optionen.md) und [einstellungen.md](einstellungen.md).
+**Einordnung:** Historischer Entwurf. Der Rahmen mit sechs Seiten, Suche und Hell/Dunkel ist umgesetzt. Diese Datei hält die ursprünglichen Ziele und Begründungen fest; für die aktuelle Bedienung siehe [aufbau-optionen.md](aufbau-optionen.md) und [einstellungen.md](../einstellungen.md).
 Abweichungen vom Entwurf: Das Gedächtnis (gelernte Schreibweisen) steht unter *Schreiben ▸ Weitere Einstellungen*; Kennwort und
 Änderungsverfolgung öffnen vorerst als Fenster aus *Speichern ▸ Weitere Einstellungen* (der Umzug nach *Datei ▸ Dokument schützen*
 und in den Reiter *Überprüfen* steht noch aus).
