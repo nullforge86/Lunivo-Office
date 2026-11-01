@@ -1,8 +1,8 @@
-# Referenzinventar: Bildbefehle in WPS Writer
+# Referenzinventar: Bildbefehle in Textverarbeitungsprogramm
 
-Diese Datei ist eine historische Sammlung von Beschriftungen aus WPS Writer. Sie dokumentiert die damalige Recherchequelle und ist **keine** Liste der in Lunivo verfügbaren Bildfunktionen.
+Diese Datei ist eine historische Sammlung von Beschriftungen aus Textverarbeitungsprogramm. Sie dokumentiert die damalige Recherchequelle und ist **keine** Liste der in Lunivo verfügbaren Bildfunktionen.
 
-**Wiederholbar:** `python3 werkzeug/wps-befehle-lesen.py`
+**Wiederholbar:** `python3 werkzeug/Befehlsinventar-Werkzeug`
 
 Ausgelesen aus `/opt/kingsoft/office/office6/mui/en_US/` —
 `qm-datei.qm`, `qmtips.qm`, `kso.qm`, `ksotips.qm`. Das sind die
