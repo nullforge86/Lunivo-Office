@@ -154,7 +154,7 @@ def _layout_bildchen(p, r, name: str) -> None:
 
 
 class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    """SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
+    """SmartArt auswählen (wie Office-Programm „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
     Beim Bearbeiten (``daten`` gegeben) kommen Farben und der eingerückte Text (zwei Leerzeichen = eine Ebene tiefer) dazu."""
     BESCHREIBUNG = {
         "Spalten": "Zeigt Gruppen mit ihren Unterpunkten nebeneinander in Spalten.",
