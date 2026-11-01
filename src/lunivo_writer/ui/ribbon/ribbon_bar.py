@@ -23,7 +23,7 @@ from lunivo_writer.ui.ribbon.plan import plan
 
 from lunivo_writer.core.farben import Farbe
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
-STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
+STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Lesezeichen", "Tabelle", "Überschrift"]
 TEXTSYMBOLE = {"F": QFont.Bold, "K": None, "U": None}
 
 
@@ -116,7 +116,7 @@ STANDARD_VERSTECKT = ("Sendungen",)
 
 class _ReiterLeiste(QTabBar):
     doppelt = Signal()
-    LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
+    LUECKE = 8          # Abstand links und rechts um einen Kontext-Reiter
 
     def mouseDoubleClickEvent(self, ev):
         self.doppelt.emit()
@@ -176,11 +176,12 @@ class RegisterBand(QWidget):
         self.knoepfe: list[tuple[QToolButton, str | None, bool]] = []   # (Knopf, Name, braucht Dokument)
         self.felder: dict[str, QWidget] = {}
         self.fehlend: list[str] = []
+        self._compact = False
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         self.kopf = QHBoxLayout()
-        self.kopf.setContentsMargins(6, 2, 6, 0)
+        self.kopf.setContentsMargins(6, 1, 6, 0)
         self.kopf.setSpacing(2)
         self.menue_knopf = QToolButton()
         self.menue_knopf.setText("Menü")
@@ -196,6 +197,7 @@ class RegisterBand(QWidget):
         self.reiter.setObjectName("bandReiter")
         self.reiter.setDrawBase(False)
         self.reiter.setExpanding(False)
+        self.reiter.setStyleSheet("QTabBar { min-height: 24px; } QTabBar::tab { min-width: 72px; padding: 4px 10px 3px 10px; margin: 0 2px; }")
         self.kopf.addWidget(self.reiter, 1)
         lay.addLayout(self.kopf)
         self.stapel = QStackedWidget()
@@ -215,9 +217,30 @@ class RegisterBand(QWidget):
         self.reiter.doppelt.connect(self.einklappen_umschalten)
         self.reiter.setCurrentIndex(self._start_index())          # Start
         self.bandfehler = sorted(set(self.fehlend))
+        self.set_compact(False)
 
     einklappbar = True          # Optionen ▸ Doppelklick blendet das Band aus
     _eingeklappt = False
+
+    def set_compact(self, compact: bool) -> None:
+        self._compact = bool(compact)
+        self.stapel.setFixedHeight(86 if self._compact else 112)
+        self.reiter.setStyleSheet(
+            "QTabBar { min-height: 22px; } QTabBar::tab { min-width: 60px; padding: 2px 8px 2px 8px; margin: 0 2px; }"
+            if self._compact else
+            "QTabBar { min-height: 24px; } QTabBar::tab { min-width: 72px; padding: 4px 10px 3px 10px; margin: 0 2px; }"
+        )
+        for k, *_ in self.knoepfe:
+            if not isinstance(k, QToolButton):
+                continue
+            gross = bool(k.property("ribbon_gross"))
+            if gross:
+                k.setFixedHeight(54 if self._compact else 68)
+                k.setMinimumWidth(max(42, k.minimumWidth()) if self._compact else max(48, k.minimumWidth()))
+            else:
+                k.setIconSize(QSize(16 if self._compact else 18, 16 if self._compact else 18))
+                if k.defaultAction() is not None and k.defaultAction().icon().isNull():
+                    k.setFixedHeight(28 if self._compact else 32)
 
     def _reiter_geklickt(self, _i):
         if self._eingeklappt:
@@ -320,7 +343,7 @@ class RegisterBand(QWidget):
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
         v = QVBoxLayout(rahmen)
-        v.setContentsMargins(3, 2, 3, 0)
+        v.setContentsMargins(3, 1, 3, 0)
         v.setSpacing(0)
         inhalt = QHBoxLayout()
         inhalt.setSpacing(1)
@@ -797,13 +820,14 @@ class RegisterBand(QWidget):
         sym = e.get("symbol", "")
         k = QToolButton()
         k.setAutoRaise(True)
+        k.setProperty("ribbon_gross", bool(gross))
         tun, klappe, menue = e.get("tun"), e.get("klappe"), e.get("menue")
         akt = QAction(k)
         akt.setText(sym if not icons.hat(sym) else name)
         akt.setToolTip(name)
         if icons.hat(sym):
             akt.setIcon(icons.icon(sym, 28 if gross else 18))
-            k.setIconSize(QSize(28, 28) if gross else QSize(18, 18))
+            k.setIconSize(QSize(28 if not self._compact else 22, 28 if not self._compact else 22) if gross else QSize(18 if not self._compact else 16, 18 if not self._compact else 16))
         k.setDefaultAction(akt)
         k.setToolTip(name)
         self._tausch_rechtsklick(k, sym)
@@ -821,8 +845,8 @@ class RegisterBand(QWidget):
             k.setText(_zweizeilig(name))
             akt.setText(_zweizeilig(name))                      # der Knopf übernimmt später den Text der Aktion
             breit = max(k.fontMetrics().horizontalAdvance(z) for z in _zweizeilig(name).split("\n"))
-            k.setMinimumWidth(max(48, breit + 10))
-            k.setFixedHeight(68)
+            k.setMinimumWidth(max(42 if self._compact else 48, breit + 8))
+            k.setFixedHeight(54 if self._compact else 68)
         elif icons.hat(sym) and e.get("text"):
             k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setText(name)
