@@ -9,112 +9,91 @@ Zellen), Bilder im Text, Hyperlinks, Seitengröße, Ränder, Kopf- und Fußzeile
 Alles, was nicht gelesen wird, landet im IOReport — nichts verschwindet still.
 """
 from __future__ import annotations
-
-import io
-import logging
-import zipfile
-from typing import Optional
-
-import docx
-from docx.document import Document as _Document
-from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
-from docx.table import Table
-from docx.text.hyperlink import Hyperlink
-from docx.text.run import Run
-from docx.text.paragraph import Paragraph
-from PySide6.QtCore import QUrl
-from PySide6.QtGui import (
-    QBrush, QColor, QFont, QImage, QTextBlockFormat, QTextCharFormat,
-    QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat, QTextImageFormat,
-    QTextLength, QTextListFormat, QTextTableFormat,
+from lunivo_writer.services.docx_teile.basis_lesen import (  # noqa: F401
+    BESCHRIFTUNGEN,
+    B_ART,
+    B_CAP,
+    B_MUSTER,
+    B_RAHMEN,
+    B_SPALTE,
+    B_TOC,
+    DocumentIOError,
+    EMU_PER_PX,
+    Farbe,
+    HEADING_DEFAULT_PT,
+    HeaderFooter,
+    Hyperlink,
+    IOReport,
+    LH_FIXED,
+    LH_PROPORTIONAL,
+    Linie,
+    NAMED_STYLE_DEFAULT,
+    Optional,
+    PT_PER_PX,
+    P_AENDERUNG,
+    P_AUTOR,
+    P_DATUM,
+    P_FELD,
+    P_FORM,
+    P_INDEX,
+    P_KOMMENTAR,
+    P_NOTE,
+    P_OBJEKT,
+    P_VERSTECKT,
+    P_ZITAT,
+    PageSettings,
+    Paragraph,
+    QBrush,
+    QColor,
+    QFont,
+    QImage,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QTextCursor,
+    QTextDocument,
+    QTextFormat,
+    QTextFrameFormat,
+    QTextImageFormat,
+    QTextLength,
+    QTextListFormat,
+    QTextTableFormat,
+    QUrl,
+    Qt,
+    Run,
+    STYLE_PROP,
+    Table,
+    WD_ALIGN_PARAGRAPH,
+    WD_STYLE_TYPE,
+    _Document,
+    _MC_ALT,
+    _MC_CHOICE,
+    _NS,
+    _NS_DOCX,
+    _NoRun,
+    _QT_ALIGN,
+    _UNSUPPORTED,
+    _WPS,
+    _doc_defaults,
+    _emu_to_px,
+    _pt_to_px,
+    _style_chain,
+    _xp,
+    art_aus_docx,
+    docx,
+    docx_wert,
+    io,
+    leere_meta,
+    logging,
+    muster,
+    px_to_mm,
+    qn,
+    zipfile,
 )
-
-from lunivo_writer.models.page import HeaderFooter, PageSettings, px_to_mm
-from lunivo_writer.models.report import DocumentIOError, IOReport
-
-LH_PROPORTIONAL, LH_FIXED = 1, 2                # QTextBlockFormat.LineHeightTypes
-from lunivo_writer.core.farben import Farbe
-STYLE_PROP = QTextFormat.UserProperty + 1       # Name der Formatvorlage am Block
-from lunivo_writer.editor.zusatz import B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
-from lunivo_writer.editor.formular import P_FORM  # noqa: E402
-from lunivo_writer.editor.linie import Linie, art_aus_docx, docx_wert
-from lunivo_writer.editor import muster
-from lunivo_writer.editor.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, BESCHRIFTUNGEN, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE, P_ZITAT, leere_meta
-EMU_PER_PX = 9525
-PT_PER_PX = 0.75
-
-HEADING_DEFAULT_PT = {1: 20, 2: 16, 3: 14, 4: 12, 5: 11, 6: 11, 7: 11, 8: 11, 9: 11}
-NAMED_STYLE_DEFAULT = {  # Name → (Punktgröße, fett, kursiv)
-    "Title": (26, False, False),
-    "Subtitle": (15, False, True),
-    "Quote": (None, False, True),
-}
-
-from PySide6.QtCore import Qt  # noqa: E402
-_QT_ALIGN = {
-    WD_ALIGN_PARAGRAPH.LEFT: Qt.AlignLeft,
-    WD_ALIGN_PARAGRAPH.CENTER: Qt.AlignHCenter,
-    WD_ALIGN_PARAGRAPH.RIGHT: Qt.AlignRight,
-    WD_ALIGN_PARAGRAPH.JUSTIFY: Qt.AlignJustify,
-}
-
-# Was beim Lesen nicht übernommen wird → Hinweis
-_MC_ALT = "{http://schemas.openxmlformats.org/markup-compatibility/2006}AlternateContent"
-_MC_CHOICE = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Choice"
-
-_UNSUPPORTED = [
-    ("//w:txbxContent[not(ancestor::wps:wsp[wps:txbx or wps:linkedTxbx])]", "Textfelder werden nicht dargestellt und gehen beim Speichern verloren."),
-    ("//m:oMath", "Formeln werden nicht dargestellt und gehen beim Speichern verloren."),
-    ("//w:pict | //wps:wsp[not(.//a:blip) and not(wps:txbx or wps:linkedTxbx)] | //wpg:wgp", "Formen und gezeichnete Objekte werden nicht dargestellt."),
-    ("//w:drawing[.//wp:anchor[.//wp:wrapTopAndBottom]]",
-     "Bilder mit „Oben und unten“-Umbruch werden als Bild im Text eingefügt."),
-]
+from lunivo_writer.services.docx_teile.seite_lesen import SeiteLesen
+from lunivo_writer.services.docx_teile.frei_lesen import FreiLesen
 
 
-from docx.oxml.ns import nsmap as _NS_DOCX  # noqa: E402
-_WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
-_NS = {**_NS_DOCX, "wps": _WPS, "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006"}
-
-
-def _xp(el, ausdruck: str):
-    """XPath mit den Namensräumen von python-docx — auch für Elemente, deren Klasse kein eigenes xpath mit Namensräumen hat."""
-    from lxml import etree
-    return etree._Element.xpath(el, ausdruck, namespaces=_NS)
-
-
-def _emu_to_px(v) -> float:
-    return float(v) / EMU_PER_PX if v is not None else 0.0
-
-
-def _pt_to_px(v) -> float:
-    return float(v) / PT_PER_PX
-
-
-def _style_chain(style):
-    seen = set()
-    while style is not None and id(style) not in seen:
-        seen.add(id(style))
-        yield style
-        style = style.base_style
-
-
-def _doc_defaults(document: _Document) -> tuple[Optional[str], Optional[float]]:
-    name, size = None, None
-    styles = document.styles.element
-    rpr = styles.find(qn("w:docDefaults") + "/" + qn("w:rPrDefault") + "/" + qn("w:rPr"))
-    if rpr is not None:
-        f = rpr.find(qn("w:rFonts"))
-        if f is not None:
-            name = f.get(qn("w:ascii"))
-        s = rpr.find(qn("w:sz"))
-        if s is not None:
-            size = int(s.get(qn("w:val"))) / 2.0
-    return name, size
-
-
-class _Reader:
+class _Reader(SeiteLesen, FreiLesen):
     def __init__(self, path: str):
         self.path = path
         self.report = IOReport()
@@ -941,297 +920,6 @@ class _Reader:
             return {}
         return fx
 
-    def _frei(self, drawing, teil=None, inline_ok: bool = False):
-        """Ein Bild, das frei auf dem Blatt liegt (wp:anchor ohne Textumbruch) → (Angabe, QImage); ``False``, wenn es nicht darstellbar ist
-        (Vektorbild); ``None``, wenn es kein solches Bild ist (steht im Text oder umflossen). Siehe editor/freie_bilder.py."""
-        from lunivo_writer.editor.freie_bilder import emu_zu_px
-        anker = drawing.xpath("wp:anchor") or (drawing.xpath("wp:inline") if inline_ok else [])
-        if not anker or _xp(anker[0], "wp:wrapSquare | wp:wrapTight | wp:wrapThrough | wp:wrapTopAndBottom"):
-            return None
-        a = anker[0]
-        textfeld = _xp(drawing, ".//wps:wsp[wps:txbx or wps:linkedTxbx]")             # Textfeld (auch verknüpft), kein Bild
-        blips = drawing.xpath(".//a:blip")
-        if not blips and not textfeld:
-            return None
-        img = None
-        if not textfeld:
-            rid = blips[0].get(qn("r:embed"))
-            try:
-                blob = (teil or self.d.part).related_parts[rid].blob
-            except KeyError:
-                self.report.warn("Ein Bild fehlt im Dokument und wurde übersprungen.")
-                return False
-            from lunivo_writer.editor.freie_bilder import bild_aus_daten
-            img = bild_aus_daten(blob)
-            if img.isNull():
-                self.report.warn("Ein Bild hat ein nicht lesbares Format (zum Beispiel eine Vektorzeichnung) und wird nicht angezeigt.")
-                return False
-        duo = _xp(drawing, ".//a:blip/a:duotone")
-        if duo and len(duo[0]) >= 2:                                   # zweifarbig umgefärbt (zum Beispiel grau statt grün)
-            from lunivo_writer.editor.freie_bilder import duoton, farbe_aus_element
-            try:
-                img = duoton(img, farbe_aus_element(duo[0][0], _NS), farbe_aus_element(duo[0][1], _NS))
-            except Exception:                                          # noqa: BLE001 — ein ungewöhnlicher Effekt darf das Laden nicht verhindern
-                pass
-        ext = _xp(a, "wp:extent")
-        b = emu_zu_px(ext[0].get("cx")) if ext else float(img.width() if img is not None else 100)
-        h = emu_zu_px(ext[0].get("cy")) if ext else float(img.height() if img is not None else 50)
-        tf_daten = None
-        if textfeld:
-            from lunivo_writer.editor import frei_objekt as FO
-            tf_daten = self._textfeld_daten(drawing, textfeld[0])
-            img = FO.textfeld_zeichnen(tf_daten, b, h)
-        rand = None
-        for ln in _xp(drawing, ".//a:ln[a:solidFill]"):                  # Umrandung der Form (der weiße Ring um ein Foto)
-            try:
-                from lunivo_writer.editor.freie_bilder import farbe_aus_element
-                f = farbe_aus_element(_xp(ln, "a:solidFill/*")[0], _NS)
-                rand = {"b": max(0.5, emu_zu_px(ln.get("w") or 9525)), "farbe": f.name()}
-                dash = _xp(ln, "a:prstDash/@val")
-                rand["art"] = {"sysDot": "gepunktet", "dot": "gepunktet", "sysDash": "fein_gestrichelt", "dash": "gestrichelt", "lgDash": "gestrichelt",
-                               "dashDot": "strichpunkt", "lgDashDot": "strichpunkt", "lgDashDotDot": "strichpunktpunkt",
-                               "sysDashDot": "strichpunkt", "sysDashDotDot": "strichpunktpunkt"}.get(dash[0] if dash else "", "einfach")
-            except Exception:                                              # noqa: BLE001
-                rand = None
-            break
-        angabe = {"b": b, "h": h, "hinter": (a.get("behindDoc") or "0").lower() in ("1", "true"), "bh": "spalte", "bv": "absatz",
-                  "xh": 0.0, "yv": 0.0, "ah": "", "av": "",
-                  "ellipse": bool(_xp(drawing, ".//a:prstGeom[@prst='ellipse']"))}
-        if rand:
-            angabe["rand"] = rand
-        fx = self._effekte_lesen(drawing)
-        if fx:
-            angabe["fx"] = fx
-        beschr = _xp(drawing, ".//wp:docPr/@descr")
-        if beschr and beschr[0]:
-            angabe["alt"] = beschr[0]
-        if tf_daten is not None:
-            angabe["art"], angabe["daten"] = "textfeld", tf_daten
-        else:
-            obj = self._frei_objekt_daten(drawing)
-            if obj:
-                angabe["art"], angabe["daten"] = obj
-            else:
-                maske = self._frei_maske(drawing)
-                if maske:
-                    angabe["maske"] = maske
-        sr = _xp(drawing, ".//pic:blipFill/a:srcRect")                  # Zuschnitt (Tausendstel Prozent)
-        if sr:
-            try:
-                zu = [max(0.0, min(0.95, int(sr[0].get(k) or 0) / 100000.0)) for k in ("l", "t", "r", "b")]
-            except ValueError:
-                zu = []
-            if any(zu):
-                angabe["zu"] = zu
-        lum = _xp(drawing, ".//pic:blipFill/a:blip/a:lum")                  # Helligkeit/Kontrast (Tausendstel Prozent)
-        if lum:
-            for schl, k in (("hell", "bright"), ("kontrast", "contrast")):
-                try:
-                    w = int(lum[0].get(k) or 0) // 1000
-                except ValueError:
-                    w = 0
-                if w:
-                    angabe[schl] = max(-100, min(100, w))
-        fl = _xp(drawing, ".//pic:spPr/a:solidFill/* | .//wps:spPr/a:solidFill/*")  # Füllung der Form hinter dem Bild
-        if fl:
-            try:
-                from lunivo_writer.editor.freie_bilder import farbe_aus_element
-                angabe["fuell"] = {"art": "farbe", "farbe": farbe_aus_element(fl[0], _NS).name()}
-            except Exception:                                              # noqa: BLE001
-                pass
-        rot = _xp(drawing, ".//a:xfrm/@rot")
-        if rot and rot[0].lstrip("-").isdigit() and int(rot[0]):
-            angabe["dreh"] = int(rot[0]) / 60000.0
-        for achse, el in (("h", _xp(a, "wp:positionH")), ("v", _xp(a, "wp:positionV"))):
-            if not el:
-                continue
-            bezug = el[0].get("relativeFrom", "")
-            if achse == "h":
-                angabe["bh"] = {"page": "seite", "margin": "rand", "leftMargin": "rand", "insideMargin": "rand", "outsideMargin": "rand",
-                                "rightMargin": "rand"}.get(bezug, "spalte")
-            else:
-                angabe["bv"] = {"page": "seite", "margin": "rand", "topMargin": "rand", "insideMargin": "rand", "outsideMargin": "rand",
-                                "bottomMargin": "rand"}.get(bezug, "absatz")
-            al = _xp(el[0], "wp:align/text()")
-            off = _xp(el[0], "wp:posOffset/text()")
-            if al:
-                angabe["ah" if achse == "h" else "av"] = al[0]
-            elif off:
-                angabe["xh" if achse == "h" else "yv"] = emu_zu_px(off[0])
-        return angabe, img
-
-    @staticmethod
-    def _frei_maske(drawing) -> str:
-        """Die Zuschneideform eines Bildes (``{"maske": …}`` im Titel, „lunivo:“), sonst leer."""
-        import json
-        titel = _xp(drawing, ".//wp:docPr/@title")
-        if titel and titel[0].startswith("lunivo:"):
-            try:
-                return str(json.loads(titel[0][len("lunivo:"):]).get("maske") or "")
-            except (ValueError, AttributeError):
-                return ""
-        return ""
-
-    @staticmethod
-    def _frei_objekt_daten(drawing) -> tuple[str, dict] | None:
-        """(Art, Daten) eines freien Objekts Form, Diagramm oder SmartArt aus dem Titel („lunivo:“) des Bildes, sonst None."""
-        import json
-        titel = _xp(drawing, ".//wp:docPr/@title")
-        if titel and titel[0].startswith("lunivo:"):
-            try:
-                o = json.loads(titel[0][len("lunivo:"):])
-            except ValueError:
-                return None
-            if o.get("art") in ("form", "diagramm", "smartart", "piktogramm") and isinstance(o.get("daten"), dict):
-                return o["art"], o["daten"]
-        return None
-
-    @staticmethod
-    def _textfeld_daten(drawing, wsp) -> dict:
-        """Die Parameter eines Textfelds (``editor/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
-        Kastens (``w:txbxContent``) und seiner Verknüpfung (``wps:linkedTxbx`` mit ``id`` und ``seq``, wie in Word)."""
-        import json
-        titel = _xp(drawing, ".//wp:docPr/@title")
-        if titel and titel[0].startswith("lunivo:"):
-            try:
-                o = json.loads(titel[0][len("lunivo:"):])
-                if o.get("art") == "textfeld" and isinstance(o.get("daten"), dict):
-                    return o["daten"]
-            except ValueError:
-                pass
-        daten: dict = {"text": "", "schrift": "Liberation Sans", "pt": 11, "farbe": "#1f1f1f"}
-        absaetze = _xp(wsp, "wps:txbx/w:txbxContent/w:p")
-        laeufe: list[dict] = []
-        for i, p in enumerate(absaetze):
-            if i:
-                laeufe.append({"t": "\n"})
-            for r in _xp(p, "w:r"):
-                t = "".join(_xp(r, "w:t/text()"))
-                if not t:
-                    continue
-                lauf = {"t": t}
-                rpr = _xp(r, "w:rPr")
-                if rpr:
-                    rp = rpr[0]
-                    for k, ausdruck in (("fett", "w:b"), ("kursiv", "w:i"), ("durch", "w:strike")):
-                        el = _xp(rp, ausdruck)
-                        if el and el[0].get(qn("w:val")) not in ("0", "false"):
-                            lauf[k] = True
-                    u = _xp(rp, "w:u/@w:val")
-                    if u and u[0] != "none":
-                        lauf["unter"] = True
-                    va = _xp(rp, "w:vertAlign/@w:val")
-                    if va and va[0] in ("superscript", "subscript"):
-                        lauf["hoch" if va[0] == "superscript" else "tief"] = True
-                    c = _xp(rp, "w:color/@w:val")
-                    if c and c[0] not in ("auto", ""):
-                        lauf["fuell"] = "#" + c[0].lower()
-                    shd = _xp(rp, "w:shd/@w:fill")
-                    if shd and shd[0] not in ("auto", ""):
-                        lauf["hervor"] = "#" + shd[0].lower()
-                    sz = _xp(rp, "w:sz/@w:val")
-                    if sz and sz[0].isdigit():
-                        lauf["pt"] = int(sz[0]) / 2
-                laeufe.append(lauf)
-        for r in laeufe:                                           # was dem Standard des Textfelds entspricht, ist keine eigene Angabe
-            if r.get("pt") == daten["pt"]:
-                r.pop("pt")
-            if r.get("fuell") == daten["farbe"]:
-                r.pop("fuell")
-        text = "".join(r["t"] for r in laeufe)
-        daten["text"] = text
-        if any(len(r) > 1 for r in laeufe):
-            daten["laeufe"] = laeufe
-        ver = _xp(wsp, "wps:linkedTxbx")
-        kopf = _xp(wsp, "wps:txbx/@id")
-        kette, seq = (ver[0].get("id"), int(ver[0].get("seq") or 0)) if ver else (kopf[0] if kopf else None, 0)
-        if ver and kette is not None:
-            daten["id"] = f"k{kette}_{seq}"
-            if seq > 0:
-                daten["von"] = f"k{kette}_{seq - 1}"
-            daten["weiter"] = f"k{kette}_{seq + 1}"                # unbekannte Folgefelder entfernt ``_ketten_bereinigen``
-        return daten
-
-    def _ketten_bereinigen(self) -> None:
-        """Nach dem Lesen: Verweise auf Folgefelder, die es nicht gibt, entfernen."""
-        import json
-        from lunivo_writer.editor import freie_bilder as FB
-        from lunivo_writer.editor.zusatz import B_BILDANKER
-        ids = set()
-        b = self.doc.firstBlock()
-        while b.isValid():
-            for a in FB.aus_absatz(b.blockFormat()):
-                if a.get("art") == "textfeld" and a.get("daten", {}).get("id"):
-                    ids.add(a["daten"]["id"])
-            b = b.next()
-        b = self.doc.firstBlock()
-        while b.isValid():
-            liste = FB.aus_absatz(b.blockFormat())
-            geaendert = False
-            for a in liste:
-                d = a.get("daten") if a.get("art") == "textfeld" else None
-                if d and d.get("weiter") and d["weiter"] not in ids:
-                    d.pop("weiter"); geaendert = True
-                if d and d.get("von") and d["von"] not in ids:
-                    d.pop("von"); geaendert = True
-            if geaendert:
-                bf = b.blockFormat(); bf.setProperty(B_BILDANKER, json.dumps(liste, separators=(",", ":")))
-                QTextCursor(b).setBlockFormat(bf)
-            b = b.next()
-
-    def _add_image(self, drawing, cursor: QTextCursor, cfmt: QTextCharFormat):
-        frei = self._frei(drawing)
-        if frei is False:
-            return
-        if frei is not None:
-            from lunivo_writer.editor import freie_bilder as FB
-            angabe, bild = frei
-            name = FB.neuer_name(self.doc)
-            self.doc.addResource(QTextDocument.ImageResource, QUrl(name), bild)
-            angabe["n"] = name
-            FB.an_absatz(cursor, angabe)
-            return
-        blips = drawing.xpath(".//a:blip")
-        if not blips:
-            return
-        rid = blips[0].get(qn("r:embed"))
-        try:
-            blob = self.d.part.related_parts[rid].blob
-        except KeyError:
-            self.report.warn("Ein Bild fehlt im Dokument und wurde übersprungen.")
-            return
-        from lunivo_writer.editor.freie_bilder import bild_aus_daten
-        img = bild_aus_daten(blob)
-        if img.isNull():
-            self.report.warn("Ein Bild hat ein nicht lesbares Format und wurde übersprungen.")
-            return
-        extent = drawing.xpath(".//wp:extent")
-        w, h = float(img.width()), float(img.height())
-        if extent:
-            w = _emu_to_px(extent[0].get("cx"))
-            h = _emu_to_px(extent[0].get("cy"))
-        self.img_n += 1
-        name = f"docx-bild-{self.img_n}"
-        self.doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
-        imf = QTextImageFormat()
-        imf.setName(name)
-        imf.setWidth(w)
-        imf.setHeight(h)
-        alt = drawing.xpath(".//wp:docPr/@descr")
-        if alt:
-            imf.setProperty(STYLE_PROP + 1, alt[0])
-        titel = drawing.xpath(".//wp:docPr/@title")
-        if titel and titel[0].startswith("lunivo:"):
-            imf.setProperty(P_OBJEKT, titel[0][len("lunivo:"):])
-        seite = self._umbruch_seite(drawing, w)
-        if seite:
-            from lunivo_writer.editor.umbruch import absatz_nach_rahmen, schwebend_einfuegen
-            bild_pos = schwebend_einfuegen(self.doc, cursor.block().position(), imf, seite)   # gehört zum Absatz: davor eingefügt
-            text = absatz_nach_rahmen(self.doc, bild_pos)
-            cursor.setPosition(text.position() + text.length() - 1)                          # weiter am Ende dieses Absatzes schreiben
-            return
-        cursor.insertImage(imf)
-
     def _umbruch_seite(self, drawing, breite_px: float) -> str:
         """„links“/„rechts“, wenn das Bild den Text umfließt (wrapSquare/Tight/Through); sonst leer."""
         anker = drawing.xpath("wp:anchor")
@@ -1340,213 +1028,6 @@ class _Reader:
         self.last_list = None
 
     # ---- Seite -------------------------------------------------------
-    def read_page(self) -> PageSettings:
-        """Einrichtung des ERSTEN Abschnitts; weitere Abschnitte stehen als Umbrüche im Text (siehe editor/abschnitte.py)."""
-        return self._section_page(self.d.sections[0], erster=True)
-
-    def _section_page(self, s, erster: bool = False, basis: PageSettings | None = None) -> PageSettings:
-        ps = PageSettings()
-        try:
-            ps.width_mm = s.page_width.mm
-            ps.height_mm = s.page_height.mm
-            ps.margin_top_mm = s.top_margin.mm
-            ps.margin_bottom_mm = s.bottom_margin.mm
-            ps.margin_left_mm = s.left_margin.mm
-            ps.margin_right_mm = s.right_margin.mm
-        except Exception:
-            self.report.warn("Seitengröße oder Ränder fehlen; es gilt A4 mit 2,5 cm Rand.")
-        try:
-            ps.kopf_abstand_mm, ps.fuss_abstand_mm = s.header_distance.mm, s.footer_distance.mm
-        except Exception:                                                  # noqa: BLE001
-            pass
-        self._seitenschmuck(ps, s)
-        if basis is not None:                                    # Hintergrund, Silbentrennung und Wasserzeichen gelten für das ganze Dokument
-            ps.color, ps.silbentrennung, ps.watermark = basis.color, basis.silbentrennung, basis.watermark
-        ps.kopf_verknuepft = (not erster) and s.header.is_linked_to_previous
-        ps.fuss_verknuepft = (not erster) and s.footer.is_linked_to_previous
-        ps.header = self._hf(s.header)
-        ps.footer = self._hf(s.footer)
-        self._aussen_innen(s, ps)
-        self._seitenzahl_art(s, ps)
-        ps.bilder = self._hf_bilder(s.header, "kopf", s, ps) + self._hf_bilder(s.footer, "fuss", s, ps)
-        if s.different_first_page_header_footer:
-            ps.diff_first = True
-            ps.first_header = self._hf(s.first_page_header)
-            ps.first_footer = self._hf(s.first_page_footer)
-            ps.bilder += self._hf_bilder(s.first_page_header, "kopf1", s, ps) + self._hf_bilder(s.first_page_footer, "fuss1", s, ps)
-        return ps
-
-    def _hf_bilder(self, teil, ort: str, s, ps: PageSettings) -> list[dict]:
-        """Frei positionierte Bilder einer Kopf- oder Fußzeile (zum Beispiel ein Band über dem Briefkopf). „Am Absatz“ wird auf das Blatt
-        umgerechnet: der Absatz steht im Abstand der Kopfzeile vom oberen Rand, der der Fußzeile über dem unteren."""
-        from lunivo_writer.models.page import mm_to_px
-        if teil.is_linked_to_previous:
-            return []
-        out = []
-        for dr in teil._element.iter(qn("w:drawing")):
-            frei = self._frei(dr, teil.part, inline_ok=True)
-            if not frei:
-                continue
-            angabe, bild = frei
-            angabe["ort"], angabe["bild"] = ort, bild
-            if dr.xpath("wp:inline"):                                  # Bild im Text der Kopf-/Fußzeile (Zierleiste): am Rand, am Absatz eingerückt
-                ind = _xp(dr, "ancestor::w:p[1]/w:pPr/w:ind/@w:left")
-                try:
-                    angabe["xh"] = float(ind[0]) / 15.0 if ind else 0.0                      # Twips → px
-                except ValueError:
-                    angabe["xh"] = 0.0
-                angabe["bh"] = "rand"
-                try:
-                    abstand = (s.header_distance if ort.startswith("kopf") else s.footer_distance).mm
-                except Exception:                                                  # noqa: BLE001
-                    abstand = 12.7
-                angabe["bv"] = "seite"
-                angabe["yv"] = mm_to_px(abstand) if ort.startswith("kopf") else mm_to_px(ps.height_mm - abstand) - angabe["h"]
-                angabe["hinter"] = False
-                out.append(angabe)
-                continue
-            if angabe["bv"] == "absatz":
-                try:
-                    abstand = (s.header_distance if ort.startswith("kopf") else s.footer_distance).mm
-                except Exception:                                                  # noqa: BLE001
-                    abstand = 12.7
-                if ort.startswith("kopf"):
-                    angabe["yv"] = mm_to_px(abstand) + angabe["yv"]
-                else:
-                    angabe["yv"] = mm_to_px(ps.height_mm - abstand) - 20 + angabe["yv"]
-                angabe["bv"] = "seite"
-            out.append(angabe)
-        return out
-
-    def _abschnitt_beginn(self, s) -> str:
-        from lunivo_writer.editor.abschnitte import VOM_DOCX
-        t = s._sectPr.find(qn("w:type"))
-        return VOM_DOCX.get(t.get(qn("w:val")) if t is not None else "nextPage", "naechste")
-
-    def _seitenschmuck(self, ps: PageSettings, sect) -> None:
-        bg = self.d.element.find(qn("w:background"))
-        if bg is not None:
-            c = bg.get(qn("w:color"))
-            if c and c.lower() not in ("auto", "ffffff"):
-                ps.color = "#" + c.lower()
-        ln = sect._sectPr.find(qn("w:lnNumType"))
-        if ln is not None:
-            ps.zeilennummern = True
-            ps.zeilennummern_neu = "seite" if ln.get(qn("w:restart")) == "newPage" else ""
-        co = sect._sectPr.find(qn("w:cols"))
-        if co is not None:
-            try:
-                n = int(co.get(qn("w:num"), "1"))
-            except ValueError:
-                n = 1
-            if n > 1:
-                ps.spalten = min(n, 4)
-                ps.spalten_abstand_mm = int(co.get(qn("w:space"), "720")) / 1440 * 25.4
-                ps.spalten_linie = co.get(qn("w:sep"), "0").lower() in ("1", "true", "on")
-        dt = self.d.settings.element.find(qn("w:defaultTabStop"))                      # Standardtabstopps des Dokuments (Twips)
-        if dt is not None and dt.get(qn("w:val"), "").isdigit() and int(dt.get(qn("w:val"))) > 0:
-            from PySide6.QtGui import QTextOption
-            from lunivo_writer.models.page import mm_to_px
-            opt = self.doc.defaultTextOption()
-            opt.setTabStopDistance(mm_to_px(int(dt.get(qn("w:val"))) / 1440 * 25.4))
-            self.doc.setDefaultTextOption(opt)
-        ah = self.d.settings.element.find(qn("w:autoHyphenation"))
-        if ah is not None and ah.get(qn("w:val"), "true").lower() not in ("false", "0", "off"):
-            ps.silbentrennung = True
-        pb = sect._sectPr.find(qn("w:pgBorders"))
-        if pb is not None:
-            e = next((x for x in (pb.find(qn("w:top")), pb.find(qn("w:left")), pb.find(qn("w:bottom")), pb.find(qn("w:right")))
-                      if x is not None and x.get(qn("w:val"), "none") not in ("none", "nil")), None)
-            if e is not None:
-                col = (e.get(qn("w:color")) or "000000")
-                da = "".join(k for x, k in (("top", "t"), ("bottom", "b"), ("left", "l"), ("right", "r"))
-                             if pb.find(qn(f"w:{x}")) is not None and pb.find(qn(f"w:{x}")).get(qn("w:val"), "none") not in ("none", "nil"))
-                ps.border = {"seiten": da or "tblr", "farbe": "#" + (col if col.lower() != "auto" else "000000").lower(),
-                             "breite_pt": int(e.get(qn("w:sz")) or 8) / 8.0,
-                             "art": art_aus_docx(e.get(qn("w:val"))),
-                             "abstand_mm": int(e.get(qn("w:space")) or 24) / 72 * 25.4}
-                from lunivo_writer.editor.seitenrahmen import KUNST
-                wert = e.get(qn("w:val"))
-                if wert in [k for k, _n in KUNST if k]:                              # Kunstrahmen
-                    ps.border["kunst"] = wert
-                if pb.get(qn("w:offsetFrom")) == "text":                              # Abstand vom Text, je Seite (pt)
-                    ps.border["messen"] = "text"
-                ab = [int((pb.find(qn(f"w:{x}")).get(qn("w:space")) if pb.find(qn(f"w:{x}")) is not None else None) or 0) for x in ("top", "bottom", "left", "right")]
-                ps.border["abstand"] = ",".join(str(x) for x in ab)
-                ps.border["vordergrund"] = pb.get(qn("w:zOrder"), "front") != "back"
-                st = self.d.settings.element
-                ps.border["kopf"] = st.find(qn("w:bordersDoNotSurroundHeader")) is None
-                ps.border["fuss"] = st.find(qn("w:bordersDoNotSurroundFooter")) is None
-                ps.border["ausrichten"] = st.find(qn("w:alignBordersAndEdges")) is not None
-
-    def _aussen_innen(self, s, ps: PageSettings) -> None:
-        """Gerade Seiten mit gespiegelter Ausrichtung bei gleichem Text: das ist „außen“ (ungerade rechts) bzw. „innen“ (ungerade links)."""
-        try:
-            if not self.d.settings.odd_and_even_pages_header_footer:
-                return
-            for attr, teil in (("header", s.even_page_header), ("footer", s.even_page_footer)):
-                hf, gerade = getattr(ps, attr), self._hf(teil)
-                if hf.text and gerade.text == hf.text and {hf.align, gerade.align} == {"left", "right"}:
-                    hf.align = "aussen" if hf.align == "right" else "innen"
-                elif not teil.is_linked_to_previous and (gerade.text != hf.text or gerade.align != hf.align):
-                    ps.diff_even = True                          # eigene Zeilen für gerade Seiten
-                    setattr(ps, "even_" + attr, gerade)
-        except Exception:                                                  # noqa: BLE001
-            pass
-
-    def _seitenzahl_art(self, s, ps: PageSettings) -> None:
-        """w:pgNumType: Zahlenart, „Beginnen mit“, Kapitelnummer."""
-        from lunivo_writer.editor import seitenzahl as SZ
-        e = s._sectPr.find(qn("w:pgNumType"))
-        if e is None:
-            return
-        ps.seiten_format = {v: k for k, v in SZ.DOCX_FORMAT.items()}.get(e.get(qn("w:fmt")) or "decimal", "dezimal")
-        try:
-            ps.seiten_start = max(0, int(e.get(qn("w:start")) or 0))
-            ps.kapitel_ebene = max(0, min(9, int(e.get(qn("w:chapStyle")) or 0)))
-        except ValueError:
-            pass
-        ps.kapitel_trenner = next((z for z, _t, d in SZ.TRENNER if d == e.get(qn("w:chapSep"))), "-")
-
-    def _hf(self, part) -> HeaderFooter:
-        if part.is_linked_to_previous or not part.paragraphs:
-            return HeaderFooter()
-        lines, align = [], "left"
-        for i, p in enumerate(part.paragraphs):
-            txt = ""
-            seite_feld = ueberspringen = False                       # der zwischengespeicherte Wert eines Seitenzahlfeldes ist kein Text
-            for el in p._p.iter():
-                if el.tag == qn("w:fldChar"):
-                    art = el.get(qn("w:fldCharType"))
-                    if art == "begin":
-                        seite_feld = ueberspringen = False
-                    elif art == "separate":
-                        ueberspringen = seite_feld
-                    elif art == "end":
-                        seite_feld = ueberspringen = False
-                elif el.tag == qn("w:instrText") and "PAGE" in (el.text or "").upper():
-                    seite_feld = True
-                if el.tag == qn("w:t"):
-                    if not ueberspringen:
-                        txt += el.text or ""
-                elif el.tag == qn("w:tab"):
-                    txt += "\t"
-                elif el.tag == qn("w:instrText") and "PAGE" in (el.text or "").upper() \
-                        and "NUMPAGES" not in (el.text or "").upper():
-                    txt += "{PAGE}"
-                elif el.tag == qn("w:instrText") and "NUMPAGES" in (el.text or "").upper():
-                    txt += "{PAGES}"
-                elif el.tag == qn("w:fldSimple"):
-                    instr = (el.get(qn("w:instr")) or "").upper()
-                    txt += "{PAGES}" if "NUMPAGES" in instr else "{PAGE}" if "PAGE" in instr else ""
-            if i == 0:
-                a = self._ausrichtung(p, p.style)
-                align = {Qt.AlignHCenter: "center", Qt.AlignRight: "right"}.get(a, "left")
-            lines.append(txt)
-        text = "\n".join(lines).rstrip("\n")
-        return HeaderFooter(text, align)
-
-    # ---- Hauptlauf ---------------------------------------------------
     def run(self):
         body = self.d.element.body
         for pat, msg in _UNSUPPORTED:
@@ -1585,16 +1066,6 @@ class _Reader:
         return self.doc, page, meta, self.report
 
 
-class _NoRun:
-    """Platzhalter, um Absatz-Standardwerte ohne Run aufzulösen."""
-    class _F:
-        name = None
-        size = None
-        bold = italic = underline = strike = superscript = subscript = None
-        all_caps = small_caps = outline = hidden = None
-        color = None
-    font = _F()
-    style = None
 
 
 _ERSATZ = {"Calibri Light": ["Carlito"], "Calibri": ["Carlito"], "Cambria": ["Caladea"], "Segoe UI": ["Noto Sans"]}
