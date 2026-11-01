@@ -23,9 +23,9 @@ Siehe `icon-ergebnis.md`. Offen bleibt: Test mit Menschen (keine Testpersonen). 
 | 2.1 | Vollständiges Icon-Inventar/Bestandsmatrix (Name, Pfad, Funktion, Orte, Größen, Herkunft, Probleme, Mehrfachbelegung, Verwechslung) | ABGESCHLOSSEN | 2 | `icon-inventar.md` (299); Funktion nur für 124 aus Beschriftungen ermittelt, Rest „nicht ermittelbar“ |
 | 2.1 | Funktionen ohne Icon | ABGESCHLOSSEN (Teil) | 2 | Fett/Kursiv/Unterstrichen im Band ohne Symbol; `nimm(…)`-Einträge nicht erfasst → NICHT PRÜFBAR |
 | 2.1 | Unterscheidung Funktions-/Bibliotheks-/Dateityp-/dekorative/ungenutzte Symbole | ABGESCHLOSSEN | 2 | Inventar-Kopf (299 / 1801 / 18 / App-Symbole / 57 ohne Textfundstelle) |
-| 3 | Marktanalyse (MS, LibreOffice, Apple, Adobe, Notion, WPS, Google Docs) | ABGESCHLOSSEN mit Lücken | 2 | `icon-markt.md`; Notion/WPS ohne offizielle Quelle; **eigene visuelle Untersuchung NICHT PRÜFBAR** (keine Programme/Bilder) |
+| 3 | Marktanalyse (MS, LibreOffice, Apple, Adobe, Notion, Office-Programm, Google Docs) | ABGESCHLOSSEN mit Lücken | 2 | `icon-markt.md`; Notion/Office-Programm ohne offizielle Quelle; **eigene visuelle Untersuchung NICHT PRÜFBAR** (keine Programme/Bilder) |
 | 3.2 | Vergleichsmatrix im Pflichtformat mit Quellenkennzeichnung | ABGESCHLOSSEN | 2 | `icon-markt.md` §1 |
-| 3 | WPS-Aussehen laut Projektregel (Bildschirmfotos `~/Bilder/wps-vorlage`) | ABGESCHLOSSEN (3 Reiter) | 2 | `icon-markt.md` §3; übrige ≈ 60 Bilder nicht ausgewertet |
+| 3 | bisherige Gestaltung laut Projektregel (Bildschirmfotos `~/Bilder/wps-vorlage`) | ABGESCHLOSSEN (3 Reiter) | 2 | `icon-markt.md` §3; übrige ≈ 60 Bilder nicht ausgewertet |
 | 4 / 4.1 | Barrierearmut-Prinzipien und Zusatzprüfungen | ABGESCHLOSSEN (ohne Menschentest) | 6 | Silhouette/Farbe/16 px geprüft, Tooltips vollständig; Verständlichkeit bei Menschen NICHT PRÜFBAR |
 | 5 / 5.1 | Gestaltung und Designparameter | ABGESCHLOSSEN (Entwurf) | 3 | `icon-designsystem.md` — **FREIGABE ERFORDERLICH** |
 | 6 | Funktionsbezogene Gestaltung aller Bereiche | ABGESCHLOSSEN | 5 | alle Register in der Oberfläche gesehen (hell/dunkel); Seitenlayout, Verweise, Überprüfen, Schreibhilfe, KI, Fenster-Symbole im Gesamtdurchgang |
