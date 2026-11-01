@@ -74,7 +74,7 @@ unten kommt überall von `fussleiste` (`dialog_rahmen.py`), Maße von `EinheitFe
 |---|---|---|
 | Absatz | `absatz_dialog.py` | Einzüge, Abstände, Zeilenabstand (Faktor, Mindestens, Genau), Gliederungsebene, Seitenumbruch, Absatzoptionen (`editor/absatzopt.py`); Umbruchregeln wirkt `editor/seitenfluss.py` |
 | Tabstopps | `tabstopp_dialog.py` | Position, Ausrichtung, Füllzeichen (`editor/tabfuell.py`, gezeichnet), Standardtabstopps (`w:defaultTabStop`) |
-| Schriftart | `schriftart_dialog.py` | alle Felder wie im WPS: asiatisch/westlich/komplex, Unterstreichungsarten, Betonungszeichen, Effekte, Zeichenabstand; Zeichnen der Extras in `editor/textfx.py` |
+| Schriftart | `schriftart_dialog.py` | alle Felder wie im Office-Programm: asiatisch/westlich/komplex, Unterstreichungsarten, Betonungszeichen, Effekte, Zeichenabstand; Zeichnen der Extras in `editor/textfx.py` |
 | Texteffekte | `texteffekt_dialog.py` | Füllung (Farbe, Verlauf), Kontur, Schatten, Reflektion, Leuchten, 3D; Zeichnen in `editor/textfx.py`, DOCX als `w14:*` in `editor/texteffekt.py` |
 | Nummerierung | `liste_dialog.py` | Aufzählung, Nummerierung, mehrstufige Gliederung (`editor/mehrstufig.py`, selbst gezeichnet), Anpassen-Fenster |
 | Tastenkombination | `tasten_dialog.py` | eine Tastenkombination aufnehmen, Belegung prüfen |
@@ -108,7 +108,7 @@ Ebenso die Fenster der Reiter Einfügen, Verweise, Sendungen und Überprüfen (Z
 Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inhaltsverzeichnis, Indexeintrag, Nummerierung,
 Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
 Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
-`schmal_machen` in Ruhe). Was in der WPS-Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
+`schmal_machen` in Ruhe). Was in der Gestaltungsvorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
 Vorschaubilder verkleinern sich mit der Breite. Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
 nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
 Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
