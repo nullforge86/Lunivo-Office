@@ -236,6 +236,7 @@ class RegisterBand(QWidget):
             gross = bool(k.property("ribbon_gross"))
             if gross:
                 k.setFixedHeight(58 if self._compact else 68)
+                k.setIconSize(QSize(22 if self._compact else 28, 22 if self._compact else 28))
                 f = k.font()
                 f.setPointSize(8 if self._compact else 9)
                 k.setFont(f)
