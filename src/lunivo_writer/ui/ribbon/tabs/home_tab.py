@@ -1,4 +1,4 @@
-"""Reiter „Start“ in der Anordnung von WPS Office."""
+"""Reiter „Start“ in der Anordnung von gängigen Office-Programmen."""
 from __future__ import annotations
 
 from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
