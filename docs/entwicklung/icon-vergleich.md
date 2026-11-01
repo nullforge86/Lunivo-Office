@@ -3,7 +3,7 @@
 > Ergänzung: Die vollständige Marktmatrix im Auftragsformat steht in `icon-markt.md`; Abschnitt 4 hier („geändert“) bezieht sich auf den zurückgesetzten Durchgang und ist nur Vorschlag.
 
 Stand 2026-11-01. Quellenstufe je Aussage: **[Q]** in der Quelle gelesen (Link unten), **[W]** Allgemeinwissen über das Programm, nicht in dieser Sitzung geprüft.
-Nicht erreicht: Bildschirmfotos der Programme (keine Programme/Bilder verfügbar), Recherche zu Notion und WPS (nur [W]). Keine Icon-Dateien fremder Programme kopiert.
+Nicht erreicht: Bildschirmfotos der Programme (keine Programme/Bilder verfügbar), Recherche zu Notion und Office-Programm (nur [W]). Keine Icon-Dateien fremder Programme kopiert.
 
 ## 1. Gestaltungsprinzipien der Programme
 
@@ -13,7 +13,7 @@ Nicht erreicht: Bildschirmfotos der Programme (keine Programme/Bilder verfügbar
 | Apple (HIG, SF Symbols) | ein Konzept pro Icon, stark vereinfacht, vertraute Metaphern; einheitliche Größe, Detailgrad, **Strichstärke**; Strich zur Schrift passend; Text nur, wenn nötig (z. B. Textformatierung); Textabsätze abstrakt als Zeilen; neutrale Figuren; Alternativtexte [Q] | [Apple HIG Icons](https://developer.apple.com/design/human-interface-guidelines/icons.md) | Tooltips/Alternativtexte bleiben Pflicht; Buchstaben nur in Zeichenformat-Symbolen |
 | Google Docs / Material Symbols | 24-px-Raster, 20/24 px pixelgenau, Strichstärke einstellbar 100–700 (Normal 400), Füllung als Zustand [Q]; Docs-Symbole für Funktionen: [W] | [Material Symbols](https://github.com/google/material-design-icons) | gleiches 24er-Raster; Füllung nur als Zustand denkbar, nicht als Unterscheidungsmerkmal |
 | LibreOffice Writer | mehrere Themen (Colibre, Elementary, Breeze, Sifr …), je nach Plattform; Colibre ohne Dunkelvariante, Sifr/Breeze mit [Q]; Symbole sind benannte Befehle (`alignleft`, `accepttrackedchange` …) [Q] | [Ask LibreOffice](https://ask.libreoffice.org/t/different-icon-set-on-tool-bar/43176), [GitHub colibre](https://github.com/LibreOffice/core/tree/master/icon-themes/colibre/cmd) | **Ein** Thema für alles (kein Zwang, Themen zu wechseln); hell/dunkel über Palettenfarbe |
-| Notion, WPS Writer | minimal/dünn bzw. Office-nah [W] | — | WPS nur Aussehens-Vorbild laut Projektregel |
+| Notion, Textverarbeitungsprogramm | minimal/dünn bzw. Office-nah [W] | — | Office-Programm nur Aussehens-Vorbild laut Projektregel |
 | Barrierefreiheit | Studie (12 Kinder): gut gewählte Icons werden ohne Zusatzhilfe erkannt [Q]; Icons neben Schlüsselwörtern stützen das Lesen [Q]; WCAG hat keine eigenen Legasthenie-Kriterien [Q, Anbieter-Blog] | [UTM-Studie](https://journals.utm.my/jurnalteknologi/article/download/5050/3485/14266), [UXcel](https://uxcel.com/lessons/designing-for-dyslexia-081) | Symbol immer **mit** Beschriftung/Tooltip; Buchstaben als Merkmal meiden |
 
 ## 2. Funktionsvergleich (Motiv je Programm)
