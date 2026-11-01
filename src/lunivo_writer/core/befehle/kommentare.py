@@ -16,7 +16,7 @@ class KommentarBefehle:
 
 
     def kommentar(self, k=None):
-        """Neuer Kommentar wie in WPS: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
+        """Neuer Kommentar wie in Office-Programm: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
         arbeiten mit denselben Kommentaren des Dokuments. Ohne Markierung hängt er am Wort, sonst an der Schreibmarke."""
         if self.ed:
             if self._geschuetzt("lesen"):
