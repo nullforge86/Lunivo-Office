@@ -6,9 +6,21 @@ Eine native Textverarbeitung für Linux, entwickelt mit Python 3 und PySide6/Qt 
 
 Lunivo braucht kein Konto und keine Internetverbindung für Schreiben, Prüfen und Speichern. Optionale Online-KI und externe Schreibhilfen werden erst nach eigener Einrichtung verwendet.
 
+## Die Idee hinter Lunivo
+
+Rechtschreibung und Kreativität sollen Hand in Hand gehen.
+
+Mein Anspruch ist es, ein professionelles Office-Programm zu entwickeln und gleichzeitig eine leistungsfähige Rechtschreibhilfe zu schaffen. Beides soll gleichwertig sein und ohne Abstriche weiterentwickelt werden.
+
+Lunivo soll nicht einfach ein Office-Programm mit einer zusätzlichen Rechtschreibfunktion sein. Es soll alle Möglichkeiten bieten, die man von einer modernen Textverarbeitung erwartet, und gleichzeitig Menschen beim Schreiben unterstützen.
+
+Denn Schwierigkeiten mit der Rechtschreibung bedeuten nicht, weniger Ideen, Fantasie oder Kreativität zu haben. Die Rechtschreibhilfe soll den eigenen Schreibstil nicht einschränken, sondern dabei helfen, Gedanken so auszudrücken, wie man es möchte.
+
+**Die Rechtschreibhilfe soll Kreativität ermöglichen, nicht begrenzen. Und ein professionelles Office-Programm soll dabei niemals zu kurz kommen.**
+
 ## Installation und Start
 
-Voraussetzung ist Python 3.10 oder neuer. Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten:
+Voraussetzung ist Python 3.9 oder neuer. Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten:
 
 ```bash
 ./starten-qt.sh
@@ -38,6 +50,7 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 
 ## Dokumentation
 
+- [Lies mich](docs/LIESMICH.md)
 - [Installation](docs/INSTALLATION.md)
 - [Lesen und Schreiben](docs/lesen-und-schreiben.md)
 - [Prüfung, Vorhersage und KI](docs/pruefung-und-ki.md)
@@ -46,6 +59,13 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 - [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
 - [Oberfläche](docs/oberflaeche.md)
 - [Projektaufbau](docs/README.md)
+- [Aufbau: Registerband](docs/aufbau-band.md)
+- [Aufbau: Ist-Stand](docs/aufbau-ist-stand.md)
+- [Aufbau: Optionen](docs/aufbau-optionen.md)
+- [Baukasten](docs/baukasten.md)
+- [Bilder – vollständige Übersicht](docs/bilder-vollstaendig.md)
+- [Konzept: Optionen](docs/konzept-optionen.md)
+- [Tabellen und Steuerung](docs/tabellen-und-steuerung.md)
 - [UI-Technologie](docs/ui-technologie.md)
 - [Interne Funktionen (Inventar)](docs/interne-funktionen.md)
 - [Erweiterungen](docs/erweiterungen.md)
@@ -56,7 +76,13 @@ Weitere Hilfe gibt es im Programm unter **☰ Menü → Hilfe → Handbuch**.
 
 ## Mitmachen
 
-Erfahrungen, Fragen und Verbesserungsvorschläge sind willkommen. Nutze dafür die [GitHub Discussions](../../discussions) oder melde einen [Fehler](../../issues/new?template=fehler.yml) beziehungsweise einen [Funktionswunsch](../../issues/new?template=wunsch.yml). Rechtschreibung muss dabei keine Rolle spielen.
+Lunivo wird derzeit von mir allein entwickelt. Hinter dem Projekt steht kein großes Team. Ich stelle mich der Herausforderung, ein professionelles Office-Programm und eine leistungsfähige Rechtschreibhilfe gleichermaßen weiterzuentwickeln.
+
+Ich möchte Lunivo aber nicht nur für mich entwickeln. Erfahrungen, Fragen und Verbesserungsvorschläge sind willkommen. Besonders freue ich mich über Rückmeldungen von Menschen mit Legasthenie. Eure Erfahrungen können helfen, Lunivo besser zu machen.
+
+Du musst kein Entwickler sein und keine perfekte Rechtschreibung haben, um dich einzubringen. **Rechtschreibung muss dabei keine Rolle spielen.**
+
+Nutze dafür die [GitHub Discussions](../../discussions) oder melde einen [Fehler](../../issues/new?template=fehler.yml) beziehungsweise einen [Funktionswunsch](../../issues/new?template=wunsch.yml).
 
 ## Lizenz
 
