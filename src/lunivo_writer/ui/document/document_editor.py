@@ -116,6 +116,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         self.cursorPositionChanged.connect(self._scroll_outer)
         self._verbinde_groesse()
         self._zusatz_init()
+        from lunivo_writer.ui.document.tabelle_griffe import TabellenGriffe
+        self._tabellen_griffe = TabellenGriffe(self)
         self.versteckt_zeigen = False
         self._blasen_flaeche = None
         self._blasen_cache = (None, [])

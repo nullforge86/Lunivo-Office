@@ -239,6 +239,213 @@ class KontextBefehle:
     def zelleUnten(self, k=None): self._zelle_ausrichten(QTextCharFormat.AlignBottom)
 
 
+    def _zelle_waagrecht(self, wo):
+        e, c, t = self._tab()
+        if t:
+            z = c if c.hasSelection() else t.cellAt(c).firstCursorPosition()
+            if not c.hasSelection():
+                z.setPosition(t.cellAt(c).lastCursorPosition().position(), QTextCursor.KeepAnchor)
+            bf = z.blockFormat(); bf.setAlignment(wo); z.mergeBlockFormat(bf)
+
+    def zelleLinks(self, k=None): self._zelle_waagrecht(Qt.AlignLeft)
+
+    def zelleZentriert(self, k=None): self._zelle_waagrecht(Qt.AlignHCenter)
+
+    def zelleRechts(self, k=None): self._zelle_waagrecht(Qt.AlignRight)
+
+
+    def tabelleTabelleTeilen(self, k=None):
+        """Tabelle oberhalb der Zeile der Schreibmarke teilen: die Zeilen ab hier kommen in eine neue Tabelle darunter."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        r = t.cellAt(c).row()
+        if r < 1:
+            self.w.lbl_msg.setText("Die Schreibmarke muss unterhalb der ersten Zeile stehen, damit die Tabelle geteilt werden kann.")
+            return
+        zeilen = []
+        for zr in range(r, t.rows()):
+            zeilen.append([QTextCursor(t.cellAt(zr, sp).firstCursorPosition()) for sp in range(t.columns())])
+        frag = []
+        for zeile in zeilen:
+            reihe = []
+            for z in zeile:
+                z.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+                reihe.append(z.selection())
+            frag.append(reihe)
+        fmt = t.format()
+        c.beginEditBlock()
+        t.removeRows(r, t.rows() - r)
+        ende = QTextCursor(t.lastCursorPosition())
+        ende.movePosition(QTextCursor.NextBlock)
+        ende.insertBlock()
+        neu = ende.insertTable(len(frag), len(frag[0]), fmt)
+        for zr, reihe in enumerate(frag):
+            for sp, f in enumerate(reihe):
+                neu.cellAt(zr, sp).firstCursorPosition().insertFragment(f)
+        c.endEditBlock()
+        e.document().setModified(True)
+
+
+    def tabelleEigenschaften(self, k=None):
+        e, c, t = self._tab()
+        if not t:
+            return
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.tabellen_dialog import TabellenDialog
+        d = TabellenDialog(self.w, TE.lesen(t, c))
+        if ausfuehren(d):
+            TE.anwenden(t, c, d.werte())
+            e.document().setModified(True)
+
+
+    def menue_tabelleAutoAnpassen(self):
+        m = QMenu()
+        m.addAction("An Fenster anpassen", self._tabelle_fenster)
+        m.addAction("Spalten gleichmäßig verteilen", self._tabelle_gleich)
+        m.addAction("Spaltenbreite festlegen …", self.tabelleBreite)
+        return m
+
+
+    def _tabelle_fenster(self):
+        from PySide6.QtGui import QTextLength
+        e, c, t = self._tab()
+        if t:
+            f = t.format(); f.setWidth(QTextLength(QTextLength.PercentageLength, 100))
+            f.setColumnWidthConstraints([QTextLength(QTextLength.PercentageLength, 100 / t.columns())] * t.columns())
+            t.setFormat(f)
+
+
+    def _tabelle_gleich(self):
+        self._tabelle_fenster()
+
+
+    def tabelleBreite(self, k=None):
+        """Breite der Spalte der Schreibmarke in cm festlegen."""
+        from PySide6.QtGui import QTextLength
+        from lunivo_writer.models.page import mm_to_px
+        e, c, t = self._tab()
+        if not t:
+            return
+        txt, ok = EingabeFenster.getText(self.w, "Spaltenbreite", "Breite in cm:", "3,0")
+        try:
+            cm = float(txt.replace(",", "."))
+        except ValueError:
+            return
+        if ok and cm > 0:
+            f = t.format()
+            lang = f.columnWidthConstraints() or [QTextLength(QTextLength.PercentageLength, 100 / t.columns())] * t.columns()
+            lang[t.cellAt(c).column()] = QTextLength(QTextLength.FixedLength, mm_to_px(cm * 10))
+            f.setColumnWidthConstraints(lang)
+            t.setFormat(f)
+
+
+    def tabelleHoehe(self, k=None):
+        """Mindesthöhe der Zeile der Schreibmarke in cm festlegen.
+        Qt kennt keine Zeilenhöhe; gewählt wird der Zellen-Innenabstand oben/unten (QTextTableCellFormat.setTop/BottomPadding)
+        aller Zellen der Zeile: Abstand = (Höhe - Zeilenhöhe der Schrift) / 2. Das ist reine Darstellung und stört das
+        DOCX-Speichern nicht (docx_writer liest aus dem Zellformat nur Hintergrund und senkrechte Ausrichtung)."""
+        from lunivo_writer.models.page import mm_to_px
+        e, c, t = self._tab()
+        if not t:
+            return
+        txt, ok = EingabeFenster.getText(self.w, "Zeilenhöhe", "Mindesthöhe in cm:", "1,0")
+        try:
+            cm = float(txt.replace(",", "."))
+        except ValueError:
+            return
+        if not ok or cm <= 0:
+            return
+        r = t.cellAt(c).row()
+        zeile = e.fontMetrics().lineSpacing()
+        pad = max(0.0, (mm_to_px(cm * 10) - zeile) / 2)
+        c.beginEditBlock()
+        for sp in range(t.columns()):
+            cell = t.cellAt(r, sp)
+            if cell.row() != r:
+                continue
+            f = cell.format().toTableCellFormat()
+            f.setTopPadding(pad); f.setBottomPadding(pad)
+            cell.setFormat(f)
+        c.endEditBlock()
+        e.document().setModified(True)
+
+
+    _GITTER_FARBE = "#c8c8c8"
+
+    def an_tabelleGitternetz(self):
+        e, c, t = self._tab()
+        if not t:
+            return False
+        f = t.cellAt(0, 0).format().toTableCellFormat()
+        return f.topBorder() > 0 and f.topBorderStyle() == QTextFrameFormat.BorderStyle_Dashed and f.topBorderBrush().color().name() == self._GITTER_FARBE
+
+
+    def tabelleGitternetz(self, k=None):
+        """Gitternetzlinien umschalten: hellgraue gestrichelte Zellränder; wirkt nur bei Tabellen ohne Rahmen."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        if t.format().border() > 0:
+            self.w.lbl_msg.setText("Das Gitternetz wird nur bei Tabellen ohne Rahmen angezeigt.")
+            return
+        an = not self.an_tabelleGitternetz()
+        c.beginEditBlock()
+        for r in range(t.rows()):
+            for sp in range(t.columns()):
+                cell = t.cellAt(r, sp)
+                if cell.row() != r or cell.column() != sp:
+                    continue
+                f = cell.format().toTableCellFormat()
+                for seite in ("Top", "Bottom", "Left", "Right"):
+                    getattr(f, f"set{seite}Border")(1 if an else 0)
+                    getattr(f, f"set{seite}BorderStyle")(QTextFrameFormat.BorderStyle_Dashed)
+                    getattr(f, f"set{seite}BorderBrush")(QColor(self._GITTER_FARBE))
+                cell.setFormat(f)
+        c.endEditBlock()
+        e.document().setModified(True)
+
+
+    def menue_tabelleTextrichtung(self):
+        m = QMenu()
+        m.addAction("Waagrecht (links nach rechts)", lambda: self._tabelle_richtung(Qt.LeftToRight))
+        m.addAction("Rechts nach links", lambda: self._tabelle_richtung(Qt.RightToLeft))
+        return m
+
+
+    def tabelleTextrichtung(self, k=None):
+        """Auswahl der Textrichtung der Zelle (waagrecht / rechts nach links); Qt zeichnet nur diese beiden."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        namen = ["Waagrecht (links nach rechts)", "Rechts nach links"]
+        n, ok = EingabeFenster.getItem(self.w, "Textrichtung", "Richtung:", namen, 0, False)
+        if ok:
+            self._tabelle_richtung(Qt.LeftToRight if n == namen[0] else Qt.RightToLeft)
+
+
+    def _tabelle_richtung(self, richtung):
+        """Textrichtung der Zelle der Schreibmarke bzw. aller markierten Zellen setzen (Blockformat setLayoutDirection)."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        if c.hasSelection():
+            a, b = t.cellAt(c.selectionStart()), t.cellAt(c.selectionEnd())
+            r0, r1 = sorted((a.row(), b.row())); c0, c1 = sorted((a.column(), b.column()))
+            zellen = [t.cellAt(r, s) for r in range(r0, r1 + 1) for s in range(c0, c1 + 1)]
+        else:
+            zellen = [t.cellAt(c)]
+        c.beginEditBlock()
+        for cell in zellen:
+            z = cell.firstCursorPosition()
+            z.setPosition(cell.lastCursorPosition().position(), QTextCursor.KeepAnchor)
+            bf = z.blockFormat(); bf.setLayoutDirection(richtung)
+            z.mergeBlockFormat(bf)
+        c.endEditBlock()
+        e.document().setModified(True)
+
+
     # ==== Bildtools (Kontext) =========================================================================================================
     def _bild(self):
         e = self.ed
