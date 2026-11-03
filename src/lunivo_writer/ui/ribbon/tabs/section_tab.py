@@ -27,10 +27,8 @@ def bauen(register: dict) -> dict:
             _k("zurueck", "Vorheriger Abschnitt", "abschnittVorher", text=True),
             _k("vor", "Nächster Abschnitt", "abschnittNaechster", text=True)]},
         {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
-            _k("seitenzahl", "Seitenzahl", "seitenzahlKlappe", True, klappe="seitenzahlKlappe"),
             _k("kaestchen", "Erste Seite anders", "ersteSeiteAnders", text=True, haken=True),
             _k("kaestchen", "Gerade und ungerade Seiten sind unterschiedlich", "geradeUngerade", text=True, haken=True),
-            _k("kopffuss", "Kopf- und Fußzeile", "kopfFussZeigen", True),
             _k("kette", "Link zu vorheriger Kopfzeile", "kopfVerknuepfen", text=True, haken=True),
             _k("kette", "Mit voriger Fußzeile verknüpfen", "fussVerknuepfen", text=True, haken=True)]},
         {"name": "Einstellungen", "reihenfolge": True, "knoepfe": [

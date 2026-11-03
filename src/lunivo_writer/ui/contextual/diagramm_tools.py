@@ -28,7 +28,6 @@ DIAGRAMMTOOLS = {"name": "Diagrammtools", "kontext": "diagramm", "gruppen": [
         + [_k(sym, "Diagrammtyp: " + name, 'diagrammTypAendern:["%s"]' % _STANDARD[sym],
               klappe=None if sym == "donut" else "diagrammTyp_" + sym) for sym, name in _TYPEN]},
     {"name": "Daten", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("table-2", "Daten auswählen", "diagrammDatenBearbeiten", True),
         _k("square-pen", "Daten bearbeiten", "diagrammDatenBearbeiten", True)]},
     {"name": "Bereich", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         {"feld": "diagrammBereich"}]},

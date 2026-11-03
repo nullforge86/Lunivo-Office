@@ -30,7 +30,6 @@ BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
     _gruppe(_a("drehen", "Frei drehen", gross=True), _a("gruppieren", text=True), _a("ausrichten", text=True), _a("umbruch", gross=True),
             _a("vorn", text=True), _a("hinten", text=True)),
     {"name": "Weitere", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("ruler", "Größe und Seitenverhältnis …", "bildGroesse", text=True),
         _k("einpassen", "Auf Seitenbreite", "bildBreite", text=True),
         _k("bild", "Originalgröße", "bildOriginal", text=True),
         _k("notiz", "Alternativtext …", "bildAltText", text=True),

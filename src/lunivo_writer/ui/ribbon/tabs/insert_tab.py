@@ -1,5 +1,5 @@
 """Reiter „Einfügen“ in der Anordnung der Vorlagen (Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
-Bild ▾, Formen, Diagramm, Kommentar, Kopf- und Fußzeile, Textfeld ▾, Schnellbausteine ▾, Symbol ▾, Gleichung, Zahl, Hyperlink.
+Bild ▾, Formen, Diagramm, Kopf- und Fußzeile, Textfeld ▾, Schnellbausteine ▾, Symbol ▾, Gleichung, Zahl, Hyperlink.
 Die Klappmenüs baut ``core/befehle/einfuegen.py`` (``menue_…Klappe``). Keine Gruppe „Weitere“: was die Vorlage nicht im Band hat, steht in
 den Klappen (Bildschirmfoto und Piktogramm unter Bild, Text aus Datei unter Objekt, eigene Form unter
 Formen); die Tabellen-Eigenschaften im Kontext-Reiter Tabelle."""
@@ -17,8 +17,6 @@ def bauen(register: dict) -> dict:
         benutzt.add(_name)
         return {s: w for s, w in dict(kn[_name], **kw).items() if w is not None}
 
-    kommentar = next(e for t in register["register"] if t["name"] == "Überprüfen" for g in t["gruppen"]
-                     for e in g["knoepfe"] if e.get("tun") == "kommentar")
     formulare = _k("formfeld", "Formulare", gross=True, menue=[
         {"name": "Textfeld", "tun": "formTextfeld"}, {"name": "Auswahlliste", "tun": "formAuswahl"},
         {"name": "Datumsfeld", "tun": "formDatum"}, {"name": "Kontrollkästchen", "tun": "formKasten"},
@@ -33,7 +31,6 @@ def bauen(register: dict) -> dict:
         {"name": "Illustrationen", "reihenfolge": True, "knoepfe": [
             nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True, tun=None, klappe="formenKlappe"),
             nimm("Diagramm", text=True, klappe="diagrammKlappe"), nimm("SmartArt", text=True)]},
-        {"name": "Kommentar", "reihenfolge": True, "knoepfe": [dict(kommentar, name="Kommentar", gross=True)]},
         {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
             nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=True, tun=None),
             _k("wasserzeichen", "Wasserzeichen", gross=True, klappe="wasserzeichenKlappe")]},
@@ -46,7 +43,7 @@ def bauen(register: dict) -> dict:
             nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=True, klappe="gleichungKlappe"),
             _k("zahl", "Zahl", "zahl", True)]},
         {"name": "Links", "reihenfolge": True, "knoepfe": [
-            nimm("Hyperlink", gross=True), nimm("Querverweis", text=True), nimm("Lesezeichen / Textmarke", name="Lesezeichen", text=True)]},
+            nimm("Hyperlink", gross=True), nimm("Lesezeichen / Textmarke", name="Lesezeichen", text=True)]},
         {"name": "Formulare", "reihenfolge": True, "knoepfe": [formulare]},
     ]
     return dict(tab, gruppen=gruppen)

@@ -30,7 +30,7 @@ def bauen(register: dict) -> dict:
     def klein(name):                                                  # nur Symbol; der Hinweistext nennt die Funktion
         return nimm(name, gross=False, text=False)
 
-    fenster_menue = list(kn["Anordnen"]["menue"]) + [{"trenner": True}] + eintraege("Nebeneinander", "Untereinander", "Kacheln", "Fensterliste")
+    fenster_menue = list(kn["Anordnen"]["menue"]) + [{"trenner": True}] + eintraege("Fensterliste")
     for n in ("Nebeneinander", "Untereinander", "Kacheln", "Fensterliste", "Anordnen", "Steuerzeichen", "Weblayout", "Gliederung", "Vertikales Lineal", "Textbegrenzungen", "Ausgeblendeter Text"):
         benutzt.add(n)
     gruppen = [

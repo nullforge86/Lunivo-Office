@@ -147,8 +147,6 @@ EINFÜGEN
 │ ├── Formen
 │ ├── Diagramm
 │ └── SmartArt
-├── Kommentar
-│ └── Kommentar
 ├── Kopf- und Fußzeile
 │ ├── Kopf- und Fußzeile
 │ ├── Seitenzahl
@@ -168,7 +166,6 @@ EINFÜGEN
 │ └── Zahl
 ├── Links
 │ ├── Hyperlink
-│ ├── Querverweis
 │ └── Lesezeichen
 └── Formulare
   └── Formulare
@@ -292,7 +289,6 @@ VERWEISE
 SCHREIBHILFE
 ├── Lesen
 │ ├── Zeilenfokus
-│ ├── Lesemodus
 │ ├── Silben farbig
 │ └── Lesehilfe
 ├── Prüfen
@@ -427,10 +423,8 @@ ABSCHNITT
 │ ├── Vorheriger Abschnitt
 │ └── Nächster Abschnitt
 ├── Kopf- und Fußzeile
-│ ├── Seitenzahl
 │ ├── Erste Seite anders
 │ ├── Gerade und ungerade Seiten sind unterschiedlich
-│ ├── Kopf- und Fußzeile
 │ ├── Link zu vorheriger Kopfzeile
 │ └── Mit voriger Fußzeile verknüpfen
 └── Einstellungen
@@ -452,15 +446,8 @@ SENDUNGEN
 │ ├── Seriendruckfeld
 │ ├── Adressblock
 │ └── Regeln
-├── Vorschau
-│ └── Ergebnisse anzeigen
-└── Formular
-  ├── Textfeld
-  ├── Kontrollkästchen
-  ├── Schaltfläche
-  ├── Auswahlliste
-  ├── Datumsfeld
-  └── Felder zurücksetzen
+└── Vorschau
+  └── Ergebnisse anzeigen
 ```
 
 ---
@@ -541,7 +528,6 @@ BILDTOOLS
 │ ├── Eine Ebene nach vorne
 │ └── Eine Ebene nach hinten
 └── Weitere
-  ├── Größe und Seitenverhältnis …
   ├── Auf Seitenbreite
   ├── Originalgröße
   ├── Alternativtext …
@@ -609,7 +595,6 @@ DIAGRAMMTOOLS
 │ ├── Diagrammtyp: Kurs
 │ └── Diagrammtyp: Punkt (XY)
 ├── Daten
-│ ├── Daten auswählen
 │ └── Daten bearbeiten
 └── Bereich
 ```
@@ -788,7 +773,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Ausschneiden | Start ▸ Zwischenablage |
 | Auswahlbereich | Seitenlayout ▸ Anordnen · SmartArt-Design ▸ Anordnen · Zeichentools ▸ Anordnen |
 | Auswählen | Start ▸ Auswählen |
-| Auswahlliste | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Auswahlliste | Einfügen ▸ Formulare |
 | AutoKorrektur | Schreibhilfe ▸ Beim Schreiben |
 | B5 | Abschnitt ▸ Seite |
 | Barrierefreiheit prüfen | Schreibhilfe ▸ Prüfen |
@@ -806,12 +791,11 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Bilder komprimieren | Bildtools ▸ Komprimieren |
 | Blocksatz | Start ▸ Absatz · Texttools ▸ Absatz |
 | Breit | Abschnitt ▸ Seite |
-| Daten auswählen | Diagrammtools ▸ Daten |
 | Daten bearbeiten | Diagrammtools ▸ Daten |
 | Datenquelle öffnen | Mailings ▸ Datenquelle |
 | Datensatz | Mailings ▸ Vorschau |
 | Datum und Uhrzeit | Einfügen ▸ Text · Kopf- und Fußzeile ▸ Felder |
-| Datumsfeld | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Datumsfeld | Einfügen ▸ Formulare |
 | Deckblatt | Einfügen ▸ Seiten |
 | Deckblätter | Abschnitt ▸ Seite |
 | Designs | Seitenlayout ▸ Designs |
@@ -861,7 +845,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Farben | Seitenlayout ▸ Designs |
 | Farben ändern | SmartArt-Design ▸ Layouts |
 | Felder | Kopf- und Fußzeile ▸ Felder |
-| Felder zurücksetzen | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Felder zurücksetzen | Einfügen ▸ Formulare |
 | Fensterliste | Ansicht ▸ Fenster |
 | Fett | Start ▸ Schriftart · Texttools ▸ Schriftart |
 | Form bearbeiten | Zeichentools ▸ Formen |
@@ -891,7 +875,6 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Gliederung | Ansicht ▸ Dokumentansichten · Zeichentools ▸ Formen formatieren |
 | Groß-/Kleinschreibung | Start ▸ Schriftart |
 | Größe | Seitenlayout ▸ Seite einrichten · Abschnitt ▸ Seite |
-| Größe und Seitenverhältnis … | Bildtools ▸ Weitere |
 | Größe zurücksetzen | Bildtools ▸ Größe |
 | Gründlich prüfen | Schreibhilfe ▸ Prüfen |
 | Gruppieren | Seitenlayout ▸ Anordnen · Bildtools ▸ Anordnen · Zeichentools ▸ Anordnen |
@@ -917,13 +900,12 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | KI-Chat | Schreibhilfe ▸ KI |
 | KI-Einstellungen | Schreibhilfe ▸ KI |
 | KI-Korrektur | Schreibhilfe ▸ Prüfen |
-| Kommentar | Einfügen ▸ Kommentar |
 | Kommentar einfügen | Überprüfen ▸ Kommentare |
 | Kontrast erhöhen | Bildtools ▸ Farbe |
 | Kontrast verringern | Bildtools ▸ Farbe |
-| Kontrollkästchen | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Kontrollkästchen | Einfügen ▸ Formulare |
 | Kontur | Texttools ▸ Form |
-| Kopf- und Fußzeile | Einfügen ▸ Kopf- und Fußzeile · Abschnitt ▸ Kopf- und Fußzeile |
+| Kopf- und Fußzeile | Einfügen ▸ Kopf- und Fußzeile |
 | Kopf-/Fußzeilengruppe | Kopf- und Fußzeile ▸ Einfügen |
 | Kopfzeile | Tabellentools ▸ Tabellenformatvorlagen · Kopf- und Fußzeile ▸ Einfügen |
 | Kopfzeilen | Kopf- und Fußzeile ▸ Einfügen |
@@ -939,7 +921,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Leeres Dokument | Datei ▸ Neu |
 | Legal | Abschnitt ▸ Seite |
 | Lesehilfe | Schreibhilfe ▸ Lesen |
-| Lesemodus | Schreibhilfe ▸ Lesen · Ansicht ▸ Dokumentansichten |
+| Lesemodus | Ansicht ▸ Dokumentansichten |
 | Lesezeichen | Einfügen ▸ Links |
 | Letter | Abschnitt ▸ Seite |
 | Letzter Datensatz | Mailings ▸ Vorschau |
@@ -982,7 +964,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Prüfen | Schreibhilfe ▸ Prüfen |
 | Quellen verwalten | Verweise ▸ Zitate und Literatur |
 | Querformat | Abschnitt ▸ Seite |
-| Querverweis | Einfügen ▸ Links · Verweise ▸ Beschriftungen |
+| Querverweis | Verweise ▸ Beschriftungen |
 | Rahmen | Bildtools ▸ Farbe |
 | Rahmenlinien ein/aus | Tabellentools ▸ Entwurf: Rahmen und Farbe |
 | Ränder | Seitenlayout ▸ Ränder · Abschnitt ▸ Seite |
@@ -991,7 +973,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Regeln | Sendungen ▸ Seriendruck |
 | Register anpassen | Ansicht ▸ Oberfläche |
 | Rückwärts | SmartArt-Design ▸ Grafik erstellen |
-| Schaltfläche | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Schaltfläche | Einfügen ▸ Formulare |
 | Schließen | Datei ▸ Programm · Kopf- und Fußzeile ▸ Schließen |
 | Schmal | Abschnitt ▸ Seite |
 | Schnellbaustein einfügen | Schreibhilfe ▸ Bausteine |
@@ -1008,7 +990,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Seitenränder | Seitenlayout ▸ Seitenhintergrund |
 | Seitenumbruch | Start ▸ Absatz |
 | Seitenverhältnis sperren | Bildtools ▸ Größe |
-| Seitenzahl | Einfügen ▸ Kopf- und Fußzeile · Abschnitt ▸ Kopf- und Fußzeile · Kopf- und Fußzeile ▸ Einfügen |
+| Seitenzahl | Einfügen ▸ Kopf- und Fußzeile · Kopf- und Fußzeile ▸ Einfügen |
 | Seriendruck | Verweise ▸ Seriendruck |
 | Seriendruck schließen | Mailings ▸ Fertigstellen |
 | Seriendruck-Assistent | Sendungen ▸ Seriendruck |
@@ -1049,7 +1031,7 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 | Textbausteine | Schreibhilfe ▸ Bausteine |
 | Textbegrenzungen | Ansicht ▸ Anzeigen |
 | Texteffekte | Start ▸ Schriftart · Texttools ▸ Text |
-| Textfeld | Einfügen ▸ Text · Einfügen ▸ Formulare · Sendungen ▸ Formular · Zeichentools ▸ Formen · Texttools ▸ Textfeld |
+| Textfeld | Einfügen ▸ Text · Einfügen ▸ Formulare · Zeichentools ▸ Formen · Texttools ▸ Textfeld |
 | Textfluss | Seitenlayout ▸ Anordnen · SmartArt-Design ▸ Anordnen |
 | Textflussumbruch | Start ▸ Absatz |
 | Textfüllung | Texttools ▸ Text |

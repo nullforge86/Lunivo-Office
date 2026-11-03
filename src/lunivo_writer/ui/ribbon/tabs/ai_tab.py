@@ -12,6 +12,8 @@ def _knoepfe(gruppe: str) -> list[dict]:
     """Die Band-Knöpfe einer Gruppe: erst die kleinen, dann die großen."""
     out = []
     for f in sorted(fuer_gruppe(gruppe), key=lambda f: f.gross):
+        if f.tun == "lesemodus":                      # steht im Reiter Ansicht (Dokumentansichten); hier keine Doppelung
+            continue
         kw = {"klappe": f.klappe} if f.klappe else {}
         if f.art == "schalter":
             kw["haken"] = True

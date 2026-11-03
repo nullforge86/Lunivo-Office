@@ -44,7 +44,7 @@ def test_reiter_einfuegen_verweise_ansicht_wie_vorlage(app, tmp_path):
     w = fenster(tmp_path)
     r = w.band.reiter
     erwartet = {
-        "Einfügen": ["SEITEN", "TABELLEN", "ILLUSTRATIONEN", "KOMMENTAR", "KOPF- UND FUSSZEILE", "TEXT", "SYMBOLE", "LINKS", "FORMULARE"],
+        "Einfügen": ["SEITEN", "TABELLEN", "ILLUSTRATIONEN", "KOPF- UND FUSSZEILE", "TEXT", "SYMBOLE", "LINKS", "FORMULARE"],
         "Verweise": ["INHALTSVERZEICHNIS", "FUSSNOTEN", "BESCHRIFTUNGEN", "INDEX", "SERIENDRUCK", "ZITATE UND LITERATUR"],
         "Ansicht": ["DOKUMENTANSICHTEN", "ANZEIGEN", "ZOOM", "HELLIGKEIT", "FENSTER", "OBERFLÄCHE"],
     }
