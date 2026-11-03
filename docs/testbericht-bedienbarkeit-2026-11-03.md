@@ -100,9 +100,28 @@ Der Funktionsumfang ist groß (191 Band-Knöpfe, 9 Menüs mit rund 300 Punkten, 
 
 V1–V3, V5, V8, V9 sind Beschriftungen oder reine Zusatzanzeigen, geringes Risiko für Kürzel, Menüs, Speichern, Drucken, PDF. V4 und V7 betreffen Layout/Zustand und brauchen gezielte Prüfung am Band. Zum Zusammenspiel mit Speichern, Öffnen, Drucken, PDF und Schreibhilfe: **nicht geprüft**.
 
-## 9. Nicht getestet
+## 8a. Schritt 2: Abläufe am laufenden Programm (beobachtet, Qt offscreen, simulierte Tasten)
 
-Tastaturbedienung (Tab-Reihenfolge, Fokusring, Kürzel auslösen), Screenreader, Dialoge und ihre Schließen-Wege, Fensterwechsel (Strg+Tab, Ansicht ▸ Fenster), Optionen ändern, Kontext-Reiter, Rechtsklick-Menü, Dunkelmodus, Bildschirme mit anderer Größe oder Skalierung, Windows/macOS.
+| Ablauf | Beobachtung |
+|---|---|
+| Strg+B zweimal, dann Fett über den Befehl des Bandknopfs | Fett an, aus, an: Kürzel und Band wirken gleich |
+| F9 öffnet Optionen, Haken ändern, Escape | Optionen öffnen, Haken wechselt; **Fund:** danach stand der Fokus auf einem Knopf, nicht im Text → **behoben**, Fokus ist wieder im Dokument |
+| Strg+N, Text tippen, Strg+Tab hin und zurück | Zweites Dokument entsteht; Text beider Dokumente bleibt erhalten; Fenstertitel stimmt |
+| Strg+H, Strg+F, Strg+D, F5 | Alle öffnen in der Seitenleiste (kein loses Fenster), Fokus im Feld; **Fund:** nach Schließen von Strg+D stand der Fokus auf einem Knopf → **behoben** (Fokus zurück in den Text), ebenso beim Schließen der Seitenleiste mit F5 |
+| Tab im Text | Bleibt im Text (Einzug/nächste Lücke). **Fund:** Per Tastatur kam man aus dem Text nicht ins Band → **behoben:** F10 springt zu den Reitern, Tab geht durch Schnellzugriff und Band, F10 zurück in den Text; in `kuerzel.py` (Hilfe) eingetragen |
+| Strg+Umschalt+N, Strg+Umschalt+L | Navigationsbereich schaltet um, Lesemodus löst aus |
+| Strg+W (Dokument ungeändert) | Schließt, Fokus im verbleibenden Dokument |
+| Beenden des Testprogramms | **Fund (mein neuer Namensfilter):** verschachtelte Aufrufe beim Abbau → mit Wiedereintritts-Schutz und Abmelden beim Beenden **behoben** |
+
+**Regression (gezielt, bestanden):** `test_fenster_seitenleiste`, `test_schreibhilfe`, `test_pdf_export`, `test_speichern_sicher` (152), `test_backstage`, `test_main_window`, `test_docx_roundtrip` (52), Druck/Vorschau-Teile von `test_baukasten` (7).
+
+## 9. Weiterhin nicht getestet
+
+- Screenreader (Orca/NVDA) und echte Hardware-Tastatur: nur simulierte Tasten.
+- Rückfrage beim Schließen eines **geänderten** Dokuments (Fenster wartet auf Eingabe).
+- Aussehen der Menüleiste (standardmäßig ausgeblendet), Dunkelmodus, andere Bildschirmgrößen und Skalierungen.
+- Tatsächlicher Ausdruck auf einem Drucker; Windows und macOS.
+- Hilfe-Dialog und Kontext-Reiter im Ablauf.
 
 ## 10. Empfohlener nächster Schritt
 

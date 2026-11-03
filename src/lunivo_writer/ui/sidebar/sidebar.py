@@ -403,6 +403,9 @@ class SchreibhilfePanel(QWidget):
             if vorher[1]:
                 self.hide()
             self.bereich_geaendert.emit(vorher[0])
+            t = self.fenster.current_tab() if hasattr(self.fenster, "current_tab") else None
+            if t is not None:
+                t.editor.setFocus()                                 # Fenster zu: weiterschreiben, wo man war
         return ausfuehren_in(seite, d, zeigen, zurueck)
 
     def zeige_bereich(self, i: int) -> None:

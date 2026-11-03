@@ -538,7 +538,7 @@ class DateienBaustein:
         """Kürzel ohne eigene Aktion (Tabelle in windows/kuerzel.py zeigt sie in der Hilfe)."""
         from PySide6.QtGui import QShortcut
         b = self.befehle
-        tabelle = [("F3", b.schnellbaustein), ("F4", b.vorlesen), ("F5", self.toggle_sidebar), ("F6", b.welcheHilfe),
+        tabelle = [("F3", b.schnellbaustein), ("F4", b.vorlesen), ("F5", self.toggle_sidebar), ("F6", b.welcheHilfe), ("F10", self.zum_band_springen),
                    ("F7", lambda: self.assistant.pruefen(True)), ("F8", b.kiKorrektur),
                    ("Ctrl++", b.groesser), ("Ctrl+-", b.kleiner), ("Ctrl+0", b.normal),
                    ("Ctrl+D", b.schriftartMehr), ("Ctrl+Alt+V", b.inhalteEinfuegen), ("Ctrl+Alt+T", b.einfuegenUnformatiert),

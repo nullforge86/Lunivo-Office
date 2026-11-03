@@ -13,7 +13,7 @@ HILFE = [
                    ("F3", "Textbaustein einfügen"), ("Tab", "Zur nächsten Lücke «…» (sonst Einzug)"), ("Strg+Klick", "Hyperlink öffnen")]),
     ("Ansicht", [("F11", "Vollbild"), ("Strg+Umschalt+8", "Formatierungszeichen"), ("Strg+Umschalt+N", "Navigationsbereich"),
                  ("Strg+Umschalt+L", "Lesemodus"), ("Strg+Mausrad", "Zoom"), ("Alt+Umschalt+←/→", "Gliederung: Ebene ändern")]),
-    ("Hilfe und Prüfung", [("F4", "Vorlesen"), ("F5", "Seitenleiste ein/aus"), ("F6", "Welche Hilfe wann"), ("F7", "Prüfen"),
+    ("Hilfe und Prüfung", [("F4", "Vorlesen"), ("F5", "Seitenleiste ein/aus"), ("F6", "Welche Hilfe wann"), ("F7", "Prüfen"), ("F10", "Zum Band springen / zurück in den Text"),
                            ("F8", "KI-Korrektur"), ("F9", "Optionen")]),
 ]
 

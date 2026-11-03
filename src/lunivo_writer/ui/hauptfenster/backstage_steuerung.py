@@ -97,6 +97,9 @@ class BackstageBaustein:
         if hasattr(self.band, "menue_knopf"):
             self.band.menue_knopf.setChecked(False)
         self.ki.geaendert.emit()                                   # Einstellungen der Optionen übernehmen (KI, Anbieter …)
+        t = self.current_tab()
+        if t is not None:
+            t.editor.setFocus()                                    # Arbeitskontext: weiterschreiben, wo man aufgehört hat
 
 
     def backstage_schliessen(self):
@@ -144,7 +147,7 @@ class BackstageBaustein:
 
     def leisten_beschriften(self) -> None:
         """Option „Seitenleisten mit Text“: unter jedem Symbol der beiden Randleisten steht sein Name (breitere Leiste, kleinere Schrift)."""
-        mit = self.settings.get_bool("ui/leisten_text", False)
+        mit = self.settings.get_bool("ui/leisten_text", True)
         for leiste_name, knoepfe, kurz in (("leisteLinks", getattr(self, "_links", {}), self.KURZTEXT_LINKS),
                                            ("leisteRechts", getattr(self, "_rechts", {}), {})):
             leiste = self.findChild(QFrame, leiste_name)
@@ -466,10 +469,23 @@ class BackstageBaustein:
         on = self.sidebar.isHidden()
         self.sidebar.setVisible(on)
         self.settings.set("ui/seitenleiste", on)
+        if not on and self.current_tab() is not None:
+            self.current_tab().editor.setFocus()                   # Seitenleiste zu: weiterschreiben, wo man war
         if hasattr(self, "_rechts"):
             self._rechts_sync()
         self._chat_knopf_pruefen()
 
+
+    def zum_band_springen(self) -> None:
+        """F10: aus dem Text zu den Reitern des Bandes (dann mit Tab und Pfeiltasten weiter), noch einmal F10: zurück in den Text."""
+        from PySide6.QtWidgets import QApplication
+        f = QApplication.focusWidget()
+        t = self.current_tab()
+        if f is not None and self.band.isAncestorOf(f) and t is not None:
+            t.editor.setFocus()
+        else:
+            self.band.reiter.setFocusPolicy(Qt.StrongFocus)
+            self.band.reiter.setFocus()
 
     def toggle_menubar(self):
         self.menubar_wanted = not self.menubar_wanted

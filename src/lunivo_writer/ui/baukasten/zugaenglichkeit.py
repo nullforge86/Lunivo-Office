@@ -27,15 +27,26 @@ def name_fuer(knopf: QAbstractButton) -> str:
 class NamenFilter(QObject):
     """Setzt beim ersten Anzeigen eines Knopfes den zugänglichen Namen, wenn noch keiner gesetzt ist."""
 
+    _aktiv = False
+
     def eventFilter(self, obj, ev):
-        if ev.type() == QEvent.Show and isinstance(obj, QAbstractButton) and not obj.accessibleName():
-            name = name_fuer(obj)
-            if name:
-                obj.setAccessibleName(name)
+        if self._aktiv or ev.type() != QEvent.Show or not isinstance(obj, QAbstractButton):
+            return False
+        self._aktiv = True                                       # setAccessibleName löst selbst Ereignisse aus: nicht verschachteln
+        try:
+            if not obj.accessibleName():
+                name = name_fuer(obj)
+                if name:
+                    obj.setAccessibleName(name)
+        except RuntimeError:                                     # Knopf ist schon abgebaut
+            pass
+        finally:
+            self._aktiv = False
         return False
 
     @classmethod
     def einhaengen(cls, app: QApplication) -> "NamenFilter":
         f = cls(app)
         app.installEventFilter(f)
+        app.aboutToQuit.connect(lambda: app.removeEventFilter(f))      # beim Beenden nicht mehr in abgebaute Knöpfe greifen
         return f
