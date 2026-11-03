@@ -7,74 +7,88 @@ Seitengröße, Ränder, Kopf- und Fußzeile (mit Seitenzahlfeld).
 """
 from __future__ import annotations
 
-import io
-import logging
-import os
-from typing import Optional
-
-import docx
-from docx.enum.section import WD_ORIENT
-from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.shared import Emu, Mm, Pt, RGBColor
-from PySide6.QtCore import QBuffer, QIODevice, QUrl, Qt
-from PySide6.QtGui import (
-    QFont, QImage, QTextBlock, QTextBlockFormat, QTextCharFormat, QTextDocument, QTextFormat, QTextFrameFormat,
-    QTextFrame, QTextListFormat, QTextTable,
+from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F401
+    io,
+    logging,
+    os,
+    Optional,
+    docx,
+    WD_ORIENT,
+    WD_STYLE_TYPE,
+    WD_ALIGN_PARAGRAPH,
+    WD_LINE_SPACING,
+    RT,
+    OxmlElement,
+    qn,
+    Emu,
+    Mm,
+    Pt,
+    RGBColor,
+    QBuffer,
+    QIODevice,
+    QUrl,
+    Qt,
+    QFont,
+    QImage,
+    QTextBlock,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QTextDocument,
+    QTextFormat,
+    QTextFrameFormat,
+    QTextFrame,
+    QTextListFormat,
+    QTextTable,
+    PageSettings,
+    LH_FIXED,
+    LH_PROPORTIONAL,
+    STYLE_PROP,
+    DocumentIOError,
+    IOReport,
+    Farbe,
+    PX_TO_PT,
+    EMU_PER_PX,
+    _LIST_STYLES,
+    _has,
+    abstand_davor_px,
+    B_BILDANKER,
+    B_SPALTE,
+    P_OBJEKT,
+    P_VERSTECKT,
+    P_FORM,
+    B_ABSCHNITT,
+    umbruch,
+    Linie,
+    art_aus_docx,
+    docx_wert,
+    muster,
+    B_ART,
+    B_CAP,
+    B_MUSTER,
+    B_RAHMEN,
+    B_TOC,
+    P_AENDERUNG,
+    P_AUTOR,
+    P_DATUM,
+    P_FELD,
+    P_INDEX,
+    P_KOMMENTAR,
+    P_NOTE,
+    _RPR_FOLGE,
+    _rpr_einfuegen,
+    absatzopt_prop,
+    _split,
+    _rstyle_hyperlink,
+    _Body,
+    _CellBox,
 )
-
-from lunivo_writer.models.page import PageSettings
-from lunivo_writer.services.docx_reader import LH_FIXED, LH_PROPORTIONAL, STYLE_PROP
-from lunivo_writer.models.report import DocumentIOError, IOReport
-
-from lunivo_writer.core.farben import Farbe
-PX_TO_PT = 0.75
-EMU_PER_PX = 9525
-
-_LIST_STYLES = {
-    QTextListFormat.ListDisc: "bullet", QTextListFormat.ListCircle: "bullet",
-    QTextListFormat.ListSquare: "bullet", QTextListFormat.ListDecimal: "number",
-    QTextListFormat.ListLowerAlpha: "number", QTextListFormat.ListUpperAlpha: "number",
-    QTextListFormat.ListLowerRoman: "number", QTextListFormat.ListUpperRoman: "number",
-}
+from lunivo_writer.services.docx_teile.schreiben_seite import SeiteSchreiber
+from lunivo_writer.services.docx_teile.schreiben_tabellen import TabellenSchreiber
+from lunivo_writer.services.docx_teile.schreiben_objekte import ObjekteSchreiber
+from lunivo_writer.services.docx_teile.schreiben_zusatz import ZusatzSchreiber
 
 
-def _has(fmt, prop) -> bool:
-    return fmt.hasProperty(prop)
-
-
-from lunivo_writer.editor.zusatz import abstand_davor_px, B_BILDANKER, B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
-from lunivo_writer.editor.formular import P_FORM  # noqa: E402
-from lunivo_writer.editor.abschnitte import B_ABSCHNITT  # noqa: E402
-from lunivo_writer.editor import umbruch
-from lunivo_writer.editor.linie import Linie, art_aus_docx, docx_wert
-from lunivo_writer.editor import muster
-from lunivo_writer.editor.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE
-
-
-_RPR_FOLGE = ("w:rStyle", "w:rFonts", "w:b", "w:bCs", "w:i", "w:iCs", "w:caps", "w:smallCaps", "w:strike", "w:dstrike", "w:outline", "w:shadow",
-              "w:emboss", "w:imprint", "w:noProof", "w:snapToGrid", "w:vanish", "w:webHidden", "w:color", "w:spacing", "w:w", "w:kern", "w:position",
-              "w:sz", "w:szCs", "w:highlight", "w:u", "w:effect", "w:bdr", "w:shd", "w:fitText", "w:vertAlign", "w:rtl", "w:cs", "w:em", "w:lang",
-              "w:eastAsianLayout", "w:specVanish", "w:oMath")
-
-
-def _rpr_einfuegen(rpr, el) -> None:
-    """Ein Element an ``w:rPr`` in der Reihenfolge einfügen, die das Schema verlangt."""
-    tag = el.tag
-    namen = [qn(t) for t in _RPR_FOLGE]
-    nach = _RPR_FOLGE[namen.index(tag) + 1:] if tag in namen else ()
-    rpr.insert_element_before(el, *nach)
-
-
-def absatzopt_prop():
-    from lunivo_writer.editor.zusatz import B_ABSATZOPT
-    return B_ABSATZOPT
-
-
-class _Writer:
+class _Writer(SeiteSchreiber, TabellenSchreiber, ObjekteSchreiber, ZusatzSchreiber):
     def __init__(self, qdoc: QTextDocument, page: PageSettings, meta: dict):
         self.q = qdoc
         self.page = page
@@ -99,90 +113,6 @@ class _Writer:
             if el.tag != qn("w:sectPr"):
                 body.remove(el)
 
-    # ---- Seite --------------------------------------------------------
-    def write_page(self):
-        """Dokumentweite Einstellungen (Hintergrund, Silbentrennung) und der letzte Abschnitt in der Schlusseinrichtung des Textes."""
-        from lunivo_writer.editor import abschnitte as AB
-        self.abschnitte = AB.alle_einrichtungen(self.q, self.page)
-        self._ab_nr = 0
-        self._dokument_ebene(self.page)
-        typ, letzte = self.abschnitte[-1]
-        self.write_section(self.d.sections[0], letzte, typ if len(self.abschnitte) > 1 else None, len(self.abschnitte) - 1)
-
-    def write_section(self, s, p, typ: str | None = None, nr: int = 0):
-        """Einen Abschnitt (python-docx Section) nach Einrichtung p schreiben; nr = Nummer des Abschnitts (für verknüpfte Kopfzeilen)."""
-        from lunivo_writer.editor import abschnitte as AB
-        s.page_width, s.page_height = Mm(p.width_mm), Mm(p.height_mm)
-        s.orientation = WD_ORIENT.LANDSCAPE if p.landscape else WD_ORIENT.PORTRAIT
-        s.top_margin, s.bottom_margin = Mm(p.margin_top_mm), Mm(p.margin_bottom_mm)
-        s.left_margin, s.right_margin = Mm(p.margin_left_mm), Mm(p.margin_right_mm)
-        s.header_distance, s.footer_distance = Mm(p.kopf_abstand_mm), Mm(p.fuss_abstand_mm)
-        if typ:
-            from docx.enum.section import WD_SECTION
-            s.start_type = {"naechste": WD_SECTION.NEW_PAGE, "fortlaufend": WD_SECTION.CONTINUOUS,
-                            "gerade": WD_SECTION.EVEN_PAGE, "ungerade": WD_SECTION.ODD_PAGE}.get(typ, WD_SECTION.NEW_PAGE)
-        self._seitenschmuck(s, p)
-        from lunivo_writer.editor import seitenzahl as SZ
-        paare = [(s.header, p.header, p.kopf_verknuepft, "kopf"), (s.footer, p.footer, p.fuss_verknuepft, "fuss")]
-        if p.diff_first:
-            s.different_first_page_header_footer = True
-            paare += [(s.first_page_header, p.first_header, p.kopf_verknuepft, "kopf1"), (s.first_page_footer, p.first_footer, p.fuss_verknuepft, "fuss1")]
-        # „außen“/„innen“ brauchen getrennte Kopf-/Fußzeilen für gerade Seiten (w:evenAndOddHeaders gilt für das ganze Dokument)
-        # „Gerade und ungerade Seiten unterschiedlich“ (diff_even) schreibt die eigenen Zeilen für gerade Seiten
-        gerade = any(h.align in ("aussen", "innen") for _t, ps in self.abschnitte for h in (ps.header, ps.footer)) \
-            or any(ps.diff_even for _t, ps in self.abschnitte)
-        if gerade:
-            self.d.settings.odd_and_even_pages_header_footer = True
-            kopf_g, fuss_g = (p.even_header, p.even_footer) if p.diff_even else (p.header, p.footer)
-            paare += [(s.even_page_header, kopf_g, p.kopf_verknuepft, "kopf", 2), (s.even_page_footer, fuss_g, p.fuss_verknuepft, "fuss", 2)]
-        for part, hf, verknuepft, ort, *seite in paare:
-            if nr > 0 and verknuepft:
-                continue                                            # bleibt „mit vorherigem verknüpft“
-            bilder = [a for a in (getattr(p, "bilder", None) or []) if a.get("ort") == ort and a.get("bild") is not None]
-            if hf.is_empty() and nr == 0 and not bilder:
-                continue
-            part.is_linked_to_previous = False
-            ausr = SZ.ausrichtung(hf.align, seite[0] if seite else 1)
-            lines = hf.text.split("\n")
-            for i, line in enumerate(lines):
-                para = part.paragraphs[0] if i == 0 else part.add_paragraph()
-                para.alignment = {"center": WD_ALIGN_PARAGRAPH.CENTER,
-                                  "right": WD_ALIGN_PARAGRAPH.RIGHT}.get(ausr, WD_ALIGN_PARAGRAPH.LEFT)
-                self._text_with_fields(para, line)
-            for a in bilder:
-                self._frei_bild(part.paragraphs[0], a, a["bild"])
-        self._seitenzahl_art(s, p)
-
-    def _seitenzahl_art(self, s, p) -> None:
-        """Zahlenart, „Beginnen mit“ und Kapitelnummer der Seitenzahl als w:pgNumType."""
-        from lunivo_writer.editor import seitenzahl as SZ
-        sp = s._sectPr
-        for alt in sp.findall(qn("w:pgNumType")):
-            sp.remove(alt)
-        if p.seiten_format == "dezimal" and not p.seiten_start and not p.kapitel_ebene:
-            return
-        e = OxmlElement("w:pgNumType")
-        if p.seiten_format != "dezimal":
-            e.set(qn("w:fmt"), SZ.DOCX_FORMAT.get(p.seiten_format, "decimal"))
-        if p.seiten_start:
-            e.set(qn("w:start"), str(int(p.seiten_start)))
-        if p.kapitel_ebene:
-            e.set(qn("w:chapStyle"), str(int(p.kapitel_ebene)))
-            e.set(qn("w:chapSep"), next((d for z, _t, d in SZ.TRENNER if z == p.kapitel_trenner), "hyphen"))
-        sp.insert_element_before(e, "w:cols", "w:formProt", "w:vAlign", "w:noEndnote", "w:titlePg", "w:textDirection", "w:bidi", "w:rtlGutter",
-                                 "w:docGrid", "w:printerSettings", "w:sectPrChange")
-
-    def _abschnitt_ende(self, para) -> None:
-        """Am Ende des Absatzes, der einen Abschnitt beschließt: dessen Einrichtung als w:sectPr in den Absatz schreiben."""
-        from docx.section import Section
-        k = self._ab_nr
-        self._ab_nr += 1
-        typ, ps = self.abschnitte[k]
-        sp = OxmlElement("w:sectPr")
-        ppr = para._p.get_or_add_pPr()
-        nach = ppr.find(qn("w:pPrChange"))
-        (nach.addprevious(sp) if nach is not None else ppr.append(sp))
-        self.write_section(Section(sp, self.d.part), ps, typ if k > 0 else None, k)
 
     def _standard_tabstopp(self) -> None:
         """Die Standardtabstopps des Dokuments als w:defaultTabStop (Twips) in die Einstellungen schreiben."""
@@ -227,59 +157,6 @@ class _Writer:
             anker = st.find(qn("w:zoom"))
             (anker.addnext(ah) if anker is not None else st.insert(0, ah))
 
-    def _seitenschmuck(self, sect, p) -> None:
-        from docx.oxml import OxmlElement
-        sp = sect._sectPr
-        for alt in sp.findall(qn("w:pgBorders")):
-            sp.remove(alt)
-        if p.border:
-            b = p.border
-            from lunivo_writer.editor.seitenrahmen import abstaende_pt
-            pb = OxmlElement("w:pgBorders")
-            pb.set(qn("w:offsetFrom"), "text" if b.get("messen") == "text" else "page")
-            pb.set(qn("w:zOrder"), "front" if b.get("vordergrund", True) else "back")
-            ab = dict(zip(("top", "bottom", "left", "right"), abstaende_pt(b)))
-            for seite, kurz in (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r")):
-                if kurz not in b.get("seiten", "tblr"):
-                    continue
-                e = OxmlElement(f"w:{seite}")
-                e.set(qn("w:val"), b["kunst"] if b.get("kunst") else docx_wert(b.get("art", "einfach")))
-                e.set(qn("w:sz"), str(max(2, int(round(b.get("breite_pt", 1.0) * 8)))))
-                e.set(qn("w:space"), str(min(31, int(round(ab[seite])))))
-                e.set(qn("w:color"), b.get("farbe", Farbe.SCHWARZ).lstrip("#").upper())
-                pb.append(e)
-            st = self.d.settings.element                                        # Kopf-/Fußzeile umgeben, am Seitenrand ausrichten (Einstellungen des Dokuments)
-            for tag, an in (("w:bordersDoNotSurroundHeader", not b.get("kopf")), ("w:bordersDoNotSurroundFooter", not b.get("fuss")),
-                            ("w:alignBordersAndEdges", bool(b.get("ausrichten")))):
-                for alt in st.findall(qn(tag)):
-                    st.remove(alt)
-                if an and tag != "w:alignBordersAndEdges" or (tag == "w:alignBordersAndEdges" and an):
-                    el = OxmlElement(tag); st.insert_element_before(el, *("w:compat", "w:docVars", "w:rsids", "w:mathPr", "w:themeFontLang", "w:clrSchemeMapping",
-                                                                         "w:shapeDefaults", "w:decimalSymbol", "w:listSeparator"))
-            pg_mar = sp.find(qn("w:pgMar"))
-            (pg_mar.addnext(pb) if pg_mar is not None else sp.append(pb))
-        for alt in sp.findall(qn("w:cols")):
-            sp.remove(alt)
-        if p.spalten > 1:
-            co = OxmlElement("w:cols")
-            co.set(qn("w:num"), str(int(p.spalten)))
-            co.set(qn("w:space"), str(int(round(p.spalten_abstand_mm / 25.4 * 1440))))
-            if p.spalten_linie:
-                co.set(qn("w:sep"), "1")
-            anker = sp.find(qn("w:pgMar"))
-            (anker.addnext(co) if anker is not None else sp.append(co))
-        for alt in sp.findall(qn("w:lnNumType")):
-            sp.remove(alt)
-        if p.zeilennummern:
-            ln = OxmlElement("w:lnNumType")
-            ln.set(qn("w:countBy"), "1"); ln.set(qn("w:restart"), "newPage" if p.zeilennummern_neu == "seite" else "continuous")
-            anker = sp.find(qn("w:pgBorders"))
-            if anker is None:
-                anker = sp.find(qn("w:pgMar"))
-            (anker.addnext(ln) if anker is not None else sp.append(ln))
-        if p.watermark and p.watermark.get("text") and not getattr(self, "_wasserzeichen_gemeldet", False):
-            self._wasserzeichen_gemeldet = True
-            self.report.warn("Das Wasserzeichen wird in der DOCX-Datei nicht gespeichert (nur Anzeige, PDF und Druck).")
 
     def _text_with_fields(self, para, text: str):
         import re
@@ -891,456 +768,14 @@ class _Writer:
                 compat.insert(stelle, OxmlElement(f"w:{name}"))
                 stelle += 1
 
-    def _image(self, imf, para, seite: str | None = None):
-        name = imf.name()
-        img = self.q.resource(QTextDocument.ImageResource, QUrl(name))
-        if not isinstance(img, QImage) or img.isNull():
-            img = QImage(name)
-        if img.isNull():
-            self.report.warn(f"Bild „{os.path.basename(name)}“ nicht lesbar und nicht gespeichert.")
-            return
-        if self.meta.get("bilder_komprimieren") and max(img.width(), img.height()) > 1600:        # „Bilder nicht komprimieren“ ist aus
-            img = img.scaled(1600, 1600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        buf = QBuffer()
-        buf.open(QIODevice.WriteOnly)
-        img.save(buf, "PNG")
-        data = bytes(buf.data())
-        w = imf.width() or img.width()
-        h = imf.height() or img.height()
-        run = para.add_run()
-        run.add_picture(io.BytesIO(data), width=Emu(int(w * EMU_PER_PX)), height=Emu(int(h * EMU_PER_PX)))
-        alt = imf.property(STYLE_PROP + 1) if imf.hasProperty(STYLE_PROP + 1) else ""
-        if alt:
-            for dp in run._r.xpath(".//wp:docPr"):
-                dp.set("descr", str(alt))
-        if imf.hasProperty(P_OBJEKT):                       # Daten zum Wiederbearbeiten (Form, Diagramm, SmartArt …) im Titel des Bildes
-            for dp in run._r.xpath(".//wp:docPr"):
-                dp.set("title", "lunivo:" + str(imf.property(P_OBJEKT)))
-        if seite:
-            self._verankern(run, "right" if seite == "rechts" else "left")
-
-    def _frei_bild(self, para, a: dict, img: QImage) -> None:
-        """Ein frei positioniertes Bild (siehe editor/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben."""
-        if img is None or img.isNull():
-            return
-        buf = QBuffer()
-        buf.open(QIODevice.WriteOnly)
-        img.save(buf, "PNG")
-        b, h = float(a.get("b") or img.width()), float(a.get("h") or img.height())
-        run = para.add_run()
-        run.add_picture(io.BytesIO(bytes(buf.data())), width=Emu(int(b * EMU_PER_PX)), height=Emu(int(h * EMU_PER_PX)))
-        if a.get("alt"):
-            for dp in run._r.xpath(".//wp:docPr"):
-                dp.set("descr", str(a["alt"]))
-        for inline in run._r.xpath(".//wp:inline"):
-            anker = OxmlElement("wp:anchor")
-            for k, v in (("distT", "0"), ("distB", "0"), ("distL", "0"), ("distR", "0"), ("simplePos", "0"),
-                         ("relativeHeight", "251658240" if a.get("hinter") else "251659264"), ("behindDoc", "1" if a.get("hinter") else "0"),
-                         ("locked", "1" if a.get("verankern") else "0"), ("layoutInCell", "1"), ("allowOverlap", "1" if a.get("ueberlappen", True) else "0")):
-                anker.set(k, v)
-            sp = OxmlElement("wp:simplePos"); sp.set("x", "0"); sp.set("y", "0")
-
-            def lage(tag, bezug, ausr, versatz):
-                el = OxmlElement(tag); el.set("relativeFrom", bezug)
-                if ausr:
-                    al = OxmlElement("wp:align"); al.text = ausr; el.append(al)
-                else:
-                    po = OxmlElement("wp:posOffset"); po.text = str(int(round(float(versatz or 0) * EMU_PER_PX))); el.append(po)
-                return el
-            ph = lage("wp:positionH", {"seite": "page", "rand": "margin"}.get(a.get("bh"), "column"), a.get("ah"), a.get("xh"))
-            pv = lage("wp:positionV", {"seite": "page", "rand": "margin"}.get(a.get("bv"), "paragraph"), a.get("av"), a.get("yv"))
-            extent = inline.find(qn("wp:extent"))
-            ee = OxmlElement("wp:effectExtent")
-            for k in ("l", "t", "r", "b"):
-                ee.set(k, "0")
-            for e in [sp, ph, pv] + ([extent] if extent is not None else []) + [ee, OxmlElement("wp:wrapNone")]:
-                anker.append(e)
-            for k in list(inline):
-                if k is not extent and k.tag != qn("wp:effectExtent"):
-                    anker.append(k)
-            inline.getparent().replace(inline, anker)
-        if a.get("ellipse") or a.get("maske") == "Ellipse":
-            for geom in run._r.xpath(".//a:prstGeom"):
-                geom.set("prst", "ellipse")
-        zu = a.get("zu")
-        if zu and len(zu) == 4 and any(zu):                                                   # Zuschnitt als a:srcRect (Tausendstel Prozent)
-            for bf in run._r.xpath(".//pic:blipFill"):
-                sr = OxmlElement("a:srcRect")
-                for k, v in zip(("l", "t", "r", "b"), zu):
-                    if v:
-                        sr.set(k, str(int(round(float(v) * 100000))))
-                blip = bf.find(qn("a:blip"))
-                (blip.addnext(sr) if blip is not None else bf.insert(0, sr))
-        if (a.get("hell") or a.get("kontrast")) and not a.get("art"):                          # Helligkeit/Kontrast als a:lum (Tausendstel Prozent)
-            for blip in run._r.xpath(".//pic:blipFill/a:blip"):
-                lum = OxmlElement("a:lum")
-                for k, schl in (("bright", "hell"), ("contrast", "kontrast")):
-                    if a.get(schl):
-                        lum.set(k, str(int(a[schl]) * 1000))
-                blip.append(lum)
-        if a.get("maske") and not a.get("art"):                                              # Zuschneideform: nur in Lunivo, im Titel gemerkt
-            import json
-            for dp in run._r.xpath(".//wp:docPr"):
-                dp.set("title", "lunivo:" + json.dumps({"maske": a["maske"]}, ensure_ascii=False, separators=(",", ":")))
-        if a.get("dreh"):
-            for xf in run._r.xpath(".//pic:spPr/a:xfrm"):
-                xf.set("rot", str(int(round(float(a["dreh"]) * 60000))))
-        f = a.get("fuell")
-        if f and f.get("art") in ("farbe", "verlauf", "graduell", "muster"):                     # Textur und Bild bleiben im Programm
-            from lunivo_writer.editor import muster as MU
-            for sppr in run._r.xpath(".//pic:spPr"):
-                def farbe(hexwert):
-                    c = OxmlElement("a:srgbClr"); c.set("val", str(hexwert).lstrip("#").upper()); return c
-                if f["art"] == "farbe":
-                    el = OxmlElement("a:solidFill"); el.append(farbe(f["farbe"]))
-                elif f["art"] == "muster":
-                    el = OxmlElement("a:pattFill"); el.set("prst", MU.ooxml_von(f.get("key", "rein")))
-                    fg, bg = OxmlElement("a:fgClr"), OxmlElement("a:bgClr"); fg.append(farbe(f.get("farbe", Farbe.SCHWARZ))); bg.append(farbe(f.get("grund") or Farbe.WEISS))
-                    el.append(fg); el.append(bg)
-                else:                                                                           # Verlauf von hell nach dunkel, von oben nach unten
-                    dunkel = f.get("dunkel", f["farbe"]); hell = f.get("hell", Farbe.WEISS)
-                    el = OxmlElement("a:gradFill"); lst = OxmlElement("a:gsLst")
-                    for pos, c in ((0, hell), (100000, dunkel)):
-                        gs = OxmlElement("a:gs"); gs.set("pos", str(pos)); gs.append(farbe(c)); lst.append(gs)
-                    lin = OxmlElement("a:lin"); lin.set("ang", "5400000"); el.append(lst); el.append(lin)
-                geom = sppr.find(qn("a:prstGeom"))
-                (geom.addnext(el) if geom is not None else sppr.append(el))
-        if a.get("rand"):
-            for sppr in run._r.xpath(".//pic:spPr"):
-                ln = OxmlElement("a:ln"); ln.set("w", str(int(round(float(a["rand"].get("b", 1)) * EMU_PER_PX))))
-                fill = OxmlElement("a:solidFill"); clr = OxmlElement("a:srgbClr"); clr.set("val", str(a["rand"].get("farbe", Farbe.WEISS)).lstrip("#").upper())
-                fill.append(clr); ln.append(fill)
-                dash = {"gepunktet": "sysDot", "fein_gestrichelt": "sysDash", "gestrichelt": "dash", "strichpunkt": "dashDot", "strichpunktpunkt": "lgDashDotDot"}.get(a["rand"].get("art", "einfach"))
-                if dash:
-                    pd = OxmlElement("a:prstDash"); pd.set("val", dash); ln.append(pd)
-                sppr.append(ln)
-        if a.get("fx"):
-            for sppr in run._r.xpath(".//pic:spPr"):
-                lst = self._effekte_element(a["fx"])
-                if len(lst):
-                    sppr.append(lst)
-        if a.get("art") == "textfeld":
-            self._textfeld_xml(run, a)
-        elif a.get("art") in ("form", "diagramm", "smartart", "piktogramm"):          # Bild mit den Parametern im Titel („lunivo:“), damit Lunivo es wieder lesen kann
-            import json
-            for dp in run._r.xpath(".//wp:docPr"):
-                daten = {k: v for k, v in a.get("daten", {}).items() if k != "teil"}                      # die Auswahl eines Diagrammteils wird nicht gespeichert
-                dp.set("title", "lunivo:" + json.dumps({"art": a["art"], "daten": daten}, ensure_ascii=False, separators=(",", ":")))
-                if a["art"] == "diagramm" and daten.get("alt_beschreibung"):
-                    dp.set("descr", str(daten["alt_beschreibung"]))
 
     _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
     _MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 
-    def _textfeld_ketten(self) -> dict:
-        """{id des Textfelds: (Kettennummer, Stelle in der Kette)} — die Verknüpfungen aller Textfelder des Dokuments (``wps:linkedTxbx``)."""
-        if getattr(self, "_tf_ketten", None) is None:
-            from lunivo_writer.editor import freie_bilder as FB
-            felder = {}
-            b = self.q.firstBlock()
-            while b.isValid():
-                for a in FB.aus_absatz(b.blockFormat()):
-                    d = a.get("daten") if a.get("art") == "textfeld" else None
-                    if d and d.get("id"):
-                        felder[d["id"]] = d
-                b = b.next()
-            self._tf_ketten, n = {}, 0
-            for i, d in felder.items():
-                if d.get("von") or not d.get("weiter"):
-                    continue
-                n += 1
-                seq, cur = 0, d
-                while cur is not None and seq < 1000:
-                    self._tf_ketten[cur["id"]] = (n, seq)
-                    cur = felder.get(cur.get("weiter")); seq += 1
-        return self._tf_ketten
-
-    def _textfeld_xml(self, run, a: dict) -> None:
-        """Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“.
-        Verknüpfte Felder tragen ``wps:linkedTxbx`` (``id`` = Kette, ``seq`` = Stelle); das erste Feld hält den ganzen Text. Die genauen Werte
-        des Programms stehen im Titel des Objekts („lunivo:“), damit Lunivo es unverändert wieder lesen kann."""
-        import json
-        from lxml import etree
-        W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-        A = "http://schemas.openxmlformats.org/drawingml/2006/main"
-        d = a.get("daten", {})
-        for drawing in run._r.xpath(".//w:drawing"):
-            gd = drawing.xpath(".//a:graphicData")[0]
-            sppr_pic = gd.xpath(".//pic:spPr")[0]
-            wsp = etree.Element(f"{{{self._WPS}}}wsp", nsmap={"wps": self._WPS})
-            etree.SubElement(wsp, f"{{{self._WPS}}}cNvSpPr").set("txBox", "1")
-            sppr = etree.SubElement(wsp, f"{{{self._WPS}}}spPr")
-            for k in list(sppr_pic):
-                sppr.append(k)
-            if sppr.find(f"{{{A}}}prstGeom") is None:
-                geom = etree.SubElement(sppr, f"{{{A}}}prstGeom"); geom.set("prst", "rect"); etree.SubElement(geom, f"{{{A}}}avLst")
-            kette = self._textfeld_ketten().get(d.get("id"))
-            if kette and (d.get("von") or d.get("weiter")) and d.get("von"):
-                lt = etree.SubElement(wsp, f"{{{self._WPS}}}linkedTxbx"); lt.set("id", str(kette[0])); lt.set("seq", str(kette[1]))
-            else:
-                tb = etree.SubElement(wsp, f"{{{self._WPS}}}txbx")
-                if kette:
-                    tb.set("id", str(kette[0]))
-                self._txbx_inhalt(etree.SubElement(tb, f"{{{W}}}txbxContent"), d)
-            bp = etree.SubElement(wsp, f"{{{self._WPS}}}bodyPr")
-            for k, v in (("lIns", "76200"), ("tIns", "76200"), ("rIns", "76200"), ("bIns", "76200")):
-                bp.set(k, v)
-            gd.set("uri", self._WPS)
-            for k in list(gd):
-                gd.remove(k)
-            gd.append(wsp)
-            for dp in drawing.xpath(".//wp:docPr"):
-                dp.set("title", "lunivo:" + json.dumps({"art": "textfeld", "daten": d}, ensure_ascii=False, separators=(",", ":")))
-            ac = etree.Element(f"{{{self._MC}}}AlternateContent", nsmap={"mc": self._MC, "wps": self._WPS})
-            ch = etree.SubElement(ac, f"{{{self._MC}}}Choice"); ch.set("Requires", "wps")
-            drawing.getparent().replace(drawing, ac)
-            ch.append(drawing)
-
-    def _txbx_inhalt(self, inhalt, d: dict) -> None:
-        """Absätze und Läufe des Textfelds (Text mit Zeichenformaten) als ``w:p``/``w:r`` in ``w:txbxContent``."""
-        from lxml import etree
-        from lunivo_writer.editor import frei_objekt as FO
-        W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-
-        def el(eltern, name, **at):
-            e = etree.SubElement(eltern, f"{{{W}}}{name}")
-            for k, v in at.items():
-                e.set(f"{{{W}}}{k}", str(v))
-            return e
-        laeufe = d.get("laeufe") or [{"t": d.get("text", "")}]
-        for zeile in FO._zeilen_laeufe(laeufe) or [[]]:
-            p = el(inhalt, "p")
-            ppr = el(p, "pPr")
-            if d.get("ausr") in ("mitte", "rechts", "block", "verteilt"):
-                el(ppr, "jc", val={"mitte": "center", "rechts": "right", "block": "both", "verteilt": "distribute"}[d["ausr"]])
-            if d.get("einzug"):
-                el(ppr, "ind", left=int(d["einzug"]) * 360)
-            if d.get("zeilenabstand"):
-                el(ppr, "spacing", line=int(float(d["zeilenabstand"]) * 240), lineRule="auto")
-            for r in zeile:
-                e = {k: r.get(k, d.get(k)) for k in FO.ZEICHEN_SCHLUESSEL}
-                wr = el(p, "r"); rpr = el(wr, "rPr")
-                if e["schrift"]:
-                    el(rpr, "rFonts", ascii=e["schrift"], hAnsi=e["schrift"])
-                if e["fett"]:
-                    el(rpr, "b")
-                if e["kursiv"]:
-                    el(rpr, "i")
-                if e["durch"]:
-                    el(rpr, "strike")
-                col = e["fuell"] or d.get("farbe")
-                if col and len(col.lstrip("#")) in (6, 8):
-                    el(rpr, "color", val=col.lstrip("#")[-6:].upper())
-                if e["pt"]:
-                    el(rpr, "sz", val=int(float(e["pt"]) * 2))
-                if e["hervor"]:
-                    el(rpr, "shd", val="clear", color="auto", fill=e["hervor"].lstrip("#")[-6:].upper())
-                if e["unter"]:
-                    el(rpr, "u", val="single")
-                if e["hoch"] or e["tief"]:
-                    el(rpr, "vertAlign", val="superscript" if e["hoch"] else "subscript")
-                t = el(wr, "t"); t.text = r["t"]; t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-
-    @staticmethod
-    def _effekte_element(fx: dict):
-        """Schatten, Leuchten, Spiegelung und weiche Kanten als ``a:effectLst`` (Längen in Punkt → EMU, Winkel in 1/60000 Grad)."""
-        pt = 12700
-
-        def farbe(el, hexfarbe: str, transparenz) -> None:
-            c = OxmlElement("a:srgbClr"); c.set("val", str(hexfarbe or Farbe.SCHWARZ).lstrip("#").upper())
-            al = OxmlElement("a:alpha"); al.set("val", str(int(round((100 - float(transparenz)) * 1000)))); c.append(al); el.append(c)
-        lst = OxmlElement("a:effectLst")
-        if fx.get("leuchten"):
-            g = fx["leuchten"]; el = OxmlElement("a:glow"); el.set("rad", str(int(float(g.get("groesse", 8)) * pt)))
-            farbe(el, g.get("farbe", Farbe.BLAU), g.get("transparenz", 60)); lst.append(el)
-        if fx.get("schatten"):
-            sc = fx["schatten"]; el = OxmlElement("a:outerShdw")
-            el.set("blurRad", str(int(float(sc.get("weich", 4)) * pt))); el.set("dist", str(int(float(sc.get("abstand", 4)) * pt)))
-            el.set("dir", str(int(float(sc.get("winkel", 45)) * 60000))); el.set("algn", "ctr"); el.set("rotWithShape", "0")
-            farbe(el, sc.get("farbe", Farbe.SCHWARZ), sc.get("transparenz", 60)); lst.append(el)
-        if fx.get("reflektion"):
-            r = fx["reflektion"]; el = OxmlElement("a:reflection")
-            el.set("blurRad", str(int(float(r.get("weich", 0.5)) * pt))); el.set("stA", str(int(round((100 - float(r.get("transparenz", 50))) * 1000))))
-            el.set("endA", "0"); el.set("endPos", str(int(float(r.get("groesse", 50)) * 1000))); el.set("dist", str(int(float(r.get("abstand", 0)) * pt)))
-            el.set("dir", "5400000"); el.set("sy", "-100000"); el.set("algn", "bl"); el.set("rotWithShape", "0"); lst.append(el)
-        if fx.get("weich"):
-            el = OxmlElement("a:softEdge"); el.set("rad", str(int(float(fx["weich"].get("radius", 6)) * pt))); lst.append(el)
-        return lst
-
-    def _verankern(self, run, ausrichtung: str) -> None:
-        """Macht aus dem Bild im Text (wp:inline) ein umflossenes Bild (wp:anchor, Umbruch „Quadrat“, links/rechts)."""
-        for inline in run._r.xpath(".//wp:inline"):
-            anker = OxmlElement("wp:anchor")
-            for k, v in (("distT", "0"), ("distB", "0"), ("distL", "114300"), ("distR", "114300"), ("simplePos", "0"),
-                         ("relativeHeight", "251658240"), ("behindDoc", "0"), ("locked", "0"), ("layoutInCell", "1"),
-                         ("allowOverlap", "0")):
-                anker.set(k, v)
-            sp = OxmlElement("wp:simplePos"); sp.set("x", "0"); sp.set("y", "0")
-            ph = OxmlElement("wp:positionH"); ph.set("relativeFrom", "margin")
-            al = OxmlElement("wp:align"); al.text = ausrichtung; ph.append(al)
-            pv = OxmlElement("wp:positionV"); pv.set("relativeFrom", "paragraph")
-            po = OxmlElement("wp:posOffset"); po.text = "0"; pv.append(po)
-            ee = OxmlElement("wp:effectExtent")
-            for k in ("l", "t", "r", "b"):
-                ee.set(k, "0")
-            wr = OxmlElement("wp:wrapSquare"); wr.set("wrapText", "bothSides")
-            extent = inline.find(qn("wp:extent"))
-            vorn = [sp, ph, pv] + ([extent] if extent is not None else [])
-            for e in vorn + [ee, wr]:
-                anker.append(e)
-            for k in list(inline):
-                if k is not extent and k.tag != qn("wp:effectExtent"):
-                    anker.append(k)
-            inline.getparent().replace(inline, anker)
-
-    # ---- Tabellen -------------------------------------------------------
-    def write_table(self, qt: QTextTable, container):
-        rows, cols = qt.rows(), qt.columns()
-        t = container.add_table(rows, cols)
-        if qt.format().border() > 0:
-            t.style = self.d.styles["Table Grid"]
-        done = set()
-        for r in range(rows):
-            self._zeilenhoehe(t.rows[r], qt, r)
-            for c in range(cols):
-                cell = qt.cellAt(r, c)
-                key = (cell.row(), cell.column())
-                if key in done:
-                    continue
-                done.add(key)
-                rs, cs = cell.rowSpan(), cell.columnSpan()
-                dcell = t.cell(r, c)
-                if rs > 1 or cs > 1:
-                    dcell = dcell.merge(t.cell(r + rs - 1, c + cs - 1))
-                self._zelle_format(dcell, cell.format().toTableCellFormat())
-                box = _CellBox(dcell)
-                # Zelleninhalt: Rahmen der Zelle durchlaufen
-                cit = cell.begin()
-                first = True
-                while not cit.atEnd():
-                    blk = cit.currentBlock()
-                    if blk.isValid():
-                        para = box.first_paragraph() if first else box.add_paragraph()
-                        first = False
-                        self.write_block(blk, para)
-                    cit += 1
-        self._tabelle_eigenschaften(t, qt)
-        if isinstance(container, _Body):
-            pass
 
     _RAND_VAL = {QTextFrameFormat.BorderStyle_Dotted: "dotted", QTextFrameFormat.BorderStyle_Dashed: "dashed",
                  QTextFrameFormat.BorderStyle_Double: "double"}
 
-    def _tabelle_eigenschaften(self, t, qt: QTextTable) -> None:
-        """Tabellenbreite, Ausrichtung, Zellabstand, Rahmen, Innenabstand (w:tblPr, in Schema-Reihenfolge), Spaltenbreiten
-        (w:tblGrid, w:tcW) und Kopfzeile (w:tblHeader) der Qt-Tabelle schreiben."""
-        from PySide6.QtGui import QTextLength
-        from lunivo_writer.models.page import px_to_mm
-        tw = lambda px: int(round(px_to_mm(px) / 25.4 * 1440))                # noqa: E731  Bildpunkte -> Zwanzigstelpunkte
-        f = qt.format()
-        inhalt = tw(self.page.content_width_px) if self.page is not None else 9000
-        b = f.width()
-        if b.type() == QTextLength.PercentageLength:
-            breite, art, wert = inhalt * b.rawValue() / 100, "pct", int(round(b.rawValue() * 50))
-        elif b.type() == QTextLength.FixedLength:
-            breite = tw(b.rawValue()); art, wert = "dxa", int(breite)
-        else:
-            breite, art, wert = inhalt, "auto", 0
-        pr = t._tbl.tblPr
-        for tag in ("w:tblW", "w:jc", "w:tblCellSpacing", "w:tblBorders", "w:tblLayout", "w:tblCellMar"):
-            for alt in pr.findall(qn(tag)):
-                pr.remove(alt)
-        neu = []
-
-        def el(tag, **attr):
-            e = OxmlElement(tag)
-            for k, v in attr.items():
-                e.set(qn("w:" + k), str(v))
-            return e
-        neu.append(el("w:tblW", type=art, w=wert))
-        al = f.alignment()
-        if al & Qt.AlignHCenter:
-            neu.append(el("w:jc", val="center"))
-        elif al & Qt.AlignRight:
-            neu.append(el("w:jc", val="right"))
-        if f.cellSpacing() > 0:
-            neu.append(el("w:tblCellSpacing", w=tw(f.cellSpacing()), type="dxa"))
-        if f.border() > 0:
-            rb = el("w:tblBorders")
-            val = self._RAND_VAL.get(f.borderStyle(), "single")
-            for kante in ("top", "left", "bottom", "right", "insideH", "insideV"):
-                rb.append(el("w:" + kante, val=val, sz=max(2, int(round(f.border() * 6))), space=0,
-                             color=f.borderBrush().color().name()[1:].upper()))
-            neu.append(rb)
-        pad = tw(f.cellPadding())
-        mar = el("w:tblCellMar")
-        for kante in ("top", "left", "bottom", "right"):
-            mar.append(el("w:" + kante, w=pad, type="dxa"))
-        neu.append(mar)
-        look = pr.find(qn("w:tblLook"))
-        for e in neu:
-            look.addprevious(e) if look is not None else pr.append(e)
-        # Spalten: Fest -> dxa, Prozent -> pct, sonst auto (Gitterbreite aus dem Rest)
-        lang = list(f.columnWidthConstraints())
-        n = qt.columns()
-        lang += [QTextLength()] * (n - len(lang))
-        w = [0.0] * n
-        for i, x in enumerate(lang[:n]):
-            if x.type() == QTextLength.FixedLength:
-                w[i] = float(tw(x.rawValue()))
-            elif x.type() == QTextLength.PercentageLength:
-                w[i] = breite * x.rawValue() / 100
-        frei = [i for i in range(n) if w[i] == 0.0]
-        if frei:
-            rest = max(breite - sum(w), 120.0 * len(frei))
-            for i in frei:
-                w[i] = rest / len(frei)
-        for g, x in zip(t._tbl.tblGrid.gridCol_lst, w):
-            g.set(qn("w:w"), str(int(round(x))))
-        for tr in t._tbl.tr_lst:
-            i = 0
-            for tc in tr.tc_lst:
-                span = max(1, tc.grid_span)
-                x = lang[i] if i < n else QTextLength()
-                tcw = tc.get_or_add_tcPr().get_or_add_tcW()
-                if span == 1 and x.type() == QTextLength.FixedLength:
-                    tcw.set(qn("w:type"), "dxa"); tcw.set(qn("w:w"), str(int(round(w[i]))))
-                elif span == 1 and x.type() == QTextLength.PercentageLength:
-                    tcw.set(qn("w:type"), "pct"); tcw.set(qn("w:w"), str(int(round(x.rawValue() * 50))))
-                elif span == 1:
-                    tcw.set(qn("w:type"), "auto"); tcw.set(qn("w:w"), "0")
-                else:
-                    tcw.set(qn("w:type"), "dxa"); tcw.set(qn("w:w"), str(int(round(sum(w[i:i + span])))))
-                i += span
-        for r in range(min(f.headerRowCount(), len(t.rows))):
-            t.rows[r]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))
-
-    @staticmethod
-    def _zeilenhoehe(drow, qt, r: int) -> None:
-        """Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten."""
-        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_lesen
-        from lunivo_writer.models.page import px_to_mm
-        px = zeilenhoehe_lesen(qt, r)
-        if px > 0:
-            h = OxmlElement("w:trHeight")
-            h.set(qn("w:val"), str(int(round(px_to_mm(px) / 25.4 * 1440)))); h.set(qn("w:hRule"), "atLeast")
-            drow._tr.get_or_add_trPr().append(h)
-
-    @staticmethod
-    def _zelle_format(dcell, cf) -> None:
-        """Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) der Qt-Zelle übernehmen."""
-        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT as V
-        br = cf.background()
-        if br.style() != Qt.NoBrush and br.color().alpha() > 0:
-            tcpr = dcell._tc.get_or_add_tcPr()
-            shd = OxmlElement("w:shd")
-            shd.set(qn("w:val"), "clear"); shd.set(qn("w:color"), "auto"); shd.set(qn("w:fill"), br.color().name()[1:].upper())
-            for alt in tcpr.findall(qn("w:shd")):
-                tcpr.remove(alt)
-            tcpr.append(shd)
-        va = {QTextCharFormat.AlignMiddle: V.CENTER, QTextCharFormat.AlignBottom: V.BOTTOM}.get(cf.verticalAlignment())
-        if va is not None:
-            dcell.vertical_alignment = va
 
     # ---- Hauptlauf --------------------------------------------------------
     def run(self) -> bytes:
@@ -1360,133 +795,6 @@ class _Writer:
         self.d.save(out)
         return out.getvalue()
 
-    def _kommentare_schreiben(self) -> None:
-        daten = self.meta.get("kommentare", {}) or {}
-        gelost: list[str] = []                                   # Kennungen der als gelöst markierten Kommentare (für commentsExtended)
-        for kid in sorted(self._komm_runs):
-            runs = self._komm_runs[kid]
-            k = daten.get(kid) or daten.get(str(kid)) or {}
-            try:
-                c = self.d.add_comment(runs=[runs[0], runs[-1]] if len(runs) > 1 else runs[0], text=k.get("text", ""),
-                                       author=k.get("autor", "") or "Unbekannt", initials=k.get("initialen", "") or "")
-                if k.get("datum"):
-                    c._comment_elm.set(qn("w:date"), k["datum"])
-                if k.get("geloest"):
-                    pid = f"{0x20000000 + len(gelost) * 0x111:08X}"
-                    c.paragraphs[0]._p.set("{http://schemas.microsoft.com/office/word/2010/wordml}paraId", pid)
-                    gelost.append(pid)
-            except Exception as ex:
-                self.report.warn(f"Ein Kommentar konnte nicht gespeichert werden: {ex}")
-        if gelost:
-            self._komm_erweitert(gelost)
-
-    def _komm_erweitert(self, kennungen: list[str]) -> None:
-        """Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done)."""
-        from docx.opc.packuri import PackURI
-        from docx.opc.part import Part
-        from lxml import etree
-        W15 = "http://schemas.microsoft.com/office/word/2012/wordml"
-        wurzel = etree.Element(f"{{{W15}}}commentsEx", nsmap={"w15": W15})
-        for pid in kennungen:
-            etree.SubElement(wurzel, f"{{{W15}}}commentEx", {f"{{{W15}}}paraId": pid, f"{{{W15}}}done": "1"})
-        blob = etree.tostring(wurzel, xml_declaration=True, encoding="UTF-8", standalone=True)
-        pkg = self.d.part.package
-        teil = Part(PackURI("/word/commentsExtended.xml"), "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtended+xml", blob, pkg)
-        self.d.part.relate_to(teil, "http://schemas.microsoft.com/office/2011/relationships/commentsExtended")
-
-    def _quellen_schreiben(self) -> None:
-        quellen = self.meta.get("quellen") or []
-        if not quellen:
-            return
-        import uuid
-        from docx.opc.packuri import PackURI
-        from docx.opc.part import Part
-        from lxml import etree
-        B = "http://schemas.openxmlformats.org/officeDocument/2006/bibliography"
-        w = etree.Element(f"{{{B}}}Sources", nsmap={"b": B, None: B},
-                          SelectedStyle="\\APA.XSL", StyleName=self.meta.get("zitierweise", "APA"), Version="6")
-        for q in quellen:
-            e = etree.SubElement(w, f"{{{B}}}Source")
-            def sub(n, v, parent=e):
-                x = etree.SubElement(parent, f"{{{B}}}{n}")
-                x.text = v or ""
-                return x
-            sub("Tag", q.get("tag", ""))
-            sub("SourceType", {"Buch": "Book", "Aufsatz": "JournalArticle", "Webseite": "InternetSite", "Bericht": "Report"}.get(q.get("typ"), "Misc"))
-            a1 = etree.SubElement(etree.SubElement(e, f"{{{B}}}Author"), f"{{{B}}}Author")
-            nl = etree.SubElement(a1, f"{{{B}}}NameList")
-            for person in [x.strip() for x in (q.get("autor") or "").split(";") if x.strip()]:
-                pe = etree.SubElement(nl, f"{{{B}}}Person")
-                last, _, first = person.partition(",")
-                sub("Last", last.strip(), pe)
-                if first.strip():
-                    sub("First", first.strip(), pe)
-            sub("Title", q.get("titel", "")); sub("Year", q.get("jahr", "")); sub("City", q.get("ort", ""))
-            sub("Publisher", q.get("verlag", "")); sub("URL", q.get("url", ""))
-        blob = etree.tostring(w, xml_declaration=True, encoding="UTF-8", standalone=True)
-        pkg = self.d.part.package
-        vorhanden = {str(x.partname) for x in pkg.iter_parts()}
-        n = 1
-        while f"/customXml/item{n}.xml" in vorhanden or f"/customXml/itemProps{n}.xml" in vorhanden:
-            n += 1
-        item = Part(PackURI(f"/customXml/item{n}.xml"), "application/xml", blob, pkg)
-        guid = "{" + str(uuid.uuid4()).upper() + "}"
-        props = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                 f'<ds:datastoreItem ds:itemID="{guid}" xmlns:ds="http://schemas.openxmlformats.org/officeDocument/2006/customXml">'
-                 f'<ds:schemaRefs><ds:schemaRef ds:uri="{B}"/></ds:schemaRefs></ds:datastoreItem>').encode("utf-8")
-        pp = Part(PackURI(f"/customXml/itemProps{n}.xml"),
-                  "application/vnd.openxmlformats-officedocument.customXmlProperties+xml", props, pkg)
-        item.relate_to(pp, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps")
-        self.d.part.relate_to(item, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml")
-
-    def _noten_schreiben(self) -> None:
-        from docx.enum.style import WD_STYLE_TYPE
-        from docx.opc.packuri import PackURI
-        from docx.opc.part import Part
-        from lxml import etree
-        W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-        for art, wurzel, tag, ref, rel, ct, stil_t, stil_r in (
-                ("f", "footnotes", "footnote", "footnoteRef", "footnotes",
-                 "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml", "Footnote Text", "Footnote Reference"),
-                ("e", "endnotes", "endnote", "endnoteRef", "endnotes",
-                 "application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml", "Endnote Text", "Endnote Reference")):
-            if not self._noten[art]:
-                continue
-            names = [s.name for s in self.d.styles]
-            if stil_t not in names:
-                st = self.d.styles.add_style(stil_t, WD_STYLE_TYPE.PARAGRAPH)
-                st.base_style = self.d.styles["Normal"]
-                st.font.size = Pt(10)
-            if stil_r not in names:
-                st = self.d.styles.add_style(stil_r, WD_STYLE_TYPE.CHARACTER)
-                st.font.superscript = True
-            root = etree.Element(f"{{{W}}}{wurzel}", nsmap={"w": W})
-
-            def trenner(typ, nid, kind):
-                n = etree.SubElement(root, f"{{{W}}}{tag}", {f"{{{W}}}type": typ, f"{{{W}}}id": str(nid)})
-                p = etree.SubElement(n, f"{{{W}}}p")
-                r = etree.SubElement(p, f"{{{W}}}r")
-                etree.SubElement(r, f"{{{W}}}{kind}")
-            trenner("separator", -1, "separator")
-            trenner("continuationSeparator", 0, "continuationSeparator")
-            for nid, text in self._noten[art]:
-                n = etree.SubElement(root, f"{{{W}}}{tag}", {f"{{{W}}}id": str(nid)})
-                for i, zeile in enumerate((text or "").split("\n")):
-                    p = etree.SubElement(n, f"{{{W}}}p")
-                    ppr = etree.SubElement(p, f"{{{W}}}pPr")
-                    etree.SubElement(ppr, f"{{{W}}}pStyle", {f"{{{W}}}val": stil_t.replace(" ", "")})
-                    if i == 0:
-                        r = etree.SubElement(p, f"{{{W}}}r")
-                        rpr = etree.SubElement(r, f"{{{W}}}rPr")
-                        etree.SubElement(rpr, f"{{{W}}}rStyle", {f"{{{W}}}val": stil_r.replace(" ", "")})
-                        etree.SubElement(r, f"{{{W}}}{ref}")
-                    r2 = etree.SubElement(p, f"{{{W}}}r")
-                    t = etree.SubElement(r2, f"{{{W}}}t")
-                    t.text = (" " if i == 0 else "") + zeile
-                    t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-            blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
-            part = Part(PackURI(f"/word/{wurzel}.xml"), ct, blob, self.d.part.package)
-            self.d.part.relate_to(part, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/" + rel)
 
     def _trim_trailing_empty(self):
         body = self.d.element.body
@@ -1496,59 +804,6 @@ class _Writer:
                 and kids[-2].tag == qn("w:p") and not kids[-1].xpath(".//w:drawing"):
             body.remove(kids[-1])
             kids.pop()
-
-
-
-
-def _split(text: str):
-    buf = ""
-    for ch in text:
-        if ch in ("\t", " ", "￼", "\n"):
-            if buf:
-                yield buf, "text"
-                buf = ""
-            yield "", {"\t": "tab", " ": "br", "\n": "br", "￼": "img"}[ch]
-        else:
-            buf += ch
-    if buf:
-        yield buf, "text"
-
-
-def _rstyle_hyperlink(d):
-    el = OxmlElement("w:rStyle")
-    el.set(qn("w:val"), "Hyperlink")
-    try:
-        d.styles["Hyperlink"]
-    except KeyError:
-        st = d.styles.add_style("Hyperlink", WD_STYLE_TYPE.CHARACTER)
-        st.font.underline = True
-        st.font.color.rgb = RGBColor(0x05, 0x63, 0xC1)
-    return el
-
-
-class _Body:
-    def __init__(self, d):
-        self.d = d
-
-    def add_paragraph(self):
-        return self.d.add_paragraph()
-
-    def add_table(self, r, c):
-        return self.d.add_table(rows=r, cols=c)
-
-
-class _CellBox:
-    def __init__(self, cell):
-        self.cell = cell
-
-    def first_paragraph(self):
-        return self.cell.paragraphs[0]
-
-    def add_paragraph(self):
-        return self.cell.add_paragraph()
-
-    def add_table(self, r, c):
-        return self.cell.add_table(r, c)
 
 
 def docx_daten(qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None) -> tuple[bytes, IOReport]:

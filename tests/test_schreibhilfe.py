@@ -462,13 +462,18 @@ def test_mcp_und_websuche_im_chat(app, tmp_path, monkeypatch):
             return _R({"choices": [{"message": {"content": "", "tool_calls": [{"id": "1", "function": {"name": "echo", "arguments": '{"text": "hallo"}'}}]}}]})
         return _R({"choices": [{"message": {"content": "Antwort: " + zuege[-1]["messages"][-1]["content"]}}]})
     monkeypatch.setattr(K, "_post", falsch)
-    monkeypatch.setattr(w.ki.ki, "werkzeug_frage", lambda n, a, s: True)
+    monkeypatch.setattr(w.ki.ki, "werkzeug_frage", lambda n, a, s, art="": True)
+    monkeypatch.setattr(w.ki.ki, "server_frage", lambda n, b: True)
     r = w.ki.ki.chat([{"rolle": "mensch", "text": "Sag hallo"}])
     assert r["text"] == "Antwort: ECHO:hallo" and zuege[0]["tools"][0]["function"]["name"] == "echo"
     # abgelehnter Aufruf wird nicht ausgeführt
     zuege.clear()
-    monkeypatch.setattr(w.ki.ki, "werkzeug_frage", lambda n, a, s: False)
+    monkeypatch.setattr(w.ki.ki, "werkzeug_frage", lambda n, a, s, art="": False)
     assert "abgelehnt" in w.ki.ki.chat([{"rolle": "mensch", "text": "Sag hallo"}])["text"]
+    # ohne Erlaubnis zum Serverstart wird kein Programm gestartet; die Erlaubnis zum Start ersetzt nicht die Frage je Werkzeugaufruf
+    w.ki.ki._server_erlaubt = set()
+    monkeypatch.setattr(w.ki.ki, "server_frage", lambda n, b: False)
+    assert "nicht erlaubt" in w.ki.ki.chat([{"rolle": "mensch", "text": "Sag hallo"}])["fehler"]
     k.mcp_entfernen(e["id"])
     # Websuche: die Treffer stehen in der Anweisung
     gesehen = {}
@@ -544,7 +549,7 @@ def test_aktionen_in_schreibhilfe_und_chat(app, tmp_path, monkeypatch):
     import time
     for _ in range(40):                                  # die Seitenverwaltung ändert das Blatt kurz nach dem Setzen; erst danach fragen (sonst „weitergeschrieben“)
         app.processEvents(); time.sleep(0.03)
-    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None: True)
+    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None, umfang="auszug", zeichen=0: True)
     monkeypatch.setattr(w.ki.ki, "eigener_assistent", lambda text, prompt: {"text": "Kurz.", "cent": None})
     w.ki._pool.setMaxThreadCount(1)
     w.ki.assistent(e)
@@ -742,7 +747,7 @@ def test_uebersetzen_markierung_ersetzen_oder_in_schreibhilfe_und_chat_zeigen(ap
     from PySide6.QtGui import QTextCursor
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
-    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None: True)
+    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None, umfang="auszug", zeichen=0: True)
     monkeypatch.setattr(w.ki.ki, "uebersetzen", lambda text, sprache: {"text": "Hello world", "cent": None})
     e = w.current_editor()
     e.setPlainText("Hallo Welt")
@@ -797,7 +802,7 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
-    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None: True)
+    monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None, umfang="auszug", zeichen=0: True)
     satz = " ".join(["wort"] * 30) + "."
     monkeypatch.setattr(w.ki.ki, "satz_umschreiben", lambda s, g="": {"text": "Erster Satz. Zweiter Satz.", "cent": None})
     e = w.current_editor()

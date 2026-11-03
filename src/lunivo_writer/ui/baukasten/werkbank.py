@@ -82,11 +82,18 @@ class FunktionsZeile(QFrame):
         b.tun(self.f.tun, self)
         self.aktualisieren()
 
+    def _beschreibung(self, an: bool | None = None) -> str:
+        """Was ein Bildschirmleser zusätzlich zum Namen hört: Art, Zustand, Hinweis, Kürzel."""
+        teile = {"schalter": "Schalter, " + ("an" if an else "aus"), "menue": "Menü, öffnet mit Eingabe oder Leertaste"}.get(self.f.art, "Knopf, Eingabe oder Leertaste führt aus")
+        return ". ".join(t for t in (teile, self.f.hinweis, f"Tastenkürzel {self.f.kuerzel}" if self.f.kuerzel else "") if t)
+
     def aktualisieren(self) -> None:
         if self.f.art == "schalter":
             an = bool(self.fenster.befehle.zustand(self.f.tun))
             self.zustand.setText("an" if an else "aus"); self.zustand.setStyleSheet(_an() if an else AUS)
-            self.setAccessibleDescription("an" if an else "aus")
+            self.setAccessibleDescription(self._beschreibung(an))
+        else:
+            self.setAccessibleDescription(self._beschreibung())
         if self.f.tun == "w.kiUebersetzen":
             self.untertitel.setText("Nach " + self.fenster.ki.konfig["sprache"])
 

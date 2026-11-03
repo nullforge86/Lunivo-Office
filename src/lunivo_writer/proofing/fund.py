@@ -18,10 +18,12 @@ def klemmen(wert, vorgabe: float = 0.5) -> float:
         return vorgabe
 
 
-def markieren(funde: list[dict], quelle: str) -> list[dict]:
-    """Quelle und – falls nicht vorhanden – Standard-Konfidenz eintragen (liefert Kopien)."""
+def markieren(funde: list[dict], quelle: str, text_laenge: int | None = None) -> list[dict]:
+    """Funde gegen den Datenvertrag ``ProofingIssue`` prüfen (ungültige fallen weg), dann Quelle und – falls nicht vorhanden – Standard-Konfidenz
+    eintragen (liefert Kopien). ``text_laenge``: Länge des geprüften Textes; Bereiche darüber hinaus sind ungültig."""
+    from lunivo_writer.models.proofing import bereinigen
     out = []
-    for f in funde:
+    for f in bereinigen(funde, text_laenge):
         wort_oder_vorschlag = bool(f.get("wortEbene")) or f.get("art") == "fehler"
         out.append(dict(f, quelle=f.get("quelle", quelle),
                         konfidenz=klemmen(f["konfidenz"]) if "konfidenz" in f

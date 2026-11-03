@@ -521,6 +521,53 @@ class McpListe(QWidget):
             self.k.mcp_entfernen(m["id"]); self.fuellen()
 
 
+class EinwilligungenPanel(QWidget):
+    """Wer darf welchen Text bekommen: die gespeicherten Einwilligungen, einzeln oder alle widerrufbar. Ohne Einwilligung wird nichts gesendet."""
+
+    def __init__(self, konfig: K.KIKonfig):
+        super().__init__()
+        self.k = konfig
+        v = QVBoxLayout(self); v.setContentsMargins(0, 8, 0, 0)
+        info = QLabel("Diese Dienste im Internet dürfen Text von Ihnen bekommen. Ohne Eintrag fragt Lunivo vor dem Senden und sendet bei „Nein“ nichts. "
+                      "Modelle auf diesem Rechner (Ollama, lokale Adressen) brauchen keine Erlaubnis.")
+        info.setWordWrap(True); v.addWidget(info)
+        self.liste = QListWidget(); self.liste.setAccessibleName("Erteilte Einwilligungen"); v.addWidget(self.liste, 1)
+        z = FlowLayout()
+        self.widerruf = QPushButton("Widerrufen"); self.widerruf.setToolTip("Nimmt die ausgewählte Erlaubnis zurück")
+        self.alle = QPushButton("Alle widerrufen")
+        for b in (self.widerruf, self.alle):
+            b.setMinimumHeight(36); z.addWidget(b)
+        v.addLayout(z)
+        self.widerruf.clicked.connect(self._widerrufen); self.alle.clicked.connect(self._alle)
+        self.liste.currentRowChanged.connect(self._knoepfe)
+        self.fuellen()
+
+    def fuellen(self) -> None:
+        self.liste.clear()
+        for e in self.k.einwilligungen():
+            seit = f" — seit {e['seit']}" if e["seit"] else ""
+            it = QListWidgetItem(f"{e['anbieter']}: darf {K.UMFAENGE[e['umfang']]} bekommen{seit}")
+            it.setData(Qt.UserRole, (e["anbieter"], e["umfang"])); self.liste.addItem(it)
+        if not self.liste.count():
+            it = QListWidgetItem("Keine Einwilligung gespeichert — es wird nichts ohne Rückfrage gesendet."); it.setFlags(Qt.NoItemFlags); self.liste.addItem(it)
+        else:
+            self.liste.setCurrentRow(0)
+        self._knoepfe()
+
+    def _knoepfe(self, *_) -> None:
+        self.widerruf.setEnabled(self.liste.currentItem() is not None and self.liste.currentItem().data(Qt.UserRole) is not None)
+        self.alle.setEnabled(bool(self.k.einwilligungen()))
+
+    def _widerrufen(self) -> None:
+        d = self.liste.currentItem().data(Qt.UserRole) if self.liste.currentItem() else None
+        if d:
+            self.k.einwilligung_widerrufen(*d); self.fuellen()
+
+    def _alle(self) -> None:
+        if QMessageBox.question(self, "Alle widerrufen", "Alle gespeicherten Einwilligungen zurücknehmen?") == QMessageBox.Yes:
+            self.k.einwilligung_widerrufen(); self.fuellen()
+
+
 class WebsuchePanel(QWidget):
     """Websuche für den KI-Chat: Anbieter, Adresse oder Schlüssel, Zahl der Treffer. Ein: die Frage geht an den Suchanbieter."""
 
@@ -568,7 +615,7 @@ class WebsuchePanel(QWidget):
         self.k.websuche_setzen(**self.werte())
 
 
-REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "MCP-Server", "Websuche")
+REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "MCP-Server", "Websuche", "Datenschutz")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -614,6 +661,8 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.stapel.addWidget(self.mcp)
         self.websuche = WebsuchePanel(self.k)
         self.stapel.addWidget(self.websuche)
+        self.datenschutz = EinwilligungenPanel(self.k)
+        self.stapel.addWidget(self.datenschutz)
         v.addWidget(knopfzeile(self, bei_ok=self._ok))
         self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)
         self.freischalten()
@@ -622,7 +671,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen."""
         for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("MCP", "MCP-Server"),
-                                          ("Websuche", "Websuche"))):
+                                          ("Websuche", "Websuche"), ("Daten", "Datenschutz"))):
             self.reiter.setTabText(i, kurz)
             if self.reiter.isTabEnabled(i):
                 self.reiter.setTabToolTip(i, voll)

@@ -61,6 +61,7 @@ class WritingAssistant(QObject):
         self.editor = None
         self.funde: list[dict] = []
         self._roh: list[dict] = []
+        self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
         self._weg: set[tuple] = set()
         self._alle_weg: set[str] = set()            # Wörter, die im ganzen Dokument in Ruhe bleiben (nur diese Sitzung)
         self._geprueft_rev = -1
@@ -180,6 +181,7 @@ class WritingAssistant(QObject):
         self._laeuft = True
         schalter = self.pruef_schalter()
         pruef_text = text[self._region[0]:self._region[1]] if self._region else text
+        self._pruef_laenge = len(pruef_text)
         self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, schalter))
 
     def pruef_schalter(self) -> dict:
@@ -198,7 +200,7 @@ class WritingAssistant(QObject):
             self._timer.start()
             return
         self._geprueft_rev = rev
-        roh = fundlib.markieren(roh, "eigen")
+        roh = fundlib.markieren(roh, "eigen", self._pruef_laenge)
         if self._region is not None:
             self._roh = inkrement.einsetzen(self._roh, *self._region, roh)
         else:
@@ -352,7 +354,7 @@ class WritingAssistant(QObject):
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
         self._roh = fundlib.loesen([f for f in self._roh if f.get("quelle") != "languagetool"]
-                                   + fundlib.markieren(funde, "languagetool"))
+                                   + fundlib.markieren(funde, "languagetool", ed.document().characterCount() - 1))
         lt = len([f for f in self._roh if f.get("quelle") == "languagetool"])
         self._zeigen(f"Gründlich geprüft: {lt} zusätzliche Hinweise von LanguageTool ({vorher} eigene Funde vorher).")
 

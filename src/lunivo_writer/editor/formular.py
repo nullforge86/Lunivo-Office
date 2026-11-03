@@ -11,7 +11,27 @@ import json
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat
 
-from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+
+
+class _Eingabe:
+    """Wer fragt den Benutzer nach Datum oder Text eines Formularfeldes? Die Oberfläche setzt ``eingabe_anbieter`` beim Start auf ihr
+    ``EingabeFenster``; der Editor kennt die Oberfläche nicht. Ohne Anbieter fragt das Standardfenster von Qt."""
+
+    @staticmethod
+    def getDatum(eltern, titel, frage="Datum:", datum=None):
+        from PySide6.QtCore import QDate
+        from PySide6.QtWidgets import QInputDialog
+        text, ok = QInputDialog.getText(eltern, titel, frage, text=(datum or QDate.currentDate()).toString(DATUMSFORMAT))
+        tag = QDate.fromString(text, DATUMSFORMAT)
+        return (tag if tag.isValid() else QDate.currentDate()), ok and tag.isValid()
+
+    @staticmethod
+    def getText(eltern, titel, frage, text="", kennwort=False):
+        from PySide6.QtWidgets import QInputDialog
+        return QInputDialog.getText(eltern, titel, frage, text=text)
+
+
+eingabe_anbieter = _Eingabe
 from lunivo_writer.core.farben import Farbe
 P_FORM = QTextFormat.UserProperty + 34
 ARTEN = ("text", "auswahl", "datum", "kasten", "knopf")
@@ -142,12 +162,12 @@ def klick(ed, pos: int, fenster=None) -> bool:
     elif art == "datum":
         from PySide6.QtCore import QDate
         aktuell = QDate.fromString(wert_von(ed.document(), v, e), DATUMSFORMAT)
-        tag, ok = EingabeFenster.getDatum(ed.window(), m.get("name") or "Datum", "Datum:", aktuell)
+        tag, ok = eingabe_anbieter.getDatum(ed.window(), m.get("name") or "Datum", "Datum:", aktuell)
         if ok:
             _ersetzen(ed, v, e, m, tag.toString(DATUMSFORMAT))
     elif art == "text":
         alt = "" if _ist_leer(ed.document(), v) else wert_von(ed.document(), v, e)
-        t, ok = EingabeFenster.getText(ed.window(), m.get("name") or "Textfeld", m.get("name") or "Wert:", text=alt)
+        t, ok = eingabe_anbieter.getText(ed.window(), m.get("name") or "Textfeld", m.get("name") or "Wert:", text=alt)
         if ok:
             if t:
                 _ersetzen(ed, v, e, m, t)

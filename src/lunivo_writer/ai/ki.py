@@ -13,6 +13,7 @@ import os
 import re
 import difflib
 import urllib.error
+import urllib.parse
 import urllib.request
 
 OLLAMA_URL = "http://127.0.0.1:11434"
@@ -20,6 +21,7 @@ CLAUDE_URL = "https://api.anthropic.com/v1/messages"
 OLLAMA_MARKE, EIGEN_MARKE = "ollama:", "eigen:"
 LERN_SCHWELLE = 5
 ZETTEL_GRENZE = 300
+UMFAENGE = {"auszug": "markierte Textauszüge", "dokument": "den ganzen Text des Dokuments"}      # was an einen Anbieter im Internet gehen darf
 
 EMPFAENGER = {
     "egal": "Lass den Tonfall genau so, wie er im Text steht: Förmliches bleibt förmlich, Lockeres bleibt locker. "
@@ -91,7 +93,7 @@ class KIKonfig:
     def __init__(self, pfad: str):
         self.pfad = pfad
         self.d = {"modell": "claude-opus-5", "sprache": "Englisch", "empfaenger": "egal", "zettel": "",
-                  "apiKey": "", "anbieter": [], "aufgaben": {}, "kosten": 0.0, "claude_erlaubt": False, "assistenten": [], "chat": {}, "mcp": [], "websuche": {}}
+                  "apiKey": "", "anbieter": [], "aufgaben": {}, "kosten": 0.0, "claude_erlaubt": False, "einwilligungen": [], "assistenten": [], "chat": {}, "mcp": [], "websuche": {}}
         try:
             with open(pfad, encoding="utf-8") as fh:
                 self.d.update(json.load(fh))
@@ -111,6 +113,33 @@ class KIKonfig:
     def setze(self, k, v) -> None:
         self.d[k] = v
         self.speichern()
+
+    # ---- Einwilligungen: wer darf welchen Umfang an Text bekommen ---------------------------------------------------
+    def einwilligungen(self) -> list[dict]:
+        """[{anbieter, umfang, seit}]; ältere Einträge (nur der Name) gelten als Umfang „dokument“, wie damals gefragt wurde."""
+        r = []
+        for e in self.d.get("einwilligungen") or []:
+            if isinstance(e, str):
+                e = {"anbieter": e, "umfang": "dokument", "seit": ""}
+            if isinstance(e, dict) and e.get("anbieter") and e.get("umfang") in UMFAENGE:
+                r.append({"anbieter": str(e["anbieter"]), "umfang": e["umfang"], "seit": str(e.get("seit", ""))})
+        return r
+
+    def hat_einwilligung(self, anbieter: str, umfang: str = "auszug") -> bool:
+        """„dokument“ schließt „auszug“ ein, nicht umgekehrt."""
+        gebraucht = {umfang} if umfang == "dokument" else {"auszug", "dokument"}
+        return any(e["anbieter"] == anbieter and e["umfang"] in gebraucht for e in self.einwilligungen())
+
+    def einwilligung_geben(self, anbieter: str, umfang: str) -> None:
+        import time
+        rest = [e for e in self.einwilligungen() if not (e["anbieter"] == anbieter and e["umfang"] == umfang)]
+        self.setze("einwilligungen", rest + [{"anbieter": anbieter, "umfang": umfang, "seit": time.strftime("%Y-%m-%d")}])
+
+    def einwilligung_widerrufen(self, anbieter: str | None = None, umfang: str | None = None) -> None:
+        """Ohne Angaben: alle. Mit ``anbieter`` (und ``umfang``): nur diese."""
+        def trifft(e: dict) -> bool:
+            return anbieter is None or (e["anbieter"] == anbieter and (umfang is None or e["umfang"] == umfang))
+        self.setze("einwilligungen", [e for e in self.einwilligungen() if not trifft(e)])
 
     def anbieter_holen(self, id_: str):
         return next((a for a in self.d["anbieter"] if a["id"] == id_), None)
@@ -199,8 +228,22 @@ class KIKonfig:
         return r
 
 
+def _json_dict(r) -> dict:
+    """Antwort eines Anbieters als Wörterbuch. Alles andere (kein JSON, keine Zeichenfolge, Liste statt Objekt) ist ein ValueError und wird als
+    Fehler gemeldet statt das Programm zu stören."""
+    daten = json.loads(r.read().decode("utf-8"))
+    if not isinstance(daten, dict):
+        raise ValueError("Antwort ist kein JSON-Objekt")
+    return daten
+
+
 def ist_lokale_url(url: str) -> bool:
-    return bool(re.match(r"^https?://(localhost|127\.0\.0\.1)([:/]|$)", url or ""))
+    """Nur der Rechner selbst: der Rechnername wird aus der Adresse gelesen (nicht per Muster), damit „http://127.0.0.1:80@fremd.de“ nicht durchgeht."""
+    try:
+        u = urllib.parse.urlparse(url or "")
+        return u.scheme in ("http", "https") and u.hostname in ("localhost", "127.0.0.1", "::1")
+    except ValueError:
+        return False
 
 
 # ---------------------------------------------------------------- Anweisungen
@@ -342,8 +385,18 @@ class KI:
             return None if (a and ist_lokale_url(a["url"])) else (a["name"] if a else "einen eigenen Anbieter")
         return "Anthropic (Claude)"
 
+    def zustimmung_fehlt(self, modell: str | None = None, umfang: str = "auszug") -> dict | None:
+        """Sperre an der Sendestelle: Geht der Text an einen Dienst außerhalb dieses Rechners und liegt dafür keine Einwilligung vor, kommt eine
+        Fehlermeldung zurück (sonst None). Unabhängig von der Rückfrage in der Oberfläche — ohne Zustimmung wird nichts gesendet."""
+        ziel = self.schickt_nach_aussen(modell)
+        if ziel is None or self.k.hat_einwilligung(ziel, umfang):
+            return None
+        return {"fehler": f"Es liegt keine Zustimmung vor, Text an „{ziel}“ zu senden ({UMFAENGE[umfang]}). Nichts wurde gesendet."}
+
     def anfrage(self, anweisung: str, text, bauplan=None, modell: str | None = None, optionen: dict | None = None) -> dict:
         m = modell or self.k["modell"]
+        if (sperre := self.zustimmung_fehlt(m)) is not None:
+            return sperre
         if m.startswith(EIGEN_MARKE):
             return self._eigen(self.k.anbieter_holen(m[len(EIGEN_MARKE):]), anweisung, text, bauplan, optionen)
         if m.startswith(OLLAMA_MARKE):
@@ -370,7 +423,7 @@ class KI:
             bitte["output_config"] = ausgabe
         try:
             with _post(CLAUDE_URL, {"x-api-key": self.k["apiKey"], "anthropic-version": "2023-06-01"}, bitte, 90) as r:
-                daten = json.loads(r.read().decode("utf-8"))
+                daten = _json_dict(r)
         except urllib.error.HTTPError as e:
             zusatz = ""
             try:
@@ -390,7 +443,8 @@ class KI:
             return {"fehler": f"Es hat nicht geklappt: {getattr(e, 'reason', e)}"}
         if daten.get("stop_reason") == "refusal":
             return {"fehler": "Die KI wollte diesen Text nicht bearbeiten."}
-        erg = "".join(b.get("text", "") for b in daten.get("content", []) if b.get("type") == "text").strip()
+        bloecke = daten.get("content") if isinstance(daten.get("content"), list) else []
+        erg = "".join(b["text"] for b in bloecke if isinstance(b, dict) and b.get("type") == "text" and isinstance(b.get("text"), str)).strip()
         if not erg:
             return {"fehler": "Es kam keine Antwort zurück."}
         return {"ergebnis": erg, "cent": cent_fuer(daten.get("model") or modell, daten.get("usage"))}
@@ -413,7 +467,7 @@ class KI:
         for _versuch in (1, 2):
             try:
                 with _post(OLLAMA_URL + "/api/chat", {}, bitte, 600) as r:
-                    daten = json.loads(r.read().decode("utf-8"))
+                    daten = _json_dict(r)
                 break
             except urllib.error.HTTPError as e:
                 grund = ""
@@ -432,7 +486,8 @@ class KI:
                 return {"fehler": "Der eigene Rechner hat zu lange gebraucht. Ein kleineres Modell geht schneller."}
             except (urllib.error.URLError, OSError, ValueError):
                 return {"fehler": f"Ollama ist unter {OLLAMA_URL} nicht zu erreichen. Läuft der Dienst?"}
-        erg = ohne_gruebeln((daten.get("message") or {}).get("content", "")).strip()
+        nachricht = daten.get("message") if isinstance(daten.get("message"), dict) else {}
+        erg = ohne_gruebeln(nachricht.get("content") if isinstance(nachricht.get("content"), str) else "").strip()
         return {"ergebnis": erg} if erg else {"fehler": "Es kam keine Antwort zurück."}
 
     def _eigen(self, a, anweisung, text, bauplan, optionen=None) -> dict:
@@ -456,14 +511,16 @@ class KI:
         kopf = {"authorization": "Bearer " + a["schluessel"]} if a["schluessel"] else {}
         try:
             with _post(a["url"] + "/chat/completions", kopf, bitte, 90) as r:
-                daten = json.loads(r.read().decode("utf-8"))
+                daten = _json_dict(r)
         except urllib.error.HTTPError as e:
             return {"fehler": f"„{a['name']}“ meldet Fehler {e.code}"}
         except TimeoutError:
             return {"fehler": f"„{a['name']}“ hat zu lange gebraucht. Bitte noch einmal versuchen."}
         except (urllib.error.URLError, OSError, ValueError):
             return {"fehler": f"„{a['name']}“ ist unter {a['url']} nicht zu erreichen. Stimmt die URL?"}
-        erg = ((daten.get("choices") or [{}])[0].get("message") or {}).get("content")
+        wahl = daten.get("choices") if isinstance(daten.get("choices"), list) and daten.get("choices") else [{}]
+        nachricht = wahl[0].get("message") if isinstance(wahl[0], dict) and isinstance(wahl[0].get("message"), dict) else {}
+        erg = nachricht.get("content") if isinstance(nachricht.get("content"), str) else None
         return {"ergebnis": erg} if erg else {"fehler": "Es kam keine Antwort zurück."}
 
     # ---- die Anwendungen
@@ -495,11 +552,15 @@ class KI:
 
     def text_aktion(self, text, aktion): return self._text(anweisung_text_aktion(self.k, aktion), text)
 
-    werkzeug_frage = staticmethod(lambda name, argumente, server: False)      # vom KI-Dienst ersetzt: fragt den Benutzer vor jedem Werkzeugaufruf
+    werkzeug_frage = staticmethod(lambda name, argumente, server, art="unbekannt": False)      # vom KI-Dienst ersetzt: fragt den Benutzer vor jedem Werkzeugaufruf
+    server_frage = staticmethod(lambda name, befehl: False)       # vom KI-Dienst ersetzt: zeigt den vollständigen Startbefehl und fragt vor dem Start
+    _server_erlaubt: set = set()                                    # Befehle, deren Start in dieser Sitzung erlaubt wurde (Zustimmung gilt nicht für Werkzeugaufrufe)
 
     def chat(self, verlauf: list[dict], dokumenttext: str = "") -> dict:
         system = ("Du bist ein Schreibassistent in einem Textverarbeitungsprogramm und antwortest kurz und klar auf Deutsch. "
                   "Erfinde nichts dazu. " + EMPFAENGER.get(self.k["empfaenger"], EMPFAENGER["egal"]))
+        if (sperre := self.zustimmung_fehlt(self.modell("chatbot"), "dokument" if dokumenttext.strip() else "auszug")) is not None:
+            return sperre
         if dokumenttext.strip():
             system += "\n\nDer Mensch arbeitet gerade an diesem Text:\n" + dokumenttext[:12000]
         notiz = ""
@@ -536,6 +597,10 @@ class KI:
         clients, tools, wo = [], [], {}
         try:
             for sv in server:
+                if sv["befehl"] not in self._server_erlaubt:
+                    if not self.server_frage(sv["name"], sv["befehl"]):
+                        return {"fehler": f"Der Start des MCP-Servers „{sv['name']}“ wurde nicht erlaubt."}
+                    self._server_erlaubt = self._server_erlaubt | {sv["befehl"]}
                 try:
                     c = M.McpClient(sv["befehl"])
                 except M.McpFehler as e:
@@ -543,7 +608,7 @@ class KI:
                 clients.append(c)
                 for t in c.werkzeuge():
                     n = t["name"] if t["name"] not in wo else f"{sv['name']}_{t['name']}"
-                    wo[n] = (c, t["name"], sv["name"])
+                    wo[n] = (c, t["name"], sv["name"], M.art_des_werkzeugs(t))
                     tools.append({"type": "function", "function": {"name": n, "description": t.get("description", ""), "parameters": t.get("inputSchema") or {"type": "object", "properties": {}}}})
             nachrichten = [{"role": "system", "content": system}] + _nachrichten(verlauf)
             for _runde in range(6):
@@ -553,9 +618,10 @@ class KI:
                 if optionen.get("maxLaenge"):
                     bitte["max_tokens"] = int(optionen["maxLaenge"])
                 with _post(url, kopf, bitte, 300) as r:
-                    daten = json.loads(r.read().decode("utf-8"))
-                msg = ((daten.get("choices") or [{}])[0].get("message")) or {}
-                aufrufe = msg.get("tool_calls") or []
+                    daten = _json_dict(r)
+                wahl = daten.get("choices") if isinstance(daten.get("choices"), list) and daten.get("choices") else [{}]
+                msg = wahl[0].get("message") if isinstance(wahl[0], dict) and isinstance(wahl[0].get("message"), dict) else {}
+                aufrufe = [a for a in (msg.get("tool_calls") or []) if isinstance(a, dict)] if isinstance(msg.get("tool_calls"), list) else []
                 if not aufrufe:
                     erg = ohne_gruebeln(msg.get("content") or "").strip()
                     return {"text": erg} if erg else {"fehler": "Es kam keine Antwort zurück."}
@@ -569,7 +635,7 @@ class KI:
                     ziel = wo.get(f.get("name", ""))
                     if ziel is None:
                         ergebnis = "Dieses Werkzeug gibt es nicht."
-                    elif not self.werkzeug_frage(ziel[1], arg, ziel[2]):
+                    elif not self.werkzeug_frage(ziel[1], arg, ziel[2], ziel[3]):
                         ergebnis = "Der Benutzer hat den Aufruf abgelehnt."
                     else:
                         try:
@@ -644,16 +710,21 @@ class KI:
             return {"fehler": "Der gewählte Anbieter ist nicht mehr da. In der KI-Konfiguration neu wählen."}
         if not a["modell"]:
             return {"fehler": f"Für „{a['name']}“ ist kein Modell eingetragen."}
+        if (sperre := self.zustimmung_fehlt(modell)) is not None:
+            return sperre
         kopf = {"authorization": "Bearer " + a["schluessel"]} if a["schluessel"] else {}
         try:
             with _post(a["url"] + "/images/generations", kopf,
                        {"model": a["modell"], "prompt": beschreibung, "n": 1, "size": "1024x1024"}, 90) as r:
-                daten = json.loads(r.read().decode("utf-8"))
-            e = (daten.get("data") or [{}])[0]
+                daten = _json_dict(r)
+            liste = daten.get("data") if isinstance(daten.get("data"), list) and daten.get("data") else [{}]
+            e = liste[0] if isinstance(liste[0], dict) else {}
             if e.get("b64_json"):
                 import base64
                 return {"bild": base64.b64decode(e["b64_json"])}
             if e.get("url"):
+                if urllib.parse.urlparse(str(e["url"])).scheme not in ("http", "https"):
+                    return {"fehler": f"„{a['name']}“ hat eine unzulässige Bildadresse geschickt."}      # kein file:// o. Ä. aus fremder Antwort
                 with urllib.request.urlopen(e["url"], timeout=90) as r2:
                     return {"bild": r2.read()}
             return {"fehler": f"„{a['name']}“ hat kein Bild zurückgegeben."}
@@ -672,8 +743,8 @@ class KI:
     def ollama_modelle(self) -> list[str]:
         try:
             with urllib.request.urlopen(OLLAMA_URL + "/api/tags", timeout=3) as r:
-                return sorted(m["name"] for m in json.loads(r.read().decode("utf-8")).get("models", []) if m.get("name"))
-        except (OSError, ValueError, KeyError):
+                return sorted(m["name"] for m in _json_dict(r).get("models", []) if isinstance(m, dict) and m.get("name"))
+        except (OSError, ValueError, KeyError, TypeError):
             return []
 
 
@@ -682,7 +753,7 @@ def anbieter_modelle(url: str, schluessel: str = "") -> list[str]:
     req = urllib.request.Request(url.rstrip("/") + "/models", headers={"accept": "application/json",
                                  **({"authorization": "Bearer " + schluessel} if schluessel else {})})
     with urllib.request.urlopen(req, timeout=6) as r:
-        d = json.loads(r.read().decode("utf-8"))
+        d = _json_dict(r)
     return sorted({m.get("id") or m.get("name") for m in (d.get("data") or d.get("models") or []) if isinstance(m, dict)} - {None})
 
 

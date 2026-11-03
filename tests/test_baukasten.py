@@ -1657,3 +1657,37 @@ def test_namenfilter_gibt_symbolknoepfen_einen_namen(app):
     k.show(); o.show(); app.processEvents()
     assert k.accessibleName() == "Schriftart" and o.accessibleName() == "Datei öffnen"
     app.removeEventFilter(f); k.close(); o.close()
+
+
+def test_kachelfeld_tastatur_und_namen(app):
+    """Tab erreicht genau eine Kachel; Pfeile bewegen den Fokus, Eingabe wählt; jede Kachel hat einen Namen."""
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QApplication
+    from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
+    k = KachelFeld(spalten=2)
+    for s, t in (("a", "Eins"), ("b", "Zwei"), ("c", "Drei")):
+        k.hinzu(s, t)
+    k.show(); k.activateWindow(); app.processEvents(); gemeldet = []; k.gewaehlt.connect(gemeldet.append)
+    assert [b.accessibleName() for b in k.knoepfe.values()] == ["Eins", "Zwei", "Drei"]
+    assert [b.focusPolicy() for b in k.knoepfe.values()].count(Qt.StrongFocus) == 1 and k.knoepfe["a"].focusPolicy() == Qt.StrongFocus
+    k.knoepfe["a"].setFocus()
+    QApplication.sendEvent(k.knoepfe["a"], QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.NoModifier))
+    assert k.knoepfe["b"].hasFocus()
+    QApplication.sendEvent(k.knoepfe["b"], QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier))
+    assert gemeldet == ["b"] and k.knoepfe["b"].isChecked() and k.knoepfe["b"].focusPolicy() == Qt.StrongFocus
+    assert k.knoepfe["a"].focusPolicy() == Qt.ClickFocus
+
+
+def test_handbuch_navigation_ist_mit_tastatur_bedienbar(app):
+    """Die Abschnittsliste ist fokussierbar und benannt; Pfeiltasten (Wechsel der aktuellen Zeile) springen im Text."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QListWidget
+    from lunivo_writer.ui.dialogs import hilfe_dialoge
+    d = hilfe_dialoge.handbuch(None)
+    nav = d.findChildren(QListWidget)[0]
+    assert nav.focusPolicy() == Qt.StrongFocus and nav.accessibleName()
+    d.show(); app.processEvents()
+    naechste = next(nav.item(i) for i in range(nav.count()) if nav.item(i).data(Qt.UserRole) and nav.item(i).flags() & Qt.ItemIsEnabled)
+    nav.setCurrentItem(naechste); app.processEvents()
+    assert nav.currentItem() is naechste

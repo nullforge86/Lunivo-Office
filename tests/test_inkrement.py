@@ -29,7 +29,7 @@ def test_konflikte_nach_konfidenz_art_quelle():
     assert [x["grund"] for x in r] == ["a", "c"]
     assert r[0]["verdraengt"][0]["quelle"] == "languagetool"
     assert fund.loesen([dict(b, konfidenz=0.95), a])[0]["grund"] == "b"           # höhere Konfidenz schlägt die Quelle
-    assert fund.markieren([{"art": "tipp", "wortEbene": False}], "languagetool")[0]["konfidenz"] == 0.5
+    assert fund.markieren([{"von": 0, "bis": 1, "alt": "x", "art": "tipp", "wortEbene": False}], "languagetool")[0]["konfidenz"] == 0.5
     assert fund.klemmen("2") == 1.0 and fund.klemmen(None) == 0.5
 
 

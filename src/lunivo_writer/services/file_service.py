@@ -10,6 +10,7 @@ from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument
 
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import docx_reader, docx_writer
+from lunivo_writer.services import sicher_schreiben
 from lunivo_writer.models.report import DocumentIOError, IOReport
 
 _log = logging.getLogger("lunivo.dateien")
@@ -87,6 +88,8 @@ def load(path: str, kennwort: str | None = None) -> Loaded:
         doc, page, meta, rep = docx_reader.read_docx(path)
         return Loaded(doc, page, meta, rep)
     if e in (".txt", ".text", ""):
+        from lunivo_writer.services.import_grenzen import pruefe_dateigroesse
+        pruefe_dateigroesse(path, "TXT")
         try:
             with open(path, "rb") as fh:
                 raw = fh.read()
@@ -163,11 +166,10 @@ def _has_rich_content(doc: QTextDocument) -> bool:
     return doc.rootFrame().childFrames() != []
 
 
-def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None, sicherung: bool = True) -> IOReport:
+def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None, sicherung: bool = True, erwartet=sicher_schreiben.UNGEPRUEFT) -> IOReport:
     """Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
     Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. Jedes Format schreibt Lunivo selbst."""
     from lunivo_writer.editor import lese_zeilenluft
-    from lunivo_writer.services import sicher_schreiben
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
         doc = lese_zeilenluft.bereinigte_kopie(doc)
     from lunivo_writer.editor import querblatt
@@ -179,7 +181,7 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
         kw = (meta or {}).get("kennwort")
         if kw:
             data = _verschluesseln(data, kw)
-        sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung)
+        sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung, erwartet=erwartet)
         return rep
     rep = IOReport()
     if e == ".txt":
@@ -187,7 +189,7 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
             rep.warn("Als Textdatei gehen Formatierung, Listen, Tabellen und Bilder verloren.")
         if not page.header.is_empty() or not page.footer.is_empty():
             rep.warn("Kopf- und Fußzeile werden in der Textdatei nicht gespeichert.")
-        sicher_schreiben.bytes_schreiben(path, doc.toPlainText().replace("\u2028", "\n").encode("utf-8"), sicherung=sicherung)
+        sicher_schreiben.bytes_schreiben(path, doc.toPlainText().replace("\u2028", "\n").encode("utf-8"), sicherung=sicherung, erwartet=erwartet)
         return rep
     if e in (".odt", ".rtf"):
         if e == ".odt":
@@ -195,7 +197,7 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
         else:
             from lunivo_writer.services.rtf_writer import rtf_daten as daten_bauen
         data, rep = daten_bauen(doc, page, meta)
-        sicher_schreiben.bytes_schreiben(path, data, endung=e, sicherung=sicherung)
+        sicher_schreiben.bytes_schreiben(path, data, endung=e, sicherung=sicherung, erwartet=erwartet)
         return rep
     raise DocumentIOError(f"Das Format „{e}“ kann nicht gespeichert werden.")
 

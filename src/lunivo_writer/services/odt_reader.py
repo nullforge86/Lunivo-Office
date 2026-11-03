@@ -582,14 +582,14 @@ QTextFrameFormatBorder = _QTFF.BorderStyle_Solid
 
 
 def _xml(daten: bytes) -> ET.Element:
-    try:
-        return ET.fromstring(daten)
-    except ET.ParseError as e:
-        raise DocumentIOError("Die Datei ist kein gültiges OpenDocument oder beschädigt.") from e
+    from lunivo_writer.services.import_grenzen import sicheres_xml
+    return sicheres_xml(daten)                       # ohne DTD/Entitäten, mit Tiefengrenze; wirft DocumentIOError
 
 
 def read_odt(path: str):
     """→ (QTextDocument, PageSettings, meta-dict, IOReport). Wirft DocumentIOError."""
+    from lunivo_writer.services.import_grenzen import pruefe_paket
+    pruefe_paket(path, "ODT")                        # Grenzen zuerst, bevor irgendetwas gelesen wird
     try:
         z = zipfile.ZipFile(path)
     except (zipfile.BadZipFile, OSError) as e:

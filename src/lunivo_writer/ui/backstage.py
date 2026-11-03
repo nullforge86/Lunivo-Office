@@ -13,7 +13,7 @@ from datetime import datetime
 from PySide6.QtCore import QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (
-    QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
+    QApplication, QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -107,7 +107,9 @@ class Backstage(QWidget):
         self.liste = QListWidget()
         self.liste.setObjectName("bsListe")
         self.liste.setIconSize(QSize(24, 24))
-        self.liste.setFocusPolicy(Qt.NoFocus)
+        self.liste.setFocusPolicy(Qt.StrongFocus)
+        self.liste.setAccessibleName("Datei-Navigation")
+        self.liste.setAccessibleDescription("Mit Pfeiltasten wählen, mit Eingabe öffnen, Esc schließt die Datei-Ansicht")
         self.liste.setItemDelegate(_Zeile(self.liste))
         self.liste.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -136,6 +138,7 @@ class Backstage(QWidget):
             self.zeilen[schl] = it
             self.liste.addItem(it)
         self.liste.itemClicked.connect(self._gewaehlt)
+        self.liste.itemActivated.connect(self._aktiviert)
         self.seiten: dict[str, QWidget] = {}
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self.schliessen.emit)
         self._frischen_sich_selbst = True
@@ -225,6 +228,11 @@ class Backstage(QWidget):
             self.liste.setCurrentItem(None)
         else:
             self.liste.setCurrentItem(zeile)
+
+    def _aktiviert(self, it: QListWidgetItem):
+        """Eingabetaste in der Liste; ein Mausklick meldet sich zugleich über ``itemClicked`` und darf nicht doppelt wirken."""
+        if QApplication.mouseButtons() == Qt.NoButton:
+            self._gewaehlt(it)
 
     def _gewaehlt(self, it: QListWidgetItem):
         schl = next(k for k, v in self.zeilen.items() if v is it)

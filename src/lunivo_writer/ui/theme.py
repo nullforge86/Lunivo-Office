@@ -160,6 +160,7 @@ QTabBar#bandReiter::tab { color: %(text2)s; }
 QTabBar#bandReiter[kompakt="true"]::tab { padding: 4px 9px 2px 9px; margin: 0 1px; }
 QTabBar#bandReiter::tab:hover { background: %(hover)s; border-top-left-radius: 6px; border-top-right-radius: 6px; }
 QTabBar#bandReiter::tab:selected { color: %(akzent)s; font-weight: 600; border-bottom: 3px solid %(akzent)s; }
+QTabBar#bandReiter:focus::tab:selected { background: %(hover)s; border-top-left-radius: 6px; border-top-right-radius: 6px; }
 QTabBar#dokReiter::tab { background: transparent; border: none; padding: 7px 14px; margin: 0 1px;
     border-top-left-radius: 8px; border-top-right-radius: 8px; }
 QTabBar#dokReiter::tab:hover { background: %(hover)s; }

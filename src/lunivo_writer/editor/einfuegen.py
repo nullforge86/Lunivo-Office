@@ -245,8 +245,8 @@ def diagramm_bild(art: str, titel: str, kategorien: list[str], reihen: dict[str,
 
 # ---- Piktogramm -------------------------------------------------------------------------------------------------------
 def piktogramm_bild(name: str, px: int = 96, farbe: str = "#1f2328") -> QImage:
-    from lunivo_writer.ui.widgets import icons
-    return icons.katalog_bild(name, px, farbe, 1.7 if px < 128 else 1.5)
+    from lunivo_writer.core import piktogramme
+    return piktogramme.katalog_bild(name, px, farbe, 1.7 if px < 128 else 1.5)
 
 
 # ---- Formel -----------------------------------------------------------------------------------------------------------------

@@ -50,23 +50,49 @@ class KIDienst(QObject):
         self._sig.fertig.connect(self._fertig)
         self.werkzeugFrage.connect(self._werkzeug_fragen)
         self.ki.werkzeug_frage = self._werkzeug_erlaubt
+        self.ki.server_frage = self._server_erlaubt
         self.konfig.d["empfaenger"] = assistant.thema
 
-    def _werkzeug_erlaubt(self, name: str, argumente: dict, server: str) -> bool:
-        """Aus dem Arbeitsfaden: fragt im Hauptfenster, ob die KI das Werkzeug aufrufen darf, und wartet auf die Antwort."""
+    def _werkzeug_erlaubt(self, name: str, argumente: dict, server: str, art: str = "unbekannt") -> bool:
+        """Aus dem Arbeitsfaden: fragt im Hauptfenster, ob die KI das Werkzeug aufrufen darf, und wartet auf die Antwort.
+        Jeder Aufruf wird einzeln gefragt, mit allen Angaben; ohne Antwort in fünf Minuten gilt: nicht erlaubt."""
         import json
         import threading
         self._antwort_ereignis = threading.Event()
         self._werkzeug_ok = False
-        self.werkzeugFrage.emit(name, json.dumps(argumente, ensure_ascii=False)[:600], server)
+        self.werkzeugFrage.emit(name, json.dumps(argumente, ensure_ascii=False, indent=1)[:20000], f"{server}\x1f{art}")
         self._antwort_ereignis.wait(300)
         return self._werkzeug_ok
 
-    def _werkzeug_fragen(self, name: str, argumente: str, server: str) -> None:
-        r = QMessageBox.question(self.w, "Werkzeug aufrufen?", f"Die KI möchte das Werkzeug „{name}“ des MCP-Servers „{server}“ aufrufen.\n\n"
-                                 f"Angaben: {argumente}\n\nErlauben?")
-        self._werkzeug_ok = r == QMessageBox.Yes
+    def _werkzeug_fragen(self, name: str, argumente: str, server_art: str) -> None:
+        server, _s, art = server_art.partition("\x1f")
+        if name == "\x00start":
+            k = QMessageBox(QMessageBox.Warning, "MCP-Server starten?",
+                            f"Für die Antwort soll das Programm des MCP-Servers „{server}“ auf diesem Rechner gestartet werden.\n\n"
+                            f"Befehl:\n{argumente}\n\nDas Programm läuft mit Ihren Rechten. Jeder Werkzeugaufruf wird danach einzeln gefragt. Starten?",
+                            QMessageBox.Yes | QMessageBox.No, self.w)
+            k.setDefaultButton(QMessageBox.No)
+            self._werkzeug_ok = k.exec() == QMessageBox.Yes
+            self._antwort_ereignis.set()
+            return
+        warnung = {"löschen": "Löschen von Daten", "schreiben": "Schreiben oder Ändern", "netzwerk": "Zugriff auf das Netzwerk",
+                   "lesen": "Lesen", "unbekannt": "unbekannte Wirkung"}.get(art, "unbekannte Wirkung")
+        k = QMessageBox(QMessageBox.Question, "Werkzeug aufrufen?",
+                        f"Die KI möchte das Werkzeug „{name}“ des MCP-Servers „{server}“ aufrufen.\n\nArt der Aktion: {warnung}\n\nErlauben?",
+                        QMessageBox.Yes | QMessageBox.No, self.w)
+        k.setDefaultButton(QMessageBox.No)
+        k.setDetailedText("Alle Angaben des Aufrufs:\n" + argumente)
+        self._werkzeug_ok = k.exec() == QMessageBox.Yes
         self._antwort_ereignis.set()
+
+    def _server_erlaubt(self, name: str, befehl: str) -> bool:
+        """Aus dem Arbeitsfaden: zeigt den vollständigen Startbefehl des MCP-Servers und fragt vor dem Start (ein Programm auf diesem Rechner)."""
+        import threading
+        self._antwort_ereignis = threading.Event()
+        self._werkzeug_ok = False
+        self.werkzeugFrage.emit("\x00start", befehl, f"{name}\x1fstart")
+        self._antwort_ereignis.wait(300)
+        return self._werkzeug_ok
 
     def _hinweis_fenster(self, titel: str, text: str) -> None:
         """Ein Hinweis, den man nicht übersehen kann (statt nur einer Zeile in der Statusleiste)."""
@@ -86,20 +112,20 @@ class KIDienst(QObject):
     def zettel(self, text: str) -> None:
         self.konfig.d["zettel"] = (text or "")[:K.ZETTEL_GRENZE]
 
-    def _einwilligung(self, modell: str | None = None) -> bool:
+    def _einwilligung(self, modell: str | None = None, umfang: str = "auszug", zeichen: int = 0) -> bool:
+        """Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
+        widerrufen wird in den KI-Einstellungen (Reiter Datenschutz). Die Sperre an der Sendestelle (``KI.zustimmung_fehlt``) gilt zusätzlich."""
         ziel = self.ki.schickt_nach_aussen(modell)
-        if ziel is None:
+        if ziel is None or self.konfig.hat_einwilligung(ziel, umfang):
             return True
-        erlaubt = self.konfig["einwilligungen"] if "einwilligungen" in self.konfig.d else []
-        if ziel in erlaubt:
-            return True
+        was = ("den ganzen Text dieses Dokuments" if umfang == "dokument" else "den markierten Textauszug") + (f" (etwa {zeichen} Zeichen)" if zeichen else "")
         r = QMessageBox.question(
             self.w, "Text an einen Dienst senden?",
-            f"Für diese Funktion wird der Text an „{ziel}“ im Internet gesendet.\n\n"
+            f"Für diese Funktion wird {was} an „{ziel}“ im Internet gesendet.\n\n"
             "Er verlässt dann diesen Rechner. Auf diesem Rechner bleibt er nur, wenn Sie Ollama (lokal) wählen.\n\n"
-            "Erlauben Sie das für diesen Dienst?")
+            f"Erlauben Sie das für „{ziel}“? Die Erlaubnis lässt sich in den KI-Einstellungen unter Datenschutz jederzeit widerrufen.")
         if r == QMessageBox.Yes:
-            self.konfig.setze("einwilligungen", erlaubt + [ziel])
+            self.konfig.einwilligung_geben(ziel, umfang)
             return True
         return False
 
@@ -130,7 +156,7 @@ class KIDienst(QObject):
         if eing is None or not eing["text"].strip():
             self._hinweis_fenster("KI", "Es steht noch kein Text da. Schreiben Sie etwas oder markieren Sie eine Stelle.")
             return
-        if not self._einwilligung():
+        if not self._einwilligung(None, "auszug" if eing.get("markiert") else "dokument", len(eing["text"])):
             self.status.emit("Abgebrochen — es wurde nichts gesendet.")
             return
         self._beschaeftigt = True
@@ -348,7 +374,7 @@ class KIDienst(QObject):
 
     # ---- Chat ----------------------------------------------------------------------------------
     def chat(self, verlauf: list) -> None:
-        if self._beschaeftigt or not self.verfuegbar() or not self._einwilligung():
+        if self._beschaeftigt or not self.verfuegbar() or not self._einwilligung(None, "dokument", 12000):
             if not self.verfuegbar():
                 self.status.emit("Der Chat braucht einen KI-Schlüssel — oder Ollama. Optionen ▸ Schreibhilfe und KI.")
             return

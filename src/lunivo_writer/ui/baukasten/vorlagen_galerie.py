@@ -116,7 +116,7 @@ class VorlagenGalerie(QWidget):
         v.addLayout(kopf)
         self.reiter_w = QTabBar(); self.reiter_w.setObjectName("bandReiter")            # dieselbe Gestalt wie die Register des Bandes
         self.reiter_w.setDrawBase(False); self.reiter_w.setExpanding(False); self.reiter_w.setCursor(Qt.PointingHandCursor)
-        self.reiter_w.setFocusPolicy(Qt.NoFocus)
+        self.reiter_w.setFocusPolicy(Qt.StrongFocus); self.reiter_w.setAccessibleName("Vorlagenbereiche")
         self._schluessel = ("geruest", "eigene")
         for text in ("Standardvorlagen", "Meine Vorlagen"):
             self.reiter_w.addTab(text)

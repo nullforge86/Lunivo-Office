@@ -72,11 +72,12 @@ class _BandSeite(QScrollArea):
         for seite, zeichen in (("links", "‹"), ("rechts", "›")):
             b = QToolButton(self)
             b.setText(zeichen); b.setAutoRepeat(True); b.setAutoRepeatDelay(350); b.setAutoRepeatInterval(120)
-            b.setCursor(Qt.ArrowCursor); b.setFocusPolicy(Qt.NoFocus)
-            b.setToolTip("Weiter nach " + seite)
+            b.setCursor(Qt.ArrowCursor); b.setFocusPolicy(Qt.StrongFocus)
+            b.setToolTip("Weiter nach " + seite); b.setAccessibleName("Band nach " + seite + " blättern")
             b.setStyleSheet("QToolButton { border: none; border-radius: 0; font-size: 16pt; font-weight: 600; padding: 0 3px; "
                             "background: palette(window); color: palette(window-text); }"
-                            "QToolButton:hover { background: palette(midlight); }")
+                            "QToolButton:hover { background: palette(midlight); }"
+                            "QToolButton:focus { border: 2px solid palette(highlight); }")
             b.clicked.connect(lambda _c=False, s=seite: self.blaettern(-1 if s == "links" else 1))
             b.hide()
             self.pfeile[seite] = b
@@ -589,6 +590,8 @@ class RegisterBand(QWidget):
         font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
         groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
         stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
+        stil.setAccessibleName("Formatvorlage")
+        font.setAccessibleName("Schriftart"); groesse.setAccessibleName("Schriftgröße")
         stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
         stil.setParent(self)                                   # die Stile stehen in der Galerie; die Auswahl bleibt nur für den Abgleich
         stil.hide()
@@ -828,10 +831,12 @@ class RegisterBand(QWidget):
                 except ValueError:
                     return None
             stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
+            stil.setAccessibleName("Formatvorlage")
             stil.setFixedWidth(150)
             stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
             font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
             groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
+            font.setAccessibleName("Schriftart"); groesse.setAccessibleName("Schriftgröße")
             for w in (stil, font, groesse):
                 spalte.addWidget(w)
             inhalt.addLayout(spalte)

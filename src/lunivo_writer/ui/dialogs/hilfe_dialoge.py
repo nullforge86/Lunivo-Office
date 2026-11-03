@@ -117,7 +117,7 @@ def handbuch(parent) -> QDialog:
     d = QDialog(parent)
     d.setWindowTitle("Handbuch"); d.resize(1180, 780)
     h = QHBoxLayout(d); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
-    nav = QListWidget(); nav.setFixedWidth(290); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.NoFocus)
+    nav = QListWidget(); nav.setFixedWidth(290); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.StrongFocus); nav.setAccessibleName("Handbuch-Abschnitte")
     nav.setStyleSheet("QListWidget { background: palette(window); border-right: 1px solid palette(midlight); padding: 14px 8px; outline: none; }"
                       "QListWidget::item { padding: 4px 10px; border-radius: 5px; }"
                       "QListWidget::item:selected { background: palette(midlight); color: palette(window-text); }")
@@ -162,6 +162,7 @@ def handbuch(parent) -> QDialog:
             lay = b.document().documentLayout()
             b.verticalScrollBar().setValue(int(lay.blockBoundingRect(stellen[t]).top()) - 8)
     nav.itemClicked.connect(springe)
+    nav.currentItemChanged.connect(lambda cur, _vor: springe(cur) if cur is not None else None)       # Pfeiltasten springen mit
     such.returnPressed.connect(lambda: b.find(such.text()) or (b.moveCursor(b.textCursor().Start), b.find(such.text())))
     return d
 

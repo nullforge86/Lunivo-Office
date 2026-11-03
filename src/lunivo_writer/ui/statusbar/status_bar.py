@@ -38,7 +38,7 @@ class StatusBar(QStatusBar):
         self.addPermanentWidget(self.thema)
         self.zoom_minus = QToolButton(); self.zoom_minus.setIcon(icons.icon("minus", 14)); self.zoom_minus.setAutoRaise(True); self.zoom_minus.setToolTip("Verkleinern")
         self.zoom_plus = QToolButton(); self.zoom_plus.setIcon(icons.icon("plus", 14)); self.zoom_plus.setAutoRaise(True); self.zoom_plus.setToolTip("Vergrößern")
-        self.zoom_regler = QSlider(Qt.Horizontal); self.zoom_regler.setRange(10, 500); self.zoom_regler.setValue(100)
+        self.zoom_regler = QSlider(Qt.Horizontal); self.zoom_regler.setRange(10, 500); self.zoom_regler.setValue(100); self.zoom_regler.setAccessibleName("Zoom")
         self.zoom_regler.setFixedWidth(120)
         self.lbl_zoom = QToolButton(); self.lbl_zoom.setText("100 %"); self.lbl_zoom.setAutoRaise(True)
         self.lbl_zoom.setToolTip("Zoom …"); self.lbl_zoom.setMinimumWidth(52)

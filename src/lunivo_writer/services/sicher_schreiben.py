@@ -32,7 +32,7 @@ from typing import Callable, TypeVar
 from xml.etree import ElementTree
 
 from lunivo_writer.models.report import DocumentIOError
-from lunivo_writer.plattform import sperre as _sperre
+from lunivo_writer.plattform import dateisystem, sperre as _sperre
 from lunivo_writer.services.settings_service import data_dir
 
 T = TypeVar("T")
@@ -51,6 +51,13 @@ _im_programm_sperre = threading.Lock()
 def ziel(path: str) -> str:
     """Tatsächliche Zieldatei: Verknüpfungen werden aufgelöst, damit die Verknüpfung erhalten bleibt."""
     return os.path.realpath(path)
+
+
+class SchreibKonflikt(DocumentIOError):
+    """Die Zieldatei hat sich zwischen Öffnen (oder letztem Speichern) und jetzt verändert; es wurde nichts überschrieben."""
+
+
+UNGEPRUEFT = object()          # ``erwartet`` nicht angegeben: kein Vergleich (z. B. beim Export in eine neue Datei)
 
 
 def stand(path: str) -> tuple[int, int] | None:
@@ -110,7 +117,7 @@ def _umask() -> int:
 
 
 def _fsync_datei(path: str) -> None:
-    fd = os.open(path, os.O_RDWR if os.name == "nt" else os.O_RDONLY)          # Windows: fsync braucht einen schreibenden Zugriff
+    fd = dateisystem.fsync_oeffnen(path)
     try:
         os.fsync(fd)
     finally:
@@ -119,7 +126,7 @@ def _fsync_datei(path: str) -> None:
 
 def _fsync_ordner(ordner: str) -> None:
     try:
-        fd = os.open(ordner, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        fd = dateisystem.ordner_oeffnen(ordner)
     except OSError:
         return
     try:
@@ -324,10 +331,14 @@ def pruefe_format(path: str, endung: str) -> None:
 
 
 # ---- Schreiben -------------------------------------------------------------------------------------------------------------------
-def schreiben(path: str, erzeugen: Callable[[str], T], *, endung: str | None = None, sicherung: bool = True) -> T:
+def schreiben(path: str, erzeugen: Callable[[str], T], *, endung: str | None = None, sicherung: bool = True, erwartet=UNGEPRUEFT) -> T:
     """Schreibt eine Datei sicher: `erzeugen(temp_pfad)` legt die neue Fassung an, der Rest geschieht hier.
 
-    `endung` bestimmt die Strukturprüfung (Vorgabe: Endung des Ziels). → Rückgabewert von `erzeugen`."""
+    `endung` bestimmt die Strukturprüfung (Vorgabe: Endung des Ziels). → Rückgabewert von `erzeugen`.
+
+    `erwartet`: der ``stand()`` der Zieldatei, den der Aufrufer zuletzt gesehen hat (None = die Datei soll noch nicht da sein). Der Vergleich
+    geschieht *innerhalb der Sperre* und unmittelbar vor dem Ersetzen; weicht der Stand ab, wirft die Funktion ``SchreibKonflikt`` und die
+    Zieldatei bleibt unberührt."""
     try:
         real = ziel(path)
     except ValueError as e:
@@ -348,7 +359,14 @@ def schreiben(path: str, erzeugen: Callable[[str], T], *, endung: str | None = N
             ergebnis = erzeugen(tmp)
             _fsync_datei(tmp)
             pruefe_format(tmp, endung)
-            alt = os.stat(real) if vorhanden else None
+            try:
+                alt = os.stat(real)                      # erst jetzt, in der Sperre: der Zustand von vorhin kann überholt sein
+            except OSError:
+                alt = None
+            vorhanden = alt is not None
+            if erwartet is not UNGEPRUEFT and ((alt.st_mtime_ns, alt.st_size) if alt else None) != erwartet:
+                raise SchreibKonflikt(f"„{os.path.basename(real)}“ wurde seit dem Öffnen oder letzten Speichern von einem anderen Programm "
+                                      f"{'geändert' if vorhanden else 'gelöscht oder verschoben'}. Es wurde nichts überschrieben.")
             os.chmod(tmp, stat.S_IMODE(alt.st_mode) if alt else 0o666 & ~_umask())
             if sicherung and alt is not None:
                 try:
@@ -361,6 +379,8 @@ def schreiben(path: str, erzeugen: Callable[[str], T], *, endung: str | None = N
             return ergebnis
         except (OSError, ValueError) as e:
             raise DocumentIOError(fehlertext(e, real, vorhanden)) from e
+        except SchreibKonflikt:
+            raise
         except DocumentIOError as e:
             if vorhanden and "unverändert" not in str(e):
                 raise DocumentIOError(f"{e} Die bisherige Datei ist unverändert.") from e
@@ -373,8 +393,8 @@ def schreiben(path: str, erzeugen: Callable[[str], T], *, endung: str | None = N
                     pass
 
 
-def bytes_schreiben(path: str, daten: bytes, *, endung: str | None = None, sicherung: bool = True) -> None:
+def bytes_schreiben(path: str, daten: bytes, *, endung: str | None = None, sicherung: bool = True, erwartet=UNGEPRUEFT) -> None:
     def erzeugen(tmp: str) -> None:
         with open(tmp, "wb") as fh:
             fh.write(daten)
-    schreiben(path, erzeugen, endung=endung, sicherung=sicherung)
+    schreiben(path, erzeugen, endung=endung, sicherung=sicherung, erwartet=erwartet)

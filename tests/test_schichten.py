@@ -9,10 +9,7 @@ import lunivo_writer
 PAKET = os.path.dirname(lunivo_writer.__file__)
 BEREICHE = ("editor", "services", "models", "proofing")
 UI_IMPORT = re.compile(r"^\s*(?:from\s+lunivo_writer\.ui\b|from\s+lunivo_writer\s+import\s+ui\b|import\s+lunivo_writer\.ui\b)", re.M)
-NOCH_ERLAUBT = {
-    "editor/formular.py",      # ruft EingabeFenster für Datum/Text eines Formularfeldes auf
-    "editor/einfuegen.py",     # Piktogramm-Katalog aus ui/widgets/icons.py
-}
+NOCH_ERLAUBT: set[str] = set()      # leer und bleibt leer: eine neue Ausnahme braucht eine dokumentierte Begründung hier und die Freigabe des Eigentümers
 
 
 def test_keine_ui_importe_in_den_unteren_schichten():
@@ -27,3 +24,21 @@ def test_keine_ui_importe_in_den_unteren_schichten():
                             gefunden.add(os.path.relpath(pfad, PAKET).replace(os.sep, "/"))
     assert gefunden <= NOCH_ERLAUBT, f"neue Importe aus ui/: {sorted(gefunden - NOCH_ERLAUBT)}"
     assert NOCH_ERLAUBT <= gefunden, f"aus der Ausnahmeliste streichen: {sorted(NOCH_ERLAUBT - gefunden)}"
+
+
+PLATTFORM_API = re.compile(r"\bfcntl\b|\bmsvcrt\b|os\.killpg|start_new_session|creationflags|subprocess\.Popen|os\.name\s*==|sys\.platform|platform\.system")
+
+
+def test_betriebssystemabhaengiges_nur_in_plattform():
+    """Prozessstart, Prozessende, Dateisperren und Dateisystem-Besonderheiten liegen in plattform/; alle anderen Teile gehen darüber."""
+    treffer = []
+    for wurzel, _o, dateien in os.walk(PAKET):
+        for name in dateien:
+            pfad = os.path.join(wurzel, name)
+            rel = os.path.relpath(pfad, PAKET).replace(os.sep, "/")
+            if name.endswith(".py") and not rel.startswith("plattform/"):
+                with open(pfad, encoding="utf-8") as fh:
+                    for n, z in enumerate(fh, 1):
+                        if PLATTFORM_API.search(z) and not z.lstrip().startswith("#"):
+                            treffer.append(f"{rel}:{n}")
+    assert treffer == [], "Betriebssystemaufrufe außerhalb von plattform/: " + ", ".join(treffer)

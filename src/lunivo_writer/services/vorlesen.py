@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import threading
 
-from lunivo_writer.plattform import pfade
+from lunivo_writer.plattform import pfade, prozess
 
 PIPER_NAMEN = {
     "de_DE-thorsten-medium": "Thorsten (männlich)", "de_DE-thorsten-high": "Thorsten, feiner (männlich)",
@@ -121,10 +121,10 @@ def lies_vor(text: str, stimme: str = "", tempo: int = 0) -> bool:
         modell = os.path.join(ort, kennung + ".onnx")
         if not os.path.isfile(modell):
             modell = os.path.join(ort, piper_stimmen()[0]["kennung"] + ".onnx")
-        sprechen = subprocess.Popen([programm, "--model", modell, "--output_raw", "--length_scale",
+        sprechen = prozess.starten([programm, "--model", modell, "--output_raw", "--length_scale",
                                      "%.2f" % tempo_piper(tempo)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL, start_new_session=True)
-        ton = subprocess.Popen(_abspieler(), stdin=sprechen.stdout, stderr=subprocess.DEVNULL, start_new_session=True)
+                                    stderr=subprocess.DEVNULL, env=dict(os.environ))
+        ton = prozess.starten(_abspieler(), stdin=sprechen.stdout, stderr=subprocess.DEVNULL, env=dict(os.environ))
         sprechen.stdout.close()
 
         def fuettern():
@@ -138,5 +138,5 @@ def lies_vor(text: str, stimme: str = "", tempo: int = 0) -> bool:
         return True
     befehl = ["spd-say", "-l", "de", "-w"] + (["-y", stimme] if stimme else []) + \
              ["-r", str(max(-100, min(100, int(tempo or 0)))), text]
-    _lauf["ton"] = subprocess.Popen(befehl, start_new_session=True)
+    _lauf["ton"] = prozess.starten(befehl, env=dict(os.environ))
     return True

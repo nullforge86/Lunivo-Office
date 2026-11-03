@@ -104,3 +104,12 @@ class EingabeFenster(PanelFaehig, QDialog):
         d = EingabeFenster(parent, titel, frage, None, datum=datum if datum is not None and datum.isValid() else QDate.currentDate())
         ok = bool(d.exec())
         return d.kalender.selectedDate(), ok
+
+
+def _beim_editor_anmelden() -> None:
+    """Der Editor fragt über ``formular.eingabe_anbieter``; er kennt die Oberfläche nicht, hier wird ihm dieses Fenster mitgegeben."""
+    from lunivo_writer.editor import formular
+    formular.eingabe_anbieter = EingabeFenster
+
+
+_beim_editor_anmelden()

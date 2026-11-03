@@ -52,28 +52,12 @@ def uebersteuern(tausch: dict) -> None:
     leeren()
 
 
-_KATALOG: dict | None = None
-
-
-def katalog() -> dict:
-    """Alle 1800 Lucide-Symbole (Name → 24×24-Pfad) — für Piktogramm einfügen und Symbol austauschen."""
-    global _KATALOG
-    if _KATALOG is None:
-        with open(os.path.join(paths.SYMBOLE, "symbolkatalog.json"), encoding="utf-8") as fh:
-            _KATALOG = json.load(fh)
-    return _KATALOG
+from lunivo_writer.core.piktogramme import katalog  # noqa: E402,F401   (der Katalog liegt neutral in core/, die Oberfläche benutzt ihn von hier aus weiter)
 
 
 def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = STRICH) -> QImage:
-    img = QImage(px, px, QImage.Format_ARGB32)
-    img.fill(Qt.transparent)
-    d = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{strich}" '
-         f'stroke-linecap="round" stroke-linejoin="round"><path d="{katalog()[name]}"/></svg>').encode()
-    p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing)
-    QSvgRenderer(QByteArray(d)).render(p, QRectF(0, 0, px, px))
-    p.end()
-    return img
+    from lunivo_writer.core import piktogramme
+    return piktogramme.katalog_bild(name, px, farbe, strich)
 
 
 def pfad_bild(pfad: str, px: int = 48, farbe: str = "#1f2328") -> QImage:

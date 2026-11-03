@@ -33,9 +33,12 @@ class DocumentManager:
             m["author"] = self.settings.get("benutzer/name", "")
         return m
 
-    def speichern(self, path: str, dokument, seite, meta: dict):
-        """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück."""
-        return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta))
+    def speichern(self, path: str, dokument, seite, meta: dict, erwartet=None):
+        """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück. ``erwartet``: der zuletzt gesehene ``stand`` der Zieldatei
+        (siehe ``sicher_schreiben.schreiben``); ohne Angabe wird nicht verglichen."""
+        if erwartet is None:
+            return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta))
+        return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=erwartet[0])
 
     # ---- Zuletzt benutzt -------------------------------------------------------------------------------
     def zuletzt(self) -> list[str]:

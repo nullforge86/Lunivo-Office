@@ -114,3 +114,17 @@ def test_optionen_stehen_in_der_datei_ansicht(app, tmp_path):
     w.backstage_oeffnen("info")                                                    # danach ist das Menü wieder da
     assert w.backstage._links.isVisible()
     w.backstage_zu()
+
+
+def test_backstage_liste_ist_mit_tastatur_bedienbar(app, tmp_path):
+    """Die Datei-Navigation ist fokussierbar, benannt, und die Eingabetaste öffnet den gewählten Eintrag."""
+    from PySide6.QtCore import Qt
+    w = fenster(tmp_path)
+    w.new_document()
+    w.band.reiter.setCurrentIndex(0)
+    liste = w.backstage.liste
+    assert liste.focusPolicy() == Qt.StrongFocus and liste.accessibleName()
+    ziel = w.backstage.zeilen["speichern_als"]
+    liste.setCurrentItem(ziel)
+    w.backstage._aktiviert(ziel)
+    assert w.backstage.stapel.currentWidget() is w.backstage.seiten["speichern_als"]

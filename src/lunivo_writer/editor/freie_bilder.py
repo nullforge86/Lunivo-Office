@@ -76,10 +76,26 @@ def neuer_name(doc: QTextDocument) -> str:
 
 
 # ---- Bilddaten lesen (auch EMF mit eingebettetem Bild) ----------------------------------------------------------------------
+MAX_BILDPUNKTE = 100_000_000          # größere Bilder aus fremden Dokumenten werden nicht dekodiert (Speicher: 4 Byte je Bildpunkt)
+
+
+def _zu_gross(blob: bytes) -> bool:
+    """Liest nur die Maße aus dem Bildkopf; Bilder über ``MAX_BILDPUNKTE`` werden abgelehnt, bevor Qt sie anlegt."""
+    from PySide6.QtCore import QBuffer, QByteArray, QIODevice
+    from PySide6.QtGui import QImageReader
+    daten = QByteArray(blob)
+    puffer = QBuffer(daten)
+    puffer.open(QIODevice.ReadOnly)
+    groesse = QImageReader(puffer).size()
+    return groesse.isValid() and groesse.width() * groesse.height() > MAX_BILDPUNKTE
+
+
 def bild_aus_daten(blob: bytes) -> QImage:
     """Ein Bild aus Dateidaten. Qt kennt kein EMF; viele Word-Bilder (eingescannte Unterschriften) sind aber EMF-Hüllen um ein Bitmap
     (Aufzeichnung ``EMR_STRETCHDIBITS``) — das Bitmap wird herausgeholt. Echte Vektorzeichnungen bleiben unlesbar (leeres Bild)."""
     img = QImage()
+    if _zu_gross(blob):
+        return img
     if img.loadFromData(blob):
         return img
     import struct

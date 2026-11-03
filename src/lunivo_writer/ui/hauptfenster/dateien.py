@@ -190,12 +190,13 @@ class DateienBaustein:
 
 
     def _write(self, tab: DocumentTab, path: str, mark_saved: bool = True) -> bool:
+        gesehen = sicher_schreiben.stand(path)               # was der Benutzer jetzt vor sich hat; ändert es sich bis zum Schreiben, meldet es die Sperre
         if not self._darf_ueberschreiben(tab, path):
             return False
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
         try:
-            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta)
+            rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta, erwartet=(gesehen,))
         except DocumentIOError as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", f"Das Dokument wurde nicht gespeichert.\n\nGrund: {e}\n\nWählen Sie „Speichern unter“ und einen anderen Ordner, oder prüfen Sie den Schreibschutz."); return False
         if mark_saved:

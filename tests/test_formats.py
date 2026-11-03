@@ -96,3 +96,15 @@ def test_textbausteine_ohne_html(app, tmp_path, monkeypatch):
     (tmp_path / "b.json").write_text(json.dumps([{"name": "alt", "text": "nur Text"}]), encoding="utf-8")
     z2 = QTextDocument(); bausteine.einfuegen(QTextCursor(z2), bausteine.laden()[0])
     assert z2.toPlainText() == "nur Text"
+
+
+def test_formatverzeichnis_stimmt_mit_dem_ablauf_ueberein():
+    """Was file_service speichern/öffnen kann, steht im Verzeichnis (und umgekehrt); Paketformate sind als solche gekennzeichnet."""
+    from lunivo_writer.services import file_service as fs, formate
+    assert set(fs.SAVE_FILTERS) <= set(formate.speicherbar())
+    assert {e for e in formate.speicherbar() if e != ".pdf"} == set(fs.SAVE_FILTERS)
+    for e in (".docx", ".odt", ".rtf", ".txt", ".dotx", ".docm", ".fodt"):
+        assert formate.finde(e).lesen, e
+    assert all(formate.finde(e).paket for e in (".docx", ".dotx", ".docm", ".odt")) and not formate.finde(".rtf").paket
+    assert formate.finde(".DOCX").name == "Word-Dokument" and formate.finde(".xyz") is None
+    assert "| Word-Dokument (`.docx`) | ja | ja |" in formate.als_markdown()

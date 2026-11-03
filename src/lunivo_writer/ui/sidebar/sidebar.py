@@ -115,6 +115,7 @@ class SchreibhilfePanel(QWidget):
         self.thema.currentTextChanged.connect(self.a.setze_thema)
         self.worum = QLineEdit()
         self.worum.setPlaceholderText("Worum geht's? (freiwillig)")
+        self.worum.setAccessibleName("Worum geht es im Text (freiwillig)")
         self.worum.setMaxLength(300)
         self.worum.setStyleSheet("QLineEdit { border: none; border-bottom: 1px dashed #c77d2e; background: transparent; "
                                  "padding: 5px 0; }")
