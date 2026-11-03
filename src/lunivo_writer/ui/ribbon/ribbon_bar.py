@@ -8,7 +8,7 @@ import json
 import os
 from lunivo_writer.core import paths
 
-from PySide6.QtCore import QPropertyAnimation, QSize, Qt, Signal
+from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
@@ -35,6 +35,27 @@ def lade_register() -> dict:
         for g in t.get("gruppen", []):
             pass
     return d
+
+
+class _GruppenTrenner(QWidget):
+    """Dezenter Gruppentrenner im Band: genau ein physischer Bildpunkt breit, oben und unten eingerückt, Farbe aus der aktuellen Palette
+    (Bandhintergrund leicht zur Mittelfarbe gemischt); folgt dem Themenwechsel von selbst, weil bei jedem Zeichnen neu gemischt wird."""
+    EINRUECKEN = 6
+    MISCHUNG = 0.30
+
+    def __init__(self):
+        super().__init__()
+        self.setFixedWidth(3)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+
+    def paintEvent(self, _ev):
+        pal = self.palette()
+        a, b, m = pal.color(self.backgroundRole()), pal.color(pal.ColorRole.Mid), self.MISCHUNG
+        farbe = QColor(*(round(x * (1 - m) + y * m) for x, y in ((a.red(), b.red()), (a.green(), b.green()), (a.blue(), b.blue()))))
+        d = self.devicePixelRatioF() or 1.0
+        p = QPainter(self)
+        x = round(self.width() / 2 * d) / d                               # auf einen physischen Punkt gerastert
+        p.fillRect(QRectF(x, self.EINRUECKEN, 1.0 / d, max(0, self.height() - 2 * self.EINRUECKEN)), farbe)
 
 
 class _BandSeite(QScrollArea):
@@ -444,11 +465,7 @@ class RegisterBand(QWidget):
         for i, g in enumerate(r["gruppen"]):
             s = None
             if i:
-                s = QFrame()
-                s.setFrameShape(QFrame.VLine)
-                s.setFixedWidth(1)
-                s.setFrameShadow(QFrame.Plain)
-                s.setStyleSheet("QFrame { background: palette(mid); border: none; }")   # 1 px, bleibt sichtbar
+                s = _GruppenTrenner()
                 h.addWidget(s)
             rahmen = self._gruppe(g)
             h.addWidget(rahmen)
