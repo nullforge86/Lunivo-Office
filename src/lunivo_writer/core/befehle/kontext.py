@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QBrush, QColor, QCursor, QTextFrameFormat, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QTextBlockFormat, QBrush, QColor, QCursor, QTextFrameFormat, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QMenu
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
@@ -300,15 +300,19 @@ class KontextBefehle:
             return
         from lunivo_writer.editor import tabelleneigenschaften as TE
         from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.tabellen_dialog import TabellenDialog
-        d = TabellenDialog(self.w, TE.lesen(t, c))
+        from lunivo_writer.ui.dialogs.dokument_dialoge import TabellenEigenschaftenDialog
+        d = TabellenEigenschaftenDialog(self.w, werte=TE.lesen(t, c))
         if ausfuehren(d):
             TE.anwenden(t, c, d.werte())
+            fm = t.format()
+            fm.setHeaderRowCount(1 if d.kopf.isChecked() else 0)
+            t.setFormat(fm)
             e.document().setModified(True)
 
 
     def menue_tabelleAutoAnpassen(self):
         m = QMenu()
+        m.addAction("An Inhalt anpassen", self._tabelle_inhalt)
         m.addAction("An Fenster anpassen", self._tabelle_fenster)
         m.addAction("Spalten gleichmäßig verteilen", self._tabelle_gleich)
         m.addAction("Spaltenbreite festlegen …", self.tabelleBreite)
@@ -322,6 +326,31 @@ class KontextBefehle:
             f = t.format(); f.setWidth(QTextLength(QTextLength.PercentageLength, 100))
             f.setColumnWidthConstraints([QTextLength(QTextLength.PercentageLength, 100 / t.columns())] * t.columns())
             t.setFormat(f)
+
+
+    def _tabelle_inhalt(self):
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        e, c, t = self._tab()
+        if t:
+            TE.an_inhalt_anpassen(t, c)
+            e.document().setModified(True)
+
+
+    def absatzFormatZuruecksetzen(self, k=None):
+        """Absatzformat (Blockformat) der Absätze an der Schreibmarke/Auswahl auf Standard; Zeichenformat bleibt. Ein Rückgängig-Schritt."""
+        e = self.ed
+        if not e:
+            return
+        c = e.textCursor()
+        c.beginEditBlock()
+        a, b = sorted((c.anchor(), c.position()))
+        x = QTextCursor(e.document()); x.setPosition(a)
+        blk = x.block()
+        while blk.isValid() and blk.position() <= b:
+            QTextCursor(blk).setBlockFormat(QTextBlockFormat())
+            blk = blk.next()
+        c.endEditBlock()
+        e.document().setModified(True)
 
 
     def _tabelle_gleich(self):
@@ -346,6 +375,51 @@ class KontextBefehle:
             lang[t.cellAt(c).column()] = QTextLength(QTextLength.FixedLength, mm_to_px(cm * 10))
             f.setColumnWidthConstraints(lang)
             t.setFormat(f)
+
+
+    def tabelleMasse(self, breite_mm=None, hoehe_mm=None):
+        """Band-Zahlenfelder der Tabellentools: Spaltenbreite der Schreibmarke und/oder Mindesthöhe ihrer Zeile in mm setzen (ein Rückgängig-Schritt)."""
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        from lunivo_writer.models.page import mm_to_px
+        e, c, t = self._tab()
+        if not t:
+            return
+        if breite_mm is not None and breite_mm > 0:
+            w = TE.lesen(t, c)
+            w.update(spalte=float(breite_mm), spalte_fest=True)
+            TE.anwenden(t, c, w)
+        if hoehe_mm is not None and hoehe_mm > 0:
+            c.beginEditBlock()
+            TE.zeilenhoehe_setzen(t, t.cellAt(c).row(), mm_to_px(float(hoehe_mm)), e.fontMetrics().lineSpacing())
+            c.endEditBlock()
+        e.document().setModified(True)
+
+
+    def tabelleMasseLesen(self):
+        """(Breite der Spalte, Höhe der Zeile) der Schreibmarke in mm für die Zahlenfelder des Bandes; ``None`` außerhalb einer Tabelle.
+        Ohne gesetztes Maß wird die tatsächliche Größe aus dem Layout genommen."""
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        from lunivo_writer.models.page import px_to_mm
+        e, c, t = self._tab()
+        if not t:
+            return None
+        z = t.cellAt(c)
+        w = TE.lesen(t, c)
+        lay = e.document().documentLayout()
+        if w["spalte_fest"] and w["spalte"] > 0:
+            breite = w["spalte"]
+        else:
+            f = t.format()
+            halb = f.cellPadding() + f.cellSpacing() / 2
+            x0 = lay.blockBoundingRect(z.firstCursorPosition().block()).left() - halb
+            n = z.column() + z.columnSpan()
+            x1 = (lay.blockBoundingRect(t.cellAt(z.row(), n).firstCursorPosition().block()).left() - halb if n < t.columns()
+                  else lay.frameBoundingRect(t).right() - f.border())
+            breite = px_to_mm(max(0.0, x1 - x0))
+        px = TE.zeilenhoehe_lesen(t, z.row())
+        if px <= 0:
+            px = e.fontMetrics().lineSpacing() + 2 * t.format().cellPadding()
+        return breite, px_to_mm(px)
 
 
     def tabelleHoehe(self, k=None):

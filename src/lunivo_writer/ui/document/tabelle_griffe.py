@@ -1,5 +1,5 @@
 """Bedienelemente direkt an der Tabelle im Dokument (wie in WPS): Verschiebegriff oben links, „+“ rechts und unten, Aufziehgriff unten rechts
-und eine kleine Leiste („Einfügen“, „Löschen“, „Eigenschaften“) über der Tabelle, sobald die Tabelle gewählt ist.
+und - sobald die Tabelle über den Verschiebegriff gewählt ist - die Minisymbolleiste (``ui/widgets/mini_leiste.py``) über der Tabelle.
 
     TabellenGriffe(editor)       # hängt sich an den Editor; zeigt sich nur, solange die Schreibmarke in einer Tabelle steht
 
@@ -9,10 +9,9 @@ und die Griffe selbst über ``QTextTable`` (ein Rückgängig-Schritt je Handgrif
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRectF, QTimer, Qt
-from PySide6.QtGui import QCursor, QFont, QIcon, QTextCursor, QTextLength
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QMenu, QToolButton, QVBoxLayout, QWidget
+from PySide6.QtGui import QCursor, QIcon, QTextCursor, QTextLength
+from PySide6.QtWidgets import QToolButton, QWidget
 
-from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
 from lunivo_writer.ui.widgets import icons
 
 GRIFF = 20
@@ -20,14 +19,6 @@ GRIFF = 20
 TINTE, FLAECHE, RAND_FARBE, HOVER = "#333333", "#f5f5f5", "#c8c8c8", "#e6e6e6"
 GRIFF_STIL = (f"QToolButton {{ background: {FLAECHE}; color: {TINTE}; border: 1px solid {RAND_FARBE}; border-radius: 2px; }}"
               f"QToolButton:hover {{ background: {HOVER}; }}")
-LEISTE_STIL = (f"#tabLeiste {{ background: {FLAECHE}; border: 1px solid {RAND_FARBE}; }}"
-               f"#tabLeiste QToolButton {{ background: {FLAECHE}; color: {TINTE}; border: 1px solid transparent; border-radius: 2px; padding: 2px 6px; }}"
-               f"#tabLeiste QToolButton:hover {{ background: {HOVER}; border-color: {RAND_FARBE}; }}"
-               f"#tabLeiste QToolButton:checked {{ background: #dce8fb; border-color: #9db8e8; }}"
-               f"#tabLeiste QToolButton::menu-indicator {{ image: none; width: 0px; }}"
-               f"#tabLeiste QComboBox, #tabLeiste QLineEdit {{ background: #ffffff; color: {TINTE}; border: 1px solid {RAND_FARBE}; border-radius: 2px; }}"
-               f"#tabLeiste QComboBox QAbstractItemView {{ background: #ffffff; color: {TINTE}; selection-background-color: #e8f0fe; selection-color: {TINTE}; }}"
-               f"QMenu {{ background: #ffffff; color: {TINTE}; border: 1px solid {RAND_FARBE}; }} QMenu::item:selected {{ background: #e8f0fe; color: {TINTE}; }}")
 
 
 def dunkel(symbol: str, px: int = 16) -> QIcon:
@@ -106,14 +97,12 @@ class TabellenGriffe(QObject):
         self.zeile_plus = _Griff(vp, "plus", "Zeile am Ende einfügen", lambda: self._anhaengen(False))
         self.aufziehen = _Griff(vp, "maximize-2", "Tabelle in der Größe ändern", None, self._aufziehen, self._aufziehen_ende, self._aufziehen_start,
                                 cursor=QCursor(Qt.SizeFDiagCursor))
-        self.leiste = self._leiste(vp)
         self._raender: list[_Rand] = []
         self._rand_basis: list[float] | None = None
         self._rand_spalte = 0
         self._rand_cur: QTextCursor | None = None
         self._teile = (self.bewegen, self.spalte_plus, self.zeile_plus, self.aufziehen)
         self._basis: list[float] | None = None
-        self._tabelle_gewaehlt = False
         self._timer = QTimer(self); self._timer.setSingleShot(True); self._timer.setInterval(0); self._timer.timeout.connect(self.aktualisieren)
         for sig in (ed.cursorPositionChanged, ed.selectionChanged, ed.document().contentsChanged):
             sig.connect(self._timer.start)
@@ -121,86 +110,6 @@ class TabellenGriffe(QObject):
         self._verstecken()
 
     # ---- Aufbau ----------------------------------------------------------------------------------------------------
-    def _leiste(self, vp) -> QWidget:
-        f = QFrame(vp); f.setObjectName("tabLeiste"); f.setFrameShape(QFrame.StyledPanel); f.setStyleSheet(LEISTE_STIL)
-        v = QVBoxLayout(f); v.setContentsMargins(4, 2, 4, 2); v.setSpacing(2)
-        h = QHBoxLayout(); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(2)
-        self._menue_knoepfe = []
-        for text, namen in (("Einfügen", (("Zeile oberhalb", "tabelleZeileOben"), ("Zeile unterhalb", "tabelleZeileUnten"),
-                                          ("Spalte links", "tabelleSpalteLinks"), ("Spalte rechts", "tabelleSpalteRechts"))),
-                            ("Löschen", (("Zeile", "tabelleZeileLoeschen"), ("Spalte", "tabelleSpalteLoeschen"), ("Tabelle", "tabelleLoeschen")))):
-            b = QToolButton(f); b.setText(text); b.setPopupMode(QToolButton.InstantPopup); b.setFocusPolicy(Qt.NoFocus); b.setAutoRaise(True)
-            m = QMenu(b)
-            for name, befehl in namen:
-                m.addAction(name, lambda _=False, bf=befehl: self._befehl(bf))
-            b.setMenu(m); h.addWidget(b)
-        self._ausrichtungen = []
-        for symbol, tipp, befehl in (("bold", "Fett", "fett"), ("links", "Links im Feld", "zelleLinks"),
-                                     ("mitte", "Zentriert im Feld", "zelleZentriert"), ("rechts", "Rechts im Feld", "zelleRechts")):
-            b = QToolButton(f); b.setIcon(dunkel(symbol, 16)); b.setToolTip(tipp); b.setAutoRaise(True); b.setFocusPolicy(Qt.NoFocus)
-            b.setFixedSize(28, 24); b.clicked.connect(lambda _=False, bf=befehl: self._befehl(bf)); h.addWidget(b)
-            if symbol != "bold":
-                self._ausrichtungen.append(b)
-        e = self._eigenschaften = QToolButton(f); e.setText("Eigenschaften …"); e.setToolTip("Tabelleneigenschaften"); e.setAutoRaise(True); e.setFocusPolicy(Qt.NoFocus)
-        e.clicked.connect(lambda: self._befehl("tabelleEigenschaften")); h.addWidget(e)
-        v.addLayout(h)
-        # zweite Reihe: Schrift (Wirkung auf die markierten Zellen über die Editor-Methoden)
-        h2 = QHBoxLayout(); h2.setContentsMargins(0, 0, 0, 0); h2.setSpacing(2)
-        self.schriftart = schrift_feld(breite=120); self.groesse = groesse_feld(breite=56)
-        for c in (self.schriftart, self.groesse):
-            c.setFocusPolicy(Qt.ClickFocus)
-        self.schriftart.activated.connect(lambda _i: self._ed_tun(lambda ed: ed.set_font_family(self.schriftart.currentFont().family())))
-        self.groesse.activated.connect(lambda _i: self._groesse_setzen())
-        self.groesse.lineEdit().editingFinished.connect(self._groesse_setzen)
-        h2.addWidget(self.schriftart); h2.addWidget(self.groesse)
-        self._schnitt = {}
-        for schl, symbol, tipp, fn in (("k", "italic", "Kursiv", lambda ed, an: ed.toggle_italic(an)),
-                                       ("u", "underline", "Unterstrichen", lambda ed, an: ed.toggle_underline(an))):
-            b = QToolButton(f); b.setIcon(dunkel(symbol, 16)); b.setToolTip(tipp); b.setAutoRaise(True); b.setCheckable(True)
-            b.setFocusPolicy(Qt.NoFocus); b.setFixedSize(28, 24)
-            b.clicked.connect(lambda an, fn=fn: self._ed_tun(lambda ed: fn(ed, an))); h2.addWidget(b); self._schnitt[schl] = b
-        self.farbe = QToolButton(f); self.farbe.setIcon(dunkel("type", 16)); self.farbe.setToolTip("Schriftfarbe"); self.farbe.setAutoRaise(True)
-        self.farbe.setFocusPolicy(Qt.NoFocus); self.farbe.setFixedSize(36, 24); self.farbe.clicked.connect(self._farbmenue_neu)
-        h2.addWidget(self.farbe); h2.addStretch(1)
-        v.addLayout(h2)
-        return f
-
-    def _ed_tun(self, fn) -> None:
-        fn(self.ed); self.ed.setFocus(); self._timer.start()
-
-    def _groesse_setzen(self) -> None:
-        try:
-            pt = float(self.groesse.currentText().replace(",", "."))
-        except ValueError:
-            return
-        self._ed_tun(lambda ed: ed.set_font_size(pt))
-
-    def _farbmenue_neu(self) -> None:
-        """Dieselbe Farbpalette wie im Band; sie wirkt auf die markierten Zellen."""
-        m = self.ed.window().befehle.menue_schriftfarbeKlappe()
-        m.gewaehlt.connect(lambda _c: (self.ed.setFocus(), self._timer.start()))
-        m.setAttribute(Qt.WA_DeleteOnClose)
-        self._farbmenue = m                                  # sonst räumt Python das Menü ab, bevor es sich öffnet
-        m.popup(self.farbe.mapToGlobal(QPoint(0, self.farbe.height())))
-
-    def _leiste_lesen(self) -> None:
-        cf = self.ed.textCursor().charFormat()
-        fam = (cf.fontFamilies() or [self.ed.document().defaultFont().family()])
-        fam = fam[0] if isinstance(fam, list) else fam
-        pt = cf.fontPointSize() or self.ed.document().defaultFont().pointSizeF()
-        for w in (self.schriftart, self.groesse):
-            w.blockSignals(True)
-        self.schriftart.setCurrentFont(QFont(str(fam)))
-        self.groesse.setCurrentText(f"{pt:g}")
-        for w in (self.schriftart, self.groesse):
-            w.blockSignals(False)
-        self._schnitt["k"].setChecked(cf.fontItalic()); self._schnitt["u"].setChecked(cf.fontUnderline())
-
-    def _befehl(self, name: str) -> None:
-        w = self.ed.window()
-        getattr(w.befehle, name)()
-        self._timer.start()
-
     def eventFilter(self, obj, ev) -> bool:
         if ev.type() in (QEvent.Resize, QEvent.Paint):
             if ev.type() == QEvent.Resize:
@@ -223,16 +132,14 @@ class TabellenGriffe(QObject):
         return QRectF(x1, y1, x2 - x1, y2 - y1)
 
     def _verstecken(self) -> None:
-        for w in (*self._teile, self.leiste, *self._raender):
+        for w in (*self._teile, *self._raender):
             w.hide()
 
     def aktualisieren(self) -> None:
         t = self.tabelle()
         if t is None:
-            self._tabelle_gewaehlt = False
-            self._verstecken(); return
+                self._verstecken(); return
         r = self.rechteck(t)
-        vp = self.ed.viewport().rect()
         self.bewegen.move(int(r.left()) - GRIFF - 2, int(r.top()) - GRIFF - 2)
         self.spalte_plus.move(int(r.right()) + 4, int(r.center().y()) - GRIFF // 2)
         self.zeile_plus.move(int(r.center().x()) - GRIFF // 2, int(r.bottom()) + 4)
@@ -240,23 +147,6 @@ class TabellenGriffe(QObject):
         for w in self._teile:
             w.show(); w.raise_()
         self._raender_setzen(t, r)
-        c = self.ed.textCursor()
-        gewaehlt = c.hasSelection() and (self._tabelle_gewaehlt or t.cellAt(c.selectionStart()) != t.cellAt(c.selectionEnd()))
-        if gewaehlt:
-            self._leiste_lesen()
-            for b in self._ausrichtungen:
-                b.show()
-            self._eigenschaften.setText("Eigenschaften …"); self.leiste.layout().invalidate()
-            self.schriftart.setFixedWidth(120); self.leiste.adjustSize()
-            if self.leiste.width() > vp.width():                    # zu schmal: Ausrichtung weglassen, Schriftfeld verkleinern
-                for b in self._ausrichtungen:
-                    b.hide()
-                self.schriftart.setFixedWidth(80); self._eigenschaften.setText("…")
-                self.leiste.layout().invalidate(); self.leiste.resize(self.leiste.minimumSizeHint())
-            x = min(int(r.left()), vp.width() - self.leiste.width())      # nicht über den Sichtbereich hinausragen
-            self.leiste.move(max(0, x), max(0, int(r.top()) - GRIFF - self.leiste.height() - 6)); self.leiste.show(); self.leiste.raise_()
-        else:
-            self.leiste.hide()
 
     # ---- Spaltenränder ---------------------------------------------------------------------------------------------
     def _grenzen(self, t) -> list[float]:
@@ -322,9 +212,12 @@ class TabellenGriffe(QObject):
             return
         c = QTextCursor(self.ed.document())
         c.setPosition(t.cellAt(0, 0).firstPosition()); c.setPosition(t.cellAt(t.rows() - 1, t.columns() - 1).lastPosition(), QTextCursor.KeepAnchor)
-        self._tabelle_gewaehlt = True
         self.ed.setTextCursor(c); self.ed.setFocus()
         self.aktualisieren()
+        hook = getattr(self.ed, "mini_hook", None)                  # die Minisymbolleiste mit Tabellenzeile über der Tabelle
+        if hook is not None:
+            r = self.rechteck(t)
+            hook(self.ed, self.ed.viewport().mapToGlobal(QPoint(int(r.left()) + 60, int(r.top()) - GRIFF - 2)), False)
 
     def _anhaengen(self, spalte: bool) -> None:
         t = self.tabelle()

@@ -4,9 +4,9 @@ Optionen ▸ Ansicht: „Minisymbolleiste bei Auswahl“ und „Minisymbolleiste
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QTimer, Qt
+from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
 from PySide6.QtGui import QFontDatabase
-from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMenu, QToolButton, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMenu, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.widgets import icons
 
@@ -17,6 +17,10 @@ ZEILE2 = [("ausschneiden", "Ausschneiden", ""), ("formatUebertragen", "Format ü
           ("fett", "Fett", ""), ("kursiv", "Kursiv", ""), ("unter", "Unterstrichen", ""),
           ("hervorhebenJetzt", "Hervorheben", "farbe:menue_hervorhebenKlappe"), ("schriftfarbeJetzt", "Schriftfarbe", "farbe:menue_schriftfarbeKlappe"),
           ("ausrichtung", "Ausrichtung", "klappe:_ausrichtung_menue"), ("zeilenabstand", "Zeilenabstand", "klappe:menue_zeilenabstandKlappe")]
+# Dritte Zeile, nur wenn die Schreibmarke in einer Tabelle steht: Menüs „Einfügen“ und „Löschen“ (Name, Befehl des Bandes) und „Eigenschaften …“
+TABELLE_MENUES = (("Einfügen", (("Zeile oberhalb", "tabelleZeileOben"), ("Zeile unterhalb", "tabelleZeileUnten"),
+                                ("Spalte links", "tabelleSpalteLinks"), ("Spalte rechts", "tabelleSpalteRechts"))),
+                  ("Löschen", (("Zeile", "tabelleZeileLoeschen"), ("Spalte", "tabelleSpalteLoeschen"), ("Tabelle", "tabelleLoeschen"))))
 GROESSEN = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 
 
@@ -94,6 +98,29 @@ class MiniLeiste(QFrame):
             h.addStretch(1)
             v.addLayout(h)
         self._ed = None
+        self.tabellenzeile = self._tabellenzeile()
+        v.addWidget(self.tabellenzeile)
+        self.tabellenzeile.hide()
+
+    def _tabellenzeile(self) -> QWidget:
+        """„Einfügen ▾“, „Löschen ▾“ und „Eigenschaften …“ für die Tabelle der Schreibmarke; dieselben Befehle wie im Band."""
+        z = QWidget()
+        h = QHBoxLayout(z); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(1)
+        for text, eintraege in TABELLE_MENUES:
+            b = QToolButton(); b.setText(text); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
+            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumWidth(78)
+            m = QMenu(b)
+            for name, befehl in eintraege:
+                m.addAction(name, lambda _=False, bf=befehl: self._tun(bf))
+            b.setMenu(m); h.addWidget(b)
+            self.knoepfe["tabellen_" + text] = b
+        e = QToolButton(); e.setText("Eigenschaften …"); e.setToolTip("Tabelleneigenschaften"); e.setFocusPolicy(Qt.NoFocus)
+        e.clicked.connect(lambda: self._tun("tabelleEigenschaften")); h.addWidget(e)
+        h.addStretch(1)
+        return z
+
+    def _in_tabelle(self) -> bool:
+        return self._ed is not None and self._ed.textCursor().currentTable() is not None
 
     def _ausrichtung_menue(self) -> QMenu:
         m = QMenu()
@@ -138,7 +165,7 @@ class MiniLeiste(QFrame):
 
     def aktualisieren(self) -> None:
         for tun, b in self.knoepfe.items():
-            z = self.w.befehle.zustand(tun)
+            z = self.w.befehle.zustand(tun) if not tun.startswith("tabellen_") else None
             if z is not None:
                 b.setChecked(bool(z))
         if self._ed is not None:                                      # Schrift und Größe an der Schreibmarke / in der Auswahl
@@ -152,20 +179,25 @@ class MiniLeiste(QFrame):
             self.groesse.setCurrentText(f"{pt:g}")
             self.schriftart.blockSignals(False); self.groesse.blockSignals(False)
 
-    def zeigen(self, editor, global_pos: QPoint, rechtsklick: bool = False) -> None:
-        """Über global_pos zeigen (am Rechtsklick darunter, neben dem Menü); verschwindet bei Tastendruck oder Auswahlende."""
+    def zeigen(self, editor, global_pos: QPoint, rechtsklick: bool = False, menue: QSize | None = None) -> None:
+        """Über global_pos zeigen; am Rechtsklick richtet sich die Leiste nach dem Menü (menue = dessen Größe) und überlappt es nie.
+        Verschwindet bei Tastendruck oder Auswahlende."""
         unter = rechtsklick
         self._rechtsklick = rechtsklick
         self._ed = editor
         self.aktualisieren()
-        self.adjustSize()
-        x = global_pos.x() - self.width() // 2
-        y = global_pos.y() + (18 if unter else -self.height() - 8)
-        scr = QApplication.screenAt(global_pos)
-        if scr is not None:
-            g = scr.availableGeometry()
-            x = max(g.left(), min(x, g.right() - self.width()))
-            y = max(g.top(), min(y, g.bottom() - self.height()))
+        self.tabellenzeile.setVisible(self._in_tabelle())
+        self.layout().invalidate(); self.adjustSize()
+        w, h = self.width(), self.height()
+        x = global_pos.x() - w // 2
+        y = global_pos.y() + (18 if unter else -h - 8)
+        scr = QApplication.screenAt(global_pos) or QApplication.primaryScreen()
+        g = scr.availableGeometry() if scr is not None else None
+        if rechtsklick and menue is not None and g is not None:
+            x, y = self._neben_menue(global_pos, menue, g)
+        elif g is not None:
+            x = max(g.left(), min(x, g.right() - w))
+            y = max(g.top(), min(y, g.bottom() - h))
         self.move(x, y)
         self.show()
         if not hasattr(editor, "_mini_filter"):
@@ -173,6 +205,34 @@ class MiniLeiste(QFrame):
             editor.installEventFilter(editor._mini_filter)
             editor.cursorPositionChanged.connect(lambda: self._pruefen(editor))
             editor.selectionChanged.connect(lambda: self._pruefen(editor))
+
+    def _neben_menue(self, p: QPoint, menue: QSize, g: QRect) -> tuple[int, int]:
+        """Platz für die Leiste um das Kontextmenü: über dem Klickpunkt, sonst unter, sonst neben dem Menü; nie überlappend."""
+        w, h = self.width(), self.height()
+        mw, mh = menue.width(), menue.height()
+        mx = p.x() - mw if p.x() + mw > g.right() + 1 else p.x()               # Qt klappt das Menü am Rand nach links / oben auf
+        nach_oben = p.y() + mh > g.bottom() + 1
+        my = max(g.top(), p.y() - mh if nach_oben else p.y())
+        m = QRect(mx, my, mw, mh)
+        cx = max(g.left(), min(p.x() - w // 2, g.right() - w + 1))
+        k = []
+        if nach_oben:
+            k.append((cx, p.y() + 4))                                          # Menü steht über dem Klickpunkt: Leiste darunter
+        else:
+            k.append((cx, p.y() - h - 8))                                      # Leiste über dem Klickpunkt, Menü darunter
+        k.append((cx, m.bottom() + 5))                                         # unter dem Menü
+        k.append((cx, m.top() - h - 5))                                        # über dem Menü
+        k.append((m.right() + 5, max(g.top(), min(p.y(), g.bottom() - h + 1))))   # rechts neben dem Menü
+        k.append((m.left() - w - 5, max(g.top(), min(p.y(), g.bottom() - h + 1))))  # links neben dem Menü
+        for x, y in k:
+            r = QRect(x, y, w, h)
+            if g.contains(r) and not r.intersects(m):
+                return x, y
+        x, y = k[0]                                                            # Notlösung: am Bildschirm halten, dann vom Menü wegschieben
+        x = max(g.left(), min(x, g.right() - w + 1)); y = max(g.top(), min(y, g.bottom() - h + 1))
+        if QRect(x, y, w, h).intersects(m):
+            x = max(g.left(), m.left() - w - 5) if m.left() - w - 5 >= g.left() else min(g.right() - w + 1, m.right() + 5)
+        return x, y
 
     def _pruefen(self, editor) -> None:
         if self.isVisible() and self._ed is editor and not editor.textCursor().hasSelection() and not self._rechtsklick:
@@ -189,8 +249,8 @@ class _Zu(QObject):
         self.l = leiste
 
     def eventFilter(self, o, e):
-        if e.type() == QEvent.FocusOut and e.reason() == Qt.PopupFocusReason:
-            return False                                           # eine Palette der Leiste selbst ging auf: die Leiste bleibt
+        if e.type() == QEvent.FocusOut and e.reason() in (Qt.PopupFocusReason, Qt.ActiveWindowFocusReason):
+            return False                                           # Palette der Leiste oder das Werkzeugfenster der Leiste selbst ging auf: sie bleibt
         if e.type() in (QEvent.KeyPress, QEvent.Wheel, QEvent.FocusOut, QEvent.Hide) and self.l.isVisible():
             self.l.hide()
         return False

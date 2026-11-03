@@ -671,14 +671,26 @@ class RegisterBand(QWidget):
         v.addStretch(1)
         inhalt.addLayout(v)
 
-    def _knoepfe_tt_schrift(self, g: dict, inhalt: QHBoxLayout):
-        """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start."""
+    def _knoepfe_tt_schrift(self, g: dict, inhalt: QHBoxLayout, art: str = "tt"):
+        """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
+        ``art="tab"`` (Tabellentools): dieselben Felder, aber sie wirken auf den Text der Schreibmarke / der markierten Zellen (Felder ``tab_font``, ``tab_groesse``)."""
         font = schrift_feld(QFontComboBox())
         groesse = groesse_feld()
-        font.activated.connect(lambda _i: self.b.ttSchriftart(font.currentText()))
-        groesse.activated.connect(lambda _i: self.b.ttGroesse(groesse.currentText()))
-        groesse.lineEdit().returnPressed.connect(lambda: self.b.ttGroesse(groesse.currentText()))
-        self.felder.update(tt_font=font, tt_groesse=groesse)
+        if art == "tab":
+            def pt_setzen(*_):
+                try:
+                    pt = float(groesse.currentText().replace(",", "."))
+                except ValueError:
+                    return
+                self.b.w._ed(lambda e: (e.set_font_size(pt), e.setFocus()))
+            font.activated.connect(lambda _i: self.b.w._ed(lambda e: (e.set_font_family(font.currentFont().family()), e.setFocus())))
+            groesse.activated.connect(pt_setzen)
+            groesse.lineEdit().editingFinished.connect(pt_setzen)
+        else:
+            font.activated.connect(lambda _i: self.b.ttSchriftart(font.currentText()))
+            groesse.activated.connect(lambda _i: self.b.ttGroesse(groesse.currentText()))
+            groesse.lineEdit().returnPressed.connect(lambda: self.b.ttGroesse(groesse.currentText()))
+        self.felder.update({art + "_font": font, art + "_groesse": groesse})
         zeilen, aktuell = [], []
         for e in g["knoepfe"]:
             if e.get("zeilenumbruch"):
@@ -779,10 +791,14 @@ class RegisterBand(QWidget):
     def _knoepfe_masse(self, g: dict, inhalt: QHBoxLayout):
         """Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern.
         ``"sperre": "bild"`` (Bildtools): Breite oben, Höhe unten; rechts daneben stehen die ersten beiden Knöpfe der Gruppe
-        (Sperre = Schalter ``bildSeitenverhaeltnis``, dann „Größe zurücksetzen“)."""
+        (Sperre = Schalter ``bildSeitenverhaeltnis``, dann „Größe zurücksetzen“).
+        ``"befehl"`` nennt den Aufruf (Vorgabe ``zeichenMasse(breite_mm, hoehe_mm)``); ``"verhaeltnis": False`` lässt Sperre und Verhältnis weg
+        und meldet nur das geänderte Maß (Tabellentools: ``tabelleMasse``)."""
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
         from PySide6.QtWidgets import QCheckBox
         bild = g.get("sperre") == "bild"
+        befehl = g.get("befehl", "zeichenMasse")
+        verh = g.get("verhaeltnis", True)
         vor = g.get("praefix") or ("bt_" if bild else "bild_")   # eigene Feldnamen: Bildtools, Zeichentools und SmartArt-Design haben je ein Paar
         host = QWidget()
         gitter = QGridLayout(host)
@@ -802,17 +818,22 @@ class RegisterBand(QWidget):
         if bild:
             for zeile, e in enumerate([e for e in g["knoepfe"] if not e.get("gross")][:2]):
                 gitter.addWidget(self._knopf(e, False), zeile, 2)
-        else:
+        elif verh:
             sperre = QCheckBox("Seitenverhältnis sperren"); sperre.setChecked(True)
             gitter.addWidget(sperre, 2, 0, 1, 2)
             self.felder[vor + "sperre"] = sperre
         verhaeltnis = [1.0]
 
         def gesperrt() -> bool:
+            if not verh:
+                return False
             return bool(self.b.an_bildSeitenverhaeltnis()) if bild else sperre.isChecked()
 
         def geaendert(wer: str):
             b, h = spins["breite"].value(), spins["hoehe"].value()
+            if not verh:
+                getattr(self.b, befehl)(**{("breite_mm" if wer == "breite" else "hoehe_mm"): b if wer == "breite" else h})
+                return
             if gesperrt() and verhaeltnis[0] > 0:
                 for sp in spins.values():
                     sp.blockSignals(True)
@@ -824,7 +845,7 @@ class RegisterBand(QWidget):
                     sp.blockSignals(False)
             else:
                 verhaeltnis[0] = b / max(0.1, h)
-            self.b.zeichenMasse(b, h)
+            getattr(self.b, befehl)(b, h)
         spins["breite"].valueChanged.connect(lambda _v: geaendert("breite"))
         spins["hoehe"].valueChanged.connect(lambda _v: geaendert("hoehe"))
         self.felder[vor + "verhaeltnis"] = verhaeltnis
@@ -839,6 +860,8 @@ class RegisterBand(QWidget):
             return self._knoepfe_schrift(g, inhalt)
         if g.get("felder") == "tt_zeile":
             return self._knoepfe_tt_schrift(g, inhalt)
+        if g.get("felder") == "tab_zeile":
+            return self._knoepfe_tt_schrift(g, inhalt, "tab")
         if g.get("galerie"):
             return self._knoepfe_galerie(g, inhalt)
         if g.get("reihenfolge"):

@@ -419,6 +419,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
                 ziel_reiter = {"wordart": "text", "smartart": "smartart", "diagramm": "diagramm", "piktogramm": "bild", "bild": "bild"}.get(frei_wahl, "zeichen")
                 self.band.kontext(ziel_reiter, True, aktivieren=True)
         self._zeichen_masse(e)
+        self._tabelle_masse(e)
         f = self.band.felder
         if e is None or not f:
             return
@@ -439,6 +440,10 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
             f["tt_font"].blockSignals(True); f["tt_font"].setCurrentFont(QFont(d.get("schrift", "Liberation Sans"))); f["tt_font"].blockSignals(False)
             if not f["tt_groesse"].hasFocus():
                 f["tt_groesse"].blockSignals(True); f["tt_groesse"].setEditText(f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}"); f["tt_groesse"].blockSignals(False)
+        if "tab_font" in f and e.textCursor().currentTable() is not None:       # Schrift und Größe der Tabellentools
+            f["tab_font"].blockSignals(True); f["tab_font"].setCurrentFont(QFont(fam)); f["tab_font"].blockSignals(False)
+            if not f["tab_groesse"].hasFocus():
+                f["tab_groesse"].blockSignals(True); f["tab_groesse"].setEditText(f"{size:g}"); f["tab_groesse"].blockSignals(False)
         st = e.current_style()
         f["stil"].blockSignals(True); f["stil"].setCurrentText("Fließtext" if st == "Standard" else st); f["stil"].blockSignals(False)
 

@@ -44,6 +44,7 @@ class AnsichtSeiten:
         p.haken(f, "ui/quickinfo", "QuickInfo", True, lambda _: self.w.ansicht_optionen_anwenden())
         p.haken(f, "ui/live_vorschau", "Live-Vorschau", True, lambda _: self.w.vorschau.ende())
         p.haken(f, "ui/mini_auswahl", "Minisymbolleiste bei Auswahl", True)
+        p.haken(f, "ui/absatz_symbol", "Absatz-Layout-Symbol neben dem Absatz", True)
         p.haken(f, "ui/objektanker", "Objektanker", True)
         p.haken(f, "ui/versteckt_zeigen", "Ausgeblendeter Text", False, lambda _: self.w.versteckt_anwenden())
         f = p.unter(e, "Formatierungszeichen einzeln")

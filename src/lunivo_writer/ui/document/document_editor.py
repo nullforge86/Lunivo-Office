@@ -118,6 +118,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         self._zusatz_init()
         from lunivo_writer.ui.document.tabelle_griffe import TabellenGriffe
         self._tabellen_griffe = TabellenGriffe(self)
+        from lunivo_writer.ui.document.absatz_symbol import AbsatzSymbol
+        self._absatz_symbol = AbsatzSymbol(self)
         self.versteckt_zeigen = False
         self._blasen_flaeche = None
         self._blasen_cache = (None, [])
@@ -379,7 +381,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                     sub.addAction(a["name"], lambda _=False, a=a: ki.assistent(a))
         mini = self.mini_hook is not None and self.opt("ui/mini_rechtsklick", True) and not self.isReadOnly()
         if mini:
-            self.mini_hook(self, e.globalPos(), True)
+            self.mini_hook(self, e.globalPos(), True, m.sizeHint())      # die Leiste richtet sich nach dem Menü
         m.exec(e.globalPos())
         m.deleteLater()
         if mini:

@@ -27,6 +27,13 @@ class EinfuegenBefehle:
             TabellenStift(self.ed)
 
 
+    def tabelleRadierer(self, k=None):
+        """Radiergummi: Klick auf eine Zellenlinie löscht sie (siehe ``ui/document/tabelle_radierer.py``)."""
+        if self.ed and not self.ed.isReadOnly() and self.ed.textCursor().currentTable() is not None:
+            from lunivo_writer.ui.document.tabelle_radierer import TabellenRadierer
+            TabellenRadierer(self.ed)
+
+
     def bild(self, k=None):
         self.w.insert_image()
 

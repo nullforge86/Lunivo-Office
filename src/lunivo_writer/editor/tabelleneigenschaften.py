@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QTextCharFormat, QTextFormat, QTextFrameFormat, QTextLength, QTextTableFormat
+from PySide6.QtGui import QFontMetricsF, QTextCharFormat, QTextFormat, QTextFrameFormat, QTextLength, QTextTableFormat
 
 from lunivo_writer.models.page import mm_to_px, px_to_mm
 
@@ -125,3 +125,69 @@ def zeilenhoehe_lesen(t, r: int) -> float:
         if cell.row() == r and f.hasProperty(Z_MINHOEHE):
             return float(f.property(Z_MINHOEHE))
     return 0.0
+
+
+MIN_SPALTE_PX = 24.0
+
+
+def an_inhalt_anpassen(t, c) -> None:
+    """Jede Spalte so schmal wie ihr breitester Zellentext (+ 2x Innenabstand + Rand); Tabellenbreite variabel. Ein Rückgängig-Schritt.
+
+    Verbundene Zellen über mehrere Spalten werden nicht berücksichtigt."""
+    f = t.format()
+    rand = float(f.border())
+    pad = f.cellPadding()
+    breiten = [MIN_SPALTE_PX] * t.columns()
+    for r in range(t.rows()):
+        for s in range(t.columns()):
+            z = t.cellAt(r, s)
+            if z.row() != r or z.column() != s or z.columnSpan() > 1:
+                continue
+            fm = QFontMetricsF(z.format().font())
+            cur = z.firstCursorPosition()
+            blk = cur.block()
+            w = 0.0
+            while blk.isValid() and blk.position() <= z.lastPosition():
+                bf = QFontMetricsF(blk.charFormat().font() if blk.text() else z.format().font())
+                w = max(w, bf.horizontalAdvance(blk.text()))
+                blk = blk.next()
+            breiten[s] = max(breiten[s], w + 2 * pad + 2 * rand)
+    c.beginEditBlock()
+    f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, b) for b in breiten])
+    f.setWidth(QTextLength())
+    t.setFormat(f)
+    c.endEditBlock()
+
+
+_RICHTUNG = {"links": (0, -1), "rechts": (0, 1), "oben": (-1, 0), "unten": (1, 0)}
+
+
+def linie_loeschen(t, zeile: int, spalte: int, seite: str) -> bool:
+    """Löscht die Linie auf der Seite (links/rechts/oben/unten) der Zelle: verbindet die Zelle mit dem Nachbarn dahinter.
+
+    Der Bereich aus beiden Zellen (samt bereits verbundener) muss ein Rechteck ergeben, sonst passiert nichts (False)."""
+    if seite not in _RICHTUNG:
+        return False
+    z = t.cellAt(zeile, spalte)
+    if not z.isValid():
+        return False
+    dr, ds = _RICHTUNG[seite]
+    if dr > 0: nr, ns = z.row() + z.rowSpan(), spalte
+    elif dr < 0: nr, ns = z.row() - 1, spalte
+    elif ds > 0: nr, ns = zeile, z.column() + z.columnSpan()
+    else: nr, ns = zeile, z.column() - 1
+    if not (0 <= nr < t.rows() and 0 <= ns < t.columns()):
+        return False
+    n = t.cellAt(nr, ns)
+    if not n.isValid() or n.firstPosition() == z.firstPosition():
+        return False
+    r0 = min(z.row(), n.row()); r1 = max(z.row() + z.rowSpan(), n.row() + n.rowSpan())
+    c0 = min(z.column(), n.column()); c1 = max(z.column() + z.columnSpan(), n.column() + n.columnSpan())
+    # Rechteck-Prüfung: keine Zelle im Bereich darf über ihn hinausragen
+    for r in range(r0, r1):
+        for s in range(c0, c1):
+            x = t.cellAt(r, s)
+            if x.row() < r0 or x.column() < c0 or x.row() + x.rowSpan() > r1 or x.column() + x.columnSpan() > c1:
+                return False
+    t.mergeCells(r0, c0, r1 - r0, c1 - c0)
+    return True

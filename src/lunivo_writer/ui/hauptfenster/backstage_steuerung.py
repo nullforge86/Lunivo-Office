@@ -416,6 +416,20 @@ class BackstageBaustein:
             f[vor + "verhaeltnis"][0] = m[0] / max(0.1, m[1])
 
 
+    def _tabelle_masse(self, e) -> None:
+        """Zahlenfelder Höhe/Breite im Reiter Tabellentools (``tab_…``) mit der Zeile und Spalte der Schreibmarke abgleichen."""
+        f = self.band.felder
+        if e is None or "tab_breite" not in f or e.textCursor().currentTable() is None:
+            return
+        m = self.befehle.tabelleMasseLesen()
+        if m is None:
+            return
+        for schl, wert in (("tab_breite", m[0]), ("tab_hoehe", m[1])):
+            sp = f[schl]
+            if not sp.hasFocus() and abs(sp.value() - wert) > 0.05:
+                sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
+
+
     def objektformat_folgen(self) -> None:
         """Wählt der Benutzer ein anderes Bild, zeigt der offene Bereich dessen Werte."""
         from lunivo_writer.editor import bildlayout as BL

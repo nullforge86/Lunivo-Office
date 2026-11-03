@@ -191,25 +191,84 @@ from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog  
 
 
 class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
-    """„Tabelleneigenschaften“: Breite, Ausrichtung, Rahmenstärke, Zellenabstand, Kopfzeile. Ändert die Tabelle nicht selbst; der Aufrufer liest die Felder."""
-    AUSRICHTUNGEN = ("Links", "Zentriert", "Rechts")
+    """„Tabelleneigenschaften“ (Reiter „Tabelle“ und „Spalte und Zelle“). Ändert die Tabelle nicht selbst; der Aufrufer liest ``werte()``
+    (Format wie ``editor.tabelleneigenschaften.lesen``) oder die alten Felder breite/ausr/rand/pad/kopf.
 
-    def __init__(self, parent, breite_prozent: int, ausrichtung: int, rand: float, abstand: float, kopfzeile: bool):
+    ``werte`` (optional) überschreibt die Einzelargumente; fehlende Schlüssel stammen aus ``VORGABE``."""
+    AUSRICHTUNGEN = ("Links", "Zentriert", "Rechts")
+    _AUSR = ("links", "mitte", "rechts")
+    _PT_MM = 25.4 / 72
+    _PX_MM = 25.4 / 96
+
+    def __init__(self, parent, breite_prozent: int = 100, ausrichtung: int = 0, rand: float = 1.0, abstand: float = 4.0,
+                 kopfzeile: bool = False, *, werte: dict | None = None):
         super().__init__(parent)
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter
+        from lunivo_writer.editor.tabelleneigenschaften import VORGABE
+        from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
+        from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
         self.setWindowTitle("Tabelleneigenschaften")
         v = QVBoxLayout(self)
-        inhalt = QWidget(); g = FormularGitter(inhalt)
-        self.breite = QSpinBox(); self.breite.setRange(10, 100); self.breite.setSuffix(" % der Textbreite"); self.breite.setValue(breite_prozent)
-        self.ausr = QComboBox(); self.ausr.addItems(self.AUSRICHTUNGEN); self.ausr.setCurrentIndex(ausrichtung)
-        self.rand = QDoubleSpinBox(); self.rand.setRange(0, 10); self.rand.setSingleStep(0.25); self.rand.setValue(rand); self.rand.setSuffix(" pt")
-        self.pad = QDoubleSpinBox(); self.pad.setRange(0, 30); self.pad.setValue(abstand); self.pad.setSuffix(" px")
+        self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
+        # ---- Tabelle
+        s = QWidget(); g = FormularGitter(s)
+        self.art = QComboBox()
+        for k, n in (("auto", "Automatisch"), ("prozent", "Prozent des Textbereichs"), ("fest", "Feste Breite")):
+            self.art.addItem(n, k)
+        self.breite = QSpinBox(); self.breite.setRange(10, 100); self.breite.setSuffix(" %")
+        self.fest = EinheitFeld(0.0, 5.0, 1000.0, ("mm", "cm", "in"), "cm")
+        self.ausr = QComboBox(); self.ausr.addItems(self.AUSRICHTUNGEN)
+        g.zeile("Breite", self.art)
+        g.reihe(("Prozent", self.breite), ("Feste Breite", self.fest))
+        g.zeile("Ausrichtung", self.ausr)
+        g.breit(abschnittstitel("Zellen"))
+        self.rand = QDoubleSpinBox(); self.rand.setRange(0, 15); self.rand.setDecimals(3); self.rand.setSingleStep(0.25); self.rand.setSuffix(" pt")
+        self.pad = QDoubleSpinBox(); self.pad.setRange(0, 100); self.pad.setDecimals(3); self.pad.setSuffix(" px")
+        self.abstand = EinheitFeld(0.0, 0.0, 50.0, ("mm", "cm", "pt"), "mm")
+        g.reihe(("Rahmenstärke", self.rand), ("Innenabstand", self.pad))
+        g.zeile("Zellenabstand", self.abstand)
         self.kopf = UmbruchSchalter("Erste Zeile ist Kopfzeile (wiederholt sich auf jeder Seite)"); self.kopf.setChecked(kopfzeile)
-        g.zeile("Breite", self.breite); g.zeile("Ausrichtung", self.ausr)
-        g.reihe(("Rahmenstärke", self.rand), ("Zellenabstand innen", self.pad))
         g.breit(self.kopf)
-        v.addWidget(inhalt)
+        self.reiter.addTab(s, "Tabelle")
+        # ---- Spalte und Zelle (die der Schreibmarke)
+        z = QWidget(); zg = FormularGitter(z)
+        self.sp_fest = UmbruchSchalter("Bevorzugte Breite der Spalte"); self.spalte = EinheitFeld(0.0, 5.0, 1000.0, ("mm", "cm", "in"), "cm")
+        zg.breit(abschnittstitel("Spalte")); zg.breit(self.sp_fest); zg.zeile("Breite", self.spalte)
+        zg.breit(abschnittstitel("Zelle"))
+        self.senkrecht = QComboBox()
+        for k, n in (("oben", "Oben"), ("mitte", "Mittig"), ("unten", "Unten")):
+            self.senkrecht.addItem(n, k)
+        zg.zeile("Senkrechte Ausrichtung", self.senkrecht)
+        self.reiter.addTab(z, "Spalte und Zelle")
         fussleiste(self, v)
+        # ---- Startwerte
+        w = {**VORGABE, "breite": float(breite_prozent), "ausr": self._AUSR[max(0, min(2, ausrichtung))],
+             "rahmen": rand * self._PT_MM, "innen": abstand * self._PX_MM, **(werte or {})}
+        self.setze(w)
+        self.art.currentIndexChanged.connect(self._sichtbar); self._sichtbar()
+
+    def setze(self, w: dict) -> None:
+        a = w.get("breite_art", "prozent")
+        self.art.setCurrentIndex(max(0, self.art.findData(a)))
+        if a == "prozent":
+            self.breite.setValue(int(round(w["breite"])))
+        elif a == "fest":
+            self.fest.setValue(w["breite"])
+        self.ausr.setCurrentIndex(max(0, self._AUSR.index(w["ausr"]) if w["ausr"] in self._AUSR else 0))
+        self.rand.setValue(w["rahmen"] / self._PT_MM); self.pad.setValue(w["innen"] / self._PX_MM)
+        self.abstand.setValue(w["abstand"])
+        self.sp_fest.setChecked(bool(w["spalte_fest"])); self.spalte.setValue(w["spalte"] or 30.0)
+        self.senkrecht.setCurrentIndex(max(0, self.senkrecht.findData(w["senkrecht"])))
+
+    def _sichtbar(self, *_) -> None:
+        a = self.art.currentData()
+        self.breite.setEnabled(a == "prozent"); self.fest.setEnabled(a == "fest")
+
+    def werte(self) -> dict:
+        a = self.art.currentData()
+        return {"breite_art": a, "breite": float(self.breite.value()) if a == "prozent" else self.fest.value() if a == "fest" else 0.0,
+                "ausr": self._AUSR[self.ausr.currentIndex()], "innen": self.pad.value() * self._PX_MM,
+                "abstand": self.abstand.value(), "rahmen": self.rand.value() * self._PT_MM,
+                "spalte_fest": self.sp_fest.isChecked(), "spalte": self.spalte.value(), "senkrecht": self.senkrecht.currentData()}
 
 
 class BildZuschneidenDialog(PanelFaehig, QDialog):

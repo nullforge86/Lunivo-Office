@@ -87,14 +87,14 @@ class BearbeitenBaustein:
         self.versteckt_anwenden(e)
 
 
-    def mini_zeigen(self, ed, pos, rechtsklick: bool = False):
+    def mini_zeigen(self, ed, pos, rechtsklick: bool = False, menue=None):
         from lunivo_writer.ui.widgets.mini_leiste import MiniLeiste
         if getattr(self, "_mini", None) is None:
             self._mini = MiniLeiste(self)
         if ed is None:
             self._mini.hide()
         else:
-            self._mini.zeigen(ed, pos, rechtsklick)
+            self._mini.zeigen(ed, pos, rechtsklick, menue)
 
 
     def markup_neu(self) -> None:

@@ -701,25 +701,6 @@ class SeiteBefehle:
         return bool(t and t.editor.abschnitt_seite().diff_first)
 
 
-    def tabelleEigenschaften(self, k=None):
-        t = self.ed.textCursor().currentTable() if self.ed else None
-        if t is None:
-            return
-        from PySide6.QtGui import QTextLength
-        from lunivo_writer.ui.dialogs.dokument_dialoge import TabellenEigenschaftenDialog
-        fm = t.format()
-        d = TabellenEigenschaftenDialog(
-            self.w, int(fm.width().rawValue()) if fm.width().type() == QTextLength.PercentageLength else 100,
-            1 if fm.alignment() & Qt.AlignHCenter else 2 if fm.alignment() & Qt.AlignRight else 0,
-            fm.border(), fm.cellPadding(), fm.headerRowCount() > 0)
-        if d.exec():
-            fm.setWidth(QTextLength(QTextLength.PercentageLength, d.breite.value()))
-            fm.setAlignment([Qt.AlignLeft, Qt.AlignHCenter, Qt.AlignRight][d.ausr.currentIndex()])
-            fm.setBorder(d.rand.value()); fm.setCellPadding(d.pad.value()); fm.setHeaderRowCount(1 if d.kopf.isChecked() else 0)
-            t.setFormat(fm)
-            self.ed.document().setModified(True)
-
-
     def tabelleSortieren(self, k=None):
         c = self.ed.textCursor() if self.ed else None
         t = c.currentTable() if c else None
