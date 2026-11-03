@@ -134,7 +134,8 @@ KURZ = {
     'Vorige Kopfzeile': 'Zurück',
     'Transparente Farbe einstellen': 'Transparenz',
     'Größe und Seitenverhältnis …': 'Größe',
-    'Seitenverhältnis sperren': 'Verhältnis sperren',
+    'Seitenverhältnis sperren': 'Maße sperren',
+    'Verhältnis sperren': 'Maße sperren',
     'Eine Ebene nach hinten': 'Nach hinten',
     'Eine Ebene nach vorne': 'Nach vorn',
     'Zuschneiden nach Maß …': 'Auf Maß',
@@ -148,9 +149,10 @@ KURZ = {
     'Auf Seitenbreite': 'Seitenbreite',
     'Alternativtext …': 'Alt-Text',
     'Bild entfernen': 'Entfernen',
-    'Layout von rechts nach links': 'Rechts → Links',
+    'Layout von rechts nach links': 'Von rechts',
     'Aufzählungszeichen einfügen': 'Aufzählung',
-    'Level reduzieren': 'Ebene −',
+    'Level reduzieren': 'Ebene runter',
+    'Level erhöhen': 'Ebene hoch',
     'Diagrammelement hinzufügen': 'Element +',
     'Diagrammtyp ändern': 'Typ ändern',
     'Daten bearbeiten': 'Daten',
@@ -193,10 +195,23 @@ KURZ = {
     'Navigationsbereich': 'Navigation',
     'Weitere Ansichten': 'Ansichten',
     'Register anpassen': 'Anpassen',
-    'Gitternetzlinien': 'Gitternetz',
+    'Gitternetzlinien': 'Seitenraster',
     'Weitere Anzeigen': 'Mehr',
     'Genko-Einstellung': 'Genko',
     'Auswahlbereich': 'Auswahl',
+    'Formatvorlage zurücksetzen': 'Stil zurück',
+    'Gitternetzlinien anzeigen': 'Tabellenlinien',
+    'Tabelleneigenschaften': 'Eigenschaften',
+    'Darüber einfügen': 'Zeile oben',
+    'Darunter einfügen': 'Zeile unten',
+    'Links einfügen': 'Spalte links',
+    'Rechts einfügen': 'Spalte rechts',
+    'Tabelle sortieren': 'Sortieren',
+    'Originalgröße': 'Original',
+    'AutoKorrektur': 'Korrektur',
+    'Silben farbig': 'Silbenfarben',
+    'Thesaurus': 'Synonyme',
+    'Markup anzeigen': 'Markierungen',
 }
 
 
@@ -431,7 +446,9 @@ class RegisterBand(QWidget):
             if i:
                 s = QFrame()
                 s.setFrameShape(QFrame.VLine)
-                s.setFrameShadow(QFrame.Sunken)
+                s.setFixedWidth(1)
+                s.setFrameShadow(QFrame.Plain)
+                s.setStyleSheet("QFrame { background: palette(mid); border: none; }")   # 1 px, bleibt sichtbar
                 h.addWidget(s)
             rahmen = self._gruppe(g)
             h.addWidget(rahmen)
@@ -450,7 +467,7 @@ class RegisterBand(QWidget):
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
         v = QVBoxLayout(rahmen)
-        v.setContentsMargins(2 if self.kompakt else 3, 2, 2 if self.kompakt else 3, 0)
+        v.setContentsMargins(1 if self.kompakt else 3, 2, 1 if self.kompakt else 3, 0)
         v.setSpacing(0)
         if self.kompakt:
             rahmen.setToolTip(g["name"])                 # die Unterschrift entfällt; der Name steht im Hinweis
@@ -687,7 +704,7 @@ class RegisterBand(QWidget):
             sp.setDecimals(1)
             sp.setSingleStep(1.0)
             sp.setKeyboardTracking(False)
-            sp.setFixedWidth(80)
+            sp.setFixedWidth(74)
             gitter.addWidget(QLabel(name), zeile, spalte)
             gitter.addWidget(sp, zeile, spalte + 1)
             spins[schl] = sp
@@ -719,7 +736,7 @@ class RegisterBand(QWidget):
                 inhalt.addWidget(self._knopf(e, True))
         zeilen = (("breite", "Breite:"), ("hoehe", "Höhe:")) if bild else (("hoehe", "Höhe:"), ("breite", "Breite:"))
         for zeile, (schl, name) in enumerate(zeilen):
-            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(90)
+            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(64)
             gitter.addWidget(QLabel(name), zeile, 0); gitter.addWidget(sp, zeile, 1)
             spins[schl] = sp
             self.felder[vor + schl] = sp
@@ -967,6 +984,7 @@ class RegisterBand(QWidget):
             k.setIconSize(QSize(gi, gi) if gross else QSize(18, 18))
         k.setDefaultAction(akt)
         k.setToolTip(_mit_kuerzel(name))
+        k.setAccessibleName(name)                      # Screenreader lesen den vollen Namen, nicht den Kurztext
         self._tausch_rechtsklick(k, sym)
         if not icons.hat(sym):
             f = k.font()
@@ -1007,7 +1025,7 @@ class RegisterBand(QWidget):
         if menu is not None:
             k.setMenu(menu)
             if gross:
-                k.setMinimumWidth(k.minimumWidth() + 20)
+                k.setMinimumWidth(k.minimumWidth() + 12)
                 # (Platz für den Pfeil-Bereich, damit die Beschriftung nicht gekürzt wird)
         if tun:
             ok = ok or self.b.hat(tun)

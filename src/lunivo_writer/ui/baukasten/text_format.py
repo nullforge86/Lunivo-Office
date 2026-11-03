@@ -18,7 +18,7 @@ AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Re
 ZEILENABSTAND = ((1.0, "Einfach"), (1.5, "1,5 Zeilen"), (2.0, "Doppelt"))
 
 
-def schrift_feld(combo: QComboBox | None = None, breite: int = 150) -> QComboBox:
+def schrift_feld(combo: QComboBox | None = None, breite: int = 130) -> QComboBox:
     """Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne)."""
     c = combo if combo is not None else QFontComboBox()
     c.setFixedWidth(breite)

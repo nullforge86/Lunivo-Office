@@ -313,7 +313,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     v.addLayout(zeile)
     for text, sym, f in (("Formatieren", "pinsel", lambda: getattr(b.w, "diagrammformat_seitenleiste", lambda: None)()),
                          ("Formatvorlage zurücksetzen", "undo-2", lambda: b.diagrammZuruecksetzen())):
-        k = QToolButton(); k.setAutoRaise(True); k.setIcon(icons.icon(sym, 16)); k.setIconSize(QSize(16, 16)); k.setText(text)
+        k = QToolButton(); k.setAutoRaise(True); k.setIcon(icons.icon(sym, 16)); k.setIconSize(QSize(16, 16)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
         k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(30)
         k.clicked.connect(lambda _=False, f=f: f())
         zeile.addWidget(k)
