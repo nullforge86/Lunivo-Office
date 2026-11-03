@@ -29,6 +29,15 @@ def _knoepfe(plan):
                 yield e
 
 
+def _hat_befehl(w, e):
+    """Ein Knopf hat einen Befehl: ``tun``, ``klappe`` oder ein Menü (``menue``), dessen Einträge Befehle oder Klappen haben."""
+    b = w.band.b
+    if e.get("menue"):
+        return all(_hat_befehl(w, it) for it in e["menue"] if not it.get("trenner"))
+    tun, klappe = e.get("tun"), e.get("klappe")
+    return bool((tun and b.hat(tun.partition(":")[0])) or (klappe and w.band._klappe(klappe) is not None))
+
+
 def test_diagramm_zeigt_diagrammtools_mit_allen_befehlen(app, tmp_path):
     from lunivo_writer.editor import diagramm as D, frei_objekt as FO
     w = _fenster(tmp_path); w.show()
@@ -60,7 +69,7 @@ def test_bildtools_jeder_knopf_hat_einen_befehl(app, tmp_path):
     w = _fenster(tmp_path); w.show()
     b = w.band.b
     for e in _knoepfe(BILDTOOLS):
-        assert (e.get("tun") and b.hat(e["tun"].partition(":")[0])) or (e.get("klappe") and w.band._klappe(e["klappe"]) is not None), e["name"]
+        assert _hat_befehl(w, e), e["name"]
     seite = w.band.stapel.widget(w.band.kontext_index["bild"])
     for k in seite.findChildren(QToolButton):
         assert not k.property("fehlt"), k.toolTip()

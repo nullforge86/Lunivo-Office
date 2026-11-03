@@ -6,7 +6,7 @@ from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
 
 def bauen(start: dict) -> dict:
     """Reiter Start in der Anordnung der Vorlage: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
-    Name und Größe in einer Zeile, Absatz, Stile, dann Wort-Extras, Suchen oder ersetzen, Auswählen und Einstellungen als große Knöpfe."""
+    Name und Größe in einer Zeile, Absatz, Stile, dann die Gruppe Bearbeiten (Suchen, Auswählen, Wort-Extras, Einstellungen als Knöpfe mit Text neben dem Symbol); die Stile zeigen zwei Spalten, der Rest steht im Pfeil."""
     alt = {g["name"]: g for g in start["gruppen"]}
     ablage = {"name": "Zwischenablage", "reihenfolge": True, "knoepfe": [
         _k("kleben", "Einfügen", "einfuegen", True, klappe="einfuegenKlappe"),
@@ -16,13 +16,10 @@ def bauen(start: dict) -> dict:
     schrift = dict(alt["Schriftart"], felder="zeile", knoepfe=[
         dict(e, tun="durchJetzt", klappe="durchKlappe") if e.get("name") == "Durchgestrichen" else e for e in alt["Schriftart"]["knoepfe"]])
     absatz = dict(alt["Absatz"])
-    extras = {"name": "Extras", "reihenfolge": True, "knoepfe": [
-        _k("wortextras", "Wort-Extras", gross=True, klappe="wortExtrasKlappe")]}
-    suchen = {"name": "Suchen", "reihenfolge": True, "knoepfe": [
-        _k("lupe", "Suchen oder ersetzen", gross=True, klappe="suchenKlappe")]}
-    waehlen = {"name": "Auswählen", "reihenfolge": True, "knoepfe": [
-        _k("objekte", "Auswählen", gross=True, klappe="auswaehlenKlappe")]}
-    einst = {"name": "Einstellungen", "reihenfolge": True, "knoepfe": [
-        _k("zahnrad", "Einstellungen", gross=True, klappe="einstellungenKlappe")]}
-    return dict(start, gruppen=[ablage, schrift, absatz, alt["Stile"], extras, suchen, waehlen, einst])
+    bearbeiten = {"name": "Bearbeiten", "reihenfolge": True, "knoepfe": [                 # vier Knöpfe in zwei Spalten statt vier großen Gruppen
+        _k("lupe", "Suchen oder ersetzen", text=True, klappe="suchenKlappe"),
+        _k("objekte", "Auswählen", text=True, klappe="auswaehlenKlappe"),
+        _k("wortextras", "Wort-Extras", text=True, klappe="wortExtrasKlappe"),
+        _k("zahnrad", "Einstellungen", text=True, klappe="einstellungenKlappe")]}
+    return dict(start, gruppen=[ablage, schrift, absatz, dict(alt["Stile"], spalten=2), bearbeiten])
 

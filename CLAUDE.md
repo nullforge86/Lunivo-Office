@@ -99,6 +99,7 @@ Gilt in **jeder** Sitzung automatisch; der Eigentümer muss nicht daran erinnern
 4. **Kontextabhängig:** Bedienelemente zeigen nur, was im aktuellen Zustand gilt (Tabelle: Tabellenfunktionen; reine Textbearbeitung: nur Textfunktionen) und schalten bei Zustandswechsel sofort um.
 5. **Vermittler prüft jeden Bericht** gegen Auftrag und Vorbild-Bilder und schickt zurück, was fehlt (z. B. „Vorlage nicht angesehen“, „Zustand nicht geprüft“). Erst danach dem Eigentümer berichten; Nicht-Geprüftes offen nennen.
 6. Fehlen die Agentenprofile unter `.claude/agents/`, aus einer Sicherung wiederherstellen oder melden, bevor gearbeitet wird.
+7. **Zeitlimit für Agenten (Eigentümer, 2026-11-03):** Jeder Agentenauftrag bekommt beim Start ein Zeitlimit (Lesen/Messen 15 Minuten, Umsetzen 25 Minuten) mit einem Hintergrund-Wecker (`sleep` im Hintergrund). Ist 10 Minuten lang weder eine neue Änderung im Arbeitsbaum (`git status`) noch eine neue Datei im Scratchpad entstanden (die Ausgabedatei des Agenten ist KEIN Fortschrittsanzeiger: sie hat immer nur wenige Byte), oder läuft das Limit ab, wird der Agent gestoppt (`TaskStop`), das Teilergebnis geprüft und dem Eigentümer gemeldet. Agenten dürfen das Sitzungslimit des Eigentümers nicht durch Hängen verbrauchen.
 
 ## Ergänzende Eigentümer-Regeln (2026-10-25 bis 2026-10-28)
 

@@ -10,31 +10,25 @@ BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
         _k("replace", "Bild ändern", "bildAendern", text=True),
         _k("shapes", "Formen", None, True, klappe="formenKlappe")]},
     {"name": "Komprimieren", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("image-down", "Bilder komprimieren", "bildKomprimieren", True)]},
+        _k("image-down", "Bilder komprimieren", "bildKomprimieren", text=True),
+        _k("einpassen", "Weitere", text=True, menue=[                               # Größen-Befehle, Alternativtext und Entfernen hinter einem Knopf
+            {"name": "Auf Seitenbreite", "tun": "bildBreite"}, {"name": "Originalgröße", "tun": "bildOriginal"},
+            {"name": "Zuschneiden nach Maß …", "tun": "bildZuschneiden"}, {"trenner": True},
+            {"name": "Alternativtext …", "tun": "bildAltText"}, {"name": "Bild entfernen", "tun": "bildEntfernen"}])]},
     {"name": "Größe", "felder": "masse", "sperre": "bild", "ohne_titel": True, "pfeil": "bildGroesse", "knoepfe": [
         _k("crop", "Zuschneiden", "bildZuschneidenModus", True, klappe="bildZuschneiden"),
         _k("sperren", "Seitenverhältnis sperren", "bildSeitenverhaeltnis", text=True),
         _k("maximize", "Größe zurücksetzen", "bildGroesseZuruecksetzen", text=True)]},
     {"name": "Farbe", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("pipette", "Transparente Farbe einstellen", "bildTransparent", True),
-        _k("farbe", "Farbe", "bildFarbe", True),
-        _k("sun", "Heller", "bildHelligkeit:[10]", text=True),
-        _k("sun-dim", "Dunkler", "bildHelligkeit:[-10]", text=True),
-        _k("contrast", "Kontrast erhöhen", "bildKontrast:[10]", text=True),
-        _k("blend", "Kontrast verringern", "bildKontrast:[-10]", text=True),
-        _k("rotate-cw", "Um 90° nach rechts drehen", "zeichenDrehen:[90]"),
-        _k("rotate-ccw", "Um 90° nach links drehen", "zeichenDrehen:[-90]"),
+        _k("farbe", "Farbe", "bildFarbe", text=True),
+        _k("pipette", "Transparente Farbe einstellen", "bildTransparent", text=True),
+        _k("sun", "Helligkeit", text=True, menue=[{"name": "Heller", "tun": "bildHelligkeit:[10]"}, {"name": "Dunkler", "tun": "bildHelligkeit:[-10]"}]),
+        _k("contrast", "Kontrast", text=True, menue=[{"name": "Kontrast erhöhen", "tun": "bildKontrast:[10]"},
+                                                      {"name": "Kontrast verringern", "tun": "bildKontrast:[-10]"}]),
         _k("sparkles", "Bildeffekte", "zeichenEffekte", True),
         _k("frame", "Rahmen", None, text=True, klappe="zeichenGliederung"),
         _k("undo-2", "Bild zurücksetzen", "bildZuruecksetzen", text=True)]},
-    _gruppe(_a("drehen", "Frei drehen", gross=True), _a("gruppieren", text=True), _a("ausrichten", text=True), _a("umbruch", gross=True),
-            _a("vorn", text=True), _a("hinten", text=True)),
-    {"name": "Weitere", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("einpassen", "Auf Seitenbreite", "bildBreite", text=True),
-        _k("bild", "Originalgröße", "bildOriginal", text=True),
-        _k("notiz", "Alternativtext …", "bildAltText", text=True),
-        _k("kanteKeine", "Bild entfernen", "bildEntfernen", text=True),
-        _k("crop", "Zuschneiden nach Maß …", "bildZuschneiden", text=True)]},
+    _gruppe(_a("drehen", "Frei drehen", text=True), _a("umbruch", text=True), _a("objekte", text=True)),
 ]}
 
 FORMTOOLS = {"name": "Zeichentools", "kontext": "form", "gruppen": [
@@ -49,19 +43,19 @@ FORMTOOLS = {"name": "Zeichentools", "kontext": "form", "gruppen": [
 
 
 ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
-    {"name": "Linien", "ohne_titel": True, "galerie": "zeichenLinien", "zeilen": 2, "knoepfe": []},
+    {"name": "Linien", "ohne_titel": True, "galerie": "zeichenLinien", "zeilen": 2, "kacheln": 6, "knoepfe": []},
     {"name": "Formen", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         _k("stift", "Formen einfügen", klappe="formenKlappe", gross=True),
         _k("textrahmen", "Textfeld", None, text=True, klappe="textfeldKlappe"),
         _k("stift", "Form bearbeiten", None, text=True, klappe="formBearbeiten")]},
-    {"name": "Formstile", "ohne_titel": True, "galerie": "zeichenFormstile", "knoepfe": []},
+    {"name": "Formstile", "ohne_titel": True, "galerie": "zeichenFormstile", "kacheln": 4, "knoepfe": []},
     {"name": "Formen formatieren", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
-        _k("toenung", "Formfüllung", klappe="zeichenFuellung", gross=True),
-        _k("linie", "Gliederung", klappe="zeichenGliederung", gross=True),
+        _k("toenung", "Formfüllung", klappe="zeichenFuellung", text=True),
+        _k("linie", "Gliederung", klappe="zeichenGliederung", text=True),
         _k("pinselchen", "Format übertragen", "zeichenFormatUebertragen", text=True),
         _k("texteffekt", "Formeffekte", "zeichenEffekte", text=True)]},
-    _gruppe(_a("ausrichten", gross=True), _a("gruppieren", text=True), _a("drehen", text=True), _a("umbruch", gross=True),
-            _a("vorn", text=True), _a("hinten", text=True), _a("auswahlbereich", gross=True)),
+    _gruppe(_a("ausrichten", text=True), _a("gruppieren", text=True), _a("drehen", text=True), _a("ebene", text=True),
+            _a("umbruch", text=True), _a("auswahlbereich", text=True)),
     {"name": "Größe", "felder": "masse", "pfeil": "zeichenLayout", "knoepfe": []},
 ]}
 
@@ -80,7 +74,6 @@ SMARTARTTOOLS = {"name": "SmartArt-Design", "kontext": "smartart", "gruppen": [
         _k("layout-template", "Layout ändern", None, True, klappe="smartartLayout"),
         _k("palette", "Farben ändern", None, True, klappe="smartartFarben")]},
     {"name": "SmartArt-Stile", "ohne_titel": True, "galerie": "smartartStile", "knoepfe": []},
-    _gruppe(_a("umbruch", "Textfluss", gross=True), _a("ausrichten", gross=True), _a("auswahlbereich", gross=True),
-            _a("vorn", text=True), _a("hinten", text=True)),
+    _gruppe(_a("umbruch", "Textfluss", text=True), _a("ausrichten", text=True), _a("auswahlbereich", text=True), _a("ebene", text=True)),
     {"name": "Größe", "felder": "masse", "praefix": "sa_", "pfeil": "zeichenLayout", "knoepfe": []},
 ]}

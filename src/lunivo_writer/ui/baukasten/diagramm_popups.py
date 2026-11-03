@@ -306,7 +306,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
     v = QVBoxLayout(host); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(1)
-    cb = QComboBox(); cb.setMinimumWidth(330); cb.setMinimumHeight(30); cb.setMaxVisibleItems(16)
+    cb = QComboBox(); cb.setMinimumWidth(200); cb.setMinimumHeight(30); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(330)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
     zeile = QHBoxLayout(); zeile.setContentsMargins(0, 0, 0, 0); zeile.setSpacing(4)          # wie in der Vorlage nebeneinander unter dem Feld

@@ -233,6 +233,10 @@ KURZ = {
     'Silben farbig': 'Silbenfarben',
     'Thesaurus': 'Synonyme',
     'Markup anzeigen': 'Markierungen',
+    'Einstellungen': 'Optionen',
+    'Tabelle zeichnen': 'Zeichnen',
+    'Absatzabstand': 'Abstand',
+    'Format übertragen': 'Format kopieren',
 }
 
 
@@ -495,7 +499,7 @@ class RegisterBand(QWidget):
         if g.get("katalog") == "raender":
             inhalt.addWidget(self._raender())
         elif g.get("katalog"):
-            inhalt.addWidget(self._stile())
+            inhalt.addWidget(self._stile(int(g.get("spalten") or 3)))
         else:
             self._knoepfe(g, inhalt)
         if self.kompakt and not g.get("pfeil"):
@@ -669,6 +673,7 @@ class RegisterBand(QWidget):
             self.fehlend.append("galerie_" + g["galerie"])
             return
         spec = spec()
+        spec = dict(spec, kacheln=spec["kacheln"][:int(g.get("kacheln") or len(spec["kacheln"]))])   # ``"kacheln": N``: nur N Kacheln im Band, alle Einträge bleiben im Pfeil-Menü
         rahmen = QFrame()
         rahmen.setFrameShape(QFrame.StyledPanel)
         h = QHBoxLayout(rahmen)
@@ -721,7 +726,7 @@ class RegisterBand(QWidget):
             sp.setDecimals(1)
             sp.setSingleStep(1.0)
             sp.setKeyboardTracking(False)
-            sp.setFixedWidth(74)
+            sp.setFixedWidth(72)
             gitter.addWidget(QLabel(name), zeile, spalte)
             gitter.addWidget(sp, zeile, spalte + 1)
             spins[schl] = sp
@@ -859,14 +864,14 @@ class RegisterBand(QWidget):
             host.setLayout(gitter)
             inhalt.addWidget(host, 0, Qt.AlignTop)
 
-    def _stile(self) -> QWidget:
+    def _stile(self, spalten: int = 3) -> QWidget:
         host = QWidget()
         g = QGridLayout(host)
         g.setSpacing(1)
         g.setContentsMargins(0, 0, 0, 0)
         self._stile_host, self._stile_gitter, self._stil_knoepfe = host, g, []
         self.stile_aktualisieren()
- # wie in der Vorlage: drei Spalten sichtbar, der Rest wird durchgescrollt
+ # wie in der Vorlage: drei Spalten sichtbar (``"spalten": N`` im Gruppeneintrag nimmt weniger), der Rest wird durchgescrollt
         sa = QScrollArea()
         sa.setObjectName("stileGalerie")
         sa.setWidget(host)
@@ -875,7 +880,7 @@ class RegisterBand(QWidget):
         sa.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         sa.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         host.adjustSize()
-        sa.setFixedWidth(3 * 85 + 4)
+        sa.setFixedWidth(spalten * 85 + 4)
         sa.setFixedHeight(host.sizeHint().height() + 2)
         sa.setStyleSheet("QScrollArea#stileGalerie, QScrollArea#stileGalerie > QWidget > QWidget { background: transparent; }")
         pfeil = QToolButton(); pfeil.setIcon(icons.icon("klappe", 14)); pfeil.setIconSize(QSize(14, 14)); pfeil.setAutoRaise(True); pfeil.setFixedWidth(18)
@@ -1078,6 +1083,15 @@ class RegisterBand(QWidget):
             elif it.get("menue"):
                 sub = menu.addMenu(it["name"])
                 ok |= self._menue_fuellen(sub, it["menue"])
+            elif it.get("klappe"):                           # das vorhandene Klappmenü eines anderen Knopfes als Untermenü (mehrere Knöpfe hinter einem)
+                sub = self._klappe(it["klappe"])
+                if sub is not None:
+                    sub.setTitle(it["name"])
+                    sub.setParent(menu, Qt.Popup)
+                    menu.addMenu(sub)
+                    ok = True
+                else:
+                    self.fehlend.append(it["klappe"])
             elif it.get("name"):
                 a = menu.addAction(it["name"])
                 t = it.get("tun")

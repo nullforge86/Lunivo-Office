@@ -34,6 +34,15 @@ def _knoepfe(plan):
                 yield g, e
 
 
+def _hat_befehl(w, e):
+    """Ein Knopf hat einen Befehl: ``tun``, ``klappe`` oder ein Menü (``menue``), dessen Einträge Befehle oder Klappen haben."""
+    b = w.band.b
+    if e.get("menue"):
+        return all(_hat_befehl(w, it) for it in e["menue"] if not it.get("trenner"))
+    tun, klappe = e.get("tun"), e.get("klappe")
+    return bool((tun and b.hat(tun.partition(":")[0])) or (klappe and w.band._klappe(klappe) is not None))
+
+
 def test_wordart_zeigt_zeichentools_und_texttools(app, tmp_path):
     w = _fenster(tmp_path); w.show()
     assert not _sichtbar(w, "zeichen") and not _sichtbar(w, "text")
@@ -63,8 +72,7 @@ def test_jeder_knopf_hat_einen_befehl(app, tmp_path):
     b = w.band.b
     for plan in (TEXTTOOLS, ZEICHENTOOLS):
         for g, e in _knoepfe(plan):
-            tun, klappe = e.get("tun"), e.get("klappe")
-            assert (tun and b.hat(tun)) or (klappe and w.band._klappe(klappe) is not None), (plan["name"], e["name"])
+            assert _hat_befehl(w, e), (plan["name"], e["name"])
         for g in plan["gruppen"]:
             if g.get("galerie"):
                 from lunivo_writer.ui.baukasten.bild_diagramm_menues import GALERIEN

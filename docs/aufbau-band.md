@@ -12,6 +12,15 @@ Dieselben Befehle stehen auch in der Menüleiste und in den beiden
 Symbolleisten — welche Oberfläche sichtbar ist, sagt
 *Ansicht ▸ Oberfläche ▸ Benutzeroberfläche*.
 
+**Breite bei 1366 px:** Jeder Reiter passt ohne Blättern (mindestens etwa 30 px Luft). Dafür gibt es vier Mittel, ohne Funktion zu streichen und ohne
+Knöpfe ohne Beschriftung: (1) Knöpfe mit Text neben dem Symbol stehen zu zweit übereinander; (2) ähnliche Befehle stehen hinter *einem* Knopf mit Menü
+(`menue`; ein Eintrag mit `klappe` zeigt das vorhandene Klappmenü eines anderen Knopfes als Untermenü): *Zeile einfügen* und *Spalte einfügen* (Tabellentools),
+*Helligkeit*, *Kontrast*, *Weitere* (Bildtools: Größen-Befehle, Alternativtext, Bild entfernen), *Ebene* und *Objekte* (Ausrichten, Gruppieren, Ebenen;
+`anordnen_gruppe` in `ui/ribbon/tabs/baustein.py`), in Seitenlayout *Umbrüche* (mit Zeilennummern) und *Objekte* (mit Ausrichten, Drehen, Gruppieren);
+(3) Galerien zeigen im Band weniger Kacheln (`"kacheln": N` in der Gruppe; alle Einträge bleiben im ▾-Menü) und die Formatvorlagen zwei Spalten
+(`"spalten": 2`); (4) Gruppen sind zusammengelegt (Start ▸ Bearbeiten, Texttools ▸ Effekte). Das Feld *Diagrammbereich* und die Liste
+*Anzeige zur Überprüfung* sind schmaler, ihre Aufklappliste bleibt breit. Neue Kurztexte stehen in `KURZ` (`ui/ribbon/ribbon_bar.py`).
+
 Die Bäume unten zeigen die Gruppen des Bandes und ihre Knöpfe; Einträge unter einem Knopf sind feste Menüpunkte. Viele Knöpfe mit ▾ öffnen
 zusätzlich ein Klappmenü, dessen Einträge im Programm erzeugt werden und hier nicht einzeln stehen.
 
@@ -120,13 +129,10 @@ START
 │ ├── Absatzschattierung
 │ └── Absatzrahmen
 ├── Stile
-├── Extras
-│ └── Wort-Extras
-├── Suchen
-│ └── Suchen oder ersetzen
-├── Auswählen
-│ └── Auswählen
-└── Einstellungen
+└── Bearbeiten
+  ├── Suchen oder ersetzen
+  ├── Auswählen
+  ├── Wort-Extras
   └── Einstellungen
 ```
 

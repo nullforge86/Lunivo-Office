@@ -19,11 +19,18 @@ _ANORDNEN = {
     "vorn": ("ebeneHoch", "Eine Ebene nach vorne", "zeichenVorn", {}),
     "hinten": ("ebeneTief", "Eine Ebene nach hinten", "zeichenHinten", {}),
     "auswahlbereich": ("auswahlbereich", "Auswahlbereich", "auswahlbereich", {}),
+    # „vorn“ und „hinten“ hinter einem Knopf (spart eine Spalte; beide Befehle bleiben im Menü)
+    "ebene": ("ebeneHoch", "Ebene", None, {"menue": [{"name": "Eine Ebene nach vorne", "tun": "zeichenVorn"},
+                                                     {"name": "Eine Ebene nach hinten", "tun": "zeichenHinten"}]}),
+    # Ausrichten, Gruppieren und die beiden Ebenen-Befehle hinter einem Knopf
+    "objekte": ("ausrichten", "Objekte", None, {"menue": [
+        {"name": "Ausrichten", "klappe": "zeichenAusrichten"}, {"name": "Gruppieren", "tun": "gruppieren"}, {"trenner": True},
+        {"name": "Eine Ebene nach vorne", "tun": "zeichenVorn"}, {"name": "Eine Ebene nach hinten", "tun": "zeichenHinten"}]}),
 }
 
 
 def anordnen_knopf(art: str, name: str | None = None, **kw) -> dict:
-    """Ein Knopf der Gruppe „Anordnen“ (``art``: drehen, gruppieren, ausrichten, umbruch, vorn, hinten, auswahlbereich); ``name`` und ``gross``/``text`` je Reiter."""
+    """Ein Knopf der Gruppe „Anordnen“ (``art``: drehen, gruppieren, ausrichten, umbruch, vorn, hinten, ebene, objekte, auswahlbereich); ``name`` und ``gross``/``text`` je Reiter."""
     symbol, standard, tun, fest = _ANORDNEN[art]
     return k(symbol, name or standard, tun, **{**fest, **kw})
 

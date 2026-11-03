@@ -35,9 +35,11 @@ def test_band_seitenlayout_wie_vorlage(fenster):
     for name, klappe in (("Designs", "designsKlappe"), ("Farben", "farbenKlappe"), ("Schriftarten", "schriftartenKlappe"),
                          ("Effekte", "effekteKlappe"), ("Ränder", "raenderKlappe"), ("Orientierung", "ausrichtungKlappe"),
                          ("Größe", "groesseKlappe"), ("Spalten", "spaltenKlappe"), ("Textrichtung", "textrichtungKlappe"),
-                         ("Umbrüche", "umbruecheKlappe"), ("Zeilennummern", "zeilennummernKlappe"), ("Seitenfarbe", "seitenfarbeKlappe"),
-                         ("Ausrichten", "ausrichtenKlappe")):
+                         ("Seitenfarbe", "seitenfarbeKlappe")):
         assert knoepfe[name].get("klappe") == klappe and "tun" not in knoepfe[name] and "menue" not in knoepfe[name], name
+    # Umbrüche + Zeilennummern und Ausrichten + Drehen + Gruppieren stehen je hinter einem Knopf (Platz im Band bei 1366 px)
+    assert [i.get("klappe") for i in knoepfe["Umbrüche"]["menue"]] == ["umbruecheKlappe", "zeilennummernKlappe"]
+    assert [i.get("klappe") or i.get("tun") for i in knoepfe["Objekte"]["menue"]] == ["ausrichtenKlappe", "objektDrehen", "gruppieren"]
     assert knoepfe["Seitenränder"]["tun"] == "seitenrahmen"
     assert not fenster.befehle.hat("genkoEinstellung")                   # Genko bleibt grau sichtbar
     namen = [e["name"] for g in tab["gruppen"] for e in g["knoepfe"]]
