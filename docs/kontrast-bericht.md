@@ -14,7 +14,7 @@
 | hell | Akzent (Markierung, Fokus) auf Grund | 4.70 | 3.0 | `#2f6fb5 auf #f3f4f6` | ok |
 | hell | Fokusrahmen im Eingabefeld | 5.17 | 3.0 | `#2f6fb5 auf #ffffff` | ok |
 | hell | Akzent auf Karte | 5.17 | 3.0 | `#2f6fb5 auf #ffffff` | ok |
-| hell | Deaktiviertes/Platzhalter auf Grund (Hinweis, kein Pflichttext) | 2.86 | 3.0 | `#8a929c auf #f3f4f6` | **zu niedrig** |
+| hell | Deaktiviertes/Platzhalter auf Grund (Hinweis, kein Pflichttext) | 3.53 | 3.0 | `#7a828c auf #f3f4f6` | ok |
 | dunkel | Text auf Grund | 11.22 | 4.5 | `#e6e9ec auf #2a2e32` | ok |
 | dunkel | Text auf Fläche | 11.22 | 4.5 | `#e6e9ec auf #2a2e32` | ok |
 | dunkel | Text auf Karte | 10.43 | 4.5 | `#e6e9ec auf #2f3338` | ok |
@@ -47,12 +47,12 @@
 | dunkel weich | Text im Eingabefeld | 8.82 | 4.5 | `#dde2e6 auf #343a40` | ok |
 | dunkel weich | Text beim Überfahren | 6.08 | 4.5 | `#dde2e6 auf #4a525a` | ok |
 | dunkel weich | Text auf Auswahl | 6.41 | 4.5 | `#dde2e6 auf #35506b` | ok |
-| dunkel weich | Nebentext auf Grund | 4.86 | 4.5 | `#afb7be auf #3d444b` | ok |
-| dunkel weich | Nebentext auf Fläche | 4.86 | 4.5 | `#afb7be auf #3d444b` | ok |
-| dunkel weich | Nebentext auf Karte | 4.36 | 4.5 | `#afb7be auf #434b53` | **zu niedrig** |
-| dunkel weich | Akzent (Markierung, Fokus) auf Grund | 2.92 | 3.0 | `#4a8fd8 auf #3d444b` | **zu niedrig** |
-| dunkel weich | Fokusrahmen im Eingabefeld | 3.40 | 3.0 | `#4a8fd8 auf #343a40` | ok |
-| dunkel weich | Akzent auf Karte | 2.62 | 3.0 | `#4a8fd8 auf #434b53` | **zu niedrig** |
+| dunkel weich | Nebentext auf Grund | 5.42 | 4.5 | `#b9c1c8 auf #3d444b` | ok |
+| dunkel weich | Nebentext auf Fläche | 5.42 | 4.5 | `#b9c1c8 auf #3d444b` | ok |
+| dunkel weich | Nebentext auf Karte | 4.86 | 4.5 | `#b9c1c8 auf #434b53` | ok |
+| dunkel weich | Akzent (Markierung, Fokus) auf Grund | 4.11 | 3.0 | `#75abe8 auf #3d444b` | ok |
+| dunkel weich | Fokusrahmen im Eingabefeld | 4.79 | 3.0 | `#75abe8 auf #343a40` | ok |
+| dunkel weich | Akzent auf Karte | 3.69 | 3.0 | `#75abe8 auf #434b53` | ok |
 | dunkel weich | Deaktiviertes/Platzhalter auf Grund (Hinweis, kein Pflichttext) | 3.21 | 3.0 | `#8c949b auf #3d444b` | ok |
 | mint | Text auf Grund | 15.74 | 4.5 | `#e6efe8 auf #0f1511` | ok |
 | mint | Text auf Fläche | 15.07 | 4.5 | `#e6efe8 auf #131a15` | ok |

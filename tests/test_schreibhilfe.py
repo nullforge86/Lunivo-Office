@@ -486,6 +486,13 @@ def test_mcp_und_websuche_im_chat(app, tmp_path, monkeypatch):
     assert W.suche({"anbieter": "searxng", "url": "http://x", "anzahl": 3}, "was")[0]["titel"] == "Titel"
     k.websuche_setzen(an=True, anbieter="searxng", url="http://x")
     zuege.clear()
+    assert w.ki.ki.websuche_ziel() == "Websuche (x)"
+    aufgerufen, echte_suche = [], W.suche
+    monkeypatch.setattr(W, "suche", lambda *a, **kw: aufgerufen.append(1) or [])
+    monkeypatch.setattr(K, "_post", lambda *a, **kw: _R({"choices": [{"message": {"content": "ok"}}]}))
+    assert "Websuche wurde nicht ausgeführt" in w.ki.ki.chat([{"rolle": "mensch", "text": "was"}])["text"] and not aufgerufen
+    monkeypatch.setattr(W, "suche", echte_suche)
+    k.einwilligung_geben("Websuche (x)", "auszug")
 
     def falsch2(url, kopf, body, timeout):
         gesehen.update(body)

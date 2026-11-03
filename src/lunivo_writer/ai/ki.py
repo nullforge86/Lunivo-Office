@@ -385,6 +385,18 @@ class KI:
             return None if (a and ist_lokale_url(a["url"])) else (a["name"] if a else "einen eigenen Anbieter")
         return "Anthropic (Claude)"
 
+    def websuche_ziel(self) -> str | None:
+        """Wohin die Frage der Websuche geht, wenn das nicht dieser Rechner ist (Brave oder eine nicht lokale Adresse), sonst None."""
+        ws = self.k.websuche_optionen()
+        if not ws["an"]:
+            return None
+        if ws.get("anbieter") == "brave":
+            return "Websuche (Brave Search)"
+        url = (ws.get("url") or "").strip()
+        if not url or ist_lokale_url(url):
+            return None
+        return "Websuche (" + (urllib.parse.urlparse(url).hostname or url) + ")"
+
     def zustimmung_fehlt(self, modell: str | None = None, umfang: str = "auszug") -> dict | None:
         """Sperre an der Sendestelle: Geht der Text an einen Dienst außerhalb dieses Rechners und liegt dafür keine Einwilligung vor, kommt eine
         Fehlermeldung zurück (sonst None). Unabhängig von der Rückfrage in der Oberfläche — ohne Zustimmung wird nichts gesendet."""
@@ -565,7 +577,10 @@ class KI:
             system += "\n\nDer Mensch arbeitet gerade an diesem Text:\n" + dokumenttext[:12000]
         notiz = ""
         ws = self.k.websuche_optionen()
-        if ws["an"] and verlauf:
+        ziel = self.websuche_ziel()
+        if ws["an"] and verlauf and ziel and not self.k.hat_einwilligung(ziel, "auszug"):
+            notiz = f"(Die Websuche wurde nicht ausgeführt: keine Zustimmung, die Frage an „{ziel}“ zu senden.)\n\n"
+        elif ws["an"] and verlauf:
             from lunivo_writer.ai import websuche as W
             try:
                 treffer = W.suche(ws, verlauf[-1]["text"])

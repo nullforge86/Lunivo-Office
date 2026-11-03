@@ -68,7 +68,7 @@ def _ist_dunkel(app: QApplication) -> bool:
 
 FARBEN = {
     False: dict(bg="#f3f4f6", flaeche="#ffffff", karte="#ffffff", tafel="#f3f4f6", feld="#ffffff", dokleiste="#f3f4f6", rand="#d9dde3",
-                text="#1f2328", text2="#59616b", hover="#e6eaf0", akzent="#2f6fb5", weich="#d8e6f7", grau="#8a929c", griff="#c3c9d1",
+                text="#1f2328", text2="#59616b", hover="#e6eaf0", akzent="#2f6fb5", weich="#d8e6f7", grau="#7a828c", griff="#c3c9d1",
                 griff_h="#a9b1bb"),
     # Dunkel wie in der ersten Fassung (aus deinem Bildschirmfoto gemessen): Leisten und Band #2A2E32, Seitenleisten #26292D,
     # Knöpfe und Menüs #2F3338, Eingabefelder und Dokument-Reiterzeile wie die Fläche um das Blatt #1F2225, Ränder #3A3F45,
@@ -85,7 +85,7 @@ WEICHE_FARBEN = {
                 text="#232019", text2="#5a5449", hover="#e4dfd5", akzent="#2f6fb5", weich="#d8e6f7", grau="#86806f", griff="#c9c3b8",
                 griff_h="#b3ac9e"),
     True: dict(bg="#3d444b", flaeche="#3d444b", karte="#434b53", tafel="#394046", feld="#343a40", dokleiste="#343a40", rand="#525b63",
-               text="#dde2e6", text2="#afb7be", hover="#4a525a", akzent="#4a8fd8", weich="#35506b", grau="#8c949b", griff="#59626b",
+               text="#dde2e6", text2="#b9c1c8", hover="#4a525a", akzent="#75abe8", weich="#35506b", grau="#8c949b", griff="#59626b",
                griff_h="#6b747d"),
 }
 

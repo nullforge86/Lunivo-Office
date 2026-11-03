@@ -22,11 +22,11 @@ Nichts committet. Tests nur gezielt (keine Vollsuite). Praxisprüfung mit Screen
 | Kontrast | rechnerische Prüfung aller Themen | `werkzeug/kontrast.py`, `docs/kontrast-bericht.md` |
 
 ## Offen / Einschränkungen
-- Kontrast: Themen „dunkel weich“ (Akzent auf Grund/Karte 2,6–2,9 statt 3,0; Nebentext auf Karte 4,36 statt 4,5) und „hell“ (Platzhalter/Deaktiviert 2,86) unter der Grenze. Farbänderung wartet auf Freigabe (Optik).
+- Kontrast: behoben (Farben leicht angepasst), siehe docs/kontrast-bericht.md.
 - Screenreader-Rollen (`QAccessible`) der selbstgebauten Widgets, Skalierung 125–200 %, Sichtprüfung der Fokusrahmen: nicht geprüft.
 - Korpus: nur selbst erzeugte Dokumente; Dokumente aus Word/LibreOffice fehlen (Ordner `tests/korpus_extern/` wird mitgeprüft, sobald vorhanden).
 - DOCX-Writer/Reader sind aufgeteilt, die Kernklassen bleiben groß; weitere Schnitte (Absatz/Lauf, Listen) nicht begonnen.
 - `ProofingIssue` prüft am Eingang; die Schreibhilfe-Teile dahinter arbeiten weiter mit Wörterbüchern (schrittweise Umstellung offen).
-- Websuche der Chat-Funktion hat noch keine eigene Einwilligung. Die ZIP-Prüfung entpackt einmal zum Zählen (Zeitaufwand bei sehr großen Paketen).
+- Die ZIP-Prüfung entpackt einmal zum Zählen (Zeitaufwand bei sehr großen Paketen).
 - Beobachtet, nicht geändert: `core/befehle/seite.py` definiert `seitenraenderRahmen` doppelt; Windows/macOS-CI bleibt nicht blockierend.
 - Gesamtlauf (CI) steht aus: lokal nur gezielte Tests.

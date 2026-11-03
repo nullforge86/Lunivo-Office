@@ -378,6 +378,12 @@ class KIDienst(QObject):
             if not self.verfuegbar():
                 self.status.emit("Der Chat braucht einen KI-Schlüssel — oder Ollama. Optionen ▸ Schreibhilfe und KI.")
             return
+        ziel = self.ki.websuche_ziel()
+        if ziel and not self.konfig.hat_einwilligung(ziel, "auszug"):
+            if QMessageBox.question(self.w, "Frage an die Websuche senden?",
+                                    f"Für die Antwort wird Ihre Frage an „{ziel}“ im Internet gesendet.\n\nErlauben Sie das? "
+                                    "Widerrufen können Sie es in den KI-Einstellungen unter Datenschutz.") == QMessageBox.Yes:
+                self.konfig.einwilligung_geben(ziel, "auszug")
         ed = self.w.current_editor()
         doc = ed.document().toPlainText() if ed else ""
         self._beschaeftigt = True
