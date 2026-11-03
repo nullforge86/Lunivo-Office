@@ -68,3 +68,6 @@ Die wichtigsten Benutzerfunktionen sind in der [Oberfläche](oberflaeche.md), de
 
 - [UI-Technologie](ui-technologie.md): Qt Widgets, Zeichnung der Seiten, Theme, Symbole, Formate, Abhängigkeiten.
 - [Interne Funktionen](interne-funktionen.md): vollständiges Inventar der Module, Klassen, Funktionen und Methoden. Wird mit `werkzeug/inventar-bauen.py` aus dem Quelltext erzeugt.
+- [Lies mich](LIESMICH.md), [Installation](INSTALLATION.md), [Lesen und Schreiben](lesen-und-schreiben.md), [Prüfung, Vorhersage und KI](pruefung-und-ki.md), [Schreiben und Dokumente](schreiben-und-dokumente.md), [Tabellen und Steuerung](tabellen-und-steuerung.md): Benutzerdokumentation.
+- [Aufbau: Registerband](aufbau-band.md), [Aufbau: Ist-Stand](aufbau-ist-stand.md), [Aufbau: Optionen](aufbau-optionen.md), [Konzept: Optionen](konzept-optionen.md), [Erweiterungen](erweiterungen.md): Aufbau und Konzepte.
+- [Entstehung](ENTSTEHUNG.md) und [Wohin Lunivo gehen soll](RICHTUNG.md): Hintergrund und Richtung.
