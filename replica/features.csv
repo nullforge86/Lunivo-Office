@@ -1,7 +1,7 @@
 feature,area,priority,original,clone,notes
 Tabelleneigenschaften öffnen,band,must,yes,yes,Fenster in der Seitenleiste (Tabelle; Spalte und Zelle)
 Gitternetzlinien anzeigen,band,should,yes,yes,Befehl tabelleGitternetz; nur bei Tabellen ohne Rahmen
-Tabelle zeichnen (Stift),band,should,yes,partial,Stift beim Einfügen vorhanden; nicht als Knopf in den Tabellentools
+Tabelle zeichnen (Stift),band,should,yes,yes,Knopf in den Tabellentools; startet den Stift
 Radiergummi (Linien löschen),band,could,yes,no,
 Zeile oberhalb einfügen,band,must,yes,yes,
 Zeile unterhalb einfügen,band,must,yes,yes,
@@ -15,7 +15,7 @@ AutoAnpassen,band,should,yes,partial,An Fenster und Spalten gleichmäßig; nicht
 Zeilenhöhe als Feld im Band,band,should,yes,partial,Befehl über Eingabefenster; kein Zahlenfeld
 Spaltenbreite als Feld im Band,band,should,yes,partial,Befehl über Eingabefenster; kein Zahlenfeld
 Schrift und Größe im Tabellenband,band,could,yes,partial,in der Mini-Leiste vorhanden; nicht im Band
-Fett/Kursiv/Unterstrichen im Tabellenband,band,could,yes,partial,in der Mini-Leiste vorhanden; nicht im Band
+Fett/Kursiv/Unterstrichen im Tabellenband,band,could,yes,yes,Gruppe Schrift
 Zellausrichtung waagrecht und senkrecht,band,must,yes,yes,je drei Knöpfe; kein 3x3-Raster
 Textrichtung,band,could,yes,partial,nur waagrecht und rechts nach links
 Tabellenstil-Vorlagen,band,must,yes,yes,
@@ -27,4 +27,4 @@ Mini-Leiste über der Tabelle,dokument,must,yes,yes,Einfügen/Löschen/Eigenscha
 Markierte Tabelle grau hinterlegt,dokument,should,yes,yes,Qt-Auswahl
 Spaltenränder mit der Maus ziehen,dokument,must,yes,partial,nur offscreen geprüft; Position auf ca. 4 px genau
 Absatz-Layout-Symbol mit Menü,dokument,could,yes,no,
-Zeilenhöhe im DOCX speichern,datei,should,yes,no,w:trHeight wird nicht geschrieben
+Zeilenhöhe im DOCX speichern,datei,should,yes,yes,w:trHeight atLeast; Rundlauf geprüft; exact wie atLeast

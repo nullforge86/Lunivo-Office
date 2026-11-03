@@ -6,10 +6,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QTextCharFormat, QTextFrameFormat, QTextLength, QTextTableFormat
+from PySide6.QtGui import QTextCharFormat, QTextFormat, QTextFrameFormat, QTextLength, QTextTableFormat
 
 from lunivo_writer.models.page import mm_to_px, px_to_mm
 
+Z_MINHOEHE = QTextFormat.UserProperty + 62     # an jeder Zelle einer Zeile: Mindesthöhe der Zeile in Bildpunkten (DOCX: w:trHeight, atLeast)
 VORGABE = {"breite_art": "prozent", "breite": 100.0, "ausr": "links", "innen": 1.0, "abstand": 0.0, "rahmen": 1.0,
            "spalte": 0.0, "spalte_fest": False, "senkrecht": "oben"}
 _AUSR = {"links": Qt.AlignLeft, "mitte": Qt.AlignHCenter, "rechts": Qt.AlignRight}
@@ -100,3 +101,27 @@ def zelle_teilen(t, c, spalten: int, zeilen: int) -> bool:
     finally:
         c.endEditBlock()
     return True
+
+
+def zeilenhoehe_setzen(t, r: int, px: float, zeile_px: float) -> None:
+    """Mindesthöhe ``px`` der Tabellenzeile ``r`` setzen: Zellformat-Eigenschaft ``Z_MINHOEHE`` plus Innenabstand oben/unten
+    (Qt kennt keine Zeilenhöhe): Abstand = (Höhe - Zeilenhöhe der Schrift) / 2."""
+    pad = max(0.0, (px - zeile_px) / 2)
+    for sp in range(t.columns()):
+        cell = t.cellAt(r, sp)
+        if cell.row() != r:
+            continue
+        f = cell.format().toTableCellFormat()
+        f.setTopPadding(pad); f.setBottomPadding(pad)
+        f.setProperty(Z_MINHOEHE, float(px))
+        cell.setFormat(f)
+
+
+def zeilenhoehe_lesen(t, r: int) -> float:
+    """Mindesthöhe der Zeile in Bildpunkten; 0, wenn keine gesetzt ist."""
+    for sp in range(t.columns()):
+        cell = t.cellAt(r, sp)
+        f = cell.format()
+        if cell.row() == r and f.hasProperty(Z_MINHOEHE):
+            return float(f.property(Z_MINHOEHE))
+    return 0.0

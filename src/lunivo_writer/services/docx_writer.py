@@ -1201,6 +1201,7 @@ class _Writer:
             t.style = self.d.styles["Table Grid"]
         done = set()
         for r in range(rows):
+            self._zeilenhoehe(t.rows[r], qt, r)
             for c in range(cols):
                 cell = qt.cellAt(r, c)
                 key = (cell.row(), cell.column())
@@ -1225,6 +1226,17 @@ class _Writer:
                     cit += 1
         if isinstance(container, _Body):
             pass
+
+    @staticmethod
+    def _zeilenhoehe(drow, qt, r: int) -> None:
+        """Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten."""
+        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_lesen
+        from lunivo_writer.models.page import px_to_mm
+        px = zeilenhoehe_lesen(qt, r)
+        if px > 0:
+            h = OxmlElement("w:trHeight")
+            h.set(qn("w:val"), str(int(round(px_to_mm(px) / 25.4 * 1440)))); h.set(qn("w:hRule"), "atLeast")
+            drow._tr.get_or_add_trPr().append(h)
 
     @staticmethod
     def _zelle_format(dcell, cf) -> None:

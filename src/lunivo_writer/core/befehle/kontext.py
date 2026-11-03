@@ -351,8 +351,8 @@ class KontextBefehle:
     def tabelleHoehe(self, k=None):
         """Mindesthöhe der Zeile der Schreibmarke in cm festlegen.
         Qt kennt keine Zeilenhöhe; gewählt wird der Zellen-Innenabstand oben/unten (QTextTableCellFormat.setTop/BottomPadding)
-        aller Zellen der Zeile: Abstand = (Höhe - Zeilenhöhe der Schrift) / 2. Das ist reine Darstellung und stört das
-        DOCX-Speichern nicht (docx_writer liest aus dem Zellformat nur Hintergrund und senkrechte Ausrichtung)."""
+        aller Zellen der Zeile: Abstand = (Höhe - Zeilenhöhe der Schrift) / 2. Zusätzlich steht die Mindesthöhe als Zellformat-
+        Eigenschaft (Z_MINHOEHE); der DOCX-Schreiber macht daraus w:trHeight, der Leser setzt beides wieder."""
         from lunivo_writer.models.page import mm_to_px
         e, c, t = self._tab()
         if not t:
@@ -366,15 +366,9 @@ class KontextBefehle:
             return
         r = t.cellAt(c).row()
         zeile = e.fontMetrics().lineSpacing()
-        pad = max(0.0, (mm_to_px(cm * 10) - zeile) / 2)
+        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_setzen
         c.beginEditBlock()
-        for sp in range(t.columns()):
-            cell = t.cellAt(r, sp)
-            if cell.row() != r:
-                continue
-            f = cell.format().toTableCellFormat()
-            f.setTopPadding(pad); f.setBottomPadding(pad)
-            cell.setFormat(f)
+        zeilenhoehe_setzen(t, r, mm_to_px(cm * 10), zeile)
         c.endEditBlock()
         e.document().setModified(True)
 

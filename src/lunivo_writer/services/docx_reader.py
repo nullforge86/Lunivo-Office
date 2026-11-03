@@ -1334,10 +1334,26 @@ class _Reader:
                     self.report.warn("Verschachtelte Tabellen werden nicht dargestellt.")
         for r0, c0, _r1, _c1, cell in placed.values():          # erst nach dem Inhalt: das Einfügen von Text setzt das Zellenformat zurück
             self._zelle_format(qt.cellAt(r0, c0), cell)
+        self._zeilenhoehen(qt, table)
         self.cur = QTextCursor(self.doc)
         self.cur.movePosition(QTextCursor.End)
         self.fresh = True
         self.last_list = None
+
+    def _zeilenhoehen(self, qt, table) -> None:
+        """w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand)."""
+        from PySide6.QtGui import QFontMetricsF
+        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_setzen
+        from lunivo_writer.models.page import mm_to_px
+        zeile = QFontMetricsF(self.doc.defaultFont()).lineSpacing()
+        for r, row in enumerate(table.rows):
+            h = row._tr.xpath("w:trPr/w:trHeight/@w:val")
+            try:
+                tw = float(h[0]) if h else 0.0
+            except ValueError:
+                continue
+            if tw > 0:
+                zeilenhoehe_setzen(qt, r, mm_to_px(tw / 1440 * 25.4), zeile)
 
     # ---- Seite -------------------------------------------------------
     def read_page(self) -> PageSettings:

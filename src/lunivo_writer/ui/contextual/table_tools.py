@@ -6,6 +6,7 @@ from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
 
 TABELLENTOOLS = {"name": "Tabellentools", "kontext": "tabelle", "gruppen": [
     {"name": "Tabelle", "knoepfe": [
+        _k("stift", "Tabelle zeichnen", "tabelleZeichnen", gross=True),
         _k("table-properties", "Tabellen-eigenschaften", "tabelleEigenschaften", gross=True),
         _k("grid-3x3", "Gitternetz-linien anzeigen", "tabelleGitternetz", haken=True, gross=True)]},
     {"name": "Tabellenformatvorlagen", "knoepfe": [
@@ -41,4 +42,8 @@ TABELLENTOOLS = {"name": "Tabellentools", "kontext": "tabelle", "gruppen": [
         _k("mitte", "Zentriert im Feld", "zelleZentriert"),
         _k("rechts", "Rechts im Feld", "zelleRechts"),
         _k("textrichtung", "Textrichtung", klappe="tabelleTextrichtung")]},
+    {"name": "Schrift", "knoepfe": [
+        _k("F", "Fett", "fett", haken=True),
+        _k("K", "Kursiv", "kursiv", haken=True),
+        _k("U", "Unterstrichen", "unter", haken=True)]},
 ]}
