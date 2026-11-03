@@ -151,10 +151,17 @@ class KontextBefehle:
 
     def tabelleTeilen(self, k=None):
         e, c, t = self._tab()
-        if t:
-            cell = t.cellAt(c)
-            if cell.rowSpan() > 1 or cell.columnSpan() > 1:
-                t.splitCell(cell.row(), cell.column(), 1, 1)
+        if not t: return
+        from lunivo_writer.editor.tabelleneigenschaften import zelle_teilen
+        text, ok = EingabeFenster.getText(self.w, "Zellen teilen", "Spalten,Zeilen:", text="2,1")
+        if not ok: return
+        try:
+            sp, ze = (int(x) for x in text.replace(";", ",").split(","))
+            if not (1 <= sp <= 20 and 1 <= ze <= 20): raise ValueError
+        except ValueError:
+            self.w.lbl_msg.setText("Ungültige Eingabe: bitte „Spalten,Zeilen“ angeben, zum Beispiel 2,1.")
+            return
+        if zelle_teilen(t, e.textCursor(), sp, ze): e.document().setModified(True)
 
 
     def tabelleRahmen(self, k=None):

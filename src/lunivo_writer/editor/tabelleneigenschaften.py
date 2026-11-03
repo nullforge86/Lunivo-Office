@@ -58,3 +58,45 @@ def anwenden(t, c, w: dict) -> None:
     zf.setVerticalAlignment(_SENKRECHT[w["senkrecht"]])
     zelle.setFormat(zf)
     c.endEditBlock()
+
+
+def zelle_teilen(t, c, spalten: int, zeilen: int) -> bool:
+    """Teilt die Zelle unter dem Cursor c in spalten x zeilen Zellen (wie „Zellen teilen“).
+
+    Verbundene Zelle: t.splitCell. Unverbundene Zelle: Qt kann nur verbundene Zellen teilen. Gewählte Lösung:
+    Tabelle um (spalten-1) Spalten bzw. (zeilen-1) Zeilen direkt hinter der Zelle erweitern und alle anderen
+    Zellen derselben Spalte bzw. Zeile über die neuen Spalten/Zeilen verbinden. So bleibt das Gitter der übrigen
+    Zellen samt Inhalt unverändert, nur die Ursprungszelle zerfällt. Alles ein Rückgängig-Schritt."""
+    spalten, zeilen = max(1, int(spalten)), max(1, int(zeilen))
+    if spalten == 1 and zeilen == 1:
+        return False
+    z = t.cellAt(c)
+    if not z.isValid():
+        return False
+    zr, zc = z.row(), z.column()
+    c.beginEditBlock()
+    try:
+        if z.rowSpan() > 1 or z.columnSpan() > 1:
+            # Qt teilt nur innerhalb der vorhandenen Spannweite
+            t.splitCell(zr, zc, min(zeilen, z.rowSpan()), min(spalten, z.columnSpan()))
+            return True
+        if spalten > 1:
+            t.insertColumns(zc + 1, spalten - 1)
+            r = 0
+            while r < t.rows():
+                x = t.cellAt(r, zc)
+                if r != zr and x.row() == r and x.column() == zc and x.columnSpan() == 1:
+                    t.mergeCells(r, zc, x.rowSpan(), spalten)
+                r += max(1, t.cellAt(r, zc).rowSpan() if t.cellAt(r, zc).row() == r else 1)
+        if zeilen > 1:
+            t.insertRows(zr + 1, zeilen - 1)
+            j = 0
+            while j < t.columns():
+                x = t.cellAt(zr, j)
+                dazu = zc <= j < zc + spalten
+                if not dazu and x.row() == zr and x.column() == j and x.rowSpan() == 1:
+                    t.mergeCells(zr, j, zeilen, x.columnSpan())
+                j += max(1, x.columnSpan() if x.column() == j else 1)
+    finally:
+        c.endEditBlock()
+    return True
