@@ -1,4 +1,4 @@
-![Lunivo Office](bilder/lunivo-office.png)
+![Lunivo Writer](assets/images/titelbild.png)
 
 # Lunivo Writer
 
@@ -18,37 +18,67 @@ Denn Schwierigkeiten mit der Rechtschreibung bedeuten nicht, weniger Ideen, Fant
 
 **Die Rechtschreibhilfe soll Kreativität ermöglichen, nicht begrenzen. Und ein professionelles Office-Programm soll dabei niemals zu kurz kommen.**
 
+## Voraussetzungen
+
+- Linux (getestet unter Linux Mint); Windows und macOS werden in der CI nur teilweise geprüft.
+- Python 3.10 oder neuer mit `python3-venv`.
+- Qt-Systembibliotheken, unter Debian/Ubuntu/Mint: `sudo apt install libxcb-cursor0 libegl1 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0`
+- Internet nur für die Einrichtung (Python-Pakete werden geladen).
+
 ## Installation und Start
 
-Voraussetzung ist Python 3.9 oder neuer. Beim ersten Start richtet das Skript eine eigene `.venv` ein und installiert die Projektabhängigkeiten:
-
 ```bash
+git clone https://github.com/nullforge86/Lunivo-Office.git
+cd Lunivo-Office
 ./starten-qt.sh
 ```
 
-Eine Datei lässt sich direkt öffnen:
+Beim ersten Start legt das Skript eine eigene `.venv` an und installiert die Abhängigkeiten aus `requirements.txt` (PySide6, python-docx, msoffcrypto-tool, pyphen, pypdf). Das System-Python bleibt unberührt.
+
+Eine Datei direkt öffnen:
 
 ```bash
 ./starten-qt.sh brief.docx
 ```
 
-Mit `./starten-qt.sh --eintrag` wird ein Menüeintrag angelegt. `./starten-qt.sh --weg` entfernt diesen Eintrag; Programmumgebung und Dokumente bleiben erhalten.
+`./starten-qt.sh --eintrag` legt einen Eintrag im Anwendungsmenü an, `./starten-qt.sh --weg` entfernt ihn (Umgebung und Dokumente bleiben). Mehr in der [Installationsanleitung](docs/INSTALLATION.md).
 
 ## Was Lunivo kann
 
 - Acht Register: Start, Einfügen, Seitenlayout, Verweise, Überprüfen, Schreibhilfe, Ansicht und Abschnitt (Sendungen lässt sich einblenden).
 - Eine Schreibhilfe für häufige Verwechslungen, Rechtschreibung, Grammatik, Wortvorhersage, Silbentrennung und Vorlesen.
-- Dokumente in DOCX, ODT, FODT, RTF und TXT öffnen oder speichern. PDF und PNG lassen sich exportieren; PDF kann Lunivo nicht öffnen.
 - Tabellen, Bilder, Formen, Diagramme, Formeln, Formatvorlagen, Kopf- und Fußzeilen sowie Seriendruck.
 - Eine native Qt-Oberfläche mit Seitenleiste, Dokumentreitern und wahlweise Registerband oder Symbolleisten.
 
-XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Die bekannte Formatunterstützung und ihre Grenzen stehen in [Speichern und Dateiformate](docs/SPEICHERN.md).
+## Dateiformate
+
+| Aktion | Formate |
+|---|---|
+| Öffnen und Speichern | DOCX, ODT, FODT, RTF, TXT |
+| Nur exportieren | PDF, PNG |
+
+PDF kann Lunivo nicht öffnen. XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Grenzen der Formatunterstützung: [Speichern und Dateiformate](docs/SPEICHERN.md).
+
+## Offline und online
+
+**Offline (ohne Konto, ohne Internet):** Schreiben, Bearbeiten, Speichern, Rechtschreib- und Grammatikprüfung, Wortvorhersage, Silbentrennung, Seriendruck, PDF-Export.
+
+**Optional, nach eigener Einrichtung:**
+
+| Funktion | Voraussetzung | Internet |
+|---|---|---|
+| Lokale KI | Ollama mit heruntergeladenem Modell | nur zum Laden des Modells |
+| Gründlichere Grammatikprüfung | LanguageTool und Java | nur zum Laden |
+| Aufgenommene Stimmen, Leseschriften | `./stimme-holen.sh`, `./schrift-holen.sh` | nur zum Laden |
+| Online-KI, Websuche | eigener API-Schlüssel des Anbieters | ja; der gewählte Text wird an den Anbieter übertragen |
 
 ## Datenschutz
 
-Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwendungsdaten liegen in den XDG-Verzeichnissen des Benutzers. Optionale KI-Anbieter und Online-Dienste brauchen eine eigene Einrichtung; lokale Funktionen laufen ohne sie weiter.
+Dokumente bleiben am gewählten Speicherort. Einstellungen und Anwendungsdaten liegen in den XDG-Verzeichnissen des Benutzers. Online-Dienste werden nur nach eigener Einrichtung verwendet; lokale Funktionen laufen ohne sie weiter.
 
-## Dokumentation
+## Hilfe und Dokumentation
+
+Im Programm: **☰ Menü → Hilfe → Handbuch**.
 
 - [Lies mich](docs/LIESMICH.md)
 - [Installation](docs/INSTALLATION.md)
@@ -70,8 +100,7 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 - [Erweiterungen](docs/erweiterungen.md)
 - [Entstehung](docs/ENTSTEHUNG.md)
 - [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
-
-Weitere Hilfe gibt es im Programm unter **☰ Menü → Hilfe → Handbuch**.
+- [Mitwirken](.github/CONTRIBUTING.md)
 
 ## Mitmachen
 
