@@ -63,6 +63,14 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
     pageApplied = Signal()                    # Seiteneinrichtung oder Größe hat sich geändert
 
+    leseschutzGeaendert = Signal(bool)        # Nur-Lesen wurde ein- oder ausgeschaltet (Qt hat dafür kein eigenes Signal)
+
+    def setReadOnly(self, ro: bool) -> None:
+        alt = self.isReadOnly()
+        super().setReadOnly(ro)
+        if alt != self.isReadOnly():
+            self.leseschutzGeaendert.emit(self.isReadOnly())
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -343,6 +351,10 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             e.accept()
             return
         from lunivo_writer.ui.widgets.kontextmenue import menue_bauen
+        c = self.cursorForPosition(e.pos())                            # wie in Word: Rechtsklick außerhalb der Markierung setzt die Schreibmarke dorthin
+        tc = self.textCursor()
+        if not (tc.hasSelection() and tc.selectionStart() <= c.position() <= tc.selectionEnd()):
+            self.setTextCursor(c)
         fenster = self.window()
         m = menue_bauen(self, fenster) if hasattr(fenster, "befehle") else self.createStandardContextMenu()
         if self.kontext_hook is not None:
@@ -365,13 +377,14 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                 a = m.addAction(text, lambda _=False, modus=modus: U.umbruch_setzen(self, modus))
                 a.setCheckable(True)
                 a.setChecked(modus == aktuell)
-        if self.textCursor().hasSelection() and not self.isReadOnly():
+        in_tabelle = self.textCursor().currentTable() is not None        # das Tabellenmenü bleibt wie in der Vorlage: ohne Anhängsel
+        if self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
             a = m.addAction("Ausgeblendeter Text", lambda: self.set_versteckt(not self.ist_versteckt()))
             a.setCheckable(True)
             a.setChecked(self.ist_versteckt())
         ki = getattr(self.window(), "ki", None)
-        if ki is not None and self.textCursor().hasSelection() and not self.isReadOnly():
+        if ki is not None and self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
             m.addAction("KI: Text in Bild", ki.bild_aus_text)
             aktionen = [a for a in ki.konfig["assistenten"] if a.get("zugriff", "kontext") == "kontext"]

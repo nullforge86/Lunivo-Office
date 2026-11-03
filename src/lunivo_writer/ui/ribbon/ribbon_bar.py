@@ -362,6 +362,7 @@ class RegisterBand(QWidget):
         lay.addWidget(linie)
         self._schnellzugriff()
         self.kontext_index: dict[str, int] = {}
+        self.kontext_weitere: dict[str, list[int]] = {}               # weitere Reiter desselben Kontexts (Tabellenstil neben Tabellentools)
         for r in self._plan_angepasst():
             self._reiter(r)
         self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)
@@ -533,7 +534,10 @@ class RegisterBand(QWidget):
         self.stapel.addWidget(scroll)
         i = self.reiter.addTab(r["name"])
         if r.get("kontext"):
-            self.kontext_index[r["kontext"]] = i
+            if r["kontext"] in self.kontext_index:
+                self.kontext_weitere.setdefault(r["kontext"], []).append(i)
+            else:
+                self.kontext_index[r["kontext"]] = i
             self.reiter.setTabVisible(i, False)
             self.reiter.setTabData(i, "kontext")
 
@@ -1156,14 +1160,18 @@ class RegisterBand(QWidget):
         i = self.kontext_index.get(name)
         if i is None:
             return
+        alle = (i, *self.kontext_weitere.get(name, ()))              # die weiteren Reiter des Kontexts folgen dem ersten
         if sichtbar and aktivieren:
-            self.reiter.setTabVisible(i, True)
+            for j in alle:
+                self.reiter.setTabVisible(j, True)
             self.reiter.setCurrentIndex(i)
             return
         if self.reiter.isTabVisible(i) == sichtbar:
             return
-        self.reiter.setTabVisible(i, sichtbar)
-        if not sichtbar and self.reiter.currentIndex() == i:
+        war_aktiv = self.reiter.currentIndex() in alle                 # Qt springt beim Ausblenden selbst zu einem Nachbarn: vorher merken
+        for j in alle:
+            self.reiter.setTabVisible(j, sichtbar)
+        if not sichtbar and war_aktiv:
             self.reiter.setCurrentIndex(self._start_index())
 
     def _start_index(self) -> int:

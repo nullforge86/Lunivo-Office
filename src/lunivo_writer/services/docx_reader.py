@@ -31,7 +31,7 @@ from PySide6.QtGui import (
     QTextLength, QTextListFormat, QTextTableFormat,
 )
 
-from lunivo_writer.models.page import HeaderFooter, PageSettings, px_to_mm
+from lunivo_writer.models.page import HeaderFooter, PageSettings, mm_to_px, px_to_mm
 from lunivo_writer.models.report import DocumentIOError, IOReport
 
 LH_PROPORTIONAL, LH_FIXED = 1, 2                # QTextBlockFormat.LineHeightTypes
@@ -1302,14 +1302,7 @@ class _Reader:
         if rows == 0 or cols == 0:
             return
         tf = QTextTableFormat()
-        tf.setCellPadding(4)
-        tf.setCellSpacing(0)
-        tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
-        grid = table._tbl.xpath("w:tblPr/w:tblBorders") or (
-            [1] if table.style is not None and "Grid" in (table.style.name or "") else [])
-        tf.setBorder(1 if grid else 0)
-        tf.setBorderBrush(QColor('#333333')); tf.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
-        tf.setBorderCollapse(True)
+        self._tabellenformat(tf, table, cols)
         qt = self.cur.insertTable(rows, cols, tf)
 
         # Zellen mit Rechteck: gleiche tc → eine Zelle
@@ -1335,10 +1328,105 @@ class _Reader:
         for r0, c0, _r1, _c1, cell in placed.values():          # erst nach dem Inhalt: das Einfügen von Text setzt das Zellenformat zurück
             self._zelle_format(qt.cellAt(r0, c0), cell)
         self._zeilenhoehen(qt, table)
+        kopf = 0
+        for row in table.rows:
+            if not row._tr.xpath("w:trPr/w:tblHeader"):
+                break
+            kopf += 1
+        if kopf:
+            f = qt.format(); f.setHeaderRowCount(kopf); qt.setFormat(f)
         self.cur = QTextCursor(self.doc)
         self.cur.movePosition(QTextCursor.End)
         self.fresh = True
         self.last_list = None
+
+    @staticmethod
+    def _tw(el):
+        """(Art, Wert) eines Maßelements (w:tblW, w:tcW, w:tblCellMar-Kante …); Art ``dxa``/``pct``/``auto``, Wert in Zwanzigstelpunkten bzw. Prozent."""
+        if el is None:
+            return None
+        art = el.get(qn("w:type")) or "dxa"
+        roh = el.get(qn("w:w"))
+        try:
+            if roh is not None and roh.endswith("%"):
+                return "pct", float(roh[:-1])
+            wert = float(roh)
+        except (TypeError, ValueError):
+            return None
+        if art == "pct":
+            return "pct", wert / 50.0
+        return ("auto" if art in ("auto", "nil") else "dxa"), wert
+
+    def _tabellenformat(self, tf, table, cols: int) -> None:
+        """Tabellenbreite, Ausrichtung, Zellabstand, Rahmen (Stärke, Farbe, Stil), Innenabstand und Spaltenbreiten aus w:tblPr/w:tblGrid/w:tcW.
+        Vorgaben (100 %, Innenabstand 4, Rahmen #333333) gelten nur, wenn die Datei nichts angibt."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QTextLength
+        px = lambda tw: mm_to_px(tw / 1440 * 25.4)                              # noqa: E731
+        pr = table._tbl.tblPr
+        x = pr.xpath
+        w = self._tw(x("w:tblW")[0] if x("w:tblW") else None)
+        if w is None:
+            tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
+        elif w[0] == "pct" and w[1] > 0:
+            tf.setWidth(QTextLength(QTextLength.PercentageLength, w[1]))
+        elif w[0] == "dxa" and w[1] > 0:
+            tf.setWidth(QTextLength(QTextLength.FixedLength, px(w[1])))
+        # Art "auto": Breite nach den Spalten (Qt: nicht gesetzt)
+        jc = x("w:jc/@w:val")
+        if jc and jc[0] in ("center", "right", "end"):
+            tf.setAlignment(Qt.AlignHCenter if jc[0] == "center" else Qt.AlignRight)
+        mar = {k: self._tw(x(f"w:tblCellMar/w:{k}")[0] if x(f"w:tblCellMar/w:{k}") else None) for k in ("left", "right", "top", "bottom")}
+        gelesen = [m[1] for k in ("left", "right", "top", "bottom") if (m := mar[k]) and m[0] == "dxa"]
+        tf.setCellPadding(px(max(gelesen[:2] or gelesen)) if gelesen else 4)
+        ab = self._tw(x("w:tblCellSpacing")[0] if x("w:tblCellSpacing") else None)
+        tf.setCellSpacing(px(ab[1]) if ab and ab[0] == "dxa" else 0)
+        tf.setBorderCollapse(True)
+        kanten = x("w:tblBorders")
+        farbe, stil, breite = "#333333", QTextFrameFormat.BorderStyle_Solid, 1
+        if kanten:
+            ein = [k for k in kanten[0] if k.get(qn("w:val")) not in (None, "nil", "none")]
+            if ein:
+                k = ein[0]
+                farbe_roh = k.get(qn("w:color"))
+                if farbe_roh and farbe_roh != "auto":
+                    farbe = "#" + farbe_roh
+                stil = {"dotted": QTextFrameFormat.BorderStyle_Dotted, "dashed": QTextFrameFormat.BorderStyle_Dashed,
+                        "dashSmallGap": QTextFrameFormat.BorderStyle_Dashed, "double": QTextFrameFormat.BorderStyle_Double
+                        }.get(k.get(qn("w:val")), QTextFrameFormat.BorderStyle_Solid)
+                try:
+                    breite = max(1, int(round(int(k.get(qn("w:sz"))) / 6)))
+                except (TypeError, ValueError):
+                    breite = 1
+            tf.setBorder(breite if ein else 0)
+        else:
+            tf.setBorder(1 if table.style is not None and "Grid" in (table.style.name or "") else 0)
+        tf.setBorderBrush(QColor(farbe)); tf.setBorderStyle(stil)
+        # Spaltenbreiten: je Spalte tcW der ersten ungeteilten Zelle; fehlt tcW in der Spalte ganz, gilt die Gitterbreite
+        spalten: list = [None] * cols
+        gefunden = [False] * cols
+        for tr in table._tbl.tr_lst:
+            i = 0
+            for tc in tr.tc_lst:
+                span = max(1, tc.grid_span)
+                if span == 1 and i < cols and not gefunden[i]:
+                    el = tc.tcPr.tcW if tc.tcPr is not None else None
+                    if el is not None:
+                        spalten[i] = self._tw(el)
+                        gefunden[i] = True
+                i += span
+        grid = [self._tw(g) for g in table._tbl.tblGrid.gridCol_lst]
+        lang, echt = [], False
+        for i in range(cols):
+            a = spalten[i] if gefunden[i] else (grid[i] if i < len(grid) else None)
+            if a and a[0] == "dxa" and a[1] > 0:
+                lang.append(QTextLength(QTextLength.FixedLength, px(a[1]))); echt = True
+            elif a and a[0] == "pct" and a[1] > 0:
+                lang.append(QTextLength(QTextLength.PercentageLength, a[1])); echt = True
+            else:
+                lang.append(QTextLength())
+        if echt:
+            tf.setColumnWidthConstraints(lang)
 
     def _zeilenhoehen(self, qt, table) -> None:
         """w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand)."""

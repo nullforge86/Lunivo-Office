@@ -22,7 +22,7 @@ from docx.oxml.ns import qn
 from docx.shared import Emu, Mm, Pt, RGBColor
 from PySide6.QtCore import QBuffer, QIODevice, QUrl, Qt
 from PySide6.QtGui import (
-    QFont, QImage, QTextBlock, QTextBlockFormat, QTextCharFormat, QTextDocument, QTextFormat,
+    QFont, QImage, QTextBlock, QTextBlockFormat, QTextCharFormat, QTextDocument, QTextFormat, QTextFrameFormat,
     QTextFrame, QTextListFormat, QTextTable,
 )
 
@@ -1224,8 +1224,96 @@ class _Writer:
                         first = False
                         self.write_block(blk, para)
                     cit += 1
+        self._tabelle_eigenschaften(t, qt)
         if isinstance(container, _Body):
             pass
+
+    _RAND_VAL = {QTextFrameFormat.BorderStyle_Dotted: "dotted", QTextFrameFormat.BorderStyle_Dashed: "dashed",
+                 QTextFrameFormat.BorderStyle_Double: "double"}
+
+    def _tabelle_eigenschaften(self, t, qt: QTextTable) -> None:
+        """Tabellenbreite, Ausrichtung, Zellabstand, Rahmen, Innenabstand (w:tblPr, in Schema-Reihenfolge), Spaltenbreiten
+        (w:tblGrid, w:tcW) und Kopfzeile (w:tblHeader) der Qt-Tabelle schreiben."""
+        from PySide6.QtGui import QTextLength
+        from lunivo_writer.models.page import px_to_mm
+        tw = lambda px: int(round(px_to_mm(px) / 25.4 * 1440))                # noqa: E731  Bildpunkte -> Zwanzigstelpunkte
+        f = qt.format()
+        inhalt = tw(self.page.content_width_px) if self.page is not None else 9000
+        b = f.width()
+        if b.type() == QTextLength.PercentageLength:
+            breite, art, wert = inhalt * b.rawValue() / 100, "pct", int(round(b.rawValue() * 50))
+        elif b.type() == QTextLength.FixedLength:
+            breite = tw(b.rawValue()); art, wert = "dxa", int(breite)
+        else:
+            breite, art, wert = inhalt, "auto", 0
+        pr = t._tbl.tblPr
+        for tag in ("w:tblW", "w:jc", "w:tblCellSpacing", "w:tblBorders", "w:tblLayout", "w:tblCellMar"):
+            for alt in pr.findall(qn(tag)):
+                pr.remove(alt)
+        neu = []
+
+        def el(tag, **attr):
+            e = OxmlElement(tag)
+            for k, v in attr.items():
+                e.set(qn("w:" + k), str(v))
+            return e
+        neu.append(el("w:tblW", type=art, w=wert))
+        al = f.alignment()
+        if al & Qt.AlignHCenter:
+            neu.append(el("w:jc", val="center"))
+        elif al & Qt.AlignRight:
+            neu.append(el("w:jc", val="right"))
+        if f.cellSpacing() > 0:
+            neu.append(el("w:tblCellSpacing", w=tw(f.cellSpacing()), type="dxa"))
+        if f.border() > 0:
+            rb = el("w:tblBorders")
+            val = self._RAND_VAL.get(f.borderStyle(), "single")
+            for kante in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                rb.append(el("w:" + kante, val=val, sz=max(2, int(round(f.border() * 6))), space=0,
+                             color=f.borderBrush().color().name()[1:].upper()))
+            neu.append(rb)
+        pad = tw(f.cellPadding())
+        mar = el("w:tblCellMar")
+        for kante in ("top", "left", "bottom", "right"):
+            mar.append(el("w:" + kante, w=pad, type="dxa"))
+        neu.append(mar)
+        look = pr.find(qn("w:tblLook"))
+        for e in neu:
+            look.addprevious(e) if look is not None else pr.append(e)
+        # Spalten: Fest -> dxa, Prozent -> pct, sonst auto (Gitterbreite aus dem Rest)
+        lang = list(f.columnWidthConstraints())
+        n = qt.columns()
+        lang += [QTextLength()] * (n - len(lang))
+        w = [0.0] * n
+        for i, x in enumerate(lang[:n]):
+            if x.type() == QTextLength.FixedLength:
+                w[i] = float(tw(x.rawValue()))
+            elif x.type() == QTextLength.PercentageLength:
+                w[i] = breite * x.rawValue() / 100
+        frei = [i for i in range(n) if w[i] == 0.0]
+        if frei:
+            rest = max(breite - sum(w), 120.0 * len(frei))
+            for i in frei:
+                w[i] = rest / len(frei)
+        for g, x in zip(t._tbl.tblGrid.gridCol_lst, w):
+            g.set(qn("w:w"), str(int(round(x))))
+        for tr in t._tbl.tr_lst:
+            i = 0
+            for tc in tr.tc_lst:
+                span = max(1, tc.grid_span)
+                x = lang[i] if i < n else QTextLength()
+                tcw = tc.get_or_add_tcPr().get_or_add_tcW()
+                if span == 1 and x.type() == QTextLength.FixedLength:
+                    tcw.set(qn("w:type"), "dxa"); tcw.set(qn("w:w"), str(int(round(w[i]))))
+                elif span == 1 and x.type() == QTextLength.PercentageLength:
+                    tcw.set(qn("w:type"), "pct"); tcw.set(qn("w:w"), str(int(round(x.rawValue() * 50))))
+                elif span == 1:
+                    tcw.set(qn("w:type"), "auto"); tcw.set(qn("w:w"), "0")
+                else:
+                    tcw.set(qn("w:type"), "dxa"); tcw.set(qn("w:w"), str(int(round(sum(w[i:i + span])))))
+                i += span
+        for r in range(min(f.headerRowCount(), len(t.rows))):
+            t.rows[r]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))
 
     @staticmethod
     def _zeilenhoehe(drow, qt, r: int) -> None:

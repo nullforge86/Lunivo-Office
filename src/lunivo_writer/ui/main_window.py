@@ -365,6 +365,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         e.zoomChanged.connect(lambda f, ed=e: ed is self.current_editor() and self._zoom_anzeigen(f))
         e.formatChanged.connect(self._sync_later)
         e.freiAuswahlGeaendert.connect(self._sync_later)
+        e.leseschutzGeaendert.connect(self._sync_later)
         from lunivo_writer.ui.widgets.schweb_knopf import SchwebKnopf
         tab._chat_knopf = SchwebKnopf(tab, "chat", "KI-Chat", lambda: self.chat_oeffnen(""))
         self.sidebar.bereich_geaendert.connect(lambda *_: self._chat_knopf_pruefen())
@@ -396,7 +397,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
     def _sync_format(self):
         e = self.current_editor()
         self.band.aktualisieren(e is not None)
-        self.band.kontext("tabelle", bool(e) and e.textCursor().currentTable() is not None)
+        self.band.kontext("tabelle", bool(e) and not e.isReadOnly() and e.textCursor().currentTable() is not None)
         bf = e.bild_format() if e else None
         from lunivo_writer.editor import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None

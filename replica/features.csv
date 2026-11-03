@@ -28,3 +28,7 @@ Markierte Tabelle grau hinterlegt,dokument,should,yes,yes,Qt-Auswahl
 Spaltenränder mit der Maus ziehen,dokument,must,yes,yes,mit simulierten Mausereignissen geprüft
 Absatz-Layout-Symbol mit Menü,dokument,could,yes,yes,Zurücksetzen und Ausblenden; Option in Ansicht
 Zeilenhöhe im DOCX speichern,datei,should,yes,yes,w:trHeight atLeast; Rundlauf geprüft; exact wie atLeast
+Tabellen-Kontextmenü beim Rechtsklick,dokument,must,yes,yes,Reihenfolge nach WPS; Tabelleneinträge ohne Symbole; Aktionen mit Zähler geprüft
+Einfügen und Löschen als große Knöpfe in der Mini-Leiste,dokument,should,yes,yes,rechts neben den zwei Zeilen
+Rahmen und Schattierung für Tabelle,band,should,yes,partial,nur Rahmen der ganzen Tabelle und Füllfarbe; keine Einzelkanten
+Tabellenbeschriftung einfügen,band,could,yes,yes,Text immer „Tabelle N“; ohne Fenster

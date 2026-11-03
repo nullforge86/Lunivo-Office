@@ -89,6 +89,17 @@ Wiederholungen, keine unnötigen Umbauten, keine Änderungen außerhalb des erfo
 
 Ein klarer Einzelauftrag braucht keinen Coordinator. Delegierte Pakete enthalten nur Ziel, relevante Dateien, Grenzen und erwartetes Ergebnis. Abhängiges nacheinander bearbeiten; parallel nur bei unabhängigen Paketen. Nie gleichzeitig an derselben Datei schreiben. QA nur auf ausdrücklichen Wunsch oder bei konkret erhöhtem Risiko. Jeder Agent liest nur nötigen Kontext und berichtet knapp; der Coordinator fasst einmal zusammen. Vor größeren Umbauten, neuen Abhängigkeiten, kostenpflichtigen Diensten oder nicht umkehrbaren Aktionen Zustimmung einholen.
 
+### Verbindlicher Ablauf bei Aufgaben mit Oberfläche oder Zuständen (Eigentümer, 2026-11-03)
+
+Gilt in **jeder** Sitzung automatisch; der Eigentümer muss nicht daran erinnern. Die Agenten (der Eigentümer nennt sie „Konnektoren“) sind dafür eingeführt, Layout und Funktionen getrennt zu bearbeiten. Die Hauptsitzung ist Vermittler und trägt die Verantwortung, dass dieser Ablauf eingehalten wird.
+
+1. **Zuerst `architektur-agent` (nur lesend).** Bevor etwas gebaut wird, klärt er: Welche Bausteine, Fenster, Befehle und Menüs gibt es schon (`docs/baukasten.md`, `docs/interne-funktionen.md`, grep)? Welche Zustände und **Zustandswechsel** sind betroffen (Auswahl, Modus, Kontext — z. B. Text in einer Zelle ↔ mehrere Zellen ↔ Tabelle ↔ außerhalb)? Was zeigen die Vorbild-Bilder des Eigentümers (Reihenfolge, Symbole, Breite, Abstände)? Ergebnis: kurzer Plan mit Zuständigkeiten und Dateien.
+2. **Dann `coding-agent`** (Logik, Befehle, Zustände), **danach `design-agent`** (Qt-Oberfläche), strikt nacheinander, nie zwei gleichzeitig; jede Aufgabe genau einem Bearbeiter. Aufträge nennen den Plan des Architekten, vorhandene Bausteine zum Wiederverwenden und die Vorbild-Bilder.
+3. **Bestand vor Neubau:** Nie ein zweites Fenster, einen zweiten Befehl oder eine zweite Leiste neben einem vorhandenen bauen; den vorhandenen Baustein erweitern.
+4. **Kontextabhängig:** Bedienelemente zeigen nur, was im aktuellen Zustand gilt (Tabelle: Tabellenfunktionen; reine Textbearbeitung: nur Textfunktionen) und schalten bei Zustandswechsel sofort um.
+5. **Vermittler prüft jeden Bericht** gegen Auftrag und Vorbild-Bilder und schickt zurück, was fehlt (z. B. „Vorlage nicht angesehen“, „Zustand nicht geprüft“). Erst danach dem Eigentümer berichten; Nicht-Geprüftes offen nennen.
+6. Fehlen die Agentenprofile unter `.claude/agents/`, aus einer Sicherung wiederherstellen oder melden, bevor gearbeitet wird.
+
 ## Ergänzende Eigentümer-Regeln (2026-10-25 bis 2026-10-28)
 
 Gelten für alle Agenten zusätzlich zu den Regeln oben; bei Widerspruch gilt die jüngere Regel.

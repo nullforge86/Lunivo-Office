@@ -44,11 +44,47 @@ def _stift_cursor() -> QCursor:
     return QCursor(pm, 6, 6)
 
 
+def andere_beenden(ed) -> None:
+    """Stift und Radiergummi schließen sich gegenseitig (und ein früherer derselben Art); der Mauszeiger wird dabei zurückgesetzt."""
+    from lunivo_writer.ui.document.tabelle_radierer import TabellenRadierer
+    for art in (TabellenStift, TabellenRadierer):
+        for w in ed.viewport().findChildren(art):
+            w.beenden()
+
+
+def ueberwachen(w, ed, bei_tabellenverlust: bool = False) -> None:
+    """Beendet das Werkzeug ``w`` (mit ``beenden()``), wenn der Reiter des Bandes wechselt, die Anwendung endet oder der Editor zerstört wird;
+    der Mauszeiger (``setOverrideCursor``) wird in jedem Fall zurückgesetzt. ``bei_tabellenverlust``: auch, wenn die Schreibmarke die Tabelle verlässt."""
+    merker = [True]                                                    # lebt über das Widget hinaus: auch bei Zerstörung ohne ``beenden``
+    w._cursor_offen = merker
+
+    def aufraeumen(*_):
+        if merker[0]:
+            merker[0] = False
+            QApplication.restoreOverrideCursor()
+    w.destroyed.connect(aufraeumen)
+    QApplication.instance().aboutToQuit.connect(w.beenden)
+    band = getattr(ed.window(), "band", None)
+    if band is not None and hasattr(band, "reiter"):
+        band.reiter.currentChanged.connect(w.beenden)
+    if bei_tabellenverlust:
+        ed.cursorPositionChanged.connect(lambda: w.ed.textCursor().currentTable() is None and w.beenden())
+
+
+def cursor_zurueck(w) -> None:
+    merker = getattr(w, "_cursor_offen", None)
+    if merker is None or merker[0]:
+        if merker is not None:
+            merker[0] = False
+        QApplication.restoreOverrideCursor()
+
+
 class TabellenStift(QWidget):
     MAUS = (QEvent.MouseButtonPress, QEvent.MouseMove, QEvent.MouseButtonRelease, QEvent.MouseButtonDblClick)
 
     def __init__(self, ed):
         vp = ed.viewport()
+        andere_beenden(ed)
         super().__init__(vp)
         self.ed = ed
         self._start: QPoint | None = None
@@ -60,6 +96,7 @@ class TabellenStift(QWidget):
         QApplication.setOverrideCursor(_stift_cursor())
         QApplication.instance().installEventFilter(self)
         self._aktiv = True
+        ueberwachen(self, ed)
         fenster = ed.window()
         if hasattr(fenster, "statusBar"):
             fenster.statusBar().showMessage("Tabelle zeichnen: im Dokument ein Rechteck aufziehen. Esc oder Rechtsklick bricht ab.", 8000)
@@ -73,6 +110,8 @@ class TabellenStift(QWidget):
         t = ev.type()
         if not getattr(self, "_aktiv", False):
             return False
+        if t in (QEvent.Hide, QEvent.Close) and obj in (self.ed, self.ed.window()):      # Dokumentwechsel oder Fenster schließt
+            self.beenden(); return False
         if t == QEvent.KeyPress and ev.key() == Qt.Key_Escape:
             self.beenden(); return True
         if t not in self.MAUS or not isinstance(obj, QWidget) or obj.window() is not self.ed.window():
@@ -118,7 +157,7 @@ class TabellenStift(QWidget):
             return
         self._aktiv = False
         QApplication.instance().removeEventFilter(self)
-        QApplication.restoreOverrideCursor()
+        cursor_zurueck(self)
         self.hide(); self.deleteLater()
         self.ed.setFocus()
 

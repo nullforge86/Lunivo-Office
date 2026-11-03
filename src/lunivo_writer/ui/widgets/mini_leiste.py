@@ -8,19 +8,26 @@ from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMenu, QToolButton, QVBoxLayout, QWidget
 
+from lunivo_writer.core.tabellenaktionen import GRUPPEN
+from lunivo_writer.editor.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from lunivo_writer.ui.widgets import icons
 
-# Zwei Zeilen wie in der Vorlage. Eintrag: (Befehl, Tooltip, Art) — Art: "" (Knopf) · "klappe" (Pfeil mit Menü des Bandes) · "farbe" (Palette)
-ZEILE1 = [("kopieren", "Kopieren", ""), ("einfuegen", "Einfügen", "klappe:menue_einfuegenKlappe"), "schriftart", "groesse",
-          ("schriftGroesser", "Schrift vergrößern", ""), ("schriftKleiner", "Schrift verkleinern", "")]
-ZEILE2 = [("ausschneiden", "Ausschneiden", ""), ("formatUebertragen", "Format übertragen", ""),
-          ("fett", "Fett", ""), ("kursiv", "Kursiv", ""), ("unter", "Unterstrichen", ""),
-          ("hervorhebenJetzt", "Hervorheben", "farbe:menue_hervorhebenKlappe"), ("schriftfarbeJetzt", "Schriftfarbe", "farbe:menue_schriftfarbeKlappe"),
-          ("ausrichtung", "Ausrichtung", "klappe:_ausrichtung_menue"), ("zeilenabstand", "Zeilenabstand", "klappe:menue_zeilenabstandKlappe")]
-# Dritte Zeile, nur wenn die Schreibmarke in einer Tabelle steht: Menüs „Einfügen“ und „Löschen“ (Name, Befehl des Bandes) und „Eigenschaften …“
-TABELLE_MENUES = (("Einfügen", (("Zeile oberhalb", "tabelleZeileOben"), ("Zeile unterhalb", "tabelleZeileUnten"),
-                                ("Spalte links", "tabelleSpalteLinks"), ("Spalte rechts", "tabelleSpalteRechts"))),
-                  ("Löschen", (("Zeile", "tabelleZeileLoeschen"), ("Spalte", "tabelleSpalteLoeschen"), ("Tabelle", "tabelleLoeschen"))))
+# Zwei Zeilen wie in der Vorlage, je Modus eine eigene Anordnung. Eintrag: Name -> (Tooltip, Art) — Art: "" (Knopf) · "klappe:…" (Pfeil mit Menü des Bandes)
+# · "farbe:…" (Palette). Die Namen sind Befehle des Bandes (``fenster.befehle``); "schriftart" und "groesse" sind die beiden Auswahlfelder.
+KNOEPFE = {"kopieren": ("Kopieren", ""), "einfuegen": ("Einfügen", "klappe:menue_einfuegenKlappe"), "ausschneiden": ("Ausschneiden", ""),
+           "schriftGroesser": ("Schrift vergrößern", ""), "schriftKleiner": ("Schrift verkleinern", ""),
+           "formatUebertragen": ("Format übertragen", ""), "fett": ("Fett", ""), "kursiv": ("Kursiv", ""), "unter": ("Unterstrichen", ""),
+           "hervorhebenJetzt": ("Hervorheben", "farbe:menue_hervorhebenKlappe"), "schriftfarbeJetzt": ("Schriftfarbe", "farbe:menue_schriftfarbeKlappe"),
+           "tabelleRahmen": ("Rahmen", "klappe:_rahmen_menue"), "tabelleSchattierung": ("Zellenschattierung", "farbe:menue_tabelleSchattierung"),
+           "ausrichtung": ("Ausrichtung", "klappe:_ausrichtung_menue"), "zeilenabstand": ("Zeilenabstand", "klappe:menue_zeilenabstandKlappe")}
+TEXT_MODUS = (("kopieren", "einfuegen", "schriftart", "groesse", "schriftGroesser", "schriftKleiner"),
+              ("ausschneiden", "formatUebertragen", "fett", "kursiv", "unter", "hervorhebenJetzt", "schriftfarbeJetzt", "ausrichtung", "zeilenabstand"))
+# Tabellenmodus (Vorlage): kein Kopieren/Ausschneiden/Einfügen vorn; Format übertragen ganz rechts; rechts daneben „Einfügen ▾“ und „Löschen ▾“
+TABELLEN_MODUS = (("schriftart", "groesse", "schriftGroesser", "schriftKleiner", "zeilenabstand"),
+                  ("fett", "kursiv", "unter", "hervorhebenJetzt", "schriftfarbeJetzt", "tabelleSchattierung", "tabelleRahmen", "ausrichtung",
+                   "formatUebertragen"))
+ICON = 18                      # Symbolgröße der Knöpfe (nie gestaucht)
+PFEIL = 12                     # Breite der Pfeilfläche rechts neben dem Symbol
 GROESSEN = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 
 
@@ -42,7 +49,40 @@ def _symbole() -> dict[str, str]:
     lauf(lade_register())
     out.setdefault("einfuegen", "kleben"); out.setdefault("kopieren", "kopie"); out.setdefault("ausschneiden", "schere")
     out.setdefault("formatUebertragen", "pinsel"); out.setdefault("ausrichtung", "links")
+    out.setdefault("tabelleRahmen", "rahmen"); out.setdefault("tabelleSchattierung", "toenung")
     return out
+
+
+def _pfeil_datei(farbe: str) -> str:
+    """Kleiner ausgefüllter Pfeil nach unten als Bilddatei für das Stylesheet (kontrastreich in Hell und Dunkel; dünne Linienpfeile verschwinden bei 8 px)."""
+    import os
+    import tempfile
+    from PySide6.QtCore import QPointF
+    from PySide6.QtGui import QColor, QImage, QPainter, QPolygonF
+    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-icons")
+    os.makedirs(ordner, exist_ok=True)
+    datei = os.path.join(ordner, f"mini_pfeil_{farbe.lstrip('#')}.png")
+    if not os.path.exists(datei):
+        img = QImage(20, 20, QImage.Format_ARGB32_Premultiplied); img.fill(Qt.transparent)
+        p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen); p.setBrush(QColor(farbe))
+        p.drawPolygon(QPolygonF([QPointF(3, 6.5), QPointF(17, 6.5), QPointF(10, 14.5)]))
+        p.end(); img.save(datei)
+    return datei.replace("\\", "/")
+
+
+def _stil(farbe: str) -> str:
+    return ("#miniLeiste { background: palette(window); border: 1px solid palette(mid); border-radius: 6px; }"
+            "QToolButton { border: none; border-radius: 4px; padding: 3px; }"
+            "QToolButton:hover { background: palette(midlight); }"
+            "QToolButton:checked { background: palette(highlight); }"
+            # Symbol- und Pfeilfläche getrennt: rechts bleibt Platz für den Pfeil (padding-right >= Pfeilbreite + Abstand), das Symbol wird nicht überdeckt
+            f"QToolButton[popupMode=\"1\"] {{ padding-right: {PFEIL + 4}px; }}"
+            f"QToolButton::menu-button {{ border: none; border-left: 1px solid palette(mid); width: {PFEIL}px; subcontrol-origin: padding; "
+            "subcontrol-position: center right; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }"
+            "QToolButton::menu-button:hover { background: palette(midlight); }"
+            f"QToolButton::menu-arrow {{ image: url({_pfeil_datei(farbe)}); width: 10px; height: 10px; }}"
+            "QToolButton::menu-indicator { image: none; width: 0px; }")
 
 
 class MiniLeiste(QFrame):
@@ -51,81 +91,141 @@ class MiniLeiste(QFrame):
         self.w = fenster
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setObjectName("miniLeiste")
-        self.setStyleSheet("#miniLeiste { background: palette(window); border: 1px solid palette(mid); border-radius: 6px; }"
-                           "QToolButton { border: none; border-radius: 4px; padding: 3px; }"
-                           "QToolButton:hover { background: palette(midlight); }"
-                           "QToolButton:checked { background: palette(highlight); }")
-        v = QVBoxLayout(self)
-        v.setContentsMargins(5, 4, 5, 4); v.setSpacing(2)
+        self._stil_farbe = ""
+        self._stil_setzen()
+        aussen = QHBoxLayout(self)
+        aussen.setContentsMargins(3, 3, 3, 3); aussen.setSpacing(2)
+        v = QVBoxLayout(); v.setSpacing(2)
+        aussen.addLayout(v)
         self.knoepfe: dict[str, QToolButton] = {}
         self._menues: dict[str, str] = {}
         sym = _symbole()
-        for zeile in (ZEILE1, ZEILE2):
-            h = QHBoxLayout(); h.setSpacing(1)
-            for k in zeile:
-                if k == "schriftart":
-                    self.schriftart = QComboBox(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(128)
-                    self.schriftart.addItems(QFontDatabase.families()); self.schriftart.setMaxVisibleItems(18)
-                    self.schriftart.textActivated.connect(lambda n: self._schrift(n))
-                    h.addWidget(self.schriftart); continue
-                if k == "groesse":
-                    self.groesse = QComboBox(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(58)
-                    self.groesse.addItems([f"{g:g}" for g in GROESSEN]); self.groesse.setMaxVisibleItems(16)
-                    self.groesse.textActivated.connect(lambda t: self._groesse(t))
-                    h.addWidget(self.groesse); continue
-                tun, tip, art = k
-                b = QToolButton()
-                b.setIcon(icons.icon(sym.get(tun, ""), 18))
-                if b.icon().isNull():                                  # Fett/Kursiv/Unterstrichen sind im Band Buchstaben, keine Symbole
-                    b.setText({"fett": "F", "kursiv": "K", "unter": "U"}.get(tun, tip[:1]))
-                    f = b.font()
-                    f.setBold(tun == "fett"); f.setItalic(tun == "kursiv"); f.setUnderline(tun == "unter")
-                    b.setFont(f)
-                    b.setMinimumWidth(26)
-                b.setToolTip(tip)
-                b.setFocusPolicy(Qt.NoFocus)
-                b.setCheckable(self.w.befehle.zustand(tun) is not None)
-                if art:                                                # Pfeil mit Menü; Klick auf das Symbol wirkt wie im Band
-                    b.setPopupMode(QToolButton.MenuButtonPopup)
-                    self._menues[tun] = art
-                    self._menue_setzen(b, tun)
-                if tun in ("ausrichtung", "zeilenabstand"):
-                    b.clicked.connect(lambda _=False, b=b: b.showMenu())
-                else:
-                    b.clicked.connect(lambda _=False, tun=tun: self._tun(tun))
-                h.addWidget(b)
-                self.knoepfe[tun] = b
-            h.addStretch(1)
+        self._felder: dict[str, QComboBox] = {}
+        self._ikonen: dict[QToolButton, tuple[str, int]] = {}          # Symbolname und -größe je Knopf (Neuzeichnen nach Themenwechsel)
+        self.schriftart = QComboBox(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(128)     # Name bleibt lesbar (wie die Textleiste)
+        self.schriftart.addItems(QFontDatabase.families()); self.schriftart.setMaxVisibleItems(18)
+        self.schriftart.textActivated.connect(lambda n: self._schrift(n))
+        self.groesse = QComboBox(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(50)
+        self.groesse.addItems([f"{g:g}" for g in GROESSEN]); self.groesse.setMaxVisibleItems(16)
+        self.groesse.textActivated.connect(lambda t: self._groesse(t))
+        self._felder = {"schriftart": self.schriftart, "groesse": self.groesse}
+        self._zeilen: list[QHBoxLayout] = []
+        for _i in range(2):
+            h = QHBoxLayout(); h.setSpacing(0)
+            self._zeilen.append(h)
             v.addLayout(h)
+        for tun, (tip, art) in KNOEPFE.items():
+            b = QToolButton()
+            b.setIconSize(QSize(ICON, ICON))
+            self._ikonen[b] = (sym.get(tun, ""), ICON)
+            b.setIcon(icons.icon(sym.get(tun, ""), ICON))
+            if b.icon().isNull():                                  # Fett/Kursiv/Unterstrichen sind im Band Buchstaben, keine Symbole
+                b.setText({"fett": "F", "kursiv": "K", "unter": "U"}.get(tun, tip[:1]))
+                f = b.font()
+                f.setBold(tun == "fett"); f.setItalic(tun == "kursiv"); f.setUnderline(tun == "unter")
+                b.setFont(f)
+                b.setMinimumWidth(26)
+            b.setToolTip(tip)
+            b.setFocusPolicy(Qt.NoFocus)
+            b.setCheckable(self.w.befehle.zustand(tun) is not None)
+            if art:                                                # Pfeil mit Menü; Klick auf das Symbol wirkt wie im Band
+                b.setPopupMode(QToolButton.MenuButtonPopup)
+                self._menues[tun] = art
+                self._menue_setzen(b, tun)
+            if tun in ("ausrichtung", "zeilenabstand", "tabelleSchattierung"):
+                b.clicked.connect(lambda _=False, b=b: b.showMenu())
+            else:
+                b.clicked.connect(lambda _=False, tun=tun: self._tun(tun))
+            self.knoepfe[tun] = b
+            b.hide()
         self._ed = None
+        self._per_griff = False
         self.tabellenzeile = self._tabellenzeile()
-        v.addWidget(self.tabellenzeile)
+        aussen.addWidget(self.tabellenzeile)                           # rechts neben den zwei Zeilen
         self.tabellenzeile.hide()
+        self._anordnen(False)
+
+    def _stil_setzen(self) -> None:
+        """Stylesheet mit dem Pfeil in der Schriftfarbe der aktuellen Palette (Hell/Dunkel)."""
+        farbe = self.palette().buttonText().color().name()
+        if farbe != self._stil_farbe:
+            alt, self._stil_farbe = self._stil_farbe, farbe
+            self.setStyleSheet(_stil(farbe))
+            if alt:                                                   # Themenwechsel: Symbole in der neuen Farbe zeichnen
+                for b, (name, px) in self._ikonen.items():
+                    if name:
+                        b.setIcon(icons.icon(name, px))
+                for text, b in ((t, self.knoepfe["tabellen_" + t]) for t in GRUPPEN):
+                    self._aktionsmenue(b, GRUPPEN[text])
+
+    def _anordnen(self, tabelle: bool) -> None:
+        """Die beiden Zeilen für den Text- oder den Tabellenmodus füllen (die Knöpfe sind dieselben, nur Auswahl und Reihenfolge wechseln)."""
+        plan = TABELLEN_MODUS if tabelle else TEXT_MODUS
+        for h in self._zeilen:
+            while h.count():
+                h.takeAt(0)
+        benutzt = set()
+        for h, namen in zip(self._zeilen, plan):
+            for n in namen:
+                w = self._felder.get(n) or self.knoepfe[n]
+                h.addWidget(w); w.show(); benutzt.add(n)
+            h.addStretch(1)
+        for n, w in (*self._felder.items(), *self.knoepfe.items()):
+            if n not in benutzt and not n.startswith("tabellen_"):
+                w.hide()
 
     def _tabellenzeile(self) -> QWidget:
-        """„Einfügen ▾“, „Löschen ▾“ und „Eigenschaften …“ für die Tabelle der Schreibmarke; dieselben Befehle wie im Band."""
+        """„Einfügen ▾“ und „Löschen ▾“ als große Symbolknöpfe mit Beschriftung darunter (wie in der Vorlage); Menüs aus ``core/tabellenaktionen.py``."""
         z = QWidget()
-        h = QHBoxLayout(z); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(1)
-        for text, eintraege in TABELLE_MENUES:
-            b = QToolButton(); b.setText(text); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
-            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumWidth(78)
-            m = QMenu(b)
-            for name, befehl in eintraege:
-                m.addAction(name, lambda _=False, bf=befehl: self._tun(bf))
-            b.setMenu(m); h.addWidget(b)
+        h = QHBoxLayout(z); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        sym = {"Einfügen": "tabelleEinfuegen", "Löschen": "tabelleLoeschen"}
+        for text, aktionen in GRUPPEN.items():
+            b = QToolButton(); b.setText(text + " ▾"); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setIconSize(QSize(28, 28))
+            self._ikonen[b] = (sym[text], 28)
+            b.setIcon(icons.icon(sym[text], 28))
+            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumSize(50, 54)
+            self._aktionsmenue(b, aktionen)
+            h.addWidget(b)
             self.knoepfe["tabellen_" + text] = b
-        e = QToolButton(); e.setText("Eigenschaften …"); e.setToolTip("Tabelleneigenschaften"); e.setFocusPolicy(Qt.NoFocus)
-        e.clicked.connect(lambda: self._tun("tabelleEigenschaften")); h.addWidget(e)
-        h.addStretch(1)
         return z
 
-    def _in_tabelle(self) -> bool:
-        return self._ed is not None and self._ed.textCursor().currentTable() is not None
+    def _aktionsmenue(self, b: QToolButton, aktionen) -> None:
+        m = QMenu(b)
+        for a in aktionen:
+            akt = m.addAction(a.name, lambda _=False, bf=a.befehl: self._tun(bf))
+            if icons.hat(a.symbol):
+                akt.setIcon(icons.icon(a.symbol, 16))
+        b.setMenu(m)
+
+    def tabellenmodus(self) -> bool:
+        """Tabellenmodus (siehe ``editor/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
+        Rechtsklick ohne Textmarkierung in einer Zelle. Text in nur einer Zelle oder außerhalb einer Tabelle: Textmodus."""
+        return tabellenmodus(self._ed, self._rechtsklick, self._per_griff)
+
+    def _modus_anwenden(self) -> bool:
+        """Knöpfe des Modus anordnen; ``True``, wenn sich der Modus geändert hat (Größe und Platz müssen neu gesetzt werden)."""
+        modus = self.tabellenmodus()
+        alt = getattr(self, "_modus", None)
+        self._modus = modus
+        if alt != modus:
+            self._anordnen(modus)
+        self.tabellenzeile.setVisible(modus)
+        return alt != modus
 
     def _ausrichtung_menue(self) -> QMenu:
         m = QMenu()
         for text, tun in (("Linksbündig", "links"), ("Zentriert", "mitte"), ("Rechtsbündig", "rechts"), ("Blocksatz", "block")):
-            m.addAction(text, lambda _=False, t=tun: self._tun(t))
+            a = m.addAction(text, lambda _=False, t=tun: self._tun(t))
+            if icons.hat(tun):
+                a.setIcon(icons.icon(tun, 16))
+        return m
+
+    def _rahmen_menue(self) -> QMenu:
+        m = QMenu()
+        for text, tun in (("Rahmenlinien ein/aus", "tabelleRahmen"), ("Rahmen und Schattierung …", "tabelleRahmenSchattierung")):
+            a = m.addAction(text, lambda _=False, t=tun: self._tun(t))
+            a.setIcon(icons.icon("rahmen", 16))
         return m
 
     def _menue_setzen(self, b: QToolButton, tun: str) -> None:
@@ -185,8 +285,23 @@ class MiniLeiste(QFrame):
         unter = rechtsklick
         self._rechtsklick = rechtsklick
         self._ed = editor
+        self._stil_setzen()
+        self._per_griff = bool(getattr(editor, "mini_per_griff", False))          # vom Verschiebegriff der Tabelle gemeldet (``TabellenGriffe._waehlen``)
+        editor.mini_per_griff = False
         self.aktualisieren()
-        self.tabellenzeile.setVisible(self._in_tabelle())
+        self._modus_anwenden()
+        self._pos, self._menue_groesse = global_pos, menue
+        self._platzieren()
+        self.show()
+        if not hasattr(editor, "_mini_filter"):
+            editor._mini_filter = _Zu(self, editor)
+            editor.installEventFilter(editor._mini_filter)
+            editor.cursorPositionChanged.connect(lambda: self._pruefen(editor))
+            editor.selectionChanged.connect(lambda: self._pruefen(editor))
+
+    def _platzieren(self) -> None:
+        """Größe neu messen und die Leiste über (bzw. am Rechtsklick neben) ``_pos`` setzen; überlappt das Menü nie."""
+        global_pos, menue, rechtsklick, unter = self._pos, self._menue_groesse, self._rechtsklick, self._rechtsklick
         self.layout().invalidate(); self.adjustSize()
         w, h = self.width(), self.height()
         x = global_pos.x() - w // 2
@@ -199,12 +314,6 @@ class MiniLeiste(QFrame):
             x = max(g.left(), min(x, g.right() - w))
             y = max(g.top(), min(y, g.bottom() - h))
         self.move(x, y)
-        self.show()
-        if not hasattr(editor, "_mini_filter"):
-            editor._mini_filter = _Zu(self, editor)
-            editor.installEventFilter(editor._mini_filter)
-            editor.cursorPositionChanged.connect(lambda: self._pruefen(editor))
-            editor.selectionChanged.connect(lambda: self._pruefen(editor))
 
     def _neben_menue(self, p: QPoint, menue: QSize, g: QRect) -> tuple[int, int]:
         """Platz für die Leiste um das Kontextmenü: über dem Klickpunkt, sonst unter, sonst neben dem Menü; nie überlappend."""
@@ -235,8 +344,15 @@ class MiniLeiste(QFrame):
         return x, y
 
     def _pruefen(self, editor) -> None:
-        if self.isVisible() and self._ed is editor and not editor.textCursor().hasSelection() and not self._rechtsklick:
+        if not (self.isVisible() and self._ed is editor):
+            return
+        if not editor.textCursor().hasSelection() and not self._rechtsklick:
             self.hide()
+            return
+        if self._per_griff and zustand(editor) not in (MEHRERE_ZELLEN, GANZE_TABELLE, EINZELZELLE_GANZ):
+            self._per_griff = False                                   # die Tabellenwahl über den Griff ist aufgehoben
+        if self._modus_anwenden():                                  # Zelle ↔ mehrere Zellen ↔ außerhalb: sofort umschalten
+            self._platzieren()
 
     _rechtsklick = False
 

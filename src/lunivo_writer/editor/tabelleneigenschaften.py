@@ -6,10 +6,12 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontMetricsF, QTextCharFormat, QTextFormat, QTextFrameFormat, QTextLength, QTextTableFormat
+from PySide6.QtGui import QFontMetricsF, QTextCharFormat, QTextCursor, QTextFormat, QTextFrameFormat, QTextLength, QTextTableFormat
 
 from lunivo_writer.models.page import mm_to_px, px_to_mm
 
+T_OPTIONEN = QTextFormat.UserProperty + 63     # an der Tabelle: Bit 1 = gebänderte Zeilen, Bit 2 = erste Spalte (Formatoptionen der Tabellentools)
+T_VORLAGE = QTextFormat.UserProperty + 64      # an der Tabelle: Name der zuletzt angewendeten Tabellenformatvorlage
 Z_MINHOEHE = QTextFormat.UserProperty + 62     # an jeder Zelle einer Zeile: Mindesthöhe der Zeile in Bildpunkten (DOCX: w:trHeight, atLeast)
 VORGABE = {"breite_art": "prozent", "breite": 100.0, "ausr": "links", "innen": 1.0, "abstand": 0.0, "rahmen": 1.0,
            "spalte": 0.0, "spalte_fest": False, "senkrecht": "oben"}
@@ -34,7 +36,7 @@ def lesen(t, c) -> dict:
 
 
 def anwenden(t, c, w: dict) -> None:
-    w = {**VORGABE, **w}
+    w = {**VORGABE, **w}                  # optional: "rahmen_stil" (QTextFrameFormat.BorderStyle_*) - fehlt er, bleibt der Rahmenstil
     spalte = t.cellAt(c).column()
     zelle = t.cellAt(c)
     c.beginEditBlock()
@@ -48,8 +50,8 @@ def anwenden(t, c, w: dict) -> None:
     f.setAlignment(_AUSR[w["ausr"]])
     f.setCellPadding(mm_to_px(w["innen"])); f.setCellSpacing(mm_to_px(w["abstand"]))
     f.setBorder(round(w["rahmen"] / 0.2646))
-    if f.border():
-        f.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
+    if f.border() and "rahmen_stil" in w:                       # nur wenn der Aufrufer einen Stil mitgibt; sonst bleibt der bestehende
+        f.setBorderStyle(w["rahmen_stil"])
     lang = f.columnWidthConstraints() or [QTextLength() for _ in range(t.columns())]
     lang = list(lang) + [QTextLength()] * (t.columns() - len(lang))
     lang[spalte] = QTextLength(QTextLength.FixedLength, mm_to_px(w["spalte"])) if w["spalte_fest"] and w["spalte"] > 0 else QTextLength()
@@ -59,6 +61,87 @@ def anwenden(t, c, w: dict) -> None:
     zf.setVerticalAlignment(_SENKRECHT[w["senkrecht"]])
     zelle.setFormat(zf)
     c.endEditBlock()
+
+
+def optionen_lesen(t) -> dict:
+    """Formatoptionen dieser Tabelle: ``kopf`` (aus der Kopfzeilenzahl), ``streifen``, ``spalte``, ``vorlage`` (Name oder ``""``) und
+    ``gesetzt`` (False, wenn noch nie eine Vorlage/Option gesetzt wurde)."""
+    f = t.format()
+    bits = int(f.property(T_OPTIONEN)) if f.hasProperty(T_OPTIONEN) else 0
+    return {"kopf": f.headerRowCount() > 0, "streifen": bool(bits & 1), "spalte": bool(bits & 2),
+            "vorlage": str(f.property(T_VORLAGE) or "") if f.hasProperty(T_VORLAGE) else "", "gesetzt": f.hasProperty(T_OPTIONEN)}
+
+
+def optionen_setzen(t, *, kopf=None, streifen=None, spalte=None, vorlage=None) -> None:
+    """Formatoptionen an der Tabelle merken (nur die übergebenen); ``kopf`` setzt die Kopfzeilenzahl (0/1)."""
+    o = optionen_lesen(t)
+    f = t.format()
+    if kopf is not None:
+        f.setHeaderRowCount(1 if kopf else 0)
+    s = o["streifen"] if streifen is None else streifen
+    sp = o["spalte"] if spalte is None else spalte
+    f.setProperty(T_OPTIONEN, (1 if s else 0) | (2 if sp else 0))
+    if vorlage is not None:
+        f.setProperty(T_VORLAGE, vorlage)
+    t.setFormat(f)
+
+
+def zellen_loeschen(t, c, art: str) -> str | None:
+    """„Zellen löschen“ für die Zelle bzw. die markierten Zellen: ``art`` = ``zeile``, ``spalte``, ``links`` (Zellen rechts davon rücken
+    nach links) oder ``oben`` (Zellen darunter rücken nach oben). Bei „links“/„oben“ wird der Inhalt (QTextDocumentFragment je Zelle)
+    nach vorn kopiert und die letzten Zellen werden geleert. Ein Rückgängig-Schritt.
+
+    Rückgabe: ``None`` bei Erfolg, sonst ein Meldetext (verbundene Zellen im Weg, letzte Zeile/Spalte, unbekannte Art)."""
+    z = t.cellAt(c)
+    if not z.isValid():
+        return "Die Schreibmarke steht in keiner Tabellenzelle."
+    if c.hasSelection():
+        r0, nr, s0, ns = c.selectedTableCells()
+        if nr <= 0 or ns <= 0:
+            r0, nr, s0, ns = z.row(), 1, z.column(), 1
+    else:
+        r0, nr, s0, ns = z.row(), 1, z.column(), 1
+    if art in ("zeile", "spalte"):
+        if art == "zeile" and t.rows() > nr:
+            c.beginEditBlock(); t.removeRows(r0, nr); c.endEditBlock(); return None
+        if art == "spalte" and t.columns() > ns:
+            c.beginEditBlock(); t.removeColumns(s0, ns); c.endEditBlock(); return None
+        return "Die letzte Zeile bzw. Spalte kann so nicht gelöscht werden; verwenden Sie „Tabelle löschen“."
+    if art not in ("links", "oben"):
+        return "Unbekannte Art des Löschens."
+    waagrecht = art == "links"
+    # Alle Zellen der betroffenen Zeilen (links) bzw. Spalten (oben) ab dem Löschbereich müssen einfache Zellen sein
+    linien = range(r0, r0 + nr) if waagrecht else range(s0, s0 + ns)
+    laenge = t.columns() if waagrecht else t.rows()
+    start = s0 if waagrecht else r0
+    schritt = ns if waagrecht else nr
+    for ln in linien:
+        for j in range(start, laenge):
+            x = t.cellAt(ln, j) if waagrecht else t.cellAt(j, ln)
+            if x.rowSpan() > 1 or x.columnSpan() > 1:
+                return "Verbundene Zellen sind im Weg; die Zellen können nicht verschoben werden."
+
+    def zelle(ln, j):
+        return t.cellAt(ln, j) if waagrecht else t.cellAt(j, ln)
+
+    def auswahl(x):
+        cur = x.firstCursorPosition()
+        cur.setPosition(x.lastCursorPosition().position(), QTextCursor.KeepAnchor)
+        return cur
+    c.beginEditBlock()
+    try:
+        for ln in linien:
+            teile = [auswahl(zelle(ln, j)).selection() for j in range(start, laenge)]
+            for k, j in enumerate(range(start, laenge)):
+                cur = auswahl(zelle(ln, j))
+                quelle = k + schritt
+                if quelle < len(teile):
+                    cur.insertFragment(teile[quelle])
+                else:
+                    cur.removeSelectedText()
+    finally:
+        c.endEditBlock()
+    return None
 
 
 def zelle_teilen(t, c, spalten: int, zeilen: int) -> bool:
@@ -157,6 +240,191 @@ def an_inhalt_anpassen(t, c) -> None:
     f.setWidth(QTextLength())
     t.setFormat(f)
     c.endEditBlock()
+
+
+MIN_SPALTE = 12.0            # kleinste Spaltenbreite beim Skalieren/Ziehen (Bildpunkte)
+
+
+def _zoom(t) -> float:
+    """Ansichtsfaktor des Layouts (Zeichengerät 96 dpi x Zoom): Layoutmaße / Faktor = Dokumentmaße."""
+    dev = t.document().documentLayout().paintDevice()
+    return dev.logicalDpiX() / 96.0 if dev is not None else 1.0
+
+
+def _zellen_der_zeile(t, r: int):
+    """Zellen, die in Zeile ``r`` beginnen und nur eine Zeile hoch sind."""
+    for sp in range(t.columns()):
+        z = t.cellAt(r, sp)
+        if z.row() == r and z.column() == sp and z.rowSpan() == 1:
+            yield z
+
+
+def _textHoehe(t, r: int) -> float:
+    """Höhe des höchsten Zelleninhalts der Zeile (ohne Innenabstand), aus dem Layout."""
+    lay = t.document().documentLayout()
+    h = 0.0
+    for z in _zellen_der_zeile(t, r):
+        a = z.firstCursorPosition().block(); b = z.lastCursorPosition().block()
+        if a.isValid() and b.isValid():
+            h = max(h, lay.blockBoundingRect(b).bottom() - lay.blockBoundingRect(a).top())
+    return h / _zoom(t)
+
+
+def _zeilen_oberkanten(t) -> list[float]:
+    """y der Oberkante jeder Zeile (Dokumentkoordinaten), gemessen an Zelleninhalt minus oberem Innenabstand."""
+    lay = t.document().documentLayout()
+    pad_t = t.format().cellPadding()
+    ys = []
+    for r in range(t.rows()):
+        y = None
+        for z in _zellen_der_zeile(t, r):
+            f = z.format().toTableCellFormat()
+            pad = f.topPadding() if f.topPadding() > 0 else pad_t
+            v = lay.blockBoundingRect(z.firstCursorPosition().block()).top() - pad
+            y = v if y is None else min(y, v)
+        ys.append(y if y is not None else (ys[-1] if ys else lay.frameBoundingRect(t).top()))
+    return ys
+
+
+def _unterkante(t) -> float:
+    """Layout-y der Unterkante der Tabelle: Ende des Inhalts der letzten Zeile plus unterer Innenabstand."""
+    lay = t.document().documentLayout()
+    pad_t = t.format().cellPadding(); y = None
+    for z in _zellen_der_zeile(t, t.rows() - 1):
+        f = z.format().toTableCellFormat()
+        pad = f.bottomPadding() if f.bottomPadding() > 0 else pad_t
+        v = lay.blockBoundingRect(z.lastCursorPosition().block()).bottom() + pad
+        y = v if y is None else max(y, v)
+    return y if y is not None else lay.frameBoundingRect(t).bottom()
+
+
+def tabelle_basis(t) -> tuple[list[float], list[float]]:
+    """(Spaltenbreiten, Zeilenhöhen) der Tabelle in Bildpunkten des Dokuments (zoomunabhängig): Breiten aus festen
+    Constraints, sonst aus dem Layout; Höhen aus dem Layout (Abstand der Zeilenoberkanten, letzte bis Tabellenunterkante)."""
+    lay = t.document().documentLayout()
+    rect = lay.frameBoundingRect(t)
+    n = t.columns()
+    lang = t.format().columnWidthConstraints()
+    if len(lang) == n and all(x.type() == QTextLength.FixedLength for x in lang):
+        breiten = [float(x.rawValue()) for x in lang]            # feste Längen sind Dokumentmaße
+    else:
+        f = t.format(); halb = f.cellPadding() + f.cellSpacing() / 2
+        xs = [0.0]
+        for i in range(1, n):
+            xs.append(lay.blockBoundingRect(t.cellAt(0, i).firstCursorPosition().block()).left() - rect.left() - halb)
+        xs.append(rect.width())
+        z = _zoom(t)
+        breiten = [(xs[i + 1] - xs[i]) / z for i in range(n)]
+    ys = _zeilen_oberkanten(t)
+    ys.append(_unterkante(t))
+    z = _zoom(t)
+    return breiten, [max(1.0, (ys[i + 1] - ys[i]) / z) for i in range(t.rows())]
+
+
+def zeilengrenzen(t) -> list[float]:
+    """y der inneren waagrechten Zeilenränder (n-1 Stück) in Layoutkoordinaten des Dokuments (wie ``_grenzen`` der Spalten,
+    also mit Zoom; für die Lage der Griffe). Dokumentmaße: Wert / Zoom, oder ``tabelle_basis``."""
+    ys = _zeilen_oberkanten(t)
+    return [float(y) for y in ys[1:]]
+
+
+def zeilen_mindesthoehe(t, r: int) -> float:
+    """Kleinste zulässige Höhe der Zeile: Inhalt plus Innenabstand oben und unten."""
+    return max(_textHoehe(t, r), 1.0) + 2 * t.format().cellPadding()
+
+
+def _zeile_setzen(t, r: int, px: float) -> None:
+    px = max(px, zeilen_mindesthoehe(t, r))
+    zeilenhoehe_setzen(t, r, px, _textHoehe(t, r) or 1.0)
+
+
+def zeile_hoehe_ziehen(t, zeile: int, neue_hoehe_px: float) -> None:
+    """Mindesthöhe nur der Zeile ``zeile`` auf ``neue_hoehe_px`` setzen (nie unter dem Inhalt). Der Aufrufer öffnet den
+    Rückgängig-Block (ein Schritt je Ziehvorgang)."""
+    if 0 <= zeile < t.rows():
+        _zeile_setzen(t, zeile, float(neue_hoehe_px))
+
+
+def _zeilen_setzen(t, ziele: list[tuple[int, float]]) -> None:
+    """Mindesthöhen mehrerer Zeilen setzen. Die Textmaße aller Zeilen werden zuerst gemessen (ein Layoutlauf); danach
+    werden nur Zeilen angefasst, deren Höhe oder Innenabstand sich um mehr als 0,5 Bildpunkte ändert."""
+    mess = [(r, px, _textHoehe(t, r)) for r, px in ziele]
+    pad_t = t.format().cellPadding()
+    for r, px, th in mess:
+        px = max(px, max(th, 1.0) + 2 * pad_t)
+        zeile_px = th or 1.0
+        pad = max(0.0, (px - zeile_px) / 2)
+        for z in _zellen_der_zeile_alle(t, r):
+            f = z.format()
+            if (f.hasProperty(Z_MINHOEHE) and abs(float(f.property(Z_MINHOEHE)) - px) <= 0.5
+                    and abs(f.toTableCellFormat().topPadding() - pad) <= 0.5):
+                break                                           # Zeile unverändert: nichts anfassen
+            zeilenhoehe_setzen(t, r, px, zeile_px)
+            break
+
+
+def _zellen_der_zeile_alle(t, r: int):
+    """Erste in Zeile ``r`` beginnende Zelle (Stellvertreter für den Ist-Zustand der Zeile)."""
+    for sp in range(t.columns()):
+        z = t.cellAt(r, sp)
+        if z.row() == r:
+            yield z
+            return
+
+
+def skalierungs_kosten(t) -> int:
+    """Aufwand eines Skalierungsschritts: Anzahl der Zellen. Der Aufrufer kann bei großen Tabellen auf einen Vorschaurahmen wechseln."""
+    return t.rows() * t.columns()
+
+
+def tabelle_skalieren_spalten(t, basis_breiten, faktor_b: float) -> None:
+    """Nur die Spaltenbreiten = Basis x ``faktor_b`` (mind. ``MIN_SPALTE``, Tabellenbreite variabel); die Zeilenhöhen
+    folgen dem Umbruch (Zeilen, deren Höhe sich nicht ändert, bleiben unberührt). Der Aufrufer öffnet den Rückgängig-Block."""
+    f = t.format()
+    f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, max(MIN_SPALTE, b * faktor_b)) for b in basis_breiten])
+    f.setWidth(QTextLength())
+    t.setFormat(f)
+
+
+def tabelle_skalieren_zeilen(t, basis_hoehen, faktor_h: float) -> None:
+    """Nur die Zeilenhöhen = Basis x ``faktor_h`` (mind. Inhalt); unveränderte Zeilen bleiben unberührt."""
+    _zeilen_setzen(t, [(r, h * faktor_h) for r, h in enumerate(basis_hoehen[:t.rows()])])
+
+
+def tabelle_skalieren(t, basis_breiten, basis_hoehen, faktor_b: float, faktor_h: float) -> None:
+    """Spaltenbreiten = Basis x ``faktor_b`` (feste Längen, mind. ``MIN_SPALTE``, Tabellenbreite variabel), Zeilenhöhen =
+    Basis x ``faktor_h`` (mind. Inhalt). Der Aufrufer öffnet den Rückgängig-Block."""
+    tabelle_skalieren_spalten(t, basis_breiten, faktor_b)
+    tabelle_skalieren_zeilen(t, basis_hoehen, faktor_h)
+
+
+def spalten_gleich(t) -> None:
+    """Alle Spalten gleich breit bei unveränderter Gesamtbreite (Prozentbreite bleibt Prozentbreite). Ein Rückgängig-Schritt."""
+    n = t.columns()
+    f = t.format()
+    if f.width().type() == QTextLength.PercentageLength:
+        f.setColumnWidthConstraints([QTextLength(QTextLength.PercentageLength, 100.0 / n)] * n)
+    else:
+        gesamt = sum(tabelle_basis(t)[0])
+        f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, gesamt / n)] * n)
+    t.setFormat(f)
+
+
+def zeilen_gleich(t) -> None:
+    """Alle Zeilen auf die Höhe der höchsten Zeile bringen (aufrunden). Ein Rückgängig-Schritt je Aufruf über den Aufrufer."""
+    hoehen = tabelle_basis(t)[1]
+    if hoehen:
+        ziel = max(hoehen)
+        for r in range(t.rows()):
+            _zeile_setzen(t, r, ziel)
+
+
+def spalten_festschreiben(t) -> None:
+    """Aktuelle Spaltenbreiten als feste Längen festschreiben; Tabellenbreite variabel."""
+    f = t.format()
+    f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, b) for b in tabelle_basis(t)[0]])
+    f.setWidth(QTextLength())
+    t.setFormat(f)
 
 
 _RICHTUNG = {"links": (0, -1), "rechts": (0, 1), "oben": (-1, 0), "unten": (1, 0)}

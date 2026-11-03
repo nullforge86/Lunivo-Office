@@ -98,7 +98,7 @@ class KontextBefehle:
         if not e:
             return None, None, None
         c = e.textCursor()
-        t = c.currentTable()
+        t = None if e.isReadOnly() else c.currentTable()               # im Nur-Lesen-Modus gibt es keine Tabelle zum Ändern
         return (e, c, t) if t else (e, c, None)
 
 
@@ -144,6 +144,30 @@ class KontextBefehle:
             cc.removeSelectedText()
 
 
+    _ZELLEN_LOESCHEN = {"Zellen nach links verschieben": "links", "Zellen nach oben verschieben": "oben",
+                        "Ganze Zeile löschen": "zeile", "Ganze Spalte löschen": "spalte"}
+
+    def tabelleZellenLoeschen(self, k=None):
+        """Löschen ▸ Zellen löschen …: Auswahl, wie die Lücke geschlossen wird (Logik: ``editor/tabelleneigenschaften.zellen_loeschen``)."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        n, ok = EingabeFenster.getItem(self.w, "Zellen löschen", "Löschen:", list(self._ZELLEN_LOESCHEN), 0, False)
+        if not ok:
+            return
+        art = self._ZELLEN_LOESCHEN[n]
+        if art == "zeile":
+            return self.tabelleZeileLoeschen()
+        if art == "spalte":
+            return self.tabelleSpalteLoeschen()
+        from lunivo_writer.editor.tabelleneigenschaften import zellen_loeschen
+        meldung = zellen_loeschen(t, e.textCursor(), art)
+        if meldung:
+            self.w.lbl_msg.setText(meldung)
+        else:
+            e.document().setModified(True)
+
+
     def tabelleVerbinden(self, k=None):
         e, c, t = self._tab()
         if t and c.hasSelection(): t.mergeCells(c)
@@ -175,6 +199,74 @@ class KontextBefehle:
         return bool(t) and t.format().border() > 0
 
 
+    _RAHMENSTIL = {"gepunktet": QTextFrameFormat.BorderStyle_Dotted, "fein_gestrichelt": QTextFrameFormat.BorderStyle_Dashed,
+                   "gestrichelt": QTextFrameFormat.BorderStyle_Dashed, "strichpunkt": QTextFrameFormat.BorderStyle_Dashed,
+                   "strichpunktpunkt": QTextFrameFormat.BorderStyle_Dashed, "doppelt": QTextFrameFormat.BorderStyle_Double}
+
+    def tabelleRahmenSchattierung(self, k=None):
+        """Rechtsklick ▸ Rahmen und Schattierung: der Baustein-Dialog (ohne Reiter Seitenrand), vorbelegt aus Tabelle und Zelle."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        from lunivo_writer.editor.linie import Linie
+        from lunivo_writer.ui.baukasten.rahmen_schattierung import RahmenSchattierungDialog
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        f = t.format()
+        linie = Linie(f.borderBrush().color().name(), round(f.border() * 0.75, 2), "einfach", "tblr") if f.border() > 0 else None
+        bg = t.cellAt(c).format().background()
+        fuell = bg.color().name() if bg.style() != Qt.NoBrush else None
+        d = RahmenSchattierungDialog(self.w, rahmen=linie, fuell=fuell, mit_seitenrand=False, innen_h=False, fuer=["Tabelle"])
+        if ausfuehren(d):
+            self._tabelle_rahmen_schattierung_anwenden(t, c, d.rahmen(), d.schattierung()[0])
+
+
+    def _tabelle_rahmen_schattierung_anwenden(self, t, c, linie, fuell) -> None:
+        """Rahmen der Tabelle (Linie oder None = ohne) und Füllfarbe der markierten Zellen bzw. der Zelle der Schreibmarke.
+        Nicht abgebildet: einzelne Kanten (Qt kennt nur einen Tabellenrahmen), Linienart über Voll/Punkt/Strich/Doppelt hinaus, Füllmuster."""
+        c.beginEditBlock()
+        f = t.format()
+        if linie is None:
+            f.setBorder(0)
+        else:
+            f.setBorder(max(1, round(linie.breite_pt / 0.75)))
+            f.setBorderBrush(QColor(linie.farbe))
+            f.setBorderStyle(self._RAHMENSTIL.get(linie.art, QTextFrameFormat.BorderStyle_Solid))
+        t.setFormat(f)
+        if c.hasSelection():
+            r0, rn, s0, sn = c.selectedTableCells()
+            zellen = [t.cellAt(r, s) for r in range(r0, r0 + rn) for s in range(s0, s0 + sn)]
+        else:
+            zellen = [t.cellAt(c)]
+        for cell in zellen:
+            cf = cell.format()
+            cf.setBackground(QBrush(QColor(fuell))) if fuell else cf.clearBackground()
+            cell.setFormat(cf)
+        c.endEditBlock()
+
+
+    def tabelleBeschriftung(self, k=None, oben: bool = False):
+        """„Beschriftung …“ für die Tabelle der Schreibmarke: dasselbe Fenster wie Verweise ▸ Beschriftung (``BeschriftungDialog``),
+        Bezeichnung „Tabelle“ vorbelegt, Lage über/unter der Tabelle wählbar (``oben`` stellt „Über“ voreingestellt ein)."""
+        import json
+        e, c, t = self._tab()
+        if not t:
+            return
+        from lunivo_writer.editor import verweise
+        from lunivo_writer.ui.dialogs.verweise_fenster import BeschriftungDialog
+        try:
+            eigene = [str(x) for x in json.loads(self.w.settings.get("verweise/beschriftungen", "[]") or "[]")]
+        except (ValueError, TypeError):
+            eigene = []
+        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: verweise.naechste_nummer(e, label, zahl), objekt=True, label="Tabelle")
+        d.pos.setCurrentIndex(1 if oben else 0)
+        ok = d.exec()
+        if d.eigene != eigene:
+            self.w.settings.set("verweise/beschriftungen", json.dumps(d.eigene, ensure_ascii=False))
+        if ok:
+            r = d.ergebnis()
+            verweise.beschriftung_einfuegen(e, r["label"], "", r["oben"], nach=r["nach"], ohne_bezeichnung=r["ohne"], zahl=r["zahl"])
+
+
     def menue_tabelleSchattierung(self):
         def setze(col):
             e, c, t = self._tab()
@@ -196,25 +288,34 @@ class KontextBefehle:
 
 
     def _tabelle_vorlage(self, name):
+        """Vorlage auf die Tabelle der Schreibmarke anwenden; Kopfzeile/Streifen/Erste Spalte stehen je Tabelle (editor/tabelleneigenschaften.py)."""
         from lunivo_writer.editor import tabellenstil as TS
+        from lunivo_writer.editor import tabelleneigenschaften as TE
         e, c, t = self._tab()
         if t:
-            o = self.tabellenOptionen
+            o = TE.optionen_lesen(t)
+            if not o["gesetzt"]:                                  # noch nie gestaltet: wie bisher Kopfzeile und Streifen an
+                o.update(kopf=True, streifen=True, spalte=False)
             e.textCursor().beginEditBlock()
+            TE.optionen_setzen(t, kopf=o["kopf"], streifen=o["streifen"], spalte=o["spalte"], vorlage=name)
             TS.anwenden(t, name, o["kopf"], o["streifen"], o["spalte"])
             e.textCursor().endEditBlock()
-            self._tabellen_vorlage_name = name
             e.document().setModified(True)
 
 
-    tabellenOptionen = {"kopf": True, "streifen": True, "spalte": False}
-
-
     def _tabellen_option(self, key):
-        self.tabellenOptionen[key] = not self.tabellenOptionen[key]
-        n = getattr(self, "_tabellen_vorlage_name", None)
-        if n:
-            self._tabelle_vorlage(n)
+        """Option (kopf/streifen/spalte) der Tabelle der Schreibmarke umschalten; ist eine Vorlage gesetzt, wird sie neu angewendet."""
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        e, c, t = self._tab()
+        if not t:
+            return
+        o = TE.optionen_lesen(t)
+        e.textCursor().beginEditBlock()
+        TE.optionen_setzen(t, **{key: not o[key]})
+        if o["vorlage"]:
+            self._tabelle_vorlage(o["vorlage"])
+        e.textCursor().endEditBlock()
+        e.document().setModified(True)
 
 
     def tabelleKopfzeile(self, k=None): self._tabellen_option("kopf")
@@ -223,11 +324,16 @@ class KontextBefehle:
 
     def tabelleErsteSpalte(self, k=None): self._tabellen_option("spalte")
 
-    def an_tabelleKopfzeile(self): return self.tabellenOptionen["kopf"]
+    def _an_tabellen_option(self, key):
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        e, c, t = self._tab()
+        return bool(t) and TE.optionen_lesen(t)[key]
 
-    def an_tabelleStreifen(self): return self.tabellenOptionen["streifen"]
+    def an_tabelleKopfzeile(self): return self._an_tabellen_option("kopf")
 
-    def an_tabelleErsteSpalte(self): return self.tabellenOptionen["spalte"]
+    def an_tabelleStreifen(self): return self._an_tabellen_option("streifen")
+
+    def an_tabelleErsteSpalte(self): return self._an_tabellen_option("spalte")
 
 
     def _zelle_ausrichten(self, wo):
@@ -310,11 +416,33 @@ class KontextBefehle:
             e.document().setModified(True)
 
 
+    def _tabellen_aktionsmenue(self, name: str):
+        """Menü „Einfügen“ bzw. „Löschen“ aus der gemeinsamen Definition (``core/tabellenaktionen.py``): Band, Mini-Leiste und Kontextmenü."""
+        from lunivo_writer.core.tabellenaktionen import GRUPPEN
+        from lunivo_writer.ui.widgets import icons
+        m = QMenu()
+        for a in GRUPPEN[name]:
+            akt = m.addAction(a.name, lambda _=False, bf=a.befehl: self.tun(bf))
+            if icons.hat(a.symbol):
+                akt.setIcon(icons.icon(a.symbol, 16))
+        return m
+
+
+    def menue_tabelleEinfuegenAktionen(self):
+        return self._tabellen_aktionsmenue("Einfügen")
+
+
+    def menue_tabelleLoeschenAktionen(self):
+        return self._tabellen_aktionsmenue("Löschen")
+
+
     def menue_tabelleAutoAnpassen(self):
         m = QMenu()
         m.addAction("An Inhalt anpassen", self._tabelle_inhalt)
         m.addAction("An Fenster anpassen", self._tabelle_fenster)
         m.addAction("Spalten gleichmäßig verteilen", self._tabelle_gleich)
+        m.addAction("Zeilen gleichmäßig verteilen", self._tabelle_zeilen_gleich)
+        m.addAction("Feste Spaltenbreite", self._tabelle_fest)
         m.addAction("Spaltenbreite festlegen …", self.tabelleBreite)
         return m
 
@@ -353,14 +481,30 @@ class KontextBefehle:
         e.document().setModified(True)
 
 
+    def _tabelle_aendern(self, funktion):
+        from lunivo_writer.editor import tabelleneigenschaften as TE
+        e, c, t = self._tab()
+        if t:
+            c.beginEditBlock()
+            getattr(TE, funktion)(t)
+            c.endEditBlock()
+            e.document().setModified(True)
+
+
     def _tabelle_gleich(self):
-        self._tabelle_fenster()
+        self._tabelle_aendern("spalten_gleich")
+
+
+    def _tabelle_zeilen_gleich(self):
+        self._tabelle_aendern("zeilen_gleich")
+
+
+    def _tabelle_fest(self):
+        self._tabelle_aendern("spalten_festschreiben")
 
 
     def tabelleBreite(self, k=None):
-        """Breite der Spalte der Schreibmarke in cm festlegen."""
-        from PySide6.QtGui import QTextLength
-        from lunivo_writer.models.page import mm_to_px
+        """Breite der Spalte der Schreibmarke in cm festlegen (Eingabe; gesetzt über ``tabelleMasse``)."""
         e, c, t = self._tab()
         if not t:
             return
@@ -370,11 +514,7 @@ class KontextBefehle:
         except ValueError:
             return
         if ok and cm > 0:
-            f = t.format()
-            lang = f.columnWidthConstraints() or [QTextLength(QTextLength.PercentageLength, 100 / t.columns())] * t.columns()
-            lang[t.cellAt(c).column()] = QTextLength(QTextLength.FixedLength, mm_to_px(cm * 10))
-            f.setColumnWidthConstraints(lang)
-            t.setFormat(f)
+            self.tabelleMasse(breite_mm=cm * 10)
 
 
     def tabelleMasse(self, breite_mm=None, hoehe_mm=None):
@@ -420,31 +560,6 @@ class KontextBefehle:
         if px <= 0:
             px = e.fontMetrics().lineSpacing() + 2 * t.format().cellPadding()
         return breite, px_to_mm(px)
-
-
-    def tabelleHoehe(self, k=None):
-        """Mindesthöhe der Zeile der Schreibmarke in cm festlegen.
-        Qt kennt keine Zeilenhöhe; gewählt wird der Zellen-Innenabstand oben/unten (QTextTableCellFormat.setTop/BottomPadding)
-        aller Zellen der Zeile: Abstand = (Höhe - Zeilenhöhe der Schrift) / 2. Zusätzlich steht die Mindesthöhe als Zellformat-
-        Eigenschaft (Z_MINHOEHE); der DOCX-Schreiber macht daraus w:trHeight, der Leser setzt beides wieder."""
-        from lunivo_writer.models.page import mm_to_px
-        e, c, t = self._tab()
-        if not t:
-            return
-        txt, ok = EingabeFenster.getText(self.w, "Zeilenhöhe", "Mindesthöhe in cm:", "1,0")
-        try:
-            cm = float(txt.replace(",", "."))
-        except ValueError:
-            return
-        if not ok or cm <= 0:
-            return
-        r = t.cellAt(c).row()
-        zeile = e.fontMetrics().lineSpacing()
-        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_setzen
-        c.beginEditBlock()
-        zeilenhoehe_setzen(t, r, mm_to_px(cm * 10), zeile)
-        c.endEditBlock()
-        e.document().setModified(True)
 
 
     _GITTER_FARBE = "#c8c8c8"

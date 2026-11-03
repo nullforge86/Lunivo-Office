@@ -22,6 +22,7 @@ class AbsatzSymbol(QObject):
     def __init__(self, ed):
         super().__init__(ed)
         self.ed = ed
+        self.pausiert = False                 # während eines Tabellen-Ziehvorgangs ruht die Neuberechnung
         vp = ed.viewport()
         self.knopf = b = QToolButton(vp)
         b.setFixedSize(GRIFF, GRIFF); b.setFocusPolicy(Qt.NoFocus); b.setAutoRaise(False)
@@ -44,6 +45,8 @@ class AbsatzSymbol(QObject):
         return not c.hasSelection() or c.block() == ed.document().findBlock(c.anchor())
 
     def aktualisieren(self) -> None:
+        if self.pausiert:
+            return
         if not self.sichtbar_soll():
             self.knopf.hide(); return
         c = QTextCursor(self.ed.textCursor())

@@ -8,10 +8,13 @@ und die Griffe selbst über ``QTextTable`` (ein Rückgängig-Schritt je Handgrif
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QRectF, QTimer, Qt
-from PySide6.QtGui import QCursor, QIcon, QTextCursor, QTextLength
+import time
+
+from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QRectF, QTimer, Qt
+from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPen, QTextCursor, QTextLength
 from PySide6.QtWidgets import QToolButton, QWidget
 
+from lunivo_writer.editor import tabelleneigenschaften as TE
 from lunivo_writer.ui.widgets import icons
 
 GRIFF = 20
@@ -26,16 +29,42 @@ def dunkel(symbol: str, px: int = 16) -> QIcon:
     return QIcon(icons._pixmap(symbol, TINTE, max(10, px)))
 RAND = 6                      # Breite des unsichtbaren Streifens über einem Spaltenrand
 MIN_SPALTE = 12.0
+TAKT = 0.016                  # frühestens alle 16 ms wird die Tabelle beim Ziehen geändert; dazwischen zählt nur die letzte Mausposition
+GROSS = 120                   # ab so vielen Zellen (Zeilen x Spalten) zeigt das Ziehen nur einen Vorschaurahmen
+
+
+class _Vorschau(QWidget):
+    """Gestrichelter Rahmen (Aufziehen) oder Linie (Rand) in der Zielgeometrie; durchsichtig für die Maus."""
+
+    def __init__(self, vp):
+        super().__init__(vp)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents); self.setAttribute(Qt.WA_NoSystemBackground)
+        self.linie = False
+        self.hide()
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        pen = QPen(QColor("#2b6cb0")); pen.setStyle(Qt.DashLine); pen.setWidth(1); p.setPen(pen)
+        r = self.rect()
+        if self.linie:
+            if r.width() >= r.height():
+                p.drawLine(0, r.height() // 2, r.width(), r.height() // 2)
+            else:
+                p.drawLine(r.width() // 2, 0, r.width() // 2, r.height())
+        else:
+            p.drawRect(r.adjusted(0, 0, -1, -1))
 
 
 class _Rand(QWidget):
-    """Durchsichtiger Streifen über einem senkrechten Spaltenrand; Ziehen meldet die Bildpunkte seit dem Start an ``bei_ziehen``."""
+    """Durchsichtiger Streifen über einem Spalten- (senkrecht) oder Zeilenrand (waagrecht); Ziehen meldet die Bildpunkte seit dem Start
+    an ``bei_ziehen`` (Spalten: x, Zeilen: y)."""
 
-    def __init__(self, vp, bei_start, bei_ziehen, bei_ende):
+    def __init__(self, vp, bei_start, bei_ziehen, bei_ende, waagrecht: bool = False):
         super().__init__(vp)
-        self.setCursor(QCursor(Qt.SizeHorCursor)); self.setFocusPolicy(Qt.NoFocus)
+        self.setCursor(QCursor(Qt.SizeVerCursor if waagrecht else Qt.SizeHorCursor)); self.setFocusPolicy(Qt.NoFocus)
         self._f = (bei_start, bei_ziehen, bei_ende)
-        self.spalte = 0
+        self._waagrecht = waagrecht
+        self.spalte = 0                                    # Index der Spalte bzw. (waagrecht) der Zeile über dem Rand
         self._press: QPoint | None = None
 
     def mousePressEvent(self, e):
@@ -43,7 +72,8 @@ class _Rand(QWidget):
 
     def mouseMoveEvent(self, e):
         if self._press is not None:
-            self._f[1](e.globalPosition().toPoint().x() - self._press.x())
+            p = e.globalPosition().toPoint()
+            self._f[1](p.y() - self._press.y() if self._waagrecht else p.x() - self._press.x())
 
     def mouseReleaseEvent(self, e):
         if self._press is not None:
@@ -53,15 +83,22 @@ class _Rand(QWidget):
 class _Griff(QToolButton):
     """Ein kleiner Knopf auf dem Sichtbereich; Ziehen meldet die Mausbewegung an ``bei_ziehen`` (Bildpunkte seit dem Start)."""
 
-    def __init__(self, vp, symbol: str, tipp: str, bei_klick=None, bei_ziehen=None, bei_ende=None, bei_start=None, cursor=None):
+    def __init__(self, vp, symbol: str, tipp: str, bei_klick=None, bei_ziehen=None, bei_ende=None, bei_start=None, cursor=None,
+                 ende_immer: bool = False):
         super().__init__(vp)
         self.setFixedSize(GRIFF, GRIFF); self.setToolTip(tipp); self.setFocusPolicy(Qt.NoFocus); self.setAutoRaise(False)
         self.setIcon(dunkel(symbol, 14)); self.setStyleSheet(GRIFF_STIL)
         if cursor is not None:
             self.setCursor(cursor)
         self._klick, self._ziehen, self._ende, self._start = bei_klick, bei_ziehen, bei_ende, bei_start
+        self._ende_immer = ende_immer          # ``bei_start`` öffnet einen Bearbeitungsblock: ``bei_ende`` schließt ihn auch ohne Ziehen
         self._press: QPoint | None = None
         self._bewegt = False
+        self.unsichtbar = False                # beim Ziehen: nichts zeichnen, aber weiter sichtbar (sonst verliert er das Mausgreifen)
+
+    def paintEvent(self, e):
+        if not self.unsichtbar:
+            super().paintEvent(e)
 
     def mousePressEvent(self, e):
         self._press = e.globalPosition().toPoint(); self._bewegt = False
@@ -81,8 +118,11 @@ class _Griff(QToolButton):
         if self._press is not None:
             if self._bewegt and self._ende:
                 self._ende(gp)
-            elif not self._bewegt and self._klick:
-                self._klick()
+            elif not self._bewegt:
+                if self._ende_immer and self._ende:
+                    self._ende(gp, False)
+                if self._klick:
+                    self._klick()
         self._press = None; self._bewegt = False
 
 
@@ -96,34 +136,81 @@ class TabellenGriffe(QObject):
         self.spalte_plus = _Griff(vp, "plus", "Spalte am Ende einfügen", lambda: self._anhaengen(True))
         self.zeile_plus = _Griff(vp, "plus", "Zeile am Ende einfügen", lambda: self._anhaengen(False))
         self.aufziehen = _Griff(vp, "maximize-2", "Tabelle in der Größe ändern", None, self._aufziehen, self._aufziehen_ende, self._aufziehen_start,
-                                cursor=QCursor(Qt.SizeFDiagCursor))
+                                cursor=QCursor(Qt.SizeFDiagCursor), ende_immer=True)
         self._raender: list[_Rand] = []
         self._rand_basis: list[float] | None = None
         self._rand_spalte = 0
         self._rand_cur: QTextCursor | None = None
+        self._zraender: list[_Rand] = []                    # waagrechte Streifen über den Zeilenrändern
+        self._zeile_cur: QTextCursor | None = None
+        self._zeile_nr = 0
+        self._zeile_h0 = 0.0
         self._teile = (self.bewegen, self.spalte_plus, self.zeile_plus, self.aufziehen)
         self._basis: list[float] | None = None
+        self._halter: QWidget | None = None        # das gerade gezogene Teil: bleibt (unsichtbar) bestehen und behält die Maus
+        self._v_aktiv = False                      # Verschiebegriff wird gezogen
+        self._ziehen = False                       # Ziehvorgang offen: ``aktualisieren`` ruht, die Griffe folgen der Zielgeometrie
+        self._z_bewegt = False
+        self._anwenden = None                      # wartende Tabellenänderung (nur die letzte Mausposition zählt)
+        self._zuletzt = 0.0
+        self._buendel = QTimer(self); self._buendel.setSingleShot(True); self._buendel.timeout.connect(self._buendel_lauf)
+        self._vorschau = _Vorschau(vp)
         self._timer = QTimer(self); self._timer.setSingleShot(True); self._timer.setInterval(0); self._timer.timeout.connect(self.aktualisieren)
         for sig in (ed.cursorPositionChanged, ed.selectionChanged, ed.document().contentsChanged):
             sig.connect(self._timer.start)
+        if hasattr(ed, "leseschutzGeaendert"):
+            ed.leseschutzGeaendert.connect(lambda _ro: self.aktualisieren())      # Nur-Lesen: Griffe sofort aus- bzw. einblenden
         vp.installEventFilter(self)
+        ed.installEventFilter(self)             # Esc und Fokusverlust schließen einen offenen Ziehvorgang
         self._verstecken()
 
     # ---- Aufbau ----------------------------------------------------------------------------------------------------
     def eventFilter(self, obj, ev) -> bool:
-        if ev.type() in (QEvent.Resize, QEvent.Paint):
-            if ev.type() == QEvent.Resize:
-                self._timer.start()
+        if obj is self.ed:
+            if ev.type() == QEvent.FocusOut or (ev.type() == QEvent.KeyPress and ev.key() == Qt.Key_Escape):
+                self._bloecke_schliessen()
+            return False
+        if ev.type() == QEvent.Resize:
+            self._timer.start()
         return False
+
+    def _bloecke_schliessen(self) -> None:
+        """Offene Bearbeitungsblöcke (Aufziehen, Spaltenrand) schließen, damit kein Rückgängig-Block hängen bleibt."""
+        if getattr(self, "_auf_cur", None) is not None:
+            self._aufziehen_ende(None, False)
+        if self._v_aktiv:
+            self._verschieben_frei()
+        if self._rand_cur is not None:
+            self._rand_ende(False)
+        if self._zeile_cur is not None:
+            self._zeile_ende(False)
+        for w in self._teile:
+            w._press = None
+        for w in (*self._raender, *self._zraender):
+            w._press = None
 
     # ---- Lage ------------------------------------------------------------------------------------------------------
     def tabelle(self):
         return None if self.ed.isReadOnly() else self.ed.textCursor().currentTable()
 
+    def _gezeichnet(self, t) -> QRectF:
+        """Der wirklich gezeichnete Rahmen in Layoutkoordinaten: aus den Zellen (Inhalt plus Innenabstand), nicht aus ``frameBoundingRect``
+        (das liegt um Rahmen-/Randmaße daneben und wandert bei erhöhtem oberem Innenabstand der Zeilenhöhe)."""
+        lay = self.ed.document().documentLayout()
+        f = t.format(); pad = f.cellPadding()
+        def rand(z, name):
+            v = getattr(z.format().toTableCellFormat(), name)()
+            return v if v > 0 else pad
+        a = t.cellAt(0, 0); b = t.cellAt(0, t.columns() - 1)
+        links = lay.blockBoundingRect(a.firstCursorPosition().block()).left() - rand(a, "leftPadding")
+        rechts = lay.blockBoundingRect(b.firstCursorPosition().block()).right() + rand(b, "rightPadding")
+        oben = TE._zeilen_oberkanten(t)[0]
+        return QRectF(links, oben, rechts - links, max(1.0, TE._unterkante(t) - oben))
+
     def rechteck(self, t) -> QRectF:
         """Die Tabelle (erste Seite, wenn sie über mehrere läuft) in Bildpunkten des Sichtbereichs."""
         ed = self.ed
-        r = ed.document().documentLayout().frameBoundingRect(t)
+        r = self._gezeichnet(t)
         if not ed._blatt_aktiv():
             return r
         ch = ed._sp_geo()["ch"]
@@ -132,34 +219,121 @@ class TabellenGriffe(QObject):
         return QRectF(x1, y1, x2 - x1, y2 - y1)
 
     def _verstecken(self) -> None:
-        for w in (*self._teile, *self._raender):
+        self._bloecke_schliessen()
+        for w in (*self._teile, *self._raender, *self._zraender):
             w.hide()
 
     def aktualisieren(self) -> None:
+        if self._ziehen:
+            return
         t = self.tabelle()
         if t is None:
                 self._verstecken(); return
         r = self.rechteck(t)
+        self._griffe_setzen(r)
+        for w in self._teile:
+            w.show(); w.raise_()
+        self._raender_setzen(t, r)
+        self._zeilenraender_setzen(t, r)
+
+    # ---- Ziehen: Zielgeometrie, Bündelung, Vorschau ----------------------------------------------------------------
+    def _ausblenden(self, halter: QWidget) -> None:
+        """Alle Tabellensymbole außer dem gezogenen verstecken; dieses bleibt sichtbar, zeichnet aber nichts (behält die Maus)."""
+        self._halter = halter
+        for w in (*self._teile, *self._raender, *self._zraender):
+            if w is not halter:
+                w.hide()
+        if isinstance(halter, _Griff):
+            halter.unsichtbar = True; halter.update()
+
+    def _einblenden(self) -> None:
+        h, self._halter = self._halter, None
+        if isinstance(h, _Griff):
+            h.unsichtbar = False; h.update()
+
+    def _ziehen_start(self, t, halter: QWidget | None = None) -> None:
+        """Merkt Rechteck und Ränder beim Start; ab jetzt ruht ``aktualisieren`` (auch das Absatz-Symbol)."""
+        if halter is not None:
+            self._ausblenden(halter)
+        self._ziehen = True; self._z_bewegt = False; self._anwenden = None; self._timer.stop(); self._buendel.stop()
+        r = self.rechteck(t)
+        oben = self._gezeichnet(t).top()
+        self._z_r0, self._z_xs0 = r, self._grenzen(t)
+        self._z_ys0 = [y - oben for y in TE.zeilengrenzen(t)]
+        self._z_zoom = TE._zoom(t)
+        self._gross = TE.skalierungs_kosten(t) > GROSS
+        ap = getattr(self.ed, "_absatz_symbol", None)
+        if ap is not None:
+            ap.pausiert = True
+
+    def _ziehen_schluss(self, geaendert: bool) -> bool:
+        """Vor ``endEditBlock``: wartende Änderung genau einmal anwenden (nur bei ``geaendert``). Liefert, ob sich etwas bewegt hat."""
+        self._buendel.stop(); self._vorschau.hide()
+        fn, self._anwenden = self._anwenden, None
+        if fn is not None and geaendert:
+            fn()
+        return geaendert and self._z_bewegt
+
+    def _ziehen_frei(self, geaendert: bool) -> None:
+        """Nach ``endEditBlock``: Ruhe aufheben und einmal vollständig aktualisieren."""
+        self._ziehen = False; self._timer.stop(); self._einblenden()
+        ap = getattr(self.ed, "_absatz_symbol", None)
+        if ap is not None:
+            ap.pausiert = False
+            ap.aktualisieren()
+        if geaendert:
+            self.ed.document().setModified(True)
+        self.aktualisieren()                       # Symbole erscheinen wieder und rasten am neuen Rand ein
+
+    def _planen(self, fn) -> None:
+        """Tabellenänderung vormerken; höchstens alle ``TAKT`` Sekunden ausführen (bei großen Tabellen erst beim Loslassen)."""
+        self._z_bewegt = True; self._anwenden = fn
+        if self._gross or self._buendel.isActive():
+            return
+        warte = TAKT - (time.monotonic() - self._zuletzt)
+        if warte <= 0:
+            self._buendel_lauf()
+        else:
+            self._buendel.start(max(1, int(warte * 1000) + 1))
+
+    def _buendel_lauf(self) -> None:
+        fn, self._anwenden = self._anwenden, None
+        if fn is not None and self._ziehen:
+            fn()
+            self._zuletzt = time.monotonic()
+
+    def _lage(self, r: QRectF, xs: list[float], yo: list[float]) -> None:
+        """Griffe und Randstreifen sofort in die Zielgeometrie setzen (xs: Spaltengrenzen ab links, yo: innere Zeilenränder ab oben)."""
+        self._griffe_setzen(r)
+        for i, w in enumerate(self._raender):
+            if w.isVisible() and i + 1 < len(xs) - 1:
+                w.setGeometry(int(r.left() + xs[i + 1]) - RAND // 2, int(r.top()), RAND, max(1, int(r.height())))
+        for i, w in enumerate(self._zraender):
+            if w.isVisible() and i < len(yo):
+                w.setGeometry(int(r.left()), int(r.top() + yo[i]) - RAND // 2, max(1, int(r.width())), RAND)
+
+    def _griffe_setzen(self, r: QRectF) -> None:
         self.bewegen.move(int(r.left()) - GRIFF - 2, int(r.top()) - GRIFF - 2)
         self.spalte_plus.move(int(r.right()) + 4, int(r.center().y()) - GRIFF // 2)
         self.zeile_plus.move(int(r.center().x()) - GRIFF // 2, int(r.bottom()) + 4)
         self.aufziehen.move(int(r.right()) + 4, int(r.bottom()) + 4)
-        for w in self._teile:
-            w.show(); w.raise_()
-        self._raender_setzen(t, r)
+
+    def _vorschau_zeigen(self, geo: QRect, linie: bool) -> None:
+        v = self._vorschau
+        v.linie = linie; v.setGeometry(geo); v.show(); v.raise_(); v.update()
 
     # ---- Spaltenränder ---------------------------------------------------------------------------------------------
     def _grenzen(self, t) -> list[float]:
         """x-Abstand jeder Spaltengrenze (0 = linker Tabellenrand, n = rechter) vom linken Tabellenrand, in Bildpunkten."""
         doc = self.ed.document(); lay = doc.documentLayout()
-        links = lay.frameBoundingRect(t).left()
+        gz = self._gezeichnet(t); links = gz.left()
         f = t.format(); n = t.columns()
         halb = f.cellPadding() + f.cellSpacing() / 2
         xs = [0.0]
         for i in range(1, n):
             blk = t.cellAt(0, i).firstCursorPosition().block()
             xs.append(lay.blockBoundingRect(blk).left() - links - halb)
-        xs.append(lay.frameBoundingRect(t).width())
+        xs.append(gz.width())
         return xs
 
     def _raender_setzen(self, t, r: QRectF) -> None:
@@ -186,24 +360,84 @@ class TabellenGriffe(QObject):
             self._rand_basis = [xs[i + 1] - xs[i] for i in range(t.columns())]
         self._rand_spalte = spalte; self._rand_tab = t
         self._rand_cur = QTextCursor(self.ed.document()); self._rand_cur.beginEditBlock()
+        self._ziehen_start(t, self._raender[spalte] if spalte < len(self._raender) else None)
 
     def _rand_ziehen(self, dx: int) -> None:
         b = self._rand_basis
-        if not b:
+        if not b or not self._ziehen:
             return
-        i = self._rand_spalte
-        dx = max(MIN_SPALTE - b[i], min(b[i + 1] - MIN_SPALTE, dx))      # keine Spalte unter die Mindestbreite; Summe bleibt
-        w = list(b); w[i] += dx; w[i + 1] -= dx
+        i = self._rand_spalte; z = self._z_zoom
+        dd = dx / z                                                         # Bildpunkte → Dokumentmaß
+        dd = max(MIN_SPALTE - b[i], min(b[i + 1] - MIN_SPALTE, dd))        # keine Spalte unter die Mindestbreite; Summe bleibt
+        xs = list(self._z_xs0); xs[i + 1] += dd * z
+        self._lage(self._z_r0, xs, self._z_ys0)
+        w = list(b); w[i] += dd; w[i + 1] -= dd
+        if self._gross:
+            r = self._z_r0
+            self._vorschau_zeigen(QRect(int(r.left() + xs[i + 1]) - 1, int(r.top()), 3, max(1, int(r.height()))), True)
+        self._planen(lambda: self._spalten_anwenden(w))
+
+    def _spalten_anwenden(self, w: list[float]) -> None:
         f = self._rand_tab.format()
         f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, x) for x in w])
         self._rand_tab.setFormat(f)
 
-    def _rand_ende(self) -> None:
-        if self._rand_cur is not None:
-            self._rand_cur.endEditBlock(); self._rand_cur = None
+    def _rand_ende(self, geaendert: bool = True) -> None:
+        if self._rand_cur is None:
+            return
+        bewegt = self._ziehen_schluss(geaendert)
+        self._rand_cur.endEditBlock(); self._rand_cur = None
         self._rand_basis = None
-        self.ed.document().setModified(True)
-        self.aktualisieren()
+        self._ziehen_frei(bewegt)
+
+    # ---- Zeilenränder ----------------------------------------------------------------------------------------------
+    def _zeilenraender_setzen(self, t, r: QRectF) -> None:
+        n = t.rows()
+        while len(self._zraender) < n - 1:
+            self._zraender.append(_Rand(self.ed.viewport(), self._zeile_start, self._zeile_ziehen, self._zeile_ende, waagrecht=True))
+        ys = TE.zeilengrenzen(t)
+        oben = self._gezeichnet(t).top()
+        for i, w in enumerate(self._zraender):
+            if i >= n - 1 or i >= len(ys):
+                w.hide(); continue
+            y = r.top() + (ys[i] - oben)
+            if y > r.bottom():                                       # Zeilen auf einer späteren Seite: kein Streifen
+                w.hide(); continue
+            w.spalte = i
+            w.setGeometry(int(r.left()), int(y) - RAND // 2, max(1, int(r.width())), RAND)
+            w.show(); w.raise_()
+
+    def _zeile_start(self, zeile: int) -> None:
+        t = self.tabelle()
+        if t is None:
+            return
+        self._zeile_tab, self._zeile_nr = t, zeile
+        self._zeile_h0 = TE.tabelle_basis(t)[1][zeile]               # Dokumentmaß (Layout / Zoom)
+        self._zeile_min = TE.zeilen_mindesthoehe(t, zeile)
+        self._zeile_cur = QTextCursor(self.ed.document()); self._zeile_cur.beginEditBlock()
+        self._ziehen_start(t, self._zraender[zeile] if zeile < len(self._zraender) else None)
+
+    def _zeile_ziehen(self, dy: int) -> None:
+        if self._zeile_cur is None or not self._ziehen:
+            return
+        z, i = self._z_zoom, self._zeile_nr
+        h = max(self._zeile_min, self._zeile_h0 + dy / z)               # Bildpunkte → Dokumentmaß, nie unter dem Inhalt
+        eff = (h - self._zeile_h0) * z
+        r0 = self._z_r0
+        yo = [y + eff if j >= i else y for j, y in enumerate(self._z_ys0)]
+        r = QRectF(r0.left(), r0.top(), r0.width(), max(1.0, r0.height() + eff))
+        self._lage(r, self._z_xs0, yo)
+        if self._gross:
+            self._vorschau_zeigen(QRect(int(r.left()), int(r.top() + yo[i]) - 1, max(1, int(r.width())), 3) if i < len(yo) else QRect(), True)
+        tab, nr = self._zeile_tab, i
+        self._planen(lambda: TE.zeile_hoehe_ziehen(tab, nr, h))
+
+    def _zeile_ende(self, geaendert: bool = True) -> None:
+        if self._zeile_cur is None:
+            return
+        bewegt = self._ziehen_schluss(geaendert)
+        self._zeile_cur.endEditBlock(); self._zeile_cur = None
+        self._ziehen_frei(bewegt)
 
     # ---- Handgriffe ------------------------------------------------------------------------------------------------
     def _waehlen(self) -> None:
@@ -217,6 +451,7 @@ class TabellenGriffe(QObject):
         hook = getattr(self.ed, "mini_hook", None)                  # die Minisymbolleiste mit Tabellenzeile über der Tabelle
         if hook is not None:
             r = self.rechteck(t)
+            self.ed.mini_per_griff = True                            # die Leiste zeigt Tabellenfunktionen (auch bei einer Tabelle mit einer Zelle)
             hook(self.ed, self.ed.viewport().mapToGlobal(QPoint(int(r.left()) + 60, int(r.top()) - GRIFF - 2)), False)
 
     def _anhaengen(self, spalte: bool) -> None:
@@ -228,9 +463,25 @@ class TabellenGriffe(QObject):
 
     def _verschieben_zeigen(self, d: QPoint, gp: QPoint) -> None:
         self.bewegen.setCursor(Qt.ClosedHandCursor)
+        if not self._v_aktiv and not self._ziehen:
+            self._v_aktiv = True; self._ziehen = True; self._timer.stop()
+            self._ausblenden(self.bewegen)
+            ap = getattr(self.ed, "_absatz_symbol", None)
+            if ap is not None:
+                ap.pausiert = True
+
+    def _verschieben_frei(self) -> None:
+        self._v_aktiv = False; self._ziehen_frei(False)
 
     def _verschieben_ende(self, gp: QPoint) -> None:
         """Tabelle an die Stelle unter der Maus verschieben (vor den Absatz, auf dem losgelassen wird)."""
+        try:
+            self._verschieben_ende_tun(gp)
+        finally:
+            if self._v_aktiv:
+                self._verschieben_frei()
+
+    def _verschieben_ende_tun(self, gp: QPoint) -> None:
         self.bewegen.setCursor(Qt.SizeAllCursor)
         t = self.tabelle()
         vp = self.ed.viewport()
@@ -261,30 +512,43 @@ class TabellenGriffe(QObject):
         if t is None:
             self._basis = None; return
         r = self.rechteck(t)
-        f = t.format()
-        lang = f.columnWidthConstraints()
-        n = t.columns()
-        if len(lang) == n and all(x.type() == QTextLength.FixedLength for x in lang):
-            self._basis = [x.rawValue() for x in lang]
-        else:
-            self._basis = [r.width() / n] * n
-        self._breite0 = sum(self._basis)
+        self._basis = TE.tabelle_basis(t)                               # (Spaltenbreiten, Zeilenhöhen) im Dokumentmaß
+        self._ansicht0 = (max(1.0, r.width()), max(1.0, r.height()))     # Größe auf dem Bildschirm: der Mausweg bezieht sich darauf
         self._tab = t
         self._auf_cur = QTextCursor(self.ed.document()); self._auf_cur.beginEditBlock()
+        self._ziehen_start(t, self.aufziehen)
+        self._auf_min = [TE.zeilen_mindesthoehe(t, k) for k in range(t.rows())]
 
     def _aufziehen(self, d: QPoint, gp: QPoint) -> None:
-        if not self._basis:
+        if not self._basis or not self._ziehen:
             return
-        faktor = max(0.1, (self._breite0 + d.x()) / self._breite0)
-        f = self._tab.format()
-        f.setWidth(QTextLength())
-        f.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, max(12.0, b * faktor)) for b in self._basis])
-        self._tab.setFormat(f)
-        self.aktualisieren()
+        w0, h0 = self._ansicht0
+        fb = max(0.1, (w0 + d.x()) / w0)
+        fh = max(0.1, (h0 + d.y()) / h0)
+        z, (bb, bh) = self._z_zoom, self._basis
+        # Zielgeometrie wie ``tabelle_skalieren``: Spalten mindestens ``MIN_SPALTE``, Zeilen mindestens Inhalt
+        xs = list(self._z_xs0); s = 0.0
+        for k, b in enumerate(bb):
+            s += (max(TE.MIN_SPALTE, b * fb) - b) * z
+            xs[k + 1] += s
+        dw = s
+        yo = list(self._z_ys0); s = 0.0
+        for k, h in enumerate(bh):
+            s += (max(self._auf_min[k] if k < len(self._auf_min) else 1.0, h * fh) - h) * z
+            if k < len(yo):
+                yo[k] += s
+        r0 = self._z_r0
+        r = QRectF(r0.left(), r0.top(), max(1.0, r0.width() + dw), max(1.0, r0.height() + s))
+        self._lage(r, xs, yo)
+        if self._gross:
+            self._vorschau_zeigen(r.toAlignedRect(), False)
+        tab, b0, h0l = self._tab, bb, bh
+        self._planen(lambda: TE.tabelle_skalieren(tab, b0, h0l, fb, fh))
 
-    def _aufziehen_ende(self, gp: QPoint) -> None:
+    def _aufziehen_ende(self, gp: QPoint | None, geaendert: bool = True) -> None:
+        """Schließt den Block, den ``_aufziehen_start`` geöffnet hat (immer, auch bei Klick ohne Ziehen)."""
         self._basis = None
         if getattr(self, '_auf_cur', None) is not None:
+            bewegt = self._ziehen_schluss(geaendert)
             self._auf_cur.endEditBlock(); self._auf_cur = None
-        self.ed.document().setModified(True)
-        self.aktualisieren()
+            self._ziehen_frei(bewegt)

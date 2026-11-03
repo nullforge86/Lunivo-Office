@@ -13,6 +13,7 @@ from PySide6.QtGui import QColor, QCursor, QImage, QPainter, QPen, QPixmap, QTex
 from PySide6.QtWidgets import QApplication, QWidget
 
 from lunivo_writer.editor import tabelleneigenschaften as TE
+from lunivo_writer.ui.document.tabelle_stift import andere_beenden, cursor_zurueck, ueberwachen
 
 TOLERANZ = 6.0          # Abstand zur Linie in Bildpunkten, bis zu dem sie getroffen wird
 
@@ -97,6 +98,7 @@ class TabellenRadierer(QWidget):
 
     def __init__(self, ed):
         vp = ed.viewport()
+        andere_beenden(ed)
         super().__init__(vp)
         self.ed = ed
         self._linie: tuple[float, float, float, float] | None = None       # Hervorhebung in Bildpunkten des Sichtbereichs
@@ -107,6 +109,7 @@ class TabellenRadierer(QWidget):
         QApplication.setOverrideCursor(_radierer_cursor())
         QApplication.instance().installEventFilter(self)
         self._aktiv = True
+        ueberwachen(self, ed, bei_tabellenverlust=True)
         fenster = ed.window()
         if hasattr(fenster, "statusBar"):
             fenster.statusBar().showMessage("Radiergummi: auf eine Zellenlinie klicken. Esc oder Rechtsklick beendet.", 8000)
@@ -143,6 +146,8 @@ class TabellenRadierer(QWidget):
         t = ev.type()
         if not getattr(self, "_aktiv", False):
             return False
+        if t in (QEvent.Hide, QEvent.Close) and obj in (self.ed, self.ed.window()):      # Dokumentwechsel oder Fenster schließt
+            self.beenden(); return False
         if t == QEvent.KeyPress and ev.key() == Qt.Key_Escape:
             self.beenden(); return True
         if t not in self.MAUS or not isinstance(obj, QWidget) or obj.window() is not self.ed.window():
@@ -195,7 +200,7 @@ class TabellenRadierer(QWidget):
             return
         self._aktiv = False
         QApplication.instance().removeEventFilter(self)
-        QApplication.restoreOverrideCursor()
+        cursor_zurueck(self)
         self.hide(); self.deleteLater()
         self.ed.setFocus()
 
