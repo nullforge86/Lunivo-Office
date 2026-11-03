@@ -72,7 +72,7 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
         or (page.diff_even and not page.even_header.is_empty())
     fuss = da(page.footer, "fuss") or (page.diff_first and da(page.first_footer, "fuss1")) \
         or (page.diff_even and not page.even_footer.is_empty())
-    # ODF misst den oberen Rand bis zur Kopfzeile; Lunivo (wie Word) bis zum Text. Mit Kopfzeile: Rand = Kopfabstand,
+    # ODF misst den oberen Rand bis zur Kopfzeile; Lunivo bis zum Text. Mit Kopfzeile: Rand = Kopfabstand,
     # Kopfzeilenbereich = Rest bis zum Text.
     rand_oben = min(page.kopf_abstand_mm, page.margin_top_mm) if kopf else page.margin_top_mm
     rand_unten = min(page.fuss_abstand_mm, page.margin_bottom_mm) if fuss else page.margin_bottom_mm

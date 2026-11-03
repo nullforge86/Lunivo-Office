@@ -152,8 +152,8 @@ bereich("12. Rechte Seitenleiste",
 z = {OK: 0, TEIL: 0, FEHLT: 0}
 txt = ["# Menüstruktur ↔ Programm", "",
        "Erzeugt von `werkzeug/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 Bereiche) Punkt für Punkt gegen das Programm: "
-       "✅ vorhanden · ◐ teilweise oder anders gelöst · ⬜ fehlt. Reiter-Reihenfolge und -Anordnung folgen den WPS-Bildschirmfotos; "
-       "wo die Struktur davon abweicht (eigener KI-Reiter, Rechtschreibung unter Überprüfen), gilt die Anordnung nach WPS: Rechtschreibung "
+       "✅ vorhanden · ◐ teilweise oder anders gelöst · ⬜ fehlt. Reiter-Reihenfolge und -Anordnung folgen den Bildschirmfotos der Vorlage; "
+       "wo die Struktur davon abweicht (eigener KI-Reiter, Rechtschreibung unter Überprüfen), gilt die Anordnung der Vorlage: Rechtschreibung "
        "und KI stehen im Reiter Schreibhilfe.", ""]
 for titel, zeilen in B:
     txt += [f"## {titel}", "", "| | Punkt | Beleg / Grenze |", "|---|---|---|"]
@@ -164,7 +164,7 @@ for titel, zeilen in B:
 txt += ["## Vorhanden, aber nicht in der Struktur", "",
         "* **Sendungen** (ausblendbarer Reiter): Seriendruck, Umschläge, Etiketten, Adressblock, Formularfelder.",
         "* **Lesehilfe für Menschen mit Legasthenie:** farbige Silben mit Einstellungen, Zeilenfokus, Leseschriften, Vorlesen.",
-        "* **Backstage-Ansicht** für *Datei* mit Info, Öffnen mit … (WPS, LibreOffice).",
+        "* **Backstage-Ansicht** für *Datei* mit Info, Öffnen mit ….",
         "* **Sprechblasen** für Kommentare, **Fußnoten am Seitenfuß**, **Spalten live** auf der Seite.",
         "* **Hilfe:** Handbuch, Tastenkürzel, „Welche Hilfe wann“.",
         "* **Hell/Dunkel**, Register anpassen, Symbole austauschen, zweite Oberfläche (Symbolleisten).", ""]

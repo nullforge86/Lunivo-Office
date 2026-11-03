@@ -31,11 +31,11 @@ nur kleiner werden, nie größer.
   `src/lunivo_writer/ui/baukasten/` und `docs/baukasten.md` — dort nachsehen, bevor etwas Neues gebaut wird.
 - **Fensterbau (Pflicht):** Fenster öffnen in der rechten Seitenleiste. Felder immer mit `FormularGitter` (`zeile`, `reihe`, `breit`),
   `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/formular_gitter.py` bauen — Muster `ui/baukasten/absatz_dialog.py`.
-  Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der WPS-Vorlage rechts steht (Vorschau), kommt darunter.
+  Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der Vorlage rechts steht (Vorschau), kommt darunter.
   Bei 300 px Breite darf nichts herausragen.
 - Gezielter Test bei relevanter Verhaltensänderung: `.venv/bin/python -m pytest <testdatei> -k <testname>`. Nie `pytest` ohne Auswahl starten. Bandprüfung nur bei Änderungen am Band: `werkzeug/funktionspruefung.py`.
 - Das Projekt liegt nicht unter Git. Vor größeren Löschungen oder Umbauten eine Sicherung anlegen.
-- WPS Office ist nur ein Aussehens-Vorbild (Bildschirmfotos). Keine WPS-Dateien, -Grafiken oder -Farbtabellen übernehmen.
+- Bildschirmfotos sind nur ein Aussehens-Vorbild. Keine fremden Dateien, Grafiken oder Farbtabellen übernehmen.
 
 ## Arbeitsauftrag: modular entwickeln, Tests risikobasiert (verbindlich)
 
@@ -93,8 +93,46 @@ Ein klarer Einzelauftrag braucht keinen Coordinator. Delegierte Pakete enthalten
 
 Gelten für alle Agenten zusätzlich zu den Regeln oben; bei Widerspruch gilt die jüngere Regel.
 
-- **Eigenständig:** keine Abhängigkeit von LibreOffice oder anderen externen Programmen, auch nicht für Dateiformate — Formate selbst schreiben.
-- **WPS-Vorlagen eng nachbauen:** Kays Bildschirmfotos (PC: `~/Bilder/wps-vorlage`) sind das Aussehens-Vorbild; keine freien
+- **Eigenständig:** keine Abhängigkeit von externen Programmen, auch nicht für Dateiformate — Formate selbst schreiben.
+- **Vorlagen eng nachbauen:** Kays Bildschirmfotos (PC: Ordner mit den Vorlagen-Bildschirmfotos unter `~/Bilder`) sind das Aussehens-Vorbild; keine freien
   Interpretationen, klar erkennbare Symbole, Felder/Knöpfe nicht schmaler als ~36 px. Fertig erst nach Bildvergleich mit der Vorlage.
 - **Paketierung (Ziel):** genau eine `.deb`; Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter
   `/usr/share/applications/stevie-lunivo-office.desktop`, Symlink `/usr/bin/lunivo-office`; Benutzerdaten nur in XDG-Verzeichnissen.
+
+## Orchestrator-Regeln und Replica Skill (Eigentümer, 2026-11-03)
+
+Ergänzung zu den Regeln oben; bei Widerspruch gelten die Abschnitte oben („Kein HTML“, Tests, Agenten). Der Master-Prompt ist hier in
+seinen verbindlichen Kernpunkten übernommen.
+
+### Aufgabenverteilung
+- Der Orchestrator zerlegt einen Auftrag nur so weit wie nötig. Jede Teilaufgabe hat genau einen Bearbeiter (Agent oder Konnektor):
+  keine Doppelvergabe, keine parallele Bearbeitung derselben Aufgabe, keine konkurrierenden Änderungen an derselben Datei.
+- Untergeordnete Agenten und Konnektoren verteilen nichts weiter und starten keine weiteren Konnektoren. Unklare Zuständigkeit geht
+  zurück an den Orchestrator. Eine Aufgabe, die ohne Agent erledigt werden kann, wird direkt erledigt.
+- Zuständigkeiten bleiben wie in der Tabelle „Agenten“: Coding = Fachlogik und Zustand, Design = Qt-Oberfläche, Architektur und
+  Security = lesen und empfehlen, QA = nur gezielte Prüfung, Coordinator = Planung ohne Produktionscode. Die Agentenprofile gelten weiter.
+
+### Konnektoren
+- Konnektoren laufen strikt nacheinander: Ergebnis prüfen, erst dann den nächsten starten. Nie gleichzeitig, auch nicht im Hintergrund.
+- Sparsam einsetzen: nur wenn nötig, nur mit abgegrenztem Auftrag, keine Wiederholung erfolgreicher Aufrufe, Ergebnisse weiterverwenden.
+
+### Tests
+- Keine Volltests, keine vollständigen Suiten, keine ungezielten Regressionstests, auch nicht durch Agenten oder Konnektoren.
+- Nur der direkt zur Aufgabe passende Test. Ist keiner möglich, das im Bericht sagen; nie ersatzweise eine Vollsuite starten.
+
+### Funktions- und Zustandslogik
+- Jede Benutzeraktion löst die richtige Funktion aus; keine rein optischen Elemente, keine funktionslosen Schaltflächen.
+- Eine Datenquelle je Zustand (Dokument, Auswahl, Formatierung, aktive Vorlage, Bearbeitungsmodus, Schreibschutz); die Oberfläche
+  leitet daraus ab. Vorhandene Signale, Slots und Modelle wiederverwenden, keine Doppelimplementierung.
+- Kontextabhängig: Werkzeuge ohne gültigen Kontext deaktivieren, benötigte nicht verstecken. Bei Vorlagenwechsel veraltete
+  Werkzeugauswahl zurücksetzen, ohne Benutzerinhalte zu verlieren. Vorlagenzustände speichern und wiederherstellen.
+- Fehlgeschlagene Aktionen lassen einen konsistenten Zustand zurück und melden verständlich. Änderungen laufen über die vorhandene
+  Undo-/Redo-Architektur, keine parallele Lösung.
+
+### Replica Skill (`Jakeschincariol/replica-skill`)
+- Einsatz nur zur Analyse und Dokumentation von Referenzprogrammen (Funktionen, Abläufe, Komponenten, Zustandsmodelle, Menüs, Dialoge)
+  und zum Vergleich mit der Umsetzung. Ergebnisse als Markdown, nie als HTML.
+- Umsetzung ausschließlich in Python und PySide6 (Qt Widgets) mit den vorhandenen Lunivo-Bausteinen. Keine fremden Quellcodes, Logos,
+  geschützten Texte oder proprietären Inhalte übernehmen; Bedienkonzepte eigenständig umsetzen (siehe auch Regel „Bildschirmfotos“).
+- Ablauf: Replica Recon (Analyse) → Architektur-Agent (Machbarkeit) → Design-Agent (Oberfläche) und Coding-Agent (Logik) → Security-Agent
+  bei sicherheitsrelevanten Teilen → QA-Agent nur gezielt. Jede Aufgabe hat genau einen Bearbeiter.

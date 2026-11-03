@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-# Asiatische Schriftzeichen (CJK, Kana, Hangul): jedes zählt für sich, wie in Word und WPS
+# Asiatische Schriftzeichen (CJK, Kana, Hangul): jedes zählt für sich
 ASIATISCH = re.compile(r"[⺀-⿿　-〿぀-ヿ㄀-ㇿ㐀-䶿一-鿿가-힯豈-﫿＀-￯]")
 
 

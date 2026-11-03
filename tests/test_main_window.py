@@ -684,3 +684,34 @@ def test_kommentar_im_leeren_absatz_erscheint_in_der_seitenleiste(app, tmp_path)
     assert kid is not None and e.kommentar_bereiche()
     w._links_klick("kommentare")
     assert w.navigation.anzahl("kommentare") == 1
+
+
+def test_band_kompakt_umschalten(app, tmp_path):
+    w = win(tmp_path)
+    w.new_document(); w.resize(1380, 860); w.show()
+    assert w.band.kompakt and w.band.stapel.height() == w.band.BAND_HOEHE[True]
+    w.settings.set("ui/band_kompakt", False); w.neu_bauen_band()
+    assert not w.band.kompakt and w.band.stapel.height() == w.band.BAND_HOEHE[False]
+    assert w.band.BAND_HOEHE[True] < w.band.BAND_HOEHE[False]
+
+
+def test_band_hinweis_zeigt_kuerzel(app):
+    from lunivo_writer.ui.ribbon.ribbon_bar import _mit_kuerzel
+    assert _mit_kuerzel("Speichern") == "Speichern (Strg+S)" and _mit_kuerzel("Unbekannt") == "Unbekannt"
+
+
+def test_band_gruppen_klappen_zusammen_und_oeffnen(app, tmp_path):
+    w = win(tmp_path)
+    w.new_document(); w.resize(900, 600); w.show()
+    b = w.band
+    b.reiter.setCurrentIndex(2); app.processEvents()
+    gruppen = b._seiten[2]
+    zu = [e for e in gruppen if e["kb"].isVisible()]
+    assert zu and not gruppen[0]["kb"].isVisible() and all(not e["rahmen"].isVisible() for e in zu)
+    e = zu[0]
+    b._gruppe_zeigen(e)                                       # öffnen: die Gruppe steht im schwebenden Feld
+    assert e["rahmen"].parent() is b._gruppen_popup and e["rahmen"].isVisible()
+    b._gruppen_popup.hide()                                   # schließen: zurück an ihren Platz im Reiter
+    assert e["rahmen"].parent() is e["lay"].parentWidget() and not e["rahmen"].isVisible()
+    w.resize(2600, 600); app.processEvents()
+    assert not any(x["kb"].isVisible() for x in gruppen) and all(x["rahmen"].isVisible() for x in gruppen)

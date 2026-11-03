@@ -63,7 +63,7 @@ def stand(path: str) -> tuple[int, int] | None:
 
 
 def fremd_geoeffnet(path: str) -> str | None:
-    """Beschreibung des Programms, das die Datei laut Sperrdatei offen hat (LibreOffice legt „.~lock.<name>#“ an), sonst None."""
+    """Beschreibung des Programms, das die Datei laut Sperrdatei offen hat (andere Programme legen „.~lock.<name>#“ an), sonst None."""
     p = ziel(path)
     if os.path.exists(os.path.join(os.path.dirname(p), ".~lock." + os.path.basename(p) + "#")):
         return "einem anderen Office-Programm"

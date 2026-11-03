@@ -87,7 +87,7 @@ def pfad_bild(pfad: str, px: int = 48, farbe: str = "#1f2328") -> QImage:
     return img
 
 
-# Farbstriche unter Symbolen wie in Word: Name → Farbe (Schriftfarbe rot, Hervorheben gelb, Tönung blau, Rahmen/Schatten bleiben neutral)
+# Farbstriche unter Symbolen: Name → Farbe (Schriftfarbe rot, Hervorheben gelb, Tönung blau, Rahmen/Schatten bleiben neutral)
 AKZENT = {"schriftfarbe": "#e03131", "marker": "#fcc419", "absatztoenung": "#74c0fc", "toenung": "#74c0fc"}
 
 def hat(name: str) -> bool:

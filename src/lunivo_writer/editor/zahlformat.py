@@ -16,7 +16,7 @@ _ZEHNER = ["", "", "zwanzig", "dreißig", "vierzig", "fünfzig", "sechzig", "sie
 
 
 def _buchstaben(n: int) -> str:
-    """1 → A, 26 → Z, 27 → AA (wie Listen in Word)."""
+    """1 → A, 26 → Z, 27 → AA ."""
     s = ""
     while n > 0:
         n, r = divmod(n - 1, 26)

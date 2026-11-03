@@ -19,7 +19,8 @@ class OberflaecheBaustein:
         from lunivo_writer.ui.dialogs.oberflaeche_dialoge import lade_json
         from lunivo_writer.ui.ribbon.toolbars import Symbolleisten
         reg = RegisterBand(self.befehle, lade_register(), lade_json(self.settings, "ui/register_plan", {}),
-                           lade_json(self.settings, "ui/schnellzugriff", None))
+                           lade_json(self.settings, "ui/schnellzugriff", None),
+                           self.settings.get_bool("ui/band_kompakt", True))
         if self.settings.get("ui/oberflaeche", "register") != "symbolleisten":
             return reg
         sym = Symbolleisten(self.befehle)

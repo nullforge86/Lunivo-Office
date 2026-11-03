@@ -1,4 +1,4 @@
-"""Zellenraster: wie bei WPS die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken."""
+"""Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken."""
 from __future__ import annotations
 
 from PySide6.QtCore import QRectF, QSize, Qt, Signal

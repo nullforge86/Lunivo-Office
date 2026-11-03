@@ -1,4 +1,4 @@
-"""Die Bildchen für den Textumbruch um ein Bild (wie im WPS): Textzeilen in Grau, das Bild als blaues Feld.
+"""Die Bildchen für den Textumbruch um ein Bild (wie in der Vorlage): Textzeilen in Grau, das Bild als blaues Feld.
 
     f = umbruch_zeichner("quadrat")        # f(QPainter, QRectF) zeichnet das Bildchen in das Rechteck
 """

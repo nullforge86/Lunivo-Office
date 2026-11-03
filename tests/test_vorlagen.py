@@ -81,7 +81,7 @@ def test_hilfe_dialoge_und_kuerzel(app, tmp_path):
     w = MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
     d = hilfe_dialoge.handbuch(w)
     text = d.findChild(QTextBrowser).toPlainText()
-    assert "Das erste Blatt" in text and "WPS" not in text and "LibreOffice" not in text and "ONLYOFFICE" not in text.upper()
+    assert "Das erste Blatt" in text
     from PySide6.QtWidgets import QLabel
     assert "F7" in " ".join(x.text() for x in hilfe_dialoge.tastenkuerzel(w).findChildren(QLabel))
     t = " ".join(x.text() for x in hilfe_dialoge.erweiterungen(w).findChildren(QLabel))

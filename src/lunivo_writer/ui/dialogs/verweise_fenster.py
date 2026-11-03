@@ -1,4 +1,4 @@
-"""Fenster des Reiters Verweise nach den WPS-Vorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
+"""Fenster des Reiters Verweise nach den Vorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
 „Beschriftungsnummerierung“) und „Querverweis“.
 
     d = InhaltsverzeichnisDialog(parent, {"fuell": "punkt", "ebenen": 3, …})   # if d.exec(): d.ergebnis() → dict

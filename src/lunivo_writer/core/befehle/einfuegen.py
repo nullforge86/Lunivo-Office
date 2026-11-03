@@ -99,13 +99,13 @@ class EinfuegenBefehle:
         c.mergeCharFormat(f)
 
 
-    # Dateitypen im Fenster „Dateiobjekt einfügen“ (wie die Reiter ALL / WPS / ET / WPP / PDF der Vorlage)
+    # Dateitypen im Fenster „Dateiobjekt einfügen“
     DATEIOBJEKT_TYPEN = [("Alle Dateien", "*"), ("Dokumente", "*.docx *.doc *.odt *.rtf *.txt *.md"),
                          ("Tabellen", "*.xlsx *.xls *.ods *.csv"), ("Präsentationen", "*.pptx *.ppt *.odp"), ("PDF", "*.pdf"),
                          ("Bilder", "*.png *.jpg *.jpeg *.gif *.bmp *.webp *.svg")]
 
     def dateiObjekt(self, k=None):
-        """„Datei-Objekt“ wie in WPS: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
+        """„Datei-Objekt“ wie in der Vorlage: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
         ins Dokument — Text und Bilder mit Inhalt, andere Dateien als Symbol mit Link."""
         if not self.ed:
             return
@@ -135,7 +135,7 @@ class EinfuegenBefehle:
 
 
     def menue_seitenzahlKlappe(self):
-        """Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
+        """Seitenzahl wie in der Vorlage: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
         „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import seitenzahl as SZ
@@ -159,7 +159,7 @@ class EinfuegenBefehle:
 
     def seitenzahlEinfuegen(self, k=None):
         """Fenster „Seitenzahl einfügen“; „Übernehmen für“ entscheidet, welche Abschnitte es trifft. „Von aktueller Seite“ beginnt am
-        Anfang der Seite mit der Schreibmarke einen neuen Abschnitt (wie in WPS)."""
+        Anfang der Seite mit der Schreibmarke einen neuen Abschnitt (wie in der Vorlage)."""
         if not self.ed:
             return
         from lunivo_writer.editor import abschnitte as AB
@@ -219,7 +219,7 @@ class EinfuegenBefehle:
 
 
     def menue_wasserzeichenKlappe(self):
-        """Wasserzeichen wie in WPS: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen."""
+        """Wasserzeichen wie in der Vorlage: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen."""
         import json
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
@@ -319,7 +319,7 @@ class EinfuegenBefehle:
                 self._symbol_kuerzel.append(sc)
 
 
-    # ---- Klappmenüs nach den WPS-Vorlagen (Ordner einfuegen/) ------------------------------------------------------------
+    # ---- Klappmenüs nach den Vorlagen (Ordner einfuegen/) ------------------------------------------------------------
     BENUTZER_SYMBOLE = ("—", "+", "-", "×", "÷", "kg", "mm", "cm", "m²", "α", "g", "β", "θ", "℃", "〖", "{", "©", "®", "@", "&", "*", "#",
                         "%", "‰", "$", "¥", "§", "¦", "※", "◎", "≈", "…", "≤", "≥", "≦", "≧")
     ZULETZT_SYMBOLE = "einfuegen/symbole_zuletzt"
@@ -333,7 +333,7 @@ class EinfuegenBefehle:
 
 
     def menue_umbruecheKlappe(self):
-        """Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
+        """Umbrüche wie in der Vorlage: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Seitenumbruch(&P)", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
@@ -357,7 +357,7 @@ class EinfuegenBefehle:
 
 
     def menue_tabelleKlappe(self):
-        """Tabelle wie in WPS: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
+        """Tabelle wie in der Vorlage: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
         was nicht passt, bleibt grau."""
         from lunivo_writer.ui.baukasten.zellen_raster import ZellenRaster
         m = ZellenRaster(self.w, 10, 10)
@@ -409,7 +409,7 @@ class EinfuegenBefehle:
 
 
     def menue_schnellbausteineKlappe(self):
-        """Schnellbausteine wie in WPS: AutoText-Liste ▸ und Felder …"""
+        """Schnellbausteine wie in der Vorlage: AutoText-Liste ▸ und Felder …"""
         from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         m = MenueListe()
         liste = m.untermenue("AutoText-Liste", self._sym("baustein"))
@@ -498,7 +498,7 @@ class EinfuegenBefehle:
 
 
     def menue_symbolKlappe(self):
-        """Symbol wie in WPS: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
+        """Symbol wie in der Vorlage: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
         Die zuletzt verwendeten werden bei jedem Aufklappen neu gesetzt (das Menü entsteht nur einmal)."""
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, textkachel
@@ -615,7 +615,7 @@ class EinfuegenBefehle:
 
 
     def menue_formenKlappe(self):
-        """Formen wie in WPS: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
+        """Formen wie in der Vorlage: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPen
         from lunivo_writer.core.farben import Farbe
@@ -756,7 +756,7 @@ class EinfuegenBefehle:
 
 
     def menue_wordartKlappe(self):
-        """Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in WPS, auch im dunklen Thema gut zu erkennen)."""
+        """Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in der Vorlage, auch im dunklen Thema gut zu erkennen)."""
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from lunivo_writer.editor import einfuegen as E
@@ -777,7 +777,7 @@ class EinfuegenBefehle:
 
 
     def menue_gleichungKlappe(self):
-        """Gleichung wie in WPS: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“."""
+        """Gleichung wie in der Vorlage: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“."""
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QPainter, QPixmap
         from lunivo_writer.editor import einfuegen as E

@@ -729,6 +729,7 @@ def test_werkbank_katalog_band_und_seitenleiste_teilen_sich_eine_liste(app, tmp_
     from lunivo_writer.ui.ribbon.plan import plan
     tab = next(r for r in plan(w.band.daten) if r["name"] == "Schreibhilfe")
     band = {k["name"] for g in tab["gruppen"] for k in g["knoepfe"]}
+    band |= {m["name"] for g in tab["gruppen"] for k in g["knoepfe"] for m in k.get("menue", []) if m.get("name")}      # auch als Menüeintrag erreichbar
     for f in KATALOG:
         if f.gruppe:
             assert f.name.removesuffix(" …") in band, f.name

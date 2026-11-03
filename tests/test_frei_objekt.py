@@ -387,7 +387,7 @@ def test_textfeld_von_word_ohne_lunivo_daten(fenster, tmp_path):
     pfad = str(tmp_path / "w.docx"); docx_writer.write_docx(pfad, ed.document(), ed.page, {})
     zin = zipfile.ZipFile(pfad); xml = zin.read("word/document.xml").decode("utf-8")
     import re
-    xml = re.sub(r' title="lunivo:[^"]*"', "", xml)                               # wie ein Dokument aus Word: ohne Programmdaten
+    xml = re.sub(r' title="lunivo:[^"]*"', "", xml)                               # ohne Programmdaten
     neu = str(tmp_path / "w2.docx")
     with zipfile.ZipFile(neu, "w") as zout:
         for n in zin.namelist():

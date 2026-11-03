@@ -34,7 +34,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 WURZEL = Path(__file__).resolve().parent.parent
-BOGEN = Path.home() / 'Downloads' / 'pruefkatalog_wps_lunivo_2026-09-13.json'
+BOGEN = Path.home() / 'Downloads' / 'pruefkatalog_lunivo_2026-09-13.json'
 ZIEL = WURZEL / 'doku' / 'pruefkatalog' / 'arbeitsplan.md'
 
 # Seine Worte -> das Paket. Die Reihenfolge entscheidet: Der erste
@@ -69,7 +69,7 @@ PAKETE = [
      ['anordnung', 'gehören nebeneinander', 'nach vorlage umzusetzen'],
      'Steht da, tut das Richtige, steht aber falsch.'),
     ('ausbauen', 'Nach Bildvorlage ausbauen',
-     ['bildvorlage', 'nach vorlage', 'nach wps', 'auszubauen', 'ausbaufähig',
+     ['bildvorlage', 'nach vorlage', 'auszubauen', 'ausbaufähig',
       'zu bauen', 'zu gestalten', 'anzupassen', 'umzubauen', 'zu ändern'],
      'Die größte Gruppe und die teuerste. Kommt zuletzt, weil jedes '
      'Stück ein eigenes Fenster ist.'),
@@ -129,7 +129,7 @@ def main():
          '## Die Regel, die vorher gefehlt hat', '',
          'Nur anfassen, was in dem Punkt steht, an dem ich gerade arbeite.',
          'Beim Umbau der Schriftart-Gruppe habe ich seine Farbpalette gegen',
-         'WPS-Signalfarben getauscht — danach stand `#FF0000` in einem',
+         'Signalfarben getauscht — danach stand `#FF0000` in einem',
          'Programm, in dem Lesen leicht sein soll. Das hatte niemand',
          'verlangt.', '',
          '## Reihenfolge der Pakete', '']

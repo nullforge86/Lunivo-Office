@@ -146,7 +146,7 @@ class ZusatzMixin:
             if not c.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor) or c.selectedText() == "\u2029":
                 c = self.textCursor()
                 if not c.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor) or c.selectedText() == "\u2029":
-                    c = self.textCursor()                             # leerer Absatz (wie in WPS: Kommentar an der Schreibmarke)
+                    c = self.textCursor()                             # leerer Absatz (wie in der Vorlage: Kommentar an der Schreibmarke)
                     c.insertText("\u200b")                           # unsichtbarer Anker
                     c.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
         kid = neue_id(self.kommentare)

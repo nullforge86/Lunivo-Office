@@ -1,7 +1,7 @@
 """Verzeichnisse: Inhalt, Abbildungen, Tabellen, Stichwörter, Literatur.
 
 Die Zeilen sind gewöhnliche Absätze mit rechtem Tabstopp und einer Markierung (B_TOC/B_ART), an der „Verzeichnisse
-aktualisieren“ sie wiederfindet. In DOCX tragen sie die Word-Formatvorlagen „TOC Heading“, „TOC 1–3“, „Table of Figures“,
+aktualisieren“ sie wiederfindet. In DOCX tragen sie die Formatvorlagen „TOC Heading“, „TOC 1–3“, „Table of Figures“,
 „Index 1“ und „Bibliography“ — beim Öffnen werden sie daran wiedererkannt (kein Word-Feld, aber aktualisierbar).
 
 Das Inhaltsverzeichnis merkt sich am Kopf seine Einstellungen (``B_TOC_OPT``, Fenster „Inhaltsverzeichnis“): Füllzeichen,

@@ -1,5 +1,5 @@
 
-# LibreOffice (rund 700 MB) und LanguageTool (rund 400 MB) liegen unter
+# Zusatzprogramme (rund 700 MB) und LanguageTool (rund 400 MB) liegen unter
 # Persönliches
 # Was beim Arbeiten nebenbei entsteht
 # Was das Programm sich zur Laufzeit holt und was nicht ins Verzeichnis gehört:
@@ -20,7 +20,6 @@ __pycache__/
 bilder/üBERARBEITUNG VON ICON lOGO/
 geheim*
 languagetool/
-libreoffice/
 Lunivo Writer.desktop
 /docs/funktionsstand.md
 /docs/pruefstand-*.md

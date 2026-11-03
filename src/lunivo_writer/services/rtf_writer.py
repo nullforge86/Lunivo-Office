@@ -140,7 +140,7 @@ class _Rtf:
                 zeichen = {QTextListFormat.ListDisc: "•", QTextListFormat.ListCircle: "◦", QTextListFormat.ListSquare: "▪"}[stil]
             else:
                 zeichen = liste.itemText(block) or f"{liste.itemNumber(block) + 1}."
-            # \pntext ist der angezeigte Listentext (für Leser ohne Listen), \pn die Liste selbst (Word, WPS und andere)
+            # \pntext ist der angezeigte Listentext (für Leser ohne Listen), \pn die Liste selbst (Word und andere)
             art = r"\pnlvlblt{\pntxtb " + _text(zeichen) + "}" if zeichen in "\u2022\u25e6\u25aa" else (
                 r"\pnlvlbody\pndec\pnstart1{\pntxta .}")
             praefix = "{\\pntext " + _text(zeichen) + r"\tab}{\*\pn" + art + "}"

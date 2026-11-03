@@ -1,4 +1,4 @@
-"""Fenster „Wasserzeichen“ nach der WPS-Vorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
+"""Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
 und „Übernehmen für“. Höchstens eine der beiden Arten ist angekreuzt; ohne Kreuz gibt es kein Wasserzeichen.
 
     d = WasserzeichenDialog(parent, page.watermark, page)

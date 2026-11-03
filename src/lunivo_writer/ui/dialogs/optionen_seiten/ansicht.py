@@ -63,6 +63,7 @@ class AnsichtSeiten:
             f.addRow(c)
         f = p.unter(e, "Menüband")
         p.haken(f, "ui/band_doppelklick", "Doppelklick blendet das Band aus", True, lambda on: setattr(self.w.band, "einklappbar", on))
+        p.haken(f, "ui/band_kompakt", "Kompaktes Menüband (niedrigere Gruppen, ohne Unterschriften)", True, lambda on: self.w.neu_bauen_band())
         p.haken(f, "ui/strg_klick_link", "Strg+Klick folgt einem Verweis", True)
         self._oberflaeche_wahl(p, f)
         p.aktion("Menüband anpassen", "Menüband anpassen …", lambda: self._anpassen("menueband"))

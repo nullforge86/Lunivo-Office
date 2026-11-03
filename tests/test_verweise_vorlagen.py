@@ -55,16 +55,18 @@ def test_band_verweise_wie_vorlage(fenster):
     from lunivo_writer.ui.ribbon.ribbon_bar import lade_register
     tab = next(t for t in plan(lade_register()) if t["name"] == "Verweise")
     namen = [e["name"] for g in tab["gruppen"] for e in g["knoepfe"]]
-    reihe = ["TOC einfügen", "Inhaltsverzeichnis aktualisieren", "Inhaltsverzeichnis", "Fußnote einfügen", "Vorherige Fußnote",
-             "Nächste Fußnote", "Endnote einfügen", "Vorherige Endnote", "Nächste Endnote", "Fußnote/Endnotentrennlinie",
-             "Beschriftung", "Abbildungsverzeichnis einfügen", "Querverweis", "Eintrag festlegen", "Index einfügen",
-             "Index aktualisieren", "Seriendruck"]
+    reihe = ["Inhaltsverzeichnis", "Inhaltsverzeichnis aktualisieren", "Fußnote einfügen", "Endnote einfügen", "Zur Note springen",
+             "Fußnote/Endnotentrennlinie", "Notenbereich", "Beschriftung", "Abbildungsverzeichnis", "Querverweis", "Eintrag festlegen",
+             "Index", "Seriendruck"]
     assert [n for n in namen if n in reihe] == reihe
     kn = {e["name"]: e for g in tab["gruppen"] for e in g["knoepfe"]}
-    assert kn["Inhaltsverzeichnis"]["klappe"] == "inhaltsverzeichnisKlappe"
-    for n in ("TOC einfügen", "Inhaltsverzeichnis aktualisieren", "Vorherige Fußnote", "Nächste Endnote", "Eintrag festlegen",
-              "Index aktualisieren", "Seriendruck"):
+    assert kn["Inhaltsverzeichnis"]["klappe"] == "inhaltsverzeichnisKlappe"           # Einfügen und Ebenen in einem Knopf
+    menue = {m["name"]: m["tun"] for m in kn["Zur Note springen"]["menue"]} | {m["name"]: m["tun"] for m in kn["Index"]["menue"]}
+    assert set(menue) == {"Vorherige Fußnote", "Nächste Fußnote", "Vorherige Endnote", "Nächste Endnote", "Index einfügen", "Index aktualisieren"}
+    for n in ("Inhaltsverzeichnis", "Inhaltsverzeichnis aktualisieren", "Eintrag festlegen", "Seriendruck"):
         assert fenster.befehle.hat(kn[n]["tun"]), n
+    for n, t in menue.items():
+        assert fenster.befehle.hat(t), n                                           # in Menüs verschoben, nichts verloren
     assert not fenster.befehle.hat(kn["Fußnote/Endnotentrennlinie"]["tun"])      # bleibt grau sichtbar
     assert "Zitat einfügen" in namen and "Nächste Note" not in namen
 

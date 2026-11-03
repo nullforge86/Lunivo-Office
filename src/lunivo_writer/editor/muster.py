@@ -1,4 +1,4 @@
-"""Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster, wie Word und WPS sie kennen.
+"""Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster.
 
 Ein Muster ist ein Schlüssel (``pct25``, ``dunkel_h`` …), eine Musterfarbe und eine Füllfarbe darunter. Gespeichert wird es
 am Absatz als Text ``schlüssel|musterfarbe|füllfarbe``; gezeichnet als kleine Kachel (``QBrush`` mit Pixmap), in DOCX als

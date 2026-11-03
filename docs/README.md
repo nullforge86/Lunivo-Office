@@ -12,6 +12,8 @@ src/lunivo_writer/
     main_window.py          Hauptfenster
     backstage.py            Datei-Menü und Dokumentaktionen
     ribbon/                 Registerband, Symbolleisten und Menüleiste
+    contextual/             Kontext-Reiter (Tabellen, Bilder, Formen, Diagramme, Text, Kopf-/Fußzeile, Seriendruck)
+    hauptfenster/           Bausteine des Hauptfensters (Dateien, Bearbeiten, Oberfläche, Datei-Ansicht)
     document/               Dokumenteditor, Seitenfläche, Lineale und Dokumentreiter
     sidebar/                 Schreibhilfe- und KI-Seitenleisten
     dialogs/                 Dialoge und Optionen

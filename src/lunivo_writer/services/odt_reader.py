@@ -493,7 +493,7 @@ class _Leser:
             hg = a.get("fo:background-color")
             if hg and hg != "transparent":
                 page.color = hg
-            # ODF misst den Rand bis zur Kopfzeile; Lunivo (wie Word) bis zum Text: Kopfzeilenhöhe und Abstand kommen dazu.
+            # ODF misst den Rand bis zur Kopfzeile; Lunivo bis zum Text: Kopfzeilenhöhe und Abstand kommen dazu.
             kopf_da = master.find(_q("style:header")) is not None or master.find(_q("style:header-first")) is not None \
                 or master.find(_q("style:header-left")) is not None
             fuss_da = master.find(_q("style:footer")) is not None or master.find(_q("style:footer-first")) is not None \

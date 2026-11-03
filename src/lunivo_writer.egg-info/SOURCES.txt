@@ -28,7 +28,6 @@ src/lunivo_writer/core/befehle/bildtools.py
 src/lunivo_writer/core/befehle/datei.py
 src/lunivo_writer/core/befehle/diagrammtools.py
 src/lunivo_writer/core/befehle/einfuegen.py
-src/lunivo_writer/core/befehle/extern.py
 src/lunivo_writer/core/befehle/formtools.py
 src/lunivo_writer/core/befehle/hilfen.py
 src/lunivo_writer/core/befehle/ki.py
@@ -156,7 +155,6 @@ src/lunivo_writer/services/sicher_schreiben.py
 src/lunivo_writer/services/vorlesen.py
 src/lunivo_writer/services/integrations/__init__.py
 src/lunivo_writer/services/integrations/languagetool.py
-src/lunivo_writer/services/integrations/wps.py
 src/lunivo_writer/ui/__init__.py
 src/lunivo_writer/ui/backstage.py
 src/lunivo_writer/ui/kuerzel.py

@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Texttools“ nach der WPS-Vorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
+"""Kontext-Reiter „Texttools“ nach der Vorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
 
 Gruppen von links nach rechts: Textfeld ▾ · Format übertragen · Schriftart/Größe, A⁺ A⁻, Formatierung löschen, F K U ▾, Durchgestrichen ▾, x² x₂,
 Hervorhebung ▾, Schriftfarbe ▾ · Aufzählung ▾, Nummerierung ▾, Einzug −/+, Textrichtung ▾, Sortieren, fünf Ausrichtungen, Zeilenabstand ▾ ·

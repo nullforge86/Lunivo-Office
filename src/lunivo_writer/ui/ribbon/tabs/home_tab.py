@@ -1,11 +1,11 @@
-"""Reiter „Start“ in der Anordnung von WPS Office."""
+"""Reiter „Start“ in der Anordnung der Vorlage."""
 from __future__ import annotations
 
 from lunivo_writer.ui.ribbon.tabs.baustein import k as _k
 
 
 def bauen(start: dict) -> dict:
-    """Reiter Start in der Anordnung von WPS Office: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
+    """Reiter Start in der Anordnung der Vorlage: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
     Name und Größe in einer Zeile, Absatz, Stile, dann Wort-Extras, Suchen oder ersetzen, Auswählen und Einstellungen als große Knöpfe."""
     alt = {g["name"]: g for g in start["gruppen"]}
     ablage = {"name": "Zwischenablage", "reihenfolge": True, "knoepfe": [

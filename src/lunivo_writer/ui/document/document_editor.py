@@ -473,7 +473,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                 unten = int(self.blatt_oben(k) + (bk or g)["H"] - (bk or g)["mb"])
                 links = bk["x"] + bk["ml"] if bk else g["ml"]
                 rechts = links + bk["cw"] if bk else g["ml"] + g["cb"] * g["n"] + g["g"] * (g["n"] - 1)
-                # Eckmarken liegen außerhalb der Textfläche und zeigen von ihrer Ecke nach außen (wie in Word)
+                # Eckmarken liegen außerhalb der Textfläche und zeigen von ihrer Ecke nach außen
                 for x, ox in ((int(links), -1), (int(rechts), 1)):
                     for y, oy in ((oben, -1), (unten, 1)):
                         p.drawLine(x, y, x + ox * L, y)

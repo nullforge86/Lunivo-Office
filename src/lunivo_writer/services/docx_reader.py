@@ -472,7 +472,7 @@ class _Reader:
         def sicher(fn, *a):
             try:
                 return fn(*a)
-            except (ValueError, KeyError, AttributeError):        # ungewöhnliche Werte (z. B. jc="start" von LibreOffice)
+            except (ValueError, KeyError, AttributeError):        # ungewöhnliche Werte (z. B. jc="start")
                 return None
 
         def eff(getter):
@@ -1089,7 +1089,7 @@ class _Reader:
     @staticmethod
     def _textfeld_daten(drawing, wsp) -> dict:
         """Die Parameter eines Textfelds (``editor/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
-        Kastens (``w:txbxContent``) und seiner Verknüpfung (``wps:linkedTxbx`` mit ``id`` und ``seq``, wie in Word)."""
+        Kastens (``w:txbxContent``) und seiner Verknüpfung (``wps:linkedTxbx`` mit ``id`` und ``seq``)."""
         import json
         titel = _xp(drawing, ".//wp:docPr/@title")
         if titel and titel[0].startswith("lunivo:"):
@@ -1602,7 +1602,7 @@ _ERSATZ = {"Calibri Light": ["Carlito"], "Calibri": ["Carlito"], "Cambria": ["Ca
 
 def _schriften_ersatz() -> None:
     """Word-Schriften ohne Entsprechung im System ersetzt Qt sonst durch irgendeine breite Schrift (so wurde aus „Calibri Light“ Noto Sans).
-    Die metrikgleichen Schriften (Carlito, Caladea) halten Zeilenhöhe und Umbruch gleich — wie es LibreOffice mit seiner Ersetzungstabelle tut."""
+    Die metrikgleichen Schriften (Carlito, Caladea) halten Zeilenhöhe und Umbruch gleich."""
     from PySide6.QtGui import QFont, QFontDatabase
     vorhanden = set(QFontDatabase.families())
     for name, ersatz in _ERSATZ.items():

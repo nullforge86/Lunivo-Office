@@ -43,7 +43,7 @@ class Suchauftrag:
     text: str = ""
     gross: bool = False                    # Groß-/Kleinschreibung beachten
     ganz: bool = False                     # Nur ganzes Wort suchen
-    platzhalter: bool = False              # Platzhalter verwenden (? * [ ] { } < > @ wie in Word)
+    platzhalter: bool = False              # Platzhalter verwenden (? * [ ] { } < >)
     praefix: bool = False                  # Präfix beachten: der Treffer steht am Wortanfang
     suffix: bool = False                   # Suffix beachten: der Treffer steht am Wortende
     ohne_satzzeichen: bool = False         # Interpunktionszeichen ignorieren
@@ -110,7 +110,7 @@ def _woertlich(text: str) -> list[str]:
 
 
 def _platzhalter(text: str) -> list[str]:
-    """Platzhalter wie in Word: ? ein Zeichen, * beliebig viele, [abc] [a-z] [!x] eines davon/keines, {n,m} Wiederholung, @ eins oder mehr,
+    """Platzhalter: ? ein Zeichen, * beliebig viele, [abc] [a-z] [!x] eines davon/keines, {n,m} Wiederholung, @ eins oder mehr,
     < Wortanfang, > Wortende, \\ nimmt das nächste Zeichen wörtlich; ( ) bilden Gruppen für \\1 im Ersatz."""
     out, i = [], 0
     beliebig = "[^" + _NIE + "]"

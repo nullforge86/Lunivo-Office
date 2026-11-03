@@ -8,7 +8,7 @@ import json
 import os
 from lunivo_writer.core import paths
 
-from PySide6.QtCore import QPropertyAnimation, QSize, Qt, Signal
+from PySide6.QtCore import QPoint, QPropertyAnimation, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
@@ -101,6 +101,119 @@ class _BandSeite(QScrollArea):
             super().wheelEvent(ev)
 
 
+# Sichtbare Kurztexte der Knöpfe: kurz, einfache Wörter, leicht lesbar (auch bei Lese-Rechtschreib-Schwäche). Der volle Name bleibt der Hinweistext
+# und der Schlüssel der Funktion; Menüeinträge behalten den vollen Namen.
+KURZ = {
+    'Gerade und ungerade Seiten sind unterschiedlich': 'Links/rechts anders',
+    'In anderem neuen Dokument zusammenführen': 'Als anderes Dokument',
+    'In neuem Dokument zusammenführen': 'Als Dokument',
+    'An Drucker zusammenführen': 'Zum Drucker',
+    'Übereinstimmende Felder festlegen': 'Felder zuordnen',
+    'Seriendruckfelder hervorheben': 'Felder markieren',
+    'Seriendruckfeld einfügen': 'Feld einfügen',
+    'Nächstes Feld einfügen': 'Nächstes Feld',
+    'Seriendruck schließen': 'Schließen',
+    'Seriendruckempfänger': 'Empfänger',
+    'Seriendruck-Vorschau': 'Vorschau',
+    'Vorheriger Datensatz': 'Zurück',
+    'Nächster Datensatz': 'Weiter',
+    'Datenquelle öffnen': 'Daten öffnen',
+    'Letzter Datensatz': 'Letzter',
+    'Erster Datensatz': 'Erster',
+    'Seriendruck-Assistent': 'Assistent',
+    'Ergebnisse anzeigen': 'Ergebnisse',
+    'Seriendruckfeld': 'Feld',
+    'Zwischen Kopf- und Fußzeile wechseln': 'Kopf/Fuß wechseln',
+    'Optionen für Kopf- und Fußzeile': 'Optionen',
+    'Ausrichtungstabstopp einfügen': 'Tabstopp',
+    'Link zu vorheriger Kopfzeile': 'Wie vorher',
+    'Mit vorheriger verknüpfen': 'Wie vorher',
+    'Mit voriger Fußzeile verknüpfen': 'Wie vorher',
+    'Kopf-/Fußzeilengruppe': 'Kopf/Fuß-Gruppe',
+    'Nächste Kopfzeile': 'Weiter',
+    'Vorige Kopfzeile': 'Zurück',
+    'Transparente Farbe einstellen': 'Transparenz',
+    'Größe und Seitenverhältnis …': 'Größe',
+    'Seitenverhältnis sperren': 'Verhältnis sperren',
+    'Eine Ebene nach hinten': 'Nach hinten',
+    'Eine Ebene nach vorne': 'Nach vorn',
+    'Zuschneiden nach Maß …': 'Auf Maß',
+    'Bilder komprimieren': 'Komprimieren',
+    'Kontrast verringern': 'Kontrast −',
+    'Kontrast erhöhen': 'Kontrast +',
+    'Größe zurücksetzen': 'Größe zurück',
+    'Bild zurücksetzen': 'Zurücksetzen',
+    'Textumbruch Stil': 'Umbruch',
+    'Textumbruch / Position': 'Umbruch',
+    'Auf Seitenbreite': 'Seitenbreite',
+    'Alternativtext …': 'Alt-Text',
+    'Bild entfernen': 'Entfernen',
+    'Layout von rechts nach links': 'Rechts → Links',
+    'Aufzählungszeichen einfügen': 'Aufzählung',
+    'Level reduzieren': 'Ebene −',
+    'Diagrammelement hinzufügen': 'Element +',
+    'Diagrammtyp ändern': 'Typ ändern',
+    'Daten bearbeiten': 'Daten',
+    'Daten auswählen': 'Auswählen',
+    'Seitenleiste Schreibhilfe': 'Seitenleiste',
+    'Dokumentprüfung': 'Prüfung',
+    'Wortvorhersage': 'Vorhersage',
+    'Silbentrennung': 'Trennung',
+    'Abschnittsnavigationsbereich': 'Abschnitte',
+    'Abschnitt einrichten …': 'Einrichten',
+    'Abschnitt hinzufügen': 'Abschnitt +',
+    'Abschnitt löschen': 'Abschnitt −',
+    'Vorheriger Abschnitt': 'Zurück',
+    'Nächster Abschnitt': 'Weiter',
+    'Änderungen nachverfolgen': 'Änderungen',
+    'Bearbeitung einschränken': 'Einschränken',
+    'Rechtschreibprüfung': 'Rechtschreibung',
+    'Kommentar einfügen': 'Kommentar',
+    'Tabellenformatvorlagen': 'Tabellenstile',
+    'Rahmenlinien ein/aus': 'Rahmen',
+    'Zellenschattierung': 'Zellfarbe',
+    'Gebänderte Zeilen': 'Zeilenband',
+    'Gruppierung aufheben': 'Lösen',
+    'Text in der Form …': 'Text in Form',
+    'Formen einfügen': 'Formen',
+    'Form bearbeiten': 'Bearbeiten',
+    'Verknüpfung erstellen': 'Verknüpfen',
+    'Suchen oder ersetzen': 'Suchen',
+    'Kopf- und Fußzeile': 'Kopf/Fuß',
+    'Datum und Uhrzeit': 'Datum',
+    'Abbildungsverzeichnis': 'Abbildungen',
+    'Literaturverzeichnis': 'Literatur',
+    'Inhaltsverzeichnis': 'Inhalt',
+    'Zur Note springen': 'Zur Note',
+    'Eintrag festlegen': 'Eintrag',
+    'Quellen verwalten': 'Quellen',
+    'Fußnote einfügen': 'Fußnote',
+    'Endnote einfügen': 'Endnote',
+    'Zitat einfügen': 'Zitat',
+    'Navigationsbereich': 'Navigation',
+    'Weitere Ansichten': 'Ansichten',
+    'Register anpassen': 'Anpassen',
+    'Gitternetzlinien': 'Gitternetz',
+    'Weitere Anzeigen': 'Mehr',
+    'Genko-Einstellung': 'Genko',
+    'Auswahlbereich': 'Auswahl',
+}
+
+
+def _kurz(name: str) -> str:
+    return KURZ.get(name, name)
+
+
+def _mit_kuerzel(name: str) -> str:
+    """Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter."""
+    from lunivo_writer.ui.kuerzel import HILFE
+    for _gruppe, zeilen in HILFE:
+        for taste, text in zeilen:
+            if text == name and " / " not in taste:
+                return f"{name} ({taste})"
+    return name
+
+
 def _zweizeilig(text: str) -> str:
     if len(text) <= 12 or " " not in text:
         return text
@@ -114,9 +227,38 @@ def _zweizeilig(text: str) -> str:
 STANDARD_VERSTECKT = ("Sendungen",)
 
 
+class _GruppenPopup(QFrame):
+    """Schwebende Fläche unter einem zusammengeklappten Gruppenknopf; die Gruppe zieht für die Zeit des Öffnens hier ein."""
+
+    def __init__(self, eltern):
+        super().__init__(eltern, Qt.Popup)
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setAutoFillBackground(True)
+        h = QHBoxLayout(self)
+        h.setContentsMargins(4, 4, 4, 4)
+        self._zurueck = None
+
+    def zeigen(self, rahmen: QWidget, unter: QWidget, zurueck) -> None:
+        self._zurueck = zurueck
+        self.layout().addWidget(rahmen)
+        rahmen.show()
+        self.adjustSize()
+        ziel = unter.mapToGlobal(QPoint(0, unter.height()))
+        rand = unter.screen().availableGeometry().right()
+        self.move(max(0, min(ziel.x(), rand - self.width())), ziel.y())          # nie über den Bildschirmrand hinaus
+        self.show()
+
+    def hideEvent(self, ev):
+        super().hideEvent(ev)
+        z, self._zurueck = self._zurueck, None
+        if z:
+            z()
+
+
 class _ReiterLeiste(QTabBar):
     doppelt = Signal()
     LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
+    LUECKE_KOMPAKT = 5
 
     def mouseDoubleClickEvent(self, ev):
         self.doppelt.emit()
@@ -128,8 +270,11 @@ class _ReiterLeiste(QTabBar):
     def tabSizeHint(self, i):
         sz = super().tabSizeHint(i)
         if self.ist_kontext(i):
-            sz.setWidth(sz.width() + 2 * self.LUECKE)
+            sz.setWidth(sz.width() + 2 * self._luecke())
         return sz
+
+    def _luecke(self) -> int:
+        return self.LUECKE_KOMPAKT if self.property("kompakt") else self.LUECKE
 
     def paintEvent(self, ev):
         super().paintEvent(ev)
@@ -143,7 +288,7 @@ class _ReiterLeiste(QTabBar):
                 continue
             tr = self.tabRect(i)
             p.fillRect(tr.adjusted(0, tr.height() - 4, 0, 0), self.parentWidget().palette().window())   # Stylesheet-Unterstrich weg
-            r = tr.adjusted(self.LUECKE, 3, -self.LUECKE, -3)
+            r = tr.adjusted(self._luecke(), 3, -self._luecke(), -3)
             if erster:                       # Trenner zwischen normalen und Kontext-Reitern
                 x = self.tabRect(i).left() + 2
                 p.setPen(self.palette().mid().color())
@@ -165,8 +310,16 @@ class _ReiterLeiste(QTabBar):
 class RegisterBand(QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
-    def __init__(self, befehle, daten: dict | None = None, cfg: dict | None = None, schnell: list | None = None):
+    # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
+    BAND_HOEHE = {False: 112, True: 88}
+    GROSS_HOEHE = {False: 68, True: 66}
+    GROSS_ICON = {False: 28, True: 24}
+
+    def __init__(self, befehle, daten: dict | None = None, cfg: dict | None = None, schnell: list | None = None, kompakt: bool = True):
         super().__init__()
+        self.kompakt = kompakt
+        self._seiten: list[list[dict]] = []                                # je Reiter: seine Gruppen (zum Zusammenklappen bei Platzmangel)
+        self._gruppen_popup: _GruppenPopup | None = None
         self.cfg = cfg or {}
         self._schnell_wahl = schnell
         self.b = befehle
@@ -196,11 +349,12 @@ class RegisterBand(QWidget):
         self.reiter.setObjectName("bandReiter")
         self.reiter.setDrawBase(False)
         self.reiter.setExpanding(False)
+        self.reiter.setProperty("kompakt", kompakt)
         self.kopf.addWidget(self.reiter, 1)
         lay.addLayout(self.kopf)
         self.stapel = QStackedWidget()
         self.stapel.setObjectName("bandStapel")
-        self.stapel.setFixedHeight(112)
+        self.stapel.setFixedHeight(self.BAND_HOEHE[kompakt])
         lay.addWidget(self.stapel)
         linie = self.linie = QFrame()
         linie.setFrameShape(QFrame.HLine)
@@ -218,6 +372,62 @@ class RegisterBand(QWidget):
 
     einklappbar = True          # Optionen ▸ Doppelklick blendet das Band aus
     _eingeklappt = False
+
+    MIN_ERSPARNIS = 60           # eine Gruppe klappt nur zu, wenn sie dadurch mindestens so viel schmaler wird
+    KNOPF_BREITE = 64            # Breite eines zusammengeklappten Gruppenknopfes
+
+    def resizeEvent(self, ev):
+        super().resizeEvent(ev)
+        self._gruppen_anpassen()
+
+    def _gruppen_knopf(self, g: dict, e: dict) -> QToolButton:
+        """Zusammengeklappte Gruppe: ein Knopf mit dem Symbol des ersten Befehls und dem Gruppennamen; ein Klick zeigt die ganze Gruppe."""
+        erste = next((k.get("symbol") for k in g.get("knoepfe", []) if icons.hat(k.get("symbol", ""))), "Stil" if g.get("katalog") else "klappe")
+        kb = QToolButton()
+        kb.setAutoRaise(True)
+        kb.setIcon(icons.icon(erste, self.GROSS_ICON[True])); kb.setIconSize(QSize(self.GROSS_ICON[True], self.GROSS_ICON[True]))
+        kb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        kb.setText(_zweizeilig(g["name"]))
+        kb.setToolTip(g["name"] + " — Gruppe öffnen")
+        text = _zweizeilig(g["name"])
+        breit = max(kb.fontMetrics().horizontalAdvance(z) for z in text.split("\n")) + 16       # der volle Name, nie gekürzt
+        e["kbbreite"] = max(self.KNOPF_BREITE, breit)
+        kb.setFixedSize(e["kbbreite"], self.GROSS_HOEHE[True])
+        kb.clicked.connect(lambda _=False, e=e: self._gruppe_zeigen(e))
+        return kb
+
+    def _gruppe_zeigen(self, e: dict) -> None:
+        if self._gruppen_popup is None:
+            self._gruppen_popup = _GruppenPopup(self)
+        e["offen"] = True
+
+        def zurueck(e=e):
+            e["offen"] = False
+            e["lay"].insertWidget(e["lay"].indexOf(e["kb"]) + 1, e["rahmen"])
+            e["rahmen"].setVisible(not e["kb"].isVisible())
+        self._gruppen_popup.zeigen(e["rahmen"], e["kb"], zurueck)
+
+    def _gruppen_anpassen(self) -> None:
+        """Kompaktes Band: passt ein Reiter nicht in die Breite, klappen seine hintersten Gruppen zu je einem Knopf zusammen. Nichts geht verloren; bei mehr Breite stehen die Gruppen wieder offen da."""
+        if not self.kompakt:
+            return
+        frei = self.stapel.width() - 12
+        for eintraege in self._seiten:
+            gesamt = sum(e["breite"] for e in eintraege)
+            zu: set[int] = set()
+            for n in range(len(eintraege) - 1, 0, -1):                  # die erste Gruppe bleibt immer offen
+                if gesamt <= frei:
+                    break
+                gespart = eintraege[n]["breite"] - eintraege[n].get("kbbreite", self.KNOPF_BREITE)
+                if eintraege[n]["fest"] or gespart < self.MIN_ERSPARNIS:     # die Stile-Galerie bleibt immer offen                        # ein einzelner Knopf ist schon so schmal: Zuklappen kostet nur einen Klick
+                    continue
+                zu.add(n)
+                gesamt -= gespart
+            for n, e in enumerate(eintraege):
+                klein = n in zu
+                e["kb"].setVisible(klein)
+                if not e["offen"]:
+                    e["rahmen"].setVisible(not klein)
 
     def _reiter_geklickt(self, _i):
         if self._eingeklappt:
@@ -271,7 +481,7 @@ class RegisterBand(QWidget):
         for sym, name, aktion in liste:
             k = QToolButton()
             k.setAutoRaise(True)
-            k.setToolTip(name)
+            k.setToolTip(_mit_kuerzel(name))
             k.setIcon(icons.icon(sym, 18))
             k.setIconSize(QSize(18, 18))
             k.clicked.connect(lambda _=False, a=aktion: self.b.tun(a))
@@ -301,13 +511,23 @@ class RegisterBand(QWidget):
         h = QHBoxLayout(seite)
         h.setContentsMargins(6, 2, 6, 0)
         h.setSpacing(0)
+        eintraege: list[dict] = []
         for i, g in enumerate(r["gruppen"]):
+            s = None
             if i:
                 s = QFrame()
                 s.setFrameShape(QFrame.VLine)
                 s.setFrameShadow(QFrame.Sunken)
                 h.addWidget(s)
-            h.addWidget(self._gruppe(g))
+            rahmen = self._gruppe(g)
+            e = dict(rahmen=rahmen, lay=h, kb=None, offen=False, fest=g.get("katalog") == "katalog", breite=rahmen.sizeHint().width() + (s.sizeHint().width() if s else 0))
+            if self.kompakt:
+                e["kb"] = kb = self._gruppen_knopf(g, e)
+                kb.hide()
+                h.addWidget(kb, 0, Qt.AlignTop)
+            h.addWidget(rahmen)
+            eintraege.append(e)
+        self._seiten.append(eintraege)
         h.addStretch(1)
         scroll.setWidget(seite)
         self.stapel.addWidget(scroll)
@@ -320,8 +540,10 @@ class RegisterBand(QWidget):
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
         v = QVBoxLayout(rahmen)
-        v.setContentsMargins(3, 2, 3, 0)
+        v.setContentsMargins(2 if self.kompakt else 3, 2, 2 if self.kompakt else 3, 0)
         v.setSpacing(0)
+        if self.kompakt:
+            rahmen.setToolTip(g["name"])                 # die Unterschrift entfällt; der Name steht im Hinweis
         inhalt = QHBoxLayout()
         inhalt.setSpacing(1)
         inhalt.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -332,9 +554,14 @@ class RegisterBand(QWidget):
             inhalt.addWidget(self._stile())
         else:
             self._knoepfe(g, inhalt)
+        if self.kompakt and not g.get("pfeil"):
+            if not g.get("ohne_titel"):
+                QLabel(g["name"].upper(), rahmen).hide()           # Unterschrift bleibt als verborgene Beschriftung (Aufbau prüfbar)
+            return rahmen
         fuss = QHBoxLayout()
         fuss.setContentsMargins(0, 0, 0, 0)
-        t = QLabel("" if g.get("ohne_titel") else g["name"].upper())     # Kontext-Reiter wie WPS: Gruppen ohne Unterschrift
+        t = QLabel("" if g.get("ohne_titel") else g["name"].upper())     # Kontext-Reiter wie in der Vorlage: Gruppen ohne Unterschrift
+        t.setVisible(not self.kompakt)
         t.setAlignment(Qt.AlignCenter)
         t.setStyleSheet("font-size: 7pt; color: palette(mid); letter-spacing: 1px;")
         fuss.addStretch(1)
@@ -402,7 +629,7 @@ class RegisterBand(QWidget):
         spalte()
 
     def _knoepfe_schrift(self, g: dict, inhalt: QHBoxLayout):
-        """Wie WPS: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate."""
+        """Wie in der Vorlage: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate."""
         from lunivo_writer.ui.widgets.live_vorschau import VorschauCombo, VorschauFontCombo
         vs = self.b.w.vorschau
 
@@ -479,7 +706,7 @@ class RegisterBand(QWidget):
         inhalt.addLayout(v)
 
     def _knoepfe_galerie(self, g: dict, inhalt: QHBoxLayout):
-        """Eine Galerie wie in WPS: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``)."""
+        """Eine Galerie wie in der Vorlage: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``)."""
         bau = GALERIEN.get(g["galerie"])                          # erst die Bausteine der Oberfläche, sonst ``galerie_<name>`` des Befehlsbausteins
         spec = (lambda: bau(self.b)) if bau else getattr(self.b, "galerie_" + g["galerie"], None)
         if spec is None:
@@ -523,7 +750,7 @@ class RegisterBand(QWidget):
         inhalt.addWidget(rahmen, 0, Qt.AlignTop)
 
     def _knoepfe_raender(self, g: dict, inhalt: QHBoxLayout):
-        """Der Rand-Knopf und daneben wie bei WPS die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit)."""
+        """Der Rand-Knopf und daneben wie in der Vorlage die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit)."""
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
         self._knoepfe_geordnet(g, inhalt)
         host = QWidget()
@@ -786,7 +1013,7 @@ class RegisterBand(QWidget):
             k = QToolButton()
             k.setAutoRaise(True)
             k.setText(text)
-            k.setFixedSize(84, 62)
+            k.setFixedSize(84, 56 if self.kompakt else 62)
             k.clicked.connect(lambda _=False, a=art: (self.b.tun('w.setzeRandVorgabe:["%s"]' % a), self.aktualisieren()))
             h.addWidget(k)
             self.knoepfe.append((k, None, True))
@@ -799,13 +1026,14 @@ class RegisterBand(QWidget):
         k.setAutoRaise(True)
         tun, klappe, menue = e.get("tun"), e.get("klappe"), e.get("menue")
         akt = QAction(k)
-        akt.setText(sym if not icons.hat(sym) else name)
-        akt.setToolTip(name)
+        akt.setText(sym if not icons.hat(sym) else _kurz(name))
+        akt.setToolTip(_mit_kuerzel(name))
         if icons.hat(sym):
-            akt.setIcon(icons.icon(sym, 28 if gross else 18))
-            k.setIconSize(QSize(28, 28) if gross else QSize(18, 18))
+            gi = self.GROSS_ICON[self.kompakt]
+            akt.setIcon(icons.icon(sym, gi if gross else 18))
+            k.setIconSize(QSize(gi, gi) if gross else QSize(18, 18))
         k.setDefaultAction(akt)
-        k.setToolTip(name)
+        k.setToolTip(_mit_kuerzel(name))
         self._tausch_rechtsklick(k, sym)
         if not icons.hat(sym):
             f = k.font()
@@ -818,14 +1046,14 @@ class RegisterBand(QWidget):
             k.setFont(f)
         if gross:
             k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-            k.setText(_zweizeilig(name))
-            akt.setText(_zweizeilig(name))                      # der Knopf übernimmt später den Text der Aktion
-            breit = max(k.fontMetrics().horizontalAdvance(z) for z in _zweizeilig(name).split("\n"))
-            k.setMinimumWidth(max(48, breit + 10))
-            k.setFixedHeight(68)
+            k.setText(_zweizeilig(_kurz(name)))
+            akt.setText(_zweizeilig(_kurz(name)))               # der Knopf übernimmt später den Text der Aktion
+            breit = max(k.fontMetrics().horizontalAdvance(z) for z in _zweizeilig(_kurz(name)).split("\n"))
+            k.setMinimumWidth(max(44 if self.kompakt else 48, breit + (6 if self.kompakt else 10)))
+            k.setFixedHeight(self.GROSS_HOEHE[self.kompakt])
         elif icons.hat(sym) and e.get("text"):
             k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            k.setText(name)
+            k.setText(_kurz(name))
         elif icons.hat(sym):
             k.setToolButtonStyle(Qt.ToolButtonIconOnly)
         else:
@@ -846,7 +1074,8 @@ class RegisterBand(QWidget):
         if menu is not None:
             k.setMenu(menu)
             if gross:
-                k.setMinimumWidth(k.minimumWidth() + 20)          # Platz für den Pfeil-Bereich, damit die Beschriftung nicht gekürzt wird
+                k.setMinimumWidth(k.minimumWidth() + 20)
+                # (Platz für den Pfeil-Bereich, damit die Beschriftung nicht gekürzt wird)
         if tun:
             ok = ok or self.b.hat(tun)
             akt.triggered.connect(lambda _=False, t=tun, kk=k: (self.b.tun(t, kk), self.aktualisieren()))

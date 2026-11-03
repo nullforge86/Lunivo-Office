@@ -49,7 +49,7 @@ Im Register `Ansicht`, Gruppe **Fenster**, öffnet **Neues Fenster** ein zweites
 
 Ganz oben steht die **Menüleiste** mit `Datei`, `Bearbeiten`, `Ansicht` und `Hilfe`. Darunter liegen die Reiter der Dokumente, dann das **Menüband** mit seinen Registern:
 
-`Start` · `Einfügen` · `Seitenlayout` · `Referenzen` · `Überprüfen` · `Schreibhilfe` · `Sendungen` · `Ansicht`
+`Start` · `Einfügen` · `Seitenlayout` · `Verweise` · `Überprüfen` · `Schreibhilfe` · `Ansicht` · `Abschnitt` (und `Sendungen`, wenn eingeblendet)
 
 Dazu kommen Register, die nur erscheinen, wenn sie etwas zu sagen haben — etwa für Tabellen, Bilder, Formen, Diagramme oder Kopf- und Fußzeilen.
 

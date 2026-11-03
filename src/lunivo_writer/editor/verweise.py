@@ -120,7 +120,7 @@ def beschriftungen_liste(ed) -> list[dict]:
 # ---- Textmarken ------------------------------------------------------------------------------------------------
 def lesezeichen_liste(ed, versteckte: bool = True) -> list[dict]:
     """[{name, von, bis}] — zusammenhängende Textstücke mit demselben Namen. ``versteckte=False`` lässt die Marken weg, die mit
-    „_“ beginnen (z. B. „_Toc…“ des Inhaltsverzeichnisses; Word blendet sie ebenso aus)."""
+    „_“ beginnen (z. B. „_Toc…“ des Inhaltsverzeichnisses)."""
     out: dict[str, dict] = {}
     b = ed.document().firstBlock()
     while b.isValid():
@@ -293,7 +293,7 @@ def _beschriftungstext(blk) -> str:
 
 
 def marke_sichern(ed, ziel: dict) -> str:
-    """Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“ (wie in Word)."""
+    """Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“."""
     if "name" in ziel:
         return ziel["name"]
     doc = ed.document()
@@ -414,7 +414,7 @@ def zitat_einfuegen(ed, q: dict) -> None:
 
 
 def quelle_tag(quellen: list[dict], q: dict) -> str:
-    """Eindeutiger Kurzname wie in Word (Nachname + Jahr)."""
+    """Eindeutiger Kurzname (Nachname + Jahr)."""
     basis = re.sub(r"\W+", "", (q.get("autor", "").split(",")[0].split(";")[0] or q.get("titel", "Quelle")))[:20] or "Quelle"
     basis += re.sub(r"\D", "", q.get("jahr", ""))[:4]
     tag, i = basis, 2

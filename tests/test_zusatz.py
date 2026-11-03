@@ -65,11 +65,11 @@ def test_zusatz_roundtrip(app, tmp_path):
     assert arten["komm"] == 0 and arten["lz"] and arten["note"].startswith("f:")
 
 
-def test_zusatz_datei_oeffnet_in_libreoffice(app, tmp_path):
+def test_zusatz_datei_oeffnet_in_fremdem_office(app, tmp_path):
     import shutil
     soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
     if not soffice:
-        pytest.skip("LibreOffice nicht installiert")
+        pytest.skip("Fremdes Office-Programm nicht installiert")
     out = str(tmp_path / "z.docx")
     docx_writer.write_docx(out, _dokument(), PageSettings(), META)
     pdf = str(tmp_path / "z.pdf")
@@ -83,7 +83,7 @@ def test_zusatz_datei_oeffnet_in_libreoffice(app, tmp_path):
 
 
 def test_geloester_kommentar_ueberlebt_docx(app, tmp_path):
-    """„Gelöst“ wird wie in Word als commentsExtended (w15:done) gespeichert und beim Öffnen wieder gelesen."""
+    """„Gelöst“ wird als commentsExtended (w15:done) gespeichert und beim Öffnen wieder gelesen."""
     meta = {"kommentare": {7: {"autor": "Ann", "initialen": "AN", "datum": "2026-01-02T03:04:05+00:00", "text": "Erledigt", "geloest": True}},
             "noten": {"f": {5: "Eine Fußnote."}, "e": {}}}
     out = str(tmp_path / "g.docx")

@@ -224,12 +224,12 @@ def _docx_mit_rahmen_und_schattierung(tmp_path):
     return out
 
 
-def test_docx_mit_rahmen_und_schattierung_oeffnet_in_libreoffice(app, tmp_path):
+def test_docx_mit_rahmen_und_schattierung_oeffnet_in_fremdem_office(app, tmp_path):
     import subprocess
     import shutil
     soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
     if not soffice:
-        pytest.skip("LibreOffice nicht installiert")
+        pytest.skip("Fremdes Office-Programm nicht installiert")
     out = _docx_mit_rahmen_und_schattierung(tmp_path)
     subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_path), out],
                    capture_output=True, timeout=120)

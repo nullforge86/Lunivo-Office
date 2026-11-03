@@ -55,7 +55,7 @@ def _verletzt(b, naechster, ch: float, w: dict) -> bool:
 
 
 def _seitenanfang(doc, ch: float) -> bool:
-    """Am Anfang einer Seite, die durch den Textfluss entsteht, entfällt der Abstand vor dem Absatz (wie in Word und LibreOffice). Nach einem
+    """Am Anfang einer Seite, die durch den Textfluss entsteht, entfällt der Abstand vor dem Absatz. Nach einem
     Seitenumbruch, den der Benutzer gesetzt hat, und am Dokumentanfang bleibt er. Der eingestellte Wert steht in ``B_VORHER``."""
     from lunivo_writer.editor.zusatz import B_VORHER
     geaendert = False

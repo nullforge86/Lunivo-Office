@@ -3,7 +3,7 @@
 Ein schwebendes Bild ist ein Rahmen (`QTextFrame` mit `FloatLeft`/`FloatRight`), in dem das Bild steht; der Text läuft darum herum.
 Qt legt vor einem solchen Rahmen einen leeren Hilfsabsatz an. Er ist der Anker des Bildes: klein gesetzt (kaum sichtbar), mit
 `B_ANKER` gekennzeichnet und wird beim Speichern nicht als Absatz geschrieben. Das Bild gehört zum Absatz, der dem Rahmen folgt —
-es steht immer an dessen Anfang (wie der Anker in Word). Der Schlüssel eines Bildes ist die Position seines Zeichens im Rahmen.
+es steht immer an dessen Anfang. Der Schlüssel eines Bildes ist die Position seines Zeichens im Rahmen.
 """
 from __future__ import annotations
 

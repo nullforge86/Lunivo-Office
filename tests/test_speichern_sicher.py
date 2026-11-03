@@ -337,7 +337,7 @@ def test_gleichzeitiges_speichern_aus_anderem_fenster(tmp_path):
     assert p.read_text() == "neu"
 
 
-def test_libreoffice_sperrdatei_wird_erkannt(tmp_path):
+def test_fremde_sperrdatei_wird_erkannt(tmp_path):
     p = tmp_path / "offen.odt"; p.write_bytes(b"x")
     assert S.fremd_geoeffnet(str(p)) is None
     (tmp_path / ".~lock.offen.odt#").write_text("kay,host,...")

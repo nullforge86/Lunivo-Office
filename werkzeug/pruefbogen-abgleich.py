@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gleicht den Prüfbogen (415 Punkte) mit der nativen Fassung ab → docs/PRUEFBOGEN.md.
 
-Quelle: docs/pruefbogen/pruefbogen.json (aus dem Artefakt „Prüfkatalog WPS Writer + Lunivo Office“).
+Quelle: docs/pruefbogen/pruefbogen.json (aus dem Artefakt „Prüfkatalog“).
 Status je Punkt:  ✅ umgesetzt   ◐ teilweise / anders gelöst   ⬜ offen
 Die Zuordnung steht in docs/pruefbogen/zuordnung.json (von Hand gepflegt, jede Zeile mit „wo“).
 Punkte ohne Eintrag werden automatisch über den Namen im Band (Befehle.hat) zugeordnet.

@@ -127,7 +127,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
     # ---- Seitenleiste ---------------------------------------------------------------------------------------------------
     def kompakt_machen(self) -> None:
-        """In der Seitenleiste: die Diagrammarten wie in WPS in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
+        """In der Seitenleiste: die Diagrammarten wie in der Vorlage in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
         Untertypen als Raster, die Vorschau so breit wie die Seitenleiste und nie abgeschnitten."""
         self._kompakt = True
         self._teile.setDirection(QBoxLayout.TopToBottom)

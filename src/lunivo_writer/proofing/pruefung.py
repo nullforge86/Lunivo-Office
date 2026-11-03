@@ -2,7 +2,7 @@
 """
 Die Prüfung ohne Internet: Regeln, Listen und Begründungen für Rechtschreibung, Grammatik und Zeichensetzung.
 
-Übernommen aus der LibreOffice-Erweiterung des Projekts „schreibhilfe“ (MIT, Kay Siebke).
+Übernommen aus dem Projekt „schreibhilfe“ (MIT, Kay Siebke).
 
 Den Wortschatz trägt diese Datei nicht selbst: Er steht einmal in lunivo_writer/resources/daten/regeln.json.
 Was hier bleibt, sind die Regeln selbst; die tragen Baustücke als Code und lassen sich nicht als Daten hinschreiben.

@@ -1,4 +1,4 @@
-"""Ein runder Knopf, der unten rechts über dem Blatt schwebt (wie der KI-Chat-Knopf in ONLYOFFICE)."""
+"""Ein runder Knopf, der unten rechts über dem Blatt schwebt."""
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QSize

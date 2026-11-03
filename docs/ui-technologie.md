@@ -20,7 +20,7 @@ Lunivo Writer ist eine native Desktop-Anwendung. Die Oberfläche besteht ausschl
 
 ## Dateiformate
 
-DOCX, ODT, FODT, RTF und TXT liest und schreibt Lunivo selbst (`services/`), ohne LibreOffice oder andere externe Programme; PDF und PNG gibt es nur als Export (Einzelheiten: [SPEICHERN.md](SPEICHERN.md)). DOCX nutzt `python-docx`. Eigene Daten (Textbausteine u. a.) sind JSON ohne Markup; Einstellungen liegen in `QSettings` (`services/settings_service.py`).
+DOCX, ODT, FODT, RTF und TXT liest und schreibt Lunivo selbst (`services/`), ohne externe Programme; PDF und PNG gibt es nur als Export (Einzelheiten: [SPEICHERN.md](SPEICHERN.md)). DOCX nutzt `python-docx`. Eigene Daten (Textbausteine u. a.) sind JSON ohne Markup; Einstellungen liegen in `QSettings` (`services/settings_service.py`).
 
 ## Abhängigkeiten
 

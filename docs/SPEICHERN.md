@@ -23,7 +23,7 @@ Dateikopf); eine falsche oder beschädigte Datei wird als Fehler gemeldet, nicht
 | FODT (flaches ODT, eine XML-Datei) | ja, eigener Leser | ja | nein, öffnet „Speichern unter“ | als DOCX/ODT/… | – |
 | RTF | ja, eigener Leser | ja | ja | ja, eigener Schreiber | – |
 | TXT (UTF-8) | ja; UTF-8, sonst cp1252, sonst Latin-1 | ja | ja | ja | – |
-| DOC, DOT (Word 97–2003), WPS (Works) | **nein**, klare Meldung mit dem Rat, im Ursprungsprogramm als DOCX zu speichern | – | – | – | – |
+| DOC, DOT (Word 97–2003), Microsoft Works (.wps) | **nein**, klare Meldung mit dem Rat, im Ursprungsprogramm als DOCX zu speichern | – | – | – | – |
 | PDF | **nein** | – | – | im selben Fenster wählbar, ist aber eine Ausgabe | ja (`QPdfWriter`) |
 | PNG (Bild der Seite) | nein | – | – | – | ja, je Seite eine Datei |
 
@@ -67,7 +67,7 @@ DOC ist ein geschlossenes Binärformat; ohne fremdes Programm lässt es sich nic
 | TXT | gültiges UTF-8 |
 
 Das ist **keine vollständige Schemaprüfung** nach ECMA-376 oder ODF. Für eine Schemaprüfung von ODT eignet sich der ODF-Validator
-(odf.openpreservation.org); die Referenzseiten von Microsoft, ECMA und OpenOffice waren bei der Erstellung aus der Arbeitsumgebung
+(odf.openpreservation.org); die Referenzseiten der Standards waren bei der Erstellung aus der Arbeitsumgebung
 nicht erreichbar und sind nicht ausgewertet.
 
 ## Sicherer Schreibweg
@@ -91,7 +91,7 @@ Jeder Speichervorgang — DOCX, TXT, ODT, RTF, PDF, auch Vorlagen — läuft üb
 - die Datei seit dem Öffnen oder letzten Speichern **außerhalb von Lunivo geändert** wurde (Änderungszeit oder Größe weichen ab) —
   etwa durch ein anderes Programm oder die Synchronisierung eines Cloud-Ordners. Abbrechen lässt die Datei unberührt; Überschreiben
   legt die fremde Fassung in die Sicherungskopien.
-- ein anderes Office-Programm die Datei offen hat (Sperrdatei `.~lock.<name>#`, wie sie LibreOffice und andere anlegen).
+- ein anderes Office-Programm die Datei offen hat (Sperrdatei `.~lock.<name>#`).
 
 **Erfolg** meldet die Statusleiste erst nach dem Ersetzen. Bei einem Fehler erscheint eine verständliche Meldung (z. B. „Auf dem
 Datenträger ist nicht genug Platz. Die bisherige Datei ist unverändert.“), das Dokument bleibt geöffnet, bearbeitbar und als geändert markiert.
@@ -108,7 +108,7 @@ Die **automatische Sicherung** (Wiederherstellung nach Absturz, `<Datenordner>/r
 - **Cloud-Ordner** (Nextcloud, Dropbox, Google Drive über Synchronisierungsprogramm): Lunivo schreibt nur lokal; die Synchronisierung
   macht ein fremdes Programm. Lunivo erkennt, wenn es die Datei inzwischen geändert hat, und fragt. Konflikte *innerhalb* des
   Synchronisierungsprogramms (z. B. Konfliktkopien) löst Lunivo nicht.
-- Dateisperren unter Linux sind beratend: Andere Programme als Lunivo und LibreOffice (über seine Sperrdatei) werden nicht erkannt.
+- Dateisperren unter Linux sind beratend: Andere Programme als Lunivo werden nur über ihre Sperrdatei `.~lock.<name>#` erkannt, sonst nicht.
 
 ## Prüfen
 

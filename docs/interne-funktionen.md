@@ -2,19 +2,20 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 303 Module, 326 Klassen, 4492 Funktionen und Methoden.
+Stand: 309 Module, 330 Klassen, 4540 Funktionen und Methoden.
 
 ## Inhalt
 
 - `(Wurzel)` — 3 Module
 - `ai` — 5 Module
 - `core` — 6 Module
-- `core/befehle` — 22 Module
-- `editor` — 67 Module
-- `models` — 3 Module
+- `core/befehle` — 21 Module
+- `editor` — 69 Module
+- `models` — 4 Module
+- `plattform` — 4 Module
 - `proofing` — 10 Module
 - `services` — 16 Module
-- `services/integrations` — 3 Module
+- `services/integrations` — 2 Module
 - `ui` — 7 Module
 - `ui/baukasten` — 62 Module
 - `ui/contextual` — 7 Module
@@ -27,7 +28,7 @@ Stand: 303 Module, 326 Klassen, 4492 Funktionen und Methoden.
 - `ui/sidebar` — 2 Module
 - `ui/sidebar/panels` — 3 Module
 - `ui/statusbar` — 2 Module
-- `ui/widgets` — 7 Module
+- `ui/widgets` — 8 Module
 
 ## `(Wurzel)`
 
@@ -197,7 +198,7 @@ Anwendungsstart: QApplication einrichten, Einstellungen und Theme laden, Hauptfe
 
 Befehle des Bandes: Aktionsname aus register.json → Funktion.
 
-- **class `Befehle`**(AnsichtBefehle, BearbeitenBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, ExternBefehle, FormToolsBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, UeberpruefenBefehle, VerweiseBefehle) — Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``.
+- **class `Befehle`**(AnsichtBefehle, BearbeitenBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, FormToolsBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, UeberpruefenBefehle, VerweiseBefehle) — Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``.
   - `__init__(win)`
   - `ed()`
   - `_teile(name)` — 'w.setzePapier:["a4"]' → ('w_setzePapier', ['a4'])
@@ -424,35 +425,35 @@ Befehle: Einfügen.
   - `hyperlink(k)` — Fenster „Hyperlink“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse).
   - `objekt(k, als_symbol)` — Fenster „Objekt einfügen“: Inhalt einer Datei (Text, Bild) oder ein Dateisymbol mit Link.
   - `_datei_einsetzen(pfad, art)` — Bild ins Dokument, Text (DOCX, ODT, RTF, TXT, MD) mit seinem Inhalt, alles andere als Dateisymbol mit Link.
-  - `dateiObjekt(k)` — „Datei-Objekt“ wie in WPS: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
+  - `dateiObjekt(k)` — „Datei-Objekt“ wie in der Vorlage: gleich das Fenster „Dateiobjekt einfügen“ (Lunivos Dateifenster); die gewählte Datei kommt
   - `menue_objektKlappe()`
   - `kopfFussZeigen(k)`
-  - `menue_seitenzahlKlappe()` — Seitenzahl wie in WPS: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
+  - `menue_seitenzahlKlappe()` — Seitenzahl wie in der Vorlage: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
   - `_seitenzahl_vorgabe(schl)`
   - `seitenzahlEinfuegen(k)` — Fenster „Seitenzahl einfügen“; „Übernehmen für“ entscheidet, welche Abschnitte es trifft. „Von aktueller Seite“ beginnt am
   - `seitenzahlenEntfernen(k)`
   - `_eigene_wasserzeichen()` — Eigene Wasserzeichen (Text oder Bild) aus den Einstellungen.
-  - `menue_wasserzeichenKlappe()` — Wasserzeichen wie in WPS: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen.
+  - `menue_wasserzeichenKlappe()` — Wasserzeichen wie in der Vorlage: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen.
   - `seitenzahlKlappe(k)`
   - `leereSeite(k, quer)` — Leere Seite: ein neues Blatt hinter der Seite der Schreibmarke (Vertikal/Horizontal; ohne Angabe wie die Seite davor).
   - `sonderzeichen(k)` — Fenster „Symbol“ (Weitere Symbole …) in der Seitenleiste; „Einfügen“ setzt das Zeichen an die Schreibmarke.
   - `_symbol_daten()` — Die eine Datenbasis von Klappe und Fenster „Symbol“: zuletzt verwendet, benutzerdefinierte Liste, Tastenkombinationen.
   - `symbol_tasten_anwenden()` — Tastenkombinationen der benutzerdefinierten Symbole als Kürzel des Hauptfensters setzen (alte werden ersetzt).
   - `_sym(name)`
-  - `menue_umbruecheKlappe()` — Umbrüche wie in WPS: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche.
+  - `menue_umbruecheKlappe()` — Umbrüche wie in der Vorlage: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche.
   - `menue_leereSeiteKlappe()`
-  - `menue_tabelleKlappe()` — Tabelle wie in WPS: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
+  - `menue_tabelleKlappe()` — Tabelle wie in der Vorlage: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
   - `menue_bildKlappe()`
   - `menue_textfeldKlappe()`
   - `textfeldVertikal(k)` — Textfeld mit senkrecht laufendem Text: dasselbe freie Objekt wie das waagerechte (Rahmen, Griffe, Schnellleiste), Richtung vertikal.
   - `textfeldMehrzeilig(k)`
-  - `menue_schnellbausteineKlappe()` — Schnellbausteine wie in WPS: AutoText-Liste ▸ und Felder …
+  - `menue_schnellbausteineKlappe()` — Schnellbausteine wie in der Vorlage: AutoText-Liste ▸ und Felder …
   - `_bausteine_fuellen(m)` — AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
   - `_autotext_seite(teile)`
   - `autotextHinzufuegen(k)` — Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“.
   - `schnellbausteine(k)`
   - `felder(k)` — Fenster „Felder“ (Schnellbausteine ▸ Felder …). TOC fügt ein echtes Inhaltsverzeichnis ein, TC einen ausgeblendeten
-  - `menue_symbolKlappe()` — Symbol wie in WPS: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
+  - `menue_symbolKlappe()` — Symbol wie in der Vorlage: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
   - `_symbole_zuletzt()`
   - `_symbol_merken(z)`
   - `_symbol_einfuegen(z)`
@@ -464,7 +465,7 @@ Befehle: Einfügen.
   - `verzeichnisseAktualisieren(k)`
   - `_bild_einfuegen(img, alt, art, daten)`
   - `formenGalerie(k)`
-  - `menue_formenKlappe()` — Formen wie in WPS: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern.
+  - `menue_formenKlappe()` — Formen wie in der Vorlage: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern.
   - `formEinfuegen(k, name)` — Die Form ``name`` (Katalog ``formen_katalog``, auch Linien und Pfeile) einfügen: im Zeichenbereich dort, sonst als freies Objekt.
   - `zeichenbereich(k)` — Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/formen.py``).
   - `zeichnen(k)`
@@ -476,8 +477,8 @@ Befehle: Einfügen.
   - `wordartVorgabe(k, nr)` — WordArt aus der Galerie: fügt sofort „Hier Text einfügen“ im gewählten Stil als freies Objekt ein — ausgewählt (Rahmen, acht Griffe,
   - `wordartBearbeiten(k)` — Text und Stil des gewählten WordArt-Objekts im Fenster „WordArt“ ändern.
   - `textfeldBearbeiten(k)` — Im gewählten Textfeld direkt schreiben (Doppelklick, Enter oder F2 auf das Textfeld).
-  - `menue_wordartKlappe()` — Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in WPS, auch im dunklen Thema gut zu erkennen).
-  - `menue_gleichungKlappe()` — Gleichung wie in WPS: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“.
+  - `menue_wordartKlappe()` — Galerie „Formatvorlage“: 15 Stile als „A“ auf hellem Kachelgrund (wie in der Vorlage, auch im dunklen Thema gut zu erkennen).
+  - `menue_gleichungKlappe()` — Gleichung wie in der Vorlage: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“.
   - `menue_deckblattKlappe()` — Deckblätter wie in der Vorlage: Kopf „Stil“ mit Hochformat/Querformat, darunter die Gestaltungen als Seitenbilder in vier Spalten
   - `deckblattVorlage(k, vorlage, quer)` — Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Sonne"]``.
   - `menue_diagrammKlappe()` — Klappe am Diagramm-Knopf: Diagramm … (Fenster) und Neuer Zeichenbereich.
@@ -497,14 +498,6 @@ Befehle: Einfügen.
   - `textbaustein(k)`
   - `textbausteine(k)`
   - `schnellbaustein(k)` — F3: steht vor der Schreibmarke ein Kürzel, kommt der Baustein sofort; sonst die Liste aller Bausteine zum Auswählen.
-
-### `core/befehle/extern.py`
-
-Befehle: Externe Programme.
-
-- **class `ExternBefehle`** — Befehle des Bandes: Externe Programme. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
-  - `_extern(fn, name)`
-  - `mitWpsOeffnen(k)`
 
 ### `core/befehle/formtools.py`
 
@@ -570,7 +563,7 @@ Befehle: Kommentare, Noten, Änderungen.
 
 - **class `KommentarBefehle`** — Befehle des Bandes: Kommentare, Noten, Änderungen. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
   - `_text_abfragen(titel, frage, vorgabe)`
-  - `kommentar(k)` — Neuer Kommentar wie in WPS: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
+  - `kommentar(k)` — Neuer Kommentar wie in der Vorlage: das Feld „Kommentare“ links öffnet sich mit dem Eingabefeld — Knopf und Seitenleiste
   - `kommentarWeiter(k)`
   - `kommentarZurueck(k)`
   - `kommentarWeg(k)`
@@ -840,7 +833,7 @@ Befehle: Seite, Abschnitte, Spalten.
 
 ### `core/befehle/serien.py`
 
-Befehle: Seriendruck (Reiter „Mailings“ nach der WPS-Vorlage).
+Befehle: Seriendruck (Reiter „Mailings“ nach der Vorlage).
 
 - **class `SerienBefehle`** — Befehle des Kontext-Reiters „Mailings“. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
   - `_serie()`
@@ -875,7 +868,7 @@ Befehle: Seriendruck (Reiter „Mailings“ nach der WPS-Vorlage).
 
 ### `core/befehle/smartarttools.py`
 
-Befehle: Kontext-Reiter „WPSArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
+Befehle: Kontext-Reiter „SmartArt-Design“ für das SmartArt als freies Objekt (``editor/frei_objekt.py``, Art ``smartart``).
 
 - **class `SmartArtToolsBefehle`**
   - `_sa()`
@@ -936,6 +929,8 @@ Befehle: Zeichen und Absatz.
   - `objekteWaehlen(k)` — Springt zum nächsten Bild im Text und markiert es (dann erscheinen die Bildtools).
   - `zeichenumriss(k)`
   - `an_zeichenumriss()`
+  - `zeichenschattierung(k)`
+  - `an_zeichenschattierung()`
   - `texteffekte(k)` — „Texteffekte formatieren“ in der rechten Seitenleiste: die Änderungen wirken sofort an der Markierung, solange der Bereich offen ist.
   - `_effekt_setzen(**teile)` — Einen Teil der Texteffekte der Markierung ersetzen (Wert ``None`` nimmt ihn weg); die übrigen Effekte bleiben.
   - `menue_texteffekteKlappe()` — Menü am Knopf „Texteffekte“ wie in der Vorlage: WordArt, Schatten, Spiegelung, Leuchteffekt (je mit Bildchen zum Anklicken), 3D-Drehung und
@@ -1045,7 +1040,7 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
   - `ttEinzugMehr(k)`
   - `ttEinzugWeniger(k)`
   - `ttSortieren(k)` — Zeilen des WordArt-Textes sortieren (A–Z, beim nächsten Mal Z–A).
-  - `menue_ttTextrichtung()` — Textrichtung wie in WPS (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt.
+  - `menue_ttTextrichtung()` — Textrichtung wie in der Vorlage (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt.
   - `_tt_ausr(wie)`
   - `ttLinks(k)`
   - `ttMitte(k)`
@@ -1079,7 +1074,7 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
   - `menue_ttVerknuepfung()` — Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen.
   - `ttVerknuepfen(k, ziel)` — Das markierte Textfeld mit ``ziel`` verknüpfen: was nicht mehr hineinpasst, läuft dort weiter.
   - `ttVerknuepfungLoesen(k)`
-  - `menue_ttEinstellungen()` — Einstellungen wie in WPS: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text).
+  - `menue_ttEinstellungen()` — Einstellungen wie in der Vorlage: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text).
   - `ttTextBearbeiten(k)`
   - `_tt_gehe(richtung)` — Das vorige/nächste WordArt oder Textfeld des Dokuments markieren (am Ende springt es an den Anfang).
   - `ttVoriges(k)`
@@ -1494,7 +1489,7 @@ Fassungen eines Dokuments mit verfolgten Änderungen, für die Anzeige „Origin
 
 ### `editor/felder.py`
 
-Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
+Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays Vorlage: Feldnamen, Feldfunktionen und Assistent.
 
 - `vorgabe(name)`
 - `_schalter(anweisung, zeichen)`
@@ -1652,7 +1647,7 @@ Freie Objekte mit Parametern (WordArt, Textfeld): EIN gemeinsamer Baustein.
 - `_aendern_innen(ed, art, **kw)` — Parameter des gewählten Objekts ändern und neu zeichnen. ``breite``/``hoehe`` (px) ändern die Größe; ``form_fuell`` (Farbe oder ``""``)
 - `daten_still(ed, art, **kw)` — Daten des gewählten Objekts ändern, ohne das Bild neu zu zeichnen (z. B. die Auswahl eines Diagrammteils); None entfernt den Schlüssel.
 - `nach_groesse(ed, neu)` — Nach dem Ziehen der Griffe: Textfeld, Form und Diagramm werden in der neuen Größe frisch gezeichnet (Zeilenumbruch folgt der Breite,
-- `text_bereich(a, bild)` — Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in WPS (nur WordArt).
+- `text_bereich(a, bild)` — Wo der Text im Objekt liegt, als Anteil (0..1) von Breite/Höhe — für die graue Textmarkierung wie in der Vorlage (nur WordArt).
 - `_format_aus_kw(kw)` — Zeichenformat für das Eingabefeld aus Schlüsseln der Texttools (nur die genannten).
 - `_lauf_aus_format(cf, basis)` — Die Zeichenschlüssel, die ein Format ausdrücklich setzt und die vom Objekt abweichen.
 - `_basis(d, art)`
@@ -1669,7 +1664,7 @@ Freie Objekte mit Parametern (WordArt, Textfeld): EIN gemeinsamer Baustein.
 - `_textfelder(ed)` — Alle Textfelder des Textes: (Schlüssel, Angabe) — frisch aus den Absätzen gelesen.
 - `_speichern_angabe(ed, key, a)`
 - `_neu_setzen(ed, key, a)` — Das Bild des Textfelds aus seinen Daten neu zeichnen und die Angabe sichern.
-- `verknuepfen(ed, von_key, nach_key)` — Textfeld ``von`` mit Textfeld ``nach`` verknüpfen: was in ``von`` nicht mehr passt, läuft in ``nach`` weiter (wie „Verknüpfung erstellen“ in
+- `verknuepfen(ed, von_key, nach_key)` — Textfeld ``von`` mit Textfeld ``nach`` verknüpfen: was in ``von`` nicht mehr passt, läuft in ``nach`` weiter (wie „Verknüpfung erstellen“).
 - `loesen(ed, key)` — Die Verknüpfung des Textfelds zu seinem Nachfolger lösen (steht ``key`` am Ende einer Kette, die zu seinem Vorgänger): der Nachfolger
 - `ist_verknuepft(ed, key)`
 - `kette_aktualisieren(ed)` — Jede Kette neu verteilen: der Text des ersten Feldes (mit seinen Zeichenformaten) füllt ein Feld nach dem anderen; geändert werden nur
@@ -1828,7 +1823,7 @@ Mehrstufige Nummerierung („Gliederung nummeriert“: 1. / 1.1. / 1.1.1.), von 
 
 ### `editor/muster.py`
 
-Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster, wie Word und WPS sie kennen.
+Schattierungsmuster (Rahmen und Schattierung ▸ Muster): Prozentraster und Linienmuster.
 
 - `_pct_name(p)`
 - `name_von(schluessel)`
@@ -1860,6 +1855,7 @@ Seitenaufteilung, PDF-Ausgabe und Drucken mit Kopf-/Fußzeile und Seitenzahlen.
 - `page_count(qdoc, page)`
 - `_expand(text, n, total, page, kapitel)`
 - `_draw_hf(p, hf, rect, n, total, base, page, kapitel)` — Kopf- oder Fußzeile einer Seite; ``n`` ist die angezeigte Seitennummer (bestimmt auch „außen“/„innen“).
+- `_hf_effekt(p, fmt, f, rect, text, flag)` — Zeilen mit Texteffekt (Schatten, Spiegelung, Leuchten, Kontur …) zeichnen: dieselben Bausteine wie im Dokument (``editor/textfx.py``).
 - `_ohne_hintergruende(d)`
 - `_text_schwarz(d)` — „Text schwarz drucken“ in der Kopie: jede Schriftfarbe wird schwarz (Verknüpfungen und Platzhalter eingeschlossen).
 - `_formularteile_ausblenden(d, steuer, platzhalter)` — Steuerelemente (Felder mit Wert, Schaltflächen, Kästchen) und/oder Platzhaltertexte leerer Felder werden in der Kopie unsichtbar.
@@ -1932,7 +1928,7 @@ Umbruchregeln am Seitenende: „Diesen Absatz zusammenhalten“, „Nicht vom n�
 - `ist_manuell(bf)` — Ein Seitenumbruch oberhalb, den der Benutzer gesetzt hat (kein von Lunivo eingefügter).
 - `_zeilen(b, ch)` — (Seite, oben, unten) jeder Zeile des Absatzes.
 - `_verletzt(b, naechster, ch, w)`
-- `_seitenanfang(doc, ch)` — Am Anfang einer Seite, die durch den Textfluss entsteht, entfällt der Abstand vor dem Absatz (wie in Word und LibreOffice). Nach einem
+- `_seitenanfang(doc, ch)` — Am Anfang einer Seite, die durch den Textfluss entsteht, entfällt der Abstand vor dem Absatz. Nach einem
 - `anwenden(doc, ch, weitere)` — Umbruchregeln auf das Dokument anwenden (``ch`` = Höhe der Textfläche einer Seite in Bildpunkten). → True, wenn sich etwas geändert hat.
 
 ### `editor/seitenrahmen.py`
@@ -2150,7 +2146,7 @@ Suchen und Ersetzen wie im Fenster der Vorlage: Sonderzeichen (^p, ^t, ^? …), 
   - `leer()`
 - `roh_text(doc)` — Der Text des Dokuments, eine Stelle je Position, mit Kennzeichen für Noten, Felder, Grafiken und Umbrüche.
 - `_woertlich(text)` — Suchtext ohne Platzhalter → Liste von Regex-Stücken (ein Stück je Zeichen oder Sonderzeichen).
-- `_platzhalter(text)` — Platzhalter wie in Word: ? ein Zeichen, * beliebig viele, [abc] [a-z] [!x] eines davon/keines, {n,m} Wiederholung, @ eins oder mehr,
+- `_platzhalter(text)` — Platzhalter: ? ein Zeichen, * beliebig viele, [abc] [a-z] [!x] eines davon/keines, {n,m} Wiederholung, @ eins oder mehr,
 - `muster(a)` — Der reguläre Ausdruck des Auftrags; ``None`` bei leerem Text (dann sucht nur die Formatierung) oder ungültigen Platzhaltern.
 - `gueltig(a)`
 - `_zeichen_passen(doc, von, bis, a)`
@@ -2251,6 +2247,12 @@ Texteffekte, die Qt am Text nicht kennt und die Lunivo über den Umrissen der Bu
 - `wordart_vorgaben()` — Die 15 Formatvorlagen im Menü „Texteffekte ▸ WordArt“: Füllung, Kontur, Schatten (vollständige Effekte, ersetzen die bisherigen).
 - `wordart_icon(w, groesse)` — Kachelbild einer WordArt-Formatvorlage.
 
+### `editor/textur.py`
+
+Kleine, selbst gezeichnete Texturen für Vorschau und Füllung. Ohne Oberfläche.
+
+- `textur(name, groesse)` — Eine kleine, selbst gezeichnete Textur (Vorschau und Füllung): ``papier``, ``granit``, ``holz``, ``stoff``, ``marmor``, ``sand``.
+
 ### `editor/umbruch.py`
 
 Textumbruch um Bilder: Bilder, die links oder rechts stehen und vom Text umflossen werden.
@@ -2264,6 +2266,12 @@ Textumbruch um Bilder: Bilder, die links oder rechts stehen und vom Text umfloss
 - `absatz_nach_rahmen(doc, bildpos)` — Der Absatz, zu dem das schwebende Bild bei bildpos gehört (er folgt dem Rahmen).
 - `schwebend_entfernen(doc, pos)` — Nimmt das schwebende Bild bei pos samt Rahmen und Anker aus dem Dokument. Gibt die Stelle zurück, an der der Absatz
 - `umbruch_setzen(ed, modus)` — Das markierte Bild: modus „zeile“ (mit Text in Zeile), „links“ oder „rechts“ (vom Text umflossen).
+
+### `editor/unterstreichung.py`
+
+Unterstreichungsarten als Zeichenformat: was Qt selbst zeichnet und was Lunivo zeichnet (``P_UNTER``). Ohne Oberfläche.
+
+- `unter_format(art)` — Nur die Unterstreichung als Zeichenformat (zum Zusammenführen, ohne anderes anzufassen).
 
 ### `editor/vergleich.py`
 
@@ -2299,13 +2307,13 @@ Beschriftungen, Textmarken, Querverweise, Stichwörter und Zitate — Funktionen
 - `_seq_fragment(blk)`
 - `_bezeichnung_nummer(blk)` — „Abbildung 2“ — der Text der Beschriftung bis einschließlich der Nummer.
 - `_beschriftungstext(blk)` — Der Text hinter der Nummer, ohne Doppelpunkt.
-- `marke_sichern(ed, ziel)` — Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“ (wie in Word).
+- `marke_sichern(ed, ziel)` — Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“.
 - `querverweis_text(ed, ziel, wie, oben_unten)` — Der Text, den der Querverweis zeigt. wie: "text", "nummer", "nur_text", "seite" oder "obenunten".
 - `querverweis_einfuegen(ed, ziel, wie, *, link, oben_unten)` — Querverweis an der Schreibmarke (siehe ``querverweis_text``); ``link`` macht ihn zum internen Hyperlink (Strg+Klick).
 - `index_eintragen(ed, e, alle)` — Indexeintrag ``e`` (``editor.indexeintrag.Eintrag``) an die Markierung setzen (ohne Markierung: das Wort an der
 - `index_markieren(ed, term)`
 - `zitat_einfuegen(ed, q)`
-- `quelle_tag(quellen, q)` — Eindeutiger Kurzname wie in Word (Nachname + Jahr).
+- `quelle_tag(quellen, q)` — Eindeutiger Kurzname (Nachname + Jahr).
 
 ### `editor/verzeichnis.py`
 
@@ -2379,7 +2387,7 @@ Wort-Extras: Absätze aufräumen — über die Markierung, ohne Markierung über
 
 Zahlen in anderer Schreibweise (Einfügen ▸ Zahl): 1,2,3 · A,B,C · I,II,III · eingekreist · Zahlwort. Keine Oberfläche.
 
-- `_buchstaben(n)` — 1 → A, 26 → Z, 27 → AA (wie Listen in Word).
+- `_buchstaben(n)` — 1 → A, 26 → Z, 27 → AA .
 - `_unter_tausend(n)`
 - `zahlwort(n)` — Deutsches Zahlwort bis 999 999 („einundzwanzig“, „eintausend“).
 - `grenzen(typ)` — Kleinste und größte Zahl, die der Typ darstellen kann.
@@ -2425,6 +2433,7 @@ Seiteneinrichtung: Papier, Ränder, Ausrichtung, Kopf- und Fußzeile.
 - `mm_to_px(mm)`
 - `px_to_mm(px)`
 - **class `HeaderFooter`** — Text mit Platzhalter {PAGE} und {PAGES}. Ausrichtung: left\|center\|right, dazu aussen\|innen (ungerade Seiten rechts bzw. links,
+  - `kopie(text, align)`
   - `is_empty()`
 - **class `PageSettings`**
   - `landscape()`
@@ -2439,6 +2448,15 @@ Seiteneinrichtung: Papier, Ränder, Ausrichtung, Kopf- und Fußzeile.
   - `copy()`
   - `spalten_breite_px()` — Breite einer Textspalte (bei einer Spalte: die ganze Textbreite).
 
+### `models/proofing.py`
+
+Gemeinsames Datenmodell eines Fundes der Schreibhilfe (Rechtschreibung, Grammatik, Stil, LanguageTool, KI).
+
+- **class `ProofingIssue`**
+  - `laenge()`
+  - `von_dict(f)`
+  - `als_dict()` — Wörterbuch wie bisher; Schlüssel ohne Wert (quelle, konfidenz, verdraengt) fehlen, wie bei den ursprünglichen Funden.
+
 ### `models/report.py`
 
 Bericht über das, was beim Öffnen/Speichern nicht verlustfrei ging.
@@ -2449,6 +2467,40 @@ Bericht über das, was beim Öffnen/Speichern nicht verlustfrei ging.
 - **class `DocumentIOError`**(Exception) — Datei nicht lesbar oder nicht schreibbar — Text ist für Anwender gedacht.
 - **class `PasswortNoetig`**(DocumentIOError) — Das Dokument ist verschlüsselt; ohne (richtiges) Kennwort lässt es sich nicht öffnen.
   - `__init__(falsch)`
+
+## `plattform`
+
+### `plattform/__init__.py`
+
+Alles, was vom Betriebssystem abhängt, an einer Stelle.
+
+
+### `plattform/pfade.py`
+
+Orte für Programmdaten, Zwischenspeicher, nachgeladene Schriften/Stimmen und Vorlagen (über QStandardPaths).
+
+- `_ort(art)`
+- `data_dir()` — Programmdaten des Benutzers (gelernte Wörter, Sicherungen, KI-Einstellungen …); wird bei Bedarf angelegt.
+- `cache_dir()` — Wiederherstellbares Zwischengelagertes.
+- `schriften_dir()` — Nachgeladene Lese-Schriften (schrift-holen.sh); Linux: ~/.local/share/fonts/lunivo-office.
+- `piper_dirs()` — Suchorte für Piper und seine Stimmen (stimme-holen.sh), der erste ist der aktuelle.
+- `vorlagen_dir()` — Vorgabeordner eigener Vorlagen, wenn der Benutzer keinen eigenen gewählt hat.
+
+### `plattform/protokoll.py`
+
+Protokoll: eine Logdatei im Zwischenspeicher-Ordner, damit Fehler beim Laden, Speichern und Prüfen nicht still verschwinden.
+
+- `logdatei()`
+- `einrichten(stufe)` — Logdatei einrichten und nicht abgefangene Fehler protokollieren; liefert den Pfad (oder None, wenn nicht schreibbar).
+
+### `plattform/sperre.py`
+
+Sperre auf eine Sperrdatei, die auch zwischen Lunivo-Fenstern (Prozessen) gilt: fcntl unter Linux/macOS, msvcrt unter Windows.
+
+- **class `SperreBelegt`**(Exception) — Ein anderer Prozess hält die Sperre.
+- `sperr_ordner()` — Ordner für die Sperrdateien (nur für den Benutzer); wird bei Bedarf angelegt.
+- `sperre_oeffnen(datei)` — Sperrdatei öffnen und sofort sperren; gibt den Dateideskriptor zurück. Belegt → SperreBelegt, sonst OSError.
+- `sperre_freigeben(fd)`
 
 ## `proofing`
 
@@ -2517,6 +2569,7 @@ Die Schreibhilfe: prüft im Hintergrund, hält den Stand, setzt Korrekturen ein.
   - `_geaendert(pos, entfernt, hinzu)` — Bereichs-Invalidierung: Funde hinter der Änderung verschieben, Funde an der Änderung verwerfen, Bereich merken.
   - `dokument_geaendert()`
   - `pruefen(zaehlen, voll)` — zaehlen=True nur bei ausdrücklichem Prüfen (Knopf): dann zählt das Gedächtnis mit und es wird alles geprüft.
+  - `pruef_schalter()` — Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“.
   - `_fertig(rev, roh)`
   - `_key(f)`
   - `_zeigen(meldung)`
@@ -2565,6 +2618,7 @@ Die Prüfung ohne Internet: Regeln, Listen und Begründungen für Rechtschreibun
 - `mach_hinweis(von, bis, grund, stelle)`
 - `pruefe_satzbau(text, hinweise)`
 - `ohne_ueberschneidung(funde)` — Zwei Funde an derselben Stelle gehen nicht — die erste Änderung ließe
+- `pruefer_aktiv(name, schalter)` — Ist der Prüfer eingeschaltet? Ohne Angabe sind alle an.
 - `finde_probleme(text, gelernt, schalter)` — Alle Stellen, die auffällig sind — in derselben Reihenfolge wie am Handy.
 - `abstand(a, b)`
 - `koelner_phonetik(wort)`
@@ -2731,7 +2785,7 @@ QTextDocument → DOCX (python-docx).
   - `_image(imf, para, seite)`
   - `_frei_bild(para, a, img)` — Ein frei positioniertes Bild (siehe editor/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben.
   - `_textfeld_ketten()` — {id des Textfelds: (Kettennummer, Stelle in der Kette)} — die Verknüpfungen aller Textfelder des Dokuments (``wps:linkedTxbx``).
-  - `_textfeld_xml(run, a)` — Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“ wie bei Word.
+  - `_textfeld_xml(run, a)` — Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“.
   - `_txbx_inhalt(inhalt, d)` — Absätze und Läufe des Textfelds (Text mit Zeichenformaten) als ``w:p``/``w:r`` in ``w:txbxContent``.
   - `_effekte_element(fx)` — Schatten, Leuchten, Spiegelung und weiche Kanten als ``a:effectLst`` (Längen in Punkt → EMU, Winkel in 1/60000 Grad).
   - `_verankern(run, ausrichtung)` — Macht aus dem Bild im Text (wp:inline) ein umflossenes Bild (wp:anchor, Umbruch „Quadrat“, links/rechts).
@@ -2739,7 +2793,7 @@ QTextDocument → DOCX (python-docx).
   - `_zelle_format(dcell, cf)` — Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) der Qt-Zelle übernehmen.
   - `run()`
   - `_kommentare_schreiben()`
-  - `_komm_erweitert(kennungen)` — Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done), wie Word es speichert.
+  - `_komm_erweitert(kennungen)` — Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done).
   - `_quellen_schreiben()`
   - `_noten_schreiben()`
   - `_trim_trailing_empty()`
@@ -2944,7 +2998,6 @@ RTF direkt schreiben — ohne Umwandlungsprogramm.
 
 Einstellungen und Pfade (XDG, über QStandardPaths). Nichts liegt im Programmordner.
 
-- `data_dir()`
 - **class `Settings`** — Dünne Hülle um QSettings mit festen Schlüsseln und Vorgaben.
   - `__init__(qsettings)`
   - `get(key, default)`
@@ -2963,14 +3016,13 @@ Ein sicherer Schreibweg für alle Dokumentdateien (DOCX, ODT, DOC, RTF, TXT, PDF
 
 - `ziel(path)` — Tatsächliche Zieldatei: Verknüpfungen werden aufgelöst, damit die Verknüpfung erhalten bleibt.
 - `stand(path)` — (Änderungszeit in ns, Größe) der Datei oder None — zum Erkennen fremder Änderungen.
-- `fremd_geoeffnet(path)` — Beschreibung des Programms, das die Datei laut Sperrdatei offen hat (LibreOffice legt „.~lock.<name>#“ an), sonst None.
+- `fremd_geoeffnet(path)` — Beschreibung des Programms, das die Datei laut Sperrdatei offen hat (andere Programme legen „.~lock.<name>#“ an), sonst None.
 - `fehlertext(e, path, vorhanden)` — Verständliche Meldung für einen Fehler beim Schreiben.
 - `_umask()`
 - `_fsync_datei(path)`
 - `_fsync_ordner(ordner)`
 - `_rest_muster(real)`
 - `_reste_aufraeumen(real)` — Entfernt eigene Temp-Reste früherer, abgebrochener Speichervorgänge derselben Datei.
-- `_sperr_ordner()`
 - `sperre(path)` — Verhindert, dass dieselbe Datei gleichzeitig zweimal gespeichert wird (im Programm und zwischen Lunivo-Fenstern).
 - `sicherungs_ordner()`
 - `_dokument_ordner(real)`
@@ -3003,7 +3055,7 @@ Vorlesen: Piper (offline, gute Stimme) wenn eingerichtet, sonst speech-dispatche
 
 ### `services/integrations/__init__.py`
 
-Optionale Anbindungen: LanguageTool, WPS.
+Optionale Anbindungen: LanguageTool.
 
 
 ### `services/integrations/languagetool.py`
@@ -3019,14 +3071,6 @@ LanguageTool als zweite Meinung (eigener Java-Prozess, nur auf diesem Rechner, 1
 - `pruefe(text, sprache, port)` — → Funde im selben Format wie die eigene Prüfung (von, bis, alt, neu, grund, art).
 - `beenden()`
 
-### `services/integrations/wps.py`
-
-WPS Office — nur die ehrliche Stufe: ein installiertes Programm aufrufen.
-
-- `finde_wps()`
-- `verfuegbar()`
-- `oeffnen(pfad)` — Öffnet die Datei in WPS Writer (eigener Prozess). False, wenn WPS nicht installiert ist.
-
 ## `ui`
 
 ### `ui/__init__.py`
@@ -3036,7 +3080,7 @@ Oberfläche (Qt-Widgets): Hauptfenster, Menüband, Dokumentbereich, Seitenleiste
 
 ### `ui/backstage.py`
 
-Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl (wie in ONLYOFFICE).
+Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Seite zum gewählten Befehl.
 
 - `symbol(name, px)`
 - **class `_Zeile`**(QStyledItemDelegate) — Zeichnet die Trennlinien quer über die Liste und den kleinen Pfeil rechts bei Einträgen mit eigener Seite.
@@ -3136,12 +3180,16 @@ Alle Funktionen der Schreibhilfe an einer Stelle: Wo sie in der Seitenleiste (�
 
 Hell/Dunkel über Qt-Paletten (Stil „Fusion“) — keine Stylesheets für das Grundlayout.
 
+- `_mint_stil(w)` — Thema Mint: Blautöne in den Stylesheets einzelner Widgets (Fokus-, Auswahlrahmen u. a.) durch das Mint-Grün ersetzen; sonst Original.
+- **class `_MintFilter`**(QObject)
+  - `eventFilter(obj, ev)`
 - `apply_theme(app, mode)`
 - `_ist_dunkel(app)`
 - `_pfeile(farbe)` — Dropdown-Pfeile aus dem zentralen Lucide-Katalog für Qt-Stylesheets.
 - `_kreuz(farbe)`
 - `_stil(app)`
 - `_setze(app, mode)`
+- `_mint_palette()`
 - `_helle_palette()` — Feste helle Grundpalette (wie Fusion hell), unabhängig von der Palette des Plattformdesigns.
 - `_hell_feinschliff(app)` — Helle Palette: Fläche um das Blatt; mit „Weichem Kontrast“ warme Töne.
 - `Qt_white()`
@@ -3688,7 +3736,7 @@ Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die 
 
 ### `ui/baukasten/layout_dialog.py`
 
-Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage (WPS).
+Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage.
 
 - `_combo(eintraege, aktuell)`
 - `_zeile(g, _r, radio, *rest)` — Eine Wahlzeile: der Knopf mit seinem Feld, dahinter (falls da) „Beschriftung + Feld“ — nebeneinander oder untereinander, je nach Breite.
@@ -3819,7 +3867,7 @@ Zahlenfeld mit Maßeinheit: intern immer Millimeter, angezeigt in der gewählten
   - `valueFromText(text)`
   - `validate(text, pos)`
 - `spin(value, lo, hi, suffix, step, decimals)`
-- **class `EinheitFeld`**(QWidget) — Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ im WPS): der Wert ist immer in Millimetern, angezeigt wird er in der
+- **class `EinheitFeld`**(QWidget) — Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ in der Vorlage): der Wert ist immer in Millimetern, angezeigt wird er in der
   - `__init__(wert_mm, lo, hi, einheiten, start, leer_bei_null)`
   - `_faktor()`
   - `_zeige()`
@@ -3844,7 +3892,6 @@ Menü-Liste: Zeilen mit Symbol, Text, Tastenkürzel, Haken und Untermenü — ü
 Die Popups für ein markiertes Bild oder eine Form: Formstile, Füllung, Kontur (wie in der Vorlage).
 
 - `_linien_symbol(art, breite, groesse)`
-- `_textur(name, groesse)` — Eine kleine, selbst gezeichnete Textur (Vorschau und Füllung): ``papier``, ``granit``, ``holz``, ``stoff``, ``marmor``, ``sand``.
 - `graduell_pixmap(dunkel, hell, w, h)`
 - **class `FuellMenue`**(FarbPalette) — Füllung wie in der Vorlage: Keine Farbe · Thema-Farben · Standard-Farben · Farbverlauf · Automatisch · Weitere Füllfarben · Pipette ·
   - `__init__(parent, start)`
@@ -4275,7 +4322,6 @@ Textformat-Bausteine: Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabs
   - `_einzug(delta)`
   - `werte()`
   - `setze(d)` — Alle Felder auf die Werte einer Vorlage stellen (ohne ``geaendert`` zu melden).
-- `unter_format(art)` — Nur die Unterstreichung als Zeichenformat (zum Zusammenführen, ohne anderes anzufassen).
 - `zu_format(w)` — Die Werte eines Zeichenfensters als Zeichenformat (zum Anwenden im Editor und für Vorschauen).
 - `aus_format(cf, standard_schrift, standard_groesse)` — Die Werte eines Zeichenformats (zum Vorbelegen eines Zeichenfensters).
 - `zeichne_absaetze(p, rect, absaetze, mittig)` — Absätze (Absatzformat, Zeichenformat, Text) in ein Rechteck zeichnen — die Vorschau der Formatierungsfenster.
@@ -4306,7 +4352,7 @@ Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung u
   - `_linie_gewaehlt(schluessel)`
   - `_voreinstellungs_knopf(text)`
   - `_seite_effekte(w)`
-  - `_schritt_feld(lo, hi, suffix, schritt, nk)` — Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format des WPS).
+  - `_schritt_feld(lo, hi, suffix, schritt, nk)` — Zahlenfeld mit Minus und Plus an den Seiten (wie die Größenfelder im 3D-Format der Vorlage).
   - `_zweier(*teile)`
   - `_d3_zuruecksetzen()`
   - `_menue_zeigen(m, knopf)`
@@ -4337,7 +4383,7 @@ Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung u
 
 ### `ui/baukasten/umbruch_symbole.py`
 
-Die Bildchen für den Textumbruch um ein Bild (wie im WPS): Textzeilen in Grau, das Bild als blaues Feld.
+Die Bildchen für den Textumbruch um ein Bild (wie in der Vorlage): Textzeilen in Grau, das Bild als blaues Feld.
 
 - `umbruch_zeichner(art)`
 
@@ -4398,6 +4444,7 @@ Die Seite „Neu“: leeres Dokument direkt starten oder Standard- und eigene Vo
 
 Werkbank: die Funktionen eines Reiters der Schreibhilfe als große, selbsterklärende Zeilen (Symbol, Name, Hinweis, Tastenkürzel, bei Schaltern „an/aus“).
 
+- `_an()`
 - **class `FunktionsZeile`**(QFrame) — Eine große, anklickbare Zeile; mit Tastatur bedienbar (Tab, Leertaste oder Eingabe) und mit Fokusrahmen.
   - `__init__(f, fenster)`
   - `mouseReleaseEvent(e)`
@@ -4410,7 +4457,7 @@ Werkbank: die Funktionen eines Reiters der Schreibhilfe als große, selbsterklä
 
 ### `ui/baukasten/zellen_raster.py`
 
-Zellenraster: wie bei WPS die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
+Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
 
 - **class `_Gitter`**(QWidget)
   - `__init__(raster, zeilen, spalten, zelle)`
@@ -4460,12 +4507,12 @@ Kontextabhängige Reiter: Tabellen, Bilder/Formen, Kopf-/Fußzeile, Formulare.
 
 ### `ui/contextual/diagramm_tools.py`
 
-Kontext-Reiter „Diagrammtools“ nach der WPS-Vorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
+Kontext-Reiter „Diagrammtools“ nach der Vorlage (erscheint bei markiertem Diagramm, Kontext ``diagramm``).
 
 
 ### `ui/contextual/header_footer_tools.py`
 
-Kontext-Reiter „Kopf- und Fußzeile“ nach der WPS-Vorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
+Kontext-Reiter „Kopf- und Fußzeile“ nach der Vorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
 
 
 ### `ui/contextual/image_tools.py`
@@ -4475,7 +4522,7 @@ Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``fo
 
 ### `ui/contextual/serien_tools.py`
 
-Kontext-Reiter „Mailings“ (Seriendruck) nach der WPS-Vorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
+Kontext-Reiter „Mailings“ (Seriendruck) nach der Vorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
 
 
 ### `ui/contextual/table_tools.py`
@@ -4485,7 +4532,7 @@ Kontext-Reiter „Tabellentools“ (erscheint, wenn die Schreibmarke in einer Ta
 
 ### `ui/contextual/text_tools.py`
 
-Kontext-Reiter „Texttools“ nach der WPS-Vorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
+Kontext-Reiter „Texttools“ nach der Vorlage (erscheint bei markiertem WordArt oder Textfeld, zusammen mit „Zeichentools“).
 
 
 ## `ui/dialogs`
@@ -4518,7 +4565,7 @@ Bildschirmfoto: ganzer Bildschirm oder aufgezogener Bereich.
   - `_kombi_tabelle()`
   - `_kombi_fuellen()` — Eine Zeile je Datenreihe; Werte aus ``self.kombi``.
   - `_kombi_geaendert(*_)`
-  - `kompakt_machen()` — In der Seitenleiste: die Diagrammarten wie in WPS in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
+  - `kompakt_machen()` — In der Seitenleiste: die Diagrammarten wie in der Vorlage in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
   - `passe_an(breite, _hoehe)` — Auf die echte Breite der Seitenleiste: zwei Spalten Diagrammarten, Vorschau so breit wie der Platz.
   - `_gruppe(zeile)`
   - `_waehle(untertyp)`
@@ -4539,7 +4586,7 @@ Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Erset
 - **class `HeaderFooterDialog`**(PanelFaehig, QDialog)
   - `__init__(title, hf, parent)`
   - `value()`
-- **class `TableDialog`**(PanelFaehig, QDialog) — „Tabelle einfügen“ wie in WPS: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
+- **class `TableDialog`**(PanelFaehig, QDialog) — „Tabelle einfügen“ wie in der Vorlage: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
   - `__init__(parent, vorgabe)`
   - `spaltenbreite_px()` — Feste Breite jeder Spalte in Bildpunkten; None: automatisch (Seitenbreite).
 - **class `BildGroesseDialog`**(PanelFaehig, QDialog)
@@ -4583,7 +4630,7 @@ Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt,
   - `aktuell()`
   - `resizeEvent(ev)`
 - `_layout_bildchen(p, r, name)` — Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``ui/baukasten/smartart_menues.py``).
-- **class `SmartArtDialog`**(PanelFaehig, QDialog, VorschauMixin) — SmartArt auswählen (wie WPS „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
+- **class `SmartArtDialog`**(PanelFaehig, QDialog, VorschauMixin) — SmartArt auswählen (wie in der Vorlage „Grafik auswählen“): Galerie der Layouts, darunter Name, Beschreibung und Vorschau, OK.
   - `__init__(parent, daten)`
   - `layout_()`
   - `_layout(name)`
@@ -4624,7 +4671,7 @@ Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt,
 
 ### `ui/dialogs/einfuegen_fenster.py`
 
-Kleine Fenster des Reiters Einfügen nach den WPS-Vorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
+Kleine Fenster des Reiters Einfügen nach den Vorlagen: „Zahl“, „Felder“, „Text in Tabelle umwandeln“, „Tabelle in Text konvertieren“.
 
 - `_titel(text, feld)`
 - **class `ZahlDialog`**(PanelFaehig, QDialog) — Feld „Zahl“, darunter die Liste „Zahlentyp“ (wie die Vorlage „Zahl“).
@@ -4795,7 +4842,7 @@ Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, S
 
 - `lade_json(settings, key, standard)`
 - `_satz(text, gedaempft)` — Erklärung über den Feldern: bricht um.
-- **class `RegisterAnpassenDialog`**(PanelFaehig, QDialog) — Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“ in WPS.
+- **class `RegisterAnpassenDialog`**(PanelFaehig, QDialog) — Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“.
   - `__init__(parent, settings, daten)`
   - `_schieben(d)`
   - `_speichern()`
@@ -4987,7 +5034,7 @@ Dialoge zu Verweisen: Textmarken, Quellen. (Beschriftung und Querverweis: ``verw
 
 ### `ui/dialogs/verweise_fenster.py`
 
-Fenster des Reiters Verweise nach den WPS-Vorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
+Fenster des Reiters Verweise nach den Vorlagen: „Inhaltsverzeichnis“, „Indexeintrag festlegen“, „Beschriftung“ (mit
 
 - `_titel(text, feld)`
 - **class `InhaltsverzeichnisDialog`**(PanelFaehig, QDialog) — Links Füllzeichen, Ebenen anzeigen, Seitenzahlen anzeigen/rechtsbündig, Hyperlinks verwenden; rechts die Seitenansicht.
@@ -5032,7 +5079,7 @@ Neu aus Vorlage: die mitgelieferten Gerüste und die Dateien aus dem Vorlagenord
 
 ### `ui/dialogs/wasserzeichen_fenster.py`
 
-Fenster „Wasserzeichen“ nach der WPS-Vorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
+Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter Textwasserzeichen, Transparenz, rechts die Vorschau
 
 - `_titel(text, feld)`
 - `_feld(w, breite)`
@@ -5071,7 +5118,7 @@ Optionen: Ansicht und Darstellung.
 
 - **class `AnsichtSeiten`** — Optionen: Ansicht und Darstellung. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/ui/dialogs/optionen.py``).
   - `_ansicht(titel)`
-  - `_aussehen(p)` — Hell, Dunkel oder wie das System: drei große Schaltflächen, genau eine ist gewählt (kein ausgegrauter Zusatzschalter).
+  - `_aussehen(p)` — Hell, Dunkel, Mint oder wie das System: vier große Schaltflächen, genau eine ist gewählt (kein ausgegrauter Zusatzschalter).
   - `_oberflaeche_wahl(p, f)`
   - `_darstellung(p, f)` — Schrift größer/kleiner, Weicher Kontrast, Größe der Symbole, Schrift der Bedienung.
 
@@ -5302,6 +5349,8 @@ Bilder im Text.
 Zeichen- und Absatzformat, Einfügen, Suchen.
 
 - **class `FormatierungBaustein`** — Zeichen- und Absatzformat, Einfügen, Suchen. Baustein von ``DocumentEditor`` (siehe ``lunivo_writer/ui/document/document_editor.py``).
+  - `_kf()` — Der Kopf-/Fußzeilen-Bearbeiter, solange die Schreibmarke dort steht (dann wirken die Start-Werkzeuge auf die Zeile), sonst None.
+  - `_kf_fertig(kf)`
   - `_merge(fmt)`
   - `toggle_bold(on)`
   - `toggle_italic(on)`
@@ -5334,7 +5383,7 @@ Zeichen- und Absatzformat, Einfügen, Suchen.
   - `toggle_list(kind, style)`
   - `list_remove(nur_qt)` — Aufzählung/Nummerierung vom Absatz an der Schreibmarke (bzw. der Auswahl) nehmen.
   - `list_level(delta)`
-  - `apply_style(name)` — Formatvorlage auf alle Absätze der Markierung (oder den Absatz am Zeiger) anwenden.
+  - `apply_style(name)`
   - `_stil_auf_block(blk, name)`
   - `_zeichen_der_vorlage(d)` — Das Zeichenformat einer Vorlage (alle Felder des Fensters „Schriftart“). Was die Vorlage nicht setzt, bleibt in der Auswahl, wie es ist.
   - `_ebene_der_vorlage(blk, name)` — „Verbinden mit Formatvorlage“ (Gliederung anpassen): ein Absatz mit dieser Vorlage gehört zur verbundenen Ebene der Gliederung.
@@ -5476,7 +5525,7 @@ Frei positionierte Bilder im Editor: zeichnen, anklicken, verschieben, in der Gr
   - `_frei_schluessel(a)`
   - `_frei_liste()` — Alle frei positionierten Bilder aller Blätter: (Schlüssel, Angabe, Bild, Rechteck im Editor, hinter, Blatt-Nr.). Unabhängig davon, was
   - `_frei_zeichnen(p, sicht, hinter)` — Bilder der sichtbaren Blätter, hinter (``hinter``) oder vor dem Text; die vorderen zeichnen auch die Auswahl.
-  - `_frei_text_markieren(p, r, a, bild)` — WordArt wie in WPS: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt).
+  - `_frei_text_markieren(p, r, a, bild)` — WordArt wie in der Vorlage: der Text im gewählten Objekt ist grau hinterlegt (nur der Text, kein Kasten über dem Objekt).
   - `_frei_rechteck(a, n)`
   - `_frei_leiste()` — Die Schaltflächen neben dem markierten Objekt: für Bilder und Diagramme eigene, sonst die der Formen und WordArt.
   - `_frei_knopf_rects(r)` — Die Schaltflächen rechts neben dem Bild: oben der Minus-Knopf (klappt sie ein), darunter Layoutoptionen, Formstile, Füllung, Kontur.
@@ -5563,6 +5612,7 @@ Kopf- und Fußzeile direkt auf der Seite bearbeiten (Einfügen ▸ Kopf- und Fu�
   - `_feld_bei(pos)` — (Anfang, Ende) des Feldes, das die Zeichen vor/hinter ``pos`` berührt, sonst None — getrennt nach 'davor' und 'dahinter'.
   - `focusInEvent(e)`
   - `keyPressEvent(e)`
+  - `_effekte_zeichnen(p)` — Schatten, Spiegelung, Leuchten usw. (``editor/textfx.py``) an der Stelle, an der das Feld den Text zeichnet. Das Feld setzt seine Blöcke
   - `paintEvent(e)`
 - **class `_Leiste`**(QWidget) — Die schwebende Leiste neben dem Etikett des aktiven Bereichs: mit Seitenzahl drei Knöpfe, ohne nur „Seitenzahl einfügen“.
   - `__init__(eltern)`
@@ -5589,6 +5639,19 @@ Kopf- und Fußzeile direkt auf der Seite bearbeiten (Einfügen ▸ Kopf- und Fu�
   - `speichern()` — Den Text des Feldes in die Seiteneinrichtung des Abschnitts schreiben (sofort; sonst nach kurzer Pause beim Tippen).
   - `aendern(aendere, neu_laden)` — ``aendere(page)`` auf die Einrichtung des aktuellen Abschnitts anwenden und speichern; → danach das Feld neu füllen.
   - `ausrichtung_setzen(align)`
+  - `_stand()`
+  - `_merken(vorher)`
+  - `_text_gemerkt(zone)`
+  - `_stand_setzen(stand)`
+  - `_text_schritt(feld, rueck)` — Rückgängig/Wiederholen im Feld, bis sich der Text ändert (Schriftschritte, die Qt dazwischen merkt, zählen nicht).
+  - `rueckgaengig()`
+  - `wiederholen()`
+  - `basis_format(fmt, zoom)` — Das Zeichenformat für ein Format aus ``HeaderFooter.fmt``; die Größe wird mit dem Zoom des Editors skaliert.
+  - `_basis_anwenden(zone, hf)`
+  - `format_anwenden(f, farbe_weg)` — Ein Zeichenformat der Start-Werkzeuge (Schrift, Größe, Fett, Kursiv, Unterstrichen, Farbe) auf die aktive Zeile anwenden.
+  - `format_loeschen()` — „Formatierung löschen“: Schrift, Größe, F/K/U, Farbe und Effekte der aktiven Zeile zurück auf die Vorgabe (die Seitenzahl-Felder bleiben).
+  - `format_lesen()` — Das Zeichenformat der aktiven Zeile (für die Schalterstellung der Start-Werkzeuge).
+  - `ausrichtung_vom_werkzeug(al)`
   - `tabstopp_einfuegen()`
   - `_rect(zone)`
   - `_platzieren()`
@@ -6043,14 +6106,25 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
   - `_pfeile_legen()`
   - `resizeEvent(ev)`
   - `wheelEvent(ev)`
+- `_kurz(name)`
+- `_mit_kuerzel(name)` — Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter.
 - `_zweizeilig(text)`
+- **class `_GruppenPopup`**(QFrame) — Schwebende Fläche unter einem zusammengeklappten Gruppenknopf; die Gruppe zieht für die Zeit des Öffnens hier ein.
+  - `__init__(eltern)`
+  - `zeigen(rahmen, unter, zurueck)`
+  - `hideEvent(ev)`
 - **class `_ReiterLeiste`**(QTabBar)
   - `mouseDoubleClickEvent(ev)`
   - `ist_kontext(i)`
   - `tabSizeHint(i)`
+  - `_luecke()`
   - `paintEvent(ev)`
 - **class `RegisterBand`**(QWidget) — Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters.
-  - `__init__(befehle, daten, cfg, schnell)`
+  - `__init__(befehle, daten, cfg, schnell, kompakt)`
+  - `resizeEvent(ev)`
+  - `_gruppen_knopf(g, e)` — Zusammengeklappte Gruppe: ein Knopf mit dem Symbol des ersten Befehls und dem Gruppennamen; ein Klick zeigt die ganze Gruppe.
+  - `_gruppe_zeigen(e)`
+  - `_gruppen_anpassen()` — Kompaktes Band: passt ein Reiter nicht in die Breite, klappen seine hintersten Gruppen zu je einem Knopf zusammen. Nichts geht verloren; bei mehr Breite stehen die Gruppen wieder offen da.
   - `_reiter_geklickt(_i)`
   - `einklappen_umschalten()`
   - `_trenner()`
@@ -6061,10 +6135,10 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
   - `_reiter(r)`
   - `_gruppe(g)`
   - `_knoepfe_geordnet(g, inhalt)` — Knöpfe in der Reihenfolge der Liste: große stehen allein, aufeinanderfolgende kleine bilden eine Spalte aus zwei Zeilen.
-  - `_knoepfe_schrift(g, inhalt)` — Wie WPS: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate.
+  - `_knoepfe_schrift(g, inhalt)` — Wie in der Vorlage: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate.
   - `_knoepfe_tt_schrift(g, inhalt)` — Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
-  - `_knoepfe_galerie(g, inhalt)` — Eine Galerie wie in WPS: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``).
-  - `_knoepfe_raender(g, inhalt)` — Der Rand-Knopf und daneben wie bei WPS die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit).
+  - `_knoepfe_galerie(g, inhalt)` — Eine Galerie wie in der Vorlage: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``).
+  - `_knoepfe_raender(g, inhalt)` — Der Rand-Knopf und daneben wie in der Vorlage die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit).
   - `_knoepfe_masse(g, inhalt)` — Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern.
   - `_knoepfe(g, inhalt)`
   - `_stile()`
@@ -6106,6 +6180,7 @@ Die Reiter des Menübands (Datei, Start, Einfügen, Seitenlayout, Verweise, Übe
 Reiter „Schreibhilfe“: Lesen, Prüfen, Beim Schreiben, Vorlesen, Sprache, Bausteine, KI und Anzeigen — jede Funktion einmal, jede mit eigenem Symbol.
 
 - `_knoepfe(gruppe)` — Die Band-Knöpfe einer Gruppe: erst die kleinen, dann die großen.
+- `_ki_knoepfe()` — KI: die vier Textbefehle (entwerfen, umformulieren, zusammenfassen, Text in Bild) stehen in einem Menü „Text mit KI“; Chat und Aktionen
 - `_pruefen_menue(e)` — Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen und die Sprache des Dokuments.
 - `bauen(register)`
 
@@ -6127,19 +6202,19 @@ Reiter „Datei“ (die Backstage-Ansicht ersetzt das Band; die Gruppen bleiben 
 
 ### `ui/ribbon/tabs/home_tab.py`
 
-Reiter „Start“ in der Anordnung von WPS Office.
+Reiter „Start“ in der Anordnung der Vorlage.
 
-- `bauen(start)` — Reiter Start in der Anordnung von WPS Office: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
+- `bauen(start)` — Reiter Start in der Anordnung der Vorlage: Zwischenablage (Einfügen, Ausschneiden/Kopieren, Format übertragen), Schriftart mit
 
 ### `ui/ribbon/tabs/insert_tab.py`
 
-Reiter „Einfügen“ in der Anordnung von WPS Office (Vorlagen im Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
+Reiter „Einfügen“ in der Anordnung der Vorlagen (Ordner einfuegen/): Deckblatt, Leere Seite ▾, Umbrüche ▾, Tabelle ▾,
 
 - `bauen(register)`
 
 ### `ui/ribbon/tabs/layout_tab.py`
 
-Reiter „Seitenlayout“ in der Anordnung von WPS Office: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
+Reiter „Seitenlayout“ in der Anordnung der Vorlage: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
 
 - `bauen(register)`
 
@@ -6151,7 +6226,7 @@ Reiter „Sendungen“ (nur nach „Register anpassen“ sichtbar): Serienbriefe
 
 ### `ui/ribbon/tabs/references_tab.py`
 
-Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung von WPS Office: TOC einfügen, Inhaltsverzeichnis
+Reiter „Verweise“ (in register.json „Referenzen“) in der Anordnung der Vorlage: TOC einfügen, Inhaltsverzeichnis
 
 - `bauen(register)`
 
@@ -6163,13 +6238,13 @@ Reiter „Überprüfen“ nach Kays Vorlagen (ueberpruefen/01–10): Rechtschrei
 
 ### `ui/ribbon/tabs/section_tab.py`
 
-Reiter „Abschnitt“ in der Anordnung von WPS Office.
+Reiter „Abschnitt“ in der Anordnung der Vorlage.
 
 - `bauen(register)`
 
 ### `ui/ribbon/tabs/view_tab.py`
 
-Reiter „Ansicht“ in der Anordnung von WPS Office: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
+Reiter „Ansicht“ in der Anordnung der Vorlage: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
 
 - `bauen(register)`
 
@@ -6354,6 +6429,16 @@ Das Rechtsklick-Menü des Textes, deutsch und in der Reihenfolge der Vorlage: Zw
 - `_symbole()`
 - `menue_bauen(editor, fenster)` — Das Menü für den Editor ``editor`` des Fensters ``fenster``; der Aufrufer zeigt es und löscht es danach.
 
+### `ui/widgets/lese_ende_knopf.py`
+
+Großer Knopf „Lesemodus beenden“, der im Lesemodus oben mittig über dem Fenster schwebt (Band und Seitenleiste sind dann ausgeblendet).
+
+- **class `LeseEndeKnopf`**(QPushButton)
+  - `__init__(fenster, aktion)`
+  - `zeigen(sichtbar)`
+  - `platzieren()`
+  - `eventFilter(obj, e)`
+
 ### `ui/widgets/live_vorschau.py`
 
 Live-Vorschau: Beim Überfahren einer Formatvorlage, Schrift, Größe oder Farbe zeigt das Dokument das Ergebnis schon — ohne dass etwas
@@ -6395,7 +6480,7 @@ Minisymbolleiste: schwebende Leiste mit den häufigsten Formaten über der Auswa
 
 ### `ui/widgets/schweb_knopf.py`
 
-Ein runder Knopf, der unten rechts über dem Blatt schwebt (wie der KI-Chat-Knopf in ONLYOFFICE).
+Ein runder Knopf, der unten rechts über dem Blatt schwebt.
 
 - **class `SchwebKnopf`**(QToolButton)
   - `__init__(editor, symbol, tipp, aktion)`

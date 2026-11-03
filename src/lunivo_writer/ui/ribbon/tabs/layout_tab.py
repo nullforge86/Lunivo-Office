@@ -1,4 +1,4 @@
-"""Reiter „Seitenlayout“ in der Anordnung von WPS Office: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
+"""Reiter „Seitenlayout“ in der Anordnung der Vorlage: Designs, Ränder mit den vier Maßfeldern, Seite einrichten
 (Orientierung, Größe, Spalten, Textrichtung, Umbrüche, Zeilennummern), Seitenhintergrund und Anordnen.
 Dazu die kleine Gruppe Absatz (Einzug, Absatzabstand) aus dem Prüfbogen; die Silbentrennung steht unter Schreibhilfe."""
 from __future__ import annotations

@@ -1056,7 +1056,7 @@ class _Writer:
         return self._tf_ketten
 
     def _textfeld_xml(self, run, a: dict) -> None:
-        """Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“ wie bei Word.
+        """Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“.
         Verknüpfte Felder tragen ``wps:linkedTxbx`` (``id`` = Kette, ``seq`` = Stelle); das erste Feld hält den ganzen Text. Die genauen Werte
         des Programms stehen im Titel des Objekts („lunivo:“), damit Lunivo es unverändert wieder lesen kann."""
         import json
@@ -1281,7 +1281,7 @@ class _Writer:
             self._komm_erweitert(gelost)
 
     def _komm_erweitert(self, kennungen: list[str]) -> None:
-        """Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done), wie Word es speichert."""
+        """Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done)."""
         from docx.opc.packuri import PackURI
         from docx.opc.part import Part
         from lxml import etree

@@ -1,6 +1,6 @@
 # Wohin Lunivo Writer gehen soll
 
-Lunivo soll Schreiben leichter machen, ohne ein zweites Word nachzubauen. Die Richtung wird von der Schreibhilfe bestimmt: Sie soll dort unterstützen, wo eine gewöhnliche Rechtschreibprüfung wenig hilft.
+Lunivo soll Schreiben leichter machen, ohne ein überladenes Office-Programm nachzubauen. Die Richtung wird von der Schreibhilfe bestimmt: Sie soll dort unterstützen, wo eine gewöhnliche Rechtschreibprüfung wenig hilft.
 
 ## Leitlinien
 

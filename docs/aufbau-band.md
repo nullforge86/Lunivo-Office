@@ -1,26 +1,74 @@
 # Der Aufbau des Bandes
 
 Quelle des Bandes: `src/lunivo_writer/resources/register.json` und die Reiter-Module unter
-`src/lunivo_writer/ui/ribbon/tabs/`. Eine lokale Funktionsprüfung lässt sich mit
+`src/lunivo_writer/ui/ribbon/tabs/`; zusammengesetzt werden sie in `src/lunivo_writer/ui/ribbon/plan.py`. Die Kontext-Reiter stehen unter
+`src/lunivo_writer/ui/contextual/`. Eine lokale Funktionsprüfung lässt sich mit
 `werkzeug/funktionspruefung.py` gezielt für einzelne Reiter ausführen.
 
-Das Band hat acht Reiter. Es zeigt einen davon; welchen, sagt die Reiterzeile.
+Das Band hat zehn Reiter. Standardmäßig sind acht sichtbar: Der Reiter *Datei* bleibt verborgen, weil seine Befehle im **☰ Menü** links vor dem Schnellzugriff
+stehen, und *Sendungen* ist ausgeblendet; er lässt sich über *Ansicht ▸ Oberfläche ▸ Register anpassen* einblenden. Dazu kommen neun Kontext-Reiter,
+die nur bei passender Auswahl erscheinen. Das Band zeigt einen Reiter; welchen, sagt die Reiterzeile.
 Dieselben Befehle stehen auch in der Menüleiste und in den beiden
 Symbolleisten — welche Oberfläche sichtbar ist, sagt
-*Ansicht ▸ Darstellung ▸ Benutzeroberfläche*.
+*Ansicht ▸ Oberfläche ▸ Benutzeroberfläche*.
+
+Die Bäume unten zeigen die Gruppen des Bandes und ihre Knöpfe; Einträge unter einem Knopf sind feste Menüpunkte. Viele Knöpfe mit ▾ öffnen
+zusätzlich ein Klappmenü, dessen Einträge im Programm erzeugt werden und hier nicht einzeln stehen.
 
 ## Die Reiter im Überblick
 
 | Reiter | Wofür |
 |---|---|
-| [Start](#start) | Zwischenablage, Schrift, Absatz, Formatvorlagen |
+| [Datei](#datei) | Neu, Öffnen, Speichern, Exportieren, Drucken, Dokumentinformationen (als ☰ Menü sichtbar, der Reiter selbst ist verborgen) |
+| [Start](#start) | Zwischenablage, Schrift, Absatz, Formatvorlagen, Suchen |
 | [Einfügen](#einfügen) | Alles, was in den Text hineinkommt |
-| [Seitenlayout](#seitenlayout) | Ränder, Spalten, Umbrüche, Wasserzeichen |
-| [Referenzen](#referenzen) | Verzeichnisse, Fußnoten, Querverweise |
-| [Überprüfen](#überprüfen) | Prüfen, Kommentare, Änderungen verfolgen |
+| [Seitenlayout](#seitenlayout) | Designs, Ränder, Seite einrichten, Seitenhintergrund, Anordnen |
+| [Verweise](#verweise) | Verzeichnisse, Fußnoten, Beschriftungen, Index, Zitate |
+| [Überprüfen](#überprüfen) | Prüfen, Kommentare, Änderungen verfolgen, Vergleichen, Schützen |
 | [Schreibhilfe](#schreibhilfe) | Was das Lesen und Schreiben erleichtert — der zentrale Reiter |
-| [Sendungen](#sendungen) | Umschläge, Etiketten, Seriendruck |
 | [Ansicht](#ansicht) | Ansichten, Zoom, Fenster, Helligkeit, Oberfläche |
+| [Abschnitt](#abschnitt) | Abschnitte, Seitenformat und Kopf-/Fußzeile je Abschnitt |
+| [Sendungen](#sendungen) | Umschläge, Etiketten, Seriendruck (standardmäßig ausgeblendet) |
+| [Kontext-Reiter](#kontext-reiter) | Tabellentools, Bildtools, Zeichentools, SmartArt-Design, Diagrammtools, Texttools, Kopf- und Fußzeile, Mailings |
+
+---
+
+## Datei
+
+```
+DATEI
+├── Neu
+│ ├── Leeres Dokument
+│ ├── Aus Vorlage erstellen
+│ └── Vorlagen durchsuchen
+├── Öffnen
+│ ├── Öffnen
+│ └── Zuletzt verwendete Dokumente
+├── Speichern
+│ ├── Speichern
+│ ├── Speichern unter
+│ └── Kopie speichern
+├── Exportieren
+│ ├── Als PDF exportieren
+│ ├── Als DOCX exportieren
+│ ├── Als RTF exportieren
+│ ├── Als TXT exportieren
+│ ├── Als ODT exportieren
+│ └── Als Bild exportieren (PNG)
+├── Drucken
+│ ├── Drucken
+│ ├── Druckvorschau
+│ ├── Drucker auswählen
+│ ├── Seitenbereich
+│ └── Druckeinstellungen
+├── Dokument
+│ ├── Dokumentinformationen
+│ ├── Dokument schützen
+│ └── Dokument teilen (optional)
+└── Programm
+  ├── Optionen / Einstellungen
+  └── Schließen
+```
 
 ---
 
@@ -30,11 +78,9 @@ Symbolleisten — welche Oberfläche sichtbar ist, sagt
 START
 ├── Zwischenablage
 │ ├── Einfügen
-│ ├── Einfügen ohne Formatierung
 │ ├── Ausschneiden
 │ ├── Kopieren
-│ ├── Format übertragen
-│ └── Wort-Extras
+│ └── Format übertragen
 ├── Schriftart
 │ ├── Schrift vergrößern
 │ ├── Schrift verkleinern
@@ -46,16 +92,25 @@ START
 │ ├── Durchgestrichen
 │ ├── Hochgestellt
 │ ├── Tiefgestellt
-│ ├── Zeichenumriss
+│ ├── Texteffekte
 │ ├── Hervorheben
 │ ├── Schriftfarbe
-│ └── Texteffekte
+│ └── Zeichenschattierung
 ├── Absatz
 │ ├── Aufzählung
 │ ├── Nummerierung
-│ ├── Einzug & Listenebene
+│ ├── Einzug verringern
+│ ├── Einzug vergrößern
+│ ├── Textrichtung
+│ │ ├── Von links nach rechts
+│ │ └── Von rechts nach links
 │ ├── Sortieren
-│ ├── Steuerzeichen
+│ ├── Umbrüche
+│ │ ├── Zeilenumbruch
+│ │ ├── Seitenumbruch
+│ │ ├── Spaltenumbruch
+│ │ └── Textflussumbruch
+│ ├── Tabulatoren
 │ ├── Linksbündig
 │ ├── Zentriert
 │ ├── Rechtsbündig
@@ -63,21 +118,19 @@ START
 │ ├── Verteilt
 │ ├── Zeilenabstand
 │ ├── Absatzschattierung
-│ ├── Absatzrahmen
-│ ├── Einzug vergrößern
-│ ├── Einzug verringern
-│ ├── Genaues Maß…
-│ ├── Listenebene verringern
-│ └── Listenebene erhöhen
+│ └── Absatzrahmen
 ├── Stile
-│ └── katalog
-└── Bearbeiten
- ├── Suchen
- ├── Ersetzen
- ├── Suchen und Ersetzen
- ├── Alles auswählen
- └── Objekte auswählen
+├── Extras
+│ └── Wort-Extras
+├── Suchen
+│ └── Suchen oder ersetzen
+├── Auswählen
+│ └── Auswählen
+└── Einstellungen
+  └── Einstellungen
 ```
+
+---
 
 ## Einfügen
 
@@ -86,39 +139,48 @@ EINFÜGEN
 ├── Seiten
 │ ├── Deckblatt
 │ ├── Leere Seite
-│ ├── Seitenumbruch
-│ ├── Hochformat
-│ └── Querformat
+│ └── Umbrüche
 ├── Tabellen
-│ ├── Tabelle einfügen
-│ ├── Schnelltabelle
-│ ├── Tabellenblatt
-│ └── Eigenschaften
+│ └── Tabelle
 ├── Illustrationen
 │ ├── Bild
 │ ├── Formen
 │ ├── Diagramm
-│ ├── SmartArt
-│ ├── WordArt
-│ ├── Form mit eigener Farbe…
-│ ├── Bildschirmfoto
-│ └── Piktogramm
-├── Links
-│ ├── Hyperlink
-│ ├── Lesezeichen / Textmarke
-│ └── Querverweis
+│ └── SmartArt
+├── Kommentar
+│ └── Kommentar
 ├── Kopf- und Fußzeile
 │ ├── Kopf- und Fußzeile
-│ └── Seitenzahl
+│ ├── Seitenzahl
+│ └── Wasserzeichen
 ├── Text
 │ ├── Textfeld
-│ ├── Initiale
+│ ├── WordArt
 │ ├── Datum und Uhrzeit
-│ └── Text aus Datei
-└── Symbole
- ├── Sonderzeichen
- └── Formel
+│ ├── Objekt
+│ │ ├── Objekt einfügen
+│ │ └── Objekt aus Datei
+│ ├── Initiale
+│ └── Schnellbausteine
+├── Symbole
+│ ├── Symbol
+│ ├── Gleichung
+│ └── Zahl
+├── Links
+│ ├── Hyperlink
+│ ├── Querverweis
+│ └── Lesezeichen
+└── Formulare
+  └── Formulare
+    ├── Textfeld
+    ├── Auswahlliste
+    ├── Datumsfeld
+    ├── Kontrollkästchen
+    ├── Schaltfläche
+    └── Felder zurücksetzen
 ```
+
+---
 
 ## Seitenlayout
 
@@ -131,131 +193,252 @@ SEITENLAYOUT
 │ └── Effekte
 ├── Ränder
 │ └── Ränder
-├── Seitenränder
-│ └── raender
 ├── Seite einrichten
-│ ├── Ausrichtung
+│ ├── Orientierung
 │ ├── Größe
 │ ├── Spalten
 │ ├── Textrichtung
 │ ├── Umbrüche
 │ └── Zeilennummern
-├── Absatz
-│ ├── Einzug
-│ ├── Absatzabstand
-│ └── Silbentrennung
 ├── Seitenhintergrund
 │ ├── Seitenfarbe
-│ ├── Wasserzeichen
-│ └── Seitenränder
-└── Anordnen
- ├── Textfluss
- ├── Ausrichten
- ├── Gruppieren
- └── Drehen
+│ ├── Seitenränder
+│ └── Genko-Einstellung
+├── Anordnen
+│ ├── Textfluss
+│ ├── Ausrichten
+│ ├── Gruppieren
+│ ├── Drehen
+│ └── Auswahlbereich
+└── Absatz
+  ├── Einzug
+  └── Absatzabstand
 ```
 
-## Referenzen
+---
+
+## Verweise
 
 ```
-REFERENZEN
+VERWEISE
 ├── Inhaltsverzeichnis
 │ ├── Inhaltsverzeichnis
-│ └── Verzeichnisse aktualisieren
+│ └── Inhaltsverzeichnis aktualisieren
 ├── Fußnoten
-│ ├── Fußnote
-│ ├── Endnote
-│ ├── Nächste Note
-│ ├── Vorige Note
+│ ├── Fußnote einfügen
+│ ├── Endnote einfügen
+│ ├── Zur Note springen
+│ │ ├── Vorherige Fußnote
+│ │ ├── Nächste Fußnote
+│ │ ├── Vorherige Endnote
+│ │ └── Nächste Endnote
+│ ├── Fußnote/Endnotentrennlinie
 │ └── Notenbereich
-├── Zitate und Literatur
-│ ├── Zitat einfügen
-│ ├── Neue Quelle
-│ ├── Quellen verwalten
-│ ├── Zitierweise
-│ └── Literaturverzeichnis
 ├── Beschriftungen
 │ ├── Beschriftung
 │ ├── Abbildungsverzeichnis
 │ └── Querverweis
-└── Index
- ├── Indexeintrag
- └── Stichwortverzeichnis
+├── Index
+│ ├── Eintrag festlegen
+│ └── Index
+│   ├── Index einfügen
+│   └── Index aktualisieren
+├── Seriendruck
+│ └── Seriendruck
+└── Zitate und Literatur
+  ├── Zitat einfügen
+  ├── Neue Quelle
+  ├── Quellen verwalten
+  ├── Zitierweise
+  └── Literaturverzeichnis
 ```
+
+---
 
 ## Überprüfen
 
 ```
 ÜBERPRÜFEN
 ├── Dokumentprüfung
-│ ├── Prüfen
-│ ├── Gründlich prüfen
-│ ├── Rechtschreibung
-│ ├── Thesaurus
+│ ├── Rechtschreibprüfung
 │ └── Wörter zählen
-├── Sprache
-│ └── Korrektursprache
-├── Barrierefreiheit
-│ └── Barrierefreiheit prüfen
 ├── Kommentare
-│ ├── Neuer Kommentar
-│ ├── Nächster Kommentar
-│ ├── Voriger Kommentar
-│ ├── Kommentar löschen
-│ └── Alle Kommentare löschen
+│ ├── Kommentar einfügen
+│ ├── Löschen
+│ ├── Vorherige
+│ └── Weiter
+├── Nachverfolgung
+│ ├── Änderungen nachverfolgen
+│ ├── Anzeige zur Überprüfung
+│ └── Überprüfen
 ├── Änderungen
-│ ├── Änderungen verfolgen
-│ ├── Markup anzeigen
-│ ├── Überarbeitungsbereich
-│ ├── Änderung annehmen
-│ ├── Änderung ablehnen
-│ ├── Nächste Änderung
-│ ├── Vorige Änderung
-│ ├── Alle annehmen
-│ └── Alle verwerfen
+│ ├── Annehmen
+│ ├── Ablehnen
+│ ├── Vorherige
+│ └── Weiter
+├── Vergleichen
+│ └── Vergleichen
+├── Freihand
+│ └── Freihand
 └── Schützen
- └── Bearbeitung sperren
+  └── Bearbeitung einschränken
 ```
+
+---
 
 ## Schreibhilfe
 
 ```
 SCHREIBHILFE
 ├── Lesen
-│ ├── Lesehilfe
 │ ├── Zeilenfokus
 │ ├── Lesemodus
-│ └── Schrift zum Lesen
+│ ├── Silben farbig
+│ └── Lesehilfe
 ├── Prüfen
-│ ├── Dokumentprüfung
-│ ├── Prüfen
-│ ├── Gründlich prüfen
-│ └── Welche Hilfe wann
+│ └── Dokumentprüfung
+│   ├── Prüfen
+│   ├── Gründlich prüfen
+│   ├── KI-Korrektur
+│   ├── Verbesserungsvorschläge
+│   ├── Barrierefreiheit prüfen
+│   ├── Welche Hilfe wann
+│   └── Korrektursprache …
 ├── Beim Schreiben
-│ ├── Rechtschreibprüfung
+│ ├── Wellenlinien
 │ ├── Wortvorhersage
 │ └── AutoKorrektur
 ├── Vorlesen
-│ ├── Vorlesen
-│ ├── Ab hier vorlesen
-│ ├── Anhalten
-│ └── Stimme und Tempo
+│ └── Vorlesen
+│   ├── Vorlesen
+│   ├── Ab hier vorlesen
+│   ├── Anhalten
+│   └── Stimme und Tempo
 ├── Sprache
-│ ├── Silbentrennung
-│ ├── Übersetzen
 │ ├── Thesaurus
-│ └── Sprache und Prüfung
+│ ├── Sprache
+│ ├── Übersetzen
+│ └── Silbentrennung
 ├── Bausteine
-│ ├── Textbausteine
-│ ├── Bausteine verwalten…
-│ └── Schnellbaustein einfügen
+│ └── Textbausteine
+│   ├── Bausteine verwalten…
+│   └── Schnellbaustein einfügen
 ├── KI
-│ ├── KI-Korrektur
-│ └── Vorschläge
+│ ├── Text mit KI
+│ │ ├── Text entwerfen
+│ │ ├── Text umformulieren
+│ │ ├── Text zusammenfassen
+│ │ └── Text in Bild
+│ ├── KI-Chat
+│ ├── KI-Aktionen
+│ └── KI-Einstellungen
 └── Anzeigen
- ├── Seitenleiste Schreibhilfe
- └── Optionen
+  └── Seitenleiste Schreibhilfe
 ```
+
+---
+
+## Ansicht
+
+```
+ANSICHT
+├── Dokumentansichten
+│ ├── Drucklayout
+│ ├── Lesemodus
+│ └── Weitere Ansichten
+│   ├── Vollbild
+│   ├── Weblayout
+│   └── Gliederung
+├── Anzeigen
+│ ├── Navigationsbereich
+│ ├── Lineal
+│ ├── Gitternetzlinien
+│ └── Weitere Anzeigen
+│   ├── Vertikales Lineal
+│   ├── Textbegrenzungen
+│   ├── Steuerzeichen
+│   └── Ausgeblendeter Text
+├── Zoom
+│ ├── Zoom
+│ ├── 100 %
+│ ├── Seitenbreite
+│ ├── Eine Seite
+│ ├── Zwei Seiten
+│ ├── Vergrößern
+│ └── Verkleinern
+├── Helligkeit
+│ ├── Wie das System
+│ ├── Immer hell
+│ └── Immer dunkel
+├── Fenster
+│ ├── Neues Fenster
+│ └── Anordnen
+│   ├── Nebeneinander
+│   ├── Untereinander
+│   ├── Kacheln
+│   └── Fensterliste
+└── Oberfläche
+  ├── Register anpassen
+  ├── Symbol austauschen
+  ├── Benutzeroberfläche
+  ├── Menüleiste
+  ├── Symbolleisten
+  └── Vorlagen zurücksetzen
+```
+
+---
+
+## Abschnitt
+
+```
+ABSCHNITT
+├── Navigation
+│ └── Abschnittsnavigationsbereich
+├── Seite
+│ ├── Deckblätter
+│ ├── Ränder
+│ │ ├── Normal
+│ │ ├── Schmal
+│ │ ├── Moderat
+│ │ ├── Breit
+│ │ └── Benutzerdefinierte Seitenränder…
+│ ├── Orientierung
+│ │ ├── Hochformat
+│ │ └── Querformat
+│ └── Größe
+│   ├── A4
+│   ├── A3
+│   ├── A5
+│   ├── B5
+│   ├── Letter
+│   ├── Legal
+│   ├── Umschlag DIN lang
+│   ├── Umschlag C5
+│   ├── Umschlag C6
+│   └── Weitere Papierformate…
+├── Abschnitte
+│ ├── Abschnitt hinzufügen
+│ │ ├── Abschnittsumbruch auf nächster Seite
+│ │ ├── Fortlaufender Abschnittsumbruch
+│ │ ├── Abschnittsumbruch (gerade Seite)
+│ │ └── Abschnittsumbruch auf ungerader Seite
+│ ├── Abschnitt löschen
+│ ├── Abschnitt einrichten …
+│ ├── Vorheriger Abschnitt
+│ └── Nächster Abschnitt
+├── Kopf- und Fußzeile
+│ ├── Seitenzahl
+│ ├── Erste Seite anders
+│ ├── Gerade und ungerade Seiten sind unterschiedlich
+│ ├── Kopf- und Fußzeile
+│ ├── Link zu vorheriger Kopfzeile
+│ └── Mit voriger Fußzeile verknüpfen
+└── Einstellungen
+  └── Einstellungen
+    └── Optionen …
+```
+
+---
 
 ## Sendungen
 
@@ -272,51 +455,287 @@ SENDUNGEN
 ├── Vorschau
 │ └── Ergebnisse anzeigen
 └── Formular
- ├── Textfeld
- ├── Kontrollkästchen
- └── Schaltfläche
+  ├── Textfeld
+  ├── Kontrollkästchen
+  ├── Schaltfläche
+  ├── Auswahlliste
+  ├── Datumsfeld
+  └── Felder zurücksetzen
 ```
 
-## Ansicht
+---
+
+## Kontext-Reiter
+
+Diese Reiter erscheinen am rechten Ende der Reiterzeile, sobald das passende Objekt markiert ist (Tabelle, Bild, Form, SmartArt, Diagramm, Textfeld oder WordArt), in Kopf- oder Fußzeile bzw. im Seriendruck.
+
+| Reiter | Erscheint bei |
+|---|---|
+| Tabellentools | Zeiger in einer Tabelle |
+| Bildtools | markiertes Bild |
+| Zeichentools | markierte Form |
+| SmartArt-Design | markiertes SmartArt |
+| Diagrammtools | markiertes Diagramm |
+| Zeichentools | Zeichnen/markiertes Zeichenobjekt |
+| Texttools | markiertes WordArt oder Textfeld |
+| Kopf- und Fußzeile | Bearbeitung von Kopf- oder Fußzeile |
+| Mailings | Seriendruck (Verweise ▸ Seriendruck) |
 
 ```
-ANSICHT
-├── Dokumentansichten
-│ ├── Drucklayout
-│ ├── Lesemodus
-│ ├── Zwei Seiten
-│ ├── Weblayout
-│ └── Gliederung
-├── Anzeigen
-│ ├── Lineal
-│ ├── Vertikales Lineal
-│ ├── Gitternetzlinien
-│ ├── Navigationsbereich
-│ └── Textbegrenzungen
-├── Zoom
-│ ├── Vergrößern
-│ ├── Verkleinern
-│ ├── Seitenbreite
-│ ├── Eine Seite
-│ └── Zoom
-├── Fenster
-│ ├── Neues Fenster
-│ ├── Anordnen
-│ ├── Nebeneinander
-│ ├── Untereinander
-│ ├── Kacheln
-│ └── Fensterliste
-├── Helligkeit
-│ ├── Wie das System
-│ ├── Immer hell
-│ └── Immer dunkel
-└── Oberfläche
- ├── Register anpassen
- ├── Symbol austauschen
- ├── Benutzeroberfläche
- ├── Menüleiste
- ├── Symbolleisten
- └── Vorlagen zurücksetzen
+TABELLENTOOLS
+├── Tabellenformatvorlagen
+│ ├── Tabellenformatvorlagen
+│ ├── Kopfzeile
+│ ├── Gebänderte Zeilen
+│ └── Erste Spalte
+├── Entwurf: Rahmen und Farbe
+│ ├── Rahmenlinien ein/aus
+│ └── Zellenschattierung
+├── Layout: Zeilen und Spalten
+│ ├── Zeile oberhalb einfügen
+│ ├── Zeile unterhalb einfügen
+│ ├── Spalte links einfügen
+│ ├── Spalte rechts einfügen
+│ ├── Zeile löschen
+│ ├── Spalte löschen
+│ └── Tabelle löschen
+├── Zellen
+│ ├── Zellen verbinden
+│ ├── Zelle teilen
+│ └── Tabelle sortieren
+└── Ausrichtung
+  ├── Oben ausrichten
+  ├── Mittig ausrichten
+  └── Unten ausrichten
+```
+
+```
+BILDTOOLS
+├── Bild
+│ ├── Bild einfügen
+│ ├── Bild ändern
+│ └── Formen
+├── Komprimieren
+│ └── Bilder komprimieren
+├── Größe
+│ ├── Zuschneiden
+│ ├── Seitenverhältnis sperren
+│ └── Größe zurücksetzen
+├── Farbe
+│ ├── Transparente Farbe einstellen
+│ ├── Farbe
+│ ├── Heller
+│ ├── Dunkler
+│ ├── Kontrast erhöhen
+│ ├── Kontrast verringern
+│ ├── Um 90° nach rechts drehen
+│ ├── Um 90° nach links drehen
+│ ├── Bildeffekte
+│ ├── Rahmen
+│ └── Bild zurücksetzen
+├── Anordnen
+│ ├── Frei drehen
+│ ├── Gruppieren
+│ ├── Ausrichten
+│ ├── Textumbruch Stil
+│ ├── Eine Ebene nach vorne
+│ └── Eine Ebene nach hinten
+└── Weitere
+  ├── Größe und Seitenverhältnis …
+  ├── Auf Seitenbreite
+  ├── Originalgröße
+  ├── Alternativtext …
+  ├── Bild entfernen
+  └── Zuschneiden nach Maß …
+```
+
+```
+ZEICHENTOOLS
+├── Formen
+│ └── Formen einfügen
+├── Formvorlagen
+│ └── Formvorlagen
+├── Formenstile
+│ ├── Formfüllung
+│ ├── Formkontur
+│ └── Text in der Form …
+└── Anordnen
+  ├── Gruppieren
+  ├── Gruppierung aufheben
+  └── Textumbruch / Position
+```
+
+```
+SMARTART-DESIGN
+├── Grafik erstellen
+│ ├── Form einfügen
+│ ├── Aufzählungszeichen einfügen
+│ ├── Level erhöhen
+│ ├── Level reduzieren
+│ ├── Vorwärts
+│ ├── Rückwärts
+│ ├── Layout von rechts nach links
+│ └── Layout
+├── Layouts
+│ ├── Layout ändern
+│ └── Farben ändern
+├── SmartArt-Stile
+├── Anordnen
+│ ├── Textfluss
+│ ├── Ausrichten
+│ ├── Auswahlbereich
+│ ├── Eine Ebene nach vorne
+│ └── Eine Ebene nach hinten
+└── Größe
+```
+
+```
+DIAGRAMMTOOLS
+├── Elemente
+│ ├── Diagrammelement hinzufügen
+│ ├── Schnelllayout
+│ └── Farbe ändern
+├── Diagrammstile
+├── Diagrammtyp
+│ ├── Diagrammtyp ändern
+│ ├── Diagrammtyp: Säule
+│ ├── Diagrammtyp: Kombination
+│ ├── Diagrammtyp: Balken
+│ ├── Diagrammtyp: Fläche
+│ ├── Diagrammtyp: Linie
+│ ├── Diagrammtyp: Kreis
+│ ├── Diagrammtyp: Netz
+│ ├── Diagrammtyp: Ring
+│ ├── Diagrammtyp: Kurs
+│ └── Diagrammtyp: Punkt (XY)
+├── Daten
+│ ├── Daten auswählen
+│ └── Daten bearbeiten
+└── Bereich
+```
+
+```
+ZEICHENTOOLS
+├── Linien
+├── Formen
+│ ├── Formen einfügen
+│ ├── Textfeld
+│ └── Form bearbeiten
+├── Formstile
+├── Formen formatieren
+│ ├── Formfüllung
+│ ├── Gliederung
+│ ├── Format übertragen
+│ └── Formeffekte
+├── Anordnen
+│ ├── Ausrichten
+│ ├── Gruppieren
+│ ├── Drehen
+│ ├── Textumbruch Stil
+│ ├── Eine Ebene nach vorne
+│ ├── Eine Ebene nach hinten
+│ └── Auswahlbereich
+└── Größe
+```
+
+```
+TEXTTOOLS
+├── Textfeld
+│ └── Textfeld
+├── Format
+│ └── Format übertragen
+├── Schriftart
+│ ├── Schrift vergrößern
+│ ├── Schrift verkleinern
+│ ├── Formatierung löschen
+│ ├── Fett
+│ ├── Kursiv
+│ ├── Unterstrichen
+│ ├── Durchgestrichen
+│ ├── Hochgestellt
+│ ├── Tiefgestellt
+│ ├── Hervorhebung
+│ └── Schriftfarbe
+├── Absatz
+│ ├── Aufzählung
+│ ├── Nummerierung
+│ ├── Einzug verringern
+│ ├── Einzug vergrößern
+│ ├── Textrichtung
+│ ├── Sortieren
+│ ├── Linksbündig
+│ ├── Zentriert
+│ ├── Rechtsbündig
+│ ├── Blocksatz
+│ ├── Verteilt
+│ └── Zeilenabstand
+├── WordArt-Stile
+├── Text
+│ ├── Textfüllung
+│ ├── Textkontur
+│ └── Texteffekte
+├── Formstile
+├── Form
+│ ├── Füllung
+│ ├── Kontur
+│ └── Formeffekte
+├── Verknüpfung
+│ ├── Verknüpfung erstellen
+│ ├── Voriges Textobjekt
+│ └── Nächstes Textobjekt
+└── Einstellungen
+  └── Einstellungen
+```
+
+```
+KOPF- UND FUSSZEILE
+├── Einfügen
+│ ├── Kopf-/Fußzeilengruppe
+│ ├── Kopfzeile
+│ ├── Fußzeile
+│ ├── Seitenzahl
+│ └── Kopfzeilen
+├── Felder
+│ ├── Datum und Uhrzeit
+│ ├── Bild
+│ └── Felder
+├── Navigation
+│ ├── Zwischen Kopf- und Fußzeile wechseln
+│ ├── Vorige Kopfzeile
+│ ├── Nächste Kopfzeile
+│ └── Mit vorheriger verknüpfen
+├── Optionen
+│ ├── Optionen für Kopf- und Fußzeile
+│ ├── Ausrichtungstabstopp einfügen
+│ ├── Kopfzeilenhöhe
+│ └── Fußzeilenhöhe
+└── Schließen
+  ├── Einstellungen
+  └── Schließen
+```
+
+```
+MAILINGS
+├── Datenquelle
+│ ├── Datenquelle öffnen
+│ └── Seriendruckempfänger
+├── Felder
+│ ├── Seriendruckfeld einfügen
+│ ├── Nächstes Feld einfügen
+│ ├── Seriendruckfelder hervorheben
+│ └── Übereinstimmende Felder festlegen
+├── Vorschau
+│ ├── Seriendruck-Vorschau
+│ ├── Erster Datensatz
+│ ├── Vorheriger Datensatz
+│ ├── Datensatz
+│ ├── Nächster Datensatz
+│ └── Letzter Datensatz
+└── Fertigstellen
+  ├── In neuem Dokument zusammenführen
+  ├── In anderem neuen Dokument zusammenführen
+  ├── An Drucker zusammenführen
+  └── Seriendruck schließen
 ```
 
 ---
@@ -328,198 +747,388 @@ genannt — das ist Absicht: ein Schalter, mehrere Stellen, ein Zustand.
 
 | Befehl | Wo er steht |
 |---|---|
+| 100 % | Ansicht ▸ Zoom |
+| A3 | Abschnitt ▸ Seite |
+| A4 | Abschnitt ▸ Seite |
+| A5 | Abschnitt ▸ Seite |
 | Ab hier vorlesen | Schreibhilfe ▸ Vorlesen |
-| Abbildungsverzeichnis | Referenzen ▸ Beschriftungen |
+| Abbildungsverzeichnis | Verweise ▸ Beschriftungen |
+| Ablehnen | Überprüfen ▸ Änderungen |
 | Absatzabstand | Seitenlayout ▸ Absatz |
 | Absatzrahmen | Start ▸ Absatz |
 | Absatzschattierung | Start ▸ Absatz |
+| Abschnitt einrichten … | Abschnitt ▸ Abschnitte |
+| Abschnitt hinzufügen | Abschnitt ▸ Abschnitte |
+| Abschnitt löschen | Abschnitt ▸ Abschnitte |
+| Abschnittsnavigationsbereich | Abschnitt ▸ Navigation |
+| Abschnittsumbruch (gerade Seite) | Abschnitt ▸ Abschnitte |
+| Abschnittsumbruch auf nächster Seite | Abschnitt ▸ Abschnitte |
+| Abschnittsumbruch auf ungerader Seite | Abschnitt ▸ Abschnitte |
 | Adressblock | Sendungen ▸ Seriendruck |
-| Alle annehmen | Überprüfen ▸ Änderungen |
-| Alle Kommentare löschen | Überprüfen ▸ Kommentare |
-| Alle verwerfen | Überprüfen ▸ Änderungen |
-| Alles auswählen | Start ▸ Bearbeiten |
+| Als Bild exportieren (PNG) | Datei ▸ Exportieren |
+| Als DOCX exportieren | Datei ▸ Exportieren |
+| Als ODT exportieren | Datei ▸ Exportieren |
+| Als PDF exportieren | Datei ▸ Exportieren |
+| Als RTF exportieren | Datei ▸ Exportieren |
+| Als TXT exportieren | Datei ▸ Exportieren |
+| Alternativtext … | Bildtools ▸ Weitere |
+| An Drucker zusammenführen | Mailings ▸ Fertigstellen |
+| Änderungen nachverfolgen | Überprüfen ▸ Nachverfolgung |
 | Anhalten | Schreibhilfe ▸ Vorlesen |
+| Annehmen | Überprüfen ▸ Änderungen |
 | Anordnen | Ansicht ▸ Fenster |
-| Aufzählung | Start ▸ Absatz |
-| Ausrichten | Seitenlayout ▸ Anordnen |
-| Ausrichtung | Seitenlayout ▸ Seite einrichten |
+| Anzeige zur Überprüfung | Überprüfen ▸ Nachverfolgung |
+| Auf Seitenbreite | Bildtools ▸ Weitere |
+| Aufzählung | Start ▸ Absatz · Texttools ▸ Absatz |
+| Aufzählungszeichen einfügen | SmartArt-Design ▸ Grafik erstellen |
+| Aus Vorlage erstellen | Datei ▸ Neu |
+| Ausgeblendeter Text | Ansicht ▸ Anzeigen |
+| Ausrichten | Seitenlayout ▸ Anordnen · Bildtools ▸ Anordnen · SmartArt-Design ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Ausrichtungstabstopp einfügen | Kopf- und Fußzeile ▸ Optionen |
 | Ausschneiden | Start ▸ Zwischenablage |
+| Auswahlbereich | Seitenlayout ▸ Anordnen · SmartArt-Design ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Auswählen | Start ▸ Auswählen |
+| Auswahlliste | Einfügen ▸ Formulare · Sendungen ▸ Formular |
 | AutoKorrektur | Schreibhilfe ▸ Beim Schreiben |
-| Barrierefreiheit prüfen | Überprüfen ▸ Barrierefreiheit |
+| B5 | Abschnitt ▸ Seite |
+| Barrierefreiheit prüfen | Schreibhilfe ▸ Prüfen |
 | Bausteine verwalten… | Schreibhilfe ▸ Bausteine |
-| Bearbeitung sperren | Überprüfen ▸ Schützen |
+| Bearbeitung einschränken | Überprüfen ▸ Schützen |
+| Benutzerdefinierte Seitenränder… | Abschnitt ▸ Seite |
 | Benutzeroberfläche | Ansicht ▸ Oberfläche |
-| Beschriftung | Referenzen ▸ Beschriftungen |
-| Bild | Einfügen ▸ Illustrationen |
-| Bildschirmfoto | Einfügen ▸ Illustrationen |
-| Blocksatz | Start ▸ Absatz |
-| Datum und Uhrzeit | Einfügen ▸ Text |
+| Beschriftung | Verweise ▸ Beschriftungen |
+| Bild | Einfügen ▸ Illustrationen · Kopf- und Fußzeile ▸ Felder |
+| Bild ändern | Bildtools ▸ Bild |
+| Bild einfügen | Bildtools ▸ Bild |
+| Bild entfernen | Bildtools ▸ Weitere |
+| Bild zurücksetzen | Bildtools ▸ Farbe |
+| Bildeffekte | Bildtools ▸ Farbe |
+| Bilder komprimieren | Bildtools ▸ Komprimieren |
+| Blocksatz | Start ▸ Absatz · Texttools ▸ Absatz |
+| Breit | Abschnitt ▸ Seite |
+| Daten auswählen | Diagrammtools ▸ Daten |
+| Daten bearbeiten | Diagrammtools ▸ Daten |
+| Datenquelle öffnen | Mailings ▸ Datenquelle |
+| Datensatz | Mailings ▸ Vorschau |
+| Datum und Uhrzeit | Einfügen ▸ Text · Kopf- und Fußzeile ▸ Felder |
+| Datumsfeld | Einfügen ▸ Formulare · Sendungen ▸ Formular |
 | Deckblatt | Einfügen ▸ Seiten |
+| Deckblätter | Abschnitt ▸ Seite |
 | Designs | Seitenlayout ▸ Designs |
 | Diagramm | Einfügen ▸ Illustrationen |
+| Diagrammelement hinzufügen | Diagrammtools ▸ Elemente |
+| Diagrammtyp ändern | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Balken | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Fläche | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Kombination | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Kreis | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Kurs | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Linie | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Netz | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Punkt (XY) | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Ring | Diagrammtools ▸ Diagrammtyp |
+| Diagrammtyp: Säule | Diagrammtools ▸ Diagrammtyp |
+| Dokument schützen | Datei ▸ Dokument |
+| Dokument teilen (optional) | Datei ▸ Dokument |
+| Dokumentinformationen | Datei ▸ Dokument |
 | Dokumentprüfung | Schreibhilfe ▸ Prüfen |
-| Drehen | Seitenlayout ▸ Anordnen |
+| Drehen | Seitenlayout ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Druckeinstellungen | Datei ▸ Drucken |
+| Drucken | Datei ▸ Drucken |
+| Drucker auswählen | Datei ▸ Drucken |
 | Drucklayout | Ansicht ▸ Dokumentansichten |
-| Durchgestrichen | Start ▸ Schriftart |
+| Druckvorschau | Datei ▸ Drucken |
+| Dunkler | Bildtools ▸ Farbe |
+| Durchgestrichen | Start ▸ Schriftart · Texttools ▸ Schriftart |
 | Effekte | Seitenlayout ▸ Designs |
-| Eigenschaften | Einfügen ▸ Tabellen |
+| Eine Ebene nach hinten | Bildtools ▸ Anordnen · SmartArt-Design ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Eine Ebene nach vorne | Bildtools ▸ Anordnen · SmartArt-Design ▸ Anordnen · Zeichentools ▸ Anordnen |
 | Eine Seite | Ansicht ▸ Zoom |
 | Einfügen | Start ▸ Zwischenablage |
-| Einfügen ohne Formatierung | Start ▸ Zwischenablage |
+| Einstellungen | Start ▸ Einstellungen · Abschnitt ▸ Einstellungen · Texttools ▸ Einstellungen · Kopf- und Fußzeile ▸ Schließen |
+| Eintrag festlegen | Verweise ▸ Index |
 | Einzug | Seitenlayout ▸ Absatz |
-| Einzug & Listenebene | Start ▸ Absatz |
-| Einzug vergrößern | Start ▸ Absatz |
-| Einzug verringern | Start ▸ Absatz |
-| Endnote | Referenzen ▸ Fußnoten |
+| Einzug vergrößern | Start ▸ Absatz · Texttools ▸ Absatz |
+| Einzug verringern | Start ▸ Absatz · Texttools ▸ Absatz |
+| Endnote einfügen | Verweise ▸ Fußnoten |
 | Ergebnisse anzeigen | Sendungen ▸ Vorschau |
-| Ersetzen | Start ▸ Bearbeiten |
+| Erste Seite anders | Abschnitt ▸ Kopf- und Fußzeile |
+| Erste Spalte | Tabellentools ▸ Tabellenformatvorlagen |
+| Erster Datensatz | Mailings ▸ Vorschau |
 | Etiketten | Sendungen ▸ Erstellen |
+| Farbe | Bildtools ▸ Farbe |
+| Farbe ändern | Diagrammtools ▸ Elemente |
 | Farben | Seitenlayout ▸ Designs |
+| Farben ändern | SmartArt-Design ▸ Layouts |
+| Felder | Kopf- und Fußzeile ▸ Felder |
+| Felder zurücksetzen | Einfügen ▸ Formulare · Sendungen ▸ Formular |
 | Fensterliste | Ansicht ▸ Fenster |
-| Fett | Start ▸ Schriftart |
-| Form mit eigener Farbe… | Einfügen ▸ Illustrationen |
-| Format übertragen | Start ▸ Zwischenablage |
-| Formatierung löschen | Start ▸ Schriftart |
-| Formel | Einfügen ▸ Symbole |
-| Formen | Einfügen ▸ Illustrationen |
-| Fußnote | Referenzen ▸ Fußnoten |
-| Genaues Maß… | Start ▸ Absatz |
+| Fett | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Form bearbeiten | Zeichentools ▸ Formen |
+| Form einfügen | SmartArt-Design ▸ Grafik erstellen |
+| Format übertragen | Start ▸ Zwischenablage · Zeichentools ▸ Formen formatieren · Texttools ▸ Format |
+| Formatierung löschen | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Formeffekte | Zeichentools ▸ Formen formatieren · Texttools ▸ Form |
+| Formen | Einfügen ▸ Illustrationen · Bildtools ▸ Bild |
+| Formen einfügen | Zeichentools ▸ Formen |
+| Formfüllung | Zeichentools ▸ Formenstile · Zeichentools ▸ Formen formatieren |
+| Formkontur | Zeichentools ▸ Formenstile |
+| Formulare | Einfügen ▸ Formulare |
+| Formvorlagen | Zeichentools ▸ Formvorlagen |
+| Fortlaufender Abschnittsumbruch | Abschnitt ▸ Abschnitte |
+| Frei drehen | Bildtools ▸ Anordnen |
+| Freihand | Überprüfen ▸ Freihand |
+| Füllung | Texttools ▸ Form |
+| Fußnote einfügen | Verweise ▸ Fußnoten |
+| Fußnote/Endnotentrennlinie | Verweise ▸ Fußnoten |
+| Fußzeile | Kopf- und Fußzeile ▸ Einfügen |
+| Fußzeilenhöhe | Kopf- und Fußzeile ▸ Optionen |
+| Gebänderte Zeilen | Tabellentools ▸ Tabellenformatvorlagen |
+| Genko-Einstellung | Seitenlayout ▸ Seitenhintergrund |
+| Gerade und ungerade Seiten sind unterschiedlich | Abschnitt ▸ Kopf- und Fußzeile |
 | Gitternetzlinien | Ansicht ▸ Anzeigen |
-| Gliederung | Ansicht ▸ Dokumentansichten |
+| Gleichung | Einfügen ▸ Symbole |
+| Gliederung | Ansicht ▸ Dokumentansichten · Zeichentools ▸ Formen formatieren |
 | Groß-/Kleinschreibung | Start ▸ Schriftart |
-| Gruppieren | Seitenlayout ▸ Anordnen |
-| Größe | Seitenlayout ▸ Seite einrichten |
-| Gründlich prüfen | Überprüfen ▸ Dokumentprüfung · Schreibhilfe ▸ Prüfen |
+| Größe | Seitenlayout ▸ Seite einrichten · Abschnitt ▸ Seite |
+| Größe und Seitenverhältnis … | Bildtools ▸ Weitere |
+| Größe zurücksetzen | Bildtools ▸ Größe |
+| Gründlich prüfen | Schreibhilfe ▸ Prüfen |
+| Gruppieren | Seitenlayout ▸ Anordnen · Bildtools ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Gruppierung aufheben | Zeichentools ▸ Anordnen |
+| Heller | Bildtools ▸ Farbe |
 | Hervorheben | Start ▸ Schriftart |
-| Hochformat | Einfügen ▸ Seiten |
-| Hochgestellt | Start ▸ Schriftart |
+| Hervorhebung | Texttools ▸ Schriftart |
+| Hochformat | Abschnitt ▸ Seite |
+| Hochgestellt | Start ▸ Schriftart · Texttools ▸ Schriftart |
 | Hyperlink | Einfügen ▸ Links |
 | Immer dunkel | Ansicht ▸ Helligkeit |
 | Immer hell | Ansicht ▸ Helligkeit |
-| Indexeintrag | Referenzen ▸ Index |
-| Inhaltsverzeichnis | Referenzen ▸ Inhaltsverzeichnis |
+| In anderem neuen Dokument zusammenführen | Mailings ▸ Fertigstellen |
+| In neuem Dokument zusammenführen | Mailings ▸ Fertigstellen |
+| Index | Verweise ▸ Index |
+| Index aktualisieren | Verweise ▸ Index |
+| Index einfügen | Verweise ▸ Index |
+| Inhaltsverzeichnis | Verweise ▸ Inhaltsverzeichnis |
+| Inhaltsverzeichnis aktualisieren | Verweise ▸ Inhaltsverzeichnis |
 | Initiale | Einfügen ▸ Text |
 | Kacheln | Ansicht ▸ Fenster |
-| katalog | Start ▸ Stile |
-| KI-Korrektur | Schreibhilfe ▸ KI |
-| Kommentar löschen | Überprüfen ▸ Kommentare |
-| Kontrollkästchen | Sendungen ▸ Formular |
-| Kopf- und Fußzeile | Einfügen ▸ Kopf- und Fußzeile |
+| KI-Aktionen | Schreibhilfe ▸ KI |
+| KI-Chat | Schreibhilfe ▸ KI |
+| KI-Einstellungen | Schreibhilfe ▸ KI |
+| KI-Korrektur | Schreibhilfe ▸ Prüfen |
+| Kommentar | Einfügen ▸ Kommentar |
+| Kommentar einfügen | Überprüfen ▸ Kommentare |
+| Kontrast erhöhen | Bildtools ▸ Farbe |
+| Kontrast verringern | Bildtools ▸ Farbe |
+| Kontrollkästchen | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Kontur | Texttools ▸ Form |
+| Kopf- und Fußzeile | Einfügen ▸ Kopf- und Fußzeile · Abschnitt ▸ Kopf- und Fußzeile |
+| Kopf-/Fußzeilengruppe | Kopf- und Fußzeile ▸ Einfügen |
+| Kopfzeile | Tabellentools ▸ Tabellenformatvorlagen · Kopf- und Fußzeile ▸ Einfügen |
+| Kopfzeilen | Kopf- und Fußzeile ▸ Einfügen |
+| Kopfzeilenhöhe | Kopf- und Fußzeile ▸ Optionen |
+| Kopie speichern | Datei ▸ Speichern |
 | Kopieren | Start ▸ Zwischenablage |
-| Korrektursprache | Überprüfen ▸ Sprache |
-| Kursiv | Start ▸ Schriftart |
+| Korrektursprache … | Schreibhilfe ▸ Prüfen |
+| Kursiv | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Layout | SmartArt-Design ▸ Grafik erstellen |
+| Layout ändern | SmartArt-Design ▸ Layouts |
+| Layout von rechts nach links | SmartArt-Design ▸ Grafik erstellen |
 | Leere Seite | Einfügen ▸ Seiten |
+| Leeres Dokument | Datei ▸ Neu |
+| Legal | Abschnitt ▸ Seite |
 | Lesehilfe | Schreibhilfe ▸ Lesen |
 | Lesemodus | Schreibhilfe ▸ Lesen · Ansicht ▸ Dokumentansichten |
-| Lesezeichen / Textmarke | Einfügen ▸ Links |
+| Lesezeichen | Einfügen ▸ Links |
+| Letter | Abschnitt ▸ Seite |
+| Letzter Datensatz | Mailings ▸ Vorschau |
+| Level erhöhen | SmartArt-Design ▸ Grafik erstellen |
+| Level reduzieren | SmartArt-Design ▸ Grafik erstellen |
 | Lineal | Ansicht ▸ Anzeigen |
-| Linksbündig | Start ▸ Absatz |
-| Listenebene erhöhen | Start ▸ Absatz |
-| Listenebene verringern | Start ▸ Absatz |
-| Literaturverzeichnis | Referenzen ▸ Zitate und Literatur |
-| Markup anzeigen | Überprüfen ▸ Änderungen |
+| Link zu vorheriger Kopfzeile | Abschnitt ▸ Kopf- und Fußzeile |
+| Linksbündig | Start ▸ Absatz · Texttools ▸ Absatz |
+| Literaturverzeichnis | Verweise ▸ Zitate und Literatur |
+| Löschen | Überprüfen ▸ Kommentare |
 | Menüleiste | Ansicht ▸ Oberfläche |
+| Mit vorheriger verknüpfen | Kopf- und Fußzeile ▸ Navigation |
+| Mit voriger Fußzeile verknüpfen | Abschnitt ▸ Kopf- und Fußzeile |
+| Mittig ausrichten | Tabellentools ▸ Ausrichtung |
+| Moderat | Abschnitt ▸ Seite |
+| Nächste Endnote | Verweise ▸ Fußnoten |
+| Nächste Fußnote | Verweise ▸ Fußnoten |
+| Nächste Kopfzeile | Kopf- und Fußzeile ▸ Navigation |
+| Nächster Abschnitt | Abschnitt ▸ Abschnitte |
+| Nächster Datensatz | Mailings ▸ Vorschau |
+| Nächstes Feld einfügen | Mailings ▸ Felder |
+| Nächstes Textobjekt | Texttools ▸ Verknüpfung |
 | Navigationsbereich | Ansicht ▸ Anzeigen |
 | Nebeneinander | Ansicht ▸ Fenster |
-| Neue Quelle | Referenzen ▸ Zitate und Literatur |
-| Neuer Kommentar | Überprüfen ▸ Kommentare |
+| Neue Quelle | Verweise ▸ Zitate und Literatur |
 | Neues Fenster | Ansicht ▸ Fenster |
-| Notenbereich | Referenzen ▸ Fußnoten |
-| Nummerierung | Start ▸ Absatz |
-| Nächste Note | Referenzen ▸ Fußnoten |
-| Nächste Änderung | Überprüfen ▸ Änderungen |
-| Nächster Kommentar | Überprüfen ▸ Kommentare |
-| Objekte auswählen | Start ▸ Bearbeiten |
-| Optionen | Schreibhilfe ▸ Anzeigen |
-| Piktogramm | Einfügen ▸ Illustrationen |
-| Prüfen | Überprüfen ▸ Dokumentprüfung · Schreibhilfe ▸ Prüfen |
-| Quellen verwalten | Referenzen ▸ Zitate und Literatur |
-| Querformat | Einfügen ▸ Seiten |
-| Querverweis | Einfügen ▸ Links · Referenzen ▸ Beschriftungen |
-| raender | Seitenlayout ▸ Seitenränder |
-| Rechtsbündig | Start ▸ Absatz |
-| Rechtschreibprüfung | Schreibhilfe ▸ Beim Schreiben |
-| Rechtschreibung | Überprüfen ▸ Dokumentprüfung |
+| Normal | Abschnitt ▸ Seite |
+| Notenbereich | Verweise ▸ Fußnoten |
+| Nummerierung | Start ▸ Absatz · Texttools ▸ Absatz |
+| Oben ausrichten | Tabellentools ▸ Ausrichtung |
+| Objekt | Einfügen ▸ Text |
+| Objekt aus Datei | Einfügen ▸ Text |
+| Objekt einfügen | Einfügen ▸ Text |
+| Öffnen | Datei ▸ Öffnen |
+| Optionen / Einstellungen | Datei ▸ Programm |
+| Optionen für Kopf- und Fußzeile | Kopf- und Fußzeile ▸ Optionen |
+| Optionen … | Abschnitt ▸ Einstellungen |
+| Orientierung | Seitenlayout ▸ Seite einrichten · Abschnitt ▸ Seite |
+| Originalgröße | Bildtools ▸ Weitere |
+| Prüfen | Schreibhilfe ▸ Prüfen |
+| Quellen verwalten | Verweise ▸ Zitate und Literatur |
+| Querformat | Abschnitt ▸ Seite |
+| Querverweis | Einfügen ▸ Links · Verweise ▸ Beschriftungen |
+| Rahmen | Bildtools ▸ Farbe |
+| Rahmenlinien ein/aus | Tabellentools ▸ Entwurf: Rahmen und Farbe |
+| Ränder | Seitenlayout ▸ Ränder · Abschnitt ▸ Seite |
+| Rechtsbündig | Start ▸ Absatz · Texttools ▸ Absatz |
+| Rechtschreibprüfung | Überprüfen ▸ Dokumentprüfung |
 | Regeln | Sendungen ▸ Seriendruck |
 | Register anpassen | Ansicht ▸ Oberfläche |
-| Ränder | Seitenlayout ▸ Ränder |
-| Schaltfläche | Sendungen ▸ Formular |
+| Rückwärts | SmartArt-Design ▸ Grafik erstellen |
+| Schaltfläche | Einfügen ▸ Formulare · Sendungen ▸ Formular |
+| Schließen | Datei ▸ Programm · Kopf- und Fußzeile ▸ Schließen |
+| Schmal | Abschnitt ▸ Seite |
 | Schnellbaustein einfügen | Schreibhilfe ▸ Bausteine |
-| Schnelltabelle | Einfügen ▸ Tabellen |
-| Schrift vergrößern | Start ▸ Schriftart |
-| Schrift verkleinern | Start ▸ Schriftart |
-| Schrift zum Lesen | Schreibhilfe ▸ Lesen |
+| Schnellbausteine | Einfügen ▸ Text |
+| Schnelllayout | Diagrammtools ▸ Elemente |
+| Schrift vergrößern | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Schrift verkleinern | Start ▸ Schriftart · Texttools ▸ Schriftart |
 | Schriftarten | Seitenlayout ▸ Designs |
-| Schriftfarbe | Start ▸ Schriftart |
+| Schriftfarbe | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Seitenbereich | Datei ▸ Drucken |
 | Seitenbreite | Ansicht ▸ Zoom |
 | Seitenfarbe | Seitenlayout ▸ Seitenhintergrund |
 | Seitenleiste Schreibhilfe | Schreibhilfe ▸ Anzeigen |
 | Seitenränder | Seitenlayout ▸ Seitenhintergrund |
-| Seitenumbruch | Einfügen ▸ Seiten |
-| Seitenzahl | Einfügen ▸ Kopf- und Fußzeile |
+| Seitenumbruch | Start ▸ Absatz |
+| Seitenverhältnis sperren | Bildtools ▸ Größe |
+| Seitenzahl | Einfügen ▸ Kopf- und Fußzeile · Abschnitt ▸ Kopf- und Fußzeile · Kopf- und Fußzeile ▸ Einfügen |
+| Seriendruck | Verweise ▸ Seriendruck |
+| Seriendruck schließen | Mailings ▸ Fertigstellen |
 | Seriendruck-Assistent | Sendungen ▸ Seriendruck |
+| Seriendruck-Vorschau | Mailings ▸ Vorschau |
+| Seriendruckempfänger | Mailings ▸ Datenquelle |
 | Seriendruckfeld | Sendungen ▸ Seriendruck |
-| Silbentrennung | Seitenlayout ▸ Absatz · Schreibhilfe ▸ Sprache |
+| Seriendruckfeld einfügen | Mailings ▸ Felder |
+| Seriendruckfelder hervorheben | Mailings ▸ Felder |
+| Silben farbig | Schreibhilfe ▸ Lesen |
+| Silbentrennung | Schreibhilfe ▸ Sprache |
 | SmartArt | Einfügen ▸ Illustrationen |
-| Sonderzeichen | Einfügen ▸ Symbole |
-| Sortieren | Start ▸ Absatz |
+| Sortieren | Start ▸ Absatz · Texttools ▸ Absatz |
+| Spalte links einfügen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Spalte löschen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Spalte rechts einfügen | Tabellentools ▸ Layout: Zeilen und Spalten |
 | Spalten | Seitenlayout ▸ Seite einrichten |
-| Sprache und Prüfung | Schreibhilfe ▸ Sprache |
-| Steuerzeichen | Start ▸ Absatz |
-| Stichwortverzeichnis | Referenzen ▸ Index |
+| Spaltenumbruch | Start ▸ Absatz |
+| Speichern | Datei ▸ Speichern |
+| Speichern unter | Datei ▸ Speichern |
+| Sprache | Schreibhilfe ▸ Sprache |
+| Steuerzeichen | Ansicht ▸ Anzeigen |
 | Stimme und Tempo | Schreibhilfe ▸ Vorlesen |
-| Suchen | Start ▸ Bearbeiten |
-| Suchen und Ersetzen | Start ▸ Bearbeiten |
+| Suchen oder ersetzen | Start ▸ Suchen |
+| Symbol | Einfügen ▸ Symbole |
 | Symbol austauschen | Ansicht ▸ Oberfläche |
 | Symbolleisten | Ansicht ▸ Oberfläche |
-| Tabelle einfügen | Einfügen ▸ Tabellen |
-| Tabellenblatt | Einfügen ▸ Tabellen |
-| Text aus Datei | Einfügen ▸ Text |
+| Tabelle | Einfügen ▸ Tabellen |
+| Tabelle löschen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Tabelle sortieren | Tabellentools ▸ Zellen |
+| Tabellenformatvorlagen | Tabellentools ▸ Tabellenformatvorlagen |
+| Tabulatoren | Start ▸ Absatz |
+| Text entwerfen | Schreibhilfe ▸ KI |
+| Text in Bild | Schreibhilfe ▸ KI |
+| Text in der Form … | Zeichentools ▸ Formenstile |
+| Text mit KI | Schreibhilfe ▸ KI |
+| Text umformulieren | Schreibhilfe ▸ KI |
+| Text zusammenfassen | Schreibhilfe ▸ KI |
 | Textbausteine | Schreibhilfe ▸ Bausteine |
 | Textbegrenzungen | Ansicht ▸ Anzeigen |
-| Texteffekte | Start ▸ Schriftart |
-| Textfeld | Einfügen ▸ Text · Sendungen ▸ Formular |
-| Textfluss | Seitenlayout ▸ Anordnen |
-| Textrichtung | Seitenlayout ▸ Seite einrichten |
-| Thesaurus | Überprüfen ▸ Dokumentprüfung · Schreibhilfe ▸ Sprache |
-| Tiefgestellt | Start ▸ Schriftart |
-| Umbrüche | Seitenlayout ▸ Seite einrichten |
+| Texteffekte | Start ▸ Schriftart · Texttools ▸ Text |
+| Textfeld | Einfügen ▸ Text · Einfügen ▸ Formulare · Sendungen ▸ Formular · Zeichentools ▸ Formen · Texttools ▸ Textfeld |
+| Textfluss | Seitenlayout ▸ Anordnen · SmartArt-Design ▸ Anordnen |
+| Textflussumbruch | Start ▸ Absatz |
+| Textfüllung | Texttools ▸ Text |
+| Textkontur | Texttools ▸ Text |
+| Textrichtung | Start ▸ Absatz · Seitenlayout ▸ Seite einrichten · Texttools ▸ Absatz |
+| Textumbruch / Position | Zeichentools ▸ Anordnen |
+| Textumbruch Stil | Bildtools ▸ Anordnen · Zeichentools ▸ Anordnen |
+| Thesaurus | Schreibhilfe ▸ Sprache |
+| Tiefgestellt | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Transparente Farbe einstellen | Bildtools ▸ Farbe |
+| Übereinstimmende Felder festlegen | Mailings ▸ Felder |
+| Überprüfen | Überprüfen ▸ Nachverfolgung |
+| Übersetzen | Schreibhilfe ▸ Sprache |
+| Um 90° nach links drehen | Bildtools ▸ Farbe |
+| Um 90° nach rechts drehen | Bildtools ▸ Farbe |
+| Umbrüche | Start ▸ Absatz · Einfügen ▸ Seiten · Seitenlayout ▸ Seite einrichten |
 | Umschlag | Sendungen ▸ Erstellen |
+| Umschlag C5 | Abschnitt ▸ Seite |
+| Umschlag C6 | Abschnitt ▸ Seite |
+| Umschlag DIN lang | Abschnitt ▸ Seite |
+| Unten ausrichten | Tabellentools ▸ Ausrichtung |
 | Untereinander | Ansicht ▸ Fenster |
-| Unterstrichen | Start ▸ Schriftart |
+| Unterstrichen | Start ▸ Schriftart · Texttools ▸ Schriftart |
+| Verbesserungsvorschläge | Schreibhilfe ▸ Prüfen |
+| Vergleichen | Überprüfen ▸ Vergleichen |
 | Vergrößern | Ansicht ▸ Zoom |
 | Verkleinern | Ansicht ▸ Zoom |
-| Verteilt | Start ▸ Absatz |
+| Verknüpfung erstellen | Texttools ▸ Verknüpfung |
+| Verteilt | Start ▸ Absatz · Texttools ▸ Absatz |
 | Vertikales Lineal | Ansicht ▸ Anzeigen |
-| Verzeichnisse aktualisieren | Referenzen ▸ Inhaltsverzeichnis |
-| Vorige Note | Referenzen ▸ Fußnoten |
-| Vorige Änderung | Überprüfen ▸ Änderungen |
-| Voriger Kommentar | Überprüfen ▸ Kommentare |
+| Vollbild | Ansicht ▸ Dokumentansichten |
+| Von links nach rechts | Start ▸ Absatz |
+| Von rechts nach links | Start ▸ Absatz |
+| Vorherige | Überprüfen ▸ Kommentare · Überprüfen ▸ Änderungen |
+| Vorherige Endnote | Verweise ▸ Fußnoten |
+| Vorherige Fußnote | Verweise ▸ Fußnoten |
+| Vorheriger Abschnitt | Abschnitt ▸ Abschnitte |
+| Vorheriger Datensatz | Mailings ▸ Vorschau |
+| Vorige Kopfzeile | Kopf- und Fußzeile ▸ Navigation |
+| Voriges Textobjekt | Texttools ▸ Verknüpfung |
+| Vorlagen durchsuchen | Datei ▸ Neu |
 | Vorlagen zurücksetzen | Ansicht ▸ Oberfläche |
 | Vorlesen | Schreibhilfe ▸ Vorlesen |
-| Vorschläge | Schreibhilfe ▸ KI |
-| Wasserzeichen | Seitenlayout ▸ Seitenhintergrund |
+| Vorwärts | SmartArt-Design ▸ Grafik erstellen |
+| Wasserzeichen | Einfügen ▸ Kopf- und Fußzeile |
 | Weblayout | Ansicht ▸ Dokumentansichten |
+| Weiter | Überprüfen ▸ Kommentare · Überprüfen ▸ Änderungen |
+| Weitere Ansichten | Ansicht ▸ Dokumentansichten |
+| Weitere Anzeigen | Ansicht ▸ Anzeigen |
+| Weitere Papierformate… | Abschnitt ▸ Seite |
 | Welche Hilfe wann | Schreibhilfe ▸ Prüfen |
+| Wellenlinien | Schreibhilfe ▸ Beim Schreiben |
 | Wie das System | Ansicht ▸ Helligkeit |
-| WordArt | Einfügen ▸ Illustrationen |
-| Wort-Extras | Start ▸ Zwischenablage |
-| Wortvorhersage | Schreibhilfe ▸ Beim Schreiben |
+| WordArt | Einfügen ▸ Text |
+| Wort-Extras | Start ▸ Extras |
 | Wörter zählen | Überprüfen ▸ Dokumentprüfung |
-| Zeichenumriss | Start ▸ Schriftart |
-| Zeilenabstand | Start ▸ Absatz |
+| Wortvorhersage | Schreibhilfe ▸ Beim Schreiben |
+| Zahl | Einfügen ▸ Symbole |
+| Zeichenschattierung | Start ▸ Schriftart |
+| Zeile löschen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Zeile oberhalb einfügen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Zeile unterhalb einfügen | Tabellentools ▸ Layout: Zeilen und Spalten |
+| Zeilenabstand | Start ▸ Absatz · Texttools ▸ Absatz |
 | Zeilenfokus | Schreibhilfe ▸ Lesen |
 | Zeilennummern | Seitenlayout ▸ Seite einrichten |
-| Zentriert | Start ▸ Absatz |
-| Zitat einfügen | Referenzen ▸ Zitate und Literatur |
-| Zitierweise | Referenzen ▸ Zitate und Literatur |
+| Zeilenumbruch | Start ▸ Absatz |
+| Zelle teilen | Tabellentools ▸ Zellen |
+| Zellen verbinden | Tabellentools ▸ Zellen |
+| Zellenschattierung | Tabellentools ▸ Entwurf: Rahmen und Farbe |
+| Zentriert | Start ▸ Absatz · Texttools ▸ Absatz |
+| Zitat einfügen | Verweise ▸ Zitate und Literatur |
+| Zitierweise | Verweise ▸ Zitate und Literatur |
 | Zoom | Ansicht ▸ Zoom |
-| Zwei Seiten | Ansicht ▸ Dokumentansichten |
-| Änderung ablehnen | Überprüfen ▸ Änderungen |
-| Änderung annehmen | Überprüfen ▸ Änderungen |
-| Änderungen verfolgen | Überprüfen ▸ Änderungen |
-| Überarbeitungsbereich | Überprüfen ▸ Änderungen |
-| Übersetzen | Schreibhilfe ▸ Sprache |
+| Zuletzt verwendete Dokumente | Datei ▸ Öffnen |
+| Zur Note springen | Verweise ▸ Fußnoten |
+| Zuschneiden | Bildtools ▸ Größe |
+| Zuschneiden nach Maß … | Bildtools ▸ Weitere |
+| Zwei Seiten | Ansicht ▸ Zoom |
+| Zwischen Kopf- und Fußzeile wechseln | Kopf- und Fußzeile ▸ Navigation |
 
 ---
 

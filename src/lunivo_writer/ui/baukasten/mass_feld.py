@@ -60,7 +60,7 @@ FELD_EINHEITEN = {"mm": (1.0, "mm", 1), "cm": (0.1, "cm", 2), "in": (1 / 25.4, "
 
 
 class EinheitFeld(QWidget):
-    """Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ im WPS): der Wert ist immer in Millimetern, angezeigt wird er in der
+    """Zahlenfeld mit Einheiten-Auswahl daneben (wie „0 char ▾“ in der Vorlage): der Wert ist immer in Millimetern, angezeigt wird er in der
     gewählten Einheit. ``value()`` / ``setValue()`` / ``valueChanged`` arbeiten in Millimetern."""
     valueChanged = Signal(float)
 

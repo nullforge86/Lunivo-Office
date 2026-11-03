@@ -57,8 +57,7 @@ class MeinDialog(DialogRahmen):
 
 Der Rahmen eines Absatzes steht als Text `farbe|pt|art` am Absatz (`B_RAHMEN`); ein vierter Teil nennt die Seiten, wenn nicht alle
 vier gemeint sind: `t` oben, `b` unten, `l` links, `r` rechts, `h` zwischen zwei Absätzen (`editor/linie.py`, Klasse `Linie`).
-Ohne vierten Teil gelten alle Seiten, ältere Dateien bleiben also gültig. Gezeichnet wird in `editor/pagination.py`, nach Word
-gespeichert und gelesen als `w:pBdr` (`top`, `left`, `bottom`, `right`, `between`; Linienarten einfach, doppelt, gestrichelt,
+Ohne vierten Teil gelten alle Seiten, ältere Dateien bleiben also gültig. Gezeichnet wird in `editor/pagination.py`, im DOCX gespeichert und gelesen als `w:pBdr` (`top`, `left`, `bottom`, `right`, `between`; Linienarten einfach, doppelt, gestrichelt,
 gepunktet, Strich-Punkt).
 
 - **Menü** (`RahmenMenue`): schaltet einzelne Seiten ein/aus, „Alle“, „Außen“, „Kein“; neue Rahmen übernehmen die zuletzt
@@ -74,7 +73,7 @@ unten kommt überall von `fussleiste` (`dialog_rahmen.py`), Maße von `EinheitFe
 |---|---|---|
 | Absatz | `absatz_dialog.py` | Einzüge, Abstände, Zeilenabstand (Faktor, Mindestens, Genau), Gliederungsebene, Seitenumbruch, Absatzoptionen (`editor/absatzopt.py`); Umbruchregeln wirkt `editor/seitenfluss.py` |
 | Tabstopps | `tabstopp_dialog.py` | Position, Ausrichtung, Füllzeichen (`editor/tabfuell.py`, gezeichnet), Standardtabstopps (`w:defaultTabStop`) |
-| Schriftart | `schriftart_dialog.py` | alle Felder wie im WPS: asiatisch/westlich/komplex, Unterstreichungsarten, Betonungszeichen, Effekte, Zeichenabstand; Zeichnen der Extras in `editor/textfx.py` |
+| Schriftart | `schriftart_dialog.py` | alle Felder: asiatisch/westlich/komplex, Unterstreichungsarten, Betonungszeichen, Effekte, Zeichenabstand; Zeichnen der Extras in `editor/textfx.py` |
 | Texteffekte | `texteffekt_dialog.py` | Füllung (Farbe, Verlauf), Kontur, Schatten, Reflektion, Leuchten, 3D; Zeichnen in `editor/textfx.py`, DOCX als `w14:*` in `editor/texteffekt.py` |
 | Nummerierung | `liste_dialog.py` | Aufzählung, Nummerierung, mehrstufige Gliederung (`editor/mehrstufig.py`, selbst gezeichnet), Anpassen-Fenster |
 | Tastenkombination | `tasten_dialog.py` | eine Tastenkombination aufnehmen, Belegung prüfen |
@@ -108,7 +107,7 @@ Ebenso die Fenster der Reiter Einfügen, Verweise, Sendungen und Überprüfen (Z
 Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inhaltsverzeichnis, Indexeintrag, Nummerierung,
 Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
 Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
-`schmal_machen` in Ruhe). Was in der WPS-Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
+`schmal_machen` in Ruhe). Was in der Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
 Vorschaubilder verkleinern sich mit der Breite. Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
 nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
 Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
@@ -121,7 +120,7 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 
 | Baustein | Datei | Aufgabe |
 |---|---|---|
-| Suchmaschine | `editor/suche.py` | `Suchauftrag` (Groß/klein, ganzes Wort, Platzhalter wie Word, Präfix, Suffix, Satz- und Leerzeichen übergehen, Zeichen- und Absatzformat), Sonderzeichen-Codes (`SPEZIAL`, `^p ^t ^l …`), `naechster`, `treffer`, `ersatz_text`, `alle_ersetzen` (ein Rückgängig-Schritt). Keine Oberfläche |
+| Suchmaschine | `editor/suche.py` | `Suchauftrag` (Groß/klein, ganzes Wort, Platzhalter, Präfix, Suffix, Satz- und Leerzeichen übergehen, Zeichen- und Absatzformat), Sonderzeichen-Codes (`SPEZIAL`, `^p ^t ^l …`), `naechster`, `treffer`, `ersatz_text`, `alle_ersetzen` (ein Rückgängig-Schritt). Keine Oberfläche |
 | Gehe zu | `editor/gehe_zu.py` | `ELEMENTE` (Seite, Abschnitt, Zeile, Textmarke, …), `positionen`, `ziel(ed, element, eingabe, richtung)` |
 | Suchen-Feld | `ui/document/suchen_feld.py` | `SuchenFeld`: Reiter Suchen/Ersetzen/Gehe zu, Erweitern/Reduzieren, Format ▾ (Schriftart, Absatz, Tabstopps, Formatvorlage, Hervorheben), Spezial ▾, Lesehervorhebung, Suchen in. Sitzt in der linken Seitenleiste (`navigation.py`), Unterfenster über `ausfuehren_im_stapel` |
 | Auswählen | `editor/auswahl.py`, `ui/baukasten/auswahl_bereich.py` | Tabelle ohne Rahmen, ähnliche Formatierung (hervorgehoben, da Qt nur eine Markierung kennt); `AuswahlBereich` listet alle Objekte |
@@ -197,11 +196,42 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Original | `ui/document/vorschau_ansicht.py` | dieselbe Vorschau mit `art="original"` |
 | Fenster | `ui/dialogs/ueberpruefen_fenster.py` | `WoerterDialog`, `SchutzDialog` (Seitenleiste) |
 
+## Weitere Bausteine in `ui/baukasten/`
+
+| Baustein | Datei | Aufgabe |
+|---|---|---|
+| Aktionsleiste | `aktionen_leiste.py` | „Meine Aktionen“: die schnellen KI-Aktionen (eigene Assistenten) als Knöpfe, in der Seitenleiste der Schreibhilfe und im KI-Chat dieselbe Leiste |
+| Beschriftung | `beschriftung.py` | Beschriftungen mit Schrifteigenschaften oder Markdown (`Qt.MarkdownText`) |
+| Bild vergrößern | `bild_zoom.py` | Fenster „Vergrößern“ (Lupe in der Schnellleiste am Bild): Bild in seiner Auflösung, Zoom mit Regler und Mausrad |
+| Dateisymbole | `datei_symbole.py` | lokale Dateityp-Symbole aus der zentralen Symbolsammlung |
+| Diagramm-Popups | `diagramm_popups.py` | Popups der Schnellleiste am Diagramm und Klappen der Diagrammtools — Band und Schnellleiste zeigen dasselbe |
+| Druckfenster | `druck_dialog.py` | Vorschau links, rechts die Reiter „Standard“, „Lunivo-Office“ und „Drucker“ |
+| Druckvorschau | `druckvorschau.py` | Druckvorschau als ganzes Fenster: Blattwechsel, Ansicht (eine, zwei, alle Seiten), Zoom, Einpassen |
+| Einklappgruppe | `einklappgruppe.py` | eingeklappte Gruppe („Weitere Einstellungen“): Knopf mit Pfeil, darunter der Inhalt auf Wunsch |
+| Fensterstapel | `fenster_stapel.py` | Unterfenster öffnen als Seite im selben Fenster statt als neues Fenster darüber |
+| Formmenüs | `form_menues.py` | Menüs und Galerie der Zeichentools für Formen („Form bearbeiten“, Stilgalerie) |
+| Galerieauswahl | `galerie_auswahl.py` | Galerie-Popup: Kacheln mit Textprobe und Namen, in Spalten, mit Aktionen darunter |
+| Kachelfeld | `kachel_feld.py` | beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die Umbruchart eines Bildes) |
+| Layoutfenster | `layout_dialog.py` | Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe |
+| Layoutoptionen | `layout_optionen.py` | Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart, „Mit Text verschieben“, „Fester Text“ |
+| Objektformat | `objektformat_panel.py` | Seitenleiste „Formatierung“ für Bild, Form, Textfeld oder WordArt |
+| Objektmenüs | `objekt_menues.py` | Popups für markierte Bilder oder Formen: Formstile, Füllung, Kontur |
+| Panelrahmen | `panel_rahmen.py` | Rahmen eines Feldes in einer Seitenleiste: Titel, Knöpfe, Menü und Schließen |
+| Leitzeichen | `ruby_dialog.py` | Fenster „Phonetisches Leitzeichen“: Text in Teilen mit Leittext, Ausrichtung, Abstand, Schrift |
+| Schreibweise | `schreibweise_dialog.py` | Fenster „Groß-/Kleinschreibung“: eine der fünf Arten wählen |
+| SmartArt-Format | `smartart_format_panel.py` | Seitenleiste „Formatierung“ für SmartArt: Füllung und Linie, Effekte, Textoptionen |
+| SmartArt-Menüs | `smartart_menues.py` | Menüs, Galerie und Miniaturen für SmartArt (Reiter „SmartArt-Design“, Schnellleiste, Dialog „SmartArt-Grafik auswählen“) |
+| Textformat | `text_format.py` | Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabstand wie im Band |
+| Umbruchsymbole | `umbruch_symbole.py` | Bildchen für den Textumbruch um ein Bild: Textzeilen in Grau, das Bild als blaues Feld |
+| Eingeschlossene Zeichen | `umschlossen_dialog.py` | Fenster „Eingeschlossene Zeichen“: Vorlage, Text und Form (Kreis, Quadrat, Dreieck, Raute) |
+| Vorlagengalerie | `vorlagen_galerie.py` | Seite „Neu“: leeres Dokument starten oder Standard- und eigene Vorlagen durchsuchen |
+| Werkbank | `werkbank.py` | die Funktionen eines Reiters der Schreibhilfe als große Zeilen (Symbol, Name, Hinweis, Tastenkürzel, „an/aus“) |
+
 ## Befehle nach Aufgaben
 
 `core/commands.py` enthält nur noch die Grundfunktionen von `Befehle` (Aktion suchen, ausführen, Zustand). Die Befehle selbst stehen in
 `core/befehle/`, je Aufgabe ein Baustein: `text` (Zeichen und Absatz), `bearbeiten`, `einfuegen`, `seite` (Seite, Abschnitte, Spalten),
-`pruefen` (Schreibhilfe, Vergleichen), `ueberpruefen` (Reiter Überprüfen), `serien` (Mailings), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `ki`, `extern`.
+`pruefen` (Schreibhilfe, Vergleichen), `ueberpruefen` (Reiter Überprüfen), `serien` (Mailings), `ansicht`, `datei`, `verweise`, `kommentare`, `kontext` (Tabelle, Bild, Formen), `kopffuss`, `bildtools`, `formtools`, `texttools`, `smartarttools`, `diagrammtools`, `hilfen`, `ki`.
 Ein neuer Befehl kommt in den Baustein seiner Aufgabe; `Befehle` setzt sie zusammen. Kein Baustein importiert `commands.py`.
 
 ## Aufbau der großen Klassen
@@ -214,7 +244,7 @@ Die drei großen Klassen sind nach Aufgaben in Bausteine (Mixins) geteilt. Die H
 | `Befehle` | `core/commands.py` (Grundfunktionen) | `core/befehle/*.py` |
 | `MainWindow` | `ui/main_window.py` | `ui/hauptfenster/`: `dateien`, `bearbeiten`, `oberflaeche`, `backstage_steuerung` |
 | `DocumentEditor` | `ui/document/document_editor.py` | `ui/document/editor_*.py`: `anzeige`, `spalten`, `seiten`, `formatierung`, `bilder`, `schreibhilfe` |
-| `OptionenAnsicht` | `ui/dialogs/optionen.py` | `ui/dialogs/optionen_seiten/`: `lesen`, `ansicht`, `datei`, `befehle`, `lunivo` |
+| `OptionenAnsicht` | `ui/dialogs/optionen.py` | `ui/dialogs/optionen_seiten/`: `lesen`, `ansicht`, `datei`, `befehle`, `lunivo`, `name_ki` |
 
 Regel: Ein neuer Befehl, eine neue Editor-Funktion oder eine neue Optionen-Seite kommt in den Baustein ihrer Aufgabe, nicht in die Hauptdatei.
 Bausteine kennen die Hauptdatei nicht (kein Import zurück); Werte, die mehrere brauchen, stehen in `gemeinsam.py` des jeweiligen Ordners.

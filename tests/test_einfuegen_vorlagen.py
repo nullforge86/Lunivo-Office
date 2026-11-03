@@ -1,4 +1,4 @@
-"""Reiter Einfügen nach Kays WPS-Vorlagen (Ordner einfuegen/): Klappmenüs, Zahl, Felder, Text ↔ Tabelle, Leere Seite quer."""
+"""Reiter Einfügen nach Kays Vorlagen (Ordner einfuegen/): Klappmenüs, Zahl, Felder, Text ↔ Tabelle, Leere Seite quer."""
 from __future__ import annotations
 
 import pytest
@@ -32,7 +32,7 @@ def test_klappmenues_wie_vorlage(fenster):
     assert _texte(b.klappe("bildKlappe")) == ["Bild aus Datei einfügen …", "Bildschirmfoto …", "Piktogramm …"]
     tf = b.klappe("textfeldKlappe")
     assert _texte(tf) == ["Horizontal", "Vertikal", "Mehrzeiliger Text"]
-    assert all(a.isEnabled() for a in tf.actions() if a.text())          # wie in WPS: alle drei wählbar
+    assert all(a.isEnabled() for a in tf.actions() if a.text())          # wie in der Vorlage: alle drei wählbar
     assert _texte(b.klappe("schnellbausteineKlappe")) == ["AutoText-Liste", "Felder …"]
     assert b.hat("textflussumbruch")                        # auch im Seitenlayout-Menü nicht mehr grau
 
@@ -53,8 +53,8 @@ def test_band_einfuegen_reihenfolge(fenster):
     for a, z in (("Deckblatt", "Leere Seite"), ("Leere Seite", "Umbrüche"), ("Umbrüche", "Tabelle"), ("Tabelle", "Bild"),
                  ("Textfeld", "WordArt"), ("Symbol", "Gleichung"), ("Gleichung", "Zahl"), ("Zahl", "Hyperlink")):
         assert namen.index(a) < namen.index(z)
-    assert all(g["name"] != "Weitere" for g in tab["gruppen"])     # nicht länger als die WPS-Vorlage (Kay, 2026-10-28)
-    # nichts geht verloren: was WPS nicht im Band hat, steht in den Klappen
+    assert all(g["name"] != "Weitere" for g in tab["gruppen"])     # nicht länger als die Vorlage (Kay, 2026-10-28)
+    # nichts geht verloren: was die Vorlage nicht im Band hat, steht in den Klappen
     assert "Text aus Datei …" in _texte(fenster.befehle.klappe("objektKlappe"))
 
 
@@ -369,7 +369,7 @@ def test_seitenzahl_vorgaben_und_entfernen(fenster):
     assert p.footer.text == "{PAGE}" and p.header.text == "Bericht"          # nicht doppelt
     assert SZ.seitenzahlen_entfernen(p) and p.footer.text == "" and not SZ.seitenzahlen_entfernen(p)
     m = fenster.befehle.klappe("seitenzahlKlappe")
-    assert len(m.knoepfe) == 10 and all(k.isEnabled() for k in m.knoepfe.values())        # außen/innen wie in WPS wählbar
+    assert len(m.knoepfe) == 10 and all(k.isEnabled() for k in m.knoepfe.values())        # außen/innen wie in der Vorlage wählbar
     m.gewaehlt.emit("fuss_rechts")
     s = fenster.current_editor().abschnitt_seite()
     assert (s.footer.text, s.footer.align) == ("{PAGE}", "right")
@@ -555,7 +555,7 @@ def test_wordart_galerie_fuegt_sofort_ein(fenster):
     e = fenster.current_editor()
     m = b.klappe("wordartKlappe")
     assert len(m.knoepfe) == 15 == len(E.WORDART_VORLAGEN)
-    assert m._spalten == 9                                                 # wie in WPS: neun Stile oben, sechs darunter
+    assert m._spalten == 9                                                 # wie in der Vorlage: neun Stile oben, sechs darunter
     m.gewaehlt.emit("3")                                                   # Klick auf Stil 4: ohne Fenster, sofort im Dokument
     d = formen.wordart_daten(e)                                            # freies Objekt, ausgewählt (siehe test_frei_objekt.py)
     assert d["text"] == "Hier Text einfügen" and d["vorlage"] == 3 and d["pt"] == 36 and e.bild_format() is None
@@ -721,7 +721,7 @@ def test_deckblatt_ausgabe_mit_grafik(fenster, tmp_path):
 
 
 def test_umbrueche_wirken(fenster):
-    """Alle sieben Einträge der Umbrüche-Klappe wirken im Dokument (WPS-Vorlage ``einfuegen/03-umbrueche.png``)."""
+    """Alle sieben Einträge der Umbrüche-Klappe wirken im Dokument (Vorlage ``einfuegen/03-umbrueche.png``)."""
     from PySide6.QtGui import QTextFormat
     from lunivo_writer.editor import abschnitte as AB
     from lunivo_writer.editor.zusatz import B_SPALTE

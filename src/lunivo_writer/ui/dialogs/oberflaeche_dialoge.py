@@ -39,7 +39,7 @@ def _satz(text: str, gedaempft: bool = False) -> QLabel:
 
 
 class RegisterAnpassenDialog(PanelFaehig, QDialog):
-    """Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“ in WPS."""
+    """Reiter ein-/ausblenden und umordnen — wie „Menüband anpassen“."""
 
     def __init__(self, parent, settings, daten: dict):
         super().__init__(parent)

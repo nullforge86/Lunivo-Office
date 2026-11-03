@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Mailings“ (Seriendruck) nach der WPS-Vorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
+"""Kontext-Reiter „Mailings“ (Seriendruck) nach der Vorlage: erscheint über Verweise ▸ Seriendruck und bleibt, bis
 „Seriendruck schließen“. Datenquelle, Felder, Vorschau mit Datensatz-Blättern, Zusammenführen."""
 from __future__ import annotations
 

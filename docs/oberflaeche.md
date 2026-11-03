@@ -2,38 +2,38 @@
 
 Band und Symbolleisten, das Lineal, Formatvorlagen, Anpassen.
 
-**Zwei Oberflächen.** *Ansicht ▸ Benutzeroberfläche* stellt zwischen
-Symbolleisten (zwei Zeilen, alles sichtbar) und Registern (Reiter wie in
-Word) um. Dieselben Befehle, anders sortiert.
+**Zwei Oberflächen.** *Ansicht ▸ Oberfläche ▸ Benutzeroberfläche* stellt zwischen
+Symbolleisten (zwei Zeilen, alles sichtbar) und Registern (Reiter) um. Dieselben Befehle, anders sortiert.
 
-Das Register hat acht Reiter — Start, Einfügen, Seitenlayout,
-Referenzen, Überprüfen, Schreibhilfe, Sendungen, Ansicht — und sechs
-weitere, die nur da sind, wenn sie etwas zu sagen haben.
+Das Register zeigt standardmäßig acht Reiter — Start, Einfügen, Seitenlayout,
+Verweise, Überprüfen, Schreibhilfe, Ansicht, Abschnitt. *Sendungen* ist
+vorhanden, aber ausgeblendet (einblendbar unter *Register anpassen*). Dazu
+kommen Kontext-Reiter, die nur da sind, wenn sie etwas zu sagen haben.
 
-**Einen Datei-Reiter gibt es nicht**, so wenig wie im Writer. Links
-davor steht **☰ Menü**: Neu, Öffnen, Speichern, Speichern unter, Als PDF
+**Der Reiter „Datei“ bleibt verborgen.** Links
+vor den Reitern steht stattdessen **☰ Menü**: Neu, Öffnen, Speichern, Speichern unter, Als PDF
 exportieren, Als Bild exportieren, Drucken, Dokumentverschlüsselung,
 Hilfe, Optionen, Beenden. Es klappt als Tafel mit zwei Spalten auf —
 links die Befehle, rechts die zuletzt benutzten Dateien. Ein Punkt mit
 Pfeil legt kein Fenster darüber, er füllt die rechte Spalte.
 
-Gleich daneben der **Schnellzugriff**: Öffnen, Speichern, Als PDF,
-Drucken, Druckvorschau, Rückgängig, Wiederholen. Dasselbe ☰ steht auch
+Gleich daneben der **Schnellzugriff**: Öffnen, Neu aus Vorlage, Speichern,
+Als PDF, Drucken, Druckvorschau, Rückgängig, Wiederholen (die Auswahl ist
+anpassbar). Dasselbe ☰ steht auch
 am Anfang der oberen Symbolleiste — beide Oberflächen tragen denselben
 Aufbau.
 
 **Die beiden Lineale** messen wirklich: Zentimeter mit Zahlen, vom
-Satzspiegel aus gezählt wie im Writer, und drei Marken für die Einzüge,
+Satzspiegel aus gezählt, und drei Marken für die Einzüge,
 die sich ziehen lassen — erste Zeile, links, rechts. Das helle Band zeigt,
 wo Text steht, und wandert beim Ziehen mit. Das **senkrechte** misst von
 der ersten Zeile abwärts und scrollt mit dem Blatt; es lässt sich einzeln
 ein- und ausschalten, so wie es hält.
 
-**Schnellzugriff.** Unter dem Prüfen-Knopf stehen drei Marken — Wellen,
-Vorhersage, AutoKorrektur. Grün heißt an, ein Klick schaltet. Sie lagen
-vorher in *Extras ▸ Beim Schreiben*, wo sie niemand fand. Daneben führt
+**Beim Schreiben.** Auf dem Reiter *Schreibhilfe* stehen in der Gruppe
+*Beim Schreiben* drei Schalter — Wellenlinien, Wortvorhersage, AutoKorrektur.
 
-**Die rechte Maustaste.** Zwei Kästen, wie im Writer: oben eine
+**Die rechte Maustaste.** Zwei Kästen: oben eine
 schwebende Formatleiste — Schriftart, Größe, fett, kursiv, Farbe, Marker,
 Ausrichtung, Pinsel —, darunter ein kurzes Menü mit Bild links und
 Tastenkombination rechts.
@@ -50,10 +50,11 @@ Liste ähnlich klingender Wörter.
 ![Rechtsklick auf „garnicht“: oben die schwebende Formatleiste mit Schriftart, Größe und fett/kursiv/unterstrichen, darunter das Menü mit dem Vorschlag „gar nicht“ und den Befehlen samt Tastenkombinationen](../bilder/rechtsklick.png)
 
 **Tabellenwerkzeuge** erscheinen, sobald der Zeiger in einer Tabelle steht,
-und verschwinden wieder; dazu Zeichentools, Diagrammtools, SmartArt-Tools,
-Gleichungswerkzeuge und Kopf- und Fußzeilenwerkzeuge. Die Gruppen folgen
-dem Menüband von Word: *Start* trägt Zwischenablage, Schriftart, Absatz,
-Formatvorlagen und Bearbeiten, *Ansicht* beginnt mit den Ansichten und
+und verschwinden wieder; dazu Bildtools, Zeichentools, Texttools,
+Diagrammtools, SmartArt-Design, Kopf- und Fußzeile sowie Mailings (siehe
+[Aufbau des Bandes](aufbau-band.md)). Die Gruppen folgen
+dem Menüband: *Start* trägt Zwischenablage, Schriftart, Absatz,
+Stile, Extras, Suchen, Auswählen und Einstellungen, *Ansicht* beginnt mit den Ansichten und
 nicht mit dem Zoom. Die Befehle sind über Register, Menü und Symbolleisten erreichbar. Auf *Start* steht der
 
 **Formatvorlagen-Katalog**: Er zeigt die Vorlage, statt sie zu benennen —
@@ -74,16 +75,14 @@ Wo eine Gruppe nicht alles zeigt, was es gibt, steht unten rechts ein
 **Pfeil ⭨** zum vollen Dialog. Ein **Doppelklick auf den Reiter** klappt
 das Band weg und wieder auf.
 
-Im Register **tritt die Reiterzeile an die Stelle der Menüleiste** — sie
-kommt nicht dazu. Beides übereinander fräße genau den Platz, den das
-Register gewinnen soll. Das Menü bleibt über das Zeichen ☰ rechts in der
-Reiterzeile erreichbar, oder über die Alt-Taste. In der Symbolleisten-Ansicht lässt sich
-die Menüleiste ebenfalls ausblenden. Symbolgröße und die Schrift der
+Die **Menüleiste** ist standardmäßig ausgeblendet; *Ansicht ▸ Oberfläche ▸
+Menüleiste* schaltet sie ein. Die Befehle des ☰ Menüs stehen unabhängig davon
+immer zur Verfügung. Symbolgröße und die Schrift der
 Bedienung sind einstellbar — wer die Leisten nicht lesen kann, benutzt sie
 nicht.
 
 **Das Register anpassen.** Rechtsklick auf eine freie Stelle im Band, oder
-*Ansicht ▸ Oberfläche ▸ Anpassen*: Die Gruppen eines Reiters lassen sich
+*Ansicht ▸ Oberfläche ▸ Register anpassen*: Die Gruppen eines Reiters lassen sich
 umsortieren und einzeln ausblenden. Verschoben wird mit zwei Pfeilen und
 nicht mit der Maus — Ziehen und Ablegen verlangt eine ruhige Hand, ein
 Pfeil nach oben trifft immer. Ausgeblendetes bleibt blass in der Liste
@@ -92,8 +91,8 @@ stehen, damit man es zurückholen kann.
 **Ein Symbol austauschen.** Rechtsklick auf einen Knopf — im Band wie in
 den Symbolleisten. Ein Fenster zeigt, wo die Zeichnung überall benutzt
 wird, dazu ein Suchfeld und eine große Auswahl an Zeichnungen. Ein Klick, und
-sie ist getauscht; „Zurücksetzen" holt die alte zurück. kann
-das für seine Symbolleisten, für sein Symbolband nicht — hier geht beides.
+sie ist getauscht; „Zurücksetzen" holt die alte zurück. Das gilt für das Band
+wie für die Symbolleisten.
 
 **Einheitliche Symbolsprache.** Funktionssymbole kommen aus dem zentralen
 Lucide-Katalog und werden über denselben Renderer ausgegeben: im 24er-Raster,

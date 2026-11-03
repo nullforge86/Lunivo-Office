@@ -9,7 +9,7 @@ und in den Reiter *Überprüfen* steht noch aus).
 
 - 3 Zweige, 21 Seiten, 87 Schalter, 20 Klapplisten. Das ist ein Baum zum Suchen, kein Fenster zum Einstellen.
 - Dieselbe Einstellung steht an mehreren Stellen (Rechtschreibung auf 3 Seiten, „Feldfunktionen drucken“ auf 2, Silbentrennung auf 2).
-- Vieles ist Word-Erbe, das für Lunivos Zweck („leichter lesen und schreiben“) nichts beiträgt (Kompatibilität, Zuschnittsmarken, Feldschattierung, Duplexdruck, PDF-Formatvorlagen).
+- Vieles ist Altlast, die für Lunivos Zweck („leichter lesen und schreiben“) nichts beiträgt (Kompatibilität, Zuschnittsmarken, Feldschattierung, Duplexdruck, PDF-Formatvorlagen).
 - Wer wenig sieht oder nur mit Tastatur arbeitet, muss durch einen Baum, dessen Äste alle gleich laut sind.
 
 ## Leitsätze

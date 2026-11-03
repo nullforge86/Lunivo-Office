@@ -18,7 +18,7 @@ Ein Dokument kann Tabellen, Bilder, Formen, Diagramme, Formeln, Formatvorlagen, 
 
 ## Oberfläche und Einstellungen
 
-Das Programm bietet acht Register sowie zusätzliche kontextabhängige Register für ausgewählte Dokumentobjekte. Die Oberfläche lässt sich als Registerband oder Symbolleisten anzeigen. Eine rechte Seitenleiste zeigt die Schreibhilfe und optionale KI-Funktionen.
+Das Programm zeigt standardmäßig acht Register (Start, Einfügen, Seitenlayout, Verweise, Überprüfen, Schreibhilfe, Ansicht, Abschnitt); Sendungen lässt sich einblenden. Dazu kommen kontextabhängige Register für ausgewählte Dokumentobjekte. Die Oberfläche lässt sich als Registerband oder Symbolleisten anzeigen. Eine rechte Seitenleiste zeigt die Schreibhilfe und optionale KI-Funktionen.
 
 Die sechs Optionsseiten heißen **Lesen**, **Anzeige**, **Schreiben**, **Speichern**, **Drucken und PDF** sowie **Name und KI**. Öffnen mit **F9**; Änderungen werden unmittelbar übernommen.
 

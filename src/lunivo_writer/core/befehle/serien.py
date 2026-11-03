@@ -1,4 +1,4 @@
-"""Befehle: Seriendruck (Reiter „Mailings“ nach der WPS-Vorlage)."""
+"""Befehle: Seriendruck (Reiter „Mailings“ nach der Vorlage)."""
 from __future__ import annotations
 
 import os

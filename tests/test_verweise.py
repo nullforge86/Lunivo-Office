@@ -95,11 +95,11 @@ def test_stichwoerter_und_zitate_roundtrip(app, tmp_path):
     assert e2.zitierweise == "APA"
 
 
-def test_datei_mit_verweisen_oeffnet_in_libreoffice(app, tmp_path):
+def test_datei_mit_verweisen_oeffnet_in_fremdem_office(app, tmp_path):
     import shutil
     soffice = shutil.which("soffice")      # nur Prüfwerkzeug: öffnet ein fremdes Office die Datei?
     if not soffice:
-        pytest.skip("LibreOffice nicht installiert")
+        pytest.skip("Fremdes Office-Programm nicht installiert")
     e = ed("Kapitel\nText")
     c = e.textCursor(); c.setPosition(0); e.setTextCursor(c); e.apply_style("Überschrift 1")
     c = e.textCursor(); c.movePosition(QTextCursor.End); e.setTextCursor(c)

@@ -1,4 +1,4 @@
-"""Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays WPS-Vorlage: Feldnamen, Feldfunktionen und Assistent.
+"""Felder einfügen (Einfügen ▸ Schnellbausteine ▸ Felder …) wie in Kays Vorlage: Feldnamen, Feldfunktionen und Assistent.
 Der Text ist das Feldergebnis, die Feldanweisung steht in ``P_FELD`` und geht als echtes Feld ins DOCX (Word rechnet es dort neu).
 Keine Oberfläche.
 

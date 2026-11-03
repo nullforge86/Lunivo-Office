@@ -2,7 +2,7 @@
 
 Das Objekt ist ein Bild mit gespeicherten Daten (P_OBJEKT, art „smartart“) oder ein freies Objekt (``editor/frei_objekt.py``): Layout, Knoten
 und Farbschema. Es lässt sich jederzeit umstellen und neu schreiben, auch nach dem Speichern als DOCX und erneutem Öffnen in Lunivo Writer.
-Grenze: In DOCX steht es als Bild (Titel „lunivo:…“); Word und LibreOffice zeigen das Bild, bearbeiten es aber nicht als SmartArt.
+Grenze: In DOCX steht es als Bild (Titel „lunivo:…“); andere Programme zeigen das Bild, bearbeiten es aber nicht als SmartArt.
 
 Daten (``a["daten"]``): ``layout`` (Schlüssel aus ``LAYOUTS``), ``farben``, ``text`` (eingerückter Text, zwei Leerzeichen je Ebene; Zeilen mit
 „• “ sind Aufzählungspunkte des Knotens davor), ``knoten`` = [{id, text, ebene, bullets: [Text], assistent: bool}] in Baumreihenfolge (fehlt er,

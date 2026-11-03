@@ -1,4 +1,4 @@
-"""Reiter Seitenlayout (Anordnung wie WPS): Maßfelder für die Ränder, Spalten 1 bis 4."""
+"""Reiter Seitenlayout (Anordnung wie in der Vorlage): Maßfelder für die Ränder, Spalten 1 bis 4."""
 from PySide6.QtCore import QSettings
 
 from lunivo_writer.services.settings_service import Settings
@@ -39,7 +39,7 @@ def test_reihenfolge_der_gruppen_und_vier_spalten(app, tmp_path):
     assert w.current_tab().page.spalten == 4
 
 
-def test_reiter_einfuegen_verweise_ansicht_wie_wps(app, tmp_path):
+def test_reiter_einfuegen_verweise_ansicht_wie_vorlage(app, tmp_path):
     from PySide6.QtWidgets import QLabel
     w = fenster(tmp_path)
     r = w.band.reiter

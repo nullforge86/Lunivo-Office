@@ -36,7 +36,7 @@ Mit `./starten-qt.sh --eintrag` wird ein Menüeintrag angelegt. `./starten-qt.sh
 
 ## Was Lunivo kann
 
-- Acht Register: Start, Einfügen, Seitenlayout, Referenzen, Überprüfen, Schreibhilfe, Sendungen und Ansicht.
+- Acht Register: Start, Einfügen, Seitenlayout, Verweise, Überprüfen, Schreibhilfe, Ansicht und Abschnitt (Sendungen lässt sich einblenden).
 - Eine Schreibhilfe für häufige Verwechslungen, Rechtschreibung, Grammatik, Wortvorhersage, Silbentrennung und Vorlesen.
 - Dokumente in DOCX, ODT, FODT, RTF und TXT öffnen oder speichern. PDF und PNG lassen sich exportieren; PDF kann Lunivo nicht öffnen.
 - Tabellen, Bilder, Formen, Diagramme, Formeln, Formatvorlagen, Kopf- und Fußzeilen sowie Seriendruck.
@@ -63,7 +63,6 @@ Dokumente bleiben an dem Speicherort, den du auswählst. Einstellungen und Anwen
 - [Aufbau: Ist-Stand](docs/aufbau-ist-stand.md)
 - [Aufbau: Optionen](docs/aufbau-optionen.md)
 - [Baukasten](docs/baukasten.md)
-- [Bilder – vollständige Übersicht](docs/bilder-vollstaendig.md)
 - [Konzept: Optionen](docs/konzept-optionen.md)
 - [Tabellen und Steuerung](docs/tabellen-und-steuerung.md)
 - [UI-Technologie](docs/ui-technologie.md)

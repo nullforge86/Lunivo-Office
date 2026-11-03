@@ -19,6 +19,17 @@ def _knoepfe(gruppe: str) -> list[dict]:
     return out
 
 
+def _ki_knoepfe() -> list[dict]:
+    """KI: die vier Textbefehle (entwerfen, umformulieren, zusammenfassen, Text in Bild) stehen in einem Menü „Text mit KI“; Chat und Aktionen
+    bleiben groß, die Einstellungen sind ein kleiner Knopf."""
+    alle = _knoepfe("KI")
+    menue = [e for e in alle if not e.get("gross") and e.get("tun")]
+    rest = [e for e in alle if e not in menue]
+    kopf = {"symbol": "ki", "name": "Text mit KI", "gross": True, "menue": [{"name": e["name"], "tun": e["tun"]} for e in menue]}
+    rest = [dict(e, gross=False, text=False) if e["name"] == "KI-Einstellungen" else e for e in rest]
+    return ([kopf] if menue else []) + rest
+
+
 def _pruefen_menue(e: dict) -> dict:
     """Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen und die Sprache des Dokuments."""
     e = {k: v for k, v in e.items() if k != "klappe"}
@@ -46,7 +57,7 @@ def bauen(register: dict) -> dict:
         gruppe("Vorlesen", [reg["Vorlesen"]]),
         gruppe("Sprache", _knoepfe("Sprache"), pfeil="w.kiSprache"),
         gruppe("Bausteine", [reg["Textbausteine"]]),
-        gruppe("KI", _knoepfe("KI")),
+        gruppe("KI", _ki_knoepfe()),
         gruppe("Anzeigen", [reg["Seitenleiste Schreibhilfe"]]),
     ]
     return sh

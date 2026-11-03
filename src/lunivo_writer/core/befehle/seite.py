@@ -438,7 +438,7 @@ class SeiteBefehle:
             self.ed.setTextCursor(c)
 
 
-    textflussumbruch = zeilenumbruch                       # WPS: „Textflussumbruch“ (Umschalt+Enter) ist bei Lunivo der Zeilenumbruch
+    textflussumbruch = zeilenumbruch                       # „Textflussumbruch“ (Umschalt+Enter) ist bei Lunivo der Zeilenumbruch
 
 
     def an_textrichtung(self):

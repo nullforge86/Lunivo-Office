@@ -127,7 +127,7 @@ class PageSettings:
 
     def erste_seite_versatz_px(self) -> float:
         """Wie weit der Text der ersten Seite nach unten rückt, weil die Kopfzeile länger ist als der obere Rand: Der Text beginnt erst unter der
-        Kopfzeile (so machen es Word und andere). Gilt für die Kopfzeile der ersten Seite, bei „Erste Seite anders“ für die eigene."""
+        Kopfzeile. Gilt für die Kopfzeile der ersten Seite, bei „Erste Seite anders“ für die eigene."""
         hf = self.first_header if self.diff_first else self.header
         if hf.is_empty():
             return 0.0

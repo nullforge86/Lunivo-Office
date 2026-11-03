@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Kopf- und Fußzeile“ nach der WPS-Vorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
+"""Kontext-Reiter „Kopf- und Fußzeile“ nach der Vorlage: Gruppen ohne Namen, Klappen für Kopfzeile, Fußzeile, Seitenzahl,
 Linie; Wechseln/Verknüpfen; Optionen, Tabstopp, Höhenfelder; Einstellungen und Schließen."""
 from __future__ import annotations
 

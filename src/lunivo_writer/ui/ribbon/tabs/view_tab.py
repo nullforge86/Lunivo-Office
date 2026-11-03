@@ -1,4 +1,4 @@
-"""Reiter „Ansicht“ in der Anordnung von WPS Office: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
+"""Reiter „Ansicht“ in der Anordnung der Vorlage: Dokumentansichten (Vollbild, Lesemodus, Drucklayout, Weblayout), Navigationsbereich
 mit den Anzeige-Schaltern, Zoom, Fenster; dazu Helligkeit und Oberfläche."""
 from __future__ import annotations
 
@@ -23,20 +23,31 @@ def bauen(register: dict) -> dict:
     for g in (helligkeit, oberflaeche):
         for e in g["knoepfe"]:
             benutzt.add(e["name"])
+    def eintraege(*namen):
+        """Befehle als Menüeinträge (Haken bleiben Haken) — aus Einzelknöpfen wird ein Menü."""
+        return [{"name": n, "tun": kn[n]["tun"], **({"haken": True} if kn[n].get("haken") else {})} for n in namen]
+
+    def klein(name):                                                  # nur Symbol; der Hinweistext nennt die Funktion
+        return nimm(name, gross=False, text=False)
+
+    fenster_menue = list(kn["Anordnen"]["menue"]) + [{"trenner": True}] + eintraege("Nebeneinander", "Untereinander", "Kacheln", "Fensterliste")
+    for n in ("Nebeneinander", "Untereinander", "Kacheln", "Fensterliste", "Anordnen", "Steuerzeichen", "Weblayout", "Gliederung", "Vertikales Lineal", "Textbegrenzungen", "Ausgeblendeter Text"):
+        benutzt.add(n)
     gruppen = [
         {"name": "Dokumentansichten", "reihenfolge": True, "knoepfe": [
-            _k("vollbild", "Vollbild", "vollbild", True, haken=True), nimm("Lesemodus", gross=True),
-            nimm("Drucklayout", gross=True), nimm("Weblayout", gross=True), nimm("Gliederung", gross=True)]},
+            nimm("Drucklayout", gross=True), nimm("Lesemodus", gross=True),
+            {"symbol": "fortlaufend", "name": "Weitere Ansichten", "gross": True,
+             "menue": [{"name": "Vollbild", "tun": "vollbild", "haken": True}] + eintraege("Weblayout", "Gliederung")}]},
         {"name": "Anzeigen", "pfeil": anz.get("pfeil"), "reihenfolge": True, "knoepfe": [
-            nimm("Navigationsbereich", gross=True), nimm("Lineal", text=True), nimm("Vertikales Lineal", text=True),
-            nimm("Gitternetzlinien", text=True), nimm("Textbegrenzungen", text=True), nimm("Ausgeblendeter Text", text=True)]},
+            nimm("Navigationsbereich", gross=True), nimm("Lineal", text=True), nimm("Gitternetzlinien", text=True),
+            {"symbol": "ecken", "name": "Weitere Anzeigen", "text": True,
+             "menue": eintraege("Vertikales Lineal", "Textbegrenzungen", "Steuerzeichen", "Ausgeblendeter Text")}]},
         {"name": "Zoom", "pfeil": "zoomStufe", "reihenfolge": True, "knoepfe": [
-            nimm("Zoom", gross=True), nimm("100 %", text=True), nimm("Seitenbreite", text=True),
-            nimm("Eine Seite", text=True), nimm("Zwei Seiten", text=True), nimm("Vergrößern", text=True), nimm("Verkleinern", text=True)]},
-        dict(helligkeit, reihenfolge=True),
+            nimm("Zoom", gross=True), klein("100 %"), klein("Seitenbreite"), klein("Eine Seite"),
+            klein("Zwei Seiten"), klein("Vergrößern"), klein("Verkleinern")]},
+        dict(helligkeit, reihenfolge=True, knoepfe=[dict(e, text=False) for e in helligkeit["knoepfe"]]),
         {"name": "Fenster", "reihenfolge": True, "knoepfe": [
-            nimm("Anordnen", gross=True), nimm("Neues Fenster", text=True), nimm("Fensterliste", text=True),
-            nimm("Nebeneinander", text=True), nimm("Untereinander", text=True), nimm("Kacheln", text=True)]},
+            nimm("Neues Fenster", gross=True), dict(kn["Anordnen"], menue=fenster_menue, gross=True)]},
         dict(oberflaeche, reihenfolge=True),
     ]
     rest = [dict(e, gross=False, text=True) for e in uebrige(tab, benutzt)]

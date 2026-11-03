@@ -83,7 +83,7 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
 
 
 class TableDialog(PanelFaehig, QDialog):
-    """„Tabelle einfügen“ wie in WPS: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
+    """„Tabelle einfügen“ wie in der Vorlage: Tabellengröße, Einstellung für optimale Breite, Abmessungen für neue Tabellen speichern.
     ``vorgabe``: (Spalten, Zeilen) aus den Einstellungen; ``speichern.isChecked()`` sagt dem Aufrufer, ob er sie merken soll."""
 
     def __init__(self, parent=None, vorgabe: tuple[int, int] = (5, 2)):
