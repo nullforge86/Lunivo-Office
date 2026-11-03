@@ -6109,7 +6109,6 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
 - `_kurz(name)`
 - `_mit_kuerzel(name)` — Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter.
 - `_zweizeilig(text)`
-- **class `_GruppenPopup`**(QFrame) — Schwebende Fläche unter einem zusammengeklappten Gruppenknopf; die Gruppe zieht für die Zeit des Öffnens hier ein.
   - `__init__(eltern)`
   - `zeigen(rahmen, unter, zurueck)`
   - `hideEvent(ev)`
@@ -6122,9 +6121,6 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
 - **class `RegisterBand`**(QWidget) — Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters.
   - `__init__(befehle, daten, cfg, schnell, kompakt)`
   - `resizeEvent(ev)`
-  - `_gruppen_knopf(g, e)` — Zusammengeklappte Gruppe: ein Knopf mit dem Symbol des ersten Befehls und dem Gruppennamen; ein Klick zeigt die ganze Gruppe.
-  - `_gruppe_zeigen(e)`
-  - `_gruppen_anpassen()` — Kompaktes Band: passt ein Reiter nicht in die Breite, klappen seine hintersten Gruppen zu je einem Knopf zusammen. Nichts geht verloren; bei mehr Breite stehen die Gruppen wieder offen da.
   - `_reiter_geklickt(_i)`
   - `einklappen_umschalten()`
   - `_trenner()`

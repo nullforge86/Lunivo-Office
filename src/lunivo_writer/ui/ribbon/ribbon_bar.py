@@ -8,7 +8,7 @@ import json
 import os
 from lunivo_writer.core import paths
 
-from PySide6.QtCore import QPoint, QPropertyAnimation, QSize, Qt, Signal
+from PySide6.QtCore import QPropertyAnimation, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
@@ -227,34 +227,6 @@ def _zweizeilig(text: str) -> str:
 STANDARD_VERSTECKT = ("Sendungen",)
 
 
-class _GruppenPopup(QFrame):
-    """Schwebende Fläche unter einem zusammengeklappten Gruppenknopf; die Gruppe zieht für die Zeit des Öffnens hier ein."""
-
-    def __init__(self, eltern):
-        super().__init__(eltern, Qt.Popup)
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setAutoFillBackground(True)
-        h = QHBoxLayout(self)
-        h.setContentsMargins(4, 4, 4, 4)
-        self._zurueck = None
-
-    def zeigen(self, rahmen: QWidget, unter: QWidget, zurueck) -> None:
-        self._zurueck = zurueck
-        self.layout().addWidget(rahmen)
-        rahmen.show()
-        self.adjustSize()
-        ziel = unter.mapToGlobal(QPoint(0, unter.height()))
-        rand = unter.screen().availableGeometry().right()
-        self.move(max(0, min(ziel.x(), rand - self.width())), ziel.y())          # nie über den Bildschirmrand hinaus
-        self.show()
-
-    def hideEvent(self, ev):
-        super().hideEvent(ev)
-        z, self._zurueck = self._zurueck, None
-        if z:
-            z()
-
-
 class _ReiterLeiste(QTabBar):
     doppelt = Signal()
     LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
@@ -318,8 +290,6 @@ class RegisterBand(QWidget):
     def __init__(self, befehle, daten: dict | None = None, cfg: dict | None = None, schnell: list | None = None, kompakt: bool = True):
         super().__init__()
         self.kompakt = kompakt
-        self._seiten: list[list[dict]] = []                                # je Reiter: seine Gruppen (zum Zusammenklappen bei Platzmangel)
-        self._gruppen_popup: _GruppenPopup | None = None
         self.cfg = cfg or {}
         self._schnell_wahl = schnell
         self.b = befehle
@@ -373,62 +343,6 @@ class RegisterBand(QWidget):
 
     einklappbar = True          # Optionen ▸ Doppelklick blendet das Band aus
     _eingeklappt = False
-
-    MIN_ERSPARNIS = 60           # eine Gruppe klappt nur zu, wenn sie dadurch mindestens so viel schmaler wird
-    KNOPF_BREITE = 64            # Breite eines zusammengeklappten Gruppenknopfes
-
-    def resizeEvent(self, ev):
-        super().resizeEvent(ev)
-        self._gruppen_anpassen()
-
-    def _gruppen_knopf(self, g: dict, e: dict) -> QToolButton:
-        """Zusammengeklappte Gruppe: ein Knopf mit dem Symbol des ersten Befehls und dem Gruppennamen; ein Klick zeigt die ganze Gruppe."""
-        erste = next((k.get("symbol") for k in g.get("knoepfe", []) if icons.hat(k.get("symbol", ""))), "Stil" if g.get("katalog") else "klappe")
-        kb = QToolButton()
-        kb.setAutoRaise(True)
-        kb.setIcon(icons.icon(erste, self.GROSS_ICON[True])); kb.setIconSize(QSize(self.GROSS_ICON[True], self.GROSS_ICON[True]))
-        kb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        kb.setText(_zweizeilig(g["name"]))
-        kb.setToolTip(g["name"] + " — Gruppe öffnen")
-        text = _zweizeilig(g["name"])
-        breit = max(kb.fontMetrics().horizontalAdvance(z) for z in text.split("\n")) + 16       # der volle Name, nie gekürzt
-        e["kbbreite"] = max(self.KNOPF_BREITE, breit)
-        kb.setFixedSize(e["kbbreite"], self.GROSS_HOEHE[True])
-        kb.clicked.connect(lambda _=False, e=e: self._gruppe_zeigen(e))
-        return kb
-
-    def _gruppe_zeigen(self, e: dict) -> None:
-        if self._gruppen_popup is None:
-            self._gruppen_popup = _GruppenPopup(self)
-        e["offen"] = True
-
-        def zurueck(e=e):
-            e["offen"] = False
-            e["lay"].insertWidget(e["lay"].indexOf(e["kb"]) + 1, e["rahmen"])
-            e["rahmen"].setVisible(not e["kb"].isVisible())
-        self._gruppen_popup.zeigen(e["rahmen"], e["kb"], zurueck)
-
-    def _gruppen_anpassen(self) -> None:
-        """Kompaktes Band: passt ein Reiter nicht in die Breite, klappen seine hintersten Gruppen zu je einem Knopf zusammen. Nichts geht verloren; bei mehr Breite stehen die Gruppen wieder offen da."""
-        if not self.kompakt:
-            return
-        frei = self.stapel.width() - 12
-        for eintraege in self._seiten:
-            gesamt = sum(e["breite"] for e in eintraege)
-            zu: set[int] = set()
-            for n in range(len(eintraege) - 1, 0, -1):                  # die erste Gruppe bleibt immer offen
-                if gesamt <= frei:
-                    break
-                gespart = eintraege[n]["breite"] - eintraege[n].get("kbbreite", self.KNOPF_BREITE)
-                if eintraege[n]["fest"] or gespart < self.MIN_ERSPARNIS:     # die Stile-Galerie bleibt immer offen                        # ein einzelner Knopf ist schon so schmal: Zuklappen kostet nur einen Klick
-                    continue
-                zu.add(n)
-                gesamt -= gespart
-            for n, e in enumerate(eintraege):
-                klein = n in zu
-                e["kb"].setVisible(klein)
-                if not e["offen"]:
-                    e["rahmen"].setVisible(not klein)
 
     def _reiter_geklickt(self, _i):
         if self._eingeklappt:
@@ -512,7 +426,6 @@ class RegisterBand(QWidget):
         h = QHBoxLayout(seite)
         h.setContentsMargins(6, 2, 6, 0)
         h.setSpacing(0)
-        eintraege: list[dict] = []
         for i, g in enumerate(r["gruppen"]):
             s = None
             if i:
@@ -521,14 +434,7 @@ class RegisterBand(QWidget):
                 s.setFrameShadow(QFrame.Sunken)
                 h.addWidget(s)
             rahmen = self._gruppe(g)
-            e = dict(rahmen=rahmen, lay=h, kb=None, offen=False, fest=g.get("katalog") == "katalog", breite=rahmen.sizeHint().width() + (s.sizeHint().width() if s else 0))
-            if self.kompakt:
-                e["kb"] = kb = self._gruppen_knopf(g, e)
-                kb.hide()
-                h.addWidget(kb, 0, Qt.AlignTop)
             h.addWidget(rahmen)
-            eintraege.append(e)
-        self._seiten.append(eintraege)
         h.addStretch(1)
         scroll.setWidget(seite)
         self.stapel.addWidget(scroll)

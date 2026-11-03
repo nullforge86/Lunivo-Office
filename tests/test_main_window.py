@@ -700,18 +700,12 @@ def test_band_hinweis_zeigt_kuerzel(app):
     assert _mit_kuerzel("Speichern") == "Speichern (Strg+S)" and _mit_kuerzel("Unbekannt") == "Unbekannt"
 
 
-def test_band_gruppen_klappen_zusammen_und_oeffnen(app, tmp_path):
+def test_band_gruppen_klappen_nie_zusammen(app, tmp_path):
     w = win(tmp_path)
     w.new_document(); w.resize(900, 600); w.show()
     b = w.band
-    b.reiter.setCurrentIndex(2); app.processEvents()
-    gruppen = b._seiten[2]
-    zu = [e for e in gruppen if e["kb"].isVisible()]
-    assert zu and not gruppen[0]["kb"].isVisible() and all(not e["rahmen"].isVisible() for e in zu)
-    e = zu[0]
-    b._gruppe_zeigen(e)                                       # öffnen: die Gruppe steht im schwebenden Feld
-    assert e["rahmen"].parent() is b._gruppen_popup and e["rahmen"].isVisible()
-    b._gruppen_popup.hide()                                   # schließen: zurück an ihren Platz im Reiter
-    assert e["rahmen"].parent() is e["lay"].parentWidget() and not e["rahmen"].isVisible()
-    w.resize(2600, 600); app.processEvents()
-    assert not any(x["kb"].isVisible() for x in gruppen) and all(x["rahmen"].isVisible() for x in gruppen)
+    app.processEvents()
+    assert not hasattr(b, "_gruppen_popup") and not hasattr(b, "_gruppen_anpassen")
+    b.reiter.setCurrentIndex(1); app.processEvents()
+    start = b.stapel.widget(1)
+    assert start.horizontalScrollBar().maximum() > 0 and start.pfeile["rechts"].isVisible()     # zu breit: Blättern statt Zuklappen
