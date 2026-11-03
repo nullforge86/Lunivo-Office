@@ -5,7 +5,7 @@
 | Seite | Inhalt |
 |---|---|
 | **Lesen** | Lesestufe, Papierton, Abstände, Zeilenfokus und Silbenfarben |
-| **Anzeige** | Oberfläche, Lineale, Hilfszeichen, Schrift- und Symbolgröße |
+| **Anzeige** | Oberfläche, Lineale, Hilfszeichen, Schrift- und Symbolgröße, Namen unter den Symbolen der Randleisten |
 | **Schreiben** | Standardschrift, Sprache, Prüfung und AutoKorrektur |
 | **Speichern** | Standardformat, Ordner, Sicherung und Wiederherstellung |
 | **Drucken und PDF** | Druckverhalten und PDF-Ausgabe |

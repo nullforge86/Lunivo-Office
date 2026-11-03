@@ -240,7 +240,7 @@ class LunivoSeiten:
                     with open(pfad, "w", encoding="utf-8") as fh:
                         json.dump(g.daten, fh, ensure_ascii=False, indent=1)
                 except OSError as ex:
-                    QMessageBox.warning(self, "Sichern", f"Das ging nicht: {ex}")
+                    QMessageBox.warning(self, "Sichern", f"Die Sicherung wurde nicht angelegt.\n\nGrund: {ex}")
 
         def einspielen():
             pfad, _ = Dateifenster.getOpenFileName(self, "Gelerntes einspielen", "", "JSON (*.json)")
@@ -253,7 +253,7 @@ class LunivoSeiten:
                     if isinstance(neu.get(key), dict):
                         g.daten[key].update(neu[key])
             except (OSError, ValueError) as ex:
-                QMessageBox.warning(self, "Einspielen", f"Das ging nicht: {ex}")
+                QMessageBox.warning(self, "Einspielen", f"Die Datei wurde nicht eingespielt. Prüfen Sie, ob es eine Lunivo-Sicherung (.json) ist.\n\nGrund: {ex}")
                 return
             g.speichern(); fuellen(); self.w.assistant.pruefen(voll=True)
         z2 = QWidget(); h2 = QHBoxLayout(z2); h2.setContentsMargins(0, 2, 0, 2)

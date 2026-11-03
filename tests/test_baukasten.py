@@ -1645,3 +1645,15 @@ def test_farbpalette_pipette_abschaltbar(app):
     namen = lambda p: [b.text() for b in p.findChildren(QPushButton)]          # noqa: E731
     assert "Pipette" in namen(FarbPalette())
     assert "Pipette" not in namen(FarbPalette(pipette=False))
+
+
+def test_namenfilter_gibt_symbolknoepfen_einen_namen(app):
+    from PySide6.QtWidgets import QToolButton
+    from lunivo_writer.ui.baukasten.zugaenglichkeit import NamenFilter, name_fuer
+    f = NamenFilter.einhaengen(app)
+    k = QToolButton(); k.setText("↘"); k.setToolTip("Schriftart — Einstellungen")
+    assert name_fuer(k) == "Schriftart"
+    o = QToolButton(); o.setToolTip("Öffnen (Strg+O)"); o.setAccessibleName("Datei öffnen")
+    k.show(); o.show(); app.processEvents()
+    assert k.accessibleName() == "Schriftart" and o.accessibleName() == "Datei öffnen"
+    app.removeEventFilter(f); k.close(); o.close()

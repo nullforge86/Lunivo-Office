@@ -55,7 +55,12 @@ class DocTabs(QObject):
     def addTab(self, w: QWidget, title: str) -> int:
         self._w.append(w)
         self.stack.addWidget(w)
-        return self.bar.addTab(title)
+        i = self.bar.addTab(title)
+        for seite in (QTabBar.RightSide, QTabBar.LeftSide):                  # Qt beschriftet den Schließen-Knopf englisch
+            k = self.bar.tabButton(i, seite)
+            if k is not None:
+                k.setToolTip("Dokument schließen"); k.setAccessibleName("Dokument schließen")
+        return i
 
     def count(self): return len(self._w)
     def widget(self, i): return self._w[i] if 0 <= i < len(self._w) else None

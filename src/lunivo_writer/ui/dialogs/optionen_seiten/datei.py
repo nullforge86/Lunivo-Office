@@ -169,7 +169,7 @@ class DateiSeiten:
                     z.extract("gelernt.json", data_dir())
             self.w.assistant.gelernt.laden(); self.w.assistant.pruefen(voll=True)
         except (OSError, zipfile.BadZipFile) as ex:
-            QMessageBox.warning(self, "Zurückholen", f"Das ging nicht: {ex}")
+            QMessageBox.warning(self, "Zurückholen", f"Der Zwischenstand wurde nicht zurückgeholt.\n\nGrund: {ex}")
             return
         QMessageBox.information(self, "Zurückholen", "Zurückgeholt.")
 

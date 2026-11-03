@@ -159,6 +159,7 @@ class BearbeitenBaustein:
     def ansicht_optionen_anwenden(self):
         """Statusleiste, QuickInfo, Bedienschrift, Symbolgröße — aus den Optionen."""
         self.statusBar().setVisible(self.settings.get_bool("ui/statusleiste", True))
+        self.leisten_beschriften()
         app = QApplication.instance()
         if getattr(self, "_quickinfo", None) is None:
             self._quickinfo = _QuickInfo()

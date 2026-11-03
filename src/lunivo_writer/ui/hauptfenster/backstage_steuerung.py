@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtWidgets import QFrame, QMessageBox
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
@@ -139,6 +139,26 @@ class BackstageBaustein:
         self._links_sync()
         return leiste
 
+
+    KURZTEXT_LINKS = {"suche": "Suchen", "kommentare": "Kommentare", "ueberschriften": "Gliederung", "aenderungen": "Änderungen", "noten": "Noten", "vorlesen": "Vorlesen"}
+
+    def leisten_beschriften(self) -> None:
+        """Option „Seitenleisten mit Text“: unter jedem Symbol der beiden Randleisten steht sein Name (breitere Leiste, kleinere Schrift)."""
+        mit = self.settings.get_bool("ui/leisten_text", False)
+        for leiste_name, knoepfe, kurz in (("leisteLinks", getattr(self, "_links", {}), self.KURZTEXT_LINKS),
+                                           ("leisteRechts", getattr(self, "_rechts", {}), {})):
+            leiste = self.findChild(QFrame, leiste_name)
+            if leiste is None:
+                continue
+            leiste.setFixedWidth(80 if mit else 48)
+            for key, b in knoepfe.items():
+                if mit:
+                    b.setText(kurz.get(key, key)); b.setToolTipDuration(-1)
+                    f = b.font(); f.setPointSizeF(max(7.0, f.pointSizeF() * 0.85)); b.setFont(f)
+                    b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setFixedSize(72, 54)
+                else:
+                    b.setText(""); b.setFont(self.font())
+                    b.setToolButtonStyle(Qt.ToolButtonIconOnly); b.setFixedSize(38, 38)
 
     def _links_klick(self, key: str):
         if self.navigation.isVisible() and self.navigation.aktuelle_seite == key:

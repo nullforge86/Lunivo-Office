@@ -24,6 +24,7 @@ from lunivo_writer.ui.ribbon.plan import plan
 from lunivo_writer.core.farben import Farbe
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
+MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
 TEXTSYMBOLE = {"F": QFont.Bold, "K": None, "U": None}
 
 
@@ -190,7 +191,6 @@ KURZ = {
     'Nächster Abschnitt': 'Weiter',
     'Änderungen nachverfolgen': 'Änderungen',
     'Bearbeitung einschränken': 'Einschränken',
-    'Rechtschreibprüfung': 'Rechtschreibung',
     'Kommentar einfügen': 'Kommentar',
     'Tabellenformatvorlagen': 'Tabellenstile',
     'Rahmenlinien ein/aus': 'Rahmen',
@@ -1029,8 +1029,9 @@ class RegisterBand(QWidget):
             k.setText(_kurz(name))
         elif icons.hat(sym):
             k.setToolButtonStyle(Qt.ToolButtonIconOnly)
+            k.setMinimumWidth(MIN_KNOPF)                                # Projektvorgabe: Knöpfe nicht schmaler als ~36 px
         else:
-            k.setMinimumWidth(40 if (klappe or menue) else 28)
+            k.setMinimumWidth(max(MIN_KNOPF, 40) if (klappe or menue) else MIN_KNOPF)
         ok = False
         menu = None
         if menue:

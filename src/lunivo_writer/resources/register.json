@@ -995,7 +995,7 @@
       },
       {
        "symbol": "Duden",
-       "name": "Rechtschreibung",
+       "name": "Rechtschreibprüfung",
        "gross": false,
        "tun": "rechtschreibung",
        "haken": true
@@ -1791,7 +1791,8 @@
     },
     {
      "name": "Schließen",
-     "tun": "schliessen"
+     "tun": "schliessen",
+     "taste": "Strg+W"
     },
     {
      "trenner": true
@@ -1824,7 +1825,8 @@
     },
     {
      "name": "Beenden",
-     "tun": "beenden"
+     "tun": "beenden",
+     "taste": "Strg+Q"
     }
    ]
   },
@@ -1841,7 +1843,8 @@
       },
       {
        "name": "Einfügen ohne Formatierung",
-       "tun": "einfuegenOhne"
+       "tun": "einfuegenOhne",
+       "taste": "Strg+Alt+T"
       },
       {
        "name": "Ausschneiden",
@@ -1999,19 +2002,23 @@
       },
       {
        "name": "Linksbündig",
-       "tun": "links"
+       "tun": "links",
+       "taste": "Strg+L"
       },
       {
        "name": "Zentriert",
-       "tun": "mitte"
+       "tun": "mitte",
+       "taste": "Strg+E"
       },
       {
        "name": "Rechtsbündig",
-       "tun": "rechts"
+       "tun": "rechts",
+       "taste": "Strg+R"
       },
       {
        "name": "Blocksatz",
-       "tun": "block"
+       "tun": "block",
+       "taste": "Strg+J"
       },
       {
        "name": "Zeilenabstand",
@@ -2048,7 +2055,8 @@
       },
       {
        "name": "Steuerzeichen",
-       "tun": "steuerzeichenZeigen"
+       "tun": "steuerzeichenZeigen",
+       "taste": "Strg+Umschalt+8"
       }
      ]
     },
@@ -2084,7 +2092,8 @@
       },
       {
        "name": "Ersetzen",
-       "tun": "ersetzen"
+       "tun": "ersetzen",
+       "taste": "Strg+H"
       },
       {
        "name": "Suchen und Ersetzen",
@@ -2191,7 +2200,8 @@
      "unter": [
       {
        "name": "Hyperlink",
-       "tun": "hyperlink"
+       "tun": "hyperlink",
+       "taste": "Strg+K"
       },
       {
        "name": "Lesezeichen / Textmarke",
@@ -2359,7 +2369,8 @@
        "unter": [
         {
          "name": "Seitenumbruch",
-         "tun": "seitenumbruch"
+         "tun": "seitenumbruch",
+         "taste": "Strg+Enter"
         },
         {
          "name": "Spaltenumbruch",
@@ -2458,7 +2469,7 @@
    ]
   },
   {
-   "name": "Referenzen",
+   "name": "Verweise",
    "punkte": [
     {
      "name": "Inhaltsverzeichnis",
@@ -2478,11 +2489,13 @@
      "unter": [
       {
        "name": "Fußnote",
-       "tun": "fussnote"
+       "tun": "fussnote",
+       "taste": "Strg+Alt+F"
       },
       {
        "name": "Endnote",
-       "tun": "endnote"
+       "tun": "endnote",
+       "taste": "Strg+Alt+D"
       },
       {
        "name": "Nächste Note",
@@ -2571,7 +2584,7 @@
        "tun": "gruendlichPruefen"
       },
       {
-       "name": "Rechtschreibung",
+       "name": "Rechtschreibprüfung",
        "tun": "rechtschreibung"
       },
       {
@@ -2888,7 +2901,8 @@
       },
       {
        "name": "Lesemodus",
-       "tun": "lesemodus"
+       "tun": "lesemodus",
+       "taste": "Strg+Umschalt+L"
       },
       {
        "name": "Zwei Seiten",
@@ -2929,7 +2943,8 @@
       },
       {
        "name": "Navigationsbereich",
-       "tun": "navigation"
+       "tun": "navigation",
+       "taste": "Strg+Umschalt+N"
       },
       {
        "name": "Textbegrenzungen",

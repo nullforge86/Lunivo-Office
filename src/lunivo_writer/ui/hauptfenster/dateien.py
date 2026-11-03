@@ -197,7 +197,7 @@ class DateienBaustein:
         try:
             rep = self.dokumente.speichern(path, tab.editor.document(), tab.page, tab.meta)
         except DocumentIOError as e:
-            QMessageBox.critical(self, "Speichern fehlgeschlagen", str(e)); return False
+            QMessageBox.critical(self, "Speichern fehlgeschlagen", f"Das Dokument wurde nicht gespeichert.\n\nGrund: {e}\n\nWählen Sie „Speichern unter“ und einen anderen Ordner, oder prüfen Sie den Schreibschutz."); return False
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
@@ -314,7 +314,7 @@ class DateienBaustein:
                 return n
             n = sicher_schreiben.schreiben(path, erzeugen, endung=".pdf")
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
-            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", str(e)); return False
+            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", f"Die PDF-Datei wurde nicht erstellt.\n\nGrund: {e}\n\nWählen Sie einen anderen Ordner oder Dateinamen."); return False
         self.statusBar().showMessage(f"PDF gespeichert ({n} Seiten): {path}", 5000)
         if self.settings.get_bool("pdf/oeffnen", False):
             from PySide6.QtCore import QUrl

@@ -80,6 +80,8 @@ unten kommt überall von `fussleiste` (`dialog_rahmen.py`), Maße von `EinheitFe
 | Formatvorlage | `formatvorlage_dialog.py` | Name, Basis, Folgevorlage, Leiste, Format ▾ mit Schriftart, Absatz, Tabstopps, Rahmen, Nummerierung, Texteffekte, Verknüpfung |
 | Hilfen | `schiebe_feld.py`, `voreinstellung_menue.py`, `pipette.py` | Regler mit Feld, Popup mit Bildchen in Abschnitten, Farbe vom Bildschirm |
 
+- **Zugängliche Namen** (`ui/baukasten/zugaenglichkeit.py`): `NamenFilter` gibt jedem Knopf ohne Namen beim Anzeigen seinen Tooltip als Namen (ohne Tastenkombination); wird einmal in `core/application.py` eingehängt.
+
 Tests: `tests/test_baukasten.py`.
 
 ## Zusatzfenster in der Seitenleiste

@@ -41,6 +41,7 @@ class AnsichtSeiten:
         p.haken(f, "ui/marken", "Textbegrenzungen", False, self.w.set_marken)
         p.schalter(f, "Gitternetzlinien", lambda: bool(self.w.befehle.an_netzlinien()), lambda: self.w.befehle.netzlinien())
         p.haken(f, "ui/seitenleiste", "Seitenleiste beim Start", True)
+        p.haken(f, "ui/leisten_text", "Namen unter den Symbolen der Randleisten", False, lambda _: self.w.ansicht_optionen_anwenden())
         p.haken(f, "ui/quickinfo", "QuickInfo", True, lambda _: self.w.ansicht_optionen_anwenden())
         p.haken(f, "ui/live_vorschau", "Live-Vorschau", True, lambda _: self.w.vorschau.ende())
         p.haken(f, "ui/mini_auswahl", "Minisymbolleiste bei Auswahl", True)
