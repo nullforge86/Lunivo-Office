@@ -10,6 +10,7 @@ from lunivo_writer.ui.widgets import icons
 import re
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.models.proofing import ProofingIssue
 _LAUF = re.compile(r"(.)\1{5,}")
 
 
@@ -36,7 +37,7 @@ def marke(art: str) -> QLabel:
 
 
 class FundKarte(QFrame):
-    def __init__(self, fund: dict, assistent, parent=None, dienst=None):
+    def __init__(self, fund: ProofingIssue, assistent, parent=None, dienst=None):
         super().__init__(parent)
         self.fund, self.a, self.d = fund, assistent, dienst
         self.setObjectName("FundKarte")
@@ -45,15 +46,15 @@ class FundKarte(QFrame):
         v.setContentsMargins(14, 12, 12, 12)
         v.setSpacing(6)
         kopf = QHBoxLayout(); kopf.setContentsMargins(0, 0, 0, 0)
-        kopf.addWidget(marke(fund["art"])); kopf.addStretch(1)
+        kopf.addWidget(marke(fund.art)); kopf.addStretch(1)
         v.addLayout(kopf)
-        if fund["art"] != "hinweis" and fund["neu"] != "":
-            t = md_label(f"~~{md_escape(kurz(fund['zeigeAlt']))}~~  →  **{md_escape(kurz(fund['zeigeNeu']))}**")
+        if fund.art != "hinweis" and fund.neu:
+            t = md_label(f"~~{md_escape(kurz(fund.zeige_alt))}~~  →  **{md_escape(kurz(fund.zeige_neu))}**")
         else:
-            t = text_label(f"„{kurz(fund['zeigeAlt'])[:80]}“" if fund["alt"] else "")
+            t = text_label(f"„{kurz(fund.zeige_alt)[:80]}“" if fund.alt else "")
         t.setStyleSheet("border: none; background: transparent; font-size: 11pt;")
         v.addWidget(t)
-        g = QLabel(fund["grund"])
+        g = QLabel(fund.grund)
         g.setWordWrap(True)
         g.setStyleSheet("color: palette(mid); font-size: 9pt; border: none; background: transparent;")
         v.addWidget(g)
@@ -62,7 +63,7 @@ class FundKarte(QFrame):
         zeigen = QPushButton("Zeigen")
         zeigen.clicked.connect(self._zeigen)
         z.addWidget(zeigen)
-        if fund["art"] != "hinweis" and fund["neu"] != "":
+        if fund.art != "hinweis" and fund.neu:
             b = QPushButton("Ändern")
             b.clicked.connect(lambda: self.a.aendern(self.fund))
             z.addWidget(b)
@@ -73,7 +74,7 @@ class FundKarte(QFrame):
             ohr.setToolTip("Das Wort anhören"); ohr.setAccessibleName("Das Wort anhören")
             ohr.clicked.connect(self._hoeren)
             z.addWidget(ohr)
-        if fund["art"] == "hinweis" and fund.get("stelle") and dienst is not None:           # ein Hinweis auf einen Satz: die KI macht einen Vorschlag
+        if fund.art == "hinweis" and fund.stelle and dienst is not None:           # ein Hinweis auf einen Satz: die KI macht einen Vorschlag
             self.vorschlag_knopf = QPushButton("Vorschlag")
             self.vorschlag_knopf.setToolTip("Die KI schreibt den Satz kürzer — Sie nehmen es an oder verwerfen es")
             self.vorschlag_knopf.clicked.connect(self._vorschlag_holen)
@@ -122,13 +123,13 @@ class FundKarte(QFrame):
     def _zeigen(self):
         ed = self.a.editor
         if ed is not None:
-            ed.select_range(self.fund["von"], self.fund["bis"])
+            ed.select_range(self.fund.von, self.fund.bis)
             ed.setFocus()
 
     def _hoeren(self):
         from lunivo_writer.services import vorlesen
         f = self.fund
-        vorlesen.lies_vor(f["zeigeNeu"] if f["art"] != "hinweis" and f["neu"] else f["zeigeAlt"])
+        vorlesen.lies_vor(f.zeige_neu if f.art != "hinweis" and f.neu else f.zeige_alt)
 
     def mousePressEvent(self, e):
         self._zeigen()

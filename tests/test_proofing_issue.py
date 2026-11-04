@@ -15,17 +15,18 @@ def _funde():
     return alle
 
 
-def test_dict_hin_und_zurueck_ist_gleich():
+def test_pruefer_liefern_issues_und_dict_wandlung_ist_verlustfrei():
     funde = _funde()
-    assert funde, "Beispieltexte liefern keine Funde"
+    assert funde and all(isinstance(f, ProofingIssue) for f in funde), "Prüfer müssen ProofingIssue liefern"
     for f in funde:
-        assert ProofingIssue.von_dict(f).als_dict() == f
+        assert ProofingIssue.von_dict(f.als_dict()) == f
 
 
 def test_markierte_und_aufgeloeste_funde_bleiben_erhalten():
     markiert = fund.markieren(_funde(), "eigen")
+    assert all(isinstance(f, ProofingIssue) and f.quelle == "eigen" and f.konfidenz is not None for f in markiert)
     for f in fund.loesen(markiert):
-        assert ProofingIssue.von_dict(f).als_dict() == f
+        assert ProofingIssue.von_dict(f.als_dict()) == f
 
 
 def test_unbekannte_schluessel_bleiben_erhalten_und_laenge():
@@ -47,7 +48,7 @@ def test_vertrag_verwirft_ungueltige_funde_und_behaelt_gueltige(caplog):
                 {"bis": 2, "alt": "x"}, "kein dict", {"von": 0, "bis": 2, "alt": 5, "art": "tipp"}]
     with caplog.at_level("WARNING", logger="lunivo.schreibhilfe"):
         r = bereinigen([gut] + schlecht, text_laenge=10)
-    assert r == [ProofingIssue.von_dict(gut).als_dict()]
+    assert r == [ProofingIssue.von_dict(gut)]
     assert "verworfen" in caplog.text and "bim" not in caplog.text           # Zahl und Grund, nie der Text
 
 
@@ -55,4 +56,4 @@ def test_vertrag_gilt_am_eingang_der_pipeline():
     from lunivo_writer.proofing import fund
     r = fund.markieren([{"von": 0, "bis": 3, "alt": "abc", "neu": "d", "grund": "", "art": "tipp"},
                         {"von": 2, "bis": 99, "alt": "c", "neu": "", "grund": "", "art": "tipp"}], "eigen", 5)
-    assert len(r) == 1 and r[0]["quelle"] == "eigen" and r[0]["konfidenz"] is not None
+    assert len(r) == 1 and r[0].quelle == "eigen" and r[0].konfidenz is not None

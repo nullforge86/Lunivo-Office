@@ -12,6 +12,7 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
+from lunivo_writer.models.proofing import ProofingIssue, zeige_leer as zeige_leer_modell
 from lunivo_writer.services.gelernt import Gelernt
 from lunivo_writer.proofing import autokorrektur, fund as fundlib, inkrement, pruefung, vorhersage
 
@@ -19,15 +20,7 @@ _log = logging.getLogger("lunivo.proofing")
 ART_REIHENFOLGE = {"fehler": 0, "tipp": 1, "hinweis": 2}
 
 
-def zeige_leer(s: str) -> str:
-    """Leerzeichen und Zeilenumbrüche in Worten statt in Symbolen: „2 Leerzeichen“, „Zeilenumbruch“ (auch gut vorlesbar)."""
-    def wort(m):
-        t = m.group(0)
-        if t.startswith("\n"):
-            return "Zeilenumbruch" if len(t) == 1 else f"{len(t)} Zeilenumbrüche"
-        return "1 Leerzeichen" if len(t) == 1 else f"{len(t)} Leerzeichen"
-    ganz = not s.strip(" \n")
-    return re.sub(r" +|\n+", lambda m: wort(m) if ganz else f"[{wort(m)}]", s)
+zeige_leer = zeige_leer_modell           # bleibt hier unter dem alten Namen erreichbar
 
 
 class _Signale(QObject):
@@ -59,8 +52,8 @@ class WritingAssistant(QObject):
         self.settings = settings
         self.gelernt = gelernt or Gelernt()
         self.editor = None
-        self.funde: list[dict] = []
-        self._roh: list[dict] = []
+        self.funde: list[ProofingIssue] = []
+        self._roh: list[ProofingIssue] = []
         self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
         self._weg: set[tuple] = set()
         self._alle_weg: set[str] = set()            # Wörter, die im ganzen Dokument in Ruhe bleiben (nur diese Sitzung)
@@ -208,31 +201,30 @@ class WritingAssistant(QObject):
         self._region, self._schmutz, self._voll = None, None, True
         if getattr(self, "_zaehlen", False):
             self._zaehlen = False
-            self.gelernt.merke_gezeigt([f for f in self._roh if self._key(f) not in self._weg and f["alt"].lower() not in self._alle_weg])
+            self.gelernt.merke_gezeigt([f for f in self._roh if self._key(f) not in self._weg and f.alt.lower() not in self._alle_weg])
         n = ed.document().characterCount() - 1
         self._zeigen(f"{n} Zeichen geprüft, {len([f for f in self._roh if self._key(f) not in self._weg])} Funde.")
 
-    def _key(self, f: dict) -> tuple:
+    def _key(self, f: ProofingIssue) -> tuple:
         t = self.editor.document().toPlainText() if self.editor else ""
-        return (f["alt"], f["neu"], f["grund"], t[max(0, f["von"] - 12):f["von"]])
+        return (f.alt, f.neu, f.grund, t[max(0, f.von - 12):f.von])
 
     def _zeigen(self, meldung: str | None = None) -> None:
-        sichtbar = [dict(f, zeigeAlt=zeige_leer(f["alt"]), zeigeNeu=zeige_leer(f["neu"]))
-                    for f in self._roh if self._key(f) not in self._weg and f["alt"].lower() not in self._alle_weg]
-        sichtbar.sort(key=lambda f: (ART_REIHENFOLGE.get(f["art"], 3), f["von"]))
+        sichtbar = [f for f in self._roh if self._key(f) not in self._weg and f.alt.lower() not in self._alle_weg]
+        sichtbar.sort(key=lambda f: (ART_REIHENFOLGE.get(f.art, 3), f.von))
         self.anzeigen(sichtbar)
         if meldung:
             self.status.emit(meldung)
 
-    def anzeigen(self, funde: list) -> None:
+    def anzeigen(self, funde: list[ProofingIssue]) -> None:
         self.funde = funde
         if self.editor is not None:
             self.editor.set_wellen(funde if self.an("wellen") else [])
         self.fundeGeaendert.emit(funde)
 
     # ---- Rechtsklick-Menü ------------------------------------------------------------------
-    def funde_an(self, pos: int) -> list[dict]:
-        return [f for f in self.funde if f["von"] <= pos <= f["bis"] and f["von"] < f["bis"]]
+    def funde_an(self, pos: int) -> list[ProofingIssue]:
+        return [f for f in self.funde if f.von <= pos <= f.bis and f.von < f.bis]
 
     def erweitere_menue(self, menu, pos: int) -> None:
         """Ein Kopf, ein Vorschlag je Möglichkeit, drei Aktionen — wie im Prüfbogen (Kontextmenü für Fehler-Aktionen)."""
@@ -241,26 +233,25 @@ class WritingAssistant(QObject):
             return
         gefunden = self.funde_an(pos)
         wort = self._wort_an(pos)
-        vorschlaege: list[tuple[str, dict | None]] = []
+        vorschlaege: list[tuple[str, ProofingIssue | None]] = []
         for f in gefunden:
-            if f["neu"]:                                     # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
-                vorschlaege.append((f["neu"], f))
+            if f.neu:                                     # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
+                vorschlaege.append((f.neu, f))
         if wort and self.settings.get_bool("schreibhilfe/vorschlaege", True):
             from lunivo_writer.proofing import pruefung
             schon = {t for t, _f in vorschlaege}
             for k in pruefung.vorschlaege_fuer(wort[0], 6, self.gelernt.daten):
                 if pruefung.uebernimm_schreibweise(wort[0], k) in schon:
                     continue
-                vorschlaege.append((pruefung.uebernimm_schreibweise(wort[0], k), {"von": wort[1], "bis": wort[2], "alt": wort[0],
-                                                                                    "neu": k, "wortEbene": True, "art": "tipp",
-                                                                                    "grund": "Vorschlag"}))
+                vorschlaege.append((pruefung.uebernimm_schreibweise(wort[0], k), ProofingIssue(von=wort[1], bis=wort[2], alt=wort[0], neu=k,
+                                                                                                  wort_ebene=True, art="tipp", grund="Vorschlag")))
         if not vorschlaege and not gefunden and not wort:
             return
         erste = menu.actions()[0] if menu.actions() else None
         from PySide6.QtGui import QAction, QFont
         neu = []
         if gefunden:
-            k = QAction(gefunden[0]["grund"], menu); k.setEnabled(False); neu.append(k)
+            k = QAction(gefunden[0].grund, menu); k.setEnabled(False); neu.append(k)
         for text, fund in vorschlaege:
             a = QAction(text, menu)
             f = a.font() if hasattr(a, "font") else QFont()
@@ -273,7 +264,7 @@ class WritingAssistant(QObject):
             n2 = QAction("Alle ignorieren", menu)
             if ziel is not None:
                 n1.triggered.connect(lambda _=False, fd=ziel: self.lassen(fd))
-                n2.triggered.connect(lambda _=False, fd=ziel: self.alle_ignorieren(fd["alt"]))
+                n2.triggered.connect(lambda _=False, fd=ziel: self.alle_ignorieren(fd.alt))
             else:
                 n1.setEnabled(False); n2.setEnabled(False)
             neu += [n1, n2]
@@ -353,17 +344,17 @@ class WritingAssistant(QObject):
             return
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
-        self._roh = fundlib.loesen([f for f in self._roh if f.get("quelle") != "languagetool"]
+        self._roh = fundlib.loesen([f for f in self._roh if f.quelle != "languagetool"]
                                    + fundlib.markieren(funde, "languagetool", ed.document().characterCount() - 1))
-        lt = len([f for f in self._roh if f.get("quelle") == "languagetool"])
+        lt = len([f for f in self._roh if f.quelle == "languagetool"])
         self._zeigen(f"Gründlich geprüft: {lt} zusätzliche Hinweise von LanguageTool ({vorher} eigene Funde vorher).")
 
     # ---- Annehmen / weglassen ----------------------------------------------------------
-    def aendern(self, fund: dict) -> bool:
+    def aendern(self, fund: ProofingIssue) -> bool:
         ed = self.editor
-        if ed is None or not fund["neu"] and fund["art"] == "hinweis":
+        if ed is None or not fund.neu and fund.art == "hinweis":
             return False
-        if not ed.replace_range(fund["von"], fund["bis"], fund["neu"], erwartet=fund["alt"]):
+        if not ed.replace_range(fund.von, fund.bis, fund.neu or "", erwartet=fund.alt):
             self.status.emit("Der Text hat sich an dieser Stelle geändert — bitte neu prüfen.")
             return False
         self.gelernt.gewaehlt(fund)
@@ -376,8 +367,8 @@ class WritingAssistant(QObject):
 
     def alle_aendern(self) -> int:
         n = 0
-        for f in sorted((f for f in self.funde if f["art"] == "fehler" and f["neu"]), key=lambda f: -f["von"]):
-            if self.editor.replace_range(f["von"], f["bis"], f["neu"], erwartet=f["alt"]):
+        for f in sorted((f for f in self.funde if f.art == "fehler" and f.neu), key=lambda f: -f.von):
+            if self.editor.replace_range(f.von, f.bis, f.neu, erwartet=f.alt):
                 self.gelernt.gewaehlt(f)
                 n += 1
         self.pruefen(voll=True)

@@ -94,7 +94,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         self.kontext_hook = None          # Rückruf(menü, position): ergänzt das Rechtsklick-Menü
         self.opt = lambda name, std=True: std      # Rückruf: Schalter aus den Optionen
         self.opt_text = lambda name, std="": std   # Rückruf: Textwerte aus den Optionen
-        self._wellen: list[dict] = []
+        self._wellen: list = []                  # ProofingIssue (Wellenlinien der Schreibhilfe)
         self._popup = QListWidget(None)
         self._popup.setWindowFlags(Qt.ToolTip)
         self._popup.setFocusPolicy(Qt.NoFocus)

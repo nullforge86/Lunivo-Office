@@ -19,7 +19,7 @@ class Beobachter:
 
     def passt(self):
         text = self.doc.toPlainText()
-        return all(text[f["von"]:f["bis"]] == f["alt"] for f in self.funde)
+        return all(text[f.von:f.bis] == f.alt for f in self.funde)
 
 
 def _doc(text):
@@ -55,7 +55,7 @@ def test_aenderung_im_fund_verwirft_ihn_aenderung_dahinter_laesst_ihn(app):
     c.setPosition(len(ABSATZ))
     c.insertText(" Ende.")
     assert len(b.funde) == n and b.passt()
-    c.setPosition(f["von"] + 1)
+    c.setPosition(f.von + 1)
     c.insertText("x")
     assert len(b.funde) < n and b.passt()
 
@@ -101,5 +101,5 @@ def test_inkrementell_gleich_ganze_pruefung(app):
     roh = fund.markieren(pruefung.finde_probleme(alt_text[von:bis]), "eigen")
     inkr = inkrement.einsetzen(b.funde, von, bis, roh)
     voll = fund.markieren(pruefung.finde_probleme(alt_text), "eigen")
-    schluessel = lambda fs: sorted((f["von"], f["bis"], f["alt"]) for f in fs)
+    schluessel = lambda fs: sorted((f.von, f.bis, f.alt) for f in fs)
     assert schluessel(inkr) == schluessel(voll)

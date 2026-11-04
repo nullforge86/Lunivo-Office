@@ -34,13 +34,13 @@ def test_pruefen_findet_und_aendert(app, tmp_path, monkeypatch):
     w.assistant.pruefen()
     for _ in range(5):                                    # eine frühere (leere) Meldung nicht für das Ergebnis halten
         warte(w.assistant.fundeGeaendert, 3000)
-        if any(f["neu"] == "Wir haben" for f in w.assistant.funde):
+        if any(f.neu == "Wir haben" for f in w.assistant.funde):
             break
     funde = w.assistant.funde
-    assert any(f["neu"] == "Wir haben" for f in funde), funde
+    assert any(f.neu == "Wir haben" for f in funde), funde
     # Wellenlinien stehen im Editor
     assert len(e.extraSelections()) == len(funde)
-    f = next(f for f in funde if f["neu"] == "Wir haben")
+    f = next(f for f in funde if f.neu == "Wir haben")
     assert w.assistant.aendern(f)
     assert e.toPlainText().startswith("Wir haben keine")
 
@@ -51,7 +51,7 @@ def test_lassen_blendet_aus_und_lernt_ruhe(app, tmp_path, monkeypatch):
     w.assistant.pruefen(); warte(w.assistant.fundeGeaendert)
     f = w.assistant.funde[0]
     w.assistant.lassen(f)
-    assert f not in w.assistant.funde and all(x["grund"] != f["grund"] for x in w.assistant.funde)
+    assert f not in w.assistant.funde and all(x.grund != f.grund for x in w.assistant.funde)
 
 
 def test_autokorrektur_beim_tippen(app, tmp_path, monkeypatch):
@@ -187,8 +187,8 @@ def test_ki_ohne_schluessel_oeffnet_nichts_nach_aussen(app, tmp_path, monkeypatc
 def test_rechtschreib_ignorieren_schalter(app, tmp_path, monkeypatch):
     from lunivo_writer.proofing import pruefung
     text = "Das Wiederspruch gegen WIEDERSPRUCH und nullforge86/wiederspruch."
-    an = {f["alt"] for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": True, "rsPfadeIgnorieren": True})}
-    aus = {f["alt"] for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": False, "rsPfadeIgnorieren": False})}
+    an = {f.alt for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": True, "rsPfadeIgnorieren": True})}
+    aus = {f.alt for f in pruefung.finde_probleme(text, None, {"rsGrossIgnorieren": False, "rsPfadeIgnorieren": False})}
     assert "WIEDERSPRUCH" not in an and "WIEDERSPRUCH" in aus
     assert not any("wiederspruch" in a and a != "Wiederspruch" for a in an) and "wiederspruch" in aus
 
@@ -795,7 +795,8 @@ def test_fundkarte_bleibt_schmal_und_der_lautsprecher_sichtbar(app, tmp_path, mo
     monkeypatch.setattr(vorlesen, "verfuegbar", lambda: True)
     w = win(tmp_path, monkeypatch)
     w.show()
-    fund = {"art": "fehler", "alt": "x", "neu": "y", "zeigeAlt": "␣" * 60, "zeigeNeu": "␣", "grund": "Mehrere Leerzeichen", "von": 0, "bis": 1}
+    from lunivo_writer.models.proofing import ProofingIssue
+    fund = ProofingIssue(von=0, bis=60, alt="␣" * 60, neu="␣", grund="Mehrere Leerzeichen", art="fehler")
     w.sidebar.zeige([fund])
     app.processEvents()
     karte = w.sidebar.findChildren(FundKarte)[0]
@@ -819,13 +820,13 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     w.assistant.pruefen(True)
     for _ in range(200):
         app.processEvents()
-        if any(f["art"] == "hinweis" for f in w.assistant.funde):
+        if any(f.art == "hinweis" for f in w.assistant.funde):
             break
         time.sleep(0.02)
     karte = None
     for _ in range(300):                                   # die Karte entsteht, sobald die Funde im Hauptthread angekommen sind
         app.processEvents()
-        karte = next((k for k in w.sidebar.findChildren(FundKarte) if k.fund["art"] == "hinweis"), None)
+        karte = next((k for k in w.sidebar.findChildren(FundKarte) if k.fund.art == "hinweis"), None)
         if karte is not None:
             break
         time.sleep(0.02)
@@ -840,7 +841,7 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     karte.verwerfen.click()                                   # verwerfen: nichts ändert sich, der Knopf ist wieder da
     assert karte.vorschlag_feld.isHidden() and karte.vorschlag_knopf.isEnabled() and e.toPlainText() == satz
     def neue_karte():                                         # die Seitenleiste baut die Karten bei neuen Funden neu auf
-        return next((k for k in w.sidebar.findChildren(FundKarte) if k.fund["art"] == "hinweis"), None)
+        return next((k for k in w.sidebar.findChildren(FundKarte) if k.fund.art == "hinweis"), None)
     for _ in range(300):
         app.processEvents()
         karte = neue_karte()

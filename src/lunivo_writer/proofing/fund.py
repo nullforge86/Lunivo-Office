@@ -5,6 +5,8 @@ echte Wahrscheinlichkeit; ihre Werte sind feste Schätzungen je Fundart (unten),
 Bei Überschneidung gewinnt: höchste Konfidenz, dann Art (Fehler vor Tipp vor Hinweis), dann Quelle (eigen vor LanguageTool vor KI)."""
 from __future__ import annotations
 
+from lunivo_writer.models.proofing import ProofingIssue, Verdraengt
+
 ART_RANG = {"fehler": 0, "tipp": 1, "hinweis": 2}
 QUELLE_RANG = {"eigen": 0, "languagetool": 1, "ki": 2}
 STANDARD = {("eigen", True): 0.9, ("eigen", False): 0.8, ("languagetool", True): 0.7, ("languagetool", False): 0.5,
@@ -18,32 +20,31 @@ def klemmen(wert, vorgabe: float = 0.5) -> float:
         return vorgabe
 
 
-def markieren(funde: list[dict], quelle: str, text_laenge: int | None = None) -> list[dict]:
-    """Funde gegen den Datenvertrag ``ProofingIssue`` prüfen (ungültige fallen weg), dann Quelle und – falls nicht vorhanden – Standard-Konfidenz
-    eintragen (liefert Kopien). ``text_laenge``: Länge des geprüften Textes; Bereiche darüber hinaus sind ungültig."""
+def markieren(funde: list, quelle: str, text_laenge: int | None = None) -> list[ProofingIssue]:
+    """Funde gegen den Datenvertrag ``ProofingIssue`` prüfen (ungültige fallen weg; Wörterbücher von außen werden umgewandelt), dann Quelle und
+    – falls nicht vorhanden – Standard-Konfidenz eintragen. ``text_laenge``: Länge des geprüften Textes; Bereiche darüber hinaus sind ungültig."""
     from lunivo_writer.models.proofing import bereinigen
     out = []
     for f in bereinigen(funde, text_laenge):
-        wort_oder_vorschlag = bool(f.get("wortEbene")) or f.get("art") == "fehler"
-        out.append(dict(f, quelle=f.get("quelle", quelle),
-                        konfidenz=klemmen(f["konfidenz"]) if "konfidenz" in f
-                        else STANDARD.get((quelle, wort_oder_vorschlag), 0.5)))
+        wort_oder_vorschlag = f.wort_ebene or f.art == "fehler"
+        out.append(f.ersetzt(quelle=f.quelle or quelle,
+                             konfidenz=klemmen(f.konfidenz) if f.konfidenz is not None else STANDARD.get((quelle, wort_oder_vorschlag), 0.5)))
     return out
 
 
-def _rang(f: dict):
-    return (-f.get("konfidenz", 0.5), ART_RANG.get(f.get("art"), 3), QUELLE_RANG.get(f.get("quelle", "eigen"), 3),
-            f["von"], -(f["bis"] - f["von"]))
+def _rang(f: ProofingIssue):
+    return (-(f.konfidenz if f.konfidenz is not None else 0.5), ART_RANG.get(f.art, 3), QUELLE_RANG.get(f.quelle or "eigen", 3),
+            f.von, -(f.bis - f.von))
 
 
-def loesen(funde: list[dict]) -> list[dict]:
+def loesen(funde: list[ProofingIssue]) -> list[ProofingIssue]:
     """Überschneidende Funde auflösen: der beste bleibt, die unterlegenen werden nicht angezeigt, aber als `verdraengt` vermerkt."""
-    belegt: list[dict] = []
+    belegt: list[ProofingIssue] = []
     for f in sorted(funde, key=_rang):
-        gegner = [b for b in belegt if f["von"] < b["bis"] and b["von"] < f["bis"]]
+        gegner = [i for i, b in enumerate(belegt) if f.von < b.bis and b.von < f.bis]
         if gegner:
-            gegner[0].setdefault("verdraengt", []).append(
-                {"quelle": f.get("quelle"), "neu": f.get("neu"), "grund": f.get("grund"), "konfidenz": f.get("konfidenz")})
+            b = belegt[gegner[0]]
+            belegt[gegner[0]] = b.ersetzt(verdraengt=b.verdraengt + (Verdraengt(f.quelle, f.neu, f.grund, f.konfidenz),))
         else:
             belegt.append(f)
-    return sorted(belegt, key=lambda f: (f["von"], -(f["bis"] - f["von"])))
+    return sorted(belegt, key=lambda f: f.stellenschluessel)

@@ -448,13 +448,13 @@ class ZusatzMixin:
         doc = self.document()
         n = doc.characterCount()
         for f in getattr(self, "_wellen", []):
-            if f["bis"] > n or f["von"] >= f["bis"]:
+            if f.bis > n or f.von >= f.bis:
                 continue
             c = QTextCursor(doc)
-            c.setPosition(f["von"]); c.setPosition(f["bis"], QTextCursor.KeepAnchor)
+            c.setPosition(f.von); c.setPosition(f.bis, QTextCursor.KeepAnchor)
             fmt = QTextCharFormat()
             fmt.setUnderlineStyle(QTextCharFormat.WaveUnderline)
-            fmt.setUnderlineColor(QColor(self.WELLE.get(f["art"], Farbe.GRAU)))
+            fmt.setUnderlineColor(QColor(self.WELLE.get(f.art, Farbe.GRAU)))
             e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
             sel.append(e)
         n_text = doc.characterCount()

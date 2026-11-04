@@ -10,6 +10,7 @@ Was hier bleibt, sind die Regeln selbst; die tragen Baustücke als Code und lass
 
 import json
 import os
+from lunivo_writer.models.proofing import ProofingIssue
 from lunivo_writer.core import paths
 import re
 
@@ -67,9 +68,8 @@ def uebernimm_schreibweise(original, verbesserung):
     return verbesserung
 
 
-def mach_fund(von, bis, alt, neu, grund, art, wort_ebene=False):
-    return {'von': von, 'bis': bis, 'alt': alt, 'neu': neu,
-            'grund': grund, 'art': art, 'wortEbene': wort_ebene}
+def mach_fund(von, bis, alt, neu, grund, art, wort_ebene=False) -> ProofingIssue:
+    return ProofingIssue(von=von, bis=bis, alt=alt, neu=neu, grund=grund, art=art, wort_ebene=wort_ebene)
 
 
 # --------------------------------------------------------------------------
@@ -528,9 +528,8 @@ def pruefe_satzende(text, funde):
                            'Am Ende fehlt der Punkt.', 'tipp'))
 
 
-def mach_hinweis(von, bis, grund, stelle):
-    return {'von': von, 'bis': bis, 'alt': '', 'neu': '', 'grund': grund,
-            'stelle': stelle, 'art': 'hinweis', 'wortEbene': False}
+def mach_hinweis(von, bis, grund, stelle) -> ProofingIssue:
+    return ProofingIssue(von=von, bis=bis, alt='', neu='', grund=grund, art='hinweis', stelle=stelle)
 
 
 def pruefe_satzbau(text, hinweise):
@@ -576,13 +575,13 @@ def ohne_ueberschneidung(funde):
     belegt = []
 
     def passt(f):
-        return all(f['bis'] <= b['von'] or f['von'] >= b['bis'] for b in belegt)
+        return all(f.bis <= b.von or f.von >= b.bis for b in belegt)
 
     def nach_stelle(f):
-        return (f['von'], -(f['bis'] - f['von']))
+        return f.stellenschluessel
 
-    for durchgang in ([f for f in funde if f.get('wortEbene')],
-                      [f for f in funde if not f.get('wortEbene')]):
+    for durchgang in ([f for f in funde if f.wort_ebene],
+                      [f for f in funde if not f.wort_ebene]):
         for fund in sorted(durchgang, key=nach_stelle):
             if passt(fund):
                 belegt.append(fund)
@@ -627,15 +626,14 @@ def finde_probleme(text, gelernt=None, schalter=None):
     for name, lauf in WORT_PRUEFER:
         if pruefer_aktiv(name, schalter):
             lauf(text, korrekturen, gelernt, schalter)
-    for fund in korrekturen:
-        fund['wortEbene'] = True
+    korrekturen = [fund.ersetzt(wort_ebene=True) for fund in korrekturen]
 
     # Wörter auf der Ruhe-Liste sind so gewollt.
     in_ruhe = gelernt.get('inRuhe', {})
     eigene = gelernt.get('woerter', {})
     korrekturen = [f for f in korrekturen
-                   if not (in_ruhe.get(f['alt'].lower())
-                           and not eigene.get(f['alt'].lower()))]
+                   if not (in_ruhe.get(f.alt.lower())
+                           and not eigene.get(f.alt.lower()))]
 
     for name, lauf in REGEL_PRUEFER:
         if pruefer_aktiv(name, schalter):

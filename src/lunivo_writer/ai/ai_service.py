@@ -351,15 +351,15 @@ class KIDienst(QObject):
             danach(wort, lst, von, bis)
         self.starte(f"Suche Wörter für „{wort}“ …", lambda _t: self.ki.synonyme(wort, umgebung), fertig, eing)
 
-    def satz_vorschlag(self, fund: dict, danach) -> None:
+    def satz_vorschlag(self, fund, danach) -> None:
         """Zu einem Hinweis („Langer Satz …“) einen Umschreibe-Vorschlag holen; ``danach(vorschlag)`` bekommt {alt, neu, grund} im Hauptthread."""
         ed = self.w.current_editor()
         if ed is None:
             return
-        satz = fund.get("stelle") or ed.document().toPlainText()[fund["von"]:fund["bis"]]
-        eing = {"ed": ed, "text": satz, "basis": fund["von"], "markiert": True, "rev": ed.document().revision()}
-        self.starte("Die KI schlägt kürzere Sätze vor …", lambda t: self.ki.satz_umschreiben(t, fund["grund"]),
-                    lambda r, e: danach({"alt": satz, "neu": r["text"].strip(), "grund": fund["grund"]}), eing=eing)
+        satz = fund.stelle or ed.document().toPlainText()[fund.von:fund.bis]
+        eing = {"ed": ed, "text": satz, "basis": fund.von, "markiert": True, "rev": ed.document().revision()}
+        self.starte("Die KI schlägt kürzere Sätze vor …", lambda t: self.ki.satz_umschreiben(t, fund.grund),
+                    lambda r, e: danach({"alt": satz, "neu": r["text"].strip(), "grund": fund.grund}), eing=eing)
 
     def vorschlag_einsetzen(self, v: dict) -> bool:
         ed = self.w.current_editor()

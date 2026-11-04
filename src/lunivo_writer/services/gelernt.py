@@ -8,6 +8,7 @@ import json
 import os
 import re
 
+from lunivo_writer.models.proofing import ProofingIssue
 from lunivo_writer.services.settings_service import data_dir
 
 WORT = re.compile(r"^[A-Za-zÄÖÜäöüß-]+$")
@@ -40,14 +41,14 @@ class Gelernt:
             pass
 
     @staticmethod
-    def wort_ebene(fund: dict) -> bool:
-        return bool(fund.get("wortEbene")) and bool(WORT.match(fund["alt"])) and \
-            fund["neu"].strip() == fund["neu"] and fund["neu"] != ""
+    def wort_ebene(fund: ProofingIssue) -> bool:
+        neu = fund.neu or ""
+        return fund.wort_ebene and bool(WORT.match(fund.alt)) and neu.strip() == neu and neu != ""
 
-    def gewaehlt(self, fund: dict) -> None:
+    def gewaehlt(self, fund: ProofingIssue) -> None:
         if self.wort_ebene(fund):
-            k = fund["alt"].lower()
-            self.daten["woerter"][k] = fund["neu"]
+            k = fund.alt.lower()
+            self.daten["woerter"][k] = fund.neu
             self.daten["gezeigt"].pop(k, None)          # angenommen ist das Gegenteil von ignoriert
             self.daten["inRuhe"].pop(k, None)
             self.speichern()
@@ -59,7 +60,7 @@ class Gelernt:
         for f in funde:
             if not self.wort_ebene(f):
                 continue
-            k = f["alt"].lower()
+            k = f.alt.lower()
             if self.daten["woerter"].get(k) or self.daten["inRuhe"].get(k):
                 continue
             n = self.daten["gezeigt"].get(k, 0) + 1

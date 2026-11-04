@@ -7,7 +7,7 @@ TEXT = ("Das ist ein Satz mit  zwei Leerzeichen und einem Tippfehler wie Fehlr .
 
 
 def _schluessel(funde):
-    return sorted((f["von"], f["bis"], f["alt"], f["art"]) for f in funde)
+    return sorted((f.von, f.bis, f.alt, f.art) for f in funde)
 
 
 def test_namen_und_aktiv():
@@ -36,7 +36,7 @@ def test_alle_aus_liefert_keine_funde():
 def test_nur_zeichen_findet_nur_zeichenfehler_keine_woerter():
     nur = {"pruefer_" + n: False for n in pruefung.PRUEFER_NAMEN if n != "zeichen"}
     funde = pruefung.finde_probleme(TEXT, None, nur)
-    assert funde and not any(c.isalpha() for f in funde for c in f["alt"])
+    assert funde and not any(c.isalpha() for f in funde for c in f.alt)
 
 
 def test_grammatik_schalter_nimmt_alle_grammatikpruefer_weg():

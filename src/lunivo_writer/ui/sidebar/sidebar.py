@@ -441,7 +441,7 @@ class SchreibhilfePanel(QWidget):
             self.liste.insertWidget(0, self.meldung)
         for i, f in enumerate(funde):
             self.liste.insertWidget(i, FundKarte(f, self.a, dienst=getattr(self, "ki", None)))
-        self.alle.setVisible(any(f["art"] == "fehler" and f["neu"] for f in funde))
+        self.alle.setVisible(any(f.art == "fehler" and f.neu for f in funde))
         for w in self._einfuehrung:                                 # mit Funden steht die Liste ganz oben, wie in der ersten Fassung
             w.setVisible(not funde)
 

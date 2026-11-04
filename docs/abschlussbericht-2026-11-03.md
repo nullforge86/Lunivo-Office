@@ -26,7 +26,7 @@ Nichts committet. Tests nur gezielt (keine Vollsuite). Praxisprüfung mit Screen
 - Screenreader-Rollen (`QAccessible`) der selbstgebauten Widgets, Skalierung 125–200 %, Sichtprüfung der Fokusrahmen: nicht geprüft.
 - Korpus: nur selbst erzeugte Dokumente; Dokumente aus Word/LibreOffice fehlen (Ordner `tests/korpus_extern/` wird mitgeprüft, sobald vorhanden).
 - DOCX-Writer/Reader sind aufgeteilt, die Kernklassen bleiben groß; weitere Schnitte (Absatz/Lauf, Listen) nicht begonnen.
-- `ProofingIssue` prüft am Eingang; die Schreibhilfe-Teile dahinter arbeiten weiter mit Wörterbüchern (schrittweise Umstellung offen).
+- `ProofingIssue` ist jetzt durchgängig der Typ der Schreibhilfe (Prüfer bis Editor); Dicts nur noch als Brücke für Daten von außen.
 - Die ZIP-Prüfung entpackt einmal zum Zählen (Zeitaufwand bei sehr großen Paketen).
 - Beobachtet, nicht geändert: `core/befehle/seite.py` definiert `seitenraenderRahmen` doppelt; Windows/macOS-CI bleibt nicht blockierend.
 - Gesamtlauf (CI) steht aus: lokal nur gezielte Tests.

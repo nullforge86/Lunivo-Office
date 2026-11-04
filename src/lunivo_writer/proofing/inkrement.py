@@ -6,20 +6,22 @@ Grenzen (bewusst): Ein Fund, der über eine Absatzgrenze hinweg reicht, wird bei
 „Gründlich prüfen“ und F7 prüfen immer den ganzen Text. Bei kurzen Texten und großen Änderungen wird ebenfalls alles geprüft."""
 from __future__ import annotations
 
+from lunivo_writer.models.proofing import ProofingIssue
+
 MIN_ZEICHEN = 2000          # darunter kostet die Gesamtprüfung nichts — dort lohnt der Aufwand nicht
 SICHERHEIT_ABSAETZE = 1     # so viele Absätze vor und hinter der Änderung werden mitgeprüft
 MAX_ANTEIL = 0.5            # größer als die Hälfte des Textes → gleich alles prüfen
 
 
-def verschieben(funde: list[dict], pos: int, entfernt: int, hinzu: int) -> list[dict]:
+def verschieben(funde: list[ProofingIssue], pos: int, entfernt: int, hinzu: int) -> list[ProofingIssue]:
     """Funde nach einer Änderung (pos, entfernt, hinzugefügt) umrechnen. Betroffene Funde entfallen."""
     delta, ende = hinzu - entfernt, pos + entfernt
     out = []
     for f in funde:
-        if f["bis"] <= pos:
+        if f.bis <= pos:
             out.append(f)
-        elif f["von"] >= ende:
-            out.append(dict(f, von=f["von"] + delta, bis=f["bis"] + delta))
+        elif f.von >= ende:
+            out.append(f.verschoben(delta))
     return out
 
 
@@ -55,8 +57,8 @@ def lohnt(laenge: int, von: int, bis: int) -> bool:
     return laenge >= MIN_ZEICHEN and (bis - von) < laenge * MAX_ANTEIL
 
 
-def einsetzen(alt: list[dict], von: int, bis: int, neue_relativ: list[dict]) -> list[dict]:
+def einsetzen(alt: list[ProofingIssue], von: int, bis: int, neue_relativ: list[ProofingIssue]) -> list[ProofingIssue]:
     """Funde im Bereich [von, bis) durch die neuen (Positionen relativ zum Bereich) ersetzen."""
-    behalten = [f for f in alt if f["bis"] <= von or f["von"] >= bis]
-    neu = [dict(f, von=f["von"] + von, bis=f["bis"] + von) for f in neue_relativ]
-    return sorted(behalten + neu, key=lambda f: (f["von"], -(f["bis"] - f["von"])))
+    behalten = [f for f in alt if f.bis <= von or f.von >= bis]
+    neu = [f.verschoben(von) for f in neue_relativ]
+    return sorted(behalten + neu, key=lambda f: f.stellenschluessel)
