@@ -1,3 +1,4 @@
 -r requirements.txt
 pytest>=8
 pypdf>=4
+ruff>=0.5

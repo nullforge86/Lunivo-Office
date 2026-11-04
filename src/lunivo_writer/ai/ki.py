@@ -407,7 +407,7 @@ class KI:
 
     def anfrage(self, anweisung: str, text, bauplan=None, modell: str | None = None, optionen: dict | None = None) -> dict:
         m = modell or self.k["modell"]
-        if (sperre := self.zustimmung_fehlt(m)) is not None:
+        if self.verfuegbar() and (sperre := self.zustimmung_fehlt(m)) is not None:      # fehlt schon der Schlüssel, nennt der Zweig unten den eigentlichen Grund
             return sperre
         if m.startswith(EIGEN_MARKE):
             return self._eigen(self.k.anbieter_holen(m[len(EIGEN_MARKE):]), anweisung, text, bauplan, optionen)

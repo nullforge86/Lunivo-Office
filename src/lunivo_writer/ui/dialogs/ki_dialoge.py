@@ -532,11 +532,12 @@ class EinwilligungenPanel(QWidget):
                       "Modelle auf diesem Rechner (Ollama, lokale Adressen) brauchen keine Erlaubnis.")
         info.setWordWrap(True); v.addWidget(info)
         self.liste = QListWidget(); self.liste.setAccessibleName("Erteilte Einwilligungen"); v.addWidget(self.liste, 1)
-        z = FlowLayout()
+        z = QHBoxLayout()
         self.widerruf = QPushButton("Widerrufen"); self.widerruf.setToolTip("Nimmt die ausgewählte Erlaubnis zurück")
         self.alle = QPushButton("Alle widerrufen")
         for b in (self.widerruf, self.alle):
             b.setMinimumHeight(36); z.addWidget(b)
+        z.addStretch(1)
         v.addLayout(z)
         self.widerruf.clicked.connect(self._widerrufen); self.alle.clicked.connect(self._alle)
         self.liste.currentRowChanged.connect(self._knoepfe)

@@ -10,6 +10,7 @@ from lunivo_writer.ai import ki as K
 
 def konfig(tmp_path, **kw):
     k = K.KIKonfig(str(tmp_path / "ki.json"))
+    k.d["einwilligungen"] = [{"anbieter": "Anthropic (Claude)", "umfang": "dokument", "seit": "2026-11-04"}]       # die Tests prüfen die Anbindung, nicht die Rückfrage
     k.d.update(kw)
     return k
 
