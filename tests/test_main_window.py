@@ -110,7 +110,9 @@ def test_quelltext_ohne_web_oberflaeche():
 
 # Das Einfügen aus der Zwischenablage nimmt Inhalte aus fremden Programmen an (die liefern ihre Formatierung so); das ist keine
 # Datei und kein Format von Lunivo. Für alles, was Lunivo selbst anlegt oder speichert, gilt: kein HTML. Neue Einträge: nicht vorgesehen.
-HTML_NOCH_ERLAUBT = {"ui/document/base.py", "ui/document/document_editor.py"}
+# Einzige weitere Ausnahme (Eigentümer, 2026-11-04): ui/baukasten/datei_symbole.py ordnet der Endung „.html“ ein Dateisymbol zu — das zeigt
+# nur fremde Dateien im Dateibrowser an und erzeugt, liest oder speichert kein HTML.
+HTML_NOCH_ERLAUBT = {"ui/document/base.py", "ui/document/document_editor.py", "ui/baukasten/datei_symbole.py"}
 
 
 def test_kein_html_im_projekt():
