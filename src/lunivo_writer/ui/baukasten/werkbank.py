@@ -49,10 +49,7 @@ class FunktionsZeile(QFrame):
         self.untertitel = QLabel(f.hinweis); self.untertitel.setStyleSheet("color: palette(mid); font-size: 9pt;"); self.untertitel.setWordWrap(True)
         for w in (self.titel, self.untertitel):
             w.setAttribute(Qt.WA_TransparentForMouseEvents)
-        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(self.titel)                 # Titelzeile: Name, rechts daneben das Kürzel; der Hinweis darunter hat die volle Breite
-        if f.kuerzel:
-            k = QLabel(f.kuerzel); k.setStyleSheet("color: palette(mid); font-size: 8pt; border: 1px solid palette(midlight); border-radius: 3px; padding: 0 5px;")
-            k.setAttribute(Qt.WA_TransparentForMouseEvents); kopf.addWidget(k, 0, Qt.AlignVCenter)
+        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(self.titel)                 # Titelzeile: nur der Name, kein Tastenkürzel im Knopf (einheitlich; das Kürzel steht in Kurzinfo und Kürzelübersicht)
         kopf.addStretch(1)
         mitte.addLayout(kopf)
         if f.hinweis:
