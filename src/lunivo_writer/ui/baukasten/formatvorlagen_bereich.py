@@ -13,11 +13,10 @@ from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFont, QPalette
-from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QStyledItemDelegate, QVBoxLayout,
-)
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QLabel, QListWidget, QListWidgetItem, QPushButton, QStyledItemDelegate, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
 ANZEIGEN = (("gueltig", "Gültige Formatvorlagen"), ("verwendet", "Verwendete Formatvorlagen"), ("alle", "Alle Formatvorlagen"))
@@ -72,23 +71,23 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.setWindowTitle("Formatvorlagen und Formatierung")
         self.get_editor = get_editor or (lambda: None)
         self._anwenden, self._neu = anwenden, neu
-        v = QVBoxLayout(self); v.setSpacing(8)
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
         self.aktuell = QComboBox(); self.aktuell.setMinimumHeight(34)
         v.addWidget(self.aktuell)
-        z = QHBoxLayout()
+        z = FlussLayout(6)
         self.neu_knopf = QPushButton("Neue Formatvorlage …"); self.loeschen = QPushButton("Formatierung löschen")
         for k in (self.neu_knopf, self.loeschen):
-            k.setMinimumHeight(34); z.addWidget(k)
+            z.addWidget(k)
         v.addLayout(z)
         titel = QLabel("Formatierung auswählen"); titel.setStyleSheet("color: palette(highlight);")
         v.addWidget(titel)
         self.liste = QListWidget(); self.liste.setMinimumHeight(260); self.liste.setItemDelegate(_Absatzmarke(self.liste))
         v.addWidget(self.liste, 1)
-        az = QHBoxLayout(); az.addWidget(QLabel("Anzeigen:"))
+        az = FormularGitter()
         self.anzeigen = QComboBox(); self.anzeigen.setMinimumHeight(34)
         for k, t in ANZEIGEN:
             self.anzeigen.addItem(t, k)
-        az.addWidget(self.anzeigen, 1); v.addLayout(az)
+        az.zeile("Anzeigen:", self.anzeigen); v.addLayout(az)
         self.vorschau = QCheckBox("Vorschau anzeigen"); self.vorschau.setChecked(True); v.addWidget(self.vorschau)
         v.addWidget(knopfzeile(self, schliessen=True))
         self.liste.itemClicked.connect(lambda it: self.waehle(it.data(Qt.UserRole)))

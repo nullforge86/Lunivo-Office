@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QAbstractItemView, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget,
-    QTableWidgetItem, QVBoxLayout,
+    QAbstractItemView, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -75,7 +74,8 @@ class FeldDialog(PanelFaehig, QDialog):
         self.name = QLineEdit(); self.name.setMinimumHeight(34); self.name.setAccessibleName("Feldname")
         self.name.setPlaceholderText("Name eines Feldes")
         t2 = QLabel("&Feldname:"); t2.setBuddy(self.name)
-        z = QHBoxLayout(); z.addWidget(t2); z.addWidget(self.name, 1); v.addLayout(z)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        z = FormularGitter(); z.zeile(t2, self.name); v.addLayout(z)
         self.zeile = knopfzeile(self, ok_text="Einfügen", bei_ok=self._melden)
         v.addWidget(self.zeile)
         self.liste.currentTextChanged.connect(self.name.setText)

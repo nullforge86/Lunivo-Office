@@ -17,17 +17,17 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QButtonGroup, QComboBox, QHBoxLayout, QPushButton, QRadioButton, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import bildeffekte as BE
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, UmbruchSchalter
 from lunivo_writer.ui.baukasten.linien import Linie, LinienWahl
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld
-from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt, TexteffektPanel
+from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt, TexteffektPanel, seitengitter
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 
 from lunivo_writer.editor.linie import OBJEKT_STRICHE
@@ -42,7 +42,7 @@ class _Felder(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.gitter = FormularGitter(self)
+        self.gitter = seitengitter(self)
 
     def zeile(self, text: str, widget: QWidget) -> None:
         self.gitter.zeile(text, widget)
@@ -72,7 +72,7 @@ class _DreiDUntereinander:
         if self.MIT_ABSCHLUSS:
             for k, titel in (("oben", "Oberer Abschluss"), ("unten", "Unterer Abschluss")):
                 self.ab_art[k] = "keine"
-                self.ab_knopf[k] = QPushButton("Keine"); self.ab_knopf[k].setMinimumWidth(110)
+                self.ab_knopf[k] = QPushButton("Keine"); self.ab_knopf[k].setMinimumWidth(0)
                 self.ab_breite[k], self.ab_hoehe[k] = SchiebeFeld(0, 20, " pt", 0.5, 1, 4.0), SchiebeFeld(0, 20, " pt", 0.5, 1, 6.0)
                 self.a_3d.zeile(titel + ":", self.ab_knopf[k]); self.a_3d.zeile("Breite:", self.ab_breite[k]); self.a_3d.zeile("Höhe:", self.ab_hoehe[k])
                 self.ab_knopf[k].clicked.connect(lambda _=False, k=k: self._abschluss_menue(k))
@@ -179,13 +179,12 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
 
     # ---- Seite 1: Füllung und Linie ------------------------------------------------------------------------------------------
     def _seite_fuellung(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
         self.a_fuell = Abschnitt("Füllung")
         self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
         self.r_textur, self.r_muster = QRadioButton("Strukturfüllung"), QRadioButton("Musterfüllung")
         self.r_bild = QRadioButton("Bildfüllung")
-        for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, *self._zusatz_radios("fuell")):
-            self.a_fuell.breit(r)
+        self.a_fuell.auswahl(self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, *self._zusatz_radios("fuell"))
         self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild = (_Felder() for _ in range(5))     # je Füllungsart nur ihre Felder
         self.farbe = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Automatisch")
         self.g_farbe.zeile("Farbe:", self.farbe)
@@ -210,8 +209,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         # Linie
         self.a_kontur = Abschnitt("Linie")
         self.k_keine, self.k_linie = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie")
-        for r in (self.k_keine, self.k_linie, *self._zusatz_radios("linie")):
-            self.a_kontur.breit(r)
+        self.a_kontur.auswahl(self.k_keine, self.k_linie, *self._zusatz_radios("linie"))
         self.g_lin_wahl, self.g_lin_verlauf, self.g_lin_form = _Felder(), _Felder(), _Felder()        # Art · Stärke · Farbe in einer Zeile · Farbverlauf · weitere Form
         self.k_wahl = LinienWahl(Linie(Farbe.SCHWARZ, 1.0, "einfach"), arten=STRICHE, frei=True)
         self.k_farbe, self.k_art = self.k_wahl.farbe, self.k_wahl.art

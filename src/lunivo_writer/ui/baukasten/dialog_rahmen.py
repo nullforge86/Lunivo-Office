@@ -4,8 +4,10 @@ from __future__ import annotations
 from typing import Callable
 
 from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtGui import QPainter, QPalette, QPen
-from PySide6.QtWidgets import QApplication, QDialog, QFormLayout, QHBoxLayout, QLayout, QPushButton, QVBoxLayout, QWidget, QWidgetItem
+from PySide6.QtGui import QPainter
+from PySide6.QtWidgets import QDialog, QFormLayout, QLayout, QPushButton, QVBoxLayout, QWidget, QWidgetItem
+
+from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
 
 
 
@@ -69,6 +71,8 @@ class _KnopfLayout(QLayout):
         out, y = [], 0
         if self._extras and eb + a + hb > w:                              # zu eng für eine Zeile: Zusatzknöpfe oben, umbrechend
             x = 0
+            if len(breiten) == 1:
+                breiten = [w]                                              # ein einzelner Zusatzknopf allein in seiner Zeile: volle Breite wie die Felder
             for it, bw in zip(self._extras, breiten):
                 if x > 0 and x + bw > w:
                     x = 0; y += self.ZEILE_H + a
@@ -110,6 +114,7 @@ class Knopfzeile(QWidget):
         if not nur_ok:
             self.zeile.haupt(self.abbrechen)
         self.zeile.haupt(self.ok)
+        felder_angleichen(self)                                              # Knöpfe in FELDHOEHE wie die Felder
 
     def zusatz_knopf(self, k: QPushButton) -> QPushButton:
         self.zeile.extra(k)

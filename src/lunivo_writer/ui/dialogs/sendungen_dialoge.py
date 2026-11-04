@@ -2,12 +2,19 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton,
+    QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit, QPushButton,
     QVBoxLayout,
 )
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import sendungen as S
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+
+
+def _hinweis(text: str) -> QLabel:
+    lb = QLabel(text.replace("\n", " "))
+    lb.setWordWrap(True)
+    return lb
 
 
 def _ok(dlg, text_ok: str | None = None):
@@ -20,26 +27,26 @@ class UmschlagDialog(PanelFaehig, QDialog):
     def __init__(self, parent, absender: str = ""):
         super().__init__(parent)
         self.setWindowTitle("Umschlag")
-        f = QFormLayout(self)
-        f.addRow(QLabel("Das Blatt wird auf Umschlagformat gestellt und beides eingesetzt.\nDanach steht der Umschlag allein im Dokument."))
+        f = FormularGitter(self)
+        f.breit(_hinweis("Das Blatt wird auf Umschlagformat gestellt und beides eingesetzt.\nDanach steht der Umschlag allein im Dokument."))
         self.format = QComboBox(); self.format.addItems(list(S.UMSCHLAEGE))
         self.absender = QPlainTextEdit(absender); self.absender.setFixedHeight(60)
         self.empfaenger = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.empfaenger.setFixedHeight(80)
-        f.addRow("Format", self.format); f.addRow("Absender", self.absender); f.addRow("Empfänger", self.empfaenger)
-        f.addRow(_ok(self, "Anlegen"))
+        f.zeile("Format", self.format); f.zeile("Absender", self.absender); f.zeile("Empfänger", self.empfaenger)
+        f.breit(_ok(self, "Anlegen"))
 
 
 class EtikettenDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Etiketten")
-        f = QFormLayout(self)
-        f.addRow(QLabel("Ein Bogen wird angelegt. Steht überall dasselbe, kommt der Text in jedes Feld; sonst je Zeile eines."))
+        f = FormularGitter(self)
+        f.breit(_hinweis("Ein Bogen wird angelegt. Steht überall dasselbe, kommt der Text in jedes Feld; sonst je Zeile eines."))
         self.bogen = QComboBox(); self.bogen.addItems(list(S.ETIKETTEN))
         self.text = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.text.setFixedHeight(90)
         self.gleich = QComboBox(); self.gleich.addItems(["ja — derselbe Text", "nein — je Zeile ein Etikett"])
-        f.addRow("Bogen", self.bogen); f.addRow("Aufschrift", self.text); f.addRow("Überall dasselbe", self.gleich)
-        f.addRow(_ok(self, "Anlegen"))
+        f.zeile("Bogen", self.bogen); f.zeile("Aufschrift", self.text); f.zeile("Überall dasselbe", self.gleich)
+        f.breit(_ok(self, "Anlegen"))
 
 
 class SeriendruckDialog(PanelFaehig, QDialog):
@@ -54,8 +61,8 @@ class SeriendruckDialog(PanelFaehig, QDialog):
                            "(oder schreiben Sie {{Name}} in den Text) und kommen Sie dann hierher zurück."))
         self.daten = QPlainTextEdit(gespeichert or (";".join(felder) + "\n" if felder else "Name;Ort\nFrau Meier;Kiel\nHerr Schmidt;Bonn"))
         v.addWidget(self.daten)
-        z = QHBoxLayout()
-        b = QPushButton("Aus Datei laden (CSV/TXT) …"); b.clicked.connect(self._laden); z.addWidget(b); z.addStretch(1)
+        z = FlussLayout()
+        b = QPushButton("Aus Datei laden (CSV/TXT) …"); b.clicked.connect(self._laden); z.addWidget(b)
         v.addLayout(z)
         v.addWidget(_ok(self, "Briefe erzeugen"))
 
@@ -73,10 +80,10 @@ class RegelDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Regel")
-        f = QFormLayout(self)
-        f.addRow(QLabel("Wenn das Feld den Wert hat, steht der erste Text da — sonst der zweite."))
+        f = FormularGitter(self)
+        f.breit(_hinweis("Wenn das Feld den Wert hat, steht der erste Text da — sonst der zweite."))
         self.feld = QLineEdit("Geschlecht"); self.wert = QLineEdit("w")
         self.dann = QLineEdit("Sehr geehrte Frau"); self.sonst = QLineEdit("Sehr geehrter Herr")
         for lab, w in (("Feld", self.feld), ("ist gleich", self.wert), ("dann", self.dann), ("sonst", self.sonst)):
-            f.addRow(lab, w)
-        f.addRow(_ok(self, "Einfügen"))
+            f.zeile(lab, w)
+        f.breit(_ok(self, "Einfügen"))

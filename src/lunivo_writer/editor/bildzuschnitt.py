@@ -14,8 +14,8 @@ from PySide6.QtGui import QBrush, QImage, QPainter
 from lunivo_writer.editor import formen_katalog as K
 
 GRENZE = 0.95                                                       # so viel darf höchstens (je Achse) abgeschnitten werden
-VERHAELTNISSE = (("1:1", 1, 1), ("4:3", 4, 3), ("3:4", 3, 4), ("3:2", 3, 2), ("2:3", 2, 3), ("16:9", 16, 9), ("9:16", 9, 16),
-                 ("16:10", 16, 10), ("5:4", 5, 4), ("21:9", 21, 9))
+VERHAELTNISSE = (("Frei", 0, 0), ("1:1", 1, 1), ("3:2", 3, 2), ("4:3", 4, 3), ("5:3", 5, 3), ("5:4", 5, 4), ("16:9", 16, 9), ("16:10", 16, 10),
+                 ("2:3", 2, 3), ("3:4", 3, 4), ("3:5", 3, 5), ("4:5", 4, 5), ("9:16", 9, 16), ("21:9", 21, 9))   # „Frei“: kein festes Verhältnis (0, 0)
 _MERK: dict = {}
 
 
@@ -138,7 +138,9 @@ def skala(ed, z, breite: float, hoehe: float) -> bool:
 
 
 def skala_text(ed, z, text) -> bool:
-    """``"16:9"`` (oder ``(16, 9)``) → ``skala``."""
+    """``"16:9"`` (oder ``(16, 9)``) → ``skala``. „Frei“ (kein festes Verhältnis) ändert nichts und gilt als gelungen."""
+    if str(text).strip().lower() == "frei":
+        return z is not None and z[0] == "frei"
     if isinstance(text, (tuple, list)):
         return skala(ed, z, float(text[0]), float(text[1]))
     try:

@@ -192,11 +192,14 @@ class BackstageBaustein:
         v.setContentsMargins(4, 8, 4, 8)
         v.setSpacing(6)
         self._rechts = {}
+        # gleiche sichtbare Symbolgröße wie links (dort füllen die Zeichnungen ~18 px von 22): Haken, KI-Plus und Chat sind kleiner gezeichnet und bekommen mehr Platz
+        px_rechts = {"haken": 28, "assistent": 26, "chat": 24, "brille": 22, "stift": 22}
         for name, sym, tip in (("Prüfen", "haken", "Prüfen — die Funde der Schreibhilfe"), ("Lesen", "brille", "Lesen — Lesehilfe, Vorlesen"),
                                ("Schreiben", "stift", "Schreiben — Schalter, Textbausteine, Sprache"), ("KI", "assistent", "KI — Korrektur, Übersetzen, Aktionen"),
                                ("Chat", "chat", "KI-Chat")):
             b = QToolButton()
-            icons.setze(b, sym, 22); b.setIconSize(QSize(22, 22))
+            px = px_rechts.get(sym, 22)
+            icons.setze(b, sym, px); b.setIconSize(QSize(px, px))
             b.setToolTip(tip); b.setAccessibleName(name)
             b.setCheckable(True)
             b.setFixedSize(38, 38)
@@ -282,7 +285,7 @@ class BackstageBaustein:
 
 
     def formatierung_seitenleiste(self, reiter: int = 0) -> None:
-        """Zahnrad der Schnellleiste und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt."""
+        """Zahnrad am Diagramm und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt."""
         from lunivo_writer.editor import frei_objekt as FO
         art = FO.art_gewaehlt(self.current_editor()) if self.current_editor() is not None else None
         if art == "diagramm":
@@ -298,7 +301,7 @@ class BackstageBaustein:
         return SA.format_lesen(e)
 
     def smartartformat_seitenleiste(self) -> None:
-        """Zahnrad am SmartArt: die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort."""
+        """Seitenleiste „Formatierung“ für SmartArt (Rechtsklick): die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort."""
         from PySide6.QtGui import QImage
         from lunivo_writer.editor import diagramm_format as F
         from lunivo_writer.editor import smartart as SA
@@ -341,7 +344,7 @@ class BackstageBaustein:
         art = D._art(d)
         reihe = teil.startswith("reihe_")
         return {"teil": teil, "teile": self.befehle.diagrammTeile(), "name": T.teil_name(e) or "Diagrammbereich", "format": T.diagramm_teil_format_lesen(e, teil),
-                "linienreihe": reihe and art.startswith(("linie", "punkte_linien")), "saeulen": reihe and art.startswith(("saeule", "balken")),
+                "linienreihe": reihe and D.hat_linien(art), "saeulen": reihe and art.startswith(("saeule", "balken")),
                 "wertachse": (art.startswith("punkte") or (teil == "achse_horizontal") == art.startswith("balken")) if teil.startswith("achse_") else True,
                 "objekt": {"legende_pos": d.get("legende_pos", "unten"), "breite_mm": px_to_mm(float(z[3]["b"])), "hoehe_mm": px_to_mm(float(z[3]["h"])),
                            "dreh": float(z[3].get("dreh", 0.0) or 0.0)},
@@ -432,11 +435,15 @@ class BackstageBaustein:
             m = m or BL.masse_lesen(e, BL.ziel(e))
             if m is None:
                 return
-            for schl, wert in ((vor + "breite", m[0]), (vor + "hoehe", m[1])):
+            km = self.befehle.smartartKnotenMasse() if vor == "sa_" else None            # SmartArt-Knoten gewählt: dessen Maße, nur ablesbar
+            mv = km or m
+            for schl, wert in ((vor + "breite", mv[0]), (vor + "hoehe", mv[1])):
                 sp = f[schl]
+                if vor == "sa_" and hasattr(sp, "setReadOnly"):
+                    sp.setReadOnly(km is not None)
                 if not sp.hasFocus() and abs(sp.value() - wert) > 0.05:
                     sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
-            f[vor + "verhaeltnis"][0] = m[0] / max(0.1, m[1])
+            f[vor + "verhaeltnis"][0] = mv[0] / max(0.1, mv[1])
 
 
     def _tabelle_masse(self, e) -> None:
@@ -453,10 +460,29 @@ class BackstageBaustein:
                 sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
 
 
+    OBJEKT_FORMATE = ("objekt", "smartart", "diagramm")
+
     def objektformat_folgen(self) -> None:
-        """Wählt der Benutzer ein anderes Bild, zeigt der offene Bereich dessen Werte."""
+        """Wechsler der Seitenleiste „Formatierung“ bei neuer Auswahl: Ist ein Format-Bereich (Objekt, SmartArt, Diagramm) offen, zeigt der zur
+        Art des neu gewählten Objekts passende Bereich dessen Werte. Ohne Objekt (Text) bleibt der Bereich, wie er ist."""
+        e, sb = self.current_editor(), self.sidebar
+        offen = [k for k in self.OBJEKT_FORMATE if sb.format_sichtbar(k)]
+        if e is None or not offen:
+            return
         from lunivo_writer.editor import bildlayout as BL
-        self._format_folgen("objekt", lambda e: BL.format_lesen(e, BL.ziel(e)))
+        from lunivo_writer.editor import frei_objekt as FO
+        if getattr(e, "_frei_sel", None) is None:
+            return
+        art = FO.art_gewaehlt(e)
+        ziel = art if art in ("diagramm", "smartart") else "objekt"
+        if ziel not in offen:
+            self.formatierung_seitenleiste()                         # anderer Bereich offen: der passende ersetzt ihn
+        elif ziel == "diagramm":
+            self.diagrammformat_folgen()
+        elif ziel == "smartart":
+            self.smartartformat_folgen()
+        else:
+            self._format_folgen("objekt", lambda ed: BL.format_lesen(ed, BL.ziel(ed)))
 
 
     def _effekt_sync(self):

@@ -12,6 +12,7 @@ from typing import Callable
 
 from PySide6.QtCore import QEventLoop, Qt
 from PySide6.QtWidgets import QDialog, QFrame, QSizePolicy, QHBoxLayout, QLabel, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
 from lunivo_writer.ui.widgets import icons
 
 
@@ -112,6 +113,7 @@ class ZusatzPanel(QWidget):
         d.setWindowFlags(Qt.Widget); d.setModal(False)
         if hasattr(d, "kompakt_machen"):
             d.kompakt_machen()
+        felder_angleichen(d)                                                           # alle Felder gleich hoch (FELDHOEHE)
         d.setMinimumSize(0, 0)
         if hasattr(d, "passe_an"):
             d.passe_an(self.verfuegbar, self.verfuegbar_hoehe)                         # Fenster, die sich an den echten Platz anpassen (Farbraster, Vorschau, volle Höhe)
@@ -121,6 +123,8 @@ class ZusatzPanel(QWidget):
             g.setStyleSheet("QGroupBox { border: none; border-top: 1px solid palette(midlight); margin-top: 10px; padding-top: 8px; }"
                             "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 8px 0 0; "
                             "color: palette(mid); font-size: 8pt; font-weight: 600; }")
+        from lunivo_writer.ui.baukasten.karten_raster import kurze_gruppen_ins_raster
+        kurze_gruppen_ins_raster(d)                                                    # kurze Ankreuzfelder/Optionen/Knöpfe untereinander → nebeneinander im Raster
         from lunivo_writer.ui.baukasten.schmal import schmal_machen
         breite = self.verfuegbar
         for _ in range(6):                                                              # was nicht in die Breite der Seitenleiste passt, bricht um

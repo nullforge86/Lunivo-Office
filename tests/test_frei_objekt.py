@@ -45,7 +45,7 @@ def test_wordart_ohne_auswahlkasten_mit_griffen(fenster):
     assert formen.wordart_daten(ed)["vorlage"] == 1
     r = _rect(ed)
     assert ed._frei_griff_bei(ed._frei_griff_mitte(r, "se"))[0] == "se" and ed._frei_griff_bei(ed._frei_griff_mitte(r, "rot"))[0] == "rot"
-    assert set(ed._frei_knopf_rects(r)) == {"anker", "minus", "layout", "formstile", "fuell", "kontur", "zahnrad"}
+    assert set(ed._frei_knopf_rects(r)) == {"anker", "minus", "layout", "formstile", "fuell", "kontur"}                      # Form: 4 Knöpfe wie im Foto, kein Zahnrad
 
 
 def test_griffe_groesse_und_drehen(fenster):
@@ -539,7 +539,8 @@ def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     b.bildZuschneidenForm(None, "Ellipse"); z = BL.ziel(ed)
     assert z[2]["maske"] == "Ellipse" and z[3].pixelColor(0, 0).alpha() == 0 and z[3].pixelColor(100, 100).alpha() == 255
     assert any(n == "Herz" for _k, ns in BZ.formen_kategorien() for n in ns) and not any(BZ.formen_kategorien()[0][0] == "Linie" for _ in [0])
-    m = b.menue_bildZuschneiden(); assert m is not None
+    from lunivo_writer.ui.baukasten.bild_diagramm_menues import KLAPPEN
+    assert "bildZuschneiden" in KLAPPEN and not hasattr(b, "menue_bildZuschneiden")        # nur noch die Klappe der Vorlage
     pfad2 = str(tmp_path / "z.docx")
     docx_writer.write_docx(pfad2, ed.document(), ed.page, {})
     doc = docx_reader.read_docx(pfad2)[0]
@@ -587,7 +588,7 @@ def test_diagramm_teile_rechtecke_und_treffer(fenster):
     r = D.teil_rechtecke(d, 400, 260)
     assert set(r) == set(schl) and all(0 <= v.x() and v.right() <= 401 and v.bottom() <= 261 for v in r.values())
     b.tun('diagrammTeilWaehlen:["reihe_0"]')
-    assert T.teil_gewaehlt(ed) == "reihe_0" and b.feld_diagrammTeil() == "Reihe „X“"
+    assert T.teil_gewaehlt(ed) == "reihe_0" and b.feld_diagrammTeil() == "Reihe\"X\""
     bal = D.teil_geo(d, 400, 260)["balken_1"][0]
     ed._frei_liste(); rr = _rect(ed)
     mitte = QPointF(rr.x() + bal.center().x() * rr.width() / 400, rr.y() + bal.center().y() * rr.height() / 260)
@@ -670,3 +671,28 @@ def test_formstil_raster_und_anpassungsgriff(fenster):
     assert d["form"] == "Pfeil nach rechts" and "adj" not in d and FO.ziel(ed)[3]["b"] == before and d["fuell"]
     b.formAnpassen(None, 0.3, 1); assert FO.daten_lesen(ed, "form")["adj"] == [0.5, 0.3]
     assert b.formPunkteBearbeiten() and ed.__dict__.get("_fp_key") is not None and FO.daten_lesen(ed, "form")["form"] == "Freiform"      # Punkte bearbeiten: Freiform
+
+
+def test_diagramm_namensquelle_und_elf_schnelllayouts(fenster):
+    ed, b = _dg(fenster)
+    from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
+    from lunivo_writer.editor import diagramm as D
+    from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUT_ANZEIGE
+    assert len(SCHNELLLAYOUTS) == 19 and len(SCHNELLLAYOUT_ANZEIGE) == 11 and max(SCHNELLLAYOUT_ANZEIGE) < len(SCHNELLLAYOUTS)
+    b.diagrammSchnelllayout(6); assert FO.daten_lesen(ed, "diagramm")["elemente"]["datentabelle"] is True
+    assert b.diagrammNamenQuelleLesen() == "zeile1"
+    for q in ("spalte_a", "keine", "zeile1"):
+        assert b.diagrammNamenQuelle(None, q) and b.diagrammNamenQuelleLesen() == q
+        assert not D.bild_aus_daten(FO.daten_lesen(ed, "diagramm"), 400, 260).isNull()
+    assert not b.diagrammNamenQuelle(None, "x")
+
+
+def test_formtools_ebene_nach_vorne_hinten(fenster):
+    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.ui.contextual.image_tools import FORMTOOLS
+    namen = [e["name"] for g in FORMTOOLS["gruppen"] for e in g["knoepfe"]]
+    assert "Eine Ebene nach vorne" in namen and "Eine Ebene nach hinten" in namen
+    ed = _ed(fenster); b = fenster.befehle
+    FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Ellipse"}, 200, 100)
+    b.zeichenHinten(); assert BL.ziel(ed)[2].get("hinter") is True
+    b.zeichenVorn(); assert not BL.ziel(ed)[2].get("hinter")

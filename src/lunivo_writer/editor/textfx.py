@@ -9,6 +9,9 @@ Ein Effekt (``fx``) ist ein Wörterbuch; nicht gesetzte Teile fehlen:
 * ``schatten``: {"art": "aussen" | "innen" | "persp", "farbe", "transparenz" %, "groesse" %, "weich" pt, "abstand" pt, "winkel" Grad}
 * ``reflektion``: {"groesse" %, "transparenz" %, "weich" pt, "abstand" pt}
 * ``leuchten``: {"farbe", "groesse" pt, "transparenz" %}
+* ``fuell_pinsel``: {"art": "muster" | "textur" | "bild", "key", "farbe", "grund", "bild_b64"} — Muster-, Textur- oder Bildfüllung (``fuell`` = "muster" | "bild")
+* ``text_3d``: {"x", "y", "z" Grad, "perspektive" Grad} — 3D-Drehung des Textes (nur Text im Diagramm, ``pfad_verformen``)
+* ``warp``: {"art": Schlüssel aus ``WARP_FORMEN``} — Transformieren (Textverformung, nur Text im Diagramm)
 * ``d3``: {"tiefe" pt, "tiefe_farbe", "kontur" pt, "kontur_farbe", "material", "beleuchtung", "winkel" Grad}
 
 ``fx_zeichnen`` malt die Effekte zu einem Pfad (den Umrissen eines Textstücks) hinter und über den Text; ``absaetze_zeichnen`` holt die Pfade
@@ -36,15 +39,18 @@ def _farbe(hexwert: str, transparenz: float = 0.0) -> QColor:
     return c
 
 
+SCHLUESSEL = ("verlauf", "kontur_verlauf", "kontur_form", "schatten", "reflektion", "leuchten", "d3", "fuell_pinsel", "text_3d", "warp")
+
+
 def hat_effekt(fx: dict | None) -> bool:
-    return bool(fx) and any(k in fx for k in ("verlauf", "kontur_verlauf", "kontur_form", "schatten", "reflektion", "leuchten", "d3"))
+    return bool(fx) and any(k in fx for k in SCHLUESSEL)
 
 
 def als_text(fx: dict | None) -> str:
     """Nur die Teile, die Lunivo selbst zeichnet, als JSON für das Zeichenformat (leer = keiner)."""
     if not hat_effekt(fx):
         return ""
-    erlaubt = ["verlauf", "kontur_verlauf", "kontur_form", "schatten", "reflektion", "leuchten", "d3"]
+    erlaubt = list(SCHLUESSEL)
     if "kontur_verlauf" in fx or fx.get("kontur_form"):                  # die Kontur zeichnet dann Lunivo: Farbe, Breite und Strichart gehören dazu
         erlaubt += ["kontur_art", "kontur_breite", "kontur_farbe"]
     return json.dumps({k: v for k, v in fx.items() if k in erlaubt}, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
@@ -67,6 +73,74 @@ def _verlauf(rect: QRectF, v: dict) -> QLinearGradient:
     g = QLinearGradient(mitte - d, mitte + d)
     g.setColorAt(0, QColor(v.get("farbe1", Farbe.SCHWARZ))); g.setColorAt(1, QColor(v.get("farbe2", Farbe.WEISS)))
     return g
+
+
+def fuell_pinsel_von(d: dict, rect: QRectF) -> QBrush | None:
+    """Der Pinsel zu ``fuell_pinsel`` (Muster, Textur, Bild); ``rect``: Fläche, über die ein Bild gestreckt wird."""
+    art = d.get("art", "muster")
+    if art == "muster":
+        from lunivo_writer.editor import muster as M
+        return M.pinsel(d.get("key", "rein"), d.get("farbe", Farbe.SCHWARZ), d.get("grund") or None)
+    if art == "textur":
+        from lunivo_writer.editor.textur import textur
+        return QBrush(textur(d.get("key", "papier"), 64))
+    if art == "bild":
+        from lunivo_writer.editor.diagramm_format import bild_dekodieren
+        img = bild_dekodieren(d.get("bild_b64", ""))
+        if img.isNull():
+            return None
+        return QBrush(img.scaled(max(1, int(rect.width())), max(1, int(rect.height())), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+    return None
+
+
+WARP_FORMEN = (("keine", "Keine Transformation"), ("bogen", "Bogen nach oben"), ("bogen_unten", "Bogen nach unten"), ("welle", "Welle"),
+               ("trichter", "Trichter"), ("kaskade_auf", "Kaskade aufwärts"), ("kaskade_ab", "Kaskade abwärts"))
+
+
+def pfad_verformen(pfad: QPainterPath, fx: dict | None) -> QPainterPath:
+    """Der Textpfad nach ``warp`` (Transformieren) und ``text_3d`` (3D-Drehung um X, Y, Z mit Perspektive); ohne beides unverändert.
+    Die Punkte werden einzeln abgebildet (der Pfad wird dafür in feine Linienzüge zerlegt)."""
+    fx = fx or {}
+    art = (fx.get("warp") or {}).get("art", "keine")
+    d3 = fx.get("text_3d") or {}
+    rx, ry, rz = (math.radians(float(d3.get(k, 0) or 0)) for k in ("x", "y", "z"))
+    if art == "keine" and not (rx or ry or rz) or pfad.isEmpty():
+        return pfad
+    r = pfad.boundingRect()
+    m = r.center()
+    breite, hoehe = max(r.width(), 1.0), max(r.height(), 1.0)
+    persp = max(0.0, min(120.0, float(d3.get("perspektive", 45) or 0)))
+    dist = (max(breite, hoehe) / 2) / math.tan(math.radians(persp) / 2) if persp > 1 else 0.0
+    gross = QTransform().scale(4, 4)
+    aus = QPainterPath()
+    for poly in gross.map(pfad).toSubpathPolygons():
+        pts = []
+        for i in range(poly.count()):
+            q = poly.at(i); x, y = q.x() / 4, q.y() / 4
+            u, v = (x - r.left()) / breite, (y - r.top()) / hoehe
+            if art == "bogen":
+                y -= hoehe * 0.7 * math.sin(math.pi * u)
+            elif art == "bogen_unten":
+                y += hoehe * 0.7 * math.sin(math.pi * u)
+            elif art == "welle":
+                y += hoehe * 0.4 * math.sin(2 * math.pi * u)
+            elif art == "trichter":
+                y = m.y() + (y - m.y()) * (1.0 - 0.6 * u)
+            elif art == "kaskade_auf":
+                y -= hoehe * 0.8 * u
+            elif art == "kaskade_ab":
+                y += hoehe * 0.8 * u
+            if rx or ry or rz:
+                a, b, c = x - m.x(), y - m.y(), 0.0
+                a, b = a * math.cos(rz) - b * math.sin(rz), a * math.sin(rz) + b * math.cos(rz)             # Z
+                b, c = b * math.cos(rx) - c * math.sin(rx), b * math.sin(rx) + c * math.cos(rx)             # X
+                a, c = a * math.cos(ry) + c * math.sin(ry), -a * math.sin(ry) + c * math.cos(ry)           # Y
+                f = dist / max(dist - c, dist * 0.2) if dist else 1.0
+                x, y = m.x() + a * f, m.y() + b * f
+            pts.append(QPointF(x, y))
+        if pts:
+            aus.addPolygon(QPolygonF(pts)); aus.closeSubpath()
+    return aus
 
 
 def _weich(p: QPainter, pfad: QPainterPath, farbe: QColor, radius: float, ausserhalb: bool = True) -> None:
@@ -93,23 +167,67 @@ def _helligkeit(c: QColor, f: float) -> QColor:
     return c.lighter(int(100 * f)) if f >= 1.0 else c.darker(int(100 / max(f, 0.05)))
 
 
-def _kontur_pfade(pfad: QPainterPath, breite: float, form: str, art: str = "einfach") -> list[QPainterPath]:
-    """Die Flächen einer Konturlinie: einfach ein Strich, doppelt zwei Streifen mit Lücke, dick–dünn ein dicker und ein dünner."""
-    from lunivo_writer.editor.texteffekt import KONTUR_ARTEN
-    st = KONTUR_ARTEN.get(art, KONTUR_ARTEN["einfach"])[1]
+# Bahnen der Mehrfachlinien: (Abstand von der Mitte, Dicke) in Linienbreiten (negativ = links der Laufrichtung)
+_BAHNEN = {"dick_duenn": ((-0.9, 1.2), (0.9, 0.6)), "duenn_dick": ((-0.9, 0.6), (0.9, 1.2)), "dreifach": ((-1.4, 0.6), (0.0, 0.6), (1.4, 0.6))}
 
-    def strich(w: float, gestrichelt: bool = False) -> QPainterPath:
+
+def _versetzt(pfad: QPainterPath, abstand: float) -> QPainterPath:
+    """Der Pfad seitlich um ``abstand`` verschoben (Eckpunkte entlang ihrer Normalen, mit begrenzter Spitze); für Linien und geschlossene Formen."""
+    import math
+    aus = QPainterPath()
+    for poly in pfad.toSubpathPolygons():
+        pts = [poly.at(i) for i in range(poly.count())]
+        if len(pts) < 2:
+            continue
+        zu = len(pts) > 2 and pts[0] == pts[-1]
+        if zu:
+            pts = pts[:-1]
+        n = len(pts)
+        neu = []
+        for i, q in enumerate(pts):
+            a = pts[i - 1] if (i > 0 or zu) else None
+            b = pts[(i + 1) % n] if (i < n - 1 or zu) else None
+            nx = ny = 0.0
+            for u, v in ((a, q), (q, b)):
+                if u is None or v is None:
+                    continue
+                dx, dy = v.x() - u.x(), v.y() - u.y(); L = math.hypot(dx, dy) or 1.0
+                nx += -dy / L; ny += dx / L
+            L = math.hypot(nx, ny) or 1.0
+            nx, ny = nx / L, ny / L
+            neu.append(QPointF(q.x() + nx * abstand, q.y() + ny * abstand))
+        aus.moveTo(neu[0])
+        for q in neu[1:]:
+            aus.lineTo(q)
+        if zu:
+            aus.closeSubpath()
+    return aus
+
+
+def _kontur_pfade(pfad: QPainterPath, breite: float, form: str, art: str = "einfach") -> list[QPainterPath]:
+    """Die Flächen einer Konturlinie: einfach ein Strich, doppelt zwei Streifen mit Lücke, dick–dünn/dünn–dick zwei ungleiche, dreifach drei Streifen."""
+    from lunivo_writer.editor.texteffekt import KONTUR_ARTEN, KONTUR_ARTEN_PLUS
+    rund = False
+    if art in KONTUR_ARTEN_PLUS:
+        st, rund = KONTUR_ARTEN_PLUS[art]
+    else:
+        st = KONTUR_ARTEN.get(art, KONTUR_ARTEN["einfach"])[1]
+
+    def strich(w: float, gestrichelt: bool = False, bahn: QPainterPath | None = None) -> QPainterPath:
         s = QPainterPathStroker(); s.setWidth(max(0.1, w)); s.setJoinStyle(Qt.RoundJoin)
-        s.setCapStyle(Qt.FlatCap if gestrichelt else Qt.RoundCap)
+        s.setCapStyle(Qt.RoundCap if rund or not gestrichelt else Qt.FlatCap)
         if gestrichelt and st != Qt.SolidLine:
             s.setDashPattern(st)
-        return s.createStroke(pfad)
+        return s.createStroke(bahn if bahn is not None else pfad)
     if form == "einfach":
         return [strich(breite, True)]
+    punkte = st != Qt.SolidLine                       # gewählte Strichart: Mehrfachlinien werden dann je Bahn in dieser Art gestrichelt
     if form == "doppelt":
+        if punkte:
+            return [strich(breite, True, _versetzt(pfad, o * breite)) for o in (-1.0, 1.0)]
         return [strich(3 * breite).subtracted(strich(breite))]
-    if form == "dick_duenn":
-        return [strich(3 * breite).subtracted(strich(1.8 * breite)), strich(0.6 * breite)]
+    if form in _BAHNEN:
+        return [strich(d * breite, punkte, _versetzt(pfad, o * breite)) for o, d in _BAHNEN[form]]
     return [strich(breite)]
 
 
@@ -196,6 +314,10 @@ def fx_zeichnen(p: QPainter, pfad: QPainterPath, fx: dict, grundlinie: float, sc
     # ---- über dem Text
     if "verlauf" in fx:
         p.save(); p.setClipPath(pfad); p.fillRect(rect.adjusted(-2, -2, 2, 2), QBrush(_verlauf(rect, fx["verlauf"]))); p.restore()
+    if fx.get("fuell_pinsel"):
+        pi = fuell_pinsel_von(fx["fuell_pinsel"], rect)
+        if pi is not None:
+            p.save(); p.setClipPath(pfad); p.fillRect(rect.adjusted(-2, -2, 2, 2), pi); p.restore()
     if s and s.get("art") == "innen":
         abst = s.get("abstand", 3) * PX
         dr = _richtung(s.get("winkel", 45))
@@ -492,13 +614,35 @@ def leuchten_vorgaben() -> list[tuple[str, dict]]:
     return aus
 
 
-def voreinstellung_icon(fx: dict, groesse=(52, 40), text: str = "A", farbe: str = Farbe.GRAU_HELL):
-    """Kachelbild einer Voreinstellung: ein „A“ mit dem Effekt auf weißem Grund."""
+def voreinstellung_icon(fx: dict, groesse=(52, 40), text: str = "A", farbe: str = Farbe.GRAU_HELL, kontur=None):
+    """Kachelbild einer Voreinstellung: ein „A“ mit dem Effekt auf weißem Grund (``kontur``: (Farbe, Breite, Form) wie bei ``vorschau_zeichnen``)."""
     from PySide6.QtGui import QFont, QIcon, QPixmap
     pm = QPixmap(*groesse); pm.fill(QColor("white"))
     p = QPainter(pm)
     f = QFont("Liberation Sans"); f.setPixelSize(int(groesse[1] * 0.62)); f.setBold(True)
-    vorschau_zeichnen(p, QRectF(0, 0, groesse[0], groesse[1] * 0.92), text, f, fx, QColor(farbe))
+    vorschau_zeichnen(p, QRectF(0, 0, groesse[0], groesse[1] * 0.92), text, f, fx, QColor(farbe), kontur)
+    p.end()
+    return QIcon(pm)
+
+
+def text_kachel_icon(fx: dict, groesse=(50, 50)):
+    """Kachelbild der Effektmenüs im Text (Schatten, Spiegelung, Leuchten): ein hellblaues „A“ mit blauem Rand, plastisch, wie in der Vorlage."""
+    return voreinstellung_icon(fx, groesse, "A", "#dbe4ff", (QColor("#8fa8e8"), 1.1, "einfach"))
+
+
+def form_kachel_icon(fx: dict, groesse=(50, 50)):
+    """Kachelbild des Schattenmenüs eines Objekts: ein abgerundetes Rechteck mit weichem Verlauf (hellblau, blauer Rand) und dem Effekt auf weißem Grund."""
+    from PySide6.QtGui import QIcon, QPixmap
+    pm = QPixmap(*groesse); pm.fill(QColor("white"))
+    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
+    seite = min(groesse) * 0.58
+    r = QRectF((groesse[0] - seite) / 2, (groesse[1] - seite) / 2 - 1, seite, seite)
+    pfad = QPainterPath(); pfad.addRoundedRect(r, 5, 5)
+    g = QLinearGradient(r.topLeft(), r.bottomLeft())
+    g.setColorAt(0, QColor("#f3f6ff")); g.setColorAt(0.55, QColor("#dfe7ff")); g.setColorAt(1, QColor("#c9d6fb"))
+    p.fillPath(pfad, QBrush(g))
+    fx_zeichnen(p, pfad, fx, r.bottom(), seite)                          # Schatten außen, innen oder in Perspektive
+    p.setPen(QPen(QColor("#a9bcef"), 1.0)); p.setBrush(Qt.NoBrush); p.drawPath(pfad)
     p.end()
     return QIcon(pm)
 

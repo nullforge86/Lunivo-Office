@@ -7,17 +7,21 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
+from lunivo_writer.ui.baukasten.karten_raster import KartenRaster
 from lunivo_writer.ui.schreibhilfe_katalog import Funktion, fuer_reiter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 ZEILE = (('QFrame#funktionsZeile { border: 1px solid palette(midlight); border-radius: 8px; background: transparent; }QFrame#funktionsZeile:hover { background: palette(alternate-base); border-color: palette(mid); }QFrame#funktionsZeile:focus { border: 2px solid ' + Farbe.AKZENT + '; }'))
+CHIP_B, CHIP_H = 52, 26                      # Schalter-Chip „an/aus“: feste, großzügige Größe (Kapsel, Radius = halbe Höhe)
+
+
 def _an() -> str:
-    return "background: %s; color: %s; border-radius: 11px; padding: 2px 10px; font-weight: bold;" % (Farbe.AN, Farbe.AN_SCHRIFT)
+    return "background: %s; color: %s; border: 1px solid %s; border-radius: %dpx; font-weight: bold;" % (Farbe.AN, Farbe.AN_SCHRIFT, Farbe.AN, CHIP_H // 2)
 
 
 
-AUS = "background: transparent; color: palette(mid); border: 1px solid palette(mid); border-radius: 11px; padding: 2px 10px;"
+AUS = "background: transparent; color: palette(mid); border: 1px solid palette(mid); border-radius: %dpx;" % (CHIP_H // 2)
 
 
 class FunktionsZeile(QFrame):
@@ -29,34 +33,38 @@ class FunktionsZeile(QFrame):
         self.setObjectName("funktionsZeile")
         self.f, self.fenster = f, fenster
         self.setStyleSheet(ZEILE)
-        self.setMinimumHeight(54)
+        self.setMinimumHeight(0)
         self.setCursor(Qt.PointingHandCursor)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAccessibleName(f.name)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        h = QHBoxLayout(self); h.setContentsMargins(12, 6, 12, 6); h.setSpacing(12)
-        sym = QLabel(); sym.setFixedWidth(28); sym.setAttribute(Qt.WA_TransparentForMouseEvents)
+        h = QHBoxLayout(self); h.setContentsMargins(8, 3, 8, 3); h.setSpacing(8)
+        sym = QLabel(); sym.setFixedWidth(22); sym.setAttribute(Qt.WA_TransparentForMouseEvents)
         if icons.hat(f.symbol):
             sym.setPixmap(icons.icon(f.symbol, 22).pixmap(22, 22))
             sym.setProperty("symbolName", f.symbol); sym.setProperty("symbolPx", 22)       # Farbwechsel: Symbol neu beziehen (icons.alle_neu)
         h.addWidget(sym)
-        mitte = QVBoxLayout(); mitte.setSpacing(0)
+        mitte = QVBoxLayout(); mitte.setSpacing(0); mitte.addStretch(1)                 # überschüssige Höhe (gleiche Zeileneinheit) verteilt sich oben und unten, nichts wird gestreckt
         self.titel = QLabel(f.name); ft = self.titel.font(); ft.setBold(True); self.titel.setFont(ft)
         self.untertitel = QLabel(f.hinweis); self.untertitel.setStyleSheet("color: palette(mid); font-size: 9pt;"); self.untertitel.setWordWrap(True)
         for w in (self.titel, self.untertitel):
             w.setAttribute(Qt.WA_TransparentForMouseEvents)
-        mitte.addWidget(self.titel)
-        if f.hinweis:
-            mitte.addWidget(self.untertitel)
-        h.addLayout(mitte, 1)
+        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(self.titel)                 # Titelzeile: Name, rechts daneben das Kürzel; der Hinweis darunter hat die volle Breite
         if f.kuerzel:
             k = QLabel(f.kuerzel); k.setStyleSheet("color: palette(mid); font-size: 8pt; border: 1px solid palette(midlight); border-radius: 3px; padding: 0 5px;")
-            k.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(k)
+            k.setAttribute(Qt.WA_TransparentForMouseEvents); kopf.addWidget(k, 0, Qt.AlignVCenter)
+        kopf.addStretch(1)
+        mitte.addLayout(kopf)
+        if f.hinweis:
+            mitte.addWidget(self.untertitel)
+        mitte.addStretch(1)
+        h.addLayout(mitte, 1)
         self.zustand = QLabel(); self.zustand.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.zustand.setAlignment(Qt.AlignCenter); self.zustand.setFixedSize(CHIP_B, CHIP_H)      # „an“ und „aus“ gleich groß, nicht auf den Text gequetscht
         if f.art == "schalter":
-            h.addWidget(self.zustand)
+            h.addWidget(self.zustand, 0, Qt.AlignVCenter)                  # Chip so hoch wie sein Text, nicht auf die Kartenhöhe gezogen
         elif f.art == "menue":
-            pf = QLabel(); pf.setPixmap(icons.icon("chevron-down", 14).pixmap(14, 14)); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf)
+            pf = QLabel(); pf.setPixmap(icons.icon("chevron-down", 14).pixmap(14, 14)); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf, 0, Qt.AlignVCenter)
         self.setToolTip(f.hinweis or f.name)
         self.clicked.connect(self._los)
         self.aktualisieren()
@@ -105,12 +113,14 @@ class Werkbank(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True); self.setFrameShape(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        host = QWidget(); v = QVBoxLayout(host); v.setContentsMargins(14, 10, 14, 10); v.setSpacing(6)
+        host = QWidget(); v = QVBoxLayout(host); v.setContentsMargins(8, 6, 8, 6); v.setSpacing(4)
         if oben is not None:
             v.addWidget(oben)
         self.zeilen = [FunktionsZeile(f, fenster) for f in fuer_reiter(reiter) if nur is None or f.tun in nur]
+        raster = KartenRaster(abstand=6, spalten_fest=1)              # Raster-Baustein, eine Spalte untereinander; alle Karten gleich groß (gleiche Zeileneinheit)
         for z in self.zeilen:
-            v.addWidget(z)
+            raster.addWidget(z)
+        v.addLayout(raster)
         v.addStretch(1)
         self.setWidget(host)
 

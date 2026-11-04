@@ -5,13 +5,14 @@ import os
 from typing import Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLayout,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QHBoxLayout, QLabel, QLayout,
                                QLineEdit, QMessageBox, QPushButton, QRadioButton, QSpinBox, QToolButton,
                                QVBoxLayout, QWidget)
 
 from lunivo_writer.services.pdf_export import DRUCK, PdfWahl, kennwort_fehler
 
-FELD_H = 34
+from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE as FELD_H, FlussLayout, FormularGitter, abschnittstitel
+
 RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
           ("kommentieren", "Kommentare hinzufügen erlauben")]
 
@@ -19,7 +20,7 @@ RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
 def _abschnitt(titel: str, hilfe: str, layout=None) -> QWidget:
     w = QWidget()
     v = QVBoxLayout(w); v.setContentsMargins(0, 8, 0, 8); v.setSpacing(5)
-    kopf = QLabel(titel); kopf.setStyleSheet("font-weight: 600; font-size: 11pt;")
+    kopf = abschnittstitel(titel)
     erklaerung = QLabel(hilfe); erklaerung.setWordWrap(True); erklaerung.setObjectName("bsHinweis")
     v.addWidget(kopf); v.addWidget(erklaerung)
     if layout is not None:
@@ -58,7 +59,7 @@ class PdfExportAnsicht(QWidget):
         self.optionen: dict[str, QCheckBox] = {}
         self.rechte: dict[str, QCheckBox] = {}
 
-        root = QVBoxLayout(self); root.setContentsMargins(30, 20, 30, 16); root.setSpacing(3)
+        root = QVBoxLayout(self); root.setContentsMargins(16, 20, 16, 16); root.setSpacing(3)
         titel = QLabel("PDF exportieren"); titel.setObjectName("bsTitel")
         root.addWidget(titel)
         intro = QLabel("Wähle Speicherort und Seiten. Weitere Einstellungen kannst du bei Bedarf öffnen.")
@@ -90,7 +91,7 @@ class PdfExportAnsicht(QWidget):
         self.von, self.bis = QSpinBox(), QSpinBox()
         for feld, wert in ((self.von, start.von), (self.bis, start.bis)):
             feld.setRange(1, max(1, seiten)); feld.setValue(min(max(1, wert), max(1, seiten)))
-            feld.setMinimumHeight(FELD_H); feld.setMinimumWidth(90)
+            feld.setMinimumHeight(FELD_H)
         if start.bereich != "seiten":
             self.von.setValue(1); self.bis.setValue(max(1, seiten))
         self.l_von, self.l_bis = QLabel("Von Seite"), QLabel("bis")
@@ -112,13 +113,13 @@ class PdfExportAnsicht(QWidget):
             self.optionen[key] = box; inhalte.addWidget(box)
         root.addWidget(_abschnitt("3. Inhalte übernehmen", "Wähle, was im PDF erhalten bleiben soll.", inhalte))
 
-        weitere = QWidget(); av = QVBoxLayout(weitere); av.setContentsMargins(18, 2, 0, 2); av.setSpacing(3)
+        weitere = QWidget(); av = QVBoxLayout(weitere); av.setContentsMargins(8, 2, 0, 2); av.setSpacing(3)
         for key, text, tip in (
             ("eigenschaften", "Dokumentinformationen übernehmen", "Titel, Verfasser und weitere Dokumentangaben in der PDF speichern."),
-            ("textmarken", "Vorhandene Textmarken als Sprungziele übernehmen", "Gesetzte Textmarken werden im PDF anklickbar."),
+            ("textmarken", "Textmarken als Sprungziele", "Gesetzte Textmarken werden im PDF anklickbar."),
             ("notenlinks", "Fuß- und Endnoten verknüpfen", "Notenzeichen führen im PDF zur jeweiligen Fuß- oder Endnote."),
-            ("andere", "Weitere Formatvorlagen als Lesezeichen", "Zum Beispiel Titel, Untertitel oder Zitat in der PDF-Navigation anzeigen."),
-            ("eigene", "Eigene Formatvorlagen als Lesezeichen", "Benutzerdefinierte Formatvorlagen in der PDF-Navigation anzeigen."),
+            ("andere", "Weitere Vorlagen als Lesezeichen", "Zum Beispiel Titel, Untertitel oder Zitat in der PDF-Navigation anzeigen."),
+            ("eigene", "Eigene Vorlagen als Lesezeichen", "Benutzerdefinierte Formatvorlagen in der PDF-Navigation anzeigen."),
         ):
             box = QCheckBox(text); box.setChecked(getattr(start, key)); box.setToolTip(tip)
             self.optionen[key] = box; av.addWidget(box)
@@ -133,61 +134,54 @@ class PdfExportAnsicht(QWidget):
         root.addWidget(self.meldung)
         root.addStretch(1)
 
-        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 8, 0, 0)
-        self.schliessen = QCheckBox("Nach dem Export zum Dokument zurückkehren")
+        fuss = FlussLayout(8); fuss.setContentsMargins(0, 8, 0, 0)
+        self.schliessen = QCheckBox("Danach zum Dokument zurück")
         self.schliessen.setChecked(start.schliessen)
         self.schliessen.setToolTip("Kehrt nach erfolgreichem Export zur Dokumentbearbeitung zurück.")
         abbrechen = QPushButton("Zurück zum Dokument"); abbrechen.clicked.connect(self._zurueck)
         self.ok = QPushButton("PDF exportieren"); self.ok.setObjectName("optFertig"); self.ok.setDefault(True)
-        self.ok.setCursor(Qt.PointingHandCursor); self.ok.setMinimumHeight(38); self.ok.clicked.connect(self._ok)
-        fuss.addWidget(self.schliessen); fuss.addStretch(1); fuss.addWidget(abbrechen); fuss.addWidget(self.ok)
+        self.ok.setCursor(Qt.PointingHandCursor); self.ok.setMinimumHeight(36); self.ok.clicked.connect(self._ok)
+        fuss.addWidget(self.schliessen); fuss.addWidget(abbrechen); fuss.addWidget(self.ok)
         root.addLayout(fuss)
 
     def _schutz(self, s: PdfWahl) -> QWidget:
         bereich = QWidget()
-        v = QVBoxLayout(bereich); v.setContentsMargins(16, 2, 0, 4); v.setSpacing(6)
+        v = QVBoxLayout(bereich); v.setContentsMargins(0, 2, 0, 4); v.setSpacing(6)
         self.verschluesseln = QCheckBox("PDF mit Kennwort schützen")
         self.verschluesseln.setChecked(s.verschluesseln)
         self.verschluesseln.setToolTip("Schützt den Zugriff und/oder legt fest, was andere Personen mit der PDF tun dürfen.")
         v.addWidget(self.verschluesseln)
 
-        self.innen = QWidget(); g = QGridLayout(self.innen); g.setContentsMargins(20, 2, 0, 4); g.setHorizontalSpacing(10); g.setVerticalSpacing(7)
+        self.innen = QWidget(); g = FormularGitter(self.innen)
         self.rechte_kw, self.rechte_kw2 = _kennwort(), _kennwort()
         self.rechte_kw.setText(s.kennwort_rechte); self.rechte_kw2.setText(s.kennwort_rechte)
-        self._kennwort_zeile(g, 0, self.rechte_kw, self.rechte_kw2, "Kennwort für Berechtigungen", "Bestätigung")
+        g.reihe(("Kennwort für Berechtigungen", self.rechte_kw), ("Bestätigung", self.rechte_kw2))
         self.rechte_kw.setAccessibleName("Kennwort für Berechtigungen"); self.rechte_kw2.setAccessibleName("Bestätigung des Berechtigungskennworts")
         hinweis = QLabel("Mit diesem Kennwort können Empfänger die unten gewählten Einschränkungen nicht ohne Weiteres ändern. Zum Öffnen der PDF ist es nicht erforderlich.")
-        hinweis.setWordWrap(True); hinweis.setObjectName("bsHinweis"); g.addWidget(hinweis, 1, 0, 1, 4)
+        hinweis.setWordWrap(True); hinweis.setObjectName("bsHinweis"); g.breit(hinweis)
 
         self.rechte: dict[str, QCheckBox] = {}
-        for row, (key, label) in enumerate(RECHTE, start=2):
+        for key, label in RECHTE:
             box = QCheckBox(label); box.setChecked(getattr(s, key)); self.rechte[key] = box
-            g.addWidget(box, row, 0, 1, 2)
-        druck_label = QLabel("Drucken"); self.druck = QComboBox(); self.druck.setMinimumHeight(FELD_H)
+            g.breit(box)
+        self.druck = QComboBox(); self.druck.setMinimumHeight(FELD_H)
         for text, value in DRUCK:
             label = {"Freier Druck": "Drucken", "Nur niedrige Auflösung": "Drucken in niedriger Auflösung",
                      "Kein Druck": "Drucken nicht erlauben"}.get(text, text)
             self.druck.addItem(label, value)
-        self.druck.setCurrentIndex(max(0, self.druck.findData(s.druck))); druck_label.setBuddy(self.druck)
-        g.addWidget(druck_label, 2, 2); g.addWidget(self.druck, 3, 2, 1, 2)
+        self.druck.setCurrentIndex(max(0, self.druck.findData(s.druck)))
+        g.zeile("Drucken", self.druck)
 
         oeffnen_titel = QLabel("Kennwort zum Öffnen der PDF (optional)")
         oeffnen_titel.setToolTip("Wer dieses Kennwort nicht kennt, kann die PDF nicht öffnen.")
-        g.addWidget(oeffnen_titel, 5, 0, 1, 4)
+        g.breit(oeffnen_titel)
         self.oeffnen_kw, self.oeffnen_kw2 = _kennwort(), _kennwort()
         self.oeffnen_kw.setText(s.kennwort_oeffnen); self.oeffnen_kw2.setText(s.kennwort_oeffnen)
-        self._kennwort_zeile(g, 6, self.oeffnen_kw, self.oeffnen_kw2, "Kennwort", "Bestätigung")
+        g.reihe(("Kennwort", self.oeffnen_kw), ("Bestätigung", self.oeffnen_kw2))
         self.oeffnen_kw.setAccessibleName("Kennwort zum Öffnen der PDF"); self.oeffnen_kw2.setAccessibleName("Bestätigung des Kennworts zum Öffnen")
-        g.setColumnStretch(1, 3); g.setColumnStretch(3, 2)
         v.addWidget(self.innen)
         self.verschluesseln.toggled.connect(self.innen.setEnabled); self.innen.setEnabled(s.verschluesseln)
         return bereich
-
-    @staticmethod
-    def _kennwort_zeile(g: QGridLayout, row: int, feld: QLineEdit, bestaetigen: QLineEdit, text: str, text2: str) -> None:
-        l1, l2 = QLabel(text), QLabel(text2)
-        l1.setBuddy(feld); l2.setBuddy(bestaetigen)
-        g.addWidget(l1, row, 0); g.addWidget(feld, row, 1); g.addWidget(l2, row, 2); g.addWidget(bestaetigen, row, 3)
 
     def _seiten_schalten(self, an: bool) -> None:
         for feld in (self.von, self.bis, self.l_von, self.l_bis):

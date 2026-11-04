@@ -6,16 +6,16 @@ from __future__ import annotations
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
+from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ai import ki as K
 from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.widgets import icons
 
 
@@ -35,20 +35,19 @@ class AnbieterDialog(QDialog):
     def __init__(self, fenster, konfig: K.KIKonfig, bestehend: dict | None = None):
         super().__init__(fenster)
         self.k, self.alt = konfig, bestehend
-        self.setWindowTitle("Modell bearbeiten" if bestehend else "Eigenen Anbieter hinzufügen")
-        self.setMinimumWidth(560)
+        self.setWindowTitle("Modell bearbeiten" if bestehend else "Eigenen Anbieter hinzufügen"); self.resize(444, 560)
         v = QVBoxLayout(self)
         t = self._titel = text_label(self.windowTitle(), fett=True, pt=13, umbruch=False)
         v.addWidget(t)
-        f = QFormLayout()
+        f = FormularGitter()
         self.name = QLineEdit(bestehend["name"] if bestehend else "")
         self.name.setPlaceholderText("Modellname")
-        f.addRow("Modellname *", self.name)
+        f.zeile("Modellname *", self.name)
         h = QLabel("Oben den Anbieter wählen — die URL füllt sich von selbst und lässt sich danach noch ändern. "
                    "Nur bei „Andere“ bleibt sie leer und will von Hand eingetragen werden.")
         h.setWordWrap(True)
         h.setStyleSheet("color: palette(mid);")
-        f.addRow(h)
+        f.breit(h)
         self.vorlage = QComboBox()
         for key, name, url in K.ANBIETER_VORLAGEN:
             self.vorlage.addItem(name, url)
@@ -57,34 +56,30 @@ class AnbieterDialog(QDialog):
         self.schluessel = QLineEdit(bestehend["schluessel"] if bestehend else "")
         self.schluessel.setEchoMode(QLineEdit.Password)
         self.schluessel.setPlaceholderText("Nicht erforderlich")
-        f.addRow("Anbieter *", self.vorlage)
-        f.addRow("URL *", self.url)
-        f.addRow("Schlüssel", self.schluessel)
+        f.zeile("Anbieter *", self.vorlage)
+        f.zeile("URL *", self.url)
+        f.zeile("Schlüssel", self.schluessel)
         self.modell = QComboBox()
         self.modell.setEditable(True)
         self.modell.setInsertPolicy(QComboBox.NoInsert)
         self.modell.lineEdit().setPlaceholderText("z. B. gpt-4o-mini")
         self.modell.setCurrentText(bestehend["modell"] if bestehend else "")
-        self.stand = QLabel("")
+        self.modell.setMinimumContentsLength(10)
+        self.modell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.stand = QLabel(""); self.stand.setWordWrap(True)
         self.stand.setStyleSheet("color: palette(mid);")
         holen = QPushButton("Liste der Modelle aktualisieren")
         holen.setFlat(True)
         holen.setCursor(Qt.PointingHandCursor)
         holen.clicked.connect(lambda: self._holen(False))
-        box = QVBoxLayout()
-        box.addWidget(self.modell)
-        z = QHBoxLayout()
-        z.addWidget(holen)
-        z.addWidget(self.stand, 1)
-        box.addLayout(z)
-        w = QWidget()
-        w.setLayout(box)
-        box.setContentsMargins(0, 0, 0, 0)
-        f.addRow("Modell *", w)
+        f.zeile("Modell *", self.modell)
+        holen_zeile = FlussLayout(6); holen_zeile.addWidget(holen)
+        f.breit(holen_zeile)
+        f.breit(self.stand)
+        f.breit(abschnittstitel("Modell verwenden für"))
+        self._chipgitter = FlussLayout(6)
+        f.breit(self._chipgitter)
         v.addLayout(f)
-        v.addWidget(QLabel("Modell verwenden für"))
-        fl = QWidget()
-        self._chipgitter = QGridLayout(fl); self._chipgitter.setContentsMargins(0, 0, 0, 0); self._chipgitter.setSpacing(6)
         self.tags = {}
         gesetzt = set(bestehend["verwendungFuer"]) if bestehend else {"text"}
         alle = QPushButton("Alle")
@@ -99,10 +94,10 @@ class AnbieterDialog(QDialog):
             b.setStyleSheet(_CHIP)
             self.tags[key] = b
             self._chips.append(b)
-        self._chips_legen(3)
-        from PySide6.QtWidgets import QSizePolicy
-        fl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        v.addWidget(fl)
+        for b in self._chips:
+            pass
+            self._chipgitter.addWidget(b)
+        v.addStretch(1)
         z = knopfzeile(self, bei_ok=self._ok, ok_text="Speichern" if bestehend else "Hinzufügen")
         self.ok = z.ok
         v.addWidget(z)
@@ -117,22 +112,9 @@ class AnbieterDialog(QDialog):
         elif not bestehend:
             self.vorlage.setCurrentIndex(1)           # Ollama ist die Vorbelegung
 
-    def _chips_legen(self, spalten: int) -> None:
-        """„Modell verwenden für“ als gleichmäßiges Raster (gleich breite Felder) statt einer Zeile, die irgendwo umbricht."""
-        from PySide6.QtWidgets import QSizePolicy
-        self._chipgitter.setProperty("schmal_nein", True)                         # das Raster bleibt, wie es ist (der Notbehelf der Seitenleiste bricht es sonst auf eine Spalte um)
-        for b in self._chips:
-            self._chipgitter.removeWidget(b)
-            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        for i, b in enumerate(self._chips):
-            self._chipgitter.addWidget(b, i // spalten, i % spalten)
-        for c in range(spalten):
-            self._chipgitter.setColumnStretch(c, 1)
-
     def kompakt_machen(self) -> None:
-        """In der Seitenleiste: der Titel steht schon im Kopf der Seite, und die Fähigkeiten stehen zu zweit nebeneinander."""
+        """In der Seitenleiste: der Titel steht schon im Kopf der Seite; die Fähigkeiten laufen als Fluss in die Breite."""
         self._titel.setVisible(False)
-        self._chips_legen(2)
 
     def _vorlage_gewaehlt(self, i: int) -> None:
         url = self.vorlage.itemData(i)
@@ -203,21 +185,18 @@ class ModellListe(QWidget):
     def __init__(self, fenster, konfig: K.KIKonfig):
         super().__init__()
         self.fenster, self.k = fenster, konfig
-        self.setMinimumSize(480, 240)
-        v = QVBoxLayout(self)
-        v.setContentsMargins(0, 0, 0, 0)
-        z = QHBoxLayout()
-        self.liste = QListWidget()
-        z.addWidget(self.liste, 1)
-        s = QVBoxLayout()
+        self.setMinimumHeight(240)
+        g = FormularGitter(self)
+        g.setContentsMargins(0, 0, 0, 0)
+        self.liste = QListWidget(); self.liste.setMinimumHeight(180)
+        g.breit(self.liste)
         self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", 16)); self.neu.setToolTip("Anbieter hinzufügen")
         self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", 16)); self.bearb.setToolTip("Bearbeiten")
         self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", 16)); self.weg.setToolTip("Entfernen")
+        s = FlussLayout(6)
         for b in (self.neu, self.bearb, self.weg):
-            s.addWidget(b)
-        s.addStretch(1)
-        z.addLayout(s)
-        v.addLayout(z, 1)
+            b.setMinimumWidth(36); s.addWidget(b)
+        g.breit(s)
         self.neu.clicked.connect(self._neu)
         self.bearb.clicked.connect(self._bearbeiten)
         self.weg.clicked.connect(self._entfernen)
@@ -297,24 +276,26 @@ class ModellZuweisung(QWidget):
         super().__init__()
         self.fenster = fenster
         self.k = fenster.ki.konfig
-        v = QVBoxLayout(self)
+        self._v = v = QVBoxLayout(self)
         v.setContentsMargins(0, 0, 0, 0)
-        v.addWidget(QLabel("Fügen Sie hinzu und wählen Sie KI-Modelle für verschiedene Aufgaben aus."))
-        self.f = QFormLayout()
-        v.addLayout(self.f)
+        hinweis = QLabel("Fügen Sie hinzu und wählen Sie KI-Modelle für verschiedene Aufgaben aus."); hinweis.setWordWrap(True)
+        v.addWidget(hinweis)
+        self.halter: QWidget | None = None
         self.felder: dict[str, QComboBox] = {}
         v.addStretch(1)
         self.aufbauen()
 
     def aufbauen(self) -> None:
         alt = {a: c.currentData() for a, c in self.felder.items()}
-        while self.f.rowCount():
-            self.f.removeRow(0)
+        if self.halter is not None:
+            self._v.removeWidget(self.halter); self.halter.setParent(None); self.halter.deleteLater()
         self.felder.clear()
+        self.halter = QWidget(); g = FormularGitter(self.halter)               # Beschriftung links, bei 300 px über dem Feld
         for aufgabe, name in K.AUFGABEN:
             c = modell_combo(self.k, aufgabe, alt.get(aufgabe, self.k["aufgaben"].get(aufgabe, "")))
             self.felder[aufgabe] = c
-            self.f.addRow(name, c)
+            g.zeile(name, c)
+        self._v.insertWidget(1, self.halter)
 
     def uebernehmen(self) -> None:
         for aufgabe, c in self.felder.items():
@@ -328,7 +309,6 @@ class KIKonfigurationDialog(QDialog):
     def __init__(self, fenster):
         super().__init__(fenster)
         self.setWindowTitle("KI-Konfiguration")
-        self.setMinimumWidth(560)
         v = QVBoxLayout(self)
         v.addWidget(text_label("KI-Konfiguration", fett=True, pt=13, umbruch=False))
         self.zuweisung = ModellZuweisung(fenster)
@@ -384,7 +364,7 @@ class SprachePanel(QWidget):
         self.fenster = fenster
         b = fenster.befehle
         v = QVBoxLayout(self); v.setContentsMargins(0, 8, 0, 0)
-        z = self._spalten = QHBoxLayout(); z.setSpacing(24); self._spalten_w = []
+        g = FormularGitter(); v.addLayout(g); v.addStretch(1)
         self.pruefung = SprachListe(list(b.SPRACHEN))
         self.pruefung.setCurrentIndex(max(0, self.pruefung.findData(b.pruefsprache_aktuell())))
         self.pruefung.setEnabled(fenster.current_tab() is not None)
@@ -392,31 +372,17 @@ class SprachePanel(QWidget):
         self.sprache.setCurrentText(fenster.ki.konfig["sprache"])
         for titel, unter, liste in (("Sprache für die Überprüfung", "Sprache des Dokuments — wird in der Datei vermerkt.", self.pruefung),
                                     ("Übersetzen nach", "Sprache für die KI-Übersetzung wählen.", self.sprache)):
-            spalte = QWidget(); sp = QVBoxLayout(spalte); sp.setContentsMargins(0, 0, 0, 0); sp.setSpacing(4)
-            sp.addWidget(text_label(titel, fett=True, pt=12, umbruch=False))
-            hint = QLabel(unter); hint.setStyleSheet("color: palette(mid);"); sp.addWidget(hint)
-            sp.addWidget(liste, 1)
-            z.addWidget(spalte, 1); self._spalten_w.append(spalte)
-        v.addLayout(z, 1)
-        self._v = v
+            g.breit(abschnittstitel(titel))
+            hint = QLabel(unter); hint.setWordWrap(True); hint.setStyleSheet("color: palette(mid);"); g.breit(hint)
+            liste.setMinimumHeight(0); liste.setFixedHeight(150); liste.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            liste.setStyleSheet(liste.styleSheet() + "QListWidget::item { padding: 6px 12px; border-bottom: 1px solid palette(midlight); }")
+            g.breit(liste)
         h = QLabel("Die Schreibhilfe selbst prüft weiter auf Deutsch. Das Modell für die Übersetzung wählen Sie im Reiter „Modellzuweisung“ (Aufgabe „Übersetzung“).")
         h.setWordWrap(True); h.setStyleSheet("color: palette(mid);")
-        v.addWidget(h)
+        g.breit(h)
 
     def kompakt_machen(self) -> None:
-        """In der Seitenleiste: die zwei Listen untereinander statt nebeneinander, jede mit sechs sichtbaren Zeilen (der Rest rollt)."""
-        neu = QVBoxLayout(); neu.setSpacing(10)                              # die Spalten wandern in ein neues, senkrechtes Layout
-        self._v.removeItem(self._spalten)
-        for w in self._spalten_w:
-            neu.addWidget(w)
-        self._v.insertLayout(0, neu)
-        from PySide6.QtWidgets import QSizePolicy
-        for l in (self.pruefung, self.sprache):
-            l.setMinimumHeight(0); l.setFixedHeight(150); l.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            l.setStyleSheet(l.styleSheet() + "QListWidget::item { padding: 6px 12px; border-bottom: 1px solid palette(midlight); }")
-        for h in self.findChildren(QLabel):
-            h.setWordWrap(True)
-        self.layout().invalidate()
+        """Die zwei Listen stehen schon untereinander (je sechs sichtbare Zeilen, der Rest rollt); nichts mehr umzubauen."""
 
     def uebernehmen(self) -> None:
         if self.sprache.currentItem() is not None:
@@ -430,22 +396,22 @@ class McpDialog(QDialog):
 
     def __init__(self, fenster, e: dict | None = None):
         super().__init__(fenster)
-        from PySide6.QtWidgets import QCheckBox
-        self.setWindowTitle("MCP-Server bearbeiten" if e else "MCP-Server hinzufügen")
-        self.setMinimumWidth(520)
+        self.setWindowTitle("MCP-Server bearbeiten" if e else "MCP-Server hinzufügen"); self.resize(444, 360)
         v = QVBoxLayout(self)
-        f = QFormLayout()
+        f = FormularGitter()
         self.name = QLineEdit(e["name"] if e else ""); self.name.setPlaceholderText("Name")
         self.befehl = QLineEdit(e["befehl"] if e else "")
         self.befehl.setPlaceholderText("Startbefehl, z. B. npx -y @modelcontextprotocol/server-filesystem ~/Dokumente")
-        f.addRow("Name *", self.name); f.addRow("Befehl *", self.befehl)
-        v.addLayout(f)
-        v.addWidget(QLabel("Der Server läuft auf diesem Rechner und startet nur während einer Chat-Frage. Jeder Werkzeugaufruf der KI wird vorher erfragt."))
-        self.an = QCheckBox("Im KI-Chat verwenden"); self.an.setChecked(e["an"] if e else True)
-        v.addWidget(self.an)
+        f.zeile("Name *", self.name); f.zeile("Befehl *", self.befehl)
+        info = QLabel("Der Server läuft auf diesem Rechner und startet nur während einer Chat-Frage. Jeder Werkzeugaufruf der KI wird vorher erfragt.")
+        info.setWordWrap(True); f.breit(info)
+        self.an = UmbruchSchalter("Im KI-Chat verwenden"); self.an.setChecked(e["an"] if e else True)
+        f.breit(self.an)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         t = QPushButton("Testen"); t.clicked.connect(self._testen)
-        v.addWidget(t, 0, Qt.AlignLeft); v.addWidget(self.stand)
+        tz = FlussLayout(6); tz.addWidget(t); f.breit(tz)
+        f.breit(self.stand)
+        v.addLayout(f); v.addStretch(1)
         v.addWidget(knopfzeile(self, bei_ok=self._ok, ok_text="Speichern"))
 
     def _testen(self) -> None:
@@ -473,16 +439,17 @@ class McpListe(QWidget):
         super().__init__()
         self.fenster, self.k = fenster, konfig
         v = QVBoxLayout(self); v.setContentsMargins(0, 8, 0, 0)
-        v.addWidget(QLabel("MCP-Server geben der KI im Chat Werkzeuge (Dateien lesen, Daten abfragen …). Gilt für Ollama und eigene Anbieter."))
-        z = QHBoxLayout()
-        self.liste = QListWidget(); z.addWidget(self.liste, 1)
-        s = QVBoxLayout()
+        g = FormularGitter(); v.addLayout(g)
+        info = QLabel("MCP-Server geben der KI im Chat Werkzeuge (Dateien lesen, Daten abfragen …). Gilt für Ollama und eigene Anbieter.")
+        info.setWordWrap(True); g.breit(info)
+        self.liste = QListWidget(); self.liste.setMinimumHeight(160); g.breit(self.liste)
+        s = FlussLayout(6)
         self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", 16)); self.neu.setToolTip("Server hinzufügen")
         self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", 16)); self.bearb.setToolTip("Bearbeiten")
         self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", 16)); self.weg.setToolTip("Entfernen")
         for b in (self.neu, self.bearb, self.weg):
-            s.addWidget(b)
-        s.addStretch(1); z.addLayout(s); v.addLayout(z, 1)
+            b.setMinimumWidth(36); s.addWidget(b)
+        g.breit(s); v.addStretch(1)
         self.neu.clicked.connect(self._neu); self.bearb.clicked.connect(self._bearbeiten); self.weg.clicked.connect(self._entfernen)
         self.liste.currentRowChanged.connect(self._knoepfe)
         self.liste.itemDoubleClicked.connect(lambda _i: self._bearbeiten())
@@ -532,12 +499,12 @@ class EinwilligungenPanel(QWidget):
                       "Modelle auf diesem Rechner (Ollama, lokale Adressen) brauchen keine Erlaubnis.")
         info.setWordWrap(True); v.addWidget(info)
         self.liste = QListWidget(); self.liste.setAccessibleName("Erteilte Einwilligungen"); v.addWidget(self.liste, 1)
-        z = QHBoxLayout()
+        self.liste.setWordWrap(True); self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)          # lange Einträge brechen um statt zu rollen
+        z = FlussLayout(6)
         self.widerruf = QPushButton("Widerrufen"); self.widerruf.setToolTip("Nimmt die ausgewählte Erlaubnis zurück")
         self.alle = QPushButton("Alle widerrufen")
         for b in (self.widerruf, self.alle):
             b.setMinimumHeight(36); z.addWidget(b)
-        z.addStretch(1)
         v.addLayout(z)
         self.widerruf.clicked.connect(self._widerrufen); self.alle.clicked.connect(self._alle)
         self.liste.currentRowChanged.connect(self._knoepfe)
@@ -585,7 +552,7 @@ class WebsuchePanel(QWidget):
                    "Die Treffer werden der KI als Quellen mitgegeben.")
         h.setWordWrap(True); h.setStyleSheet("color: palette(mid);")
         v.addWidget(h)
-        f = QFormLayout()
+        f = FormularGitter()
         self.anbieter = QComboBox()
         for schl, name in W.ANBIETER:
             self.anbieter.addItem(name, schl)
@@ -593,8 +560,8 @@ class WebsuchePanel(QWidget):
         self.url = QLineEdit(o["url"]); self.url.setPlaceholderText("https://searx.example.org")
         self.schluessel = QLineEdit(o["schluessel"]); self.schluessel.setEchoMode(QLineEdit.Password)
         self.anzahl = QSpinBox(); self.anzahl.setRange(1, 10); self.anzahl.setValue(int(o["anzahl"]))
-        f.addRow("Anbieter", self.anbieter); f.addRow("Adresse (SearXNG)", self.url); f.addRow("API-Schlüssel (Brave)", self.schluessel)
-        f.addRow("Treffer", self.anzahl)
+        f.zeile("Anbieter", self.anbieter); f.zeile("Adresse (SearXNG)", self.url); f.zeile("API-Schlüssel (Brave)", self.schluessel)
+        f.zeile("Treffer", self.anzahl)
         v.addLayout(f)
         t = QPushButton("Testen"); t.clicked.connect(self._testen)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
@@ -633,7 +600,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.fenster = fenster
         self.k = fenster.ki.konfig
         self.setWindowTitle("KI-Einstellungen")
-        self.setMinimumSize(620, 520)
+        self.resize(620, 520)
         v = QVBoxLayout(self)
         self.reiter = QTabBar(); self.reiter.setObjectName("bandReiter"); self.reiter.setExpanding(False)
         for n in REITER:
@@ -741,36 +708,36 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import QPlainTextEdit, QRadioButton
         self.setWindowTitle("Schnelle KI-Aktion erstellen")
         v = QVBoxLayout(self)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
         kopf = QLabel("Eine schnelle KI-Aktion führt einmalige KI-Aufgaben aus."); kopf.setWordWrap(True)
-        v.addWidget(kopf)
-        v.addWidget(text_label("Mit einer Vorlage beginnen", fett=True))
-        fl = QWidget(); fll = FlowLayout(fl)
-        self.chipfeld = fl
+        g.breit(kopf)
+        g.breit(abschnittstitel("Mit einer Vorlage beginnen"))
+        self.chipfluss = FlussLayout(6)
         self.chips = []
         for name, prompt in VORLAGEN_AKTION:
             b = QPushButton(name); b.setStyleSheet(_CHIP); b.clicked.connect(lambda _=False, n=name, p=prompt: self._vorlage(n, p))
-            fll.addWidget(b); self.chips.append(b)
-        v.addWidget(fl)
+            self.chips.append(b)
+        g.breit(self.chipfluss)
         self.mehr = QPushButton(); self.mehr.setFlat(True); self.mehr.setCursor(Qt.PointingHandCursor)
         self.mehr.clicked.connect(self._umschalten)
-        v.addWidget(self.mehr, 0, Qt.AlignLeft)
-        v.addWidget(text_label("Name *", fett=True))
+        g.breit(self.mehr)
         self.name = QLineEdit(); self.name.setPlaceholderText("Geben Sie einen kurzen Namen für die Aktion ein"); self.name.setMaxLength(40)
-        v.addWidget(self.name)
-        v.addWidget(text_label("Was soll die Aktion tun? *", fett=True))
+        g.zeile("Name *", self.name)
         self.prompt = QPlainTextEdit()
         self.prompt.setPlaceholderText("Beschreiben Sie die Aktion, die die KI ausführen soll, z. B. „Grammatik korrigieren“ oder „In einem formellen Ton umschreiben“")
         self.prompt.setMinimumHeight(90)
-        v.addWidget(self.prompt)
-        v.addWidget(text_label("Ergebnis anwenden als", fett=True))
+        g.zeile("Was soll die Aktion tun? *", self.prompt)
         self.ergebnis = QComboBox()
+        self.ergebnis.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.ergebnis.setMinimumContentsLength(10)
         for schl, text in ERGEBNIS_ARTEN:
             self.ergebnis.addItem(text, schl)
-        v.addWidget(self.ergebnis)
-        v.addWidget(text_label("Zugriff von", fett=True))
+        g.zeile("Ergebnis anwenden als", self.ergebnis)
+        g.breit(abschnittstitel("Zugriff von"))
         self.r_kontext = QRadioButton("Verfügbar über das Kontextmenü"); self.r_kontext.setChecked(True)
         self.r_schnell = QRadioButton("Schnellzugriff über die Symbolleiste")
-        v.addWidget(self.r_kontext); v.addWidget(self.r_schnell)
+        zugriff = FlussLayout(6); zugriff.addWidget(self.r_kontext); zugriff.addWidget(self.r_schnell)
+        g.breit(zugriff)
+        v.addWidget(inhalt)
         z = knopfzeile(self, bei_ok=self._ok, ok_text="Erstellen")
         self.ok = z.ok
         v.addWidget(z)
@@ -780,10 +747,15 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
     def _umschalten(self) -> None:
         """Erst die ersten sechs Vorlagen, mit „Alle anzeigen“ alle."""
         self._alle = not self._alle
+        while self.chipfluss.count():                                    # ausgeblendete Vorlagen dürfen im Fluss keinen Platz belegen
+            self.chipfluss.takeAt(0)
         for i, b in enumerate(self.chips):
-            b.setVisible(self._alle or i < 6)
+            zeigen = self._alle or i < 6
+            b.setVisible(zeigen)
+            if zeigen:
+                self.chipfluss.addWidget(b)
         self.mehr.setText("Ausblenden" if self._alle else "Alle anzeigen")
-        self.chipfeld.setMinimumHeight(self.chipfeld.layout().heightForWidth(max(300, self.width() - 24)))
+        self.chipfluss.invalidate()
 
     def _vorlage(self, name: str, prompt: str) -> None:
         self.name.setText(name)

@@ -2,13 +2,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QPushButton, QVBoxLayout,
-)
+from PySide6.QtWidgets import QComboBox, QDialog, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QVBoxLayout
 
 from lunivo_writer.editor import verweise
-from lunivo_writer.editor.literatur import TYPEN, ZITIERWEISEN, eintrag
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.editor.literatur import TYPEN, eintrag
 
 
 def _knoepfe(dlg):
@@ -27,7 +25,7 @@ class TextmarkeDialog(PanelFaehig, QDialog):
         v.addWidget(self.name)
         self.liste = QListWidget(); self.liste.itemDoubleClicked.connect(lambda _: self._gehe())
         v.addWidget(self.liste)
-        z = QHBoxLayout()
+        z = FlussLayout()
         for text, fn in (("Hinzufügen", self._add), ("Löschen", self._del), ("Gehe zu", self._gehe)):
             b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
         v.addLayout(z)
@@ -68,13 +66,13 @@ class QuelleDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Quelle")
         q = q or {}
-        f = QFormLayout(self)
+        f = FormularGitter(self)
         self.typ = QComboBox(); self.typ.addItems(TYPEN); self.typ.setCurrentText(q.get("typ", "Buch"))
-        f.addRow("Typ", self.typ)
+        f.zeile("Typ", self.typ)
         self.eingaben = {}
         for k, t in self.FELDER:
-            e = QLineEdit(q.get(k, "")); self.eingaben[k] = e; f.addRow(t, e)
-        f.addRow(_knoepfe(self))
+            e = QLineEdit(q.get(k, "")); self.eingaben[k] = e; f.zeile(t, e)
+        f.breit(_knoepfe(self))
 
     def ergebnis(self) -> dict:
         d = {k: e.text().strip() for k, e in self.eingaben.items()}
@@ -90,7 +88,7 @@ class QuellenDialog(PanelFaehig, QDialog):
         self.resize(560, 420)
         v = QVBoxLayout(self)
         self.liste = QListWidget(); v.addWidget(self.liste)
-        z = QHBoxLayout()
+        z = FlussLayout()
         for text, fn in (("Neu …", self._neu), ("Bearbeiten …", self._bearb), ("Löschen", self._weg), ("Zitat einfügen", self._zitat)):
             b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
         v.addLayout(z)

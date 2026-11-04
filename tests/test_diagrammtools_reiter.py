@@ -74,3 +74,20 @@ def test_bildtools_jeder_knopf_hat_einen_befehl(app, tmp_path):
     for k in seite.findChildren(QToolButton):
         assert not k.property("fehlt"), k.toolTip()
     _zu(w)
+
+
+def test_bildtools_seitenverhaeltnis_als_kontrollkaestchen(app, tmp_path):
+    from PySide6.QtGui import QColor, QImage
+    from PySide6.QtWidgets import QCheckBox
+    w = _fenster(tmp_path); w.show()
+    ed = w.current_editor()
+    img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red")); pfad = str(tmp_path / "r.png"); img.save(pfad)
+    assert ed.insert_image(pfad)
+    kasten = w.band.felder["bt_sperrkasten"]
+    assert isinstance(kasten, QCheckBox) and kasten.text() == "Seitenverhältnis sperren"
+    assert not kasten.isChecked() and not w.band.b.an_bildSeitenverhaeltnis()
+    kasten.click()                                          # Kästchen -> Befehl -> Bild
+    assert w.band.b.an_bildSeitenverhaeltnis() and kasten.isChecked()
+    w.band.b.bildSeitenverhaeltnis(); w.band.aktualisieren(True)     # Bild -> Kästchen
+    assert not kasten.isChecked()
+    _zu(w)

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import Qt
 
 from lunivo_writer.ui.baukasten import weitere_farben
 
@@ -45,8 +44,14 @@ class BildToolsBefehle:
         """Nach Skala zuschneiden: Seitenverhältnis wie ``"16:9"``, ``"4:3"``, ``"1:1"`` (mittiger Ausschnitt)."""
         from lunivo_writer.editor import bildzuschnitt as BZ
         z = self._bz()
-        if z is not None and not BZ.skala_text(self.ed, z, verhaeltnis):
+        if z is not None and str(verhaeltnis).strip().lower() == "frei":
+            self.bildZuschneidenModus()                               # „Frei“: Zuschneiden ohne festes Seitenverhältnis
+        elif z is not None and not BZ.skala_text(self.ed, z, verhaeltnis):
             self.w.lbl_msg.setText("Das Seitenverhältnis ist ungültig (Beispiel: 16:9).")
+
+    def bildDrehen(self, k=None, richtung="rechts"):
+        """Das Bild um 90° drehen: ``richtung`` ist ``"rechts"`` oder ``"links"`` (nutzt ``zeichenDrehen``)."""
+        self.zeichenDrehen(None, -90 if str(richtung) == "links" else 90)
 
     def bildZuschneidenZuruecksetzen(self, k=None):
         """Form und Größe zurücksetzen: Maske und Zuschnitt entfernen, das ganze Bild im ursprünglichen Seitenverhältnis."""
@@ -55,32 +60,6 @@ class BildToolsBefehle:
         if z is not None:
             BZ.zuruecksetzen(self.ed, z)
             self.ed.__dict__["_frei_zuschnitt"] = False
-
-    def menue_bildZuschneiden(self):
-        """Klappe „Zuschneiden“: Zuschneiden, Nach Form zuschneiden (Katalog, ohne Linien), Nach Skala zuschneiden, Form und Größe zurücksetzen.
-        Die Daten für die Galerie liefern ``bildzuschnitt.formen_kategorien()`` und ``bildzuschnitt.VERHAELTNISSE``."""
-        from PySide6.QtCore import QRectF, QSize
-        from PySide6.QtGui import QColor, QPen
-        from lunivo_writer.core.farben import Farbe
-        from lunivo_writer.editor import bildzuschnitt as BZ
-        from lunivo_writer.editor import formen_katalog as K
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
-        m = RasterAuswahl(self.w, titel="Nach Form zuschneiden", spalten=10, groesse=QSize(24, 24))
-        formen_namen: dict[str, str] = {}
-        for kat, namen in BZ.formen_kategorien():
-            m.abschnitt(kat)
-            for name in namen:
-                def zeichne(p, r, name=name):
-                    p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
-                    p.drawPath(K.pfad(name, QRectF(r).adjusted(3, 3, -3, -3)))
-                m.kachel(name, name, zeichne).setCheckable(False)
-                formen_namen[name] = name
-        m.gewaehlt.connect(lambda n: self.bildZuschneidenForm(None, n))
-        m.fuss("Zuschneiden", self.bildZuschneidenModus)
-        for text, b, h in BZ.VERHAELTNISSE[:6]:
-            m.fuss(f"Nach Skala zuschneiden: {text}", lambda t=text: self.bildZuschneidenSkala(None, t))
-        m.fuss("Form und Größe zurücksetzen", self.bildZuschneidenZuruecksetzen)
-        return m
 
     # ==== Größe, Seitenverhältnis ====================================================================================================
     def bildGroesseZuruecksetzen(self, k=None):

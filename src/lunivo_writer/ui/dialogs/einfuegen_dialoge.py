@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem,
-    QSizePolicy, QVBoxLayout, QApplication, QWidget,
+    QComboBox, QDialog, QDoubleSpinBox, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox,
+    QTableWidget, QTableWidgetItem, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.editor import einfuegen as E
@@ -121,7 +120,7 @@ class _LayoutGalerie(QWidget):
             self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
             self.feld.knoepfe[n].setAccessibleName(n)
             self.feld.knoepfe[n].setFixedSize(self.KACHEL + 10, self.KACHEL * 3 // 4 + 10)
-            self.feld.knoepfe[n].setStyleSheet(f"QToolButton:checked {{ background: #dbe7f7; border: 1px solid {Farbe.AKZENT}; }}")      # die gewählte Kachel ist blau hinterlegt
+            self.feld.knoepfe[n].setProperty("kachel", True)      # die gewählte Kachel ist hinterlegt (Theme)
         self.feld.gewaehlt.connect(self._klick)
         self.feld.setze(self._aktuell)
         self._v.addWidget(self.feld)
@@ -275,7 +274,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Daten bearbeiten")
         v = QVBoxLayout(self)
         kopf = QWidget(); g = FormularGitter(kopf)
-        self.titel = QLineEdit(titel); self.titel.setMinimumHeight(34); g.zeile("&Titel:", self.titel)
+        self.titel = QLineEdit(titel); g.zeile("&Titel:", self.titel)
         v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
@@ -290,7 +289,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
                          ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
                          ("Reihe hinzufügen", self._reihe_dazu),
                          ("Reihe entfernen", lambda: self.tab.setColumnCount(max(2, self.tab.columnCount() - 1)))):
-            b = QPushButton(text); b.setMinimumHeight(34); b.clicked.connect(fn); z.addWidget(b)
+            b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
         v.addLayout(z)
         fussleiste(self, v)
         self.resize(520, 360)
@@ -329,7 +328,8 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         self.liste.setResizeMode(QListWidget.Adjust); self.liste.setGridSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(90, 70))
         self.liste.setUniformItemSizes(True); self.liste.itemDoubleClicked.connect(lambda _: self.accept())
         v.addWidget(self.liste)
-        z = QHBoxLayout(); self.farbe = _Farbknopf("#1f2328"); z.addWidget(QLabel("Farbe:")); z.addWidget(self.farbe); z.addStretch(1); v.addLayout(z)
+        self.farbe = _Farbknopf("#1f2328")
+        fg = FormularGitter(); fg.zeile("Farbe:", self.farbe); v.addLayout(fg)
         v.addWidget(_ok(self))
         self.namen = sorted(icons.katalog())
         self.suche.textChanged.connect(self._fuellen)
@@ -379,13 +379,13 @@ class DeckblattDialog(PanelFaehig, QDialog):
     def __init__(self, parent, autor: str = ""):
         super().__init__(parent)
         self.setWindowTitle("Deckblatt")
-        f = QFormLayout(self)
+        v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.vorlage = QComboBox(); self.vorlage.addItems(E.DECKBLATT_VORLAGEN)
         self.titel = QLineEdit("Titel des Dokuments"); self.unter = QLineEdit(); self.autor = QLineEdit(autor)
         self.datum = QLineEdit(E.datum_text("d. MMMM yyyy"))
         for lab, w in (("Vorlage", self.vorlage), ("Titel", self.titel), ("Untertitel", self.unter), ("Autor", self.autor), ("Datum", self.datum)):
-            f.addRow(lab, w)
-        f.addRow(_ok(self))
+            f.zeile(lab + ":", w)
+        v.addWidget(_ok(self))
 
 
 class DatumDialog(PanelFaehig, QDialog):
@@ -393,12 +393,12 @@ class DatumDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent, sprache: str = "de_DE"):
         super().__init__(parent)
-        from PySide6.QtWidgets import QCheckBox, QGridLayout
+        from PySide6.QtWidgets import QCheckBox
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         self.setWindowTitle("Datum und Uhrzeit")
         v = QVBoxLayout(self)
-        g = QGridLayout(); g.setHorizontalSpacing(12)
-        self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate"); self.liste.setMinimumWidth(220)
+        g = FormularGitter(); v.addLayout(g)
+        self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate")
         self.sprache = QComboBox(); self.sprache.setMinimumHeight(34); self.sprache.setAccessibleName("Sprache")
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
@@ -407,10 +407,9 @@ class DatumDialog(PanelFaehig, QDialog):
         self.auto.setToolTip("Das Datum wird als Feld gespeichert; Textprogramme rechnen es beim Öffnen neu (in DOCX).")
         t1 = QLabel("&Verfügbare Formate:"); t1.setBuddy(self.liste)
         t2 = QLabel("&Sprache:"); t2.setBuddy(self.sprache)
-        g.addWidget(t1, 0, 0); g.addWidget(self.liste, 1, 0, 2, 1)
-        g.addWidget(t2, 0, 1); g.addWidget(self.sprache, 1, 1, Qt.AlignTop); g.addWidget(self.auto, 2, 1, Qt.AlignBottom)
-        g.setRowStretch(2, 1)
-        v.addLayout(g)
+        g.zeile(t1, self.liste)
+        g.zeile(t2, self.sprache)
+        g.breit(self.auto)
         fussleiste(self, v)
         self.sprache.currentIndexChanged.connect(self._fuellen)
         self.liste.itemDoubleClicked.connect(lambda _: self.accept())

@@ -17,8 +17,8 @@ import json
 from PySide6.QtCore import QEvent, QObject, QRectF, QSettings, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListView, QListWidget, QListWidgetItem, QPushButton,
-    QSpinBox, QTabWidget, QGroupBox, QCheckBox, QSizePolicy, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QListView, QListWidget, QListWidgetItem, QPushButton, QSpinBox, QGroupBox, QVBoxLayout,
+    QWidget,
 )
 
 import copy
@@ -27,7 +27,7 @@ from lunivo_writer.editor import listen as L
 from lunivo_writer.editor import mehrstufig as M
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.listen_symbole import liste_zeichner
-from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld, spin
+from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
 
 from lunivo_writer.core.farben import Farbe
 PLATZHALTER = "①"
@@ -78,7 +78,7 @@ def _raster(eintraege: list[dict | None], bild=None) -> QListWidget:
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 class _Zahlenformat(QWidget):
     """Zahlenformat, Zahlenart, Startzahl und „Schriftart …“ der Nummer — gemeinsam für „Nummerierung anpassen“ und „Gliederung anpassen“."""
     geaendert = Signal()
@@ -95,15 +95,15 @@ class _Zahlenformat(QWidget):
         for k, st in L.STILE.items():
             if not st[1]:
                 self.art.addItem(st[0], k)
+        self.art.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.art.setMinimumContentsLength(6)
         self.start = QSpinBox(); self.start.setRange(1, 9999)
         if breit:
             g.reihe(("Zahlenformat:", self.format))
-            g.reihe(("Zahlenformatvorlage:", self.art))
-            g.zeile("Beginnen mit:", self.start)
+            g.reihe(("Zahlenformatvorlage:", self.art), ("Beginnen mit:", self.start), gewichte=(5, 4))
         else:
             g.reihe(("Zahlenformat:", self.format))
             g.breit(self.schrift)
-            g.reihe(("Zahlenformatvorlage:", self.art), ("Beginnen mit:", self.start), gewichte=(3, 1))
+            g.reihe(("Zahlenformatvorlage:", self.art), ("Beginnen mit:", self.start), gewichte=(5, 4))
         self.format.textChanged.connect(lambda *_: self.geaendert.emit())
         self.art.currentIndexChanged.connect(lambda *_: self.geaendert.emit())
         self.start.valueChanged.connect(lambda *_: self.geaendert.emit())
@@ -479,8 +479,8 @@ class ListenDialog(PanelFaehig, QDialog):
         # ---- Knöpfe
         self.anpassen = QPushButton("Anpassen …"); self.loeschen = QPushButton("Löschen")
         self.anpassen.clicked.connect(self._anpassen); self.loeschen.clicked.connect(self._loeschen)
-        gruppe = QWidget(); gh = QHBoxLayout(gruppe); gh.setContentsMargins(0, 0, 0, 0)       # unter allen Reitern dieselbe Zeile, ohne Rahmen
-        gh.addStretch(1); gh.addWidget(self.loeschen); gh.addWidget(self.anpassen)
+        gruppe = QWidget(); gh = FlussLayout(6); gruppe.setLayout(gh); gh.setContentsMargins(0, 0, 0, 0)       # unter allen Reitern dieselbe Zeile, ohne Rahmen
+        gh.addWidget(self.anpassen); gh.addWidget(self.loeschen)
         v.addWidget(gruppe)
         fussleiste(self, v)
         # ---- Anfangsauswahl

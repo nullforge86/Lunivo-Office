@@ -113,7 +113,7 @@ class GalerieAuswahl(QMenu):
             self._trenner = QFrame(); self._trenner.setFrameShape(QFrame.HLine); self._trenner.setFrameShadow(QFrame.Sunken)
             self._v.addWidget(self._trenner)
         b = QPushButton(text); b.setFlat(True); b.setEnabled(aktiv)
-        b.setStyleSheet("QPushButton { text-align: left; padding: 6px 8px; border: none; border-radius: 4px; }"
+        b.setStyleSheet("QPushButton { text-align: left; padding: 6px 8px; border: none; border-radius: 6px; }"
                         "QPushButton:hover:enabled { background: palette(midlight); }")
         b.setIconSize(QSize(18, 18))
         if haken is not None:

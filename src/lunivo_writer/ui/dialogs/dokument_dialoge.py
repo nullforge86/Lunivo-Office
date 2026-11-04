@@ -1,42 +1,44 @@
 """Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFormLayout, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
 
 from lunivo_writer.models.page import PAPER_MM, HeaderFooter, PageSettings
-from lunivo_writer.ui.baukasten import Linie, LinienWahl
 from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
+def _titel(text: str, feld) -> QLabel:
+    t = QLabel(text); t.setBuddy(feld)
+    return t
+
+
 class PageSetupDialog(PanelFaehig, QDialog):
     def __init__(self, page: PageSettings, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Seite einrichten")
         self.page = page.copy()
-        form = QFormLayout()
+        inhalt = QWidget(); form = FormularGitter(inhalt)
         self.paper = QComboBox(); self.paper.addItems(list(PAPER_MM) + ["Benutzerdefiniert"])
         self.paper.setCurrentText(page.paper_name())
         self.orient = QComboBox(); self.orient.addItems(["Hochformat", "Querformat"])
         self.orient.setCurrentIndex(1 if page.landscape else 0)
         self.top = _spin(page.margin_top_mm); self.bottom = _spin(page.margin_bottom_mm)
         self.left = _spin(page.margin_left_mm); self.right = _spin(page.margin_right_mm)
-        form.addRow("Papierformat", self.paper); form.addRow("Ausrichtung", self.orient)
-        form.addRow("Rand oben", self.top); form.addRow("Rand unten", self.bottom)
-        form.addRow("Rand links", self.left); form.addRow("Rand rechts", self.right)
+        form.reihe(("Papierformat", self.paper), ("Ausrichtung", self.orient))
+        form.breit(abschnittstitel("Ränder"))
+        form.reihe(("Oben", self.top), ("Unten", self.bottom))
+        form.reihe(("Links", self.left), ("Rechts", self.right))
+        form.breit(abschnittstitel("Spalten"))
         self.spalten = QSpinBox(); self.spalten.setRange(1, 4); self.spalten.setValue(max(1, int(page.spalten)))
         self.spalten_abstand = _spin(page.spalten_abstand_mm, 2, 40)
         self.spalten_linie = QCheckBox("Linie zwischen den Spalten"); self.spalten_linie.setChecked(page.spalten_linie)
-        form.addRow("Spalten", self.spalten); form.addRow("Abstand der Spalten", self.spalten_abstand)
-        form.addRow("", self.spalten_linie)
+        form.reihe(("Spalten", self.spalten), ("Abstand der Spalten", self.spalten_abstand))
+        form.breit(self.spalten_linie)
         bb = knopfzeile(self)
-        lay = QVBoxLayout(self); lay.addLayout(form); lay.addWidget(bb)
+        lay = QVBoxLayout(self); lay.addWidget(inhalt); lay.addWidget(bb)
 
     def result_page(self) -> PageSettings:
         p = self.page
@@ -71,9 +73,10 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         b = QPushButton("Seitenzahl einfügen")
         b.clicked.connect(lambda: self.text.insertPlainText("{PAGE}"))
         lay = QVBoxLayout(self)
-        lay.addWidget(self.text); 
-        row = QHBoxLayout(); row.addWidget(QLabel("Ausrichtung")); row.addWidget(self.align); row.addWidget(b)
-        lay.addLayout(row)
+        lay.addWidget(self.text)
+        inhalt = QWidget(); g = FormularGitter(inhalt)
+        g.zeile("Ausrichtung", self.align); g.breit(b)
+        lay.addWidget(inhalt)
         bb = knopfzeile(self)
         lay.addWidget(bb)
 
@@ -94,22 +97,20 @@ class TableDialog(PanelFaehig, QDialog):
         lay.addWidget(QLabel("Tabellengröße"))
         self.cols = QSpinBox(); self.cols.setRange(1, 63); self.cols.setValue(vorgabe[0])
         self.rows = QSpinBox(); self.rows.setRange(1, 500); self.rows.setValue(vorgabe[1])
-        g = QGridLayout(); g.setContentsMargins(8, 0, 0, 0)
-        for i, (text, feld) in enumerate((("Spaltenan&zahl:", self.cols), ("Zeilenan&zahl:", self.rows))):
-            feld.setMinimumHeight(36); feld.setMinimumWidth(140)
-            t = QLabel(text); t.setBuddy(feld)
-            g.addWidget(t, i, 0); g.addWidget(feld, i, 1)
-        g.setColumnStretch(0, 1)
-        lay.addLayout(g)
+        gi = QWidget(); g = FormularGitter(gi)
+        for feld in (self.cols, self.rows):
+            pass
+        g.reihe((_titel("Spaltenan&zahl:", self.cols), self.cols), (_titel("Zeilenan&zahl:", self.rows), self.rows))
+        lay.addWidget(gi)
         lay.addWidget(QLabel("Einstellung für optimale Breite"))
         self.fest = QRadioButton("Feste Spalten&breite:")
         self.auto = QRadioButton("Spaltenbreite automatisch anpassen (&S)"); self.auto.setChecked(True)
         gruppe = QButtonGroup(self); gruppe.addButton(self.fest); gruppe.addButton(self.auto)
-        self.breite = _spin(30.0, 2.0, 500.0); self.breite.setMinimumHeight(36); self.breite.setMinimumWidth(140)
+        self.breite = _spin(30.0, 2.0, 500.0)
         self.breite.setAccessibleName("Feste Spaltenbreite")
-        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.fest); z.addStretch(1); z.addWidget(self.breite)
-        lay.addLayout(z)
-        z = QHBoxLayout(); z.setContentsMargins(8, 0, 0, 0); z.addWidget(self.auto); lay.addLayout(z)
+        zi = QWidget(); z = FormularGitter(zi)
+        z.reihe(("", self.fest), ("", self.breite)); z.breit(self.auto)
+        lay.addWidget(zi)
         self.fest.toggled.connect(self.breite.setEnabled); self.breite.setEnabled(False)
         self.speichern = QCheckBox("Ab&messungen für neue Tabellen speichern")
         lay.addWidget(self.speichern)
@@ -132,9 +133,10 @@ class BildGroesseDialog(PanelFaehig, QDialog):
         self._sperre = False
         self.b.valueChanged.connect(self._b)
         self.h.valueChanged.connect(self._h)
-        form = QFormLayout(); form.addRow("Breite", self.b); form.addRow("Höhe", self.h); form.addRow("", self.fest)
+        inhalt = QWidget(); form = FormularGitter(inhalt)
+        form.reihe(("Breite", self.b), ("Höhe", self.h)); form.breit(self.fest)
         bb = knopfzeile(self)
-        lay = QVBoxLayout(self); lay.addLayout(form); lay.addWidget(bb)
+        lay = QVBoxLayout(self); lay.addWidget(inhalt); lay.addWidget(bb)
 
     def _b(self, v):
         if self.fest.isChecked() and not self._sperre:
@@ -157,6 +159,7 @@ class ZoomDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import QButtonGroup, QRadioButton, QSpinBox
         self.setWindowTitle("Zoom")
         lay = QVBoxLayout(self)
+        raster = QWidget(); fl = FlussLayout(10); raster.setLayout(fl); fl.setContentsMargins(0, 0, 0, 0)
         self.gruppe = QButtonGroup(self)
         self._art: dict[int, tuple[str, float]] = {}
         eintraege = [(f"{n} %", ("wert", n / 100)) for n in self.STUFEN] + \
@@ -165,7 +168,7 @@ class ZoomDialog(PanelFaehig, QDialog):
             r = QRadioButton(text)
             self.gruppe.addButton(r, i)
             self._art[i] = art
-            lay.addWidget(r)
+            fl.addWidget(r)
             if art[0] == "wert" and abs(art[1] - aktuell) < 0.005:
                 r.setChecked(True)
         eigen = QRadioButton("Eigener Wert:")
@@ -173,8 +176,9 @@ class ZoomDialog(PanelFaehig, QDialog):
         self.spin = QSpinBox(); self.spin.setRange(10, 500); self.spin.setSuffix(" %")
         self.spin.setValue(int(round(aktuell * 100)))
         self.spin.valueChanged.connect(lambda _: eigen.setChecked(True))
-        zeile = QHBoxLayout(); zeile.addWidget(eigen); zeile.addWidget(self.spin)
-        lay.addLayout(zeile)
+        lay.addWidget(raster)
+        ei = QWidget(); zeile = FormularGitter(ei); zeile.reihe(("", eigen), ("", self.spin))
+        lay.addWidget(ei)
         if self.gruppe.checkedId() < 0:
             eigen.setChecked(True)
         bb = knopfzeile(self)

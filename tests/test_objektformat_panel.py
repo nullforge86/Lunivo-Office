@@ -203,3 +203,13 @@ def test_schrittfeld_zeigt_die_zahl_im_dunklen_thema(app):
     img = f.feld.grab().toImage()
     mitte = {img.pixelColor(x, y).name() for x in range(img.width() // 2 - 20, img.width() // 2 + 20) for y in range(img.height())}
     assert len(mitte) > 2                                            # die Mitte zeigt Schrift, nicht nur die Fläche
+
+
+# ---- ObjektFormatPanelFoto: Unterklasse nach dem Foto (direkt instanziiert, in der Seitenleiste noch nicht aktiv) ------------------------
+_FOTO_WERTE = {"fuell": {"art": "farbe", "farbe": "#4a90d9"}, "rand": {"b": 2.0, "farbe": "#222222", "art": "einfach"},
+               "schatten": {"farbe": "#000000", "transparenz": 40, "groesse": 100, "weich": 4, "abstand": 3, "winkel": 45},
+               "weich": {"radius": 5.0}, "drehung": {"x": 10.0, "y": 20.0, "z": 0.0, "persp": 45.0, "text_gerade": False, "boden": 0.0}}
+
+
+
+

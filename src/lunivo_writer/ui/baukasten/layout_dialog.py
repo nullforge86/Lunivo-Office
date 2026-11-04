@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import copy
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton,
-                               QRadioButton, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtCore import QSize
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QDoubleSpinBox, QGroupBox, QLabel, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
@@ -127,7 +126,7 @@ class LayoutDialog(PanelFaehig, QDialog):
     def _umbruch(self, w: dict) -> None:
         seite = QWidget(); v = QVBoxLayout(seite)
         box = QGroupBox("Umbruchart"); bv = QVBoxLayout(box)
-        self.kacheln = KachelFeld(spalten=4, groesse=QSize(44, 44))
+        self.kacheln = KachelFeld(spalten=4, groesse=QSize(44, 44), fliessend=True)
         for schl, text in ARTEN:
             self.kacheln.hinzu(schl, text, umbruch_zeichner(schl))
         self.kacheln.setze(w["umbruch"]); self.kacheln.gewaehlt.connect(lambda _k: self._pruefen())

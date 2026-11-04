@@ -679,8 +679,8 @@ class EinfuegenBefehle:
     def smartart(self, k=None):
         if self.ed:
             from lunivo_writer.editor import smartart as SA
-            from lunivo_writer.ui.dialogs.einfuegen_dialoge import SmartArtDialog
-            d = SmartArtDialog(self.w)
+            from lunivo_writer.ui.dialogs.smartart_dialog_foto import SmartArtDialogFoto
+            d = SmartArtDialogFoto(self.w)
             if d.exec():
                 SA.einfuegen(self.ed, d.daten())
 

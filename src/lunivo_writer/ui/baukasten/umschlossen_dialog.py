@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap, QPolygonF
-from PySide6.QtWidgets import QButtonGroup, QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QToolButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QToolButton, QVBoxLayout
 
 from lunivo_writer.editor.zeichenzusatz import FORMEN, VORLAGEN
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
 VORSCHLAEGE = ("√", "A", "a", "!", "?", "1", "2", "3", "★", "●", "✓", "※")
@@ -58,33 +58,29 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, text: str = "", form: str = "kreis", vorlage: str = "reduzieren"):
         super().__init__(parent)
         self.setWindowTitle("Eingeschlossene Zeichen")
-        v = QVBoxLayout(self)
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
         v.addWidget(abschnittstitel("Formatvorlage"))
-        zeile = QHBoxLayout(); zeile.setSpacing(8)
+        zeile = FlussLayout(8)
         self._vorlage = QButtonGroup(self)
         for i, (k, t) in enumerate(VORLAGEN):
             b = QToolButton(); b.setCheckable(True); b.setChecked(k == vorlage); b.setText(t); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(56, 40))
-            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(False); b.setMinimumWidth(96)
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(False)
             self._vorlage.addButton(b, i); zeile.addWidget(b)
-        zeile.addStretch(1)
         v.addLayout(zeile)
         v.addWidget(abschnittstitel("Umschließen"))
-        spalten = QHBoxLayout(); spalten.setSpacing(10)
-        links = QVBoxLayout(); links.addWidget(QLabel("Text:"))
-        self.text = QLineEdit(text); links.addWidget(self.text)
+        v.addWidget(QLabel("Text:"))
+        self.text = QLineEdit(text); self.text.setMinimumHeight(34); v.addWidget(self.text)
         self.vorschlaege = QListWidget(); self.vorschlaege.setMaximumHeight(120)
         self.vorschlaege.addItems(VORSCHLAEGE)
         self.vorschlaege.itemClicked.connect(lambda i: self.text.setText(i.text()))
-        links.addWidget(self.vorschlaege)
-        rechts = QVBoxLayout(); rechts.addWidget(QLabel("Umschließen mit:"))
+        v.addWidget(self.vorschlaege)
+        v.addWidget(QLabel("Umschließen mit:"))
         self.formen = QListWidget(); self.formen.setIconSize(QSize(20, 20)); self.formen.setMaximumHeight(150)
         for k, t in FORMEN:
             it = QListWidgetItem(QIcon(form_bild(k, 20)), ""); it.setData(Qt.UserRole, k); it.setToolTip(t); self.formen.addItem(it)
             if k == form:
                 self.formen.setCurrentItem(it)
-        rechts.addWidget(self.formen)
-        spalten.addLayout(links, 1); spalten.addLayout(rechts, 1)
-        v.addLayout(spalten); v.addStretch(1)
+        v.addWidget(self.formen); v.addStretch(1)
         fussleiste(self, v)
 
     def werte(self) -> dict:

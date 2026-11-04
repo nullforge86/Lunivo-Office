@@ -43,8 +43,9 @@ class AuswahlBereich(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Auswahl")
         self.ed = ed
-        v = QVBoxLayout(self)
-        v.addWidget(QLabel("Objekte im Dokument:"))
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
+        kopf = QLabel("Objekte im Dokument:"); kopf.setWordWrap(True)
+        v.addWidget(kopf)
         self.liste = QListWidget(); self.liste.setMinimumHeight(260)
         v.addWidget(self.liste, 1)
         self.leer = QLabel("Das Dokument enthält keine Bilder, Formen oder Tabellen."); self.leer.setWordWrap(True)

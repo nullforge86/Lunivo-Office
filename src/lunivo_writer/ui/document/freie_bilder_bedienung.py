@@ -15,6 +15,7 @@ from lunivo_writer.editor import freie_bilder as FB
 from lunivo_writer.editor.zusatz import B_BILDANKER
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import schnellleiste_zustand as SZ
 GRIFF = 9.0                                                  # Seitenlänge eines Griffs in Bildschirmpunkten
 GRIFFE = {"nw": (0, 0), "n": (0.5, 0), "ne": (1, 0), "e": (1, 0.5), "se": (1, 1), "s": (0.5, 1), "sw": (0, 1), "w": (0, 0.5)}
 ROT_ABSTAND = 24.0                                           # Drehgriff: so weit über der Oberkante des Rahmens
@@ -131,10 +132,12 @@ class FreieBilderMixin:
                    "sa_stil": "Formvorlagen",
                    "kontur": "Formkontur\n\nFarbe, Breite und Linienart für die Konturlinie der ausgewählten Form auswählen.\n\n"
                              "Auf den Pfeil klicken, um detaillierte Einstellungen für die Konturlinie auszuwählen."}
-    KNOEPFE = ("layout", "formstile", "fuell", "kontur", "zahnrad")   # von oben nach unten, wie in der Vorlage; das Zahnrad öffnet die Seitenleiste „Formatierung“
-    KNOEPFE_BILD = ("layout", "lupe", "zuschnitt", "zahnrad")    # Bild: Layoutoptionen, Vergrößern, Zuschneiden, Formatierung
+    # Knopfsätze genau nach den Fotos der Vorlage (von oben nach unten); nur beim Diagramm zeigt das Foto das Zahnrad (Seitenleiste „Formatierung“)
+    KNOEPFE = ("layout", "formstile", "fuell", "kontur")                  # Form: Layoutoptionen, Formstile, Füllung, Kontur
+    KNOEPFE_BILD = ("layout", "lupe", "zuschnitt")                        # Bild: Layoutoptionen, Vergrößern, Zuschneiden
     KNOEPFE_DIAGRAMM = ("layout", "dg_element", "dg_stile", "dg_filter", "zahnrad")   # Diagramm: Layoutoptionen, Elemente, Stile, Filter, Formatierung
-    KNOEPFE_SMARTART = ("sa_form", "sa_layout", "sa_level", "sa_bullet", "sa_stil", "zahnrad")    # am gewählten SmartArt-Knoten
+    KNOEPFE_SMARTART_LEER = ("layout", "fuell", "kontur")                 # SmartArt ohne gewählten Knoten: Layoutoptionen, Füllung, Kontur
+    KNOEPFE_SMARTART = ("sa_form", "sa_layout", "sa_level", "sa_bullet", "sa_stil")    # am gewählten SmartArt-Knoten
     KNOPF_SYMBOLE = {"lupe": "lupe", "zuschnitt": "crop", "dg_element": "diagrammteil", "dg_stile": "pinsel", "zahnrad": "zahnrad", "dg_filter": "funnel",
                      "sa_form": "network", "sa_layout": "layout-dashboard", "sa_level": "workflow", "sa_bullet": "list-plus", "sa_stil": "pinsel"}
 
@@ -146,6 +149,8 @@ class FreieBilderMixin:
             return self.KNOEPFE_DIAGRAMM
         if self._frei_knoten_rect() is not None:
             return self.KNOEPFE_SMARTART
+        if FO.art_gewaehlt(self) == "smartart":
+            return self.KNOEPFE_SMARTART_LEER
         return self.KNOEPFE_BILD if BW.frei_bild(self) is not None else self.KNOEPFE
 
     def _frei_knopf_rects(self, r: QRectF) -> dict[str, QRectF]:
@@ -169,6 +174,8 @@ class FreieBilderMixin:
                     out[k] = QRectF(kn.right() + 10, kn.top() + i * 40, self.KNOPF, self.KNOPF)
                 else:
                     out[k] = QRectF(x, r.top() + 32 + i * 40, self.KNOPF, self.KNOPF)
+            if SZ.ohne_minus(leiste, kn):
+                out.pop("minus", None)                              # am gewählten Knoten steht kein ⊖ (wie in der Vorlage)
         return out
 
     def _frei_auswahl_zeichnen(self, p: QPainter, r: QRectF, a: dict | None = None) -> None:
@@ -179,6 +186,7 @@ class FreieBilderMixin:
         offen = getattr(self, "_frei_knoepfe_offen", True)
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         for name, k in self._frei_knopf_rects(r).items():
+            p.setOpacity(1.0 if SZ.knopf_aktiv(getattr(self.window(), "befehle", None), name) else 0.4)      # grau, wenn nicht möglich
             p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(QColor(Farbe.WEISS))
             if name == "anker":                                    # Seite mit Pfeil nach unten (Menü)
                 p.drawRoundedRect(k, 3, 3); p.setPen(QPen(QColor(Farbe.BLAU), 1.3)); p.setBrush(Qt.NoBrush)
@@ -349,7 +357,6 @@ class FreieBilderMixin:
     @staticmethod
     def _frei_dunkel(name: str):
         """Das Symbol dunkel gefärbt: die Knöpfe am Bild sind immer weiß, auch im dunklen Design (dort wären die Symbole sonst hell auf weiß)."""
-        from PySide6.QtGui import QPixmap
         from lunivo_writer.ui.widgets import icons
         pm = icons.icon(name, 20).pixmap(20, 20)
         p = QPainter(pm); p.setCompositionMode(QPainter.CompositionMode_SourceIn); p.fillRect(pm.rect(), QColor(Farbe.TINTE)); p.end()
@@ -425,6 +432,8 @@ class FreieBilderMixin:
                 if self._frei_sel is not None:
                     self._frei_teilwahl_aufheben()
                     self._frei_sel = None; self.viewport().update()
+                    if hasattr(self.window(), "objektformat_folgen"):
+                        self.window().objektformat_folgen()                  # Text statt Objekt: offener Formatbereich geht zu
                 return False
             key, a, r, hinten, n = treffer
             vorher = self._frei_sel
@@ -717,7 +726,11 @@ class FreieBilderMixin:
         if name == "lupe":
             b.bildVergroessern()
         elif name == "zuschnitt":
-            b.bildZuschneidenModus()
+            from lunivo_writer.ui.baukasten.bild_diagramm_menues import zuschneiden_menue
+            if not b.an_bildZuschneidenModus():                    # Klick schaltet den Zuschneiden-Modus ein und öffnet die Klappe
+                b.bildZuschneidenModus()
+            m = zuschneiden_menue(b)
+            m.popup(pos); self._frei_menue = m
         elif name == "sa_bullet":
             b.smartartAufzaehlung(); self.viewport().update()
         else:
@@ -781,7 +794,7 @@ class FreieBilderMixin:
         return m
 
     def _frei_formatierung(self, reiter: int = 0) -> None:
-        """Zahnrad der Schnellleiste und Rechtsklick „Formatieren“: die Seitenleiste „Formatierung“ für das gewählte Objekt (Diagramm, SmartArt, Form, Bild …)."""
+        """Zahnrad am Diagramm und Rechtsklick „Formatieren“: die Seitenleiste „Formatierung“ für das gewählte Objekt (Diagramm, SmartArt, Form, Bild …)."""
         fenster = self.window()
         if hasattr(fenster, "formatierung_seitenleiste"):
             fenster.formatierung_seitenleiste(reiter)
@@ -849,12 +862,13 @@ class FreieBilderMixin:
 
     def _frei_layout_popup(self, global_pos) -> None:
         from lunivo_writer.editor import bildlayout as BL
-        from lunivo_writer.ui.baukasten.layout_optionen import LayoutOptionen
+        from lunivo_writer.ui.baukasten.layout_optionen_objekt import LayoutOptionenObjekt
         z = BL.ziel(self)
         if z is None:
             return
         w = BL.lesen(self, z)
-        p = LayoutOptionen(self, w["umbruch"], bool(w.get("mit_text")))
+        p = LayoutOptionenObjekt(self, w["umbruch"], w.get("verschieben_wahl", "mit_text" if w.get("mit_text") else "fest") == "mit_text")
+        p.verschieben_wahl = w.get("verschieben_wahl")               # None (SmartArt): beide Radios leer – die Oberfläche greift das auf
         p.gewaehlt.connect(lambda art: BL.anwenden(self, BL.ziel(self), {"umbruch": art}) if BL.ziel(self) else None)
         p.verschieben.connect(lambda an: BL.anwenden(self, BL.ziel(self), {"mit_text": bool(an)}) if BL.ziel(self) else None)
         p.mehr.connect(self.bild_layout_dialog)
@@ -864,11 +878,11 @@ class FreieBilderMixin:
     def bild_layout_dialog(self) -> None:
         """Das Fenster „Layout“ für das markierte Bild (frei oder im Text)."""
         from lunivo_writer.editor import bildlayout as BL
-        from lunivo_writer.ui.baukasten.layout_dialog import LayoutDialog
+        from lunivo_writer.ui.baukasten.layout_dialog_objekt import layout_dialog_fuer
         z = BL.ziel(self)
         if z is None:
             return
-        d = LayoutDialog(self.window(), BL.lesen(self, z))
+        d = layout_dialog_fuer(z[2].get("art") if z[0] == "frei" else None)(self.window(), BL.lesen(self, z))
         if d.exec():
             z = BL.ziel(self)
             if z is not None:
@@ -883,6 +897,12 @@ class FreieBilderMixin:
             if FP.taste(self, e):
                 return True
         if e.key() == Qt.Key_Escape:
+            if self.__dict__.get("_frei_zuschnitt"):               # Esc beendet zuerst den Zuschneiden-Modus
+                self.__dict__["_frei_zuschnitt"] = False; self.viewport().update()
+                b = getattr(self.window(), "befehle", None)
+                if b is not None:
+                    self.window().band.aktualisieren()
+                return True
             self._frei_teilwahl_aufheben()
             self._frei_sel = None; self.viewport().update()
             return True

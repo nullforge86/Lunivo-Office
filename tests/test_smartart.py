@@ -132,7 +132,9 @@ def test_smartart_knotenbefehle(fenster_sa):
     b.tun('smartartLevel:["reduzieren"]'); b.tun('smartartVerschieben:["vor"]')
     assert [k["id"] for k in SA.knoten_von(SA.daten_der_auswahl(ed))][1:3] == ["k6", "k2"]            # vor den Teilbaum von k2
     b.tun('smartartKnotenWaehlen:["k2"]'); b.tun('smartartFormEinfuegen:["assistent"]'); b.tun('smartartFormEinfuegen:["ueber"]')
-    b.tun('smartartAufzaehlung'); d = SA.daten_der_auswahl(ed); kn = SA.knoten_von(d)
+    b.tun('smartartAufzaehlung'); assert not SA.knoten_von(SA.daten_der_auswahl(ed))[1]['bullets']      # Organigramm: grau, ohne Wirkung
+    SA.aendern(ed, layout='Punktliste'); b.tun('smartartAufzaehlung'); SA.aendern(ed, layout='Organigramm')
+    d = SA.daten_der_auswahl(ed); kn = SA.knoten_von(d)
     assert any(k.get("assistent") for k in kn) and any(k["bullets"] for k in kn) and "• Text" in d["text"]
     assert SA.knoten_text_setzen(ed, "k1", "Kay") and SA.knoten_text(ed, "k1") == "Kay" and SA.daten_der_auswahl(ed)["text"].startswith("Kay")
     b.smartartRechtsLinks(); assert b.an_smartartRechtsLinks()

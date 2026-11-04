@@ -153,12 +153,12 @@ def test_reiter_und_abschnitte_folgen_dem_teil(app):
     p = DiagrammFormatPanel(None, _teile_werte("diagrammbereich")); p.show(); app.processEvents()
     sichtbar = lambda: [p.reiter.isTabVisible(i) for i in range(4)]       # noqa: E731
     assert sichtbar() == [True, True, False, True]
-    for teil, namen, haupt in (("titel", [True, True, False, False], "Titeloptionen"), ("legende", [True, True, True, False], "Legendenoptionen"),
-                               ("achse_horizontal", [True, True, True, False], "Achsenoptionen"), ("reihe_1", [True, True, True, False], "Reihenoptionen")):
+    for teil, namen, haupt in (("titel", [True, True, False, False], "Titel Optionen"), ("legende", [True, True, True, False], "Legende Optionen"),
+                               ("achse_horizontal", [True, True, True, False], "Achse Optionen"), ("reihe_1", [True, True, True, False], "Reihe Optionen")):
         p.setze(_teile_werte(teil)); app.processEvents()
         assert sichtbar() == namen and p.optionen.tabText(0) == haupt, teil
-    p.setze({**_teile_werte("reihe_0", "linie"), "linienreihe": True}); assert not p.a_pfeile.isHidden() and not p.a_reihe_linie.isHidden() and p.a_reihe.isHidden()
-    p.setze({**_teile_werte("reihe_0"), "saeulen": True}); assert p.a_pfeile.isHidden() and not p.a_reihe.isHidden()
+    p.setze({**_teile_werte("reihe_0", "linie"), "linienreihe": True}); assert p.p_anfang.isEnabledTo(p.g_lin_form) and not p.a_reihe_linie.isHidden() and p.a_reihe.isHidden()
+    p.setze({**_teile_werte("reihe_0"), "saeulen": True}); assert not p.p_anfang.isEnabledTo(p.g_lin_form) and not p.p_anfang.isHidden() and not p.a_reihe.isHidden()
     p.setze(_teile_werte("zeichnungsbereich")); assert not p.optionen.isTabEnabled(1)
     p.setze(_teile_werte("datenbeschriftung")); assert p.optionen.isTabEnabled(1) and not p.optionen.isTabEnabled(0) and p.optionen.currentIndex() == 1
 
@@ -175,7 +175,7 @@ def test_panel_meldet_verlauf_linie_effekte_text_und_optionen(fenster, app):
     assert fu["art"] == "graduell" and fu["winkel"] == 90
     p.f_trans.setValue(40, melden=True); app.processEvents()
     assert T.diagramm_teil_format_lesen(ed)["fuell"]["transparenz"] == 40
-    p.k_verlauf.setChecked(True); p.l_kombi.setCurrentIndex(p.l_kombi.findData("doppelt")); p.l_rund.setChecked(True); app.processEvents()
+    p.k_verlauf.setChecked(True); p.l_kombi.setze("doppelt"); p.l_kombi.gewaehlt.emit("doppelt"); p.l_rund.setChecked(True); app.processEvents()
     li = T.diagramm_teil_format_lesen(ed)["linie"]
     assert li["verlauf"]["farbe1"] and li["kombiniert"] == "doppelt" and li["rund"] is True and "keine" not in li
     p.k_keine.setChecked(True); app.processEvents()
@@ -191,9 +191,9 @@ def test_panel_meldet_verlauf_linie_effekte_text_und_optionen(fenster, app):
     # Textoptionen: Winkel, Ränder, Schrift, Textfüllung
     p.optionen_waehlen(1)
     tp = p.text_panel
-    tp.f_winkel.setValue(-30); tp.f_rand["l"].setValue(8); tp.s_fett.setChecked(True); tp.s_groesse.setValue(20); app.processEvents()
+    tp.f_winkel.setValue(-30); tp.f_rand["l"].setValue(0.1); tp.s_fett.setChecked(True); tp.s_groesse.setValue(20); app.processEvents()
     t = T.diagramm_teil_format_lesen(ed)["text"]
-    assert t["feld"]["winkel"] == -30 and t["feld"]["raender"]["l"] == 8 and t["fett"] is True and t["groesse"] == 20
+    assert t["feld"]["winkel"] == -30 and t["feld"]["raender"]["l"] == 7.2 and t["fett"] is True and t["groesse"] == 20
     tp.r_verlauf.setChecked(True); app.processEvents()
     assert T.diagramm_teil_format_lesen(ed)["text"]["effekt"]["fuell"] == "verlauf"
     # Legende: Position; Achse: Skala; Reihe: Lückenbreite
@@ -207,12 +207,8 @@ def test_panel_meldet_verlauf_linie_effekte_text_und_optionen(fenster, app):
     T.teil_waehlen(ed, "reihe_0"); fenster.diagrammformat_folgen()
     p.o_luecke.setValue(50, melden=True); app.processEvents()
     assert T.diagramm_teil_format_lesen(ed)["reihe"]["luecke"] == 50
-    # Diagrammbereich: Größe, Drehung, Effekt am Objekt
+    # Diagrammbereich: Effekt am Objekt (Größe und Drehung stellt das Fenster „Layout“ ein)
     T.teil_waehlen(ed, "diagrammbereich"); fenster.diagrammformat_folgen()
-    p.g_breite.zahl.setValue(p.g_breite.zahl.value() / 2); app.processEvents()
-    assert FO.ziel(ed)[3]["b"] < 400
-    p.g_dreh.setValue(15); app.processEvents()
-    assert FO.ziel(ed)[3]["dreh"] == 15
     p.reiter.setCurrentIndex(1); p.s_farbe.setFarbe("#112233"); p.s_farbe.farbeGeaendert.emit("#112233"); app.processEvents()
     assert FO.ziel(ed)[3]["fx"]["schatten"]["farbe"] == "#112233"
 
@@ -225,3 +221,51 @@ def test_achse_nebenintervall_und_zahlenformat(app):
     assert a.minorTickCount() == 4 and a.labelFormat() == "%.1f" and a.tickInterval() == 10
     ohne = _bild({})
     assert _bild({"achse_vertikal": {"achse": {"min": 0, "max": 20, "intervall": 10, "neben": 2, "format": "%.2f"}}}) != ohne
+
+
+def test_automatisch_zeigt_keine_toten_felder(app):
+    from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
+    p = DiagrammFormatPanel(None, _teile_werte("titel")); p.show(); app.processEvents()
+    p.r_auto.setChecked(True); p.k_auto.setChecked(True); app.processEvents()
+    for g in (p.g_farbe, p.g_lin_form):
+        assert g.isHidden()                                  # keine grauen, nicht bedienbaren Felder: sie erscheinen mit der passenden Art
+    p.r_farbe.setChecked(True); p.k_linie.setChecked(True); app.processEvents()
+    assert p.g_farbe.isEnabled() and p.g_lin_form.isEnabled()
+    p.close()
+
+
+def test_effekte_seite_nur_drei_abschnitte_einzeln_offen_mit_nullwerten(app):
+    from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
+    p = DiagrammFormatPanel()
+    a = (p.a_schatten, p.a_leucht, p.a_weich)
+    assert not any(x.knopf.isChecked() for x in a) and not (p.a_refl.isVisibleTo(p) or p.a_3d.isVisibleTo(p) or p.a_dreh.isVisibleTo(p))
+    assert (p.s_trans.value(), p.s_gross.value(), p.s_weich.value(), p.s_abst.value(), p.w_winkel.value()) == (0, 0, 0, 0, 0)
+    assert (p.l_gross.value(), p.l_trans.value(), p.w_radius.value()) == (0, 0, 0)
+    p.a_schatten.knopf.setChecked(True); p.a_weich.knopf.setChecked(True)
+    assert [x.knopf.isChecked() for x in a] == [False, False, True]
+    p.setze({"teil": "titel", "name": "Titel", "format": {"schatten": {"farbe": "#000000", "transparenz": 40, "groesse": 100, "weich": 3, "abstand": 4, "winkel": 90}}})
+    assert p.s_trans.value() == 40 and p.w_winkel.value() == 90 and p.werte()["schatten"]["winkel"] == 90
+    p.w_winkel.setValue(0); p.w_winkel.valueChanged.emit(30.0)
+    assert p.s_winkel.value() == 30
+
+
+def test_kopf_dropdowns_fuellung_linie_setzen_die_felder_und_smartart_bleibt_ohne(app):
+    from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
+    from lunivo_writer.ui.baukasten.kopf_dropdown import KopfDropdown
+    from lunivo_writer.ui.baukasten.smartart_format_panel import SmartArtFormatPanel
+    p = DiagrammFormatPanel()
+    assert p.a_fuell.isAncestorOf(p.kopf_fuell) and p.a_kontur.isAncestorOf(p.kopf_linie)
+    assert isinstance(p.kopf_fuell, KopfDropdown) and p.r_auto.isChecked() and p.k_auto.isChecked()
+    for schl, pruef in (("farbe:#1971c2", lambda: p.r_farbe.isChecked() and p.farbe.farbe == "#1971c2"),
+                        ("graduell:#e03131", lambda: p.r_verlauf.isChecked() and p.v1.farbe == "#e03131"),
+                        ("muster:pct20", lambda: p.r_muster.isChecked() and p.muster.currentData() == "pct20"),
+                        ("textur:holz", lambda: p.r_textur.isChecked() and p.textur.currentData() == "holz"), ("", lambda: p.r_keine.isChecked())):
+        p._fuell_voreinstellung(schl)
+        assert pruef(), schl
+    assert p._fuell_schluessel() == ""
+    p._linien_voreinstellung("lang|doppelt|2.25")
+    w = p.werte()["linie"]
+    assert p.k_linie.isChecked() and (w["art"], w["kombiniert"], w["breite"]) == ("lang", "doppelt", 2.25) and p._linien_schluessel() == "lang|doppelt|2.25"
+    p._linien_voreinstellung("")
+    assert p.k_keine.isChecked() and p.werte()["linie"]["keine"]
+    assert not hasattr(SmartArtFormatPanel(), "kopf_fuell")

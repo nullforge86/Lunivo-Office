@@ -109,6 +109,11 @@ QPushButton:hover { background: %(hover)s; }
 QPushButton:pressed { background: %(weich)s; }
 QPushButton:disabled { color: %(grau)s; background: transparent; }
 QPushButton:default { border-color: %(akzent)s; }
+QPushButton[listenzeile="true"] { text-align: left; padding: 4px 6px; min-height: 22px; }
+QPushButton[feldknopf="true"] { text-align: left; padding: 3px 10px; min-width: 72px; }
+QPushButton[hervorgehoben="true"] { background: %(akzent)s; color: white; border-color: %(akzent)s; }
+QPushButton[hervorgehoben="true"]:hover { border-color: %(text)s; }
+QToolButton[kachel="true"]:checked { background: %(weich)s; border: 1px solid %(akzent)s; }
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit { border: 1px solid %(rand)s; border-radius: 6px; padding: 3px 6px;
     background: %(feld)s; selection-background-color: %(akzent)s; selection-color: white; }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: %(akzent)s; }

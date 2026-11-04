@@ -94,6 +94,31 @@ class _VerlaufKachel(_Kachel):
         p.setPen(QPen(pal.highlight().color() if self._an else pal.mid().color(), 2 if self._an else 1)); p.setBrush(Qt.NoBrush); p.drawRect(r)
 
 
+class _BildKachel(_Kachel):
+    """Kachel einer Bildreihe („Musterfüllung“, „Strukturfüllung“): zeigt ein Bild; ein Klick meldet ihren Schlüssel."""
+
+    def __init__(self, palette: "FarbPalette", schluessel: str, bild: QPixmap, tipp: str, seite: int = 18):
+        super().__init__(palette, schluessel, seite)
+        self._bild = bild; self.setToolTip(tipp)
+
+    def enterEvent(self, e):
+        self._an = True; self.update()
+
+    def leaveEvent(self, e):
+        self._an = False; self.update()
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.LeftButton and self.rect().contains(e.position().toPoint()):
+            self._p.reihe_gewaehlt.emit(self.farbe); self._p.close()
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        r = QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5)
+        p.drawPixmap(r.toRect(), self._bild)
+        pal = self.palette()
+        p.setPen(QPen(pal.highlight().color() if self._an else pal.mid().color(), 2 if self._an else 1)); p.setBrush(Qt.NoBrush); p.drawRect(r)
+
+
 class FarbPalette(QMenu):
     """Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“."""
 
@@ -101,18 +126,19 @@ class FarbPalette(QMenu):
     ueberfahren = Signal(object)     # QColor unter der Maus (für Live-Vorschau)
     verlassen = Signal()
     verlauf_gewaehlt = Signal(object)  # QColor: die Farbe der gewählten „Graduellen Füllung“ (nur mit ``verlauf=True``)
+    reihe_gewaehlt = Signal(str)       # Schlüssel einer Kachel aus ``reihen`` (z. B. „muster:pct20“)
 
     def __init__(self, parent=None, *, keine_text: str | None = "Keine Farbe", start=None, titel: str = "Farbe",
                  zuletzt: bool = True, weitere: bool = True, verlauf: bool = False, verlauf_titel: str = "Graduelle Füllung",
                  weitere_text: str = "Weitere Farben …", automatisch: str | None = None,
-                 pipette: bool = True, standard: bool = True):
+                 pipette: bool = True, standard: bool = True, reihen: list[tuple[str, list[tuple[str, QPixmap, str]]]] | None = None):
         super().__init__(parent)
         self._start, self._titel = start, titel
         wid = QWidget()
         v = QVBoxLayout(wid)
         v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
         if keine_text:
-            keine = QPushButton(keine_text); keine.setFlat(True); keine.setStyleSheet("text-align: left; padding: 4px 6px;")
+            keine = QPushButton(keine_text); keine.setFlat(True); keine.setProperty("listenzeile", True)
             keine.setIcon(self._keine_symbol()); keine.clicked.connect(lambda: self.waehle(None))
             v.addWidget(keine)
         v.addWidget(self._titel_zeile("Themenfarben"))
@@ -126,21 +152,27 @@ class FarbPalette(QMenu):
             for i, farbe in enumerate(F.STANDARD_FARBEN):
                 g.addWidget(_VerlaufKachel(self, farbe), 0, i)
             v.addLayout(g)
+        for titel_reihe, kacheln in (reihen or []):        # weitere Kachelreihen im Stil der Palette: (Titel, [(Schlüssel, Bild, Tipp)])
+            v.addWidget(self._titel_zeile(titel_reihe))
+            g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0); g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+            for i, (schl, bild, tipp) in enumerate(kacheln):
+                g.addWidget(_BildKachel(self, schl, bild, tipp), 0, i)
+            v.addLayout(g)
         letzte = F.zuletzt_laden() if zuletzt else []
         if letzte:
             v.addWidget(self._titel_zeile("Zuletzt benutzt"))
             v.addLayout(self._raster([letzte]))
         if automatisch:                                    # „Automatisch“ mit schwarzem Feld (Vorlage: Füllung)
-            auto = QPushButton(automatisch); auto.setFlat(True); auto.setStyleSheet("text-align: left; padding: 4px 6px;")
+            auto = QPushButton(automatisch); auto.setFlat(True); auto.setProperty("listenzeile", True)
             pm = QPixmap(14, 14); pm.fill(QColor("black")); auto.setIcon(QIcon(pm)); auto.clicked.connect(lambda: self.waehle(QColor(Farbe.SCHWARZ)))
             v.addWidget(auto)
         if weitere:
-            mehr = QPushButton(weitere_text); mehr.setFlat(True); mehr.setStyleSheet("text-align: left; padding: 4px 6px;")
+            mehr = QPushButton(weitere_text); mehr.setFlat(True); mehr.setProperty("listenzeile", True)
             mehr.clicked.connect(self._weitere)
             v.addWidget(mehr)
             from lunivo_writer.ui.baukasten import pipette as _pip
             if _pip.AKTIV and pipette:
-                pip = QPushButton("Pipette"); pip.setFlat(True); pip.setStyleSheet("text-align: left; padding: 4px 6px;")
+                pip = QPushButton("Pipette"); pip.setFlat(True); pip.setProperty("listenzeile", True)
                 pip.clicked.connect(self._pipette)
                 v.addWidget(pip)
         self._spalte = v
@@ -150,7 +182,7 @@ class FarbPalette(QMenu):
 
     def zusatz_eintrag(self, text: str, aktion) -> None:
         """Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``."""
-        k = QPushButton(text); k.setFlat(True); k.setStyleSheet("text-align: left; padding: 4px 6px;")
+        k = QPushButton(text); k.setFlat(True); k.setProperty("listenzeile", True)
         k.clicked.connect(lambda: (self.close(), aktion()))
         self._spalte.addWidget(k)
 
@@ -236,7 +268,7 @@ class FarbFeld(QPushButton):
             pm = QPixmap(14, 14); pm.fill(QColor(self.farbe))
             p = QPainter(pm); p.setPen(QPen(QColor(Farbe.GRAU), 1)); p.setBrush(Qt.NoBrush); p.drawRect(0, 0, 13, 13); p.end()
             self.setIcon(QIcon(pm))
-        self.setStyleSheet("QPushButton { text-align: left; padding: 3px 10px; min-width: 72px; }")
+        self.setProperty("feldknopf", True)
 
 
 class FarbKnopf(QToolButton):

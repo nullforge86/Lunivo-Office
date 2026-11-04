@@ -12,6 +12,9 @@ from lunivo_writer.core.befehle.hilfen import _farbfeld
 from lunivo_writer.editor import diagramm_zusatz as Z
 
 # Schnelllayouts: (Name, Angaben) — jedes setzt Titel, Legende und Beschriftungen zugleich
+# Layouts 1 bis 6 (Nummer 0 bis 5) sind in gespeicherten Dokumenten bekannt und behalten ihre Bedeutung; neue werden nur hinten angelegt.
+# ``elemente`` setzt die Zusatzelemente vollständig (Aufbau: ``diagramm_zusatz.STANDARD_ELEMENTE``); fehlt es, bleiben sie unverändert.
+_E0 = {"achsen": True, "achsentitel": False, "datentabelle": False, "fehlerindikatoren": False, "gitter": True, "trendlinie": False}
 SCHNELLLAYOUTS = [
     ("Layout 1: Titel, Legende unten", {"titel_an": True, "legende": True, "legende_pos": "unten", "labels": False}),
     ("Layout 2: Titel, Legende rechts", {"titel_an": True, "legende": True, "legende_pos": "rechts", "labels": False}),
@@ -19,10 +22,40 @@ SCHNELLLAYOUTS = [
     ("Layout 4: Datenbeschriftungen, ohne Legende", {"titel_an": True, "legende": False, "legende_pos": "unten", "labels": True}),
     ("Layout 5: Legende links, Datenbeschriftungen", {"titel_an": True, "legende": True, "legende_pos": "links", "labels": True}),
     ("Layout 6: nur das Diagramm", {"titel_an": False, "legende": False, "legende_pos": "unten", "labels": False}),
+    ("Layout 7: Datentabelle, Legende unten", {"titel_an": True, "legende": True, "legende_pos": "unten", "labels": False,
+                                              "elemente": {**_E0, "datentabelle": True}}),
+    ("Layout 8: Achsentitel, Legende rechts", {"titel_an": True, "legende": True, "legende_pos": "rechts", "labels": False,
+                                              "elemente": {**_E0, "achsentitel": True}}),
+    ("Layout 9: Achsentitel, Datenbeschriftungen, ohne Gitternetz", {"titel_an": True, "legende": False, "legende_pos": "unten", "labels": True,
+                                                                    "elemente": {**_E0, "achsentitel": True, "gitter": False}}),
+    ("Layout 10: Trendlinie, Legende unten", {"titel_an": True, "legende": True, "legende_pos": "unten", "labels": False,
+                                             "elemente": {**_E0, "trendlinie": True}}),
+    ("Layout 11: Datenbeschriftungen, Legende rechts, ohne Gitternetz", {"titel_an": True, "legende": True, "legende_pos": "rechts",
+                                                                         "labels": True, "elemente": {**_E0, "gitter": False}}),
+    # Nummer 11 bis 18: neu, nur für die elf Kacheln der Vorlage (Foto Diagramm, Schnelllayout), die es noch nicht gab
+    ("Layout 12: Titel, Legende oben, Datenbeschriftungen, ohne Achsen und Gitternetz",
+     {"titel_an": True, "legende": True, "legende_pos": "oben", "labels": True, "elemente": {**_E0, "achsen": False, "gitter": False}}),
+    ("Layout 13: Datenbeschriftungen, Legende unten, ohne Titel und Gitternetz",
+     {"titel_an": False, "legende": True, "legende_pos": "unten", "labels": True, "elemente": {**_E0, "gitter": False}}),
+    ("Layout 14: Titel, Achsentitel, Datentabelle, ohne Legende",
+     {"titel_an": True, "legende": False, "legende_pos": "unten", "labels": False, "elemente": {**_E0, "achsentitel": True, "datentabelle": True}}),
+    ("Layout 15: Titel, Achsentitel, Datenbeschriftungen, ohne Legende",
+     {"titel_an": True, "legende": False, "legende_pos": "unten", "labels": True, "elemente": {**_E0, "achsentitel": True}}),
+    ("Layout 16: Achsentitel, Legende rechts, ohne Titel",
+     {"titel_an": False, "legende": True, "legende_pos": "rechts", "labels": False, "elemente": {**_E0, "achsentitel": True}}),
+    ("Layout 17: Titel, Achsentitel, ohne Legende und Gitternetz",
+     {"titel_an": True, "legende": False, "legende_pos": "unten", "labels": False, "elemente": {**_E0, "achsentitel": True, "gitter": False}}),
+    ("Layout 18: Titel, Datenbeschriftungen, Legende rechts",
+     {"titel_an": True, "legende": True, "legende_pos": "rechts", "labels": True, "elemente": _E0}),
+    ("Layout 19: Legende rechts, ohne Titel",
+     {"titel_an": False, "legende": True, "legende_pos": "rechts", "labels": False, "elemente": _E0}),
 ]
+# Anzeigereihenfolge der Kacheln im Popup (Foto der Vorlage, von links nach rechts, Zeile für Zeile): Platz → Nummer in ``SCHNELLLAYOUTS``.
+# Die Nummern selbst bleiben stabil (sie stehen in gespeicherten Dokumenten); nur die Anzeige folgt dem Foto.
+SCHNELLLAYOUT_ANZEIGE = (1, 11, 0, 12, 13, 14, 15, 16, 7, 17, 18)
 LEGENDEN_LAGEN = (("oben", "Oben"), ("unten", "Unten"), ("links", "Links"), ("rechts", "Rechts"))
 # Angaben der Darstellung, die „Zurücksetzen“ entfernt (None = Standard); Daten, Diagrammart und Alternativtext bleiben
-DARSTELLUNG = ("farben", "titel_an", "legende", "legende_pos", "labels", "stil", "elemente", "ausgeblendet", "teil_format", "teil")
+DARSTELLUNG = ("farben", "titel_an", "legende", "legende_pos", "labels", "stil", "elemente", "ausgeblendet", "namen_quelle", "teil_format", "teil")
 
 
 def _nummer(k, nr) -> int:
@@ -113,7 +146,7 @@ class DiagrammToolsBefehle:
         return m
 
     def diagrammSchnelllayout(self, k=None, nr=None):
-        """Schnelllayout Nummer ``nr`` (0 bis 5) anwenden — für Kacheln der Schnellleiste."""
+        """Schnelllayout Nummer ``nr`` (0 bis 18, siehe ``SCHNELLLAYOUT_ANZEIGE`` für die Reihenfolge der Kacheln) anwenden — für Kacheln der Schnellleiste."""
         nr = _nummer(k, nr)
         self._dg_set(**SCHNELLLAYOUTS[max(0, min(int(nr), len(SCHNELLLAYOUTS) - 1))][1])
 
@@ -246,6 +279,18 @@ class DiagrammToolsBefehle:
         """„Übernehmen“: {"reihen": [Namen], "rubriken": [Namen]} = die ausgeblendeten Einträge (leer/None = alles zeigen)."""
         aus = {k2: list(v) for k2, v in (ausgeblendet or {}).items() if k2 in ("reihen", "rubriken") and v}
         return self._dg_set(ausgeblendet=aus or None, teil=None)
+
+    def diagrammNamenQuelleLesen(self, k=None) -> str:
+        """Gewählte Namensquelle: ``"zeile1"`` (Standard), ``"spalte_a"`` oder ``"keine"`` (Radio im Reiter „Name“)."""
+        return (self._dg() or {}).get("namen_quelle") or "zeile1"
+
+    def diagrammNamenQuelle(self, k=None, quelle=None):
+        """Namensquelle wählen: ``"zeile1"`` (Standard: Reihennamen und Rubriken wie eingegeben), ``"spalte_a"`` (Reihen und Rubriken tauschen die
+        Namensrolle: Reihen heißen wie die Rubriken) oder ``"keine"`` (Reihen „Reihe 1 …“, Rubriken „1 …“). Die Daten bleiben unverändert."""
+        from lunivo_writer.editor import diagramm as D
+        if quelle not in D.NAMEN_QUELLEN:
+            return False
+        return self._dg_set(namen_quelle=None if quelle == "zeile1" else quelle)
 
     def diagrammNamenSetzen(self, k=None, namen=None):
         """Reihen/Rubriken umbenennen: {"reihen": [(alt, neu)], "rubriken": [(alt, neu)]}. Leere oder doppelte neue Namen bleiben beim alten Namen;

@@ -4,12 +4,13 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QPlainTextEdit, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSlider, QToolButton, QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QHBoxLayout, QPlainTextEdit, QFrame, QLabel, QLineEdit, QPushButton, QScrollArea, QSlider, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ai import ki as K
-from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
+from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
 
 
 
@@ -51,11 +52,10 @@ class ChatPanel(QWidget):
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(8)
-        kopf = QHBoxLayout()
-        kopf.addWidget(text_label("KI-Chat", fett=True, pt=12, umbruch=False))
-        kopf.addStretch(1)
+        kopf = QHBoxLayout(); kopf.setSpacing(6)
+        kopf.addWidget(text_label("KI-Chat", fett=True, pt=12, umbruch=False), 1)
         for symbol, tipp, fn in (("settings", "KI-Einstellungen", self._einstellungen), ("x", "Zur Schreibhilfe", self.zurueck.emit)):
-            b = QToolButton(); b.setIcon(icons.icon(symbol, 16)); b.setAutoRaise(True); b.setToolTip(tipp)
+            b = QToolButton(); b.setIcon(icons.icon(symbol, 16)); b.setAutoRaise(True); b.setToolTip(tipp); b.setMinimumWidth(36)
             b.clicked.connect(lambda _=False, f=fn: f())
             kopf.addWidget(b)
         v.addLayout(kopf)
@@ -92,13 +92,15 @@ class ChatPanel(QWidget):
         self.eingabe.textChanged.connect(lambda: self.tokens.setText(f"Tokens: {(len(self.eingabe.text()) + 3) // 4}"))
         ev.addWidget(self.tokens)
         self._erweitert(ev)
-        z2 = QHBoxLayout()
+        z2 = FlussLayout(6)
         senden = QPushButton("Senden"); senden.clicked.connect(self.senden)
         z2.addWidget(senden)
         bild = QPushButton("Bild"); bild.setFlat(True); bild.setToolTip("Aus dem Text im Feld (oder der Markierung) ein Bild erzeugen und einfügen")
         bild.clicked.connect(self._bild)
         neu = QPushButton("Leeren"); neu.setFlat(True); neu.setToolTip("Gespräch leeren"); neu.clicked.connect(self.leeren)
-        z2.addWidget(bild); z2.addWidget(neu); z2.addStretch(1)
+        z2.addWidget(bild); z2.addWidget(neu)
+        for k in (senden, bild, neu):
+            pass
         ev.addLayout(z2)
         v.addWidget(self.eingabezeile)
         dienst.chatAntwort.connect(self._antwort)
@@ -120,12 +122,14 @@ class ChatPanel(QWidget):
         ew.addWidget(self.modell)
 
         def regler(titel: str, tipp: str, maximum: int, wert: int, anzeige, speichern):
-            kopf = QHBoxLayout(); kopf.addWidget(text_label(titel, fett=True)); kopf.addStretch(1)
-            zahl = QLabel(anzeige(wert)); kopf.addWidget(zahl)
-            ew.addLayout(kopf)
+            from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+            zeile = QWidget(); g = FormularGitter(zeile); g.setContentsMargins(0, 0, 0, 0)
+            zahl = QLabel(anzeige(wert)); zahl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            g.zeile(text_label(titel, fett=True), zahl)
             sl = QSlider(Qt.Horizontal); sl.setRange(0, maximum); sl.setValue(wert); sl.setToolTip(tipp)
             sl.valueChanged.connect(lambda v: (zahl.setText(anzeige(v)), speichern(v)))
-            ew.addWidget(sl)
+            g.breit(sl)
+            ew.addWidget(zeile)
             return sl
         self.s_laenge = regler("Maximale Länge", "0 = Vorgabe des Anbieters", 4096, int(o["maxLaenge"]),
                                lambda v: str(v) if v else "Standard", lambda v: k.chat_setzen(maxLaenge=v))
@@ -183,7 +187,7 @@ class ChatPanel(QWidget):
         t.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(t)
         if ki and not text.startswith("⚠"):
-            z = QHBoxLayout()
+            z = FlussLayout(6)
             for name, fn in (("Kopieren", lambda: QApplication.clipboard().setText(text)),
                              ("Einfügen", lambda: self._einfuegen(text)),
                              ("Ersetzen", lambda: self._ersetzen(text))):

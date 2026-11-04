@@ -11,15 +11,13 @@ from typing import Callable
 
 from PySide6.QtCore import QPointF, QRectF, QSize, QStandardPaths, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPalette, QPen
-from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QHBoxLayout, QLabel, QLineEdit,
                                QLayout, QPushButton, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.services.bild_export import FORMATE, QUALITAET, BildWahl
 
-STIL = ("QPushButton#beHaupt { background: " + Farbe.AKZENT + "; color: white; border: none; border-radius: 4px; padding: 8px 28px; }"
-        "QPushButton#beHaupt:hover { background: " + Farbe.AKZENT_DUNKEL + "; }"
-        "QLabel#beText { font-size: 11pt; }")
+from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
 
 
 class _Karte(QAbstractButton):
@@ -31,11 +29,11 @@ class _Karte(QAbstractButton):
         self.lang = lang
         self.setCheckable(True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedSize(260, 200)
+        self.setFixedSize(124, 120)
         self.setAccessibleName(text)
 
     def sizeHint(self) -> QSize:
-        return QSize(260, 200)
+        return QSize(124, 120)
 
     def paintEvent(self, _e) -> None:
         p = QPainter(self)
@@ -49,7 +47,9 @@ class _Karte(QAbstractButton):
         p.fillRect(r, grund)
         p.setPen(QPen(rahmen, 2 if self.isChecked() else 1))
         p.drawRect(r)
+        p.save(); p.translate((self.width() - 130) / 2, 0); p.scale(0.5, 0.5)       # das Bildchen ist für 260 × 200 gezeichnet
         self._bildchen(p, dunkel)
+        p.restore()
         p.setPen(pal.color(QPalette.Text) if self.isChecked() else pal.color(QPalette.PlaceholderText))
         p.drawText(QRectF(0, r.bottom() - 34, r.width(), 24), Qt.AlignCenter, self.text())
         if self.isChecked():                                           # Haken in der Ecke rechts unten
@@ -102,27 +102,24 @@ class BildExportAnsicht(QWidget):
 
     def __init__(self, parent, startordner: str, dpi: int, exportieren: Callable[[BildWahl], list[str]], zurueck: Callable[[], None]):
         super().__init__(parent)
-        self.setStyleSheet(STIL)
         self._exportieren_cb = exportieren
         self._zurueck = zurueck
-        v = QVBoxLayout(self); v.setContentsMargins(30, 20, 30, 16); v.setSpacing(8)
+        v = QVBoxLayout(self); v.setContentsMargins(16, 20, 16, 16); v.setSpacing(8)
         titel = QLabel("Als Bild exportieren"); titel.setObjectName("bsTitel"); v.addWidget(titel)
         intro = QLabel("Wähle das Bildlayout, die Qualität und den Speicherort. Jede Seite kann einzeln oder als langes Bild gespeichert werden.")
         intro.setWordWrap(True); intro.setObjectName("bsHinweis"); v.addWidget(intro)
 
-        karten = QHBoxLayout(); karten.setSpacing(24)
+        karten = FlussLayout(12)
         self.k_seite = _Karte("Jede Seite", False)
         self.k_lang = _Karte("Langes Bild", True)
         gruppe = QButtonGroup(self); gruppe.setExclusive(True)
         for k in (self.k_seite, self.k_lang):
             gruppe.addButton(k); karten.addWidget(k)
-        karten.addStretch(1)
         self.k_seite.setChecked(True)
         v.addWidget(_abschnitt("1. Bildlayout", "Wähle eine Bilddatei pro Seite oder ein langes Bild mit allen Seiten untereinander.", karten))
 
-        g = QGridLayout(); g.setHorizontalSpacing(14); g.setVerticalSpacing(14)
+        g = FormularGitter()
         self.wasser = QLineEdit(); self.wasser.setPlaceholderText("Zum Beispiel: Vertraulich")
-        self.wasser.setMinimumWidth(390)
         self.qualitaet = QComboBox()
         for name, wert in QUALITAET:
             self.qualitaet.addItem(f"{name} ({wert} dpi)", wert)
@@ -133,27 +130,22 @@ class BildExportAnsicht(QWidget):
         for name in FORMATE:
             self.format.addItem(name)
         self.format.setCurrentText("PNG")
-        for c in (self.qualitaet, self.format):
-            c.setFixedWidth(220)
         self.ordner = QLineEdit(startordner or _bilder_ordner())
         from lunivo_writer.ui.widgets import icons
         waehlen = self.ordner.addAction(icons.icon("ellipsis", 18), QLineEdit.TrailingPosition)
         waehlen.setToolTip("Ordner wählen …")
         waehlen.triggered.connect(self._ordner_waehlen)
-        self.k_export = QPushButton("Exportieren"); self.k_export.setObjectName("beHaupt"); self.k_export.setDefault(True)
-        self.k_export.setCursor(Qt.PointingHandCursor); self.k_export.setMinimumWidth(120)
+        self.k_export = QPushButton("Exportieren"); self.k_export.setObjectName("optFertig"); self.k_export.setDefault(True)
+        self.k_export.setCursor(Qt.PointingHandCursor)
         self.k_export.clicked.connect(self._exportieren)
         self.wasser.setToolTip("Optionaler, blasser Schriftzug auf jeder exportierten Seite.")
         self.qualitaet.setToolTip("Höhere Auflösung ergibt schärfere, aber größere Bilddateien.")
         self.format.setToolTip("Wähle PNG, JPG, BMP oder TIF.")
-        for zeile, (text, feld) in enumerate((("&Wasserzeichen", self.wasser), ("&Qualität", self.qualitaet),
-                                              ("&Format", self.format), ("Speichern &in", self.ordner))):
-            l = QLabel(text); l.setBuddy(feld)
-            g.addWidget(l, zeile, 0)
-            g.addWidget(feld, zeile, 1, Qt.AlignLeft if feld in (self.qualitaet, self.format) else Qt.Alignment())
-        for feld in (self.wasser, self.qualitaet, self.format, self.ordner, self.k_export):
-            feld.setMinimumHeight(36)                                 # Felder in der Höhe des Vorbilds, nicht schmal
-        g.setColumnStretch(1, 1)
+        for text, feld in (("&Wasserzeichen", self.wasser), ("&Qualität", self.qualitaet),
+                           ("&Format", self.format), ("Speichern &in", self.ordner)):
+            g.reihe((text, feld))
+        for feld in (self.wasser, self.qualitaet, self.format, self.ordner):
+            feld.setMinimumHeight(FELDHOEHE)
         v.addWidget(_abschnitt("2. Ausgabe festlegen", "Lege Wasserzeichen, Bildqualität, Dateiformat und Zielordner fest.", g))
         self.k_export.setText("Bilder exportieren")
         self.ordner.setAccessibleName("Ordner für die exportierten Bilder")
@@ -165,7 +157,7 @@ class BildExportAnsicht(QWidget):
 
         self.meldung = QLabel(); self.meldung.setWordWrap(True); self.meldung.setObjectName("bsHinweis"); self.meldung.hide()
         v.addWidget(self.meldung)
-        aktionen = QHBoxLayout(); aktionen.addStretch(1)
+        aktionen = FlussLayout(8)
         self._datei_oeffnen = QPushButton("Bild öffnen"); self._datei_oeffnen.setEnabled(False)
         self._ordner_oeffnen = QPushButton("Ordner öffnen"); self._ordner_oeffnen.setEnabled(False)
         self._datei_oeffnen.hide(); self._ordner_oeffnen.hide()
@@ -174,10 +166,10 @@ class BildExportAnsicht(QWidget):
         aktionen.addWidget(self._datei_oeffnen); aktionen.addWidget(self._ordner_oeffnen)
         v.addLayout(aktionen)
         v.addStretch(1)
-        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 8, 0, 0)
+        fuss = FlussLayout(8); fuss.setContentsMargins(0, 8, 0, 0)
         self.zurueck_knopf = QPushButton("Zurück zum Dokument"); self.zurueck_knopf.clicked.connect(self._zurueck)
-        self.k_export.setMinimumHeight(38); self.k_export.setMinimumWidth(160)
-        fuss.addStretch(1); fuss.addWidget(self.zurueck_knopf); fuss.addWidget(self.k_export)
+        self.k_export.setMinimumHeight(36)
+        fuss.addWidget(self.zurueck_knopf); fuss.addWidget(self.k_export)
         v.addLayout(fuss)
 
     def _ordner_waehlen(self) -> None:
@@ -233,7 +225,7 @@ class BildExportAnsicht(QWidget):
 
 def _abschnitt(titel: str, hilfe: str, layout: QLayout) -> QWidget:
     w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 6, 0, 6); v.setSpacing(5)
-    t = QLabel(titel); t.setStyleSheet("font-weight: 600; font-size: 11pt;")
+    t = abschnittstitel(titel)
     h = QLabel(hilfe); h.setObjectName("bsHinweis"); h.setWordWrap(True)
     v.addWidget(t); v.addWidget(h); v.addLayout(layout)
     return w

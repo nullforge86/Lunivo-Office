@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
+
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
 
 from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.ui.widgets import icons
@@ -45,8 +47,8 @@ class FundKarte(QFrame):
         v = QVBoxLayout(self)
         v.setContentsMargins(14, 12, 12, 12)
         v.setSpacing(6)
-        kopf = QHBoxLayout(); kopf.setContentsMargins(0, 0, 0, 0)
-        kopf.addWidget(marke(fund.art)); kopf.addStretch(1)
+        kopf = FlussLayout(6)
+        kopf.addWidget(marke(fund.art))
         v.addLayout(kopf)
         if fund.art != "hinweis" and fund.neu:
             t = md_label(f"~~{md_escape(kurz(fund.zeige_alt))}~~  →  **{md_escape(kurz(fund.zeige_neu))}**")
@@ -58,8 +60,7 @@ class FundKarte(QFrame):
         g.setWordWrap(True)
         g.setStyleSheet("color: palette(mid); font-size: 9pt; border: none; background: transparent;")
         v.addWidget(g)
-        z = QHBoxLayout()
-        z.setSpacing(8)
+        z = FlussLayout(6)
         zeigen = QPushButton("Zeigen")
         zeigen.clicked.connect(self._zeigen)
         z.addWidget(zeigen)
@@ -79,18 +80,20 @@ class FundKarte(QFrame):
             self.vorschlag_knopf.setToolTip("Die KI schreibt den Satz kürzer — Sie nehmen es an oder verwerfen es")
             self.vorschlag_knopf.clicked.connect(self._vorschlag_holen)
             z.addWidget(self.vorschlag_knopf)
-        z.addStretch(1)
         self._aktionen = z
+        for k in self.findChildren(QPushButton):
+            pass
         v.addLayout(z)
         # Der Vorschlag der KI, erst sichtbar, wenn er da ist
         self.vorschlag_feld = QFrame(); self.vorschlag_feld.setStyleSheet("QFrame { border: none; background: transparent; }")
         vv = QVBoxLayout(self.vorschlag_feld); vv.setContentsMargins(0, 0, 0, 0); vv.setSpacing(6)
         self.vorschlag_text = QLabel(); self.vorschlag_text.setWordWrap(True); self.vorschlag_text.setStyleSheet("font-size: 11pt; font-weight: 600;")
         vv.addWidget(self.vorschlag_text)
-        vz = QHBoxLayout(); vz.setSpacing(8)
+        vz = FlussLayout(6)
         self.annehmen = QPushButton("Annehmen"); self.annehmen.clicked.connect(self._annehmen)
         self.verwerfen = QPushButton("Verwerfen"); self.verwerfen.clicked.connect(self._verwerfen)
-        vz.addWidget(self.annehmen); vz.addWidget(self.verwerfen); vz.addStretch(1)
+        for k in (self.annehmen, self.verwerfen):
+            vz.addWidget(k)
         vv.addLayout(vz)
         self.vorschlag_feld.hide()
         v.addWidget(self.vorschlag_feld)
@@ -150,10 +153,12 @@ class VorschlagKarte(QFrame):
         g.setWordWrap(True)
         t = md_label(f"~~{md_escape(v['alt'])}~~\n\n**{md_escape(v['neu'])}**")
         lay.addWidget(g); lay.addWidget(t)
-        z = QHBoxLayout(); z.addStretch(1)
+        z = FlussLayout(6)
         b1 = QPushButton("Annehmen"); b1.clicked.connect(self._einsetzen)
         b2 = QPushButton("Verwerfen"); b2.clicked.connect(self._lassen)
-        z.addWidget(b1); z.addWidget(b2); lay.addLayout(z)
+        for k in (b1, b2):
+            z.addWidget(k)
+        lay.addLayout(z)
 
     def _lassen(self):
         self.d.assistant.gelernt.ki_vermerken(self.v, False)
@@ -179,7 +184,7 @@ class HinweisKarte(QFrame):
         t = text_label(titel, fett=True, umbruch=False)
         body = text_label(text, auswaehlbar=True)
         lay.addWidget(t); lay.addWidget(body)
-        z = QHBoxLayout()
+        z = FlussLayout(6)
         for name, fn in (("Kopieren", self._kopieren), ("Am Ende einfügen", self._ende), ("Schließen", self._weg)):
             b = QPushButton(name); b.clicked.connect(fn); z.addWidget(b)
         lay.addLayout(z)

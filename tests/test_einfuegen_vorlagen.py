@@ -573,12 +573,13 @@ def test_diagramm_alle_arten_und_fenster(app):
             assert not img.isNull() and img.pixelColor(100, 70).name() != "#000000"
     d = DiagrammDialog(None)
     gruppen = [g for g, _s, _u in D.TYPEN]
-    assert gruppen == ["Säule", "Linie", "Kreis", "Balken", "Fläche", "X Y (Punkt)", "Kurs", "Netz", "Kombination", "Vorlagen"]
+    assert gruppen == ["Säule", "Linie", "Kreis", "Balken", "Fläche", "X Y (Punkt)", "Kurs", "Netz", "Kombination"]
+    assert d.arten.count() == len(gruppen) + 1 and d.arten.item(d.arten.count() - 1).text() == "Vorlagen"
     d.arten.setCurrentRow(1)                                               # Linie
-    assert d.untertyp == "linie" and d.name.text() == "Linie" and len(d._knoepfe.buttons()) == 3
+    assert d.untertyp == "linie" and d.name.text() == "Linie" and len(d._knoepfe.buttons()) == 6
     assert d.daten()["kategorien"] == D.BEISPIEL_KATEGORIEN and d.kombi_teil.isHidden()
     d.arten.setCurrentRow(gruppen.index("Kurs"))
-    assert d.untertyp == "kurs_hts" and len(d._knoepfe.buttons()) == 2
+    assert d.untertyp == "kurs_hts" and len(d._knoepfe.buttons()) == 4
     # Kombination wie in der Vorlage: vier Untertypen und die Tabelle Datenreihen / Diagrammtyp / Sekundärachse
     d.arten.setCurrentRow(gruppen.index("Kombination"))
     assert len(d._knoepfe.buttons()) == 4 and not d.kombi_teil.isHidden() and len(d._kombi_felder) == 3
@@ -586,8 +587,13 @@ def test_diagramm_alle_arten_und_fenster(app):
     _l, box, kasten = d._kombi_felder[2]
     kasten.setChecked(True)
     assert d.untertyp == "kombi_eigen" and d.daten()["kombi"][2] == ["linie", True]
-    d.arten.setCurrentRow(gruppen.index("Vorlagen"))
-    assert d.daten()["farben"] == D.VORLAGEN[d.untertyp][1] and not d.bild().isNull()
+    d.arten.setCurrentRow(d.arten.count() - 1)                             # Vorlagen: leere Seite, Knopf, OK aus
+    assert d.vorlagen_seite.isVisibleTo(d) and not d.seite.isVisibleTo(d) and not d._ok.isEnabled() and d.daten() == {}
+    d.arten.setCurrentRow(gruppen.index("Kreis"))                          # Beispieldaten folgen der Art, solange nichts geändert wurde
+    assert d._ok.isEnabled() and d.titel_text == "Vertrieb" and d.kategorien[0] == "1. Quartal"
+    d._daten_geaendert = True; d.titel_text = "Mein Titel"
+    d.arten.setCurrentRow(gruppen.index("Fläche"))
+    assert d.titel_text == "Mein Titel"
 
 
 def test_datum_fenster_mit_feld(app):

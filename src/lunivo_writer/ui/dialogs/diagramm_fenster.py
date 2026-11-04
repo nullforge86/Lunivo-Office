@@ -8,8 +8,8 @@ Das Fenster ändert das Dokument nicht. „Daten bearbeiten …“ öffnet Titel
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QListView, QListWidget,
     QListWidgetItem, QPushButton, QToolButton, QVBoxLayout, QWidget,
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm as D
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
@@ -46,24 +46,34 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(2)
         for gruppe, sym, _unter in D.TYPEN:
             self.arten.addItem(QListWidgetItem(art_symbol(sym), gruppe if gruppe != "Kombination" else "Kombination …"))
+        self.arten.addItem(QListWidgetItem(art_symbol("vorlagen"), "Vorlagen"))     # letzter Punkt: eigene Vorlagen, keine Untertypen
+        self._vorlagen_zeile = len(D.TYPEN)
+        self._daten_geaendert = False                                       # True, sobald der Nutzer über „Daten bearbeiten …“ eigene Daten setzt
         h.addWidget(self.arten)
-        rechts = QVBoxLayout(); rechts.setContentsMargins(12, 10, 12, 10)
+        self.seite = QWidget(); rechts = QVBoxLayout(self.seite); rechts.setContentsMargins(12, 10, 12, 10)
         self.unter_zeile = FlussLayout(6)                                   # Untertypen: brechen um, wenn der Platz nicht reicht
         rechts.addLayout(self.unter_zeile)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setStyleSheet("color: palette(midlight);"); rechts.addWidget(linie)
+        rechts.addWidget(abschnittstitel("Vorschau"))
         self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
         self.name.setWordWrap(True)
         rechts.addWidget(self.name)
-        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumSize(560, 330)
+        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumHeight(330)
         self.vorschau.setStyleSheet("background: white; border: 1px solid " + Farbe.GRAU_HELL + ";")
         rechts.addWidget(self.vorschau, 1)
         self.kombi_teil = self._kombi_tabelle()
         rechts.addWidget(self.kombi_teil)
-        h.addLayout(rechts, 1)
+        h.addWidget(self.seite, 1)
+        self.vorlagen_seite = QWidget(); vs = QVBoxLayout(self.vorlagen_seite); vs.setContentsMargins(12, 10, 12, 10)
+        vs.addStretch(1)
+        self.vorlagen_verwalten = QPushButton("Vorlagen &verwalten …")
+        self.vorlagen_verwalten.clicked.connect(self._vorlagen_hinweis)
+        vs.addWidget(self.vorlagen_verwalten, 0, Qt.AlignLeft)
+        h.addWidget(self.vorlagen_seite, 1); self.vorlagen_seite.hide()
         v.addWidget(rahmen, 1)
         self._teile = h
-        daten = QPushButton("&Daten bearbeiten …"); daten.setMinimumHeight(36); daten.clicked.connect(self._daten)
-        fussleiste(self, v, daten)
+        daten = QPushButton("&Daten bearbeiten …"); daten.clicked.connect(self._daten)
+        self._daten_knopf = daten
+        self._ok = fussleiste(self, v, daten)
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
         self.untertyp = "saeule_gruppiert"
         self._vorschau_breite, self._bild_groesse = 620, QSize(84, 64)
@@ -73,6 +83,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             self.kategorien = list(vorhanden.get("kategorien") or self.kategorien)
             self.reihen = {k: list(v) for k, v in (vorhanden.get("reihen") or self.reihen).items()}
             self.kombi = [(k[0], bool(k[1])) for k in vorhanden.get("kombi") or []]
+            self._daten_geaendert = True
             u = D.ALT.get(vorhanden.get("art"), vorhanden.get("art"))
             for i, (_g, _s, unter) in enumerate(D.TYPEN):
                 if any(schl == u for schl, _n in unter):
@@ -105,7 +116,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._kombi_box.addWidget(gitterteil)
         for i, name in enumerate(self.reihen):
             typ, sek = self.kombi[i] if i < len(self.kombi) else ("saeule", False)
-            box = QComboBox(); box.setMinimumHeight(36); box.setAccessibleName(f"Diagrammtyp {name}")
+            box = QComboBox(); box.setAccessibleName(f"Diagrammtyp {name}")
             box.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); box.setMinimumContentsLength(8)
             for schl, text in D.KOMBI_TYPEN:
                 box.addItem(text, schl)
@@ -149,11 +160,18 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
     # ---- Auswahl --------------------------------------------------------------------------------------------------------
     def _gruppe(self, zeile: int) -> None:
+        vorlagen = zeile == self._vorlagen_zeile
+        self.seite.setVisible(not vorlagen); self.vorlagen_seite.setVisible(vorlagen)
+        self._ok.setEnabled(not vorlagen); self._daten_knopf.setEnabled(not vorlagen)
+        if vorlagen:
+            return
         while self.unter_zeile.count():
             w = self.unter_zeile.takeAt(0).widget()
             if w is not None:
                 self._knoepfe.removeButton(w); w.hide(); w.deleteLater()
         unter = D.TYPEN[zeile][2] if 0 <= zeile < len(D.TYPEN) else []
+        if unter and not self._daten_geaendert:                              # Beispieldaten passend zur Art, solange nichts selbst eingegeben wurde
+            self._beispiel_laden(self.untertyp if any(s == self.untertyp for s, _n in unter) else unter[0][0])
         g = self._bild_groesse
         for i, (schl, name) in enumerate(unter):
             img = D.bild(schl, "", self.kategorien, self.reihen, g.width() * 2, g.height() * 2, kachel=True)
@@ -169,7 +187,17 @@ class DiagrammDialog(PanelFaehig, QDialog):
                 b.setChecked(b.property("untertyp") == vorher)
             self._waehle(vorher)
 
+    def _beispiel_laden(self, untertyp: str) -> None:
+        self.titel_text, kat, reihen = D.beispiel(untertyp)
+        self.kategorien, self.reihen = list(kat), {k: list(w) for k, w in reihen.items()}
+
+    def _vorlagen_hinweis(self) -> None:
+        from PySide6.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Vorlagen verwalten", "Es sind noch keine eigenen Diagrammvorlagen gespeichert.")
+
     def _waehle(self, untertyp: str) -> None:
+        if not self._daten_geaendert and untertyp != self.untertyp:
+            self._beispiel_laden(untertyp)
         self.untertyp = untertyp
         self.name.setText(D.NAMEN.get(untertyp, ""))
         if untertyp == "kombination" or untertyp.startswith("kombi_"):
@@ -185,6 +213,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
         def fertig():
             self.titel_text, self.kategorien, self.reihen = d.daten()
+            self._daten_geaendert = True
             self.kombi = self.kombi[:len(self.reihen)]
             self._gruppe(self.arten.currentRow())
         zeige_unter(self, d, fertig)
@@ -198,10 +227,12 @@ class DiagrammDialog(PanelFaehig, QDialog):
                       kombi=self.kombi if self._ist_kombi() else None)
 
     def daten(self) -> dict:
+        if self.arten.currentRow() == self._vorlagen_zeile:
+            return {}
         d = {"art": self.untertyp, "titel": self.titel_text, "kategorien": self.kategorien, "reihen": self.reihen}
         if self._ist_kombi():
             d["kombi"] = [list(k) for k in self.kombi]
-        if self.untertyp in D.VORLAGEN:
+        if self.untertyp in D.VORLAGEN:                                      # nur noch ältere Dokumente
             d["farben"] = list(D.VORLAGEN[self.untertyp][1])
         return d
 

@@ -18,9 +18,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import (QSizePolicy, 
-    QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QTabWidget,
-    QToolButton, QVBoxLayout, QWidget,
+from PySide6.QtWidgets import (
+    QSizePolicy, QComboBox, QDialog, QDoubleSpinBox, QLabel, QListWidget, QListWidgetItem, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.editor import muster as M
@@ -97,20 +96,26 @@ def _muster_symbol(schluessel: str, px: int = 16) -> QIcon:
 
 # ------------------------------------------------------------------------------------------------------ Vorschau
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel, mittig
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel, mittig
 class _Vorschau(QWidget):
     """Blatt mit zwei Absätzen aus grauen Zeilen; zeigt Rahmen und Füllung und schaltet Kanten per Klick."""
     kante = Signal(str)
 
     def __init__(self, kanten_klick: bool = True):
         super().__init__()
-        self.setFixedSize(220, 160)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)      # wächst und schrumpft mit seinem Platz
         self.seiten = ""
         self.linie = Linie()
         self.pinsel = None
         self.klick = kanten_klick
         self.mit_h = False                                        # Linie zwischen Absätzen schaltbar
         self.seitenrand: tuple[Linie, float] | None = None        # Rahmen um die Seite: (Linie, Abstand in mm)
+
+    def sizeHint(self) -> QSize:
+        return QSize(220, 160)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(60, 44)
 
     def _feld(self) -> QRectF:
         r = self.rect()
@@ -163,6 +168,62 @@ class _Vorschau(QWidget):
 
 
 # --------------------------------------------------------------------------------------------------- Karteireiter
+_KANTE = 36                                                      # Größe der Kantenknöpfe
+
+
+class _KantenFlaeche(QWidget):
+    """Die Vorschau mit den Kantenknöpfen um sich (oben, Mitte, unten links daneben; links und rechts darunter). Die Vorschau wächst mit
+    der Breite bis ``maximal`` Bildpunkte, das Ganze steht in der Mitte und nimmt nie mehr Breite, als da ist."""
+
+    def __init__(self, vorschau: QWidget, links: list, unten_l: QWidget, unten_r: QWidget):
+        super().__init__()
+        self.vorschau, self.links, self.unten_l, self.unten_r = vorschau, links, unten_l, unten_r
+        for w in (vorschau, *links, unten_l, unten_r):
+            w.setParent(self)
+        self.maximal = 184
+        sp = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum); sp.setHeightForWidth(True); self.setSizePolicy(sp)
+
+    def _rand(self) -> int:
+        return _KANTE + 6
+
+    def _vorschau_breite(self, breite: int) -> int:
+        return max(60, min(self.maximal, breite - self._rand()))
+
+    def _vorschau_hoehe(self, w: int) -> int:
+        n = len(self.links)
+        return max(round(w * 118 / 184), n * _KANTE + (n - 1) * 4)
+
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, breite: int) -> int:
+        return self._vorschau_hoehe(self._vorschau_breite(breite)) + 4 + _KANTE
+
+    def sizeHint(self) -> QSize:
+        b = self.maximal + self._rand()
+        return QSize(b, self.heightForWidth(b))
+
+    def minimumSizeHint(self) -> QSize:
+        b = 60 + self._rand()
+        return QSize(b, self.heightForWidth(b))
+
+    def setMaximal(self, maximal: int) -> None:
+        self.maximal = maximal; self.updateGeometry(); self._lege()
+
+    def resizeEvent(self, ev) -> None:
+        self._lege()
+
+    def _lege(self) -> None:
+        w = self._vorschau_breite(self.width()); h = self._vorschau_hoehe(w)
+        x0 = max(0, (self.width() - self._rand() - w) // 2)
+        px = x0 + self._rand()
+        self.vorschau.setGeometry(px, 0, w, h)
+        n = len(self.links)
+        for i, b in enumerate(self.links):
+            b.setGeometry(x0, 0 if n == 1 else round(i * (h - _KANTE) / (n - 1)), _KANTE, _KANTE)
+        self.unten_l.setGeometry(px, h + 4, _KANTE, _KANTE); self.unten_r.setGeometry(px + w - _KANTE, h + 4, _KANTE, _KANTE)
+
+
 class _RahmenSeite(QWidget):
     """Einstellung · Linienart · Farbe · Breite · Vorschau mit Kantenknöpfen · Übernehmen für."""
     geaendert = Signal()
@@ -175,10 +236,10 @@ class _RahmenSeite(QWidget):
         self.rand_optionen = {"messen": "text", "abstand": (1.0, 1.0, 4.0, 4.0), "ausrichten": False, "vordergrund": True, "kopf": False, "fuss": False}   # Seitenrand ▸ Optionen
         basis = linie or Linie(Farbe.SCHWARZ, 0.75, "einfach")
         self.seiten = linie.seiten if linie else ""
-        v = QVBoxLayout(self); v.setContentsMargins(10, 8, 10, 6); v.setSpacing(6)
-        # --- Einstellung: eine Reihe Symbole (der Name steht im Tipp)
-        v.addWidget(abschnittstitel("Einstellung"))
-        reihe = QHBoxLayout(); reihe.setSpacing(4)
+        g = FormularGitter(self); g.setContentsMargins(10, 8, 10, 6)
+        # --- Einstellung: eine Reihe Symbole (der Name steht im Tipp), bei Platzmangel in der nächsten Zeile weiter
+        g.breit(abschnittstitel("Einstellung"))
+        reihe = FlussLayout(4)
         self.einstellung: dict[str, QToolButton] = {}
         for art, text in (("ohne", "Ohne"), ("kontur", "Kontur"), ("alle", "Alle"), ("raster", "Raster"), ("anpassen", "Anpassen")):
             b = QToolButton(); b.setCheckable(True); b.setAutoExclusive(True); b.setToolTip(text); b.setAccessibleName(text)
@@ -188,80 +249,58 @@ class _RahmenSeite(QWidget):
             b.clicked.connect(lambda _c=False, a=art: self._setze_einstellung(a))
             self.einstellung[art] = b
             reihe.addWidget(b)
-        reihe.addStretch(1)
-        v.addLayout(reihe)
+        g.breit(reihe)
         self.einstellung["raster"].setEnabled(False); self.einstellung["raster"].setToolTip("Raster: nur für Tabellen")
         self.einstellung["alle"].setEnabled(innen_h)
         self.einstellung["alle"].setToolTip("Alle" if innen_h else "Alle: nur, wenn mehrere Absätze oder Tabellenzellen gemeint sind")
         if seitenrand:                                           # um eine Seite gibt es nur Ohne, Kontur und Anpassen
             self.einstellung["alle"].setVisible(False); self.einstellung["raster"].setVisible(False)
-        # --- Vorschau mit Kantenknöpfen, daneben Farbe und Breite
-        v.addWidget(abschnittstitel("Vorschau"))
-        self.vorschau = _Vorschau(); self.vorschau.setFixedSize(184, 118); self.vorschau.setToolTip(HINWEIS)
+        # --- Vorschau mit Kantenknöpfen (wächst mit der Breite), darunter Farbe und Breite
+        g.breit(abschnittstitel("Vorschau"))
+        self.vorschau = _Vorschau(); self.vorschau.setToolTip(HINWEIS)
         self.vorschau.mit_h = innen_h
-        kasten = QWidget(); kg = QGridLayout(kasten); kg.setContentsMargins(0, 0, 0, 0)
-        kg.setProperty("schmal_nein", True)                                              # die Kantenknöpfe stehen um die Vorschau: nicht umbrechen
         self.kantenknoepfe: dict[str, QToolButton] = {}
         for k, text, flagge in KANTEN:
             if k == "h" and not innen_h:
                 continue
             b = QToolButton(); b.setCheckable(True); b.setIcon(rahmen_symbol(flagge, 22)); b.setToolTip(text); b.setIconSize(QSize(22, 22))
-            b.setAutoRaise(True); b.setFixedSize(30, 30)
-            b.setStyleSheet("QToolButton { border: 1px solid palette(midlight); border-radius: 4px; }"
+            b.setAutoRaise(True); b.setFixedSize(_KANTE, _KANTE)
+            b.setStyleSheet("QToolButton { border: 1px solid palette(midlight); border-radius: 6px; }"
                             "QToolButton:hover { background: palette(midlight); border-color: palette(mid); }"
                             "QToolButton:checked { background: palette(mid); border-color: palette(highlight); }")
             b.toggled.connect(lambda an, k=k: self._kante(k, an))
             self.kantenknoepfe[k] = b
-        links = QVBoxLayout(); links.setContentsMargins(0, 0, 0, 0)
-        reihenfolge = [k for k in ("t", "h", "b") if k in self.kantenknoepfe]
-        for i, k in enumerate(reihenfolge):
-            links.addWidget(self.kantenknoepfe[k])
-            if i < len(reihenfolge) - 1:
-                links.addStretch(1)
-        unten = QHBoxLayout(); unten.setContentsMargins(0, 0, 0, 0)
-        unten.addWidget(self.kantenknoepfe["l"]); unten.addStretch(1); unten.addWidget(self.kantenknoepfe["r"])
-        kg.setHorizontalSpacing(6); kg.setVerticalSpacing(4)
-        kg.addLayout(links, 0, 0)
-        kg.addWidget(self.vorschau, 0, 1)
-        kg.addLayout(unten, 1, 1)
-        kasten.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)                        # genau so groß wie Vorschau und Knöpfe: die unteren Knöpfe stehen unter den Rändern der Vorschau
+        self.kasten = _KantenFlaeche(self.vorschau, [self.kantenknoepfe[k] for k in ("t", "h", "b") if k in self.kantenknoepfe],
+                                     self.kantenknoepfe["l"], self.kantenknoepfe["r"])
+        g.breit(self.kasten)
         self.vorschau.kante.connect(lambda k: self.kantenknoepfe[k].toggle() if k in self.kantenknoepfe else None)
-        rechts = QVBoxLayout(); rechts.setSpacing(2); rechts.setContentsMargins(0, 0, 0, 0)
         self.farbe = FarbFeld("" if basis.farbe in ("", Farbe.SCHWARZ) else basis.farbe, "Rahmenfarbe", keine_text="Automatisch")
         self.breite = QComboBox(); self.breite.setIconSize(QSize(40, 12))
         for b in LINIENBREITEN:
             self.breite.addItem(_breite_symbol(b, QSize(40, 12)), f"{b:g}".replace(".", ",") + " Pt", b)
         self.breite.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.breite.setMinimumContentsLength(3)
-        for w_ in (self.farbe, self.breite):
-            w_.setMinimumWidth(0); w_.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        rechts.addWidget(_kopf("Farbe:")); rechts.addWidget(self.farbe)
-        rechts.addWidget(_kopf("Breite:")); rechts.addWidget(self.breite)
+        g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
         self.kunst = QComboBox()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
         from lunivo_writer.editor.seitenrahmen import KUNST
         for k, name in KUNST:
             self.kunst.addItem(name, k)
-        self.kunst_kopf = _kopf("Art:")
-        rechts.addWidget(self.kunst_kopf); rechts.addWidget(self.kunst); rechts.addStretch(1)
-        self.kunst.setVisible(seitenrand); self.kunst_kopf.setVisible(seitenrand)
+        self.kunst.setVisible(seitenrand)
+        g.reihe(("Art:", self.kunst))
         self.kunst.currentIndexChanged.connect(lambda _i: self._neu())
-        mitte = QHBoxLayout(); mitte.setSpacing(8); mitte.setProperty("schmal_nein", True)       # Vorschau und Farbe/Breite bleiben nebeneinander
-        mitte.addWidget(kasten, 0, Qt.AlignTop); mitte.addLayout(rechts, 1)
-        v.addLayout(mitte)
         # --- Linienart
-        v.addWidget(abschnittstitel("Linienart"))
-        self.arten = QListWidget(); self.arten.setIconSize(QSize(150, 16)); self.arten.setFixedHeight(104)
+        g.breit(abschnittstitel("Linienart"))
+        self.arten = QListWidget(); self.arten.setIconSize(QSize(150, 16)); self.arten.setFixedHeight(46 if seitenrand else 104)    # Seitenrand hat zusätzlich „Art:“: sonst rollt die Seite
         for k in STILE:
             it = QListWidgetItem(_stil_symbol(k), ""); it.setData(Qt.UserRole, k); it.setToolTip(STILE[k][0])
             self.arten.addItem(it)
-        v.addWidget(self.arten)
+        g.breit(self.arten)
         # --- Übernehmen für, Optionen
-        fuss = QHBoxLayout(); fuss.setSpacing(8)
         self.fuer = QComboBox(); self.fuer.addItems(fuer or ["Absatz"]); self.fuer.setToolTip("Übernehmen für")
         self.optionen = QPushButton("Optionen …")
         self.optionen.clicked.connect(self._optionen)
         self.polster = linie.polster() if linie and linie.polster() else (1.0, 1.0, 4.0, 4.0)    # Abstand zum Text: oben, unten, links, rechts (pt)
-        fuss.addWidget(_kopf("Für:"), 0, Qt.AlignVCenter); fuss.addWidget(self.fuer, 1); fuss.addWidget(self.optionen)
-        v.addLayout(fuss)
+        g.reihe(("Für:", self.fuer))
+        g.breit(self.optionen)
         # --- Anfangswerte, Verkabelung
         i = self.arten.row(next((self.arten.item(r) for r in range(self.arten.count()) if self.arten.item(r).data(Qt.UserRole) == basis.art), self.arten.item(0)))
         self.arten.setCurrentRow(i)
@@ -450,9 +489,9 @@ class _AbstandDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Rahmen- und Schattierungsoptionen")
         v = QVBoxLayout(self)
-        z = QHBoxLayout(); z.addWidget(QLabel("Abstand vom Seitenrand"))
+        g = FormularGitter(); v.addLayout(g)
         self.feld = QDoubleSpinBox(); self.feld.setRange(2, 30); self.feld.setSuffix(" mm"); self.feld.setValue(mm)
-        z.addWidget(self.feld); v.addLayout(z)
+        g.zeile("Abstand vom Seitenrand", self.feld)
         fussleiste(self, v)
 
     def wert(self) -> float:
@@ -531,7 +570,7 @@ class RahmenSchattierungDialog(PanelFaehig, QDialog):
         """Vorschau so groß, wie die Seitenleiste Platz hat (neben ihr stehen Farbe und Breite)."""
         for s in (self.p_rahmen, self.p_rand):
             if s is not None:
-                s.vorschau.setFixedSize(*((184, 118) if breite >= 400 else (152, 104)))
+                s.kasten.setMaximal(184 if breite >= 400 else 152)
 
     # ---- Ergebnis
     def rahmen(self) -> Linie | None:

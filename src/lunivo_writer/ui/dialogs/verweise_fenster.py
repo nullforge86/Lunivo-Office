@@ -14,7 +14,7 @@ from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetricsF, QPainter
 from PySide6.QtWidgets import (
     QButtonGroup, QCheckBox, QComboBox, QDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton,
-    QSpinBox, QVBoxLayout,
+    QSpinBox, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
@@ -42,9 +42,10 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         box = QGroupBox("Inhaltsverzeichnis"); h = QHBoxLayout(box); h.setSpacing(12)
         links = QVBoxLayout()
-        self.fuell = QComboBox(); self.fuell.setMinimumHeight(34); self.fuell.setMinimumWidth(190); self.fuell.setAccessibleName("Füllzeichen")
+        self.fuell = QComboBox(); self.fuell.setMinimumHeight(34); self.fuell.setAccessibleName("Füllzeichen")
         for schl in TOC_FUELL:
             self.fuell.addItem(_FUELL_ANZEIGE[schl], schl)
+        self.fuell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.fuell.setMinimumContentsLength(6)
         self.fuell.setCurrentIndex(max(0, self.fuell.findData(o["fuell"])))
         self.ebenen = QSpinBox(); self.ebenen.setRange(1, 9); self.ebenen.setValue(int(o["ebenen"])); self.ebenen.setMinimumHeight(34)
         self.ebenen.setAccessibleName("Ebenen anzeigen")
@@ -52,8 +53,11 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         self.rechts = QCheckBox("Seitenzahlen &rechtsbündig"); self.rechts.setChecked(bool(o["rechts"]))
         self.links = QCheckBox("&Hyperlinks verwenden"); self.links.setChecked(bool(o["links"]))
         optionen = QPushButton("&Optionen…"); optionen.setMinimumHeight(36); optionen.setEnabled(False)   # Vorlagen den Ebenen zuordnen: fehlt noch
-        links.addWidget(_titel("Füllzei&chen:", self.fuell)); links.addWidget(self.fuell)
-        links.addWidget(_titel("&Ebenen anzeigen:", self.ebenen)); links.addWidget(self.ebenen)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter as _FG
+        fw = QWidget(); fg = _FG(fw); fg.setContentsMargins(0, 0, 0, 0)
+        fg.reihe((_titel("Füllzei&chen:", self.fuell), self.fuell))
+        fg.reihe((_titel("&Ebenen anzeigen:", self.ebenen), self.ebenen))
+        links.addWidget(fw)
         for w in (self.seitenzahlen, self.rechts, self.links):
             links.addWidget(w)
         z = QHBoxLayout(); z.addWidget(optionen); z.addStretch(1); links.addLayout(z)
@@ -61,7 +65,7 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         h.addLayout(links)
         rechts = QVBoxLayout()
         rechts.addWidget(QLabel("Seitenansicht"))
-        self.vorschau = VorschauFlaeche(self._male, 190); self.vorschau.setMinimumWidth(260)
+        self.vorschau = VorschauFlaeche(self._male, 190)
         rechts.addWidget(self.vorschau, 1)
         h.addLayout(rechts, 1)
         v.addWidget(box)
@@ -122,17 +126,17 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
 
         def feld(name, text=""):
-            e = QLineEdit(text); e.setMinimumHeight(34); e.setMinimumWidth(130); e.setAccessibleName(name)
+            e = QLineEdit(text); e.setMinimumHeight(34); e.setAccessibleName(name)
             return e
         from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
         g = FormularGitter()                                                   # breit: zwei Paare nebeneinander wie die Vorlage; schmal: untereinander
         g.breit(abschnittstitel("Index"))
         self.haupt, self.lesung = feld("Haupteintrag", vorschlag), feld("Sortieren als (Haupteintrag)")
         self.unter, self.lesung_unter = feld("Untereintrag"), feld("Sortieren als (Untereintrag)")
-        for text, f in (("Haupteintrag (&e):", self.haupt), ("Sortieren als (&H):", self.lesung), ("Untereintrag (&S):", self.unter),
-                        ("Sortieren als (&g):", self.lesung_unter)):
+        for f in (self.haupt, self.lesung, self.unter, self.lesung_unter):
             f.setMinimumWidth(0)
-            g.zeile(_titel(text, f), f)
+        g.reihe((_titel("Haupteintrag (&e):", self.haupt), self.haupt), (_titel("Sortieren als (&H):", self.lesung), self.lesung))
+        g.reihe((_titel("Untereintrag (&S):", self.unter), self.unter), (_titel("Sortieren als (&g):", self.lesung_unter), self.lesung_unter))
         g.breit(abschnittstitel("Optionen"))
         self.art = QButtonGroup(self)
         self.r_siehe, self.r_seite, self.r_bereich = (QRadioButton("Querverweis (&r):"), QRadioButton("Aktuelle Seite (&p)"),
@@ -191,8 +195,10 @@ class NummerierungDialog(PanelFaehig, QDialog):
             if k in SEQ_FORMAT:
                 self.format.addItem(t, k)
         self.format.setCurrentIndex(max(0, self.format.findData(zahl)))
-        z = QHBoxLayout(); z.addWidget(_titel("&Format:", self.format)); z.addWidget(self.format, 1); v.addLayout(z)
-        kapitel = QCheckBox("&Kapitelnummer einbeziehen"); kapitel.setEnabled(False); v.addWidget(kapitel)
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter as _FG
+        fw = QWidget(); fg = _FG(fw)
+        kapitel = QCheckBox("&Kapitelnummer einbeziehen"); kapitel.setEnabled(False)
+        fg.zeile(_titel("&Format:", self.format), self.format); fg.breit(kapitel); v.addWidget(fw)
         fussleiste(self, v)
 
     def zahl(self) -> str:

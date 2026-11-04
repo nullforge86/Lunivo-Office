@@ -9,9 +9,9 @@ Das Fenster ändert keinen Text; der Aufrufer setzt ``P_RUBY`` (``Befehle.phonet
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QFont, QFontDatabase
-from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout
 
 from lunivo_writer.editor.zeichenzusatz import AUSRICHTUNGEN
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste

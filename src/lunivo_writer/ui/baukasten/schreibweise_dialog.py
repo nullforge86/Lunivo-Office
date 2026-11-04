@@ -19,7 +19,7 @@ class SchreibweiseDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, art: str = "satz"):
         super().__init__(parent)
         self.setWindowTitle("Groß-/Kleinschreibung")
-        v = QVBoxLayout(self)
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
         v.addWidget(abschnittstitel("Groß-/Kleinschreibung"))
         self._gruppe = QButtonGroup(self)
         for i, (k, text) in enumerate(SCHREIBWEISEN):

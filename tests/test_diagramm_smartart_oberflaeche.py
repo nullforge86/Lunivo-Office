@@ -72,6 +72,8 @@ def test_popups_bauen_sich(fenster):
     for bau in (SM.form_menue, SM.level_menue, SM.hierarchie_menue, SM.layout_menue, SM.stile_menue):
         assert bau(b) is not None
     assert len(SM.stile_galerie(b)["kacheln"]) == 5
+    from lunivo_writer.ui.baukasten.bild_diagramm_menues import GALERIEN
+    assert len(GALERIEN["smartartStile"](b)["kacheln"]) == 5 and GALERIEN["smartartStile"](b)["name"] == "SmartArt-Stile"
     assert len(FM.formstile_galerie(b)["kacheln"]) == 6 and FM.form_bearbeiten_menue(b) is not None
     assert len(SM.layout_menue(b).actions()) == 15
     for k in SA.LAYOUTS:
@@ -108,7 +110,7 @@ def test_formatierung_diagrammteil_wirkt(fenster, app):
     T.teil_waehlen(ed, "legende")
     w.diagrammformat_seitenleiste()
     p = w.sidebar.diagramm_panel
-    assert p.optionen.tabText(0) == "Legendenoptionen"
+    assert p.optionen.tabText(0) == "Legende Optionen"
     p.farbe.setFarbe("#ff0000"); p.farbe.farbeGeaendert.emit("#ff0000"); app.processEvents()
     assert T.diagramm_teil_format_lesen(ed)["fuell"] == "#ff0000"
     p.s_farbe.farbeGeaendert.emit("#112233"); app.processEvents()                 # ein Regler des Schattens schaltet ihn ein
@@ -181,12 +183,12 @@ def test_formstile_raster_ist_eines(fenster):
     assert FO.daten_lesen(ed, "form")["fuell"].lower() == "#f08c00"
 
 
-def test_zahnrad_oeffnet_formatierung_je_objektart(fenster):
+def test_formatierung_seitenleiste_je_objektart_ohne_zahnrad_an_form(fenster):
     w = fenster; ed = w.current_editor()
     FO.einfuegen(ed, "form", {"form": "Rechteck", "fuell": "#ffffff", "linie": "#000000", "strich": 1.0, "text": ""}, 200, 120)
     ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
-    assert "zahnrad" in ed._frei_knopf_rects(_rect(ed))
-    ed._frei_knopf("zahnrad", QPointF(0, 0))
+    assert "zahnrad" not in ed._frei_knopf_rects(_rect(ed))          # Form: Layout, Formstile, Füllung, Kontur wie im Foto
+    w.formatierung_seitenleiste()                                     # Weg zur Seitenleiste: „Formatieren“ im Rechtsklick-Menü
     assert w.sidebar.objektformat_sichtbar()
     w.sidebar.zeige_bereich(0)
     ed = _diagramm(w); ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
@@ -204,10 +206,25 @@ def test_smartart_formatpanel_baut_und_ragt_nicht_heraus(app, breite):
     p.close()
 
 
-def test_zahnrad_smartart_oeffnet_formatierung_und_wirkt(fenster):
+def test_smartart_formatierung_ueber_rechtsklick_und_wirkt(fenster):
     w = fenster; ed = w.current_editor()
     SA.einfuegen(ed, "Matrix"); ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
-    ed._frei_knopf("zahnrad", QPointF(0, 0))
+    assert set(ed._frei_knopf_rects(_rect(ed))) == {"anker", "minus", "layout", "fuell", "kontur"}     # SmartArt ohne Knoten: 3 Knöpfe wie im Foto
+    w.formatierung_seitenleiste()
     assert w.sidebar.format_sichtbar("smartart")
     w.sidebar.format_panel("smartart").geaendert.emit({"fuell": "#ff0000", "linie": None})
     assert FO.daten_lesen(ed, "smartart")["format"]["fuell"] == "#ff0000"
+
+
+def test_format_wechsler_form_smartart_text(fenster):
+    w = fenster; ed = w.current_editor()
+    FO.einfuegen(ed, "form", {"form": "Rechteck", "fuell": "#ffffff", "linie": "#000000", "strich": 1.0, "text": ""}, 200, 120)
+    ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
+    w.formatierung_seitenleiste()
+    assert w.sidebar.format_sichtbar("objekt")
+    SA.einfuegen(ed, "Matrix"); ed._frei_liste(); ed._frei_sel = [t[0] for t in ed._frei_treffer][-1]
+    w.objektformat_folgen()                                              # Form -> SmartArt bei offenem Bereich
+    assert w.sidebar.format_sichtbar("smartart")
+    ed._frei_sel = None
+    w.objektformat_folgen()                                              # SmartArt -> Text: der Bereich bleibt, wie er ist
+    assert w.sidebar.format_sichtbar("smartart")

@@ -80,16 +80,16 @@ class HilfeWannDialog(PanelFaehig, QDialog):
         if kuerzel:
             k = QLabel(kuerzel); k.setStyleSheet("border: 1px solid palette(mid); border-radius: 3px; padding: 0 5px; font-size: 8pt;"); kopf.addWidget(k)
         if aktion and aktion[0] == "schalter":
-            b = QPushButton(); b.setCheckable(True); b.setFixedWidth(52)
+            b = QPushButton(); b.setCheckable(True); b.setMinimumWidth(52)
             b.setChecked(self.fenster.assistant.an(aktion[1]))
-            b.setStyleSheet("QPushButton { border: 1px solid palette(mid); border-radius: 11px; padding: 2px 8px; }"
+            b.setStyleSheet("QPushButton { border: 1px solid palette(mid); border-radius: 18px; padding: 2px 8px; }"
                             "QPushButton:checked { background: #2f9e75; color: white; border-color: #2f9e75; }")
             b.setText("an" if b.isChecked() else "aus")
             b.toggled.connect(lambda an, name=aktion[1], b=b: (b.setText("an" if an else "aus"), self.fenster.assistant.setze(name, an)))
             self.schalter[aktion[1]] = b
             kopf.addWidget(b)
         elif aktion:
-            b = QPushButton("jetzt"); b.setStyleSheet(('QPushButton { border: 1px solid ' + Farbe.AKZENT + '; color: ' + Farbe.AKZENT + '; border-radius: 11px; padding: 2px 12px; }'))
+            b = QPushButton("jetzt"); b.setMinimumWidth(52); b.setStyleSheet(('QPushButton { border: 1px solid ' + Farbe.AKZENT + '; color: ' + Farbe.AKZENT + '; border-radius: 18px; padding: 2px 12px; }'))
             b.clicked.connect(lambda _=False, a=aktion[1]: (self.accept(), self.fenster.befehle.tun(a)))
             kopf.addWidget(b)
         mitte.addLayout(kopf)

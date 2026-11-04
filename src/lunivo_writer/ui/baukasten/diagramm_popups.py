@@ -9,13 +9,13 @@ Die Seiten werden bei jedem Öffnen neu gelesen. Gerechnet wird hier nichts; ``b
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, QSize, Qt
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QScrollArea,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QRadioButton, QScrollArea,
                                QSizePolicy, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
+from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
 
 KACHEL = 36
@@ -44,37 +44,73 @@ def _ueberschrift(text: str) -> QLabel:
 
 
 # ---- Kacheln -------------------------------------------------------------------------------------------------------------------------
-def layout_bild(nr: int, groesse: QSize = QSize(64, 46)) -> QPixmap:
-    """Schematisches Bild von „Layout 1 bis 6“: Titel oben, Legende (Lage), Datenbeschriftungen (Punkte auf den Säulen)."""
+def layout_bild(nr: int, groesse: QSize = QSize(92, 84)) -> QPixmap:
+    """Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
+    Achsen, Achsentitel, Gitternetz, Datentabelle, Trendlinie — grau gezeichnet wie die Kacheln der Vorlage."""
     from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
+    from lunivo_writer.editor import diagramm_zusatz as Z
     kw = SCHNELLLAYOUTS[nr][1]
+    el = {**Z.STANDARD_ELEMENTE, **(kw.get("elemente") or {})}
     pm = QPixmap(groesse); pm.fill(QColor(Farbe.WEISS))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    w, h = groesse.width(), groesse.height()
-    grau, blau = QColor(Farbe.GRAU_HELL), QColor(Farbe.AKZENT)
-    fl = QRectF(4, 4, w - 8, h - 8)
+    w, h = float(groesse.width()), float(groesse.height())
+    hell, mittel, dunkel = QColor("#d4d4d4"), QColor("#9a9a9a"), QColor("#6e6e6e")
+    balken = QColor("#c8c8c8")
+    fl = QRectF(10, 8, w - 20, h - 16)                                   # Zeichenfläche des Diagramms
+    p.setPen(Qt.NoPen); p.setBrush(mittel)
     if kw.get("titel_an"):
-        p.setPen(Qt.NoPen); p.setBrush(grau); p.drawRect(QRectF(w * 0.35, 5, w * 0.30, 3)); fl.setTop(11)
+        p.drawRect(QRectF(w * 0.34, 8, w * 0.32, 3)); fl.setTop(17)
+    if el.get("achsentitel"):
+        p.drawRect(QRectF(6, h * 0.36, 3, h * 0.26)); fl.setLeft(fl.left() + 6)
+        p.drawRect(QRectF(w * 0.40, h - 9, w * 0.20, 2)); fl.setBottom(fl.bottom() - 6)
     if kw.get("legende"):
-        pos = kw.get("legende_pos", "unten"); p.setPen(Qt.NoPen); p.setBrush(grau)
+        pos = kw.get("legende_pos", "unten")
+        feld = lambda r: (p.setPen(QPen(mittel, 1)), p.setBrush(Qt.NoBrush), p.drawRect(r), p.setPen(Qt.NoPen), p.setBrush(mittel))
         if pos == "unten":
-            p.drawRect(QRectF(w * 0.3, h - 8, w * 0.4, 3)); fl.setBottom(h - 11)
+            p.drawRect(QRectF(w * 0.30, h - 8, w * 0.40, 3)); fl.setBottom(min(fl.bottom(), h - 12))
         elif pos == "oben":
-            p.drawRect(QRectF(w * 0.3, 10, w * 0.4, 3)); fl.setTop(16)
+            feld(QRectF(w * 0.28, fl.top() - 1, w * 0.44, 7)); fl.setTop(fl.top() + 9)
         elif pos == "links":
-            p.drawRect(QRectF(5, h * 0.4, 8, 12)); fl.setLeft(17)
+            feld(QRectF(5, h * 0.40, 10, 14)); fl.setLeft(max(fl.left(), 19))
         else:
-            p.drawRect(QRectF(w - 13, h * 0.4, 8, 12)); fl.setRight(w - 17)
-    p.setPen(QPen(grau, 1)); p.drawLine(fl.bottomLeft(), fl.bottomRight())
-    p.setPen(Qt.NoPen); p.setBrush(blau)
+            feld(QRectF(w - 15, h * 0.40, 10, 14)); fl.setRight(min(fl.right(), w - 19))
+    tab = None
+    if el.get("datentabelle"):
+        th = 14.0
+        tab = QRectF(fl.left(), fl.bottom() - th, fl.width(), th); fl.setBottom(fl.bottom() - th - 1)
+    if el.get("achsen"):
+        fl.setLeft(fl.left() + 5)
+        for k in range(4):                                               # Zahlenmarken links
+            y = fl.top() + 2 + k * (fl.height() - 4) / 3
+            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(fl.left() - 6, y - 0.5, 4, 1.5))
+    if el.get("gitter"):
+        p.setPen(QPen(hell, 1))
+        for k in range(4):
+            y = fl.top() + 2 + k * (fl.height() - 4) / 3
+            p.drawLine(QPointF(fl.left(), y), QPointF(fl.right(), y))
+    p.setPen(QPen(dunkel if not el.get("achsen") else mittel, 1.2)); p.drawLine(fl.bottomLeft(), fl.bottomRight())
+    if el.get("achsen"):
+        p.drawLine(fl.topLeft(), fl.bottomLeft())
     n = 4
-    for i, hh in enumerate((0.5, 0.8, 0.35, 0.65)):
-        x = fl.left() + 2 + i * (fl.width() - 4) / n
-        r = QRectF(x, fl.bottom() - fl.height() * hh, (fl.width() - 4) / n * 0.6, fl.height() * hh)
-        p.drawRect(r)
+    breite = (fl.width() - 4) / n
+    for i, hh in enumerate((0.55, 0.85, 0.40, 0.70)):
+        x = fl.left() + 3 + i * breite
+        r = QRectF(x, fl.bottom() - (fl.height() - 4) * hh, breite * 0.62, (fl.height() - 4) * hh)
+        p.setPen(QPen(mittel, 1)); p.setBrush(balken if i % 2 else QColor(Farbe.WEISS)); p.drawRect(r)
         if kw.get("labels"):
-            p.setBrush(QColor(Farbe.WEISS)); p.drawRect(QRectF(r.center().x() - 2, r.top() + 2, 4, 2)); p.setBrush(blau)
-    p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(Qt.NoBrush); p.drawRect(QRectF(0.5, 0.5, w - 1, h - 1))
+            p.setPen(Qt.NoPen); p.setBrush(dunkel); p.drawRect(QRectF(r.center().x() - 3, r.top() - 4, 6, 1.5))
+        if el.get("achsen") and tab is None:
+            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(r.center().x() - 3, fl.bottom() + 2, 6, 1.5))
+    if el.get("trendlinie"):
+        pen = QPen(dunkel, 1.2, Qt.DashLine); p.setPen(pen)
+        p.drawLine(QPointF(fl.left() + 3, fl.bottom() - fl.height() * 0.30), QPointF(fl.right() - 3, fl.bottom() - fl.height() * 0.78))
+    if tab is not None:
+        p.setPen(QPen(mittel, 1.2)); p.setBrush(Qt.NoBrush); p.drawRect(tab)
+        p.drawLine(QPointF(tab.left(), tab.center().y()), QPointF(tab.right(), tab.center().y()))
+        for k in range(1, n):
+            xx = tab.left() + k * tab.width() / n
+            p.drawLine(QPointF(xx, tab.top()), QPointF(xx, tab.bottom()))
+    p.setPen(QPen(mittel, 1)); p.setBrush(Qt.NoBrush); p.drawRect(QRectF(0.5, 0.5, w - 1, h - 1))
     p.end()
     return pm
 
@@ -152,13 +188,14 @@ class DiagrammPopup(QMenu):
         return w
 
     def _seite_schnelllayout(self) -> QWidget:
-        from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
+        from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUT_ANZEIGE, SCHNELLLAYOUTS
         w = QWidget(); g = QGridLayout(w); g.setContentsMargins(8, 8, 8, 8); g.setSpacing(6)
-        for i, (name, _kw) in enumerate(SCHNELLLAYOUTS):
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(64, 46)); k.setToolTip(name)
-            k.setFixedSize(76, 58); k.setAccessibleName(name)
+        for platz, i in enumerate(SCHNELLLAYOUT_ANZEIGE):                # Reihenfolge wie im Foto der Vorlage; i ist die gespeicherte Layoutnummer
+            name = SCHNELLLAYOUTS[i][0]
+            k = QToolButton(); k.setAutoRaise(True); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(92, 84)); k.setToolTip(name)
+            k.setFixedSize(100, 92); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, i=i: (self.close(), self.b.diagrammSchnelllayout(None, i)))
-            g.addWidget(k, i // 3, i % 3)
+            g.addWidget(k, platz // 3, platz % 3)
         g.setColumnStretch(3, 1)
         return w
 
@@ -231,9 +268,9 @@ class DiagrammPopup(QMenu):
         v.addWidget(r)
         v.addWidget(_linie())
         fuss = QHBoxLayout(); fuss.setContentsMargins(0, 2, 0, 0)
-        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setMinimumHeight(KACHEL - 4); ok.setAccessibleName("Filter übernehmen")
+        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Filter übernehmen")
         ok.clicked.connect(self._uebernehmen)
-        mehr = QPushButton("Daten auswählen …"); mehr.setFlat(True); mehr.setMinimumHeight(KACHEL - 4)
+        mehr = QPushButton("Daten auswählen …"); mehr.setFlat(True); mehr.setFixedHeight(FELDHOEHE)
         mehr.setStyleSheet(f"QPushButton {{ color: {Farbe.AKZENT}; border: none; text-decoration: underline; padding: 0 6px; }}")
         mehr.clicked.connect(lambda: (self.close(), self.b.diagrammDatenBearbeiten()))
         fuss.addWidget(ok); fuss.addStretch(1); fuss.addWidget(mehr)
@@ -246,11 +283,21 @@ class DiagrammPopup(QMenu):
         w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(8, 4, 8, 6); v.setSpacing(2)
         self._felder: dict[str, list[tuple[str, QLineEdit]]] = {}
         inhalt = QWidget(); iv = QVBoxLayout(inhalt); iv.setContentsMargins(0, 0, 0, 0); iv.setSpacing(2)
-        for schl, titel in (("reihen", "Reihe"), ("rubriken", "Rubrik")):
+        quelle = self.b.diagrammNamenQuelleLesen()
+        for schl, titel, (qwert, qtext) in (("reihen", "Reihe", ("zeile1", "Zeile 1")), ("rubriken", "Rubrik", ("spalte_a", "Spalte A"))):
             iv.addWidget(_ueberschrift(titel))
+            gr = QButtonGroup(inhalt)
+            for wert, text in ((qwert, qtext), ("keine", "(Keine)")):
+                rb = QRadioButton(text); rb.setMinimumHeight(KACHEL - 6); rb.setAccessibleName(f"{titel}: {text}")
+                rb.setChecked(quelle == wert); gr.addButton(rb)
+                rb.clicked.connect(lambda _=False, wv=wert: (self.close(), self.b.diagrammNamenQuelle(None, wv)))
+                iv.addWidget(rb)
+                if wert == qwert and daten.get(schl):
+                    sub = QLabel(", ".join(n for n, _a in daten[schl])); sub.setWordWrap(True)
+                    sub.setContentsMargins(26, 0, 0, 2); sub.setStyleSheet("color: palette(mid);"); iv.addWidget(sub)
             felder = []
             for name, _an in daten.get(schl, []):
-                e = QLineEdit(name); e.setMinimumHeight(KACHEL - 6); e.setAccessibleName(f"{titel} {name}")
+                e = QLineEdit(name); e.setFixedHeight(FELDHOEHE); e.setAccessibleName(f"{titel} {name}")
                 iv.addWidget(e); felder.append((name, e))
             self._felder[schl] = felder
         iv.addStretch(1)
@@ -258,7 +305,7 @@ class DiagrammPopup(QMenu):
         r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(min(300, max(120, inhalt.sizeHint().height() + 4)))
         v.addWidget(r); v.addWidget(_linie())
         fuss = QHBoxLayout(); fuss.setContentsMargins(0, 2, 0, 0)
-        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setMinimumHeight(KACHEL - 4); ok.setAccessibleName("Namen übernehmen")
+        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Namen übernehmen")
         ok.clicked.connect(self._namen_uebernehmen)
         fuss.addWidget(ok); fuss.addStretch(1)
         v.addLayout(fuss)
@@ -306,7 +353,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
     v = QVBoxLayout(host); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(1)
-    cb = QComboBox(); cb.setMinimumWidth(200); cb.setMinimumHeight(30); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(330)   # schmal im Band, die Liste ganz breit
+    cb = QComboBox(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(330)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
     zeile = QHBoxLayout(); zeile.setContentsMargins(0, 0, 0, 0); zeile.setSpacing(4)          # wie in der Vorlage nebeneinander unter dem Feld
@@ -314,7 +361,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     for text, sym, f in (("Formatieren", "pinsel", lambda: getattr(b.w, "diagrammformat_seitenleiste", lambda: None)()),
                          ("Formatvorlage zurücksetzen", "undo-2", lambda: b.diagrammZuruecksetzen())):
         k = QToolButton(); k.setAutoRaise(True); k.setIcon(icons.icon(sym, 16)); k.setIconSize(QSize(16, 16)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
-        k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(30)
+        k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(FELDHOEHE)
         k.clicked.connect(lambda _=False, f=f: f())
         zeile.addWidget(k)
     stumm = [False]

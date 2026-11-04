@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QStackedWidget,
-                               QToolButton, QVBoxLayout, QWidget, QWidgetAction)
+from PySide6.QtWidgets import (
+    QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+)
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
@@ -19,7 +20,7 @@ from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
 
 KACHEL = 36                       # Seitenlänge einer Formkachel (Knöpfe nicht schmaler als 36 px)
-SPALTEN = 10
+SPALTEN = 12                      # Formen je Zeile wie in der Vorlage (Kachel bleibt 36 px, das Fenster wird breiter)
 STIL_KACHEL = QSize(88, 56)       # Vorschau eines Diagrammstils
 BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfeil daneben öffnet alle
 
@@ -31,19 +32,6 @@ def _form_bild(name: str) -> QIcon:
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
     p.drawPath(K.pfad(name, QRectF(4, 4, 20, 20)))
-    p.end()
-    return QIcon(pm)
-
-
-def _skala_bild(b: int, h: int) -> QIcon:
-    pm = QPixmap(QSize(30, 22)); pm.fill(Qt.transparent)
-    f = 24.0 / max(b, h)
-    w, hh = b * f, h * f
-    if w > 28:
-        hh, w = hh * 28 / w, 28.0
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QApplication.palette().text().color(), 1.3)); p.setBrush(Qt.NoBrush)
-    p.drawRect(QRectF((30 - w) / 2, (22 - hh) / 2, w, hh))
     p.end()
     return QIcon(pm)
 
@@ -94,15 +82,18 @@ def zuschneiden_menue(b) -> QMenu:
     rollen.setFixedSize(breite, 330)
     stapel.addWidget(rollen)
 
-    # Seite 2: Seitenverhältnisse
-    skala = QWidget()
-    sg = QGridLayout(skala); sg.setContentsMargins(6, 6, 6, 6); sg.setSpacing(4)
-    for n, (text, bb, hh) in enumerate(BZ.VERHAELTNISSE):
-        k = QToolButton(); k.setAutoRaise(True); k.setIcon(_skala_bild(bb, hh)); k.setIconSize(QSize(30, 22)); k.setText(text)
-        k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); k.setFixedSize(64, 52); k.setToolTip("Seitenverhältnis " + text)
+    # Seite 2: Seitenverhältnisse als Textliste untereinander, rollbar (wie in der Vorlage)
+    liste = QWidget()
+    lv = QVBoxLayout(liste); lv.setContentsMargins(6, 4, 6, 4); lv.setSpacing(0)
+    for text, bb, hh in BZ.VERHAELTNISSE:
+        k = QPushButton(text.replace(":", " : ")); k.setFlat(True); k.setMinimumHeight(KACHEL)
+        k.setStyleSheet("text-align: left; padding: 4px 24px; border: none;")
+        k.setToolTip("Seitenverhältnis " + text); k.setAccessibleName("Seitenverhältnis " + text)
         k.clicked.connect(lambda _=False, t=text: waehlen(b.bildZuschneidenSkala, t))
-        sg.addWidget(k, n // 5, n % 5)
-    sg.setColumnStretch(5, 1); sg.setRowStretch(len(BZ.VERHAELTNISSE) // 5 + 1, 1)
+        lv.addWidget(k)
+    lv.addStretch(1)
+    skala = QScrollArea(); skala.setWidget(liste); skala.setWidgetResizable(True); skala.setFrameShape(QFrame.NoFrame)
+    skala.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     stapel.addWidget(skala)
     stapel.setFixedSize(breite, 330)
     v.addWidget(stapel)
@@ -185,5 +176,7 @@ from lunivo_writer.ui.baukasten import form_menues as _fm                       
 from lunivo_writer.ui.baukasten import smartart_menues as _sm                       # noqa: E402  (Menüs und Galerie für SmartArt)
 
 KLAPPEN = {"bildZuschneiden": zuschneiden_menue, **_dp.KLAPPEN, **_sm.KLAPPEN, **_fm.KLAPPEN}
-GALERIEN = {"diagrammStile": diagramm_stile_galerie, **_sm.GALERIEN, **_fm.GALERIEN}
+from lunivo_writer.ui.baukasten.smartart_stil_kacheln import stile_galerie_org as _sa_stile  # noqa: E402
+
+GALERIEN = {"diagrammStile": diagramm_stile_galerie, **_sm.GALERIEN, **_fm.GALERIEN, "smartartStile": _sa_stile}   # SmartArt-Stile mit Organigramm-Motiv wie in der Vorlage
 FELDER = {**_dp.FELDER}                                                              # Eingabefelder des Bandes, die die Oberfläche selbst baut

@@ -1,7 +1,7 @@
 """Befehle: Kontext-Reiter „Kopf- und Fußzeile“ (Bearbeiten direkt auf der Seite, siehe ``ui/document/kopffuss_bearbeiter.py``)."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QVBoxLayout
+from PySide6.QtWidgets import QVBoxLayout
 
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
@@ -81,7 +81,6 @@ class KopfFussBefehle:
 
 
     def _kf_leeren(self, felder: tuple):
-        from lunivo_writer.models.page import HeaderFooter
         e = self.ed
         if e is None:
             return
@@ -161,10 +160,17 @@ class KopfFussBefehle:
             pass
         d = Fenster(self.w)
         d.setWindowTitle("Optionen für Kopf- und Fußzeile")
+        from PySide6.QtWidgets import QWidget
+        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
         v = QVBoxLayout(d)
-        erste = QCheckBox("Erste Seite anders"); erste.setChecked(pg.diff_first)
-        gu = QCheckBox("Gerade und ungerade Seiten sind unterschiedlich"); gu.setChecked(pg.diff_even)
-        v.addWidget(erste); v.addWidget(gu); v.addStretch(1)
+        erste = UmbruchSchalter("Erste Seite anders"); erste.setChecked(pg.diff_first)
+        gu = UmbruchSchalter("Gerade und ungerade Seiten sind unterschiedlich"); gu.setChecked(pg.diff_even)
+        for k in (erste, gu):
+            pass
+        feld = QWidget(); gitter = FormularGitter(feld)
+        gitter.breit(abschnittstitel("Seiten"))
+        gitter.breit(erste); gitter.breit(gu)
+        v.addWidget(feld); v.addStretch(1)
         fussleiste(d, v)
         if ausfuehren(d):
             if erste.isChecked() != pg.diff_first:
@@ -182,7 +188,8 @@ class KopfFussBefehle:
 
     def _kf_abstand(self, attr: str, name: str, symbol: str):
         from PySide6.QtCore import QLocale, QSize
-        from PySide6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
+        from PySide6.QtWidgets import QLabel, QToolButton, QWidget
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
         from lunivo_writer.ui.widgets import icons
         from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
         class _Zeile(QWidget):
@@ -192,7 +199,7 @@ class KopfFussBefehle:
                 if self.neu_laden:
                     self.neu_laden()
                 super().showEvent(ev)
-        host = _Zeile(); h = QHBoxLayout(host); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(3)
+        host = _Zeile(); h = FlussLayout(6); host.setLayout(h); h.setContentsMargins(0, 0, 0, 0)
         bild = QLabel(); bild.setPixmap(icons.icon(symbol, 16).pixmap(QSize(16, 16))); h.addWidget(bild)
         h.addWidget(QLabel(name + ":"))
         f = SchrittFeld(0.0, 100.0, " mm", 0.5, 1)

@@ -9,16 +9,11 @@ Das Fenster legt nichts an; es liefert die Werte, der Aufrufer ruft ``stile.anle
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont, QTextBlockFormat, QTextCharFormat
-from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton,
-    QVBoxLayout, QWidget,
-)
+from PySide6.QtGui import QColor, QTextBlockFormat, QTextCharFormat
+from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QMenu, QPushButton, QVBoxLayout, QWidget
 
 from lunivo_writer.editor import stile
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import weitere_farben
-from lunivo_writer.ui.baukasten.mass_feld import MassSpin, spin
 from lunivo_writer.ui.baukasten.text_format import TextFormatLeiste, zeichne_absaetze, zu_format
 
 from lunivo_writer.core.farben import Farbe
@@ -55,6 +50,8 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         namen = [n for n in (vorlagen if vorlagen is not None else stile.namen()) if n != aendern]
         self.basis = QComboBox(); self.basis.addItem(KEINE, ""); [self.basis.addItem("↵ " + n, n) for n in namen]
         self.folge = QComboBox(); self.folge.addItem(GLEICHE, ""); [self.folge.addItem("↵ " + n, n) for n in namen]
+        for w in (self.name, self.typ, self.basis, self.folge):
+            pass
         f.breit(abschnittstitel("Eigenschaften"))
         f.reihe(("Name:", self.name), ("Typ:", self.typ), gewichte=(3, 2))
         f.reihe(("Basiert auf:", self.basis), ("Für folgenden Absatz:", self.folge))

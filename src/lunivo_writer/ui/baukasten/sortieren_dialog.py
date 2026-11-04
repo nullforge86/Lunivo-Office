@@ -10,10 +10,7 @@ Das Fenster sortiert nicht selbst; der Aufrufer ruft ``editor.schreibweise.reihe
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QFrame, QLabel, QLineEdit, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
 from lunivo_writer.editor.schreibweise import SPRACHEN, feldzahl
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
@@ -42,9 +39,9 @@ class SortierOptionenDialog(PanelFaehig, QDialog):
         self._trenner = QButtonGroup(self)
         for i, (_z, t) in enumerate(TRENNER):
             r = QRadioButton(t); self._trenner.addButton(r, i); v.addWidget(r)
-        z = QHBoxLayout(); r = QRadioButton("Andere:"); self._trenner.addButton(r, len(TRENNER)); z.addWidget(r)
+        z = FlussLayout(8); r = QRadioButton("Andere:"); self._trenner.addButton(r, len(TRENNER)); z.addWidget(r)
         self.andere = _feld(QLineEdit("-"), 44); self.andere.setMaximumWidth(48); self.andere.setMaxLength(1); self.andere.setAlignment(Qt.AlignCenter)
-        z.addWidget(self.andere); z.addStretch(1); v.addLayout(z)
+        z.addWidget(self.andere); v.addLayout(z)
         bekannt = [k for k, _t in TRENNER]
         if trenner in bekannt:
             self._trenner.button(bekannt.index(trenner)).setChecked(True)

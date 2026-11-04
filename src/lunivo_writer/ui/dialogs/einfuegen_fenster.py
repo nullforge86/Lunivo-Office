@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox,
-    QVBoxLayout, QWidget,
+    QButtonGroup, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -19,6 +18,7 @@ from lunivo_writer.editor import felder as F
 from lunivo_writer.editor import tabelle_text as TT
 from lunivo_writer.editor import zahlformat as Z
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 
 
 def _titel(text: str, feld) -> QLabel:
@@ -75,31 +75,23 @@ class FelderDialog(PanelFaehig, QDialog):
         self.kontext = kontext or {}
         self._sperre = False
         v = QVBoxLayout(self)
-        h = QHBoxLayout(); h.setSpacing(16)
-        links = QVBoxLayout()
-        links.addWidget(self._kopf("Feld auswählen"))
+        g = FormularGitter(); v.addLayout(g, 1)
+        g.breit(abschnittstitel("Feld auswählen"))
         self.liste = QListWidget(); self.liste.setAccessibleName("Feldnamen"); self.liste.addItems(list(F.FELDER))
-        self.liste.setMinimumWidth(170)
-        links.addWidget(_titel("Feldna&men:", self.liste)); links.addWidget(self.liste, 1)
-        h.addLayout(links)
-        rechts = QVBoxLayout()
-        rechts.addWidget(self._kopf("Feldeigenschaften"))
-        self.anweisung = QLineEdit(); self.anweisung.setMinimumHeight(36); self.anweisung.setMinimumWidth(260)
+        g.zeile(_titel("Feldna&men:", self.liste), self.liste)
+        g.breit(abschnittstitel("Feldeigenschaften"))
+        self.anweisung = QLineEdit()
         self.anweisung.setAccessibleName("Feldfunktionen")
-        rechts.addWidget(_titel("&Feldfunktionen:", self.anweisung)); rechts.addWidget(self.anweisung)
-        rechts.addWidget(QLabel("Assistent:"))
-        self._assistent = QGridLayout(); self._assistent.setHorizontalSpacing(10); self._assistent.setVerticalSpacing(6)
-        self._assistent.setProperty("schmal_nein", True)                  # wird je Feld neu gefüllt
-        self._assistent.setColumnStretch(1, 1)
-        rechts.addLayout(self._assistent)
-        rechts.addStretch(1)
-        rechts.addWidget(QLabel("Beschreibung:"))
+        g.zeile(_titel("&Feldfunktionen:", self.anweisung), self.anweisung)
+        g.breit(QLabel("Assistent:"))
+        self._assistent_platz = QVBoxLayout(); self._assistent_platz.setContentsMargins(0, 0, 0, 0)     # wird je Feld neu gefüllt
+        self._assistent = self._assistent_host = None
+        g.breit(self._assistent_platz)
+        g.breit(QLabel("Beschreibung:"))
         self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True); self.beschreibung.setStyleSheet("color: palette(mid);")
-        rechts.addWidget(self.beschreibung)
-        self.formatierung = QCheckBox("Formatierung bei Aktualisierung &beibehalten"); self.formatierung.setChecked(True)
-        rechts.addWidget(self.formatierung)
-        h.addLayout(rechts, 1)
-        v.addLayout(h, 1)
+        g.breit(self.beschreibung)
+        self.formatierung = UmbruchSchalter("Formatierung bei Aktualisierung &beibehalten"); self.formatierung.setChecked(True)
+        g.breit(self.formatierung)
         self.ok = fussleiste(self, v)
         self._felder: dict[str, QWidget] = {}
         self.liste.currentTextChanged.connect(self._zeigen)
@@ -107,24 +99,15 @@ class FelderDialog(PanelFaehig, QDialog):
         self.anweisung.textChanged.connect(self._pruefen)
         self.liste.setCurrentRow(0)
 
-    @staticmethod
-    def _kopf(text: str) -> QLabel:
-        t = QLabel(text); f = t.font(); f.setBold(True); t.setFont(f)
-        return t
-
     def kompakt_machen(self) -> None:
-        """In der Seitenleiste: Feldnamen über den Eigenschaften."""
-        from PySide6.QtWidgets import QBoxLayout
-        self.layout().itemAt(0).layout().setDirection(QBoxLayout.TopToBottom)
-        self.liste.setMinimumWidth(0); self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * 9 + 8)
-        self.anweisung.setMinimumWidth(0)
+        """In der Seitenleiste: die Feldnamen als Liste von begrenzter Höhe."""
+        self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * 9 + 8)
 
     # ---- Assistent je Feld ----------------------------------------------------------------------------------------------
     def _zeile(self, schl: str, text: str, w: QWidget, aktiv: bool = True) -> QWidget:
-        n = self._assistent.rowCount()
         lab = _titel(text, w)
         w.setMinimumHeight(36); w.setEnabled(aktiv); lab.setEnabled(aktiv)
-        self._assistent.addWidget(lab, n, 0); self._assistent.addWidget(w, n, 1)
+        self._assistent.zeile(lab, w)
         self._felder[schl] = w
         return w
 
@@ -135,10 +118,10 @@ class FelderDialog(PanelFaehig, QDialog):
         return b
 
     def _zeigen(self, name: str) -> None:
-        while self._assistent.count():
-            w = self._assistent.takeAt(0).widget()
-            if w is not None:
-                w.deleteLater()
+        if self._assistent_host is not None:
+            self._assistent_platz.removeWidget(self._assistent_host); self._assistent_host.hide(); self._assistent_host.deleteLater()
+        self._assistent_host = QWidget(); self._assistent = FormularGitter(self._assistent_host)
+        self._assistent_platz.addWidget(self._assistent_host)
         self._felder = {}
         self.name = name
         k = self.kontext
@@ -281,12 +264,11 @@ class TrennerDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.zu_tabelle, self.texte = zu_tabelle, list(texte or [])
         self.setWindowTitle("Text in Tabelle umwandeln" if zu_tabelle else "Tabelle in Text konvertieren")
-        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
         v = QVBoxLayout(self)
         fg = FormularGitter()                                                  # passt sich der Breite an (Seitenleiste)
         v.addLayout(fg)
         if zu_tabelle:
-            self._spalten = QSpinBox(); self._spalten.setRange(1, 63); self._spalten.setMinimumHeight(34); self._spalten.setMinimumWidth(90)
+            self._spalten = QSpinBox(); self._spalten.setRange(1, 63); self._spalten.setMinimumHeight(34)
             self._zeilen = QLabel()
             fg.zeile(_titel("&Spaltenanzahl:", self._spalten), self._spalten)
             fg.zeile("Zeilenanzahl:", self._zeilen)
@@ -301,7 +283,7 @@ class TrennerDialog(PanelFaehig, QDialog):
         andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(self._liste))
         self.andere = QLineEdit("-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(48); self.andere.setMinimumHeight(34)
         self.andere.setAlignment(Qt.AlignCenter); self.andere.setAccessibleName("Anderes Trennzeichen")
-        z = QHBoxLayout(); z.addWidget(andere); z.addWidget(self.andere); z.addStretch(1)
+        z = FlussLayout(6); z.addWidget(andere); z.addWidget(self.andere)
         fg.breit(g); fg.breit(z)
         if not zu_tabelle:
             self.geschachtelt = UmbruchSchalter("&Geschachtelte Tabellen umwandeln"); self.geschachtelt.setChecked(True)
@@ -344,7 +326,6 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, page=None):
         super().__init__(parent)
         from lunivo_writer.editor import seitenzahl as SZ
-        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
         self.setWindowTitle("Seitenzahl einfügen")
         v = QVBoxLayout(self)
         g = FormularGitter()                                                # passt sich der Breite an (Seitenleiste), nichts wird abgeschnitten
@@ -374,10 +355,10 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
             self._kapitel_teile += [t, feld]
         g.breit(abschnittstitel("Seitennummerierung"))
         self.fortsetzen = QRadioButton("Fortsetzen vom vorherigen Abschnitt (&o)"); self.beginnen = QRadioButton("&Beginnen mit:")
-        self.start = QSpinBox(); self.start.setRange(1, 9999); self.start.setMinimumHeight(34); self.start.setMinimumWidth(80)
+        self.start = QSpinBox(); self.start.setRange(1, 9999); self.start.setMinimumHeight(34)
         self.start.setAccessibleName("Beginnen mit")
         g.breit(self.fortsetzen)
-        z = QHBoxLayout(); z.addWidget(self.beginnen); z.addWidget(self.start); z.addStretch(1); g.breit(z)
+        z = FlussLayout(6); z.addWidget(self.beginnen); z.addWidget(self.start); g.breit(z)
         g.breit(abschnittstitel("Übernehmen für"))
         self.bereich = QButtonGroup(self)
         u = FlussLayout(10)
@@ -438,27 +419,21 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self._os, self._QInputDialog = os, QInputDialog
         self.setWindowTitle("Hyperlink")
         self.tipp = ""
-        h = QHBoxLayout(self)
-        from PySide6.QtWidgets import QFrame
-        links = QVBoxLayout(); t = QLabel("Link zu:"); t.setAlignment(Qt.AlignCenter); links.addWidget(t)
-        leiste = QFrame(); leiste.setFrameShape(QFrame.StyledPanel); leiste.setFixedWidth(164); lv = QVBoxLayout(leiste)
-        lv.setContentsMargins(4, 4, 4, 4); lv.setSpacing(4)
+        rechts = QVBoxLayout(self)
+        z = FormularGitter()                                                   # passt sich der Breite an (Seitenleiste: untereinander)
+        z.breit(abschnittstitel("Link zu"))
         self.arten = QButtonGroup(self)
+        fl = FlussLayout(6)                                                    # die drei Ziele, bei Platzmangel untereinander
         for i, (sym, name) in enumerate((("kette", "&Datei oder Webseite"), ("textmarke", "Aktuelles D&okument"),
                                          ("briefumschlag", "E-Mail-Adre&sse"))):
             b = QToolButton(); b.setText(name); b.setIcon(icons.icon(sym, 24)); b.setIconSize(QSize(24, 24)); b.setCheckable(True)
-            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(True); b.setMinimumSize(152, 60)
-            self.arten.addButton(b, i); lv.addWidget(b)
-        lv.addStretch(1)
-        links.addWidget(leiste, 1); h.addLayout(links)
-        rechts = QVBoxLayout(); h.addLayout(rechts, 1)
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
-        z = FormularGitter()                                                   # passt sich der Breite an (Seitenleiste: untereinander)
+            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); b.setAutoRaise(True); b.setMinimumHeight(40)
+            self.arten.addButton(b, i); fl.addWidget(b)
+        z.breit(fl)
         self.text = QLineEdit(text); self.text.setMinimumHeight(34)
         quick = QPushButton("&QuickInfo …"); quick.setMinimumHeight(34); quick.clicked.connect(self._quickinfo)
         z.zeile(_titel("Anzuzeigender &Text:", self.text), self.text); z.breit(quick)
         rechts.addLayout(z)
-        self._teile = (h, leiste, lv)
         self.seiten = QStackedWidget(); rechts.addWidget(self.seiten, 1)
         # Seite 1: Datei oder Webseite
         s1 = QWidget(); v1 = QVBoxLayout(s1); v1.setContentsMargins(0, 0, 0, 0)
@@ -474,7 +449,7 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self.modell = QFileSystemModel(self); self.modell.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
         self.dateien = QListView(); self.dateien.setModel(self.modell); self.dateien.setViewMode(QListView.ListMode)
         self.dateien.setFlow(QListView.TopToBottom); self.dateien.setWrapping(True); self.dateien.setResizeMode(QListView.Adjust)
-        self.dateien.setGridSize(QSize(170, 26)); self.dateien.setUniformItemSizes(True); self.dateien.setMinimumSize(520, 240)
+        self.dateien.setGridSize(QSize(140, 26)); self.dateien.setUniformItemSizes(True); self.dateien.setMinimumHeight(180)
         self.dateien.setAccessibleName("Dateien")
         v1.addWidget(self.dateien, 1)
         az = FormularGitter()
@@ -501,13 +476,12 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self.stellen.expandAll(); self.stellen.setCurrentItem(anfang)
         self.seiten.addWidget(s2)
         # Seite 3: E-Mail-Adresse
-        s3 = QWidget(); g3 = QGridLayout(s3); g3.setContentsMargins(0, 0, 0, 0)
+        s3 = QWidget(); v3 = QVBoxLayout(s3); v3.setContentsMargins(0, 0, 0, 0); g3 = FormularGitter(); v3.addLayout(g3, 1)
         self.mail = QLineEdit(); self.mail.setMinimumHeight(34); self.betreff = QLineEdit(); self.betreff.setMinimumHeight(34)
         self.zuletzt = QListWidget(); self.zuletzt.addItems(adressen or []); self.zuletzt.setAccessibleName("Zuletzt verwendete E-Mail-Adressen")
-        g3.addWidget(_titel("E-&Mail-Adresse:", self.mail), 0, 0); g3.addWidget(self.mail, 1, 0)
-        g3.addWidget(_titel("&Betreff:", self.betreff), 2, 0); g3.addWidget(self.betreff, 3, 0)
-        g3.addWidget(_titel("&Zuletzt verwendete E-Mail-Adressen:", self.zuletzt), 4, 0); g3.addWidget(self.zuletzt, 5, 0)
-        g3.setRowStretch(5, 1)
+        g3.zeile(_titel("E-&Mail-Adresse:", self.mail), self.mail)
+        g3.zeile(_titel("&Betreff:", self.betreff), self.betreff)
+        g3.zeile(_titel("&Zuletzt verwendete E-Mail-Adressen:", self.zuletzt), self.zuletzt)
         self.seiten.addWidget(s3)
         self.ok = fussleiste(self, rechts)
         # Verbindungen
@@ -523,21 +497,6 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self.arten.button(0).setChecked(True)
         self._ordner_zeigen(self.ordner.currentText())
         self._pruefen()
-        self.resize(820, 470)
-
-    def kompakt_machen(self) -> None:
-        """In der Seitenleiste: „Link zu“ oben (drei Ziele untereinander, Bild neben dem Text), die Felder darunter in voller Breite."""
-        from PySide6.QtCore import QSize
-        from PySide6.QtWidgets import QBoxLayout, QToolButton
-        h, leiste, lv = self._teile
-        from PySide6.QtWidgets import QSizePolicy
-        h.setDirection(QBoxLayout.TopToBottom)                                 # „Link zu“ über den Feldern, die drei Ziele untereinander
-        leiste.setMinimumWidth(0); leiste.setMaximumWidth(16777215)
-        for b in leiste.findChildren(QToolButton):
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); b.setMinimumSize(0, 40)
-            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.ordner.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.ordner.setMinimumContentsLength(10)
-        self.dateien.setMinimumSize(0, 180); self.dateien.setGridSize(QSize(140, 26))
 
     def _ordner_setzen(self, pfad: str) -> None:
         if self.ordner.findText(pfad) < 0:
@@ -618,7 +577,6 @@ class ObjektDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import QFrame, QPushButton
         self.setWindowTitle("Objekt einfügen")
         self._ordner = ordner
-        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
         v = QVBoxLayout(self)
         g = FormularGitter()                                                   # in der Seitenleiste untereinander: Art, Objekttyp, Datei, Symbol
         self.neu = QRadioButton("&Neu"); self.aus_datei = QRadioButton("&Aus Datei erstellen")
@@ -635,13 +593,12 @@ class ObjektDialog(PanelFaehig, QDialog):
         g.breit(self.symbol)
         g.breit(abschnittstitel("Ergebnis"))
         v.addLayout(g)
-        kasten = QFrame(); kasten.setFrameShape(QFrame.StyledPanel); kh = QHBoxLayout(kasten)
+        kasten = QFrame(); kasten.setFrameShape(QFrame.StyledPanel); kh = QVBoxLayout(kasten)
         self.ergebnis_text = QLabel(); self.ergebnis_text.setWordWrap(True); kh.addWidget(self.ergebnis_text)
         v.addWidget(kasten)
         self.ok = fussleiste(self, v)
         self.datei.textChanged.connect(lambda _t: self._beschreiben()); self.symbol.toggled.connect(lambda _a: self._beschreiben())
         self._beschreiben()
-        self.resize(640, 0)
 
     def _suchen(self) -> None:
         from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen

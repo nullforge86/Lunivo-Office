@@ -85,6 +85,9 @@ def teil_bei(ed, pos) -> str | None:
         if k.startswith("reihe_") and geo.get("balken_" + k[6:]):                      # Säulen/Balken: nur die einzelnen Balken zählen
             if any(x.contains(lp) for x in geo["balken_" + k[6:]]):
                 treffer.append((0.0, k))
+        elif k == "gitter_haupt":                                                        # nur die Streifen um die Linien
+            if any(x.contains(lp) for x in geo.get("gitter_linien") or []):
+                treffer.append((1.0, k))
         elif rr.contains(lp):
             treffer.append((rr.width() * rr.height(), k))
     return min(treffer)[1] if treffer else "diagrammbereich"
@@ -147,7 +150,11 @@ def diagramm_teil_format_setzen(ed, teil: str | None = None, **kw) -> bool:
         alle[t] = fmt
     else:
         alle.pop(t, None)
-    ok = FO.aendern(ed, "diagramm", teil_format=alle or None)
+    extra = {}
+    if "text" in kw and isinstance(kw["text"], dict) and (kw["text"].get("feld") or {}).get("gerade"):
+        z = FO.ziel(ed)                                              # „Text nicht drehen“: die Drehung des Objekts merkt sich das Diagramm für das Zeichnen
+        extra["objekt_dreh"] = float(z[3].get("dreh", 0.0) or 0.0) if z else 0.0
+    ok = FO.aendern(ed, "diagramm", teil_format=alle or None, **extra)
     if ok and geaendert_fx:
         ok = FO.aendern(ed, "diagramm", form_effekt=obj_fx or None)
     return ok

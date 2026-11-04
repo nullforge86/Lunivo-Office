@@ -6,11 +6,10 @@ import json
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QRadioButton, QScrollArea, QToolButton, QVBoxLayout, QWidget,
+    QDialog, QFrame, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QRadioButton, QScrollArea,
+    QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.ribbon.plan import plan
 
@@ -159,8 +158,6 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
     """Ein Symbol austauschen — wie in der ersten Fassung: Getauscht wird die Zeichnung, nicht der Knopf; sie ändert sich überall,
     wo sie benutzt wird. Oben steht, wo das ist. Dazu Suche, 1800 Zeichnungen, eigene Zeichnung und Zurücksetzen."""
     GRENZE = 240
-    SPALTEN = 7
-    spalten = 7
 
     def __init__(self, parent, settings, name: str | None = None):
         super().__init__(parent)
@@ -178,20 +175,21 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         g.breit(_satz("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.", True))
         kopf = QFrame(); kopf.setObjectName("tauschKopf")
         kopf.setStyleSheet("QFrame#tauschKopf { border: 1px solid palette(midlight); border-radius: 8px; }")
-        kh = QHBoxLayout(kopf)
+        kh = FormularGitter(kopf); kh.setContentsMargins(8, 8, 8, 8)           # Symbol, darunter der Text: bei 300 px bricht nichts ab
         self.jetzt = QLabel(); self.jetzt.setFixedSize(40, 40); self.jetzt.setAlignment(Qt.AlignCenter)
         self.wo = QLabel(); self.wo.setWordWrap(True)
-        kh.addWidget(self.jetzt); kh.addWidget(self.wo, 1)
+        kh.breit(self.jetzt); kh.breit(self.wo)
         g.breit(kopf)
         self.suche = QLineEdit(); self.suche.setClearButtonEnabled(True); self.suche.setAccessibleName("Zeichnung suchen")
         self.suche.setPlaceholderText("Zeichnung suchen … (englisch: table, clock, save)")
         g.breit(self.suche)
         sc = QScrollArea(); sc.setWidgetResizable(True); sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         sc.setMinimumHeight(180)
-        self.gitter_halter = QWidget(); self.gitter = QGridLayout(self.gitter_halter)
-        self.gitter.setSpacing(4); self.gitter.setAlignment(Qt.AlignTop)
+        self.gitter_halter = QWidget(); self.gitter = FlussLayout(4)                  # so viele Zeichnungen je Zeile, wie in die Breite passen
+        self.gitter.setContentsMargins(4, 4, 4, 4); self.gitter_halter.setLayout(self.gitter)
         sc.setWidget(self.gitter_halter)
         g.breit(sc)
+        self.treffer = QLabel(); self.treffer.setWordWrap(True); self.treffer.setStyleSheet("color: palette(mid);"); g.breit(self.treffer)
         fuss = FlussLayout(6)
         self.b_eigene = QPushButton("Eigene Zeichnung …"); self.b_dieses = QPushButton("Dieses zurücksetzen"); self.b_alle = QPushButton("Alle zurücksetzen")
         for b in (self.b_eigene, self.b_dieses, self.b_alle):
@@ -206,13 +204,6 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         self.b_alle.clicked.connect(self._alle_zurueck)
         self._kopf_zeigen()
         self._gitter_zeigen()
-
-    def passe_an(self, breite: int, hoehe: int) -> None:
-        """In der Seitenleiste so viele Zeichnungen nebeneinander, wie in die Breite passen."""
-        n = max(3, min(self.SPALTEN, (breite - 40) // 56))
-        if n != self.spalten:
-            self.spalten = n
-            self._gitter_zeigen()
 
     # ---- Kopf: welches Symbol, und wo es steht --------------------------------------------------------------------
     def _befehle(self) -> list[str]:
@@ -252,13 +243,12 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
             k = QToolButton(); k.setFixedSize(52, 52); k.setToolTip(n); k.setAutoRaise(True)
             k.setIcon(QIcon(QPixmap.fromImage(icons.pfad_bild(pfad, 56, farbe)))); k.setIconSize(QSize(28, 28))
             k.clicked.connect(lambda _=False, n=n: self._waehle(n))
-            self.gitter.addWidget(k, gezeigt // self.spalten, gezeigt % self.spalten)
+            self.gitter.addWidget(k)
             gezeigt += 1
-        if not gefunden:
-            self.gitter.addWidget(QLabel("Keine Zeichnung mit diesem Namen."), 0, 0, 1, self.spalten)
-        elif gefunden > self.GRENZE:
-            self.gitter.addWidget(QLabel(f"{gefunden} gefunden, {self.GRENZE} gezeigt — die Suche genauer machen."),
-                                  gezeigt // self.spalten + 1, 0, 1, self.spalten)
+        self.treffer.setText("Keine Zeichnung mit diesem Namen." if not gefunden else
+                             f"{gefunden} gefunden, {self.GRENZE} gezeigt — die Suche genauer machen." if gefunden > self.GRENZE else "")
+        self.treffer.setVisible(bool(self.treffer.text()))
+        self.gitter.invalidate()
 
     # ---- Wirkung --------------------------------------------------------------------------------------------------
     def _anwenden(self, meldung: str) -> None:

@@ -98,6 +98,7 @@ Jeder Baustein macht genau eine Sache:
 | `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
 | `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
 | `FlussLayout` | `formular_gitter.py` | Reihe von Feldern, die wie Text umbricht (Beschriftung und Feld bleiben beisammen) |
+| `KartenRaster` | `karten_raster.py` | Raster mit gemeinsamem Maßsystem: gleich große Zellen, Spaltenzahl nach Breite; jedes Element belegt eine Rasterspanne `Spalten×Zeilen` (`1×1`, `2×1`, `2×2`, `3×1`), die zentral in `SPANNEN` benannt ist (`addWidget(w, "breit")` oder Eigenschaft `raster_spanne`). Gleiche Spanne = gleiche Außenmaße; zu breite Spannen werden auf die vorhandenen Spalten gekürzt (ganze Zeile), nichts wird abgeschnitten. `spalten_fest=1` = untereinander (Funktionszeilen der Schreibhilfe in `werkbank.py`); `kurze_gruppen_ins_raster` setzt in jedem Seitenleisten-Fenster kurze Ankreuzfelder/Knöpfe nebeneinander |
 | `EingabeFenster` | `eingabe_fenster.py` | kleine Abfrage in der Seitenleiste (Frage + Auswahlliste oder Textfeld): `getItem(parent, titel, frage, eintraege, aktuell)` / `getText(...)` wie `QInputDialog`, Rückgabe `(Text, ok)` |
 | `ausfuehren_im_stapel` | `zusatz_panel.py` | ein `PanelFaehig`-Fenster in einem beliebigen `QStackedWidget` zeigen (z. B. die Fenster der Suche in der **linken** Seitenleiste, ohne dass sich die rechte öffnet) |
 | `schmal_machen` | `schmal.py` | **Notbehelf** für Fenster, die noch nicht aus Bausteinen gebaut sind: bricht zu breite Zeilen nachträglich um. Neue Fenster bauen mit `FormularGitter`, nicht darauf verlassen |
@@ -110,7 +111,7 @@ Form, SmartArt, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Baustein, Inha
 Beschriftung, Querverweis, Empfänger, Seriendruckfeld, Felder zuordnen, Wörter zählen, Wasserzeichen). Breite Fenster (Hyperlink,
 Inhaltsverzeichnis, Diagramm) stellen ihre Spalten in `kompakt_machen()` untereinander (ein so senkrecht gestelltes `QHBoxLayout` lässt
 `schmal_machen` in Ruhe). Was in der Vorlage rechts daneben steht (Vorschau, „Übernehmen für“), steht in der Seitenleiste darunter;
-Vorschaubilder verkleinern sich mit der Breite. Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
+Vorschaubilder verkleinern sich mit der Breite. Ebenfalls auf `FormularGitter`/`FlussLayout` umgebaut: Umschlag, Etiketten, Seriendruck, Regel, Quelle, Textmarke, Quellen verwalten, Formularfeld, Silben farbig (Test in `test_fenster_seitenleiste_weitere.py`). Weitere Fenster (Register anpassen, Symbole, Benutzeroberfläche, Lesehilfe, Welche Hilfe wann, Abfragen, Diagrammdaten, Tabelleneigenschaften, Bild zuschneiden): `tests/test_fenster_seitenleiste_weitere.py`. Prüfung: `tests/test_fenster_seitenleiste.py` — jedes Fenster bei 444 und bei 300 px,
 nichts darf links oder rechts herausragen. Neue Seitenleisten-Fenster dort in `FENSTER` eintragen.
 Unterfenster eines Seitenleisten-Fensters (z. B. Diagrammdaten) öffnen über `zeige_unter` im selben Stapel.
 
@@ -146,7 +147,7 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Seitenzahlen | `editor/seitenzahl.py` | `VORGABEN`, `MUSTER`, `seitenzahl_setzen(page, ort, ausrichtung, muster)`, `seitenzahlen_entfernen` (arbeiten auf `PageSettings`) |
 | Formenkatalog | `editor/formen_katalog.py` | `KATEGORIEN` (Linie … Legenden), `pfad(name, r)`, `ist_linie`, `namen`; `editor.einfuegen.form_bild` zeichnet damit |
 | Gleichungen, WordArt | `editor/einfuegen.py` | `GLEICHUNGEN`, `formel_bild`, `WORDART_VORGABEN`, `DECKBLATT_VORLAGEN` |
-| Diagramme | `editor/diagramm.py` | `TYPEN` (Säule … Kombination, Gruppe ohne Untertyp bleibt grau), `bild(untertyp, titel, kategorien, reihen)` → `QImage` über QtCharts in einer eigenen `QGraphicsScene`; `ALT` für frühere Namen |
+| Diagramme | `editor/diagramm.py`, `editor/diagramm_kreis.py` | `TYPEN` (Säule, Linie ×6, Kreis ×5, Balken, Fläche ×3, X Y ×7 mit Blase, Kurs ×4 mit Volumen, Netz, Kombination; „Vorlagen“ ist im Fenster eine leere Seite, `VORLAGEN` nur für alte Dokumente), `bild(untertyp, titel, kategorien, reihen)` → `QImage` über QtCharts in einer eigenen `QGraphicsScene`; `beispiel(untertyp)` liefert die Beispieldaten des Fensters; `namen_angewendet` setzt die Namensquelle (`zeile1`/`spalte_a`/`keine`, Befehl `diagrammNamenQuelle`); 3D-Kreis, Kreis von Kreis und Balken von Kreis zeichnet `diagramm_kreis.py` mit QPainter; `ALT` für frühere Namen |
 | Diagramm formatieren | `ui/baukasten/diagramm_format_panel.py`, `editor/diagramm_format.py` | Seitenleiste „Formatierung“ je Diagrammteil: baut auf `ObjektFormatPanel` (Füllung, Linie, Effekte; Erweiterungspunkte `_zusatz_radios`/`_zusatz_felder`) und `TexteffektPanel` (Textoptionen + Schrift + Textfeld) auf; Optionen von Legende, Achse (Skala), Reihe (Lückenbreite, Glättung, Pfeile); Größe/Drehung/Alternativtext beim Diagrammbereich. Gezeichnet mit `freie_bilder` (Pinsel, Stift), `bildeffekte`, `textfx`; Datenmodell `daten["teil_format"][teil]` siehe Kopf von `diagramm_format.py` |
 | Fenster | `ui/dialogs/einfuegen_fenster.py` | `ZahlDialog`, `FelderDialog`, `TrennerDialog` (Text in Tabelle / Tabelle in Text), `SeitenzahlDialog`, `HyperlinkDialog` (Datei/Webseite, Stelle im Dokument, E-Mail; `ergebnis()`), `ObjektDialog` (aus Datei, als Symbol; `art()`) — ändern das Dokument nicht selbst |
 | Fenster (Daten) | `ui/dialogs/einfuegen_dialoge.py` | `DiagrammDialog` mit `DiagrammDatenDialog`, `DatumDialog` (Formate, Sprache, „Automatisch aktualisieren“ → Feld), `WordArtDialog`, `FormelDialog` |
@@ -206,7 +207,7 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Beschriftung | `beschriftung.py` | Beschriftungen mit Schrifteigenschaften oder Markdown (`Qt.MarkdownText`) |
 | Bild vergrößern | `bild_zoom.py` | Fenster „Vergrößern“ (Lupe in der Schnellleiste am Bild): Bild in seiner Auflösung, Zoom mit Regler und Mausrad |
 | Dateisymbole | `datei_symbole.py` | lokale Dateityp-Symbole aus der zentralen Symbolsammlung |
-| Diagramm-Popups | `diagramm_popups.py` | Popups der Schnellleiste am Diagramm und Klappen der Diagrammtools — Band und Schnellleiste zeigen dasselbe |
+| Diagramm-Popups | `diagramm_popups.py` | Popups der Schnellleiste am Diagramm und Klappen der Diagrammtools — Band und Schnellleiste zeigen dasselbe; Schnelllayout: 11 Kacheln in der Reihenfolge des Fotos (`SCHNELLLAYOUT_ANZEIGE` → Nummer in `SCHNELLLAYOUTS`, `core/befehle/diagrammtools.py`; Nummern bleiben stabil); Filter, Reiter „Name“: Radiogruppen für die Namensquelle |
 | Druckfenster | `druck_dialog.py` | Vorschau links, rechts die Reiter „Standard“, „Lunivo-Office“ und „Drucker“ |
 | Druckvorschau | `druckvorschau.py` | Druckvorschau als ganzes Fenster: Blattwechsel, Ansicht (eine, zwei, alle Seiten), Zoom, Einpassen |
 | Einklappgruppe | `einklappgruppe.py` | eingeklappte Gruppe („Weitere Einstellungen“): Knopf mit Pfeil, darunter der Inhalt auf Wunsch |
@@ -250,3 +251,29 @@ Die drei großen Klassen sind nach Aufgaben in Bausteine (Mixins) geteilt. Die H
 
 Regel: Ein neuer Befehl, eine neue Editor-Funktion oder eine neue Optionen-Seite kommt in den Baustein ihrer Aufgabe, nicht in die Hauptdatei.
 Bausteine kennen die Hauptdatei nicht (kein Import zurück); Werte, die mehrere brauchen, stehen in `gemeinsam.py` des jeweiligen Ordners.
+
+## Bausteine der Seitenleiste „Formatierung“ für Diagramme
+
+Jeder Baustein liegt in einer eigenen Datei unter `ui/baukasten/` und hat eine Aufgabe. Eingebunden werden sie nur im Diagramm-Panel
+(`diagramm_format_panel.py`) durch Mixins und Komposition. Die Basis (`objektformat_panel.py`, `texteffekt_dialog.py`, `formular_gitter.py`,
+`farbpalette.py`, `schiebe_feld.py`, `linien.py`) bleibt unverändert; Form-Panel, SmartArt-Panel und das Fenster „Texteffekte“ sehen aus wie zuvor
+(Schalter `NUR_DREI_EFFEKTE`, `AUTO_FELDER`, `KOPF_MENUES`, `FOTO` im SmartArt-Panel auf `False`).
+Vorlage: die Fotos in `~/Schreibtisch/Illustrationen/Diagram/`; Abgleich Foto für Foto in `docs/pruefung-illustrationen.md`.
+
+| Baustein | Datei | Aufgabe | Meldet |
+|---|---|---|---|
+| Flache Reiterleiste | `flache_reiter_leiste.py` | `FlacheReiterLeiste(QTabBar)` in zwei Arten: Hauptreiter (Großbuchstaben, aktiver fett mit Linie) und Unterreiter (Symbol oben, Beschriftung darunter, bricht um, aktiv blau); `flach_machen(reiter, art)` setzt sie in ein `QTabWidget`; zeichnet den Teil-Pfeil „▾“ hinter dem Reitertext | Klick auf den Pfeil |
+| Teilmenü | `teil_menue.py` | `TeilMenueKnopf`: Liste der Diagrammteile als Popup mit Haken beim aktuellen | `gewaehlt(str)` |
+| Auto-Felder | `auto_felder_mixin.py` | Bei „Automatisch“ stehen Füll- und Linienfelder sichtbar, aber grau | – |
+| Strichauswahl | `strich_auswahl.py` | Dropdown mit Strichvorschau (Kombinierter Typ 5, Strichtyp 8 Zeilen) | `gewaehlt(str)` |
+| Effekte (3) | `effekte_drei_mixin.py`, `abschnitt_gruppe.py`, `winkel_feld.py` | Nur Schatten, Leuchten, Weiche Kanten, zugeklappt, höchstens einer offen (`EinzelOffen`), Nullwerte, Schatten-Winkel mit Drehknopf (`WinkelFeld`) | – |
+| Kopfmenüs | `kopf_dropdown.py`, `fuell_voreinstellungen.py`, `linien_voreinstellungen.py`, `kopf_menue_mixin.py` | Dropdown im Kopf von FÜLLUNG und LINIE (Keine, Designfarben, Graduelle, Muster, Struktur; Voreingestellte Linie 8×4) | `gewaehlt(str)` |
+| Text-Kopfmenüs | `text_kopf_menue_mixin.py` | dasselbe für TEXTFÜLLUNG und TEXTKONTUR, ohne die Basis zu ändern | – |
+| Textfüllarten | `text_fuellarten_mixin.py` | Fünf Radios der Textfüllung (Bild/Textur, Muster) mit `fuell_pinsel` | – |
+| Alternativtext | `alternativtext_abschnitt.py` | Titel und Beschreibung mit 400 ms Verzögerung | `geaendert(titel, text)` |
+| Textfeld | `textfeld_abschnitt.py` | Ausrichtung, Textrichtung, Textwinkel, Ränder in Inch (intern pt), „Text nicht drehen“ | `geaendert()` |
+
+| `ui/dialogs/smartart_dialog_foto.py` | `SmartArtDialogFoto(SmartArtDialog)`: SmartArt einfügen nach der Vorlage (Reiter „Alle“, Kacheln 126 x 76 px, Vorschau darunter mit Name und Beschreibung, blauer OK-Knopf); `SmartArtDialog` bleibt für das Bearbeiten |
+| `ui/baukasten/smartart_stil_kacheln.py` | `stil_bild_org(nr, groesse)`, `stile_galerie_org(b)`: Stilkacheln im Band „SmartArt-Design“ mit Organigramm-Motiv, Galerie `smartartStile` |
+| `ui/baukasten/layout_dialog_objekt.py` | `LayoutDialogObjekt(LayoutDialog)`, Fabrik `layout_dialog_fuer(art)`: Fenster „Layout“ nach der Vorlage — Position bei „Im Textfluss“ grau, „Relativ“ immer grau, Abstand Oben/Unten/Links/Rechts, bei SmartArt Drehung, Original-Skalierung und Zurücksetzen gesperrt, Originalgröße leer; `LayoutDialog` bleibt für Absatz/Tabelle |
+| `ui/baukasten/layout_optionen_objekt.py` | `LayoutOptionenObjekt(LayoutOptionen)`: Popup „Layoutoptionen“ mit ✕ im Kopf, Kacheln 50 px, Eigenschaft `verschieben_wahl` (`"mit_text"`, `"fest"`, None = beide Radios leer) |

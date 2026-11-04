@@ -15,10 +15,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import (QHBoxLayout, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget, QWidgetItem)
+from PySide6.QtWidgets import (QAbstractSpinBox, QComboBox, QHBoxLayout, QPushButton, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget, QWidgetItem)
 
-ABSTAND = 8
-SPALTEN_ABSTAND = 16
+ABSTAND = 6
+SPALTEN_ABSTAND = 10
 
 
 class UmbruchSchalter(QCheckBox):
@@ -57,7 +57,7 @@ class UmbruchSchalter(QCheckBox):
         p.setPen(self.palette().color(self.foregroundRole() if self.isEnabled() else self.palette().ColorRole.WindowText))
         if not self.isEnabled():
             p.setPen(self.palette().color(self.palette().ColorGroup.Disabled, self.palette().ColorRole.WindowText))
-        p.drawText(QRect(rand, 2, self.width() - rand, self.height() - 2), Qt.TextWordWrap | Qt.TextShowMnemonic | Qt.AlignTop | Qt.AlignLeft, self.text())
+        p.drawText(QRect(rand, 0, self.width() - rand, self.height()), Qt.TextWordWrap | Qt.TextShowMnemonic | Qt.AlignVCenter | Qt.AlignLeft, self.text())
 
 
 class FlussLayout(QLayout):
@@ -179,7 +179,31 @@ def _natuerlich(item: QLayoutItem) -> int:
     return max(item.sizeHint().width(), item.minimumSize().width())
 
 
+FELDHOEHE = 32                                                # einzeilige Felder (Menü, Farbe, Zahl, Text) in der Feldspalte der Seitenleiste: alle gleich hoch
+_EINZEILIG = ("QComboBox", "QPushButton", "QLineEdit", "QDoubleSpinBox", "QSpinBox", "FarbFeld", "KopfDropdown", "SchrittFeld", "StrichAuswahl")
+
+
+def einzeilig(item: QLayoutItem) -> bool:
+    w = item.widget()
+    return w is not None and any(c.__name__ in _EINZEILIG for c in type(w).__mro__)
+
+
+def felder_angleichen(wurzel: QWidget) -> None:
+    """Alle einzeiligen Felder (Menü, Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``: eine Quelle für die Höhe, auch für
+    Felder, die nicht im ``FormularGitter`` mit Feldspalte stehen (Einheitenfelder, Unterfenster). Knöpfe fester Größe (Kacheln, Symbole) bleiben."""
+    for w in wurzel.findChildren(QWidget):
+        if isinstance(w.parent(), (QAbstractSpinBox, QComboBox)) or not any(c.__name__ in _EINZEILIG for c in type(w).__mro__):
+            continue
+        if isinstance(w, QPushButton) and (not w.text() or (w.minimumWidth() == w.maximumWidth() and w.minimumWidth() > 0)):
+            continue
+        w.setFixedHeight(FELDHOEHE)
+
+
 class FormularGitter(QLayout):
+    _flach: list = []                                         # Vorgabe, solange QLayout.__init__ schon itemAt() ruft (vor __init__ dieser Klasse)
+    _einheiten: list = []
+    feldbreite = 0                                            # > 0: Felder in fester Breite rechtsbündig, Beschriftungen links (Seitenleiste „Formatierung“); 0: Feld füllt den Rest
+
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._einheiten: list[_Einheit] = []
@@ -215,7 +239,7 @@ class FormularGitter(QLayout):
         self._einheiten.append(_Einheit(None, self._nimm(objekt)))
         self.invalidate()
 
-    def reihe(self, *paare, gewichte: tuple | None = None) -> None:
+    def reihe(self, *paare, gewichte: tuple | None = None, vorn: bool = False) -> None:
         """Mehrere Felder nebeneinander, jedes mit der Beschriftung darüber: ``reihe(("Schriftart:", a), ("Größe:", b), gewichte=(3, 1))``.
         Zu eng für eine Zeile, brechen die Felder um (im Äußersten eines je Zeile)."""
         liste = []
@@ -224,7 +248,7 @@ class FormularGitter(QLayout):
             if isinstance(bi.widget(), QLabel):
                 bi.widget().setWordWrap(False)
             liste.append((bi, self._nimm(f)))
-        self._einheiten.append(_Einheit(None, liste[0][1], liste, gewichte))
+        self._einheiten.insert(0 if vorn else len(self._einheiten), _Einheit(None, liste[0][1], liste, gewichte))      # ``vorn``: als erste Reihe
         self.invalidate()
 
     # ---- QLayout ---------------------------------------------------------------------------------------
@@ -271,6 +295,20 @@ class FormularGitter(QLayout):
         r = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
         for item, x, y, w, h in self._plan(r.width())[0]:
             item.setGeometry(QRect(r.x() + x, r.y() + y, w, h))
+        self._beschriftungen_nachfuehren()
+
+    def _beschriftungen_nachfuehren(self) -> None:
+        """Ein ausgeblendetes Feld nimmt seine Beschriftung mit (sonst bliebe sie als Waise am alten Platz stehen); wird das Feld wieder gezeigt, kommt sie zurück."""
+        versteckt = self.__dict__.setdefault("_versteckt", set())
+        for e in self._einheiten:
+            for b, f in (e.reihe or ([(e.b, e.f)] if e.b is not None else [])):
+                w = b.widget() if b is not None else None
+                if w is None:
+                    continue
+                if f.isEmpty() and w.isVisibleTo(w.parentWidget() or w):
+                    w.setVisible(False); versteckt.add(w)
+                elif not f.isEmpty() and w in versteckt:
+                    w.setVisible(True); versteckt.discard(w)
 
     # ---- die Anordnung ---------------------------------------------------------------------------------
     def _reihe_legen(self, e: _Einheit, breite: int, y: int, out: list) -> int:
@@ -296,8 +334,43 @@ class FormularGitter(QLayout):
             y += hmax + ABSTAND
         return y
 
+    @staticmethod
+    def _kurz(e: _Einheit, breite: int) -> bool:
+        """Ein einzelnes Ankreuzfeld, Optionsfeld oder ein Knopf, der höchstens eine halbe Zeile braucht."""
+        w = e.f.widget()
+        if w is None or e.reihe is not None or e.b is not None:
+            return False
+        if w.property("einspaltig"):                                              # z. B. Füllungsart/Linienart: immer eine Option je Zeile
+            return False
+        if not any(c.__name__ in ("QCheckBox", "QRadioButton", "QPushButton", "QToolButton") for c in type(w).__mro__):
+            return False
+        return _natuerlich(e.f) <= (breite - SPALTEN_ABSTAND) // 2
+
+    def _gleich_hoch(self) -> None:
+        """Alle einzeiligen Bedienelemente (Menü, Zahl, Text, Knopf) dieses Formulars gleich hoch: die Höhe des höchsten natürlichen Elements, ohne feste Pixelwerte."""
+        ws: list[QWidget] = []
+
+        def sammle(item) -> None:
+            if item is None:
+                return
+            if item.widget() is not None:
+                if einzeilig(item):
+                    ws.append(item.widget())
+            elif item.layout() is not None:
+                for i in range(item.layout().count()):
+                    sammle(item.layout().itemAt(i))
+        for it in self._flach:
+            sammle(it)
+        if len(ws) < 2:
+            return
+        h = max((w.sizeHint().height() for w in ws if w.sizeHint().height() <= 40), default=0)       # ein ungewöhnlich hohes Element (Bildknopf) bestimmt die Höhe nicht
+        for w in ws:
+            if h and w.minimumHeight() < h <= w.maximumHeight():
+                w.setMinimumHeight(h)
+
     def _plan(self, breite: int):
         """→ ([(Element, x, y, Breite, Höhe)], Gesamthöhe) bei dieser Breite."""
+        self._gleich_hoch()
         einheiten = [e for e in self._einheiten if not e.f.isEmpty()]            # ausgeblendete Felder (und Feldgruppen) lassen keinen Abstand stehen
         paare = [e for e in einheiten if e.b is not None]
         bw = max((_natuerlich(e.b) for e in paare), default=0)                    # Breite der Beschriftungen
@@ -305,6 +378,10 @@ class FormularGitter(QLayout):
         wunsch = bw + ABSTAND + fw
         spalten = 2 if paare and 2 * wunsch + SPALTEN_ABSTAND <= breite else 1
         gestapelt = bool(paare) and wunsch > breite                               # zu eng für „Beschriftung links“: darüber
+        if self.feldbreite and paare:                                             # feste Feldspalte: nur zu schmal für Beschriftung + Feld → Beschriftung darüber
+            gestapelt = breite < self.feldbreite + ABSTAND + 90
+            spalten = 1
+            bw = max(0, breite - self.feldbreite - ABSTAND)
         out, y = [], 0
         i = 0
         n = len(einheiten)
@@ -314,6 +391,20 @@ class FormularGitter(QLayout):
                 y = self._reihe_legen(e, breite, y, out); i += 1
                 continue
             if e.b is None:                                                       # breites Element: eine ganze Zeile
+                if self._kurz(e, breite):                                         # kurze Einzelelemente (Ankreuzfeld, Option, Knopf) stehen zu zweit/zu dritt nebeneinander
+                    for n_sp in (3, 2):
+                        gruppe = einheiten[i:i + n_sp]
+                        cw = (breite - (n_sp - 1) * SPALTEN_ABSTAND) // n_sp
+                        if len(gruppe) == n_sp and all(g.reihe is None and g.b is None and self._kurz(g, breite) and _natuerlich(g.f) <= cw for g in gruppe):
+                            h = max(_hoehe_bei(g.f, cw) for g in gruppe)
+                            for k, g in enumerate(gruppe):
+                                out.append((g.f, k * (cw + SPALTEN_ABSTAND), y, cw, h))
+                            y += h + ABSTAND; i += n_sp
+                            break
+                    else:
+                        h = _hoehe_bei(e.f, breite)
+                        out.append((e.f, 0, y, breite, h)); y += h + ABSTAND; i += 1
+                    continue
                 h = _hoehe_bei(e.f, breite)
                 out.append((e.f, 0, y, breite, h)); y += h + ABSTAND; i += 1
                 continue
@@ -330,11 +421,13 @@ class FormularGitter(QLayout):
                     hf = _hoehe_bei(u.f, sp)
                     plaetze.append((u.b, x0, 0, sp, hb)); plaetze.append((u.f, x0, hb + 2, sp, hf)); hmax = max(hmax, hb + 2 + hf)
                 else:
-                    fb = max(40, sp - bw - ABSTAND)
+                    fb = self.feldbreite if self.feldbreite else max(40, sp - bw - ABSTAND)
                     hf = _hoehe_bei(u.f, fb)
+                    if self.feldbreite and einzeilig(u.f):
+                        u.f.widget().setFixedHeight(FELDHOEHE); hf = FELDHOEHE
                     hb = u.b.sizeHint().height()
                     h = max(hb, hf)
-                    plaetze.append((u.b, x0, (h - hb) // 2, bw, hb)); plaetze.append((u.f, x0 + bw + ABSTAND, 0, fb, hf)); hmax = max(hmax, h)
+                    plaetze.append((u.b, x0, (h - hb) // 2, bw, hb)); plaetze.append((u.f, x0 + sp - fb if self.feldbreite else x0 + bw + ABSTAND, 0, fb, hf)); hmax = max(hmax, h)
             for it, x, dy, w, h in plaetze:
                 out.append((it, x, y + dy, w, h))
             y += hmax + ABSTAND

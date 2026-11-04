@@ -22,25 +22,30 @@ from lunivo_writer.editor import diagramm_zusatz as Z
 TYPEN = [
     ("Säule", "saeule", [("saeule_gruppiert", "Gruppierte Säule"), ("saeule_gestapelt", "Gestapelte Säule"),
                          ("saeule_100", "100 % gestapelte Säule")]),
-    ("Linie", "linie", [("linie", "Linie"), ("linie_punkte", "Linie mit Datenpunkten"), ("linie_glatt", "Geglättete Linie")]),
-    ("Kreis", "kreis", [("kreis", "Kreis"), ("ring", "Ring")]),
+    ("Linie", "linie", [("linie", "Linie"), ("linie_gestapelt", "Gestapelte Linie"), ("linie_100", "100 % gestapelte Linie"),
+                        ("linie_punkte", "Linie mit Datenpunkten"), ("linie_punkte_gestapelt", "Gestapelte Linie mit Datenpunkten"),
+                        ("linie_punkte_100", "100 % gestapelte Linie mit Datenpunkten")]),
+    ("Kreis", "kreis", [("kreis", "Kreis"), ("kreis_3d", "3D-Kreis"), ("kreis_von_kreis", "Kreis von Kreis"),
+                        ("kreis_balken", "Balken von Kreis"), ("ring", "Ring")]),
     ("Balken", "balkenquer", [("balken_gruppiert", "Gruppierte Balken"), ("balken_gestapelt", "Gestapelte Balken"),
                               ("balken_100", "100 % gestapelte Balken")]),
-    ("Fläche", "flaeche", [("flaeche", "Fläche"), ("flaeche_gestapelt", "Gestapelte Fläche")]),
-    ("X Y (Punkt)", "punktwolke", [("punkte", "Punkt"), ("punkte_linien", "Punkt mit Linien")]),
-    ("Kurs", "kurs", [("kurs_hts", "Höchst-Tiefst-Schluss"), ("kurs_ohts", "Eröffnung-Höchst-Tiefst-Schluss")]),
+    ("Fläche", "flaeche", [("flaeche", "Fläche"), ("flaeche_gestapelt", "Gestapelte Fläche"), ("flaeche_100", "100 % gestapelte Fläche")]),
+    ("X Y (Punkt)", "punktwolke", [("punkte", "Punkte"), ("punkte_glatt_punkte", "Punkt mit geglätteten Linien und Datenpunkten"),
+                                   ("punkte_glatt", "Punkt mit geglätteten Linien"), ("punkte_gerade_punkte", "Punkt mit geraden Linien und Datenpunkten"),
+                                   ("punkte_gerade", "Punkt mit geraden Linien"), ("punkte_blase", "Blase"), ("punkte_blase_3d", "3D-Blase")]),
+    ("Kurs", "kurs", [("kurs_hts", "Höchst-Tiefst-Schluss"), ("kurs_ohts", "Eröffnung-Höchst-Tiefst-Schluss"),
+                      ("kurs_vhts", "Volumen-Höchst-Tiefst-Schluss"), ("kurs_vohts", "Volumen-Eröffnung-Höchst-Tiefst-Schluss")]),
     ("Netz", "netz", [("netz", "Netz"), ("netz_punkte", "Netz mit Datenpunkten"), ("netz_gefuellt", "Gefülltes Netz")]),
     ("Kombination", "kombination", [("kombination", "Gruppierte Säulenlinie"),
                                     ("kombi_sekundaer", "Gruppierte Säule - Linie auf Sekundärachse"),
                                     ("kombi_flaeche", "Gestapelte Fläche - Gruppierte Säule"),
                                     ("kombi_eigen", "Benutzerdefinierte Kombination")]),
-    ("Vorlagen", "vorlagen", [("vorlage_klar", "Klar"), ("vorlage_blau", "Blautöne"), ("vorlage_gruen", "Grüntöne"),
-                              ("vorlage_warm", "Warme Farben"), ("vorlage_grau", "Graustufen"), ("vorlage_kreis", "Kreis bunt")]),
 ]
 # Reihentypen der Kombination (Spalte „Diagrammtyp“ im Fenster)
 KOMBI_TYPEN = [("saeule", "Gruppierte Säule"), ("saeule_gestapelt", "Gestapelte Säule"), ("linie", "Linie"),
                ("linie_punkte", "Linie mit Datenpunkten"), ("flaeche", "Fläche"), ("flaeche_gestapelt", "Gestapelte Fläche")]
-# Vorlagen: fertige Farbreihen zu einer Diagrammart
+# Vorlagen: fertige Farbreihen zu einer Diagrammart. Nicht mehr in ``TYPEN`` (die Gruppe „Vorlagen“ im Fenster ist eine eigene, später
+# benutzerverwaltete Liste); die feste Liste bleibt für ältere Dokumente und das Menü „Diagrammstile ▸ Vorlagen“.
 VORLAGEN = {
     "vorlage_klar": ("saeule_gruppiert", ["#4a8fd8", "#ef8a3c", "#9aa0a6", "#f2b705", "#2f6fb5", "#5aa454"]),
     "vorlage_blau": ("saeule_gruppiert", ["#1c4f8c", "#3a7bd5", "#7fb0ea", "#b9d4f5", "#0e2f57", "#5c93d8"]),
@@ -50,12 +55,44 @@ VORLAGEN = {
     "vorlage_kreis": ("kreis", ["#4a8fd8", "#ef8a3c", "#5aa454", "#f2b705", "#9b59b6", "#e74c3c"]),
 }
 NAMEN = {u: n for _g, _s, unter in TYPEN for u, n in unter}
+NAMEN["linie_glatt"] = "Geglättete Linie"          # versteckter Altname: wird gezeichnet, steht aber nicht mehr im Fenster
 # Beispieldaten, mit denen das Fenster öffnet (wie in der Vorlage: vier Rubriken, drei Datenreihen)
 BEISPIEL_KATEGORIEN = ["Rubrik 1", "Rubrik 2", "Rubrik 3", "Rubrik 4"]
 BEISPIEL_REIHEN = {"Datenreihe 1": [4.1, 2.8, 3.3, 4.6], "Datenreihe 2": [2.6, 4.2, 1.7, 2.9], "Datenreihe 3": [1.9, 2.2, 3.1, 4.8]}
 FARBEN = ["#4a8fd8", "#ef8a3c", "#9aa0a6", "#f2b705", "#2f6fb5", "#5aa454"]
 # frühere Namen (gespeicherte Diagramme, ältere Aufrufe)
-ALT = {"Säulen": "saeule_gruppiert", "Balken": "balken_gruppiert", "Linie": "linie", "Kreis": "kreis"}
+ALT = {"Säulen": "saeule_gruppiert", "Balken": "balken_gruppiert", "Linie": "linie", "Kreis": "kreis",
+       "punkte_linien": "punkte_gerade_punkte"}       # „Punkt mit Linien“ (Punkte und gerade Linien)
+
+
+def ist_kreis(u: str) -> bool:
+    """Alle Kreisarten (Kreis, 3D-Kreis, Kreis/Balken von Kreis, Ring)."""
+    return u.startswith("kreis") or u == "ring"
+
+
+def hat_linien(u: str) -> bool:
+    """Arten mit Linienreihen (Pfeile, Linienformat)."""
+    return u.startswith(("linie", "punkte_gerade", "punkte_glatt"))
+
+
+def beispiel(untertyp: str) -> tuple[str, list[str], dict[str, list[float]]]:
+    """Beispieldaten für die Vorschau im Fenster nach Art des Untertyps (wie die Vorlage): (Titel, Rubriken, Reihen)."""
+    u = ALT.get(untertyp, untertyp)
+    if u.startswith("kreis") or u == "ring":
+        return "Vertrieb", ["1. Quartal", "2. Quartal", "3. Quartal", "4. Quartal"], {"Vertrieb": [8.2, 3.2, 1.4, 1.2]}
+    datum = ["05/01/2002", "06/01/2002", "07/01/2002", "08/01/2002"]
+    if u.startswith("kurs_v"):
+        r = {"Volumen": [4500.0, 6800.0, 5200.0, 7400.0]}
+    elif u.startswith("kurs"):
+        r = {}
+    elif u.startswith(("flaeche", "netz")):
+        return "Diagrammtitel", datum, dict(BEISPIEL_REIHEN)
+    else:
+        return "Diagrammtitel", list(BEISPIEL_KATEGORIEN), dict(BEISPIEL_REIHEN)
+    r.update({"Eröffnung": [44.0, 25.0, 38.0, 50.0], "Höchst": [55.0, 57.0, 57.0, 58.0], "Tiefst": [11.0, 12.0, 13.0, 11.0],
+              "Schluss": [25.0, 38.0, 50.0, 34.0]} if "o" in u.split("_")[1] else {"Höchst": [55.0, 57.0, 57.0, 58.0], "Tiefst": [11.0, 12.0, 13.0, 11.0],
+                                                                                    "Schluss": [25.0, 38.0, 50.0, 34.0]})
+    return "Diagrammtitel", datum, r
 
 
 _PALETTE = FARBEN
@@ -113,7 +150,7 @@ def bild(untertyp: str, titel: str, kategorien: list[str], reihen: dict[str, lis
     else:
         nummern, keep, kat, reihen_f = _filtern(kategorien, reihen, ausgeblendet)
         kombi_f = [kombi[i] for i in nummern if i < len(kombi)] if kombi else kombi
-        if u in ("kreis", "ring"):
+        if ist_kreis(u):
             _PALETTE = [basis[j % len(basis)] for j in keep] or basis
         else:
             _PALETTE = [F.hauptfarbe((tf.get(f"reihe_{i}") or {}).get("fuell")) or basis[i % len(basis)] for i in nummern] or basis
@@ -127,14 +164,37 @@ def bild(untertyp: str, titel: str, kategorien: list[str], reihen: dict[str, lis
         _PALETTE = FARBEN
 
 
+NAMEN_QUELLEN = ("zeile1", "spalte_a", "keine")
+
+
+def namen_angewendet(kategorien: list[str], reihen: dict, ausgeblendet: dict | None, quelle: str | None) -> tuple[list[str], dict, dict | None]:
+    """Namensquelle (Reiter „Name“ des Diagrammfilters) auf die Daten anwenden, ohne sie zu ändern: ``zeile1`` = wie gespeichert; ``spalte_a`` = die
+    Namen kommen aus der ersten Spalte, Reihen und Rubriken tauschen die Plätze; ``keine`` = „Reihe 1 …“ und „1 …“. Der Filter wandert mit."""
+    aus = {k: list(v) for k, v in (ausgeblendet or {}).items()}
+    if quelle == "spalte_a" and reihen:
+        namen = list(reihen)
+        neu = {k: [(reihen[n][j] if j < len(reihen[n]) else 0.0) for n in namen] for j, k in enumerate(kategorien)}
+        return namen, neu, ({"reihen": aus.get("rubriken", []), "rubriken": aus.get("reihen", [])} if aus else None)
+    if quelle == "keine":
+        rn = {n: f"Reihe {i + 1}" for i, n in enumerate(reihen)}
+        kn = {k: str(j + 1) for j, k in enumerate(kategorien)}
+        return (list(kn.values()), {rn[n]: v for n, v in reihen.items()},
+                {"reihen": [rn[x] for x in aus.get("reihen", []) if x in rn], "rubriken": [kn[x] for x in aus.get("rubriken", []) if x in kn]} if aus else None)
+    return kategorien, reihen, ausgeblendet or None
+
+
 def bild_aus_daten(d: dict, b: float, h: float, skala: float = 1.0, geo: dict | None = None) -> QImage:
     """Das Diagramm aus den gespeicherten Daten (``a["daten"]``) in b × h Bildpunkten."""
+    F.OBJEKT_DREH = float(d.get("objekt_dreh") or 0.0)
     kombi = [(k[0], bool(k[1])) for k in d.get("kombi") or []] or None
-    return bild(d.get("art", "saeule_gruppiert"), d.get("titel", ""), list(d.get("kategorien") or BEISPIEL_KATEGORIEN),
-                dict(d.get("reihen") or BEISPIEL_REIHEN), max(120, round(b)), max(90, round(h)), legende=d.get("legende", True),
+    kat, reihen, aus = namen_angewendet(list(d.get("kategorien") or BEISPIEL_KATEGORIEN), dict(d.get("reihen") or BEISPIEL_REIHEN),
+                                        d.get("ausgeblendet"), d.get("namen_quelle"))
+    if d.get("namen_quelle") == "spalte_a":
+        kombi = None
+    return bild(d.get("art", "saeule_gruppiert"), d.get("titel", ""), kat, reihen, max(120, round(b)), max(90, round(h)), legende=d.get("legende", True),
                 kombi=kombi, farben=d.get("farben"), titel_an=d.get("titel_an", True), legende_pos=d.get("legende_pos", "unten"),
                 labels=d.get("labels", False), stil=int(d.get("stil", 0)), skala=skala, elemente=d.get("elemente"),
-                ausgeblendet=d.get("ausgeblendet"), teil_format=d.get("teil_format"), geo=geo)
+                ausgeblendet=aus, teil_format=d.get("teil_format"), geo=geo)
 
 
 def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=False, legende_pos="unten", labels=False, stil=0, skala=1.0,
@@ -150,7 +210,10 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
     ch.setTitle(titel); ch.setAnimationOptions(QChart.NoAnimation); ch.setBackgroundRoundness(0)
     namen = list(reihen)
     werte = [[float(v) for v in reihen[n]] for n in namen]
-    gestapelt = u.endswith("_gestapelt")
+    if u.startswith(("linie", "flaeche")) and u.endswith("_100"):           # 100 %: jede Rubrik auf Summe 100 bringen, dann wie gestapelt
+        summen = [sum(abs(w[j]) for w in werte if j < len(w)) or 1.0 for j in range(max((len(w) for w in werte), default=0))]
+        werte = [[v / summen[j] * 100.0 for j, v in enumerate(w)] for w in werte]
+    gestapelt = u.endswith("_gestapelt") or (u.endswith("_100") and u.startswith(("linie", "flaeche")))
     if gestapelt and werte:
         hoechst = max((sum(w[j] for w in werte if j < len(w)) for j in range(max(len(w) for w in werte))), default=1.0)
     else:
@@ -172,29 +235,46 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
             ay.applyNiceNumbers()                               # 0 … 5 statt 0 … 4,8
         return ax, ay
 
-    if u in ("kreis", "ring"):
+    if ist_kreis(u):
         s = QPieSeries()
         if u == "ring":
             s.setHoleSize(0.45)
+        eigen = u in ("kreis_3d", "kreis_von_kreis", "kreis_balken")       # diese zeichnet ``diagramm_kreis`` selbst; die Scheiben von QtCharts bleiben unsichtbar
         for i, (k, v) in enumerate(zip(kategorien, werte[0] if werte else [])):
             sl = s.append(k, v); sl.setColor(_farbe(i)); sl.setLabelVisible(not legende or labels)
             sl.setLabel(f"{k}: {v:g}" if labels else k)
+            if eigen:
+                sl.setBrush(QBrush(Qt.transparent)); sl.setPen(QPen(Qt.NoPen)); sl.setLabelVisible(False)
         ch.addSeries(s)
+        if eigen:
+            for m, sl in zip(ch.legend().markers(s), s.slices()):
+                m.setBrush(QBrush(_farbe(s.slices().index(sl)))); m.setPen(QPen(Qt.NoPen))
     elif u == "kombination" or u.startswith("kombi_"):
         _kombination(ch, kombi or kombi_vorgabe(u, len(namen)), namen, werte, kategorien)
     elif u.startswith("kurs"):
+        volumen = u.startswith("kurs_v") and len(werte) > 1
+        preise = werte[1:] if volumen else werte
+        ohlc = u.endswith("ohts")
+        ax = QBarCategoryAxis(); ax.append(kategorien); ch.addAxis(ax, Qt.AlignBottom)
+        if volumen:                                             # Volumen: Säulen auf eigener Achse links, nur im unteren Teil; Kurse an der Achse rechts
+            vs = QBarSeries(); bs = QBarSet("Volumen"); bs.setColor(_farbe(1)); bs.setBorderColor(_farbe(1))
+            for v in werte[0]:
+                bs.append(v)
+            vs.append(bs); vs.setBarWidth(0.6); ch.addSeries(vs)
+            av = QValueAxis(); ch.addAxis(av, Qt.AlignLeft); vs.attachAxis(ax); vs.attachAxis(av)
+            av.setRange(0, max(max(werte[0], default=1.0), 1e-9) * 2.6); av.applyNiceNumbers()
         s = QCandlestickSeries(); s.setIncreasingColor(QColor("#ffffff")); s.setDecreasingColor(_farbe(0))
-        s.setBodyWidth(0.25 if u == "kurs_ohts" else 0.04); s.setPen(QPen(QColor("#3c4043"), 1.5)); s.setName("Kurs")
+        s.setBodyWidth(0.25 if ohlc else 0.04); s.setPen(QPen(QColor("#3c4043"), 1.5)); s.setName("Kurs")
         for j in range(len(kategorien)):
-            spalte = [w[j] for w in werte if j < len(w)] or [0.0]
+            spalte = [w[j] for w in preise if j < len(w)] or [0.0]
             schluss = spalte[-1]
-            auf = spalte[0] if u == "kurs_ohts" else schluss
+            auf = spalte[0] if ohlc else schluss
             s.append(QCandlestickSet(auf, max(spalte), min(spalte), schluss, float(j)))
         ch.addSeries(s)
-        ax = QBarCategoryAxis(); ax.append(kategorien); ay = QValueAxis()
-        ch.addAxis(ax, Qt.AlignBottom); ch.addAxis(ay, Qt.AlignLeft); s.attachAxis(ax); s.attachAxis(ay)
-        tief = min((min(w) for w in werte if w), default=0.0)
-        ay.setRange(min(0.0, tief), max(hoechst, 1e-9)); ay.applyNiceNumbers()
+        ay = QValueAxis(); ch.addAxis(ay, Qt.AlignRight if volumen else Qt.AlignLeft); s.attachAxis(ax); s.attachAxis(ay)
+        tief = min((min(w) for w in preise if w), default=0.0)
+        spitze = max((max(w) for w in preise if w), default=1.0)
+        ay.setRange(min(0.0, tief), max(spitze, 1e-9)); ay.applyNiceNumbers()
     elif u.startswith(("saeule", "balken")):
         klasse = {"saeule_gruppiert": QBarSeries, "saeule_gestapelt": QStackedBarSeries, "saeule_100": QPercentBarSeries,
                   "balken_gruppiert": QHorizontalBarSeries, "balken_gestapelt": QHorizontalStackedBarSeries,
@@ -208,18 +288,19 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
         ch.addSeries(s)
         achsen([s], waagrecht=u.startswith("balken"))
     elif u.startswith("flaeche"):
+        stapel = u != "flaeche"
         unten = [0.0] * len(kategorien)
         serien = []
         for i, n in enumerate(namen):
-            oben = [(unten[j] if u == "flaeche_gestapelt" else 0.0) + v for j, v in enumerate(werte[i])]
+            oben = [(unten[j] if stapel else 0.0) + v for j, v in enumerate(werte[i])]
             hoch, tief = QLineSeries(), QLineSeries()
             for j, v in enumerate(oben):
-                hoch.append(j, v); tief.append(j, unten[j] if u == "flaeche_gestapelt" else 0.0)
+                hoch.append(j, v); tief.append(j, unten[j] if stapel else 0.0)
             a = QAreaSeries(hoch, tief); a.setName(n)
             hoch.setParent(a); tief.setParent(a)                # QAreaSeries übernimmt die Linien nicht selbst
-            c = _farbe(i); c.setAlpha(200 if u == "flaeche_gestapelt" else 150); a.setColor(c); a.setBorderColor(_farbe(i))
+            c = _farbe(i); c.setAlpha(200 if stapel else 150); a.setColor(c); a.setBorderColor(_farbe(i))
             ch.addSeries(a); serien.append(a)
-            if u == "flaeche_gestapelt":
+            if stapel:
                 unten = oben
         ax = QCategoryAxis(); ax.setLabelsPosition(QCategoryAxis.AxisLabelsPositionOnValue)
         for j, k in enumerate(kategorien):
@@ -229,19 +310,29 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
         for a in serien:
             a.attachAxis(ax); a.attachAxis(ay)
         ay.setRange(0, max(hoechst, 1e-9)); ay.applyNiceNumbers()
+    elif u.startswith("punkte_blase"):
+        serien = _blasen(ch, u, kategorien, werte, namen, kachel)
+        achsen(serien, kategorie=False)
+        _blasen_achsen(ch, kategorien, werte)
     elif u.startswith("punkte"):
         serien = []
+        glatt, linien = "_glatt" in u, u.startswith(("punkte_glatt", "punkte_gerade"))
+        punkte_an = u == "punkte" or u.endswith("_punkte")
         for i, n in enumerate(namen):
-            s = QScatterSeries(); s.setName(n); s.setColor(_farbe(i)); s.setMarkerSize(9); s.setBorderColor(_farbe(i))
-            for j, v in enumerate(werte[i]):
-                s.append(j + 1, v)
-            ch.addSeries(s); serien.append(s)
-            if u == "punkte_linien":
-                ls = QLineSeries(); ls.setPen(QPen(_farbe(i), 2))
+            if punkte_an:
+                s = QScatterSeries(); s.setName(n); s.setColor(_farbe(i)); s.setMarkerSize(9); s.setBorderColor(_farbe(i))
+                for j, v in enumerate(werte[i]):
+                    s.append(j + 1, v)
+                ch.addSeries(s); serien.append(s)
+            if linien:
+                ls = QSplineSeries() if glatt else QLineSeries(); ls.setPen(QPen(_farbe(i), 2))
                 for j, v in enumerate(werte[i]):
                     ls.append(j + 1, v)
                 ch.addSeries(ls); serien.append(ls)
-                ch.legend().markers(ls)[0].setVisible(False)
+                if punkte_an:
+                    ch.legend().markers(ls)[0].setVisible(False)
+                else:
+                    ls.setName(n)
         ax, _ay = achsen(serien, kategorie=False)
         ax.setRange(0, len(kategorien) + 1); ax.setTickCount(len(kategorien) + 2); ax.setLabelFormat("%d")
     elif u.startswith("netz"):
@@ -265,11 +356,14 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
             ch.addSeries(ls); ls.attachAxis(winkel); ls.attachAxis(radius)
     else:                                                       # Linien
         serien = []
+        stapel = [0.0] * len(kategorien)
         for i, n in enumerate(namen):
             rf = (opt["tf"].get(f"reihe_{opt['nummern'][i]}") or {}).get("reihe") or {} if i < len(opt["nummern"]) else {}
             s = QSplineSeries() if (u == "linie_glatt" or rf.get("glatt")) else QLineSeries()
-            s.setName(n); s.setPen(QPen(_farbe(i), 2.5)); s.setPointsVisible(u == "linie_punkte" or bool(rf.get("punkte")))
+            s.setName(n); s.setPen(QPen(_farbe(i), 2.5)); s.setPointsVisible(u.startswith("linie_punkte") or bool(rf.get("punkte")))
             for j, v in enumerate(werte[i]):
+                if gestapelt and j < len(stapel):
+                    stapel[j] += v; v = stapel[j]
                 s.append(j, v)
             ch.addSeries(s); serien.append(s)
         achsen(serien)
@@ -302,12 +396,17 @@ def _bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel=Fals
     px, py = max(1, round(b * skala)), max(1, round(h * skala))
     ebene = QImage(px, py, QImage.Format_ARGB32); ebene.fill(Qt.transparent)
     p = QPainter(ebene); p.setRenderHint(QPainter.Antialiasing); p.scale(skala, skala)
-    szene.render(p, QRectF(0, 0, b, ch_h), QRectF(0, 0, b, ch_h)); p.end()
+    szene.render(p, QRectF(0, 0, b, ch_h), QRectF(0, 0, b, ch_h))
+    if u in ("kreis_3d", "kreis_von_kreis", "kreis_balken") and werte:
+        from lunivo_writer.editor import diagramm_kreis as K
+        K.zeichnen(p, QRectF(ch.plotArea()), u, kategorien, werte[0], [_farbe(i) for i in range(len(kategorien))], labels and not kachel,
+                   QColor(STILE[stil][2] if 0 <= stil < len(STILE) else "#3c4043"))
+    p.end()
     brauch_geo = geo is not None or bool(tf) or (el.get("fehlerindikatoren") and not kachel)
     g = {}
     if brauch_geo and not kachel:
         from lunivo_writer.editor import diagramm_geo as G
-        legenden = list(kategorien) if u in ("kreis", "ring") else ["Kurs"] if u.startswith("kurs") else list(namen)
+        legenden = _legenden_namen(u, namen, kategorien)
         g = G.geometrie(ch, u, kategorien, werte, namen, nummern, b, ch_h, titel, legende, bool(el.get("achsen", True)), legenden)
         g["diagrammbereich"] = QRectF(0, 0, b, h)               # mit der Datentabelle
         for teil in ("titel", "legende"):                        # das Feld um den Text: Größe und Ränder aus den Textoptionen
@@ -412,7 +511,7 @@ def _elemente_anwenden(ch, u: str, el: dict, werte, namen, nummern, tf: dict) ->
     if not el.get("achsen", True):
         for a in achsen:
             a.setLabelsVisible(False); a.setLineVisible(False)
-    kreis, polar = u in ("kreis", "ring"), u.startswith("netz")
+    kreis, polar = ist_kreis(u), u.startswith("netz")
     waagr, senkr = ch.axes(Qt.Horizontal), ch.axes(Qt.Vertical)
     if el.get("achsentitel") and not kreis and not polar:
         hb = u.startswith("balken")
@@ -420,7 +519,7 @@ def _elemente_anwenden(ch, u: str, el: dict, werte, namen, nummern, tf: dict) ->
             waagr[0].setTitleText("Werte" if hb else "Rubriken")
         if senkr:
             senkr[0].setTitleText("Rubriken" if hb else "Werte")
-    if el.get("trendlinie") and u in ("saeule_gruppiert", "linie", "linie_punkte", "linie_glatt", "punkte", "punkte_linien", "flaeche") and waagr and senkr:
+    if el.get("trendlinie") and (u in ("saeule_gruppiert", "linie", "linie_punkte", "linie_glatt", "flaeche") or u.startswith("punkte") and "blase" not in u) and waagr and senkr:
         for i, n in enumerate(namen):
             if len(werte[i]) < 2:
                 continue
@@ -453,6 +552,16 @@ def _elemente_anwenden(ch, u: str, el: dict, werte, namen, nummern, tf: dict) ->
             tm = {**text("legende"), **te}
             m.setFont(F.schrift_aus(m.font(), tm))
             m.setLabelBrush(QBrush(QColor(0, 0, 0, 0) if F.text_eigen(text("legende")) else F.textfarbe(tm, schrift_hex)))
+    gl = (tf.get("gitter_haupt") or {}).get("linie")                            # Linie der Hauptrasterlinien der Wertachse
+    if gl:
+        hb_ = u.startswith("balken")
+        for a in (waagr if hb_ else senkr):
+            if isinstance(a, QValueAxis) and not isinstance(a, QCategoryAxis):
+                if F.linie_keine(gl):
+                    a.setGridLineVisible(False)
+                else:
+                    a.setGridLineVisible(True)
+                    a.setGridLinePen(F.stift({"farbe": a.gridLinePen().color().name(), **gl}))
     for teil, liste in (("achse_horizontal", waagr), ("achse_vertikal", senkr)):
         t = text(teil)
         opt = (tf.get(teil) or {}).get("achse")
@@ -528,7 +637,7 @@ def _eigene_texte(p, ch, g: dict, tf: dict, titel: str, standard: str, legende_a
 
 def _pfeile(p, ch, u: str, kategorien, werte, namen, nummern, tf: dict) -> None:
     """Pfeile und Linienenden an Linien- und Kurvenreihen (``linie.pfeil_anfang`` / ``pfeil_ende``)."""
-    if not (u.startswith(("linie", "punkte_linien")) and namen):
+    if not (hat_linien(u) and namen):
         return
     wollen = [nr for nr in nummern if ((tf.get(f"reihe_{nr}") or {}).get("linie") or {}).get("pfeil_anfang", "keiner") != "keiner"
               or ((tf.get(f"reihe_{nr}") or {}).get("linie") or {}).get("pfeil_ende", "keiner") != "keiner"]
@@ -542,10 +651,54 @@ def _pfeile(p, ch, u: str, kategorien, werte, namen, nummern, tf: dict) -> None:
             continue
         farbe = QColor(lin.get("farbe") or _farbe(k).name())
         farbe.setAlphaF(max(0.0, min(1.0, 1.0 - float(lin.get("transparenz", 0) or 0) / 100.0)))
-        br, gr = float(lin.get("breite", 2.5)), float(lin.get("pfeil_groesse", 1.0))
+        br, (gr_a, gr_e) = float(lin.get("breite", 2.5)), F.pfeil_groessen(lin)
         a, b2, y, z = pts[k][0], pts[k][1], pts[k][-1], pts[k][-2]
-        F.pfeil_zeichnen(p, QPointF(a[0], a[1]), QPointF(b2[0], b2[1]), lin.get("pfeil_anfang", "keiner"), br, gr, farbe)
-        F.pfeil_zeichnen(p, QPointF(y[0], y[1]), QPointF(z[0], z[1]), lin.get("pfeil_ende", "keiner"), br, gr, farbe)
+        F.pfeil_zeichnen(p, QPointF(a[0], a[1]), QPointF(b2[0], b2[1]), lin.get("pfeil_anfang", "keiner"), br, gr_a, farbe)
+        F.pfeil_zeichnen(p, QPointF(y[0], y[1]), QPointF(z[0], z[1]), lin.get("pfeil_ende", "keiner"), br, gr_e, farbe)
+
+
+def _blasen(ch, u: str, kategorien, werte, namen, kachel: bool) -> list:
+    """Blasen: ab drei Reihen X = 1., Y = 2., Größe = 3. Reihe; sonst X = Rubriknummer, Y = Wert, Größe = Wertebetrag. Je Blase eine Serie
+    (QtCharts kennt nur eine Punktgröße je Serie); nur die erste jeder Reihe steht in der Legende."""
+    from PySide6.QtCharts import QScatterSeries
+    voll = len(werte) >= 3
+    gruppen = [(namen[1], list(werte[0]), list(werte[1]), list(werte[2]), 1)] if voll else \
+        [(n, [j + 1 for j in range(len(w))], list(w), [abs(v) for v in w], i) for i, (n, w) in enumerate(zip(namen, werte))]
+    groesse = max((max(g[3], default=0.0) for g in gruppen), default=1.0) or 1.0
+    faktor = 0.4 if kachel else 1.0
+    serien = []
+    for name, xs, ys, gs, farbe in gruppen:
+        for k, (x, y, g) in enumerate(zip(xs, ys, gs)):
+            s = QScatterSeries(); s.setName(name); s.setMarkerSize(faktor * (10 + 36 * (abs(g) / groesse) ** 0.5))
+            c = _farbe(farbe)
+            if u == "punkte_blase_3d":
+                from PySide6.QtGui import QRadialGradient
+                gr = QRadialGradient(0.35, 0.35, 0.75); gr.setCoordinateMode(QRadialGradient.ObjectBoundingMode)
+                gr.setColorAt(0.0, c.lighter(185)); gr.setColorAt(1.0, c.darker(150))
+                s.setBrush(QBrush(gr)); s.setPen(QPen(c.darker(160), 1))
+            else:
+                c.setAlpha(190); s.setColor(c); s.setBorderColor(_farbe(farbe))
+            s.append(float(x), float(y))
+            ch.addSeries(s); serien.append(s)
+            if k:
+                ch.legend().markers(s)[0].setVisible(False)
+    return serien
+
+
+def _blasen_achsen(ch, kategorien, werte) -> None:
+    """Achsen der Blasen mit Luft für die großen Punkte."""
+    waagr, senkr = ch.axes(Qt.Horizontal), ch.axes(Qt.Vertical)
+    voll = len(werte) >= 3
+    xs = werte[0] if voll else [j + 1 for j in range(len(kategorien))]
+    ys = werte[1] if voll else [v for w in werte for v in w]
+    for achse, wr in ((waagr[0] if waagr else None, xs), (senkr[0] if senkr else None, ys)):
+        if achse is None or not wr:
+            continue
+        lo, hi = min(0.0, min(wr)), max(wr)
+        spanne = (hi - lo) or 1.0
+        achse.setRange(lo - (0.08 * spanne if lo < 0 else 0.0), hi + 0.18 * spanne); achse.applyNiceNumbers()
+        if achse is waagr[0] and not voll:
+            achse.setRange(0, len(kategorien) + 1); achse.setTickCount(len(kategorien) + 2); achse.setLabelFormat("%d")
 
 
 def _kombination(ch, kombi: list[tuple[str, bool]], namen: list[str], werte: list[list[float]], kategorien: list[str]) -> None:
@@ -603,7 +756,7 @@ def _kombination(ch, kombi: list[tuple[str, bool]], namen: list[str], werte: lis
 
 # ---- Diagrammteile (Auswahl, Anklicken) -----------------------------------------------------------------------------------------
 def _legenden_namen(u: str, namen: list[str], kategorien: list[str]) -> list[str]:
-    return list(kategorien) if u in ("kreis", "ring") else ["Kurs"] if u.startswith("kurs") else list(namen)
+    return list(kategorien) if ist_kreis(u) else (["Volumen", "Kurs"] if u.startswith("kurs_v") else ["Kurs"]) if u.startswith("kurs") else list(namen)
 
 
 def teile(daten: dict) -> list[tuple[str, str]]:
@@ -621,11 +774,13 @@ def teile(daten: dict) -> list[tuple[str, str]]:
         out.append(("titel", "Diagrammtitel"))
     if el["legende"] != "aus":
         out.append(("legende", "Legende"))
-    if el["achsen"] and u not in ("kreis", "ring") and not u.startswith("netz"):
+    if el["achsen"] and not ist_kreis(u) and not u.startswith("netz"):
         hb = u.startswith("balken")
         out += [("achse_horizontal", "Horizontal (Wert) Achse" if hb else "Horizontal (Rubrik) Achse"),
                 ("achse_vertikal", "Vertikal (Rubrik) Achse" if hb else "Vertikal (Wert) Achse")]
-    out += [(f"reihe_{i}", f"Reihe „{namen_alle[i]}“") for i in nummern]
+        if el.get("gitter", True):                                       # Hauptrasterlinie der Wertachse (Foto: direkt nach den Achsen)
+            out.append(("gitter_haupt", "Horizontal (Wert) Achse Hauptrasterlinie" if hb else "Vertikal (Wert) Achse Hauptrasterlinie"))
+    out += [(f"reihe_{i}", f'Reihe"{namen_alle[i]}"') for i in nummern]
     if el["datenbeschriftung"]:
         out.append(("datenbeschriftung", "Datenbeschriftungen"))
     if el["legende"] != "aus":

@@ -1,13 +1,12 @@
 """Einstellungen für „Silben farbig“: alles, was jemand mit Legasthenie braucht, um es für sich passend zu machen."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QPushButton,
+    QCheckBox, QComboBox, QDialog, QLabel, QPushButton,
     QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.editor import silbenfarben as S
 from lunivo_writer.ui.baukasten import weitere_farben
 
@@ -20,7 +19,6 @@ class SilbenDialog(PanelFaehig, QDialog):
         super().__init__(fenster)
         self.w = fenster
         self.setWindowTitle("Silben farbig — Einstellungen")
-        self.setMinimumWidth(520)
         self._alt = S.konfig_lesen(fenster.settings)
         k = dict(self._alt)
         v = QVBoxLayout(self)
@@ -32,13 +30,13 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.an = QCheckBox("Silben farbig anzeigen")
         self.an.setChecked(k["an"])
         v.addWidget(self.an)
-        f = QFormLayout()
+        f = FormularGitter()
         self.palette = QComboBox()
         self.palette.addItems(list(S.PALETTEN))
+        self.palette.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.palette.setMinimumContentsLength(6)
         self.palette.setCurrentText(k["palette"])
-        f.addRow("Farben", self.palette)
         self.eigene_box = QWidget()
-        eh = QHBoxLayout(self.eigene_box)
+        eh = FlussLayout(); self.eigene_box.setLayout(eh)
         eh.setContentsMargins(0, 0, 0, 0)
         self.eigene = list(k["eigene"])
         self.eigene_knoepfe = []
@@ -53,32 +51,31 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.anzahl.setValue(k["anzahl_eigene"])
         self.anzahl.setPrefix("Anzahl: ")
         eh.addWidget(self.anzahl)
-        eh.addStretch(1)
-        f.addRow("Eigene Farben", self.eigene_box)
         self.darstellung = QComboBox()
         self.darstellung.addItems(S.DARSTELLUNGEN)
+        self.darstellung.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.darstellung.setMinimumContentsLength(6)
         self.darstellung.setCurrentText(k["darstellung"])
-        f.addRow("Darstellung", self.darstellung)
+        f.reihe(("Farben", self.palette), ("Darstellung", self.darstellung))
+        f.zeile("Eigene Farben", self.eigene_box)
         self.fett = QCheckBox("Fett")
         self.fett.setChecked(k["fett"])
-        f.addRow("", self.fett)
         self.mindestens = QSpinBox()
         self.mindestens.setRange(2, 10)
         self.mindestens.setValue(k["mindestens"])
         self.mindestens.setSuffix(" Buchstaben")
-        f.addRow("Wörter einfärben ab", self.mindestens)
+        f.reihe(("Wörter einfärben ab", self.mindestens), ("", self.fett))
         self.einsilbig = QCheckBox("Auch Wörter einfärben, die sich nicht teilen lassen")
         self.einsilbig.setChecked(k["einsilbig"])
-        f.addRow("", self.einsilbig)
+        f.breit(self.einsilbig)
         self.neu = QCheckBox("Jedes Wort beginnt wieder mit der ersten Farbe")
         self.neu.setChecked(k["neu_pro_wort"])
-        f.addRow("", self.neu)
+        f.breit(self.neu)
         self.absatz = QCheckBox("Nur im Absatz mit dem Cursor (ruhigeres Bild)")
         self.absatz.setChecked(k["nur_absatz"])
-        f.addRow("", self.absatz)
+        f.breit(self.absatz)
         self.drucken = QCheckBox("Auch beim Drucken und im PDF")
         self.drucken.setChecked(k["drucken"])
-        f.addRow("", self.drucken)
+        f.breit(self.drucken)
         v.addLayout(f)
         v.addWidget(QLabel("Vorschau"))
         self.vorschau = QTextEdit()
@@ -111,7 +108,7 @@ class SilbenDialog(PanelFaehig, QDialog):
 
     def _knoepfe_faerben(self) -> None:
         for b, c in zip(self.eigene_knoepfe, self.eigene):
-            b.setStyleSheet(f"QPushButton {{ background: {c}; border: 1px solid palette(mid); border-radius: 4px; }}")
+            b.setStyleSheet(f"QPushButton {{ background: {c}; border: 1px solid palette(mid); border-radius: 6px; }}")
 
     def _zustand(self) -> None:
         eigene = self.palette.currentText() == "Eigene Farben"

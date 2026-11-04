@@ -11,20 +11,30 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
-    QButtonGroup, QComboBox, QDialog, QScrollArea, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QTabWidget, QToolButton, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QScrollArea, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSizePolicy, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import textfx as X
-from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
+from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, AngepassteReiter, FormularGitter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
+FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)
+
+
+def seitengitter(widget: QWidget) -> FormularGitter:
+    """Das ``FormularGitter`` der Seitenleiste „Formatierung“: Beschriftungen links, alle Felder in einer gleich breiten Spalte rechts."""
+    g = FormularGitter(widget)
+    g.feldbreite = FELDBREITE
+    return g
+
+
 class _Pfeil(QToolButton):
     """Der Pfeil vor einer Abschnittsüberschrift: schaltet um wie ein Umschaltknopf (``setChecked``, ``toggled``), zeigt aber keinen Knopfrahmen."""
     toggled = Signal(bool)
@@ -33,6 +43,7 @@ class _Pfeil(QToolButton):
         super().__init__()
         self._an = False
         self.setAutoRaise(True); self.setArrowType(Qt.RightArrow)
+        self.setMinimumHeight(32)                                                # Klickfläche: Höhe wie die Felder; die Breite bleibt, sonst ragt die Zeile bei 300 px heraus
         self.clicked.connect(self.toggle)
 
     def isChecked(self) -> bool:
@@ -51,7 +62,7 @@ class _Pfeil(QToolButton):
 class Abschnitt(QWidget):
     """Aufklappbarer Abschnitt: Pfeil und Überschrift in Großbuchstaben links, optional ein Bedienelement rechts (z. B. die Voreinstellung)."""
 
-    def __init__(self, titel: str, rechts: QWidget | None = None):
+    def __init__(self, titel: str, rechts: QWidget | None = None, rechts_text: str = "Voreinstellung:"):
         super().__init__()
         v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(6)
         kopf = QHBoxLayout()
@@ -60,12 +71,12 @@ class Abschnitt(QWidget):
         self.titel = abschnittstitel(titel)                              # die Überschrift wie überall (kleine graue Großbuchstaben); ein Klick klappt auf und zu
         self.titel.setCursor(Qt.PointingHandCursor); self.titel.mousePressEvent = lambda e: self.knopf.toggle()
         kopf.addWidget(self.knopf); kopf.addWidget(self.titel); kopf.addStretch(1)
-        if rechts is not None:
-            kopf.addWidget(rechts)
         v.addLayout(kopf)
-        self.inhalt = QWidget(); self.gitter = FormularGitter(self.inhalt); self.gitter.setContentsMargins(0, 0, 0, 6)
+        self.inhalt = QWidget(); self.gitter = seitengitter(self.inhalt); self.gitter.setContentsMargins(0, 0, 0, 6)
         v.addWidget(self.inhalt); self.inhalt.setVisible(False)
         self.knopf.toggled.connect(self._umschalten)
+        if rechts is not None:
+            self.kopffeld(rechts)
 
     def _umschalten(self, an: bool) -> None:
         self.knopf.setArrowType(Qt.DownArrow if an else Qt.RightArrow); self.inhalt.setVisible(an)
@@ -78,8 +89,19 @@ class Abschnitt(QWidget):
         if p is not None:
             p.widget().adjustSize()
 
+    def kopffeld(self, widget: QWidget, text: str = "") -> None:
+        """Das Menü des Abschnitts (Voreinstellung, Farbe) rechts im Kopf, in der Breite der Feldspalte darunter."""
+        widget.setFixedSize(FELDBREITE, FELDHOEHE)
+        self.layout().itemAt(0).layout().addWidget(widget)
+
     def zeile(self, text: str, widget: QWidget) -> None:
         self.gitter.zeile(text, widget)
+
+    def auswahl(self, *radios: QWidget) -> None:
+        """Auswahlpunkte (Füllungsart, Linienart) ordentlich untereinander, eine je Zeile."""
+        for r in radios:
+            r.setProperty("einspaltig", True)                                  # nicht zu zweit nebeneinander ins Raster
+            self.gitter.breit(r)
 
     def breit(self, widget: QWidget) -> None:
         self.gitter.breit(widget)
@@ -120,6 +142,16 @@ class TexteffektPanel(QWidget):
     def _scroll(seite: QWidget) -> QWidget:
         from PySide6.QtWidgets import QFrame
         sa = QScrollArea(); sa.setWidgetResizable(True); sa.setFrameShape(QFrame.NoFrame); sa.setWidget(seite)
+        sa.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)           # nie seitlich rollen: die Breite der Seitenleiste bleibt
+        sa.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding); sa.setMinimumWidth(0)
+        lay = seite.layout()
+        if lay is not None:                                               # die senkrechte Leiste klebt nicht am Inhalt: rechts bleibt ein Abstand, solange sie da ist
+            def luft(_lo=0, hi=0, lay=lay) -> None:
+                r = 18 if hi > 0 else 10               # immer ein Abstand zum rechten Rand der Seitenleiste, mit senkrechter Leiste mehr
+                if lay.contentsMargins().right() != r:
+                    m = lay.contentsMargins(); lay.setContentsMargins(m.left(), m.top(), r, m.bottom())
+            luft()
+            sa.verticalScrollBar().rangeChanged.connect(luft)
         return sa
 
     @staticmethod
@@ -129,29 +161,27 @@ class TexteffektPanel(QWidget):
 
     # ---- Seite 1: Füllung und Kontur
     def _seite_fuellung(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
         self.fuell_farbe_kopf = FarbFeld(w["farbe"], "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
-        self.fuell_farbe_kopf.setMinimumWidth(110)
+        self.fuell_farbe_kopf.setMinimumWidth(0)
         self.a_fuell = Abschnitt("Textfüllung", self.fuell_farbe_kopf)
         self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
-        for r in (self.r_keine, self.r_farbe, self.r_verlauf):
-            self.a_fuell.breit(r)
+        self.a_fuell.auswahl(self.r_keine, self.r_farbe, self.r_verlauf)
         self.farbe = FarbFeld(w["farbe"], "Füllfarbe", keine_text="Automatisch")
         self.trans = SchiebeFeld(0, 100, " %")
-        self.f_einfarbig = QWidget(); fe = FormularGitter(self.f_einfarbig)               # nur bei „Einfarbige Füllung“ zu sehen
+        self.f_einfarbig = QWidget(); fe = seitengitter(self.f_einfarbig)               # nur bei „Einfarbige Füllung“ zu sehen
         fe.zeile("Farbe:", self.farbe); fe.zeile("Transparenz:", self.trans)
         self.v1, self.v2 = FarbFeld(Farbe.ROT, "Farbe 1"), FarbFeld("#1864ab", "Farbe 2")
         self.v_winkel = SchiebeFeld(0, 360, "°", 5)
-        self.f_verlauf = QWidget(); fv = FormularGitter(self.f_verlauf)                    # nur bei „Farbverlauf“ zu sehen
+        self.f_verlauf = QWidget(); fv = seitengitter(self.f_verlauf)                    # nur bei „Farbverlauf“ zu sehen
         fv.zeile("Farbe 1:", self.v1); fv.zeile("Farbe 2:", self.v2); fv.zeile("Winkel:", self.v_winkel)
         self.a_fuell.breit(self.f_einfarbig); self.a_fuell.breit(self.f_verlauf)
         v.addWidget(self.a_fuell)
         # Kontur
-        self.linie_knopf = QPushButton("Keine"); self.linie_knopf.setMinimumWidth(110)
+        self.linie_knopf = QPushButton("Keine"); self.linie_knopf.setMinimumWidth(0)
         self.a_kontur = Abschnitt("Textkontur", self.linie_knopf)
         self.k_keine, self.k_linie, self.k_verlauf = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie"), QRadioButton("Farbverlaufslinie")
-        for r in (self.k_keine, self.k_linie, self.k_verlauf):
-            self.a_kontur.breit(r)
+        self.a_kontur.auswahl(self.k_keine, self.k_linie, self.k_verlauf)
         self.k_farbe = FarbFeld(w["kontur_farbe"], "Konturfarbe")
         self.k_breite = SchiebeFeld(0.1, 20, " pt", 0.25, 2)
         self.k_art = QComboBox(); self.k_art.setIconSize(QSize(86, 14))
@@ -162,9 +192,9 @@ class TexteffektPanel(QWidget):
             self.k_form.addItem(name, key)
         self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Konturfarbe 1"), FarbFeld("#1864ab", "Konturfarbe 2")
         self.kv_winkel = SchiebeFeld(0, 360, "°", 5)
-        self.k_einfach = QWidget(); ke = FormularGitter(self.k_einfach)                    # nur bei „Durchgezogene Linie“ zu sehen
+        self.k_einfach = QWidget(); ke = seitengitter(self.k_einfach)                    # nur bei „Durchgezogene Linie“ zu sehen
         ke.zeile("Farbe:", self.k_farbe); ke.zeile("Breite:", self.k_breite); ke.zeile("Linienart:", self.k_art); ke.zeile("Form:", self.k_form)
-        self.k_vlauf = QWidget(); kv = FormularGitter(self.k_vlauf)                        # nur bei „Farbverlaufslinie“ zu sehen
+        self.k_vlauf = QWidget(); kv = seitengitter(self.k_vlauf)                        # nur bei „Farbverlaufslinie“ zu sehen
         kv.zeile("Farbe 1:", self.kv1); kv.zeile("Farbe 2:", self.kv2); kv.zeile("Winkel:", self.kv_winkel)
         self.a_kontur.breit(self.k_einfach); self.a_kontur.breit(self.k_vlauf)
         v.addWidget(self.a_kontur)
@@ -219,11 +249,11 @@ class TexteffektPanel(QWidget):
 
     # ---- Seite 2: Effekte
     def _voreinstellungs_knopf(self, text: str = "Keine") -> QPushButton:
-        k = QPushButton(text); k.setMinimumWidth(110)
+        k = QPushButton(text); k.setMinimumWidth(0)
         return k
 
     def _seite_effekte(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
         # Schatten
         self.schatten_knopf = self._voreinstellungs_knopf()
         self.a_schatten = Abschnitt("Schatten", self.schatten_knopf)

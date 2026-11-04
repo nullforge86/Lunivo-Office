@@ -19,9 +19,9 @@ from lunivo_writer.ui.baukasten.raster_auswahl import _symbol
 class KachelFeld(QWidget):
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, spalten: int = 4, groesse: QSize = QSize(44, 44), mit_text: bool = True):
+    def __init__(self, parent=None, *, spalten: int = 4, groesse: QSize = QSize(44, 44), mit_text: bool = True, fliessend: bool = False):
         super().__init__(parent)
-        self._spalten, self._groesse, self._text = spalten, groesse, mit_text
+        self._spalten, self._groesse, self._text, self._fliessend = spalten, groesse, mit_text, fliessend
         self._gitter = QGridLayout(self); self._gitter.setContentsMargins(0, 0, 0, 0); self._gitter.setSpacing(4)
         self.knoepfe: dict[str, QToolButton] = {}
         self._aktuell: str | None = None
@@ -40,6 +40,28 @@ class KachelFeld(QWidget):
         self.knoepfe[schluessel] = b
         self._fokus_ziel()
         return b
+
+    def _neu_legen(self, spalten: int) -> None:
+        """Kacheln in ``spalten`` Spalten neu ins Raster setzen (nur Anordnung, Auswahl und Signale bleiben)."""
+        self._spalten = spalten
+        for b in self.knoepfe.values():
+            self._gitter.removeWidget(b)
+        for n, b in enumerate(self.knoepfe.values()):
+            self._gitter.addWidget(b, n // spalten, n % spalten)
+
+    def minimumSizeHint(self) -> QSize:
+        if self._fliessend and self.knoepfe:
+            return next(iter(self.knoepfe.values())).sizeHint()
+        return super().minimumSizeHint()
+
+    def resizeEvent(self, ev) -> None:
+        """Mit ``fliessend=True`` so viele Spalten, wie in die Breite passen (``spalten`` ist das Höchstmaß)."""
+        super().resizeEvent(ev)
+        if self._fliessend and self.knoepfe:
+            zelle = max(b.sizeHint().width() for b in self.knoepfe.values()) + self._gitter.spacing()
+            n = max(1, min(len(self.knoepfe), int((ev.size().width() + self._gitter.spacing()) // zelle)))
+            if n != self._spalten:
+                self._neu_legen(n)
 
     def _fokus_ziel(self) -> None:
         """Nur eine Kachel ist per Tab erreichbar: die gewählte, sonst die erste."""

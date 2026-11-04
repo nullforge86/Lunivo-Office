@@ -9,9 +9,10 @@ Das Fenster weist nichts selbst zu; wer es aufruft (Formatvorlage, später Makro
 from __future__ import annotations
 
 from PySide6.QtGui import QKeySequence
-from PySide6.QtWidgets import QDialog, QGroupBox, QHBoxLayout, QKeySequenceEdit, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QKeySequenceEdit, QLabel, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
 
 
 from lunivo_writer.core.farben import Farbe
@@ -21,10 +22,10 @@ class TastenDialog(QDialog):
         self.setWindowTitle("Tastenkombination"); self.resize(311, 122)
         self._belegt = belegt
         v = QVBoxLayout(self)
-        g = QGroupBox("Tasten"); h = QHBoxLayout(g)
-        h.addWidget(QLabel("Tastenkombination:"))
+        g = QWidget(); gitter = FormularGitter(g)
+        gitter.breit(abschnittstitel("Tasten"))
         self.feld = QKeySequenceEdit(QKeySequence(aktuell)); self.feld.setMaximumSequenceLength(1)
-        h.addWidget(self.feld, 1)
+        gitter.zeile("Tastenkombination:", self.feld)
         v.addWidget(g)
         self.hinweis = QLabel(); self.hinweis.setStyleSheet(('color: ' + Farbe.ORANGE + ';')); self.hinweis.setWordWrap(True)
         v.addWidget(self.hinweis)

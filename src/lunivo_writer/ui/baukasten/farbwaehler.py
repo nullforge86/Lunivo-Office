@@ -10,20 +10,18 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QObject, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QObject, QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import (
     QBrush, QColor, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
 )
-from PySide6.QtWidgets import (
-    QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider, QSpinBox, QStyle, QTabWidget, QVBoxLayout, QWidget,
-)
+from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QSlider, QSpinBox, QVBoxLayout, QWidget
 
 MODELLE = ("RGB", "HSV", "HSL")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, mittig
 class Modell(QObject):
     """Die gewählte Farbe, als Farbton/Sättigung/Wert gehalten (der Farbton geht bei Grau nicht verloren)."""
     geaendert = Signal()
@@ -286,18 +284,18 @@ class _Regler(QWidget):
     def __init__(self, modell: Modell):
         super().__init__()
         self.m = modell
-        g = QGridLayout(self); g.setContentsMargins(0, 0, 0, 0); g.setVerticalSpacing(8)
         self.modell_wahl = QComboBox(); self.modell_wahl.addItems(MODELLE)
-        g.addWidget(QLabel("Farbmodell"), 0, 0); g.addWidget(self.modell_wahl, 0, 1, 1, 2)       # Zeile 1: Farbmodell und Hex, Zeile 2: die drei Zahlenfelder nebeneinander
         self.namen = [QLabel() for _ in range(3)]
         self.felder = [QSpinBox() for _ in range(3)]
-        for i, (n, f) in enumerate(zip(self.namen, self.felder)):
-            g.addWidget(n, 1, 2 * i); g.addWidget(f, 1, 2 * i + 1)
-            f.valueChanged.connect(self._tippen)
         self.hex = QLineEdit(); self.hex.setMaxLength(7); self.hex.setPlaceholderText("#rrggbb")
-        g.addWidget(QLabel("Hex"), 0, 3); g.addWidget(self.hex, 0, 4, 1, 2)
-        for c in (1, 3, 5):
-            g.setColumnStretch(c, 1)
+        # Rasteransicht des Baukastens: je nach Breite zwei Paare nebeneinander oder eines je Zeile, nichts ragt heraus
+        g = FormularGitter(self)
+        g.reihe(("Farbmodell", self.modell_wahl), ("Hex", self.hex))
+        g.reihe(*zip(self.namen, self.felder))                               # die drei Werte nebeneinander, bei Platzmangel darunter
+        for f in self.felder:
+            f.valueChanged.connect(self._tippen)
+        for w in (self.modell_wahl, self.hex, *self.felder):
+            w.setMinimumWidth(0)
         self.modell_wahl.currentTextChanged.connect(self._modus)
         self.hex.editingFinished.connect(self._hex)
         self.m.geaendert.connect(self.auffrischen)
@@ -371,6 +369,36 @@ class _Proben(QWidget):
         p.end()
 
 
+class _FlaechePaar(QWidget):
+    """Farbfläche und Helligkeitsleiste als ein Bedienelement; die Größe folgt den beiden (``ordne`` nach jeder Änderung)."""
+
+    def __init__(self, flaeche: QWidget, leiste: QWidget):
+        super().__init__()
+        self.f, self.l = flaeche, leiste
+        flaeche.setParent(self); leiste.setParent(self)
+        self.ordne()
+
+    def ordne(self) -> None:
+        f, l = self.f, self.l
+        h = max(f.height(), l.height())
+        f.move(0, 0); l.move(f.width() + 6, 0)
+        self.setFixedSize(f.width() + 6 + l.width(), h)
+
+
+class _ProbeBlock(QWidget):
+    """Die Probe mit „Neu“ oben und „Aktuell“ unten daneben."""
+
+    def __init__(self, probe: QWidget):
+        super().__init__()
+        probe.setParent(self)
+        neu, alt = QLabel("Neu", self), QLabel("Aktuell", self)
+        b = max(neu.sizeHint().width(), alt.sizeHint().width())
+        probe.move(0, 0)
+        neu.move(probe.width() + 8, 0)
+        alt.move(probe.width() + 8, probe.height() - alt.sizeHint().height())
+        self.setFixedSize(probe.width() + 8 + b, probe.height())
+
+
 class FarbenDialog(PanelFaehig, QDialog):
     """Das Fenster „Farben“ (öffnet sich in der Seitenleiste). ``farbe()`` gibt nach OK die gewählte Farbe zurück."""
 
@@ -393,35 +421,26 @@ class FarbenDialog(PanelFaehig, QDialog):
             return w
         kacheln = self._kacheln = _Kacheln(self.m)
         kacheln.bestaetigt.connect(self.accept)
-        flaeche = QWidget(); fh = QHBoxLayout(flaeche); fh.setContentsMargins(0, 0, 0, 0); fh.setSpacing(6)
         self._flaeche, self._leiste = _Flaeche(self.m), _Leiste(self.m)
-        fh.addWidget(self._flaeche); fh.addWidget(self._leiste)
+        flaeche = self._paar = _FlaechePaar(self._flaeche, self._leiste)
         self.reiter.addTab(seite(kacheln, False), "Standard")
         self.reiter.addTab(seite(flaeche, True), "Benutzerdefiniert")
         self._ring = _Ring(self.m)
         self.reiter.addTab(seite(self._ring, True), "Erweitert")
         # Neu und Aktuell: die Probe mit ihren Beschriftungen, mittig unter den Reitern
-        probe = QHBoxLayout(); probe.setSpacing(8); probe.setContentsMargins(6, 0, 6, 0)
-        probe.addStretch(1)                                                  # mittig unter den Farben
-        probe.addWidget(_Proben(self.m, ausgang))
-        namen = QVBoxLayout(); namen.addWidget(QLabel("Neu")); namen.addStretch(1); namen.addWidget(QLabel("Aktuell"))
-        probe.addLayout(namen); probe.addStretch(1)
-        v.addLayout(probe)
+        v.addWidget(mittig(_ProbeBlock(_Proben(self.m, ausgang))))           # mittig unter den Farben
         v.addWidget(self._transparenz_zeile())
         v.addWidget(knopfzeile(self))
 
     def _transparenz_zeile(self) -> QWidget:
         """„Transparenz“: Schieber und Zahlenfeld in Prozent (100 % = deckend) — beide halten dieselbe Zahl."""
-        z = QWidget(); zv = QVBoxLayout(z); zv.setContentsMargins(6, 0, 6, 0); zv.setSpacing(2)
-        zv.addWidget(QLabel("Transparenz"))
-        reihe = QHBoxLayout(); reihe.setSpacing(6)
+        z = QWidget(); zg = FormularGitter(z); zg.setContentsMargins(6, 0, 6, 0)
         self.schieber = QSlider(Qt.Horizontal); self.schieber.setRange(0, 100); self.schieber.setValue(self.m.deckkraft)
         self.prozent = QSpinBox(); self.prozent.setRange(0, 100); self.prozent.setSuffix(" %"); self.prozent.setValue(self.m.deckkraft)
         self.schieber.setToolTip("100 % = deckend, 0 % = unsichtbar"); self.prozent.setToolTip(self.schieber.toolTip())
         self.schieber.valueChanged.connect(self.m.setze_deckkraft); self.prozent.valueChanged.connect(self.m.setze_deckkraft)
         self.m.geaendert.connect(self._deckkraft_zeigen)
-        reihe.addWidget(self.schieber, 1); reihe.addWidget(self.prozent)
-        zv.addLayout(reihe)
+        zg.reihe(("Transparenz", self.schieber), ("Prozent", self.prozent), gewichte=(2, 1))
         return z
 
     def _deckkraft_zeigen(self) -> None:
@@ -432,11 +451,11 @@ class FarbenDialog(PanelFaehig, QDialog):
     def passe_an(self, breite: int, hoehe: int) -> None:
         """Das Standard-Raster so groß machen, wie die Seitenleiste Platz hat (Breite für 17 Spalten, Höhe für 18 Zeilen samt Reitern und Probe)."""
         k = self._kacheln
-        zelle = min((breite - 24) // k.SPALTEN - 1, (hoehe - 250) // (k.ZEILEN + 2) - 1)
+        zelle = min((breite - 40) // k.SPALTEN - 1, (hoehe - 250) // (k.ZEILEN + 2) - 1)
         k.skaliere(max(12, min(24, zelle)))
-        h = max(150, min(340, hoehe - 295))                                         # Farbfläche und Leiste: die Höhe, die nach den zwei Reihen Felder und der Probe übrig bleibt
-        self._leiste.setFixedHeight(h); self._flaeche.setGroesse(max(200, min(380, breite - 70)), h)
-        self._ring.skaliere(max(0.7, min(1.5, (hoehe - 295) / 250, (breite - 24) / 270)))
+        h = max(120, min(340, hoehe - 400))                                         # Farbfläche und Leiste: die Höhe, die nach den zwei Reihen Felder und der Probe übrig bleibt
+        self._leiste.setFixedHeight(h); self._flaeche.setGroesse(max(200, min(380, breite - 100)), h); self._paar.ordne()
+        self._ring.skaliere(max(0.7, min(1.5, (hoehe - 400) / 250, (breite - 40) / 270)))
 
     def farbe(self) -> QColor:
         """Die gewählte Farbe samt Transparenz (Alpha); ohne Änderung am Schieber ist sie deckend."""

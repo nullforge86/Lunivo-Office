@@ -20,7 +20,9 @@ KONTUR_ARTEN = {"einfach": ("Durchgezogen", Qt.SolidLine, "solid"), "gepunktet":
                 "lang_strichpunkt": ("Lang Strich-Punkt", [8.0, 3.0, 1.0, 3.0], "lgDashDot"),
                 "strichpunktpunkt": ("Strich-Punkt-Punkt", Qt.DashDotDotLine, "lgDashDotDot")}
 # Formen der Konturlinie (zusammen mit der Breite die Spalten der Linienauswahl): einfach, doppelt, dick–dünn
-KONTUR_FORMEN = (("einfach", "Einfach"), ("doppelt", "Doppelt"), ("dick_duenn", "Dick–dünn"))
+KONTUR_FORMEN = (("einfach", "Einfach"), ("doppelt", "Doppelt"), ("dick_duenn", "Dick–dünn"), ("duenn_dick", "Dünn–dick"), ("dreifach", "Dreifach"))
+# Zusätzliche Strichtypen des Diagramms (nicht in der Voreinstellungsliste ``KONTUR_ARTEN``): Schlüssel → (Strichmuster in Linienbreiten, runde Enden)
+KONTUR_ARTEN_PLUS = {"rundpunkt": ([0.01, 2.0], True), "quadratpunkt": ([1.0, 1.0], False), "lang_strichpunktpunkt": ([8.0, 3.0, 1.0, 3.0, 1.0, 3.0], False)}
 
 
 def strich_setzen(pen: QPen, art: str) -> None:
@@ -71,6 +73,8 @@ def aus_format(cf: QTextCharFormat) -> dict:
         w.update(textfx.aus_text(cf.stringProperty(P_EFFEKT)))
         if "verlauf" in w:
             w["fuell"] = "verlauf"; w["farbe"] = ""
+        if w.get("fuell_pinsel"):
+            w["fuell"] = "muster" if w["fuell_pinsel"].get("art") == "muster" else "bild"
         if "kontur_verlauf" in w or w.get("kontur_form"):
             w["kontur"] = True
     p = cf.textOutline()
@@ -102,6 +106,8 @@ def aus_text(text: str | None, farbe: str = "") -> dict | None:
             w.update(textfx.aus_text(t[4]))
             if "verlauf" in w:
                 w["fuell"] = "verlauf"
+            if w.get("fuell_pinsel"):
+                w["fuell"] = "muster" if w["fuell_pinsel"].get("art") == "muster" else "bild"
             if "kontur_verlauf" in w or w.get("kontur_form"):
                 w["kontur"] = True
         return w
@@ -119,7 +125,7 @@ def _q(name: str) -> str:
 
 
 _MATERIAL = {"matt": "matte", "plastik": "plastic", "metall": "metal", "dunkel": "dkEdge", "weich": "softEdge", "hell": "flat"}
-_FORM = {"doppelt": "dbl", "dick_duenn": "thickThin"}
+_FORM = {"doppelt": "dbl", "dick_duenn": "thickThin", "duenn_dick": "thinThick", "dreifach": "tri"}
 _EMU_PT = 12700
 
 

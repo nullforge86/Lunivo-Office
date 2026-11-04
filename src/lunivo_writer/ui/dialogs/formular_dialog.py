@@ -1,9 +1,10 @@
 """Dialog zum Anlegen eines Formularfelds (Textfeld, Auswahlliste, Datum, Kontrollkästchen, Schaltfläche)."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout, QLabel, QLineEdit, QPlainTextEdit, QVBoxLayout
+from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit, QVBoxLayout
 
 from lunivo_writer.editor import formular as FO
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 
@@ -16,11 +17,10 @@ class FormFeldDialog(PanelFaehig, QDialog):
         self.art = art
         m = bestehend or {}
         self.setWindowTitle(TITEL[art] + " einfügen" if not bestehend else TITEL[art] + " bearbeiten")
-        self.setMinimumWidth(420)
-        f = QFormLayout()
+        f = FormularGitter()
         self.name = QLineEdit(m.get("name", ""))
         self.name.setPlaceholderText("z. B. Vorname")
-        f.addRow("Name des Feldes", self.name)
+        f.zeile("Name des Feldes", self.name)
         self.platz = QLineEdit(m.get("platzhalter", ""))
         self.beschriftung = QLineEdit(m.get("beschriftung", ""))
         self.liste = QPlainTextEdit("\n".join(m.get("optionen", [])))
@@ -28,16 +28,16 @@ class FormFeldDialog(PanelFaehig, QDialog):
         self.aktion = QComboBox(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.get("aktion", "Keine"))
         if art in ("text", "auswahl", "datum"):
             self.platz.setPlaceholderText({"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[art])
-            f.addRow("Hinweis im leeren Feld", self.platz)
+            f.zeile("Hinweis im leeren Feld", self.platz)
         if art == "auswahl":
             self.liste.setPlaceholderText("Ein Eintrag pro Zeile")
             self.liste.setFixedHeight(90)
-            f.addRow("Einträge", self.liste)
+            f.zeile("Einträge", self.liste)
         if art == "kasten":
-            f.addRow("Beschriftung daneben", self.beschriftung)
+            f.zeile("Beschriftung daneben", self.beschriftung)
         if art == "knopf":
-            f.addRow("Aufschrift", self.aufschrift)
-            f.addRow("Aktion beim Klicken", self.aktion)
+            f.zeile("Aufschrift", self.aufschrift)
+            f.zeile("Aktion beim Klicken", self.aktion)
         v = QVBoxLayout(self)
         v.addLayout(f)
         info = QLabel("Felder werden in DOCX als Inhaltssteuerelemente gespeichert und lassen sich auch in anderen Textprogrammen ausfüllen.")

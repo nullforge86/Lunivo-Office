@@ -4,7 +4,7 @@ Das Fenster klappt unter dem Knopf „Lesehilfe“ auf (Titel, Erklärung, siebe
 ``ui/lesestufen.py`` und sind dieselben wie in den Optionen ▸ Lesehilfe; geschrieben wird in dieselben Einstellungen."""
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QVBoxLayout, QWidget
 
 from lunivo_writer.ui import lesestufen as LS
@@ -65,7 +65,6 @@ class LesehilfeDialog(PanelFaehig, QDialog):
 
     def zeige_unter(self, knopf) -> None:
         """Unter dem Knopf „Lesehilfe“ aufklappen (ohne ihn: wie ein gewöhnliches Fenster)."""
-        self.setMinimumWidth(520)
         self.adjustSize()
         if knopf is not None:
             self.move(knopf.mapToGlobal(QPoint(0, knopf.height() + 4)))

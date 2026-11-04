@@ -14,14 +14,11 @@ für Zeichen, die die erste Schrift nicht hat.
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QIcon, QTextBlockFormat
-from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFontComboBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QTabWidget, QToolButton, QVBoxLayout, QWidget,
-)
+from PySide6.QtGui import QColor, QFontDatabase, QIcon, QTextBlockFormat
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGroupBox, QLabel, QPushButton, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.linien import linien_symbol
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.text_format import BETONUNG, UNTERSTREICHUNG, ZEICHEN, groesse_feld, zeichne_absaetze, zu_format
 
@@ -41,13 +38,12 @@ def _schrift_combo(thema: tuple[str, ...] = ()) -> QFontComboBox:
     c = QFontComboBox(); c.setEditable(True)
     for i, t in enumerate(thema):
         c.insertItem(i, t)
-    c.setMinimumWidth(120)
     c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(12)     # breite Schriftnamen machen das Feld nicht breiter
     return c
 
 
 def _schnitt_combo() -> QComboBox:
-    c = QComboBox(); c.setEditable(True); c.addItems(SCHNITTE); c.setMinimumWidth(90)
+    c = QComboBox(); c.setEditable(True); c.addItems(SCHNITTE)
     c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(8)
     return c
 

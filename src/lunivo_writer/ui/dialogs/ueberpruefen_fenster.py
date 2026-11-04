@@ -8,7 +8,7 @@ Die Fenster ändern das Dokument nicht; der Aufrufer (``Befehle``) setzt das Erg
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QButtonGroup, QDialog, QGridLayout, QLabel, QPushButton, QRadioButton, QVBoxLayout
+from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -22,7 +22,7 @@ SCHUTZ_ARTEN = (("lesen", "Schreibgeschützt"), ("aenderungen", "Nachverfolgte �
                 ("formulare", "Ausfüllen von Formularen"))
 
 
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter  # noqa: E402
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter  # noqa: E402
 
 class WoerterDialog(PanelFaehig, QDialog):
     """„Wörter zählen“: die Statistiken untereinander, Werte rechtsbündig; der Haken nimmt Fuß- und Endnoten dazu."""
@@ -31,15 +31,14 @@ class WoerterDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Wörter zählen")
         self.ohne, self.mit = dict(ohne or {}), dict(mit or ohne or {})
-        v = QVBoxLayout(self)
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
         v.addWidget(QLabel("Statistiken:"))
-        g = QGridLayout(); g.setContentsMargins(6, 8, 6, 8); g.setHorizontalSpacing(16); g.setVerticalSpacing(6)
+        g = FormularGitter()                                                   # eng: Wert unter der Beschriftung
         self.werte: dict[str, QLabel] = {}
         for i, (key, text) in enumerate(ZEILEN):
             wert = QLabel(); wert.setAlignment(Qt.AlignRight | Qt.AlignVCenter); wert.setAccessibleName(text)
-            g.addWidget(QLabel(text), i, 0); g.addWidget(wert, i, 1)
+            g.zeile(text, wert)
             self.werte[key] = wert
-        g.setColumnStretch(0, 1)
         v.addLayout(g)
         self.noten = UmbruchSchalter("Textfelder, Fußnoten und Endnoten einbeziehen(&F)")
         self.noten.setToolTip("Textfelder stehen in Lunivo im Text und zählen immer; der Haken nimmt Fuß- und Endnoten dazu.")
@@ -62,7 +61,7 @@ class SchutzDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Bearbeitung einschränken")
         self.art = art
-        v = QVBoxLayout(self)
+        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
         self.formate = UmbruchSchalter("Formatierungen auf eine Auswahl von Formatvorlagen beschränken")
         self.formate.setEnabled(False); self.formate.setToolTip("Das kann Lunivo noch nicht.")
         v.addWidget(self.formate)

@@ -6,10 +6,18 @@ Werte und Meldungen sind dieselben wie beim Diagrammteil (Format wie ``teil_form
 """
 from __future__ import annotations
 
-from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
+from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel, DiagrammTextPanel
+
+
+class SmartArtTextPanel(DiagrammTextPanel):
+    FOTO = False                                    # SmartArt behält den bisherigen Aufbau der Textoptionen
 
 
 class SmartArtFormatPanel(DiagrammFormatPanel):
+    TEXT_KLASSE = SmartArtTextPanel
+    AUTO_FELDER = False
+    KOPF_MENUES = False
+    NUR_DREI_EFFEKTE = False
     def __init__(self, parent=None, werte: dict | None = None):
         super().__init__(parent, werte)
         self._nur_format()

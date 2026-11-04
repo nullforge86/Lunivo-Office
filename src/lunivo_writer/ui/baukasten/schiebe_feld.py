@@ -9,8 +9,11 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QLabel, QSlider, QToolButton, QVBoxLayout, QWidget
 
 
+from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE
+
+
 def _knopf(text: str) -> QToolButton:
-    k = QToolButton(); k.setText(text); k.setAutoRaise(False); k.setFixedSize(26, 26); k.setAutoRepeat(True)
+    k = QToolButton(); k.setText(text); k.setAutoRaise(False); k.setFixedSize(FELDHOEHE, FELDHOEHE); k.setAutoRepeat(True)
     return k
 
 

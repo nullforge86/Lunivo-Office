@@ -11,8 +11,8 @@ from lunivo_writer.core import paths
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
-    QComboBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea,
-    QSizePolicy, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
+    QCheckBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QTabBar, QToolButton,
+    QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
@@ -318,6 +318,25 @@ class _ReiterLeiste(QTabBar):
             p.setPen(QColor("#ffffff") if aktiv else (QColor("#9cc4f0") if dunkel else akzent))
             p.drawText(r, Qt.AlignCenter, self.tabText(i))
         p.end()
+
+
+class _SperrKasten(QCheckBox):
+    """Kontrollkästchen „Seitenverhältnis sperren“: Klick ruft ``bildSeitenverhaeltnis``; ``auffrischen`` holt den Zustand vom Bild."""
+
+    def __init__(self, text: str, befehle):
+        super().__init__(text)
+        self._b = befehle
+        self.clicked.connect(self._klick)
+
+    def _klick(self, an: bool):
+        if bool(self._b.an_bildSeitenverhaeltnis()) != an:
+            self._b.bildSeitenverhaeltnis()
+        self.auffrischen()
+
+    def auffrischen(self):
+        an = bool(self._b.an_bildSeitenverhaeltnis())
+        if an != self.isChecked():
+            self.blockSignals(True); self.setChecked(an); self.blockSignals(False)
 
 
 class RegisterBand(QWidget):
@@ -747,7 +766,6 @@ class RegisterBand(QWidget):
         ``"befehl"`` nennt den Aufruf (Vorgabe ``zeichenMasse(breite_mm, hoehe_mm)``); ``"verhaeltnis": False`` lässt Sperre und Verhältnis weg
         und meldet nur das geänderte Maß (Tabellentools: ``tabelleMasse``)."""
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
-        from PySide6.QtWidgets import QCheckBox
         bild = g.get("sperre") == "bild"
         befehl = g.get("befehl", "zeichenMasse")
         verh = g.get("verhaeltnis", True)
@@ -768,7 +786,13 @@ class RegisterBand(QWidget):
             self.knoepfe.append((sp, None, True))
         sperre = None
         if bild:
-            for zeile, e in enumerate([e for e in g["knoepfe"] if not e.get("gross")][:2]):
+            kl = [e for e in g["knoepfe"] if not e.get("gross")]
+            if kl:                                                # Seitenverhältnis sperren: Kontrollkästchen, Zustand = Bild (an_bildSeitenverhaeltnis)
+                kasten = _SperrKasten(kl[0]["name"], self.b)
+                gitter.addWidget(kasten, 0, 2)
+                self.felder[vor + "sperrkasten"] = kasten
+                self.knoepfe.append((kasten, kl[0].get("tun"), True))
+            for zeile, e in enumerate(kl[1:2], 1):
                 gitter.addWidget(self._knopf(e, False), zeile, 2)
         elif verh:
             sperre = QCheckBox("Seitenverhältnis sperren"); sperre.setChecked(True)

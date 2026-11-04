@@ -62,6 +62,16 @@ def _achse_lesen(a: dict, waagerecht: bool, seite_mm: float) -> dict:
     return w
 
 
+def verschieben_wahl(a: dict) -> str | None:
+    """Vorwahl der Radios „Mit Text verschieben“ / „Fester Text“ im Popup Layoutoptionen eines freien Objekts: ``"mit_text"``, ``"fest"`` oder
+    None (keins gewählt: SmartArt). Eine Form ohne gespeicherte Angabe steht auf „Mit Text verschieben“ (wie in der Vorlage)."""
+    if a.get("art") == "smartart":
+        return None
+    if a.get("art") in ("form", "gruppe") and "mit_text" not in a:
+        return "mit_text"
+    return "mit_text" if a.get("mit_text") else "fest"
+
+
 def lesen(ed, z) -> dict:
     import copy
     w = copy.deepcopy(STANDARD)
@@ -75,6 +85,7 @@ def lesen(ed, z) -> dict:
         if a.get("abstand"):
             w["abstand"] = dict(a["abstand"])
         w["mit_text"], w["ueberlappen"], w["verankern"] = bool(a.get("mit_text", False)), bool(a.get("ueberlappen", True)), bool(a.get("verankern", False))
+        w["verschieben_wahl"] = verschieben_wahl(a)
         w["original"] = (px_to_mm(bild.width()), px_to_mm(bild.height()))
         return w
     c = z[1]

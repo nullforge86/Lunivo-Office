@@ -13,11 +13,12 @@ from typing import Callable
 
 from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
 from lunivo_writer.editor.druck import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
 from lunivo_writer.ui.widgets import icons
 
 KEIN_DRUCKER = "Kein Drucker eingerichtet"
@@ -29,9 +30,7 @@ ZUSTAND = {0: "Bereit", 1: "Druckt", 2: "Fehler", 3: "Angehalten"}
 
 
 def _kopf(text: str) -> QLabel:
-    k = QLabel(text.upper())
-    k.setStyleSheet("color: palette(mid); font-size: 8pt; font-weight: 600; letter-spacing: 1px; margin-top: 8px;")
-    return k
+    return abschnittstitel(text)
 
 
 def _drucker_liste() -> list:
@@ -85,10 +84,10 @@ class DruckAnsicht(QWidget):
                             ("chevron-last", "Letztes Blatt", lambda: self._gehe(10 ** 6))):
             k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
         for k in self.nav:
-            k.setFlat(True); k.setFixedWidth(30)
+            k.setFlat(True); k.setMinimumWidth(36); k.setMinimumHeight(36)
         links.addLayout(unten)
-        lw = QWidget(); lw.setLayout(links); lw.setFixedWidth(384)
-        v.addWidget(lw)
+        lw = QWidget(); lw.setLayout(links); lw.setMinimumWidth(240)
+        v.addWidget(lw, 1)
 
         # ---- rechts: Reiter ----------------------------------------------------------------------------------------------
         self.reiter = QTabWidget(); self.reiter.setDocumentMode(True)
@@ -103,9 +102,9 @@ class DruckAnsicht(QWidget):
 
     # ---- Reiter „Standard“ ----------------------------------------------------------------------------------------------
     def _standard(self, s, hoch, quer, auswahl):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(20, 6, 20, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
         f.addWidget(_kopf("Drucker"))
-        z = QHBoxLayout(); z.addWidget(QLabel("Name"))
+        g = FormularGitter(); f.addLayout(g)
         self.name = QComboBox()
         if self._drucker:
             for p in self._drucker:
@@ -114,33 +113,32 @@ class DruckAnsicht(QWidget):
             self.name.setCurrentIndex(i if i >= 0 else max(0, next((j for j, p in enumerate(self._drucker) if p.isDefault()), 0)))
         else:
             self.name.addItem(KEIN_DRUCKER, "")
-        z.addWidget(self.name, 1)
-        self.eig = QPushButton("Eigenschaften…"); self.eig.setEnabled(bool(self._drucker))
-        z.addWidget(self.eig); f.addLayout(z)
-        zz = QHBoxLayout(); zz.addWidget(QLabel("Status:")); self.status = QLabel(); self.status.setWordWrap(True)
-        zz.addWidget(self.status, 1); f.addLayout(zz)
+        g.zeile("Name", self.name)
+        self.eig = QPushButton("Eigenschaften…"); self.eig.setMinimumHeight(36); self.eig.setEnabled(bool(self._drucker))
+        g.breit(self.eig)
+        self.status = QLabel(); self.status.setWordWrap(True)
+        g.zeile("Status:", self.status)
 
         f.addWidget(_kopf("Bereich und Kopien"))
+        g = FormularGitter(); f.addLayout(g)
         self.alle = QRadioButton("Alle Seiten"); self.auswahl = QRadioButton("Auswahl"); self.seiten = QRadioButton("Seiten:")
         self.auswahl.setEnabled(auswahl)
         gruppe = QButtonGroup(self); [gruppe.addButton(b) for b in (self.alle, self.auswahl, self.seiten)]
         self.text = QLineEdit(s.get("seiten_text", "")); self.text.setPlaceholderText("1-3, 5")
         (self.seiten if s.get("bereich") == "seiten" else self.alle).setChecked(True)
-        f.addWidget(self.alle); f.addWidget(self.auswahl)
-        zs = QHBoxLayout(); zs.addWidget(self.seiten); zs.addWidget(self.text, 1); f.addLayout(zs)
-        zk = QHBoxLayout(); zk.addWidget(QLabel("Anzahl der Kopien"))
+        g.breit(self.alle); g.breit(self.auswahl); g.zeile(self.seiten, self.text)
         self.kopien = QSpinBox(); self.kopien.setRange(1, 999); self.kopien.setValue(int(s.get("kopien", 1)))
-        zk.addWidget(self.kopien); zk.addStretch(1); f.addLayout(zk)
-        self.sortieren = QCheckBox("Sortieren"); self.sortieren.setChecked(bool(s.get("sortieren", True))); f.addWidget(self.sortieren)
-        zb = QHBoxLayout(); zb.addWidget(QLabel("Blattseiten"))
-        self.blattseiten = _combo(BLATTSEITEN, s.get("blattseiten", "alle")); zb.addStretch(1); zb.addWidget(self.blattseiten); f.addLayout(zb)
+        g.zeile("Anzahl der Kopien", self.kopien)
+        self.sortieren = QCheckBox("Sortieren"); self.sortieren.setChecked(bool(s.get("sortieren", True))); g.breit(self.sortieren)
+        self.blattseiten = _combo(BLATTSEITEN, s.get("blattseiten", "alle")); g.zeile("Blattseiten", self.blattseiten)
 
         f.addWidget(_kopf("Seitenlayout"))
+        g = FormularGitter(); f.addLayout(g)
         self.papier = self._papier_combo(s.get("papier") or papier_name(*hoch))
         self.lage = _combo([("Hochformat", False), ("Querformat", True)], bool(s.get("quer", quer)))
         self.pro_blatt = _combo([(str(n), n) for n in PRO_BLATT], int(s.get("pro_blatt", 1)))
         for text, c in (("Papiergröße", self.papier), ("Ausrichtung", self.lage), ("Seiten pro Blatt", self.pro_blatt)):
-            z = QHBoxLayout(); z.addWidget(QLabel(text)); z.addStretch(1); z.addWidget(c); f.addLayout(z)
+            g.zeile(text, c)
         f.addStretch(1)
         self.reiter.addTab(w, "Standard")
 
@@ -156,7 +154,7 @@ class DruckAnsicht(QWidget):
 
     # ---- Reiter „Lunivo-Office“ ------------------------------------------------------------------------------------------
     def _programm(self, s):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(20, 6, 20, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
         f.addWidget(_kopf("Inhalt"))
 
         def haken(text, schl, vorgabe):
@@ -165,8 +163,8 @@ class DruckAnsicht(QWidget):
         self.zeichnungen = haken("Bilder und andere Grafikobjekte", "zeichnungen", True)
         self.platzhalter = haken("Textplatzhalter", "platzhalter", False)
         self.steuer = haken("Steuerelemente", "steuerelemente", True)
-        z = QHBoxLayout(); z.addWidget(QLabel("Kommentare")); z.addStretch(1)
-        self.kommentare = _combo(KOMMENTARE, s.get("kommentare", "keine")); z.addWidget(self.kommentare); f.addLayout(z)
+        g = FormularGitter(); f.addLayout(g)
+        self.kommentare = _combo(KOMMENTARE, s.get("kommentare", "keine")); g.zeile("Kommentare", self.kommentare)
         f.addWidget(_kopf("Farbe"))
         self.schwarz = haken("Text schwarz drucken", "schwarz", False)
         f.addWidget(_kopf("Seiten"))
@@ -176,20 +174,19 @@ class DruckAnsicht(QWidget):
 
     # ---- Reiter „Drucker“ ------------------------------------------------------------------------------------------------
     def _druckerseite(self, s):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(20, 6, 20, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
         f.addWidget(_kopf("Drucker"))
-        g = QGridLayout(); g.setHorizontalSpacing(24)
+        g = FormularGitter(); f.addLayout(g)
         self.info = {}
         for i, k in enumerate(("Name", "Status", "Typ", "Ort", "Kommentar")):
-            g.addWidget(QLabel(k + ":"), i, 0)
-            self.info[k] = QLabel("—"); self.info[k].setWordWrap(True); g.addWidget(self.info[k], i, 1)
-        g.setColumnStretch(1, 1); f.addLayout(g)
+            self.info[k] = QLabel("—"); self.info[k].setWordWrap(True); g.zeile(k + ":", self.info[k])
         f.addWidget(_kopf("Papier"))
         self.papier2 = self._papier_combo(self.papier.currentData())
         self.lage2 = _combo([("Hochformat", False), ("Querformat", True)], self.lage.currentData())
         self.beidseitig = _combo(BEIDSEITIG, s.get("beidseitig", "aus"))
+        g = FormularGitter(); f.addLayout(g)
         for text, c in (("Papiergröße", self.papier2), ("Ausrichtung", self.lage2), ("Beidseitig", self.beidseitig)):
-            z = QHBoxLayout(); z.addWidget(QLabel(text)); z.addStretch(1); z.addWidget(c); f.addLayout(z)
+            g.zeile(text, c)
         f.addWidget(_kopf("Gerät"))
         self.geraet = QLabel(); self.geraet.setWordWrap(True); f.addWidget(self.geraet)
         f.addStretch(1)

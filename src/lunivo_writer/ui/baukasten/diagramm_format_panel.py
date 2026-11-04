@@ -17,21 +17,34 @@ Diagramms, z. B. ``legende_pos``), ``groesse`` ({"breite_mm", "hoehe_mm"}) und `
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QFont, QIcon
-from PySide6.QtWidgets import (QCheckBox, QGridLayout, QLabel, QMenu, QToolButton, QComboBox, QDoubleSpinBox, QFontComboBox, QHBoxLayout, QLineEdit, QPlainTextEdit, QRadioButton, QVBoxLayout, QWidget)
+
+from PySide6.QtCore import QPointF, QSize, Qt, Signal
+from PySide6.QtGui import QFont, QIcon, QPainter, QPainterPath, QPalette, QPixmap
+from PySide6.QtWidgets import (
+    QApplication, QCheckBox, QLabel, QTabBar, QComboBox, QDoubleSpinBox, QFontComboBox, QHBoxLayout, QLineEdit, QPushButton, QRadioButton,
+    QVBoxLayout, QWidget,
+)
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.editor import muster as M
+from lunivo_writer.editor.textfx import WARP_FORMEN, pfad_verformen
+from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.kopf_dropdown import KopfDropdown, keine_zeile
+from lunivo_writer.ui.baukasten.alternativtext_abschnitt import AlternativtextAbschnitt
+from lunivo_writer.ui.baukasten.auto_felder_mixin import AutoFelderMixin
+from lunivo_writer.ui.baukasten.effekte_drei_mixin import NurDreiEffekteMixin
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.kopf_menue_mixin import KopfMenueMixin
+from lunivo_writer.ui.baukasten.textfeld_abschnitt import TextfeldAbschnitt
+from lunivo_writer.ui.baukasten.teil_menue import TeilMenueKnopf
 from lunivo_writer.ui.baukasten.linien import Linie
-from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN, _textur
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
+from lunivo_writer.ui.baukasten.text_kopf_menue_mixin import TextKopfMenueMixin
 from lunivo_writer.ui.baukasten.objektformat_panel import ObjektFormatPanel, _TextPanel
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
+from lunivo_writer.ui.baukasten.text_fuellarten_mixin import TextFuellartenMixin
+from lunivo_writer.ui.baukasten.strich_auswahl import StrichAuswahl
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
 from lunivo_writer.ui.widgets import icons
 
@@ -39,7 +52,6 @@ from lunivo_writer.ui.widgets import icons
 TEXT_TEILE = ("diagrammbereich", "titel", "legende", "achse_horizontal", "achse_vertikal", "datenbeschriftung")
 LEGENDEN_LAGEN = (("oben", "Oben"), ("unten", "Unten"), ("links", "Links"), ("rechts", "Rechts"))
 RICHTUNGEN = (("waagerecht", "Waagerecht"), ("dreh90", "Um 90° drehen"), ("dreh270", "Um 270° drehen"), ("gestapelt", "Gestapelt"))
-VERTIKAL = (("oben", "Oben"), ("mitte", "Mittig"), ("unten", "Unten"))
 ABSCHLUSS = (("flach", "Flach"), ("rund", "Rund"), ("quadrat", "Quadratisch"))
 VERKNUEPFUNG = (("rund", "Rund"), ("schraeg", "Abgeschrägt"), ("spitz", "Spitz"))
 _OHNE = object()                                       # „Bildfüllung ohne Bild“: die Füllung bleibt, wie sie ist
@@ -47,11 +59,11 @@ _OHNE = object()                                       # „Bildfüllung ohne Bi
 
 def _optionen_name(teil: str) -> str:
     if teil.startswith("reihe_"):
-        return "Reihenoptionen"
+        return "Reihe Optionen"
     if teil.startswith("legendeneintrag_"):
-        return "Legendeneintragoptionen"
-    return {"titel": "Titeloptionen", "legende": "Legendenoptionen", "achse_horizontal": "Achsenoptionen", "achse_vertikal": "Achsenoptionen",
-            "zeichnungsbereich": "Zeichnungsbereichoptionen", "datenbeschriftung": "Datenbeschriftungoptionen"}.get(teil, "Diagrammoptionen")
+        return "Legendeneintrag Optionen"
+    return {"titel": "Titel Optionen", "legende": "Legende Optionen", "achse_horizontal": "Achse Optionen", "achse_vertikal": "Achse Optionen",
+            "zeichnungsbereich": "Zeichnungsbereich Optionen", "datenbeschriftung": "Datenbeschriftung Optionen"}.get(teil, "Diagramm Optionen")
 
 
 def _text_teil(teil: str) -> bool:
@@ -63,6 +75,25 @@ def _combo(eintraege) -> QComboBox:
     for k, n in eintraege:
         c.addItem(n, k)
     return c
+
+
+def _strich_zeichner(art: str):
+    """Zeichner für ``StrichAuswahl``: ein Strich der Strichart ``art`` über die Breite (schwarz)."""
+    def z(p, r, farbe):
+        pen = F.stift({"art": art, "breite": 1.6, "farbe": farbe.name()}); pen.setColor(farbe); p.setPen(pen)
+        p.drawLine(QPointF(r.left(), r.center().y()), QPointF(r.right(), r.center().y()))
+    return z
+
+
+def _kombi_zeichner(form: str):
+    """Zeichner für ``StrichAuswahl``: eine Linie des kombinierten Typs ``form`` (Flächen aus ``textfx._kontur_pfade``)."""
+    def z(p, r, farbe):
+        from lunivo_writer.editor import textfx as X
+        pf = QPainterPath(); pf.moveTo(r.left(), r.center().y()); pf.lineTo(r.right(), r.center().y())
+        p.setPen(Qt.NoPen); p.setBrush(farbe)
+        for fl in X._kontur_pfade(pf, 3.0, form):
+            p.drawPath(fl)
+    return z
 
 
 def _still(x, wert, setter: str = "setValue") -> None:
@@ -78,7 +109,7 @@ class _AutoWert(QWidget):
         h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(6)
         self.auto = QCheckBox("Auto"); self.auto.setChecked(True)
         self.feld = QDoubleSpinBox(); self.feld.setRange(-1e9, 1e9); self.feld.setDecimals(2); self.feld.setValue(vorgabe); self.feld.setEnabled(False)
-        self.feld.setMinimumWidth(70)
+        self.feld.setMinimumWidth(0)
         h.addWidget(self.auto); h.addWidget(self.feld, 1)
         self.auto.toggled.connect(lambda an: (self.feld.setEnabled(not an), self.geaendert.emit()))
         self.feld.valueChanged.connect(lambda *_: self.geaendert.emit())
@@ -97,13 +128,15 @@ class _AutoWert(QWidget):
 
 
 # ---- Textoptionen --------------------------------------------------------------------------------------------------------------------
-class DiagrammTextPanel(_TextPanel):
+class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
     """Textfüllung und -kontur, Effekte (wie bei den Texteffekten) und „Textfeld“. ``werte()`` ist das Textformat des Teils (``diagramm_format``: ``text``)."""
+
+    FOTO = True                                     # Vorlage: „Ausrichtung“ als Baustein, Schrift hinter Textkontur (SmartArt behält den alten Aufbau)
 
     def __init__(self, parent=None, werte: dict | None = None):
         super().__init__(parent, werte)
         self._stumm = True
-        # Schrift vor der Textfüllung
+        # Schrift (die Vorlage zeigt sie nicht; sie ist sonst nirgends erreichbar und steht darum hinter der Textkontur)
         self.a_schrift = Abschnitt("Schrift")
         self.s_name = QFontComboBox()
         self.s_groesse = SchrittFeld(6, 96, " pt", 1, 0, 10)
@@ -112,10 +145,21 @@ class DiagrammTextPanel(_TextPanel):
         self.a_schrift.zeile("Schriftart:", self.s_name); self.a_schrift.zeile("Größe:", self.s_groesse)
         for x in (self.s_fett, self.s_kursiv, self.s_unter):
             self.a_schrift.breit(x)
-        self.reiter.widget(0).widget().layout().insertWidget(0, self.a_schrift)
+        seite0 = self.reiter.widget(0).widget().layout()
+        seite0.insertWidget(seite0.indexOf(self.a_kontur) + 1 if self.FOTO and seite0.indexOf(self.a_kontur) >= 0 else 0, self.a_schrift)
+        self._dreh_warp_bauen()
         # Textfeld
+        if self.FOTO:
+            self._text_kopf_bauen()                 # Köpfe von Textfüllung und -kontur wie in der Vorlage (Mixin, Basis unverändert)
+            self._text_fuellarten_bauen()           # Bild-/Texturfüllung und Musterfüllung als Textfüllung (Mixin)
+            self.a_feld = TextfeldAbschnitt()
+            self.f_winkel, self.f_rand = self.a_feld.winkel, self.a_feld.raender
+            feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6); v.addWidget(self.a_feld); v.addStretch(1)
+            self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "Textfeld")
+            self._verbinde()
+            return
         self.a_feld = Abschnitt("Textfeld")
-        self.f_vertikal, self.f_richtung = _combo(VERTIKAL), _combo(RICHTUNGEN)
+        self.f_vertikal, self.f_richtung = _combo(F.VERTIKAL), _combo(RICHTUNGEN)
         self.f_winkel = SchrittFeld(-180, 180, "°", 5, 0, 0)
         self.f_rand = {k: SchrittFeld(0, 60, " pt", 1, 0, 0) for k in "lrou"}
         self.f_anpassen = UmbruchSchalter("Größe der Form dem Text anpassen"); self.f_anpassen.setChecked(True)
@@ -124,18 +168,81 @@ class DiagrammTextPanel(_TextPanel):
                      ("Linker Rand:", self.f_rand["l"]), ("Rechter Rand:", self.f_rand["r"]), ("Oberer Rand:", self.f_rand["o"]), ("Unterer Rand:", self.f_rand["u"])):
             self.a_feld.zeile(t, f)
         self.a_feld.breit(self.f_anpassen); self.a_feld.breit(self.f_umbruch)
-        feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(10); v.addWidget(self.a_feld); v.addStretch(1)
+        feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6); v.addWidget(self.a_feld); v.addStretch(1)
         self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "Textfeld")
+        self._verbinde()
+
+    # ---- 3D-Drehung und Transformieren (Effekte, hinter dem 3D-Format): Datenmodell ``text_3d`` und ``warp`` (``editor/textfx.py``)
+    def _dreh_warp_bauen(self) -> None:
+        seite = self.reiter.widget(1).widget().layout()
+        self.a_dreh = Abschnitt("3D-Drehung")
+        self.dr_x, self.dr_y, self.dr_z = (self._schritt_feld(-180, 180, "°", 5, 1) for _ in range(3))
+        self.dr_pers = self._schritt_feld(0, 120, "°", 5, 1); self.dr_pers.setValue(45)
+        for t, f in (("X-Drehung", self.dr_x), ("Y-Drehung", self.dr_y), ("Z-Drehung", self.dr_z), ("Perspektive", self.dr_pers)):
+            self.a_dreh.zeile(t, f)
+            f.valueChanged.connect(lambda *_: self._neu())
+        zr = QPushButton("Zurücksetzen"); zr.clicked.connect(self._dreh_zuruecksetzen); self.a_dreh.breit(zr)
+        self.a_warp = Abschnitt("Transformieren")
+        self._warp_art = "keine"
+        self.warp_knopf = KopfDropdown(self._warp_menue)
+        self.warp_knopf.gewaehlt.connect(lambda k: self._warp_setzen(k or "keine"))
+        self.warp_knopf.setAccessibleName("Transformieren wählen"); self.warp_knopf.setToolTip("Textverformung wählen")
+        self.warp_knopf.an(self.a_warp)
+        self._warp_zeige = QLabel(); self._warp_zeige.setWordWrap(True); self.a_warp.breit(self._warp_zeige)
+        self._warp_setzen("keine", melden=False)
+        i = seite.indexOf(self.a_3d)
+        seite.insertWidget(i + 1, self.a_dreh); seite.insertWidget(i + 2, self.a_warp)
+
+    def _dreh_zuruecksetzen(self) -> None:
+        for f in (self.dr_x, self.dr_y, self.dr_z):
+            f.setValue(0)
+        self.dr_pers.setValue(45)
+
+    @staticmethod
+    def _warp_bild(art: str, groesse: QSize) -> QPixmap:
+        """„abcde“ so verformt, wie der Text gezeichnet wird (derselbe ``pfad_verformen``)."""
+        pm = QPixmap(groesse); pm.fill(Qt.transparent)
+        pfad = QPainterPath(); pfad.addText(0, 0, QFont("sans-serif", 40), "abcde")
+        pfad = pfad_verformen(pfad, {"warp": {"art": art}})
+        r = pfad.boundingRect()
+        if r.isEmpty():
+            return pm
+        k = min((groesse.width() - 6) / r.width(), (groesse.height() - 6) / r.height())
+        p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
+        p.translate(groesse.width() / 2, groesse.height() / 2); p.scale(k, k); p.translate(-r.center())
+        p.fillPath(pfad, QApplication.palette().color(QPalette.WindowText)); p.end()
+        return pm
+
+    def _warp_menue(self, parent) -> VoreinstellungMenue:
+        m = VoreinstellungMenue(parent, keine=None, kachel=QSize(48, 36))
+        m.aktuell = "" if self._warp_art == "keine" else self._warp_art
+        keine_zeile(m, "Keine Transformation")
+        m.abschnitt("Verbiegen", [(k, QIcon(self._warp_bild(k, QSize(48, 36))), n) for k, n in WARP_FORMEN if k != "keine"], 4)
+        return m
+
+    def _warp_setzen(self, art: str, melden: bool = True) -> None:
+        self._warp_art = art if art in dict(WARP_FORMEN) else "keine"
+        self.warp_knopf.setSymbol(QIcon(self._warp_bild(self._warp_art, KopfDropdown.SYMBOL)))
+        self._warp_zeige.setText(dict(WARP_FORMEN)[self._warp_art])
+        if melden:
+            self._neu()
+
+    def _verbinde(self) -> None:
         for a in (self.a_schrift, self.a_feld, self.a_fuell, self.a_kontur):
             a.knopf.setChecked(True)
         self.s_name.currentFontChanged.connect(lambda *_: (self.s_gesetzt.update(name=True), self._neu()))
         self.s_groesse.valueChanged.connect(lambda *_: (self.s_gesetzt.update(groesse=True), self._neu()))
-        for x in (self.s_fett, self.s_kursiv, self.s_unter, self.f_anpassen, self.f_umbruch):
+        for x in (self.s_fett, self.s_kursiv, self.s_unter):
             x.toggled.connect(lambda *_: self._neu())
-        for x in (self.f_vertikal, self.f_richtung):
-            x.currentIndexChanged.connect(lambda *_: self._neu())
-        for x in (self.f_winkel, *self.f_rand.values()):
-            x.valueChanged.connect(lambda *_: self._neu())
+        if self.FOTO:
+            self.a_feld.geaendert.connect(self._neu)
+        else:
+            for x in (self.f_anpassen, self.f_umbruch):
+                x.toggled.connect(lambda *_: self._neu())
+            for x in (self.f_vertikal, self.f_richtung):
+                x.currentIndexChanged.connect(lambda *_: self._neu())
+            for x in (self.f_winkel, *self.f_rand.values()):
+                x.valueChanged.connect(lambda *_: self._neu())
         self._stumm = False
 
     # ---- Werte: das Textformat des Teils
@@ -146,14 +253,24 @@ class DiagrammTextPanel(_TextPanel):
         if not e and t.get("farbe"):
             basis["farbe"] = t["farbe"]
         super()._setze(basis)
+        if hasattr(self, "a_dreh"):
+            d3 = e.get("text_3d") or {}
+            for f, k, v in ((self.dr_x, "x", 0), (self.dr_y, "y", 0), (self.dr_z, "z", 0), (self.dr_pers, "perspektive", 45)):
+                _still(f, float(d3[k]) if d3.get(k) is not None else float(v))
+            self._warp_setzen((e.get("warp") or {}).get("art", "keine"), melden=False)
         if not hasattr(self, "f_rand"):
             return
-        f = F.feld_von(t)
+        f = F.feld_von(t, w.get("teil"))
         _still(self.s_name, QFont(t.get("name") or self.font().family()), "setCurrentFont")
         self.s_gesetzt = {"name": bool(t.get("name")), "groesse": bool(t.get("groesse"))}
-        _still(self.s_groesse, float(t.get("groesse") or 10)); _still(self.f_winkel, float(f["winkel"]))
-        for x, wert in ((self.s_fett, bool(t.get("fett"))), (self.s_kursiv, bool(t.get("kursiv"))), (self.s_unter, bool(t.get("unter"))),
-                        (self.f_anpassen, f["anpassen"] is not False), (self.f_umbruch, f["umbruch"] is not False)):
+        _still(self.s_groesse, float(t.get("groesse") or 10))
+        for x, wert in ((self.s_fett, bool(t.get("fett"))), (self.s_kursiv, bool(t.get("kursiv"))), (self.s_unter, bool(t.get("unter")))):
+            _still(x, wert, "setChecked")
+        if self.FOTO:
+            self.a_feld.setze(f)
+            return
+        _still(self.f_winkel, float(f["winkel"]))
+        for x, wert in ((self.f_anpassen, f["anpassen"] is not False), (self.f_umbruch, f["umbruch"] is not False)):
             _still(x, wert, "setChecked")
         for x, d in ((self.f_vertikal, f["vertikal"]), (self.f_richtung, f["richtung"])):
             _still(x, max(0, x.findData(d)), "setCurrentIndex")
@@ -163,21 +280,25 @@ class DiagrammTextPanel(_TextPanel):
     def werte(self) -> dict:
         w = super().werte()
         eff = {k: v for k, v in w.items() if v is not None}
+        if any(abs(f.value()) > 0.01 for f in (self.dr_x, self.dr_y, self.dr_z)):
+            eff["text_3d"] = {"x": self.dr_x.value(), "y": self.dr_y.value(), "z": self.dr_z.value(), "perspektive": self.dr_pers.value()}
+        if self._warp_art != "keine":
+            eff["warp"] = {"art": self._warp_art}
         standard = eff.get("fuell") == "farbe" and not eff.get("transparenz") and not eff.get("kontur") and not any(
-            eff.get(k) for k in ("verlauf", "kontur_verlauf", "schatten", "reflektion", "leuchten", "d3")) and eff.get("kontur_form", "einfach") == "einfach"
+            eff.get(k) for k in ("verlauf", "kontur_verlauf", "schatten", "reflektion", "leuchten", "d3", "text_3d", "warp")) and eff.get("kontur_form", "einfach") == "einfach"
         t = {"farbe": eff.get("farbe") or None, "effekt": None if standard else eff,
              "groesse": self.s_groesse.value() if self.s_gesetzt["groesse"] else None,
              "name": self.s_name.currentFont().family() if self.s_gesetzt["name"] else None,
              "fett": True if self.s_fett.isChecked() else None, "kursiv": True if self.s_kursiv.isChecked() else None,
              "unter": True if self.s_unter.isChecked() else None}
-        t["feld"] = {"vertikal": self.f_vertikal.currentData(), "richtung": self.f_richtung.currentData(), "winkel": self.f_winkel.value(),
+        t["feld"] = self.a_feld.werte() if self.FOTO else {"vertikal": self.f_vertikal.currentData(), "richtung": self.f_richtung.currentData(), "winkel": self.f_winkel.value(),
                      "anpassen": self.f_anpassen.isChecked(), "umbruch": self.f_umbruch.isChecked(),
                      "raender": {k: x.value() for k, x in self.f_rand.items()}}
         return t
 
 
 # ---- das Panel ------------------------------------------------------------------------------------------------------------------------
-class DiagrammFormatPanel(ObjektFormatPanel):
+class DiagrammFormatPanel(KopfMenueMixin, NurDreiEffekteMixin, AutoFelderMixin, ObjektFormatPanel):
     TEXT_KLASSE = DiagrammTextPanel
     _bild_modus = False
     alt_geaendert = Signal(str, str)
@@ -190,22 +311,31 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self._luecke_an = False
         super().__init__(parent, werte)
         self._stumm = True
-        self.teil_wahl = QComboBox(); self.teil_wahl.setToolTip("Diagrammteil wählen")           # „TEIL [Diagrammbereich ▾]“ über den Reitern, wie „FÜR“ im Standardfenster
-        self.teil_wahl.activated.connect(lambda _i: self.teil_gewaehlt.emit(str(self.teil_wahl.currentData())))
-        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(abschnittstitel("Teil:"), 0, Qt.AlignVCenter); kopf.addWidget(self.teil_wahl, 1)
-        self.layout().insertLayout(0, kopf)
+        self.teil_wahl = TeilMenueKnopf()                                                      # der Pfeil am Hauptreiter „DIAGRAMM OPTIONEN ▾“ (Liste der Teile)
+        self.teil_wahl.gewaehlt.connect(self.teil_gewaehlt)
+        self._kopf_menues_bauen()                                                               # Dropdowns in den Köpfen von Füllung und Linie
+        self.optionen.tabBar().setTabButton(0, QTabBar.RightSide, self.teil_wahl)      # die Teilliste „▾“ am ersten Hauptreiter, mit gewöhnlicher wie flacher Leiste
         self.text_panel.geaendert.connect(lambda t: self._melde(text=t))
         self.optionen_seite = self._seite_optionen()
         self.reiter.addTab(self._scroll(self.optionen_seite), icons.icon("sliders-horizontal", 22), "Optionen")
         self.eigenschaften_seite = self._seite_eigenschaften()
         self.reiter.addTab(self._scroll(self.eigenschaften_seite), icons.icon("scaling", 22), "Größe und Eigenschaften")
-        for a in (self.a_fuell, self.a_kontur, self.a_schatten):         # wie in der Vorlage: die wichtigsten Abschnitte stehen offen
+        self._reiter_kurz()
+        for a in (self.a_fuell, self.a_kontur) + (() if self.NUR_DREI_EFFEKTE else (self.a_schatten,)):         # wie in der Vorlage: Füllung und Linie offen, die Effekte zu
             a.knopf.setChecked(True)
-        self._alt_timer = QTimer(self); self._alt_timer.setSingleShot(True); self._alt_timer.setInterval(400)
-        self._alt_timer.timeout.connect(lambda: self.alt_geaendert.emit(self.alt_titel.text(), self.alt_text.toPlainText()))
         self._fertig = True
         self._stumm = False
         self.setze(werte or {})
+
+    def _reiter_kurz(self) -> None:
+        """Kurze Reitertexte, damit sie bei 300 px lesbar bleiben; der volle Name steht als Tooltip (nur Texte)."""
+        kurz = {"Füllung und Linie": "Füllung", "Textfüllung und -kontur": "Füllung", "Größe und Eigenschaften": "Größe",
+                "Legendenoptionen": "Legende", "Achsenoptionen": "Achse", "Reihenoptionen": "Reihe"}
+        for rw in (self.reiter, self.text_panel.reiter):
+            for i in range(rw.count()):
+                voll = rw.tabText(i)
+                if voll in kurz:
+                    rw.setTabToolTip(i, voll); rw.setTabText(i, kurz[voll])
 
     # ---- Erweiterungen der Seite „Füllung und Linie“ ----------------------------------------------------------------------------
     def _zusatz_radios(self, abschnitt: str) -> list:
@@ -231,25 +361,48 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Farbe 1"), FarbFeld(Farbe.BLAU_DUNKEL, "Farbe 2")
         self.kv_winkel = SchiebeFeld(0, 360, "°", 5)
         self.k_trans = SchiebeFeld(0, 100, " %")
-        self.l_kombi = _combo(T.KONTUR_FORMEN)
+        self.l_kombi = StrichAuswahl([(k, _kombi_zeichner(k), n) for k, n in T.KONTUR_FORMEN])
+        self.l_kombi.gewaehlt.connect(lambda *_: (self._linie_waehlen(), self._neu()))
+        self.k_wahl.breite.hide(); self.k_wahl.art.hide()                  # sie bleiben die Datenhalter der Basis; sichtbar sind Zähler und Strichauswahl
+        self.k_art.clear()
+        for k, n in F.STRICHTYPEN:
+            self.k_art.addItem(n, k)
+        self.s_art = StrichAuswahl([(k, _strich_zeichner(k), n) for k, n in F.STRICHTYPEN])
+        self.s_art.gewaehlt.connect(lambda k: self.k_art.setCurrentIndex(max(0, self.k_art.findData(k))))
+        self.k_art.currentIndexChanged.connect(lambda *_: self.s_art.setze(str(self.k_art.currentData())))
+        self.s_breite = SchrittFeld(0, 1584, "pt", 0.25, 2, 0.75)
+        self.s_breite.valueChanged.connect(lambda *_: (self._linie_waehlen(), self._neu()))
         self.l_abschluss, self.l_verknuepfung = _combo(ABSCHLUSS), _combo(VERKNUEPFUNG)
         self.l_rund = UmbruchSchalter("Abgerundete Ecke")
         g, f = self.g_lin_verlauf, self.g_lin_form
         g.zeile("Farbe 1:", self.kv1); g.zeile("Farbe 2:", self.kv2); g.zeile("Winkel:", self.kv_winkel)
-        f.zeile("Transparenz:", self.k_trans); f.zeile("Kombinierter Typ:", self.l_kombi); f.zeile("Abschlusstyp:", self.l_abschluss)
-        f.zeile("Verknüpfungstyp:", self.l_verknuepfung); f.breit(self.l_rund)
+        # Reihenfolge der Vorlage: Farbe, Transparenz, Breite, Kombinierter Typ, Strichtyp, Abschluss, Verknüpfung (die Teile der Zeile von ``k_wahl`` einzeln)
+        self.l_farbe_text = QLabel("Farbe:")
+        f.zeile(self.l_farbe_text, self.k_farbe); f.zeile("Transparenz:", self.k_trans); f.zeile("Breite:", self.s_breite)
+        f.zeile("Kombinierter Typ:", self.l_kombi); f.zeile("Strichtyp:", self.s_art); f.zeile("Abschlusstyp:", self.l_abschluss)
+        f.zeile("Verknüpfungstyp:", self.l_verknuepfung)
+        # Pfeile (wie in der Vorlage in der Linie, immer zu sehen, grau außer bei Linienreihen): je Pfeil Art und Größe
+        self._linienreihe = False
+        self.p_anfang, self.p_ende = _combo(F.PFEILE), _combo(F.PFEILE)
+        self.p_groesse_anfang, self.p_groesse_ende = _combo(F.PFEIL_GROESSEN), _combo(F.PFEIL_GROESSEN)
+        self.l_pfeil_anfang, self.l_pfeil_ende = QLabel("Anfangspfeil:"), QLabel("Endpfeil:")
+        for l, a, g in ((self.l_pfeil_anfang, self.p_anfang, self.p_groesse_anfang), (self.l_pfeil_ende, self.p_ende, self.p_groesse_ende)):
+            f.zeile(l, a); f.zeile("Größe:", g)
+        f.breit(self.l_rund)
         for sig in (self.kv1.farbeGeaendert, self.kv2.farbeGeaendert, self.kv_winkel.valueChanged):
             sig.connect(lambda *_: (self.k_verlauf.setChecked(True), self._neu()))
-        for sig in (self.k_trans.valueChanged, self.l_kombi.currentIndexChanged, self.l_abschluss.currentIndexChanged, self.l_verknuepfung.currentIndexChanged,
+        for sig in (self.k_trans.valueChanged, self.l_abschluss.currentIndexChanged, self.l_verknuepfung.currentIndexChanged,
                     self.l_rund.toggled):
             sig.connect(lambda *_: (self._linie_waehlen(), self._neu()))
-        # Pfeile (nur Linienreihen): eigener Abschnitt unter der Linie
-        self.a_pfeile = Abschnitt("Pfeile")
-        self.p_anfang, self.p_ende = _combo(F.PFEILE), _combo(F.PFEILE)
-        self.p_groesse = SchiebeFeld(1, 3, "", 0.5, 1, 1.0)
-        self.a_pfeile.zeile("Anfang:", self.p_anfang); self.a_pfeile.zeile("Ende:", self.p_ende); self.a_pfeile.zeile("Größe:", self.p_groesse)
-        for sig in (self.p_anfang.currentIndexChanged, self.p_ende.currentIndexChanged, self.p_groesse.valueChanged):
+        for sig in (self.p_anfang.currentIndexChanged, self.p_ende.currentIndexChanged, self.p_groesse_anfang.currentIndexChanged,
+                    self.p_groesse_ende.currentIndexChanged):
             sig.connect(lambda *_: (self._linie_waehlen(), self._neu()))
+        self._pfeile_freigeben(False)
+
+    def _pfeile_freigeben(self, an: bool) -> None:
+        self._linienreihe = an
+        for x in (self.p_anfang, self.p_ende, self.p_groesse_anfang, self.p_groesse_ende, self.l_pfeil_anfang, self.l_pfeil_ende):
+            x.setEnabled(an)
 
     def _bild_waehlen(self) -> None:
         self._bild_modus = True
@@ -266,6 +419,12 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         if self.r_auto.isChecked() or self.r_keine.isChecked():
             self.r_farbe.setChecked(True)
 
+    def _k_breite(self) -> float:
+        return float(self.s_breite.value())
+
+    def _k_breite_setzen(self, pt: float) -> None:
+        _still(self.s_breite, float(pt))
+
     def _linie_waehlen(self) -> None:
         if self.k_auto.isChecked() or self.k_keine.isChecked():
             self.k_linie.setChecked(True)
@@ -275,14 +434,12 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.r_textur.setText("Bild- oder Texturfüllung"); self.r_bild.setVisible(False)       # ein Feld mit Unterwahl (Struktur oder Bild)
         self._bild_modus = False
         self.bild_knopf.clicked.connect(self._bild_waehlen)
-        v = seite.layout()
-        v.insertWidget(v.count() - 1, self.a_pfeile)
         self.k_wahl.geaendert.connect(lambda *_: self._linie_waehlen())
         return seite
 
     # ---- Seite „Optionen“ (Legende, Achse, Reihe) ---------------------------------------------------------------------------------
     def _seite_optionen(self) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10); v.setContentsMargins(0, 0, 0, 0)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
         self.a_legende = Abschnitt("Legendenoptionen")
         self.o_lage = _combo(LEGENDEN_LAGEN)
         self.a_legende.zeile("Legendenposition:", self.o_lage)
@@ -326,38 +483,14 @@ class DiagrammFormatPanel(ObjektFormatPanel):
 
     # ---- Seite „Größe und Eigenschaften“ ------------------------------------------------------------------------------------------
     def _seite_eigenschaften(self) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(10); v.setContentsMargins(0, 0, 0, 0)
-        self.a_groesse = Abschnitt("Größe")
-        self.g_hoehe = EinheitFeld(80.0, 10.0, 1000.0, ("mm", "cm", "in", "pt")); self.g_breite = EinheitFeld(120.0, 10.0, 1000.0, ("mm", "cm", "in", "pt"))
-        self.g_sperren = UmbruchSchalter("Seitenverhältnis sperren")
-        self.g_dreh = SchrittFeld(-360, 360, "°", 5, 0, 0)
-        self.a_groesse.zeile("Höhe:", self.g_hoehe); self.a_groesse.zeile("Breite:", self.g_breite); self.a_groesse.breit(self.g_sperren)
-        self.a_groesse.zeile("Drehung:", self.g_dreh)
-        self._verhaeltnis = 1.5
-        self.g_hoehe.valueChanged.connect(lambda *_: self._groesse_melden(True)); self.g_breite.valueChanged.connect(lambda *_: self._groesse_melden(False))
-        self.g_dreh.valueChanged.connect(lambda *_: self._melde(dreh=self.g_dreh.value()))
-        self.a_alt = Abschnitt("Alternativtext")
-        self.alt_titel = QLineEdit()
-        self.alt_text = QPlainTextEdit(); self.alt_text.setMinimumHeight(110)
-        self.a_alt.zeile("Titel:", self.alt_titel); self.a_alt.zeile("Beschreibung:", self.alt_text)
-        self.alt_titel.textChanged.connect(lambda *_: self._alt_start()); self.alt_text.textChanged.connect(self._alt_start)
-        v.addWidget(self.a_groesse); v.addWidget(self.a_alt); v.addStretch(1)
-        for a in (self.a_groesse, self.a_alt):
-            a.knopf.setChecked(True)
+        """Nach der Vorlage nur „Alternativtext“ (Größe und Drehung stellt das Fenster „Layout“ des Objekts ein)."""
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        self.a_alt = AlternativtextAbschnitt()
+        self.a_alt.geaendert.connect(lambda t, b: None if self._stumm or not self._fertig else self.alt_geaendert.emit(t, b))
+        self.alt_titel, self.alt_text = self.a_alt.titel_feld, self.a_alt.text_feld
+        self._alt_timer = self.a_alt._timer
+        v.addWidget(self.a_alt); v.addStretch(1)
         return seite
-
-    def _groesse_melden(self, hoehe: bool) -> None:
-        if self._stumm or not self._fertig:
-            return
-        if self.g_sperren.isChecked():
-            ziel, wert = (self.g_breite, self.g_hoehe.value() * self._verhaeltnis) if hoehe else (self.g_hoehe, self.g_breite.value() / max(0.01, self._verhaeltnis))
-            ziel.blockSignals(True); ziel.setValue(wert); ziel.blockSignals(False)
-        self._verhaeltnis = self.g_breite.value() / max(0.01, self.g_hoehe.value())
-        self._melde(groesse={"breite_mm": self.g_breite.value(), "hoehe_mm": self.g_hoehe.value()})
-
-    def _alt_start(self) -> None:
-        if not self._stumm and self._fertig:
-            self._alt_timer.start()
 
     # ---- Melden --------------------------------------------------------------------------------------------------------------------------
     def _melde(self, **kw) -> None:
@@ -417,20 +550,22 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         if self.k_auto.isChecked():
             return None
         voll = {"keine": None, "farbe": None, "breite": None, "art": None, "transparenz": None, "kombiniert": None, "abschluss": None, "verknuepfung": None,
-                "rund": None, "verlauf": None, "pfeil_anfang": None, "pfeil_ende": None, "pfeil_groesse": None}
+                "rund": None, "verlauf": None, "pfeil_anfang": None, "pfeil_ende": None, "pfeil_groesse": None,
+                "pfeil_groesse_anfang": None, "pfeil_groesse_ende": None}
         if self.k_keine.isChecked():
             return {**voll, "keine": True}
         voll.update(farbe=self.k_farbe.farbe or Farbe.GRAU, breite=self._k_breite(), art=self.k_art.currentData() or "einfach",
-                    transparenz=int(self.k_trans.value()) or None, kombiniert=self.l_kombi.currentData() if self.l_kombi.currentData() != "einfach" else None,
+                    transparenz=int(self.k_trans.value()) or None, kombiniert=self.l_kombi.aktuell() if self.l_kombi.aktuell() != "einfach" else None,
                     abschluss=self.l_abschluss.currentData() if self.l_abschluss.currentData() != "flach" else None,
                     verknuepfung=self.l_verknuepfung.currentData() if self.l_verknuepfung.currentData() != "rund" else None,
                     rund=True if self.l_rund.isChecked() else None)
         if self.k_verlauf.isChecked():
             voll["verlauf"] = {"farbe1": self.kv1.farbe or Farbe.ROT, "farbe2": self.kv2.farbe or Farbe.BLAU_DUNKEL, "winkel": self.kv_winkel.value()}
-        if not self.a_pfeile.isHidden():
+        if self._linienreihe:
             voll.update(pfeil_anfang=self.p_anfang.currentData() if self.p_anfang.currentData() != "keiner" else None,
                         pfeil_ende=self.p_ende.currentData() if self.p_ende.currentData() != "keiner" else None,
-                        pfeil_groesse=self.p_groesse.value() if self.p_groesse.value() != 1.0 else None)
+                        pfeil_groesse_anfang=self.p_groesse_anfang.currentData() if self.p_groesse_anfang.currentData() != 1.0 else None,
+                        pfeil_groesse_ende=self.p_groesse_ende.currentData() if self.p_groesse_ende.currentData() != 1.0 else None)
         return voll
 
     # ---- Füllen ----------------------------------------------------------------------------------------------------------------------
@@ -469,13 +604,16 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         self.f_trans.setValue(float(d.get("transparenz", 0))); self.v_winkel.setValue(float(d.get("winkel", 90)))
         li = li or {}
         self.k_farbe.keine_text = "Automatisch"
-        _still(self.k_wahl, Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), li.get("art", "einfach")), "setLinie")      # still: sonst wählt die Änderung „Durchgezogene Linie“
+        _still(self.k_wahl, Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), F.strich_schluessel(li.get("art"))), "setLinie")
+        self.s_art.setze(F.strich_schluessel(li.get("art"))); _still(self.s_breite, float(li.get("breite", 1.0 if li else 0.75)))      # still: sonst wählt die Änderung „Durchgezogene Linie“
         self.k_trans.setValue(float(li.get("transparenz", 0)))
-        for c, k, vorgabe in ((self.l_kombi, "kombiniert", "einfach"), (self.l_abschluss, "abschluss", "flach"), (self.l_verknuepfung, "verknuepfung", "rund"),
+        self.l_kombi.setze(li.get("kombiniert", "einfach"))
+        for c, k, vorgabe in ((self.l_abschluss, "abschluss", "flach"), (self.l_verknuepfung, "verknuepfung", "rund"),
                               (self.p_anfang, "pfeil_anfang", "keiner"), (self.p_ende, "pfeil_ende", "keiner")):
             _still(c, max(0, c.findData(li.get(k, vorgabe))), "setCurrentIndex")
         _still(self.l_rund, bool(li.get("rund")), "setChecked")
-        self.p_groesse.setValue(float(li.get("pfeil_groesse", 1.0)))
+        for c, k in ((self.p_groesse_anfang, "pfeil_groesse_anfang"), (self.p_groesse_ende, "pfeil_groesse_ende")):
+            _still(c, max(0, c.findData(float(li.get(k, li.get("pfeil_groesse", 1.0))))), "setCurrentIndex")
         v = li.get("verlauf") or {}
         self.kv1.setFarbe(v.get("farbe1", Farbe.ROT)); self.kv2.setFarbe(v.get("farbe2", Farbe.BLAU_DUNKEL)); self.kv_winkel.setValue(float(v.get("winkel", 0)))
         self._felder_zeigen()
@@ -492,7 +630,9 @@ class DiagrammFormatPanel(ObjektFormatPanel):
             self._teil_einrichten(werte)
             super().setze(werte)
             f = werte.get("format") or {}
-            self.text_panel.setze({"text": f.get("text") or {}})
+            self.text_panel.setze({"text": f.get("text") or {}, "teil": self._teil})
+            if getattr(self.text_panel, "FOTO", False):               # Ränder usw. nur außer beim Titel (Vorlage: dort grau); „Text nicht drehen“ nur beim gedrehten Diagramm
+                self.text_panel.a_feld.freigeben(self._teil != "titel", bool((werte.get("objekt") or {}).get("dreh")))
             self._setze_optionen(werte, f)
         finally:
             self._stumm = alt
@@ -500,12 +640,7 @@ class DiagrammFormatPanel(ObjektFormatPanel):
     def _teile_zeigen(self, werte: dict) -> None:
         """Die Liste „Teil“ mit den Teilen des Diagramms (``werte["teile"]``, sonst nur der gewählte) und dem gewählten Eintrag."""
         teile = list(werte.get("teile") or [(self._teil, werte.get("name") or "Diagrammbereich")])
-        self.teil_wahl.blockSignals(True)
-        self.teil_wahl.clear()
-        for schl, name in teile:
-            self.teil_wahl.addItem(name, schl)
-        self.teil_wahl.setCurrentIndex(max(0, self.teil_wahl.findData(self._teil)))
-        self.teil_wahl.blockSignals(False)
+        self.teil_wahl.setze(teile, self._teil)
 
     def _teil_einrichten(self, werte: dict) -> None:
         teil = self._teil
@@ -518,11 +653,13 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         legende, achse, reihe, bereich = teil == "legende", teil.startswith("achse_"), teil.startswith("reihe_"), teil == "diagrammbereich"
         self.reiter.setTabVisible(2, legende or achse or reihe)
         self.reiter.setTabText(2, "Legendenoptionen" if legende else "Achsenoptionen" if achse else "Reihenoptionen")
+        self._reiter_kurz()
         self.reiter.setTabVisible(3, bereich)
         self._luecke_an = reihe and bool(werte.get("saeulen"))
         for a, an in ((self.a_legende, legende), (self.a_achse, achse), (self.a_reihe, self._luecke_an),
-                      (self.a_reihe_linie, reihe and bool(werte.get("linienreihe"))), (self.a_pfeile, reihe and bool(werte.get("linienreihe")))):
+                      (self.a_reihe_linie, reihe and bool(werte.get("linienreihe")))):
             a.setVisible(an)
+        self._pfeile_freigeben(reihe and bool(werte.get("linienreihe")))
         for x in self._wert_zeilen:                                         # Minimum, Maximum, Hauptintervall: nur die Wertachse
             x.setEnabled(bool(werte.get("wertachse", True)))
 
@@ -536,12 +673,4 @@ class DiagrammFormatPanel(ObjektFormatPanel):
         _still(self.o_beschr, max(0, self.o_beschr.findData(a.get("beschriftung", "neben"))), "setCurrentIndex")
         r = f.get("reihe") or {}
         _still(self.o_luecke, float(r.get("luecke", 100))); _still(self.o_glatt, bool(r.get("glatt")), "setChecked"); _still(self.o_punkte, bool(r.get("punkte")), "setChecked")
-        if o.get("breite_mm"):
-            for x, wert in ((self.g_breite, float(o["breite_mm"])), (self.g_hoehe, float(o["hoehe_mm"]))):
-                _still(x, wert)
-            self._verhaeltnis = float(o["breite_mm"]) / max(0.01, float(o["hoehe_mm"]))
-        _still(self.g_dreh, float(o.get("dreh", 0.0)))
-        if not self.alt_titel.hasFocus():
-            self.alt_titel.setText(werte.get("alt_titel") or "")
-        if not self.alt_text.hasFocus():
-            self.alt_text.setPlainText(werte.get("alt_beschreibung") or "")
+        self.a_alt.setze(werte.get("alt_titel") or "", werte.get("alt_beschreibung") or "")

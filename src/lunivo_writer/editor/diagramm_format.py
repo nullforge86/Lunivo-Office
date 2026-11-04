@@ -7,8 +7,8 @@ Schlüssel eines Teils (jeder darf fehlen = Automatisch):
 
 ``fuell``      ``""`` keine Füllung · ``"#rrggbb"`` einfarbig · ``{"art": "farbe"|"graduell"|"textur"|"muster"|"bild", "farbe", "dunkel", "hell", "winkel", "key",
                "grund", "bild_b64", "transparenz": 0…100}``
-``linie``      ``{"keine": True}`` oder ``{"farbe", "breite" (pt), "art", "transparenz", "kombiniert" (einfach|doppelt|dick_duenn), "abschluss" (flach|rund|quadrat),
-               "verknuepfung" (rund|schraeg|spitz), "rund": bool, "verlauf": {"farbe1", "farbe2", "winkel"}, "pfeil_anfang", "pfeil_ende", "pfeil_groesse"}``
+``linie``      ``{"keine": True}`` oder ``{"farbe", "breite" (pt), "art", "transparenz", "kombiniert" (einfach|doppelt|dick_duenn|duenn_dick|dreifach), "abschluss" (flach|rund|quadrat),
+               "verknuepfung" (rund|schraeg|spitz), "rund": bool, "verlauf": {"farbe1", "farbe2", "winkel"}, "pfeil_anfang", "pfeil_ende", "pfeil_groesse_anfang", "pfeil_groesse_ende" (je 1…3; ältere Dokumente: ein gemeinsames "pfeil_groesse")}``
 ``schatten``, ``reflektion``, ``leuchten``, ``weich``, ``d3``, ``drehung``   wie ``fx`` bei ``bildeffekte`` (``True`` = Vorgabe; ältere Angaben ``{"farbe",
                "abstand"}`` / ``{"farbe", "radius"}`` werden gelesen)
 ``text``       ``{"farbe", "groesse", "fett", "kursiv", "unter", "name", "effekt": {Werte der Texteffekte}, "feld": {"vertikal", "richtung", "winkel", "raender",
@@ -28,13 +28,21 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetricsF, QImage, QLinear
 from lunivo_writer.editor import bildeffekte as E
 from lunivo_writer.editor import freie_bilder as FB
 from lunivo_writer.editor import textfx as X
+from lunivo_writer.editor import texteffekt as T
 
 FX_SCHLUESSEL = ("schatten", "reflektion", "leuchten", "weich", "d3", "drehung")
 FX_NUR_HINTER = ("schatten", "reflektion", "leuchten", "d3")           # hinter einem Balken, den QtCharts selbst darüber zeichnet
 PX_PT = 96.0 / 72.0
+PFEIL_GROESSEN = ((1.0, "Klein"), (1.5, "Mittel"), (2.0, "Groß"), (3.0, "Sehr groß"))     # Größe je Pfeil (Anfang und Ende getrennt)
 PFEILE = (("keiner", "Kein Pfeil"), ("pfeil", "Pfeil"), ("offen", "Offener Pfeil"), ("oval", "Oval"), ("raute", "Raute"))
-FELD_STANDARD = {"vertikal": "mitte", "richtung": "waagerecht", "winkel": 0.0, "anpassen": True, "umbruch": True,
+FELD_STANDARD = {"vertikal": "mitte", "richtung": "waagerecht", "winkel": 0.0, "anpassen": True, "umbruch": True, "gerade": False,
                  "raender": {"l": 0.0, "o": 0.0, "r": 0.0, "u": 0.0}}
+# Vertikale Ausrichtung in der Reihenfolge der Vorlage (Foto 54): „zentriert“ = auch waagerecht mittig (die älteren Schlüssel oben/mitte/unten meinten das schon);
+# ohne „zentriert“ steht der Text am linken Rand des Feldes
+VERTIKAL = (("oben_links", "Oben"), ("oben", "Oben zentriert"), ("mitte_links", "Mitte"), ("mitte", "Mitte zentriert"),
+            ("unten_links", "Unten"), ("unten", "Unten zentriert"))
+# Vorbelegung der Ränder des Diagrammtitels (Foto 54): links/rechts 0,10 Inch, oben/unten 0,05 Inch, gespeichert in pt
+RAENDER_TITEL = {"l": 7.2, "o": 3.6, "r": 7.2, "u": 3.6}
 
 
 # ---- Füllung ---------------------------------------------------------------------------------------------------------------------
@@ -129,6 +137,28 @@ def flaeche_bild(fuell, w: int, h: int, aufl: float = 2.0) -> QImage:
 
 
 # ---- Linie -----------------------------------------------------------------------------------------------------------------------
+# Strichtypen des Diagramms in der Reihenfolge der Vorlage (Foto 29): die eine Liste, aus der auch die Seitenleiste ihre Auswahl baut
+STRICHTYPEN = (("einfach", "Durchgezogen"), ("rundpunkt", "Rundpunkt"), ("quadratpunkt", "Quadratpunkt"), ("gestrichelt", "Strich"),
+               ("strichpunkt", "Strich-Punkt"), ("lang", "Langer Strich"), ("lang_strichpunkt", "Langer Strich-Punkt"),
+               ("lang_strichpunktpunkt", "Langer Strich-Punkt-Punkt"))
+# Kombinierte Typen (Foto 28): Schlüssel → Name; gezeichnet von ``textfx._kontur_pfade``
+KOMBI_TYPEN = tuple(T.KONTUR_FORMEN)
+_ALT_STRICH = {"gepunktet": "quadratpunkt", "fein_gestrichelt": "gestrichelt", "strichpunktpunkt": "lang_strichpunktpunkt"}   # ältere Schlüssel → Auswahl
+
+
+def strich_schluessel(art: str | None) -> str:
+    """Der Schlüssel der Auswahl ``STRICHTYPEN`` zu einer gespeicherten Strichart (ältere Dokumente: ``gepunktet`` …)."""
+    art = art or "einfach"
+    return art if any(art == k for k, _n in STRICHTYPEN) else _ALT_STRICH.get(art, "einfach")
+
+
+def _strichmuster(art: str):
+    """(Strichmuster in Linienbreiten, runde Enden) der neuen Strichtypen; None für die, die ``freie_bilder._stift`` kennt."""
+    if art in T.KONTUR_ARTEN_PLUS:
+        return T.KONTUR_ARTEN_PLUS[art]
+    return {"lang": ([8.0, 3.0], False), "lang_strichpunkt": ([8.0, 3.0, 1.0, 3.0], False)}.get(art)
+
+
 _ABSCHLUSS = {"flach": Qt.FlatCap, "rund": Qt.RoundCap, "quadrat": Qt.SquareCap}
 _VERKNUEPFUNG = {"rund": Qt.RoundJoin, "schraeg": Qt.BevelJoin, "spitz": Qt.MiterJoin}
 
@@ -144,7 +174,10 @@ def stift(linie: dict | None, standard_farbe: str = "#3c4043", r: QRectF | None 
     c = QColor(linie.get("farbe", standard_farbe))
     c.setAlphaF(max(0.0, min(1.0, 1.0 - float(linie.get("transparenz", 0) or 0) / 100.0)))
     pen.setColor(c)
-    pen.setCapStyle(_ABSCHLUSS.get(linie.get("abschluss", "flach"), Qt.FlatCap))
+    m = _strichmuster(linie.get("art", "einfach"))
+    if m:
+        pen.setDashPattern(m[0])
+    pen.setCapStyle(Qt.RoundCap if m and m[1] and "abschluss" not in linie else _ABSCHLUSS.get(linie.get("abschluss", "flach"), Qt.FlatCap))
     pen.setJoinStyle(_VERKNUEPFUNG.get(linie.get("verknuepfung", "rund"), Qt.RoundJoin))
     v = linie.get("verlauf")
     if v:
@@ -222,9 +255,11 @@ def teil_zeichnen(p: QPainter, r: QRectF, fmt: dict | None, grund: QColor, nur_h
 
 
 # ---- Text ------------------------------------------------------------------------------------------------------------------------
-def feld_von(t: dict | None) -> dict:
+def feld_von(t: dict | None, teil: str | None = None) -> dict:
+    """Das Textfeld eines Teils mit Vorgaben; ``teil="titel"`` belegt die Ränder vor (``RAENDER_TITEL``), alle anderen Teile bleiben bei 0."""
     f = (t or {}).get("feld") or {}
-    return {**FELD_STANDARD, **f, "raender": {**FELD_STANDARD["raender"], **(f.get("raender") or {})}}
+    basis = RAENDER_TITEL if teil == "titel" else FELD_STANDARD["raender"]
+    return {**FELD_STANDARD, **f, "raender": {**basis, **(f.get("raender") or {})}}
 
 
 def textwinkel(t: dict | None) -> float:
@@ -243,17 +278,22 @@ def text_eigen(t: dict | None) -> bool:
     if not t:
         return False
     e = effekt_von(t)
-    if e.get("fuell") in ("keine", "verlauf") or e.get("kontur") or any(e.get(k) for k in ("schatten", "reflektion", "leuchten", "d3")):
+    if e.get("fuell") in ("keine", "verlauf", "muster", "bild") or e.get("kontur") or any(e.get(k) for k in ("schatten", "reflektion", "leuchten", "d3", "text_3d", "fuell_pinsel")):
+        return True
+    if (e.get("warp") or {}).get("art", "keine") != "keine":
         return True
     f = feld_von(t)
-    return bool(f["richtung"] != "waagerecht" or f["winkel"] or f["anpassen"] is False)
+    return bool(f["richtung"] != "waagerecht" or f["winkel"] or f["anpassen"] is False or f["vertikal"].endswith("_links") or (f["gerade"] and OBJEKT_DREH))
+
+
+OBJEKT_DREH = 0.0              # Drehung des Diagramms auf dem Blatt (Grad), für „Text nicht drehen“; ``diagramm.bild_aus_daten`` setzt sie je Zeichnung
 
 
 def textfarbe(t: dict | None, standard: str = "#3c4043") -> QColor:
     """Farbe des Textes mit Transparenz; „Keine Füllung“ ist ganz durchsichtig."""
     t = t or {}
     e = effekt_von(t)
-    if e.get("fuell") == "keine":
+    if e.get("fuell") in ("keine", "muster", "bild"):                              # Muster und Bild zeichnet ``textfx`` über den Buchstaben
         return QColor(0, 0, 0, 0)
     c = QColor(e.get("farbe") or t.get("farbe") or standard)
     if e.get("fuell") == "verlauf" and e.get("verlauf"):
@@ -319,21 +359,25 @@ def text_zeichnen(p: QPainter, feld: QRectF, text: str, font: QFont, t: dict | N
     fm = QFontMetricsF(font)
     zeilen = _umbrechen(text, fm, feld.width()) if umbrechbar and f["umbruch"] else text.split("\n")
     gesamt = len(zeilen) * fm.lineSpacing()
-    y0 = {"oben": feld.top(), "unten": feld.bottom() - gesamt}.get(f["vertikal"], feld.center().y() - gesamt / 2)
+    senkrecht = f["vertikal"].replace("_links", "")
+    links = f["vertikal"].endswith("_links")
+    y0 = {"oben": feld.top(), "unten": feld.bottom() - gesamt}.get(senkrecht, feld.center().y() - gesamt / 2)
     face = textfarbe(t, standard)
-    fx = {k: v for k, v in e.items() if k in ("verlauf", "kontur_verlauf", "kontur_form", "schatten", "reflektion", "leuchten", "d3")}
+    fx = {k: v for k, v in e.items() if k in X.SCHLUESSEL}
     kontur = None
     if e.get("kontur"):
         kontur = (QColor(e.get("kontur_farbe", "#000000")), float(e.get("kontur_breite", 0.75)) * X.PX, e.get("kontur_form", "einfach"), e.get("kontur_art", "einfach"))
     p.save(); p.setRenderHint(QPainter.Antialiasing)
-    w = textwinkel(t)
+    w = textwinkel(t) - (OBJEKT_DREH if f["gerade"] else 0.0)                       # „Text nicht drehen“: gegen die Drehung des Objekts drehen
     if w:
         p.translate(feld.center()); p.rotate(w); p.translate(-feld.center())
     px = font.pixelSize() if font.pixelSize() > 0 else font.pointSizeF() * X.PX
     for i, z in enumerate(zeilen):
-        x = feld.center().x() - fm.horizontalAdvance(z) / 2
+        x = feld.left() if links else feld.center().x() - fm.horizontalAdvance(z) / 2
         y = y0 + i * fm.lineSpacing() + fm.ascent()
         pfad, gl = X.text_pfad(z, font, QPointF(x, y))
+        if "warp" in fx or "text_3d" in fx:
+            pfad = X.pfad_verformen(pfad, fx)
         if face.alpha() > 0:
             p.fillPath(pfad, face)
         if fx or kontur is not None:
@@ -371,6 +415,12 @@ def achse_anwenden(achse, opt: dict | None, wert: bool) -> None:
 def luecke_zu_breite(prozent: float) -> float:
     """Lückenbreite in Prozent der Säulenbreite → ``barWidth`` der Serie (Anteil der Kategorie, den die Säulen füllen)."""
     return 1.0 / (1.0 + max(0.0, min(500.0, float(prozent))) / 100.0)
+
+
+def pfeil_groessen(linie: dict) -> tuple[float, float]:
+    """(Größe des Anfangspfeils, Größe des Endpfeils); fehlt die eigene, gilt die gemeinsame ``pfeil_groesse`` älterer Dokumente."""
+    alt = float(linie.get("pfeil_groesse", 1.0))
+    return float(linie.get("pfeil_groesse_anfang", alt)), float(linie.get("pfeil_groesse_ende", alt))
 
 
 def pfeil_zeichnen(p: QPainter, spitze: QPointF, von: QPointF, art: str, breite_pt: float, groesse: float, farbe: QColor) -> None:

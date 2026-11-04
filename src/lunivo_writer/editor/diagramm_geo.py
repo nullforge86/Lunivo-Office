@@ -141,10 +141,15 @@ def geometrie(ch, u: str, kategorien: list[str], werte: list[list[float]], namen
         for k, eintrag in enumerate(_legendeneintraege(ch, legenden_namen, r)):
             geo[f"legendeneintrag_{k}"] = eintrag
     polar = u.startswith("netz")
-    if achsen_an and not polar and u not in ("kreis", "ring"):
+    if achsen_an and not polar and not u.startswith(("kreis", "ring")):
         geo["achse_horizontal"] = QRectF(pa.left(), pa.bottom(), pa.width(), max(14.0, min(24.0, h - pa.bottom() - 2)))
         geo["achse_vertikal"] = QRectF(max(0.0, pa.left() - 40), pa.top(), min(40.0, pa.left()), pa.height())
-    if u in ("kreis", "ring") or polar or u.startswith(("kurs", "kombi")) or not namen:
+    if achsen_an and not polar and not u.startswith(("kreis", "ring")):
+        streifen = gitter_streifen(ch, u, pa)
+        if streifen:
+            geo["gitter_haupt"] = _vereinigung(streifen)
+            geo["gitter_linien"] = streifen
+    if u.startswith(("kreis", "ring")) or polar or u.startswith(("kurs", "kombi")) or not namen:
         for nr in nummern:
             geo[f"reihe_{nr}"] = QRectF(pa)
         return geo
@@ -158,6 +163,35 @@ def geometrie(ch, u: str, kategorien: list[str], werte: list[list[float]], namen
         else:
             geo[f"reihe_{nr}"] = _umhuellung(pts[k], pa)
     return geo
+
+
+def gitter_streifen(ch, u: str, pa: QRectF, halb: float = 3.0) -> list[QRectF]:
+    """Schmale Streifen um die Hauptrasterlinien der Wertachse (senkrechte Achse, bei Balken die waagerechte) — zum Anklicken."""
+    from PySide6.QtCharts import QCategoryAxis, QValueAxis
+    waagr = u.startswith("balken")
+    achsen = [a for a in ch.axes(Qt.Horizontal if waagr else Qt.Vertical) if isinstance(a, QValueAxis) and not isinstance(a, QCategoryAxis)]
+    if not achsen or not achsen[0].isGridLineVisible():
+        return []
+    a = achsen[0]
+    lo, hi = a.min(), a.max()
+    if hi <= lo:
+        return []
+    if a.tickType() == QValueAxis.TicksDynamic and a.tickInterval() > 0:
+        n = int((hi - a.tickAnchor()) / a.tickInterval() + 1e-9)
+        werte = [a.tickAnchor() + i * a.tickInterval() for i in range(-int((a.tickAnchor() - lo) / a.tickInterval() + 1e-9), n + 1)]
+    else:
+        k = max(2, a.tickCount())
+        werte = [lo + (hi - lo) * i / (k - 1) for i in range(k)]
+    out = []
+    for v in werte:
+        f = (v - lo) / (hi - lo)
+        if waagr:
+            x = pa.left() + f * pa.width()
+            out.append(QRectF(x - halb, pa.top(), 2 * halb, pa.height()))
+        else:
+            y = pa.bottom() - f * pa.height()
+            out.append(QRectF(pa.left(), y - halb, pa.width(), 2 * halb))
+    return out
 
 
 def _vereinigung(rects: list[QRectF]) -> QRectF:

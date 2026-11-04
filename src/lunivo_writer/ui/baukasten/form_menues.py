@@ -6,13 +6,12 @@
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, QSize, Qt
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import QSize, Qt
 
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
-# Welche sechs Stile die Kacheln im Band zeigen: (Zeile, Spalte) des Rasters
-BAND_STILE = ((1, 0), (0, 1), (1, 1), (1, 2), (1, 3), (1, 4))
+# Welche sechs Stile die Kacheln im Band zeigen (Reihenfolge wie in der Vorlage: Umriss grün, schwarz, blau, orange, grau, gelb): (Zeile, Spalte) des Rasters
+BAND_STILE = ((0, 6), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4))
 
 
 def form_bearbeiten_menue(b) -> MenueListe:
@@ -30,7 +29,7 @@ def form_bearbeiten_menue(b) -> MenueListe:
 
 
 def formstile_galerie(b) -> dict:
-    from lunivo_writer.ui.baukasten.objekt_menues import formstil_zeichner, formstile
+    from lunivo_writer.ui.baukasten.objekt_menues import formstil_zeichner
     from lunivo_writer.ui.baukasten.raster_auswahl import _symbol
     kacheln = []
     for z, s in BAND_STILE:
