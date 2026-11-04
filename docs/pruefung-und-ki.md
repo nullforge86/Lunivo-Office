@@ -2,6 +2,8 @@
 
 Was Lunivo an einem Text findet — und was es dabei nicht tut.
 
+![Reiter Überprüfen](../assets/images/qt-ueberpruefen.png)
+
 **Welche Hilfe wann?** (F6) auf die Seite, die alle sechs Stufen erklärt —
 und dort lässt sich jede auch gleich umlegen oder auslösen.
 

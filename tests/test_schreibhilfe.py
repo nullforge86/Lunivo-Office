@@ -354,7 +354,7 @@ def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
     k = w.ki.konfig
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: False)
     d = KIEinstellungenDialog(w)
-    assert [d.reiter.isTabEnabled(i) for i in range(5)] == [True, False, False, False, False]
+    assert all(d.reiter.isTabEnabled(i) for i in range(d.reiter.count()))
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     d2 = KIEinstellungenDialog(w, 1)
     assert d2.reiter.currentIndex() == 1 and all(d2.reiter.isTabEnabled(i) for i in range(5))

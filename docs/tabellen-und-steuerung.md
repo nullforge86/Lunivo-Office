@@ -8,6 +8,8 @@
 
 ## Tabellen
 
+![Tabellentools und Tabellenstil bei einer Tabelle mit Kopfzeile und gebänderten Zeilen](../assets/images/qt-tabellentools.png)
+
 | Funktion | Wo / Name in Lunivo |
 |---|---|
 | Tabelle einfügen | *Einfügen ▸ Tabelle*: Raster mit 10 × 10 Zellen, darunter „Tabelle einfügen“ (Fenster) |

@@ -10,6 +10,10 @@ Verweise, Überprüfen, Schreibhilfe, Ansicht, Abschnitt. *Sendungen* ist
 vorhanden, aber ausgeblendet (einblendbar unter *Register anpassen*). Dazu
 kommen Kontext-Reiter, die nur da sind, wenn sie etwas zu sagen haben.
 
+![Die Oberfläche hell: Register Start, Seitenleiste links und rechts, Seite in der Mitte](../assets/images/qt-uebersicht.png)
+
+![Dieselbe Oberfläche im dunklen Thema](../assets/images/qt-uebersicht-dunkel.png)
+
 **Der Reiter „Datei“ bleibt verborgen.** Links
 vor den Reitern steht stattdessen **☰ Menü**: Neu, Öffnen, Speichern, Speichern unter, Als PDF
 exportieren, Als Bild exportieren, Drucken, Dokumentverschlüsselung,
@@ -47,12 +51,18 @@ Auf einem Wort sieht das Programm auch dann nach, wenn noch gar nicht
 geprüft wurde: Wer auf *garnicht* klickt, bekommt *gar nicht* — nicht eine
 Liste ähnlich klingender Wörter.
 
-![Rechtsklick auf „garnicht“: oben die schwebende Formatleiste mit Schriftart, Größe und fett/kursiv/unterstrichen, darunter das Menü mit dem Vorschlag „gar nicht“ und den Befehlen samt Tastenkombinationen](../bilder/rechtsklick.png)
+![Rechtsklick auf „garnicht“: oben die schwebende Formatleiste mit Schriftart, Größe und fett/kursiv/unterstrichen, darunter das Menü mit dem Vorschlag „gar nicht“ und den Befehlen samt Tastenkombinationen](../assets/images/rechtsklick.png)
 
 **Tabellenwerkzeuge** erscheinen, sobald der Zeiger in einer Tabelle steht,
 und verschwinden wieder; dazu Bildtools, Zeichentools, Texttools,
 Diagrammtools, SmartArt-Design, Kopf- und Fußzeile sowie Mailings (siehe
-[Aufbau des Bandes](aufbau-band.md)). Die Gruppen folgen
+[Aufbau des Bandes](aufbau-band.md)).
+
+![Kontext-Reiter Tabellentools mit Tabellenstil, wenn der Zeiger in einer Tabelle steht](../assets/images/qt-tabellentools.png)
+
+![Kontext-Reiter SmartArt-Design und Zeichentools bei markiertem SmartArt, mit Rahmen, Griffen und Schnellleiste](../assets/images/qt-smartart.png)
+
+![Kontext-Reiter Zeichentools bei einer markierten Form](../assets/images/qt-formtools.png) Die Gruppen folgen
 dem Menüband: *Start* trägt Zwischenablage, Schriftart, Absatz,
 Stile, Extras, Suchen, Auswählen und Einstellungen, *Ansicht* beginnt mit den Ansichten und
 nicht mit dem Zoom. Die Befehle sind über Register, Menü und Symbolleisten erreichbar. Auf *Start* steht der

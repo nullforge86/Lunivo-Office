@@ -6,6 +6,8 @@ Lunivo bündelt Lesehilfen und Schreibhilfe neben dem Dokument. Die Hinweise ers
 
 Unter **Optionen → Lesen** lassen sich Lesestufe, Papierton, Buchstaben- und Wortabstand, Zeilenluft und Zeilenfokus einstellen. Die Änderungen wirken direkt auf die Ansicht. Für den Ausdruck bleiben Papierfarbe und Bildschirmhilfen außen vor.
 
+![Optionen, Seite Lesen: Lesestufe mit Vorschau, darunter Papierton, Buchstaben- und Wortabstand, Zeilenluft](../assets/images/qt-optionen-lesehilfe.png)
+
 Als Schriften zum leichteren Lesen können **OpenDyslexic**, **Lexend** und **Atkinson Hyperlegible** installiert werden. Ohne sie verwendet Lunivo die verfügbaren Systemschriften. Details und Installationsbefehle stehen in [Erweiterungen](erweiterungen.md).
 
 ## Schreibhilfe
@@ -13,6 +15,10 @@ Als Schriften zum leichteren Lesen können **OpenDyslexic**, **Lexend** und **At
 Der Reiter **Schreibhilfe** fasst Prüfung, Wortvorhersage, AutoKorrektur, Silbentrennung, Vorlesen, Übersetzen und Thesaurus zusammen. Mit **F5** blendest du die rechte Seitenleiste ein oder aus. **F6** erklärt, welche Hilfe sich für welchen Schritt eignet.
 
 Die eingebaute Prüfung findet unter anderem häufige Wortverwechslungen, doppelte Wörter und bestimmte Grammatik- und Zeichensetzungsfehler. Ein Fund wird begründet; Vorschläge werden erst nach deiner Auswahl eingesetzt. Die optionale gründliche Grammatikprüfung verwendet LanguageTool lokal.
+
+![Reiter Schreibhilfe: Wellenlinie im Text, rechts die Karte mit dem Fund „wiedersprechen“ und den Knöpfen Zeigen und Ändern](../assets/images/qt-schreibhilfe.png)
+
+![Dieselbe Ansicht im dunklen Thema](../assets/images/qt-schreibhilfe-dunkel.png)
 
 ## Vorlesen
 

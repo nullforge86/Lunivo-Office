@@ -625,8 +625,7 @@ from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 class KIEinstellungenDialog(PanelFaehig, QDialog):
     """Das eine Fenster für alles zur KI: verbundene Modelle, Modellzuweisung, MCP-Server und Websuche.
 
-    Dieselbe Konfiguration (``KIKonfig``) wie in der Seitenleiste der Schreibhilfe, im KI-Chat und in den Optionen. Bis ein Modell verbunden ist,
-    sind alle übrigen Reiter grau."""
+    Dieselbe Konfiguration (``KIKonfig``) wie in der Seitenleiste der Schreibhilfe, im KI-Chat und in den Optionen. """
 
     def __init__(self, fenster, start: int = 0):
         super().__init__(fenster)
@@ -677,6 +676,8 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
             if self.reiter.isTabEnabled(i):
                 self.reiter.setTabToolTip(i, voll)
         self.reiter.setUsesScrollButtons(True); self.reiter.setElideMode(Qt.ElideNone)
+        self.reiter.setProperty("kompakt", True)                              # schmaler Innenabstand, damit alle Reiter in die Seitenleiste passen
+        self.reiter.style().unpolish(self.reiter); self.reiter.style().polish(self.reiter)
         self.liste.setMinimumSize(0, 0)
         for l in self.stapel.widget(0).findChildren(QLabel):
             l.setWordWrap(True)
@@ -698,11 +699,10 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.setMinimumSize(0, 0)
 
     def freischalten(self) -> None:
-        """Ohne verbundenes Modell ist nur der erste Reiter bedienbar; mit Modell (auch Ollama auf diesem Rechner) sind alle frei."""
-        da = self.fenster.ki.verfuegbar()
-        for i in (1, 2, 3, 4):
-            self.reiter.setTabEnabled(i, da)
-            self.reiter.setTabToolTip(i, "" if da else "Erst ein KI-Modell verbinden.")
+        """Alle Reiter sind immer anklickbar; Sprache, MCP und Websuche brauchen kein Modell, die Zuweisung zeigt ohne Modell eine leere Auswahl."""
+        for i in range(self.reiter.count()):
+            self.reiter.setTabEnabled(i, True)
+            self.reiter.setTabToolTip(i, "")
 
     def neues_modell(self) -> None:
         def fertig():

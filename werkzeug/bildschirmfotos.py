@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Nimmt die Bilder der Qt-Oberfläche für das README auf (ohne Bildschirm, QT_QPA_PLATFORM=offscreen).
 
-    python3 werkzeug/bildschirmfotos.py        schreibt assets/images/qt-*.png
+    python3 werkzeug/bildschirmfotos.py            schreibt assets/images/qt-*.png und rechtsklick.png
+    python3 werkzeug/bildschirmfotos.py --zusatz   nur Abschnitte, SmartArt, Formen, Tabellen, Überprüfen, Rechtsklick
 """
 import os
 import sys
@@ -87,11 +88,11 @@ def foto(w, name):
 
 def reiter(w, name):
     r = w.band.reiter
-    r.setCurrentIndex(next(i for i in range(r.count()) if r.tabText(i) == name))
+    r.setCurrentIndex(next(i for i in range(r.count()) if r.tabText(i) == name and r.isTabVisible(i)))
 
 
 def main():
-    app = QApplication([])
+    app = QApplication.instance() or QApplication([])
     os.makedirs(ZIEL, exist_ok=True)
     for theme, suffix in (("light", ""), ("dark", "-dunkel")):
         w = fenster(app, theme)
@@ -128,8 +129,7 @@ def main():
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
     from PySide6.QtGui import QTextCursor
-    from lunivo_writer.editor import formen, smartart as SA, tabellenstil as TS
-    from lunivo_writer.editor import einfuegen as E
+    from lunivo_writer.editor import frei_objekt as FO, smartart as SA, tabellenstil as TS
     from PySide6.QtGui import QTextTableFormat
 
     w = fenster(app, "light")
@@ -144,19 +144,17 @@ def zusatzbilder(app):
 
     w = fenster(app, "light", "Unser Vorgehen in vier Schritten:\n")
     ed = w.current_editor()
-    SA.einfuegen(ed, {"layout": "Prozess", "farben": "Blau", "text": "Planen\nUmsetzen\nPrüfen\nAbschließen"})
-    c = QTextCursor(ed.document()); c.setPosition(ed.document().toPlainText().index("\ufffc")); ed.setTextCursor(c)
+    SA.einfuegen(ed, {"layout": "Prozess", "farben": "Blau", "text": "Planen\nUmsetzen\nPrüfen\nAbschließen"})   # freies Objekt, gleich gewählt
     w._sync_format()
-    reiter(w, "SmartArt-Tools")
+    reiter(w, "SmartArt-Design")
     warte(400)
     foto(w, "qt-smartart.png")
     schliessen(w)
 
     w = fenster(app, "light", "Formen im Text:\n")
     ed = w.current_editor()
-    E.qimage_einfuegen(ed, E.form_bild("Raute"), "Form: Raute", "form", {"form": "Raute"})
-    c = QTextCursor(ed.document()); c.setPosition(ed.document().toPlainText().index("\ufffc")); ed.setTextCursor(c)
-    formen.vorlage(ed, "Orange")
+    FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Raute"}, 160, 120)      # freies Objekt, gleich gewählt
+    FO.aendern(ed, "form", form_fuell="#f4a259", form_linie="#9c4f0a")
     w._sync_format()
     reiter(w, "Zeichentools")
     warte(400)
@@ -186,6 +184,47 @@ def zusatzbilder(app):
     schliessen(w)
 
 
+def rechtsklick(app):
+    """Rechtsklick auf „garnicht“: Menü samt schwebender Formatleiste, in das Fenster hineingemalt."""
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtGui import QContextMenuEvent, QPainter, QTextCursor
+    from PySide6.QtWidgets import QMenu
+
+    w = fenster(app, "light", "Das Ergebnis ist garnicht schlimm, wenn man es kurz prüft.\n", groesse=(1100, 1050))
+    w.sidebar.setVisible(False)
+    ed = w.current_editor()
+    c = QTextCursor(ed.document())
+    c.setPosition(ed.document().toPlainText().index("garnicht") + 8)
+    ed.setTextCursor(c)
+    w.assistant.pruefen(zaehlen=True)
+    warte(1500)                                   # die Prüfung läuft im Hintergrund; erst danach kennt das Menü den Fund
+    pos = ed.cursorRect(c).center()
+
+    def aufnehmen():
+        bild = w.grab()
+        maler = QPainter(bild)
+        for top in app.topLevelWidgets():
+            if top is not w and top.isVisible() and top.windowFlags() & (Qt.Popup | Qt.ToolTip | Qt.Tool | Qt.FramelessWindowHint):
+                maler.drawPixmap(w.mapFromGlobal(top.pos()), top.grab())
+        maler.end()
+        pfad = os.path.join(ZIEL, "rechtsklick.png")
+        bild.save(pfad)
+        print("geschrieben:", pfad)
+        for m in app.allWidgets():
+            if isinstance(m, QMenu) and m.isVisible():
+                m.close()
+
+    QTimer.singleShot(800, aufnehmen)
+    ed.contextMenuEvent(QContextMenuEvent(QContextMenuEvent.Mouse, pos, ed.mapToGlobal(pos)))
+    schliessen(w)
+
+
 if __name__ == "__main__":
-    main()
-    zusatzbilder(QApplication.instance())
+    app = QApplication.instance() or QApplication([])
+    if "--zusatz" in sys.argv:                    # nur die Bilder der Zusatzfunktionen und des Rechtsklicks (ohne die Übersichten)
+        zusatzbilder(app)
+        rechtsklick(app)
+    else:
+        main()
+        zusatzbilder(QApplication.instance())
+        rechtsklick(QApplication.instance())

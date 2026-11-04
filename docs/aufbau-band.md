@@ -187,6 +187,8 @@ EINFÜGEN
 
 ## Seitenlayout
 
+![Reiter Seitenlayout mit zwei Textspalten](../assets/images/qt-spalten.png)
+
 ```
 SEITENLAYOUT
 ├── Designs
@@ -391,6 +393,8 @@ ANSICHT
 ---
 
 ## Abschnitt
+
+![Reiter Abschnitt: Abschnitt 2 beginnt vor „Sehr geehrte Damen und Herren“, die Seite des Abschnitts steht im Querformat](../assets/images/qt-abschnitte.png)
 
 ```
 ABSCHNITT

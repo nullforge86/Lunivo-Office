@@ -13,6 +13,8 @@
 
 Mit der Suche findest du auch Einstellungen in eingeklappten Gruppen. Weitere Details zur Seitenstruktur stehen in [aufbau-optionen.md](aufbau-optionen.md).
 
+![Optionen, Seite Schreiben: Standardschrift und -größe, Prüfung, AutoKorrektur](../assets/images/qt-optionen-schriften.png)
+
 ## Dokumentkennwort
 
 Der Kennwortschutz wird pro DOCX-Dokument eingerichtet. Lunivo verschlüsselt die Datei; ohne das Kennwort kann auch Lunivo sie nicht wieder öffnen. Ein vergessenes Kennwort lässt sich nicht zurücksetzen.

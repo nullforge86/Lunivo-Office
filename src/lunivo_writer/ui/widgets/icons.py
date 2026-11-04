@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 _PFADE: dict | None = None
 _CACHE: dict = {}
-STRICH = 1.05         # schlanke Office-Kontur bei typischen Symbolgrößen von 16–20 px
+STRICH = 1.25         # Kontur des Symbolsystems „Lunivo Klar“ (docs/symbolsystem/konzept.md); 1.05 war die frühere, 1.6 die zu kräftige Stärke
 FAKTOR = 1.0          # Größe der Symbole (Optionen ▸ Darstellung)
 
 

@@ -12,6 +12,10 @@ Unter `☰ Menü → Neu` kannst du ein leeres Dokument anlegen oder eine Vorlag
 
 Lunivo öffnet und speichert DOCX, ODT, FODT, RTF und TXT. PDF und PNG sind Ausgabeformate. PDF-Dateien lassen sich nicht in Lunivo öffnen. Die genaue Formatunterstützung sowie bekannte Einschränkungen stehen in [Speichern und Dateiformate](SPEICHERN.md).
 
+![Das Datei-Menü mit Informationen zum Dokument](../assets/images/qt-datei.png)
+
+![Das Datei-Menü im dunklen Thema](../assets/images/qt-datei-dunkel.png)
+
 ## Drucken
 
 Die Druckvorschau zeigt die berechneten Seiten. Im Druckfenster lassen sich Drucker, Seitenbereich, Kopien und weitere Druckoptionen auswählen. Alternativ kannst du direkt in eine PDF-Datei exportieren.
