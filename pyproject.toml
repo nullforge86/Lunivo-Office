@@ -25,3 +25,6 @@ lunivo_writer = ["resources/*", "resources/daten/*"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
