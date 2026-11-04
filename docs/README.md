@@ -32,6 +32,10 @@ tests/                      Gezielte pytest-Tests
 werkzeug/                   Entwicklungs- und Prüfhilfen (inventar-bauen.py: docs/interne-funktionen.md neu erzeugen; funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken, Bericht docs/seitenleistenstand.md)
 ```
 
+## Architekturübersicht
+
+![Architektur: Anwendungsstart, gemeinsam genutzte Dienste, Dokumentenverwaltung, Bearbeitung und Layout sowie Schreibunterstützung mit ihren Beziehungen](../assets/images/architektur.png)
+
 ## Zuständigkeiten
 
 - **core** steuert den Programmablauf und vermittelt Befehle.
