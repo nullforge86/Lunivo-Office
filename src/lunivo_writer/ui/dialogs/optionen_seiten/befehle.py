@@ -20,7 +20,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 class BefehleSeiten:
@@ -111,7 +111,7 @@ class BefehleSeiten:
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel("Anpassungen:"))
         zr = QPushButton("Zurücksetzen ▾")
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(zr)
         m.eintrag("Nur das Menüband", lambda: (self.w.settings.remove("ui/register_plan"), self._band_merken(), self._band_jetzt()))
         m.eintrag("Alle Anpassungen (Register, Schnellzugriff, Symbole) …", self.w.befehle.vorlagenZurueck)

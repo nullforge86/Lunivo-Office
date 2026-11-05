@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
 
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.mass import GROESSE_FORMLINIE_KACHEL, GROESSE_FORMSTIL_KACHEL
 
 # Welche sechs Stile die Kacheln im Band zeigen (Reihenfolge wie in der Vorlage: Umriss grün, schwarz, blau, orange, grau, gelb): (Zeile, Spalte) des Rasters
@@ -17,7 +17,7 @@ BAND_STILE = ((0, 6), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4))
 
 def form_bearbeiten_menue(b) -> MenueListe:
     from lunivo_writer.editor import formen_katalog as K
-    from lunivo_writer.ui.baukasten.bild_diagramm_menues import _form_bild
+    from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import _form_bild
     m = MenueListe()
     aendern = m.untermenue("Form ändern")
     for kat, formen in K.KATEGORIEN:
@@ -30,8 +30,8 @@ def form_bearbeiten_menue(b) -> MenueListe:
 
 
 def formstile_galerie(b) -> dict:
-    from lunivo_writer.ui.baukasten.objekt_menues import formstil_zeichner
-    from lunivo_writer.ui.baukasten.raster_auswahl import _symbol
+    from lunivo_writer.ui.baukasten.dropdown.objekt_menues import formstil_zeichner
+    from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import _symbol
     kacheln = []
     for z, s in BAND_STILE:
         pm = _symbol(formstil_zeichner(f"z{z}{s}"), QSize(*GROESSE_FORMSTIL_KACHEL)).pixmap(QSize(*GROESSE_FORMSTIL_KACHEL))
@@ -47,7 +47,7 @@ def linien_galerie(b) -> dict:
     from PySide6.QtGui import QPalette, QPen
     from PySide6.QtWidgets import QApplication
     from lunivo_writer.editor import formen_katalog as K
-    from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, _symbol
+    from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, _symbol
     namen = list(dict(K.KATEGORIEN)["Linie"])
 
     def zeichner(name):

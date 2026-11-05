@@ -35,7 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     ZUGABE_LISTE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _titel(text: str, feld) -> QLabel:

@@ -16,7 +16,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QSlider, QSpinBox, QVBoxLayout, QWidget
 from lunivo_writer.ui.baukasten.mass import GROESSE_FARBFLAECHE, GROESSE_FARBPROBE, GROESSE_FARBREGLER, GROESSE_FARBRING, RAND_FARBWAEHLER_SEITE, RAND_FARBWAEHLER_TRANSPARENZ
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 MODELLE = ("RGB", "HSV", "HSL")
 

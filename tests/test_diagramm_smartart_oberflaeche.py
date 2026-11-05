@@ -60,7 +60,7 @@ def test_smartarttools_alle_knoepfe_da(fenster):
 
 
 def test_popups_bauen_sich(fenster):
-    from lunivo_writer.ui.baukasten import diagramm_popups as DP, form_menues as FM, smartart_menues as SM
+    from lunivo_writer.ui.baukasten.dropdown import diagramm_popups as DP, form_menues as FM, smartart_menues as SM
     w = fenster; b = w.befehle
     _diagramm(w)
     for bau in (DP.elemente_popup, DP.schnelllayout_popup, DP.stile_popup, DP.farben_popup, DP.filter_popup):
@@ -72,7 +72,7 @@ def test_popups_bauen_sich(fenster):
     for bau in (SM.form_menue, SM.level_menue, SM.hierarchie_menue, SM.layout_menue, SM.stile_menue):
         assert bau(b) is not None
     assert len(SM.stile_galerie(b)["kacheln"]) == 5
-    from lunivo_writer.ui.baukasten.bild_diagramm_menues import GALERIEN
+    from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import GALERIEN
     assert len(GALERIEN["smartartStile"](b)["kacheln"]) == 5 and GALERIEN["smartartStile"](b)["name"] == "SmartArt-Stile"
     assert len(FM.formstile_galerie(b)["kacheln"]) == 6 and FM.form_bearbeiten_menue(b) is not None
     assert len(SM.layout_menue(b).actions()) == 15
@@ -175,7 +175,7 @@ def test_knotenklick_waehlt_knoten_und_tippen_schreibt(fenster):
 
 
 def test_formstile_raster_ist_eines(fenster):
-    from lunivo_writer.ui.baukasten.objekt_menues import formstile, formstil_werte
+    from lunivo_writer.ui.baukasten.dropdown.objekt_menues import formstile, formstil_werte
     assert len(formstile().knoepfe) == 42 and formstil_werte("z12")["fuell"]["art"] == "farbe"
     w = fenster; ed = w.current_editor()
     FO.einfuegen(ed, "form", {"form": "Rechteck", "fuell": "#ffffff", "linie": "#000000", "strich": 1.0, "text": ""}, 200, 120)

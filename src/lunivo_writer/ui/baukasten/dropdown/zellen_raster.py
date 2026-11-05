@@ -5,7 +5,7 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QLabel, QMenu, QVBoxLayout, QWidget, QWidgetAction
 from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_ZELLENRASTER
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 class _Gitter(QWidget):

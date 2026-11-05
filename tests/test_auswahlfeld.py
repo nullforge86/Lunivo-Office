@@ -4,7 +4,7 @@ from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEILE_PAD_V
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl, _KuerzDelegate
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl, _KuerzDelegate
 
 LANG = "Sehr langer Eintrag " * 12 + "ENDE"
 

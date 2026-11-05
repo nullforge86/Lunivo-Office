@@ -23,7 +23,7 @@ class BearbeitenBefehle:
     def menue_einfuegenKlappe(self):
         """Wie in der Vorlage: mit Formatierung, passend zum Ziel formatiert, als unformatierter Text, „Inhalte einfügen …“ und
         „Standard zum Einfügen festlegen …“ (Optionen ▸ Schreiben ▸ Bearbeiten und Einfügen)."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         m.eintrag("Formatierter Text", self.einfuegen, symbol=icons.icon("einfFormatiert", 16))
@@ -98,7 +98,7 @@ class BearbeitenBefehle:
 
     def menue_suchenKlappe(self):
         """„Suchen oder ersetzen“: Suchen, Ersetzen, Gehe zu — alle im Feld der linken Seitenleiste."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         m.eintrag("Suchen …", self.suchen, symbol=icons.icon("lupe", 16), kuerzel="Strg+F")
@@ -119,7 +119,7 @@ class BearbeitenBefehle:
 
     def menue_auswaehlenKlappe(self):
         """„Auswählen“ wie in der Vorlage."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         m.eintrag("Alles auswählen", self.allesMarkieren, symbol=icons.icon("allesmark", 16), kuerzel="Strg+A")

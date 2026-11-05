@@ -28,7 +28,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_HINWEIS,
     SCHRIFT_KLEIN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 class LunivoSeiten:

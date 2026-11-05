@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMen
 from lunivo_writer.core.tabellenaktionen import GRUPPEN
 from lunivo_writer.editor.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_ENG,
     BREITE_MINILEISTE_KNOPF,
@@ -26,7 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_MINILEISTE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Zwei Zeilen wie in der Vorlage, je Modus eine eigene Anordnung. Eintrag: Name -> (Tooltip, Art) — Art: "" (Knopf) · "klappe:…" (Pfeil mit Menü des Bandes)
 # · "farbe:…" (Palette). Die Namen sind Befehle des Bandes (``fenster.befehle``); "schriftart" und "groesse" sind die beiden Auswahlfelder.

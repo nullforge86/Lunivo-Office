@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.ui.baukasten.texte import trennlinie
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
-from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
@@ -59,7 +59,7 @@ def _abschnittsleiste(text: str) -> QLabel:
 def zuschneiden_menue(b) -> QMenu:
     """Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``)."""
     from lunivo_writer.editor import bildzuschnitt as BZ
-    from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+    from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
     m = MenueListe(b.w)
     wid = QWidget()
     v = QVBoxLayout(wid); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
@@ -182,14 +182,14 @@ def diagramm_stile_galerie(b) -> dict:
     """Die Galerie im Band: eine Kachel je Stil und das Menü mit allen (Aufbau wie ``galerie_ttFormstile``)."""
     from lunivo_writer.editor import diagramm as D
     kacheln = [(_stilname(i), stil_bild(i), lambda i=i: b.diagrammStil(None, i)) for i in range(BAND_STILE)]      # wie in der Vorlage vier im Band, alle im Popup
-    from lunivo_writer.ui.baukasten.diagramm_popups import stile_popup
+    from lunivo_writer.ui.baukasten.dropdown.diagramm_popups import stile_popup
     return {"kacheln": kacheln, "menue": stile_popup(b), "name": "Diagrammstile"}                  # der Pfeil öffnet dasselbe Popup wie die Schnellleiste
 
 
 # Dem Band bekannt: Name im Plan → Baustein. Sie gehen vor die gleichnamigen ``menue_…``/``galerie_…`` des Befehlsbausteins.
-from lunivo_writer.ui.baukasten import diagramm_popups as _dp                       # noqa: E402  (die Popups am Diagramm)
-from lunivo_writer.ui.baukasten import form_menues as _fm                           # noqa: E402  (Form bearbeiten, Formstile)
-from lunivo_writer.ui.baukasten import smartart_menues as _sm                       # noqa: E402  (Menüs und Galerie für SmartArt)
+from lunivo_writer.ui.baukasten.dropdown import diagramm_popups as _dp                       # noqa: E402  die Popups am Diagramm
+from lunivo_writer.ui.baukasten.dropdown import form_menues as _fm                           # noqa: E402  (Form bearbeiten, Formstile)
+from lunivo_writer.ui.baukasten.dropdown import smartart_menues as _sm                       # noqa: E402  Menüs und Galerie für SmartArt
 
 KLAPPEN = {"bildZuschneiden": zuschneiden_menue, **_dp.KLAPPEN, **_sm.KLAPPEN, **_fm.KLAPPEN}
 from lunivo_writer.ui.baukasten.smartart_stil_kacheln import stile_galerie_org as _sa_stile  # noqa: E402

@@ -40,7 +40,7 @@ class UeberpruefenBefehle:
 
     # ---- Rechtschreibprüfung -----------------------------------------------------------------------------------
     def menue_rechtschreibKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Rechtschreibprüfung …", self.rechtschreibung, symbol=self._sym("rechtschreibpruefung"), kuerzel="F7")
         m.eintrag("Sprache festlegen …", self.pruefsprache, symbol=self._sym("sprache"))
@@ -48,7 +48,7 @@ class UeberpruefenBefehle:
 
     # ---- Kommentare --------------------------------------------------------------------------------------------
     def menue_kommentarLoeschenKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         eins = m.eintrag("Kommentar löschen", self.kommentarWeg, symbol=self._sym("kommentarloeschen"))
         alle = m.eintrag("Alle Kommentare im Dokument löschen", self.kommentareAlleWeg, symbol=self._sym("kommentareweg"))
@@ -58,7 +58,7 @@ class UeberpruefenBefehle:
 
     # ---- Änderungen nachverfolgen ------------------------------------------------------------------------------
     def menue_verfolgenKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         an = m.eintrag("Änderungen nachverfolgen", lambda: (self.verfolgen(), self.w.band.aktualisieren()),
                        symbol=self._sym("nachverfolgen"), haken=False, tip=VERFOLGEN_TIP)
@@ -94,7 +94,7 @@ class UeberpruefenBefehle:
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QStandardItemModel
         from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
-        from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+        from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
         halter = QWidget()
         v = QVBoxLayout(halter); v.setContentsMargins(2, 4, 2, 4); v.setSpacing(4)
         cb = Auswahlfeld(); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(36); cb.setMinimumWidth(220); cb.view().setMinimumWidth(290)   # schmal im Band, die Liste zeigt die Namen ganz
@@ -151,7 +151,7 @@ class UeberpruefenBefehle:
 
     def menue_markupKlappe(self):
         from lunivo_writer.editor import sprechblasen as SB
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         kom = m.eintrag("Kommentare anzeigen(&C)", lambda: self._filter_setzen(kommentare=not self.ed.markup_filter["kommentare"]), haken=True)
         ein = m.eintrag("Einfügungen und Löschungen anzeigen",
@@ -182,7 +182,7 @@ class UeberpruefenBefehle:
         return m
 
     def menue_ueberpruefenKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         bearb = m.untermenue("Bearbeiter", self._sym("bearbeiter"))
         zeit = m.untermenue("Überprüfungszeit", self._sym("pruefzeit"))
@@ -199,7 +199,7 @@ class UeberpruefenBefehle:
             self.w.statusBar().showMessage(f"{n} angezeigte Änderungen {'angenommen' if annehmen else 'abgelehnt'}.", 4000)
 
     def _entscheiden_menue(self, annehmen: bool):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         wort = "annehmen" if annehmen else "ablehnen"
         sym = self._sym("aenderungannehmen" if annehmen else "aenderungablehnen")
         m = MenueListe()
@@ -226,7 +226,7 @@ class UeberpruefenBefehle:
 
     # ---- Vergleichen -------------------------------------------------------------------------------------------
     def menue_vergleichenKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Vergleichen …", self.dokumenteVergleichen, symbol=self._sym("vergleichen"))
         m.eintrag("Zusammenführen …", self.dokumenteZusammenfuehren, symbol=self._sym("zusammenfuehren"))

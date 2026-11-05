@@ -11,7 +11,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QHBoxLayout, QToolButton
 
 from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
-from lunivo_writer.ui.baukasten.layout_optionen import LayoutOptionen
+from lunivo_writer.ui.baukasten.dropdown.layout_optionen import LayoutOptionen
 from lunivo_writer.ui.baukasten.umbruch_symbole import umbruch_zeichner
 from lunivo_writer.ui.baukasten.mass import GROESSE_OBJEKTLAYOUT_KACHEL, GROESSE_SCHLIESSEN_KNOPF, RAND_KEIN
 

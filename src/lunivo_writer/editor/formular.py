@@ -154,7 +154,7 @@ def klick(ed, pos: int, fenster=None) -> bool:
         voll = wert_von(ed.document(), v, e) == KASTEN_VOLL
         _ersetzen(ed, v, e, m, KASTEN_LEER if voll else KASTEN_VOLL)
     elif art == "auswahl":
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         menu = MenueListe(ed)
         for o in m.get("optionen") or []:
             menu.eintrag(o, lambda o=o: _ersetzen(ed, v, e, m, o))

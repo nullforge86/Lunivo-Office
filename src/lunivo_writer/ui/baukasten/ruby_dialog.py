@@ -20,7 +20,7 @@ from lunivo_writer.ui.baukasten.mass_feld import spin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 STANDARD = {"ausrichtung": "zentriert", "abstand": 0.0, "groesse": 7.0}
 

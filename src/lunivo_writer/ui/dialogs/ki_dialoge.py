@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.beschriftung import text_label
@@ -43,7 +43,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)

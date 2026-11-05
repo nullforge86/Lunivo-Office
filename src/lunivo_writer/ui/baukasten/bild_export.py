@@ -25,7 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE_LOCKER,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Sinnbild „dunkles Blatt“ im Exportdialog: bewusst feste Farben, unabhängig vom Thema.
 BILDCHEN_BLATT_DUNKEL = "#3a3f45"

@@ -26,7 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_PANEL_KLEIN,
 )
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 class _Kachel(QWidget):

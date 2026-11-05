@@ -17,13 +17,13 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QHBo
 from lunivo_writer.editor import wasserzeichen as WZ
 from lunivo_writer.models.page import PageSettings, mm_to_px
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.mass_feld import MassSpin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 AUTOMATISCH = "Automatisch"
 

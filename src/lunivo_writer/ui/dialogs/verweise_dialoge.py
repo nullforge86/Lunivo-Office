@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QComboBox, QDialog, QLineEdit, QListWidget, QListW
 from lunivo_writer.editor import verweise
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.editor.literatur import TYPEN, eintrag
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _knoepfe(dlg):

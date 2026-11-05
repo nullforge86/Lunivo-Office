@@ -38,14 +38,14 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_POPUP_SEITE,
     RAND_POPUP_UNTERTEXT,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Grautöne der Diagramm-Sinnbilder: bewusst feste Farben, unabhängig vom Thema.
 SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = "#d4d4d4", "#9a9a9a", "#6e6e6e"
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 KACHEL = 36
 BREITE = 340
@@ -231,7 +231,7 @@ class DiagrammPopup(MenueListe):
     # ---- Formatvorlagen und Farben -----------------------------------------------------------------------------------------------------
     def _seite_vorlagen(self) -> QWidget:
         from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.bild_diagramm_menues import stil_bild
+        from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import stil_bild
         STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_POPUP)                                  # wie in der Vorlage: zwei große Kacheln je Zeile
         aktuell = int(_dg(self.b).get("stil", 0) or 0)
         inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_KLEIN)

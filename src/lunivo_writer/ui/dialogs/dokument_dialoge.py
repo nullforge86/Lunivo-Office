@@ -11,7 +11,7 @@ from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
 from lunivo_writer.ui.baukasten.mass import RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def _titel(text: str, feld) -> QLabel:
     t = QLabel(text); t.setBuddy(feld)
     return t

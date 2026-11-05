@@ -14,12 +14,12 @@ from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPushButton
 
 from lunivo_writer.editor import stile
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.text_format import TextFormatLeiste, zeichne_absaetze, zu_format
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 ZEICHEN_ZUSATZ = ("unter", "unterfarbe", "durch", "doppelt", "hoch", "tief", "kapital", "gross", "versteckt", "abstand", "kerning", "betonung", "schrift_asien",
                   "schnitt_asien", "groesse_asien", "schrift_komplex", "schnitt_komplex", "groesse_komplex", "skala", "position", "kern_ab", "raster")
 ABSATZ_ZUSATZ = ("rechts", "erste", "rtl", "umbruch", "zeilen_art", "zeilen_pt", "gliederung", "opt")

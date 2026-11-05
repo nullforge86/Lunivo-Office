@@ -42,7 +42,7 @@ def test_palette_ueberfahren_meldet_vorschau(app):
     pal = FarbPalette()
     geseh, ende = [], []
     pal.ueberfahren.connect(lambda c: geseh.append(c.name())); pal.verlassen.connect(lambda: ende.append(1))
-    from lunivo_writer.ui.baukasten.farbpalette import _Kachel
+    from lunivo_writer.ui.baukasten.dropdown.farbpalette import _Kachel
     k = pal.findChildren(_Kachel)[0]
     k.enterEvent(None); k.leaveEvent(None)
     assert geseh == [k.farbe] and ende == [1]
@@ -1084,7 +1084,7 @@ def test_weitere_farben_als_seite_im_stapel(app):
     from PySide6.QtGui import QColor
     from lunivo_writer.ui.baukasten.fenster_stapel import FensterStapel
     from lunivo_writer.ui.baukasten.formatvorlage_dialog import FormatvorlageDialog
-    from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
+    from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
     fv = FormatvorlageDialog(None, start={"groesse": 12}, vorlagen=["Standard"])
     host = FensterStapel(fv); host.show()
     pal = FarbPalette(fv.leiste, keine_text=None)                  # eine Palette in der Formatvorlage
@@ -1443,7 +1443,7 @@ def test_objekt_menues_und_bildformat_roundtrip(app, tmp_path):
     from lunivo_writer.editor.pagination import seite_als_bild
     from lunivo_writer.models.page import PageSettings
     from lunivo_writer.services import docx_writer, file_service
-    from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue, KonturMenue, formstil_werte, formstile
+    from lunivo_writer.ui.baukasten.dropdown.objekt_menues import FuellMenue, KonturMenue, formstil_werte, formstile
     assert len(formstile().knoepfe) == 42 and formstil_werte("z12")["fuell"]["art"] == "farbe"
     f, k = FuellMenue(), KonturMenue()
     # Graduell, Textur und Muster sind Untermenüs mit Kacheln (mit „Weitere …“ darunter); „Fülleffekte…“ gibt es nicht mehr als eigene Zeile

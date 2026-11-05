@@ -22,18 +22,18 @@ from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QVBoxLayout,
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import bildeffekte as BE
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, UmbruchSchalter
 from lunivo_writer.ui.baukasten.linien import Linie, LinienWahl
-from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN
+from lunivo_writer.ui.baukasten.dropdown.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt, TexteffektPanel, seitengitter
-from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 
 from lunivo_writer.editor.linie import OBJEKT_STRICHE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_SPALTE, GROESSE_ABSCHLUSS_KACHEL, ICON_NORMAL, RAND_FORMATSEITE
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/linie.py)
 WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
@@ -362,7 +362,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
 
     def _weich_menue(self) -> None:
         """Voreinstellungen als Liste mit Bild und Text: Keine weichen Kanten · 1 · 2,5 · 5 · 10 · 25 · 50 Punkt."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
         def waehle(k: float) -> None:
             self._weich_an = bool(k)

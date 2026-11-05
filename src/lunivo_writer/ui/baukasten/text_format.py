@@ -20,7 +20,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ICON_TEXTFORMATLEISTE,
     RAND_KEIN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 GROESSEN = (8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72)
 AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Rechtsbündig"), ("block", "Blocksatz"))

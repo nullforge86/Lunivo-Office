@@ -7,7 +7,7 @@ from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.editor import formular as FO
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.baukasten.mass import HOEHE_TEXT_NORMAL
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 

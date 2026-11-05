@@ -14,8 +14,8 @@ from PySide6.QtWidgets import QWidget
 
 from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.editor import textfx as X
-from lunivo_writer.ui.baukasten.kopf_dropdown import keine_zeile
-from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import keine_zeile
+from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENVORGABE_KACHEL
 

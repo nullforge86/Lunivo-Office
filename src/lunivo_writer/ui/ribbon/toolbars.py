@@ -30,7 +30,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_SYMBOLLEISTE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 T = "trenner"
 # (Symbol, Tooltip, Aktion)

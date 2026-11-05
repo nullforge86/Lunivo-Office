@@ -144,8 +144,8 @@ def test_textfuellung_fuenf_arten_und_fuell_pinsel(app):
 
 
 def test_kopfmenues_sind_kompakt_wie_die_vorlage(app):
-    from lunivo_writer.ui.baukasten.fuell_voreinstellungen import fuell_menue
-    from lunivo_writer.ui.baukasten.linien_voreinstellungen import linien_menue
+    from lunivo_writer.ui.baukasten.dropdown.fuell_voreinstellungen import fuell_menue
+    from lunivo_writer.ui.baukasten.dropdown.linien_voreinstellungen import linien_menue
     f = fuell_menue(None, ""); f.adjustSize()
     assert f.sizeHint().width() <= 230                       # Vorlage: ~222 px (vorher ~370)
     l = linien_menue(None, ""); l.adjustSize()

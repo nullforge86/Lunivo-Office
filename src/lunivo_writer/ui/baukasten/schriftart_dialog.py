@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGro
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.text_format import BETONUNG, UNTERSTREICHUNG, ZEICHEN, groesse_feld, zeichne_absaetze, zu_format
 from lunivo_writer.ui.baukasten.mass import (
@@ -29,7 +29,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_DIALOG_GRUPPE,
     SCHRIFT_HINWEIS,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 SCHNITTE = ("Regulär", "Kursiv", "Fett", "Fett Kursiv")
 _THEMA = {"+Textkörper": "", "+Überschrift": "", "+Textkörper asiatisch": "", "+Überschrift asiatisch": "", "+Textkörper komplex": "", "+Überschrift komplex": ""}

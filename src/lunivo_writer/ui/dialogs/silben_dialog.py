@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QDialog, QLabel, QPushButton,
     QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter

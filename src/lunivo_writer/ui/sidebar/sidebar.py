@@ -35,7 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_SCHREIBHILFE_BANNER,
     RAND_SEITENLEISTE_TABS,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -297,7 +297,7 @@ class SchreibhilfePanel(QWidget):
 
     def _bereiche_menue(self, eltern, menue_text: str):
         """Das Menü am Titel „Formatierung ▾“: die Bereiche der Seitenleiste wie in der Vorlage (der eigene Bereich trägt den Haken)."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe(eltern)
         tun = lambda name: (lambda: self.fenster.befehle.tun(name))

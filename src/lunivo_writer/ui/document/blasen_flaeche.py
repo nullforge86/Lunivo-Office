@@ -63,7 +63,7 @@ class BlasenFlaeche(QWidget):
             self.ed.setFocus()
 
     def _menue(self, bl, pos) -> None:
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         k = self.ed.kommentare.get(bl.kid, {})
         geloest = bool(k.get("geloest"))
         m = MenueListe(self)

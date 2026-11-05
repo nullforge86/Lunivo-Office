@@ -18,7 +18,7 @@ from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.mass import BREITE_SCHIENE, HOEHE_KNOPF, RAND_BOX_KOMPAKT
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 TYPEN = (("text", "Text"), ("zahl", "Zahl"), ("datum", "Datum"))
 TRENNER = (("\t", "Tabstopps"), (",", "Kommata"))

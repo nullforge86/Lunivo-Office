@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.editor import gehe_zu as G
 from lunivo_writer.editor import suche as S
 from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_KLEIN,
@@ -35,7 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_KLEIN,
     RAND_OBEN_SEITE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 HERVORHEBUNG_GELB = "#ffec99"      # Textmarker beim Hervorheben: bewusst fest (Gruppe C)
 

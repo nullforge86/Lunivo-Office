@@ -22,7 +22,7 @@ from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.tabstopp_dialog import TabstoppDialog
 from lunivo_writer.ui.baukasten.text_format import AUSRICHTUNG, zeichne_absaetze
 from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_ABSATZ, RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 ABSATZ = {"ausr": "links", "rtl": False, "einzug": 0.0, "rechts": 0.0, "erste": 0.0, "vor": 0.0, "nach": 0.0, "zeilen": 1.0,
           "zeilen_art": "faktor", "zeilen_pt": 12.0, "ebene": 0, "umbruch": False, "tabs": [], "opt": {}}

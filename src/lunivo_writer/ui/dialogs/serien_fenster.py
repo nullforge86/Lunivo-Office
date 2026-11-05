@@ -21,7 +21,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_KNOPF_GROSS,
     HOEHE_LISTE_HOCH,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 OHNE = "(nicht zugeordnet)"
 

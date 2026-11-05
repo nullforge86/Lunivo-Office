@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QComboBox, QFontComboBox, QStyle, QStyledItemDele
 
 from lunivo_writer.ui.baukasten.mass import (ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN,
                                                 DROPDOWN_ZEILE_PAD_V)
-from lunivo_writer.ui.baukasten.popup_lage import popup_klemmen
+from lunivo_writer.ui.baukasten.dropdown.popup_lage import popup_bereich, popup_klemmen
 
 MAX_ZEILEN = DROPDOWN_MAX_ZEILEN
 
@@ -45,15 +45,15 @@ def popup_begrenzen(combo: QComboBox, popup_min: int = 0) -> None:
     pop = view.window() if view is not None else None
     if pop is None or pop is combo.window() or not pop.isVisible():
         return
-    fenster = combo.window()
     bs = combo.screen().availableGeometry() if combo.screen() else QRect(0, 0, 10000, 10000)
+    bereich = popup_bereich(combo, bs)
     g = pop.geometry()
-    breite = min(max(g.width(), popup_min), fenster.width(), bs.width())
+    breite = min(max(g.width(), popup_min), bereich.width())
     zeilen = min(combo.maxVisibleItems(), combo.count()) if combo.count() else 1
     hoehe = min(g.height(), bs.height(), max(zeilen * (combo.fontMetrics().height() + 2 * DROPDOWN_ZEILE_PAD_V), 1) + ABSTAND_MITTEL)      # nie höher als die sichtbaren Zeilen und nie höher als der Bildschirm
     pop.setMinimumWidth(0); pop.setMaximumWidth(breite)         # der Behälter meldet sonst die Breite des längsten Eintrags als Mindestmaß
     pop.resize(breite, hoehe)
-    popup_klemmen(pop, fenster)
+    popup_klemmen(pop, combo)
 
 
 class Auswahlfeld(QComboBox):

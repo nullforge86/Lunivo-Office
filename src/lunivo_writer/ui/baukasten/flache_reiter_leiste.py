@@ -95,7 +95,7 @@ class FlacheReiterLeiste(QTabBar):
         return [i for i in self._sichtbar() if i not in b]
 
     def _mehr_menue(self) -> None:
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(self)
         for i in self._versteckte():
             m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))
@@ -336,7 +336,7 @@ class UeberlaufLeiste(QTabBar):
         self.updateGeometry()
 
     def _mehr_menue(self) -> None:
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(self)
         for i in self._versteckte():
             m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))

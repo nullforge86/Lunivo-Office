@@ -39,7 +39,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 KEIN_DRUCKER = "Kein Drucker eingerichtet"
 KEIN_DRUCKER_HINWEIS = "Kein Drucker eingerichtet — es wird das Fenster des Systems geöffnet."

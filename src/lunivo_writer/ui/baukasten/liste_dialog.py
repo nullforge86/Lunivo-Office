@@ -47,7 +47,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_FENSTER_LISTE,
     RAND_KEIN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 PLATZHALTER = "①"
 _SCHLUESSEL = "listen/benutzer"
 _KACHEL = QSize(*GROESSE_LISTENSTIL_KACHEL) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen

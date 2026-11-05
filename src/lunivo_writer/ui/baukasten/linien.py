@@ -8,13 +8,13 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QWidget
 
 from lunivo_writer.editor.linie import ALLE_SEITEN, LINIENARTEN, LINIENBREITEN, Linie  # noqa: F401
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def linien_symbol(art: str, groesse: QSize = QSize(*GROESSE_LINIENART_BILD), farbe: str | None = None, breite_pt: float = 1.5) -> QIcon:
     farbe = Farbe.TINTE if farbe is None else farbe
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
@@ -161,22 +161,3 @@ def rahmen_symbol(seiten: RahmenSeiten, groesse: int = 16) -> QIcon:
     return QIcon(pm)
 
 
-class RahmenMenue(MenueListe):
-    """Das Rahmen-Menü (Unten, Oben, Links, Rechts, Kein, Alle, Außen, Innen). Meldet die gewählten Seiten."""
-
-    gewaehlt = Signal(object, str)         # RahmenSeiten, Schlüssel ('unten', 'alle', 'kein' …)
-
-    def __init__(self, parent=None, *, innen: bool | str = True, mehr_text: str | None = "Rahmen und Schattierung …", mehr=None):
-        """``innen``: True = beide inneren Linien (Tabelle), ``"h"`` = nur die waagerechte (Absätze), False = keine."""
-        super().__init__(parent)
-        erlaubt = {True: "hv", False: ""}.get(innen, innen)
-        for e in RAHMEN_EINTRAEGE:
-            if e is None:
-                self.trenner(); continue
-            schl, text, seiten = e
-            if schl.startswith("innen_") and schl[-1] not in erlaubt:
-                continue
-            self.eintrag(text, lambda s=seiten, k=schl: self.gewaehlt.emit(s, k), symbol=rahmen_symbol(seiten))
-        if mehr_text and mehr is not None:
-            self.trenner()
-            self.eintrag(mehr_text, mehr)

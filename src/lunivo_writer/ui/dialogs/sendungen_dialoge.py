@@ -15,7 +15,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_TEXT_MITTEL,
     HOEHE_TEXT_NORMAL,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _hinweis(text: str) -> QLabel:

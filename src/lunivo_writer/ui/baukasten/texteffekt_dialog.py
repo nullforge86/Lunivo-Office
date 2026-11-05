@@ -17,9 +17,9 @@ from PySide6.QtWidgets import (
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor import textfx as X
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
-from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -37,7 +37,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_TEXTEFFEKT_GITTER,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)
 
 

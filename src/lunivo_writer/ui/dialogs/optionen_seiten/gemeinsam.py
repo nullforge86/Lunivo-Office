@@ -25,7 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_ZEILE_PAAR,
     RAND_ZEILE_SPALTEN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 MIN_HOEHE = HOEHE_FELD                                      # Mindesthöhe der Bedienelemente (leicht zu treffen)
 _ERKLAERUNGEN: dict | None = None

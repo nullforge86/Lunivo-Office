@@ -58,7 +58,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_LISTE,
     SCHRIFT_UEBERSCHRIFT,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 def stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""

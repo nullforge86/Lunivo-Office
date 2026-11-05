@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QHBoxLay
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import seitenzahl as SZ
 from lunivo_writer.models.page import HeaderFooter, mm_to_px
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter, kacheln_legen
 from lunivo_writer.ui.baukasten.mass import (
@@ -44,7 +44,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_SEITENZAHL_ZEILE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
@@ -118,7 +118,7 @@ class _Linie(QWidget):
         p.drawLine(0, self.height() // 2, self.width(), self.height() // 2)
 
 
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 class _EinfuegenPanel(MenueListe):
@@ -129,7 +129,6 @@ class _EinfuegenPanel(MenueListe):
     def __init__(self, eltern):
         super().__init__(eltern)
         self.ort = "kopf"
-        self.setStyleSheet(_stil("QMenu { background: @PAPIER; border: 1px solid @LEISTE_RAND; }"))
         w = QWidget(); w.setObjectName("kfPanel"); w.setStyleSheet(panel_stil())
         v = QVBoxLayout(w); v.setContentsMargins(*RAND_EINFUEGEN_PANEL); v.setSpacing(ABSTAND_NORMAL)
         self.format = Auswahlfeld(); self.format.setAccessibleName("Format")

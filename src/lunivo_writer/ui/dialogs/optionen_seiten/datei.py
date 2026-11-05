@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QS
 from lunivo_writer.proofing import autokorrektur
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
 from lunivo_writer.ui.baukasten.mass import HOEHE_FELD
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 class DateiSeiten:

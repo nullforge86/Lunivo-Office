@@ -16,11 +16,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
+from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
 from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
 from lunivo_writer.ui.document.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
@@ -55,7 +55,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_BANDGRUPPE_TITEL,
     SCHRIFT_BANDKNOPF,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Schriftauswahl
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
@@ -972,7 +972,7 @@ class RegisterBand(QWidget):
         m.aktion("Weitere Stile anzeigen", lambda an: w.settings.set("ui/stile_mehr", an), haken=mehr)
 
         def kontext(name, pos):
-            from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+            from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
             km = MenueListe(m)
             km.eintrag("Ändern …", lambda: (m.close(), self.b.formatvorlageAendern(name)))
             if stile.ist_eigen(name):

@@ -10,7 +10,7 @@ from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPixmap
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.baukasten.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP
 
 BAND_KACHEL = QSize(*GROESSE_SMARTART_STIL_BAND)
@@ -51,7 +51,7 @@ def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str | None = None
 
 def stile_menue_org(b) -> RasterAuswahl:
     from lunivo_writer.editor import smartart as SA
-    from lunivo_writer.ui.baukasten.smartart_menues import _sa
+    from lunivo_writer.ui.baukasten.dropdown.smartart_menues import _sa
     m = RasterAuswahl(b.w, spalten=len(SA.STILE), groesse=POPUP_KACHEL)
     aktuell = _sa(b).get("stil", 1)
     for i, name in enumerate(SA.STILE):

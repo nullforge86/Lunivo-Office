@@ -31,7 +31,7 @@ def test_ueberlauf_geht_ins_menue_ohne_rollpfeile(app):
 
 def test_mehr_menue_listet_versteckte_und_loest_aus(app, monkeypatch):
     """Die Einträge hinter „•••“ sind genau die versteckten Reiter; ein Eintrag macht den Reiter aktiv und sichtbar."""
-    from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+    from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
     tw = QTabWidget()
     for n in NAMEN:
         tw.addTab(QWidget(), n)

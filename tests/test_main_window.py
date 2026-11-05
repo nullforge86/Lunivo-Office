@@ -144,12 +144,12 @@ COMBO_NOCH_ERLAUBT: set[str] = set()   # alle Dropdowns laufen über Auswahlfeld
 
 
 def test_kein_combobox_ausser_auswahlfeld():
-    """Dropdowns kommen aus ui/baukasten/auswahlfeld.py (Auswahlfeld/Schriftauswahl). COMBO_NOCH_ERLAUBT darf nur kleiner werden."""
+    """Dropdowns kommen aus ui/baukasten/dropdown/auswahlfeld.py (Auswahlfeld/Schriftauswahl). COMBO_NOCH_ERLAUBT darf nur kleiner werden."""
     import pathlib, re
     wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
     muster = re.compile(r"\bQComboBox\(|\bQFontComboBox\(")
     treffer = {p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py") if muster.search(p.read_text(encoding="utf-8", errors="replace"))}
-    treffer.discard("ui/baukasten/auswahlfeld.py")
+    treffer.discard("ui/baukasten/dropdown/auswahlfeld.py")
     assert treffer <= COMBO_NOCH_ERLAUBT, "QComboBox( außerhalb von auswahlfeld.py: " + ", ".join(sorted(treffer - COMBO_NOCH_ERLAUBT))
 
 

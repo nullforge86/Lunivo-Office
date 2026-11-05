@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QWidget
 from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_EINHEITENAUSWAHL, BREITE_REGLER_MIN, RAND_KEIN
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 # Maßeinheit der Oberfläche (Optionen ▸ Speichern): intern bleibt alles in Millimetern, nur die Anzeige wechselt.

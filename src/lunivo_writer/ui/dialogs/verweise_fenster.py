@@ -32,7 +32,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_LISTE_ZIEL,
     RAND_KEIN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 _FUELL_ANZEIGE = {"": "(ohne)", "punkt": "." * 24, "strich": "-" * 20, "linie": "_" * 18}
 

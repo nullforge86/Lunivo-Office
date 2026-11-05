@@ -251,7 +251,7 @@ def test_effekte_seite_nur_drei_abschnitte_einzeln_offen_mit_nullwerten(app):
 
 def test_kopf_dropdowns_fuellung_linie_setzen_die_felder_und_smartart_bleibt_ohne(app):
     from lunivo_writer.ui.baukasten.diagramm_format_panel import DiagrammFormatPanel
-    from lunivo_writer.ui.baukasten.kopf_dropdown import KopfDropdown
+    from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown
     from lunivo_writer.ui.baukasten.smartart_format_panel import SmartArtFormatPanel
     p = DiagrammFormatPanel()
     assert p.a_fuell.isAncestorOf(p.kopf_fuell) and p.a_kontur.isAncestorOf(p.kopf_linie)

@@ -38,7 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_LISTE_ARTEN,
     ZUGABE_RAHMEN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""

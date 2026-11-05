@@ -75,7 +75,7 @@ def test_jeder_knopf_hat_einen_befehl(app, tmp_path):
             assert _hat_befehl(w, e), (plan["name"], e["name"])
         for g in plan["gruppen"]:
             if g.get("galerie"):
-                from lunivo_writer.ui.baukasten.bild_diagramm_menues import GALERIEN
+                from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import GALERIEN
                 spec = GALERIEN[g["galerie"]](b) if g["galerie"] in GALERIEN else getattr(b, "galerie_" + g["galerie"])()
                 assert len(spec["kacheln"]) in (3, 6, 10) and spec["menue"] is not None
             if g.get("pfeil"):

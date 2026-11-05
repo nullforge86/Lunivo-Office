@@ -26,7 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
           ("kommentieren", "Kommentare hinzufügen erlauben")]

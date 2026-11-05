@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor.linie import LINIENBREITEN, STILE, Linie
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.linien import RahmenSeiten, rahmen_symbol
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld
 
@@ -49,7 +49,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_RAHMEN_SEITE,
     RAND_SCHATTIERUNG_SEITE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 KANTEN = (("t", "Oben", RahmenSeiten.OBEN), ("b", "Unten", RahmenSeiten.UNTEN), ("l", "Links", RahmenSeiten.LINKS),
           ("r", "Rechts", RahmenSeiten.RECHTS), ("h", "Zwischen Absätzen", RahmenSeiten.INNEN_H))
 HINWEIS = "Diagramm oder Schaltflächen klicken, um Rahmen hinzuzufügen"

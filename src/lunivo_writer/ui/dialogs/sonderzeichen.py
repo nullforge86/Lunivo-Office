@@ -37,7 +37,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_LISTE_SONDER,
     ZUGABE_RAHMEN,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"

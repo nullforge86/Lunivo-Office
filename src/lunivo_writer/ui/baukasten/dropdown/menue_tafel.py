@@ -26,6 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_PANEL_KLEIN,
     SCHRIFT_HINWEIS,
 )
+from lunivo_writer.ui.baukasten.dropdown.popup_lage import PopupVerhalten
 
 
 # Symbolnamen aus dem zentralen Lucide-Katalog.
@@ -52,7 +53,7 @@ def _datum(pfad: str) -> str:
         return "nicht mehr da"
 
 
-class MenueTafel(QFrame):
+class MenueTafel(PopupVerhalten, QFrame):
     def __init__(self, punkte: list, befehle, fenster):
         super().__init__(fenster, Qt.Popup)
         self.setFrameShape(QFrame.StyledPanel)

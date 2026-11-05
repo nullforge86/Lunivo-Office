@@ -38,7 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_HINWEIS,
     ZUGABE_KACHEL,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def _ok(dlg):
     return knopfzeile(dlg)
 
@@ -170,7 +170,7 @@ _BILDCHEN: dict = {}
 
 def _layout_bildchen(p, r, name: str) -> None:
     """Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``ui/baukasten/smartart_menues.py``)."""
-    from lunivo_writer.ui.baukasten.smartart_menues import zeichne_miniatur
+    from lunivo_writer.ui.baukasten.dropdown.smartart_menues import zeichne_miniatur
     zeichne_miniatur(p, r.adjusted(3, 3, -3, -3), name, True)
 
 
@@ -247,7 +247,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
-            from lunivo_writer.ui.baukasten.smartart_menues import miniatur
+            from lunivo_writer.ui.baukasten.dropdown.smartart_menues import miniatur
             self._zeige(miniatur(d["layout"], False, QSize(*GROESSE_MINIATUR_LAYOUT)).toImage())
 
 

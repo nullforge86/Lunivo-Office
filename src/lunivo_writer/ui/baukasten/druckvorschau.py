@@ -25,7 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_ZEILE_KARTE,
 )
-from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 ANSICHTEN = [("Eine Seite", 1), ("Zwei Seiten", 2), ("Alle Seiten", 0)]
 
 
