@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
 from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
-from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte, VorschlagKarte
+from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe

@@ -2,7 +2,7 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 356 Module, 383 Klassen, 4993 Funktionen und Methoden.
+Stand: 361 Module, 386 Klassen, 5056 Funktionen und Methoden.
 
 ## Inhalt
 
@@ -18,7 +18,7 @@ Stand: 356 Module, 383 Klassen, 4993 Funktionen und Methoden.
 - `services/docx_teile` — 11 Module
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 83 Module
+- `ui/baukasten` — 88 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
@@ -2717,6 +2717,7 @@ Herkunft und Sicherheit eines Fundes; Auflösung, wenn mehrere Quellen dieselbe 
 - `markieren(funde, quelle, text_laenge)` — Funde gegen den Datenvertrag ``ProofingIssue`` prüfen (ungültige fallen weg; Wörterbücher von außen werden umgewandelt), dann Quelle und
 - `_rang(f)`
 - `loesen(funde)` — Überschneidende Funde auflösen: der beste bleibt, die unterlegenen werden nicht angezeigt, aber als `verdraengt` vermerkt.
+- `abstimmen(funde, geprueft, in_ruhe, selbst, gegenprobe)` — Konsens zwischen den Quellen nach ``loesen`` (reine Funktion, idempotent).
 
 ### `proofing/haeufig.py`
 
@@ -2753,6 +2754,7 @@ Die Schreibhilfe: prüft im Hintergrund, hält den Stand, setzt Korrekturen ein.
   - `pruefen(zaehlen, voll)` — zaehlen=True nur bei ausdrücklichem Prüfen (Knopf): dann zählt das Gedächtnis mit und es wird alles geprüft.
   - `pruef_schalter()` — Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“.
   - `_fertig(rev, roh)`
+  - `_abstimmen(funde)` — Konsens zwischen den Quellen (``fund.abstimmen``) mit den gelernten Daten und dem Schalter der Gegenprobe.
   - `_key(f)`
   - `_zeigen(meldung)`
   - `anzeigen(funde)`
@@ -2764,6 +2766,7 @@ Die Schreibhilfe: prüft im Hintergrund, hält den Stand, setzt Korrekturen ein.
   - `ignorierte_wieder_pruefen()`
   - `gruendlich()`
   - `_lt_fertig(rev, funde)`
+  - `ki_fertig(rev, vorschlaege)` — KI-Vorschläge (alt/neu/grund/konfidenz) als Funde der Quelle „ki“; veraltete Antworten (Text inzwischen geändert) werden verworfen.
   - `aendern(fund)`
   - `lassen(fund)`
   - `alle_aendern()`
@@ -2788,10 +2791,18 @@ Die Prüfung ohne Internet: Regeln, Listen und Begründungen für Rechtschreibun
 - `lade_woerter(pfad)` — Liest die deutsche Wörterliste. Sie liegt neben dieser Datei; fehlt sie,
 - `trenne_zusammen(wort)`
 - `pruefe_zusammengeschrieben(text, funde)`
+- `verwechslungen(wort)` — Wörter, bei denen genau ein Buchstabe gegen sein Spiegelbild getauscht ist (b/d, p/q). Eigene Hilfe, die
+- `regel_varianten(wort)` — Wörter, die eine feste Hörregel ergibt: b/d, p/q, schp→sp, scht→st, verdoppelter oder einfacher Mitlaut.
+- `_geruest(w)`
+- `_ist_zusammensetzung(w)` — Zwei bekannte Wörter (mindestens vier Buchstaben), auch mit Fugen-s: „Wortabstand“.
+- `_klang_kandidaten(w)`
+- `klang_vorschlag(wort)` — Das eine Wort, das gemeint sein muss, oder None. Nur kleingeschrieben, ohne Rücksicht auf Satzstellung.
+- `_klang_fund_wort(text, m, gelernt, schalter)` — Die Verbesserung für das Wort, falls der Klang-Prüfer sicher genug ist, sonst None.
+- `pruefe_klang(text, funde, gelernt, schalter)`
 - `nachbar_woerter(w)` — Alle Wörter, die genau einen Handgriff entfernt sind.
 - `_de_schluessel(wort)`
 - `tippfehler_vorschlag(wort)`
-- `pruefe_tippfehler(text, funde, gelernt)`
+- `pruefe_tippfehler(text, funde, gelernt, schalter)`
 - `wort_abstand(a, b)` — Wie viele Handgriffe liegen zwischen zwei Wörtern? Zwei vertauschte
 - `ist_korrektur(falsch, richtig)` — Sieht die Verbesserung dem Wort überhaupt ähnlich? Ein Rechtschreib-
 - `uebergehen(wort, text, stelle, schalter)`
@@ -3374,6 +3385,7 @@ Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Se
 - `symbol(name, px)`
 - **class `_Zeile`**(QStyledItemDelegate) — Zeichnet die Trennlinien quer über die Liste und den kleinen Pfeil rechts bei Einträgen mit eigener Seite.
   - `paint(p, opt, idx)`
+- `stil()` — Stylesheet beim Aufruf formatiert, damit das Thema gilt.
 - **class `Backstage`**(QWidget)
   - `__init__(fenster)`
   - `oeffnen(seite, unter)` — ``unter``: bei „optionen“ die Seite der Optionen, die gleich offen sein soll (z. B. „ki“).
@@ -3471,6 +3483,13 @@ Alle Funktionen der Schreibhilfe an einer Stelle: Wo sie in der Seitenleiste (�
 Hell/Dunkel über Qt-Paletten (Stil „Fusion“) — keine Stylesheets für das Grundlayout.
 
 - `kopf_symbolfarbe()` — Symbolfarbe für den grünen Kopfbereich im Thema Mint (dunkel auf Hellgrün); sonst ``None`` = Farbe der Palette.
+- **class `_RundFilter`**(QObject) — Rundet die Ecken eines Widgets (Maske), solange er installiert ist; Radius aus ``MINT_FARBEN``.
+  - `eventFilter(obj, ev)`
+  - `runden(w)`
+- `karten_rand()` — Breite des Kartenrands der Seitenleisten-Panels im aktuellen Thema (Mint: ``luft``, sonst 0).
+- `karte_einrichten(widget, layout, breite)` — Seitenleisten-Karte (Mint): gemeinsame Eigenschaft für das Stylesheet und der Innenrand = Breite des Kartenrands, sonst überdeckt der Rand die
+- `_karten_rand_setzen(widget)`
+- `mint_abstaende(fenster)` — Thema-Hook für das Hauptfenster: im Thema Mint Außenränder um Arbeitsbereich und Band, Band als Karte, Dokumentfläche mit runden Ecken;
 - `apply_theme(app, mode)`
 - `_ist_dunkel(app)`
 - `_pfeile(farbe)` — Dropdown-Pfeile aus dem zentralen Lucide-Katalog für Qt-Stylesheets.
@@ -3679,7 +3698,7 @@ Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein B
 - `_ueberschrift(text)`
 - `layout_bild(nr, groesse)` — Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
 - `_farbzeile(farben, gewaehlt, klick)`
-- **class `DiagrammPopup`**(QMenu) — Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter.
+- **class `DiagrammPopup`**(MenueListe) — Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter.
   - `__init__(b, art, reiter, parent)`
   - `waehle(i)`
   - `neu_lesen()` — Beim Öffnen: den Reiter zeigen, den der Aufrufer wollte, mit frisch gelesenen Daten.
@@ -3737,13 +3756,17 @@ Grundgerüst für kleine Dialoge: Formular, optionale Vorschau, OK/Abbrechen und
 
 ### `ui/baukasten/druck_dialog.py`
 
-Das Druckfenster: links die Vorschau des Blattes, rechts die Reiter „Standard“, „Lunivo-Office“ und „Drucker“.
+Das Druckfenster: oben die Reiter „Standard“, „Lunivo-Office“ und „Drucker“, darunter die Vorschau des Blattes (eine Spalte).
 
 - `_kopf(text)`
 - `_drucker_liste()`
 - `_combo(eintraege, aktuell)`
+- **class `_Reiter`**(AngepassteReiter) — Reiter, deren Höhe mit der Breite mitgeht: schmal umbrechen die Beschriftungen, die Seite wird höher (sonst überlappen die Felder).
+  - `hasHeightForWidth()`
+  - `heightForWidth(w)`
 - **class `DruckAnsicht`**(QWidget) — Reiter oben, Vorschau darunter. ``geaendert`` kommt bei jeder Änderung der Wahl.
   - `__init__(seiten, papier_mm, quer, start, *, auswahl, vorschau, parent)`
+  - `_angeordnet(breit)`
   - `_standard(s, hoch, quer, auswahl)`
   - `_papier_combo(aktuell)`
   - `_programm(s)`
@@ -3760,7 +3783,7 @@ Das Druckfenster: links die Vorschau des Blattes, rechts die Reiter „Standard�
   - `_gehe(i)`
   - `_neu_laden()`
   - `_zeichnen(p, r)`
-- **class `DruckDialog`**(QDialog) — Das Druckfenster mit Knopfzeile: Hilfe links, „Abbrechen“ und „Drucken“ rechts.
+- **class `DruckDialog`**(PanelFaehig, QDialog) — Das Druckfenster mit Knopfzeile: Hilfe links, „Abbrechen“ und „Drucken“ rechts.
   - `__init__(parent, seiten, papier_mm, quer, start, *, auswahl, vorschau, hilfe)`
   - `_pruefen()`
   - `ergebnis()`
@@ -3845,7 +3868,7 @@ Die eine Farbpalette des Programms: Popup, Farbfeld für Dialoge und geteilter K
   - `leaveEvent(e)`
   - `mouseReleaseEvent(e)`
   - `paintEvent(e)`
-- **class `FarbPalette`**(QMenu) — Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“.
+- **class `FarbPalette`**(MenueListe) — Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“.
   - `__init__(parent, *, keine_text, start, titel, zuletzt, weitere, verlauf, verlauf_titel, weitere_text, automatisch, pipette, standard, reihen)`
   - `zusatz_eintrag(text, aktion)` — Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``.
   - `_titel_zeile(text)`
@@ -3966,12 +3989,14 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `minimumTabSizeHint(index)`
   - `sizeHint()`
   - `minimumSizeHint()`
+  - `_ueberlauf()` — Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander?
   - `resizeEvent(e)`
   - `tabLayoutChange()`
   - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
   - `mousePressEvent(e)`
   - `paintEvent(_e)`
 - `flach_machen(reiter, art)` — Setzt eine ``FlacheReiterLeiste`` in das ``QTabWidget`` (``setTabBar`` gilt nur vor dem ersten Reiter, darum werden die Seiten neu eingesetzt).
+- `alle_flach(wurzel, art)` — Alle Reiter unter ``wurzel`` (``QTabWidget``) bekommen dieselbe flache Leiste: EIN Aussehen für alle Reiter in den Seitenleisten-Fenstern.
 
 ### `ui/baukasten/form_menues.py`
 
@@ -4024,8 +4049,10 @@ Der Bereich „Formatvorlagen und Formatierung“ (Start ▸ Einstellungen) als 
 
 Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfenstern (Seitenleiste) und in breiten Fenstern.
 
+- `tabellen_gitter(eltern, *, rand, abstand, waagerecht, senkrecht, oben_links)` — DIE eine Stelle im Projekt, an der ein ``QGridLayout`` erzeugt wird. Für Zellen, deren Spalten feste Aufgaben haben (Kachelraster, Zwei-Listen-Gerüst,
 - **class `UmbruchSchalter`**(QCheckBox) — Ankreuzfeld, dessen Text bei Platzmangel umbricht (``QCheckBox`` selbst kann das nicht).
   - `__init__(text, parent)`
+  - `natuerliche_breite()` — Breite des Ankreuzfelds in einer Zeile, ohne Umbruch (damit kurz/lang richtig entschieden wird; ``sizeHint`` ist wegen des Umbruchs klein).
   - `_indikator()`
   - `hasHeightForWidth()`
   - `heightForWidth(breite)`
@@ -4060,6 +4087,7 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `_nimm(objekt)`
   - `zeile(beschriftung, feld)` — Beschriftung (Text oder Widget) und das Feld (Widget oder Layout) dahinter.
   - `breit(objekt)`
+  - `nebeneinander(*felder, spalten, abstand)` — Felder ohne Beschriftung gleich breit in einer Zeile; ``spalten`` größer als die Zahl der Felder lässt den Rest der Zeile frei (halbe Zeile).
   - `reihe(*paare, gewichte, vorn)` — Mehrere Felder nebeneinander, jedes mit der Beschriftung darüber: ``reihe(("Schriftart:", a), ("Größe:", b), gewichte=(3, 1))``.
   - `addItem(item)`
   - `count()`
@@ -4084,6 +4112,7 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `heightForWidth(breite)` — Die Höhe der gewählten Seite bei dieser Breite (Seiten aus ``FormularGitter`` brechen um): so bleibt unter kürzeren Reitern kein leerer Platz.
   - `sizeHint()`
   - `minimumSizeHint()`
+- `gruppe(titel, *, karte)` — Eine Gruppe von Feldern mit Titel: flach wie die Abschnittstitel (Großbuchstaben, Linie darüber); ``karte=True`` = Gruppenkasten des Stils
 
 ### `ui/baukasten/fuell_voreinstellungen.py`
 
@@ -4109,7 +4138,7 @@ Galerie-Popup: Kacheln mit einer Textprobe in der jeweiligen Schrift und dem Nam
   - `contextMenuEvent(e)`
   - `mouseReleaseEvent(e)`
   - `paintEvent(_e)`
-- **class `GalerieAuswahl`**(QMenu) — Meldet den Schlüssel der gewählten Kachel.
+- **class `GalerieAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
   - `__init__(parent, *, titel, spalten, kachel, zeilen_sichtbar)`
   - `kachel(schluessel, name, schrift, *, probe, farbe, aktuell, tipp)`
   - `aktion(text, fn, symbol, *, haken, aktiv)` — Zeile unter der Galerie (z. B. „Neue Formatvorlage …“); schließt das Popup und ruft ``fn``.
@@ -4129,6 +4158,13 @@ Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die 
   - `eventFilter(obj, ev)`
   - `setze(schluessel, melden)`
   - `aktuell()`
+
+### `ui/baukasten/karte.py`
+
+Karte/Zeile: die eine Quelle für abgesetzte Flächen in den Seitenleisten (Kommentar, Fund, Funktionszeile, KI-Blase).
+
+- `als_karte(widget, art)` — Kennzeichnet das Widget als Karte der Art ``art``: zeile (anklickbar, durchsichtig), karte (Fund), kompakt (Kommentar), ki/markiert (Blase mit Streifen links).
+- `karte_regeln(fokus, ki, grau)` — QSS-Text aller Kartenarten; Farben ``fokus`` (Fokusrahmen, KI-Streifen), ``ki`` (Streifen KI-Blase), ``grau`` (Streifen sonst) kommen vom Thema.
 
 ### `ui/baukasten/karten_raster.py`
 
@@ -4152,6 +4188,8 @@ KartenRaster: ein Raster mit gemeinsamem Maßsystem für Karten, Schalter und Kn
   - `sizeHint()`
   - `minimumSize()`
   - `setGeometry(r)`
+- `kacheln_legen(gitter, kacheln, spalten)` — Kacheln der Reihe nach in ``spalten`` Spalten ins Gitter setzen (zeilenweise, links oben beginnend).
+- `kachel_gitter(kacheln, spalten, *, eltern, rand, abstand, waagerecht, senkrecht, oben_links, rest_dehnt)` — Kachelraster fester Kachelgröße (Farben, Formen, Seitenbildchen …): die Rasterlogik für alle Stellen, an denen das Gitter der Zweck ist.
 - `kurze_gruppen_ins_raster(fenster, max_breite)` — Zentrale Automatik für jedes Fenster der Seitenleiste: aufeinanderfolgende kurze Ankreuzfelder, Optionsfelder und Knöpfe in einem senkrechten Layout
 
 ### `ui/baukasten/kopf_dropdown.py`
@@ -4338,6 +4376,11 @@ Kleine Vorschaubilder für Aufzählungs- und Nummerierungsarten (drei Zeilen mit
 
 - `liste_zeichner(marke)` — ``marke``: 'disc', 'circle', 'square' oder die Zeichenfolge der ersten drei Nummern (z. B. '1.\|2.\|3.'); None = Keine.
 
+### `ui/baukasten/mass.py`
+
+Zentrale Maße der gemeinsamen Bausteine und Fenster — benannte Konstanten nach Rolle, damit gleiche Werte nur einmal stehen.
+
+
 ### `ui/baukasten/mass_feld.py`
 
 Zahlenfeld mit Maßeinheit: intern immer Millimeter, angezeigt in der gewählten Einheit (Optionen ▸ Speichern).
@@ -4363,8 +4406,14 @@ Zahlenfeld mit Maßeinheit: intern immer Millimeter, angezeigt in der gewählten
 Menü-Liste: Zeilen mit Symbol, Text, Tastenkürzel, Haken und Untermenü — überall dieselbe Gestalt.
 
 - **class `MenueListe`**(QMenu) — Ein Menü, das Zeilen einheitlich aufbaut. Nicht Mögliches bleibt grau sichtbar statt zu fehlen.
-  - `eintrag(text, aktion, *, symbol, kuerzel, haken, aktiv, tip, daten)`
+  - `eintrag(text, aktion, *, symbol, kuerzel, haken, aktiv, tip, daten, echt, gruppe)` — ``kuerzel`` (Text oder ``QKeySequence``) wird nur angezeigt; mit ``echt=True`` ist es ein wirkliches Tastenkürzel
+  - `vorhanden(a)` — Eine schon bestehende Aktion (z. B. aus der Hauptfenster-Aktionstabelle) als Zeile übernehmen.
+  - `einhaengen(text, menue, symbol)` — Ein fertiges Menü (z. B. ein Raster) als Untermenü-Zeile mit ``text`` einhängen.
   - `untermenue(text, symbol, aktiv)`
+  - `widget(w)` — Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen.
+  - `kompakt()` — Schmalere Zeilen (Symbolspalte, Text, Kürzel dicht) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
+  - `standard(widget, parent)` — Das Standard-Kontextmenü eines Qt-Textfeldes (``createStandardContextMenu``) als Menüliste, mit deutschen Texten.
+  - `in_leiste(leiste, titel)` — Ein Menü der Menüleiste (``QMenuBar``) mit dem Titel ``titel``.
   - `trenner()`
   - `aus_liste(zeilen, parent)` — Baut ein Menü aus einer Beschreibung: ``"-"`` = Trennlinie, sonst ein Wörterbuch mit text, aktion, symbol,
   - `_fuellen(zeilen)`
@@ -4432,9 +4481,11 @@ Die Popups für ein markiertes Bild oder eine Form: Formstile, Füllung, Kontur 
 
 Rahmen eines Feldes in einer Seitenleiste: Titel, davor/dahinter Knöpfe, ein Menü (⋯ oder ⚙) und ✕ zum Schließen; darunter der Inhalt.
 
+- `panel_kopf(*teile, dehnen)` — Die Kopfzeile aller Seitenleistenfenster samt Trennlinie darunter: ``teile`` von links nach rechts.
 - `_knopf(symbol, tipp)`
 - **class `PanelRahmen`**(QWidget)
-  - `__init__(titel, menue_zeichen, menue, knoepfe)` — ``knoepfe``: Folge von (Lucide-Name, Tooltip, Funktion) — stehen vor dem Menü.
+  - `__init__(titel, menue_zeichen, menue, knoepfe, schliessbar, titel_teile)` — ``knoepfe``: Folge von (Lucide-Name oder Text, Tooltip, Funktion) — stehen vor dem Menü.
+- `rollflaeche(inhalt, *, immer)` — Der Rollbereich in Seitenleisten-Panels: ohne Rahmen, nie seitlich rollend, Rollbalken nach Bedarf — mit ``immer=True`` steht er immer
 
 ### `ui/baukasten/pdf_export.py`
 
@@ -4539,7 +4590,7 @@ Kachel-Auswahl: ein Popup mit Bildchen im Raster und einem „Mehr …“-Fuß (
 - `_symbol(bild, groesse, blass)` — Aus QIcon, QPixmap oder einer Zeichenfunktion ``f(QPainter, QRectF)`` ein Symbol machen; ``blass``: für Graues (nicht möglich).
 - `textkachel(text, pixel)` — Zeichenfunktion für eine Kachel, die nur ein Zeichen oder kurzes Wort zeigt (Symbole, Einheiten).
 - `zeilenkachel(bild, titel, angaben, spalten, bild_breite)` — Zeichenfunktion für eine Listenzeile: links ein Bildchen (Zeichner), daneben der Titel fett und darunter die Angaben,
-- **class `RasterAuswahl`**(QMenu) — Meldet den Schlüssel der gewählten Kachel.
+- **class `RasterAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
   - `__init__(parent, *, titel, spalten, groesse, beschriftet, hoehe_max)` — ``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp.
   - `_rollen_masse()`
   - `kachel(schluessel, beschriftung, bild, *, aktuell, aktiv)` — ``aktiv=False``: die Kachel bleibt sichtbar, aber grau (blass gezeichnet) und nicht wählbar.
@@ -4570,6 +4621,15 @@ Das Fenster „Phonetisches Leitzeichen“ als Baustein: der Text in Teilen (je 
   - `_feld_geaendert(*_)`
   - `_malen(p, rect)`
   - `zeilen()`
+
+### `ui/baukasten/schalter.py`
+
+Chips und an/aus-Schalter der Oberfläche — ein Baustein statt einzelner Stylesheets.
+
+- `chip_stil()` — Auswahl-Chip mit Rahmen; gewählt: Akzentfläche.
+- `chip_gruen_stil()` — Grüner Schalter-Chip (gewählt = ``Farbe.AN``).
+- `schalter_an_stil()` — Die Kapsel „an“ (gefüllt).
+- `schalter_aus_stil()` — Die Kapsel „aus“ (nur Rahmen).
 
 ### `ui/baukasten/schiebe_feld.py`
 
@@ -4739,10 +4799,20 @@ Das Fenster „Text sortieren“ als Baustein (Start ▸ Absatz ▸ Sortieren): 
   - `_optionen()`
   - `werte()`
 
+### `ui/baukasten/spalten.py`
+
+Zweispalter: links Navigation/Blatt/Liste, rechts Inhalt — der eine Baustein für alle zweispaltigen Seiten.
+
+- **class `ZweiSpalter`**(QWidget) — ``links``/``rechts``: beliebige Widgets. ``breit_ab``: Breite, ab der sie nebeneinander stehen (``0`` = immer nebeneinander,
+  - `__init__(links, rechts, *, breit_ab, links_breite, oben, breit_stretch, gestapelt_stretch, raender_breit, raender_gestapelt, abstand, parent)`
+  - `anordnen(breit)` — Setzt Richtung, Reihenfolge, Ränder und Breite neu; bei gleichem Zustand geschieht nichts.
+  - `resizeEvent(e)`
+
 ### `ui/baukasten/speichern_fenster.py`
 
 Das eine Speichern-Fenster: Orte links, Ordnerinhalt rechts, unten Dateiname und Dateityp.
 
+- `stil()` — Stylesheet beim Aufruf formatiert, damit das Thema gilt.
 - `_symbol(name, px)`
 - **class `_DateiModell`**(QFileSystemModel) — Dateimodell mit deutschen Spaltenköpfen (Qt liefert sie sonst englisch).
   - `headerData(section, orientation, role)`
@@ -4891,6 +4961,18 @@ Dropdowns in den Köpfen von „TEXTFÜLLUNG“ und „TEXTKONTUR“ der Textopt
   - `_neu(*a)`
   - `_setze_fuellung(w)`
 
+### `ui/baukasten/texte.py`
+
+Gedämpfte Texte und Trennlinien der Oberfläche — ein Baustein statt einzelner Stylesheets.
+
+- `_stil(klein, zusatz)`
+- `hinweis_label(text, *, umbruch, klein, zusatz)`
+- `hinweis_stil(label, *, klein, zusatz)` — Macht ein vorhandenes Label zum gedämpften Hinweistext (für Labels, die anders gebaut werden, z. B. mit eigener Schrift oder Ausrichtung).
+- `kleintext_label(text)` — Kleine gedämpfte Beschriftung (z. B. „Für wen“), ohne Zeilenumbruch.
+- `trennlinie(*, senkrecht, tief)` — Feine Trennlinie: waagerecht (Standard) oder ``senkrecht``; ``tief`` = die vertiefte Linie des Stils, sonst eine Linie in ``midlight``.
+- `auffrischen(widget)` — Setzt den Stil eines Hinweistexts nach einem Themenwechsel mit der neuen ``Farbe.HINWEIS`` neu.
+- `marke_faerben(w, grund, schrift, rest)` — Farbige Marke (Chip-Label): ``grund``/``schrift`` sind Farben; ist ``grund`` die Akzentfarbe, kommen Fläche und Schrift aus dem Thema
+
 ### `ui/baukasten/texteffekt_dialog.py`
 
 Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung und -kontur“ und „Effekte“ (Schatten, Reflektion, Leuchten, 3D-Format).
@@ -4980,7 +5062,7 @@ Das Fenster „Eingeschlossene Zeichen“ als Baustein: Vorlage (Ohne, Text redu
 
 Auswahl von Voreinstellungen als Popup mit Bildchen in Abschnitten (Schatten: Kein, Außen, Innen, Perspektive; Leuchten; Spiegelung;
 
-- **class `VoreinstellungMenue`**(QMenu)
+- **class `VoreinstellungMenue`**(MenueListe)
   - `__init__(parent, *, keine, kachel)`
   - `_kopf(text)`
   - `_gitter(eintraege, spalten)`
@@ -5023,16 +5105,16 @@ Die Seite „Neu“: leeres Dokument direkt starten oder Standard- und eigene Vo
 
 Werkbank: die Funktionen eines Reiters der Schreibhilfe als große, selbsterklärende Zeilen (Symbol, Name, Hinweis, Tastenkürzel, bei Schaltern „an/aus“).
 
-- `_an()`
 - **class `FunktionsZeile`**(QFrame) — Eine große, anklickbare Zeile; mit Tastatur bedienbar (Tab, Leertaste oder Eingabe) und mit Fokusrahmen.
   - `__init__(f, fenster)`
   - `mouseReleaseEvent(e)`
   - `keyPressEvent(e)`
   - `_los()`
+  - `_in_navigation()`
   - `_beschreibung(an)` — Was ein Bildschirmleser zusätzlich zum Namen hört: Art, Zustand, Hinweis, Kürzel.
   - `aktualisieren()`
 - **class `Werkbank`**(QScrollArea) — Die Zeilen eines Reiters; ``oben`` (optional) ist ein Widget über den Zeilen, etwa ein Hinweis.
-  - `__init__(fenster, reiter, oben, nur)`
+  - `__init__(fenster, reiter, oben, nur, ohne)`
   - `aktualisieren()`
 
 ### `ui/baukasten/winkel_feld.py`
@@ -5058,7 +5140,7 @@ Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Ze
   - `leaveEvent(e)`
   - `mouseReleaseEvent(e)`
   - `paintEvent(e)`
-- **class `ZellenRaster`**(QMenu) — Meldet ``gewaehlt(zeilen, spalten)``. Darunter lassen sich mit ``fuss(...)`` weitere Einträge anhängen.
+- **class `ZellenRaster`**(MenueListe) — Meldet ``gewaehlt(zeilen, spalten)``. Darunter lassen sich mit ``fuss(...)`` weitere Einträge anhängen.
   - `__init__(parent, zeilen, spalten, *, leer_text)`
   - `_beschriften(z, s)`
   - `waehle(zeilen, spalten)`
@@ -5340,11 +5422,12 @@ Dialog zum Anlegen eines Formularfelds (Textfeld, Auswahlliste, Datum, Kontrollk
 Hilfe: Handbuch, Tastenkürzel, Erweiterungen.
 
 - `_browser(parent, titel, breite, hoehe)`
-- **class `_Lesefeld`**(QTextBrowser) — Der Text des Handbuchs in einer ruhigen Spalte: nicht breiter als ~780 px, die Spalte steht in der Mitte.
+- **class `HilfeFenster`**(PanelFaehig, QDialog) — Hilfefenster (Handbuch, Tastenkürzel, Erweiterungen, Über): öffnet mit ``exec()`` in der Seitenleiste.
+- **class `_Lesefeld`**(QTextBrowser) — Der Text des Handbuchs in einer ruhigen Spalte: nicht breiter als ~780 px, die Spalte steht in der Mitte (schmal: kleiner Rand).
   - `resizeEvent(e)`
 - `_handbuch_gestalten(b)` — Gibt dem Markdown-Text die Gestalt der Vorlage: Antiqua mit Luft, Überschriften, Tabellen ohne Gitter, Merkkästen, Tastenchips.
-- `handbuch(parent)` — Das Handbuch: links die Gliederung (Gruppen, Abschnitte), rechts der Text. Er liegt als Markdown in resources/handbuch.md.
-- `_fuss(d, v)` — Wie in der Vorlage: „Abbrechen“ und „Schließen“ rechts unten, beide schließen das Fenster.
+- `handbuch(parent)` — Das Handbuch: oben die Gliederung (Gruppen, Abschnitte), darunter der Text. Er liegt als Markdown in resources/handbuch.md.
+- `_fuss(d, v)` — Knopfzeile unten („Schließen“); in der Seitenleiste bleibt sie angeheftet.
 - `_titel(text)`
 - `_dialog(parent, titel, breite)`
 - `tastenkuerzel(parent)` — „Tastenkombinationen“: je Gruppe eine Überschrift, darunter zwei Kürzel mit Wirkung nebeneinander.
@@ -5365,6 +5448,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `_holen(still)`
   - `_geholt(r)`
   - `_ok()`
+- `_chip()` — Auswahl-Chip (Baustein ``schalter.chip_stil``).
 - **class `ModellListe`**(QWidget) — Die Liste der verbundenen KI-Modelle: hinzufügen, bearbeiten, entfernen (im Fenster „KI-Einstellungen“ und als eigenes Fenster).
   - `__init__(fenster, konfig)`
   - `_fuellen()`
@@ -5482,6 +5566,7 @@ Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, S
 
 Optionen — das Fenster hinter „☰ Menü ▸ Optionen“ (F9): sechs Seiten in einer flachen Liste, oben eine Suche.
 
+- `stil()` — Stylesheet beim Aufruf formatiert, damit das Thema gilt.
 - **class `OptionenAnsicht`**(LesenSeiten, AnsichtSeiten, DateiSeiten, BefehleSeiten, LunivoSeiten, NameKiSeiten, QWidget) — Alle Optionen als Ansicht (Liste und Suche links, Seite rechts) — sie steht in der Datei-Ansicht („☰ Menü ▸ Erweiterte
   - `__init__(fenster, seite)`
   - `eventFilter(obj, ev)`
@@ -5721,6 +5806,7 @@ Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter T
 
 „Welche Hilfe wann“: die Stufen der Schreibhilfe von der Wellenlinie bis zur KI, die Etiketten der Funde und ein Weg durch einen Brief.
 
+- `_etiketten()`
 - **class `_Umbruch`**(QLabel) — Text, der umbricht und dabei immer die Höhe bekommt, die er braucht (verschachtelte Layouts reichen „Höhe bei Breite“ nicht sicher weiter).
   - `resizeEvent(ev)`
 - `_text(text)`
@@ -5797,7 +5883,7 @@ Gemeinsame Werte der Bausteine.
   - `aktion(text, knopf, aktion, name)` — Zeile mit Text und Knopf in der Gruppe, die zuletzt begonnen wurde.
   - `haken_aus(f, text, grund, an)` — Ein Haken, den es in der ersten Fassung gab und der hier noch nichts bewirkt: grau, mit Grund.
   - `abschluss()`
-- **class `_Karte`**(QFormLayout) — Zeilen einer Gruppe. Haken stehen wie in der ersten Fassung zu zweit nebeneinander, mit Linie zwischen den Zeilen;
+- **class `_Karte`**(FormularGitter) — Zeilen einer Gruppe (ein ``FormularGitter``). Haken stehen wie in der ersten Fassung zu zweit nebeneinander, mit Linie zwischen den Zeilen;
   - `__init__(eltern)`
   - `addRow(*args)`
   - `aktion(text, knopf, aktion, name)` — Zeile aus Text und darunter einem Knopf („Den Text hören“ / „Stimme und Tempo …“).
@@ -6233,11 +6319,16 @@ Punkte einer Form bearbeiten mit der Maus (Zeichentools ▸ Form bearbeiten ▸ 
 
 Kopf- und Fußzeile direkt auf der Seite bearbeiten (Einfügen ▸ Kopf- und Fußzeile, Doppelklick in den Seitenrand).
 
+- `_stil(vorlage)` — Stylesheet zur Laufzeit aus den Farbe-Tokens bilden (Farbe.* setzt apply_theme erst nach dem Import).
+- `leiste_stil()`
+- `absatz_stil()`
+- `etikett_stil()`
+- `panel_stil()`
 - `_symbol(art)` — Aktionssymbol aus dem zentralen Lucide-Katalog.
 - **class `_Linie`**(QWidget) — Gestrichelte graue Linie über die ganze Blattbreite, an der der Kopf-/Fußbereich endet.
   - `__init__(eltern)`
   - `paintEvent(e)`
-- **class `_EinfuegenPanel`**(QMenu) — Aufklappfeld „Seitenzahl einfügen“: Format, Position (fünf Kacheln mit Seitenbildchen), Übernehmen für, OK.
+- **class `_EinfuegenPanel`**(MenueListe) — Aufklappfeld „Seitenzahl einfügen“: Format, Position (fünf Kacheln mit Seitenbildchen), Übernehmen für, OK.
   - `__init__(eltern)`
   - `ort_setzen(ort)`
   - `_ok()`
@@ -6348,6 +6439,7 @@ Die linke Seitenleiste: Suchen und ersetzen, Kommentare, Überschriften, Änderu
   - `aktualisieren()`
   - `anzahl(key)` — Wie viele Einträge ein Feld gerade zeigt (für Tests und die Zähler).
   - `_bau_suche()`
+  - `zusatz_ausfuehren(d)` — Ein Zusatzfenster (Stimme und Tempo …) in dieser Leiste zeigen: dieselbe Schnittstelle wie die rechte Seitenleiste.
   - `unterfenster(d)` — Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu.
   - `suche_zeigen(text, reiter, element)` — Das Feld öffnen, die Markierung (oder ``text``) einsetzen und in das Suchfeld springen; ``reiter``: Suchen, Ersetzen oder Gehe zu.
   - `_zaehlen()`
@@ -6456,6 +6548,7 @@ Zwei-Seiten-Ansicht: die Seiten des Dokuments nebeneinander, so wie sie gedruckt
 
 Bedienelemente direkt an der Tabelle im Dokument (wie in WPS): Verschiebegriff oben links, „+“ rechts und unten, Aufziehgriff unten rechts
 
+- `griff_stil()` — Stil der Griffe aus den Farbe-Tokens (zur Laufzeit gelesen, nichts beim Import eingefroren).
 - `dunkel(symbol, px)` — Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß).
 - **class `_Vorschau`**(QWidget) — Gestrichelter Rahmen (Aufziehen) oder Linie (Rand) in der Zielgeometrie; durchsichtig für die Maus.
   - `__init__(vp)`
@@ -6903,7 +6996,7 @@ Reiter „Schreibhilfe“: Lesen, Prüfen, Beim Schreiben, Vorlesen, Sprache, Ba
 
 - `_knoepfe(gruppe)` — Die Band-Knöpfe einer Gruppe: erst die kleinen, dann die großen.
 - `_ki_knoepfe()` — KI: die vier Textbefehle (entwerfen, umformulieren, zusammenfassen, Text in Bild) stehen in einem Menü „Text mit KI“; Chat und Aktionen
-- `_pruefen_menue(e)` — Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen und die Sprache des Dokuments.
+- `_pruefen_menue(e)` — Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen.
 - `bauen(register)`
 
 ### `ui/ribbon/tabs/baustein.py`
@@ -6981,6 +7074,7 @@ Rechte Seitenleiste: Schreibhilfe und KI-Chat.
 
 Die Schreibhilfe-Seitenleiste: Prüfen, Wellen/Vorhersage/AutoKorr, Funde, „Für wen?“, KI-Knöpfe.
 
+- `werk_reiter_stil()` — Stylesheet beim Aufruf formatiert, damit das Thema gilt.
 - **class `SchreibhilfePanel`**(QWidget)
   - `sizeHint()`
   - `__init__(assistent, parent)`
@@ -7060,7 +7154,9 @@ KI-Chat in der Seitenleiste (Bereich „KI“): mehrere Runden, der Dokumenttext
 Bereich „Schreibhilfe“ der Seitenleiste: die Karten für Funde, Vorschläge und Hinweise.
 
 - `kurz(text)` — Lange gleiche Zeichenfolgen (viele Leerzeichen hintereinander) kurz zeigen: „␣×34“ — sonst wird die Karte breiter als die Seitenleiste.
-- `marke(art)`
+- `farbe_je_art()`
+- `_marken()`
+- `marke(art, quelle)`
 - **class `FundKarte`**(QFrame)
   - `__init__(fund, assistent, parent, dienst)`
   - `_vorschlag_holen()`
@@ -7152,7 +7248,7 @@ Das Rechtsklick-Menü des Textes, deutsch und in der Reihenfolge der Vorlage: Zw
 
 - `_symbole()`
 - `menue_bauen(editor, fenster)` — Das Menü für den Editor ``editor`` des Fensters ``fenster``; der Aufrufer zeigt es und löscht es danach.
-- `_mit_symbol(aktion, name)`
+- `_symbol(name)`
 - `_tabellenmenue(m, punkt, b, editor, lesen, auswahl)` — Das Menü in einer Tabelle (Reihenfolge der Vorlage): Zwischenablage · Zeilen/Spalten/Zellen · Rahmen, Anpassen, Ausrichtung, Eigenschaften.
 
 ### `ui/widgets/lese_ende_knopf.py`

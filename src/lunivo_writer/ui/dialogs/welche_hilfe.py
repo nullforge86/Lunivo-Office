@@ -47,7 +47,8 @@ STUFEN = [
 def _etiketten() -> list:
     return [("SICHER FALSCH", Farbe.WARNUNG, Farbe.AUF_AKZENT, "Da ist kein Zweifel.", "blind übernehmen"),
                 ("KOMMT DRAUF AN", Farbe.AKZENT, Farbe.AUF_AKZENT, "Hängt vom Satz ab.", "kurz hinschauen"),
-                ("ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT, "Nur ein Anstoß, keine Regel.", "oft übergehen")]
+                ("ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT, "Nur ein Anstoß, keine Regel.", "oft übergehen"),
+                ("KI-VORSCHLAG", Farbe.AKZENT_HELL, Farbe.TINTE_DUNKEL, "Die KI hat einen Satz umgeschrieben.", "prüfen, dann annehmen")]
 WEG = ["Schreiben, ohne auf die Wellenlinien zu achten.", "F7 drücken und „Alles Eindeutige übernehmen“ wählen.", "Die übrigen Karten einzeln durchgehen.",
        "F4 — einmal vorlesen lassen. Da fällt auf, was keine Regel findet.", "Nur wenn der Text sitzen muss: F8."]
 
@@ -83,7 +84,7 @@ class HilfeWannDialog(PanelFaehig, QDialog):
             kv.addWidget(self._zeile(*zeile, trenner=i > 0))
         h.addWidget(karte)
         h.addWidget(abschnittstitel("Wie sicher ein Fund ist"))
-        h.addWidget(_text("Auch innerhalb von F7 gibt es Stufen. Jede Karte in der Seitenleiste trägt eins von drei Etiketten."))
+        h.addWidget(_text("Auch innerhalb von F7 gibt es Stufen. Jede Karte in der Seitenleiste trägt eins von vier Etiketten."))
         karte2 = QFrame(); karte2.setFrameShape(QFrame.StyledPanel); k2 = QVBoxLayout(karte2); k2.setContentsMargins(*RAND_KEIN); k2.setSpacing(ABSTAND_KEIN)
         chips = []
         for i, (name, farbe, schrift, satz, rechts) in enumerate(_etiketten()):
