@@ -12,16 +12,11 @@ from lunivo_writer.ui.schreibhilfe_katalog import Funktion, fuer_reiter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-ZEILE = (('QFrame#funktionsZeile { border: 1px solid palette(midlight); border-radius: 8px; background: transparent; }QFrame#funktionsZeile:hover { background: palette(alternate-base); border-color: palette(mid); }QFrame#funktionsZeile:focus { border: 2px solid ' + Farbe.AKZENT + '; }'))
-CHIP_B, CHIP_H = 52, 26                      # Schalter-Chip „an/aus“: feste, großzügige Größe (Kapsel, Radius = halbe Höhe)
-
-
-def _an() -> str:
-    return "background: %s; color: %s; border: 1px solid %s; border-radius: %dpx; font-weight: bold;" % (Farbe.AN, Farbe.AN_SCHRIFT, Farbe.AN, CHIP_H // 2)
-
-
-
-AUS = "background: transparent; color: palette(mid); border: 1px solid palette(mid); border-radius: %dpx;" % (CHIP_H // 2)
+from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.schalter import CHIP_B, CHIP_H, schalter_an_stil, schalter_aus_stil
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, BREITE_FUNKTIONSSYMBOL, ICON_KLEIN, ICON_MITTEL, RAND_FUNKTIONSZEILE, RAND_KEIN
+_an, AUS = schalter_an_stil, schalter_aus_stil()   # alte Namen bleiben
 
 
 class FunktionsZeile(QFrame):
@@ -32,24 +27,24 @@ class FunktionsZeile(QFrame):
         super().__init__()
         self.setObjectName("funktionsZeile")
         self.f, self.fenster = f, fenster
-        self.setStyleSheet(ZEILE)
+        als_karte(self, "zeile")
         self.setMinimumHeight(0)
         self.setCursor(Qt.PointingHandCursor)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAccessibleName(f.name)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        h = QHBoxLayout(self); h.setContentsMargins(8, 3, 8, 3); h.setSpacing(8)
-        sym = QLabel(); sym.setFixedWidth(22); sym.setAttribute(Qt.WA_TransparentForMouseEvents)
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_FUNKTIONSZEILE); h.setSpacing(ABSTAND_MITTEL)
+        sym = QLabel(); sym.setFixedWidth(BREITE_FUNKTIONSSYMBOL); sym.setAttribute(Qt.WA_TransparentForMouseEvents)
         if icons.hat(f.symbol):
-            sym.setPixmap(icons.icon(f.symbol, 22).pixmap(22, 22))
+            sym.setPixmap(icons.icon(f.symbol, ICON_MITTEL).pixmap(ICON_MITTEL, ICON_MITTEL))
             sym.setProperty("symbolName", f.symbol); sym.setProperty("symbolPx", 22)       # Farbwechsel: Symbol neu beziehen (icons.alle_neu)
         h.addWidget(sym)
         mitte = QVBoxLayout(); mitte.setSpacing(0); mitte.addStretch(1)                 # überschüssige Höhe (gleiche Zeileneinheit) verteilt sich oben und unten, nichts wird gestreckt
         self.titel = QLabel(f.name); ft = self.titel.font(); ft.setBold(True); self.titel.setFont(ft)
-        self.untertitel = QLabel(f.hinweis); self.untertitel.setStyleSheet("color: palette(mid); font-size: 9pt;"); self.untertitel.setWordWrap(True)
+        self.untertitel = hinweis_label(f.hinweis, klein=True)
         for w in (self.titel, self.untertitel):
             w.setAttribute(Qt.WA_TransparentForMouseEvents)
-        kopf = QHBoxLayout(); kopf.setSpacing(8); kopf.addWidget(self.titel)                 # Titelzeile: nur der Name, kein Tastenkürzel im Knopf (einheitlich; das Kürzel steht in Kurzinfo und Kürzelübersicht)
+        kopf = QHBoxLayout(); kopf.setSpacing(ABSTAND_MITTEL); kopf.addWidget(self.titel)                 # Titelzeile: nur der Name, kein Tastenkürzel im Knopf (einheitlich; das Kürzel steht in Kurzinfo und Kürzelübersicht)
         kopf.addStretch(1)
         mitte.addLayout(kopf)
         if f.hinweis:
@@ -61,7 +56,7 @@ class FunktionsZeile(QFrame):
         if f.art == "schalter":
             h.addWidget(self.zustand, 0, Qt.AlignVCenter)                  # Chip so hoch wie sein Text, nicht auf die Kartenhöhe gezogen
         elif f.art == "menue":
-            pf = QLabel(); pf.setPixmap(icons.icon("chevron-down", 14).pixmap(14, 14)); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf, 0, Qt.AlignVCenter)
+            pf = QLabel(); pf.setPixmap(icons.icon("chevron-down", ICON_KLEIN).pixmap(ICON_KLEIN, ICON_KLEIN)); pf.setAttribute(Qt.WA_TransparentForMouseEvents); h.addWidget(pf, 0, Qt.AlignVCenter)
         self.setToolTip(f.hinweis or f.name)
         self.clicked.connect(self._los)
         self.aktualisieren()
@@ -84,8 +79,21 @@ class FunktionsZeile(QFrame):
                 m.popup(self.mapToGlobal(QPoint(0, self.height())))
                 self._menue = m
             return
-        b.tun(self.f.tun, self)
+        fenster = self.fenster
+        fenster.zusatz_seite = "links" if self._in_navigation() else "rechts"      # ein Fenster öffnet sich in der Leiste, in der man geklickt hat
+        try:
+            b.tun(self.f.tun, self)
+        finally:
+            fenster.zusatz_seite = "rechts"
         self.aktualisieren()
+
+    def _in_navigation(self) -> bool:
+        w = self.parentWidget()
+        while w is not None:
+            if type(w).__name__ == "NavigationPanel":
+                return True
+            w = w.parentWidget()
+        return False
 
     def _beschreibung(self, an: bool | None = None) -> str:
         """Was ein Bildschirmleser zusätzlich zum Namen hört: Art, Zustand, Hinweis, Kürzel."""
@@ -95,25 +103,27 @@ class FunktionsZeile(QFrame):
     def aktualisieren(self) -> None:
         if self.f.art == "schalter":
             an = bool(self.fenster.befehle.zustand(self.f.tun))
-            self.zustand.setText("an" if an else "aus"); self.zustand.setStyleSheet(_an() if an else AUS)
+            self.zustand.setText("an" if an else "aus"); self.zustand.setStyleSheet(schalter_an_stil() if an else schalter_aus_stil())
             self.setAccessibleDescription(self._beschreibung(an))
         else:
             self.setAccessibleDescription(self._beschreibung())
-        if self.f.tun == "w.kiUebersetzen":
+        if self.f.tun == "w.kiUebersetzenErsetzen":
             self.untertitel.setText("Nach " + self.fenster.ki.konfig["sprache"])
 
 
 class Werkbank(QScrollArea):
     """Die Zeilen eines Reiters; ``oben`` (optional) ist ein Widget über den Zeilen, etwa ein Hinweis."""
 
-    def __init__(self, fenster, reiter: str, oben: QWidget | None = None, nur: set | None = None):
+    def __init__(self, fenster, reiter: str, oben: QWidget | None = None, nur: set | None = None, ohne: set | None = None):
         super().__init__()
         self.setWidgetResizable(True); self.setFrameShape(QFrame.NoFrame)
+        self.setProperty("tafel", True)                                  # Fläche im Thema (Mint)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        host = QWidget(); v = QVBoxLayout(host); v.setContentsMargins(8, 6, 8, 6); v.setSpacing(4)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)           # der Rollbalken steht auf JEDER Seite (links und rechts): alle Karten gleich breit, gleiche Abstände
+        host = QWidget(); v = QVBoxLayout(host); v.setContentsMargins(0, 0, ABSTAND_MITTEL, 0); v.setSpacing(ABSTAND_KLEIN)      # rechts Abstand zum Rollbalken
         if oben is not None:
             v.addWidget(oben)
-        self.zeilen = [FunktionsZeile(f, fenster) for f in fuer_reiter(reiter) if nur is None or f.tun in nur]
+        self.zeilen = [FunktionsZeile(f, fenster) for f in fuer_reiter(reiter) if (nur is None or f.tun in nur) and (ohne is None or f.tun not in ohne)]
         raster = KartenRaster(abstand=6, spalten_fest=1)              # Raster-Baustein, eine Spalte untereinander; alle Karten gleich groß (gleiche Zeileneinheit)
         for z in self.zeilen:
             raster.addWidget(z)

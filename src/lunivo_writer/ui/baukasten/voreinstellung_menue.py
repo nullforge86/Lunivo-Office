@@ -12,17 +12,29 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QGridLayout, QLabel, QMenu, QToolButton, QVBoxLayout, QWidget, QWidgetAction
+from PySide6.QtWidgets import QLabel, QMenu, QToolButton, QVBoxLayout, QWidget, QWidgetAction
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    ABSTAND_ZEILE,
+    GROESSE_VORGABEMENUE_KACHEL,
+    GROESSE_VORGABEMENUE_RAND,
+    PADDING_VORGABEMENUE_KOPF,
+    RADIUS_MARKE,
+    RAND_KEIN,
+    RAND_PANEL_KLEIN,
+)
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 
-class VoreinstellungMenue(QMenu):
+class VoreinstellungMenue(MenueListe):
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, keine: tuple[str, QIcon | None] | None = ("Keine", None), kachel: QSize = QSize(52, 40)):
+    def __init__(self, parent=None, *, keine: tuple[str, QIcon | None] | None = ("Keine", None), kachel: QSize = QSize(*GROESSE_VORGABEMENUE_KACHEL)):
         super().__init__(parent)
         self._kachel = kachel
-        self._koerper = QWidget(); self._v = QVBoxLayout(self._koerper); self._v.setContentsMargins(6, 6, 6, 6); self._v.setSpacing(4)
-        a = QWidgetAction(self); a.setDefaultWidget(self._koerper); self.addAction(a)
+        self._koerper = QWidget(); self._v = QVBoxLayout(self._koerper); self._v.setContentsMargins(*RAND_PANEL_KLEIN); self._v.setSpacing(ABSTAND_KLEIN)
+        self.widget(self._koerper)
         self.aktuell: str | None = None
         if keine is not None:
             self._kopf(keine[0])
@@ -30,18 +42,19 @@ class VoreinstellungMenue(QMenu):
                 self._gitter([("", keine[1], keine[0])], 1)
 
     def _kopf(self, text: str) -> None:
-        l = QLabel(text); l.setStyleSheet("font-weight: 600; padding: 3px 2px; color: palette(text);")
+        l = QLabel(text); l.setStyleSheet("font-weight: 600; padding: " f"{PADDING_VORGABEMENUE_KOPF}" "; color: palette(text);")
         self._v.addWidget(l)
 
     def _gitter(self, eintraege: list[tuple[str, QIcon, str]], spalten: int) -> None:
-        w = QWidget(); g = QGridLayout(w); g.setContentsMargins(0, 0, 0, 0); g.setSpacing(3)
+        w = QWidget(); kacheln = []
         for i, (schl, icon, tipp) in enumerate(eintraege):
             k = QToolButton(); k.setAutoRaise(True); k.setIcon(icon); k.setIconSize(self._kachel); k.setToolTip(tipp)
-            k.setFixedSize(self._kachel + QSize(10, 8)); k.setCheckable(True); k.setChecked(schl == self.aktuell)
-            k.setStyleSheet("QToolButton { border: 1px solid transparent; border-radius: 3px; }"
+            k.setFixedSize(self._kachel + QSize(*GROESSE_VORGABEMENUE_RAND)); k.setCheckable(True); k.setChecked(schl == self.aktuell)
+            k.setStyleSheet("QToolButton { border: 1px solid transparent; border-radius: " f"{RADIUS_MARKE}" "px; }"
                             "QToolButton:hover { border-color: palette(highlight); } QToolButton:checked { border-color: palette(highlight); background: palette(midlight); }")
             k.clicked.connect(lambda _=False, s=schl: self._waehle(s))
-            g.addWidget(k, i // spalten, i % spalten)
+            kacheln.append(k)
+        kachel_gitter(kacheln, spalten, eltern=w, abstand=ABSTAND_ZEILE)
         self._v.addWidget(w)
 
     def abschnitt(self, titel: str, eintraege: list[tuple[str, QIcon, str]], spalten: int = 3) -> None:

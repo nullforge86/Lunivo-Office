@@ -28,7 +28,7 @@ def _stift_cursor() -> QCursor:
     from lunivo_writer.ui.widgets import icons
     px = 32
     hell, dunkel = (icons._pixmap("stift", f, px).scaled(px, px, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-                    for f in ("#ffffff", "#111111"))
+                    for f in (Farbe.WEISS, Farbe.SCHWARZ))
     if hell.isNull():
         return QCursor(Qt.CrossCursor)
     bild = QImage(px + 8, px + 8, QImage.Format_ARGB32_Premultiplied)

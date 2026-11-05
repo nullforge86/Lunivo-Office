@@ -7,6 +7,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QVBoxLayout, QWidget
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui import lesestufen as LS
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
@@ -28,7 +29,7 @@ class LesehilfeDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         inhalt = QWidget(); form = FormularGitter(inhalt)
         er = QLabel("Erleichtert das Lesen am Bildschirm. Das Dokument bleibt, wie es ist — auf dem Papier steht nachher nichts davon.")
-        er.setWordWrap(True); er.setStyleSheet("color: palette(mid);")
+        er.setWordWrap(True); hinweis_stil(er)
         form.breit(er)
         self.felder: dict[str, QComboBox] = {}
 

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld, einheit
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_TABSTOPP, HOEHE_TABSTOPP_LISTE_MAX, HOEHE_WAHLKARTE, RAND_KEIN
 
 ARTEN = (("links", "Links"), ("mitte", "Zentriert"), ("rechts", "Rechts"), ("dezimal", "Dezimal"))
 
@@ -72,11 +73,11 @@ class TabstoppDialog(PanelFaehig, QDialog):
         """``standard_mm``: Standardabstand der Tabstopps des Dokuments (``None``: das Feld bleibt weg)."""
         super().__init__(parent)
         self.setWindowTitle("Tabstopps")
-        self.resize(550, 340)
+        self.resize(*GROESSE_FENSTER_TABSTOPP)
         self._stopps: list[tuple[float, str, str]] = sorted(((round(m, 1), a, f) for m, a, f in stopps), key=lambda x: x[0])
         self._geloescht: list[float] = []
         v = QVBoxLayout(self)
-        kopf = FormularGitter(); kopf.setContentsMargins(0, 0, 0, 0)
+        kopf = FormularGitter(); kopf.setContentsMargins(*RAND_KEIN)
         self.pos = EinheitFeld(0.0, 0.0, 1000.0, ("mm", "cm", "in", "pt"), leer_bei_null=True)
         self.standard = None
         felder = [("Tabstoppposition:", self.pos)]
@@ -84,19 +85,19 @@ class TabstoppDialog(PanelFaehig, QDialog):
             self.standard = EinheitFeld(standard_mm, 0.5, 200.0, ("Zeichen", "mm", "cm", "in", "pt"), "Zeichen")
             felder.append(("Standardtabstopps:", self.standard))
         kopf.reihe(*felder, gewichte=(3, 2))
-        self.liste = QListWidget(); self.liste.setMinimumHeight(48); self.liste.setMaximumHeight(72)
+        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_WAHLKARTE); self.liste.setMaximumHeight(HOEHE_TABSTOPP_LISTE_MAX)
         kopf.breit(self.liste)
         self.geloescht_text = QLabel(); self.geloescht_text.setWordWrap(True); self.geloescht_text.setAlignment(Qt.AlignTop)
         kopf.breit(self.geloescht_text)
         kopf.breit(abschnittstitel("Ausrichtung"))
-        bh = FlussLayout(14); bh.setContentsMargins(0, 0, 0, 0)
+        bh = FlussLayout(14); bh.setContentsMargins(*RAND_KEIN)
         self.art = QButtonGroup(self)
         for i, k in enumerate(("dezimal", "links", "mitte", "rechts")):
             r = QRadioButton(dict(ARTEN)[k]); self.art.addButton(r, [a for a, _n in ARTEN].index(k)); bh.addWidget(r)
         self.art.button(0).setChecked(True)
         kopf.breit(bh)
         kopf.breit(abschnittstitel("Füllzeichen"))
-        fg = FlussLayout(14); fg.setContentsMargins(0, 0, 0, 0)
+        fg = FlussLayout(14); fg.setContentsMargins(*RAND_KEIN)
         from lunivo_writer.editor.tabfuell import FUELL
         self.fuell = QButtonGroup(self)
         self._fuell_schluessel = list(FUELL)

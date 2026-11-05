@@ -16,6 +16,10 @@ from lunivo_writer.editor.zusatz import B_BILDANKER
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten import schnellleiste_zustand as SZ
+from lunivo_writer.ui.baukasten.mass import ICON_FREIBILD_BEDIENUNG
+
+# Sinnbilder des Formleisten-Schwebeknopfs und der Anpassungsraute: bewusst fest (Gruppe C)
+SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR = "#f2c200", "#ffe45c", "#1c3faa"
 GRIFF = 9.0                                                  # Seitenlänge eines Griffs in Bildschirmpunkten
 GRIFFE = {"nw": (0, 0), "n": (0.5, 0), "ne": (1, 0), "e": (1, 0.5), "se": (1, 1), "s": (0.5, 1), "sw": (0, 1), "w": (0, 0.5)}
 ROT_ABSTAND = 24.0                                           # Drehgriff: so weit über der Oberkante des Rahmens
@@ -192,11 +196,11 @@ class FreieBilderMixin:
                 p.drawRoundedRect(k, 3, 3); p.setPen(QPen(QColor(Farbe.BLAU), 1.3)); p.setBrush(Qt.NoBrush)
                 p.drawRect(QRectF(k.left() + 5, k.top() + 4, 10, 12)); p.drawLine(QPointF(k.left() + 7, k.top() + 8), QPointF(k.left() + 13, k.top() + 8))
                 p.drawLine(QPointF(k.left() + 7, k.top() + 11), QPointF(k.left() + 13, k.top() + 11))
-                p.setPen(QPen(QColor("#495057"), 1.3)); c = k.center().x() + 8
+                p.setPen(QPen(QColor(Farbe.TINTE), 1.3)); c = k.center().x() + 8
                 p.drawLine(QPointF(c - 3, k.center().y() - 1), QPointF(c, k.center().y() + 2)); p.drawLine(QPointF(c, k.center().y() + 2), QPointF(c + 3, k.center().y() - 1))
                 continue
             if name == "minus":
-                p.drawEllipse(k); p.setPen(QPen(QColor("#495057"), 1.6))
+                p.drawEllipse(k); p.setPen(QPen(QColor(Farbe.TINTE), 1.6))
                 p.drawLine(int(k.left() + 5), int(k.center().y()), int(k.right() - 5), int(k.center().y()))
                 if not offen:
                     p.drawLine(int(k.center().x()), int(k.top() + 5), int(k.center().x()), int(k.bottom() - 5))
@@ -211,9 +215,9 @@ class FreieBilderMixin:
                 p.drawPixmap(inner.toRect(), self._frei_dunkel("pinsel"))
             elif name == "fuell":
                 p.drawPixmap(inner.adjusted(0, -2, 0, -3).toRect(), self._frei_dunkel("farbe"))
-                p.fillRect(QRectF(inner.left(), inner.bottom() - 2, inner.width(), 3), QColor("#f2c200"))
+                p.fillRect(QRectF(inner.left(), inner.bottom() - 2, inner.width(), 3), QColor(SINNBILD_GELB))
             else:                                                  # Kontur: ein Rahmen
-                p.setPen(QPen(QColor("#1c3faa"), 2)); p.setBrush(Qt.NoBrush); p.drawRoundedRect(inner.adjusted(1, 1, -1, -1), 2, 2)
+                p.setPen(QPen(QColor(SINNBILD_KONTUR), 2)); p.setBrush(Qt.NoBrush); p.drawRoundedRect(inner.adjusted(1, 1, -1, -1), 2, 2)
         p.restore()
         p.save()
         pen = QPen(QColor(Farbe.AUSWAHL), 1.5, Qt.DashLine)
@@ -244,14 +248,17 @@ class FreieBilderMixin:
         for name in GRIFFE:
             c = self._frei_griff_mitte(r, name)
             p.drawEllipse(c, GRIFF / 2, GRIFF / 2)
-        rc = self._frei_griff_mitte(r, "rot")                     # der Drehgriff über der Mitte der Oberkante
-        p.setPen(QPen(QColor(Farbe.AUSWAHL), 1)); p.drawLine(QPointF(rc.x(), r.top()), QPointF(rc.x(), rc.y() + GRIFF / 2))
-        p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(rc, GRIFF / 2 + 1, GRIFF / 2 + 1)
-        p.setPen(QPen(QColor(Farbe.AUSWAHL), 1.4)); p.setBrush(Qt.NoBrush)
-        p.drawArc(QRectF(rc.x() - 2.5, rc.y() - 2.5, 5, 5), 40 * 16, 280 * 16)
+        rc = self._frei_griff_mitte(r, "rot")                     # der Drehgriff über der Mitte der Oberkante (nicht beim Zeichenbereich, wie in der Vorlage)
+        if a is not None and a.get("art") == "zeichenbereich":
+            rc = None
+        if rc is not None:
+            p.setPen(QPen(QColor(Farbe.AUSWAHL), 1)); p.drawLine(QPointF(rc.x(), r.top()), QPointF(rc.x(), rc.y() + GRIFF / 2))
+            p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(rc, GRIFF / 2 + 1, GRIFF / 2 + 1)
+            p.setPen(QPen(QColor(Farbe.AUSWAHL), 1.4)); p.setBrush(Qt.NoBrush)
+            p.drawArc(QRectF(rc.x() - 2.5, rc.y() - 2.5, 5, 5), 40 * 16, 280 * 16)
         for c in self._frei_adj_lagen(r, a).values():             # Anpassungsgriff der Form: eine gelbe Raute
             raute = QPolygonF([QPointF(c.x(), c.y() - 6), QPointF(c.x() + 6, c.y()), QPointF(c.x(), c.y() + 6), QPointF(c.x() - 6, c.y())])
-            p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1)); p.setBrush(QColor("#ffe45c")); p.drawPolygon(raute)
+            p.setPen(QPen(QColor(Farbe.GRIFF_RAND), 1)); p.setBrush(QColor(SINNBILD_GELB_HELL)); p.drawPolygon(raute)
         p.restore()
         if a is not None:
             self._frei_teile_zeichnen(p, r, a)
@@ -358,7 +365,7 @@ class FreieBilderMixin:
     def _frei_dunkel(name: str):
         """Das Symbol dunkel gefärbt: die Knöpfe am Bild sind immer weiß, auch im dunklen Design (dort wären die Symbole sonst hell auf weiß)."""
         from lunivo_writer.ui.widgets import icons
-        pm = icons.icon(name, 20).pixmap(20, 20)
+        pm = icons.icon(name, ICON_FREIBILD_BEDIENUNG).pixmap(ICON_FREIBILD_BEDIENUNG, ICON_FREIBILD_BEDIENUNG)
         p = QPainter(pm); p.setCompositionMode(QPainter.CompositionMode_SourceIn); p.fillRect(pm.rect(), QColor(Farbe.TINTE)); p.end()
         return pm
 
@@ -378,7 +385,7 @@ class FreieBilderMixin:
                 for name, c in self._frei_adj_lagen(r, a).items():
                     if abs(pos.x() - c.x()) <= GRIFF and abs(pos.y() - c.y()) <= GRIFF:
                         return name, (key, a, r, hinten, n)
-                for name in (*GRIFFE, "rot"):
+                for name in (*GRIFFE, *(() if a.get("art") == "zeichenbereich" else ("rot",))):
                     c = self._frei_griff_mitte(r, name)
                     if abs(pos.x() - c.x()) <= GRIFF and abs(pos.y() - c.y()) <= GRIFF:
                         return name, (key, a, r, hinten, n)
@@ -460,6 +467,7 @@ class FreieBilderMixin:
             if self._frei_zug is not None and e.buttons() & Qt.LeftButton:
                 self._frei_ziehen(e)
                 return True
+            ueber_knopf = False
             if self._frei_sel is not None:
                 for key, a, r, hinten, n in self._frei_treffer:
                     if key == self._frei_sel:
@@ -467,9 +475,12 @@ class FreieBilderMixin:
                             if k.contains(pos) and name in self.KNOPF_TIPPS:
                                 from PySide6.QtWidgets import QToolTip
                                 QToolTip.showText(e.globalPosition().toPoint(), self.KNOPF_TIPPS[name], self.viewport(), k.toRect())
+                                ueber_knopf = True
             griff, treffer = self._frei_griff_bei(pos)
             self._frei_teil_tipp(e, pos, griff)
-            if griff:
+            if ueber_knopf:
+                self.viewport().setCursor(Qt.PointingHandCursor); self._frei_cursor_gesetzt = True      # Knopf der Schnellleiste (Zahnrad usw.): Hand statt Textcursor
+            elif griff:
                 self.viewport().setCursor(CURSOR[griff]); self._frei_cursor_gesetzt = True
             elif treffer is not None or self._frei_bild_bei(pos, not self._frei_text_bei(pos)) is not None:
                 self.viewport().setCursor(Qt.SizeAllCursor); self._frei_cursor_gesetzt = True      # das Bild lässt sich anfassen
@@ -672,7 +683,7 @@ class FreieBilderMixin:
         w.setText(text if (text is not None and ersetzt) else bisher + (text or ""))
         w.setAlignment(Qt.AlignCenter)
         f = w.font(); f.setPixelSize(max(8, int(kn.height() * 0.3))); w.setFont(f)
-        w.setStyleSheet("QLineEdit { background: white; color: #1f1f1f; border: 1px solid #1c7ed6; }")
+        w.setStyleSheet(f"QLineEdit {{ background: {Farbe.PAPIER}; color: {Farbe.SYMBOL}; border: 1px solid palette(highlight); }}")
         w.setGeometry(kn.toRect())
         self.__dict__["_sa_edit"] = (w, ident)
 
@@ -743,10 +754,10 @@ class FreieBilderMixin:
 
     def _frei_anker_menue(self, pos) -> None:
         """Menü des Absatz-Symbols links vom Rahmen: Absatzformat zurücksetzen, Symbol ausblenden."""
-        from PySide6.QtWidgets import QMenu
-        m = QMenu(self)
-        m.addAction("Absatzformat zurücksetzen", self._frei_absatz_zuruecksetzen)
-        m.addAction("Symbol vom Absatz-Layout ausblenden", self._frei_anker_ausblenden)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe(self)
+        m.eintrag("Absatzformat zurücksetzen", self._frei_absatz_zuruecksetzen)
+        m.eintrag("Symbol vom Absatz-Layout ausblenden", self._frei_anker_ausblenden)
         m.popup(pos); self._frei_menue = m
 
     def _frei_anker_ausblenden(self) -> None:

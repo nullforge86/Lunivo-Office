@@ -26,6 +26,7 @@ from lunivo_writer.ui.hauptfenster.bearbeiten import BearbeitenBaustein
 from lunivo_writer.ui.hauptfenster.oberflaeche import OberflaecheBaustein
 from lunivo_writer.ui.hauptfenster.backstage_steuerung import BackstageBaustein
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import ICON_NORMAL, ICON_TAB_GEAENDERT, RAND_KEIN
 MARGIN_PRESETS = {
     "Normal (2,5 cm)": (25, 25, 25, 25),
     "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),
@@ -88,13 +89,13 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         central = QWidget()
         from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
         lay = QVBoxLayout(central)
-        lay.setContentsMargins(0, 0, 0, 0); lay.setSpacing(0)
+        lay.setContentsMargins(*RAND_KEIN); lay.setSpacing(0)
         lay.addWidget(self.docs.leiste)
         self.band_lay = lay
         lay.addWidget(self.band)
         mitte = QHBoxLayout(); mitte.setSpacing(0)
         self.arbeit = QWidget()
-        mitte.setContentsMargins(0, 0, 0, 0)
+        mitte.setContentsMargins(*RAND_KEIN)
         self.navigation = NavigationPanel(self.current_editor, self)
         self.navigation.aktion = self._nav_aktion
         self.navigation.hide()
@@ -116,6 +117,8 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         lay.addWidget(self.backstage, 1)
         self._backstage_verbinden()
         self.setCentralWidget(central)
+        from lunivo_writer.ui.theme import mint_abstaende
+        mint_abstaende(self)                                           # Thema Mint: Außenränder, Bandkarte, runde Dokumentfläche
         geo = self.settings.get("window/geometry")
         if geo:
             self.restoreGeometry(geo)
@@ -135,7 +138,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
     def _act(self, text, slot=None, shortcut=None, checkable=False, tip=None, symbol=None) -> QAction:
         a = QAction(text, self)
         if symbol:
-            a.setIcon(icons.icon(symbol, 16))
+            a.setIcon(icons.icon(symbol, ICON_NORMAL))
         if shortcut:
             a.setShortcut(QKeySequence(shortcut))
         a.setCheckable(checkable)
@@ -225,44 +228,43 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
     # ==== Menü ============================================================
     def _build_menu(self):
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         mb = self.menuBar()
-        m = mb.addMenu("&Datei")
-        m.addAction(self.a_new); m.addAction(self.a_open)
-        self.recent_menu = m.addMenu("Zuletzt verwendete Dokumente")
+        m = MenueListe.in_leiste(mb, "&Datei")
+        m.vorhanden(self.a_new); m.vorhanden(self.a_open)
+        self.recent_menu = m.untermenue("Zuletzt verwendete Dokumente")
         self.recent_menu.aboutToShow.connect(self._fill_recent)
         m.addSeparator()
-        m.addAction(self.a_save); m.addAction(self.a_save_as); m.addAction(self.a_save_copy)
-        ex = m.addMenu("Exportieren")
+        m.vorhanden(self.a_save); m.vorhanden(self.a_save_as); m.vorhanden(self.a_save_copy)
+        ex = m.untermenue("Exportieren")
         for a in (self.a_pdf, self.a_exp_docx, self.a_exp_odt, self.a_exp_txt):
-            ex.addAction(a)
-        pr = m.addMenu("Drucken")
-        pr.addAction(self.a_print); pr.addAction(self.a_preview)
+            ex.vorhanden(a)
+        pr = m.untermenue("Drucken")
+        pr.vorhanden(self.a_print); pr.vorhanden(self.a_preview)
         m.addSeparator()
-        m.addAction(self.a_info); m.addAction(self.a_options)
+        m.vorhanden(self.a_info); m.vorhanden(self.a_options)
         m.addSeparator()
-        m.addAction(self.a_close); m.addAction(self.a_quit)
-        e = mb.addMenu("&Bearbeiten")
+        m.vorhanden(self.a_close); m.vorhanden(self.a_quit)
+        e = MenueListe.in_leiste(mb, "&Bearbeiten")
         for a in (self.a_undo, self.a_redo, None, self.a_cut, self.a_copy, self.a_paste,
                   self.a_paste_plain, None, self.a_find, self.a_replace, self.a_goto, self.a_select_all):
-            e.addSeparator() if a is None else e.addAction(a)
-        v = mb.addMenu("&Ansicht")
-        v.addAction(self.a_marks); v.addAction(self.a_fullscreen); v.addAction(self.a_thema)
-        h = mb.addMenu("&Hilfe")
-        h.addAction(self.a_about)
+            e.addSeparator() if a is None else e.vorhanden(a)
+        v = MenueListe.in_leiste(mb, "&Ansicht")
+        v.vorhanden(self.a_marks); v.vorhanden(self.a_fullscreen); v.vorhanden(self.a_thema)
+        h = MenueListe.in_leiste(mb, "&Hilfe")
+        h.vorhanden(self.a_about)
 
 
     def _fill_recent(self):
         self.recent_menu.clear()
         items = self.settings.recent()
         if not items:
-            self.recent_menu.addAction("(leer)").setEnabled(False)
+            self.recent_menu.eintrag("(leer)", aktiv=False)
             return
         for p in items:
-            a = self.recent_menu.addAction(os.path.basename(p))
-            a.setToolTip(p)
-            a.triggered.connect(lambda _=False, p=p: self.open_path(p))
+            self.recent_menu.eintrag(os.path.basename(p), lambda p=p: self.open_path(p), tip=p)
         self.recent_menu.addSeparator()
-        self.recent_menu.addAction("Liste leeren", self._clear_recent)
+        self.recent_menu.eintrag("Liste leeren", self._clear_recent)
 
 
     def _clear_recent(self):
@@ -317,7 +319,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
             w = self.tabs.widget(i)
             if isinstance(w, DocumentTab):
                 self.tabs.setTabText(i, self._tab_title(w))
-                self.tabs.setTabIcon(i, icons.icon("circle", 10) if w.is_modified() else QIcon())
+                self.tabs.setTabIcon(i, icons.icon("circle", ICON_TAB_GEAENDERT) if w.is_modified() else QIcon())
                 self.tabs.setTabToolTip(i, w.path or "Noch nicht gespeichert")
         self._update_window_title()
 
@@ -407,7 +409,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         if frei_art:
             art, bf = frei_art, True
         frei_bild = bool(e) and getattr(e, "_frei_sel", None) is not None and frei_art in (None, "piktogramm")   # Bild, Bildschirmfoto, Piktogramm
-        self.band.kontext("bild", frei_bild or (bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld", "diagramm", "piktogramm")))
+        self.band.kontext("bild", frei_bild or (bf is not None and art not in ("form", "gruppe", "smartart", "wordart", "textfeld", "diagramm", "piktogramm", "zeichenbereich")))
         self.band.kontext("form", art in ("form", "gruppe"))
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", bool(e) and getattr(e, "_frei_sel", None) is not None)
@@ -525,13 +527,14 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
 
     def fensterliste_menue(self) -> QMenu:
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for f in self.alle_fenster():
             for t in f._doc_tabs():
-                a = m.addAction(t.title + ("  (dieses Fenster)" if f is self else ""))
-                a.triggered.connect(lambda _=False, f=f, t=t: (f.raise_(), f.activateWindow(), f.tabs.setCurrentWidget(t)))
+                m.eintrag(t.title + ("  (dieses Fenster)" if f is self else ""),
+                          lambda f=f, t=t: (f.raise_(), f.activateWindow(), f.tabs.setCurrentWidget(t)))
         if m.isEmpty():
-            m.addAction("Keine Dokumente geöffnet").setEnabled(False)
+            m.eintrag("Keine Dokumente geöffnet", aktiv=False)
         return m
 
 

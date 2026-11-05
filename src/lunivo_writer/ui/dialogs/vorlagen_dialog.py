@@ -9,21 +9,23 @@ from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QTabWidget, QVBoxLayout,
     QWidget,
 )
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import vorlagen
 
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_VORLAGEN
 class VorlagenDialog(QDialog):
     def __init__(self, parent, settings, kann_speichern: bool):
         super().__init__(parent)
         self.settings = settings
         self.setWindowTitle("Neu aus Vorlage")
-        self.resize(560, 460)
+        self.resize(*GROESSE_FENSTER_VORLAGEN)
         self.auswahl = None            # ("geruest", dict) | ("datei", pfad)
         v = QVBoxLayout(self)
-        self.tabs = QTabWidget(); v.addWidget(self.tabs)
+        self.tabs = AngepassteReiter(); v.addWidget(self.tabs)
         s1 = QWidget(); v1 = QVBoxLayout(s1)
         v1.addWidget(QLabel("Leere Gerüste: nur der Aufbau, in jeder Lücke steht, was dort hingehört. Tab springt zur nächsten Lücke."))
         self.geruest = QListWidget()

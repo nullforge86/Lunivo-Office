@@ -10,6 +10,7 @@ from lunivo_writer.services.file_service import Loaded
 from lunivo_writer.ui.document.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import recovery
+from lunivo_writer.ui.baukasten.mass import RAND_DOKUMENTFLAECHE
 
 
 class DocumentTab(QScrollArea):
@@ -24,7 +25,7 @@ class DocumentTab(QScrollArea):
         holder.setBackgroundRole(holder.backgroundRole().Dark)
         holder.setAutoFillBackground(True)
         lay = QHBoxLayout(holder)
-        lay.setContentsMargins(12, 12, 12, 12)
+        lay.setContentsMargins(*RAND_DOKUMENTFLAECHE)
         self.editor = DocumentEditor()
         from lunivo_writer.ui.document.lineal import LinealH, LinealV
         # Die Lineale stehen fest am Rand des Fensters (im Rand des Viewports) und folgen dem Blatt beim Rollen

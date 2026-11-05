@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import json
 import os
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
-    QCheckBox, QFontComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QTabBar, QToolButton,
+    QCheckBox, QFontComboBox, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QTabBar, QToolButton,
     QVBoxLayout, QWidget,
 )
 
@@ -19,9 +20,40 @@ from lunivo_writer.ui.baukasten.bild_diagramm_menues import FELDER, GALERIEN, KL
 from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
 from lunivo_writer.ui.document.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.ribbon.plan import plan
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_DICHT,
+    ABSTAND_ENG,
+    ABSTAND_KLEIN,
+    BREITE_AUFKLAPPPFEIL,
+    BREITE_BAND_GRUPPENKNOPF,
+    BREITE_FORMATVORLAGE_BAND,
+    BREITE_GRUPPENTRENNER,
+    BREITE_MASSFELD_BAND,
+    BREITE_MEHRKNOPF,
+    BREITE_RANDFELD_BAND,
+    BREITE_VORLAGEN_AKTUALISIEREN,
+    GROESSE_BANDKNOPF_ICON_KLEIN,
+    GROESSE_GRUPPEN_STARTER,
+    HOEHE_BAND_GRUPPENKNOPF,
+    HOEHE_BAND_GRUPPENKNOPF_KOMPAKT,
+    ICON_GROSS,
+    ICON_KLEIN,
+    ICON_NORMAL,
+    PADDING_BANDKNOPF,
+    RAND_BANDGALERIE,
+    RAND_BANDREITER,
+    RAND_KEIN,
+    RAND_POPUP_KOPF,
+    SCHRIFT_BANDGRUPPE_TITEL,
+    SCHRIFT_BANDKNOPF,
+)
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
@@ -46,7 +78,7 @@ class _GruppenTrenner(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setFixedWidth(3)
+        self.setFixedWidth(BREITE_GRUPPENTRENNER)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
     def paintEvent(self, _ev):
@@ -74,7 +106,7 @@ class _BandSeite(QScrollArea):
             b.setText(zeichen); b.setAutoRepeat(True); b.setAutoRepeatDelay(350); b.setAutoRepeatInterval(120)
             b.setCursor(Qt.ArrowCursor); b.setFocusPolicy(Qt.StrongFocus)
             b.setToolTip("Weiter nach " + seite); b.setAccessibleName("Band nach " + seite + " blättern")
-            b.setStyleSheet("QToolButton { border: none; border-radius: 0; font-size: 16pt; font-weight: 600; padding: 0 3px; "
+            b.setStyleSheet("QToolButton { border: none; border-radius: 0; font-size: " f"{SCHRIFT_BANDKNOPF}" "pt; font-weight: 600; padding: " f"{PADDING_BANDKNOPF}" "; "
                             "background: palette(window); color: palette(window-text); }"
                             "QToolButton:hover { background: palette(midlight); }"
                             "QToolButton:focus { border: 2px solid palette(highlight); }")
@@ -294,7 +326,7 @@ class _ReiterLeiste(QTabBar):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         dunkel = self.palette().window().color().lightness() < 128
-        akzent = QColor(Farbe.AKZENT_DUNKEL if dunkel else Farbe.AKZENT)
+        akzent = QColor(Farbe.KONTEXT or (Farbe.AKZENT_DUNKEL if dunkel else Farbe.AKZENT))
         erster = True
         for i in range(self.count()):
             if not self.isTabVisible(i) or not self.ist_kontext(i):
@@ -315,7 +347,7 @@ class _ReiterLeiste(QTabBar):
                 p.setPen(akzent); p.setBrush(fl)
             p.drawRoundedRect(r, r.height() / 2, r.height() / 2)
             f = QFont(self.font()); f.setBold(aktiv); p.setFont(f)
-            p.setPen(QColor("#ffffff") if aktiv else (QColor("#9cc4f0") if dunkel else akzent))
+            p.setPen(QColor(Farbe.KONTEXT_SCHRIFT) if aktiv else (QColor(Farbe.KONTEXT_TEXT) if dunkel else akzent))
             p.drawText(r, Qt.AlignCenter, self.tabText(i))
         p.end()
 
@@ -349,6 +381,7 @@ class RegisterBand(QWidget):
 
     def __init__(self, befehle, daten: dict | None = None, cfg: dict | None = None, schnell: list | None = None, kompakt: bool = True):
         super().__init__()
+        self.setObjectName("bandKopf"); self.setAttribute(Qt.WA_StyledBackground, True)      # Thema Mint: Kopfzeile in einem Farbton
         self.kompakt = kompakt
         self.cfg = cfg or {}
         self._schnell_wahl = schnell
@@ -360,16 +393,16 @@ class RegisterBand(QWidget):
         self.felder: dict[str, QWidget] = {}
         self.fehlend: list[str] = []
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setContentsMargins(*RAND_KEIN)
         lay.setSpacing(0)
         self.kopf = QHBoxLayout()
-        self.kopf.setContentsMargins(6, 2, 6, 0)
-        self.kopf.setSpacing(2)
+        self.kopf.setContentsMargins(*RAND_POPUP_KOPF)
+        self.kopf.setSpacing(ABSTAND_ENG)
         self.menue_knopf = QToolButton()
         self.menue_knopf.setText("Menü")
-        self.menue_knopf.setIcon(icons.icon("menu", 16)); self.menue_knopf.setIconSize(QSize(16, 16))
+        self.menue_knopf.setIcon(icons.icon("menu", ICON_NORMAL, kopf_symbolfarbe())); self.menue_knopf.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
         self.menue_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); self.menue_knopf.setLayoutDirection(Qt.RightToLeft)
-        self.menue_knopf.setAutoRaise(True)
+        self.menue_knopf.setAutoRaise(True); self.menue_knopf.setObjectName("menueKnopf")
         self.kopf.addWidget(self.menue_knopf)
         self.schnell = QHBoxLayout()
         self.schnell.setSpacing(0)
@@ -381,14 +414,14 @@ class RegisterBand(QWidget):
         self.reiter.setExpanding(False)
         self.reiter.setProperty("kompakt", kompakt)
         self.kopf.addWidget(self.reiter, 1)
-        lay.addLayout(self.kopf)
+        zeile = QWidget(); zeile.setObjectName("bandKopfZeile"); zeile.setAttribute(Qt.WA_StyledBackground, True)     # Thema Mint: Kopfzeile als grüne Fläche mit runden unteren Ecken
+        zeile.setLayout(self.kopf)
+        lay.addWidget(zeile)
         self.stapel = QStackedWidget()
         self.stapel.setObjectName("bandStapel")
         self.stapel.setFixedHeight(self.BAND_HOEHE[kompakt])
         lay.addWidget(self.stapel)
-        linie = self.linie = QFrame()
-        linie.setFrameShape(QFrame.HLine)
-        linie.setFrameShadow(QFrame.Sunken)
+        linie = self.linie = trennlinie(tief=True)
         lay.addWidget(linie)
         self._schnellzugriff()
         self.kontext_index: dict[str, int] = {}
@@ -416,10 +449,7 @@ class RegisterBand(QWidget):
         self.stapel.setVisible(not self._eingeklappt)
 
     def _trenner(self):
-        s = QFrame()
-        s.setFrameShape(QFrame.VLine)
-        s.setFrameShadow(QFrame.Sunken)
-        self.kopf.addWidget(s)
+        self.kopf.addWidget(trennlinie(senkrecht=True, tief=True))
 
     # ---- Schnellzugriff -------------------------------------------------------------------------------
     SCHNELL = [("oeffnen", "Öffnen", "oeffnen"), ("vorlage", "Neu aus Vorlage", "neuAusVorlage"), ("speichern", "Speichern", "speichern"),
@@ -457,8 +487,8 @@ class RegisterBand(QWidget):
             k = QToolButton()
             k.setAutoRaise(True)
             k.setToolTip(_mit_kuerzel(name))
-            k.setIcon(icons.icon(sym, 18))
-            k.setIconSize(QSize(18, 18))
+            k.setIcon(icons.icon(sym, ICON_GROSS, kopf_symbolfarbe()))
+            k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
             k.clicked.connect(lambda _=False, a=aktion: self.b.tun(a))
             self._tausch_rechtsklick(k, sym)
             self.schnell.addWidget(k)
@@ -471,7 +501,7 @@ class RegisterBand(QWidget):
         self._ki_schnell_knoepfe = []
         for a in aktionen:
             k = QToolButton(); k.setAutoRaise(True); k.setToolTip("KI: " + a["name"])
-            k.setIcon(icons.icon("assistent", 18)); k.setIconSize(QSize(18, 18))
+            k.setIcon(icons.icon("assistent", ICON_GROSS, kopf_symbolfarbe())); k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
             k.clicked.connect(lambda _=False, a=a: ausfuehren(a))
             self.schnell.addWidget(k)
             self._ki_schnell_knoepfe.append(k)
@@ -484,7 +514,7 @@ class RegisterBand(QWidget):
         scroll.setFrameShape(QFrame.NoFrame)
         seite = QWidget()
         h = QHBoxLayout(seite)
-        h.setContentsMargins(6, 2, 6, 0)
+        h.setContentsMargins(*RAND_BANDREITER)
         h.setSpacing(0)
         for i, g in enumerate(r["gruppen"]):
             s = None
@@ -513,7 +543,7 @@ class RegisterBand(QWidget):
         if self.kompakt:
             rahmen.setToolTip(g["name"])                 # die Unterschrift entfällt; der Name steht im Hinweis
         inhalt = QHBoxLayout()
-        inhalt.setSpacing(1)
+        inhalt.setSpacing(ABSTAND_DICHT)
         inhalt.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         v.addLayout(inhalt, 1)
         if g.get("katalog") == "raender":
@@ -527,19 +557,19 @@ class RegisterBand(QWidget):
                 QLabel(g["name"].upper(), rahmen).hide()           # Unterschrift bleibt als verborgene Beschriftung (Aufbau prüfbar)
             return rahmen
         fuss = QHBoxLayout()
-        fuss.setContentsMargins(0, 0, 0, 0)
+        fuss.setContentsMargins(*RAND_KEIN)
         t = QLabel("" if g.get("ohne_titel") else g["name"].upper())     # Kontext-Reiter wie in der Vorlage: Gruppen ohne Unterschrift
         t.setVisible(not self.kompakt)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet("font-size: 7pt; color: palette(mid); letter-spacing: 1px;")
+        hinweis_stil(t, zusatz="font-size: " f"{SCHRIFT_BANDGRUPPE_TITEL}" "pt; letter-spacing: 1px;")
         fuss.addStretch(1)
         fuss.addWidget(t)
         if g.get("pfeil"):
             p = QToolButton()
             p.setText("↘")
             p.setAutoRaise(True)
-            p.setFixedSize(14, 14)
-            p.setStyleSheet("font-size: 7pt;")
+            p.setFixedSize(*GROESSE_GRUPPEN_STARTER)
+            p.setStyleSheet("font-size: " f"{SCHRIFT_BANDGRUPPE_TITEL}" "pt;")
             p.setToolTip(g["name"] + " — Einstellungen")
             p.clicked.connect(lambda _=False, a=g["pfeil"]: self.b.tun(a))
             p.setEnabled(self.b.hat(g["pfeil"]))
@@ -559,8 +589,8 @@ class RegisterBand(QWidget):
             if felder:
                 host = QWidget()
                 v = QVBoxLayout(host)
-                v.setContentsMargins(0, 0, 0, 0)
-                v.setSpacing(1)
+                v.setContentsMargins(*RAND_KEIN)
+                v.setSpacing(ABSTAND_DICHT)
                 for w in felder:
                     v.addWidget(w)
                 v.addStretch(1)
@@ -573,8 +603,8 @@ class RegisterBand(QWidget):
             for i in range(0, len(lauf), 2):                    # je Spalte zwei Zeilen
                 host = QWidget()
                 v = QVBoxLayout(host)
-                v.setContentsMargins(0, 0, 0, 0)
-                v.setSpacing(1)
+                v.setContentsMargins(*RAND_KEIN)
+                v.setSpacing(ABSTAND_DICHT)
                 for e in lauf[i:i + 2]:
                     v.addWidget(self._knopf(e, False))
                 v.addStretch(1)
@@ -624,12 +654,12 @@ class RegisterBand(QWidget):
                 aktuell.append(e)
         zeilen.append(aktuell)
         v = QVBoxLayout()
-        v.setSpacing(2)
-        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(ABSTAND_ENG)
+        v.setContentsMargins(*RAND_KEIN)
         for i, zeile in enumerate(zeilen):
             h = QHBoxLayout()
-            h.setSpacing(1)
-            h.setContentsMargins(0, 0, 0, 0)
+            h.setSpacing(ABSTAND_DICHT)
+            h.setContentsMargins(*RAND_KEIN)
             if i == 0:
                 h.addWidget(font)
                 h.addWidget(groesse)
@@ -648,12 +678,8 @@ class RegisterBand(QWidget):
         groesse = groesse_feld()
         if art == "tab":
             def pt_setzen(*_):
-                try:
-                    pt = float(groesse.currentText().replace(",", "."))
-                except ValueError:
-                    return
-                self.b.w._ed(lambda e: (e.set_font_size(pt), e.setFocus()))
-            font.activated.connect(lambda _i: self.b.w._ed(lambda e: (e.set_font_family(font.currentFont().family()), e.setFocus())))
+                self.b.tabGroesse(groesse.currentText())
+            font.activated.connect(lambda _i: self.b.tabSchriftart(font.currentFont().family()))
             groesse.activated.connect(pt_setzen)
             groesse.lineEdit().editingFinished.connect(pt_setzen)
         else:
@@ -670,12 +696,12 @@ class RegisterBand(QWidget):
                 aktuell.append(e)
         zeilen.append(aktuell)
         v = QVBoxLayout()
-        v.setSpacing(2)
-        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(ABSTAND_ENG)
+        v.setContentsMargins(*RAND_KEIN)
         for i, zeile in enumerate(zeilen):
             h = QHBoxLayout()
-            h.setSpacing(1)
-            h.setContentsMargins(0, 0, 0, 0)
+            h.setSpacing(ABSTAND_DICHT)
+            h.setContentsMargins(*RAND_KEIN)
             if i == 0:
                 h.addWidget(font)
                 h.addWidget(groesse)
@@ -699,21 +725,20 @@ class RegisterBand(QWidget):
         rahmen = QFrame()
         rahmen.setFrameShape(QFrame.StyledPanel)
         h = QHBoxLayout(rahmen)
-        h.setContentsMargins(3, 3, 3, 3)
-        h.setSpacing(2)
+        h.setContentsMargins(*RAND_BANDGALERIE)
+        h.setSpacing(ABSTAND_ENG)
         zeilen = int(g.get("zeilen") or 1)                       # ``"zeilen": 2``: Kacheln in mehreren Reihen (Linien und Pfeile)
-        raster = QGridLayout() if zeilen > 1 else None
-        if raster is not None:
-            raster.setContentsMargins(0, 0, 0, 0); raster.setSpacing(2)
-            h.addLayout(raster)
         spalten = -(-len(spec["kacheln"]) // zeilen)
+        raster = kachel_gitter((), spalten, abstand=ABSTAND_ENG) if zeilen > 1 else None
+        if raster is not None:
+            h.addLayout(raster)
         for nr, (tipp, pm, tun) in enumerate(spec["kacheln"]):
             k = QToolButton()
             k.setAutoRaise(True)
             k.setIcon(QIcon(pm))
             k.setIconSize(pm.size())
             k.setFixedSize(pm.width() + 8, pm.height() + 8)
-            k.setToolTip(tipp)
+            k.setToolTip(tipp); k.setCursor(Qt.PointingHandCursor)                  # klickbare Kachel: Hand
             k.clicked.connect(lambda _=False, f=tun: (f(), self.aktualisieren()))
             if raster is not None:
                 raster.addWidget(k, nr // spalten, nr % spalten)
@@ -727,7 +752,7 @@ class RegisterBand(QWidget):
         mehr.setPopupMode(QToolButton.InstantPopup)
         spec["menue"].setParent(mehr, Qt.Popup)
         mehr.setMenu(spec["menue"])
-        mehr.setFixedWidth(16)
+        mehr.setFixedWidth(BREITE_MEHRKNOPF); mehr.setCursor(Qt.PointingHandCursor)
         h.addWidget(mehr)
         self.knoepfe.append((mehr, None, True))
         inhalt.addWidget(rahmen, 0, Qt.AlignTop)
@@ -737,10 +762,7 @@ class RegisterBand(QWidget):
         from lunivo_writer.ui.dialogs.dokument_dialoge import _MassSpin
         self._knoepfe_geordnet(g, inhalt)
         host = QWidget()
-        gitter = QGridLayout(host)
-        gitter.setContentsMargins(0, 0, 0, 0)
-        gitter.setHorizontalSpacing(4)
-        gitter.setVerticalSpacing(2)
+        gitter = tabellen_gitter(host, waagerecht=ABSTAND_KLEIN, senkrecht=ABSTAND_ENG)       # Menüband: Beschriftung und Maßfeld in festen Zellen
         spins = {}
         for zeile, spalte, schl, name in ((0, 0, "oben", "Oben:"), (0, 2, "unten", "Unten:"), (1, 0, "links", "Links:"), (1, 2, "rechts", "Rechts:")):
             sp = _MassSpin()
@@ -748,14 +770,14 @@ class RegisterBand(QWidget):
             sp.setDecimals(1)
             sp.setSingleStep(1.0)
             sp.setKeyboardTracking(False)
-            sp.setFixedWidth(72)
+            sp.setFixedWidth(BREITE_RANDFELD_BAND)
             gitter.addWidget(QLabel(name), zeile, spalte)
             gitter.addWidget(sp, zeile, spalte + 1)
             spins[schl] = sp
             self.felder["rand_" + schl] = sp
             self.knoepfe.append((sp, None, True))
         for sp in spins.values():
-            sp.valueChanged.connect(lambda _v, sps=spins: self.b.w.set_margins(
+            sp.valueChanged.connect(lambda _v, sps=spins: self.b.setzeRaender(
                 sps["oben"].value(), sps["unten"].value(), sps["links"].value(), sps["rechts"].value()))
         inhalt.addWidget(host, 0, Qt.AlignTop)
 
@@ -771,15 +793,14 @@ class RegisterBand(QWidget):
         verh = g.get("verhaeltnis", True)
         vor = g.get("praefix") or ("bt_" if bild else "bild_")   # eigene Feldnamen: Bildtools, Zeichentools und SmartArt-Design haben je ein Paar
         host = QWidget()
-        gitter = QGridLayout(host)
-        gitter.setContentsMargins(0, 0, 0, 0); gitter.setHorizontalSpacing(4); gitter.setVerticalSpacing(2)
+        gitter = tabellen_gitter(host, waagerecht=ABSTAND_KLEIN, senkrecht=ABSTAND_ENG)       # Menüband: Beschriftung, Maßfeld und Sperre in festen Zellen
         spins = {}
         if bild:                                                  # große Knöpfe (Zuschneiden) stehen links vor den Feldern
             for e in (e for e in g["knoepfe"] if e.get("gross")):
                 inhalt.addWidget(self._knopf(e, True))
         zeilen = (("breite", "Breite:"), ("hoehe", "Höhe:")) if bild else (("hoehe", "Höhe:"), ("breite", "Breite:"))
         for zeile, (schl, name) in enumerate(zeilen):
-            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(64)
+            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(BREITE_MASSFELD_BAND)
             gitter.addWidget(QLabel(name), zeile, 0); gitter.addWidget(sp, zeile, 1)
             spins[schl] = sp
             self.felder[vor + schl] = sp
@@ -845,7 +866,7 @@ class RegisterBand(QWidget):
         eintraege = g["knoepfe"]
         if g.get("felder"):
             spalte = QVBoxLayout()
-            spalte.setSpacing(2)
+            spalte.setSpacing(ABSTAND_ENG)
             from lunivo_writer.ui.widgets.live_vorschau import VorschauCombo, VorschauFontCombo
             vs = self.b.w.vorschau
 
@@ -856,7 +877,7 @@ class RegisterBand(QWidget):
                     return None
             stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
             stil.setAccessibleName("Formatvorlage")
-            stil.setFixedWidth(150)
+            stil.setFixedWidth(BREITE_FORMATVORLAGE_BAND)
             stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
             font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
             groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
@@ -879,8 +900,7 @@ class RegisterBand(QWidget):
             elif not e.get("gross") and not e.get("hinweis"):
                 aktuell.append(e)
         zeilen.append(aktuell)
-        gitter = QGridLayout()
-        gitter.setSpacing(1)
+        gitter = tabellen_gitter(rand=None, abstand=ABSTAND_DICHT)
         if explizit:
             for r, zeile in enumerate(zeilen):
                 for c, e in enumerate(zeile):
@@ -895,9 +915,7 @@ class RegisterBand(QWidget):
 
     def _stile(self, spalten: int = 3) -> QWidget:
         host = QWidget()
-        g = QGridLayout(host)
-        g.setSpacing(1)
-        g.setContentsMargins(0, 0, 0, 0)
+        g = tabellen_gitter(host, abstand=ABSTAND_DICHT)
         self._stile_host, self._stile_gitter, self._stil_knoepfe = host, g, []
         self.stile_aktualisieren()
  # wie in der Vorlage: drei Spalten sichtbar (``"spalten": N`` im Gruppeneintrag nimmt weniger), der Rest wird durchgescrollt
@@ -912,13 +930,13 @@ class RegisterBand(QWidget):
         sa.setFixedWidth(spalten * 85 + 4)
         sa.setFixedHeight(host.sizeHint().height() + 2)
         sa.setStyleSheet("QScrollArea#stileGalerie, QScrollArea#stileGalerie > QWidget > QWidget { background: transparent; }")
-        pfeil = QToolButton(); pfeil.setIcon(icons.icon("klappe", 14)); pfeil.setIconSize(QSize(14, 14)); pfeil.setAutoRaise(True); pfeil.setFixedWidth(18)
+        pfeil = QToolButton(); pfeil.setIcon(icons.icon("klappe", ICON_KLEIN)); pfeil.setIconSize(QSize(ICON_KLEIN, ICON_KLEIN)); pfeil.setAutoRaise(True); pfeil.setFixedWidth(BREITE_AUFKLAPPPFEIL)
         pfeil.setToolTip("Alle Formatvorlagen")
         pfeil.clicked.connect(lambda: self._stile_popup(pfeil))
         sa.viewport().installEventFilter(self)
         self._stile_scroll = sa
         aussen = QWidget()
-        h = QHBoxLayout(aussen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        h = QHBoxLayout(aussen); h.setContentsMargins(*RAND_KEIN); h.setSpacing(0)
         h.addWidget(sa); h.addWidget(pfeil, 0, Qt.AlignVCenter)
         return aussen
 
@@ -943,19 +961,20 @@ class RegisterBand(QWidget):
             f.setItalic(name in ("Untertitel", "Zitat") or bool(d["kursiv"]))
             m.kachel(name, name, f, farbe=d["farbe"] or None, aktuell=name == aktuell,
                      tipp=name + (" (eigene Vorlage)" if stile.ist_eigen(name) else ""))
-        m.gewaehlt.connect(w.stil_anwenden)
-        m.ueberfahren.connect(lambda name: w.vorschau.zeigen(lambda ed: ed.apply_style("Standard" if name == "Fließtext" else name)))
+        m.gewaehlt.connect(self.b.stilAnwenden)
+        m.ueberfahren.connect(lambda name: w.vorschau.zeigen(lambda ed: self.b.stilVorschau(name, ed)))
         m.verlassen.connect(w.vorschau.ende)
-        m.aktion("Neue Formatvorlage …", lambda: self.b.neueFormatvorlage(), icons.icon("pinsel", 18))
-        m.aktion("Stil löschen", lambda: self.b.formatvorlageLoeschen(aktuell), icons.icon("radierer", 18),
+        m.aktion("Neue Formatvorlage …", lambda: self.b.neueFormatvorlage(), icons.icon("pinsel", ICON_GROSS))
+        m.aktion("Stil löschen", lambda: self.b.formatvorlageLoeschen(aktuell), icons.icon("radierer", ICON_GROSS),
                  aktiv=bool(aktuell) and stile.ist_eigen(aktuell))
         m.aktion("Weitere Stile anzeigen", lambda an: w.settings.set("ui/stile_mehr", an), haken=mehr)
 
         def kontext(name, pos):
-            km = QMenu(m)
-            km.addAction("Ändern …", lambda: (m.close(), self.b.formatvorlageAendern(name)))
+            from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+            km = MenueListe(m)
+            km.eintrag("Ändern …", lambda: (m.close(), self.b.formatvorlageAendern(name)))
             if stile.ist_eigen(name):
-                km.addAction("Löschen", lambda: (m.close(), self.b.formatvorlageLoeschen(name)))
+                km.eintrag("Löschen", lambda: (m.close(), self.b.formatvorlageLoeschen(name)))
             km.exec(pos)
         m.kontext.connect(kontext)
         m.aboutToHide.connect(w.vorschau.ende)
@@ -985,10 +1004,10 @@ class RegisterBand(QWidget):
             if name in ("Untertitel", "Zitat") or (stile.ist_eigen(name) and d["kursiv"]):
                 f.setItalic(True)
             k.setFont(f)
-            k.setFixedWidth(84)
+            k.setFixedWidth(BREITE_VORLAGEN_AKTUALISIEREN)
             k.setToolTip(name + (" (eigene Vorlage)" if stile.ist_eigen(name) else ""))
-            k.clicked.connect(lambda _=False, n=name: self.b.w.stil_anwenden(n))
-            fl = Ueberfahren(self.b.w.vorschau, lambda e, n=name: e.apply_style("Standard" if n == "Fließtext" else n))
+            k.clicked.connect(lambda _=False, n=name: self.b.stilAnwenden(n))
+            fl = Ueberfahren(self.b.w.vorschau, lambda e, n=name: self.b.stilVorschau(n, e))
             k.installEventFilter(fl)
             k._ueberfahren = fl                                  # am Knopf festhalten, sonst räumt Python den Filter ab
             g.addWidget(k, i % 2, i // 2)
@@ -1007,15 +1026,14 @@ class RegisterBand(QWidget):
     def _raender(self) -> QWidget:
         host = QWidget()
         h = QHBoxLayout(host)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(2)
-        for art, text in (("normal", "Normal\n25 / 32 mm"), ("schmal", "Schmal\n13 mm"),
-                          ("moderat", "Moderat\n25 / 19 mm"), ("breit", "Breit\n25 / 51 mm")):
+        h.setContentsMargins(*RAND_KEIN)
+        h.setSpacing(ABSTAND_ENG)
+        for art, text in self.b.galerie_randVorgaben():
             k = QToolButton()
             k.setAutoRaise(True)
             k.setText(text)
-            k.setFixedSize(84, 56 if self.kompakt else 62)
-            k.clicked.connect(lambda _=False, a=art: (self.b.tun('w.setzeRandVorgabe:["%s"]' % a), self.aktualisieren()))
+            k.setFixedSize(BREITE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT if self.kompakt else HOEHE_BAND_GRUPPENKNOPF)
+            k.clicked.connect(lambda _=False, a=art: (self.b.randVorgabeWaehlen(a), self.aktualisieren()))
             h.addWidget(k)
             self.knoepfe.append((k, None, True))
         return host
@@ -1032,7 +1050,7 @@ class RegisterBand(QWidget):
         if icons.hat(sym):
             gi = self.GROSS_ICON[self.kompakt]
             akt.setIcon(icons.icon(sym, gi if gross else 18))
-            k.setIconSize(QSize(gi, gi) if gross else QSize(18, 18))
+            k.setIconSize(QSize(gi, gi) if gross else QSize(*GROESSE_BANDKNOPF_ICON_KLEIN))
         k.setDefaultAction(akt)
         k.setToolTip(_mit_kuerzel(name))
         k.setAccessibleName(name)                      # Screenreader lesen den vollen Namen, nicht den Kurztext
@@ -1064,7 +1082,7 @@ class RegisterBand(QWidget):
         ok = False
         menu = None
         if menue:
-            menu = QMenu(k)
+            menu = MenueListe(k)
             ok = self._menue_fuellen(menu, menue)
             k.setPopupMode(QToolButton.MenuButtonPopup)             # Symbol und Pfeil getrennt: der Pfeil sitzt nicht im Symbol
             akt.triggered.connect(lambda _=False, kk=k: kk.showMenu())
@@ -1105,13 +1123,13 @@ class RegisterBand(QWidget):
         bau = KLAPPEN.get(name)
         return bau(self.b) if bau else self.b.klappe(name)
 
-    def _menue_fuellen(self, menu: QMenu, items: list) -> bool:
+    def _menue_fuellen(self, menu: MenueListe, items: list) -> bool:
         ok = False
         for it in items:
             if it.get("trenner"):
-                menu.addSeparator()
+                menu.trenner()
             elif it.get("menue"):
-                sub = menu.addMenu(it["name"])
+                sub = menu.untermenue(it["name"])
                 ok |= self._menue_fuellen(sub, it["menue"])
             elif it.get("klappe"):                           # das vorhandene Klappmenü eines anderen Knopfes als Untermenü (mehrere Knöpfe hinter einem)
                 sub = self._klappe(it["klappe"])
@@ -1123,19 +1141,16 @@ class RegisterBand(QWidget):
                 else:
                     self.fehlend.append(it["klappe"])
             elif it.get("name"):
-                a = menu.addAction(it["name"])
                 t = it.get("tun")
                 if t and self.b.hat(t):
                     if it.get("haken"):
-                        a.setCheckable(True)
+                        a = menu.eintrag(it["name"], lambda t=t, it=it: self.b.haken_wert(it) or self.b.tun(t), haken=False)
                         menu.aboutToShow.connect(lambda a=a, it=it: a.setChecked(bool(self.b.haken_wert(it))))
-                        a.triggered.connect(lambda _=False, t=t, it=it: self.b.haken_wert(it) or self.b.tun(t))
                     else:
-                        a.triggered.connect(lambda _=False, t=t: self.b.tun(t))
+                        menu.eintrag(it["name"], lambda t=t: self.b.tun(t))
                     ok = True
                 else:
-                    a.setEnabled(False)
-                    a.setToolTip(NICHT_DA.format(it["name"]))
+                    menu.eintrag(it["name"], aktiv=False, tip=NICHT_DA.format(it["name"]))
                     if t:
                         self.fehlend.append(t)
         return ok

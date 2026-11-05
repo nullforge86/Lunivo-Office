@@ -4,6 +4,17 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QSlider, QStatusBar, QToolButton
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    BREITE_ZOOMANZEIGE,
+    BREITE_ZOOM_REGLER,
+    HOEHE_LESEENDE_KNOPF,
+    HOEHE_THEMAKNOPF,
+    ICON_KLEIN,
+    PADDING_LESEENDE_STATUS,
+    RADIUS_FELD,
+    RAND_STATUSLEISTE,
+)
 
 
 class StatusBar(QStatusBar):
@@ -19,29 +30,29 @@ class StatusBar(QStatusBar):
         self.setSizeGripEnabled(True)
         self.lbl_msg = QLabel("")
         self.addWidget(self.lbl_msg, 1)
-        self.lesen_ende = QPushButton("Lesemodus beenden"); self.lesen_ende.setMinimumHeight(30); self.lesen_ende.setCursor(Qt.PointingHandCursor)
+        self.lesen_ende = QPushButton("Lesemodus beenden"); self.lesen_ende.setMinimumHeight(HOEHE_LESEENDE_KNOPF); self.lesen_ende.setCursor(Qt.PointingHandCursor)
         self.lesen_ende.setToolTip("Zurück zum Bearbeiten (Strg+Umschalt+L)"); self.lesen_ende.hide()
         self.lesen_ende.setStyleSheet("QPushButton { background: palette(highlight); color: palette(highlighted-text); border: none; "
-                                      "border-radius: 6px; padding: 4px 16px; font-weight: bold; }"
-                                      "QPushButton:hover { background: palette(link); color: black; }")
+                                      "border-radius: " f"{RADIUS_FELD}" "px; padding: " f"{PADDING_LESEENDE_STATUS}" "; font-weight: bold; }"
+                                      "QPushButton:hover { background: palette(link); color: %s; }" % Farbe.SCHWARZ)
         self.lesen_ende.clicked.connect(self.lesemodus_beenden)
         self.addPermanentWidget(self.lesen_ende)
         self.lbl_words = QLabel("0 Wörter, 0 Zeichen")
         self.lbl_page = QLabel("Seite 1 von 1")
         for w in (self.lbl_words, self.lbl_page):
-            w.setContentsMargins(10, 0, 10, 0)
+            w.setContentsMargins(*RAND_STATUSLEISTE)
             self.addPermanentWidget(w)
-        self.thema = QToolButton(); self.thema.setAutoRaise(True); self.thema.setMinimumHeight(24)
+        self.thema = QToolButton(); self.thema.setAutoRaise(True); self.thema.setMinimumHeight(HOEHE_THEMAKNOPF)
         self.thema.setText("Hell / Dunkel"); self.thema.setToolTip("Zwischen hell und dunkel wechseln (Strg+Umschalt+D)")
         self.thema.setAccessibleName("Zwischen hell und dunkel wechseln")
         self.thema.clicked.connect(self.thema_wechseln)
         self.addPermanentWidget(self.thema)
-        self.zoom_minus = QToolButton(); self.zoom_minus.setIcon(icons.icon("minus", 14)); self.zoom_minus.setAutoRaise(True); self.zoom_minus.setToolTip("Verkleinern")
-        self.zoom_plus = QToolButton(); self.zoom_plus.setIcon(icons.icon("plus", 14)); self.zoom_plus.setAutoRaise(True); self.zoom_plus.setToolTip("Vergrößern")
+        self.zoom_minus = QToolButton(); self.zoom_minus.setIcon(icons.icon("minus", ICON_KLEIN)); self.zoom_minus.setAutoRaise(True); self.zoom_minus.setToolTip("Verkleinern")
+        self.zoom_plus = QToolButton(); self.zoom_plus.setIcon(icons.icon("plus", ICON_KLEIN)); self.zoom_plus.setAutoRaise(True); self.zoom_plus.setToolTip("Vergrößern")
         self.zoom_regler = QSlider(Qt.Horizontal); self.zoom_regler.setRange(10, 500); self.zoom_regler.setValue(100); self.zoom_regler.setAccessibleName("Zoom")
-        self.zoom_regler.setFixedWidth(120)
+        self.zoom_regler.setFixedWidth(BREITE_ZOOM_REGLER)
         self.lbl_zoom = QToolButton(); self.lbl_zoom.setText("100 %"); self.lbl_zoom.setAutoRaise(True)
-        self.lbl_zoom.setToolTip("Zoom …"); self.lbl_zoom.setMinimumWidth(52)
+        self.lbl_zoom.setToolTip("Zoom …"); self.lbl_zoom.setMinimumWidth(BREITE_ZOOMANZEIGE)
         self.zoom_minus.clicked.connect(self.zoom_kleiner)
         self.zoom_plus.clicked.connect(self.zoom_groesser)
         self.lbl_zoom.clicked.connect(self.zoom_stufe)

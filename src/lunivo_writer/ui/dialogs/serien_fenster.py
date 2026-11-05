@@ -15,6 +15,12 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_FENSTER_SERIENBRIEF,
+    HOEHE_KNOPF,
+    HOEHE_KNOPF_GROSS,
+    HOEHE_LISTE_HOCH,
+)
 
 OHNE = "(nicht zugeordnet)"
 
@@ -25,7 +31,7 @@ class EmpfaengerDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, spalten: list[str] | None = None, saetze: list[dict] | None = None, aktiv: list[bool] | None = None):
         super().__init__(parent)
         self.setWindowTitle("Seriendruckempfänger")
-        self.resize(720, 440)
+        self.resize(*GROESSE_FENSTER_SERIENBRIEF)
         spalten, saetze = list(spalten or []), list(saetze or [])
         aktiv = list(aktiv) if aktiv is not None and len(aktiv) == len(saetze) else [True] * len(saetze)
         v = QVBoxLayout(self)
@@ -46,7 +52,7 @@ class EmpfaengerDialog(PanelFaehig, QDialog):
         v.addWidget(self.tabelle, 1)
         alle, keine = QPushButton("&Alle"), QPushButton("&Keine")
         for k, an in ((alle, True), (keine, False)):
-            k.setMinimumHeight(36); k.clicked.connect(lambda _=False, a=an: self._alle(a))
+            k.setMinimumHeight(HOEHE_KNOPF_GROSS); k.clicked.connect(lambda _=False, a=an: self._alle(a))
         fussleiste(self, v, alle, keine)
 
     def _alle(self, an: bool) -> None:
@@ -67,11 +73,11 @@ class FeldDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Seriendruckfeld einfügen")
         v = QVBoxLayout(self)
-        self.liste = QListWidget(); self.liste.addItems(list(spalten or [])); self.liste.setMinimumHeight(200)
+        self.liste = QListWidget(); self.liste.addItems(list(spalten or [])); self.liste.setMinimumHeight(HOEHE_LISTE_HOCH)
         self.liste.setAccessibleName("Felder")
         titel = QLabel("&Datenbankfelder:"); titel.setBuddy(self.liste)
         v.addWidget(titel); v.addWidget(self.liste, 1)
-        self.name = QLineEdit(); self.name.setMinimumHeight(34); self.name.setAccessibleName("Feldname")
+        self.name = QLineEdit(); self.name.setMinimumHeight(HOEHE_KNOPF); self.name.setAccessibleName("Feldname")
         self.name.setPlaceholderText("Name eines Feldes")
         t2 = QLabel("&Feldname:"); t2.setBuddy(self.name)
         from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
@@ -109,7 +115,7 @@ class ZuordnenDialog(PanelFaehig, QDialog):
         g.zeile(QLabel("Feld im Text"), kopf)
         self.wahl: dict[str, QComboBox] = {}
         for i, f in enumerate(felder or [], 1):
-            cb = QComboBox(); cb.addItem(OHNE, ""); cb.setMinimumHeight(34); cb.setAccessibleName(f)
+            cb = QComboBox(); cb.addItem(OHNE, ""); cb.setMinimumHeight(HOEHE_KNOPF); cb.setAccessibleName(f)
             for s in spalten:
                 cb.addItem(s, s)
             soll = zuordnung.get(f, f if f in spalten else "")

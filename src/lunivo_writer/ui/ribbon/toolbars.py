@@ -11,11 +11,25 @@ from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QHBoxLayout, QToolButton, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.contextual.image_tools import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from lunivo_writer.ui.contextual.text_tools import TEXTTOOLS
 from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
 from lunivo_writer.ui.ribbon.ribbon_bar import NICHT_DA, STILE_KATALOG
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    BREITE_ABSTANDSFELD,
+    BREITE_FORMATVORLAGE_LEISTE,
+    BREITE_LEISTENKNOPF_MIN,
+    BREITE_REGLER_MIN,
+    BREITE_SCHRIFTAUSWAHL_LEISTE,
+    ICON_GROSS,
+    ICON_NORMAL,
+    RAND_KEIN,
+    RAND_SYMBOLLEISTE,
+)
 
 T = "trenner"
 # (Symbol, Tooltip, Aktion)
@@ -67,11 +81,11 @@ class Symbolleisten(QWidget):
         self.kontext_index: dict = {}
         self.fehlend: list[str] = []
         v = QVBoxLayout(self)
-        v.setContentsMargins(6, 2, 6, 2)
-        v.setSpacing(2)
+        v.setContentsMargins(*RAND_SYMBOLLEISTE)
+        v.setSpacing(ABSTAND_ENG)
         self.menue_knopf = QToolButton()
         self.menue_knopf.setText("Menü")
-        self.menue_knopf.setIcon(icons.icon("menu", 16)); self.menue_knopf.setIconSize(QSize(16, 16))
+        self.menue_knopf.setIcon(icons.icon("menu", ICON_NORMAL, kopf_symbolfarbe())); self.menue_knopf.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
         self.menue_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.menue_knopf.setAutoRaise(True)
         z1 = self._zeile(v)
@@ -81,9 +95,9 @@ class Symbolleisten(QWidget):
         z1.addStretch(1)
         z2 = self._zeile(v)
         stil = QComboBox(); stil.addItems(["Fließtext"] + [n for n in STILE_KATALOG if n not in ("Standard", "Kein Abstand")])
-        stil.setFixedWidth(130)
-        font = QFontComboBox(); font.setFixedWidth(160)
-        groesse = QComboBox(); groesse.setEditable(True); groesse.setFixedWidth(60)
+        stil.setFixedWidth(BREITE_FORMATVORLAGE_LEISTE)
+        font = QFontComboBox(); font.setFixedWidth(BREITE_SCHRIFTAUSWAHL_LEISTE)
+        groesse = QComboBox(); groesse.setEditable(True); groesse.setFixedWidth(BREITE_REGLER_MIN)
         groesse.addItems([str(x) for x in GROESSEN])
         self.felder.update(stil=stil, font=font, groesse=groesse)
         for w in (font, groesse):
@@ -93,7 +107,7 @@ class Symbolleisten(QWidget):
         for wert, name in ZEILENABSTAENDE:
             abstand.addItem("Zeilen " + name, float(wert))
         abstand.addItem("Mehr…", "mehr")
-        abstand.setFixedWidth(100)
+        abstand.setFixedWidth(BREITE_ABSTANDSFELD)
         abstand.activated.connect(lambda _: self._abstand(abstand))
         z2.addWidget(abstand)
         self._fuellen(z2, UNTEN_B)
@@ -102,21 +116,21 @@ class Symbolleisten(QWidget):
         z2.addStretch(1)
         self.zusammenhang = QWidget()
         self.z3 = QHBoxLayout(self.zusammenhang)
-        self.z3.setContentsMargins(0, 0, 0, 0)
+        self.z3.setContentsMargins(*RAND_KEIN)
         self.z3.setSpacing(0)
         v.addWidget(self.zusammenhang)
         self.zusammenhang.hide()
         self._kontext_name = None
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Sunken)
+        linie = trennlinie(tief=True)
         v.addWidget(linie)
 
     def _zeile(self, v) -> QHBoxLayout:
-        h = QHBoxLayout(); h.setSpacing(0); h.setContentsMargins(0, 0, 0, 0)
+        h = QHBoxLayout(); h.setSpacing(0); h.setContentsMargins(*RAND_KEIN)
         v.addLayout(h)
         return h
 
     def _trenner(self, h):
-        s = QFrame(); s.setFrameShape(QFrame.VLine); s.setFrameShadow(QFrame.Sunken)
+        s = trennlinie(senkrecht=True, tief=True)
         h.addWidget(s)
 
     def _fuellen(self, h: QHBoxLayout, liste):
@@ -132,8 +146,8 @@ class Symbolleisten(QWidget):
         k.setAutoRaise(True)
         a = QAction(k)
         if icons.hat(sym):
-            a.setIcon(icons.icon(sym, 18))
-            k.setIconSize(QSize(18, 18))
+            a.setIcon(icons.icon(sym, ICON_GROSS))
+            k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
             k.setToolButtonStyle(Qt.ToolButtonIconOnly)
         else:
             a.setText(BUCHSTABEN.get(sym, (sym,))[0])
@@ -143,7 +157,7 @@ class Symbolleisten(QWidget):
             if sym == "U": f.setUnderline(True)
             if sym == "S": f.setStrikeOut(True)
             k.setFont(f)
-            k.setMinimumWidth(28)
+            k.setMinimumWidth(BREITE_LEISTENKNOPF_MIN)
         a.setToolTip(tip)
         k.setDefaultAction(a)
         k.setToolTip(tip)
@@ -190,7 +204,7 @@ class Symbolleisten(QWidget):
                         fn = getattr(self.b, "menue_" + e["klappe"], None)
                         if fn:
                             kn = QToolButton(); kn.setAutoRaise(True); kn.setPopupMode(QToolButton.InstantPopup)
-                            kn.setIcon(icons.icon(e["symbol"], 18)); kn.setToolTip(e["name"])
+                            kn.setIcon(icons.icon(e["symbol"], ICON_GROSS)); kn.setToolTip(e["name"])
                             kn.setMenu(fn())
                             self.z3.addWidget(kn)
                         continue

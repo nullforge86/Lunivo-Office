@@ -14,6 +14,19 @@ from PySide6.QtCore import QEventLoop, Qt
 from PySide6.QtWidgets import QDialog, QFrame, QSizePolicy, QHBoxLayout, QLabel, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.baukasten.panel_rahmen import PANEL_INHALT_RAND, rollflaeche
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_PANELKNOPF,
+    ICON_NORMAL,
+    MARGIN_OBEN_GRUPPE_ZUSATZ,
+    MARGIN_RECHTS_ZUSATZ_REITER,
+    PADDING_GRUPPENTITEL,
+    PADDING_GRUPPE_OBEN,
+    PADDING_ZUSATZ_REITER,
+    RAND_KEIN,
+    SCHRIFT_KLEIN,
+)
 
 
 class _Seite(QWidget):
@@ -23,19 +36,17 @@ class _Seite(QWidget):
     def __init__(self, d: QDialog):
         super().__init__()
         self.dialog = d
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        halter = QWidget(); hv = QVBoxLayout(halter); hv.setContentsMargins(0, 0, 0, 0); hv.setSpacing(0)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+        halter = QWidget(); hv = QVBoxLayout(halter); hv.setContentsMargins(*RAND_KEIN); hv.setSpacing(0)
         hv.addWidget(d); hv.addStretch(1)                                              # das Fenster bleibt in seiner Höhe, Platz darunter bleibt leer
-        self.sa = QScrollArea(); self.sa.setWidgetResizable(True); self.sa.setFrameShape(QFrame.NoFrame)
-        self.sa.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)                   # nie seitlich rollen: die Breite der Seitenleiste bleibt
-        self.sa.setWidget(halter)
+        self.sa = rollflaeche(halter)                                                 # nie seitlich rollen: die Breite der Seitenleiste bleibt
         self.sa.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding); self.sa.setMinimumWidth(0)
         v.addWidget(self.sa, 1)
         self.knopfzeile = self._anheften(d)
         if self.knopfzeile is not None:
-            self.knopfzeile.setContentsMargins(0, 0, 0, 0)
-            rand = QWidget(); rv = QVBoxLayout(rand); rv.setContentsMargins(12, 8, 12, 10); rv.addWidget(self.knopfzeile)
-            linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Plain); linie.setStyleSheet("color: palette(midlight);")
+            self.knopfzeile.setContentsMargins(*RAND_KEIN)
+            rand = QWidget(); rv = QVBoxLayout(rand); rv.setContentsMargins(*PANEL_INHALT_RAND); rv.addWidget(self.knopfzeile)
+            linie = trennlinie()
             v.addWidget(linie); v.addWidget(rand)
 
     @staticmethod
@@ -61,15 +72,15 @@ class _Seite(QWidget):
 
 FLACHE_REITER = (                                                             # flach: Reiter ohne Rahmen um die Seite, nur eine Linie unter dem gewählten Reiter (kein Rahmen im Rahmen)
     "QTabWidget::pane { border: none; border-top: 1px solid palette(midlight); }"
-    "QTabBar::tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 5px 10px; margin-right: 2px; color: palette(text); }"
+    "QTabBar::tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: " f"{PADDING_ZUSATZ_REITER}" "; margin-right: " f"{MARGIN_RECHTS_ZUSATZ_REITER}" "; color: palette(text); }"
     "QTabBar::tab:selected { font-weight: 600; border-bottom: 2px solid palette(highlight); }"
     "QTabBar::tab:hover:!selected { border-bottom: 2px solid palette(midlight); }")
 
 
 def zusatz_knopf(symbol: str, tipp: str, aktion: Callable | None, name: str = "") -> QToolButton:
     """Ein Knopf der Titelzeile (Zurück, Schließen, Anheften): flach, mit Symbol aus ``icons``."""
-    k = QToolButton(); k.setIcon(icons.icon(symbol, 16)); k.setToolTip(tipp); k.setAccessibleName(name or tipp)
-    k.setAutoRaise(True); k.setFixedSize(30, 30)
+    k = QToolButton(); k.setIcon(icons.icon(symbol, ICON_NORMAL)); k.setToolTip(tipp); k.setAccessibleName(name or tipp)
+    k.setAutoRaise(True); k.setFixedSize(*GROESSE_PANELKNOPF)
     if aktion is not None:
         k.clicked.connect(aktion)
     return k
@@ -77,15 +88,9 @@ def zusatz_knopf(symbol: str, tipp: str, aktion: Callable | None, name: str = ""
 
 def zusatz_kopf(*teile: QWidget) -> QWidget:
     """Die Titelzeile der Seitenleistenfenster samt Linie darunter: ``teile`` von links nach rechts; das erste QLabel/der Titel nimmt den freien Platz.
-    Gemeinsam benutzt von ``ZusatzPanel`` und dem Bereich „Formatierung“ der Seitenleiste."""
-    ganz = QWidget(); gv = QVBoxLayout(ganz); gv.setContentsMargins(0, 0, 0, 0); gv.setSpacing(0)
-    kopf = QWidget(); h = QHBoxLayout(kopf); h.setContentsMargins(10, 8, 8, 8); h.setSpacing(4)
-    for t in teile:
-        h.addWidget(t, 1 if isinstance(t, QLabel) else 0)
-    gv.addWidget(kopf)
-    linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Plain); linie.setStyleSheet("color: palette(midlight);")
-    gv.addWidget(linie)
-    return ganz
+    Dünne Hülle um ``panel_kopf`` (``panel_rahmen.py``). Gemeinsam benutzt von ``ZusatzPanel`` und dem Bereich „Formatierung“ der Seitenleiste."""
+    from lunivo_writer.ui.baukasten.panel_rahmen import panel_kopf
+    return panel_kopf(*teile)
 
 
 class ZusatzPanel(QWidget):
@@ -98,7 +103,7 @@ class ZusatzPanel(QWidget):
         self.setMinimumWidth(0)
         self.verfuegbar = 360                                                          # Breite für den Inhalt in Pixeln (setzt die Seitenleiste)
         self.verfuegbar_hoehe = 520                                                    # Höhe für den Inhalt in Pixeln (setzt die Seitenleiste)
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
         self.zurueck = zusatz_knopf("arrow-left", "Zurück", self._zurueck)
         self.titel = QLabel(); self.titel.setWordWrap(True)
         f = self.titel.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 1); self.titel.setFont(f)
@@ -117,12 +122,8 @@ class ZusatzPanel(QWidget):
         d.setMinimumSize(0, 0)
         if hasattr(d, "passe_an"):
             d.passe_an(self.verfuegbar, self.verfuegbar_hoehe)                         # Fenster, die sich an den echten Platz anpassen (Farbraster, Vorschau, volle Höhe)
-        from PySide6.QtWidgets import QGroupBox
-        for g in d.findChildren(QGroupBox):                                           # Gruppen wie die Abschnittstitel: Großbuchstaben, flach, mit Linie darüber
-            g.setTitle(g.title().rstrip(":").upper())
-            g.setStyleSheet("QGroupBox { border: none; border-top: 1px solid palette(midlight); margin-top: 10px; padding-top: 8px; }"
-                            "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 8px 0 0; "
-                            "color: palette(mid); font-size: 8pt; font-weight: 600; }")
+        from lunivo_writer.ui.baukasten.flache_reiter_leiste import alle_flach
+        alle_flach(d)                                                                  # alle Reiter im Fenster: dieselbe flache Leiste wie überall in der Seitenleiste
         from lunivo_writer.ui.baukasten.karten_raster import kurze_gruppen_ins_raster
         kurze_gruppen_ins_raster(d)                                                    # kurze Ankreuzfelder/Optionen/Knöpfe untereinander → nebeneinander im Raster
         from lunivo_writer.ui.baukasten.schmal import schmal_machen
@@ -234,6 +235,10 @@ def leiste_fuer(d: QDialog):
     if not fenster.isVisible() or (arbeit is not None and arbeit.isHidden()):         # zum Beispiel bei geöffneter Datei-Ansicht: die Seitenleiste wäre verdeckt
         return None
     leiste = getattr(fenster, "sidebar", None)
+    if getattr(fenster, "zusatz_seite", "rechts") == "links":                           # der Klick kam aus der linken Leiste: dort zeigen
+        links = getattr(fenster, "navigation", None)
+        if links is not None and links.isVisible() and hasattr(links, "zusatz_ausfuehren"):
+            leiste = links
     if leiste is None or not hasattr(leiste, "zusatz_ausfuehren"):
         return None
     st = getattr(fenster, "settings", None)

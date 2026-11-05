@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QCalendarWidget, QDialog, QLabel, QLineEdit, QList
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import BREITE_EINGABEFENSTER, HOEHE_EINGABEFELD, HOEHE_EINGABE_TEXT
 
 
 class EingabeFenster(PanelFaehig, QDialog):
@@ -50,7 +51,7 @@ class EingabeFenster(PanelFaehig, QDialog):
             g.breit(self.kalender)
             self.feld = self.liste = None
         elif mehrzeilig:
-            self.feld = QPlainTextEdit(text); self.feld.setMinimumHeight(110); self.feld.setAccessibleName(titel)
+            self.feld = QPlainTextEdit(text); self.feld.setMinimumHeight(HOEHE_EINGABE_TEXT); self.feld.setAccessibleName(titel)
             self.feld.selectAll()
             f.setBuddy(self.feld)
             g.breit(self.feld)
@@ -59,14 +60,14 @@ class EingabeFenster(PanelFaehig, QDialog):
             self.feld = QLineEdit(text)
             if kennwort:
                 self.feld.setEchoMode(QLineEdit.Password)
-            self.feld.setMinimumHeight(30); self.feld.setAccessibleName(titel); self.feld.selectAll()
+            self.feld.setMinimumHeight(HOEHE_EINGABEFELD); self.feld.setAccessibleName(titel); self.feld.selectAll()
             self.feld.returnPressed.connect(self.accept)
             f.setBuddy(self.feld)
             g.breit(self.feld)
             self.liste = None
         v.addWidget(inhalt)
         fussleiste(self, v)
-        self.resize(300, 0)
+        self.resize(BREITE_EINGABEFENSTER, 0)
 
     def wert(self) -> str:
         """Der gewählte Eintrag oder der getippte Text."""

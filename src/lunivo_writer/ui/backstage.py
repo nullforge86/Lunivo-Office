@@ -13,14 +13,60 @@ from datetime import datetime
 from PySide6.QtCore import QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QKeySequence, QPainter, QPalette, QPen, QShortcut
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
+    QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QStackedWidget,
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
 from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_GROSS,
+    ABSTAND_KEIN,
+    ABSTAND_KLEIN,
+    ABSTAND_MITTEL,
+    BREITE_FELD_BACKSTAGE,
+    BREITE_FELD_ORT,
+    BREITE_NAMENSFELD,
+    BREITE_NAVIGATION_BACKSTAGE,
+    BREITE_NAVIGATION_OPTIONEN,
+    BREITE_ZEILENHINWEIS,
+    BREITE_ZEILE_BACKSTAGE,
+    GROESSE_KNOPF_MIN,
+    HOEHE_ABSTAND_LISTE,
+    HOEHE_KNOPF,
+    HOEHE_TRENNER_LISTE,
+    HOEHE_ZEILE_ZULETZT,
+    ICON_GROSS,
+    ICON_KACHEL,
+    ICON_KLEIN,
+    ICON_KNOPF_GROSS,
+    ICON_LISTE,
+    ICON_NORMAL,
+    PADDING_BACKSTAGE_FERTIG,
+    PADDING_BACKSTAGE_KNOPF,
+    PADDING_BACKSTAGE_ZURUECK,
+    PADDING_LINKS_BACKSTAGE_LISTE,
+    PADDING_NAVIGATION_EINTRAG,
+    RADIUS_FELD,
+    RADIUS_KLEIN,
+    RAND_BACKSTAGE_SEITE,
+    RAND_FUSS_BACKSTAGE,
+    RAND_FUSS_RECHTS,
+    RAND_KEIN,
+    RAND_KOPF_LINKS,
+    RAND_LISTENKOPF,
+    RAND_ZEILE,
+    RAND_ZEILE_BACKSTAGE,
+    RAND_ZULETZT_ZEILE,
+    SCHRIFT_LISTE,
+    SCHRIFT_UEBERSCHRIFT,
+    SCHRIFT_UEBERSCHRIFT_KLEIN,
+)
 
 # Das Menü links nach Kays Vorbild (Bildschirmfoto „Menü“): große Zeilen mit Liniensymbol, Pfeil bei Einträgen mit eigener Seite.
 # (Schlüssel, Beschriftung, Symbol, Art: "seite" | "tun" | "trenner", Seite bzw. Befehl)
@@ -50,7 +96,7 @@ SYMBOLE = {
 }
 
 
-def symbol(name: str, px: int = 24):
+def symbol(name: str, px: int = ICON_LISTE):
     return icons.icon(SYMBOLE[name], px)
 
 class _Zeile(QStyledItemDelegate):
@@ -68,7 +114,7 @@ class _Zeile(QStyledItemDelegate):
         super().paint(p, opt, idx)
         if idx.data(PFEIL):
             p.save()
-            pm = icons.icon("chevron-right", 14).pixmap(14, 14)
+            pm = icons.icon("chevron-right", ICON_KLEIN).pixmap(ICON_KLEIN, ICON_KLEIN)
             p.drawPixmap(opt.rect.right() - 18, opt.rect.center().y() - 7, pm)
             p.restore()
 
@@ -84,9 +130,11 @@ EXPORTE = [("PDF-Dokument (.pdf)", "speichernPdf"), ("Word-Dokument (.docx)", "e
 EXPORT_ENDUNG = {"speichernPdf": ".pdf", "exportierenDocx": ".docx", "exportierenOdt": ".odt",
                  "exportierenRtf": ".rtf", "exportierenTxt": ".txt", "exportierenPng": ".png"}
 
-BREITE = 460
+BREITE = BREITE_ZEILE_BACKSTAGE
 
-STIL = ('\nQWidget#bsLinks { background: palette(window); }\nQListWidget#bsListe { background: transparent; border: none; outline: none; }\nQListWidget#bsListe { font-size: 11pt; }\nQListWidget#bsListe::item { padding-left: 18px; border: none; }\nQListWidget#bsListe::item:selected, QListWidget#bsListe::item:hover:enabled { background: palette(midlight); color: palette(window-text); }\nQListWidget#bsListe::item:disabled { color: palette(mid); }\nQLabel#bsZuletzt { font-size: 11pt; }\nQPushButton#bsDatei { border: none; background: transparent; text-align: left; padding: 8px 10px; border-radius: 4px; }\nQPushButton#bsDatei:hover:enabled { background: palette(midlight); }\nQToolButton#bsKlein { border: none; background: transparent; border-radius: 4px; }\nQToolButton#bsKlein:hover { background: palette(midlight); }\nQWidget#bsRechts, QScrollArea#bsSeite, QScrollArea#bsSeite > QWidget > QWidget { background: palette(base); }\nQLabel#bsTitel { font-size: 17pt; }\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQWidget#optKopf { border: none; }\nQPushButton#optZurueck { border: none; background: transparent; font-size: 14pt; font-weight: 600; text-align: left; padding: 4px 6px; }\nQPushButton#optFertig { background: ' + Farbe.AKZENT + '; color: white; border: none; border-radius: 6px; padding: 9px 30px; font-weight: 600; }\nQPushButton#optFertig:hover { background: ' + Farbe.AKZENT_DUNKEL + '; }\nQLabel#bsGruppe { font-size: 11pt; font-weight: 600; }\nQLabel#bsHinweis { color: palette(mid); }\nQPushButton#bsKnopf { border: none; background: transparent; padding: 9px 12px; text-align: left; border-radius: 6px; }\nQPushButton#bsKnopf:hover:enabled { background: palette(midlight); }\nQPushButton#bsKnopf:disabled { color: palette(mid); }\n')
+def stil() -> str:
+    """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
+    return ('\nQWidget#bsLinks { background: palette(window); }\nQListWidget#bsListe { background: transparent; border: none; outline: none; }\nQListWidget#bsListe { font-size: ' f"{SCHRIFT_LISTE}" 'pt; }\nQListWidget#bsListe::item { padding-left: ' f"{PADDING_LINKS_BACKSTAGE_LISTE}" '; border: none; }\nQListWidget#bsListe::item:selected, QListWidget#bsListe::item:hover:enabled { background: palette(midlight); color: palette(window-text); }\nQListWidget#bsListe::item:disabled { color: palette(mid); }\nQLabel#bsZuletzt { font-size: ' f"{SCHRIFT_LISTE}" 'pt; }\nQPushButton#bsDatei { border: none; background: transparent; text-align: left; padding: ' f"{PADDING_NAVIGATION_EINTRAG}" '; border-radius: ' f"{RADIUS_KLEIN}" 'px; }\nQPushButton#bsDatei:hover:enabled { background: palette(midlight); }\nQToolButton#bsKlein { border: none; background: transparent; border-radius: ' f"{RADIUS_KLEIN}" 'px; }\nQToolButton#bsKlein:hover { background: palette(midlight); }\nQWidget#bsRechts, QScrollArea#bsSeite, QScrollArea#bsSeite > QWidget > QWidget { background: palette(base); }\nQLabel#bsTitel { font-size: ' f"{SCHRIFT_UEBERSCHRIFT}" 'pt; }\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQWidget#optKopf { border: none; }\nQPushButton#optZurueck { border: none; background: transparent; font-size: ' f"{SCHRIFT_UEBERSCHRIFT_KLEIN}" 'pt; font-weight: 600; text-align: left; padding: ' f"{PADDING_BACKSTAGE_ZURUECK}" '; }\nQPushButton#optFertig { border: none; border-radius: ' f"{RADIUS_FELD}" 'px; padding: ' f"{PADDING_BACKSTAGE_FERTIG}" '; font-weight: 600; }\nQLabel#bsGruppe { font-size: ' f"{SCHRIFT_LISTE}" 'pt; font-weight: 600; }\nQLabel#bsHinweis { color: palette(mid); }\nQPushButton#bsKnopf { border: none; background: transparent; padding: ' f"{PADDING_BACKSTAGE_KNOPF}" '; text-align: left; border-radius: ' f"{RADIUS_FELD}" 'px; }\nQPushButton#bsKnopf:hover:enabled { background: palette(midlight); }\nQPushButton#bsKnopf:disabled { color: palette(mid); }\n')
 
 
 class Backstage(QWidget):
@@ -95,18 +143,14 @@ class Backstage(QWidget):
     def __init__(self, fenster):
         super().__init__()
         self.w = fenster
-        self.setStyleSheet(STIL)
-        lay = QHBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(0)
+        self.setStyleSheet(stil())
         links = QWidget()
         links.setObjectName("bsLinks")
-        links.setFixedWidth(310)
         ll = QVBoxLayout(links)
-        ll.setContentsMargins(0, 10, 0, 10)
+        ll.setContentsMargins(*RAND_LISTENKOPF)
         self.liste = QListWidget()
         self.liste.setObjectName("bsListe")
-        self.liste.setIconSize(QSize(24, 24))
+        self.liste.setIconSize(QSize(ICON_LISTE, ICON_LISTE))
         self.liste.setFocusPolicy(Qt.StrongFocus)
         self.liste.setAccessibleName("Datei-Navigation")
         self.liste.setAccessibleDescription("Mit Pfeiltasten wählen, mit Eingabe öffnen, Esc schließt die Datei-Ansicht")
@@ -114,15 +158,16 @@ class Backstage(QWidget):
         self.liste.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         ll.addWidget(self.liste, 1)
-        lay.addWidget(links)
         self._links = links                                          # bei den Optionen ausgeblendet
         self.rechts = QWidget()
         self.rechts.setObjectName("bsRechts")
         rl = QVBoxLayout(self.rechts)
-        rl.setContentsMargins(0, 0, 0, 0)
+        rl.setContentsMargins(*RAND_KEIN)
         self.stapel = QStackedWidget()
         rl.addWidget(self.stapel)
-        lay.addWidget(self.rechts, 1)
+        # bildschirmbreit: die Menüleiste steht immer links (breit_ab=0 = ohne Umbruch), aber aus dem gemeinsamen Baustein
+        self.spalten = ZweiSpalter(links, self.rechts, breit_ab=0, links_breite=BREITE_NAVIGATION_BACKSTAGE)
+        lay = QVBoxLayout(self); lay.setContentsMargins(*RAND_KEIN); lay.setSpacing(ABSTAND_KEIN); lay.addWidget(self.spalten)
         self.zeilen: dict[str, QListWidgetItem] = {}
         for schl, text, sym, art, _b in EINTRAEGE:
             it = QListWidgetItem(text)
@@ -130,11 +175,11 @@ class Backstage(QWidget):
             it.setData(PFEIL, schl in MIT_PFEIL)
             if art == "trenner":
                 it.setFlags(Qt.NoItemFlags)
-                it.setSizeHint(QSize(10, 16))
+                it.setSizeHint(QSize(BREITE_ZEILENHINWEIS, HOEHE_TRENNER_LISTE))
                 it.setText("")
             else:
                 it.setIcon(symbol(sym))
-                it.setSizeHint(QSize(10, 54))
+                it.setSizeHint(QSize(BREITE_ZEILENHINWEIS, HOEHE_ABSTAND_LISTE))
             self.zeilen[schl] = it
             self.liste.addItem(it)
         self.liste.itemClicked.connect(self._gewaehlt)
@@ -175,7 +220,7 @@ class Backstage(QWidget):
     def _optionen(self) -> QWidget:
         """Platzhalter: die Optionen werden erst gebaut, wenn die Seite zum ersten Mal gezeigt wird."""
         ph = QWidget()
-        QVBoxLayout(ph).setContentsMargins(0, 0, 0, 0)
+        QVBoxLayout(ph).setContentsMargins(*RAND_KEIN)
         ph._ansicht = None
         return ph
 
@@ -184,23 +229,23 @@ class Backstage(QWidget):
         ph = self.seiten["optionen"]
         self._links.hide()                                           # die Optionen füllen die ganze Breite; das Menü ist für die Dauer weg
         if ph._ansicht is None:
-            v = ph.layout(); v.setSpacing(0)                         # keine Lücke zwischen Optionen und Fußleiste: die linke Fläche bleibt ganz
+            v = ph.layout(); v.setSpacing(ABSTAND_KEIN)                         # keine Lücke zwischen Optionen und Fußleiste: die linke Fläche bleibt ganz
             kopf = QWidget(); kopf.setObjectName("optKopf")
-            kh = QHBoxLayout(kopf); kh.setContentsMargins(0, 0, 0, 0); kh.setSpacing(0)
-            kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(250)         # die linke Fläche beginnt schon in der Kopfzeile
+            kh = QHBoxLayout(kopf); kh.setContentsMargins(*RAND_KEIN); kh.setSpacing(ABSTAND_KEIN)
+            kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)         # die linke Fläche beginnt schon in der Kopfzeile
             kopf_links.setAttribute(Qt.WA_StyledBackground, True)
-            kl = QHBoxLayout(kopf_links); kl.setContentsMargins(14, 10, 14, 10)
-            zurueck = QPushButton("Optionen"); zurueck.setIcon(icons.icon("arrow-left", 16))
+            kl = QHBoxLayout(kopf_links); kl.setContentsMargins(*RAND_KOPF_LINKS)
+            zurueck = QPushButton("Optionen"); zurueck.setIcon(icons.icon("arrow-left", ICON_NORMAL))
             zurueck.setObjectName("optZurueck"); zurueck.setFlat(True); zurueck.setCursor(Qt.PointingHandCursor)
             zurueck.setToolTip("Optionen verlassen")
             zurueck.clicked.connect(self.schliessen)
             kl.addWidget(zurueck); kl.addStretch(1)
             kh.addWidget(kopf_links); kh.addStretch(1)
             ph._ansicht = OptionenAnsicht(self.w, getattr(self, "_optionen_unter", None))
-            fuss = QWidget(); fh = QHBoxLayout(fuss); fh.setContentsMargins(0, 0, 0, 0); fh.setSpacing(0)
-            unten_links = QWidget(); unten_links.setObjectName("optLinks"); unten_links.setFixedWidth(250)     # die linke Fläche läuft bis ganz unten durch
+            fuss = QWidget(); fh = QHBoxLayout(fuss); fh.setContentsMargins(*RAND_KEIN); fh.setSpacing(ABSTAND_KEIN)
+            unten_links = QWidget(); unten_links.setObjectName("optLinks"); unten_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)     # die linke Fläche läuft bis ganz unten durch
             unten_links.setAttribute(Qt.WA_StyledBackground, True)
-            rechts_fuss = QHBoxLayout(); rechts_fuss.setContentsMargins(24, 10, 24, 14)
+            rechts_fuss = QHBoxLayout(); rechts_fuss.setContentsMargins(*RAND_FUSS_RECHTS)
             fertig = QPushButton("Fertig"); fertig.setObjectName("optFertig"); fertig.setCursor(Qt.PointingHandCursor)
             fertig.clicked.connect(self.schliessen)
             rechts_fuss.addStretch(1); rechts_fuss.addWidget(fertig)
@@ -258,8 +303,8 @@ class Backstage(QWidget):
         sa.setFrameShape(QFrame.NoFrame)
         inh = QWidget()
         v = QVBoxLayout(inh)
-        v.setContentsMargins(44, 36, 44, 24)
-        v.setSpacing(8)
+        v.setContentsMargins(*RAND_BACKSTAGE_SEITE)
+        v.setSpacing(ABSTAND_MITTEL)
         if titel:
             t = QLabel(titel)
             t.setObjectName("bsTitel")
@@ -286,9 +331,9 @@ class Backstage(QWidget):
         k.setObjectName("bsKnopf")
         sym = datei_symbol(datei) if datei else None
         if sym is not None and not sym.isNull():                       # eigenes, vollständiges Dateiformatblatt
-            k.setIcon(sym); k.setIconSize(QSize(28, 28))
+            k.setIcon(sym); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
         elif icon and icons.hat(icon):
-            icons.setze(k, icon, 18)
+            icons.setze(k, icon, ICON_GROSS)
         k.setEnabled(self.w.befehle.hat(befehl))
         k.setCursor(Qt.PointingHandCursor)
         k.setFixedWidth(BREITE)                               # alle Zeilen gleich breit, keine Kästen
@@ -300,17 +345,17 @@ class Backstage(QWidget):
     def _zuletzt(self):
         """Rechts neben dem Menü: die zuletzt verwendeten Dateien (Name, Ordner, Datum; ✕ nimmt sie aus der Liste)."""
         sa, v = self._seite("")
-        v.setContentsMargins(22, 14, 22, 14)
-        v.setSpacing(2)
+        v.setContentsMargins(*RAND_ZEILE_BACKSTAGE)
+        v.setSpacing(ABSTAND_ENG)
         kopf = QHBoxLayout()
         t = QLabel("Zuletzt verwendete Dokumente"); t.setObjectName("bsZuletzt")
         oeffnen = QPushButton("Weitere Dokumente öffnen …")
         oeffnen.setObjectName("bsKnopf")
-        oeffnen.setIcon(symbol("oeffnen", 18)); oeffnen.setIconSize(QSize(18, 18))
+        oeffnen.setIcon(symbol("oeffnen", ICON_GROSS)); oeffnen.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         oeffnen.setCursor(Qt.PointingHandCursor)
         oeffnen.setToolTip("Datei im Dateiauswahldialog suchen")
         oeffnen.clicked.connect(lambda: (self.schliessen.emit(), self.w.open_dialog()))
-        neu = QToolButton(); neu.setObjectName("bsKlein"); neu.setIcon(symbol("neu_laden", 16)); neu.setIconSize(QSize(16, 16))
+        neu = QToolButton(); neu.setObjectName("bsKlein"); neu.setIcon(symbol("neu_laden", ICON_NORMAL)); neu.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
         neu.setToolTip("Liste neu laden"); neu.setCursor(Qt.PointingHandCursor)
         neu.clicked.connect(lambda: self.oeffnen("zuletzt"))
         kopf.addWidget(t); kopf.addStretch(1); kopf.addWidget(oeffnen); kopf.addWidget(neu)
@@ -323,7 +368,7 @@ class Backstage(QWidget):
             v.addWidget(h)
         heim = os.path.expanduser("~")
         for p in pfade:
-            zeile = QHBoxLayout(); zeile.setSpacing(4)
+            zeile = QHBoxLayout(); zeile.setSpacing(ABSTAND_KLEIN)
             k = QPushButton()
             k.setObjectName("bsDatei")
             k.setCursor(Qt.PointingHandCursor)
@@ -332,17 +377,17 @@ class Backstage(QWidget):
             k.setAccessibleName(os.path.basename(p))               # sichtbar sind Name, Ordner und Datum als eigene Zeilen
             k.setToolTip(p)
             sym = datei_symbol(p)                                    # vollständiges, formatspezifisches Blatt
-            k.setIcon(sym if not sym.isNull() else symbol("datei", 32))
-            k.setIconSize(QSize(32, 32))
+            k.setIcon(sym if not sym.isNull() else symbol("datei", ICON_KACHEL))
+            k.setIconSize(QSize(ICON_KACHEL, ICON_KACHEL))
             k.setEnabled(os.path.exists(p))
             k.clicked.connect(lambda _=False, p=p: (self.schliessen.emit(), self.w.open_path(p)))
-            text = QVBoxLayout(); text.setSpacing(0); text.setContentsMargins(0, 0, 0, 0)
+            text = QVBoxLayout(); text.setSpacing(ABSTAND_KEIN); text.setContentsMargins(*RAND_KEIN)
             name = QLabel(os.path.basename(p)); name.setAttribute(Qt.WA_TransparentForMouseEvents)
             ort = QLabel(ordner); ort.setObjectName("bsHinweis"); ort.setAttribute(Qt.WA_TransparentForMouseEvents)
-            ort.setMaximumWidth(380)
+            ort.setMaximumWidth(BREITE_FELD_ORT)
             ort.setText(ort.fontMetrics().elidedText(ordner, Qt.ElideRight, 380))
             text.addWidget(name); text.addWidget(ort)
-            innen = QHBoxLayout(k); innen.setContentsMargins(52, 6, 12, 6)
+            innen = QHBoxLayout(k); innen.setContentsMargins(*RAND_ZULETZT_ZEILE)
             innen.addLayout(text); innen.addStretch(1)
             try:
                 datum = datetime.fromtimestamp(os.path.getmtime(p))
@@ -352,8 +397,8 @@ class Backstage(QWidget):
                 d = QLabel("")
             d.setObjectName("bsHinweis"); d.setAttribute(Qt.WA_TransparentForMouseEvents)
             innen.addWidget(d)
-            k.setMinimumHeight(56)
-            weg = QToolButton(); weg.setObjectName("bsKlein"); weg.setIcon(symbol("weg", 14)); weg.setIconSize(QSize(14, 14))
+            k.setMinimumHeight(HOEHE_ZEILE_ZULETZT)
+            weg = QToolButton(); weg.setObjectName("bsKlein"); weg.setIcon(symbol("weg", ICON_KLEIN)); weg.setIconSize(QSize(ICON_KLEIN, ICON_KLEIN))
             weg.setToolTip("Aus der Liste nehmen"); weg.setCursor(Qt.PointingHandCursor)
             weg.clicked.connect(lambda _=False, p=p: (self.w.settings.remove_recent(p), self.oeffnen("zuletzt")))
             zeile.addWidget(k, 1); zeile.addWidget(weg)
@@ -372,11 +417,11 @@ class Backstage(QWidget):
         self._gruppe(v, "Weiteres")
         for text, ziel, sym in (("Informationen und Eigenschaften", "info", "inhalt"), ("Öffnen mit …", "oeffnen_mit", "buch")):
             k = QPushButton(text); k.setObjectName("bsKnopf"); k.setFixedWidth(BREITE); k.setCursor(Qt.PointingHandCursor)
-            icons.setze(k, sym, 18)
+            icons.setze(k, sym, ICON_GROSS)
             k.clicked.connect(lambda _=False, z=ziel: self._zeigen(z))
             v.addWidget(k)
         ort = QPushButton("Dateispeicherort öffnen"); ort.setObjectName("bsKnopf"); ort.setFixedWidth(BREITE)
-        icons.setze(ort, "oeffnen", 18); ort.setCursor(Qt.PointingHandCursor); ort.clicked.connect(self._speicherort)
+        icons.setze(ort, "oeffnen", ICON_GROSS); ort.setCursor(Qt.PointingHandCursor); ort.clicked.connect(self._speicherort)
         v.addWidget(ort)
         v.addStretch(1)
         return sa
@@ -384,7 +429,7 @@ class Backstage(QWidget):
     def _vorlage(self) -> QWidget:
         """Platzhalter: die Galerie mit den Vorschauen wird erst gebaut, wenn die Seite gezeigt wird."""
         ph = QWidget()
-        QVBoxLayout(ph).setContentsMargins(0, 0, 0, 0)
+        QVBoxLayout(ph).setContentsMargins(*RAND_KEIN)
         ph._ansicht = None
         return ph
 
@@ -402,7 +447,7 @@ class Backstage(QWidget):
     def _drucken(self) -> QWidget:
         """Platzhalter: das Druckfenster samt Vorschau wird erst gebaut, wenn die Seite gezeigt wird."""
         ph = QWidget()
-        QVBoxLayout(ph).setContentsMargins(0, 0, 0, 0)
+        QVBoxLayout(ph).setContentsMargins(*RAND_KEIN)
         ph._ansicht = None
         return ph
 
@@ -444,10 +489,10 @@ class Backstage(QWidget):
         v = ph.layout()
         ph._ansicht = self.w.druck_ansicht(t)
         v.addWidget(ph._ansicht, 1)
-        fuss = QHBoxLayout(); fuss.setContentsMargins(14, 8, 14, 12)
+        fuss = QHBoxLayout(); fuss.setContentsMargins(*RAND_FUSS_BACKSTAGE)
         hilfe = QPushButton("Hilfe"); hilfe.clicked.connect(self.w.druck_hilfe)
         drucken = QPushButton("Drucken"); drucken.setObjectName("optFertig"); drucken.setDefault(True); drucken.setCursor(Qt.PointingHandCursor)
-        drucken.setMinimumSize(100, 34); hilfe.setMinimumHeight(34)
+        drucken.setMinimumSize(*GROESSE_KNOPF_MIN); hilfe.setMinimumHeight(HOEHE_KNOPF)
         drucken.clicked.connect(lambda: (self.schliessen.emit(), self.w.drucke_nach_wahl(t, ph._ansicht.ergebnis())))
         ph._ansicht.geaendert.connect(lambda: drucken.setEnabled(ph._ansicht.gueltig()))
         fuss.addWidget(hilfe); fuss.addStretch(1); fuss.addWidget(drucken)
@@ -466,14 +511,14 @@ class Backstage(QWidget):
         sa, v = self._seite("Dokumentverschlüsselung")
         t = self.w.current_tab()
         self._gruppe(v, "Kennwortschutz", "Das Kennwort schützt das Öffnen der DOCX-Datei. Die Verschlüsselung wird beim nächsten Speichern angewendet.")
-        kennwort_form = QWidget(); kg = QGridLayout(kennwort_form); kg.setContentsMargins(0, 4, 0, 4); kg.setHorizontalSpacing(10); kg.setVerticalSpacing(8)
+        kennwort_form = QWidget(); kg = FormularGitter(kennwort_form); kg.setContentsMargins(*RAND_ZEILE); kg.einspaltig = True; kg.beschriftung_voll = True
+        kg.beschriftungsabstand = ABSTAND_GROSS; kg.zeilenabstand = ABSTAND_MITTEL
         kennwort = QLineEdit(); kennwort.setEchoMode(QLineEdit.Password); kennwort.setPlaceholderText("Dokumentkennwort")
         bestaetigung = QLineEdit(); bestaetigung.setEchoMode(QLineEdit.Password); bestaetigung.setPlaceholderText("Kennwort erneut eingeben")
         kennwort.setAccessibleName("Dokumentkennwort"); bestaetigung.setAccessibleName("Bestätigung des Dokumentkennworts")
         kennwort.setEnabled(t is not None); bestaetigung.setEnabled(t is not None)
-        kg.addWidget(QLabel("Dokumentkennwort:"), 0, 0); kg.addWidget(kennwort, 0, 1)
-        kg.addWidget(QLabel("Erneut eingeben:"), 1, 0); kg.addWidget(bestaetigung, 1, 1)
-        kg.setColumnStretch(1, 1); v.addWidget(kennwort_form)
+        kg.zeile("Dokumentkennwort:", kennwort); kg.zeile("Erneut eingeben:", bestaetigung)
+        v.addWidget(kennwort_form)
 
         hinweis = QLabel("Ein vergessenes Kennwort kann nicht wiederhergestellt werden. Bewahre es an einem sicheren Ort auf.")
         hinweis.setWordWrap(True); hinweis.setObjectName("bsHinweis"); v.addWidget(hinweis)
@@ -519,7 +564,7 @@ class Backstage(QWidget):
         self._gruppe(v, "Dokument", "Weitere Dokumentaktionen")
         eigenschaften = QPushButton("Eigenschaften …")
         eigenschaften.setObjectName("bsKnopf"); eigenschaften.setFixedWidth(BREITE)
-        eigenschaften.setCursor(Qt.PointingHandCursor); icons.setze(eigenschaften, "info", 18)
+        eigenschaften.setCursor(Qt.PointingHandCursor); icons.setze(eigenschaften, "info", ICON_GROSS)
         eigenschaften.setToolTip("Dokumentangaben wie Titel und Verfasser anzeigen und bearbeiten.")
         eigenschaften.clicked.connect(lambda: self._zeigen("info"))
         v.addWidget(eigenschaften)
@@ -562,7 +607,7 @@ class Backstage(QWidget):
         self._gruppe(v, "Eigenschaften", "Werden mit dem Dokument gespeichert (DOCX: Titel und Verfasser).")
         for schl, name in (("author", "Verfasser"), ("title", "Titel")):
             e = QLineEdit(t.meta.get(schl, "") or "")
-            e.setFixedWidth(320)
+            e.setFixedWidth(BREITE_FELD_BACKSTAGE)
             e.editingFinished.connect(lambda e=e, s=schl, t=t: self._meta_setzen(t, s, e.text()))
             self._zeile(v, name, e)
         v.addStretch(1)
@@ -577,7 +622,7 @@ class Backstage(QWidget):
     def _zeile(v: QVBoxLayout, name: str, feld: QWidget):
         row = QHBoxLayout()
         n = QLabel(name)
-        n.setFixedWidth(190)
+        n.setFixedWidth(BREITE_NAMENSFELD)
         row.addWidget(n)
         row.addWidget(feld)
         row.addStretch(1)

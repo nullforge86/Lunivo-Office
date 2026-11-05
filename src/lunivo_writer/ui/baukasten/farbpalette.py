@@ -8,14 +8,18 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QGridLayout, QLabel, QMenu, QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+    QLabel, QLayout, QMenu, QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten import farben as F
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
     from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog
@@ -119,7 +123,7 @@ class _BildKachel(_Kachel):
         p.setPen(QPen(pal.highlight().color() if self._an else pal.mid().color(), 2 if self._an else 1)); p.setBrush(Qt.NoBrush); p.drawRect(r)
 
 
-class FarbPalette(QMenu):
+class FarbPalette(MenueListe):
     """Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“."""
 
     gewaehlt = Signal(object)        # QColor — oder None für „Keine Farbe“
@@ -136,49 +140,41 @@ class FarbPalette(QMenu):
         self._start, self._titel = start, titel
         wid = QWidget()
         v = QVBoxLayout(wid)
-        v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
+        v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_KLEIN)
         if keine_text:
             keine = QPushButton(keine_text); keine.setFlat(True); keine.setProperty("listenzeile", True)
             keine.setIcon(self._keine_symbol()); keine.clicked.connect(lambda: self.waehle(None))
             v.addWidget(keine)
-        v.addWidget(self._titel_zeile("Themenfarben"))
+        v.addWidget(self._titel_zeile("Thema-Farben"))
         v.addLayout(self._raster(F.thema_raster()))
         if standard:
-            v.addWidget(self._titel_zeile("Standardfarben"))
+            v.addWidget(self._titel_zeile("Standard-Farben"))
             v.addLayout(self._raster([list(F.STANDARD_FARBEN)]))
         if verlauf: # „Graduelle Füllung“ wie in der Vorlage: dieselben Farben als Verläufe
             v.addWidget(self._titel_zeile(verlauf_titel))
-            g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0); g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-            for i, farbe in enumerate(F.STANDARD_FARBEN):
-                g.addWidget(_VerlaufKachel(self, farbe), 0, i)
-            v.addLayout(g)
+            v.addLayout(kachel_gitter([_VerlaufKachel(self, farbe) for farbe in F.STANDARD_FARBEN], len(F.STANDARD_FARBEN), abstand=ABSTAND_ENG, oben_links=True))
         for titel_reihe, kacheln in (reihen or []):        # weitere Kachelreihen im Stil der Palette: (Titel, [(Schlüssel, Bild, Tipp)])
             v.addWidget(self._titel_zeile(titel_reihe))
-            g = QGridLayout(); g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0); g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-            for i, (schl, bild, tipp) in enumerate(kacheln):
-                g.addWidget(_BildKachel(self, schl, bild, tipp), 0, i)
-            v.addLayout(g)
+            v.addLayout(kachel_gitter([_BildKachel(self, schl, bild, tipp) for schl, bild, tipp in kacheln], max(1, len(kacheln)), abstand=ABSTAND_ENG, oben_links=True))
         letzte = F.zuletzt_laden() if zuletzt else []
         if letzte:
             v.addWidget(self._titel_zeile("Zuletzt benutzt"))
             v.addLayout(self._raster([letzte]))
         if automatisch:                                    # „Automatisch“ mit schwarzem Feld (Vorlage: Füllung)
             auto = QPushButton(automatisch); auto.setFlat(True); auto.setProperty("listenzeile", True)
-            pm = QPixmap(14, 14); pm.fill(QColor("black")); auto.setIcon(QIcon(pm)); auto.clicked.connect(lambda: self.waehle(QColor(Farbe.SCHWARZ)))
+            pm = QPixmap(14, 14); pm.fill(QColor(Farbe.SCHWARZ)); auto.setIcon(QIcon(pm)); auto.clicked.connect(lambda: self.waehle(QColor(Farbe.SCHWARZ)))
             v.addWidget(auto)
         if weitere:
-            mehr = QPushButton(weitere_text); mehr.setFlat(True); mehr.setProperty("listenzeile", True)
+            mehr = QPushButton(weitere_text); mehr.setFlat(True); mehr.setProperty("listenzeile", True); mehr.setIcon(icons.icon("palette", ICON_KLEIN))
             mehr.clicked.connect(self._weitere)
             v.addWidget(mehr)
             from lunivo_writer.ui.baukasten import pipette as _pip
             if _pip.AKTIV and pipette:
-                pip = QPushButton("Pipette"); pip.setFlat(True); pip.setProperty("listenzeile", True)
+                pip = QPushButton("Pipette"); pip.setFlat(True); pip.setProperty("listenzeile", True); pip.setIcon(icons.icon("pipette", ICON_KLEIN))
                 pip.clicked.connect(self._pipette)
                 v.addWidget(pip)
         self._spalte = v
-        a = QWidgetAction(self)
-        a.setDefaultWidget(wid)
-        self.addAction(a)
+        self.widget(wid)
 
     def zusatz_eintrag(self, text: str, aktion) -> None:
         """Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``."""
@@ -189,17 +185,15 @@ class FarbPalette(QMenu):
     @staticmethod
     def _titel_zeile(text: str) -> QLabel:
         l = QLabel(text)
-        l.setStyleSheet("color: palette(mid); font-size: 11px; padding-top: 2px;")
+        hinweis_stil(l, zusatz="font-size: " f"{SCHRIFT_GRUPPENTITEL_PX}" "px; padding-top: " f"{PADDING_PALETTE_TITEL_OBEN}" ";")
         return l
 
     @staticmethod
     def _keine_symbol() -> QIcon:
-        return icons.icon("ban", 14)
+        return icons.icon("ban", ICON_KLEIN)
 
-    def _raster(self, zeilen: list[list[str]]) -> QGridLayout:
-        g = QGridLayout()
-        g.setSpacing(2); g.setContentsMargins(0, 0, 0, 0)
-        g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+    def _raster(self, zeilen: list[list[str]]) -> QLayout:
+        g = kachel_gitter((), 1, abstand=ABSTAND_ENG, oben_links=True)
         for z, zeile in enumerate(zeilen):
             for s, farbe in enumerate(zeile):
                 g.addWidget(_Kachel(self, farbe), z, s)
@@ -232,8 +226,9 @@ class FarbFeld(QPushButton):
     farbeGeaendert = Signal(str)
     verlaufGewaehlt = Signal(str)          # Farbe, die als Farbverlauf gemeint ist (nur mit ``verlauf=True``)
 
-    def __init__(self, farbe: str = Farbe.SCHWARZ, titel: str = "Farbe", keine_text: str | None = None, parent=None, verlauf: bool = False):
+    def __init__(self, farbe: str | None = None, titel: str = "Farbe", keine_text: str | None = None, parent=None, verlauf: bool = False):
         super().__init__(parent)
+        farbe = Farbe.SCHWARZ if farbe is None else farbe
         self.farbe, self.titel, self.keine_text, self._verlauf = farbe, titel, keine_text, verlauf
         self.clicked.connect(self._waehle)
         self._zeige()
@@ -276,14 +271,15 @@ class FarbKnopf(QToolButton):
 
     angewendet = Signal(object)      # QColor oder None
 
-    def __init__(self, symbol: QIcon | None = None, text: str = "", farbe: str = Farbe.ROT, *, keine_text: str | None = "Keine Farbe",
+    def __init__(self, symbol: QIcon | None = None, text: str = "", farbe: str | None = None, *, keine_text: str | None = "Keine Farbe",
                  titel: str = "Farbe", parent=None):
         super().__init__(parent)
+        farbe = Farbe.ROT if farbe is None else farbe
         self._symbol, self.farbe, self._titel, self._keine = symbol, farbe, titel, keine_text
         self.setText(text); self.setToolTip(text or titel)
         self.setPopupMode(QToolButton.MenuButtonPopup)
         self.setToolButtonStyle(Qt.ToolButtonIconOnly if symbol else Qt.ToolButtonTextOnly)
-        self.setIconSize(QSize(22, 22))
+        self.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
         self.clicked.connect(lambda: self.angewendet.emit(QColor(self.farbe)))
         self.menu_neu()
         self._balken()
@@ -303,6 +299,6 @@ class FarbKnopf(QToolButton):
     def _balken(self) -> None:
         if self._symbol is None:
             return
-        pm = self._symbol.pixmap(22, 22)
+        pm = self._symbol.pixmap(ICON_MITTEL, ICON_MITTEL)
         p = QPainter(pm); p.fillRect(2, pm.height() - 5, pm.width() - 4, 4, QColor(self.farbe)); p.end()
         self.setIcon(QIcon(pm))

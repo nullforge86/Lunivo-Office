@@ -10,7 +10,7 @@ Das Fenster ändert keinen Text; der Aufrufer setzt ``P_RUBY`` (``Befehle.phonet
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout
 
 from lunivo_writer.editor.zeichenzusatz import AUSRICHTUNGEN
@@ -18,6 +18,8 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.mass_feld import spin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
 
 STANDARD = {"ausrichtung": "zentriert", "abstand": 0.0, "groesse": 7.0}
 
@@ -31,18 +33,18 @@ class RubyDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         self.tabelle = QTableWidget(0, 2); self.tabelle.setHorizontalHeaderLabels(["Basistext:", "Ruby-Text:"])
         self.tabelle.verticalHeader().setVisible(False); self.tabelle.horizontalHeader().setStretchLastSection(True)
-        self.tabelle.setSelectionBehavior(QAbstractItemView.SelectRows); self.tabelle.setMinimumHeight(110)
+        self.tabelle.setSelectionBehavior(QAbstractItemView.SelectRows); self.tabelle.setMinimumHeight(HOEHE_EINGABE_TEXT)
         for basis, ruby in teile:
             self._zeile_anhaengen(basis, ruby)
         v.addWidget(self.tabelle)
-        tasten = FlussLayout(6); tasten.setContentsMargins(0, 0, 0, 0)
+        tasten = FlussLayout(6); tasten.setContentsMargins(*RAND_KEIN)
         self.gruppieren, self.mono = QPushButton("Gruppieren"), QPushButton("Mono")
         self.alle_weg, self.standard, self.ton = QPushButton("Alle entfernen"), QPushButton("Standardanzeige"), QPushButton("Ton")
         self.ton.setEnabled(False); self.ton.setToolTip("Nur für asiatische Schriften")
         for b in (self.gruppieren, self.mono, self.alle_weg, self.standard, self.ton):
             tasten.addWidget(b)
         v.addLayout(tasten)
-        g = FormularGitter(); g.setContentsMargins(0, 0, 0, 0)
+        g = FormularGitter(); g.setContentsMargins(*RAND_KEIN)
         self.ausrichtung = QComboBox()
         for k, t in AUSRICHTUNGEN:
             self.ausrichtung.addItem(t, k)
@@ -66,7 +68,7 @@ class RubyDialog(PanelFaehig, QDialog):
             w.connect(self._feld_geaendert)
         if self.tabelle.rowCount():
             self.tabelle.setCurrentCell(0, 1)
-        self.resize(430, 420)
+        self.resize(*GROESSE_FENSTER_PHONETISCH)
 
     # ---- Zeilen ----
     def _zeile_anhaengen(self, basis: str, ruby: str, wie: dict | None = None, an: int | None = None) -> None:
@@ -142,7 +144,7 @@ class RubyDialog(PanelFaehig, QDialog):
         for r in range(self.tabelle.rowCount()):
             basis, ruby, w = self.tabelle.item(r, 0).text(), self.tabelle.item(r, 1).text(), self._wie[r]
             p.setFont(f); breite = p.fontMetrics().horizontalAdvance(basis)
-            p.setPen(Qt.black); p.drawText(int(x), int(rect.bottom() - 6), basis)
+            p.setPen(QColor(Farbe.SYMBOL)); p.drawText(int(x), int(rect.bottom() - 6), basis)
             if ruby:
                 k = QFont(f); k.setPixelSize(max(6, int(w["groesse"] * 1.6))); p.setFont(k)
                 rb = p.fontMetrics().horizontalAdvance(ruby)

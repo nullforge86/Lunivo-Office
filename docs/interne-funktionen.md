@@ -2,26 +2,27 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 309 Module, 330 Klassen, 4540 Funktionen und Methoden.
+Stand: 356 Module, 383 Klassen, 4993 Funktionen und Methoden.
 
 ## Inhalt
 
 - `(Wurzel)` — 3 Module
 - `ai` — 5 Module
-- `core` — 6 Module
-- `core/befehle` — 21 Module
-- `editor` — 69 Module
+- `core` — 8 Module
+- `core/befehle` — 22 Module
+- `editor` — 72 Module
 - `models` — 4 Module
-- `plattform` — 4 Module
+- `plattform` — 6 Module
 - `proofing` — 10 Module
-- `services` — 16 Module
-- `services/integrations` — 2 Module
+- `services` — 18 Module
+- `services/docx_teile` — 11 Module
+- `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 62 Module
+- `ui/baukasten` — 83 Module
 - `ui/contextual` — 7 Module
-- `ui/dialogs` — 22 Module
+- `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
-- `ui/document` — 24 Module
+- `ui/document` — 27 Module
 - `ui/hauptfenster` — 6 Module
 - `ui/ribbon` — 6 Module
 - `ui/ribbon/tabs` — 12 Module
@@ -63,13 +64,14 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `run()`
 - **class `KIDienst`**(QObject)
   - `__init__(assistant, fenster, parent)`
-  - `_werkzeug_erlaubt(name, argumente, server)` — Aus dem Arbeitsfaden: fragt im Hauptfenster, ob die KI das Werkzeug aufrufen darf, und wartet auf die Antwort.
-  - `_werkzeug_fragen(name, argumente, server)`
+  - `_werkzeug_erlaubt(name, argumente, server, art)` — Aus dem Arbeitsfaden: fragt im Hauptfenster, ob die KI das Werkzeug aufrufen darf, und wartet auf die Antwort.
+  - `_werkzeug_fragen(name, argumente, server_art)`
+  - `_server_erlaubt(name, befehl)` — Aus dem Arbeitsfaden: zeigt den vollständigen Startbefehl des MCP-Servers und fragt vor dem Start (ein Programm auf diesem Rechner).
   - `_hinweis_fenster(titel, text)` — Ein Hinweis, den man nicht übersehen kann (statt nur einer Zeile in der Statusleiste).
   - `merke_ergebnis(titel, text, vorlage)`
   - `verfuegbar()`
   - `zettel(text)`
-  - `_einwilligung(modell)`
+  - `_einwilligung(modell, umfang, zeichen)` — Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
   - `_eingabe()`
   - `starte(meldung, arbeit, danach, eing)` — arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread.
   - `_fertig(auftrag, r)`
@@ -99,6 +101,10 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `speichern()`
   - `__getitem__(k)`
   - `setze(k, v)`
+  - `einwilligungen()` — [{anbieter, umfang, seit}]; ältere Einträge (nur der Name) gelten als Umfang „dokument“, wie damals gefragt wurde.
+  - `hat_einwilligung(anbieter, umfang)` — „dokument“ schließt „auszug“ ein, nicht umgekehrt.
+  - `einwilligung_geben(anbieter, umfang)`
+  - `einwilligung_widerrufen(anbieter, umfang)` — Ohne Angaben: alle. Mit ``anbieter`` (und ``umfang``): nur diese.
   - `anbieter_holen(id_)`
   - `anbieter_hinzufuegen(name, url, schluessel, modell, verwendung)`
   - `anbieter_aktualisieren(id_, name, url, schluessel, modell, verwendung)`
@@ -113,7 +119,8 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `assistent_entfernen(id_)`
   - `anbieter_entfernen(id_)`
   - `alle_modelle()` — Eine Liste für alle Felder „welches Modell?“: Claude, eigene Anbieter (mit Fähigkeiten und ‚lokal‘).
-- `ist_lokale_url(url)`
+- `_json_dict(r)` — Antwort eines Anbieters als Wörterbuch. Alles andere (kein JSON, keine Zeichenfolge, Liste statt Objekt) ist ein ValueError und wird als
+- `ist_lokale_url(url)` — Nur der Rechner selbst: der Rechnername wird aus der Adresse gelesen (nicht per Muster), damit „http://127.0.0.1:80@fremd.de“ nicht durchgeht.
 - `_zettel(z)`
 - `steckbrief(gelernt)`
 - `anweisung_korrektur(k, gelernt)`
@@ -130,6 +137,8 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `modell(aufgabe)`
   - `verfuegbar()`
   - `schickt_nach_aussen(modell)` — Name des Empfängers, wenn der Text das Gerät verlässt — sonst None.
+  - `websuche_ziel()` — Wohin die Frage der Websuche geht, wenn das nicht dieser Rechner ist (Brave oder eine nicht lokale Adresse), sonst None.
+  - `zustimmung_fehlt(modell, umfang)` — Sperre an der Sendestelle: Geht der Text an einen Dienst außerhalb dieses Rechners und liegt dafür keine Einwilligung vor, kommt eine
   - `anfrage(anweisung, text, bauplan, modell, optionen)`
   - `_stopp(optionen)`
   - `_claude(anweisung, text, bauplan, modell, optionen)`
@@ -161,6 +170,7 @@ MCP-Server (Model Context Protocol) über die Standard-Ein-/Ausgabe: Werkzeuge a
 - **class `McpFehler`**(Exception)
 - **class `McpClient`**
   - `__init__(befehl)`
+  - `_starten()`
   - `_neu()`
   - `_lesen()`
   - `_senden(nachricht)`
@@ -169,6 +179,7 @@ MCP-Server (Model Context Protocol) über die Standard-Ein-/Ausgabe: Werkzeuge a
   - `aufrufen(name, argumente)`
   - `schliessen()`
 - `pruefen(befehl)` — Verbindung testen: die Werkzeuge des Servers (für „Testen“ im Fenster KI-Einstellungen).
+- `art_des_werkzeugs(werkzeug)` — Grobe Einstufung eines Werkzeugs für die Rückfrage: „lesen“, „schreiben“, „löschen“, „netzwerk“ oder „unbekannt“.
 
 ### `ai/websuche.py`
 
@@ -198,7 +209,7 @@ Anwendungsstart: QApplication einrichten, Einstellungen und Theme laden, Hauptfe
 
 Befehle des Bandes: Aktionsname aus register.json → Funktion.
 
-- **class `Befehle`**(AnsichtBefehle, BearbeitenBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, FormToolsBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, UeberpruefenBefehle, VerweiseBefehle) — Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``.
+- **class `Befehle`**(AnsichtBefehle, BearbeitenBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, FormToolsBefehle, KIBefehle, KommentarBefehle, KopfFussBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtKnotenZustand, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, UeberpruefenBefehle, VerweiseBefehle) — Alle Befehle des Bandes. Die Grundfunktionen (Aktion suchen, ausführen, Zustand) stehen hier, die Befehle selbst in ``core/befehle/*``.
   - `__init__(win)`
   - `ed()`
   - `_teile(name)` — 'w.setzePapier:["a4"]' → ('w_setzePapier', ['a4'])
@@ -222,7 +233,7 @@ Dokumentverwaltung ohne Oberfläche: Laden, Speichern, automatische Sicherung, W
   - `__init__(settings)`
   - `laden(path, kennwort)` — Liest eine Datei; Fehler (DocumentIOError, PasswortNoetig) gehen an den Aufrufer.
   - `meta_fuer_speichern(meta)` — Dokument-Metadaten plus Einstellungen: Verfasser (Benutzername oder gelöscht).
-  - `speichern(path, dokument, seite, meta)` — Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück.
+  - `speichern(path, dokument, seite, meta, erwartet)` — Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück. ``erwartet``: der zuletzt gesehene ``stand`` der Zieldatei
   - `zuletzt()`
   - `gelesen(path)`
   - `vergessen(path)`
@@ -240,6 +251,19 @@ Die Grundfarben des Programms mit Namen — der eine Ort, an dem ein Farbwert st
 
 Orte der Programmdaten: Ressourcen im Paket, Symbole/Bilder/Schriften unter assets/.
 
+
+### `core/piktogramme.py`
+
+Der Piktogramm-Katalog (Name → 24×24-Pfad) und das Bild eines Piktogramms — neutral, ohne Oberfläche.
+
+- `katalog()` — Alle 1800 Lucide-Symbole (Name → 24×24-Pfad) — für Piktogramm einfügen und Symbol austauschen.
+- `katalog_bild(name, px, farbe, strich)`
+
+### `core/tabellenaktionen.py`
+
+Die Tabellenaktionen „Einfügen“ und „Löschen“ - eine gemeinsame Definition für Tabellentools, Mini-Leiste und Kontextmenü.
+
+- **class `Tabellenaktion`**(NamedTuple)
 
 ## `core/befehle`
 
@@ -331,8 +355,8 @@ Befehle: Kontext-Reiter „Bildtools“ für frei positionierte Bilder (Datei, B
   - `an_bildZuschneidenModus()`
   - `bildZuschneidenForm(k, name)` — Nach Form zuschneiden: ``name`` ist eine Form des Formenkatalogs (zum Beispiel „Ellipse“, „Herz“).
   - `bildZuschneidenSkala(k, verhaeltnis)` — Nach Skala zuschneiden: Seitenverhältnis wie ``"16:9"``, ``"4:3"``, ``"1:1"`` (mittiger Ausschnitt).
+  - `bildDrehen(k, richtung)` — Das Bild um 90° drehen: ``richtung`` ist ``"rechts"`` oder ``"links"`` (nutzt ``zeichenDrehen``).
   - `bildZuschneidenZuruecksetzen(k)` — Form und Größe zurücksetzen: Maske und Zuschnitt entfernen, das ganze Bild im ursprünglichen Seitenverhältnis.
-  - `menue_bildZuschneiden()` — Klappe „Zuschneiden“: Zuschneiden, Nach Form zuschneiden (Katalog, ohne Linien), Nach Skala zuschneiden, Form und Größe zurücksetzen.
   - `bildGroesseZuruecksetzen(k)` — Größe zurücksetzen: Originalgröße des sichtbaren Ausschnitts in Bildpunkten.
   - `bildSeitenverhaeltnis(k)` — Seitenverhältnis sperren ein/aus (auch Ziehen an den Kanten hält es dann).
   - `an_bildSeitenverhaeltnis()`
@@ -349,6 +373,10 @@ Befehle: Kontext-Reiter „Bildtools“ für frei positionierte Bilder (Datei, B
 Befehle: Datei, Vorlagen, Schutz.
 
 - **class `DateiBefehle`** — Befehle des Bandes: Datei, Vorlagen, Schutz. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
+  - `zuletztOeffnen(pfad)`
+  - `zuletztEntfernen(pfad)`
+  - `optionen(k)`
+  - `fensterWaehlen(tab)`
   - `neu(k)`
   - `oeffnen(k)`
   - `speichern(k)`
@@ -387,7 +415,7 @@ Befehle: Kontext-Reiter „Diagrammtools“ für das Diagramm als freies Objekt 
   - `diagrammTypAendern(k, untertyp)` — Mit ``untertyp`` (``diagrammTypAendern:["linie"]``, Namen aus ``diagramm.TYPEN``) wird die Diagrammart direkt gesetzt; ohne Angabe öffnet
   - `menue_diagrammTyp(symbol)` — Klappe eines Typ-Knopfes: die Untertypen der Gruppe (``diagramm.TYPEN``) mit Haken beim aktuellen (beim Öffnen aufgefrischt);
   - `menue_diagrammSchnelllayout()`
-  - `diagrammSchnelllayout(k, nr)` — Schnelllayout Nummer ``nr`` (0 bis 5) anwenden — für Kacheln der Schnellleiste.
+  - `diagrammSchnelllayout(k, nr)` — Schnelllayout Nummer ``nr`` (0 bis 18, siehe ``SCHNELLLAYOUT_ANZEIGE`` für die Reihenfolge der Kacheln) anwenden — für Kacheln der Schnellleiste.
   - `menue_diagrammFarben()` — Die Farbreihen der Diagrammvorlagen (``diagramm.VORLAGEN``), je mit der ersten Farbe als Muster.
   - `diagrammFarben(k, nr)` — Farbzeile Nummer ``nr`` aus ``diagramm.farbschemen_flach()`` (Gruppen „Farbig“ dann „Monochrom“) anwenden — für Kacheln der Schnellleiste.
   - `menue_diagrammElement()` — Diagrammelemente an/aus: Titel, Legende (mit Lage), Datenbeschriftungen, Achsen, Achsentitel, Gitternetzlinien, Datentabelle,
@@ -408,6 +436,8 @@ Befehle: Kontext-Reiter „Diagrammtools“ für das Diagramm als freies Objekt 
   - `diagrammTeilFormat(k, angaben, **kw)` — Format des gewählten Teils ändern: ``fuell`` (Farbe oder Wörterbuch), ``linie``, ``schatten``, ``reflektion``, ``leuchten``, ``weich``, ``d3``, ``drehung``,
   - `diagrammFilterDaten(k)` — Für das Popup „Diagrammfilter“: {"reihen": [(Name, Haken)], "rubriken": [(Name, Haken)]} — Haken = sichtbar.
   - `diagrammFilterSetzen(k, ausgeblendet)` — „Übernehmen“: {"reihen": [Namen], "rubriken": [Namen]} = die ausgeblendeten Einträge (leer/None = alles zeigen).
+  - `diagrammNamenQuelleLesen(k)` — Gewählte Namensquelle: ``"zeile1"`` (Standard), ``"spalte_a"`` oder ``"keine"`` (Radio im Reiter „Name“).
+  - `diagrammNamenQuelle(k, quelle)` — Namensquelle wählen: ``"zeile1"`` (Standard: Reihennamen und Rubriken wie eingegeben), ``"spalte_a"`` (Reihen und Rubriken tauschen die
   - `diagrammNamenSetzen(k, namen)` — Reihen/Rubriken umbenennen: {"reihen": [(alt, neu)], "rubriken": [(alt, neu)]}. Leere oder doppelte neue Namen bleiben beim alten Namen;
   - `diagrammAltText(k, titel, beschreibung)` — Alternativtext des Diagramms (``alt_titel``, ``alt_beschreibung``; in DOCX steht die Beschreibung als ``descr``); ``""`` löscht.
 - `_element_befehle()` — Je Element ``an_diagrammElement_<name>`` (Haken) und ``diagrammElement_<name>`` (Umschalten) — für Knöpfe, die keine Angabe mitgeben.
@@ -421,6 +451,7 @@ Befehle: Einfügen.
   - `seitenumbruch(k)`
   - `tabelleRaster(k)`
   - `tabelleZeichnen(k)` — Stift: Rechteck aufziehen, die Tabelle kommt dorthin (siehe ``ui/document/tabelle_stift.py``).
+  - `tabelleRadierer(k)` — Radiergummi: Klick auf eine Zellenlinie löscht sie (siehe ``ui/document/tabelle_radierer.py``).
   - `bild(k)`
   - `hyperlink(k)` — Fenster „Hyperlink“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse).
   - `objekt(k, als_symbol)` — Fenster „Objekt einfügen“: Inhalt einer Datei (Text, Bild) oder ein Dateisymbol mit Link.
@@ -542,10 +573,8 @@ Befehle: KI, Vorlesen.
   - `kiVorschlaege(k)`
   - `kiUmformulieren(k)`
   - `kiZusammenfassen(k)`
-  - `w_kiUebersetzen(k)`
   - `w_kiUebersetzenErsetzen(k)`
   - `w_kiUebersetzenZeigen(k)`
-  - `menue_uebersetzenMenue()`
   - `kiEntwerfen(k)`
   - `w_chatUmschalten(k)`
   - `_ki_einstellungen(reiter)`
@@ -607,17 +636,22 @@ Befehle: Kontext-Reiter: Tabelle, Bild, Formen, Zeichnen.
   - `tabelleZeileLoeschen(k)`
   - `tabelleSpalteLoeschen(k)`
   - `tabelleLoeschen(k)`
+  - `tabelleZellenLoeschen(k)` — Löschen ▸ Zellen löschen …: Auswahl, wie die Lücke geschlossen wird (Logik: ``editor/tabelleneigenschaften.zellen_loeschen``).
   - `tabelleVerbinden(k)`
   - `tabelleTeilen(k)`
   - `tabelleRahmen(k)`
   - `an_tabelleRahmen()`
+  - `tabelleRahmenSchattierung(k)` — Rechtsklick ▸ Rahmen und Schattierung: der Baustein-Dialog (ohne Reiter Seitenrand), vorbelegt aus Tabelle und Zelle.
+  - `_tabelle_rahmen_schattierung_anwenden(t, c, linie, fuell)` — Rahmen der Tabelle (Linie oder None = ohne) und Füllfarbe der markierten Zellen bzw. der Zelle der Schreibmarke.
+  - `tabelleBeschriftung(k, oben)` — „Beschriftung …“ für die Tabelle der Schreibmarke: dasselbe Fenster wie Verweise ▸ Beschriftung (``BeschriftungDialog``),
   - `menue_tabelleSchattierung()`
   - `menue_tabelleVorlagen()`
-  - `_tabelle_vorlage(name)`
-  - `_tabellen_option(key)`
+  - `_tabelle_vorlage(name)` — Vorlage auf die Tabelle der Schreibmarke anwenden; Kopfzeile/Streifen/Erste Spalte stehen je Tabelle (editor/tabelleneigenschaften.py).
+  - `_tabellen_option(key)` — Option (kopf/streifen/spalte) der Tabelle der Schreibmarke umschalten; ist eine Vorlage gesetzt, wird sie neu angewendet.
   - `tabelleKopfzeile(k)`
   - `tabelleStreifen(k)`
   - `tabelleErsteSpalte(k)`
+  - `_an_tabellen_option(key)`
   - `an_tabelleKopfzeile()`
   - `an_tabelleStreifen()`
   - `an_tabelleErsteSpalte()`
@@ -625,6 +659,31 @@ Befehle: Kontext-Reiter: Tabelle, Bild, Formen, Zeichnen.
   - `zelleOben(k)`
   - `zelleMitte(k)`
   - `zelleUnten(k)`
+  - `_zelle_waagrecht(wo)`
+  - `zelleLinks(k)`
+  - `zelleZentriert(k)`
+  - `zelleRechts(k)`
+  - `tabelleTabelleTeilen(k)` — Tabelle oberhalb der Zeile der Schreibmarke teilen: die Zeilen ab hier kommen in eine neue Tabelle darunter.
+  - `tabelleEigenschaften(k)`
+  - `_tabellen_aktionsmenue(name)` — Menü „Einfügen“ bzw. „Löschen“ aus der gemeinsamen Definition (``core/tabellenaktionen.py``): Band, Mini-Leiste und Kontextmenü.
+  - `menue_tabelleEinfuegenAktionen()`
+  - `menue_tabelleLoeschenAktionen()`
+  - `menue_tabelleAutoAnpassen()`
+  - `_tabelle_fenster()`
+  - `_tabelle_inhalt()`
+  - `absatzFormatZuruecksetzen(k)` — Absatzformat (Blockformat) der Absätze an der Schreibmarke/Auswahl auf Standard; Zeichenformat bleibt. Ein Rückgängig-Schritt.
+  - `_tabelle_aendern(funktion)`
+  - `_tabelle_gleich()`
+  - `_tabelle_zeilen_gleich()`
+  - `_tabelle_fest()`
+  - `tabelleBreite(k)` — Breite der Spalte der Schreibmarke in cm festlegen (Eingabe; gesetzt über ``tabelleMasse``).
+  - `tabelleMasse(breite_mm, hoehe_mm)` — Band-Zahlenfelder der Tabellentools: Spaltenbreite der Schreibmarke und/oder Mindesthöhe ihrer Zeile in mm setzen (ein Rückgängig-Schritt).
+  - `tabelleMasseLesen()` — (Breite der Spalte, Höhe der Zeile) der Schreibmarke in mm für die Zahlenfelder des Bandes; ``None`` außerhalb einer Tabelle.
+  - `an_tabelleGitternetz()`
+  - `tabelleGitternetz(k)` — Gitternetzlinien umschalten: hellgraue gestrichelte Zellränder; wirkt nur bei Tabellen ohne Rahmen.
+  - `menue_tabelleTextrichtung()`
+  - `tabelleTextrichtung(k)` — Auswahl der Textrichtung der Zelle (waagrecht / rechts nach links); Qt zeichnet nur diese beiden.
+  - `_tabelle_richtung(richtung)` — Textrichtung der Zelle der Schreibmarke bzw. aller markierten Zellen setzen (Blockformat setLayoutDirection).
   - `_bild()`
   - `_form_farbe(feld, titel)`
   - `_form_aendern(**kw)`
@@ -751,8 +810,10 @@ Befehle: Überprüfen, Schreibhilfe, Vergleichen.
 Befehle: Seite, Abschnitte, Spalten.
 
 - **class `SeiteBefehle`** — Befehle des Bandes: Seite, Abschnitte, Spalten. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
-  - `seitenraenderRahmen(k, *_)`
   - `w_setzeRandVorgabe(k, art)`
+  - `galerie_randVorgaben()` — Die Randvorgaben der Galerie im Band: ``[(art, Beschriftung), ...]``.
+  - `randVorgabeWaehlen(art)`
+  - `setzeRaender(oben, unten, links, rechts)`
   - `w_randVorgabeJetzt()`
   - `seitenraender(k, *_)`
   - `spaltenSetzen(k, n)`
@@ -828,7 +889,6 @@ Befehle: Seite, Abschnitte, Spalten.
   - `geradeUngerade(k)` — „Gerade und ungerade Seiten sind unterschiedlich“: gerade Seiten bekommen eine eigene Kopf-/Fußzeile (zuerst eine Kopie der gewöhnlichen).
   - `an_geradeUngerade()`
   - `an_ersteSeiteAnders()`
-  - `tabelleEigenschaften(k)`
   - `tabelleSortieren(k)`
 
 ### `core/befehle/serien.py`
@@ -865,6 +925,15 @@ Befehle: Seriendruck (Reiter „Mailings“ nach der Vorlage).
   - `serienNeuesDokument(k)` — In neuem Dokument zusammenführen: alle Briefe hintereinander, je Brief eine neue Seite.
   - `serienEinzeln(k)` — In anderem neuen Dokument zusammenführen: jeder Brief als eigene DOCX-Datei in einem Ordner.
   - `serienDrucker(k)` — An Drucker zusammenführen: die Briefe in ein neues Dokument und gleich das Druckfenster.
+
+### `core/befehle/smartart_knoten_zustand.py`
+
+Befehle: Zustand des gewählten SmartArt-Knotens – seine Maße fürs Band und ob „Aufzählungszeichen einfügen“ geht.
+
+- **class `SmartArtKnotenZustand`**
+  - `smartartKnotenMasse()` — (Breite, Höhe) des gewählten Knotens in mm; ohne gewählten Knoten None (dann gelten die Maße des Objekts).
+  - `kann_smartartAufzaehlung()` — Ein Knoten ist gewählt und das Layout erlaubt Aufzählungspunkte (im Organigramm sind Unterpunkte eigene Knoten: im Foto grau).
+  - `smartartAufzaehlung(k)` — Ohne Wirkung, solange der Knopf grau ist.
 
 ### `core/befehle/smartarttools.py`
 
@@ -906,6 +975,8 @@ Befehle: Kontext-Reiter „SmartArt-Design“ für das SmartArt als freies Objek
 Befehle: Zeichen und Absatz.
 
 - **class `TextBefehle`** — Befehle des Bandes: Zeichen und Absatz. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
+  - `stilAnwenden(name)`
+  - `stilVorschau(name, ed)` — Stilvorschau (Überfahren der Galerie): „Fließtext“ gilt als „Standard“.
   - `schriftGroesser(k)`
   - `schriftKleiner(k)`
   - `schlicht(k)`
@@ -947,9 +1018,11 @@ Befehle: Zeichen und Absatz.
   - `_aa_waehlen(wahl)`
   - `menue_schreibweiseKlappe()`
   - `schreibweiseFenster(k)` — Das Fenster „Groß-/Kleinschreibung“ (Zusatzfenster in der Seitenleiste).
+  - `zeichenSkalierung(k, prozent)` — Zeichenskalierung: Breite der Zeichen des gewählten Texts in Prozent (wie „Skalieren“ im Fenster Schriftart).
+  - `zeichenSkalierungJetzt()` — Aktuelle Zeichenskalierung in Prozent am Cursor (für den Haken im Menü Zeichen-Layout).
   - `umschlosseneZeichen(k)` — Das Fenster „Eingeschlossene Zeichen“: der gewählte Text bekommt Kreis, Quadrat, Dreieck oder Raute.
   - `phonetischesLeitzeichen(k)` — Das Fenster „Phonetisches Leitzeichen“: Leittext über dem gewählten Text.
-  - `_farbmenue(setzen, ohne_text, vorschau)` — Die gemeinsame Farbpalette; ``setzen`` bekommt eine QColor oder None („keine“).
+  - `_farbmenue(setzen, ohne_text, vorschau, **opt)` — Die gemeinsame Farbpalette; ``setzen`` bekommt eine QColor oder None („keine“).
   - `schriftfarbeJetzt(k)`
   - `menue_schriftfarbeKlappe()`
   - `hervorhebenJetzt(k)`
@@ -1003,6 +1076,8 @@ Befehle: Kontext-Reiter „Texttools“ (und die Galerien von „Zeichentools“
   - `_wa_set(**kw)` — Angaben des markierten WordArt/Textfelds ändern; ohne Auswahl ein Hinweis in der Statuszeile.
   - `ttSchriftart(name)`
   - `ttGroesse(pt)`
+  - `tabSchriftart(name)`
+  - `tabGroesse(pt)`
   - `_tt_pt(delta)`
   - `ttGroesser(k)`
   - `ttKleiner(k)`
@@ -1236,6 +1311,7 @@ Das Fenster „Layout“ (ui/baukasten/layout_dialog.py) mit einem Bild verbinde
 
 - `ziel(ed)` — („frei“, Schlüssel, Angabe, Bild) oder („text“, Cursor) für das markierte Bild; sonst None.
 - `_achse_lesen(a, waagerecht, seite_mm)`
+- `verschieben_wahl(a)` — Vorwahl der Radios „Mit Text verschieben“ / „Fester Text“ im Popup Layoutoptionen eines freien Objekts: ``"mit_text"``, ``"fest"`` oder
 - `lesen(ed, z)`
 - `_box(page, bezug, waagerecht)`
 - `_achse_schreiben(a, w, page, waagerecht)`
@@ -1294,7 +1370,7 @@ Zuschneiden frei positionierter Bilder — nicht zerstörend (die Bilddaten blei
 - `_skalen(a)` — Anzeigepunkte je Anteil des ganzen Bildes (waagerecht, senkrecht).
 - `setzen(ed, z, zu, maske, b, h)` — Zuschnitt ``zu`` = (links, oben, rechts, unten) als Anteile (None: Zuschnitt entfernen) und/oder Formmaske (``""``: entfernen); was nicht
 - `skala(ed, z, breite, hoehe)` — Nach Skala (Seitenverhältnis) zuschneiden: der größte mittige Ausschnitt mit diesem Verhältnis; die Breite des Rahmens bleibt.
-- `skala_text(ed, z, text)` — ``"16:9"`` (oder ``(16, 9)``) → ``skala``.
+- `skala_text(ed, z, text)` — ``"16:9"`` (oder ``(16, 9)``) → ``skala``. „Frei“ (kein festes Verhältnis) ändert nichts und gilt als gelungen.
 - `form(ed, z, name)` — Nach Form zuschneiden: der Ausschnitt wird in die Form (Name aus dem Formenkatalog) eingepasst; Zuschnitt bleibt.
 - `zuruecksetzen(ed, z)` — Form und Größe zurücksetzen: Maske und Zuschnitt weg, das ganze Bild in der bisherigen Breite im ursprünglichen Seitenverhältnis.
 - `aus_ziehen(a0, neu, griff)` — Zuschneiden durch Ziehen an einem Griff: ``a0`` die Angabe vor dem Ziehen, ``neu`` die mit der gezogenen Größe (``b``, ``h``).
@@ -1333,11 +1409,15 @@ Designs des Reiters Seitenlayout: Farbschemen, Schriftpaare, Effekte und die Des
 
 Diagramme als Bild (Einfügen ▸ Diagramm), gezeichnet mit QtCharts. Keine Oberfläche.
 
+- `ist_kreis(u)` — Alle Kreisarten (Kreis, 3D-Kreis, Kreis/Balken von Kreis, Ring).
+- `hat_linien(u)` — Arten mit Linienreihen (Pfeile, Linienformat).
+- `beispiel(untertyp)` — Beispieldaten für die Vorschau im Fenster nach Art des Untertyps (wie die Vorlage): (Titel, Rubriken, Reihen).
 - `_farbe(i)`
 - `kombi_vorgabe(untertyp, anzahl)` — Belegung der Kombinationstabelle für eine fertige Kombination (die letzte Reihe ist Linie bzw. Säule).
 - `_art(daten)`
 - `_filtern(kategorien, reihen, ausgeblendet)` — Diagrammfilter: → (Stellen der sichtbaren Reihen, Stellen der sichtbaren Rubriken, Rubriken, Reihen) ohne die ausgeblendeten.
 - `bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, farben, kachel, titel_an, legende_pos, labels, stil, skala, elemente, ausgeblendet, teil_format, geo)` — ``skala``: Bild in dieser Auflösung (Maße ``b``/``h`` logisch, das Bild ist ``skala``-mal so groß, Schrift bleibt scharf).
+- `namen_angewendet(kategorien, reihen, ausgeblendet, quelle)` — Namensquelle (Reiter „Name“ des Diagrammfilters) auf die Daten anwenden, ohne sie zu ändern: ``zeile1`` = wie gespeichert; ``spalte_a`` = die
 - `bild_aus_daten(d, b, h, skala, geo)` — Das Diagramm aus den gespeicherten Daten (``a["daten"]``) in b × h Bildpunkten.
 - `_bild(untertyp, titel, kategorien, reihen, b, h, legende, kombi, kachel, legende_pos, labels, stil, skala, opt)`
 - `stile_liste()` — Alle Formatvorlagen (Diagrammstile) für die Galerie: {nr, name, grund, schrift, raster, **Zusätze}.
@@ -1349,6 +1429,8 @@ Diagramme als Bild (Einfügen ▸ Diagramm), gezeichnet mit QtCharts. Keine Ober
 - `_text_fuer(tf, teil)` — Das Textformat eines Teils: die Angaben des Diagrammbereichs gelten für alle, der Teil überschreibt sie.
 - `_eigene_texte(p, ch, g, tf, titel, standard, legende_an)` — Titel und Legende mit Textfüllung (Verlauf, Keine), Kontur und Effekten: QtCharts zeichnet sie durchsichtig, hier kommt der Text selbst darüber.
 - `_pfeile(p, ch, u, kategorien, werte, namen, nummern, tf)` — Pfeile und Linienenden an Linien- und Kurvenreihen (``linie.pfeil_anfang`` / ``pfeil_ende``).
+- `_blasen(ch, u, kategorien, werte, namen, kachel)` — Blasen: ab drei Reihen X = 1., Y = 2., Größe = 3. Reihe; sonst X = Rubriknummer, Y = Wert, Größe = Wertebetrag. Je Blase eine Serie
+- `_blasen_achsen(ch, kategorien, werte)` — Achsen der Blasen mit Luft für die großen Punkte.
 - `_kombination(ch, kombi, namen, werte, kategorien)` — Jede Reihe mit eigenem Typ; Reihen mit Sekundärachse an einer zweiten Werteachse rechts.
 - `_legenden_namen(u, namen, kategorien)`
 - `teile(daten)` — Die wählbaren Teile des Diagramms (Schlüssel, Anzeigename), in der Reihenfolge des Feldes „Diagrammbereich“: Diagrammbereich,
@@ -1367,13 +1449,15 @@ Formate der Diagrammteile (``daten["teil_format"][teil]``): Füllung, Linie, Eff
 - `pinsel(fuell, r)` — (Pinsel, Deckkraft 0…1) der Füllung; ``r`` ist das Rechteck, das gefüllt wird (ohne: der Pinsel gilt für das jeweils gezeichnete Objekt,
 - `flaeche_zeichnen(p, r, fuell)`
 - `flaeche_bild(fuell, w, h, aufl)` — Die Füllung als Bild (für die Effekte, die mit einem Bild arbeiten).
+- `strich_schluessel(art)` — Der Schlüssel der Auswahl ``STRICHTYPEN`` zu einer gespeicherten Strichart (ältere Dokumente: ``gepunktet`` …).
+- `_strichmuster(art)` — (Strichmuster in Linienbreiten, runde Enden) der neuen Strichtypen; None für die, die ``freie_bilder._stift`` kennt.
 - `linie_keine(linie)`
 - `stift(linie, standard_farbe, r)` — Der Stift einer ``linie`` (Breite in pt): Strichart über ``freie_bilder._stift``, dazu Transparenz, Abschluss, Verknüpfung und Farbverlauf.
 - `_verlauf_pinsel(v, r, alpha)`
 - `rahmen_zeichnen(p, r, linie)` — Die Linie um ein Rechteck; ``kombiniert`` (Doppelt, Dick–dünn) zeichnet die Konturformen von ``textfx``, ``rund`` rundet die Ecken.
 - `fx_normal(fmt)` — Die Effekte eines Teils im Format von ``bildeffekte`` (``True`` und ältere Angaben ergänzt).
 - `teil_zeichnen(p, r, fmt, grund, nur_hinter)` — Füllung und Effekte eines Teils unter dem Diagramm. Ohne Füllung brauchen die Effekte eine Fläche: dann dient ``grund`` (Hintergrund des Stils).
-- `feld_von(t)`
+- `feld_von(t, teil)` — Das Textfeld eines Teils mit Vorgaben; ``teil="titel"`` belegt die Ränder vor (``RAENDER_TITEL``), alle anderen Teile bleiben bei 0.
 - `textwinkel(t)` — Der Winkel des Textes in Grad (im Uhrzeigersinn): Textrichtung und benutzerdefinierter Winkel zusammen.
 - `effekt_von(t)`
 - `text_eigen(t)` — Muss der Text selbst gezeichnet werden (QtCharts kann Verläufe, Kontur, Schatten … nicht)? Gilt für Titel und Legende.
@@ -1385,6 +1469,7 @@ Formate der Diagrammteile (``daten["teil_format"][teil]``): Füllung, Linie, Eff
 - `text_zeichnen(p, feld, text, font, t, standard, umbrechbar)` — Text mit Textfüllung, -kontur und Effekten (Schatten, Spiegelung, Leuchten, 3D) in ``feld``: waagerecht mittig, senkrecht nach ``vertikal``,
 - `achse_anwenden(achse, opt, wert)` — Die Optionen einer Achse (``achse`` im Teilformat) auf die QtCharts-Achse. ``wert``: Wertachse (Minimum, Maximum, Hauptintervall).
 - `luecke_zu_breite(prozent)` — Lückenbreite in Prozent der Säulenbreite → ``barWidth`` der Serie (Anteil der Kategorie, den die Säulen füllen).
+- `pfeil_groessen(linie)` — (Größe des Anfangspfeils, Größe des Endpfeils); fehlt die eigene, gilt die gemeinsame ``pfeil_groesse`` älterer Dokumente.
 - `pfeil_zeichnen(p, spitze, von, art, breite_pt, groesse, farbe)` — Ein Linienende an ``spitze``; ``von`` ist der benachbarte Punkt der Linie (gibt die Richtung).
 
 ### `editor/diagramm_geo.py`
@@ -1398,8 +1483,20 @@ Lage der Diagrammteile im gezeichneten Bild (aus der QtCharts-Geometrie nach dem
 - `titel_rect(ch)` — Das Rechteck des Titeltextes (QtCharts-Element), sonst None.
 - `_legendeneintraege(ch, namen, r)` — Die Einträge der Legende: aus den Grafikelementen von QtCharts; ohne sie eine Näherung (nebeneinander oben/unten, untereinander links/rechts).
 - `geometrie(ch, u, kategorien, werte, namen, nummern, b, h, titel, legende_an, achsen_an, legenden_namen)` — Alle Teile → Rechteck (siehe Kopf); ``nummern`` = Stelle jeder sichtbaren Reihe in den gespeicherten Daten.
+- `gitter_streifen(ch, u, pa, halb)` — Schmale Streifen um die Hauptrasterlinien der Wertachse (senkrechte Achse, bei Balken die waagerechte) — zum Anklicken.
 - `_vereinigung(rects)`
 - `_umhuellung(pts, pa)`
+
+### `editor/diagramm_kreis.py`
+
+Eigene Kreisgrafiken des Diagrammzeichners (QPainter): 3D-Kreis, Kreis von Kreis, Balken von Kreis. Keine Oberfläche.
+
+- `_scheiben(werte, start)` — (Anfang, Spanne) in Grad je Wert, im Uhrzeigersinn ab ``start``.
+- `_text(p, mitte, text, farbe)`
+- `_flach(p, c, r, werte, farben, beschriftung, schrift, start)`
+- `_drei_d(p, pa, werte, farben, beschriftung)`
+- `_von_kreis(p, pa, balken, werte, farben, beschriftung, schrift)`
+- `zeichnen(p, pa, u, kategorien, werte, farben, beschriftung, schrift)` — Malt die Kreisgrafik ``u`` (``kreis_3d`` \| ``kreis_von_kreis`` \| ``kreis_balken``) in ``pa``.
 
 ### `editor/diagramm_teile.py`
 
@@ -1520,9 +1617,9 @@ Formen nachträglich ändern (Füllung, Kontur, Vorlage, Größe) und Formen zu 
 - `_auswahl_formen(ed)` — Alle Formbilder der Markierung (Position, Format); nur wenn die Markierung sonst leer ist.
 - `gruppieren(ed)` — → '' bei Erfolg, sonst die Begründung.
 - `gruppe_aufheben(ed)`
-- `zeichenbereich_bild(d)`
-- `zeichenbereich_einfuegen(ed)`
-- `in_zeichenbereich(ed, form)` — Form in den markierten Zeichenbereich setzen; False, wenn keiner markiert ist (dann kommt die Form in den Text).
+- `zeichenbereich_bild(d, skala)`
+- `zeichenbereich_einfuegen(ed)` — Als freies Objekt (``frei_objekt.py``): Rahmen mit Griffen zum Skalieren und Schnellleiste rechts daneben.
+- `in_zeichenbereich(ed, form)` — Form in den gewählten Zeichenbereich setzen; False, wenn keiner gewählt ist (dann kommt die Form in den Text).
 - `E_ist_linie(form)`
 - `wordart_daten(ed)` — Die Parameter des gewählten WordArt (Kopie) oder None.
 - `wordart_aendern(ed, **kw)` — Parameter des gewählten WordArt ändern (None entfernt den Schlüssel) und neu zeichnen; ``form_fuell``/``form_linie``/``form_strich``/
@@ -1578,6 +1675,7 @@ Die Formen der Galerie Einfügen ▸ Formen, nach Gruppen wie in der Vorlage: Li
 - `_wolke(r)`
 - `_dokument(r)`
 - `_welle(r)`
+- `_fahne(r)` — Fahne: Mast links, wehendes Tuch rechts.
 - `_legende(form)`
 - `_rechteck(r)`
 - `namen()`
@@ -1597,6 +1695,9 @@ Formstil-Raster (Zeichentools ▸ Formstile „Abc“): sechs Zeilen (Umriss, Vo
 
 Formularfelder (Inhaltssteuerelemente): Textfeld, Auswahlliste, Datum, Kontrollkästchen, Schaltfläche.
 
+- **class `_Eingabe`** — Wer fragt den Benutzer nach Datum oder Text eines Formularfeldes? Die Oberfläche setzt ``eingabe_anbieter`` beim Start auf ihr
+  - `getDatum(eltern, titel, frage, datum)`
+  - `getText(eltern, titel, frage, text, kennwort)`
 - `meta(art, name, **kw)`
 - `meta_text(m)`
 - `meta_lesen(s)`
@@ -1636,6 +1737,7 @@ Freie Objekte mit Parametern (WordArt, Textfeld): EIN gemeinsamer Baustein.
 - `_diagramm_zeichnen(d, b, h)` — Ein Diagramm (``editor/diagramm.py``) aus den gespeicherten Daten, in b × h Bildpunkten, in doppelter Auflösung.
 - `_smartart_zeichnen(d, _b, _h)`
 - `_piktogramm_zeichnen(d, _b, _h)`
+- `_zeichenbereich_zeichnen(d, b, h)` — Zeichenbereich (``editor/formen.py``): gestrichelter Rand und die ``kinder`` (Formen mit Lage x/y), in doppelter Auflösung.
 - `zeichnen(art, d, b, h)`
 - `_anzeige_mass(art, img, b, h)` — Größe auf dem Blatt in Bildpunkten: WordArt aus dem Bild (ohne Überbreite), SmartArt wie das Bild (sofern keine Größe vorgegeben),
 - `einfuegen(ed, art, daten, b, h)` — Fügt das Objekt als freies Bild am Absatz der Schreibmarke ein (steht dort Text, in einem neuen Absatz darunter), wählt es aus —
@@ -1679,6 +1781,7 @@ Frei positionierte Bilder: Bilder, die nicht im Text stehen, sondern an einer St
 - `hat_bilder(doc)` — Gibt es im Text überhaupt einen Absatz mit frei positionierten Bildern? (billig genug für jeden Zeichenvorgang des Editors)
 - `bild_im_dokument(doc, name)`
 - `neuer_name(doc)`
+- `_zu_gross(blob)` — Liest nur die Maße aus dem Bildkopf; Bilder über ``MAX_BILDPUNKTE`` werden abgelehnt, bevor Qt sie anlegt.
 - `bild_aus_daten(blob)` — Ein Bild aus Dateidaten. Qt kennt kein EMF; viele Word-Bilder (eingescannte Unterschriften) sind aber EMF-Hüllen um ein Bitmap
 - `farbe_aus_element(el, ns)` — Eine DrawingML-Farbe (srgbClr, prstClr, schemeClr) mit lumMod, lumOff, satMod, tint und shade. ``ns``: Namensräume für XPath.
 - `duoton(img, dunkel, hell)` — Das Bild in zwei Farben: Schwarz wird ``dunkel``, Weiß wird ``hell``, dazwischen Verlauf (DrawingML ``a:duotone``). Durchsicht bleibt.
@@ -2169,6 +2272,40 @@ Text in Tabelle umwandeln und zurück (Einfügen ▸ Tabelle). Keine Oberfläche
 - `_tabelle_zeilen(t, trenner, geschachtelt, bleiben)`
 - `tabelle_zu_text(ed, trenner, geschachtelt)` — Die Tabelle an der Schreibmarke zu Text. ``geschachtelt``: Tabellen in Zellen ebenfalls zu Text; sonst bleiben sie Tabellen
 
+### `editor/tabelleneigenschaften.py`
+
+Eigenschaften einer Tabelle lesen und setzen (Fenster „Tabelleneigenschaften“). Keine Oberfläche; Maße in Millimetern.
+
+- `lesen(t, c)`
+- `anwenden(t, c, w)`
+- `optionen_lesen(t)` — Formatoptionen dieser Tabelle: ``kopf`` (aus der Kopfzeilenzahl), ``streifen``, ``spalte``, ``vorlage`` (Name oder ``""``) und
+- `optionen_setzen(t, *, kopf, streifen, spalte, vorlage)` — Formatoptionen an der Tabelle merken (nur die übergebenen); ``kopf`` setzt die Kopfzeilenzahl (0/1).
+- `zellen_loeschen(t, c, art)` — „Zellen löschen“ für die Zelle bzw. die markierten Zellen: ``art`` = ``zeile``, ``spalte``, ``links`` (Zellen rechts davon rücken
+- `zelle_teilen(t, c, spalten, zeilen)` — Teilt die Zelle unter dem Cursor c in spalten x zeilen Zellen (wie „Zellen teilen“).
+- `zeilenhoehe_setzen(t, r, px, zeile_px)` — Mindesthöhe ``px`` der Tabellenzeile ``r`` setzen: Zellformat-Eigenschaft ``Z_MINHOEHE`` plus Innenabstand oben/unten
+- `zeilenhoehe_lesen(t, r)` — Mindesthöhe der Zeile in Bildpunkten; 0, wenn keine gesetzt ist.
+- `an_inhalt_anpassen(t, c)` — Jede Spalte so schmal wie ihr breitester Zellentext (+ 2x Innenabstand + Rand); Tabellenbreite variabel. Ein Rückgängig-Schritt.
+- `_zoom(t)` — Ansichtsfaktor des Layouts (Zeichengerät 96 dpi x Zoom): Layoutmaße / Faktor = Dokumentmaße.
+- `_zellen_der_zeile(t, r)` — Zellen, die in Zeile ``r`` beginnen und nur eine Zeile hoch sind.
+- `_textHoehe(t, r)` — Höhe des höchsten Zelleninhalts der Zeile (ohne Innenabstand), aus dem Layout.
+- `_zeilen_oberkanten(t)` — y der Oberkante jeder Zeile (Dokumentkoordinaten), gemessen an Zelleninhalt minus oberem Innenabstand.
+- `_unterkante(t)` — Layout-y der Unterkante der Tabelle: Ende des Inhalts der letzten Zeile plus unterer Innenabstand.
+- `tabelle_basis(t)` — (Spaltenbreiten, Zeilenhöhen) der Tabelle in Bildpunkten des Dokuments (zoomunabhängig): Breiten aus festen
+- `zeilengrenzen(t)` — y der inneren waagrechten Zeilenränder (n-1 Stück) in Layoutkoordinaten des Dokuments (wie ``_grenzen`` der Spalten,
+- `zeilen_mindesthoehe(t, r)` — Kleinste zulässige Höhe der Zeile: Inhalt plus Innenabstand oben und unten.
+- `_zeile_setzen(t, r, px)`
+- `zeile_hoehe_ziehen(t, zeile, neue_hoehe_px)` — Mindesthöhe nur der Zeile ``zeile`` auf ``neue_hoehe_px`` setzen (nie unter dem Inhalt). Der Aufrufer öffnet den
+- `_zeilen_setzen(t, ziele)` — Mindesthöhen mehrerer Zeilen setzen. Die Textmaße aller Zeilen werden zuerst gemessen (ein Layoutlauf); danach
+- `_zellen_der_zeile_alle(t, r)` — Erste in Zeile ``r`` beginnende Zelle (Stellvertreter für den Ist-Zustand der Zeile).
+- `skalierungs_kosten(t)` — Aufwand eines Skalierungsschritts: Anzahl der Zellen. Der Aufrufer kann bei großen Tabellen auf einen Vorschaurahmen wechseln.
+- `tabelle_skalieren_spalten(t, basis_breiten, faktor_b)` — Nur die Spaltenbreiten = Basis x ``faktor_b`` (mind. ``MIN_SPALTE``, Tabellenbreite variabel); die Zeilenhöhen
+- `tabelle_skalieren_zeilen(t, basis_hoehen, faktor_h)` — Nur die Zeilenhöhen = Basis x ``faktor_h`` (mind. Inhalt); unveränderte Zeilen bleiben unberührt.
+- `tabelle_skalieren(t, basis_breiten, basis_hoehen, faktor_b, faktor_h)` — Spaltenbreiten = Basis x ``faktor_b`` (feste Längen, mind. ``MIN_SPALTE``, Tabellenbreite variabel), Zeilenhöhen =
+- `spalten_gleich(t)` — Alle Spalten gleich breit bei unveränderter Gesamtbreite (Prozentbreite bleibt Prozentbreite). Ein Rückgängig-Schritt.
+- `zeilen_gleich(t)` — Alle Zeilen auf die Höhe der höchsten Zeile bringen (aufrunden). Ein Rückgängig-Schritt je Aufruf über den Aufrufer.
+- `spalten_festschreiben(t)` — Aktuelle Spaltenbreiten als feste Längen festschreiben; Tabellenbreite variabel.
+- `linie_loeschen(t, zeile, spalte, seite)` — Löscht die Linie auf der Seite (links/rechts/oben/unten) der Zelle: verbindet die Zelle mit dem Nachbarn dahinter.
+
 ### `editor/tabellenstil.py`
 
 Tabellenformatvorlagen und Formatoptionen (Kopfzeile, gebänderte Zeilen, erste Spalte).
@@ -2176,6 +2313,13 @@ Tabellenformatvorlagen und Formatoptionen (Kopfzeile, gebänderte Zeilen, erste 
 - `_zellen(t)`
 - `_fett(cell, an, farbe)`
 - `anwenden(t, name, kopf, streifen, spalte)`
+
+### `editor/tabellenzustand.py`
+
+Der Zustand der Schreibmarke gegenüber einer Tabelle - an einer Stelle festgelegt (keine Oberfläche).
+
+- `zustand(editor)`
+- `tabellenmodus(editor, rechtsklick, per_griff)` — ``True``, wenn Tabellenfunktionen (Einfügen/Löschen, Rahmen, Schattierung …) angeboten werden.
 
 ### `editor/tabfuell.py`
 
@@ -2221,10 +2365,13 @@ Texteffekte, die Qt am Text nicht kennt und die Lunivo über den Umrissen der Bu
 - `als_text(fx)` — Nur die Teile, die Lunivo selbst zeichnet, als JSON für das Zeichenformat (leer = keiner).
 - `aus_text(text)`
 - `_verlauf(rect, v)`
+- `fuell_pinsel_von(d, rect)` — Der Pinsel zu ``fuell_pinsel`` (Muster, Textur, Bild); ``rect``: Fläche, über die ein Bild gestreckt wird.
+- `pfad_verformen(pfad, fx)` — Der Textpfad nach ``warp`` (Transformieren) und ``text_3d`` (3D-Drehung um X, Y, Z mit Perspektive); ohne beides unverändert.
 - `_weich(p, pfad, farbe, radius, ausserhalb)` — Pfad mit weichem Rand: gefüllt, dazu Striche in wachsender Breite und sinkender Deckkraft.
 - `_richtung(winkel)`
 - `_helligkeit(c, f)`
-- `_kontur_pfade(pfad, breite, form, art)` — Die Flächen einer Konturlinie: einfach ein Strich, doppelt zwei Streifen mit Lücke, dick–dünn ein dicker und ein dünner.
+- `_versetzt(pfad, abstand)` — Der Pfad seitlich um ``abstand`` verschoben (Eckpunkte entlang ihrer Normalen, mit begrenzter Spitze); für Linien und geschlossene Formen.
+- `_kontur_pfade(pfad, breite, form, art)` — Die Flächen einer Konturlinie: einfach ein Strich, doppelt zwei Streifen mit Lücke, dick–dünn/dünn–dick zwei ungleiche, dreifach drei Streifen.
 - `fx_zeichnen(p, pfad, fx, grundlinie, schrift_px, basis_farbe, kontur)` — Die Effekte zu einem Textstück zeichnen. ``pfad``: Umrisse in Zeichenkoordinaten, ``grundlinie``: y der Schriftlinie, ``schrift_px``: Schriftgröße.
 - `_woerter(text)` — Die Wörter eines Textes als (Anfang, Ende); Leerzeichen bleiben frei („Nur Wörter“).
 - `_unterstrich(p, strecken, art, grundlinie, groesse, farbe)` — Unterstreichungen, die Qt nicht kennt: doppelt, dick, lang gestrichelt, Wellen in zwei Stärken, nur Wörter.
@@ -2243,7 +2390,9 @@ Texteffekte, die Qt am Text nicht kennt und die Lunivo über den Umrissen der Bu
 - `schatten_vorgaben()` — [(Abschnitt, Name, Schatten)] — Außen, Innen (je 9) und Perspektive (5).
 - `reflektion_vorgaben()` — 9 Spiegelungen: drei Größen (eng, halb, voll) mal drei Abstände.
 - `leuchten_vorgaben()` — 24 Leuchtvarianten: sechs Farben mal vier Größen.
-- `voreinstellung_icon(fx, groesse, text, farbe)` — Kachelbild einer Voreinstellung: ein „A“ mit dem Effekt auf weißem Grund.
+- `voreinstellung_icon(fx, groesse, text, farbe, kontur)` — Kachelbild einer Voreinstellung: ein „A“ mit dem Effekt auf weißem Grund (``kontur``: (Farbe, Breite, Form) wie bei ``vorschau_zeichnen``).
+- `text_kachel_icon(fx, groesse)` — Kachelbild der Effektmenüs im Text (Schatten, Spiegelung, Leuchten): ein hellblaues „A“ mit blauem Rand, plastisch, wie in der Vorlage.
+- `form_kachel_icon(fx, groesse)` — Kachelbild des Schattenmenüs eines Objekts: ein abgerundetes Rechteck mit weichem Verlauf (hellblau, blauer Rand) und dem Effekt auf weißem Grund.
 - `wordart_vorgaben()` — Die 15 Formatvorlagen im Menü „Texteffekte ▸ WordArt“: Füllung, Kontur, Schatten (vollständige Effekte, ersetzen die bisherigen).
 - `wordart_icon(w, groesse)` — Kachelbild einer WordArt-Formatvorlage.
 
@@ -2452,10 +2601,21 @@ Seiteneinrichtung: Papier, Ränder, Ausrichtung, Kopf- und Fußzeile.
 
 Gemeinsames Datenmodell eines Fundes der Schreibhilfe (Rechtschreibung, Grammatik, Stil, LanguageTool, KI).
 
+- **class `FundFehler`**(ValueError) — Ein Fund entspricht nicht dem Datenvertrag von ``ProofingIssue``.
+- **class `Verdraengt`** — Ein Fund einer anderen Quelle, der von einem besseren überlagert wurde (nur zur Nachvollziehbarkeit).
+- `zeige_leer(s)` — Leerzeichen und Zeilenumbrüche in Worten statt in Symbolen: „2 Leerzeichen“, „Zeilenumbruch“ (auch gut vorlesbar).
 - **class `ProofingIssue`**
+  - `pruefen(text_laenge)` — Wirft ``FundFehler``, wenn der Fund nicht dem Vertrag entspricht. → self.
   - `laenge()`
+  - `zeige_alt()`
+  - `zeige_neu()`
+  - `hat_vorschlag()`
+  - `ersetzt(**felder)` — Eine Kopie mit geänderten Feldern (der Fund selbst ist unveränderlich).
+  - `verschoben(delta)`
+  - `stellenschluessel()` — Sortierung nach Stelle: früher zuerst, bei gleichem Anfang der längere.
   - `von_dict(f)`
   - `als_dict()` — Wörterbuch wie bisher; Schlüssel ohne Wert (quelle, konfidenz, verdraengt) fehlen, wie bei den ursprünglichen Funden.
+- `bereinigen(funde, text_laenge)` — Prüft jeden Fund gegen den Vertrag (``ProofingIssue`` oder Wörterbuch von außen, etwa aus LanguageTool); gültige kommen als
 
 ### `models/report.py`
 
@@ -2475,6 +2635,13 @@ Bericht über das, was beim Öffnen/Speichern nicht verlustfrei ging.
 Alles, was vom Betriebssystem abhängt, an einer Stelle.
 
 
+### `plattform/dateisystem.py`
+
+Dateisystem-Besonderheiten der Betriebssysteme an einer Stelle (heute: wie eine Datei für ``fsync`` geöffnet werden muss).
+
+- `fsync_oeffnen(path)` — Dateikennung für ``os.fsync``. Windows braucht dafür einen schreibenden Zugriff, Linux und macOS genügt Lesen.
+- `ordner_oeffnen(ordner)` — Kennung eines Ordners zum ``fsync`` (sichert das Umbenennen); wirft OSError, wo das Betriebssystem es nicht kann (Windows).
+
 ### `plattform/pfade.py`
 
 Orte für Programmdaten, Zwischenspeicher, nachgeladene Schriften/Stimmen und Vorlagen (über QStandardPaths).
@@ -2490,8 +2657,24 @@ Orte für Programmdaten, Zwischenspeicher, nachgeladene Schriften/Stimmen und Vo
 
 Protokoll: eine Logdatei im Zwischenspeicher-Ordner, damit Fehler beim Laden, Speichern und Prüfen nicht still verschwinden.
 
+- `schwaerzen(text)` — Schlüssel, Tokens und Kennwörter in einem Text durch „***“ ersetzen.
+- **class `SchutzFilter`**(logging.Filter) — Schwärzt Meldung und Ablaufspur, bevor sie in die Logdatei geschrieben werden.
+  - `filter(record)`
+- `umgebung()`
+- `benutzerfehler(log, fehler)` — Erwartet und für den Benutzer bestimmt: eine Zeile ohne Ablaufspur.
+- `technischer_fehler(log, kontext, fehler)` — Die Umgebung versagt (Platte, Netz, Dienst): Art des Fehlers und Systemcode, ohne Ablaufspur.
+- `unerwartet(log, kontext, fehler)` — Ein Programmfehler: vollständige Ablaufspur und Umgebung, damit er sich nachstellen lässt.
 - `logdatei()`
 - `einrichten(stufe)` — Logdatei einrichten und nicht abgefangene Fehler protokollieren; liefert den Pfad (oder None, wenn nicht schreibbar).
+
+### `plattform/prozess.py`
+
+Fremde Programme starten und sicher beenden — die einzige Stelle, die dabei auf das Betriebssystem Rücksicht nimmt.
+
+- `bereinigte_umgebung(basis)` — Die Umgebung ohne Variablen, die nach Zugangsdaten aussehen (API-Schlüssel, Tokens, Kennwörter).
+- `starten(args, **kw)` — ``subprocess.Popen`` mit eigener Prozessgruppe und bereinigter Umgebung (``env`` überschreibt).
+- `_signal(p, hart)`
+- `beenden(p, warte)` — Beendet den Prozess (und bei POSIX seine Gruppe) und wartet auf ihn, damit kein Zombie bleibt.
 
 ### `plattform/sperre.py`
 
@@ -2531,7 +2714,7 @@ Barrierefreiheit prüfen — was Menschen mit Sehbehinderung den Text unlesbar m
 Herkunft und Sicherheit eines Fundes; Auflösung, wenn mehrere Quellen dieselbe Stelle melden.
 
 - `klemmen(wert, vorgabe)`
-- `markieren(funde, quelle)` — Quelle und – falls nicht vorhanden – Standard-Konfidenz eintragen (liefert Kopien).
+- `markieren(funde, quelle, text_laenge)` — Funde gegen den Datenvertrag ``ProofingIssue`` prüfen (ungültige fallen weg; Wörterbücher von außen werden umgewandelt), dann Quelle und
 - `_rang(f)`
 - `loesen(funde)` — Überschneidende Funde auflösen: der beste bleibt, die unterlegenen werden nicht angezeigt, aber als `verdraengt` vermerkt.
 
@@ -2554,7 +2737,6 @@ Inkrementelle Prüfung: nur die geänderte Stelle (plus Sicherheitsbereich) neu 
 
 Die Schreibhilfe: prüft im Hintergrund, hält den Stand, setzt Korrekturen ein.
 
-- `zeige_leer(s)` — Leerzeichen und Zeilenumbrüche in Worten statt in Symbolen: „2 Leerzeichen“, „Zeilenumbruch“ (auch gut vorlesbar).
 - **class `_Signale`**(QObject)
 - **class `_Lauf`**(QRunnable)
   - `__init__(rev, text, gelernt, signale, schalter)`
@@ -2683,30 +2865,11 @@ Das Dokument als Bild schreiben: jede Seite als eigene Datei oder alle Seiten un
 
 DOCX → QTextDocument (python-docx).
 
-- `_xp(el, ausdruck)` — XPath mit den Namensräumen von python-docx — auch für Elemente, deren Klasse kein eigenes xpath mit Namensräumen hat.
-- `_emu_to_px(v)`
-- `_pt_to_px(v)`
-- `_style_chain(style)`
-- `_doc_defaults(document)`
-- **class `_Reader`**
+- **class `_Reader`**(StilMixin, TabellenMixin, SeiteMixin, ObjekteMixin)
   - `__init__(path)`
   - `_laden_zusatz()` — Kommentare (python-docx) und Fuß-/Endnoten (Teile footnotes.xml / endnotes.xml) einlesen.
   - `_kommentare_geloest_lesen()` — Welche Kommentare Word als gelöst markiert hat (Teil commentsExtended: w15:done je Absatzkennung).
   - `_quellen_lesen()` — Literaturquellen aus dem Word-Bibliografieteil (customXml, Namensraum …/bibliography).
-  - `_standard_stil(art)`
-  - `_ps(para)` — Absatzvorlage (mit Zwischenspeicher).
-  - `_rs(run)`
-  - `_kette(style)`
-  - `_style_attr(style, getter)`
-  - `_stil_font(style, attr)`
-  - `_font_name(run, para)`
-  - `_font_size_pt(run, para)`
-  - `_flag(run, para, attr)`
-  - `_heading_level(para)`
-  - `_char_format(run, para)`
-  - `_schrift_zusatz(rpr, f)` — Schrift für asiatische und komplexe Zeichen, Betonungszeichen und doppeltes Durchstreichen (Fenster „Schriftart“).
-  - `_highlight(run)`
-  - `_ausrichtung(para, st)` — w:jc roh lesen — python-docx kennt „start“/„end“ nicht und bricht sonst ab.
   - `_block_format(para)`
   - `_list_info(para)` — → (numId, ilvl, 'bullet'\|'decimal'\|…) oder None.
   - `_num_format(num_id, ilvl)`
@@ -2720,27 +2883,9 @@ DOCX → QTextDocument (python-docx).
   - `_flush_break(cursor)`
   - `_add_run(run, para, cursor, href)` — → True, wenn Text oder Bild eingefügt wurde.
   - `_note_marke(art, n)`
-  - `_effekte_lesen(drawing)` — ``a:effectLst`` am Bild → ``fx`` (Schatten, Leuchten, Spiegelung, weiche Kanten) in den Werten des Programms.
-  - `_frei(drawing, teil, inline_ok)` — Ein Bild, das frei auf dem Blatt liegt (wp:anchor ohne Textumbruch) → (Angabe, QImage); ``False``, wenn es nicht darstellbar ist
-  - `_frei_maske(drawing)` — Die Zuschneideform eines Bildes (``{"maske": …}`` im Titel, „lunivo:“), sonst leer.
-  - `_frei_objekt_daten(drawing)` — (Art, Daten) eines freien Objekts Form, Diagramm oder SmartArt aus dem Titel („lunivo:“) des Bildes, sonst None.
-  - `_textfeld_daten(drawing, wsp)` — Die Parameter eines Textfelds (``editor/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
-  - `_ketten_bereinigen()` — Nach dem Lesen: Verweise auf Folgefelder, die es nicht gibt, entfernen.
-  - `_add_image(drawing, cursor, cfmt)`
   - `_umbruch_seite(drawing, breite_px)` — „links“/„rechts“, wenn das Bild den Text umfließt (wrapSquare/Tight/Through); sonst leer.
   - `_eigene_vorlage(st, b)` — Eine selbst angelegte Absatzvorlage des Dokuments: der Absatz behält ihren Namen; fehlt sie im Katalog, wird sie übernommen.
-  - `_zelle_format(qcell, cell)` — Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) aus der DOCX-Zelle.
-  - `add_table(table)`
-  - `read_page()` — Einrichtung des ERSTEN Abschnitts; weitere Abschnitte stehen als Umbrüche im Text (siehe editor/abschnitte.py).
-  - `_section_page(s, erster, basis)`
-  - `_hf_bilder(teil, ort, s, ps)` — Frei positionierte Bilder einer Kopf- oder Fußzeile (zum Beispiel ein Band über dem Briefkopf). „Am Absatz“ wird auf das Blatt
-  - `_abschnitt_beginn(s)`
-  - `_seitenschmuck(ps, sect)`
-  - `_aussen_innen(s, ps)` — Gerade Seiten mit gespiegelter Ausrichtung bei gleichem Text: das ist „außen“ (ungerade rechts) bzw. „innen“ (ungerade links).
-  - `_seitenzahl_art(s, ps)` — w:pgNumType: Zahlenart, „Beginnen mit“, Kapitelnummer.
-  - `_hf(part)`
   - `run()`
-- **class `_NoRun`** — Platzhalter, um Absatz-Standardwerte ohne Run aufzulösen.
 - `_schriften_ersatz()` — Word-Schriften ohne Entsprechung im System ersetzt Qt sonst durch irgendeine breite Schrift (so wurde aus „Calibri Light“ Noto Sans).
 - `read_docx(path)` — → (QTextDocument, PageSettings, meta-dict, IOReport). Wirft DocumentIOError.
 
@@ -2748,19 +2893,11 @@ DOCX → QTextDocument (python-docx).
 
 QTextDocument → DOCX (python-docx).
 
-- `_has(fmt, prop)`
-- `_rpr_einfuegen(rpr, el)` — Ein Element an ``w:rPr`` in der Reihenfolge einfügen, die das Schema verlangt.
-- `absatzopt_prop()`
-- **class `_Writer`**
+- **class `_Writer`**(SeiteSchreiber, TabellenSchreiber, ObjekteSchreiber, ZusatzSchreiber)
   - `__init__(qdoc, page, meta)`
   - `_clear_body()`
-  - `write_page()` — Dokumentweite Einstellungen (Hintergrund, Silbentrennung) und der letzte Abschnitt in der Schlusseinrichtung des Textes.
-  - `write_section(s, p, typ, nr)` — Einen Abschnitt (python-docx Section) nach Einrichtung p schreiben; nr = Nummer des Abschnitts (für verknüpfte Kopfzeilen).
-  - `_seitenzahl_art(s, p)` — Zahlenart, „Beginnen mit“ und Kapitelnummer der Seitenzahl als w:pgNumType.
-  - `_abschnitt_ende(para)` — Am Ende des Absatzes, der einen Abschnitt beschließt: dessen Einrichtung als w:sectPr in den Absatz schreiben.
   - `_standard_tabstopp()` — Die Standardtabstopps des Dokuments als w:defaultTabStop (Twips) in die Einstellungen schreiben.
   - `_dokument_ebene(p)`
-  - `_seitenschmuck(sect, p)`
   - `_text_with_fields(para, text)`
   - `_field(para, name)`
   - `_sprache()`
@@ -2782,32 +2919,8 @@ QTextDocument → DOCX (python-docx).
   - `_hyperlink(para, href, tipp)`
   - `_format_run(run, cf, in_head, is_link)`
   - `_kompatibilitaet()`
-  - `_image(imf, para, seite)`
-  - `_frei_bild(para, a, img)` — Ein frei positioniertes Bild (siehe editor/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben.
-  - `_textfeld_ketten()` — {id des Textfelds: (Kettennummer, Stelle in der Kette)} — die Verknüpfungen aller Textfelder des Dokuments (``wps:linkedTxbx``).
-  - `_textfeld_xml(run, a)` — Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“.
-  - `_txbx_inhalt(inhalt, d)` — Absätze und Läufe des Textfelds (Text mit Zeichenformaten) als ``w:p``/``w:r`` in ``w:txbxContent``.
-  - `_effekte_element(fx)` — Schatten, Leuchten, Spiegelung und weiche Kanten als ``a:effectLst`` (Längen in Punkt → EMU, Winkel in 1/60000 Grad).
-  - `_verankern(run, ausrichtung)` — Macht aus dem Bild im Text (wp:inline) ein umflossenes Bild (wp:anchor, Umbruch „Quadrat“, links/rechts).
-  - `write_table(qt, container)`
-  - `_zelle_format(dcell, cf)` — Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) der Qt-Zelle übernehmen.
   - `run()`
-  - `_kommentare_schreiben()`
-  - `_komm_erweitert(kennungen)` — Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done).
-  - `_quellen_schreiben()`
-  - `_noten_schreiben()`
   - `_trim_trailing_empty()`
-- `_split(text)`
-- `_rstyle_hyperlink(d)`
-- **class `_Body`**
-  - `__init__(d)`
-  - `add_paragraph()`
-  - `add_table(r, c)`
-- **class `_CellBox`**
-  - `__init__(cell)`
-  - `first_paragraph()`
-  - `add_paragraph()`
-  - `add_table(r, c)`
 - `docx_daten(qdoc, page, meta)` — Baut die DOCX-Datei im Speicher. → (Inhalt, Bericht). Wirft DocumentIOError.
 - `write_docx(path, qdoc, page, meta, sicherung)` — Schreibt über den sicheren Schreibweg (Temp-Datei, Prüfung, Umbenennen). Wirft DocumentIOError.
 
@@ -2823,9 +2936,19 @@ Eine Stelle für alle Dateiformate: laden und speichern nach Endung.
 - `load(path, kennwort)`
 - `_kopf_pruefen(path, e)` — Ein falsch benanntes oder kaputtes Dokument wird als solches gemeldet, nicht „irgendwie“ geöffnet.
 - `_has_rich_content(doc)`
-- `save(path, doc, page, meta, sicherung)` — Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
+- `save(path, doc, page, meta, sicherung, erwartet)` — Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
 - `_als_docx(path, ziel)` — DOTX (Vorlage) und DOCM (mit Makros) sind DOCX-Pakete mit anderem Inhaltstyp des Hauptteils; für den DOCX-Leser wird nur
 - `_verschluesseln(data, kennwort)`
+
+### `services/formate.py`
+
+Verzeichnis der Dateiformate: was Lunivo öffnen und speichern kann, was dabei unterstützt wird und was nicht.
+
+- **class `FormatInfo`**
+- `finde(endung)`
+- `lesbar()`
+- `speicherbar()`
+- `als_markdown()` — Tabelle für Handbuch und Dokumentation (Markdown, kein HTML).
 
 ### `services/gelernt.py`
 
@@ -2841,6 +2964,20 @@ Das Gedächtnis der Prüfung: was dieser Mensch korrigiert oder stehen gelassen 
   - `ki_vermerken(vorschlag, angenommen)` — Die Sicherheit (konfidenz) eines KI-Vorschlags und ob er angenommen wurde — für die Trefferquote je Sicherheitsstufe.
   - `ki_trefferquote(stufe)`
   - `vergessen()`
+
+### `services/import_grenzen.py`
+
+Grenzen für fremde Dokumente: werden geprüft, bevor ein Leser (DOCX, ODT, RTF) das Dokument verarbeitet.
+
+- **class `Grenzen`**
+- `_mb(n)`
+- `pruefe_dateigroesse(pfad, art, grenze)` — Größe der Datei gegen die Grenze prüfen. → Größe in Byte.
+- `_zu_gross(art, was)`
+- `pruefe_paket(pfad, art)` — Prüft ein ZIP-Paket, bevor irgendetwas daraus gelesen wird. Wirft DocumentIOError, sonst Rückkehr ohne Wert.
+- `_entpacken_zaehlen(z, info, art, grenze, rest)` — Entpackt einen Eintrag nur zum Zählen. Prüft Größe, Gesamtgröße, Verhältnis und (bei XML) DTD/Entitäten.
+- `_tiefe_pruefen(daten)`
+- `sicheres_xml(daten)` — XML lesen wie ``ET.fromstring``, aber ohne DTD und Entitäten und mit Tiefengrenze. Wirft DocumentIOError.
+- `lxml_parser()` — lxml-Parser für selbst gelesene Teile: keine Entitäten, kein Netz, keine DTD, keine Riesenknoten.
 
 ### `services/odt_reader.py`
 
@@ -3015,6 +3152,7 @@ Einstellungen und Pfade (XDG, über QStandardPaths). Nichts liegt im Programmord
 Ein sicherer Schreibweg für alle Dokumentdateien (DOCX, ODT, DOC, RTF, TXT, PDF).
 
 - `ziel(path)` — Tatsächliche Zieldatei: Verknüpfungen werden aufgelöst, damit die Verknüpfung erhalten bleibt.
+- **class `SchreibKonflikt`**(DocumentIOError) — Die Zieldatei hat sich zwischen Öffnen (oder letztem Speichern) und jetzt verändert; es wurde nichts überschrieben.
 - `stand(path)` — (Änderungszeit in ns, Größe) der Datei oder None — zum Erkennen fremder Änderungen.
 - `fremd_geoeffnet(path)` — Beschreibung des Programms, das die Datei laut Sperrdatei offen hat (andere Programme legen „.~lock.<name>#“ an), sonst None.
 - `fehlertext(e, path, vorhanden)` — Verständliche Meldung für einen Fehler beim Schreiben.
@@ -3032,8 +3170,8 @@ Ein sicherer Schreibweg für alle Dokumentdateien (DOCX, ODT, DOC, RTF, TXT, PDF
 - `_defekt(grund)`
 - `_zip_pruefen(path, pflicht)`
 - `pruefe_format(path, endung)` — Strukturprüfung der geschriebenen Datei. Wirft DocumentIOError, wenn sie nicht vollständig oder nicht gültig ist.
-- `schreiben(path, erzeugen, *, endung, sicherung)` — Schreibt eine Datei sicher: `erzeugen(temp_pfad)` legt die neue Fassung an, der Rest geschieht hier.
-- `bytes_schreiben(path, daten, *, endung, sicherung)`
+- `schreiben(path, erzeugen, *, endung, sicherung, erwartet)` — Schreibt eine Datei sicher: `erzeugen(temp_pfad)` legt die neue Fassung an, der Rest geschieht hier.
+- `bytes_schreiben(path, daten, *, endung, sicherung, erwartet)`
 
 ### `services/vorlesen.py`
 
@@ -3051,6 +3189,143 @@ Vorlesen: Piper (offline, gute Stimme) wenn eingerichtet, sonst speech-dispatche
 - `beenden()`
 - `lies_vor(text, stimme, tempo)`
 
+## `services/docx_teile`
+
+### `services/docx_teile/__init__.py`
+
+
+### `services/docx_teile/lesen_gemeinsam.py`
+
+DOCX lesen — gemeinsame Bausteine (Importe, Konstanten, Hilfsfunktionen), von allen Teilen benutzt. Nichts hängt hier von den Teilen ab.
+
+- `_xp(el, ausdruck)` — XPath mit den Namensräumen von python-docx — auch für Elemente, deren Klasse kein eigenes xpath mit Namensräumen hat.
+- `_emu_to_px(v)`
+- `_pt_to_px(v)`
+- `_style_chain(style)`
+- `_doc_defaults(document)`
+- **class `_NoRun`** — Platzhalter, um Absatz-Standardwerte ohne Run aufzulösen.
+
+### `services/docx_teile/lesen_objekte.py`
+
+DOCX lesen: Bilder, schwebende Objekte und Textfelder.
+
+- **class `ObjekteMixin`** — DOCX lesen: Bilder, schwebende Objekte und Textfelder.
+  - `_effekte_lesen(drawing)` — ``a:effectLst`` am Bild → ``fx`` (Schatten, Leuchten, Spiegelung, weiche Kanten) in den Werten des Programms.
+  - `_frei(drawing, teil, inline_ok)` — Ein Bild, das frei auf dem Blatt liegt (wp:anchor ohne Textumbruch) → (Angabe, QImage); ``False``, wenn es nicht darstellbar ist
+  - `_frei_maske(drawing)` — Die Zuschneideform eines Bildes (``{"maske": …}`` im Titel, „lunivo:“), sonst leer.
+  - `_frei_objekt_daten(drawing)` — (Art, Daten) eines freien Objekts Form, Diagramm oder SmartArt aus dem Titel („lunivo:“) des Bildes, sonst None.
+  - `_textfeld_daten(drawing, wsp)` — Die Parameter eines Textfelds (``editor/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
+  - `_ketten_bereinigen()` — Nach dem Lesen: Verweise auf Folgefelder, die es nicht gibt, entfernen.
+  - `_add_image(drawing, cursor, cfmt)`
+
+### `services/docx_teile/lesen_seite.py`
+
+DOCX lesen: Seitengröße, Ränder, Abschnitte, Kopf- und Fußzeilen.
+
+- **class `SeiteMixin`** — DOCX lesen: Seitengröße, Ränder, Abschnitte, Kopf- und Fußzeilen.
+  - `read_page()` — Einrichtung des ERSTEN Abschnitts; weitere Abschnitte stehen als Umbrüche im Text (siehe editor/abschnitte.py).
+  - `_section_page(s, erster, basis)`
+  - `_hf_bilder(teil, ort, s, ps)` — Frei positionierte Bilder einer Kopf- oder Fußzeile (zum Beispiel ein Band über dem Briefkopf). „Am Absatz“ wird auf das Blatt
+  - `_abschnitt_beginn(s)`
+  - `_seitenschmuck(ps, sect)`
+  - `_aussen_innen(s, ps)` — Gerade Seiten mit gespiegelter Ausrichtung bei gleichem Text: das ist „außen“ (ungerade rechts) bzw. „innen“ (ungerade links).
+  - `_seitenzahl_art(s, ps)` — w:pgNumType: Zahlenart, „Beginnen mit“, Kapitelnummer.
+  - `_hf(part)`
+
+### `services/docx_teile/lesen_stile.py`
+
+DOCX lesen: Formatvorlagen, Schrift und Zeichenformat (Vererbung, Standardwerte, Hervorhebung).
+
+- **class `StilMixin`** — DOCX lesen: Formatvorlagen, Schrift und Zeichenformat (Vererbung, Standardwerte, Hervorhebung).
+  - `_standard_stil(art)`
+  - `_ps(para)` — Absatzvorlage (mit Zwischenspeicher).
+  - `_rs(run)`
+  - `_kette(style)`
+  - `_style_attr(style, getter)`
+  - `_stil_font(style, attr)`
+  - `_font_name(run, para)`
+  - `_font_size_pt(run, para)`
+  - `_flag(run, para, attr)`
+  - `_heading_level(para)`
+  - `_char_format(run, para)`
+  - `_schrift_zusatz(rpr, f)` — Schrift für asiatische und komplexe Zeichen, Betonungszeichen und doppeltes Durchstreichen (Fenster „Schriftart“).
+  - `_highlight(run)`
+  - `_ausrichtung(para, st)` — w:jc roh lesen — python-docx kennt „start“/„end“ nicht und bricht sonst ab.
+
+### `services/docx_teile/lesen_tabellen.py`
+
+DOCX lesen: Tabellen (verbundene Zellen, Rahmen, Maße, Zeilenhöhen).
+
+- **class `TabellenMixin`** — DOCX lesen: Tabellen (verbundene Zellen, Rahmen, Maße, Zeilenhöhen).
+  - `_zelle_format(qcell, cell)` — Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) aus der DOCX-Zelle.
+  - `add_table(table)`
+  - `_tw(el)` — (Art, Wert) eines Maßelements (w:tblW, w:tcW, w:tblCellMar-Kante …); Art ``dxa``/``pct``/``auto``, Wert in Zwanzigstelpunkten bzw. Prozent.
+  - `_tabellenformat(tf, table, cols)` — Tabellenbreite, Ausrichtung, Zellabstand, Rahmen (Stärke, Farbe, Stil), Innenabstand und Spaltenbreiten aus w:tblPr/w:tblGrid/w:tcW.
+  - `_zeilenhoehen(qt, table)` — w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand).
+
+### `services/docx_teile/schreiben_gemeinsam.py`
+
+DOCX schreiben — gemeinsame Bausteine (Importe, Konstanten, Hilfsfunktionen), von allen Teilen benutzt. Nichts hängt hier von den Teilen ab.
+
+- `_has(fmt, prop)`
+- `_rpr_einfuegen(rpr, el)` — Ein Element an ``w:rPr`` in der Reihenfolge einfügen, die das Schema verlangt.
+- `absatzopt_prop()`
+- `_split(text)`
+- `_rstyle_hyperlink(d)`
+- **class `_Body`**
+  - `__init__(d)`
+  - `add_paragraph()`
+  - `add_table(r, c)`
+- **class `_CellBox`**
+  - `__init__(cell)`
+  - `first_paragraph()`
+  - `add_paragraph()`
+  - `add_table(r, c)`
+
+### `services/docx_teile/schreiben_objekte.py`
+
+DOCX schreiben: Bilder, schwebende Objekte, Textfelder und ihre Verankerung.
+
+- **class `ObjekteSchreiber`** — DOCX schreiben: Bilder, schwebende Objekte, Textfelder und ihre Verankerung.
+  - `_image(imf, para, seite)`
+  - `_frei_bild(para, a, img)` — Ein frei positioniertes Bild (siehe editor/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben.
+  - `_textfeld_ketten()` — {id des Textfelds: (Kettennummer, Stelle in der Kette)} — die Verknüpfungen aller Textfelder des Dokuments (``wps:linkedTxbx``).
+  - `_textfeld_xml(run, a)` — Das Bild des Textfelds wird zur Form mit Text (``wps:wsp`` mit ``wps:txbx``/``w:txbxContent``), in „Alternativer Inhalt“.
+  - `_txbx_inhalt(inhalt, d)` — Absätze und Läufe des Textfelds (Text mit Zeichenformaten) als ``w:p``/``w:r`` in ``w:txbxContent``.
+  - `_effekte_element(fx)` — Schatten, Leuchten, Spiegelung und weiche Kanten als ``a:effectLst`` (Längen in Punkt → EMU, Winkel in 1/60000 Grad).
+  - `_verankern(run, ausrichtung)` — Macht aus dem Bild im Text (wp:inline) ein umflossenes Bild (wp:anchor, Umbruch „Quadrat“, links/rechts).
+
+### `services/docx_teile/schreiben_seite.py`
+
+DOCX schreiben: Seite, Abschnitte, Kopf- und Fußzeilen.
+
+- **class `SeiteSchreiber`** — DOCX schreiben: Seite, Abschnitte, Kopf- und Fußzeilen.
+  - `write_page()` — Dokumentweite Einstellungen (Hintergrund, Silbentrennung) und der letzte Abschnitt in der Schlusseinrichtung des Textes.
+  - `write_section(s, p, typ, nr)` — Einen Abschnitt (python-docx Section) nach Einrichtung p schreiben; nr = Nummer des Abschnitts (für verknüpfte Kopfzeilen).
+  - `_seitenzahl_art(s, p)` — Zahlenart, „Beginnen mit“ und Kapitelnummer der Seitenzahl als w:pgNumType.
+  - `_abschnitt_ende(para)` — Am Ende des Absatzes, der einen Abschnitt beschließt: dessen Einrichtung als w:sectPr in den Absatz schreiben.
+  - `_seitenschmuck(sect, p)`
+
+### `services/docx_teile/schreiben_tabellen.py`
+
+DOCX schreiben: Tabellen (Zellen, Rahmen, Maße).
+
+- **class `TabellenSchreiber`** — DOCX schreiben: Tabellen (Zellen, Rahmen, Maße).
+  - `write_table(qt, container)`
+  - `_tabelle_eigenschaften(t, qt)` — Tabellenbreite, Ausrichtung, Zellabstand, Rahmen, Innenabstand (w:tblPr, in Schema-Reihenfolge), Spaltenbreiten
+  - `_zeilenhoehe(drow, qt, r)` — Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten.
+  - `_zelle_format(dcell, cf)` — Zellenschattierung (w:shd) und senkrechte Ausrichtung (w:vAlign) der Qt-Zelle übernehmen.
+
+### `services/docx_teile/schreiben_zusatz.py`
+
+DOCX schreiben: Kommentare, Quellenverzeichnis, Fuß- und Endnoten.
+
+- **class `ZusatzSchreiber`** — DOCX schreiben: Kommentare, Quellenverzeichnis, Fuß- und Endnoten.
+  - `_kommentare_schreiben()`
+  - `_komm_erweitert(kennungen)` — Teil word/commentsExtended.xml: Die Kommentare mit diesen Absatzkennungen sind gelöst (w15:done).
+  - `_quellen_schreiben()`
+  - `_noten_schreiben()`
+
 ## `services/integrations`
 
 ### `services/integrations/__init__.py`
@@ -3066,10 +3341,24 @@ LanguageTool als zweite Meinung (eigener Java-Prozess, nur auf diesem Rechner, 1
 - `ordner()`
 - `laeuft(port)`
 - `jar_finden()`
-- `verfuegbar(port)`
-- `starten(port, warte_s)`
+- `fremd_erlauben(port)` — Erlaubt (``port``) oder verbietet (None) die Nutzung eines bereits laufenden lokalen LanguageTool-Dienstes auf diesem Port.
+- `eigener_prozess_laeuft()`
+- `status()` — Wer bedient die Prüfung? Für Anzeige und Datenschutzhinweis: ``art`` ist „eigen“, „fremd“ oder „keiner“.
+- `verfuegbar(port)` — Gibt es einen Weg, zu prüfen: eigener Prozess startbar (Jar und Java) oder ausdrücklich erlaubter lokaler Dienst?
+- `_freier_port()`
+- `starten(port, warte_s)` — Stellt sicher, dass ein vertrauenswürdiger Dienst läuft. → Portnummer. Ohne ``port`` wählt das System einen freien.
 - `pruefe(text, sprache, port)` — → Funde im selben Format wie die eigene Prüfung (von, bis, alt, neu, grund, art).
-- `beenden()`
+- `beenden()` — Beendet den selbst gestarteten Prozess (nie einen fremden Dienst).
+
+### `services/integrations/verzeichnis.py`
+
+Verzeichnis der Anbindungen an andere Programme und Dienste — eine Stelle, die für jede sagt, was sie ist, wohin Daten gehen und was erst
+
+- **class `Integration`**
+- `_languagetool(_k)`
+- `_ki(k)`
+- `_mcp(k)`
+- `uebersicht(kontext)` — Für die Datenschutzanzeige: je Integration Name, Art, Zustand, Datenweg und Zustimmung.
 
 ## `ui`
 
@@ -3092,6 +3381,7 @@ Backstage-Ansicht des Reiters „Datei“: links die Befehlsliste, rechts die Se
   - `_optionen()` — Platzhalter: die Optionen werden erst gebaut, wenn die Seite zum ersten Mal gezeigt wird.
   - `_optionen_zeigen()`
   - `_zeigen(schl)`
+  - `_aktiviert(it)` — Eingabetaste in der Liste; ein Mausklick meldet sich zugleich über ``itemClicked`` und darf nicht doppelt wirken.
   - `_gewaehlt(it)`
   - `_speicherort()`
   - `_seite(titel)`
@@ -3180,9 +3470,7 @@ Alle Funktionen der Schreibhilfe an einer Stelle: Wo sie in der Seitenleiste (�
 
 Hell/Dunkel über Qt-Paletten (Stil „Fusion“) — keine Stylesheets für das Grundlayout.
 
-- `_mint_stil(w)` — Thema Mint: Blautöne in den Stylesheets einzelner Widgets (Fokus-, Auswahlrahmen u. a.) durch das Mint-Grün ersetzen; sonst Original.
-- **class `_MintFilter`**(QObject)
-  - `eventFilter(obj, ev)`
+- `kopf_symbolfarbe()` — Symbolfarbe für den grünen Kopfbereich im Thema Mint (dunkel auf Hellgrün); sonst ``None`` = Farbe der Palette.
 - `apply_theme(app, mode)`
 - `_ist_dunkel(app)`
 - `_pfeile(farbe)` — Dropdown-Pfeile aus dem zentralen Lucide-Katalog für Qt-Stylesheets.
@@ -3216,6 +3504,15 @@ Das Fenster „Absatz“ (Einzüge und Abstände, Zeilen- und Seitenumbruch) als
   - `_tabstopps()`
   - `_male(p, rect)` — Vorhergehender Absatz (grau), der eigene mit Einzügen und Abständen, folgender Absatz (grau).
 
+### `ui/baukasten/abschnitt_gruppe.py`
+
+Aufklappbare Abschnitte als Gruppe: höchstens einer ist offen.
+
+- **class `EinzelOffen`**
+  - `__init__(*abschnitte)`
+  - `_geoeffnet(offen)`
+  - `schliesse_alle()`
+
 ### `ui/baukasten/aktionen_leiste.py`
 
 „Meine Aktionen“: die Schnellen KI-Aktionen (Eigene Assistenten) als Knöpfe — in der Seitenleiste der Schreibhilfe und im KI-Chat dieselbe Leiste.
@@ -3226,6 +3523,15 @@ Das Fenster „Absatz“ (Einzüge und Abstände, Zeilen- und Seitenumbruch) als
   - `fuellen()` — Die Knöpfe neu aufbauen: je Aktion einer, dazu „＋ Neue Aktion“.
   - `zustand()` — Die Aktionen laufen nur mit verbundenem Modell und nicht, solange die KI schon arbeitet; „Neue Aktion“ geht immer.
 
+### `ui/baukasten/alternativtext_abschnitt.py`
+
+Abschnitt „ALTERNATIVTEXT“ (Titel und Beschreibung) für die Seite „Größe und Eigenschaften“ — nach der Vorlage.
+
+- **class `AlternativtextAbschnitt`**(Abschnitt)
+  - `__init__(parent)`
+  - `_start(*_)`
+  - `setze(titel, text)` — Ohne Meldung; ein Feld mit dem Fokus (Eingabe läuft) bleibt unberührt.
+
 ### `ui/baukasten/auswahl_bereich.py`
 
 Der Bereich „Auswahl“ (Start ▸ Auswählen ▸ Auswahlbereich) als Baustein: alle Bilder, Formen, Diagramme und Tabellen des Dokuments in einer
@@ -3235,6 +3541,14 @@ Der Bereich „Auswahl“ (Start ▸ Auswählen ▸ Auswahlbereich) als Baustein
   - `__init__(parent, ed)`
   - `fuellen()`
   - `_markieren(it)`
+
+### `ui/baukasten/auto_felder_mixin.py`
+
+Bei „Automatische Füllung“ / „Automatische Linie“ die Felder zeigen, aber grau (nicht bedienbar), wie in der Vorlage.
+
+- **class `AutoFelderMixin`**
+  - `_felder_zeigen()`
+  - `_auto_gruppe(gruppen, auto)`
 
 ### `ui/baukasten/beschriftung.py`
 
@@ -3249,7 +3563,6 @@ Beschriftungen ohne Auszeichnungssprache: Text mit Schrifteigenschaften oder Mar
 Menüs und Galerien der Reiter „Bildtools“ und „Diagrammtools“ (nur Aussehen; jede Wahl ruft einen Befehl des Bandes).
 
 - `_form_bild(name)`
-- `_skala_bild(b, h)`
 - `_abschnittsleiste(text)`
 - `zuschneiden_menue(b)` — Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``).
 - `stil_bild(nr, groesse)` — Vorschau des Diagrammstils ``nr`` (``diagramm.STILE``): Grund, Raster und Schrift wie im fertigen Diagramm, mit drei Säulenreihen.
@@ -3310,30 +3623,40 @@ Bildchen für die Galerien Designs, Farben, Schriftarten und Effekte (Reiter Sei
 - `_optionen_name(teil)`
 - `_text_teil(teil)`
 - `_combo(eintraege)`
+- `_strich_zeichner(art)` — Zeichner für ``StrichAuswahl``: ein Strich der Strichart ``art`` über die Breite (schwarz).
+- `_kombi_zeichner(form)` — Zeichner für ``StrichAuswahl``: eine Linie des kombinierten Typs ``form`` (Flächen aus ``textfx._kontur_pfade``).
 - `_still(x, wert, setter)`
 - **class `_AutoWert`**(QWidget) — Eine Zahl, die „Automatisch“ sein kann (Minimum, Maximum, Hauptintervall der Achse): Haken + Feld. ``wert()`` ist None bei Automatisch.
   - `__init__(vorgabe)`
   - `wert()`
   - `setze(w)`
-- **class `DiagrammTextPanel`**(_TextPanel) — Textfüllung und -kontur, Effekte (wie bei den Texteffekten) und „Textfeld“. ``werte()`` ist das Textformat des Teils (``diagramm_format``: ``text``).
+- **class `DiagrammTextPanel`**(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel) — Textfüllung und -kontur, Effekte (wie bei den Texteffekten) und „Textfeld“. ``werte()`` ist das Textformat des Teils (``diagramm_format``: ``text``).
   - `__init__(parent, werte)`
+  - `_dreh_warp_bauen()`
+  - `_dreh_zuruecksetzen()`
+  - `_warp_bild(art, groesse)` — „abcde“ so verformt, wie der Text gezeichnet wird (derselbe ``pfad_verformen``).
+  - `_warp_menue(parent)`
+  - `_warp_setzen(art, melden)`
+  - `_verbinde()`
   - `_setze(w)`
   - `werte()`
-- **class `DiagrammFormatPanel`**(ObjektFormatPanel)
+- **class `DiagrammFormatPanel`**(KopfMenueMixin, NurDreiEffekteMixin, AutoFelderMixin, ObjektFormatPanel)
   - `__init__(parent, werte)`
+  - `_reiter_kurz()` — Kurze Reitertexte, damit sie bei 300 px lesbar bleiben; der volle Name steht als Tooltip (nur Texte).
   - `_zusatz_radios(abschnitt)`
   - `_zusatz_felder(abschnitt, a)`
+  - `_pfeile_freigeben(an)`
   - `_bild_waehlen()`
   - `fuellung_waehlen(art)`
   - `_farbe_waehlen()`
+  - `_k_breite()`
+  - `_k_breite_setzen(pt)`
   - `_linie_waehlen()`
   - `_seite_fuellung(w)`
   - `_seite_optionen()`
   - `_achse_melden()`
   - `_reihe_melden()`
-  - `_seite_eigenschaften()`
-  - `_groesse_melden(hoehe)`
-  - `_alt_start()`
+  - `_seite_eigenschaften()` — Nach der Vorlage nur „Alternativtext“ (Größe und Drehung stellt das Fenster „Layout“ des Objekts ein).
   - `_melde(**kw)`
   - `_melden()`
   - `werte()` — Füllung, Linie und Effekte im Format des Teilformats (``None`` = entfernen).
@@ -3354,7 +3677,7 @@ Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein B
 - `_kopfknopf(text, i, gruppe)`
 - `_linie()`
 - `_ueberschrift(text)`
-- `layout_bild(nr, groesse)` — Schematisches Bild von „Layout 1 bis 6“: Titel oben, Legende (Lage), Datenbeschriftungen (Punkte auf den Säulen).
+- `layout_bild(nr, groesse)` — Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
 - `_farbzeile(farben, gewaehlt, klick)`
 - **class `DiagrammPopup`**(QMenu) — Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter.
   - `__init__(b, art, reiter, parent)`
@@ -3419,7 +3742,7 @@ Das Druckfenster: links die Vorschau des Blattes, rechts die Reiter „Standard�
 - `_kopf(text)`
 - `_drucker_liste()`
 - `_combo(eintraege, aktuell)`
-- **class `DruckAnsicht`**(QWidget) — Vorschau links, Reiter rechts. ``geaendert`` kommt bei jeder Änderung der Wahl.
+- **class `DruckAnsicht`**(QWidget) — Reiter oben, Vorschau darunter. ``geaendert`` kommt bei jeder Änderung der Wahl.
   - `__init__(seiten, papier_mm, quer, start, *, auswahl, vorschau, parent)`
   - `_standard(s, hoch, quer, auswahl)`
   - `_papier_combo(aktuell)`
@@ -3456,6 +3779,17 @@ Die Druckvorschau als ganzes Fenster: oben Drucken…, Blattwechsel, Ansicht (Ei
   - `_gehe(n)`
   - `_aufbauen()`
 
+### `ui/baukasten/effekte_drei_mixin.py`
+
+Effekte-Seite mit nur drei Abschnitten (Schatten, Leuchten, Weiche Kanten) — wie die Vorlage des Diagramms.
+
+- **class `NurDreiEffekteMixin`**
+  - `_seite_effekte(w)`
+  - `alle_zu()`
+  - `_teil_in_regler(name)`
+  - `_fx_null_schatten()`
+  - `_setze_effekte(w)`
+
 ### `ui/baukasten/eingabe_fenster.py`
 
 Kleine Abfrage in der Seitenleiste: eine Frage, darunter eine Auswahl oder ein Textfeld, unten „Abbrechen“ und „OK“.
@@ -3467,6 +3801,7 @@ Kleine Abfrage in der Seitenleiste: eine Frage, darunter eine Auswahl oder ein T
   - `getText(parent, titel, frage, text, kennwort)` — Wie ``QInputDialog.getText``; ``kennwort=True`` zeigt Punkte statt der Zeichen.
   - `getMultiLineText(parent, titel, frage, text)` — Wie ``QInputDialog.getMultiLineText``.
   - `getDatum(parent, titel, frage, datum)` — Ein Datum aus dem Kalender wählen; Rückgabe ``(QDate, ok)``.
+- `_beim_editor_anmelden()` — Der Editor fragt über ``formular.eingabe_anbieter``; er kennt die Oberfläche nicht, hier wird ihm dieses Fenster mitgegeben.
 
 ### `ui/baukasten/einklappgruppe.py`
 
@@ -3504,8 +3839,14 @@ Die eine Farbpalette des Programms: Popup, Farbfeld für Dialoge und geteilter K
 - **class `_VerlaufKachel`**(_Kachel) — Kachel der Zeile „Graduelle Füllung“: ein Farbverlauf von hell nach dunkel in der Farbe; ein Klick meldet die Farbe als Verlauf.
   - `mouseReleaseEvent(e)`
   - `paintEvent(e)`
+- **class `_BildKachel`**(_Kachel) — Kachel einer Bildreihe („Musterfüllung“, „Strukturfüllung“): zeigt ein Bild; ein Klick meldet ihren Schlüssel.
+  - `__init__(palette, schluessel, bild, tipp, seite)`
+  - `enterEvent(e)`
+  - `leaveEvent(e)`
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(e)`
 - **class `FarbPalette`**(QMenu) — Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“.
-  - `__init__(parent, *, keine_text, start, titel, zuletzt, weitere, verlauf, verlauf_titel, weitere_text, automatisch, pipette, standard)`
+  - `__init__(parent, *, keine_text, start, titel, zuletzt, weitere, verlauf, verlauf_titel, weitere_text, automatisch, pipette, standard, reihen)`
   - `zusatz_eintrag(text, aktion)` — Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``.
   - `_titel_zeile(text)`
   - `_keine_symbol()`
@@ -3578,6 +3919,11 @@ Die eine Farbpalette des Programms: Popup, Farbfeld für Dialoge und geteilter K
 - **class `_Proben`**(QWidget) — Eine Fläche, oben „Neu“, unten „Aktuell“.
   - `__init__(modell, aktuell)`
   - `paintEvent(_e)`
+- **class `_FlaechePaar`**(QWidget) — Farbfläche und Helligkeitsleiste als ein Bedienelement; die Größe folgt den beiden (``ordne`` nach jeder Änderung).
+  - `__init__(flaeche, leiste)`
+  - `ordne()`
+- **class `_ProbeBlock`**(QWidget) — Die Probe mit „Neu“ oben und „Aktuell“ unten daneben.
+  - `__init__(probe)`
 - **class `FarbenDialog`**(PanelFaehig, QDialog) — Das Fenster „Farben“ (öffnet sich in der Seitenleiste). ``farbe()`` gibt nach OK die gewählte Farbe zurück.
   - `__init__(parent, start, titel)`
   - `_transparenz_zeile()` — „Transparenz“: Schieber und Zahlenfeld in Prozent (100 % = deckend) — beide halten dieselbe Zahl.
@@ -3599,6 +3945,33 @@ Fenster in einem Fenster: Unterfenster öffnen sich als Seite im selben Fenster 
 - `ausfuehren(d)` — ``d`` als oberstes Fenster eines Stapels zeigen und warten (wie ``d.exec()``): seine Unterfenster öffnen sich als Seiten im selben Fenster.
 - `stapel_von(w)`
 - `zeige_unter(elter, d, fertig)` — ``d`` als Unterfenster von ``elter`` zeigen; ``fertig()`` läuft nach „OK“. Im ``FensterStapel`` als Seite, sonst als Fenster mit ``exec``.
+
+### `ui/baukasten/flache_reiter_leiste.py`
+
+Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kasten, Linie unter dem aktiven Reiter.
+
+- `_gross(text)`
+- `_mische(a, b, anteil)` — Farbe a zum Anteil (0…1) mit b gemischt.
+- **class `FlacheReiterLeiste`**(QTabBar)
+  - `__init__(art, parent)`
+  - `_sichtbar()`
+  - `_knopf_breite(i)`
+  - `_schrift(groesse)`
+  - `_breiten()` — Breite je sichtbarem Reiter: Unterreiter gleich breit, Hauptreiter nach Länge der Beschriftung (der Pfeilknopf zählt mit).
+  - `_text_flaeche(i, breite)`
+  - `_groesse(breiten)` — Die Schriftgröße: so groß wie möglich, aber so, dass das längste Wort jedes Reiters ganz hineinpasst (nie „…“).
+  - `_text_hoehe(fm, i, breite)`
+  - `_hoehe(breiten, gr)`
+  - `tabSizeHint(index)`
+  - `minimumTabSizeHint(index)`
+  - `sizeHint()`
+  - `minimumSizeHint()`
+  - `resizeEvent(e)`
+  - `tabLayoutChange()`
+  - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
+  - `mousePressEvent(e)`
+  - `paintEvent(_e)`
+- `flach_machen(reiter, art)` — Setzt eine ``FlacheReiterLeiste`` in das ``QTabWidget`` (``setTabBar`` gilt nur vor dem ersten Reiter, darum werden die Seiten neu eingesetzt).
 
 ### `ui/baukasten/form_menues.py`
 
@@ -3680,12 +4053,14 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `__init__(beschriftung, feld, reihe, gewichte)`
 - `_hoehe_bei(item, breite)`
 - `_natuerlich(item)`
+- `einzeilig(item)`
+- `felder_angleichen(wurzel)` — Alle einzeiligen Felder (Menü, Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``: eine Quelle für die Höhe, auch für
 - **class `FormularGitter`**(QLayout)
   - `__init__(parent)`
   - `_nimm(objekt)`
   - `zeile(beschriftung, feld)` — Beschriftung (Text oder Widget) und das Feld (Widget oder Layout) dahinter.
   - `breit(objekt)`
-  - `reihe(*paare, gewichte)` — Mehrere Felder nebeneinander, jedes mit der Beschriftung darüber: ``reihe(("Schriftart:", a), ("Größe:", b), gewichte=(3, 1))``.
+  - `reihe(*paare, gewichte, vorn)` — Mehrere Felder nebeneinander, jedes mit der Beschriftung darüber: ``reihe(("Schriftart:", a), ("Größe:", b), gewichte=(3, 1))``.
   - `addItem(item)`
   - `count()`
   - `itemAt(i)`
@@ -3695,7 +4070,10 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `minimumSize()`
   - `heightForWidth(breite)`
   - `setGeometry(rect)`
+  - `_beschriftungen_nachfuehren()` — Ein ausgeblendetes Feld nimmt seine Beschriftung mit (sonst bliebe sie als Waise am alten Platz stehen); wird das Feld wieder gezeigt, kommt sie zurück.
   - `_reihe_legen(e, breite, y, out)`
+  - `_kurz(e, breite)` — Ein einzelnes Ankreuzfeld, Optionsfeld oder ein Knopf, der höchstens eine halbe Zeile braucht.
+  - `_gleich_hoch()` — Alle einzeiligen Bedienelemente (Menü, Zahl, Text, Knopf) dieses Formulars gleich hoch: die Höhe des höchsten natürlichen Elements, ohne feste Pixelwerte.
   - `_plan(breite)` — → ([(Element, x, y, Breite, Höhe)], Gesamthöhe) bei dieser Breite.
 - **class `AngepassteReiter`**(QTabWidget) — Reiter, deren Höhe dem gewählten Reiter folgt (ein ``QTabWidget`` richtet sich sonst nach dem höchsten und lässt kürzeren Reitern leeren Platz).
   - `__init__(parent)`
@@ -3706,6 +4084,19 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `heightForWidth(breite)` — Die Höhe der gewählten Seite bei dieser Breite (Seiten aus ``FormularGitter`` brechen um): so bleibt unter kürzeren Reitern kein leerer Platz.
   - `sizeHint()`
   - `minimumSizeHint()`
+
+### `ui/baukasten/fuell_voreinstellungen.py`
+
+Popup der Füllung im Kopf (Vorlage): „Keine Füllung“, Designfarben (10 × 6), Graduelle Füllung (10), Musterfüllung (5), Strukturfüllung (5).
+
+- `graduell_paar(farbe)` — (dunkel, hell) der graduellen Füllung einer Grundfarbe.
+- `_feld(farbe, groesse)`
+- `_gekachelt(kachel, groesse)`
+- `_muster_kachel(key, farbe)`
+- `fuell_bild(spec, groesse)` — Das Ergebnis der Füllung als Bild der Größe ``groesse`` (leer = durchsichtig).
+- **class `FuellPalette`**(FarbPalette) — Die Farbpalette des Programms als Popup der Füllung im Kopf; meldet den Schlüssel statt einer Farbe.
+  - `__init__(parent, aktuell, **kw)`
+- `fuell_menue(parent, aktuell)`
 
 ### `ui/baukasten/galerie_auswahl.py`
 
@@ -3729,10 +4120,69 @@ Galerie-Popup: Kacheln mit einer Textprobe in der jeweiligen Schrift und dem Nam
 Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die Umbruchart eines Bildes).
 
 - **class `KachelFeld`**(QWidget)
-  - `__init__(parent, *, spalten, groesse, mit_text)`
+  - `__init__(parent, *, spalten, groesse, mit_text, fliessend)`
   - `hinzu(schluessel, text, bild)`
+  - `_neu_legen(spalten)` — Kacheln in ``spalten`` Spalten neu ins Raster setzen (nur Anordnung, Auswahl und Signale bleiben).
+  - `minimumSizeHint()`
+  - `resizeEvent(ev)` — Mit ``fliessend=True`` so viele Spalten, wie in die Breite passen (``spalten`` ist das Höchstmaß).
+  - `_fokus_ziel()` — Nur eine Kachel ist per Tab erreichbar: die gewählte, sonst die erste.
+  - `eventFilter(obj, ev)`
   - `setze(schluessel, melden)`
   - `aktuell()`
+
+### `ui/baukasten/karten_raster.py`
+
+KartenRaster: ein Raster mit gemeinsamem Maßsystem für Karten, Schalter und Knöpfe.
+
+- `spanne_von(name_oder_text)` — Spanne aus einem Namen der zentralen Tabelle (``"breit"``), aus ``"2x1"`` oder aus einem Paar.
+- **class `KartenRaster`**(QLayout)
+  - `__init__(parent, min_breite, abstand, spalten_fest, gleiche_hoehe)`
+  - `addWidget(w, spanne)`
+  - `addItem(item)`
+  - `setSpanne(w, spanne)`
+  - `count()`
+  - `itemAt(i)`
+  - `takeAt(i)`
+  - `hasHeightForWidth()`
+  - `expandingDirections()`
+  - `spalten(breite)`
+  - `_sichtbar()`
+  - `_plan(breite)` — Plätze (Item, x, y, b, h) und Gesamthöhe bei der Breite ``breite``.
+  - `heightForWidth(breite)`
+  - `sizeHint()`
+  - `minimumSize()`
+  - `setGeometry(r)`
+- `kurze_gruppen_ins_raster(fenster, max_breite)` — Zentrale Automatik für jedes Fenster der Seitenleiste: aufeinanderfolgende kurze Ankreuzfelder, Optionsfelder und Knöpfe in einem senkrechten Layout
+
+### `ui/baukasten/kopf_dropdown.py`
+
+Dropdown im Kopf eines Abschnitts („FÜLLUNG ▾ [Feld ▾]“, „LINIE ▾ [Strich ▾]“ der Vorlage): ein weißes Feld mit dem aktuellen Ergebnis und kleinem
+
+- `keine_symbol(groesse)` — Das Zeichen der Zeile „Keine …“: Quadrat mit rotem Schrägstrich.
+- `keine_zeile(menue, text)` — Die klickbare Zeile „Keine …“ ganz oben im Popup (Zeichen + Text); sie meldet den Schlüssel ``""``.
+- **class `KopfDropdown`**(QPushButton)
+  - `__init__(fabrik, symbol, parent)`
+  - `sizeHint()`
+  - `setSymbol(symbol)`
+  - `an(abschnitt)` — Rechts in den Kopf des ``Abschnitt`` setzen (hinter den Streckungsraum).
+  - `_popup()`
+  - `paintEvent(_e)` — Ein Feld wie die übrigen der Seitenleiste (Farbfeld „Automatisch“): Rahmen, Hintergrund und Rundung vom Thema, darin nur das Ergebnis und der Pfeil.
+
+### `ui/baukasten/kopf_menue_mixin.py`
+
+Dropdowns in den Köpfen von „FÜLLUNG“ und „LINIE“ des Diagramm-Panels (Vorlage): Mixin vor ``ObjektFormatPanel``.
+
+- `_hex(farbe)`
+- **class `KopfMenueMixin`**
+  - `_kopf_menues_bauen()`
+  - `_fuell_voreinstellung(schluessel)`
+  - `_linien_voreinstellung(schluessel)`
+  - `_fuell_spec()`
+  - `_fuell_schluessel()`
+  - `_linien_spec()`
+  - `_linien_schluessel()`
+  - `_kopf_aktualisieren()`
+  - `_felder_zeigen()`
 
 ### `ui/baukasten/layout_dialog.py`
 
@@ -3759,6 +4209,19 @@ Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe 
   - `_mass_lesen(f)`
   - `werte()`
 
+### `ui/baukasten/layout_dialog_objekt.py`
+
+Das Fenster „Layout“ eines Bildes oder freien Objekts nach der Vorlage (Fotos „Im Textfluss“ und „SmartArt“).
+
+- **class `LayoutDialogObjekt`**(LayoutDialog)
+  - `__init__(parent, werte, art)`
+  - `_pruefen()`
+  - `_abstand_ordnen()`
+  - `_relativ_sperren()`
+  - `_ohne_original()`
+  - `_orig_anzeigen()`
+- `layout_dialog_fuer(art)` — Der Fensterbau für die Objektart: ``layout_dialog_fuer(art)(parent, werte)``.
+
 ### `ui/baukasten/layout_optionen.py`
 
 Das kleine Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart per Klick, „Mit Text verschieben“ oder „Fester Text“, „Mehr anzeigen“.
@@ -3769,6 +4232,17 @@ Das kleine Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart pe
   - `_klick(art)`
   - `setze(art)`
   - `zeigen_bei(pos)`
+
+### `ui/baukasten/layout_optionen_objekt.py`
+
+Das Popup „Layoutoptionen“ eines freien Objekts nach der Vorlage: ✕ im Kopf, größere Kacheln, beide Radios leer bei SmartArt.
+
+- **class `LayoutOptionenObjekt`**(LayoutOptionen)
+  - `__init__(parent, art, mit_text)`
+  - `_kopf_mit_schliessen()`
+  - `_kacheln_gross()`
+  - `verschieben_wahl()`
+  - `verschieben_wahl(wahl)`
 
 ### `ui/baukasten/linien.py`
 
@@ -3791,6 +4265,14 @@ Linien: Stärke, Art, Farbe — als Wert, als Auswahlzeile für Dialoge und als 
 - `rahmen_symbol(seiten, groesse)` — Kleines Quadrat, in dem nur die gemeinten Linien kräftig sind.
 - **class `RahmenMenue`**(MenueListe) — Das Rahmen-Menü (Unten, Oben, Links, Rechts, Kein, Alle, Außen, Innen). Meldet die gewählten Seiten.
   - `__init__(parent, *, innen, mehr_text, mehr)` — ``innen``: True = beide inneren Linien (Tabelle), ``"h"`` = nur die waagerechte (Absätze), False = keine.
+
+### `ui/baukasten/linien_voreinstellungen.py`
+
+Popup der Linie im Kopf (Vorlage): „Keine Linie“ und „Voreingestellte Linie“ — 8 Strichtypen (Zeilen) × 4 Formen (Spalten).
+
+- `linien_schluessel(art, form, breite)`
+- `linien_bild(spec, groesse)` — Eine Linie der Strichart/Form/Breite (pt) in Farbe über die Breite, mittig; ``art`` "keine" gibt ein leeres Bild.
+- `linien_menue(parent, aktuell, arten)`
 
 ### `ui/baukasten/liste_dialog.py`
 
@@ -3964,7 +4446,6 @@ Eingebettete, schrittweise PDF-Exportansicht für Lunivos Datei-Menü.
 - **class `PdfExportAnsicht`**(QWidget) — PDF-Export als dauerhaft sichtbare zweite Menüspalte, keine separates Dialogfenster.
   - `__init__(parent, start, seiten, aktuelle, markierung, exportieren, zurueck)`
   - `_schutz(s)`
-  - `_kennwort_zeile(g, row, feld, bestaetigen, text, text2)`
   - `_seiten_schalten(an)`
   - `_durchsuchen()`
   - `ergebnis()`
@@ -4000,10 +4481,24 @@ Die Pipette: eine Farbe vom Bildschirm aufnehmen.
 - `_muster_symbol(schluessel, px)`
 - **class `_Vorschau`**(QWidget) — Blatt mit zwei Absätzen aus grauen Zeilen; zeigt Rahmen und Füllung und schaltet Kanten per Klick.
   - `__init__(kanten_klick)`
+  - `sizeHint()`
+  - `minimumSizeHint()`
   - `_feld()`
   - `paintEvent(_e)`
   - `_luecke(f)`
   - `mousePressEvent(e)`
+- **class `_KantenFlaeche`**(QWidget) — Die Vorschau mit den Kantenknöpfen um sich (oben, Mitte, unten links daneben; links und rechts darunter). Die Vorschau wächst mit
+  - `__init__(vorschau, links, unten_l, unten_r)`
+  - `_rand()`
+  - `_vorschau_breite(breite)`
+  - `_vorschau_hoehe(w)`
+  - `hasHeightForWidth()`
+  - `heightForWidth(breite)`
+  - `sizeHint()`
+  - `minimumSizeHint()`
+  - `setMaximal(maximal)`
+  - `resizeEvent(ev)`
+  - `_lege()`
 - **class `_RahmenSeite`**(QWidget) — Einstellung · Linienart · Farbe · Breite · Vorschau mit Kantenknöpfen · Übernehmen für.
   - `__init__(linie, *, seitenrand, innen_h, fuer, abstand_mm)`
   - `linie_wert()`
@@ -4108,6 +4603,13 @@ Ein Fenster auf eine schmale Breite bringen (Seitenleiste), ohne dass etwas abge
 - `schmal_machen(d, breite)` — Alles in ``d``, was breiter als ``breite`` Pixel ist, umbrechen.
 - `_breite_gitter(g)`
 
+### `ui/baukasten/schnellleiste_zustand.py`
+
+Zustand der Schnellleiste neben dem gewählten SmartArt-Knoten: ob ⊖ fehlt und welche Knöpfe grau sind. Reine Funktionen, zeichnen nichts.
+
+- `ohne_minus(leiste, knoten)` — Bei gewähltem SmartArt-Knoten (Knopfsatz mit ``sa_form`` und ein Knotenrechteck) steht kein ⊖ (wie in der Vorlage).
+- `knopf_aktiv(b, name)` — Ob der Knopf bedienbar ist (sonst grau). Unbekannte Knöpfe und fehlende Befehle gelten als aktiv; ``sa_level`` genügt eine Richtung.
+
 ### `ui/baukasten/schreibweise_dialog.py`
 
 Das Fenster „Groß-/Kleinschreibung“ als Baustein: eine der fünf Arten wählen.
@@ -4157,6 +4659,7 @@ Kleine Seitenbilder für Galerien (Einfügen ▸ Seitenzahl, Wasserzeichen, Deck
 
 „Formatierung“ für SmartArt in der rechten Seitenleiste: Füllung und Linie, Effekte, Textoptionen — für den gewählten Knoten, ohne Auswahl für alle.
 
+- **class `SmartArtTextPanel`**(DiagrammTextPanel)
 - **class `SmartArtFormatPanel`**(DiagrammFormatPanel)
   - `__init__(parent, werte)`
   - `_nur_format()`
@@ -4208,6 +4711,14 @@ Menüs, Galerie und Miniaturen für SmartArt (Reiter „SmartArt-Design“, Schn
 - `_m_segmentzyklus(p, W, H, c)`
 - `zeichne_miniatur(p, r, schluessel, grau)` — Zeichnet die Miniatur des Layouts in ``r``.
 - `miniatur(schluessel, grau, groesse)`
+
+### `ui/baukasten/smartart_stil_kacheln.py`
+
+Stilkacheln im Band „SmartArt-Design“ nach der Vorlage: Organigramm-Motiv (ein Kasten oben, zwei unten, Linien) in den fünf Stilen.
+
+- `stil_bild_org(nr, groesse, blau)`
+- `stile_menue_org(b)`
+- `stile_galerie_org(b)`
 
 ### `ui/baukasten/sortieren_dialog.py`
 
@@ -4271,6 +4782,21 @@ Das eine Speichern-Fenster: Orte links, Ordnerinhalt rechts, unten Dateiname und
   - `getExistingDirectory(parent, titel, start, *_a, **_k)`
 - `_ordner_name_fragen(parent)` — Kleines Fenster „Neuer Ordner“ in der Größe der übrigen Felder (statt des winzigen Eingabefensters von Qt).
 
+### `ui/baukasten/strich_auswahl.py`
+
+Auswahlfeld, das einen Strich zeigt (Kombinierter Typ, Strichtyp): im Feld die schwarze Strichvorschau, im Popup eine Zeile je Eintrag.
+
+- **class `StrichAuswahl`**(QPushButton)
+  - `__init__(eintraege, parent)`
+  - `aktuell()`
+  - `setze(schluessel)`
+  - `_namen()`
+  - `_zeichner(schluessel)`
+  - `_bild(zeichner, groesse)`
+  - `paintEvent(_e)`
+  - `_popup()`
+  - `_waehle(schluessel)`
+
 ### `ui/baukasten/tabstopp_dialog.py`
 
 Das Fenster „Tabstopps“ als Baustein: Position, Ausrichtung und Füllzeichen festlegen, löschen, alle löschen.
@@ -4300,6 +4826,18 @@ Das Fenster „Tastenkombination“ als Baustein: eine Tastenkombination aufnehm
   - `taste()`
   - `_pruefen(*_)`
 
+### `ui/baukasten/teil_menue.py`
+
+Der Pfeil am Hauptreiter („DIAGRAMM OPTIONEN ▾“): öffnet die Liste der Teile des Diagramms, der aktuelle Teil trägt einen Haken.
+
+- **class `TeilMenueKnopf`**(QToolButton)
+  - `__init__(parent)`
+  - `setze(teile, aktuell)`
+  - `aktuell()`
+  - `_menue()`
+  - `_waehlen(schluessel)`
+  - `_oeffnen()`
+
 ### `ui/baukasten/text_format.py`
 
 Textformat-Bausteine: Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabstand — so wie im Band (Start ▸ Schriftart, Absatz).
@@ -4326,19 +4864,49 @@ Textformat-Bausteine: Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabs
 - `aus_format(cf, standard_schrift, standard_groesse)` — Die Werte eines Zeichenformats (zum Vorbelegen eines Zeichenfensters).
 - `zeichne_absaetze(p, rect, absaetze, mittig)` — Absätze (Absatzformat, Zeichenformat, Text) in ein Rechteck zeichnen — die Vorschau der Formatierungsfenster.
 
+### `ui/baukasten/text_fuellarten_mixin.py`
+
+Textfüllung der Diagramm-Textoptionen mit fünf Arten wie in der Vorlage: Keine Füllung · Einfarbige Füllung · Farbverlauf · Bild- oder Texturfüllung · Musterfüllung.
+
+- **class `TextFuellartenMixin`**
+  - `_text_fuellarten_bauen()`
+  - `_pinsel_wahl(art)` — Ein Feld einer neuen Art wurde bedient: damit ist diese Art gewählt.
+  - `_bild_waehlen()`
+  - `_sichtbar()`
+  - `_setze_fuellung(w)`
+  - `werte()`
+
+### `ui/baukasten/text_kopf_menue_mixin.py`
+
+Dropdowns in den Köpfen von „TEXTFÜLLUNG“ und „TEXTKONTUR“ der Textoptionen des Diagramms (Vorlage): Mixin vor ``TexteffektPanel``/``_TextPanel``.
+
+- `text_fuell_menue(parent, aktuell)` — „Keine Füllung“, die Farbpalette und graduelle Füllung (Muster und Struktur gibt es beim Text nicht).
+- `_text_bild(text, groesse)`
+- **class `TextKopfMenueMixin`**
+  - `_text_kopf_bauen()`
+  - `_text_fuell_wahl(schluessel)`
+  - `_text_fuell_schluessel()`
+  - `_text_linien_schluessel()`
+  - `_text_kopf_aktualisieren()`
+  - `_neu(*a)`
+  - `_setze_fuellung(w)`
+
 ### `ui/baukasten/texteffekt_dialog.py`
 
 Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung und -kontur“ und „Effekte“ (Schatten, Reflektion, Leuchten, 3D-Format).
 
+- `seitengitter(widget)` — Das ``FormularGitter`` der Seitenleiste „Formatierung“: Beschriftungen links, alle Felder in einer gleich breiten Spalte rechts.
 - **class `_Pfeil`**(QToolButton) — Der Pfeil vor einer Abschnittsüberschrift: schaltet um wie ein Umschaltknopf (``setChecked``, ``toggled``), zeigt aber keinen Knopfrahmen.
   - `__init__()`
   - `isChecked()`
   - `setChecked(an)`
   - `toggle()`
 - **class `Abschnitt`**(QWidget) — Aufklappbarer Abschnitt: Pfeil und Überschrift in Großbuchstaben links, optional ein Bedienelement rechts (z. B. die Voreinstellung).
-  - `__init__(titel, rechts)`
+  - `__init__(titel, rechts, rechts_text)`
   - `_umschalten(an)`
+  - `kopffeld(widget, text)` — Das Menü des Abschnitts (Voreinstellung, Farbe) rechts im Kopf, in der Breite der Feldspalte darunter.
   - `zeile(text, widget)`
+  - `auswahl(*radios)` — Auswahlpunkte (Füllungsart, Linienart) ordentlich untereinander, eine je Zeile.
   - `breit(widget)`
 - `_linien_icon(art, form, groesse)` — Kachel der Linienauswahl: eine Linie in Strichart und Form.
 - **class `TexteffektPanel`**(QWidget)
@@ -4380,6 +4948,17 @@ Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung u
   - `__init__(parent, werte)`
   - `passe_an(breite, hoehe)` — Die Seite nimmt die ganze Höhe der Seitenleiste: die Abschnitte rollen sonst in einem winzigen Streifen.
   - `__getattr__(name)`
+
+### `ui/baukasten/textfeld_abschnitt.py`
+
+Abschnitt „AUSRICHTUNG“ der Seite „Textfeld“ (Textoptionen eines Diagrammteils) — nach der Vorlage.
+
+- `_still(x, wert, setter)`
+- **class `TextfeldAbschnitt`**(Abschnitt)
+  - `__init__(parent)`
+  - `freigeben(raender, gerade)`
+  - `setze(feld)` — Ohne Meldung.
+  - `werte()`
 
 ### `ui/baukasten/umbruch_symbole.py`
 
@@ -4450,10 +5029,22 @@ Werkbank: die Funktionen eines Reiters der Schreibhilfe als große, selbsterklä
   - `mouseReleaseEvent(e)`
   - `keyPressEvent(e)`
   - `_los()`
+  - `_beschreibung(an)` — Was ein Bildschirmleser zusätzlich zum Namen hört: Art, Zustand, Hinweis, Kürzel.
   - `aktualisieren()`
 - **class `Werkbank`**(QScrollArea) — Die Zeilen eines Reiters; ``oben`` (optional) ist ein Widget über den Zeilen, etwa ein Hinweis.
   - `__init__(fenster, reiter, oben, nur)`
   - `aktualisieren()`
+
+### `ui/baukasten/winkel_feld.py`
+
+Winkelfeld: Drehknopf (QDial) und Zähler „0,0°“ mit „−“ und „+“ (wie der Schattenwinkel der Vorlage).
+
+- **class `WinkelFeld`**(QWidget)
+  - `__init__(lo, hi, suffix, schritt, nachkomma, wert)`
+  - `_vom_knopf(v)`
+  - `_vom_zaehler(v)`
+  - `value()`
+  - `setValue(v)`
 
 ### `ui/baukasten/zellen_raster.py`
 
@@ -4472,6 +5063,15 @@ Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Ze
   - `_beschriften(z, s)`
   - `waehle(zeilen, spalten)`
   - `fuss(text, aktion)`
+
+### `ui/baukasten/zugaenglichkeit.py`
+
+Zugängliche Namen für Knöpfe ohne eigenen Namen (Screenreader, Sprachsteuerung).
+
+- `name_fuer(knopf)` — Der Name, den ein Screenreader für diesen Knopf lesen soll: Text, sonst Tooltip, ohne Tastenkombination und Erklärung.
+- **class `NamenFilter`**(QObject) — Setzt beim ersten Anzeigen eines Knopfes den zugänglichen Namen, wenn noch keiner gesetzt ist.
+  - `eventFilter(obj, ev)`
+  - `einhaengen(app)`
 
 ### `ui/baukasten/zusatz_panel.py`
 
@@ -4519,6 +5119,7 @@ Kontext-Reiter „Kopf- und Fußzeile“ nach der Vorlage: Gruppen ohne Namen, K
 
 Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``form``; für freie Objekte inkl. WordArt/Textfeld: ``zeichen``).
 
+- `_gruppieren_menue()` — Gruppieren ▾ wie in der Vorlage: beide Befehle im Menü (der Knopf selbst löst nichts aus).
 
 ### `ui/contextual/serien_tools.py`
 
@@ -4568,6 +5169,8 @@ Bildschirmfoto: ganzer Bildschirm oder aufgezogener Bereich.
   - `kompakt_machen()` — In der Seitenleiste: die Diagrammarten wie in der Vorlage in einer Spalte über der Vorschau (alle sichtbar, ohne Rollbalken),
   - `passe_an(breite, _hoehe)` — Auf die echte Breite der Seitenleiste: zwei Spalten Diagrammarten, Vorschau so breit wie der Platz.
   - `_gruppe(zeile)`
+  - `_beispiel_laden(untertyp)`
+  - `_vorlagen_hinweis()`
   - `_waehle(untertyp)`
   - `_daten()`
   - `_ist_kombi()`
@@ -4579,6 +5182,7 @@ Bildschirmfoto: ganzer Bildschirm oder aufgezogener Bereich.
 
 Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen.
 
+- `_titel(text, feld)`
 - **class `PageSetupDialog`**(PanelFaehig, QDialog)
   - `__init__(page, parent)`
   - `result_page()`
@@ -4598,8 +5202,11 @@ Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Erset
 - **class `ZoomDialog`**(PanelFaehig, QDialog) — Ansicht ▸ Zoom: feste Stufen, Seitenbreite, ganze Seite oder eigener Wert.
   - `__init__(parent, aktuell)`
   - `ergebnis()`
-- **class `TabellenEigenschaftenDialog`**(PanelFaehig, QDialog) — „Tabelleneigenschaften“: Breite, Ausrichtung, Rahmenstärke, Zellenabstand, Kopfzeile. Ändert die Tabelle nicht selbst; der Aufrufer liest die Felder.
-  - `__init__(parent, breite_prozent, ausrichtung, rand, abstand, kopfzeile)`
+- **class `TabellenEigenschaftenDialog`**(PanelFaehig, QDialog) — „Tabelleneigenschaften“ (Reiter „Tabelle“ und „Spalte und Zelle“). Ändert die Tabelle nicht selbst; der Aufrufer liest ``werte()``
+  - `__init__(parent, breite_prozent, ausrichtung, rand, abstand, kopfzeile, *, werte)`
+  - `setze(w)`
+  - `_sichtbar(*_)`
+  - `werte()`
 - **class `BildZuschneidenDialog`**(PanelFaehig, QDialog) — „Bild zuschneiden“: wie viele Bildpunkte links, oben, rechts und unten abgeschnitten werden.
   - `__init__(parent)`
   - `werte()` — (links, oben, rechts, unten) in Bildpunkten.
@@ -4680,8 +5287,7 @@ Kleine Fenster des Reiters Einfügen nach den Vorlagen: „Zahl“, „Felder“
   - `_pruefen()`
 - **class `FelderDialog`**(PanelFaehig, QDialog) — „Felder“ wie in der Vorlage: links „Feld auswählen“ mit den Feldnamen, rechts „Feldeigenschaften“ mit Feldfunktionen,
   - `__init__(parent, kontext)`
-  - `_kopf(text)`
-  - `kompakt_machen()` — In der Seitenleiste: Feldnamen über den Eigenschaften.
+  - `kompakt_machen()` — In der Seitenleiste: die Feldnamen als Liste von begrenzter Höhe.
   - `_zeile(schl, text, w, aktiv)`
   - `_box(eintraege, bearbeitbar, daten)`
   - `_zeigen(name)`
@@ -4706,7 +5312,6 @@ Kleine Fenster des Reiters Einfügen nach den Vorlagen: „Zahl“, „Felder“
   - `werte()`
 - **class `HyperlinkDialog`**(PanelFaehig, QDialog) — „Hyperlink“ wie in der Vorlage: links „Link zu“ (Datei oder Webseite, Aktuelles Dokument, E-Mail-Adresse), oben „Anzuzeigender Text“
   - `__init__(parent, *, text, ziele, ordner, adressen)`
-  - `kompakt_machen()` — In der Seitenleiste: „Link zu“ oben (drei Ziele untereinander, Bild neben dem Text), die Felder darunter in voller Breite.
   - `_ordner_setzen(pfad)`
   - `_ordner_zeigen(pfad)`
   - `_doppelklick(i)`
@@ -4755,8 +5360,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
 - **class `_Antwort`**(QObject)
 - **class `AnbieterDialog`**(QDialog) — Neuer oder zu bearbeitender Anbieter: Name, Vorlage, URL, Schlüssel, Modell (Liste vom Anbieter), Fähigkeiten.
   - `__init__(fenster, konfig, bestehend)`
-  - `_chips_legen(spalten)` — „Modell verwenden für“ als gleichmäßiges Raster (gleich breite Felder) statt einer Zeile, die irgendwo umbricht.
-  - `kompakt_machen()` — In der Seitenleiste: der Titel steht schon im Kopf der Seite, und die Fähigkeiten stehen zu zweit nebeneinander.
+  - `kompakt_machen()` — In der Seitenleiste: der Titel steht schon im Kopf der Seite; die Fähigkeiten laufen als Fluss in die Breite.
   - `_vorlage_gewaehlt(i)`
   - `_holen(still)`
   - `_geholt(r)`
@@ -4788,7 +5392,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `setCurrentText(text)`
 - **class `SprachePanel`**(QWidget) — Die Sprachen der Schreibhilfe, nebeneinander: „Sprache für die Überprüfung“ (Sprache des Dokuments) und „Übersetzen nach“ (Ziel der KI-Übersetzung).
   - `__init__(fenster)`
-  - `kompakt_machen()` — In der Seitenleiste: die zwei Listen untereinander statt nebeneinander, jede mit sechs sichtbaren Zeilen (der Rest rollt).
+  - `kompakt_machen()` — Die zwei Listen stehen schon untereinander (je sechs sichtbare Zeilen, der Rest rollt); nichts mehr umzubauen.
   - `uebernehmen()`
 - **class `McpDialog`**(QDialog) — Ein MCP-Server: Name, Startbefehl, ein/aus; „Testen“ startet ihn kurz und zeigt seine Werkzeuge.
   - `__init__(fenster, e)`
@@ -4803,6 +5407,12 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `_neu()`
   - `_bearbeiten()`
   - `_entfernen()`
+- **class `EinwilligungenPanel`**(QWidget) — Wer darf welchen Text bekommen: die gespeicherten Einwilligungen, einzeln oder alle widerrufbar. Ohne Einwilligung wird nichts gesendet.
+  - `__init__(konfig)`
+  - `fuellen()`
+  - `_knoepfe(*_)`
+  - `_widerrufen()`
+  - `_alle()`
 - **class `WebsuchePanel`**(QWidget) — Websuche für den KI-Chat: Anbieter, Adresse oder Schlüssel, Zahl der Treffer. Ein: die Frage geht an den Suchanbieter.
   - `__init__(konfig)`
   - `werte()`
@@ -4811,7 +5421,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
 - **class `KIEinstellungenDialog`**(PanelFaehig, QDialog) — Das eine Fenster für alles zur KI: verbundene Modelle, Modellzuweisung, MCP-Server und Websuche.
   - `__init__(fenster, start)`
   - `kompakt_machen()` — In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen.
-  - `freischalten()` — Ohne verbundenes Modell ist nur der erste Reiter bedienbar; mit Modell (auch Ollama auf diesem Rechner) sind alle frei.
+  - `freischalten()` — Alle Reiter sind immer anklickbar; Sprache, MCP und Websuche brauchen kein Modell, die Zuweisung zeigt ohne Modell eine leere Auswahl.
   - `neues_modell()`
   - `_ok()`
 - **class `SchnelleAktionDialog`**(PanelFaehig, QDialog) — „Schnelle KI-Aktion erstellen“: eine einmalige KI-Aufgabe mit Name, Anweisung, Ergebnisart und Zugriff.
@@ -4855,7 +5465,6 @@ Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, S
   - `_ok()`
 - **class `SymbolTauschenDialog`**(PanelFaehig, QDialog) — Ein Symbol austauschen — wie in der ersten Fassung: Getauscht wird die Zeichnung, nicht der Knopf; sie ändert sich überall,
   - `__init__(parent, settings, name)`
-  - `passe_an(breite, hoehe)` — In der Seitenleiste so viele Zeichnungen nebeneinander, wie in die Breite passen.
   - `_befehle()`
   - `_kopf_zeigen()`
   - `_gitter_zeigen()`
@@ -4891,6 +5500,7 @@ Optionen — das Fenster hinter „☰ Menü ▸ Optionen“ (F9): sechs Seiten 
 
 Dialoge zu Sendungen: Umschlag, Etiketten, Seriendruck, Regeln, Vorschau.
 
+- `_hinweis(text)`
 - `_ok(dlg, text_ok)`
 - **class `UmschlagDialog`**(PanelFaehig, QDialog)
   - `__init__(parent, absender)`
@@ -4930,6 +5540,18 @@ Einstellungen für „Silben farbig“: alles, was jemand mit Legasthenie brauch
   - `anwenden()` — Wirkt sofort auf Vorschau und alle offenen Dokumente (Abbrechen stellt den alten Stand wieder her).
   - `_standard()`
   - `reject()`
+
+### `ui/dialogs/smartart_dialog_foto.py`
+
+SmartArt-Auswahl nach der Vorlage (Foto „Grafik auswählen“): Reiter „Alle“, große Kacheln, darunter Vorschau mit Name und Beschreibung, ein blauer OK-Knopf.
+
+- `_weg(w)`
+- **class `_GrosseGalerie`**(_LayoutGalerie) — Die Layout-Galerie mit Kacheln im Seitenverhältnis des Fotos.
+  - `__init__(namen, zeichner, aktuell)`
+  - `_bauen(spalten)`
+  - `resizeEvent(ev)`
+- **class `SmartArtDialogFoto`**(SmartArtDialog)
+  - `__init__(parent, daten)`
 
 ### `ui/dialogs/sonderzeichen.py`
 
@@ -5085,7 +5707,7 @@ Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter T
 - `_feld(w, breite)`
 - **class `WasserzeichenDialog`**(PanelFaehig, QDialog)
   - `__init__(parent, aktuell, page, ordner)`
-  - `_lage_felder(g, kuerzel)` — Format, Horizontal und Vertikal (je Liste und Abstand vom Rand).
+  - `_lage_felder(g, kuerzel, partner)` — Format, Horizontal und Vertikal (je Liste und Abstand vom Rand).
   - `_vorbelegen(a)`
   - `_art(an, andere)`
   - `_bild_waehlen()`
@@ -5099,10 +5721,13 @@ Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter T
 
 „Welche Hilfe wann“: die Stufen der Schreibhilfe von der Wellenlinie bis zur KI, die Etiketten der Funde und ein Weg durch einen Brief.
 
+- **class `_Umbruch`**(QLabel) — Text, der umbricht und dabei immer die Höhe bekommt, die er braucht (verschachtelte Layouts reichen „Höhe bei Breite“ nicht sicher weiter).
+  - `resizeEvent(ev)`
 - `_text(text)`
 - **class `HilfeWannDialog`**(PanelFaehig, QDialog)
   - `__init__(fenster)`
-  - `_zeile(stufe, titel, kuerzel, frage, rechts, aktion, trenner)`
+  - `_mit_trenner(z, trenner)`
+  - `_zeile(stufe, titel, kuerzel, frage, rechts, aktion, trenner)` — Stufenzeile in drei festen Spalten: Nummer \| Text (Titel, Frage, Hinweis) \| Schalter rechts, immer oben bündig.
   - `_nachziehen(name, an)`
 
 ## `ui/dialogs/optionen_seiten`
@@ -5212,6 +5837,17 @@ Optionen: Name und KI, dazu die Werkzeug-Fenster (Menüband, Schnellzugriff, Ken
 Dokumentbereich: Editor, Seitenfläche, Dokumentreiter, Lineal, Navigation.
 
 
+### `ui/document/absatz_symbol.py`
+
+Absatz-Layout-Symbol: ein kleiner Knopf links neben dem Absatz der Schreibmarke (Absatzzeichen mit Pfeil). Sein Menü bietet
+
+- **class `AbsatzSymbol`**(QObject)
+  - `__init__(ed)`
+  - `sichtbar_soll()`
+  - `aktualisieren()`
+  - `_zuruecksetzen()`
+  - `_ausblenden()`
+
 ### `ui/document/base.py`
 
 - `_ziel_fragment(html, standard)` — HTML einfügen, aber Schriftart, -größe, Farben und Hintergründe des Ziels behalten.
@@ -5253,6 +5889,7 @@ Der Editor: QTextEdit mit Seitenbreite, Formatierungsbefehlen und Seitenzählung
 
 - `_ziel_fragment(html, standard)` — HTML einfügen, aber Schriftart, -größe, Farben und Hintergründe des Ziels behalten (Fett, Kursiv, Verweise bleiben).
 - **class `DocumentEditor`**(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, FormatierungBaustein, BilderBaustein, SchreibhilfeBaustein, FreieBilderMixin, ZusatzMixin, QTextEdit)
+  - `setReadOnly(ro)`
   - `__init__(parent)`
   - `_verbinde_groesse()`
   - `_passe_hoehe_an(*_)`
@@ -5559,7 +6196,7 @@ Frei positionierte Bilder im Editor: zeichnen, anklicken, verschieben, in der Gr
   - `_frei_wirken(**teile)`
   - `_frei_formstile(pos)`
   - `frei_formstile_menue(parent, ed)`
-  - `_frei_formatierung(reiter)` — Zahnrad der Schnellleiste und Rechtsklick „Formatieren“: die Seitenleiste „Formatierung“ für das gewählte Objekt (Diagramm, SmartArt, Form, Bild …).
+  - `_frei_formatierung(reiter)` — Zahnrad am Diagramm und Rechtsklick „Formatieren“: die Seitenleiste „Formatierung“ für das gewählte Objekt (Diagramm, SmartArt, Form, Bild …).
   - `_frei_effekte()` — „Weitere Effekte …“: die Seitenleiste „Formatierung“ mit den Effekten.
   - `_frei_fuell(pos)`
   - `frei_fuell_menue(parent, ed)`
@@ -5815,12 +6452,95 @@ Zwei-Seiten-Ansicht: die Seiten des Dokuments nebeneinander, so wie sie gedruckt
   - `_format_loeschen()`
 - `_absatz_format(w)` — Die geänderten Absatzwerte als Absatzformat (für „Ersetzen durch“): nur, was im Fenster geändert wurde.
 
+### `ui/document/tabelle_griffe.py`
+
+Bedienelemente direkt an der Tabelle im Dokument (wie in WPS): Verschiebegriff oben links, „+“ rechts und unten, Aufziehgriff unten rechts
+
+- `dunkel(symbol, px)` — Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß).
+- **class `_Vorschau`**(QWidget) — Gestrichelter Rahmen (Aufziehen) oder Linie (Rand) in der Zielgeometrie; durchsichtig für die Maus.
+  - `__init__(vp)`
+  - `paintEvent(e)`
+- **class `_Grau`**(QWidget) — Graue, durchscheinende Fläche über der markierten Tabelle (Qt füllt leere Zellen einer Auswahl nicht); durchsichtig für die Maus.
+  - `__init__(vp)`
+  - `paintEvent(e)`
+- **class `_Rand`**(QWidget) — Durchsichtiger Streifen über einem Spalten- (senkrecht) oder Zeilenrand (waagrecht); Ziehen meldet die Bildpunkte seit dem Start
+  - `__init__(vp, bei_start, bei_ziehen, bei_ende, waagrecht)`
+  - `mousePressEvent(e)`
+  - `mouseMoveEvent(e)`
+  - `mouseReleaseEvent(e)`
+- **class `_Griff`**(QToolButton) — Ein kleiner Knopf auf dem Sichtbereich; Ziehen meldet die Mausbewegung an ``bei_ziehen`` (Bildpunkte seit dem Start).
+  - `__init__(vp, symbol, tipp, bei_klick, bei_ziehen, bei_ende, bei_start, cursor, ende_immer)`
+  - `paintEvent(e)`
+  - `mousePressEvent(e)`
+  - `mouseMoveEvent(e)`
+  - `mouseReleaseEvent(e)`
+- **class `TabellenGriffe`**(QObject)
+  - `__init__(ed)`
+  - `eventFilter(obj, ev)`
+  - `_bloecke_schliessen()` — Offene Ziehvorgänge (Esc, Fokusverlust) ohne Änderung verwerfen.
+  - `tabelle()`
+  - `_gezeichnet(t)` — Der wirklich gezeichnete Rahmen in Layoutkoordinaten: aus den Zellen (Inhalt plus Innenabstand), nicht aus ``frameBoundingRect``
+  - `rechteck(t)` — Die Tabelle (erste Seite, wenn sie über mehrere läuft) in Bildpunkten des Sichtbereichs.
+  - `_verstecken()`
+  - `aktualisieren()`
+  - `_ausblenden(halter)` — Alle Tabellensymbole außer dem gezogenen verstecken; dieses bleibt sichtbar, zeichnet aber nichts (behält die Maus).
+  - `_einblenden()`
+  - `_ziehen_start(t, halter)` — Merkt Rechteck und Zoom beim Start; ab jetzt ruht ``aktualisieren`` (auch das Absatz-Symbol).
+  - `_ziehen_ende(anwenden)` — Loslassen (``anwenden``) oder Verwerfen: die vorgemerkte Änderung genau einmal und als ein Rückgängig-Schritt ausführen.
+  - `_ziehen_frei(geaendert)` — Ruhe aufheben und einmal vollständig aktualisieren.
+  - `_markieren()` — Die ganze Tabelle grau zeigen (wie in WPS beim Aufziehen); die Textauswahl bleibt unberührt, ``_ziehen_ende`` blendet die Fläche aus.
+  - `_auswahl_alle(t)`
+  - `_griffe_setzen(r)`
+  - `_vorschau_zeigen(geo, linie)`
+  - `_grenzen(t)` — x-Abstand jeder Spaltengrenze (0 = linker Tabellenrand, n = rechter) vom linken Tabellenrand, in Bildpunkten.
+  - `_raender_setzen(t, r)`
+  - `_rand_start(spalte)`
+  - `_rand_ziehen(dx)`
+  - `_spalten_anwenden(w)`
+  - `_rand_ende(geaendert)`
+  - `_zeilenraender_setzen(t, r)`
+  - `_zeile_start(zeile)`
+  - `_zeile_ziehen(dy)`
+  - `_zeile_ende(geaendert)`
+  - `_waehlen()`
+  - `_anhaengen(spalte)` — Symbole kurz ausblenden, Spalte/Zeile anhängen, nach dem Layout am neuen Rand wieder einblenden (kein zweiter Klick dazwischen).
+  - `_verschieben_zeigen(d, gp)`
+  - `_verschieben_frei()`
+  - `_verschieben_ende(gp)` — Tabelle an die Stelle unter der Maus verschieben (vor den Absatz, auf dem losgelassen wird).
+  - `_verschieben_ende_tun(gp)`
+  - `_aufziehen_start()`
+  - `_aufziehen(d, gp)` — Nur der gestrichelte Rahmen von der oberen linken Ecke bis zum Ziel; die Tabelle bleibt (grau markiert) unverändert.
+  - `_aufziehen_ende(gp, geaendert)` — Loslassen: einmal skalieren (auch bei Klick ohne Ziehen wird der Vorgang geschlossen).
+
+### `ui/document/tabelle_radierer.py`
+
+„Radiergummi“ (Tabellentools): ein Klick auf eine Zellenlinie löscht sie; die beiden Zellen daneben werden zu einer verbunden.
+
+- `_pad(zelle, name, tabelle)` — Innenabstand der Zelle (links/oben); ohne eigenen Wert gilt der der Tabelle.
+- `gitter(ed, t)` — (x der Spaltengrenzen, y der Zeilengrenzen) der Tabelle in Dokumentkoordinaten, je ``columns+1`` bzw. ``rows+1`` Werte.
+- `kante_finden(ed, t, dx, dy, toleranz)` — Nächste Zellenlinie zum Punkt (Dokumentkoordinaten): ``(zeile, spalte, seite, (x1, y1, x2, y2))`` oder ``None``.
+- `_radierer_cursor()` — Radiergummi in Dunkel mit weißem Rand (wie der Stift): auf weißem Blatt wie auf dunklem Grund gut zu sehen; heißer Punkt unten links.
+- **class `TabellenRadierer`**(QWidget)
+  - `__init__(ed)`
+  - `_doc(pt)`
+  - `_view(x, y)`
+  - `treffer(pt)` — Die Linie unter dem Punkt des Sichtbereichs: ``(tabelle, (zeile, spalte, seite, linie))`` oder ``None``.
+  - `_im_dokument(global_pos)`
+  - `eventFilter(obj, ev)`
+  - `loeschen(pt)` — Die Linie unter ``pt`` löschen (ein Rückgängig-Schritt); sonst kurze Meldung in der Statusleiste.
+  - `_hervorheben(pt)`
+  - `beenden()`
+  - `paintEvent(_e)`
+
 ### `ui/document/tabelle_stift.py`
 
 „Tabelle zeichnen“ (Einfügen ▸ Tabelle): mit dem Stift ein Rechteck auf die Seite ziehen; gestrichelt erscheinen die Zellen und
 
 - `groesse(breite, hoehe, zoom)` — (Zeilen, Spalten) für ein gezogenes Rechteck; mindestens 1 × 1.
 - `_stift_cursor()` — Stift in Dunkel mit weißem Rand: auf weißem Blatt wie auf dunklem Grund gut zu sehen (Spitze oben links).
+- `andere_beenden(ed)` — Stift und Radiergummi schließen sich gegenseitig (und ein früherer derselben Art); der Mauszeiger wird dabei zurückgesetzt.
+- `ueberwachen(w, ed, bei_tabellenverlust)` — Beendet das Werkzeug ``w`` (mit ``beenden()``), wenn der Reiter des Bandes wechselt, die Anwendung endet oder der Editor zerstört wird;
+- `cursor_zurueck(w)`
 - **class `TabellenStift`**(QWidget)
   - `__init__(ed)`
   - `_im_dokument(global_pos)`
@@ -5908,6 +6628,7 @@ Datei-Ansicht (Backstage).
   - `backstage_schliessen()`
   - `show_main_menu()`
   - `_leiste_links()` — Schmale Leiste links: Suchen, Kommentare, Überschriften, Änderungen, Noten, Vorlesen. Ein Klick öffnet das Feld, ein zweiter schließt es.
+  - `leisten_beschriften()` — Option „Seitenleisten mit Text“: unter jedem Symbol der beiden Randleisten steht sein Name (breitere Leiste, kleinere Schrift).
   - `_links_klick(key)`
   - `_links_sync()`
   - `_leiste_rechts()` — Schmale Leiste rechts: Die vier Reiter der Schreibhilfe (Prüfen, Lesen, Schreiben, KI) und der KI-Chat schalten die Seitenleiste um.
@@ -5916,9 +6637,9 @@ Datei-Ansicht (Backstage).
   - `_seitenleiste_oeffnen()` — Gemeinsam für alle Bereiche „Formatierung“: die Seitenleiste einblenden, falls sie zu ist.
   - `texteffekte_seitenleiste()` — Den Bereich „Texteffekte formatieren“ in der Seitenleiste öffnen; Änderungen gelten sofort für die Markierung.
   - `objektformat_seitenleiste(reiter, fuellung)` — Den Bereich „Formatierung“ für das markierte Bild in der Seitenleiste öffnen (Füllung und Linie, Effekte); Änderungen gelten sofort.
-  - `formatierung_seitenleiste(reiter)` — Zahnrad der Schnellleiste und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt.
+  - `formatierung_seitenleiste(reiter)` — Zahnrad am Diagramm und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt.
   - `_smartart_werte(e)`
-  - `smartartformat_seitenleiste()` — Zahnrad am SmartArt: die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort.
+  - `smartartformat_seitenleiste()` — Seitenleiste „Formatierung“ für SmartArt (Rechtsklick): die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort.
   - `smartartformat_folgen()` — Wählt der Benutzer einen anderen Knoten, zeigt der offene Bereich dessen Format.
   - `_diagramm_werte(e)` — Die Werte für die Seitenleiste „Formatierung“ des gewählten Diagrammteils (None ohne markiertes Diagramm).
   - `diagrammformat_seitenleiste()` — „Formatieren“ in den Diagrammtools: die Seitenleiste „Formatierung“ für den gewählten Diagrammteil öffnen; Änderungen gelten sofort.
@@ -5926,9 +6647,11 @@ Datei-Ansicht (Backstage).
   - `diagrammformat_folgen()` — Wählt der Benutzer einen anderen Diagrammteil, zeigt der offene Bereich dessen Format.
   - `_objekt_text_verbinden()` — Die Textoptionen der Seitenleiste wirken auf den Text im gewählten WordArt oder Textfeld (``editor/frei_objekt.py``).
   - `_zeichen_masse(e)` — Höhe und Breite im Reiter Zeichentools (``bild_…``) und Bildtools (``bt_…``) mit dem markierten Bild abgleichen.
-  - `objektformat_folgen()` — Wählt der Benutzer ein anderes Bild, zeigt der offene Bereich dessen Werte.
+  - `_tabelle_masse(e)` — Zahlenfelder Höhe/Breite im Reiter Tabellentools (``tab_…``) mit der Zeile und Spalte der Schreibmarke abgleichen.
+  - `objektformat_folgen()` — Wechsler der Seitenleiste „Formatierung“ bei neuer Auswahl: Ist ein Format-Bereich (Objekt, SmartArt, Diagramm) offen, zeigt der zur
   - `_effekt_sync()` — Folgt die Markierung einer anderen Formatierung, zeigt der offene Bereich „Texteffekte“ deren Werte.
   - `toggle_sidebar()`
+  - `zum_band_springen()` — F10: aus dem Text zu den Reitern des Bandes (dann mit Tab und Pfeiltasten weiter), noch einmal F10: zurück in den Text.
   - `toggle_menubar()`
   - `rename_document()`
   - `toggle_sperre()` — Überprüfen ▸ Bearbeitung einschränken: Dokument schreibgeschützt (nur in dieser Sitzung).
@@ -5954,7 +6677,7 @@ Bearbeiten, Einfügen, Seite.
   - `paragraph_dialog()`
   - `tabstopp_dialog()`
   - `_lesehilfe_auf(e)`
-  - `mini_zeigen(ed, pos, rechtsklick)`
+  - `mini_zeigen(ed, pos, rechtsklick, menue)`
   - `markup_neu()` — Markup- und Sprechblasen-Einstellungen haben sich geändert: Seitenrand für Blasen und Auszeichnung neu aufbauen.
   - `versteckt_anwenden(e)`
   - `silbenfarben_anwenden(e)`
@@ -6099,6 +6822,9 @@ Die Reiterleiste nach der Struktur „LUNIVO WRITER“: Datei, Start, Einfügen,
 Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/register.json.
 
 - `lade_register()`
+- **class `_GruppenTrenner`**(QWidget) — Dezenter Gruppentrenner im Band: genau ein physischer Bildpunkt breit, oben und unten eingerückt, Farbe aus der aktuellen Palette
+  - `__init__()`
+  - `paintEvent(_ev)`
 - **class `_BandSeite`**(QScrollArea) — Eine Seite des Bandes. Ist sie breiter als das Fenster, erscheinen am Rand Pfeile zum Blättern (‹ und ›), wie in der Vorlage Writer;
   - `__init__()`
   - `blaettern(richtung)`
@@ -6109,18 +6835,18 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
 - `_kurz(name)`
 - `_mit_kuerzel(name)` — Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter.
 - `_zweizeilig(text)`
-  - `__init__(eltern)`
-  - `zeigen(rahmen, unter, zurueck)`
-  - `hideEvent(ev)`
 - **class `_ReiterLeiste`**(QTabBar)
   - `mouseDoubleClickEvent(ev)`
   - `ist_kontext(i)`
   - `tabSizeHint(i)`
   - `_luecke()`
   - `paintEvent(ev)`
+- **class `_SperrKasten`**(QCheckBox) — Kontrollkästchen „Seitenverhältnis sperren“: Klick ruft ``bildSeitenverhaeltnis``; ``auffrischen`` holt den Zustand vom Bild.
+  - `__init__(text, befehle)`
+  - `_klick(an)`
+  - `auffrischen()`
 - **class `RegisterBand`**(QWidget) — Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters.
   - `__init__(befehle, daten, cfg, schnell, kompakt)`
-  - `resizeEvent(ev)`
   - `_reiter_geklickt(_i)`
   - `einklappen_umschalten()`
   - `_trenner()`
@@ -6132,12 +6858,12 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
   - `_gruppe(g)`
   - `_knoepfe_geordnet(g, inhalt)` — Knöpfe in der Reihenfolge der Liste: große stehen allein, aufeinanderfolgende kleine bilden eine Spalte aus zwei Zeilen.
   - `_knoepfe_schrift(g, inhalt)` — Wie in der Vorlage: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate.
-  - `_knoepfe_tt_schrift(g, inhalt)` — Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
+  - `_knoepfe_tt_schrift(g, inhalt, art)` — Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
   - `_knoepfe_galerie(g, inhalt)` — Eine Galerie wie in der Vorlage: drei Kacheln zum Anklicken und daneben ein Pfeil mit der ganzen Auswahl (Befehl ``galerie_<name>``).
   - `_knoepfe_raender(g, inhalt)` — Der Rand-Knopf und daneben wie in der Vorlage die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit).
   - `_knoepfe_masse(g, inhalt)` — Höhe und Breite des markierten Bildes (Zeichentools); „Seitenverhältnis sperren“ hält das Verhältnis beim Ändern.
   - `_knoepfe(g, inhalt)`
-  - `_stile()`
+  - `_stile(spalten)`
   - `_stile_popup(unter)` — Alle Formatvorlagen als Galerie (Pfeil rechts neben der Reihe): Probe in der Vorlage, Name darunter; Überfahren zeigt live.
   - `stile_aktualisieren()` — Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/stile.py).
   - `eventFilter(obj, ev)`
@@ -6185,7 +6911,7 @@ Reiter „Schreibhilfe“: Lesen, Prüfen, Beim Schreiben, Vorlesen, Sprache, Ba
 Baustein für die Reiterbeschreibungen: ein Knopf als Wörterbuch.
 
 - `k(symbol, name, tun, gross, **kw)`
-- `anordnen_knopf(art, name, **kw)` — Ein Knopf der Gruppe „Anordnen“ (``art``: drehen, gruppieren, ausrichten, umbruch, vorn, hinten, auswahlbereich); ``name`` und ``gross``/``text`` je Reiter.
+- `anordnen_knopf(art, name, **kw)` — Ein Knopf der Gruppe „Anordnen“ (``art``: drehen, gruppieren, ausrichten, umbruch, vorn, hinten, ebene, objekte, auswahlbereich); ``name`` und ``gross``/``text`` je Reiter.
 - `anordnen_gruppe(*knoepfe)` — Die Gruppe „Anordnen“ der Kontext-Reiter.
 - `alle(tab)` — Alle Knöpfe eines Reiters aus register.json nach Namen.
 - `uebrige(tab, benutzt)` — Knöpfe des Reiters, die in der neuen Anordnung noch nicht vorkommen (damit keine Funktion verloren geht).
@@ -6216,7 +6942,7 @@ Reiter „Seitenlayout“ in der Anordnung der Vorlage: Designs, Ränder mit den
 
 ### `ui/ribbon/tabs/mailings_tab.py`
 
-Reiter „Sendungen“ (nur nach „Register anpassen“ sichtbar): Serienbriefe und Formulare.
+Reiter „Sendungen“ (nur nach „Register anpassen“ sichtbar): Serienbriefe. Die Formularfelder stehen nur im Reiter Einfügen (Gruppe Formulare).
 
 - `bauen(register)`
 
@@ -6256,6 +6982,7 @@ Rechte Seitenleiste: Schreibhilfe und KI-Chat.
 Die Schreibhilfe-Seitenleiste: Prüfen, Wellen/Vorhersage/AutoKorr, Funde, „Für wen?“, KI-Knöpfe.
 
 - **class `SchreibhilfePanel`**(QWidget)
+  - `sizeHint()`
   - `__init__(assistent, parent)`
   - `verbinde_ki(dienst, fenster)`
   - `_schalter_nachziehen(name, an)`
@@ -6274,6 +7001,8 @@ Die Schreibhilfe-Seitenleiste: Prüfen, Wellen/Vorhersage/AutoKorr, Funde, „F�
   - `_leer(text)`
   - `_format_zustand()`
   - `format_panel(schluessel)`
+  - `_bereiche_menue(eltern, menue_text)` — Das Menü am Titel „Formatierung ▾“: die Bereiche der Seitenleiste wie in der Vorlage (der eigene Bereich trägt den Haken).
+  - `_sicherungen_zeigen()` — Der Ordner mit den Sicherungskopien (derselbe wie in den Optionen).
   - `_formatierung_host(panel_klasse, menue_text, werte)` — Der gemeinsame Rahmen der Bereiche „Formatierung“: Kopf mit „Formatierung ▾“, Anheften und Schließen, darunter das Panel.
   - `zeige_format(schluessel, werte, **verbindungen)` — Den Bereich „Formatierung“ für ``schluessel`` zeigen. ``verbindungen``: Signalname des Panels -> Empfänger (``None`` wird übergangen).
   - `format_sichtbar(schluessel)`
@@ -6403,7 +7132,6 @@ Einheitliche Office-Symbole: 24×24-Strichzeichnungen aus Lucide, mit Qt gerende
 - `pfade_original()` — Die mitgelieferten Symbole, ohne Austausch.
 - `pfade()`
 - `uebersteuern(tausch)` — Austausch {Symbolname: Katalogname} anwenden (Ansicht ▸ Symbol austauschen); leere Zuordnung stellt alles zurück.
-- `katalog()` — Alle 1800 Lucide-Symbole (Name → 24×24-Pfad) — für Piktogramm einfügen und Symbol austauschen.
 - `katalog_bild(name, px, farbe, strich)`
 - `pfad_bild(pfad, px, farbe)` — Eine Zeichnung (Katalogpfad oder eigene) als Bild — für Vorschau und Auswahlfenster.
 - `hat(name)`
@@ -6412,7 +7140,7 @@ Einheitliche Office-Symbole: 24×24-Strichzeichnungen aus Lucide, mit Qt gerende
 - `_svg(pfad, farbe)`
 - `svg_datei(name, farbe)` — Lucide-SVG als Datei für Qt-Stylesheets, die SVG-Daten nicht direkt annehmen.
 - `_pixmap(name, farbe, px)`
-- `icon(name, px)`
+- `icon(name, px, farbe)`
 - `icon_aus_pfad(pfad, px)` — Ein Liniensymbol aus einem Pfad (24er-Raster, Strichstil wie die übrigen Symbole) in den Farben der Palette.
 - `leeren()`
 - `setze(knopf, name, px)` — Symbol auf einen Knopf setzen und den Namen merken: beim Wechsel zwischen hell und dunkel bekommt er sein Symbol in der neuen Farbe zurück.
@@ -6424,6 +7152,8 @@ Das Rechtsklick-Menü des Textes, deutsch und in der Reihenfolge der Vorlage: Zw
 
 - `_symbole()`
 - `menue_bauen(editor, fenster)` — Das Menü für den Editor ``editor`` des Fensters ``fenster``; der Aufrufer zeigt es und löscht es danach.
+- `_mit_symbol(aktion, name)`
+- `_tabellenmenue(m, punkt, b, editor, lesen, auswahl)` — Das Menü in einer Tabelle (Reihenfolge der Vorlage): Zwischenablage · Zeilen/Spalten/Zellen · Rahmen, Anpassen, Ausrichtung, Eigenschaften.
 
 ### `ui/widgets/lese_ende_knopf.py`
 
@@ -6459,16 +7189,27 @@ Live-Vorschau: Beim Überfahren einer Formatvorlage, Schrift, Größe oder Farbe
 Minisymbolleiste: schwebende Leiste mit den häufigsten Formaten über der Auswahl oder am Rechtsklick.
 
 - `_symbole()`
+- `_pfeil_datei(farbe)` — Kleiner ausgefüllter Pfeil nach unten als Bilddatei für das Stylesheet (kontrastreich in Hell und Dunkel; dünne Linienpfeile verschwinden bei 8 px).
+- `_stil(farbe)`
 - **class `MiniLeiste`**(QFrame)
   - `__init__(fenster)`
+  - `_stil_setzen()` — Stylesheet mit dem Pfeil in der Schriftfarbe der aktuellen Palette (Hell/Dunkel).
+  - `_anordnen(tabelle)` — Die beiden Zeilen für den Text- oder den Tabellenmodus füllen (die Knöpfe sind dieselben, nur Auswahl und Reihenfolge wechseln).
+  - `_tabellenzeile()` — „Einfügen ▾“ und „Löschen ▾“ als große Symbolknöpfe mit Beschriftung darunter (wie in der Vorlage); Menüs aus ``core/tabellenaktionen.py``.
+  - `_aktionsmenue(b, aktionen)`
+  - `tabellenmodus()` — Tabellenmodus (siehe ``editor/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
+  - `_modus_anwenden()` — Knöpfe des Modus anordnen; ``True``, wenn sich der Modus geändert hat (Größe und Platz müssen neu gesetzt werden).
   - `_ausrichtung_menue()`
+  - `_rahmen_menue()`
   - `_menue_setzen(b, tun)` — Das Menü ist dasselbe wie im Band (Einfügen, Farbpaletten mit „Zuletzt benutzt“ und Vorschau, Zeilenabstand); es entsteht nach jeder Wahl neu.
   - `_nach_farbe(b, tun)`
   - `_schrift(name)`
   - `_groesse(text)`
   - `_tun(tun)`
   - `aktualisieren()`
-  - `zeigen(editor, global_pos, rechtsklick)` — Über global_pos zeigen (am Rechtsklick darunter, neben dem Menü); verschwindet bei Tastendruck oder Auswahlende.
+  - `zeigen(editor, global_pos, rechtsklick, menue)` — Über global_pos zeigen; am Rechtsklick richtet sich die Leiste nach dem Menü (menue = dessen Größe) und überlappt es nie.
+  - `_platzieren()` — Größe neu messen und die Leiste über (bzw. am Rechtsklick neben) ``_pos`` setzen; überlappt das Menü nie.
+  - `_neben_menue(p, menue, g)` — Platz für die Leiste um das Kontextmenü: über dem Klickpunkt, sonst unter, sonst neben dem Menü; nie überlappend.
   - `_pruefen(editor)`
 - **class `_Zu`**(QObject) — Schließt die Leiste bei Tastendruck, Mausrad und Fokusverlust des Editors.
   - `__init__(leiste, editor)`

@@ -8,6 +8,7 @@ from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.dialogs.dokument_dialoge import PageSetupDialog
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.farben import VORGABE_MARKER
 from lunivo_writer.ui.hauptfenster.gemeinsam import _QuickInfo
 
 
@@ -28,13 +29,13 @@ class BearbeitenBaustein:
 
 
     def choose_color(self):
-        c = weitere_farben(self, Qt.black, "Schriftfarbe")
+        c = weitere_farben(self, QColor(Farbe.SCHWARZ), "Schriftfarbe")
         if c is not None:
             self._ed(lambda e: e.set_text_color(c))
 
 
     def choose_highlight(self):
-        c = weitere_farben(self, QColor("yellow"), "Texthervorhebungsfarbe")
+        c = weitere_farben(self, QColor(VORGABE_MARKER), "Texthervorhebungsfarbe")
         if c is not None:
             self._ed(lambda e: e.set_highlight(c))
 

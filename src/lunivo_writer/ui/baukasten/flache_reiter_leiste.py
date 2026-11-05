@@ -37,8 +37,8 @@ class FlacheReiterLeiste(QTabBar):
         super().__init__(parent)
         self._art = art
         self._letzte_hoehe = 0
-        self.setExpanding(True); self.setDrawBase(False); self.setUsesScrollButtons(False)
-        self.setElideMode(Qt.ElideNone); self.setFocusPolicy(Qt.NoFocus); self.setCursor(Qt.PointingHandCursor)
+        self.setExpanding(True); self.setDrawBase(False); self.setUsesScrollButtons(art == HAUPT)      # passen die Hauptreiter nicht, rollt die Leiste dezent (Pfeile an den Seiten)
+        self.setElideMode(Qt.ElideNone); self.setCursor(Qt.PointingHandCursor)
 
     # ---- Maße ---------------------------------------------------------------------------------------------------------------------
     def _sichtbar(self) -> list[int]:
@@ -65,11 +65,7 @@ class FlacheReiterLeiste(QTabBar):
         if summe <= gesamt:                                   # Platz genug: der Rest wird gleich verteilt
             extra = (gesamt - summe) // len(vis)
             return {i: soll[i] + extra for i in vis}
-        mind = {i: max(fm.horizontalAdvance(w) for w in (_gross(self.tabText(i)).split() or [""])) + 2 * _RAND + self._knopf_breite(i) for i in vis}
-        frei = gesamt - sum(mind.values())                    # zu schmal: erst das längste Wort, den Rest nach Länge der Beschriftung
-        rest = {i: soll[i] - mind[i] for i in vis}
-        sr = max(1, sum(rest.values()))
-        return {i: mind[i] + max(0, frei) * rest[i] // sr for i in vis}
+        return soll                                           # zu schmal: die Reiter behalten ihre natürliche Breite, die Leiste rollt (keine gequetschten oder abgeschnittenen Wörter)
 
     def _text_flaeche(self, i: int, breite: int) -> int:
         return max(10, breite - 2 * _RAND - (self._knopf_breite(i) if self._art == HAUPT else 0))
@@ -100,6 +96,8 @@ class FlacheReiterLeiste(QTabBar):
         return QSize(b.get(index, 0), self._hoehe(b, self._groesse(b)))
 
     def minimumTabSizeHint(self, index: int) -> QSize:
+        if self._ueberlauf():                                  # nicht zusammenschieben: die Reiter behalten ihre Breite, die Leiste rollt
+            return self.tabSizeHint(index)
         return QSize(20, self.tabSizeHint(index).height())
 
     def sizeHint(self) -> QSize:
@@ -109,7 +107,15 @@ class FlacheReiterLeiste(QTabBar):
     def minimumSizeHint(self) -> QSize:
         return QSize(60, self.sizeHint().height())
 
+    def _ueberlauf(self) -> bool:
+        """Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander?"""
+        if self._art != HAUPT or not self._sichtbar():
+            return False
+        fm = QFontMetrics(self._schrift(9.0))
+        return sum(fm.horizontalAdvance(_gross(self.tabText(i))) + 2 * _RAND + self._knopf_breite(i) for i in self._sichtbar()) > self.width()
+
     def resizeEvent(self, e) -> None:
+        self.setExpanding(not self._ueberlauf())               # überlaufend: nicht auf die Breite zusammenschieben, sondern rollen
         super().resizeEvent(e)
         b = self._breiten()
         h = self._hoehe(b, self._groesse(b))
@@ -206,3 +212,10 @@ def flach_machen(reiter: QTabWidget, art: str = UNTER) -> FlacheReiterLeiste:
     reiter.blockSignals(False)
     reiter.currentChanged.emit(reiter.currentIndex())
     return leiste
+
+
+def alle_flach(wurzel, art: str = HAUPT) -> None:
+    """Alle Reiter unter ``wurzel`` (``QTabWidget``) bekommen dieselbe flache Leiste: EIN Aussehen für alle Reiter in den Seitenleisten-Fenstern."""
+    for tw in wurzel.findChildren(QTabWidget):
+        if not isinstance(tw.tabBar(), FlacheReiterLeiste):
+            flach_machen(tw, art)

@@ -9,6 +9,14 @@ from lunivo_writer.services import vorlesen
 from lunivo_writer.ui.dialogs.lesehilfe_dialog import PAPIERTOENE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_GROSS,
+    ABSTAND_SPALTEN,
+    PADDING_LESEN_VORSCHAU,
+    RADIUS_FELD,
+    RAND_ZEILE,
+    SCHRIFT_HINWEIS,
+)
 
 
 class LesenSeiten:
@@ -34,21 +42,21 @@ class LesenSeiten:
                 return
             px_b, px_w = float(p.s.get("lesehilfe/buchstaben", 0)), float(p.s.get("lesehilfe/wort", 0))
             fnt = lab.font(); fnt.setLetterSpacing(QFont.AbsoluteSpacing, px_b); fnt.setWordSpacing(px_w); lab.setFont(fnt)
-            lab.setStyleSheet(f"background: {PAPIERTOENE.get(str(p.s.get('lesehilfe/papier', 'Weiß')), Farbe.WEISS)}; color: #111417; "
-                              "border-radius: 6px; padding: 16px 20px;")
+            lab.setStyleSheet(f"background: {PAPIERTOENE.get(str(p.s.get('lesehilfe/papier', 'Weiß')), Farbe.WEISS)}; color: " + Farbe.SYMBOL + "; "
+                              "border-radius: " f"{RADIUS_FELD}" "px; padding: " f"{PADDING_LESEN_VORSCHAU}" ";")
 
         # ---- Lesestufe: drei Voreinstellungen, die die Einstellungen darunter setzen
         f = p.gruppe("Lesestufe")
         karte = QWidget()
-        kv = QVBoxLayout(karte); kv.setContentsMargins(0, 4, 0, 4)
+        kv = QVBoxLayout(karte); kv.setContentsMargins(*RAND_ZEILE)
         kv.addWidget(QLabel("Wie leicht soll es zu lesen sein?"))
-        spalten = QHBoxLayout(); spalten.setSpacing(24)
+        spalten = QHBoxLayout(); spalten.setSpacing(ABSTAND_SPALTEN)
         links = QVBoxLayout()
         links.addWidget(text_label("Lesestufe", fett=True, umbruch=False))
         gruppe = QButtonGroup(karte)
         aktuell = LS.aktuell(p.s)
         erlaeutert = text_label(" ".join(stufen[aktuell]["text"] if aktuell else LS.EIGENE))
-        erlaeutert.setStyleSheet("color: palette(window-text); font-size: 9pt;")
+        erlaeutert.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
         for name in stufen:
             r = QRadioButton(name)
             r.setProperty("optName", "Lesestufe")
@@ -126,7 +134,7 @@ class LesenSeiten:
         beschreibung = {"OpenDyslexic": "Die Buchstaben sind unten schwerer — sie kippen nicht.",
                         "Lexend": "Weitere Abstände, ruhigeres Zeilenbild.",
                         "Atkinson Hyperlegible": "Unterscheidet Zeichen wie I, l und 1."}
-        reihe = QWidget(); rh = QHBoxLayout(reihe); rh.setContentsMargins(0, 4, 0, 4); rh.setSpacing(10)
+        reihe = QWidget(); rh = QHBoxLayout(reihe); rh.setContentsMargins(*RAND_ZEILE); rh.setSpacing(ABSTAND_GROSS)
         for n in LESESCHRIFTEN:
             k = QFrame(); k.setObjectName("optSchriftkarte")
             kv = QVBoxLayout(k)
@@ -135,7 +143,7 @@ class LesenSeiten:
                 fnt = QFont(n); fnt.setPointSizeF(13); name.setFont(fnt)
             kv.addWidget(name)
             t = text_label(beschreibung.get(n, "") + ("" if n.lower() in vorhanden else "  (fehlt — ./schrift-holen.sh holt sie)"))
-            t.setStyleSheet("color: palette(window-text); font-size: 9pt;")
+            t.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
             kv.addWidget(t)
             rh.addWidget(k, 1)
         reihe.setProperty("optName", "Schriften zum leichteren Lesen")

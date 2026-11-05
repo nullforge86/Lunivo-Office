@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit, QVBoxLayout
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.editor import formular as FO
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.mass import HOEHE_TEXT_NORMAL
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 
@@ -31,7 +33,7 @@ class FormFeldDialog(PanelFaehig, QDialog):
             f.zeile("Hinweis im leeren Feld", self.platz)
         if art == "auswahl":
             self.liste.setPlaceholderText("Ein Eintrag pro Zeile")
-            self.liste.setFixedHeight(90)
+            self.liste.setFixedHeight(HOEHE_TEXT_NORMAL)
             f.zeile("Einträge", self.liste)
         if art == "kasten":
             f.zeile("Beschriftung daneben", self.beschriftung)
@@ -42,7 +44,7 @@ class FormFeldDialog(PanelFaehig, QDialog):
         v.addLayout(f)
         info = QLabel("Felder werden in DOCX als Inhaltssteuerelemente gespeichert und lassen sich auch in anderen Textprogrammen ausfüllen.")
         info.setWordWrap(True)
-        info.setStyleSheet("color: palette(mid);")
+        hinweis_stil(info)
         v.addWidget(info)
         v.addWidget(knopfzeile(self, bei_ok=self._ok))
 

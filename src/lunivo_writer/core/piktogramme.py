@@ -27,7 +27,9 @@ def katalog() -> dict:
     return _KATALOG
 
 
-def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = STRICH) -> QImage:
+def katalog_bild(name: str, px: int = 96, farbe: str | None = None, strich: float = STRICH) -> QImage:
+    from lunivo_writer.core.farben import Farbe
+    farbe = farbe or Farbe.SYMBOL
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     d = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{farbe}" stroke-width="{strich}" '

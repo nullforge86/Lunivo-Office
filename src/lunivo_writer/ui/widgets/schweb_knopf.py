@@ -8,16 +8,17 @@ from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import GROESSE_SCHWEBKNOPF, ICON_SCHWEBKNOPF, RADIUS_MITTEL
 class SchwebKnopf(QToolButton):
     RAND = 16
 
     def __init__(self, editor, symbol: str, tipp: str, aktion):
         super().__init__(editor)
         self.editor = editor
-        icons.setze(self, symbol, 26); self.setIconSize(QSize(26, 26)); self.setToolTip(tipp); self.setAccessibleName(tipp)
-        self.setFixedSize(48, 48)
+        icons.setze(self, symbol, ICON_SCHWEBKNOPF); self.setIconSize(QSize(ICON_SCHWEBKNOPF, ICON_SCHWEBKNOPF)); self.setToolTip(tipp); self.setAccessibleName(tipp)
+        self.setFixedSize(*GROESSE_SCHWEBKNOPF)
         self.setCursor(self.cursor())
-        self.setStyleSheet(('QToolButton { background: palette(button); border: 1px solid palette(mid); border-radius: 8px; }QToolButton:hover { background: palette(alternate-base); }QToolButton:focus { border: 2px solid ' + Farbe.AKZENT + '; }'))
+        self.setStyleSheet(('QToolButton { background: palette(button); border: 1px solid palette(mid); border-radius: ' f"{RADIUS_MITTEL}" 'px; }QToolButton:hover { background: palette(alternate-base); }QToolButton:focus { border: 2px solid palette(highlight); }'))
         self.clicked.connect(lambda: aktion())
         editor.installEventFilter(self)
         self.platzieren()

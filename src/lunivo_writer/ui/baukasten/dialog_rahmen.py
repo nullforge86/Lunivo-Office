@@ -4,10 +4,12 @@ from __future__ import annotations
 from typing import Callable
 
 from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import QDialog, QFormLayout, QLayout, QPushButton, QVBoxLayout, QWidget, QWidgetItem
+from PySide6.QtGui import QColor, QPainter
+from PySide6.QtWidgets import QDialog, QLayout, QPushButton, QVBoxLayout, QWidget, QWidgetItem
 
-from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, felder_angleichen
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import ICON_NORMAL
 
 
 
@@ -109,7 +111,7 @@ class Knopfzeile(QWidget):
         self.ok.setDefault(True)
         self.abbrechen.setIcon(_symbol("kreuz")); self.ok.setIcon(_symbol("haken"))
         for k in (self.abbrechen, self.ok):                                  # wie in der Vorlage: breite Knöpfe mit Symbol
-            k.setIconSize(QSize(16, 16))
+            k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
         self.abbrechen.clicked.connect(dialog.reject); self.ok.clicked.connect(bei_ok or dialog.accept)
         if not nur_ok:
             self.zeile.haupt(self.abbrechen)
@@ -148,7 +150,7 @@ def fussleiste(dialog: QDialog, layout, *links: QPushButton, bei_ok: Callable | 
 def _symbol(art: str):
     """Lucide-Symbol für Abbrechen oder Bestätigen."""
     from lunivo_writer.ui.widgets import icons
-    return icons.icon("x" if art == "kreuz" else "check", 16)
+    return icons.icon("x" if art == "kreuz" else "check", ICON_NORMAL)
 
 
 class VorschauFlaeche(QWidget):
@@ -165,7 +167,7 @@ class VorschauFlaeche(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         if self._flaeche:
-            p.fillRect(self.rect(), Qt.white)
+            p.fillRect(self.rect(), QColor(Farbe.PAPIER))
             p.setPen(self.palette().mid().color()); p.drawRect(self.rect().adjusted(0, 0, -1, -1))
         self._zeichne(p, self.rect().adjusted(8, 8, -8, -8))
 
@@ -177,16 +179,16 @@ class DialogRahmen(QDialog):
         super().__init__(parent)
         self.setWindowTitle(titel)
         v = QVBoxLayout(self)
-        self.form = QFormLayout()
+        self.form = FormularGitter(); self.form.einspaltig = True; self.form.beschriftung_natuerlich = True
         v.addLayout(self.form)
         self.vorschau = VorschauFlaeche(vorschau) if vorschau else None
         if self.vorschau:
             v.addWidget(self.vorschau)
         self.knoepfe = Knopfzeile(self)
-        v.addWidget(self.knoepfe)
+        v.addWidget(self.knoepfe, 1)                                   # überzählige Höhe bekommt die Knopfzeile (wie beim früheren Formular), nicht das Formular
 
     def zeile(self, beschriftung: str, widget) -> None:
-        self.form.addRow(beschriftung, widget)
+        self.form.zeile(beschriftung, widget)
 
     def zusatzknopf(self, text: str, aktion: Callable | None = None, *, schliesst: bool = True) -> QPushButton:
         """Knopf neben OK/Abbrechen (z. B. „Entfernen“); ``schliesst`` beendet den Dialog mit OK."""

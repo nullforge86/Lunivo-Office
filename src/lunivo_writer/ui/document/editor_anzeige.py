@@ -158,10 +158,10 @@ class AnzeigeBaustein:
 
     def set_lesehilfe(self, papier: str, buchstaben: float, wort: float) -> None:
         pk = QColor(papier) if papier else QColor()
-        text_farbe = "black" if (not pk.isValid() or pk.lightness() >= 128) else Farbe.WEISS
-        self._lese_papier = papier if pk.isValid() and papier.lower() not in ("white", Farbe.WEISS) else ""
+        text_farbe = Farbe.SCHWARZ if (not pk.isValid() or pk.lightness() >= 128) else Farbe.WEISS
+        self._lese_papier = papier if pk.isValid() and papier.lower() not in ("white", Farbe.PAPIER) else ""
         self._lese_text = text_farbe if self._lese_papier else ""
-        self.setStyleSheet(f"QTextEdit {{ background: {papier or 'white'}; color: {text_farbe}; border: none; }}")
+        self.setStyleSheet(f"QTextEdit {{ background: {papier or Farbe.PAPIER}; color: {text_farbe}; border: none; }}")
         self.viewport().update()
         f = QFont(self.document().defaultFont())
         f.setLetterSpacing(QFont.AbsoluteSpacing, buchstaben)
@@ -251,11 +251,11 @@ class AnzeigeBaustein:
             breite = g["cb"]
             spalte = max(0, min(int(g["n"]) - 1, int((r0.x() - g["ml"]) // max(1.0, g["cb"] + g["g"]))))
             x0 = g["ml"] + spalte * (g["cb"] + g["g"])
-            papier = QColor(self._lese_papier or self.page.color or "white")
+            papier = QColor(self._lese_papier or self.page.color or Farbe.PAPIER)
         else:
             x0 = self.document().documentMargin()
             breite = vp.width() - 2 * x0
-            papier = QColor(self._lese_papier or "white")
+            papier = QColor(self._lese_papier or Farbe.PAPIER)
         feld = QRectF(x0, r0.top(), breite, r1.bottom() - r0.top() + 1)
         # QTextLayout.draw addiert die eigene Position im Dokument selbst; die Schreibmarke liefert die Stelle auf dem Schirm
         origin = QPointF(r0.x() - lay.lineAt(0).x() - lay.position().x(), r0.top() - lay.lineAt(0).y() - lay.position().y())
@@ -294,7 +294,7 @@ class AnzeigeBaustein:
         vp, z, pg = self.viewport(), self.zoom, self.page
         is_dark = self.palette().color(QPalette.Window).lightness() < 128
         line_color = QColor(Farbe.GRAU_HELL) if is_dark else QColor(Farbe.GRAU)
-        accent_color = QColor("#748ffc") if is_dark else QColor(Farbe.BLAU)
+        accent_color = QColor(Farbe.AKZENT_HELL) if is_dark else QColor(Farbe.BLAU)
 
         # Objektanker neben Bildern, die vom Text umflossen werden (bei sichtbaren Formatierungszeichen)
         marks = bool(self.document().defaultTextOption().flags() & QTextOption.ShowTabsAndSpaces)
@@ -336,7 +336,7 @@ class AnzeigeBaustein:
         if seite in ("links", "rechts", "außen"):
             zeilen = self._aenderungszeilen_gecacht()
             if zeilen:
-                p.setPen(QPen(QColor("#ff6b6b") if is_dark else QColor(Farbe.ROT), 1.6))
+                p.setPen(QPen(QColor(Farbe.ROT_HELL) if is_dark else QColor(Farbe.ROT), 1.6))
                 for t, u in zeilen:
                     g = self._sp_geo()
                     vx, vy = self._sp_view(0, t)

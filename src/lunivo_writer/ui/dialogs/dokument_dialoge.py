@@ -10,6 +10,7 @@ from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpi
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
+from lunivo_writer.ui.baukasten.mass import RAND_KEIN
 def _titel(text: str, feld) -> QLabel:
     t = QLabel(text); t.setBuddy(feld)
     return t
@@ -112,7 +113,7 @@ class TableDialog(PanelFaehig, QDialog):
         z.reihe(("", self.fest), ("", self.breite)); z.breit(self.auto)
         lay.addWidget(zi)
         self.fest.toggled.connect(self.breite.setEnabled); self.breite.setEnabled(False)
-        self.speichern = QCheckBox("Ab&messungen für neue Tabellen speichern")
+        self.speichern = UmbruchSchalter("Ab&messungen für neue Tabellen speichern")
         lay.addWidget(self.speichern)
         lay.addStretch(1)
         lay.addWidget(knopfzeile(self))
@@ -159,7 +160,7 @@ class ZoomDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import QButtonGroup, QRadioButton, QSpinBox
         self.setWindowTitle("Zoom")
         lay = QVBoxLayout(self)
-        raster = QWidget(); fl = FlussLayout(10); raster.setLayout(fl); fl.setContentsMargins(0, 0, 0, 0)
+        raster = QWidget(); fl = FlussLayout(10); raster.setLayout(fl); fl.setContentsMargins(*RAND_KEIN)
         self.gruppe = QButtonGroup(self)
         self._art: dict[int, tuple[str, float]] = {}
         eintraege = [(f"{n} %", ("wert", n / 100)) for n in self.STUFEN] + \

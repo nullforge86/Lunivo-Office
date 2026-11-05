@@ -14,13 +14,36 @@ from PySide6.QtCore import QEvent, QObject, QRect, QRectF, QSize, Qt, QTimer, Si
 import re
 
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap, QTextCharFormat, QTextCursor, QTextFormat
-from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLabel, QMenu, QPlainTextEdit, QPushButton,
+from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QMenu, QPlainTextEdit, QPushButton,
                                QRadioButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
+from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import seitenzahl as SZ
 from lunivo_writer.models.page import HeaderFooter, mm_to_px
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter, kacheln_legen
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_GROSS,
+    ABSTAND_NORMAL,
+    BREITE_SEITENZAHL_FELD,
+    GROESSE_EINFUEGKNOPF,
+    GROESSE_EINFUEGKNOPF_BILD,
+    ICON_NORMAL,
+    PADDING_KOPFFUSS_ABSATZKNOPF,
+    PADDING_KOPFFUSS_PANELKNOPF,
+    PADDING_KOPFFUSS_PANELTASTE,
+    PADDING_KOPFFUSS_WERKZEUG,
+    PADDING_ZAHLENFELD_KOPFFUSS,
+    RADIUS_LEISTENKNOPF,
+    RADIUS_RUNDE_OPTION,
+    RADIUS_ZAHLENFELD_KLEIN,
+    RAND_EINFUEGEN_PANEL,
+    RAND_ETIKETT,
+    RAND_KEIN,
+    RAND_SEITENZAHL_ZEILE,
+)
 
 ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
@@ -29,36 +52,56 @@ _FELDER = re.compile(r"\{(PAGES|PAGE)\}")
 FORMATE = [("dezimal", "1, 2, 3 …"), ("klein", "a, b, c …"), ("gross", "A, B, C …"), ("roem_klein", "i, ii, iii …"), ("roem_gross", "I, II, III …")]
 
 
-LEISTE_STIL = """
-#kfLeiste QToolButton { background: #f5f5f5; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 2px 6px; }
-#kfLeiste QToolButton:hover { background: #e6e6e6; }
+_LEISTE_STIL = """
+#kfLeiste QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; padding: """ f"{PADDING_KOPFFUSS_ABSATZKNOPF}" """; }
+#kfLeiste QToolButton:hover { background: @GITTER; }
 #kfLeiste QToolButton::menu-indicator { image: none; width: 0px; }
-#kfLeiste QMenu, #kfAbsatz QMenu { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; }
-#kfLeiste QMenu::item:selected, #kfAbsatz QMenu::item:selected { background: #e8f0fe; color: #333333; }
-#kfLeiste QMenu::item:disabled { color: #9a9a9a; }
+#kfLeiste QMenu, #kfAbsatz QMenu { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; }
+#kfLeiste QMenu::item:selected, #kfAbsatz QMenu::item:selected { background: @AUSWAHL_HELL; color: @TINTE; }
+#kfLeiste QMenu::item:disabled { color: @GRAU; }
 """
-ABSATZ_STIL = ("QToolButton { background: #f5f5f5; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 1px 4px; }"
-               "QToolButton:hover { background: #e6e6e6; } QToolButton::menu-indicator { image: none; width: 0px; }"
-               "QMenu { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; } QMenu::item:selected { background: #e8f0fe; color: #333333; }")
-ETIKETT_STIL = "QLabel { background: #f5f5f5; color: #777777; border: 1px dashed #9a9a9a; }"
-PANEL_STIL = """
-QWidget#kfPanel { background: #ffffff; color: #333333; }
-#kfPanel QLabel, #kfPanel QRadioButton { color: #333333; background: transparent; }
-#kfPanel QComboBox { background: #ffffff; color: #333333; border: 1px solid #c8c8c8; border-radius: 2px; padding: 2px 6px; }
-#kfPanel QComboBox QAbstractItemView { background: #ffffff; color: #333333; selection-background-color: #cfe0fb; selection-color: #333333; }
-#kfPanel QToolButton { background: #f7f7f7; color: #333333; border: 1px solid transparent; padding: 3px; }
-#kfPanel QToolButton:checked { background: #cfe0fb; }
-#kfPanel QToolButton:hover { border: 1px solid #c8c8c8; }
-#kfPanel QRadioButton::indicator { width: 12px; height: 12px; border: 1px solid #8a8a8a; border-radius: 7px; background: #ffffff; }
-#kfPanel QRadioButton::indicator:checked { background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 #3e78d0, stop:0.5 #3e78d0, stop:0.6 #ffffff, stop:1 #ffffff); border-color: #3e78d0; }
-#kfPanel QPushButton { background: #3e78d0; color: #ffffff; border: none; border-radius: 2px; padding: 3px 22px; }
+_ABSATZ_STIL = ("QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: " f"{RADIUS_LEISTENKNOPF}" "px; padding: " f"{PADDING_KOPFFUSS_WERKZEUG}" "; }"
+               "QToolButton:hover { background: @GITTER; } QToolButton::menu-indicator { image: none; width: 0px; }"
+               "QMenu { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; } QMenu::item:selected { background: @AUSWAHL_HELL; color: @TINTE; }")
+_ETIKETT_STIL = "QLabel { background: @LEISTE; color: @GRAU; border: 1px dashed @GRAU; }"
+_PANEL_STIL = """
+QWidget#kfPanel { background: @PAPIER; color: @TINTE; }
+#kfPanel QLabel, #kfPanel QRadioButton { color: @TINTE; background: transparent; }
+#kfPanel QComboBox { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; padding: """ f"{PADDING_KOPFFUSS_ABSATZKNOPF}" """; }
+#kfPanel QComboBox QAbstractItemView { background: @PAPIER; color: @TINTE; selection-background-color: @BLAU_HELL; selection-color: @TINTE; }
+#kfPanel QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid transparent; padding: """ f"{PADDING_KOPFFUSS_PANELKNOPF}" """; }
+#kfPanel QToolButton:checked { background: @BLAU_HELL; }
+#kfPanel QToolButton:hover { border: 1px solid @LEISTE_RAND; }
+#kfPanel QRadioButton::indicator { width: 12px; height: 12px; border: 1px solid @GRAU; border-radius: """ f"{RADIUS_RUNDE_OPTION}" """px; background: @PAPIER; }
+#kfPanel QPushButton { border: none; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; padding: """ f"{PADDING_KOPFFUSS_PANELTASTE}" """; }
 """
+
+
+def _stil(vorlage: str) -> str:
+    """Stylesheet zur Laufzeit aus den Farbe-Tokens bilden (Farbe.* setzt apply_theme erst nach dem Import)."""
+    return re.sub(r"@([A-Z_]+)", lambda t: getattr(Farbe, t.group(1)), vorlage)
+
+
+def leiste_stil() -> str:
+    return _stil(_LEISTE_STIL)
+
+
+def absatz_stil() -> str:
+    return _stil(_ABSATZ_STIL)
+
+
+def etikett_stil() -> str:
+    return _stil(_ETIKETT_STIL)
+
+
+def panel_stil() -> str:
+    return _stil(_PANEL_STIL)
 
 
 def _symbol(art: str) -> QIcon:
     """Aktionssymbol aus dem zentralen Lucide-Katalog."""
     from lunivo_writer.ui.widgets import icons
-    return icons.icon({"x": "x", "neu": "file-plus", "format": "file-text"}.get(art, "file"), 16)
+    return icons.icon({"x": "x", "neu": "file-plus", "format": "file-text"}.get(art, "file"), 16, Farbe.SYMBOL)           # die Knöpfe sind hell (Papier): dunkles Symbol in jedem Thema
 
 
 class _Linie(QWidget):
@@ -70,11 +113,14 @@ class _Linie(QWidget):
 
     def paintEvent(self, e):
         p = QPainter(self)
-        pen = QPen(QColor("#9a9a9a")); pen.setStyle(Qt.DashLine); p.setPen(pen)
+        pen = QPen(QColor(Farbe.GRAU)); pen.setStyle(Qt.DashLine); p.setPen(pen)
         p.drawLine(0, self.height() // 2, self.width(), self.height() // 2)
 
 
-class _EinfuegenPanel(QMenu):
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+
+
+class _EinfuegenPanel(MenueListe):
     """Aufklappfeld „Seitenzahl einfügen“: Format, Position (fünf Kacheln mit Seitenbildchen), Übernehmen für, OK."""
     uebernommen = Signal(str, str, str, str)          # Ausrichtung, Muster, Zahlenart, Bereich (dokument | seite | abschnitt)
     POS = [("left", "Links"), ("center", "Zentriert"), ("right", "Rechts"), ("aussen", "Außen"), ("innen", "Innen")]
@@ -82,26 +128,26 @@ class _EinfuegenPanel(QMenu):
     def __init__(self, eltern):
         super().__init__(eltern)
         self.ort = "kopf"
-        self.setStyleSheet("QMenu { background: #ffffff; border: 1px solid #c8c8c8; }")
-        w = QWidget(); w.setObjectName("kfPanel"); w.setStyleSheet(PANEL_STIL)
-        v = QVBoxLayout(w); v.setContentsMargins(10, 8, 10, 10); v.setSpacing(6)
+        self.setStyleSheet(_stil("QMenu { background: @PAPIER; border: 1px solid @LEISTE_RAND; }"))
+        w = QWidget(); w.setObjectName("kfPanel"); w.setStyleSheet(panel_stil())
+        v = QVBoxLayout(w); v.setContentsMargins(*RAND_EINFUEGEN_PANEL); v.setSpacing(ABSTAND_NORMAL)
         self.format = QComboBox(); self.format.setAccessibleName("Format")
         for muster, zahl, text in SZ.MUSTER:
             self.format.addItem("Format: " + text, (muster, zahl))
         v.addWidget(self.format)
         v.addWidget(QLabel("Position:"))
-        g = QGridLayout(); g.setSpacing(2)
+        kacheln = []
         self.gruppe = QButtonGroup(self); self.gruppe.setExclusive(True)
         self.kacheln = {}
         for i, (schl, text) in enumerate(self.POS):
             k = QToolButton(); k.setCheckable(True); k.setText(text); k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-            k.setIconSize(QSize(40, 50)); k.setMinimumSize(92, 80); k.setAccessibleName(text)
+            k.setIconSize(QSize(*GROESSE_EINFUEGKNOPF_BILD)); k.setMinimumSize(*GROESSE_EINFUEGKNOPF); k.setAccessibleName(text)
             self.gruppe.addButton(k); self.kacheln[schl] = k
-            g.addWidget(k, i // 3, i % 3)
+            kacheln.append(k)
         self.kacheln["center"].setChecked(True)
-        v.addLayout(g)
+        v.addLayout(kachel_gitter(kacheln, 3, abstand=ABSTAND_ENG))
         v.addWidget(QLabel("Übernehmen für:"))
-        r = QHBoxLayout(); r.setSpacing(10)
+        r = QHBoxLayout(); r.setSpacing(ABSTAND_GROSS)
         self.bereich = {}
         for schl, text in (("dokument", "Gesamtes Dokument"), ("seite", "Von aktueller Seite"), ("abschnitt", "Aktueller Abschnitt")):
             b = QRadioButton(text); self.bereich[schl] = b; r.addWidget(b)
@@ -109,7 +155,7 @@ class _EinfuegenPanel(QMenu):
         v.addLayout(r)
         ok = QPushButton("OK"); ok.clicked.connect(self._ok)
         z = QHBoxLayout(); z.addStretch(1); z.addWidget(ok); v.addLayout(z)
-        a = QWidgetAction(self); a.setDefaultWidget(w); self.addAction(a)
+        self.widget(w)
 
     def ort_setzen(self, ort: str) -> None:
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
@@ -142,11 +188,11 @@ class _Feld(QPlainTextEdit):
         # Das Feld steht auf dem weißen Papier: Farben unabhängig vom Programm-Thema (Papier, schwarzer Text, sichtbare Schreibmarke)
         pal = QPalette(self.palette())
         for gr in (QPalette.Active, QPalette.Inactive, QPalette.Disabled):
-            pal.setColor(gr, QPalette.Base, QColor("#ffffff")); pal.setColor(gr, QPalette.Window, QColor("#ffffff"))
-            pal.setColor(gr, QPalette.Text, QColor("#000000")); pal.setColor(gr, QPalette.WindowText, QColor("#000000"))
-            pal.setColor(gr, QPalette.Highlight, QColor("#3e78d0")); pal.setColor(gr, QPalette.HighlightedText, QColor("#ffffff"))
+            pal.setColor(gr, QPalette.Base, QColor(Farbe.PAPIER)); pal.setColor(gr, QPalette.Window, QColor(Farbe.PAPIER))
+            pal.setColor(gr, QPalette.Text, QColor(Farbe.SCHWARZ)); pal.setColor(gr, QPalette.WindowText, QColor(Farbe.SCHWARZ))
+            pal.setColor(gr, QPalette.Highlight, QColor(Farbe.AKZENT)); pal.setColor(gr, QPalette.HighlightedText, QColor(Farbe.AUF_AKZENT))
         self.setPalette(pal)
-        self.setStyleSheet("QPlainTextEdit { background: #ffffff; color: #000000; border: none; selection-background-color: #3e78d0; selection-color: #ffffff; }")
+        self.setStyleSheet(_stil("QPlainTextEdit { background: @PAPIER; color: @SCHWARZ; border: none; selection-background-color: palette(highlight); selection-color: palette(highlighted-text); }"))
         self.setCursorWidth(1)
         self.basis = QTextCharFormat()                            # das Zeichenformat der ganzen Zeile (Schrift, Größe, F/K/U, Farbe)
 
@@ -155,7 +201,7 @@ class _Feld(QPlainTextEdit):
     def _feld_format(art: str) -> QTextCharFormat:
         f = QTextCharFormat()
         f.setProperty(FELD_EIGENSCHAFT, art)
-        f.setBackground(QColor("#d9d9d9"))
+        f.setBackground(QColor(Farbe.GITTER))
         return f
 
     def felder_setzen(self, text: str, zahlen: dict) -> None:
@@ -255,7 +301,7 @@ class _Feld(QPlainTextEdit):
         super().paintEvent(e)
         p = QPainter(self.viewport())
         self._effekte_zeichnen(p)
-        pen = QPen(QColor("#9a9a9a")); pen.setStyle(Qt.DashLine); pen.setWidth(1)
+        pen = QPen(QColor(Farbe.GRAU)); pen.setStyle(Qt.DashLine); pen.setWidth(1)
         p.setPen(pen)
         p.drawRect(self.viewport().rect().adjusted(0, 0, -1, -1))
 
@@ -266,14 +312,14 @@ class _Leiste(QWidget):
     def __init__(self, eltern):
         super().__init__(eltern)
         self.setObjectName("kfLeiste")
-        h = self.h = FlussLayout(4); self.setLayout(h); h.setContentsMargins(0, 0, 0, 0)    # bricht um, wenn das Blatt zu schmal ist
+        h = self.h = FlussLayout(4); self.setLayout(h); h.setContentsMargins(*RAND_KEIN)    # bricht um, wenn das Blatt zu schmal ist
         self.knopf = {}
         for schl, text, sym in (("neu", "Seitenzahl neu aufbauen", "neu"), ("format", "Seitenzahlenformat", "format"),
                                 ("loeschen", "Seitenzahl löschen", "x"), ("einfuegen", "Seitenzahl einfügen", "neu")):
             k = QToolButton(); k.setText(text); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setPopupMode(QToolButton.InstantPopup)
             k.setParent(self); self.knopf[schl] = k
-        self.setStyleSheet(LEISTE_STIL)                        # sitzt auf dem weißen Papier: unabhängig vom Thema
+        self.setStyleSheet(leiste_stil())                        # sitzt auf dem weißen Papier: unabhängig vom Thema
         self.zahl_zeigen(True)
 
     def zahl_zeigen(self, mit: bool) -> None:
@@ -333,10 +379,10 @@ class KopfFussBearbeiter(QObject):
                 f.document().undoCommandAdded.connect(lambda z=z: self._text_gemerkt(z))
                 self.linien[z] = _Linie(vp)
                 et = self.etiketten[z] = QLabel("Kopfzeile" if z == "kopf" else "Fußzeile", vp)
-                et.setStyleSheet(ETIKETT_STIL); et.setContentsMargins(6, 2, 6, 2)
+                et.setStyleSheet(etikett_stil()); et.setContentsMargins(*RAND_ETIKETT)
             self.leiste = _Leiste(vp)
             from lunivo_writer.ui.widgets import icons
-            self.absatz = QToolButton(vp); self.absatz.setText("Absatz"); self.absatz.setIcon(icons.icon("pilcrow", 16)); self.absatz.setStyleSheet(ABSATZ_STIL); self.absatz.setObjectName("kfAbsatz")
+            self.absatz = QToolButton(vp); self.absatz.setText("Absatz"); self.absatz.setIcon(icons.icon("pilcrow", ICON_NORMAL, Farbe.SYMBOL)); self.absatz.setStyleSheet(absatz_stil()); self.absatz.setObjectName("kfAbsatz")
             self.absatz.setPopupMode(QToolButton.InstantPopup); self.absatz.setToolTip("Absatz")
             vp.installEventFilter(self)
             self._menues()
@@ -755,16 +801,16 @@ class KopfFussBearbeiter(QObject):
         page = self.ed.abschnitt_seite()
         # Wie die Vorlage: Beschriftung und kleines Zahlfeld nebeneinander, hell wie das übrige Aufklappfeld auf dem Papier
         zeile = QWidget(); zeile.setObjectName("seitennummerierung")
-        zeile.setStyleSheet("#seitennummerierung { background: #ffffff; } QLabel { color: #333333; background: transparent; }"
-                            " QDoubleSpinBox { background: #ffffff; color: #000000; border: 1px solid #b8b8b8; border-radius: 2px;"
-                            " padding: 1px 2px; selection-background-color: #3e78d0; selection-color: #ffffff; }")
-        lay = QHBoxLayout(zeile); lay.setContentsMargins(8, 4, 8, 4); lay.setSpacing(6)
+        zeile.setStyleSheet(_stil("#seitennummerierung { background: @PAPIER; } QLabel { color: @TINTE; background: transparent; }"
+                                  " QDoubleSpinBox { background: @PAPIER; color: @SCHWARZ; border: 1px solid @LEISTE_RAND; border-radius: " f"{RADIUS_ZAHLENFELD_KLEIN}" "px;"
+                                  " padding: " f"{PADDING_ZAHLENFELD_KOPFFUSS}" "; selection-background-color: palette(highlight); selection-color: palette(highlighted-text); }"))
+        lay = QHBoxLayout(zeile); lay.setContentsMargins(*RAND_SEITENZAHL_ZEILE); lay.setSpacing(ABSTAND_NORMAL)
         lay.addWidget(QLabel("Seitennummerierung:"))
-        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setFixedWidth(64)
+        sp = QDoubleSpinBox(); sp.setDecimals(0); sp.setRange(1, 99999); sp.setValue(SZ.erste_nummer(page)); sp.setFixedWidth(BREITE_SEITENZAHL_FELD)
         sp.setAccessibleName("Seitennummerierung")
         sp.editingFinished.connect(lambda: self._start_setzen(int(sp.value())))
         lay.addWidget(sp); lay.addStretch(1)
-        a = QWidgetAction(m); a.setDefaultWidget(zeile); m.addAction(a)
+        m.widget(zeile)
         m.eintrag("Nummerierung fortsetzen", lambda: self._start_setzen(0), aktiv=page.seiten_start > 0)
 
     def seitenzahl_einfuegen(self, ausr: str, muster: str, zahl: str, bereich: str) -> None:

@@ -11,9 +11,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import QObject, QTimer, Qt
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QMenu, QToolButton
+from PySide6.QtWidgets import QToolButton
 
-from lunivo_writer.ui.document.tabelle_griffe import GRIFF, GRIFF_STIL, dunkel
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+
+from lunivo_writer.ui.document.tabelle_griffe import GRIFF, dunkel, griff_stil
 
 OPTION = "ui/absatz_symbol"
 
@@ -26,11 +28,11 @@ class AbsatzSymbol(QObject):
         vp = ed.viewport()
         self.knopf = b = QToolButton(vp)
         b.setFixedSize(GRIFF, GRIFF); b.setFocusPolicy(Qt.NoFocus); b.setAutoRaise(False)
-        b.setIcon(dunkel("pilcrow-left", 14)); b.setStyleSheet(GRIFF_STIL + "QToolButton::menu-indicator { image: none; width: 0px; }")
+        b.setIcon(dunkel("pilcrow-left", 14)); b.setStyleSheet(griff_stil() + "QToolButton::menu-indicator { image: none; width: 0px; }")
         b.setToolTip("Absatz-Layout"); b.setPopupMode(QToolButton.InstantPopup)
-        self.menue = m = QMenu(b)
-        self.a_zuruecksetzen = m.addAction("Absatzformat zurücksetzen", self._zuruecksetzen)
-        self.a_ausblenden = m.addAction("Symbol vom Absatz-Layout ausblenden", self._ausblenden)
+        self.menue = m = MenueListe(b)
+        self.a_zuruecksetzen = m.eintrag("Absatzformat zurücksetzen", self._zuruecksetzen)
+        self.a_ausblenden = m.eintrag("Symbol vom Absatz-Layout ausblenden", self._ausblenden)
         b.setMenu(m)
         b.hide()
         self._timer = QTimer(self); self._timer.setSingleShot(True); self._timer.setInterval(0); self._timer.timeout.connect(self.aktualisieren)

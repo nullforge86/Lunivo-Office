@@ -10,7 +10,7 @@ dem Baustein ``TabstoppDialog``. Nur, was Lunivo wirklich zeichnen und speichern
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QTextBlockFormat, QTextCharFormat
+from PySide6.QtGui import QColor, QTextBlockFormat, QTextCharFormat
 from PySide6.QtWidgets import (
     QButtonGroup, QCheckBox, QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QRadioButton, QTabWidget,
     QToolButton, QVBoxLayout, QWidget,
@@ -21,6 +21,7 @@ from lunivo_writer.editor import absatzopt
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.tabstopp_dialog import TabstoppDialog
 from lunivo_writer.ui.baukasten.text_format import AUSRICHTUNG, zeichne_absaetze
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_ABSATZ, RAND_KEIN
 
 ABSATZ = {"ausr": "links", "rtl": False, "einzug": 0.0, "rechts": 0.0, "erste": 0.0, "vor": 0.0, "nach": 0.0, "zeilen": 1.0,
           "zeilen_art": "faktor", "zeilen_pt": 12.0, "ebene": 0, "umbruch": False, "tabs": [], "opt": {}}
@@ -32,6 +33,7 @@ _ZEILEN = (("faktor", 1.0, "Einfach"), ("faktor", 1.5, "1,5 Zeilen"), ("faktor",
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.core.farben import Farbe
 
 
 def aus_block(bf: QTextBlockFormat) -> dict:
@@ -56,7 +58,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None, *, umfang: str = "text"):
         super().__init__(parent)
         self.setWindowTitle("Absatz")
-        self.resize(574, 560)
+        self.resize(*GROESSE_FENSTER_ABSATZ)
         self.umfang = umfang
         w = {**ABSATZ, **(werte or {})}
         self._tabs = list(w["tabs"])
@@ -89,7 +91,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
             self.zeilen_art.addItem(name, (art, f))
         self.zeilen = spin(1.0, 0.1, 10.0, " ×", 0.05, 2)
         self.zeilen_pt = spin(12.0, 1.0, 1000.0, " pt", 0.5, 1)
-        zf = QVBoxLayout(); zf.setContentsMargins(0, 0, 0, 0); zf.addWidget(self.zeilen); zf.addWidget(self.zeilen_pt)      # je nach Art ist eines davon zu sehen
+        zf = QVBoxLayout(); zf.setContentsMargins(*RAND_KEIN); zf.addWidget(self.zeilen); zf.addWidget(self.zeilen_pt)      # je nach Art ist eines davon zu sehen
         g.reihe(("Vor:", self.vor), ("Nach:", self.nach), ("Zeilenabstand:", self.zeilen_art), ("Von:", zf))
         self.reiter.addTab(s, "Einzüge und Abstände")
         # ---- Zeilen- und Seitenumbruch: das Gebräuchliche sichtbar, asiatische Regeln und Raster eingeklappt
@@ -195,7 +197,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         """Vorhergehender Absatz (grau), der eigene mit Einzügen und Abständen, folgender Absatz (grau)."""
         w = self.werte()
         grau = QTextCharFormat(); grau.setForeground(Qt.gray); grau.setFontPointSize(7.5); grau.setFontFamilies(["Liberation Sans"])
-        f = QTextCharFormat(); f.setFontPointSize(9); f.setFontFamilies(["Liberation Sans"]); f.setForeground(Qt.black)
+        f = QTextCharFormat(); f.setFontPointSize(9); f.setFontFamilies(["Liberation Sans"]); f.setForeground(QColor(Farbe.SYMBOL))
         bf = QTextBlockFormat()
         bf.setLeftMargin(w["einzug"] * _MM); bf.setRightMargin(w["rechts"] * _MM)
         bf.setTextIndent(w["erste"] * _MM)

@@ -12,8 +12,11 @@ from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextBlockFormat, QTextCharFormat, QTextCursor
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton,
+    QApplication, QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton,
     QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -22,6 +25,18 @@ from lunivo_writer.editor import suche as S
 from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    HOEHE_SUCHOPTION,
+    ICON_GROSS,
+    RAND_KEIN,
+    RAND_OBEN_KLEIN,
+    RAND_OBEN_SEITE,
+)
+
+HERVORHEBUNG_GELB = "#ffec99"      # Textmarker beim Hervorheben: bewusst fest (Gruppe C)
 
 RICHTUNGEN = (("abwaerts", "Abwärts"), ("aufwaerts", "Aufwärts"), ("alles", "Alles"))
 ZEICHEN_NAMEN = {"schrift": "Schriftart", "groesse": "Größe", "fett": "Fett", "kursiv": "Kursiv", "farbe": "Schriftfarbe", "unter": "Unterstreichung",
@@ -60,7 +75,7 @@ def _format_text(f: dict) -> str:
 
 
 def _linie() -> QFrame:
-    l = QFrame(); l.setFrameShape(QFrame.HLine); l.setFrameShadow(QFrame.Plain); l.setStyleSheet("color: palette(midlight);")
+    l = trennlinie()
     return l
 
 
@@ -99,8 +114,8 @@ class SuchenFeld(QWidget):
         self.bereich: tuple[int, int] | None = None # „Suchen in ▸ Aktuelle Auswahl“
         self.formate: dict[str, dict] = {"suchen": {}, "ersetzen": {}}
         self._fokus = "suchen"                    # für welches Feld „Format“ und „Spezial“ gelten
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(8)
-        self.reiter = QTabBar(); self.reiter.setExpanding(False); self.reiter.setDrawBase(True)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_MITTEL)
+        self.reiter = FlacheReiterLeiste(HAUPT)                       # dieselbe flache Reiterleiste wie in allen Seitenleisten-Fenstern
         for t in ("Suchen", "Ersetzen", "Gehe zu"):
             self.reiter.addTab(t)
         v.addWidget(self.reiter)
@@ -124,7 +139,7 @@ class SuchenFeld(QWidget):
 
     def _sprung(self, symbol: str, tipp: str) -> QToolButton:
         """Pfeilknopf neben dem Suchfeld (vorheriger/nächster Treffer) — quadratisch, so hoch wie das Feld."""
-        k = QToolButton(); k.setIcon(icons.icon(symbol, 18)); k.setFixedSize(KNOPF_H + 2, KNOPF_H + 2)
+        k = QToolButton(); k.setIcon(icons.icon(symbol, ICON_GROSS)); k.setFixedSize(KNOPF_H + 2, KNOPF_H + 2)
         k.setToolTip(tipp); k.setAccessibleName(tipp)
         return k
 
@@ -137,28 +152,28 @@ class SuchenFeld(QWidget):
     def _bau_suchen(self) -> QWidget:
         """Aufbau von oben nach unten: was man sucht (Feld, Pfeile, Trefferzahl), was man einsetzt (nur Reiter Ersetzen), dann zwei
         einklappbare Abschnitte — „Suchoptionen“ und „Weitere Werkzeuge“ —, damit nicht alle Knöpfe auf einmal dastehen."""
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 4, 0, 0); v.setSpacing(6)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_OBEN_KLEIN); v.setSpacing(ABSTAND_NORMAL)
         # 1. Suchen nach: Feld mit Pfeilen, darunter die Treffer
         self.such_combo = self._feld(); self.suchfeld = self.such_combo.lineEdit(); self.suchfeld.setPlaceholderText("Suchbegriff eingeben")
         self.such_combo.setAccessibleName("Suchen nach")
         v.addWidget(self._titel("Suchen &nach", self.such_combo))
-        z = QHBoxLayout(); z.setSpacing(4)
+        z = QHBoxLayout(); z.setSpacing(ABSTAND_KLEIN)
         self.vorherige = self._sprung("trefferHoch", "Vorherigen Treffer suchen (Umschalt+Eingabe)")
         self.weiter = self._sprung("trefferRunter", "Nächsten Treffer suchen (Eingabe)")
         z.addWidget(self.such_combo, 1); z.addWidget(self.vorherige); z.addWidget(self.weiter)
         v.addLayout(z)
-        self.treffer = QLabel("Keine Suchergebnisse"); self.treffer.setStyleSheet("color: palette(mid);"); self.treffer.setWordWrap(True)
+        self.treffer = QLabel("Keine Suchergebnisse"); hinweis_stil(self.treffer); self.treffer.setWordWrap(True)
         self.treffer.setAccessibleName("Suchergebnis")
         v.addWidget(self.treffer)
         self.such_format = QLabel(); self.such_format.setWordWrap(True); v.addWidget(self.such_format)
         # 2. Ersetzen durch (nur im Reiter Ersetzen)
-        self.ersatz_bereich = QWidget(); ev = QVBoxLayout(self.ersatz_bereich); ev.setContentsMargins(0, 8, 0, 0); ev.setSpacing(6)
+        self.ersatz_bereich = QWidget(); ev = QVBoxLayout(self.ersatz_bereich); ev.setContentsMargins(*RAND_OBEN_SEITE); ev.setSpacing(ABSTAND_NORMAL)
         self.ersatz_combo = self._feld(); self.ersatzfeld = self.ersatz_combo.lineEdit(); self.ersatzfeld.setPlaceholderText("Ersatztext eingeben")
         self.ersatz_combo.setAccessibleName("Ersetzen durch")
         self.ersatz_titel = self._titel("Ersetzen &durch", self.ersatz_combo)
         ev.addWidget(self.ersatz_titel); ev.addWidget(self.ersatz_combo)
         self.ersatz_format = QLabel(); self.ersatz_format.setWordWrap(True); ev.addWidget(self.ersatz_format)
-        self.ersetz_zeile = QWidget(); ez = QHBoxLayout(self.ersetz_zeile); ez.setContentsMargins(0, 0, 0, 0); ez.setSpacing(6)
+        self.ersetz_zeile = QWidget(); ez = QHBoxLayout(self.ersetz_zeile); ez.setContentsMargins(*RAND_KEIN); ez.setSpacing(ABSTAND_NORMAL)
         self.ersetzen = self._knopf("&Ersetzen"); self.alle_ersetzen = self._knopf("&Alle ersetzen")
         ez.addWidget(self.ersetzen, 1); ez.addWidget(self.alle_ersetzen, 1)
         ev.addWidget(self.ersetz_zeile)
@@ -167,9 +182,9 @@ class SuchenFeld(QWidget):
         # 3. Suchoptionen (eingeklappt; die Zusammenfassung zeigt, was gerade gilt)
         self.optionen_gruppe = EinklappGruppe("Suchoptionen")
         self.erweitern = self.optionen_gruppe.knopf
-        self.optionen_text = QLabel(); self.optionen_text.setWordWrap(True); self.optionen_text.setStyleSheet("color: palette(mid);")
+        self.optionen_text = QLabel(); self.optionen_text.setWordWrap(True); hinweis_stil(self.optionen_text)
         self.optionen = self.optionen_gruppe.inhalt
-        ov = self.optionen_gruppe.innen; ov.setSpacing(4)
+        ov = self.optionen_gruppe.innen; ov.setSpacing(ABSTAND_KLEIN)
         rz = QHBoxLayout(); self.richtung = QComboBox(); self.richtung.setMinimumHeight(KNOPF_H)
         for k, t in RICHTUNGEN:
             self.richtung.addItem(t, k)
@@ -179,13 +194,13 @@ class SuchenFeld(QWidget):
         self.platzhalter = QCheckBox("Platzhalter verwenden"); self.praefix = QCheckBox("Präfix beachten"); self.suffix = QCheckBox("Suffix beachten")
         self.satzzeichen = QCheckBox("Interpunktionszeichen ignorieren"); self.leerzeichen = QCheckBox("Leerzeichen ignorieren")
         for c in (self.gross, self.ganz, self.platzhalter, self.praefix, self.suffix, self.satzzeichen, self.leerzeichen):
-            c.setMinimumHeight(28); ov.addWidget(c); c.toggled.connect(lambda _a: (self._optionen_neu(), self.zaehlen()))
+            c.setMinimumHeight(HOEHE_SUCHOPTION); ov.addWidget(c); c.toggled.connect(lambda _a: (self._optionen_neu(), self.zaehlen()))
         v.addWidget(self.optionen_gruppe)
         v.addWidget(self.optionen_text)
         self.erweitern.toggled.connect(lambda offen: self.optionen_text.setVisible(not offen))   # eingeklappt: kurz, was gilt
         # 4. Weitere Werkzeuge: Format, Spezial, Lesehervorhebung, Suchen in — zwei Reihen zu je zwei Knöpfen
         self.werkzeuge = EinklappGruppe("Weitere Werkzeuge")
-        g = QGridLayout(); g.setSpacing(6)
+        g = FormularGitter()
         self.format_menue = MenueListe(self); self.format_menue.aboutToShow.connect(self._format_menue_fuellen)
         self.spezial_menue = MenueListe(self); self.spezial_menue.aboutToShow.connect(self._spezial_menue_fuellen)
         self.format_knopf = self._knopf("Format", self.format_menue); self.spezial_knopf = self._knopf("Sonderzeichen", self.spezial_menue)
@@ -198,8 +213,11 @@ class SuchenFeld(QWidget):
         self.lese_knopf = self._knopf("Hervorheben", lese); self.in_knopf = self._knopf("Suchen in", self.suchen_in)
         self.lese_knopf.setToolTip("Lesehervorhebung: alle Treffer farbig hinterlegen oder die Hervorhebung löschen")
         self.in_knopf.setToolTip("Im ganzen Dokument oder nur in der aktuellen Auswahl suchen")
-        g.addWidget(self.format_knopf, 0, 0); g.addWidget(self.spezial_knopf, 0, 1)
-        g.addWidget(self.lese_knopf, 1, 0); g.addWidget(self.in_knopf, 1, 1)
+        for paar in ((self.format_knopf, self.spezial_knopf), (self.lese_knopf, self.in_knopf)):          # zwei Reihen zu je zwei gleich breiten Knöpfen
+            reihe = QHBoxLayout(); reihe.setContentsMargins(*RAND_KEIN); reihe.setSpacing(ABSTAND_NORMAL)
+            for knopf in paar:
+                reihe.addWidget(knopf, 1)
+            g.breit(reihe)
         self.lese_zeile = self.lese_knopf
         self.werkzeuge.innen.addLayout(g)
         v.addWidget(self.werkzeuge)
@@ -236,7 +254,7 @@ class SuchenFeld(QWidget):
 
     # ---- Aufbau: Gehe zu ---------------------------------------------------------------------------------------------------------
     def _bau_gehe_zu(self) -> QWidget:
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(6)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_NORMAL)
         self.elemente = QListWidget(); self.elemente.addItems(list(G.ELEMENTE)); self.elemente.setCurrentRow(0)
         self.elemente.setAccessibleName("Gehe zu Element")
         v.addWidget(self._titel("Gehe zu &Element", self.elemente))
@@ -247,8 +265,8 @@ class SuchenFeld(QWidget):
         v.addWidget(self.eingabe_titel); v.addWidget(self.eingabe)
         hilfe = QLabel("Geben Sie + und – ein, um sich relativ zur derzeitigen Position zu bewegen.\nBeispiel: Mit +4 springen Sie um vier "
                        "Elemente weiter.")
-        hilfe.setWordWrap(True); hilfe.setStyleSheet("color: palette(mid);"); v.addWidget(hilfe)
-        self.gehe_meldung = QLabel(); self.gehe_meldung.setStyleSheet("color: palette(mid);"); self.gehe_meldung.setWordWrap(True)
+        hilfe.setWordWrap(True); hinweis_stil(hilfe); v.addWidget(hilfe)
+        self.gehe_meldung = QLabel(); hinweis_stil(self.gehe_meldung); self.gehe_meldung.setWordWrap(True)
         v.addWidget(self.gehe_meldung)
         z = QHBoxLayout()
         self.zurueck = self._knopf("Zurück"); self.gehe_weiter = self._knopf("Weiter"); self.gehe_weiter.setDefault(True)
@@ -356,7 +374,7 @@ class SuchenFeld(QWidget):
             cf = QTextCharFormat(f["zeichen_format"]) if f.get("zeichen_format") is not None else QTextCharFormat()
             if f.get("hervor") is True:
                 from PySide6.QtGui import QColor
-                cf.setBackground(QColor("#ffec99"))
+                cf.setBackground(QColor(HERVORHEBUNG_GELB))
             elif f.get("hervor") is False:
                 cf.clearBackground()
         ed = self.get_editor()

@@ -17,6 +17,7 @@ from lunivo_writer.core.farben import Farbe
 Zeichner = Callable[[QPainter, QRectF], None]
 _LINIE = QColor("#5c636a")
 _RAND = QColor("#495057")
+_STRICH_HELL, _FLAECHE_HELL = "#ced4da", "#f1f3f5"   # helle Linie und Fläche der Papier-Sinnbilder: bewusst fest (Gruppe C)
 
 
 def _blatt(p: QPainter, r: QRectF, verhaeltnis: float = 1.36) -> QRectF:
@@ -97,8 +98,8 @@ def plus_zeichner(beschriftung: str = "") -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         q = QRectF(r.center().x() - r.height() * 0.35, r.top() + r.height() * 0.08, r.height() * 0.7, r.height() * 0.6)
-        p.setPen(QPen(QColor("#ced4da"), 1, Qt.DashLine)); p.setBrush(QColor("#f1f3f5")); p.drawRoundedRect(q, 4, 4)
-        p.setPen(QPen(QColor("#adb5bd"), q.width() * 0.16, Qt.SolidLine, Qt.FlatCap))
+        p.setPen(QPen(QColor(_STRICH_HELL), 1, Qt.DashLine)); p.setBrush(QColor(_FLAECHE_HELL)); p.drawRoundedRect(q, 4, 4)
+        p.setPen(QPen(QColor(Farbe.GRAU_HELL), q.width() * 0.16, Qt.SolidLine, Qt.FlatCap))
         m = q.center(); a = q.width() * 0.3
         p.drawLine(QPointF(m.x() - a, m.y()), QPointF(m.x() + a, m.y())); p.drawLine(QPointF(m.x(), m.y() - a), QPointF(m.x(), m.y() + a))
         if beschriftung:

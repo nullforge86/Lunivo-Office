@@ -14,30 +14,68 @@ import re
 
 from PySide6.QtCore import QDir, QFileInfo, QModelIndex, QSize, QStandardPaths, QStorageInfo, Qt
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileIconProvider, QFileSystemModel, QFrame, QGridLayout,
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileIconProvider, QFileSystemModel, QFrame,
                                QHBoxLayout, QHeaderView,
                                QLabel, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
                                QStackedWidget, QToolButton, QTreeView, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_GROSS,
+    ABSTAND_KLEIN,
+    BREITE_NAVIGATION_OPTIONEN,
+    BREITE_ORDNERNAME_DIALOG,
+    BREITE_SPEICHERN_KNOPF,
+    GROESSE_FENSTER_SPEICHERN,
+    GROESSE_ORDNERNAME_KNOPF,
+    GROESSE_SPEICHERN_KACHEL,
+    GROESSE_SPEICHERN_WERKZEUGKNOPF,
+    HOEHE_KNOPF_GROSS,
+    HOEHE_KNOPF_HOCH,
+    ICON_GROSS,
+    ICON_PFADTRENNER,
+    ICON_SPEICHERN_KACHEL,
+    ICON_SPEICHERN_ORT,
+    ICON_SPEICHERN_WERKZEUG,
+    PADDING_LINKS_SPEICHERN_ORT,
+    PADDING_SPEICHERN_DATEIZEILE,
+    PADDING_SPEICHERN_HAUPTKNOPF,
+    PADDING_SPEICHERN_PFADKNOPF,
+    PADDING_SPEICHERN_TITEL,
+    RADIUS_FELD,
+    RADIUS_KLEIN,
+    RADIUS_MARKE,
+    RAND_KEIN,
+    RAND_ORDNERNAME_DIALOG,
+    RAND_PFADTRENNER,
+    RAND_SPEICHERN_LINKS,
+    RAND_SPEICHERN_PFAD,
+    RAND_SPEICHERN_RECHTS,
+    SCHRIFT_LISTE,
+    SCHRIFT_UEBERSCHRIFT,
+)
 
-STIL = """
+def stil() -> str:
+    """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
+    return """
 QWidget#sfLinks { background: palette(window); border-right: 1px solid palette(midlight); }
-QLabel#sfTitel { font-size: 17pt; font-weight: 600; padding: 4px 6px 14px 6px; }
+QLabel#sfTitel { font-size: """ f"{SCHRIFT_UEBERSCHRIFT}" """pt; font-weight: 600; padding: """ f"{PADDING_SPEICHERN_TITEL}" """; }
 QListWidget#sfOrte { background: transparent; border: none; outline: none; }
-QListWidget#sfOrte { font-size: 11pt; }
-QListWidget#sfOrte::item { padding-left: 10px; border-radius: 6px; }
+QListWidget#sfOrte { font-size: """ f"{SCHRIFT_LISTE}" """pt; }
+QListWidget#sfOrte::item { padding-left: """ f"{PADDING_LINKS_SPEICHERN_ORT}" """; border-radius: """ f"{RADIUS_FELD}" """px; }
 QListWidget#sfOrte::item:selected { background: palette(midlight); color: palette(highlight); }
 QListWidget#sfOrte::item:hover:!selected { background: palette(midlight); }
-QFrame#sfPfad { border: 1px solid palette(mid); border-radius: 4px; }
-QFrame#sfPfad QToolButton { border: none; padding: 2px 4px; }
-QFrame#sfPfad QToolButton:hover { background: palette(midlight); border-radius: 3px; }
-QPushButton#sfSpeichern { background: %(akzent)s; color: white; border: none; border-radius: 4px; padding: 6px 28px; font-weight: 600; }
-QPushButton#sfSpeichern:hover { background: %(akzent_d)s; }
-QTreeView#sfListe::item { padding: 4px 2px; }
+QFrame#sfPfad { border: 1px solid palette(mid); border-radius: """ f"{RADIUS_KLEIN}" """px; }
+QFrame#sfPfad QToolButton { border: none; padding: """ f"{PADDING_SPEICHERN_PFADKNOPF}" """; }
+QFrame#sfPfad QToolButton:hover { background: palette(midlight); border-radius: """ f"{RADIUS_MARKE}" """px; }
+QPushButton#sfSpeichern { border: none; border-radius: """ f"{RADIUS_KLEIN}" """px; padding: """ f"{PADDING_SPEICHERN_HAUPTKNOPF}" """; font-weight: 600; }
+QTreeView#sfListe::item { padding: """ f"{PADDING_SPEICHERN_DATEIZEILE}" """; }
 QPushButton#sfSpeichern:disabled { background: palette(mid); }
-""" % {"akzent": Farbe.AKZENT, "akzent_d": Farbe.AKZENT_DUNKEL}
+"""
 
 
 def _symbol(name: str, px: int = 20) -> QIcon:
@@ -82,8 +120,8 @@ class SpeichernFenster(QDialog):
         super().__init__(parent)
         self.setWindowTitle(titel)
         self.setObjectName("speichernFenster")
-        self.setStyleSheet(STIL)
-        self.resize(1040, 660)
+        self.setStyleSheet(stil())
+        self.resize(*GROESSE_FENSTER_SPEICHERN)
         self.typen = list(typen)
         self.nur_ordner = not self.typen
         self.oeffnen = oeffnen
@@ -97,17 +135,14 @@ class SpeichernFenster(QDialog):
         if not ordner or not os.path.isdir(ordner):
             ordner = _ordner(QStandardPaths.DocumentsLocation) or QDir.homePath()
 
-        haupt = QHBoxLayout(self)
-        haupt.setContentsMargins(0, 0, 0, 0)
-        haupt.setSpacing(0)
 
         # ---- links: Titel und Orte -------------------------------------------------------------------------------------
-        links = QWidget(); links.setObjectName("sfLinks"); links.setFixedWidth(250)
-        lv = QVBoxLayout(links); lv.setContentsMargins(18, 22, 12, 12)
+        links = QWidget(); links.setObjectName("sfLinks")
+        lv = QVBoxLayout(links); lv.setContentsMargins(*RAND_SPEICHERN_LINKS)
         t = QLabel(titel); t.setObjectName("sfTitel"); t.setWordWrap(True)
         lv.addWidget(t)
-        self.orte = QListWidget(); self.orte.setObjectName("sfOrte"); self.orte.setIconSize(QSize(20, 20))
-        self.orte.setSpacing(2)
+        self.orte = QListWidget(); self.orte.setObjectName("sfOrte"); self.orte.setIconSize(QSize(ICON_SPEICHERN_ORT, ICON_SPEICHERN_ORT))
+        self.orte.setSpacing(ABSTAND_ENG)
         self.orte.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.orte.setTextElideMode(Qt.ElideMiddle)
         for text, pfad, ic in (("Persönlicher Ordner", QDir.homePath(), _symbol("house")),
                                ("Schreibtisch", _ordner(QStandardPaths.DesktopLocation), _symbol("monitor")),
@@ -121,19 +156,18 @@ class SpeichernFenster(QDialog):
         self._ort("Andere Orte", "/", _symbol("ellipsis"))
         self.orte.itemClicked.connect(lambda it: self.gehe_zu(it.data(Qt.UserRole)))
         lv.addWidget(self.orte, 1)
-        haupt.addWidget(links)
 
         # ---- rechts: Leiste, Dateien, Name und Typ ---------------------------------------------------------------------
         rechts = QWidget()
-        rv = QVBoxLayout(rechts); rv.setContentsMargins(16, 14, 16, 16); rv.setSpacing(10)
-        leiste = QHBoxLayout(); leiste.setSpacing(4)
+        rv = QVBoxLayout(rechts); rv.setContentsMargins(*RAND_SPEICHERN_RECHTS); rv.setSpacing(ABSTAND_GROSS)
+        leiste = QHBoxLayout(); leiste.setSpacing(ABSTAND_KLEIN)
         self.k_zurueck = self._knopf(_symbol("arrow-left"), "Zurück", self.zurueck)
         self.k_vor = self._knopf(_symbol("arrow-right"), "Vor", self.vor)
         self.k_hoch = self._knopf(_symbol("arrow-up"), "Übergeordneter Ordner", self.hoch)
         for k in (self.k_zurueck, self.k_vor, self.k_hoch):
             leiste.addWidget(k)
-        self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad"); self.pfad_leiste.setMinimumHeight(36)
-        self.pfad_layout = QHBoxLayout(self.pfad_leiste); self.pfad_layout.setContentsMargins(4, 1, 4, 1); self.pfad_layout.setSpacing(0)
+        self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad"); self.pfad_leiste.setMinimumHeight(HOEHE_KNOPF_GROSS)
+        self.pfad_layout = QHBoxLayout(self.pfad_leiste); self.pfad_layout.setContentsMargins(*RAND_SPEICHERN_PFAD); self.pfad_layout.setSpacing(0)
         leiste.addWidget(self.pfad_leiste, 1)
         leiste.addSpacing(8)
         leiste.addWidget(self._knopf(_symbol("folder-plus"), "Neuer Ordner", self.neuer_ordner))
@@ -160,17 +194,18 @@ class SpeichernFenster(QDialog):
         for spalte, breite in ((3, 150), (2, 170), (1, 100)):
             kopf.setSectionResizeMode(spalte, QHeaderView.Interactive)
             kopf.resizeSection(spalte, breite)
-        self.liste.setIconSize(QSize(18, 18))
+        self.liste.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         self.kacheln = QListView(); self.kacheln.setModel(self.modell)
         self.kacheln.setViewMode(QListView.IconMode); self.kacheln.setResizeMode(QListView.Adjust)
-        self.kacheln.setGridSize(QSize(110, 90)); self.kacheln.setIconSize(QSize(40, 40)); self.kacheln.setWordWrap(True)
+        self.kacheln.setGridSize(QSize(*GROESSE_SPEICHERN_KACHEL)); self.kacheln.setIconSize(QSize(ICON_SPEICHERN_KACHEL, ICON_SPEICHERN_KACHEL)); self.kacheln.setWordWrap(True)
         self.ansichten = QStackedWidget(); self.ansichten.addWidget(self.liste); self.ansichten.addWidget(self.kacheln)
         for v in (self.liste, self.kacheln):
             v.clicked.connect(self._angeklickt)
             v.doubleClicked.connect(self._doppelklick)
         rv.addWidget(self.ansichten, 1)
 
-        unten = QGridLayout(); unten.setHorizontalSpacing(10); unten.setVerticalSpacing(10)
+        unten = FormularGitter(); unten.einspaltig = True; unten.beschriftung_voll = True
+        unten.beschriftungsabstand = ABSTAND_GROSS; unten.zeilenabstand = ABSTAND_GROSS
         self.name = QComboBox(); self.name.setEditable(True); self.name.setInsertPolicy(QComboBox.NoInsert)
         self.name.setEditText(name)
         self.typ = QComboBox()
@@ -180,14 +215,15 @@ class SpeichernFenster(QDialog):
         self.k_speichern = QPushButton("&Speichern"); self.k_speichern.setObjectName("sfSpeichern"); self.k_speichern.setDefault(True)
         self.k_abbrechen = QPushButton("Abbrechen")
         for k in (self.k_speichern, self.k_abbrechen):
-            k.setMinimumWidth(120)
+            k.setMinimumWidth(BREITE_SPEICHERN_KNOPF)
         for feld in (self.name, self.typ, self.k_speichern, self.k_abbrechen):
-            feld.setMinimumHeight(36)                                 # Felder in der Höhe des Vorbilds, nicht schmal
+            feld.setMinimumHeight(HOEHE_KNOPF_GROSS)                                 # Felder in der Höhe des Vorbilds, nicht schmal
         l1 = QLabel("Datei&name:"); l1.setBuddy(self.name)
         l2 = QLabel("Datei&typ:"); l2.setBuddy(self.typ)
-        unten.addWidget(l1, 0, 0); unten.addWidget(self.name, 0, 1); unten.addWidget(self.k_speichern, 0, 2)
-        unten.addWidget(l2, 1, 0); unten.addWidget(self.typ, 1, 1); unten.addWidget(self.k_abbrechen, 1, 2)
-        unten.setColumnStretch(1, 1)
+        for beschriftung, feld, knopf in ((l1, self.name, self.k_speichern), (l2, self.typ, self.k_abbrechen)):
+            z = QHBoxLayout(); z.setContentsMargins(*RAND_KEIN); z.setSpacing(ABSTAND_GROSS)       # Feld, rechts daneben der Knopf (wie im Vorbild)
+            z.addWidget(feld, 1); z.addWidget(knopf)
+            unten.zeile(beschriftung, z)
         rv.addLayout(unten)
         if oeffnen:
             self.k_speichern.setText("Ö&ffnen")
@@ -199,7 +235,8 @@ class SpeichernFenster(QDialog):
             l1.setText("&Ordner:"); l2.hide(); self.typ.hide()
             self.k_speichern.setText("&Auswählen")
             self.modell.setFilter(QDir.AllDirs | QDir.NoDotAndDotDot)
-        haupt.addWidget(rechts, 1)
+        self.spalten = ZweiSpalter(links, rechts, links_breite=BREITE_NAVIGATION_OPTIONEN, oben="links", gestapelt_stretch=(1, 3))   # schmal: die Orte oben
+        haupt = QVBoxLayout(self); haupt.setContentsMargins(*RAND_KEIN); haupt.setSpacing(0); haupt.addWidget(self.spalten)
 
         self.k_speichern.clicked.connect(self.speichern)
         self.k_abbrechen.clicked.connect(self.reject)
@@ -218,14 +255,14 @@ class SpeichernFenster(QDialog):
     # ---- Bausteine ---------------------------------------------------------------------------------------------------------
     def _ort(self, text: str, pfad: str, ic: QIcon) -> None:
         it = QListWidgetItem(ic, "  " + text)
-        it.setSizeHint(QSize(0, 40))                              # feste Zeilenhöhe: nichts überlappt, egal welches Thema
+        it.setSizeHint(QSize(0, HOEHE_KNOPF_HOCH))                              # feste Zeilenhöhe: nichts überlappt, egal welches Thema
         it.setData(Qt.UserRole, pfad)
         it.setToolTip(pfad)
         self.orte.addItem(it)
 
     def _knopf(self, ic: QIcon, tipp: str, aktion, pruefbar: bool = False) -> QToolButton:
-        k = QToolButton(); k.setIcon(ic); k.setToolTip(tipp); k.setAutoRaise(True); k.setIconSize(QSize(20, 20))
-        k.setFixedSize(36, 34); k.setCheckable(pruefbar)
+        k = QToolButton(); k.setIcon(ic); k.setToolTip(tipp); k.setAutoRaise(True); k.setIconSize(QSize(ICON_SPEICHERN_WERKZEUG, ICON_SPEICHERN_WERKZEUG))
+        k.setFixedSize(*GROESSE_SPEICHERN_WERKZEUGKNOPF); k.setCheckable(pruefbar)
         if ic.isNull():
             k.setText(tipp[:1])
         k.clicked.connect(lambda _=False: aktion())
@@ -285,7 +322,7 @@ class SpeichernFenster(QDialog):
             k.clicked.connect(lambda _=False, z=ziel: self.gehe_zu(z))
             self.pfad_layout.addWidget(k)
             if 0 < i < len(stufen) - 1 or (i == 0 and len(stufen) > 1):
-                pfeil = QLabel(); pfeil.setPixmap(icons.icon("chevron-right", 12).pixmap(12, 12)); pfeil.setContentsMargins(2, 0, 2, 0)
+                pfeil = QLabel(); pfeil.setPixmap(icons.icon("chevron-right", ICON_PFADTRENNER).pixmap(ICON_PFADTRENNER, ICON_PFADTRENNER)); pfeil.setContentsMargins(*RAND_PFADTRENNER)
                 self.pfad_layout.addWidget(pfeil)
         self.pfad_layout.addStretch(1)
 
@@ -475,17 +512,17 @@ def _ordner_name_fragen(parent) -> str:
     """Kleines Fenster „Neuer Ordner“ in der Größe der übrigen Felder (statt des winzigen Eingabefensters von Qt)."""
     d = QDialog(parent)
     d.setWindowTitle("Neuer Ordner")
-    d.setStyleSheet(STIL)
-    d.setMinimumWidth(440)
-    v = QVBoxLayout(d); v.setContentsMargins(24, 20, 24, 20); v.setSpacing(10)
-    feld = QLineEdit("Neuer Ordner"); feld.setMinimumHeight(36); feld.selectAll()
+    d.setStyleSheet(stil())
+    d.setMinimumWidth(BREITE_ORDNERNAME_DIALOG)
+    v = QVBoxLayout(d); v.setContentsMargins(*RAND_ORDNERNAME_DIALOG); v.setSpacing(ABSTAND_GROSS)
+    feld = QLineEdit("Neuer Ordner"); feld.setMinimumHeight(HOEHE_KNOPF_GROSS); feld.selectAll()
     l = QLabel("&Name des Ordners:"); l.setBuddy(feld)
     v.addWidget(l); v.addWidget(feld); v.addSpacing(10)
     knoepfe = QHBoxLayout(); knoepfe.addStretch(1)
     ok = QPushButton("&Anlegen"); ok.setObjectName("sfSpeichern"); ok.setDefault(True)
     ab = QPushButton("Abbrechen")
     for k in (ok, ab):
-        k.setMinimumSize(120, 36); knoepfe.addWidget(k)
+        k.setMinimumSize(*GROESSE_ORDNERNAME_KNOPF); knoepfe.addWidget(k)
     v.addLayout(knoepfe)
     ok.clicked.connect(d.accept); ab.clicked.connect(d.reject)
     feld.textChanged.connect(lambda t: ok.setEnabled(bool(t.strip())))

@@ -11,12 +11,40 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QRadioButton, QScrollArea,
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QRadioButton, QScrollArea,
                                QSizePolicy, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_DICHT,
+    ABSTAND_ENG,
+    ABSTAND_KLEIN,
+    ABSTAND_NORMAL,
+    BREITE_BEREICHSLISTE_POPUP,
+    GROESSE_DIAGRAMMSTIL_POPUP,
+    GROESSE_SCHNELLLAYOUT_BILD,
+    GROESSE_SCHNELLLAYOUT_KNOPF,
+    GROESSE_STILKACHEL_RAND,
+    HOEHE_POPUP_SEITE,
+    ICON_NORMAL,
+    PADDING_POPUP_LINKKNOPF,
+    RAND_BOX,
+    RAND_BOX_KOMPAKT,
+    RAND_KEIN,
+    RAND_POPUP_FILTERGRUPPE,
+    RAND_POPUP_FUSS,
+    RAND_POPUP_KOPF,
+    RAND_POPUP_SEITE,
+    RAND_POPUP_UNTERTEXT,
+)
+
+# Grautöne der Diagramm-Sinnbilder: bewusst feste Farben, unabhängig vom Thema.
+SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = "#d4d4d4", "#9a9a9a", "#6e6e6e"
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 KACHEL = 36
 BREITE = 340
@@ -35,7 +63,7 @@ def _kopfknopf(text: str, i: int, gruppe: QButtonGroup) -> QToolButton:
 
 
 def _linie() -> QFrame:
-    f = QFrame(); f.setFrameShape(QFrame.HLine); f.setStyleSheet("color: palette(midlight);")
+    f = trennlinie()
     return f
 
 
@@ -44,7 +72,7 @@ def _ueberschrift(text: str) -> QLabel:
 
 
 # ---- Kacheln -------------------------------------------------------------------------------------------------------------------------
-def layout_bild(nr: int, groesse: QSize = QSize(92, 84)) -> QPixmap:
+def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) -> QPixmap:
     """Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
     Achsen, Achsentitel, Gitternetz, Datentabelle, Trendlinie — grau gezeichnet wie die Kacheln der Vorlage."""
     from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
@@ -54,8 +82,8 @@ def layout_bild(nr: int, groesse: QSize = QSize(92, 84)) -> QPixmap:
     pm = QPixmap(groesse); pm.fill(QColor(Farbe.WEISS))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     w, h = float(groesse.width()), float(groesse.height())
-    hell, mittel, dunkel = QColor("#d4d4d4"), QColor("#9a9a9a"), QColor("#6e6e6e")
-    balken = QColor("#c8c8c8")
+    hell, mittel, dunkel = QColor(SINNBILD_HELL), QColor(SINNBILD_MITTEL), QColor(SINNBILD_DUNKEL)
+    balken = QColor(Farbe.LEISTE_RAND)
     fl = QRectF(10, 8, w - 20, h - 16)                                   # Zeichenfläche des Diagramms
     p.setPen(Qt.NoPen); p.setBrush(mittel)
     if kw.get("titel_an"):
@@ -128,7 +156,7 @@ def _farbzeile(farben: list[str], gewaehlt: bool, klick) -> QWidget:
     return z
 
 
-class DiagrammPopup(QMenu):
+class DiagrammPopup(MenueListe):
     """Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter."""
 
     SEITEN = {"elemente": ("Diagrammelement", "Schnelllayout"), "stile": ("Formatvorlagen", "Farben"), "filter": ("Wert", "Name")}
@@ -137,8 +165,8 @@ class DiagrammPopup(QMenu):
         super().__init__(parent or getattr(b, "w", None))
         self.b, self.art, self._start = b, art, reiter
         self._wid = QWidget()
-        v = QVBoxLayout(self._wid); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        kopf = QHBoxLayout(); kopf.setContentsMargins(6, 2, 6, 0); kopf.setSpacing(2)
+        v = QVBoxLayout(self._wid); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+        kopf = QHBoxLayout(); kopf.setContentsMargins(*RAND_POPUP_KOPF); kopf.setSpacing(ABSTAND_ENG)
         self.gruppe = QButtonGroup(self); self.gruppe.setExclusive(True)
         for i, t in enumerate(self.SEITEN[art]):
             kopf.addWidget(_kopfknopf(t, i, self.gruppe))
@@ -147,10 +175,10 @@ class DiagrammPopup(QMenu):
         self.stapel = QStackedWidget(); v.addWidget(self.stapel)
         self._seiten: list[QWidget] = []
         for _ in self.SEITEN[art]:
-            host = QWidget(); QVBoxLayout(host).setContentsMargins(0, 0, 0, 0)
+            host = QWidget(); QVBoxLayout(host).setContentsMargins(*RAND_KEIN)
             self.stapel.addWidget(host); self._seiten.append(host)
         self.gruppe.idClicked.connect(self.waehle)
-        a = QWidgetAction(self); a.setDefaultWidget(self._wid); self.addAction(a)
+        self.widget(self._wid)
         self.setFixedWidth(BREITE)
         self.aboutToShow.connect(self.neu_lesen)
         self.waehle(reiter)
@@ -180,7 +208,7 @@ class DiagrammPopup(QMenu):
 
     # ---- Diagrammelement -----------------------------------------------------------------------------------------------------------------
     def _seite_elemente(self) -> QWidget:
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(8, 6, 8, 6); v.setSpacing(0)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_BOX_KOMPAKT); v.setSpacing(0)
         for name, text, an in self.b.diagrammElementListe():
             c = QCheckBox(text); c.setChecked(bool(an)); c.setMinimumHeight(KACHEL - 6); c.setAccessibleName(text)
             c.clicked.connect(lambda _=False, n=name: (self.b.diagrammElement(None, n), self._fuellen(0)))
@@ -189,42 +217,41 @@ class DiagrammPopup(QMenu):
 
     def _seite_schnelllayout(self) -> QWidget:
         from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUT_ANZEIGE, SCHNELLLAYOUTS
-        w = QWidget(); g = QGridLayout(w); g.setContentsMargins(8, 8, 8, 8); g.setSpacing(6)
+        w = QWidget(); kacheln = []
         for platz, i in enumerate(SCHNELLLAYOUT_ANZEIGE):                # Reihenfolge wie im Foto der Vorlage; i ist die gespeicherte Layoutnummer
             name = SCHNELLLAYOUTS[i][0]
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(92, 84)); k.setToolTip(name)
-            k.setFixedSize(100, 92); k.setAccessibleName(name)
+            k = QToolButton(); k.setAutoRaise(True); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(*GROESSE_SCHNELLLAYOUT_BILD)); k.setToolTip(name)
+            k.setFixedSize(*GROESSE_SCHNELLLAYOUT_KNOPF); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, i=i: (self.close(), self.b.diagrammSchnelllayout(None, i)))
-            g.addWidget(k, platz // 3, platz % 3)
-        g.setColumnStretch(3, 1)
+            kacheln.append(k)
+        kachel_gitter(kacheln, 3, eltern=w, rand=RAND_BOX, abstand=ABSTAND_NORMAL, rest_dehnt=True)
         return w
 
     # ---- Formatvorlagen und Farben -----------------------------------------------------------------------------------------------------
     def _seite_vorlagen(self) -> QWidget:
         from lunivo_writer.editor import diagramm as D
         from lunivo_writer.ui.baukasten.bild_diagramm_menues import stil_bild
-        STIL_KACHEL = QSize(136, 80)                                  # wie in der Vorlage: zwei große Kacheln je Zeile
+        STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_POPUP)                                  # wie in der Vorlage: zwei große Kacheln je Zeile
         aktuell = int(_dg(self.b).get("stil", 0) or 0)
-        inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(8, 4, 8, 6); v.setSpacing(4)
+        inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_KLEIN)
         v.addWidget(_ueberschrift("Systemstil"))
-        g = QGridLayout(); g.setSpacing(6)
+        kacheln = []
         for i, s in enumerate(D.stile_liste()):
             k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setChecked(i == aktuell)
             k.setIcon(QIcon(stil_bild(s["nr"], STIL_KACHEL))); k.setIconSize(STIL_KACHEL); k.setToolTip(s["name"]); k.setAccessibleName(s["name"])
-            k.setFixedSize(STIL_KACHEL + QSize(14, 12))
-            k.setStyleSheet(f"QToolButton:checked {{ border: 2px solid {Farbe.AKZENT}; background: transparent; }}")
+            k.setFixedSize(STIL_KACHEL + QSize(*GROESSE_STILKACHEL_RAND))
+            k.setStyleSheet("QToolButton:checked { border: 2px solid palette(highlight); background: transparent; }")
             k.clicked.connect(lambda _=False, n=s["nr"]: (self.close(), self.b.diagrammStil(None, n)))
-            g.addWidget(k, i // 2, i % 2)
-        g.setColumnStretch(2, 1)
-        v.addLayout(g); v.addStretch(1)
+            kacheln.append(k)
+        v.addLayout(kachel_gitter(kacheln, 2, abstand=ABSTAND_NORMAL, rest_dehnt=True)); v.addStretch(1)
         r = QScrollArea(); r.setWidget(inhalt); r.setWidgetResizable(True); r.setFrameShape(QFrame.NoFrame)
-        r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(340)
+        r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(HOEHE_POPUP_SEITE)
         return r
 
     def _seite_farben(self) -> QWidget:
         from lunivo_writer.editor import diagramm as D
         akt = [str(f).lower() for f in (_dg(self.b).get("farben") or [])]
-        inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(8, 4, 8, 6); v.setSpacing(2)
+        inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_ENG)
         nr = 0
         for gruppe, zeilen in D.farbschemen_gruppen():
             v.addWidget(_ueberschrift(gruppe))
@@ -234,21 +261,21 @@ class DiagrammPopup(QMenu):
                 v.addWidget(z); nr += 1
         v.addStretch(1)
         r = QScrollArea(); r.setWidget(inhalt); r.setWidgetResizable(True); r.setFrameShape(QFrame.NoFrame)
-        r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(340)
+        r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(HOEHE_POPUP_SEITE)
         return r
 
     # ---- Filter ---------------------------------------------------------------------------------------------------------------------------
     def _seite_filter(self) -> QWidget:
         daten = self.b.diagrammFilterDaten()
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(8, 4, 8, 6); v.setSpacing(2)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_ENG)
         self._haken: dict[str, list[tuple[str, QCheckBox]]] = {}
-        inhalt = QWidget(); iv = QVBoxLayout(inhalt); iv.setContentsMargins(0, 0, 0, 0); iv.setSpacing(0)
+        inhalt = QWidget(); iv = QVBoxLayout(inhalt); iv.setContentsMargins(*RAND_KEIN); iv.setSpacing(0)
         for schl, titel in (("reihen", "Reihe"), ("rubriken", "Rubrik")):
             eintraege = daten.get(schl, [])
             kopf = QToolButton(); kopf.setText(titel); kopf.setCheckable(True); kopf.setChecked(True); kopf.setAutoRaise(True)
             kopf.setArrowType(Qt.DownArrow); kopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); kopf.setMinimumHeight(KACHEL - 6)
-            kopf.setStyleSheet(f"QToolButton {{ color: {Farbe.AKZENT}; font-weight: 600; border: none; }}")
-            gruppe = QWidget(); gv = QVBoxLayout(gruppe); gv.setContentsMargins(18, 0, 0, 4); gv.setSpacing(0)
+            kopf.setProperty("akzentSchrift", True); kopf.setStyleSheet("QToolButton { font-weight: 600; border: none; }")
+            gruppe = QWidget(); gv = QVBoxLayout(gruppe); gv.setContentsMargins(*RAND_POPUP_FILTERGRUPPE); gv.setSpacing(0)
             kopf.toggled.connect(lambda an, k=kopf, g=gruppe: (g.setVisible(an), k.setArrowType(Qt.DownArrow if an else Qt.RightArrow), self._hoehe()))
             alle = QCheckBox("(Alle auswählen)"); alle.setMinimumHeight(KACHEL - 6); alle.setTristate(False)
             gv.addWidget(alle)
@@ -267,11 +294,11 @@ class DiagrammPopup(QMenu):
         r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(min(300, max(120, inhalt.sizeHint().height() + 4)))
         v.addWidget(r)
         v.addWidget(_linie())
-        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 2, 0, 0)
-        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Filter übernehmen")
+        fuss = QHBoxLayout(); fuss.setContentsMargins(*RAND_POPUP_FUSS)
+        ok = QPushButton(icons.icon("refresh-cw", ICON_NORMAL), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Filter übernehmen")
         ok.clicked.connect(self._uebernehmen)
         mehr = QPushButton("Daten auswählen …"); mehr.setFlat(True); mehr.setFixedHeight(FELDHOEHE)
-        mehr.setStyleSheet(f"QPushButton {{ color: {Farbe.AKZENT}; border: none; text-decoration: underline; padding: 0 6px; }}")
+        mehr.setProperty("akzentSchrift", True); mehr.setStyleSheet("QPushButton { border: none; text-decoration: underline; padding: " f"{PADDING_POPUP_LINKKNOPF}" "; }")
         mehr.clicked.connect(lambda: (self.close(), self.b.diagrammDatenBearbeiten()))
         fuss.addWidget(ok); fuss.addStretch(1); fuss.addWidget(mehr)
         v.addLayout(fuss)
@@ -280,9 +307,9 @@ class DiagrammPopup(QMenu):
     def _seite_namen(self) -> QWidget:
         """Reiter „Name“: Reihen und Rubriken umbenennen; „Übernehmen“ schreibt über ``diagrammNamenSetzen`` in die Diagrammdaten."""
         daten = self.b.diagrammFilterDaten()
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(8, 4, 8, 6); v.setSpacing(2)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_ENG)
         self._felder: dict[str, list[tuple[str, QLineEdit]]] = {}
-        inhalt = QWidget(); iv = QVBoxLayout(inhalt); iv.setContentsMargins(0, 0, 0, 0); iv.setSpacing(2)
+        inhalt = QWidget(); iv = QVBoxLayout(inhalt); iv.setContentsMargins(*RAND_KEIN); iv.setSpacing(ABSTAND_ENG)
         quelle = self.b.diagrammNamenQuelleLesen()
         for schl, titel, (qwert, qtext) in (("reihen", "Reihe", ("zeile1", "Zeile 1")), ("rubriken", "Rubrik", ("spalte_a", "Spalte A"))):
             iv.addWidget(_ueberschrift(titel))
@@ -294,7 +321,7 @@ class DiagrammPopup(QMenu):
                 iv.addWidget(rb)
                 if wert == qwert and daten.get(schl):
                     sub = QLabel(", ".join(n for n, _a in daten[schl])); sub.setWordWrap(True)
-                    sub.setContentsMargins(26, 0, 0, 2); sub.setStyleSheet("color: palette(mid);"); iv.addWidget(sub)
+                    sub.setContentsMargins(*RAND_POPUP_UNTERTEXT); hinweis_stil(sub); iv.addWidget(sub)
             felder = []
             for name, _an in daten.get(schl, []):
                 e = QLineEdit(name); e.setFixedHeight(FELDHOEHE); e.setAccessibleName(f"{titel} {name}")
@@ -304,8 +331,8 @@ class DiagrammPopup(QMenu):
         r = QScrollArea(); r.setWidget(inhalt); r.setWidgetResizable(True); r.setFrameShape(QFrame.NoFrame)
         r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(min(300, max(120, inhalt.sizeHint().height() + 4)))
         v.addWidget(r); v.addWidget(_linie())
-        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 2, 0, 0)
-        ok = QPushButton(icons.icon("refresh-cw", 16), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Namen übernehmen")
+        fuss = QHBoxLayout(); fuss.setContentsMargins(*RAND_POPUP_FUSS)
+        ok = QPushButton(icons.icon("refresh-cw", ICON_NORMAL), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Namen übernehmen")
         ok.clicked.connect(self._namen_uebernehmen)
         fuss.addWidget(ok); fuss.addStretch(1)
         v.addLayout(fuss)
@@ -352,15 +379,15 @@ def diagramm_bereich_feld(b) -> QWidget:
     """Auswahlfeld „Diagrammbereich“ der Diagrammtools: oben die Liste der Teile (zeigt den gewählten), darunter „Formatieren“ und
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
-    v = QVBoxLayout(host); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(1)
-    cb = QComboBox(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(330)   # schmal im Band, die Liste ganz breit
+    v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_DICHT)
+    cb = QComboBox(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
-    zeile = QHBoxLayout(); zeile.setContentsMargins(0, 0, 0, 0); zeile.setSpacing(4)          # wie in der Vorlage nebeneinander unter dem Feld
+    zeile = QHBoxLayout(); zeile.setContentsMargins(*RAND_KEIN); zeile.setSpacing(ABSTAND_KLEIN)          # wie in der Vorlage nebeneinander unter dem Feld
     v.addLayout(zeile)
     for text, sym, f in (("Formatieren", "pinsel", lambda: getattr(b.w, "diagrammformat_seitenleiste", lambda: None)()),
                          ("Formatvorlage zurücksetzen", "undo-2", lambda: b.diagrammZuruecksetzen())):
-        k = QToolButton(); k.setAutoRaise(True); k.setIcon(icons.icon(sym, 16)); k.setIconSize(QSize(16, 16)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
+        k = QToolButton(); k.setAutoRaise(True); k.setIcon(icons.icon(sym, ICON_NORMAL)); k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
         k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(FELDHOEHE)
         k.clicked.connect(lambda _=False, f=f: f())
         zeile.addWidget(k)

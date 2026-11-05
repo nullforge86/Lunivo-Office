@@ -6,7 +6,8 @@ from PySide6.QtWidgets import (
     QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
 from lunivo_writer.editor import silbenfarben as S
 from lunivo_writer.ui.baukasten import weitere_farben
 
@@ -14,6 +15,13 @@ from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_KNOPF_SILBE,
+    HOEHE_TEXT_NORMAL,
+    RADIUS_FELD,
+    RAND_KEIN,
+    SCHRIFT_VORSCHAU,
+)
 class SilbenDialog(PanelFaehig, QDialog):
     def __init__(self, fenster):
         super().__init__(fenster)
@@ -25,7 +33,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         info = QLabel("Jede Silbe eines Wortes bekommt abwechselnd eine andere Farbe. Das ändert nur die Anzeige — nicht den Text, "
                       "nicht die Datei. Die Silben sind deutsche Sprechsilben (Wan-de-rung); bei Fremdwörtern, Namen und seltenen Zusammensetzungen kann eine Grenze falsch liegen.")
         info.setWordWrap(True)
-        info.setStyleSheet("color: palette(mid);")
+        hinweis_stil(info)
         v.addWidget(info)
         self.an = QCheckBox("Silben farbig anzeigen")
         self.an.setChecked(k["an"])
@@ -37,12 +45,12 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.palette.setCurrentText(k["palette"])
         self.eigene_box = QWidget()
         eh = FlussLayout(); self.eigene_box.setLayout(eh)
-        eh.setContentsMargins(0, 0, 0, 0)
+        eh.setContentsMargins(*RAND_KEIN)
         self.eigene = list(k["eigene"])
         self.eigene_knoepfe = []
         for i in range(3):
             b = QPushButton()
-            b.setFixedSize(44, 26)
+            b.setFixedSize(*GROESSE_KNOPF_SILBE)
             b.clicked.connect(lambda _=False, i=i: self._farbe_waehlen(i))
             self.eigene_knoepfe.append(b)
             eh.addWidget(b)
@@ -64,13 +72,13 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.mindestens.setValue(k["mindestens"])
         self.mindestens.setSuffix(" Buchstaben")
         f.reihe(("Wörter einfärben ab", self.mindestens), ("", self.fett))
-        self.einsilbig = QCheckBox("Auch Wörter einfärben, die sich nicht teilen lassen")
+        self.einsilbig = UmbruchSchalter("Auch Wörter einfärben, die sich nicht teilen lassen")
         self.einsilbig.setChecked(k["einsilbig"])
         f.breit(self.einsilbig)
-        self.neu = QCheckBox("Jedes Wort beginnt wieder mit der ersten Farbe")
+        self.neu = UmbruchSchalter("Jedes Wort beginnt wieder mit der ersten Farbe")
         self.neu.setChecked(k["neu_pro_wort"])
         f.breit(self.neu)
-        self.absatz = QCheckBox("Nur im Absatz mit dem Cursor (ruhigeres Bild)")
+        self.absatz = UmbruchSchalter("Nur im Absatz mit dem Cursor (ruhigeres Bild)")
         self.absatz.setChecked(k["nur_absatz"])
         f.breit(self.absatz)
         self.drucken = QCheckBox("Auch beim Drucken und im PDF")
@@ -81,8 +89,8 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.vorschau = QTextEdit()
         self.vorschau.setReadOnly(True)
         self.vorschau.setPlainText(S.BEISPIEL)
-        self.vorschau.setFixedHeight(90)
-        self.vorschau.setStyleSheet("QTextEdit { background: white; color: #222; font-size: 15pt; }")
+        self.vorschau.setFixedHeight(HOEHE_TEXT_NORMAL)
+        self.vorschau.setStyleSheet("QTextEdit { background: white; color: #222; font-size: " f"{SCHRIFT_VORSCHAU}" "pt; }")
         self._hl = S.SilbenFarben(self.vorschau.document(), {**k, "an": True, "nur_absatz": False})
         v.addWidget(self.vorschau)
         self.hinweis = QLabel("")
@@ -108,7 +116,7 @@ class SilbenDialog(PanelFaehig, QDialog):
 
     def _knoepfe_faerben(self) -> None:
         for b, c in zip(self.eigene_knoepfe, self.eigene):
-            b.setStyleSheet(f"QPushButton {{ background: {c}; border: 1px solid palette(mid); border-radius: 6px; }}")
+            b.setStyleSheet(f"QPushButton {{ background: {c}; border: 1px solid palette(mid); border-radius: {RADIUS_FELD}px; }}")
 
     def _zustand(self) -> None:
         eigene = self.palette.currentText() == "Eigene Farben"

@@ -14,6 +14,8 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QApplication
 
+from lunivo_writer.core.farben import Farbe
+
 Zeichner = Callable[[QPainter, QRectF], None]
 _RAND = QColor("#adb5bd")
 
@@ -33,7 +35,7 @@ def design_zeichner(farben: list[str], kopf: str) -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = r.adjusted(1, 1, -1, -1)
-        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor("#ffffff")); p.drawRect(k)
+        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor(Farbe.PAPIER)); p.drawRect(k)
         _text(p, QRectF(k.left() + 6, k.top() + 3, k.width() - 8, k.height() * 0.55), "Aa", kopf, int(k.height() * 0.32),
               farbe=QColor(farben[0]))
         b = (k.width() - 12) / 6
@@ -62,8 +64,8 @@ def schriftpaar_zeichner(name: str, kopf: str, text: str) -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = QRectF(r.left() + 4, r.top() + 6, r.height() - 12, r.height() - 12)
-        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor("#ffffff")); p.drawRect(k)
-        _text(p, k.adjusted(5, 0, 0, -4), "Aa", kopf, int(k.height() * 0.3), Qt.AlignLeft | Qt.AlignBottom, farbe=QColor("#212529"))
+        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor(Farbe.PAPIER)); p.drawRect(k)
+        _text(p, k.adjusted(5, 0, 0, -4), "Aa", kopf, int(k.height() * 0.3), Qt.AlignLeft | Qt.AlignBottom, farbe=QColor(Farbe.TINTE_DUNKEL))
         x = k.right() + 12; w = r.right() - x
         h = r.height()
         _text(p, QRectF(x, r.top() + 2, w, h * 0.24), name, None, 11)
@@ -80,9 +82,9 @@ def effekt_zeichner(fx: dict) -> Zeichner:
         from lunivo_writer.editor import freie_bilder as FB
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = r.adjusted(1, 1, -1, -1)
-        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor("#ffffff")); p.drawRect(k)
+        p.setPen(QPen(_RAND, 1)); p.setBrush(QColor(Farbe.PAPIER)); p.drawRect(k)
         z = QRectF(k.left() + k.width() * 0.14, k.top() + k.height() * 0.16, k.width() * 0.66, k.height() * 0.5)
         p.setClipRect(k.adjusted(1, 1, -1, -1))
-        FB.bild_zeichnen(p, E.form_bild("Pfeil nach rechts", 240, 160, "#4a8fd8", "#2f6fb5", 3.0), z, fx=fx or None)
+        FB.bild_zeichnen(p, E.form_bild("Pfeil nach rechts", 240, 160, Farbe.AKZENT_DUNKEL, Farbe.AKZENT, 3.0), z, fx=fx or None)
         p.restore()
     return f

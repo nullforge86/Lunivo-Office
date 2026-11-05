@@ -30,9 +30,26 @@ from lunivo_writer.ui.baukasten.listen_symbole import liste_zeichner
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    BREITE_LISTENVORSCHAU,
+    GROESSE_EBENENZEILE,
+    GROESSE_FENSTER_GLIEDERUNG_ANPASSEN,
+    GROESSE_FENSTER_LISTE,
+    GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN,
+    GROESSE_LISTENSTIL_KACHEL,
+    HOEHE_EINGABE_TEXT,
+    HOEHE_KNOPF_HOCH,
+    HOEHE_LISTENVORSCHAU,
+    HOEHE_TEXT_NORMAL,
+    HOEHE_ZEILE_ZULETZT,
+    RAND_DIALOG_GRUPPE,
+    RAND_FENSTER_LISTE,
+    RAND_KEIN,
+)
 PLATZHALTER = "①"
 _SCHLUESSEL = "listen/benutzer"
-_KACHEL = QSize(144, 102) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen
+_KACHEL = QSize(*GROESSE_LISTENSTIL_KACHEL) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen
 
 
 def benutzerlisten() -> list[dict]:
@@ -48,16 +65,16 @@ def _merke(listen: list[dict]) -> None:
 
 
 def _rahmen(p: QPainter, groesse: QSize) -> None:
-    p.setPen(QColor("#c4c9ce")); p.setBrush(Qt.NoBrush); p.drawRect(0, 0, groesse.width() - 1, groesse.height() - 1)
+    p.setPen(QColor(Farbe.GRAU_HELL)); p.setBrush(Qt.NoBrush); p.drawRect(0, 0, groesse.width() - 1, groesse.height() - 1)
 
 
 def _bild(spec: dict | None, groesse: QSize = _KACHEL) -> QIcon:
-    pm = QPixmap(groesse); pm.fill(QColor("white"))
+    pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     r = QRectF(0, 0, groesse.width(), groesse.height())
     if spec is None:                                          # „Kein“: ein kleines Quadrat mit dem Wort darin
         q = QRectF(r.center().x() - 32, r.center().y() - 32, 64, 64)
-        p.setPen(QColor("#6c757d")); p.drawRect(q)
+        p.setPen(QColor(Farbe.GRAU)); p.drawRect(q)
         f = p.font(); f.setBold(True); p.setFont(f)
         p.setPen(QColor(Farbe.TINTE_DUNKEL)); p.drawText(q, Qt.AlignCenter, "Kein")
     else:
@@ -78,7 +95,7 @@ def _raster(eintraege: list[dict | None], bild=None) -> QListWidget:
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 class _Zahlenformat(QWidget):
     """Zahlenformat, Zahlenart, Startzahl und „Schriftart …“ der Nummer — gemeinsam für „Nummerierung anpassen“ und „Gliederung anpassen“."""
     geaendert = Signal()
@@ -87,7 +104,7 @@ class _Zahlenformat(QWidget):
         """``breit``: die Anordnung der Gliederung (Zahlenformat und Vorlage über die ganze Breite, „Beginnen mit“ in einer eigenen Zeile;
         „Schriftart …“ setzt der Aufrufer, z. B. neben die vorherige Ebene). Sonst die der einfachen Nummerierung."""
         super().__init__()
-        g = FormularGitter(self); g.setContentsMargins(0, 0, 0, 0)
+        g = FormularGitter(self); g.setContentsMargins(*RAND_KEIN)
         self.format = QLineEdit(); self.format.setToolTip(tipp)
         self.schrift = QPushButton("Schriftart …"); self.schrift.clicked.connect(self._schriftart)
         self.zeichen: dict = {}
@@ -134,14 +151,14 @@ class _Positionen(QWidget):
 
     def __init__(self):
         super().__init__()
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0)
-        g1 = QGroupBox("Nummernposition"); a = FormularGitter(g1); a.setContentsMargins(0, 6, 0, 2)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN)
+        g1 = gruppe("Nummernposition"); a = FormularGitter(g1); a.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.art = QComboBox()
         for k, name in (("links", "Links"), ("mitte", "Zentriert"), ("rechts", "Rechts")):
             self.art.addItem(name, k)
         self.ausr = EinheitFeld(0.0, 0.0, 300.0, ("mm", "cm", "in", "pt"))
         a.breit(self.art); a.zeile("Ausrichtung:", self.ausr)
-        g2 = QGroupBox("Textposition"); t = FormularGitter(g2); t.setContentsMargins(0, 6, 0, 2)
+        g2 = gruppe("Textposition"); t = FormularGitter(g2); t.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.tab = EinheitFeld(8.0, 0.0, 300.0, ("mm", "cm", "in", "pt")); self.einzug = EinheitFeld(8.0, 0.0, 300.0, ("mm", "cm", "in", "pt"))
         t.zeile("Tabstopp-Leerstelle nach:", self.tab); t.zeile("Einzug bei:", self.einzug)
         v.addWidget(g1); v.addWidget(g2)
@@ -163,14 +180,14 @@ class _Positionen(QWidget):
 class NummerierungAnpassenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, spec: dict | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Nummerierung anpassen"); self.resize(359, 403)
+        self.setWindowTitle("Nummerierung anpassen"); self.resize(*GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN)
         s = L.liste("dezimal") if not spec or L.STILE[spec["stil"]][1] else spec
         v = QVBoxLayout(self)
         self.zf = _Zahlenformat(f"{PLATZHALTER} steht für die Nummer; davor und danach darf Text stehen")
         self.format, self.art, self.start, self.schrift = self.zf.format, self.zf.art, self.zf.start, self.zf.schrift
         v.addWidget(self.zf)
-        vg = QGroupBox("Vorschau"); vh = QHBoxLayout(vg)
-        self.vorschau = VorschauFlaeche(self._male, 190); self.vorschau.setFixedWidth(200) # schmal und in der Mitte, wie in der Vorlage
+        vg = gruppe("Vorschau"); vh = QHBoxLayout(vg)
+        self.vorschau = VorschauFlaeche(self._male, 190); self.vorschau.setFixedWidth(BREITE_LISTENVORSCHAU) # schmal und in der Mitte, wie in der Vorlage
         vh.addStretch(1); vh.addWidget(self.vorschau); vh.addStretch(1)
         v.addWidget(vg)
         self.hinweis = QLabel(); self.hinweis.setStyleSheet(('color: ' + Farbe.ORANGE + ';')); v.addWidget(self.hinweis)
@@ -218,7 +235,7 @@ class NummerierungAnpassenDialog(PanelFaehig, QDialog):
         """Vorschau wie in der Vorlage: oben und unten graue Balken, dazwischen drei Nummern mit je zwei schwarzen Zeilen."""
         s = self.spec()
         r = QRectF(rect)
-        grau, schwarz = QPen(QColor("#9aa0a6"), 3), QPen(QColor("#111111"), 3)
+        grau, schwarz = QPen(QColor(Farbe.GRAU_HELL), 3), QPen(QColor(Farbe.SCHWARZ), 3)
         for y in (r.top() + 6, r.top() + 20):
             p.setPen(grau); p.drawLine(int(r.left() + 4), int(y), int(r.right() - 4), int(y))
         if s:
@@ -241,7 +258,7 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
         return _bild(None, groesse)
     if "ebenen" not in defn:
         return _bild(defn, groesse)
-    pm = QPixmap(groesse); pm.fill(QColor("white"))
+    pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     if M.ist_aufzaehlung(defn):                              # Aufzählung mit eigenem Zeichen: drei Zeilen mit dem Zeichen davor
         f = p.font(); f.setPixelSize(16); p.setFont(f)
@@ -271,17 +288,17 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, defn: dict | None = None, *, titel: str = "Gliederung anpassen"):
         super().__init__(parent)
-        self.setWindowTitle(titel); self.resize(718, 348)
+        self.setWindowTitle(titel); self.resize(*GROESSE_FENSTER_GLIEDERUNG_ANPASSEN)
         self._e = copy.deepcopy((defn or M.VORLAGEN[0][1])["ebenen"])
         self._ebene = 0
         v = QVBoxLayout(self)
-        grp = QGroupBox("Zahlenformat"); g = FormularGitter(grp); g.setContentsMargins(0, 6, 0, 2)
+        grp = gruppe("Zahlenformat"); g = FormularGitter(grp); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.ebenen = QListWidget()                                          # die neun Ebenen in einer Reihe: spart Höhe und Breite
-        self.ebenen.setFlow(QListView.LeftToRight); self.ebenen.setWrapping(False); self.ebenen.setSpacing(2)
-        self.ebenen.setFixedHeight(40); self.ebenen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.ebenen.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.ebenen.setFlow(QListView.LeftToRight); self.ebenen.setWrapping(False); self.ebenen.setSpacing(ABSTAND_ENG)
+        self.ebenen.setFixedHeight(HOEHE_KNOPF_HOCH); self.ebenen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.ebenen.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.ebenen.addItems([str(i + 1) for i in range(M.EBENEN)])
         for i in range(self.ebenen.count()):
-            self.ebenen.item(i).setSizeHint(QSize(30, 28)); self.ebenen.item(i).setTextAlignment(Qt.AlignCenter)
+            self.ebenen.item(i).setSizeHint(QSize(*GROESSE_EBENENZEILE)); self.ebenen.item(i).setTextAlignment(Qt.AlignCenter)
         g.reihe(("Ebene:", self.ebenen))
         self.zf = _Zahlenformat("① bis ⑨ stehen für die Nummern der Ebenen 1 bis 9", breit=True)
         self.format, self.art, self.start, self.schrift = self.zf.format, self.zf.art, self.zf.start, self.zf.schrift
@@ -295,7 +312,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.mehr = QPushButton("Erweitern"); self.mehr.setCheckable(True); self.mehr.toggled.connect(self._erweitern)
         self.ok = fussleiste(self, v, self.mehr)
  # ---- erweiterter Teil (wie in der Vorlage unter „Reduzieren“)
-        self.unten = QWidget(); ug = FormularGitter(self.unten); ug.setContentsMargins(0, 0, 0, 0)
+        self.unten = QWidget(); ug = FormularGitter(self.unten); ug.setContentsMargins(*RAND_KEIN)
         self.position = _Positionen(); ug.breit(self.position)
         self.norm = UmbruchSchalter("Nummerieren nach Norm")
         self.vorlage = QComboBox(); self.vorlage.addItem("(Keine Formatvorlage)", "")
@@ -401,7 +418,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
             aktuell = n - 1 == self._ebene
             p.setPen(QColor(Farbe.TINTE_DUNKEL)); p.drawText(QRectF(x, y, 120, h), Qt.AlignVCenter | Qt.AlignLeft, t)
             tx = max(r.left() + e.get("tab", e["einzug"]) * 1.1, x + p.fontMetrics().horizontalAdvance(t) + 5)
-            pen = QPen(QColor("#111111" if aktuell else Farbe.GRAU_HELL), 3 if aktuell else 3); pen.setCapStyle(Qt.FlatCap)
+            pen = QPen(QColor(Farbe.TINTE_DUNKEL if aktuell else Farbe.GRAU_HELL), 3 if aktuell else 3); pen.setCapStyle(Qt.FlatCap)
             p.setPen(pen); p.drawLine(int(tx), int(y + h / 2), int(r.right()), int(y + h / 2))
             if aktuell:                                           # die zweite Zeile des gewählten Absatzes
                 y += h * 0.9
@@ -445,7 +462,7 @@ class ListenDialog(PanelFaehig, QDialog):
     def kompakt_machen(self) -> None:
         """Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter zum Rollen, Fenster ohne feste Größe."""
         self._fueller = [_KachelFueller(w, 4) for w in (self.r_punkte, self.r_zahlen, self.r_gl)]       # vier Kacheln je Zeile, die ganze Breite ausgefüllt
-        self.liste.setMinimumHeight(56); self.liste.setMaximumHeight(90); self.vorschau.setFixedHeight(84)
+        self.liste.setMinimumHeight(HOEHE_ZEILE_ZULETZT); self.liste.setMaximumHeight(HOEHE_TEXT_NORMAL); self.vorschau.setFixedHeight(HOEHE_LISTENVORSCHAU)
         self.reiter.setUsesScrollButtons(True); self.reiter.tabBar().setExpanding(False); self.reiter.tabBar().setElideMode(Qt.ElideNone)
         for i, (kurz, voll) in enumerate((("Aufzählung", "Aufzählungszeichen"), ("Nummern", "Nummerierung"), ("Gliederung", "Gliederung nummeriert"),
                                           ("Eigene", "Benutzerdefinierte Liste"))):
@@ -460,7 +477,7 @@ class ListenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, aktuell: dict | None = None, *, seite: str = "aufzaehlung"):
         super().__init__(parent)
-        self.setWindowTitle("Nummerierung und Aufzählungszeichen"); self.resize(694, 435)
+        self.setWindowTitle("Nummerierung und Aufzählungszeichen"); self.resize(*GROESSE_FENSTER_LISTE)
         self._benutzer = benutzerlisten()
         v = QVBoxLayout(self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
@@ -470,16 +487,16 @@ class ListenDialog(PanelFaehig, QDialog):
         self.reiter.addTab(self.r_punkte, "Aufzählungszeichen"); self.reiter.addTab(self.r_zahlen, "Nummerierung")
         self.reiter.addTab(self.r_gl, "Gliederung nummeriert")
         # ---- Benutzerdefinierte Liste
-        b = QWidget(); bg = FormularGitter(b); bg.setContentsMargins(10, 10, 10, 10)
+        b = QWidget(); bg = FormularGitter(b); bg.setContentsMargins(*RAND_FENSTER_LISTE)
         self.liste = QListWidget(); self.vorschau = VorschauFlaeche(self._male, 150)
-        self.liste.setMinimumHeight(110)
+        self.liste.setMinimumHeight(HOEHE_EINGABE_TEXT)
         bg.reihe(("Benutzerdefinierte Liste:", self.liste), ("Listenvorschau:", self.vorschau))        # gleich breit wie in der Vorlage, schmal untereinander
         self.reiter.addTab(b, "Benutzerdefinierte Liste")
         self._fuelle_benutzer()
         # ---- Knöpfe
         self.anpassen = QPushButton("Anpassen …"); self.loeschen = QPushButton("Löschen")
         self.anpassen.clicked.connect(self._anpassen); self.loeschen.clicked.connect(self._loeschen)
-        gruppe = QWidget(); gh = FlussLayout(6); gruppe.setLayout(gh); gh.setContentsMargins(0, 0, 0, 0)       # unter allen Reitern dieselbe Zeile, ohne Rahmen
+        gruppe = QWidget(); gh = FlussLayout(6); gruppe.setLayout(gh); gh.setContentsMargins(*RAND_KEIN)       # unter allen Reitern dieselbe Zeile, ohne Rahmen
         gh.addWidget(self.anpassen); gh.addWidget(self.loeschen)
         v.addWidget(gruppe)
         fussleiste(self, v)

@@ -15,6 +15,20 @@ from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QHBoxLa
                                QLayout, QPushButton, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_EXPORT_ABSCHNITT,
+    ABSTAND_MITTEL,
+    GROESSE_EXPORTKARTE,
+    HOEHE_KNOPF_GROSS,
+    ICON_GROSS,
+    RAND_EXPORT_BILD,
+    RAND_OBEN_SEITE,
+    RAND_ZEILE_LOCKER,
+)
+
+# Sinnbild „dunkles Blatt“ im Exportdialog: bewusst feste Farben, unabhängig vom Thema.
+BILDCHEN_BLATT_DUNKEL = "#3a3f45"
+BILDCHEN_AKZENT_DUNKEL = "#6b5442"
 from lunivo_writer.services.bild_export import FORMATE, QUALITAET, BildWahl
 
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
@@ -29,11 +43,11 @@ class _Karte(QAbstractButton):
         self.lang = lang
         self.setCheckable(True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedSize(124, 120)
+        self.setFixedSize(*GROESSE_EXPORTKARTE)
         self.setAccessibleName(text)
 
     def sizeHint(self) -> QSize:
-        return QSize(124, 120)
+        return QSize(*GROESSE_EXPORTKARTE)
 
     def paintEvent(self, _e) -> None:
         p = QPainter(self)
@@ -62,7 +76,7 @@ class _Karte(QAbstractButton):
                             QPointF(r.right() - 5, r.bottom() - 13)])
 
     def _bildchen(self, p: QPainter, dunkel: bool) -> None:
-        blatt = QColor(Farbe.WEISS) if not dunkel else QColor("#3a3f45")
+        blatt = QColor(Farbe.WEISS) if not dunkel else QColor(BILDCHEN_BLATT_DUNKEL)
         linie = QColor(Farbe.GRAU_HELL)
         block = QColor(Farbe.AKZENT).lighter(170) if not dunkel else QColor(Farbe.AKZENT_DUNKEL).darker(130)
         p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1))
@@ -93,7 +107,7 @@ class _Karte(QAbstractButton):
                 links = x + 30 if yy > 86 else x + 10                  # neben dem kleinen Bild unten links
                 p.drawLine(QPointF(links, y + yy), QPointF(x + (b - 30 if 54 < yy < 86 else b - 10), y + yy))
             p.restore()
-            p.fillRect(QRectF(x + b - 26, y + 54, 16, 24), QColor(Farbe.ORANGE).lighter(175) if not dunkel else QColor("#6b5442"))
+            p.fillRect(QRectF(x + b - 26, y + 54, 16, 24), QColor(Farbe.ORANGE).lighter(175) if not dunkel else QColor(BILDCHEN_AKZENT_DUNKEL))
             p.fillRect(QRectF(x + 10, y + 90, 14, 14), linie)
 
 
@@ -104,7 +118,7 @@ class BildExportAnsicht(QWidget):
         super().__init__(parent)
         self._exportieren_cb = exportieren
         self._zurueck = zurueck
-        v = QVBoxLayout(self); v.setContentsMargins(16, 20, 16, 16); v.setSpacing(8)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_EXPORT_BILD); v.setSpacing(ABSTAND_MITTEL)
         titel = QLabel("Als Bild exportieren"); titel.setObjectName("bsTitel"); v.addWidget(titel)
         intro = QLabel("Wähle das Bildlayout, die Qualität und den Speicherort. Jede Seite kann einzeln oder als langes Bild gespeichert werden.")
         intro.setWordWrap(True); intro.setObjectName("bsHinweis"); v.addWidget(intro)
@@ -132,7 +146,7 @@ class BildExportAnsicht(QWidget):
         self.format.setCurrentText("PNG")
         self.ordner = QLineEdit(startordner or _bilder_ordner())
         from lunivo_writer.ui.widgets import icons
-        waehlen = self.ordner.addAction(icons.icon("ellipsis", 18), QLineEdit.TrailingPosition)
+        waehlen = self.ordner.addAction(icons.icon("ellipsis", ICON_GROSS), QLineEdit.TrailingPosition)
         waehlen.setToolTip("Ordner wählen …")
         waehlen.triggered.connect(self._ordner_waehlen)
         self.k_export = QPushButton("Exportieren"); self.k_export.setObjectName("optFertig"); self.k_export.setDefault(True)
@@ -166,9 +180,9 @@ class BildExportAnsicht(QWidget):
         aktionen.addWidget(self._datei_oeffnen); aktionen.addWidget(self._ordner_oeffnen)
         v.addLayout(aktionen)
         v.addStretch(1)
-        fuss = FlussLayout(8); fuss.setContentsMargins(0, 8, 0, 0)
+        fuss = FlussLayout(8); fuss.setContentsMargins(*RAND_OBEN_SEITE)
         self.zurueck_knopf = QPushButton("Zurück zum Dokument"); self.zurueck_knopf.clicked.connect(self._zurueck)
-        self.k_export.setMinimumHeight(36)
+        self.k_export.setMinimumHeight(HOEHE_KNOPF_GROSS)
         fuss.addWidget(self.zurueck_knopf); fuss.addWidget(self.k_export)
         v.addLayout(fuss)
 
@@ -197,7 +211,7 @@ class BildExportAnsicht(QWidget):
             dateien = self._exportieren_cb(self._wahl)
         except OSError as e:
             self.meldung.setText(f"Export nicht möglich: {e}")
-            self.meldung.setStyleSheet("color: #e88b8b;")
+            self.meldung.setStyleSheet("color: %s;" % Farbe.ROT_HELL)
             self.ordner.setFocus()
             return
         finally:
@@ -224,7 +238,7 @@ class BildExportAnsicht(QWidget):
 
 
 def _abschnitt(titel: str, hilfe: str, layout: QLayout) -> QWidget:
-    w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 6, 0, 6); v.setSpacing(5)
+    w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_ZEILE_LOCKER); v.setSpacing(ABSTAND_EXPORT_ABSCHNITT)
     t = abschnittstitel(titel)
     h = QLabel(hilfe); h.setObjectName("bsHinweis"); h.setWordWrap(True)
     v.addWidget(t); v.addWidget(h); v.addLayout(layout)

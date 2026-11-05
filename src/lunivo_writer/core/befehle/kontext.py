@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMenu
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import farben as BF
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld
 
 
@@ -191,7 +192,7 @@ class KontextBefehle:
     def tabelleRahmen(self, k=None):
         e, c, t = self._tab()
         if t:
-            f = t.format(); f.setBorder(0 if f.border() > 0 else 1); f.setBorderBrush(QColor('#333333')); f.setBorderStyle(QTextFrameFormat.BorderStyle_Solid); t.setFormat(f)
+            f = t.format(); f.setBorder(0 if f.border() > 0 else 1); f.setBorderBrush(QColor(BF.VORGABE_TABELLENRAND)); f.setBorderStyle(QTextFrameFormat.BorderStyle_Solid); t.setFormat(f)
 
 
     def an_tabelleRahmen(self):
@@ -281,9 +282,10 @@ class KontextBefehle:
     # Tabellenformatvorlagen und Formatoptionen
     def menue_tabelleVorlagen(self):
         from lunivo_writer.editor import tabellenstil as TS
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for n, (kopf, _s, streifen, _r) in TS.VORLAGEN.items():
-            m.addAction(_farbfeld(kopf or streifen or Farbe.WEISS), n, lambda _=False, n=n: self._tabelle_vorlage(n))
+            m.eintrag(n, lambda n=n: self._tabelle_vorlage(n), symbol=_farbfeld(kopf or streifen or Farbe.WEISS))
         return m
 
 
@@ -420,11 +422,10 @@ class KontextBefehle:
         """Menü „Einfügen“ bzw. „Löschen“ aus der gemeinsamen Definition (``core/tabellenaktionen.py``): Band, Mini-Leiste und Kontextmenü."""
         from lunivo_writer.core.tabellenaktionen import GRUPPEN
         from lunivo_writer.ui.widgets import icons
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for a in GRUPPEN[name]:
-            akt = m.addAction(a.name, lambda _=False, bf=a.befehl: self.tun(bf))
-            if icons.hat(a.symbol):
-                akt.setIcon(icons.icon(a.symbol, 16))
+            m.eintrag(a.name, lambda bf=a.befehl: self.tun(bf), symbol=icons.icon(a.symbol, 16) if icons.hat(a.symbol) else None)
         return m
 
 
@@ -437,13 +438,14 @@ class KontextBefehle:
 
 
     def menue_tabelleAutoAnpassen(self):
-        m = QMenu()
-        m.addAction("An Inhalt anpassen", self._tabelle_inhalt)
-        m.addAction("An Fenster anpassen", self._tabelle_fenster)
-        m.addAction("Spalten gleichmäßig verteilen", self._tabelle_gleich)
-        m.addAction("Zeilen gleichmäßig verteilen", self._tabelle_zeilen_gleich)
-        m.addAction("Feste Spaltenbreite", self._tabelle_fest)
-        m.addAction("Spaltenbreite festlegen …", self.tabelleBreite)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("An Inhalt anpassen", self._tabelle_inhalt)
+        m.eintrag("An Fenster anpassen", self._tabelle_fenster)
+        m.eintrag("Spalten gleichmäßig verteilen", self._tabelle_gleich)
+        m.eintrag("Zeilen gleichmäßig verteilen", self._tabelle_zeilen_gleich)
+        m.eintrag("Feste Spaltenbreite", self._tabelle_fest)
+        m.eintrag("Spaltenbreite festlegen …", self.tabelleBreite)
         return m
 
 
@@ -598,9 +600,10 @@ class KontextBefehle:
 
 
     def menue_tabelleTextrichtung(self):
-        m = QMenu()
-        m.addAction("Waagrecht (links nach rechts)", lambda: self._tabelle_richtung(Qt.LeftToRight))
-        m.addAction("Rechts nach links", lambda: self._tabelle_richtung(Qt.RightToLeft))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Waagrecht (links nach rechts)", lambda: self._tabelle_richtung(Qt.LeftToRight))
+        m.eintrag("Rechts nach links", lambda: self._tabelle_richtung(Qt.RightToLeft))
         return m
 
 
@@ -671,17 +674,18 @@ class KontextBefehle:
         m = FarbPalette(self.w, keine_text=None, start=Farbe.AKZENT_DUNKEL, titel="Linienfarbe")
         m.gewaehlt.connect(lambda c: self._form_aendern(linie=c.name()))
         m.addSeparator()
-        st = m.addMenu("Linienstärke")
+        st = m.untermenue("Linienstärke")
         for w in (0.5, 1.0, 2.0, 3.0, 5.0, 8.0):
-            st.addAction(f"{w:g} pt".replace(".", ","), lambda _=False, w=w: self._form_aendern(strich=w))
+            st.eintrag(f"{w:g} pt".replace(".", ","), lambda w=w: self._form_aendern(strich=w))
         return m
 
 
     def menue_formVorlagen(self):
         from lunivo_writer.editor import formen
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for n, fu, li, _st in formen.VORLAGEN:
-            m.addAction(_farbfeld(fu or Farbe.WEISS), n, lambda _=False, n=n: self._form_vorlage(n))
+            m.eintrag(n, lambda n=n: self._form_vorlage(n), symbol=_farbfeld(fu or Farbe.WEISS))
         return m
 
 
@@ -732,25 +736,28 @@ class KontextBefehle:
 
 
     def menue_zeichenAusrichten(self):
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for schl, text in (("links", "Links ausrichten"), ("mitte", "Waagerecht zentrieren"), ("rechts", "Rechts ausrichten"),
                            ("oben", "Oben ausrichten"), ("mittig", "Senkrecht zentrieren"), ("unten", "Unten ausrichten")):
-            m.addAction(text, lambda _=False, s=schl: self.zeichenAusrichten(None, s))
+            m.eintrag(text, lambda s=schl: self.zeichenAusrichten(None, s))
         return m
 
 
     def menue_zeichenDrehen(self):
-        m = QMenu()
-        m.addAction("Um 90° nach rechts drehen", lambda: self.zeichenDrehen(None, 90))
-        m.addAction("Um 90° nach links drehen", lambda: self.zeichenDrehen(None, -90))
-        m.addAction("Drehung zurücksetzen", lambda: self.zeichenDrehen(None, 0))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Um 90° nach rechts drehen", lambda: self.zeichenDrehen(None, 90))
+        m.eintrag("Um 90° nach links drehen", lambda: self.zeichenDrehen(None, -90))
+        m.eintrag("Drehung zurücksetzen", lambda: self.zeichenDrehen(None, 0))
         return m
 
 
     def menue_zeichenEbene(self):
-        m = QMenu()
-        m.addAction("Vor den Text", lambda: self.zeichenEbene(None, "vor"))
-        m.addAction("Hinter den Text", lambda: self.zeichenEbene(None, "hinter"))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Vor den Text", lambda: self.zeichenEbene(None, "vor"))
+        m.eintrag("Hinter den Text", lambda: self.zeichenEbene(None, "hinter"))
         return m
 
 
@@ -897,12 +904,11 @@ class KontextBefehle:
             return
         from lunivo_writer.editor import umbruch as U
         aktuell = U.schwebend(e.document(), e._bild_cursor().selectionStart()) or "zeile"
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for modus, text in (("zeile", "Mit Text in Zeile"), ("links", "Links, Text umfließt"), ("rechts", "Rechts, Text umfließt"),
                              ("oben_unten", "Oben und unten (eigene Zeile)")):
-            a = m.addAction(text, lambda _=False, modus=modus: U.umbruch_setzen(e, modus))
-            a.setCheckable(True)
-            a.setChecked(modus == aktuell)
+            m.eintrag(text, lambda modus=modus: U.umbruch_setzen(e, modus), haken=modus == aktuell)
         self._popup(m)
 
 

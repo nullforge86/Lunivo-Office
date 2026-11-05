@@ -4,12 +4,29 @@ from __future__ import annotations
 import json
 import os
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
 from lunivo_writer.core import paths
 from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.formular_gitter import gruppe, FormularGitter
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_BLOCK,
+    ABSTAND_GROSS,
+    ABSTAND_KEIN,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    ABSTAND_PAAR,
+    HOEHE_FELD,
+    RAND_ABSCHNITT,
+    RAND_KEIN,
+    RAND_OPTIONEN_GRUPPE,
+    RAND_SEITE_TITEL,
+    RAND_ZEILE_LOCKER,
+    RAND_ZEILE_PAAR,
+    RAND_ZEILE_SPALTEN,
+)
 
-MIN_HOEHE = 32                                      # Mindesthöhe der Bedienelemente (leicht zu treffen)
+MIN_HOEHE = HOEHE_FELD                                      # Mindesthöhe der Bedienelemente (leicht zu treffen)
 _ERKLAERUNGEN: dict | None = None
 
 
@@ -36,7 +53,7 @@ class _Seite(QWidget):
         self.w = fenster
         self.s = fenster.settings
         self.lay = QVBoxLayout(self)
-        self.lay.setContentsMargins(24, 16, 24, 16) if titel else self.lay.setContentsMargins(0, 0, 0, 0)
+        self.lay.setContentsMargins(*RAND_SEITE_TITEL) if titel else self.lay.setContentsMargins(*RAND_KEIN)
         if titel:
             self.lay.addWidget(text_label(titel, fett=True, pt=16, umbruch=False))
         self.gruppe_lay = None
@@ -44,8 +61,8 @@ class _Seite(QWidget):
         self.einklappe: list[EinklappGruppe] = []
         self._offen = offen or []
 
-    def gruppe(self, name: str) -> QFormLayout:
-        g = QGroupBox(name.upper())
+    def gruppe(self, name: str) -> _Karte:
+        g = gruppe(name.upper(), karte=True)
         g.setProperty("optName", name)
         f = _Karte(g)
         self.karten.append(f)
@@ -59,8 +76,8 @@ class _Seite(QWidget):
         self.lay.addWidget(e)
         return e
 
-    def unter(self, e: EinklappGruppe, name: str = "") -> QFormLayout:
-        g = QGroupBox(name.upper())
+    def unter(self, e: EinklappGruppe, name: str = "") -> _Karte:
+        g = gruppe(name.upper(), karte=True)
         g.setProperty("optName", name)
         f = _Karte(g)
         self.karten.append(f)
@@ -90,7 +107,7 @@ class _Seite(QWidget):
             return
         c.setAccessibleDescription(satz)
         zeile = QWidget(); zeile.setObjectName("optPaar"); zeile.setProperty("optName", text)
-        v = QVBoxLayout(zeile); v.setContentsMargins(0, 2, 0, 6); v.setSpacing(0)
+        v = QVBoxLayout(zeile); v.setContentsMargins(*RAND_ZEILE_PAAR); v.setSpacing(ABSTAND_KEIN)
         v.addWidget(c)
         hinweis = text_label(satz)
         hinweis.setObjectName("optHinweis")                       # Aussehen steht in STIL (optionen.py): ein Stylesheet statt eines je Zeile
@@ -148,14 +165,14 @@ class _Seite(QWidget):
 
     def felder(self, f, eintraege: list[tuple[str, str]], spalten: int = 2):
         """Eingabefelder im Raster, jedes mit seinem Platzhalter als Beschriftung."""
-        w = QWidget(); g = QGridLayout(w); g.setContentsMargins(0, 6, 0, 6); g.setHorizontalSpacing(10); g.setVerticalSpacing(8)
-        for i, (key, platzhalter) in enumerate(eintraege):
-            g.addWidget(self.eingabe(key, platzhalter), i // spalten, i % spalten)
+        w = QWidget(); g = FormularGitter(w); g.setContentsMargins(*RAND_ZEILE_LOCKER); g.zeilenabstand = ABSTAND_MITTEL; g.angleichen = False
+        for i in range(0, len(eintraege), spalten):
+            g.nebeneinander(*[self.eingabe(key, platzhalter) for key, platzhalter in eintraege[i:i + spalten]], spalten=spalten, abstand=ABSTAND_GROSS)
         f.addRow(w)
 
     def pfad(self, f, key: str, text: str, platzhalter: str, wirkt=None):
         """Ordner-Zeile: Beschriftung, darunter Feld und „Wählen …“."""
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 6, 0, 8); v.setSpacing(6)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_ABSCHNITT); v.setSpacing(ABSTAND_NORMAL)
         v.addWidget(QLabel(text))
         h = QHBoxLayout()
         e = self.eingabe(key, platzhalter)
@@ -239,32 +256,36 @@ class _Seite(QWidget):
 
 LESESCHRIFTEN = ("OpenDyslexic", "Lexend", "Atkinson Hyperlegible")
 
-class _Karte(QFormLayout):
-    """Zeilen einer Gruppe. Haken stehen wie in der ersten Fassung zu zweit nebeneinander, mit Linie zwischen den Zeilen;
-    alles andere (Auswahl, Zahlen, Text) steht in einer eigenen Zeile. Verhält sich sonst wie ein ``QFormLayout``."""
+class _Karte(FormularGitter):
+    """Zeilen einer Gruppe (ein ``FormularGitter``). Haken stehen wie in der ersten Fassung zu zweit nebeneinander, mit Linie zwischen den Zeilen;
+    alles andere (Auswahl, Zahlen, Text) steht in einer eigenen Zeile. ``addRow`` bleibt als Name für „Zeile anfügen“."""
+    einspaltig = True                                       # jede Zeile ist ein eigenes Widget über die ganze Breite
+    kurz_gruppen = False                                    # Haken-Paare bildet ``addRow`` selbst
+    angleichen = False                                      # Feldhöhen bleiben, wie die Seite sie setzt
+    zeilenabstand = ABSTAND_NORMAL
 
     def __init__(self, eltern):
         super().__init__(eltern)
+        self.setContentsMargins(*RAND_OPTIONEN_GRUPPE)
         self._offen = None                                  # Zeile mit einem Haken, in die noch ein zweiter passt
         self.paare: list[QWidget] = []
-        self.setHorizontalSpacing(12); self.setVerticalSpacing(6)
 
     def addRow(self, *args):
         if len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], QWidget):
             self._offen = None
             zeile = QWidget(); zeile.setObjectName("optPaar")
-            h = QHBoxLayout(zeile); h.setContentsMargins(0, 4, 0, 6); h.setSpacing(12)
+            h = QHBoxLayout(zeile); h.setContentsMargins(*RAND_ZEILE_SPALTEN); h.setSpacing(ABSTAND_BLOCK)
             l = QLabel(args[0]); l.setWordWrap(False)
             if not args[1].accessibleName():
                 args[1].setAccessibleName(args[0])               # Bildschirmleser: das Feld heißt wie seine Beschriftung
             h.addWidget(l); h.addWidget(args[1], 1)
             args[1].setProperty("optName", args[0])
             self.paare.append(zeile)
-            super().addRow(zeile)
+            self.breit(zeile)
             return
         if len(args) == 1 and isinstance(args[0], QCheckBox) and len(args[0].text()) > 42:
             self._offen = None                               # langer Text: eine ganze Zeile, sonst wird er abgeschnitten
-            super().addRow(args[0])
+            self.breit(args[0])
             return
         if len(args) == 1 and isinstance(args[0], QCheckBox):
             if self._offen is not None:
@@ -272,20 +293,23 @@ class _Karte(QFormLayout):
                 self._offen = None
                 return
             paar = QWidget(); paar.setObjectName("optPaar")
-            h = QHBoxLayout(paar); h.setContentsMargins(0, 2, 0, 6); h.setSpacing(18)
+            h = QHBoxLayout(paar); h.setContentsMargins(*RAND_ZEILE_PAAR); h.setSpacing(ABSTAND_PAAR)
             h.addWidget(args[0], 1)
             self.paare.append(paar)
             self._offen = paar
-            super().addRow(paar)
+            self.breit(paar)
             return
         self._offen = None
-        super().addRow(*args)
+        if len(args) == 2:
+            self.zeile(*args)
+        else:
+            self.breit(args[0])
 
     def aktion(self, text: str, knopf: str, aktion, name: str | None = None) -> QPushButton:
         """Zeile aus Text und darunter einem Knopf („Den Text hören“ / „Stimme und Tempo …“)."""
         self._offen = None
         zeile = QWidget(); zeile.setObjectName("optPaar")
-        v = QVBoxLayout(zeile); v.setContentsMargins(0, 6, 0, 8); v.setSpacing(8)
+        v = QVBoxLayout(zeile); v.setContentsMargins(*RAND_ABSCHNITT); v.setSpacing(ABSTAND_MITTEL)
         v.addWidget(QLabel(text))
         k = QPushButton(knopf)
         k.clicked.connect(lambda _=False: aktion())
@@ -293,7 +317,7 @@ class _Karte(QFormLayout):
         v.addLayout(h)
         zeile.setProperty("optName", name or text)
         self.paare.append(zeile)
-        super().addRow(zeile)
+        self.breit(zeile)
         return k
 
     def ende(self):

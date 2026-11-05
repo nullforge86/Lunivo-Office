@@ -11,6 +11,21 @@ from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMen
 from lunivo_writer.core.tabellenaktionen import GRUPPEN
 from lunivo_writer.editor.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    BREITE_MINILEISTE_KNOPF,
+    BREITE_SCHRIFTAUSWAHL_MINILEISTE,
+    BREITE_SCHRIFTGROESSE_MINILEISTE,
+    GROESSE_TABELLENKNOPF_MINILEISTE,
+    ICON_KNOPF_GROSS,
+    ICON_NORMAL,
+    PADDING_MINILEISTE_KNOPF,
+    RADIUS_FELD,
+    RADIUS_KLEIN,
+    RAND_KEIN,
+    RAND_MINILEISTE,
+)
 
 # Zwei Zeilen wie in der Vorlage, je Modus eine eigene Anordnung. Eintrag: Name -> (Tooltip, Art) — Art: "" (Knopf) · "klappe:…" (Pfeil mit Menü des Bandes)
 # · "farbe:…" (Palette). Die Namen sind Befehle des Bandes (``fenster.befehle``); "schriftart" und "groesse" sind die beiden Auswahlfelder.
@@ -72,8 +87,8 @@ def _pfeil_datei(farbe: str) -> str:
 
 
 def _stil(farbe: str) -> str:
-    return ("#miniLeiste { background: palette(window); border: 1px solid palette(mid); border-radius: 6px; }"
-            "QToolButton { border: none; border-radius: 4px; padding: 3px; }"
+    return ("#miniLeiste { background: palette(window); border: 1px solid palette(mid); border-radius: " f"{RADIUS_FELD}" "px; }"
+            "QToolButton { border: none; border-radius: " f"{RADIUS_KLEIN}" "px; padding: " f"{PADDING_MINILEISTE_KNOPF}" "; }"
             "QToolButton:hover { background: palette(midlight); }"
             "QToolButton:checked { background: palette(highlight); }"
             # Symbol- und Pfeilfläche getrennt: rechts bleibt Platz für den Pfeil (padding-right >= Pfeilbreite + Abstand), das Symbol wird nicht überdeckt
@@ -94,18 +109,18 @@ class MiniLeiste(QFrame):
         self._stil_farbe = ""
         self._stil_setzen()
         aussen = QHBoxLayout(self)
-        aussen.setContentsMargins(3, 3, 3, 3); aussen.setSpacing(2)
-        v = QVBoxLayout(); v.setSpacing(2)
+        aussen.setContentsMargins(*RAND_MINILEISTE); aussen.setSpacing(ABSTAND_ENG)
+        v = QVBoxLayout(); v.setSpacing(ABSTAND_ENG)
         aussen.addLayout(v)
         self.knoepfe: dict[str, QToolButton] = {}
         self._menues: dict[str, str] = {}
         sym = _symbole()
         self._felder: dict[str, QComboBox] = {}
         self._ikonen: dict[QToolButton, tuple[str, int]] = {}          # Symbolname und -größe je Knopf (Neuzeichnen nach Themenwechsel)
-        self.schriftart = QComboBox(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(128)     # Name bleibt lesbar (wie die Textleiste)
+        self.schriftart = QComboBox(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(BREITE_SCHRIFTAUSWAHL_MINILEISTE)     # Name bleibt lesbar (wie die Textleiste)
         self.schriftart.addItems(QFontDatabase.families()); self.schriftart.setMaxVisibleItems(18)
         self.schriftart.textActivated.connect(lambda n: self._schrift(n))
-        self.groesse = QComboBox(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(50)
+        self.groesse = QComboBox(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(BREITE_SCHRIFTGROESSE_MINILEISTE)
         self.groesse.addItems([f"{g:g}" for g in GROESSEN]); self.groesse.setMaxVisibleItems(16)
         self.groesse.textActivated.connect(lambda t: self._groesse(t))
         self._felder = {"schriftart": self.schriftart, "groesse": self.groesse}
@@ -124,7 +139,7 @@ class MiniLeiste(QFrame):
                 f = b.font()
                 f.setBold(tun == "fett"); f.setItalic(tun == "kursiv"); f.setUnderline(tun == "unter")
                 b.setFont(f)
-                b.setMinimumWidth(26)
+                b.setMinimumWidth(BREITE_MINILEISTE_KNOPF)
             b.setToolTip(tip)
             b.setFocusPolicy(Qt.NoFocus)
             b.setCheckable(self.w.befehle.zustand(tun) is not None)
@@ -177,25 +192,23 @@ class MiniLeiste(QFrame):
     def _tabellenzeile(self) -> QWidget:
         """„Einfügen ▾“ und „Löschen ▾“ als große Symbolknöpfe mit Beschriftung darunter (wie in der Vorlage); Menüs aus ``core/tabellenaktionen.py``."""
         z = QWidget()
-        h = QHBoxLayout(z); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        h = QHBoxLayout(z); h.setContentsMargins(*RAND_KEIN); h.setSpacing(0)
         sym = {"Einfügen": "tabelleEinfuegen", "Löschen": "tabelleLoeschen"}
         for text, aktionen in GRUPPEN.items():
             b = QToolButton(); b.setText(text + " ▾"); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
-            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setIconSize(QSize(28, 28))
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             self._ikonen[b] = (sym[text], 28)
-            b.setIcon(icons.icon(sym[text], 28))
-            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumSize(50, 54)
+            b.setIcon(icons.icon(sym[text], ICON_KNOPF_GROSS))
+            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumSize(*GROESSE_TABELLENKNOPF_MINILEISTE)
             self._aktionsmenue(b, aktionen)
             h.addWidget(b)
             self.knoepfe["tabellen_" + text] = b
         return z
 
     def _aktionsmenue(self, b: QToolButton, aktionen) -> None:
-        m = QMenu(b)
+        m = MenueListe(b)
         for a in aktionen:
-            akt = m.addAction(a.name, lambda _=False, bf=a.befehl: self._tun(bf))
-            if icons.hat(a.symbol):
-                akt.setIcon(icons.icon(a.symbol, 16))
+            m.eintrag(a.name, lambda bf=a.befehl: self._tun(bf), symbol=icons.icon(a.symbol, ICON_NORMAL) if icons.hat(a.symbol) else None)
         b.setMenu(m)
 
     def tabellenmodus(self) -> bool:
@@ -214,18 +227,15 @@ class MiniLeiste(QFrame):
         return alt != modus
 
     def _ausrichtung_menue(self) -> QMenu:
-        m = QMenu()
+        m = MenueListe()
         for text, tun in (("Linksbündig", "links"), ("Zentriert", "mitte"), ("Rechtsbündig", "rechts"), ("Blocksatz", "block")):
-            a = m.addAction(text, lambda _=False, t=tun: self._tun(t))
-            if icons.hat(tun):
-                a.setIcon(icons.icon(tun, 16))
+            m.eintrag(text, lambda t=tun: self._tun(t), symbol=icons.icon(tun, ICON_NORMAL) if icons.hat(tun) else None)
         return m
 
     def _rahmen_menue(self) -> QMenu:
-        m = QMenu()
+        m = MenueListe()
         for text, tun in (("Rahmenlinien ein/aus", "tabelleRahmen"), ("Rahmen und Schattierung …", "tabelleRahmenSchattierung")):
-            a = m.addAction(text, lambda _=False, t=tun: self._tun(t))
-            a.setIcon(icons.icon("rahmen", 16))
+            m.eintrag(text, lambda t=tun: self._tun(t), symbol=icons.icon("rahmen", ICON_NORMAL))
         return m
 
     def _menue_setzen(self, b: QToolButton, tun: str) -> None:

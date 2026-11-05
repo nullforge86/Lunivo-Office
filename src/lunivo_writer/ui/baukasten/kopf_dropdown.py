@@ -18,6 +18,8 @@ from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPix
 from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter, QWidget
 
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH, HOEHE_KOPFDROPDOWN
 
 
 def keine_symbol(groesse: int = 16) -> QIcon:
@@ -25,8 +27,8 @@ def keine_symbol(groesse: int = 16) -> QIcon:
     pm = QPixmap(groesse, groesse); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     r = QRectF(1.5, 1.5, groesse - 3, groesse - 3)
-    p.setPen(QPen(QColor("#868e96"), 1.2)); p.drawRect(r)
-    p.setPen(QPen(QColor("#e03131"), 1.4)); p.drawLine(r.bottomLeft(), r.topRight())
+    p.setPen(QPen(QColor(Farbe.GRAU), 1.2)); p.drawRect(r)
+    p.setPen(QPen(QColor(Farbe.ROT), 1.4)); p.drawLine(r.bottomLeft(), r.topRight())
     p.end()
     return QIcon(pm)
 
@@ -40,18 +42,18 @@ def keine_zeile(menue: VoreinstellungMenue, text: str) -> None:
 
 class KopfDropdown(QPushButton):
     gewaehlt = Signal(str)
-    SYMBOL = QSize(64, 16)                           # so groß sind die Pixmaps, die ``setSymbol`` erwartet
+    SYMBOL = QSize(*GROESSE_KOPFDROPDOWN_SYMBOL)                           # so groß sind die Pixmaps, die ``setSymbol`` erwartet
 
     def __init__(self, fabrik: Callable[[QWidget], QMenu], symbol: QIcon | None = None, parent: QWidget | None = None):
         super().__init__(parent)
         self._fabrik = fabrik
         self._symbol = symbol or QIcon()
-        self.setFixedHeight(30); self.setMinimumWidth(64); self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(HOEHE_KOPFDROPDOWN); self.setMinimumWidth(BREITE_KOPFDROPDOWN); self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.clicked.connect(self._popup)
 
     def sizeHint(self) -> QSize:
-        return QSize(88, 30)                                        # Symbol + Pfeil; schrumpft bis zum Mindestmaß, wächst nie über den Kopf hinaus
+        return QSize(*GROESSE_KOPFDROPDOWN_WUNSCH)                                        # Symbol + Pfeil; schrumpft bis zum Mindestmaß, wächst nie über den Kopf hinaus
 
     def setSymbol(self, symbol: QIcon) -> None:
         self._symbol = symbol or QIcon()

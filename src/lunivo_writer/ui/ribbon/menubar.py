@@ -4,6 +4,8 @@ from __future__ import annotations
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QMenu, QMenuBar
 
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 TASTEN = {"Strg": "Ctrl", "Umschalt": "Shift", "Alt": "Alt"}
 
@@ -18,34 +20,30 @@ def baue_menueleiste(mb: QMenuBar, menues: list, befehle) -> int:
     """Füllt die Menüleiste. → Anzahl der Menüpunkte ohne nativen Befehl."""
     fehlend = 0
 
-    def fuellen(menu: QMenu, punkte: list):
+    def fuellen(menu: MenueListe, punkte: list):
         nonlocal fehlend
         for p in punkte:
             if p.get("trenner"):
                 menu.addSeparator()
             elif p.get("unter"):
-                fuellen(menu.addMenu(p["name"]), p["unter"])
+                fuellen(menu.untermenue(p["name"]), p["unter"])
             elif p.get("unter_dynamisch"):
-                m = menu.addMenu(p["name"])
+                m = menu.untermenue(p["name"])
                 if p["name"] == "Fenster":
                     m.aboutToShow.connect(lambda m=m: _fenster_menue(m, befehle))
             else:
-                a = QAction(p["name"], menu)
                 t = p.get("tun")
                 if p["name"] == "Optionen":
-                    a.triggered.connect(lambda: befehle.w.show_options())
+                    aktion, aktiv, tip = (lambda: befehle.optionen()), True, ""
                 elif t and t != "eigen" and befehle.hat(t):
-                    a.triggered.connect(lambda _=False, t=t: befehle.tun(t))
+                    aktion, aktiv, tip = (lambda t=t: befehle.tun(t)), True, ""
                 else:
-                    a.setEnabled(False)
-                    a.setToolTip(NICHT_DA.format(p["name"]))
+                    aktion, aktiv, tip = None, False, NICHT_DA.format(p["name"])
                     fehlend += 1
-                if p.get("taste"):
-                    a.setText(p["name"] + "\t" + p["taste"])
-                menu.addAction(a)
+                menu.eintrag(p["name"], aktion, kuerzel=p.get("taste") or "", aktiv=aktiv, tip=tip)
 
     for m in menues:
-        fuellen(mb.addMenu(m["name"]), m["punkte"])
+        fuellen(MenueListe.in_leiste(mb, m["name"]), m["punkte"])
     return fehlend
 
 
@@ -53,10 +51,7 @@ def _fenster_menue(m: QMenu, befehle) -> None:
     m.clear()
     w = befehle.w
     for i, t in enumerate(w._doc_tabs()):
-        a = m.addAction(("● " if t.is_modified() else "") + t.title)
-        a.setCheckable(True)
-        a.setChecked(t is w.current_tab())
-        a.triggered.connect(lambda _=False, t=t: w.docs.setCurrentWidget(t))
+        m.eintrag(("● " if t.is_modified() else "") + t.title, lambda t=t: befehle.fensterWaehlen(t), haken=t is w.current_tab())
     m.addSeparator()
-    m.addAction("Neues Dokument", w.new_document)
-    m.addAction("Dokument schließen", lambda: w.close_tab(w.docs.currentIndex()))
+    m.eintrag("Neues Dokument", w.new_document)
+    m.eintrag("Dokument schließen", lambda: w.close_tab(w.docs.currentIndex()))

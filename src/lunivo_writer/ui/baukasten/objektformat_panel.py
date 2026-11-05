@@ -32,6 +32,7 @@ from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 
 from lunivo_writer.editor.linie import OBJEKT_STRICHE
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import ABSTAND_SPALTE, GROESSE_ABSCHLUSS_KACHEL, ICON_NORMAL, RAND_FORMATSEITE
 STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/linie.py)
 WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
@@ -88,7 +89,7 @@ class _DreiDUntereinander:
 
     # ---- Oberer / Unterer Abschluss: Auswahl der Art (Bildchen), Breite und Höhe
     def _abschluss_menue(self, k: str) -> None:
-        m = VoreinstellungMenue(self, keine=("Kein Abschluss", QIcon(BE.abschluss_symbol("keine"))), kachel=QSize(40, 40))
+        m = VoreinstellungMenue(self, keine=("Kein Abschluss", QIcon(BE.abschluss_symbol("keine"))), kachel=QSize(*GROESSE_ABSCHLUSS_KACHEL))
         m.abschnitt("Abschluss", [(a, QIcon(BE.abschluss_symbol(a)), n) for a, n in BE.ABSCHLUSS], 3)
         m.gewaehlt.connect(lambda a: self._abschluss_setzen(k, a or "keine"))
         m.exec(self.ab_knopf[k].mapToGlobal(self.ab_knopf[k].rect().bottomLeft()))
@@ -167,7 +168,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     def _tab_icon(t: str, unterstrichen: bool):
         """Die Reiter-Symbole aus dem Katalog (gut sichtbar in beiden Designs): Farbeimer (Füllung und Linie) und Funken (Effekte)."""
         from lunivo_writer.ui.widgets import icons
-        return icons.icon("farbe" if unterstrichen else "sparkles", 16)
+        return icons.icon("farbe" if unterstrichen else "sparkles", ICON_NORMAL)
 
     # ---- Erweiterungen für Panels, die auf diesem aufbauen (Diagramm): zusätzliche Auswahlpunkte und Felder in „Füllung“ und „Linie“
     def _zusatz_radios(self, abschnitt: str) -> list:
@@ -179,7 +180,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
 
     # ---- Seite 1: Füllung und Linie ------------------------------------------------------------------------------------------
     def _seite_fuellung(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE)
         self.a_fuell = Abschnitt("Füllung")
         self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
         self.r_textur, self.r_muster = QRadioButton("Strukturfüllung"), QRadioButton("Musterfüllung")
@@ -188,7 +189,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild = (_Felder() for _ in range(5))     # je Füllungsart nur ihre Felder
         self.farbe = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Automatisch")
         self.g_farbe.zeile("Farbe:", self.farbe)
-        self.v1, self.v2 = FarbFeld("#1864ab", "Dunkle Farbe"), FarbFeld("#d0ebff", "Helle Farbe")
+        self.v1, self.v2 = FarbFeld(Farbe.BLAU_DUNKEL, "Dunkle Farbe"), FarbFeld(Farbe.BLAU_HELL, "Helle Farbe")
         self.g_verlauf.zeile("Farbe 1:", self.v1); self.g_verlauf.zeile("Farbe 2:", self.v2)
         self.textur = QComboBox()
         for schl, name in TEXTUREN:
@@ -282,7 +283,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
             if art == "farbe":
                 self.farbe.setFarbe(f["farbe"])
             elif art in ("verlauf", "graduell"):
-                self.v1.setFarbe(f.get("dunkel", f.get("farbe", "#1864ab"))); self.v2.setFarbe(f.get("hell", "#d0ebff"))
+                self.v1.setFarbe(f.get("dunkel", f.get("farbe", Farbe.BLAU_DUNKEL))); self.v2.setFarbe(f.get("hell", Farbe.BLAU_HELL))
             elif art == "textur":
                 self.textur.setCurrentIndex(max(0, self.textur.findData(f.get("key"))))
             elif art == "muster":
@@ -295,7 +296,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         if self.r_keine.isChecked():
             fuell = None
         elif self.r_verlauf.isChecked():
-            fuell = {"art": "graduell", "dunkel": self.v1.farbe or "#1864ab", "hell": self.v2.farbe or Farbe.WEISS, "farbe": self.v1.farbe or "#1864ab"}
+            fuell = {"art": "graduell", "dunkel": self.v1.farbe or Farbe.BLAU_DUNKEL, "hell": self.v2.farbe or Farbe.WEISS, "farbe": self.v1.farbe or Farbe.BLAU_DUNKEL}
         elif self.r_textur.isChecked():
             fuell = {"art": "textur", "key": self.textur.currentData()}
         elif self.r_muster.isChecked():

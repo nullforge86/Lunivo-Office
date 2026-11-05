@@ -15,6 +15,16 @@ from lunivo_writer.editor.zeichenzusatz import FORMEN, VORLAGEN
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_NORMAL,
+    GROESSE_UMSCHLOSSEN_VORLAGENBILD,
+    HOEHE_BEREICH_MITTEL,
+    HOEHE_KNOPF,
+    HOEHE_VORSCHAU_KLEIN,
+    ICON_FORMENLISTE,
+    RAND_PANEL_KLEIN,
+)
 
 VORSCHLAEGE = ("√", "A", "a", "!", "?", "1", "2", "3", "★", "●", "✓", "※")
 
@@ -23,7 +33,7 @@ def form_bild(form: str, px: int = 18, gross: bool = False, text: str = "") -> Q
     """Die Form als kleines Bild (für die Liste) oder, mit ``text``, als Beispiel für die Vorlage."""
     pm = QPixmap(px, px); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QColor("#343a40"), 1.3)); r = QRectF(px * 0.12, px * 0.12, px * 0.76, px * 0.76)
+    p.setPen(QPen(QColor(Farbe.TINTE), 1.3)); r = QRectF(px * 0.12, px * 0.12, px * 0.76, px * 0.76)
     if text:
         f = QFont(); f.setPixelSize(int(px * (0.42 if gross else 0.5))); p.setFont(f)
     if form == "kreis":
@@ -42,8 +52,8 @@ def form_bild(form: str, px: int = 18, gross: bool = False, text: str = "") -> Q
 
 
 def _vorlagenbild(vorlage: str) -> QIcon:
-    pm = QPixmap(56, 40); pm.fill(Qt.white)
-    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setPen(QColor("#212529"))
+    pm = QPixmap(56, 40); pm.fill(QColor(Farbe.PAPIER))
+    p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setPen(QColor(Farbe.TINTE_DUNKEL))
     f = QFont("Liberation Serif"); f.setPixelSize(22 if vorlage == "ohne" else 15); p.setFont(f)
     if vorlage == "ohne":
         p.drawText(pm.rect(), Qt.AlignCenter, "I")
@@ -58,24 +68,24 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, text: str = "", form: str = "kreis", vorlage: str = "reduzieren"):
         super().__init__(parent)
         self.setWindowTitle("Eingeschlossene Zeichen")
-        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_NORMAL)
         v.addWidget(abschnittstitel("Formatvorlage"))
         zeile = FlussLayout(8)
         self._vorlage = QButtonGroup(self)
         for i, (k, t) in enumerate(VORLAGEN):
-            b = QToolButton(); b.setCheckable(True); b.setChecked(k == vorlage); b.setText(t); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(56, 40))
+            b = QToolButton(); b.setCheckable(True); b.setChecked(k == vorlage); b.setText(t); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(*GROESSE_UMSCHLOSSEN_VORLAGENBILD))
             b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(False)
             self._vorlage.addButton(b, i); zeile.addWidget(b)
         v.addLayout(zeile)
         v.addWidget(abschnittstitel("Umschließen"))
         v.addWidget(QLabel("Text:"))
-        self.text = QLineEdit(text); self.text.setMinimumHeight(34); v.addWidget(self.text)
-        self.vorschlaege = QListWidget(); self.vorschlaege.setMaximumHeight(120)
+        self.text = QLineEdit(text); self.text.setMinimumHeight(HOEHE_KNOPF); v.addWidget(self.text)
+        self.vorschlaege = QListWidget(); self.vorschlaege.setMaximumHeight(HOEHE_VORSCHAU_KLEIN)
         self.vorschlaege.addItems(VORSCHLAEGE)
         self.vorschlaege.itemClicked.connect(lambda i: self.text.setText(i.text()))
         v.addWidget(self.vorschlaege)
         v.addWidget(QLabel("Umschließen mit:"))
-        self.formen = QListWidget(); self.formen.setIconSize(QSize(20, 20)); self.formen.setMaximumHeight(150)
+        self.formen = QListWidget(); self.formen.setIconSize(QSize(ICON_FORMENLISTE, ICON_FORMENLISTE)); self.formen.setMaximumHeight(HOEHE_BEREICH_MITTEL)
         for k, t in FORMEN:
             it = QListWidgetItem(QIcon(form_bild(k, 20)), ""); it.setData(Qt.UserRole, k); it.setToolTip(t); self.formen.addItem(it)
             if k == form:

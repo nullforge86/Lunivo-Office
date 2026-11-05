@@ -14,9 +14,9 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetricsF, QImage, QLinear
 from lunivo_writer.editor import freie_bilder as FB
 from lunivo_writer.editor.mehrstufig import nummer_text
 
-ARTEN = ("wordart", "textfeld", "form", "diagramm", "smartart", "piktogramm")
+ARTEN = ("wordart", "textfeld", "form", "diagramm", "smartart", "piktogramm", "zeichenbereich")
 TEXT_ARTEN = ("wordart", "textfeld")                                 # Arten mit Text zum Schreiben (Texttools, Eingabefeld im Objekt)
-STANDARD_MASS = {"form": (160, 120), "diagramm": (480, 300)}         # Größe in Bildpunkten, wenn beim Einfügen keine angegeben ist
+STANDARD_MASS = {"form": (160, 120), "diagramm": (480, 300), "zeichenbereich": (567, 302)}         # Größe in Bildpunkten, wenn beim Einfügen keine angegeben ist
 FORM_STANDARD = {"form": "Rechteck", "fuell": "#4a8fd8", "linie": "#1f3864", "strich": 2.0, "text": ""}
 TEXTFELD_STANDARD = {"text": "", "schrift": "Liberation Sans", "pt": 11, "farbe": "#1f1f1f"}
 TEXTFELD_FUELL = {"art": "farbe", "farbe": "#ffffff"}
@@ -446,10 +446,18 @@ def _piktogramm_zeichnen(d: dict, _b: float, _h: float) -> QImage:
     return E.piktogramm_bild(d.get("name", "star"), 96, d.get("farbe", "#1f2328"))
 
 
+def _zeichenbereich_zeichnen(d: dict, b: float, h: float) -> QImage:
+    """Zeichenbereich (``editor/formen.py``): gestrichelter Rand und die ``kinder`` (Formen mit Lage x/y), in doppelter Auflösung."""
+    from lunivo_writer.editor import formen as F
+    b, h = (b, h) if b and h else STANDARD_MASS["zeichenbereich"]
+    return F.zeichenbereich_bild(dict(d, breite=round(b), hoehe=round(h)), _SS)
+
+
 # Art → Funktion(daten, breite, höhe) → Bild. Neue Art = ein Eintrag hier (und in ARTEN).
 ZEICHNER = {"wordart": lambda d, b, h: wordart_zeichnen(d), "textfeld": textfeld_zeichnen, "form": _form_zeichnen,
-            "diagramm": _diagramm_zeichnen, "smartart": _smartart_zeichnen, "piktogramm": _piktogramm_zeichnen}
-NEU_ZEICHNEN = ("textfeld", "form", "diagramm")                      # Arten, die nach einer Größenänderung in der neuen Größe frisch gezeichnet werden
+            "diagramm": _diagramm_zeichnen, "smartart": _smartart_zeichnen, "piktogramm": _piktogramm_zeichnen,
+            "zeichenbereich": _zeichenbereich_zeichnen}
+NEU_ZEICHNEN = ("textfeld", "form", "diagramm", "zeichenbereich")                      # Arten, die nach einer Größenänderung in der neuen Größe frisch gezeichnet werden
 
 
 def zeichnen(art: str, d: dict, b: float = 0, h: float = 0) -> QImage:

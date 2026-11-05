@@ -17,10 +17,18 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFontDatabase, QIcon, QTextBlockFormat
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGroupBox, QLabel, QPushButton, QToolButton, QVBoxLayout, QWidget
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.text_format import BETONUNG, UNTERSTREICHUNG, ZEICHEN, groesse_feld, zeichne_absaetze, zu_format
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_FENSTER_SCHRIFTART,
+    GROESSE_UNTERSTREICHUNG_BILD,
+    GROESSE_UNTERSTREICHUNG_BILD_HOCH,
+    RAND_DIALOG_GRUPPE,
+    SCHRIFT_HINWEIS,
+)
 
 SCHNITTE = ("Regulär", "Kursiv", "Fett", "Fett Kursiv")
 _THEMA = {"+Textkörper": "", "+Überschrift": "", "+Textkörper asiatisch": "", "+Überschrift asiatisch": "", "+Textkörper komplex": "", "+Überschrift komplex": ""}
@@ -49,7 +57,8 @@ def _schnitt_combo() -> QComboBox:
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.core.farben import Farbe
 def _ueberschrift(text: str) -> QLabel:
     return abschnittstitel(text)
 
@@ -57,7 +66,7 @@ def _ueberschrift(text: str) -> QLabel:
 class SchriftartDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None, *, umfang: str = "text"):
         super().__init__(parent)
-        self.setWindowTitle("Schriftart"); self.resize(504, 560)
+        self.setWindowTitle("Schriftart"); self.resize(*GROESSE_FENSTER_SCHRIFTART)
         self.umfang = umfang
         w = {**ZEICHEN, **(werte or {})}
         v = QVBoxLayout(self)
@@ -79,17 +88,17 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self.asiat_knopf.toggled.connect(lambda an: (asiat.setVisible(an), self.asiat_knopf.setArrowType(Qt.DownArrow if an else Qt.RightArrow)))
         g.breit(self.asiat_knopf); g.breit(asiat)
         self.farbe = FarbFeld(w["farbe"], "Schriftfarbe", keine_text="Automatisch")
-        self.unter = QComboBox(); self.unter.setIconSize(QSize(70, 14))
+        self.unter = QComboBox(); self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD))
         from lunivo_writer.editor.textfx import unter_symbol
-        self.unter.setIconSize(QSize(70, 16))
+        self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD_HOCH))
         for k, name in UNTERSTREICHUNG:
-            self.unter.addItem(unter_symbol(k, (70, 16), "#e6e9ec") if k and k != "woerter" else QIcon(), name if k in ("", "woerter") else "", k)
+            self.unter.addItem(unter_symbol(k, (70, 16), Farbe.GITTER) if k and k != "woerter" else QIcon(), name if k in ("", "woerter") else "", k)
         self.unterfarbe = FarbFeld(w["unterfarbe"], "Farbe der Unterstreichung", keine_text="Automatisch")
         self.betonung = QComboBox()
         for k, name in BETONUNG:
             self.betonung.addItem(name, k)
         g.reihe(("Schriftfarbe:", self.farbe), ("Unterstreichung:", self.unter), ("Farbe:", self.unterfarbe), ("Betonungszeichen:", self.betonung))
-        self.effekte = QGroupBox("Effekte"); eg = FlussLayout(12); eg.setContentsMargins(0, 6, 0, 2); self.effekte.setLayout(eg)
+        self.effekte = gruppe("Effekte"); eg = FlussLayout(12); eg.setContentsMargins(*RAND_DIALOG_GRUPPE); self.effekte.setLayout(eg)
         namen = (("durch", "Durchgestrichen"), ("doppelt", "Doppelt durchgestrichen"), ("hoch", "Hochgestellt"), ("tief", "Tiefgestellt"),
                  ("kapital", "Kapitälchen"), ("gross", "Großbuchstaben"), ("versteckt", "Ausgeblendet"))
         self.cb = {k: QCheckBox(t) for k, t in namen}
@@ -114,7 +123,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
         v.addWidget(QLabel("Vorschau"))
         self.vorschau = VorschauFlaeche(self._male, 44); v.addWidget(self.vorschau)
         self._w = dict(ZEICHEN)
-        self.hinweis = QLabel(); self.hinweis.setWordWrap(True); self.hinweis.setStyleSheet("color: palette(mid); font-size: 9pt;")
+        self.hinweis = QLabel(); self.hinweis.setWordWrap(True); hinweis_stil(self.hinweis, klein=True)
         v.addWidget(self.hinweis)
         self.standard_knopf = QPushButton("Standard …"); self.standard_knopf.setToolTip("Diese Schrift für neue Dokumente merken")
         self.standard_knopf.clicked.connect(self._standard)
@@ -241,6 +250,6 @@ class SchriftartDialog(PanelFaehig, QDialog):
         if not f.fontFamilies():
             f.setFontFamilies(["Liberation Sans"])
         if not w.get("farbe"):
-            f.setForeground(QColor("#111417"))
+            f.setForeground(QColor(Farbe.SYMBOL))
         bf = QTextBlockFormat(); bf.setAlignment(Qt.AlignHCenter)
         zeichne_absaetze(p, rect, [(bf, f, "Lunivo entspannt die Arbeit AaBbCc")], mittig=True)

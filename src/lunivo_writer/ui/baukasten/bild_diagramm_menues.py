@@ -11,24 +11,40 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+    QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
+from lunivo_writer.ui.baukasten.texte import trennlinie
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_KLEIN,
+    GROESSE_DIAGRAMMSTIL_KACHEL,
+    GROESSE_FORMBILD_KACHEL,
+    ICON_GROSS,
+    ICON_KNOPF_GROSS,
+    PADDING_ZUSCHNEIDEN_KNOPF,
+    PADDING_ZUSCHNEIDEN_ZEILE,
+    RAND_KEIN,
+    RAND_MENUE_KOPF,
+    RAND_ZUSCHNEIDEN_KACHELN,
+    RAND_ZUSCHNEIDEN_LISTE,
+)
 
 KACHEL = 36                       # Seitenlänge einer Formkachel (Knöpfe nicht schmaler als 36 px)
 SPALTEN = 12                      # Formen je Zeile wie in der Vorlage (Kachel bleibt 36 px, das Fenster wird breiter)
-STIL_KACHEL = QSize(88, 56)       # Vorschau eines Diagrammstils
+STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_KACHEL)       # Vorschau eines Diagrammstils
 BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfeil daneben öffnet alle
 
 
 # ---- Zuschneiden --------------------------------------------------------------------------------------------------------------
 def _form_bild(name: str) -> QIcon:
     from lunivo_writer.editor import formen_katalog as K
-    pm = QPixmap(QSize(28, 28)); pm.fill(Qt.transparent)
+    pm = QPixmap(QSize(*GROESSE_FORMBILD_KACHEL)); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
     p.drawPath(K.pfad(name, QRectF(4, 4, 20, 20)))
@@ -43,10 +59,11 @@ def _abschnittsleiste(text: str) -> QLabel:
 def zuschneiden_menue(b) -> QMenu:
     """Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``)."""
     from lunivo_writer.editor import bildzuschnitt as BZ
-    m = QMenu(b.w)
+    from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+    m = MenueListe(b.w)
     wid = QWidget()
-    v = QVBoxLayout(wid); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-    kopf = QHBoxLayout(); kopf.setContentsMargins(6, 4, 6, 4); kopf.setSpacing(2)
+    v = QVBoxLayout(wid); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+    kopf = QHBoxLayout(); kopf.setContentsMargins(*RAND_MENUE_KOPF); kopf.setSpacing(ABSTAND_ENG)
     stapel = QStackedWidget()
     reiter = []
     for i, text in enumerate(("Nach Form zuschneiden", "Nach Skala zuschneiden")):
@@ -64,17 +81,16 @@ def zuschneiden_menue(b) -> QMenu:
 
     # Seite 1: Formen nach Gruppen, rollbar
     inhalt = QWidget()
-    iv = QVBoxLayout(inhalt); iv.setContentsMargins(0, 0, 0, 0); iv.setSpacing(4)
+    iv = QVBoxLayout(inhalt); iv.setContentsMargins(*RAND_KEIN); iv.setSpacing(ABSTAND_KLEIN)
     for kat, namen in BZ.formen_kategorien():
         iv.addWidget(_abschnittsleiste(kat))
-        g = QGridLayout(); g.setContentsMargins(6, 0, 6, 0); g.setSpacing(2)
+        kachelreihe = []
         for n, name in enumerate(namen):
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(_form_bild(name)); k.setIconSize(QSize(28, 28))
+            k = QToolButton(); k.setAutoRaise(True); k.setIcon(_form_bild(name)); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             k.setFixedSize(KACHEL, KACHEL); k.setToolTip(name); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, name=name: waehlen(b.bildZuschneidenForm, name))
-            g.addWidget(k, n // SPALTEN, n % SPALTEN)
-        g.setColumnStretch(SPALTEN, 1)
-        iv.addLayout(g)
+            kachelreihe.append(k)
+        iv.addLayout(kachel_gitter(kachelreihe, SPALTEN, rand=RAND_ZUSCHNEIDEN_KACHELN, abstand=ABSTAND_ENG, rest_dehnt=True))
     iv.addStretch(1)
     rollen = QScrollArea(); rollen.setWidget(inhalt); rollen.setWidgetResizable(True); rollen.setFrameShape(QFrame.NoFrame)
     rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -84,10 +100,10 @@ def zuschneiden_menue(b) -> QMenu:
 
     # Seite 2: Seitenverhältnisse als Textliste untereinander, rollbar (wie in der Vorlage)
     liste = QWidget()
-    lv = QVBoxLayout(liste); lv.setContentsMargins(6, 4, 6, 4); lv.setSpacing(0)
+    lv = QVBoxLayout(liste); lv.setContentsMargins(*RAND_ZUSCHNEIDEN_LISTE); lv.setSpacing(0)
     for text, bb, hh in BZ.VERHAELTNISSE:
         k = QPushButton(text.replace(":", " : ")); k.setFlat(True); k.setMinimumHeight(KACHEL)
-        k.setStyleSheet("text-align: left; padding: 4px 24px; border: none;")
+        k.setStyleSheet("text-align: left; padding: " f"{PADDING_ZUSCHNEIDEN_KNOPF}" "; border: none;")
         k.setToolTip("Seitenverhältnis " + text); k.setAccessibleName("Seitenverhältnis " + text)
         k.clicked.connect(lambda _=False, t=text: waehlen(b.bildZuschneidenSkala, t))
         lv.addWidget(k)
@@ -98,13 +114,13 @@ def zuschneiden_menue(b) -> QMenu:
     stapel.setFixedSize(breite, 330)
     v.addWidget(stapel)
 
-    linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setStyleSheet("color: palette(midlight);")
+    linie = trennlinie()
     v.addWidget(linie)
-    z = QPushButton(icons.icon("rotate-ccw", 18), "  Form und Größe zurücksetzen"); z.setFlat(True); z.setIconSize(QSize(18, 18))
-    z.setMinimumHeight(KACHEL); z.setStyleSheet("text-align: left; padding: 4px 10px; border: none;")
+    z = QPushButton(icons.icon("rotate-ccw", ICON_GROSS), "  Form und Größe zurücksetzen"); z.setFlat(True); z.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
+    z.setMinimumHeight(KACHEL); z.setStyleSheet("text-align: left; padding: " f"{PADDING_ZUSCHNEIDEN_ZEILE}" "; border: none;")
     z.clicked.connect(lambda: waehlen(b.bildZuschneidenZuruecksetzen))
     v.addWidget(z)
-    a = QWidgetAction(m); a.setDefaultWidget(wid); m.addAction(a)
+    m.widget(wid)
     return m
 
 

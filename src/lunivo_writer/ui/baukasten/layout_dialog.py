@@ -18,6 +18,7 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
 from lunivo_writer.ui.baukasten.umbruch_symbole import ARTEN, umbruch_zeichner
+from lunivo_writer.ui.baukasten.mass import GROESSE_KACHELFELD_STANDARD, RAND_DIALOG_GRUPPE
 
 BEZUG_H = [("spalte", "Spalte"), ("rand", "Seitenrand"), ("seite", "Seite")]
 BEZUG_V = [("absatz", "Absatz"), ("rand", "Seitenrand"), ("seite", "Seite")]
@@ -46,7 +47,7 @@ def _zeile(g: FormularGitter, _r: int, radio: QRadioButton, *rest) -> None:
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter
 class LayoutDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None):
         super().__init__(parent)
@@ -66,7 +67,7 @@ class LayoutDialog(PanelFaehig, QDialog):
 
     # ---- Reiter Position ---------------------------------------------------------------------------------------------------
     def _achse(self, titel: str, w: dict, waagerecht: bool) -> dict:
-        box = QGroupBox(titel); g = FormularGitter(box); g.setContentsMargins(0, 6, 0, 2)
+        box = gruppe(titel); g = FormularGitter(box); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         grp = QButtonGroup(self)
         ausr_liste, bezug = (AUSR_H, BEZUG_H) if waagerecht else (AUSR_V, BEZUG_V)
         f: dict = {}
@@ -112,7 +113,7 @@ class LayoutDialog(PanelFaehig, QDialog):
         seite = QWidget(); v = QVBoxLayout(seite)
         self.h = self._achse("Horizontal", w["h"], True); self.v = self._achse("Vertikal", w["v"], False)
         v.addWidget(self.h["box"]); v.addWidget(self.v["box"])
-        opt = QGroupBox("Optionen"); g = FormularGitter(opt); g.setContentsMargins(0, 6, 0, 2)
+        opt = gruppe("Optionen"); g = FormularGitter(opt); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.mit_text = UmbruchSchalter("Objekt mit Text verschieben"); self.mit_text.setChecked(w["mit_text"])
         self.ueberlappen = UmbruchSchalter("Überlappen zulassen"); self.ueberlappen.setChecked(w["ueberlappen"])
         self.verankern = UmbruchSchalter("Verankern"); self.verankern.setChecked(w["verankern"])
@@ -125,19 +126,19 @@ class LayoutDialog(PanelFaehig, QDialog):
     # ---- Reiter Textumbruch ------------------------------------------------------------------------------------------------
     def _umbruch(self, w: dict) -> None:
         seite = QWidget(); v = QVBoxLayout(seite)
-        box = QGroupBox("Umbruchart"); bv = QVBoxLayout(box)
-        self.kacheln = KachelFeld(spalten=4, groesse=QSize(44, 44), fliessend=True)
+        box = gruppe("Umbruchart"); bv = QVBoxLayout(box)
+        self.kacheln = KachelFeld(spalten=4, groesse=QSize(*GROESSE_KACHELFELD_STANDARD), fliessend=True)
         for schl, text in ARTEN:
             self.kacheln.hinzu(schl, text, umbruch_zeichner(schl))
         self.kacheln.setze(w["umbruch"]); self.kacheln.gewaehlt.connect(lambda _k: self._pruefen())
         bv.addWidget(self.kacheln); v.addWidget(box)
-        zb = QGroupBox("Zeilenumbruch"); zh = FlussLayout(14); zh.setContentsMargins(0, 6, 0, 2); zb.setLayout(zh)
+        zb = gruppe("Zeilenumbruch"); zh = FlussLayout(14); zh.setContentsMargins(*RAND_DIALOG_GRUPPE); zb.setLayout(zh)
         self.zeilen = {}
         gr = QButtonGroup(self)
         for schl, text in ZEILEN:
             r = QRadioButton(text); r.setChecked(w["zeilen"] == schl); gr.addButton(r); zh.addWidget(r); self.zeilen[schl] = r
         v.addWidget(zb); self._zeilen_box = zb
-        ab = QGroupBox("Abstand zum Text"); ag = FormularGitter(ab); ag.setContentsMargins(0, 6, 0, 2)
+        ab = gruppe("Abstand zum Text"); ag = FormularGitter(ab); ag.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.abstand = {}
         for i, (schl, text) in enumerate((("oben", "Oben"), ("links", "Links"), ("unten", "Unten"), ("rechts", "Rechts"))):
             f = EinheitFeld(w["abstand"][schl], 0.0, 200.0, ("mm", "cm", "in", "pt"))
@@ -148,7 +149,7 @@ class LayoutDialog(PanelFaehig, QDialog):
 
     # ---- Reiter Größe ------------------------------------------------------------------------------------------------------
     def _mass(self, titel: str, w: dict) -> dict:
-        box = QGroupBox(titel); g = FormularGitter(box); g.setContentsMargins(0, 6, 0, 2)
+        box = gruppe(titel); g = FormularGitter(box); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         f = {"r_abs": QRadioButton("Absolut"), "mm": EinheitFeld(w["mm"], 1.0, 3000.0, ("mm", "cm", "in", "pt")),
              "r_rel": QRadioButton("Relativ"), "proz": QDoubleSpinBox(), "bezug": _combo([("seite", "Seite"), ("rand", "Seitenrand")], w["bezug"])}
         f["proz"].setRange(1, 1000); f["proz"].setSuffix(" %"); f["proz"].setValue(w["proz"] or 100)
@@ -166,10 +167,10 @@ class LayoutDialog(PanelFaehig, QDialog):
         seite = QWidget(); v = QVBoxLayout(seite)
         self.hoehe = self._mass("Höhe", w["hoehe"]); self.breite = self._mass("Breite", w["breite"])
         v.addWidget(self.hoehe["box"]); v.addWidget(self.breite["box"])
-        d = QGroupBox("Drehen"); dh = FormularGitter(d); dh.setContentsMargins(0, 6, 0, 2)
+        d = gruppe("Drehen"); dh = FormularGitter(d); dh.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.drehung = QDoubleSpinBox(); self.drehung.setRange(-360, 360); self.drehung.setSuffix(" °"); self.drehung.setValue(w["drehung"])
         dh.zeile("Drehung:", self.drehung); v.addWidget(d)
-        s = QGroupBox("Skalieren"); sg = FormularGitter(s); sg.setContentsMargins(0, 6, 0, 2)
+        s = gruppe("Skalieren"); sg = FormularGitter(s); sg.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.skal_h = QDoubleSpinBox(); self.skal_b = QDoubleSpinBox()
         for x in (self.skal_h, self.skal_b):
             x.setRange(1, 1000); x.setSuffix(" %"); x.setValue(100)
@@ -178,7 +179,7 @@ class LayoutDialog(PanelFaehig, QDialog):
         self.skal_original = UmbruchSchalter("Relativ zur Originalbildgröße"); self.skal_original.setChecked(w["skal_original"])
         sg.breit(self.sperren); sg.breit(self.skal_original)
         v.addWidget(s)
-        o = QGroupBox("Originalgröße"); og = FormularGitter(o); og.setContentsMargins(0, 6, 0, 2)
+        o = gruppe("Originalgröße"); og = FormularGitter(o); og.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self._orig_b, self._orig_h = w["original"]
         self._start_b, self._start_h = self.breite["mm"].value(), self.hoehe["mm"].value()      # Größe beim Öffnen: Bezug, wenn „Relativ zur Originalbildgröße“ aus ist
         self.orig_text = QLabel(); og.breit(self.orig_text)

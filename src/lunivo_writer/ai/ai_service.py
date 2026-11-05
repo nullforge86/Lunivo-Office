@@ -147,8 +147,7 @@ class KIDienst(QObject):
         if self._beschaeftigt:
             return
         if not self.verfuegbar():
-            self.status.emit("Dafür fehlt ein KI-Modell — Ollama auf diesem Rechner oder ein Schlüssel. Die KI-Einstellungen sind offen.")
-            self.w.befehle.w_kiEinstellungen()
+            self._hinweis_fenster("KI", "Dafür fehlt ein KI-Modell — Ollama auf diesem Rechner oder ein Schlüssel. Beides richten Sie unter „KI-Einstellungen“ ein.")
             return
         eing = eing or self._eingabe()
         if eing is not None:

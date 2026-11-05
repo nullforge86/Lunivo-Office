@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_KEIN, SCHRIFT_HINWEIS
 
 
 class AktionenLeiste(QWidget):
@@ -14,8 +16,8 @@ class AktionenLeiste(QWidget):
         super().__init__()
         self.dienst = None
         self.fenster = None
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(4)
-        self.titel = QLabel("Meine Aktionen"); self.titel.setStyleSheet("color: palette(mid); font-size: 9pt;")
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_KLEIN)
+        self.titel = QLabel("Meine Aktionen"); hinweis_stil(self.titel, klein=True)
         v.addWidget(self.titel)
         self.feld = QWidget()
         self.fluss = FlowLayout(self.feld)

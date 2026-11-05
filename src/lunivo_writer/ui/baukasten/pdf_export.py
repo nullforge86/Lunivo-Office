@@ -12,6 +12,20 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QHBoxLayout, 
 from lunivo_writer.services.pdf_export import DRUCK, PdfWahl, kennwort_fehler
 
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE as FELD_H, FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_EXPORT_ABSCHNITT,
+    ABSTAND_KLEIN,
+    ABSTAND_NORMAL,
+    ABSTAND_ZEILE,
+    RAND_EXPORT_ABSCHNITT,
+    RAND_EXPORT_FENSTER,
+    RAND_EXPORT_SCHUTZ,
+    RAND_EXPORT_SEITENZEILE,
+    RAND_EXPORT_WEITERE,
+    RAND_KEIN,
+    RAND_OBEN_SEITE,
+    RAND_ZEILE,
+)
 
 RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
           ("kommentieren", "Kommentare hinzufügen erlauben")]
@@ -19,7 +33,7 @@ RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
 
 def _abschnitt(titel: str, hilfe: str, layout=None) -> QWidget:
     w = QWidget()
-    v = QVBoxLayout(w); v.setContentsMargins(0, 8, 0, 8); v.setSpacing(5)
+    v = QVBoxLayout(w); v.setContentsMargins(*RAND_EXPORT_ABSCHNITT); v.setSpacing(ABSTAND_EXPORT_ABSCHNITT)
     kopf = abschnittstitel(titel)
     erklaerung = QLabel(hilfe); erklaerung.setWordWrap(True); erklaerung.setObjectName("bsHinweis")
     v.addWidget(kopf); v.addWidget(erklaerung)
@@ -29,7 +43,7 @@ def _abschnitt(titel: str, hilfe: str, layout=None) -> QWidget:
 
 
 def _einklappen(titel: str, beschreibung: str, inhalt: QWidget, offen: bool = False) -> tuple[QWidget, QToolButton]:
-    w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 4, 0, 4); v.setSpacing(4)
+    w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_ZEILE); v.setSpacing(ABSTAND_KLEIN)
     knopf = QToolButton(); knopf.setText(titel); knopf.setCheckable(True); knopf.setChecked(offen)
     knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); knopf.setArrowType(Qt.DownArrow if offen else Qt.RightArrow)
     knopf.setAutoRaise(True); knopf.setMinimumHeight(FELD_H)
@@ -59,7 +73,7 @@ class PdfExportAnsicht(QWidget):
         self.optionen: dict[str, QCheckBox] = {}
         self.rechte: dict[str, QCheckBox] = {}
 
-        root = QVBoxLayout(self); root.setContentsMargins(16, 20, 16, 16); root.setSpacing(3)
+        root = QVBoxLayout(self); root.setContentsMargins(*RAND_EXPORT_FENSTER); root.setSpacing(ABSTAND_ZEILE)
         titel = QLabel("PDF exportieren"); titel.setObjectName("bsTitel")
         root.addWidget(titel)
         intro = QLabel("Wähle Speicherort und Seiten. Weitere Einstellungen kannst du bei Bedarf öffnen.")
@@ -73,7 +87,7 @@ class PdfExportAnsicht(QWidget):
         datei_zeile = QHBoxLayout(); datei_zeile.addWidget(self.pfad, 1); datei_zeile.addWidget(durch)
         root.addWidget(_abschnitt("1. PDF speichern", "Dateiname und Speicherort", datei_zeile))
 
-        bereich_layout = QVBoxLayout(); bereich_layout.setContentsMargins(0, 0, 0, 0); bereich_layout.setSpacing(3)
+        bereich_layout = QVBoxLayout(); bereich_layout.setContentsMargins(*RAND_KEIN); bereich_layout.setSpacing(ABSTAND_ZEILE)
         self.b_alles = QRadioButton("Ganzes Dokument")
         self.b_aktuell = QRadioButton(f"Aktuelle Seite ({aktuelle})")
         self.b_markierung = QRadioButton("Nur die Markierung")
@@ -87,7 +101,7 @@ class PdfExportAnsicht(QWidget):
             gruppe.addButton(b); bereich_layout.addWidget(b)
         bereich = start.bereich if start.bereich != "markierung" or markierung else "alles"
         self._bereiche.get(bereich, self.b_alles).setChecked(True)
-        seiten_zeile = QHBoxLayout(); seiten_zeile.setContentsMargins(25, 0, 0, 0)
+        seiten_zeile = QHBoxLayout(); seiten_zeile.setContentsMargins(*RAND_EXPORT_SEITENZEILE)
         self.von, self.bis = QSpinBox(), QSpinBox()
         for feld, wert in ((self.von, start.von), (self.bis, start.bis)):
             feld.setRange(1, max(1, seiten)); feld.setValue(min(max(1, wert), max(1, seiten)))
@@ -103,7 +117,7 @@ class PdfExportAnsicht(QWidget):
         self._seiten_schalten(self.b_seiten.isChecked())
         root.addWidget(_abschnitt("2. Seiten auswählen", "Lege fest, welche Seiten in die PDF kommen.", bereich_layout))
 
-        inhalte = QVBoxLayout(); inhalte.setContentsMargins(0, 0, 0, 0); inhalte.setSpacing(3)
+        inhalte = QVBoxLayout(); inhalte.setContentsMargins(*RAND_KEIN); inhalte.setSpacing(ABSTAND_ZEILE)
         for key, text, tip in (
             ("hyperlinks", "Links beibehalten", "Anklickbare Links im Dokument funktionieren auch im PDF."),
             ("kommentare", "Kommentare übernehmen", "Kommentare erscheinen im PDF als Notizen."),
@@ -113,7 +127,7 @@ class PdfExportAnsicht(QWidget):
             self.optionen[key] = box; inhalte.addWidget(box)
         root.addWidget(_abschnitt("3. Inhalte übernehmen", "Wähle, was im PDF erhalten bleiben soll.", inhalte))
 
-        weitere = QWidget(); av = QVBoxLayout(weitere); av.setContentsMargins(8, 2, 0, 2); av.setSpacing(3)
+        weitere = QWidget(); av = QVBoxLayout(weitere); av.setContentsMargins(*RAND_EXPORT_WEITERE); av.setSpacing(ABSTAND_ZEILE)
         for key, text, tip in (
             ("eigenschaften", "Dokumentinformationen übernehmen", "Titel, Verfasser und weitere Dokumentangaben in der PDF speichern."),
             ("textmarken", "Textmarken als Sprungziele", "Gesetzte Textmarken werden im PDF anklickbar."),
@@ -134,19 +148,19 @@ class PdfExportAnsicht(QWidget):
         root.addWidget(self.meldung)
         root.addStretch(1)
 
-        fuss = FlussLayout(8); fuss.setContentsMargins(0, 8, 0, 0)
+        fuss = FlussLayout(8); fuss.setContentsMargins(*RAND_OBEN_SEITE)
         self.schliessen = QCheckBox("Danach zum Dokument zurück")
         self.schliessen.setChecked(start.schliessen)
         self.schliessen.setToolTip("Kehrt nach erfolgreichem Export zur Dokumentbearbeitung zurück.")
         abbrechen = QPushButton("Zurück zum Dokument"); abbrechen.clicked.connect(self._zurueck)
         self.ok = QPushButton("PDF exportieren"); self.ok.setObjectName("optFertig"); self.ok.setDefault(True)
-        self.ok.setCursor(Qt.PointingHandCursor); self.ok.setMinimumHeight(36); self.ok.clicked.connect(self._ok)
+        self.ok.setCursor(Qt.PointingHandCursor); self.ok.setMinimumHeight(FELD_H); self.ok.clicked.connect(self._ok)
         fuss.addWidget(self.schliessen); fuss.addWidget(abbrechen); fuss.addWidget(self.ok)
         root.addLayout(fuss)
 
     def _schutz(self, s: PdfWahl) -> QWidget:
         bereich = QWidget()
-        v = QVBoxLayout(bereich); v.setContentsMargins(0, 2, 0, 4); v.setSpacing(6)
+        v = QVBoxLayout(bereich); v.setContentsMargins(*RAND_EXPORT_SCHUTZ); v.setSpacing(ABSTAND_NORMAL)
         self.verschluesseln = QCheckBox("PDF mit Kennwort schützen")
         self.verschluesseln.setChecked(s.verschluesseln)
         self.verschluesseln.setToolTip("Schützt den Zugriff und/oder legt fest, was andere Personen mit der PDF tun dürfen.")

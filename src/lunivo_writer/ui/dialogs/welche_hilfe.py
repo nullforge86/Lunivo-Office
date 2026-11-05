@@ -7,11 +7,32 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.texte import marke_faerben
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_GROSS,
+    ABSTAND_KEIN,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    ABSTAND_ZEILE,
+    BREITE_NUMMER,
+    GROESSE_SCHALTER,
+    GROESSE_STUFE,
+    PADDING_HILFE_CHIP,
+    PADDING_TASTENKUERZEL,
+    RADIUS_MARKE,
+    RADIUS_PILLE,
+    RADIUS_STUFE,
+    RAND_KEIN,
+    RAND_ZEILE_KARTE,
+    SCHRIFT_KLEIN,
+)
 STUFEN = [
     # (Stufe, Titel, Kürzel, Frage, Hinweis rechts, Schalter | Befehl)
     (1, "Rote Wellenlinien", "", "Gibt es das Wort überhaupt?", "sofort beim Tippen", ("schalter", "wellen")),
@@ -23,15 +44,26 @@ STUFEN = [
     (5, "Gründlich prüfen", "", "Stimmt die Grammatik?", "LanguageTool, einmal 400 MB", ("tun", "gruendlichPruefen")),
     (6, "KI-Korrektur", "F8", "Versteht das jemand? Passt der Ton?", "Internet und Guthaben", ("tun", "kiKorrektur")),
 ]
-ETIKETTEN = [("SICHER FALSCH", "#c77d2e", "white", "Da ist kein Zweifel.", "blind übernehmen"),
-             ("KOMMT DRAUF AN", Farbe.AKZENT, "white", "Hängt vom Satz ab.", "kurz hinschauen"),
-             ("ZUM NACHDENKEN", Farbe.GRAU, "white", "Nur ein Anstoß, keine Regel.", "oft übergehen")]
+def _etiketten() -> list:
+    return [("SICHER FALSCH", Farbe.WARNUNG, Farbe.AUF_AKZENT, "Da ist kein Zweifel.", "blind übernehmen"),
+                ("KOMMT DRAUF AN", Farbe.AKZENT, Farbe.AUF_AKZENT, "Hängt vom Satz ab.", "kurz hinschauen"),
+                ("ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT, "Nur ein Anstoß, keine Regel.", "oft übergehen")]
 WEG = ["Schreiben, ohne auf die Wellenlinien zu achten.", "F7 drücken und „Alles Eindeutige übernehmen“ wählen.", "Die übrigen Karten einzeln durchgehen.",
        "F4 — einmal vorlesen lassen. Da fällt auf, was keine Regel findet.", "Nur wenn der Text sitzen muss: F8."]
 
 
+class _Umbruch(QLabel):
+    """Text, der umbricht und dabei immer die Höhe bekommt, die er braucht (verschachtelte Layouts reichen „Höhe bei Breite“ nicht sicher weiter)."""
+
+    def resizeEvent(self, ev) -> None:
+        super().resizeEvent(ev)
+        h = self.heightForWidth(self.width())
+        if h > 0 and h != self.minimumHeight():
+            self.setMinimumHeight(h)
+
+
 def _text(text: str) -> QLabel:
-    t = QLabel(text); t.setWordWrap(True)
+    t = _Umbruch(text); t.setWordWrap(True)
     return t
 
 
@@ -42,67 +74,83 @@ class HilfeWannDialog(PanelFaehig, QDialog):
         self.schalter: dict[str, QPushButton] = {}
         self.setWindowTitle("Welche Hilfe wann")
         v = QVBoxLayout(self)
-        host = QWidget(); h = QVBoxLayout(host); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(6)
+        host = QWidget(); h = QVBoxLayout(host); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_NORMAL)
         h.addWidget(_text("Jede Stufe ist langsamer als die darüber und klüger als sie. Fang oben an und geh nur so weit hinunter, wie du musst. "
                           "Die Stufen 1 bis 5 brauchen kein Internet und kein Konto."))
-        h.addWidget(abschnittstitel("Welche Hilfe wann"))
-        karte = QFrame(); karte.setFrameShape(QFrame.StyledPanel); kv = QVBoxLayout(karte); kv.setContentsMargins(0, 0, 0, 0); kv.setSpacing(0)
+        h.addWidget(abschnittstitel("Die Stufen"))
+        karte = QFrame(); karte.setFrameShape(QFrame.StyledPanel); kv = QVBoxLayout(karte); kv.setContentsMargins(*RAND_KEIN); kv.setSpacing(ABSTAND_KEIN)
         for i, zeile in enumerate(STUFEN):
             kv.addWidget(self._zeile(*zeile, trenner=i > 0))
         h.addWidget(karte)
         h.addWidget(abschnittstitel("Wie sicher ein Fund ist"))
         h.addWidget(_text("Auch innerhalb von F7 gibt es Stufen. Jede Karte in der Seitenleiste trägt eins von drei Etiketten."))
-        karte2 = QFrame(); karte2.setFrameShape(QFrame.StyledPanel); k2 = QVBoxLayout(karte2); k2.setContentsMargins(0, 0, 0, 0); k2.setSpacing(0)
-        for i, (name, farbe, schrift, satz, rechts) in enumerate(ETIKETTEN):
-            z = QWidget(); zh = FlussLayout(8); z.setLayout(zh); zh.setContentsMargins(12, 8, 12, 8)
-            chip = QLabel(name); chip.setStyleSheet(f"background: {farbe}; color: {schrift}; font-weight: bold; font-size: 8pt; padding: 3px 10px; border-radius: 3px;")
-            zh.addWidget(chip); zh.addWidget(QLabel(satz))
-            r = QLabel(rechts); r.setStyleSheet("color: palette(mid);"); zh.addWidget(r)
-            k2.addWidget(z)
+        karte2 = QFrame(); karte2.setFrameShape(QFrame.StyledPanel); k2 = QVBoxLayout(karte2); k2.setContentsMargins(*RAND_KEIN); k2.setSpacing(ABSTAND_KEIN)
+        chips = []
+        for i, (name, farbe, schrift, satz, rechts) in enumerate(_etiketten()):
+            z = QWidget(); zv = QVBoxLayout(z); zv.setContentsMargins(*RAND_ZEILE_KARTE); zv.setSpacing(ABSTAND_ZEILE)
+            chip = QLabel(name); marke_faerben(chip, farbe, schrift, "font-weight: bold; font-size: " f"{SCHRIFT_KLEIN}" "pt; padding: " f"{PADDING_HILFE_CHIP}" "; border-radius: " f"{RADIUS_MARKE}" "px;")
+            chips.append(chip); chip.setAlignment(Qt.AlignCenter)
+            kopf = QHBoxLayout(); kopf.setContentsMargins(*RAND_KEIN); kopf.addWidget(chip); kopf.addStretch(1)
+            zv.addLayout(kopf); zv.addWidget(_text(satz))
+            r = _text(rechts); hinweis_stil(r); zv.addWidget(r)
+            k2.addWidget(self._mit_trenner(z, i > 0))
         h.addWidget(karte2)
+        breite = max(c.sizeHint().width() for c in chips)
+        for c in chips:
+            c.setFixedWidth(breite)                                             # alle Etiketten gleich breit
         h.addWidget(_text("„Alles Eindeutige übernehmen“ fasst nur die erste Sorte an und lässt die anderen beiden in Ruhe. Wenn es eilt, ist das der eine Klick, den du brauchst."))
         h.addWidget(abschnittstitel("Ein Weg durch einen Brief"))
         for n, s in enumerate(WEG, 1):
-            h.addWidget(_text(f"{n}.  {s}"))
+            zeile = QWidget(); zh = QHBoxLayout(zeile); zh.setContentsMargins(*RAND_KEIN); zh.setSpacing(ABSTAND_MITTEL)
+            nr = QLabel(f"{n}."); nr.setFixedWidth(BREITE_NUMMER); nr.setAlignment(Qt.AlignRight | Qt.AlignTop)
+            nr.setProperty("akzentSchrift", True); nr.setStyleSheet("font-weight: bold;")
+            zh.addWidget(nr); zh.addWidget(_text(s), 1)
+            h.addWidget(zeile)
         h.addWidget(_text("Für einen Zettel an die Tür reicht Stufe 1. Für den Widerspruch ans Amt geht man bis 6."))
         v.addWidget(host)
         fussleiste(self, v, ok_text="Schließen")                                # wie in der Vorlage: „Abbrechen“, dann „Schließen“ (die Hauptschaltfläche)
         fenster.assistant.schalterGeaendert.connect(self._nachziehen)
 
+    @staticmethod
+    def _mit_trenner(z: QWidget, trenner: bool) -> QWidget:
+        if not trenner:
+            return z
+        w = QWidget(); wv = QVBoxLayout(w); wv.setContentsMargins(*RAND_KEIN); wv.setSpacing(ABSTAND_KEIN)
+        linie = trennlinie(tief=True)
+        wv.addWidget(linie); wv.addWidget(z)
+        return w
+
     def _zeile(self, stufe, titel, kuerzel, frage, rechts, aktion, trenner: bool) -> QWidget:
-        z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(12, 8, 12, 8); zh.setSpacing(12)
-        n = QLabel(str(stufe)); n.setAlignment(Qt.AlignCenter); n.setFixedSize(26, 26)
-        n.setStyleSheet(('background: ' + Farbe.AKZENT + '; color: white; font-weight: bold; border-radius: 13px;'))
+        """Stufenzeile in drei festen Spalten: Nummer | Text (Titel, Frage, Hinweis) | Schalter rechts, immer oben bündig."""
+        z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(*RAND_ZEILE_KARTE); zh.setSpacing(ABSTAND_GROSS)
+        n = QLabel(str(stufe)); n.setAlignment(Qt.AlignCenter); n.setFixedSize(*GROESSE_STUFE)
+        n.setProperty("akzentFlaeche", True); n.setStyleSheet('font-weight: bold; border-radius: ' f"{RADIUS_STUFE}" 'px;')
         zh.addWidget(n, 0, Qt.AlignTop)
-        mitte = QVBoxLayout(); mitte.setSpacing(2)
-        kopf = FlussLayout(8)                                                   # Titel, Kürzel und Schalter: bei wenig Platz in mehreren Zeilen
-        t = QLabel(titel); f = t.font(); f.setBold(True); t.setFont(f); kopf.addWidget(t)
+        mitte_w = QWidget(); mitte = QVBoxLayout(mitte_w); mitte.setSpacing(ABSTAND_ENG); mitte.setContentsMargins(*RAND_KEIN)
+        kopf = QHBoxLayout(); kopf.setContentsMargins(*RAND_KEIN); kopf.setSpacing(ABSTAND_MITTEL)
+        t = QLabel(titel); f = t.font(); f.setBold(True); t.setFont(f); kopf.addWidget(t, 0)
         if kuerzel:
-            k = QLabel(kuerzel); k.setStyleSheet("border: 1px solid palette(mid); border-radius: 3px; padding: 0 5px; font-size: 8pt;"); kopf.addWidget(k)
+            k = QLabel(kuerzel); k.setStyleSheet("border: 1px solid palette(mid); border-radius: " f"{RADIUS_MARKE}" "px; padding: " f"{PADDING_TASTENKUERZEL}" "; font-size: " f"{SCHRIFT_KLEIN}" "pt;"); kopf.addWidget(k)
+        kopf.addStretch(1)
+        mitte.addLayout(kopf)
+        mitte.addWidget(_text(frage))
+        r = _text(rechts); hinweis_stil(r); mitte.addWidget(r)
+        zh.addWidget(mitte_w, 1)
         if aktion and aktion[0] == "schalter":
-            b = QPushButton(); b.setCheckable(True); b.setMinimumWidth(52)
+            b = QPushButton(); b.setCheckable(True); b.setFixedSize(*GROESSE_SCHALTER)
             b.setChecked(self.fenster.assistant.an(aktion[1]))
-            b.setStyleSheet("QPushButton { border: 1px solid palette(mid); border-radius: 18px; padding: 2px 8px; }"
-                            "QPushButton:checked { background: #2f9e75; color: white; border-color: #2f9e75; }")
+            b.setStyleSheet("QPushButton { border: 1px solid palette(mid); border-radius: " f"{RADIUS_PILLE}" "px; padding: 0; }"
+                            "QPushButton:checked { background: %s; color: %s; border-color: %s; }" % (Farbe.AN, Farbe.AN_SCHRIFT, Farbe.AN))
             b.setText("an" if b.isChecked() else "aus")
             b.toggled.connect(lambda an, name=aktion[1], b=b: (b.setText("an" if an else "aus"), self.fenster.assistant.setze(name, an)))
             self.schalter[aktion[1]] = b
-            kopf.addWidget(b)
+            zh.addWidget(b, 0, Qt.AlignTop)
         elif aktion:
-            b = QPushButton("jetzt"); b.setMinimumWidth(52); b.setStyleSheet(('QPushButton { border: 1px solid ' + Farbe.AKZENT + '; color: ' + Farbe.AKZENT + '; border-radius: 18px; padding: 2px 12px; }'))
+            b = QPushButton("jetzt"); b.setFixedSize(*GROESSE_SCHALTER)
+            b.setProperty("akzentRand", True); b.setStyleSheet('QPushButton { border-width: 1px; border-style: solid; border-radius: ' f"{RADIUS_PILLE}" 'px; padding: 0; }')
             b.clicked.connect(lambda _=False, a=aktion[1]: (self.accept(), self.fenster.befehle.tun(a)))
-            kopf.addWidget(b)
-        mitte.addLayout(kopf)
-        mitte.addWidget(_text(frage))
-        r = _text(rechts); r.setStyleSheet("color: palette(mid);"); mitte.addWidget(r)
-        zh.addLayout(mitte, 1)
-        if trenner:
-            z.setStyleSheet("")
-            w = QWidget(); wv = QVBoxLayout(w); wv.setContentsMargins(0, 0, 0, 0); wv.setSpacing(0)
-            linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Sunken); linie.setStyleSheet("color: palette(mid);")
-            wv.addWidget(linie); wv.addWidget(z)
-            return w
-        return z
+            zh.addWidget(b, 0, Qt.AlignTop)
+        return self._mit_trenner(z, trenner)
 
     def _nachziehen(self, name: str, an: bool) -> None:
         b = self.schalter.get(name)

@@ -19,6 +19,9 @@ from lunivo_writer.ui.document.editor_seiten import SeitenBaustein
 from lunivo_writer.ui.document.editor_formatierung import FormatierungBaustein
 from lunivo_writer.ui.document.editor_bilder import BilderBaustein
 from lunivo_writer.ui.document.editor_schreibhilfe import SchreibhilfeBaustein
+from lunivo_writer.ui.baukasten.mass import ICON_KLEIN, PADDING_EDITOR_KNOPF, RADIUS_KLEIN, SCHRIFT_KLEIN
+
+STREIFEN_DUNKEL, STREIFEN_HELL = "#2b2d30", "#d9dee5"   # Arbeitsfläche neben dem Blatt (dunkel/hell)
 
 STYLES = dict.fromkeys(stile.NAMEN)       # nur die eingebauten; selbst angelegte: stile.namen()            # Namen der Formatvorlagen (Definitionen: editor/stile.py)
 
@@ -351,12 +354,13 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             e.accept()
             return
         from lunivo_writer.ui.widgets.kontextmenue import menue_bauen
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         c = self.cursorForPosition(e.pos())                            # wie in Word: Rechtsklick außerhalb der Markierung setzt die Schreibmarke dorthin
         tc = self.textCursor()
         if not (tc.hasSelection() and tc.selectionStart() <= c.position() <= tc.selectionEnd()):
             self.setTextCursor(c)
         fenster = self.window()
-        m = menue_bauen(self, fenster) if hasattr(fenster, "befehle") else self.createStandardContextMenu()
+        m = menue_bauen(self, fenster) if hasattr(fenster, "befehle") else MenueListe.standard(self)
         if self.kontext_hook is not None:
             pos = self.cursorForPosition(e.pos()).position()
             self.kontext_hook(m, pos)
@@ -364,8 +368,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if BL.ziel(self) is not None and not self.isReadOnly():
             m.addSeparator()
             if BL.ziel(self)[0] == "frei":
-                m.addAction("Formatieren …", self._frei_formatierung)         # dieselbe Seitenleiste „Formatierung“ wie das Zahnrad der Schnellleiste
-            m.addAction("Layout …", self.bild_layout_dialog)
+                m.eintrag("Formatieren …", self._frei_formatierung)         # dieselbe Seitenleiste „Formatierung“ wie das Zahnrad der Schnellleiste
+            m.eintrag("Layout …", self.bild_layout_dialog)
         if self._bild_cursor() is not None and not self.isReadOnly():
             from lunivo_writer.editor import umbruch as U
             m.addSeparator()
@@ -374,24 +378,20 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             for modus, text in (("zeile", "Bild: mit Text in Zeile"), ("links", "Bild: links, Text umfließt"),
                                 ("rechts", "Bild: rechts, Text umfließt"),
                                 ("oben_unten", "Bild: oben und unten (eigene Zeile)")):
-                a = m.addAction(text, lambda _=False, modus=modus: U.umbruch_setzen(self, modus))
-                a.setCheckable(True)
-                a.setChecked(modus == aktuell)
+                m.eintrag(text, lambda modus=modus: U.umbruch_setzen(self, modus), haken=(modus == aktuell))
         in_tabelle = self.textCursor().currentTable() is not None        # das Tabellenmenü bleibt wie in der Vorlage: ohne Anhängsel
         if self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
-            a = m.addAction("Ausgeblendeter Text", lambda: self.set_versteckt(not self.ist_versteckt()))
-            a.setCheckable(True)
-            a.setChecked(self.ist_versteckt())
+            m.eintrag("Ausgeblendeter Text", lambda: self.set_versteckt(not self.ist_versteckt()), haken=self.ist_versteckt())
         ki = getattr(self.window(), "ki", None)
         if ki is not None and self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
-            m.addAction("KI: Text in Bild", ki.bild_aus_text)
+            m.eintrag("KI: Text in Bild", ki.bild_aus_text)
             aktionen = [a for a in ki.konfig["assistenten"] if a.get("zugriff", "kontext") == "kontext"]
             if aktionen:
-                sub = m.addMenu("KI-Aktionen")
+                sub = m.untermenue("KI-Aktionen")
                 for a in aktionen:
-                    sub.addAction(a["name"], lambda _=False, a=a: ki.assistent(a))
+                    sub.eintrag(a["name"], lambda a=a: ki.assistent(a))
         mini = self.mini_hook is not None and self.opt("ui/mini_rechtsklick", True) and not self.isReadOnly()
         if mini:
             self.mini_hook(self, e.globalPos(), True, m.sizeHint())      # die Leiste richtet sich nach dem Menü
@@ -455,8 +455,8 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
         is_dark = self.palette().color(QPalette.Window).lightness() < 128
         line_color = QColor(Farbe.GRAU_HELL) if is_dark else QColor(Farbe.GRAU)
-        accent_color = QColor("#748ffc") if is_dark else QColor(Farbe.BLAU)
-        strip_color = QColor("#2b2d30") if is_dark else QColor("#d9dee5")
+        accent_color = QColor(Farbe.AKZENT_HELL) if is_dark else QColor(Farbe.BLAU)
+        strip_color = QColor(STREIFEN_DUNKEL) if is_dark else QColor(STREIFEN_HELL)
 
         self._schmuck_zeichnen(p)
         if self.gitter:
@@ -519,7 +519,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
 
 
     # ---- Schreibhilfe: Wellenlinien, Ersetzen, Vorhersage, AutoKorrektur -------------------
-    WELLE = {"fehler": Farbe.ORANGE, "tipp": "#1c7ed6", "hinweis": Farbe.GRAU}
+    WELLE = {"fehler": Farbe.ORANGE, "tipp": Farbe.AUSWAHL, "hinweis": Farbe.GRAU}
 
 
     def keyPressEvent(self, e) -> None:
@@ -618,19 +618,17 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if b is None:
             b = self._paste_btn = QToolButton(self.viewport())
             from lunivo_writer.ui.widgets import icons
-            b.setText("Einfügen"); b.setIcon(icons.icon("clipboard-paste", 14))
+            b.setText("Einfügen"); b.setIcon(icons.icon("clipboard-paste", ICON_KLEIN))
             b.setCursor(Qt.ArrowCursor)
             b.setPopupMode(QToolButton.InstantPopup)
-            b.setStyleSheet("QToolButton { border: 1px solid palette(mid); border-radius: 4px; padding: 2px 6px; "
-                            "background: palette(window); font-size: 8pt; }")
+            b.setStyleSheet("QToolButton { border: 1px solid palette(mid); border-radius: " f"{RADIUS_KLEIN}" "px; padding: " f"{PADDING_EDITOR_KNOPF}" "; "
+                            "background: palette(window); font-size: " f"{SCHRIFT_KLEIN}" "pt; }")
             self.cursorPositionChanged.connect(self._paste_btn_pruefen)
         self._paste_ende = ende
-        m = QMenu(b)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe(b)
         for name in EINFUEGE_MODI:
-            a = m.addAction(name)
-            a.setCheckable(True)
-            a.setChecked(name == modus)
-            a.triggered.connect(lambda _=False, name=name: self._einfuegen_neu(quelle, start, name))
+            m.eintrag(name, lambda name=name: self._einfuegen_neu(quelle, start, name), haken=(name == modus))
         b.setMenu(m)
         c = QTextCursor(self.document()); c.setPosition(ende)
         r = self.cursorRect(c)

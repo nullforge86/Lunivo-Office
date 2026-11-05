@@ -10,9 +10,22 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_BLOCK,
+    BREITE_MENUETAFEL,
+    BREITE_NAVIGATION_OPTIONEN,
+    ICON_KNOPF_GROSS,
+    ICON_MITTEL,
+    PADDING_MENUETAFEL_KNOPF,
+    PADDING_MENUETAFEL_UNTEREINTRAG,
+    PADDING_MENUETAFEL_ZULETZT,
+    RAND_PANEL_KLEIN,
+    SCHRIFT_HINWEIS,
+)
 
 
 # Symbolnamen aus dem zentralen Lucide-Katalog.
@@ -28,7 +41,7 @@ _MENUE_SYMBOLE = {
 def _menue_symbol(name: str) -> QIcon:
     if name == "Als PDF exportieren":
         return datei_symbol(".pdf")
-    return icons.icon(_MENUE_SYMBOLE.get(name, "file"), 22)
+    return icons.icon(_MENUE_SYMBOLE.get(name, "file"), ICON_MITTEL)
 
 
 def _datum(pfad: str) -> str:
@@ -45,23 +58,23 @@ class MenueTafel(QFrame):
         self.setFrameShape(QFrame.StyledPanel)
         self.punkte, self.b, self.w = punkte, befehle, fenster
         h = QHBoxLayout(self)
-        h.setContentsMargins(6, 6, 6, 6)
-        h.setSpacing(12)
+        h.setContentsMargins(*RAND_PANEL_KLEIN)
+        h.setSpacing(ABSTAND_BLOCK)
         self.links = QVBoxLayout()
         self.links.setSpacing(0)
         host = QWidget()
         host.setLayout(self.links)
-        host.setFixedWidth(250)
+        host.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)
         h.addWidget(host)
         self.rechts = QVBoxLayout()
         self.rechts.setAlignment(Qt.AlignTop)
         rh = QWidget()
         rh.setLayout(self.rechts)
-        rh.setFixedWidth(330)
+        rh.setFixedWidth(BREITE_MENUETAFEL)
         h.addWidget(rh)
         for p in punkte:
             if p.get("trenner"):
-                s = QFrame(); s.setFrameShape(QFrame.HLine); s.setFrameShadow(QFrame.Sunken)
+                s = trennlinie(tief=True)
                 self.links.addWidget(s)
                 continue
             name = p["name"]
@@ -69,9 +82,9 @@ class MenueTafel(QFrame):
             b = QPushButton(name)
             sym = _menue_symbol(name)
             if not sym.isNull():
-                b.setIcon(sym); b.setIconSize(QSize(22, 22))
+                b.setIcon(sym); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: 5px 8px;")
+            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_KNOPF}" ";")
             if taste:
                 b.setToolTip(taste)
             ok = bool(p.get("unter")) or name in ("Optionen", "Zuletzt geöffnet") or (p.get("tun") and self.b.hat(p["tun"]))
@@ -122,15 +135,15 @@ class MenueTafel(QFrame):
         for pfad in items[:10]:
             z = QHBoxLayout()
             b = QPushButton(f"{os.path.basename(pfad)}\n{os.path.dirname(pfad)}")
-            b.setIcon(datei_symbol(pfad)); b.setIconSize(QSize(28, 28))
+            b.setIcon(datei_symbol(pfad)); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: 3px 6px; font-size: 9pt;")
-            b.clicked.connect(lambda _=False, p=pfad: (self.close(), self.w.open_path(p)))
+            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_ZULETZT}" "; font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
+            b.clicked.connect(lambda _=False, p=pfad: (self.close(), self.b.zuletztOeffnen(p)))
             x = QToolButton(); x.setText("×"); x.setAutoRaise(True)
             x.setToolTip("Aus der Liste nehmen — die Datei bleibt liegen")
-            x.clicked.connect(lambda _=False, p=pfad: (self.w.settings.remove_recent(p), self._zeige_zuletzt()))
+            x.clicked.connect(lambda _=False, p=pfad: (self.b.zuletztEntfernen(p), self._zeige_zuletzt()))
             datum = text_label(_datum(pfad), umbruch=False)
-            datum.setStyleSheet("color: palette(mid); font-size: 9pt;")
+            hinweis_stil(datum, klein=True)
             z.addWidget(b, 1); z.addWidget(datum); z.addWidget(x)
             zw = QWidget(); zw.setLayout(z)
             self.rechts.addWidget(zw)
@@ -143,9 +156,9 @@ class MenueTafel(QFrame):
                 continue
             b = QPushButton(u["name"])
             if u.get("datei"):                                     # passendes, lokal gebündeltes Dateiformat-SVG
-                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(28, 28))
+                b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: 4px 8px;")
+            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_UNTEREINTRAG}" ";")
             ok = bool(u.get("tun")) and self.b.hat(u["tun"])
             b.setEnabled(ok)
             if not ok:
@@ -159,7 +172,7 @@ class MenueTafel(QFrame):
             return
         self.close()
         if p["name"] == "Optionen":
-            self.w.show_options()
+            self.b.optionen()
         elif p.get("tun") and self.b.hat(p["tun"]):
             self.b.tun(p["tun"])
 

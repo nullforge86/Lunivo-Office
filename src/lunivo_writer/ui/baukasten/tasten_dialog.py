@@ -16,10 +16,11 @@ from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnitt
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_TASTENKOMBINATION
 class TastenDialog(QDialog):
     def __init__(self, parent=None, aktuell: str = "", *, belegt=None):
         super().__init__(parent)
-        self.setWindowTitle("Tastenkombination"); self.resize(311, 122)
+        self.setWindowTitle("Tastenkombination"); self.resize(*GROESSE_FENSTER_TASTENKOMBINATION)
         self._belegt = belegt
         v = QVBoxLayout(self)
         g = QWidget(); gitter = FormularGitter(g)

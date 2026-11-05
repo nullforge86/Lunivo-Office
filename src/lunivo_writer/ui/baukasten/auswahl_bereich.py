@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem, QVB
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
 
 
 def objekte(ed) -> list[tuple[str, int, int]]:
@@ -43,10 +44,10 @@ class AuswahlBereich(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Auswahl")
         self.ed = ed
-        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_NORMAL)
         kopf = QLabel("Objekte im Dokument:"); kopf.setWordWrap(True)
         v.addWidget(kopf)
-        self.liste = QListWidget(); self.liste.setMinimumHeight(260)
+        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_REITER)
         v.addWidget(self.liste, 1)
         self.leer = QLabel("Das Dokument enthält keine Bilder, Formen oder Tabellen."); self.leer.setWordWrap(True)
         v.addWidget(self.leer)

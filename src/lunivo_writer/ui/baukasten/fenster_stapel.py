@@ -13,21 +13,23 @@ from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QStackedWidget, QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import ABSTAND_GROSS, GROESSE_FENSTER_STAPEL, ICON_NORMAL, RAND_FENSTERSTAPEL_KOPF, RAND_KEIN
 
 
 class FensterStapel(QDialog):
-    GROESSE = QSize(830, 670)             # feste Größe des ganzen Stapels: das größte Unterfenster (Rahmen, Texteffekte, Absatz …) passt hinein, nichts springt
+    GROESSE = QSize(*GROESSE_FENSTER_STAPEL)             # feste Größe des ganzen Stapels: das größte Unterfenster (Rahmen, Texteffekte, Absatz …) passt hinein, nichts springt
 
     def __init__(self, wurzel: QDialog, parent=None):
         super().__init__(parent)
         self.wurzel = wurzel
         self.setWindowTitle(wurzel.windowTitle())
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        self.kopf = QWidget(); kh = QHBoxLayout(self.kopf); kh.setContentsMargins(10, 6, 10, 6); kh.setSpacing(10)
-        self.zurueck = QToolButton(); self.zurueck.setText("Zurück"); self.zurueck.setIcon(icons.icon("arrow-left", 16)); self.zurueck.setAutoRaise(True)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+        self.kopf = QWidget(); kh = QHBoxLayout(self.kopf); kh.setContentsMargins(*RAND_FENSTERSTAPEL_KOPF); kh.setSpacing(ABSTAND_GROSS)
+        self.zurueck = QToolButton(); self.zurueck.setText("Zurück"); self.zurueck.setIcon(icons.icon("arrow-left", ICON_NORMAL)); self.zurueck.setAutoRaise(True)
         self.zurueck.clicked.connect(self._zurueck)
-        self.pfad = QLabel(); self.pfad.setStyleSheet("color: palette(mid);")
+        self.pfad = QLabel(); hinweis_stil(self.pfad)
         kh.addWidget(self.zurueck); kh.addWidget(self.pfad, 1)
         v.addWidget(self.kopf)
         self.stapel = QStackedWidget(); v.addWidget(self.stapel, 1)

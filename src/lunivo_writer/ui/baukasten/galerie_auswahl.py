@@ -10,8 +10,23 @@ from typing import Callable
 
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPen, QPixmap
-from PySide6.QtWidgets import QApplication, QFrame, QGridLayout, QLabel, QMenu, QPushButton, QScrollArea, QVBoxLayout, QWidget, QWidgetAction
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QVBoxLayout, QWidget, QWidgetAction
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.mass import (
+    SCHRIFT_GRUPPENTITEL_PX,
+    ABSTAND_ENG,
+    ABSTAND_NORMAL,
+    GROESSE_GALERIE_KACHEL,
+    ICON_GROSS,
+    PADDING_GALERIE_EINTRAG,
+    PADDING_GALERIE_TITEL,
+    RADIUS_FELD,
+    RAND_KEIN,
+    RAND_PANEL_KLEIN,
+)
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 
 class _Kachel(QWidget):
@@ -64,7 +79,7 @@ class _Kachel(QWidget):
         p.end()
 
 
-class GalerieAuswahl(QMenu):
+class GalerieAuswahl(MenueListe):
     """Meldet den Schlüssel der gewählten Kachel."""
 
     gewaehlt = Signal(str)
@@ -72,20 +87,19 @@ class GalerieAuswahl(QMenu):
     verlassen = Signal()
     kontext = Signal(str, object)            # Rechtsklick auf eine Kachel: Schlüssel, Bildschirmposition
 
-    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, kachel: QSize = QSize(78, 56), zeilen_sichtbar: int = 6):
+    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, kachel: QSize = QSize(*GROESSE_GALERIE_KACHEL), zeilen_sichtbar: int = 6):
         super().__init__(parent)
         self._spalten, self._kachel, self._zeilen = spalten, kachel, zeilen_sichtbar
         self._n = 0
         self.kacheln: dict[str, _Kachel] = {}
         wid = QWidget()
         self._v = QVBoxLayout(wid)
-        self._v.setContentsMargins(6, 6, 6, 6); self._v.setSpacing(6)
+        self._v.setContentsMargins(*RAND_PANEL_KLEIN); self._v.setSpacing(ABSTAND_NORMAL)
         if titel:
-            t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px; padding: 0 2px;")
+            t = QLabel(titel); hinweis_stil(t, zusatz="font-size: " f"{SCHRIFT_GRUPPENTITEL_PX}" "px; padding: " f"{PADDING_GALERIE_TITEL}" ";")
             self._v.addWidget(t)
         halter = QWidget()
-        self._gitter = QGridLayout(halter)
-        self._gitter.setContentsMargins(0, 0, 0, 0); self._gitter.setSpacing(2); self._gitter.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self._gitter = kachel_gitter((), spalten, eltern=halter, abstand=ABSTAND_ENG, oben_links=True)
         self._rolle = QScrollArea(); self._rolle.setWidget(halter); self._rolle.setWidgetResizable(True)
         self._rolle.setFrameShape(QFrame.NoFrame)
         self._rolle.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -93,7 +107,7 @@ class GalerieAuswahl(QMenu):
         self._rolle.setFixedHeight(zeilen_sichtbar * (kachel.height() + 2))
         self._v.addWidget(self._rolle)
         self._trenner = None
-        a = QWidgetAction(self); a.setDefaultWidget(wid); self.addAction(a)
+        self.widget(wid)
 
     def kachel(self, schluessel: str, name: str, schrift: QFont, *, probe: str = "AaBbCcD", farbe: str | None = None,
                aktuell: bool = False, tipp: str = "") -> None:
@@ -110,12 +124,12 @@ class GalerieAuswahl(QMenu):
         """Zeile unter der Galerie (z. B. „Neue Formatvorlage …“); schließt das Popup und ruft ``fn``.
         ``haken`` (True/False) macht daraus einen Schalter mit Haken vorn; ``fn`` bekommt dann den neuen Zustand."""
         if self._trenner is None:
-            self._trenner = QFrame(); self._trenner.setFrameShape(QFrame.HLine); self._trenner.setFrameShadow(QFrame.Sunken)
+            self._trenner = trennlinie(tief=True)
             self._v.addWidget(self._trenner)
         b = QPushButton(text); b.setFlat(True); b.setEnabled(aktiv)
-        b.setStyleSheet("QPushButton { text-align: left; padding: 6px 8px; border: none; border-radius: 6px; }"
+        b.setStyleSheet("QPushButton { text-align: left; padding: " f"{PADDING_GALERIE_EINTRAG}" "; border: none; border-radius: " f"{RADIUS_FELD}" "px; }"
                         "QPushButton:hover:enabled { background: palette(midlight); }")
-        b.setIconSize(QSize(18, 18))
+        b.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         if haken is not None:
             b.setCheckable(True); b.setChecked(haken)
             haken_symbol = self._haken_symbol()
@@ -132,4 +146,4 @@ class GalerieAuswahl(QMenu):
 
     @staticmethod
     def _haken_symbol() -> QIcon:
-        return icons.icon("check", 18)
+        return icons.icon("check", ICON_GROSS)

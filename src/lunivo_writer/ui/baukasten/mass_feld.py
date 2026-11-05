@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_EINHEITENAUSWAHL, BREITE_REGLER_MIN, RAND_KEIN
 
 
 # Maßeinheit der Oberfläche (Optionen ▸ Speichern): intern bleibt alles in Millimetern, nur die Anzeige wechselt.
@@ -69,14 +70,14 @@ class EinheitFeld(QWidget):
         super().__init__()
         self._mm = wert_mm
         self._lo, self._hi = lo, hi
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(4)
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_KLEIN)
         self.zahl = QDoubleSpinBox(); self.zahl.setSingleStep(1.0)
         if leer_bei_null:
             self.zahl.setSpecialValueText(" ")            # leer, solange nichts eingetragen ist
         self.einheit = QComboBox()
         for k in einheiten:
             self.einheit.addItem(FELD_EINHEITEN[k][1], k)
-        self.zahl.setMinimumWidth(60); self.einheit.setMinimumWidth(46); self.einheit.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.einheit.setMinimumContentsLength(3)
+        self.zahl.setMinimumWidth(BREITE_REGLER_MIN); self.einheit.setMinimumWidth(BREITE_EINHEITENAUSWAHL); self.einheit.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.einheit.setMinimumContentsLength(3)
         h.addWidget(self.zahl, 1); h.addWidget(self.einheit)
         k0 = start or einheit_name()
         self.einheit.setCurrentIndex(max(0, self.einheit.findData(k0)))

@@ -10,12 +10,23 @@ from PySide6.QtWidgets import (
 from lunivo_writer.ai import ki as K
 from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout
 
 
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    ABSTAND_MITTEL,
+    HOEHE_EINGABE_TEXT,
+    HOEHE_LISTE_MITTEL,
+    ICON_NORMAL,
+    RAND_KEIN,
+)
 class ChatEingabe(QPlainTextEdit):
     """Mehrzeiliges Eingabefeld für den Chat: Enter schickt ab, Umschalt+Enter macht eine neue Zeile. ``text()``/``setText()`` wie beim Einzeiler."""
     abgeschickt = Signal()
@@ -23,7 +34,7 @@ class ChatEingabe(QPlainTextEdit):
     def __init__(self):
         super().__init__()
         self.setPlaceholderText("Frage an die KI …")
-        self.setMinimumHeight(110)
+        self.setMinimumHeight(HOEHE_EINGABE_TEXT)
         self.setTabChangesFocus(True)
 
     def keyPressEvent(self, e) -> None:
@@ -49,20 +60,15 @@ class ChatPanel(QWidget):
         super().__init__()
         self.d, self.w = dienst, fenster
         self.verlauf: list[dict] = []
-        v = QVBoxLayout(self)
-        v.setContentsMargins(0, 0, 0, 0)
-        v.setSpacing(8)
-        kopf = QHBoxLayout(); kopf.setSpacing(6)
-        kopf.addWidget(text_label("KI-Chat", fett=True, pt=12, umbruch=False), 1)
-        for symbol, tipp, fn in (("settings", "KI-Einstellungen", self._einstellungen), ("x", "Zur Schreibhilfe", self.zurueck.emit)):
-            b = QToolButton(); b.setIcon(icons.icon(symbol, 16)); b.setAutoRaise(True); b.setToolTip(tipp); b.setMinimumWidth(36)
-            b.clicked.connect(lambda _=False, f=fn: f())
-            kopf.addWidget(b)
-        v.addLayout(kopf)
+        aussen = QVBoxLayout(self); aussen.setContentsMargins(*RAND_KEIN); aussen.setSpacing(0)
+        rahmen = PanelRahmen("KI-Chat", knoepfe=(("settings", "KI-Einstellungen", self._einstellungen),))      # Kopfzeile, Titel und Ränder aus dem gemeinsamen Rahmen
+        rahmen.schliessen.connect(self.zurueck.emit)
+        aussen.addWidget(rahmen)
+        v = rahmen.inhalt
         # Hinweis, solange kein Modell verbunden ist
         self.hinweis = QWidget()
-        hv = QVBoxLayout(self.hinweis); hv.setContentsMargins(0, 0, 0, 0)
-        hv.addWidget(text_label("KI-Modell verbinden, um den KI-Chat zu aktivieren", fett=True))
+        hv = QVBoxLayout(self.hinweis); hv.setContentsMargins(*RAND_KEIN)
+        hv.addWidget(hinweis_label("KI-Modell verbinden, um den KI-Chat zu aktivieren"))
         hb = QPushButton("KI-Einstellungen …"); hb.clicked.connect(self._einstellungen)
         hv.addWidget(hb, 0, Qt.AlignLeft)
         v.addWidget(self.hinweis)
@@ -72,7 +78,7 @@ class ChatPanel(QWidget):
         self.blasen = QVBoxLayout()
         self.blasen.setAlignment(Qt.AlignTop)
         host = QWidget(); host.setLayout(self.blasen)
-        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setWidget(host); sc.setMinimumHeight(180); sc.setFrameShape(QFrame.NoFrame)
+        sc = rollflaeche(host); sc.setMinimumHeight(HOEHE_LISTE_MITTEL)
         self.scroll = sc
         v.addWidget(sc, 1)
         # Meine Aktionen: dieselbe Leiste wie in der Schreibhilfe
@@ -83,11 +89,11 @@ class ChatPanel(QWidget):
         dienst.aktionErgebnis.connect(self._aktion_ergebnis)
         # Eingabe
         self.eingabezeile = QWidget()
-        ev = QVBoxLayout(self.eingabezeile); ev.setContentsMargins(0, 0, 0, 0); ev.setSpacing(4)
+        ev = QVBoxLayout(self.eingabezeile); ev.setContentsMargins(*RAND_KEIN); ev.setSpacing(ABSTAND_KLEIN)
         self.eingabe = ChatEingabe()
         self.eingabe.abgeschickt.connect(self.senden)
         ev.addWidget(self.eingabe)
-        self.tokens = QLabel("Tokens: 0"); self.tokens.setStyleSheet("color: palette(mid);"); self.tokens.setAlignment(Qt.AlignRight)
+        self.tokens = hinweis_label("Tokens: 0", umbruch=False); self.tokens.setAlignment(Qt.AlignRight)
         self.tokens.setToolTip("Grobe Schätzung: etwa vier Zeichen je Token")
         self.eingabe.textChanged.connect(lambda: self.tokens.setText(f"Tokens: {(len(self.eingabe.text()) + 3) // 4}"))
         ev.addWidget(self.tokens)
@@ -115,7 +121,7 @@ class ChatPanel(QWidget):
         self.mehr = QPushButton(); self.mehr.setFlat(True); self.mehr.setCursor(Qt.PointingHandCursor)
         ev.addWidget(self.mehr, 0, Qt.AlignLeft)
         self.erweitert = QWidget()
-        ew = QVBoxLayout(self.erweitert); ew.setContentsMargins(0, 0, 0, 0); ew.setSpacing(4)
+        ew = QVBoxLayout(self.erweitert); ew.setContentsMargins(*RAND_KEIN); ew.setSpacing(ABSTAND_KLEIN)
         ew.addWidget(text_label("Modell", fett=True))
         self.modell = modell_combo(k, "chatbot")
         self.modell.currentIndexChanged.connect(lambda: (k.aufgabe_setzen("chatbot", self.modell.currentData() or ""), self.d.geaendert.emit()))
@@ -123,7 +129,7 @@ class ChatPanel(QWidget):
 
         def regler(titel: str, tipp: str, maximum: int, wert: int, anzeige, speichern):
             from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
-            zeile = QWidget(); g = FormularGitter(zeile); g.setContentsMargins(0, 0, 0, 0)
+            zeile = QWidget(); g = FormularGitter(zeile); g.setContentsMargins(*RAND_KEIN)
             zahl = QLabel(anzeige(wert)); zahl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             g.zeile(text_label(titel, fett=True), zahl)
             sl = QSlider(Qt.Horizontal); sl.setRange(0, maximum); sl.setValue(wert); sl.setToolTip(tipp)
@@ -141,7 +147,7 @@ class ChatPanel(QWidget):
         self.stopp = QLineEdit(str(o["stopp"])); self.stopp.setPlaceholderText("durch Komma getrennt")
         self.stopp.textChanged.connect(lambda t: k.chat_setzen(stopp=t))
         ew.addWidget(self.stopp)
-        self.direkt = QCheckBox("Antwort direkt ins Dokument einfügen"); self.direkt.setChecked(bool(o["direkt"]))
+        self.direkt = UmbruchSchalter("Antwort direkt ins Dokument einfügen"); self.direkt.setChecked(bool(o["direkt"]))
         self.direkt.toggled.connect(lambda an: k.chat_setzen(direkt=an))
         ew.addWidget(self.direkt)
         ev.addWidget(self.erweitert)
@@ -149,7 +155,7 @@ class ChatPanel(QWidget):
         def umschalten(an: bool) -> None:
             self.erweitert.setVisible(an)
             self.mehr.setText("Erweiterte Einstellungen ausblenden" if an else "Erweiterte Einstellungen anzeigen")
-            self.mehr.setIcon(icons.icon("chevron-up" if an else "chevron-down", 16))
+            self.mehr.setIcon(icons.icon("chevron-up" if an else "chevron-down", ICON_NORMAL))
         self.mehr.clicked.connect(lambda: umschalten(not self.erweitert.isVisible()))
         umschalten(False)
         self.d.geaendert.connect(self._modelle_neu)
@@ -174,14 +180,12 @@ class ChatPanel(QWidget):
         self.eingabezeile.setVisible(da)
 
     def _einstellungen(self) -> None:
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
-        ausfuehren(KIEinstellungenDialog(self.w, 0))
+        self.w.befehle.tun("w.kiEinstellungen")             # derselbe Befehl wie in Band und Schreibhilfe, kein zweites Öffnen
         self.d.geaendert.emit()
 
     def _blase(self, text: str, ki: bool, cent=None) -> None:
         f = QFrame(); f.setFrameShape(QFrame.StyledPanel)
-        f.setStyleSheet("QFrame { border-left: 4px solid %s; }" % (Farbe.AKZENT if ki else Farbe.GRAU))
+        als_karte(f, "ki" if ki else "markiert")
         l = QVBoxLayout(f)
         t = text_label(text)
         t.setTextInteractionFlags(Qt.TextSelectableByMouse)

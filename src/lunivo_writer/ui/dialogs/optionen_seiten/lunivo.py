@@ -12,6 +12,22 @@ from lunivo_writer.services import vorlesen
 from lunivo_writer.plattform import pfade
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_NORMAL,
+    BREITE_KNOPF_KLEIN,
+    HOEHE_VORSCHAU_KLEIN,
+    PADDING_PLAKETTE,
+    PADDING_STARTKNOPF_LINK,
+    RADIUS_KLEIN,
+    RAND_KARTE_ZEILE,
+    RAND_KEIN,
+    RAND_ZEILE,
+    RAND_ZEILE_ENG,
+    SCHRIFT_HINWEIS,
+    SCHRIFT_KLEIN,
+)
 
 
 class LunivoSeiten:
@@ -54,20 +70,20 @@ class LunivoSeiten:
             c.currentIndexChanged.connect(lambda _i, a=aufgabe, c=c: (k.aufgabe_setzen(a, c.currentData() or ""), geaendert.emit()))
             f.addRow(name, c)
         mb = QPushButton("KI-Modelle bearbeiten"); mb.setFlat(True); mb.setCursor(Qt.PointingHandCursor)
-        mb.setStyleSheet("QPushButton { color: #5b9bd5; text-align: left; border: none; padding: 4px 0; }")
+        mb.setProperty("akzentSchrift", True); mb.setStyleSheet("QPushButton { text-align: left; border: none; padding: " f"{PADDING_STARTKNOPF_LINK}" "; }")
         f.addRow(mb)
 
         schluessel = QLineEdit(k["apiKey"]); schluessel.setEchoMode(QLineEdit.Password); schluessel.setPlaceholderText("sk-ant-…")
         schluessel.setProperty("optName", "API-Schlüssel")
         f.addRow("API-Schlüssel", schluessel)
-        hinweis = QLabel(); hinweis.setStyleSheet("color: palette(window-text); font-size: 9pt;"); hinweis.setWordWrap(True)
+        hinweis = QLabel(); hinweis.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;"); hinweis.setWordWrap(True)
         f.addRow(hinweis)
-        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(0, 0, 0, 0)
+        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(*RAND_KEIN)
         zeigen = QPushButton("Anzeigen"); zeigen.setCheckable(True)
         kopie = QPushButton("Kopieren")
         loeschen = QPushButton("Schlüssel löschen")
         erstellen = QPushButton("Schlüssel erstellen ↗"); erstellen.setFlat(True); erstellen.setCursor(Qt.PointingHandCursor)
-        erstellen.setStyleSheet("QPushButton { color: #5b9bd5; border: none; }")
+        erstellen.setProperty("akzentSchrift", True); erstellen.setStyleSheet("QPushButton { border: none; }")
         for b in (zeigen, kopie, loeschen, erstellen):
             h.addWidget(b)
         h.addStretch(1)
@@ -107,7 +123,7 @@ class LunivoSeiten:
             modell.blockSignals(False)
         modell.currentIndexChanged.connect(lambda _i: (k.setze("modell", modell.currentData()), aufgaben_fuellen(), geaendert.emit()))
 
-        anb = QWidget(); av = QVBoxLayout(anb); av.setContentsMargins(0, 4, 0, 4); av.setSpacing(6)
+        anb = QWidget(); av = QVBoxLayout(anb); av.setContentsMargins(*RAND_ZEILE); av.setSpacing(ABSTAND_NORMAL)
         anb.setProperty("optName", "Eigene Anbieter")
         f.addRow(QLabel("Eigene Anbieter"))
         f.addRow(anb)
@@ -122,7 +138,7 @@ class LunivoSeiten:
             if not k["anbieter"]:
                 av.addWidget(QLabel("Noch keiner angelegt — Ollama, OpenAI, OpenRouter, Gemini, Mistral …"))
             for a in k["anbieter"]:
-                z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(0, 0, 0, 0)
+                z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(*RAND_KEIN)
                 teile = [a["modell"], "Lokaler Anbieter" if K.ist_lokale_url(a["url"]) else "Über das Internet"]
                 zh.addWidget(QLabel(f"{a['name']}  ·  {' · '.join(t for t in teile if t)}"), 1)
                 eb = QPushButton("Entfernen")
@@ -148,7 +164,7 @@ class LunivoSeiten:
         mb.clicked.connect(modelle_bearbeiten)
 
         f.addRow(QLabel("Eigene Assistenten"))
-        ass = QWidget(); sv = QVBoxLayout(ass); sv.setContentsMargins(0, 4, 0, 4); sv.setSpacing(6)
+        ass = QWidget(); sv = QVBoxLayout(ass); sv.setContentsMargins(*RAND_ZEILE); sv.setSpacing(ABSTAND_NORMAL)
         ass.setProperty("optName", "Eigene Assistenten")
         f.addRow(ass)
         na = QPushButton("Neuen Assistenten erstellen …")
@@ -162,7 +178,7 @@ class LunivoSeiten:
             if not k["assistenten"]:
                 sv.addWidget(QLabel("Noch keiner angelegt."))
             for a in k["assistenten"]:
-                z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(0, 0, 0, 0)
+                z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(*RAND_KEIN)
                 zh.addWidget(QLabel(a["name"]), 1)
                 eb = QPushButton("Entfernen")
                 eb.clicked.connect(lambda _=False, i=a["id"]: (k.assistent_entfernen(i), assistenten_fuellen()))
@@ -176,11 +192,11 @@ class LunivoSeiten:
         self.w.assistant.themaGeaendert.connect(lambda t: wen.currentText() != t and (wen.blockSignals(True), wen.setCurrentText(t), wen.blockSignals(False)))
         f.addRow("Für wen der Text ist", wen)
 
-        verbrauch = QWidget(); vh = QHBoxLayout(verbrauch); vh.setContentsMargins(0, 2, 0, 2)
+        verbrauch = QWidget(); vh = QHBoxLayout(verbrauch); vh.setContentsMargins(*RAND_ZEILE_ENG)
         vh.addWidget(QLabel("Verbrauch"))
         vh.addWidget(QLabel("Noch nichts verbraucht." if not k["kosten"] else f"Bisherige Kosten: {K.als_geld(k['kosten'])}"))
         auf = QPushButton("Guthaben aufladen ↗"); auf.setFlat(True); auf.setCursor(Qt.PointingHandCursor)
-        auf.setStyleSheet("QPushButton { color: #5b9bd5; border: none; }")
+        auf.setProperty("akzentSchrift", True); auf.setStyleSheet("QPushButton { border: none; }")
         auf.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://console.anthropic.com/settings/billing")))
         vh.addWidget(auf); vh.addStretch(1)
         f.addRow(verbrauch)
@@ -196,13 +212,13 @@ class LunivoSeiten:
         p = _Seite(self.w, titel)
         g = self.w.assistant.gelernt
         f = p.gruppe("Gelernte Schreibweisen")
-        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(0, 2, 0, 2)
+        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(*RAND_ZEILE_ENG)
         lab = QLabel(); lab.setStyleSheet("color: palette(window-text);")
         vergessen = QPushButton("vergessen")
         h.addWidget(lab, 1); h.addWidget(vergessen)
         f.addRow(zeile)
         zeile.setProperty("optName", "Gelernte Schreibweisen")
-        liste = QListWidget(); liste.setMinimumHeight(120); liste.setAccessibleName("Gelernte Schreibweisen")
+        liste = QListWidget(); liste.setMinimumHeight(HOEHE_VORSCHAU_KLEIN); liste.setAccessibleName("Gelernte Schreibweisen")
 
         def fuellen():
             d = g.daten
@@ -256,7 +272,7 @@ class LunivoSeiten:
                 QMessageBox.warning(self, "Einspielen", f"Die Datei wurde nicht eingespielt. Prüfen Sie, ob es eine Lunivo-Sicherung (.json) ist.\n\nGrund: {ex}")
                 return
             g.speichern(); fuellen(); self.w.assistant.pruefen(voll=True)
-        z2 = QWidget(); h2 = QHBoxLayout(z2); h2.setContentsMargins(0, 2, 0, 2)
+        z2 = QWidget(); h2 = QHBoxLayout(z2); h2.setContentsMargins(*RAND_ZEILE_ENG)
         b1 = QPushButton("Sichern"); b2 = QPushButton("Einspielen")
         b1.clicked.connect(sichern); b2.clicked.connect(einspielen)
         h2.addWidget(b1); h2.addWidget(b2); h2.addWidget(eb); h2.addStretch(1)
@@ -300,19 +316,19 @@ class LunivoSeiten:
         f = p.gruppe("Was zusätzlich geholt wurde")
         for name, beschr, da, pfad, fehlt in karten:
             k = QFrame(); k.setObjectName("optSchriftkarte")
-            h = QHBoxLayout(k); h.setContentsMargins(12, 10, 12, 10)
+            h = QHBoxLayout(k); h.setContentsMargins(*RAND_KARTE_ZEILE)
             badge = QLabel("DA" if da else "—")
-            badge.setAlignment(Qt.AlignCenter); badge.setFixedWidth(36)
-            badge.setStyleSheet("background: %s; color: white; border-radius: 4px; font-weight: 700; font-size: 8pt; padding: 3px;"
-                                % ("#3aa57a" if da else "#6b7280"))
+            badge.setAlignment(Qt.AlignCenter); badge.setFixedWidth(BREITE_KNOPF_KLEIN)
+            badge.setStyleSheet("background: %s; color: %s; border-radius: " f"{RADIUS_KLEIN}" "px; font-weight: 700; font-size: " f"{SCHRIFT_KLEIN}" "pt; padding: " f"{PADDING_PLAKETTE}" ";"
+                                % (Farbe.AN if da else Farbe.GRAU, Farbe.AN_SCHRIFT))
             h.addWidget(badge, 0, Qt.AlignTop)
-            v = QVBoxLayout(); v.setSpacing(2)
+            v = QVBoxLayout(); v.setSpacing(ABSTAND_ENG)
             v.addWidget(text_label(name, fett=True, umbruch=False))
             b = QLabel(beschr if da else f"{beschr} — nicht vorhanden ({fehlt})")
             b.setWordWrap(True); b.setStyleSheet("color: palette(window-text); font-style: italic;")
             v.addWidget(b)
             h.addLayout(v, 1)
-            gr = QLabel(groesse(pfad) if da else ""); gr.setStyleSheet("color: palette(window-text); font-size: 9pt;")
+            gr = QLabel(groesse(pfad) if da else ""); gr.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
             h.addWidget(gr, 0, Qt.AlignTop)
             f.addRow(k)
         f = p.gruppe("Daten")

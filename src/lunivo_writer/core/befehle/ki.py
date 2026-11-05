@@ -21,23 +21,24 @@ class KIBefehle:
 
     def menue_assistenten(self):
         """Das Menü „KI-Aktionen“: die eigenen Schnellen KI-Aktionen, neue anlegen, entfernen und alle bisherigen Ergebnisse."""
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
 
         def fuellen():
             m.clear()
             liste = self.w.ki.konfig["assistenten"]
             for a in liste:
-                m.addAction(a["name"], lambda _=False, a=a: self.w.ki.assistent(a))
+                m.eintrag(a["name"], lambda a=a: self.w.ki.assistent(a))
             if not liste:
-                m.addAction("Noch keine eigenen KI-Aktionen").setEnabled(False)
+                m.eintrag("Noch keine eigenen KI-Aktionen", aktiv=False)
             m.addSeparator()
-            m.addAction("Neue Schnelle KI-Aktion …", self.w_assistentErstellen)
+            m.eintrag("Neue Schnelle KI-Aktion …", self.w_assistentErstellen)
             if liste:
-                entf = m.addMenu("KI-Aktion entfernen")
+                entf = m.untermenue("KI-Aktion entfernen")
                 for a in liste:
-                    entf.addAction(a["name"], lambda _=False, a=a: (self.w.ki.konfig.assistent_entfernen(a["id"]), self.w.ki.geaendert.emit()))
+                    entf.eintrag(a["name"], lambda a=a: (self.w.ki.konfig.assistent_entfernen(a["id"]), self.w.ki.geaendert.emit()))
             m.addSeparator()
-            m.addAction("Alle Ergebnisse anzeigen", self.w_kiErgebnisse)
+            m.eintrag("Alle Ergebnisse anzeigen", self.w_kiErgebnisse)
         m.aboutToShow.connect(fuellen)
         fuellen()
         return m
@@ -45,9 +46,10 @@ class KIBefehle:
 
     def menue_silbenTrennungMenue(self):
         """Zur Silbentrennung: wo man die Trennstriche sieht (die Bearbeitungsansicht zeigt sie nicht) und die Einstellungen."""
-        m = QMenu()
-        m.addAction("Trennstriche in der Druckvorschau ansehen", self.silbentrennungVorschau)
-        m.addAction("Einstellungen der Silbentrennung …", lambda: self.w.show_options("sprache"))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Trennstriche in der Druckvorschau ansehen", self.silbentrennungVorschau)
+        m.eintrag("Einstellungen der Silbentrennung …", lambda: self.w.show_options("sprache"))
         return m
 
 
@@ -56,8 +58,9 @@ class KIBefehle:
 
 
     def menue_silbenMenue(self):
-        m = QMenu()
-        m.addAction("Silben einstellen …", self.silbenEinstellen)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Silben einstellen …", self.silbenEinstellen)
         return m
 
 
@@ -91,20 +94,9 @@ class KIBefehle:
     def kiZusammenfassen(self, k=None):
         self.w.sidebar._funde_zeigen(); self.w.ki.zusammenfassen()
 
-    def w_kiUebersetzen(self, k=None): self.w.ki.uebersetzen()                      # Markierung → ersetzen, sonst Übersetzung zeigen
-
     def w_kiUebersetzenErsetzen(self, k=None): self.w.ki.uebersetzen(modus="ersetzen")
 
     def w_kiUebersetzenZeigen(self, k=None): self.w.ki.uebersetzen(modus="zeigen")
-
-
-    def menue_uebersetzenMenue(self):
-        m = QMenu()
-        m.addAction("Markierung im Text ersetzen", self.w_kiUebersetzenErsetzen)
-        m.addAction("Übersetzung in Schreibhilfe und Chat zeigen", self.w_kiUebersetzenZeigen)
-        m.addSeparator()
-        m.addAction("Sprache wählen …", self.w_kiSprache)
-        return m
 
 
     def kiEntwerfen(self, k=None): self.w.chat_oeffnen("Entwirf einen Text zu folgendem Anliegen: ")

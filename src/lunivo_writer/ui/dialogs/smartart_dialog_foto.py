@@ -12,8 +12,9 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
 from lunivo_writer.ui.dialogs.einfuegen_dialoge import SmartArtDialog, _layout_bildchen, _LayoutGalerie
+from lunivo_writer.ui.baukasten.mass import GROESSE_KACHEL_FOTO
 
-KACHEL_B, KACHEL_H = 126, 76                      # Außenmaß einer Kachel (Foto etwa 130 x 78)
+KACHEL_B, KACHEL_H = GROESSE_KACHEL_FOTO                      # Außenmaß einer Kachel (Foto etwa 130 x 78)
 ABSTAND = 4
 
 

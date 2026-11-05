@@ -154,9 +154,10 @@ def klick(ed, pos: int, fenster=None) -> bool:
         voll = wert_von(ed.document(), v, e) == KASTEN_VOLL
         _ersetzen(ed, v, e, m, KASTEN_LEER if voll else KASTEN_VOLL)
     elif art == "auswahl":
-        menu = QMenu(ed)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        menu = MenueListe(ed)
         for o in m.get("optionen") or []:
-            menu.addAction(o, lambda _=False, o=o: _ersetzen(ed, v, e, m, o))
+            menu.eintrag(o, lambda o=o: _ersetzen(ed, v, e, m, o))
         if not menu.isEmpty():
             menu.exec(ed.viewport().mapToGlobal(ed.cursorRect(_c(ed, v)).bottomLeft()))
     elif art == "datum":

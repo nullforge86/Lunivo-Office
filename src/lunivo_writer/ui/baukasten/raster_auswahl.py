@@ -6,8 +6,21 @@ from typing import Callable
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QGridLayout, QLabel, QMenu, QPushButton, QScrollArea, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+    QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.mass import (
+    SCHRIFT_GRUPPENTITEL_PX,
+    ABSTAND_ENG,
+    ABSTAND_KLEIN,
+    GROESSE_RASTERKACHEL_RAND,
+    GROESSE_RASTER_STANDARD_KACHEL,
+    PADDING_RASTER_FUSSKNOPF,
+    RAND_PANEL_KLEIN,
+    RAND_RASTER_FUSS,
+)
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 
 def _symbol(bild, groesse: QSize, blass: bool = False) -> QIcon:
@@ -55,12 +68,12 @@ def zeilenkachel(bild, titel: str, angaben: list[str] = (), spalten: int = 1, bi
     return f
 
 
-class RasterAuswahl(QMenu):
+class RasterAuswahl(MenueListe):
     """Meldet den Schlüssel der gewählten Kachel."""
 
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(56, 56), beschriftet: bool = False,
+    def __init__(self, parent=None, *, titel: str = "", spalten: int = 4, groesse: QSize = QSize(*GROESSE_RASTER_STANDARD_KACHEL), beschriftet: bool = False,
                  hoehe_max: int = 0):
         """``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp.
         ``hoehe_max``: lange Galerien (Designs, Schriftarten) rollen ab dieser Höhe; der Fuß bleibt darunter stehen."""
@@ -68,23 +81,22 @@ class RasterAuswahl(QMenu):
         self._spalten, self._groesse, self._beschriftet = spalten, groesse, beschriftet
         self._wid = QWidget()
         self._v = QVBoxLayout(self._wid)
-        self._v.setContentsMargins(6, 6, 6, 6); self._v.setSpacing(4)
+        self._v.setContentsMargins(*RAND_PANEL_KLEIN); self._v.setSpacing(ABSTAND_KLEIN)
         self._fuss_v, self._rollen, self._hoehe_max = self._v, None, hoehe_max
         if hoehe_max:
-            aussen = QWidget(); self._fuss_v = QVBoxLayout(aussen); self._fuss_v.setContentsMargins(0, 0, 0, 4); self._fuss_v.setSpacing(2)
+            aussen = QWidget(); self._fuss_v = QVBoxLayout(aussen); self._fuss_v.setContentsMargins(*RAND_RASTER_FUSS); self._fuss_v.setSpacing(ABSTAND_ENG)
             self._rollen = QScrollArea(); self._rollen.setWidgetResizable(True); self._rollen.setFrameShape(QFrame.NoFrame)
             self._rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self._rollen.setWidget(self._wid)
             self._fuss_v.addWidget(self._rollen)
             self.aboutToShow.connect(self._rollen_masse)
         if titel:
-            t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
+            t = QLabel(titel); hinweis_stil(t, zusatz="font-size: " f"{SCHRIFT_GRUPPENTITEL_PX}" "px;")
             self._v.addWidget(t)
-        self._gitter = QGridLayout(); self._gitter.setSpacing(4)
-        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
+        self._gitter = kachel_gitter((), self._spalten, abstand=ABSTAND_KLEIN, rest_dehnt=True)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
         self._v.addLayout(self._gitter)
         self._n = 0
         self.knoepfe: dict[str, QToolButton] = {}
-        a = QWidgetAction(self); a.setDefaultWidget(self._fuss_v.parentWidget() if self._rollen else self._wid); self.addAction(a)
+        self.widget(self._fuss_v.parentWidget() if self._rollen else self._wid)
 
     def _rollen_masse(self) -> None:
         inhalt = self._wid.sizeHint()
@@ -95,7 +107,7 @@ class RasterAuswahl(QMenu):
         b = QToolButton()
         b.setIcon(_symbol(bild, self._groesse, blass=not aktiv)); b.setIconSize(self._groesse); b.setEnabled(aktiv)
         b.setToolTip(beschriftung or schluessel); b.setAccessibleName(beschriftung or schluessel); b.setCheckable(True); b.setChecked(aktuell)
-        b.setFixedSize(self._groesse + QSize(10, 10))
+        b.setFixedSize(self._groesse + QSize(*GROESSE_RASTERKACHEL_RAND))
         if self._beschriftet:
             b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             b.setText(b.fontMetrics().elidedText(beschriftung or schluessel, Qt.ElideRight, self._groesse.width() + 4))
@@ -113,10 +125,9 @@ class RasterAuswahl(QMenu):
 
     def abschnitt(self, titel: str) -> None:
         """Neuer Abschnitt mit eigener Überschrift und eigenem Raster darunter (z. B. „Benutzerdefinierte Symbole:“)."""
-        t = QLabel(titel); t.setStyleSheet("color: palette(mid); font-size: 11px;")
+        t = QLabel(titel); hinweis_stil(t, zusatz="font-size: " f"{SCHRIFT_GRUPPENTITEL_PX}" "px;")
         self._v.addWidget(t)
-        self._gitter = QGridLayout(); self._gitter.setSpacing(4)
-        self._gitter.setColumnStretch(self._spalten, 1)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
+        self._gitter = kachel_gitter((), self._spalten, abstand=ABSTAND_KLEIN, rest_dehnt=True)          # Kacheln bleiben links beisammen, auch wenn ein anderer Abschnitt breiter ist
         self._v.addLayout(self._gitter)
         self._n = 0
 
@@ -127,14 +138,14 @@ class RasterAuswahl(QMenu):
 
     def fuss(self, text: str, aktion: Callable) -> QPushButton:
         """Zeile unter dem Raster, z. B. „Weitere Aufzählungszeichen …“."""
-        b = QPushButton(text); b.setFlat(True); b.setStyleSheet("text-align: left; padding: 6px 8px; border: none;")
+        b = QPushButton(text); b.setFlat(True); b.setStyleSheet("text-align: left; padding: " f"{PADDING_RASTER_FUSSKNOPF}" "; border: none;")
         b.clicked.connect(lambda: (self.close(), aktion()))
         self._fuss_v.addWidget(b)
         return b
 
     def trenner(self) -> None:
         """Dünne Linie im Fuß (vor „Benutzerdefinierte Seitenränder …“ u. ä.)."""
-        l = QFrame(); l.setFrameShape(QFrame.HLine); l.setStyleSheet("color: palette(midlight);")
+        l = trennlinie()
         self._fuss_v.addWidget(l)
 
     def kopf(self, widget: QWidget) -> None:

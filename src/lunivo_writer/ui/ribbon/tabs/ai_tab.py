@@ -33,13 +33,12 @@ def _ki_knoepfe() -> list[dict]:
 
 
 def _pruefen_menue(e: dict) -> dict:
-    """Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen und die Sprache des Dokuments."""
+    """Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen."""
     e = {k: v for k, v in e.items() if k != "klappe"}
     e["menue"] = [
         {"name": "Prüfen", "tun": "w.pruefen"}, {"name": "Gründlich prüfen", "tun": "gruendlichPruefen"},
         {"name": "KI-Korrektur", "tun": "kiKorrektur"}, {"name": "Verbesserungsvorschläge", "tun": "kiVorschlaege"}, {"trenner": True},
-        {"name": "Barrierefreiheit prüfen", "tun": "barrierefrei"}, {"name": "Welche Hilfe wann", "tun": "welcheHilfe"}, {"trenner": True},
-        {"name": "Korrektursprache …", "tun": "pruefsprache"}]
+        {"name": "Barrierefreiheit prüfen", "tun": "barrierefrei"}, {"name": "Welche Hilfe wann", "tun": "welcheHilfe"}]
     return e
 
 

@@ -30,6 +30,25 @@ from lunivo_writer.ui.baukasten.linien import RahmenSeiten, rahmen_symbol
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_FENSTER_RAHMENABSTAND,
+    GROESSE_FENSTER_RAHMEN_SCHATTIERUNG,
+    GROESSE_FENSTER_SEITENRAND,
+    GROESSE_LINIENBREITE_BILD,
+    GROESSE_LINIENBREITE_BILD_STANDARD,
+    GROESSE_RAHMENART_BILD,
+    GROESSE_RAHMENKANTEN_MIN,
+    GROESSE_RAHMENKANTEN_WUNSCH,
+    GROESSE_RAHMENSEITE_KNOPF,
+    GROESSE_RAHMENVORSCHAU,
+    HOEHE_BEREICH_MITTEL,
+    ICON_KNOPF_GROSS,
+    ICON_MITTEL,
+    ICON_NORMAL,
+    RADIUS_FELD,
+    RAND_RAHMEN_SEITE,
+    RAND_SCHATTIERUNG_SEITE,
+)
 KANTEN = (("t", "Oben", RahmenSeiten.OBEN), ("b", "Unten", RahmenSeiten.UNTEN), ("l", "Links", RahmenSeiten.LINKS),
           ("r", "Rechts", RahmenSeiten.RECHTS), ("h", "Zwischen Absätzen", RahmenSeiten.INNEN_H))
 HINWEIS = "Diagramm oder Schaltflächen klicken, um Rahmen hinzuzufügen"
@@ -48,7 +67,7 @@ def _einstellung_symbol(art: str, px: int = 28) -> QIcon:
     p.setPen(Qt.NoPen); p.setBrush(QColor(Farbe.GRAU_HELL))
     for i in range(5):
         p.drawRect(QRectF(r.left() + 3, r.top() + 4 + i * (r.height() - 8) / 5, r.width() - 6 - (i == 4) * 6, 1.6))
-    stark, blass = QPen(QColor("#e6e9ec"), 2), QPen(QColor(Farbe.GRAU), 1, Qt.DotLine)
+    stark, blass = QPen(QColor(Farbe.GITTER), 2), QPen(QColor(Farbe.GRAU), 1, Qt.DotLine)
     p.setBrush(Qt.NoBrush)
     if art == "kontur":
         p.setPen(stark); p.drawRect(r)
@@ -65,20 +84,20 @@ def _einstellung_symbol(art: str, px: int = 28) -> QIcon:
     return QIcon(pm)
 
 
-def _stil_symbol(art: str, groesse: QSize = QSize(150, 16)) -> QIcon:
+def _stil_symbol(art: str, groesse: QSize = QSize(*GROESSE_RAHMENART_BILD)) -> QIcon:
     """Probe einer Linienart für die Liste „Formatvorlage“."""
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
-    Linie("#e6e9ec", 1.5, art).zeichne(p, 3, groesse.height() / 2, groesse.width() - 3, groesse.height() / 2, 96 / 72)
+    Linie(Farbe.GITTER, 1.5, art).zeichne(p, 3, groesse.height() / 2, groesse.width() - 3, groesse.height() / 2, 96 / 72)
     p.end()
     return QIcon(pm)
 
 
-def _breite_symbol(pt: float, groesse: QSize = QSize(74, 12)) -> QIcon:
+def _breite_symbol(pt: float, groesse: QSize = QSize(*GROESSE_LINIENBREITE_BILD_STANDARD)) -> QIcon:
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm)
-    p.setPen(QPen(QColor("#e6e9ec"), max(1.0, pt * 96 / 72), Qt.SolidLine, Qt.FlatCap))
+    p.setPen(QPen(QColor(Farbe.GITTER), max(1.0, pt * 96 / 72), Qt.SolidLine, Qt.FlatCap))
     p.drawLine(0, groesse.height() // 2, groesse.width(), groesse.height() // 2)
     p.end()
     return QIcon(pm)
@@ -112,10 +131,10 @@ class _Vorschau(QWidget):
         self.seitenrand: tuple[Linie, float] | None = None        # Rahmen um die Seite: (Linie, Abstand in mm)
 
     def sizeHint(self) -> QSize:
-        return QSize(220, 160)
+        return QSize(*GROESSE_RAHMENKANTEN_WUNSCH)
 
     def minimumSizeHint(self) -> QSize:
-        return QSize(60, 44)
+        return QSize(*GROESSE_RAHMENKANTEN_MIN)
 
     def _feld(self) -> QRectF:
         r = self.rect()
@@ -124,7 +143,7 @@ class _Vorschau(QWidget):
     def paintEvent(self, _e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        p.fillRect(self.rect(), Qt.white)
+        p.fillRect(self.rect(), QColor(Farbe.PAPIER))
         f = self._feld()
         if self.seitenrand is not None:
             li, mm = self.seitenrand
@@ -236,15 +255,15 @@ class _RahmenSeite(QWidget):
         self.rand_optionen = {"messen": "text", "abstand": (1.0, 1.0, 4.0, 4.0), "ausrichten": False, "vordergrund": True, "kopf": False, "fuss": False}   # Seitenrand ▸ Optionen
         basis = linie or Linie(Farbe.SCHWARZ, 0.75, "einfach")
         self.seiten = linie.seiten if linie else ""
-        g = FormularGitter(self); g.setContentsMargins(10, 8, 10, 6)
+        g = FormularGitter(self); g.setContentsMargins(*RAND_RAHMEN_SEITE)
         # --- Einstellung: eine Reihe Symbole (der Name steht im Tipp), bei Platzmangel in der nächsten Zeile weiter
         g.breit(abschnittstitel("Einstellung"))
         reihe = FlussLayout(4)
         self.einstellung: dict[str, QToolButton] = {}
         for art, text in (("ohne", "Ohne"), ("kontur", "Kontur"), ("alle", "Alle"), ("raster", "Raster"), ("anpassen", "Anpassen")):
             b = QToolButton(); b.setCheckable(True); b.setAutoExclusive(True); b.setToolTip(text); b.setAccessibleName(text)
-            b.setIcon(_einstellung_symbol("ohne" if art == "ohne" else art)); b.setIconSize(QSize(28, 28)); b.setFixedSize(40, 38); b.setAutoRaise(True)
-            b.setStyleSheet("QToolButton { border: 1px solid transparent; border-radius: 6px; }"
+            b.setIcon(_einstellung_symbol("ohne" if art == "ohne" else art)); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS)); b.setFixedSize(*GROESSE_RAHMENSEITE_KNOPF); b.setAutoRaise(True)
+            b.setStyleSheet("QToolButton { border: 1px solid transparent; border-radius: " f"{RADIUS_FELD}" "px; }"
                             "QToolButton:checked { background: palette(midlight); border-color: palette(mid); }")
             b.clicked.connect(lambda _c=False, a=art: self._setze_einstellung(a))
             self.einstellung[art] = b
@@ -263,9 +282,9 @@ class _RahmenSeite(QWidget):
         for k, text, flagge in KANTEN:
             if k == "h" and not innen_h:
                 continue
-            b = QToolButton(); b.setCheckable(True); b.setIcon(rahmen_symbol(flagge, 22)); b.setToolTip(text); b.setIconSize(QSize(22, 22))
+            b = QToolButton(); b.setCheckable(True); b.setIcon(rahmen_symbol(flagge, 22)); b.setToolTip(text); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
             b.setAutoRaise(True); b.setFixedSize(_KANTE, _KANTE)
-            b.setStyleSheet("QToolButton { border: 1px solid palette(midlight); border-radius: 6px; }"
+            b.setStyleSheet("QToolButton { border: 1px solid palette(midlight); border-radius: " f"{RADIUS_FELD}" "px; }"
                             "QToolButton:hover { background: palette(midlight); border-color: palette(mid); }"
                             "QToolButton:checked { background: palette(mid); border-color: palette(highlight); }")
             b.toggled.connect(lambda an, k=k: self._kante(k, an))
@@ -275,9 +294,9 @@ class _RahmenSeite(QWidget):
         g.breit(self.kasten)
         self.vorschau.kante.connect(lambda k: self.kantenknoepfe[k].toggle() if k in self.kantenknoepfe else None)
         self.farbe = FarbFeld("" if basis.farbe in ("", Farbe.SCHWARZ) else basis.farbe, "Rahmenfarbe", keine_text="Automatisch")
-        self.breite = QComboBox(); self.breite.setIconSize(QSize(40, 12))
+        self.breite = QComboBox(); self.breite.setIconSize(QSize(*GROESSE_LINIENBREITE_BILD))
         for b in LINIENBREITEN:
-            self.breite.addItem(_breite_symbol(b, QSize(40, 12)), f"{b:g}".replace(".", ",") + " Pt", b)
+            self.breite.addItem(_breite_symbol(b, QSize(*GROESSE_LINIENBREITE_BILD)), f"{b:g}".replace(".", ",") + " Pt", b)
         self.breite.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.breite.setMinimumContentsLength(3)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
         self.kunst = QComboBox()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
@@ -289,7 +308,7 @@ class _RahmenSeite(QWidget):
         self.kunst.currentIndexChanged.connect(lambda _i: self._neu())
         # --- Linienart
         g.breit(abschnittstitel("Linienart"))
-        self.arten = QListWidget(); self.arten.setIconSize(QSize(150, 16)); self.arten.setFixedHeight(46 if seitenrand else 104)    # Seitenrand hat zusätzlich „Art:“: sonst rollt die Seite
+        self.arten = QListWidget(); self.arten.setIconSize(QSize(*GROESSE_RAHMENART_BILD)); self.arten.setFixedHeight(46 if seitenrand else 104)    # Seitenrand hat zusätzlich „Art:“: sonst rollt die Seite
         for k in STILE:
             it = QListWidgetItem(_stil_symbol(k), ""); it.setData(Qt.UserRole, k); it.setToolTip(STILE[k][0])
             self.arten.addItem(it)
@@ -375,7 +394,7 @@ def _blatt_vorschau(p: QPainter, rect) -> tuple[QRectF, QRectF]:
     → (Blatt, Textblock) in Fensterkoordinaten."""
     r = QRectF(rect)
     blatt = QRectF(r.center().x() - 96, r.top(), 192, r.height() + 60)
-    p.fillRect(blatt, QColor("white")); p.setPen(QColor("#c4c9ce")); p.drawRect(blatt)
+    p.fillRect(blatt, QColor(Farbe.PAPIER)); p.setPen(QColor(Farbe.GRAU_HELL)); p.drawRect(blatt)
     text = QRectF(blatt.left() + 32, blatt.top() + 32, 128, 70)
     p.setPen(QPen(QColor(Farbe.GRAU), 1.2))
     y, n = text.top(), 0
@@ -388,7 +407,7 @@ class _PolsterDialog(QDialog):
     """„Optionen …“ am Absatzrahmen: Abstand des Rahmens vom Text, oben, unten, links und rechts (mit Einheit), dazu eine Vorschau."""
     def __init__(self, parent, werte: tuple[float, float, float, float], linie: Linie | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Rahmen- und Schattierungsoptionen"); self.resize(345, 328); self.setMinimumSize(0, 0)
+        self.setWindowTitle("Rahmen- und Schattierungsoptionen"); self.resize(*GROESSE_FENSTER_RAHMENABSTAND); self.setMinimumSize(0, 0)
         self._linie = linie
         v = QVBoxLayout(self)
         v.addWidget(abschnittstitel("Vom Text"))
@@ -403,7 +422,7 @@ class _PolsterDialog(QDialog):
         g.reihe(*paare)                                              # je nach Breite 2 bis 4 nebeneinander
         v.addLayout(g)
         v.addWidget(abschnittstitel("Vorschau"))
-        self.vorschau = VorschauFlaeche(self._male, 150, flaeche=False); self.vorschau.setFixedHeight(150); v.addWidget(self.vorschau)
+        self.vorschau = VorschauFlaeche(self._male, 150, flaeche=False); self.vorschau.setFixedHeight(HOEHE_BEREICH_MITTEL); v.addWidget(self.vorschau)
         v.addStretch(1)
         fussleiste(self, v)
 
@@ -424,7 +443,7 @@ class _SeitenOptionenDialog(QDialog):
     """„Optionen …“ am Seitenrand: Abstand (vom Text oder vom Seitenrand), „Gemessen von“, die vier Optionen und eine Vorschau der Seite."""
     def __init__(self, parent, w: dict, linie: Linie | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Rahmen- und Schattierungsoptionen"); self.resize(635, 478); self.setMinimumSize(0, 0)
+        self.setWindowTitle("Rahmen- und Schattierungsoptionen"); self.resize(*GROESSE_FENSTER_SEITENRAND); self.setMinimumSize(0, 0)
         v = QVBoxLayout(self)
         self.abstand_gruppe = abschnittstitel("Vom Text"); v.addWidget(self.abstand_gruppe)
         g = FormularGitter()
@@ -452,7 +471,7 @@ class _SeitenOptionenDialog(QDialog):
             og.breit(c)
         v.addLayout(og)
         v.addWidget(abschnittstitel("Vorschau"))
-        self.vorschau = VorschauFlaeche(self._male, 150, flaeche=False); self.vorschau.setFixedHeight(150); v.addWidget(self.vorschau)
+        self.vorschau = VorschauFlaeche(self._male, 150, flaeche=False); self.vorschau.setFixedHeight(HOEHE_BEREICH_MITTEL); v.addWidget(self.vorschau)
         v.addStretch(1)
         self._linie = linie
         for c in (self.ausrichten, self.vordergrund, self.kopf, self.fuss):
@@ -504,13 +523,13 @@ class _SchattierungSeite(QWidget):
 
     def __init__(self, fuell: str | None, muster: tuple[str, str] | None, fuer: list[str] | None):
         super().__init__()
-        g = FormularGitter(self); g.setContentsMargins(10, 10, 10, 10)
+        g = FormularGitter(self); g.setContentsMargins(*RAND_SCHATTIERUNG_SEITE)
         self.fuell = FarbFeld(fuell or "", "Füllfarbe", keine_text="Keine Farbe")
-        self.art = QComboBox(); self.art.setIconSize(QSize(16, 16)); self.art.setMaxVisibleItems(18)
+        self.art = QComboBox(); self.art.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); self.art.setMaxVisibleItems(18)
         for k, name, _o in M.MUSTER:
             self.art.addItem(_muster_symbol(k), name, k)
         self.farbe = FarbFeld("" if not muster or muster[1] in ("", Farbe.SCHWARZ) else muster[1], "Musterfarbe", keine_text="Automatisch")
-        self.vorschau = _Vorschau(kanten_klick=False); self.vorschau.setFixedSize(190, 130)         # klein, in der Mitte
+        self.vorschau = _Vorschau(kanten_klick=False); self.vorschau.setFixedSize(*GROESSE_RAHMENVORSCHAU)         # klein, in der Mitte
         self.fuer = QComboBox(); self.fuer.addItems(fuer or ["Absatz"])
         g.breit(abschnittstitel("Ausfüllen")); g.breit(self.fuell)
         g.breit(abschnittstitel("Muster")); g.reihe(("Formatvorlage:", self.art)); g.reihe(("Farbe:", self.farbe))
@@ -544,7 +563,7 @@ class RahmenSchattierungDialog(PanelFaehig, QDialog):
                  seite: str = "rahmen"):
         super().__init__(parent)
         self.setWindowTitle("Rahmen und Schattierung")
-        self.resize(783, 481)
+        self.resize(*GROESSE_FENSTER_RAHMEN_SCHATTIERUNG)
         v = QVBoxLayout(self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         self.p_rahmen = _RahmenSeite(rahmen, innen_h=innen_h, fuer=fuer)

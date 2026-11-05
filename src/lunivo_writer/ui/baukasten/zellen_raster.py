@@ -4,6 +4,8 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QLabel, QMenu, QVBoxLayout, QWidget, QWidgetAction
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_ZELLENRASTER
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 
 class _Gitter(QWidget):
@@ -46,7 +48,7 @@ class _Gitter(QWidget):
                 p.drawRect(r)
 
 
-class ZellenRaster(QMenu):
+class ZellenRaster(MenueListe):
     """Meldet ``gewaehlt(zeilen, spalten)``. Darunter lassen sich mit ``fuss(...)`` weitere Einträge anhängen."""
 
     gewaehlt = Signal(int, int)
@@ -55,11 +57,11 @@ class ZellenRaster(QMenu):
         super().__init__(parent)
         self._leer = leer_text
         wid = QWidget()
-        v = QVBoxLayout(wid); v.setContentsMargins(8, 6, 8, 8); v.setSpacing(4)
+        v = QVBoxLayout(wid); v.setContentsMargins(*RAND_ZELLENRASTER); v.setSpacing(ABSTAND_KLEIN)
         self.beschriftung = QLabel(leer_text)
         self.gitter = _Gitter(self, zeilen, spalten)
         v.addWidget(self.beschriftung); v.addWidget(self.gitter)
-        a = QWidgetAction(self); a.setDefaultWidget(wid); self.addAction(a)
+        self.widget(wid)
 
     def _beschriften(self, z: int, s: int) -> None:
         self.beschriftung.setText(f"{z} × {s} Tabelle" if z else self._leer)
@@ -70,4 +72,4 @@ class ZellenRaster(QMenu):
 
     def fuss(self, text: str, aktion) -> None:
         self.addSeparator()
-        self.addAction(text, aktion)
+        self.eintrag(text, aktion)

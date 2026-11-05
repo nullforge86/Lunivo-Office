@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QDialog, QScrollArea, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_NAME_KI, RAND_DIALOG_KI
 
 
 class NameKiSeiten:
@@ -41,9 +42,9 @@ class NameKiSeiten:
         titel, bauer = self.FENSTER[key]
         d = QDialog(self)
         d.setWindowTitle(titel)
-        d.resize(920, 660)
+        d.resize(*GROESSE_FENSTER_NAME_KI)
         v = QVBoxLayout(d)
-        v.setContentsMargins(12, 12, 12, 8)
+        v.setContentsMargins(*RAND_DIALOG_KI)
         sc = QScrollArea(); sc.setWidgetResizable(True); sc.setFrameShape(QScrollArea.NoFrame)
         sc.setWidget(getattr(self, bauer)(""))
         v.addWidget(sc, 1)

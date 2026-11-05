@@ -6,8 +6,9 @@ from datetime import datetime
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import QApplication, QLineEdit, QMenu, QMessageBox, QWidget
+from PySide6.QtWidgets import QApplication, QLineEdit, QMessageBox, QWidget
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben
@@ -389,8 +390,8 @@ class DateienBaustein:
 
 
     def druck_hilfe(self):
-        QMessageBox.information(self, "Drucken", "Links sehen Sie das Blatt, wie es gedruckt wird. Rechts wählen Sie Drucker, Seiten, Kopien und Papier; "
-                                "auf „Lunivo-Office“ stehen die Inhalte des Dokuments.")
+        QMessageBox.information(self, "Drucken", "Oben wählen Sie Drucker, Seiten, Kopien und Papier; darunter sehen Sie das Blatt, wie es gedruckt wird. "
+                                "Auf „Lunivo-Office“ stehen die Inhalte des Dokuments.")
 
 
     def drucke_nach_wahl(self, t, e: dict) -> None:
@@ -491,15 +492,14 @@ class DateienBaustein:
         w = self.tabs.widget(index) if index >= 0 else None
         if not isinstance(w, DocumentTab):
             return
-        m = QMenu(self)
-        m.addAction("Schließen", lambda: self.close_tab(index))
-        m.addAction("Andere schließen", lambda: self._reiter_schliessen(w, nur_andere=True))
-        m.addAction("Alle schließen", lambda: self._reiter_schliessen(w, nur_andere=False))
-        m.addSeparator()
-        m.addAction("Speichern", lambda: (self.tabs.setCurrentIndex(index), self._save_tab(w)))
-        pfad = m.addAction("Pfad kopieren", lambda: QApplication.clipboard().setText(w.path))
-        ordner = m.addAction("Ordner öffnen", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(w.path))))
-        pfad.setEnabled(bool(w.path)); ordner.setEnabled(bool(w.path))
+        m = MenueListe(self)
+        m.eintrag("Schließen", lambda: self.close_tab(index))
+        m.eintrag("Andere schließen", lambda: self._reiter_schliessen(w, nur_andere=True))
+        m.eintrag("Alle schließen", lambda: self._reiter_schliessen(w, nur_andere=False))
+        m.trenner()
+        m.eintrag("Speichern", lambda: (self.tabs.setCurrentIndex(index), self._save_tab(w)))
+        m.eintrag("Pfad kopieren", lambda: QApplication.clipboard().setText(w.path), aktiv=bool(w.path))
+        m.eintrag("Ordner öffnen", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(w.path))), aktiv=bool(w.path))
         m.exec(pos)
 
 

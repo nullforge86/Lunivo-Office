@@ -21,8 +21,15 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_SMARTART_LAYOUT_MINIATUR,
+    GROESSE_SMARTART_MINIATUR,
+    GROESSE_SMARTART_STIL_GALERIE,
+    GROESSE_SMARTART_STIL_MENUE,
+    ICON_NORMAL,
+)
 
-STIL_KACHEL = QSize(46, 40)
+STIL_KACHEL = QSize(*GROESSE_SMARTART_STIL_MENUE)
 
 
 def _sa(b) -> dict:
@@ -31,7 +38,7 @@ def _sa(b) -> dict:
 
 
 def _sym(name: str) -> QIcon:
-    return icons.icon(name, 16)
+    return icons.icon(name, ICON_NORMAL)
 
 
 class _Auffrischend(MenueListe):
@@ -93,13 +100,14 @@ def layout_menue(b) -> MenueListe:
         aktuell, geht = _sa(b).get("layout"), bool(b.kann_smartartStil())
         for e in SA.LAYOUT_KATALOG:
             k = e["schluessel"]
-            m.eintrag(e["name"], lambda k=k: b.smartartLayout(None, k), symbol=QIcon(miniatur(k, True, QSize(28, 20))), haken=aktuell == k, aktiv=geht)
+            m.eintrag(e["name"], lambda k=k: b.smartartLayout(None, k), symbol=QIcon(miniatur(k, True, QSize(*GROESSE_SMARTART_LAYOUT_MINIATUR))), haken=aktuell == k, aktiv=geht)
     return _Auffrischend(bau)
 
 
 # ---- Stile ---------------------------------------------------------------------------------------------------------------------------
-def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str = Farbe.AKZENT_DUNKEL) -> QPixmap:
+def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str | None = None) -> QPixmap:
     """Zwei übereinanderstehende Kästen im Formenstil ``nr`` (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D)."""
+    blau = Farbe.AKZENT_DUNKEL if blau is None else blau
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     w, h = groesse.width(), groesse.height()
@@ -134,7 +142,7 @@ def stile_menue(b) -> RasterAuswahl:
 
 def stile_galerie(b) -> dict:
     from lunivo_writer.editor import smartart as SA
-    return {"kacheln": [(name, stil_bild(i, QSize(56, 34)), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
+    return {"kacheln": [(name, stil_bild(i, QSize(*GROESSE_SMARTART_STIL_GALERIE)), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
             "menue": stile_menue(b), "name": "Formenstile"}
 
 
@@ -422,7 +430,7 @@ def zeichne_miniatur(p: QPainter, r: QRectF, schluessel: str, grau: bool = True)
     p.restore()
 
 
-def miniatur(schluessel: str, grau: bool = True, groesse: QSize = QSize(64, 48)) -> QPixmap:
+def miniatur(schluessel: str, grau: bool = True, groesse: QSize = QSize(*GROESSE_SMARTART_MINIATUR)) -> QPixmap:
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm)
     zeichne_miniatur(p, QRectF(0, 0, groesse.width(), groesse.height()), schluessel, grau)

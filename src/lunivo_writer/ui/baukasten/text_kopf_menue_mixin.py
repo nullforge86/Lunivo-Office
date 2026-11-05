@@ -27,7 +27,7 @@ def text_fuell_menue(parent=None, aktuell: str = "") -> FarbPalette:
 
 def _text_bild(text: str, groesse) -> QPixmap:
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
-    p = QPainter(pm); p.setPen(QColor("#212529")); p.drawText(pm.rect(), Qt.AlignCenter, text); p.end()
+    p = QPainter(pm); p.setPen(QColor(Farbe.TINTE_DUNKEL)); p.drawText(pm.rect(), Qt.AlignCenter, text); p.end()
     return pm
 
 

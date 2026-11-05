@@ -9,13 +9,40 @@ import datetime
 from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtGui import QActionGroup, QFont
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu, QPlainTextEdit, QPushButton, QScrollArea,
+    QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QScrollArea,
     QStackedWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen
+from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.theme import karte_einrichten
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.texte import hinweis_label, marke_faerben
+from lunivo_writer.ui.baukasten.mass import (
+    BREITE_SEITENLEISTE_PANEL,
+    ABSTAND_KARTENZEILE,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    BREITE_VERFOLGEN_KNOPF,
+    GROESSE_STUFE,
+    HOEHE_FELD,
+    HOEHE_TEXT_MITTEL,
+    HOEHE_TEXT_NORMAL,
+    PADDING_MARKE,
+    PADDING_NAVIGATION_KNOPF,
+    RADIUS_MARKE,
+    RADIUS_STUFE,
+    RAND_KARTE_NAVIGATION,
+    RAND_KEIN,
+    SCHRIFT_HINWEIS,
+    SCHRIFT_KLEIN,
+)
+
+FUSSNOTE_VIOLETT = "#7048a8"     # Kennfarbe der Endnoten-Karten: bewusst fest (Gruppe C)
 SEITEN = ("suche", "kommentare", "ueberschriften", "aenderungen", "noten", "vorlesen")
 TABS = SEITEN                                                             # alter Name
 TITEL = {"suche": "Suchen und ersetzen", "kommentare": "Kommentare", "ueberschriften": "Überschriften", "aenderungen": "Änderungen",
@@ -43,25 +70,24 @@ class KommentarKarte(QFrame):
         self.setObjectName("kommentarKarte")
         geloest = bool(k.get("geloest"))
         farbe = kommentar_farbe(geloest)                                  # orange Kreis wie in der alten Fassung, gelöste grau
-        self.setStyleSheet("QFrame#kommentarKarte { border: 1px solid palette(midlight); border-radius: 8px; background: rgba(128,128,128,0.06); }"
-                           "QFrame#kommentarKarte QLabel { border: none; background: transparent; }")
-        v = QVBoxLayout(self); v.setContentsMargins(10, 8, 10, 8); v.setSpacing(6)
-        kopf = QHBoxLayout(); kopf.setSpacing(8)
-        ini = QLabel((k.get("initialen") or (k.get("autor") or "?")[:1]).upper()[:2]); ini.setAlignment(Qt.AlignCenter); ini.setFixedSize(26, 26)
-        ini.setStyleSheet(f"background: {farbe}; color: white; font-weight: bold; border-radius: 13px;")
+        als_karte(self, "kompakt")
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KARTE_NAVIGATION); v.setSpacing(ABSTAND_NORMAL)
+        kopf = QHBoxLayout(); kopf.setSpacing(ABSTAND_MITTEL)
+        ini = QLabel((k.get("initialen") or (k.get("autor") or "?")[:1]).upper()[:2]); ini.setAlignment(Qt.AlignCenter); ini.setFixedSize(*GROESSE_STUFE)
+        ini.setStyleSheet(f"background: {farbe}; color: {Farbe.WEISS}; font-weight: bold; border-radius: {RADIUS_STUFE}px;")
         kopf.addWidget(ini)
         name = QLabel(k.get("autor", "?")); f = name.font(); f.setBold(True); f.setPointSizeF(pt); name.setFont(f)
         kopf.addWidget(name, 1)
-        datum = QLabel(_datum(k.get("datum", ""))); datum.setStyleSheet("color: palette(mid);"); fd = datum.font(); fd.setPointSizeF(max(8.0, pt - 3)); datum.setFont(fd)
+        datum = hinweis_label(_datum(k.get("datum", "")), umbruch=False); fd = datum.font(); fd.setPointSizeF(max(8.0, pt - 3)); datum.setFont(fd)
         kopf.addWidget(datum)
         v.addLayout(kopf)
         kid = int(b["wert"])
         self.kid = kid
         if bearbeiten:
-            self.eingabe = QPlainTextEdit(k.get("text", "")); self.eingabe.setMinimumHeight(90)
+            self.eingabe = QPlainTextEdit(k.get("text", "")); self.eingabe.setMinimumHeight(HOEHE_TEXT_NORMAL)
             fe = self.eingabe.font(); fe.setPointSizeF(pt); self.eingabe.setFont(fe)
             v.addWidget(self.eingabe)
-            z = QHBoxLayout(); z.setSpacing(6)
+            z = QHBoxLayout(); z.setSpacing(ABSTAND_NORMAL)
             ok = QPushButton("Speichern"); ok.clicked.connect(lambda: speichern(kid, self.eingabe.toPlainText().strip()))
             ab = QPushButton("Abbrechen"); ab.clicked.connect(lambda: abbrechen())
             z.addWidget(ok); z.addWidget(ab); z.addStretch(1)
@@ -70,10 +96,10 @@ class KommentarKarte(QFrame):
         text = QLabel(k.get("text", "")); text.setWordWrap(True); text.setTextInteractionFlags(Qt.TextSelectableByMouse)
         ft = text.font(); ft.setPointSizeF(pt); text.setFont(ft)
         if geloest:
-            text.setStyleSheet("color: palette(mid); text-decoration: line-through;")
+            hinweis_stil(text, zusatz="text-decoration: line-through;")
         v.addWidget(text)
-        feld = QWidget(); z = QHBoxLayout(feld); z.setContentsMargins(0, 0, 0, 0); z.setSpacing(5)                  # eine Zeile, die Knöpfe knapp geschnitten
-        feld.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 9pt; }")
+        feld = QWidget(); z = QHBoxLayout(feld); z.setContentsMargins(*RAND_KEIN); z.setSpacing(ABSTAND_KARTENZEILE)                  # eine Zeile, die Knöpfe knapp geschnitten
+        feld.setStyleSheet("QPushButton { padding: " f"{PADDING_NAVIGATION_KNOPF}" "; font-size: " f"{SCHRIFT_HINWEIS}" "pt; }")
         zeigen = QPushButton("Zeigen"); zeigen.clicked.connect(lambda: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus()))
         bearb = QPushButton("Bearbeiten"); bearb.clicked.connect(lambda: bearbeite_los(kid))
         loesen = QPushButton("Wieder öffnen" if geloest else "Gelöst")
@@ -92,14 +118,14 @@ class NavigationPanel(QWidget):
         super().__init__()
         self.get_editor, self.fenster = get_editor, fenster
         self.settings = getattr(fenster, "settings", None)
-        self.setFixedWidth(340)
         self.aktion = None                                                  # Rückruf (name, daten) → Hauptfenster
         self.zuletzt = "kommentare"
         self.sortierung = "neu"
         self.anzeige = "alle"
         self._bearbeite = None                                               # Kennung des Kommentars, der gerade bearbeitet wird
         self.liste: dict[str, QListWidget] = {}
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0)
+        self.setAttribute(Qt.WA_StyledBackground, True)                      # Thema Mint: Seitenfläche hebt sich von der Arbeitsfläche ab
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); karte_einrichten(self, v, breite=BREITE_SEITENLEISTE_PANEL)      # gemeinsames Aussehen mit dem Schreibhilfe-Panel (theme.py)
         self.stapel = QStackedWidget(); v.addWidget(self.stapel)
         self._seiten: dict[str, PanelRahmen] = {}
         for key in SEITEN:
@@ -162,6 +188,10 @@ class NavigationPanel(QWidget):
         self.suchfeld, self.ersatzfeld, self.treffer, self.gross, self.ganz = f.suchfeld, f.ersatzfeld, f.treffer, f.gross, f.ganz
         return r
 
+    def zusatz_ausfuehren(self, d) -> bool:
+        """Ein Zusatzfenster (Stimme und Tempo …) in dieser Leiste zeigen: dieselbe Schnittstelle wie die rechte Seitenleiste."""
+        return self.unterfenster(d)
+
     def unterfenster(self, d) -> bool:
         """Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu."""
         from lunivo_writer.ui.baukasten.zusatz_panel import ausfuehren_im_stapel
@@ -191,39 +221,34 @@ class NavigationPanel(QWidget):
 
     # ---- Kommentare --------------------------------------------------------------------------------------------------
     def _bau_kommentare(self) -> PanelRahmen:
-        m = QMenu(self)
+        m = MenueListe(self)
         gs = QActionGroup(m); gs.setExclusive(True)
         for key, text in SORTIERUNG:
-            a = m.addAction(text); a.setCheckable(True); a.setChecked(key == self.sortierung); gs.addAction(a)
-            a.triggered.connect(lambda _=False, k=key: self._sortieren(k))
-        m.addSeparator()
-        sub = m.addMenu("Kommentare anzeigen")
+            m.eintrag(text, lambda k=key: self._sortieren(k), haken=key == self.sortierung, gruppe=gs)
+        m.trenner()
+        sub = m.untermenue("Kommentare anzeigen")
         ga = QActionGroup(sub); ga.setExclusive(True)
         for key, text in ANZEIGE:
-            a = sub.addAction(text); a.setCheckable(True); a.setChecked(key == self.anzeige); ga.addAction(a)
-            a.triggered.connect(lambda _=False, k=key: self._anzeigen(k))
-        m.addSeparator()
-        sg2 = m.addMenu("Schriftgröße")
+            sub.eintrag(text, lambda k=key: self._anzeigen(k), haken=key == self.anzeige, gruppe=ga)
+        m.trenner()
+        sg2 = m.untermenue("Schriftgröße")
         gz = QActionGroup(sg2); gz.setExclusive(True)
         aktuell_k = self._einstellung("kommentare/schrift", "mittel")
         for key, text, _pt in SCHRIFT:
-            a = sg2.addAction(text); a.setCheckable(True); a.setChecked(key == aktuell_k); gz.addAction(a)
-            a.triggered.connect(lambda _=False, k=key: self._kommentar_schrift(k))
-        m.addSeparator()
-        m.addAction("Kommentar zum Dokument hinzufügen", self._neu_zeigen)
+            sg2.eintrag(text, lambda k=key: self._kommentar_schrift(k), haken=key == aktuell_k, gruppe=gz)
+        m.trenner()
+        m.eintrag("Kommentar zum Dokument hinzufügen", self._neu_zeigen)
         r = PanelRahmen(TITEL["kommentare"], "ellipsis", m, knoepfe=(("plus", "Kommentar hinzufügen", self._neu_zeigen),))
         self._karten: list[KommentarKarte] = []
-        host = QWidget(); self._karten_layout = QVBoxLayout(host); self._karten_layout.setContentsMargins(0, 0, 0, 0); self._karten_layout.setSpacing(8)
+        host = QWidget(); self._karten_layout = QVBoxLayout(host); self._karten_layout.setContentsMargins(*RAND_KEIN); self._karten_layout.setSpacing(ABSTAND_MITTEL)
         self._karten_layout.addStretch(1)
-        self.kommentar_leer = QLabel("Das Dokument enthält keine Kommentare."); self.kommentar_leer.setWordWrap(True)
-        self.kommentar_leer.setStyleSheet("color: palette(mid);")
+        self.kommentar_leer = hinweis_label("Das Dokument enthält keine Kommentare.")
         self._karten_layout.insertWidget(0, self.kommentar_leer)
-        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setFrameShape(QFrame.NoFrame); sc.setWidget(host)
-        sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        sc = rollflaeche(host)
         r.inhalt.addWidget(sc, 1)
         # Eingabe eines neuen Kommentars
-        self.neu_feld = QFrame(); nv = QVBoxLayout(self.neu_feld); nv.setContentsMargins(0, 0, 0, 0); nv.setSpacing(6)
-        self.neu_text = QPlainTextEdit(); self.neu_text.setPlaceholderText("Geben Sie Ihren Kommentar hier ein"); self.neu_text.setFixedHeight(80)
+        self.neu_feld = QFrame(); nv = QVBoxLayout(self.neu_feld); nv.setContentsMargins(*RAND_KEIN); nv.setSpacing(ABSTAND_NORMAL)
+        self.neu_text = QPlainTextEdit(); self.neu_text.setPlaceholderText("Geben Sie Ihren Kommentar hier ein"); self.neu_text.setFixedHeight(HOEHE_TEXT_MITTEL)
         nv.addWidget(self.neu_text)
         nz = QHBoxLayout()
         self.neu_ok = QPushButton("Kommentar hinzufügen"); self.neu_ok.setEnabled(False)
@@ -325,21 +350,20 @@ class NavigationPanel(QWidget):
 
     # ---- Überschriften -----------------------------------------------------------------------------------------------
     def _bau_ueberschriften(self) -> PanelRahmen:
-        m = QMenu(self)
-        m.addAction("Alle ausklappen", lambda: self.baum.expandAll())
-        m.addAction("Alle einklappen", lambda: self.baum.collapseAll())
-        ebene = m.addMenu("Auf Ebene erweitern")
+        m = MenueListe(self)
+        m.eintrag("Alle ausklappen", lambda: self.baum.expandAll())
+        m.eintrag("Alle einklappen", lambda: self.baum.collapseAll())
+        ebene = m.untermenue("Auf Ebene erweitern")
         for n in range(1, 10):
-            ebene.addAction(str(n), lambda _=False, n=n: self._ebene(n))
-        m.addSeparator()
-        sg = m.addMenu("Schriftgröße")
+            ebene.eintrag(str(n), lambda n=n: self._ebene(n))
+        m.trenner()
+        sg = m.untermenue("Schriftgröße")
         grp = QActionGroup(sg); grp.setExclusive(True)
         aktuell = self._einstellung("navigation/schrift", "mittel")
         for key, text, _pt in SCHRIFT:
-            a = sg.addAction(text); a.setCheckable(True); a.setChecked(key == aktuell); grp.addAction(a)
-            a.triggered.connect(lambda _=False, k=key: self._schrift(k))
-        self._umbruch = m.addAction("Lange Überschriften umbrechen"); self._umbruch.setCheckable(True)
-        self._umbruch.setChecked(str(self._einstellung("navigation/umbrechen", "1")) in ("1", "true", "True"))
+            sg.eintrag(text, lambda k=key: self._schrift(k), haken=key == aktuell, gruppe=grp)
+        self._umbruch = m.eintrag("Lange Überschriften umbrechen",
+                                  haken=str(self._einstellung("navigation/umbrechen", "1")) in ("1", "true", "True"))
         self._umbruch.toggled.connect(self._umbrechen)
         r = PanelRahmen(TITEL["ueberschriften"], "settings", m)
         self.baum = QTreeWidget(); self.baum.setHeaderHidden(True); self.baum.setFrameShape(QFrame.NoFrame)
@@ -347,8 +371,7 @@ class NavigationPanel(QWidget):
         self.baum.setUniformRowHeights(False)
         self._schrift(aktuell, speichern=False); self._umbrechen(self._umbruch.isChecked(), speichern=False)
         r.inhalt.addWidget(self.baum, 1)
-        self.leer = QLabel("Dieses Dokument enthält keine Überschriften. Wenden Sie ein Überschriftenformat auf den Text an, damit er hier angezeigt wird.")
-        self.leer.setWordWrap(True); self.leer.setStyleSheet("color: palette(mid);")
+        self.leer = hinweis_label("Dieses Dokument enthält keine Überschriften. Wenden Sie ein Überschriftenformat auf den Text an, damit er hier angezeigt wird.")
         r.inhalt.addWidget(self.leer)
         return r
 
@@ -418,22 +441,21 @@ class NavigationPanel(QWidget):
     @staticmethod
     def _kartenfeld(r: PanelRahmen, leer_text: str):
         """Ein Feld mit Karten in einer Rolle (ohne seitliches Rollen) und einem Hinweis für den leeren Zustand. → (Layout, Hinweis)"""
-        host = QWidget(); lay = QVBoxLayout(host); lay.setContentsMargins(0, 0, 0, 0); lay.setSpacing(8); lay.addStretch(1)
-        leer = QLabel(leer_text); leer.setWordWrap(True); leer.setStyleSheet("color: palette(mid);")
+        host = QWidget(); lay = QVBoxLayout(host); lay.setContentsMargins(*RAND_KEIN); lay.setSpacing(ABSTAND_MITTEL); lay.addStretch(1)
+        leer = hinweis_label(leer_text)
         lay.insertWidget(0, leer)
-        sc = QScrollArea(); sc.setWidgetResizable(True); sc.setFrameShape(QFrame.NoFrame); sc.setWidget(host)
-        sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        sc = rollflaeche(host)
         r.inhalt.addWidget(sc, 1)
         return lay, leer
 
     def _bau_aenderungen(self) -> PanelRahmen:
-        m = QMenu(self)
-        m.addAction("Alle Änderungen annehmen", lambda: self._befehl("aenderungenUebernehmen"))
-        m.addAction("Alle Änderungen ablehnen", lambda: self._befehl("aenderungenVerwerfen"))
+        m = MenueListe(self)
+        m.eintrag("Alle Änderungen annehmen", lambda: self._befehl("aenderungenUebernehmen"))
+        m.eintrag("Alle Änderungen ablehnen", lambda: self._befehl("aenderungenVerwerfen"))
         r = PanelRahmen(TITEL["aenderungen"], "ellipsis", m)
         zeile = QHBoxLayout()
         zeile.addWidget(QLabel("Änderungen verfolgen"), 1)
-        self.verfolgen_knopf = QPushButton(); self.verfolgen_knopf.setCheckable(True); self.verfolgen_knopf.setFixedWidth(64)
+        self.verfolgen_knopf = QPushButton(); self.verfolgen_knopf.setCheckable(True); self.verfolgen_knopf.setFixedWidth(BREITE_VERFOLGEN_KNOPF)
         self.verfolgen_knopf.setToolTip("Jede Änderung am Text wird festgehalten; Sie nehmen sie hier an oder lehnen sie ab")
         self.verfolgen_knopf.clicked.connect(lambda: (self._befehl("verfolgen"), self._verfolgen_zeigen()))
         zeile.addWidget(self.verfolgen_knopf)
@@ -451,13 +473,13 @@ class NavigationPanel(QWidget):
         an = bool(self.fenster.befehle.zustand("verfolgen")) if self.fenster is not None else False
         self.verfolgen_knopf.setChecked(an)
         self.verfolgen_knopf.setText("an" if an else "aus")
-        self.verfolgen_knopf.setStyleSheet("QPushButton:checked { background: #2f9e75; color: white; border-color: #2f9e75; font-weight: bold; }")
+        self.verfolgen_knopf.setStyleSheet(f"QPushButton:checked {{ background: {Farbe.AN}; color: {Farbe.AN_SCHRIFT}; border-color: {Farbe.AN}; font-weight: bold; }}")
 
     def _bau_noten(self) -> PanelRahmen:
         r = PanelRahmen(TITEL["noten"])
         zeile = QHBoxLayout()
         for text, befehl in (("＋ Fußnote", "fussnote"), ("＋ Endnote", "endnote")):
-            b = QPushButton(text); b.setMinimumHeight(32)
+            b = QPushButton(text); b.setMinimumHeight(HOEHE_FELD)
             b.setToolTip("Fügt an der Schreibmarke eine " + text[2:] + " ein")
             b.clicked.connect(lambda _=False, n=befehl: self._befehl(n))
             zeile.addWidget(b)
@@ -470,14 +492,13 @@ class NavigationPanel(QWidget):
     @staticmethod
     def _karte(titel: str, text: str, farbe: str, kopf_rechts: str = "") -> tuple[QFrame, QVBoxLayout]:
         k = QFrame(); k.setObjectName("sKarte")
-        k.setStyleSheet("QFrame#sKarte { border: 1px solid palette(midlight); border-radius: 8px; background: rgba(128,128,128,0.06); }"
-                        "QFrame#sKarte QLabel { border: none; background: transparent; }")
-        v = QVBoxLayout(k); v.setContentsMargins(10, 8, 10, 8); v.setSpacing(6)
+        als_karte(k, "kompakt")
+        v = QVBoxLayout(k); v.setContentsMargins(*RAND_KARTE_NAVIGATION); v.setSpacing(ABSTAND_NORMAL)
         kopf = QHBoxLayout()
-        chip = QLabel(titel); chip.setStyleSheet(f"background: {farbe}; color: white; font-weight: bold; font-size: 8pt; padding: 2px 8px; border-radius: 3px;")
+        chip = QLabel(titel); marke_faerben(chip, farbe, Farbe.WEISS, "font-weight: bold; font-size: " f"{SCHRIFT_KLEIN}" "pt; padding: " f"{PADDING_MARKE}" "; border-radius: " f"{RADIUS_MARKE}" "px;")
         kopf.addWidget(chip); kopf.addStretch(1)
         if kopf_rechts:
-            d = QLabel(kopf_rechts); d.setStyleSheet("color: palette(mid); font-size: 8pt;"); kopf.addWidget(d)
+            d = QLabel(kopf_rechts); hinweis_stil(d, zusatz="font-size: " f"{SCHRIFT_KLEIN}" "pt;"); kopf.addWidget(d)
         v.addLayout(kopf)
         t = QLabel(text); t.setWordWrap(True); t.setTextInteractionFlags(Qt.TextSelectableByMouse)
         v.addWidget(t)
@@ -497,9 +518,9 @@ class NavigationPanel(QWidget):
         for i, b in enumerate(ed.aenderungen()):
             ins = b["wert"] == "ins"
             autor, datum = b["cf"].stringProperty(P_AUTOR) or "?", b["cf"].stringProperty(P_DATUM) or ""
-            k, v = self._karte("Eingefügt" if ins else "Gelöscht", f"„{text_ges[b['von']:b['bis']][:120]}“", "#2f9e75" if ins else Farbe.ROT,
+            k, v = self._karte("Eingefügt" if ins else "Gelöscht", f"„{text_ges[b['von']:b['bis']][:120]}“", Farbe.AN if ins else Farbe.ROT,
                                f"{autor} · {_datum(datum)}")
-            z = QHBoxLayout(); z.setSpacing(6)
+            z = QHBoxLayout(); z.setSpacing(ABSTAND_NORMAL)
             for text, fn in (("Zeigen", lambda b=b: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
                              ("Annehmen", lambda b=b: self._aend_aktion("aenderung_an", b)), ("Ablehnen", lambda b=b: self._aend_aktion("aenderung_ab", b))):
                 kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
@@ -510,8 +531,8 @@ class NavigationPanel(QWidget):
         for i, st in enumerate(ed.noten_stellen()):
             zaehler[st["art"]] += 1
             txt = ed.noten[st["art"]].get(st["id"], "")
-            k, v = self._karte(("Fußnote " if st["art"] == "f" else "Endnote ") + str(zaehler[st["art"]]), txt or "(leer)", Farbe.AKZENT if st["art"] == "f" else "#7048a8")
-            z = QHBoxLayout(); z.setSpacing(6)
+            k, v = self._karte(("Fußnote " if st["art"] == "f" else "Endnote ") + str(zaehler[st["art"]]), txt or "(leer)", Farbe.AKZENT if st["art"] == "f" else FUSSNOTE_VIOLETT)
+            z = QHBoxLayout(); z.setSpacing(ABSTAND_NORMAL)
             for text, fn in (("Zeigen", lambda st=st: (ed.select_range(st["von"], st["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
                              ("Bearbeiten", lambda st=st: self._aend_aktion("note_bearbeiten", st)), ("Löschen", lambda st=st: self._aend_aktion("note_weg", st))):
                 kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
@@ -528,7 +549,7 @@ class NavigationPanel(QWidget):
         r = PanelRahmen(TITEL["vorlesen"])
         if self.fenster is not None:
             from lunivo_writer.ui.baukasten.werkbank import Werkbank
-            wb = Werkbank(self.fenster, "Lesen", nur={"vorlesen", "vorlesenAbSatz", "vorlesenStopp", "stimmeWaehlen"})
+            wb = Werkbank(self.fenster, "Lesen", nur=VORLESEN)
             r.inhalt.addWidget(wb, 1)
             self.vorlesen_zeilen = wb
         return r

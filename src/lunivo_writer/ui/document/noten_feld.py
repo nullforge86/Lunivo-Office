@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QPlainTextEdit
 
 from lunivo_writer.editor.zusatz import roemisch
 from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen
+from lunivo_writer.ui.baukasten.mass import HOEHE_NOTENFELD
 
 
 class _Eingabe(QPlainTextEdit):
@@ -30,7 +31,7 @@ class NotenFeld(PanelRahmen):
         self._art, self._nid = "f", 0
         self._lade = False
         self.eingabe = _Eingabe()
-        self.eingabe.setFixedHeight(84)
+        self.eingabe.setFixedHeight(HOEHE_NOTENFELD)
         self.eingabe.setPlaceholderText("Text der Note …")
         self.eingabe.setAccessibleName("Text der Note")
         self.eingabe.textChanged.connect(self._getippt)

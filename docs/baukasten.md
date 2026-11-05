@@ -9,10 +9,11 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `farben.py` | Daten: 10 Themenfarben mit je 5 Abstufungen, 10 Standardfarben, „zuletzt benutzt“ (QSettings) | — |
 | `farbpalette.py` | `FarbPalette` (Popup), `FarbFeld` (Knopf für Dialoge), `FarbKnopf` (geteilter Knopf fürs Band), `weitere_farben()` (Fenster „Farben“, siehe `farbwaehler.py`: Standard · Benutzerdefiniert · Erweitert, Farbmodell RGB/HSV/HSL, Hex, Neu/Aktuell) | `gewaehlt(QColor \| None)`, `ueberfahren`, `verlassen` |
 | `linien.py` | `Linie` (Farbe, pt, Art), `LinienWahl` (Zeile aus Art, Stärke, Farbe), `RahmenMenue` (unten, oben, links, rechts, kein, alle, außen, innen) | `geaendert(Linie)`, `gewaehlt(RahmenSeiten, schluessel)` |
-| `menue_liste.py` | `MenueListe`: Zeilen mit Symbol, Kürzel, Haken, Untermenü, auch aus einer Beschreibung (`aus_liste`) | `triggered` je Zeile |
+| `menue_liste.py` | `MenueListe`: der EINE Baustein für alle Menüs (außerhalb davon wird kein `QMenu(` erzeugt; Wächter: `grep -rn "QMenu(" src`). `eintrag` (Symbol, Haken, `aktiv=`, `kuerzel=` nur Anzeige oder `echt=True` = wirkliches Tastenkürzel), `untermenue`, `trenner`, `widget(w)` (eingebettetes Bedienfeld, z. B. Raster/Zuschneiden), `kompakt()` (Tabellenmenü-Stil), `standard(editor)` (Standard-Kontextmenü deutsch), `in_leiste(menueleiste, titel)`, `aus_liste`. Raster-, Farb-, Galerie-, Voreinstellungs-Menüs erben davon | `triggered` je Zeile |
 | `raster_auswahl.py` | `RasterAuswahl`: Kacheln mit „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter, Symbole); `abschnitt(titel)` beginnt ein zweites Raster, `bild_setzen` wechselt eine Kachel vor dem Aufklappen, `kopf(widget)` setzt eine Leiste über die Kacheln, `leeren(groesse)` + `neu_messen()` füllen neu (Deckblatt: Hoch-/Querformat), `textkachel(text)` zeichnet ein Zeichen als Kachel | `gewaehlt(schluessel)` |
 | `bild_diagramm_menues.py` | `zuschneiden_menue(b)` (Klappe „Zuschneiden“: Reiter Nach Form / Nach Skala, Formen nach Gruppen, „Form und Größe zurücksetzen“), `diagramm_stile_galerie(b)` / `diagramm_stile_menue(b)` (vier Stilkacheln, mit QPainter gezeichnet); `KLAPPEN` / `GALERIEN` melden sie dem Band | der Aufruf der Befehle `bildZuschneiden…`, `diagrammStil` |
 | `zellen_raster.py` | `ZellenRaster`: Zellen überfahren, „3 × 4 Tabelle“ lesen, klicken; mit `fuss()` weitere Einträge darunter | `gewaehlt(zeilen, spalten)` |
+| `spalten.py` | `ZweiSpalter(links, rechts, breit_ab=760, links_breite=None, oben="links"|"rechts", breit_stretch, gestapelt_stretch, raender_breit, raender_gestapelt, abstand)`: der eine Baustein für alle zweispaltigen Seiten (links Navigation/Blatt/Liste, rechts Inhalt). Ab `breit_ab` nebeneinander, schmal untereinander (`oben` = welches Widget oben steht); `breit_ab=0` = nie umbrechen. Genutzt von Druck, Optionen, Datei öffnen/speichern, Handbuch, Datei-Ansicht | `angeordnet(breit)` |
 | `listen_symbole.py` | `liste_zeichner()`: Vorschaubild einer Aufzählungs- oder Nummerierungsart für die Kachel-Auswahl | — |
 | `mass_feld.py` | `MassSpin`: Zahl mit Maßeinheit (intern mm), `set_einheit()` | `valueChanged` |
 | `dialog_rahmen.py` | `DialogRahmen`: Formular, optionale Vorschau, OK/Abbrechen, Zusatzknöpfe („Entfernen“) | `ergebnis()` |
@@ -29,6 +30,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 5. **Nichts nachbauen:** Wer eine Farbe braucht, nimmt `FarbPalette`/`FarbFeld`/`weitere_farben`, wer eine Linie braucht,
    `LinienWahl`/`Linie`, wer ein Maß braucht, `MassSpin`.
 
+6. **Farben nur im Thema:** Ein Widget-Stylesheet trägt keine Akzentfarbe (`Farbe.AKZENT*`, `AUSWAHL`, Hex). Es setzt die Eigenschaft `akzentSchrift`, `akzentRand` oder `akzentFlaeche` (Chip-Marken: `texte.marke_faerben`), die Knöpfe `optFertig`/`sfSpeichern` bekommen ihre Farbe aus `ui/theme.py`, sonst gilt `palette(highlight)`/`palette(highlighted-text)`. Die Mint-Ersetzung von Blautönen in Widget-Stylesheets gibt es nicht mehr.
 ## Wer den Baukasten benutzt
 
 - **Band** (`core/commands.py`): Schriftfarbe, Hervorheben, Seitenfarbe, Absatz- und Tabellenschattierung, Formfüllung,
@@ -80,6 +82,8 @@ unten kommt überall von `fussleiste` (`dialog_rahmen.py`), Maße von `EinheitFe
 | Formatvorlage | `formatvorlage_dialog.py` | Name, Basis, Folgevorlage, Leiste, Format ▾ mit Schriftart, Absatz, Tabstopps, Rahmen, Nummerierung, Texteffekte, Verknüpfung |
 | Hilfen | `schiebe_feld.py`, `voreinstellung_menue.py`, `pipette.py` | Regler mit Feld, Popup mit Bildchen in Abschnitten, Farbe vom Bildschirm |
 
+- **Gedämpfte Texte und Trennlinie** (`ui/baukasten/texte.py`): `hinweis_label` (Hinweis-/Leertext, Farbe `Farbe.HINWEIS` = Palette-Rolle Mid je Thema, klein/Umbruch/`zusatz`), `kleintext_label` (kleine Beschriftung), `trennlinie()` (HLine in midlight); Themenwechsel frischt die Texte über `auffrischen` auf.
+- **Chips und an/aus-Schalter** (`ui/baukasten/schalter.py`): `chip_stil` (Auswahl-Chip, gewählt = Akzent), `chip_gruen_stil`, `schalter_an_stil`/`schalter_aus_stil` (Kapseln der Werkbank), `CHIP_B`/`CHIP_H`; Farben zur Laufzeit aus `Farbe`.
 - **Zugängliche Namen** (`ui/baukasten/zugaenglichkeit.py`): `NamenFilter` gibt jedem Knopf ohne Namen beim Anzeigen seinen Tooltip als Namen (ohne Tastenkombination); wird einmal in `core/application.py` eingehängt.
 
 Tests: `tests/test_baukasten.py`.
@@ -93,7 +97,7 @@ Jeder Baustein macht genau eine Sache:
 | Baustein | Datei | Aufgabe |
 |---|---|---|
 | `PanelFaehig` | `zusatz_panel.py` | Markierung für ein Fenster: `exec()` zeigt es in der Seitenleiste (sonst wie bisher als Fenster) |
-| `ZusatzPanel` | `zusatz_panel.py` | die Seite in der Seitenleiste: Kopf mit Titel und ✕, Rollbereich ohne seitliche Leiste, Unterfenster mit „←“ |
+| `ZusatzPanel` | `zusatz_panel.py` | die Seite in der Seitenleiste: Kopf mit Titel und ✕, Rollbereich ohne seitliche Leiste, Unterfenster mit „←“; Kopfzeile = `panel_kopf` aus `panel_rahmen.py` (dieselbe wie `PanelRahmen` und „Formatierung“), Ränder `PANEL_KOPF_RAND`/`PANEL_INHALT_RAND` |
 | `FormularGitter` | `formular_gitter.py` | Felder, die sich der Breite anpassen: `zeile(Beschriftung, Feld)`, `breit(Feld)`, `reihe((Beschr., Feld), …)`. Breit: zwei Paare nebeneinander; schmal: eines je Zeile; sehr schmal: Beschriftung über dem Feld |
 | `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
 | `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
@@ -208,7 +212,7 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Bild vergrößern | `bild_zoom.py` | Fenster „Vergrößern“ (Lupe in der Schnellleiste am Bild): Bild in seiner Auflösung, Zoom mit Regler und Mausrad |
 | Dateisymbole | `datei_symbole.py` | lokale Dateityp-Symbole aus der zentralen Symbolsammlung |
 | Diagramm-Popups | `diagramm_popups.py` | Popups der Schnellleiste am Diagramm und Klappen der Diagrammtools — Band und Schnellleiste zeigen dasselbe; Schnelllayout: 11 Kacheln in der Reihenfolge des Fotos (`SCHNELLLAYOUT_ANZEIGE` → Nummer in `SCHNELLLAYOUTS`, `core/befehle/diagrammtools.py`; Nummern bleiben stabil); Filter, Reiter „Name“: Radiogruppen für die Namensquelle |
-| Druckfenster | `druck_dialog.py` | Vorschau links, rechts die Reiter „Standard“, „Lunivo-Office“ und „Drucker“ |
+| Druckfenster | `druck_dialog.py` | eine Spalte: oben die Reiter „Standard“, „Lunivo-Office“ und „Drucker“, darunter die Vorschau; öffnet in der Seitenleiste (`PanelFaehig`) |
 | Druckvorschau | `druckvorschau.py` | Druckvorschau als ganzes Fenster: Blattwechsel, Ansicht (eine, zwei, alle Seiten), Zoom, Einpassen |
 | Einklappgruppe | `einklappgruppe.py` | eingeklappte Gruppe („Weitere Einstellungen“): Knopf mit Pfeil, darunter der Inhalt auf Wunsch |
 | Fensterstapel | `fenster_stapel.py` | Unterfenster öffnen als Seite im selben Fenster statt als neues Fenster darüber |
@@ -219,7 +223,9 @@ Tests, die Fenster per Zeitgeber schließen, müssen auch die Fenster in der Sei
 | Layoutoptionen | `layout_optionen.py` | Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart, „Mit Text verschieben“, „Fester Text“ |
 | Objektformat | `objektformat_panel.py` | Seitenleiste „Formatierung“ für Bild, Form, Textfeld oder WordArt |
 | Objektmenüs | `objekt_menues.py` | Popups für markierte Bilder oder Formen: Formstile, Füllung, Kontur |
-| Panelrahmen | `panel_rahmen.py` | Rahmen eines Feldes in einer Seitenleiste: Titel, Knöpfe, Menü und Schließen |
+| Panelrahmen | `panel_rahmen.py` | Rahmen eines Feldes in einer Seitenleiste: Titel (auch mehrfarbig: `titel_teile`), Knöpfe (Symbol oder Text), Menü und Schließen (abschaltbar: `schliessbar=False`); Styling der Seitenfelder über `seitenKarte` in `theme.py` |
+| Karte/Zeile | `karte.py` | `als_karte(widget, art)` setzt die Eigenschaft `karte` (zeile, karte, kompakt, ki, markiert); die Regeln stehen einmal dort und im Thema (`theme.py`), kein Widget-Stylesheet |
+| Maße | `mass.py` | EINE Quelle aller UI-Maße, benannt nach Rolle: `RADIUS_*`, `ICON_*`, `HOEHE_*`, `BREITE_*`, `GROESSE_*` (Tupel, `setFixedSize(*…)`), `RAND_*` (Tupel, `setContentsMargins(*…)`), `ABSTAND_*`, `SCHRIFT_*` (pt), `ZUGABE_*`, `PADDING_*`/`MARGIN_*` (Textbausteine wie `"4px 10px"` für Stylesheets, per f-String eingesetzt), Kachelgrößen als `GROESSE_*_KACHEL` bzw. `GROESSE_*_BILD` (`QSize(*…)`). Seit 2026-11-05 stehen in ganz `ui/` keine nackten Maße mehr (rund 500 Konstanten); neue Maße zuerst hier benennen. Fenster (`dialogs/`, `hauptfenster/`, `backstage.py`) und Bausteine nutzen sie; keine nackten Zahlen für Maße (nur Werte, kein Verhalten) |
 | Leitzeichen | `ruby_dialog.py` | Fenster „Phonetisches Leitzeichen“: Text in Teilen mit Leittext, Ausrichtung, Abstand, Schrift |
 | Schreibweise | `schreibweise_dialog.py` | Fenster „Groß-/Kleinschreibung“: eine der fünf Arten wählen |
 | SmartArt-Format | `smartart_format_panel.py` | Seitenleiste „Formatierung“ für SmartArt: Füllung und Linie, Effekte, Textoptionen |

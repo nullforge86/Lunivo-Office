@@ -13,8 +13,9 @@ from PySide6.QtWidgets import QHBoxLayout, QToolButton
 from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
 from lunivo_writer.ui.baukasten.layout_optionen import LayoutOptionen
 from lunivo_writer.ui.baukasten.umbruch_symbole import umbruch_zeichner
+from lunivo_writer.ui.baukasten.mass import GROESSE_OBJEKTLAYOUT_KACHEL, GROESSE_SCHLIESSEN_KNOPF, RAND_KEIN
 
-KACHEL = QSize(50, 50)                                   # wie in der Vorlage (bei 300 px Breite: 3 Kacheln = rund 160 px)
+KACHEL = QSize(*GROESSE_OBJEKTLAYOUT_KACHEL)                                   # wie in der Vorlage (bei 300 px Breite: 3 Kacheln = rund 160 px)
 UMBRUCH = (("quadrat", "Quadrat"), ("passend", "Passend"), ("transparent", "Transparent"), ("obenunten", "Oben und Unten"),
            ("hinter", "Hinter den Text"), ("vor", "Vor dem Text"))
 
@@ -36,8 +37,8 @@ class LayoutOptionenObjekt(LayoutOptionen):
         kopf = v.itemAt(0).widget()
         v.removeWidget(kopf)
         x = QToolButton(); x.setText("✕"); x.setAutoRaise(True); x.setCursor(Qt.PointingHandCursor); x.setToolTip("Schließen")
-        x.setAccessibleName("Schließen"); x.setFixedSize(28, 28); x.clicked.connect(self.close)
-        reihe = QHBoxLayout(); reihe.setContentsMargins(0, 0, 0, 0)
+        x.setAccessibleName("Schließen"); x.setFixedSize(*GROESSE_SCHLIESSEN_KNOPF); x.clicked.connect(self.close)
+        reihe = QHBoxLayout(); reihe.setContentsMargins(*RAND_KEIN)
         reihe.addWidget(kopf, 1); reihe.addWidget(x)
         v.insertLayout(0, reihe)
 

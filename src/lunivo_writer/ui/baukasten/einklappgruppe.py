@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_FELD, RAND_KEIN, RAND_ZEILE
 
 
 class EinklappGruppe(QWidget):
@@ -14,20 +15,20 @@ class EinklappGruppe(QWidget):
         super().__init__(parent)
         self.titel = titel
         v = QVBoxLayout(self)
-        v.setContentsMargins(0, 4, 0, 4)
-        v.setSpacing(6)
+        v.setContentsMargins(*RAND_ZEILE)
+        v.setSpacing(ABSTAND_NORMAL)
         self.knopf = QToolButton()
         self.knopf.setCheckable(True)
         self.knopf.setAutoRaise(True)
         self.knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.knopf.setText(titel)
-        self.knopf.setMinimumHeight(32)
+        self.knopf.setMinimumHeight(HOEHE_FELD)
         self.knopf.setCursor(Qt.PointingHandCursor)
         self.knopf.setProperty("optName", titel)
         v.addWidget(self.knopf, 0, Qt.AlignLeft)
         self.inhalt = QWidget()
         self.innen = QVBoxLayout(self.inhalt)
-        self.innen.setContentsMargins(0, 0, 0, 0)
+        self.innen.setContentsMargins(*RAND_KEIN)
         v.addWidget(self.inhalt)
         self.knopf.toggled.connect(self._zeigen)
         self._zeigen(False)

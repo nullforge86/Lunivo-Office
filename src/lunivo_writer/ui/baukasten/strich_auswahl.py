@@ -13,8 +13,9 @@ from PySide6.QtGui import QIcon, QPainter, QPalette, QPixmap, QPolygonF
 from PySide6.QtWidgets import QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter
 
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, GROESSE_STRICHART_KACHEL, HOEHE_KNOPF_GROSS
 
-_KACHEL = QSize(150, 22)
+_KACHEL = QSize(*GROESSE_STRICHART_KACHEL)
 
 
 class StrichAuswahl(QPushButton):
@@ -24,7 +25,7 @@ class StrichAuswahl(QPushButton):
         super().__init__(parent)
         self._eintraege = list(eintraege)
         self._aktuell = self._eintraege[0][0] if self._eintraege else ""
-        self.setMinimumHeight(36); self.setMinimumWidth(60); self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(HOEHE_KNOPF_GROSS); self.setMinimumWidth(BREITE_REGLER_MIN); self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.clicked.connect(self._popup)
 

@@ -19,6 +19,25 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm as D
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_ENG,
+    ABSTAND_KEIN,
+    BREITE_LISTE_ARTEN,
+    BREITE_VORSCHAU_DIAGRAMM,
+    BREITE_VORSCHAU_DIAGRAMM_SCHMAL,
+    GROESSE_BILD_DIAGRAMM,
+    GROESSE_BILD_DIAGRAMM_SCHMAL,
+    HOEHE_FELD,
+    HOEHE_VORSCHAU_DIAGRAMM,
+    ICON_MITTEL,
+    RAND_BOX_KOMPAKT,
+    RAND_KARTE_ZEILE,
+    RAND_KEIN,
+    RAND_OBEN_SEITE,
+    ZUGABE_KNOPF,
+    ZUGABE_LISTE_ARTEN,
+    ZUGABE_RAHMEN,
+)
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
@@ -40,30 +59,30 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
         self.kombi: list[tuple[str, bool]] = []
         v = QVBoxLayout(self)
-        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = QHBoxLayout(rahmen); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_KEIN)
         self._kompakt = False
-        self.arten = QListWidget(); self.arten.setIconSize(QSize(22, 22)); self.arten.setFixedWidth(180)
-        self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(2)
+        self.arten = QListWidget(); self.arten.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL)); self.arten.setFixedWidth(BREITE_LISTE_ARTEN)
+        self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(ABSTAND_ENG)
         for gruppe, sym, _unter in D.TYPEN:
             self.arten.addItem(QListWidgetItem(art_symbol(sym), gruppe if gruppe != "Kombination" else "Kombination …"))
         self.arten.addItem(QListWidgetItem(art_symbol("vorlagen"), "Vorlagen"))     # letzter Punkt: eigene Vorlagen, keine Untertypen
         self._vorlagen_zeile = len(D.TYPEN)
         self._daten_geaendert = False                                       # True, sobald der Nutzer über „Daten bearbeiten …“ eigene Daten setzt
         h.addWidget(self.arten)
-        self.seite = QWidget(); rechts = QVBoxLayout(self.seite); rechts.setContentsMargins(12, 10, 12, 10)
+        self.seite = QWidget(); rechts = QVBoxLayout(self.seite); rechts.setContentsMargins(*RAND_KARTE_ZEILE)
         self.unter_zeile = FlussLayout(6)                                   # Untertypen: brechen um, wenn der Platz nicht reicht
         rechts.addLayout(self.unter_zeile)
         rechts.addWidget(abschnittstitel("Vorschau"))
         self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
         self.name.setWordWrap(True)
         rechts.addWidget(self.name)
-        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumHeight(330)
+        self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumHeight(HOEHE_VORSCHAU_DIAGRAMM)
         self.vorschau.setStyleSheet("background: white; border: 1px solid " + Farbe.GRAU_HELL + ";")
         rechts.addWidget(self.vorschau, 1)
         self.kombi_teil = self._kombi_tabelle()
         rechts.addWidget(self.kombi_teil)
         h.addWidget(self.seite, 1)
-        self.vorlagen_seite = QWidget(); vs = QVBoxLayout(self.vorlagen_seite); vs.setContentsMargins(12, 10, 12, 10)
+        self.vorlagen_seite = QWidget(); vs = QVBoxLayout(self.vorlagen_seite); vs.setContentsMargins(*RAND_KARTE_ZEILE)
         vs.addStretch(1)
         self.vorlagen_verwalten = QPushButton("Vorlagen &verwalten …")
         self.vorlagen_verwalten.clicked.connect(self._vorlagen_hinweis)
@@ -76,7 +95,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._ok = fussleiste(self, v, daten)
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
         self.untertyp = "saeule_gruppiert"
-        self._vorschau_breite, self._bild_groesse = 620, QSize(84, 64)
+        self._vorschau_breite, self._bild_groesse = BREITE_VORSCHAU_DIAGRAMM, QSize(*GROESSE_BILD_DIAGRAMM)
         zeile = 0
         if vorhanden:
             self.titel_text = vorhanden.get("titel", self.titel_text)
@@ -93,10 +112,10 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
     # ---- Kombinationstabelle ----------------------------------------------------------------------------------------------
     def _kombi_tabelle(self) -> QWidget:
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 8, 0, 0)
+        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(*RAND_OBEN_SEITE)
         v.addWidget(QLabel("Kombinationsdiagramme erstellen."))
         self._kombi_rahmen = QFrame(); self._kombi_rahmen.setFrameShape(QFrame.StyledPanel)
-        self._kombi_box = QVBoxLayout(self._kombi_rahmen); self._kombi_box.setContentsMargins(8, 6, 8, 6)
+        self._kombi_box = QVBoxLayout(self._kombi_rahmen); self._kombi_box.setContentsMargins(*RAND_BOX_KOMPAKT)
         self._kombi_gitter = None
         v.addWidget(self._kombi_rahmen)
         self._kombi_felder: list[tuple[QLabel, QComboBox, QCheckBox]] = []
@@ -143,13 +162,13 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._kompakt = True
         self._teile.setDirection(QBoxLayout.TopToBottom)
         a = self.arten
-        a.setFlow(QListView.TopToBottom); a.setWrapping(False); a.setResizeMode(QListView.Adjust); a.setSpacing(0)
+        a.setFlow(QListView.TopToBottom); a.setWrapping(False); a.setResizeMode(QListView.Adjust); a.setSpacing(ABSTAND_KEIN)
         a.setUniformItemSizes(True); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); a.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(32 * a.count() + 6)
+        a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(HOEHE_FELD * a.count() + ZUGABE_LISTE_ARTEN)
         for i in range(a.count()):
-            a.item(i).setSizeHint(QSize(0, 32))
+            a.item(i).setSizeHint(QSize(0, HOEHE_FELD))
         self.vorschau.setMinimumSize(0, 0)
-        self._vorschau_breite, self._bild_groesse = 390, QSize(70, 54)
+        self._vorschau_breite, self._bild_groesse = BREITE_VORSCHAU_DIAGRAMM_SCHMAL, QSize(*GROESSE_BILD_DIAGRAMM_SCHMAL)
         self._gruppe(self.arten.currentRow())
 
     def passe_an(self, breite: int, _hoehe: int) -> None:
@@ -176,7 +195,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         for i, (schl, name) in enumerate(unter):
             img = D.bild(schl, "", self.kategorien, self.reihen, g.width() * 2, g.height() * 2, kachel=True)
             b = QToolButton(); b.setCheckable(True); b.setToolTip(name); b.setAccessibleName(name); b.setProperty("untertyp", schl)
-            b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(g); b.setFixedSize(g.width() + 12, g.height() + 12)
+            b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(g); b.setFixedSize(g.width() + ZUGABE_KNOPF, g.height() + ZUGABE_KNOPF)
             b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
             self._knoepfe.addButton(b); self.unter_zeile.addWidget(b)
         ist_kombi = D.TYPEN[zeile][0] == "Kombination" if 0 <= zeile < len(D.TYPEN) else False
@@ -243,4 +262,4 @@ class DiagrammDialog(PanelFaehig, QDialog):
         pm = pm if r == b else pm.scaledToWidth(b, Qt.SmoothTransformation)
         self.vorschau.setPixmap(pm)
         if self._kompakt:
-            self.vorschau.setFixedHeight(pm.height() + 2)                    # genau so hoch wie das Bild: nichts abgeschnitten
+            self.vorschau.setFixedHeight(pm.height() + ZUGABE_RAHMEN)                    # genau so hoch wie das Bild: nichts abgeschnitten

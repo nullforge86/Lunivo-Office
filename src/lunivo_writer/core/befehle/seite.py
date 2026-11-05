@@ -27,6 +27,23 @@ class SeiteBefehle:
         self.w.set_margins(o, u, l, r)
 
 
+    RAND_TEXTE = (("normal", "Normal\n25 / 32 mm"), ("schmal", "Schmal\n13 mm"),
+                  ("moderat", "Moderat\n25 / 19 mm"), ("breit", "Breit\n25 / 51 mm"))
+
+
+    def galerie_randVorgaben(self):
+        """Die Randvorgaben der Galerie im Band: ``[(art, Beschriftung), ...]``."""
+        return list(self.RAND_TEXTE)
+
+
+    def randVorgabeWaehlen(self, art):
+        self.w_setzeRandVorgabe(None, art)
+
+
+    def setzeRaender(self, oben, unten, links, rechts):
+        self.w.set_margins(oben, unten, links, rechts)
+
+
     def w_randVorgabeJetzt(self):
         t = self.w.current_tab()
         if not t:
@@ -290,8 +307,8 @@ class SeiteBefehle:
         Untermenü Wasserzeichen (dieselbe Galerie wie Einfügen ▸ Wasserzeichen)."""
         m = self.menue_seitenfarbe()
         m.addSeparator()
-        m.addAction("Hintergrundbild …").setEnabled(False)
-        anders = m.addMenu("Anderer Hintergrund"); anders.setEnabled(False)
+        m.eintrag("Hintergrundbild …", aktiv=False)
+        m.untermenue("Anderer Hintergrund", aktiv=False)
         m.addSeparator()
         w = self.menue_wasserzeichenKlappe(); w.setTitle("Wasserzeichen")
         from lunivo_writer.ui.widgets import icons
@@ -366,9 +383,10 @@ class SeiteBefehle:
     def absatzabstand(self, k=None):
         if not self.ed:
             return
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for text, vor, nach in self.ABSATZABSTAND:
-            m.addAction(text, lambda _=False, v=vor, n=nach: self._abstand_setzen(v, n))
+            m.eintrag(text, lambda v=vor, n=nach: self._abstand_setzen(v, n))
         self._popup(m)
 
 

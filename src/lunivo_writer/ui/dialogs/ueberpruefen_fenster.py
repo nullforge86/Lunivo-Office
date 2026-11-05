@@ -12,6 +12,12 @@ from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QPushButton, QRadio
 
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    ABSTAND_NORMAL,
+    HOEHE_KNOPF_GROSS,
+    RAND_PANEL_KLEIN,
+)
 
 ZEILEN = (("seiten", "Seiten"), ("woerter", "Wörter"), ("zeichen_ohne", "Zeichen (keine Leerzeichen)"),
           ("zeichen_mit", "Zeichen (mit Leerzeichen)"), ("absaetze", "Absätze"), ("nicht_asiatisch", "Nicht-asiatische Wörter"),
@@ -31,7 +37,7 @@ class WoerterDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Wörter zählen")
         self.ohne, self.mit = dict(ohne or {}), dict(mit or ohne or {})
-        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_NORMAL)
         v.addWidget(QLabel("Statistiken:"))
         g = FormularGitter()                                                   # eng: Wert unter der Beschriftung
         self.werte: dict[str, QLabel] = {}
@@ -61,11 +67,11 @@ class SchutzDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Bearbeitung einschränken")
         self.art = art
-        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_KLEIN)
         self.formate = UmbruchSchalter("Formatierungen auf eine Auswahl von Formatvorlagen beschränken")
         self.formate.setEnabled(False); self.formate.setToolTip("Das kann Lunivo noch nicht.")
         v.addWidget(self.formate)
-        einst = QPushButton("Einstellungen …"); einst.setEnabled(False); einst.setMinimumHeight(36)
+        einst = QPushButton("Einstellungen …"); einst.setEnabled(False); einst.setMinimumHeight(HOEHE_KNOPF_GROSS)
         v.addWidget(einst, 0, Qt.AlignLeft)
         self.schutz = UmbruchSchalter("Dokumentschutz einstellen")
         self.schutz.setChecked(art is not None)

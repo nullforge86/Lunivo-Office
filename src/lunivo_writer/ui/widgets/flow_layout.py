@@ -1,6 +1,7 @@
 """Umbrechendes Layout für die Auswahlknöpfe (nach dem Qt-Beispiel „Flow Layout“)."""
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QLayout, QSizePolicy
+from lunivo_writer.ui.baukasten.mass import RAND_KEIN
 
 
 class FlowLayout(QLayout):
@@ -8,7 +9,7 @@ class FlowLayout(QLayout):
         super().__init__(parent)
         self._items = []
         self._sp = spacing
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(*RAND_KEIN)
 
     def addItem(self, item): self._items.append(item)
     def count(self): return len(self._items)

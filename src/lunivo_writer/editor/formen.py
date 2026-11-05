@@ -181,45 +181,43 @@ ZEICHENBEREICH = (567, 302)
 ZB_VERSATZ = 24                                                   # jede neue Form etwas rechts unterhalb der vorigen
 
 
-def zeichenbereich_bild(d: dict) -> QImage:
+def zeichenbereich_bild(d: dict, skala: int = 1) -> QImage:
     from PySide6.QtCore import QRectF, Qt
     from PySide6.QtGui import QPen
     b, h = int(d.get("breite", ZEICHENBEREICH[0])), int(d.get("hoehe", ZEICHENBEREICH[1]))
-    img = E._leer(b, h)
+    img = E._leer(b * skala, h * skala)
     p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1, Qt.DashLine)); p.drawRect(QRectF(0.5, 0.5, b - 1, h - 1))
+    p.setPen(QPen(QColor(Farbe.GRAU_HELL), skala, Qt.DashLine)); p.drawRect(QRectF(0.5, 0.5, b * skala - 1, h * skala - 1))
     for k in d.get("kinder", []):
-        p.drawImage(int(k["x"]), int(k["y"]), _zeichnen(dict(STANDARD, **k)))
+        kd = dict(STANDARD, **k)
+        if skala != 1:
+            kd = dict(kd, breite=int(kd["breite"]) * skala, hoehe=int(kd["hoehe"]) * skala, strich=float(kd["strich"]) * skala)
+        p.drawImage(int(k["x"]) * skala, int(k["y"]) * skala, _zeichnen(kd))
     p.end()
     return img
 
 
 def zeichenbereich_einfuegen(ed) -> None:
-    d = {"breite": min(ZEICHENBEREICH[0], int(ed.page.content_width_px)), "hoehe": ZEICHENBEREICH[1], "kinder": []}
-    E.qimage_einfuegen(ed, zeichenbereich_bild(d), "Zeichenbereich", "zeichenbereich", d)
+    """Als freies Objekt (``frei_objekt.py``): Rahmen mit Griffen zum Skalieren und Schnellleiste rechts daneben."""
+    from lunivo_writer.editor import frei_objekt as FO
+    FO.einfuegen(ed, "zeichenbereich", {"kinder": []}, min(ZEICHENBEREICH[0], int(ed.page.content_width_px)), ZEICHENBEREICH[1])
 
 
 def in_zeichenbereich(ed, form: str) -> bool:
-    """Form in den markierten Zeichenbereich setzen; False, wenn keiner markiert ist (dann kommt die Form in den Text)."""
-    c = ed._bild_cursor()
-    if c is None:
+    """Form in den gewählten Zeichenbereich setzen; False, wenn keiner gewählt ist (dann kommt die Form in den Text)."""
+    from lunivo_writer.editor import frei_objekt as FO
+    z = FO.ziel(ed)
+    if z is None or z[0] != "zeichenbereich":
         return False
-    f = c.charFormat().toImageFormat()
-    o = objekt(f)
-    if not o or o.get("art") != "zeichenbereich":
-        return False
-    d = dict(o.get("daten", {}))
+    _art, d, _key, a, _bild = z
     kinder = list(d.get("kinder", []))
-    b, h = int(d.get("breite", ZEICHENBEREICH[0])), int(d.get("hoehe", ZEICHENBEREICH[1]))
+    b, h = int(a["b"]), int(a["h"])
     kb, kh = (min(240, b - 16), 60) if E_ist_linie(form) else (min(160, b - 16), min(120, h - 16))
     n = len(kinder)
     x = 8 + (n * ZB_VERSATZ) % max(1, b - kb - 16)
     y = 8 + (n * ZB_VERSATZ) % max(1, h - kh - 16)
     kinder.append({"form": form, "x": x, "y": y, "breite": kb, "hoehe": kh})
-    d["kinder"] = kinder
-    o["daten"] = d
-    _ersetzen(ed, c, zeichenbereich_bild(d), o, f, f.width(), f.height())
-    return True
+    return FO.aendern(ed, "zeichenbereich", kinder=kinder)
 
 
 def E_ist_linie(form: str) -> bool:

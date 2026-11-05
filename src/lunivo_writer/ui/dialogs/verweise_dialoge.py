@@ -15,6 +15,7 @@ def _knoepfe(dlg):
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_VERWEIS
 class TextmarkeDialog(PanelFaehig, QDialog):
     def __init__(self, parent, ed):
         super().__init__(parent)
@@ -85,7 +86,7 @@ class QuellenDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.ed = ed
         self.setWindowTitle("Quellen verwalten")
-        self.resize(560, 420)
+        self.resize(*GROESSE_FENSTER_VERWEIS)
         v = QVBoxLayout(self)
         self.liste = QListWidget(); v.addWidget(self.liste)
         z = FlussLayout()

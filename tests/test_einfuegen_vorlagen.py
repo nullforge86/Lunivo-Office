@@ -242,9 +242,9 @@ def test_zeichenbereich_nimmt_formen_auf(fenster):
     assert any(x.text().replace("&", "") == "Neuer Zeichenbereich" for x in m.findChildren(__import__("PySide6.QtWidgets", fromlist=["QPushButton"]).QPushButton))
     b.zeichenbereich()
     assert F.in_zeichenbereich(e, "Rechteck") and F.in_zeichenbereich(e, "Ellipse")
-    o = json.loads(e.bild_format().property(P_OBJEKT))
-    assert o["art"] == "zeichenbereich" and [k["form"] for k in o["daten"]["kinder"]] == ["Rechteck", "Ellipse"]
-    assert (e.bild_format().width(), e.bild_format().height()) == (o["daten"]["breite"], F.ZEICHENBEREICH[1])
+    from lunivo_writer.editor import frei_objekt as FO
+    art, d, _k, _a, _bild = FO.ziel(e)
+    assert art == "zeichenbereich" and [k["form"] for k in d["kinder"]] == ["Rechteck", "Ellipse"]
 
 
 def test_tabelle_in_text_fenster_wie_vorlage():

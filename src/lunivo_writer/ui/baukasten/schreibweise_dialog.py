@@ -13,13 +13,14 @@ from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_PANEL_KLEIN
 
 
 class SchreibweiseDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, art: str = "satz"):
         super().__init__(parent)
         self.setWindowTitle("Groß-/Kleinschreibung")
-        v = QVBoxLayout(self); v.setContentsMargins(6, 6, 6, 6); v.setSpacing(4)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_KLEIN)
         v.addWidget(abschnittstitel("Groß-/Kleinschreibung"))
         self._gruppe = QButtonGroup(self)
         for i, (k, text) in enumerate(SCHREIBWEISEN):

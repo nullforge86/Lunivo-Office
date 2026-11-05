@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QPushButton
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import GROESSE_LESEENDEKNOPF, PADDING_LESEENDEKNOPF, RADIUS_KARTE, SCHRIFT_LESEENDEKNOPF
 
 
 class LeseEndeKnopf(QPushButton):
@@ -12,11 +14,11 @@ class LeseEndeKnopf(QPushButton):
         super().__init__("Lesemodus beenden", fenster)
         self.fenster = fenster
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumSize(240, 48)
+        self.setMinimumSize(*GROESSE_LESEENDEKNOPF)
         self.setToolTip("Zurück zum Bearbeiten (Strg+Umschalt+L)"); self.setAccessibleName("Lesemodus beenden")
         self.setStyleSheet("QPushButton { background: palette(highlight); color: palette(highlighted-text); border: 2px solid palette(window-text); "
-                           "border-radius: 10px; padding: 8px 24px; font-size: 12pt; font-weight: bold; }"
-                           "QPushButton:hover { background: palette(link); color: black; }")
+                           "border-radius: " f"{RADIUS_KARTE}" "px; padding: " f"{PADDING_LESEENDEKNOPF}" "; font-size: " f"{SCHRIFT_LESEENDEKNOPF}" "pt; font-weight: bold; }"
+                           "QPushButton:hover { background: palette(link); color: %s; }" % Farbe.SCHWARZ)
         self.clicked.connect(lambda: aktion())
         fenster.installEventFilter(self)
         self.hide()

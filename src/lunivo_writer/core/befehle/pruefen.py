@@ -332,16 +332,7 @@ class PruefenBefehle:
 
 
     def pruefsprache(self, k=None):
-        if not self.ed:
-            return
-        aktuell = self.w.current_tab().meta.get("sprache") or self.w.settings.get("pruefsprache", "de-DE")
-        namen = [n for _k, n in self.SPRACHEN]
-        start = next((i for i, (kk, _n) in enumerate(self.SPRACHEN) if kk == aktuell), 0)
-        from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
-        n, ok = EingabeFenster.getItem(self.w, "Sprache für die Korrekturhilfen", "Sprache des Dokuments (wird in der Datei vermerkt).\n"
-                                     "Die Schreibhilfe selbst prüft weiter auf Deutsch.", namen, start, False)
-        if ok:
-            self.pruefsprache_setzen(self.SPRACHEN[namen.index(n)][0])
+        self.w_kiSprache()                  # ein Fenster für die Sprache: „KI-Einstellungen → Sprache“ (Prüfsprache und Übersetzungssprache)
 
 
     def pruefsprache_aktuell(self) -> str:

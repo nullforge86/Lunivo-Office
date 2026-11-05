@@ -11,12 +11,14 @@ from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPixmap
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP
 
-BAND_KACHEL = QSize(70, 48)
-POPUP_KACHEL = QSize(70, 48)
+BAND_KACHEL = QSize(*GROESSE_SMARTART_STIL_BAND)
+POPUP_KACHEL = QSize(*GROESSE_SMARTART_STIL_POPUP)
 
 
-def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str = Farbe.AKZENT) -> QPixmap:
+def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str | None = None) -> QPixmap:
+    blau = Farbe.AKZENT if blau is None else blau
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     w, h = groesse.width(), groesse.height()

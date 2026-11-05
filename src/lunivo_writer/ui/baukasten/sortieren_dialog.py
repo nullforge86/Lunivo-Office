@@ -17,6 +17,7 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import BREITE_SCHIENE, HOEHE_KNOPF, RAND_BOX_KOMPAKT
 
 TYPEN = (("text", "Text"), ("zahl", "Zahl"), ("datum", "Datum"))
 TRENNER = (("\t", "Tabstopps"), (",", "Kommata"))
@@ -24,7 +25,7 @@ TRENNER = (("\t", "Tabstopps"), (",", "Kommata"))
 
 def _feld(w: QWidget, breite: int = 0) -> QWidget:
     """Feldhöhe wie überall; ``breite`` nur für kleine Felder (ein Zeichen), sonst richtet sich das Feld nach dem Gitter."""
-    w.setMinimumHeight(34)
+    w.setMinimumHeight(HOEHE_KNOPF)
     if breite:
         w.setMinimumWidth(breite)
     return w
@@ -40,7 +41,7 @@ class SortierOptionenDialog(PanelFaehig, QDialog):
         for i, (_z, t) in enumerate(TRENNER):
             r = QRadioButton(t); self._trenner.addButton(r, i); v.addWidget(r)
         z = FlussLayout(8); r = QRadioButton("Andere:"); self._trenner.addButton(r, len(TRENNER)); z.addWidget(r)
-        self.andere = _feld(QLineEdit("-"), 44); self.andere.setMaximumWidth(48); self.andere.setMaxLength(1); self.andere.setAlignment(Qt.AlignCenter)
+        self.andere = _feld(QLineEdit("-"), 44); self.andere.setMaximumWidth(BREITE_SCHIENE); self.andere.setMaxLength(1); self.andere.setAlignment(Qt.AlignCenter)
         z.addWidget(self.andere); v.addLayout(z)
         bekannt = [k for k, _t in TRENNER]
         if trenner in bekannt:
@@ -120,7 +121,7 @@ class SortierenDialog(PanelFaehig, QDialog):
             g.breit(abschnittstitel(titel))
             self.schluessel.append(_Schluessel(g, self, mit_keine=n > 0))
         g.breit(abschnittstitel("Meine Liste enthält"))
-        kz = QFrame(); kz.setFrameShape(QFrame.StyledPanel); h = FlussLayout(14); h.setContentsMargins(8, 6, 8, 6); kz.setLayout(h)
+        kz = QFrame(); kz.setFrameShape(QFrame.StyledPanel); h = FlussLayout(14); h.setContentsMargins(*RAND_BOX_KOMPAKT); kz.setLayout(h)
         self._kopf = QButtonGroup(self)
         self.mit_kopf, self.ohne_kopf = QRadioButton("Überschriftenzeile"), QRadioButton("Keine Überschriftenzeile")
         self._kopf.addButton(self.mit_kopf, 1); self._kopf.addButton(self.ohne_kopf, 0); self.ohne_kopf.setChecked(True)
@@ -128,7 +129,7 @@ class SortierenDialog(PanelFaehig, QDialog):
         self.kopf_rahmen = kz
         g.breit(kz)
         v.addWidget(seite); v.addStretch(1)
-        optionen = QPushButton("Option …"); optionen.setMinimumHeight(34); optionen.clicked.connect(self._optionen)
+        optionen = QPushButton("Option …"); optionen.setMinimumHeight(HOEHE_KNOPF); optionen.clicked.connect(self._optionen)
         fussleiste(self, v, optionen)
         self._aktualisieren()
 

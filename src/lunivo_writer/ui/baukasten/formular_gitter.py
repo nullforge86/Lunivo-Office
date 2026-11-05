@@ -15,10 +15,31 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import (QAbstractSpinBox, QComboBox, QHBoxLayout, QPushButton, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget, QWidgetItem)
+from PySide6.QtWidgets import (QAbstractSpinBox, QComboBox, QGridLayout, QHBoxLayout, QPushButton, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget, QWidgetItem)
+from lunivo_writer.ui.baukasten.mass import (MARGIN_OBEN_GRUPPE_ZUSATZ, PADDING_ABSCHNITTSBAND, PADDING_ABSCHNITT_KNOPF, PADDING_GRUPPE_OBEN, PADDING_GRUPPENTITEL, RAND_KEIN,
+                                                  SCHRIFT_KLEIN)
 
 ABSTAND = 6
 SPALTEN_ABSTAND = 10
+
+
+def tabellen_gitter(eltern: QWidget | None = None, *, rand: tuple | None = RAND_KEIN, abstand: int | None = None,
+                    waagerecht: int | None = None, senkrecht: int | None = None, oben_links: bool = False) -> QGridLayout:
+    """DIE eine Stelle im Projekt, an der ein ``QGridLayout`` erzeugt wird. Für Zellen, deren Spalten feste Aufgaben haben (Kachelraster, Zwei-Listen-Gerüst,
+    Menüband-Zellen mit Beschriftung und Maßfeld), nicht für Felder: Felder gehören in ``FormularGitter``, Kachelreihen in ``kachel_gitter`` (karten_raster.py).
+    ``abstand`` setzt beide Abstände, ``waagerecht``/``senkrecht`` einzeln; ``oben_links``: Zellen bleiben links oben stehen, statt sich zu verteilen."""
+    g = QGridLayout(eltern) if eltern is not None else QGridLayout()
+    if rand is not None:                                      # ``None``: Standardrand des Stils
+        g.setContentsMargins(*rand)
+    if abstand is not None:
+        g.setSpacing(abstand)
+    if waagerecht is not None:
+        g.setHorizontalSpacing(waagerecht)
+    if senkrecht is not None:
+        g.setVerticalSpacing(senkrecht)
+    if oben_links:
+        g.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+    return g
 
 
 class UmbruchSchalter(QCheckBox):
@@ -29,6 +50,11 @@ class UmbruchSchalter(QCheckBox):
         sp = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
         sp.setHeightForWidth(True)
         self.setSizePolicy(sp)
+
+    def natuerliche_breite(self) -> int:
+        """Breite des Ankreuzfelds in einer Zeile, ohne Umbruch (damit kurz/lang richtig entschieden wird; ``sizeHint`` ist wegen des Umbruchs klein)."""
+        from PySide6.QtGui import QFontMetrics
+        return QFontMetrics(self.font()).horizontalAdvance(self.text().replace("&", "")) + self._indikator()
 
     def _indikator(self) -> int:
         o = QStyleOptionButton(); self.initStyleOption(o)
@@ -136,27 +162,27 @@ def abschnittstitel(text: str) -> QLabel:
     """Die Überschrift eines Abschnitts: klein, gedämpft, Großbuchstaben — überall gleich (Gruppen, Spalten, Bereiche in Fenstern)."""
     l = QLabel(text.rstrip(":").replace("ß", "ẞ").upper())          # ß groß als ẞ, nicht „SS“
     l.setObjectName("abschnittTitel")
-    l.setStyleSheet("color: palette(mid); font-size: 8pt; font-weight: 600;")
+    l.setStyleSheet("color: palette(mid); font-size: " f"{SCHRIFT_KLEIN}" "pt; font-weight: 600;")
     return l
 
 
 def reiter_knopf_stil(knopf: QWidget) -> None:
     """Der Reiterknopf (``QToolButton``, ``checkable``) mit Unterstrich in der Hervorhebungsfarbe — für selbst gebaute Reiterleisten."""
-    knopf.setStyleSheet("QToolButton, QToolButton:hover { border: none; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; padding: 4px 6px; color: palette(window-text); }"
+    knopf.setStyleSheet("QToolButton, QToolButton:hover { border: none; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; padding: " f"{PADDING_ABSCHNITT_KNOPF}" "; color: palette(window-text); }"
                         "QToolButton:checked { color: palette(highlight); border-bottom: 2px solid palette(highlight); background: transparent; }")
 
 
 def abschnittsband(text: str) -> QLabel:
     """Eine Überschrift als graues Band über einer Gruppe von Kacheln (Menüs mit mehreren Gruppen); Schriftgröße der Oberfläche."""
     t = QLabel(text)
-    t.setStyleSheet("background: palette(midlight); padding: 5px 8px;")
+    t.setStyleSheet("background: palette(midlight); padding: " f"{PADDING_ABSCHNITTSBAND}" ";")
     return t
 
 
 def mittig(widget: QWidget) -> QWidget:
     """Ein Element fester Größe (Vorschau, Farbraster …) in der Mitte der Breite."""
     host = QWidget()
-    h = QHBoxLayout(host); h.setContentsMargins(0, 0, 0, 0)
+    h = QHBoxLayout(host); h.setContentsMargins(*RAND_KEIN)
     h.addStretch(1); h.addWidget(widget); h.addStretch(1)
     return host
 
@@ -176,6 +202,9 @@ def _hoehe_bei(item: QLayoutItem, breite: int) -> int:
 
 
 def _natuerlich(item: QLayoutItem) -> int:
+    w = item.widget()
+    if w is not None and hasattr(w, "natuerliche_breite"):             # ein Widget mit Umbruch (Policy „Ignored“) meldet über das Layout sonst Breite 0
+        return w.natuerliche_breite()
     return max(item.sizeHint().width(), item.minimumSize().width())
 
 
@@ -202,13 +231,21 @@ def felder_angleichen(wurzel: QWidget) -> None:
 class FormularGitter(QLayout):
     _flach: list = []                                         # Vorgabe, solange QLayout.__init__ schon itemAt() ruft (vor __init__ dieser Klasse)
     _einheiten: list = []
+    einspaltig = False                                        # True: nie zwei Paare nebeneinander (z. B. Dateiname/Dateityp mit Knopf daneben, Kennwortfelder)
+    # Rhythmus-Optionen: Vorgaben = Seitenleiste; Fenster mit eigenem, früher festgelegtem Rhythmus (Optionen, Dateifenster) setzen sie, statt ein eigenes Gitter zu bauen
+    zeilenabstand = ABSTAND                                   # senkrechter Abstand zwischen den Zeilen
+    beschriftungsabstand = ABSTAND                            # Abstand zwischen Beschriftung (links) und Feld
+    beschriftung_voll = False                                 # True: die Beschriftung füllt die Zeilenhöhe (Text bleibt mittig) statt nur ihre eigene Höhe
+    beschriftung_natuerlich = False                           # True: jede Beschriftung nur so breit wie ihr Text (Felder beginnen trotzdem in einer Spalte)
+    kurz_gruppen = True                                       # False: Ankreuzfelder/Knöpfe nie zu zweit nebeneinander
+    angleichen = True                                         # False: Höhen der Felder bleiben, wie sie sind
     feldbreite = 0                                            # > 0: Felder in fester Breite rechtsbündig, Beschriftungen links (Seitenleiste „Formatierung“); 0: Feld füllt den Rest
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._einheiten: list[_Einheit] = []
         self._flach: list[QLayoutItem] = []
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(*RAND_KEIN)
 
     # ---- Aufbau ----------------------------------------------------------------------------------------
     def _nimm(self, objekt) -> QLayoutItem:
@@ -238,6 +275,15 @@ class FormularGitter(QLayout):
     def breit(self, objekt) -> None:
         self._einheiten.append(_Einheit(None, self._nimm(objekt)))
         self.invalidate()
+
+    def nebeneinander(self, *felder, spalten: int | None = None, abstand: int = SPALTEN_ABSTAND) -> None:
+        """Felder ohne Beschriftung gleich breit in einer Zeile; ``spalten`` größer als die Zahl der Felder lässt den Rest der Zeile frei (halbe Zeile)."""
+        z = QHBoxLayout(); z.setContentsMargins(*RAND_KEIN); z.setSpacing(abstand)
+        for f in felder:
+            z.addWidget(f, 1)
+        for _ in range(max(0, (spalten or len(felder)) - len(felder))):
+            z.addSpacing(abstand); z.addStretch(1)                   # Spalte bleibt leer, aber gleich breit
+        self.breit(z)
 
     def reihe(self, *paare, gewichte: tuple | None = None, vorn: bool = False) -> None:
         """Mehrere Felder nebeneinander, jedes mit der Beschriftung darüber: ``reihe(("Schriftart:", a), ("Größe:", b), gewichte=(3, 1))``.
@@ -274,7 +320,7 @@ class FormularGitter(QLayout):
 
     def sizeHint(self) -> QSize:
         m = self.contentsMargins()
-        breit = max((_natuerlich(e.f) + (_natuerlich(e.b) + ABSTAND if e.b is not None else 0) for e in self._einheiten if e.reihe is None), default=0)
+        breit = max((_natuerlich(e.f) + (_natuerlich(e.b) + self.beschriftungsabstand if e.b is not None else 0) for e in self._einheiten if e.reihe is None), default=0)
         return QSize(breit + m.left() + m.right(), self.heightForWidth(max(breit, 1) + m.left() + m.right()))
 
     def minimumSize(self) -> QSize:
@@ -331,14 +377,13 @@ class FormularGitter(QLayout):
                 hb = b.sizeHint().height(); hf = _hoehe_bei(f, w)
                 out.append((b, x, y, w, hb)); out.append((f, x, y + hb + 2, w, hf))
                 hmax = max(hmax, hb + 2 + hf); x += w + SPALTEN_ABSTAND
-            y += hmax + ABSTAND
+            y += hmax + self.zeilenabstand
         return y
 
-    @staticmethod
-    def _kurz(e: _Einheit, breite: int) -> bool:
+    def _kurz(self, e: _Einheit, breite: int) -> bool:
         """Ein einzelnes Ankreuzfeld, Optionsfeld oder ein Knopf, der höchstens eine halbe Zeile braucht."""
         w = e.f.widget()
-        if w is None or e.reihe is not None or e.b is not None:
+        if not self.kurz_gruppen or w is None or e.reihe is not None or e.b is not None:
             return False
         if w.property("einspaltig"):                                              # z. B. Füllungsart/Linienart: immer eine Option je Zeile
             return False
@@ -348,6 +393,8 @@ class FormularGitter(QLayout):
 
     def _gleich_hoch(self) -> None:
         """Alle einzeiligen Bedienelemente (Menü, Zahl, Text, Knopf) dieses Formulars gleich hoch: die Höhe des höchsten natürlichen Elements, ohne feste Pixelwerte."""
+        if not self.angleichen:
+            return
         ws: list[QWidget] = []
 
         def sammle(item) -> None:
@@ -375,13 +422,13 @@ class FormularGitter(QLayout):
         paare = [e for e in einheiten if e.b is not None]
         bw = max((_natuerlich(e.b) for e in paare), default=0)                    # Breite der Beschriftungen
         fw = max((_natuerlich(e.f) for e in paare), default=0)                    # Breite, die ein Feld gern hätte
-        wunsch = bw + ABSTAND + fw
-        spalten = 2 if paare and 2 * wunsch + SPALTEN_ABSTAND <= breite else 1
+        wunsch = bw + self.beschriftungsabstand + fw
+        spalten = 2 if paare and not self.einspaltig and 2 * wunsch + SPALTEN_ABSTAND <= breite else 1
         gestapelt = bool(paare) and wunsch > breite                               # zu eng für „Beschriftung links“: darüber
         if self.feldbreite and paare:                                             # feste Feldspalte: nur zu schmal für Beschriftung + Feld → Beschriftung darüber
-            gestapelt = breite < self.feldbreite + ABSTAND + 90
+            gestapelt = breite < self.feldbreite + self.beschriftungsabstand + 90
             spalten = 1
-            bw = max(0, breite - self.feldbreite - ABSTAND)
+            bw = max(0, breite - self.feldbreite - self.beschriftungsabstand)
         out, y = [], 0
         i = 0
         n = len(einheiten)
@@ -399,14 +446,14 @@ class FormularGitter(QLayout):
                             h = max(_hoehe_bei(g.f, cw) for g in gruppe)
                             for k, g in enumerate(gruppe):
                                 out.append((g.f, k * (cw + SPALTEN_ABSTAND), y, cw, h))
-                            y += h + ABSTAND; i += n_sp
+                            y += h + self.zeilenabstand; i += n_sp
                             break
                     else:
                         h = _hoehe_bei(e.f, breite)
-                        out.append((e.f, 0, y, breite, h)); y += h + ABSTAND; i += 1
+                        out.append((e.f, 0, y, breite, h)); y += h + self.zeilenabstand; i += 1
                     continue
                 h = _hoehe_bei(e.f, breite)
-                out.append((e.f, 0, y, breite, h)); y += h + ABSTAND; i += 1
+                out.append((e.f, 0, y, breite, h)); y += h + self.zeilenabstand; i += 1
                 continue
             zeile = [e]
             while spalten == 2 and len(zeile) < 2 and i + len(zeile) < n and einheiten[i + len(zeile)].b is not None:
@@ -421,18 +468,20 @@ class FormularGitter(QLayout):
                     hf = _hoehe_bei(u.f, sp)
                     plaetze.append((u.b, x0, 0, sp, hb)); plaetze.append((u.f, x0, hb + 2, sp, hf)); hmax = max(hmax, hb + 2 + hf)
                 else:
-                    fb = self.feldbreite if self.feldbreite else max(40, sp - bw - ABSTAND)
+                    fb = self.feldbreite if self.feldbreite else max(40, sp - bw - self.beschriftungsabstand)
                     hf = _hoehe_bei(u.f, fb)
                     if self.feldbreite and einzeilig(u.f):
                         u.f.widget().setFixedHeight(FELDHOEHE); hf = FELDHOEHE
                     hb = u.b.sizeHint().height()
                     h = max(hb, hf)
-                    plaetze.append((u.b, x0, (h - hb) // 2, bw, hb)); plaetze.append((u.f, x0 + sp - fb if self.feldbreite else x0 + bw + ABSTAND, 0, fb, hf)); hmax = max(hmax, h)
+                    bb = min(bw, _natuerlich(u.b)) if self.beschriftung_natuerlich else bw
+                    plaetze.append((u.b, x0, 0, bb, h) if self.beschriftung_voll else (u.b, x0, (h - hb) // 2, bb, hb))
+                    plaetze.append((u.f, x0 + sp - fb if self.feldbreite else x0 + bw + self.beschriftungsabstand, 0, fb, hf)); hmax = max(hmax, h)
             for it, x, dy, w, h in plaetze:
                 out.append((it, x, y + dy, w, h))
-            y += hmax + ABSTAND
+            y += hmax + self.zeilenabstand
             i += len(zeile)
-        return out, max(0, y - ABSTAND)
+        return out, max(0, y - self.zeilenabstand)
 
 
 class AngepassteReiter(QTabWidget):
@@ -440,10 +489,10 @@ class AngepassteReiter(QTabWidget):
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+        from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+        self.setTabBar(FlacheReiterLeiste(HAUPT))          # EINE Reiterleiste für alle Fenster: flach, die Beschriftung bricht um, nichts wird abgeschnitten
         self.currentChanged.connect(self._aktuelle_seite)
         self.setUsesScrollButtons(False)
-        self.tabBar().setExpanding(False)
-        self.tabBar().setElideMode(Qt.ElideRight)          # zu schmal: die Reiternamen kürzen sich, die Leiste macht das Fenster nie breiter
 
     def _aktuelle_seite(self, _i: int = 0) -> None:
         """Nur die gewählte Seite bestimmt die Höhe: die anderen zählen für das Layout nicht mit (sonst bleibt unter kürzeren Reitern leerer Platz)."""
@@ -491,3 +540,15 @@ class AngepassteReiter(QTabWidget):
 
     def minimumSizeHint(self) -> QSize:
         return self._mass(True)
+
+
+def gruppe(titel: str, *, karte: bool = False):
+    """Eine Gruppe von Feldern mit Titel: flach wie die Abschnittstitel (Großbuchstaben, Linie darüber); ``karte=True`` = Gruppenkasten des Stils
+    (Optionenseiten). EINE Stelle für alle Gruppen in Fenstern und Seitenleiste."""
+    from PySide6.QtWidgets import QGroupBox
+    g = QGroupBox(titel if karte else titel.rstrip(":").upper())
+    if not karte:
+        g.setStyleSheet("QGroupBox { border: none; border-top: 1px solid palette(midlight); margin-top: " f"{MARGIN_OBEN_GRUPPE_ZUSATZ}" "; padding-top: " f"{PADDING_GRUPPE_OBEN}" "; }"
+                        "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: " f"{PADDING_GRUPPENTITEL}" "; "
+                        "color: palette(mid); font-size: " f"{SCHRIFT_KLEIN}" "pt; font-weight: 600; }")
+    return g

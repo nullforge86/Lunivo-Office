@@ -14,6 +14,7 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
 from lunivo_writer.ui.dialogs.optionen_seiten.ansicht import AnsichtSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.datei import DateiSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.befehle import BefehleSeiten
@@ -21,10 +22,39 @@ from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import erklaerung as _er
 from lunivo_writer.ui.dialogs.optionen_seiten.lesen import LesenSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.lunivo import LunivoSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.name_ki import NameKiSeiten
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KEIN,
+    ABSTAND_NORMAL,
+    BREITE_NAVIGATION_OPTIONEN,
+    BREITE_SEITE_MAX,
+    BREITE_SEITE_MIN,
+    GROESSE_FENSTER_OPTIONEN,
+    HOEHE_FELD,
+    HOEHE_LISTE_ANBIETER,
+    MARGIN_NAVIGATION_EINTRAG,
+    MARGIN_OBEN_OPTIONEN_GRUPPE,
+    PADDING_LINKS_OPTIONEN_HINWEIS,
+    PADDING_NAVIGATION_EINTRAG,
+    PADDING_OPTIONEN_ERKLAERUNG,
+    PADDING_OPTIONEN_GRUPPE,
+    PADDING_OPTIONEN_VORSCHAU,
+    PADDING_OPTIONEN_WAHL,
+    RADIUS_FELD,
+    RADIUS_KARTE,
+    RADIUS_KLEIN,
+    RADIUS_MITTEL,
+    RAND_BOX,
+    RAND_KEIN,
+    RAND_UNTEN,
+    SCHRIFT_HINWEIS,
+    SCHRIFT_KLEIN,
+)
 
 ERKLAERUNG_LEER = "Zeig auf eine Einstellung — hier steht, was sie tut."
 
-STIL = ('\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQTreeWidget#optNavigation { background: transparent; border: none; outline: none; }\nQTreeWidget#optNavigation::item { padding: 8px 10px; margin: 1px 8px 1px 0; border-radius: 6px; color: palette(window-text); }\nQTreeWidget#optNavigation::item:selected { background: ' + Farbe.AKZENT + '; color: white; font-weight: 600; }\nQTreeWidget#optNavigation::item:hover:!selected { background: palette(midlight); }\nQScrollArea#optSeite, QScrollArea#optSeite > QWidget > QWidget { background: transparent; border: none; }\nQGroupBox { border: 1px solid palette(midlight); border-radius: 10px; margin-top: 26px; padding: 8px 10px 8px 10px; background: transparent; }\nQGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 2px; padding: 0; color: palette(window-text); font-size: 8pt; font-weight: 600; }\nQWidget#optPaar { border-bottom: 1px solid palette(midlight); }\nQLabel#optErklaerung { color: palette(window-text); font-style: italic; padding: 12px 24px; border-top: 1px solid palette(midlight); }\nQFrame#optSchriftkarte { border: 1px solid palette(midlight); border-radius: 8px; }\nQLabel#optVorschau { background: white; color: #111417; border-radius: 6px; padding: 16px 20px; }\nQLabel#optHinweis { color: palette(window-text); font-size: 9pt; padding-left: 26px; }\nQPushButton#optWahl { border: 1px solid palette(mid); border-radius: 8px; padding: 8px 14px; }\nQPushButton#optWahl:checked { background: ' + Farbe.AKZENT + '; color: white; font-weight: 600; border-color: ' + Farbe.AKZENT + '; }\nQPushButton#optWahl:focus { border: 2px solid palette(highlight); }\nQToolButton:focus { border: 2px solid palette(highlight); border-radius: 4px; }\n')
+def stil() -> str:
+    """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
+    return ('\nQWidget#optLinks { background: palette(window); border-right: 1px solid palette(midlight); }\nQTreeWidget#optNavigation { background: transparent; border: none; outline: none; }\nQTreeWidget#optNavigation::item { padding: ' f"{PADDING_NAVIGATION_EINTRAG}" '; margin: ' f"{MARGIN_NAVIGATION_EINTRAG}" '; border-radius: ' f"{RADIUS_FELD}" 'px; color: palette(window-text); }\nQTreeWidget#optNavigation::item:selected { background: palette(highlight); color: palette(highlighted-text); font-weight: 600; }\nQTreeWidget#optNavigation::item:hover:!selected { background: palette(midlight); }\nQScrollArea#optSeite, QScrollArea#optSeite > QWidget > QWidget { background: transparent; border: none; }\nQGroupBox { border: 1px solid palette(midlight); border-radius: ' f"{RADIUS_KARTE}" 'px; margin-top: ' f"{MARGIN_OBEN_OPTIONEN_GRUPPE}" '; padding: ' f"{PADDING_OPTIONEN_GRUPPE}" '; background: transparent; }\nQGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 2px; padding: 0; color: palette(window-text); font-size: ' f"{SCHRIFT_KLEIN}" 'pt; font-weight: 600; }\nQWidget#optPaar { border-bottom: 1px solid palette(midlight); }\nQLabel#optErklaerung { color: palette(window-text); font-style: italic; padding: ' f"{PADDING_OPTIONEN_ERKLAERUNG}" '; border-top: 1px solid palette(midlight); }\nQFrame#optSchriftkarte { border: 1px solid palette(midlight); border-radius: ' f"{RADIUS_MITTEL}" 'px; }\nQLabel#optVorschau { background: ' + Farbe.PAPIER + '; color: ' + Farbe.SYMBOL + '; border-radius: ' f"{RADIUS_FELD}" 'px; padding: ' f"{PADDING_OPTIONEN_VORSCHAU}" '; }\nQLabel#optHinweis { color: palette(window-text); font-size: ' f"{SCHRIFT_HINWEIS}" 'pt; padding-left: ' f"{PADDING_LINKS_OPTIONEN_HINWEIS}" '; }\nQPushButton#optWahl { border: 1px solid palette(mid); border-radius: ' f"{RADIUS_MITTEL}" 'px; padding: ' f"{PADDING_OPTIONEN_WAHL}" '; }\nQPushButton#optWahl:checked { background: palette(highlight); color: palette(highlighted-text); font-weight: 600; border-color: palette(highlight); }\nQPushButton#optWahl:focus { border: 2px solid palette(highlight); }\nQToolButton:focus { border: 2px solid palette(highlight); border-radius: ' f"{RADIUS_KLEIN}" 'px; }\n')
 
 SEITEN = (("lesen", "Lesen"), ("anzeige", "Anzeige"), ("schreiben", "Schreiben"), ("speichern", "Speichern"),
           ("drucken", "Drucken und PDF"), ("ki", "Name und KI"))
@@ -45,18 +75,15 @@ class OptionenAnsicht(LesenSeiten, AnsichtSeiten, DateiSeiten, BefehleSeiten, Lu
     def __init__(self, fenster, seite: str | None = None):
         super().__init__()
         self.w = fenster
-        self.setStyleSheet(STIL)
-        h = QHBoxLayout(self)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(0)
-        links = QWidget(); links.setFixedWidth(250); links.setObjectName("optLinks"); links.setAttribute(Qt.WA_StyledBackground, True)
-        lv = QVBoxLayout(links); lv.setContentsMargins(8, 8, 8, 8); lv.setSpacing(6)
+        self.setStyleSheet(stil())
+        links = QWidget(); links.setObjectName("optLinks"); links.setAttribute(Qt.WA_StyledBackground, True)
+        lv = QVBoxLayout(links); lv.setContentsMargins(*RAND_BOX); lv.setSpacing(ABSTAND_NORMAL)
         self.suche = QLineEdit()
         self.suche.setPlaceholderText("Einstellung suchen …"); self.suche.setToolTip("Suchen (Strg+F)")
         self.suche.setClearButtonEnabled(True)
-        self.suche.setMinimumHeight(32)
+        self.suche.setMinimumHeight(HOEHE_FELD)
         self.suche.setAccessibleName("Einstellung suchen")
-        self.treffer = QListWidget(); self.treffer.setMaximumHeight(240); self.treffer.hide()
+        self.treffer = QListWidget(); self.treffer.setMaximumHeight(HOEHE_LISTE_ANBIETER); self.treffer.hide()
         self.treffer.setAccessibleName("Suchergebnisse")
         self.baum = QTreeWidget()
         self.baum.setObjectName("optNavigation")
@@ -67,20 +94,20 @@ class OptionenAnsicht(LesenSeiten, AnsichtSeiten, DateiSeiten, BefehleSeiten, Lu
         self.baum.setAccessibleName("Seiten der Optionen")
         lv.addWidget(self.suche); lv.addWidget(self.treffer); lv.addWidget(self.baum, 1)
         self.stapel = QStackedWidget()
-        self.stapel.setMinimumWidth(520)
-        self.stapel.setMaximumWidth(860)
-        h.addWidget(links)
+        self.stapel.setMinimumWidth(BREITE_SEITE_MIN)
+        self.stapel.setMaximumWidth(BREITE_SEITE_MAX)
         self.scroll = sc = QScrollArea(); sc.setObjectName("optSeite"); sc.setWidgetResizable(True); sc.setFrameShape(QFrame.NoFrame)
         sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        halter = QWidget(); hl = QHBoxLayout(halter); hl.setContentsMargins(0, 0, 0, 0)
+        halter = QWidget(); hl = QHBoxLayout(halter); hl.setContentsMargins(*RAND_KEIN)
         hl.addWidget(self.stapel); hl.addStretch(1)                      # Seite links, nicht über die ganze Breite gezogen
         sc.setWidget(halter)
-        rechts = QWidget(); rv = QVBoxLayout(rechts); rv.setContentsMargins(0, 0, 0, 0); rv.setSpacing(0)
+        rechts = QWidget(); rv = QVBoxLayout(rechts); rv.setContentsMargins(*RAND_KEIN); rv.setSpacing(ABSTAND_KEIN)
         rv.addWidget(sc, 1)
         self.erklaerzeile = text_label(ERKLAERUNG_LEER, umbruch=True)
         self.erklaerzeile.setObjectName("optErklaerung")
         rv.addWidget(self.erklaerzeile)
-        h.addWidget(rechts, 1)
+        self.spalten = ZweiSpalter(links, rechts, links_breite=BREITE_NAVIGATION_OPTIONEN, oben="links", gestapelt_stretch=(1, 2))   # schmal: die Liste oben
+        h = QVBoxLayout(self); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_KEIN); h.addWidget(self.spalten)
         self.knoten: dict[str, QTreeWidgetItem] = {}
         bauer = {"lesen": self._lesehilfe, "anzeige": self._ansicht, "schreiben": self._schreiben, "speichern": self._speichern,
                  "drucken": self._drucken, "ki": self._name_ki}
@@ -218,9 +245,9 @@ class OptionenDialog(QDialog):
     def __init__(self, fenster, seite: str | None = None):
         super().__init__(fenster)
         self.setWindowTitle("Optionen")
-        self.resize(1000, 680)
+        self.resize(*GROESSE_FENSTER_OPTIONEN)
         v = QVBoxLayout(self)
-        v.setContentsMargins(0, 0, 0, 8)
+        v.setContentsMargins(*RAND_UNTEN)
         self.ansicht = OptionenAnsicht(fenster, seite)
         self.baum, self.stapel, self.knoten, self.gehe_zu = self.ansicht.baum, self.ansicht.stapel, self.ansicht.knoten, self.ansicht.gehe_zu
         v.addWidget(self.ansicht, 1)

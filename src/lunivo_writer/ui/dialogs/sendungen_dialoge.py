@@ -9,6 +9,12 @@ from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import sendungen as S
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_FENSTER_SENDUNG,
+    HOEHE_TEXT_KURZ,
+    HOEHE_TEXT_MITTEL,
+    HOEHE_TEXT_NORMAL,
+)
 
 
 def _hinweis(text: str) -> QLabel:
@@ -30,8 +36,8 @@ class UmschlagDialog(PanelFaehig, QDialog):
         f = FormularGitter(self)
         f.breit(_hinweis("Das Blatt wird auf Umschlagformat gestellt und beides eingesetzt.\nDanach steht der Umschlag allein im Dokument."))
         self.format = QComboBox(); self.format.addItems(list(S.UMSCHLAEGE))
-        self.absender = QPlainTextEdit(absender); self.absender.setFixedHeight(60)
-        self.empfaenger = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.empfaenger.setFixedHeight(80)
+        self.absender = QPlainTextEdit(absender); self.absender.setFixedHeight(HOEHE_TEXT_KURZ)
+        self.empfaenger = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.empfaenger.setFixedHeight(HOEHE_TEXT_MITTEL)
         f.zeile("Format", self.format); f.zeile("Absender", self.absender); f.zeile("Empfänger", self.empfaenger)
         f.breit(_ok(self, "Anlegen"))
 
@@ -43,7 +49,7 @@ class EtikettenDialog(PanelFaehig, QDialog):
         f = FormularGitter(self)
         f.breit(_hinweis("Ein Bogen wird angelegt. Steht überall dasselbe, kommt der Text in jedes Feld; sonst je Zeile eines."))
         self.bogen = QComboBox(); self.bogen.addItems(list(S.ETIKETTEN))
-        self.text = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.text.setFixedHeight(90)
+        self.text = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.text.setFixedHeight(HOEHE_TEXT_NORMAL)
         self.gleich = QComboBox(); self.gleich.addItems(["ja — derselbe Text", "nein — je Zeile ein Etikett"])
         f.zeile("Bogen", self.bogen); f.zeile("Aufschrift", self.text); f.zeile("Überall dasselbe", self.gleich)
         f.breit(_ok(self, "Anlegen"))
@@ -53,7 +59,7 @@ class SeriendruckDialog(PanelFaehig, QDialog):
     def __init__(self, parent, felder: list[str], gespeichert: str):
         super().__init__(parent)
         self.setWindowTitle("Seriendruck")
-        self.resize(560, 420)
+        self.resize(*GROESSE_FENSTER_SENDUNG)
         v = QVBoxLayout(self)
         v.addWidget(QLabel(
             ("Im Text gefunden: " + ", ".join("{{" + x + "}}" for x in felder) + "\nDie erste Zeile unten muss diese Namen enthalten.")

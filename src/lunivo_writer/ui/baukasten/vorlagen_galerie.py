@@ -12,16 +12,34 @@ import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
-from PySide6.QtWidgets import (QTabBar, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
+from PySide6.QtWidgets import (QTabBar, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
                                QWidget)
+from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter, kacheln_legen
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import vorlagen
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-KACHEL = QSize(186, 243)
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_GROSS,
+    ABSTAND_PAAR,
+    BREITE_GALERIE_HINWEIS_MIN,
+    BREITE_VORLAGENSUCHE,
+    GROESSE_VORLAGE_KACHEL,
+    HOEHE_FELD,
+    HOEHE_KNOPF,
+    ICON_GROSS,
+    ICON_NORMAL,
+    ICON_VORLAGE_PLATZHALTER,
+    RAND_VORLAGENGALERIE,
+    RAND_VORLAGEN_FUSS,
+)
+
+_FLAECHE_HELL = "#f1f3f5"   # Vordergrund der Stapel-Kachel: bewusst fest (Gruppe C)
+KACHEL = QSize(*GROESSE_VORLAGE_KACHEL)
 _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Änderungszeit) → Bild, solange das Programm läuft
 
 
@@ -64,9 +82,9 @@ class _Kachel(QToolButton):
         self.setIcon(QIcon(self._platzhalter(art == "leer")))
 
     def _platzhalter(self, symbol: bool = False) -> QPixmap:
-        pm = QPixmap(KACHEL); pm.fill(QColor("white"))
+        pm = QPixmap(KACHEL); pm.fill(QColor(Farbe.PAPIER))
         if symbol:
-            p = QPainter(pm); ic = icons.icon("neu", 56).pixmap(56, 56)
+            p = QPainter(pm); ic = icons.icon("neu", ICON_VORLAGE_PLATZHALTER).pixmap(ICON_VORLAGE_PLATZHALTER, ICON_VORLAGE_PLATZHALTER)
             p.setOpacity(0.35); p.drawPixmap((KACHEL.width() - 56) // 2, (KACHEL.height() - 56) // 2, ic); p.end()
         return pm
 
@@ -82,10 +100,10 @@ class _Kachel(QToolButton):
         w, h = pm.width(), pm.height()
         vorn = pm.scaled(w - 16, h - 16, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         for dx, dy in ((16, 0), (8, 8)):                             # zwei Blätter dahinter, nur an der Kante zu sehen
-            p.setPen(QColor(Farbe.GRAU_HELL)); p.setBrush(QColor("#f1f3f5")); p.drawRect(dx, dy, vorn.width() - 1, vorn.height() - 1)
+            p.setPen(QColor(Farbe.GRAU_HELL)); p.setBrush(QColor(_FLAECHE_HELL)); p.drawRect(dx, dy, vorn.width() - 1, vorn.height() - 1)
         p.drawPixmap(0, 16, vorn)
         p.setBrush(QColor(0, 0, 0, 190)); p.setPen(Qt.NoPen); p.drawRoundedRect(6, KACHEL.height() - 34, 58, 26, 6, 6)
-        p.setPen(QColor("white")); p.drawText(6, KACHEL.height() - 34, 58, 26, Qt.AlignCenter, f"▣ {self.anzahl}")
+        p.setPen(QColor(Farbe.PAPIER)); p.drawText(6, KACHEL.height() - 34, 58, 26, Qt.AlignCenter, f"▣ {self.anzahl}")
         p.end()
         return out
 
@@ -99,15 +117,15 @@ class VorlagenGalerie(QWidget):
         self.settings, self._benutzer = settings, benutzer or {}
         self._reiter, self._rubrik = "geruest", None
         self._offen: list[_Kachel] = []
-        v = QVBoxLayout(self); v.setContentsMargins(36, 28, 36, 0); v.setSpacing(10)
-        kopf = QHBoxLayout(); kopf.setSpacing(10)
-        self.zurueck = QPushButton("Neu"); self.zurueck.setIcon(icons.icon("arrow-left", 16)); self.zurueck.setFlat(True); self.zurueck.setCursor(Qt.PointingHandCursor)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_VORLAGENGALERIE); v.setSpacing(ABSTAND_GROSS)
+        kopf = QHBoxLayout(); kopf.setSpacing(ABSTAND_GROSS)
+        self.zurueck = QPushButton("Neu"); self.zurueck.setIcon(icons.icon("arrow-left", ICON_NORMAL)); self.zurueck.setFlat(True); self.zurueck.setCursor(Qt.PointingHandCursor)
         self.zurueck.clicked.connect(lambda: self.rubrik_oeffnen(None)); kopf.addWidget(self.zurueck)
         self.titel = QLabel("Neu"); f = self.titel.font(); f.setPointSizeF(f.pointSizeF() + 8); f.setBold(True); self.titel.setFont(f)
         kopf.addWidget(self.titel); kopf.addStretch(1)
         self.leer_knopf = QPushButton("Neues leeres Dokument")
-        self.leer_knopf.setIcon(icons.icon("file-plus", 18)); self.leer_knopf.setIconSize(QSize(18, 18))
-        self.leer_knopf.setMinimumHeight(34)
+        self.leer_knopf.setIcon(icons.icon("file-plus", ICON_GROSS)); self.leer_knopf.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
+        self.leer_knopf.setMinimumHeight(HOEHE_KNOPF)
         self.leer_knopf.clicked.connect(lambda: self.gewaehlt.emit("leer", None))
         kopf.addWidget(self.leer_knopf)
         self.neue_rubrik = QPushButton("Neue Rubrik …")
@@ -122,25 +140,24 @@ class VorlagenGalerie(QWidget):
             self.reiter_w.addTab(text)
         self.reiter_w.currentChanged.connect(lambda i: self._reiter_setzen(self._schluessel[i]))
         v.addWidget(self.reiter_w, 0, Qt.AlignLeft)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Sunken); v.addWidget(linie)
+        linie = trennlinie(tief=True); v.addWidget(linie)
         self.suche = QLineEdit(); self.suche.setPlaceholderText("Vorlage suchen"); self.suche.setClearButtonEnabled(True)
-        self.suche.setFixedWidth(420); self.suche.setMinimumHeight(34); self.suche.textChanged.connect(self._anordnen)
+        self.suche.setFixedWidth(BREITE_VORLAGENSUCHE); self.suche.setMinimumHeight(HOEHE_KNOPF); self.suche.textChanged.connect(self._anordnen)
         v.addWidget(self.suche)
         self.flaeche = QScrollArea(); self.flaeche.setWidgetResizable(True); self.flaeche.setFrameShape(QFrame.NoFrame)
-        self.raster_w = QWidget(); self.raster = QGridLayout(self.raster_w); self.raster.setSpacing(18)
-        self.raster.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.raster_w = QWidget(); self.raster = kachel_gitter((), 1, eltern=self.raster_w, rand=None, abstand=ABSTAND_PAAR, oben_links=True)
         self.flaeche.setWidget(self.raster_w); v.addWidget(self.flaeche, 1)
-        self.leer = QLabel(); self.leer.setWordWrap(True); self.leer.setStyleSheet("color: palette(mid);"); v.addWidget(self.leer)
+        self.leer = QLabel(); self.leer.setWordWrap(True); hinweis_stil(self.leer); v.addWidget(self.leer)
 
-        fuss = QHBoxLayout(); fuss.setContentsMargins(0, 8, 0, 12)
+        fuss = QHBoxLayout(); fuss.setContentsMargins(*RAND_VORLAGEN_FUSS)
         hin = QLabel("Geöffnet wird immer eine Abschrift. Die Vorlage selbst bleibt, wie sie ist — auch nach dem dritten Brief.")
-        hin.setStyleSheet("color: palette(mid);"); hin.setWordWrap(True); hin.setMinimumWidth(120); fuss.addWidget(hin, 1)   # darf umbrechen, sonst wird das Fenster breiter als der Schirm
+        hinweis_stil(hin); hin.setWordWrap(True); hin.setMinimumWidth(BREITE_GALERIE_HINWEIS_MIN); fuss.addWidget(hin, 1)   # darf umbrechen, sonst wird das Fenster breiter als der Schirm
         self.speichern = QPushButton("Dieses Dokument als Vorlage behalten …"); self.speichern.setEnabled(kann_speichern)
         self.speichern.clicked.connect(lambda: self.als_vorlage.emit(self._ziel()))
         waehlen = QPushButton("Vorlagenordner wählen …"); waehlen.clicked.connect(self._ordner_waehlen)
         oeffnen = QPushButton("Vorlagenordner öffnen"); oeffnen.clicked.connect(self._ordner_oeffnen)
         for k in (self.speichern, waehlen, oeffnen):
-            k.setMinimumHeight(32); fuss.addWidget(k)
+            k.setMinimumHeight(HOEHE_FELD); fuss.addWidget(k)
         self.vorlagen_aktionen = (self.speichern, waehlen, oeffnen)
         v.addLayout(fuss)
 
@@ -270,8 +287,7 @@ class VorlagenGalerie(QWidget):
         for k in alle:
             k.setVisible(k in sicht)
         spalten = max(1, (max(self.width(), 600) - 100) // (KACHEL.width() + 30))
-        for i, k in enumerate(sicht):
-            self.raster.addWidget(k, i // spalten, i % spalten)
+        kacheln_legen(self.raster, sicht, spalten)
         in_rubrik = self._rubrik is not None
         self.zurueck.setVisible(in_rubrik); self.reiter_w.setVisible(not in_rubrik and not self.suche.text().strip())
         self.neue_rubrik.setVisible(not in_rubrik and self._reiter == "eigene")

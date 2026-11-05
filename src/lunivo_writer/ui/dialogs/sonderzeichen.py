@@ -27,6 +27,16 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.tasten_dialog import TastenDialog
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import (
+    BREITE_FELD_ZEICHENCODE,
+    BREITE_ZEILENHINWEIS,
+    GROESSE_FENSTER_SONDERZEICHEN,
+    HOEHE_ZEILE_SONDER,
+    HOEHE_ZELLE_SONDER,
+    ZUGABE_LISTE_KOPF,
+    ZUGABE_LISTE_SONDER,
+    ZUGABE_RAHMEN,
+)
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
@@ -42,7 +52,7 @@ SONDERZEICHEN = (
 )
 VON = (("Symbol(DEC)", 10), ("Unicode(HEX)", 16))
 NORMAL = "(Normaler Text)"
-ZELLE = 30
+ZELLE = HOEHE_ZELLE_SONDER
 
 
 class SymbolDaten:
@@ -204,7 +214,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
     def __init__(self, parent, einfuegen: Callable[[str], None], daten: SymbolDaten | None = None, *, bei_tasten: Callable | None = None):
         super().__init__(parent)
         self.setWindowTitle("Symbol")
-        self.resize(444, 560)
+        self.resize(*GROESSE_FENSTER_SONDERZEICHEN)
         self.einfuegen = einfuegen
         self.daten = daten or SymbolDaten()
         self._bei_tasten = bei_tasten
@@ -237,7 +247,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         g.zeile("&Schriftart:", self.schrift)
         self.raster = Zeichenraster()
         self.rollen = QScrollArea(); self.rollen.setWidgetResizable(True); self.rollen.setWidget(self.raster)
-        self.rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.rollen.setFixedHeight(ZELLE * 5 + 2)
+        self.rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.rollen.setFixedHeight(ZELLE * 5 + ZUGABE_RAHMEN)
         self.rollen.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed); self.rollen.setMinimumWidth(0)
         self.raster.gewaehlt.connect(self._gewaehlt); self.raster.gewaehlt_doppelt.connect(lambda cp: (self._gewaehlt(cp), self._einfuegen()))
         g.breit(self.rollen)
@@ -246,7 +256,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.zuletzt.setze([ord(z) for z in self.daten.zuletzt() if len(z) == 1], QApplication.font())
         self.zuletzt.gewaehlt.connect(self._gewaehlt); self.zuletzt.gewaehlt_doppelt.connect(lambda cp: (self._gewaehlt(cp), self._einfuegen()))
         g.breit(self.zuletzt)
-        self.zeichencode = QLineEdit(); self.zeichencode.setMaximumWidth(120)
+        self.zeichencode = QLineEdit(); self.zeichencode.setMaximumWidth(BREITE_FELD_ZEICHENCODE)
         self.zeichencode.textEdited.connect(self._code_getippt)
         self.von = QComboBox()
         for name, basis in VON:
@@ -304,12 +314,12 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         s = QWidget(); g = FormularGitter(s)
         self.sonder = QTreeWidget(); self.sonder.setColumnCount(2); self.sonder.setHeaderHidden(True); self.sonder.setRootIsDecorated(False)
         self.sonder.setUniformRowHeights(True); self.sonder.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.sonder.setFixedHeight(12 * 27 + 4); self.sonder.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.sonder.setFixedHeight(12 * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_SONDER); self.sonder.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         self.sonder.header().setSectionResizeMode(0, QHeaderView.Fixed); self.sonder.setColumnWidth(0, 56)
         self.sonder.header().setStretchLastSection(True)
         for anzeige, name, zeichen in SONDERZEICHEN:
             it = QTreeWidgetItem([anzeige, name]); it.setData(0, Qt.UserRole, zeichen)
-            it.setTextAlignment(0, Qt.AlignCenter); it.setSizeHint(0, QSize(10, 27)); it.setToolTip(1, name)
+            it.setTextAlignment(0, Qt.AlignCenter); it.setSizeHint(0, QSize(BREITE_ZEILENHINWEIS, HOEHE_ZEILE_SONDER)); it.setToolTip(1, name)
             self.sonder.addTopLevelItem(it)
         self.sonder.setCurrentItem(self.sonder.topLevelItem(0))
         self.sonder.currentItemChanged.connect(lambda *_: self._knoepfe())
@@ -324,7 +334,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.liste = QTreeWidget(); self.liste.setColumnCount(2); self.liste.setRootIsDecorated(False); self.liste.setUniformRowHeights(True)
         self.liste.setHeaderLabels(["Benutzerdefinierte Symbole:", "Tastenkombinationen:"]); self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.liste.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.liste.setFixedHeight(8 * 27 + 24); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.liste.setFixedHeight(8 * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_KOPF); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         kopf = self.liste.header(); kopf.setStretchLastSection(True); kopf.setSectionResizeMode(0, QHeaderView.Fixed)
         kopf.setTextElideMode(Qt.ElideRight)
         self.liste.itemChanged.connect(self._haken); self.liste.currentItemChanged.connect(lambda *_: self._liste_knoepfe())
@@ -362,7 +372,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         for z, an in self.daten.benutzer():
             it = QTreeWidgetItem([z, tasten.get(z, "")])
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable); it.setCheckState(0, Qt.Checked if an else Qt.Unchecked)
-            it.setData(0, Qt.UserRole, z); it.setSizeHint(0, QSize(10, 27))
+            it.setData(0, Qt.UserRole, z); it.setSizeHint(0, QSize(BREITE_ZEILENHINWEIS, HOEHE_ZEILE_SONDER))
             self.liste.addTopLevelItem(it)
         self.liste.blockSignals(False)
         n = self.liste.topLevelItemCount()

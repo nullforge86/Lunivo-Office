@@ -614,13 +614,13 @@ def leuchten_vorgaben() -> list[tuple[str, dict]]:
     return aus
 
 
-def voreinstellung_icon(fx: dict, groesse=(52, 40), text: str = "A", farbe: str = Farbe.GRAU_HELL, kontur=None):
+def voreinstellung_icon(fx: dict, groesse=(52, 40), text: str = "A", farbe: str | None = None, kontur=None):
     """Kachelbild einer Voreinstellung: ein „A“ mit dem Effekt auf weißem Grund (``kontur``: (Farbe, Breite, Form) wie bei ``vorschau_zeichnen``)."""
     from PySide6.QtGui import QFont, QIcon, QPixmap
     pm = QPixmap(*groesse); pm.fill(QColor("white"))
     p = QPainter(pm)
     f = QFont("Liberation Sans"); f.setPixelSize(int(groesse[1] * 0.62)); f.setBold(True)
-    vorschau_zeichnen(p, QRectF(0, 0, groesse[0], groesse[1] * 0.92), text, f, fx, QColor(farbe), kontur)
+    vorschau_zeichnen(p, QRectF(0, 0, groesse[0], groesse[1] * 0.92), text, f, fx, QColor(farbe if farbe is not None else Farbe.GRAU_HELL), kontur)
     p.end()
     return QIcon(pm)
 

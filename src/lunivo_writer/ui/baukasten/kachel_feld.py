@@ -11,21 +11,23 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QSize, Qt, Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QGridLayout, QToolButton, QWidget
+from PySide6.QtWidgets import QToolButton, QWidget
 
+from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.raster_auswahl import _symbol
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, GROESSE_KACHELFELD_STANDARD, RADIUS_KLEIN, RAND_KEIN
 
 
 class KachelFeld(QWidget):
     gewaehlt = Signal(str)
 
-    def __init__(self, parent=None, *, spalten: int = 4, groesse: QSize = QSize(44, 44), mit_text: bool = True, fliessend: bool = False):
+    def __init__(self, parent=None, *, spalten: int = 4, groesse: QSize = QSize(*GROESSE_KACHELFELD_STANDARD), mit_text: bool = True, fliessend: bool = False):
         super().__init__(parent)
         self._spalten, self._groesse, self._text, self._fliessend = spalten, groesse, mit_text, fliessend
-        self._gitter = QGridLayout(self); self._gitter.setContentsMargins(0, 0, 0, 0); self._gitter.setSpacing(4)
+        self._gitter = kachel_gitter((), spalten, eltern=self, abstand=ABSTAND_KLEIN)
         self.knoepfe: dict[str, QToolButton] = {}
         self._aktuell: str | None = None
-        self.setStyleSheet("QToolButton:focus { border: 2px solid palette(highlight); border-radius: 4px; }")
+        self.setStyleSheet("QToolButton:focus { border: 2px solid palette(highlight); border-radius: " f"{RADIUS_KLEIN}" "px; }")
 
     def hinzu(self, schluessel: str, text: str, bild=None) -> QToolButton:
         b = QToolButton(); b.setCheckable(True); b.setAutoRaise(True); b.setFocusPolicy(Qt.ClickFocus)

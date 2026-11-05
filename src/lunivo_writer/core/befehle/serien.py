@@ -95,9 +95,10 @@ class SerienBefehle:
 
     def menue_serienQuelleKlappe(self):
         from PySide6.QtWidgets import QMenu
-        m = QMenu(self.w)
-        m.addAction("Datenquelle &öffnen…", lambda: (self.serienQuelle(), self.w.band.aktualisieren()))
-        zu = m.addAction("Datenquelle &schließen", lambda: (self.serienQuelleSchliessen(), self.w.band.aktualisieren()))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe(self.w)
+        m.eintrag("Datenquelle &öffnen…", lambda: (self.serienQuelle(), self.w.band.aktualisieren()))
+        zu = m.eintrag("Datenquelle &schließen", lambda: (self.serienQuelleSchliessen(), self.w.band.aktualisieren()))
         m.aboutToShow.connect(lambda: zu.setEnabled(self._hat_quelle()))
         return m
 

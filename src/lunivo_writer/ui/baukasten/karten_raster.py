@@ -20,7 +20,9 @@ from __future__ import annotations
 import math
 
 from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtWidgets import QLayout, QLayoutItem, QWidget
+from PySide6.QtWidgets import QGridLayout, QLayout, QLayoutItem, QWidget
+from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
+from lunivo_writer.ui.baukasten.mass import RAND_KEIN
 
 SPANNE_STANDARD: tuple[int, int] = (1, 1)
 SPANNEN: dict[str, tuple[int, int]] = {          # die einzige Stelle, an der Rasterspannen festgelegt werden
@@ -55,7 +57,7 @@ class KartenRaster(QLayout):
         super().__init__(parent)
         self._min_b, self._abstand, self._fest = min_breite, abstand, spalten_fest      # spalten_fest > 0: immer diese Spaltenzahl (1 = untereinander)
         self._gleich = gleiche_hoehe                                                    # False: jede Rasterzeile so hoch wie ihr höchstes Element (Zeilen mit natürlicher Höhe)
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(*RAND_KEIN)
 
     # ---- QLayout ----------------------------------------------------------------------------------------
     def addWidget(self, w: QWidget, spanne: object = None) -> None:                    # type: ignore[override]
@@ -171,6 +173,25 @@ class KartenRaster(QLayout):
             it.setGeometry(QRect(innen.x() + x, innen.y() + y, b, h))
 
 
+def kacheln_legen(gitter: QGridLayout, kacheln, spalten: int) -> None:
+    """Kacheln der Reihe nach in ``spalten`` Spalten ins Gitter setzen (zeilenweise, links oben beginnend)."""
+    spalten = max(1, spalten)
+    for n, k in enumerate(kacheln):
+        gitter.addWidget(k, n // spalten, n % spalten)
+
+
+def kachel_gitter(kacheln=(), spalten: int = 3, *, eltern: QWidget | None = None, rand: tuple | None = RAND_KEIN, abstand: int | None = None,
+                  waagerecht: int | None = None, senkrecht: int | None = None, oben_links: bool = False, rest_dehnt: bool = False) -> QGridLayout:
+    """Kachelraster fester Kachelgröße (Farben, Formen, Seitenbildchen …): die Rasterlogik für alle Stellen, an denen das Gitter der Zweck ist.
+    ``rest_dehnt``: überzählige Breite fällt in eine zusätzliche Spalte, die Kacheln bleiben links. Kacheln gleicher Größe, die sich der Breite anpassen
+    sollen, gehören in ``KartenRaster``."""
+    g = tabellen_gitter(eltern, rand=rand, abstand=abstand, waagerecht=waagerecht, senkrecht=senkrecht, oben_links=oben_links)
+    kacheln_legen(g, kacheln, spalten)
+    if rest_dehnt:
+        g.setColumnStretch(max(1, spalten), 1)
+    return g
+
+
 _KURZ = ("QCheckBox", "QRadioButton", "QPushButton", "QToolButton")
 
 
@@ -182,7 +203,8 @@ def kurze_gruppen_ins_raster(fenster: QWidget, max_breite: int = 150) -> int:
     def kurz(it) -> bool:
         w = it.widget() if it is not None else None
         return (w is not None and not w.isHidden() and any(c.__name__ in _KURZ for c in type(w).__mro__)
-                and w.sizeHint().width() <= max_breite and not w.property("raster_nein"))
+                and (w.natuerliche_breite() if hasattr(w, "natuerliche_breite") else w.sizeHint().width()) <= max_breite
+                and not w.property("raster_nein"))
 
     n = 0
     layouts = [x.layout() for x in [fenster] + fenster.findChildren(QWidget) if x.layout() is not None]

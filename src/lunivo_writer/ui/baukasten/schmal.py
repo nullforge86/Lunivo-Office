@@ -8,9 +8,10 @@ Zeilen, die zu breit sind, brechen um: eine Reihe aus Feldern (``QHBoxLayout``) 
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt
-from PySide6.QtWidgets import QAbstractButton, QBoxLayout, QCheckBox, QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
+from PySide6.QtWidgets import QAbstractButton, QBoxLayout, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
 
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_SCHMAL_BESCHRIFTUNG, BREITE_UMBRUCHTEXT_MIN, RAND_KEIN
 
 
 def _alle_layouts(w: QWidget) -> list[QLayout]:
@@ -128,7 +129,7 @@ class _Umbruchtext(QLabel):
         self.setBuddy(knopf)                                      # „&“ bleibt Kürzel (unterstrichen) statt als Zeichen sichtbar
         self.setWordWrap(True)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
-        self.setMinimumWidth(40)
+        self.setMinimumWidth(BREITE_UMBRUCHTEXT_MIN)
         self.setEnabled(knopf.isEnabled())
         knopf.installEventFilter(self)
 
@@ -149,7 +150,7 @@ def _knopf_umbrechen(l: QLayout, k: QAbstractButton) -> None:
     k.setText("")
     k.setSizePolicy(QSizePolicy.Fixed, k.sizePolicy().verticalPolicy())
     host = QWidget()
-    h = QHBoxLayout(host); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(4)
+    h = QHBoxLayout(host); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_KLEIN)
     t = _Umbruchtext(k, text)
     host.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
     l.replaceWidget(k, host)
@@ -172,7 +173,7 @@ def schmal_machen(d: QWidget, breite: int) -> None:
         if not lb.wordWrap() and lb.pixmap().isNull() and lb.minimumSizeHint().width() > breite - 30:
             lb.setWordWrap(True)
             lb.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
-            lb.setMinimumWidth(40)
+            lb.setMinimumWidth(BREITE_SCHMAL_BESCHRIFTUNG)
     for l in _alle_layouts(d):
         if _nein(l):
             continue
@@ -185,10 +186,6 @@ def schmal_machen(d: QWidget, breite: int) -> None:
                 _knopf_umbrechen(l, w)
     for l in _alle_layouts(d):
         if _nein(l):
-            continue
-        if isinstance(l, QFormLayout):                                       # lange Zeilen: Beschriftung über das Feld
-            l.setRowWrapPolicy(QFormLayout.WrapLongRows)
-            l.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
             continue
         if isinstance(l, QGridLayout):
             if max(_breite_gitter(l), l.minimumSize().width()) > breite:

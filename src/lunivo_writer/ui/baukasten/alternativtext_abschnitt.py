@@ -8,6 +8,7 @@ from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QLineEdit, QPlainTextEdit
 
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
+from lunivo_writer.ui.baukasten.mass import HOEHE_BEREICH_MITTEL
 
 
 class AlternativtextAbschnitt(Abschnitt):
@@ -16,7 +17,7 @@ class AlternativtextAbschnitt(Abschnitt):
     def __init__(self, parent=None):
         super().__init__("Alternativtext")
         self.titel_feld = QLineEdit()
-        self.text_feld = QPlainTextEdit(); self.text_feld.setMinimumHeight(150)
+        self.text_feld = QPlainTextEdit(); self.text_feld.setMinimumHeight(HOEHE_BEREICH_MITTEL)
         self.titel_feld.setPlaceholderText("Titel eingeben"); self.text_feld.setPlaceholderText("Beschreibung eingeben")
         self.gitter.reihe(("Titel", self.titel_feld)); self.gitter.reihe(("Beschreibung", self.text_feld))       # Eingabe braucht Platz: Beschriftung darüber, Feld über die ganze Breite
         self._stumm = False

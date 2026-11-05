@@ -153,9 +153,10 @@ class DiagrammToolsBefehle:
     def menue_diagrammFarben(self):
         """Die Farbreihen der Diagrammvorlagen (``diagramm.VORLAGEN``), je mit der ersten Farbe als Muster."""
         from lunivo_writer.editor import diagramm as D
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for schl, (_typ, farben) in D.VORLAGEN.items():
-            m.addAction(_farbfeld(farben[0]), D.NAMEN.get(schl, schl), lambda _=False, f=list(farben): self._dg_set(farben=f))
+            m.eintrag(D.NAMEN.get(schl, schl), lambda f=list(farben): self._dg_set(farben=f), symbol=_farbfeld(farben[0]))
         return m
 
     def diagrammFarben(self, k=None, nr=None):

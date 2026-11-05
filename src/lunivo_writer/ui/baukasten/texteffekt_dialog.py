@@ -25,6 +25,18 @@ from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, AngepassteReiter, FormularGitter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_GROSS,
+    ABSTAND_NORMAL,
+    ABSTAND_SPALTE,
+    GROESSE_FENSTER_TEXTEFFEKT,
+    GROESSE_TEXTEFFEKT_LINIENART_BILD,
+    HOEHE_FELD,
+    ICON_NORMAL,
+    RAND_FORMATSEITE,
+    RAND_KEIN,
+    RAND_TEXTEFFEKT_GITTER,
+)
 FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)
 
 
@@ -43,7 +55,7 @@ class _Pfeil(QToolButton):
         super().__init__()
         self._an = False
         self.setAutoRaise(True); self.setArrowType(Qt.RightArrow)
-        self.setMinimumHeight(32)                                                # Klickfläche: Höhe wie die Felder; die Breite bleibt, sonst ragt die Zeile bei 300 px heraus
+        self.setMinimumHeight(HOEHE_FELD)                                                # Klickfläche: Höhe wie die Felder; die Breite bleibt, sonst ragt die Zeile bei 300 px heraus
         self.clicked.connect(self.toggle)
 
     def isChecked(self) -> bool:
@@ -64,7 +76,7 @@ class Abschnitt(QWidget):
 
     def __init__(self, titel: str, rechts: QWidget | None = None, rechts_text: str = "Voreinstellung:"):
         super().__init__()
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_NORMAL)
         kopf = QHBoxLayout()
         self.knopf = _Pfeil()                                            # nur der Pfeil
         self.knopf.setAccessibleName(titel); self.knopf.setToolTip(titel)
@@ -72,7 +84,7 @@ class Abschnitt(QWidget):
         self.titel.setCursor(Qt.PointingHandCursor); self.titel.mousePressEvent = lambda e: self.knopf.toggle()
         kopf.addWidget(self.knopf); kopf.addWidget(self.titel); kopf.addStretch(1)
         v.addLayout(kopf)
-        self.inhalt = QWidget(); self.gitter = seitengitter(self.inhalt); self.gitter.setContentsMargins(0, 0, 0, 6)
+        self.inhalt = QWidget(); self.gitter = seitengitter(self.inhalt); self.gitter.setContentsMargins(*RAND_TEXTEFFEKT_GITTER)
         v.addWidget(self.inhalt); self.inhalt.setVisible(False)
         self.knopf.toggled.connect(self._umschalten)
         if rechts is not None:
@@ -107,14 +119,14 @@ class Abschnitt(QWidget):
         self.gitter.breit(widget)
 
 
-def _linien_icon(art: str, form: str, groesse: QSize = QSize(86, 14)) -> QIcon:
+def _linien_icon(art: str, form: str, groesse: QSize = QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD)) -> QIcon:
     """Kachel der Linienauswahl: eine Linie in Strichart und Form."""
-    pm = QPixmap(groesse); pm.fill(QColor("white"))
+    pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     from PySide6.QtGui import QPainterPath
     pf = QPainterPath(); pf.moveTo(4, groesse.height() / 2); pf.lineTo(groesse.width() - 4, groesse.height() / 2)
     for f in X._kontur_pfade(pf, 1.6 if form == "einfach" else 1.2, form, art):
-        p.fillPath(f, QColor("#1c7ed6"))
+        p.fillPath(f, QColor(Farbe.AUSWAHL))
     p.end()
     return QIcon(pm)
 
@@ -130,7 +142,7 @@ class TexteffektPanel(QWidget):
         w = {**T.EFFEKT, **(werte or {})}
         self._fx = {k: dict(w[k]) for k in ("verlauf", "kontur_verlauf", "schatten", "reflektion", "leuchten", "d3") if w.get(k)}
         self._stumm = True
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         self.reiter.addTab(self._scroll(self._seite_fuellung(w)), self._tab_icon("A", True), self.TITEL[0])
         self.reiter.addTab(self._scroll(self._seite_effekte(w)), self._tab_icon("A", False), self.TITEL[1])
@@ -157,11 +169,11 @@ class TexteffektPanel(QWidget):
     @staticmethod
     def _tab_icon(t: str, unterstrichen: bool) -> QIcon:
         from lunivo_writer.ui.widgets import icons
-        return icons.icon("baseline" if unterstrichen else "sparkles", 16)
+        return icons.icon("baseline" if unterstrichen else "sparkles", ICON_NORMAL)
 
     # ---- Seite 1: Füllung und Kontur
     def _seite_fuellung(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE)
         self.fuell_farbe_kopf = FarbFeld(w["farbe"], "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
         self.fuell_farbe_kopf.setMinimumWidth(0)
         self.a_fuell = Abschnitt("Textfüllung", self.fuell_farbe_kopf)
@@ -171,7 +183,7 @@ class TexteffektPanel(QWidget):
         self.trans = SchiebeFeld(0, 100, " %")
         self.f_einfarbig = QWidget(); fe = seitengitter(self.f_einfarbig)               # nur bei „Einfarbige Füllung“ zu sehen
         fe.zeile("Farbe:", self.farbe); fe.zeile("Transparenz:", self.trans)
-        self.v1, self.v2 = FarbFeld(Farbe.ROT, "Farbe 1"), FarbFeld("#1864ab", "Farbe 2")
+        self.v1, self.v2 = FarbFeld(Farbe.ROT, "Farbe 1"), FarbFeld(Farbe.BLAU_DUNKEL, "Farbe 2")
         self.v_winkel = SchiebeFeld(0, 360, "°", 5)
         self.f_verlauf = QWidget(); fv = seitengitter(self.f_verlauf)                    # nur bei „Farbverlauf“ zu sehen
         fv.zeile("Farbe 1:", self.v1); fv.zeile("Farbe 2:", self.v2); fv.zeile("Winkel:", self.v_winkel)
@@ -184,13 +196,13 @@ class TexteffektPanel(QWidget):
         self.a_kontur.auswahl(self.k_keine, self.k_linie, self.k_verlauf)
         self.k_farbe = FarbFeld(w["kontur_farbe"], "Konturfarbe")
         self.k_breite = SchiebeFeld(0.1, 20, " pt", 0.25, 2)
-        self.k_art = QComboBox(); self.k_art.setIconSize(QSize(86, 14))
+        self.k_art = QComboBox(); self.k_art.setIconSize(QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD))
         for key, (name, _s, _d) in T.KONTUR_ARTEN.items():
             self.k_art.addItem(_linien_icon(key, "einfach"), name, key)
         self.k_form = QComboBox()
         for key, name in T.KONTUR_FORMEN:
             self.k_form.addItem(name, key)
-        self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Konturfarbe 1"), FarbFeld("#1864ab", "Konturfarbe 2")
+        self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Konturfarbe 1"), FarbFeld(Farbe.BLAU_DUNKEL, "Konturfarbe 2")
         self.kv_winkel = SchiebeFeld(0, 360, "°", 5)
         self.k_einfach = QWidget(); ke = seitengitter(self.k_einfach)                    # nur bei „Durchgezogene Linie“ zu sehen
         ke.zeile("Farbe:", self.k_farbe); ke.zeile("Breite:", self.k_breite); ke.zeile("Linienart:", self.k_art); ke.zeile("Form:", self.k_form)
@@ -232,7 +244,7 @@ class TexteffektPanel(QWidget):
         self._neu()
 
     def _linien_auswahl(self) -> None:
-        m = VoreinstellungMenue(self, keine=("Keine Linie", None), kachel=QSize(86, 14))
+        m = VoreinstellungMenue(self, keine=("Keine Linie", None), kachel=QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD))
         m._kopf("Keine Linie")
         eintraege = [(f"{art}|{form}|{br}", _linien_icon(art, form), f"{T.KONTUR_ARTEN[art][0]}, {dict(T.KONTUR_FORMEN)[form]}, {br} pt")
                      for art in T.KONTUR_ARTEN for form, br in (("einfach", 0.75), ("einfach", 2.25), ("doppelt", 2.25), ("dick_duenn", 2.25))]
@@ -253,7 +265,7 @@ class TexteffektPanel(QWidget):
         return k
 
     def _seite_effekte(self, w: dict) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE)
         # Schatten
         self.schatten_knopf = self._voreinstellungs_knopf()
         self.a_schatten = Abschnitt("Schatten", self.schatten_knopf)
@@ -318,7 +330,7 @@ class TexteffektPanel(QWidget):
 
     @staticmethod
     def _zweier(*teile: QWidget) -> QWidget:
-        w = QWidget(); h = QHBoxLayout(w); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(10)
+        w = QWidget(); h = QHBoxLayout(w); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_GROSS)
         for i, t in enumerate(teile):
             h.addWidget(t, 1 if i in (0, len(teile) - 1) else 0)
         return w
@@ -420,9 +432,9 @@ class TexteffektPanel(QWidget):
         for r in (self.r_keine, self.r_farbe, self.r_verlauf, self.k_keine, self.k_linie, self.k_verlauf):
             r.blockSignals(False)
         self.farbe.setFarbe(w["farbe"]); self.fuell_farbe_kopf.setFarbe("" if w["fuell"] == "keine" else w["farbe"]); self.trans.setValue(w["transparenz"])
-        vv = self._fx.get("verlauf", {"farbe1": Farbe.ROT, "farbe2": "#1864ab", "winkel": 90})
+        vv = self._fx.get("verlauf", {"farbe1": Farbe.ROT, "farbe2": Farbe.BLAU_DUNKEL, "winkel": 90})
         self.v1.setFarbe(vv["farbe1"]); self.v2.setFarbe(vv["farbe2"]); self.v_winkel.setValue(vv["winkel"])
-        kvv = self._fx.get("kontur_verlauf", {"farbe1": Farbe.ROT, "farbe2": "#1864ab", "winkel": 90})
+        kvv = self._fx.get("kontur_verlauf", {"farbe1": Farbe.ROT, "farbe2": Farbe.BLAU_DUNKEL, "winkel": 90})
         self.kv1.setFarbe(kvv["farbe1"]); self.kv2.setFarbe(kvv["farbe2"]); self.kv_winkel.setValue(kvv["winkel"])
         self.k_farbe.setFarbe(w["kontur_farbe"]); self.k_breite.setValue(w["kontur_breite"])
         self.k_art.setCurrentIndex(max(0, self.k_art.findData(w["kontur_art"]))); self.k_form.setCurrentIndex(max(0, self.k_form.findData(w.get("kontur_form", "einfach"))))
@@ -509,7 +521,7 @@ class TexteffektPanel(QWidget):
     def _male(self, p: QPainter, rect) -> None:
         w = self.werte()
         f = QFont("Liberation Sans"); f.setPixelSize(36); f.setBold(True)
-        face = QColor(0, 0, 0, 0) if w["fuell"] == "keine" else QColor(w["farbe"] or "#111417")
+        face = QColor(0, 0, 0, 0) if w["fuell"] == "keine" else QColor(w["farbe"] or Farbe.TINTE_DUNKEL)
         if w["fuell"] == "farbe" and w["transparenz"]:
             face.setAlphaF(1 - w["transparenz"] / 100)
         if w["fuell"] == "verlauf":
@@ -530,7 +542,7 @@ class TexteffektDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         self.panel = TexteffektPanel(self, werte)
         v.addWidget(self.panel, 1)
-        self.resize(422, 558)
+        self.resize(*GROESSE_FENSTER_TEXTEFFEKT)
         fussleiste(self, v, nur_ok=True)
 
     def passe_an(self, breite: int, hoehe: int) -> None:

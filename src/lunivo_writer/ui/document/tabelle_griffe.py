@@ -13,18 +13,21 @@ from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPen, QTextCursor, Q
 from PySide6.QtWidgets import QToolButton, QWidget
 
 from lunivo_writer.editor import tabelleneigenschaften as TE
+from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import RADIUS_LEISTENKNOPF
 
 GRIFF = 20
 # Hell wie die übrigen Knöpfe auf dem Papier (siehe LEISTE_STIL in kopffuss_bearbeiter.py): unabhängig vom Thema des Fensters
-TINTE, FLAECHE, RAND_FARBE, HOVER = "#333333", "#f5f5f5", "#c8c8c8", "#e6e6e6"
-GRIFF_STIL = (f"QToolButton {{ background: {FLAECHE}; color: {TINTE}; border: 1px solid {RAND_FARBE}; border-radius: 2px; }}"
-              f"QToolButton:hover {{ background: {HOVER}; }}")
+def griff_stil() -> str:
+    """Stil der Griffe aus den Farbe-Tokens (zur Laufzeit gelesen, nichts beim Import eingefroren)."""
+    return (f"QToolButton {{ background: {Farbe.LEISTE}; color: {Farbe.TINTE}; border: 1px solid {Farbe.LEISTE_RAND}; border-radius: {RADIUS_LEISTENKNOPF}px; }}"
+            f"QToolButton:hover {{ background: {Farbe.GITTER}; }}")
 
 
 def dunkel(symbol: str, px: int = 16) -> QIcon:
     """Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß)."""
-    return QIcon(icons._pixmap(symbol, TINTE, max(10, px)))
+    return QIcon(icons._pixmap(symbol, Farbe.TINTE, max(10, px)))
 RAND = 6                      # Breite des unsichtbaren Streifens über einem Spaltenrand
 MIN_SPALTE = 12.0
 
@@ -40,7 +43,7 @@ class _Vorschau(QWidget):
 
     def paintEvent(self, e):
         p = QPainter(self)
-        pen = QPen(QColor("#2b6cb0")); pen.setStyle(Qt.DashLine); pen.setWidth(1); p.setPen(pen)
+        pen = QPen(QColor(Farbe.AKZENT)); pen.setStyle(Qt.DashLine); pen.setWidth(1); p.setPen(pen)
         r = self.rect()
         if self.linie:
             if r.width() >= r.height():
@@ -95,7 +98,7 @@ class _Griff(QToolButton):
                  ende_immer: bool = False):
         super().__init__(vp)
         self.setFixedSize(GRIFF, GRIFF); self.setToolTip(tipp); self.setFocusPolicy(Qt.NoFocus); self.setAutoRaise(False)
-        self.setIcon(dunkel(symbol, 14)); self.setStyleSheet(GRIFF_STIL)
+        self.setIcon(dunkel(symbol, 14)); self.setStyleSheet(griff_stil())
         if cursor is not None:
             self.setCursor(cursor)
         self._klick, self._ziehen, self._ende, self._start = bei_klick, bei_ziehen, bei_ende, bei_start

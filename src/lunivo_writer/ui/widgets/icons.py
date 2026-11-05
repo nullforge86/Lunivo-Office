@@ -6,6 +6,7 @@ import os
 import re
 import tempfile
 from lunivo_writer.core import paths
+from lunivo_writer.core.farben import Farbe
 
 from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPalette, QPixmap
@@ -55,13 +56,14 @@ def uebersteuern(tausch: dict) -> None:
 from lunivo_writer.core.piktogramme import katalog  # noqa: E402,F401   (der Katalog liegt neutral in core/, die Oberfläche benutzt ihn von hier aus weiter)
 
 
-def katalog_bild(name: str, px: int = 96, farbe: str = "#1f2328", strich: float = STRICH) -> QImage:
+def katalog_bild(name: str, px: int = 96, farbe: str | None = None, strich: float = STRICH) -> QImage:
     from lunivo_writer.core import piktogramme
-    return piktogramme.katalog_bild(name, px, farbe, strich)
+    return piktogramme.katalog_bild(name, px, farbe or Farbe.SYMBOL, strich)
 
 
-def pfad_bild(pfad: str, px: int = 48, farbe: str = "#1f2328") -> QImage:
+def pfad_bild(pfad: str, px: int = 48, farbe: str | None = None) -> QImage:
     """Eine Zeichnung (Katalogpfad oder eigene) als Bild — für Vorschau und Auswahlfenster."""
+    farbe = farbe or Farbe.SYMBOL
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     p = QPainter(img)
@@ -161,7 +163,7 @@ def _pixmap(name: str, farbe: str, px: int) -> QPixmap:
     return pm
 
 
-def icon(name: str, px: int = 20) -> QIcon:
+def icon(name: str, px: int = 20, farbe: str | None = None) -> QIcon:
     px = max(10, int(round(px * FAKTOR)))
     """Symbol in den Farben der aktuellen Palette (hell/dunkel), ausgegraut wenn deaktiviert."""
     pfad = _symbolpfad(name)
@@ -170,11 +172,18 @@ def icon(name: str, px: int = 20) -> QIcon:
     pal = QApplication.palette()
     normal = pal.color(QPalette.ButtonText).name()
     if QColor(normal).lightness() > 128:                 # dunkler Hintergrund: Symbole fast weiß, damit man sie gut erkennt
-        normal = "#f4f6f8"
+        normal = Farbe.SYMBOL_HELL
     off = pal.color(QPalette.Disabled, QPalette.ButtonText).name()
+    if farbe:                                            # feste Farbe, z. B. dunkle Symbole auf dem grünen Kopf im Thema Mint
+        normal, off = farbe, Farbe.SYMBOL_AUS_AKZENT   # ausgegraut: gedämpftes Grün, bleibt auf dem Hellgrün sichtbar
     ic = QIcon()
     ic.addPixmap(_pixmap(name, normal, px), QIcon.Normal)
     ic.addPixmap(_pixmap(name, off, px), QIcon.Disabled)
+    from lunivo_writer.ui import theme
+    if theme._MINT and not farbe:                        # Mint: eingeschaltet = hellgrüner Grund, darauf immer dunkle Symbole
+        dunkel = _pixmap(name, Farbe.AUF_AKZENT, px)
+        for modus in (QIcon.Normal, QIcon.Active, QIcon.Selected):
+            ic.addPixmap(dunkel, modus, QIcon.On)
     return ic
 
 
@@ -184,7 +193,7 @@ def icon_aus_pfad(pfad: str, px: int = 20) -> QIcon:
     pal = QApplication.palette()
     normal = pal.color(QPalette.ButtonText).name()
     if QColor(normal).lightness() > 128:
-        normal = "#f4f6f8"
+        normal = Farbe.SYMBOL_HELL
     off = pal.color(QPalette.Disabled, QPalette.ButtonText).name()
     ic = QIcon()
     for farbe, modus in ((normal, QIcon.Normal), (off, QIcon.Disabled)):
@@ -196,6 +205,17 @@ def icon_aus_pfad(pfad: str, px: int = 20) -> QIcon:
         pm = QPixmap.fromImage(img)
         pm.setDevicePixelRatio(2)
         ic.addPixmap(pm, modus)
+    from lunivo_writer.ui import theme
+    if theme._MINT:                                      # Mint: eingeschaltet = hellgrüner Grund, darauf dunkle Symbole
+        img = QImage(px * 2, px * 2, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        p = QPainter(img)
+        QSvgRenderer(QByteArray(_svg(pfad, Farbe.AUF_AKZENT))).render(p, QRectF(0, 0, px * 2, px * 2))
+        p.end()
+        pm = QPixmap.fromImage(img)
+        pm.setDevicePixelRatio(2)
+        for modus in (QIcon.Normal, QIcon.Active, QIcon.Selected):
+            ic.addPixmap(pm, modus, QIcon.On)
     return ic
 
 

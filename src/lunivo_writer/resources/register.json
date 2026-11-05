@@ -175,16 +175,68 @@
       },
       {
        "symbol": "textrichtung",
-       "name": "Textrichtung",
+       "name": "Zeichen-Layout",
        "gross": false,
        "menue": [
         {
-         "name": "Von links nach rechts",
-         "tun": "textrichtungLinks"
+         "name": "Zeichen kombinieren…",
+         "tun": "umschlosseneZeichen"
         },
         {
-         "name": "Von rechts nach links",
-         "tun": "textrichtungRechts"
+         "name": "Zwei Zeilen in einer…",
+         "tun": "phonetischesLeitzeichen"
+        },
+        {
+         "name": "Fit Text…"
+        },
+        {
+         "name": "Zeichenskalierung",
+         "menue": [
+          {
+           "name": "200%",
+           "tun": "zeichenSkalierung:[200]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "150%",
+           "tun": "zeichenSkalierung:[150]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "100%",
+           "tun": "zeichenSkalierung:[100]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "90%",
+           "tun": "zeichenSkalierung:[90]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "80%",
+           "tun": "zeichenSkalierung:[80]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "66%",
+           "tun": "zeichenSkalierung:[66]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "50%",
+           "tun": "zeichenSkalierung:[50]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "33%",
+           "tun": "zeichenSkalierung:[33]",
+           "haken": "zeichenSkalierungJetzt"
+          },
+          {
+           "name": "Mehr…",
+           "tun": "schriftartMehr"
+          }
+         ]
         }
        ]
       },
@@ -196,24 +248,16 @@
       },
       {
        "symbol": "zeilenumbruch",
-       "name": "Umbrüche",
+       "name": "Textrichtung",
        "gross": false,
        "menue": [
         {
-         "name": "Zeilenumbruch",
-         "tun": "zeilenumbruch"
+         "name": "Von links nach rechts",
+         "tun": "textrichtungLinks"
         },
         {
-         "name": "Seitenumbruch",
-         "tun": "seitenumbruch"
-        },
-        {
-         "name": "Spaltenumbruch",
-         "tun": "spaltenumbruch"
-        },
-        {
-         "name": "Textflussumbruch",
-         "tun": "textflussumbruch"
+         "name": "Von rechts nach links",
+         "tun": "textrichtungRechts"
         }
        ]
       },
@@ -1163,26 +1207,6 @@
      "name": "Lesen",
      "knoepfe": [
       {
-       "symbol": "brille",
-       "name": "Lesehilfe",
-       "gross": true,
-       "tun": "lesehilfe"
-      },
-      {
-       "symbol": "zeile",
-       "name": "Zeilenfokus",
-       "gross": false,
-       "tun": "zeilenfokus",
-       "haken": true
-      },
-      {
-       "symbol": "buch",
-       "name": "Lesemodus",
-       "gross": false,
-       "tun": "lesemodus",
-       "haken": true
-      },
-      {
        "symbol": "groesserA",
        "name": "Schrift zum Lesen",
        "gross": false,
@@ -1228,18 +1252,6 @@
        "tun": "rechtschreibung",
        "klappe": "pruefungKlappe",
        "haken": true
-      },
-      {
-       "symbol": "Vorhersage",
-       "name": "Wortvorhersage",
-       "gross": false,
-       "tun": "vorhersage"
-      },
-      {
-       "symbol": "autokorr",
-       "name": "AutoKorrektur",
-       "gross": false,
-       "tun": "autokorrektur"
       }
      ]
     },
@@ -1278,25 +1290,6 @@
      "name": "Sprache",
      "knoepfe": [
       {
-       "symbol": "silben",
-       "name": "Silbentrennung",
-       "gross": true,
-       "tun": "silbentrennung",
-       "haken": true
-      },
-      {
-       "symbol": "uebersetzen",
-       "name": "Übersetzen",
-       "gross": false,
-       "tun": "w.kiUebersetzen"
-      },
-      {
-       "symbol": "woerterbuch",
-       "name": "Thesaurus",
-       "gross": false,
-       "tun": "thesaurus"
-      },
-      {
        "symbol": "sprache",
        "name": "Sprache und Prüfung",
        "gross": false,
@@ -1328,12 +1321,6 @@
     {
      "name": "KI",
      "knoepfe": [
-      {
-       "symbol": "chat",
-       "name": "KI-Chat",
-       "gross": true,
-       "tun": "w.chatUmschalten"
-      },
       {
        "symbol": "assistent",
        "name": "Eigenen Assistenten erstellen",
@@ -1745,14 +1732,43 @@
      "tun": "speichernUnter",
      "taste": "Strg+Umschalt+S",
      "unter": [
-      {"name": "Word-Dokument (.docx)", "tun": "w.speichernAls:[\".docx\"]", "datei": ".docx"},
-      {"name": "OpenDocument-Text (.odt)", "tun": "w.speichernAls:[\".odt\"]", "datei": ".odt"},
-      {"name": "Word 97–2003 (.doc)", "tun": "w.speichernAls:[\".doc\"]", "datei": ".doc"},
-      {"name": "Rich Text (.rtf)", "tun": "w.speichernAls:[\".rtf\"]", "datei": ".rtf"},
-      {"name": "Textdatei (.txt)", "tun": "w.speichernAls:[\".txt\"]", "datei": ".txt"},
-      {"name": "PDF (.pdf)", "tun": "speichernPdf", "datei": ".pdf"},
-      {"trenner": true},
-      {"name": "Anderer Name oder Ort …", "tun": "speichernUnter"}
+      {
+       "name": "Word-Dokument (.docx)",
+       "tun": "w.speichernAls:[\".docx\"]",
+       "datei": ".docx"
+      },
+      {
+       "name": "OpenDocument-Text (.odt)",
+       "tun": "w.speichernAls:[\".odt\"]",
+       "datei": ".odt"
+      },
+      {
+       "name": "Word 97–2003 (.doc)",
+       "tun": "w.speichernAls:[\".doc\"]",
+       "datei": ".doc"
+      },
+      {
+       "name": "Rich Text (.rtf)",
+       "tun": "w.speichernAls:[\".rtf\"]",
+       "datei": ".rtf"
+      },
+      {
+       "name": "Textdatei (.txt)",
+       "tun": "w.speichernAls:[\".txt\"]",
+       "datei": ".txt"
+      },
+      {
+       "name": "PDF (.pdf)",
+       "tun": "speichernPdf",
+       "datei": ".pdf"
+      },
+      {
+       "trenner": true
+      },
+      {
+       "name": "Anderer Name oder Ort …",
+       "tun": "speichernUnter"
+      }
      ]
     },
     {
@@ -2037,7 +2053,7 @@
         },
         {
          "name": "Mehr…",
-         "tun": "eigen"
+         "tun": "einzugGenau"
         }
        ]
       },

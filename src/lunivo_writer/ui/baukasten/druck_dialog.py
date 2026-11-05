@@ -1,4 +1,4 @@
-"""Das Druckfenster: links die Vorschau des Blattes, rechts die Reiter „Standard“, „Lunivo-Office“ und „Drucker“.
+"""Das Druckfenster: oben die Reiter „Standard“, „Lunivo-Office“ und „Drucker“, darunter die Vorschau des Blattes (eine Spalte).
 
     d = DruckDialog(parent, seiten=5, papier_mm=(210, 297), quer=False, start={...}, vorschau=lambda nummern, ein: [QImage, ...])
     if d.exec(): d.ergebnis()
@@ -13,13 +13,32 @@ from typing import Callable
 
 from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+from PySide6.QtWidgets import (QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
 from lunivo_writer.editor.druck import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_MITTEL,
+    BREITE_AB_ZWEISPALTER,
+    BREITE_KNOPF_KLEIN,
+    GROESSE_FENSTER_DRUCKEN,
+    HOEHE_KNOPF_GROSS,
+    ICON_GROSS,
+    RAND_DRUCK_FUSS,
+    RAND_DRUCK_SEITE,
+    RAND_DRUCK_SPALTEN,
+    RAND_FENSTER_DRUCKEN,
+    RAND_FUSS_BACKSTAGE,
+    RAND_KEIN,
+    RAND_OBEN_SEITE,
+)
 
 KEIN_DRUCKER = "Kein Drucker eingerichtet"
 KEIN_DRUCKER_HINWEIS = "Kein Drucker eingerichtet — es wird das Fenster des Systems geöffnet."
@@ -50,8 +69,26 @@ def _combo(eintraege, aktuell) -> QComboBox:
     return c
 
 
+class _Reiter(AngepassteReiter):
+    """Reiter, deren Höhe mit der Breite mitgeht: schmal umbrechen die Beschriftungen, die Seite wird höher (sonst überlappen die Felder)."""
+
+    gestapelt = True                                          # nur gestapelt (schmal) geht die Höhe mit der Breite mit; nebeneinander bestimmt das Fenster die Höhe
+
+    def hasHeightForWidth(self) -> bool:
+        return self.gestapelt
+
+    def heightForWidth(self, w: int) -> int:
+        kopf = self.tabBar().sizeHint().height() + 4
+        hoehen = []
+        for i in range(self.count()):
+            lay = self.widget(i).layout()
+            wunsch = self.widget(i).sizeHint().height()                    # natürliche Höhe: nie darunter, sonst überlappen die Zeilen
+            hoehen.append(max(wunsch, lay.totalHeightForWidth(w)) if lay is not None and lay.hasHeightForWidth() else wunsch)
+        return kopf + max(hoehen or [0])
+
+
 class DruckAnsicht(QWidget):
-    """Vorschau links, Reiter rechts. ``geaendert`` kommt bei jeder Änderung der Wahl."""
+    """Reiter oben, Vorschau darunter. ``geaendert`` kommt bei jeder Änderung der Wahl."""
     geaendert = Signal()
     eigenschaften = Signal(str)                                   # Name des Druckers → der Aufrufer öffnet dessen Einstellungen
 
@@ -64,34 +101,38 @@ class DruckAnsicht(QWidget):
         self._sync = False
         self._drucker = _drucker_liste()
         hoch = (min(papier_mm), max(papier_mm))
-        v = QHBoxLayout(self); v.setContentsMargins(0, 14, 0, 0); v.setSpacing(0)
 
-        # ---- links: Vorschau -------------------------------------------------------------------------------------------
-        links = QVBoxLayout(); links.setContentsMargins(14, 12, 14, 12)
-        self.flaeche = VorschauFlaeche(self._zeichnen, 380, flaeche=False)
-        links.addWidget(self.flaeche, 1)
-        unten = QHBoxLayout()
+        # ---- Reiter: breit (Datei-Ansicht) rechts neben dem Blatt wie in der Vorlage, schmal (Seitenleiste) oben ----------------
+        self.reiter = _Reiter(); self.reiter.setDocumentMode(True)
+        self.reiter.setUsesScrollButtons(False); self.reiter.tabBar().setExpanding(True); self.reiter.tabBar().setElideMode(Qt.ElideRight)
+
+        # ---- darunter: Vorschau des Blattes, in voller Breite ------------------------------------------------------------------
+        unter = QVBoxLayout(); unter.setContentsMargins(*RAND_FUSS_BACKSTAGE)
+        self.flaeche = VorschauFlaeche(self._zeichnen, 300, flaeche=False)
+        unter.addWidget(self.flaeche, 1)
+        nav_zeile = FlussLayout()
         self.zeigen = QCheckBox("Vorschau"); self.zeigen.setChecked(bool(s.get("vorschau", True)))
-        unten.addWidget(self.zeigen); unten.addStretch(1)
+        nav_zeile.addWidget(self.zeigen)
         self.nav = []
         for sym, tip, f in (("chevron-first", "Erstes Blatt", lambda: self._gehe(0)),
                             ("chevron-left", "Voriges Blatt", lambda: self._gehe(self._blatt - 1))):
-            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
+            k = QPushButton(); k.setIcon(icons.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); nav_zeile.addWidget(k)
         self.nr = QSpinBox(); self.nr.setMinimum(1); self.nr.valueChanged.connect(lambda n: self._gehe(n - 1))
         self.von = QLabel("/ 1")
-        unten.addWidget(self.nr); unten.addWidget(self.von)
+        nav_zeile.addWidget(self.nr); nav_zeile.addWidget(self.von)
         for sym, tip, f in (("chevron-right", "Nächstes Blatt", lambda: self._gehe(self._blatt + 1)),
                             ("chevron-last", "Letztes Blatt", lambda: self._gehe(10 ** 6))):
-            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); unten.addWidget(k)
+            k = QPushButton(); k.setIcon(icons.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); nav_zeile.addWidget(k)
         for k in self.nav:
-            k.setFlat(True); k.setMinimumWidth(36); k.setMinimumHeight(36)
-        links.addLayout(unten)
-        lw = QWidget(); lw.setLayout(links); lw.setMinimumWidth(240)
-        v.addWidget(lw, 1)
-
-        # ---- rechts: Reiter ----------------------------------------------------------------------------------------------
-        self.reiter = QTabWidget(); self.reiter.setDocumentMode(True)
-        v.addWidget(self.reiter, 1)
+            k.setFlat(True); k.setMinimumWidth(BREITE_KNOPF_KLEIN); k.setMinimumHeight(HOEHE_KNOPF_GROSS)
+        unter.addLayout(nav_zeile)
+        self._blatt_box = QWidget(); self._blatt_box.setLayout(unter)
+        # ---- beide in den ZweiSpalter: breit links das Blatt, rechts die Auswahl; schmal die Auswahl oben, das Blatt darunter -------
+        self.spalten = ZweiSpalter(self._blatt_box, self.reiter, oben="rechts", gestapelt_stretch=(0, 1),
+                                   raender_breit=RAND_DRUCK_SPALTEN, raender_gestapelt=RAND_OBEN_SEITE)
+        self.spalten.angeordnet.connect(self._angeordnet)
+        self._angeordnet(False)
+        _h = QVBoxLayout(self); _h.setContentsMargins(*RAND_KEIN); _h.setSpacing(0); _h.addWidget(self.spalten)
         self._standard(s, hoch, quer, auswahl)
         self._programm(s)
         self._druckerseite(s)
@@ -100,9 +141,16 @@ class DruckAnsicht(QWidget):
         self._timer = QTimer(self); self._timer.setSingleShot(True); self._timer.setInterval(250); self._timer.timeout.connect(self._neu_laden)
         self._aenderung()
 
+    # ---- Anordnung nach Breite (macht der ZweiSpalter) -----------------------------------------------------------------------
+    BREIT_AB = BREITE_AB_ZWEISPALTER                              # ab dieser Breite stehen Blatt und Auswahl nebeneinander (Datei-Ansicht)
+
+    def _angeordnet(self, breit: bool) -> None:
+        self.reiter.gestapelt = not breit
+        self.reiter.updateGeometry()
+
     # ---- Reiter „Standard“ ----------------------------------------------------------------------------------------------
     def _standard(self, s, hoch, quer, auswahl):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(*RAND_DRUCK_SEITE); f.setSpacing(ABSTAND_MITTEL)
         f.addWidget(_kopf("Drucker"))
         g = FormularGitter(); f.addLayout(g)
         self.name = QComboBox()
@@ -114,7 +162,7 @@ class DruckAnsicht(QWidget):
         else:
             self.name.addItem(KEIN_DRUCKER, "")
         g.zeile("Name", self.name)
-        self.eig = QPushButton("Eigenschaften…"); self.eig.setMinimumHeight(36); self.eig.setEnabled(bool(self._drucker))
+        self.eig = QPushButton("Eigenschaften…"); self.eig.setMinimumHeight(HOEHE_KNOPF_GROSS); self.eig.setEnabled(bool(self._drucker))
         g.breit(self.eig)
         self.status = QLabel(); self.status.setWordWrap(True)
         g.zeile("Status:", self.status)
@@ -154,7 +202,7 @@ class DruckAnsicht(QWidget):
 
     # ---- Reiter „Lunivo-Office“ ------------------------------------------------------------------------------------------
     def _programm(self, s):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(*RAND_DRUCK_SEITE); f.setSpacing(ABSTAND_MITTEL)
         f.addWidget(_kopf("Inhalt"))
 
         def haken(text, schl, vorgabe):
@@ -174,7 +222,7 @@ class DruckAnsicht(QWidget):
 
     # ---- Reiter „Drucker“ ------------------------------------------------------------------------------------------------
     def _druckerseite(self, s):
-        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(16, 6, 16, 12); f.setSpacing(8)
+        w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(*RAND_DRUCK_SEITE); f.setSpacing(ABSTAND_MITTEL)
         f.addWidget(_kopf("Drucker"))
         g = FormularGitter(); f.addLayout(g)
         self.info = {}
@@ -305,26 +353,26 @@ class DruckAnsicht(QWidget):
         p.save(); p.translate(rand_links - 8, blatt.center().y()); p.rotate(-90)
         p.drawText(QRectF(-60, -10, 120, 20), Qt.AlignCenter, f"{h:g} mm"); p.restore()
         p.fillRect(blatt.translated(2, 3), QColor(0, 0, 0, 60))
-        p.fillRect(blatt, Qt.white)
+        p.fillRect(blatt, QColor(Farbe.PAPIER))
         bilder = getattr(self, "_bilder", [])
         if bilder and self.zeigen.isChecked():
             blatt_zeichnen(p, blatt, bilder, int(self.pro_blatt.currentData()), rand=1.0 if self.pro_blatt.currentData() > 1 else 0.0)
 
 
-class DruckDialog(QDialog):
+class DruckDialog(PanelFaehig, QDialog):
     """Das Druckfenster mit Knopfzeile: Hilfe links, „Abbrechen“ und „Drucken“ rechts."""
 
     def __init__(self, parent, seiten: int, papier_mm: tuple[float, float] = (210, 297), quer: bool = False, start: dict | None = None, *,
                  auswahl: bool = False, vorschau=None, hilfe: Callable | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Drucken"); self.setModal(True); self.resize(940, 640)
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 12); v.setSpacing(0)
+        self.setWindowTitle("Drucken"); self.setModal(True); self.resize(*GROESSE_FENSTER_DRUCKEN)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_FENSTER_DRUCKEN); v.setSpacing(0)
         self.ansicht = DruckAnsicht(seiten, papier_mm, quer, start, auswahl=auswahl, vorschau=vorschau)
         v.addWidget(self.ansicht, 1)
         h = QPushButton("Hilfe")
         if hilfe:
             h.clicked.connect(hilfe)
-        fuss = QVBoxLayout(); fuss.setContentsMargins(14, 8, 14, 0)
+        fuss = QVBoxLayout(); fuss.setContentsMargins(*RAND_DRUCK_FUSS)
         self.ok = fussleiste(self, fuss, h, ok_text="Drucken")
         v.addLayout(fuss)
         self.ansicht.geaendert.connect(self._pruefen)

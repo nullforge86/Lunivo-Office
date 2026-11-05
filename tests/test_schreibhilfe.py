@@ -708,9 +708,9 @@ def test_schreibhilfe_knoepfe_melden_sich_sichtbar(app, tmp_path, monkeypatch):
         meldungen.clear(); w.befehle.tun(befehl)
         assert meldungen, befehl
     w.current_editor().setPlainText("Ein Text.")
-    for befehl in ("kiKorrektur", "kiUmformulieren", "kiZusammenfassen", "w.kiUebersetzen", "kiVorschlaege"):
-        fenster.clear(); w.befehle.tun(befehl)
-        assert fenster == ["einstellungen"], befehl
+    for befehl in ("kiKorrektur", "kiUmformulieren", "kiZusammenfassen", "w.kiUebersetzenErsetzen", "w.kiUebersetzenZeigen", "kiVorschlaege"):
+        fenster.clear(); meldungen.clear(); w.befehle.tun(befehl)
+        assert meldungen and not fenster, befehl          # ohne Modell: eine Meldung, kein fremdes Einstellungsfenster
     # Silbentrennung: Menü mit Vorschau und Einstellungen
     m = w.befehle.klappe("silbenTrennungMenue")
     assert [a.text() for a in m.actions()] == ["Trennstriche in der Druckvorschau ansehen", "Einstellungen der Silbentrennung …"]
@@ -769,14 +769,14 @@ def test_uebersetzen_markierung_ersetzen_oder_in_schreibhilfe_und_chat_zeigen(ap
         return False
     # 1. markieren → im Dokument ersetzen
     c = e.textCursor(); c.select(QTextCursor.Document); e.setTextCursor(c)
-    w.befehle.tun("w.kiUebersetzen")
+    w.befehle.tun("w.kiUebersetzenErsetzen")
     assert warte(lambda: e.toPlainText() == "Hello world")
-    # 2. keine Markierung → Übersetzung wird gezeigt, der Text bleibt
+    # 2. keine Markierung → „Übersetzung zeigen“ zeigt sie, der Text bleibt
     e.setPlainText("Hallo Welt")
     for _ in range(40):
         app.processEvents(); time.sleep(0.03)
     c = e.textCursor(); c.clearSelection(); e.setTextCursor(c)
-    w.befehle.tun("w.kiUebersetzen")
+    w.befehle.tun("w.kiUebersetzenZeigen")
     assert warte(lambda: any("Übersetzung" in z["text"] or z["text"] == "Hello world" for z in w.sidebar.chat.verlauf))
     assert e.toPlainText() == "Hallo Welt" and w.sidebar.werk_reiter.checkedId() == 0
     # 3. markiert, aber ausdrücklich „zeigen“ → Text bleibt

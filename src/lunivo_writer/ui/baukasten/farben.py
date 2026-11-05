@@ -7,6 +7,17 @@ from PySide6.QtGui import QColor
 # Eigene Grundfarben (Weiß, Schwarz, zwei Grautöne, dann die Farben der Oberfläche) — jede Spalte bekommt fünf Abstufungen.
 THEMA_FARBEN = ("#ffffff", "#000000", "#e9ecef", "#343a40", "#1971c2", "#e8590c", "#868e96", "#f08c00", "#1098ad", "#2f9e44")
 STANDARD_FARBEN = ("#c92a2a", "#f03e3e", "#f08c00", "#ffd43b", "#82c91e", "#2f9e44", "#1098ad", "#1971c2", "#364fc7", "#6741d9")
+# Voreinstellungsfarben für Benutzerobjekte und Dokumentdaten (werden bewusst nicht thematisiert).
+VORGABE_WASSERZEICHEN = "#c0c0c0"      # Standardfarbe der Wasserzeichen
+VORGABE_WORDART = "#2f78bd"            # Standardfarbe eines WordArt-Objekts im Dialog
+VORGABE_MARKER = "#ffec99"             # Standardfarbe des Textmarkers
+VORGABE_SCHATTIERUNG = "#d9d9d9"       # Zeichenschattierung
+VORGABE_LINIE = "#1f3864"             # Standard-Linienfarbe einer neuen Form im Dialog
+VORGABE_SCHRIFT = "#1f2328"            # Standard-Schriftfarbe eines neuen Textobjekts im Dialog
+VORGABE_TABELLENRAND = "#333333"       # Rand einer per Befehl umrandeten Tabelle
+# Heller Kachelgrund für Vorschauen mit dunkler Schrift (in allen Themen gleich hell, damit auch das schwarze „A“ zu sehen ist).
+KACHEL_GRUND = "#f3f4f6"
+KACHEL_RAND = "#d0d4d9"
 ZULETZT_SCHLUESSEL = "baukasten/zuletzt_farben"
 ZULETZT_MAX = 10
 

@@ -13,17 +13,17 @@ class AnsichtBefehle:
     # ---- Ansicht ---------------------------------------------------------------------------------------------------------------
     def handbuch(self, k=None):
         from lunivo_writer.ui.dialogs import hilfe_dialoge
-        hilfe_dialoge.handbuch(self.w).show()
+        hilfe_dialoge.handbuch(self.w).exec()
 
 
     def tastenHilfe(self, k=None):
         from lunivo_writer.ui.dialogs import hilfe_dialoge
-        hilfe_dialoge.tastenkuerzel(self.w).show()
+        hilfe_dialoge.tastenkuerzel(self.w).exec()
 
 
     def erweiterungen(self, k=None):
         from lunivo_writer.ui.dialogs import hilfe_dialoge
-        hilfe_dialoge.erweiterungen(self.w).show()
+        hilfe_dialoge.erweiterungen(self.w).exec()
 
 
     def vorlagenWaehlen(self, k=None): self.w.neu_aus_vorlage()

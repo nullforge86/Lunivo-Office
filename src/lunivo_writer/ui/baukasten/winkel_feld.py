@@ -11,6 +11,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDial, QHBoxLayout, QWidget
 
 from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
+from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, GROESSE_WINKELKNOPF, RAND_KEIN
 
 
 class WinkelFeld(QWidget):
@@ -19,9 +20,9 @@ class WinkelFeld(QWidget):
     def __init__(self, lo: float = 0.0, hi: float = 360.0, suffix: str = "°", schritt: float = 1.0, nachkomma: int = 1, wert: float = 0.0):
         super().__init__()
         self._lo, self._hi = lo, hi
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(8)
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_MITTEL)
         self.knopf = QDial(); self.knopf.setRange(int(lo), int(hi)); self.knopf.setWrapping(True); self.knopf.setNotchesVisible(False)
-        self.knopf.setFixedSize(36, 36)
+        self.knopf.setFixedSize(*GROESSE_WINKELKNOPF)
         self.zaehler = SchrittFeld(lo, hi, suffix, schritt, nachkomma, wert)
         h.addWidget(self.knopf); h.addWidget(self.zaehler, 1)
         self.setValue(wert)

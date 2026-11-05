@@ -242,7 +242,7 @@ class SpaltenBaustein:
         p = QPainter(vp)
         g = self._sp_geo()
         p.fillRect(e.rect(), self._arbeitsflaeche())
-        papier = QColor(self._lese_papier or self.page.color or "white")
+        papier = QColor(self._lese_papier or self.page.color or Farbe.PAPIER)
         sicht = QRectF(e.rect())
         quer = bool(getattr(self, "_qplan", None))
         for k in range(self._blatt_anzahl()):
@@ -276,7 +276,7 @@ class SpaltenBaustein:
         lay = doc.documentLayout()
         ctx = QAbstractTextDocumentLayout.PaintContext()
         pal = QPalette(self.palette())
-        pal.setColor(QPalette.Text, QColor(self._lese_text or "black"))
+        pal.setColor(QPalette.Text, QColor(self._lese_text or Farbe.SCHWARZ))
         ctx.palette = pal
         auswahl = []
         for es in self.extraSelections():
@@ -593,9 +593,9 @@ class SpaltenBaustein:
 
 
     def seitenfarbe_anwenden(self) -> None:
-        c = self.page.color or "white"
+        c = self.page.color or Farbe.PAPIER
         # der Rahmen hat die Farbe der Arbeitsfläche: um das Blatt herum ist kein Strich zu sehen
-        self.setStyleSheet("QTextEdit { background: palette(dark); color: black; border: none; }")
+        self.setStyleSheet(f"QTextEdit {{ background: palette(dark); color: {Farbe.SCHWARZ}; border: none; }}")
 
 
     def set_zoom(self, faktor: float) -> None:

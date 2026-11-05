@@ -13,7 +13,9 @@ from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 
 from lunivo_writer.core.farben import Farbe
-def linien_symbol(art: str, groesse: QSize = QSize(56, 14), farbe: str = Farbe.TINTE, breite_pt: float = 1.5) -> QIcon:
+from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
+def linien_symbol(art: str, groesse: QSize = QSize(*GROESSE_LINIENART_BILD), farbe: str | None = None, breite_pt: float = 1.5) -> QIcon:
+    farbe = Farbe.TINTE if farbe is None else farbe
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
@@ -33,7 +35,7 @@ class LinienZeile(QWidget):
         super().__init__(parent)
         self._text, self._art, self._breite, self._farbe, self._maler = text, art, breite_pt, farbe, maler
         self.setMouseTracking(True); self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(30); self.setMinimumWidth(190 if text else 150)
+        self.setMinimumHeight(HOEHE_LINIENZEILE); self.setMinimumWidth(190 if text else 150)
         self._hover = False
 
     def enterEvent(self, e):
@@ -65,9 +67,8 @@ class LinienZeile(QWidget):
 
 def linien_menue_zeile(menue, text: str, art: str, breite_pt: float, aktion, maler=None) -> LinienZeile:
     """Hängt eine ``LinienZeile`` als Eintrag in ein Menü; ein Klick ruft ``aktion`` und schließt das Menü."""
-    from PySide6.QtWidgets import QWidgetAction
     z = LinienZeile(text, art, breite_pt, maler=maler)
-    a = QWidgetAction(menue); a.setDefaultWidget(z); menue.addAction(a)
+    menue.widget(z)
     z.angeklickt.connect(lambda: (aktion(), menue.hide(), [m.hide() for m in QApplication.topLevelWidgets() if m.isVisible() and m.inherits("QMenu")]))
     return z
 
@@ -82,8 +83,8 @@ class LinienWahl(QWidget):
         super().__init__(parent)
         self._frei = frei
         linie = linie or Linie()
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0)
-        self.art = QComboBox(); self.art.setIconSize(QSize(44, 14))
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN)
+        self.art = QComboBox(); self.art.setIconSize(QSize(*GROESSE_LINIENART_AUSWAHL_BILD))
         for k in arten:
             self.art.addItem(linien_symbol(k), LINIENARTEN[k][0], k)
         self.breite = QComboBox()

@@ -11,6 +11,18 @@ class DateiBefehle:
 
 
     # ---- Datei (☰-Menü und Schnellzugriff) ----------------------------------------------------------------
+    def zuletztOeffnen(self, pfad): self.w.open_path(pfad)
+
+
+    def zuletztEntfernen(self, pfad): self.w.settings.remove_recent(pfad)
+
+
+    def optionen(self, k=None): self.w.show_options()
+
+
+    def fensterWaehlen(self, tab): self.w.docs.setCurrentWidget(tab)
+
+
     def neu(self, k=None): self.w.new_document()
 
     def oeffnen(self, k=None): self.w.open_dialog()
@@ -97,10 +109,11 @@ class DateiBefehle:
 
 
     def menue_zuletzt(self):
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         items = self.w.settings.recent()
         if not items:
-            m.addAction("(keine)").setEnabled(False)
+            m.eintrag("(keine)", aktiv=False)
         for pfad in items:
-            m.addAction(os.path.basename(pfad), lambda _=False, p=pfad: self.w.open_path(p)).setToolTip(pfad)
+            m.eintrag(os.path.basename(pfad), lambda p=pfad: self.w.open_path(p), tip=pfad)
         return m

@@ -9,7 +9,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QLabel, QSlider, QToolButton, QVBoxLayout, QWidget
 
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_SCHIENE_BESCHRIFTET, RAND_KEIN, SCHRIFT_KLEIN
 
 
 def _knopf(text: str) -> QToolButton:
@@ -22,13 +24,13 @@ class SchrittFeld(QWidget):
 
     def __init__(self, lo: float = 0.0, hi: float = 100.0, suffix: str = "", schritt: float = 1.0, nachkomma: int = 0, wert: float = 0.0):
         super().__init__()
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN); h.setSpacing(0)
         self.feld = QDoubleSpinBox(); self.feld.setRange(lo, hi); self.feld.setDecimals(nachkomma); self.feld.setSingleStep(schritt)
         self.feld.setSuffix(suffix); self.feld.setAlignment(Qt.AlignCenter)
         # „NoButtons“ nimmt dem Feld unter dem Stylesheet des Themas die ganze Textfläche (die Zahl bliebe unsichtbar): die Knöpfe bleiben, nur ohne Breite
         self.feld.setStyleSheet("QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 0px; border: none; }"
                                 "QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow { width: 0px; height: 0px; }")
-        self.feld.setMinimumWidth(80)
+        self.feld.setMinimumWidth(BREITE_SCHIENE_BESCHRIFTET)
         minus, plus = _knopf("−"), _knopf("+")
         minus.clicked.connect(lambda: self.feld.stepBy(-1)); plus.clicked.connect(lambda: self.feld.stepBy(1))
         h.addWidget(minus); h.addWidget(self.feld, 1); h.addWidget(plus)
@@ -48,9 +50,9 @@ class SchiebeFeld(QWidget):
     def __init__(self, lo: float = 0.0, hi: float = 100.0, suffix: str = "", schritt: float = 1.0, nachkomma: int = 0, wert: float = 0.0):
         super().__init__()
         self._f = 10 ** nachkomma; self._suffix = suffix; self._nk = nachkomma; self._schritt = schritt
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        self.anzeige = QLabel(); self.anzeige.setStyleSheet("color: palette(mid); font-size: 8pt;"); v.addWidget(self.anzeige)
-        h = QHBoxLayout(); h.setSpacing(4); h.setContentsMargins(0, 0, 0, 0)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+        self.anzeige = QLabel(); hinweis_stil(self.anzeige, zusatz="font-size: " f"{SCHRIFT_KLEIN}" "pt;"); v.addWidget(self.anzeige)
+        h = QHBoxLayout(); h.setSpacing(ABSTAND_KLEIN); h.setContentsMargins(*RAND_KEIN)
         self.regler = QSlider(Qt.Horizontal); self.regler.setRange(int(lo * self._f), int(hi * self._f))
         minus, plus = _knopf("−"), _knopf("+")
         minus.clicked.connect(lambda: self.setValue(self.value() - schritt, melden=True)); plus.clicked.connect(lambda: self.setValue(self.value() + schritt, melden=True))

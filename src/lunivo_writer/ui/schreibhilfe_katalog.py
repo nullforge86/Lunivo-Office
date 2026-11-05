@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 REITER = ("Prüfen", "Lesen", "Schreiben", "KI")
+VORLESEN = frozenset({"vorlesen", "vorlesenAbSatz", "vorlesenStopp", "stimmeWaehlen"})      # stehen NUR in der linken Leiste „Vorlesen“, nicht noch einmal rechts
 
 
 @dataclass(frozen=True)
@@ -47,13 +48,12 @@ KATALOG: tuple[Funktion, ...] = (
     Funktion("Thesaurus", "woerterbuch", "thesaurus", reiter="Schreiben", gruppe="Sprache", hinweis="Ein anderes Wort für das markierte"),
     Funktion("Silbentrennung", "silben", "silbentrennung", "schalter", reiter="Schreiben", gruppe="Sprache", gross=True, klappe="silbenTrennungMenue",
              hinweis="Trennstriche in Druck, PDF und Vorschau"),
-    Funktion("Sprache", "sprache", "w.kiSprache", reiter="Schreiben", gruppe="Sprache", hinweis="Prüfsprache und Übersetzungssprache"),
-    Funktion("Korrektursprache …", "sprache", "pruefsprache", reiter="Schreiben"),
+    Funktion("Sprache", "sprache", "w.kiSprache", reiter="Schreiben", gruppe="Sprache", hinweis="Sprache des Dokuments und Übersetzungssprache"),
     # ---- KI
     Funktion("KI-Korrektur", "assistent", "kiKorrektur", kuerzel="F8", reiter="KI", hinweis="Ton und Verständlichkeit prüfen lassen"),
     Funktion("Verbesserungsvorschläge", "vorschlag", "kiVorschlaege", reiter="KI", hinweis="Sätze, die sich leichter lesen ließen"),
-    Funktion("Übersetzen", "uebersetzen", "w.kiUebersetzen", reiter="KI", gruppe="Sprache", klappe="uebersetzenMenue",
-             hinweis="Markierung ersetzen — ohne Markierung die Übersetzung zeigen"),
+    Funktion("Übersetzen", "uebersetzen", "w.kiUebersetzenErsetzen", reiter="KI", gruppe="Sprache",
+             hinweis="Die Markierung durch die Übersetzung ersetzen"),
     Funktion("Übersetzung zeigen", "uebersetzen", "w.kiUebersetzenZeigen", reiter="KI", hinweis="In Schreibhilfe und Chat, der Text bleibt"),
     Funktion("Text entwerfen", "ki", "kiEntwerfen", reiter="KI", gruppe="KI", hinweis="Im KI-Chat einen Text schreiben lassen"),
     Funktion("Text umformulieren", "stift", "kiUmformulieren", reiter="KI", gruppe="KI", hinweis="Markierung oder ganzen Text anders sagen"),

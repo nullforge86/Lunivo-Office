@@ -12,6 +12,7 @@ from PySide6.QtCore import QEvent, QPoint, Qt
 from PySide6.QtGui import QColor, QCursor, QImage, QPainter, QPen, QPixmap, QTextFormat
 from PySide6.QtWidgets import QApplication, QWidget
 
+from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import tabelleneigenschaften as TE
 from lunivo_writer.ui.document.tabelle_stift import andere_beenden, cursor_zurueck, ueberwachen
 
@@ -78,7 +79,7 @@ def _radierer_cursor() -> QCursor:
     """Radiergummi in Dunkel mit weißem Rand (wie der Stift): auf weißem Blatt wie auf dunklem Grund gut zu sehen; heißer Punkt unten links."""
     from lunivo_writer.ui.widgets import icons
     px = 32
-    hell, dunkel = (icons._pixmap("eraser", f, px).scaled(px, px, Qt.IgnoreAspectRatio, Qt.SmoothTransformation) for f in ("#ffffff", "#111111"))
+    hell, dunkel = (icons._pixmap("eraser", f, px).scaled(px, px, Qt.IgnoreAspectRatio, Qt.SmoothTransformation) for f in (Farbe.WEISS, Farbe.SCHWARZ))
     if hell.isNull():
         return QCursor(Qt.CrossCursor)
     bild = QImage(px + 8, px + 8, QImage.Format_ARGB32_Premultiplied)
@@ -208,7 +209,7 @@ class TabellenRadierer(QWidget):
         if self._linie is None:
             return
         p = QPainter(self)
-        p.setPen(QPen(QColor("#d6336c"), 3))
+        p.setPen(QPen(QColor(Farbe.ROT), 3))
         a, b, c, d = self._linie
         p.drawLine(int(a), int(b), int(c), int(d))
         p.end()

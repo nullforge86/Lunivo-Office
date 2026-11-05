@@ -15,10 +15,12 @@ from PySide6.QtGui import (
     QBrush, QColor, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
 )
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QSlider, QSpinBox, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.mass import GROESSE_FARBFLAECHE, GROESSE_FARBPROBE, GROESSE_FARBREGLER, GROESSE_FARBRING, RAND_FARBWAEHLER_SEITE, RAND_FARBWAEHLER_TRANSPARENZ
 
 MODELLE = ("RGB", "HSV", "HSL")
 
 
+from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, mittig
@@ -130,7 +132,7 @@ class _Flaeche(QWidget):
     def __init__(self, modell: Modell):
         super().__init__()
         self.m = modell
-        self.setFixedSize(285, 215)
+        self.setFixedSize(*GROESSE_FARBFLAECHE)
         self.bild = QImage(self.width(), self.height(), QImage.Format_RGB32)
         for y in range(self.height()):
             for x in range(self.width()):
@@ -151,8 +153,8 @@ class _Flaeche(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         p.drawImage(0, 0, self.bild)
         x, y = self.m.h * self.width(), (1 - self.m.s) * (self.height() - 1)
-        p.setPen(QPen(Qt.white, 2)); p.setBrush(Qt.NoBrush); p.drawEllipse(QPointF(x, y), 6, 6)
-        p.setPen(QPen(Qt.black, 1)); p.drawEllipse(QPointF(x, y), 7.5, 7.5)
+        p.setPen(QPen(QColor(Farbe.PAPIER), 2)); p.setBrush(Qt.NoBrush); p.drawEllipse(QPointF(x, y), 6, 6)
+        p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(QPointF(x, y), 7.5, 7.5)
         p.end()
 
     def _setze(self, pos) -> None:
@@ -167,13 +169,13 @@ class _Leiste(QWidget):
     def __init__(self, modell: Modell):
         super().__init__()
         self.m = modell
-        self.setFixedSize(26, 215)
+        self.setFixedSize(*GROESSE_FARBREGLER)
         self.m.geaendert.connect(self.update)
 
     def paintEvent(self, _e):
         p = QPainter(self)
         balken = QRectF(0, 0, 16, self.height())
-        g = QLinearGradient(0, 0, 0, self.height()); g.setColorAt(0, Qt.white); g.setColorAt(1, Qt.black)
+        g = QLinearGradient(0, 0, 0, self.height()); g.setColorAt(0, QColor(Farbe.PAPIER)); g.setColorAt(1, QColor(Farbe.SCHWARZ))
         p.fillRect(balken, QBrush(g))
         y = (1 - self.m.v) * (self.height() - 1)
         pfeil = QPolygonF([QPointF(25, y - 5), QPointF(25, y + 5), QPointF(18, y)])
@@ -195,7 +197,7 @@ class _Ring(QWidget):
     def __init__(self, modell: Modell):
         super().__init__()
         self.m = modell
-        self.setFixedSize(270, 250)
+        self.setFixedSize(*GROESSE_FARBRING)
         self.mitte = QPointF(self.width() / 2, self.height() / 2)
         self._ziehen = None                                      # "ring" oder "dreieck"
         self.m.geaendert.connect(self.update)
@@ -224,8 +226,8 @@ class _Ring(QWidget):
         t = self.m.h * 2 * math.pi                               # Marke auf dem Ring
         mr = (self.AUSSEN + self.INNEN) / 2
         mp = QPointF(self.mitte.x() + mr * math.sin(t), self.mitte.y() - mr * math.cos(t))
-        p.setBrush(Qt.NoBrush); p.setPen(QPen(Qt.white, 2.5)); p.drawEllipse(mp, 7, 7)
-        p.setPen(QPen(Qt.black, 1)); p.drawEllipse(mp, 8.5, 8.5)
+        p.setBrush(Qt.NoBrush); p.setPen(QPen(QColor(Farbe.PAPIER), 2.5)); p.drawEllipse(mp, 7, 7)
+        p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(mp, 8.5, 8.5)
         # Dreieck: Punkt für Punkt gemischt (a Farbe, b Weiß, c Schwarz)
         fa, fw, fk = self._ecken()
         links, oben = int(min(fa.x(), fw.x(), fk.x())) - 1, int(min(fa.y(), fw.y(), fk.y())) - 1
@@ -243,8 +245,8 @@ class _Ring(QWidget):
         p.setBrush(Qt.NoBrush); p.setPen(QPen(self.palette().mid().color(), 1)); p.drawPath(spitze)
         a, b = self.m.s * self.m.v, self.m.v * (1 - self.m.s)                     # Marke im Dreieck
         pos = QPointF(a * fa.x() + b * fw.x() + (1 - a - b) * fk.x(), a * fa.y() + b * fw.y() + (1 - a - b) * fk.y())
-        p.setPen(QPen(Qt.white, 2)); p.drawEllipse(pos, 5, 5)
-        p.setPen(QPen(Qt.black, 1)); p.drawEllipse(pos, 6.5, 6.5)
+        p.setPen(QPen(QColor(Farbe.PAPIER), 2)); p.drawEllipse(pos, 5, 5)
+        p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(pos, 6.5, 6.5)
         p.end()
 
     @staticmethod
@@ -353,7 +355,7 @@ class _Proben(QWidget):
     def __init__(self, modell: Modell, aktuell: QColor):
         super().__init__()
         self.m, self.alt = modell, QColor(aktuell)
-        self.setFixedSize(72, 56)
+        self.setFixedSize(*GROESSE_FARBPROBE)
         self.m.geaendert.connect(self.update)
 
     def paintEvent(self, _e):
@@ -361,7 +363,7 @@ class _Proben(QWidget):
         h = self.height() // 2
         for y in range(0, self.height(), 6):                      # Schachbrett: durch eine durchscheinende Farbe sieht man es
             for x in range(0, self.width(), 6):
-                p.fillRect(x, y, 6, 6, QColor("#ffffff") if (x // 6 + y // 6) % 2 == 0 else QColor("#c8c8c8"))
+                p.fillRect(x, y, 6, 6, QColor(Farbe.PAPIER) if (x // 6 + y // 6) % 2 == 0 else QColor(Farbe.LEISTE_RAND))
         neu = self.m.farbe(); neu.setAlphaF(self.m.deckkraft / 100)
         p.fillRect(0, 0, self.width(), h, neu)
         p.fillRect(0, h, self.width(), self.height() - h, self.alt)
@@ -405,7 +407,7 @@ class FarbenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, start=None, titel: str = "Farben"):
         super().__init__(parent)
         self.setWindowTitle(titel if titel not in ("", "Farbe") else "Farben")
-        ausgang = QColor(start) if start is not None and QColor(start).isValid() else QColor(Qt.black)
+        ausgang = QColor(start) if start is not None and QColor(start).isValid() else QColor(Farbe.SCHWARZ)
         self.m = Modell(ausgang)
         self.m.deckkraft = round(ausgang.alphaF() * 100)
         v = QVBoxLayout(self)
@@ -413,7 +415,7 @@ class FarbenDialog(PanelFaehig, QDialog):
         v.addWidget(self.reiter, 1)
 
         def seite(inhalt: QWidget, regler: bool) -> QWidget:
-            w = QWidget(); sv = QVBoxLayout(w); sv.setContentsMargins(6, 8, 6, 6)
+            w = QWidget(); sv = QVBoxLayout(w); sv.setContentsMargins(*RAND_FARBWAEHLER_SEITE)
             sv.addWidget(inhalt, 0, Qt.AlignHCenter)
             if regler:
                 sv.addWidget(_Regler(self.m))
@@ -434,7 +436,7 @@ class FarbenDialog(PanelFaehig, QDialog):
 
     def _transparenz_zeile(self) -> QWidget:
         """„Transparenz“: Schieber und Zahlenfeld in Prozent (100 % = deckend) — beide halten dieselbe Zahl."""
-        z = QWidget(); zg = FormularGitter(z); zg.setContentsMargins(6, 0, 6, 0)
+        z = QWidget(); zg = FormularGitter(z); zg.setContentsMargins(*RAND_FARBWAEHLER_TRANSPARENZ)
         self.schieber = QSlider(Qt.Horizontal); self.schieber.setRange(0, 100); self.schieber.setValue(self.m.deckkraft)
         self.prozent = QSpinBox(); self.prozent.setRange(0, 100); self.prozent.setSuffix(" %"); self.prozent.setValue(self.m.deckkraft)
         self.schieber.setToolTip("100 % = deckend, 0 % = unsichtbar"); self.prozent.setToolTip(self.schieber.toolTip())

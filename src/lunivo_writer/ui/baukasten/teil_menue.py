@@ -8,6 +8,7 @@ from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.mass import GROESSE_TEILMENUEKNOPF
 
 
 class TeilMenueKnopf(QToolButton):
@@ -17,8 +18,8 @@ class TeilMenueKnopf(QToolButton):
         super().__init__(parent)
         self._teile: list[tuple[str, str]] = []
         self._aktuell = ""
-        self.setArrowType(Qt.DownArrow); self.setAutoRaise(True); self.setFocusPolicy(Qt.NoFocus)
-        self.setFixedSize(36, 32); self.setToolTip("Diagrammteil wählen"); self.setCursor(Qt.PointingHandCursor)
+        self.setArrowType(Qt.DownArrow); self.setAutoRaise(True)
+        self.setFixedSize(*GROESSE_TEILMENUEKNOPF); self.setToolTip("Diagrammteil wählen"); self.setCursor(Qt.PointingHandCursor)
         self.clicked.connect(self._oeffnen)
 
     def setze(self, teile, aktuell: str) -> None:

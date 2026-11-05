@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QTextBlockFormat, QTextCharFormat
-from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QMenu, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from lunivo_writer.editor import stile
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
+from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.text_format import TextFormatLeiste, zeichne_absaetze, zu_format
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
 ZEICHEN_ZUSATZ = ("unter", "unterfarbe", "durch", "doppelt", "hoch", "tief", "kapital", "gross", "versteckt", "abstand", "kerning", "betonung", "schrift_asien",
                   "schnitt_asien", "groesse_asien", "schrift_komplex", "schnitt_komplex", "groesse_komplex", "skala", "position", "kern_ab", "raster")
 ABSATZ_ZUSATZ = ("rechts", "erste", "rtl", "umbruch", "zeilen_art", "zeilen_pt", "gliederung", "opt")
@@ -38,7 +40,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self._belegt = belegt                                       # Funktion (Taste, eigener Name) → Name, der sie schon hat, oder None
         self._taste = (start or {}).get("taste", "")
         self.setWindowTitle("Formatvorlage ändern" if aendern else "Neue Formatvorlage")
-        self.resize(614, 520)
+        self.resize(*GROESSE_FENSTER_FORMATVORLAGE)
         self._farbe = (start or {}).get("farbe", "")
         self._rs = {k: (start or {}).get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}      # Rahmen und Schattierung (kein Feld der Leiste)
         v = QVBoxLayout(self)
@@ -59,7 +61,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         f.breit(self.hinweis)
         v.addWidget(eig)
         # --- Formatierung (dieselbe Leiste wie im Band)
-        fo = QWidget(); fv = QVBoxLayout(fo); fv.setContentsMargins(0, 0, 0, 0); fv.setSpacing(6)
+        fo = QWidget(); fv = QVBoxLayout(fo); fv.setContentsMargins(*RAND_KEIN); fv.setSpacing(ABSTAND_NORMAL)
         fv.addWidget(abschnittstitel("Formatierung"))
         self.leiste = TextFormatLeiste()
         fv.addWidget(self.leiste)
@@ -73,8 +75,10 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self.zur_vorlage.setVisible(not aendern)
         v.addWidget(self.zur_vorlage)
         self.format = QPushButton("Format")
-        m = QMenu(self.format)
-        m.addAction("Schriftart …", self._schriftart); m.addAction("Absatz …", self._absatz); m.addAction("Tabstopps …", self._tabs); m.addAction("Rahmen …", self._rahmen); m.addAction("Nummerierung …", self._liste); m.addAction("Texteffekte …", self._effekte); m.addAction("Verknüpfung …", self._verknuepfung)
+        m = MenueListe(self.format)
+        for text, tun in (("Schriftart …", self._schriftart), ("Absatz …", self._absatz), ("Tabstopps …", self._tabs), ("Rahmen …", self._rahmen),
+                          ("Nummerierung …", self._liste), ("Texteffekte …", self._effekte), ("Verknüpfung …", self._verknuepfung)):
+            m.eintrag(text, tun)
         self.format.setMenu(m)
         self.ok = fussleiste(self, v, self.format, bei_ok=self._ok)
         # --- Anfangswerte und Verdrahtung
@@ -126,7 +130,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
             bf.setLineHeight(d["zeilen"] * 100, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
         bf.setAlignment({"mitte": Qt.AlignHCenter, "rechts": Qt.AlignRight, "block": Qt.AlignJustify}.get(d.get("ausr"), Qt.AlignLeft))
         f = zu_format({**d, "groesse": min(18.0, max(7.0, d.get("groesse") or 10.0)), "schrift": d.get("schrift") or "Liberation Sans"})
-        f.setForeground(QColor(d.get("farbe") or "#111417"))
+        f.setForeground(QColor(d.get("farbe") or Farbe.SYMBOL))
         if d.get("fuell") or d.get("muster"):
             from lunivo_writer.editor import muster as M
             bf.setBackground(M.pinsel(d["muster"], d.get("musterfarbe") or Farbe.SCHWARZ, d.get("fuell") or None) if d.get("muster")

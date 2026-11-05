@@ -9,8 +9,22 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
+from lunivo_writer.ui.baukasten.texte import trennlinie
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_DRUCKVORSCHAU_SEITEN,
+    ABSTAND_MITTEL,
+    BREITE_DRUCKVORSCHAU_SYMBOLKNOPF,
+    BREITE_DRUCKVORSCHAU_ZOOMKNOPF,
+    BREITE_SCHIENE,
+    GROESSE_FENSTER_DRUCKVORSCHAU,
+    HOEHE_FELD,
+    ICON_GROSS,
+    RAND_DRUCKVORSCHAU_SEITEN,
+    RAND_KEIN,
+    RAND_ZEILE_KARTE,
+)
 ANSICHTEN = [("Eine Seite", 1), ("Zwei Seiten", 2), ("Alle Seiten", 0)]
 
 
@@ -22,13 +36,13 @@ class DruckVorschau(QDialog):
         self.setWindowTitle("Lunivo-Office")
         self._q, self._zoom, self._n = quelle, 1.0, 1
         self._gesamt = max(1, quelle.anzahl())
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
-        leiste = QHBoxLayout(); leiste.setContentsMargins(12, 8, 12, 8); leiste.setSpacing(8)
-        druck = QPushButton("Drucken…"); druck.setObjectName("optFertig"); druck.setMinimumHeight(32)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
+        leiste = QHBoxLayout(); leiste.setContentsMargins(*RAND_ZEILE_KARTE); leiste.setSpacing(ABSTAND_MITTEL)
+        druck = QPushButton("Drucken…"); druck.setObjectName("optFertig"); druck.setMinimumHeight(HOEHE_FELD)
         druck.clicked.connect(lambda: (self.accept(), self.drucken.emit()))
         leiste.addWidget(druck); leiste.addSpacing(12)
         def knopf(sym, tip, f):
-            k = QPushButton(); k.setIcon(icons.icon(sym, 18)); k.setToolTip(tip); k.setFlat(True); k.setFixedWidth(32); k.clicked.connect(f)
+            k = QPushButton(); k.setIcon(icons.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.setFlat(True); k.setFixedWidth(BREITE_DRUCKVORSCHAU_SYMBOLKNOPF); k.clicked.connect(f)
             leiste.addWidget(k); return k
         knopf("chevron-first", "Erste Seite", lambda: self._gehe(1))
         knopf("chevron-left", "Vorige Seite", lambda: self._gehe(self._n - self._schritt()))
@@ -43,21 +57,21 @@ class DruckVorschau(QDialog):
         self.ansicht.currentIndexChanged.connect(lambda _=0: self._aufbauen())
         leiste.addWidget(self.ansicht); leiste.addSpacing(12)
         leiste.addWidget(self._zoomknopf("−", "Verkleinern", 1 / 1.25))
-        self.prozent = QLabel("100 %"); self.prozent.setMinimumWidth(48); self.prozent.setAlignment(Qt.AlignCenter)
+        self.prozent = QLabel("100 %"); self.prozent.setMinimumWidth(BREITE_SCHIENE); self.prozent.setAlignment(Qt.AlignCenter)
         leiste.addWidget(self.prozent)
         leiste.addWidget(self._zoomknopf("+", "Vergrößern", 1.25))
         ein = QPushButton("Einpassen"); ein.clicked.connect(self.einpassen); leiste.addWidget(ein)
         leiste.addStretch(1)
         zu = QPushButton("Vorschau schließen"); zu.clicked.connect(self.reject); leiste.addWidget(zu)
         v.addLayout(leiste)
-        linie = QFrame(); linie.setFrameShape(QFrame.HLine); linie.setFrameShadow(QFrame.Sunken); v.addWidget(linie)
+        linie = trennlinie(tief=True); v.addWidget(linie)
         self.flaeche = QScrollArea(); self.flaeche.setWidgetResizable(True); self.flaeche.setFrameShape(QFrame.NoFrame)
         v.addWidget(self.flaeche, 1)
         self.finished.connect(lambda _=0: self._q.schliessen())
-        self.resize(1100, 800)
+        self.resize(*GROESSE_FENSTER_DRUCKVORSCHAU)
 
     def _zoomknopf(self, text, tip, faktor):
-        k = QPushButton(text); k.setFlat(True); k.setFixedWidth(30); k.setToolTip(tip)
+        k = QPushButton(text); k.setFlat(True); k.setFixedWidth(BREITE_DRUCKVORSCHAU_ZOOMKNOPF); k.setToolTip(tip)
         k.clicked.connect(lambda: self._zoom_setzen(self._zoom * faktor))
         return k
 
@@ -96,11 +110,11 @@ class DruckVorschau(QDialog):
         modus = self.ansicht.currentData()
         zeigen = list(range(1, self._gesamt + 1)) if modus == 0 else list(range(self._n, min(self._gesamt, self._n + modus - 1) + 1))
         inhalt = QWidget(); h = QVBoxLayout(inhalt) if modus == 0 else QHBoxLayout(inhalt)
-        h.setContentsMargins(20, 20, 20, 20); h.setSpacing(16); h.setAlignment(Qt.AlignCenter)
+        h.setContentsMargins(*RAND_DRUCKVORSCHAU_SEITEN); h.setSpacing(ABSTAND_DRUCKVORSCHAU_SEITEN); h.setAlignment(Qt.AlignCenter)
         self._seiten = []
         for n in zeigen:
             l = QLabel(); l.setPixmap(QPixmap.fromImage(self._q.bild(n, self._zoom))); l.setObjectName("vorschauSeite")
-            l.setStyleSheet("QLabel#vorschauSeite { border: 1px solid " + ("#1c7ed6" if n == self._n else Farbe.GRAU) + "; }")
+            l.setStyleSheet("QLabel#vorschauSeite { border: 1px solid " + ("palette(highlight)" if n == self._n else Farbe.GRAU) + "; }")
             h.addWidget(l, 0, Qt.AlignCenter); self._seiten.append(l)
         self.flaeche.setWidget(inhalt)
         if modus == 0 and self._n > 1:

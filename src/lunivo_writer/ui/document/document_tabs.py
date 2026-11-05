@@ -4,6 +4,8 @@ from __future__ import annotations
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QTabBar, QToolButton, QWidget
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.theme import kopf_symbolfarbe
+from lunivo_writer.ui.baukasten.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
 
 
 class DocTabs(QObject):
@@ -26,11 +28,11 @@ class DocTabs(QObject):
         self.leiste = QWidget()
         self.leiste.setObjectName("dokLeiste")
         h = QHBoxLayout(self.leiste)
-        h.setContentsMargins(6, 3, 6, 8)
-        h.setSpacing(2)
+        h.setContentsMargins(*RAND_DOKUMENTREITER)
+        h.setSpacing(ABSTAND_ENG)
         h.addWidget(self.bar)
         plus = QToolButton()
-        plus.setIcon(icons.icon("plus", 16))
+        plus.setIcon(icons.icon("plus", ICON_NORMAL, kopf_symbolfarbe()))
         plus.setAutoRaise(True)
         plus.setToolTip("Neues Dokument (Strg+N)")
         plus.clicked.connect(self.newRequested)

@@ -11,7 +11,15 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QButtonGroup, QComboBox, QFontComboBox, QFrame, QToolButton, QWidget
 
+from lunivo_writer.ui.baukasten.texte import trennlinie
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    BREITE_KNOPF_KLEIN,
+    ICON_GROSS,
+    ICON_TEXTFORMATLEISTE,
+    RAND_KEIN,
+)
 
 GROESSEN = (8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72)
 AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Rechtsbündig"), ("block", "Blocksatz"))
@@ -37,7 +45,7 @@ def groesse_feld(combo: QComboBox | None = None, breite: int = 62) -> QComboBox:
 def text_knopf(symbol: str, tipp: str) -> QToolButton:
     """F, K oder U als Knopf zum Ein-/Ausschalten, in dem Schnitt, den er bedeutet (wie im Band)."""
     k = QToolButton()
-    k.setAutoRaise(True); k.setCheckable(True); k.setText(symbol); k.setToolTip(tipp); k.setMinimumWidth(36)
+    k.setAutoRaise(True); k.setCheckable(True); k.setText(symbol); k.setToolTip(tipp); k.setMinimumWidth(BREITE_KNOPF_KLEIN)
     f = k.font()
     f.setBold(symbol == "F"); f.setItalic(symbol == "K"); f.setUnderline(symbol == "U")
     k.setFont(f)
@@ -49,21 +57,21 @@ def ausrichtung_knoepfe() -> dict[str, QToolButton]:
     gruppe = {}
     for schl, name in AUSRICHTUNG:
         k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name)
-        k.setIcon(icons.icon(schl, 18)); k.setIconSize(QSize(18, 18))
+        k.setIcon(icons.icon(schl, ICON_GROSS)); k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         gruppe[schl] = k
     return gruppe
 
 
 def _zeilen_symbol(abstand: float) -> QIcon:
-    return icons.icon({1.0: "list-start", 1.5: "list", 2.0: "list-chevrons-up-down"}.get(abstand, "list"), 20)
+    return icons.icon({1.0: "list-start", 1.5: "list", 2.0: "list-chevrons-up-down"}.get(abstand, "list"), ICON_TEXTFORMATLEISTE)
 
 
 def _abstand_symbol(mehr: bool) -> QIcon:
-    return icons.icon("list-plus" if mehr else "list-minus", 20)
+    return icons.icon("list-plus" if mehr else "list-minus", ICON_TEXTFORMATLEISTE)
 
 
 def _einzug_symbol(mehr: bool) -> QIcon:
-    return icons.icon("list-indent-increase" if mehr else "list-indent-decrease", 20)
+    return icons.icon("list-indent-increase" if mehr else "list-indent-decrease", ICON_TEXTFORMATLEISTE)
 
 
 class TextFormatLeiste(QWidget):
@@ -79,7 +87,7 @@ class TextFormatLeiste(QWidget):
         from PySide6.QtWidgets import QVBoxLayout
         self.vor = self.nach = self.einzug = 0.0
         self.zeilen = 0.0
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(4)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_KLEIN)
         from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
         z1 = FlussLayout(4); v.addLayout(z1)
         self.schrift = schrift_feld(); self.groesse = groesse_feld()
@@ -98,7 +106,7 @@ class TextFormatLeiste(QWidget):
         self.knoepfe_absatz: list[QToolButton] = []
         if absatz:
             for f, name in ZEILENABSTAND:
-                k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name); k.setIcon(_zeilen_symbol(f)); k.setIconSize(QSize(20, 20))
+                k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name); k.setIcon(_zeilen_symbol(f)); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
                 k.clicked.connect(lambda an, f=f: self._zeilenabstand(f, an))
                 self.zeilen_knoepfe[f] = k; z2.addWidget(k)
             for name, mehr, fn in (("Absatzabstand vergrößern", True, lambda: self._abstand(+self.SCHRITT_ABSTAND)),
@@ -109,19 +117,19 @@ class TextFormatLeiste(QWidget):
                 k = self._aktion(name, _einzug_symbol(mehr), fn); z2.addWidget(k)
         for w in self.findChildren(QToolButton) + [self.schrift, self.groesse]:       # Bedienelemente mindestens 36 px (Eigentümer-Vorgabe Seitenleiste)
             if isinstance(w, QToolButton):
-                w.setMinimumWidth(36)
+                w.setMinimumWidth(BREITE_KNOPF_KLEIN)
         self.schrift.currentFontChanged.connect(lambda _f: self.geaendert.emit())
         self.groesse.editTextChanged.connect(lambda _t: self.geaendert.emit())
         self.fett.toggled.connect(lambda _a: self.geaendert.emit()); self.kursiv.toggled.connect(lambda _a: self.geaendert.emit())
 
     @staticmethod
     def _trenner() -> QFrame:
-        t = QFrame(); t.setFrameShape(QFrame.VLine); t.setFrameShadow(QFrame.Sunken)
+        t = trennlinie(senkrecht=True, tief=True)
         return t
 
     @staticmethod
     def _aktion(name: str, symbol: QIcon, fn) -> QToolButton:
-        k = QToolButton(); k.setAutoRaise(True); k.setToolTip(name); k.setIcon(symbol); k.setIconSize(QSize(20, 20))
+        k = QToolButton(); k.setAutoRaise(True); k.setToolTip(name); k.setIcon(symbol); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
         k.clicked.connect(lambda _c=False: fn())
         return k
 

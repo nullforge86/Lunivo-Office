@@ -14,6 +14,7 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittstitel
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_KEIN
 
 ZOOM_MIN, ZOOM_MAX = 10, 400
 
@@ -41,13 +42,13 @@ class BildZoomFenster(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle(titel)
         self._bild = bild if bild is not None and not bild.isNull() else QImage(1, 1, QImage.Format_ARGB32)
-        v = QVBoxLayout(self); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_NORMAL)
         v.addWidget(abschnittstitel("Vergrößerung"))
         self.zoom = SchiebeFeld(ZOOM_MIN, ZOOM_MAX, " %", 10, 0, 100)
         self.zoom.setAccessibleName("Vergrößerung")
         v.addWidget(self.zoom)
         self.ansicht = _Ansicht(lambda s: self.zoom.setValue(self.zoom.value() + s, melden=True))
-        self.ansicht.setMinimumHeight(260)
+        self.ansicht.setMinimumHeight(HOEHE_LISTE_REITER)
         v.addWidget(self.ansicht, 1)
         self.info = QLabel(f"Originalauflösung: {self._bild.width()} × {self._bild.height()} Bildpunkte"); self.info.setWordWrap(True)
         v.addWidget(self.info)

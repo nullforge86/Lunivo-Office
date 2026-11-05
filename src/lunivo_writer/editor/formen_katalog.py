@@ -150,6 +150,17 @@ def _welle(r: QRectF) -> QPainterPath:
     return p
 
 
+def _fahne(r: QRectF) -> QPainterPath:
+    """Fahne: Mast links, wehendes Tuch rechts."""
+    p = QPainterPath(); x, y, b, h = r.left(), r.top(), r.width(), r.height()
+    p.moveTo(x, y); p.lineTo(x + b * 0.08, y); p.lineTo(x + b * 0.08, y + h * 0.12)
+    p.cubicTo(x + b * 0.35, y - h * 0.08, x + b * 0.6, y + h * 0.3, x + b, y + h * 0.1)
+    p.lineTo(x + b, y + h * 0.6)
+    p.cubicTo(x + b * 0.6, y + h * 0.8, x + b * 0.35, y + h * 0.42, x + b * 0.08, y + h * 0.62)
+    p.lineTo(x + b * 0.08, y + h); p.lineTo(x, y + h); p.closeSubpath()
+    return p
+
+
 def _legende(form: Pfad) -> Pfad:
     def f(r: QRectF) -> QPainterPath:
         koerper = QRectF(r.left(), r.top(), r.width(), r.height() * 0.75)
@@ -226,7 +237,7 @@ KATEGORIEN: list[tuple[str, dict[str, Pfad]]] = [
                            "Stern mit 16 Zacken": _stern(16, 0.78), "Stern mit 24 Zacken": _stern(24, 0.82), "Stern mit 32 Zacken": _stern(32, 0.85),
                            "Explosion": _poly((0.05, 0.3), (0.32, 0.28), (0.35, 0.02), (0.52, 0.22), (0.78, 0.05), (0.72, 0.32), (0.98, 0.4),
                                               (0.75, 0.55), (0.9, 0.85), (0.6, 0.72), (0.45, 0.98), (0.36, 0.72), (0.08, 0.8), (0.22, 0.55)),
-                           "Welle": _welle}),
+                           "Welle": _welle, "Fahne": _fahne}),
     ("Legenden", {"Rechteckige Legende": _legende(_rechteck), "Abgerundete Legende": _legende(_abgerundet()),
                   "Ovale Legende": _legende(_ellipse), "Wolkenlegende": _legende(_wolke)}),
 ]

@@ -63,14 +63,14 @@ class BlasenFlaeche(QWidget):
             self.ed.setFocus()
 
     def _menue(self, bl, pos) -> None:
-        from PySide6.QtWidgets import QMenu
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
         k = self.ed.kommentare.get(bl.kid, {})
         geloest = bool(k.get("geloest"))
-        m = QMenu(self)
-        m.addAction("Bearbeiten", lambda: self.ed.kommentar_bearbeiten(bl.kid))
-        m.addAction("Wieder öffnen" if geloest else "Als gelöst markieren", lambda: self.ed.kommentar_geloest(bl.kid, not geloest))
-        m.addSeparator()
-        m.addAction("Löschen", lambda: self.ed.kommentar_loeschen(bl.kid))
+        m = MenueListe(self)
+        m.eintrag("Bearbeiten", lambda: self.ed.kommentar_bearbeiten(bl.kid))
+        m.eintrag("Wieder öffnen" if geloest else "Als gelöst markieren", lambda: self.ed.kommentar_geloest(bl.kid, not geloest))
+        m.trenner()
+        m.eintrag("Löschen", lambda: self.ed.kommentar_loeschen(bl.kid))
         m.exec(pos)
 
     def mouseDoubleClickEvent(self, e) -> None:

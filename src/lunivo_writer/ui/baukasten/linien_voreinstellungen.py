@@ -16,8 +16,10 @@ from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.editor import textfx as X
 from lunivo_writer.ui.baukasten.kopf_dropdown import keine_zeile
 from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENVORGABE_KACHEL
 
-KACHEL = QSize(100, 26)                        # Vorlage: Kachelabstand 107 x 29 px
+KACHEL = QSize(*GROESSE_LINIENVORGABE_KACHEL)                        # Vorlage: Kachelabstand 107 x 29 px
 BREITE = 412
 SPALTEN = (("einfach", 0.75), ("einfach", 2.25), ("doppelt", 2.25), ("dick_duenn", 2.25))      # Form, Breite in pt je Spalte
 _FORMEN = {"einfach": "Einfach", "doppelt": "Doppelt", "dick_duenn": "Dick–dünn"}
@@ -38,7 +40,7 @@ def linien_bild(spec: dict, groesse: QSize) -> QPixmap:
         p.setClipRect(QRectF(3, 0, groesse.width() - 6, groesse.height()))          # die Enden der Mehrfachlinien bleiben offen (keine Kappen)
     dicke = min(max(float(spec.get("breite") or 0.75) * 96 / 72, 1.2), 3.2)
     for fl in X._kontur_pfade(pf, dicke, spec.get("form") or "einfach", spec.get("art") or "einfach"):
-        p.fillPath(fl, QColor(spec.get("farbe") or "#868e96"))
+        p.fillPath(fl, QColor(spec.get("farbe") or Farbe.GRAU))
     p.end()
     return pm
 

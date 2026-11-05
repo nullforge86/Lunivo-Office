@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMenu, QMessageBox
 from lunivo_writer.editor.linie import Linie
 from lunivo_writer.ui.baukasten import FarbPalette, RahmenMenue, RasterAuswahl
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import farben as BF
 
 
 ZEILENABSTAENDE = (1.0, 1.5, 2.0, 2.5, 3.0)     # die Zeilenabstände der Klappe (Start und Texttools)
@@ -17,6 +18,15 @@ class TextBefehle:
 
 
     # ---- Schriftart ---------------------------------------------------------------------------
+    def stilAnwenden(self, name):
+        self.w.stil_anwenden(name)
+
+
+    def stilVorschau(self, name, ed):
+        """Stilvorschau (Überfahren der Galerie): „Fließtext“ gilt als „Standard“."""
+        ed.apply_style("Standard" if name == "Fließtext" else name)
+
+
     def schriftGroesser(self, k=None):
         if self.ed: self.ed.grow_font(1)
 
@@ -183,7 +193,7 @@ class TextBefehle:
 
 
     # Zeichenschattierung (Start ▸ „A“ im Kasten): graue Fläche hinter dem Text, ein/aus; Hervorheben bleibt die bunte Markierung
-    SCHATTIERUNG = "#d9d9d9"
+    SCHATTIERUNG = BF.VORGABE_SCHATTIERUNG
 
 
     def zeichenschattierung(self, k=None):
@@ -221,7 +231,8 @@ class TextBefehle:
         Transformieren (nur für Formen und Textfelder, hier ausgegraut), „Weitere Texteffekte …“ öffnet die Seitenleiste."""
         from lunivo_writer.editor import texteffekt, textfx
         from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
 
         def untermenue(titel: str, keine: tuple | None) -> VoreinstellungMenue:
             u = VoreinstellungMenue(m, keine=keine); u.setTitle(titel); m.addMenu(u)
@@ -244,9 +255,9 @@ class TextBefehle:
         le.abschnitt("Leuchtvarianten", [(str(i), textfx.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(lv)], 6)
         le.gewaehlt.connect(lambda k: self._effekt_setzen(leuchten=lv[int(k)][1] if k else None))
         for titel in ("3D-Drehung", "Transformieren"): # wie in der Vorlage: nur für Formen und Textfelder, sonst ausgegraut
-            a = m.addMenu(titel); a.setEnabled(False)
+            a = m.untermenue(titel, aktiv=False)
         m.addSeparator()
-        m.addAction("Weitere Texteffekte(&O) …", self.texteffekte)
+        m.eintrag("Weitere Texteffekte(&O) …", self.texteffekte)
         return m
 
 
@@ -264,16 +275,17 @@ class TextBefehle:
     def effekt(self, k=None):
         if not self.ed:
             return
-        m = QMenu()
-        m.addAction("Kapitälchen", lambda: self.ed.set_capitalization(QFont.SmallCaps))
-        m.addAction("Großbuchstaben (Anzeige)", lambda: self.ed.set_capitalization(QFont.AllUppercase))
-        m.addAction("Normal", lambda: self.ed.set_capitalization(QFont.MixedCase))
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
+        m.eintrag("Kapitälchen", lambda: self.ed.set_capitalization(QFont.SmallCaps))
+        m.eintrag("Großbuchstaben (Anzeige)", lambda: self.ed.set_capitalization(QFont.AllUppercase))
+        m.eintrag("Normal", lambda: self.ed.set_capitalization(QFont.MixedCase))
         m.addSeparator()
-        m.addAction("Texteffekte …", self.texteffekte)
+        m.eintrag("Texteffekte …", self.texteffekte)
         m.addSeparator()
         for t, px in (("Zeichenabstand: eng", -1.0), ("Zeichenabstand: normal", 0.0), ("Zeichenabstand: weit", 2.0),
                       ("Zeichenabstand: sehr weit", 4.0)):
-            m.addAction(t, lambda _=False, px=px: self.ed.set_letter_spacing(px))
+            m.eintrag(t, lambda px=px: self.ed.set_letter_spacing(px))
         self._popup(m)
 
 
@@ -323,9 +335,10 @@ class TextBefehle:
 
     def menue_schreibweiseKlappe(self):
         from lunivo_writer.ui.widgets import icons
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for wahl, text, symbol, _b in self._AA:
-            m.addAction(icons.icon(symbol, 16), text, lambda _=False, w=wahl: self._aa_waehlen(w))
+            m.eintrag(text, lambda w=wahl: self._aa_waehlen(w), symbol=icons.icon(symbol, 16))
         return m
 
 
@@ -339,6 +352,20 @@ class TextBefehle:
         if ausfuehren(d):
             self._schreibweise = d.art()
             self.ed.change_case(self._schreibweise)
+
+
+    def zeichenSkalierung(self, k=None, prozent=100):
+        """Zeichenskalierung: Breite der Zeichen des gewählten Texts in Prozent (wie „Skalieren“ im Fenster Schriftart)."""
+        if self.ed:
+            f = QTextCharFormat(); f.setFontStretch(int(prozent)); self.ed._merge(f)
+
+
+    def zeichenSkalierungJetzt(self):
+        """Aktuelle Zeichenskalierung in Prozent am Cursor (für den Haken im Menü Zeichen-Layout)."""
+        if not self.ed:
+            return 100
+        cf = self.ed.currentCharFormat()
+        return int(cf.fontStretch() or 100)
 
 
     def umschlosseneZeichen(self, k=None):
@@ -385,9 +412,9 @@ class TextBefehle:
         c.endEditBlock()
 
 
-    def _farbmenue(self, setzen, ohne_text, vorschau=None):
+    def _farbmenue(self, setzen, ohne_text, vorschau=None, **opt):
         """Die gemeinsame Farbpalette; ``setzen`` bekommt eine QColor oder None („keine“)."""
-        m = FarbPalette(self.w, keine_text=ohne_text)
+        m = FarbPalette(self.w, keine_text=ohne_text, **opt)
         m.gewaehlt.connect(lambda c: self.ed and setzen(c))
         if vorschau is not None:                              # Live-Vorschau beim Überfahren der Farben
             m.ueberfahren.connect(lambda c: self.w.vorschau.zeigen(lambda e: vorschau(c)))
@@ -408,12 +435,12 @@ class TextBefehle:
 
 
     def hervorhebenJetzt(self, k=None):
-        if self.ed: self.ed.set_highlight(QColor(getattr(self, "_marker", "#ffec99")))
+        if self.ed: self.ed.set_highlight(QColor(getattr(self, "_marker", BF.VORGABE_MARKER)))
 
 
     def menue_hervorhebenKlappe(self):
         def setze(c):
-            self._marker = c.name() if c else "#ffec99"
+            self._marker = c.name() if c else BF.VORGABE_MARKER
             self.ed.set_highlight(c)
         return self._farbmenue(setze, "Keine Hervorhebung", lambda c: self.ed.set_highlight(c))
 
@@ -525,10 +552,11 @@ class TextBefehle:
 
 
     def menue_zeilenabstandKlappe(self):
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for f in ZEILENABSTAENDE:                                   # wie in der Vorlage; alles andere im Fenster Absatz (dort auch „Tabstopps …“)
-            m.addAction(f"{f:g}".replace(".", ","), lambda _=False, f=f: self.ed and self.ed.set_line_spacing(f))
-        m.addAction("Mehr …", self.w.paragraph_dialog)
+            m.eintrag(f"{f:g}".replace(".", ","), lambda f=f: self.ed and self.ed.set_line_spacing(f))
+        m.eintrag("Mehr …", self.w.paragraph_dialog)
         return m
 
 
@@ -587,9 +615,7 @@ class TextBefehle:
     def menue_absatzSchattierung(self):
         def setze(c):
             self.ed.set_absatzschatten(c.name() if c else None)
-        m = self._farbmenue(setze, "Keine Schattierung")
-        m.zusatz_eintrag("Rahmen und Schattierung …", lambda: self.absatzRahmen(seite="schattierung"))
-        return m
+        return self._farbmenue(setze, "Keine Schattierung", pipette=False)
 
 
     _rahmen_stil = Linie(Farbe.SCHWARZ, 0.75, "einfach")          # Linie, die ein neuer Rahmen aus dem Menü bekommt

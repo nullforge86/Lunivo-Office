@@ -10,8 +10,24 @@ from PySide6.QtWidgets import (
     QToolButton, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.ribbon.plan import plan
+from lunivo_writer.ui.baukasten.mass import (
+    GROESSE_KNOPF_KACHEL,
+    GROESSE_SYMBOL_JETZT,
+    GROESSE_VORSCHAU_QUADRAT,
+    HOEHE_BEREICH_MITTEL,
+    HOEHE_LISTE_KNOEPFE,
+    HOEHE_LISTE_MITTEL,
+    HOEHE_LISTE_REITER,
+    ICON_GROSS,
+    ICON_KACHEL,
+    ICON_KNOPF_GROSS,
+    RADIUS_MITTEL,
+    RAND_BOX,
+    RAND_GITTER,
+)
 
 IMMER = ("Datei",)          # dieser Reiter lässt sich nicht ausblenden
 
@@ -33,7 +49,7 @@ def _satz(text: str, gedaempft: bool = False) -> QLabel:
     """Erklärung über den Feldern: bricht um."""
     t = QLabel(text); t.setWordWrap(True)
     if gedaempft:
-        t.setStyleSheet("color: palette(mid);")
+        hinweis_stil(t)
     return t
 
 
@@ -47,7 +63,7 @@ class RegisterAnpassenDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
         g.breit(_satz("Haken = Reiter wird gezeigt. Mit den Pfeilen ändern Sie die Reihenfolge."))
-        self.liste = QListWidget(); self.liste.setMinimumHeight(260); self.liste.setAccessibleName("Reiter")
+        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_REITER); self.liste.setAccessibleName("Reiter")
         g.breit(self.liste)
         namen = [r["name"] for r in plan(daten) if not r.get("kontext")]
         cfg = lade_json(settings, "ui/register_plan", {})
@@ -93,10 +109,10 @@ class SchnellzugriffDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Symbolleiste für den Schnellzugriff")
         v = QVBoxLayout(self)
         v.addWidget(_satz("Haken = Knopf steht in der Schnellzugriffsleiste."))
-        self.liste = QListWidget(); self.liste.setMinimumHeight(280); self.liste.setAccessibleName("Knöpfe")
+        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_KNOEPFE); self.liste.setAccessibleName("Knöpfe")
         v.addWidget(self.liste)
         for sym, name, aktion in alle:
-            it = QListWidgetItem(icons.icon(sym, 18), name)
+            it = QListWidgetItem(icons.icon(sym, ICON_GROSS), name)
             it.setData(Qt.UserRole, aktion)
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
             it.setCheckState(Qt.Checked if aktion in aktuell else Qt.Unchecked)
@@ -123,10 +139,10 @@ class EigeneZeichnungDialog(PanelFaehig, QDialog):
         g.breit(t)
         g.breit(_satz("Eine SVG-Datei hier hineinkopieren — oder nur die Pfaddaten. Sie wird auf 24 × 24 gebracht und mittig eingepasst."))
         self.feld = QPlainTextEdit(); self.feld.setPlaceholderText('<svg viewBox="0 0 24 24">…</svg>')
-        self.feld.setMinimumHeight(150); self.feld.setAccessibleName("SVG oder Pfaddaten")
+        self.feld.setMinimumHeight(HOEHE_BEREICH_MITTEL); self.feld.setAccessibleName("SVG oder Pfaddaten")
         g.breit(self.feld)
-        self.bild = QLabel(); self.bild.setFixedSize(96, 96); self.bild.setAlignment(Qt.AlignCenter)
-        self.bild.setStyleSheet("border: 1px solid palette(midlight); border-radius: 8px;")
+        self.bild = QLabel(); self.bild.setFixedSize(*GROESSE_VORSCHAU_QUADRAT); self.bild.setAlignment(Qt.AlignCenter)
+        self.bild.setStyleSheet("border: 1px solid palette(midlight); border-radius: " f"{RADIUS_MITTEL}" "px;")
         self.wort = QLabel("Noch nichts"); self.wort.setWordWrap(True)
         vorschau = FlussLayout(10); vorschau.addWidget(self.bild); vorschau.addWidget(self.wort)
         g.breit(vorschau)
@@ -174,9 +190,9 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         g.breit(t)
         g.breit(_satz("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.", True))
         kopf = QFrame(); kopf.setObjectName("tauschKopf")
-        kopf.setStyleSheet("QFrame#tauschKopf { border: 1px solid palette(midlight); border-radius: 8px; }")
-        kh = FormularGitter(kopf); kh.setContentsMargins(8, 8, 8, 8)           # Symbol, darunter der Text: bei 300 px bricht nichts ab
-        self.jetzt = QLabel(); self.jetzt.setFixedSize(40, 40); self.jetzt.setAlignment(Qt.AlignCenter)
+        kopf.setStyleSheet("QFrame#tauschKopf { border: 1px solid palette(midlight); border-radius: " f"{RADIUS_MITTEL}" "px; }")
+        kh = FormularGitter(kopf); kh.setContentsMargins(*RAND_BOX)           # Symbol, darunter der Text: bei 300 px bricht nichts ab
+        self.jetzt = QLabel(); self.jetzt.setFixedSize(*GROESSE_SYMBOL_JETZT); self.jetzt.setAlignment(Qt.AlignCenter)
         self.wo = QLabel(); self.wo.setWordWrap(True)
         kh.breit(self.jetzt); kh.breit(self.wo)
         g.breit(kopf)
@@ -184,18 +200,18 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         self.suche.setPlaceholderText("Zeichnung suchen … (englisch: table, clock, save)")
         g.breit(self.suche)
         sc = QScrollArea(); sc.setWidgetResizable(True); sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        sc.setMinimumHeight(180)
+        sc.setMinimumHeight(HOEHE_LISTE_MITTEL)
         self.gitter_halter = QWidget(); self.gitter = FlussLayout(4)                  # so viele Zeichnungen je Zeile, wie in die Breite passen
-        self.gitter.setContentsMargins(4, 4, 4, 4); self.gitter_halter.setLayout(self.gitter)
+        self.gitter.setContentsMargins(*RAND_GITTER); self.gitter_halter.setLayout(self.gitter)
         sc.setWidget(self.gitter_halter)
         g.breit(sc)
-        self.treffer = QLabel(); self.treffer.setWordWrap(True); self.treffer.setStyleSheet("color: palette(mid);"); g.breit(self.treffer)
+        self.treffer = QLabel(); self.treffer.setWordWrap(True); hinweis_stil(self.treffer); g.breit(self.treffer)
         fuss = FlussLayout(6)
         self.b_eigene = QPushButton("Eigene Zeichnung …"); self.b_dieses = QPushButton("Dieses zurücksetzen"); self.b_alle = QPushButton("Alle zurücksetzen")
         for b in (self.b_eigene, self.b_dieses, self.b_alle):
             fuss.addWidget(b)
         g.breit(fuss)
-        self.meldung = QLabel(); self.meldung.setStyleSheet("color: palette(mid);"); self.meldung.setWordWrap(True); g.breit(self.meldung)
+        self.meldung = QLabel(); hinweis_stil(self.meldung); self.meldung.setWordWrap(True); g.breit(self.meldung)
         v.addWidget(inhalt)
         fussleiste(self, v, ok_text="Fertig")
         self.suche.textChanged.connect(self._gitter_zeigen)
@@ -219,7 +235,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         return namen
 
     def _kopf_zeigen(self) -> None:
-        self.jetzt.setPixmap(icons.icon(self.welches, 32).pixmap(32, 32))
+        self.jetzt.setPixmap(icons.icon(self.welches, ICON_KACHEL).pixmap(ICON_KACHEL, ICON_KACHEL))
         b = self._befehle()
         self.wo.setText((", ".join(b[:4]) + (" und weitere" if len(b) > 4 else "")) if b else "Wird zurzeit nirgends im Register benutzt.")
         self.b_dieses.setEnabled(self.welches in self.tausch)
@@ -240,8 +256,8 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
             gefunden += 1
             if gezeigt >= self.GRENZE:
                 continue
-            k = QToolButton(); k.setFixedSize(52, 52); k.setToolTip(n); k.setAutoRaise(True)
-            k.setIcon(QIcon(QPixmap.fromImage(icons.pfad_bild(pfad, 56, farbe)))); k.setIconSize(QSize(28, 28))
+            k = QToolButton(); k.setFixedSize(*GROESSE_KNOPF_KACHEL); k.setToolTip(n); k.setAutoRaise(True)
+            k.setIcon(QIcon(QPixmap.fromImage(icons.pfad_bild(pfad, 56, farbe)))); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             k.clicked.connect(lambda _=False, n=n: self._waehle(n))
             self.gitter.addWidget(k)
             gezeigt += 1

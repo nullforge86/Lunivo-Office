@@ -2,11 +2,17 @@
 from __future__ import annotations
 
 import os
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser,
-                               QVBoxLayout)
+from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QVBoxLayout, QWidget
+
+from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 
 from lunivo_writer.ui import kuerzel
 
@@ -14,6 +20,29 @@ from lunivo_writer.ui import kuerzel
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_BLOCK,
+    ABSTAND_ENG,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    BREITE_NAVIGATION_HILFE,
+    GROESSE_FENSTER_HANDBUCH,
+    GROESSE_PLAKETTE,
+    HOEHE_LESEFELD,
+    HOEHE_NAVIGATION_HILFE,
+    HOEHE_ZEILE_ABSCHNITT,
+    HOEHE_ZEILE_ERWEITERUNG_KOPF,
+    PADDING_HANDBUCH_EINTRAG,
+    PADDING_HANDBUCH_NAVIGATION,
+    RADIUS_EINTRAG,
+    RADIUS_FELD,
+    RADIUS_MITTEL,
+    RAND_ERWEITERUNG_KARTE,
+    RAND_HILFE_DIALOG,
+    RAND_HILFE_FUSS,
+    RAND_HILFE_SEITE,
+    RAND_KEIN,
+)
 def _browser(parent, titel: str, breite=860, hoehe=640) -> tuple[QDialog, QTextBrowser, QVBoxLayout]:
     d = QDialog(parent)
     d.setWindowTitle(titel)
@@ -33,13 +62,17 @@ GRUPPEN = [("Anfangen", ["Das erste Blatt", "Mehrere Dokumente", "Die Oberfläch
            ("Nachschlagen", ["Woher es kommt", "Tastenkürzel", "Wo was liegt", "Wenn etwas klemmt"])]
 
 
+class HilfeFenster(PanelFaehig, QDialog):
+    """Hilfefenster (Handbuch, Tastenkürzel, Erweiterungen, Über): öffnet mit ``exec()`` in der Seitenleiste."""
+
+
 class _Lesefeld(QTextBrowser):
-    """Der Text des Handbuchs in einer ruhigen Spalte: nicht breiter als ~780 px, die Spalte steht in der Mitte."""
+    """Der Text des Handbuchs in einer ruhigen Spalte: nicht breiter als ~780 px, die Spalte steht in der Mitte (schmal: kleiner Rand)."""
     BREITE = 780
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        rand = max(28, (self.width() - self.BREITE) // 2)
+        rand = max(28 if self.width() > 520 else 12, (self.width() - self.BREITE) // 2)
         self.setViewportMargins(0, 0, 0, 0)
         self.document().setDocumentMargin(rand)
 
@@ -111,29 +144,44 @@ def _handbuch_gestalten(b: QTextBrowser) -> None:
 
 
 def handbuch(parent) -> QDialog:
-    """Das Handbuch: links die Gliederung (Gruppen, Abschnitte), rechts der Text. Er liegt als Markdown in resources/handbuch.md."""
+    """Das Handbuch: oben die Gliederung (Gruppen, Abschnitte), darunter der Text. Er liegt als Markdown in resources/handbuch.md."""
     from PySide6.QtCore import QSize
     from PySide6.QtWidgets import QListWidget, QListWidgetItem
-    d = QDialog(parent)
-    d.setWindowTitle("Handbuch"); d.resize(1180, 780)
-    h = QHBoxLayout(d); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(0)
-    nav = QListWidget(); nav.setFixedWidth(290); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.StrongFocus); nav.setAccessibleName("Handbuch-Abschnitte")
-    nav.setStyleSheet("QListWidget { background: palette(window); border-right: 1px solid palette(midlight); padding: 14px 8px; outline: none; }"
-                      "QListWidget::item { padding: 4px 10px; border-radius: 5px; }"
+    d = HilfeFenster(parent)
+    d.setWindowTitle("Handbuch"); d.resize(*GROESSE_FENSTER_HANDBUCH)
+    v = QVBoxLayout(d); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_NORMAL)
+    # Schmal: oben die Gliederung (einklappbar), darunter Suche und Text. Breit (ZweiSpalter): Gliederung links, Suche und Text rechts
+    themen = EinklappGruppe("Themen")
+    themen.setContentsMargins(*RAND_HILFE_SEITE)
+    nav = QListWidget(); nav.setMaximumHeight(HOEHE_NAVIGATION_HILFE); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.StrongFocus); nav.setAccessibleName("Handbuch-Abschnitte")
+    nav.setObjectName("hilfeNav")
+    nav.setStyleSheet("QListWidget { background: palette(window); border: 1px solid palette(midlight); border-radius: " f"{RADIUS_FELD}" "px; padding: " f"{PADDING_HANDBUCH_NAVIGATION}" "; outline: none; }"
+                      "QListWidget::item { padding: " f"{PADDING_HANDBUCH_EINTRAG}" "; border-radius: " f"{RADIUS_EINTRAG}" "px; }"
                       "QListWidget::item:selected { background: palette(midlight); color: palette(window-text); }")
-    rechts = QVBoxLayout(); rechts.setContentsMargins(0, 0, 0, 0); rechts.setSpacing(0)
-    b = _Lesefeld(); b.setOpenExternalLinks(True); b.setFrameShape(QFrame.NoFrame)
+    themen.innen.addWidget(nav)
+    themen.ausklappen(True)
+    rechts = QWidget(); rv = QVBoxLayout(rechts); rv.setContentsMargins(*RAND_KEIN); rv.setSpacing(ABSTAND_NORMAL)
+    spalten = ZweiSpalter(themen, rechts, links_breite=BREITE_NAVIGATION_HILFE, oben="links", abstand=ABSTAND_NORMAL)
+    d.spalten = spalten
+    v.addWidget(spalten, 1)
+
+    def angeordnet(breit: bool) -> None:                                 # breit steht die Liste immer offen und so hoch wie das Fenster
+        themen.knopf.setVisible(not breit)
+        if breit:
+            themen.ausklappen(True)
+        nav.setMaximumHeight(16777215 if breit else HOEHE_NAVIGATION_HILFE)
+    spalten.angeordnet.connect(angeordnet)
+    such = QLineEdit(); such.setPlaceholderText("Im Handbuch suchen …"); such.setClearButtonEnabled(True)
+    such.setContentsMargins(*RAND_KEIN)
+    sz = QHBoxLayout(); sz.setContentsMargins(*RAND_HILFE_SEITE); sz.addWidget(such, 1)
+    rv.addLayout(sz)
+    b = _Lesefeld(); b.setOpenExternalLinks(True); b.setFrameShape(QFrame.NoFrame); b.setMinimumHeight(HOEHE_LESEFELD)
     with open(os.path.join(paths.RESSOURCEN, "handbuch.md"), encoding="utf-8") as fh:
         b.setMarkdown(fh.read())
     _handbuch_gestalten(b)
-    rechts.addWidget(b, 1)
-    such = QLineEdit(); such.setPlaceholderText("Im Handbuch suchen …"); such.setClearButtonEnabled(True)
-    such.setContentsMargins(0, 0, 0, 0)
-    z = QHBoxLayout(); z.setContentsMargins(20, 8, 20, 10)
-    z.addWidget(such, 1)
-    zu = QPushButton("Schließen"); zu.clicked.connect(d.accept); z.addWidget(zu)
-    rechts.addLayout(z)
-    h.addWidget(nav); h.addLayout(rechts, 1)
+    rv.addWidget(b, 1)
+    fz = QVBoxLayout(); fz.setContentsMargins(*RAND_HILFE_FUSS); fussleiste(d, fz, nur_ok=True, ok_text="Schließen")
+    v.addLayout(fz)
 
     stellen = {}
     blk = b.document().begin()
@@ -144,11 +192,11 @@ def handbuch(parent) -> QDialog:
                 stellen.setdefault("Woher es kommt", blk)
         blk = blk.next()
     ueber_kopf = QListWidgetItem("Lunivo Writer\nEin Raum für Worte — das Handbuch"); ueber_kopf.setData(Qt.UserRole, "")
-    f = ueber_kopf.font(); f.setBold(True); ueber_kopf.setFont(f); ueber_kopf.setSizeHint(QSize(0, 52))
+    f = ueber_kopf.font(); f.setBold(True); ueber_kopf.setFont(f); ueber_kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ERWEITERUNG_KOPF))
     nav.addItem(ueber_kopf)
     for gruppe, titel in GRUPPEN:
         kopf = QListWidgetItem(gruppe.upper()); kopf.setFlags(Qt.NoItemFlags)
-        f = kopf.font(); f.setPointSizeF(8); f.setBold(True); kopf.setFont(f); kopf.setSizeHint(QSize(0, 30))
+        f = kopf.font(); f.setPointSizeF(8); f.setBold(True); kopf.setFont(f); kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ABSCHNITT))
         nav.addItem(kopf)
         for t in titel:
             if t in stellen:
@@ -168,13 +216,8 @@ def handbuch(parent) -> QDialog:
 
 
 def _fuss(d: QDialog, v: QVBoxLayout) -> None:
-    """Wie in der Vorlage: „Abbrechen“ und „Schließen“ rechts unten, beide schließen das Fenster."""
-    z = QHBoxLayout(); z.addStretch(1)
-    ab, zu = QPushButton("Abbrechen"), QPushButton("Schließen")
-    zu.setObjectName("optFertig"); zu.setDefault(True)
-    for k in (ab, zu):
-        k.setMinimumHeight(34); k.clicked.connect(d.accept); z.addWidget(k)
-    v.addSpacing(6); v.addLayout(z)
+    """Knopfzeile unten („Schließen“); in der Seitenleiste bleibt sie angeheftet."""
+    fussleiste(d, v, nur_ok=True, ok_text="Schließen")
 
 
 def _titel(text: str) -> QLabel:
@@ -183,33 +226,24 @@ def _titel(text: str) -> QLabel:
 
 
 def _dialog(parent, titel: str, breite: int) -> tuple[QDialog, QVBoxLayout]:
-    d = QDialog(parent); d.setWindowTitle(titel); d.setMinimumWidth(breite)
-    v = QVBoxLayout(d); v.setContentsMargins(24, 22, 24, 18); v.setSpacing(8)
+    d = HilfeFenster(parent); d.setWindowTitle(titel)
+    if breite: d.setMinimumWidth(breite)
+    v = QVBoxLayout(d); v.setContentsMargins(*RAND_HILFE_DIALOG); v.setSpacing(ABSTAND_MITTEL)
     v.addWidget(_titel(titel)); v.addSpacing(4)
     return d, v
 
 
 def tastenkuerzel(parent) -> QDialog:
     """„Tastenkombinationen“: je Gruppe eine Überschrift, darunter zwei Kürzel mit Wirkung nebeneinander."""
-    d, v = _dialog(parent, "Tastenkombinationen", 640)
+    d, v = _dialog(parent, "Tastenkombinationen", 0)
     for gruppe, zeilen in kuerzel.HILFE:
-        k = QLabel(gruppe.upper()); k.setStyleSheet("color: palette(mid); font-size: 8pt; font-weight: 600; letter-spacing: 1px; margin-top: 10px;")
-        v.addWidget(k)
-        g = QGridLayout(); g.setHorizontalSpacing(28); g.setVerticalSpacing(4)
-        zeile, spalte = 0, 0
+        v.addWidget(abschnittstitel(gruppe))
+        w = QWidget(); g = FormularGitter(w)
         for taste, text in zeilen:
-            lang = len(taste) + len(text) > 44                           # lange Einträge bekommen die ganze Zeile
-            if lang and spalte:
-                zeile, spalte = zeile + 1, 0
-            zelle = QHBoxLayout(); zelle.setSpacing(8)
-            t = QLabel(taste); f = t.font(); f.setBold(True); t.setFont(f)
-            zelle.addWidget(t); zelle.addWidget(QLabel(text)); zelle.addStretch(1)
-            g.addLayout(zelle, zeile, spalte, 1, 2 if lang else 1)
-            spalte += 2 if lang else 1
-            if spalte >= 2:
-                zeile, spalte = zeile + 1, 0
-        g.setColumnStretch(0, 1); g.setColumnStretch(1, 1)
-        v.addLayout(g)
+            wirkung = QLabel(text); wirkung.setWordWrap(True)
+            t = QLabel(taste); f = t.font(); f.setBold(True); t.setFont(f); t.setWordWrap(True)
+            g.zeile(wirkung, t)
+        v.addWidget(w)
     v.addStretch(1)
     _fuss(d, v)
     return d
@@ -227,22 +261,22 @@ def _erweiterungen_liste() -> list[tuple[bool, str, str, str]]:
 
 def erweiterungen(parent) -> QDialog:
     """„Erweiterungen“: jede Karte zeigt mit „DA“, ob der Teil schon geholt ist."""
-    d, v = _dialog(parent, "Erweiterungen", 720)
+    d, v = _dialog(parent, "Erweiterungen", 0)
     hin = QLabel("Drei Teile liegen außerhalb des Programms, weil sie zu groß sind. Sie werden geholt, wenn sie zum ersten Mal gebraucht werden — "
                  "und ohne sie läuft alles Übrige weiter: Schreiben, Prüfen.")
     hin.setWordWrap(True); v.addWidget(hin)
     for da, name, text, groesse in _erweiterungen_liste():
         karte = QFrame(); karte.setObjectName("erwKarte")
-        karte.setStyleSheet("QFrame#erwKarte { border: 1px solid palette(midlight); border-radius: 8px; }")
-        h = QHBoxLayout(karte); h.setContentsMargins(12, 10, 14, 10); h.setSpacing(12)
-        b = QLabel("DA" if da else "—"); b.setAlignment(Qt.AlignCenter); b.setFixedSize(40, 26)
-        b.setStyleSheet("background: %s; color: white; border-radius: 5px; font-weight: 700;" % ("#2f9e73" if da else Farbe.GRAU))
-        mitte = QVBoxLayout(); mitte.setSpacing(2)
-        n = QLabel(name); f = n.font(); f.setBold(True); n.setFont(f)
-        t = QLabel(text); f = t.font(); f.setItalic(True); t.setFont(f); t.setStyleSheet("color: palette(mid);")
+        karte.setStyleSheet("QFrame#erwKarte { border: 1px solid palette(midlight); border-radius: " f"{RADIUS_MITTEL}" "px; }")
+        h = QHBoxLayout(karte); h.setContentsMargins(*RAND_ERWEITERUNG_KARTE); h.setSpacing(ABSTAND_BLOCK)
+        b = QLabel("DA" if da else "—"); b.setAlignment(Qt.AlignCenter); b.setFixedSize(*GROESSE_PLAKETTE)
+        b.setStyleSheet("background: %s; color: %s; border-radius: " f"{RADIUS_EINTRAG}" "px; font-weight: 700;" % (Farbe.AN if da else Farbe.GRAU, Farbe.AN_SCHRIFT))
+        mitte = QVBoxLayout(); mitte.setSpacing(ABSTAND_ENG)
+        n = QLabel(name); n.setWordWrap(True); f = n.font(); f.setBold(True); n.setFont(f)
+        t = QLabel(text); t.setWordWrap(True); f = t.font(); f.setItalic(True); t.setFont(f); hinweis_stil(t)
         mitte.addWidget(n); mitte.addWidget(t)
         h.addWidget(b); h.addLayout(mitte, 1)
-        g = QLabel(groesse); g.setStyleSheet("color: palette(mid);"); h.addWidget(g, 0, Qt.AlignTop)
+        g = QLabel(groesse); hinweis_stil(g); h.addWidget(g, 0, Qt.AlignTop)
         v.addWidget(karte)
     fuss = QLabel("Erweiterungen von fremder Hand nimmt dieses Programm nicht an. Was es kann, steckt im Programm.")
     fuss.setWordWrap(True); v.addWidget(fuss)
@@ -252,7 +286,7 @@ def erweiterungen(parent) -> QDialog:
 
 
 def ueber(parent, version: str) -> QDialog:
-    d, v = _dialog(parent, "Über Lunivo Writer", 460)
+    d, v = _dialog(parent, "Über Lunivo Writer", 0)
     for text in (f"Lunivo Writer {version}\nEin Raum für Worte",
                  "Die Prüfung und der Wortschatz stammen aus der Schreibhilfe.\nDOCX, ODT, RTF, TXT und PDF schreibt Lunivo selbst — ohne fremdes Programm im Hintergrund.",
                  "Was geschrieben wird, bleibt auf diesem Rechner.\nNichts geht hinaus, ohne dass du es selbst schickst."):

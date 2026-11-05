@@ -8,49 +8,72 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.beschriftung import text_label
+from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
+from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
 from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte, VorschlagKarte
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-WERK_REITER = (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: 4px 6px; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid ' + Farbe.AKZENT + '; }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid ' + Farbe.AKZENT + '; }'))
-CHIP = (('QPushButton { border: 1px solid palette(mid); border-radius: 11px; padding: 3px 12px; color: palette(window-text); }QPushButton:checked { background: ' + Farbe.AKZENT + '; color: white; border-color: ' + Farbe.AKZENT + '; }'))
-CHIP_GRUEN = ("QPushButton { border: 1px solid palette(mid); border-radius: 11px; padding: 0px; font-weight: bold; color: palette(window-text); }"
-              "QPushButton:checked { background: #2f9e75; color: white; border-color: #2f9e75; }")
+from lunivo_writer.ui.theme import karte_einrichten, karten_rand
+from lunivo_writer.ui.baukasten.texte import hinweis_label, kleintext_label, trennlinie
+from lunivo_writer.ui.baukasten.mass import (
+    BREITE_AKTIONSKNOPF_MIN,
+    BREITE_SEITENLEISTE_PANEL,
+    ABSTAND_KLEIN,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    BREITE_SCHREIBHILFE_MAX,
+    BREITE_SCHREIBHILFE_MIN,
+    HOEHE_KNOPF_GROSS,
+    HOEHE_LISTE_HOCH,
+    ICON_NORMAL,
+    PADDING_HINWEIS,
+    PADDING_SEITENLEISTE_REITER,
+    PADDING_SEITENLEISTE_WARNUNG,
+    RAND_KEIN,
+    RAND_SCHREIBHILFE_BANNER,
+    RAND_SEITENLEISTE_TABS,
+)
+def werk_reiter_stil() -> str:
+    """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
+    return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
+from lunivo_writer.ui.baukasten.schalter import chip_gruen_stil as chip_gruen, chip_stil   # alte Namen bleiben
 LEER = ("Nichts gefunden. Das heißt nicht, dass alles richtig ist — die Schreibhilfe sucht nur die Fehler, "
         "die ein Rechtschreibprüfer nicht finden kann.")
 class SchreibhilfePanel(QWidget):
     _ollama_gefunden = Signal(list)
     bereich_geaendert = Signal(int)
 
-    BREITE = 380                                   # die Seitenleiste ist immer so breit (innerhalb 300–420); der Inhalt passt sich an, nie umgekehrt
+    BREITE = BREITE_SEITENLEISTE_PANEL                                   # die Seitenleiste ist immer so breit (innerhalb 300–420); der Inhalt passt sich an, nie umgekehrt
 
     def sizeHint(self):
         from PySide6.QtCore import QSize
-        return QSize(self.BREITE, super().sizeHint().height())
+        return QSize(self.BREITE + 2 * karten_rand(), super().sizeHint().height())
 
     def __init__(self, assistent, parent=None):
         super().__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground, True)     # Rahmen und Fläche aus dem Thema (Mint) sichtbar
         self.a = assistent
-        self.setMinimumWidth(300)
-        self.setMaximumWidth(420)
+        self.setMinimumWidth(BREITE_SCHREIBHILFE_MIN)
+        self.setMaximumWidth(BREITE_SCHREIBHILFE_MAX)
         aussen = QVBoxLayout(self)
-        aussen.setContentsMargins(0, 0, 0, 0)
+        aussen.setContentsMargins(*RAND_KEIN)
+        karte_einrichten(self, aussen)                      # gemeinsames Aussehen mit den Feldern links (theme.py)
         aussen.setSpacing(0)
         self.stapel = QStackedWidget()
         aussen.addWidget(self.stapel, 1)
         seite0 = QWidget()
         self.stapel.addWidget(seite0)
-        w0 = QVBoxLayout(seite0); w0.setContentsMargins(0, 0, 0, 0); w0.setSpacing(0)
+        w0 = QVBoxLayout(seite0); w0.setContentsMargins(*RAND_KEIN); w0.setSpacing(0)
         # Werkbank: vier Reiter nach dem, was man gerade braucht — Prüfen (die Funde), Lesen, Schreiben, KI
         from lunivo_writer.ui.schreibhilfe_katalog import REITER
-        leiste = QHBoxLayout(); leiste.setContentsMargins(10, 8, 10, 0); leiste.setSpacing(4)
+        leiste = QHBoxLayout(); leiste.setContentsMargins(*RAND_SEITENLEISTE_TABS); leiste.setSpacing(ABSTAND_KLEIN)
         self.werk_reiter = QButtonGroup(self)
         self._werk_namen = list(REITER)
         for i, name in enumerate(REITER):
-            b = QPushButton(name); b.setCheckable(True); b.setChecked(i == 0); b.setMinimumHeight(36); b.setCursor(Qt.PointingHandCursor)
-            b.setStyleSheet(WERK_REITER)
+            b = QPushButton(name); b.setCheckable(True); b.setChecked(i == 0); b.setMinimumHeight(HOEHE_KNOPF_GROSS); b.setCursor(Qt.PointingHandCursor)
+            b.setStyleSheet(werk_reiter_stil())
             self.werk_reiter.addButton(b, i); leiste.addWidget(b, 1)
         self._werk_leiste = QWidget(); self._werk_leiste.setLayout(leiste); self._werk_leiste.hide()      # die Reiter stehen in der Leiste rechts (Seitenleiste), nicht mehr oben: mehr Platz
         self.werk_stapel = QStackedWidget()
@@ -58,59 +81,34 @@ class SchreibhilfePanel(QWidget):
         self.werk_reiter.idClicked.connect(self.werk_stapel.setCurrentIndex)
         pruef_seite = QWidget()
         self.werk_stapel.addWidget(pruef_seite)
-        v = QVBoxLayout(pruef_seite)
-        v.setContentsMargins(14, 12, 14, 10)
-        v.setSpacing(8)
-        # Kopf: Titel, die drei Schalter der Schreibbrücke (We/Vo/Ko), rechts „Prüfen“
-        kopf = QHBoxLayout()
-        kopf.setSpacing(6)
-        titel = QHBoxLayout()
-        titel.setSpacing(0)
-        for teil, farbe in (("Schreib", None), (" | ", Farbe.AKZENT), ("hilfe", None)):
-            t = text_label(teil, fett=True, pt=12, umbruch=False)
-            if farbe:
-                t.setStyleSheet(f"color: {farbe};")
-            titel.addWidget(t)
-        kopf.addLayout(titel)
+        pl = QVBoxLayout(pruef_seite); pl.setContentsMargins(*RAND_KEIN); pl.setSpacing(0)
+        rahmen = PanelRahmen("Schreibhilfe", schliessbar=False, titel_teile=(("Schreib", None), (" | ", "AKZENT"), ("hilfe", None)),
+                             knoepfe=(("circle-question-mark", "Welche Hilfe wann? (F6)", self.welche_hilfe),))
+        rahmen.knoepfe[0].setAccessibleName("Welche Hilfe wann")
+        pl.addWidget(rahmen)
+        v = rahmen.inhalt                                                  # Kopfzeile und Abstände aus dem gemeinsamen Baustein
         self.chips = {}                                   # We/Vo/Ko stehen jetzt auf dem Reiter „Schreiben“ — hier bleibt mehr Platz für die Funde
-        kopf.addStretch(1)
-        l = QToolButton(); l.setText("?"); l.setAutoRaise(True); l.setCursor(Qt.PointingHandCursor); l.setFixedSize(26, 26)   # in der Titelzeile: spart eine Zeile
-        l.setStyleSheet("QToolButton { font-weight: bold; font-size: 11pt; border: 1px solid palette(mid); border-radius: 15px; }"
-                        "QToolButton:hover { background: palette(alternate-base); }")
-        l.setToolTip("Welche Hilfe wann? (F6)"); l.setAccessibleName("Welche Hilfe wann")
-        l.clicked.connect(self.welche_hilfe)
-        kopf.addWidget(l)
-        v.addLayout(kopf)
         self._einfuehrung = []
         self.liste = QVBoxLayout()
-        self.liste.setSpacing(6)
+        self.liste.setSpacing(ABSTAND_NORMAL)
         host = QWidget()
         host.setLayout(self.liste)
-        self.meldung = QLabel("Noch nicht geprüft.")
-        self.meldung.setWordWrap(True)
-        self.meldung.setStyleSheet("color: palette(mid); padding: 8px;")
+        self.meldung = hinweis_label("Noch nicht geprüft.", zusatz="padding: " f"{PADDING_HINWEIS}" ";")
         self.liste.addWidget(self.meldung)
         self.liste.addStretch(1)
-        sc = QScrollArea()
-        sc.setWidgetResizable(True)
-        sc.setFrameShape(QFrame.NoFrame)
-        sc.setWidget(host)
-        sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)           # nie seitlich rollen müssen: alles auf der Karte (auch der Lautsprecher) bleibt erreichbar
-        sc.setMinimumHeight(200)                                        # der Hauptinhalt: die Funde bekommen immer Platz, auch auf kleinen Bildschirmen
+        sc = rollflaeche(host)                                                       # nie seitlich rollen müssen: alles auf der Karte bleibt erreichbar
+        sc.setMinimumHeight(HOEHE_LISTE_HOCH)                                        # der Hauptinhalt: die Funde bekommen immer Platz, auch auf kleinen Bildschirmen
         v.addWidget(sc, 1)
         self.alle = QPushButton("Alle sicheren Fehler ändern")
         self.alle.clicked.connect(self._alle)
         self.alle.hide()
         v.addWidget(self.alle)
         # Für wen?
-        linie = QFrame()
-        linie.setFrameShape(QFrame.HLine)
-        linie.setFrameShadow(QFrame.Sunken)
-        v.addWidget(linie)
+        v.addWidget(trennlinie(tief=True))
         # Eine Zeile statt zwei Reihen Chips: „Für wen?“ als Auswahl, daneben „Worum geht's?“ — der Platz gehört den Funden
         from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
-        kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(0, 0, 0, 0)
-        fw = QLabel("Für wen"); fw.setStyleSheet("color: palette(mid); font-size: 9pt;")
+        kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
+        fw = kleintext_label("Für wen")
         self.thema = QComboBox()
         for name in EMPFAENGER:
             self.thema.addItem(name)
@@ -123,26 +121,25 @@ class SchreibhilfePanel(QWidget):
         self.worum.setPlaceholderText("Worum geht's? (freiwillig)")
         self.worum.setAccessibleName("Worum geht es im Text (freiwillig)")
         self.worum.setMaxLength(300)
-        self.worum.setStyleSheet("QLineEdit { border: none; border-bottom: 1px dashed #c77d2e; background: transparent; "
-                                 "padding: 5px 0; }")
-        pal = self.worum.palette(); pal.setColor(QPalette.PlaceholderText, QColor("#c98a3d")); self.worum.setPalette(pal)
+        self.worum.setStyleSheet("QLineEdit { border: none; border-bottom: 1px dashed %s; background: transparent; "
+                                 "padding: " f"{PADDING_SEITENLEISTE_WARNUNG}" "; border-radius: 0; }" % Farbe.WARNUNG)
+        pal = self.worum.palette(); pal.setColor(QPalette.PlaceholderText, QColor(Farbe.WARNUNG)); self.worum.setPalette(pal)
         fw2 = QLabel("Worum geht's?"); fw2.setStyleSheet(fw.styleSheet())
         kontext_gitter.reihe((fw, self.thema), (fw2, self.worum), gewichte=(2, 3))
         v.addWidget(kontext)
         # Unten, wo man nach dem Schreiben hinschaut: „Prüfen“ mit seiner Erklärung, darunter die beiden KI-Wege
         from lunivo_writer.ui.baukasten.karten_raster import KartenRaster
-        zk = KartenRaster(min_breite=80, abstand=6)  # Raster: Prüfen · KI-Korrektur · Vorschläge gleich breit und gleich hoch
+        zk = KartenRaster(min_breite=BREITE_AKTIONSKNOPF_MIN, abstand=ABSTAND_NORMAL)  # Raster: Prüfen · KI-Korrektur · Vorschläge gleich breit und gleich hoch
         self.pruefen = QPushButton("Prüfen")
         self.pruefen.setToolTip("Prüfen (F7) — sucht die Fehler, die ein Rechtschreibprüfer nicht finden kann")
         self.pruefen.clicked.connect(lambda: self.a.pruefen(True))
         self.ki_korrektur = QPushButton("KI-Korrektur"); self.ki_korrektur.setToolTip("KI-Korrektur (F8)")
         self.ki_vorschlaege = QPushButton("Vorschläge"); self.ki_vorschlaege.setToolTip("Verbesserungsvorschläge")
         for b_ in (self.pruefen, self.ki_korrektur, self.ki_vorschlaege):
+            b_.setMinimumWidth(b_.sizeHint().width())                    # Beschriftung nie abschneiden: Zelle mindestens so breit wie der Text samt Rand
             zk.addWidget(b_)
         v.addLayout(zk)
-        self.ki_info = QLabel("")                                        # steht auf dem Reiter KI, solange kein Modell verbunden ist
-        self.ki_info.setWordWrap(True)
-        self.ki_info.setStyleSheet("color: palette(mid);")
+        self.ki_info = hinweis_label("")                                 # steht auf dem Reiter KI, solange kein Modell verbunden ist
         self.ki_aktion = QPushButton("")
         self._ki_fn = None
         self.ki_aktion.clicked.connect(lambda: self._ki_fn() if self._ki_fn else None)
@@ -150,10 +147,7 @@ class SchreibhilfePanel(QWidget):
         self.a.schalterGeaendert.connect(self._schalter_nachziehen)
         self.a.themaGeaendert.connect(self._thema_nachziehen)
         self._ollama_gefunden.connect(self._ollama_da)
-        self._seite_ki = QScrollArea()
-        self._seite_ki.setWidgetResizable(True)
-        self._seite_ki.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)        # der Chat passt sich der Breite an, nichts wird seitlich abgeschnitten
-        self._seite_ki.setFrameShape(QFrame.NoFrame)
+        self._seite_ki = rollflaeche()                                              # der Chat passt sich der Breite an, nichts wird seitlich abgeschnitten
         self.stapel.addWidget(self._seite_ki)
 
     # ---- KI ------------------------------------------------------------------------------------
@@ -192,9 +186,10 @@ class SchreibhilfePanel(QWidget):
                 z.setToolTip((z.f.hinweis + " — " if z.f.hinweis else "") + info)
             self.ki_banner.hide()
         else:
-            self.ki_info.setText("Es ist noch kein KI-Modell verbunden. Ollama auf diesem Rechner geht ohne Schlüssel und ohne Geld.")
-            self.ki_aktion.setText("KI einrichten …")
-            self._ki_fn = lambda: self.fenster.befehle.tun("w.kiEinstellungen")
+            self.ki_info.setText("Es ist noch kein KI-Modell verbunden. Ollama auf diesem Rechner geht ohne Schlüssel und ohne Geld. "
+                                 "Verbinden Sie es unten unter „KI-Einstellungen“.")
+            self._ki_fn = None
+            self.ki_aktion.hide()                           # den Weg dorthin gibt es schon einmal: die Zeile „KI-Einstellungen“
             self.ki_banner.show()
         self.werkbank_aktualisieren()
 
@@ -203,12 +198,14 @@ class SchreibhilfePanel(QWidget):
         """Die Reiter Lesen, Schreiben und KI aus dem Katalog; der Reiter Prüfen sind die Funde plus die Wege dahin."""
         from lunivo_writer.ui.baukasten.werkbank import Werkbank
         self.ki_banner = QWidget()
-        bl = QVBoxLayout(self.ki_banner); bl.setContentsMargins(0, 0, 0, 6)
+        bl = QVBoxLayout(self.ki_banner); bl.setContentsMargins(*RAND_SCHREIBHILFE_BANNER)
         bl.addWidget(self.ki_info); bl.addWidget(self.ki_aktion)
         self.werk = {}
         for name in self._werk_namen[1:]:
-            self.werk[name] = Werkbank(self.fenster, name, self.ki_banner if name == "KI" else None)
-            self.werk_stapel.addWidget(self.werk[name])
+            self.werk[name] = Werkbank(self.fenster, name, self.ki_banner if name == "KI" else None, ohne=VORLESEN if name == "Lesen" else None)
+            seite = PanelRahmen(name, schliessbar=False)                 # Kopfzeile wie bei „Schreibhilfe“ und den Feldern links
+            seite.inhalt.addWidget(self.werk[name], 1)
+            self.werk_stapel.addWidget(seite)
         self.a.schalterGeaendert.connect(lambda *_: self.werkbank_aktualisieren())
 
     def werkbank_aktualisieren(self) -> None:
@@ -278,8 +275,7 @@ class SchreibhilfePanel(QWidget):
                 w_.hide(); w_.setParent(None); w_.deleteLater()
 
     def _leer(self, text: str) -> None:
-        m = QLabel(text); m.setWordWrap(True)
-        m.setStyleSheet("color: palette(mid); padding: 8px;")
+        m = hinweis_label(text, zusatz="padding: " f"{PADDING_HINWEIS}" ";")
         self.liste.insertWidget(0, m)
 
     # ---- Bereich „Formatierung“: ein Register für Texteffekte, Objekt (Bild, Form …) und Diagrammteil ---------------------------------
@@ -308,11 +304,11 @@ class SchreibhilfePanel(QWidget):
         from lunivo_writer.ui.widgets import icons
         m = MenueListe(eltern)
         tun = lambda name: (lambda: self.fenster.befehle.tun(name))
-        m.eintrag("Formatvorlagen und Formatierung", tun("formatvorlagenBereich"), symbol=icons.icon("pen-line", 16))
-        m.eintrag("Auswahlbereich", tun("auswahlbereich"), symbol=icons.icon("mouse-pointer", 16))
-        m.eintrag("Bearbeitung einschränken", tun("bearbeitungEinschraenken"), symbol=icons.icon("lock", 16))
-        m.eintrag("Formatierung", None, symbol=icons.icon("sliders-horizontal", 16), haken=True)
-        m.eintrag("Sicherungsverwaltung", self._sicherungen_zeigen, symbol=icons.icon("rotate-ccw", 16))
+        m.eintrag("Formatvorlagen und Formatierung", tun("formatvorlagenBereich"), symbol=icons.icon("pen-line", ICON_NORMAL))
+        m.eintrag("Auswahlbereich", tun("auswahlbereich"), symbol=icons.icon("mouse-pointer", ICON_NORMAL))
+        m.eintrag("Bearbeitung einschränken", tun("bearbeitungEinschraenken"), symbol=icons.icon("lock", ICON_NORMAL))
+        m.eintrag("Formatierung", None, symbol=icons.icon("sliders-horizontal", ICON_NORMAL), haken=True)
+        m.eintrag("Sicherungsverwaltung", self._sicherungen_zeigen, symbol=icons.icon("rotate-ccw", ICON_NORMAL))
         return m
 
     @staticmethod
@@ -328,9 +324,10 @@ class SchreibhilfePanel(QWidget):
 
     def _formatierung_host(self, panel_klasse, menue_text: str, werte: dict):
         """Der gemeinsame Rahmen der Bereiche „Formatierung“: Kopf mit „Formatierung ▾“, Anheften und Schließen, darunter das Panel."""
-        from lunivo_writer.ui.baukasten.zusatz_panel import FLACHE_REITER, zusatz_knopf, zusatz_kopf
+        from lunivo_writer.ui.baukasten.zusatz_panel import FLACHE_REITER, zusatz_knopf
+        from lunivo_writer.ui.baukasten.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
         host = QWidget(); host.setStyleSheet(FLACHE_REITER)        # dieselben flachen Reiter wie in den anderen Seitenleistenfenstern
-        v = QVBoxLayout(host); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(0)
+        v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
         titel = QToolButton(); titel.setText("Formatierung"); titel.setPopupMode(QToolButton.InstantPopup); titel.setAutoRaise(True)
         from lunivo_writer.ui.widgets import icons as _ic
         titel.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); titel.setIcon(_ic.icon("chevron-down", 12))           # der Pfeil „▾“ ist sichtbar: das Titelmenü
@@ -340,12 +337,14 @@ class SchreibhilfePanel(QWidget):
         anheften = zusatz_knopf("pin", "Anheften: der Bereich folgt der Markierung und bleibt offen", None, "Anheften"); anheften.setCheckable(True)
         zu = zusatz_knopf("x", "Schließen", lambda: self.zeige_bereich(0))
         stretch = QWidget(); stretch.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        v.addWidget(zusatz_kopf(titel, stretch, anheften, zu))
-        rumpf = QWidget(); rv = QVBoxLayout(rumpf); rv.setContentsMargins(20, 8, 20, 12); v.addWidget(rumpf, 1)      # Abstand zum Rand wie im Fenster Rahmen und Schattierung
+        v.addWidget(panel_kopf(titel, stretch, anheften, zu, dehnen=stretch))
+        rumpf = QWidget(); rv = QVBoxLayout(rumpf); rv.setContentsMargins(*PANEL_INHALT_RAND); v.addWidget(rumpf, 1)      # Innenrand wie in allen Seitenleistenfenstern
         panel = panel_klasse(rumpf, werte)
         from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
         felder_angleichen(panel)                                                     # Felder und beschriftete Knöpfe gleich hoch (FELDHOEHE)
         rv.addWidget(panel, 1)
+        from lunivo_writer.ui.baukasten.flache_reiter_leiste import alle_flach
+        alle_flach(host)                                                             # alle Reiter: dieselbe flache Leiste wie in allen Seitenleisten-Fenstern
         return host, panel, anheften
 
     def zeige_format(self, schluessel: str, werte: dict, **verbindungen) -> None:
@@ -458,8 +457,8 @@ class SchreibhilfePanel(QWidget):
         """Den KI-Bereich bauen: nur der Chat (Verlauf, Eingabe) — alles andere steht im Reiter Schreibhilfe und im Fenster „KI-Einstellungen“."""
         host = QWidget()
         lay = QVBoxLayout(host)
-        lay.setContentsMargins(12, 10, 12, 10)
-        lay.setSpacing(8)
+        lay.setContentsMargins(*RAND_KEIN)                      # Kopf und Ränder bringt der Rahmen des Chats mit
+        lay.setSpacing(ABSTAND_MITTEL)
         from lunivo_writer.ui.sidebar.panels.ai_panel import ChatPanel
         self.chat = ChatPanel(self.ki, self.fenster)
         self.chat.zurueck.connect(lambda: self.zeige_bereich(0))
@@ -475,9 +474,7 @@ class SchreibhilfePanel(QWidget):
                 w_.setParent(None)
                 w_.deleteLater()
         if not funde:
-            self.meldung = QLabel(LEER if self.a._geprueft_rev >= 0 else "Noch nicht geprüft.")
-            self.meldung.setWordWrap(True)
-            self.meldung.setStyleSheet("color: palette(mid); padding: 8px;")
+            self.meldung = hinweis_label(LEER if self.a._geprueft_rev >= 0 else "Noch nicht geprüft.", zusatz="padding: " f"{PADDING_HINWEIS}" ";")
             self.liste.insertWidget(0, self.meldung)
         for i, f in enumerate(funde):
             self.liste.insertWidget(i, FundKarte(f, self.a, dienst=getattr(self, "ki", None)))

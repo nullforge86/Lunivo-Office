@@ -47,6 +47,14 @@ from lunivo_writer.ui.baukasten.text_fuellarten_mixin import TextFuellartenMixin
 from lunivo_writer.ui.baukasten.strich_auswahl import StrichAuswahl
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_NORMAL,
+    ABSTAND_SPALTE,
+    GROESSE_TEXTVERFORMUNG_KACHEL,
+    ICON_MITTEL,
+    RAND_FORMATSEITE,
+    RAND_KEIN,
+)
 
 # Teile, deren Text sich formatieren lässt (Titel, Legende, Achsen, Legendeneinträge, Datenbeschriftungen)
 TEXT_TEILE = ("diagrammbereich", "titel", "legende", "achse_horizontal", "achse_vertikal", "datenbeschriftung")
@@ -106,7 +114,7 @@ class _AutoWert(QWidget):
 
     def __init__(self, vorgabe: float = 0.0):
         super().__init__()
-        h = QHBoxLayout(self); h.setContentsMargins(0, 0, 0, 0); h.setSpacing(6)
+        h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN); h.setSpacing(ABSTAND_NORMAL)
         self.auto = QCheckBox("Auto"); self.auto.setChecked(True)
         self.feld = QDoubleSpinBox(); self.feld.setRange(-1e9, 1e9); self.feld.setDecimals(2); self.feld.setValue(vorgabe); self.feld.setEnabled(False)
         self.feld.setMinimumWidth(0)
@@ -154,8 +162,8 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
             self._text_fuellarten_bauen()           # Bild-/Texturfüllung und Musterfüllung als Textfüllung (Mixin)
             self.a_feld = TextfeldAbschnitt()
             self.f_winkel, self.f_rand = self.a_feld.winkel, self.a_feld.raender
-            feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6); v.addWidget(self.a_feld); v.addStretch(1)
-            self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "Textfeld")
+            feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE); v.addWidget(self.a_feld); v.addStretch(1)
+            self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", ICON_MITTEL), "Textfeld")
             self._verbinde()
             return
         self.a_feld = Abschnitt("Textfeld")
@@ -168,8 +176,8 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
                      ("Linker Rand:", self.f_rand["l"]), ("Rechter Rand:", self.f_rand["r"]), ("Oberer Rand:", self.f_rand["o"]), ("Unterer Rand:", self.f_rand["u"])):
             self.a_feld.zeile(t, f)
         self.a_feld.breit(self.f_anpassen); self.a_feld.breit(self.f_umbruch)
-        feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6); v.addWidget(self.a_feld); v.addStretch(1)
-        self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", 22), "Textfeld")
+        feldseite = QWidget(); v = QVBoxLayout(feldseite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE); v.addWidget(self.a_feld); v.addStretch(1)
+        self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", ICON_MITTEL), "Textfeld")
         self._verbinde()
 
     # ---- 3D-Drehung und Transformieren (Effekte, hinter dem 3D-Format): Datenmodell ``text_3d`` und ``warp`` (``editor/textfx.py``)
@@ -214,10 +222,10 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         return pm
 
     def _warp_menue(self, parent) -> VoreinstellungMenue:
-        m = VoreinstellungMenue(parent, keine=None, kachel=QSize(48, 36))
+        m = VoreinstellungMenue(parent, keine=None, kachel=QSize(*GROESSE_TEXTVERFORMUNG_KACHEL))
         m.aktuell = "" if self._warp_art == "keine" else self._warp_art
         keine_zeile(m, "Keine Transformation")
-        m.abschnitt("Verbiegen", [(k, QIcon(self._warp_bild(k, QSize(48, 36))), n) for k, n in WARP_FORMEN if k != "keine"], 4)
+        m.abschnitt("Verbiegen", [(k, QIcon(self._warp_bild(k, QSize(*GROESSE_TEXTVERFORMUNG_KACHEL))), n) for k, n in WARP_FORMEN if k != "keine"], 4)
         return m
 
     def _warp_setzen(self, art: str, melden: bool = True) -> None:
@@ -317,9 +325,9 @@ class DiagrammFormatPanel(KopfMenueMixin, NurDreiEffekteMixin, AutoFelderMixin, 
         self.optionen.tabBar().setTabButton(0, QTabBar.RightSide, self.teil_wahl)      # die Teilliste „▾“ am ersten Hauptreiter, mit gewöhnlicher wie flacher Leiste
         self.text_panel.geaendert.connect(lambda t: self._melde(text=t))
         self.optionen_seite = self._seite_optionen()
-        self.reiter.addTab(self._scroll(self.optionen_seite), icons.icon("sliders-horizontal", 22), "Optionen")
+        self.reiter.addTab(self._scroll(self.optionen_seite), icons.icon("sliders-horizontal", ICON_MITTEL), "Optionen")
         self.eigenschaften_seite = self._seite_eigenschaften()
-        self.reiter.addTab(self._scroll(self.eigenschaften_seite), icons.icon("scaling", 22), "Größe und Eigenschaften")
+        self.reiter.addTab(self._scroll(self.eigenschaften_seite), icons.icon("scaling", ICON_MITTEL), "Größe und Eigenschaften")
         self._reiter_kurz()
         for a in (self.a_fuell, self.a_kontur) + (() if self.NUR_DREI_EFFEKTE else (self.a_schatten,)):         # wie in der Vorlage: Füllung und Linie offen, die Effekte zu
             a.knopf.setChecked(True)
@@ -439,7 +447,7 @@ class DiagrammFormatPanel(KopfMenueMixin, NurDreiEffekteMixin, AutoFelderMixin, 
 
     # ---- Seite „Optionen“ (Legende, Achse, Reihe) ---------------------------------------------------------------------------------
     def _seite_optionen(self) -> QWidget:
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE)
         self.a_legende = Abschnitt("Legendenoptionen")
         self.o_lage = _combo(LEGENDEN_LAGEN)
         self.a_legende.zeile("Legendenposition:", self.o_lage)
@@ -484,7 +492,7 @@ class DiagrammFormatPanel(KopfMenueMixin, NurDreiEffekteMixin, AutoFelderMixin, 
     # ---- Seite „Größe und Eigenschaften“ ------------------------------------------------------------------------------------------
     def _seite_eigenschaften(self) -> QWidget:
         """Nach der Vorlage nur „Alternativtext“ (Größe und Drehung stellt das Fenster „Layout“ des Objekts ein)."""
-        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(14); v.setContentsMargins(0, 10, 0, 6)
+        seite = QWidget(); v = QVBoxLayout(seite); v.setSpacing(ABSTAND_SPALTE); v.setContentsMargins(*RAND_FORMATSEITE)
         self.a_alt = AlternativtextAbschnitt()
         self.a_alt.geaendert.connect(lambda t, b: None if self._stumm or not self._fertig else self.alt_geaendert.emit(t, b))
         self.alt_titel, self.alt_text = self.a_alt.titel_feld, self.a_alt.text_feld

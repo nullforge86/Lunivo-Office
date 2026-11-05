@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from lunivo_writer.core.befehle.hilfen import _farbfeld
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import farben as BF
 
 
 class EinfuegenBefehle:
@@ -271,7 +273,7 @@ class EinfuegenBefehle:
                     self._wasserzeichen_setzen(dict(eigene[i]))
             else:
                 winkel = dict(self.WASSERZEICHEN_VORGABEN)[schl]
-                self._wasserzeichen_setzen({"text": schl, "farbe": "#c0c0c0", "winkel": winkel, "groesse_pt": 0, "transparenz": 50})
+                self._wasserzeichen_setzen({"text": schl, "farbe": BF.VORGABE_WASSERZEICHEN, "winkel": winkel, "groesse_pt": 0, "transparenz": 50})
         m.aboutToShow.connect(auffrischen)
         m.gewaehlt.connect(gewaehlt)
         auffrischen()
@@ -370,10 +372,10 @@ class EinfuegenBefehle:
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
-        m.addAction(self._sym("tabelle"), "Tabelle e&infügen", self.tabelleRaster)
-        m.addAction(self._sym("tabelleZeichnen"), "Tabelle zeichnen(&W)", self.tabelleZeichnen)
-        zu_tab = m.addAction(self._sym("tabelleWahl"), "Text in Tabelle umwandeln...", self.textInTabelle)
-        zu_text = m.addAction(self._sym("schnelltab"), "Tabelle in Text konvertieren...", self.tabelleInText)
+        m.eintrag("Tabelle e&infügen", self.tabelleRaster, symbol=self._sym("tabelle"))
+        m.eintrag("Tabelle zeichnen(&W)", self.tabelleZeichnen, symbol=self._sym("tabelleZeichnen"))
+        zu_tab = m.eintrag("Text in Tabelle umwandeln...", self.textInTabelle, symbol=self._sym("tabelleWahl"))
+        zu_text = m.eintrag("Tabelle in Text konvertieren...", self.tabelleInText, symbol=self._sym("schnelltab"))
 
         def zustand():
             c = self.ed.textCursor() if self.ed else None
@@ -435,18 +437,18 @@ class EinfuegenBefehle:
         „AutoText hinzufügen …“ (nur mit Markierung)."""
         from lunivo_writer.services import bausteine
         for name, teile in self.AUTOTEXTE_SEITE:
-            m.addAction(name, lambda _=False, teile=teile: self._autotext_seite(teile))
+            m.eintrag(name, lambda teile=teile: self._autotext_seite(teile))
         for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
             if not liste:
                 continue
             m.addSection(titel)
             for b in liste:
-                m.addAction(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
-                            lambda _=False, b=b: self.ed and (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
+                m.eintrag(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
+                            lambda b=b: self.ed and (bausteine.einfuegen(self.ed.textCursor(), b), self.ed.document().setModified(True)))
         m.addSeparator()
-        neu = m.addAction(self._sym("baustein"), "AutoText hinzufügen …", self.autotextHinzufuegen)
-        neu.setEnabled(bool(self.ed and self.ed.textCursor().hasSelection()))
-        m.addAction("Textbausteine verwalten …", self.textbaustein)
+        m.eintrag("AutoText hinzufügen …", self.autotextHinzufuegen, symbol=self._sym("baustein"),
+                  aktiv=bool(self.ed and self.ed.textCursor().hasSelection()))
+        m.eintrag("Textbausteine verwalten …", self.textbaustein)
 
 
     def _autotext_seite(self, teile) -> None:
@@ -624,7 +626,7 @@ class EinfuegenBefehle:
     def menue_formenKlappe(self):
         """Formen wie in der Vorlage: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
         from PySide6.QtCore import QRectF, QSize
-        from PySide6.QtGui import QColor, QPen
+        from PySide6.QtGui import QColor, QPalette, QPen
         from lunivo_writer.core.farben import Farbe
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.editor import formen_katalog as K
@@ -637,13 +639,12 @@ class EinfuegenBefehle:
                 m.abschnitt(gruppe)
             for name in formen:
                 def zeichne(p, r, name=name):
-                    p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
+                    from PySide6.QtWidgets import QApplication
+                    p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), 1.3)); p.setBrush(Qt.NoBrush)
                     p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
                 m.kachel(name, name, zeichne).setCheckable(False)
 
         m.gewaehlt.connect(lambda f: self.formEinfuegen(None, f))
-        m.fuss("Weitere Formen und Farben …", self.zeichnen)
-        m.trenner()
         bereich = m.fuss("Neuer &Zeichenbereich", self.zeichenbereich)
         bereich.setIcon(self._sym("textrahmen"))
         bereich.setToolTip("Fügt einen Bereich ein, der Formen aufnimmt: Bereich markieren, dann eine Form wählen.")
@@ -701,17 +702,19 @@ class EinfuegenBefehle:
 
     def menue_smartartLayout(self):
         from lunivo_writer.editor import smartart as SA
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for e in SA.LAYOUT_KATALOG:
-            m.addAction(e["name"], lambda _=False, n=e["schluessel"]: self.ed and SA.aendern(self.ed, layout=n))
+            m.eintrag(e["name"], lambda n=e["schluessel"]: self.ed and SA.aendern(self.ed, layout=n))
         return m
 
 
     def menue_smartartFarben(self):
         from lunivo_writer.editor import smartart as SA
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for n, f in SA.FARBEN.items():
-            m.addAction(_farbfeld(f[0]), n, lambda _=False, n=n: self.ed and SA.aendern(self.ed, farben=n))
+            m.eintrag(n, lambda n=n: self.ed and SA.aendern(self.ed, farben=n), symbol=_farbfeld(f[0]))
         return m
 
 
@@ -747,7 +750,7 @@ class EinfuegenBefehle:
         if d0 is None:
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt-Objekt markieren.")
             return
-        d = WordArtDialog(self.w, d0.get("text", ""), d0.get("stil", "Verlauf"), d0.get("farbe", "#2f78bd"), d0.get("vorlage"))
+        d = WordArtDialog(self.w, d0.get("text", ""), d0.get("stil", "Verlauf"), d0.get("farbe", BF.VORGABE_WORDART), d0.get("vorlage"))
         if d.exec():
             FO.aendern(self.ed, "wordart", text=d.text.text() or " ", vorlage=d.vorlage_nr(), schrift=d.schrift.text() or "Liberation Sans",
                        pt=d.pt.value(), stil=d.stil.currentText(), farbe=d.farbe.farbe)
@@ -773,7 +776,7 @@ class EinfuegenBefehle:
             img = E.wordart_bild("A", vorlage=i, pt=80)
             pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
-            p.setBrush(QColor("#f3f4f6")); p.setPen(QPen(QColor("#d0d4d9"), 1)); p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 4, 4)
+            p.setBrush(QColor(BF.KACHEL_GRUND)); p.setPen(QPen(QColor(BF.KACHEL_RAND), 1)); p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 4, 4)
             z = img.scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             p.drawImage((40 - z.width()) // 2, (40 - z.height()) // 2, z)
             p.end()
@@ -786,14 +789,14 @@ class EinfuegenBefehle:
     def menue_gleichungKlappe(self):
         """Gleichung wie in der Vorlage: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“."""
         from PySide6.QtCore import QSize
-        from PySide6.QtGui import QPainter, QPixmap
+        from PySide6.QtGui import QColor, QPainter, QPixmap
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
         groesse = QSize(380, 54)
         m = RasterAuswahl(self.w, titel="Integriert", spalten=1, groesse=groesse, beschriftet=True)
         for i, (name, formel) in enumerate(E.GLEICHUNGEN):
             img = E.formel_bild(formel, 13)
-            pm = QPixmap(groesse); pm.fill(Qt.white)
+            pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
             p = QPainter(pm); p.setPen(Qt.lightGray); p.drawRect(0, 0, groesse.width() - 1, groesse.height() - 1)
             bild = img.scaled(groesse.width() - 12, groesse.height() - 8, Qt.KeepAspectRatio, Qt.SmoothTransformation) \
                 if img.width() > groesse.width() - 12 or img.height() > groesse.height() - 8 else img
@@ -819,7 +822,7 @@ class EinfuegenBefehle:
 
         def zeichner(name):
             def f(p: QPainter, r: QRectF) -> None:
-                p.setPen(QColor("#c8c8c8")); p.drawRect(r.adjusted(0.5, 0.5, -0.5, -0.5))
+                p.setPen(QColor(Farbe.LEISTE_RAND)); p.drawRect(r.adjusted(0.5, 0.5, -0.5, -0.5))
                 DB.zeichnen(p, name, r.adjusted(1, 1, -1, -1))
             return f
 
@@ -979,9 +982,10 @@ class EinfuegenBefehle:
         if not self.ed:
             return
         from lunivo_writer.editor import einfuegen as E
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for n in E.SCHNELLTABELLEN:
-            m.addAction(n, lambda _=False, n=n: E.schnelltabelle(self.ed, n))
+            m.eintrag(n, lambda n=n: E.schnelltabelle(self.ed, n))
         self._popup(m)
 
 
@@ -1032,6 +1036,7 @@ class EinfuegenBefehle:
             if b is not None:
                 w.removeSelectedText(); bausteine.einfuegen(w, b); self.ed.document().setModified(True)
                 return
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         self._bausteine_fuellen(m)
         self._popup(m)

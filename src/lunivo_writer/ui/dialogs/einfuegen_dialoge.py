@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QSizePolicy, QVBoxLayout, QWidget,
 )
 
+from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.ui.baukasten import FarbFeld
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
@@ -17,6 +18,26 @@ from lunivo_writer.services import bausteine
 
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.farben import VORGABE_LINIE, VORGABE_SCHRIFT
+from lunivo_writer.ui.baukasten.mass import (
+    BREITE_KACHEL_VORSCHAU,
+    GROESSE_FENSTER_AUSWAHL,
+    GROESSE_FENSTER_EINFUEGEN_GROSS,
+    GROESSE_FENSTER_TABELLE,
+    GROESSE_MINIATUR_LAYOUT,
+    GROESSE_RASTER_SYMBOLE,
+    HOEHE_BEREICH_MITTEL,
+    HOEHE_EINGABE_TEXT,
+    HOEHE_KNOPF,
+    HOEHE_LISTE_HOCH,
+    HOEHE_LISTE_MITTEL,
+    HOEHE_VORSCHAU_KLEIN,
+    ICON_VORSCHAU,
+    RAND_KEIN,
+    RAND_ZEILE,
+    SCHRIFT_HINWEIS,
+    ZUGABE_KACHEL,
+)
 def _ok(dlg):
     return knopfzeile(dlg)
 
@@ -32,7 +53,7 @@ class _Vorschau(QLabel):
     def __init__(self):
         super().__init__()
         self._bild = None
-        self.setMinimumHeight(120); self.setAlignment(Qt.AlignCenter)
+        self.setMinimumHeight(HOEHE_VORSCHAU_KLEIN); self.setAlignment(Qt.AlignCenter)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.setStyleSheet(('background: white; border: 1px solid ' + Farbe.GRAU_HELL + ';'))
 
@@ -71,7 +92,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.art = QComboBox(); self.art.addItems(E.FORMEN)
         if form:
             self.art.setCurrentText(form)
-        self.fuell = _Farbknopf(Farbe.AKZENT_DUNKEL, "Füllfarbe"); self.linie = _Farbknopf("#1f3864", "Linienfarbe")
+        self.fuell = _Farbknopf(Farbe.AKZENT_DUNKEL, "Füllfarbe"); self.linie = _Farbknopf(VORGABE_LINIE, "Linienfarbe")
         self.breite = QSpinBox(); self.breite.setRange(20, 1200); self.breite.setValue(240)
         self.hoehe = QSpinBox(); self.hoehe.setRange(10, 1200); self.hoehe.setValue(140)
         self.strich = QDoubleSpinBox(); self.strich.setRange(0.5, 12); self.strich.setValue(2.0)
@@ -101,12 +122,12 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
 class _LayoutGalerie(QWidget):
     """Galerie der SmartArt-Layouts: Bildchen (selbst gezeichnet) in einem KachelFeld, die Spaltenzahl folgt der Breite."""
     gewaehlt = Signal(str)
-    KACHEL = 64
+    KACHEL = BREITE_KACHEL_VORSCHAU
 
     def __init__(self, namen, zeichner, aktuell):
         super().__init__()
         self._namen, self._zeichner, self._aktuell, self._spalten = list(namen), zeichner, aktuell, 0
-        self._v = QVBoxLayout(self); self._v.setContentsMargins(0, 0, 0, 0)
+        self._v = QVBoxLayout(self); self._v.setContentsMargins(*RAND_KEIN)
         self.feld = None
         self._bauen(3)
 
@@ -119,7 +140,7 @@ class _LayoutGalerie(QWidget):
         for n in self._namen:
             self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
             self.feld.knoepfe[n].setAccessibleName(n)
-            self.feld.knoepfe[n].setFixedSize(self.KACHEL + 10, self.KACHEL * 3 // 4 + 10)
+            self.feld.knoepfe[n].setFixedSize(self.KACHEL + ZUGABE_KACHEL, self.KACHEL * 3 // 4 + ZUGABE_KACHEL)
             self.feld.knoepfe[n].setProperty("kachel", True)      # die gewählte Kachel ist hinterlegt (Theme)
         self.feld.gewaehlt.connect(self._klick)
         self.feld.setze(self._aktuell)
@@ -192,9 +213,9 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.farben = QComboBox(); self.farben.addItems(list(SA.FARBEN))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
         self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
-        self.text.setMinimumHeight(110)
+        self.text.setMinimumHeight(HOEHE_EINGABE_TEXT)
         self.bearbeiten = QWidget()
-        f = FormularGitter(); b = QVBoxLayout(self.bearbeiten); b.setContentsMargins(0, 0, 0, 0); b.addLayout(f)
+        f = FormularGitter(); b = QVBoxLayout(self.bearbeiten); b.setContentsMargins(*RAND_KEIN); b.addLayout(f)
         f.zeile("Farben", self.farben)
         f.breit(QLabel("Text (eine Zeile je Punkt)")); f.breit(self.text)
         v.addWidget(self.bearbeiten); self.bearbeiten.setVisible(bearbeiten)
@@ -226,13 +247,14 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
             from lunivo_writer.ui.baukasten.smartart_menues import miniatur
-            self._zeige(miniatur(d["layout"], False, QSize(360, 240)).toImage())
+            self._zeige(miniatur(d["layout"], False, QSize(*GROESSE_MINIATUR_LAYOUT)).toImage())
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
-    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str = Farbe.AKZENT, vorlage: int | None = None):
+    def __init__(self, parent, text: str = "Ihr Text", stil: str = "Verlauf", farbe: str | None = None, vorlage: int | None = None):
         """``vorlage``: Nummer eines Galerie-Stils (``E.WORDART_VORLAGEN``); ohne sie gelten ``stil`` und ``farbe``."""
         super().__init__(parent)
+        farbe = Farbe.AKZENT if farbe is None else farbe
         self.setWindowTitle("WordArt")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
         self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
@@ -278,7 +300,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
         v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
-        self.tab.setMinimumHeight(180)
+        self.tab.setMinimumHeight(HOEHE_LISTE_MITTEL)
         for r, k in enumerate(kategorien):
             self.tab.setItem(r, 0, QTableWidgetItem(k))
             for c, werte in enumerate(reihen.values(), 1):
@@ -292,7 +314,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
             b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
         v.addLayout(z)
         fussleiste(self, v)
-        self.resize(520, 360)
+        self.resize(*GROESSE_FENSTER_TABELLE)
 
     def _reihe_dazu(self) -> None:
         n = self.tab.columnCount()
@@ -319,16 +341,16 @@ class PiktogrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Piktogramm einfügen")
-        self.resize(520, 520)
+        self.resize(*GROESSE_FENSTER_AUSWAHL)
         from lunivo_writer.ui.widgets import icons
         v = QVBoxLayout(self)
         self.suche = QLineEdit(); self.suche.setPlaceholderText("Suchen (englische Symbolnamen, z. B. heart, home, star)")
         v.addWidget(self.suche)
-        self.liste = QListWidget(); self.liste.setViewMode(QListWidget.IconMode); self.liste.setIconSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(40, 40))
-        self.liste.setResizeMode(QListWidget.Adjust); self.liste.setGridSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(90, 70))
+        self.liste = QListWidget(); self.liste.setViewMode(QListWidget.IconMode); self.liste.setIconSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(ICON_VORSCHAU, ICON_VORSCHAU))
+        self.liste.setResizeMode(QListWidget.Adjust); self.liste.setGridSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(*GROESSE_RASTER_SYMBOLE))
         self.liste.setUniformItemSizes(True); self.liste.itemDoubleClicked.connect(lambda _: self.accept())
         v.addWidget(self.liste)
-        self.farbe = _Farbknopf("#1f2328")
+        self.farbe = _Farbknopf(VORGABE_SCHRIFT)
         fg = FormularGitter(); fg.zeile("Farbe:", self.farbe); v.addLayout(fg)
         v.addWidget(_ok(self))
         self.namen = sorted(icons.katalog())
@@ -370,7 +392,7 @@ class FormelDialog(PanelFaehig, QDialog):
     def _zeige(self, *_):
         from PySide6.QtGui import QColor, QPainter, QPixmap
         img = E.formel_bild(self.eingabe.text())
-        pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor("white"))
+        pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor(Farbe.PAPIER))
         p = QPainter(pm); p.drawImage(8, 6, img); p.end()
         self.vorschau.setze(pm.toImage())
 
@@ -399,7 +421,7 @@ class DatumDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         g = FormularGitter(); v.addLayout(g)
         self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate")
-        self.sprache = QComboBox(); self.sprache.setMinimumHeight(34); self.sprache.setAccessibleName("Sprache")
+        self.sprache = QComboBox(); self.sprache.setMinimumHeight(HOEHE_KNOPF); self.sprache.setAccessibleName("Sprache")
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))
@@ -443,7 +465,7 @@ class BausteinDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import QLineEdit, QTextBrowser
         self.ed = ed
         self.setWindowTitle("Textbausteine")
-        self.resize(840, 600)
+        self.resize(*GROESSE_FENSTER_EINFUEGEN_GROSS)
         v = QVBoxLayout(self)
         from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
         from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
@@ -456,15 +478,15 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.liste.currentItemChanged.connect(lambda *_: self._zeigen())
         self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.liste.setWordWrap(True)
         self.liste.setTextElideMode(Qt.ElideNone); self.liste.setVerticalScrollMode(QListWidget.ScrollPerPixel)
-        self.liste.setMinimumHeight(200)
+        self.liste.setMinimumHeight(HOEHE_LISTE_HOCH)
         v.addWidget(self.liste, 3)
         v.addWidget(abschnittstitel("Vorschau"))
         self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
         self.vorschau.document().setDocumentMargin(12); self.vorschau.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.vorschau.setMinimumHeight(150)
+        self.vorschau.setMinimumHeight(HOEHE_BEREICH_MITTEL)
         v.addWidget(self.vorschau, 4)
         h = QLabel("Eigene kommen aus dem Markierten, die übrigen sind mitgeliefert. «So gesetzte Stellen» sind Lücken: Tab springt von einer zur nächsten, Tippen ersetzt sie.")
-        h.setWordWrap(True); h.setStyleSheet("color: palette(mid); font-size: 9pt;"); h.setContentsMargins(0, 4, 0, 4)
+        h.setWordWrap(True); hinweis_stil(h, klein=True); h.setContentsMargins(*RAND_ZEILE)
         v.addWidget(h)
         self.aus_markierung = QPushButton("Aus Markierung …"); self.aus_markierung.clicked.connect(self._neu)
         self.loeschen = QPushButton("Löschen"); self.loeschen.clicked.connect(self._weg)

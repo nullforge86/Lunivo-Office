@@ -13,6 +13,14 @@ from PySide6.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QRadioB
 
 from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
 from lunivo_writer.ui.baukasten.umbruch_symbole import umbruch_zeichner
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_NORMAL,
+    GROESSE_LAYOUTOPTIONEN_KACHEL,
+    PADDING_LAYOUTOPTIONEN_TITEL,
+    RADIUS_FELD,
+    RADIUS_MARKE,
+    RAND_LAYOUTOPTIONEN,
+)
 
 
 class LayoutOptionen(QFrame):
@@ -23,16 +31,16 @@ class LayoutOptionen(QFrame):
     def __init__(self, parent=None, art: str = "textfluss", mit_text: bool = False):
         super().__init__(parent, Qt.Popup)
         self.setObjectName("layoutOptionen")
-        self.setStyleSheet("#layoutOptionen { background: palette(window); border: 1px solid palette(mid); border-radius: 6px; }"
+        self.setStyleSheet("#layoutOptionen { background: palette(window); border: 1px solid palette(mid); border-radius: " f"{RADIUS_FELD}" "px; }"
                            "QLabel#kopf { color: palette(highlight); font-weight: 600; }")
-        v = QVBoxLayout(self); v.setContentsMargins(10, 8, 10, 8); v.setSpacing(6)
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_LAYOUTOPTIONEN); v.setSpacing(ABSTAND_NORMAL)
         k = QLabel("Layoutoptionen"); k.setObjectName("kopf"); v.addWidget(k)
         v.addWidget(self._titel("Mit Text in Zeile"))
-        self.zeile = KachelFeld(spalten=1, groesse=QSize(40, 40), mit_text=False)
+        self.zeile = KachelFeld(spalten=1, groesse=QSize(*GROESSE_LAYOUTOPTIONEN_KACHEL), mit_text=False)
         self.zeile.hinzu("textfluss", "Im Textfluss", umbruch_zeichner("textfluss"))
         v.addWidget(self.zeile)
         v.addWidget(self._titel("Zeilenumbruch"))
-        self.umbruch = KachelFeld(spalten=3, groesse=QSize(40, 40), mit_text=False)
+        self.umbruch = KachelFeld(spalten=3, groesse=QSize(*GROESSE_LAYOUTOPTIONEN_KACHEL), mit_text=False)
         for schl, text in (("quadrat", "Quadrat"), ("passend", "Passend"), ("transparent", "Transparent"), ("obenunten", "Oben und Unten"),
                            ("hinter", "Hinter den Text"), ("vor", "Vor dem Text")):
             self.umbruch.hinzu(schl, text, umbruch_zeichner(schl))
@@ -51,7 +59,7 @@ class LayoutOptionen(QFrame):
 
     @staticmethod
     def _titel(text: str) -> QLabel:
-        t = QLabel(text); t.setStyleSheet("background: palette(midlight); padding: 3px 6px; border-radius: 3px;")
+        t = QLabel(text); t.setStyleSheet("background: palette(midlight); padding: " f"{PADDING_LAYOUTOPTIONEN_TITEL}" "; border-radius: " f"{RADIUS_MARKE}" "px;")
         return t
 
     def _klick(self, art: str) -> None:

@@ -12,7 +12,20 @@ from lunivo_writer.ui.widgets import icons
 import re
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.karte import als_karte
 from lunivo_writer.models.proofing import ProofingIssue
+from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_NORMAL,
+    ICON_GROSS,
+    PADDING_MARKE,
+    RADIUS_MARKE,
+    RAND_FUNDKARTE,
+    RAND_KEIN,
+    RAND_VORSCHLAGKARTE,
+    SCHRIFT_KLEIN,
+    SCHRIFT_LISTE,
+)
 _LAUF = re.compile(r"(.)\1{5,}")
 
 
@@ -21,20 +34,22 @@ def kurz(text: str) -> str:
     return _LAUF.sub(lambda m: f"{m.group(1)}×{len(m.group(0))}", text)
 
 
-FARBE = {"fehler": Farbe.ORANGE, "tipp": "#1c7ed6", "hinweis": Farbe.GRAU}
+def farbe_je_art() -> dict:
+    return {"fehler": Farbe.ORANGE, "tipp": Farbe.AUSWAHL, "hinweis": Farbe.GRAU}
 
 
 # Marke oben auf der Karte: Schrift, Hintergrund (nach der Vorlage der ersten Fassung)
-MARKE = {"fehler": ("SICHER FALSCH", "#d9a03a", "#1d1a12"), "tipp": ("KOMMT DRAUF AN", Farbe.AKZENT, Farbe.WEISS),
-         "hinweis": ("NUR ZUM NACHDENKEN", "#6b7280", Farbe.WEISS)}
-KARTE = "{name} {{ border: 1px solid palette(midlight); border-radius: 10px; background: rgba(128, 128, 128, 0.07); }}"
+def _marken() -> dict:
+    return {"fehler": ("SICHER FALSCH", Farbe.WARNUNG_HELL, Farbe.TINTE_DUNKEL), "tipp": ("KOMMT DRAUF AN", Farbe.AKZENT, Farbe.AUF_AKZENT),
+            "hinweis": ("NUR ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT)}
 
 
 def marke(art: str) -> QLabel:
-    text, grund, schrift = MARKE.get(art, MARKE["hinweis"])
+    marken = _marken()
+    text, grund, schrift = marken.get(art, marken["hinweis"])
     m = QLabel(text)
-    m.setStyleSheet(f"background: {grund}; color: {schrift}; border: none; border-radius: 3px; padding: 2px 8px; "
-                    "font-size: 8pt; font-weight: 700; letter-spacing: 0.5px;")
+    from lunivo_writer.ui.baukasten.texte import marke_faerben
+    marke_faerben(m, grund, schrift, "border: none; border-radius: " f"{RADIUS_MARKE}" "px; padding: " f"{PADDING_MARKE}" "; font-size: " f"{SCHRIFT_KLEIN}" "pt; font-weight: 700; letter-spacing: 0.5px;")
     return m
 
 
@@ -43,10 +58,10 @@ class FundKarte(QFrame):
         super().__init__(parent)
         self.fund, self.a, self.d = fund, assistent, dienst
         self.setObjectName("FundKarte")
-        self.setStyleSheet(KARTE.format(name="QFrame#FundKarte"))
+        als_karte(self, "karte")
         v = QVBoxLayout(self)
-        v.setContentsMargins(14, 12, 12, 12)
-        v.setSpacing(6)
+        v.setContentsMargins(*RAND_FUNDKARTE)
+        v.setSpacing(ABSTAND_NORMAL)
         kopf = FlussLayout(6)
         kopf.addWidget(marke(fund.art))
         v.addLayout(kopf)
@@ -54,11 +69,9 @@ class FundKarte(QFrame):
             t = md_label(f"~~{md_escape(kurz(fund.zeige_alt))}~~  →  **{md_escape(kurz(fund.zeige_neu))}**")
         else:
             t = text_label(f"„{kurz(fund.zeige_alt)[:80]}“" if fund.alt else "")
-        t.setStyleSheet("border: none; background: transparent; font-size: 11pt;")
+        t.setStyleSheet("border: none; background: transparent; font-size: " f"{SCHRIFT_LISTE}" "pt;")
         v.addWidget(t)
-        g = QLabel(fund.grund)
-        g.setWordWrap(True)
-        g.setStyleSheet("color: palette(mid); font-size: 9pt; border: none; background: transparent;")
+        g = hinweis_label(fund.grund, klein=True, zusatz="border: none; background: transparent;")
         v.addWidget(g)
         z = FlussLayout(6)
         zeigen = QPushButton("Zeigen")
@@ -71,7 +84,7 @@ class FundKarte(QFrame):
         from lunivo_writer.services import vorlesen
         if vorlesen.verfuegbar():                                        # gleich neben den anderen Knöpfen: immer sichtbar
             ohr = QPushButton()
-            ohr.setIcon(icons.icon("vorlesen", 18)); ohr.setCursor(Qt.PointingHandCursor)
+            ohr.setIcon(icons.icon("vorlesen", ICON_GROSS)); ohr.setCursor(Qt.PointingHandCursor)
             ohr.setToolTip("Das Wort anhören"); ohr.setAccessibleName("Das Wort anhören")
             ohr.clicked.connect(self._hoeren)
             z.addWidget(ohr)
@@ -86,8 +99,8 @@ class FundKarte(QFrame):
         v.addLayout(z)
         # Der Vorschlag der KI, erst sichtbar, wenn er da ist
         self.vorschlag_feld = QFrame(); self.vorschlag_feld.setStyleSheet("QFrame { border: none; background: transparent; }")
-        vv = QVBoxLayout(self.vorschlag_feld); vv.setContentsMargins(0, 0, 0, 0); vv.setSpacing(6)
-        self.vorschlag_text = QLabel(); self.vorschlag_text.setWordWrap(True); self.vorschlag_text.setStyleSheet("font-size: 11pt; font-weight: 600;")
+        vv = QVBoxLayout(self.vorschlag_feld); vv.setContentsMargins(*RAND_KEIN); vv.setSpacing(ABSTAND_NORMAL)
+        self.vorschlag_text = QLabel(); self.vorschlag_text.setWordWrap(True); self.vorschlag_text.setStyleSheet("font-size: " f"{SCHRIFT_LISTE}" "pt; font-weight: 600;")
         vv.addWidget(self.vorschlag_text)
         vz = FlussLayout(6)
         self.annehmen = QPushButton("Annehmen"); self.annehmen.clicked.connect(self._annehmen)
@@ -144,13 +157,11 @@ class VorschlagKarte(QFrame):
         super().__init__()
         self.v, self.d, self.p = v, dienst, panel
         self.setObjectName("VorschlagKarte")
-        self.setStyleSheet(KARTE.format(name="QFrame#VorschlagKarte"))
+        als_karte(self, "karte")
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(10, 6, 8, 6)
+        lay.setContentsMargins(*RAND_VORSCHLAGKARTE)
         sicher = f" · Sicherheit {round(v['konfidenz'] * 100)} %" if "konfidenz" in v else ""
-        g = QLabel(v.get("grund", "") + sicher)
-        g.setStyleSheet("color: palette(mid); font-size: 9pt;")
-        g.setWordWrap(True)
+        g = hinweis_label(v.get("grund", "") + sicher, klein=True)
         t = md_label(f"~~{md_escape(v['alt'])}~~\n\n**{md_escape(v['neu'])}**")
         lay.addWidget(g); lay.addWidget(t)
         z = FlussLayout(6)
@@ -179,7 +190,7 @@ class HinweisKarte(QFrame):
         super().__init__()
         self.text, self.w = text, fenster
         self.setObjectName("HinweisKarte")
-        self.setStyleSheet(KARTE.format(name="QFrame#HinweisKarte"))
+        als_karte(self, "karte")
         lay = QVBoxLayout(self)
         t = text_label(titel, fett=True, umbruch=False)
         body = text_label(text, auswaehlbar=True)

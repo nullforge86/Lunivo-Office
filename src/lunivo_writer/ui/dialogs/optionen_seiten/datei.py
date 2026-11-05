@@ -6,6 +6,7 @@ from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QSpinBox
 from lunivo_writer.proofing import autokorrektur
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
+from lunivo_writer.ui.baukasten.mass import HOEHE_FELD
 
 
 class DateiSeiten:
@@ -16,7 +17,7 @@ class DateiSeiten:
         """Schrift für neuen Text, Prüfung, AutoKorrektur; im Einzelnen eingeklappt (alle AutoKorrektur-Fälle bleiben erhalten)."""
         p = _Seite(self.w, titel)
         f = p.gruppe("Schrift für neuen Text")
-        fam = QComboBox(); fam.setEditable(True); fam.setMinimumHeight(32)
+        fam = QComboBox(); fam.setEditable(True); fam.setMinimumHeight(HOEHE_FELD)
         fam.addItems(sorted(set(QFontDatabase.families())))
         fam.setCurrentText(p.s.get("standard/schrift", "Liberation Sans"))
         fam.currentTextChanged.connect(lambda t: p.s.set("standard/schrift", t))
@@ -81,7 +82,7 @@ class DateiSeiten:
         p.wahl(f, "ui/masseinheit", "Maßeinheit", [(n, n) for n in _d.EINHEITEN], "Millimeter", _d.set_einheit)
         f = p.gruppe("Sicherung")
         p.wahl(f, "sicherung/aktiv", "Wann gesichert wird", [("Laufend, nach jeder Änderung", True), ("Nie", False)], True)
-        minuten = QSpinBox(); minuten.setRange(1, 120); minuten.setSuffix(" min"); minuten.setMinimumHeight(32)
+        minuten = QSpinBox(); minuten.setRange(1, 120); minuten.setSuffix(" min"); minuten.setMinimumHeight(HOEHE_FELD)
         minuten.setValue(max(1, p.s.get_int("autosave_seconds", 60) // 60))
 
         def neu(m):

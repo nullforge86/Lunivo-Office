@@ -4,9 +4,20 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QRadioButton, QPushButton, QSlider, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
 from lunivo_writer.ui.baukasten.beschriftung import text_label
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
 from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_GROSS,
+    ABSTAND_MITTEL,
+    HOEHE_FELD,
+    HOEHE_WAHLKARTE,
+    ICON_NORMAL,
+    RAND_ABSCHNITT,
+    RAND_ZEILE_LOCKER,
+    SCHRIFT_HINWEIS,
+)
 
 
 class AnsichtSeiten:
@@ -22,8 +33,8 @@ class AnsichtSeiten:
         f = p.gruppe("Anzeigen")
         p.haken(f, "ansicht/lineal", "Lineal", False, lambda _: self.w.lineale_anwenden())
         p.haken(f, "ui/statusleiste", "Statusleiste", True, lambda on: self.w.statusBar().setVisible(on))
-        alle = QCheckBox("Absatzmarken und Leerzeichen zeigen")
-        alle.setProperty("optName", alle.text()); alle.setMinimumHeight(32)
+        alle = UmbruchSchalter("Absatzmarken und Leerzeichen zeigen")
+        alle.setProperty("optName", alle.text()); alle.setMinimumHeight(HOEHE_FELD)
 
         def alle_stand():
             alt = p.s.get_bool("ui/steuerzeichen", False)
@@ -41,7 +52,7 @@ class AnsichtSeiten:
         p.haken(f, "ui/marken", "Textbegrenzungen", False, self.w.set_marken)
         p.schalter(f, "Gitternetzlinien", lambda: bool(self.w.befehle.an_netzlinien()), lambda: self.w.befehle.netzlinien())
         p.haken(f, "ui/seitenleiste", "Seitenleiste beim Start", True)
-        p.haken(f, "ui/leisten_text", "Namen unter den Symbolen der Randleisten", True, lambda _: self.w.ansicht_optionen_anwenden())
+        p.haken(f, "ui/leisten_text", "Namen unter den Symbolen der Randleisten", False, lambda _: self.w.ansicht_optionen_anwenden())
         p.haken(f, "ui/quickinfo", "QuickInfo", True, lambda _: self.w.ansicht_optionen_anwenden())
         p.haken(f, "ui/live_vorschau", "Live-Vorschau", True, lambda _: self.w.vorschau.ende())
         p.haken(f, "ui/mini_auswahl", "Minisymbolleiste bei Auswahl", True)
@@ -51,7 +62,7 @@ class AnsichtSeiten:
         f = p.unter(e, "Formatierungszeichen einzeln")
         absatz, leer = QCheckBox("Absatzmarken"), QCheckBox("Leerzeichen und Tabstoppzeichen")
         for c in (absatz, leer):
-            c.setProperty("optName", c.text()); c.setMinimumHeight(32)
+            c.setProperty("optName", c.text()); c.setMinimumHeight(HOEHE_FELD)
 
         def stand():
             alt = p.s.get_bool("ui/steuerzeichen", False)
@@ -77,12 +88,12 @@ class AnsichtSeiten:
     def _aussehen(self, p):
         """Hell, Dunkel, Mint oder wie das System: vier große Schaltflächen, genau eine ist gewählt (kein ausgegrauter Zusatzschalter)."""
         f = p.gruppe("Aussehen")
-        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(0, 6, 0, 6); h.setSpacing(10)
+        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(*RAND_ZEILE_LOCKER); h.setSpacing(ABSTAND_GROSS)
         gruppe = QButtonGroup(zeile)
         knoepfe: dict[str, QPushButton] = {}
         for schl, name in self.THEMEN:
             b = QPushButton(name)
-            b.setObjectName("optWahl"); b.setCheckable(True); b.setMinimumHeight(48)
+            b.setObjectName("optWahl"); b.setCheckable(True); b.setMinimumHeight(HOEHE_WAHLKARTE)
             b.setAccessibleName(name); b.setAccessibleDescription("Aussehen des Programms")
             b.setProperty("optName", "Hell, Dunkel (Aussehen)")
             gruppe.addButton(b); h.addWidget(b, 1)
@@ -93,7 +104,7 @@ class AnsichtSeiten:
             for schl, b in knoepfe.items():
                 b.blockSignals(True); b.setChecked(schl == jetzt)
                 aktiv = schl == jetzt
-                b.setText(dict(self.THEMEN)[schl]); b.setIcon(icons.icon("check", 16) if aktiv else QIcon()); b.blockSignals(False)
+                b.setText(dict(self.THEMEN)[schl]); b.setIcon(icons.icon("check", ICON_NORMAL) if aktiv else QIcon()); b.blockSignals(False)
         for schl, b in knoepfe.items():
             b.clicked.connect(lambda _c=False, k=schl: (self.w.set_theme(k), zeigen()))
         zeigen()
@@ -103,15 +114,15 @@ class AnsichtSeiten:
 
 
     def _oberflaeche_wahl(self, p, f):
-        oberfl = QWidget(); ov = QVBoxLayout(oberfl); ov.setContentsMargins(0, 6, 0, 8); ov.addWidget(QLabel("Benutzeroberfläche"))
+        oberfl = QWidget(); ov = QVBoxLayout(oberfl); ov.setContentsMargins(*RAND_ABSCHNITT); ov.addWidget(QLabel("Benutzeroberfläche"))
         gr = QButtonGroup(oberfl)
         beschreibung = text_label("", umbruch=True)
-        beschreibung.setStyleSheet("color: palette(window-text); font-size: 9pt;")
+        beschreibung.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
         texte = {"symbolleisten": "Menüleiste, darunter zwei Zeilen Symbole: alles ist sichtbar, nichts ist versteckt.",
                  "register": "Menüleiste oben, darunter Reiter: Start, Einfügen, Layout. Jeder Reiter hat seine eigenen Werkzeuge, in Gruppen mit Namen darunter."}
         aktuell = p.s.get("ui/oberflaeche", "register")
         for schl, name in (("symbolleisten", "Symbolleisten"), ("register", "In Registern")):
-            r = QRadioButton(name); r.setChecked(schl == aktuell); r.setProperty("optName", "Benutzeroberfläche"); r.setMinimumHeight(32)
+            r = QRadioButton(name); r.setChecked(schl == aktuell); r.setProperty("optName", "Benutzeroberfläche"); r.setMinimumHeight(HOEHE_FELD)
             gr.addButton(r); ov.addWidget(r)
             r.toggled.connect(lambda an, k=schl: an and (beschreibung.setText(texte[k]),
                                                          self.w.oberflaeche_aendern(k, self.w.menubar_wanted if k == "register" else True)))
@@ -123,19 +134,19 @@ class AnsichtSeiten:
 
     def _darstellung(self, p, f):
         """Schrift größer/kleiner, Weicher Kontrast, Größe der Symbole, Schrift der Bedienung."""
-        kopf = QWidget(); v = QVBoxLayout(kopf); v.setContentsMargins(0, 6, 0, 8); v.setSpacing(8)
+        kopf = QWidget(); v = QVBoxLayout(kopf); v.setContentsMargins(*RAND_ABSCHNITT); v.setSpacing(ABSTAND_MITTEL)
         v.addWidget(QLabel("Schrift im Text"))
         knoepfe = QHBoxLayout()
         klein, gross = QPushButton("A−  kleiner"), QPushButton("A+  größer")
         for k in (klein, gross):
-            k.setMinimumHeight(32); knoepfe.addWidget(k)
+            k.setMinimumHeight(HOEHE_FELD); knoepfe.addWidget(k)
         knoepfe.addStretch(1)
         v.addLayout(knoepfe)
         zeile = QHBoxLayout()
         probe = QLabel("So groß schreibst du.")
         probe.setObjectName("optVorschau")
         stand = QLabel()
-        stand.setStyleSheet("color: palette(window-text); font-size: 9pt;")
+        stand.setStyleSheet("color: palette(window-text); font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
         zeile.addWidget(probe); zeile.addWidget(stand); zeile.addStretch(1)
         v.addLayout(zeile)
 
@@ -156,9 +167,9 @@ class AnsichtSeiten:
         p.haken(f, "ui/weich", "Weicher Kontrast", False, lambda _: self.w.set_theme(self.w.settings.get("theme", "system")))
         p.wahl(f, "ui/icongroesse", "Größe der Symbole", [("Klein", "klein"), ("Mittel", "mittel"), ("Groß", "gross")], "mittel",
                lambda _: self.w.ansicht_optionen_anwenden())
-        regler = QWidget(); rv = QVBoxLayout(regler); rv.setContentsMargins(0, 6, 0, 8); rv.addWidget(QLabel("Schrift der Bedienung"))
+        regler = QWidget(); rv = QVBoxLayout(regler); rv.setContentsMargins(*RAND_ABSCHNITT); rv.addWidget(QLabel("Schrift der Bedienung"))
         rh = QHBoxLayout()
-        sl = QSlider(Qt.Horizontal); sl.setRange(80, 140); sl.setSingleStep(5); sl.setPageStep(10); sl.setMinimumHeight(32)
+        sl = QSlider(Qt.Horizontal); sl.setRange(80, 140); sl.setSingleStep(5); sl.setPageStep(10); sl.setMinimumHeight(HOEHE_FELD)
         sl.setAccessibleName("Schrift der Bedienung in Prozent")
         sl.setValue(p.s.get_int("ui/bedien_prozent", 100))
         prozent = QLabel(f"{sl.value()} %"); prozent.setStyleSheet("color: palette(window-text);")

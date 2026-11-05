@@ -3,9 +3,23 @@ from __future__ import annotations
 
 import json
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 from lunivo_writer.ui.baukasten.beschriftung import md_label
+from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FormularGitter, tabellen_gitter
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_GROSS,
+    ABSTAND_MITTEL,
+    ABSTAND_NORMAL,
+    ABSTAND_SPALTE,
+    BREITE_KNOPF_PFEIL,
+    HOEHE_LISTE_BEFEHLE,
+    ICON_GROSS,
+    RAND_KEIN,
+    RAND_OBEN_KLEIN,
+    RAND_OBEN_SEITE,
+    RAND_ZEILE,
+)
 
 
 class BefehleSeiten:
@@ -15,7 +29,7 @@ class BefehleSeiten:
     def _zwei_listen(self, p, links_kopf: str, rechts_kopf: str, hinzu: str, weg: str, kategorie: str):
         """Gerüst der Vorlage: links „Befehle auswählen“ (Auswahl, Suche, Liste), in der Mitte Hinzufügen/Entfernen, rechts die Liste
         der aktuellen Einträge mit Pfeilen. Gibt (links, rechts, suche, b_hinzu, b_weg, auf, ab, unten) zurück."""
-        w = QWidget(); g = QGridLayout(w); g.setContentsMargins(0, 8, 0, 0); g.setHorizontalSpacing(14); g.setVerticalSpacing(6)
+        w = QWidget(); g = tabellen_gitter(w, rand=RAND_OBEN_SEITE, waagerecht=ABSTAND_SPALTE, senkrecht=ABSTAND_NORMAL)       # Zwei-Listen-Gerüst: Spalten mit festen Aufgaben, Listen über mehrere Zeilen
         g.setColumnStretch(0, 5); g.setColumnStretch(2, 5)
         g.addWidget(QLabel(links_kopf), 0, 0)
         kopf = QHBoxLayout()
@@ -23,22 +37,22 @@ class BefehleSeiten:
         suche = QLineEdit(); suche.setPlaceholderText("Befehl suchen"); suche.setClearButtonEnabled(True)
         kopf.addWidget(auswahl, 1); kopf.addWidget(suche, 1)
         g.addLayout(kopf, 1, 0)
-        links = QListWidget(); links.setMinimumHeight(250); links.setIconSize(QSize(18, 18))
+        links = QListWidget(); links.setMinimumHeight(HOEHE_LISTE_BEFEHLE); links.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         g.addWidget(links, 2, 0)
         mitte = QVBoxLayout(); mitte.addStretch(1)
         b_hinzu = QPushButton(hinzu); b_weg = QPushButton(weg)
         mitte.addWidget(b_hinzu); mitte.addWidget(b_weg); mitte.addStretch(1)
         g.addLayout(mitte, 2, 1)
         g.addWidget(QLabel(rechts_kopf), 0, 2)
-        rechts = QListWidget(); rechts.setMinimumHeight(250); rechts.setIconSize(QSize(18, 18))
+        rechts = QListWidget(); rechts.setMinimumHeight(HOEHE_LISTE_BEFEHLE); rechts.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         pf = QVBoxLayout()
         auf = QPushButton("▲"); ab = QPushButton("▼")
         for b in (auf, ab):
-            b.setFixedWidth(34)
+            b.setFixedWidth(BREITE_KNOPF_PFEIL)
         pf.addStretch(1); pf.addWidget(auf); pf.addWidget(ab); pf.addStretch(1)
         rz = QHBoxLayout(); rz.addWidget(rechts, 1); rz.addLayout(pf)
         g.addLayout(rz, 1, 2, 2, 1)
-        unten = QHBoxLayout(); unten.setContentsMargins(0, 4, 0, 0)
+        unten = QHBoxLayout(); unten.setContentsMargins(*RAND_OBEN_KLEIN)
         g.addLayout(unten, 3, 0, 1, 3)
         p.lay.addWidget(w)
         return links, rechts, suche, b_hinzu, b_weg, auf, ab, unten
@@ -92,13 +106,14 @@ class BefehleSeiten:
         from PySide6.QtWidgets import QMenu
         unten.addWidget(QLabel("Tastenkombinationen:"))
         tk = QPushButton("Anzeigen …")
-        tk.clicked.connect(lambda: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).show())
+        tk.clicked.connect(lambda: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).exec())
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel("Anpassungen:"))
         zr = QPushButton("Zurücksetzen ▾")
-        m = QMenu(zr)
-        m.addAction("Nur das Menüband", lambda: (self.w.settings.remove("ui/register_plan"), self._band_merken(), self._band_jetzt()))
-        m.addAction("Alle Anpassungen (Register, Schnellzugriff, Symbole) …", self.w.befehle.vorlagenZurueck)
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe(zr)
+        m.eintrag("Nur das Menüband", lambda: (self.w.settings.remove("ui/register_plan"), self._band_merken(), self._band_jetzt()))
+        m.eintrag("Alle Anpassungen (Register, Schnellzugriff, Symbole) …", self.w.befehle.vorlagenZurueck)
         zr.setMenu(m)
         unten.addWidget(zr)
         f = p.gruppe("Aussehen")
@@ -121,7 +136,7 @@ class BefehleSeiten:
 
         def eintrag(aktion):
             sym, name = alle[aktion]
-            it = QListWidgetItem(icons.icon(sym, 18), name)
+            it = QListWidgetItem(icons.icon(sym, ICON_GROSS), name)
             it.setData(Qt.UserRole, aktion)
             return it
 
@@ -165,17 +180,17 @@ class BefehleSeiten:
         p = _Seite(self.w, titel)
         t = self.w.current_tab()
         f = p.gruppe("Kennwortschutz")
-        w = QWidget(); g = QGridLayout(w); g.setContentsMargins(0, 4, 0, 4); g.setHorizontalSpacing(10); g.setVerticalSpacing(8)
-        g.addWidget(QLabel("Dokumentkennwort"), 0, 0)
+        w = QWidget(); g = FormularGitter(w); g.setContentsMargins(*RAND_ZEILE)
+        g.beschriftung_voll = True; g.beschriftungsabstand = ABSTAND_GROSS; g.einspaltig = True
         k1 = QLineEdit(); k1.setEchoMode(QLineEdit.Password); k1.setPlaceholderText("Kennwort")
         k2 = QLineEdit(); k2.setEchoMode(QLineEdit.Password); k2.setPlaceholderText("Kennwort erneut eingeben")
-        g.addWidget(k1, 0, 1); g.addWidget(k2, 0, 2)
-        g.setColumnStretch(1, 1); g.setColumnStretch(2, 1)
+        zk = QHBoxLayout(); zk.setContentsMargins(*RAND_KEIN); zk.setSpacing(ABSTAND_GROSS); zk.addWidget(k1, 1); zk.addWidget(k2, 1)
+        g.zeile("Dokumentkennwort", zk)
         f.addRow(w)
         w.setProperty("optName", "Dokumentkennwort")
         stand = QLabel(); stand.setWordWrap(True)
         setzen = QPushButton("Kennwort setzen"); weg = QPushButton("Kennwort entfernen")
-        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(0, 0, 0, 0)
+        zeile = QWidget(); h = QHBoxLayout(zeile); h.setContentsMargins(*RAND_KEIN)
         h.addWidget(setzen); h.addWidget(weg); h.addStretch(1)
         f.addRow(zeile)
         f.addRow(stand)
@@ -221,12 +236,12 @@ class BefehleSeiten:
     def _verfolgen(self, titel):
         p = _Seite(self.w, titel)
         f = p.gruppe("Änderungen verfolgen")
-        b = QCheckBox("Änderungen im aktuellen Dokument verfolgen")
+        b = UmbruchSchalter("Änderungen im aktuellen Dokument verfolgen")
         e = self.w.current_editor()
         b.setChecked(bool(e and e.verfolgen)); b.setEnabled(e is not None)
         b.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_verfolgen(on))
         f.addRow(b)
-        m = QCheckBox("Markup anzeigen (Kommentare, Einfügungen, Löschungen)")
+        m = UmbruchSchalter("Markup anzeigen (Kommentare, Einfügungen, Löschungen)")
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)

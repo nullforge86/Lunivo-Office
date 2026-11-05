@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QMenu
 
 from lunivo_writer.core.befehle.text import ZEILENABSTAENDE
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import farben as BF
 from lunivo_writer.ui.baukasten import FarbPalette
 
 STRICHE = (0.5, 1.0, 2.0, 3.0, 5.0, 8.0)
@@ -60,6 +61,19 @@ class TextToolsBefehle:
             return
         if 1 <= pt <= 400:
             self._wa_set(pt=pt)
+
+
+    # ---- Tabellentools: Schrift der Schreibmarke / markierten Zellen (Felder tab_font, tab_groesse) ----
+    def tabSchriftart(self, name):
+        self.w._ed(lambda e: (e.set_font_family(str(name)), e.setFocus()))
+
+
+    def tabGroesse(self, pt):
+        try:
+            pt = float(str(pt).replace(",", "."))
+        except ValueError:
+            return
+        self.w._ed(lambda e: (e.set_font_size(pt), e.setFocus()))
 
 
     def _tt_pt(self, delta):
@@ -152,7 +166,7 @@ class TextToolsBefehle:
 
 
     def ttHervorJetzt(self, k=None):
-        self._wa_set(hervor=getattr(self, "_marker", "#ffec99"))
+        self._wa_set(hervor=getattr(self, "_marker", BF.VORGABE_MARKER))
 
 
     def menue_ttHervor(self):
@@ -283,9 +297,10 @@ class TextToolsBefehle:
 
 
     def menue_ttZeilenabstand(self):
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
         for f in ZEILENABSTAENDE:
-            m.addAction(f"{f:g}".replace(".", ","), lambda _=False, f=f: self._wa_set(zeilenabstand=f if f != 1.0 else None))
+            m.eintrag(f"{f:g}".replace(".", ","), lambda f=f: self._wa_set(zeilenabstand=f if f != 1.0 else None))
         return m
 
 
@@ -304,7 +319,7 @@ class TextToolsBefehle:
     @staticmethod
     def _wa_kachel(i: int) -> QPixmap:
         from lunivo_writer.editor import einfuegen as E
-        pm = QPixmap(QSize(40, 40)); pm.fill(QColor("#f3f4f6"))              # heller Kachelgrund: auch das schwarze „A“ ist im dunklen Thema zu sehen
+        pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))              # heller Kachelgrund: auch das schwarze „A“ ist im dunklen Thema zu sehen
         img = E.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
         p.drawImage((40 - img.width()) // 2, (40 - img.height()) // 2, img)
@@ -318,7 +333,7 @@ class TextToolsBefehle:
         from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
-            pm = QPixmap(QSize(40, 40)); pm.fill(QColor("#f3f4f6"))
+            pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
             img = E.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             p.drawImage((40 - img.width()) // 2, (40 - img.height()) // 2, img); p.end()
@@ -337,9 +352,9 @@ class TextToolsBefehle:
         m = FarbPalette(self.w, keine_text="Keine Kontur", titel="Textkontur")
         m.gewaehlt.connect(lambda c: self._wa_set(kontur=c.name() if c is not None else "", **({} if c is None else {"kontur_breite": self._wa().get("kontur_breite") or 1.5})))
         m.addSeparator()
-        st = m.addMenu("Linienstärke")
+        st = m.untermenue("Linienstärke")
         for w in STRICHE:
-            st.addAction(f"{w:g} pt".replace(".", ","), lambda _=False, w=w: self._wa_set(kontur_breite=w, kontur=self._wa().get("kontur") or Farbe.SCHWARZ))
+            st.eintrag(f"{w:g} pt".replace(".", ","), lambda w=w: self._wa_set(kontur_breite=w, kontur=self._wa().get("kontur") or Farbe.SCHWARZ))
         return m
 
 
@@ -361,7 +376,8 @@ class TextToolsBefehle:
         """Schatten, Spiegelung und Leuchteffekt mit Bildchen (wie bei Start ▸ Texteffekte); ``setzen(**teil)`` schreibt den Teil."""
         from lunivo_writer.editor import textfx
         from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
-        m = QMenu()
+        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        m = MenueListe()
 
         def untermenue(titel, keine):
             u = VoreinstellungMenue(m, keine=keine); u.setTitle(titel); m.addMenu(u)
@@ -395,7 +411,7 @@ class TextToolsBefehle:
         from lunivo_writer.ui.baukasten.objekt_menues import formstil_zeichner
         kacheln = []
         for k in FORMSTIL_KACHELN:
-            pm = QPixmap(QSize(52, 36)); pm.fill(QColor("#ffffff"))
+            pm = QPixmap(QSize(52, 36)); pm.fill(QColor(Farbe.PAPIER))
             p = QPainter(pm); formstil_zeichner(k)(p, QRectF(0, 0, 52, 36)); p.end()
             kacheln.append(("Formstil", pm, lambda k=k: self.ttFormstil(k)))
         from lunivo_writer.core.befehle.hilfen import FreiMenue
@@ -436,7 +452,7 @@ class TextToolsBefehle:
             BL.format_setzen(self.ed, z, fx=fx)
         m = self._effekt_menue(setze, "fx")
         m.addSeparator()
-        m.addAction("Weitere Effekte …", self.ttFormEffekte)
+        m.eintrag("Weitere Effekte …", self.ttFormEffekte)
         return m
 
 

@@ -21,6 +21,8 @@ from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.mass_feld import MassSpin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
 
 AUTOMATISCH = "Automatisch"
 
@@ -31,7 +33,7 @@ def _titel(text: str, feld) -> QLabel:
 
 
 def _feld(w, breite: int = 0):
-    w.setMinimumHeight(34)
+    w.setMinimumHeight(HOEHE_KNOPF)
     if breite:
         w.setMinimumWidth(breite)
     return w
@@ -78,7 +80,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self._text_teile = [self.inhalt, self.schrift, self.groesse, self.farbe, self.text_format, self.text_h, self.text_h_mm,
                             self.text_v, self.text_v_mm]
         # ---- Transparenz ----
-        self.transparenz = QSlider(Qt.Horizontal); self.transparenz.setRange(0, 100); self.transparenz.setMinimumWidth(60)
+        self.transparenz = QSlider(Qt.Horizontal); self.transparenz.setRange(0, 100); self.transparenz.setMinimumWidth(BREITE_REGLER_MIN)
         self.transparenz_zahl = _feld(QSpinBox(), 80); self.transparenz_zahl.setRange(0, 100); self.transparenz_zahl.setSuffix(" %")
         tz = QHBoxLayout(); tz.addWidget(self.transparenz, 1); tz.addWidget(self.transparenz_zahl)
         g.zeile(_titel("&Transparenz:", self.transparenz), tz)
@@ -189,13 +191,13 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         f = min(r.width() / pw, r.height() / ph)
         blatt = QRectF(r.center().x() - pw * f / 2, r.center().y() - ph * f / 2, pw * f, ph * f)
         p.save()
-        p.setPen(QColor("#a0a0a0"))                                  # Eckmarken des Satzspiegels wie in der Vorlage
+        p.setPen(QColor(Farbe.GRAU_HELL))                                  # Eckmarken des Satzspiegels wie in der Vorlage
         ml, mr = mm_to_px(self._page.margin_left_mm) * f, mm_to_px(self._page.margin_right_mm) * f
         mt, mb = mm_to_px(self._page.margin_top_mm) * f, mm_to_px(self._page.margin_bottom_mm) * f
         l = 6
         for x, y, dx, dy in ((blatt.left() + ml, blatt.top() + mt, -1, -1), (blatt.right() - mr, blatt.top() + mt, 1, -1),
                              (blatt.left() + ml, blatt.bottom() - mb, -1, 1), (blatt.right() - mr, blatt.bottom() - mb, 1, 1)):
-            p.setPen(QPen(QColor("#a0a0a0"), 1))
+            p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1))
             p.drawLine(x, y, x + dx * l, y); p.drawLine(x, y, x, y + dy * l)
         p.translate(blatt.topLeft()); p.scale(f, f)
         WZ.zeichnen(p, self.ergebnis(), QRectF(0, 0, pw, ph))

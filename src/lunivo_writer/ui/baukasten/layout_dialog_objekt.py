@@ -15,8 +15,9 @@ from functools import partial
 
 from PySide6.QtWidgets import QGroupBox, QPushButton
 
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.formular_gitter import gruppe, FormularGitter
 from lunivo_writer.ui.baukasten.layout_dialog import LayoutDialog
+from lunivo_writer.ui.baukasten.mass import RAND_DIALOG_GRUPPE
 
 OHNE_ORIGINAL = ("smartart",)                           # Arten ohne Originalgröße (Drehung, Original-Skalierung, Zurücksetzen gesperrt)
 
@@ -44,7 +45,7 @@ class LayoutDialogObjekt(LayoutDialog):
     def _abstand_ordnen(self) -> None:
         alt = self._abstand_box
         seite = alt.parentWidget()
-        neu = QGroupBox(alt.title()); g = FormularGitter(neu); g.setContentsMargins(0, 6, 0, 2)
+        neu = gruppe(alt.title()); g = FormularGitter(neu); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         for schl, text in (("oben", "Oben"), ("unten", "Unten"), ("links", "Links"), ("rechts", "Rechts")):
             g.zeile(text + ":", self.abstand[schl])
         seite.layout().replaceWidget(alt, neu)

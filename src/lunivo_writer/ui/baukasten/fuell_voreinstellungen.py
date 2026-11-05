@@ -18,8 +18,9 @@ from lunivo_writer.ui.baukasten import farben
 from lunivo_writer.ui.baukasten.kopf_dropdown import keine_symbol
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN, _textur, graduell_pixmap
 from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
+from lunivo_writer.ui.baukasten.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
 
-KACHEL = QSize(16, 16)
+KACHEL = QSize(*GROESSE_FUELLVORGABE_KACHEL)
 BREITE = 222                                       # Breite des Popups in der Vorlage (px)
 MUSTER_AUSWAHL = ("pct5", "pct10", "pct20", "pct30", "pct50")            # von dünn nach dicht
 TEXTUR_AUSWAHL = tuple(k for k, _n in TEXTUREN[:5])
@@ -27,7 +28,7 @@ TEXTUR_AUSWAHL = tuple(k for k, _n in TEXTUREN[:5])
 
 def graduell_paar(farbe: str) -> tuple[str, str]:
     """(dunkel, hell) der graduellen Füllung einer Grundfarbe."""
-    return QColor(farbe).name(), farben.mische(farbe, "#ffffff", 0.7)
+    return QColor(farbe).name(), farben.mische(farbe, Farbe.WEISS, 0.7)
 
 
 def _feld(farbe: str, groesse: QSize = KACHEL) -> QPixmap:
@@ -37,13 +38,13 @@ def _feld(farbe: str, groesse: QSize = KACHEL) -> QPixmap:
 
 
 def _gekachelt(kachel: QPixmap, groesse: QSize) -> QPixmap:
-    pm = QPixmap(groesse); pm.fill(QColor("white"))
+    pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.drawTiledPixmap(pm.rect(), kachel); p.end()
     return pm
 
 
-def _muster_kachel(key: str, farbe: str = Farbe.TINTE) -> QPixmap:
-    return M.kachel(key, farbe, Farbe.WEISS)
+def _muster_kachel(key: str, farbe: str | None = None) -> QPixmap:
+    return M.kachel(key, Farbe.TINTE if farbe is None else farbe, Farbe.WEISS)
 
 
 def fuell_bild(spec: dict, groesse: QSize) -> QPixmap:
@@ -77,6 +78,6 @@ class FuellPalette(FarbPalette):
 
 def fuell_menue(parent: QWidget | None = None, aktuell: str = "") -> FarbPalette:
     namen = dict(TEXTUREN)
-    reihen = [("Musterfüllung", [(f"muster:{k}", _gekachelt(_muster_kachel(k), QSize(18, 18)), M.name_von(k)) for k in MUSTER_AUSWAHL]),
+    reihen = [("Musterfüllung", [(f"muster:{k}", _gekachelt(_muster_kachel(k), QSize(*GROESSE_MUSTER_KACHEL)), M.name_von(k)) for k in MUSTER_AUSWAHL]),
               ("Strukturfüllung", [(f"textur:{k}", _textur(k, 18), namen[k]) for k in TEXTUR_AUSWAHL])]
     return FuellPalette(parent, aktuell, keine_text="Keine Füllung", verlauf=True, reihen=reihen, titel="Füllung")
