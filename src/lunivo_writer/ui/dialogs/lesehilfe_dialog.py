@@ -14,6 +14,7 @@ from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig, leiste_fuer
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 PAPIERTOENE = {"Weiß": Farbe.WEISS, "Creme": "#fbf4e2", "Gelblich": "#fff7cc", "Hellblau": "#e6f0fa",
                "Hellgrün": "#e8f5e9", "Hellgrau": "#eceff1"}
 VORGABEN = {"papier": "Weiß", "buchstaben": 0.0, "wort": 0.0, "zeilenluft": 1.0, "zeilenfokus": False, "groesser": "keine", "zurueck": "keine"}
@@ -34,7 +35,7 @@ class LesehilfeDialog(PanelFaehig, QDialog):
         self.felder: dict[str, QComboBox] = {}
 
         def feld(schluessel: str, text: str, eintraege, standard) -> QComboBox:
-            c = QComboBox()
+            c = Auswahlfeld()
             for anzeige, wert in eintraege:
                 c.addItem(anzeige, wert)
             akt = s.get("lesehilfe/" + schluessel, standard)

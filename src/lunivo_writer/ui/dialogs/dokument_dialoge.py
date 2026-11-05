@@ -11,6 +11,7 @@ from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
 from lunivo_writer.ui.baukasten.mass import RAND_KEIN
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 def _titel(text: str, feld) -> QLabel:
     t = QLabel(text); t.setBuddy(feld)
     return t
@@ -22,9 +23,9 @@ class PageSetupDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Seite einrichten")
         self.page = page.copy()
         inhalt = QWidget(); form = FormularGitter(inhalt)
-        self.paper = QComboBox(); self.paper.addItems(list(PAPER_MM) + ["Benutzerdefiniert"])
+        self.paper = Auswahlfeld(); self.paper.addItems(list(PAPER_MM) + ["Benutzerdefiniert"])
         self.paper.setCurrentText(page.paper_name())
-        self.orient = QComboBox(); self.orient.addItems(["Hochformat", "Querformat"])
+        self.orient = Auswahlfeld(); self.orient.addItems(["Hochformat", "Querformat"])
         self.orient.setCurrentIndex(1 if page.landscape else 0)
         self.top = _spin(page.margin_top_mm); self.bottom = _spin(page.margin_bottom_mm)
         self.left = _spin(page.margin_left_mm); self.right = _spin(page.margin_right_mm)
@@ -69,7 +70,7 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         self.setWindowTitle(title)
         self.text = QPlainTextEdit(hf.text)
         self.text.setPlaceholderText("Text eingeben. {PAGE} = Seitenzahl, {PAGES} = Seitenanzahl")
-        self.align = QComboBox(); self.align.addItems(["Links", "Zentriert", "Rechts", "Außen", "Innen"])
+        self.align = Auswahlfeld(); self.align.addItems(["Links", "Zentriert", "Rechts", "Außen", "Innen"])
         self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2, "aussen": 3, "innen": 4}.get(hf.align, 1))
         b = QPushButton("Seitenzahl einfügen")
         b.clicked.connect(lambda: self.text.insertPlainText("{PAGE}"))
@@ -216,12 +217,12 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         # ---- Tabelle
         s = QWidget(); g = FormularGitter(s)
-        self.art = QComboBox()
+        self.art = Auswahlfeld()
         for k, n in (("auto", "Automatisch"), ("prozent", "Prozent des Textbereichs"), ("fest", "Feste Breite")):
             self.art.addItem(n, k)
         self.breite = QSpinBox(); self.breite.setRange(10, 100); self.breite.setSuffix(" %")
         self.fest = EinheitFeld(0.0, 5.0, 1000.0, ("mm", "cm", "in"), "cm")
-        self.ausr = QComboBox(); self.ausr.addItems(self.AUSRICHTUNGEN)
+        self.ausr = Auswahlfeld(); self.ausr.addItems(self.AUSRICHTUNGEN)
         g.zeile("Breite", self.art)
         g.reihe(("Prozent", self.breite), ("Feste Breite", self.fest))
         g.zeile("Ausrichtung", self.ausr)
@@ -239,7 +240,7 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
         self.sp_fest = UmbruchSchalter("Bevorzugte Breite der Spalte"); self.spalte = EinheitFeld(0.0, 5.0, 1000.0, ("mm", "cm", "in"), "cm")
         zg.breit(abschnittstitel("Spalte")); zg.breit(self.sp_fest); zg.zeile("Breite", self.spalte)
         zg.breit(abschnittstitel("Zelle"))
-        self.senkrecht = QComboBox()
+        self.senkrecht = Auswahlfeld()
         for k, n in (("oben", "Oben"), ("mitte", "Mittig"), ("unten", "Unten")):
             self.senkrecht.addItem(n, k)
         zg.zeile("Senkrechte Ausrichtung", self.senkrecht)

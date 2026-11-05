@@ -21,6 +21,17 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 | `bild_export.py` | `BildExportFenster`: „Als Bild exportieren“ — Karten „Jede Seite“ / „Langes Bild“, Wasserzeichen, Qualität, Format, Zielordner; `ErfolgFenster` danach mit Öffnen / Ordner öffnen. Geschrieben wird in `services/bild_export.py` | `BildWahl` oder `None` |
 | `pdf_export.py` | `PdfExportFenster`: „PDF-Datei exportieren“ — Reiter Allgemein (Speichern unter, Seitenbereich, Exportoptionen) und Berechtigungseinstellungen (Verschlüsseln, Kennwörter, Rechte, Druck); unten „Nach Abschluss des Exports schließen“. Schreibt nichts selbst: der Aufrufer gibt `exportieren(PdfWahl) -> bool` mit, Seitenbereich, Markierung und Verschlüsselung stecken in `services/pdf_export.py` | `PdfWahl` oder `None` |
 
+## Dropdown-Pyramide (jede Stufe baut auf der darunter auf)
+
+| Stufe | Zuständig | Datei | Stand |
+|---|---|---|---|
+| 1 Öffnungsverhalten (Lage in Fenster und Bildschirm) | `PopupWaechter`, `popup_klemmen` | `ui/baukasten/popup_lage.py`, eingehängt in `core/application.py` | gilt für jedes `Qt.Popup`-Fenster |
+| 2 Größe und Skalierung (Zeilenhöhe so kompakt wie möglich, sichtbare Zeilen, Breite, Kürzung) | `DROPDOWN_ZEILE_PAD_V`, `DROPDOWN_MAX_ZEILEN` in `mass.py`; `popup_begrenzen`, Kürz-Delegate | `ui/baukasten/mass.py`, `auswahlfeld.py` | Auswahlfeld und Menüs (Stylesheet `PADDING_MENUEEINTRAG_GLOBAL`) nutzen dieselbe Quelle |
+| 3 Aussehen (Farbe, Rand, Radius, Pfeil, Auswahlfarbe) | Stylesheet-Regeln `QComboBox`, `QMenu` | `ui/theme.py` | zentral; keine Farben in Widget-Stylesheets |
+| 4 Bausteine | `Auswahlfeld`, `Schriftauswahl`, `MenueListe` (und `RasterAuswahl`, `GalerieAuswahl`, Kopf-Dropdowns), Überlaufmenü „•••“ der `FlacheReiterLeiste` | `ui/baukasten/` | bauen auf 1–3 auf |
+
+Eine Änderung gehört in die tiefste Stufe, die sie betrifft: Lage → Stufe 1, Maße → Stufe 2, Farbe → Stufe 3; Bausteine ändern daran nichts.
+
 ## Regeln
 
 1. **Ein Popup liefert einen Wert** — `QColor` oder `None` („Keine Farbe“). Es kennt den Aufrufer nicht.
@@ -31,6 +42,7 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
    `LinienWahl`/`Linie`, wer ein Maß braucht, `MassSpin`.
 
 6. **Farben nur im Thema:** Ein Widget-Stylesheet trägt keine Akzentfarbe (`Farbe.AKZENT*`, `AUSWAHL`, Hex). Es setzt die Eigenschaft `akzentSchrift`, `akzentRand` oder `akzentFlaeche` (Chip-Marken: `texte.marke_faerben`), die Knöpfe `optFertig`/`sfSpeichern` bekommen ihre Farbe aus `ui/theme.py`, sonst gilt `palette(highlight)`/`palette(highlighted-text)`. Die Mint-Ersetzung von Blautönen in Widget-Stylesheets gibt es nicht mehr.
+7. **Kein `QComboBox(` außerhalb von `auswahlfeld.py`:** Dropdowns sind `Auswahlfeld`/`Schriftauswahl` (Wächter: `tests/test_main_window.py::test_kein_combobox_ausser_auswahlfeld`, Liste `COMBO_NOCH_ERLAUBT` darf nur kleiner werden).
 ## Wer den Baukasten benutzt
 
 - **Band** (`core/commands.py`): Schriftfarbe, Hervorheben, Seitenfarbe, Absatz- und Tabellenschattierung, Formfüllung,
@@ -99,6 +111,8 @@ Jeder Baustein macht genau eine Sache:
 | `PanelFaehig` | `zusatz_panel.py` | Markierung für ein Fenster: `exec()` zeigt es in der Seitenleiste (sonst wie bisher als Fenster) |
 | `ZusatzPanel` | `zusatz_panel.py` | die Seite in der Seitenleiste: Kopf mit Titel und ✕, Rollbereich ohne seitliche Leiste, Unterfenster mit „←“; Kopfzeile = `panel_kopf` aus `panel_rahmen.py` (dieselbe wie `PanelRahmen` und „Formatierung“), Ränder `PANEL_KOPF_RAND`/`PANEL_INHALT_RAND` |
 | `FormularGitter` | `formular_gitter.py` | Felder, die sich der Breite anpassen: `zeile(Beschriftung, Feld)`, `breit(Feld)`, `reihe((Beschr., Feld), …)`. Breit: zwei Paare nebeneinander; schmal: eines je Zeile; sehr schmal: Beschriftung über dem Feld |
+| `Auswahlfeld` / `Schriftauswahl` | `auswahlfeld.py` | Das eine Dropdown (Drop-in für `QComboBox`/`QFontComboBox`): Feldbreite folgt dem Layout, Aufklappliste nie breiter als das Fenster/die Seitenleiste, Zeilen so kompakt wie Menüzeilen (Schrifthöhe + 2 × `DROPDOWN_ZEILE_PAD_V`), lange Texte mittig gekürzt. `popup_begrenzen(combo)` ist der geteilte Teil |
+| `PopupWaechter` / `popup_klemmen` | `popup_lage.py` | Das eine Öffnungsverhalten aller aufklappenden Fenster (Menüs, Klapplisten, Popup-Widgets): Ein Filter an der Anwendung (`core/application.py`) rückt jedes `Qt.Popup`-Fenster in Programmfenster ∩ Bildschirm. Einzelne Stellen tun nichts; `Auswahlfeld` nutzt dieselbe Funktion |
 | `AngepassteReiter` | `formular_gitter.py` | Reiter, deren Höhe dem gewählten Reiter folgt (kein leerer Platz unter kurzen Reitern) |
 | `UmbruchSchalter` | `formular_gitter.py` | Ankreuzfeld, dessen langer Text umbricht |
 | `FlussLayout` | `formular_gitter.py` | Reihe von Feldern, die wie Text umbricht (Beschriftung und Feld bleiben beisammen) |

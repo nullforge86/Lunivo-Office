@@ -47,6 +47,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_FENSTER_LISTE,
     RAND_KEIN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 PLATZHALTER = "①"
 _SCHLUESSEL = "listen/benutzer"
 _KACHEL = QSize(*GROESSE_LISTENSTIL_KACHEL) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen
@@ -108,7 +109,7 @@ class _Zahlenformat(QWidget):
         self.format = QLineEdit(); self.format.setToolTip(tipp)
         self.schrift = QPushButton("Schriftart …"); self.schrift.clicked.connect(self._schriftart)
         self.zeichen: dict = {}
-        self.art = QComboBox()
+        self.art = Auswahlfeld()
         for k, st in L.STILE.items():
             if not st[1]:
                 self.art.addItem(st[0], k)
@@ -153,7 +154,7 @@ class _Positionen(QWidget):
         super().__init__()
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN)
         g1 = gruppe("Nummernposition"); a = FormularGitter(g1); a.setContentsMargins(*RAND_DIALOG_GRUPPE)
-        self.art = QComboBox()
+        self.art = Auswahlfeld()
         for k, name in (("links", "Links"), ("mitte", "Zentriert"), ("rechts", "Rechts")):
             self.art.addItem(name, k)
         self.ausr = EinheitFeld(0.0, 0.0, 300.0, ("mm", "cm", "in", "pt"))
@@ -303,7 +304,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.zf = _Zahlenformat("① bis ⑨ stehen für die Nummern der Ebenen 1 bis 9", breit=True)
         self.format, self.art, self.start, self.schrift = self.zf.format, self.zf.art, self.zf.start, self.zf.schrift
         g.breit(self.zf)
-        self.vorher = QComboBox()
+        self.vorher = Auswahlfeld()
         g.zeile("Vorherige Nummerierungsebene:", self.vorher)
         g.breit(self.schrift)
         v.addWidget(grp)
@@ -315,14 +316,14 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.unten = QWidget(); ug = FormularGitter(self.unten); ug.setContentsMargins(*RAND_KEIN)
         self.position = _Positionen(); ug.breit(self.position)
         self.norm = UmbruchSchalter("Nummerieren nach Norm")
-        self.vorlage = QComboBox(); self.vorlage.addItem("(Keine Formatvorlage)", "")
+        self.vorlage = Auswahlfeld(); self.vorlage.addItem("(Keine Formatvorlage)", "")
         from lunivo_writer.editor import stile
         for n in stile.namen():
             self.vorlage.addItem(n, n)
-        self.danach = QComboBox()
+        self.danach = Auswahlfeld()
         for k, name in (("tab", "Tabstoppzeichen"), ("leer", "Leerzeichen"), ("nichts", "Nichts")):
             self.danach.addItem(name, k)
-        self.neu = UmbruchSchalter("Neu nummerieren nach:"); self.neu_ebene = QComboBox()
+        self.neu = UmbruchSchalter("Neu nummerieren nach:"); self.neu_ebene = Auswahlfeld()
         ug.breit(self.norm)
         ug.zeile("Verbinden mit Formatvorlage:", self.vorlage)
         ug.zeile("Text danach:", self.danach)
@@ -460,10 +461,9 @@ class ListenDialog(PanelFaehig, QDialog):
     ALS_PANEL = True                                          # öffnet sich in der Seitenleiste (siehe zusatz_panel)
 
     def kompakt_machen(self) -> None:
-        """Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter zum Rollen, Fenster ohne feste Größe."""
+        """Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter mit Überlauf hinter „•••“, Fenster ohne feste Größe."""
         self._fueller = [_KachelFueller(w, 4) for w in (self.r_punkte, self.r_zahlen, self.r_gl)]       # vier Kacheln je Zeile, die ganze Breite ausgefüllt
         self.liste.setMinimumHeight(HOEHE_ZEILE_ZULETZT); self.liste.setMaximumHeight(HOEHE_TEXT_NORMAL); self.vorschau.setFixedHeight(HOEHE_LISTENVORSCHAU)
-        self.reiter.setUsesScrollButtons(True); self.reiter.tabBar().setExpanding(False); self.reiter.tabBar().setElideMode(Qt.ElideNone)
         for i, (kurz, voll) in enumerate((("Aufzählung", "Aufzählungszeichen"), ("Nummern", "Nummerierung"), ("Gliederung", "Gliederung nummeriert"),
                                           ("Eigene", "Benutzerdefinierte Liste"))):
             self.reiter.setTabText(i, kurz); self.reiter.setTabToolTip(i, voll)

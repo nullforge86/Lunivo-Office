@@ -38,6 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_POPUP_SEITE,
     RAND_POPUP_UNTERTEXT,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 # Grautöne der Diagramm-Sinnbilder: bewusst feste Farben, unabhängig vom Thema.
 SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = "#d4d4d4", "#9a9a9a", "#6e6e6e"
@@ -380,7 +381,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
     v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_DICHT)
-    cb = QComboBox(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
+    cb = Auswahlfeld(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
     zeile = QHBoxLayout(); zeile.setContentsMargins(*RAND_KEIN); zeile.setSpacing(ABSTAND_KLEIN)          # wie in der Vorlage nebeneinander unter dem Feld

@@ -33,6 +33,7 @@ from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.editor.linie import OBJEKT_STRICHE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_SPALTE, GROESSE_ABSCHLUSS_KACHEL, ICON_NORMAL, RAND_FORMATSEITE
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/linie.py)
 WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
@@ -191,11 +192,11 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         self.g_farbe.zeile("Farbe:", self.farbe)
         self.v1, self.v2 = FarbFeld(Farbe.BLAU_DUNKEL, "Dunkle Farbe"), FarbFeld(Farbe.BLAU_HELL, "Helle Farbe")
         self.g_verlauf.zeile("Farbe 1:", self.v1); self.g_verlauf.zeile("Farbe 2:", self.v2)
-        self.textur = QComboBox()
+        self.textur = Auswahlfeld()
         for schl, name in TEXTUREN:
             self.textur.addItem(name, schl)
         self.g_textur.zeile("Struktur:", self.textur)
-        self.muster = QComboBox()
+        self.muster = Auswahlfeld()
         for schl, name, _o in M.MUSTER:
             if schl != "loeschen":
                 self.muster.addItem(M.name_von(schl), schl)

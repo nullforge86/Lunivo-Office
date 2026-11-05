@@ -13,6 +13,7 @@ from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
 from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 RICHTUNGEN = (("waagerecht", "Horizontal"), ("dreh90", "Um 90° drehen"), ("dreh270", "Um 270° drehen"), ("gestapelt", "Gestapelt"))
 _PT = 72.0                                                   # Punkt je Inch
@@ -27,7 +28,7 @@ class TextfeldAbschnitt(Abschnitt):
 
     def __init__(self, parent=None):
         super().__init__("Ausrichtung")
-        self.vertikal, self.richtung = QComboBox(), QComboBox()
+        self.vertikal, self.richtung = Auswahlfeld(), Auswahlfeld()
         for k, n in F.VERTIKAL:
             self.vertikal.addItem(n, k)
         for k, n in RICHTUNGEN:

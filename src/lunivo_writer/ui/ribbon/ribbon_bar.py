@@ -12,7 +12,7 @@ from lunivo_writer.core import paths
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
-    QCheckBox, QFontComboBox, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QTabBar, QToolButton,
+    QCheckBox, QFontComboBox, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QToolButton,
     QVBoxLayout, QWidget,
 )
 
@@ -21,6 +21,7 @@ from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
 from lunivo_writer.ui.document.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.theme import kopf_symbolfarbe
@@ -54,6 +55,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_BANDGRUPPE_TITEL,
     SCHRIFT_BANDKNOPF,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Schriftauswahl
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
@@ -300,7 +302,7 @@ def _zweizeilig(text: str) -> str:
 STANDARD_VERSTECKT = ("Sendungen",)
 
 
-class _ReiterLeiste(QTabBar):
+class _ReiterLeiste(UeberlaufLeiste):
     doppelt = Signal()
     LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
     LUECKE_KOMPAKT = 5
@@ -329,7 +331,7 @@ class _ReiterLeiste(QTabBar):
         akzent = QColor(Farbe.KONTEXT or (Farbe.AKZENT_DUNKEL if dunkel else Farbe.AKZENT))
         erster = True
         for i in range(self.count()):
-            if not self.isTabVisible(i) or not self.ist_kontext(i):
+            if not self.gezeigt(i) or not self.ist_kontext(i):
                 continue
             tr = self.tabRect(i)
             p.fillRect(tr.adjusted(0, tr.height() - 4, 0, 0), self.parentWidget().palette().window())   # Stylesheet-Unterstrich weg
@@ -674,7 +676,7 @@ class RegisterBand(QWidget):
     def _knoepfe_tt_schrift(self, g: dict, inhalt: QHBoxLayout, art: str = "tt"):
         """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
         ``art="tab"`` (Tabellentools): dieselben Felder, aber sie wirken auf den Text der Schreibmarke / der markierten Zellen (Felder ``tab_font``, ``tab_groesse``)."""
-        font = schrift_feld(QFontComboBox())
+        font = schrift_feld(Schriftauswahl())
         groesse = groesse_feld()
         if art == "tab":
             def pt_setzen(*_):

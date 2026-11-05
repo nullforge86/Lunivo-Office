@@ -35,6 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_SCHREIBHILFE_BANNER,
     RAND_SEITENLEISTE_TABS,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -109,7 +110,7 @@ class SchreibhilfePanel(QWidget):
         from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
         kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
         fw = kleintext_label("Für wen")
-        self.thema = QComboBox()
+        self.thema = Auswahlfeld()
         for name in EMPFAENGER:
             self.thema.addItem(name)
         self.thema.setCurrentText(self.a.thema)

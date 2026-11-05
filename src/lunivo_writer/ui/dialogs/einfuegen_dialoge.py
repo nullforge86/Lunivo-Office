@@ -38,6 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_HINWEIS,
     ZUGABE_KACHEL,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 def _ok(dlg):
     return knopfzeile(dlg)
 
@@ -89,7 +90,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         super().__init__(parent)
         self.setWindowTitle("Form einfügen")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
-        self.art = QComboBox(); self.art.addItems(E.FORMEN)
+        self.art = Auswahlfeld(); self.art.addItems(E.FORMEN)
         if form:
             self.art.setCurrentText(form)
         self.fuell = _Farbknopf(Farbe.AKZENT_DUNKEL, "Füllfarbe"); self.linie = _Farbknopf(VORGABE_LINIE, "Linienfarbe")
@@ -210,7 +211,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.beschreibung.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
         v.addWidget(self.name); v.addWidget(self.beschreibung)
         self._vorschau_bauen(v)
-        self.farben = QComboBox(); self.farben.addItems(list(SA.FARBEN))
+        self.farben = Auswahlfeld(); self.farben.addItems(list(SA.FARBEN))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
         self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
         self.text.setMinimumHeight(HOEHE_EINGABE_TEXT)
@@ -257,9 +258,9 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         farbe = Farbe.AKZENT if farbe is None else farbe
         self.setWindowTitle("WordArt")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
-        self.text = QLineEdit(text or "Ihr Text"); self.stil = QComboBox(); self.stil.addItems(E.WORDART_STILE)
+        self.text = QLineEdit(text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
-        self.vorlage = QComboBox(); self.vorlage.addItem("(eigener Stil)")
+        self.vorlage = Auswahlfeld(); self.vorlage.addItem("(eigener Stil)")
         self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
         self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
         self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
@@ -402,7 +403,7 @@ class DeckblattDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Deckblatt")
         v = QVBoxLayout(self); f = FormularGitter(); v.addLayout(f)
-        self.vorlage = QComboBox(); self.vorlage.addItems(E.DECKBLATT_VORLAGEN)
+        self.vorlage = Auswahlfeld(); self.vorlage.addItems(E.DECKBLATT_VORLAGEN)
         self.titel = QLineEdit("Titel des Dokuments"); self.unter = QLineEdit(); self.autor = QLineEdit(autor)
         self.datum = QLineEdit(E.datum_text("d. MMMM yyyy"))
         for lab, w in (("Vorlage", self.vorlage), ("Titel", self.titel), ("Untertitel", self.unter), ("Autor", self.autor), ("Datum", self.datum)):
@@ -421,7 +422,7 @@ class DatumDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         g = FormularGitter(); v.addLayout(g)
         self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate")
-        self.sprache = QComboBox(); self.sprache.setMinimumHeight(HOEHE_KNOPF); self.sprache.setAccessibleName("Sprache")
+        self.sprache = Auswahlfeld(); self.sprache.setMinimumHeight(HOEHE_KNOPF); self.sprache.setAccessibleName("Sprache")
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))

@@ -19,6 +19,7 @@ from lunivo_writer.ui.baukasten.text_format import TextFormatLeiste, zeichne_abs
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 ZEICHEN_ZUSATZ = ("unter", "unterfarbe", "durch", "doppelt", "hoch", "tief", "kapital", "gross", "versteckt", "abstand", "kerning", "betonung", "schrift_asien",
                   "schnitt_asien", "groesse_asien", "schrift_komplex", "schnitt_komplex", "groesse_komplex", "skala", "position", "kern_ab", "raster")
 ABSATZ_ZUSATZ = ("rechts", "erste", "rtl", "umbruch", "zeilen_art", "zeilen_pt", "gliederung", "opt")
@@ -48,10 +49,10 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         eig = QWidget(); f = FormularGitter(eig)                    # flach: Abschnittstitel statt Rahmen im Rahmen
         self.name = QLineEdit(aendern or self._freier_name(name))
         self.name.setReadOnly(bool(aendern))
-        self.typ = QComboBox(); self.typ.addItem("Absatz")
+        self.typ = Auswahlfeld(); self.typ.addItem("Absatz")
         namen = [n for n in (vorlagen if vorlagen is not None else stile.namen()) if n != aendern]
-        self.basis = QComboBox(); self.basis.addItem(KEINE, ""); [self.basis.addItem("↵ " + n, n) for n in namen]
-        self.folge = QComboBox(); self.folge.addItem(GLEICHE, ""); [self.folge.addItem("↵ " + n, n) for n in namen]
+        self.basis = Auswahlfeld(); self.basis.addItem(KEINE, ""); [self.basis.addItem("↵ " + n, n) for n in namen]
+        self.folge = Auswahlfeld(); self.folge.addItem(GLEICHE, ""); [self.folge.addItem("↵ " + n, n) for n in namen]
         for w in (self.name, self.typ, self.basis, self.folge):
             pass
         f.breit(abschnittstitel("Eigenschaften"))

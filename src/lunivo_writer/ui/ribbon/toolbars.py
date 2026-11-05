@@ -30,6 +30,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_SYMBOLLEISTE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 T = "trenner"
 # (Symbol, Tooltip, Aktion)
@@ -94,16 +95,16 @@ class Symbolleisten(QWidget):
         self._fuellen(z1, OBEN)
         z1.addStretch(1)
         z2 = self._zeile(v)
-        stil = QComboBox(); stil.addItems(["Fließtext"] + [n for n in STILE_KATALOG if n not in ("Standard", "Kein Abstand")])
+        stil = Auswahlfeld(); stil.addItems(["Fließtext"] + [n for n in STILE_KATALOG if n not in ("Standard", "Kein Abstand")])
         stil.setFixedWidth(BREITE_FORMATVORLAGE_LEISTE)
-        font = QFontComboBox(); font.setFixedWidth(BREITE_SCHRIFTAUSWAHL_LEISTE)
-        groesse = QComboBox(); groesse.setEditable(True); groesse.setFixedWidth(BREITE_REGLER_MIN)
+        font = Schriftauswahl(); font.setFixedWidth(BREITE_SCHRIFTAUSWAHL_LEISTE)
+        groesse = Auswahlfeld(); groesse.setEditable(True); groesse.setFixedWidth(BREITE_REGLER_MIN)
         groesse.addItems([str(x) for x in GROESSEN])
         self.felder.update(stil=stil, font=font, groesse=groesse)
         for w in (font, groesse):
             z2.addWidget(w)
         self._fuellen(z2, UNTEN_A)
-        abstand = QComboBox()
+        abstand = Auswahlfeld()
         for wert, name in ZEILENABSTAENDE:
             abstand.addItem("Zeilen " + name, float(wert))
         abstand.addItem("Mehr…", "mehr")

@@ -35,6 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     ZUGABE_LISTE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 
 def _titel(text: str, feld) -> QLabel:
@@ -128,7 +129,7 @@ class FelderDialog(PanelFaehig, QDialog):
         return w
 
     def _box(self, eintraege, bearbeitbar: bool = False, daten=None) -> QComboBox:
-        b = QComboBox(); b.setEditable(bearbeitbar)
+        b = Auswahlfeld(); b.setEditable(bearbeitbar)
         for i, t in enumerate(eintraege):
             b.addItem(t, (daten[i] if daten else t))
         return b
@@ -345,7 +346,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Seitenzahl einfügen")
         v = QVBoxLayout(self)
         g = FormularGitter()                                                # passt sich der Breite an (Seitenleiste), nichts wird abgeschnitten
-        self.muster = QComboBox(); self.position = QComboBox()
+        self.muster = Auswahlfeld(); self.position = Auswahlfeld()
         for muster, fmt, t in SZ.MUSTER:
             self.muster.addItem(t, (muster, fmt))
         for ort, ausr, t in SZ.POSITIONEN:
@@ -355,7 +356,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
             feld.setMinimumHeight(HOEHE_KNOPF)
             g.zeile(_titel(text, feld), feld)
         self.kapitel = UmbruchSchalter("&Kapitelnummer einbeziehen"); g.breit(self.kapitel)
-        self.ebene = QComboBox(); self.trenner = QComboBox()
+        self.ebene = Auswahlfeld(); self.trenner = Auswahlfeld()
         for n in range(1, 10):
             self.ebene.addItem(f"Überschrift {n}", n)
         for z, t, _docx in SZ.TRENNER:
@@ -454,7 +455,7 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         # Seite 1: Datei oder Webseite
         s1 = QWidget(); v1 = QVBoxLayout(s1); v1.setContentsMargins(*RAND_KEIN)
         oz = QHBoxLayout()
-        self.ordner = QComboBox(); self.ordner.setEditable(True); self.ordner.setMinimumHeight(HOEHE_KNOPF); self.ordner.setAccessibleName("Ordner")
+        self.ordner = Auswahlfeld(); self.ordner.setEditable(True); self.ordner.setMinimumHeight(HOEHE_KNOPF); self.ordner.setAccessibleName("Ordner")
         start = ordner if ordner and os.path.isdir(ordner) else QDir.homePath()
         for p in dict.fromkeys([start, QDir.homePath()] + [os.path.join(QDir.homePath(), n) for n in ("Schreibtisch", "Desktop", "Dokumente")]):
             if os.path.isdir(p):

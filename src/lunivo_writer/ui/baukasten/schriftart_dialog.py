@@ -29,6 +29,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_DIALOG_GRUPPE,
     SCHRIFT_HINWEIS,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 SCHNITTE = ("Regulär", "Kursiv", "Fett", "Fett Kursiv")
 _THEMA = {"+Textkörper": "", "+Überschrift": "", "+Textkörper asiatisch": "", "+Überschrift asiatisch": "", "+Textkörper komplex": "", "+Überschrift komplex": ""}
@@ -43,7 +44,7 @@ def zeichen_waehlen(parent, zeichen: dict | None) -> dict | None:
 
 def _schrift_combo(thema: tuple[str, ...] = ()) -> QFontComboBox:
     """Schriftauswahl; ``thema``: Einträge wie „+Textkörper“ davor (die Vorgabe des Dokuments, hier: keine bestimmte Schrift)."""
-    c = QFontComboBox(); c.setEditable(True)
+    c = Schriftauswahl(); c.setEditable(True)
     for i, t in enumerate(thema):
         c.insertItem(i, t)
     c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(12)     # breite Schriftnamen machen das Feld nicht breiter
@@ -51,7 +52,7 @@ def _schrift_combo(thema: tuple[str, ...] = ()) -> QFontComboBox:
 
 
 def _schnitt_combo() -> QComboBox:
-    c = QComboBox(); c.setEditable(True); c.addItems(SCHNITTE)
+    c = Auswahlfeld(); c.setEditable(True); c.addItems(SCHNITTE)
     c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(8)
     return c
 
@@ -88,13 +89,13 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self.asiat_knopf.toggled.connect(lambda an: (asiat.setVisible(an), self.asiat_knopf.setArrowType(Qt.DownArrow if an else Qt.RightArrow)))
         g.breit(self.asiat_knopf); g.breit(asiat)
         self.farbe = FarbFeld(w["farbe"], "Schriftfarbe", keine_text="Automatisch")
-        self.unter = QComboBox(); self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD))
+        self.unter = Auswahlfeld(); self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD))
         from lunivo_writer.editor.textfx import unter_symbol
         self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD_HOCH))
         for k, name in UNTERSTREICHUNG:
             self.unter.addItem(unter_symbol(k, (70, 16), Farbe.GITTER) if k and k != "woerter" else QIcon(), name if k in ("", "woerter") else "", k)
         self.unterfarbe = FarbFeld(w["unterfarbe"], "Farbe der Unterstreichung", keine_text="Automatisch")
-        self.betonung = QComboBox()
+        self.betonung = Auswahlfeld()
         for k, name in BETONUNG:
             self.betonung.addItem(name, k)
         g.reihe(("Schriftfarbe:", self.farbe), ("Unterstreichung:", self.unter), ("Farbe:", self.unterfarbe), ("Betonungszeichen:", self.betonung))
@@ -108,10 +109,10 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self.reiter.addTab(s, "Schriftart")
         # ---- Karteireiter „Zeichenabstand“
         z = QWidget(); zg = FormularGitter(z)
-        self.skala = QComboBox(); self.skala.setEditable(True); self.skala.addItems(["200%", "150%", "100%", "90%", "80%", "66%", "50%", "33%"])
-        self.abstand_art = QComboBox(); self.abstand_art.addItems(["Normal", "Erweitert", "Schmal"])
+        self.skala = Auswahlfeld(); self.skala.setEditable(True); self.skala.addItems(["200%", "150%", "100%", "90%", "80%", "66%", "50%", "33%"])
+        self.abstand_art = Auswahlfeld(); self.abstand_art.addItems(["Normal", "Erweitert", "Schmal"])
         self.abstand_wert = EinheitFeld(0.0, 0.0, 20 * _PT_MM, ("mm", "cm", "in", "pt"), "pt", leer_bei_null=True)
-        self.pos_art = QComboBox(); self.pos_art.addItems(["Normal", "Höher", "Tiefer"])
+        self.pos_art = Auswahlfeld(); self.pos_art.addItems(["Normal", "Höher", "Tiefer"])
         self.pos_wert = EinheitFeld(0.0, 0.0, 100 * _PT_MM, ("mm", "cm", "in", "pt"), "pt", leer_bei_null=True)
         self.kerning = UmbruchSchalter("Einschalten"); self.kern_ab = spin(0.0, 0.0, 200.0, "", 0.5, 1)
         self.raster = UmbruchSchalter("Bei Dokumentrasterdefinition am Raster ausrichten")

@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QLabel, QPushButton,
+    QCheckBox, QDialog, QLabel, QPushButton,
     QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
@@ -39,9 +40,9 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.an.setChecked(k["an"])
         v.addWidget(self.an)
         f = FormularGitter()
-        self.palette = QComboBox()
+        self.palette = Auswahlfeld()
         self.palette.addItems(list(S.PALETTEN))
-        self.palette.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.palette.setMinimumContentsLength(6)
+        self.palette.setSizeAdjustPolicy(Auswahlfeld.AdjustToMinimumContentsLengthWithIcon); self.palette.setMinimumContentsLength(6)
         self.palette.setCurrentText(k["palette"])
         self.eigene_box = QWidget()
         eh = FlussLayout(); self.eigene_box.setLayout(eh)
@@ -59,9 +60,9 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.anzahl.setValue(k["anzahl_eigene"])
         self.anzahl.setPrefix("Anzahl: ")
         eh.addWidget(self.anzahl)
-        self.darstellung = QComboBox()
+        self.darstellung = Auswahlfeld()
         self.darstellung.addItems(S.DARSTELLUNGEN)
-        self.darstellung.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.darstellung.setMinimumContentsLength(6)
+        self.darstellung.setSizeAdjustPolicy(Auswahlfeld.AdjustToMinimumContentsLengthWithIcon); self.darstellung.setMinimumContentsLength(6)
         self.darstellung.setCurrentText(k["darstellung"])
         f.reihe(("Farben", self.palette), ("Darstellung", self.darstellung))
         f.zeile("Eigene Farben", self.eigene_box)

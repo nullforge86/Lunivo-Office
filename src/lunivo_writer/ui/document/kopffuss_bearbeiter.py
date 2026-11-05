@@ -44,6 +44,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_SEITENZAHL_ZEILE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
@@ -131,7 +132,7 @@ class _EinfuegenPanel(MenueListe):
         self.setStyleSheet(_stil("QMenu { background: @PAPIER; border: 1px solid @LEISTE_RAND; }"))
         w = QWidget(); w.setObjectName("kfPanel"); w.setStyleSheet(panel_stil())
         v = QVBoxLayout(w); v.setContentsMargins(*RAND_EINFUEGEN_PANEL); v.setSpacing(ABSTAND_NORMAL)
-        self.format = QComboBox(); self.format.setAccessibleName("Format")
+        self.format = Auswahlfeld(); self.format.setAccessibleName("Format")
         for muster, zahl, text in SZ.MUSTER:
             self.format.addItem("Format: " + text, (muster, zahl))
         v.addWidget(self.format)

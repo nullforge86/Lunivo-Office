@@ -12,7 +12,8 @@ import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
-from PySide6.QtWidgets import (QTabBar, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
+from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
+from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QVBoxLayout,
                                QWidget)
 from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
@@ -132,7 +133,7 @@ class VorlagenGalerie(QWidget):
         self.neue_rubrik.clicked.connect(self._rubrik_anlegen)
         kopf.addWidget(self.neue_rubrik)
         v.addLayout(kopf)
-        self.reiter_w = QTabBar(); self.reiter_w.setObjectName("bandReiter")            # dieselbe Gestalt wie die Register des Bandes
+        self.reiter_w = UeberlaufLeiste(); self.reiter_w.setObjectName("bandReiter")            # dieselbe Gestalt wie die Register des Bandes
         self.reiter_w.setDrawBase(False); self.reiter_w.setExpanding(False); self.reiter_w.setCursor(Qt.PointingHandCursor)
         self.reiter_w.setFocusPolicy(Qt.StrongFocus); self.reiter_w.setAccessibleName("Vorlagenbereiche")
         self._schluessel = ("geruest", "eigene")

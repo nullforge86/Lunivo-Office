@@ -26,6 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_MINILEISTE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 # Zwei Zeilen wie in der Vorlage, je Modus eine eigene Anordnung. Eintrag: Name -> (Tooltip, Art) — Art: "" (Knopf) · "klappe:…" (Pfeil mit Menü des Bandes)
 # · "farbe:…" (Palette). Die Namen sind Befehle des Bandes (``fenster.befehle``); "schriftart" und "groesse" sind die beiden Auswahlfelder.
@@ -117,10 +118,10 @@ class MiniLeiste(QFrame):
         sym = _symbole()
         self._felder: dict[str, QComboBox] = {}
         self._ikonen: dict[QToolButton, tuple[str, int]] = {}          # Symbolname und -größe je Knopf (Neuzeichnen nach Themenwechsel)
-        self.schriftart = QComboBox(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(BREITE_SCHRIFTAUSWAHL_MINILEISTE)     # Name bleibt lesbar (wie die Textleiste)
+        self.schriftart = Auswahlfeld(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(BREITE_SCHRIFTAUSWAHL_MINILEISTE)     # Name bleibt lesbar (wie die Textleiste)
         self.schriftart.addItems(QFontDatabase.families()); self.schriftart.setMaxVisibleItems(18)
         self.schriftart.textActivated.connect(lambda n: self._schrift(n))
-        self.groesse = QComboBox(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(BREITE_SCHRIFTGROESSE_MINILEISTE)
+        self.groesse = Auswahlfeld(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(BREITE_SCHRIFTGROESSE_MINILEISTE)
         self.groesse.addItems([f"{g:g}" for g in GROESSEN]); self.groesse.setMaxVisibleItems(16)
         self.groesse.textActivated.connect(lambda t: self._groesse(t))
         self._felder = {"schriftart": self.schriftart, "groesse": self.groesse}

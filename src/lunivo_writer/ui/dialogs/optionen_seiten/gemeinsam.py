@@ -25,6 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_ZEILE_PAAR,
     RAND_ZEILE_SPALTEN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 MIN_HOEHE = HOEHE_FELD                                      # Mindesthöhe der Bedienelemente (leicht zu treffen)
 _ERKLAERUNGEN: dict | None = None
@@ -115,7 +116,7 @@ class _Seite(QWidget):
         f.addRow(zeile)
 
     def auswahl(self, f, key, label, werte: list[str], std, wirkt=None):
-        c = QComboBox()
+        c = Auswahlfeld()
         c.setMinimumHeight(MIN_HOEHE)
         c.addItems(werte)
         c.setCurrentText(str(self.s.get(key, std)))
@@ -130,7 +131,7 @@ class _Seite(QWidget):
 
     def wahl(self, f, key, label, eintraege: list[tuple[str, object]], std, wirkt=None):
         """Auswahl mit Anzeigetext und gespeichertem Wert (Text oder Ja/Nein)."""
-        c = QComboBox()
+        c = Auswahlfeld()
         c.setMinimumHeight(MIN_HOEHE)
         for text, wert in eintraege:
             c.addItem(text, wert)
@@ -192,7 +193,7 @@ class _Seite(QWidget):
 
     def stufen(self, f, key, label, eintraege: list[tuple[str, float]], std, wirkt=None):
         """Auswahl aus benannten Stufen („normal“, „weit“ …), die als Zahl gespeichert werden."""
-        c = QComboBox()
+        c = Auswahlfeld()
         c.setMinimumHeight(MIN_HOEHE)
         for text, wert in eintraege:
             c.addItem(text, wert)

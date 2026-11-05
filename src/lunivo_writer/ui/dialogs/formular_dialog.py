@@ -7,6 +7,7 @@ from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.editor import formular as FO
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.baukasten.mass import HOEHE_TEXT_NORMAL
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 
@@ -27,7 +28,7 @@ class FormFeldDialog(PanelFaehig, QDialog):
         self.beschriftung = QLineEdit(m.get("beschriftung", ""))
         self.liste = QPlainTextEdit("\n".join(m.get("optionen", [])))
         self.aufschrift = QLineEdit(m.get("aufschrift", "Absenden"))
-        self.aktion = QComboBox(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.get("aktion", "Keine"))
+        self.aktion = Auswahlfeld(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.get("aktion", "Keine"))
         if art in ("text", "auswahl", "datum"):
             self.platz.setPlaceholderText({"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[art])
             f.zeile("Hinweis im leeren Feld", self.platz)

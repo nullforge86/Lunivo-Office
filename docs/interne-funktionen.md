@@ -2,7 +2,7 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 362 Module, 389 Klassen, 5082 Funktionen und Methoden.
+Stand: 364 Module, 394 Klassen, 5113 Funktionen und Methoden.
 
 ## Inhalt
 
@@ -18,7 +18,7 @@ Stand: 362 Module, 389 Klassen, 5082 Funktionen und Methoden.
 - `services/docx_teile` — 11 Module
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 88 Module
+- `ui/baukasten` — 90 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
@@ -3583,6 +3583,22 @@ Der Bereich „Auswahl“ (Start ▸ Auswählen ▸ Auswahlbereich) als Baustein
   - `fuellen()`
   - `_markieren(it)`
 
+### `ui/baukasten/auswahlfeld.py`
+
+Auswahlfeld: das eine Dropdown für ganz Lunivo.
+
+- **class `_KuerzDelegate`**(QStyledItemDelegate) — Zeilenhöhe wie in den Menüs (Schrifthöhe + 2 × Abstand aus mass.py), Text mittig gekürzt.
+  - `sizeHint(option, index)`
+  - `paint(painter, option, index)`
+- `popup_begrenzen(combo, popup_min)` — Nach ``showPopup()`` aufrufen: Größe der Liste (Breite, sichtbare Zeilen); die Lage in Fenster und Bildschirm bestimmt ``popup_klemmen``.
+- **class `Auswahlfeld`**(QComboBox)
+  - `__init__(parent, *, min_zeichen, popup_min)`
+  - `showPopup()`
+  - `paintEvent(event)`
+- **class `Schriftauswahl`**(QFontComboBox) — Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste.
+  - `__init__(parent, *, min_zeichen)`
+  - `showPopup()`
+
 ### `ui/baukasten/auto_felder_mixin.py`
 
 Bei „Automatische Füllung“ / „Automatische Linie“ die Felder zeigen, aber grau (nicht bedienbar), wie in der Vorlage.
@@ -4003,6 +4019,10 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_knopf_breite(i)`
   - `_schrift(groesse)`
   - `_breiten()` — Breite je sichtbarem Reiter: Unterreiter gleich breit, Hauptreiter nach Länge der Beschriftung (der Pfeilknopf zählt mit).
+  - `_passende(soll, gesamt)` — Die Reiter, die neben dem Knopf „…“ ganz passen (in Reihenfolge); der aktive Reiter ist immer dabei.
+  - `_versteckte()`
+  - `_mehr_menue()`
+  - `_neu_anordnen()` — Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen.
   - `_text_flaeche(i, breite)`
   - `_groesse(breiten)` — Die Schriftgröße: so groß wie möglich, aber so, dass das längste Wort jedes Reiters ganz hineinpasst (nie „…“).
   - `_text_hoehe(fm, i, breite)`
@@ -4017,6 +4037,22 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
   - `mousePressEvent(e)`
   - `paintEvent(_e)`
+- **class `UeberlaufLeiste`**(QTabBar) — Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
+  - `__init__(parent)`
+  - `setTabVisible(index, sichtbar)`
+  - `isTabVisible(index)`
+  - `gezeigt(index)`
+  - `tabInserted(index)`
+  - `tabRemoved(index)`
+  - `_verschoben(von, nach)`
+  - `_verfuegbar()`
+  - `_versteckte()`
+  - `neu_verteilen()`
+  - `_mehr_menue()`
+  - `sizeHint()`
+  - `minimumSizeHint()`
+  - `resizeEvent(e)`
+  - `tabLayoutChange()`
 - `flach_machen(reiter, art)` — Setzt eine ``FlacheReiterLeiste`` in das ``QTabWidget`` (``setTabBar`` gilt nur vor dem ersten Reiter, darum werden die Seiten neu eingesetzt).
 - `alle_flach(wurzel, art)` — Alle Reiter unter ``wurzel`` (``QTabWidget``) bekommen dieselbe flache Leiste: EIN Aussehen für alle Reiter in den Seitenleisten-Fenstern.
 
@@ -4375,7 +4411,7 @@ Die Fenster „Nummerierung und Aufzählungszeichen“ und „Nummerierung anpas
   - `eventFilter(obj, ev)`
   - `_anpassen()`
 - **class `ListenDialog`**(PanelFaehig, QDialog)
-  - `kompakt_machen()` — Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter zum Rollen, Fenster ohne feste Größe.
+  - `kompakt_machen()` — Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter mit Überlauf hinter „•••“, Fenster ohne feste Größe.
   - `passe_an(breite, hoehe)` — Je breiter die Seitenleiste, desto mehr Kacheln je Zeile (vier bis sechs), damit die Auswahl ohne Rollen auskommt.
   - `__init__(parent, aktuell, *, seite)`
   - `_fuelle_benutzer()`
@@ -4542,6 +4578,15 @@ Die Pipette: eine Farbe vom Bildschirm aufnehmen.
   - `mouseReleaseEvent(e)`
   - `keyPressEvent(e)`
 - `farbe_vom_bildschirm(parent)` — Die Farbe unter dem nächsten Linksklick (blockiert höchstens ``ZEIT_S`` Sekunden); None bei Abbruch, Zeitablauf oder wenn der Bildschirm nicht aufnehmbar ist.
+
+### `ui/baukasten/popup_lage.py`
+
+Popup-Lage: das eine Öffnungsverhalten für alle aufklappenden Fenster (Menüs, Klapplisten, Popup-Fenster).
+
+- `popup_klemmen(pop, anker)` — Schiebt ``pop`` in den erlaubten Bereich (Fenster des Ankers ∩ Bildschirm). True, wenn es verschoben wurde.
+- **class `PopupWaechter`**(QObject) — Wird einmal an der Anwendung eingehängt (``einhaengen``) und klemmt jedes aufklappende Fenster beim Öffnen.
+  - `einhaengen(app)`
+  - `eventFilter(obj, ev)`
 
 ### `ui/baukasten/rahmen_schattierung.py`
 
@@ -6045,6 +6090,7 @@ Dokumentreiter ganz oben (mit „+“) und der Stapel der Dokumente darunter.
 
 - **class `DocTabs`**(QObject) — Wie ein QTabWidget, nur dass Reiterleiste und Inhalt getrennt eingebaut werden.
   - `__init__()`
+  - `eventFilter(obj, ev)`
   - `_moved(von, nach)`
   - `_bar_changed(i)`
   - `addTab(w, title)`
@@ -6962,7 +7008,7 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
 - `_kurz(name)`
 - `_mit_kuerzel(name)` — Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter.
 - `_zweizeilig(text)`
-- **class `_ReiterLeiste`**(QTabBar)
+- **class `_ReiterLeiste`**(UeberlaufLeiste)
   - `mouseDoubleClickEvent(ev)`
   - `ist_kontext(i)`
   - `tabSizeHint(i)`

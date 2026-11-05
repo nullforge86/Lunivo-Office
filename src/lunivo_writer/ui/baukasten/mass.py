@@ -478,7 +478,11 @@ PADDING_LISTENZEILE_GLOBAL = '4px 6px'   # Listenzeilen-Knöpfe und Kurzinfos (S
 PADDING_FELDKNOPF = '3px 10px'   # Feldknöpfe (Stylesheet)
 PADDING_EINGABEFELD_GLOBAL = '3px 6px'   # Eingabefelder (Stylesheet)
 PADDING_MENUE_GLOBAL = '5px'   # Menüs (Stylesheet)
-PADDING_MENUEEINTRAG_GLOBAL = '6px 26px 6px 12px'   # Menüeinträge (Stylesheet)
+# Dropdown-Pyramide, Stufe „Größe“: EINE Quelle für Menüs und Auswahllisten (so kompakt wie möglich: Schrifthöhe + 2 × Abstand)
+DROPDOWN_ZEILE_PAD_V = ABSTAND_KLEIN      # senkrechter Abstand einer Zeile in Menüs und aufklappenden Listen (aus der Abstandsleiter, keine eigene Zahl)
+DROPDOWN_MAX_ZEILEN = 12      # so viele Zeilen sind sichtbar, danach rollt die Liste
+DROPDOWN_MIN_ZEICHEN = 12     # Mindestlänge des Feldes in Zeichen (die Feldbreite folgt sonst dem Layout)
+PADDING_MENUEEINTRAG_GLOBAL = f'{DROPDOWN_ZEILE_PAD_V}px 26px {DROPDOWN_ZEILE_PAD_V}px {ABSTAND_BLOCK}px'   # Menüeinträge (Stylesheet)
 PADDING_OPTIONSKNOPF_GLOBAL = '3px 0'   # Optionsknöpfe (Stylesheet)
 PADDING_GRUPPENTITEL_GLOBAL = '0 4px'   # Gruppentitel (Stylesheet)
 PADDING_BAUMEINTRAG_GLOBAL = '4px'   # Einträge von Baum- und Listenansichten (Stylesheet)

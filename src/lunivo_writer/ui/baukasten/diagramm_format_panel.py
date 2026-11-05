@@ -55,6 +55,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_FORMATSEITE,
     RAND_KEIN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 # Teile, deren Text sich formatieren lässt (Titel, Legende, Achsen, Legendeneinträge, Datenbeschriftungen)
 TEXT_TEILE = ("diagrammbereich", "titel", "legende", "achse_horizontal", "achse_vertikal", "datenbeschriftung")
@@ -79,7 +80,7 @@ def _text_teil(teil: str) -> bool:
 
 
 def _combo(eintraege) -> QComboBox:
-    c = QComboBox()
+    c = Auswahlfeld()
     for k, n in eintraege:
         c.addItem(n, k)
     return c
@@ -146,7 +147,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         self._stumm = True
         # Schrift (die Vorlage zeigt sie nicht; sie ist sonst nirgends erreichbar und steht darum hinter der Textkontur)
         self.a_schrift = Abschnitt("Schrift")
-        self.s_name = QFontComboBox()
+        self.s_name = Schriftauswahl()
         self.s_groesse = SchrittFeld(6, 96, " pt", 1, 0, 10)
         self.s_fett, self.s_kursiv, self.s_unter = UmbruchSchalter("Fett"), UmbruchSchalter("Kursiv"), UmbruchSchalter("Unterstrichen")
         self.s_gesetzt = {"name": False, "groesse": False}

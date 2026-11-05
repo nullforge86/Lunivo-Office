@@ -23,6 +23,7 @@ from lunivo_writer.ui.baukasten.mass_feld import MassSpin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 AUTOMATISCH = "Automatisch"
 
@@ -58,7 +59,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self.bild_knopf = _feld(QPushButton("Bild a&uswählen")); self.bild_name = QLabel("(Keine Grafik)")
         self.bild_name.setWordWrap(True)
         bz = FlussLayout(6); bz.addWidget(self.bild_knopf); bz.addWidget(self.bild_name); g.breit(bz)
-        self.zoom = _feld(QComboBox()); self.zoom.addItem(AUTOMATISCH, 0)
+        self.zoom = _feld(Auswahlfeld()); self.zoom.addItem(AUTOMATISCH, 0)
         for n in WZ.ZOOMS:
             self.zoom.addItem(f"{n} %", n)
         self.auswaschen = UmbruchSchalter("Aus&waschen")
@@ -68,9 +69,9 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
                             self.bild_v, self.bild_v_mm]
         # ---- Textwasserzeichen ----
         self.mit_text = UmbruchSchalter("Te&xtwasserzeichen"); g.breit(self.mit_text)
-        self.inhalt = _feld(QComboBox()); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
-        self.schrift = _feld(QFontComboBox()); self.schrift.setMinimumContentsLength(8)
-        self.groesse = _feld(QComboBox()); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
+        self.inhalt = _feld(Auswahlfeld()); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
+        self.schrift = _feld(Schriftauswahl()); self.schrift.setMinimumContentsLength(8)
+        self.groesse = _feld(Auswahlfeld()); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
         for n in WZ.GROESSEN:
             self.groesse.addItem(str(n))
         self.farbe = _feld(FarbFeld(a.get("farbe") or WZ.STANDARD_FARBE, "Farbe"))
@@ -90,7 +91,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         g.breit(abschnittstitel("Vorschau"))
         self.vorschau = VorschauFlaeche(self._male, 280)
         g.breit(self.vorschau)
-        self.bereich_wahl = _feld(QComboBox())
+        self.bereich_wahl = _feld(Auswahlfeld())
         for k, t in self.BEREICHE:
             self.bereich_wahl.addItem(t, k)
         g.zeile(_titel("Ü&bernehmen für:", self.bereich_wahl), self.bereich_wahl)
@@ -112,14 +113,14 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
 
     def _lage_felder(self, g: FormularGitter, kuerzel: str, partner: tuple):
         """Format, Horizontal und Vertikal (je Liste und Abstand vom Rand)."""
-        fmt = _feld(QComboBox())
+        fmt = _feld(Auswahlfeld())
         for w, t in WZ.FORMATE:
             fmt.addItem(t, w)
         felder = [fmt]
         g.reihe((_titel("F&ormat:" if kuerzel else "Fo&rmat:", fmt), fmt), partner)
         for titel, werte in (("&Horizontal:" if not kuerzel else "Hori&zontal:", WZ.HORIZONTAL),
                              ("Verti&kal:" if not kuerzel else "&Vertikal:", WZ.VERTIKAL)):
-            c = _feld(QComboBox())
+            c = _feld(Auswahlfeld())
             for k, t in werte:
                 c.addItem(t, k)
             m = _feld(MassSpin()); m.setRange(0, 300); m.setDecimals(1); m.setAccessibleName(titel.replace("&", "") + " Abstand")

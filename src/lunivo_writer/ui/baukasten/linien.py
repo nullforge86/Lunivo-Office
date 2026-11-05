@@ -14,6 +14,7 @@ from lunivo_writer.ui.baukasten.menue_liste import MenueListe
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 def linien_symbol(art: str, groesse: QSize = QSize(*GROESSE_LINIENART_BILD), farbe: str | None = None, breite_pt: float = 1.5) -> QIcon:
     farbe = Farbe.TINTE if farbe is None else farbe
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
@@ -84,10 +85,10 @@ class LinienWahl(QWidget):
         self._frei = frei
         linie = linie or Linie()
         h = QHBoxLayout(self); h.setContentsMargins(*RAND_KEIN)
-        self.art = QComboBox(); self.art.setIconSize(QSize(*GROESSE_LINIENART_AUSWAHL_BILD))
+        self.art = Auswahlfeld(); self.art.setIconSize(QSize(*GROESSE_LINIENART_AUSWAHL_BILD))
         for k in arten:
             self.art.addItem(linien_symbol(k), LINIENARTEN[k][0], k)
-        self.breite = QComboBox()
+        self.breite = Auswahlfeld()
         for b in breiten:
             self.breite.addItem(f"{b:g}".replace(".", ",") + " pt", b)
         self._n_liste = self.breite.count()

@@ -32,6 +32,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_LISTE_ZIEL,
     RAND_KEIN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 _FUELL_ANZEIGE = {"": "(ohne)", "punkt": "." * 24, "strich": "-" * 20, "linie": "_" * 18}
 
@@ -51,7 +52,7 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         box = gruppe("Inhaltsverzeichnis"); h = QHBoxLayout(box); h.setSpacing(ABSTAND_BLOCK)
         links = QVBoxLayout()
-        self.fuell = QComboBox(); self.fuell.setMinimumHeight(HOEHE_KNOPF); self.fuell.setAccessibleName("Füllzeichen")
+        self.fuell = Auswahlfeld(); self.fuell.setMinimumHeight(HOEHE_KNOPF); self.fuell.setAccessibleName("Füllzeichen")
         for schl in TOC_FUELL:
             self.fuell.addItem(_FUELL_ANZEIGE[schl], schl)
         self.fuell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.fuell.setMinimumContentsLength(6)
@@ -154,7 +155,7 @@ class IndexeintragDialog(PanelFaehig, QDialog):
             self.art.addButton(r, i)
         self.r_seite.setChecked(True)
         self.siehe = feld("Querverweis"); self.siehe.setPlaceholderText("Siehe"); self.siehe.setMinimumWidth(0)
-        self.marke = QComboBox(); self.marke.addItems(marken or []); self.marke.setMinimumHeight(HOEHE_KNOPF); self.marke.setAccessibleName("Textmarke")
+        self.marke = Auswahlfeld(); self.marke.addItems(marken or []); self.marke.setMinimumHeight(HOEHE_KNOPF); self.marke.setAccessibleName("Textmarke")
         self.marke_titel = _titel("Textmarke:", self.marke)
         g.zeile(self.r_siehe, self.siehe); g.breit(self.r_seite); g.breit(self.r_bereich); g.zeile(self.marke_titel, self.marke)
         g.breit(abschnittstitel("Seitenzahlenformat"))
@@ -199,7 +200,7 @@ class NummerierungDialog(PanelFaehig, QDialog):
         from lunivo_writer.editor.verweise import SEQ_FORMAT
         self.setWindowTitle("Beschriftungsnummerierung")
         v = QVBoxLayout(self)
-        self.format = QComboBox(); self.format.setMinimumHeight(HOEHE_KNOPF); self.format.setAccessibleName("Format")
+        self.format = Auswahlfeld(); self.format.setMinimumHeight(HOEHE_KNOPF); self.format.setAccessibleName("Format")
         for k, t in Z.TYPEN:
             if k in SEQ_FORMAT:
                 self.format.addItem(t, k)
@@ -234,10 +235,10 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         g = FormularGitter()                                                   # passt sich der Breite an (Seitenleiste), nichts abgeschnitten
         self.text = QLineEdit(); self.text.setMinimumHeight(HOEHE_KNOPF); self.text.setAccessibleName("Beschriftung")
         g.breit(_titel("&Beschriftung:", self.text)); g.breit(self.text)
-        self.label = QComboBox(); self.label.setMinimumHeight(HOEHE_KNOPF); self.label.setAccessibleName("Bezeichnung")
+        self.label = Auswahlfeld(); self.label.setMinimumHeight(HOEHE_KNOPF); self.label.setAccessibleName("Bezeichnung")
         self.label.addItems(list(BESCHRIFTUNGEN) + [x for x in self.eigene if x not in BESCHRIFTUNGEN])
         self.label.setCurrentText(label)
-        self.pos = QComboBox(); self.pos.addItems(["Unter dem ausgewählten Element", "Über dem ausgewählten Element"])
+        self.pos = Auswahlfeld(); self.pos.addItems(["Unter dem ausgewählten Element", "Über dem ausgewählten Element"])
         self.pos.setMinimumHeight(HOEHE_KNOPF); self.pos.setEnabled(objekt); self.pos.setAccessibleName("Position")
         self.pos.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.pos.setMinimumContentsLength(12)
         g.zeile(_titel("B&ezeichnung:", self.label), self.label)
@@ -311,8 +312,8 @@ class QuerverweisDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter
         g = FormularGitter()                                                   # breit: nebeneinander wie die Vorlage, Seitenleiste: untereinander
-        self.art = QComboBox(); self.art.addItems(VW.VERWEISTYPEN); self.art.setMinimumHeight(HOEHE_KNOPF); self.art.setAccessibleName("Verweistyp")
-        self.auf = QComboBox(); self.auf.setMinimumHeight(HOEHE_KNOPF); self.auf.setAccessibleName("Verweisen auf")
+        self.art = Auswahlfeld(); self.art.addItems(VW.VERWEISTYPEN); self.art.setMinimumHeight(HOEHE_KNOPF); self.art.setAccessibleName("Verweistyp")
+        self.auf = Auswahlfeld(); self.auf.setMinimumHeight(HOEHE_KNOPF); self.auf.setAccessibleName("Verweisen auf")
         self.auf.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.auf.setMinimumContentsLength(12)
         g.reihe((_titel("&Verweistyp:", self.art), self.art), (_titel("Verweisen &auf:", self.auf), self.auf))
         self.link = UmbruchSchalter("Als &Hyperlink einfügen"); self.link.setChecked(True)

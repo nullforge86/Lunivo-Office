@@ -20,6 +20,7 @@ from lunivo_writer.editor import muster as M
 from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
 from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 _BILD_FILTER = "Bilder (*.png *.jpg *.jpeg *.bmp *.gif *.webp);;Alle Dateien (*)"
 
@@ -37,13 +38,13 @@ class TextFuellartenMixin:
                     break
         for x in (self.r_bild, self.r_muster, self.f_einfarbig, self.f_verlauf):
             a.breit(x)
-        self.p_textur = QComboBox()
+        self.p_textur = Auswahlfeld()
         for schl, name in TEXTUREN:
             self.p_textur.addItem(name, schl)
         self.p_bildknopf = QPushButton("Bilddatei wählen …")
         self.f_bild = QWidget(); fb = FormularGitter(self.f_bild)
         fb.zeile("Textur:", self.p_textur); fb.breit(self.p_bildknopf)
-        self.p_muster = QComboBox()
+        self.p_muster = Auswahlfeld()
         for schl, _n, _o in M.MUSTER:
             if schl != "loeschen":
                 self.p_muster.addItem(M.name_von(schl), schl)

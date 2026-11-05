@@ -28,6 +28,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_HINWEIS,
     SCHRIFT_KLEIN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 
 class LunivoSeiten:
@@ -67,7 +68,7 @@ class LunivoSeiten:
                 c.setCurrentIndex(max(0, c.findData(k["aufgaben"].get(aufgabe, ""))))
                 c.blockSignals(False)
         for aufgabe, name in K.AUFGABEN:
-            c = QComboBox()
+            c = Auswahlfeld()
             combos[aufgabe] = c
             c.currentIndexChanged.connect(lambda _i, a=aufgabe, c=c: (k.aufgabe_setzen(a, c.currentData() or ""), geaendert.emit()))
             f.addRow(name, c)
@@ -109,7 +110,7 @@ class LunivoSeiten:
         loeschen.clicked.connect(loesche)
         erstellen.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://console.anthropic.com/settings/keys")))
 
-        modell = QComboBox()
+        modell = Auswahlfeld()
         f.addRow("KI-Modell", modell)
 
         def modell_fuellen():
@@ -188,7 +189,7 @@ class LunivoSeiten:
                 sv.addWidget(z)
         na.clicked.connect(lambda: (self.w.befehle.w_assistentErstellen(), assistenten_fuellen()))
 
-        wen = QComboBox(); wen.addItems(EMPFAENGER)
+        wen = Auswahlfeld(); wen.addItems(EMPFAENGER)
         wen.setCurrentText(self.w.assistant.thema)
         wen.currentTextChanged.connect(self.w.assistant.setze_thema)
         self.w.assistant.themaGeaendert.connect(lambda t: wen.currentText() != t and (wen.blockSignals(True), wen.setCurrentText(t), wen.blockSignals(False)))

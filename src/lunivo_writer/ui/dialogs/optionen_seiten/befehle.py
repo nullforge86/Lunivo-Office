@@ -20,6 +20,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 
 class BefehleSeiten:
@@ -33,7 +34,7 @@ class BefehleSeiten:
         g.setColumnStretch(0, 5); g.setColumnStretch(2, 5)
         g.addWidget(QLabel(links_kopf), 0, 0)
         kopf = QHBoxLayout()
-        auswahl = QComboBox(); auswahl.addItem(kategorie)
+        auswahl = Auswahlfeld(); auswahl.addItem(kategorie)
         suche = QLineEdit(); suche.setPlaceholderText("Befehl suchen"); suche.setClearButtonEnabled(True)
         kopf.addWidget(auswahl, 1); kopf.addWidget(suche, 1)
         g.addLayout(kopf, 1, 0)

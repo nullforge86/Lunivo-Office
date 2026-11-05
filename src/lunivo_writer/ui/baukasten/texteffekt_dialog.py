@@ -37,6 +37,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_TEXTEFFEKT_GITTER,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)
 
 
@@ -196,10 +197,10 @@ class TexteffektPanel(QWidget):
         self.a_kontur.auswahl(self.k_keine, self.k_linie, self.k_verlauf)
         self.k_farbe = FarbFeld(w["kontur_farbe"], "Konturfarbe")
         self.k_breite = SchiebeFeld(0.1, 20, " pt", 0.25, 2)
-        self.k_art = QComboBox(); self.k_art.setIconSize(QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD))
+        self.k_art = Auswahlfeld(); self.k_art.setIconSize(QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD))
         for key, (name, _s, _d) in T.KONTUR_ARTEN.items():
             self.k_art.addItem(_linien_icon(key, "einfach"), name, key)
-        self.k_form = QComboBox()
+        self.k_form = Auswahlfeld()
         for key, name in T.KONTUR_FORMEN:
             self.k_form.addItem(name, key)
         self.kv1, self.kv2 = FarbFeld(Farbe.ROT, "Konturfarbe 1"), FarbFeld(Farbe.BLAU_DUNKEL, "Konturfarbe 2")

@@ -38,6 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_LISTE_ARTEN,
     ZUGABE_RAHMEN,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
@@ -135,7 +136,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self._kombi_box.addWidget(gitterteil)
         for i, name in enumerate(self.reihen):
             typ, sek = self.kombi[i] if i < len(self.kombi) else ("saeule", False)
-            box = QComboBox(); box.setAccessibleName(f"Diagrammtyp {name}")
+            box = Auswahlfeld(); box.setAccessibleName(f"Diagrammtyp {name}")
             box.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); box.setMinimumContentsLength(8)
             for schl, text in D.KOMBI_TYPEN:
                 box.addItem(text, schl)

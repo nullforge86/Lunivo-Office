@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.beschriftung import text_label
@@ -42,6 +43,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
+from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)
@@ -70,7 +72,7 @@ class AnbieterDialog(QDialog):
         h.setWordWrap(True)
         hinweis_stil(h)
         f.breit(h)
-        self.vorlage = QComboBox()
+        self.vorlage = Auswahlfeld()
         for key, name, url in K.ANBIETER_VORLAGEN:
             self.vorlage.addItem(name, url)
         self.url = QLineEdit(bestehend["url"] if bestehend else "")
@@ -81,7 +83,7 @@ class AnbieterDialog(QDialog):
         f.zeile("Anbieter *", self.vorlage)
         f.zeile("URL *", self.url)
         f.zeile("Schlüssel", self.schluessel)
-        self.modell = QComboBox()
+        self.modell = Auswahlfeld()
         self.modell.setEditable(True)
         self.modell.setInsertPolicy(QComboBox.NoInsert)
         self.modell.lineEdit().setPlaceholderText("z. B. gpt-4o-mini")
@@ -289,9 +291,7 @@ def modell_passt(m: dict, aufgabe: str) -> bool:
 
 def modell_combo(konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None) -> QComboBox:
     """Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats."""
-    c = QComboBox()
-    c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)       # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
-    c.setMinimumContentsLength(12)
+    c = Auswahlfeld()                                                            # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
     c.addItem("Standard (KI-Modell der Optionen)", "")
     for m in konfig.alle_modelle():
         if not modell_passt(m, aufgabe):
@@ -686,7 +686,7 @@ class WebsuchePanel(QWidget):
         h.setWordWrap(True); hinweis_stil(h)
         v.addWidget(h)
         f = FormularGitter()
-        self.anbieter = QComboBox()
+        self.anbieter = Auswahlfeld()
         for schl, name in W.ANBIETER:
             self.anbieter.addItem(name, schl)
         self.anbieter.setCurrentIndex(max(0, self.anbieter.findData(o["anbieter"])))
@@ -859,7 +859,7 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
         self.prompt.setPlaceholderText("Beschreiben Sie die Aktion, die die KI ausführen soll, z. B. „Grammatik korrigieren“ oder „In einem formellen Ton umschreiben“")
         self.prompt.setMinimumHeight(HOEHE_TEXT_NORMAL)
         g.zeile("Was soll die Aktion tun? *", self.prompt)
-        self.ergebnis = QComboBox()
+        self.ergebnis = Auswahlfeld()
         self.ergebnis.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.ergebnis.setMinimumContentsLength(10)
         for schl, text in ERGEBNIS_ARTEN:
             self.ergebnis.addItem(text, schl)

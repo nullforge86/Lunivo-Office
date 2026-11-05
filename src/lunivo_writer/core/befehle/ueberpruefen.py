@@ -93,10 +93,11 @@ class UeberpruefenBefehle:
         """Die Auswahl über „Markup anzeigen“ wie in der Vorlage: die Fassung, darunter das Markup-Menü."""
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QStandardItemModel
-        from PySide6.QtWidgets import QComboBox, QToolButton, QVBoxLayout, QWidget
+        from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
+        from lunivo_writer.ui.baukasten.auswahlfeld import Auswahlfeld
         halter = QWidget()
         v = QVBoxLayout(halter); v.setContentsMargins(2, 4, 2, 4); v.setSpacing(4)
-        cb = QComboBox(); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(36); cb.setMinimumWidth(220); cb.view().setMinimumWidth(290)   # schmal im Band, die Liste zeigt die Namen ganz
+        cb = Auswahlfeld(); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(36); cb.setMinimumWidth(220); cb.view().setMinimumWidth(290)   # schmal im Band, die Liste zeigt die Namen ganz
         cb.setAccessibleName("Anzeige zur Überprüfung"); cb.setToolTip("Anzeige zur Überprüfung")
         modell = cb.model()
         if isinstance(modell, QStandardItemModel):
