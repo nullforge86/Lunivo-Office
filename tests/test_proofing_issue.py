@@ -57,3 +57,34 @@ def test_vertrag_gilt_am_eingang_der_pipeline():
     r = fund.markieren([{"von": 0, "bis": 3, "alt": "abc", "neu": "d", "grund": "", "art": "tipp"},
                         {"von": 2, "bis": 99, "alt": "c", "neu": "", "grund": "", "art": "tipp"}], "eigen", 5)
     assert len(r) == 1 and r[0].quelle == "eigen" and r[0].konfidenz is not None
+
+
+def _f(quelle, neu="X", konf=0.7, art="fehler", alt="Wort", von=0, bis=4):
+    return ProofingIssue(von, bis, alt, neu, "g", art, quelle=quelle, konfidenz=konf)
+
+
+def test_abstimmen_gleiches_neu_bestaetigt_und_ist_idempotent():
+    g = fund.loesen([_f("eigen", konf=0.8), _f("languagetool", konf=0.7)])
+    a = fund.abstimmen(g)
+    assert len(a) == 1 and a[0].bestaetigt_von == ("languagetool",) and a[0].konfidenz > 0.8
+    assert fund.abstimmen(a) == a
+
+
+def test_abstimmen_verschiedenes_neu_senkt_fehler_auf_tipp():
+    a = fund.abstimmen(fund.loesen([_f("eigen", "A", 0.8), _f("languagetool", "B", 0.7)]))
+    assert len(a) == 1 and a[0].art == "tipp" and a[0].verdraengt
+
+
+def test_abstimmen_in_ruhe_und_selbst():
+    funde = [_f("languagetool")]
+    assert fund.abstimmen(funde, in_ruhe={"wort": True}) == []
+    assert fund.abstimmen(funde, in_ruhe={"wort": True}, selbst={"wort": "x"}) == funde
+
+
+def test_abstimmen_gegenprobe_nur_auf_wunsch():
+    funde = [_f("eigen", konf=0.8)]
+    gp = {"languagetool": [(0, 100)]}
+    assert fund.abstimmen(funde, geprueft=gp) == funde
+    assert fund.abstimmen(funde, geprueft=gp, gegenprobe=True)[0].art == "tipp"
+    assert fund.abstimmen([_f("eigen", konf=0.9)], geprueft=gp, gegenprobe=True)[0].art == "fehler"
+    assert fund.abstimmen(funde, geprueft={"eigen": [(0, 100)]}, gegenprobe=True) == funde

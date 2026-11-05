@@ -48,3 +48,36 @@ def loesen(funde: list[ProofingIssue]) -> list[ProofingIssue]:
         else:
             belegt.append(f)
     return sorted(belegt, key=lambda f: f.stellenschluessel)
+
+
+def abstimmen(funde: list[ProofingIssue], geprueft: dict | None = None, in_ruhe: dict | None = None, selbst: dict | None = None,
+              gegenprobe: bool = False) -> list[ProofingIssue]:
+    """Konsens zwischen den Quellen nach ``loesen`` (reine Funktion, idempotent).
+
+    a) Melden überlagerte Funde anderer Quellen denselben Vorschlag, wird der Gewinner von ihnen ``bestaetigt_von`` und seine Konfidenz
+       steigt (höchstens 1.0, nur einmal je neu hinzugekommener Quelle).
+    b) Melden andere Quellen einen anderen Vorschlag, wird ein „fehler“ zum „tipp“ (Widerspruch bleibt in ``verdraengt``).
+    d) Ein „fehler“, dessen Wort in ``in_ruhe`` steht, entfällt – außer das Wort steht in ``selbst`` (selbst gelernte Schreibweise).
+    c) Nur mit ``gegenprobe``: ein unbestätigter Fund unter 0.9, dessen Bereich eine andere Quelle laut ``geprueft``
+       (Quelle → Liste (von, bis)) vollständig geprüft und nicht beanstandet hat, wird zum „tipp“ (nie ausgeblendet)."""
+    in_ruhe, selbst, geprueft = in_ruhe or {}, selbst or {}, geprueft or {}
+    aus = []
+    for f in funde:
+        w = f.alt.lower()
+        if f.art == "fehler" and in_ruhe.get(w) and w not in selbst:
+            continue
+        if f.neu:
+            quellen = tuple(q for q in dict.fromkeys(v.quelle for v in f.verdraengt if v.neu == f.neu)
+                            if q and q != f.quelle)
+            neue = [q for q in quellen if q not in f.bestaetigt_von]
+            if neue:
+                mehr = max([f.konfidenz or 0.0] + [v.konfidenz or 0.0 for v in f.verdraengt if v.quelle in neue])
+                f = f.ersetzt(bestaetigt_von=f.bestaetigt_von + tuple(neue), konfidenz=min(1.0, mehr + 0.1))
+            if f.art == "fehler" and any(v.neu and v.neu != f.neu and v.quelle and v.quelle != f.quelle for v in f.verdraengt):
+                f = f.ersetzt(art="tipp")
+        if (gegenprobe and f.art == "fehler" and not f.bestaetigt_von and f.konfidenz is not None and f.konfidenz < 0.9
+                and any(q != f.quelle and not any(v.quelle == q for v in f.verdraengt)
+                        and any(a <= f.von and f.bis <= b for a, b in bereiche) for q, bereiche in geprueft.items())):
+            f = f.ersetzt(art="tipp")
+        aus.append(f)
+    return aus

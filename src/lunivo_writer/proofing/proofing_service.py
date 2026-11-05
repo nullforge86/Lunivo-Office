@@ -54,6 +54,7 @@ class WritingAssistant(QObject):
         self.editor = None
         self.funde: list[ProofingIssue] = []
         self._roh: list[ProofingIssue] = []
+        self._geprueft: dict[str, list[tuple[int, int]]] = {}   # Quelle → Bereiche, die sie vollständig geprüft hat
         self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
         self._weg: set[tuple] = set()
         self._alle_weg: set[str] = set()            # Wörter, die im ganzen Dokument in Ruhe bleiben (nur diese Sitzung)
@@ -117,6 +118,7 @@ class WritingAssistant(QObject):
         self.editor = editor
         self._doc = editor.document() if editor is not None else None
         self._voll, self._schmutz, self._roh = False, None, []
+        self._geprueft = {}
         if self._doc is not None:
             self._doc.contentsChange.connect(self._geaendert)
         self._weg.clear()
@@ -126,20 +128,21 @@ class WritingAssistant(QObject):
             editor.autokorr = self.autokorr
             editor.kontext_hook = self.erweitere_menue
             self.anzeigen([])
-            if self.an("wellen") and editor.document().characterCount() > 1:
+            if editor.document().characterCount() > 1:
                 self._timer.start()
         else:
             self.anzeigen([])
 
     def _geaendert(self, pos: int, entfernt: int, hinzu: int) -> None:
         """Bereichs-Invalidierung: Funde hinter der Änderung verschieben, Funde an der Änderung verwerfen, Bereich merken."""
+        self._geprueft = {}
         if not self._voll:
             return
         self._roh = inkrement.verschieben(self._roh, pos, entfernt, hinzu)
         self._schmutz = inkrement.schmutz_abbilden(self._schmutz, pos, entfernt, hinzu)
 
     def dokument_geaendert(self) -> None:
-        if self.an("wellen") and self.editor is not None:
+        if self.editor is not None:
             self._timer.start()
 
     # ---- Prüfen --------------------------------------------------------------------
@@ -194,16 +197,25 @@ class WritingAssistant(QObject):
             return
         self._geprueft_rev = rev
         roh = fundlib.markieren(roh, "eigen", self._pruef_laenge)
+        fremd = [f for f in self._roh if f.quelle != "eigen"]       # LanguageTool/KI gehen durch eigene Prüfung nicht verloren
         if self._region is not None:
-            self._roh = inkrement.einsetzen(self._roh, *self._region, roh)
+            von, bis = self._region
+            eigene = inkrement.einsetzen([f for f in self._roh if f.quelle == "eigen"], von, bis, roh)
+            fremd = [f for f in fremd if f.bis <= von or f.von >= bis]
+            self._roh = self._abstimmen(fundlib.loesen(eigene + fremd) if fremd else eigene)   # ohne fremde Funde nichts auflösen: Satz-Hinweise überlappen Wort-Funde gewollt
         else:
-            self._roh = roh
+            self._roh = self._abstimmen(fundlib.loesen(roh + fremd) if fremd else roh)
         self._region, self._schmutz, self._voll = None, None, True
         if getattr(self, "_zaehlen", False):
             self._zaehlen = False
             self.gelernt.merke_gezeigt([f for f in self._roh if self._key(f) not in self._weg and f.alt.lower() not in self._alle_weg])
         n = ed.document().characterCount() - 1
         self._zeigen(f"{n} Zeichen geprüft, {len([f for f in self._roh if self._key(f) not in self._weg])} Funde.")
+
+    def _abstimmen(self, funde: list) -> list:
+        """Konsens zwischen den Quellen (``fund.abstimmen``) mit den gelernten Daten und dem Schalter der Gegenprobe."""
+        return fundlib.abstimmen(funde, self._geprueft, self.gelernt.daten["inRuhe"], self.gelernt.daten["woerter"],
+                                 self.settings.get_bool("schreibhilfe/konsens_gegenprobe", False))
 
     def _key(self, f: ProofingIssue) -> tuple:
         t = self.editor.document().toPlainText() if self.editor else ""
@@ -229,7 +241,7 @@ class WritingAssistant(QObject):
     def erweitere_menue(self, menu, pos: int) -> None:
         """Ein Kopf, ein Vorschlag je Möglichkeit, drei Aktionen — wie im Prüfbogen (Kontextmenü für Fehler-Aktionen)."""
         ed = self.editor
-        if ed is None or not self.an("wellen"):
+        if ed is None:
             return
         gefunden = self.funde_an(pos)
         wort = self._wort_an(pos)
@@ -344,10 +356,38 @@ class WritingAssistant(QObject):
             return
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
-        self._roh = fundlib.loesen([f for f in self._roh if f.quelle != "languagetool"]
-                                   + fundlib.markieren(funde, "languagetool", ed.document().characterCount() - 1))
+        laenge = ed.document().characterCount() - 1
+        self._geprueft["languagetool"] = [(0, laenge)]
+        self._roh = self._abstimmen(fundlib.loesen([f for f in self._roh if f.quelle != "languagetool"]
+                                                   + fundlib.markieren(funde, "languagetool", laenge)))
         lt = len([f for f in self._roh if f.quelle == "languagetool"])
         self._zeigen(f"Gründlich geprüft: {lt} zusätzliche Hinweise von LanguageTool ({vorher} eigene Funde vorher).")
+
+    def ki_fertig(self, rev: int, vorschlaege: list) -> int:
+        """KI-Vorschläge (alt/neu/grund/konfidenz) als Funde der Quelle „ki“; veraltete Antworten (Text inzwischen geändert) werden verworfen."""
+        ed = self.editor
+        if ed is None or rev != ed.document().revision():
+            return 0
+        text, pos, roh = ed.document().toPlainText(), 0, []
+        for v in vorschlaege or []:
+            alt = str(v.get("alt") or "")
+            von = text.find(alt, pos) if alt else -1
+            if von < 0:
+                continue
+            pos = von + len(alt)
+            neu = v.get("neu") or None
+            d = {"von": von, "bis": pos, "alt": alt, "neu": neu, "grund": str(v.get("grund") or ""),
+                 "art": "tipp" if neu else "hinweis", "wortEbene": False, "stelle": alt}
+            if v.get("konfidenz") is not None:
+                d["konfidenz"] = v["konfidenz"]
+            roh.append(d)
+        ki = fundlib.markieren(roh, "ki", ed.document().characterCount() - 1)
+        if vorschlaege:
+            self._geprueft["ki"] = [(0, ed.document().characterCount() - 1)]
+        self._roh = self._abstimmen(fundlib.loesen([f for f in self._roh if f.quelle != "ki"] + ki))
+        n = len([f for f in self._roh if f.quelle == "ki"])
+        self._zeigen(f"{n} Vorschläge der KI.")
+        return n
 
     # ---- Annehmen / weglassen ----------------------------------------------------------
     def aendern(self, fund: ProofingIssue) -> bool:
@@ -357,11 +397,16 @@ class WritingAssistant(QObject):
         if not ed.replace_range(fund.von, fund.bis, fund.neu or "", erwartet=fund.alt):
             self.status.emit("Der Text hat sich an dieser Stelle geändert — bitte neu prüfen.")
             return False
-        self.gelernt.gewaehlt(fund)
+        if fund.quelle == "ki":
+            self.gelernt.ki_vermerken({"konfidenz": fund.konfidenz if fund.konfidenz is not None else 0.5}, True)
+        else:
+            self.gelernt.gewaehlt(fund)
         self.pruefen(voll=self.gelernt.wort_ebene(fund))
         return True
 
     def lassen(self, fund: dict) -> None:
+        if getattr(fund, "quelle", None) == "ki":
+            self.gelernt.ki_vermerken({"konfidenz": fund.konfidenz if fund.konfidenz is not None else 0.5}, False)
         self._weg.add(self._key(fund))
         self._zeigen()
 

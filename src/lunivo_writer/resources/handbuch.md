@@ -216,7 +216,11 @@ Die Seitenleiste rechts (`F5`). Sie sucht die Fehler, die ein Rechtschreibprüfe
 | **Vorhersage** | Schlägt beim Tippen Wörter vor (nach drei Buchstaben). `Tab` oder `Enter` übernimmt das markierte; `Strg+1` bis `Strg+6` nimmt einen der Vorschläge. |
 | **AutoKorr** | Bessert beim Schreiben stillschweigend aus, was eindeutig ist: Anführungszeichen, Gedankenstrich, Auslassungszeichen, Satzanfang, Wochentage. |
 
+**Klang-Hilfe:** Wer so schreibt, wie er das Wort hört („kwalität“, „fileicht“, „schpielen“), bekommt bei `F7` eine Karte „Klingt wie …“ mit dem gemeinten Wort. Namen, Fachwörter und Zusammensetzungen lässt sie in Ruhe. Abschalten: Schalter `schreibhilfe/pruefer_klang`.
+
 Das Programm lernt mit: Was einmal ausgebessert wurde, wird beim nächsten Mal zuerst vorgeschlagen.
+
+Alle Stufen — eigene Prüfung, LanguageTool und KI-Vorschläge — arbeiten über einen gemeinsamen Vermittler und heben sich nicht gegenseitig auf: Eine neue Prüfung lässt die Funde der anderen Stufen stehen, und die Wellen steuern nur die Wellenlinien im Text. Die **KI-Korrektur** (`F8`) ersetzt den Text direkt; die **Vorschläge** der KI erscheinen als Karten zwischen den übrigen Funden.
 
 Die drei Knöpfe **KI-Korrektur**, **Vorschläge** und **Nach Englisch** sind freiwillig. Sie sind grau, solange kein Schlüssel hinterlegt ist. Läuft auf dem Rechner ein eigenes Modell (Ollama), gehen sie auch ohne Schlüssel und ohne Geld — dann verlässt der Text den Rechner nicht.
 

@@ -248,13 +248,9 @@ class SchreibhilfePanel(QWidget):
         self.ki_aktion.show()
 
     def zeige_vorschlaege(self, lst: list) -> None:
-        self._karten_leeren()
-        self._funde_zeigen()
+        self._funde_zeigen()                                 # die Karten kommen als Funde (quelle „ki“) über fundeGeaendert
         if not lst:
             self._leer("Die KI findet nichts, was sich leichter sagen ließe.")
-            return
-        for i, v in enumerate(lst):
-            self.liste.insertWidget(i, VorschlagKarte(v, self.ki, self))
 
     def _funde_zeigen(self) -> None:
         """Ergebnisse (Hinweise, Vorschläge, Übersetzung) erscheinen auf dem Reiter Prüfen — die Seitenleiste wird dafür geöffnet und umgestellt."""

@@ -38,7 +38,7 @@ STUFEN = [
     (1, "Rote Wellenlinien", "", "Gibt es das Wort überhaupt?", "sofort beim Tippen", ("schalter", "wellen")),
     (1, "Wortvorhersage", "", "Wie ging das Wort weiter?", "ab drei Buchstaben", ("schalter", "vorhersage")),
     (1, "AutoKorrektur", "", "Bessert das Offensichtliche beim Tippen", "zum Beispiel „dass“ nach Komma", ("schalter", "autokorr")),
-    (2, "Rechtsklick auf ein Wort", "", "Welches Wort war gemeint?", "sucht auch nach dem Klang", None),
+    (2, "Rechtsklick auf ein Wort", "", "Welches Wort war gemeint?", "sucht auch nach dem Klang — F7 meldet ihn ebenfalls", None),
     (3, "Prüfen", "F7", "Ist es das richtige Wort? das/dass, wider/wieder", "die Schreibhilfe rechts", ("tun", "w.pruefen")),
     (4, "Vorlesen", "F4", "Klingt der Satz rund?", "Stimmen aus dem System", ("tun", "vorlesen")),
     (5, "Gründlich prüfen", "", "Stimmt die Grammatik?", "LanguageTool, einmal 400 MB", ("tun", "gruendlichPruefen")),
