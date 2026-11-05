@@ -15,6 +15,7 @@ from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_SCHMAL, DROPDOWN_ZEICHEN_ZAHL
 def linien_symbol(art: str, groesse: QSize = QSize(*GROESSE_LINIENART_BILD), farbe: str | None = None, breite_pt: float = 1.5) -> QIcon:
     farbe = Farbe.TINTE if farbe is None else farbe
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
@@ -93,8 +94,8 @@ class LinienWahl(QWidget):
             self.breite.addItem(f"{b:g}".replace(".", ",") + " pt", b)
         self._n_liste = self.breite.count()
         self.farbe = FarbFeld(linie.farbe, "Linienfarbe")
-        for c, n in ((self.art, 1), (self.breite, 3)):                    # die Zeile darf schmal werden (300 px): Art und Stärke geben nach, die Farbe bleibt sichtbar
-            c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(n)
+        for c, n in ((self.art, DROPDOWN_ZEICHEN_SCHMAL), (self.breite, DROPDOWN_ZEICHEN_ZAHL)):                    # die Zeile darf schmal werden (300 px): Art und Stärke geben nach, die Farbe bleibt sichtbar
+            c.zeichen(n)
         h.addWidget(self.art, 3); h.addWidget(self.breite, 2); h.addWidget(self.farbe, 0)
         self.setLinie(linie)
         self.art.currentIndexChanged.connect(self._aend)

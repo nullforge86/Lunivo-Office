@@ -33,6 +33,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_MIN_ZEICHEN, DROPDOWN_ZEICHEN_KURZ
 
 _FUELL_ANZEIGE = {"": "(ohne)", "punkt": "." * 24, "strich": "-" * 20, "linie": "_" * 18}
 
@@ -55,7 +56,7 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         self.fuell = Auswahlfeld(); self.fuell.setMinimumHeight(HOEHE_KNOPF); self.fuell.setAccessibleName("Füllzeichen")
         for schl in TOC_FUELL:
             self.fuell.addItem(_FUELL_ANZEIGE[schl], schl)
-        self.fuell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.fuell.setMinimumContentsLength(6)
+        self.fuell.zeichen(DROPDOWN_ZEICHEN_KURZ)
         self.fuell.setCurrentIndex(max(0, self.fuell.findData(o["fuell"])))
         self.ebenen = QSpinBox(); self.ebenen.setRange(1, 9); self.ebenen.setValue(int(o["ebenen"])); self.ebenen.setMinimumHeight(HOEHE_KNOPF)
         self.ebenen.setAccessibleName("Ebenen anzeigen")
@@ -240,7 +241,7 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         self.label.setCurrentText(label)
         self.pos = Auswahlfeld(); self.pos.addItems(["Unter dem ausgewählten Element", "Über dem ausgewählten Element"])
         self.pos.setMinimumHeight(HOEHE_KNOPF); self.pos.setEnabled(objekt); self.pos.setAccessibleName("Position")
-        self.pos.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.pos.setMinimumContentsLength(12)
+        self.pos.zeichen(DROPDOWN_MIN_ZEICHEN)
         g.zeile(_titel("B&ezeichnung:", self.label), self.label)
         g.zeile(_titel("&Position:", self.pos), self.pos)
         self.ohne = UmbruchSchalter("Be&zeichnung nicht in der Beschriftung verwenden"); g.breit(self.ohne)
@@ -314,7 +315,7 @@ class QuerverweisDialog(PanelFaehig, QDialog):
         g = FormularGitter()                                                   # breit: nebeneinander wie die Vorlage, Seitenleiste: untereinander
         self.art = Auswahlfeld(); self.art.addItems(VW.VERWEISTYPEN); self.art.setMinimumHeight(HOEHE_KNOPF); self.art.setAccessibleName("Verweistyp")
         self.auf = Auswahlfeld(); self.auf.setMinimumHeight(HOEHE_KNOPF); self.auf.setAccessibleName("Verweisen auf")
-        self.auf.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.auf.setMinimumContentsLength(12)
+        self.auf.zeichen(DROPDOWN_MIN_ZEICHEN)
         g.reihe((_titel("&Verweistyp:", self.art), self.art), (_titel("Verweisen &auf:", self.auf), self.auf))
         self.link = UmbruchSchalter("Als &Hyperlink einfügen"); self.link.setChecked(True)
         self.oben_unten = UmbruchSchalter("Oben/unten einschließen (&O)")

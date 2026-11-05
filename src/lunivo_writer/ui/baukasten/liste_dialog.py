@@ -48,6 +48,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_KURZ
 PLATZHALTER = "①"
 _SCHLUESSEL = "listen/benutzer"
 _KACHEL = QSize(*GROESSE_LISTENSTIL_KACHEL) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen
@@ -113,7 +114,7 @@ class _Zahlenformat(QWidget):
         for k, st in L.STILE.items():
             if not st[1]:
                 self.art.addItem(st[0], k)
-        self.art.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.art.setMinimumContentsLength(6)
+        self.art.zeichen(DROPDOWN_ZEICHEN_KURZ)
         self.start = QSpinBox(); self.start.setRange(1, 9999)
         if breit:
             g.reihe(("Zahlenformat:", self.format))

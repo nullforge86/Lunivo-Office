@@ -35,16 +35,37 @@ def _mische(a: QColor, b: QColor, anteil: float) -> QColor:
                   round(a.blue() + (b.blue() - a.blue()) * anteil))
 
 
-class FlacheReiterLeiste(QTabBar):
+MEHR_TEXT = "•••"                 # Beschriftung des Überlaufknopfs aller Reiterleisten (an einer Stelle)
+MEHR_TIPP = "Weitere Reiter"      # Tooltip und Name des Überlaufknopfs
+
+
+class ReiterUeberlauf:
+    """Basis aller Reiterleisten mit Überlauf: der Knopf „•••“ und das Menü der Reiter, die nicht mehr in die Leiste passen.
+    Reihenfolge: ``class X(ReiterUeberlauf, QTabBar)``. Die Leiste liefert ``_versteckte()`` (Indizes der ausgelagerten Reiter)
+    und setzt den Knopf selbst; hier steht nur, was beide Leisten gemeinsam haben."""
+
+    def _mehr_einrichten(self) -> None:
+        self._mehr = QToolButton(self)
+        self._mehr.setText(MEHR_TEXT); self._mehr.setAutoRaise(True); self._mehr.setCursor(Qt.PointingHandCursor)
+        self._mehr.setToolTip(MEHR_TIPP); self._mehr.setAccessibleName(MEHR_TIPP)
+        self._mehr.clicked.connect(self._mehr_menue); self._mehr.hide()
+
+    def _mehr_menue(self) -> None:
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        m = MenueListe(self)
+        for i in self._versteckte():
+            m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))
+        m.exec(self.mapToGlobal(QPoint(max(0, self._mehr.x() + self._mehr.width() - m.sizeHint().width()), self.height())))
+
+
+class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
     def __init__(self, art: str = UNTER, parent=None):
         super().__init__(parent)
         self._art = art
         self._letzte_hoehe = 0
         self.setExpanding(True); self.setDrawBase(False); self.setUsesScrollButtons(False)      # nie Rollpfeile, nie ein angeschnittener Reiter: Überlauf geht in das Menü „…“
         self.setElideMode(Qt.ElideNone); self.setCursor(Qt.PointingHandCursor)
-        self._mehr = QToolButton(self)
-        self._mehr.setText("•••"); self._mehr.setAutoRaise(True); self._mehr.setCursor(Qt.PointingHandCursor)
-        self._mehr.setToolTip("Weitere Reiter"); self._mehr.clicked.connect(self._mehr_menue); self._mehr.hide()
+        self._mehr_einrichten()
         self.currentChanged.connect(lambda _i: self._neu_anordnen())
 
     # ---- Maße ---------------------------------------------------------------------------------------------------------------------
@@ -93,13 +114,6 @@ class FlacheReiterLeiste(QTabBar):
     def _versteckte(self) -> list[int]:
         b = self._breiten()
         return [i for i in self._sichtbar() if i not in b]
-
-    def _mehr_menue(self) -> None:
-        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-        m = MenueListe(self)
-        for i in self._versteckte():
-            m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))
-        m.exec(self.mapToGlobal(QPoint(self.width() - m.sizeHint().width(), self.height())))
 
     def _neu_anordnen(self) -> None:
         """Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen."""
@@ -244,7 +258,7 @@ class FlacheReiterLeiste(QTabBar):
         p.end()
 
 
-class UeberlaufLeiste(QTabBar):
+class UeberlaufLeiste(ReiterUeberlauf, QTabBar):
     """Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
 
     Zu wenig Platz: so viele Reiter wie ganz passen (der aktive immer), der Rest steht hinter dem Knopf „•••“. ``setTabVisible``/``isTabVisible`` behalten ihren Sinn
@@ -258,9 +272,7 @@ class UeberlaufLeiste(QTabBar):
         self._im_verteilen = False
         self.platz = None
         self.setUsesScrollButtons(False); self.setElideMode(Qt.ElideNone); self.setExpanding(False)       # Reiter in natürlicher Breite: die Summe stimmt mit der Rechnung überein
-        self._mehr = QToolButton(self)
-        self._mehr.setText("•••"); self._mehr.setAutoRaise(True); self._mehr.setCursor(Qt.PointingHandCursor)
-        self._mehr.setToolTip("Weitere Reiter"); self._mehr.setAccessibleName("Weitere Reiter"); self._mehr.clicked.connect(self._mehr_menue); self._mehr.hide()
+        self._mehr_einrichten()
         self.currentChanged.connect(lambda _i: self.neu_verteilen())
         self.tabMoved.connect(self._verschoben)
 
@@ -334,13 +346,6 @@ class UeberlaufLeiste(QTabBar):
         finally:
             self._im_verteilen = False
         self.updateGeometry()
-
-    def _mehr_menue(self) -> None:
-        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-        m = MenueListe(self)
-        for i in self._versteckte():
-            m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))
-        m.exec(self.mapToGlobal(QPoint(max(0, self._mehr.x() + _MEHR - m.sizeHint().width()), self.height())))
 
     def sizeHint(self) -> QSize:
         sh = super().sizeHint()

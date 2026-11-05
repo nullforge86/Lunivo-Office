@@ -30,6 +30,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_HINWEIS,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_MIN_ZEICHEN, DROPDOWN_ZEICHEN_MITTEL
 
 SCHNITTE = ("Regulär", "Kursiv", "Fett", "Fett Kursiv")
 _THEMA = {"+Textkörper": "", "+Überschrift": "", "+Textkörper asiatisch": "", "+Überschrift asiatisch": "", "+Textkörper komplex": "", "+Überschrift komplex": ""}
@@ -47,13 +48,13 @@ def _schrift_combo(thema: tuple[str, ...] = ()) -> QFontComboBox:
     c = Schriftauswahl(); c.setEditable(True)
     for i, t in enumerate(thema):
         c.insertItem(i, t)
-    c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(12)     # breite Schriftnamen machen das Feld nicht breiter
+    c.zeichen(DROPDOWN_MIN_ZEICHEN)     # breite Schriftnamen machen das Feld nicht breiter
     return c
 
 
 def _schnitt_combo() -> QComboBox:
     c = Auswahlfeld(); c.setEditable(True); c.addItems(SCHNITTE)
-    c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); c.setMinimumContentsLength(8)
+    c.zeichen(DROPDOWN_ZEICHEN_MITTEL)
     return c
 
 

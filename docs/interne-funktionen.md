@@ -2,7 +2,7 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 366 Module, 394 Klassen, 5113 Funktionen und Methoden.
+Stand: 366 Module, 396 Klassen, 5115 Funktionen und Methoden.
 
 ## Inhalt
 
@@ -3911,7 +3911,10 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
 
 - `_gross(text)`
 - `_mische(a, b, anteil)` — Farbe a zum Anteil (0…1) mit b gemischt.
-- **class `FlacheReiterLeiste`**(QTabBar)
+- **class `ReiterUeberlauf`** — Basis aller Reiterleisten mit Überlauf: der Knopf „•••“ und das Menü der Reiter, die nicht mehr in die Leiste passen.
+  - `_mehr_einrichten()`
+  - `_mehr_menue()`
+- **class `FlacheReiterLeiste`**(ReiterUeberlauf, QTabBar)
   - `__init__(art, parent)`
   - `_sichtbar()`
   - `_knopf_breite(i)`
@@ -3919,7 +3922,6 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_breiten()` — Breite je sichtbarem Reiter: Unterreiter gleich breit, Hauptreiter nach Länge der Beschriftung (der Pfeilknopf zählt mit).
   - `_passende(soll, gesamt)` — Die Reiter, die neben dem Knopf „…“ ganz passen (in Reihenfolge); der aktive Reiter ist immer dabei.
   - `_versteckte()`
-  - `_mehr_menue()`
   - `_neu_anordnen()` — Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen.
   - `_text_flaeche(i, breite)`
   - `_groesse(breiten)` — Die Schriftgröße: so groß wie möglich, aber so, dass das längste Wort jedes Reiters ganz hineinpasst (nie „…“).
@@ -3935,7 +3937,7 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
   - `mousePressEvent(e)`
   - `paintEvent(_e)`
-- **class `UeberlaufLeiste`**(QTabBar) — Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
+- **class `UeberlaufLeiste`**(ReiterUeberlauf, QTabBar) — Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
   - `__init__(parent)`
   - `setTabVisible(index, sichtbar)`
   - `isTabVisible(index)`
@@ -3946,7 +3948,6 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_verfuegbar()`
   - `_versteckte()`
   - `neu_verteilen()`
-  - `_mehr_menue()`
   - `sizeHint()`
   - `minimumSizeHint()`
   - `resizeEvent(e)`
@@ -4889,11 +4890,14 @@ Auswahlfeld: das eine Dropdown für ganz Lunivo.
   - `sizeHint(option, index)`
   - `paint(painter, option, index)`
 - `popup_begrenzen(combo, popup_min)` — Nach ``showPopup()`` aufrufen: Größe der Liste (Breite, sichtbare Zeilen); die Lage in Fenster und Bildschirm bestimmt ``popup_klemmen``.
-- **class `Auswahlfeld`**(QComboBox)
+- **class `_Feldlaenge`** — Gemeinsam für ``Auswahlfeld`` und ``Schriftauswahl``: die Länge des Feldes in Zeichen (Rolle statt fester Zahl am Aufrufer).
+  - `zeichen(n)`
+  - `an_inhalt()` — Das Feld ist so breit wie sein längster Eintrag (z. B. kurze feste Listen).
+- **class `Auswahlfeld`**(_Feldlaenge, QComboBox)
   - `__init__(parent, *, min_zeichen, popup_min)`
   - `showPopup()`
   - `paintEvent(event)`
-- **class `Schriftauswahl`**(QFontComboBox) — Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste.
+- **class `Schriftauswahl`**(_Feldlaenge, QFontComboBox) — Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste.
   - `__init__(parent, *, min_zeichen)`
   - `showPopup()`
 

@@ -114,7 +114,7 @@ class SchreibhilfePanel(QWidget):
         for name in EMPFAENGER:
             self.thema.addItem(name)
         self.thema.setCurrentText(self.a.thema)
-        self.thema.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.thema.an_inhalt()
         self.thema.setToolTip("Für wen schreiben Sie? Danach richtet sich, was als Fehler zählt und welche Wörter vorgeschlagen werden.")
         self.thema.setAccessibleName("Für wen")
         self.thema.currentTextChanged.connect(self.a.setze_thema)

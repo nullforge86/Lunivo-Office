@@ -95,9 +95,10 @@ class UeberpruefenBefehle:
         from PySide6.QtGui import QStandardItemModel
         from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
         from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+        from lunivo_writer.ui.baukasten.mass import BREITE_ANZEIGEAUSWAHL_BAND, DROPDOWN_BREITE_MIN, HOEHE_KNOPF_GROSS
         halter = QWidget()
         v = QVBoxLayout(halter); v.setContentsMargins(2, 4, 2, 4); v.setSpacing(4)
-        cb = Auswahlfeld(); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(36); cb.setMinimumWidth(220); cb.view().setMinimumWidth(290)   # schmal im Band, die Liste zeigt die Namen ganz
+        cb = Auswahlfeld(popup_min=DROPDOWN_BREITE_MIN); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(HOEHE_KNOPF_GROSS); cb.setMinimumWidth(BREITE_ANZEIGEAUSWAHL_BAND)   # schmal im Band, die Liste zeigt die Namen ganz
         cb.setAccessibleName("Anzeige zur Überprüfung"); cb.setToolTip("Anzeige zur Überprüfung")
         modell = cb.model()
         if isinstance(modell, QStandardItemModel):

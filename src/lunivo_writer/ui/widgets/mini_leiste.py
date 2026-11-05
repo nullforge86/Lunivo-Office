@@ -119,10 +119,10 @@ class MiniLeiste(QFrame):
         self._felder: dict[str, QComboBox] = {}
         self._ikonen: dict[QToolButton, tuple[str, int]] = {}          # Symbolname und -größe je Knopf (Neuzeichnen nach Themenwechsel)
         self.schriftart = Auswahlfeld(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(BREITE_SCHRIFTAUSWAHL_MINILEISTE)     # Name bleibt lesbar (wie die Textleiste)
-        self.schriftart.addItems(QFontDatabase.families()); self.schriftart.setMaxVisibleItems(18)
+        self.schriftart.addItems(QFontDatabase.families())
         self.schriftart.textActivated.connect(lambda n: self._schrift(n))
         self.groesse = Auswahlfeld(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(BREITE_SCHRIFTGROESSE_MINILEISTE)
-        self.groesse.addItems([f"{g:g}" for g in GROESSEN]); self.groesse.setMaxVisibleItems(16)
+        self.groesse.addItems([f"{g:g}" for g in GROESSEN])
         self.groesse.textActivated.connect(lambda t: self._groesse(t))
         self._felder = {"schriftart": self.schriftart, "groesse": self.groesse}
         self._zeilen: list[QHBoxLayout] = []

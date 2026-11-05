@@ -24,6 +24,7 @@ from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
 
 AUTOMATISCH = "Automatisch"
 
@@ -70,7 +71,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         # ---- Textwasserzeichen ----
         self.mit_text = UmbruchSchalter("Te&xtwasserzeichen"); g.breit(self.mit_text)
         self.inhalt = _feld(Auswahlfeld()); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
-        self.schrift = _feld(Schriftauswahl()); self.schrift.setMinimumContentsLength(8)
+        self.schrift = _feld(Schriftauswahl()); self.schrift.zeichen(DROPDOWN_ZEICHEN_MITTEL)
         self.groesse = _feld(Auswahlfeld()); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
         for n in WZ.GROESSEN:
             self.groesse.addItem(str(n))

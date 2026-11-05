@@ -38,6 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_RAHMEN,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
@@ -242,7 +243,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         s = QWidget(); g = FormularGitter(s)
         self.schrift = Auswahlfeld(); self.schrift.addItem(NORMAL)
         self.schrift.addItems(QFontDatabase.families())
-        self.schrift.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.schrift.setMinimumContentsLength(8)
+        self.schrift.zeichen(DROPDOWN_ZEICHEN_MITTEL)
         self.schrift.currentIndexChanged.connect(self._schrift_neu)
         g.zeile("&Schriftart:", self.schrift)
         self.raster = Zeichenraster()

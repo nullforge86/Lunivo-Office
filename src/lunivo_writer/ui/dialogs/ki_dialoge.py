@@ -44,6 +44,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_LANG
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)
@@ -88,8 +89,7 @@ class AnbieterDialog(QDialog):
         self.modell.setInsertPolicy(QComboBox.NoInsert)
         self.modell.lineEdit().setPlaceholderText("z. B. gpt-4o-mini")
         self.modell.setCurrentText(bestehend["modell"] if bestehend else "")
-        self.modell.setMinimumContentsLength(10)
-        self.modell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.modell.zeichen(DROPDOWN_ZEICHEN_LANG)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         hinweis_stil(self.stand)
         holen = QPushButton("Liste der Modelle aktualisieren")
@@ -860,7 +860,7 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
         self.prompt.setMinimumHeight(HOEHE_TEXT_NORMAL)
         g.zeile("Was soll die Aktion tun? *", self.prompt)
         self.ergebnis = Auswahlfeld()
-        self.ergebnis.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.ergebnis.setMinimumContentsLength(10)
+        self.ergebnis.zeichen(DROPDOWN_ZEICHEN_LANG)
         for schl, text in ERGEBNIS_ARTEN:
             self.ergebnis.addItem(text, schl)
         g.zeile("Ergebnis anwenden als", self.ergebnis)

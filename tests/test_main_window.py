@@ -166,6 +166,16 @@ def test_kein_rohe_reiterleiste():
     assert treffer <= REITER_NOCH_ERLAUBT, "rohe Reiterleiste außerhalb des Bausteins: " + ", ".join(sorted(treffer - REITER_NOCH_ERLAUBT))
 
 
+def test_dropdown_groesse_nur_im_paket_dropdown():
+    """Wächter: Feldlänge, Größenregel und Zeilenzahl eines Dropdowns setzt nur das Paket dropdown (Aufrufer nutzen ``zeichen``/``an_inhalt``)."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\.(setSizeAdjustPolicy|setMinimumContentsLength|setMaxVisibleItems)\(")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Dropdown-Größe außerhalb des Pakets dropdown: " + ", ".join(treffer)
+
+
 def test_tastenkuerzel_fett(app, tmp_path):
     from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest

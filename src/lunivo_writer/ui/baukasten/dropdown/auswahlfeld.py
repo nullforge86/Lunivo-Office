@@ -56,7 +56,19 @@ def popup_begrenzen(combo: QComboBox, popup_min: int = 0) -> None:
     popup_klemmen(pop, combo)
 
 
-class Auswahlfeld(QComboBox):
+class _Feldlaenge:
+    """Gemeinsam für ``Auswahlfeld`` und ``Schriftauswahl``: die Länge des Feldes in Zeichen (Rolle statt fester Zahl am Aufrufer)."""
+
+    def zeichen(self, n: int) -> None:
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.setMinimumContentsLength(n)
+
+    def an_inhalt(self) -> None:
+        """Das Feld ist so breit wie sein längster Eintrag (z. B. kurze feste Listen)."""
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+
+
+class Auswahlfeld(_Feldlaenge, QComboBox):
     def __init__(self, parent=None, *, min_zeichen: int = DROPDOWN_MIN_ZEICHEN, popup_min: int = 0):
         super().__init__(parent)
         self._popup_min = popup_min
@@ -86,7 +98,7 @@ class Auswahlfeld(QComboBox):
         p.drawControl(QStyle.ControlElement.CE_ComboBoxLabel, opt)
 
 
-class Schriftauswahl(QFontComboBox):
+class Schriftauswahl(_Feldlaenge, QFontComboBox):
     """Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste."""
 
     def __init__(self, parent=None, *, min_zeichen: int = DROPDOWN_MIN_ZEICHEN):

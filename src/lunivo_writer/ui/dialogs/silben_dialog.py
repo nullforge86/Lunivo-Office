@@ -23,6 +23,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     SCHRIFT_VORSCHAU,
 )
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_KURZ
 class SilbenDialog(PanelFaehig, QDialog):
     def __init__(self, fenster):
         super().__init__(fenster)
@@ -42,7 +43,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         f = FormularGitter()
         self.palette = Auswahlfeld()
         self.palette.addItems(list(S.PALETTEN))
-        self.palette.setSizeAdjustPolicy(Auswahlfeld.AdjustToMinimumContentsLengthWithIcon); self.palette.setMinimumContentsLength(6)
+        self.palette.zeichen(DROPDOWN_ZEICHEN_KURZ)
         self.palette.setCurrentText(k["palette"])
         self.eigene_box = QWidget()
         eh = FlussLayout(); self.eigene_box.setLayout(eh)
@@ -62,7 +63,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         eh.addWidget(self.anzahl)
         self.darstellung = Auswahlfeld()
         self.darstellung.addItems(S.DARSTELLUNGEN)
-        self.darstellung.setSizeAdjustPolicy(Auswahlfeld.AdjustToMinimumContentsLengthWithIcon); self.darstellung.setMinimumContentsLength(6)
+        self.darstellung.zeichen(DROPDOWN_ZEICHEN_KURZ)
         self.darstellung.setCurrentText(k["darstellung"])
         f.reihe(("Farben", self.palette), ("Darstellung", self.darstellung))
         f.zeile("Eigene Farben", self.eigene_box)
