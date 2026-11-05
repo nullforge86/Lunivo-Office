@@ -142,11 +142,12 @@ class KIDienst(QObject):
         text = ed.document().toPlainText().rstrip("\n")
         return {"ed": ed, "text": text, "basis": 0, "markiert": False, "rev": ed.document().revision()}
 
-    def starte(self, meldung: str, arbeit, danach, eing: dict | None = None) -> None:
+    def starte(self, meldung: str, arbeit, danach, eing: dict | None = None, aufgabe: str | None = None) -> None:
         """arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread."""
         if self._beschaeftigt:
             return
-        if not self.verfuegbar():
+        self.verfuegbar()           # hält Empfänger/Thema in der Konfiguration aktuell
+        if not self.ki.verfuegbar_fuer(aufgabe):
             self._hinweis_fenster("KI", "Dafür fehlt ein KI-Modell — Ollama auf diesem Rechner oder ein Schlüssel. Beides richten Sie unter „KI-Einstellungen“ ein.")
             return
         eing = eing or self._eingabe()
@@ -155,9 +156,11 @@ class KIDienst(QObject):
         if eing is None or not eing["text"].strip():
             self._hinweis_fenster("KI", "Es steht noch kein Text da. Schreiben Sie etwas oder markieren Sie eine Stelle.")
             return
-        if not self._einwilligung(None, "auszug" if eing.get("markiert") else "dokument", len(eing["text"])):
-            self.status.emit("Abgebrochen — es wurde nichts gesendet.")
-            return
+        modell = self.ki.modell(aufgabe) if aufgabe else None
+        if not self._einwilligung(modell, "auszug" if eing.get("markiert") else "dokument", len(eing["text"])):
+            if not (modell or "").startswith(K.AUTO_MARKE):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
+                self.status.emit("Abgebrochen — es wurde nichts gesendet.")
+                return
         self._beschaeftigt = True
         self.laeuft.emit(True)
         self.status.emit(f"Die KI liest die Markierung ({len(eing['text'])} Zeichen) …" if eing["markiert"] else meldung)
@@ -282,12 +285,18 @@ class KIDienst(QObject):
             titel = f"Übersetzung nach {s}"
 
             def zeigen(r, e):
-                self.hinweis.emit(titel, r["text"], r.get("cent"))
-                self.aktionErgebnis.emit(titel, r["text"], r.get("cent"))
-            self.starte(f"Wird nach {s} übersetzt …", lambda t: self.ki.uebersetzen(t, s), zeigen)
+                titel_m = titel + (f" ({r['methode']})" if r.get("methode") else "")
+                self.hinweis.emit(titel_m, r["text"], r.get("cent"))
+                self.aktionErgebnis.emit(titel_m, r["text"], r.get("cent"))
+            self.starte(f"Wird nach {s} übersetzt …", lambda t: self.ki.uebersetzen(t, s), zeigen, aufgabe="uebersetzung")
             return
         self.starte(f"Wird nach {s} übersetzt …", lambda t: self.ki.uebersetzen(t, s),
-                    lambda r, e: self._einsetzen(r, e, f"Nach {s} übersetzt.", f"Markierung nach {s} übersetzt."))
+                    lambda r, e: self._einsetzen(r, e, f"Nach {s} übersetzt{self._methode(r)}.", f"Markierung nach {s} übersetzt{self._methode(r)}."),
+                    aufgabe="uebersetzung")
+
+    @staticmethod
+    def _methode(r) -> str:
+        return f" ({r['methode']})" if r.get("methode") else ""
 
     def text_aktion(self, aktion: str) -> None:
         namen = dict(K.TEXT_AKTIONEN)

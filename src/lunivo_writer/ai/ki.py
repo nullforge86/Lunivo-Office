@@ -19,6 +19,7 @@ import urllib.request
 OLLAMA_URL = "http://127.0.0.1:11434"
 CLAUDE_URL = "https://api.anthropic.com/v1/messages"
 OLLAMA_MARKE, EIGEN_MARKE = "ollama:", "eigen:"
+ARGOS_MARKE, AUTO_MARKE = "argos:", "auto:"      # lokale Übersetzung (Argos) / Automatisch: KI, sonst lokal
 LERN_SCHWELLE = 5
 ZETTEL_GRENZE = 300
 UMFAENGE = {"auszug": "markierte Textauszüge", "dokument": "den ganzen Text des Dokuments"}      # was an einen Anbieter im Internet gehen darf
@@ -93,7 +94,7 @@ class KIKonfig:
     def __init__(self, pfad: str):
         self.pfad = pfad
         self.d = {"modell": "claude-opus-5", "sprache": "Englisch", "empfaenger": "egal", "zettel": "",
-                  "apiKey": "", "anbieter": [], "aufgaben": {}, "kosten": 0.0, "claude_erlaubt": False, "einwilligungen": [], "assistenten": [], "chat": {}, "mcp": [], "websuche": {}}
+                  "apiKey": "", "anbieter": [], "aufgaben": {"uebersetzung": AUTO_MARKE}, "kosten": 0.0, "claude_erlaubt": False, "einwilligungen": [], "assistenten": [], "chat": {}, "mcp": [], "websuche": {}}
         try:
             with open(pfad, encoding="utf-8") as fh:
                 self.d.update(json.load(fh))
@@ -225,6 +226,8 @@ class KIKonfig:
         for a in self.d["anbieter"]:
             r.append({"id": EIGEN_MARKE + a["id"], "name": f"{a['name']} ({a['modell']})", "lokal": ist_lokale_url(a["url"]),
                       "verwendungFuer": a.get("verwendungFuer", [])})
+        r.append({"id": ARGOS_MARKE, "name": "Lokal (offline) · Argos", "lokal": True, "verwendungFuer": ["uebersetzung"]})
+        r.append({"id": AUTO_MARKE, "name": "Automatisch (KI, sonst lokal)", "lokal": False, "verwendungFuer": ["uebersetzung"]})
         return r
 
 
@@ -375,9 +378,18 @@ class KI:
             return self.k.anbieter_holen(m[len(EIGEN_MARKE):]) is not None
         return m.startswith(OLLAMA_MARKE) or bool(self.k["apiKey"])
 
+    def verfuegbar_fuer(self, aufgabe: str | None = None) -> bool:
+        """Wie ``verfuegbar``, aber für das Modell der Aufgabe: argos: und auto: gehen auch ohne Standardmodell (lokal)."""
+        m = self.modell(aufgabe)
+        return True if m.startswith((ARGOS_MARKE, AUTO_MARKE)) else self.verfuegbar()
+
     def schickt_nach_aussen(self, modell: str | None = None) -> str | None:
         """Name des Empfängers, wenn der Text das Gerät verlässt — sonst None."""
         m = modell or self.k["modell"]
+        if m.startswith(ARGOS_MARKE):
+            return None
+        if m.startswith(AUTO_MARKE):
+            return self.schickt_nach_aussen(self.k["modell"]) if self.verfuegbar() else None
         if m.startswith(OLLAMA_MARKE):
             return None
         if m.startswith(EIGEN_MARKE):
@@ -548,7 +560,29 @@ class KI:
             self.k.setze("kosten", self.k["kosten"] + cent)
 
     def korrigieren(self, text): return self._text(anweisung_korrektur(self.k, self.gelernt), text)
-    def uebersetzen(self, text, sprache): return self._text(anweisung_uebersetzung(sprache), text, "uebersetzung")
+    def uebersetzen(self, text, sprache) -> dict:
+        """Je nach Modell der Aufgabe: Argos (lokal), KI oder Automatisch (KI wenn eingeschaltet, erlaubt und erreichbar, sonst lokal;
+        schlägt die KI fehl, einmal lokal). Im Ergebnis steht ``methode`` („KI“ oder „Lokal“)."""
+        from lunivo_writer.ai import argos
+        m = self.modell("uebersetzung")
+        if m.startswith(ARGOS_MARKE):
+            return argos.uebersetze(text, sprache)
+        if m.startswith(AUTO_MARKE):
+            std = self.k["modell"]
+            if self.verfuegbar() and self.zustimmung_fehlt(std) is None:
+                r = self._uebersetzen_ki(text, sprache, std)
+                if "fehler" not in r:
+                    return r
+            return argos.uebersetze(text, sprache)
+        r = self._text(anweisung_uebersetzung(sprache), text, "uebersetzung")
+        return r if "fehler" in r else {**r, "methode": "KI"}
+
+    def _uebersetzen_ki(self, text, sprache, modell) -> dict:
+        r = self.anfrage(anweisung_uebersetzung(sprache), text, None, modell)
+        if "fehler" in r:
+            return r
+        self._kosten(r.get("cent"))
+        return {"text": r["ergebnis"], "cent": r.get("cent"), "methode": "KI"}
     def zusammenfassen(self, text): return self._text(ANWEISUNG_ZUSAMMENFASSUNG, text, "zusammenfassen")
     def text_analyse(self, text): return self._text(ANWEISUNG_ANALYSE, text, "textanalyse")
     def eigener_assistent(self, text, prompt):

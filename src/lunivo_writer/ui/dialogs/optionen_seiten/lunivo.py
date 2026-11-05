@@ -54,12 +54,14 @@ class LunivoSeiten:
                     return m["name"]
             return mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid
 
+        from lunivo_writer.ui.dialogs.ki_dialoge import modell_passt
+
         def aufgaben_fuellen():
             for aufgabe, c in combos.items():
                 c.blockSignals(True); c.clear()
                 c.addItem(f"Standard ({standard_name()})", "")
                 for m in k.alle_modelle():
-                    if aufgabe == "bildgenerierung" and ("bilder" not in m["verwendungFuer"] or not m["id"].startswith(K.EIGEN_MARKE)):
+                    if not modell_passt(m, aufgabe):
                         continue
                     c.addItem(m["name"] + ("  · lokal" if m["lokal"] else ""), m["id"])
                 c.setCurrentIndex(max(0, c.findData(k["aufgaben"].get(aufgabe, ""))))

@@ -69,6 +69,18 @@ korrigiert als eine Nachricht an einen Freund. Die *Vorschläge* der KI
 erscheinen wie alle anderen Funde als Karten in der Seitenleiste und löschen
 die Karten der übrigen Stufen nicht mehr.
 
+**Übersetzen, auch ohne KI.** Für die Aufgabe „Übersetzung“ gibt es in der
+Modellzuweisung drei Wege: ein bestimmtes KI-Modell, **Lokal (offline)** mit
+Argos Translate (der Text verlässt den Rechner nie) und **Automatisch** (KI,
+wenn eine eingeschaltet, erreichbar und erlaubt ist, sonst lokal; schlägt die
+KI fehl oder wird der Datenschutz-Hinweis abgelehnt, wird einmal lokal
+übersetzt). Im Ergebnis steht, womit übersetzt wurde („KI“ oder „Lokal“).
+Deutsch ↔ Englisch liegt der `.deb` bei; weitere Sprachen lädt man nur auf
+Wunsch im Bereich „Offline-Sprachen“ der Schreibhilfe-Einstellungen. Die
+Bibliothek ist ein optionales Extra (`pip install .[offline]`); ohne sie
+startet Lunivo trotzdem, nur die lokale Übersetzung meldet dann, dass sie fehlt.
+Code: `src/lunivo_writer/ai/argos.py`.
+
 ---
 
 [← Zurück zum README](../README.md)
