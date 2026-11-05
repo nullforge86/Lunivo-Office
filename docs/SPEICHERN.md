@@ -27,9 +27,7 @@ Dateikopf); eine falsche oder beschädigte Datei wird als Fehler gemeldet, nicht
 | PDF | **nein** | – | – | im selben Fenster wählbar, ist aber eine Ausgabe | ja (`QPdfWriter`) |
 | PNG (Bild der Seite) | nein | – | – | – | ja, je Seite eine Datei |
 
-DOC ist ein geschlossenes Binärformat; ohne fremdes Programm lässt es sich nicht verlässlich schreiben. Auf Wunsch des Eigentümers
-(2026-10-27) ist es ganz entfernt statt halb unterstützt.
-
+DOC ist ein geschlossenes Binärformat; ohne fremdes Programm lässt es sich nicht verlässlich schreiben. 
 ### Was ODT und RTF mitnehmen
 
 | | ODT | RTF |
