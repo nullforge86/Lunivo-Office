@@ -181,7 +181,7 @@ class KIKonfig:
         if e is None:
             e = {"id": "m" + uuid.uuid4().hex[:8]}
             self.d["mcp"].append(e)
-        e.update(name=(name or "").strip()[:60] or "MCP-Server", befehl=(befehl or "").strip(), an=bool(an))
+        e.update(name=(name or "").strip()[:60] or "KI-Werkzeug", befehl=(befehl or "").strip(), an=bool(an))
         self.speichern()
         return e
 
@@ -648,12 +648,12 @@ class KI:
             for sv in server:
                 if sv["befehl"] not in self._server_erlaubt:
                     if not self.server_frage(sv["name"], sv["befehl"]):
-                        return {"fehler": f"Der Start des MCP-Servers „{sv['name']}“ wurde nicht erlaubt."}
+                        return {"fehler": f"Der Start des KI-Werkzeugs „{sv['name']}“ wurde nicht erlaubt."}
                     self._server_erlaubt = self._server_erlaubt | {sv["befehl"]}
                 try:
                     c = M.McpClient(sv["befehl"])
                 except M.McpFehler as e:
-                    return {"fehler": f"MCP-Server „{sv['name']}“: {e}"}
+                    return {"fehler": f"KI-Werkzeug „{sv['name']}“: {e}"}
                 clients.append(c)
                 for t in c.werkzeuge():
                     n = t["name"] if t["name"] not in wo else f"{sv['name']}_{t['name']}"
@@ -694,7 +694,7 @@ class KI:
                     nachrichten.append({"role": "tool", "tool_call_id": aufruf.get("id", ""), "content": str(ergebnis)[:8000]})
             return {"fehler": "Die KI hat zu viele Werkzeugaufrufe gebraucht. Bitte die Frage genauer stellen."}
         except M.McpFehler as e:
-            return {"fehler": f"MCP: {e}"}
+            return {"fehler": f"KI-Werkzeug: {e}"}
         except urllib.error.HTTPError as e:
             return {"fehler": f"Der Anbieter meldet Fehler {e.code} — unterstützt das Modell Werkzeuge?"}
         except (urllib.error.URLError, OSError, ValueError) as e:

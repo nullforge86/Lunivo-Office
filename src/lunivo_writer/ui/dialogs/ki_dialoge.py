@@ -529,7 +529,7 @@ class McpDialog(QDialog):
 
     def __init__(self, fenster, e: dict | None = None):
         super().__init__(fenster)
-        self.setWindowTitle("MCP-Server bearbeiten" if e else "MCP-Server hinzufügen"); self.resize(*GROESSE_FENSTER_MCP)
+        self.setWindowTitle("KI-Werkzeug bearbeiten" if e else "KI-Werkzeug hinzufügen"); self.resize(*GROESSE_FENSTER_MCP)
         v = QVBoxLayout(self)
         f = FormularGitter()
         self.name = QLineEdit(e["name"] if e else ""); self.name.setPlaceholderText("Name")
@@ -557,7 +557,7 @@ class McpDialog(QDialog):
 
     def _ok(self) -> None:
         if not self.name.text().strip() or not self.befehl.text().strip():
-            QMessageBox.information(self, "MCP-Server", "Name und Befehl werden gebraucht.")
+            QMessageBox.information(self, "KI-Werkzeug", "Name und Befehl werden gebraucht.")
             return
         self.accept()
 
@@ -573,7 +573,7 @@ class McpListe(QWidget):
         self.fenster, self.k = fenster, konfig
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_OBEN_SEITE)
         g = FormularGitter(); v.addLayout(g)
-        info = QLabel("MCP-Server geben der KI im Chat Werkzeuge (Dateien lesen, Daten abfragen …). Gilt für Ollama und eigene Anbieter.")
+        info = QLabel("KI-Werkzeuge sind kleine Zusatzprogramme, die die KI im Chat benutzen darf (zum Beispiel Dateien lesen oder Daten abfragen). Fachbegriff: MCP-Server. Gilt für Ollama und eigene Anbieter.")
         info.setWordWrap(True); g.breit(info)
         self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_KURZ); g.breit(self.liste)
         s = FlussLayout(6)
@@ -716,7 +716,7 @@ class WebsuchePanel(QWidget):
         self.k.websuche_setzen(**self.werte())
 
 
-REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "MCP-Server", "Websuche", "Datenschutz")
+REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -770,7 +770,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
 
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen."""
-        for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("MCP", "MCP-Server"),
+        for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("Werkzeuge", "KI-Werkzeuge"),
                                           ("Websuche", "Websuche"), ("Daten", "Datenschutz"))):
             self.reiter.setTabText(i, kurz)
             if self.reiter.isTabEnabled(i):

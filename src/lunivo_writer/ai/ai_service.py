@@ -67,8 +67,8 @@ class KIDienst(QObject):
     def _werkzeug_fragen(self, name: str, argumente: str, server_art: str) -> None:
         server, _s, art = server_art.partition("\x1f")
         if name == "\x00start":
-            k = QMessageBox(QMessageBox.Warning, "MCP-Server starten?",
-                            f"Für die Antwort soll das Programm des MCP-Servers „{server}“ auf diesem Rechner gestartet werden.\n\n"
+            k = QMessageBox(QMessageBox.Warning, "KI-Werkzeug starten?",
+                            f"Für die Antwort soll das Programm des KI-Werkzeugs „{server}“ (MCP-Server) auf diesem Rechner gestartet werden.\n\n"
                             f"Befehl:\n{argumente}\n\nDas Programm läuft mit Ihren Rechten. Jeder Werkzeugaufruf wird danach einzeln gefragt. Starten?",
                             QMessageBox.Yes | QMessageBox.No, self.w)
             k.setDefaultButton(QMessageBox.No)
@@ -78,7 +78,7 @@ class KIDienst(QObject):
         warnung = {"löschen": "Löschen von Daten", "schreiben": "Schreiben oder Ändern", "netzwerk": "Zugriff auf das Netzwerk",
                    "lesen": "Lesen", "unbekannt": "unbekannte Wirkung"}.get(art, "unbekannte Wirkung")
         k = QMessageBox(QMessageBox.Question, "Werkzeug aufrufen?",
-                        f"Die KI möchte das Werkzeug „{name}“ des MCP-Servers „{server}“ aufrufen.\n\nArt der Aktion: {warnung}\n\nErlauben?",
+                        f"Die KI möchte das Werkzeug „{name}“ des KI-Werkzeugs „{server}“ aufrufen.\n\nArt der Aktion: {warnung}\n\nErlauben?",
                         QMessageBox.Yes | QMessageBox.No, self.w)
         k.setDefaultButton(QMessageBox.No)
         k.setDetailedText("Alle Angaben des Aufrufs:\n" + argumente)
