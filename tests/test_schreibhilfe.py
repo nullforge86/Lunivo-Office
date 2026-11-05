@@ -860,3 +860,56 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     assert not karte.vorschlag_feld.isHidden()
     karte.annehmen.click()                                    # annehmen: der lange Satz ist ersetzt
     assert e.toPlainText().startswith("Erster Satz. Zweiter Satz.")
+
+
+def test_fremder_fund_languagetool_bleibt_nach_eigener_vollpruefung(app, tmp_path, monkeypatch):
+    from lunivo_writer.models.proofing import ProofingIssue
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor(); e.setPlainText("Das ist vieleicht gut.")
+    a = w.assistant
+    a._roh = [ProofingIssue(0, 3, "Das", None, "LT-Hinweis", "hinweis", quelle="languagetool", konfidenz=0.5)]
+    a._region = None
+    a._fertig(e.document().revision(), [])
+    assert any(f.quelle == "languagetool" for f in a._roh)
+
+
+def test_wellen_schalter_aus_laesst_funde_und_menue_bestehen(app, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QMenu
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor(); e.setPlainText("Wir hat keine Zahlung erhalten.")
+    w.assistant.setze("wellen", False)
+    w.assistant.pruefen()
+    for _ in range(5):                                    # frühere (leere) Meldung nicht für das Ergebnis halten
+        warte(w.assistant.fundeGeaendert, 3000)
+        if any(f.neu == "Wir haben" for f in w.assistant.funde):
+            break
+    assert any(f.neu == "Wir haben" for f in w.assistant.funde)
+    assert e.extraSelections() == []
+    m = QMenu(); w.assistant.erweitere_menue(m, e.toPlainText().index("hat") + 1)
+    assert "Wir haben" in [x.text() for x in m.actions()]
+
+
+def test_ki_vorschlaege_als_funde_quelle_ki(app, tmp_path, monkeypatch):
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor(); e.setPlainText("Das ist ein sehr langer Satz.")
+    a = w.assistant
+    v = [{"alt": "sehr langer Satz", "neu": "kurzer Satz", "grund": "kürzer", "konfidenz": 0.8}]
+    assert a.ki_fertig(e.document().revision() - 1, v) == 0                   # alte Revision wird verworfen
+    assert a.ki_fertig(e.document().revision(), v) == 1
+    f = [x for x in a._roh if x.quelle == "ki"][0]
+    assert (f.von, f.bis, f.neu) == (12, 28, "kurzer Satz")
+    a._region = None
+    a._fertig(e.document().revision(), [])
+    assert any(x.quelle == "ki" for x in a._roh)
+
+
+def test_konsens_lt_und_ki_fertig_tragen_geprueft_ein(app, tmp_path, monkeypatch):
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor(); e.setPlainText("Das ist vieleicht gut.")
+    a = w.assistant
+    a._lt_fertig(e.document().revision(), [])
+    assert a._geprueft["languagetool"] == [(0, 22)]
+    a.ki_fertig(e.document().revision(), [])
+    assert "ki" not in a._geprueft
+    e.insertPlainText("x")
+    assert a._geprueft == {}

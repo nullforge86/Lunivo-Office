@@ -320,6 +320,7 @@ class KIDienst(QObject):
     def vorschlaege_holen(self) -> None:
         def danach(r, e):
             lst = r.get("vorschlaege", [])
+            self.assistant.ki_fertig(e.get("rev", -1), lst)
             self.vorschlaege.emit(lst)
             self.status.emit((f"{len(lst)} Vorschläge." if lst else "Die KI findet nichts, was sich leichter sagen ließe.")
                              + self._preis(r.get("cent")))

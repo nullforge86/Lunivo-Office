@@ -41,12 +41,13 @@ def farbe_je_art() -> dict:
 # Marke oben auf der Karte: Schrift, Hintergrund (nach der Vorlage der ersten Fassung)
 def _marken() -> dict:
     return {"fehler": ("SICHER FALSCH", Farbe.WARNUNG_HELL, Farbe.TINTE_DUNKEL), "tipp": ("KOMMT DRAUF AN", Farbe.AKZENT, Farbe.AUF_AKZENT),
-            "hinweis": ("NUR ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT)}
+            "hinweis": ("NUR ZUM NACHDENKEN", Farbe.GRAU, Farbe.AUF_AKZENT),
+            "ki": ("KI-VORSCHLAG", Farbe.AKZENT_HELL, Farbe.TINTE_DUNKEL)}   # dunkle Schrift auf Hellblau: Kontrast ca. 5 : 1
 
 
-def marke(art: str) -> QLabel:
+def marke(art: str, quelle: str = "") -> QLabel:
     marken = _marken()
-    text, grund, schrift = marken.get(art, marken["hinweis"])
+    text, grund, schrift = marken["ki"] if quelle == "ki" else marken.get(art, marken["hinweis"])
     m = QLabel(text)
     from lunivo_writer.ui.baukasten.texte import marke_faerben
     marke_faerben(m, grund, schrift, "border: none; border-radius: " f"{RADIUS_MARKE}" "px; padding: " f"{PADDING_MARKE}" "; font-size: " f"{SCHRIFT_KLEIN}" "pt; font-weight: 700; letter-spacing: 0.5px;")
@@ -58,12 +59,12 @@ class FundKarte(QFrame):
         super().__init__(parent)
         self.fund, self.a, self.d = fund, assistent, dienst
         self.setObjectName("FundKarte")
-        als_karte(self, "karte")
+        als_karte(self, "ki" if fund.quelle == "ki" else "karte")
         v = QVBoxLayout(self)
         v.setContentsMargins(*RAND_FUNDKARTE)
         v.setSpacing(ABSTAND_NORMAL)
         kopf = FlussLayout(6)
-        kopf.addWidget(marke(fund.art))
+        kopf.addWidget(marke(fund.art, fund.quelle))
         v.addLayout(kopf)
         if fund.art != "hinweis" and fund.neu:
             t = md_label(f"~~{md_escape(kurz(fund.zeige_alt))}~~  →  **{md_escape(kurz(fund.zeige_neu))}**")
@@ -88,7 +89,7 @@ class FundKarte(QFrame):
             ohr.setToolTip("Das Wort anhören"); ohr.setAccessibleName("Das Wort anhören")
             ohr.clicked.connect(self._hoeren)
             z.addWidget(ohr)
-        if fund.art == "hinweis" and fund.stelle and dienst is not None:           # ein Hinweis auf einen Satz: die KI macht einen Vorschlag
+        if fund.art == "hinweis" and fund.stelle and dienst is not None and fund.quelle != "ki":           # ein Hinweis auf einen Satz: die KI macht einen Vorschlag
             self.vorschlag_knopf = QPushButton("Vorschlag")
             self.vorschlag_knopf.setToolTip("Die KI schreibt den Satz kürzer — Sie nehmen es an oder verwerfen es")
             self.vorschlag_knopf.clicked.connect(self._vorschlag_holen)

@@ -21,7 +21,7 @@ _log = logging.getLogger("lunivo.schreibhilfe")
 ARTEN = ("fehler", "tipp", "hinweis")      # Schweregrad, von schwer nach leicht
 QUELLEN = ("eigen", "languagetool", "ki")  # Herkunft
 
-_BEKANNT = {"von", "bis", "alt", "neu", "grund", "art", "wortEbene", "quelle", "konfidenz", "verdraengt", "stelle"}
+_BEKANNT = {"von", "bis", "alt", "neu", "grund", "art", "wortEbene", "quelle", "konfidenz", "verdraengt", "stelle", "bestaetigtVon"}
 
 
 class FundFehler(ValueError):
@@ -61,6 +61,7 @@ class ProofingIssue:
     konfidenz: float | None = None
     verdraengt: tuple[Verdraengt, ...] = ()    # von diesem Fund überlagerte Funde anderer Quellen
     stelle: str = ""                           # bei Hinweisen auf einen Satz: der ganze Satz
+    bestaetigt_von: tuple[str, ...] = ()       # andere Quellen (QUELLEN), die denselben Vorschlag melden (Konsens, siehe fund.abstimmen)
     weitere: tuple = field(default_factory=tuple)  # unbekannte Schlüssel als (Name, Wert)-Paare
 
     def pruefen(self, text_laenge: int | None = None) -> "ProofingIssue":
@@ -79,6 +80,8 @@ class ProofingIssue:
             raise FundFehler(f"unbekannte Quelle „{self.quelle}“")
         if self.konfidenz is not None and not (isinstance(self.konfidenz, (int, float)) and 0.0 <= self.konfidenz <= 1.0):
             raise FundFehler("Konfidenz außerhalb von 0 bis 1")
+        if not isinstance(self.bestaetigt_von, tuple) or any(q not in QUELLEN for q in self.bestaetigt_von):
+            raise FundFehler("bestaetigt_von enthält unbekannte Quellen")
         return self
 
     @property
@@ -118,6 +121,7 @@ class ProofingIssue:
             verdraengt=tuple(v if isinstance(v, Verdraengt) else Verdraengt(**{k: v.get(k) for k in ("quelle", "neu", "grund", "konfidenz")})
                              for v in f.get("verdraengt", ())),
             stelle=f.get("stelle") or "",
+            bestaetigt_von=tuple(q for q in (f.get("bestaetigtVon") or ()) if q in QUELLEN),
             weitere=tuple((k, v) for k, v in f.items() if k not in _BEKANNT))
 
     def als_dict(self) -> dict:
@@ -132,6 +136,8 @@ class ProofingIssue:
             d["verdraengt"] = [{"quelle": v.quelle, "neu": v.neu, "grund": v.grund, "konfidenz": v.konfidenz} for v in self.verdraengt]
         if self.stelle:
             d["stelle"] = self.stelle
+        if self.bestaetigt_von:
+            d["bestaetigtVon"] = list(self.bestaetigt_von)
         d.update(self.weitere)
         return d
 
