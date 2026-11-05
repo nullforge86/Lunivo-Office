@@ -8,7 +8,7 @@ from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpi
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
 from lunivo_writer.ui.baukasten.mass import RAND_KEIN
 def _titel(text: str, feld) -> QLabel:

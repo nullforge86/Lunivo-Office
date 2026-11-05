@@ -41,6 +41,20 @@ def piper_dirs() -> list[str]:
     return [os.path.join(generisch, "lunivo-office", "piper"), os.path.join(generisch, "schreibhilfe", "piper")]
 
 
+def argos_dirs() -> list[str]:
+    """Suchorte für Argos-Sprachpakete (.argosmodel): Benutzerordner zuerst, dann der mitgelieferte Ordner beim Programm."""
+    generisch = _ort(_SP.GenericDataLocation)
+    programm = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "argos"))
+    return [os.path.join(generisch, "lunivo-office", "argos"), programm, "/opt/stevie-empire/lunivo-office/argos"]
+
+
+def argos_pakete_dir() -> str:
+    """Beschreibbarer Ort, an dem Argos die installierten Sprachpakete ablegt (der mitgelieferte Ordner ist schreibgeschützt)."""
+    pfad = os.path.join(data_dir(), "argos-pakete")
+    os.makedirs(pfad, exist_ok=True)
+    return pfad
+
+
 def vorlagen_dir() -> str:
     """Vorgabeordner eigener Vorlagen, wenn der Benutzer keinen eigenen gewählt hat."""
     return os.path.join(_ort(_SP.HomeLocation), "Vorlagen")

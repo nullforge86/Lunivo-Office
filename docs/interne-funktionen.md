@@ -2,12 +2,12 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 361 Module, 386 Klassen, 5056 Funktionen und Methoden.
+Stand: 362 Module, 389 Klassen, 5082 Funktionen und Methoden.
 
 ## Inhalt
 
 - `(Wurzel)` — 3 Module
-- `ai` — 5 Module
+- `ai` — 6 Module
 - `core` — 8 Module
 - `core/befehle` — 22 Module
 - `editor` — 72 Module
@@ -73,7 +73,7 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `zettel(text)`
   - `_einwilligung(modell, umfang, zeichen)` — Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
   - `_eingabe()`
-  - `starte(meldung, arbeit, danach, eing)` — arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread.
+  - `starte(meldung, arbeit, danach, eing, aufgabe)` — arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread.
   - `_fertig(auftrag, r)`
   - `bild_aus_text(beschreibung)` — Markierter Text (oder der übergebene) ist die Bildbeschreibung; das Bild tritt an die Stelle der Markierung.
   - `_bild_fertig(r, eing)`
@@ -82,6 +82,7 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `_anhaengen(r, eing, name)` — Das Ergebnis hinter die Markierung (ohne Markierung: ans Ende des Textes) setzen — als ein Schritt für Rückgängig.
   - `korrigieren()`
   - `uebersetzen(sprache, modus)` — Übersetzen in die gewählte Sprache. ``modus``: „ersetzen“ setzt die Übersetzung an die Stelle der Markierung, „zeigen“ zeigt sie in der Schreibhilfe
+  - `_methode(r)`
   - `text_aktion(aktion)`
   - `assistent(a)` — Schnelle KI-Aktion (Eigener Assistent): ein Name und ein Prompt. Wirkung „ersetzen“ wie Korrigieren, „anhaengen“ hinter den Text, „hinweis“ wie
   - `zusammenfassen()`
@@ -91,6 +92,23 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `satz_vorschlag(fund, danach)` — Zu einem Hinweis („Langer Satz …“) einen Umschreibe-Vorschlag holen; ``danach(vorschlag)`` bekommt {alt, neu, grund} im Hauptthread.
   - `vorschlag_einsetzen(v)`
   - `chat(verlauf)`
+
+### `ai/argos.py`
+
+Lokale Offline-Übersetzung mit argostranslate. Der Text verlässt den Rechner nie.
+
+- `code_fuer(sprache)`
+- `erkenne_sprache(text)` — Einfache Erkennung (Schrift, dann Stoppwörter). Bei Unklarheit Deutsch.
+- `_fehler(text)`
+- `_bibliothek()` — (package, translate) oder None, wenn argostranslate fehlt. Speicherort der Pakete vorher auf einen beschreibbaren Ordner legen.
+- `_mitgelieferte_installieren(package)` — Beim ersten Bedarf einmalig alle .argosmodel-Dateien aus den Suchorten installieren (bereits Installierte überspringt Argos nicht,
+- `_suche(translate, von, nach)` — Übersetzer von→nach, direkt oder über Englisch; sonst None.
+- `uebersetze(text, sprache, quelle)` — {"text": …, "methode": "Lokal"} oder {"fehler": …}. ``sprache`` ist der deutsche Name (oder ISO-Code) der Zielsprache.
+- `_name(code)`
+- `installierte_richtungen()` — Bereits installierte Richtungen: [{"von", "nach", "name"}]. Leer, wenn Argos fehlt. Kein Netz.
+- `verfuegbare_richtungen()` — Noch nicht installierte Richtungen aus dem Argos-Paketindex: {"richtungen": [{"von","nach","name","groesse_mb"}]} oder {"fehler"}.
+- `richtung_installieren(von, nach)` — Lädt das Paket von→nach herunter und installiert es. Nur auf ausdrücklichen Wunsch, im Hintergrund; nie automatisch.
+- `_netzfehler(e)`
 
 ### `ai/ki.py`
 
@@ -136,6 +154,7 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `__init__(konfig, gelernt)`
   - `modell(aufgabe)`
   - `verfuegbar()`
+  - `verfuegbar_fuer(aufgabe)` — Wie ``verfuegbar``, aber für das Modell der Aufgabe: argos: und auto: gehen auch ohne Standardmodell (lokal).
   - `schickt_nach_aussen(modell)` — Name des Empfängers, wenn der Text das Gerät verlässt — sonst None.
   - `websuche_ziel()` — Wohin die Frage der Websuche geht, wenn das nicht dieser Rechner ist (Brave oder eine nicht lokale Adresse), sonst None.
   - `zustimmung_fehlt(modell, umfang)` — Sperre an der Sendestelle: Geht der Text an einen Dienst außerhalb dieses Rechners und liegt dafür keine Einwilligung vor, kommt eine
@@ -147,7 +166,8 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `_text(anweisung, text, aufgabe, optionen)`
   - `_kosten(cent)`
   - `korrigieren(text)`
-  - `uebersetzen(text, sprache)`
+  - `uebersetzen(text, sprache)` — Je nach Modell der Aufgabe: Argos (lokal), KI oder Automatisch (KI wenn eingeschaltet, erlaubt und erreichbar, sonst lokal;
+  - `_uebersetzen_ki(text, sprache, modell)`
   - `zusammenfassen(text)`
   - `text_analyse(text)`
   - `eigener_assistent(text, prompt)`
@@ -2651,6 +2671,8 @@ Orte für Programmdaten, Zwischenspeicher, nachgeladene Schriften/Stimmen und Vo
 - `cache_dir()` — Wiederherstellbares Zwischengelagertes.
 - `schriften_dir()` — Nachgeladene Lese-Schriften (schrift-holen.sh); Linux: ~/.local/share/fonts/lunivo-office.
 - `piper_dirs()` — Suchorte für Piper und seine Stimmen (stimme-holen.sh), der erste ist der aktuelle.
+- `argos_dirs()` — Suchorte für Argos-Sprachpakete (.argosmodel): Benutzerordner zuerst, dann der mitgelieferte Ordner beim Programm.
+- `argos_pakete_dir()` — Beschreibbarer Ort, an dem Argos die installierten Sprachpakete ablegt (der mitgelieferte Ordner ist schreibgeschützt).
 - `vorlagen_dir()` — Vorgabeordner eigener Vorlagen, wenn der Benutzer keinen eigenen gewählt hat.
 
 ### `plattform/protokoll.py`
@@ -5459,6 +5481,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `_entfernen()`
 - **class `ModellListeDialog`**(QDialog) — „Liste der KI-Modelle“ als eigenes Fenster (Optionen).
   - `__init__(fenster, konfig)`
+- `modell_passt(m, aufgabe)` — Lokale Übersetzung („argos:“) und „Automatisch“ („auto:“) gelten nur für ihre Aufgabe (``verwendungFuer``); Bildgenerierung hat ihre eigene Regel.
 - `modell_combo(konfig, aufgabe, gewaehlt)` — Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats.
 - **class `ModellZuweisung`**(QWidget) — Je Aufgabe ein Modell: Chatbot, Zusammenfassen, Übersetzung, Textanalyse, Bildgenerierung.
   - `__init__(fenster)`
@@ -5474,6 +5497,17 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `findData(daten)`
   - `setCurrentIndex(i)`
   - `setCurrentText(text)`
+- **class `_NetzLauf`**(QRunnable) — Ein Netzaufruf der Sprachpakete im Hintergrund; das Ergebnis kommt als Signal zurück.
+  - `__init__(sender, funktion, *args)`
+  - `run()`
+- **class `_NetzSender`**(QObject)
+- **class `OfflineSprachen`**(QWidget) — „Offline-Sprachen“: installierte Richtungen der lokalen Übersetzung und das Nachladen weiterer Sprachpakete (nur auf Klick, im Hintergrund).
+  - `__init__()`
+  - `aktualisieren()`
+  - `_sperren(an)`
+  - `_verfuegbare_holen()`
+  - `_herunterladen(von, nach, name, mb)`
+  - `_ergebnis(erg)`
 - **class `SprachePanel`**(QWidget) — Die Sprachen der Schreibhilfe, nebeneinander: „Sprache für die Überprüfung“ (Sprache des Dokuments) und „Übersetzen nach“ (Ziel der KI-Übersetzung).
   - `__init__(fenster)`
   - `kompakt_machen()` — Die zwei Listen stehen schon untereinander (je sechs sichtbare Zeilen, der Rest rollt); nichts mehr umzubauen.
