@@ -22,6 +22,7 @@ from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.tabstopp_dialog import TabstoppDialog
 from lunivo_writer.ui.baukasten.text_format import AUSRICHTUNG, zeichne_absaetze
 from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_ABSATZ, RAND_KEIN
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 ABSATZ = {"ausr": "links", "rtl": False, "einzug": 0.0, "rechts": 0.0, "erste": 0.0, "vor": 0.0, "nach": 0.0, "zeilen": 1.0,
           "zeilen_art": "faktor", "zeilen_pt": 12.0, "ebene": 0, "umbruch": False, "tabs": [], "opt": {}}
@@ -66,10 +67,10 @@ class AbsatzDialog(PanelFaehig, QDialog):
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         # ---- Einzüge und Abstände: flach, Felder als Reihen (je nach Breite 2 bis 4 nebeneinander), keine Gruppenrahmen
         s = QWidget(); g = FormularGitter(s)
-        self.ausr = QComboBox()
+        self.ausr = Auswahlfeld()
         for k, name in AUSRICHTUNG:
             self.ausr.addItem(name, k)
-        self.ebene = QComboBox(); self.ebene.addItem("Textkörper", 0)
+        self.ebene = Auswahlfeld(); self.ebene.addItem("Textkörper", 0)
         for i in range(1, 10):
             self.ebene.addItem(f"Ebene {i}", i)
         self.r_rtl, self.r_ltr = QRadioButton("Rechts nach links"), QRadioButton("Links nach rechts")
@@ -78,7 +79,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         g.reihe(("Ausrichtung:", self.ausr), ("Gliederungsebene:", self.ebene))
         g.zeile("Richtung:", rz)
         g.breit(abschnittstitel("Einzug"))
-        self.links = EinheitFeld(0.0, 0.0, 300.0); self.rechts = EinheitFeld(0.0, 0.0, 300.0); self.sonder = QComboBox()
+        self.links = EinheitFeld(0.0, 0.0, 300.0); self.rechts = EinheitFeld(0.0, 0.0, 300.0); self.sonder = Auswahlfeld()
         for k, name in _SONDER:
             self.sonder.addItem(name, k)
         self.sonder_mass = EinheitFeld(0.0, 0.0, 300.0)
@@ -86,7 +87,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         g.breit(abschnittstitel("Abstand"))
         self.vor = EinheitFeld(0.0, 0.0, 200 * _PT_MM, ("pt", "Zeile", "mm", "cm", "in"), "pt")
         self.nach = EinheitFeld(0.0, 0.0, 200 * _PT_MM, ("pt", "Zeile", "mm", "cm", "in"), "pt")
-        self.zeilen_art = QComboBox()
+        self.zeilen_art = Auswahlfeld()
         for art, f, name in _ZEILEN:
             self.zeilen_art.addItem(name, (art, f))
         self.zeilen = spin(1.0, 0.1, 10.0, " ×", 0.05, 2)
@@ -106,7 +107,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         self.umbruch = UmbruchSchalter("Seitenumbruch oberhalb")
         self.rest_einzug = UmbruchSchalter("Bei Dokumentrasterdefinition rechten Einzug automatisch ausrichten")
         self.raster = UmbruchSchalter("Bei Dokumentrasterdefinition am Raster ausrichten")
-        self.textausr = QComboBox()
+        self.textausr = Auswahlfeld()
         for k, name in (("auto", "Automatisch"), ("top", "Oben"), ("center", "Zentriert"), ("baseline", "Basislinie"), ("bottom", "Unten")):
             self.textausr.addItem(name, k)
         ul.breit(abschnittstitel("Seitenumbruch"))

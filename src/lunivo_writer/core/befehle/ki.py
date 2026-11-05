@@ -21,7 +21,7 @@ class KIBefehle:
 
     def menue_assistenten(self):
         """Das Menü „KI-Aktionen“: die eigenen Schnellen KI-Aktionen, neue anlegen, entfernen und alle bisherigen Ergebnisse."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
         def fuellen():
@@ -46,7 +46,7 @@ class KIBefehle:
 
     def menue_silbenTrennungMenue(self):
         """Zur Silbentrennung: wo man die Trennstriche sieht (die Bearbeitungsansicht zeigt sie nicht) und die Einstellungen."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Trennstriche in der Druckvorschau ansehen", self.silbentrennungVorschau)
         m.eintrag("Einstellungen der Silbentrennung …", lambda: self.w.show_options("sprache"))
@@ -58,7 +58,7 @@ class KIBefehle:
 
 
     def menue_silbenMenue(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Silben einstellen …", self.silbenEinstellen)
         return m

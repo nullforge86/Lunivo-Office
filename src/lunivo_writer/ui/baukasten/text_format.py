@@ -20,6 +20,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ICON_TEXTFORMATLEISTE,
     RAND_KEIN,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 GROESSEN = (8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72)
 AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Rechtsbündig"), ("block", "Blocksatz"))
@@ -28,14 +29,14 @@ ZEILENABSTAND = ((1.0, "Einfach"), (1.5, "1,5 Zeilen"), (2.0, "Doppelt"))
 
 def schrift_feld(combo: QComboBox | None = None, breite: int = 130) -> QComboBox:
     """Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne)."""
-    c = combo if combo is not None else QFontComboBox()
+    c = combo if combo is not None else Schriftauswahl()
     c.setFixedWidth(breite)
     return c
 
 
 def groesse_feld(combo: QComboBox | None = None, breite: int = 62) -> QComboBox:
     """Das Feld für die Schriftgröße: zum Tippen und mit der Liste der üblichen Größen."""
-    c = combo if combo is not None else QComboBox()
+    c = combo if combo is not None else Auswahlfeld()
     c.setEditable(True)
     c.setFixedWidth(breite)
     c.addItems([f"{g:g}" for g in GROESSEN])

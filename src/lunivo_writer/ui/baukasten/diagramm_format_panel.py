@@ -29,22 +29,22 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm_format as F
 from lunivo_writer.editor import texteffekt as T
 from lunivo_writer.editor.textfx import WARP_FORMEN, pfad_verformen
-from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
-from lunivo_writer.ui.baukasten.kopf_dropdown import KopfDropdown, keine_zeile
+from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown, keine_zeile
 from lunivo_writer.ui.baukasten.alternativtext_abschnitt import AlternativtextAbschnitt
 from lunivo_writer.ui.baukasten.auto_felder_mixin import AutoFelderMixin
 from lunivo_writer.ui.baukasten.effekte_drei_mixin import NurDreiEffekteMixin
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.kopf_menue_mixin import KopfMenueMixin
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.kopf_menue_mixin import KopfMenueMixin
 from lunivo_writer.ui.baukasten.textfeld_abschnitt import TextfeldAbschnitt
-from lunivo_writer.ui.baukasten.teil_menue import TeilMenueKnopf
+from lunivo_writer.ui.baukasten.dropdown.teil_menue import TeilMenueKnopf
 from lunivo_writer.ui.baukasten.linien import Linie
 from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
-from lunivo_writer.ui.baukasten.text_kopf_menue_mixin import TextKopfMenueMixin
+from lunivo_writer.ui.baukasten.dropdown.text_kopf_menue_mixin import TextKopfMenueMixin
 from lunivo_writer.ui.baukasten.objektformat_panel import ObjektFormatPanel, _TextPanel
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld
 from lunivo_writer.ui.baukasten.text_fuellarten_mixin import TextFuellartenMixin
-from lunivo_writer.ui.baukasten.strich_auswahl import StrichAuswahl
+from lunivo_writer.ui.baukasten.dropdown.strich_auswahl import StrichAuswahl
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
@@ -55,6 +55,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_FORMATSEITE,
     RAND_KEIN,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 # Teile, deren Text sich formatieren lässt (Titel, Legende, Achsen, Legendeneinträge, Datenbeschriftungen)
 TEXT_TEILE = ("diagrammbereich", "titel", "legende", "achse_horizontal", "achse_vertikal", "datenbeschriftung")
@@ -79,7 +80,7 @@ def _text_teil(teil: str) -> bool:
 
 
 def _combo(eintraege) -> QComboBox:
-    c = QComboBox()
+    c = Auswahlfeld()
     for k, n in eintraege:
         c.addItem(n, k)
     return c
@@ -146,7 +147,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         self._stumm = True
         # Schrift (die Vorlage zeigt sie nicht; sie ist sonst nirgends erreichbar und steht darum hinter der Textkontur)
         self.a_schrift = Abschnitt("Schrift")
-        self.s_name = QFontComboBox()
+        self.s_name = Schriftauswahl()
         self.s_groesse = SchrittFeld(6, 96, " pt", 1, 0, 10)
         self.s_fett, self.s_kursiv, self.s_unter = UmbruchSchalter("Fett"), UmbruchSchalter("Kursiv"), UmbruchSchalter("Unterstrichen")
         self.s_gesetzt = {"name": False, "groesse": False}

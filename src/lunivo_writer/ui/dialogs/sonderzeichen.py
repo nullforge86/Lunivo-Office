@@ -37,6 +37,8 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_LISTE_SONDER,
     ZUGABE_RAHMEN,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
@@ -223,7 +225,6 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self._cache: dict[str, list[int]] = {}
         v = QVBoxLayout(self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
-        self.reiter.tabBar().setElideMode(Qt.ElideNone); self.reiter.tabBar().setUsesScrollButtons(True)      # Namen bleiben ganz, bei Enge rollt die Leiste
         self.reiter.addTab(self._symbole(), "Symbole")
         self.reiter.addTab(self._sonderzeichen(), "Sonderzeichen")
         self.reiter.addTab(self._benutzer(), "Benutzerdefinierte Symbole")
@@ -240,9 +241,9 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
     # ---- Reiter „Symbole“
     def _symbole(self) -> QWidget:
         s = QWidget(); g = FormularGitter(s)
-        self.schrift = QComboBox(); self.schrift.addItem(NORMAL)
+        self.schrift = Auswahlfeld(); self.schrift.addItem(NORMAL)
         self.schrift.addItems(QFontDatabase.families())
-        self.schrift.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.schrift.setMinimumContentsLength(8)
+        self.schrift.zeichen(DROPDOWN_ZEICHEN_MITTEL)
         self.schrift.currentIndexChanged.connect(self._schrift_neu)
         g.zeile("&Schriftart:", self.schrift)
         self.raster = Zeichenraster()
@@ -258,7 +259,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         g.breit(self.zuletzt)
         self.zeichencode = QLineEdit(); self.zeichencode.setMaximumWidth(BREITE_FELD_ZEICHENCODE)
         self.zeichencode.textEdited.connect(self._code_getippt)
-        self.von = QComboBox()
+        self.von = Auswahlfeld()
         for name, basis in VON:
             self.von.addItem(name, basis)
         self.von.currentIndexChanged.connect(lambda *_: self._code_zeigen())

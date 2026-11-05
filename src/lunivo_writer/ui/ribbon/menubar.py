@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QMenu, QMenuBar
 
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 TASTEN = {"Strg": "Ctrl", "Umschalt": "Shift", "Alt": "Alt"}

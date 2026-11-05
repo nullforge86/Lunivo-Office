@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor.linie import LINIENBREITEN, STILE, Linie
 from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.linien import RahmenSeiten, rahmen_symbol
 from lunivo_writer.ui.baukasten.mass_feld import _PT_MM, EinheitFeld
 
@@ -49,6 +49,8 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_RAHMEN_SEITE,
     RAND_SCHATTIERUNG_SEITE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_ZAHL
 KANTEN = (("t", "Oben", RahmenSeiten.OBEN), ("b", "Unten", RahmenSeiten.UNTEN), ("l", "Links", RahmenSeiten.LINKS),
           ("r", "Rechts", RahmenSeiten.RECHTS), ("h", "Zwischen Absätzen", RahmenSeiten.INNEN_H))
 HINWEIS = "Diagramm oder Schaltflächen klicken, um Rahmen hinzuzufügen"
@@ -294,12 +296,12 @@ class _RahmenSeite(QWidget):
         g.breit(self.kasten)
         self.vorschau.kante.connect(lambda k: self.kantenknoepfe[k].toggle() if k in self.kantenknoepfe else None)
         self.farbe = FarbFeld("" if basis.farbe in ("", Farbe.SCHWARZ) else basis.farbe, "Rahmenfarbe", keine_text="Automatisch")
-        self.breite = QComboBox(); self.breite.setIconSize(QSize(*GROESSE_LINIENBREITE_BILD))
+        self.breite = Auswahlfeld(); self.breite.setIconSize(QSize(*GROESSE_LINIENBREITE_BILD))
         for b in LINIENBREITEN:
             self.breite.addItem(_breite_symbol(b, QSize(*GROESSE_LINIENBREITE_BILD)), f"{b:g}".replace(".", ",") + " Pt", b)
-        self.breite.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.breite.setMinimumContentsLength(3)
+        self.breite.zeichen(DROPDOWN_ZEICHEN_ZAHL)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
-        self.kunst = QComboBox()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
+        self.kunst = Auswahlfeld()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
         from lunivo_writer.editor.seitenrahmen import KUNST
         for k, name in KUNST:
             self.kunst.addItem(name, k)
@@ -314,7 +316,7 @@ class _RahmenSeite(QWidget):
             self.arten.addItem(it)
         g.breit(self.arten)
         # --- Übernehmen für, Optionen
-        self.fuer = QComboBox(); self.fuer.addItems(fuer or ["Absatz"]); self.fuer.setToolTip("Übernehmen für")
+        self.fuer = Auswahlfeld(); self.fuer.addItems(fuer or ["Absatz"]); self.fuer.setToolTip("Übernehmen für")
         self.optionen = QPushButton("Optionen …")
         self.optionen.clicked.connect(self._optionen)
         self.polster = linie.polster() if linie and linie.polster() else (1.0, 1.0, 4.0, 4.0)    # Abstand zum Text: oben, unten, links, rechts (pt)
@@ -456,7 +458,7 @@ class _SeitenOptionenDialog(QDialog):
             paare.append((name, f))
             f.valueChanged.connect(lambda *_: self.vorschau.update())
         g.reihe(*paare)
-        self.messen = QComboBox(); self.messen.addItem("Text", "text"); self.messen.addItem("Seitenrand", "seitenrand")
+        self.messen = Auswahlfeld(); self.messen.addItem("Text", "text"); self.messen.addItem("Seitenrand", "seitenrand")
         self.messen.setCurrentIndex(0 if w["messen"] == "text" else 1)
         self.messen.currentIndexChanged.connect(self._messen)
         g.reihe(("Gemessen von:", self.messen))
@@ -525,12 +527,12 @@ class _SchattierungSeite(QWidget):
         super().__init__()
         g = FormularGitter(self); g.setContentsMargins(*RAND_SCHATTIERUNG_SEITE)
         self.fuell = FarbFeld(fuell or "", "Füllfarbe", keine_text="Keine Farbe")
-        self.art = QComboBox(); self.art.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); self.art.setMaxVisibleItems(18)
+        self.art = Auswahlfeld(); self.art.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
         for k, name, _o in M.MUSTER:
             self.art.addItem(_muster_symbol(k), name, k)
         self.farbe = FarbFeld("" if not muster or muster[1] in ("", Farbe.SCHWARZ) else muster[1], "Musterfarbe", keine_text="Automatisch")
         self.vorschau = _Vorschau(kanten_klick=False); self.vorschau.setFixedSize(*GROESSE_RAHMENVORSCHAU)         # klein, in der Mitte
-        self.fuer = QComboBox(); self.fuer.addItems(fuer or ["Absatz"])
+        self.fuer = Auswahlfeld(); self.fuer.addItems(fuer or ["Absatz"])
         g.breit(abschnittstitel("Ausfüllen")); g.breit(self.fuell)
         g.breit(abschnittstitel("Muster")); g.reihe(("Formatvorlage:", self.art)); g.reihe(("Farbe:", self.farbe))
         g.breit(abschnittstitel("Vorschau")); g.breit(mittig(self.vorschau))

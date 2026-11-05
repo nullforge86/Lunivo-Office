@@ -39,6 +39,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 KEIN_DRUCKER = "Kein Drucker eingerichtet"
 KEIN_DRUCKER_HINWEIS = "Kein Drucker eingerichtet — es wird das Fenster des Systems geöffnet."
@@ -61,7 +62,7 @@ def _drucker_liste() -> list:
 
 
 def _combo(eintraege, aktuell) -> QComboBox:
-    c = QComboBox()
+    c = Auswahlfeld()
     for text, wert in eintraege:
         c.addItem(text, wert)
     i = c.findData(aktuell)
@@ -104,7 +105,7 @@ class DruckAnsicht(QWidget):
 
         # ---- Reiter: breit (Datei-Ansicht) rechts neben dem Blatt wie in der Vorlage, schmal (Seitenleiste) oben ----------------
         self.reiter = _Reiter(); self.reiter.setDocumentMode(True)
-        self.reiter.setUsesScrollButtons(False); self.reiter.tabBar().setExpanding(True); self.reiter.tabBar().setElideMode(Qt.ElideRight)
+        self.reiter.setUsesScrollButtons(False)                   # die flache Leiste (Basis) zeigt, was ganz passt; der Rest steht hinter „•••“
 
         # ---- darunter: Vorschau des Blattes, in voller Breite ------------------------------------------------------------------
         unter = QVBoxLayout(); unter.setContentsMargins(*RAND_FUSS_BACKSTAGE)
@@ -153,7 +154,7 @@ class DruckAnsicht(QWidget):
         w = QWidget(); f = QVBoxLayout(w); f.setContentsMargins(*RAND_DRUCK_SEITE); f.setSpacing(ABSTAND_MITTEL)
         f.addWidget(_kopf("Drucker"))
         g = FormularGitter(); f.addLayout(g)
-        self.name = QComboBox()
+        self.name = Auswahlfeld()
         if self._drucker:
             for p in self._drucker:
                 self.name.addItem(p.printerName(), p.printerName())
@@ -192,7 +193,7 @@ class DruckAnsicht(QWidget):
 
     @staticmethod
     def _papier_combo(aktuell: str) -> QComboBox:
-        c = QComboBox()
+        c = Auswahlfeld()
         for n in PAPIER:
             c.addItem(n, n)
         if aktuell not in PAPIER:

@@ -6,7 +6,7 @@ Die Befehle sind dieselben wie im Band (``fenster.befehle``); das Menü hat kein
 from __future__ import annotations
 
 from PySide6.QtGui import QKeySequence
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import ICON_NORMAL

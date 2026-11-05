@@ -354,7 +354,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             e.accept()
             return
         from lunivo_writer.ui.widgets.kontextmenue import menue_bauen
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         c = self.cursorForPosition(e.pos())                            # wie in Word: Rechtsklick außerhalb der Markierung setzt die Schreibmarke dorthin
         tc = self.textCursor()
         if not (tc.hasSelection() and tc.selectionStart() <= c.position() <= tc.selectionEnd()):
@@ -625,7 +625,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                             "background: palette(window); font-size: " f"{SCHRIFT_KLEIN}" "pt; }")
             self.cursorPositionChanged.connect(self._paste_btn_pruefen)
         self._paste_ende = ende
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(b)
         for name in EINFUEGE_MODI:
             m.eintrag(name, lambda name=name: self._einfuegen_neu(quelle, start, name), haken=(name == modus))

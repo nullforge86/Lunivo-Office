@@ -1,8 +1,9 @@
 """Dokumentreiter ganz oben (mit „+“) und der Stapel der Dokumente darunter."""
 from __future__ import annotations
 
-from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QTabBar, QToolButton, QWidget
+from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
@@ -17,7 +18,7 @@ class DocTabs(QObject):
 
     def __init__(self):
         super().__init__()
-        self.bar = QTabBar()
+        self.bar = UeberlaufLeiste()
         self.bar.setObjectName("dokReiter")
         self.bar.setTabsClosable(True)
         self.bar.setMovable(True)
@@ -38,6 +39,8 @@ class DocTabs(QObject):
         plus.clicked.connect(self.newRequested)
         h.addWidget(plus)
         h.addStretch(1)
+        self.bar.platz = lambda: self.leiste.width() - h.contentsMargins().left() - h.contentsMargins().right() - plus.sizeHint().width() - 2 * h.spacing()
+        self.leiste.installEventFilter(self)                                  # Größe der Leiste geändert: Überlauf neu verteilen
         self._w: list[QWidget] = []
         self.bar.currentChanged.connect(self._bar_changed)
         self.bar.tabCloseRequested.connect(self.tabCloseRequested)
@@ -45,6 +48,11 @@ class DocTabs(QObject):
         self.bar.setContextMenuPolicy(Qt.CustomContextMenu)
         self.bar.customContextMenuRequested.connect(
             lambda p: self.kontextGewuenscht.emit(self.bar.tabAt(p), self.bar.mapToGlobal(p)))
+
+    def eventFilter(self, obj, ev):
+        if obj is self.leiste and ev.type() == QEvent.Resize:
+            self.bar.neu_verteilen()
+        return False
 
     def _moved(self, von, nach):
         self._w.insert(nach, self._w.pop(von))

@@ -20,6 +20,7 @@ from lunivo_writer.ui.baukasten.mass_feld import spin
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 STANDARD = {"ausrichtung": "zentriert", "abstand": 0.0, "groesse": 7.0}
 
@@ -45,11 +46,11 @@ class RubyDialog(PanelFaehig, QDialog):
             tasten.addWidget(b)
         v.addLayout(tasten)
         g = FormularGitter(); g.setContentsMargins(*RAND_KEIN)
-        self.ausrichtung = QComboBox()
+        self.ausrichtung = Auswahlfeld()
         for k, t in AUSRICHTUNGEN:
             self.ausrichtung.addItem(t, k)
         self.abstand = spin(0.0, -20.0, 40.0, " pt", 0.5, 1)
-        self.schrift = QFontComboBox(); self.schrift.setEditable(False)
+        self.schrift = Schriftauswahl(); self.schrift.setEditable(False)
         if schrift:
             self.schrift.setCurrentFont(QFont(schrift))
         self.groesse = spin(7.0, 2.0, 60.0, " pt", 0.5, 1)

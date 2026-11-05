@@ -140,6 +140,42 @@ def test_kein_html_im_projekt():
     assert treffer == [], "HTML im Quelltext:\n" + "\n".join(treffer)
 
 
+COMBO_NOCH_ERLAUBT: set[str] = set()   # alle Dropdowns laufen über Auswahlfeld; die Liste bleibt leer
+
+
+def test_kein_combobox_ausser_auswahlfeld():
+    """Dropdowns kommen aus ui/baukasten/dropdown/auswahlfeld.py (Auswahlfeld/Schriftauswahl). COMBO_NOCH_ERLAUBT darf nur kleiner werden."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\bQComboBox\(|\bQFontComboBox\(")
+    treffer = {p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py") if muster.search(p.read_text(encoding="utf-8", errors="replace"))}
+    treffer.discard("ui/baukasten/dropdown/auswahlfeld.py")
+    assert treffer <= COMBO_NOCH_ERLAUBT, "QComboBox( außerhalb von auswahlfeld.py: " + ", ".join(sorted(treffer - COMBO_NOCH_ERLAUBT))
+
+
+REITER_NOCH_ERLAUBT: set[str] = set()   # alle Reiterleisten laufen über flache_reiter_leiste.py (FlacheReiterLeiste/UeberlaufLeiste); die Liste bleibt leer
+
+
+def test_kein_rohe_reiterleiste():
+    """QTabBar(/QTabWidget( und setUsesScrollButtons(True) nur in flache_reiter_leiste.py/formular_gitter.py (Überlauf hinter „•••“, keine Rollpfeile). REITER_NOCH_ERLAUBT darf nur kleiner werden."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\bQTabBar\(|\bQTabWidget\(|setUsesScrollButtons\(\s*True")
+    treffer = {p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py") if muster.search(p.read_text(encoding="utf-8", errors="replace"))}
+    treffer -= {"ui/baukasten/flache_reiter_leiste.py", "ui/baukasten/formular_gitter.py"}
+    assert treffer <= REITER_NOCH_ERLAUBT, "rohe Reiterleiste außerhalb des Bausteins: " + ", ".join(sorted(treffer - REITER_NOCH_ERLAUBT))
+
+
+def test_dropdown_groesse_nur_im_paket_dropdown():
+    """Wächter: Feldlänge, Größenregel und Zeilenzahl eines Dropdowns setzt nur das Paket dropdown (Aufrufer nutzen ``zeichen``/``an_inhalt``)."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\.(setSizeAdjustPolicy|setMinimumContentsLength|setMaxVisibleItems)\(")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Dropdown-Größe außerhalb des Pakets dropdown: " + ", ".join(treffer)
+
+
 def test_tastenkuerzel_fett(app, tmp_path):
     from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest

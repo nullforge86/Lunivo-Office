@@ -21,9 +21,10 @@ from lunivo_writer.ui.baukasten.mass import (
     RADIUS_MARKE,
     RAND_LAYOUTOPTIONEN,
 )
+from lunivo_writer.ui.baukasten.dropdown.popup_lage import PopupVerhalten
 
 
-class LayoutOptionen(QFrame):
+class LayoutOptionen(PopupVerhalten, QFrame):
     gewaehlt = Signal(str)
     verschieben = Signal(bool)
     mehr = Signal()

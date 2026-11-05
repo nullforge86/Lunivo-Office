@@ -15,9 +15,9 @@ from PySide6.QtWidgets import QWidget
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import muster as M
 from lunivo_writer.ui.baukasten import farben
-from lunivo_writer.ui.baukasten.kopf_dropdown import keine_symbol
-from lunivo_writer.ui.baukasten.objekt_menues import TEXTUREN, _textur, graduell_pixmap
-from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
+from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import keine_symbol
+from lunivo_writer.ui.baukasten.dropdown.objekt_menues import TEXTUREN, _textur, graduell_pixmap
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
 from lunivo_writer.ui.baukasten.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
 
 KACHEL = QSize(*GROESSE_FUELLVORGABE_KACHEL)

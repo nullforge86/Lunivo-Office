@@ -539,7 +539,7 @@ def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     b.bildZuschneidenForm(None, "Ellipse"); z = BL.ziel(ed)
     assert z[2]["maske"] == "Ellipse" and z[3].pixelColor(0, 0).alpha() == 0 and z[3].pixelColor(100, 100).alpha() == 255
     assert any(n == "Herz" for _k, ns in BZ.formen_kategorien() for n in ns) and not any(BZ.formen_kategorien()[0][0] == "Linie" for _ in [0])
-    from lunivo_writer.ui.baukasten.bild_diagramm_menues import KLAPPEN
+    from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import KLAPPEN
     assert "bildZuschneiden" in KLAPPEN and not hasattr(b, "menue_bildZuschneiden")        # nur noch die Klappe der Vorlage
     pfad2 = str(tmp_path / "z.docx")
     docx_writer.write_docx(pfad2, ed.document(), ed.page, {})

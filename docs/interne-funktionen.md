@@ -2,7 +2,7 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 362 Module, 389 Klassen, 5082 Funktionen und Methoden.
+Stand: 366 Module, 396 Klassen, 5115 Funktionen und Methoden.
 
 ## Inhalt
 
@@ -18,13 +18,14 @@ Stand: 362 Module, 389 Klassen, 5082 Funktionen und Methoden.
 - `services/docx_teile` — 11 Module
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 88 Module
+- `ui/baukasten` — 69 Module
+- `ui/baukasten/dropdown` — 24 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
 - `ui/document` — 27 Module
 - `ui/hauptfenster` — 6 Module
-- `ui/ribbon` — 6 Module
+- `ui/ribbon` — 5 Module
 - `ui/ribbon/tabs` — 12 Module
 - `ui/sidebar` — 2 Module
 - `ui/sidebar/panels` — 3 Module
@@ -3599,18 +3600,6 @@ Beschriftungen ohne Auszeichnungssprache: Text mit Schrifteigenschaften oder Mar
 - `text_label(text, *, fett, pt, durchgestrichen, umbruch, auswaehlbar)` — Beschriftung aus reinem Text; Zeilenumbrüche des Textes bleiben erhalten.
 - `md_label(markdown, *, umbruch)` — Beschriftung aus Markdown (fett, durchgestrichen, Absätze) — Qt zeigt es selbst an.
 
-### `ui/baukasten/bild_diagramm_menues.py`
-
-Menüs und Galerien der Reiter „Bildtools“ und „Diagrammtools“ (nur Aussehen; jede Wahl ruft einen Befehl des Bandes).
-
-- `_form_bild(name)`
-- `_abschnittsleiste(text)`
-- `zuschneiden_menue(b)` — Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``).
-- `stil_bild(nr, groesse)` — Vorschau des Diagrammstils ``nr`` (``diagramm.STILE``): Grund, Raster und Schrift wie im fertigen Diagramm, mit drei Säulenreihen.
-- `_stilname(nr)`
-- `diagramm_stile_menue(b)` — Alle Diagrammstile als Kacheln (Name im Tipp); die Wahl ist ``diagrammStil``.
-- `diagramm_stile_galerie(b)` — Die Galerie im Band: eine Kachel je Stil und das Menü mit allen (Aufbau wie ``galerie_ttFormstile``).
-
 ### `ui/baukasten/bild_export.py`
 
 „Als Bild exportieren“: die Bildlayoutkarten und Einstellungen in der rechten Spalte des Datei-Menüs.
@@ -3709,37 +3698,6 @@ Bildchen für die Galerien Designs, Farben, Schriftarten und Effekte (Reiter Sei
   - `_teile_zeigen(werte)` — Die Liste „Teil“ mit den Teilen des Diagramms (``werte["teile"]``, sonst nur der gewählte) und dem gewählten Eintrag.
   - `_teil_einrichten(werte)`
   - `_setze_optionen(werte, f)`
-
-### `ui/baukasten/diagramm_popups.py`
-
-Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein Baustein, damit Band und Schnellleiste dasselbe zeigen.
-
-- `_dg(b)`
-- `_kopfknopf(text, i, gruppe)`
-- `_linie()`
-- `_ueberschrift(text)`
-- `layout_bild(nr, groesse)` — Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
-- `_farbzeile(farben, gewaehlt, klick)`
-- **class `DiagrammPopup`**(MenueListe) — Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter.
-  - `__init__(b, art, reiter, parent)`
-  - `waehle(i)`
-  - `neu_lesen()` — Beim Öffnen: den Reiter zeigen, den der Aufrufer wollte, mit frisch gelesenen Daten.
-  - `_fuellen(i)`
-  - `_seite_elemente()`
-  - `_seite_schnelllayout()`
-  - `_seite_vorlagen()`
-  - `_seite_farben()`
-  - `_seite_filter()`
-  - `_seite_namen()` — Reiter „Name“: Reihen und Rubriken umbenennen; „Übernehmen“ schreibt über ``diagrammNamenSetzen`` in die Diagrammdaten.
-  - `_namen_uebernehmen()`
-  - `_hoehe()`
-  - `_uebernehmen()`
-- `elemente_popup(b)`
-- `schnelllayout_popup(b)`
-- `stile_popup(b)`
-- `farben_popup(b)`
-- `filter_popup(b)`
-- `diagramm_bereich_feld(b)` — Auswahlfeld „Diagrammbereich“ der Diagrammtools: oben die Liste der Teile (zeigt den gewählten), darunter „Formatieren“ und
 
 ### `ui/baukasten/dialog_rahmen.py`
 
@@ -3868,50 +3826,6 @@ Farbdaten für jede Palette im Programm: Themenfarben mit Abstufungen, Standardf
 - `zuletzt_laden()`
 - `zuletzt_merken(farbe)`
 
-### `ui/baukasten/farbpalette.py`
-
-Die eine Farbpalette des Programms: Popup, Farbfeld für Dialoge und geteilter Knopf fürs Band.
-
-- `weitere_farben(parent, start, titel)` — „Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch.
-- `weitere_farben_unter(parent, fertig, start, titel)` — Wie ``weitere_farben``, aber als Unterfenster: Liegt ``parent`` in einem ``FensterStapel``, öffnet sich „Farben“ als Seite im selben Fenster;
-- `farb_symbol(farbe, groesse)`
-- **class `_Kachel`**(QWidget) — Ein Farbfeld der Palette; meldet Überfahren und Klick an die Palette.
-  - `__init__(palette, farbe, seite)`
-  - `enterEvent(e)`
-  - `leaveEvent(e)`
-  - `mouseReleaseEvent(e)`
-  - `paintEvent(e)`
-- **class `_VerlaufKachel`**(_Kachel) — Kachel der Zeile „Graduelle Füllung“: ein Farbverlauf von hell nach dunkel in der Farbe; ein Klick meldet die Farbe als Verlauf.
-  - `mouseReleaseEvent(e)`
-  - `paintEvent(e)`
-- **class `_BildKachel`**(_Kachel) — Kachel einer Bildreihe („Musterfüllung“, „Strukturfüllung“): zeigt ein Bild; ein Klick meldet ihren Schlüssel.
-  - `__init__(palette, schluessel, bild, tipp, seite)`
-  - `enterEvent(e)`
-  - `leaveEvent(e)`
-  - `mouseReleaseEvent(e)`
-  - `paintEvent(e)`
-- **class `FarbPalette`**(MenueListe) — Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“.
-  - `__init__(parent, *, keine_text, start, titel, zuletzt, weitere, verlauf, verlauf_titel, weitere_text, automatisch, pipette, standard, reihen)`
-  - `zusatz_eintrag(text, aktion)` — Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``.
-  - `_titel_zeile(text)`
-  - `_keine_symbol()`
-  - `_raster(zeilen)`
-  - `waehle(farbe)` — Farbe übernehmen: merken, melden, Popup schließen.
-  - `_pipette()` — „Pipette“: eine Farbe vom Bildschirm aufnehmen.
-  - `_weitere()`
-- **class `FarbFeld`**(QPushButton) — Knopf für Dialoge, der seine Farbe zeigt; ein Klick öffnet die Palette. ``farbe`` ist ein Hex-Text ('' = keine).
-  - `__init__(farbe, titel, keine_text, parent, verlauf)`
-  - `setFarbe(farbe)`
-  - `_waehle()`
-  - `_zeige_popup(pal)`
-  - `_uebernehmen(c)`
-  - `_zeige()` — Ruhig und sachlich: ein kleines Farbfeld mit Rand und der Name daneben — kein Knopf, der selbst bunt wird.
-- **class `FarbKnopf`**(QToolButton) — Geteilter Knopf fürs Band: Klick auf das Symbol wendet die letzte Farbe an, der Pfeil klappt die Palette auf.
-  - `__init__(symbol, text, farbe, *, keine_text, titel, parent)`
-  - `menu_neu()`
-  - `_gewaehlt(c)`
-  - `_balken()`
-
 ### `ui/baukasten/farbwaehler.py`
 
 „Weitere Farben …“: das Fenster „Farben“ mit den Karteireitern Standard, Benutzerdefiniert und Erweitert.
@@ -3997,12 +3911,18 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
 
 - `_gross(text)`
 - `_mische(a, b, anteil)` — Farbe a zum Anteil (0…1) mit b gemischt.
-- **class `FlacheReiterLeiste`**(QTabBar)
+- **class `ReiterUeberlauf`** — Basis aller Reiterleisten mit Überlauf: der Knopf „•••“ und das Menü der Reiter, die nicht mehr in die Leiste passen.
+  - `_mehr_einrichten()`
+  - `_mehr_menue()`
+- **class `FlacheReiterLeiste`**(ReiterUeberlauf, QTabBar)
   - `__init__(art, parent)`
   - `_sichtbar()`
   - `_knopf_breite(i)`
   - `_schrift(groesse)`
   - `_breiten()` — Breite je sichtbarem Reiter: Unterreiter gleich breit, Hauptreiter nach Länge der Beschriftung (der Pfeilknopf zählt mit).
+  - `_passende(soll, gesamt)` — Die Reiter, die neben dem Knopf „…“ ganz passen (in Reihenfolge); der aktive Reiter ist immer dabei.
+  - `_versteckte()`
+  - `_neu_anordnen()` — Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen.
   - `_text_flaeche(i, breite)`
   - `_groesse(breiten)` — Die Schriftgröße: so groß wie möglich, aber so, dass das längste Wort jedes Reiters ganz hineinpasst (nie „…“).
   - `_text_hoehe(fm, i, breite)`
@@ -4017,16 +3937,23 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
   - `mousePressEvent(e)`
   - `paintEvent(_e)`
+- **class `UeberlaufLeiste`**(ReiterUeberlauf, QTabBar) — Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
+  - `__init__(parent)`
+  - `setTabVisible(index, sichtbar)`
+  - `isTabVisible(index)`
+  - `gezeigt(index)`
+  - `tabInserted(index)`
+  - `tabRemoved(index)`
+  - `_verschoben(von, nach)`
+  - `_verfuegbar()`
+  - `_versteckte()`
+  - `neu_verteilen()`
+  - `sizeHint()`
+  - `minimumSizeHint()`
+  - `resizeEvent(e)`
+  - `tabLayoutChange()`
 - `flach_machen(reiter, art)` — Setzt eine ``FlacheReiterLeiste`` in das ``QTabWidget`` (``setTabBar`` gilt nur vor dem ersten Reiter, darum werden die Seiten neu eingesetzt).
 - `alle_flach(wurzel, art)` — Alle Reiter unter ``wurzel`` (``QTabWidget``) bekommen dieselbe flache Leiste: EIN Aussehen für alle Reiter in den Seitenleisten-Fenstern.
-
-### `ui/baukasten/form_menues.py`
-
-Menüs und Galerie des Reiters „Zeichentools“ für Formen: „Form bearbeiten“ und die Stilgalerie „Abc“ (nur Aussehen; jede Wahl ruft einen Befehl).
-
-- `form_bearbeiten_menue(b)`
-- `formstile_galerie(b)`
-- `linien_galerie(b)` — Linien und Pfeile als Kacheln im Band (zwei Reihen, ``zeilen`` der Gruppe); Klick fügt die Linie ein (``formEinfuegen``).
 
 ### `ui/baukasten/formatvorlage_dialog.py`
 
@@ -4136,36 +4063,6 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `minimumSizeHint()`
 - `gruppe(titel, *, karte)` — Eine Gruppe von Feldern mit Titel: flach wie die Abschnittstitel (Großbuchstaben, Linie darüber); ``karte=True`` = Gruppenkasten des Stils
 
-### `ui/baukasten/fuell_voreinstellungen.py`
-
-Popup der Füllung im Kopf (Vorlage): „Keine Füllung“, Designfarben (10 × 6), Graduelle Füllung (10), Musterfüllung (5), Strukturfüllung (5).
-
-- `graduell_paar(farbe)` — (dunkel, hell) der graduellen Füllung einer Grundfarbe.
-- `_feld(farbe, groesse)`
-- `_gekachelt(kachel, groesse)`
-- `_muster_kachel(key, farbe)`
-- `fuell_bild(spec, groesse)` — Das Ergebnis der Füllung als Bild der Größe ``groesse`` (leer = durchsichtig).
-- **class `FuellPalette`**(FarbPalette) — Die Farbpalette des Programms als Popup der Füllung im Kopf; meldet den Schlüssel statt einer Farbe.
-  - `__init__(parent, aktuell, **kw)`
-- `fuell_menue(parent, aktuell)`
-
-### `ui/baukasten/galerie_auswahl.py`
-
-Galerie-Popup: Kacheln mit einer Textprobe in der jeweiligen Schrift und dem Namen darunter (Formatvorlagen, später Tabellen-
-
-- **class `_Kachel`**(QWidget)
-  - `__init__(schluessel, name, probe, schrift, farbe, groesse, aktuell, tipp)`
-  - `enterEvent(e)`
-  - `leaveEvent(e)`
-  - `contextMenuEvent(e)`
-  - `mouseReleaseEvent(e)`
-  - `paintEvent(_e)`
-- **class `GalerieAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
-  - `__init__(parent, *, titel, spalten, kachel, zeilen_sichtbar)`
-  - `kachel(schluessel, name, schrift, *, probe, farbe, aktuell, tipp)`
-  - `aktion(text, fn, symbol, *, haken, aktiv)` — Zeile unter der Galerie (z. B. „Neue Formatvorlage …“); schließt das Popup und ruft ``fn``.
-  - `_haken_symbol()`
-
 ### `ui/baukasten/kachel_feld.py`
 
 Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die Umbruchart eines Bildes).
@@ -4214,36 +4111,6 @@ KartenRaster: ein Raster mit gemeinsamem Maßsystem für Karten, Schalter und Kn
 - `kachel_gitter(kacheln, spalten, *, eltern, rand, abstand, waagerecht, senkrecht, oben_links, rest_dehnt)` — Kachelraster fester Kachelgröße (Farben, Formen, Seitenbildchen …): die Rasterlogik für alle Stellen, an denen das Gitter der Zweck ist.
 - `kurze_gruppen_ins_raster(fenster, max_breite)` — Zentrale Automatik für jedes Fenster der Seitenleiste: aufeinanderfolgende kurze Ankreuzfelder, Optionsfelder und Knöpfe in einem senkrechten Layout
 
-### `ui/baukasten/kopf_dropdown.py`
-
-Dropdown im Kopf eines Abschnitts („FÜLLUNG ▾ [Feld ▾]“, „LINIE ▾ [Strich ▾]“ der Vorlage): ein weißes Feld mit dem aktuellen Ergebnis und kleinem
-
-- `keine_symbol(groesse)` — Das Zeichen der Zeile „Keine …“: Quadrat mit rotem Schrägstrich.
-- `keine_zeile(menue, text)` — Die klickbare Zeile „Keine …“ ganz oben im Popup (Zeichen + Text); sie meldet den Schlüssel ``""``.
-- **class `KopfDropdown`**(QPushButton)
-  - `__init__(fabrik, symbol, parent)`
-  - `sizeHint()`
-  - `setSymbol(symbol)`
-  - `an(abschnitt)` — Rechts in den Kopf des ``Abschnitt`` setzen (hinter den Streckungsraum).
-  - `_popup()`
-  - `paintEvent(_e)` — Ein Feld wie die übrigen der Seitenleiste (Farbfeld „Automatisch“): Rahmen, Hintergrund und Rundung vom Thema, darin nur das Ergebnis und der Pfeil.
-
-### `ui/baukasten/kopf_menue_mixin.py`
-
-Dropdowns in den Köpfen von „FÜLLUNG“ und „LINIE“ des Diagramm-Panels (Vorlage): Mixin vor ``ObjektFormatPanel``.
-
-- `_hex(farbe)`
-- **class `KopfMenueMixin`**
-  - `_kopf_menues_bauen()`
-  - `_fuell_voreinstellung(schluessel)`
-  - `_linien_voreinstellung(schluessel)`
-  - `_fuell_spec()`
-  - `_fuell_schluessel()`
-  - `_linien_spec()`
-  - `_linien_schluessel()`
-  - `_kopf_aktualisieren()`
-  - `_felder_zeigen()`
-
 ### `ui/baukasten/layout_dialog.py`
 
 Das Fenster „Layout“ für Bilder und Formen: Position, Textumbruch, Größe — nach der Vorlage.
@@ -4282,17 +4149,6 @@ Das Fenster „Layout“ eines Bildes oder freien Objekts nach der Vorlage (Foto
   - `_orig_anzeigen()`
 - `layout_dialog_fuer(art)` — Der Fensterbau für die Objektart: ``layout_dialog_fuer(art)(parent, werte)``.
 
-### `ui/baukasten/layout_optionen.py`
-
-Das kleine Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart per Klick, „Mit Text verschieben“ oder „Fester Text“, „Mehr anzeigen“.
-
-- **class `LayoutOptionen`**(QFrame)
-  - `__init__(parent, art, mit_text)`
-  - `_titel(text)`
-  - `_klick(art)`
-  - `setze(art)`
-  - `zeigen_bei(pos)`
-
 ### `ui/baukasten/layout_optionen_objekt.py`
 
 Das Popup „Layoutoptionen“ eines freien Objekts nach der Vorlage: ✕ im Kopf, größere Kacheln, beide Radios leer bei SmartArt.
@@ -4323,16 +4179,6 @@ Linien: Stärke, Art, Farbe — als Wert, als Auswahlzeile für Dialoge und als 
   - `_aend()`
 - **class `RahmenSeiten`**(Flag)
 - `rahmen_symbol(seiten, groesse)` — Kleines Quadrat, in dem nur die gemeinten Linien kräftig sind.
-- **class `RahmenMenue`**(MenueListe) — Das Rahmen-Menü (Unten, Oben, Links, Rechts, Kein, Alle, Außen, Innen). Meldet die gewählten Seiten.
-  - `__init__(parent, *, innen, mehr_text, mehr)` — ``innen``: True = beide inneren Linien (Tabelle), ``"h"`` = nur die waagerechte (Absätze), False = keine.
-
-### `ui/baukasten/linien_voreinstellungen.py`
-
-Popup der Linie im Kopf (Vorlage): „Keine Linie“ und „Voreingestellte Linie“ — 8 Strichtypen (Zeilen) × 4 Formen (Spalten).
-
-- `linien_schluessel(art, form, breite)`
-- `linien_bild(spec, groesse)` — Eine Linie der Strichart/Form/Breite (pt) in Farbe über die Breite, mittig; ``art`` "keine" gibt ein leeres Bild.
-- `linien_menue(parent, aktuell, arten)`
 
 ### `ui/baukasten/liste_dialog.py`
 
@@ -4375,7 +4221,7 @@ Die Fenster „Nummerierung und Aufzählungszeichen“ und „Nummerierung anpas
   - `eventFilter(obj, ev)`
   - `_anpassen()`
 - **class `ListenDialog`**(PanelFaehig, QDialog)
-  - `kompakt_machen()` — Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter zum Rollen, Fenster ohne feste Größe.
+  - `kompakt_machen()` — Für die schmale Seitenleiste: kleinere Kacheln (drei je Zeile), Reiter mit Überlauf hinter „•••“, Fenster ohne feste Größe.
   - `passe_an(breite, hoehe)` — Je breiter die Seitenleiste, desto mehr Kacheln je Zeile (vier bis sechs), damit die Auswahl ohne Rollen auskommt.
   - `__init__(parent, aktuell, *, seite)`
   - `_fuelle_benutzer()`
@@ -4422,40 +4268,6 @@ Zahlenfeld mit Maßeinheit: intern immer Millimeter, angezeigt in der gewählten
   - `value()`
   - `setValue(mm)`
 - `einheit_name()` — Kürzel der Maßeinheit der Oberfläche (Optionen ▸ Speichern) als Schlüssel von ``FELD_EINHEITEN``.
-
-### `ui/baukasten/menue_liste.py`
-
-Menü-Liste: Zeilen mit Symbol, Text, Tastenkürzel, Haken und Untermenü — überall dieselbe Gestalt.
-
-- **class `MenueListe`**(QMenu) — Ein Menü, das Zeilen einheitlich aufbaut. Nicht Mögliches bleibt grau sichtbar statt zu fehlen.
-  - `eintrag(text, aktion, *, symbol, kuerzel, haken, aktiv, tip, daten, echt, gruppe)` — ``kuerzel`` (Text oder ``QKeySequence``) wird nur angezeigt; mit ``echt=True`` ist es ein wirkliches Tastenkürzel
-  - `vorhanden(a)` — Eine schon bestehende Aktion (z. B. aus der Hauptfenster-Aktionstabelle) als Zeile übernehmen.
-  - `einhaengen(text, menue, symbol)` — Ein fertiges Menü (z. B. ein Raster) als Untermenü-Zeile mit ``text`` einhängen.
-  - `untermenue(text, symbol, aktiv)`
-  - `widget(w)` — Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen.
-  - `kompakt()` — Schmalere Zeilen (Symbolspalte, Text, Kürzel dicht) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
-  - `standard(widget, parent)` — Das Standard-Kontextmenü eines Qt-Textfeldes (``createStandardContextMenu``) als Menüliste, mit deutschen Texten.
-  - `in_leiste(leiste, titel)` — Ein Menü der Menüleiste (``QMenuBar``) mit dem Titel ``titel``.
-  - `trenner()`
-  - `aus_liste(zeilen, parent)` — Baut ein Menü aus einer Beschreibung: ``"-"`` = Trennlinie, sonst ein Wörterbuch mit text, aktion, symbol,
-  - `_fuellen(zeilen)`
-
-### `ui/baukasten/objekt_menues.py`
-
-Die Popups für ein markiertes Bild oder eine Form: Formstile, Füllung, Kontur (wie in der Vorlage).
-
-- `_linien_symbol(art, breite, groesse)`
-- `graduell_pixmap(dunkel, hell, w, h)`
-- **class `FuellMenue`**(FarbPalette) — Füllung wie in der Vorlage: Keine Farbe · Thema-Farben · Standard-Farben · Farbverlauf · Automatisch · Weitere Füllfarben · Pipette ·
-  - `__init__(parent, start)`
-  - `_raster_untermenue(text, art, weitere, kacheln, groesse, spalten, gewaehlt)` — Ein Untermenü mit Kacheln (Graduell, Textur, Muster) und darunter „Weitere …“, das die Seitenleiste „Formatierung“ öffnet.
-  - `_untermenue(text, icon)`
-  - `_einsetzen(menue, inhalt)` — Das Raster steht als Inhalt des Untermenüs.
-- **class `KonturMenue`**(FarbPalette) — Kontur wie in der Vorlage: Keine Linie · Thema-Farben · Standard-Farben · Farbverlauf · Weitere Linienfarben · Pipette · Linienart ▸ · Strichart ▸ · Pfeilart ▸.
-  - `__init__(parent, start)`
-- `formstil_werte(schluessel)` — Füllung und Kontur des Stils ``z{Zeile}{Spalte}`` für Bilder und Textfelder: {"fuell": …, "rand": …} (``None`` = keine). Die Werte kommen aus
-- `formstil_zeichner(schluessel)` — Zeichnet die Kachel „Abc“ des Stils: Füllung (auch Verlauf), Rand und Schrift in passender Farbe.
-- `formstile(parent)` — Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“.
 
 ### `ui/baukasten/objektformat_panel.py`
 
@@ -4605,27 +4417,6 @@ Die Pipette: eine Farbe vom Bildschirm aufnehmen.
   - `schattierung()` — (Füllfarbe oder None, (Musterschlüssel, Musterfarbe) oder None).
   - `seitenrand()`
 
-### `ui/baukasten/raster_auswahl.py`
-
-Kachel-Auswahl: ein Popup mit Bildchen im Raster und einem „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter …).
-
-- `_symbol(bild, groesse, blass)` — Aus QIcon, QPixmap oder einer Zeichenfunktion ``f(QPainter, QRectF)`` ein Symbol machen; ``blass``: für Graues (nicht möglich).
-- `textkachel(text, pixel)` — Zeichenfunktion für eine Kachel, die nur ein Zeichen oder kurzes Wort zeigt (Symbole, Einheiten).
-- `zeilenkachel(bild, titel, angaben, spalten, bild_breite)` — Zeichenfunktion für eine Listenzeile: links ein Bildchen (Zeichner), daneben der Titel fett und darunter die Angaben,
-- **class `RasterAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
-  - `__init__(parent, *, titel, spalten, groesse, beschriftet, hoehe_max)` — ``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp.
-  - `_rollen_masse()`
-  - `kachel(schluessel, beschriftung, bild, *, aktuell, aktiv)` — ``aktiv=False``: die Kachel bleibt sichtbar, aber grau (blass gezeichnet) und nicht wählbar.
-  - `bild_setzen(schluessel, bild, beschriftung)` — Bild und Tipp einer vorhandenen Kachel wechseln (z. B. „zuletzt verwendet“ vor dem Aufklappen).
-  - `abschnitt(titel)` — Neuer Abschnitt mit eigener Überschrift und eigenem Raster darunter (z. B. „Benutzerdefinierte Symbole:“).
-  - `kacheln(eintraege, aktuell)` — ``eintraege``: Liste aus (schluessel, beschriftung, bild).
-  - `fuss(text, aktion)` — Zeile unter dem Raster, z. B. „Weitere Aufzählungszeichen …“.
-  - `trenner()` — Dünne Linie im Fuß (vor „Benutzerdefinierte Seitenränder …“ u. ä.).
-  - `kopf(widget)` — Eine Leiste über den Kacheln (z. B. „Stil \| Hochformat \| Querformat“ bei den Deckblättern).
-  - `leeren(groesse)` — Alle Kacheln entfernen (auf Wunsch mit neuer Kachelgröße), um sie neu zu füllen; Kopf und Fuß bleiben.
-  - `neu_messen()` — Nach ``leeren`` und neuem Füllen bei offenem Menü: Größe an die neuen Kacheln anpassen.
-  - `_klick(schluessel)`
-
 ### `ui/baukasten/ruby_dialog.py`
 
 Das Fenster „Phonetisches Leitzeichen“ als Baustein: der Text in Teilen (je eine Zeile), zu jedem Teil sein Leittext, dazu Ausrichtung, Abstand, Schrift und Größe.
@@ -4747,53 +4538,6 @@ Kleine Seitenbilder für Galerien (Einfügen ▸ Seitenzahl, Wasserzeichen, Deck
   - `_nur_format()`
   - `_teil_einrichten(werte)`
 
-### `ui/baukasten/smartart_menues.py`
-
-Menüs, Galerie und Miniaturen für SmartArt (Reiter „SmartArt-Design“, Schnellleiste am Knoten, Dialog „SmartArt-Grafik auswählen“).
-
-- `_sa(b)`
-- `_sym(name)`
-- **class `_Auffrischend`**(MenueListe) — Ein Menü, das seine Zeilen bei jedem Öffnen neu bewertet (grau, Haken) — das Band baut ein Menü nur einmal.
-  - `__init__(bau, parent)`
-  - `_neu()`
-- `form_menue(b)`
-- `level_menue(b)`
-- `hierarchie_menue(b, mit_rechts_links)` — Die Layoutvarianten des Organigramms; ``mit_rechts_links``: oben noch „Layout von rechts nach links“ (Schnellleiste am Knoten).
-- `layout_menue(b)` — „Layout ändern“: die 15 Layouts des Katalogs mit ihren Anzeigenamen; das gewählte trägt einen Haken.
-- `stil_bild(nr, groesse, blau)` — Zwei übereinanderstehende Kästen im Formenstil ``nr`` (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D).
-- `stile_menue(b)`
-- `stile_galerie(b)`
-- `_farben(grau)` — (Fläche, Rand, Strich für Text) — grau im Raster des Dialogs, blau in der großen Vorschau.
-- `_kasten(p, r, fl, rand, strich, text, rund)`
-- `_pfeil(p, a, b, col)`
-- `_m_organigramm(p, W, H, c)`
-- `_m_liste(p, W, H, c)`
-- `_m_prozess(p, W, H, c)`
-- `_m_zyklus(p, W, H, c)`
-- `_m_pyramide(p, W, H, c)`
-- `_m_spalten(p, W, H, c)`
-- `_m_gruppen(p, W, H, c)`
-- `_m_matrix(p, W, H, c)`
-- `_m_chevron(p, W, H, c)`
-- `_m_radial(p, W, H, c)`
-- `_m_zielscheibe(p, W, H, c)`
-- `_m_trichter(p, W, H, c)`
-- `_m_zeitachse(p, W, H, c)`
-- `_m_stufen(p, W, H, c)`
-- `_zeile(p, x, y, w, col, punkt)` — Eine Aufzählungszeile: Punkt und Strich.
-- `_m_punktliste(p, W, H, c)`
-- `_m_balkenliste(p, W, H, c)`
-- `_m_beschreibungsliste(p, W, H, c)`
-- `_m_spaltenrahmen(p, W, H, c)`
-- `_m_bildliste(p, W, H, c)`
-- `_m_perspektive(p, W, H, c)`
-- `_m_konvergenz(p, W, H, c)`
-- `_m_kartenprozess(p, W, H, c)`
-- `_m_kreisbeziehung(p, W, H, c)`
-- `_m_segmentzyklus(p, W, H, c)`
-- `zeichne_miniatur(p, r, schluessel, grau)` — Zeichnet die Miniatur des Layouts in ``r``.
-- `miniatur(schluessel, grau, groesse)`
-
 ### `ui/baukasten/smartart_stil_kacheln.py`
 
 Stilkacheln im Band „SmartArt-Design“ nach der Vorlage: Organigramm-Motiv (ein Kasten oben, zwei unten, Linien) in den fünf Stilen.
@@ -4874,21 +4618,6 @@ Das eine Speichern-Fenster: Orte links, Ordnerinhalt rechts, unten Dateiname und
   - `getExistingDirectory(parent, titel, start, *_a, **_k)`
 - `_ordner_name_fragen(parent)` — Kleines Fenster „Neuer Ordner“ in der Größe der übrigen Felder (statt des winzigen Eingabefensters von Qt).
 
-### `ui/baukasten/strich_auswahl.py`
-
-Auswahlfeld, das einen Strich zeigt (Kombinierter Typ, Strichtyp): im Feld die schwarze Strichvorschau, im Popup eine Zeile je Eintrag.
-
-- **class `StrichAuswahl`**(QPushButton)
-  - `__init__(eintraege, parent)`
-  - `aktuell()`
-  - `setze(schluessel)`
-  - `_namen()`
-  - `_zeichner(schluessel)`
-  - `_bild(zeichner, groesse)`
-  - `paintEvent(_e)`
-  - `_popup()`
-  - `_waehle(schluessel)`
-
 ### `ui/baukasten/tabstopp_dialog.py`
 
 Das Fenster „Tabstopps“ als Baustein: Position, Ausrichtung und Füllzeichen festlegen, löschen, alle löschen.
@@ -4917,18 +4646,6 @@ Das Fenster „Tastenkombination“ als Baustein: eine Tastenkombination aufnehm
   - `__init__(parent, aktuell, *, belegt)`
   - `taste()`
   - `_pruefen(*_)`
-
-### `ui/baukasten/teil_menue.py`
-
-Der Pfeil am Hauptreiter („DIAGRAMM OPTIONEN ▾“): öffnet die Liste der Teile des Diagramms, der aktuelle Teil trägt einen Haken.
-
-- **class `TeilMenueKnopf`**(QToolButton)
-  - `__init__(parent)`
-  - `setze(teile, aktuell)`
-  - `aktuell()`
-  - `_menue()`
-  - `_waehlen(schluessel)`
-  - `_oeffnen()`
 
 ### `ui/baukasten/text_format.py`
 
@@ -4967,21 +4684,6 @@ Textfüllung der Diagramm-Textoptionen mit fünf Arten wie in der Vorlage: Keine
   - `_sichtbar()`
   - `_setze_fuellung(w)`
   - `werte()`
-
-### `ui/baukasten/text_kopf_menue_mixin.py`
-
-Dropdowns in den Köpfen von „TEXTFÜLLUNG“ und „TEXTKONTUR“ der Textoptionen des Diagramms (Vorlage): Mixin vor ``TexteffektPanel``/``_TextPanel``.
-
-- `text_fuell_menue(parent, aktuell)` — „Keine Füllung“, die Farbpalette und graduelle Füllung (Muster und Struktur gibt es beim Text nicht).
-- `_text_bild(text, groesse)`
-- **class `TextKopfMenueMixin`**
-  - `_text_kopf_bauen()`
-  - `_text_fuell_wahl(schluessel)`
-  - `_text_fuell_schluessel()`
-  - `_text_linien_schluessel()`
-  - `_text_kopf_aktualisieren()`
-  - `_neu(*a)`
-  - `_setze_fuellung(w)`
 
 ### `ui/baukasten/texte.py`
 
@@ -5080,17 +4782,6 @@ Das Fenster „Eingeschlossene Zeichen“ als Baustein: Vorlage (Ohne, Text redu
   - `__init__(parent, text, form, vorlage)`
   - `werte()`
 
-### `ui/baukasten/voreinstellung_menue.py`
-
-Auswahl von Voreinstellungen als Popup mit Bildchen in Abschnitten (Schatten: Kein, Außen, Innen, Perspektive; Leuchten; Spiegelung;
-
-- **class `VoreinstellungMenue`**(MenueListe)
-  - `__init__(parent, *, keine, kachel)`
-  - `_kopf(text)`
-  - `_gitter(eintraege, spalten)`
-  - `abschnitt(titel, eintraege, spalten)`
-  - `_waehle(schluessel)`
-
 ### `ui/baukasten/vorlagen_galerie.py`
 
 Die Seite „Neu“: leeres Dokument direkt starten oder Standard- und eigene Vorlagen getrennt durchsuchen.
@@ -5150,24 +4841,6 @@ Winkelfeld: Drehknopf (QDial) und Zähler „0,0°“ mit „−“ und „+“ 
   - `value()`
   - `setValue(v)`
 
-### `ui/baukasten/zellen_raster.py`
-
-Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
-
-- **class `_Gitter`**(QWidget)
-  - `__init__(raster, zeilen, spalten, zelle)`
-  - `_zelle_bei(pos)`
-  - `setze(z, s)`
-  - `mouseMoveEvent(e)`
-  - `leaveEvent(e)`
-  - `mouseReleaseEvent(e)`
-  - `paintEvent(e)`
-- **class `ZellenRaster`**(MenueListe) — Meldet ``gewaehlt(zeilen, spalten)``. Darunter lassen sich mit ``fuss(...)`` weitere Einträge anhängen.
-  - `__init__(parent, zeilen, spalten, *, leer_text)`
-  - `_beschriften(z, s)`
-  - `waehle(zeilen, spalten)`
-  - `fuss(text, aktion)`
-
 ### `ui/baukasten/zugaenglichkeit.py`
 
 Zugängliche Namen für Knöpfe ohne eigenen Namen (Screenreader, Sprachsteuerung).
@@ -5201,6 +4874,410 @@ Zusatzfenster in der Seitenleiste: ein Fenster (zum Beispiel „Nummerierung und
 - `leiste_fuer(d)` — Die Seitenleiste, in der ``d`` sich zeigen soll — oder None (dann wie bisher als Fenster): Panels aus, kein Hauptfenster, oder ein anderes Fenster hält schon den Fokus.
 - **class `PanelFaehig`** — Zusatzfenster (Einstellungen, die man selten braucht): ``exec()`` zeigt sie in der Seitenleiste statt über dem Text.
   - `exec()`
+
+## `ui/baukasten/dropdown`
+
+### `ui/baukasten/dropdown/__init__.py`
+
+Das Dropdown-Paket: ALLE aufklappenden Bausteine der Anwendung an einem Ort.
+
+
+### `ui/baukasten/dropdown/auswahlfeld.py`
+
+Auswahlfeld: das eine Dropdown für ganz Lunivo.
+
+- **class `_KuerzDelegate`**(QStyledItemDelegate) — Zeilenhöhe wie in den Menüs (Schrifthöhe + 2 × Abstand aus mass.py), Text mittig gekürzt.
+  - `sizeHint(option, index)`
+  - `paint(painter, option, index)`
+- `popup_begrenzen(combo, popup_min)` — Nach ``showPopup()`` aufrufen: Größe der Liste (Breite, sichtbare Zeilen); die Lage in Fenster und Bildschirm bestimmt ``popup_klemmen``.
+- **class `_Feldlaenge`** — Gemeinsam für ``Auswahlfeld`` und ``Schriftauswahl``: die Länge des Feldes in Zeichen (Rolle statt fester Zahl am Aufrufer).
+  - `zeichen(n)`
+  - `an_inhalt()` — Das Feld ist so breit wie sein längster Eintrag (z. B. kurze feste Listen).
+- **class `Auswahlfeld`**(_Feldlaenge, QComboBox)
+  - `__init__(parent, *, min_zeichen, popup_min)`
+  - `showPopup()`
+  - `paintEvent(event)`
+- **class `Schriftauswahl`**(_Feldlaenge, QFontComboBox) — Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste.
+  - `__init__(parent, *, min_zeichen)`
+  - `showPopup()`
+
+### `ui/baukasten/dropdown/bild_diagramm_menues.py`
+
+Menüs und Galerien der Reiter „Bildtools“ und „Diagrammtools“ (nur Aussehen; jede Wahl ruft einen Befehl des Bandes).
+
+- `_form_bild(name)`
+- `_abschnittsleiste(text)`
+- `zuschneiden_menue(b)` — Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``).
+- `stil_bild(nr, groesse)` — Vorschau des Diagrammstils ``nr`` (``diagramm.STILE``): Grund, Raster und Schrift wie im fertigen Diagramm, mit drei Säulenreihen.
+- `_stilname(nr)`
+- `diagramm_stile_menue(b)` — Alle Diagrammstile als Kacheln (Name im Tipp); die Wahl ist ``diagrammStil``.
+- `diagramm_stile_galerie(b)` — Die Galerie im Band: eine Kachel je Stil und das Menü mit allen (Aufbau wie ``galerie_ttFormstile``).
+
+### `ui/baukasten/dropdown/diagramm_popups.py`
+
+Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein Baustein, damit Band und Schnellleiste dasselbe zeigen.
+
+- `_dg(b)`
+- `_kopfknopf(text, i, gruppe)`
+- `_linie()`
+- `_ueberschrift(text)`
+- `layout_bild(nr, groesse)` — Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
+- `_farbzeile(farben, gewaehlt, klick)`
+- **class `DiagrammPopup`**(MenueListe) — Ein Popup mit Reitern; ``art``: ``elemente``, ``stile`` oder ``filter``; ``reiter``: der zuerst gezeigte Reiter.
+  - `__init__(b, art, reiter, parent)`
+  - `waehle(i)`
+  - `neu_lesen()` — Beim Öffnen: den Reiter zeigen, den der Aufrufer wollte, mit frisch gelesenen Daten.
+  - `_fuellen(i)`
+  - `_seite_elemente()`
+  - `_seite_schnelllayout()`
+  - `_seite_vorlagen()`
+  - `_seite_farben()`
+  - `_seite_filter()`
+  - `_seite_namen()` — Reiter „Name“: Reihen und Rubriken umbenennen; „Übernehmen“ schreibt über ``diagrammNamenSetzen`` in die Diagrammdaten.
+  - `_namen_uebernehmen()`
+  - `_hoehe()`
+  - `_uebernehmen()`
+- `elemente_popup(b)`
+- `schnelllayout_popup(b)`
+- `stile_popup(b)`
+- `farben_popup(b)`
+- `filter_popup(b)`
+- `diagramm_bereich_feld(b)` — Auswahlfeld „Diagrammbereich“ der Diagrammtools: oben die Liste der Teile (zeigt den gewählten), darunter „Formatieren“ und
+
+### `ui/baukasten/dropdown/farbpalette.py`
+
+Die eine Farbpalette des Programms: Popup, Farbfeld für Dialoge und geteilter Knopf fürs Band.
+
+- `weitere_farben(parent, start, titel)` — „Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch.
+- `weitere_farben_unter(parent, fertig, start, titel)` — Wie ``weitere_farben``, aber als Unterfenster: Liegt ``parent`` in einem ``FensterStapel``, öffnet sich „Farben“ als Seite im selben Fenster;
+- `farb_symbol(farbe, groesse)`
+- **class `_Kachel`**(QWidget) — Ein Farbfeld der Palette; meldet Überfahren und Klick an die Palette.
+  - `__init__(palette, farbe, seite)`
+  - `enterEvent(e)`
+  - `leaveEvent(e)`
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(e)`
+- **class `_VerlaufKachel`**(_Kachel) — Kachel der Zeile „Graduelle Füllung“: ein Farbverlauf von hell nach dunkel in der Farbe; ein Klick meldet die Farbe als Verlauf.
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(e)`
+- **class `_BildKachel`**(_Kachel) — Kachel einer Bildreihe („Musterfüllung“, „Strukturfüllung“): zeigt ein Bild; ein Klick meldet ihren Schlüssel.
+  - `__init__(palette, schluessel, bild, tipp, seite)`
+  - `enterEvent(e)`
+  - `leaveEvent(e)`
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(e)`
+- **class `FarbPalette`**(MenueListe) — Popup mit „Keine Farbe“, Themenfarben (Grundfarben + Abstufungen), Standardfarben, zuletzt Benutzten, „Weitere Farben …“.
+  - `__init__(parent, *, keine_text, start, titel, zuletzt, weitere, verlauf, verlauf_titel, weitere_text, automatisch, pipette, standard, reihen)`
+  - `zusatz_eintrag(text, aktion)` — Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``.
+  - `_titel_zeile(text)`
+  - `_keine_symbol()`
+  - `_raster(zeilen)`
+  - `waehle(farbe)` — Farbe übernehmen: merken, melden, Popup schließen.
+  - `_pipette()` — „Pipette“: eine Farbe vom Bildschirm aufnehmen.
+  - `_weitere()`
+- **class `FarbFeld`**(QPushButton) — Knopf für Dialoge, der seine Farbe zeigt; ein Klick öffnet die Palette. ``farbe`` ist ein Hex-Text ('' = keine).
+  - `__init__(farbe, titel, keine_text, parent, verlauf)`
+  - `setFarbe(farbe)`
+  - `_waehle()`
+  - `_zeige_popup(pal)`
+  - `_uebernehmen(c)`
+  - `_zeige()` — Ruhig und sachlich: ein kleines Farbfeld mit Rand und der Name daneben — kein Knopf, der selbst bunt wird.
+- **class `FarbKnopf`**(QToolButton) — Geteilter Knopf fürs Band: Klick auf das Symbol wendet die letzte Farbe an, der Pfeil klappt die Palette auf.
+  - `__init__(symbol, text, farbe, *, keine_text, titel, parent)`
+  - `menu_neu()`
+  - `_gewaehlt(c)`
+  - `_balken()`
+
+### `ui/baukasten/dropdown/form_menues.py`
+
+Menüs und Galerie des Reiters „Zeichentools“ für Formen: „Form bearbeiten“ und die Stilgalerie „Abc“ (nur Aussehen; jede Wahl ruft einen Befehl).
+
+- `form_bearbeiten_menue(b)`
+- `formstile_galerie(b)`
+- `linien_galerie(b)` — Linien und Pfeile als Kacheln im Band (zwei Reihen, ``zeilen`` der Gruppe); Klick fügt die Linie ein (``formEinfuegen``).
+
+### `ui/baukasten/dropdown/fuell_voreinstellungen.py`
+
+Popup der Füllung im Kopf (Vorlage): „Keine Füllung“, Designfarben (10 × 6), Graduelle Füllung (10), Musterfüllung (5), Strukturfüllung (5).
+
+- `graduell_paar(farbe)` — (dunkel, hell) der graduellen Füllung einer Grundfarbe.
+- `_feld(farbe, groesse)`
+- `_gekachelt(kachel, groesse)`
+- `_muster_kachel(key, farbe)`
+- `fuell_bild(spec, groesse)` — Das Ergebnis der Füllung als Bild der Größe ``groesse`` (leer = durchsichtig).
+- **class `FuellPalette`**(FarbPalette) — Die Farbpalette des Programms als Popup der Füllung im Kopf; meldet den Schlüssel statt einer Farbe.
+  - `__init__(parent, aktuell, **kw)`
+- `fuell_menue(parent, aktuell)`
+
+### `ui/baukasten/dropdown/galerie_auswahl.py`
+
+Galerie-Popup: Kacheln mit einer Textprobe in der jeweiligen Schrift und dem Namen darunter (Formatvorlagen, später Tabellen-
+
+- **class `_Kachel`**(QWidget)
+  - `__init__(schluessel, name, probe, schrift, farbe, groesse, aktuell, tipp)`
+  - `enterEvent(e)`
+  - `leaveEvent(e)`
+  - `contextMenuEvent(e)`
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(_e)`
+- **class `GalerieAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
+  - `__init__(parent, *, titel, spalten, kachel, zeilen_sichtbar)`
+  - `kachel(schluessel, name, schrift, *, probe, farbe, aktuell, tipp)`
+  - `aktion(text, fn, symbol, *, haken, aktiv)` — Zeile unter der Galerie (z. B. „Neue Formatvorlage …“); schließt das Popup und ruft ``fn``.
+  - `_haken_symbol()`
+
+### `ui/baukasten/dropdown/kopf_dropdown.py`
+
+Dropdown im Kopf eines Abschnitts („FÜLLUNG ▾ [Feld ▾]“, „LINIE ▾ [Strich ▾]“ der Vorlage): ein weißes Feld mit dem aktuellen Ergebnis und kleinem
+
+- `keine_symbol(groesse)` — Das Zeichen der Zeile „Keine …“: Quadrat mit rotem Schrägstrich.
+- `keine_zeile(menue, text)` — Die klickbare Zeile „Keine …“ ganz oben im Popup (Zeichen + Text); sie meldet den Schlüssel ``""``.
+- **class `KopfDropdown`**(QPushButton)
+  - `__init__(fabrik, symbol, parent)`
+  - `sizeHint()`
+  - `setSymbol(symbol)`
+  - `an(abschnitt)` — Rechts in den Kopf des ``Abschnitt`` setzen (hinter den Streckungsraum).
+  - `_popup()`
+  - `paintEvent(_e)` — Ein Feld wie die übrigen der Seitenleiste (Farbfeld „Automatisch“): Rahmen, Hintergrund und Rundung vom Thema, darin nur das Ergebnis und der Pfeil.
+
+### `ui/baukasten/dropdown/kopf_menue_mixin.py`
+
+Dropdowns in den Köpfen von „FÜLLUNG“ und „LINIE“ des Diagramm-Panels (Vorlage): Mixin vor ``ObjektFormatPanel``.
+
+- `_hex(farbe)`
+- **class `KopfMenueMixin`**
+  - `_kopf_menues_bauen()`
+  - `_fuell_voreinstellung(schluessel)`
+  - `_linien_voreinstellung(schluessel)`
+  - `_fuell_spec()`
+  - `_fuell_schluessel()`
+  - `_linien_spec()`
+  - `_linien_schluessel()`
+  - `_kopf_aktualisieren()`
+  - `_felder_zeigen()`
+
+### `ui/baukasten/dropdown/layout_optionen.py`
+
+Das kleine Popup „Layoutoptionen“ neben einem markierten Bild: Umbruchart per Klick, „Mit Text verschieben“ oder „Fester Text“, „Mehr anzeigen“.
+
+- **class `LayoutOptionen`**(PopupVerhalten, QFrame)
+  - `__init__(parent, art, mit_text)`
+  - `_titel(text)`
+  - `_klick(art)`
+  - `setze(art)`
+  - `zeigen_bei(pos)`
+
+### `ui/baukasten/dropdown/linien_voreinstellungen.py`
+
+Popup der Linie im Kopf (Vorlage): „Keine Linie“ und „Voreingestellte Linie“ — 8 Strichtypen (Zeilen) × 4 Formen (Spalten).
+
+- `linien_schluessel(art, form, breite)`
+- `linien_bild(spec, groesse)` — Eine Linie der Strichart/Form/Breite (pt) in Farbe über die Breite, mittig; ``art`` "keine" gibt ein leeres Bild.
+- `linien_menue(parent, aktuell, arten)`
+
+### `ui/baukasten/dropdown/menue_liste.py`
+
+Menü-Liste: Zeilen mit Symbol, Text, Tastenkürzel, Haken und Untermenü — überall dieselbe Gestalt.
+
+- **class `MenueListe`**(PopupVerhalten, QMenu) — Ein Menü, das Zeilen einheitlich aufbaut. Nicht Mögliches bleibt grau sichtbar statt zu fehlen.
+  - `eintrag(text, aktion, *, symbol, kuerzel, haken, aktiv, tip, daten, echt, gruppe)` — ``kuerzel`` (Text oder ``QKeySequence``) wird nur angezeigt; mit ``echt=True`` ist es ein wirkliches Tastenkürzel
+  - `vorhanden(a)` — Eine schon bestehende Aktion (z. B. aus der Hauptfenster-Aktionstabelle) als Zeile übernehmen.
+  - `einhaengen(text, menue, symbol)` — Ein fertiges Menü (z. B. ein Raster) als Untermenü-Zeile mit ``text`` einhängen.
+  - `untermenue(text, symbol, aktiv)`
+  - `widget(w)` — Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen.
+  - `kompakt()` — Schmalere Zeilen (Symbolspalte, Text, Kürzel dicht) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
+  - `standard(widget, parent)` — Das Standard-Kontextmenü eines Qt-Textfeldes (``createStandardContextMenu``) als Menüliste, mit deutschen Texten.
+  - `in_leiste(leiste, titel)` — Ein Menü der Menüleiste (``QMenuBar``) mit dem Titel ``titel``.
+  - `trenner()`
+  - `aus_liste(zeilen, parent)` — Baut ein Menü aus einer Beschreibung: ``"-"`` = Trennlinie, sonst ein Wörterbuch mit text, aktion, symbol,
+  - `_fuellen(zeilen)`
+
+### `ui/baukasten/dropdown/menue_tafel.py`
+
+Das ☰ Menü: links die Datei-Befehle, rechts der Inhalt (zuletzt verwendete Dateien oder die Punkte eines Untermenüs).
+
+- `_menue_symbol(name)`
+- `_datum(pfad)` — Änderungsdatum der Datei für die Liste „Zuletzt verwendet“ (leer, wenn es sie nicht mehr gibt).
+- **class `MenueTafel`**(PopupVerhalten, QFrame)
+  - `__init__(punkte, befehle, fenster)`
+  - `eventFilter(obj, ev)`
+  - `_leeren()`
+  - `_zeige_zuletzt()`
+  - `_zeige_unter(p)`
+  - `_klick(p)`
+  - `zeigen_unter(widget)`
+
+### `ui/baukasten/dropdown/objekt_menues.py`
+
+Die Popups für ein markiertes Bild oder eine Form: Formstile, Füllung, Kontur (wie in der Vorlage).
+
+- `_linien_symbol(art, breite, groesse)`
+- `graduell_pixmap(dunkel, hell, w, h)`
+- **class `FuellMenue`**(FarbPalette) — Füllung wie in der Vorlage: Keine Farbe · Thema-Farben · Standard-Farben · Farbverlauf · Automatisch · Weitere Füllfarben · Pipette ·
+  - `__init__(parent, start)`
+  - `_raster_untermenue(text, art, weitere, kacheln, groesse, spalten, gewaehlt)` — Ein Untermenü mit Kacheln (Graduell, Textur, Muster) und darunter „Weitere …“, das die Seitenleiste „Formatierung“ öffnet.
+  - `_untermenue(text, icon)`
+  - `_einsetzen(menue, inhalt)` — Das Raster steht als Inhalt des Untermenüs.
+- **class `KonturMenue`**(FarbPalette) — Kontur wie in der Vorlage: Keine Linie · Thema-Farben · Standard-Farben · Farbverlauf · Weitere Linienfarben · Pipette · Linienart ▸ · Strichart ▸ · Pfeilart ▸.
+  - `__init__(parent, start)`
+- `formstil_werte(schluessel)` — Füllung und Kontur des Stils ``z{Zeile}{Spalte}`` für Bilder und Textfelder: {"fuell": …, "rand": …} (``None`` = keine). Die Werte kommen aus
+- `formstil_zeichner(schluessel)` — Zeichnet die Kachel „Abc“ des Stils: Füllung (auch Verlauf), Rand und Schrift in passender Farbe.
+- `formstile(parent)` — Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“.
+
+### `ui/baukasten/dropdown/popup_lage.py`
+
+Popup-Lage: das eine Öffnungsverhalten für alle aufklappenden Fenster (Menüs, Klapplisten, Popup-Fenster).
+
+- `popup_bereich(anker, schirm_geometrie)` — Der Bereich, in dem ein von ``anker`` aufklappendes Fenster liegen darf: nächste Grenze oberhalb des Ankers (Eigenschaft
+- `popup_klemmen(pop, anker)` — Die Öffnungsregeln für jedes aufklappende Fenster. True, wenn es verschoben wurde.
+- **class `PopupVerhalten`** — Basis aller aufklappenden Fenster (Menüs, Galerien, Popup-Widgets): Wer von ihr erbt, öffnet sich nach denselben Regeln.
+  - `showEvent(ev)`
+
+### `ui/baukasten/dropdown/rahmen_menue.py`
+
+Das Rahmen-Menü (Unten, Oben, Links, Rechts, Kein, Alle, Außen, Innen): ein Dropdown-Baustein, erbt alles von ``MenueListe``.
+
+- **class `RahmenMenue`**(MenueListe) — Das Rahmen-Menü (Unten, Oben, Links, Rechts, Kein, Alle, Außen, Innen). Meldet die gewählten Seiten.
+  - `__init__(parent, *, innen, mehr_text, mehr)` — ``innen``: True = beide inneren Linien (Tabelle), ``"h"`` = nur die waagerechte (Absätze), False = keine.
+
+### `ui/baukasten/dropdown/raster_auswahl.py`
+
+Kachel-Auswahl: ein Popup mit Bildchen im Raster und einem „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter …).
+
+- `_symbol(bild, groesse, blass)` — Aus QIcon, QPixmap oder einer Zeichenfunktion ``f(QPainter, QRectF)`` ein Symbol machen; ``blass``: für Graues (nicht möglich).
+- `textkachel(text, pixel)` — Zeichenfunktion für eine Kachel, die nur ein Zeichen oder kurzes Wort zeigt (Symbole, Einheiten).
+- `zeilenkachel(bild, titel, angaben, spalten, bild_breite)` — Zeichenfunktion für eine Listenzeile: links ein Bildchen (Zeichner), daneben der Titel fett und darunter die Angaben,
+- **class `RasterAuswahl`**(MenueListe) — Meldet den Schlüssel der gewählten Kachel.
+  - `__init__(parent, *, titel, spalten, groesse, beschriftet, hoehe_max)` — ``beschriftet``: der Name steht unter dem Bild (Seitenzahl-, Wasserzeichen-, Gleichungsgalerie), sonst nur im Tipp.
+  - `_rollen_masse()`
+  - `kachel(schluessel, beschriftung, bild, *, aktuell, aktiv)` — ``aktiv=False``: die Kachel bleibt sichtbar, aber grau (blass gezeichnet) und nicht wählbar.
+  - `bild_setzen(schluessel, bild, beschriftung)` — Bild und Tipp einer vorhandenen Kachel wechseln (z. B. „zuletzt verwendet“ vor dem Aufklappen).
+  - `abschnitt(titel)` — Neuer Abschnitt mit eigener Überschrift und eigenem Raster darunter (z. B. „Benutzerdefinierte Symbole:“).
+  - `kacheln(eintraege, aktuell)` — ``eintraege``: Liste aus (schluessel, beschriftung, bild).
+  - `fuss(text, aktion)` — Zeile unter dem Raster, z. B. „Weitere Aufzählungszeichen …“.
+  - `trenner()` — Dünne Linie im Fuß (vor „Benutzerdefinierte Seitenränder …“ u. ä.).
+  - `kopf(widget)` — Eine Leiste über den Kacheln (z. B. „Stil \| Hochformat \| Querformat“ bei den Deckblättern).
+  - `leeren(groesse)` — Alle Kacheln entfernen (auf Wunsch mit neuer Kachelgröße), um sie neu zu füllen; Kopf und Fuß bleiben.
+  - `neu_messen()` — Nach ``leeren`` und neuem Füllen bei offenem Menü: Größe an die neuen Kacheln anpassen.
+  - `_klick(schluessel)`
+
+### `ui/baukasten/dropdown/smartart_menues.py`
+
+Menüs, Galerie und Miniaturen für SmartArt (Reiter „SmartArt-Design“, Schnellleiste am Knoten, Dialog „SmartArt-Grafik auswählen“).
+
+- `_sa(b)`
+- `_sym(name)`
+- **class `_Auffrischend`**(MenueListe) — Ein Menü, das seine Zeilen bei jedem Öffnen neu bewertet (grau, Haken) — das Band baut ein Menü nur einmal.
+  - `__init__(bau, parent)`
+  - `_neu()`
+- `form_menue(b)`
+- `level_menue(b)`
+- `hierarchie_menue(b, mit_rechts_links)` — Die Layoutvarianten des Organigramms; ``mit_rechts_links``: oben noch „Layout von rechts nach links“ (Schnellleiste am Knoten).
+- `layout_menue(b)` — „Layout ändern“: die 15 Layouts des Katalogs mit ihren Anzeigenamen; das gewählte trägt einen Haken.
+- `stil_bild(nr, groesse, blau)` — Zwei übereinanderstehende Kästen im Formenstil ``nr`` (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D).
+- `stile_menue(b)`
+- `stile_galerie(b)`
+- `_farben(grau)` — (Fläche, Rand, Strich für Text) — grau im Raster des Dialogs, blau in der großen Vorschau.
+- `_kasten(p, r, fl, rand, strich, text, rund)`
+- `_pfeil(p, a, b, col)`
+- `_m_organigramm(p, W, H, c)`
+- `_m_liste(p, W, H, c)`
+- `_m_prozess(p, W, H, c)`
+- `_m_zyklus(p, W, H, c)`
+- `_m_pyramide(p, W, H, c)`
+- `_m_spalten(p, W, H, c)`
+- `_m_gruppen(p, W, H, c)`
+- `_m_matrix(p, W, H, c)`
+- `_m_chevron(p, W, H, c)`
+- `_m_radial(p, W, H, c)`
+- `_m_zielscheibe(p, W, H, c)`
+- `_m_trichter(p, W, H, c)`
+- `_m_zeitachse(p, W, H, c)`
+- `_m_stufen(p, W, H, c)`
+- `_zeile(p, x, y, w, col, punkt)` — Eine Aufzählungszeile: Punkt und Strich.
+- `_m_punktliste(p, W, H, c)`
+- `_m_balkenliste(p, W, H, c)`
+- `_m_beschreibungsliste(p, W, H, c)`
+- `_m_spaltenrahmen(p, W, H, c)`
+- `_m_bildliste(p, W, H, c)`
+- `_m_perspektive(p, W, H, c)`
+- `_m_konvergenz(p, W, H, c)`
+- `_m_kartenprozess(p, W, H, c)`
+- `_m_kreisbeziehung(p, W, H, c)`
+- `_m_segmentzyklus(p, W, H, c)`
+- `zeichne_miniatur(p, r, schluessel, grau)` — Zeichnet die Miniatur des Layouts in ``r``.
+- `miniatur(schluessel, grau, groesse)`
+
+### `ui/baukasten/dropdown/strich_auswahl.py`
+
+Auswahlfeld, das einen Strich zeigt (Kombinierter Typ, Strichtyp): im Feld die schwarze Strichvorschau, im Popup eine Zeile je Eintrag.
+
+- **class `StrichAuswahl`**(QPushButton)
+  - `__init__(eintraege, parent)`
+  - `aktuell()`
+  - `setze(schluessel)`
+  - `_namen()`
+  - `_zeichner(schluessel)`
+  - `_bild(zeichner, groesse)`
+  - `paintEvent(_e)`
+  - `_popup()`
+  - `_waehle(schluessel)`
+
+### `ui/baukasten/dropdown/teil_menue.py`
+
+Der Pfeil am Hauptreiter („DIAGRAMM OPTIONEN ▾“): öffnet die Liste der Teile des Diagramms, der aktuelle Teil trägt einen Haken.
+
+- **class `TeilMenueKnopf`**(QToolButton)
+  - `__init__(parent)`
+  - `setze(teile, aktuell)`
+  - `aktuell()`
+  - `_menue()`
+  - `_waehlen(schluessel)`
+  - `_oeffnen()`
+
+### `ui/baukasten/dropdown/text_kopf_menue_mixin.py`
+
+Dropdowns in den Köpfen von „TEXTFÜLLUNG“ und „TEXTKONTUR“ der Textoptionen des Diagramms (Vorlage): Mixin vor ``TexteffektPanel``/``_TextPanel``.
+
+- `text_fuell_menue(parent, aktuell)` — „Keine Füllung“, die Farbpalette und graduelle Füllung (Muster und Struktur gibt es beim Text nicht).
+- `_text_bild(text, groesse)`
+- **class `TextKopfMenueMixin`**
+  - `_text_kopf_bauen()`
+  - `_text_fuell_wahl(schluessel)`
+  - `_text_fuell_schluessel()`
+  - `_text_linien_schluessel()`
+  - `_text_kopf_aktualisieren()`
+  - `_neu(*a)`
+  - `_setze_fuellung(w)`
+
+### `ui/baukasten/dropdown/voreinstellung_menue.py`
+
+Auswahl von Voreinstellungen als Popup mit Bildchen in Abschnitten (Schatten: Kein, Außen, Innen, Perspektive; Leuchten; Spiegelung;
+
+- **class `VoreinstellungMenue`**(MenueListe)
+  - `__init__(parent, *, keine, kachel)`
+  - `_kopf(text)`
+  - `_gitter(eintraege, spalten)`
+  - `abschnitt(titel, eintraege, spalten)`
+  - `_waehle(schluessel)`
+
+### `ui/baukasten/dropdown/zellen_raster.py`
+
+Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Zellen fahren, „3 × 4“ lesen, klicken.
+
+- **class `_Gitter`**(QWidget)
+  - `__init__(raster, zeilen, spalten, zelle)`
+  - `_zelle_bei(pos)`
+  - `setze(z, s)`
+  - `mouseMoveEvent(e)`
+  - `leaveEvent(e)`
+  - `mouseReleaseEvent(e)`
+  - `paintEvent(e)`
+- **class `ZellenRaster`**(MenueListe) — Meldet ``gewaehlt(zeilen, spalten)``. Darunter lassen sich mit ``fuss(...)`` weitere Einträge anhängen.
+  - `__init__(parent, zeilen, spalten, *, leer_text)`
+  - `_beschriften(z, s)`
+  - `waehle(zeilen, spalten)`
+  - `fuss(text, aktion)`
 
 ## `ui/contextual`
 
@@ -6045,6 +6122,7 @@ Dokumentreiter ganz oben (mit „+“) und der Stapel der Dokumente darunter.
 
 - **class `DocTabs`**(QObject) — Wie ein QTabWidget, nur dass Reiterleiste und Inhalt getrennt eingebaut werden.
   - `__init__()`
+  - `eventFilter(obj, ev)`
   - `_moved(von, nach)`
   - `_bar_changed(i)`
   - `addTab(w, title)`
@@ -6923,21 +7001,6 @@ Menüleiste, gebaut aus register.json („menues“).
 - `baue_menueleiste(mb, menues, befehle)` — Füllt die Menüleiste. → Anzahl der Menüpunkte ohne nativen Befehl.
 - `_fenster_menue(m, befehle)`
 
-### `ui/ribbon/menue_tafel.py`
-
-Das ☰ Menü: links die Datei-Befehle, rechts der Inhalt (zuletzt verwendete Dateien oder die Punkte eines Untermenüs).
-
-- `_menue_symbol(name)`
-- `_datum(pfad)` — Änderungsdatum der Datei für die Liste „Zuletzt verwendet“ (leer, wenn es sie nicht mehr gibt).
-- **class `MenueTafel`**(QFrame)
-  - `__init__(punkte, befehle, fenster)`
-  - `eventFilter(obj, ev)`
-  - `_leeren()`
-  - `_zeige_zuletzt()`
-  - `_zeige_unter(p)`
-  - `_klick(p)`
-  - `zeigen_unter(widget)`
-
 ### `ui/ribbon/plan.py`
 
 Die Reiterleiste nach der Struktur „LUNIVO WRITER“: Datei, Start, Einfügen, Seitenlayout, Verweise, Überprüfen,
@@ -6962,7 +7025,7 @@ Das Band (Register): Reiter → Gruppen → Knöpfe, gebaut aus resources/regist
 - `_kurz(name)`
 - `_mit_kuerzel(name)` — Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``ui/kuerzel.py``), kommt das Tastenkürzel dahinter.
 - `_zweizeilig(text)`
-- **class `_ReiterLeiste`**(QTabBar)
+- **class `_ReiterLeiste`**(UeberlaufLeiste)
   - `mouseDoubleClickEvent(ev)`
   - `ist_kontext(i)`
   - `tabSizeHint(i)`

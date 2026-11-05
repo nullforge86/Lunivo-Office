@@ -38,13 +38,14 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_POPUP_SEITE,
     RAND_POPUP_UNTERTEXT,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Grautöne der Diagramm-Sinnbilder: bewusst feste Farben, unabhängig vom Thema.
 SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = "#d4d4d4", "#9a9a9a", "#6e6e6e"
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 KACHEL = 36
 BREITE = 340
@@ -230,7 +231,7 @@ class DiagrammPopup(MenueListe):
     # ---- Formatvorlagen und Farben -----------------------------------------------------------------------------------------------------
     def _seite_vorlagen(self) -> QWidget:
         from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.bild_diagramm_menues import stil_bild
+        from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import stil_bild
         STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_POPUP)                                  # wie in der Vorlage: zwei große Kacheln je Zeile
         aktuell = int(_dg(self.b).get("stil", 0) or 0)
         inhalt = QWidget(); v = QVBoxLayout(inhalt); v.setContentsMargins(*RAND_POPUP_SEITE); v.setSpacing(ABSTAND_KLEIN)
@@ -380,7 +381,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
     v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_DICHT)
-    cb = QComboBox(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
+    cb = Auswahlfeld(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
     zeile = QHBoxLayout(); zeile.setContentsMargins(*RAND_KEIN); zeile.setSpacing(ABSTAND_KLEIN)          # wie in der Vorlage nebeneinander unter dem Feld

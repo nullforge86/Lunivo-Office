@@ -109,7 +109,7 @@ class DateiBefehle:
 
 
     def menue_zuletzt(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         items = self.w.settings.recent()
         if not items:

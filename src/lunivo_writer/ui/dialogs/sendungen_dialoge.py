@@ -15,6 +15,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_TEXT_MITTEL,
     HOEHE_TEXT_NORMAL,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _hinweis(text: str) -> QLabel:
@@ -35,7 +36,7 @@ class UmschlagDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Umschlag")
         f = FormularGitter(self)
         f.breit(_hinweis("Das Blatt wird auf Umschlagformat gestellt und beides eingesetzt.\nDanach steht der Umschlag allein im Dokument."))
-        self.format = QComboBox(); self.format.addItems(list(S.UMSCHLAEGE))
+        self.format = Auswahlfeld(); self.format.addItems(list(S.UMSCHLAEGE))
         self.absender = QPlainTextEdit(absender); self.absender.setFixedHeight(HOEHE_TEXT_KURZ)
         self.empfaenger = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.empfaenger.setFixedHeight(HOEHE_TEXT_MITTEL)
         f.zeile("Format", self.format); f.zeile("Absender", self.absender); f.zeile("Empfänger", self.empfaenger)
@@ -48,9 +49,9 @@ class EtikettenDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Etiketten")
         f = FormularGitter(self)
         f.breit(_hinweis("Ein Bogen wird angelegt. Steht überall dasselbe, kommt der Text in jedes Feld; sonst je Zeile eines."))
-        self.bogen = QComboBox(); self.bogen.addItems(list(S.ETIKETTEN))
+        self.bogen = Auswahlfeld(); self.bogen.addItems(list(S.ETIKETTEN))
         self.text = QPlainTextEdit("Vorname Nachname\nStraße 1\n12345 Ort"); self.text.setFixedHeight(HOEHE_TEXT_NORMAL)
-        self.gleich = QComboBox(); self.gleich.addItems(["ja — derselbe Text", "nein — je Zeile ein Etikett"])
+        self.gleich = Auswahlfeld(); self.gleich.addItems(["ja — derselbe Text", "nein — je Zeile ein Etikett"])
         f.zeile("Bogen", self.bogen); f.zeile("Aufschrift", self.text); f.zeile("Überall dasselbe", self.gleich)
         f.breit(_ok(self, "Anlegen"))
 

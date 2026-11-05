@@ -33,7 +33,7 @@ def _rect(ed):
 
 
 def test_diagramm_filter_name_und_typ_direkt(fenster):
-    from lunivo_writer.ui.baukasten.diagramm_popups import DiagrammPopup
+    from lunivo_writer.ui.baukasten.dropdown.diagramm_popups import DiagrammPopup
     ed = fenster.current_editor(); b = fenster.befehle
     FO.einfuegen(ed, "diagramm", {"art": "saeule_gruppiert", "titel": "T", "kategorien": ["A", "B"], "reihen": {"X": [1, 2], "Y": [3, 1]}}, 400, 260)
     b.diagrammFilterSetzen(None, {"reihen": ["Y"]})
@@ -63,7 +63,7 @@ def test_diagramm_filter_name_und_typ_direkt(fenster):
 
 
 def test_linien_galerie_fuegt_ein(fenster):
-    from lunivo_writer.ui.baukasten.form_menues import GALERIEN
+    from lunivo_writer.ui.baukasten.dropdown.form_menues import GALERIEN
     from lunivo_writer.ui.contextual.image_tools import ZEICHENTOOLS
     from lunivo_writer.editor import formen_katalog as K
     ed = fenster.current_editor(); b = fenster.befehle

@@ -228,7 +228,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
     # ==== Menü ============================================================
     def _build_menu(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         mb = self.menuBar()
         m = MenueListe.in_leiste(mb, "&Datei")
         m.vorhanden(self.a_new); m.vorhanden(self.a_open)
@@ -527,7 +527,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
 
 
     def fensterliste_menue(self) -> QMenu:
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for f in self.alle_fenster():
             for t in f._doc_tabs():

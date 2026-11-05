@@ -18,8 +18,8 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPen, QPixmap, QPolygonF
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
     GROESSE_SMARTART_LAYOUT_MINIATUR,

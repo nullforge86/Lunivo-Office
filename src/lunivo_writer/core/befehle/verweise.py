@@ -116,7 +116,7 @@ class VerweiseBefehle:
     def menue_inhaltsverzeichnisKlappe(self):
         """Ebene 1–9 und Textkörper wie in der Vorlage. In Lunivo trägt die Ebene die Formatvorlage „Überschrift N“
         (Textkörper: „Standard“); das Inhaltsverzeichnis nimmt diese Absätze auf. Der Haken zeigt die Ebene am Zeiger."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         eintraege = [m.eintrag(f"Ebene &{n}", lambda n=n: self.inhaltsEbene(None, n), haken=False) for n in range(1, 10)]
         eintraege.append(m.eintrag("Textkörper(&B)", lambda: self.inhaltsEbene(None, 0), haken=False))

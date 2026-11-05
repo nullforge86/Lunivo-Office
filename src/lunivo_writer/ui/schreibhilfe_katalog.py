@@ -61,7 +61,7 @@ KATALOG: tuple[Funktion, ...] = (
     Funktion("Text in Bild", "bild", "kiTextInBild", reiter="KI", gruppe="KI", hinweis="Aus der Markierung ein Bild erzeugen"),
     Funktion("KI-Chat", "chat", "w.chatUmschalten", reiter="KI", gruppe="KI", gross=True, hinweis="Fragen zum Text stellen"),
     Funktion("KI-Aktionen", "assistent", "", "menue", reiter="KI", gruppe="KI", klappe="assistenten", gross=True, hinweis="Deine Schnellen KI-Aktionen"),
-    Funktion("KI-Einstellungen", "zahnrad", "w.kiEinstellungen", reiter="KI", gruppe="KI", gross=True, hinweis="Modelle, Sprache, MCP, Websuche"),
+    Funktion("KI-Einstellungen", "zahnrad", "w.kiEinstellungen", reiter="KI", gruppe="KI", gross=True, hinweis="Modelle, Sprache, KI-Werkzeuge, Websuche"),
 )
 
 

@@ -18,6 +18,7 @@ from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.mass import BREITE_SCHIENE, HOEHE_KNOPF, RAND_BOX_KOMPAKT
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 TYPEN = (("text", "Text"), ("zahl", "Zahl"), ("datum", "Datum"))
 TRENNER = (("\t", "Tabstopps"), (",", "Kommata"))
@@ -54,7 +55,7 @@ class SortierOptionenDialog(PanelFaehig, QDialog):
         self.gross_klein = UmbruchSchalter("Groß-/Kleinschreibung beachten"); self.gross_klein.setChecked(gross_klein)
         v.addWidget(self.nur_spalte); v.addWidget(self.gross_klein)
         v.addWidget(abschnittstitel("Sortiersprache"))
-        self.sprache = _feld(QComboBox())
+        self.sprache = _feld(Auswahlfeld())
         for k, t in SPRACHEN:
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))
@@ -71,9 +72,9 @@ class _Schluessel:
 
     def __init__(self, g: FormularGitter, eltern: QDialog, mit_keine: bool):
         self.mit_keine = mit_keine
-        self.feld = _feld(QComboBox())
+        self.feld = _feld(Auswahlfeld())
         self.typ_text = QLabel("Typ:")
-        self.typ = _feld(QComboBox())
+        self.typ = _feld(Auswahlfeld())
         for k, t in TYPEN:
             self.typ.addItem(t, k)
         self.ordnung = QButtonGroup(eltern)

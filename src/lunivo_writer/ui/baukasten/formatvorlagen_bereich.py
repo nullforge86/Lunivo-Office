@@ -19,6 +19,7 @@ from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_KNOPF, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 ANZEIGEN = (("gueltig", "Gültige Formatvorlagen"), ("verwendet", "Verwendete Formatvorlagen"), ("alle", "Alle Formatvorlagen"))
 
@@ -73,7 +74,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.get_editor = get_editor or (lambda: None)
         self._anwenden, self._neu = anwenden, neu
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_NORMAL)
-        self.aktuell = QComboBox(); self.aktuell.setMinimumHeight(HOEHE_KNOPF)
+        self.aktuell = Auswahlfeld(); self.aktuell.setMinimumHeight(HOEHE_KNOPF)
         v.addWidget(self.aktuell)
         z = FlussLayout(6)
         self.neu_knopf = QPushButton("Neue Formatvorlage …"); self.loeschen = QPushButton("Formatierung löschen")
@@ -85,7 +86,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_REITER); self.liste.setItemDelegate(_Absatzmarke(self.liste))
         v.addWidget(self.liste, 1)
         az = FormularGitter()
-        self.anzeigen = QComboBox(); self.anzeigen.setMinimumHeight(HOEHE_KNOPF)
+        self.anzeigen = Auswahlfeld(); self.anzeigen.setMinimumHeight(HOEHE_KNOPF)
         for k, t in ANZEIGEN:
             self.anzeigen.addItem(t, k)
         az.zeile("Anzeigen:", self.anzeigen); v.addLayout(az)

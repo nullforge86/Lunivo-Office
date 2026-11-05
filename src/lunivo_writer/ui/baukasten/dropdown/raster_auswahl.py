@@ -20,7 +20,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_PANEL_KLEIN,
     RAND_RASTER_FUSS,
 )
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 def _symbol(bild, groesse: QSize, blass: bool = False) -> QIcon:

@@ -9,7 +9,7 @@ from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
 from lunivo_writer.models.page import HeaderFooter
 from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
-from lunivo_writer.ui.ribbon.menue_tafel import MenueTafel
+from lunivo_writer.ui.baukasten.dropdown.menue_tafel import MenueTafel
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.theme import kopf_symbolfarbe
 

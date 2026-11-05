@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.editor import gehe_zu as G
 from lunivo_writer.editor import suche as S
 from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_KLEIN,
@@ -35,6 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_KLEIN,
     RAND_OBEN_SEITE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 HERVORHEBUNG_GELB = "#ffec99"      # Textmarker beim Hervorheben: bewusst fest (Gruppe C)
 
@@ -127,7 +128,7 @@ class SuchenFeld(QWidget):
 
     # ---- Aufbau: Suchen und Ersetzen ----------------------------------------------------------------------------------------------
     def _feld(self) -> QComboBox:
-        c = QComboBox(); c.setEditable(True); c.setInsertPolicy(QComboBox.NoInsert); c.setMinimumHeight(KNOPF_H)
+        c = Auswahlfeld(); c.setEditable(True); c.setInsertPolicy(QComboBox.NoInsert); c.setMinimumHeight(KNOPF_H)
         c.lineEdit().setClearButtonEnabled(True)
         return c
 
@@ -185,7 +186,7 @@ class SuchenFeld(QWidget):
         self.optionen_text = QLabel(); self.optionen_text.setWordWrap(True); hinweis_stil(self.optionen_text)
         self.optionen = self.optionen_gruppe.inhalt
         ov = self.optionen_gruppe.innen; ov.setSpacing(ABSTAND_KLEIN)
-        rz = QHBoxLayout(); self.richtung = QComboBox(); self.richtung.setMinimumHeight(KNOPF_H)
+        rz = QHBoxLayout(); self.richtung = Auswahlfeld(); self.richtung.setMinimumHeight(KNOPF_H)
         for k, t in RICHTUNGEN:
             self.richtung.addItem(t, k)
         rl = QLabel("Such&richtung:"); rl.setBuddy(self.richtung)

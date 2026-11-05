@@ -101,6 +101,7 @@ class ZusatzPanel(QWidget):
         super().__init__()
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)                 # der Inhalt bestimmt nie die Breite der Seitenleiste
         self.setMinimumWidth(0)
+        self.setProperty("popupGrenze", True)                                          # Popups aus dieser Seite bleiben in der Seitenleiste (siehe popup_lage.py)
         self.verfuegbar = 360                                                          # Breite für den Inhalt in Pixeln (setzt die Seitenleiste)
         self.verfuegbar_hoehe = 520                                                    # Höhe für den Inhalt in Pixeln (setzt die Seitenleiste)
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)

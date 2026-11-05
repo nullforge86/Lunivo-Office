@@ -6,8 +6,10 @@ from typing import Callable
 from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenu, QWidget, QWidgetAction
 
+from lunivo_writer.ui.baukasten.dropdown.popup_lage import PopupVerhalten
 
-class MenueListe(QMenu):
+
+class MenueListe(PopupVerhalten, QMenu):
     """Ein Menü, das Zeilen einheitlich aufbaut. Nicht Mögliches bleibt grau sichtbar statt zu fehlen."""
 
     def eintrag(self, text: str, aktion: Callable | None = None, *, symbol: QIcon | None = None, kuerzel: str = "",

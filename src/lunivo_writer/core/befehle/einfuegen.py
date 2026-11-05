@@ -132,7 +132,7 @@ class EinfuegenBefehle:
 
 
     def menue_objektKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Objekt …", self.objekt, symbol=self._sym("objekte"))
         m.eintrag("Text aus Datei …", self.textAusDatei, symbol=self._sym("ausdatei"))
@@ -148,7 +148,7 @@ class EinfuegenBefehle:
         „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import seitenzahl as SZ
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
         for schl, text, ort, ausr in SZ.VORGABEN:
@@ -231,7 +231,7 @@ class EinfuegenBefehle:
         """Wasserzeichen wie in der Vorlage: „Benutzerdefiniert“ (eigene + Hinzufügen), „Voreinstellung“, darunter Einfügen … und Entfernen."""
         import json
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         from lunivo_writer.ui.baukasten.seiten_bildchen import plus_zeichner, wasserzeichen_vorschau, wasserzeichen_zeichner
         m = RasterAuswahl(self.w, titel="Benutzerdefiniertes Wasserzeichen", spalten=3, groesse=QSize(84, 112), beschriftet=True)
         for i in range(self.EIGENE_ANZAHL):
@@ -343,7 +343,7 @@ class EinfuegenBefehle:
 
     def menue_umbruecheKlappe(self):
         """Umbrüche wie in der Vorlage: Seite, Spalte, Textfluss, dann die vier Abschnittsumbrüche."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Seitenumbruch(&P)", self.seitenumbruch, symbol=self._sym("umbruch"), kuerzel="Strg+Enter")
         m.eintrag("Spaltenumbr&uch", self.spaltenumbruch, symbol=self._sym("spaltenumbruch"))
@@ -358,7 +358,7 @@ class EinfuegenBefehle:
 
 
     def menue_leereSeiteKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("&Vertikal", lambda: self.leereSeite(None, False), symbol=self._sym("leereseite"))
         m.eintrag("&Horizontal", lambda: self.leereSeite(None, True), symbol=self._sym("querformat"))
@@ -368,7 +368,7 @@ class EinfuegenBefehle:
     def menue_tabelleKlappe(self):
         """Tabelle wie in der Vorlage: 10 × 10 Zellen (fügt an der Schreibmarke ein), darunter Einfügen, Zeichnen, Text ↔ Tabelle;
         was nicht passt, bleibt grau."""
-        from lunivo_writer.ui.baukasten.zellen_raster import ZellenRaster
+        from lunivo_writer.ui.baukasten.dropdown.zellen_raster import ZellenRaster
         m = ZellenRaster(self.w, 10, 10)
         m.gewaehlt.connect(lambda z, s: self.ed and self.ed.insert_table(z, s))
         m.addSeparator()
@@ -386,7 +386,7 @@ class EinfuegenBefehle:
 
 
     def menue_bildKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Bild aus Datei einfügen …", self.bild, symbol=self._sym("bild"))
         m.eintrag("Bildschirmfoto …", self.screenshot, symbol=self._sym("bildfoto"))
@@ -395,7 +395,7 @@ class EinfuegenBefehle:
 
 
     def menue_textfeldKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Horizontal", self.textfeld, symbol=self._sym("textrahmen"))
         m.eintrag("Vertikal", self.textfeldVertikal, symbol=self._sym("textrichtung"))
@@ -419,7 +419,7 @@ class EinfuegenBefehle:
 
     def menue_schnellbausteineKlappe(self):
         """Schnellbausteine wie in der Vorlage: AutoText-Liste ▸ und Felder …"""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         liste = m.untermenue("AutoText-Liste", self._sym("baustein"))
         liste.aboutToShow.connect(lambda: (liste.clear(), self._bausteine_fuellen(liste)))
@@ -510,7 +510,7 @@ class EinfuegenBefehle:
         """Symbol wie in der Vorlage: zuletzt verwendete und benutzerdefinierte Symbole als Kacheln, darunter „Weitere Symbole …“.
         Die zuletzt verwendeten werden bei jedem Aufklappen neu gesetzt (das Menü entsteht nur einmal)."""
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, textkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, textkachel
         m = RasterAuswahl(self.w, titel="Aktuell verwendete Symbole:", spalten=12, groesse=QSize(24, 24))
         for i in range(self.ZULETZT_ANZAHL):
             m.kachel(f"zuletzt{i}")
@@ -630,7 +630,7 @@ class EinfuegenBefehle:
         from lunivo_writer.core.farben import Farbe
         from lunivo_writer.editor import einfuegen as E
         from lunivo_writer.editor import formen_katalog as K
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = None
         for gruppe, formen in K.KATEGORIEN:
             if m is None:
@@ -702,7 +702,7 @@ class EinfuegenBefehle:
 
     def menue_smartartLayout(self):
         from lunivo_writer.editor import smartart as SA
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for e in SA.LAYOUT_KATALOG:
             m.eintrag(e["name"], lambda n=e["schluessel"]: self.ed and SA.aendern(self.ed, layout=n))
@@ -711,7 +711,7 @@ class EinfuegenBefehle:
 
     def menue_smartartFarben(self):
         from lunivo_writer.editor import smartart as SA
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n, f in SA.FARBEN.items():
             m.eintrag(n, lambda n=n: self.ed and SA.aendern(self.ed, farben=n), symbol=_farbfeld(f[0]))
@@ -770,7 +770,7 @@ class EinfuegenBefehle:
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from lunivo_writer.editor import einfuegen as E
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=9, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
             img = E.wordart_bild("A", vorlage=i, pt=80)
@@ -791,7 +791,7 @@ class EinfuegenBefehle:
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QColor, QPainter, QPixmap
         from lunivo_writer.editor import einfuegen as E
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         groesse = QSize(380, 54)
         m = RasterAuswahl(self.w, titel="Integriert", spalten=1, groesse=groesse, beschriftet=True)
         for i, (name, formel) in enumerate(E.GLEICHUNGEN):
@@ -816,7 +816,7 @@ class EinfuegenBefehle:
         from PySide6.QtWidgets import QButtonGroup, QHBoxLayout, QLabel, QToolButton, QWidget
         from lunivo_writer.core.farben import Farbe
         from lunivo_writer.editor import deckblatt as DB
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         HOCH, QUER = QSize(130, 184), QSize(184, 130)
         m = RasterAuswahl(self.w, spalten=4, groesse=HOCH, hoehe_max=640)
 
@@ -869,7 +869,7 @@ class EinfuegenBefehle:
 
     def menue_diagrammKlappe(self):
         """Klappe am Diagramm-Knopf: Diagramm … (Fenster) und Neuer Zeichenbereich."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Diagramm …", self.diagramm, symbol=self._sym("saeule"))
         m.eintrag("Neuer Zeichenbereich", self.zeichenbereich, symbol=self._sym("textrahmen"))
@@ -982,7 +982,7 @@ class EinfuegenBefehle:
         if not self.ed:
             return
         from lunivo_writer.editor import einfuegen as E
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n in E.SCHNELLTABELLEN:
             m.eintrag(n, lambda n=n: E.schnelltabelle(self.ed, n))
@@ -1036,7 +1036,7 @@ class EinfuegenBefehle:
             if b is not None:
                 w.removeSelectedText(); bausteine.einfuegen(w, b); self.ed.document().setModified(True)
                 return
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         self._bausteine_fuellen(m)
         self._popup(m)

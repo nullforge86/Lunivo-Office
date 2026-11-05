@@ -737,7 +737,7 @@ class FreieBilderMixin:
         if name == "lupe":
             b.bildVergroessern()
         elif name == "zuschnitt":
-            from lunivo_writer.ui.baukasten.bild_diagramm_menues import zuschneiden_menue
+            from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import zuschneiden_menue
             if not b.an_bildZuschneidenModus():                    # Klick schaltet den Zuschneiden-Modus ein und öffnet die Klappe
                 b.bildZuschneidenModus()
             m = zuschneiden_menue(b)
@@ -745,8 +745,8 @@ class FreieBilderMixin:
         elif name == "sa_bullet":
             b.smartartAufzaehlung(); self.viewport().update()
         else:
-            from lunivo_writer.ui.baukasten import diagramm_popups as DP
-            from lunivo_writer.ui.baukasten import smartart_menues as SM
+            from lunivo_writer.ui.baukasten.dropdown import diagramm_popups as DP
+            from lunivo_writer.ui.baukasten.dropdown import smartart_menues as SM
             bau = {"dg_element": DP.elemente_popup, "dg_stile": DP.stile_popup, "dg_filter": DP.filter_popup, "sa_form": SM.form_menue,
                    "sa_layout": lambda bb: SM.hierarchie_menue(bb, True), "sa_level": SM.level_menue, "sa_stil": SM.stile_menue}[name]
             m = bau(b)
@@ -754,7 +754,7 @@ class FreieBilderMixin:
 
     def _frei_anker_menue(self, pos) -> None:
         """Menü des Absatz-Symbols links vom Rahmen: Absatzformat zurücksetzen, Symbol ausblenden."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(self)
         m.eintrag("Absatzformat zurücksetzen", self._frei_absatz_zuruecksetzen)
         m.eintrag("Symbol vom Absatz-Layout ausblenden", self._frei_anker_ausblenden)
@@ -789,7 +789,7 @@ class FreieBilderMixin:
 
     def frei_formstile_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from lunivo_writer.ui.baukasten.objekt_menues import formstil_werte, formstile
+        from lunivo_writer.ui.baukasten.dropdown.objekt_menues import formstil_werte, formstile
         m = formstile(parent)
         def waehlen(k: str) -> None:
             ed = E()
@@ -825,7 +825,7 @@ class FreieBilderMixin:
         from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
         from PySide6.QtGui import QImage
         from lunivo_writer.editor import bildlayout as BL
-        from lunivo_writer.ui.baukasten.objekt_menues import FuellMenue
+        from lunivo_writer.ui.baukasten.dropdown.objekt_menues import FuellMenue
         m = FuellMenue(parent)
         m.gewaehlt.connect(lambda c: E()._frei_wirken(fuell=None if c is None else {"art": "farbe", "farbe": c.name(QColor.HexArgb)}))
         m.verlauf_gewaehlt.connect(lambda c: E()._frei_wirken(fuell={"art": "verlauf", "farbe": c.name(QColor.HexArgb)}))
@@ -853,7 +853,7 @@ class FreieBilderMixin:
 
     def frei_kontur_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from lunivo_writer.ui.baukasten.objekt_menues import KonturMenue
+        from lunivo_writer.ui.baukasten.dropdown.objekt_menues import KonturMenue
         m = KonturMenue(parent)
         m.gewaehlt.connect(lambda c: E()._frei_wirken(rand=None) if c is None else E()._frei_wirken(rand_teil={"farbe": c.name(QColor.HexArgb)}))
         m.breite_gewaehlt.connect(lambda pt: E()._frei_wirken(rand_teil={"b": pt * 96 / 72}))

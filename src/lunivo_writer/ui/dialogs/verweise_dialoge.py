@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QComboBox, QDialog, QLineEdit, QListWidget, QListW
 from lunivo_writer.editor import verweise
 from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.editor.literatur import TYPEN, eintrag
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _knoepfe(dlg):
@@ -68,7 +69,7 @@ class QuelleDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Quelle")
         q = q or {}
         f = FormularGitter(self)
-        self.typ = QComboBox(); self.typ.addItems(TYPEN); self.typ.setCurrentText(q.get("typ", "Buch"))
+        self.typ = Auswahlfeld(); self.typ.addItems(TYPEN); self.typ.setCurrentText(q.get("typ", "Buch"))
         f.zeile("Typ", self.typ)
         self.eingaben = {}
         for k, t in self.FELDER:

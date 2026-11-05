@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QVBoxLayout
 
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 AUSRICHTUNGEN = (("Links", "left"), ("Zentriert", "center"), ("Rechts", "right"), ("Außen", "aussen"), ("Innen", "innen"))
 

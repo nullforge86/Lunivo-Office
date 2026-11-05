@@ -17,7 +17,7 @@ from PySide6.QtCore import QPoint, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter, QWidget
 
-from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH, HOEHE_KOPFDROPDOWN
 

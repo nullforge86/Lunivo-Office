@@ -15,9 +15,9 @@ from PySide6.QtWidgets import QMenu
 
 from lunivo_writer.editor import muster as M
 from lunivo_writer.editor.linie import LINIENBREITEN, Linie
-from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
 from lunivo_writer.ui.baukasten.linien import linien_menue_zeile, linien_symbol
-from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.editor.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/linie.py)

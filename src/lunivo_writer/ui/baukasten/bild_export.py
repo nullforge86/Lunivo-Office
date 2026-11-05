@@ -25,6 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE_LOCKER,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Sinnbild „dunkles Blatt“ im Exportdialog: bewusst feste Farben, unabhängig vom Thema.
 BILDCHEN_BLATT_DUNKEL = "#3a3f45"
@@ -134,13 +135,13 @@ class BildExportAnsicht(QWidget):
 
         g = FormularGitter()
         self.wasser = QLineEdit(); self.wasser.setPlaceholderText("Zum Beispiel: Vertraulich")
-        self.qualitaet = QComboBox()
+        self.qualitaet = Auswahlfeld()
         for name, wert in QUALITAET:
             self.qualitaet.addItem(f"{name} ({wert} dpi)", wert)
         if dpi not in [d for _n, d in QUALITAET]:                  # die Auflösung aus den Optionen steht dann zuoberst
             self.qualitaet.insertItem(0, f"Wie in den Optionen ({dpi} dpi)", dpi)
         self.qualitaet.setCurrentIndex(self.qualitaet.findData(dpi))
-        self.format = QComboBox()
+        self.format = Auswahlfeld()
         for name in FORMATE:
             self.format.addItem(name)
         self.format.setCurrentText("PNG")

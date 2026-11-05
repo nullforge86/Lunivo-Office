@@ -8,7 +8,7 @@ from PySide6.QtGui import QDesktopServices, QFont, QKeySequence
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
 from PySide6.QtWidgets import QApplication, QLineEdit, QMessageBox, QWidget
 from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.editor import stile
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben

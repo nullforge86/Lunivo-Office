@@ -138,7 +138,7 @@ class SeiteBefehle:
 
     def menue_raenderKlappe(self):
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import raender_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(320, 70))
         for art, (o, u, l, r) in self.RAND.items():
@@ -153,7 +153,7 @@ class SeiteBefehle:
 
     def menue_ausrichtungKlappe(self):
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import format_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(170, 40))
         m.kachel("hoch", "Hochformat", zeilenkachel(format_zeichner(False), "Hochformat", bild_breite=34))
@@ -165,7 +165,7 @@ class SeiteBefehle:
 
     def menue_groesseKlappe(self):
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import papier_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(240, 48), hoehe_max=620)
         for art, (b, h) in self.PAPIER.items():
@@ -178,7 +178,7 @@ class SeiteBefehle:
 
 
     def menue_spaltenKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         eintraege = [m.eintrag(t, lambda n=n: self.spaltenSetzen(None, n), symbol=icons.icon(f"spalte{n}", 18), haken=False)
@@ -196,7 +196,7 @@ class SeiteBefehle:
     def menue_textrichtungKlappe(self):
         """Textrichtung wie in der Vorlage. Lunivo setzt Text nur waagerecht; die senkrechten Richtungen bleiben grau."""
         from PySide6.QtCore import QSize
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
         for art, text in self.TEXTRICHTUNGEN:
@@ -209,7 +209,7 @@ class SeiteBefehle:
 
 
     def menue_zeilennummernKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         keine = m.eintrag("Keine", lambda: self.zeilennummernArt(None, None), haken=False)
         fort = m.eintrag("Fortlaufend", lambda: self.zeilennummernArt(None, ""), haken=False)
@@ -257,7 +257,7 @@ class SeiteBefehle:
 
     def menue_ausrichtenKlappe(self):
         """Ausrichten wie in der Vorlage: die Form oder das freie Bild am Blatt ausrichten; was eine Mehrfachauswahl braucht, bleibt grau."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         objekt = [m.eintrag(t, lambda w=w: self.zeichenAusrichten(None, w), symbol=icons.icon(sym, 18))
@@ -383,7 +383,7 @@ class SeiteBefehle:
     def absatzabstand(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for text, vor, nach in self.ABSATZABSTAND:
             m.eintrag(text, lambda v=vor, n=nach: self._abstand_setzen(v, n))
@@ -464,7 +464,7 @@ class SeiteBefehle:
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
         from lunivo_writer.ui.baukasten.design_bildchen import design_zeichner
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(72, 50), hoehe_max=620)
         for name, (schema, paar) in D.DESIGNS.items():
             m.kachel(name, name, design_zeichner(D.FARBSCHEMEN[schema], D.SCHRIFTPAARE[paar][0]))
@@ -484,7 +484,7 @@ class SeiteBefehle:
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
         from lunivo_writer.ui.baukasten.design_bildchen import farbreihe_zeichner
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Farbschemen", spalten=1, groesse=QSize(310, 24), hoehe_max=620)
         for name, farben in D.FARBSCHEMEN.items():
             m.kachel(name, name, farbreihe_zeichner(farben, name))
@@ -501,7 +501,7 @@ class SeiteBefehle:
 
 
     def _farbe_eigen(self):
-        from lunivo_writer.ui.baukasten.farbpalette import weitere_farben
+        from lunivo_writer.ui.baukasten.dropdown.farbpalette import weitere_farben
         if self.ed and (c := weitere_farben(self.w, titel="Farbe der Überschriften")) is not None:
             self.ed.apply_design(None, None, c.name())
 
@@ -510,7 +510,7 @@ class SeiteBefehle:
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
         from lunivo_writer.ui.baukasten.design_bildchen import schriftpaar_zeichner
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(290, 70), hoehe_max=640)
         for name, (kopf, text) in D.SCHRIFTPAARE.items():
             m.kachel(name, f"{name}: Überschriften {kopf}, Text {text}", schriftpaar_zeichner(name, kopf, text))
@@ -529,7 +529,7 @@ class SeiteBefehle:
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
         from lunivo_writer.ui.baukasten.design_bildchen import effekt_zeichner
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(112, 60), beschriftet=True, hoehe_max=640)
         for name, fx in D.EFFEKTE.items():
             m.kachel(name, name, effekt_zeichner(fx))

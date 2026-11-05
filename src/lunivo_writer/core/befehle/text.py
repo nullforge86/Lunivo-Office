@@ -74,7 +74,7 @@ class TextBefehle:
         gemeinsamen Farbpalette."""
         from lunivo_writer.editor.textfx import unter_zeichnen
         from lunivo_writer.ui.baukasten.linien import linien_menue_zeile
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.baukasten.text_format import unter_format
         m = MenueListe()
         for art in self.UNTER_MENUE:
@@ -114,7 +114,7 @@ class TextBefehle:
 
 
     def menue_durchKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         for art, text, symbol in self._DURCH:
@@ -144,7 +144,7 @@ class TextBefehle:
 
     def menue_einstellungenKlappe(self):
         """Knopf „Einstellungen“ wie in der Vorlage: die Fenster des Reiters Start."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe()
         m.eintrag("Schriftart …", self.schriftartMehr, symbol=icons.icon("schriftFenster", 16), kuerzel="Strg+D")
@@ -230,8 +230,8 @@ class TextBefehle:
         """Menü am Knopf „Texteffekte“ wie in der Vorlage: WordArt, Schatten, Spiegelung, Leuchteffekt (je mit Bildchen zum Anklicken), 3D-Drehung und
         Transformieren (nur für Formen und Textfelder, hier ausgegraut), „Weitere Texteffekte …“ öffnet die Seitenleiste."""
         from lunivo_writer.editor import texteffekt, textfx
-        from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
         def untermenue(titel: str, keine: tuple | None) -> VoreinstellungMenue:
@@ -275,7 +275,7 @@ class TextBefehle:
     def effekt(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Kapitälchen", lambda: self.ed.set_capitalization(QFont.SmallCaps))
         m.eintrag("Großbuchstaben (Anzeige)", lambda: self.ed.set_capitalization(QFont.AllUppercase))
@@ -335,7 +335,7 @@ class TextBefehle:
 
     def menue_schreibweiseKlappe(self):
         from lunivo_writer.ui.widgets import icons
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for wahl, text, symbol, _b in self._AA:
             m.eintrag(text, lambda w=wahl: self._aa_waehlen(w), symbol=icons.icon(symbol, 16))
@@ -552,7 +552,7 @@ class TextBefehle:
 
 
     def menue_zeilenabstandKlappe(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for f in ZEILENABSTAENDE:                                   # wie in der Vorlage; alles andere im Fenster Absatz (dort auch „Tabstopps …“)
             m.eintrag(f"{f:g}".replace(".", ","), lambda f=f: self.ed and self.ed.set_line_spacing(f))

@@ -122,7 +122,7 @@ class DiagrammToolsBefehle:
         """Klappe eines Typ-Knopfes: die Untertypen der Gruppe (``diagramm.TYPEN``) mit Haken beim aktuellen (beim Öffnen aufgefrischt);
         Klick ändert die Diagrammart direkt."""
         from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for _g, sym, unter in D.TYPEN:
             if sym == symbol:
@@ -139,7 +139,7 @@ class DiagrammToolsBefehle:
 
     # ==== Schnelllayout, Farben, Elemente, Stile =====================================================================================
     def menue_diagrammSchnelllayout(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for name, kw in SCHNELLLAYOUTS:
             m.eintrag(name, lambda kw=kw: self._dg_set(**kw))
@@ -153,7 +153,7 @@ class DiagrammToolsBefehle:
     def menue_diagrammFarben(self):
         """Die Farbreihen der Diagrammvorlagen (``diagramm.VORLAGEN``), je mit der ersten Farbe als Muster."""
         from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for schl, (_typ, farben) in D.VORLAGEN.items():
             m.eintrag(D.NAMEN.get(schl, schl), lambda f=list(farben): self._dg_set(farben=f), symbol=_farbfeld(farben[0]))
@@ -169,7 +169,7 @@ class DiagrammToolsBefehle:
     def menue_diagrammElement(self):
         """Diagrammelemente an/aus: Titel, Legende (mit Lage), Datenbeschriftungen, Achsen, Achsentitel, Gitternetzlinien, Datentabelle,
         Fehlerindikatoren, Trendlinie."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         d = self._dg() or {}
         m = MenueListe()
         m.eintrag("Diagrammtitel", self.diagrammTitel, haken=d.get("titel_an", True))

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.beschriftung import text_label
@@ -42,6 +43,8 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_LANG
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)
@@ -70,7 +73,7 @@ class AnbieterDialog(QDialog):
         h.setWordWrap(True)
         hinweis_stil(h)
         f.breit(h)
-        self.vorlage = QComboBox()
+        self.vorlage = Auswahlfeld()
         for key, name, url in K.ANBIETER_VORLAGEN:
             self.vorlage.addItem(name, url)
         self.url = QLineEdit(bestehend["url"] if bestehend else "")
@@ -81,13 +84,12 @@ class AnbieterDialog(QDialog):
         f.zeile("Anbieter *", self.vorlage)
         f.zeile("URL *", self.url)
         f.zeile("Schlüssel", self.schluessel)
-        self.modell = QComboBox()
+        self.modell = Auswahlfeld()
         self.modell.setEditable(True)
         self.modell.setInsertPolicy(QComboBox.NoInsert)
         self.modell.lineEdit().setPlaceholderText("z. B. gpt-4o-mini")
         self.modell.setCurrentText(bestehend["modell"] if bestehend else "")
-        self.modell.setMinimumContentsLength(10)
-        self.modell.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.modell.zeichen(DROPDOWN_ZEICHEN_LANG)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         hinweis_stil(self.stand)
         holen = QPushButton("Liste der Modelle aktualisieren")
@@ -289,9 +291,7 @@ def modell_passt(m: dict, aufgabe: str) -> bool:
 
 def modell_combo(konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None) -> QComboBox:
     """Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats."""
-    c = QComboBox()
-    c.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)       # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
-    c.setMinimumContentsLength(12)
+    c = Auswahlfeld()                                                            # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
     c.addItem("Standard (KI-Modell der Optionen)", "")
     for m in konfig.alle_modelle():
         if not modell_passt(m, aufgabe):
@@ -529,7 +529,7 @@ class McpDialog(QDialog):
 
     def __init__(self, fenster, e: dict | None = None):
         super().__init__(fenster)
-        self.setWindowTitle("MCP-Server bearbeiten" if e else "MCP-Server hinzufügen"); self.resize(*GROESSE_FENSTER_MCP)
+        self.setWindowTitle("KI-Werkzeug bearbeiten" if e else "KI-Werkzeug hinzufügen"); self.resize(*GROESSE_FENSTER_MCP)
         v = QVBoxLayout(self)
         f = FormularGitter()
         self.name = QLineEdit(e["name"] if e else ""); self.name.setPlaceholderText("Name")
@@ -557,7 +557,7 @@ class McpDialog(QDialog):
 
     def _ok(self) -> None:
         if not self.name.text().strip() or not self.befehl.text().strip():
-            QMessageBox.information(self, "MCP-Server", "Name und Befehl werden gebraucht.")
+            QMessageBox.information(self, "KI-Werkzeug", "Name und Befehl werden gebraucht.")
             return
         self.accept()
 
@@ -573,7 +573,7 @@ class McpListe(QWidget):
         self.fenster, self.k = fenster, konfig
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_OBEN_SEITE)
         g = FormularGitter(); v.addLayout(g)
-        info = QLabel("MCP-Server geben der KI im Chat Werkzeuge (Dateien lesen, Daten abfragen …). Gilt für Ollama und eigene Anbieter.")
+        info = QLabel("KI-Werkzeuge sind kleine Zusatzprogramme, die die KI im Chat benutzen darf (zum Beispiel Dateien lesen oder Daten abfragen). Fachbegriff: MCP-Server. Gilt für Ollama und eigene Anbieter.")
         info.setWordWrap(True); g.breit(info)
         self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_KURZ); g.breit(self.liste)
         s = FlussLayout(6)
@@ -686,7 +686,7 @@ class WebsuchePanel(QWidget):
         h.setWordWrap(True); hinweis_stil(h)
         v.addWidget(h)
         f = FormularGitter()
-        self.anbieter = QComboBox()
+        self.anbieter = Auswahlfeld()
         for schl, name in W.ANBIETER:
             self.anbieter.addItem(name, schl)
         self.anbieter.setCurrentIndex(max(0, self.anbieter.findData(o["anbieter"])))
@@ -716,7 +716,7 @@ class WebsuchePanel(QWidget):
         self.k.websuche_setzen(**self.werte())
 
 
-REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "MCP-Server", "Websuche", "Datenschutz")
+REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -770,7 +770,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
 
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen."""
-        for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("MCP", "MCP-Server"),
+        for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("Werkzeuge", "KI-Werkzeuge"),
                                           ("Websuche", "Websuche"), ("Daten", "Datenschutz"))):
             self.reiter.setTabText(i, kurz)
             if self.reiter.isTabEnabled(i):
@@ -859,8 +859,8 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
         self.prompt.setPlaceholderText("Beschreiben Sie die Aktion, die die KI ausführen soll, z. B. „Grammatik korrigieren“ oder „In einem formellen Ton umschreiben“")
         self.prompt.setMinimumHeight(HOEHE_TEXT_NORMAL)
         g.zeile("Was soll die Aktion tun? *", self.prompt)
-        self.ergebnis = QComboBox()
-        self.ergebnis.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon); self.ergebnis.setMinimumContentsLength(10)
+        self.ergebnis = Auswahlfeld()
+        self.ergebnis.zeichen(DROPDOWN_ZEICHEN_LANG)
         for schl, text in ERGEBNIS_ARTEN:
             self.ergebnis.addItem(text, schl)
         g.zeile("Ergebnis anwenden als", self.ergebnis)

@@ -35,6 +35,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_SCHREIBHILFE_BANNER,
     RAND_SEITENLEISTE_TABS,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -109,11 +110,11 @@ class SchreibhilfePanel(QWidget):
         from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
         kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
         fw = kleintext_label("Für wen")
-        self.thema = QComboBox()
+        self.thema = Auswahlfeld()
         for name in EMPFAENGER:
             self.thema.addItem(name)
         self.thema.setCurrentText(self.a.thema)
-        self.thema.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.thema.an_inhalt()
         self.thema.setToolTip("Für wen schreiben Sie? Danach richtet sich, was als Fehler zählt und welche Wörter vorgeschlagen werden.")
         self.thema.setAccessibleName("Für wen")
         self.thema.currentTextChanged.connect(self.a.setze_thema)
@@ -296,7 +297,7 @@ class SchreibhilfePanel(QWidget):
 
     def _bereiche_menue(self, eltern, menue_text: str):
         """Das Menü am Titel „Formatierung ▾“: die Bereiche der Seitenleiste wie in der Vorlage (der eigene Bereich trägt den Haken)."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
         m = MenueListe(eltern)
         tun = lambda name: (lambda: self.fenster.befehle.tun(name))

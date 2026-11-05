@@ -26,6 +26,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
     RAND_ZEILE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 RECHTE = [("aendern", "Ändern erlauben"), ("kopieren", "Kopieren erlauben"),
           ("kommentieren", "Kommentare hinzufügen erlauben")]
@@ -178,7 +179,7 @@ class PdfExportAnsicht(QWidget):
         for key, label in RECHTE:
             box = QCheckBox(label); box.setChecked(getattr(s, key)); self.rechte[key] = box
             g.breit(box)
-        self.druck = QComboBox(); self.druck.setMinimumHeight(FELD_H)
+        self.druck = Auswahlfeld(); self.druck.setMinimumHeight(FELD_H)
         for text, value in DRUCK:
             label = {"Freier Druck": "Drucken", "Nur niedrige Auflösung": "Drucken in niedriger Auflösung",
                      "Kein Druck": "Drucken nicht erlauben"}.get(text, text)

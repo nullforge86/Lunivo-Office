@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
 from lunivo_writer.ui.baukasten.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.ui.theme import karte_einrichten
 

@@ -57,7 +57,7 @@ def _mcp(k: dict) -> tuple[str, str]:
 INTEGRATIONEN: tuple[Integration, ...] = (
     Integration("languagetool", "LanguageTool", "lokaler_prozess", False, "keine (läuft nur lokal)", _languagetool),
     Integration("ki", "KI-Anbieter", "internet", None, "vor dem ersten Senden je Anbieter und Umfang (Auszug / ganzes Dokument)", _ki),
-    Integration("mcp", "MCP-Server", "fremdprogramm", None, "vor dem Start und vor jedem Werkzeugaufruf", _mcp),
+    Integration("mcp", "KI-Werkzeuge (MCP-Server)", "fremdprogramm", None, "vor dem Start und vor jedem Werkzeugaufruf", _mcp),
 )
 
 

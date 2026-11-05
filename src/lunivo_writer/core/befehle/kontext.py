@@ -282,7 +282,7 @@ class KontextBefehle:
     # Tabellenformatvorlagen und Formatoptionen
     def menue_tabelleVorlagen(self):
         from lunivo_writer.editor import tabellenstil as TS
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n, (kopf, _s, streifen, _r) in TS.VORLAGEN.items():
             m.eintrag(n, lambda n=n: self._tabelle_vorlage(n), symbol=_farbfeld(kopf or streifen or Farbe.WEISS))
@@ -422,7 +422,7 @@ class KontextBefehle:
         """Menü „Einfügen“ bzw. „Löschen“ aus der gemeinsamen Definition (``core/tabellenaktionen.py``): Band, Mini-Leiste und Kontextmenü."""
         from lunivo_writer.core.tabellenaktionen import GRUPPEN
         from lunivo_writer.ui.widgets import icons
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for a in GRUPPEN[name]:
             m.eintrag(a.name, lambda bf=a.befehl: self.tun(bf), symbol=icons.icon(a.symbol, 16) if icons.hat(a.symbol) else None)
@@ -438,7 +438,7 @@ class KontextBefehle:
 
 
     def menue_tabelleAutoAnpassen(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("An Inhalt anpassen", self._tabelle_inhalt)
         m.eintrag("An Fenster anpassen", self._tabelle_fenster)
@@ -600,7 +600,7 @@ class KontextBefehle:
 
 
     def menue_tabelleTextrichtung(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Waagrecht (links nach rechts)", lambda: self._tabelle_richtung(Qt.LeftToRight))
         m.eintrag("Rechts nach links", lambda: self._tabelle_richtung(Qt.RightToLeft))
@@ -682,7 +682,7 @@ class KontextBefehle:
 
     def menue_formVorlagen(self):
         from lunivo_writer.editor import formen
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n, fu, li, _st in formen.VORLAGEN:
             m.eintrag(n, lambda n=n: self._form_vorlage(n), symbol=_farbfeld(fu or Farbe.WEISS))
@@ -736,7 +736,7 @@ class KontextBefehle:
 
 
     def menue_zeichenAusrichten(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for schl, text in (("links", "Links ausrichten"), ("mitte", "Waagerecht zentrieren"), ("rechts", "Rechts ausrichten"),
                            ("oben", "Oben ausrichten"), ("mittig", "Senkrecht zentrieren"), ("unten", "Unten ausrichten")):
@@ -745,7 +745,7 @@ class KontextBefehle:
 
 
     def menue_zeichenDrehen(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Um 90° nach rechts drehen", lambda: self.zeichenDrehen(None, 90))
         m.eintrag("Um 90° nach links drehen", lambda: self.zeichenDrehen(None, -90))
@@ -754,7 +754,7 @@ class KontextBefehle:
 
 
     def menue_zeichenEbene(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Vor den Text", lambda: self.zeichenEbene(None, "vor"))
         m.eintrag("Hinter den Text", lambda: self.zeichenEbene(None, "hinter"))
@@ -770,7 +770,7 @@ class KontextBefehle:
     def menue_wortExtrasKlappe(self):
         """Das Menü „Wort-Extras“ wie in der Vorlage, mit dem Untermenü „Löschen“; jeder Eintrag ist ein Schritt für Rückgängig."""
         from lunivo_writer.editor import wortextras as W
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         from lunivo_writer.ui.widgets import icons
 
         def fuellen(m, zeilen):
@@ -904,7 +904,7 @@ class KontextBefehle:
             return
         from lunivo_writer.editor import umbruch as U
         aktuell = U.schwebend(e.document(), e._bild_cursor().selectionStart()) or "zeile"
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for modus, text in (("zeile", "Mit Text in Zeile"), ("links", "Links, Text umfließt"), ("rechts", "Rechts, Text umfließt"),
                              ("oben_unten", "Oben und unten (eigene Zeile)")):

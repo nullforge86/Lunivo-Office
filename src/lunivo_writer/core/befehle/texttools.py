@@ -129,7 +129,7 @@ class TextToolsBefehle:
         """Wie bei Start: die Linienarten als Bild, „Mehr Unterstreichungen …“ und die Unterstreichungsfarbe; wirkt auf das Objekt."""
         from lunivo_writer.editor.textfx import unter_zeichnen
         from lunivo_writer.ui.baukasten.linien import linien_menue_zeile
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for art in self.UNTER_MENUE:
             linien_menue_zeile(m, "", art, 1.0, lambda a=art: self._wa_set(unter=a),
@@ -158,7 +158,7 @@ class TextToolsBefehle:
 
 
     def menue_ttDurch(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Durchgestrichen", self.ttDurch)
         m.eintrag("Nicht durchgestrichen", lambda: self._wa_set(durch=None))
@@ -225,7 +225,7 @@ class TextToolsBefehle:
     def _tt_listenraster(self, art: str, titel: str):
         """Dieselbe Auswahl wie bei Start (alle Aufzählungszeichen und Nummerierungen), gilt für den Text im Objekt."""
         from lunivo_writer.ui.baukasten.liste_dialog import aufzaehlungen, kachel_bild, nummerierungen
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         arten = aufzaehlungen() if art == "bullet" else nummerierungen()
         r = RasterAuswahl(self.w, titel=titel, spalten=4, groesse=QSize(96, 68))
         r.kachel("keine", "Keine", kachel_bild(None, QSize(96, 68)))
@@ -264,7 +264,7 @@ class TextToolsBefehle:
 
     def menue_ttTextrichtung(self):
         """Textrichtung wie in der Vorlage (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt."""
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl, zeilenkachel
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
         from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
         for art, text in self.TEXTRICHTUNGEN:
@@ -297,7 +297,7 @@ class TextToolsBefehle:
 
 
     def menue_ttZeilenabstand(self):
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for f in ZEILENABSTAENDE:
             m.eintrag(f"{f:g}".replace(".", ","), lambda f=f: self._wa_set(zeilenabstand=f if f != 1.0 else None))
@@ -330,7 +330,7 @@ class TextToolsBefehle:
     def menue_ttStile(self):
         """Alle 15 Stile als „A“ auf hellem Grund (wie das Menü neben Einfügen ▸ WordArt), wirkt auf das markierte WordArt."""
         from lunivo_writer.editor import einfuegen as E
-        from lunivo_writer.ui.baukasten.raster_auswahl import RasterAuswahl
+        from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
             pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))
@@ -375,8 +375,8 @@ class TextToolsBefehle:
     def _effekt_menue(self, setzen, _schl):
         """Schatten, Spiegelung und Leuchteffekt mit Bildchen (wie bei Start ▸ Texteffekte); ``setzen(**teil)`` schreibt den Teil."""
         from lunivo_writer.editor import textfx
-        from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
         def untermenue(titel, keine):
@@ -400,7 +400,7 @@ class TextToolsBefehle:
 
     # ---- Form (Kasten hinter dem Text): dieselben Menüs und Wege wie im Reiter Zeichentools (Baukasten, ``_frei_wirken``) -------------------
     def ttFormstil(self, schl: str):
-        from lunivo_writer.ui.baukasten.objekt_menues import formstil_werte
+        from lunivo_writer.ui.baukasten.dropdown.objekt_menues import formstil_werte
         w = formstil_werte(schl)
         if self.ed:
             self.ed._frei_wirken(fuell=w["fuell"], rand=w["rand"])
@@ -408,7 +408,7 @@ class TextToolsBefehle:
 
     def galerie_ttFormstile(self):
         """Die drei Kacheln „Abc“ im Band (schwarzer, blauer, oranger Rand) und das Menü mit allen 42 Formstilen."""
-        from lunivo_writer.ui.baukasten.objekt_menues import formstil_zeichner
+        from lunivo_writer.ui.baukasten.dropdown.objekt_menues import formstil_zeichner
         kacheln = []
         for k in FORMSTIL_KACHELN:
             pm = QPixmap(QSize(52, 36)); pm.fill(QColor(Farbe.PAPIER))
@@ -500,7 +500,7 @@ class TextToolsBefehle:
     def menue_ttVerknuepfung(self):
         """Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen."""
         from lunivo_writer.editor import frei_objekt as FO
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
         def fuellen():
@@ -538,7 +538,7 @@ class TextToolsBefehle:
 
     def menue_ttEinstellungen(self):
         """Einstellungen wie in der Vorlage: die Fenster zum markierten Objekt (Seitenleiste „Formatierung“, Layout, Text)."""
-        from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         m.eintrag("Formatierung: Füllung und Linie …", lambda: self.ed and self.ed._frei_linien_fenster())
         m.eintrag("Formatierung: Effekte …", self.ttFormEffekte)

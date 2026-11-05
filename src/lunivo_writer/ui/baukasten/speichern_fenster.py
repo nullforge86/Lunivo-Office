@@ -58,6 +58,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_LISTE,
     SCHRIFT_UEBERSCHRIFT,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 def stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
@@ -206,9 +207,9 @@ class SpeichernFenster(QDialog):
 
         unten = FormularGitter(); unten.einspaltig = True; unten.beschriftung_voll = True
         unten.beschriftungsabstand = ABSTAND_GROSS; unten.zeilenabstand = ABSTAND_GROSS
-        self.name = QComboBox(); self.name.setEditable(True); self.name.setInsertPolicy(QComboBox.NoInsert)
+        self.name = Auswahlfeld(); self.name.setEditable(True); self.name.setInsertPolicy(QComboBox.NoInsert)
         self.name.setEditText(name)
-        self.typ = QComboBox()
+        self.typ = Auswahlfeld()
         for endung, filtertext in self.typen:
             self.typ.addItem(filtertext, None if oeffnen else endung)
         self.typ.setCurrentIndex(max(0, next((i for i, (e, _f) in enumerate(self.typen) if e == vorwahl), 0)))

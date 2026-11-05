@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QS
 from lunivo_writer.proofing import autokorrektur
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
 from lunivo_writer.ui.baukasten.mass import HOEHE_FELD
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 
 class DateiSeiten:
@@ -17,7 +18,7 @@ class DateiSeiten:
         """Schrift für neuen Text, Prüfung, AutoKorrektur; im Einzelnen eingeklappt (alle AutoKorrektur-Fälle bleiben erhalten)."""
         p = _Seite(self.w, titel)
         f = p.gruppe("Schrift für neuen Text")
-        fam = QComboBox(); fam.setEditable(True); fam.setMinimumHeight(HOEHE_FELD)
+        fam = Auswahlfeld(); fam.setEditable(True); fam.setMinimumHeight(HOEHE_FELD)
         fam.addItems(sorted(set(QFontDatabase.families())))
         fam.setCurrentText(p.s.get("standard/schrift", "Liberation Sans"))
         fam.currentTextChanged.connect(lambda t: p.s.set("standard/schrift", t))

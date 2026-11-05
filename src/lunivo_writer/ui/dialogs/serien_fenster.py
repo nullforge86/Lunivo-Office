@@ -21,6 +21,7 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_KNOPF_GROSS,
     HOEHE_LISTE_HOCH,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 OHNE = "(nicht zugeordnet)"
 
@@ -115,7 +116,7 @@ class ZuordnenDialog(PanelFaehig, QDialog):
         g.zeile(QLabel("Feld im Text"), kopf)
         self.wahl: dict[str, QComboBox] = {}
         for i, f in enumerate(felder or [], 1):
-            cb = QComboBox(); cb.addItem(OHNE, ""); cb.setMinimumHeight(HOEHE_KNOPF); cb.setAccessibleName(f)
+            cb = Auswahlfeld(); cb.addItem(OHNE, ""); cb.setMinimumHeight(HOEHE_KNOPF); cb.setAccessibleName(f)
             for s in spalten:
                 cb.addItem(s, s)
             soll = zuordnung.get(f, f if f in spalten else "")

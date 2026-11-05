@@ -19,7 +19,7 @@ from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
     from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog

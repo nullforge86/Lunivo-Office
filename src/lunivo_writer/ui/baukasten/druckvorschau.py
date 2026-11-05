@@ -25,6 +25,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_KEIN,
     RAND_ZEILE_KARTE,
 )
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 ANSICHTEN = [("Eine Seite", 1), ("Zwei Seiten", 2), ("Alle Seiten", 0)]
 
 
@@ -51,7 +52,7 @@ class DruckVorschau(QDialog):
         knopf("chevron-right", "Nächste Seite", lambda: self._gehe(self._n + self._schritt()))
         knopf("chevron-last", "Letzte Seite", lambda: self._gehe(self._gesamt))
         leiste.addSpacing(12)
-        self.ansicht = QComboBox()
+        self.ansicht = Auswahlfeld()
         for t, w in ANSICHTEN:
             self.ansicht.addItem(t, w)
         self.ansicht.currentIndexChanged.connect(lambda _=0: self._aufbauen())

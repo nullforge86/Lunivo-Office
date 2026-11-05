@@ -13,7 +13,7 @@ from PySide6.QtCore import QObject, QTimer, Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QToolButton
 
-from lunivo_writer.ui.baukasten.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 from lunivo_writer.ui.document.tabelle_griffe import GRIFF, dunkel, griff_stil
 

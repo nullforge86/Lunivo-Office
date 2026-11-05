@@ -19,6 +19,7 @@ from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
 from lunivo_writer.ui.baukasten.umbruch_symbole import ARTEN, umbruch_zeichner
 from lunivo_writer.ui.baukasten.mass import GROESSE_KACHELFELD_STANDARD, RAND_DIALOG_GRUPPE
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 BEZUG_H = [("spalte", "Spalte"), ("rand", "Seitenrand"), ("seite", "Seite")]
 BEZUG_V = [("absatz", "Absatz"), ("rand", "Seitenrand"), ("seite", "Seite")]
@@ -32,7 +33,7 @@ from lunivo_writer.editor.bildlayout import STANDARD  # noqa: E402
 
 
 def _combo(eintraege, aktuell) -> QComboBox:
-    c = QComboBox()
+    c = Auswahlfeld()
     for schl, text in eintraege:
         c.addItem(text, schl)
     c.setCurrentIndex(max(0, c.findData(aktuell)))
