@@ -20,6 +20,7 @@ from lunivo_writer.ui.baukasten.text_format import TextFormatLeiste, zeichne_abs
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownTaste
 ZEICHEN_ZUSATZ = ("unter", "unterfarbe", "durch", "doppelt", "hoch", "tief", "kapital", "gross", "versteckt", "abstand", "kerning", "betonung", "schrift_asien",
                   "schnitt_asien", "groesse_asien", "schrift_komplex", "schnitt_komplex", "groesse_komplex", "skala", "position", "kern_ab", "raster")
 ABSATZ_ZUSATZ = ("rechts", "erste", "rtl", "umbruch", "zeilen_art", "zeilen_pt", "gliederung", "opt")
@@ -75,12 +76,12 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self.zur_vorlage.setToolTip("Die Formatvorlage auch für künftige Dokumente merken (sonst gilt sie nur, solange Lunivo läuft, und in den Dokumenten, die sie benutzen)")
         self.zur_vorlage.setVisible(not aendern)
         v.addWidget(self.zur_vorlage)
-        self.format = QPushButton("Format")
+        self.format = DropdownTaste("Format")
         m = MenueListe(self.format)
         for text, tun in (("Schriftart …", self._schriftart), ("Absatz …", self._absatz), ("Tabstopps …", self._tabs), ("Rahmen …", self._rahmen),
                           ("Nummerierung …", self._liste), ("Texteffekte …", self._effekte), ("Verknüpfung …", self._verknuepfung)):
             m.eintrag(text, tun)
-        self.format.setMenu(m)
+        self.format.menue_setzen(m)
         self.ok = fussleiste(self, v, self.format, bei_ok=self._ok)
         # --- Anfangswerte und Verdrahtung
         if aendern:

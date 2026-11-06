@@ -14,19 +14,13 @@ from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_ENG,
-    BREITE_MINILEISTE_KNOPF,
-    BREITE_SCHRIFTAUSWAHL_MINILEISTE,
-    BREITE_SCHRIFTGROESSE_MINILEISTE,
-    GROESSE_TABELLENKNOPF_MINILEISTE,
     ICON_KNOPF_GROSS,
     ICON_NORMAL,
-    PADDING_MINILEISTE_KNOPF,
-    RADIUS_FELD,
-    RADIUS_KLEIN,
     RAND_KEIN,
     RAND_MINILEISTE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 # Zwei Zeilen wie in der Vorlage, je Modus eine eigene Anordnung. Eintrag: Name -> (Tooltip, Art) — Art: "" (Knopf) · "klappe:…" (Pfeil mit Menü des Bandes)
 # · "farbe:…" (Palette). Die Namen sind Befehle des Bandes (``fenster.befehle``); "schriftart" und "groesse" sind die beiden Auswahlfelder.
@@ -43,7 +37,6 @@ TABELLEN_MODUS = (("schriftart", "groesse", "schriftGroesser", "schriftKleiner",
                   ("fett", "kursiv", "unter", "hervorhebenJetzt", "schriftfarbeJetzt", "tabelleSchattierung", "tabelleRahmen", "ausrichtung",
                    "formatUebertragen"))
 ICON = 18                      # Symbolgröße der Knöpfe (nie gestaucht)
-PFEIL = 12                     # Breite der Pfeilfläche rechts neben dem Symbol
 GROESSEN = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 
 
@@ -69,38 +62,6 @@ def _symbole() -> dict[str, str]:
     return out
 
 
-def _pfeil_datei(farbe: str) -> str:
-    """Kleiner ausgefüllter Pfeil nach unten als Bilddatei für das Stylesheet (kontrastreich in Hell und Dunkel; dünne Linienpfeile verschwinden bei 8 px)."""
-    import os
-    import tempfile
-    from PySide6.QtCore import QPointF
-    from PySide6.QtGui import QColor, QImage, QPainter, QPolygonF
-    ordner = os.path.join(tempfile.gettempdir(), "lunivo-writer-icons")
-    os.makedirs(ordner, exist_ok=True)
-    datei = os.path.join(ordner, f"mini_pfeil_{farbe.lstrip('#')}.png")
-    if not os.path.exists(datei):
-        img = QImage(20, 20, QImage.Format_ARGB32_Premultiplied); img.fill(Qt.transparent)
-        p = QPainter(img); p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(Qt.NoPen); p.setBrush(QColor(farbe))
-        p.drawPolygon(QPolygonF([QPointF(3, 6.5), QPointF(17, 6.5), QPointF(10, 14.5)]))
-        p.end(); img.save(datei)
-    return datei.replace("\\", "/")
-
-
-def _stil(farbe: str) -> str:
-    return ("#miniLeiste { background: palette(window); border: 1px solid palette(mid); border-radius: " f"{RADIUS_FELD}" "px; }"
-            "QToolButton { border: none; border-radius: " f"{RADIUS_KLEIN}" "px; padding: " f"{PADDING_MINILEISTE_KNOPF}" "; }"
-            "QToolButton:hover { background: palette(midlight); }"
-            "QToolButton:checked { background: palette(highlight); }"
-            # Symbol- und Pfeilfläche getrennt: rechts bleibt Platz für den Pfeil (padding-right >= Pfeilbreite + Abstand), das Symbol wird nicht überdeckt
-            f"QToolButton[popupMode=\"1\"] {{ padding-right: {PFEIL + 4}px; }}"
-            f"QToolButton::menu-button {{ border: none; border-left: 1px solid palette(mid); width: {PFEIL}px; subcontrol-origin: padding; "
-            "subcontrol-position: center right; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }"
-            "QToolButton::menu-button:hover { background: palette(midlight); }"
-            f"QToolButton::menu-arrow {{ image: url({_pfeil_datei(farbe)}); width: 10px; height: 10px; }}"
-            "QToolButton::menu-indicator { image: none; width: 0px; }")
-
-
 class MiniLeiste(QFrame):
     def __init__(self, fenster):
         super().__init__(fenster, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowDoesNotAcceptFocus)
@@ -118,10 +79,10 @@ class MiniLeiste(QFrame):
         sym = _symbole()
         self._felder: dict[str, QComboBox] = {}
         self._ikonen: dict[QToolButton, tuple[str, int]] = {}          # Symbolname und -größe je Knopf (Neuzeichnen nach Themenwechsel)
-        self.schriftart = Auswahlfeld(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.setFixedWidth(BREITE_SCHRIFTAUSWAHL_MINILEISTE)     # Name bleibt lesbar (wie die Textleiste)
+        self.schriftart = Auswahlfeld(); self.schriftart.setFocusPolicy(Qt.NoFocus); self.schriftart.rolle("schrift", "mini")     # Name bleibt lesbar (wie die Textleiste)
         self.schriftart.addItems(QFontDatabase.families())
         self.schriftart.textActivated.connect(lambda n: self._schrift(n))
-        self.groesse = Auswahlfeld(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.setFixedWidth(BREITE_SCHRIFTGROESSE_MINILEISTE)
+        self.groesse = Auswahlfeld(); self.groesse.setFocusPolicy(Qt.NoFocus); self.groesse.rolle("groesse", "mini")
         self.groesse.addItems([f"{g:g}" for g in GROESSEN])
         self.groesse.textActivated.connect(lambda t: self._groesse(t))
         self._felder = {"schriftart": self.schriftart, "groesse": self.groesse}
@@ -131,7 +92,7 @@ class MiniLeiste(QFrame):
             self._zeilen.append(h)
             v.addLayout(h)
         for tun, (tip, art) in KNOEPFE.items():
-            b = QToolButton()
+            b = DropdownKnopf()
             b.setIconSize(QSize(ICON, ICON))
             self._ikonen[b] = (sym.get(tun, ""), ICON)
             b.setIcon(icons.icon(sym.get(tun, ""), ICON))
@@ -140,12 +101,11 @@ class MiniLeiste(QFrame):
                 f = b.font()
                 f.setBold(tun == "fett"); f.setItalic(tun == "kursiv"); f.setUnderline(tun == "unter")
                 b.setFont(f)
-                b.setMinimumWidth(BREITE_MINILEISTE_KNOPF)
+                b.groesse_rolle("knopf", "mini")
             b.setToolTip(tip)
             b.setFocusPolicy(Qt.NoFocus)
             b.setCheckable(self.w.befehle.zustand(tun) is not None)
             if art:                                                # Pfeil mit Menü; Klick auf das Symbol wirkt wie im Band
-                b.setPopupMode(QToolButton.MenuButtonPopup)
                 self._menues[tun] = art
                 self._menue_setzen(b, tun)
             if tun in ("ausrichtung", "zeilenabstand", "tabelleSchattierung"):
@@ -162,11 +122,10 @@ class MiniLeiste(QFrame):
         self._anordnen(False)
 
     def _stil_setzen(self) -> None:
-        """Stylesheet mit dem Pfeil in der Schriftfarbe der aktuellen Palette (Hell/Dunkel)."""
+        """Bei Themenwechsel Symbole und Menüs in der neuen Schriftfarbe neu zeichnen (Aussehen der Leiste: ``ui/theme.py``)."""
         farbe = self.palette().buttonText().color().name()
         if farbe != self._stil_farbe:
             alt, self._stil_farbe = self._stil_farbe, farbe
-            self.setStyleSheet(_stil(farbe))
             if alt:                                                   # Themenwechsel: Symbole in der neuen Farbe zeichnen
                 for b, (name, px) in self._ikonen.items():
                     if name:
@@ -196,11 +155,11 @@ class MiniLeiste(QFrame):
         h = QHBoxLayout(z); h.setContentsMargins(*RAND_KEIN); h.setSpacing(0)
         sym = {"Einfügen": "tabelleEinfuegen", "Löschen": "tabelleLoeschen"}
         for text, aktionen in GRUPPEN.items():
-            b = QToolButton(); b.setText(text + " ▾"); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
+            b = DropdownKnopf(); b.setText(text + " ▾"); b.setToolTip(text); b.setFocusPolicy(Qt.NoFocus)
             b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             self._ikonen[b] = (sym[text], 28)
             b.setIcon(icons.icon(sym[text], ICON_KNOPF_GROSS))
-            b.setPopupMode(QToolButton.InstantPopup); b.setMinimumSize(*GROESSE_TABELLENKNOPF_MINILEISTE)
+            b.groesse_rolle("tabelle", "mini")
             self._aktionsmenue(b, aktionen)
             h.addWidget(b)
             self.knoepfe["tabellen_" + text] = b
@@ -210,7 +169,7 @@ class MiniLeiste(QFrame):
         m = MenueListe(b)
         for a in aktionen:
             m.eintrag(a.name, lambda bf=a.befehl: self._tun(bf), symbol=icons.icon(a.symbol, ICON_NORMAL) if icons.hat(a.symbol) else None)
-        b.setMenu(m)
+        b.menue_setzen(m, geteilt=False)
 
     def tabellenmodus(self) -> bool:
         """Tabellenmodus (siehe ``editor/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
@@ -246,7 +205,7 @@ class MiniLeiste(QFrame):
         m = getattr(quelle, name)()
         alt = getattr(b, "_menue_obj", None)
         b._menue_obj = m                                              # sonst räumt Python das Menü ab, bevor es sich öffnet
-        b.setMenu(m)
+        b.menue_setzen(m, geteilt=True)
         if alt is not None:
             alt.deleteLater()
         if hasattr(m, "gewaehlt"):

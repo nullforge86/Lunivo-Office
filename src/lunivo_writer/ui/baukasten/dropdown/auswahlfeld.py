@@ -13,7 +13,7 @@ from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtWidgets import (QComboBox, QFontComboBox, QStyle, QStyledItemDelegate, QStyleOptionComboBox, QStylePainter,
                                QStyleOptionViewItem)
 
-from lunivo_writer.ui.baukasten.mass import (ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN,
+from lunivo_writer.ui.baukasten.mass import (DROPDOWN_BREITE, ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_HOEHE, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN,
                                                 DROPDOWN_ZEILE_PAD_V)
 from lunivo_writer.ui.baukasten.dropdown.popup_lage import popup_bereich, popup_klemmen
 
@@ -63,6 +63,12 @@ class _Feldlaenge:
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.setMinimumContentsLength(n)
 
+    def rolle(self, rolle: str, variante: str, *, mindest: bool = False) -> None:
+        """Die Breite des Feldes aus der zentralen Tabelle ``DROPDOWN_BREITE`` (Rolle × Layoutvariante: band, leiste, mini, dialog, feld).
+        ``mindest``: nur Mindestbreite (das Feld darf wachsen), sonst feste Breite."""
+        b = DROPDOWN_BREITE[(rolle, variante)]
+        self.setMinimumWidth(b) if mindest else self.setFixedWidth(b)
+
     def an_inhalt(self) -> None:
         """Das Feld ist so breit wie sein längster Eintrag (z. B. kurze feste Listen)."""
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
@@ -72,6 +78,7 @@ class Auswahlfeld(_Feldlaenge, QComboBox):
     def __init__(self, parent=None, *, min_zeichen: int = DROPDOWN_MIN_ZEICHEN, popup_min: int = 0):
         super().__init__(parent)
         self._popup_min = popup_min
+        self.setMinimumHeight(DROPDOWN_HOEHE)
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.setMinimumContentsLength(min_zeichen)
         self.setMaxVisibleItems(MAX_ZEILEN)
@@ -106,6 +113,7 @@ class Schriftauswahl(_Feldlaenge, QFontComboBox):
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.setMinimumContentsLength(min_zeichen)
         self.setMaxVisibleItems(MAX_ZEILEN)
+        self.setMinimumHeight(DROPDOWN_HOEHE)
 
     def showPopup(self) -> None:
         self.view().window().setMaximumWidth(16777215)

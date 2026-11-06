@@ -42,3 +42,10 @@ class Farbe:
     WARNUNG = "#c77d2e"             # „sicher falsch“-Marke und gestrichelte Linie der Schreibhilfe (warmes Orange)
     WARNUNG_HELL = "#d9a03a"        # dieselbe Marke als Fläche mit dunkler Schrift
     AUSWAHL_HELL = "#e8f0fe"        # helle Auswahl-/Hover-Fläche in Menüs auf dem Papier
+    # Farben der Dropdown-Vorschauen (Sinnbilder, Voreinstellungen): feste Farben, unabhängig vom Thema
+    SINNBILD_HELL = "#d4d4d4"       # Diagramm-Sinnbilder: Grautöne
+    SINNBILD_MITTEL = "#9a9a9a"
+    SINNBILD_DUNKEL = "#6e6e6e"
+    VORSCHAU_RAND = "#3c000000"     # feiner Rand um Farbfelder in Vorschauen (ARGB, 24 % Schwarz)
+    GRADUELL = (("#e03131", "#ffc9c9"), ("#f08c00", "#ffe8cc"), ("#f2c200", "#fff3bf"), (GRUEN, "#d3f9d8"), ("#1971c2", "#d0ebff"), ("#7048e8", "#e5dbff"),
+                (TINTE_DUNKEL, "#dee2e6"), (GRAU, "#f8f9fa"))     # (dunkel, hell) der graduellen Füllungen

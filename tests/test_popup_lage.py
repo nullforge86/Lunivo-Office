@@ -90,3 +90,20 @@ def test_alle_menues_sind_mindestens_gleich_breit(app):
         m = MenueListe(); m.eintrag(text); m.popup(QPoint(50, 50)); app.processEvents()
         assert m.width() >= DROPDOWN_BREITE_MIN
         m.close()
+
+
+def test_menue_liste_behaelt_symbole_kuerzel_zustaende_und_untermenues(app):
+    """Der zentrale Menübaustein: Symbol, Tastenkürzel (nur angezeigt oder echt), Haken, Aktivierung und Untermenü bleiben erhalten."""
+    from PySide6.QtGui import QIcon, QPixmap
+    pm = QPixmap(8, 8); pm.fill(Qt.GlobalColor.red)
+    m = MenueListe()
+    a = m.eintrag("Einfügen", symbol=QIcon(pm), kuerzel="Strg+V")
+    b = m.eintrag("Haken", haken=True, aktiv=False, tip="grau")
+    echt = m.eintrag("Echt", kuerzel="Ctrl+E", echt=True)
+    u = m.untermenue("Mehr")
+    u.eintrag("Innen")
+    assert "Strg+V" in a.text() and not a.icon().isNull()
+    assert b.isCheckable() and b.isChecked() and not b.isEnabled() and b.toolTip() == "grau"
+    assert echt.shortcut().toString() == "Ctrl+E"
+    assert isinstance(u, MenueListe) and [x.text() for x in u.actions()] == ["Innen"]
+    assert any(x.menu() is u for x in m.actions())

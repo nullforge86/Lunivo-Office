@@ -27,18 +27,18 @@ AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Re
 ZEILENABSTAND = ((1.0, "Einfach"), (1.5, "1,5 Zeilen"), (2.0, "Doppelt"))
 
 
-def schrift_feld(combo: QComboBox | None = None, breite: int = 130) -> QComboBox:
+def schrift_feld(combo: QComboBox | None = None, variante: str = "band") -> QComboBox:
     """Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne)."""
     c = combo if combo is not None else Schriftauswahl()
-    c.setFixedWidth(breite)
+    c.rolle("schrift", variante)
     return c
 
 
-def groesse_feld(combo: QComboBox | None = None, breite: int = 62) -> QComboBox:
+def groesse_feld(combo: QComboBox | None = None, variante: str = "band") -> QComboBox:
     """Das Feld für die Schriftgröße: zum Tippen und mit der Liste der üblichen Größen."""
     c = combo if combo is not None else Auswahlfeld()
     c.setEditable(True)
-    c.setFixedWidth(breite)
+    c.rolle("groesse", variante)
     c.addItems([f"{g:g}" for g in GROESSEN])
     return c
 

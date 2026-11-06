@@ -117,7 +117,6 @@ class _Seite(QWidget):
 
     def auswahl(self, f, key, label, werte: list[str], std, wirkt=None):
         c = Auswahlfeld()
-        c.setMinimumHeight(MIN_HOEHE)
         c.addItems(werte)
         c.setCurrentText(str(self.s.get(key, std)))
 
@@ -132,7 +131,6 @@ class _Seite(QWidget):
     def wahl(self, f, key, label, eintraege: list[tuple[str, object]], std, wirkt=None):
         """Auswahl mit Anzeigetext und gespeichertem Wert (Text oder Ja/Nein)."""
         c = Auswahlfeld()
-        c.setMinimumHeight(MIN_HOEHE)
         for text, wert in eintraege:
             c.addItem(text, wert)
         aktuell = self.s.get_bool(key, std) if isinstance(std, bool) else self.s.get(key, std)
@@ -194,7 +192,6 @@ class _Seite(QWidget):
     def stufen(self, f, key, label, eintraege: list[tuple[str, float]], std, wirkt=None):
         """Auswahl aus benannten Stufen („normal“, „weit“ …), die als Zahl gespeichert werden."""
         c = Auswahlfeld()
-        c.setMinimumHeight(MIN_HOEHE)
         for text, wert in eintraege:
             c.addItem(text, wert)
         akt = float(self.s.get(key, std))

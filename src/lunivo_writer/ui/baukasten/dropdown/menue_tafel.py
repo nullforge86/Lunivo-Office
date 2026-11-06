@@ -15,17 +15,15 @@ from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_la
 from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KEIN,
     ABSTAND_BLOCK,
     BREITE_MENUETAFEL,
     BREITE_NAVIGATION_OPTIONEN,
     ICON_KNOPF_GROSS,
     ICON_MITTEL,
-    PADDING_MENUETAFEL_KNOPF,
-    PADDING_MENUETAFEL_UNTEREINTRAG,
-    PADDING_MENUETAFEL_ZULETZT,
     RAND_PANEL_KLEIN,
-    SCHRIFT_HINWEIS,
 )
+from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.ui.baukasten.dropdown.popup_lage import PopupVerhalten
 
 
@@ -56,13 +54,13 @@ def _datum(pfad: str) -> str:
 class MenueTafel(PopupVerhalten, QFrame):
     def __init__(self, punkte: list, befehle, fenster):
         super().__init__(fenster, Qt.Popup)
-        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShape(QFrame.StyledPanel); self.setProperty("dropdownFenster", True)
         self.punkte, self.b, self.w = punkte, befehle, fenster
         h = QHBoxLayout(self)
         h.setContentsMargins(*RAND_PANEL_KLEIN)
         h.setSpacing(ABSTAND_BLOCK)
         self.links = QVBoxLayout()
-        self.links.setSpacing(0)
+        self.links.setSpacing(ABSTAND_KEIN)
         host = QWidget()
         host.setLayout(self.links)
         host.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)
@@ -85,7 +83,7 @@ class MenueTafel(PopupVerhalten, QFrame):
             if not sym.isNull():
                 b.setIcon(sym); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_KNOPF}" ";")
+            dropdown_zeile(b)
             if taste:
                 b.setToolTip(taste)
             ok = bool(p.get("unter")) or name in ("Optionen", "Zuletzt geöffnet") or (p.get("tun") and self.b.hat(p["tun"]))
@@ -138,7 +136,7 @@ class MenueTafel(PopupVerhalten, QFrame):
             b = QPushButton(f"{os.path.basename(pfad)}\n{os.path.dirname(pfad)}")
             b.setIcon(datei_symbol(pfad)); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_ZULETZT}" "; font-size: " f"{SCHRIFT_HINWEIS}" "pt;")
+            dropdown_zeile(b, hinweis=True)
             b.clicked.connect(lambda _=False, p=pfad: (self.close(), self.b.zuletztOeffnen(p)))
             x = QToolButton(); x.setText("×"); x.setAutoRaise(True)
             x.setToolTip("Aus der Liste nehmen — die Datei bleibt liegen")
@@ -159,7 +157,7 @@ class MenueTafel(PopupVerhalten, QFrame):
             if u.get("datei"):                                     # passendes, lokal gebündeltes Dateiformat-SVG
                 b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)
-            b.setStyleSheet("text-align: left; padding: " f"{PADDING_MENUETAFEL_UNTEREINTRAG}" ";")
+            dropdown_zeile(b)
             ok = bool(u.get("tun")) and self.b.hat(u["tun"])
             b.setEnabled(ok)
             if not ok:

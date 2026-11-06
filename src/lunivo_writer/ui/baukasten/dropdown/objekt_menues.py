@@ -23,6 +23,7 @@ from lunivo_writer.ui.widgets import icons
 from lunivo_writer.editor.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/linie.py)
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import (
+    DROPDOWN_INNEN_OBJEKT,
     GROESSE_SPALTENRASTER_KACHEL,
     GROESSE_STRICHART_MENUEBILD,
     GROESSE_STRICHART_MENUESYMBOL,
@@ -40,8 +41,7 @@ from lunivo_writer.editor.textur import textur as _textur  # noqa: E402
 
 
 TEXTUREN = [("papier", "Papier"), ("granit", "Granit"), ("holz", "Holz"), ("stoff", "Stoff"), ("marmor", "Marmor"), ("sand", "Sand")]
-GRADUELL = [("#e03131", "#ffc9c9"), ("#f08c00", "#ffe8cc"), ("#f2c200", "#fff3bf"), (Farbe.GRUEN, "#d3f9d8"), ("#1971c2", "#d0ebff"), ("#7048e8", "#e5dbff"),
-            (Farbe.TINTE_DUNKEL, "#dee2e6"), (Farbe.GRAU, "#f8f9fa")]
+GRADUELL = list(Farbe.GRADUELL)                         # die Paare stehen in core/farben.py
 
 
 def graduell_pixmap(dunkel: str, hell: str, w: int = 34, h: int = 24) -> QPixmap:
@@ -134,7 +134,7 @@ def formstil_zeichner(schluessel: str):
 
     def zeichne(p: QPainter, r: QRectF) -> None:
         w = S.formstil(int(schluessel[1]), int(schluessel[2]))
-        kachel = r.adjusted(2, 2, -2, -2)
+        kachel = r.adjusted(DROPDOWN_INNEN_OBJEKT, DROPDOWN_INNEN_OBJEKT, -DROPDOWN_INNEN_OBJEKT, -DROPDOWN_INNEN_OBJEKT)
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         if w["fuell"]:
             c = QColor(w["fuell"])

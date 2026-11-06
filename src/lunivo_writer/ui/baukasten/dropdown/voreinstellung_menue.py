@@ -19,8 +19,6 @@ from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_ZEILE,
     GROESSE_VORGABEMENUE_KACHEL,
     GROESSE_VORGABEMENUE_RAND,
-    PADDING_VORGABEMENUE_KOPF,
-    RADIUS_MARKE,
     RAND_KEIN,
     RAND_PANEL_KLEIN,
 )
@@ -42,7 +40,7 @@ class VoreinstellungMenue(MenueListe):
                 self._gitter([("", keine[1], keine[0])], 1)
 
     def _kopf(self, text: str) -> None:
-        l = QLabel(text); l.setStyleSheet("font-weight: 600; padding: " f"{PADDING_VORGABEMENUE_KOPF}" "; color: palette(text);")
+        l = QLabel(text); l.setProperty("dropdownTitel", "kopfzeile")
         self._v.addWidget(l)
 
     def _gitter(self, eintraege: list[tuple[str, QIcon, str]], spalten: int) -> None:
@@ -50,8 +48,7 @@ class VoreinstellungMenue(MenueListe):
         for i, (schl, icon, tipp) in enumerate(eintraege):
             k = QToolButton(); k.setAutoRaise(True); k.setIcon(icon); k.setIconSize(self._kachel); k.setToolTip(tipp)
             k.setFixedSize(self._kachel + QSize(*GROESSE_VORGABEMENUE_RAND)); k.setCheckable(True); k.setChecked(schl == self.aktuell)
-            k.setStyleSheet("QToolButton { border: 1px solid transparent; border-radius: " f"{RADIUS_MARKE}" "px; }"
-                            "QToolButton:hover { border-color: palette(highlight); } QToolButton:checked { border-color: palette(highlight); background: palette(midlight); }")
+            k.setProperty("dropdownKachel", "kachel")
             k.clicked.connect(lambda _=False, s=schl: self._waehle(s))
             kacheln.append(k)
         kachel_gitter(kacheln, spalten, eltern=w, abstand=ABSTAND_ZEILE)

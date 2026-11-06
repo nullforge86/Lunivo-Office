@@ -15,7 +15,8 @@ from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
-from lunivo_writer.ui.document.tabelle_griffe import GRIFF, dunkel, griff_stil
+from lunivo_writer.ui.document.tabelle_griffe import GRIFF, dunkel
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 OPTION = "ui/absatz_symbol"
 
@@ -26,14 +27,14 @@ class AbsatzSymbol(QObject):
         self.ed = ed
         self.pausiert = False                 # während eines Tabellen-Ziehvorgangs ruht die Neuberechnung
         vp = ed.viewport()
-        self.knopf = b = QToolButton(vp)
-        b.setFixedSize(GRIFF, GRIFF); b.setFocusPolicy(Qt.NoFocus); b.setAutoRaise(False)
-        b.setIcon(dunkel("pilcrow-left", 14)); b.setStyleSheet(griff_stil() + "QToolButton::menu-indicator { image: none; width: 0px; }")
-        b.setToolTip("Absatz-Layout"); b.setPopupMode(QToolButton.InstantPopup)
+        self.knopf = b = DropdownKnopf(vp)
+        b.groesse_rolle("griff", "dokument"); b.setFocusPolicy(Qt.NoFocus); b.setAutoRaise(False)
+        b.setIcon(dunkel("pilcrow-left", 14)); b.setProperty("papierKnopf", "griff")
+        b.setToolTip("Absatz-Layout")
         self.menue = m = MenueListe(b)
         self.a_zuruecksetzen = m.eintrag("Absatzformat zurücksetzen", self._zuruecksetzen)
         self.a_ausblenden = m.eintrag("Symbol vom Absatz-Layout ausblenden", self._ausblenden)
-        b.setMenu(m)
+        b.menue_setzen(m, geteilt=False)
         b.hide()
         self._timer = QTimer(self); self._timer.setSingleShot(True); self._timer.setInterval(0); self._timer.timeout.connect(self.aktualisieren)
         for sig in (ed.cursorPositionChanged, ed.selectionChanged, ed.document().contentsChanged):

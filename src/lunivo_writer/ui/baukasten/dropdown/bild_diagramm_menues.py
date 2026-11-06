@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
+from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.ui.baukasten.texte import trennlinie
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
@@ -21,22 +22,23 @@ from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import (
+    DROPDOWN_FORMEN_SPALTEN,
+    DROPDOWN_KACHEL,
+    DROPDOWN_KACHEL_ABSTAND,
+    DROPDOWN_ROLLRAND,
+    HOEHE_FORMENMENUE,
     ABSTAND_ENG,
     ABSTAND_KLEIN,
     GROESSE_DIAGRAMMSTIL_KACHEL,
     GROESSE_FORMBILD_KACHEL,
     ICON_GROSS,
     ICON_KNOPF_GROSS,
-    PADDING_ZUSCHNEIDEN_KNOPF,
-    PADDING_ZUSCHNEIDEN_ZEILE,
     RAND_KEIN,
     RAND_MENUE_KOPF,
     RAND_ZUSCHNEIDEN_KACHELN,
     RAND_ZUSCHNEIDEN_LISTE,
 )
 
-KACHEL = 36                       # Seitenlänge einer Formkachel (Knöpfe nicht schmaler als 36 px)
-SPALTEN = 12                      # Formen je Zeile wie in der Vorlage (Kachel bleibt 36 px, das Fenster wird breiter)
 STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_KACHEL)       # Vorschau eines Diagrammstils
 BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfeil daneben öffnet alle
 
@@ -68,7 +70,7 @@ def zuschneiden_menue(b) -> QMenu:
     reiter = []
     for i, text in enumerate(("Nach Form zuschneiden", "Nach Skala zuschneiden")):
         t = QToolButton(); t.setText(text); t.setCheckable(True); t.setAutoExclusive(True); t.setChecked(i == 0)
-        t.setMinimumHeight(KACHEL - 4); t.setAutoRaise(True)
+        t.setMinimumHeight(DROPDOWN_KACHEL - 4); t.setAutoRaise(True)
         reiter_knopf_stil(t)
         t.clicked.connect(lambda _=False, i=i: stapel.setCurrentIndex(i))
         kopf.addWidget(t); reiter.append(t)
@@ -87,23 +89,23 @@ def zuschneiden_menue(b) -> QMenu:
         kachelreihe = []
         for n, name in enumerate(namen):
             k = QToolButton(); k.setAutoRaise(True); k.setIcon(_form_bild(name)); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
-            k.setFixedSize(KACHEL, KACHEL); k.setToolTip(name); k.setAccessibleName(name)
+            k.setFixedSize(DROPDOWN_KACHEL, DROPDOWN_KACHEL); k.setToolTip(name); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, name=name: waehlen(b.bildZuschneidenForm, name))
             kachelreihe.append(k)
-        iv.addLayout(kachel_gitter(kachelreihe, SPALTEN, rand=RAND_ZUSCHNEIDEN_KACHELN, abstand=ABSTAND_ENG, rest_dehnt=True))
+        iv.addLayout(kachel_gitter(kachelreihe, DROPDOWN_FORMEN_SPALTEN, rand=RAND_ZUSCHNEIDEN_KACHELN, abstand=ABSTAND_ENG, rest_dehnt=True))
     iv.addStretch(1)
     rollen = QScrollArea(); rollen.setWidget(inhalt); rollen.setWidgetResizable(True); rollen.setFrameShape(QFrame.NoFrame)
     rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    breite = SPALTEN * (KACHEL + 2) + 12 + rollen.verticalScrollBar().sizeHint().width()
-    rollen.setFixedSize(breite, 330)
+    breite = DROPDOWN_FORMEN_SPALTEN * (DROPDOWN_KACHEL + DROPDOWN_KACHEL_ABSTAND) + DROPDOWN_ROLLRAND + rollen.verticalScrollBar().sizeHint().width()
+    rollen.setFixedSize(breite, HOEHE_FORMENMENUE)
     stapel.addWidget(rollen)
 
     # Seite 2: Seitenverhältnisse als Textliste untereinander, rollbar (wie in der Vorlage)
     liste = QWidget()
     lv = QVBoxLayout(liste); lv.setContentsMargins(*RAND_ZUSCHNEIDEN_LISTE); lv.setSpacing(0)
     for text, bb, hh in BZ.VERHAELTNISSE:
-        k = QPushButton(text.replace(":", " : ")); k.setFlat(True); k.setMinimumHeight(KACHEL)
-        k.setStyleSheet("text-align: left; padding: " f"{PADDING_ZUSCHNEIDEN_KNOPF}" "; border: none;")
+        k = QPushButton(text.replace(":", " : ")); k.setFlat(True); k.setMinimumHeight(DROPDOWN_KACHEL)
+        dropdown_zeile(k)
         k.setToolTip("Seitenverhältnis " + text); k.setAccessibleName("Seitenverhältnis " + text)
         k.clicked.connect(lambda _=False, t=text: waehlen(b.bildZuschneidenSkala, t))
         lv.addWidget(k)
@@ -111,13 +113,13 @@ def zuschneiden_menue(b) -> QMenu:
     skala = QScrollArea(); skala.setWidget(liste); skala.setWidgetResizable(True); skala.setFrameShape(QFrame.NoFrame)
     skala.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     stapel.addWidget(skala)
-    stapel.setFixedSize(breite, 330)
+    stapel.setFixedSize(breite, HOEHE_FORMENMENUE)
     v.addWidget(stapel)
 
     linie = trennlinie()
     v.addWidget(linie)
     z = QPushButton(icons.icon("rotate-ccw", ICON_GROSS), "  Form und Größe zurücksetzen"); z.setFlat(True); z.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
-    z.setMinimumHeight(KACHEL); z.setStyleSheet("text-align: left; padding: " f"{PADDING_ZUSCHNEIDEN_ZEILE}" "; border: none;")
+    z.setMinimumHeight(DROPDOWN_KACHEL); dropdown_zeile(z)
     z.clicked.connect(lambda: waehlen(b.bildZuschneidenZuruecksetzen))
     v.addWidget(z)
     m.widget(wid)

@@ -26,7 +26,8 @@ TRENNER = (("\t", "Tabstopps"), (",", "Kommata"))
 
 def _feld(w: QWidget, breite: int = 0) -> QWidget:
     """Feldhöhe wie überall; ``breite`` nur für kleine Felder (ein Zeichen), sonst richtet sich das Feld nach dem Gitter."""
-    w.setMinimumHeight(HOEHE_KNOPF)
+    if not isinstance(w, QComboBox):                        # Dropdowns bekommen ihre Höhe vom Baustein (DROPDOWN_HOEHE)
+        w.setMinimumHeight(HOEHE_KNOPF)
     if breite:
         w.setMinimumWidth(breite)
     return w

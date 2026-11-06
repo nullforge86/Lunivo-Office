@@ -208,8 +208,14 @@ def _natuerlich(item: QLayoutItem) -> int:
     return max(item.sizeHint().width(), item.minimumSize().width())
 
 
-FELDHOEHE = 32                                                # einzeilige Felder (Menü, Farbe, Zahl, Text) in der Feldspalte der Seitenleiste: alle gleich hoch
+FELDHOEHE = 32                                                # einzeilige Felder (Zahl, Text, Farbe) in der Feldspalte der Seitenleiste: alle gleich hoch; Dropdowns nicht: ihre Höhe kommt aus DROPDOWN_HOEHE (mass.py)
 _EINZEILIG = ("QComboBox", "QPushButton", "QLineEdit", "QDoubleSpinBox", "QSpinBox", "FarbFeld", "KopfDropdown", "SchrittFeld", "StrichAuswahl")
+
+
+def ist_dropdown(w: QWidget | None) -> bool:
+    """Ein Dropdown (Auswahlfeld, Schriftauswahl, Dropdown-Taste, Kopf-Dropdown, Strichart, Farbfeld; Knöpfe tragen die Eigenschaft ``dropdownFeld``):
+    seine Höhe bestimmt allein ``DROPDOWN_HOEHE``; dieses Gitter setzt keine eigene."""
+    return isinstance(w, QComboBox) or bool(w is not None and w.property("dropdownFeld"))
 
 
 def einzeilig(item: QLayoutItem) -> bool:
@@ -218,10 +224,10 @@ def einzeilig(item: QLayoutItem) -> bool:
 
 
 def felder_angleichen(wurzel: QWidget) -> None:
-    """Alle einzeiligen Felder (Menü, Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``: eine Quelle für die Höhe, auch für
+    """Alle einzeiligen Felder (Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``; Dropdowns bleiben bei ``DROPDOWN_HOEHE``. Auch für
     Felder, die nicht im ``FormularGitter`` mit Feldspalte stehen (Einheitenfelder, Unterfenster). Knöpfe fester Größe (Kacheln, Symbole) bleiben."""
     for w in wurzel.findChildren(QWidget):
-        if isinstance(w.parent(), (QAbstractSpinBox, QComboBox)) or not any(c.__name__ in _EINZEILIG for c in type(w).__mro__):
+        if ist_dropdown(w) or isinstance(w.parent(), (QAbstractSpinBox, QComboBox)) or not any(c.__name__ in _EINZEILIG for c in type(w).__mro__):
             continue
         if isinstance(w, QPushButton) and (not w.text() or (w.minimumWidth() == w.maximumWidth() and w.minimumWidth() > 0)):
             continue
@@ -412,7 +418,7 @@ class FormularGitter(QLayout):
             return
         h = max((w.sizeHint().height() for w in ws if w.sizeHint().height() <= 40), default=0)       # ein ungewöhnlich hohes Element (Bildknopf) bestimmt die Höhe nicht
         for w in ws:
-            if h and w.minimumHeight() < h <= w.maximumHeight():
+            if h and w.minimumHeight() < h <= w.maximumHeight() and not ist_dropdown(w):         # Dropdowns behalten DROPDOWN_HOEHE
                 w.setMinimumHeight(h)
 
     def _plan(self, breite: int):
@@ -470,7 +476,7 @@ class FormularGitter(QLayout):
                 else:
                     fb = self.feldbreite if self.feldbreite else max(40, sp - bw - self.beschriftungsabstand)
                     hf = _hoehe_bei(u.f, fb)
-                    if self.feldbreite and einzeilig(u.f):
+                    if self.feldbreite and einzeilig(u.f) and not ist_dropdown(u.f.widget()):
                         u.f.widget().setFixedHeight(FELDHOEHE); hf = FELDHOEHE
                     hb = u.b.sizeHint().height()
                     h = max(hb, hf)

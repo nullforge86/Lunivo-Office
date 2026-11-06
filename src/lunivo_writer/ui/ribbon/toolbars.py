@@ -20,17 +20,14 @@ from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
 from lunivo_writer.ui.ribbon.ribbon_bar import NICHT_DA, STILE_KATALOG
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_ENG,
-    BREITE_ABSTANDSFELD,
-    BREITE_FORMATVORLAGE_LEISTE,
     BREITE_LEISTENKNOPF_MIN,
-    BREITE_REGLER_MIN,
-    BREITE_SCHRIFTAUSWAHL_LEISTE,
     ICON_GROSS,
     ICON_NORMAL,
     RAND_KEIN,
     RAND_SYMBOLLEISTE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 T = "trenner"
 # (Symbol, Tooltip, Aktion)
@@ -96,9 +93,9 @@ class Symbolleisten(QWidget):
         z1.addStretch(1)
         z2 = self._zeile(v)
         stil = Auswahlfeld(); stil.addItems(["Fließtext"] + [n for n in STILE_KATALOG if n not in ("Standard", "Kein Abstand")])
-        stil.setFixedWidth(BREITE_FORMATVORLAGE_LEISTE)
-        font = Schriftauswahl(); font.setFixedWidth(BREITE_SCHRIFTAUSWAHL_LEISTE)
-        groesse = Auswahlfeld(); groesse.setEditable(True); groesse.setFixedWidth(BREITE_REGLER_MIN)
+        stil.rolle("formatvorlage", "leiste")
+        font = Schriftauswahl(); font.rolle("schrift", "leiste")
+        groesse = Auswahlfeld(); groesse.setEditable(True); groesse.rolle("groesse", "leiste")
         groesse.addItems([str(x) for x in GROESSEN])
         self.felder.update(stil=stil, font=font, groesse=groesse)
         for w in (font, groesse):
@@ -108,7 +105,7 @@ class Symbolleisten(QWidget):
         for wert, name in ZEILENABSTAENDE:
             abstand.addItem("Zeilen " + name, float(wert))
         abstand.addItem("Mehr…", "mehr")
-        abstand.setFixedWidth(BREITE_ABSTANDSFELD)
+        abstand.rolle("abstand", "leiste")
         abstand.activated.connect(lambda _: self._abstand(abstand))
         z2.addWidget(abstand)
         self._fuellen(z2, UNTEN_B)
@@ -204,9 +201,9 @@ class Symbolleisten(QWidget):
                     if e.get("klappe") and not e.get("tun"):
                         fn = getattr(self.b, "menue_" + e["klappe"], None)
                         if fn:
-                            kn = QToolButton(); kn.setAutoRaise(True); kn.setPopupMode(QToolButton.InstantPopup)
+                            kn = DropdownKnopf(); kn.setAutoRaise(True)
                             kn.setIcon(icons.icon(e["symbol"], ICON_GROSS)); kn.setToolTip(e["name"])
-                            kn.setMenu(fn())
+                            kn.menue_setzen(fn(), geteilt=False)
                             self.z3.addWidget(kn)
                         continue
                     if not e.get("tun"):

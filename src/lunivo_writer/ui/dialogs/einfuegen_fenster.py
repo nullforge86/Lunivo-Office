@@ -455,7 +455,7 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         # Seite 1: Datei oder Webseite
         s1 = QWidget(); v1 = QVBoxLayout(s1); v1.setContentsMargins(*RAND_KEIN)
         oz = QHBoxLayout()
-        self.ordner = Auswahlfeld(); self.ordner.setEditable(True); self.ordner.setMinimumHeight(HOEHE_KNOPF); self.ordner.setAccessibleName("Ordner")
+        self.ordner = Auswahlfeld(); self.ordner.setEditable(True); self.ordner.setAccessibleName("Ordner")
         start = ordner if ordner and os.path.isdir(ordner) else QDir.homePath()
         for p in dict.fromkeys([start, QDir.homePath()] + [os.path.join(QDir.homePath(), n) for n in ("Schreibtisch", "Desktop", "Dokumente")]):
             if os.path.isdir(p):

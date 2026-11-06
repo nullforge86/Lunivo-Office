@@ -95,21 +95,22 @@ class UeberpruefenBefehle:
         from PySide6.QtGui import QStandardItemModel
         from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
         from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-        from lunivo_writer.ui.baukasten.mass import BREITE_ANZEIGEAUSWAHL_BAND, DROPDOWN_BREITE_MIN, HOEHE_KNOPF_GROSS
+        from lunivo_writer.ui.baukasten.mass import DROPDOWN_BREITE_MIN, HOEHE_KNOPF_GROSS
+        from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
         halter = QWidget()
         v = QVBoxLayout(halter); v.setContentsMargins(2, 4, 2, 4); v.setSpacing(4)
-        cb = Auswahlfeld(popup_min=DROPDOWN_BREITE_MIN); cb.addItems(list(ANZEIGEN)); cb.setMinimumHeight(HOEHE_KNOPF_GROSS); cb.setMinimumWidth(BREITE_ANZEIGEAUSWAHL_BAND)   # schmal im Band, die Liste zeigt die Namen ganz
+        cb = Auswahlfeld(popup_min=DROPDOWN_BREITE_MIN); cb.addItems(list(ANZEIGEN)); cb.rolle("anzeige", "band", mindest=True)   # schmal im Band, die Liste zeigt die Namen ganz
         cb.setAccessibleName("Anzeige zur Überprüfung"); cb.setToolTip("Anzeige zur Überprüfung")
         modell = cb.model()
         if isinstance(modell, QStandardItemModel):
             it = modell.item(2)
             it.setEnabled(False); it.setToolTip("Lunivo zeigt das Original ohne Markup; mit Markup kommt noch.")
         cb.activated.connect(lambda i: (self.ueberpruefenAnzeige(None, i), self.w.band.aktualisieren()))
-        markup = QToolButton(); markup.setAutoRaise(True); markup.setText("Markup anzeigen"); markup.setToolTip("Markup anzeigen")
+        markup = DropdownKnopf(); markup.setAutoRaise(True); markup.setText("Markup anzeigen"); markup.setToolTip("Markup anzeigen")
         markup.setIcon(self._sym("markupzeigen")); markup.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        markup.setPopupMode(QToolButton.InstantPopup); markup.setMinimumHeight(30)
-        menue = self.menue_markupKlappe(); menue.setParent(markup, Qt.Popup)        # das Menü gehört dem Knopf (sonst räumt Python es weg)
-        markup.setMenu(menue)
+        markup.band_zeile()
+        menue = self.menue_markupKlappe()
+        markup.menue_setzen(menue, geteilt=False, besitzen=True)
         v.addWidget(cb); v.addWidget(markup, 0, Qt.AlignLeft); v.addStretch(1)
         halter.anzeige, halter.markup = cb, markup
 
