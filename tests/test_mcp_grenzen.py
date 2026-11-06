@@ -128,3 +128,11 @@ def test_art_des_werkzeugs():
     assert f({"name": "write_file"}) == "schreiben" and f({"name": "x", "annotations": {"readOnlyHint": False}}) == "schreiben"
     assert f({"name": "list_dir"}) == "lesen" and f({"name": "x", "annotations": {"readOnlyHint": True}}) == "lesen"
     assert f({"name": "frobnicate"}) == "unbekannt"
+
+
+def test_werkzeug_erlaubt_automatisch_nur_lesen_schreiben():
+    from lunivo_writer.ai import modellfaehigkeit as MF
+    assert MF.werkzeug_erlaubt("automatisch", "lesen") and MF.werkzeug_erlaubt("automatisch", "schreiben")
+    for art in ("löschen", "netzwerk", "unbekannt", "start"):
+        assert not MF.werkzeug_erlaubt("automatisch", art)
+    assert not MF.werkzeug_erlaubt("fragen", "lesen")

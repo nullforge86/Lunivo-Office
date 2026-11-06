@@ -3,11 +3,15 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
+from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 from PySide6.QtWidgets import QMessageBox
 
 from lunivo_writer.services.settings_service import data_dir
 from lunivo_writer.ai import ki as K
+from lunivo_writer.ai import assistent_lauf as AL
+from lunivo_writer.ai import modellfaehigkeit as MF
+from lunivo_writer.ai import chat_bezug as CB
+from lunivo_writer.ai.chat_modell import ChatModell
 
 
 class _Sig(QObject):
@@ -33,9 +37,10 @@ class KIDienst(QObject):
     laeuft = Signal(bool)
     vorschlaege = Signal(list)                # Liste von {alt, neu, grund}
     hinweis = Signal(str, str, object)        # Titel, Text, Kosten (cent) — Karte in der Seitenleiste
-    chatAntwort = Signal(str, object)
-    aktionErgebnis = Signal(str, str, object)  # Name, Text, Kosten — das Ergebnis einer Schnellen KI-Aktion (der Chat zeigt es als Antwort)
+    aktionErgebnis = Signal(str, str, object, object)  # Name, Text, Kosten, Bezug (dict|None) — das Ergebnis einer Schnellen KI-Aktion (der Chat zeigt es als Antwort)
     geaendert = Signal()                      # Einstellungen haben sich geändert
+    chatGeaendert = Signal()                  # ``chat_modell`` hat sich geändert (Nachricht, Phase, Gespräch) — die Anzeige liest daraus
+    kontextGeaendert = Signal()               # Markierung oder Dokumentinhalt (leer/nicht leer) haben sich geändert — ``kontext()`` neu lesen
 
     def __init__(self, assistant, fenster, parent=None):
         super().__init__(parent)
@@ -43,15 +48,26 @@ class KIDienst(QObject):
         self.assistant = assistant
         self.konfig = K.KIKonfig(os.path.join(data_dir(), "ki.json"))
         self.ki = K.KI(self.konfig, assistant.gelernt.daten)
-        self._beschaeftigt = False
+        self._arbeit_laeuft = False
+        self.chat_modell = ChatModell()
         self.ergebnisse: list[dict] = []          # „Alle Ergebnisse anzeigen“: die KI-Antworten dieser Sitzung (neueste zuletzt)
         self._pool = QThreadPool(self)
         self._sig = _Sig()
         self._sig.fertig.connect(self._fertig)
         self.werkzeugFrage.connect(self._werkzeug_fragen)
+        self.aktionErgebnis.connect(self.aktion_in_chat)         # Verlauf und Anzeige führen dieselbe Quelle
         self.ki.werkzeug_frage = self._werkzeug_erlaubt
         self.ki.server_frage = self._server_erlaubt
+        self.ki.faehigkeit_bekannt = self.geaendert.emit          # Ollama hat die Fähigkeiten des Modells gemeldet: Menüs neu lesen
         self.konfig.d["empfaenger"] = assistant.thema
+        self._drossel = AL.Drossel()                  # fortlaufende Assistenten: Mindestabstand und Höchstzahl je Stunde
+        self._dauer_timer = QTimer(self)
+        self._dauer_timer.setSingleShot(True)
+        self._dauer_timer.timeout.connect(self._dauer_los)
+        self._dauer_art = "absatz"                    # was die letzte Änderung war: „absatz“ (Text) oder „markierung“
+        self._dauer_zuletzt: dict = {}                # (Assistent, Stelle) → zuletzt gesendeter Text
+        self._dauer_eigen = False                     # der Assistent schreibt selbst ins Dokument: das löst keine neue Runde aus
+        self._dauer_pause = False
 
     def _werkzeug_erlaubt(self, name: str, argumente: dict, server: str, art: str = "unbekannt") -> bool:
         """Aus dem Arbeitsfaden: fragt im Hauptfenster, ob die KI das Werkzeug aufrufen darf, und wartet auf die Antwort.
@@ -105,6 +121,37 @@ class KIDienst(QObject):
         del self.ergebnisse[:-50]
 
     # ---- Zustand ------------------------------------------------------------------
+    @property
+    def beschaeftigt(self) -> bool:
+        return self._arbeit_laeuft
+
+    def kontext_pruefen(self) -> None:
+        """Von Editor-Signalen gerufen: ``kontextGeaendert`` nur, wenn sich Markierung oder Leer-Sein wirklich geändert haben."""
+        jetzt = (*self.kontext()[:2], self._bezug_stand())
+        if jetzt != getattr(self, "_kontext_alt", None):
+            self._kontext_alt = jetzt
+            self.kontextGeaendert.emit()
+
+    def _bezug_stand(self):
+        """Nur wenn eine Antwort mit Bezug im Chat steht: (Editor, Revision), damit die Oberfläche „Ersetzen/Einfügen“ neu bewertet."""
+        if not any(n.get("bezug") for n in self.chat_modell.nachrichten):
+            return None
+        ed = self.w.current_editor()
+        try:
+            return (id(ed), ed.document().revision()) if ed is not None else None
+        except RuntimeError:
+            return None
+
+    def kontext(self) -> tuple[bool, bool, bool, str]:
+        """(Markierung da, Dokument leer, Modell für den Chat verbunden, Name des Chat-Modells) aus Editor und Konfiguration."""
+        ed = self.w.current_editor()
+        auswahl = bool(ed is not None and ed.textCursor().hasSelection())
+        leer = ed is None or not ed.document().toPlainText().strip()
+        verbunden = self.verfuegbar() and self.ki.verfuegbar_fuer("chatbot")
+        mid = self.ki.modell("chatbot") if verbunden else ""
+        name = next((m["name"] for m in self.konfig.alle_modelle() if m["id"] == mid), mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid)
+        return auswahl, leer, verbunden, name
+
     def verfuegbar(self) -> bool:
         self.konfig.d["empfaenger"] = self.assistant.thema
         return self.ki.verfuegbar()
@@ -118,7 +165,7 @@ class KIDienst(QObject):
         ziel = self.ki.schickt_nach_aussen(modell)
         if ziel is None or self.konfig.hat_einwilligung(ziel, umfang):
             return True
-        was = ("den ganzen Text dieses Dokuments" if umfang == "dokument" else "den markierten Textauszug") + (f" (etwa {zeichen} Zeichen)" if zeichen else "")
+        was = {"dokument": "den ganzen Text dieses Dokuments", "bild": "das angehängte Bild"}.get(umfang, "den markierten Textauszug") + (f" (etwa {zeichen} Zeichen)" if zeichen else "")
         r = QMessageBox.question(
             self.w, "Text an einen Dienst senden?",
             f"Für diese Funktion wird {was} an „{ziel}“ im Internet gesendet.\n\n"
@@ -142,9 +189,9 @@ class KIDienst(QObject):
         text = ed.document().toPlainText().rstrip("\n")
         return {"ed": ed, "text": text, "basis": 0, "markiert": False, "rev": ed.document().revision()}
 
-    def starte(self, meldung: str, arbeit, danach, eing: dict | None = None, aufgabe: str | None = None) -> None:
+    def starte(self, meldung: str, arbeit, danach, eing: dict | None = None, aufgabe: str | None = None, modell: str | None = None) -> None:
         """arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread."""
-        if self._beschaeftigt:
+        if self._arbeit_laeuft:
             return
         self.verfuegbar()           # hält Empfänger/Thema in der Konfiguration aktuell
         if not self.ki.verfuegbar_fuer(aufgabe):
@@ -156,25 +203,32 @@ class KIDienst(QObject):
         if eing is None or not eing["text"].strip():
             self._hinweis_fenster("KI", "Es steht noch kein Text da. Schreiben Sie etwas oder markieren Sie eine Stelle.")
             return
-        modell = self.ki.modell(aufgabe) if aufgabe else None
+        modell = modell or (self.ki.modell(aufgabe) if aufgabe else None)
         if not self._einwilligung(modell, "auszug" if eing.get("markiert") else "dokument", len(eing["text"])):
             if not (modell or "").startswith(K.AUTO_MARKE):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
                 self.status.emit("Abgebrochen — es wurde nichts gesendet.")
                 return
-        self._beschaeftigt = True
+        self._arbeit_laeuft = True
         self.laeuft.emit(True)
         self.status.emit(f"Die KI liest die Markierung ({len(eing['text'])} Zeichen) …" if eing["markiert"] else meldung)
         self._pool.start(_Lauf((danach, eing), lambda: arbeit(eing["text"]), self._sig))
 
     def _fertig(self, auftrag, r) -> None:
         danach, eing = auftrag
-        self._beschaeftigt = False
+        self._arbeit_laeuft = False
         self.laeuft.emit(False)
         if danach == "bild":
             self._bild_fertig(r, eing)
             return
+        if danach == "dauer":
+            self._dauer_fertig(r, eing)
+            return
         if danach == "chat":
-            self.chatAntwort.emit("⚠ " + r["fehler"] if "fehler" in r else r["text"], r.get("cent"))
+            kennung = eing["anfrage"]
+            angenommen = (self.chat_modell.fehler(kennung, r["fehler"]) if "fehler" in r else self.chat_modell.antwort(kennung, r["text"], r.get("cent")))
+            if not angenommen:                                      # nach „Neues Gespräch“/Abbruch: veraltete Antwort verwerfen
+                return
+            self.chatGeaendert.emit()
             if "fehler" not in r:
                 self.merke_ergebnis("KI-Chat", r["text"])
             return
@@ -197,7 +251,7 @@ class KIDienst(QObject):
     # ---- Bild aus Text ------------------------------------------------------------------------
     def bild_aus_text(self, beschreibung: str | None = None) -> None:
         """Markierter Text (oder der übergebene) ist die Bildbeschreibung; das Bild tritt an die Stelle der Markierung."""
-        if self._beschaeftigt:
+        if self._arbeit_laeuft:
             return
         ed = self.w.current_editor()
         if ed is None:
@@ -214,7 +268,7 @@ class KIDienst(QObject):
         if not self._einwilligung(self.konfig["aufgaben"]["bildgenerierung"]):
             self.status.emit("Abgebrochen — es wurde nichts gesendet.")
             return
-        self._beschaeftigt = True
+        self._arbeit_laeuft = True
         self.laeuft.emit(True)
         self.status.emit("Die KI erzeugt das Bild …")
         eing = {"ed": ed, "beschreibung": text, "ersetzen": c.hasSelection()}
@@ -287,7 +341,7 @@ class KIDienst(QObject):
             def zeigen(r, e):
                 titel_m = titel + (f" ({r['methode']})" if r.get("methode") else "")
                 self.hinweis.emit(titel_m, r["text"], r.get("cent"))
-                self.aktionErgebnis.emit(titel_m, r["text"], r.get("cent"))
+                self.aktionErgebnis.emit(titel_m, r["text"], r.get("cent"), self._aktion_bezug(e))
             self.starte(f"Wird nach {s} übersetzt …", lambda t: self.ki.uebersetzen(t, s), zeigen, aufgabe="uebersetzung")
             return
         self.starte(f"Wird nach {s} übersetzt …", lambda t: self.ki.uebersetzen(t, s),
@@ -309,14 +363,202 @@ class KIDienst(QObject):
         Zusammenfassen. Das Ergebnis geht außerdem als Antwort in den KI-Chat."""
         arbeit = lambda t: self.ki.eigener_assistent(t, a["prompt"])           # noqa: E731
 
-        def melden(r) -> None:
-            self.aktionErgebnis.emit(a["name"], r["text"], r.get("cent"))
+        def melden(r, e=None) -> None:         # ersetzen/anhängen haben das Ergebnis schon ins Dokument geschrieben: kein zweites Anwenden
+            self.aktionErgebnis.emit(a["name"], r["text"], r.get("cent"), self._aktion_bezug(e) if e else CB.bezug_angewendet())
         if a["modus"] == "ersetzen":
             self.starte(f"„{a['name']}“ …", arbeit, lambda r, e: (self._einsetzen(r, e, a["name"] + ".", "Markierung: " + a["name"] + "."), melden(r)))
         elif a["modus"] == "anhaengen":
             self.starte(f"„{a['name']}“ …", arbeit, lambda r, e: (self._anhaengen(r, e, a["name"]), melden(r)))
         else:
-            self.starte(f"„{a['name']}“ …", arbeit, lambda r, e: (self.hinweis.emit(a["name"], r["text"], r.get("cent")), melden(r)))
+            self.starte(f"„{a['name']}“ …", arbeit, lambda r, e: (self.hinweis.emit(a["name"], r["text"], r.get("cent")), melden(r, e)))
+
+    # ---- Fortlaufende Assistenten ---------------------------------------------------------------------------------------
+    def dauerbetrieb(self) -> bool:
+        """Hauptschalter: nur wenn er an ist, läuft irgendein fortlaufender Assistent."""
+        return bool(self.konfig["assistenten_dauerbetrieb"])
+
+    def _dauer_einwilligung(self, modell: str | None) -> bool:
+        """Klartext-Frage (nur bei Anbietern außerhalb dieses Rechners): „Sendet bei jeder Änderung den geänderten Absatz an <Anbieter>“."""
+        ziel = self.ki.schickt_nach_aussen(modell or None)
+        if ziel is None or self.konfig.hat_einwilligung(ziel, "dauer"):
+            return True
+        r = QMessageBox.question(
+            self.w, "Fortlaufende Assistenten erlauben?",
+            f"Ein fortlaufender Assistent sendet bei jeder Änderung den geänderten Absatz an „{ziel}“ im Internet. "
+            "Das kann Kosten verursachen und geschieht, solange der Assistent eingeschaltet ist.\n\n"
+            "Die Erlaubnis lässt sich in den KI-Einstellungen unter Datenschutz jederzeit widerrufen. Erlauben?")
+        if r != QMessageBox.Yes:
+            return False
+        self.konfig.einwilligung_geben(ziel, "dauer")
+        if not self.konfig.hat_einwilligung(ziel, "auszug"):
+            self.konfig.einwilligung_geben(ziel, "auszug")
+        return True
+
+    def dauerbetrieb_setzen(self, an: bool) -> bool:
+        """Hauptschalter ein-/ausschalten; False, wenn das Einschalten abgelehnt wurde oder nicht möglich ist."""
+        an = bool(an)
+        if an:
+            if not self.verfuegbar():
+                self._hinweis_fenster("KI", "Dafür fehlt ein KI-Modell — Ollama auf diesem Rechner oder ein Schlüssel. Beides richten Sie unter „KI-Einstellungen“ ein.")
+                return False
+            if not self._dauer_einwilligung(None):
+                return False
+        else:
+            self._dauer_timer.stop()
+        self._dauer_pause = False
+        self.konfig.setze("assistenten_dauerbetrieb", an)
+        self.geaendert.emit()
+        return True
+
+    def assistent_an_setzen(self, id_: str, an: bool) -> bool:
+        """Einen fortlaufenden Assistenten an-/ausschalten (läuft erst, wenn auch ``dauerbetrieb()`` an ist); False bei Ablehnung."""
+        a = self.konfig.assistent_holen(id_)
+        if a is None or a.get("art") != "fortlaufend":
+            return False
+        if an and not self._dauer_einwilligung(a.get("modell") or None):
+            return False
+        self.konfig.assistent_aendern(id_, an=bool(an))
+        self.geaendert.emit()
+        return True
+
+    def _dauer_aus(self, a: dict, grund: str) -> None:
+        """Fehler oder fehlende Erlaubnis: den Assistenten ausschalten und es sagen — nie stumm wiederholen."""
+        self.konfig.assistent_aendern(a["id"], an=False)
+        self.geaendert.emit()
+        self._hinweis_fenster(f"Assistent „{a['name']}“", f"„{a['name']}“ wurde ausgeschaltet: {grund}")
+
+    def dauer_geaendert(self, art: str = "absatz") -> None:
+        """Von Dokument-/Markierungssignalen gerufen (ui/main_window.py): startet die Ruhezeit des Assistenten neu."""
+        if self._dauer_eigen or not self.dauerbetrieb():
+            return
+        aktiv = [a for a in self.konfig.assistenten("fortlaufend") if a["an"] and a["ausloeser"] == art]
+        if not aktiv:
+            return
+        self._dauer_art = art
+        self._dauer_timer.start(int(min(AL.verzoegerung_begrenzen(a["verzoegerung"]) for a in aktiv) * 1000))
+
+    def _dauer_eingabe(self, a: dict):
+        ed = self.w.current_editor()
+        if ed is None or ed.isReadOnly():
+            return None
+        c = ed.textCursor()
+        if a["ausloeser"] == "markierung" or a["umfang"] == "markierung":
+            if not c.hasSelection():
+                return None
+            text, basis = c.selectedText().replace("\u2029", "\n"), c.selectionStart()
+            stelle = "markierung"
+        else:
+            b = c.block()
+            text, basis, stelle = b.text(), b.position(), "absatz"
+        return {"ed": ed, "text": AL.eingabe_kuerzen(text), "basis": basis, "markiert": True, "rev": ed.document().revision(), "stelle": stelle}
+
+    def _dauer_los(self) -> None:
+        """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
+        if self._arbeit_laeuft or not self.dauerbetrieb():
+            return
+        wartet = self._drossel.warten_noch()
+        if wartet == float("inf"):
+            if not self._dauer_pause:
+                self._dauer_pause = True
+                self.status.emit("Fortlaufende Assistenten pausieren: Höchstzahl der Anfragen in dieser Stunde erreicht.")
+            return
+        if wartet > 0:
+            self._dauer_timer.start(int(wartet * 1000) + 50)
+            return
+        self._dauer_pause = False
+        for a in self.konfig.assistenten("fortlaufend"):
+            if not a["an"] or a["ausloeser"] != self._dauer_art:
+                continue
+            eing = self._dauer_eingabe(a)
+            if eing is None:
+                continue
+            schluessel = (a["id"], eing["stelle"] if eing["stelle"] == "markierung" else eing["ed"].textCursor().blockNumber())
+            if not AL.absatz_geaendert(self._dauer_zuletzt.get(schluessel), eing["text"]):
+                continue
+            modell = a.get("modell") or None
+            if not self.ki.verfuegbar():
+                self._dauer_aus(a, "Es ist kein KI-Modell eingerichtet.")
+                return
+            if (sperre := self.ki.zustimmung_fehlt(modell, "auszug")) is not None or \
+                    (self.ki.schickt_nach_aussen(modell) and not self.konfig.hat_einwilligung(self.ki.schickt_nach_aussen(modell), "dauer")):
+                self._dauer_aus(a, (sperre or {}).get("fehler", "Die Erlaubnis für fortlaufende Assistenten fehlt."))
+                return
+            self._dauer_zuletzt[schluessel] = eing["text"]
+            eing.update(assistent=a["id"], _titel=a["name"])
+            self._drossel.gesendet()
+            nur = a["modus"] == "kommentar"
+            self.starte(f"„{a['name']}“ …", lambda t, a=a, nur=nur: self.ki.eigener_assistent(t, a["prompt"], a["kommentar"] and not nur, a.get("modell", ""), nur),
+                        "dauer", eing, modell=modell)
+            return
+
+    def _dauer_fertig(self, r, eing) -> None:
+        a = self.konfig.assistent_holen(eing.get("assistent"))
+        if a is None:
+            return
+        if "fehler" in r:
+            self._dauer_aus(a, r["fehler"])
+            return
+        modus, alt = a["modus"], eing["text"]
+        text, begruendung = AL.trenne_begruendung(r.get("text", ""))
+        wirkt = AL.ergebnis_wirkt(alt, text) if modus in ("ersetzen", "anhaengen", "hervorheben") else bool(text.strip())
+        if not wirkt:
+            self.status.emit(f"„{a['name']}“: nichts zu ändern." + self._preis(r.get("cent")))
+            return
+        self.merke_ergebnis(a["name"], text + (f"\n\nBegründung: {begruendung}" if begruendung else ""), alt)
+        ed = eing["ed"]
+        try:
+            if ed.document().revision() != eing["rev"]:
+                self.status.emit(f"„{a['name']}“: Sie haben weitergeschrieben — die Antwort passt nicht mehr und wurde verworfen.")
+                return
+        except RuntimeError:
+            return
+        k = self._preis(r.get("cent"))
+        self._dauer_eigen = True
+        try:
+            if modus == "kommentar":
+                self._dauer_kommentar(ed, eing, text, a["name"])
+                self.status.emit(f"„{a['name']}“: Kommentar angelegt." + k)
+            elif modus == "hervorheben":
+                self.assistant.ki_fertig(eing["rev"], [{"alt": alt, "neu": None, "grund": text + (f" ({begruendung})" if begruendung else ""), "konfidenz": 1.0}])
+                self.status.emit(f"„{a['name']}“: Stelle in der Schreibhilfe markiert." + k)
+            elif modus == "ersetzen":
+                self._dauer_ersetzen(a, eing, text, begruendung, r)
+            else:                                           # hinweis (anhängen wäre unaufgefordert zu eingreifend)
+                self.hinweis.emit(a["name"], text, r.get("cent"))
+                self.aktionErgebnis.emit(a["name"], text, r.get("cent"), self._aktion_bezug(eing))
+        finally:
+            self._dauer_eigen = False
+        if self._dauer_timer.isActive() is False and self.dauerbetrieb():
+            self._dauer_timer.start(int(AL.MINDESTABSTAND * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
+
+    def _dauer_kommentar(self, ed, eing, text: str, autor: str) -> None:
+        from PySide6.QtGui import QTextCursor
+        alt_c = ed.textCursor()
+        c = QTextCursor(ed.document())
+        c.setPosition(eing["basis"])
+        c.setPosition(min(eing["basis"] + len(eing["text"]), ed.document().characterCount() - 1), QTextCursor.KeepAnchor)
+        ed.setTextCursor(c)
+        try:
+            ed.kommentar_neu(text, autor)
+        finally:
+            ed.setTextCursor(alt_c)
+
+    def _dauer_ersetzen(self, a: dict, eing, text: str, begruendung: str, r) -> None:
+        """Ersetzen nur nach Bestätigung; ein Undo-Schritt (``_einsetzen``)."""
+        ed = eing["ed"]
+        vorher = eing["text"] if len(eing["text"]) <= 400 else eing["text"][:400] + " …"
+        nachher = text if len(text) <= 400 else text[:400] + " …"
+        f = QMessageBox.question(self.w, f"„{a['name']}“ übernehmen?", f"Vorher:\n{vorher}\n\nNachher:\n{nachher}\n\nDen Text ersetzen? Strg+Z macht es rückgängig.")
+        if f != QMessageBox.Yes:
+            self.status.emit(f"„{a['name']}“: nicht übernommen.")
+            return
+        if ed.document().revision() != eing["rev"]:
+            self.status.emit(f"„{a['name']}“: Der Text hat sich inzwischen geändert — nichts wurde ersetzt.")
+            return
+        self._einsetzen({"text": text, "cent": r.get("cent")}, eing, a["name"] + ".", a["name"] + ".")
+        self._dauer_zuletzt[(a["id"], "markierung" if eing["stelle"] == "markierung" else ed.textCursor().blockNumber())] = text
+        if begruendung and a["kommentar"]:
+            self._dauer_kommentar(ed, {**eing, "text": text}, begruendung, a["name"])
 
     def zusammenfassen(self) -> None:
         self.starte("Die KI fasst zusammen …", self.ki.zusammenfassen,
@@ -382,19 +624,212 @@ class KIDienst(QObject):
         return ed.replace_range(i, i + len(v["alt"]), v["neu"])
 
     # ---- Chat ----------------------------------------------------------------------------------
-    def chat(self, verlauf: list) -> None:
-        if self._beschaeftigt or not self.verfuegbar() or not self._einwilligung(None, "dokument", 12000):
+    def chat_senden(self, text: str, bild: str | None = None) -> bool:
+        """Neue Nutzernachricht in ``chat_modell`` aufnehmen und senden. False, wenn nichts gesendet wurde (leer, beschäftigt, keine Zustimmung).
+        ``bild``: Pfad eines Anhangs; er wird vorher geprüft (Format, Größe), bei einem Fehler kommt die Meldung über ``status`` und nichts geht raus."""
+        if (not text.strip() and not bild) or self._arbeit_laeuft:
+            return False
+        bilder = None
+        if bild:
+            p = MF.bild_pruefen(bild)
+            if "fehler" in p:
+                self.status.emit(p["fehler"])
+                return False
+            if not self.kann_bild():
+                self.status.emit(self.bild_hinweis())
+                return False
+            if not self._einwilligung(self.ki.modell("chatbot"), "bild"):      # der Bildinhalt verlässt den Rechner: eigene Einwilligung
+                return False
+            bilder = [p]
+        return self._chat_anfragen(lambda b: self.chat_modell.anfrage(text.strip(), bilder, b))
+
+    # ---- Chat-Einstellungen fürs Menü (Quelle: ``konfig.chat_optionen()``; Änderungen lösen ``geaendert`` aus)
+    def denktiefe(self) -> str:
+        return MF.denkstufe(self.konfig.chat_optionen().get("denktiefe"))
+
+    def denktiefe_setzen(self, stufe: str) -> bool:
+        if stufe not in MF.DENKSTUFEN:
+            return False
+        self.konfig.chat_setzen(denktiefe=stufe)            # dauerhaft
+        self.geaendert.emit()
+        return True
+
+    def werkzeugmodus(self) -> str:
+        return self.konfig.chat_optionen().get("werkzeuge", "fragen")
+
+    def werkzeugmodus_setzen(self, modus: str) -> bool:
+        """„fragen“ oder „automatisch“. „automatisch“ gilt nur für diese Sitzung (``KIKonfig.speichern`` schreibt es nie) und nur für Lesen und
+        Schreiben; Löschen, Netzwerk, Unbekanntes, der Programmstart und die Datenschutz-Einwilligung fragen weiter."""
+        if modus not in MF.WERKZEUG_MODI:
+            return False
+        self.konfig.d["chat"] = {**(self.konfig.d.get("chat") or {}), "werkzeuge": modus}      # nur im Speicher
+        self.geaendert.emit()
+        return True
+
+    def kann_bild(self) -> bool:
+        return self.ki.kann_bild()
+
+    def kann_denken(self) -> bool:
+        return self.ki.kann_denken()
+
+    def werkzeuge_vorhanden(self) -> bool:
+        """MCP-Server an UND ein Modell, das Werkzeuge im Chat nutzt (Ollama oder eigener Anbieter, nicht Claude)."""
+        an = any(m.get("an") and m.get("befehl") for m in self.konfig["mcp"])
+        return an and self.ki.modell("chatbot").startswith((K.OLLAMA_MARKE, K.EIGEN_MARKE))
+
+    def bild_hinweis(self) -> str:
+        m = self.ki.modell("chatbot")
+        if self.kann_bild():
+            return "Bild anhängen (PNG, JPEG oder WebP, bis 5 MB)."
+        if m.startswith(K.OLLAMA_MARKE):
+            return "Dieses Modell kann keine Bilder, oder Ollama hat es noch nicht gemeldet. Ein Modell mit Bildverständnis wählen."
+        if m.startswith(K.EIGEN_MARKE):
+            return "Dieser Anbieter ist nicht als „Visuelle Analyse“ eingetragen. In den KI-Einstellungen das Etikett setzen."
+        return "Das gewählte Modell kann keine Bilder."
+
+    def denken_hinweis(self) -> str:
+        if self.kann_denken():
+            return "Wie gründlich das Modell nachdenkt. „Automatisch“ lässt es beim Bisherigen."
+        return "Das gewählte Modell denkt nicht nach oder meldet es nicht."
+
+    def werkzeuge_hinweis(self) -> str:
+        if self.werkzeuge_vorhanden():
+            return "Automatisch gilt nur für Lesen und Schreiben und nur in dieser Sitzung; Löschen und Netzwerk fragen immer."
+        if not any(m.get("an") and m.get("befehl") for m in self.konfig["mcp"]):
+            return "Kein KI-Werkzeug (MCP-Server) eingeschaltet."
+        return "Claude nutzt im Chat keine Werkzeuge. Ollama oder einen eigenen Anbieter wählen."
+
+    def chat_wiederholen(self) -> bool:
+        """Die letzte Nutzernachricht erneut senden; die davorliegende Antwort/der Fehler fällt weg."""
+        if self._arbeit_laeuft:
+            return False
+        text = self.chat_modell.wiederholen()
+        self.chatGeaendert.emit()
+        bilder = self.chat_modell.wiederhol_bilder
+        return bool(text or bilder) and self.chat_senden(text, bilder[0]["pfad"] if bilder else None)
+
+    def chat_neu(self) -> None:
+        self.chat_modell.neues_gespraech()
+        self.chatGeaendert.emit()
+
+    def chat_abbrechen(self) -> None:
+        """Eine laufende Antwort wird nicht mehr angezeigt. Der Hintergrundfaden selbst lässt sich im Thread-Pool nicht unterbrechen und läuft aus."""
+        self.chat_modell.abbrechen()
+        self.chatGeaendert.emit()
+
+    @staticmethod
+    def _aktion_bezug(eing: dict) -> dict | None:
+        """Bezug einer Aktion aus ihrer Eingabe (Editor, Text, Basis, Revision zum Start); ganzes Dokument: Einfügen am Ende, kein Ersetzen."""
+        try:
+            return CB.bezug_bauen(eing["basis"], eing["basis"] + len(eing["text"]), eing["markiert"], eing["rev"], eing["text"], id(eing["ed"]))
+        except (KeyError, TypeError):
+            return None
+
+    def aktion_in_chat(self, name: str, text: str, cent, bezug=None) -> None:
+        self.chat_modell.aktion(name, text, cent, bezug)
+        self.chatGeaendert.emit()
+
+    def _chat_anfragen(self, aufnehmen) -> bool:
+        if not self._chat_bereit():                      # Zustimmungen zuerst: ohne sie wird nichts aufgenommen
+            return False
+        kennung = aufnehmen(self.chat_bezug())
+        self.chatGeaendert.emit()
+        self._chat_los(self.chat_modell.verlauf(), kennung)
+        return True
+
+    # ---- Antwort ins Dokument (EIN Weg: Schaltflächen und Option „direkt einfügen“)
+    def chat_bezug(self) -> dict | None:
+        """Stelle im Text zum SENDEZEITPUNKT: Markierung (markiert=True) oder Schreibmarke; None ohne Editor. Nur im Speicher."""
+        ed = self.w.current_editor()
+        if ed is None:
+            return None
+        try:
+            c = ed.textCursor()
+            alt = c.selectedText().replace("\u2029", "\n") if c.hasSelection() else ""
+            von, bis = (min(c.anchor(), c.position()), max(c.anchor(), c.position())) if c.hasSelection() else (c.position(),) * 2
+            return CB.bezug_bauen(von, bis, c.hasSelection(), ed.document().revision(), alt, id(ed))
+        except RuntimeError:
+            return None
+
+    def _bezug_lage(self, index: int):
+        """(Bezug, Editor, Grund). Editor nur, wenn Bezug und aktueller Editor noch zusammenpassen."""
+        bezug = self.chat_modell.bezug_von(index)
+        ed = self.w.current_editor()
+        try:
+            rev = ed.document().revision() if ed is not None else None
+        except RuntimeError:
+            ed, rev = None, None
+        ok, grund = CB.bezug_pruefen(bezug, rev, id(ed) if ed is not None else None)
+        return bezug, (ed if ok else None), grund
+
+    def bezug_gueltig(self, index: int, ersetzen: bool = False) -> tuple[bool, str]:
+        """Für die Oberfläche: darf die Antwort ``index`` jetzt eingefügt (bzw. ersetzt) werden? (ok, Grund)."""
+        bezug, ed, grund = self._bezug_lage(index)
+        if ed is None:
+            return False, grund
+        if ersetzen and not bezug["markiert"]:
+            return False, CB.MELDUNG_OHNE_MARKIERUNG
+        return True, ""
+
+    def antwort_vorschau(self, index: int, ersetzen: bool) -> list[tuple[str, str]]:
+        """Vorschau als [(art, text)] (gleich/entfernt/neu); leer, wenn nichts anzuwenden ist."""
+        ok, _ = self.bezug_gueltig(index, ersetzen)
+        if not ok:
+            return []
+        neu = self.chat_modell.nachrichten[index]["text"]
+        return CB.vorschau_stuecke(self.chat_modell.bezug_von(index)["alt"], neu) if ersetzen else CB.vorschau_einfuegen(neu)
+
+    def antwort_einfuegen(self, index: int) -> tuple[bool, str]:
+        """Antwort ``index`` hinter der gemerkten Stelle einfügen (ein Schritt für Rückgängig). → (ok, Meldung); bei Ablehnung wird nichts geändert."""
+        return self._antwort_anwenden(index, False)
+
+    def antwort_ersetzen(self, index: int) -> tuple[bool, str]:
+        """Die beim Fragen markierte Stelle durch die Antwort ersetzen (ein Schritt). Nur bei unverändertem Text. → (ok, Meldung)."""
+        return self._antwort_anwenden(index, True)
+
+    def _antwort_anwenden(self, index: int, ersetzen: bool) -> tuple[bool, str]:
+        ok, grund = self.bezug_gueltig(index, ersetzen)
+        if not ok:
+            return False, grund
+        bezug, ed, _ = self._bezug_lage(index)
+        neu = self.chat_modell.nachrichten[index]["text"]
+        von, bis, alt = (bezug["von"], bezug["bis"], bezug["alt"]) if ersetzen else (bezug["bis"], bezug["bis"], "")
+        from PySide6.QtGui import QTextCursor
+        try:
+            sperre = QTextCursor(ed.document())
+            sperre.beginEditBlock()
+            try:
+                geklappt = ed.replace_range(von, bis, neu, erwartet=alt)
+            finally:
+                sperre.endEditBlock()
+        except RuntimeError:                       # Tab/Editor wurde geschlossen
+            return False, CB.MELDUNG_EDITOR
+        if not geklappt:
+            return False, CB.MELDUNG_GEAENDERT
+        self.assistant.pruefen()
+        return True, ("Ersetzt." if ersetzen else "Eingefügt.") + " Strg+Z macht es rückgängig."
+
+    def _chat_bereit(self) -> bool:
+        """Modell da und Zustimmungen erteilt? Bei Markierung gilt der Umfang „auszug“, sonst „dokument“ (die Sperre an der Sendestelle bleibt)."""
+        auswahl = self.kontext()[0]
+        if self._arbeit_laeuft or not self.verfuegbar() or not self._einwilligung(None, "auszug" if auswahl else "dokument", 12000):
             if not self.verfuegbar():
                 self.status.emit("Der Chat braucht einen KI-Schlüssel — oder Ollama. Optionen ▸ Schreibhilfe und KI.")
-            return
+            return False
         ziel = self.ki.websuche_ziel()
         if ziel and not self.konfig.hat_einwilligung(ziel, "auszug"):
             if QMessageBox.question(self.w, "Frage an die Websuche senden?",
                                     f"Für die Antwort wird Ihre Frage an „{ziel}“ im Internet gesendet.\n\nErlauben Sie das? "
                                     "Widerrufen können Sie es in den KI-Einstellungen unter Datenschutz.") == QMessageBox.Yes:
                 self.konfig.einwilligung_geben(ziel, "auszug")
+        return True
+
+    def _chat_los(self, verlauf: list, kennung: int) -> None:
+        """Kontext des Chats: die Markierung, wenn es eine gibt (weniger Text verlässt den Rechner), sonst das Dokument."""
         ed = self.w.current_editor()
-        doc = ed.document().toPlainText() if ed else ""
-        self._beschaeftigt = True
+        c = ed.textCursor() if ed else None
+        markiert = bool(c is not None and c.hasSelection())
+        doc = c.selectedText().replace("\u2029", "\n") if markiert else (ed.document().toPlainText() if ed else "")
+        self._arbeit_laeuft = True
         self.laeuft.emit(True)
-        self._pool.start(_Lauf(("chat", None), lambda: self.ki.chat(verlauf, doc), self._sig))
+        self._pool.start(_Lauf(("chat", {"anfrage": kennung}), lambda: self.ki.chat(verlauf, doc, markiert), self._sig))

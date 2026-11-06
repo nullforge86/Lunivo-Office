@@ -89,10 +89,12 @@ class UmbruchSchalter(QCheckBox):
 class FlussLayout(QLayout):
     """Zeile, die umbricht (wie Text): Beschriftung und das Feld dahinter bleiben beisammen."""
 
-    def __init__(self, abstand: int = 6):
+    def __init__(self, abstand: int = 6, zentriert: bool = False):
+        """``zentriert``: jede Zeile steht für sich mittig (Standard: linksbündig)."""
         super().__init__()
         self._items: list = []
         self._abstand = abstand
+        self._zentriert = zentriert
 
     def addItem(self, item) -> None:
         self._items.append(item)
@@ -139,23 +141,30 @@ class FlussLayout(QLayout):
     def _lege(self, rect: QRect, setzen: bool) -> int:
         m = self.contentsMargins()
         r = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
-        x, y, zeile = r.x(), r.y(), 0
+        zeilen: list[list] = [[]]
+        x = r.x()
         for g in self._gruppen():
             gb = sum(i.sizeHint().width() for i in g) + self._abstand * (len(g) - 1)
-            gh = max(i.sizeHint().height() for i in g)
             if x > r.x() and x + gb > r.right() + 1:
-                x = r.x(); y += zeile + self._abstand; zeile = 0
+                zeilen.append([]); x = r.x()
+            zeilen[-1].append((g, gb)); x += gb + self._abstand
+        y = r.y()
+        for k, zg in enumerate(zeilen):
+            zeile = max((max(i.sizeHint().height() for i in g) for g, _ in zg), default=0)
             if setzen:
-                px = x
-                for i in g:
-                    w = i.sizeHint().width()
-                    if len(g) == 1 and w > r.width():
-                        w = r.width()
-                    i.setGeometry(QRect(QPoint(px, y), QSize(w, i.sizeHint().height())))
-                    px += w + self._abstand
-            x += gb + self._abstand
-            zeile = max(zeile, gh)
-        return y + zeile - rect.y() + m.top() + m.bottom()
+                breite = sum(gb for _, gb in zg) + self._abstand * (len(zg) - 1)
+                x = r.x() + (max(0, r.width() - breite) // 2 if self._zentriert else 0)
+                for g, gb in zg:
+                    px = x
+                    for i in g:
+                        w = i.sizeHint().width()
+                        if len(g) == 1 and w > r.width():
+                            w = r.width()
+                        i.setGeometry(QRect(QPoint(px, y), QSize(w, i.sizeHint().height())))
+                        px += w + self._abstand
+                    x += gb + self._abstand
+            y += zeile + (self._abstand if k < len(zeilen) - 1 else 0)
+        return y - rect.y() + m.top() + m.bottom()
 
 
 def abschnittstitel(text: str) -> QLabel:

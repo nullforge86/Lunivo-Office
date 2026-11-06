@@ -332,6 +332,7 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
     def _tab_changed(self, _i):
         t = self.current_tab()
         self._refresh_ui()
+        self.ki.kontext_pruefen()
         if t:
             t.editor.setFocus()
             t.editor._recount()
@@ -376,7 +377,11 @@ class MainWindow(DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, Backs
         e.document().modificationChanged.connect(lambda _m: self._update_tab_titles())
         e.document().contentsChanged.connect(self._sync_status)
         e.document().contentsChanged.connect(self.assistant.dokument_geaendert)
+        for sig in (e.selectionChanged, e.document().contentsChanged):       # KI-Chat: Markierung/leeres Dokument (nur der aktuelle Editor zählt)
+            sig.connect(lambda ed=e: ed is self.current_editor() and self.ki.kontext_pruefen())
         e.document().contentsChanged.connect(self.navigation.spaeter)
+        e.document().contentsChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("absatz"))        # fortlaufende KI-Assistenten
+        e.selectionChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("markierung"))
         e.opt = lambda name, std=True: self.settings.get_bool(name, std)
         e.opt_text = lambda name, std="": self.settings.get(name, std)
         e.autor = self.autor_angaben

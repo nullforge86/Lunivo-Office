@@ -6,6 +6,7 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 
 | Klasse | Basis | Datei |
 |---|---|---|
+| `SymbolKnopf` | DropdownKnopf | `ui/baukasten/chat_blase.py` |
 | `Auswahlfeld` | QComboBox, _Feldlaenge | `ui/baukasten/dropdown/auswahlfeld.py` |
 | `Schriftauswahl` | QFontComboBox, _Feldlaenge | `ui/baukasten/dropdown/auswahlfeld.py` |
 | `DiagrammPopup` | MenueListe | `ui/baukasten/dropdown/diagramm_popups.py` |
@@ -20,14 +21,17 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 | `RahmenMenue` | MenueListe | `ui/baukasten/dropdown/rahmen_menue.py` |
 | `RasterAuswahl` | MenueListe | `ui/baukasten/dropdown/raster_auswahl.py` |
 | `_Auffrischend` | MenueListe | `ui/baukasten/dropdown/smartart_menues.py` |
+| `SymbolWahl` | DropdownTaste | `ui/baukasten/dropdown/symbol_auswahl.py` |
 | `VoreinstellungMenue` | MenueListe | `ui/baukasten/dropdown/voreinstellung_menue.py` |
 | `ZellenRaster` | MenueListe | `ui/baukasten/dropdown/zellen_raster.py` |
-| `FlacheReiterLeiste` | QTabBar, ReiterUeberlauf | `ui/baukasten/flache_reiter_leiste.py` |
+| `FlacheReiterLeiste` | QTabBar, ReiterDropdown | `ui/baukasten/flache_reiter_leiste.py` |
 | `UeberlaufLeiste` | QTabBar, ReiterUeberlauf | `ui/baukasten/flache_reiter_leiste.py` |
 | `_EinfuegenPanel` | MenueListe | `ui/document/kopffuss_bearbeiter.py` |
 | `_ReiterLeiste` | UeberlaufLeiste | `ui/ribbon/ribbon_bar.py` |
+| `VorschauCombo` | Auswahlfeld | `ui/widgets/live_vorschau.py` |
+| `VorschauFontCombo` | Schriftauswahl | `ui/widgets/live_vorschau.py` |
 
-## Verwendung von `MenueListe(…` außerhalb des Pakets (91 Stellen in 31 Dateien)
+## Verwendung von `MenueListe(…` außerhalb des Pakets (96 Stellen in 34 Dateien)
 
 - `core/befehle/bearbeiten.py`: 3
 - `core/befehle/datei.py`: 1
@@ -43,7 +47,9 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 - `core/befehle/ueberpruefen.py`: 7
 - `core/befehle/verweise.py`: 1
 - `editor/formular.py`: 1
-- `ui/baukasten/flache_reiter_leiste.py`: 1
+- `ui/baukasten/chat_blase.py`: 1
+- `ui/baukasten/chat_eingabe.py`: 2
+- `ui/baukasten/flache_reiter_leiste.py`: 2
 - `ui/baukasten/formatvorlage_dialog.py`: 1
 - `ui/baukasten/objektformat_panel.py`: 1
 - `ui/dialogs/optionen_seiten/befehle.py`: 1
@@ -57,15 +63,17 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 - `ui/hauptfenster/dateien.py`: 1
 - `ui/main_window.py`: 1
 - `ui/ribbon/ribbon_bar.py`: 2
+- `ui/sidebar/panels/ai_panel.py`: 1
 - `ui/sidebar/sidebar.py`: 1
 - `ui/widgets/kontextmenue.py`: 1
 - `ui/widgets/mini_leiste.py`: 3
 
-## Verwendung von `Auswahlfeld(…` außerhalb des Pakets (122 Stellen in 47 Dateien)
+## Verwendung von `Auswahlfeld(…` außerhalb des Pakets (127 Stellen in 48 Dateien)
 
 - `core/befehle/ueberpruefen.py`: 1
 - `ui/baukasten/absatz_dialog.py`: 5
 - `ui/baukasten/bild_export.py`: 2
+- `ui/baukasten/chat_eingabe.py`: 1
 - `ui/baukasten/diagramm_format_panel.py`: 1
 - `ui/baukasten/druck_dialog.py`: 3
 - `ui/baukasten/druckvorschau.py`: 1
@@ -92,7 +100,7 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 - `ui/dialogs/einfuegen_dialoge.py`: 6
 - `ui/dialogs/einfuegen_fenster.py`: 6
 - `ui/dialogs/formular_dialog.py`: 1
-- `ui/dialogs/ki_dialoge.py`: 5
+- `ui/dialogs/ki_dialoge.py`: 9
 - `ui/dialogs/lesehilfe_dialog.py`: 1
 - `ui/dialogs/optionen_seiten/befehle.py`: 1
 - `ui/dialogs/optionen_seiten/datei.py`: 1
@@ -133,16 +141,21 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 - `ui/sidebar/sidebar.py`: 1
 - `ui/widgets/mini_leiste.py`: 2
 
-## Verwendung von `DropdownTaste(…` außerhalb des Pakets (3 Stellen in 3 Dateien)
+## Verwendung von `DropdownTaste(…` außerhalb des Pakets (4 Stellen in 4 Dateien)
 
+- `ui/baukasten/flache_reiter_leiste.py`: 1
 - `ui/baukasten/formatvorlage_dialog.py`: 1
 - `ui/dialogs/optionen_seiten/befehle.py`: 1
 - `ui/document/suchen_feld.py`: 1
 
-## Verwendung von `menue_setzen(…` außerhalb des Pakets (19 Stellen in 13 Dateien)
+## Verwendung von `menue_setzen(…` außerhalb des Pakets (25 Stellen in 18 Dateien)
 
 - `core/befehle/ueberpruefen.py`: 1
+- `ui/baukasten/chat_blase.py`: 1
+- `ui/baukasten/chat_eingabe.py`: 2
 - `ui/baukasten/dropdown/dropdown_knopf.py`: 1
+- `ui/baukasten/dropdown/symbol_auswahl.py`: 1
+- `ui/baukasten/flache_reiter_leiste.py`: 1
 - `ui/baukasten/formatvorlage_dialog.py`: 1
 - `ui/baukasten/panel_rahmen.py`: 1
 - `ui/dialogs/optionen_seiten/befehle.py`: 1
@@ -152,5 +165,6 @@ Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdo
 - `ui/document/suchen_feld.py`: 1
 - `ui/ribbon/ribbon_bar.py`: 2
 - `ui/ribbon/toolbars.py`: 1
+- `ui/sidebar/panels/ai_panel.py`: 1
 - `ui/sidebar/sidebar.py`: 1
 - `ui/widgets/mini_leiste.py`: 2

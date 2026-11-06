@@ -1,68 +1,34 @@
-"""KI-Chat in der Seitenleiste (Bereich „KI“): mehrere Runden, der Dokumenttext geht als Auskunft mit."""
+"""KI-Chat in der Seitenleiste (Bereich „KI“): nur Verdrahtung — Zustand und Logik liegen im Dienst (``dienst.chat_modell``), die Bausteine in ``ui/baukasten/chat_*.py``."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QHBoxLayout, QPlainTextEdit, QFrame, QLabel, QLineEdit, QPushButton, QScrollArea, QSlider, QToolButton, QVBoxLayout, QWidget,
-)
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
-from lunivo_writer.ai import ki as K
-from lunivo_writer.ui.baukasten.beschriftung import text_label
-from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout
-
-
-
-
-from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.chat_blase import FehlerKarte, KiBlase, NutzerBlase
+from lunivo_writer.ui.baukasten.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar
+from lunivo_writer.ui.baukasten.chat_leerzustand import ChatLeerzustand
+from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, RAND_KEIN
 from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
-from lunivo_writer.ui.baukasten.mass import (
-    ABSTAND_KLEIN,
-    ABSTAND_MITTEL,
-    HOEHE_EINGABE_TEXT,
-    HOEHE_LISTE_MITTEL,
-    ICON_NORMAL,
-    RAND_KEIN,
-)
-class ChatEingabe(QPlainTextEdit):
-    """Mehrzeiliges Eingabefeld für den Chat: Enter schickt ab, Umschalt+Enter macht eine neue Zeile. ``text()``/``setText()`` wie beim Einzeiler."""
-    abgeschickt = Signal()
-
-    def __init__(self):
-        super().__init__()
-        self.setPlaceholderText("Frage an die KI …")
-        self.setMinimumHeight(HOEHE_EINGABE_TEXT)
-        self.setTabChangesFocus(True)
-
-    def keyPressEvent(self, e) -> None:
-        if e.key() in (Qt.Key_Return, Qt.Key_Enter) and not (e.modifiers() & Qt.ShiftModifier):
-            self.abgeschickt.emit()
-            return
-        super().keyPressEvent(e)
-
-    def text(self) -> str:
-        return self.toPlainText()
-
-    def setText(self, t: str) -> None:
-        self.setPlainText(t)
-        self.moveCursor(QTextCursor.End)
+from lunivo_writer.ui.baukasten.texte import hinweis_label
 
 
 class ChatPanel(QWidget):
-    """KI-Chat: Kopf („KI-Chat“, Einstellungen, Schließen), Verlauf, darunter Eingabe mit Senden; Bild und Neu als kleine Knöpfe.
-    Ohne verbundenes Modell steht statt des Verlaufs der Hinweis „KI-Modell verbinden“ mit dem Weg zu den KI-Einstellungen."""
+    """KI-Chat: Kopf (Neues Gespräch, Verlauf, KI-Einstellungen, Schließen), darunter je nach Phase Leerzustand mit Chips oder Nachrichten, Eingabekasten (mit Befehlen, Modell, Fußzeile). Ohne verbundenes Modell steht der Hinweis „KI-Modell verbinden“ mit dem Weg zu den KI-Einstellungen, die Eingabe ist gesperrt."""
     zurueck = Signal()
 
     def __init__(self, dienst, fenster):
         super().__init__()
         self.d, self.w = dienst, fenster
-        self.verlauf: list[dict] = []
+        self._phase = "leer"
         aussen = QVBoxLayout(self); aussen.setContentsMargins(*RAND_KEIN); aussen.setSpacing(0)
-        rahmen = PanelRahmen("KI-Chat", knoepfe=(("settings", "KI-Einstellungen", self._einstellungen),))      # Kopfzeile, Titel und Ränder aus dem gemeinsamen Rahmen
+        rahmen = PanelRahmen("KI-Chat", knoepfe=(("plus", "Neues Gespräch", self._neu), ("clock", "Verlauf", lambda: None),
+                                                 ("settings", "KI-Einstellungen", self._einstellungen)))
         rahmen.schliessen.connect(self.zurueck.emit)
+        self.neu_knopf, self.verlauf_knopf = rahmen.knoepfe[0], rahmen.knoepfe[1]
+        self.verlauf_menue = MenueListe(self.verlauf_knopf)
+        self.verlauf_menue.aboutToShow.connect(self._verlauf_fuellen)
+        self.verlauf_knopf.menue_setzen(self.verlauf_menue, geteilt=False)
         aussen.addWidget(rahmen)
         v = rahmen.inhalt
         # Hinweis, solange kein Modell verbunden ist
@@ -72,180 +38,113 @@ class ChatPanel(QWidget):
         hb = QPushButton("KI-Einstellungen …"); hb.clicked.connect(self._einstellungen)
         hv.addWidget(hb, 0, Qt.AlignLeft)
         v.addWidget(self.hinweis)
-        self.leer = QWidget()                                  # nimmt den Platz ein, solange nur der Hinweis dasteht
-        v.addWidget(self.leer, 1)
-        # Verlauf
-        self.blasen = QVBoxLayout()
-        self.blasen.setAlignment(Qt.AlignTop)
+        # Leerzustand (Chips) oder Nachrichten
+        self.leerzustand = ChatLeerzustand(dienst)
+        self.leerzustand.gewaehlt.connect(lambda t: self.eingabe.setText(t))
+        v.addWidget(self.leerzustand, 1)
+        self.blasen = QVBoxLayout(); self.blasen.setAlignment(Qt.AlignTop); self.blasen.setSpacing(ABSTAND_MITTEL)
         host = QWidget(); host.setLayout(self.blasen)
-        sc = rollflaeche(host); sc.setMinimumHeight(HOEHE_LISTE_MITTEL)
-        self.scroll = sc
-        v.addWidget(sc, 1)
-        # Meine Aktionen: dieselbe Leiste wie in der Schreibhilfe
-        from lunivo_writer.ui.baukasten.aktionen_leiste import AktionenLeiste
-        self.aktionen = AktionenLeiste()
-        self.aktionen.verbinde(dienst, fenster)
-        v.addWidget(self.aktionen)
-        dienst.aktionErgebnis.connect(self._aktion_ergebnis)
+        self.scroll = rollflaeche(host)
+        v.addWidget(self.scroll, 1)
         # Eingabe
         self.eingabezeile = QWidget()
         ev = QVBoxLayout(self.eingabezeile); ev.setContentsMargins(*RAND_KEIN); ev.setSpacing(ABSTAND_KLEIN)
-        self.eingabe = ChatEingabe()
-        self.eingabe.abgeschickt.connect(self.senden)
+        self.eingabe = ChatEingabeKasten(dienst)
+        self.eingabe.senden.connect(self._senden)
+        self.eingabe.bild.connect(self._bild)
+        self.eingabe.meldung.connect(self._melden)
+        self.eingabe.stopp.connect(dienst.chat_abbrechen)
+        self.eingabe.neue_aktion.connect(lambda: self.w.befehle.tun("w.schnelleAktionErstellen"))
+        self.eingabe.neuer_assistent.connect(lambda: self.w.befehle.tun("w.kiAssistentErstellen"))
         ev.addWidget(self.eingabe)
-        self.tokens = hinweis_label("Tokens: 0", umbruch=False); self.tokens.setAlignment(Qt.AlignRight)
-        self.tokens.setToolTip("Grobe Schätzung: etwa vier Zeichen je Token")
-        self.eingabe.textChanged.connect(lambda: self.tokens.setText(f"Tokens: {(len(self.eingabe.text()) + 3) // 4}"))
-        ev.addWidget(self.tokens)
-        self._erweitert(ev)
-        z2 = FlussLayout(6)
-        senden = QPushButton("Senden"); senden.clicked.connect(self.senden)
-        z2.addWidget(senden)
-        bild = QPushButton("Bild"); bild.setFlat(True); bild.setToolTip("Aus dem Text im Feld (oder der Markierung) ein Bild erzeugen und einfügen")
-        bild.clicked.connect(self._bild)
-        neu = QPushButton("Leeren"); neu.setFlat(True); neu.setToolTip("Gespräch leeren"); neu.clicked.connect(self.leeren)
-        z2.addWidget(bild); z2.addWidget(neu)
-        for k in (senden, bild, neu):
-            pass
-        ev.addLayout(z2)
         v.addWidget(self.eingabezeile)
-        dienst.chatAntwort.connect(self._antwort)
-        dienst.geaendert.connect(self.zustand)
+        dienst.chatGeaendert.connect(self.anzeige)
+        dienst.kontextGeaendert.connect(self._kontext)
+        dienst.laeuft.connect(lambda _an: self.zustand())
+        dienst.geaendert.connect(self._geaendert)
+        self.anzeige()
+
+    # ---- Zustand -> Anzeige
+    def _geaendert(self) -> None:
+        """KI-Einstellungen oder Modell geändert: Modellfeld, Chips und Zustand neu lesen."""
+        self.eingabe.modelle_neu()
+        self.leerzustand.neu_aufbauen()
         self.zustand()
 
-    def _erweitert(self, ev: QVBoxLayout) -> None:
-        """„Erweiterte Einstellungen anzeigen“: Modell (dieselbe Wahl wie in der Modellzuweisung), Länge, Temperatur, Top P, Stoppfolgen — in der KI-Konfiguration gespeichert."""
-        from lunivo_writer.ui.dialogs.ki_dialoge import modell_combo
-        k = self.d.konfig
-        o = k.chat_optionen()
-        self.mehr = QPushButton(); self.mehr.setFlat(True); self.mehr.setCursor(Qt.PointingHandCursor)
-        ev.addWidget(self.mehr, 0, Qt.AlignLeft)
-        self.erweitert = QWidget()
-        ew = QVBoxLayout(self.erweitert); ew.setContentsMargins(*RAND_KEIN); ew.setSpacing(ABSTAND_KLEIN)
-        ew.addWidget(text_label("Modell", fett=True))
-        self.modell = modell_combo(k, "chatbot")
-        self.modell.currentIndexChanged.connect(lambda: (k.aufgabe_setzen("chatbot", self.modell.currentData() or ""), self.d.geaendert.emit()))
-        ew.addWidget(self.modell)
-
-        def regler(titel: str, tipp: str, maximum: int, wert: int, anzeige, speichern):
-            from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
-            zeile = QWidget(); g = FormularGitter(zeile); g.setContentsMargins(*RAND_KEIN)
-            zahl = QLabel(anzeige(wert)); zahl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            g.zeile(text_label(titel, fett=True), zahl)
-            sl = QSlider(Qt.Horizontal); sl.setRange(0, maximum); sl.setValue(wert); sl.setToolTip(tipp)
-            sl.valueChanged.connect(lambda v: (zahl.setText(anzeige(v)), speichern(v)))
-            g.breit(sl)
-            ew.addWidget(zeile)
-            return sl
-        self.s_laenge = regler("Maximale Länge", "0 = Vorgabe des Anbieters", 4096, int(o["maxLaenge"]),
-                               lambda v: str(v) if v else "Standard", lambda v: k.chat_setzen(maxLaenge=v))
-        self.s_temp = regler("Temperatur", "Niedrig = sachlich und gleichbleibend, hoch = freier. Gilt für Ollama und eigene Anbieter.", 20,
-                             int(round(float(o["temperatur"]) * 10)), lambda v: f"{v / 10:g}", lambda v: k.chat_setzen(temperatur=v / 10))
-        self.s_top = regler("Top P", "Wie viele der wahrscheinlichsten Wörter zur Wahl stehen. Gilt für Ollama und eigene Anbieter.", 10,
-                            int(round(float(o["topP"]) * 10)), lambda v: f"{v / 10:g}", lambda v: k.chat_setzen(topP=v / 10))
-        ew.addWidget(text_label("Stoppfolgen", fett=True))
-        self.stopp = QLineEdit(str(o["stopp"])); self.stopp.setPlaceholderText("durch Komma getrennt")
-        self.stopp.textChanged.connect(lambda t: k.chat_setzen(stopp=t))
-        ew.addWidget(self.stopp)
-        self.direkt = UmbruchSchalter("Antwort direkt ins Dokument einfügen"); self.direkt.setChecked(bool(o["direkt"]))
-        self.direkt.toggled.connect(lambda an: k.chat_setzen(direkt=an))
-        ew.addWidget(self.direkt)
-        ev.addWidget(self.erweitert)
-
-        def umschalten(an: bool) -> None:
-            self.erweitert.setVisible(an)
-            self.mehr.setText("Erweiterte Einstellungen ausblenden" if an else "Erweiterte Einstellungen anzeigen")
-            self.mehr.setIcon(icons.icon("chevron-up" if an else "chevron-down", ICON_NORMAL))
-        self.mehr.clicked.connect(lambda: umschalten(not self.erweitert.isVisible()))
-        umschalten(False)
-        self.d.geaendert.connect(self._modelle_neu)
-
-    def _modelle_neu(self) -> None:
-        """Nach einer Änderung in den KI-Einstellungen die Modellliste dieser Auswahl neu füllen."""
-        from lunivo_writer.ui.dialogs.ki_dialoge import modell_combo
-        neu = modell_combo(self.d.konfig, "chatbot")
-        self.modell.blockSignals(True)
-        self.modell.clear()
-        for i in range(neu.count()):
-            self.modell.addItem(neu.itemText(i), neu.itemData(i))
-        self.modell.setCurrentIndex(max(0, self.modell.findData(self.d.konfig["aufgaben"].get("chatbot", ""))))
-        self.modell.blockSignals(False)
+    def _kontext(self) -> None:
+        """Markierung oder Dokumentinhalt haben sich geändert: Chips neu, Ersetzen-Knöpfe nachziehen."""
+        self.leerzustand.neu_aufbauen()
+        self.zustand()
+        for i in range(self.blasen.count()):
+            w = self.blasen.itemAt(i).widget()
+            if isinstance(w, KiBlase):
+                w.kontext_neu()
 
     def zustand(self) -> None:
-        """Verlauf und Eingabe gibt es erst mit einem verbundenen Modell."""
-        da = self.d.verfuegbar()
-        self.hinweis.setVisible(not da)
-        self.leer.setVisible(not da)
-        self.scroll.setVisible(da)
-        self.eingabezeile.setVisible(da)
+        """Verbunden ja/nein, Phase und Beschäftigung bestimmen, was sichtbar und bedienbar ist."""
+        verbunden = self.d.kontext()[2]
+        phase = self.d.chat_modell.phase
+        self.hinweis.setVisible(not verbunden)
+        self.leerzustand.setVisible(phase == "leer")
+        self.scroll.setVisible(phase != "leer")
+        self.neu_knopf.setVisible(phase != "leer")
+        self.verlauf_knopf.setEnabled(True)
+        self.eingabe.zustand_setzen(verbunden, self.d.beschaeftigt)
+
+    def anzeige(self) -> None:
+        """Nachrichten aus ``dienst.chat_modell`` neu aufbauen."""
+        m = self.d.chat_modell
+        while self.blasen.count():
+            it = self.blasen.takeAt(0)
+            w = it.widget()
+            if w is not None:
+                w.hide(); w.setParent(None); w.deleteLater()
+        for i, n in enumerate(m.nachrichten):
+            if n["rolle"] == "mensch":
+                b = NutzerBlase(n["text"], n.get("bilder")); b.inEingabe.connect(self.eingabe.setText)
+            elif n.get("fehler"):
+                b = FehlerKarte(self.d, n["fehler"]); b.einstellungen.connect(self._einstellungen)
+            else:
+                b = KiBlase(self.d, n["text"], n.get("cent"), i); b.meldung.connect(self._melden)
+            self.blasen.addWidget(b)
+        if m.phase == "laufend":
+            self.blasen.addWidget(hinweis_label("Die KI schreibt …", klein=True))
+        if self._phase == "laufend" and m.phase == "bereit" and self.d.konfig.chat_optionen()["direkt"]:
+            ok, meldung = self.d.antwort_einfuegen(len(m.nachrichten) - 1)           # Option „direkt ins Dokument einfügen“ (derselbe Weg wie der Knopf)
+            if not ok:
+                self._melden(meldung)
+        self._phase = m.phase
+        self.zustand()
+        QTimer.singleShot(0, lambda: self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum()))
+
+    # ---- Aktionen
+    def _verlauf_fuellen(self) -> None:
+        self.verlauf_menue.clear()
+        for i, g in enumerate(self.d.chat_modell.gespraeche):
+            self.verlauf_menue.eintrag(g["titel"], lambda i=i: self._gespraech(i))
+        if not self.d.chat_modell.gespraeche:
+            self.verlauf_menue.eintrag("Noch keine früheren Gespräche", aktiv=False)
+
+    def _gespraech(self, index: int) -> None:
+        if self.d.chat_modell.gespraech_laden(index):
+            self._phase = self.d.chat_modell.phase
+            self.d.chatGeaendert.emit()
+
+    def _neu(self) -> None:
+        self.eingabe.anhang_entfernen()
+        self.d.chat_neu()
 
     def _einstellungen(self) -> None:
         self.w.befehle.tun("w.kiEinstellungen")             # derselbe Befehl wie in Band und Schreibhilfe, kein zweites Öffnen
         self.d.geaendert.emit()
 
-    def _blase(self, text: str, ki: bool, cent=None) -> None:
-        f = QFrame(); f.setFrameShape(QFrame.StyledPanel)
-        als_karte(f, "ki" if ki else "markiert")
-        l = QVBoxLayout(f)
-        t = text_label(text)
-        t.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        l.addWidget(t)
-        if ki and not text.startswith("⚠"):
-            z = FlussLayout(6)
-            for name, fn in (("Kopieren", lambda: QApplication.clipboard().setText(text)),
-                             ("Einfügen", lambda: self._einfuegen(text)),
-                             ("Ersetzen", lambda: self._ersetzen(text))):
-                b = QPushButton(name); b.clicked.connect(fn); z.addWidget(b)
-            if cent is not None:
-                z.addWidget(QLabel(K.als_geld(cent)))
-            l.addLayout(z)
-        self.blasen.addWidget(f)
-        self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum() + 200)
+    def _melden(self, text: str) -> None:
+        self.w.lbl_msg.setText(text)
 
-    def _einfuegen(self, text):
-        e = self.w.current_editor()
-        if e is not None:
-            e.textCursor().insertText(text)
+    def _senden(self, text: str) -> None:
+        if self.d.chat_senden(text, self.eingabe.anhang()):
+            self.eingabe.leeren()
 
-    def _ersetzen(self, text):
-        e = self.w.current_editor()
-        if e is not None and e.textCursor().hasSelection():
-            e.textCursor().insertText(text)
-        else:
-            self.w.lbl_msg.setText("Zum Ersetzen zuerst die Stelle im Text markieren.")
-
-    def senden(self):
-        t = self.eingabe.text().strip()
-        if not t:
-            return
-        self.eingabe.clear()
-        self.verlauf.append({"rolle": "mensch", "text": t})
-        self._blase(t, False)
-        self.d.chat(list(self.verlauf))
-
-    def _bild(self):
-        t = self.eingabe.text().strip()
-        self.eingabe.clear()
-        if t:
-            self._blase("Bild: " + t, False)
-        self.d.bild_aus_text(t or None)
-
-    def _aktion_ergebnis(self, name: str, text: str, cent) -> None:
-        """Das Ergebnis einer Schnellen KI-Aktion steht im Chat wie eine Antwort (und ist Teil des Gesprächs)."""
-        self.verlauf.append({"rolle": "mensch", "text": f"Aktion „{name}“ auf den Text anwenden."})
-        self.verlauf.append({"rolle": "ki", "text": text})
-        self._blase(f"„{name}“: {text}", True, cent)
-
-    def _antwort(self, text: str, cent) -> None:
-        if not text.startswith("⚠"):
-            self.verlauf.append({"rolle": "ki", "text": text})
-        self._blase(text, True, cent)
-        if self.direkt.isChecked() and not text.startswith("⚠"):
-            self._einfuegen(text)
-
-    def leeren(self):
-        self.verlauf.clear()
-        while self.blasen.count():
-            it = self.blasen.takeAt(0)
-            if it.widget():
-                it.widget().deleteLater()
+    def _bild(self, text: str) -> None:
+        self.eingabe.leeren()
+        self.d.bild_aus_text(text or None)

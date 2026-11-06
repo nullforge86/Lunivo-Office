@@ -388,7 +388,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if ki is not None and self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
             m.eintrag("KI: Text in Bild", ki.bild_aus_text)
-            aktionen = [a for a in ki.konfig["assistenten"] if a.get("zugriff", "kontext") == "kontext"]
+            aktionen = [a for a in ki.konfig.assistenten("aktion") if a.get("zugriff", "kontext") == "kontext"]
             if aktionen:
                 sub = m.untermenue("KI-Aktionen")
                 for a in aktionen:

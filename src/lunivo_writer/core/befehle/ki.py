@@ -8,9 +8,9 @@ class KIBefehle:
     """Befehle des Bandes: KI, Vorlesen. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``)."""
 
 
-    # ---- KI: eigene Assistenten ----------------------------------------------------------------------------------------
-    def w_assistentErstellen(self, k=None):
-        """„Schnelle KI-Aktion erstellen“ — dasselbe wie „Eigenen Assistenten erstellen“: ein Eintrag in der Liste der Assistenten."""
+    # ---- KI: Schnelle KI-Aktionen und fortlaufende Assistenten -----------------------------------------------------------
+    def w_schnelleAktionErstellen(self, k=None):
+        """„Schnelle KI-Aktion erstellen“: ein Eintrag (art „aktion“) in der Liste der Assistenten."""
         from lunivo_writer.ui.dialogs.ki_dialoge import SchnelleAktionDialog
         d = SchnelleAktionDialog(self.w)
         if d.exec():
@@ -19,24 +19,44 @@ class KIBefehle:
             self.w.statusBar().showMessage(f"Aktion „{e['name']}“ angelegt (KI ▸ Eigene Assistenten).", 5000)
 
 
+    def w_kiAssistentErstellen(self, k=None):
+        """„Neuen Assistenten erstellen“: das Fenster ``KIAssistentDialog`` (ui/dialogs/ki_dialoge.py); ``werte()`` liefert die Felder für
+        ``konfig.assistent_hinzufuegen(name, prompt, modus, **mehr)`` mit ``art="fortlaufend"``."""
+        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.dialogs.ki_dialoge import KIAssistentDialog
+        d = KIAssistentDialog(self.w)
+        if ausfuehren(d):
+            name, prompt, modus, mehr = d.werte()
+            e = self.w.ki.konfig.assistent_hinzufuegen(name, prompt, modus, art="fortlaufend", **mehr)
+            self.w.ki.geaendert.emit()
+            self.w.statusBar().showMessage(f"Assistent „{e['name']}“ angelegt (KI ▸ Assistenten).", 5000)
+
+
     def menue_assistenten(self):
-        """Das Menü „KI-Aktionen“: die eigenen Schnellen KI-Aktionen, neue anlegen, entfernen und alle bisherigen Ergebnisse."""
+        """Das Menü „KI-Aktionen“: Schnelle KI-Aktionen und fortlaufende Assistenten (mit Haken an/aus) getrennt, neu anlegen, entfernen, Ergebnisse."""
         from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
         def fuellen():
             m.clear()
-            liste = self.w.ki.konfig["assistenten"]
-            for a in liste:
-                m.eintrag(a["name"], lambda a=a: self.w.ki.assistent(a))
-            if not liste:
+            ki = self.w.ki
+            aktionen, laufend = ki.konfig.assistenten("aktion"), ki.konfig.assistenten("fortlaufend")
+            for a in aktionen:
+                m.eintrag(a["name"], lambda a=a: ki.assistent(a))
+            if not aktionen:
                 m.eintrag("Noch keine eigenen KI-Aktionen", aktiv=False)
             m.addSeparator()
-            m.eintrag("Neue Schnelle KI-Aktion …", self.w_assistentErstellen)
-            if liste:
-                entf = m.untermenue("KI-Aktion entfernen")
-                for a in liste:
-                    entf.eintrag(a["name"], lambda a=a: (self.w.ki.konfig.assistent_entfernen(a["id"]), self.w.ki.geaendert.emit()))
+            m.eintrag("Neue Schnelle KI-Aktion …", self.w_schnelleAktionErstellen)
+            m.addSeparator()
+            m.eintrag(("✓ " if ki.dauerbetrieb() else "") + "Fortlaufende Assistenten", lambda: ki.dauerbetrieb_setzen(not ki.dauerbetrieb()))
+            for a in laufend:
+                m.eintrag(("✓ " if a["an"] else "") + a["name"], lambda a=a: ki.assistent_an_setzen(a["id"], not a["an"]))
+            m.eintrag("Neuen Assistenten erstellen …", self.w_kiAssistentErstellen)
+            alle = aktionen + laufend
+            if alle:
+                entf = m.untermenue("Entfernen")
+                for a in alle:
+                    entf.eintrag(a["name"], lambda a=a: (ki.konfig.assistent_entfernen(a["id"]), ki.geaendert.emit()))
             m.addSeparator()
             m.eintrag("Alle Ergebnisse anzeigen", self.w_kiErgebnisse)
         m.aboutToShow.connect(fuellen)

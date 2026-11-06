@@ -349,7 +349,7 @@ class BearbeitenBaustein:
     def ki_schnell_zeigen(self) -> None:
         """Die Schnellen KI-Aktionen mit Zugriff „Schnellzugriff“ in der Schnellzugriffsleiste zeigen."""
         if hasattr(self.band, "ki_schnell"):
-            self.band.ki_schnell([a for a in self.ki.konfig["assistenten"] if a.get("zugriff") == "schnell"], self.ki.assistent)
+            self.band.ki_schnell([a for a in self.ki.konfig.assistenten("aktion") if a.get("zugriff") == "schnell"], self.ki.assistent)
 
 
     # ==== Seite ==================================================================================

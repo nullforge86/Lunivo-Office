@@ -539,7 +539,9 @@ DROPDOWN_FARBKACHEL = 18        # Seitenlänge einer Farbkachel in der Palette
 DROPDOWN_BREITE_SCHRIFT_BAND = 130           # Schriftname im Band
 DROPDOWN_BREITE_GROESSE_BAND = 62            # Schriftgröße im Band
 DROPDOWN_BREITE_GROESSE_DIALOG = 70          # Schriftgröße im Fenster
+CHAT_MODELL_BREITE = 90          # Mindestbreite des Modellfelds im Eingabekasten
 DROPDOWN_BREITE = {
+    ("modell", "chat"): CHAT_MODELL_BREITE,       # Modellfeld im Eingabekasten des KI-Chats (Mindestbreite)
     ("schrift", "band"): DROPDOWN_BREITE_SCHRIFT_BAND, ("schrift", "leiste"): BREITE_SCHRIFTAUSWAHL_LEISTE, ("schrift", "mini"): BREITE_SCHRIFTAUSWAHL_MINILEISTE,
     ("groesse", "band"): DROPDOWN_BREITE_GROESSE_BAND, ("groesse", "leiste"): BREITE_REGLER_MIN, ("groesse", "mini"): BREITE_SCHRIFTGROESSE_MINILEISTE,
     ("groesse", "dialog"): DROPDOWN_BREITE_GROESSE_DIALOG,
@@ -573,3 +575,28 @@ DROPDOWN_INNEN_FORM = 3         # Rand des Formbildes und der Strichart-Kachel
 DROPDOWN_INNEN_OBJEKT = 2       # Rand der Objekt-Kachel
 DROPDOWN_INNEN_KOPF = 7         # seitlicher Rand im Kopf-Dropdown
 DROPDOWN_LINIE_HALB = 0.5      # halbe Strichbreite: Rahmen einer 1-px-Linie liegt mittig auf dem Pixel
+
+# KI-Chat (Eingabekasten, Blasen, Leerzustand) — Maße nur hier
+RADIUS_EINGABEKASTEN = 12        # Eingabekasten des Chats
+CHAT_SENDEN = 36                 # runder Senden-/Stopp-Knopf
+CHAT_KNOPF = 36                  # Symbolknöpfe in Blasen und im Eingabekasten
+CHAT_EINGABE_MIN = 56            # Mindesthöhe des Textfelds im Eingabekasten
+CHAT_EINGABE_MAX = 140           # darüber rollt das Textfeld
+CHAT_LEER_ICON = 48              # Symbol im Leerzustand
+CHAT_MINIATUR = 72               # Bildvorschau in der Nutzerblase (längste Seite)
+CHAT_VORSCHAU_MAX = 150          # Änderungsvorschau in der Chat-Antwort: höher wächst sie nicht, dann rollt sie
+AENDERUNG_DECKKRAFT = 70         # Hintergrund entfernter/neuer Stücke (0–255)
+CHAT_ANHANG_MINIATUR = 28        # Bildvorschau im Anhang-Chip über dem Textfeld
+CHAT_ANHANG_ZEICHEN = 22         # Dateiname im Anhang-Chip: so viele Zeichen, dann gekürzt
+
+# Chat: Chips, Kippschalter, Menüzeile mit Schalter
+CHAT_CHIP_HOEHE = 26             # flache Vorschlags-Pille (Vorlage: dünner Rand, kleine Schrift)
+KIPP_BREITE = 28                 # kleiner Kippschalter (Schalter-Zeile im Menü)
+KIPP_HOEHE = 16
+KIPP_KNOPF_RAND = 2              # Abstand des runden Knopfs zum Rand der Schiene
+
+GROESSE_SYMBOLWAHL = (56, 36)   # Knopf der Symbolwahl (Symbol + Pfeil) neben dem Namensfeld
+GROESSE_SYMBOLWAHL_KACHEL = (36, 36)   # Kachel im Aufklappraster der Symbolwahl
+GEWICHT_SYMBOL_NAME = (1, 5)   # Breitenverhältnis Symbolwahl : Namensfeld in Erstellen-Fenstern
+NAME_MAX_ZEICHEN = 40   # längster Name einer Aktion / eines Assistenten
+REITER_DROPDOWN_RAND = 2          # Abstand oben/unten um das Dropdown, das eine zu schmale Reiterleiste ersetzt

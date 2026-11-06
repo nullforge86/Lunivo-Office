@@ -137,7 +137,7 @@ class ZusatzMixin:
             c.endEditBlock()
 
     # ---- Kommentare -------------------------------------------------------------------------------
-    def kommentar_neu(self, text: str) -> int | None:
+    def kommentar_neu(self, text: str, autor: str | None = None) -> int | None:
         c = self.textCursor()
         if not c.hasSelection():
             c.select(QTextCursor.WordUnderCursor)
@@ -151,6 +151,8 @@ class ZusatzMixin:
                     c.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
         kid = neue_id(self.kommentare)
         name, init = self.autor()
+        if autor:                                                     # z. B. der Name eines KI-Assistenten
+            name, init = autor, "".join(w[0] for w in autor.split()[:2]).upper()
         self.kommentare[kid] = {"autor": name, "initialen": init, "datum": datetime.datetime.now(datetime.timezone.utc)
                                 .replace(microsecond=0).isoformat(), "text": text}
         self._bereich_format(c.selectionStart(), c.selectionEnd(), {P_KOMMENTAR: kid})

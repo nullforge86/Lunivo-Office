@@ -142,6 +142,7 @@ def apply_theme(app: QApplication, mode: str) -> None:
     Farbe.SYMBOL_AUS_AKZENT = "#5d7a45"   # ausgegraute Symbole auf dem hellen Akzent (nur Mint: Hellgrün); in allen Themen gleich
     # Mint: der Kopf ist hellgrün, der Kontext-Reiter dunkel mit grüner Schrift (sonst wäre er auf dem Grün unsichtbar)
     Farbe.KONTEXT, Farbe.KONTEXT_TEXT, Farbe.KONTEXT_SCHRIFT = (AUF_AKZENT, AUF_AKZENT, MINT_FARBEN["akzent"]) if _MINT else (None, "#9cc4f0", "#ffffff")
+    Farbe.ENTFERNT, Farbe.NEU = (Farbe.ROT_HELL, Farbe.GRUEN_HELL) if mode == "dark" else (Farbe.ROT, Farbe.GRUEN)     # Änderungsvorschau (Mint ist hell)
     _setze(app, mode)
     Farbe.HINWEIS = app.palette().color(QPalette.Mid).name()     # Mid der Palette des Themas (Mint: MINT_FARBEN["grau"])
     _stil(app)
@@ -215,9 +216,12 @@ QPushButton[feldknopf="true"] { text-align: left; padding: """ f"{PADDING_FELDKN
 QPushButton[hervorgehoben="true"] { background: %(akzent)s; color: white; border-color: %(akzent)s; }
 QPushButton[hervorgehoben="true"]:hover { border-color: %(text)s; }
 QToolButton[kachel="true"]:checked { background: %(weich)s; border: 1px solid %(akzent)s; }
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit { border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_FELD}" """px; padding: """ f"{PADDING_EINGABEFELD_GLOBAL}" """;
+/* EINGABEFELD: eine Regelgruppe für alle Eingabefelder (Rahmen, Radius, Fläche, Innenabstand, Fokus, deaktiviert). Mehrzeilig: QPlainTextEdit; QTextEdit nur mit Eigenschaft eingabefeld=true
+   (der Dokument-Editor und Vorschauflächen sind QTextEdit und bleiben ohne Rahmen). Ausnahme Chat-Eingabekasten: Regel karte="eingabe" weiter unten. */
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextEdit[eingabefeld="true"] { border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_FELD}" """px; padding: """ f"{PADDING_EINGABEFELD_GLOBAL}" """;
     background: %(feld)s; selection-background-color: %(akzent)s; selection-color: white; }
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: %(akzent)s; }
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus, QTextEdit[eingabefeld="true"]:focus { border-color: %(akzent)s; }
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled, QPlainTextEdit:disabled, QTextEdit[eingabefeld="true"]:disabled { color: %(grau)s; }
 QComboBox::drop-down { border: none; width: 20px; }
 QComboBox::down-arrow { image: url(%(pfeil_unten)s); width: 10px; height: 10px; }
 QSpinBox::up-button, QDoubleSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::down-button { border: none; width: 16px; background: transparent; }
@@ -302,8 +306,8 @@ QWidget#dokLeiste { background: %(dokleiste)s; }
 FlacheReiterLeiste QToolButton { border: none; background: transparent; padding: 0; }          /* die dezenten Rollpfeile der flachen Reiterleiste */
 QToolButton#menueKnopf:checked { color: %(akzent)s; }
 *[seitenKarte="true"] { background: %(tafel)s; }                                       /* alle Seitenleisten-Panels (links und rechts, alle Themen): EINE Regel */
-*[seitenKarte="true"] QAbstractScrollArea { background: transparent; border: none; }          /* ein homogener Kasten, keine Fläche im Kasten */
-*[seitenKarte="true"] QAbstractScrollArea > QWidget > QWidget { background: transparent; }
+*[seitenKarte="true"] QAbstractItemView, *[seitenKarte="true"] QScrollArea, *[seitenKarte="true"] QTextBrowser { background: transparent; border: none; }          /* ein homogener Kasten, keine Fläche im Kasten */
+*[seitenKarte="true"] QAbstractItemView > QWidget > QWidget, *[seitenKarte="true"] QScrollArea > QWidget > QWidget { background: transparent; }
 QPushButton#optFertig, QPushButton#sfSpeichern { background: %(akzent)s; color: %(auf_akzent)s; }
 QPushButton#optFertig:hover, QPushButton#sfSpeichern:hover { background: %(akzent_hover)s; }
 *[akzentSchrift="true"] { color: %(akzent)s; }
@@ -312,6 +316,7 @@ QToolButton[akzentSchrift="true"]:checked { background: transparent; color: %(ak
 *[akzentFlaeche="true"] { background: %(akzent)s; color: %(auf_akzent)s; }
 #kfPanel QRadioButton::indicator:checked { background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 %(akzent)s, stop:0.5 %(akzent)s, stop:0.6 %(kf_papier)s, stop:1 %(kf_papier)s); border-color: %(akzent)s; }
 #kfPanel QPushButton { background: %(akzent)s; color: %(auf_akzent)s; }
+QFrame[karte="eingabe"] QPlainTextEdit, QFrame[karte="eingabe"] QComboBox, QFrame[karte="eingabe"] QComboBox:disabled, QFrame[karte="eingabe"] QPlainTextEdit:disabled { border: none; background: transparent; }          /* Chat-Eingabekasten: der Rahmen gehört dem Kasten */
 """
 
 
@@ -340,10 +345,9 @@ QToolButton#menueKnopf { color: %(auf_akzent)s; }
 QToolButton#menueKnopf:checked { color: %(auf_akzent)s; }
 QScrollArea[tafel="true"], QScrollArea[tafel="true"] > QWidget > QWidget { background: %(tafel)s; }
 *[seitenKarte="true"] { border: %(luft)s solid %(bg)s; border-radius: %(radius)s; background-clip: padding; }          /* Mint: zusätzlich als Karte mit Rand */
-QPushButton, QComboBox, QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit { border-radius: %(radius_klein)s; border-color: %(karte)s; }
+QPushButton, QComboBox, QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit[eingabefeld="true"] { border-radius: %(radius_klein)s; }
 QPushButton { border-color: %(hover)s; }
 QPushButton:default { border-color: %(akzent)s; }
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: %(akzent)s; }
 QToolButton { border-radius: %(radius_klein)s; }
 QMenu, QFrame[dropdownFenster], QComboBox QAbstractItemView { border-radius: %(radius)s; border-color: %(hover)s; }
 QMenu::item, QComboBox QAbstractItemView::item { border-radius: %(radius_klein)s; }
@@ -376,7 +380,7 @@ def _stil(app: QApplication) -> None:
     f["kf_papier"] = Farbe.PAPIER
     f["kf_leiste"], f["kf_leiste_rand"], f["kf_gitter"], f["kf_tinte"] = Farbe.LEISTE, Farbe.LEISTE_RAND, Farbe.GITTER, Farbe.TINTE     # Knöpfe auf dem Papier: unabhängig vom Thema
     from lunivo_writer.ui.baukasten.karte import karte_regeln
-    qss = QSS % f + karte_regeln(f["akzent"], f["akzent"], Farbe.GRAU)           # Karten/Zeilen: eine Quelle (baukasten/karte.py)
+    qss = QSS % f + karte_regeln(f["akzent"], f["akzent"], Farbe.GRAU, Farbe.ROT_HELL if _ist_dunkel(app) else Farbe.ROT)           # Karten/Zeilen: eine Quelle (baukasten/karte.py)
     if _MINT:
         qss += MINT_QSS % f
     if app.styleSheet() != qss:                                    # unverändert: nichts neu auswerten lassen
