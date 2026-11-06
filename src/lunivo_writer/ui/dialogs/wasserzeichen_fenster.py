@@ -35,7 +35,8 @@ def _titel(text: str, feld) -> QLabel:
 
 
 def _feld(w, breite: int = 0):
-    w.setMinimumHeight(HOEHE_KNOPF)
+    if not isinstance(w, QComboBox):                        # Dropdowns bekommen ihre Höhe vom Baustein (DROPDOWN_HOEHE)
+        w.setMinimumHeight(HOEHE_KNOPF)
     if breite:
         w.setMinimumWidth(breite)
     return w

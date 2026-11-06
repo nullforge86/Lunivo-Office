@@ -307,7 +307,7 @@ class UeberlaufLeiste(ReiterUeberlauf, QTabBar):
         return int(self.platz()) if self.platz else self.width()
 
     def _versteckte(self) -> list[int]:
-        return [i for i in range(self.count()) if self._will[i] and not QTabBar.isTabVisible(self, i)]
+        return [i for i in range(min(self.count(), len(self._will))) if self._will[i] and not QTabBar.isTabVisible(self, i)]      # Qt fragt die Größe, bevor ``tabInserted`` den Reiter eingetragen hat
 
     def neu_verteilen(self) -> None:
         if self._im_verteilen or len(self._will) != self.count():

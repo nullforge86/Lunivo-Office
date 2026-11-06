@@ -8,6 +8,7 @@ from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
+from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.mass import (
@@ -16,7 +17,6 @@ from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_KLEIN,
     GROESSE_RASTERKACHEL_RAND,
     GROESSE_RASTER_STANDARD_KACHEL,
-    PADDING_RASTER_FUSSKNOPF,
     RAND_PANEL_KLEIN,
     RAND_RASTER_FUSS,
 )
@@ -138,7 +138,7 @@ class RasterAuswahl(MenueListe):
 
     def fuss(self, text: str, aktion: Callable) -> QPushButton:
         """Zeile unter dem Raster, z. B. „Weitere Aufzählungszeichen …“."""
-        b = QPushButton(text); b.setFlat(True); b.setStyleSheet("text-align: left; padding: " f"{PADDING_RASTER_FUSSKNOPF}" "; border: none;")
+        b = QPushButton(text); b.setFlat(True); dropdown_zeile(b)
         b.clicked.connect(lambda: (self.close(), aktion()))
         self._fuss_v.addWidget(b)
         return b

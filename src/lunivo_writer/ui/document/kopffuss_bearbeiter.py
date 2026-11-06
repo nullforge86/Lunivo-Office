@@ -31,10 +31,8 @@ from lunivo_writer.ui.baukasten.mass import (
     GROESSE_EINFUEGKNOPF,
     GROESSE_EINFUEGKNOPF_BILD,
     ICON_NORMAL,
-    PADDING_KOPFFUSS_ABSATZKNOPF,
     PADDING_KOPFFUSS_PANELKNOPF,
     PADDING_KOPFFUSS_PANELTASTE,
-    PADDING_KOPFFUSS_WERKZEUG,
     PADDING_ZAHLENFELD_KOPFFUSS,
     RADIUS_LEISTENKNOPF,
     RADIUS_RUNDE_OPTION,
@@ -45,6 +43,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_SEITENZAHL_ZEILE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 ZONEN = ("kopf", "fuss")
 _FLAG = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
@@ -53,23 +52,10 @@ _FELDER = re.compile(r"\{(PAGES|PAGE)\}")
 FORMATE = [("dezimal", "1, 2, 3 …"), ("klein", "a, b, c …"), ("gross", "A, B, C …"), ("roem_klein", "i, ii, iii …"), ("roem_gross", "I, II, III …")]
 
 
-_LEISTE_STIL = """
-#kfLeiste QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; padding: """ f"{PADDING_KOPFFUSS_ABSATZKNOPF}" """; }
-#kfLeiste QToolButton:hover { background: @GITTER; }
-#kfLeiste QToolButton::menu-indicator { image: none; width: 0px; }
-#kfLeiste QMenu, #kfAbsatz QMenu { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; }
-#kfLeiste QMenu::item:selected, #kfAbsatz QMenu::item:selected { background: @AUSWAHL_HELL; color: @TINTE; }
-#kfLeiste QMenu::item:disabled { color: @GRAU; }
-"""
-_ABSATZ_STIL = ("QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: " f"{RADIUS_LEISTENKNOPF}" "px; padding: " f"{PADDING_KOPFFUSS_WERKZEUG}" "; }"
-               "QToolButton:hover { background: @GITTER; } QToolButton::menu-indicator { image: none; width: 0px; }"
-               "QMenu { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; } QMenu::item:selected { background: @AUSWAHL_HELL; color: @TINTE; }")
 _ETIKETT_STIL = "QLabel { background: @LEISTE; color: @GRAU; border: 1px dashed @GRAU; }"
 _PANEL_STIL = """
 QWidget#kfPanel { background: @PAPIER; color: @TINTE; }
 #kfPanel QLabel, #kfPanel QRadioButton { color: @TINTE; background: transparent; }
-#kfPanel QComboBox { background: @PAPIER; color: @TINTE; border: 1px solid @LEISTE_RAND; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; padding: """ f"{PADDING_KOPFFUSS_ABSATZKNOPF}" """; }
-#kfPanel QComboBox QAbstractItemView { background: @PAPIER; color: @TINTE; selection-background-color: @BLAU_HELL; selection-color: @TINTE; }
 #kfPanel QToolButton { background: @LEISTE; color: @TINTE; border: 1px solid transparent; padding: """ f"{PADDING_KOPFFUSS_PANELKNOPF}" """; }
 #kfPanel QToolButton:checked { background: @BLAU_HELL; }
 #kfPanel QToolButton:hover { border: 1px solid @LEISTE_RAND; }
@@ -81,14 +67,6 @@ QWidget#kfPanel { background: @PAPIER; color: @TINTE; }
 def _stil(vorlage: str) -> str:
     """Stylesheet zur Laufzeit aus den Farbe-Tokens bilden (Farbe.* setzt apply_theme erst nach dem Import)."""
     return re.sub(r"@([A-Z_]+)", lambda t: getattr(Farbe, t.group(1)), vorlage)
-
-
-def leiste_stil() -> str:
-    return _stil(_LEISTE_STIL)
-
-
-def absatz_stil() -> str:
-    return _stil(_ABSATZ_STIL)
 
 
 def etikett_stil() -> str:
@@ -316,10 +294,8 @@ class _Leiste(QWidget):
         self.knopf = {}
         for schl, text, sym in (("neu", "Seitenzahl neu aufbauen", "neu"), ("format", "Seitenzahlenformat", "format"),
                                 ("loeschen", "Seitenzahl löschen", "x"), ("einfuegen", "Seitenzahl einfügen", "neu")):
-            k = QToolButton(); k.setText(text); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            k.setPopupMode(QToolButton.InstantPopup)
+            k = DropdownKnopf(); k.setText(text); k.setIcon(_symbol(sym)); k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setParent(self); self.knopf[schl] = k
-        self.setStyleSheet(leiste_stil())                        # sitzt auf dem weißen Papier: unabhängig vom Thema
         self.zahl_zeigen(True)
 
     def zahl_zeigen(self, mit: bool) -> None:
@@ -382,8 +358,8 @@ class KopfFussBearbeiter(QObject):
                 et.setStyleSheet(etikett_stil()); et.setContentsMargins(*RAND_ETIKETT)
             self.leiste = _Leiste(vp)
             from lunivo_writer.ui.widgets import icons
-            self.absatz = QToolButton(vp); self.absatz.setText("Absatz"); self.absatz.setIcon(icons.icon("pilcrow", ICON_NORMAL, Farbe.SYMBOL)); self.absatz.setStyleSheet(absatz_stil()); self.absatz.setObjectName("kfAbsatz")
-            self.absatz.setPopupMode(QToolButton.InstantPopup); self.absatz.setToolTip("Absatz")
+            self.absatz = DropdownKnopf(vp); self.absatz.setText("Absatz"); self.absatz.setIcon(icons.icon("pilcrow", ICON_NORMAL, Farbe.SYMBOL)); self.absatz.setProperty("papierKnopf", "absatz"); self.absatz.setObjectName("kfAbsatz")
+            self.absatz.setToolTip("Absatz")
             vp.installEventFilter(self)
             self._menues()
         self.aktiv = True
@@ -786,13 +762,13 @@ class KopfFussBearbeiter(QObject):
     # ---- Menüs -------------------------------------------------------------------------------------------------------
     def _menues(self) -> None:
         k = self.leiste.knopf
-        m = MenueListe(self.leiste); k["neu"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_neu(m))
-        m = MenueListe(self.leiste); k["format"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_format(m))
-        m = MenueListe(self.leiste); k["loeschen"].setMenu(m); m.aboutToShow.connect(lambda m=m: self._menue_loeschen(m))
-        self.panel = _EinfuegenPanel(self.leiste); k["einfuegen"].setMenu(self.panel)
+        m = MenueListe(self.leiste); k["neu"].menue_setzen(m, geteilt=False); m.aboutToShow.connect(lambda m=m: self._menue_neu(m))
+        m = MenueListe(self.leiste); k["format"].menue_setzen(m, geteilt=False); m.aboutToShow.connect(lambda m=m: self._menue_format(m))
+        m = MenueListe(self.leiste); k["loeschen"].menue_setzen(m, geteilt=False); m.aboutToShow.connect(lambda m=m: self._menue_loeschen(m))
+        self.panel = _EinfuegenPanel(self.leiste); k["einfuegen"].menue_setzen(self.panel, geteilt=False)
         self.panel.aboutToShow.connect(lambda: self.panel.ort_setzen(self.zone))
         self.panel.uebernommen.connect(self.seitenzahl_einfuegen)
-        m = MenueListe(self.absatz); self.absatz.setMenu(m)
+        m = MenueListe(self.absatz); self.absatz.menue_setzen(m, geteilt=False)
         m.eintrag("Absatzformat zurücksetzen", lambda: self.ausrichtung_setzen("center"))
         m.eintrag("Symbol vom Absatz-Layout ausblenden", self.absatz.hide)
 

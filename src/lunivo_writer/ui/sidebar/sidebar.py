@@ -36,6 +36,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_SEITENLEISTE_TABS,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -325,12 +326,12 @@ class SchreibhilfePanel(QWidget):
         from lunivo_writer.ui.baukasten.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
         host = QWidget(); host.setStyleSheet(FLACHE_REITER)        # dieselben flachen Reiter wie in den anderen Seitenleistenfenstern
         v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
-        titel = QToolButton(); titel.setText("Formatierung"); titel.setPopupMode(QToolButton.InstantPopup); titel.setAutoRaise(True)
+        titel = DropdownKnopf(); titel.setText("Formatierung"); titel.setAutoRaise(True)
         from lunivo_writer.ui.widgets import icons as _ic
         titel.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); titel.setIcon(_ic.icon("chevron-down", 12))           # der Pfeil „▾“ ist sichtbar: das Titelmenü
-        titel.setLayoutDirection(Qt.RightToLeft); titel.setStyleSheet("QToolButton::menu-indicator { image: none; }")   # Symbol hinter dem Text
+        titel.setLayoutDirection(Qt.RightToLeft)   # Symbol hinter dem Text
         tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 1); titel.setFont(tf)       # Titel wie in der Titelzeile der anderen Seitenleistenfenster
-        titel.setMenu(self._bereiche_menue(titel, menue_text))
+        titel.menue_setzen(self._bereiche_menue(titel, menue_text), geteilt=False)
         anheften = zusatz_knopf("pin", "Anheften: der Bereich folgt der Markierung und bleibt offen", None, "Anheften"); anheften.setCheckable(True)
         zu = zusatz_knopf("x", "Schließen", lambda: self.zeige_bereich(0))
         stretch = QWidget(); stretch.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)

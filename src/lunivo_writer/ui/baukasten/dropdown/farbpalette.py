@@ -18,7 +18,7 @@ from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_FARBKACHEL, DROPDOWN_HOEHE, DROPDOWN_INNEN_FARBE, SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
@@ -54,7 +54,7 @@ def farb_symbol(farbe: str | None, groesse: int = 14) -> QIcon:
 class _Kachel(QWidget):
     """Ein Farbfeld der Palette; meldet Überfahren und Klick an die Palette."""
 
-    def __init__(self, palette: "FarbPalette", farbe: str, seite: int = 18):
+    def __init__(self, palette: "FarbPalette", farbe: str, seite: int = DROPDOWN_FARBKACHEL):
         super().__init__()
         self._p, self.farbe, self._an = palette, farbe, False
         self.setFixedSize(seite, seite)
@@ -73,7 +73,7 @@ class _Kachel(QWidget):
 
     def paintEvent(self, e):
         p = QPainter(self)
-        r = QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_FARBE, DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE)
         p.fillRect(r, QColor(self.farbe))
         pal = self.palette()
         stift = QPen(pal.highlight().color() if self._an else pal.mid().color(), 2 if self._an else 1)
@@ -90,7 +90,7 @@ class _VerlaufKachel(_Kachel):
     def paintEvent(self, e):
         from PySide6.QtGui import QLinearGradient
         p = QPainter(self)
-        r = QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_FARBE, DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE)
         g = QLinearGradient(r.topLeft(), r.bottomRight())
         g.setColorAt(0, QColor(self.farbe).lighter(150)); g.setColorAt(1, QColor(self.farbe).darker(140))
         p.fillRect(r, g)
@@ -101,7 +101,7 @@ class _VerlaufKachel(_Kachel):
 class _BildKachel(_Kachel):
     """Kachel einer Bildreihe („Musterfüllung“, „Strukturfüllung“): zeigt ein Bild; ein Klick meldet ihren Schlüssel."""
 
-    def __init__(self, palette: "FarbPalette", schluessel: str, bild: QPixmap, tipp: str, seite: int = 18):
+    def __init__(self, palette: "FarbPalette", schluessel: str, bild: QPixmap, tipp: str, seite: int = DROPDOWN_FARBKACHEL):
         super().__init__(palette, schluessel, seite)
         self._bild = bild; self.setToolTip(tipp)
 
@@ -117,7 +117,7 @@ class _BildKachel(_Kachel):
 
     def paintEvent(self, e):
         p = QPainter(self)
-        r = QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_FARBE, DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE, -DROPDOWN_INNEN_FARBE)
         p.drawPixmap(r.toRect(), self._bild)
         pal = self.palette()
         p.setPen(QPen(pal.highlight().color() if self._an else pal.mid().color(), 2 if self._an else 1)); p.setBrush(Qt.NoBrush); p.drawRect(r)
@@ -228,6 +228,7 @@ class FarbFeld(QPushButton):
 
     def __init__(self, farbe: str | None = None, titel: str = "Farbe", keine_text: str | None = None, parent=None, verlauf: bool = False):
         super().__init__(parent)
+        self.setMinimumHeight(DROPDOWN_HOEHE); self.setProperty("dropdownFeld", True)          # Höhe wie jedes Dropdown
         farbe = Farbe.SCHWARZ if farbe is None else farbe
         self.farbe, self.titel, self.keine_text, self._verlauf = farbe, titel, keine_text, verlauf
         self.clicked.connect(self._waehle)

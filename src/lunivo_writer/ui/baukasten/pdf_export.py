@@ -179,7 +179,7 @@ class PdfExportAnsicht(QWidget):
         for key, label in RECHTE:
             box = QCheckBox(label); box.setChecked(getattr(s, key)); self.rechte[key] = box
             g.breit(box)
-        self.druck = Auswahlfeld(); self.druck.setMinimumHeight(FELD_H)
+        self.druck = Auswahlfeld()
         for text, value in DRUCK:
             label = {"Freier Druck": "Drucken", "Nur niedrige Auflösung": "Drucken in niedriger Auflösung",
                      "Kein Druck": "Drucken nicht erlauben"}.get(text, text)

@@ -7,7 +7,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QMenu, QToolButton, QVBoxLayout, QWidget
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.texte import trennlinie
-from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, GROESSE_PANELKNOPF, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 
 PANEL_KOPF_RAND = (14, 8, 8, 8)           # Rand der Kopfzeile eines Seitenleistenfensters (links, oben, rechts, unten)
@@ -27,12 +28,12 @@ def panel_kopf(*teile: QWidget, dehnen: QWidget | None = None) -> QWidget:
     return ganz
 
 
-def _knopf(symbol: str, tipp: str) -> QToolButton:
-    b = QToolButton()
+def _knopf(symbol: str, tipp: str) -> DropdownKnopf:
+    b = DropdownKnopf()
     if icons.hat(symbol): b.setIcon(icons.icon(symbol, ICON_NORMAL))
     else: b.setText(symbol); b.setStyleSheet("QToolButton { font-weight: bold; }")          # kein Symbol dieses Namens: der Text selbst (z. B. „?“)
     b.setToolTip(tipp); b.setAccessibleName(tipp); b.setAutoRaise(True); b.setCursor(Qt.PointingHandCursor)
-    b.setFixedSize(*GROESSE_PANELKNOPF)
+    b.groesse_rolle("panel", "kopf")
     return b
 
 
@@ -62,7 +63,7 @@ class PanelRahmen(QWidget):
         self.menue_knopf = None
         if menue is not None:
             self.menue_knopf = _knopf(menue_zeichen or "ellipsis", "Weitere Einstellungen")
-            self.menue_knopf.setPopupMode(QToolButton.InstantPopup); self.menue_knopf.setMenu(menue)
+            self.menue_knopf.menue_setzen(menue, geteilt=False)
             teile.append(self.menue_knopf)
         zu = _knopf("x", "Schließen"); zu.clicked.connect(self.schliessen.emit); teile.append(zu); zu.setVisible(schliessbar)
         v.addWidget(panel_kopf(*teile, dehnen=self.titel))

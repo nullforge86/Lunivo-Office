@@ -28,7 +28,18 @@ from lunivo_writer.ui.baukasten.mass import (
     PADDING_GRUPPENTITEL_GLOBAL,
     PADDING_GRUPPE_OBEN,
     PADDING_KNOPF_GLOBAL,
+    DROPDOWN_ZEILE_PADDING,
+    PADDING_KOPFFUSS_ABSATZKNOPF,
+    PADDING_KOPFFUSS_WERKZEUG,
+    PADDING_LAYOUTOPTIONEN_TITEL,
+    PADDING_LINKS_MENUESYMBOL,
+    PADDING_MINILEISTE_KNOPF,
+    PADDING_POPUP_LINKKNOPF,
+    PADDING_VORGABEMENUE_KOPF,
     PADDING_LISTENZEILE_GLOBAL,
+    PADDING_MENUE_KOMPAKT,
+    PADDING_MENUEEINTRAG_KOMPAKT,
+    SCHRIFT_HINWEIS,
     PADDING_MENUEEINTRAG_GLOBAL,
     PADDING_MENUE_GLOBAL,
     PADDING_OPTIONSKNOPF_GLOBAL,
@@ -38,6 +49,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RADIUS_EINTRAG,
     RADIUS_FELD,
     RADIUS_KLEIN,
+    RADIUS_LEISTENKNOPF,
     RADIUS_MARKE,
     RADIUS_MITTEL,
     RADIUS_REGLER_GRIFF,
@@ -196,6 +208,9 @@ QPushButton:pressed { background: %(weich)s; }
 QPushButton:disabled { color: %(grau)s; background: transparent; }
 QPushButton:default { border-color: %(akzent)s; }
 QPushButton[listenzeile="true"] { text-align: left; padding: """ f"{PADDING_LISTENZEILE_GLOBAL}" """; min-height: """ f"{HOEHE_LISTENZEILEN_KNOPF}" """px; }
+QPushButton[dropdownZeile] { text-align: left; padding: """ f"{DROPDOWN_ZEILE_PADDING}" """; border: none; border-radius: """ f"{RADIUS_FELD}" """px; }
+QPushButton[dropdownZeile="hinweis"] { font-size: """ f"{SCHRIFT_HINWEIS}" """pt; }
+QPushButton[dropdownZeile]:hover:enabled { background: %(hover)s; }
 QPushButton[feldknopf="true"] { text-align: left; padding: """ f"{PADDING_FELDKNOPF}" """; min-width: """ f"{BREITE_FELDKNOPF_MIN}" """px; }
 QPushButton[hervorgehoben="true"] { background: %(akzent)s; color: white; border-color: %(akzent)s; }
 QPushButton[hervorgehoben="true"]:hover { border-color: %(text)s; }
@@ -210,12 +225,34 @@ QSpinBox::up-arrow, QDoubleSpinBox::up-arrow { image: url(%(pfeil_oben)s); width
 QSpinBox::down-arrow, QDoubleSpinBox::down-arrow { image: url(%(pfeil_unten)s); width: 8px; height: 8px; }
 QScrollArea#bandSeite QScrollBar:horizontal { height: 6px; margin: 0; }
 QScrollArea#bandSeite QScrollBar::handle:horizontal { margin: 0; border-radius: """ f"{RADIUS_MARKE}" """px; }
-QComboBox QAbstractItemView { border: 1px solid %(rand)s; background: %(karte)s; selection-background-color: %(weich)s; selection-color: %(text)s; outline: 0; }
+QComboBox, QAbstractSpinBox[dropdownFeld] { background: %(karte)s; color: %(text)s; }          /* Dropdowns und dropdown-artige Maßfelder: ein Hintergrund */
+QComboBox QAbstractItemView { border: 1px solid %(rand)s; background: %(karte)s; selection-background-color: %(weich)s; selection-color: %(text)s; outline: 0; border-radius: """ f"{RADIUS_MITTEL}" """px; }
+QComboBox QAbstractItemView::item { border-radius: """ f"{RADIUS_EINTRAG}" """px; }
 QMenu { background: %(karte)s; border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_MITTEL}" """px; padding: """ f"{PADDING_MENUE_GLOBAL}" """; }
 QMenu::item { padding: """ f"{PADDING_MENUEEINTRAG_GLOBAL}" """; border-radius: """ f"{RADIUS_EINTRAG}" """px; }
+QMenu[variante="kompakt"] { padding: """ f"{PADDING_MENUE_KOMPAKT}" """; }
+QMenu[variante="kompakt"]::item { padding: """ f"{PADDING_MENUEEINTRAG_KOMPAKT}" """; }
+QMenu[variante="kompakt"]::icon { padding-left: """ f"{PADDING_LINKS_MENUESYMBOL}" """; }
 QMenu::item:selected { background: %(weich)s; color: %(text)s; }
 QMenu::item:disabled { color: %(grau)s; }
 QMenu::separator { height: 1px; background: %(rand)s; margin: """ f"{MARGIN_MENUETRENNER}" """; }
+QFrame[dropdownFenster] { background: %(karte)s; border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_MITTEL}" """px; }
+QLabel[dropdownTitel="kopf"] { color: %(akzent)s; font-weight: 600; }
+QLabel[dropdownTitel="abschnitt"] { background: %(hover)s; padding: """ f"{PADDING_LAYOUTOPTIONEN_TITEL}" """; border-radius: """ f"{RADIUS_MARKE}" """px; }
+QLabel[dropdownTitel="kopfzeile"] { font-weight: 600; padding: """ f"{PADDING_VORGABEMENUE_KOPF}" """; }
+QToolButton[dropdownKachel] { border: 1px solid transparent; border-radius: """ f"{RADIUS_MARKE}" """px; }
+QToolButton[dropdownKachel]:hover { border-color: %(akzent)s; }
+QToolButton[dropdownKachel]:checked { border-color: %(akzent)s; background: %(hover)s; color: %(text)s; }
+QToolButton[dropdownKachel="stil"]:checked { border: 2px solid %(akzent)s; background: transparent; }
+QToolButton[dropdownKopf] { font-weight: 600; border: none; }
+QPushButton[dropdownLink] { color: %(akzent)s; text-align: left; text-decoration: underline; border: none; background: transparent; padding: """ f"{PADDING_POPUP_LINKKNOPF}" """; }
+QFrame#miniLeiste { background: %(karte)s; border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_FELD}" """px; }
+QFrame#miniLeiste QToolButton { padding: """ f"{PADDING_MINILEISTE_KNOPF}" """; }
+QToolButton[papierKnopf], QWidget#kfLeiste QToolButton { background: %(kf_leiste)s; color: %(kf_tinte)s; border: 1px solid %(kf_leiste_rand)s; border-radius: """ f"{RADIUS_LEISTENKNOPF}" """px; }
+QToolButton[papierKnopf]:hover, QWidget#kfLeiste QToolButton:hover { background: %(kf_gitter)s; }
+QWidget#kfLeiste QToolButton { padding: """ f"{PADDING_KOPFFUSS_ABSATZKNOPF}" """; }
+QToolButton[papierKnopf="absatz"] { padding: """ f"{PADDING_KOPFFUSS_WERKZEUG}" """; }
+QToolButton[papierKnopf="griff"] { padding: 0; }
 QToolTip { background: %(karte)s; color: %(text)s; border: 1px solid %(rand)s; padding: """ f"{PADDING_LISTENZEILE_GLOBAL}" """; }
 QStatusBar { background: %(bg)s; border-top: 1px solid %(rand)s; }
 QStatusBar::item { border: none; }
@@ -308,8 +345,8 @@ QPushButton { border-color: %(hover)s; }
 QPushButton:default { border-color: %(akzent)s; }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: %(akzent)s; }
 QToolButton { border-radius: %(radius_klein)s; }
-QMenu { border-radius: %(radius)s; border-color: %(hover)s; }
-QMenu::item { border-radius: %(radius_klein)s; }
+QMenu, QFrame[dropdownFenster], QComboBox QAbstractItemView { border-radius: %(radius)s; border-color: %(hover)s; }
+QMenu::item, QComboBox QAbstractItemView::item { border-radius: %(radius_klein)s; }
 QMenu::separator { background: %(hover)s; }
 QTreeWidget, QListWidget { border-color: %(hover)s; border-radius: %(radius_klein)s; }
 QGroupBox { border-color: %(hover)s; border-radius: %(radius)s; }
@@ -337,6 +374,7 @@ def _stil(app: QApplication) -> None:
     f.setdefault("auf_akzent", Farbe.AUF_AKZENT)                       # Schrift auf der Akzentfläche (Mint: dunkel, sonst weiß)
     f["akzent_hover"] = f["kopf_hover"] if _MINT else Farbe.AKZENT_DUNKEL
     f["kf_papier"] = Farbe.PAPIER
+    f["kf_leiste"], f["kf_leiste_rand"], f["kf_gitter"], f["kf_tinte"] = Farbe.LEISTE, Farbe.LEISTE_RAND, Farbe.GITTER, Farbe.TINTE     # Knöpfe auf dem Papier: unabhängig vom Thema
     from lunivo_writer.ui.baukasten.karte import karte_regeln
     qss = QSS % f + karte_regeln(f["akzent"], f["akzent"], Farbe.GRAU)           # Karten/Zeilen: eine Quelle (baukasten/karte.py)
     if _MINT:

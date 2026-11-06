@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence
 from PySide6.QtWidgets import QMenu, QWidget, QWidgetAction
 
@@ -59,16 +60,24 @@ class MenueListe(PopupVerhalten, QMenu):
         self.addMenu(m)
         return m
 
+    def untermenue_einhaengen(self, sub: "MenueListe", titel: str | None = None) -> "MenueListe":
+        """Ein vorhandenes Menü (z. B. das Klappmenü eines anderen Knopfes) als Untermenü übernehmen; es gehört danach diesem Menü."""
+        if titel is not None:
+            sub.setTitle(titel)
+        sub.setParent(self, Qt.WindowType.Popup)
+        self.addMenu(sub)
+        return sub
+
     def widget(self, w: QWidget) -> QWidgetAction:
         """Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen."""
         a = QWidgetAction(self); a.setDefaultWidget(w); self.addAction(a)
         return a
 
     def kompakt(self) -> "MenueListe":
-        """Schmalere Zeilen (Symbolspalte, Text, Kürzel dicht) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß."""
-        from lunivo_writer.ui.baukasten.mass import PADDING_LINKS_MENUESYMBOL, PADDING_MENUE, PADDING_MENUEEINTRAG
-        self.setStyleSheet("QMenu { padding: " f"{PADDING_MENUE}" "; } QMenu::item { padding: " f"{PADDING_MENUEEINTRAG}" "; } "
-                           "QMenu::icon { padding-left: " f"{PADDING_LINKS_MENUESYMBOL}" "; }")
+        """Layoutvariante „kompakt“ (schmalere Zeilen) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
+        Die Maße stehen im Thema (``QMenu[variante="kompakt"]`` in ``ui/theme.py``), nicht hier."""
+        self.setProperty("variante", "kompakt")
+        self.style().unpolish(self); self.style().polish(self)
         return self
 
     _STANDARD_DE = {"&Undo": "Rückgängig", "&Redo": "Wiederholen", "Cu&t": "Ausschneiden", "&Copy": "Kopieren", "&Paste": "Einfügen",

@@ -29,15 +29,14 @@ from lunivo_writer.ui.ribbon.plan import plan
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import (
+    DROPDOWN_HOEHE,
     ABSTAND_DICHT,
     ABSTAND_ENG,
     ABSTAND_KLEIN,
     BREITE_AUFKLAPPPFEIL,
     BREITE_BAND_GRUPPENKNOPF,
-    BREITE_FORMATVORLAGE_BAND,
     BREITE_GRUPPENTRENNER,
     BREITE_MASSFELD_BAND,
-    BREITE_MEHRKNOPF,
     BREITE_RANDFELD_BAND,
     BREITE_VORLAGEN_AKTUALISIEREN,
     GROESSE_BANDKNOPF_ICON_KLEIN,
@@ -56,6 +55,7 @@ from lunivo_writer.ui.baukasten.mass import (
     SCHRIFT_BANDKNOPF,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Schriftauswahl
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
@@ -378,7 +378,6 @@ class RegisterBand(QWidget):
 
     # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
     BAND_HOEHE = {False: 112, True: 88}
-    GROSS_HOEHE = {False: 68, True: 66}
     GROSS_ICON = {False: 28, True: 24}
 
     def __init__(self, befehle, daten: dict | None = None, cfg: dict | None = None, schnell: list | None = None, kompakt: bool = True):
@@ -622,7 +621,7 @@ class RegisterBand(QWidget):
                     felder.append(w)
             elif e.get("gross"):
                 spalte()
-                inhalt.addWidget(self._knopf(e, True))
+                inhalt.addWidget(self._knopf(e, True), 0, Qt.AlignTop)
             else:
                 feldspalte()
                 lauf.append(e)
@@ -747,14 +746,12 @@ class RegisterBand(QWidget):
             else:
                 h.addWidget(k)
             self.knoepfe.append((k, None, True))
-        mehr = QToolButton()
+        mehr = DropdownKnopf()
         mehr.setAutoRaise(True)
         mehr.setArrowType(Qt.DownArrow)
         mehr.setToolTip(spec["name"])
-        mehr.setPopupMode(QToolButton.InstantPopup)
-        spec["menue"].setParent(mehr, Qt.Popup)
-        mehr.setMenu(spec["menue"])
-        mehr.setFixedWidth(BREITE_MEHRKNOPF); mehr.setCursor(Qt.PointingHandCursor)
+        mehr.menue_setzen(spec["menue"], geteilt=False, besitzen=True)
+        mehr.groesse_rolle("mehr", "band"); mehr.setCursor(Qt.PointingHandCursor)
         h.addWidget(mehr)
         self.knoepfe.append((mehr, None, True))
         inhalt.addWidget(rahmen, 0, Qt.AlignTop)
@@ -772,7 +769,7 @@ class RegisterBand(QWidget):
             sp.setDecimals(1)
             sp.setSingleStep(1.0)
             sp.setKeyboardTracking(False)
-            sp.setFixedWidth(BREITE_RANDFELD_BAND)
+            sp.setFixedWidth(BREITE_RANDFELD_BAND); sp.setMinimumHeight(DROPDOWN_HOEHE); sp.setProperty("dropdownFeld", True)
             gitter.addWidget(QLabel(name), zeile, spalte)
             gitter.addWidget(sp, zeile, spalte + 1)
             spins[schl] = sp
@@ -799,10 +796,10 @@ class RegisterBand(QWidget):
         spins = {}
         if bild:                                                  # große Knöpfe (Zuschneiden) stehen links vor den Feldern
             for e in (e for e in g["knoepfe"] if e.get("gross")):
-                inhalt.addWidget(self._knopf(e, True))
+                inhalt.addWidget(self._knopf(e, True), 0, Qt.AlignTop)
         zeilen = (("breite", "Breite:"), ("hoehe", "Höhe:")) if bild else (("hoehe", "Höhe:"), ("breite", "Breite:"))
         for zeile, (schl, name) in enumerate(zeilen):
-            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(BREITE_MASSFELD_BAND)
+            sp = _MassSpin(); sp.setRange(1.0, 2000.0); sp.setDecimals(1); sp.setSingleStep(1.0); sp.setKeyboardTracking(False); sp.setFixedWidth(BREITE_MASSFELD_BAND); sp.setMinimumHeight(DROPDOWN_HOEHE); sp.setProperty("dropdownFeld", True)
             gitter.addWidget(QLabel(name), zeile, 0); gitter.addWidget(sp, zeile, 1)
             spins[schl] = sp
             self.felder[vor + schl] = sp
@@ -879,7 +876,7 @@ class RegisterBand(QWidget):
                     return None
             stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
             stil.setAccessibleName("Formatvorlage")
-            stil.setFixedWidth(BREITE_FORMATVORLAGE_BAND)
+            stil.rolle("formatvorlage", "band")
             stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
             font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
             groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
@@ -891,7 +888,7 @@ class RegisterBand(QWidget):
         grosse = [e for e in eintraege if e.get("gross")]
         kleine = [e for e in eintraege if not e.get("gross") and not e.get("hinweis") and e.get("symbol") != "//"]
         for e in grosse:
-            inhalt.addWidget(self._knopf(e, True))
+            inhalt.addWidget(self._knopf(e, True), 0, Qt.AlignTop)
         # Zeilen: '//' beginnt eine neue; sonst zwei Zeilen, spaltenweise gefüllt
         zeilen, aktuell, explizit = [], [], False
         for e in eintraege:
@@ -1043,7 +1040,7 @@ class RegisterBand(QWidget):
     def _knopf(self, e: dict, gross: bool) -> QToolButton:
         name = e["name"]
         sym = e.get("symbol", "")
-        k = QToolButton()
+        k = DropdownKnopf()
         k.setAutoRaise(True)
         tun, klappe, menue = e.get("tun"), e.get("klappe"), e.get("menue")
         akt = QAction(k)
@@ -1071,34 +1068,29 @@ class RegisterBand(QWidget):
             k.setText(_zweizeilig(_kurz(name)))
             akt.setText(_zweizeilig(_kurz(name)))               # der Knopf übernimmt später den Text der Aktion
             breit = max(k.fontMetrics().horizontalAdvance(z) for z in _zweizeilig(_kurz(name)).split("\n"))
-            k.setMinimumWidth(max(44 if self.kompakt else 48, breit + (6 if self.kompakt else 10)))
-            k.setFixedHeight(self.GROSS_HOEHE[self.kompakt])
+            k.gross(breit, self.kompakt)
         elif icons.hat(sym) and e.get("text"):
             k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             k.setText(_kurz(name))
         elif icons.hat(sym):
             k.setToolButtonStyle(Qt.ToolButtonIconOnly)
-            k.setMinimumWidth(MIN_KNOPF)                                # Projektvorgabe: Knöpfe nicht schmaler als ~36 px
+            k.groesse_rolle("symbol", "band")                           # Projektvorgabe: Knöpfe nicht schmaler als ~36 px
         else:
-            k.setMinimumWidth(max(MIN_KNOPF, 40) if (klappe or menue) else MIN_KNOPF)
+            k.groesse_rolle("menue" if (klappe or menue) else "symbol", "band")
         ok = False
         menu = None
         if menue:
             menu = MenueListe(k)
             ok = self._menue_fuellen(menu, menue)
-            k.setPopupMode(QToolButton.MenuButtonPopup)             # Symbol und Pfeil getrennt: der Pfeil sitzt nicht im Symbol
             akt.triggered.connect(lambda _=False, kk=k: kk.showMenu())
         elif klappe and (menu := self._klappe(klappe)) is not None:
-            menu.setParent(k, Qt.Popup)
-            k.setPopupMode(QToolButton.MenuButtonPopup)
             if not tun:
                 akt.triggered.connect(lambda _=False, kk=k: kk.showMenu())
             ok = True
         if menu is not None:
-            k.setMenu(menu)
-            if gross:
-                k.setMinimumWidth(k.minimumWidth() + 12)
-                # (Platz für den Pfeil-Bereich, damit die Beschriftung nicht gekürzt wird)
+            k.menue_setzen(menu, geteilt=True, gross=gross, fuellend=not gross, besitzen=bool(klappe and not menue))         # Symbol und Pfeil getrennt; gestapelte Knöpfe füllen die Spalte
+            if not gross:
+                k.groesse_rolle("zeile", "band")                                                       # Dropdown-Knopf in einer Bandzeile: Höhe wie jedes Dropdown
         if tun:
             ok = ok or self.b.hat(tun)
             akt.triggered.connect(lambda _=False, t=tun, kk=k: (self.b.tun(t, kk), self.aktualisieren()))
@@ -1136,9 +1128,7 @@ class RegisterBand(QWidget):
             elif it.get("klappe"):                           # das vorhandene Klappmenü eines anderen Knopfes als Untermenü (mehrere Knöpfe hinter einem)
                 sub = self._klappe(it["klappe"])
                 if sub is not None:
-                    sub.setTitle(it["name"])
-                    sub.setParent(menu, Qt.Popup)
-                    menu.addMenu(sub)
+                    menu.untermenue_einhaengen(sub, it["name"])
                     ok = True
                 else:
                     self.fehlend.append(it["klappe"])

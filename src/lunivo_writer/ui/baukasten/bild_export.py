@@ -159,7 +159,7 @@ class BildExportAnsicht(QWidget):
         for text, feld in (("&Wasserzeichen", self.wasser), ("&Qualität", self.qualitaet),
                            ("&Format", self.format), ("Speichern &in", self.ordner)):
             g.reihe((text, feld))
-        for feld in (self.wasser, self.qualitaet, self.format, self.ordner):
+        for feld in (self.wasser, self.ordner):                       # Textfelder; die Auswahlfelder behalten DROPDOWN_HOEHE
             feld.setMinimumHeight(FELDHOEHE)
         v.addWidget(_abschnitt("2. Ausgabe festlegen", "Lege Wasserzeichen, Bildqualität, Dateiformat und Zielordner fest.", g))
         self.k_export.setText("Bilder exportieren")
