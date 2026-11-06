@@ -20,6 +20,9 @@ class Farbe:
     ROT_HELL = "#ff6b6b"            # Rot auf dunklem Grund (Änderungsbalken)
     ORANGE = "#e8590c"
     GRUEN = "#2f9e44"
+    ENTFERNT = ROT                  # Änderungsvorschau: entfernter Text (durchgestrichen); das Thema setzt sie je Thema um (dunkel: ROT_HELL)
+    NEU = GRUEN                     # Änderungsvorschau: neuer Text (unterstrichen); das Thema setzt sie je Thema um (dunkel: GRUEN_HELL)
+    GRUEN_HELL = "#69db7c"          # Grün auf dunklem Grund
     AN = "#2f9e75"                  # „an“-Marke und eingeschaltete Schalter der Seitenleisten (Thema „Mint“ setzt sie um)
     AN_SCHRIFT = "#ffffff"
     HINWEIS = "#a0a0a0"             # gedämpfte Hinweis-/Leertexte = Palette-Rolle Mid (hell: #a0a0a0); das Thema setzt sie je Thema — nur zur Laufzeit lesen

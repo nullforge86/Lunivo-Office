@@ -7,21 +7,25 @@ Zwei Arten (eine Aufgabe: das Zeichnen der Leiste):
 Trägt ein Hauptreiter einen Knopf (``setTabButton``, z. B. ``TeilMenueKnopf``), zeichnet die Leiste den Pfeil „▾“ selbst direkt hinter dem Text; ein Klick auf den
 Pfeil löst den Knopf aus (der Knopf selbst bleibt unsichtbar und liefert nur das Popup).
 
+Passen die Hauptreiter nicht nebeneinander (Beschriftungen gemessen), ersetzt EIN Dropdown (``DropdownTaste`` + ``MenueListe``, zeigt den aktuellen Reiter, Haken in der
+Liste) die Leiste; die Wahl geht über ``setCurrentIndex``/``currentChanged`` wie ein Klick. Die ``UeberlaufLeiste`` (Band, Dokumente) behält „•••“: sie hat eine andere Aufgabe.
+
 Die Beschriftung bricht bei Platzmangel um und wird nie mit „…“ gekürzt; passt ein Wort nicht, wird die Schrift etwas kleiner.
 ``flach_machen(reiter, art)`` setzt die Leiste in ein vorhandenes ``QTabWidget`` (die Seiten, Symbole und Namen bleiben; die Basis ``AngepassteReiter`` bleibt unverändert).
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, QPointF, QRect, QSize, Qt
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPolygonF
 from PySide6.QtWidgets import QTabBar, QTabWidget, QToolButton
 
-from lunivo_writer.ui.baukasten.mass import BREITE_KNOPF_KLEIN, HOEHE_BANDREITER_KNOPF, HOEHE_KNOPF_GROSS
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownTaste
+from lunivo_writer.ui.baukasten.mass import BREITE_KNOPF_KLEIN, DROPDOWN_HOEHE, HOEHE_BANDREITER_KNOPF, REITER_DROPDOWN_RAND
 
 HAUPT, UNTER = "haupt", "unter"
 _RAND = 6                      # Abstand der Beschriftung zum Rand des Reiters
 _SYMBOL = 18
-_MEHR = BREITE_KNOPF_KLEIN     # Breite des Knopfes „…“ (Überlaufmenü), wenn nicht alle Hauptreiter in eine Zeile passen
+_MEHR = BREITE_KNOPF_KLEIN     # Breite des Knopfes „•••“ (Überlaufmenü der ``UeberlaufLeiste``)
 _PFEIL = 18                    # Platz für den Teil-Pfeil „▾“ hinter dem Text des Hauptreiters (mit ``TeilMenueKnopf`` als Reiterknopf)
 
 
@@ -40,9 +44,9 @@ MEHR_TIPP = "Weitere Reiter"      # Tooltip und Name des Überlaufknopfs
 
 
 class ReiterUeberlauf:
-    """Basis aller Reiterleisten mit Überlauf: der Knopf „•••“ und das Menü der Reiter, die nicht mehr in die Leiste passen.
-    Reihenfolge: ``class X(ReiterUeberlauf, QTabBar)``. Die Leiste liefert ``_versteckte()`` (Indizes der ausgelagerten Reiter)
-    und setzt den Knopf selbst; hier steht nur, was beide Leisten gemeinsam haben."""
+    """Basis der Reiterleisten mit Knopf „•••“ (Band, Dokumente, Register: ``UeberlaufLeiste``) und Menü der Reiter, die nicht mehr in die Leiste passen.
+    Reihenfolge: ``class X(ReiterUeberlauf, QTabBar)``. Die Leiste liefert ``_versteckte()`` (Indizes der ausgelagerten Reiter) und setzt den Knopf selbst.
+    Die flachen Leisten der Fenster nutzen stattdessen ``ReiterDropdown``."""
 
     def _mehr_einrichten(self) -> None:
         self._mehr = QToolButton(self)
@@ -58,14 +62,46 @@ class ReiterUeberlauf:
         m.exec(self.mapToGlobal(QPoint(max(0, self._mehr.x() + self._mehr.width() - m.sizeHint().width()), self.height())))
 
 
-class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
+class ReiterDropdown:
+    """Die Leiste als ein Dropdown (statt vieler Reiter nebeneinander): Taste mit dem Namen des aktuellen Reiters, Liste aller sichtbaren Reiter mit Haken am aktuellen;
+    nicht wählbare Reiter stehen grau. Reihenfolge: ``class X(ReiterDropdown, QTabBar)``."""
+
+    def _wahl_einrichten(self) -> None:
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        self._wahl = DropdownTaste(self)
+        self._wahl.setCursor(Qt.PointingHandCursor); self._wahl.setAccessibleName("Reiter wählen")
+        self._wahl_liste = MenueListe(self._wahl)             # die Liste wird bei jedem Öffnen frisch gefüllt (Namen, grau, Haken)
+        self._wahl_liste.aboutToShow.connect(self._wahl_fuellen)
+        self._wahl.menue_setzen(self._wahl_liste, geteilt=False)
+        self._wahl.hide()
+
+    def _wahl_zeigen(self, an: bool) -> None:
+        """Dropdown ein/aus; Name und Lage nachziehen."""
+        self._wahl.setVisible(an)
+        if not an:
+            return
+        self._wahl.setGeometry(0, REITER_DROPDOWN_RAND, self.width(), DROPDOWN_HOEHE)
+        text = self.tabText(self.currentIndex()) if self.currentIndex() >= 0 else ""
+        self._wahl.setText(self._wahl.fontMetrics().elidedText(text, Qt.ElideMiddle, max(10, self.width() - 3 * _RAND - _PFEIL)))
+        self._wahl.setToolTip(text); self._wahl.raise_()
+
+    def _wahl_fuellen(self) -> None:
+        m = self._wahl_liste
+        m.clear()
+        for i in range(self.count()):
+            if self.isTabVisible(i):
+                m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), haken=i == self.currentIndex(), aktiv=self.isTabEnabled(i))
+        m.setMinimumWidth(self._wahl.width())
+
+
+class FlacheReiterLeiste(ReiterDropdown, QTabBar):
     def __init__(self, art: str = UNTER, parent=None):
         super().__init__(parent)
         self._art = art
         self._letzte_hoehe = 0
         self.setExpanding(True); self.setDrawBase(False); self.setUsesScrollButtons(False)      # nie Rollpfeile, nie ein angeschnittener Reiter: Überlauf geht in das Menü „…“
         self.setElideMode(Qt.ElideNone); self.setCursor(Qt.PointingHandCursor)
-        self._mehr_einrichten()
+        self._wahl_einrichten()
         self.currentChanged.connect(lambda _i: self._neu_anordnen())
 
     # ---- Maße ---------------------------------------------------------------------------------------------------------------------
@@ -87,44 +123,32 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
             return {}
         if self._art == UNTER:
             return {i: gesamt // len(vis) for i in vis}
-        fm = QFontMetrics(self._schrift(9.0))
-        soll = {i: fm.horizontalAdvance(_gross(self.tabText(i))) + 2 * _RAND + self._knopf_breite(i) for i in vis}
+        if self._als_dropdown():
+            return {}                                         # das Dropdown ersetzt die Reiter: keine Reiterflächen
+        soll = self._soll()
         summe = sum(soll.values())
-        if summe > gesamt:                                    # zu schmal: so viele Reiter wie ganz passen, der Rest steht im Menü „…“
-            return {i: soll[i] for i in self._passende(soll, gesamt)}
-        if summe <= gesamt:                                   # Platz genug: der Rest wird gleich verteilt
-            extra = (gesamt - summe) // len(vis)
-            return {i: soll[i] + extra for i in vis}
-        return soll
+        if summe > gesamt:                                    # zu schmal und nicht als Dropdown möglich (Reiter mit Knopf): anteilig enger, die Beschriftung bricht um
+            return {i: max(20, soll[i] * gesamt // summe) for i in vis}
+        extra = (gesamt - summe) // len(vis)                  # Platz genug: der Rest wird gleich verteilt
+        return {i: soll[i] + extra for i in vis}
 
-    def _passende(self, soll: dict[int, int], gesamt: int) -> list[int]:
-        """Die Reiter, die neben dem Knopf „…“ ganz passen (in Reihenfolge); der aktive Reiter ist immer dabei."""
-        frei, zeige, summe = gesamt - _MEHR, [], 0
-        for i in soll:
-            if summe + soll[i] > frei:
-                break
-            zeige.append(i); summe += soll[i]
-        aktiv = self.currentIndex()
-        if aktiv in soll and aktiv not in zeige:
-            while zeige and summe + soll[aktiv] > frei:
-                summe -= soll[zeige.pop()]
-            zeige = sorted(zeige + [aktiv])
-        return zeige
+    def _soll(self) -> dict[int, int]:
+        """Natürliche Breite jedes sichtbaren Hauptreiters (Beschriftung gemessen, Pfeilknopf zählt mit)."""
+        fm = QFontMetrics(self._schrift(9.0))
+        return {i: fm.horizontalAdvance(_gross(self.tabText(i))) + 2 * _RAND + self._knopf_breite(i) for i in self._sichtbar()}
 
-    def _versteckte(self) -> list[int]:
-        b = self._breiten()
-        return [i for i in self._sichtbar() if i not in b]
+    def _als_dropdown(self) -> bool:
+        """Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander? Dann zeigt das Dropdown die Wahl (Reiter mit Knopf bleiben Reiter: ihr Pfeil hätte im Dropdown keinen Platz)."""
+        vis = self._sichtbar()
+        if self._art != HAUPT or len(vis) < 2 or self.width() <= 60 or any(self.tabButton(i, QTabBar.RightSide) is not None for i in vis):
+            return False
+        return sum(self._soll().values()) > self.width()
 
     def _neu_anordnen(self) -> None:
-        """Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen."""
-        if self._art != HAUPT:
-            return
-        mehr = bool(self._versteckte())
-        self._mehr.setVisible(mehr)
-        if mehr:
-            self._mehr.setGeometry(self.width() - _MEHR, 0, _MEHR, max(HOEHE_KNOPF_GROSS, self.height() - 1))
-            self._mehr.raise_()
-        self.setExpanding(not self._ueberlauf())                # setExpanding stößt die Neuauslegung an
+        """Größe, aktiver Reiter, Texte oder Reiterzahl haben sich geändert: Dropdown oder Reiterleiste zeigen und neu auslegen."""
+        self._wahl_zeigen(self._als_dropdown())
+        self.setExpanding(True)                                 # stößt die Neuauslegung an
+        self.updateGeometry()
 
     def _text_flaeche(self, i: int, breite: int) -> int:
         return max(10, breite - 2 * _RAND - (self._knopf_breite(i) if self._art == HAUPT else 0))
@@ -143,6 +167,8 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
         return fm.boundingRect(QRect(0, 0, self._text_flaeche(i, breite), 10000), Qt.AlignHCenter | Qt.TextWordWrap, _gross(self.tabText(i))).height()
 
     def _hoehe(self, breiten: dict[int, int], gr: float) -> int:
+        if self._als_dropdown():
+            return DROPDOWN_HOEHE + 2 * REITER_DROPDOWN_RAND + 1
         fm = QFontMetrics(self._schrift(gr))
         th = max([self._text_hoehe(fm, i, b) for i, b in breiten.items()] or [fm.height()])
         if self._art == HAUPT:
@@ -155,8 +181,6 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
         return QSize(b.get(index, 0), self._hoehe(b, self._groesse(b)))
 
     def minimumTabSizeHint(self, index: int) -> QSize:
-        if self._ueberlauf():                                  # nicht zusammenschieben: die Reiter behalten ihre Breite, der Rest steht im Menü „…“
-            return self.tabSizeHint(index)
         return QSize(20, self.tabSizeHint(index).height())
 
     def sizeHint(self) -> QSize:
@@ -166,15 +190,7 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
     def minimumSizeHint(self) -> QSize:
         return QSize(60, self.sizeHint().height())
 
-    def _ueberlauf(self) -> bool:
-        """Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander?"""
-        if self._art != HAUPT or not self._sichtbar():
-            return False
-        fm = QFontMetrics(self._schrift(9.0))
-        return sum(fm.horizontalAdvance(_gross(self.tabText(i))) + 2 * _RAND + self._knopf_breite(i) for i in self._sichtbar()) > self.width()
-
     def resizeEvent(self, e) -> None:
-        self.setExpanding(not self._ueberlauf())               # überlaufend: nicht auf die Breite zusammenschieben, sondern rollen
         super().resizeEvent(e)
         self._neu_anordnen()
         b = self._breiten()
@@ -185,8 +201,8 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
 
     def tabLayoutChange(self) -> None:
         super().tabLayoutChange()
-        if self._art == HAUPT and getattr(self, "_mehr", None) is not None:
-            self._mehr.setVisible(bool(self._versteckte()))
+        if getattr(self, "_wahl", None) is not None:           # Reiter hinzugefügt, entfernt, umbenannt, aus-/eingeblendet
+            self._wahl_zeigen(self._als_dropdown())
         for i in range(self.count()):                          # der Knopf bleibt unsichtbar: der Pfeil wird im Reiter gezeichnet
             b = self.tabButton(i, QTabBar.RightSide)
             if b is not None:
@@ -203,6 +219,11 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
         x = r.left() + _RAND + (breite + br.width()) // 2 + 4
         y = r.top() + (r.height() - 2 - th) // 2 + th - fm.height() // 2
         return QRect(x, y - 5, 10, 10)
+
+    def changeEvent(self, e) -> None:
+        super().changeEvent(e)
+        if e.type() in (QEvent.StyleChange, QEvent.PaletteChange, QEvent.FontChange, QEvent.EnabledChange):      # Thema oder Schrift gewechselt: neu messen
+            self._neu_anordnen()
 
     def mousePressEvent(self, e) -> None:
         if e.button() == Qt.LeftButton:
@@ -224,7 +245,7 @@ class FlacheReiterLeiste(ReiterUeberlauf, QTabBar):
         b = self._breiten()
         gr = self._groesse(b)
         p.fillRect(QRect(0, self.height() - 1, self.width(), 1), _mische(text, grund, 0.82))          # feine Grundlinie
-        for i in b:                                            # nur die gezeigten Reiter (die übrigen stehen im Menü „…“)
+        for i in b:                                            # leer, solange das Dropdown die Leiste ersetzt
             r = self.tabRect(i)
             aktiv, an = i == self.currentIndex(), self.isTabEnabled(i)
             if not an:

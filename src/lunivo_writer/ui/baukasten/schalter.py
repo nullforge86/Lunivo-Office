@@ -5,8 +5,12 @@
 """
 from __future__ import annotations
 
+from PySide6.QtCore import QRectF, QSize, Qt
+from PySide6.QtGui import QPainter, QPalette
+from PySide6.QtWidgets import QAbstractButton
+
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import PADDING_SCHALTER_CHIP, RADIUS_CHIP
+from lunivo_writer.ui.baukasten.mass import KIPP_BREITE, KIPP_HOEHE, KIPP_KNOPF_RAND, PADDING_SCHALTER_CHIP, RADIUS_CHIP
 
 CHIP_B, CHIP_H = 52, 26                      # Schalter-Chip „an/aus“: feste, großzügige Größe (Kapsel, Radius = halbe Höhe)
 
@@ -30,3 +34,28 @@ def schalter_an_stil() -> str:
 def schalter_aus_stil() -> str:
     """Die Kapsel „aus“ (nur Rahmen)."""
     return "background: transparent; color: palette(mid); border: 1px solid palette(mid); border-radius: %dpx;" % (CHIP_H // 2)
+
+
+class KippSchalter(QAbstractButton):
+    """Kleiner Kippschalter (Schiene mit rundem Knopf), gezeichnet in Paletten­farben: an = Akzent, aus = Rand. Maße aus ``mass.py``; ``toggled(bool)`` wie beim Ankreuzfeld."""
+
+    def __init__(self, an: bool = False, parent=None):
+        super().__init__(parent)
+        self.setCheckable(True); self.setChecked(an); self.setCursor(Qt.PointingHandCursor)
+        self.setFixedSize(KIPP_BREITE, KIPP_HOEHE)
+
+    def sizeHint(self) -> QSize:
+        return QSize(KIPP_BREITE, KIPP_HOEHE)
+
+    def paintEvent(self, _e) -> None:
+        pal, p = self.palette(), QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        gruppe = QPalette.Normal if self.isEnabled() else QPalette.Disabled
+        an = self.isChecked()
+        p.setPen(Qt.NoPen)
+        p.setBrush(pal.color(gruppe, QPalette.Highlight if an else QPalette.Mid))
+        p.drawRoundedRect(QRectF(self.rect()), KIPP_HOEHE / 2, KIPP_HOEHE / 2)
+        d = KIPP_HOEHE - 2 * KIPP_KNOPF_RAND
+        x = KIPP_BREITE - KIPP_KNOPF_RAND - d if an else KIPP_KNOPF_RAND
+        p.setBrush(pal.color(gruppe, QPalette.HighlightedText if an else QPalette.Base))
+        p.drawEllipse(QRectF(x, KIPP_KNOPF_RAND, d, d))

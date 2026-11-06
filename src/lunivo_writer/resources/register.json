@@ -1322,10 +1322,22 @@
      "name": "KI",
      "knoepfe": [
       {
-       "symbol": "assistent",
-       "name": "Eigenen Assistenten erstellen",
+       "symbol": "ki",
+       "name": "Schnelle KI-Aktion erstellen",
        "gross": true,
-       "tun": "w.assistentErstellen"
+       "tun": "w.schnelleAktionErstellen"
+      },
+      {
+       "symbol": "assistent",
+       "name": "KI-Assistent erstellen",
+       "gross": true,
+       "tun": "w.kiAssistentErstellen"
+      },
+      {
+       "symbol": "zusammenfassen",
+       "name": "Alle Ergebnisse anzeigen",
+       "gross": true,
+       "tun": "w.kiErgebnisse"
       },
       {
        "symbol": "assistent",
@@ -2817,6 +2829,18 @@
       {
        "name": "Überschrift erzeugen",
        "tun": "eigen"
+      },
+      {
+       "name": "Schnelle KI-Aktion erstellen",
+       "tun": "w.schnelleAktionErstellen"
+      },
+      {
+       "name": "KI-Assistent erstellen",
+       "tun": "w.kiAssistentErstellen"
+      },
+      {
+       "name": "Alle Ergebnisse anzeigen",
+       "tun": "w.kiErgebnisse"
       },
       {
        "name": "KI-Einstellungen",

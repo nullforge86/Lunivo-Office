@@ -8,13 +8,18 @@ Schlüssel stehen nie im Quelltext, sondern in einer Datei mit Zugriff nur für 
 """
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
+import threading
+import time
 import difflib
 import urllib.error
 import urllib.parse
 import urllib.request
+
+from lunivo_writer.ai import modellfaehigkeit as MF
 
 OLLAMA_URL = "http://127.0.0.1:11434"
 CLAUDE_URL = "https://api.anthropic.com/v1/messages"
@@ -22,7 +27,8 @@ OLLAMA_MARKE, EIGEN_MARKE = "ollama:", "eigen:"
 ARGOS_MARKE, AUTO_MARKE = "argos:", "auto:"      # lokale Übersetzung (Argos) / Automatisch: KI, sonst lokal
 LERN_SCHWELLE = 5
 ZETTEL_GRENZE = 300
-UMFAENGE = {"auszug": "markierte Textauszüge", "dokument": "den ganzen Text des Dokuments"}      # was an einen Anbieter im Internet gehen darf
+UMFAENGE = {"auszug": "markierte Textauszüge", "dokument": "den ganzen Text des Dokuments",
+           "bild": "ein angehängtes Bild", "dauer": "bei jeder Änderung den geänderten Absatz (fortlaufende Assistenten)"}      # was an einen Anbieter im Internet gehen darf
 
 EMPFAENGER = {
     "egal": "Lass den Tonfall genau so, wie er im Text steht: Förmliches bleibt förmlich, Lockeres bleibt locker. "
@@ -69,11 +75,28 @@ _AKTION_SATZ = {
     "ton-locker": "Ändere die Tonalität des folgenden Textes zu locker und ungezwungen.",
     "ton-bestimmt": "Ändere die Tonalität des folgenden Textes zu bestimmt und klar.",
 }
+# Anweisungen der Chat-Vorschläge, die es als Schnelle Aktion noch nicht gab (Titel, Anweisung); die übrigen kommen aus TEXT_AKTIONEN/_AKTION_SATZ
+VORLAGE_ANWEISUNG = {
+    "umschreiben": ("Text umschreiben", "Schreiben Sie den folgenden Text um, damit er klar, prägnant und professioneller wird. Verbessern Sie die Lesbarkeit und den Satzbau, "
+                    "während Sie die ursprüngliche Bedeutung und Absicht beibehalten."),
+    "vereinfachen": ("Text vereinfachen", "Vereinfachen Sie den folgenden Text: kurze Sätze, geläufige Wörter, leicht verständlich, ohne die Bedeutung zu verändern."),
+    "erweitern_inhalt": ("Inhalt erweitern", "Erweitern Sie den folgenden Inhalt um sinnvolle Einzelheiten, Beispiele und Erklärungen, ohne vom Thema abzuschweifen."),
+    "inhaltsverzeichnis": ("Inhaltsverzeichnis erstellen", "Erstellen Sie ein Inhaltsverzeichnis für das folgende Dokument, das seine Gliederung und die wichtigsten Abschnitte widerspiegelt."),
+    "titel": ("Titel vorschlagen", "Schlagen Sie drei passende, prägnante Titel für das folgende Dokument vor."),
+    "kernpunkte": ("Kernpunkte hervorheben", "Heben Sie die Kernpunkte des folgenden Textes hervor und nennen Sie sie als kurze Liste."),
+    "korrektur": ("Dokument Korrektur lesen", "Lesen Sie das folgende Dokument Korrektur: Nennen Sie Rechtschreib-, Grammatik- und Zeichensetzungsfehler und verbessern Sie sie, "
+                  "ohne Inhalt und Stil zu verändern."),
+    "dokument_zusammenfassen": ("Dokument zusammenfassen", "Fassen Sie das folgende Dokument in wenigen Sätzen zusammen und nennen Sie nur die wichtigsten Aussagen."),
+    "zusammenfassung": ("Zusammenfassung erstellen", "Erstellen Sie eine Zusammenfassung des folgenden Textes als kurzen Abschnitt, den man auch ohne den Originaltext versteht."),
+    "entwurf": ("Entwurf schreiben", "Schreiben Sie einen ersten Entwurf für ein Dokument zu dem Thema, das ich Ihnen nenne. Fragen Sie nach dem Thema, wenn es fehlt."),
+    "gliederung": ("Gliederung vorschlagen", "Schlagen Sie eine übersichtliche Gliederung für ein neues Dokument vor und fragen Sie nach dem Thema, wenn es fehlt."),
+}
 ANBIETER_TAGS = [("text", "Text"), ("bilder", "Bilder"), ("einbettungen", "Einbettungen"), ("audio", "Audioverarbeitung"),
                  ("moderation", "Inhaltsmoderation"), ("echtzeit", "Echtzeitaufgaben"),
                  ("programmieren", "Hilfe zum Programmieren"), ("visuell", "Visuelle Analyse")]
 # Erweiterte Einstellungen des Chats: maxLaenge 0 = Vorgabe des Anbieters; temperatur/topP gelten für Ollama und eigene Anbieter
-CHAT_VORGABE = {"maxLaenge": 0, "temperatur": 0.2, "topP": 1.0, "stopp": "", "direkt": False}
+CHAT_VORGABE = {"maxLaenge": 0, "temperatur": 0.2, "topP": 1.0, "stopp": "", "direkt": False,
+                "denktiefe": MF.DENK_VORGABE, "werkzeuge": "fragen"}      # werkzeuge: „automatisch“ gilt nur für die Sitzung (wird nie gespeichert)
 AUFGABEN = [("chatbot", "Chatbot"), ("zusammenfassen", "Zusammenfassen"), ("uebersetzung", "Übersetzung"),
             ("textanalyse", "Textanalyse"), ("bildgenerierung", "Bildgenerierung")]
 # Bekannte Anbieter mit der Adresse, die sie selbst angeben (Claude fehlt bewusst: kein OpenAI-kompatibles /chat/completions)
@@ -82,6 +105,30 @@ ANBIETER_VORLAGEN = [("andere", "Andere", ""), ("ollama", "Ollama (auf diesem Re
                      ("gemini", "Google Gemini", "https://generativelanguage.googleapis.com/v1beta/openai"),
                      ("mistral", "Mistral", "https://api.mistral.ai/v1"), ("groq", "Groq", "https://api.groq.com/openai/v1"),
                      ("deepseek", "DeepSeek", "https://api.deepseek.com/v1"), ("together", "Together AI", "https://api.together.xyz/v1")]
+# ---- Assistenten: Schnelle KI-Aktionen (art „aktion“, auf Knopfdruck) und fortlaufende Assistenten (art „fortlaufend“)
+ASSISTENT_ARTEN = ("aktion", "fortlaufend")
+AKTIONS_MODI = ("ersetzen", "anhaengen", "hinweis")                        # bisherige Wirkungen einer Schnellen KI-Aktion
+FORTLAUFEND_MODI = AKTIONS_MODI + ("kommentar", "hervorheben")           # fortlaufend zusätzlich: Kommentar anlegen / Fund in der Schreibhilfe
+ASSISTENT_AUSLOESER = ("knopf", "absatz", "markierung")                  # nur „absatz“ und „markierung“ werden überwacht
+ASSISTENT_UMFAENGE = ("absatz", "markierung")                            # nie das ganze Dokument
+KOMMENTAR_ZUSATZ = ("\n\nBegründe deine Änderung kurz (ein bis zwei Sätze). Schreibe zuerst den Text, dann eine eigene Zeile "
+                    "###BEGRUENDUNG### und danach die Begründung.")
+KOMMENTAR_NUR = "\n\nAntworte nur mit einem kurzen Kommentar (höchstens drei Sätze); ändere den Text nicht und gib ihn nicht noch einmal aus."
+VORLAGEN_ASSISTENT = [
+    # (Name, Prompt, Aktion = modus, Erklärender Kommentar)
+    ("Korrekturlesen", "Korrigiere Rechtschreibung, Grammatik und Zeichensetzung des Textes. Ändere weder Inhalt noch Stil. "
+     "Antworte ausschließlich mit dem korrigierten Text.", "ersetzen", True),
+    ("KI-Inhaltsindikator", "Beurteile, ob der Text eher von einem Menschen oder von einer KI geschrieben wirkt. Nenne die Merkmale, "
+     "die dafür sprechen, und gib eine vorsichtige Einschätzung. Sei ehrlich über die Unsicherheit dieser Einschätzung.", "kommentar", False),
+    ("Textoptimierer", "Verbessere Lesbarkeit und Ausdruck des Textes: klarere Wortwahl, kürzere Sätze, keine Füllwörter. "
+     "Der Sinn und der Tonfall bleiben. Antworte ausschließlich mit dem verbesserten Text.", "ersetzen", True),
+    ("Faktenprüfung", "Prüfe die Tatsachenbehauptungen im Text. Nenne jede Behauptung, die falsch oder zweifelhaft ist oder sich "
+     "nicht belegen lässt, und sage kurz warum. Erfinde keine Quellen; sage, wenn du etwas nicht sicher weißt.", "kommentar", False),
+    ("Professionelle Umschreibung", "Schreibe den Text in einem professionellen, sachlichen und höflichen Ton um. "
+     "Der Inhalt bleibt, nichts wird hinzugefügt. Antworte ausschließlich mit dem umgeschriebenen Text.", "ersetzen", True),
+    ("Logik- und Argumentationsprüfung", "Prüfe die Argumentation des Textes auf Denkfehler, Widersprüche, fehlende Begründungen und "
+     "Trugschlüsse. Nenne die Stellen und erkläre knapp, was nicht schlüssig ist.", "hervorheben", True),
+]
 VORSCHLAG_BAUPLAN = {"type": "object", "properties": {"vorschlaege": {"type": "array", "items": {
     "type": "object", "properties": {"alt": {"type": "string"}, "neu": {"type": "string"}, "grund": {"type": "string"},
                                                                         "konfidenz": {"type": "number"}},
@@ -89,23 +136,44 @@ VORSCHLAG_BAUPLAN = {"type": "object", "properties": {"vorschlaege": {"type": "a
     "required": ["vorschlaege"], "additionalProperties": False}
 
 
+def assistent_normiert(a: dict) -> dict:
+    """Ein Assistenteneintrag mit allen Feldern und gültigen Werten; fehlende Felder (ältere Einträge) bekommen ihre Vorgabe.
+    aktion: id, name, prompt, modus, zugriff.  fortlaufend zusätzlich: ausloeser, umfang, verzoegerung, an.  Beide: symbol, kommentar, modell."""
+    from lunivo_writer.ai.assistent_lauf import verzoegerung_begrenzen
+    art = a.get("art") if a.get("art") in ASSISTENT_ARTEN else "aktion"
+    erlaubt = FORTLAUFEND_MODI if art == "fortlaufend" else AKTIONS_MODI
+    r = {**a, "art": art, "name": (a.get("name") or "").strip()[:40], "prompt": (a.get("prompt") or "").strip()[:2000],
+         "modus": a.get("modus") if a.get("modus") in erlaubt else "hinweis",
+         "zugriff": "schnell" if a.get("zugriff") == "schnell" else "kontext",
+         "symbol": str(a.get("symbol") or ""), "kommentar": bool(a.get("kommentar", False)),
+         "modell": str(a.get("modell") or ""), "an": bool(a.get("an", False)) and art == "fortlaufend",
+         "ausloeser": a.get("ausloeser") if a.get("ausloeser") in ASSISTENT_AUSLOESER else "knopf",
+         "umfang": a.get("umfang") if a.get("umfang") in ASSISTENT_UMFAENGE else "absatz",
+         "verzoegerung": verzoegerung_begrenzen(a.get("verzoegerung", 5))}
+    if art == "aktion":
+        r["ausloeser"] = "knopf"
+    return r
+
+
 # ---------------------------------------------------------------- Konfiguration (mit Schlüsseln, 0600)
 class KIKonfig:
     def __init__(self, pfad: str):
         self.pfad = pfad
         self.d = {"modell": "claude-opus-5", "sprache": "Englisch", "empfaenger": "egal", "zettel": "",
-                  "apiKey": "", "anbieter": [], "aufgaben": {"uebersetzung": AUTO_MARKE}, "kosten": 0.0, "claude_erlaubt": False, "einwilligungen": [], "assistenten": [], "chat": {}, "mcp": [], "websuche": {}}
+                  "apiKey": "", "anbieter": [], "aufgaben": {"uebersetzung": AUTO_MARKE}, "kosten": 0.0, "claude_erlaubt": False, "einwilligungen": [], "assistenten": [], "assistenten_dauerbetrieb": False, "chat": {}, "mcp": [], "websuche": {}}
         try:
             with open(pfad, encoding="utf-8") as fh:
                 self.d.update(json.load(fh))
         except (OSError, ValueError):
             pass
+        if isinstance(self.d.get("chat"), dict) and self.d["chat"].get("werkzeuge") != "fragen":
+            self.d["chat"] = {**self.d["chat"], "werkzeuge": "fragen"}       # beim Start immer „fragen“
 
     def speichern(self) -> None:
         tmp = self.pfad + ".tmp"
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            json.dump(self.d, fh, ensure_ascii=False, indent=1)
+            json.dump({**self.d, "chat": {**(self.d.get("chat") or {}), "werkzeuge": "fragen"}}, fh, ensure_ascii=False, indent=1)     # „automatisch“ nie auf die Platte
         os.replace(tmp, self.pfad)
         os.chmod(self.pfad, 0o600)
 
@@ -127,8 +195,8 @@ class KIKonfig:
         return r
 
     def hat_einwilligung(self, anbieter: str, umfang: str = "auszug") -> bool:
-        """„dokument“ schließt „auszug“ ein, nicht umgekehrt."""
-        gebraucht = {umfang} if umfang == "dokument" else {"auszug", "dokument"}
+        """„dokument“ schließt „auszug“ ein, nicht umgekehrt; „bild“ wird von keinem anderen Umfang abgedeckt."""
+        gebraucht = {umfang} if umfang in ("dokument", "bild", "dauer") else {"auszug", "dokument"}      # „bild“ steht für sich
         return any(e["anbieter"] == anbieter and e["umfang"] in gebraucht for e in self.einwilligungen())
 
     def einwilligung_geben(self, anbieter: str, umfang: str) -> None:
@@ -200,14 +268,31 @@ class KIKonfig:
             self.d["aufgaben"].pop(aufgabe, None)
         self.speichern()
 
-    def assistent_hinzufuegen(self, name: str, prompt: str, modus: str, zugriff: str = "kontext") -> dict:
-        """Eine „Schnelle KI-Aktion“: ``modus`` = ersetzen | anhaengen | hinweis; ``zugriff`` = kontext (Rechtsklick-Menü) | schnell (Schnellzugriffsleiste)."""
+    def assistent_hinzufuegen(self, name: str, prompt: str, modus: str, zugriff: str = "kontext", **mehr) -> dict:
+        """Eine „Schnelle KI-Aktion“ (art „aktion“): ``modus`` = ersetzen | anhaengen | hinweis; ``zugriff`` = kontext (Rechtsklick-Menü) | schnell
+        (Schnellzugriffsleiste). Mit ``art="fortlaufend"`` ein fortlaufender Assistent; ``mehr`` setzt die Zusatzfelder (siehe ``assistent_normiert``)."""
         import uuid
-        e = {"id": "a" + uuid.uuid4().hex[:8], "name": (name or "").strip()[:40], "prompt": (prompt or "").strip()[:2000],
-             "modus": modus if modus in ("ersetzen", "anhaengen") else "hinweis", "zugriff": "schnell" if zugriff == "schnell" else "kontext"}
+        e = {"id": "a" + uuid.uuid4().hex[:8], "name": name, "prompt": prompt, "modus": modus, "zugriff": zugriff, **mehr}
+        e = assistent_normiert(e)
         self.d["assistenten"].append(e)
         self.speichern()
         return e
+
+    def assistent_holen(self, id_: str) -> dict | None:
+        return next((a for a in self.d["assistenten"] if a.get("id") == id_), None)
+
+    def assistent_aendern(self, id_: str, **teile) -> dict | None:
+        """Felder eines Assistenten ändern (der Eintrag bleibt dasselbe Objekt, Werte werden geprüft)."""
+        e = self.assistent_holen(id_)
+        if e is None:
+            return None
+        e.update(assistent_normiert({**e, **teile}))
+        self.speichern()
+        return e
+
+    def assistenten(self, art: str | None = None) -> list[dict]:
+        """Alle Assistenten (``art`` None) oder nur die einer Art; ältere Einträge ohne Art gelten als „aktion“."""
+        return [a for a in self.d["assistenten"] if art is None or a.get("art", "aktion") == art]
 
     def assistent_entfernen(self, id_: str) -> None:
         self.d["assistenten"] = [a for a in self.d["assistenten"] if a["id"] != id_]
@@ -328,10 +413,48 @@ def anweisung_text_aktion(k: KIKonfig, aktion: str) -> str:
 
 
 # ---------------------------------------------------------------- Anfragen
-def _nachrichten(text) -> list[dict]:
+def _bild_block(b: dict, anbieter: str):
+    """Ein Bildanhang im Format des Anbieters: „claude“, „ollama“ oder „openai“ (eigene Anbieter). ``b["b64"]`` ist beim Senden schon gelesen."""
+    if anbieter == "claude":
+        return {"type": "image", "source": {"type": "base64", "media_type": b["typ"], "data": b["b64"]}}
+    return {"type": "image_url", "image_url": {"url": f"data:{b['typ']};base64,{b['b64']}"}}
+
+
+def _nachricht(z: dict, anbieter: str, letzte: bool) -> dict:
+    rolle = "assistant" if z.get("rolle") == "ki" else "user"
+    text, bilder = z["text"], z.get("bilder") or []
+    if not bilder:
+        return {"role": rolle, "content": text}
+    if not letzte:                                   # frühere Bilder werden nicht erneut gesendet
+        return {"role": rolle, "content": (text + "\n" if text else "") + "[Bild]"}
+    bilder = [b for b in bilder if b.get("b64")]
+    if anbieter == "ollama":
+        return {"role": rolle, "content": text, "images": [b["b64"] for b in bilder]}
+    bloecke = [_bild_block(b, anbieter) for b in bilder]
+    wort = [{"type": "text", "text": text}] if text else []
+    return {"role": rolle, "content": bloecke + wort if anbieter == "claude" else wort + bloecke}      # Claude: Bild vor dem Text
+
+
+def _nachrichten(text, anbieter: str = "claude") -> list[dict]:
     if isinstance(text, list):
-        return [{"role": "assistant" if z.get("rolle") == "ki" else "user", "content": z["text"]} for z in text]
+        return [_nachricht(z, anbieter, i == len(text) - 1) for i, z in enumerate(text)]
     return [{"role": "user", "content": text}]
+
+
+def bilder_lesen(verlauf: list[dict]) -> tuple[list[dict], str | None]:
+    """Liest und kodiert (Base64) nur die Bilder der LETZTEN Nachricht, erst beim Senden. Liefert (Kopie des Verlaufs, Fehlertext)."""
+    ergebnis = [dict(z) for z in verlauf]
+    if not ergebnis or not ergebnis[-1].get("bilder"):
+        return ergebnis, None
+    neu = []
+    for b in ergebnis[-1]["bilder"]:
+        p = MF.bild_pruefen(b.get("pfad"))
+        if "fehler" in p:
+            return ergebnis, p["fehler"]
+        with open(p["pfad"], "rb") as fh:
+            neu.append({**p, "b64": base64.b64encode(fh.read()).decode("ascii")})
+    ergebnis[-1]["bilder"] = neu
+    return ergebnis, None
 
 
 def ohne_gruebeln(roh: str) -> str:
@@ -397,6 +520,60 @@ class KI:
             return None if (a and ist_lokale_url(a["url"])) else (a["name"] if a else "einen eigenen Anbieter")
         return "Anthropic (Claude)"
 
+    # ---- Fähigkeiten des Chat-Modells (denken, Bild) — nie die Oberfläche blockieren
+    _faehig: dict = {}                       # Ollama-Modell -> (Zeitpunkt, {Fähigkeiten} | None bei Fehler)
+    _faehig_laeuft: set = set()
+    FAEHIG_NEU_NACH = 30.0                   # Sekunden, bis ein fehlgeschlagenes Abfragen wiederholt wird
+    faehigkeit_bekannt = staticmethod(lambda: None)       # vom KI-Dienst ersetzt: wird (aus einem Faden) gerufen, wenn eine Abfrage fertig ist
+
+    def _ollama_faehigkeiten(self, name: str, warten: bool) -> set | None:
+        """Fähigkeiten laut Ollama (/api/show → capabilities), mit Zwischenspeicher. ``warten=False``: nur aus dem Speicher, sonst im
+        Hintergrund holen (None = noch unbekannt)."""
+        alt = KI._faehig.get(name)
+        if alt and (alt[1] is not None or time.monotonic() - alt[0] < self.FAEHIG_NEU_NACH):
+            return alt[1]
+        if not warten:
+            if name not in KI._faehig_laeuft:
+                KI._faehig_laeuft.add(name)
+                threading.Thread(target=self._ollama_faehigkeiten_holen, args=(name,), daemon=True).start()
+            return None
+        return self._ollama_faehigkeiten_holen(name)
+
+    def _ollama_faehigkeiten_holen(self, name: str) -> set | None:
+        try:
+            with _post(OLLAMA_URL + "/api/show", {}, {"model": name}, 3) as r:
+                f = _json_dict(r).get("capabilities")
+            erg = {str(x) for x in f} if isinstance(f, list) else set()
+        except (urllib.error.URLError, OSError, ValueError):
+            erg = None                                              # unbekannt = nicht fähig
+        KI._faehig[name] = (time.monotonic(), erg)
+        KI._faehig_laeuft.discard(name)
+        try:
+            self.faehigkeit_bekannt()
+        except Exception:                                           # die Rückmeldung an die Oberfläche darf die Abfrage nie stören
+            pass
+        return erg
+
+    def faehigkeit(self, modell: str, warten: bool = True) -> tuple[bool, bool]:
+        """(denken, bild) für die Modellkennung (claude-…, ollama:…, eigen:…). Mit ``warten=False`` nie blockierend."""
+        m = modell or ""
+        if m.startswith(OLLAMA_MARKE):
+            f = self._ollama_faehigkeiten(m[len(OLLAMA_MARKE):], warten) or set()
+            return ("thinking" in f, "vision" in f)
+        if m.startswith(EIGEN_MARKE):
+            a = self.k.anbieter_holen(m[len(EIGEN_MARKE):])
+            return (a is not None, bool(a) and "visuell" in (a.get("verwendungFuer") or []))     # Denktiefe wird nur bei Wahl gesendet, mit Rückfall bei 400
+        if m.startswith((ARGOS_MARKE, AUTO_MARKE)):
+            return (False, False)
+        return MF.claude_faehig(m)
+
+    def kann_bild(self, modell: str | None = None) -> bool:
+        """Für die Oberfläche: nie blockierend; während die Abfrage bei Ollama läuft (oder scheitert) False."""
+        return self.faehigkeit(modell or self.modell("chatbot"), False)[1]
+
+    def kann_denken(self, modell: str | None = None) -> bool:
+        return self.faehigkeit(modell or self.modell("chatbot"), False)[0]
+
     def websuche_ziel(self) -> str | None:
         """Wohin die Frage der Websuche geht, wenn das nicht dieser Rechner ist (Brave oder eine nicht lokale Adresse), sonst None."""
         ws = self.k.websuche_optionen()
@@ -428,18 +605,23 @@ class KI:
         return self._claude(anweisung, text, bauplan, m, optionen)
 
     @staticmethod
+    def _stufe(optionen) -> dict:
+        return MF.DENKSTUFEN[MF.denkstufe((optionen or {}).get("denktiefe"))]
+
+    @staticmethod
     def _stopp(optionen) -> list[str]:
         return [t.strip() for t in str((optionen or {}).get("stopp", "")).split(",") if t.strip()]
 
     def _claude(self, anweisung, text, bauplan, modell, optionen=None) -> dict:
         if not self.k["apiKey"]:
             return {"fehler": "Es ist kein Schlüssel gespeichert. Optionen ▸ Schreibhilfe und KI."}
-        bitte = {"model": modell, "max_tokens": int((optionen or {}).get("maxLaenge") or 16000), "system": anweisung, "messages": _nachrichten(text)}
+        bitte = {"model": modell, "max_tokens": int((optionen or {}).get("maxLaenge") or 16000), "system": anweisung, "messages": _nachrichten(text, "claude")}
         if self._stopp(optionen):
             bitte["stop_sequences"] = self._stopp(optionen)                  # Temperatur und Top P gelten hier nicht (Claude regelt das selbst)
         ausgabe = {}
-        if modell != "claude-haiku-4-5":
-            ausgabe["effort"] = "low"
+        effort = self._stufe(optionen)["claude"]              # „aus“ = kein thinking; „auto“ = bisher (low, adaptiv); Haiku denkt nicht
+        if effort and MF.claude_faehig(modell)[0]:
+            ausgabe["effort"] = effort
             bitte["thinking"] = {"type": "adaptive"}
         if bauplan:
             ausgabe["format"] = {"type": "json_schema", "schema": bauplan}
@@ -484,8 +666,8 @@ class KI:
             opt["num_predict"] = int(o["maxLaenge"])
         if self._stopp(o):
             opt["stop"] = self._stopp(o)
-        bitte = {"model": modell, "stream": False, "options": opt, "think": False,
-                 "messages": [{"role": "system", "content": anweisung}] + _nachrichten(text)}
+        bitte = {"model": modell, "stream": False, "options": opt, "think": self._stufe(o)["ollama"],
+                 "messages": [{"role": "system", "content": anweisung}] + _nachrichten(text, "ollama")}
         if bauplan:
             bitte["format"] = bauplan
         for _versuch in (1, 2):
@@ -519,7 +701,9 @@ class KI:
             return {"fehler": "Der gewählte Anbieter ist nicht mehr da. In den Optionen neu wählen oder anlegen."}
         if not a["modell"]:
             return {"fehler": f"Für „{a['name']}“ ist kein Modell eingetragen."}
-        bitte = {"model": a["modell"], "messages": [{"role": "system", "content": anweisung}] + _nachrichten(text)}
+        bitte = {"model": a["modell"], "messages": [{"role": "system", "content": anweisung}] + _nachrichten(text, "openai")}
+        if self._stufe(optionen)["openai"] is not None:
+            bitte["reasoning_effort"] = self._stufe(optionen)["openai"]       # nur bei ausdrücklicher Wahl
         if optionen:
             if optionen.get("temperatur") is not None:
                 bitte["temperature"] = float(optionen["temperatur"])
@@ -533,15 +717,20 @@ class KI:
             bitte["response_format"] = {"type": "json_schema", "json_schema": {"name": "antwort", "schema": bauplan,
                                                                               "strict": True}}
         kopf = {"authorization": "Bearer " + a["schluessel"]} if a["schluessel"] else {}
-        try:
-            with _post(a["url"] + "/chat/completions", kopf, bitte, 90) as r:
-                daten = _json_dict(r)
-        except urllib.error.HTTPError as e:
-            return {"fehler": f"„{a['name']}“ meldet Fehler {e.code}"}
-        except TimeoutError:
-            return {"fehler": f"„{a['name']}“ hat zu lange gebraucht. Bitte noch einmal versuchen."}
-        except (urllib.error.URLError, OSError, ValueError):
-            return {"fehler": f"„{a['name']}“ ist unter {a['url']} nicht zu erreichen. Stimmt die URL?"}
+        for _versuch in (1, 2):
+            try:
+                with _post(a["url"] + "/chat/completions", kopf, bitte, 90) as r:
+                    daten = _json_dict(r)
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 400 and "reasoning_effort" in bitte:
+                    del bitte["reasoning_effort"]                      # das Modell kennt keine Denktiefe: ohne sie noch einmal
+                    continue
+                return {"fehler": f"„{a['name']}“ meldet Fehler {e.code}"}
+            except TimeoutError:
+                return {"fehler": f"„{a['name']}“ hat zu lange gebraucht. Bitte noch einmal versuchen."}
+            except (urllib.error.URLError, OSError, ValueError):
+                return {"fehler": f"„{a['name']}“ ist unter {a['url']} nicht zu erreichen. Stimmt die URL?"}
         wahl = daten.get("choices") if isinstance(daten.get("choices"), list) and daten.get("choices") else [{}]
         nachricht = wahl[0].get("message") if isinstance(wahl[0], dict) and isinstance(wahl[0].get("message"), dict) else {}
         erg = nachricht.get("content") if isinstance(nachricht.get("content"), str) else None
@@ -585,8 +774,15 @@ class KI:
         return {"text": r["ergebnis"], "cent": r.get("cent"), "methode": "KI"}
     def zusammenfassen(self, text): return self._text(ANWEISUNG_ZUSAMMENFASSUNG, text, "zusammenfassen")
     def text_analyse(self, text): return self._text(ANWEISUNG_ANALYSE, text, "textanalyse")
-    def eigener_assistent(self, text, prompt):
-        return self._text(prompt, text)
+    def eigener_assistent(self, text, prompt, kommentar: bool = False, modell: str = "", nur_kommentar: bool = False):
+        """``kommentar``: die KI begründet ihre Änderung nach ``KOMMENTAR_ZUSATZ``; ``nur_kommentar``: sie antwortet nur mit einem Kommentar;
+        ``modell``: Modell des Assistenten (leer = Standard)."""
+        prompt = prompt + (KOMMENTAR_NUR if nur_kommentar else KOMMENTAR_ZUSATZ if kommentar else "")
+        r = self.anfrage(prompt, text, None, modell or self.modell(None))
+        if "fehler" in r:
+            return r
+        self._kosten(r.get("cent"))
+        return {"text": r["ergebnis"], "cent": r.get("cent")}
 
     def satz_umschreiben(self, satz: str, grund: str = "") -> dict:
         """Ein zu langer oder verschachtelter Satz in kürzere Sätze — der Sinn bleibt, nichts kommt dazu."""
@@ -602,11 +798,20 @@ class KI:
     server_frage = staticmethod(lambda name, befehl: False)       # vom KI-Dienst ersetzt: zeigt den vollständigen Startbefehl und fragt vor dem Start
     _server_erlaubt: set = set()                                    # Befehle, deren Start in dieser Sitzung erlaubt wurde (Zustimmung gilt nicht für Werkzeugaufrufe)
 
-    def chat(self, verlauf: list[dict], dokumenttext: str = "") -> dict:
+    def chat(self, verlauf: list[dict], dokumenttext: str = "", markiert: bool = False) -> dict:
+        """``markiert``: ``dokumenttext`` ist nur die Markierung (Umfang „auszug“ genügt), sonst das ganze Dokument („dokument“)."""
         system = ("Du bist ein Schreibassistent in einem Textverarbeitungsprogramm und antwortest kurz und klar auf Deutsch. "
                   "Erfinde nichts dazu. " + EMPFAENGER.get(self.k["empfaenger"], EMPFAENGER["egal"]))
-        if (sperre := self.zustimmung_fehlt(self.modell("chatbot"), "dokument" if dokumenttext.strip() else "auszug")) is not None:
+        if (sperre := self.zustimmung_fehlt(self.modell("chatbot"), "dokument" if dokumenttext.strip() and not markiert else "auszug")) is not None:
             return sperre
+        if verlauf and verlauf[-1].get("bilder"):
+            if (sperre := self.zustimmung_fehlt(self.modell("chatbot"), "bild")) is not None:
+                return sperre                                       # der Bildinhalt geht an den Anbieter: eigene Einwilligung
+            if not self.faehigkeit(self.modell("chatbot"))[1]:
+                return {"fehler": "Das gewählte Modell kann keine Bilder verarbeiten. Bitte ein anderes Modell wählen."}
+            verlauf, fehler = bilder_lesen(verlauf)                 # Lesen und Base64 erst hier, im Arbeitsfaden
+            if fehler:
+                return {"fehler": fehler}
         if dokumenttext.strip():
             system += "\n\nDer Mensch arbeitet gerade an diesem Text:\n" + dokumenttext[:12000]
         notiz = ""
@@ -659,15 +864,27 @@ class KI:
                     n = t["name"] if t["name"] not in wo else f"{sv['name']}_{t['name']}"
                     wo[n] = (c, t["name"], sv["name"], M.art_des_werkzeugs(t))
                     tools.append({"type": "function", "function": {"name": n, "description": t.get("description", ""), "parameters": t.get("inputSchema") or {"type": "object", "properties": {}}}})
-            nachrichten = [{"role": "system", "content": system}] + _nachrichten(verlauf)
+            nachrichten = [{"role": "system", "content": system}] + _nachrichten(verlauf, "openai")
+            effort = self._stufe(optionen)["openai"]
+            modus = optionen.get("werkzeuge", "fragen")
             for _runde in range(6):
                 bitte = {"model": name, "messages": nachrichten, "tools": tools, "temperature": float(optionen.get("temperatur", 0.2))}
                 if optionen.get("topP") is not None:
                     bitte["top_p"] = float(optionen["topP"])
                 if optionen.get("maxLaenge"):
                     bitte["max_tokens"] = int(optionen["maxLaenge"])
-                with _post(url, kopf, bitte, 300) as r:
-                    daten = _json_dict(r)
+                if effort is not None:
+                    bitte["reasoning_effort"] = effort
+                try:
+                    with _post(url, kopf, bitte, 300) as r:
+                        daten = _json_dict(r)
+                except urllib.error.HTTPError as e:
+                    if e.code != 400 or effort is None:
+                        raise
+                    effort = None                                      # Denktiefe nicht unterstützt: ohne sie noch einmal, dauerhaft für dieses Gespräch
+                    bitte.pop("reasoning_effort", None)
+                    with _post(url, kopf, bitte, 300) as r:
+                        daten = _json_dict(r)
                 wahl = daten.get("choices") if isinstance(daten.get("choices"), list) and daten.get("choices") else [{}]
                 msg = wahl[0].get("message") if isinstance(wahl[0], dict) and isinstance(wahl[0].get("message"), dict) else {}
                 aufrufe = [a for a in (msg.get("tool_calls") or []) if isinstance(a, dict)] if isinstance(msg.get("tool_calls"), list) else []
@@ -684,7 +901,7 @@ class KI:
                     ziel = wo.get(f.get("name", ""))
                     if ziel is None:
                         ergebnis = "Dieses Werkzeug gibt es nicht."
-                    elif not self.werkzeug_frage(ziel[1], arg, ziel[2], ziel[3]):
+                    elif not (MF.werkzeug_erlaubt(modus, ziel[3]) or self.werkzeug_frage(ziel[1], arg, ziel[2], ziel[3])):
                         ergebnis = "Der Benutzer hat den Aufruf abgelehnt."
                     else:
                         try:
@@ -696,7 +913,7 @@ class KI:
         except M.McpFehler as e:
             return {"fehler": f"KI-Werkzeug: {e}"}
         except urllib.error.HTTPError as e:
-            return {"fehler": f"Der Anbieter meldet Fehler {e.code} — unterstützt das Modell Werkzeuge?"}
+            return {"fehler": f"Der Anbieter meldet Fehler {e.code} — unterstützt das Modell Werkzeuge" + (" und Bilder?" if any(z.get("bilder") for z in verlauf[-1:]) else "?")}
         except (urllib.error.URLError, OSError, ValueError) as e:
             return {"fehler": f"Es hat nicht geklappt: {getattr(e, 'reason', e)}"}
         finally:

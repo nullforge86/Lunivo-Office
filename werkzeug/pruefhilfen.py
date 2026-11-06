@@ -69,14 +69,14 @@ class DialogWaechter:
 
     def takt(self) -> None:
         # Dialoge, die nach OK noch offen sind (etwa weil sie eine Warnung zeigten), werden nach einigen Takten abgebrochen
-        for x in QApplication.topLevelWidgets():
+        for x in QApplication.allWidgets():                         # auch Fenster, die in der Seitenleiste stehen (PanelFaehig), nicht nur oberste Fenster
             if isinstance(x, QDialog) and x.isVisible() and x.property("geprueft"):
                 n = int(x.property("takte") or 0) + 1
                 x.setProperty("takte", n)
                 if n == 5:
                     self.fenster_log.append(f"{type(x).__name__}: {x.windowTitle()} (blieb nach OK offen)")
                     QTimer.singleShot(0, x.reject)
-        sichtbar = [x for x in QApplication.topLevelWidgets() if isinstance(x, QDialog) and x.isVisible() and not x.property("geprueft")]
+        sichtbar = [x for x in QApplication.allWidgets() if isinstance(x, QDialog) and x.isVisible() and not x.property("geprueft")]
         fremd = [x for x in sichtbar if not type(x).__module__.startswith("lunivo_writer")]
         for x in (fremd or sichtbar):                              # zuerst Meldungs- und Dateifenster, erst dann Lunivos eigene Dialoge
             x.setProperty("geprueft", True)

@@ -35,17 +35,17 @@ class AktionenLeiste(QWidget):
         for b in self.knoepfe:
             self.fluss.removeWidget(b); b.hide(); b.setParent(None); b.deleteLater()
         self.knoepfe = []
-        for a in self.dienst.konfig["assistenten"]:
+        for a in self.dienst.konfig.assistenten("aktion"):
             b = QPushButton(a["name"]); b.setToolTip(a["prompt"][:200])
             b.clicked.connect(lambda _=False, a=a: self.dienst.assistent(a))
             self.fluss.addWidget(b); self.knoepfe.append(b)
         neu = QPushButton("＋ Neue Aktion"); neu.setFlat(True)
-        neu.clicked.connect(lambda: self.fenster.befehle.tun("w.assistentErstellen"))
+        neu.clicked.connect(lambda: self.fenster.befehle.tun("w.schnelleAktionErstellen"))
         self.fluss.addWidget(neu); self.knoepfe.append(neu)
         self.zustand()
 
     def zustand(self) -> None:
         """Die Aktionen laufen nur mit verbundenem Modell und nicht, solange die KI schon arbeitet; „Neue Aktion“ geht immer."""
-        frei = self.dienst.verfuegbar() and not self.dienst._beschaeftigt
+        frei = self.dienst.verfuegbar() and not self.dienst.beschaeftigt
         for b in self.knoepfe[:-1]:
             b.setEnabled(frei)

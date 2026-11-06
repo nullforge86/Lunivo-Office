@@ -115,7 +115,7 @@ class FundKarte(QFrame):
     def _vorschlag_holen(self):
         self.vorschlag_knopf.setEnabled(False); self.vorschlag_knopf.setText("Die KI schreibt …")
         self.d.satz_vorschlag(self.fund, self._vorschlag_da)
-        if not self.d._beschaeftigt:                       # es kam nicht zum Lauf (kein Modell, kein Text): der Knopf bleibt bedienbar
+        if not self.d.beschaeftigt:                       # es kam nicht zum Lauf (kein Modell, kein Text): der Knopf bleibt bedienbar
             self.vorschlag_knopf.setEnabled(True); self.vorschlag_knopf.setText("Vorschlag")
 
     def _vorschlag_da(self, v: dict):

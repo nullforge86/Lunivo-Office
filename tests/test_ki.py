@@ -185,3 +185,167 @@ def test_bildgenerierung_und_anbieter(tmp_path):
     assert gesehen["pfad"] == "/v1/images/generations" and gesehen["body"]["prompt"] == "ein Hund"
     k.anbieter_entfernen(a["id"])
     assert "bildgenerierung" not in k["aufgaben"]
+
+
+# ---- Chat-Zustand (ohne Oberfläche)
+def test_chat_phasen_und_wiederholen():
+    from lunivo_writer.ai.chat_modell import ChatModell
+    m = ChatModell()
+    assert m.phase == "leer"
+    k = m.anfrage("Hallo Welt")
+    assert m.phase == "laufend" and m.titel == "Hallo Welt"
+    assert m.fehler(k, "Es hat nicht geklappt: x") and m.phase == "fehler"
+    assert m.nachrichten[-1]["fehler"]["text"].startswith("Es hat") and m.verlauf() == [{"rolle": "mensch", "text": "Hallo Welt"}]
+    assert m.wiederholen() == "Hallo Welt" and m.nachrichten == []
+    k = m.anfrage("Hallo Welt")
+    assert m.antwort(k, "Hi", 3) and m.phase == "bereit"
+
+
+def test_chat_neues_gespraech_verwirft_alte_antwort():
+    from lunivo_writer.ai.chat_modell import ChatModell
+    m = ChatModell()
+    k = m.anfrage("Frage")
+    m.neues_gespraech()
+    assert not m.antwort(k, "zu spät") and m.phase == "leer" and m.nachrichten == []
+    assert m.gespraeche[0]["titel"] == "Frage"
+    m.aktion("Kürzen", "kurz")
+    assert [n["rolle"] for n in m.verlauf()] == ["mensch", "ki"]
+
+
+def test_chat_vorschlaege_je_zustand():
+    from lunivo_writer.ai.chat_vorschlaege import chat_vorschlaege
+    titel = ["Dokument zusammenfassen", "Text umschreiben", "Text vereinfachen", "Inhalt erweitern", "Dokument Korrektur lesen",
+             "Zusammenfassung erstellen", "Text übersetzen", "Inhaltsverzeichnis erstellen", "Titel vorschlagen", "Kernpunkte hervorheben"]
+    for a, l in ((True, False), (False, False), (False, True)):          # Markierung, Dokument, leeres Dokument: immer dieselben zehn in dieser Reihenfolge
+        v = chat_vorschlaege(a, l)
+        assert [e["titel"] for e in v] == titel and all(e["anweisung"] and e["hinweis"] for e in v)
+        assert all(e["aktiv"] is (not l) for e in v)                      # leer: gesperrt statt versteckt
+
+
+# ---- Denktiefe, Bildanhang, Bildprüfung
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
+
+
+def _bild(tmp_path, name="a.png", inhalt=PNG):
+    p = tmp_path / name
+    p.write_bytes(inhalt)
+    return str(p)
+
+
+def test_bild_pruefen_nach_inhalt_und_groesse(tmp_path):
+    from lunivo_writer.ai import modellfaehigkeit as MF
+    assert MF.bild_pruefen(_bild(tmp_path))["typ"] == "image/png"
+    assert MF.bild_pruefen(_bild(tmp_path, "x.png", b"\xff\xd8\xff" + b"0" * 20))["typ"] == "image/jpeg"     # Endung lügt
+    assert "nicht unterstützt" in MF.bild_pruefen(_bild(tmp_path, "t.png", b"GIF89a" + b"0" * 20))["fehler"]
+    assert "gibt es nicht" in MF.bild_pruefen(str(tmp_path / "nix.png"))["fehler"]
+    assert "zu groß" in MF.bild_pruefen(_bild(tmp_path, "g.png", PNG + b"0" * MF.BILD_MAX_BYTES))["fehler"]
+
+
+def test_denk_stufen_je_anbieter(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(K, "CLAUDE_URL", server + "/v1/messages")
+    monkeypatch.setattr(K, "OLLAMA_URL", server)
+    Handler.antwort = {"content": [{"type": "text", "text": "ok"}]}
+    ki = K.KI(konfig(tmp_path, modell="claude-sonnet-5", apiKey="sk"))
+    ki.anfrage("s", "t", optionen={"denktiefe": "hoch"})
+    ki.anfrage("s", "t", optionen={"denktiefe": "aus"})
+    ki.anfrage("s", "t")
+    hoch, aus, auto = (g[2] for g in Handler.gesehen)
+    assert hoch["output_config"]["effort"] == "high" and hoch["thinking"] == {"type": "adaptive"}
+    assert "thinking" not in aus and "output_config" not in aus
+    assert auto["output_config"]["effort"] == "low"
+    Handler.gesehen = []
+    ki.anfrage("s", "t", modell="claude-haiku-4-5", optionen={"denktiefe": "hoch"})
+    assert "thinking" not in Handler.gesehen[0][2]
+    Handler.gesehen = []
+    Handler.antwort = {"message": {"content": "ok"}}
+    ki.anfrage("s", "t", modell="ollama:q", optionen={"denktiefe": "mittel"})
+    ki.anfrage("s", "t", modell="ollama:q")
+    assert Handler.gesehen[0][2]["think"] == "medium" and Handler.gesehen[1][2]["think"] is False
+    Handler.gesehen = []
+    Handler.antwort = {"choices": [{"message": {"content": "ok"}}]}
+    a = ki.k.anbieter_hinzufuegen("X", server, "", "m")
+    ki.anfrage("s", "t", modell="eigen:" + a["id"], optionen={"denktiefe": "niedrig"})
+    ki.anfrage("s", "t", modell="eigen:" + a["id"])
+    assert Handler.gesehen[0][2]["reasoning_effort"] == "low" and "reasoning_effort" not in Handler.gesehen[1][2]
+
+
+def test_denk_eigen_rueckfall_bei_400(tmp_path, server):
+    Handler.antwort = {"choices": [{"message": {"content": "ok"}}]}
+    ki = K.KI(konfig(tmp_path))
+    a = ki.k.anbieter_hinzufuegen("X", server, "", "m")
+    Handler.status = 400
+    r = ki.anfrage("s", "t", modell="eigen:" + a["id"], optionen={"denktiefe": "hoch"})
+    assert "400" in r["fehler"] and len(Handler.gesehen) == 2 and "reasoning_effort" not in Handler.gesehen[1][2]
+
+
+def test_bild_format_je_anbieter(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(K, "CLAUDE_URL", server + "/v1/messages")
+    monkeypatch.setattr(K, "OLLAMA_URL", server)
+    pfad = _bild(tmp_path)
+    verlauf = [{"rolle": "mensch", "text": "alt", "bilder": [{"pfad": pfad}]}, {"rolle": "ki", "text": "ja"},
+               {"rolle": "mensch", "text": "neu", "bilder": [{"pfad": pfad}]}]
+    # Claude: nur das letzte Bild, vor dem Text; frühere mit Platzhalter
+    Handler.antwort = {"content": [{"type": "text", "text": "ok"}]}
+    ki = K.KI(konfig(tmp_path, modell="claude-sonnet-5", apiKey="sk"))
+    ki.k.einwilligung_geben("Anthropic (Claude)", "bild")
+    assert ki.chat(verlauf)["text"] == "ok"
+    m = Handler.gesehen[0][2]["messages"]
+    assert m[0]["content"] == "alt\n[Bild]"
+    assert m[2]["content"][0]["type"] == "image" and m[2]["content"][0]["source"]["media_type"] == "image/png"
+    assert m[2]["content"][1] == {"type": "text", "text": "neu"}
+    # Ollama
+    Handler.gesehen = []
+    Handler.antwort = {"message": {"content": "ok"}}
+    ki.k.d["modell"] = "ollama:v"
+    K.KI._faehig["v"] = (0, {"vision"})
+    assert ki.chat(verlauf)["text"] == "ok"
+    m = Handler.gesehen[0][2]["messages"]
+    assert len(m[3]["images"][0]) > 10 and "images" not in m[1]
+    # eigener Anbieter: nur mit Etikett „visuell“
+    Handler.gesehen = []
+    Handler.antwort = {"choices": [{"message": {"content": "ok"}}]}
+    a = ki.k.anbieter_hinzufuegen("X", server, "", "m", ["text"])
+    ki.k.aufgabe_setzen("chatbot", "eigen:" + a["id"])
+    assert "keine Bilder" in ki.chat(verlauf)["fehler"] and not Handler.gesehen
+    ki.k.anbieter_aktualisieren(a["id"], "X", server, "", "m", ["text", "visuell"])
+    assert ki.chat(verlauf)["text"] == "ok"
+    teil = Handler.gesehen[0][2]["messages"][3]["content"]
+    assert teil[-1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+def test_bild_ollama_unbekannt_ist_nicht_faehig(tmp_path, monkeypatch):
+    monkeypatch.setattr(K, "OLLAMA_URL", "http://127.0.0.1:9")
+    K.KI._faehig.pop("nix", None)
+    ki = K.KI(konfig(tmp_path))
+    assert ki.faehigkeit("ollama:nix") == (False, False)
+    assert ki.kann_bild("ollama:nix") is False
+
+
+def test_chat_modell_bilder_und_neues_gespraech():
+    from lunivo_writer.ai.chat_modell import ChatModell
+    c = ChatModell()
+    c.anfrage("x", [{"pfad": "/a.png", "typ": "image/png", "bytes": 1}])
+    assert c.verlauf()[0]["bilder"][0]["pfad"] == "/a.png"
+    c.abbrechen(); c.wiederholen()
+    assert c.wiederhol_bilder
+    c.neues_gespraech()
+    assert not c.wiederhol_bilder and c.nachrichten == []
+
+
+def test_werkzeug_automatisch_nur_nicht_gespeichert(tmp_path):
+    k = K.KIKonfig(str(tmp_path / "k.json"))
+    k.chat_setzen(werkzeuge="automatisch", denktiefe="hoch")
+    assert json.load(open(tmp_path / "k.json"))["chat"] == {"werkzeuge": "fragen", "denktiefe": "hoch"}
+    assert K.KIKonfig(str(tmp_path / "k.json")).chat_optionen()["werkzeuge"] == "fragen"
+
+
+def test_assistent_migration_filter_und_aendern(tmp_path):
+    k = K.KIKonfig(str(tmp_path / "ki.json"))
+    k.d["assistenten"].append({"id": "alt1", "name": "Alt", "prompt": "p", "modus": "ersetzen", "zugriff": "schnell"})      # Bestand ohne Art
+    n = k.assistent_hinzufuegen("Dauer", "q", "kommentar", art="fortlaufend", ausloeser="absatz", verzoegerung=1, kommentar=True, an=True)
+    assert [a["name"] for a in k.assistenten("aktion")] == ["Alt"] and [a["name"] for a in k.assistenten("fortlaufend")] == ["Dauer"]
+    assert n["verzoegerung"] == 2 and n["umfang"] == "absatz" and n["an"] is True and n["kommentar"] is True
+    z = k.assistent_hinzufuegen("Akt", "r", "kommentar", art="aktion", an=True, umfang="dokument")
+    assert z["modus"] == "hinweis" and z["an"] is False and z["umfang"] == "absatz"       # Aktion: nur alte Modi, nie „an“
+    assert k.assistent_aendern(n["id"], an=False)["an"] is False and k.assistent_aendern("nix", an=True) is None
+    assert len(K.VORLAGEN_ASSISTENT) == 6 and all(v[2] in K.FORTLAUFEND_MODI for v in K.VORLAGEN_ASSISTENT)

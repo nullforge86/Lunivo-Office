@@ -55,18 +55,11 @@ class LunivoSeiten:
                     return m["name"]
             return mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid
 
-        from lunivo_writer.ui.dialogs.ki_dialoge import modell_passt
+        from lunivo_writer.ui.dialogs.ki_dialoge import modell_felder_fuellen
 
         def aufgaben_fuellen():
             for aufgabe, c in combos.items():
-                c.blockSignals(True); c.clear()
-                c.addItem(f"Standard ({standard_name()})", "")
-                for m in k.alle_modelle():
-                    if not modell_passt(m, aufgabe):
-                        continue
-                    c.addItem(m["name"] + ("  · lokal" if m["lokal"] else ""), m["id"])
-                c.setCurrentIndex(max(0, c.findData(k["aufgaben"].get(aufgabe, ""))))
-                c.blockSignals(False)
+                modell_felder_fuellen(c, k, aufgabe, standard=f"Standard ({standard_name()})")
         for aufgabe, name in K.AUFGABEN:
             c = Auswahlfeld()
             combos[aufgabe] = c
@@ -166,28 +159,10 @@ class LunivoSeiten:
         neuer.clicked.connect(anbieter_neu)
         mb.clicked.connect(modelle_bearbeiten)
 
-        f.addRow(QLabel("Eigene Assistenten"))
-        ass = QWidget(); sv = QVBoxLayout(ass); sv.setContentsMargins(*RAND_ZEILE); sv.setSpacing(ABSTAND_NORMAL)
-        ass.setProperty("optName", "Eigene Assistenten")
+        f.addRow(QLabel("Assistenten"))
+        from lunivo_writer.ui.baukasten.assistenten_liste import AssistentenListe
+        ass = AssistentenListe(self.w); ass.setProperty("optName", "Assistenten")
         f.addRow(ass)
-        na = QPushButton("Neuen Assistenten erstellen …")
-        f.addRow(na)
-
-        def assistenten_fuellen():
-            while sv.count():
-                it = sv.takeAt(0)
-                if it.widget():
-                    it.widget().deleteLater()
-            if not k["assistenten"]:
-                sv.addWidget(QLabel("Noch keiner angelegt."))
-            for a in k["assistenten"]:
-                z = QWidget(); zh = QHBoxLayout(z); zh.setContentsMargins(*RAND_KEIN)
-                zh.addWidget(QLabel(a["name"]), 1)
-                eb = QPushButton("Entfernen")
-                eb.clicked.connect(lambda _=False, i=a["id"]: (k.assistent_entfernen(i), assistenten_fuellen()))
-                zh.addWidget(eb)
-                sv.addWidget(z)
-        na.clicked.connect(lambda: (self.w.befehle.w_assistentErstellen(), assistenten_fuellen()))
 
         wen = Auswahlfeld(); wen.addItems(EMPFAENGER)
         wen.setCurrentText(self.w.assistant.thema)
@@ -203,8 +178,9 @@ class LunivoSeiten:
         auf.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://console.anthropic.com/settings/billing")))
         vh.addWidget(auf); vh.addStretch(1)
         f.addRow(verbrauch)
-        alles_neu(); assistenten_fuellen(); schluessel_stand()
-        self.w.ki.geaendert.connect(lambda: (aufgaben_fuellen(), modell_fuellen(), anbieter_fuellen()))
+        alles_neu(); schluessel_stand()
+        verbindung = self.w.ki.geaendert.connect(lambda: (aufgaben_fuellen(), modell_fuellen(), anbieter_fuellen()))
+        p.destroyed.connect(lambda *_: self.w.ki.geaendert.disconnect(verbindung))       # sonst greift die Verbindung nach dem Schließen der Seite auf gelöschte Felder
         p.abschluss()
         return p
 

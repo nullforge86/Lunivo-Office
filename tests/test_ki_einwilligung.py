@@ -112,3 +112,29 @@ def test_fehlerhafte_ki_antworten_stuerzen_nicht_ab(ki, monkeypatch, antwort):
     monkeypatch.setattr(K, "_post", lambda *a, **k: R())
     r = ki.anfrage("Korrigiere", "Hallo")
     assert isinstance(r, dict) and ("fehler" in r or "text" in r)
+
+
+def test_bild_ohne_einwilligung_wird_nicht_gesendet(ki, netz, tmp_path):
+    p = tmp_path / "a.png"
+    p.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 20)
+    ki.k.einwilligung_geben("Anthropic (Claude)", "dokument")           # Text erlaubt, Bild nicht
+    r = ki.chat([{"rolle": "mensch", "text": "Was ist das?", "bilder": [{"pfad": str(p)}]}])
+    assert "keine Zustimmung" in r["fehler"] and "Bild" in r["fehler"] and not netz
+    ki.k.einwilligung_geben("Anthropic (Claude)", "bild")
+    ki.chat([{"rolle": "mensch", "text": "Was ist das?", "bilder": [{"pfad": str(p)}]}])
+    assert netz
+
+
+def test_dauer_einwilligung_deckt_nicht_dokument_und_umgekehrt(ki):
+    ki.k.einwilligung_geben("Anthropic (Claude)", "dauer")
+    assert ki.k.hat_einwilligung("Anthropic (Claude)", "dauer")
+    assert not ki.k.hat_einwilligung("Anthropic (Claude)", "auszug")
+    ki.k.einwilligung_geben("Anthropic (Claude)", "dokument")
+    assert ki.k.hat_einwilligung("Anthropic (Claude)", "auszug")
+    ki.k.einwilligung_widerrufen("Anthropic (Claude)", "dauer")
+    assert not ki.k.hat_einwilligung("Anthropic (Claude)", "dauer")
+
+
+def test_dauer_assistent_ohne_zustimmung_sendet_nichts(ki, netz):
+    r = ki.eigener_assistent("Ein längerer Absatz zum Prüfen.", "Prüfe.", kommentar=True)
+    assert "keine Zustimmung" in r["fehler"] and not netz

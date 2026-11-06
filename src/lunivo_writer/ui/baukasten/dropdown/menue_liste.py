@@ -52,11 +52,14 @@ class MenueListe(PopupVerhalten, QMenu):
             a.setIcon(symbol)
         return a
 
-    def untermenue(self, text: str, symbol: QIcon | None = None, aktiv: bool = True) -> "MenueListe":
-        m = MenueListe(text, self)
+    def untermenue(self, text: str, symbol: QIcon | None = None, aktiv: bool = True, *, wert: str = "", tip: str = "") -> "MenueListe":
+        """Untermenü-Zeile. ``wert``: aktueller Wert, rechts in der Zeile vor dem Pfeil (wie ein Kürzel). ``tip``: Hinweis, auch bei grauer Zeile."""
+        m = MenueListe(text + ("\t" + wert.replace("&", "&&") if wert else ""), self)
         if symbol is not None:
             m.setIcon(symbol)
         m.setEnabled(aktiv)
+        if tip:
+            m.menuAction().setToolTip(tip)
         self.addMenu(m)
         return m
 
@@ -72,6 +75,16 @@ class MenueListe(PopupVerhalten, QMenu):
         """Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen."""
         a = QWidgetAction(self); a.setDefaultWidget(w); self.addAction(a)
         return a
+
+    def schalter(self, text: str, an: bool, aktion: Callable[[bool], None] | None = None, *, symbol: QIcon | None = None):
+        """Zeile mit kleinem Kippschalter (z. B. „Websuche“). ``aktion(an)`` läuft beim Umschalten; zurückgegeben wird die ``SchalterZeile``
+        (``an_setzen`` zieht den Zustand von außen nach)."""
+        from lunivo_writer.ui.baukasten.dropdown.schalter_zeile import SchalterZeile
+        z = SchalterZeile(text, an, symbol)
+        if aktion is not None:
+            z.umgeschaltet.connect(aktion)
+        self.widget(z)
+        return z
 
     def kompakt(self) -> "MenueListe":
         """Layoutvariante „kompakt“ (schmalere Zeilen) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.

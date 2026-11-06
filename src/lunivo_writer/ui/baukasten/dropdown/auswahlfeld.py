@@ -9,7 +9,7 @@ Keine Farben im Widget-Stylesheet: das Aussehen kommt aus ``ui/theme.py``.
 """
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import (QComboBox, QFontComboBox, QStyle, QStyledItemDelegate, QStyleOptionComboBox, QStylePainter,
                                QStyleOptionViewItem)
 
@@ -83,11 +83,38 @@ class Auswahlfeld(_Feldlaenge, QComboBox):
         self.setMinimumContentsLength(min_zeichen)
         self.setMaxVisibleItems(MAX_ZEILEN)
         self.setItemDelegate(_KuerzDelegate(self))
+        self._menue_oben = False
+
+    def als_menue_nach_oben(self, an: bool = True, zusatz=None) -> None:
+        """Statt der Liste öffnet das Feld eine ``MenueListe`` über sich (Häkchen rechts am gewählten Eintrag); Auswahl setzt wie gewohnt den Index.
+        ``zusatz(menue)``: füllt bei jedem Öffnen weitere Zeilen unter einer Trennlinie unter die Liste (z. B. Zeilen mit Untermenü)."""
+        self._menue_oben = an
+        self._menue_zusatz = zusatz
+
+    def _menue_zeigen(self) -> None:
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        m = self._menue = MenueListe(self)
+        m.setMinimumWidth(self.width())
+        for i in range(self.count()):
+            m.eintrag(self.itemText(i).replace("&", "&&"), lambda i=i: self.setCurrentIndex(i), kuerzel="✓" if i == self.currentIndex() else "")
+        if getattr(self, "_menue_zusatz", None) is not None:
+            m.trenner()
+            self._menue_zusatz(m)
+        m.ensurePolished()
+        m.popup(self.mapToGlobal(self.rect().topLeft()) - QPoint(0, m.sizeHint().height()))
 
     def showPopup(self) -> None:
+        if self._menue_oben:
+            self._menue_zeigen()
+            return
         self.view().window().setMaximumWidth(16777215)
         super().showPopup()
         popup_begrenzen(self, self._popup_min)
+
+    def hidePopup(self) -> None:
+        if self._menue_oben and getattr(self, "_menue", None) is not None:
+            self._menue.hide()
+        super().hidePopup()
 
     def paintEvent(self, event) -> None:
         if self.isEditable():

@@ -2,12 +2,12 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 367 Module, 399 Klassen, 5116 Funktionen und Methoden.
+Stand: 382 Module, 418 Klassen, 5276 Funktionen und Methoden.
 
 ## Inhalt
 
 - `(Wurzel)` — 3 Module
-- `ai` — 6 Module
+- `ai` — 10 Module
 - `core` — 8 Module
 - `core/befehle` — 22 Module
 - `editor` — 72 Module
@@ -18,8 +18,8 @@ Stand: 367 Module, 399 Klassen, 5116 Funktionen und Methoden.
 - `services/docx_teile` — 11 Module
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 69 Module
-- `ui/baukasten/dropdown` — 25 Module
+- `ui/baukasten` — 77 Module
+- `ui/baukasten/dropdown` — 28 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
@@ -70,11 +70,14 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `_server_erlaubt(name, befehl)` — Aus dem Arbeitsfaden: zeigt den vollständigen Startbefehl des MCP-Servers und fragt vor dem Start (ein Programm auf diesem Rechner).
   - `_hinweis_fenster(titel, text)` — Ein Hinweis, den man nicht übersehen kann (statt nur einer Zeile in der Statusleiste).
   - `merke_ergebnis(titel, text, vorlage)`
+  - `beschaeftigt()`
+  - `kontext_pruefen()` — Von Editor-Signalen gerufen: ``kontextGeaendert`` nur, wenn sich Markierung oder Leer-Sein wirklich geändert haben.
+  - `kontext()` — (Markierung da, Dokument leer, Modell für den Chat verbunden, Name des Chat-Modells) aus Editor und Konfiguration.
   - `verfuegbar()`
   - `zettel(text)`
   - `_einwilligung(modell, umfang, zeichen)` — Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
   - `_eingabe()`
-  - `starte(meldung, arbeit, danach, eing, aufgabe)` — arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread.
+  - `starte(meldung, arbeit, danach, eing, aufgabe, modell)` — arbeit(text) → Ergebnisdict (im Hintergrund); danach(ergebnis, eingabe) im Hauptthread.
   - `_fertig(auftrag, r)`
   - `bild_aus_text(beschreibung)` — Markierter Text (oder der übergebene) ist die Bildbeschreibung; das Bild tritt an die Stelle der Markierung.
   - `_bild_fertig(r, eing)`
@@ -86,13 +89,43 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `_methode(r)`
   - `text_aktion(aktion)`
   - `assistent(a)` — Schnelle KI-Aktion (Eigener Assistent): ein Name und ein Prompt. Wirkung „ersetzen“ wie Korrigieren, „anhaengen“ hinter den Text, „hinweis“ wie
+  - `dauerbetrieb()` — Hauptschalter: nur wenn er an ist, läuft irgendein fortlaufender Assistent.
+  - `_dauer_einwilligung(modell)` — Klartext-Frage (nur bei Anbietern außerhalb dieses Rechners): „Sendet bei jeder Änderung den geänderten Absatz an <Anbieter>“.
+  - `dauerbetrieb_setzen(an)` — Hauptschalter ein-/ausschalten; False, wenn das Einschalten abgelehnt wurde oder nicht möglich ist.
+  - `assistent_an_setzen(id_, an)` — Einen fortlaufenden Assistenten an-/ausschalten (läuft erst, wenn auch ``dauerbetrieb()`` an ist); False bei Ablehnung.
+  - `_dauer_aus(a, grund)` — Fehler oder fehlende Erlaubnis: den Assistenten ausschalten und es sagen — nie stumm wiederholen.
+  - `dauer_geaendert(art)` — Von Dokument-/Markierungssignalen gerufen (ui/main_window.py): startet die Ruhezeit des Assistenten neu.
+  - `_dauer_eingabe(a)`
+  - `_dauer_los()` — Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran).
+  - `_dauer_fertig(r, eing)`
+  - `_dauer_kommentar(ed, eing, text, autor)`
+  - `_dauer_ersetzen(a, eing, text, begruendung, r)` — Ersetzen nur nach Bestätigung; ein Undo-Schritt (``_einsetzen``).
   - `zusammenfassen()`
   - `analyse()`
   - `vorschlaege_holen()`
   - `thesaurus(danach)` — Synonyme zum Wort am Zeiger; danach(wort, woerter, von, bis) im Hauptthread.
   - `satz_vorschlag(fund, danach)` — Zu einem Hinweis („Langer Satz …“) einen Umschreibe-Vorschlag holen; ``danach(vorschlag)`` bekommt {alt, neu, grund} im Hauptthread.
   - `vorschlag_einsetzen(v)`
-  - `chat(verlauf)`
+  - `chat_senden(text, bild)` — Neue Nutzernachricht in ``chat_modell`` aufnehmen und senden. False, wenn nichts gesendet wurde (leer, beschäftigt, keine Zustimmung).
+  - `denktiefe()`
+  - `denktiefe_setzen(stufe)`
+  - `werkzeugmodus()`
+  - `werkzeugmodus_setzen(modus)` — „fragen“ oder „automatisch“. „automatisch“ gilt nur für diese Sitzung (``KIKonfig.speichern`` schreibt es nie) und nur für Lesen und
+  - `kann_bild()`
+  - `kann_denken()`
+  - `werkzeuge_vorhanden()` — MCP-Server an UND ein Modell, das Werkzeuge im Chat nutzt (Ollama oder eigener Anbieter, nicht Claude).
+  - `bild_hinweis()`
+  - `denken_hinweis()`
+  - `werkzeuge_hinweis()`
+  - `chat_wiederholen()` — Die letzte Nutzernachricht erneut senden; die davorliegende Antwort/der Fehler fällt weg.
+  - `chat_neu()`
+  - `chat_abbrechen()` — Eine laufende Antwort wird nicht mehr angezeigt. Der Hintergrundfaden selbst lässt sich im Thread-Pool nicht unterbrechen und läuft aus.
+  - `aktion_in_chat(name, text, cent)`
+  - `_chat_anfragen(aufnehmen)`
+  - `antwort_einfuegen(text)` — Antwort an der Schreibmarke einfügen (ein Schritt für Rückgängig).
+  - `antwort_ersetzen(text)` — Markierung durch die Antwort ersetzen; ohne Markierung False (die Oberfläche sagt dann, dass zuerst markiert werden muss).
+  - `_chat_bereit()` — Modell da und Zustimmungen erteilt? Bei Markierung gilt der Umfang „auszug“, sonst „dokument“ (die Sperre an der Sendestelle bleibt).
+  - `_chat_los(verlauf, kennung)` — Kontext des Chats: die Markierung, wenn es eine gibt (weniger Text verlässt den Rechner), sonst das Dokument.
 
 ### `ai/argos.py`
 
@@ -111,17 +144,63 @@ Lokale Offline-Übersetzung mit argostranslate. Der Text verlässt den Rechner n
 - `richtung_installieren(von, nach)` — Lädt das Paket von→nach herunter und installiert es. Nur auf ausdrücklichen Wunsch, im Hintergrund; nie automatisch.
 - `_netzfehler(e)`
 
+### `ai/assistent_lauf.py`
+
+Fortlaufende KI-Assistenten: reine Regeln ohne Qt — wann ein Absatz neu geschickt wird, wie gedrosselt wird, was ein Ergebnis wert ist.
+
+- `verzoegerung_begrenzen(wert)`
+- `absatz_geaendert(zuletzt, jetzt)` — Lohnt eine Anfrage? Nur wenn der Absatz lang genug ist und sich gegenüber dem zuletzt gesendeten Stand wirklich geändert hat.
+- `eingabe_kuerzen(text)`
+- `ergebnis_wirkt(alt, neu)` — Leer oder (bis auf Leerraum) gleich dem Eingang: keine Wirkung.
+- `trenne_begruendung(text)` — (geänderter Text, Begründung); ohne Trenner ist die Begründung leer.
+- **class `Drossel`** — Mindestabstand und Höchstzahl je Stunde; die Uhr ist austauschbar (Tests).
+  - `__init__(abstand, je_stunde, uhr)`
+  - `warten_noch()` — Sekunden bis zur nächsten erlaubten Anfrage (0 = jetzt); ``float('inf')`` heißt: Stundengrenze erreicht.
+  - `erlaubt()`
+  - `gesendet()`
+  - `stundengrenze()`
+
+### `ai/chat_modell.py`
+
+Zustand des KI-Chats ohne Oberfläche: Nachrichten, Phase, Anfragekennung, Gesprächsliste. Schicht 1 — kennt weder Dienst noch Qt.
+
+- `fehler_objekt(text)` — Aus einer Fehlermeldung des Dienstes {titel, art, text}; ``art`` steuert die Darstellung.
+- `gespraechstitel(text)`
+- **class `ChatModell`**
+  - `__init__()`
+  - `phase()`
+  - `titel()`
+  - `verlauf()` — Was an die KI geht: ohne Fehler, im Format des Dienstes.
+  - `_neu(rolle, text, cent, fehler, bilder)`
+  - `anfrage(text, bilder)` — Nutzernachricht (mit geprüften Bildanhängen {pfad, typ, bytes}) aufnehmen und eine Anfrage beginnen; liefert deren Kennung.
+  - `beginnen()`
+  - `antwort(kennung, text, cent)`
+  - `fehler(kennung, text)`
+  - `aktion(name, text, cent)` — Ergebnis einer Schnellen KI-Aktion: Verlauf und Anzeige führen dieselben zwei Nachrichten.
+  - `abbrechen()` — Die Antwort der laufenden Anfrage wird nicht mehr angenommen.
+  - `wiederholen()` — Letzte Nutzernachricht erneut senden: davor liegende Antwort/Fehler fällt weg. Liefert den Text oder None; danach ``beginnen()``.
+  - `neues_gespraech()`
+  - `gespraech_laden(index)`
+
+### `ai/chat_vorschlaege.py`
+
+Welche Aufgaben der Chat vorschlägt — je Zustand (Markierung / Dokument / leeres Dokument). Schicht 1: nur Daten aus ``ki``, kein Qt.
+
+- `_eintrag(id_, konfig)`
+- `chat_vorschlaege(auswahl, leer, konfig)` — Immer die zehn Chips der Vorlage. Jeder Eintrag: {id, titel, anweisung, aktiv, hinweis}; ``aktiv`` ist False, wenn der Chip Text braucht und das Dokument leer
+
 ### `ai/ki.py`
 
 Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbeiten, Chat.
 
+- `assistent_normiert(a)` — Ein Assistenteneintrag mit allen Feldern und gültigen Werten; fehlende Felder (ältere Einträge) bekommen ihre Vorgabe.
 - **class `KIKonfig`**
   - `__init__(pfad)`
   - `speichern()`
   - `__getitem__(k)`
   - `setze(k, v)`
   - `einwilligungen()` — [{anbieter, umfang, seit}]; ältere Einträge (nur der Name) gelten als Umfang „dokument“, wie damals gefragt wurde.
-  - `hat_einwilligung(anbieter, umfang)` — „dokument“ schließt „auszug“ ein, nicht umgekehrt.
+  - `hat_einwilligung(anbieter, umfang)` — „dokument“ schließt „auszug“ ein, nicht umgekehrt; „bild“ wird von keinem anderen Umfang abgedeckt.
   - `einwilligung_geben(anbieter, umfang)`
   - `einwilligung_widerrufen(anbieter, umfang)` — Ohne Angaben: alle. Mit ``anbieter`` (und ``umfang``): nur diese.
   - `anbieter_holen(id_)`
@@ -134,7 +213,10 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `mcp_entfernen(id_)`
   - `chat_setzen(**teile)`
   - `aufgabe_setzen(aufgabe, modell)`
-  - `assistent_hinzufuegen(name, prompt, modus, zugriff)` — Eine „Schnelle KI-Aktion“: ``modus`` = ersetzen \| anhaengen \| hinweis; ``zugriff`` = kontext (Rechtsklick-Menü) \| schnell (Schnellzugriffsleiste).
+  - `assistent_hinzufuegen(name, prompt, modus, zugriff, **mehr)` — Eine „Schnelle KI-Aktion“ (art „aktion“): ``modus`` = ersetzen \| anhaengen \| hinweis; ``zugriff`` = kontext (Rechtsklick-Menü) \| schnell
+  - `assistent_holen(id_)`
+  - `assistent_aendern(id_, **teile)` — Felder eines Assistenten ändern (der Eintrag bleibt dasselbe Objekt, Werte werden geprüft).
+  - `assistenten(art)` — Alle Assistenten (``art`` None) oder nur die einer Art; ältere Einträge ohne Art gelten als „aktion“.
   - `assistent_entfernen(id_)`
   - `anbieter_entfernen(id_)`
   - `alle_modelle()` — Eine Liste für alle Felder „welches Modell?“: Claude, eigene Anbieter (mit Fähigkeiten und ‚lokal‘).
@@ -146,7 +228,10 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
 - `anweisung_uebersetzung(sprache)`
 - `anweisung_vorschlaege(k)`
 - `anweisung_text_aktion(k, aktion)`
-- `_nachrichten(text)`
+- `_bild_block(b, anbieter)` — Ein Bildanhang im Format des Anbieters: „claude“, „ollama“ oder „openai“ (eigene Anbieter). ``b["b64"]`` ist beim Senden schon gelesen.
+- `_nachricht(z, anbieter, letzte)`
+- `_nachrichten(text, anbieter)`
+- `bilder_lesen(verlauf)` — Liest und kodiert (Base64) nur die Bilder der LETZTEN Nachricht, erst beim Senden. Liefert (Kopie des Verlaufs, Fehlertext).
 - `ohne_gruebeln(roh)`
 - `cent_fuer(modell, verbrauch)`
 - `als_geld(cent)`
@@ -157,9 +242,15 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `verfuegbar()`
   - `verfuegbar_fuer(aufgabe)` — Wie ``verfuegbar``, aber für das Modell der Aufgabe: argos: und auto: gehen auch ohne Standardmodell (lokal).
   - `schickt_nach_aussen(modell)` — Name des Empfängers, wenn der Text das Gerät verlässt — sonst None.
+  - `_ollama_faehigkeiten(name, warten)` — Fähigkeiten laut Ollama (/api/show → capabilities), mit Zwischenspeicher. ``warten=False``: nur aus dem Speicher, sonst im
+  - `_ollama_faehigkeiten_holen(name)`
+  - `faehigkeit(modell, warten)` — (denken, bild) für die Modellkennung (claude-…, ollama:…, eigen:…). Mit ``warten=False`` nie blockierend.
+  - `kann_bild(modell)` — Für die Oberfläche: nie blockierend; während die Abfrage bei Ollama läuft (oder scheitert) False.
+  - `kann_denken(modell)`
   - `websuche_ziel()` — Wohin die Frage der Websuche geht, wenn das nicht dieser Rechner ist (Brave oder eine nicht lokale Adresse), sonst None.
   - `zustimmung_fehlt(modell, umfang)` — Sperre an der Sendestelle: Geht der Text an einen Dienst außerhalb dieses Rechners und liegt dafür keine Einwilligung vor, kommt eine
   - `anfrage(anweisung, text, bauplan, modell, optionen)`
+  - `_stufe(optionen)`
   - `_stopp(optionen)`
   - `_claude(anweisung, text, bauplan, modell, optionen)`
   - `_ollama(anweisung, text, bauplan, modell, optionen)`
@@ -171,10 +262,10 @@ Die KI-Ebene: Korrigieren, Vorschläge, Übersetzen, Zusammenfassen, Text bearbe
   - `_uebersetzen_ki(text, sprache, modell)`
   - `zusammenfassen(text)`
   - `text_analyse(text)`
-  - `eigener_assistent(text, prompt)`
+  - `eigener_assistent(text, prompt, kommentar, modell, nur_kommentar)` — ``kommentar``: die KI begründet ihre Änderung nach ``KOMMENTAR_ZUSATZ``; ``nur_kommentar``: sie antwortet nur mit einem Kommentar;
   - `satz_umschreiben(satz, grund)` — Ein zu langer oder verschachtelter Satz in kürzere Sätze — der Sinn bleibt, nichts kommt dazu.
   - `text_aktion(text, aktion)`
-  - `chat(verlauf, dokumenttext)`
+  - `chat(verlauf, dokumenttext, markiert)` — ``markiert``: ``dokumenttext`` ist nur die Markierung (Umfang „auszug“ genügt), sonst das ganze Dokument („dokument“).
   - `_chat_werkzeuge(system, verlauf, server, modell, optionen)` — Chat mit MCP-Werkzeugen über die OpenAI-kompatible Schnittstelle (Ollama und eigene Anbieter): das Modell darf Werkzeuge verlangen; jeder
   - `vorschlaege(text)`
   - `synonyme(wort, umgebung)` — Wörter, die statt `wort` an dieser Stelle stehen könnten (Thesaurus — geht nur mit KI).
@@ -201,6 +292,16 @@ MCP-Server (Model Context Protocol) über die Standard-Ein-/Ausgabe: Werkzeuge a
   - `schliessen()`
 - `pruefen(befehl)` — Verbindung testen: die Werkzeuge des Servers (für „Testen“ im Fenster KI-Einstellungen).
 - `art_des_werkzeugs(werkzeug)` — Grobe Einstufung eines Werkzeugs für die Rückfrage: „lesen“, „schreiben“, „löschen“, „netzwerk“ oder „unbekannt“.
+
+### `ai/modellfaehigkeit.py`
+
+Was ein KI-Modell kann und was erlaubt ist — reine Logik ohne Qt. Schicht 1: kennt weder Dienst noch Oberfläche.
+
+- `denkstufe(schluessel)`
+- `claude_faehig(modell)` — (denken, bild) für ein Claude-Modell.
+- `bildtyp_aus_inhalt(kopf)` — Medientyp nach den ersten Bytes der Datei (nicht nach der Endung).
+- `bild_pruefen(pfad)` — Prüft einen Bildanhang. Liefert {pfad, typ, bytes} oder {fehler}.
+- `werkzeug_erlaubt(modus, art)` — Darf ein Werkzeug dieser Art ohne Rückfrage laufen? Nur im Modus „automatisch“ und nur für Lesen und Schreiben.
 
 ### `ai/websuche.py`
 
@@ -581,8 +682,9 @@ Gemeinsame Kleinigkeiten der Befehls-Bausteine.
 Befehle: KI, Vorlesen.
 
 - **class `KIBefehle`** — Befehle des Bandes: KI, Vorlesen. Ein Baustein von ``Befehle`` (siehe ``core/commands.py``).
-  - `w_assistentErstellen(k)` — „Schnelle KI-Aktion erstellen“ — dasselbe wie „Eigenen Assistenten erstellen“: ein Eintrag in der Liste der Assistenten.
-  - `menue_assistenten()` — Das Menü „KI-Aktionen“: die eigenen Schnellen KI-Aktionen, neue anlegen, entfernen und alle bisherigen Ergebnisse.
+  - `w_schnelleAktionErstellen(k)` — „Schnelle KI-Aktion erstellen“: ein Eintrag (art „aktion“) in der Liste der Assistenten.
+  - `w_kiAssistentErstellen(k)` — „Neuen Assistenten erstellen“: das Fenster ``KIAssistentDialog`` (ui/dialogs/ki_dialoge.py); ``werte()`` liefert die Felder für
+  - `menue_assistenten()` — Das Menü „KI-Aktionen“: Schnelle KI-Aktionen und fortlaufende Assistenten (mit Haken an/aus) getrennt, neu anlegen, entfernen, Ergebnisse.
   - `menue_silbenTrennungMenue()` — Zur Silbentrennung: wo man die Trennstriche sieht (die Bearbeitungsansicht zeigt sie nicht) und die Einstellungen.
   - `silbentrennungVorschau(k)`
   - `menue_silbenMenue()`
@@ -3574,6 +3676,15 @@ Abschnitt „ALTERNATIVTEXT“ (Titel und Beschreibung) für die Seite „Größ
   - `_start(*_)`
   - `setze(titel, text)` — Ohne Meldung; ein Feld mit dem Fokus (Eingabe läuft) bleibt unberührt.
 
+### `ui/baukasten/assistenten_liste.py`
+
+Die Liste der Assistenten (Schnelle KI-Aktionen und fortlaufende Assistenten) mit Hauptschalter — EIN Baustein für KI-Einstellungen und Optionen.
+
+- **class `AssistentenListe`**(QWidget)
+  - `__init__(fenster, parent)`
+  - `_haupt_geklickt(an)`
+  - `neu_lesen()`
+
 ### `ui/baukasten/auswahl_bereich.py`
 
 Der Bereich „Auswahl“ (Start ▸ Auswählen ▸ Auswahlbereich) als Baustein: alle Bilder, Formen, Diagramme und Tabellen des Dokuments in einer
@@ -3628,6 +3739,91 @@ Das Fenster „Vergrößern“ (Lupe in der Schnellleiste am Bild): das Bild in 
 - **class `BildZoomFenster`**(PanelFaehig, QDialog)
   - `__init__(parent, bild, titel)`
   - `aktualisieren(_w)` — Das Bild im gewählten Maßstab zeigen.
+
+### `ui/baukasten/chat_anhang.py`
+
+Bild-Anhang im KI-Chat: ``AnhangChip`` (über dem Textfeld) und (Vorschau ``miniatur`` steht in ``chat_blase``).
+
+- `groesse_text(n)`
+- `name_gekuerzt(pfad, zeichen)` — Dateiname, in der Mitte gekürzt, die Endung bleibt sichtbar.
+- **class `AnhangChip`**(QFrame) — Zeile „Vorschau, Dateiname (gekürzt), Größe, ×“. ``entfernt`` kommt beim Klick auf ×.
+  - `__init__(pfad, groesse)`
+
+### `ui/baukasten/chat_blase.py`
+
+Nachrichten des KI-Chats: Nutzerblase, KI-Antwort und Fehlerkarte — nur Darstellung, jede Aktion ruft den Dienst (``dienst``).
+
+- **class `SymbolKnopf`**(DropdownKnopf) — Flacher Symbolknopf (Chat): Symbol in Palettenfarbe, folgt dem Themenwechsel.
+  - `__init__(symbol, tipp, funktion)`
+  - `symbol_setzen(symbol, tipp, farbe)`
+  - `_zeichnen()`
+  - `changeEvent(e)`
+- `miniatur(pfad, seite)` — Kleine Bildvorschau als Widget. Fehlt die Datei oder lässt sie sich nicht lesen, steht dort der Platzhalter „[Bild]“.
+- `_text(text)`
+- `_kopieren(text)`
+- **class `NutzerBlase`**(QWidget) — Eigene Nachricht: rechts, grau, bei Anhang mit Bild-Miniatur; darunter Kopieren und Mehr (Text noch einmal ins Eingabefeld nehmen).
+  - `__init__(text, bilder)`
+- **class `KiBlase`**(QWidget) — Antwort der KI mit Symbolzeile: Wiederholen, Kopieren, Einfügen, Ersetzen (nur mit Markierung); Kosten klein dahinter.
+  - `__init__(dienst, text, cent)`
+  - `kontext_neu()` — Ersetzen gibt es nur mit Markierung (aus ``dienst.kontext()``).
+  - `_einfuegen()`
+  - `_ersetzen()`
+- **class `FehlerKarte`**(QWidget) — Fehler der KI: Titel, Text, Knopf „Wiederholen“; bei ``art`` „konfiguration“ der Weg zu den KI-Einstellungen, bei „zustimmung“ ein Hinweis.
+  - `__init__(dienst, fehler)`
+
+### `ui/baukasten/chat_eingabe.py`
+
+Eingabekasten des KI-Chats: Textfeld, darunter + (Bild), Befehle (Meine Aktionen), Modellwahl und der runde Senden-/Stopp-Knopf; Fußzeile mit Hinweis.
+
+- **class `ChatEingabe`**(QPlainTextEdit) — Mehrzeiliges Eingabefeld: Enter schickt ab, Umschalt+Enter macht eine neue Zeile; wächst mit dem Text bis ``CHAT_EINGABE_MAX``. ``text()``/``setText()`` wie beim Einzeiler.
+  - `__init__()`
+  - `_hoehe()`
+  - `keyPressEvent(e)`
+  - `text()`
+  - `setText(t)`
+- **class `ChatEingabeKasten`**(QWidget)
+  - `__init__(dienst)`
+  - `text()`
+  - `setText(t)`
+  - `leeren()`
+  - `anhang()` — Pfad des angehängten Bildes (oder ``None``).
+  - `anhang_setzen(pfad, groesse)`
+  - `anhang_entfernen()`
+  - `_bild_waehlen()`
+  - `_bild_nachziehen()` — „Lokales Bild“ ist grau mit dem Hinweis des Dienstes, wenn das Modell keine Bilder kann; ein vorhandener Anhang fällt dann mit Hinweis weg.
+  - `zustand_setzen(frei, beschaeftigt)` — ``frei``: Modell verbunden (sonst alles gesperrt); ``beschaeftigt``: die KI arbeitet (Knopf wird zum Stopp).
+  - `_zustand()`
+  - `_symbole()`
+  - `changeEvent(e)`
+  - `eventFilter(o, e)`
+  - `modelle_neu()` — Modellfeld aus der KI-Konfiguration füllen; „Standard“ zeigt den Namen des tatsächlich genutzten Modells.
+  - `_modell_gewaehlt()`
+  - `_websuche_gewaehlt(an)`
+  - `_websuche_nachziehen()` — Der Schalter zeigt immer den Zustand der Konfiguration (auch nach Änderungen in den Einstellungen).
+  - `_modell_zusatz(menue)` — Zeilen unter der Modellliste: Denktiefe und Berechtigungen, je mit dem aktuellen Wert rechts und einem Untermenü. Grau mit Hinweis, wenn nicht möglich.
+  - `_werkzeugmodus_waehlen(modus)`
+  - `_vorlagen_fuellen(menue)` — Untermenü „Vorlagen“: dieselben Anweisungen wie die Chips (Datenquelle ``chat_vorschlaege``); Klick füllt das Eingabefeld.
+  - `_aktionen_fuellen()`
+  - `_abschicken()`
+  - `_knopf()`
+
+### `ui/baukasten/chat_leerzustand.py`
+
+Leerzustand des KI-Chats: Symbol, Text „Ihr KI-Assistent für Dokumente“ und darunter die Vorschläge (Chips) passend zu Markierung und Dokument.
+
+- **class `ChatLeerzustand`**(QWidget)
+  - `__init__(dienst)`
+  - `_bild()`
+  - `changeEvent(e)`
+  - `neu_aufbauen()` — Chips aus Markierung, Dokumentstand und Konfiguration neu bilden.
+
+### `ui/baukasten/chat_regler.py`
+
+Reglerblock für den KI-Chat: Länge, Temperatur, Top P, Stoppfolgen, „Antwort direkt einfügen“ — als zugeklappter Abschnitt in den KI-Einstellungen.
+
+- **class `ChatReglerBlock`**(QWidget)
+  - `__init__(konfig)`
+  - `umschalten(an)`
 
 ### `ui/baukasten/datei_symbole.py`
 
@@ -3815,6 +4011,18 @@ Eingeklappte Gruppe („Weitere Einstellungen“): ein Knopf mit Pfeil, darunter
   - `_zeigen(offen)`
   - `ausklappen(offen)`
   - `ist_offen()`
+
+### `ui/baukasten/erstellen_fenster.py`
+
+Basis der Erstellen-Fenster „Schnelle KI-Aktion“ und „Neuen Assistenten erstellen“: Hinweis, Vorlagen-Chips, Name, Prompt, Knopfzeile.
+
+- **class `ErstellenFenster`**(PanelFaehig, QDialog)
+  - `__init__(fenster, titel, hinweis, vorlagen_namen, *, meldung, ok_text)`
+  - `name_zeile(beschriftung, platzhalter, symbol)` — Namensfeld; mit ``symbol`` (Symbolwahl) steht es links daneben, die Beschriftungen darüber.
+  - `prompt_zeile(beschriftung, platzhalter)`
+  - `abschliessen()`
+  - `vorlage_gewaehlt(i)` — Hier füllt die Unterklasse die Felder aus der Vorlage Nr. ``i``.
+  - `_ok()`
 
 ### `ui/baukasten/farben.py`
 
@@ -4009,7 +4217,7 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `minimumSizeHint()`
   - `paintEvent(ev)`
 - **class `FlussLayout`**(QLayout) — Zeile, die umbricht (wie Text): Beschriftung und das Feld dahinter bleiben beisammen.
-  - `__init__(abstand)`
+  - `__init__(abstand, zentriert)` — ``zentriert``: jede Zeile steht für sich mittig (Standard: linksbündig).
   - `addItem(item)`
   - `count()`
   - `itemAt(i)`
@@ -4029,8 +4237,9 @@ Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfens
   - `__init__(beschriftung, feld, reihe, gewichte)`
 - `_hoehe_bei(item, breite)`
 - `_natuerlich(item)`
+- `ist_dropdown(w)` — Ein Dropdown (Auswahlfeld, Schriftauswahl, Dropdown-Taste, Kopf-Dropdown, Strichart, Farbfeld; Knöpfe tragen die Eigenschaft ``dropdownFeld``):
 - `einzeilig(item)`
-- `felder_angleichen(wurzel)` — Alle einzeiligen Felder (Menü, Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``: eine Quelle für die Höhe, auch für
+- `felder_angleichen(wurzel)` — Alle einzeiligen Felder (Zahl, Text, Farbe) und beschriftete Knöpfe unter ``wurzel`` auf ``FELDHOEHE``; Dropdowns bleiben bei ``DROPDOWN_HOEHE``. Auch für
 - **class `FormularGitter`**(QLayout)
   - `__init__(parent)`
   - `_nimm(objekt)`
@@ -4082,8 +4291,8 @@ Beschriftete Kacheln zum Anklicken, immer genau eine gewählt (zum Beispiel die 
 
 Karte/Zeile: die eine Quelle für abgesetzte Flächen in den Seitenleisten (Kommentar, Fund, Funktionszeile, KI-Blase).
 
-- `als_karte(widget, art)` — Kennzeichnet das Widget als Karte der Art ``art``: zeile (anklickbar, durchsichtig), karte (Fund), kompakt (Kommentar), ki/markiert (Blase mit Streifen links).
-- `karte_regeln(fokus, ki, grau)` — QSS-Text aller Kartenarten; Farben ``fokus`` (Fokusrahmen, KI-Streifen), ``ki`` (Streifen KI-Blase), ``grau`` (Streifen sonst) kommen vom Thema.
+- `als_karte(widget, art)` — Kennzeichnet das Widget als Karte der Art ``art``: zeile (anklickbar, durchsichtig), karte (Fund), kompakt (Kommentar), ki/markiert (Blase mit Streifen links),
+- `karte_regeln(fokus, ki, grau, fehler)` — QSS-Text aller Kartenarten; Farben ``fokus`` (Fokusrahmen, KI-Streifen), ``ki`` (Streifen KI-Blase), ``grau`` (Streifen sonst), ``fehler`` (Fehlerkarte) kommen vom Thema.
 
 ### `ui/baukasten/karten_raster.py`
 
@@ -4443,6 +4652,10 @@ Chips und an/aus-Schalter der Oberfläche — ein Baustein statt einzelner Style
 - `chip_gruen_stil()` — Grüner Schalter-Chip (gewählt = ``Farbe.AN``).
 - `schalter_an_stil()` — Die Kapsel „an“ (gefüllt).
 - `schalter_aus_stil()` — Die Kapsel „aus“ (nur Rahmen).
+- **class `KippSchalter`**(QAbstractButton) — Kleiner Kippschalter (Schiene mit rundem Knopf), gezeichnet in Paletten­farben: an = Akzent, aus = Rand. Maße aus ``mass.py``; ``toggled(bool)`` wie beim Ankreuzfeld.
+  - `__init__(an, parent)`
+  - `sizeHint()`
+  - `paintEvent(_e)`
 
 ### `ui/baukasten/schiebe_feld.py`
 
@@ -4651,8 +4864,8 @@ Das Fenster „Tastenkombination“ als Baustein: eine Tastenkombination aufnehm
 
 Textformat-Bausteine: Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabstand — so wie im Band (Start ▸ Schriftart, Absatz).
 
-- `schrift_feld(combo, breite)` — Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne).
-- `groesse_feld(combo, breite)` — Das Feld für die Schriftgröße: zum Tippen und mit der Liste der üblichen Größen.
+- `schrift_feld(combo, variante)` — Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne).
+- `groesse_feld(combo, variante)` — Das Feld für die Schriftgröße: zum Tippen und mit der Liste der üblichen Größen.
 - `text_knopf(symbol, tipp)` — F, K oder U als Knopf zum Ein-/Ausschalten, in dem Schnitt, den er bedeutet (wie im Band).
 - `ausrichtung_knoepfe()` — Linksbündig, Zentriert, Rechtsbündig, Blocksatz — gleiche Symbole und Namen wie im Band; immer höchstens einer gewählt.
 - `_zeilen_symbol(abstand)`
@@ -4782,6 +4995,18 @@ Das Fenster „Eingeschlossene Zeichen“ als Baustein: Vorlage (Ohne, Text redu
   - `__init__(parent, text, form, vorlage)`
   - `werte()`
 
+### `ui/baukasten/vorlagen_chips.py`
+
+Zwei kleine Bausteine für Erstellen-Fenster (Schnelle KI-Aktion, KI-Assistent): Vorlagen-Chips und ein aufklappbarer Bereich.
+
+- `_link(text)`
+- **class `VorlagenChips`**(QWidget) — Chips zum Antippen; zuerst ``zuerst`` Stück, mit „Alle anzeigen“ alle. Meldet den Index des gewählten Chips.
+  - `__init__(namen, zuerst, parent)`
+  - `umschalten()`
+- **class `AufklappBereich`**(QWidget) — Ein Link-Knopf „<Titel> anzeigen/ausblenden“ und darunter ein Bereich, der aufklappt (``layout_innen``).
+  - `__init__(titel, parent)`
+  - `umschalten(an)`
+
 ### `ui/baukasten/vorlagen_galerie.py`
 
 Die Seite „Neu“: leeres Dokument direkt starten oder Standard- und eigene Vorlagen getrennt durchsuchen.
@@ -4892,10 +5117,14 @@ Auswahlfeld: das eine Dropdown für ganz Lunivo.
 - `popup_begrenzen(combo, popup_min)` — Nach ``showPopup()`` aufrufen: Größe der Liste (Breite, sichtbare Zeilen); die Lage in Fenster und Bildschirm bestimmt ``popup_klemmen``.
 - **class `_Feldlaenge`** — Gemeinsam für ``Auswahlfeld`` und ``Schriftauswahl``: die Länge des Feldes in Zeichen (Rolle statt fester Zahl am Aufrufer).
   - `zeichen(n)`
+  - `rolle(rolle, variante, *, mindest)` — Die Breite des Feldes aus der zentralen Tabelle ``DROPDOWN_BREITE`` (Rolle × Layoutvariante: band, leiste, mini, dialog, feld).
   - `an_inhalt()` — Das Feld ist so breit wie sein längster Eintrag (z. B. kurze feste Listen).
 - **class `Auswahlfeld`**(_Feldlaenge, QComboBox)
   - `__init__(parent, *, min_zeichen, popup_min)`
+  - `als_menue_nach_oben(an, zusatz)` — Statt der Liste öffnet das Feld eine ``MenueListe`` über sich (Häkchen rechts am gewählten Eintrag); Auswahl setzt wie gewohnt den Index.
+  - `_menue_zeigen()`
   - `showPopup()`
+  - `hidePopup()`
   - `paintEvent(event)`
 - **class `Schriftauswahl`**(_Feldlaenge, QFontComboBox) — Schriftart-Auswahl; behält die Schriftvorschau der Einträge, begrenzt nur die Liste.
   - `__init__(parent, *, min_zeichen)`
@@ -4949,9 +5178,13 @@ Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein B
 Dropdown-Knopf: der Knopf mit Pfeil, der ein Menü öffnet (Stufe 4 der Dropdown-Pyramide).
 
 - **class `_DropdownBasis`**
-  - `menue_setzen(menue, *, geteilt, gross, fuellend)` — ``geteilt``: True = Symbol und Pfeil getrennt (``MenuButtonPopup``), False = ein Klick öffnet das Menü (``InstantPopup``), None = Modus bleibt.
+  - `groesse_rolle(rolle, variante)` — Die Größe des Knopfes aus der zentralen Tabelle ``DROPDOWN_KNOPF`` (Rolle × Layoutvariante: band, mini, kopf, dokument).
+  - `gross(textbreite, kompakt)` — Großer Bandknopf (Text unter dem Symbol): Breite folgt dem Text, Höhe je Dichte (kompakt oder normal) aus ``mass.py``.
+  - `band_zeile()` — Knopf in einer Bandzeile: Mindesthöhe der Kopf-Dropdowns (eine Quelle in ``mass.py``), damit die Zeilen fluchten.
+  - `menue_setzen(menue, *, geteilt, gross, fuellend, besitzen)` — ``geteilt``: True = Symbol und Pfeil getrennt (``MenuButtonPopup``), False = ein Klick öffnet das Menü (``InstantPopup``), None = Modus bleibt.
 - **class `DropdownKnopf`**(_DropdownBasis, QToolButton) — Werkzeugknopf, der ein Menü öffnet.
 - **class `DropdownTaste`**(_DropdownBasis, QPushButton) — Taste mit Text, die ein Menü öffnet.
+  - `__init__(*args, **kw)`
 
 ### `ui/baukasten/dropdown/farbpalette.py`
 
@@ -5092,9 +5325,11 @@ Menü-Liste: Zeilen mit Symbol, Text, Tastenkürzel, Haken und Untermenü — ü
   - `eintrag(text, aktion, *, symbol, kuerzel, haken, aktiv, tip, daten, echt, gruppe)` — ``kuerzel`` (Text oder ``QKeySequence``) wird nur angezeigt; mit ``echt=True`` ist es ein wirkliches Tastenkürzel
   - `vorhanden(a)` — Eine schon bestehende Aktion (z. B. aus der Hauptfenster-Aktionstabelle) als Zeile übernehmen.
   - `einhaengen(text, menue, symbol)` — Ein fertiges Menü (z. B. ein Raster) als Untermenü-Zeile mit ``text`` einhängen.
-  - `untermenue(text, symbol, aktiv)`
+  - `untermenue(text, symbol, aktiv, *, wert, tip)` — Untermenü-Zeile. ``wert``: aktueller Wert, rechts in der Zeile vor dem Pfeil (wie ein Kürzel). ``tip``: Hinweis, auch bei grauer Zeile.
+  - `untermenue_einhaengen(sub, titel)` — Ein vorhandenes Menü (z. B. das Klappmenü eines anderen Knopfes) als Untermenü übernehmen; es gehört danach diesem Menü.
   - `widget(w)` — Ein eingebautes Bedienfeld (Raster, Reiter, Zeile) als einzige Zeile des Menüs oder zwischen anderen Zeilen.
-  - `kompakt()` — Schmalere Zeilen (Symbolspalte, Text, Kürzel dicht) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
+  - `schalter(text, an, aktion, *, symbol)` — Zeile mit kleinem Kippschalter (z. B. „Websuche“). ``aktion(an)`` läuft beim Umschalten; zurückgegeben wird die ``SchalterZeile``
+  - `kompakt()` — Layoutvariante „kompakt“ (schmalere Zeilen) — für das Tabellenmenü; die übrigen Menüs behalten das Standardmaß.
   - `standard(widget, parent)` — Das Standard-Kontextmenü eines Qt-Textfeldes (``createStandardContextMenu``) als Menüliste, mit deutschen Texten.
   - `in_leiste(leiste, titel)` — Ein Menü der Menüleiste (``QMenuBar``) mit dem Titel ``titel``.
   - `trenner()`
@@ -5170,6 +5405,16 @@ Kachel-Auswahl: ein Popup mit Bildchen im Raster und einem „Mehr …“-Fuß (
   - `neu_messen()` — Nach ``leeren`` und neuem Füllen bei offenem Menü: Größe an die neuen Kacheln anpassen.
   - `_klick(schluessel)`
 
+### `ui/baukasten/dropdown/schalter_zeile.py`
+
+Schalter-Zeile für Menüs: Symbol, Text und kleiner Kippschalter (``KippSchalter``). Ein Klick auf die ganze Zeile schaltet um; das Menü bleibt offen.
+
+- **class `SchalterZeile`**(QWidget)
+  - `__init__(text, an, symbol, parent)`
+  - `an()`
+  - `an_setzen(an)` — Zustand von außen nachziehen, ohne ``umgeschaltet`` zu senden.
+  - `mousePressEvent(e)`
+
 ### `ui/baukasten/dropdown/smartart_menues.py`
 
 Menüs, Galerie und Miniaturen für SmartArt (Reiter „SmartArt-Design“, Schnellleiste am Knoten, Dialog „SmartArt-Grafik auswählen“).
@@ -5232,6 +5477,17 @@ Auswahlfeld, das einen Strich zeigt (Kombinierter Typ, Strichtyp): im Feld die s
   - `_popup()`
   - `_waehle(schluessel)`
 
+### `ui/baukasten/dropdown/symbol_auswahl.py`
+
+Symbolwahl: ein Knopf mit dem gewählten Symbol und Pfeil, der ein kleines Raster aus dem vorhandenen Symbolsystem aufklappt.
+
+- **class `SymbolAuswahl`**(RasterAuswahl) — Das Raster der Symbole (meldet den Schlüssel).
+  - `__init__(parent, symbole, aktuell, spalten)`
+- **class `SymbolWahl`**(DropdownTaste) — Taste mit Symbol und Pfeil; ein Klick öffnet das Raster.
+  - `__init__(wert, parent, symbole)`
+  - `wert()`
+  - `setzen(schluessel, melden)`
+
 ### `ui/baukasten/dropdown/teil_menue.py`
 
 Der Pfeil am Hauptreiter („DIAGRAMM OPTIONEN ▾“): öffnet die Liste der Teile des Diagramms, der aktuelle Teil trägt einen Haken.
@@ -5269,6 +5525,12 @@ Auswahl von Voreinstellungen als Popup mit Bildchen in Abschnitten (Schatten: Ke
   - `_gitter(eintraege, spalten)`
   - `abschnitt(titel, eintraege, spalten)`
   - `_waehle(schluessel)`
+
+### `ui/baukasten/dropdown/zeile.py`
+
+Dropdown-Zeile: die eine Gestalt jeder Zeilentaste in aufklappenden Fenstern (Menütafel, Raster, Galerie, Bildmenüs).
+
+- `dropdown_zeile(taste, *, hinweis)` — Macht ``taste`` zur Dropdown-Zeile; ``hinweis``: kleinere Schrift (Hinweis-Zeilen wie „Zuletzt geöffnet“).
 
 ### `ui/baukasten/dropdown/zellen_raster.py`
 
@@ -5568,6 +5830,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
 - **class `ModellListeDialog`**(QDialog) — „Liste der KI-Modelle“ als eigenes Fenster (Optionen).
   - `__init__(fenster, konfig)`
 - `modell_passt(m, aufgabe)` — Lokale Übersetzung („argos:“) und „Automatisch“ („auto:“) gelten nur für ihre Aufgabe (``verwendungFuer``); Bildgenerierung hat ihre eigene Regel.
+- `modell_felder_fuellen(combo, konfig, aufgabe, gewaehlt, standard)` — Die eine Stelle, die ein Modell-Auswahlfeld füllt (Modellzuweisung, Optionen, Chat): Eintrag „Standard“, dann alle passenden Modelle; Signale ruhen dabei.
 - `modell_combo(konfig, aufgabe, gewaehlt)` — Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats.
 - **class `ModellZuweisung`**(QWidget) — Je Aufgabe ein Modell: Chatbot, Zusammenfassen, Übersetzung, Textanalyse, Bildgenerierung.
   - `__init__(fenster)`
@@ -5628,11 +5891,13 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `freischalten()` — Alle Reiter sind immer anklickbar; Sprache, MCP und Websuche brauchen kein Modell, die Zuweisung zeigt ohne Modell eine leere Auswahl.
   - `neues_modell()`
   - `_ok()`
-- **class `SchnelleAktionDialog`**(PanelFaehig, QDialog) — „Schnelle KI-Aktion erstellen“: eine einmalige KI-Aufgabe mit Name, Anweisung, Ergebnisart und Zugriff.
+- **class `SchnelleAktionDialog`**(ErstellenFenster) — „Schnelle KI-Aktion erstellen“: eine einmalige KI-Aufgabe mit Name, Anweisung, Ergebnisart und Zugriff.
   - `__init__(fenster)`
-  - `_umschalten()` — Erst die ersten sechs Vorlagen, mit „Alle anzeigen“ alle.
-  - `_vorlage(name, prompt)`
-  - `_ok()`
+  - `vorlage_gewaehlt(i)`
+  - `werte()`
+- **class `KIAssistentDialog`**(ErstellenFenster) — „Neuen Assistenten erstellen“: ein KI-Assistent, der fortlaufend arbeitet und auf Änderungen im Dokument reagiert.
+  - `__init__(fenster)`
+  - `vorlage_gewaehlt(i)`
   - `werte()`
 - **class `ErgebnisseDialog`**(PanelFaehig, QDialog) — „Alle Ergebnisse anzeigen“: die KI-Antworten dieser Sitzung; Kopieren oder an der Schreibmarke einfügen.
   - `__init__(fenster)`
@@ -6441,8 +6706,6 @@ Punkte einer Form bearbeiten mit der Maus (Zeichentools ▸ Form bearbeiten ▸ 
 Kopf- und Fußzeile direkt auf der Seite bearbeiten (Einfügen ▸ Kopf- und Fußzeile, Doppelklick in den Seitenrand).
 
 - `_stil(vorlage)` — Stylesheet zur Laufzeit aus den Farbe-Tokens bilden (Farbe.* setzt apply_theme erst nach dem Import).
-- `leiste_stil()`
-- `absatz_stil()`
 - `etikett_stil()`
 - `panel_stil()`
 - `_symbol(art)` — Aktionssymbol aus dem zentralen Lucide-Katalog.
@@ -6669,7 +6932,6 @@ Zwei-Seiten-Ansicht: die Seiten des Dokuments nebeneinander, so wie sie gedruckt
 
 Bedienelemente direkt an der Tabelle im Dokument (wie in WPS): Verschiebegriff oben links, „+“ rechts und unten, Aufziehgriff unten rechts
 
-- `griff_stil()` — Stil der Griffe aus den Farbe-Tokens (zur Laufzeit gelesen, nichts beim Import eingefroren).
 - `dunkel(symbol, px)` — Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß).
 - **class `_Vorschau`**(QWidget) — Gestrichelter Rahmen (Aufziehen) oder Linie (Rand) in der Zielgeometrie; durchsichtig für die Maus.
   - `__init__(vp)`
@@ -6788,7 +7050,7 @@ Editor-Seite von Kommentaren, Fuß-/Endnoten und Änderungsverfolgung (Mixin fü
   - `noten_stellen()`
   - `_bereich_format(von, bis, props)`
   - `_eigenschaft_weg(prop, pred, von, bis)`
-  - `kommentar_neu(text)`
+  - `kommentar_neu(text, autor)`
   - `set_suchtreffer(bereiche)` — Alle Treffer der Suche farbig hinterlegen (leere Liste nimmt die Markierung weg).
   - `kommentar_text_setzen(kid, text)` — Den Text eines Kommentars ändern; Blase und Karte zeigen ihn sofort neu.
   - `kommentar_geloest(kid, geloest)` — Einen Kommentar als gelöst markieren (oder wieder öffnen); er bleibt im Dokument.
@@ -7233,27 +7495,21 @@ Bereiche der Seitenleiste.
 
 ### `ui/sidebar/panels/ai_panel.py`
 
-KI-Chat in der Seitenleiste (Bereich „KI“): mehrere Runden, der Dokumenttext geht als Auskunft mit.
+KI-Chat in der Seitenleiste (Bereich „KI“): nur Verdrahtung — Zustand und Logik liegen im Dienst (``dienst.chat_modell``), die Bausteine in ``ui/baukasten/chat_*.py``.
 
-- **class `ChatEingabe`**(QPlainTextEdit) — Mehrzeiliges Eingabefeld für den Chat: Enter schickt ab, Umschalt+Enter macht eine neue Zeile. ``text()``/``setText()`` wie beim Einzeiler.
-  - `__init__()`
-  - `keyPressEvent(e)`
-  - `text()`
-  - `setText(t)`
-- **class `ChatPanel`**(QWidget) — KI-Chat: Kopf („KI-Chat“, Einstellungen, Schließen), Verlauf, darunter Eingabe mit Senden; Bild und Neu als kleine Knöpfe.
+- **class `ChatPanel`**(QWidget) — KI-Chat: Kopf (Neues Gespräch, Verlauf, KI-Einstellungen, Schließen), darunter je nach Phase Leerzustand mit Chips oder Nachrichten, Eingabekasten (mit Befehlen, Modell, Fußzeile). Ohne verbundenes Modell steht der Hinweis „KI-Modell verbinden“ mit dem Weg zu den KI-Einstellungen, die Eingabe ist gesperrt.
   - `__init__(dienst, fenster)`
-  - `_erweitert(ev)` — „Erweiterte Einstellungen anzeigen“: Modell (dieselbe Wahl wie in der Modellzuweisung), Länge, Temperatur, Top P, Stoppfolgen — in der KI-Konfiguration gespeichert.
-  - `_modelle_neu()` — Nach einer Änderung in den KI-Einstellungen die Modellliste dieser Auswahl neu füllen.
-  - `zustand()` — Verlauf und Eingabe gibt es erst mit einem verbundenen Modell.
+  - `_geaendert()` — KI-Einstellungen oder Modell geändert: Modellfeld, Chips und Zustand neu lesen.
+  - `_kontext()` — Markierung oder Dokumentinhalt haben sich geändert: Chips neu, Ersetzen-Knöpfe nachziehen.
+  - `zustand()` — Verbunden ja/nein, Phase und Beschäftigung bestimmen, was sichtbar und bedienbar ist.
+  - `anzeige()` — Nachrichten aus ``dienst.chat_modell`` neu aufbauen.
+  - `_verlauf_fuellen()`
+  - `_gespraech(index)`
+  - `_neu()`
   - `_einstellungen()`
-  - `_blase(text, ki, cent)`
-  - `_einfuegen(text)`
-  - `_ersetzen(text)`
-  - `senden()`
-  - `_bild()`
-  - `_aktion_ergebnis(name, text, cent)` — Das Ergebnis einer Schnellen KI-Aktion steht im Chat wie eine Antwort (und ist Teil des Gesprächs).
-  - `_antwort(text, cent)`
-  - `leeren()`
+  - `_melden(text)`
+  - `_senden(text)`
+  - `_bild(text)`
 
 ### `ui/sidebar/panels/writing_panel.py`
 
@@ -7379,10 +7635,10 @@ Live-Vorschau: Beim Überfahren einer Formatvorlage, Schrift, Größe oder Farbe
 - **class `Ueberfahren`**(QObject) — Event-Filter: Zeiger über dem Knopf → Vorschau, Zeiger weg oder Klick → Vorschau beenden.
   - `__init__(vorschau, anwenden)`
   - `eventFilter(o, e)`
-- **class `VorschauCombo`**(QComboBox) — Auswahlfeld, dessen Einträge beim Überfahren (highlighted) als Vorschau gezeigt werden.
+- **class `VorschauCombo`**(Auswahlfeld) — Auswahlfeld, dessen Einträge beim Überfahren (highlighted) als Vorschau gezeigt werden.
   - `__init__(vorschau_fn, ende_fn, parent)`
   - `hidePopup()`
-- **class `VorschauFontCombo`**(QFontComboBox)
+- **class `VorschauFontCombo`**(Schriftauswahl)
   - `__init__(vorschau_fn, ende_fn, parent)`
   - `hidePopup()`
 
@@ -7391,11 +7647,9 @@ Live-Vorschau: Beim Überfahren einer Formatvorlage, Schrift, Größe oder Farbe
 Minisymbolleiste: schwebende Leiste mit den häufigsten Formaten über der Auswahl oder am Rechtsklick.
 
 - `_symbole()`
-- `_pfeil_datei(farbe)` — Kleiner ausgefüllter Pfeil nach unten als Bilddatei für das Stylesheet (kontrastreich in Hell und Dunkel; dünne Linienpfeile verschwinden bei 8 px).
-- `_stil(farbe)`
 - **class `MiniLeiste`**(QFrame)
   - `__init__(fenster)`
-  - `_stil_setzen()` — Stylesheet mit dem Pfeil in der Schriftfarbe der aktuellen Palette (Hell/Dunkel).
+  - `_stil_setzen()` — Bei Themenwechsel Symbole und Menüs in der neuen Schriftfarbe neu zeichnen (Aussehen der Leiste: ``ui/theme.py``).
   - `_anordnen(tabelle)` — Die beiden Zeilen für den Text- oder den Tabellenmodus füllen (die Knöpfe sind dieselben, nur Auswahl und Reihenfolge wechseln).
   - `_tabellenzeile()` — „Einfügen ▾“ und „Löschen ▾“ als große Symbolknöpfe mit Beschriftung darunter (wie in der Vorlage); Menüs aus ``core/tabellenaktionen.py``.
   - `_aktionsmenue(b, aktionen)`

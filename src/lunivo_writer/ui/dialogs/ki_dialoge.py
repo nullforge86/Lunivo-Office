@@ -23,6 +23,7 @@ from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.karte import als_karte
 from lunivo_writer.ui.baukasten.mass import (
     BREITE_KNOPF_KLEIN,
     GROESSE_FENSTER_ANBIETER,
@@ -37,9 +38,6 @@ from lunivo_writer.ui.baukasten.mass import (
     HOEHE_LISTE_REITER,
     HOEHE_TEXT_NORMAL,
     ICON_NORMAL,
-    PADDING_KI_ANBIETER_EINTRAG,
-    PADDING_KI_LISTENEINTRAG,
-    RADIUS_FELD,
     RAND_KEIN,
     RAND_OBEN_SEITE,
 )
@@ -108,14 +106,14 @@ class AnbieterDialog(QDialog):
         gesetzt = set(bestehend["verwendungFuer"]) if bestehend else {"text"}
         alle = QPushButton("Alle")
         alle.setCheckable(True)
-        alle.setStyleSheet(_chip())
+        als_karte(alle, "chip")
         alle.toggled.connect(lambda an: [b.setChecked(an) for b in self.tags.values()])
         self._chips = [alle]
         for key, name in K.ANBIETER_TAGS:
             b = QPushButton(name)
             b.setCheckable(True)
             b.setChecked(key in gesetzt)
-            b.setStyleSheet(_chip())
+            als_karte(b, "chip")
             self.tags[key] = b
             self._chips.append(b)
         for b in self._chips:
@@ -198,12 +196,6 @@ class AnbieterDialog(QDialog):
         else:
             self.k.anbieter_hinzufuegen(*werte)
         self.accept()
-
-
-def _chip() -> str:
-    """Auswahl-Chip (Baustein ``schalter.chip_stil``)."""
-    from lunivo_writer.ui.baukasten.schalter import chip_stil
-    return chip_stil()
 
 
 class ModellListe(QWidget):
@@ -289,16 +281,23 @@ def modell_passt(m: dict, aufgabe: str) -> bool:
     return True
 
 
+def modell_felder_fuellen(combo: QComboBox, konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None, standard: str = "Standard (KI-Modell der Optionen)") -> None:
+    """Die eine Stelle, die ein Modell-Auswahlfeld füllt (Modellzuweisung, Optionen, Chat): Eintrag „Standard“, dann alle passenden Modelle; Signale ruhen dabei."""
+    combo.blockSignals(True)
+    combo.clear()
+    combo.addItem(standard, "")
+    for m in konfig.alle_modelle():
+        if modell_passt(m, aufgabe):
+            combo.addItem(m["name"] + ("  · lokal" if m["lokal"] else ""), m["id"])
+    g = konfig["aufgaben"].get(aufgabe, "") if gewaehlt is None else gewaehlt
+    combo.setCurrentIndex(max(0, combo.findData(g)))
+    combo.blockSignals(False)
+
+
 def modell_combo(konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None) -> QComboBox:
     """Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats."""
     c = Auswahlfeld()                                                            # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
-    c.addItem("Standard (KI-Modell der Optionen)", "")
-    for m in konfig.alle_modelle():
-        if not modell_passt(m, aufgabe):
-            continue
-        c.addItem(m["name"] + ("  · lokal" if m["lokal"] else ""), m["id"])
-    g = konfig["aufgaben"].get(aufgabe, "") if gewaehlt is None else gewaehlt
-    c.setCurrentIndex(max(0, c.findData(g)))
+    modell_felder_fuellen(c, konfig, aufgabe, gewaehlt)
     return c
 
 
@@ -362,10 +361,7 @@ class SprachListe(QListWidget):
         super().__init__()
         for daten, text in eintraege:
             it = QListWidgetItem(text); it.setData(Qt.UserRole, daten); self.addItem(it)
-        self.setStyleSheet("QListWidget { border: 1px solid palette(mid); border-radius: " f"{RADIUS_FELD}" "px; }"
-                           "QListWidget::item { padding: " f"{PADDING_KI_ANBIETER_EINTRAG}" "; border-bottom: 1px solid palette(midlight); }"
-                           "QListWidget::item:selected { background: palette(highlight); color: palette(highlighted-text); }"
-                           "QListWidget::item:hover:!selected { background: palette(alternate-base); }")
+        als_karte(self, "liste")
         self.setMinimumHeight(HOEHE_LISTE_REITER)
 
     def currentData(self):
@@ -504,7 +500,7 @@ class SprachePanel(QWidget):
             g.breit(abschnittstitel(titel))
             hint = QLabel(unter); hint.setWordWrap(True); hinweis_stil(hint); g.breit(hint)
             liste.setMinimumHeight(0); liste.setFixedHeight(HOEHE_BEREICH_MITTEL); liste.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            liste.setStyleSheet(liste.styleSheet() + "QListWidget::item { padding: " f"{PADDING_KI_LISTENEINTRAG}" "; border-bottom: 1px solid palette(midlight); }")
+            als_karte(liste, "liste_eng")
             g.breit(liste)
         h = QLabel("Die Schreibhilfe selbst prüft weiter auf Deutsch. Das Modell für die Übersetzung wählen Sie im Reiter „Modellzuweisung“ (Aufgabe „Übersetzung“).")
         h.setWordWrap(True); hinweis_stil(h)
@@ -716,10 +712,12 @@ class WebsuchePanel(QWidget):
         self.k.websuche_setzen(**self.werte())
 
 
-REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz")
+REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.vorlagen_chips import AufklappBereich
+from lunivo_writer.ui.baukasten.erstellen_fenster import ErstellenFenster
 
 
 class KIEinstellungenDialog(PanelFaehig, QDialog):
@@ -753,6 +751,9 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         z = QWidget(); zv = QVBoxLayout(z); zv.setContentsMargins(*RAND_OBEN_SEITE)
         self.zuweisung = ModellZuweisung(fenster)
         zv.addWidget(self.zuweisung)
+        from lunivo_writer.ui.baukasten.chat_regler import ChatReglerBlock
+        self.chat_regler = ChatReglerBlock(self.k)                 # Länge, Temperatur, Top P, Stoppfolgen, direkt einfügen (zugeklappt)
+        zv.addWidget(self.chat_regler)
         self.stapel.addWidget(z)
         # 3 Sprache, 4 MCP-Server, 5 Websuche
         self.sprache = SprachePanel(fenster)
@@ -763,6 +764,11 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.stapel.addWidget(self.websuche)
         self.datenschutz = EinwilligungenPanel(self.k)
         self.stapel.addWidget(self.datenschutz)
+        from lunivo_writer.ui.baukasten.assistenten_liste import AssistentenListe
+        seite = QWidget(); av = QVBoxLayout(seite); av.setContentsMargins(*RAND_OBEN_SEITE)
+        self.assistenten = AssistentenListe(fenster)
+        av.addWidget(self.assistenten); av.addStretch(1)
+        self.stapel.addWidget(seite)
         v.addWidget(knopfzeile(self, bei_ok=self._ok))
         self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)
         self.freischalten()
@@ -771,7 +777,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen."""
         for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("Werkzeuge", "KI-Werkzeuge"),
-                                          ("Websuche", "Websuche"), ("Daten", "Datenschutz"))):
+                                          ("Websuche", "Websuche"), ("Daten", "Datenschutz"), ("Assistenten", "Assistenten"))):
             self.reiter.setTabText(i, kurz)
             if self.reiter.isTabEnabled(i):
                 self.reiter.setTabToolTip(i, voll)
@@ -830,35 +836,17 @@ ERGEBNIS_ARTEN = (("ersetzen", "Ersetzen (ersetzt den markierten Text durch das 
                   ("hinweis", "Als Hinweis zeigen (Karte in der Seitenleiste)"))
 
 
-class SchnelleAktionDialog(PanelFaehig, QDialog):
+class SchnelleAktionDialog(ErstellenFenster):
     """„Schnelle KI-Aktion erstellen“: eine einmalige KI-Aufgabe mit Name, Anweisung, Ergebnisart und Zugriff.
 
     Speichert als „Eigener Assistent“ (``KIKonfig.assistenten``) — dieselbe Liste wie im Band und in den Optionen."""
 
     def __init__(self, fenster):
-        super().__init__(fenster)
-        from PySide6.QtWidgets import QPlainTextEdit, QRadioButton
-        self.setWindowTitle("Schnelle KI-Aktion erstellen")
-        v = QVBoxLayout(self)
-        inhalt = QWidget(); g = FormularGitter(inhalt)
-        kopf = QLabel("Eine schnelle KI-Aktion führt einmalige KI-Aufgaben aus."); kopf.setWordWrap(True)
-        g.breit(kopf)
-        g.breit(abschnittstitel("Mit einer Vorlage beginnen"))
-        self.chipfluss = FlussLayout(6)
-        self.chips = []
-        for name, prompt in VORLAGEN_AKTION:
-            b = QPushButton(name); b.setStyleSheet(_chip()); b.clicked.connect(lambda _=False, n=name, p=prompt: self._vorlage(n, p))
-            self.chips.append(b)
-        g.breit(self.chipfluss)
-        self.mehr = QPushButton(); self.mehr.setFlat(True); self.mehr.setCursor(Qt.PointingHandCursor)
-        self.mehr.clicked.connect(self._umschalten)
-        g.breit(self.mehr)
-        self.name = QLineEdit(); self.name.setPlaceholderText("Geben Sie einen kurzen Namen für die Aktion ein"); self.name.setMaxLength(40)
-        g.zeile("Name *", self.name)
-        self.prompt = QPlainTextEdit()
-        self.prompt.setPlaceholderText("Beschreiben Sie die Aktion, die die KI ausführen soll, z. B. „Grammatik korrigieren“ oder „In einem formellen Ton umschreiben“")
-        self.prompt.setMinimumHeight(HOEHE_TEXT_NORMAL)
-        g.zeile("Was soll die Aktion tun? *", self.prompt)
+        from PySide6.QtWidgets import QRadioButton
+        super().__init__(fenster, TEXTE_AKTION["titel"], TEXTE_AKTION["hinweis"], [n for n, _p in VORLAGEN_AKTION], meldung=TEXTE_AKTION["meldung"])
+        g = self.gitter
+        self.name_zeile("Name *", TEXTE_AKTION["name"])
+        self.prompt_zeile("Was soll die Aktion tun? *", TEXTE_AKTION["prompt"])
         self.ergebnis = Auswahlfeld()
         self.ergebnis.zeichen(DROPDOWN_ZEICHEN_LANG)
         for schl, text in ERGEBNIS_ARTEN:
@@ -867,40 +855,88 @@ class SchnelleAktionDialog(PanelFaehig, QDialog):
         g.breit(abschnittstitel("Zugriff von"))
         self.r_kontext = QRadioButton("Verfügbar über das Kontextmenü"); self.r_kontext.setChecked(True)
         self.r_schnell = QRadioButton("Schnellzugriff über die Symbolleiste")
-        zugriff = FlussLayout(6); zugriff.addWidget(self.r_kontext); zugriff.addWidget(self.r_schnell)
+        zugriff = FlussLayout(); zugriff.addWidget(self.r_kontext); zugriff.addWidget(self.r_schnell)
         g.breit(zugriff)
-        v.addWidget(inhalt)
-        z = knopfzeile(self, bei_ok=self._ok, ok_text="Erstellen")
-        self.ok = z.ok
-        v.addWidget(z)
-        self._alle = False
-        self._umschalten()
+        self.abschliessen()
 
-    def _umschalten(self) -> None:
-        """Erst die ersten sechs Vorlagen, mit „Alle anzeigen“ alle."""
-        self._alle = not self._alle
-        while self.chipfluss.count():                                    # ausgeblendete Vorlagen dürfen im Fluss keinen Platz belegen
-            self.chipfluss.takeAt(0)
-        for i, b in enumerate(self.chips):
-            zeigen = self._alle or i < 6
-            b.setVisible(zeigen)
-            if zeigen:
-                self.chipfluss.addWidget(b)
-        self.mehr.setText("Ausblenden" if self._alle else "Alle anzeigen")
-        self.chipfluss.invalidate()
-
-    def _vorlage(self, name: str, prompt: str) -> None:
-        self.name.setText(name)
-        self.prompt.setPlainText(prompt)
-
-    def _ok(self) -> None:
-        if not self.name.text().strip() or not self.prompt.toPlainText().strip():
-            QMessageBox.information(self, "Schnelle KI-Aktion", "Name und Beschreibung werden gebraucht.")
-            return
-        self.accept()
+    def vorlage_gewaehlt(self, i: int) -> None:
+        self.name.setText(VORLAGEN_AKTION[i][0]); self.prompt.setPlainText(VORLAGEN_AKTION[i][1])
 
     def werte(self) -> tuple:
         return (self.name.text(), self.prompt.toPlainText(), self.ergebnis.currentData(), "schnell" if self.r_schnell.isChecked() else "kontext")
+
+
+TEXTE_AKTION = {"titel": "Schnelle KI-Aktion erstellen", "hinweis": "Eine schnelle KI-Aktion führt einmalige KI-Aufgaben aus.",
+                "meldung": "Name und Beschreibung werden gebraucht.", "name": "Geben Sie einen kurzen Namen für die Aktion ein",
+                "prompt": "Beschreiben Sie die Aktion, die die KI ausführen soll, z. B. „Grammatik korrigieren“ oder „In einem formellen Ton umschreiben“"}
+TEXTE_ASSISTENT = {"titel": "Neuen Assistenten erstellen", "hinweis": "Ein KI-Assistent kann fortlaufend arbeiten und auf Änderungen im Dokument reagieren.",
+                    "meldung": "Name und Prompt werden gebraucht.", "name": "Geben Sie Ihrem Werkzeug einen kurzen Namen für die Symbolleiste",
+                    "prompt": "Sagen Sie der KI, was Sie mit dem Text tun möchten (z. B. „Faktenfehler finden“ oder „Zusammenfassung“)"}
+AKTION_TEXTE = {"ersetzen": "Ersetzen (Ersetzt den ausgewählten Text mit dem KI-Ergebnis)",
+                "anhaengen": "Anhängen (Setzt das KI-Ergebnis hinter den Text)",
+                "hinweis": "Hinweis (Zeigt das Ergebnis als Karte in der Seitenleiste)",
+                "kommentar": "Kommentar (Legt das Ergebnis als Kommentar am Text an)",
+                "hervorheben": "Hervorheben (Meldet Funde in der Schreibhilfe)"}
+AUSLOESER_TEXTE = {"knopf": "Nur auf Knopfdruck (keine Überwachung)", "absatz": "Wenn ein Absatz geändert wird", "markierung": "Wenn Text markiert wird"}
+UMFANG_TEXTE = {"absatz": "Der geänderte Absatz", "markierung": "Die Markierung"}
+ASSISTENT_DATENSCHUTZ = ("Ein fortlaufender Assistent sendet den geänderten Absatz an das gewählte KI-Modell. Bei einem Anbieter im Internet verlässt der Text "
+                         "den Rechner und kann Kosten verursachen; er läuft nur bei eingeschaltetem Hauptschalter und gesetztem Haken.")
+
+
+class KIAssistentDialog(ErstellenFenster):
+    """„Neuen Assistenten erstellen“: ein KI-Assistent, der fortlaufend arbeitet und auf Änderungen im Dokument reagiert.
+
+    ``werte()`` liefert ``(name, prompt, modus, mehr)``; der Befehl ``w_kiAssistentErstellen`` speichert mit ``art="fortlaufend"``."""
+
+    def __init__(self, fenster):
+        from lunivo_writer.ai.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
+        from lunivo_writer.ui.baukasten.dropdown.symbol_auswahl import SymbolWahl
+        from lunivo_writer.ui.baukasten.mass_feld import spin
+        t = TEXTE_ASSISTENT
+        super().__init__(fenster, t["titel"], t["hinweis"], [e[0] for e in K.VORLAGEN_ASSISTENT], meldung=t["meldung"])
+        g = self.gitter
+        self.symbol = SymbolWahl()
+        self.name_zeile("Name *", t["name"], symbol=self.symbol)
+        self.aktion = Auswahlfeld(); self.aktion.zeichen(DROPDOWN_ZEICHEN_LANG)
+        for schl in K.FORTLAUFEND_MODI:
+            self.aktion.addItem(AKTION_TEXTE[schl], schl)
+        g.zeile("Aktion", self.aktion)
+        self.prompt_zeile("Prompt *", t["prompt"])
+        self.kommentar = UmbruchSchalter("Erklärender Kommentar")
+        self.kommentar.setToolTip("Die KI begründet jede Änderung kurz in einem Kommentar.")
+        g.breit(self.kommentar)
+        self.erweitert = AufklappBereich("Erweiterte Einstellungen")
+        eg = FormularGitter(self.erweitert.inhalt); eg.setContentsMargins(*RAND_KEIN)
+        self.modell = Auswahlfeld(); modell_felder_fuellen(self.modell, fenster.ki.konfig, "assistent", "")
+        eg.zeile("Modell", self.modell)
+        self.ausloeser = Auswahlfeld(); self.ausloeser.zeichen(DROPDOWN_ZEICHEN_LANG)
+        for schl in K.ASSISTENT_AUSLOESER:
+            self.ausloeser.addItem(AUSLOESER_TEXTE[schl], schl)
+        self.ausloeser.setCurrentIndex(max(0, self.ausloeser.findData(K.ASSISTENT_AUSLOESER[1])))
+        eg.zeile("Auslöser", self.ausloeser)
+        self.verzoegerung = spin(VERZOEGERUNG_VORGABE, VERZOEGERUNG_MIN, VERZOEGERUNG_MAX, " s", 1, 0)
+        eg.zeile("Verzögerung", self.verzoegerung)
+        self.umfang = Auswahlfeld()
+        for schl in K.ASSISTENT_UMFAENGE:
+            self.umfang.addItem(UMFANG_TEXTE[schl], schl)
+        eg.zeile("Umfang", self.umfang)
+        self.an = UmbruchSchalter("Sofort einschalten"); self.an.setChecked(True)
+        eg.breit(self.an)
+        hinweis = QLabel(ASSISTENT_DATENSCHUTZ); hinweis.setWordWrap(True); hinweis_stil(hinweis)
+        eg.breit(hinweis)
+        g.breit(self.erweitert)
+        self.abschliessen()
+
+    def vorlage_gewaehlt(self, i: int) -> None:
+        name, prompt, modus, kommentar = K.VORLAGEN_ASSISTENT[i]
+        self.name.setText(name); self.prompt.setPlainText(prompt); self.aktion.setCurrentIndex(max(0, self.aktion.findData(modus)))
+        self.kommentar.setChecked(bool(kommentar))
+
+    def werte(self) -> tuple:
+        mehr = {"symbol": self.symbol.wert(), "kommentar": self.kommentar.isChecked(), "modell": self.modell.currentData() or "",
+                "ausloeser": self.ausloeser.currentData(), "umfang": self.umfang.currentData(), "verzoegerung": int(self.verzoegerung.value()),
+                "an": self.an.isChecked()}
+        return (self.name.text().strip(), self.prompt.toPlainText().strip(), self.aktion.currentData(), mehr)
 
 
 class ErgebnisseDialog(PanelFaehig, QDialog):

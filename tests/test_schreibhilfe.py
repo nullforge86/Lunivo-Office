@@ -349,6 +349,7 @@ def test_live_vorschau(app, tmp_path, monkeypatch):
 
 def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
     """Ein Fenster „KI-Einstellungen“ (Reiter grau, bis ein Modell da ist), Schnelle KI-Aktion als Assistent, Chat ohne Bandgruppen."""
+    from lunivo_writer.ui.dialogs import ki_dialoge
     from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog, SchnelleAktionDialog
     w = win(tmp_path, monkeypatch)
     k = w.ki.konfig
@@ -359,7 +360,7 @@ def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
     d2 = KIEinstellungenDialog(w, 1)
     assert d2.reiter.currentIndex() == 1 and all(d2.reiter.isTabEnabled(i) for i in range(5))
     a = SchnelleAktionDialog(w)
-    a._vorlage("Kürzer machen", "Kürze den Text.")
+    a.vorlage_gewaehlt([n for n, _p in ki_dialoge.VORLAGEN_AKTION].index("Kürzer machen"))
     a.r_schnell.setChecked(True); a.ergebnis.setCurrentIndex(1)
     e = k.assistent_hinzufuegen(*a.werte())
     assert e["modus"] == "anhaengen" and e["zugriff"] == "schnell" and k["assistenten"][-1] is e
@@ -369,10 +370,12 @@ def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
     c = w.sidebar.chat
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: False)
     c.zustand()
-    assert c.hinweis.isVisibleTo(c) and not c.eingabezeile.isVisibleTo(c)
+    assert c.hinweis.isVisibleTo(c) and not c.eingabe.eingabe.isEnabled() and not c.eingabe.knopf.isEnabled()
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe: True)          # Chat gilt als verbunden, wenn ein Chat-Modell da ist
     c.zustand()
-    assert not c.hinweis.isVisibleTo(c) and c.eingabezeile.isVisibleTo(c)
+    assert not c.hinweis.isVisibleTo(c) and c.eingabe.eingabe.isEnabled() and c.eingabezeile.isVisibleTo(c)
+    assert not hasattr(c, "aktionen")                                  # keine Aktionsleiste mehr im Chat
 
 
 def test_ki_ergebnisse_und_band(app, tmp_path, monkeypatch):
@@ -398,15 +401,17 @@ def test_chat_erweiterte_einstellungen(app, tmp_path, monkeypatch):
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     k = w.ki.konfig
     c = w.sidebar.chat
-    c.s_temp.setValue(7); c.s_top.setValue(9); c.s_laenge.setValue(300); c.stopp.setText("ENDE, ###"); c.direkt.setChecked(True)
+    from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+    r = KIEinstellungenDialog(w).chat_regler                       # die Regler liegen im Baustein ChatReglerBlock im Dialog
+    r.s_temp.setValue(7); r.s_top.setValue(9); r.s_laenge.setValue(300); r.stopp.setText("ENDE, ###"); r.direkt.setChecked(True)
     o = k.chat_optionen()
     assert o["temperatur"] == 0.7 and o["topP"] == 0.9 and o["maxLaenge"] == 300 and o["stopp"] == "ENDE, ###" and o["direkt"]
-    c.eingabe.setText("a" * 40)
-    assert c.tokens.text() == "Tokens: 10"
+    r2 = KIEinstellungenDialog(w).chat_regler                      # neu geöffnet liest dieselben gespeicherten Werte
+    assert r2.s_temp.value() == 7 and r2.s_top.value() == 9 and r2.s_laenge.value() == 300 and r2.stopp.text() == "ENDE, ###" and r2.direkt.isChecked()
     # Das Modell des Chats ist die „Chatbot“-Zuweisung — keine zweite Einstellung
     k.anbieter_hinzufuegen("Lokal", "http://localhost:11434/v1", "", "m", ["text"])
-    c._modelle_neu()
-    c.modell.setCurrentIndex(c.modell.findData(K.EIGEN_MARKE + k["anbieter"][0]["id"]))
+    c.eingabe.modelle_neu()
+    c.eingabe.modell.setCurrentIndex(c.eingabe.modell.findData(K.EIGEN_MARKE + k["anbieter"][0]["id"]))
     assert k["aufgaben"]["chatbot"] == K.EIGEN_MARKE + k["anbieter"][0]["id"]
     # Die Werte gehen in die Anfrage an einen eigenen Anbieter
     gesehen = {}
@@ -539,17 +544,20 @@ def test_aktionen_in_schreibhilfe_und_chat(app, tmp_path, monkeypatch):
     from lunivo_writer.ai import ki as K
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: True)    # sonst öffnet „starte“ das Hinweisfenster „Modell fehlt“
     k = w.ki.konfig
     e = k.assistent_hinzufuegen("Kürzer", "Kürze den Text.", "hinweis", "kontext")
     w.ki.geaendert.emit()
-    namen = lambda leiste: [b.text() for b in leiste.knoepfe]            # noqa: E731
+    def chat_aktionen():                                 # Befehls-Menü im Eingabekasten des Chats
+        m = w.sidebar.chat.eingabe._menue; m.aboutToShow.emit()
+        return [a.text() for a in m.actions() if a.text()]
     def menue():
         m = w.befehle.klappe("assistenten"); m.aboutToShow.emit()
         return [a.text() for a in m.actions() if a.text()]
-    assert menue()[0] == "Kürzer" and namen(w.sidebar.chat.aktionen) == ["Kürzer", "＋ Neue Aktion"]
+    assert menue()[0] == "Kürzer" and chat_aktionen() == ["Vorlagen", "Kürzer", "Neue Aktion …", "Neuer Assistent …"]
     # Entfernen wirkt überall
     k.assistent_entfernen(e["id"]); w.ki.geaendert.emit()
-    assert menue()[0] == "Noch keine eigenen KI-Aktionen" and namen(w.sidebar.chat.aktionen) == ["＋ Neue Aktion"]
+    assert menue()[0] == "Noch keine eigenen KI-Aktionen" and chat_aktionen() == ["Vorlagen", "Noch keine eigenen Aktionen", "Neue Aktion …", "Neuer Assistent …"]
     # Das Ergebnis einer Aktion kommt als Antwort in den Chat und in die Ergebnisliste
     e = k.assistent_hinzufuegen("Kürzer", "Kürze den Text.", "hinweis")
     w.current_editor().setPlainText("Ein langer Text, der gekürzt werden soll.")
@@ -562,11 +570,11 @@ def test_aktionen_in_schreibhilfe_und_chat(app, tmp_path, monkeypatch):
     w.ki.assistent(e)
     for _ in range(300):
         app.processEvents()
-        if any(z["text"] == "Kurz." for z in w.sidebar.chat.verlauf):
+        if any(z["text"] == "Kurz." for z in w.ki.chat_modell.nachrichten):
             break
         time.sleep(0.02)
     assert w.ki.ergebnisse and w.ki.ergebnisse[-1]["text"] == "Kurz."
-    assert any(z["text"] == "Kurz." for z in w.sidebar.chat.verlauf)
+    assert any(z["text"] == "Kurz." for z in w.ki.chat_modell.nachrichten)
 
 
 def test_textbausteine_welche_hilfe_und_zusammenfassen(app, tmp_path, monkeypatch):
@@ -777,13 +785,13 @@ def test_uebersetzen_markierung_ersetzen_oder_in_schreibhilfe_und_chat_zeigen(ap
         app.processEvents(); time.sleep(0.03)
     c = e.textCursor(); c.clearSelection(); e.setTextCursor(c)
     w.befehle.tun("w.kiUebersetzenZeigen")
-    assert warte(lambda: any("Übersetzung" in z["text"] or z["text"] == "Hello world" for z in w.sidebar.chat.verlauf))
+    assert warte(lambda: any("Übersetzung" in z["text"] or z["text"] == "Hello world" for z in w.ki.chat_modell.nachrichten))
     assert e.toPlainText() == "Hallo Welt" and w.sidebar.werk_reiter.checkedId() == 0
     # 3. markiert, aber ausdrücklich „zeigen“ → Text bleibt
     c = e.textCursor(); c.select(QTextCursor.Document); e.setTextCursor(c)
-    w.sidebar.chat.verlauf.clear()
+    w.ki.chat_modell.nachrichten.clear()
     w.befehle.tun("w.kiUebersetzenZeigen")
-    assert warte(lambda: any(z["text"] == "Hello world" for z in w.sidebar.chat.verlauf))
+    assert warte(lambda: any(z["text"] == "Hello world" for z in w.ki.chat_modell.nachrichten))
     assert e.toPlainText() == "Hallo Welt"
 
 
