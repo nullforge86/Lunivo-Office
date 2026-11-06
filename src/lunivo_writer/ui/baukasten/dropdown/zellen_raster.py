@@ -4,12 +4,12 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QLabel, QMenu, QVBoxLayout, QWidget, QWidgetAction
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_ZELLENRASTER
+from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, DROPDOWN_RASTERZELLE, RAND_ZELLENRASTER
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 class _Gitter(QWidget):
-    def __init__(self, raster: "ZellenRaster", zeilen: int, spalten: int, zelle: int = 23):
+    def __init__(self, raster: "ZellenRaster", zeilen: int, spalten: int, zelle: int = DROPDOWN_RASTERZELLE):
         super().__init__()
         self._r, self.zeilen, self.spalten, self.zelle = raster, zeilen, spalten, zelle
         self.an = (0, 0)                                  # (Zeilen, Spalten) unter der Maus; (0, 0) = keine

@@ -210,7 +210,6 @@ SCHRIFT_BANDKNOPF = 16   # Beschriftung der Bandknöpfe
 # Höhen nach Rolle
 HOEHE_NOTENFELD = 84   # Eingabefeld der Notenzeile
 HOEHE_EINGABEFELD = 30   # Eingabefeld im Eingabefenster
-HOEHE_KOPFDROPDOWN = 30   # Kopf-Auswahlknopf (Symbol mit Pfeil)
 HOEHE_LESEENDE_KNOPF = 30   # Lesemodus-Beenden-Knopf in der Statusleiste
 HOEHE_LINIENZEILE = 30   # Zeile mit Linienart-Auswahl
 HOEHE_TABSTOPP_LISTE_MAX = 72   # Höchsthöhe der Tabstopp-Liste
@@ -306,7 +305,7 @@ GROESSE_FENSTER_SPEICHERN = (1040, 660)   # Fenstergröße Speichern
 GROESSE_TABELLENKNOPF_MINILEISTE = (50, 54)   # Tabellenknöpfe der Mini-Leiste
 GROESSE_FENSTER_TABSTOPP = (550, 340)   # Fenstergröße Tabstopps
 GROESSE_FENSTER_TASTENKOMBINATION = (311, 122)   # Fenstergröße Tastenkombination
-GROESSE_TEILMENUEKNOPF = (36, 32)   # Knopf „Diagrammteil wählen“
+BREITE_TEILMENUEKNOPF = 36   # Knopf „Diagrammteil wählen“: Breite (die Höhe ist DROPDOWN_HOEHE)
 GROESSE_FENSTER_TEXTEFFEKT = (422, 558)   # Fenstergröße Texteffekt
 GROESSE_UMSCHLOSSEN_VORLAGENBILD = (56, 40)   # Vorlagenbild im Dialog „Umschlossene Zeichen“
 GROESSE_UNTERSTREICHUNG_BILD = (70, 14)   # Unterstreichungsbild der Schriftart-Auswahl (zunächst)
@@ -424,14 +423,13 @@ ABSTAND_SEITENBILDER = 16   # Seitenbilder
 PADDING_ABSCHNITTSBAND = '5px 8px'   # Titelband eines Abschnitts
 PADDING_SCHALTER_CHIP = '3px 12px'   # Schalter-Chip
 PADDING_PLAKETTE = '3px'   # Plakette (Badge) im Startbereich
-PADDING_RASTER_FUSSKNOPF = '6px 8px'   # Fußknopf der Rasterauswahl
 PADDING_GALERIE_TITEL = '0 2px'   # Titel der Galerieauswahl
 PADDING_GRUPPENTITEL = '0 8px 0 0'   # Titel der Gruppenrahmen im Zusatzpanel
 PADDING_HANDBUCH_NAVIGATION = '6px 4px'   # Navigationsliste des Handbuchs
 PADDING_HILFE_CHIP = '3px 10px'   # Chip im Hilfe-Auswahldialog
 PADDING_HINWEIS = '8px'   # Hinweistexte (Leer-, Prüf- und Statushinweise)
 PADDING_MARKE = '2px 8px'   # Beschriftungsmarke (Chip)
-PADDING_MENUEEINTRAG = '5px 14px 5px 6px'   # Eintrag des Kontextmenüs
+PADDING_MENUEEINTRAG_KOMPAKT = '5px 14px 5px 6px'   # Eintrag der Menü-Variante „kompakt“ (Tabellenmenü)
 PADDING_VORGABEMENUE_KOPF = '3px 2px'   # Kopfzeile des Voreinstellungsmenüs
 PADDING_KOPFFUSS_ABSATZKNOPF = '2px 6px'   # Absatzknöpfe der Kopf-/Fußzeilen-Leiste
 PADDING_KOPFFUSS_PANELKNOPF = '3px'   # Knöpfe im Kopf-/Fußzeilen-Panel
@@ -444,11 +442,9 @@ PADDING_LESEENDEKNOPF = '8px 24px'   # Lesemodus-Beenden-Knopf
 PADDING_HANDBUCH_EINTRAG = '4px 10px'   # Eintrag der Handbuch-Navigation
 PADDING_KI_ANBIETER_EINTRAG = '11px 14px'   # Anbieter-Eintrag im KI-Dialog
 PADDING_KI_LISTENEINTRAG = '6px 12px'   # Listeneintrag im KI-Dialog
-PADDING_MENUE = '3px'   # Kontextmenü
-PADDING_MENUETAFEL_KNOPF = '5px 8px'   # Knöpfe der Menütafel
+PADDING_MENUE_KOMPAKT = '3px'   # Menü-Variante „kompakt“ (Tabellenmenü)
 PADDING_ZAHLENFELD_KOPFFUSS = '1px 2px'   # Zahlenfeld der Seitenzahl-Zeile
 PADDING_POPUP_LINKKNOPF = '0 6px'   # Unterstrichener Mehr-Knopf der Popups
-PADDING_GALERIE_EINTRAG = '6px 8px'   # Eintrag der Galerieauswahl
 PADDING_STARTKNOPF_LINK = '4px 0'   # Textknopf im Startbereich
 PADDING_NAVIGATION_KNOPF = '4px 8px'   # Zeilenknopf der Navigation
 PADDING_SEITENLEISTE_REITER = '4px 6px'   # Reiterknopf der Seitenleiste
@@ -479,7 +475,9 @@ PADDING_FELDKNOPF = '3px 10px'   # Feldknöpfe (Stylesheet)
 PADDING_EINGABEFELD_GLOBAL = '3px 6px'   # Eingabefelder (Stylesheet)
 PADDING_MENUE_GLOBAL = '5px'   # Menüs (Stylesheet)
 # Dropdown-Pyramide, Stufe „Größe“: EINE Quelle für Menüs und Auswahllisten (so kompakt wie möglich: Schrifthöhe + 2 × Abstand)
+DROPDOWN_HOEHE = 30    # Höhe JEDES Auswahlfelds und jeder Dropdown-Taste (eine Quelle; Aufrufer setzen keine Höhe)
 DROPDOWN_ZEILE_PAD_V = ABSTAND_KLEIN      # senkrechter Abstand einer Zeile in Menüs und aufklappenden Listen (aus der Abstandsleiter, keine eigene Zahl)
+DROPDOWN_ZEILE_PADDING = f'{DROPDOWN_ZEILE_PAD_V}px {ABSTAND_MITTEL}px'    # Abstand JEDER Zeilen-/Eintragstaste in aufklappenden Fenstern (eine Quelle statt sieben)
 DROPDOWN_MAX_ZEILEN = 12      # so viele Zeilen sind sichtbar, danach rollt die Liste
 POPUP_RAND = ABSTAND_MITTEL    # Mindestabstand eines aufklappenden Fensters zum Rand seines Bereichs (Seitenleiste, Fenster, Bildschirm)
 DROPDOWN_BREITE_MIN = 8 * ABSTAND_SPALTEN    # Mindestbreite aller aufklappenden Menüs, damit sie gleich breit wirken (wächst nur, wenn der Inhalt mehr braucht)
@@ -489,6 +487,7 @@ DROPDOWN_ZEICHEN_KURZ = 6
 DROPDOWN_ZEICHEN_MITTEL = 8
 DROPDOWN_ZEICHEN_LANG = 10
 BREITE_ANZEIGEAUSWAHL_BAND = 220   # Auswahl „Anzeige“ im Band (Überprüfen)
+DROPDOWN_PFEIL_ZONE = ABSTAND_BLOCK    # zusätzlicher Platz für den Pfeil-Bereich eines großen Dropdown-Knopfs, damit die Beschriftung nicht gekürzt wird
 DROPDOWN_MIN_ZEICHEN = 12     # Mindestlänge des Feldes in Zeichen (die Feldbreite folgt sonst dem Layout)
 PADDING_MENUEEINTRAG_GLOBAL = f'{DROPDOWN_ZEILE_PAD_V}px 26px {DROPDOWN_ZEILE_PAD_V}px {ABSTAND_BLOCK}px'   # Menüeinträge (Stylesheet)
 PADDING_OPTIONSKNOPF_GLOBAL = '3px 0'   # Optionsknöpfe (Stylesheet)
@@ -504,11 +503,7 @@ PADDING_BANDKNOPF = '0 3px'   # Bandknöpfe
 PADDING_GRUPPE_OBEN = '8px'   # Oberer Innenabstand von Gruppenrahmen
 PADDING_PALETTE_TITEL_OBEN = '2px'   # Oberer Abstand der Palettentitel
 PADDING_LESEN_VORSCHAU = '16px 20px'   # Vorschau im Lesemodus
-PADDING_MENUETAFEL_UNTEREINTRAG = '4px 8px'   # Untereintrag der Menütafel
-PADDING_MENUETAFEL_ZULETZT = '3px 6px'   # Zuletzt-Eintrag der Menütafel
 PADDING_TASTENKUERZEL = '0 5px'   # Tastenkürzel-Marke im Hilfe-Dialog
-PADDING_ZUSCHNEIDEN_KNOPF = '4px 24px'   # Zuschneiden-Menü, Kacheln
-PADDING_ZUSCHNEIDEN_ZEILE = '4px 10px'   # Zuschneiden-Menü, Listenzeilen
 
 # Außenabstände in Stylesheets nach Rolle
 MARGIN_RECHTS_ZUSATZ_REITER = '2px'   # Abstand zwischen den Reitern des Zusatzpanels
@@ -530,3 +525,51 @@ SCHRIFT_GRUPPENTITEL_PX = 11
 
 # Aktionsknöpfe in Reihe (Prüfen · KI-Korrektur · Vorschläge): Mindestbreite je Knopf, damit alle drei in die Seitenleiste in einer Zeile passen
 BREITE_AKTIONSKNOPF_MIN = 100
+
+# Maße der aufklappenden Raster, Galerien und Paletten (Dropdown-Paket): eine Quelle, Aufrufer setzen keine eigenen Zahlen
+DROPDOWN_KACHEL = 36            # Seitenlänge einer Formkachel (Knöpfe nicht schmaler als 36 px)
+DROPDOWN_FORMEN_SPALTEN = 12    # Formen je Zeile wie in der Vorlage (Kachel bleibt 36 px, das Fenster wird breiter)
+DROPDOWN_KACHEL_ABSTAND = 2     # Abstand zwischen Kacheln im Formen-Raster
+DROPDOWN_ROLLRAND = 12          # Zuschlag für Rand der Bildlauffläche der Formenliste
+HOEHE_FORMENMENUE = 330         # Höhe der Bildlauffläche im Bild-/Formenmenü
+DROPDOWN_RASTERZELLE = 23       # Zelle des Tabellen-Einfüge-Rasters
+DROPDOWN_FARBKACHEL = 18        # Seitenlänge einer Farbkachel in der Palette
+
+# Breite eines Dropdown-Feldes nach Rolle und Layoutvariante (eine Quelle; Aufrufer rufen ``Auswahlfeld.rolle(rolle, variante)``)
+DROPDOWN_BREITE_SCHRIFT_BAND = 130           # Schriftname im Band
+DROPDOWN_BREITE_GROESSE_BAND = 62            # Schriftgröße im Band
+DROPDOWN_BREITE_GROESSE_DIALOG = 70          # Schriftgröße im Fenster
+DROPDOWN_BREITE = {
+    ("schrift", "band"): DROPDOWN_BREITE_SCHRIFT_BAND, ("schrift", "leiste"): BREITE_SCHRIFTAUSWAHL_LEISTE, ("schrift", "mini"): BREITE_SCHRIFTAUSWAHL_MINILEISTE,
+    ("groesse", "band"): DROPDOWN_BREITE_GROESSE_BAND, ("groesse", "leiste"): BREITE_REGLER_MIN, ("groesse", "mini"): BREITE_SCHRIFTGROESSE_MINILEISTE,
+    ("groesse", "dialog"): DROPDOWN_BREITE_GROESSE_DIALOG,
+    ("formatvorlage", "band"): BREITE_FORMATVORLAGE_BAND, ("formatvorlage", "leiste"): BREITE_FORMATVORLAGE_LEISTE,
+    ("abstand", "leiste"): BREITE_ABSTANDSFELD, ("einheit", "feld"): BREITE_EINHEITENAUSWAHL, ("anzeige", "band"): BREITE_ANZEIGEAUSWAHL_BAND,
+}
+
+# Größen von Dropdown-Knöpfen nach Rolle und Layoutvariante (eine Quelle; Aufrufer rufen ``DropdownKnopf.groesse_rolle(rolle, variante)``)
+# Wert: (Breite oder None, Höhe oder None, fest?) — fest = setFixedSize, sonst Mindestgröße
+DROPDOWN_GRIFF = 20                 # Griff-Knopf auf dem Dokument (Absatz-Layout, Tabellengriffe)
+DROPDOWN_KNOPF_MIN = 36             # kleinste Breite eines Bandknopfes in px (Projektvorgabe: nicht schmaler als ~36 px)
+DROPDOWN_KNOPF_MIN_MENUE = 40       # kleinste Breite eines Bandknopfes mit Menü
+DROPDOWN_GROSS_BREITE_MIN = {False: 48, True: 44}     # großer Bandknopf (Text unter dem Symbol): Mindestbreite je Dichte (kompakt?)
+DROPDOWN_GROSS_BREITE_ZUGABE = {False: 10, True: 6}   # Zuschlag zur Textbreite
+DROPDOWN_GROSS_HOEHE = {False: 68, True: 66}          # Höhe
+DROPDOWN_KNOPF = {
+    ("panel", "kopf"): (GROESSE_PANELKNOPF[0], GROESSE_PANELKNOPF[1], True),
+    ("griff", "dokument"): (DROPDOWN_GRIFF, DROPDOWN_GRIFF, True),
+    ("mehr", "band"): (BREITE_MEHRKNOPF, None, True),
+    ("zeile", "band"): (None, DROPDOWN_HOEHE, False),               # Dropdown-Knopf in einer Bandzeile: so hoch wie jedes Dropdown
+    ("symbol", "band"): (DROPDOWN_KNOPF_MIN, None, False),
+    ("menue", "band"): (DROPDOWN_KNOPF_MIN_MENUE, None, False),
+    ("knopf", "mini"): (BREITE_MINILEISTE_KNOPF, None, False),
+    ("tabelle", "mini"): (GROESSE_TABELLENKNOPF_MINILEISTE[0], GROESSE_TABELLENKNOPF_MINILEISTE[1], False),
+}
+
+# Einrückungen beim Zeichnen von Dropdown-Kacheln (px; eine Quelle, keine Zahlen in den Zeichenroutinen)
+DROPDOWN_INNEN_GALERIE = 1      # Rand der Galerie-Kachel
+DROPDOWN_INNEN_FARBE = 1.5      # Rand der Farbkachel
+DROPDOWN_INNEN_FORM = 3         # Rand des Formbildes und der Strichart-Kachel
+DROPDOWN_INNEN_OBJEKT = 2       # Rand der Objekt-Kachel
+DROPDOWN_INNEN_KOPF = 7         # seitlicher Rand im Kopf-Dropdown
+DROPDOWN_LINIE_HALB = 0.5      # halbe Strichbreite: Rahmen einer 1-px-Linie liegt mittig auf dem Pixel

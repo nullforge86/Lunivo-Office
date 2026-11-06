@@ -21,6 +21,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_ZEILE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownTaste
 
 
 class BefehleSeiten:
@@ -110,12 +111,12 @@ class BefehleSeiten:
         tk.clicked.connect(lambda: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).exec())
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel("Anpassungen:"))
-        zr = QPushButton("Zurücksetzen ▾")
+        zr = DropdownTaste("Zurücksetzen ▾")
         from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe(zr)
         m.eintrag("Nur das Menüband", lambda: (self.w.settings.remove("ui/register_plan"), self._band_merken(), self._band_jetzt()))
         m.eintrag("Alle Anpassungen (Register, Schnellzugriff, Symbole) …", self.w.befehle.vorlagenZurueck)
-        zr.setMenu(m)
+        zr.menue_setzen(m)
         unten.addWidget(zr)
         f = p.gruppe("Aussehen")
         for text, fn in (("Benutzeroberfläche wählen …", self.w.befehle.benutzeroberflaeche),

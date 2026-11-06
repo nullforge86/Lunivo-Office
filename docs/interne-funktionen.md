@@ -2,7 +2,7 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 366 Module, 396 Klassen, 5115 Funktionen und Methoden.
+Stand: 367 Module, 399 Klassen, 5116 Funktionen und Methoden.
 
 ## Inhalt
 
@@ -19,7 +19,7 @@ Stand: 366 Module, 396 Klassen, 5115 Funktionen und Methoden.
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
 - `ui/baukasten` — 69 Module
-- `ui/baukasten/dropdown` — 24 Module
+- `ui/baukasten/dropdown` — 25 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
 - `ui/dialogs/optionen_seiten` — 8 Module
@@ -4943,6 +4943,15 @@ Popups der Schnellleiste am Diagramm und die Klappen der Diagrammtools — ein B
 - `farben_popup(b)`
 - `filter_popup(b)`
 - `diagramm_bereich_feld(b)` — Auswahlfeld „Diagrammbereich“ der Diagrammtools: oben die Liste der Teile (zeigt den gewählten), darunter „Formatieren“ und
+
+### `ui/baukasten/dropdown/dropdown_knopf.py`
+
+Dropdown-Knopf: der Knopf mit Pfeil, der ein Menü öffnet (Stufe 4 der Dropdown-Pyramide).
+
+- **class `_DropdownBasis`**
+  - `menue_setzen(menue, *, geteilt, gross, fuellend)` — ``geteilt``: True = Symbol und Pfeil getrennt (``MenuButtonPopup``), False = ein Klick öffnet das Menü (``InstantPopup``), None = Modus bleibt.
+- **class `DropdownKnopf`**(_DropdownBasis, QToolButton) — Werkzeugknopf, der ein Menü öffnet.
+- **class `DropdownTaste`**(_DropdownBasis, QPushButton) — Taste mit Text, die ein Menü öffnet.
 
 ### `ui/baukasten/dropdown/farbpalette.py`
 

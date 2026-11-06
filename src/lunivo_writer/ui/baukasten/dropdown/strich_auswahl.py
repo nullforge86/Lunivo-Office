@@ -13,7 +13,7 @@ from PySide6.QtGui import QIcon, QPainter, QPalette, QPixmap, QPolygonF
 from PySide6.QtWidgets import QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter
 
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
-from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, GROESSE_STRICHART_KACHEL, HOEHE_KNOPF_GROSS
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_FORM, BREITE_REGLER_MIN, GROESSE_STRICHART_KACHEL, HOEHE_KNOPF_GROSS
 
 _KACHEL = QSize(*GROESSE_STRICHART_KACHEL)
 
@@ -25,7 +25,7 @@ class StrichAuswahl(QPushButton):
         super().__init__(parent)
         self._eintraege = list(eintraege)
         self._aktuell = self._eintraege[0][0] if self._eintraege else ""
-        self.setMinimumHeight(HOEHE_KNOPF_GROSS); self.setMinimumWidth(BREITE_REGLER_MIN); self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(DROPDOWN_HOEHE); self.setProperty("dropdownFeld", True); self.setMinimumWidth(BREITE_REGLER_MIN); self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.clicked.connect(self._popup)
 
@@ -54,7 +54,7 @@ class StrichAuswahl(QPushButton):
         sp = QStylePainter(self)
         opt = QStyleOptionButton(); self.initStyleOption(opt); opt.text = ""; opt.icon = QIcon()
         sp.drawPrimitive(QStyle.PE_PanelButtonCommand, opt)
-        r = QRectF(self.rect()).adjusted(3, 3, -3, -3)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_FORM, DROPDOWN_INNEN_FORM, -DROPDOWN_INNEN_FORM, -DROPDOWN_INNEN_FORM)
         sp.setRenderHint(QPainter.Antialiasing)
         pal = self.palette()
         sp.fillRect(r, pal.color(QPalette.Base if self.isEnabled() else QPalette.Window))

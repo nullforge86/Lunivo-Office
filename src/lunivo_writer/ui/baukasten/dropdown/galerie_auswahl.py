@@ -11,18 +11,18 @@ from typing import Callable
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QVBoxLayout, QWidget, QWidgetAction
+from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.mass import (
+    DROPDOWN_INNEN_GALERIE,
     SCHRIFT_GRUPPENTITEL_PX,
     ABSTAND_ENG,
     ABSTAND_NORMAL,
     GROESSE_GALERIE_KACHEL,
     ICON_GROSS,
-    PADDING_GALERIE_EINTRAG,
     PADDING_GALERIE_TITEL,
-    RADIUS_FELD,
     RAND_KEIN,
     RAND_PANEL_KLEIN,
 )
@@ -63,7 +63,7 @@ class _Kachel(QWidget):
     def paintEvent(self, _e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_GALERIE, DROPDOWN_INNEN_GALERIE, -DROPDOWN_INNEN_GALERIE, -DROPDOWN_INNEN_GALERIE)
         if self._ueber or self.aktuell:
             hell = QColor(self.palette().highlight().color()); hell.setAlpha(55 if self._ueber else 30)
             p.setPen(QPen(self.palette().highlight().color(), 1.4 if self.aktuell else 1)); p.setBrush(hell)
@@ -127,8 +127,7 @@ class GalerieAuswahl(MenueListe):
             self._trenner = trennlinie(tief=True)
             self._v.addWidget(self._trenner)
         b = QPushButton(text); b.setFlat(True); b.setEnabled(aktiv)
-        b.setStyleSheet("QPushButton { text-align: left; padding: " f"{PADDING_GALERIE_EINTRAG}" "; border: none; border-radius: " f"{RADIUS_FELD}" "px; }"
-                        "QPushButton:hover:enabled { background: palette(midlight); }")
+        dropdown_zeile(b)
         b.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         if haken is not None:
             b.setCheckable(True); b.setChecked(haken)

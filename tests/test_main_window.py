@@ -176,6 +176,66 @@ def test_dropdown_groesse_nur_im_paket_dropdown():
     assert treffer == [], "Dropdown-Größe außerhalb des Pakets dropdown: " + ", ".join(treffer)
 
 
+def test_menue_an_knopf_nur_ueber_dropdown_knopf():
+    """Wächter: ``setMenu``/``setPopupMode`` ruft nur das Paket dropdown auf; Knöpfe mit Menü sind DropdownKnopf/DropdownTaste (``menue_setzen``)."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\.(setMenu|setPopupMode)\(")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "setMenu/setPopupMode außerhalb des Pakets dropdown: " + ", ".join(treffer)
+
+
+def test_dropdown_farben_nur_im_thema():
+    """Wächter: Kein Stylesheet außerhalb von ui/theme.py färbt ``QMenu``, ``QComboBox`` oder deren Listen."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"(QMenu|QComboBox)[^{\n]*\{[^}\n]*(background|color|border)")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if p.name != "theme.py" and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Dropdown-Farben außerhalb des Themas: " + ", ".join(treffer)
+
+
+def test_popup_besitz_nur_ueber_den_baustein():
+    """Wächter: ``setParent(…, Qt.Popup)`` für Menüs gibt es nur im Paket (``menue_setzen(besitzen=True)``, ``untermenue_einhaengen``)."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"setParent\([^)]*Popup")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Popup-Besitz von Hand: " + ", ".join(treffer)
+
+
+def test_keine_eigene_dropdown_klasse_ausserhalb_des_pakets():
+    """Wächter: Wer ein Auswahlfeld oder Menü ableitet, erbt von ``Auswahlfeld``/``Schriftauswahl``/``MenueListe`` und so Höhe, Farben, Verhalten."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"^class \w+\([^)]*\b(QComboBox|QFontComboBox|QMenu)\b[^)]*\)", re.M)
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "eigene Dropdown-Klasse an der Baukasten-Basis vorbei: " + ", ".join(treffer)
+
+
+def test_kein_menue_wird_aus_text_erzeugt():
+    """Wächter: ``addMenu("Titel")`` erzeugt ein rohes QMenu; Untermenüs entstehen nur über ``MenueListe.untermenue``."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"\.addMenu\(\s*(?:f?[\"'])")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if "ui/baukasten/dropdown/" not in p.as_posix() and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "rohes QMenu über addMenu(Text): " + ", ".join(treffer)
+
+
+def test_dropdown_hoehe_nur_im_baustein():
+    """Wächter: Die Höhe eines Auswahlfelds oder einer Dropdown-Taste kommt aus dem Baustein (``DROPDOWN_HOEHE``); Aufrufer setzen keine eigene."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"(?:Auswahlfeld|Schriftauswahl|DropdownTaste)\([^\n]*\.(?:setMinimumHeight|setFixedHeight)\(")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Dropdown-Höhe außerhalb des Bausteins: " + ", ".join(treffer)
+
+
 def test_tastenkuerzel_fett(app, tmp_path):
     from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest
@@ -747,3 +807,185 @@ def test_band_gruppen_klappen_nie_zusammen(app, tmp_path):
     b.reiter.setCurrentIndex(1); app.processEvents()
     start = b.stapel.widget(1)
     assert start.horizontalScrollBar().maximum() > 0 and start.pfeile["rechts"].isVisible()     # zu breit: Blättern statt Zuklappen
+
+
+def test_dropdown_zeilen_und_menuemasse_nur_im_thema():
+    """Wächter: Zeilenabstand und Menümaße (``DROPDOWN_ZEILE_PADDING``, ``PADDING_MENUE*``, ``QMenu::``) stehen in Stylesheets nur in ui/theme.py;
+    Zeilentasten in Popups nutzen ``dropdown_zeile``, Menüvarianten die Eigenschaft ``variante``."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    muster = re.compile(r"setStyleSheet\([^\n]*(DROPDOWN_ZEILE_PADDING|PADDING_MENUE|QMenu::|PADDING_GALERIE_EINTRAG)")
+    treffer = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                     if p.name != "theme.py" and muster.search(p.read_text(encoding="utf-8", errors="replace")))
+    assert treffer == [], "Dropdown-Zeilen-/Menümaß im Widget-Stylesheet statt im Thema: " + ", ".join(treffer)
+
+
+def test_dropdown_paket_ohne_eigene_stylesheets_und_menuepfeile_nur_im_thema():
+    """Wächter: Im Paket dropdown steht kein ``setStyleSheet`` (Aussehen kommt aus ui/theme.py über Eigenschaften wie ``dropdownZeile``,
+    ``dropdownKachel``, ``dropdownFenster``); Menü-Knopf und Menü-Pfeil (``::menu-button``, ``::menu-arrow``) gestaltet nur das Thema."""
+    import pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    paket = sorted(p.relative_to(wurzel).as_posix() for p in (wurzel / "ui" / "baukasten" / "dropdown").glob("*.py")
+                   if "setStyleSheet(" in p.read_text(encoding="utf-8", errors="replace"))
+    assert paket == [], "Stylesheet im Dropdown-Paket: " + ", ".join(paket)
+    pfeil = sorted(p.relative_to(wurzel).as_posix() for p in wurzel.rglob("*.py")
+                   if p.name != "theme.py" and re.search(r"::menu-(button|arrow)", p.read_text(encoding="utf-8", errors="replace")))
+    assert pfeil == [], "Menü-Knopf/-Pfeil außerhalb des Themas: " + ", ".join(pfeil)
+
+
+def test_auswahlfelder_sehen_ueberall_gleich_aus(app):
+    """Wächter (gemessen, nicht nur gelesen): Ein ``Auswahlfeld`` hat in jedem Zusammenhang (Fenster, Seitenleisten-Karte, Band-Seite) Höhe, Hintergrund, Rand
+    und Pfeil des Themas — gleiche Pixel, in allen Themen."""
+    from PySide6.QtWidgets import QVBoxLayout, QWidget
+    from lunivo_writer.ui import theme
+    from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+    for modus in ("dark", "mint", "light"):
+        theme.apply_theme(app, modus)
+        bilder = []
+        for kontext in ("fenster", "seitenkarte", "bandSeite"):
+            halter = QWidget(); v = QVBoxLayout(halter)
+            if kontext == "seitenkarte":
+                halter.setProperty("seitenKarte", True)
+            if kontext == "bandSeite":
+                halter.setObjectName("bandSeite")
+            c = Auswahlfeld(); c.addItem("Standard"); c.setFixedWidth(160); v.addWidget(c)
+            halter.show(); app.processEvents()
+            bilder.append((c.height(), c.grab().toImage()))
+        for h, b in bilder[1:]:
+            assert h == bilder[0][0], f"Höhe verschieden im Thema {modus}"
+            assert b == bilder[0][1], f"Aussehen verschieden im Thema {modus}"
+
+
+def test_formular_gitter_gibt_dropdowns_die_dropdown_hoehe(app):
+    """Wächter: Im ``FormularGitter`` (Seitenleisten-Fenster wie KI-Einstellungen) hat ein ``Auswahlfeld`` dieselbe Höhe wie überall (``DROPDOWN_HOEHE``)."""
+    from PySide6.QtWidgets import QWidget
+    from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+    from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+    from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE
+    halter = QWidget(); g = FormularGitter(halter); c = Auswahlfeld(); c.addItem("Standard"); g.zeile("Chatbot", c)
+    halter.resize(300, 200); halter.show(); app.processEvents()
+    assert c.height() == DROPDOWN_HOEHE
+
+
+def test_dropdown_breite_und_hoehe_nur_ueber_rolle():
+    """Wächter (Syntaxbaum, je Funktion): Ein Dropdown (``Auswahlfeld``, ``Schriftauswahl``, ``VorschauCombo``, ``VorschauFontCombo``, ``DropdownKnopf``,
+    ``DropdownTaste``) bekommt Breite und Höhe außerhalb des Pakets dropdown nie von Hand (``setFixed*``/``setMinimum*``/``setMaximum*``), sondern über
+    ``rolle(rolle, variante)`` bzw. ``band_zeile()``."""
+    import ast, pathlib
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer"
+    klassen = {"Auswahlfeld", "Schriftauswahl", "VorschauCombo", "VorschauFontCombo", "DropdownKnopf", "DropdownTaste"}
+    verboten = {"setFixedWidth", "setFixedHeight", "setFixedSize", "setMinimumWidth", "setMinimumHeight", "setMinimumSize", "setMaximumWidth", "setMaximumHeight"}
+
+    def name(n):
+        if isinstance(n, ast.Name):
+            return n.id
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "self":
+            return "self." + n.attr
+        return None
+
+    def ctor(v):
+        return isinstance(v, ast.Call) and isinstance(v.func, ast.Name) and v.func.id in klassen
+
+    treffer = []
+    for p in wurzel.rglob("*.py"):
+        if "ui/baukasten/dropdown/" in p.as_posix():
+            continue
+        baum = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+        for fn in [n for n in ast.walk(baum) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+            namen = set()
+            for n in ast.walk(fn):
+                if isinstance(n, ast.Assign) and ctor(n.value):
+                    namen |= {name(t) for t in n.targets if name(t)}
+                if isinstance(n, ast.Assign) and isinstance(n.value, ast.Tuple) and any(ctor(e) for e in n.value.elts):
+                    for t in n.targets:
+                        if isinstance(t, ast.Tuple):
+                            namen |= {name(a) for a, e in zip(t.elts, n.value.elts) if ctor(e) and name(a)}
+            for n in ast.walk(fn):
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in verboten:
+                    if name(n.func.value) in namen or ctor(n.func.value):
+                        treffer.append(f"{p.relative_to(wurzel).as_posix()}:{n.lineno} {n.func.attr}")
+    assert sorted(set(treffer)) == [], "Dropdown-Größe von Hand statt über rolle(): " + ", ".join(sorted(set(treffer)))
+
+
+def test_dropdown_paket_ohne_feste_farben_und_layoutzahlen():
+    """Wächter (Syntaxbaum): Im Paket dropdown steht keine Farbe als Zeichenkette ``"#rrggbb"`` (Farben: ``Farbe.*`` in core/farben.py oder Palette des Themas)
+    und kein Zahlenliteral in ``adjusted``, ``setContentsMargins``, ``setSpacing`` (Maße: ``mass.py``)."""
+    import ast, pathlib, re
+    wurzel = pathlib.Path(__file__).resolve().parent.parent / "src" / "lunivo_writer" / "ui" / "baukasten" / "dropdown"
+    treffer = []
+    for p in sorted(wurzel.glob("*.py")):
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8", errors="replace"))):
+            if isinstance(n, ast.Constant) and isinstance(n.value, str) and re.fullmatch(r"#[0-9a-fA-F]{6,8}", n.value):
+                treffer.append(f"{p.name}:{n.lineno} Farbe {n.value}")
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in ("adjusted", "setContentsMargins", "setSpacing"):
+                zahlen = [a for a in n.args if isinstance(a, ast.Constant) and isinstance(a.value, (int, float)) and a.value != 0]
+                if zahlen:
+                    treffer.append(f"{p.name}:{n.lineno} {n.func.attr}")
+    assert treffer == [], "feste Farbe/Layoutzahl im Dropdown-Paket: " + ", ".join(treffer)
+
+
+def test_formular_gitter_setzt_dropdowns_keine_eigene_hoehe(app):
+    """Wächter: ``FormularGitter`` und ``felder_angleichen`` überschreiben die Höhe von Dropdowns nicht (Auswahlfeld bleibt bei ``DROPDOWN_HOEHE``), Textfelder bekommen ``FELDHOEHE``."""
+    from PySide6.QtWidgets import QLineEdit, QWidget
+    from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+    from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, FormularGitter, felder_angleichen
+    from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE
+    halter = QWidget(); g = FormularGitter(halter); c = Auswahlfeld(); c.addItem("Standard"); t = QLineEdit()
+    g.zeile("Chatbot", c); g.zeile("Name", t); felder_angleichen(halter)
+    halter.resize(300, 200); halter.show(); app.processEvents()
+    assert c.height() == DROPDOWN_HOEHE and c.minimumHeight() == DROPDOWN_HOEHE and c.maximumHeight() > DROPDOWN_HOEHE      # keine feste Höhe von außen
+    assert t.height() == FELDHOEHE
+
+
+def test_alle_dropdown_arten_haben_im_formular_gitter_dieselbe_hoehe(app):
+    """Wächter: Auswahlfeld, Farbfeld, Kopf-Dropdown, Strichart-Auswahl und Teil-Menü-Knopf sind im ``FormularGitter`` gleich hoch (``DROPDOWN_HOEHE``)."""
+    from PySide6.QtWidgets import QWidget
+    from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
+    from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+    from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown
+    from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+    from lunivo_writer.ui.baukasten.dropdown.strich_auswahl import StrichAuswahl
+    from lunivo_writer.ui.baukasten.dropdown.teil_menue import TeilMenueKnopf
+    from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+    from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE
+    halter = QWidget(); g = FormularGitter(halter)
+    felder = [Auswahlfeld(), FarbFeld(), KopfDropdown(lambda p: MenueListe(p)), StrichAuswahl([]), TeilMenueKnopf()]
+    for i, w in enumerate(felder):
+        g.zeile(f"Feld {i}", w)
+    halter.resize(300, 500); halter.show(); app.processEvents()
+    assert [w.height() for w in felder] == [DROPDOWN_HOEHE] * len(felder)
+
+
+def test_band_dropdowns_start_seitenlayout_ueberpruefen_haben_dropdown_hoehe(app, tmp_path):
+    """Wächter: In den Reitern Start, Seitenlayout und Überprüfen ist jedes sichtbare Dropdown (Auswahlfeld, Schrift/Größe, Dropdown-Knopf mit Menü, Maßfeld der Ränder) mindestens ``DROPDOWN_HOEHE`` hoch."""
+    from PySide6.QtWidgets import QAbstractSpinBox, QComboBox
+    from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
+    from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE
+    w = win(tmp_path); w.new_document(); w.resize(1920, 1040); w.show(); app.processEvents()
+    r = w.band
+    zu_niedrig = []
+    for i in range(r.reiter.count()):
+        if r.reiter.tabText(i) in ("Start", "Seitenlayout", "Überprüfen"):
+            r.reiter.setCurrentIndex(i); app.processEvents()
+            for b in r.findChildren(QComboBox) + r.findChildren(QAbstractSpinBox) + [x for x in r.findChildren(DropdownKnopf) if x.menu() is not None]:
+                if b.isVisible() and not b.isVisibleTo(r) is False and b.height() < DROPDOWN_HOEHE:
+                    zu_niedrig.append((r.reiter.tabText(i), type(b).__name__, b.height()))
+    assert zu_niedrig == [], f"Dropdowns niedriger als DROPDOWN_HOEHE: {zu_niedrig}"
+
+
+def test_band_maßfelder_haben_den_hintergrund_der_dropdowns(app, tmp_path):
+    """Wächter: Die Maßfelder der Ränder (Seitenlayout) haben in jedem Thema denselben Hintergrund wie das Schrift-Dropdown im Start-Reiter."""
+    from PySide6.QtWidgets import QAbstractSpinBox, QComboBox
+    from lunivo_writer.ui import theme
+    for modus in ("dark", "mint", "light"):
+        theme.apply_theme(app, modus)
+        w = win(tmp_path); w.new_document(); w.resize(1920, 1040); w.show(); app.processEvents()
+        r = w.band; farben = {}
+        for i in range(r.reiter.count()):
+            if r.reiter.tabText(i) in ("Start", "Seitenlayout"):
+                r.reiter.setCurrentIndex(i); app.processEvents()
+                feld = next(x for x in (r.findChildren(QComboBox) + r.findChildren(QAbstractSpinBox)) if x.isVisible())
+                bild = feld.grab().toImage()
+                farben[r.reiter.tabText(i)] = bild.pixelColor(feld.width() // 2, 4).name()
+        assert farben["Start"] == farben["Seitenlayout"], f"Hintergrund verschieden im Thema {modus}: {farben}"
+        w.close()

@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOpt
 
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH, HOEHE_KOPFDROPDOWN
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
 
 
 def keine_symbol(groesse: int = 16) -> QIcon:
@@ -48,7 +48,7 @@ class KopfDropdown(QPushButton):
         super().__init__(parent)
         self._fabrik = fabrik
         self._symbol = symbol or QIcon()
-        self.setFixedHeight(HOEHE_KOPFDROPDOWN); self.setMinimumWidth(BREITE_KOPFDROPDOWN); self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(DROPDOWN_HOEHE); self.setProperty("dropdownFeld", True); self.setMinimumWidth(BREITE_KOPFDROPDOWN); self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.clicked.connect(self._popup)
 
@@ -80,12 +80,12 @@ class KopfDropdown(QPushButton):
         opt = QStyleOptionButton(); self.initStyleOption(opt); opt.text = ""; opt.icon = QIcon()
         sp.drawControl(QStyle.CE_PushButtonBevel, opt)
         sp.setRenderHint(QPainter.Antialiasing)
-        r = QRectF(self.rect()).adjusted(7, 0, -7, 0)
+        r = QRectF(self.rect()).adjusted(DROPDOWN_INNEN_KOPF, 0, -DROPDOWN_INNEN_KOPF, 0)
         if not self._symbol.isNull():
             pm = self._symbol.pixmap(self.SYMBOL)                                      # das Ergebnis klein und mit dünnem Rand, wie das Farbfeld im Fenster
             z = QRectF(r.left(), r.center().y() - 7, r.width() - 14, 14)
             sp.drawPixmap(z.toRect(), pm)
-            sp.setBrush(Qt.NoBrush); sp.setPen(QPen(self.palette().color(QPalette.Mid), 1)); sp.drawRect(z.adjusted(0.5, 0.5, -0.5, -0.5))
+            sp.setBrush(Qt.NoBrush); sp.setPen(QPen(self.palette().color(QPalette.Mid), 1)); sp.drawRect(z.adjusted(DROPDOWN_LINIE_HALB, DROPDOWN_LINIE_HALB, -DROPDOWN_LINIE_HALB, -DROPDOWN_LINIE_HALB))
         x, y = r.right() - 3, r.center().y()
         sp.setPen(Qt.NoPen); sp.setBrush(self.palette().color(QPalette.ButtonText if self.isEnabled() else QPalette.Mid))
         sp.drawPolygon(QPolygonF([QPointF(x - 3.5, y - 1.5), QPointF(x + 3.5, y - 1.5), QPointF(x, y + 2.5)]))

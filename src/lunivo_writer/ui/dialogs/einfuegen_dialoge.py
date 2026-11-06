@@ -422,7 +422,7 @@ class DatumDialog(PanelFaehig, QDialog):
         v = QVBoxLayout(self)
         g = FormularGitter(); v.addLayout(g)
         self.liste = QListWidget(); self.liste.setAccessibleName("Verfügbare Formate")
-        self.sprache = Auswahlfeld(); self.sprache.setMinimumHeight(HOEHE_KNOPF); self.sprache.setAccessibleName("Sprache")
+        self.sprache = Auswahlfeld(); self.sprache.setAccessibleName("Sprache")
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))

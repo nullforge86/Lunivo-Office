@@ -20,6 +20,7 @@ from lunivo_writer.ui.document.editor_formatierung import FormatierungBaustein
 from lunivo_writer.ui.document.editor_bilder import BilderBaustein
 from lunivo_writer.ui.document.editor_schreibhilfe import SchreibhilfeBaustein
 from lunivo_writer.ui.baukasten.mass import ICON_KLEIN, PADDING_EDITOR_KNOPF, RADIUS_KLEIN, SCHRIFT_KLEIN
+from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 STREIFEN_DUNKEL, STREIFEN_HELL = "#2b2d30", "#d9dee5"   # Arbeitsfläche neben dem Blatt (dunkel/hell)
 
@@ -616,11 +617,10 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         from PySide6.QtWidgets import QMenu, QToolButton
         b = getattr(self, "_paste_btn", None)
         if b is None:
-            b = self._paste_btn = QToolButton(self.viewport())
+            b = self._paste_btn = DropdownKnopf(self.viewport())
             from lunivo_writer.ui.widgets import icons
             b.setText("Einfügen"); b.setIcon(icons.icon("clipboard-paste", ICON_KLEIN))
             b.setCursor(Qt.ArrowCursor)
-            b.setPopupMode(QToolButton.InstantPopup)
             b.setStyleSheet("QToolButton { border: 1px solid palette(mid); border-radius: " f"{RADIUS_KLEIN}" "px; padding: " f"{PADDING_EDITOR_KNOPF}" "; "
                             "background: palette(window); font-size: " f"{SCHRIFT_KLEIN}" "pt; }")
             self.cursorPositionChanged.connect(self._paste_btn_pruefen)
@@ -629,7 +629,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         m = MenueListe(b)
         for name in EINFUEGE_MODI:
             m.eintrag(name, lambda name=name: self._einfuegen_neu(quelle, start, name), haken=(name == modus))
-        b.setMenu(m)
+        b.menue_setzen(m, geteilt=False)
         c = QTextCursor(self.document()); c.setPosition(ende)
         r = self.cursorRect(c)
         b.move(max(0, r.left()), r.bottom() + 2)

@@ -28,7 +28,6 @@ from lunivo_writer.ui.baukasten.mass import (
     GROESSE_STILKACHEL_RAND,
     HOEHE_POPUP_SEITE,
     ICON_NORMAL,
-    PADDING_POPUP_LINKKNOPF,
     RAND_BOX,
     RAND_BOX_KOMPAKT,
     RAND_KEIN,
@@ -40,8 +39,8 @@ from lunivo_writer.ui.baukasten.mass import (
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
-# Grautöne der Diagramm-Sinnbilder: bewusst feste Farben, unabhängig vom Thema.
-SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = "#d4d4d4", "#9a9a9a", "#6e6e6e"
+# Grautöne der Diagramm-Sinnbilder: feste Farben, unabhängig vom Thema (core/farben.py).
+SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = Farbe.SINNBILD_HELL, Farbe.SINNBILD_MITTEL, Farbe.SINNBILD_DUNKEL
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
@@ -153,7 +152,7 @@ def _farbzeile(farben: list[str], gewaehlt: bool, klick) -> QWidget:
         p.fillRect(QRectF(4 + i * 46, 2, 44, 32), QColor(f))
     p.end()
     z.setIcon(QIcon(pm)); z.setIconSize(pm.size()); z.clicked.connect(klick)
-    z.setStyleSheet("QToolButton { border: 1px solid transparent; } QToolButton:checked { background: palette(midlight); border: 1px solid palette(mid); }")
+    z.setProperty("dropdownKachel", "kachel")
     return z
 
 
@@ -241,7 +240,7 @@ class DiagrammPopup(MenueListe):
             k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setChecked(i == aktuell)
             k.setIcon(QIcon(stil_bild(s["nr"], STIL_KACHEL))); k.setIconSize(STIL_KACHEL); k.setToolTip(s["name"]); k.setAccessibleName(s["name"])
             k.setFixedSize(STIL_KACHEL + QSize(*GROESSE_STILKACHEL_RAND))
-            k.setStyleSheet("QToolButton:checked { border: 2px solid palette(highlight); background: transparent; }")
+            k.setProperty("dropdownKachel", "stil")
             k.clicked.connect(lambda _=False, n=s["nr"]: (self.close(), self.b.diagrammStil(None, n)))
             kacheln.append(k)
         v.addLayout(kachel_gitter(kacheln, 2, abstand=ABSTAND_NORMAL, rest_dehnt=True)); v.addStretch(1)
@@ -275,7 +274,7 @@ class DiagrammPopup(MenueListe):
             eintraege = daten.get(schl, [])
             kopf = QToolButton(); kopf.setText(titel); kopf.setCheckable(True); kopf.setChecked(True); kopf.setAutoRaise(True)
             kopf.setArrowType(Qt.DownArrow); kopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); kopf.setMinimumHeight(KACHEL - 6)
-            kopf.setProperty("akzentSchrift", True); kopf.setStyleSheet("QToolButton { font-weight: 600; border: none; }")
+            kopf.setProperty("akzentSchrift", True); kopf.setProperty("dropdownKopf", True)
             gruppe = QWidget(); gv = QVBoxLayout(gruppe); gv.setContentsMargins(*RAND_POPUP_FILTERGRUPPE); gv.setSpacing(0)
             kopf.toggled.connect(lambda an, k=kopf, g=gruppe: (g.setVisible(an), k.setArrowType(Qt.DownArrow if an else Qt.RightArrow), self._hoehe()))
             alle = QCheckBox("(Alle auswählen)"); alle.setMinimumHeight(KACHEL - 6); alle.setTristate(False)
@@ -299,7 +298,7 @@ class DiagrammPopup(MenueListe):
         ok = QPushButton(icons.icon("refresh-cw", ICON_NORMAL), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Filter übernehmen")
         ok.clicked.connect(self._uebernehmen)
         mehr = QPushButton("Daten auswählen …"); mehr.setFlat(True); mehr.setFixedHeight(FELDHOEHE)
-        mehr.setProperty("akzentSchrift", True); mehr.setStyleSheet("QPushButton { border: none; text-decoration: underline; padding: " f"{PADDING_POPUP_LINKKNOPF}" "; }")
+        mehr.setProperty("akzentSchrift", True); mehr.setProperty("dropdownLink", True)
         mehr.clicked.connect(lambda: (self.close(), self.b.diagrammDatenBearbeiten()))
         fuss.addWidget(ok); fuss.addStretch(1); fuss.addWidget(mehr)
         v.addLayout(fuss)
@@ -381,7 +380,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     „Formatvorlage zurücksetzen“. ``auffrischen()`` (vom Band bei jeder Änderung gerufen) liest Liste und Auswahl neu."""
     host = QWidget()
     v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_DICHT)
-    cb = Auswahlfeld(); cb.setFixedHeight(FELDHOEHE); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
+    cb = Auswahlfeld(); cb.setMaxVisibleItems(16); cb.view().setMinimumWidth(BREITE_BEREICHSLISTE_POPUP)   # schmal im Band, die Liste ganz breit
     cb.setAccessibleName("Diagrammbereich"); cb.setToolTip("Diagrammbereich")
     v.addWidget(cb)
     zeile = QHBoxLayout(); zeile.setContentsMargins(*RAND_KEIN); zeile.setSpacing(ABSTAND_KLEIN)          # wie in der Vorlage nebeneinander unter dem Feld

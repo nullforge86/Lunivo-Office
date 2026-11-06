@@ -21,7 +21,6 @@ from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
 from lunivo_writer.ui.baukasten.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
 
 KACHEL = QSize(*GROESSE_FUELLVORGABE_KACHEL)
-BREITE = 222                                       # Breite des Popups in der Vorlage (px)
 MUSTER_AUSWAHL = ("pct5", "pct10", "pct20", "pct30", "pct50")            # von dünn nach dicht
 TEXTUR_AUSWAHL = tuple(k for k, _n in TEXTUREN[:5])
 
@@ -33,7 +32,7 @@ def graduell_paar(farbe: str) -> tuple[str, str]:
 
 def _feld(farbe: str, groesse: QSize = KACHEL) -> QPixmap:
     pm = QPixmap(groesse); pm.fill(QColor(farbe))
-    p = QPainter(pm); p.setPen(QColor(0, 0, 0, 60)); p.drawRect(pm.rect().adjusted(0, 0, -1, -1)); p.end()
+    p = QPainter(pm); p.setPen(QColor(Farbe.VORSCHAU_RAND)); p.drawRect(pm.rect().adjusted(0, 0, -1, -1)); p.end()
     return pm
 
 

@@ -75,9 +75,9 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
         # ---- Karteireiter „Schriftart“
         s = QWidget(); g = FormularGitter(s)
-        self.asien, self.schnitt_asien, self.groesse_asien = _schrift_combo(("+Überschrift asiatisch", "+Textkörper asiatisch")), _schnitt_combo(), groesse_feld(breite=70)
-        self.schrift, self.schnitt, self.groesse = _schrift_combo(("+Überschrift", "+Textkörper")), _schnitt_combo(), groesse_feld(breite=70)
-        self.komplex, self.schnitt_komplex, self.groesse_komplex = _schrift_combo(("+Überschrift komplex", "+Textkörper komplex")), _schnitt_combo(), groesse_feld(breite=70)
+        self.asien, self.schnitt_asien, self.groesse_asien = _schrift_combo(("+Überschrift asiatisch", "+Textkörper asiatisch")), _schnitt_combo(), groesse_feld(variante="dialog")
+        self.schrift, self.schnitt, self.groesse = _schrift_combo(("+Überschrift", "+Textkörper")), _schnitt_combo(), groesse_feld(variante="dialog")
+        self.komplex, self.schnitt_komplex, self.groesse_komplex = _schrift_combo(("+Überschrift komplex", "+Textkörper komplex")), _schnitt_combo(), groesse_feld(variante="dialog")
         gew = (3, 2, 1)
         g.reihe(("Schriftart:", self.schrift), ("Schriftschnitt:", self.schnitt), ("Größe:", self.groesse), gewichte=gew)
         asiat = QWidget(); ag = FormularGitter(asiat)                       # asiatische und komplexe Schrift: eingeklappt, bis man sie braucht

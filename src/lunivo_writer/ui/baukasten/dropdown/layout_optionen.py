@@ -16,9 +16,6 @@ from lunivo_writer.ui.baukasten.umbruch_symbole import umbruch_zeichner
 from lunivo_writer.ui.baukasten.mass import (
     ABSTAND_NORMAL,
     GROESSE_LAYOUTOPTIONEN_KACHEL,
-    PADDING_LAYOUTOPTIONEN_TITEL,
-    RADIUS_FELD,
-    RADIUS_MARKE,
     RAND_LAYOUTOPTIONEN,
 )
 from lunivo_writer.ui.baukasten.dropdown.popup_lage import PopupVerhalten
@@ -32,10 +29,9 @@ class LayoutOptionen(PopupVerhalten, QFrame):
     def __init__(self, parent=None, art: str = "textfluss", mit_text: bool = False):
         super().__init__(parent, Qt.Popup)
         self.setObjectName("layoutOptionen")
-        self.setStyleSheet("#layoutOptionen { background: palette(window); border: 1px solid palette(mid); border-radius: " f"{RADIUS_FELD}" "px; }"
-                           "QLabel#kopf { color: palette(highlight); font-weight: 600; }")
+        self.setProperty("dropdownFenster", True)
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_LAYOUTOPTIONEN); v.setSpacing(ABSTAND_NORMAL)
-        k = QLabel("Layoutoptionen"); k.setObjectName("kopf"); v.addWidget(k)
+        k = QLabel("Layoutoptionen"); k.setProperty("dropdownTitel", "kopf"); v.addWidget(k)
         v.addWidget(self._titel("Mit Text in Zeile"))
         self.zeile = KachelFeld(spalten=1, groesse=QSize(*GROESSE_LAYOUTOPTIONEN_KACHEL), mit_text=False)
         self.zeile.hinzu("textfluss", "Im Textfluss", umbruch_zeichner("textfluss"))
@@ -54,13 +50,13 @@ class LayoutOptionen(PopupVerhalten, QFrame):
         self.r_mit.toggled.connect(self.verschieben)
         v.addWidget(self.r_mit); v.addWidget(self.r_fest)
         m = QPushButton("Mehr anzeigen"); m.setFlat(True); m.setCursor(Qt.PointingHandCursor)
-        m.setStyleSheet("QPushButton { color: palette(link); text-align: left; text-decoration: underline; border: none; }")
+        m.setProperty("dropdownLink", True)
         m.clicked.connect(lambda: (self.close(), self.mehr.emit())); v.addWidget(m)
         self.setze(art)
 
     @staticmethod
     def _titel(text: str) -> QLabel:
-        t = QLabel(text); t.setStyleSheet("background: palette(midlight); padding: " f"{PADDING_LAYOUTOPTIONEN_TITEL}" "; border-radius: " f"{RADIUS_MARKE}" "px;")
+        t = QLabel(text); t.setProperty("dropdownTitel", "abschnitt")
         return t
 
     def _klick(self, art: str) -> None:

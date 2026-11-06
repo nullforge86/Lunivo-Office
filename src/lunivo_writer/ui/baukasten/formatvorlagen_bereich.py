@@ -74,7 +74,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.get_editor = get_editor or (lambda: None)
         self._anwenden, self._neu = anwenden, neu
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_PANEL_KLEIN); v.setSpacing(ABSTAND_NORMAL)
-        self.aktuell = Auswahlfeld(); self.aktuell.setMinimumHeight(HOEHE_KNOPF)
+        self.aktuell = Auswahlfeld()
         v.addWidget(self.aktuell)
         z = FlussLayout(6)
         self.neu_knopf = QPushButton("Neue Formatvorlage …"); self.loeschen = QPushButton("Formatierung löschen")
@@ -86,7 +86,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_REITER); self.liste.setItemDelegate(_Absatzmarke(self.liste))
         v.addWidget(self.liste, 1)
         az = FormularGitter()
-        self.anzeigen = Auswahlfeld(); self.anzeigen.setMinimumHeight(HOEHE_KNOPF)
+        self.anzeigen = Auswahlfeld()
         for k, t in ANZEIGEN:
             self.anzeigen.addItem(t, k)
         az.zeile("Anzeigen:", self.anzeigen); v.addLayout(az)

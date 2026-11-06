@@ -116,7 +116,7 @@ class ZuordnenDialog(PanelFaehig, QDialog):
         g.zeile(QLabel("Feld im Text"), kopf)
         self.wahl: dict[str, QComboBox] = {}
         for i, f in enumerate(felder or [], 1):
-            cb = Auswahlfeld(); cb.addItem(OHNE, ""); cb.setMinimumHeight(HOEHE_KNOPF); cb.setAccessibleName(f)
+            cb = Auswahlfeld(); cb.addItem(OHNE, ""); cb.setAccessibleName(f)
             for s in spalten:
                 cb.addItem(s, s)
             soll = zuordnung.get(f, f if f in spalten else "")

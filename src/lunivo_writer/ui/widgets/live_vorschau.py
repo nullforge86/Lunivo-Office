@@ -5,7 +5,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject
 from PySide6.QtGui import QTextDocument
-from PySide6.QtWidgets import QComboBox, QFontComboBox
+
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
 
 class LiveVorschau:
@@ -78,7 +79,7 @@ class Ueberfahren(QObject):
         return False
 
 
-class VorschauCombo(QComboBox):
+class VorschauCombo(Auswahlfeld):
     """Auswahlfeld, dessen Einträge beim Überfahren (highlighted) als Vorschau gezeigt werden."""
 
     def __init__(self, vorschau_fn, ende_fn, parent=None):
@@ -91,7 +92,7 @@ class VorschauCombo(QComboBox):
         super().hidePopup()
 
 
-class VorschauFontCombo(QFontComboBox):
+class VorschauFontCombo(Schriftauswahl):
     def __init__(self, vorschau_fn, ende_fn, parent=None):
         super().__init__(parent)
         self._ende = ende_fn

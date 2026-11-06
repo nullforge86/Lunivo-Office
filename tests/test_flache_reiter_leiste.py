@@ -70,3 +70,15 @@ def test_ueberlauf_leiste_gewoehnliche_reiter(app):
     assert b.gezeigt(7) and b.tabRect(7).left() >= 0 and b.tabRect(7).right() <= b.width()
     b.resize(2000, 32); QApplication.processEvents()
     assert not b._versteckte() and not b._mehr.isVisible() and not b.gezeigt(3)
+
+
+def test_groesse_vor_dem_eintragen_des_reiters_wirft_nicht(app):
+    """Wächter: Fragt Qt die Größe, bevor ``tabInserted`` den Reiter in ``_will`` eingetragen hat (Liste kürzer als ``count()``), gibt es keinen IndexError
+    (Absturz beim Öffnen der Silben-Einstellungen in der Seitenleiste)."""
+    from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
+    leiste = UeberlaufLeiste()
+    for n in ("Eins", "Zwei", "Drei"):
+        leiste.addTab(n)
+    leiste._will = leiste._will[:1]                      # Zustand mitten im Einfügen
+    leiste.sizeHint(); leiste.minimumSizeHint()
+    assert leiste._versteckte() == []

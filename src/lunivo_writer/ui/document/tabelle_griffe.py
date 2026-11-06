@@ -17,14 +17,8 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import RADIUS_LEISTENKNOPF
 
-GRIFF = 20
+from lunivo_writer.ui.baukasten.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
 # Hell wie die übrigen Knöpfe auf dem Papier (siehe LEISTE_STIL in kopffuss_bearbeiter.py): unabhängig vom Thema des Fensters
-def griff_stil() -> str:
-    """Stil der Griffe aus den Farbe-Tokens (zur Laufzeit gelesen, nichts beim Import eingefroren)."""
-    return (f"QToolButton {{ background: {Farbe.LEISTE}; color: {Farbe.TINTE}; border: 1px solid {Farbe.LEISTE_RAND}; border-radius: {RADIUS_LEISTENKNOPF}px; }}"
-            f"QToolButton:hover {{ background: {Farbe.GITTER}; }}")
-
-
 def dunkel(symbol: str, px: int = 16) -> QIcon:
     """Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß)."""
     return QIcon(icons._pixmap(symbol, Farbe.TINTE, max(10, px)))
@@ -98,7 +92,7 @@ class _Griff(QToolButton):
                  ende_immer: bool = False):
         super().__init__(vp)
         self.setFixedSize(GRIFF, GRIFF); self.setToolTip(tipp); self.setFocusPolicy(Qt.NoFocus); self.setAutoRaise(False)
-        self.setIcon(dunkel(symbol, 14)); self.setStyleSheet(griff_stil())
+        self.setIcon(dunkel(symbol, 14)); self.setProperty("papierKnopf", "griff")
         if cursor is not None:
             self.setCursor(cursor)
         self._klick, self._ziehen, self._ende, self._start = bei_klick, bei_ziehen, bei_ende, bei_start
