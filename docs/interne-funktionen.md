@@ -2,12 +2,12 @@
 
 Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. Die Beschreibung stammt aus der ersten Docstring-Zeile.
 
-Stand: 382 Module, 418 Klassen, 5276 Funktionen und Methoden.
+Stand: 384 Module, 420 Klassen, 5300 Funktionen und Methoden.
 
 ## Inhalt
 
 - `(Wurzel)` — 3 Module
-- `ai` — 10 Module
+- `ai` — 11 Module
 - `core` — 8 Module
 - `core/befehle` — 22 Module
 - `editor` — 72 Module
@@ -18,7 +18,7 @@ Stand: 382 Module, 418 Klassen, 5276 Funktionen und Methoden.
 - `services/docx_teile` — 11 Module
 - `services/integrations` — 3 Module
 - `ui` — 7 Module
-- `ui/baukasten` — 77 Module
+- `ui/baukasten` — 78 Module
 - `ui/baukasten/dropdown` — 28 Module
 - `ui/contextual` — 7 Module
 - `ui/dialogs` — 23 Module
@@ -72,6 +72,7 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `merke_ergebnis(titel, text, vorlage)`
   - `beschaeftigt()`
   - `kontext_pruefen()` — Von Editor-Signalen gerufen: ``kontextGeaendert`` nur, wenn sich Markierung oder Leer-Sein wirklich geändert haben.
+  - `_bezug_stand()` — Nur wenn eine Antwort mit Bezug im Chat steht: (Editor, Revision), damit die Oberfläche „Ersetzen/Einfügen“ neu bewertet.
   - `kontext()` — (Markierung da, Dokument leer, Modell für den Chat verbunden, Name des Chat-Modells) aus Editor und Konfiguration.
   - `verfuegbar()`
   - `zettel(text)`
@@ -120,10 +121,16 @@ KI im Programm: Anfragen im Hintergrund, Zustimmung vor jedem Weg nach außen, E
   - `chat_wiederholen()` — Die letzte Nutzernachricht erneut senden; die davorliegende Antwort/der Fehler fällt weg.
   - `chat_neu()`
   - `chat_abbrechen()` — Eine laufende Antwort wird nicht mehr angezeigt. Der Hintergrundfaden selbst lässt sich im Thread-Pool nicht unterbrechen und läuft aus.
-  - `aktion_in_chat(name, text, cent)`
+  - `_aktion_bezug(eing)` — Bezug einer Aktion aus ihrer Eingabe (Editor, Text, Basis, Revision zum Start); ganzes Dokument: Einfügen am Ende, kein Ersetzen.
+  - `aktion_in_chat(name, text, cent, bezug)`
   - `_chat_anfragen(aufnehmen)`
-  - `antwort_einfuegen(text)` — Antwort an der Schreibmarke einfügen (ein Schritt für Rückgängig).
-  - `antwort_ersetzen(text)` — Markierung durch die Antwort ersetzen; ohne Markierung False (die Oberfläche sagt dann, dass zuerst markiert werden muss).
+  - `chat_bezug()` — Stelle im Text zum SENDEZEITPUNKT: Markierung (markiert=True) oder Schreibmarke; None ohne Editor. Nur im Speicher.
+  - `_bezug_lage(index)` — (Bezug, Editor, Grund). Editor nur, wenn Bezug und aktueller Editor noch zusammenpassen.
+  - `bezug_gueltig(index, ersetzen)` — Für die Oberfläche: darf die Antwort ``index`` jetzt eingefügt (bzw. ersetzt) werden? (ok, Grund).
+  - `antwort_vorschau(index, ersetzen)` — Vorschau als [(art, text)] (gleich/entfernt/neu); leer, wenn nichts anzuwenden ist.
+  - `antwort_einfuegen(index)` — Antwort ``index`` hinter der gemerkten Stelle einfügen (ein Schritt für Rückgängig). → (ok, Meldung); bei Ablehnung wird nichts geändert.
+  - `antwort_ersetzen(index)` — Die beim Fragen markierte Stelle durch die Antwort ersetzen (ein Schritt). Nur bei unverändertem Text. → (ok, Meldung).
+  - `_antwort_anwenden(index, ersetzen)`
   - `_chat_bereit()` — Modell da und Zustimmungen erteilt? Bei Markierung gilt der Umfang „auszug“, sonst „dokument“ (die Sperre an der Sendestelle bleibt).
   - `_chat_los(verlauf, kennung)` — Kontext des Chats: die Markierung, wenn es eine gibt (weniger Text verlässt den Rechner), sonst das Dokument.
 
@@ -160,6 +167,16 @@ Fortlaufende KI-Assistenten: reine Regeln ohne Qt — wann ein Absatz neu geschi
   - `gesendet()`
   - `stundengrenze()`
 
+### `ai/chat_bezug.py`
+
+Woran sich eine Chat-Antwort bezieht (Markierung/Schreibmarke zum Sendezeitpunkt) und ob sie noch passt. Reine Logik, ohne Qt.
+
+- `bezug_bauen(von, bis, markiert, revision, alt, dokument)` — {von, bis, markiert, revision, alt, dokument}. Ohne Markierung: von == bis == Schreibmarke, ``alt`` leer.
+- `bezug_angewendet()` — Marke für Aktionen, die ihr Ergebnis selbst schon ins Dokument geschrieben haben (Wirkung „ersetzen“/„anhängen“).
+- `bezug_pruefen(bezug, revision_jetzt, editor_jetzt)` — (ok, Grund). Streng: nur gleiche Revision im selben Editor; kein Raten, keine Suche im Text.
+- `vorschau_stuecke(alt, neu)` — Alt → neu als Stücke (art, text); art: „gleich“, „entfernt“, „neu“. Ohne Farben und Markup.
+- `vorschau_einfuegen(neu)` — Einfache Vorschau fürs Einfügen: nur der neue Text.
+
 ### `ai/chat_modell.py`
 
 Zustand des KI-Chats ohne Oberfläche: Nachrichten, Phase, Anfragekennung, Gesprächsliste. Schicht 1 — kennt weder Dienst noch Qt.
@@ -171,12 +188,13 @@ Zustand des KI-Chats ohne Oberfläche: Nachrichten, Phase, Anfragekennung, Gespr
   - `phase()`
   - `titel()`
   - `verlauf()` — Was an die KI geht: ohne Fehler, im Format des Dienstes.
-  - `_neu(rolle, text, cent, fehler, bilder)`
-  - `anfrage(text, bilder)` — Nutzernachricht (mit geprüften Bildanhängen {pfad, typ, bytes}) aufnehmen und eine Anfrage beginnen; liefert deren Kennung.
-  - `beginnen()`
+  - `_neu(rolle, text, cent, fehler, bilder, bezug)`
+  - `anfrage(text, bilder, bezug)` — Nutzernachricht (mit geprüften Bildanhängen {pfad, typ, bytes}) aufnehmen und eine Anfrage beginnen; liefert deren Kennung.
+  - `beginnen(bezug)`
   - `antwort(kennung, text, cent)`
   - `fehler(kennung, text)`
-  - `aktion(name, text, cent)` — Ergebnis einer Schnellen KI-Aktion: Verlauf und Anzeige führen dieselben zwei Nachrichten.
+  - `aktion(name, text, cent, bezug)` — Ergebnis einer Schnellen KI-Aktion: Verlauf und Anzeige führen dieselben zwei Nachrichten.
+  - `bezug_von(index)` — Bezug der KI-Nachricht ``index`` (None, wenn es keinen gibt).
   - `abbrechen()` — Die Antwort der laufenden Anfrage wird nicht mehr angenommen.
   - `wiederholen()` — Letzte Nutzernachricht erneut senden: davor liegende Antwort/Fehler fällt weg. Liefert den Text oder None; danach ``beginnen()``.
   - `neues_gespraech()`
@@ -3657,6 +3675,20 @@ Aufklappbare Abschnitte als Gruppe: höchstens einer ist offen.
   - `_geoeffnet(offen)`
   - `schliesse_alle()`
 
+### `ui/baukasten/aenderungs_vorschau.py`
+
+Änderungsvorschau: schreibgeschütztes Feld, das Stücke ``(art, text)`` zeigt — „entfernt“ durchgestrichen, „neu“ unterstrichen, „gleich“ normal.
+
+- `_hinterlegt(farbe)`
+- **class `AenderungsVorschau`**(QTextEdit)
+  - `__init__(stuecke)`
+  - `stuecke_setzen(stuecke)`
+  - `_format(art)`
+  - `_zeichnen()`
+  - `_hoehe()`
+  - `resizeEvent(e)`
+  - `changeEvent(e)`
+
 ### `ui/baukasten/aktionen_leiste.py`
 
 „Meine Aktionen“: die Schnellen KI-Aktionen (Eigene Assistenten) als Knöpfe — in der Seitenleiste der Schreibhilfe und im KI-Chat dieselbe Leiste.
@@ -3763,11 +3795,12 @@ Nachrichten des KI-Chats: Nutzerblase, KI-Antwort und Fehlerkarte — nur Darste
 - `_kopieren(text)`
 - **class `NutzerBlase`**(QWidget) — Eigene Nachricht: rechts, grau, bei Anhang mit Bild-Miniatur; darunter Kopieren und Mehr (Text noch einmal ins Eingabefeld nehmen).
   - `__init__(text, bilder)`
-- **class `KiBlase`**(QWidget) — Antwort der KI mit Symbolzeile: Wiederholen, Kopieren, Einfügen, Ersetzen (nur mit Markierung); Kosten klein dahinter.
-  - `__init__(dienst, text, cent)`
-  - `kontext_neu()` — Ersetzen gibt es nur mit Markierung (aus ``dienst.kontext()``).
-  - `_einfuegen()`
-  - `_ersetzen()`
+- **class `KiBlase`**(QWidget) — Antwort der KI mit Symbolzeile: Wiederholen, Kopieren, Einfügen, Ersetzen; Kosten klein dahinter.
+  - `__init__(dienst, text, cent, index)`
+  - `kontext_neu()` — Zustand der Knöpfe aus ``dienst.bezug_gueltig`` neu lesen (bei ``kontextGeaendert``/``chatGeaendert``).
+  - `_oeffnen(ersetzen)`
+  - `_schliessen()`
+  - `_uebernehmen()`
 - **class `FehlerKarte`**(QWidget) — Fehler der KI: Titel, Text, Knopf „Wiederholen“; bei ``art`` „konfiguration“ der Weg zu den KI-Einstellungen, bei „zustimmung“ ein Hinweis.
   - `__init__(dienst, fehler)`
 
@@ -4119,18 +4152,22 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
 
 - `_gross(text)`
 - `_mische(a, b, anteil)` — Farbe a zum Anteil (0…1) mit b gemischt.
-- **class `ReiterUeberlauf`** — Basis aller Reiterleisten mit Überlauf: der Knopf „•••“ und das Menü der Reiter, die nicht mehr in die Leiste passen.
+- **class `ReiterUeberlauf`** — Basis der Reiterleisten mit Knopf „•••“ (Band, Dokumente, Register: ``UeberlaufLeiste``) und Menü der Reiter, die nicht mehr in die Leiste passen.
   - `_mehr_einrichten()`
   - `_mehr_menue()`
-- **class `FlacheReiterLeiste`**(ReiterUeberlauf, QTabBar)
+- **class `ReiterDropdown`** — Die Leiste als ein Dropdown (statt vieler Reiter nebeneinander): Taste mit dem Namen des aktuellen Reiters, Liste aller sichtbaren Reiter mit Haken am aktuellen;
+  - `_wahl_einrichten()`
+  - `_wahl_zeigen(an)` — Dropdown ein/aus; Name und Lage nachziehen.
+  - `_wahl_fuellen()`
+- **class `FlacheReiterLeiste`**(ReiterDropdown, QTabBar)
   - `__init__(art, parent)`
   - `_sichtbar()`
   - `_knopf_breite(i)`
   - `_schrift(groesse)`
   - `_breiten()` — Breite je sichtbarem Reiter: Unterreiter gleich breit, Hauptreiter nach Länge der Beschriftung (der Pfeilknopf zählt mit).
-  - `_passende(soll, gesamt)` — Die Reiter, die neben dem Knopf „…“ ganz passen (in Reihenfolge); der aktive Reiter ist immer dabei.
-  - `_versteckte()`
-  - `_neu_anordnen()` — Der Überlauf hat sich geändert (Größe, aktiver Reiter, Texte): Knopf „…“ setzen und die Reiter neu auslegen.
+  - `_soll()` — Natürliche Breite jedes sichtbaren Hauptreiters (Beschriftung gemessen, Pfeilknopf zählt mit).
+  - `_als_dropdown()` — Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander? Dann zeigt das Dropdown die Wahl (Reiter mit Knopf bleiben Reiter: ihr Pfeil hätte im Dropdown keinen Platz).
+  - `_neu_anordnen()` — Größe, aktiver Reiter, Texte oder Reiterzahl haben sich geändert: Dropdown oder Reiterleiste zeigen und neu auslegen.
   - `_text_flaeche(i, breite)`
   - `_groesse(breiten)` — Die Schriftgröße: so groß wie möglich, aber so, dass das längste Wort jedes Reiters ganz hineinpasst (nie „…“).
   - `_text_hoehe(fm, i, breite)`
@@ -4139,10 +4176,10 @@ Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kast
   - `minimumTabSizeHint(index)`
   - `sizeHint()`
   - `minimumSizeHint()`
-  - `_ueberlauf()` — Passen die Hauptreiter in ihrer natürlichen Breite nicht nebeneinander?
   - `resizeEvent(e)`
   - `tabLayoutChange()`
   - `_pfeil_rect(i, gr)` — Die Fläche des Pfeils hinter dem Text des Reiters ``i`` (leer ohne Knopf).
+  - `changeEvent(e)`
   - `mousePressEvent(e)`
   - `paintEvent(_e)`
 - **class `UeberlaufLeiste`**(ReiterUeberlauf, QTabBar) — Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
@@ -5818,7 +5855,6 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
   - `_holen(still)`
   - `_geholt(r)`
   - `_ok()`
-- `_chip()` — Auswahl-Chip (Baustein ``schalter.chip_stil``).
 - **class `ModellListe`**(QWidget) — Die Liste der verbundenen KI-Modelle: hinzufügen, bearbeiten, entfernen (im Fenster „KI-Einstellungen“ und als eigenes Fenster).
   - `__init__(fenster, konfig)`
   - `_fuellen()`
