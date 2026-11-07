@@ -74,6 +74,7 @@ def lade_register() -> dict:
 
 from lunivo_writer.ui.ribbon.ribbon_stile import BandStileBaustein
 from lunivo_writer.ui.ribbon.ribbon_reiter import BandReiterBaustein
+from lunivo_writer.ui.ribbon.ribbon_raender import BandRaenderBaustein
 from lunivo_writer.ui.ribbon.ribbon_schnellzugriff import BandSchnellzugriffBaustein
 from lunivo_writer.ui.ribbon.ribbon_knoepfe import BandKnopfBaustein
 from lunivo_writer.ui.ribbon.ribbon_gruppen import BandGruppenBaustein
@@ -83,7 +84,7 @@ from lunivo_writer.ui.ribbon.ribbon_bausteine import (
 )
 
 
-class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
+class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
     # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
@@ -159,20 +160,7 @@ class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandStileBaus
         self.kopf.addWidget(trennlinie(senkrecht=True, tief=True))
 
     # ---- Reiter und Gruppen -------------------------------------------------------------------------------
-    def _raender(self) -> QWidget:
-        host = QWidget()
-        h = QHBoxLayout(host)
-        h.setContentsMargins(*RAND_KEIN)
-        h.setSpacing(ABSTAND_ENG)
-        for art, text in self.b.galerie_randVorgaben():
-            k = QToolButton()
-            k.setAutoRaise(True)
-            k.setText(text)
-            k.setFixedSize(BREITE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT if self.kompakt else HOEHE_BAND_GRUPPENKNOPF)
-            k.clicked.connect(lambda _=False, a=art: (self.b.randVorgabeWaehlen(a), self.aktualisieren()))
-            h.addWidget(k)
-            self.knoepfe.append((k, None, True))
-        return host
+
 
     def gruppe_widget(self, g: dict) -> QWidget:
         """Eine Gruppe als eigenständiges Widget (für die Seitenleiste)."""
