@@ -21,6 +21,7 @@ src/lunivo_writer/
     statusbar/               Statusleiste
   plattform/                Betriebssystem-Abhängiges an einer Stelle: pfade (QStandardPaths), sperre (Dateisperre), protokoll (Logdatei)
   editor/                   Dokumentoperationen und Textlogik
+    diagramme/              Diagrammzeichnung, Geometrie, Formatierung und Teil-Auswahl
   models/                   Dokument- und Seitendaten
   services/                 Datei-, Einstellungs-, Wiederherstellungs- und Exportdienste
   ai/                       KI-Anbieter und KI-Aufgaben
@@ -41,6 +42,7 @@ werkzeug/                   Entwicklungs- und Prüfhilfen (inventar-bauen.py: do
 - **core** steuert den Programmablauf und vermittelt Befehle.
 - **ui** zeigt Dokumente, Register, Seitenleisten und Dialoge.
 - **editor** führt Dokumentänderungen aus.
+- **editor/diagramme** bündelt die Diagrammlogik; die bisherigen Importpfade `editor.diagramm*` bleiben vorerst kompatibel.
 - **models** hält Dokument- und Seitendaten.
 - **services** liest und schreibt Dateien, Einstellungen und Sicherungen.
 - **plattform** kapselt Pfade, Dateisperre und Protokoll; nur dort steht Code, der je nach Betriebssystem verschieden ist.
