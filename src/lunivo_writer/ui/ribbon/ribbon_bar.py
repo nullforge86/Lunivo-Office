@@ -75,6 +75,7 @@ def lade_register() -> dict:
 from lunivo_writer.ui.ribbon.ribbon_stile import BandStileBaustein
 from lunivo_writer.ui.ribbon.ribbon_reiter import BandReiterBaustein
 from lunivo_writer.ui.ribbon.ribbon_raender import BandRaenderBaustein
+from lunivo_writer.ui.ribbon.ribbon_zustand import BandZustandBaustein
 from lunivo_writer.ui.ribbon.ribbon_schnellzugriff import BandSchnellzugriffBaustein
 from lunivo_writer.ui.ribbon.ribbon_knoepfe import BandKnopfBaustein
 from lunivo_writer.ui.ribbon.ribbon_gruppen import BandGruppenBaustein
@@ -84,7 +85,7 @@ from lunivo_writer.ui.ribbon.ribbon_bausteine import (
 )
 
 
-class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
+class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBaustein, BandZustandBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
     # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
@@ -166,30 +167,3 @@ class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBa
         """Eine Gruppe als eigenständiges Widget (für die Seitenleiste)."""
         return self._gruppe(g)
 
-    # ---- Zustand -----------------------------------------------------------------------------------------------
-    def aktualisieren(self, hat_dokument: bool | None = None):
-        if hat_dokument is not None:
-            self._hat_dok = hat_dokument
-        for k, name in self.wechsler:
-            n = self.b.symbolname(name)
-            if n:
-                k.defaultAction().setIcon(icons.icon(n, k.iconSize().width()))
-        for k, name in self.schalter:
-            z = self.b.zustand(name) if name else None
-            a = k.defaultAction()
-            a.blockSignals(True)
-            a.setChecked(bool(z))
-            a.blockSignals(False)
-        if hat_dokument is not None:
-            for k, name, braucht in self.knoepfe:
-                if braucht and not k.property("fehlt"):
-                    k.setEnabled(hat_dokument)
-        for k, name, _braucht in self.knoepfe:                    # Befehle mit eigener Bedingung (kann_<Befehl>) bleiben sonst grau
-            if name and not k.property("fehlt"):
-                frei = self.b.kann(name)
-                if frei is not None:
-                    k.setEnabled(bool(frei) and hat_dokument is not False)
-        for f in self.felder.values():                            # Felder aus band_feld ziehen ihren Zustand selbst nach (auffrischen)
-            auf = getattr(f, "auffrischen", None)
-            if callable(auf):
-                auf()
