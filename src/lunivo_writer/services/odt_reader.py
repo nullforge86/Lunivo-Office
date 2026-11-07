@@ -8,14 +8,12 @@ Was nicht übernommen wird (Fußnoten, Kommentare, Textrahmen, Zeichnungen), mel
 """
 from __future__ import annotations
 
-import base64
-import re
 import zipfile
 import xml.etree.ElementTree as ET
 
-from PySide6.QtCore import QUrl, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtGui import (QBrush, QColor, QFont, QImage, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument,
-                           QTextFormat, QTextImageFormat, QTextLength, QTextListFormat, QTextTableFormat)
+                           QTextFormat, QTextLength, QTextListFormat, QTextTableFormat)
 
 from lunivo_writer.models.page import HeaderFooter, PageSettings, px_to_mm
 from lunivo_writer.models.report import DocumentIOError, IOReport
@@ -26,6 +24,8 @@ from lunivo_writer.services.odt_xml import (
 
 
 from lunivo_writer.services.odt_stile import _Stile, _zeichenformat, _absatzformat
+
+
 class _Ort:
     """Wohin der nächste Absatz kommt: ein Cursor und ob dessen Block noch leer und frei ist."""
 
@@ -34,6 +34,7 @@ class _Ort:
 
 
 from lunivo_writer.services.odt_bilder import _ODTBilder
+
 
 class _Leser(_ODTBilder):
     def __init__(self, inhalt: ET.Element, stil_wurzel: ET.Element | None, meta: ET.Element | None, bilder):
