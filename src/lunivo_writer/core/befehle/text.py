@@ -4,7 +4,7 @@ from __future__ import annotations
 from lunivo_writer.core.befehle.text_zeichen import TextZeichenBefehle
 from lunivo_writer.core.befehle.text_absatz import TextAbsatzBefehle
 from lunivo_writer.core.befehle.text_vorlagen import TextVorlagenBefehle
-from lunivo_writer.core.befehle.text_absatz import ZEILENABSTAENDE
+from lunivo_writer.core.befehle.text_absatz import ZEILENABSTAENDE  # noqa: F401
 
 
 class TextBefehle(TextZeichenBefehle, TextAbsatzBefehle, TextVorlagenBefehle):
