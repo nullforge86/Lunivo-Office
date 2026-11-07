@@ -10,7 +10,7 @@ from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.mass import GROESSE_BANDKNOPF_ICON_KLEIN, ICON_GROSS
 
-from lunivo_writer.ui.ribbon.bausteine import _kurz, _mit_kuerzel, _zweizeilig
+from lunivo_writer.ui.ribbon.ribbon_bausteine import _kurz, _mit_kuerzel, _zweizeilig
 
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 
