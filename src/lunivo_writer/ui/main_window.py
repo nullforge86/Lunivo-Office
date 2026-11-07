@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 
 from PySide6.QtCore import QTimer, Signal
-from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QKeySequence, QPalette
+from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QWidget
 
 from lunivo_writer import __version__
