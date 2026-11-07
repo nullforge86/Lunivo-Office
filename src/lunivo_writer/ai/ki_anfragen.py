@@ -1,19 +1,18 @@
 """KIAnfragen: fachlich abgegrenzte KI-Dienstlogik."""
-from __future__ import annotations
-
-from __future__ import annotations
-import os
-import threading
-from PySide6.QtWidgets import QMessageBox
-from lunivo_writer.services.settings_service import data_dir
-from lunivo_writer.ai import ki as K
-from lunivo_writer.ai import assistent_lauf as AL
-from lunivo_writer.ai import modellfaehigkeit as MF
-from lunivo_writer.ai import chat_bezug as CB
-from lunivo_writer.ai.chat_modell import ChatModell
-from lunivo_writer.ai.arbeitslauf import _Lauf
 
 
+
+import os  # noqa: F401
+import threading  # noqa: F401
+from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal  # noqa: F401
+from PySide6.QtWidgets import QMessageBox  # noqa: F401
+from lunivo_writer.services.settings_service import data_dir  # noqa: F401
+from lunivo_writer.ai import ki as K  # noqa: F401
+from lunivo_writer.ai import assistent_lauf as AL  # noqa: F401
+from lunivo_writer.ai import modellfaehigkeit as MF  # noqa: F401
+from lunivo_writer.ai import chat_bezug as CB  # noqa: F401
+from lunivo_writer.ai.chat_modell import ChatModell  # noqa: F401
+from lunivo_writer.ai.arbeitslauf import _Lauf  # noqa: F401
 class KIAnfragenMixin:
     """Teilverantwortung des KI-Dienstes; wird von KIDienst eingebunden."""
 
