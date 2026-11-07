@@ -15,6 +15,7 @@ Diese Seite verweist auf die aktuellen Quellen statt eine zweite, manuell gepfle
 - Optionen: `src/lunivo_writer/ui/dialogs/optionen.py` und `optionen_seiten/`
 - Dokumentoperationen: `src/lunivo_writer/editor/`.
 - Der Qt-Editor liegt in `src/lunivo_writer/ui/document/document_editor.py`; Einfügen aus der Zwischenablage und Einfügevarianten sind in `editor_einfuegen.py` gekapselt.
+- Zeichenformatierung, Absatz-/Listenformatierung, Formatvorlagen sowie Einfüge-/Suchwerkzeuge des Editors sind in `editor_zeichenformat.py`, `editor_absatzformat.py`, `editor_stilformat.py` und `editor_werkzeuge.py` getrennt; `editor_formatierung.py` bleibt als kompatible Fassade bestehen.
 - Synchronisierung von Dokument, Ribbon und Statusleiste liegt in `src/lunivo_writer/ui/hauptfenster/dokument_sync.py`; `ui/main_window.py` bindet diese Verantwortlichkeit über einen Mixin ein.
 - Dateiformate und Einstellungen: `src/lunivo_writer/services/`
 
