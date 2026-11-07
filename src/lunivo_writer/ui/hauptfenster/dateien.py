@@ -322,8 +322,8 @@ class DateienBaustein(DateienDruckenBaustein):
         if self.settings.get_bool("pdf/oeffnen", False):
             from PySide6.QtCore import QUrl
             from PySide6.QtGui import QDesktopServices
-    rt verzeichnis_aktualisieren
-            verzeichnis_aktualisieren(tab.editor)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+        return True
 
 
     def reiter_menue(self, index: int, pos) -> None:
