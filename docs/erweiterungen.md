@@ -8,6 +8,7 @@ Lunivo startet und funktioniert auch ohne zusätzliche Stimmen, Schriften, Langu
 | **Piper-Stimmen** | Aufgenommene Stimmen zum Vorlesen | `./stimme-holen.sh`; Stimmen arbeiten offline |
 | **Leseschriften** | OpenDyslexic, Lexend und Atkinson Hyperlegible | `./schrift-holen.sh`; installiert benutzerspezifisch |
 | **Ollama** | KI-Aufgaben mit einem lokalen Modell | Ollama und ein Modell selbst installieren, dann in Lunivo auswählen |
+| **Dokumentensuche** | Eigene Dokumente im KI-Chat als Quellen nutzen | In den KI-Einstellungen, Reiter „Dokumente“, Ordner freigeben; nichts weiter zu installieren |
 | **Online-KI** | Korrektur, Vorschläge und Übersetzung über einen Anbieter | Anbieter und persönlichen API-Schlüssel in den KI-Einstellungen einrichten |
 
 LanguageTool wird als eigener Prozess auf dem Rechner gestartet und sendet den Text nicht an einen externen Dienst. Bei Online-KI wird der Text an den ausgewählten Anbieter übertragen.

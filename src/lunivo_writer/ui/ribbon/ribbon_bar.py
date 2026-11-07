@@ -9,7 +9,7 @@ import os
 from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
 from lunivo_writer.core import paths
 
-from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import (
     QCheckBox, QFontComboBox, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QToolButton,
@@ -373,6 +373,28 @@ class _SperrKasten(QCheckBox):
             self.blockSignals(True); self.setChecked(an); self.blockSignals(False)
 
 
+class _FelderDict(dict):
+    """Felder des Bandes: Reiter werden erst nach dem Anzeigen fertig gebaut; wer ein noch fehlendes Feld braucht, bekommt zuerst alle Reiter."""
+
+    def __init__(self, band):
+        super().__init__()
+        self._band = band
+
+    def __missing__(self, key):
+        self._band._alle_bauen()
+        return dict.__getitem__(self, key)
+
+    def get(self, key, default=None):
+        if key not in self:
+            self._band._alle_bauen()
+        return dict.get(self, key, default)
+
+    def __contains__(self, key):
+        if not dict.__contains__(self, key):
+            self._band._alle_bauen()
+        return dict.__contains__(self, key)
+
+
 class RegisterBand(QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
@@ -391,8 +413,10 @@ class RegisterBand(QWidget):
         self.schalter: list[tuple[QToolButton, str]] = []     # (Knopf, Aktionsname) für Haken
         self.wechsler: list[tuple[QToolButton, str]] = []     # Knöpfe, deren Symbol dem zuletzt gewählten Menüeintrag folgt (Groß-/Kleinschreibung)
         self.knoepfe: list[tuple[QToolButton, str | None, bool]] = []   # (Knopf, Name, braucht Dokument)
-        self.felder: dict[str, QWidget] = {}
+        self.felder: dict[str, QWidget] = _FelderDict(self)
         self.fehlend: list[str] = []
+        self._offen: dict[int, tuple] = {}                    # Stapelindex → (Seite, Reiter): noch nicht gebaute Reiter
+        self._hat_dok = None
         lay = QVBoxLayout(self)
         lay.setContentsMargins(*RAND_KEIN)
         lay.setSpacing(0)
@@ -429,11 +453,51 @@ class RegisterBand(QWidget):
         self.kontext_weitere: dict[str, list[int]] = {}               # weitere Reiter desselben Kontexts (Tabellenstil neben Tabellentools)
         for r in self._plan_angepasst():
             self._reiter(r)
-        self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)
+        self.reiter.currentChanged.connect(self._reiter_gewaehlt)
         self.reiter.tabBarClicked.connect(self._reiter_geklickt)
         self.reiter.doppelt.connect(self.einklappen_umschalten)
         self.reiter.setCurrentIndex(self._start_index())          # Start
-        self.bandfehler = sorted(set(self.fehlend))
+        QTimer.singleShot(0, self._im_leerlauf_bauen)
+
+    @property
+    def bandfehler(self) -> list[str]:
+        self._alle_bauen()
+        return sorted(set(self.fehlend))
+
+    def _reiter_gewaehlt(self, i: int) -> None:
+        self._seite_bauen(i)
+        self.stapel.setCurrentIndex(i)
+
+    def _seite_bauen(self, i: int) -> None:
+        eintrag = self._offen.pop(i, None)
+        if eintrag is None:
+            return
+        scroll, r = eintrag
+        seite = QWidget()
+        h = QHBoxLayout(seite)
+        h.setContentsMargins(*RAND_BANDREITER)
+        h.setSpacing(0)
+        for n, g in enumerate(r["gruppen"]):
+            if n:
+                h.addWidget(_GruppenTrenner())
+            h.addWidget(self._gruppe(g))
+        h.addStretch(1)
+        scroll.setWidget(seite)
+        self.aktualisieren(self._hat_dok)                  # Zustand (aktiv/Haken) auch für die neuen Knöpfe
+
+    def _alle_bauen(self) -> None:
+        for i in list(self._offen):
+            self._seite_bauen(i)
+
+    def _im_leerlauf_bauen(self) -> None:
+        """Nach dem Anzeigen: je Durchlauf einen Reiter bauen, damit die Oberfläche dazwischen bedienbar bleibt."""
+        try:
+            if self._offen:
+                self._seite_bauen(next(iter(self._offen)))
+            if self._offen:
+                QTimer.singleShot(0, self._im_leerlauf_bauen)
+        except RuntimeError:                                    # Band wurde inzwischen abgebaut
+            pass
 
     einklappbar = True          # Optionen ▸ Doppelklick blendet das Band aus
     _eingeklappt = False
@@ -513,21 +577,9 @@ class RegisterBand(QWidget):
         scroll.setObjectName("bandSeite")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        seite = QWidget()
-        h = QHBoxLayout(seite)
-        h.setContentsMargins(*RAND_BANDREITER)
-        h.setSpacing(0)
-        for i, g in enumerate(r["gruppen"]):
-            s = None
-            if i:
-                s = _GruppenTrenner()
-                h.addWidget(s)
-            rahmen = self._gruppe(g)
-            h.addWidget(rahmen)
-        h.addStretch(1)
-        scroll.setWidget(seite)
         self.stapel.addWidget(scroll)
         i = self.reiter.addTab(r["name"])
+        self._offen[i] = (scroll, r)                              # Inhalt wird beim ersten Wählen oder im Leerlauf gebaut
         if r.get("kontext"):
             if r["kontext"] in self.kontext_index:
                 self.kontext_weitere.setdefault(r["kontext"], []).append(i)
@@ -1178,6 +1230,8 @@ class RegisterBand(QWidget):
 
     # ---- Zustand -----------------------------------------------------------------------------------------------
     def aktualisieren(self, hat_dokument: bool | None = None):
+        if hat_dokument is not None:
+            self._hat_dok = hat_dokument
         for k, name in self.wechsler:
             n = self.b.symbolname(name)
             if n:

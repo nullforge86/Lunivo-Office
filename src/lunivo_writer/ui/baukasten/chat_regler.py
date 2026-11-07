@@ -39,6 +39,24 @@ class ChatReglerBlock(QWidget):
                              int(round(float(o["temperatur"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(temperatur=w / 10))
         self.s_top = regler("Top P", "Wie viele der wahrscheinlichsten Wörter zur Wahl stehen. Gilt für Ollama und eigene Anbieter.", 10,
                             int(round(float(o["topP"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(topP=w / 10))
+        from lunivo_writer.ai import ki as _ki
+        stufen = _ki.NUM_CTX_STUFEN
+        self.s_alive = regler("Modell im Speicher halten", "Minuten, die Ollama das Modell nach der letzten Antwort geladen lässt. "
+                              "Länger = schneller, belegt aber Arbeitsspeicher. 0 = sofort entladen.", _ki.KEEP_ALIVE_MAX,
+                              _ki.keep_alive_begrenzen(o["keepAlive"]), lambda w: f"{w} min" if w else "sofort entladen",
+                              lambda w: k.chat_setzen(keepAlive=w))
+        self.s_ctx = regler("Kontextgröße (Ollama)", "Wie viel Gespräch und Dokument das Modell auf einmal sieht. Größer = mehr Speicher, "
+                            "langsamer. Wird bei langem Verlauf automatisch erhöht.", len(stufen) - 1,
+                            stufen.index(_ki.num_ctx_begrenzen(o["numCtx"])), lambda w: f"{stufen[w]} Tokens",
+                            lambda w: k.chat_setzen(numCtx=stufen[w]))
+        import os as _os
+        self.s_thread = regler("Rechenkerne (Ollama)", "Wie viele Prozessorkerne Ollama nutzt. Automatisch ist meist am besten; weniger kann "
+                               "den Rechner kühler und ruhiger halten, bei Bedarf kleiner stellen.", _os.cpu_count() or 8,
+                               _ki.num_thread_begrenzen(o["numThread"]), lambda w: str(w) if w else "automatisch",
+                               lambda w: k.chat_setzen(numThread=w))
+        self.streaming = UmbruchSchalter("Antwort Stück für Stück anzeigen (Ollama)"); self.streaming.setChecked(bool(o["streaming"]))
+        self.streaming.toggled.connect(lambda an: k.chat_setzen(streaming=an))
+        ew.addWidget(self.streaming)
         ew.addWidget(text_label("Stoppfolgen", fett=True))
         self.stopp = QLineEdit(str(o["stopp"])); self.stopp.setPlaceholderText("durch Komma getrennt")
         self.stopp.textChanged.connect(lambda t: k.chat_setzen(stopp=t))

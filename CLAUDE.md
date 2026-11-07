@@ -2,6 +2,16 @@
 
 **Lunivo ist eine native Desktop-Anwendung in Python 3 mit PySide6 (Qt Widgets). Es ist keine Web-Anwendung und war nie eine.**
 
+## Modulare Bauweise — vor jeder Änderung (Eigentümer, 2026-11-07)
+
+Lunivo besteht aus **Bausteinen und Modulen**. Sie werden überall wiederverwendet. Der Eigentümer will das nicht mehr jedes Mal sagen müssen.
+
+1. **Erst suchen, dann bauen:** `docs/README.md`, `docs/baukasten.md` lesen; mit grep nach vorhandenem Baustein, Befehl, Fenster, Menü, Farbe, Maß, Text suchen. Im Bericht nennen, was wiederverwendet wurde.
+2. **Keine Hardcodierung:** Farben, Maße, Schriftgrößen, Texte, Listen kommen aus Palette/Thema, `ui/baukasten/mass.py` und den Baukasten-Konstanten, nie als Einzelwert im Fenster.
+3. **Keine Parallel- oder Doppelstruktur:** kein zweites Fenster, keine zweite Leiste, kein zweiter Befehl oder Dropdown neben einem vorhandenen. Fehlt etwas, den Baukasten zentral erweitern, in `docs/baukasten.md` eintragen und verknüpfen.
+4. **Zuständigkeiten trennen:** Logik in Modulen/Services, Oberfläche in `ui/`, Gestaltung im Baukasten. Keine unbeteiligten Module ändern.
+5. **Selbstprüfung vor dem Bericht:** Entstand eine zweite Stelle für dasselbe? Steht ein fester Wert, der zentral sein sollte?
+
 ## Kein HTML — nirgends
 
 Das gilt ausnahmslos und auch „nur intern“: **kein HTML, kein JavaScript, kein CSS, kein Browser, kein WebEngine/WebKit,

@@ -225,7 +225,7 @@ class BearbeitenBaustein:
         else:
             text = e.document().toPlainText()
         try:
-            ok = v.lies_vor(text, self.settings.get("vorlesen/stimme", ""), self.settings.get_int("vorlesen/tempo", 0))
+            ok = v.lies_vor(text, self.settings.get(v.EINSTELLUNG_STIMME, ""), self.settings.get_int(v.EINSTELLUNG_TEMPO, 0))
         except v.VorlesenFehler as ex:
             QMessageBox.information(self, "Vorlesen", str(ex))
             return
@@ -241,10 +241,12 @@ class BearbeitenBaustein:
         if not liste:
             QMessageBox.information(self, "Stimme", "Es ist keine Stimme eingerichtet. Siehe docs/INSTALLATION.md.")
             return
-        namen = [s["name"] for s in liste]
-        n, ok = EingabeFenster.getItem(self, "Stimme wählen", "Stimme:", namen, 0, False)
-        if ok:
-            self.settings.set("vorlesen/stimme", liste[namen.index(n)]["kennung"])
+        from lunivo_writer.ui.baukasten.stimme_dialog import StimmeDialog
+        d = StimmeDialog(self, liste, self.settings.get(v.EINSTELLUNG_STIMME, ""), self.settings.get_int(v.EINSTELLUNG_TEMPO, 0),
+                         (v.TEMPO_MIN, v.TEMPO_MAX, v.TEMPO_SCHRITT))
+        if d.exec():
+            self.settings.set(v.EINSTELLUNG_STIMME, d.stimme())
+            self.settings.set(v.EINSTELLUNG_TEMPO, d.tempo())
 
 
     def _nav_aktion(self, name: str, b: dict):

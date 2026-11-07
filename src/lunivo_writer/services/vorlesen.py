@@ -69,9 +69,18 @@ def verfuegbar() -> bool:
     return piper_da() or spd_da()
 
 
+EINSTELLUNG_STIMME = "vorlesen/stimme"      # Schlüssel in den Einstellungen (eine Quelle für Fenster und Vorlesen)
+EINSTELLUNG_TEMPO = "vorlesen/tempo"
+TEMPO_MIN, TEMPO_MAX, TEMPO_SCHRITT = -100, 100, 10      # Tempo in Prozent: 0 = normal, negativ langsamer, positiv schneller
+
+
+def tempo_begrenzen(tempo: int) -> int:
+    return max(TEMPO_MIN, min(TEMPO_MAX, int(tempo or 0)))
+
+
 def tempo_piper(tempo: int) -> float:
-    t = max(-100, min(100, int(tempo or 0)))
-    return 1.0 - t * (0.4 / 100) if t > 0 else 1.0 - t * (0.5 / 100)
+    t = tempo_begrenzen(tempo)
+    return 1.0 - t * ((0.4 if t > 0 else 0.5) / TEMPO_MAX)
 
 
 def stimmen() -> list[dict]:
@@ -137,6 +146,6 @@ def lies_vor(text: str, stimme: str = "", tempo: int = 0) -> bool:
         _lauf["ton"], _lauf["rechner"] = ton, sprechen
         return True
     befehl = ["spd-say", "-l", "de", "-w"] + (["-y", stimme] if stimme else []) + \
-             ["-r", str(max(-100, min(100, int(tempo or 0)))), text]
+             ["-r", str(tempo_begrenzen(tempo)), text]
     _lauf["ton"] = prozess.starten(befehl, env=dict(os.environ))
     return True

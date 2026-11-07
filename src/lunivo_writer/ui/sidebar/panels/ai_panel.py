@@ -59,6 +59,7 @@ class ChatPanel(QWidget):
         ev.addWidget(self.eingabe)
         v.addWidget(self.eingabezeile)
         dienst.chatGeaendert.connect(self.anzeige)
+        dienst.chatTeil.connect(self._teil_zeigen)
         dienst.kontextGeaendert.connect(self._kontext)
         dienst.laeuft.connect(lambda _an: self.zustand())
         dienst.geaendert.connect(self._geaendert)
@@ -107,8 +108,12 @@ class ChatPanel(QWidget):
             else:
                 b = KiBlase(self.d, n["text"], n.get("cent"), i); b.meldung.connect(self._melden)
             self.blasen.addWidget(b)
+        self._teil_label = None
         if m.phase == "laufend":
-            self.blasen.addWidget(hinweis_label("Die KI schreibt …", klein=True))
+            self._teil_label = hinweis_label(m.teil or "Die KI schreibt …", klein=not m.teil)
+            self._teil_label.setWordWrap(True)
+            self._teil_label.setTextFormat(Qt.PlainText)             # KI-Text ist nie Markup
+            self.blasen.addWidget(self._teil_label)
         if self._phase == "laufend" and m.phase == "bereit" and self.d.konfig.chat_optionen()["direkt"]:
             ok, meldung = self.d.antwort_einfuegen(len(m.nachrichten) - 1)           # Option „direkt ins Dokument einfügen“ (derselbe Weg wie der Knopf)
             if not ok:
@@ -116,6 +121,20 @@ class ChatPanel(QWidget):
         self._phase = m.phase
         self.zustand()
         QTimer.singleShot(0, lambda: self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum()))
+
+    def _teil_zeigen(self) -> None:
+        """Streaming: nur das Textfeld der laufenden Antwort nachziehen — kein Neuaufbau aller Blasen."""
+        lb = getattr(self, "_teil_label", None)
+        if lb is None or self.d.chat_modell.phase != "laufend":
+            return
+        try:
+            lb.setText(self.d.chat_modell.teil or "Die KI schreibt …")
+        except RuntimeError:
+            self._teil_label = None
+            return
+        sb = self.scroll.verticalScrollBar()
+        if sb.value() >= sb.maximum() - 40:
+            sb.setValue(sb.maximum())
 
     # ---- Aktionen
     def _verlauf_fuellen(self) -> None:
