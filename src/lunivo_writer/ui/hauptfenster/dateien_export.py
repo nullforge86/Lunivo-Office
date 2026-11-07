@@ -106,7 +106,7 @@ class DateienExportBaustein:
                 return n
             n = sicher_schreiben.schreiben(path, erzeugen, endung=".pdf")
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
-            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", f"Die PDF-Datei wurde nicht erstellt.\\n\\nGrund: {e}\\n\\nWählen Sie einen anderen Ordner oder Dateinamen.")
+            QMessageBox.critical(self, "PDF-Export fehlgeschlagen", f"Die PDF-Datei wurde nicht erstellt.\n\nGrund: {e}\n\nWählen Sie einen anderen Ordner oder Dateinamen.")
             return False
         self.statusBar().showMessage(f"PDF gespeichert ({n} Seiten): {path}", 5000)
         if self.settings.get_bool("pdf/oeffnen", False):
