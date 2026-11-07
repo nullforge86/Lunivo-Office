@@ -1,6 +1,17 @@
 """Dokumentaktionen aus der Backstage-Ansicht."""
 from __future__ import annotations
 
+import os
+from datetime import datetime
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QMessageBox
+
+from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from lunivo_writer.models.page import HeaderFooter
+from lunivo_writer.ui.dialogs.dokument_dialoge import HeaderFooterDialog, TableDialog
+
 
 class BackstageDokumentBaustein:
     """Umbenennen, Einfügen, Sperren und Kopf-/Fußzeilen eines Dokuments."""
