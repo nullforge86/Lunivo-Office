@@ -1,8 +1,8 @@
 """Der Editor: QTextEdit mit Seitenbreite, Formatierungsbefehlen und Seitenzählung."""
 from __future__ import annotations
 
-from PySide6.QtCore import QMimeData, QRect, QRectF, QSizeF, QTimer, Qt, Signal, QUrl
-from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPalette, QPen, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat, QTextImageFormat, QTextDocumentFragment
+from PySide6.QtCore import QRect, QRectF, QSizeF, QTimer, Qt, Signal, QUrl
+from PySide6.QtGui import QColor, QFont, QPainter, QPalette, QPen, QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat
 from PySide6.QtWidgets import QListWidget, QScrollArea, QTextEdit
 
 from lunivo_writer.editor.anzeige_extra import VersteckterText
@@ -20,8 +20,6 @@ from lunivo_writer.ui.document.editor_seiten import SeitenBaustein
 from lunivo_writer.ui.document.editor_formatierung import FormatierungBaustein
 from lunivo_writer.ui.document.editor_bilder import BilderBaustein
 from lunivo_writer.ui.document.editor_schreibhilfe import SchreibhilfeBaustein
-from lunivo_writer.ui.baukasten.mass import ICON_KLEIN, PADDING_EDITOR_KNOPF, RADIUS_KLEIN, SCHRIFT_KLEIN
-from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 STREIFEN_DUNKEL, STREIFEN_HELL = "#2b2d30", "#d9dee5"   # Arbeitsfläche neben dem Blatt (dunkel/hell)
 
