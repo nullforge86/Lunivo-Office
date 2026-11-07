@@ -73,6 +73,7 @@ def lade_register() -> dict:
 
 
 from lunivo_writer.ui.ribbon.ribbon_stile import BandStileBaustein
+from lunivo_writer.ui.ribbon.ribbon_schnellzugriff import BandSchnellzugriffBaustein
 from lunivo_writer.ui.ribbon.ribbon_knoepfe import BandKnopfBaustein
 from lunivo_writer.ui.ribbon.ribbon_gruppen import BandGruppenBaustein
 from lunivo_writer.ui.ribbon.ribbon_bausteine import (
@@ -81,7 +82,7 @@ from lunivo_writer.ui.ribbon.ribbon_bausteine import (
 )
 
 
-class RegisterBand(BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
+class RegisterBand(BandSchnellzugriffBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
     # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
@@ -202,19 +203,6 @@ class RegisterBand(BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QW
     def _trenner(self):
         self.kopf.addWidget(trennlinie(senkrecht=True, tief=True))
 
-    # ---- Schnellzugriff -------------------------------------------------------------------------------
-    SCHNELL = [("oeffnen", "Öffnen", "oeffnen"), ("vorlage", "Neu aus Vorlage", "neuAusVorlage"), ("speichern", "Speichern", "speichern"),
-               ("pdf", "Als PDF exportieren", "speichernPdf"), ("drucken", "Drucken", "drucken"),
-               ("vorschau", "Druckvorschau", "vorschau"), ("zurueck", "Rückgängig", "rueckgaengig"),
-               ("vor", "Wiederholen", "wiederholen")]
-
-    SCHNELL_ALLE = SCHNELL + [("drucker2", "Drucker auswählen", "druckerWaehlen"), ("neu", "Neu", "neu"), ("unter", "Speichern unter", "speichernUnter"), ("kleben", "Einfügen", "einfuegen"),
-                              ("schere", "Ausschneiden", "ausschneiden"), ("kopie", "Kopieren", "kopieren"),
-                              ("lupe", "Suchen und Ersetzen", "suchen"), ("haken", "Prüfen", "rechtschreibung"),
-                              ("umbruch", "Seitenumbruch", "seitenumbruch"), ("bild", "Bild", "bild"), ("kette", "Hyperlink", "hyperlink"),
-                              ("notiz", "Neuer Kommentar", "kommentar"), ("verfolgt", "Änderungen verfolgen", "verfolgen"),
-                              ("F", "Fett", "fett"), ("K", "Kursiv", "kursiv")]
-
     def _plan_angepasst(self) -> list[dict]:
         """Reiter in der Reihenfolge der Struktur — ausgeblendete weglassen, eigene Reihenfolge beachten (Register anpassen)."""
         alle = plan(self.daten)
@@ -224,38 +212,6 @@ class RegisterBand(BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QW
         versteckt = set(self.cfg["versteckt"] if "versteckt" in self.cfg else STANDARD_VERSTECKT) - {"Datei"}
         haupt.sort(key=lambda r: ordnung.index(r["name"]) if r["name"] in ordnung else 999)
         return [r for r in haupt if r["name"] not in versteckt] + kontext
-
-    def _tausch_rechtsklick(self, k: QToolButton, sym: str) -> None:
-        """Rechtsklick auf einen Knopf: Fenster „Symbol austauschen“ mit der Zeichnung dieses Knopfes."""
-        if not icons.hat(sym):
-            return
-        k.setContextMenuPolicy(Qt.CustomContextMenu)
-        k.customContextMenuRequested.connect(lambda _p, s=sym: self.b.symbolTauschen(None, s))
-
-    def _schnellzugriff(self):
-        liste = self.SCHNELL if self._schnell_wahl is None else [e for e in self.SCHNELL_ALLE if e[2] in self._schnell_wahl]
-        for sym, name, aktion in liste:
-            k = QToolButton()
-            k.setAutoRaise(True)
-            k.setToolTip(_mit_kuerzel(name))
-            k.setIcon(icons.icon(sym, ICON_GROSS, kopf_symbolfarbe()))
-            k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
-            k.clicked.connect(lambda _=False, a=aktion: self.b.tun(a))
-            self._tausch_rechtsklick(k, sym)
-            self.schnell.addWidget(k)
-            self.knoepfe.append((k, aktion, sym in ("speichern", "pdf", "drucken", "vorschau", "zurueck", "vor")))
-
-    def ki_schnell(self, aktionen: list, ausfuehren) -> None:
-        """„Schnelle KI-Aktionen“ mit Zugriff „Schnellzugriff“: je ein Knopf hinter den übrigen der Schnellzugriffsleiste."""
-        for k in getattr(self, "_ki_schnell_knoepfe", []):
-            self.schnell.removeWidget(k); k.hide(); k.setParent(None); k.deleteLater()
-        self._ki_schnell_knoepfe = []
-        for a in aktionen:
-            k = QToolButton(); k.setAutoRaise(True); k.setToolTip("KI: " + a["name"])
-            k.setIcon(icons.icon("assistent", ICON_GROSS, kopf_symbolfarbe())); k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
-            k.clicked.connect(lambda _=False, a=a: ausfuehren(a))
-            self.schnell.addWidget(k)
-            self._ki_schnell_knoepfe.append(k)
 
     # ---- Reiter und Gruppen -------------------------------------------------------------------------------
     def _reiter(self, r: dict):
