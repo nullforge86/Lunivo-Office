@@ -6,56 +6,22 @@ from __future__ import annotations
 
 import json
 import os
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
+
 from lunivo_writer.core import paths
+from lunivo_writer.ui.baukasten.texte import trennlinie
 
-from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
-from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
-from PySide6.QtWidgets import (
-    QCheckBox, QFontComboBox, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QToolButton,
-    QVBoxLayout, QWidget,
-)
+from PySide6.QtCore import QSize, QTimer, Qt
+from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
-from lunivo_writer.ui.baukasten.text_format import groesse_feld, schrift_feld
-from lunivo_writer.ui.document.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
-from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.theme import kopf_symbolfarbe
-from lunivo_writer.ui.ribbon.plan import plan
-
-from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import (
-    DROPDOWN_HOEHE,
-    ABSTAND_DICHT,
     ABSTAND_ENG,
-    ABSTAND_KLEIN,
-    BREITE_AUFKLAPPPFEIL,
-    BREITE_BAND_GRUPPENKNOPF,
-    BREITE_GRUPPENTRENNER,
-    BREITE_MASSFELD_BAND,
-    BREITE_RANDFELD_BAND,
-    BREITE_VORLAGEN_AKTUALISIEREN,
-    GROESSE_BANDKNOPF_ICON_KLEIN,
-    GROESSE_GRUPPEN_STARTER,
-    HOEHE_BAND_GRUPPENKNOPF,
-    HOEHE_BAND_GRUPPENKNOPF_KOMPAKT,
-    ICON_GROSS,
-    ICON_KLEIN,
     ICON_NORMAL,
-    PADDING_BANDKNOPF,
-    RAND_BANDGALERIE,
-    RAND_BANDREITER,
     RAND_KEIN,
     RAND_POPUP_KOPF,
-    SCHRIFT_BANDGRUPPE_TITEL,
-    SCHRIFT_BANDKNOPF,
 )
-from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Schriftauswahl
-from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
+
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 MIN_KNOPF = 36                                                  # kleinste Breite eines Bandknopfes in px
