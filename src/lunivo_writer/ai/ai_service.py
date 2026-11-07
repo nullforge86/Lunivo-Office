@@ -1,6 +1,14 @@
 """Öffentliche Fassade des KI-Dienstes; Fachlogik liegt in eigenen Mixins."""
 from __future__ import annotations
 
+import os
+import threading
+
+from lunivo_writer.services.settings_service import data_dir
+from lunivo_writer.ai import ki as K
+from lunivo_writer.ai import assistent_lauf as AL
+from lunivo_writer.ai.chat_modell import ChatModell
+
 from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal
 from lunivo_writer.ai.ki_anfragen import KIAnfragenMixin
 from lunivo_writer.ai.ki_aktionen import KIAktionenMixin
