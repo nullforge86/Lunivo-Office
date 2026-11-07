@@ -58,13 +58,13 @@ Diese Richtung prüft `tests/test_schichten.py`: `editor/`, `services/`, `models
 - **Python:** ab 3.10. **Fehlerprüfung:** `ruff check .` (nur echte Fehler). **Tests:** gezielt, `python -m pytest <Datei> -k <Name>`; die Gesamtprüfung macht die CI.
 - **Plattformen:** Linux ist getestet. Windows und macOS sind vorbereitet (Pfade, Dateisperre, Start); ob sie laufen, zeigt erst der CI-Job „Prüfen (windows/macos, Auswahl)“, der noch nicht blockiert.
 - **Protokoll:** Fehler beim Laden, Speichern und Prüfen stehen in `logs/lunivo.log` im Zwischenspeicher-Ordner des Benutzers.
-- **Bekannte offene Punkte:** zwei Ausnahmen in `tests/test_schichten.py`; die großen Dateien `services/docx_reader.py` und `docx_writer.py` sind ungeteilt, weil die Absicherung des DOCX-Roundtrips noch nicht gemessen ist.
+- **Bekannte offene Punkte:** zwei Ausnahmen in `tests/test_schichten.py`. Die DOCX-Ein-/Ausgabe ist in fachliche Mixins unter `services/docx_teile/` aufgeteilt; `docx_reader.py` und `docx_writer.py` bleiben als kompatible Fassaden. Die Roundtrip-Absicherung liegt in `tests/test_docx_roundtrip.py` und muss nach strukturellen Änderungen in CI ausgeführt werden.
 
 ## Einstiegspunkte
 
 - Banddefinition und Reiter: `src/lunivo_writer/resources/register.json` und `src/lunivo_writer/ui/ribbon/tabs/`.
 - Gemeinsame Qt-Bausteine: `src/lunivo_writer/ui/baukasten/`; Konventionen stehen in [baukasten.md](baukasten.md).
-- Dokumentformate: `src/lunivo_writer/services/`.
+- Dokumentformate: `src/lunivo_writer/services/`; DOCX-Lese- und Schreiblogik ist nach Metadaten, Absätzen, Runs, Dokumentaufbau und Tabellen/Objekten getrennt in `services/docx_teile/`.
 - Eingebautes Handbuch: `src/lunivo_writer/resources/handbuch.md`.
 - Abhängigkeiten und Start: `pyproject.toml`, `requirements.txt` und `starten-qt.sh`.
 
