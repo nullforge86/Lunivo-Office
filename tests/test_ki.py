@@ -23,7 +23,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
         Handler.gesehen.append((self.path, {k.lower(): v for k, v in self.headers.items()}, json.loads(self.rfile.read(n))))
-        body = json.dumps(Handler.antwort).encode()
+        if Handler.gesehen[-1][2].get("stream") and "teile" in Handler.antwort:
+            body = b"".join(json.dumps(t).encode() + b"\n" for t in Handler.antwort["teile"])
+        else:
+            body = json.dumps(Handler.antwort).encode()
         self.send_response(Handler.status); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
 
     def do_GET(self):
@@ -63,6 +66,36 @@ def test_ollama_anfrage(tmp_path, server, monkeypatch):
     pfad, _kopf, body = Handler.gesehen[0]
     assert pfad == "/api/chat" and body["model"] == "qwen3:8b" and body["messages"][0]["role"] == "system"
     assert ki.schickt_nach_aussen() is None                      # lokal: nichts verlässt den Rechner
+
+
+def test_ollama_tempo_optionen(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(K, "OLLAMA_URL", server)
+    Handler.antwort = {"message": {"content": "Hallo"}}
+    ki = K.KI(konfig(tmp_path, modell="ollama:qwen3:8b"))
+    assert ki.korrigieren("kurz")["text"] == "Hallo"
+    body = Handler.gesehen[0][2]
+    assert body["keep_alive"] == "30m" and body["stream"] is False
+    assert body["options"]["num_ctx"] == 8192 and 512 <= body["options"]["num_predict"] <= 2048
+    assert "num_thread" not in body["options"]                    # Vorgabe: automatisch
+    assert K.num_thread_begrenzen(0) == 0 and K.num_thread_begrenzen("x") == 0 and K.num_thread_begrenzen(999) == (os.cpu_count() or 999)
+    ki.k.chat_setzen(numThread=2)
+    ki.korrigieren("kurz")
+    assert Handler.gesehen[1][2]["options"]["num_thread"] == min(2, os.cpu_count() or 2)
+    assert K.num_ctx_fuer(4096, 30000, 1024) == 16384            # langer Verlauf wird nie abgeschnitten
+    assert K.num_predict_fuer(0, True, False) == 1024 and K.num_predict_fuer(0, True, False, 300) == 300
+
+
+def test_ollama_streaming_und_abbruch(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(K, "OLLAMA_URL", server)
+    Handler.antwort = {"teile": [{"message": {"content": "Hal"}}, {"message": {"content": "lo"}},
+                                 {"message": {"content": ""}, "done": True, "done_reason": "length"}]}
+    ki = K.KI(konfig(tmp_path, modell="ollama:qwen3:8b"))
+    teile = []
+    r = ki.chat([{"rolle": "mensch", "text": "hi"}], strom=teile.append)
+    assert Handler.gesehen[0][2]["stream"] is True and teile and teile[-1] == "Hallo"
+    assert r["text"].startswith("Hallo") and "gekürzt" in r["text"]
+    ev = threading.Event(); ev.set()
+    assert "Abgebrochen" in ki.chat([{"rolle": "mensch", "text": "hi"}], strom=teile.append, abbruch=ev)["fehler"]
 
 
 def test_claude_anfrage_schluessel_im_kopf_und_kosten(tmp_path, server, monkeypatch):

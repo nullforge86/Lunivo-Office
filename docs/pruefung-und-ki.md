@@ -69,6 +69,22 @@ korrigiert als eine Nachricht an einen Freund. Die *Vorschläge* der KI
 erscheinen wie alle anderen Funde als Karten in der Seitenleiste und löschen
 die Karten der übrigen Stufen nicht mehr.
 
+**Eigene Dokumente durchsuchen.** In den KI-Einstellungen, Reiter „Dokumente“,
+gibt man Ordner frei. Lunivo liest darin DOCX, ODT, RTF, TXT und PDF (mit Text),
+zerlegt sie nach Überschriften (PDF: nach Seiten) in Abschnitte und legt einen
+Suchindex (SQLite FTS5) im Programmdatenordner an (`dokumentindex.sqlite`). Zu
+einer Frage im KI-Chat bekommt die KI die passenden Abschnitte als Quellen; unter
+der Antwort stehen die Fundstellen mit Dateiname und Abschnitt oder Seite. Der
+Index wird beim Fragen (höchstens ein paar Sekunden lang) und auf „Jetzt
+indexieren“ nur für neue oder geänderte Dateien aktualisiert; entfernte Dateien
+und zurückgenommene Freigaben verschwinden daraus. Es gibt keinen Hintergrunddienst.
+Gelesen wird nur unterhalb der freigegebenen Ordner (keine Links, keine
+versteckten Ordner). Bei einem Online-Modell gehen die Auszüge nur mit der
+Zustimmung für „Auszug“ hinaus; mit Ollama bleibt alles auf dem Rechner.
+Grenzen: gescannte PDFs ohne Text und PDF-Tabellen werden nicht gelesen; die
+Suche ist eine Wortsuche (mit Wortanfängen), keine Bedeutungssuche.
+Code: `src/lunivo_writer/ai/dokumentensuche.py`, `dokument_abschnitte.py`.
+
 **Übersetzen, auch ohne KI.** Für die Aufgabe „Übersetzung“ gibt es in der
 Modellzuweisung drei Wege: ein bestimmtes KI-Modell, **Lokal (offline)** mit
 Argos Translate (der Text verlässt den Rechner nie) und **Automatisch** (KI,

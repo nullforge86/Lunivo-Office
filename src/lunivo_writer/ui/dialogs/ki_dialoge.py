@@ -4,6 +4,8 @@ Der Anbieter wird hier festgelegt — in „KI-Konfiguration“ (Reiter Schreibh
 """
 from __future__ import annotations
 
+import os
+
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Qt, Signal
 from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem,
@@ -23,7 +25,9 @@ from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.auswahl_liste import AuswahlListe
 from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.listen_leiste import ListenLeiste
 from lunivo_writer.ui.baukasten.mass import (
     BREITE_KNOPF_KLEIN,
     GROESSE_FENSTER_ANBIETER,
@@ -207,20 +211,12 @@ class ModellListe(QWidget):
         self.setMinimumHeight(HOEHE_LISTE_ANBIETER)
         g = FormularGitter(self)
         g.setContentsMargins(*RAND_KEIN)
-        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_MITTEL)
-        g.breit(self.liste)
-        self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", ICON_NORMAL)); self.neu.setToolTip("Anbieter hinzufügen")
-        self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", ICON_NORMAL)); self.bearb.setToolTip("Bearbeiten")
-        self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", ICON_NORMAL)); self.weg.setToolTip("Entfernen")
-        s = FlussLayout(6)
-        for b in (self.neu, self.bearb, self.weg):
-            b.setMinimumWidth(BREITE_KNOPF_KLEIN); s.addWidget(b)
-        g.breit(s)
-        self.neu.clicked.connect(self._neu)
-        self.bearb.clicked.connect(self._bearbeiten)
-        self.weg.clicked.connect(self._entfernen)
-        self.liste.currentRowChanged.connect(self._knoepfe)
-        self.liste.itemDoubleClicked.connect(lambda _i: self._bearbeiten())
+        self.leiste = ListenLeiste("Anbieter hinzufügen", HOEHE_LISTE_MITTEL)
+        self.liste, self.neu, self.bearb, self.weg = self.leiste.liste, self.leiste.neu, self.leiste.bearb, self.leiste.weg
+        g.breit(self.leiste)
+        self.leiste.neu_angefordert.connect(self._neu)
+        self.leiste.bearbeiten_angefordert.connect(self._bearbeiten)
+        self.leiste.entfernen_angefordert.connect(self._entfernen)
         self._fuellen()
 
     def _fuellen(self) -> None:
@@ -232,12 +228,7 @@ class ModellListe(QWidget):
             self.liste.addItem(it)
         if self.liste.count():
             self.liste.setCurrentRow(0)                    # der erste Eintrag ist gewählt: ✎ und 🗑 sind sofort bedienbar
-        self._knoepfe()
-
-    def _knoepfe(self, *_):
-        an = self.liste.currentRow() >= 0
-        self.bearb.setEnabled(an)
-        self.weg.setEnabled(an)
+        self.leiste.knoepfe_pruefen()
 
     def _aktuell(self):
         it = self.liste.currentItem()
@@ -353,37 +344,6 @@ class KIKonfigurationDialog(QDialog):
         self.accept()
 
 
-class SprachListe(QListWidget):
-    """Eine Sprachliste mit hohen Zeilen (wie das alte Fenster „Einstellungen der Übersetzung“); bedienbar wie eine Auswahl: ``currentData()``,
-    ``currentText()``, ``setCurrentText()``, ``findData()``, ``setCurrentIndex()``."""
-
-    def __init__(self, eintraege: list[tuple[str, str]]):
-        super().__init__()
-        for daten, text in eintraege:
-            it = QListWidgetItem(text); it.setData(Qt.UserRole, daten); self.addItem(it)
-        als_karte(self, "liste")
-        self.setMinimumHeight(HOEHE_LISTE_REITER)
-
-    def currentData(self):
-        it = self.currentItem()
-        return it.data(Qt.UserRole) if it else None
-
-    def currentText(self) -> str:
-        it = self.currentItem()
-        return it.text() if it else ""
-
-    def findData(self, daten) -> int:
-        return next((i for i in range(self.count()) if self.item(i).data(Qt.UserRole) == daten), -1)
-
-    def setCurrentIndex(self, i: int) -> None:
-        self.setCurrentRow(i)
-        if 0 <= i < self.count():
-            self.scrollToItem(self.item(i))
-
-    def setCurrentText(self, text: str) -> None:
-        self.setCurrentIndex(next((i for i in range(self.count()) if self.item(i).text() == text), -1))
-
-
 class _NetzLauf(QRunnable):
     """Ein Netzaufruf der Sprachpakete im Hintergrund; das Ergebnis kommt als Signal zurück."""
 
@@ -490,10 +450,10 @@ class SprachePanel(QWidget):
         b = fenster.befehle
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_OBEN_SEITE)
         g = FormularGitter(); v.addLayout(g); v.addStretch(1)
-        self.pruefung = SprachListe(list(b.SPRACHEN))
+        self.pruefung = AuswahlListe(list(b.SPRACHEN))
         self.pruefung.setCurrentIndex(max(0, self.pruefung.findData(b.pruefsprache_aktuell())))
         self.pruefung.setEnabled(fenster.current_tab() is not None)
-        self.sprache = SprachListe([(n, n) for n in K.SPRACHEN])
+        self.sprache = AuswahlListe([(n, n) for n in K.SPRACHEN])
         self.sprache.setCurrentText(fenster.ki.konfig["sprache"])
         for titel, unter, liste in (("Sprache für die Überprüfung", "Sprache des Dokuments — wird in der Datei vermerkt.", self.pruefung),
                                     ("Übersetzen nach", "Sprache für die KI-Übersetzung wählen.", self.sprache)):
@@ -571,17 +531,11 @@ class McpListe(QWidget):
         g = FormularGitter(); v.addLayout(g)
         info = QLabel("KI-Werkzeuge sind kleine Zusatzprogramme, die die KI im Chat benutzen darf (zum Beispiel Dateien lesen oder Daten abfragen). Fachbegriff: MCP-Server. Gilt für Ollama und eigene Anbieter.")
         info.setWordWrap(True); g.breit(info)
-        self.liste = QListWidget(); self.liste.setMinimumHeight(HOEHE_LISTE_KURZ); g.breit(self.liste)
-        s = FlussLayout(6)
-        self.neu = QToolButton(); self.neu.setIcon(icons.icon("plus", ICON_NORMAL)); self.neu.setToolTip("Server hinzufügen")
-        self.bearb = QToolButton(); self.bearb.setIcon(icons.icon("pencil", ICON_NORMAL)); self.bearb.setToolTip("Bearbeiten")
-        self.weg = QToolButton(); self.weg.setIcon(icons.icon("trash-2", ICON_NORMAL)); self.weg.setToolTip("Entfernen")
-        for b in (self.neu, self.bearb, self.weg):
-            b.setMinimumWidth(BREITE_KNOPF_KLEIN); s.addWidget(b)
-        g.breit(s); v.addStretch(1)
-        self.neu.clicked.connect(self._neu); self.bearb.clicked.connect(self._bearbeiten); self.weg.clicked.connect(self._entfernen)
-        self.liste.currentRowChanged.connect(self._knoepfe)
-        self.liste.itemDoubleClicked.connect(lambda _i: self._bearbeiten())
+        self.leiste = ListenLeiste("Server hinzufügen", HOEHE_LISTE_KURZ); g.breit(self.leiste); v.addStretch(1)
+        self.liste, self.neu, self.bearb, self.weg = self.leiste.liste, self.leiste.neu, self.leiste.bearb, self.leiste.weg
+        self.leiste.neu_angefordert.connect(self._neu)
+        self.leiste.bearbeiten_angefordert.connect(self._bearbeiten)
+        self.leiste.entfernen_angefordert.connect(self._entfernen)
         self.fuellen()
 
     def fuellen(self) -> None:
@@ -591,11 +545,7 @@ class McpListe(QWidget):
             it.setData(Qt.UserRole, m["id"]); self.liste.addItem(it)
         if self.liste.count():
             self.liste.setCurrentRow(0)
-        self._knoepfe()
-
-    def _knoepfe(self, *_) -> None:
-        an = self.liste.currentRow() >= 0
-        self.bearb.setEnabled(an); self.weg.setEnabled(an)
+        self.leiste.knoepfe_pruefen()
 
     def _aktuell(self):
         it = self.liste.currentItem()
@@ -712,7 +662,84 @@ class WebsuchePanel(QWidget):
         self.k.websuche_setzen(**self.werte())
 
 
-REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten")
+class DokumentePanel(QWidget):
+    """Lokale Dokumentensuche für den KI-Chat: freigegebene Ordner, Zahl der Abschnitte, Index aufbauen. Der Text bleibt auf dem Rechner, solange das
+    Chat-Modell lokal ist; bei einem Online-Modell fragt der Chat vorher nach der Zustimmung für Auszüge."""
+
+    def __init__(self, konfig: K.KIKonfig):
+        super().__init__()
+        from PySide6.QtWidgets import QCheckBox, QSpinBox
+        from lunivo_writer.ai import dokumentensuche as DS
+        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+        self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
+        o = konfig.dokumentsuche_optionen()
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_OBEN_SEITE)
+        self.an = QCheckBox("Eigene Dokumente im KI-Chat durchsuchen"); self.an.setChecked(bool(o["an"]))
+        v.addWidget(self.an)
+        h = QLabel("Lunivo liest nur die Ordner, die Sie hier freigeben (DOCX, ODT, RTF, TXT und PDF mit Text), und legt einen Suchindex auf diesem "
+                   "Rechner an. Zur Frage im Chat werden die passenden Abschnitte der KI als Quelle mitgegeben; unter der Antwort stehen die Fundstellen.")
+        h.setWordWrap(True); hinweis_stil(h)
+        v.addWidget(h)
+        self.leiste = ListenLeiste("Ordner freigeben", HOEHE_LISTE_KURZ)
+        self.leiste.bearb.hide()
+        self.liste = self.leiste.liste
+        for p in o["ordner"]:
+            self.liste.addItem(p)
+        self.leiste.neu_angefordert.connect(self._neu)
+        self.leiste.entfernen_angefordert.connect(self._weg)
+        self.leiste.knoepfe_pruefen()
+        v.addWidget(self.leiste)
+        f = FormularGitter()
+        self.anzahl = QSpinBox(); self.anzahl.setRange(1, 10); self.anzahl.setValue(int(o["anzahl"]))
+        f.zeile("Abschnitte je Frage", self.anzahl)
+        v.addLayout(f)
+        self.los = QPushButton("Jetzt indexieren"); self.los.clicked.connect(self._indexieren)
+        self.stand = QLabel(""); self.stand.setWordWrap(True)
+        v.addWidget(self.los, 0, Qt.AlignLeft); v.addWidget(self.stand); v.addStretch(1)
+        self._sender = _NetzSender(); self._sender.fertig.connect(self._fertig)
+        self._pool = QThreadPool(self)
+        self._stand_zeigen()
+
+    def ordner(self) -> list[str]:
+        return [self.liste.item(i).text() for i in range(self.liste.count())]
+
+    def _stand_zeigen(self) -> None:
+        d, a = self._DS.Index(self.k.dokumentindex_pfad()).anzahl()
+        self.stand.setText(f"Im Index: {d} Dateien, {a} Abschnitte." if d else "Der Index ist noch leer.")
+
+    def _neu(self) -> None:
+        p = self._Dateifenster.getExistingDirectory(self, "Ordner freigeben", os.path.expanduser("~"))
+        if p and p not in self.ordner():
+            self.liste.addItem(os.path.abspath(p))
+            self.leiste.knoepfe_pruefen()
+
+    def _weg(self) -> None:
+        r = self.liste.currentRow()
+        if r >= 0:
+            self.liste.takeItem(r)
+            self.leiste.knoepfe_pruefen()
+
+    def _indexieren(self) -> None:
+        ordner = self.ordner()
+        self.los.setEnabled(False); self.stand.setText("Die Dokumente werden gelesen … Das kann etwas dauern.")
+        pfad = self.k.dokumentindex_pfad()
+        self._pool.start(_NetzLauf(self._sender, lambda: {"bericht": self._DS.Index(pfad).aktualisieren(ordner)}))
+
+    def _fertig(self, b: dict) -> None:
+        self.los.setEnabled(True)
+        if "fehler" in b:
+            self.stand.setText(f"Das hat nicht geklappt: {b['fehler']}")
+            return
+        b = b["bericht"]
+        self._stand_zeigen()
+        self.stand.setText(self.stand.text() + f" Neu: {b['neu']}, geändert: {b['geaendert']}, entfernt: {b['entfernt']}"
+                           + (f", nicht lesbar: {b['fehler']}" if b["fehler"] else "") + ".")
+
+    def uebernehmen(self) -> None:
+        self.k.dokumentsuche_setzen(an=self.an.isChecked(), ordner=self.ordner(), anzahl=self.anzahl.value())
+
+
+REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten", "Dokumente")
 
 
 from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
@@ -769,6 +796,8 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.assistenten = AssistentenListe(fenster)
         av.addWidget(self.assistenten); av.addStretch(1)
         self.stapel.addWidget(seite)
+        self.dokumente = DokumentePanel(self.k)
+        self.stapel.addWidget(self.dokumente)
         v.addWidget(knopfzeile(self, bei_ok=self._ok))
         self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)
         self.freischalten()
@@ -777,7 +806,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: kurze Reiternamen (die langen stehen im Tipp), damit alle fünf nebeneinander passen."""
         for i, (kurz, voll) in enumerate((("Modelle", "KI-Modelle"), ("Zuweisung", "Modellzuweisung"), ("Sprache", "Sprache"), ("Werkzeuge", "KI-Werkzeuge"),
-                                          ("Websuche", "Websuche"), ("Daten", "Datenschutz"), ("Assistenten", "Assistenten"))):
+                                          ("Websuche", "Websuche"), ("Daten", "Datenschutz"), ("Assistenten", "Assistenten"), ("Dokumente", "Dokumente"))):
             self.reiter.setTabText(i, kurz)
             if self.reiter.isTabEnabled(i):
                 self.reiter.setTabToolTip(i, voll)
@@ -821,6 +850,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.zuweisung.uebernehmen()
         self.sprache.uebernehmen()
         self.websuche.uebernehmen()
+        self.dokumente.uebernehmen()
         self.accept()
 
 

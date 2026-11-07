@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import time
 
-VERZOEGERUNG_MIN, VERZOEGERUNG_MAX, VERZOEGERUNG_VORGABE = 2, 60, 5      # Sekunden Ruhe nach der letzten Änderung
+VERZOEGERUNG_MIN, VERZOEGERUNG_MAX, VERZOEGERUNG_VORGABE = 2, 60, 15     # Sekunden Ruhe nach der letzten Änderung
 MINDESTABSTAND = 10.0                 # Sekunden zwischen zwei Anfragen
 HOECHSTZAHL_STUNDE = 60               # Anfragen je Stunde, danach Pause mit Meldung
 MIN_ZEICHEN = 12                      # kürzere Absätze sind kein Anlass für eine Anfrage

@@ -161,7 +161,7 @@ class WritingAssistant(QObject):
             self._timer.start()
             return
         doc = ed.document()
-        text = doc.toPlainText()
+        text = self._text()
         self._region = None
         if voll:
             self._voll, self._schmutz = False, None
@@ -217,8 +217,20 @@ class WritingAssistant(QObject):
         return fundlib.abstimmen(funde, self._geprueft, self.gelernt.daten["inRuhe"], self.gelernt.daten["woerter"],
                                  self.settings.get_bool("schreibhilfe/konsens_gegenprobe", False))
 
+    def _text(self) -> str:
+        """Dokumenttext, je Dokumentrevision nur einmal gebildet (``toPlainText`` kopiert das ganze Dokument)."""
+        ed = self.editor
+        if ed is None:
+            return ""
+        doc = ed.document()
+        rev = doc.revision()
+        zw = getattr(self, "_text_zw", None)
+        if zw is None or zw[0] is not doc or zw[1] != rev:
+            zw = self._text_zw = (doc, rev, doc.toPlainText())
+        return zw[2]
+
     def _key(self, f: ProofingIssue) -> tuple:
-        t = self.editor.document().toPlainText() if self.editor else ""
+        t = self._text()
         return (f.alt, f.neu, f.grund, t[max(0, f.von - 12):f.von])
 
     def _zeigen(self, meldung: str | None = None) -> None:
@@ -293,7 +305,7 @@ class WritingAssistant(QObject):
     def _wort_an(self, pos: int):
         """(Wort, von, bis), wenn an der Stelle ein Wort steht, das das Wörterbuch nicht kennt."""
         from lunivo_writer.proofing import pruefung
-        text = self.editor.document().toPlainText()
+        text = self._text()
         for m in pruefung.WORT_MUSTER.finditer(text):
             if m.start() <= pos <= m.end():
                 w = m.group(0)
@@ -327,7 +339,7 @@ class WritingAssistant(QObject):
         ed = self.editor
         if ed is None:
             return
-        text = ed.document().toPlainText()
+        text = self._text()
         pool = QThreadPool.globalInstance()
 
         class _LT(QRunnable):
@@ -368,7 +380,7 @@ class WritingAssistant(QObject):
         ed = self.editor
         if ed is None or rev != ed.document().revision():
             return 0
-        text, pos, roh = ed.document().toPlainText(), 0, []
+        text, pos, roh = self._text(), 0, []
         for v in vorschlaege or []:
             alt = str(v.get("alt") or "")
             von = text.find(alt, pos) if alt else -1

@@ -6,12 +6,12 @@ from __future__ import annotations
 
 from lunivo_writer.ui.baukasten.mass import CHAT_CHIP_HOEHE, PADDING_KI_ANBIETER_EINTRAG, PADDING_KI_LISTENEINTRAG, RADIUS_FELD, CHAT_SENDEN, SCHRIFT_HINWEIS, PADDING_HILFE_CHIP, RADIUS_CHIP, RADIUS_EINGABEKASTEN, RADIUS_KLEIN, RADIUS_KARTE, RADIUS_MITTEL
 
-ARTEN = ("zeile", "karte", "kompakt", "ki", "markiert", "nutzer", "fehler", "eingabe", "chip", "senden", "anhang", "miniatur", "liste", "liste_eng")
+ARTEN = ("zeile", "karte", "kompakt", "ki", "markiert", "nutzer", "fehler", "eingabe", "chip", "senden", "anhang", "miniatur", "liste", "liste_eng", "listenleiste", "listenfuss")
 
 
 def als_karte(widget, art: str = "karte"):
     """Kennzeichnet das Widget als Karte der Art ``art``: zeile (anklickbar, durchsichtig), karte (Fund), kompakt (Kommentar), ki/markiert (Blase mit Streifen links),
-    nutzer (graue Nutzerblase), fehler (Fehlerkarte), eingabe (Eingabekasten; Eigenschaft ``fokus`` = Rahmen in Akzentfarbe), chip (QPushButton), senden (runder QPushButton), anhang (Bild-Anhang über dem Textfeld), miniatur (QLabel mit Bildvorschau, dünner Rahmen), liste / liste_eng (QListWidget mit Rahmen, hohe bzw. engere Zeilen; ein ``chip`` ist checkbar: gewählt = Akzent)."""
+    nutzer (graue Nutzerblase), fehler (Fehlerkarte), eingabe (Eingabekasten; Eigenschaft ``fokus`` = Rahmen in Akzentfarbe), chip (QPushButton), senden (runder QPushButton), anhang (Bild-Anhang über dem Textfeld), miniatur (QLabel mit Bildvorschau, dünner Rahmen), liste / liste_eng (QListWidget mit Rahmen, hohe bzw. engere Zeilen; listenleiste / listenfuss (``ListenLeiste``: Rahmen um Liste + Knopfleiste, Trennlinie über den Knöpfen); ein ``chip`` ist checkbar: gewählt = Akzent)."""
     widget.setProperty("karte", art)
     widget.style().unpolish(widget); widget.style().polish(widget)          # eine spätere Art (z. B. Liste „eng“ statt „liste“) gilt auch für ein schon eingerichtetes Widget
     return widget
@@ -43,6 +43,9 @@ def karte_regeln(fokus: str, ki: str, grau: str, fehler: str = "#c92a2a") -> str
         'QListWidget[karte="liste_eng"]::item { padding: ' + PADDING_KI_LISTENEINTRAG + '; border-bottom: 1px solid palette(midlight); }'
         'QListWidget[karte="liste"]::item:selected, QListWidget[karte="liste_eng"]::item:selected { background: palette(highlight); color: palette(highlighted-text); }'
         'QListWidget[karte="liste"]::item:hover:!selected, QListWidget[karte="liste_eng"]::item:hover:!selected { background: palette(alternate-base); }'
+        'QFrame[karte="listenleiste"] { border: 1px solid palette(mid); border-radius: ' + str(RADIUS_FELD) + 'px; background: palette(base); }'
+        'QFrame[karte="listenleiste"] QListWidget[karte="liste"] { border: none; border-radius: 0px; background: transparent; }'
+        'QFrame[karte="listenfuss"] { border: none; border-top: 1px solid palette(midlight); background: transparent; }'
         'QFrame[karte="anhang"] { border: 1px solid palette(mid); border-radius: ' + str(RADIUS_MITTEL) + 'px; background: rgba(128, 128, 128, 0.10); }'
         'QFrame[karte="anhang"] QLabel { border: none; background: transparent; }'
         'QLabel[karte="miniatur"] { border: 1px solid palette(mid); border-radius: ' + str(RADIUS_KLEIN) + 'px; background: palette(base); }'

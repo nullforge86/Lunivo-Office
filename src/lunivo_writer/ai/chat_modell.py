@@ -29,6 +29,7 @@ class ChatModell:
         self.gespraeche: list[dict] = []         # frühere Gespräche, neuestes zuerst: {titel, nachrichten}
         self._offen: int | None = None           # Kennung der Anfrage, auf die noch gewartet wird
         self._zaehler = 0
+        self.teil = ""                           # bisher eingetroffener Antworttext der laufenden Anfrage (Streaming), nur im Speicher
         self._bezug_offen: dict | None = None    # Bezug (Stelle im Text) der laufenden Anfrage; nur im Speicher
         self.wiederhol_bilder: list[dict] = []   # Anhang der Nachricht, die ``wiederholen()`` zuletzt herausgenommen hat
 
@@ -70,14 +71,23 @@ class ChatModell:
 
     def beginnen(self, bezug: dict | None = None) -> int:
         self._bezug_offen = bezug
+        self.teil = ""
         self._zaehler += 1
         self._offen = self._zaehler
         return self._offen
+
+    def teil_setzen(self, kennung: int, text: str) -> bool:
+        """Zwischenstand der Antwort; veraltete Anfragen werden verworfen."""
+        if kennung != self._offen:
+            return False
+        self.teil = text
+        return True
 
     def antwort(self, kennung: int, text: str, cent=None) -> bool:
         if kennung != self._offen:
             return False                      # veraltet (neues Gespräch, Abbruch, Wiederholung)
         self._offen = None
+        self.teil = ""
         bezug, self._bezug_offen = self._bezug_offen, None
         self._neu("ki", text, cent, bezug=bezug)
         return True
@@ -86,6 +96,7 @@ class ChatModell:
         if kennung != self._offen:
             return False
         self._offen = None
+        self.teil = ""
         self._neu("ki", text, None, fehler_objekt(text))
         return True
 
@@ -103,6 +114,7 @@ class ChatModell:
 
     def abbrechen(self) -> None:
         """Die Antwort der laufenden Anfrage wird nicht mehr angenommen."""
+        self.teil = ""
         self._offen = None
         self._bezug_offen = None
 
@@ -111,6 +123,7 @@ class ChatModell:
         self._offen = None
         self._bezug_offen = None
         self.wiederhol_bilder = []
+        self.teil = ""
         while self.nachrichten and self.nachrichten[-1]["rolle"] != "mensch":
             self.nachrichten.pop()
         if not self.nachrichten:
@@ -125,6 +138,7 @@ class ChatModell:
             del self.gespraeche[MAX_GESPRAECHE:]
         self.nachrichten = []
         self.wiederhol_bilder = []              # ein Anhang gehört zum Gespräch und fällt mit ihm weg
+        self.teil = ""
         self._offen = None
         self._bezug_offen = None
 

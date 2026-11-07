@@ -53,6 +53,9 @@ def popup_begrenzen(combo: QComboBox, popup_min: int = 0) -> None:
     hoehe = min(g.height(), bs.height(), max(zeilen * (combo.fontMetrics().height() + 2 * DROPDOWN_ZEILE_PAD_V), 1) + ABSTAND_MITTEL)      # nie höher als die sichtbaren Zeilen und nie höher als der Bildschirm
     pop.setMinimumWidth(0); pop.setMaximumWidth(breite)         # der Behälter meldet sonst die Breite des längsten Eintrags als Mindestmaß
     pop.resize(breite, hoehe)
+    unten = combo.mapToGlobal(QPoint(0, combo.height()))         # Qt setzt die Liste so, dass der gewählte Eintrag über dem Feld liegt; nach dem Kürzen sitzt sie dann falsch: unter das Feld, ist dort kein Platz, darüber
+    oben = combo.mapToGlobal(QPoint(0, 0)).y() - hoehe
+    pop.move(pop.x(), unten.y() if unten.y() + hoehe <= bs.bottom() or oben < bs.top() else oben)
     popup_klemmen(pop, combo)
 
 

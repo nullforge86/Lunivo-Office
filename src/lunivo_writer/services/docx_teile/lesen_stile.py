@@ -115,6 +115,22 @@ class StilMixin:
 
     # ---- Zeichenformat -----------------------------------------------
     def _char_format(self, run, para) -> QTextCharFormat:
+        """Zeichenformat eines Textlaufs. Es hängt nur von dessen Eigenschaften (rPr) und den Vorlagen von Lauf und Absatz ab; Läufe mit gleichem
+        Schlüssel (in langen Dokumenten fast alle) teilen sich das Ergebnis, statt die Vorlagenkette jedes Mal neu aufzulösen."""
+        try:
+            from lxml import etree
+            rpr = run._r.rPr
+            schluessel = (etree.tostring(rpr) if rpr is not None else b"", id(self._rs(run).element) if self._rs(run) is not None else 0,
+                          id(self._ps(para).element) if para is not None and self._ps(para) is not None else 0, para is None)
+        except Exception:
+            return self._char_format_roh(run, para)
+        zw = self.__dict__.setdefault("_cf_zw", {})
+        f = zw.get(schluessel)
+        if f is None:
+            f = zw[schluessel] = self._char_format_roh(run, para)
+        return QTextCharFormat(f)
+
+    def _char_format_roh(self, run, para) -> QTextCharFormat:
         f = QTextCharFormat()
         f.setFontFamilies([self._font_name(run, para)])
         f.setFontPointSize(self._font_size_pt(run, para))

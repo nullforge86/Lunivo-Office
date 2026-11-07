@@ -121,7 +121,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         self._fluss.timeout.connect(self._seitenfluss)
         self._fluss_laeuft = False
         self._effekt_cache: bool | None = None
-        self.document().contentsChanged.connect(lambda: setattr(self, "_effekt_cache", None))
+        self.document().contentsChange.connect(self._effekt_geaendert)
         self.document().contentsChanged.connect(self._fluss_planen)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)       # die Seite wächst mit, der graue Grund scrollt
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -195,7 +195,7 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         doc.setDocumentMargin(0)
         doc.contentsChanged.connect(self._timer.start)
         doc.contentsChanged.connect(self._fluss_planen)
-        doc.contentsChanged.connect(lambda: setattr(self, "_effekt_cache", None))
+        doc.contentsChange.connect(self._effekt_geaendert)
         self._effekt_cache = None
         self._fluss.start()
         doc.contentsChange.connect(self._inhalt_geaendert)

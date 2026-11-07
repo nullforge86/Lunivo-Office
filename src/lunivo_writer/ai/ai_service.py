@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import threading
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 from PySide6.QtWidgets import QMessageBox
@@ -16,6 +17,7 @@ from lunivo_writer.ai.chat_modell import ChatModell
 
 class _Sig(QObject):
     fertig = Signal(object, object)       # (Auftrag, Ergebnisdict)
+    teil = Signal(int, str)               # (Anfragekennung, bisheriger Antworttext) — Streaming, aus dem Arbeitsfaden
 
 
 class _Lauf(QRunnable):
@@ -39,6 +41,7 @@ class KIDienst(QObject):
     hinweis = Signal(str, str, object)        # Titel, Text, Kosten (cent) — Karte in der Seitenleiste
     aktionErgebnis = Signal(str, str, object, object)  # Name, Text, Kosten, Bezug (dict|None) — das Ergebnis einer Schnellen KI-Aktion (der Chat zeigt es als Antwort)
     geaendert = Signal()                      # Einstellungen haben sich geändert
+    chatTeil = Signal()                       # neuer Zwischenstand der streamenden Chat-Antwort (``chat_modell.teil``) — nur die Anzeige des Teils nachziehen
     chatGeaendert = Signal()                  # ``chat_modell`` hat sich geändert (Nachricht, Phase, Gespräch) — die Anzeige liest daraus
     kontextGeaendert = Signal()               # Markierung oder Dokumentinhalt (leer/nicht leer) haben sich geändert — ``kontext()`` neu lesen
 
@@ -54,6 +57,8 @@ class KIDienst(QObject):
         self._pool = QThreadPool(self)
         self._sig = _Sig()
         self._sig.fertig.connect(self._fertig)
+        self._sig.teil.connect(self._chat_teil)
+        self._chat_abbruch = threading.Event()       # beendet eine streamende Ollama-Verbindung sofort
         self.werkzeugFrage.connect(self._werkzeug_fragen)
         self.aktionErgebnis.connect(self.aktion_in_chat)         # Verlauf und Anzeige führen dieselbe Quelle
         self.ki.werkzeug_frage = self._werkzeug_erlaubt
@@ -714,6 +719,7 @@ class KIDienst(QObject):
 
     def chat_abbrechen(self) -> None:
         """Eine laufende Antwort wird nicht mehr angezeigt. Der Hintergrundfaden selbst lässt sich im Thread-Pool nicht unterbrechen und läuft aus."""
+        self._chat_abbruch.set()                   # streamende Verbindung wird sofort geschlossen
         self.chat_modell.abbrechen()
         self.chatGeaendert.emit()
 
@@ -832,4 +838,10 @@ class KIDienst(QObject):
         doc = c.selectedText().replace("\u2029", "\n") if markiert else (ed.document().toPlainText() if ed else "")
         self._arbeit_laeuft = True
         self.laeuft.emit(True)
-        self._pool.start(_Lauf(("chat", {"anfrage": kennung}), lambda: self.ki.chat(verlauf, doc, markiert), self._sig))
+        self._chat_abbruch = abbruch = threading.Event()
+        self._pool.start(_Lauf(("chat", {"anfrage": kennung}),
+                               lambda: self.ki.chat(verlauf, doc, markiert, lambda t: self._sig.teil.emit(kennung, t), abbruch), self._sig))
+
+    def _chat_teil(self, kennung: int, text: str) -> None:
+        if self.chat_modell.teil_setzen(kennung, text):
+            self.chatTeil.emit()

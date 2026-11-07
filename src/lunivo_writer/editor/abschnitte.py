@@ -56,6 +56,10 @@ def lesen(blockformat) -> tuple[str, PageSettings] | None:
 # ---- Abfragen ----------------------------------------------------------------------------------------------------
 def umbrueche(doc) -> list[tuple[int, str, PageSettings]]:
     """[(Blocknummer, Beginn, Einrichtung des folgenden Abschnitts)] in Dokumentreihenfolge."""
+    rev = doc.revision()                                 # Qt vergibt auch nach Undo/Redo neue Revisionen: der Stand gilt genau für diese
+    zw = getattr(doc, "_umbrueche_zw", None)
+    if zw is not None and zw[0] == rev:
+        return list(zw[1])
     out = []
     b = doc.firstBlock()
     while b.isValid():
@@ -63,7 +67,8 @@ def umbrueche(doc) -> list[tuple[int, str, PageSettings]]:
         if e:
             out.append((b.blockNumber(), e[0], e[1]))
         b = b.next()
-    return out
+    doc._umbrueche_zw = (rev, out)
+    return list(out)
 
 
 def anzahl(doc) -> int:

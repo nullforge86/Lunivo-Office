@@ -466,22 +466,36 @@ class SpaltenBaustein:
             self._fluss_laeuft = False
 
 
+    def _effekt_in(self, von: int, bis: int) -> bool:
+        from lunivo_writer.editor.textfx import hat_zeichen_effekt
+        doc = self.document()
+        b = doc.findBlock(max(0, von)) if von is not None else doc.firstBlock()
+        while b.isValid() and (bis is None or b.position() <= bis):
+            it = b.begin()
+            while not it.atEnd():
+                if hat_zeichen_effekt(it.fragment().charFormat()):
+                    return True
+                it += 1
+            b = b.next()
+        return False
+
+
+    def _effekt_geaendert(self, pos: int, entfernt: int, neu: int) -> None:
+        """Änderung im Text: war bisher kein Effekt da, genügt es, die geänderte Stelle zu prüfen (statt das ganze Dokument bei jedem Tastendruck).
+        Stand „ja“ bleibt, bis etwas entfernt oder umformatiert wird; dann wird beim nächsten Zeichnen neu gesucht."""
+        if self._effekt_cache is False:
+            if self._effekt_in(pos, pos + max(entfernt, neu)):
+                self._effekt_cache = True
+        else:
+            self._effekt_cache = None
+
+
     def _hat_effekt(self) -> bool:
         """Gibt es Textstücke mit Effekten, die Lunivo selbst zeichnet (Verlauf, Schatten, Spiegelung, Leuchten, 3D)? Das Ergebnis gilt bis zur nächsten Änderung."""
         if self._effekt_cache is not None:
             return self._effekt_cache
-        from lunivo_writer.editor.textfx import hat_zeichen_effekt
-        gefunden = False
-        b = self.document().firstBlock()
-        while b.isValid() and not gefunden:
-            it = b.begin()
-            while not it.atEnd():
-                if hat_zeichen_effekt(it.fragment().charFormat()):
-                    gefunden = True; break
-                it += 1
-            b = b.next()
-        self._effekt_cache = gefunden
-        return gefunden
+        self._effekt_cache = self._effekt_in(None, None)
+        return self._effekt_cache
 
 
     def _hat_tabfuell(self) -> bool:

@@ -73,6 +73,12 @@ class ZusatzMixin:
 
     def _bereiche(self, prop, schluessel=None) -> list[dict]:
         """Zusammenhängende Textstücke mit gleicher Eigenschaft: [{von, bis, wert, cf}]."""
+        doc = self.document()
+        zw = getattr(self, "_bereiche_zw", None)
+        if zw is None or zw[0] is not doc or zw[1] != doc.revision():
+            zw = self._bereiche_zw = (doc, doc.revision(), {})      # je Dokumentrevision nur einmal über alle Textstücke laufen
+        if prop in zw[2]:
+            return [dict(x) for x in zw[2][prop]]
         aus: list[dict] = []
         for f in self._fragmente():
             cf = f.charFormat()
@@ -85,7 +91,8 @@ class ZusatzMixin:
                 aus[-1]["bis"] = bis
             else:
                 aus.append({"von": v, "bis": bis, "wert": wert, "key": key, "cf": cf})
-        return aus
+        zw[2][prop] = aus
+        return [dict(x) for x in aus]
 
     def kommentar_bereiche(self) -> list[dict]:
         return self._bereiche(P_KOMMENTAR)
