@@ -1,7 +1,5 @@
 """TextVorlagenBefehle: fachlich abgegrenzte Bandbefehle."""
 from __future__ import annotations
-
-from __future__ import annotations  # noqa: F401
 from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QTextListFormat  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
