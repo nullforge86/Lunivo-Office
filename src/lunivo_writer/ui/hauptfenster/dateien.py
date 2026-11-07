@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QKeySequence
 from PySide6.QtWidgets import QApplication, QMessageBox, QWidget
