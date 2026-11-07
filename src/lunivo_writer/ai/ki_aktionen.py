@@ -1,6 +1,5 @@
 """KIAktionen: fachlich abgegrenzte KI-Dienstlogik."""
-
-
+from __future__ import annotations
 
 import os  # noqa: F401
 import threading  # noqa: F401
@@ -12,6 +11,8 @@ from lunivo_writer.ai import assistent_lauf as AL  # noqa: F401
 from lunivo_writer.ai import modellfaehigkeit as MF  # noqa: F401
 from lunivo_writer.ai import chat_bezug as CB  # noqa: F401
 from lunivo_writer.ai.chat_modell import ChatModell  # noqa: F401
+
+
 class KIAktionenMixin:
     """Teilverantwortung des KI-Dienstes; wird von KIDienst eingebunden."""
 
