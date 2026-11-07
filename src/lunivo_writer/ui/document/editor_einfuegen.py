@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from PySide6.QtCore import QMimeData, Qt, QUrl
 from PySide6.QtGui import QFont, QImage, QTextCharFormat, QTextCursor, QTextDocument, QTextDocumentFragment, QTextFormat, QTextImageFormat
-from PySide6.QtWidgets import QTextEdit
 
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.baukasten.mass import ICON_KLEIN, PADDING_EDITOR_KNOPF, RADIUS_KLEIN, SCHRIFT_KLEIN
