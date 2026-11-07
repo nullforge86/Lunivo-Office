@@ -464,6 +464,27 @@ def test_oberflaeche_wechseln_register_anpassen_symbole_tauschen(app, tmp_path):
     w.current_editor().document().setModified(False); w.close()
 
 
+def test_symbolleisten_bauen_kein_verstecktes_register(app, tmp_path, monkeypatch):
+    from lunivo_writer.ui.ribbon.ribbon_bar import RegisterBand
+    from lunivo_writer.ui.ribbon.toolbars import Symbolleisten
+
+    w = win(tmp_path)
+    w.new_document()
+
+    def register_nicht_bauen(*args, **kwargs):
+        raise AssertionError("Symbolleisten dürfen kein Registerband erzeugen")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(RegisterBand, "__init__", register_nicht_bauen)
+        w.oberflaeche_aendern("symbolleisten", False)
+
+    assert isinstance(w.band, Symbolleisten)
+    assert w.band.daten["register"]
+    assert not hasattr(w.band, "_reg")
+    w.band.aktualisieren(True)
+    w.close()
+
+
 def test_linke_seitenleiste_suchen_kommentare_ueberschriften(app, tmp_path, monkeypatch):
     """Die Leiste links öffnet die Felder; Suchen/Ersetzen, Kommentare (sortieren, filtern, gelöst, neu) und Überschriften (Menü) funktionieren."""
     from PySide6.QtGui import QTextCursor
