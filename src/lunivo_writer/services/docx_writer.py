@@ -117,40 +117,12 @@ class _Writer(SchreibenDokumentMixin, SchreibenAbsatzMixin, SchreibenRunsMixin, 
 
 
 
-    def _field(para, name: str):
-        run = para.add_run()
-        for kind, extra in (("begin", None), (None, f" {name} "), ("separate", None), (None, "1"), ("end", None)):
-            if kind:
-                el = OxmlElement("w:fldChar")
-                el.set(qn("w:fldCharType"), kind)
-                run._r.append(el)
-            elif extra.strip() == name:
-                it = OxmlElement("w:instrText")
-                it.set(qn("xml:space"), "preserve")
-                it.text = extra
-                run._r.append(it)
-            else:
-                t = OxmlElement("w:t")
-                t.text = extra
-                run._r.append(t)
-
-    # ---- Grundschrift --------------------------------------------------
 
 
 
 
 
-    def _fldchar(para, typ: str):
-        r = OxmlElement("w:r")
-        fc = OxmlElement("w:fldChar"); fc.set(qn("w:fldCharType"), typ)
-        r.append(fc)
-        para._p.append(r)
 
-    def _instr(para, text: str):
-        r = OxmlElement("w:r")
-        it = OxmlElement("w:instrText"); it.set("{http://www.w3.org/XML/1998/namespace}space", "preserve"); it.text = f" {text} "
-        r.append(it)
-        para._p.append(r)
 
 
 
