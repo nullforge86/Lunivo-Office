@@ -23,6 +23,7 @@ from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
 from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
 from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.ribbon.plan import plan
+from lunivo_writer.ui.ribbon.ribbon_bausteine import _SperrKasten
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.mass import (
