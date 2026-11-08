@@ -1,0 +1,293 @@
+"""Textformat-Bausteine: Schriftname, Größe, Fett, Kursiv, Ausrichtung, Zeilenabstand — so wie im Band (Start ▸ Schriftart, Absatz).
+
+Das Band und jedes Fenster, das Text formatiert (Neue Formatvorlage, später Zeichen- und Absatzfenster), bauen ihre Felder hier;
+niemand baut sie nach. Die Bausteine kennen den Editor nicht: ``TextFormatLeiste`` meldet Werte, der Aufrufer tut damit, was er will.
+"""
+from __future__ import annotations
+
+from PySide6.QtCore import QRectF, QSize, Qt, Signal
+from PySide6.QtGui import (
+    QColor, QFont, QIcon, QPainter, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat,
+)
+from PySide6.QtWidgets import QButtonGroup, QComboBox, QFontComboBox, QFrame, QToolButton, QWidget
+
+from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.mass import (
+    ABSTAND_KLEIN,
+    BREITE_KNOPF_KLEIN,
+    ICON_GROSS,
+    ICON_TEXTFORMATLEISTE,
+    RAND_KEIN,
+)
+from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+
+GROESSEN = (8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72)
+AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Rechtsbündig"), ("block", "Blocksatz"))
+ZEILENABSTAND = ((1.0, "Einfach"), (1.5, "1,5 Zeilen"), (2.0, "Doppelt"))
+
+
+def schrift_feld(combo: QComboBox | None = None, variante: str = "band") -> QComboBox:
+    """Das Feld für den Schriftnamen (im Band mit Live-Vorschau, im Fenster ohne)."""
+    c = combo if combo is not None else Schriftauswahl()
+    c.rolle("schrift", variante)
+    return c
+
+
+def groesse_feld(combo: QComboBox | None = None, variante: str = "band") -> QComboBox:
+    """Das Feld für die Schriftgröße: zum Tippen und mit der Liste der üblichen Größen."""
+    c = combo if combo is not None else Auswahlfeld()
+    c.setEditable(True)
+    c.rolle("groesse", variante)
+    c.addItems([f"{g:g}" for g in GROESSEN])
+    return c
+
+
+def text_knopf(symbol: str, tipp: str) -> QToolButton:
+    """F, K oder U als Knopf zum Ein-/Ausschalten, in dem Schnitt, den er bedeutet (wie im Band)."""
+    k = QToolButton()
+    k.setAutoRaise(True); k.setCheckable(True); k.setText(symbol); k.setToolTip(tipp); k.setMinimumWidth(BREITE_KNOPF_KLEIN)
+    f = k.font()
+    f.setBold(symbol == "F"); f.setItalic(symbol == "K"); f.setUnderline(symbol == "U")
+    k.setFont(f)
+    return k
+
+
+def ausrichtung_knoepfe() -> dict[str, QToolButton]:
+    """Linksbündig, Zentriert, Rechtsbündig, Blocksatz — gleiche Symbole und Namen wie im Band; immer höchstens einer gewählt."""
+    gruppe = {}
+    for schl, name in AUSRICHTUNG:
+        k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name)
+        k.setIcon(icons.icon(schl, ICON_GROSS)); k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
+        gruppe[schl] = k
+    return gruppe
+
+
+def _zeilen_symbol(abstand: float) -> QIcon:
+    return icons.icon({1.0: "list-start", 1.5: "list", 2.0: "list-chevrons-up-down"}.get(abstand, "list"), ICON_TEXTFORMATLEISTE)
+
+
+def _abstand_symbol(mehr: bool) -> QIcon:
+    return icons.icon("list-plus" if mehr else "list-minus", ICON_TEXTFORMATLEISTE)
+
+
+def _einzug_symbol(mehr: bool) -> QIcon:
+    return icons.icon("list-indent-increase" if mehr else "list-indent-decrease", ICON_TEXTFORMATLEISTE)
+
+
+class TextFormatLeiste(QWidget):
+    """Zwei Zeilen wie im Band: Schrift, Größe, Fett, Kursiv · Ausrichtung (und mit ``absatz=True`` Zeilenabstand, Absatzabstand und
+    Einzug). Meldet jede Änderung mit ``geaendert``; ``werte()`` und ``setze()`` lesen und schreiben alles auf einmal."""
+
+    geaendert = Signal()
+    SCHRITT_ABSTAND = 6.0        # pt je Klick auf „Absatzabstand“
+    SCHRITT_EINZUG = 10.0        # mm je Klick auf „Einzug“
+
+    def __init__(self, parent=None, *, absatz: bool = True):
+        super().__init__(parent)
+        from PySide6.QtWidgets import QVBoxLayout
+        self.vor = self.nach = self.einzug = 0.0
+        self.zeilen = 0.0
+        v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_KLEIN)
+        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+        z1 = FlussLayout(4); v.addLayout(z1)
+        self.schrift = schrift_feld(); self.groesse = groesse_feld()
+        self.groesse.setCurrentIndex(-1)
+        self.fett, self.kursiv = text_knopf("F", "Fett"), text_knopf("K", "Kursiv")
+        for w in (self.schrift, self.groesse):
+            z1.addWidget(w)
+        z1.addWidget(self.fett); z1.addWidget(self.kursiv)
+        z2 = FlussLayout(4); v.addLayout(z2)
+        self.ausr = ausrichtung_knoepfe()
+        self._gruppe = QButtonGroup(self); self._gruppe.setExclusive(False)
+        for schl, k in self.ausr.items():
+            z2.addWidget(k)
+            k.clicked.connect(lambda an, s=schl: self._ausrichtung(s, an))
+        self.zeilen_knoepfe: dict[float, QToolButton] = {}
+        self.knoepfe_absatz: list[QToolButton] = []
+        if absatz:
+            for f, name in ZEILENABSTAND:
+                k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name); k.setIcon(_zeilen_symbol(f)); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
+                k.clicked.connect(lambda an, f=f: self._zeilenabstand(f, an))
+                self.zeilen_knoepfe[f] = k; z2.addWidget(k)
+            for name, mehr, fn in (("Absatzabstand vergrößern", True, lambda: self._abstand(+self.SCHRITT_ABSTAND)),
+                                   ("Absatzabstand verkleinern", False, lambda: self._abstand(-self.SCHRITT_ABSTAND))):
+                k = self._aktion(name, _abstand_symbol(mehr), fn); z2.addWidget(k)
+            for name, mehr, fn in (("Einzug verkleinern", False, lambda: self._einzug(-self.SCHRITT_EINZUG)),
+                                   ("Einzug vergrößern", True, lambda: self._einzug(+self.SCHRITT_EINZUG))):
+                k = self._aktion(name, _einzug_symbol(mehr), fn); z2.addWidget(k)
+        for w in self.findChildren(QToolButton) + [self.schrift, self.groesse]:       # Bedienelemente mindestens 36 px (Eigentümer-Vorgabe Seitenleiste)
+            if isinstance(w, QToolButton):
+                w.setMinimumWidth(BREITE_KNOPF_KLEIN)
+        self.schrift.currentFontChanged.connect(lambda _f: self.geaendert.emit())
+        self.groesse.editTextChanged.connect(lambda _t: self.geaendert.emit())
+        self.fett.toggled.connect(lambda _a: self.geaendert.emit()); self.kursiv.toggled.connect(lambda _a: self.geaendert.emit())
+
+    @staticmethod
+    def _trenner() -> QFrame:
+        t = trennlinie(senkrecht=True, tief=True)
+        return t
+
+    @staticmethod
+    def _aktion(name: str, symbol: QIcon, fn) -> QToolButton:
+        k = QToolButton(); k.setAutoRaise(True); k.setToolTip(name); k.setIcon(symbol); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
+        k.clicked.connect(lambda _c=False: fn())
+        return k
+
+    # ---- Bedienung
+    def _ausrichtung(self, schl: str, an: bool) -> None:
+        for s, k in self.ausr.items():
+            k.setChecked(s == schl and an)
+        self.geaendert.emit()
+
+    def _zeilenabstand(self, f: float, an: bool) -> None:
+        self.zeilen = f if an else 0.0
+        self._zeige_zeilen()
+        self.geaendert.emit()
+
+    def _zeige_zeilen(self) -> None:
+        for f, k in self.zeilen_knoepfe.items():
+            k.setChecked(abs(f - self.zeilen) < 0.01)
+
+    def _abstand(self, delta: float) -> None:
+        self.vor, self.nach = max(0.0, self.vor + delta), max(0.0, self.nach + delta)
+        self.geaendert.emit()
+
+    def _einzug(self, delta: float) -> None:
+        self.einzug = max(0.0, self.einzug + delta)
+        self.geaendert.emit()
+
+    # ---- Werte
+    def werte(self) -> dict:
+        try:
+            gr = float(self.groesse.currentText().replace(",", "."))
+        except ValueError:
+            gr = 0.0
+        return {"schrift": self.schrift.currentFont().family() if self._schrift_gesetzt else "", "groesse": gr,
+                "fett": self.fett.isChecked(), "kursiv": self.kursiv.isChecked(),
+                "ausr": next((s for s, k in self.ausr.items() if k.isChecked()), ""),
+                "vor": self.vor, "nach": self.nach, "einzug": self.einzug, "zeilen": self.zeilen}
+
+    _schrift_gesetzt = False
+
+    def setze(self, d: dict) -> None:
+        """Alle Felder auf die Werte einer Vorlage stellen (ohne ``geaendert`` zu melden)."""
+        for w in (self.schrift, self.groesse, self.fett, self.kursiv):
+            w.blockSignals(True)
+        self._schrift_gesetzt = bool(d.get("schrift"))
+        if d.get("schrift"):
+            self.schrift.setCurrentFont(QFont(d["schrift"]))
+        g = d.get("groesse") or 0
+        self.groesse.setCurrentText(f"{g:g}" if g else "")
+        self.fett.setChecked(bool(d.get("fett"))); self.kursiv.setChecked(bool(d.get("kursiv")))
+        for s, k in self.ausr.items():
+            k.setChecked(d.get("ausr") == s)
+        self.vor, self.nach = float(d.get("vor") or 0), float(d.get("nach") or 0)
+        self.einzug, self.zeilen = float(d.get("einzug") or 0), float(d.get("zeilen") or 0)
+        self._zeige_zeilen()
+        for w in (self.schrift, self.groesse, self.fett, self.kursiv):
+            w.blockSignals(False)
+
+
+# ---- Zeichenformat <-> Werte, gemeinsam für das Fenster „Schriftart“ und den Editor --------------------------------------------
+UNTERSTREICHUNG = (("", "(Keine)"), ("woerter", "Nur Wörter"), ("einfach", "Einfach"), ("doppelt", "Doppelt"), ("dick", "Dick"),
+                   ("gepunktet", "Gepunktet"), ("dick_gepunktet", "Dick gepunktet"), ("gestrichelt", "Gestrichelt"), ("dick_gestrichelt", "Dick gestrichelt"),
+                   ("lang", "Lang gestrichelt"), ("dick_lang", "Dick lang gestrichelt"), ("strichpunkt", "Strich-Punkt"), ("dick_strichpunkt", "Dick Strich-Punkt"),
+                   ("strichpunktpunkt", "Strich-Punkt-Punkt"), ("dick_strichpunktpunkt", "Dick Strich-Punkt-Punkt"), ("wellig", "Wellenlinie"),
+                   ("dick_wellig", "Dicke Wellenlinie"), ("doppelwellig", "Doppelte Wellenlinie"))
+from lunivo_writer.editor.unterstreichung import _UNTER_QT, _UNTER_RUECKFALL, unter_format  # noqa: F401  (hier weiter erreichbar)
+ZEICHEN = {"schrift": "", "fett": False, "kursiv": False, "groesse": 0.0, "farbe": "", "unter": "", "unterfarbe": "",
+           "durch": False, "hoch": False, "tief": False, "kapital": False, "gross": False, "versteckt": False,
+           "abstand": 0.0, "kerning": True, "doppelt": False, "betonung": "", "skala": 100.0, "position": 0.0, "kern_ab": 0.0, "raster": True,
+           "schrift_asien": "", "schnitt_asien": "", "groesse_asien": 0.0, "schrift_komplex": "", "schnitt_komplex": "", "groesse_komplex": 0.0}
+BETONUNG = (("", "(Keine)"), ("punkt", "Punkt oberhalb"), ("kreis", "Kreis oberhalb"), ("komma", "Komma oberhalb"), ("unten", "Punkt unterhalb"))
+
+
+def zu_format(w: dict) -> QTextCharFormat:
+    """Die Werte eines Zeichenfensters als Zeichenformat (zum Anwenden im Editor und für Vorschauen)."""
+    from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+    f = QTextCharFormat()
+    familien = [x for x in (w.get("schrift"), w.get("schrift_asien"), w.get("schrift_komplex")) if x]
+    if familien:                                  # Qt nimmt für Zeichen, die die erste Schrift nicht hat, die nächste (asiatisch, komplex)
+        f.setFontFamilies(list(dict.fromkeys(familien)))
+    f.setProperty(P_FONT_ASIEN, f'{w.get("schrift_asien", "")}|{w.get("schnitt_asien", "")}|{w.get("groesse_asien", 0.0):g}')
+    f.setProperty(P_FONT_KOMPLEX, f'{w.get("schrift_komplex", "")}|{w.get("schnitt_komplex", "")}|{w.get("groesse_komplex", 0.0):g}')
+    f.setProperty(P_DOPPELT, 1 if w.get("doppelt") else 0)
+    f.setProperty(P_BETONUNG, w.get("betonung", ""))
+    f.setFontWeight(QFont.Bold if w.get("fett") else QFont.Normal)
+    f.setFontItalic(bool(w.get("kursiv")))
+    if w.get("groesse"):
+        f.setFontPointSize(float(w["groesse"]))
+    if w.get("farbe"):
+        f.setForeground(QColor(w["farbe"]))
+    f.merge(unter_format(w.get("unter") or ""))
+    if w.get("unter") and w.get("unterfarbe"):
+        f.setUnderlineColor(QColor(w["unterfarbe"]))
+    f.setFontStrikeOut(bool(w.get("durch") or w.get("doppelt")))
+    f.setVerticalAlignment(QTextCharFormat.AlignSuperScript if w.get("hoch") else QTextCharFormat.AlignSubScript if w.get("tief")
+                           else QTextCharFormat.AlignNormal)
+    f.setFontCapitalization(QFont.AllUppercase if w.get("gross") else QFont.SmallCaps if w.get("kapital") else QFont.MixedCase)
+    f.setFontLetterSpacingType(QFont.AbsoluteSpacing)
+    f.setFontLetterSpacing(float(w.get("abstand") or 0) / 0.75)
+    kern_ab = float(w.get("kern_ab") or 0)                     # „Unterschneidung ab … Punkte“: erst ab dieser Größe
+    f.setFontKerning(bool(w.get("kerning", True)) and (kern_ab <= 0 or float(w.get("groesse") or 11) >= kern_ab))
+    f.setFontStretch(int(round(float(w.get("skala") or 100))))                       # „Skalieren“: Breite der Zeichen in Prozent
+    gr = float(w.get("groesse") or 11)
+    f.setBaselineOffset(float(w.get("position") or 0) / gr * 100 if gr else 0.0)     # „Position“: Pt höher (+) oder tiefer (−), in Prozent der Schriftgröße
+    from lunivo_writer.editor.zusatz import P_RASTER
+    f.setProperty(P_RASTER, 1 if w.get("raster", True) else 0)
+    return f
+
+
+def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse: float = 0.0) -> dict:
+    """Die Werte eines Zeichenformats (zum Vorbelegen eines Zeichenfensters)."""
+    w = dict(ZEICHEN)
+    fam = cf.fontFamilies()
+    w["schrift"] = (fam[0] if fam else "") or standard_schrift
+    w["fett"], w["kursiv"] = cf.fontWeight() >= 600, cf.fontItalic()
+    w["groesse"] = cf.fontPointSize() or standard_groesse
+    if cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().style() != Qt.NoBrush:
+        w["farbe"] = cf.foreground().color().name()
+    from lunivo_writer.editor.zusatz import P_UNTER
+    w["unter"] = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) and cf.stringProperty(P_UNTER) else \
+        next((k for k, q in _UNTER_QT.items() if cf.underlineStyle() == q), "")
+    if w["unter"] and cf.underlineColor().isValid():
+        w["unterfarbe"] = cf.underlineColor().name()
+    from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+    w["doppelt"] = bool(cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT))
+    w["durch"] = cf.fontStrikeOut() and not w["doppelt"]
+    w["betonung"] = cf.stringProperty(P_BETONUNG) if cf.hasProperty(P_BETONUNG) else ""
+    for art, prop in (("asien", P_FONT_ASIEN), ("komplex", P_FONT_KOMPLEX)):
+        if cf.hasProperty(prop):
+            f_, sn, gr = (cf.stringProperty(prop).split("|") + ["", "", ""])[:3]
+            w[f"schrift_{art}"] = f_; w[f"schnitt_{art}"] = sn
+            try:
+                w[f"groesse_{art}"] = float(gr or 0)
+            except ValueError:
+                pass
+    w["hoch"] = cf.verticalAlignment() == QTextCharFormat.AlignSuperScript
+    w["tief"] = cf.verticalAlignment() == QTextCharFormat.AlignSubScript
+    w["kapital"] = cf.fontCapitalization() == QFont.SmallCaps
+    w["gross"] = cf.fontCapitalization() == QFont.AllUppercase
+    w["abstand"] = round(cf.fontLetterSpacing() * 0.75, 1) if cf.fontLetterSpacingType() == QFont.AbsoluteSpacing else 0.0
+    w["kerning"] = cf.fontKerning() if cf.hasProperty(QTextFormat.FontKerning) else True       # ohne Angabe gilt: an
+    w["skala"] = float(cf.fontStretch()) if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() else 100.0
+    gr = w["groesse"] or standard_groesse or 11
+    w["position"] = round(cf.baselineOffset() * gr / 100, 1) if cf.hasProperty(QTextFormat.TextBaselineOffset) else 0.0
+    from lunivo_writer.editor.zusatz import P_RASTER
+    w["raster"] = not (cf.hasProperty(P_RASTER) and not cf.property(P_RASTER))
+    return w
+
+
+def zeichne_absaetze(p: QPainter, rect, absaetze: list[tuple[QTextBlockFormat, QTextCharFormat, str]], mittig: bool = False) -> None:
+    """Absätze (Absatzformat, Zeichenformat, Text) in ein Rechteck zeichnen — die Vorschau der Formatierungsfenster."""
+    doc = QTextDocument(); doc.setDocumentMargin(0); doc.setTextWidth(rect.width())
+    c = QTextCursor(doc)
+    for i, (bf, cf, text) in enumerate(absaetze):
+        c.setBlockFormat(bf) if i == 0 else c.insertBlock(bf)
+        c.setCharFormat(cf); c.insertText(text)
+    p.save()
+    p.setClipRect(rect)
+    p.translate(rect.left(), rect.top() + (max(0.0, (rect.height() - doc.size().height()) / 2) if mittig else 0))
+    doc.drawContents(p, QRectF(0, 0, rect.width(), rect.height()))
+    p.restore()

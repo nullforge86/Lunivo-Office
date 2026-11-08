@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: formatierung. """
+"""Text- und Objektformatierung."""

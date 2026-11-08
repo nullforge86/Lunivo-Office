@@ -4,7 +4,7 @@ Ein Widget wird nur mit ``als_karte(widget, art)`` gekennzeichnet (Eigenschaft `
 (``ui/theme.py``) in das Programm-Stylesheet aufgenommen. Kein Widget setzt dafür ein eigenes Stylesheet."""
 from __future__ import annotations
 
-from lunivo_writer.ui.baukasten.mass import CHAT_CHIP_HOEHE, PADDING_KI_ANBIETER_EINTRAG, PADDING_KI_LISTENEINTRAG, RADIUS_FELD, CHAT_SENDEN, SCHRIFT_HINWEIS, PADDING_HILFE_CHIP, RADIUS_CHIP, RADIUS_EINGABEKASTEN, RADIUS_KLEIN, RADIUS_KARTE, RADIUS_MITTEL
+from lunivo_writer.ui.baukasten.basis.mass import CHAT_CHIP_HOEHE, PADDING_KI_ANBIETER_EINTRAG, PADDING_KI_LISTENEINTRAG, RADIUS_FELD, CHAT_SENDEN, SCHRIFT_HINWEIS, PADDING_HILFE_CHIP, RADIUS_CHIP, RADIUS_EINGABEKASTEN, RADIUS_KLEIN, RADIUS_KARTE, RADIUS_MITTEL
 
 ARTEN = ("zeile", "karte", "kompakt", "ki", "markiert", "nutzer", "fehler", "eingabe", "chip", "senden", "anhang", "miniatur", "liste", "liste_eng", "listenleiste", "listenfuss")
 

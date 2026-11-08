@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: dokument. """
+"""Dokument-, Druck- und Exportbausteine."""

@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: controls. """
+"""Wiederverwendbare Bedienelemente."""
