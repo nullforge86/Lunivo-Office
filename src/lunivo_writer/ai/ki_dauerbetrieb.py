@@ -148,13 +148,10 @@ class KIDauerbetriebMixin:
             self.status.emit(f"„{a['name']}“: nichts zu ändern." + self._preis(r.get("cent")))
             return
         self.merke_ergebnis(a["name"], text + (f"\n\nBegründung: {begruendung}" if begruendung else ""), alt)
-        ed = eing["ed"]
-        try:
-            if ed.document().revision() != eing["rev"]:
-                self.status.emit(f"„{a['name']}“: Sie haben weitergeschrieben — die Antwort passt nicht mehr und wurde verworfen.")
-                return
-        except RuntimeError:
+        if not self._eingabe_gueltig(eing):
+            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — die Antwort wurde verworfen.")
             return
+        ed = eing["ed"]
         k = self._preis(r.get("cent"))
         self._dauer_eigen = True
         try:
