@@ -75,6 +75,7 @@ def test_thesaurus_antwort_nach_dokumentwechsel_verwerfen(app, tmp_path, monkeyp
     assert erstes.toPlainText() == "Das ist ein schönes Haus."
     assert zweites.toPlainText() == "Anders: Das ist ein schönes Haus."
     assert dialog_aufrufe == []
+    erstes.document().setModified(False); zweites.document().setModified(False)      # sonst fragt das Schließen nach dem Speichern und der Test blockiert
     w.close()
 
 

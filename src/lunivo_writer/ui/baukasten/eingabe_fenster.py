@@ -106,6 +106,16 @@ class EingabeFenster(PanelFaehig, QDialog):
         ok = bool(d.exec())
         return d.kalender.selectedDate(), ok
 
+    @staticmethod
+    def zeigeAuswahl(parent, optionen: list[str], global_pos, gewaehlt) -> None:
+        """Auswahlfeld im Text: Liste der Möglichkeiten an ``global_pos``; ein Eintrag ruft ``gewaehlt(eintrag)``."""
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        menu = MenueListe(parent)
+        for o in optionen:
+            menu.eintrag(o, lambda o=o: gewaehlt(o))
+        if not menu.isEmpty():
+            menu.exec(global_pos)
+
 
 def _beim_editor_anmelden() -> None:
     """Der Editor fragt über ``formular.eingabe_anbieter``; er kennt die Oberfläche nicht, hier wird ihm dieses Fenster mitgegeben."""
