@@ -11,10 +11,10 @@ from PySide6.QtWidgets import (QCheckBox, QDialog, QFrame, QHBoxLayout, QLineEdi
                                QStackedWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.beschriftung import text_label
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
 from lunivo_writer.ui.dialogs.optionen_seiten.ansicht import AnsichtSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.datei import DateiSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.befehle import BefehleSeiten
@@ -22,7 +22,7 @@ from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import erklaerung as _er
 from lunivo_writer.ui.dialogs.optionen_seiten.lesen import LesenSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.lunivo import LunivoSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.name_ki import NameKiSeiten
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KEIN,
     ABSTAND_NORMAL,
     BREITE_NAVIGATION_OPTIONEN,

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QScrollArea, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
-from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_NAME_KI, RAND_DIALOG_KI
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FENSTER_NAME_KI, RAND_DIALOG_KI
 
 
 class NameKiSeiten:
@@ -38,7 +38,7 @@ class NameKiSeiten:
 
     def _anpassen(self, key: str) -> None:
         """Eines der Werkzeuge als Fenster zeigen; das Band wird danach neu gebaut, wenn es sich geändert hat."""
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         titel, bauer = self.FENSTER[key]
         d = QDialog(self)
         d.setWindowTitle(titel)
