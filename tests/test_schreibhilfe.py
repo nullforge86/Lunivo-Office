@@ -935,3 +935,23 @@ def test_ki_fertig_verwirft_antwort_fuer_anders_dokument(app, tmp_path, monkeypa
     assert a.ki_fertig(rev, v, dokument=object()) == 0
     assert a._roh == vorher
     assert a.ki_fertig(rev, v, dokument=e.document()) == 1
+
+
+
+def test_hintergrundpruefungen_verwerfen_anderes_dokument(app, tmp_path, monkeypatch):
+    """Gleiche Revisionen dürfen Ergebnisse aus einem früheren Dokument nicht gültig machen."""
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor()
+    e.setPlainText("Das ist vieleicht gut.")
+    a = w.assistant
+    vorher = list(a._roh)
+    rev = e.document().revision()
+
+    a._laeuft = True
+    a._fertig(rev, [], dokument=object())
+    assert a._roh == vorher
+    assert a._laeuft is False
+
+    a._lt_fertig(rev, [{"alt": "vieleicht"}], object())
+    assert a._roh == vorher
+    assert "languagetool" not in a._geprueft
