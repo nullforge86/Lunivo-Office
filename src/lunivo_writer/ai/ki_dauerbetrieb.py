@@ -138,6 +138,9 @@ class KIDauerbetriebMixin:
         a = self.konfig.assistent_holen(eing.get("assistent"))
         if a is None:
             return
+        if not self._eingabe_gueltig(eing):
+            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — die Antwort wurde verworfen.")
+            return
         if "fehler" in r:
             self._dauer_aus(a, r["fehler"])
             return
@@ -148,9 +151,6 @@ class KIDauerbetriebMixin:
             self.status.emit(f"„{a['name']}“: nichts zu ändern." + self._preis(r.get("cent")))
             return
         self.merke_ergebnis(a["name"], text + (f"\n\nBegründung: {begruendung}" if begruendung else ""), alt)
-        if not self._eingabe_gueltig(eing):
-            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — die Antwort wurde verworfen.")
-            return
         ed = eing["ed"]
         k = self._preis(r.get("cent"))
         self._dauer_eigen = True
