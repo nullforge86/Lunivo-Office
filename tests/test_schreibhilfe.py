@@ -39,6 +39,39 @@ def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp
     assert assistant._timer.isActive()
 
 
+def test_attach_erkennt_dokumentwechsel_im_selben_editor(app, tmp_path, monkeypatch):
+    from PySide6.QtGui import QTextDocument
+    w = win(tmp_path, monkeypatch)
+    a = w.assistant
+    ed = w.current_editor()
+    alt = ed.document()
+    neu = QTextDocument(ed)
+    neu.setPlainText("Neues Dokument mit gleichem Revisionsstand.")
+    ed.setDocument(neu)
+
+    a.attach(ed)
+
+    assert a._doc is neu
+    assert a._doc is not alt
+
+
+def test_languagetool_fehler_fuer_altes_dokument_wird_verworfen(app, tmp_path, monkeypatch):
+    from PySide6.QtGui import QTextDocument
+    w = win(tmp_path, monkeypatch)
+    a = w.assistant
+    ed = w.current_editor()
+    alt = ed.document()
+    neu = QTextDocument(ed)
+    neu.setPlainText("Neues Dokument.")
+    ed.setDocument(neu)
+    meldungen = []
+    a.status.connect(meldungen.append)
+
+    a._lt_fertig(-1, ["Fehler des alten Auftrags"], alt)
+
+    assert meldungen == []
+
+
 def test_verspaetetes_languagetool_ergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp_path, monkeypatch):
     w = win(tmp_path, monkeypatch)
     assistant = w.assistant
