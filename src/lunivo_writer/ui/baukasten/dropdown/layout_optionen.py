@@ -11,9 +11,9 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
 from PySide6.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
-from lunivo_writer.ui.baukasten.umbruch_symbole import umbruch_zeichner
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.kachel_feld import KachelFeld
+from lunivo_writer.ui.baukasten.formatierung.umbruch_symbole import umbruch_zeichner
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_NORMAL,
     GROESSE_LAYOUTOPTIONEN_KACHEL,
     RAND_LAYOUTOPTIONEN,
