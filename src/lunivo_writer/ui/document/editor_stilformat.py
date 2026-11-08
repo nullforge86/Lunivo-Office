@@ -80,7 +80,7 @@ class StilformatMixin:
                 bf.setBackground(QBrush(QColor(fuell)))
         cc.setBlockFormat(bf)
         if d.get("tabs"):
-            from lunivo_writer.ui.baukasten.tabstopp_dialog import aus_text as tabs_aus, zu_block
+            from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import aus_text as tabs_aus, zu_block
             bf = QTextCursor(blk).blockFormat(); zu_block(bf, tabs_aus(d["tabs"]))
             QTextCursor(blk).setBlockFormat(bf)
         if d.get("liste"):
@@ -102,7 +102,7 @@ class StilformatMixin:
     def _zeichen_der_vorlage(self, d: dict) -> QTextCharFormat:
         """Das Zeichenformat einer Vorlage (alle Felder des Fensters „Schriftart“). Was die Vorlage nicht setzt, bleibt in der Auswahl, wie es ist."""
         from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX, P_RASTER
-        from lunivo_writer.ui.baukasten.text_format import ZEICHEN, zu_format
+        from lunivo_writer.ui.baukasten.formatierung.text_format import ZEICHEN, zu_format
         zw = {k: d.get(k, v) for k, v in ZEICHEN.items()}
         f = zu_format(zw)
         if not zw["groesse"]:
@@ -226,7 +226,7 @@ class StilformatMixin:
         """Definition für eine neue Formatvorlage nach dem Absatz, in dem die Schreibmarke steht."""
         from lunivo_writer.editor import texteffekt
         from lunivo_writer.editor.listen import als_text
-        from lunivo_writer.ui.baukasten.tabstopp_dialog import als_text as tabs_text, aus_block
+        from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import als_text as tabs_text, aus_block
         c = self.textCursor()
         bf, cf = c.blockFormat(), c.charFormat()
         ausr = {Qt.AlignHCenter: "mitte", Qt.AlignRight: "rechts", Qt.AlignJustify: "block"}
@@ -251,7 +251,7 @@ class StilformatMixin:
 
     def _zeichen_felder(self, cf) -> dict:
         """Die Felder des Fensters „Schriftart“ (ohne Schrift, Größe, Schnitt, Farbe) eines Zeichenformats, als Felder einer Formatvorlage."""
-        from lunivo_writer.ui.baukasten.text_format import aus_format
+        from lunivo_writer.ui.baukasten.formatierung.text_format import aus_format
         w = aus_format(cf)
         keys = ("unter", "unterfarbe", "durch", "doppelt", "hoch", "tief", "kapital", "gross", "abstand", "kerning", "betonung", "schrift_asien", "schnitt_asien",
                 "groesse_asien", "schrift_komplex", "schnitt_komplex", "groesse_komplex", "skala", "position", "kern_ab", "raster")
