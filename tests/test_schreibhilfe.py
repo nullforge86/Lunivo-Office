@@ -1120,3 +1120,24 @@ def test_bildschirmfoto_nach_tabwechsel_nicht_in_neues_dokument_einfuegen(app, t
 
     assert erstes.toPlainText() == "Dokument A"
     assert zweites.toPlainText() == "Dokument B"
+
+
+def test_veraltete_modelllisten_antwort_nach_urlwechsel_verwerfen(app, tmp_path, monkeypatch):
+    """Eine Antwort für die vorige Anbieter-URL darf die Modellliste der neuen URL nicht überschreiben."""
+    from lunivo_writer.ui.dialogs.ki_modelle_dialoge import AnbieterDialog
+    w = win(tmp_path, monkeypatch)
+    d = AnbieterDialog(w, w.ki.konfig)
+    d.modell.setCurrentText("bereits gewählt")
+    alte_kennung = d._modell_abfrage
+
+    d.url.setText("https://neuer-anbieter.example/v1")
+    aktuelle_kennung = d._modell_abfrage
+    assert aktuelle_kennung > alte_kennung
+
+    d._geholt({"kennung": alte_kennung, "namen": ["Altes Modell"]})
+    assert d.modell.findText("Altes Modell") == -1
+    assert d.modell.currentText() == "bereits gewählt"
+
+    d._geholt({"kennung": aktuelle_kennung, "namen": ["Neues Modell"]})
+    assert d.modell.findText("Neues Modell") >= 0
+    assert d.modell.currentText() == "bereits gewählt"
