@@ -64,6 +64,7 @@ class WritingAssistant(QObject):
         self._schmutz: tuple[int, int] | None = None    # seit der letzten Prüfung geänderter Bereich
         self._region: tuple[int, int] | None = None     # Bereich der laufenden Teilprüfung (None = ganzer Text)
         self._doc = None
+        self._lauf_doc = None  # Dokumentobjekt des laufenden Workers; Revisionen allein sind nicht dokumentübergreifend eindeutig
         self._pool = QThreadPool(self)
         self._pool.setMaxThreadCount(1)
         self._sig = _Signale()
@@ -175,6 +176,7 @@ class WritingAssistant(QObject):
             self._zeigen()                               # nichts geändert — nichts zu prüfen
             return
         self._laeuft = True
+        self._lauf_doc = doc
         schalter = self.pruef_schalter()
         pruef_text = text[self._region[0]:self._region[1]] if self._region else text
         self._pruef_laenge = len(pruef_text)
@@ -192,7 +194,7 @@ class WritingAssistant(QObject):
         ed = self.editor
         if ed is None:
             return
-        if rev != ed.document().revision():          # Text hat sich inzwischen geändert
+        if self._lauf_doc is not ed.document() or rev != ed.document().revision():  # Dokument gewechselt oder Text inzwischen geändert
             self._timer.start()
             return
         self._geprueft_rev = rev
