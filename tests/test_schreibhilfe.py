@@ -39,6 +39,22 @@ def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp
     assert assistant._timer.isActive()
 
 
+def test_verspaetetes_languagetool_ergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp_path, monkeypatch):
+    w = win(tmp_path, monkeypatch)
+    assistant = w.assistant
+    erstes = w.current_editor().document()
+    w.new_document()
+    zweites = w.current_editor().document()
+    assistant.attach(w.current_editor())
+    assert erstes is not zweites
+    assert erstes.revision() == zweites.revision()
+
+    vorher = list(assistant._roh)
+    assistant._lt_fertig(zweites.revision(), [{"alt": "falsch"}], erstes)
+
+    assert assistant._roh == vorher
+
+
 def warte(sig_obj, timeout=8000):
     loop = QEventLoop()
     sig_obj.connect(lambda *_: loop.quit())
