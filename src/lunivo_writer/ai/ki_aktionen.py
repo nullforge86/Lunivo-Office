@@ -77,7 +77,9 @@ class KIAktionenMixin:
     def vorschlaege_holen(self) -> None:
         def danach(r, e):
             lst = r.get("vorschlaege", [])
-            self.assistant.ki_fertig(e.get("rev", -1), lst, dokument=e["ed"].document())
+            for v in lst:
+                v.update(_ed=e["ed"], _dokument=e["dokument"], _rev=e["rev"])
+            self.assistant.ki_fertig(e.get("rev", -1), lst, dokument=e["dokument"])
             self.vorschlaege.emit(lst)
             self.status.emit((f"{len(lst)} Vorschläge." if lst else "Die KI findet nichts, was sich leichter sagen ließe.")
                              + self._preis(r.get("cent")))
@@ -116,11 +118,20 @@ class KIAktionenMixin:
         satz = fund.stelle or ed.document().toPlainText()[fund.von:fund.bis]
         eing = {"ed": ed, "text": satz, "basis": fund.von, "markiert": True, "rev": ed.document().revision()}
         self.starte("Die KI schlägt kürzere Sätze vor …", lambda t: self.ki.satz_umschreiben(t, fund.grund),
-                    lambda r, e: danach({"alt": satz, "neu": r["text"].strip(), "grund": fund.grund}), eing=eing)
+                    lambda r, e: danach({"alt": satz, "neu": r["text"].strip(), "grund": fund.grund,
+                                         "_ed": e["ed"], "_dokument": e["dokument"], "_rev": e["rev"]}), eing=eing)
 
     def vorschlag_einsetzen(self, v: dict) -> bool:
         ed = self.w.current_editor()
         if ed is None:
+            return False
+        try:
+            if (ed is not v.get("_ed") or ed.document() is not v.get("_dokument")
+                    or ed.document().revision() != v.get("_rev")):
+                self.status.emit("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet.")
+                return False
+        except RuntimeError:
+            self.status.emit("Das Dokument ist nicht mehr verfügbar — der KI-Vorschlag ist veraltet.")
             return False
         text = ed.document().toPlainText()
         i = text.find(v["alt"])
