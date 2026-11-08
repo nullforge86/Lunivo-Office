@@ -235,8 +235,14 @@ class KIChatMixin:
         self._arbeit_laeuft = True
         self.laeuft.emit(True)
         self._chat_abbruch = abbruch = threading.Event()
+        def teil_senden(text: str) -> None:
+            try:
+                self._sig.teil.emit(kennung, text)
+            except RuntimeError:
+                abbruch.set()                         # Oberfläche wurde geschlossen; Stream abbrechen
+
         self._pool.start(_Lauf(("chat", {"anfrage": kennung}),
-                               lambda: self.ki.chat(verlauf, doc, markiert, lambda t: self._sig.teil.emit(kennung, t), abbruch), self._sig))
+                               lambda: self.ki.chat(verlauf, doc, markiert, teil_senden, abbruch), self._sig))
 
     def _chat_teil(self, kennung: int, text: str) -> None:
         if self.chat_modell.teil_setzen(kennung, text):
