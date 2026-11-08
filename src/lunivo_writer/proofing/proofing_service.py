@@ -38,7 +38,10 @@ class _Lauf(QRunnable):
         except Exception:        # Eine Prüfung, die abstürzt, darf das Schreiben nie stören
             _log.exception("Prüfung abgestürzt")
             funde = []
-        self.sig.fertig.emit(self.rev, funde, self.dokument)
+        try:
+            self.sig.fertig.emit(self.rev, funde, self.dokument)
+        except RuntimeError:
+            pass                                      # Prüfdienst wurde beim Schließen bereits freigegeben
 
 
 class WritingAssistant(QObject):
@@ -369,9 +372,15 @@ class WritingAssistant(QObject):
                 try:
                     funde = languagetool.pruefe(text)
                 except languagetool.LanguageToolFehler as e:
-                    self.sig.fertig.emit(-1, [str(e)], self.doc)
+                    try:
+                        self.sig.fertig.emit(-1, [str(e)], self.doc)
+                    except RuntimeError:
+                        pass                          # Prüfdienst wurde beim Schließen bereits freigegeben
                     return
-                self.sig.fertig.emit(self.rev, funde, self.doc)
+                try:
+                    self.sig.fertig.emit(self.rev, funde, self.doc)
+                except RuntimeError:
+                    pass                              # Prüfdienst wurde beim Schließen bereits freigegeben
 
         self._lt_sig = _Signale()
         self._lt_sig.fertig.connect(self._lt_fertig)
