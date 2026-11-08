@@ -11,14 +11,14 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ai import ki as K
-from lunivo_writer.ui.baukasten.aenderungs_vorschau import AenderungsVorschau
-from lunivo_writer.ui.baukasten.beschriftung import text_label
+from lunivo_writer.ui.baukasten.dokument.aenderungs_vorschau import AenderungsVorschau
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ABSTAND_NORMAL, CHAT_KNOPF, HOEHE_KNOPF_GROSS, CHAT_MINIATUR, ICON_NORMAL, RAND_KEIN
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_NORMAL, CHAT_KNOPF, HOEHE_KNOPF_GROSS, CHAT_MINIATUR, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 from lunivo_writer.ui.widgets import icons
 
 
