@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QComboBox, QHBoxLa
                                QLayout, QPushButton, QVBoxLayout, QWidget)
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_EXPORT_ABSCHNITT,
     ABSTAND_MITTEL,
     GROESSE_EXPORTKARTE,
@@ -32,7 +32,7 @@ BILDCHEN_BLATT_DUNKEL = "#3a3f45"
 BILDCHEN_AKZENT_DUNKEL = "#6b5442"
 from lunivo_writer.services.bild_export import FORMATE, QUALITAET, BildWahl
 
-from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
 
 
 class _Karte(QAbstractButton):
@@ -188,7 +188,7 @@ class BildExportAnsicht(QWidget):
         v.addLayout(fuss)
 
     def _ordner_waehlen(self) -> None:
-        from lunivo_writer.ui.baukasten.speichern_fenster import ordner_waehlen
+        from lunivo_writer.ui.baukasten.dokument.speichern_fenster import ordner_waehlen
         neu = ordner_waehlen(self, "Ordner für die Bilder", self.ordner.text() or _bilder_ordner())
         if neu:
             self.ordner.setText(neu)
