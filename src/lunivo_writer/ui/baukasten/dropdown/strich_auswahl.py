@@ -13,7 +13,7 @@ from PySide6.QtGui import QIcon, QPainter, QPalette, QPixmap, QPolygonF
 from PySide6.QtWidgets import QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter
 
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_FORM, BREITE_REGLER_MIN, GROESSE_STRICHART_KACHEL, HOEHE_KNOPF_GROSS
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_FORM, BREITE_REGLER_MIN, GROESSE_STRICHART_KACHEL, HOEHE_KNOPF_GROSS
 
 _KACHEL = QSize(*GROESSE_STRICHART_KACHEL)
 

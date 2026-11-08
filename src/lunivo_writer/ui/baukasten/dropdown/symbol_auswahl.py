@@ -11,7 +11,7 @@ from PySide6.QtGui import QIcon
 
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownTaste
 from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
-from lunivo_writer.ui.baukasten.mass import GROESSE_SYMBOLWAHL, GROESSE_SYMBOLWAHL_KACHEL, ICON_NORMAL
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_SYMBOLWAHL, GROESSE_SYMBOLWAHL_KACHEL, ICON_NORMAL
 from lunivo_writer.ui.widgets import icons
 
 # (Schlüssel, Name) — Symbole des Katalogs, die zu Assistenten passen

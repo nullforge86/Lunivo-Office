@@ -21,7 +21,7 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_SMARTART_LAYOUT_MINIATUR,
     GROESSE_SMARTART_MINIATUR,
     GROESSE_SMARTART_STIL_GALERIE,
