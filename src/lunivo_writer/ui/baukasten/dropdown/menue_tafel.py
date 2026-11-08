@@ -10,11 +10,11 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
-from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
-from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.basis.beschriftung import md_escape, md_label, text_label
+from lunivo_writer.ui.baukasten.medien.datei_symbole import datei_symbol
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KEIN,
     ABSTAND_BLOCK,
     BREITE_MENUETAFEL,

@@ -18,7 +18,7 @@ from lunivo_writer.ui.baukasten import farben
 from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import keine_symbol
 from lunivo_writer.ui.baukasten.dropdown.objekt_menues import TEXTUREN, _textur, graduell_pixmap
 from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
-from lunivo_writer.ui.baukasten.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
 
 KACHEL = QSize(*GROESSE_FUELLVORGABE_KACHEL)
 MUSTER_AUSWAHL = ("pct5", "pct10", "pct20", "pct30", "pct50")            # von dünn nach dicht

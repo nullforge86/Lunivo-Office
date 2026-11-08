@@ -17,7 +17,7 @@ from lunivo_writer.editor import textfx as X
 from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import keine_zeile
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENVORGABE_KACHEL
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_LINIENVORGABE_KACHEL
 
 KACHEL = QSize(*GROESSE_LINIENVORGABE_KACHEL)                        # Vorlage: Kachelabstand 107 x 29 px
 BREITE = 412
