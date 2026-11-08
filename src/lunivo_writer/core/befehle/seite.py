@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
-from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.models.page import HeaderFooter
 from PySide6.QtWidgets import QMenu
 from lunivo_writer.core.farben import Farbe
@@ -139,7 +139,7 @@ class SeiteBefehle:
     def menue_raenderKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
-        from lunivo_writer.ui.baukasten.seiten_bildchen import raender_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import raender_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(320, 70))
         for art, (o, u, l, r) in self.RAND.items():
             m.kachel(art, self.RAND_NAMEN[art], zeilenkachel(raender_zeichner(o, u, l, r), self.RAND_NAMEN[art],
@@ -154,7 +154,7 @@ class SeiteBefehle:
     def menue_ausrichtungKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
-        from lunivo_writer.ui.baukasten.seiten_bildchen import format_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import format_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(170, 40))
         m.kachel("hoch", "Hochformat", zeilenkachel(format_zeichner(False), "Hochformat", bild_breite=34))
         m.kachel("quer", "Querformat", zeilenkachel(format_zeichner(True), "Querformat", bild_breite=34))
@@ -166,7 +166,7 @@ class SeiteBefehle:
     def menue_groesseKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
-        from lunivo_writer.ui.baukasten.seiten_bildchen import papier_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import papier_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(240, 48), hoehe_max=620)
         for art, (b, h) in self.PAPIER.items():
             m.kachel(art, self.PAPIER_NAMEN[art], zeilenkachel(papier_zeichner(), self.PAPIER_NAMEN[art], [f"{b} mm × {h} mm"], bild_breite=34))
@@ -197,7 +197,7 @@ class SeiteBefehle:
         """Textrichtung wie in der Vorlage. Lunivo setzt Text nur waagerecht; die senkrechten Richtungen bleiben grau."""
         from PySide6.QtCore import QSize
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
-        from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import textrichtung_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
         for art, text in self.TEXTRICHTUNGEN:
             m.kachel(art, text, zeilenkachel(textrichtung_zeichner(art), text, bild_breite=40), aktiv=art == "waagerecht")
@@ -463,7 +463,7 @@ class SeiteBefehle:
     def menue_designsKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
-        from lunivo_writer.ui.baukasten.design_bildchen import design_zeichner
+        from lunivo_writer.ui.baukasten.medien.design_bildchen import design_zeichner
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(72, 50), hoehe_max=620)
         for name, (schema, paar) in D.DESIGNS.items():
@@ -483,7 +483,7 @@ class SeiteBefehle:
     def menue_farbenKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
-        from lunivo_writer.ui.baukasten.design_bildchen import farbreihe_zeichner
+        from lunivo_writer.ui.baukasten.medien.design_bildchen import farbreihe_zeichner
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Farbschemen", spalten=1, groesse=QSize(310, 24), hoehe_max=620)
         for name, farben in D.FARBSCHEMEN.items():
@@ -509,7 +509,7 @@ class SeiteBefehle:
     def menue_schriftartenKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
-        from lunivo_writer.ui.baukasten.design_bildchen import schriftpaar_zeichner
+        from lunivo_writer.ui.baukasten.medien.design_bildchen import schriftpaar_zeichner
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(290, 70), hoehe_max=640)
         for name, (kopf, text) in D.SCHRIFTPAARE.items():
@@ -528,7 +528,7 @@ class SeiteBefehle:
     def menue_effekteKlappe(self):
         from PySide6.QtCore import QSize
         from lunivo_writer.editor import designs as D
-        from lunivo_writer.ui.baukasten.design_bildchen import effekt_zeichner
+        from lunivo_writer.ui.baukasten.medien.design_bildchen import effekt_zeichner
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(112, 60), beschriftet=True, hoehe_max=640)
         for name, fx in D.EFFEKTE.items():
@@ -651,12 +651,12 @@ class SeiteBefehle:
         if not self.ed:
             return
         """Fenster „Schriftart“ (Baukasten): Schrift, Schnitt, Größe, Farbe, Unterstreichung, Effekte, Zeichenabstand."""
-        from lunivo_writer.ui.baukasten.schriftart_dialog import SchriftartDialog
-        from lunivo_writer.ui.baukasten.text_format import aus_format, zu_format
+        from lunivo_writer.ui.baukasten.formatierung.schriftart_dialog import SchriftartDialog
+        from lunivo_writer.ui.baukasten.formatierung.text_format import aus_format, zu_format
         d0 = self.ed.document().defaultFont()
         w = aus_format(self._fmt(), d0.family(), d0.pointSizeF())
         w["versteckt"] = self.ed.ist_versteckt()
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         d = SchriftartDialog(self.w, w)
         if ausfuehren(d):
             neu = d.werte()

@@ -56,9 +56,9 @@ class TextZeichenBefehle:
         """Wie in der Vorlage: die Linienarten als Bild, „Mehr Unterstreichungen …“ (Fenster Schriftart) und „Unterstreichungsfarbe“ mit der
         gemeinsamen Farbpalette."""
         from lunivo_writer.editor.textfx import unter_zeichnen
-        from lunivo_writer.ui.baukasten.linien import linien_menue_zeile
+        from lunivo_writer.ui.baukasten.basis.linien import linien_menue_zeile
         from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-        from lunivo_writer.ui.baukasten.text_format import unter_format
+        from lunivo_writer.ui.baukasten.formatierung.text_format import unter_format
         m = MenueListe()
         for art in self.UNTER_MENUE:
             linien_menue_zeile(m, "", art, 1.0, lambda a=art: self.ed and self.ed._merge(unter_format(a)),
@@ -73,7 +73,7 @@ class TextZeichenBefehle:
 
     def _unterfarbe(self, farbe) -> None:
         """Farbe der Unterstreichung; ist der Text noch nicht unterstrichen, wird er es einfach (wie in der Vorlage)."""
-        from lunivo_writer.ui.baukasten.text_format import unter_format
+        from lunivo_writer.ui.baukasten.formatierung.text_format import unter_format
         f = QTextCharFormat() if self.an_unter() else unter_format("einfach")
         f.setUnderlineColor(farbe if farbe is not None else QColor())
         self.ed._merge(f)
@@ -130,8 +130,8 @@ class TextZeichenBefehle:
         """„Formatvorlagen und Formatierung“: die Liste aller Formatvorlagen in der rechten Seitenleiste (wie der Bereich der Vorlage)."""
         if not self.ed:
             return
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.formatvorlagen_bereich import FormatvorlagenBereich
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.vorlagen.formatvorlagen_bereich import FormatvorlagenBereich
         ausfuehren(FormatvorlagenBereich(self.w, self.w.current_editor, self.w.stil_anwenden, self.neueFormatvorlage))
 
     def objekteWaehlen(self, k=None):
@@ -230,7 +230,7 @@ class TextZeichenBefehle:
         if not self.ed:
             return
         from lunivo_writer.editor import texteffekt
-        from lunivo_writer.ui.baukasten.texteffekt_dialog import TexteffektDialog
+        from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import TexteffektDialog
         d = TexteffektDialog(self.w, texteffekt.aus_format(self._fmt()))
         if d.exec():
             self.ed._merge(texteffekt.zu_format(d.werte()))
@@ -298,8 +298,8 @@ class TextZeichenBefehle:
         """Das Fenster „Groß-/Kleinschreibung“ (Zusatzfenster in der Seitenleiste)."""
         if not self.ed:
             return
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.schreibweise_dialog import SchreibweiseDialog
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.schreibweise_dialog import SchreibweiseDialog
         d = SchreibweiseDialog(self.w, getattr(self, "_schreibweise", "satz"))
         if ausfuehren(d):
             self._schreibweise = d.art()
@@ -323,8 +323,8 @@ class TextZeichenBefehle:
             return
         from lunivo_writer.editor import zeichenzusatz as Z
         from lunivo_writer.editor.zusatz import P_UMSCHLOSSEN
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.umschlossen_dialog import UmschlosseneZeichenDialog
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.umschlossen_dialog import UmschlosseneZeichenDialog
         c = self.ed.textCursor()
         d = UmschlosseneZeichenDialog(self.w, c.selectedText().replace("\u2029", " "))
         if not ausfuehren(d):
@@ -341,8 +341,8 @@ class TextZeichenBefehle:
             return
         from lunivo_writer.editor import zeichenzusatz as Z
         from lunivo_writer.editor.zusatz import P_RUBY
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.ruby_dialog import RubyDialog
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.ruby_dialog import RubyDialog
         c = self.ed.textCursor()
         text = c.selectedText().replace("\u2029", " ")
         if not text:

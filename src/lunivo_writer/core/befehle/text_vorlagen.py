@@ -34,8 +34,8 @@ class TextVorlagenBefehle:
     def neueFormatvorlage(self, k=None):
         """Fenster „Neue Formatvorlage“ (Baukasten); die Werte kommen vom Absatz an der Schreibmarke."""
         from lunivo_writer.editor import stile
-        from lunivo_writer.ui.baukasten.formatvorlage_dialog import FormatvorlageDialog
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.formatvorlage_dialog import FormatvorlageDialog
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         d = FormatvorlageDialog(self.w, start=(self.ed.stil_aus_auswahl() if self.ed else None), belegt=self._taste_belegt,
                                 standard_tab_mm=self.ed.standard_tab_mm() if self.ed else None)
         if not ausfuehren(d):
@@ -56,8 +56,8 @@ class TextVorlagenBefehle:
     def formatvorlageAendern(self, name: str):
         """Rechtsklick auf eine Vorlage in der Galerie ▸ Ändern …: dasselbe Fenster, der Name steht fest."""
         from lunivo_writer.editor import stile
-        from lunivo_writer.ui.baukasten.formatvorlage_dialog import FormatvorlageDialog
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.formatvorlage_dialog import FormatvorlageDialog
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         d = FormatvorlageDialog(self.w, aendern=name, belegt=self._taste_belegt, standard_tab_mm=self.ed.standard_tab_mm() if self.ed else None)
         if not ausfuehren(d):
             return
