@@ -1098,3 +1098,25 @@ def test_fortlaufender_ki_timer_startet_nicht_im_neuen_tab(app, tmp_path, monkey
 
     assert zweites.toPlainText() == "Unveränderter Text in Dokument B"
     assert not w.ki.beschaeftigt
+
+
+def test_bildschirmfoto_nach_tabwechsel_nicht_in_neues_dokument_einfuegen(app, tmp_path, monkeypatch):
+    """Die verzögerte Screenshot-Aufnahme bleibt an das Dokument beim Start gebunden."""
+    from PySide6.QtGui import QPixmap
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Dokument A")
+    w.befehle._foto_editor = erstes
+    w.befehle._foto_dokument = erstes.document()
+    w.befehle._foto_revision = erstes.document().revision()
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Dokument B")
+    bild = QPixmap(8, 8)
+    bild.fill(Qt.black)
+
+    w.befehle._foto_einfuegen(bild)
+
+    assert erstes.toPlainText() == "Dokument A"
+    assert zweites.toPlainText() == "Dokument B"
