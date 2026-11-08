@@ -1,0 +1,525 @@
+"""Hauptfenster: Menüleiste, Schnellzugriff, Ribbon, Dokumentreiter, Statusleiste."""
+from __future__ import annotations
+
+import os
+
+from PySide6.QtCore import QTimer, Signal
+from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence, QPalette
+from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QWidget
+
+from lunivo_writer import __version__
+from lunivo_writer.editor import stile
+from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.services.settings_service import Settings
+from lunivo_writer.ai.ai_service import KIDienst
+from lunivo_writer.proofing.proofing_service import WritingAssistant
+from lunivo_writer.core.document_manager import DocumentManager
+from lunivo_writer.ui.statusbar.status_bar import StatusBar
+from lunivo_writer.ui.document.document_tabs import DocTabs
+from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.document.navigation import NavigationPanel
+from lunivo_writer.ui.sidebar.sidebar import SchreibhilfePanel
+from lunivo_writer.core.commands import Befehle
+
+from lunivo_writer.ui.hauptfenster.dateien import DateienBaustein
+from lunivo_writer.ui.hauptfenster.bearbeiten import BearbeitenBaustein
+from lunivo_writer.ui.hauptfenster.oberflaeche import OberflaecheBaustein
+from lunivo_writer.ui.hauptfenster.backstage_steuerung import BackstageBaustein
+from lunivo_writer.ui.hauptfenster.dokument_sync import DokumentSyncMixin
+from lunivo_writer.ui.widgets import icons
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL, ICON_TAB_GEAENDERT, RAND_KEIN
+MARGIN_PRESETS = {
+    "Normal (2,5 cm)": (25, 25, 25, 25),
+    "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),
+    "Mittel (1,9 cm)": (19.1, 19.1, 19.1, 19.1),
+    "Breit (5,1 cm links/rechts)": (25.4, 25.4, 50.8, 50.8),
+}
+
+
+
+
+class MainWindow(DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, BackstageBaustein, QMainWindow):
+    lesehilfe_geaendert = Signal()                  # Lesestufe, Papier, Abstände, Zeilenfokus, Silben farbig: Seitenleiste und Optionen ziehen nach
+
+
+    def __init__(self, settings: Settings | None = None):
+        super().__init__()
+        self.settings = settings or Settings()
+        self.setWindowTitle("Lunivo Writer")
+        scr = QApplication.primaryScreen().availableGeometry() if QApplication.primaryScreen() else None
+        self.resize(min(1380, scr.width()) if scr else 1380, min(860, scr.height()) if scr else 860)
+        self.marks_on = False
+        self.lesemodus = False
+        self.docs = DocTabs()
+        self.docs.tabCloseRequested.connect(self.close_tab)
+        self.docs.currentChanged.connect(self._tab_changed)
+        self.docs.newRequested.connect(self.new_document)
+        self.docs.kontextGewuenscht.connect(self.reiter_menue)
+        self.tabs = self.docs                      # gleiche Schnittstelle wie ein QTabWidget
+        self.leer = QWidget()                      # nur der graue Arbeitsgrund, solange kein Dokument offen ist
+        self.leer.setBackgroundRole(QPalette.Dark)
+        self.leer.setAutoFillBackground(True)
+        self.docs.stack.insertWidget(0, self.leer)
+        self.docs.stack.setCurrentWidget(self.leer)
+        self.assistant = WritingAssistant(self.settings, parent=self)
+        self.assistant.status.connect(lambda t: self.lbl_msg.setText(t))
+        self.ki = KIDienst(self.assistant, self)
+        self.ki.status.connect(lambda t: self.lbl_msg.setText(t))
+        self.ki.geaendert.connect(lambda: hasattr(self, "band") and self.ki_schnell_zeigen())
+        from lunivo_writer.ui.dialogs import dokument_dialoge as _dlg
+        _dlg.set_einheit(self.settings.get("ui/masseinheit", "Millimeter"))
+        from lunivo_writer.ui.widgets.live_vorschau import LiveVorschau
+        self.vorschau = LiveVorschau(self)
+        self.dokumente = DocumentManager(self.settings)
+        self.befehle = Befehle(self)
+        self._build_actions()
+        self._zusatz_kuerzel()
+        self._build_status()
+        stile.laden(self.settings.get("stile/aenderungen", ""))
+        stile.laden_neu(self.settings.get("stile/eigene", ""))
+        self.menubar_wanted = self.settings.get_bool("ui/menueleiste", False)
+        self._symbole_anwenden()
+        self.band = self._band_erzeugen()
+        self.band.menue_knopf.clicked.connect(self.show_main_menu)
+        self._build_menu()
+        self.menuBar().setVisible(self.menubar_wanted)
+        self.sidebar = SchreibhilfePanel(self.assistant)
+        self.sidebar.verbinde_ki(self.ki, self)
+        self._bereiche_bauen()
+        self.sidebar.setVisible(self.settings.get_bool("ui/seitenleiste", True))
+        central = QWidget()
+        from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
+        lay = QVBoxLayout(central)
+        lay.setContentsMargins(*RAND_KEIN); lay.setSpacing(0)
+        lay.addWidget(self.docs.leiste)
+        self.band_lay = lay
+        lay.addWidget(self.band)
+        mitte = QHBoxLayout(); mitte.setSpacing(0)
+        self.arbeit = QWidget()
+        mitte.setContentsMargins(*RAND_KEIN)
+        self.navigation = NavigationPanel(self.current_editor, self)
+        self.navigation.aktion = self._nav_aktion
+        self.navigation.hide()
+        mitte.addWidget(self._leiste_links())
+        mitte.addWidget(self.navigation)
+        mitte.addWidget(self.docs.stack, 1)
+        mitte.addWidget(self.sidebar)
+        mitte.addWidget(self._leiste_rechts())
+        self.arbeit.setLayout(mitte)
+        lay.addWidget(self.arbeit, 1)
+        from lunivo_writer.ui.document.noten_feld import NotenFeld
+        self.noten_feld = NotenFeld(self.current_editor)
+        self.noten_feld.geaendert.connect(lambda: self.navigation.aktualisieren())
+        lay.addWidget(self.noten_feld)
+        from lunivo_writer.ui.backstage import Backstage
+        self.backstage = Backstage(self)
+        self.backstage.schliessen.connect(self.backstage_schliessen)
+        self.backstage.hide()
+        lay.addWidget(self.backstage, 1)
+        self._backstage_verbinden()
+        self.setCentralWidget(central)
+        from lunivo_writer.ui.theme import mint_abstaende
+        mint_abstaende(self)                                           # Thema Mint: Außenränder, Bandkarte, runde Dokumentfläche
+        geo = self.settings.get("window/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+        self.autosave = QTimer(self)
+        self.autosave.timeout.connect(self.autosave_now)
+        self.autosave.start(max(10, self.settings.get_int("autosave_seconds", 60)) * 1000)
+        self._sync_timer = QTimer(self)
+        self._sync_timer.setSingleShot(True)
+        self._sync_timer.setInterval(60)
+        self._sync_timer.timeout.connect(self._sync_format)
+        self._verbinde_felder()
+        self.ansicht_optionen_anwenden()
+        self._refresh_ui()
+
+
+    # ==== Aktionen =======================================================
+    def _act(self, text, slot=None, shortcut=None, checkable=False, tip=None, symbol=None) -> QAction:
+        a = QAction(text, self)
+        if symbol:
+            a.setIcon(icons.icon(symbol, ICON_NORMAL))
+        if shortcut:
+            a.setShortcut(QKeySequence(shortcut))
+        a.setCheckable(checkable)
+        if tip:
+            a.setToolTip(tip + (f" ({a.shortcut().toString()})" if shortcut else ""))
+        elif shortcut:
+            a.setToolTip(f"{text} ({a.shortcut().toString()})")
+        if slot:
+            (a.toggled if checkable else a.triggered).connect(slot)
+        return a
+
+
+    def _build_actions(self):
+        A = self._act
+        self.a_new = A("Neu", self.new_document, "Ctrl+N")
+        self.a_open = A("Öffnen …", self.open_dialog, "Ctrl+O")
+        self.a_save = A("Speichern", self.save, "Ctrl+S")
+        self.a_save_as = A("Speichern unter …", self.save_as, "Ctrl+Shift+S")
+        self.a_save_copy = A("Kopie speichern …", self.save_copy)
+        self.a_pdf = A("Als PDF exportieren …", self.export_pdf_dialog, "Ctrl+Shift+E")
+        self.a_exp_docx = A("Als DOCX exportieren …", lambda: self.export_as(".docx"))
+        self.a_exp_odt = A("Als ODT exportieren …", lambda: self.export_as(".odt"))
+        self.a_exp_txt = A("Als TXT exportieren …", lambda: self.export_as(".txt"))
+        self.a_print = A("Drucken …", self.print_dialog, "Ctrl+P")
+        self.a_preview = A("Druckvorschau …", self.print_preview)
+        self.a_info = A("Dokumentinformationen …", self.show_info)
+        self.a_options = A("Optionen …", self.show_options, "F9")
+        self.a_thema = A("Hell/Dunkel wechseln", self.thema_wechseln, "Ctrl+Shift+D")
+        self.a_close = A("Schließen", lambda: self.close_tab(self.tabs.currentIndex()), "Ctrl+W")
+        self.a_quit = A("Beenden", self.close, "Ctrl+Q")
+
+        self.a_undo = A("Rückgängig", lambda: self._ed(lambda e: e.undo()), "Ctrl+Z", tip="Rückgängig", symbol="undo")
+        self.a_redo = A("Wiederholen", lambda: self._ed(lambda e: e.redo()), "Ctrl+Y", tip="Wiederholen", symbol="redo")
+        self.a_cut = A("Ausschneiden", lambda: self._ed(lambda e: e.cut()), "Ctrl+X")
+        self.a_copy = A("Kopieren", lambda: self._ed(lambda e: e.copy()), "Ctrl+C")
+        self.a_paste = A("Einfügen", lambda: self._ed(lambda e: e.paste()), "Ctrl+V")
+        self.a_paste_plain = A("Einfügen ohne Formatierung", self.paste_plain, "Ctrl+Shift+V")
+        self.a_select_all = A("Alles auswählen", lambda: self._ed(lambda e: e.selectAll()), "Ctrl+A")
+        self.a_find = A("Suchen …", self.find_dialog_show, "Ctrl+F")
+        self.a_replace = A("Ersetzen …", lambda: self.find_dialog_show("Ersetzen"), "Ctrl+H")
+        self.a_tabs = A("Tabstopps …", self.tabstopp_dialog)
+        self.a_goto = A("Gehe zu …", self.befehle.geheZu, "Ctrl+G")
+
+        self.a_bold = A("Fett", self.befehle.fett, "Ctrl+B", symbol="bold")
+        self.a_italic = A("Kursiv", self.befehle.kursiv, "Ctrl+I", symbol="italic")
+        self.a_under = A("Unterstrichen", self.befehle.unter, "Ctrl+U", symbol="underline")
+        self.a_strike = A("Durchgestrichen", self.befehle.durch, symbol="strikethrough")
+        self.a_sup = A("Hochgestellt", self.befehle.hoch, "Ctrl+Shift+=", symbol="superscript")
+        self.a_sub = A("Tiefgestellt", self.befehle.tief, "Ctrl+=", symbol="subscript")
+        self.a_grow = A("Schrift vergrößern", lambda: self._ed(lambda e: e.grow_font(1)), "Ctrl+]", tip="Schrift vergrößern", symbol="a-arrow-up")
+        self.a_shrink = A("Schrift verkleinern", lambda: self._ed(lambda e: e.grow_font(-1)), "Ctrl+[", tip="Schrift verkleinern", symbol="a-arrow-down")
+        self.a_clear = A("Formatierung löschen", lambda: self._ed(lambda e: e.clear_formatting()), symbol="remove-formatting")
+        self.a_color = A("Schriftfarbe", self.choose_color, tip="Schriftfarbe", symbol="paint-bucket")
+        self.a_highlight = A("Hervorheben", self.choose_highlight, tip="Texthervorhebungsfarbe", symbol="highlighter")
+        self.a_bullets = A("Aufzählung", lambda: self._ed(lambda e: e.toggle_list("bullet")), tip="Aufzählung", symbol="list")
+        self.a_numbers = A("Nummerierung", lambda: self._ed(lambda e: e.toggle_list("number")), tip="Nummerierung", symbol="list-ordered")
+        self.a_indent_less = A("Einzug verkleinern", lambda: self._ed(lambda e: e.change_indent(-10)), tip="Einzug verkleinern", symbol="list-indent-decrease")
+        self.a_indent_more = A("Einzug vergrößern", lambda: self._ed(lambda e: e.change_indent(10)), tip="Einzug vergrößern", symbol="list-indent-increase")
+        self.align_group = QActionGroup(self)
+        self.a_left = A("Linksbündig", self.befehle.links, "Ctrl+L", symbol="text-align-start")
+        self.a_center = A("Zentriert", self.befehle.mitte, "Ctrl+E", symbol="text-align-center")
+        self.a_right = A("Rechtsbündig", self.befehle.rechts, "Ctrl+R", symbol="text-align-end")
+        self.a_justify = A("Blocksatz", self.befehle.block, "Ctrl+J", symbol="text-align-justify")
+        for a in (self.a_left, self.a_center, self.a_right, self.a_justify):
+            self.align_group.addAction(a)
+        self.a_para = A("Absatz …", self.paragraph_dialog)
+        self.a_marks = A("Formatierungszeichen", self.toggle_marks, "Ctrl+Shift+8", True, "Formatierungszeichen ein-/ausblenden", symbol="pilcrow")
+
+        self.a_pagebreak = A("Seitenumbruch", lambda: self._ed(lambda e: e.insert_page_break()), "Ctrl+Return")
+        self.a_table = A("Tabelle …", self.insert_table)
+        self.a_image = A("Bild …", self.insert_image)
+        self.a_link = A("Hyperlink …", self.insert_link, "Ctrl+K")
+        self.a_header = A("Kopfzeile …", lambda: self.edit_header_footer(True))
+        self.a_footer = A("Fußzeile …", lambda: self.edit_header_footer(False))
+        self.a_pagenum = A("Seitenzahl", self.insert_page_number)
+        self.a_date = A("Datum", self.insert_date)
+        self.a_pagesetup = A("Seite einrichten …", self.page_setup)
+        self.a_wordcount = A("Wortanzahl", self.word_count)
+        self.a_fullscreen = A("Vollbild", self.toggle_fullscreen, "F11", True)
+        self.a_about = A("Über Lunivo Writer", self.about)
+        self.a_lesemodus = A("Lesemodus", self.toggle_lesemodus, "Ctrl+Shift+L")
+        self.a_navigation = A("Navigationsbereich", self.toggle_navigation, "Ctrl+Shift+N")
+        for name, a in list(vars(self).items()):
+            if name.startswith("a_") and isinstance(a, QAction):
+                self.addAction(a)            # Tastenkürzel gelten auch bei verstecktem Menü
+
+
+    # ==== Menü ============================================================
+    def _build_menu(self):
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        mb = self.menuBar()
+        m = MenueListe.in_leiste(mb, "&Datei")
+        m.vorhanden(self.a_new); m.vorhanden(self.a_open)
+        self.recent_menu = m.untermenue("Zuletzt verwendete Dokumente")
+        self.recent_menu.aboutToShow.connect(self._fill_recent)
+        m.addSeparator()
+        m.vorhanden(self.a_save); m.vorhanden(self.a_save_as); m.vorhanden(self.a_save_copy)
+        ex = m.untermenue("Exportieren")
+        for a in (self.a_pdf, self.a_exp_docx, self.a_exp_odt, self.a_exp_txt):
+            ex.vorhanden(a)
+        pr = m.untermenue("Drucken")
+        pr.vorhanden(self.a_print); pr.vorhanden(self.a_preview)
+        m.addSeparator()
+        m.vorhanden(self.a_info); m.vorhanden(self.a_options)
+        m.addSeparator()
+        m.vorhanden(self.a_close); m.vorhanden(self.a_quit)
+        e = MenueListe.in_leiste(mb, "&Bearbeiten")
+        for a in (self.a_undo, self.a_redo, None, self.a_cut, self.a_copy, self.a_paste,
+                  self.a_paste_plain, None, self.a_find, self.a_replace, self.a_goto, self.a_select_all):
+            e.addSeparator() if a is None else e.vorhanden(a)
+        v = MenueListe.in_leiste(mb, "&Ansicht")
+        v.vorhanden(self.a_marks); v.vorhanden(self.a_fullscreen); v.vorhanden(self.a_thema)
+        h = MenueListe.in_leiste(mb, "&Hilfe")
+        h.vorhanden(self.a_about)
+
+
+    def _fill_recent(self):
+        self.recent_menu.clear()
+        items = self.settings.recent()
+        if not items:
+            self.recent_menu.eintrag("(leer)", aktiv=False)
+            return
+        for p in items:
+            self.recent_menu.eintrag(os.path.basename(p), lambda p=p: self.open_path(p), tip=p)
+        self.recent_menu.addSeparator()
+        self.recent_menu.eintrag("Liste leeren", self._clear_recent)
+
+
+    def _clear_recent(self):
+        self.settings.clear_recent()
+
+
+    # ==== Statusleiste ============================================================
+    def _build_status(self):
+        sb = StatusBar()
+        self.setStatusBar(sb)
+        self.statusleiste = sb
+        self.lbl_msg, self.lbl_words, self.lbl_page, self.lbl_zoom = sb.lbl_msg, sb.lbl_words, sb.lbl_page, sb.lbl_zoom
+        self.zoom_regler = sb.zoom_regler
+        sb.thema_wechseln.connect(self.thema_wechseln)
+        sb.lesemodus_beenden.connect(self.toggle_lesemodus)
+        sb.zoom_kleiner.connect(lambda: self.befehle.kleiner())
+        sb.zoom_groesser.connect(lambda: self.befehle.groesser())
+        sb.zoom_stufe.connect(lambda: self.befehle.zoomStufe())
+        sb.zoom_geaendert.connect(self._regler_bewegt)
+        self.thema_anzeigen()
+
+
+    # ==== Hilfen ====================================================================
+    def current_tab(self) -> DocumentTab | None:
+        w = self.tabs.currentWidget()
+        return w if isinstance(w, DocumentTab) else None
+
+
+    def current_editor(self) -> DocumentEditor | None:
+        t = self.current_tab()
+        return t.editor if t else None
+
+
+    def _ed(self, fn):
+        self.vorschau.ende()
+        e = self.current_editor()
+        if e is not None:
+            fn(e)
+
+
+    def _doc_tabs(self) -> list[DocumentTab]:
+        return [self.tabs.widget(i) for i in range(self.tabs.count())
+                if isinstance(self.tabs.widget(i), DocumentTab)]
+
+
+    def _tab_title(self, tab: DocumentTab) -> str:
+        return tab.title
+
+
+    def _update_tab_titles(self):
+        for i in range(self.tabs.count()):
+            w = self.tabs.widget(i)
+            if isinstance(w, DocumentTab):
+                self.tabs.setTabText(i, self._tab_title(w))
+                self.tabs.setTabIcon(i, icons.icon("circle", ICON_TAB_GEAENDERT) if w.is_modified() else QIcon())
+                self.tabs.setTabToolTip(i, w.path or "Noch nicht gespeichert")
+        self._update_window_title()
+
+
+    def _update_window_title(self):
+        t = self.current_tab()
+        self.setWindowTitle(f"{self._tab_title(t)} — Lunivo Writer" if t else "Lunivo Writer")
+
+
+    def _tab_changed(self, _i):
+        t = self.current_tab()
+        self._refresh_ui()
+        self.ki.kontext_pruefen()
+        if t:
+            t.editor.setFocus()
+            t.editor._recount()
+
+
+    def _refresh_ui(self):
+        has = self.current_tab() is not None
+        self.docs.stack.setCurrentWidget(self.current_tab() if has else self.leer)
+        self.band.aktualisieren(has)
+        for a in (self.a_undo, self.a_redo):
+            a.setEnabled(has)
+        self._update_window_title()
+        self._sync_format()
+        self._sync_status()
+        self._zoom_anzeigen()
+        self.assistant.attach(self.current_editor())
+
+
+
+
+
+
+    def _connect_tab(self, tab: DocumentTab):
+        e = tab.editor
+        e.zoomChanged.connect(lambda f, ed=e: ed is self.current_editor() and self._zoom_anzeigen(f))
+        e.formatChanged.connect(self._sync_later)
+        e.freiAuswahlGeaendert.connect(self._sync_later)
+        e.leseschutzGeaendert.connect(self._sync_later)
+        from lunivo_writer.ui.widgets.schweb_knopf import SchwebKnopf
+        tab._chat_knopf = SchwebKnopf(tab, "chat", "KI-Chat", lambda: self.chat_oeffnen(""))
+        self.sidebar.bereich_geaendert.connect(lambda *_: self._chat_knopf_pruefen())
+        e.formatChanged.connect(self._effekt_sync)
+        e.pageInfoChanged.connect(lambda *_: self._sync_status())
+        e.document().modificationChanged.connect(lambda _m: self._update_tab_titles())
+        e.document().contentsChanged.connect(self._sync_status)
+        e.document().contentsChanged.connect(self.assistant.dokument_geaendert)
+        for sig in (e.selectionChanged, e.document().contentsChanged):       # KI-Chat: Markierung/leeres Dokument (nur der aktuelle Editor zählt)
+            sig.connect(lambda ed=e: ed is self.current_editor() and self.ki.kontext_pruefen())
+        e.document().contentsChanged.connect(self.navigation.spaeter)
+        e.document().contentsChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("absatz"))        # fortlaufende KI-Assistenten
+        e.selectionChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("markierung"))
+        e.opt = lambda name, std=True: self.settings.get_bool(name, std)
+        e.opt_text = lambda name, std="": self.settings.get(name, std)
+        e.autor = self.autor_angaben
+        e.mini_hook = self.mini_zeigen
+        e.zusatzGeaendert.connect(self.navigation.spaeter)
+        e.noteAngeklickt.connect(lambda art, nid: self.noten_feld.oeffnen(art, nid))
+        e.set_marken(self.settings.get_bool("ui/marken", False))
+        self.formatzeichen_anwenden(e)
+        self.lineale_anwenden(tab)
+        self._lesehilfe_auf(e)
+        felder = self.band.felder
+        if felder and e is not None:
+            pass
+
+
+
+
+
+
+
+
+    def _verbinde_felder(self):
+        f = self.band.felder
+        if not f:
+            return
+        f["font"].activated.connect(lambda _: self._ed(lambda e: (e.set_font_family(f["font"].currentFont().family()), e.setFocus())))
+        f["groesse"].activated.connect(self._size_chosen)
+        f["groesse"].lineEdit().editingFinished.connect(self._size_chosen)
+        f["stil"].activated.connect(lambda _: self.stil_anwenden(f["stil"].currentText()))
+
+
+    def stil_anwenden(self, name: str):
+        name = "Standard" if name == "Fließtext" else name
+        self._ed(lambda e: e.apply_style(name))
+
+
+    def _size_chosen(self, *_):
+        try:
+            pt = float(self.band.felder["groesse"].currentText().replace(",", "."))
+        except ValueError:
+            return
+        self._ed(lambda e: (e.set_font_size(pt), e.setFocus()))
+
+
+    # ==== Fenster ====================================================================
+    @staticmethod
+    def alle_fenster() -> list["MainWindow"]:
+        return [w for w in QApplication.topLevelWidgets() if isinstance(w, MainWindow) and w.isVisible()]
+
+
+    def neues_fenster(self):
+        """Das aktuelle Dokument in einem zweiten Fenster öffnen (eigene Kopie, keine Synchronisation)."""
+        t = self.current_tab()
+        if t is None:
+            w = MainWindow(self.settings); w.show(); return w
+        if t.is_modified() or not t.path:
+            r = QMessageBox.question(self, "Neues Fenster",
+                                     "Das neue Fenster zeigt die gespeicherte Datei als eigene Kopie. Änderungen werden nicht zwischen "
+                                     "den Fenstern abgeglichen.\n\nJetzt speichern und das Fenster öffnen?")
+            if r != QMessageBox.Yes or not self.save():
+                return None
+        w = MainWindow(self.settings)
+        w.show()
+        w.open_path(t.path)
+        return w
+
+
+    def fenster_anordnen(self, art: str):
+        fenster = self.alle_fenster()
+        if len(fenster) < 2:
+            self.statusBar().showMessage("Zum Anordnen werden mindestens zwei Fenster gebraucht (Ansicht ▸ Neues Fenster).", 5000)
+            return
+        r = (self.screen() or QApplication.primaryScreen()).availableGeometry()
+        n = len(fenster)
+        if art == "nebeneinander":
+            spalten, zeilen = n, 1
+        elif art == "untereinander":
+            spalten, zeilen = 1, n
+        else:
+            spalten = int(n ** 0.5 + 0.999); zeilen = (n + spalten - 1) // spalten
+        bw, bh = r.width() // spalten, r.height() // zeilen
+        for i, f in enumerate(fenster):
+            f.showNormal()
+            f.setGeometry(r.x() + (i % spalten) * bw, r.y() + (i // spalten) * bh, bw, bh)
+
+
+    def fensterliste_menue(self) -> QMenu:
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        m = MenueListe()
+        for f in self.alle_fenster():
+            for t in f._doc_tabs():
+                m.eintrag(t.title + ("  (dieses Fenster)" if f is self else ""),
+                          lambda f=f, t=t: (f.raise_(), f.activateWindow(), f.tabs.setCurrentWidget(t)))
+        if m.isEmpty():
+            m.eintrag("Keine Dokumente geöffnet", aktiv=False)
+        return m
+
+
+    def closeEvent(self, ev):
+        for i in range(self.tabs.count() - 1, -1, -1):
+            if isinstance(self.tabs.widget(i), DocumentTab) and not self.close_tab(i):
+                ev.ignore(); return
+        self.settings.set("window/geometry", self.saveGeometry())
+        ev.accept()
+
+
+    # ---- Backstage (Reiter „Datei“) ------------------------------------------------------------------------------
+    _letzter_reiter = 1
+
+    _bs_zeit = 0.0
+
+
+    # ==== Sonstiges ===============================================================================
+    def word_count(self):
+        """Wörter zählen (Fenster wie Überprüfen ▸ Wörter zählen)."""
+        self.befehle.woerterZaehlen()
+
+
+    def show_info(self):
+        t = self.current_tab()
+        if not t:
+            return
+        size = os.path.getsize(t.path) if t.path and os.path.exists(t.path) else None
+        QMessageBox.information(self, "Dokumentinformationen",
+                                f"Name: {t.title}\nOrt: {t.path or 'noch nicht gespeichert'}\n"
+                                f"Größe: {f'{size/1024:.1f} KB' if size is not None else '–'}\n"
+                                f"Papier: {t.page.paper_name()} {'quer' if t.page.landscape else 'hoch'}\n"
+                                f"Seiten: {t.editor.page_count}   Wörter: {t.editor.word_count()}")
+
+
+    def show_options(self, seite: str | None = None):
+        """Die Optionen stehen in der Datei-Ansicht („☰ Menü ▸ Optionen“); ohne Register-Band als Fenster."""
+        if hasattr(self.band, "reiter") and hasattr(self.band, "stapel"):
+            self.backstage_oeffnen("optionen", seite)
+            return
+        from lunivo_writer.ui.dialogs.optionen import OptionenDialog
+        d = OptionenDialog(self, seite)
+        d.exec()
+        self.ki.geaendert.emit()
+
+
+    def toggle_fullscreen(self, on: bool):
+        self.showFullScreen() if on else self.showNormal()
+
+
+    def about(self):
+        from lunivo_writer.ui.dialogs import hilfe_dialoge
+        hilfe_dialoge.ueber(self, __version__).exec()

@@ -1,0 +1,1 @@
+"""Diagramm- und SmartArt-Bausteine."""
