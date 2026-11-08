@@ -2,7 +2,7 @@
 """Schreibt docs/pruefbogen/zuordnung.json — die von Hand begründete Zuordnung Prüfpunkt → native Fassung.
 
 Jede Zeile: "Kategorie|Punkt": {"status": "✅|◐|⬜", "wo": "…"}. Ändert sich der Stand, wird DIESE Datei angepasst und
-danach werkzeug/pruefbogen-abgleich.py ausgeführt. Kein Status ohne Beleg im Code oder in tests/.
+danach werkzeug/pruefen/pruefbogen-abgleich.py ausgeführt. Kein Status ohne Beleg im Code oder in tests/.
 """
 import json
 import os
@@ -206,6 +206,6 @@ s("OPTIONEN > In PDF exportieren > Exportoptionen", "Kommentare mitnehmen; Verkn
 s("OPTIONEN > Menüband anpassen", "Befehle auswählen; Menüband anpassen", OK, "Register anpassen (ein-/ausblenden, ordnen)")
 s("OPTIONEN > Symbolleiste für den Schnellzugriff", "Befehle auswählen; Derzeit angezeigte Optionen", OK, "Schnellzugriff anpassen (Haken je Befehl)")
 s("KONTEXTTABELLEN", "Kopf- und Fußzeilenwerkzeuge", TEIL, "Reiter mit „Erste Seite anders“ (PDF und DOCX); „Gerade/ungerade“ fehlt")
-json.dump(Z, open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+json.dump(Z, open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                                 "docs/pruefbogen/zuordnung.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print(len(Z), "Zuordnungen (Teil 1)")

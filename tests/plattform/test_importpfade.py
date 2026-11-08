@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_importpfade_stimmen():
-    ziel = Path(__file__).resolve().parents[2] / "werkzeug" / "importpruefung.py"
+    ziel = Path(__file__).resolve().parents[2] / "werkzeug" / "pruefen" / "importpruefung.py"
     spec = importlib.util.spec_from_file_location("importpruefung", ziel)
     modul = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(modul)

@@ -582,7 +582,7 @@ def test_seitenleistenpruefung_schreibt_bericht_und_endet(tmp_path):
     wurzel = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     ziel = tmp_path / "stand.md"
     bilder = tmp_path / "bilder"
-    r = subprocess.run([sys.executable, os.path.join(wurzel, "werkzeug", "seitenleistenpruefung.py"), "--teile", "titel", "--limit", "20",
+    r = subprocess.run([sys.executable, os.path.join(wurzel, "werkzeug", "pruefen", "seitenleistenpruefung.py"), "--teile", "titel", "--limit", "20",
                         "--ziel", str(ziel), "--behalten", str(bilder)],
                        capture_output=True, text=True, timeout=180, env={**os.environ, "QT_QPA_PLATFORM": "offscreen"}, cwd=wurzel)
     assert r.returncode == 0, r.stderr[-800:]

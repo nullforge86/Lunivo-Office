@@ -2,12 +2,12 @@
 """Schreibt docs/MENUESTRUKTUR.md: die vorgegebene Menüstruktur (12 Bereiche) Punkt für Punkt gegen das Programm.
 
 Status: ✅ vorhanden · ◐ teilweise oder anders gelöst · ⬜ fehlt. Die Einträge sind von Hand begründet (Befehl im Band, Test oder
-ehrliche Grenze); der Stand der Befehle kommt aus docs/PRUEFBOGEN.md und dem Band (werkzeug/pruefbogen-abgleich.py).
+ehrliche Grenze); der Stand der Befehle kommt aus docs/PRUEFBOGEN.md und dem Band (werkzeug/pruefen/pruefbogen-abgleich.py).
 """
 import os
 
 OK, TEIL, FEHLT = "✅", "◐", "⬜"
-W = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+W = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 B = []
 
 
@@ -151,7 +151,7 @@ bereich("12. Rechte Seitenleiste",
 
 z = {OK: 0, TEIL: 0, FEHLT: 0}
 txt = ["# Menüstruktur ↔ Programm", "",
-       "Erzeugt von `werkzeug/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 Bereiche) Punkt für Punkt gegen das Programm: "
+       "Erzeugt von `werkzeug/pruefen/menuestruktur-abgleich.py`. Die vorgegebene Struktur (12 Bereiche) Punkt für Punkt gegen das Programm: "
        "✅ vorhanden · ◐ teilweise oder anders gelöst · ⬜ fehlt. Reiter-Reihenfolge und -Anordnung folgen den Bildschirmfotos der Vorlage; "
        "wo die Struktur davon abweicht (eigener KI-Reiter, Rechtschreibung unter Überprüfen), gilt die Anordnung der Vorlage: Rechtschreibung "
        "und KI stehen im Reiter Schreibhilfe.", ""]

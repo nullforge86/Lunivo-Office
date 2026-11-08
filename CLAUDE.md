@@ -43,7 +43,7 @@ nur kleiner werden, nie größer.
   `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/controls/formular_gitter.py` bauen — Muster `ui/baukasten/formatierung/absatz_dialog.py`.
   Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der Vorlage rechts steht (Vorschau), kommt darunter.
   Bei 300 px Breite darf nichts herausragen.
-- Gezielter Test bei relevanter Verhaltensänderung: `.venv/bin/python -m pytest <testdatei> -k <testname>`. Nie `pytest` ohne Auswahl starten. Bandprüfung nur bei Änderungen am Band: `werkzeug/funktionspruefung.py`.
+- Gezielter Test bei relevanter Verhaltensänderung: `.venv/bin/python -m pytest <testdatei> -k <testname>`. Nie `pytest` ohne Auswahl starten. Bandprüfung nur bei Änderungen am Band: `werkzeug/pruefen/funktionspruefung.py`.
 - Das Projekt liegt nicht unter Git. Vor größeren Löschungen oder Umbauten eine Sicherung anlegen.
 - Bildschirmfotos sind nur ein Aussehens-Vorbild. Keine fremden Dateien, Grafiken oder Farbtabellen übernehmen.
 

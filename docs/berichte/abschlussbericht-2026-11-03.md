@@ -14,15 +14,15 @@ Nichts committet. Tests nur gezielt (keine Vollsuite). Praxisprüfung mit Screen
 | Schichten | beide Ausnahmen entfernt (`core/piktogramme.py`, Anbieter-Einhängung); Wächter für Betriebssystemaufrufe | `editor/dokument/formular.py`, `editor/dokument/einfuegen.py`, `tests/editor/test_schichten.py` |
 | Schreibhilfe | `ProofingIssue` ist Vertrag am Fund-Eingang (`bereinigen`) | `models/proofing.py`, `proofing/fund.py`, `proofing_service.py` |
 | DOCX-Aufbau | Reader/Writer in fachliche Teile (Stile, Tabellen, Seite, Objekte, Zusatz) | `services/docx_teile/` |
-| Korpus | 9 selbst erzeugte Dokumente, Roundtrip-Vergleich, Bericht | `werkzeug/docx_korpus.py`, `docs/docx-korpus-bericht.md` |
+| Korpus | 9 selbst erzeugte Dokumente, Roundtrip-Vergleich, Bericht | `werkzeug/pruefen/docx_korpus.py`, `docs/berichte/docx-korpus-bericht.md` |
 | Fehlerprotokoll | drei Fehlerarten, Schwärzung von Schlüsseln/Kennwörtern, Faden-Hook | `plattform/protokoll.py` |
 | Formate/Integrationen/Plattform | Verzeichnisse und Dokumentation; `fsync`/Prozesse in `plattform/` | `services/formate.py`, `integrations/verzeichnis.py`, `plattform/dateisystem.py`, `docs/formate.md`, `docs/plattformen.md` |
 | CI | ruff mit festen „echten Fehler“-Regeln, `ruff` in dev; Auswahl für Windows/macOS erweitert (weiter nicht blockierend) | `pyproject.toml`, `.github/workflows/pruefen.yml` |
-| Bedienbarkeit | Kachelfeld, Backstage-Liste, Handbuch-Liste, Vorlagenregister, Bandpfeile tastaturbedienbar; Namen für Schrift/Größe/Vorlage/Zoom/„Worum“; Beschreibung der Funktionszeilen; Wächter und Ausnahmeliste | siehe `docs/pruefbericht-barrierefreiheit-2026-11-03.md` |
-| Kontrast | rechnerische Prüfung aller Themen | `werkzeug/kontrast.py`, `docs/kontrast-bericht.md` |
+| Bedienbarkeit | Kachelfeld, Backstage-Liste, Handbuch-Liste, Vorlagenregister, Bandpfeile tastaturbedienbar; Namen für Schrift/Größe/Vorlage/Zoom/„Worum“; Beschreibung der Funktionszeilen; Wächter und Ausnahmeliste | siehe `docs/berichte/pruefbericht-barrierefreiheit-2026-11-03.md` |
+| Kontrast | rechnerische Prüfung aller Themen | `werkzeug/pruefen/kontrast.py`, `docs/berichte/kontrast-bericht.md` |
 
 ## Offen / Einschränkungen
-- Kontrast: behoben (Farben leicht angepasst), siehe docs/kontrast-bericht.md.
+- Kontrast: behoben (Farben leicht angepasst), siehe docs/berichte/kontrast-bericht.md.
 - Screenreader-Rollen (`QAccessible`) der selbstgebauten Widgets, Skalierung 125–200 %, Sichtprüfung der Fokusrahmen: nicht geprüft.
 - Korpus: nur selbst erzeugte Dokumente; Dokumente aus Word/LibreOffice fehlen (Ordner `tests/korpus_extern/` wird mitgeprüft, sobald vorhanden).
 - DOCX-Writer/Reader sind aufgeteilt, die Kernklassen bleiben groß; weitere Schnitte (Absatz/Lauf, Listen) nicht begonnen.

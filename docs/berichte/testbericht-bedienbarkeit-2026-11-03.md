@@ -77,7 +77,7 @@ Der Funktionsumfang ist groß (191 Band-Knöpfe, 9 Menüs mit rund 300 Punkten, 
 | V1 | Reiter und Menü einheitlich benennen (empfohlen „Verweise“ wie im Band, Menü „Referenzen“ umbenennen; oder umgekehrt) | nur Beschriftung; `register.json`, `references_tab.py`, Tests/Handbuch mit dem Namen prüfen |
 | V2 | Gleiche Aktion = gleicher Name (Rechtschreibung/-prüfung) und Prüfknöpfe vereinheitlichen | Beschriftung; Tastenkürzel unberührt |
 | V3 | Leerer Startzustand: Hinweis „Neu (Strg+N) oder Öffnen (Strg+O)“ in der Schreibfläche | rein anzeigend |
-| V4 | Band: Gruppen früher in Auswahlmenü falten statt abzuschneiden; Mindestgröße 36 px für alle Knöpfe (Pfeil ⭨ mit größerer Trefferfläche) | Layoutänderung im Band; mit `werkzeug/funktionspruefung.py` gezielt prüfen |
+| V4 | Band: Gruppen früher in Auswahlmenü falten statt abzuschneiden; Mindestgröße 36 px für alle Knöpfe (Pfeil ⭨ mit größerer Trefferfläche) | Layoutänderung im Band; mit `werkzeug/pruefen/funktionspruefung.py` gezielt prüfen |
 | V5 | Seitenleisten-Symbole optional mit Text (Einstellung „Beschriftung anzeigen“) | optional, nichts entfällt |
 | V6 | Mehr Kürzel in Menüs anzeigen, Kürzelliste (`kuerzel.py`) mit F1-Hilfe verknüpfen | Konflikte vorher gegen `setShortcut` prüfen |
 | V7 | Schreibhilfe-Seitenleiste beim Start schmaler oder zugeklappt, Breite merken | Zustand der Seitenleiste |

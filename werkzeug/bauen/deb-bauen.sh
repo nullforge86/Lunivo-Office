@@ -7,11 +7,11 @@
 #   Symlink    /usr/bin/lunivo-office
 #   Benutzerdaten nur in XDG-Verzeichnissen (das Programm schreibt nie nach /opt; Argos-Pakete landen unter data_dir()/argos-pakete).
 #
-#   werkzeug/deb-bauen.sh [VERSION]      Ergebnis: build/lunivo-office_VERSION_ARCH.deb
+#   werkzeug/bauen/deb-bauen.sh [VERSION]      Ergebnis: build/lunivo-office_VERSION_ARCH.deb
 #
 # Braucht Internet (pip, Argos-Sprachpakete) und dpkg-deb. Wird vom Eigentümer ausgeführt, nicht von der CI.
 set -euo pipefail
-HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERSION="${1:-$(sed -n 's/^version *= *"\(.*\)"/\1/p' "$HIER/pyproject.toml" | head -1)}"
 ARCH="$(dpkg --print-architecture)"
 APP=/opt/stevie-empire/lunivo-office
@@ -46,7 +46,7 @@ fi
 grep -rIl "$ROOT" "$ROOT$APP/venv/bin" 2>/dev/null | xargs -r sed -i "s#$ROOT##g"
 
 # 3. Sprachpakete Deutsch<->Englisch (alle anderen Sprachen lädt das Programm nur auf Wunsch)
-"$HIER/werkzeug/argos-holen.sh" "$SPRACHEN" "$VPY"
+"$HIER/werkzeug/bauen/argos-holen.sh" "$SPRACHEN" "$VPY"
 mkdir -p "$ROOT$APP/argos"
 cp "$SPRACHEN"/*.argosmodel "$ROOT$APP/argos/"
 

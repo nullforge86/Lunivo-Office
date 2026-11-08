@@ -5,7 +5,7 @@
    (oder auf einen Namen darin).
 3. Keine Weiterleitungs-Module (``sys.modules[__name__] = …``): alte Pfade werden nicht weiter geführt.
 
-Aufruf: ``QT_QPA_PLATFORM=offscreen PYTHONPATH=src python werkzeug/importpruefung.py`` — Rückgabewert 1 bei Fehlern.
+Aufruf: ``QT_QPA_PLATFORM=offscreen PYTHONPATH=src python werkzeug/pruefen/importpruefung.py`` — Rückgabewert 1 bei Fehlern.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import re
 import sys
 from pathlib import Path
 
-WURZEL = Path(__file__).resolve().parent.parent
+WURZEL = Path(__file__).resolve().parents[2]
 PAKET = "lunivo_writer"
 PFAD = re.compile(rf"\b{PAKET}(?:\.\w+)+")
 TEXTE = {".py", ".md"}

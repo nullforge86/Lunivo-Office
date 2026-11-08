@@ -427,7 +427,7 @@ def test_pdf_export_ersetzt_alte_pdf_erst_nach_erfolg(app, tmp_path, monkeypatch
 def test_pruefprotokoll_ohne_dokumentinhalte(app, tmp_path):
     import importlib.util
     import sqlite3
-    pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "werkzeug", "speicherpruefung.py")
+    pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "werkzeug", "pruefen", "speicherpruefung.py")
     spec = importlib.util.spec_from_file_location("speicherpruefung", pfad)
     mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
     db = str(tmp_path / "p.sqlite3")

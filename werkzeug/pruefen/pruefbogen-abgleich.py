@@ -12,7 +12,7 @@ import re
 import sys
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-WURZEL = os.path.dirname(HIER)
+WURZEL = os.path.dirname(os.path.dirname(HIER))
 sys.path.insert(0, os.path.join(WURZEL, "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtWidgets import QApplication  # noqa: E402
@@ -84,7 +84,7 @@ for k in bogen["items"]:
         zaehl[st] += 1
         ki = bogen["ki_stand"].get(slug(cat) + "|" + slug(it.rstrip("*")).strip("-"), {}).get("stand", "")
         zeilen.append(f"- {st} {it.rstrip('*')} — {wo}")
-kopf = (f"# Prüfbogen ↔ native Fassung\n\nErzeugt von `werkzeug/pruefbogen-abgleich.py` aus dem Prüfkatalog "
+kopf = (f"# Prüfbogen ↔ native Fassung\n\nErzeugt von `werkzeug/pruefen/pruefbogen-abgleich.py` aus dem Prüfkatalog "
         f"(415 Punkte). **✅ {zaehl['✅']} · ◐ {zaehl['◐']} · ⬜ {zaehl['⬜']}**. "
         "✅ = Befehl/Funktion vorhanden (einzeln getestet nur, wo `tests/` es belegt); "
         "◐ = teilweise oder anders gelöst; ⬜ = offen.\n"

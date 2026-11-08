@@ -3,7 +3,7 @@
 
 Zeichnen: Linie · Pfad (Klick für Klick, Doppelklick oder Enter beendet) · Rechteck · Kreis · Radierer.
 Unten steht das Ergebnis als Pfaddaten: Die kopiert man in Lunivo unter „Symbol austauschen ▸ Eigene Zeichnung …“.
-Starten:  python3 werkzeug/icon-zeichner.py   (braucht nur PySide6)
+Starten:  python3 werkzeug/symbole/icon-zeichner.py   (braucht nur PySide6)
 """
 from __future__ import annotations
 

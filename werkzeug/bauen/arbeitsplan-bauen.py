@@ -33,7 +33,7 @@ import re
 from collections import OrderedDict
 from pathlib import Path
 
-WURZEL = Path(__file__).resolve().parent.parent
+WURZEL = Path(__file__).resolve().parents[2]
 BOGEN = Path.home() / 'Downloads' / 'pruefkatalog_lunivo_2026-09-13.json'
 ZIEL = WURZEL / 'doku' / 'pruefkatalog' / 'arbeitsplan.md'
 
@@ -123,7 +123,7 @@ def main():
         nach_paket[paket_fuer(v.get('note'))].append((k, v))
 
     z = ['# Arbeitsplan aus seinem Prüfbogen', '',
-         'Gebaut von `werkzeug/arbeitsplan-bauen.py` aus seinem Export vom',
+         'Gebaut von `werkzeug/bauen/arbeitsplan-bauen.py` aus seinem Export vom',
          '13.09.2026. Die Pakete kommen aus seinen eigenen Notizen, nicht aus',
          'meinem Gefühl.', '',
          '## Die Regel, die vorher gefehlt hat', '',

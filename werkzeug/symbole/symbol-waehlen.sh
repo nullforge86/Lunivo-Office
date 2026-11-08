@@ -2,8 +2,8 @@
 #
 # symbol-waehlen.sh — legt fest, welche Icon-Variante das Programm trägt.
 #
-#     werkzeug/symbol-waehlen.sh                    zeigt, was da ist
-#     werkzeug/symbol-waehlen.sh klassisch-dunkel   setzt sie ein
+#     werkzeug/symbole/symbol-waehlen.sh                    zeigt, was da ist
+#     werkzeug/symbole/symbol-waehlen.sh klassisch-dunkel   setzt sie ein
 #
 # WARUM EIN BEFEHL UND KEIN HANDGRIFF
 #
@@ -13,7 +13,7 @@
 # Das ist genau der Schritt, den man vergisst. Hier macht ihn der Befehl mit.
 
 set -euo pipefail
-HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VARIANTEN="$HIER/symbole/varianten"
 
 if [ $# -eq 0 ]; then
@@ -23,7 +23,7 @@ if [ $# -eq 0 ]; then
     echo "  $(basename "$V")"
   done
   echo
-  echo "Aufruf:  werkzeug/symbol-waehlen.sh <name>"
+  echo "Aufruf:  werkzeug/symbole/symbol-waehlen.sh <name>"
   exit 0
 fi
 

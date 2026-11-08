@@ -44,9 +44,9 @@ src/lunivo_writer/
   proofing/                 Rechtschreibprüfung, Vorhersage und Barrierefreiheit
   resources/                Handbuch, Registerdefinitionen und Wörterdaten
 assets/                     Symbole, Logos und weitere Laufzeitressourcen
-docs/                       Projekt- und Benutzerdokumentation
+docs/                       Projekt- und Benutzerdokumentation; berichte/ enthält die Prüf-, Test- und Abschlussberichte
 tests/                      Gezielte pytest-Tests
-werkzeug/                   Entwicklungs- und Prüfhilfen (inventar-bauen.py: docs/interne-funktionen.md neu erzeugen; funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken, Bericht docs/seitenleistenstand.md)
+werkzeug/                   Entwicklungs- und Prüfhilfen: pruefen/ (funktionspruefung.py: Band; seitenleistenpruefung.py: Seitenleiste „Formatierung“ durchklicken; importpruefung.py: Importpfade; speicherpruefung.py; kontrast.py; docx_korpus.py), bauen/ (inventar-bauen.py: docs/interne-funktionen.md neu erzeugen; module_verschieben.py; deb-bauen.sh; titelbild.py), symbole/ (Symbol-Werkzeuge), git-haken/ und haken-an.sh
 ```
 
 ## Architekturübersicht
@@ -58,7 +58,7 @@ werkzeug/                   Entwicklungs- und Prüfhilfen (inventar-bauen.py: do
 - **core** steuert den Programmablauf und vermittelt Befehle.
 - **ui** zeigt Dokumente, Register, Seitenleisten und Dialoge.
 - **editor** führt Dokumentänderungen aus.
-- **editor/** ist in `seite`, `text`, `objekte`, `tabelle`, `dokument` und `diagramme` gegliedert. Alte Weiterleitungen gibt es nicht mehr; `werkzeug/importpruefung.py` (und `tests/plattform/test_importpfade.py`) prüft nach jedem Verschieben alle Importpfade. `werkzeug/module_verschieben.py` verschiebt Module und zieht alle Verweise mit.
+- **editor/** ist in `seite`, `text`, `objekte`, `tabelle`, `dokument` und `diagramme` gegliedert. Alte Weiterleitungen gibt es nicht mehr; `werkzeug/pruefen/importpruefung.py` (und `tests/plattform/test_importpfade.py`) prüft nach jedem Verschieben alle Importpfade. `werkzeug/bauen/module_verschieben.py` verschiebt Module und zieht alle Verweise mit.
 - **models** hält Dokument- und Seitendaten.
 - **services** liest und schreibt Dateien, Einstellungen und Sicherungen.
 - **plattform** kapselt Pfade, Dateisperre und Protokoll; nur dort steht Code, der je nach Betriebssystem verschieden ist.
@@ -89,7 +89,7 @@ Die wichtigsten Benutzerfunktionen sind in der [Oberfläche](oberflaeche.md), de
 ## Weitere Dokumentation
 
 - [UI-Technologie](ui-technologie.md): Qt Widgets, Zeichnung der Seiten, Theme, Symbole, Formate, Abhängigkeiten.
-- [Interne Funktionen](interne-funktionen.md): vollständiges Inventar der Module, Klassen, Funktionen und Methoden. Wird mit `werkzeug/inventar-bauen.py` aus dem Quelltext erzeugt.
+- [Interne Funktionen](interne-funktionen.md): vollständiges Inventar der Module, Klassen, Funktionen und Methoden. Wird mit `werkzeug/bauen/inventar-bauen.py` aus dem Quelltext erzeugt.
 - [Lies mich](LIESMICH.md), [Installation](INSTALLATION.md), [Lesen und Schreiben](lesen-und-schreiben.md), [Prüfung, Vorhersage und KI](pruefung-und-ki.md), [Schreiben und Dokumente](schreiben-und-dokumente.md), [Tabellen und Steuerung](tabellen-und-steuerung.md): Benutzerdokumentation.
 - [Aufbau: Registerband](aufbau-band.md), [Aufbau: Ist-Stand](aufbau-ist-stand.md), [Aufbau: Optionen](aufbau-optionen.md), [Konzept: Optionen](konzept-optionen.md), [Erweiterungen](erweiterungen.md): Aufbau und Konzepte.
 - [Entstehung](ENTSTEHUNG.md) und [Wohin Lunivo gehen soll](RICHTUNG.md): Hintergrund und Richtung.

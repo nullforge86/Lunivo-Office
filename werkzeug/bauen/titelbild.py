@@ -1,6 +1,6 @@
 """Zeichnet die Titelbilder für die README mit QPainter.
 
-Aufruf (nimmt die Anwendung neu auf und setzt das Bild zusammen): .venv/bin/python werkzeug/titelbild.py
+Aufruf (nimmt die Anwendung neu auf und setzt das Bild zusammen): .venv/bin/python werkzeug/bauen/titelbild.py
 Ausgabe: assets/images/titelbild.png
 Nur Qt-Zeichnen, kein HTML.
 """
@@ -16,7 +16,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QImage, QLinearGradient, QPainter, QPainterPath,
                            QPen, QPixmap, QRadialGradient)
 
-WURZEL = Path(__file__).resolve().parent.parent
+WURZEL = Path(__file__).resolve().parents[2]
 BILDER = WURZEL / "assets" / "images"
 LOGO = WURZEL / "assets" / "symbole" / "varianten" / "icon-SVG" / "Logo-Bunte.png"
 BREITE, HOEHE = 1600, 1200
@@ -40,7 +40,7 @@ def _fenster(p: QPainter, bild: QPixmap, ziel: QRectF, thema: dict) -> None:
 
 def aufnehmen() -> None:
     """Startet Lunivo (ohne Bildschirm) und nimmt das Hauptfenster hell und dunkel auf."""
-    sys.path.insert(0, str(WURZEL / "werkzeug"))
+    sys.path.insert(0, str(WURZEL / "werkzeug" / "bauen"))
     import bildschirmfotos as B
     from PySide6.QtWidgets import QApplication
     app = QApplication.instance()

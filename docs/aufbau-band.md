@@ -3,7 +3,7 @@
 Quelle des Bandes: `src/lunivo_writer/resources/register.json` und die Reiter-Module unter
 `src/lunivo_writer/ui/ribbon/tabs/`; zusammengesetzt werden sie in `src/lunivo_writer/ui/ribbon/plan.py`. Die Kontext-Reiter stehen unter
 `src/lunivo_writer/ui/contextual/`. Eine lokale Funktionsprüfung lässt sich mit
-`werkzeug/funktionspruefung.py` gezielt für einzelne Reiter ausführen.
+`werkzeug/pruefen/funktionspruefung.py` gezielt für einzelne Reiter ausführen.
 
 Das Band hat zehn Reiter. Standardmäßig sind acht sichtbar: Der Reiter *Datei* bleibt verborgen, weil seine Befehle im **☰ Menü** links vor dem Schnellzugriff
 stehen, und *Sendungen* ist ausgeblendet; er lässt sich über *Ansicht ▸ Oberfläche ▸ Register anpassen* einblenden. Dazu kommen neun Kontext-Reiter,

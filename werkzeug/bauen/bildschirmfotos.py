@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Nimmt die Bilder der Qt-Oberfläche für das README auf (ohne Bildschirm, QT_QPA_PLATFORM=offscreen).
 
-    python3 werkzeug/bildschirmfotos.py            schreibt assets/images/qt-*.png und rechtsklick.png
-    python3 werkzeug/bildschirmfotos.py --zusatz   nur Abschnitte, SmartArt, Formen, Tabellen, Überprüfen, Rechtsklick
+    python3 werkzeug/bauen/bildschirmfotos.py            schreibt assets/images/qt-*.png und rechtsklick.png
+    python3 werkzeug/bauen/bildschirmfotos.py --zusatz   nur Abschnitte, SmartArt, Formen, Tabellen, Überprüfen, Rechtsklick
 """
 import os
 import sys
 import tempfile
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-WURZEL = os.path.dirname(HIER)
+WURZEL = os.path.dirname(os.path.dirname(HIER))
 sys.path.insert(0, os.path.join(WURZEL, "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 ZIEL = os.path.join(WURZEL, "assets", "images")

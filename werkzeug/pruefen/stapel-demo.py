@@ -1,6 +1,6 @@
 """Vorführung: „Neue Formatvorlage“ mit allen Unterfenstern in EINEM Fenster (Fenster-Stapel), ohne die Anwendung.
 
-    .venv/bin/python werkzeug/stapel-demo.py
+    .venv/bin/python werkzeug/pruefen/stapel-demo.py
 
 Format ▾ öffnet Schriftart, Absatz, Tabstopps, Rahmen, Nummerierung, Texteffekte und Verknüpfung als Seite im selben Fenster; darin wieder
 Tabstopps (aus Absatz), Texteffekte (aus Schriftart), Anpassen (aus Nummerierung) und die Optionen (aus Rahmen). „OK“ kehrt zur vorigen Seite
@@ -9,7 +9,7 @@ zurück, „← Zurück“ bricht die Seite ab. Der Code liegt in ``ui/baukasten
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from PySide6.QtWidgets import QApplication
 
 from lunivo_writer.ui.theme import apply_theme

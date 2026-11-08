@@ -132,7 +132,7 @@ def test_kein_html_im_projekt():
         rel = p.relative_to(wurzel).as_posix()
         if p.suffix not in {".py", ".json", ".sh", ".toml"} or rel.startswith(("tests/", "src/lunivo_writer/resources/daten/")):
             continue
-        if rel.removeprefix("src/lunivo_writer/") in HTML_NOCH_ERLAUBT or rel == "werkzeug/funktionspruefung.py":
+        if rel.removeprefix("src/lunivo_writer/") in HTML_NOCH_ERLAUBT or rel == "werkzeug/pruefen/funktionspruefung.py":
             continue
         for n, z in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
             if code.search(z):

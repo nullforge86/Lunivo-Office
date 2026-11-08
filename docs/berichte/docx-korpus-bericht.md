@@ -1,7 +1,7 @@
 # DOCX-Korpus: Roundtrip-Bericht
 
 Jedes Dokument: einlesen → ohne Änderung speichern → erneut einlesen; verglichen werden Text, Zeichenformat-Läufe, Tabellenstruktur, Bilder, Kopf-/Fußzeile.
-Alle Dokumente sind selbst erzeugt (python-docx und eigenes XML), keine aus Word, LibreOffice oder Google Docs — siehe Grenze in `werkzeug/docx_korpus.py`.
+Alle Dokumente sind selbst erzeugt (python-docx und eigenes XML), keine aus Word, LibreOffice oder Google Docs — siehe Grenze in `werkzeug/pruefen/docx_korpus.py`.
 
 | Dokument | Abweichungen nach Roundtrip | Hinweise beim Lesen |
 |---|---|---|

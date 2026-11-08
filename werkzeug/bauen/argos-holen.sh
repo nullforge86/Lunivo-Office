@@ -5,9 +5,9 @@
 # Läuft zur BAUZEIT (von deb-bauen.sh aufgerufen), nicht beim Benutzer. Die Dateien werden nicht ins Repository eingecheckt.
 # Alle anderen Sprachen sind optional und werden nur auf Wunsch im Programm nachgeladen.
 #
-#   werkzeug/argos-holen.sh ZIELORDNER [PYTHON]    PYTHON braucht argostranslate (Standard: .venv/bin/python)
+#   werkzeug/bauen/argos-holen.sh ZIELORDNER [PYTHON]    PYTHON braucht argostranslate (Standard: .venv/bin/python)
 set -euo pipefail
-HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ZIEL="${1:?Aufruf: argos-holen.sh ZIELORDNER [PYTHON]}"
 PY="${2:-$HIER/.venv/bin/python}"
 "$PY" -c 'import argostranslate' 2>/dev/null || { echo "argostranslate fehlt in $PY." >&2; exit 1; }

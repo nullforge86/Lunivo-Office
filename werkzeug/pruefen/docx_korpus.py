@@ -1,6 +1,6 @@
 """Testkorpus für DOCX: selbst erzeugte Dokumente (kein fremdes oder geschütztes Material, keine Personendaten) und der Roundtrip-Vergleich.
 
-Verwendung:  python werkzeug/docx_korpus.py [Ausgabedatei.md]   → schreibt den Bericht (Markdown) über Verluste und Abweichungen.
+Verwendung:  python werkzeug/pruefen/docx_korpus.py [Ausgabedatei.md]   → schreibt den Bericht (Markdown) über Verluste und Abweichungen.
 Die Tests (tests/dokument/formate/test_docx_korpus.py) benutzen dieselben Bausteine.
 
 Ehrliche Grenze: Alle Dokumente stammen aus python-docx und eigenem XML, nicht aus Word, LibreOffice oder Google Docs. Dokumente aus
@@ -13,7 +13,7 @@ import os
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import docx  # noqa: E402
@@ -174,7 +174,7 @@ def bauen(name: str, ordner: str) -> str:
     return pfad
 
 
-def externe(ordner: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tests", "korpus_extern")) -> dict[str, str]:
+def externe(ordner: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tests", "korpus_extern")) -> dict[str, str]:
     """Vom Eigentümer beigesteuerte Dokumente aus anderen Programmen (nur wenn der Ordner existiert)."""
     if not os.path.isdir(ordner):
         return {}
@@ -236,7 +236,7 @@ def bericht(pfad_aus: str) -> None:
     QApplication.instance() or QApplication([])
     zeilen = ["# DOCX-Korpus: Roundtrip-Bericht", "",
               "Jedes Dokument: einlesen → ohne Änderung speichern → erneut einlesen; verglichen werden Text, Zeichenformat-Läufe, Tabellenstruktur, Bilder, Kopf-/Fußzeile.",
-              "Alle Dokumente sind selbst erzeugt (python-docx und eigenes XML), keine aus Word, LibreOffice oder Google Docs — siehe Grenze in `werkzeug/docx_korpus.py`.", "",
+              "Alle Dokumente sind selbst erzeugt (python-docx und eigenes XML), keine aus Word, LibreOffice oder Google Docs — siehe Grenze in `werkzeug/pruefen/docx_korpus.py`.", "",
               "| Dokument | Abweichungen nach Roundtrip | Hinweise beim Lesen |", "|---|---|---|"]
     with tempfile.TemporaryDirectory(prefix="korpus-") as tmp:
         quellen = {n: bauen(n, tmp) for n in KORPUS}
@@ -252,5 +252,5 @@ def bericht(pfad_aus: str) -> None:
 
 
 if __name__ == "__main__":
-    bericht(sys.argv[1] if len(sys.argv) > 1 else "docs/docx-korpus-bericht.md")
+    bericht(sys.argv[1] if len(sys.argv) > 1 else "docs/berichte/docx-korpus-bericht.md")
     print("Bericht geschrieben.")

@@ -8,7 +8,7 @@
 
 ## Paket (.deb)
 
-`werkzeug/deb-bauen.sh` baut genau eine `.deb` (Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter `stevie-lunivo-office.desktop`,
+`werkzeug/bauen/deb-bauen.sh` baut genau eine `.deb` (Anwendung unter `/opt/stevie-empire/lunivo-office/`, Starter `stevie-lunivo-office.desktop`,
 Symlink `/usr/bin/lunivo-office`). `torch` kommt nur als CPU-Version hinein (sonst mehrere GB durch CUDA). Die Argos-Sprachpakete
-Deutsch<->Englisch lädt `werkzeug/argos-holen.sh` zur Bauzeit nach `/opt/stevie-empire/lunivo-office/argos/`; weitere Sprachen lädt das Programm
+Deutsch<->Englisch lädt `werkzeug/bauen/argos-holen.sh` zur Bauzeit nach `/opt/stevie-empire/lunivo-office/argos/`; weitere Sprachen lädt das Programm
 nur auf Wunsch (`ai/argos.py`). Nicht in der CI ausgeführt.

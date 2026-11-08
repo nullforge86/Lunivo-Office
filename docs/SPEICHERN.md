@@ -114,7 +114,7 @@ Automatisch:
 
 ```bash
 .venv/bin/python -m pytest tests/dokument/speichern/test_speichern_sicher.py tests/dokument/formate/test_formats.py tests/dokument/formate/test_odt_rtf.py
-.venv/bin/python werkzeug/speicherpruefung.py          # alle Formate speichern, prüfen, öffnen; Protokoll in SQLite
+.venv/bin/python werkzeug/pruefen/speicherpruefung.py          # alle Formate speichern, prüfen, öffnen; Protokoll in SQLite
 ```
 
 Das Prüfprotokoll (`~/.cache/lunivo-writer/speicherpruefung.sqlite3`) enthält Test-ID, Zeit, Format, Testfall, Ergebnisse,

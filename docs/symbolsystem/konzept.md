@@ -63,7 +63,7 @@ Bilder (Entwurf links, bisher rechts; 72 px sowie 16, 20, 24 px ohne Hochskalier
 - [kontaktbogen-hell.png](kontaktbogen-hell.png)
 - [kontaktbogen-dunkel.png](kontaktbogen-dunkel.png)
 
-Erzeugt mit `.venv/bin/python werkzeug/symbol-kontaktbogen.py` (QPainter, kein HTML).
+Erzeugt mit `.venv/bin/python werkzeug/symbole/symbol-kontaktbogen.py` (QPainter, kein HTML).
 
 **Gemessen** (16 px, Entwurf gegen bisher, alle Symbole der Auswahl mit Gegenstück):
 - Mittlere Tintenmenge: 0,19 gegenüber 0,13.

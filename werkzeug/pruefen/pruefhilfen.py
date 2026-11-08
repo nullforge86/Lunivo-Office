@@ -9,7 +9,7 @@ import os
 import sys
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-WURZEL = os.path.dirname(HIER)
+WURZEL = os.path.dirname(os.path.dirname(HIER))
 sys.path.insert(0, os.path.join(WURZEL, "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 

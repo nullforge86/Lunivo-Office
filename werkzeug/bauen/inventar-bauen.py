@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Schreibt docs/interne-funktionen.md: Inventar aller Module, Klassen, Funktionen und Methoden von ``src/lunivo_writer``.
 
-    .venv/bin/python werkzeug/inventar-bauen.py
+    .venv/bin/python werkzeug/bauen/inventar-bauen.py
 
 Liest den Quelltext nur über ``ast`` (nichts wird importiert oder ausgeführt) und schreibt Markdown. Die Beschreibung ist
 die erste Zeile des Docstrings; fehlt er, bleibt sie leer.
@@ -11,7 +11,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-WURZEL = Path(__file__).resolve().parent.parent
+WURZEL = Path(__file__).resolve().parents[2]
 QUELLE = WURZEL / "src" / "lunivo_writer"
 ZIEL = WURZEL / "docs" / "interne-funktionen.md"
 
@@ -68,7 +68,7 @@ def main() -> None:
         "# Interne Funktionen — Inventar",
         "",
         "Vollständiges Inventar der Module, Klassen, Funktionen und Methoden von `src/lunivo_writer`. "
-        "Erzeugt mit `werkzeug/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. "
+        "Erzeugt mit `werkzeug/bauen/inventar-bauen.py` aus dem Quelltext (`ast`, ohne Import); nicht von Hand ändern, sondern neu erzeugen. "
         "Die Beschreibung stammt aus der ersten Docstring-Zeile.",
         "",
     ]

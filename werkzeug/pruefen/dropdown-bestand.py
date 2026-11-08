@@ -2,7 +2,7 @@
 """Schreibt docs/dropdown-bestand.md: alle Dropdown-Bausteine und ihre Verwendung (Markdown, aus dem Quelltext erzeugt)."""
 import ast, pathlib, re
 
-WURZEL = pathlib.Path(__file__).resolve().parent.parent
+WURZEL = pathlib.Path(__file__).resolve().parents[2]
 SRC = WURZEL / "src" / "lunivo_writer"
 PAKET = "ui/baukasten/dropdown/"
 BASEN = {"MenueListe", "PopupVerhalten", "Auswahlfeld", "Schriftauswahl", "DropdownKnopf", "DropdownTaste", "UeberlaufLeiste", "FlacheReiterLeiste"}
@@ -20,7 +20,7 @@ for p in sorted(SRC.rglob("*.py")):
         if z and not (rel.startswith(PAKET) and n != "menue_setzen("):
             verwendung[n][rel] = z
 
-z = ["# Dropdown-Bestand", "", "Erzeugt mit `werkzeug/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdown-Bausteine liegen im Paket "
+z = ["# Dropdown-Bestand", "", "Erzeugt mit `werkzeug/pruefen/dropdown-bestand.py` (nicht von Hand ändern). Alle Dropdown-Bausteine liegen im Paket "
      "`ui/baukasten/dropdown/`; Regeln und Pyramide stehen in `docs/baukasten.md`.", "", "## Klassen (Baustein → Basis → Datei)", "",
      "| Klasse | Basis | Datei |", "|---|---|---|"]
 for n, b, r in sorted(klassen, key=lambda x: (x[2], x[0])):

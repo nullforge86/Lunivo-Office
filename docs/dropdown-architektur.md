@@ -1,6 +1,6 @@
 # Dropdown-Architektur: Übersicht und Maßnahmen
 
-Stand: 2026-11-06. Grundlage ist die Verfolgung der Aufrufketten im Code, nicht nur Suchtreffer. Die Stellenzahlen stehen in `docs/dropdown-bestand.md` (erzeugt mit `werkzeug/dropdown-bestand.py`).
+Stand: 2026-11-06. Grundlage ist die Verfolgung der Aufrufketten im Code, nicht nur Suchtreffer. Die Stellenzahlen stehen in `docs/dropdown-bestand.md` (erzeugt mit `werkzeug/pruefen/dropdown-bestand.py`).
 
 ## 1. Die vier Stufen (jede baut auf der darunter auf)
 

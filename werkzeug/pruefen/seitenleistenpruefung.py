@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Klickt die Seitenleiste „Formatierung“ automatisch durch, wie ein Tester es von Hand täte, und schreibt auf, was wirklich passiert.
 
-    .venv/bin/python werkzeug/seitenleistenpruefung.py [--panel diagramm|objekt] [--teile titel,legende,...] [--arten saeule,linie,kreis]
+    .venv/bin/python werkzeug/pruefen/seitenleistenpruefung.py [--panel diagramm|objekt] [--teile titel,legende,...] [--arten saeule,linie,kreis]
                                                        [--limit 300] [--behalten ORDNER] [--ziel docs/seitenleistenstand.md]
 
 Läuft ohne Bildschirm (QT_QPA_PLATFORM=offscreen). Ein Dokument mit einem Diagramm (Säulen: 3 Reihen, 4 Rubriken) wird angelegt; dann wird
@@ -790,7 +790,7 @@ def bericht(p: Pruefer, panel: str, dauer: float, behalten: str | None, unvollst
     zaehl = {u: sum(1 for z in alle if z["urteil"] == u) for u in URTEILE}
     verborgen = sum(len(s.get("uebersprungen", [])) for s in p.seiten)
     t = [f"# Stand der Seitenleiste „Formatierung“ ({panel})", "",
-         "Geschrieben von `werkzeug/seitenleistenpruefung.py`: jedes Steuerelement jedes Reiters jedes Teils wird bedient; danach wird gemessen, ob sich der "
+         "Geschrieben von `werkzeug/pruefen/seitenleistenpruefung.py`: jedes Steuerelement jedes Reiters jedes Teils wird bedient; danach wird gemessen, ob sich der "
          "Datenwert geändert hat, ob sich das gezeichnete Bild geändert hat und ob das Panel den Wert beim erneuten Befüllen zurückliest. Vor jedem Steuerelement "
          "wird das Format zurückgesetzt. Bei „nur Daten“ kann es in Ordnung sein, wenn der Teil im Bild nicht zu sehen ist.", "",
          f"Lauf: {dauer:.0f} s, {len(alle)} Steuerelemente bedient, {verborgen} verborgen oder deaktiviert (nur gemeldet)."]

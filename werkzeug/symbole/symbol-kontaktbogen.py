@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Kontaktbogen für Symbolentwürfe: zeichnet jedes Symbol aus ``assets/icons/entwurf/`` neben das aktuelle Symbol gleichen Namens.
 
-    .venv/bin/python werkzeug/symbol-kontaktbogen.py [--ziel docs/symbolsystem]
+    .venv/bin/python werkzeug/symbole/symbol-kontaktbogen.py [--ziel docs/symbolsystem]
 
 Je Symbol: groß (72 px) und in 16, 20, 24 px — ohne Hochskalierung, also so grob wie auf einem normalen Bildschirm; links der Entwurf, rechts das
 bisherige Symbol. Es entstehen PNG-Bilder in hell und dunkel (Qt-Zeichnung, kein HTML).
@@ -14,7 +14,7 @@ import os
 import sys
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-WURZEL = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WURZEL = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(WURZEL, "src"))
 
 from PySide6.QtCore import QByteArray, QRectF, Qt

@@ -1,11 +1,11 @@
 """DOCX-Korpus: jedes Dokument übersteht Einlesen → Speichern → Einlesen ohne Abweichung in Text, Zeichenformat, Tabellenstruktur, Bildern;
-nicht Unterstütztes steht im Bericht (siehe werkzeug/docx_korpus.py)."""
+nicht Unterstütztes steht im Bericht (siehe werkzeug/pruefen/docx_korpus.py)."""
 import os
 import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "werkzeug"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "werkzeug", "pruefen"))
 import docx_korpus as K  # noqa: E402
 
 EXTERN = K.externe()

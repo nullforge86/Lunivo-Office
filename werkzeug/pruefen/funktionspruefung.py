@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Probiert jeden Knopf und jeden Menüpunkt des Bandes aus und schreibt auf, was wirklich passiert.
 
-    .venv/bin/python werkzeug/funktionspruefung.py [--ziel docs/funktionsstand.md] [--reiter Start,Einfügen]
+    .venv/bin/python werkzeug/pruefen/funktionspruefung.py [--ziel docs/funktionsstand.md] [--reiter Start,Einfügen]
 
 Läuft ohne Bildschirm (QT_QPA_PLATFORM=offscreen). Jeder Knopf wird in vier Lagen gedrückt — Text markiert, vorformatierter Text
 markiert, Zeiger in einer Tabelle, Bild markiert — und das Dokument wird davor und danach verglichen. Dialoge werden abgebrochen (und, wenn sie aus
@@ -25,7 +25,7 @@ import traceback
 from collections import OrderedDict
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-WURZEL = os.path.dirname(HIER)
+WURZEL = os.path.dirname(os.path.dirname(HIER))
 sys.path.insert(0, os.path.join(WURZEL, "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -325,7 +325,7 @@ def bericht(erg: OrderedDict) -> str:
     for z in alle:
         zaehl[z.get("urteil", "?")] = zaehl.get(z.get("urteil", "?"), 0) + 1
     t = ["# Funktionsstand des Bandes", "",
-         "Geschrieben von `werkzeug/funktionspruefung.py` (jeder Knopf und Menüpunkt wird in vier Lagen gedrückt: Text markiert, "
+         "Geschrieben von `werkzeug/pruefen/funktionspruefung.py` (jeder Knopf und Menüpunkt wird in vier Lagen gedrückt: Text markiert, "
          "vorformatierter Text markiert, Zeiger in der Tabelle, Bild markiert).", "",
          "| Urteil | Anzahl |", "|---|---|"] + [f"| {u} | {n} |" for u, n in zaehl.items() if n] + [""]
     probleme = [z for z in alle if z.get("urteil") in ("Fehler", "fehlt", "keine Wirkung", "grau")]

@@ -12,7 +12,7 @@ dependencies = ["PySide6-Essentials>=6.6,<7", "PySide6-Addons>=6.6,<7", "PySide6
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.5"]
-# Lokale Offline-Übersetzung (Argos). Optional: Lunivo startet auch ohne. Zieht torch nach — für die .deb als CPU-Version, siehe werkzeug/deb-bauen.sh.
+# Lokale Offline-Übersetzung (Argos). Optional: Lunivo startet auch ohne. Zieht torch nach — für die .deb als CPU-Version, siehe werkzeug/bauen/deb-bauen.sh.
 offline = ["argostranslate>=1.9"]
 
 [project.scripts]

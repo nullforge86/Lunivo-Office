@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prüft den Speicherweg für alle Formate und schreibt ein Prüfprotokoll in eine SQLite-Datenbank.
 
-    .venv/bin/python werkzeug/speicherpruefung.py [--db PFAD] [--formate .docx,.odt,...]
+    .venv/bin/python werkzeug/pruefen/speicherpruefung.py [--db PFAD] [--formate .docx,.odt,...]
 
 Läuft ohne Bildschirm in einem eigenen Temp-Ordner mit eigens erzeugten Testdokumenten; vorhandene Dokumente werden nie angefasst.
 Je Format und Testfall wird gespeichert, die Struktur geprüft, erneut geöffnet und der Inhalt verglichen.
@@ -23,7 +23,7 @@ import time
 import uuid
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(HIER), "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HIER)), "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 TABELLE = """

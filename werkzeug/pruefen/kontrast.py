@@ -1,6 +1,6 @@
 """Kontrast der Oberflächenfarben nach WCAG 2.1 (Verhältnis der relativen Helligkeiten) — rechnerisch aus den Farbtafeln in ``ui/theme.py``.
 
-    python werkzeug/kontrast.py [Ausgabe.md]      → Markdown-Tabelle aller Paare in allen Themen
+    python werkzeug/pruefen/kontrast.py [Ausgabe.md]      → Markdown-Tabelle aller Paare in allen Themen
 
 Grenzen: Text normal ≥ 4,5 : 1, Text ab 18 pt oder 14 pt fett und Bedienelemente/Rahmen/Fokus ≥ 3 : 1.
 Das prüft nur die Tafeln, nicht jede einzelne Stelle mit eigenem Stylesheet — dafür bleibt die Sichtprüfung nötig.
@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
