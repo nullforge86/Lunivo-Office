@@ -124,19 +124,27 @@ class KIAktionenMixin:
                     lambda r, e: danach({"alt": satz, "neu": r["text"].strip(), "grund": fund.grund,
                                          "_ed": e["ed"], "_dokument": e["dokument"], "_rev": e["rev"]}), eing=eing)
 
+    def vorschlag_aktuell(self, v: dict) -> bool:
+        """Prüft den Herkunftsbezug, auch wenn ein Vorschlag nur verworfen werden soll."""
+        ed = self.w.current_editor()
+        try:
+            doc = ed.document() if ed is not None else None
+            return (ed is v.get("_ed") and doc is v.get("_dokument")
+                    and doc.revision() == v.get("_rev"))
+        except (AttributeError, RuntimeError, TypeError):
+            return False
+
     def vorschlag_einsetzen(self, v: dict) -> bool:
         ed = self.w.current_editor()
-        if ed is None:
+        if not self.vorschlag_aktuell(v):
+            self.status.emit("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet.")
             return False
         try:
-            if (ed is not v.get("_ed") or ed.document() is not v.get("_dokument")
-                    or ed.document().revision() != v.get("_rev")):
-                self.status.emit("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet.")
-                return False
+            doc = ed.document()
         except RuntimeError:
             self.status.emit("Das Dokument ist nicht mehr verfügbar — der KI-Vorschlag ist veraltet.")
             return False
-        text = ed.document().toPlainText()
+        text = doc.toPlainText()
         i = text.find(v["alt"])
         if i < 0:
             self.status.emit("Der Satz steht nicht mehr so im Text — nichts geändert.")
