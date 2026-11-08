@@ -81,6 +81,25 @@ def test_pruefen_findet_und_aendert(app, tmp_path, monkeypatch):
 
 
 
+
+def test_ki_hinweiskarte_fuegt_nach_dokumentwechsel_nicht_falsch_ein(app, tmp_path, monkeypatch):
+    from lunivo_writer.ui.sidebar.panels.writing_panel import HinweisKarte
+    from PySide6.QtWidgets import QPushButton
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Ursprungsdokument")
+    w.sidebar.zeige_hinweis("Zusammenfassung", "Ergebnis aus Dokument A", None)
+    karte = w.sidebar.findChildren(HinweisKarte)[0]
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Zieldokument")
+    next(b for b in karte.findChildren(QPushButton) if b.text() == "Am Ende einfügen").click()
+
+    assert erstes.toPlainText() == "Ursprungsdokument"
+    assert zweites.toPlainText() == "Zieldokument"
+
+
 def test_veraltete_schreibhilfe_funde_nach_aenderung_oder_tabwechsel_sind_unwirksam(app, tmp_path, monkeypatch):
     from lunivo_writer.models.proofing import ProofingIssue
     w = win(tmp_path, monkeypatch)
