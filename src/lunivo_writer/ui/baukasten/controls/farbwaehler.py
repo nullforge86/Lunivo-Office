@@ -15,16 +15,16 @@ from PySide6.QtGui import (
     QBrush, QColor, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
 )
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QSlider, QSpinBox, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.mass import GROESSE_FARBFLAECHE, GROESSE_FARBPROBE, GROESSE_FARBREGLER, GROESSE_FARBRING, RAND_FARBWAEHLER_SEITE, RAND_FARBWAEHLER_TRANSPARENZ
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FARBFLAECHE, GROESSE_FARBPROBE, GROESSE_FARBREGLER, GROESSE_FARBRING, RAND_FARBWAEHLER_SEITE, RAND_FARBWAEHLER_TRANSPARENZ
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 MODELLE = ("RGB", "HSV", "HSL")
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, mittig
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FormularGitter, mittig
 class Modell(QObject):
     """Die gewählte Farbe, als Farbton/Sättigung/Wert gehalten (der Farbton geht bei Grau nicht verloren)."""
     geaendert = Signal()

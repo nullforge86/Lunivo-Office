@@ -13,9 +13,9 @@ from typing import Callable
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QStackedWidget, QToolButton, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import ABSTAND_GROSS, GROESSE_FENSTER_STAPEL, ICON_NORMAL, RAND_FENSTERSTAPEL_KOPF, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_GROSS, GROESSE_FENSTER_STAPEL, ICON_NORMAL, RAND_FENSTERSTAPEL_KOPF, RAND_KEIN
 
 
 class FensterStapel(QDialog):
@@ -88,7 +88,7 @@ def ausfuehren(d: QDialog) -> bool:
     """``d`` als oberstes Fenster eines Stapels zeigen und warten (wie ``d.exec()``): seine Unterfenster öffnen sich als Seiten im selben Fenster.
     → True nach „OK“. ``d`` bleibt danach lesbar (``d.werte()`` …); der Wirt hängt an ``d`` und lebt so lange wie dieses."""
     if getattr(d, "ALS_PANEL", False):                                  # Zusatzfenster: in der Seitenleiste statt über dem Text
-        from lunivo_writer.ui.baukasten.zusatz_panel import leiste_fuer
+        from lunivo_writer.ui.baukasten.controls.zusatz_panel import leiste_fuer
         leiste = leiste_fuer(d)
         if leiste is not None:
             return leiste.zusatz_ausfuehren(d)

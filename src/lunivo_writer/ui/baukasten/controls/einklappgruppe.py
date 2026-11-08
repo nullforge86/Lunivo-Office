@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_FELD, RAND_KEIN, RAND_ZEILE
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE_FELD, RAND_KEIN, RAND_ZEILE
 
 
 class EinklappGruppe(QWidget):

@@ -20,7 +20,7 @@ from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import QTabBar, QTabWidget, QToolButton
 
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownTaste
-from lunivo_writer.ui.baukasten.mass import BREITE_KNOPF_KLEIN, DROPDOWN_HOEHE, HOEHE_BANDREITER_KNOPF, REITER_DROPDOWN_RAND
+from lunivo_writer.ui.baukasten.basis.mass import BREITE_KNOPF_KLEIN, DROPDOWN_HOEHE, HOEHE_BANDREITER_KNOPF, REITER_DROPDOWN_RAND
 
 HAUPT, UNTER = "haupt", "unter"
 _RAND = 6                      # Abstand der Beschriftung zum Rand des Reiters
