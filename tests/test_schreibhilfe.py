@@ -1055,3 +1055,27 @@ def test_hintergrundpruefungen_verwerfen_anderes_dokument(app, tmp_path, monkeyp
     a._lt_fertig(rev, [{"alt": "vieleicht"}], object())
     assert a._roh == vorher
     assert "languagetool" not in a._geprueft
+
+
+def test_ki_ergebnis_nach_editorwechsel_verwerfen(app, tmp_path, monkeypatch):
+    """Auch das ursprüngliche Dokument darf nach einem Tabwechsel nicht mehr verändert werden."""
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Text im ersten Dokument")
+    eing = {
+        "ed": erstes,
+        "dokument": erstes.document(),
+        "rev": erstes.document().revision(),
+        "text": erstes.toPlainText(),
+        "basis": 0,
+        "markiert": False,
+    }
+    assert w.ki._eingabe_gueltig(eing)
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Text im zweiten Dokument")
+
+    assert not w.ki._eingabe_gueltig(eing)
+    assert erstes.toPlainText() == "Text im ersten Dokument"
+    assert zweites.toPlainText() == "Text im zweiten Dokument"
