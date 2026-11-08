@@ -13,22 +13,22 @@ from PySide6.QtWidgets import (
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.beschriftung import text_label
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ai import ki as K
-from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
-from lunivo_writer.ui.baukasten.auswahl_liste import AuswahlListe
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.listen_leiste import ListenLeiste
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.controls.auswahl_liste import AuswahlListe
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.controls.listen_leiste import ListenLeiste
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_KNOPF_KLEIN,
     GROESSE_FENSTER_ANBIETER,
     GROESSE_FENSTER_KI,
@@ -46,7 +46,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_LANG
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_LANG
 from lunivo_writer.ui.dialogs.ki_modelle_dialoge import (
     AnbieterDialog, KIKonfigurationDialog, ModellListe, ModellListeDialog,
     ModellZuweisung, _Antwort, _tags_text, modell_combo,
@@ -380,7 +380,7 @@ class DokumentePanel(QWidget):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
         from lunivo_writer.ai import dokumentensuche as DS
-        from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+        from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
         self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
         o = konfig.dokumentsuche_optionen()
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_OBEN_SEITE)
@@ -452,9 +452,9 @@ class DokumentePanel(QWidget):
 REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten", "Dokumente")
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.vorlagen_chips import AufklappBereich
-from lunivo_writer.ui.baukasten.erstellen_fenster import ErstellenFenster
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.vorlagen.vorlagen_chips import AufklappBereich
+from lunivo_writer.ui.baukasten.dokument.erstellen_fenster import ErstellenFenster
 
 
 class KIEinstellungenDialog(PanelFaehig, QDialog):
@@ -488,7 +488,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         z = QWidget(); zv = QVBoxLayout(z); zv.setContentsMargins(*RAND_OBEN_SEITE)
         self.zuweisung = ModellZuweisung(fenster)
         zv.addWidget(self.zuweisung)
-        from lunivo_writer.ui.baukasten.chat_regler import ChatReglerBlock
+        from lunivo_writer.ui.baukasten.chat.chat_regler import ChatReglerBlock
         self.chat_regler = ChatReglerBlock(self.k)                 # Länge, Temperatur, Top P, Stoppfolgen, direkt einfügen (zugeklappt)
         zv.addWidget(self.chat_regler)
         self.stapel.addWidget(z)
@@ -501,7 +501,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.stapel.addWidget(self.websuche)
         self.datenschutz = EinwilligungenPanel(self.k)
         self.stapel.addWidget(self.datenschutz)
-        from lunivo_writer.ui.baukasten.assistenten_liste import AssistentenListe
+        from lunivo_writer.ui.baukasten.controls.assistenten_liste import AssistentenListe
         seite = QWidget(); av = QVBoxLayout(seite); av.setContentsMargins(*RAND_OBEN_SEITE)
         self.assistenten = AssistentenListe(fenster)
         av.addWidget(self.assistenten); av.addStretch(1)
@@ -631,7 +631,7 @@ class KIAssistentDialog(ErstellenFenster):
     def __init__(self, fenster):
         from lunivo_writer.ai.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
         from lunivo_writer.ui.baukasten.dropdown.symbol_auswahl import SymbolWahl
-        from lunivo_writer.ui.baukasten.mass_feld import spin
+        from lunivo_writer.ui.baukasten.controls.mass_feld import spin
         t = TEXTE_ASSISTENT
         super().__init__(fenster, t["titel"], t["hinweis"], [e[0] for e in K.VORLAGEN_ASSISTENT], meldung=t["meldung"])
         g = self.gitter
