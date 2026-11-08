@@ -8,7 +8,7 @@ from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ui.main_window import MainWindow
 
 
-FENSTER = "lunivo_writer.ui.hauptfenster.dateien.speicherort_waehlen"
+FENSTER = "lunivo_writer.ui.hauptfenster.dateien_speichern.speicherort_waehlen"
 
 def win(tmp_path):
     return MainWindow(Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat)))
@@ -112,7 +112,7 @@ def test_quelltext_ohne_web_oberflaeche():
 # Datei und kein Format von Lunivo. Für alles, was Lunivo selbst anlegt oder speichert, gilt: kein HTML. Neue Einträge: nicht vorgesehen.
 # Einzige weitere Ausnahme (Eigentümer, 2026-11-04): ui/baukasten/datei_symbole.py ordnet der Endung „.html“ ein Dateisymbol zu — das zeigt
 # nur fremde Dateien im Dateibrowser an und erzeugt, liest oder speichert kein HTML.
-HTML_NOCH_ERLAUBT = {"ui/document/base.py", "ui/document/document_editor.py", "ui/baukasten/datei_symbole.py"}
+HTML_NOCH_ERLAUBT = {"ui/document/base.py", "ui/document/editor_einfuegen.py", "ui/baukasten/datei_symbole.py"}
 
 
 def test_kein_html_im_projekt():
