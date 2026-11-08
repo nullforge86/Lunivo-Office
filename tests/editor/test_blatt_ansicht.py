@@ -6,7 +6,7 @@ from PySide6.QtGui import QColor, QDropEvent, QTextCursor
 from lunivo_writer.editor.pagination import export_pdf
 from lunivo_writer.models.page import PageSettings, mm_to_px
 from lunivo_writer.ui.document.document_editor import DocumentEditor
-from tests.blatt_dokument import fuelle
+from tests.editor.blatt_dokument import fuelle
 
 
 def _editor(kapitel=6):

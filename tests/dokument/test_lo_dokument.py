@@ -1,7 +1,7 @@
 """Ein von einem fremden Programm erzeugtes DOCX (nicht von uns geschrieben) lässt sich lesen: Ausrichtung „start“, Fußnote, Kommentar,
 nachverfolgte Änderungen, Textmarke, Tabelle.
 
-Gelesen wird die mitgelieferte Referenzdatei ``../daten/lo_dokument.docx``; das fremde Programm wird zum Testen nicht gebraucht. Sie entstand einmalig
+Gelesen wird die mitgelieferte Referenzdatei ``daten/lo_dokument.docx``; das fremde Programm wird zum Testen nicht gebraucht. Sie entstand einmalig
 aus dem unten stehenden ``FODT`` mit einem fremden Programm. Neu erzeugen nur, wenn sich ``FODT`` ändert."""
 import os
 
@@ -25,7 +25,7 @@ FODT = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 def test_von_fremdem_programm_erzeugtes_docx_lesen(app):
-    daten = os.path.join(os.path.dirname(__file__), "..", "daten", "lo_dokument.docx")
+    daten = os.path.join(os.path.dirname(__file__), "daten", "lo_dokument.docx")
     d, p, meta, rep = docx_reader.read_docx(daten)  # früher: ValueError wegen w:jc="start"
     t = d.toPlainText()
     assert "Kapitel Eins" in t and "Text mit Fußnote1 und kommentiertem Wort." in t and "A1" in t and "Ende" in t
