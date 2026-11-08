@@ -15,13 +15,13 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
-from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.baukasten.basis.texte import trennlinie
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.formular_gitter import abschnittsband, reiter_knopf_stil
+from lunivo_writer.ui.baukasten.controls.formular_gitter import abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     DROPDOWN_FORMEN_SPALTEN,
     DROPDOWN_KACHEL,
     DROPDOWN_KACHEL_ABSTAND,
@@ -194,7 +194,7 @@ from lunivo_writer.ui.baukasten.dropdown import form_menues as _fm              
 from lunivo_writer.ui.baukasten.dropdown import smartart_menues as _sm                       # noqa: E402  Menüs und Galerie für SmartArt
 
 KLAPPEN = {"bildZuschneiden": zuschneiden_menue, **_dp.KLAPPEN, **_sm.KLAPPEN, **_fm.KLAPPEN}
-from lunivo_writer.ui.baukasten.smartart_stil_kacheln import stile_galerie_org as _sa_stile  # noqa: E402
+from lunivo_writer.ui.baukasten.diagramme.smartart_stil_kacheln import stile_galerie_org as _sa_stile  # noqa: E402
 
 GALERIEN = {"diagrammStile": diagramm_stile_galerie, **_sm.GALERIEN, **_fm.GALERIEN, "smartartStile": _sa_stile}   # SmartArt-Stile mit Organigramm-Motiv wie in der Vorlage
 FELDER = {**_dp.FELDER}                                                              # Eingabefelder des Bandes, die die Oberfläche selbst baut

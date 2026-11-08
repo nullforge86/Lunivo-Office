@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QSlider, QStatusBar, QToolButton
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_ZOOMANZEIGE,
     BREITE_ZOOM_REGLER,
     HOEHE_LESEENDE_KNOPF,

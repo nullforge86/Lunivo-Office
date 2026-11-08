@@ -8,7 +8,7 @@ from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import GROESSE_SCHWEBKNOPF, ICON_SCHWEBKNOPF, RADIUS_MITTEL
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_SCHWEBKNOPF, ICON_SCHWEBKNOPF, RADIUS_MITTEL
 class SchwebKnopf(QToolButton):
     RAND = 16
 

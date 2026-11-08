@@ -9,11 +9,11 @@ import os
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout
 
-from lunivo_writer.ui.baukasten.beschriftung import text_label
-from lunivo_writer.ui.baukasten.chat_blase import SymbolKnopf, miniatur
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, CHAT_ANHANG_MINIATUR, CHAT_ANHANG_ZEICHEN
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
+from lunivo_writer.ui.baukasten.chat.chat_blase import SymbolKnopf, miniatur
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_MITTEL, CHAT_ANHANG_MINIATUR, CHAT_ANHANG_ZEICHEN
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 
 
 def groesse_text(n: int) -> str:

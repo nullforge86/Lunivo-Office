@@ -6,18 +6,18 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtGui import QTextCursor
-from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ai import modellfaehigkeit as MF
-from lunivo_writer.ui.baukasten.chat_anhang import AnhangChip
-from lunivo_writer.ui.baukasten.chat_blase import SymbolKnopf
+from lunivo_writer.ui.baukasten.chat.chat_anhang import AnhangChip
+from lunivo_writer.ui.baukasten.chat.chat_blase import SymbolKnopf
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.mass import (ABSTAND_KLEIN, CHAT_EINGABE_MAX, CHAT_EINGABE_MIN, CHAT_SENDEN, DROPDOWN_ZEICHEN_KURZ, ICON_NORMAL, RAND_KEIN)
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.mass import (ABSTAND_KLEIN, CHAT_EINGABE_MAX, CHAT_EINGABE_MIN, CHAT_SENDEN, DROPDOWN_ZEICHEN_KURZ, ICON_NORMAL, RAND_KEIN)
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 from lunivo_writer.ui.widgets import icons
 
 WERKZEUG_NAMEN = {"fragen": "Vor Ausführung fragen", "automatisch": "Automatisch genehmigen"}      # Reihenfolge wie ``MF.WERKZEUG_MODI``

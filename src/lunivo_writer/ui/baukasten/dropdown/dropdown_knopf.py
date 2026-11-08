@@ -7,7 +7,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QToolButton
 
-from lunivo_writer.ui.baukasten.mass import (DROPDOWN_GROSS_BREITE_MIN, DROPDOWN_GROSS_BREITE_ZUGABE, DROPDOWN_GROSS_HOEHE, DROPDOWN_HOEHE,
+from lunivo_writer.ui.baukasten.basis.mass import (DROPDOWN_GROSS_BREITE_MIN, DROPDOWN_GROSS_BREITE_ZUGABE, DROPDOWN_GROSS_HOEHE, DROPDOWN_HOEHE,
                                               DROPDOWN_KNOPF, DROPDOWN_PFEIL_ZONE)
 
 

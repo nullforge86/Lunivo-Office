@@ -9,7 +9,7 @@ from PySide6.QtGui import QKeySequence
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import ICON_NORMAL
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL
 
 
 def _symbole() -> dict[str, str]:

@@ -8,10 +8,10 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ai.chat_vorschlaege import chat_vorschlaege
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.mass import ABSTAND_BLOCK, ABSTAND_NORMAL, CHAT_CHIP_HOEHE, CHAT_LEER_ICON, RAND_KEIN
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_NORMAL, CHAT_CHIP_HOEHE, CHAT_LEER_ICON, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 from lunivo_writer.ui.widgets import icons
 
 TEXT = "Ihr KI-Assistent für Dokumente"

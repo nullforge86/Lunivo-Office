@@ -12,7 +12,7 @@ from lunivo_writer.core.tabellenaktionen import GRUPPEN
 from lunivo_writer.editor.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ICON_KNOPF_GROSS,
     ICON_NORMAL,

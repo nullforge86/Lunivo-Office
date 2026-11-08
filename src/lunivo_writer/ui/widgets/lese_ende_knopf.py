@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QPushButton
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import GROESSE_LESEENDEKNOPF, PADDING_LESEENDEKNOPF, RADIUS_KARTE, SCHRIFT_LESEENDEKNOPF
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_LESEENDEKNOPF, PADDING_LESEENDEKNOPF, RADIUS_KARTE, SCHRIFT_LESEENDEKNOPF
 
 
 class LeseEndeKnopf(QPushButton):

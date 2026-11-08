@@ -6,9 +6,9 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QLineEdit, QPushButton, QSlider, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.beschriftung import text_label
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, ICON_NORMAL, RAND_KEIN
 from lunivo_writer.ui.widgets import icons
 
 
