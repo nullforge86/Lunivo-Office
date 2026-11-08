@@ -174,6 +174,19 @@ class KIAnfragenMixin:
         self._arbeit_laeuft = False
         self.laeuft.emit(False)
         if danach == "bild":
+            if not self._eingabe_gueltig(eing):
+                self.status.emit("Das Dokument wurde gewechselt oder geändert, während das Bild erzeugt wurde. Das Bild wurde verworfen.")
+                return
+            pos = eing.get("cursor")
+            try:
+                ed = eing["ed"]
+                cur = ed.textCursor()
+                aktuell = (cur.anchor(), cur.position())
+            except (KeyError, RuntimeError):
+                aktuell = None
+            if pos is None or aktuell != pos:
+                self.status.emit("Die Schreibposition wurde inzwischen geändert. Das Bild wurde nicht eingefügt.")
+                return
             self._bild_fertig(r, eing)
             return
         if danach == "dauer":
@@ -233,7 +246,14 @@ class KIAnfragenMixin:
         self._arbeit_laeuft = True
         self.laeuft.emit(True)
         self.status.emit("Die KI erzeugt das Bild …")
-        eing = {"ed": ed, "beschreibung": text, "ersetzen": c.hasSelection()}
+        try:
+            dokument = ed.document()
+            rev = dokument.revision()
+            cursor_stand = (c.anchor(), c.position())
+        except RuntimeError:
+            return
+        eing = {"ed": ed, "dokument": dokument, "rev": rev, "cursor": cursor_stand,
+                "beschreibung": text, "ersetzen": c.hasSelection()}
         self._pool.start(_Lauf(("bild", eing), lambda: self.ki.bild_erzeugen(text), self._sig))
 
     def _bild_fertig(self, r, eing) -> None:
