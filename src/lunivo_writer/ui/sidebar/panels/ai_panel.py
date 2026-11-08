@@ -141,9 +141,14 @@ class ChatPanel(QWidget):
         except RuntimeError:
             self._teil_label = None
             return
-        sb = self.scroll.verticalScrollBar()
-        if sb.value() >= sb.maximum() - 40:
-            sb.setValue(sb.maximum())
+        try:
+            sb = self.scroll.verticalScrollBar()
+            if sb.value() >= sb.maximum() - 40:
+                sb.setValue(sb.maximum())
+        except RuntimeError:
+            # Das Panel oder seine Scrollfläche kann während des Streamings verschwinden.
+            self._teil_label = None
+            return
 
     # ---- Aktionen
     def _verlauf_fuellen(self) -> None:
