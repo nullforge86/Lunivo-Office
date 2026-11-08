@@ -111,6 +111,7 @@ def test_ki_vorschlag_nach_dokumentwechsel_nicht_einsetzen():
         "_rev": erstes.revision(),
     }
 
+    assert dienst.vorschlag_aktuell(vorschlag) is False
     assert dienst.vorschlag_einsetzen(vorschlag) is False
     assert not hasattr(editor, "ersatz")
     assert dienst.status.werte == [
