@@ -8,7 +8,7 @@ from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import KLAPPEN
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import GROESSE_BANDKNOPF_ICON_KLEIN, ICON_GROSS
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_BANDKNOPF_ICON_KLEIN, ICON_GROSS
 
 from lunivo_writer.ui.ribbon.ribbon_bausteine import _kurz, _mit_kuerzel, _zweizeilig
 
