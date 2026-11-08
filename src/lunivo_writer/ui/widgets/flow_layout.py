@@ -1,7 +1,7 @@
 """Umbrechendes Layout für die Auswahlknöpfe (nach dem Qt-Beispiel „Flow Layout“)."""
 from PySide6.QtCore import QMargins, QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QLayout, QSizePolicy
-from lunivo_writer.ui.baukasten.mass import RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import RAND_KEIN
 
 
 class FlowLayout(QLayout):
