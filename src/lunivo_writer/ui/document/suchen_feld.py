@@ -12,9 +12,9 @@ from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextBlockFormat, QTextCharFormat, QTextCursor
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton,
     QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget,
@@ -22,10 +22,10 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.editor import gehe_zu as G
 from lunivo_writer.editor import suche as S
-from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KLEIN,
     ABSTAND_MITTEL,
     ABSTAND_NORMAL,
@@ -87,7 +87,7 @@ class FormatvorlageWahl(QDialog):
     def __init__(self, parent=None, aktuell: str = ""):
         super().__init__(parent)
         from lunivo_writer.editor import stile
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
         from lunivo_writer.ui.ribbon.ribbon_bar import STILE_KATALOG
         self.setWindowTitle("Formatvorlage suchen")
         v = QVBoxLayout(self)
@@ -349,7 +349,7 @@ class SuchenFeld(QWidget):
     def _bedingungen(self, a: S.Suchauftrag, f: dict) -> None:
         ed = self.get_editor()
         if f.get("zeichen"):
-            from lunivo_writer.ui.baukasten.text_format import aus_format
+            from lunivo_writer.ui.baukasten.formatierung.text_format import aus_format
             soll = dict(f["zeichen"])
             fam, gr = (ed.document().defaultFont().family(), ed.document().defaultFont().pointSizeF()) if ed is not None else ("", 0.0)
             a.zeichen.append(lambda cf: (lambda w: all(_gleich(w.get(k), v) for k, v in soll.items()))(aus_format(cf, fam, gr)))
@@ -357,11 +357,11 @@ class SuchenFeld(QWidget):
             an = f["hervor"]
             a.zeichen.append(lambda cf: (cf.background().style() != Qt.NoBrush) == an)
         if f.get("absatz"):
-            from lunivo_writer.ui.baukasten.absatz_dialog import aus_block
+            from lunivo_writer.ui.baukasten.formatierung.absatz_dialog import aus_block
             soll_a = dict(f["absatz"])
             a.absatz.append(lambda b: (lambda w: all(_gleich(w.get(k), v) for k, v in soll_a.items()))(aus_block(b.blockFormat())))
         if f.get("tabs"):
-            from lunivo_writer.ui.baukasten.tabstopp_dialog import aus_block as tabs
+            from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import aus_block as tabs
             soll_t = list(f["tabs"])
             a.absatz.append(lambda b: all(any(abs(m - t[0]) < 0.6 for t in tabs(b.blockFormat())) for m in soll_t))
         if f.get("stil") and ed is not None:
@@ -385,7 +385,7 @@ class SuchenFeld(QWidget):
             if f.get("absatz_format") is not None:
                 c.mergeBlockFormat(f["absatz_format"])
             if f.get("tabs"):
-                from lunivo_writer.ui.baukasten.tabstopp_dialog import zu_block
+                from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import zu_block
                 bf = c.blockFormat(); zu_block(bf, [(m, "links", "") for m in f["tabs"]]); c.setBlockFormat(bf)
             if f.get("stil") and ed is not None:
                 ed._stil_auf_block(c.block(), f["stil"])
@@ -535,8 +535,8 @@ class SuchenFeld(QWidget):
         self._optionen_neu(); self.zaehlen()
 
     def _format_schrift(self) -> None:
-        from lunivo_writer.ui.baukasten.schriftart_dialog import SchriftartDialog
-        from lunivo_writer.ui.baukasten.text_format import ZEICHEN, aus_format, zu_format
+        from lunivo_writer.ui.baukasten.formatierung.schriftart_dialog import SchriftartDialog
+        from lunivo_writer.ui.baukasten.formatierung.text_format import ZEICHEN, aus_format, zu_format
         d = SchriftartDialog(self)
         vorher = d.werte()
         if not self.unterfenster(d):
@@ -557,7 +557,7 @@ class SuchenFeld(QWidget):
         self._geaendert()
 
     def _format_absatz(self) -> None:
-        from lunivo_writer.ui.baukasten.absatz_dialog import AbsatzDialog, aus_block
+        from lunivo_writer.ui.baukasten.formatierung.absatz_dialog import AbsatzDialog, aus_block
         d = AbsatzDialog(self, aus_block(QTextBlockFormat()))
         vorher = d.werte()
         if not self.unterfenster(d):
@@ -571,7 +571,7 @@ class SuchenFeld(QWidget):
         self._geaendert()
 
     def _format_tabs(self) -> None:
-        from lunivo_writer.ui.baukasten.tabstopp_dialog import TabstoppDialog
+        from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import TabstoppDialog
         d = TabstoppDialog(self, [])
         if self.unterfenster(d) and d.stopps():
             self.formate[self._fokus]["tabs"] = [m for m, _a, _f in d.stopps()]

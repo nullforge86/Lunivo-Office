@@ -7,8 +7,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QPlainTextEdit
 
 from lunivo_writer.editor.zusatz import roemisch
-from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen
-from lunivo_writer.ui.baukasten.mass import HOEHE_NOTENFELD
+from lunivo_writer.ui.baukasten.controls.panel_rahmen import PanelRahmen
+from lunivo_writer.ui.baukasten.basis.mass import HOEHE_NOTENFELD
 
 
 class _Eingabe(QPlainTextEdit):
