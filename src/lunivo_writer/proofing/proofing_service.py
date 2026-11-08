@@ -110,7 +110,8 @@ class WritingAssistant(QObject):
 
     # ---- Anbindung an den Editor ---------------------------------------------
     def attach(self, editor) -> None:
-        if self.editor is editor:
+        doc = editor.document() if editor is not None else None
+        if self.editor is editor and self._doc is doc:
             return
         if self._doc is not None:
             try:
@@ -118,7 +119,7 @@ class WritingAssistant(QObject):
             except (RuntimeError, TypeError):
                 pass
         self.editor = editor
-        self._doc = editor.document() if editor is not None else None
+        self._doc = doc
         self._voll, self._schmutz, self._roh = False, None, []
         self._geprueft = {}
         if self._doc is not None:
@@ -378,13 +379,19 @@ class WritingAssistant(QObject):
         pool.start(_LT(self._lt_sig, ed.document()))
 
     def _lt_fertig(self, rev: int, funde: list, doc=None) -> None:
-        if doc is not None and doc is not self._doc:
+        ed = self.editor
+        if ed is None:
+            return
+        try:
+            aktuell = ed.document()
+        except RuntimeError:
+            return
+        if doc is not None and (doc is not self._doc or doc is not aktuell):
             return
         if rev == -1:
             self.status.emit(str(funde[0]) if funde else "LanguageTool-Fehler.")
             return
-        ed = self.editor
-        if ed is None or (doc is not None and doc is not ed.document()) or rev != ed.document().revision():
+        if rev != aktuell.revision():
             return
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
