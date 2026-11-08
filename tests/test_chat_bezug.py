@@ -27,6 +27,21 @@ def test_bezug_pruefen_streng():
     assert CB.bezug_pruefen(None, 7, 1) == (False, CB.MELDUNG_KEIN_BEZUG)
 
 
+def test_bezug_pruefen_erkennt_editor_und_dokumentobjekt():
+    editor = object()
+    anderes_editor = object()
+    erstes_dokument = object()
+    anderes_dokument = object()
+    b = CB.bezug_bauen(0, 3, True, 7, "alt", 123,
+                       editor_obj=editor, dokument_obj=erstes_dokument)
+    assert CB.bezug_pruefen(b, 7, 123, dokument_jetzt=erstes_dokument,
+                            editor_obj_jetzt=editor) == (True, "")
+    assert CB.bezug_pruefen(b, 7, 123, dokument_jetzt=anderes_dokument,
+                            editor_obj_jetzt=editor) == (False, CB.MELDUNG_EDITOR)
+    assert CB.bezug_pruefen(b, 7, 123, dokument_jetzt=erstes_dokument,
+                            editor_obj_jetzt=anderes_editor) == (False, CB.MELDUNG_EDITOR)
+
+
 def test_vorschau_stuecke_diff_und_rueckfall(monkeypatch):
     st = CB.vorschau_stuecke("Das ist gut.", "Das ist sehr gut.")
     assert "".join(t for a, t in st if a != "neu") == "Das ist gut."
