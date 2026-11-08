@@ -13,8 +13,8 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLabel, QMenu, QToolButton, QVBoxLayout, QWidget, QWidgetAction
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KLEIN,
     ABSTAND_ZEILE,
     GROESSE_VORGABEMENUE_KACHEL,
