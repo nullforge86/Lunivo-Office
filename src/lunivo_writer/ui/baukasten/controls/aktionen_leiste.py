@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui.widgets.flow_layout import FlowLayout
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, RAND_KEIN, SCHRIFT_HINWEIS
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, RAND_KEIN, SCHRIFT_HINWEIS
 
 
 class AktionenLeiste(QWidget):

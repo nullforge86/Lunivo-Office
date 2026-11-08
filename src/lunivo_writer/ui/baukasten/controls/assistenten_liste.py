@@ -8,9 +8,9 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, RAND_KEIN, RAND_ZEILE
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, RAND_KEIN, RAND_ZEILE
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 
 ART_TEXTE = {"aktion": "Aktion", "fortlaufend": "Fortlaufend"}
 TEXT_DAUERBETRIEB = "Fortlaufende Assistenten einschalten"
