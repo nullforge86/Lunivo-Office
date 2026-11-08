@@ -212,13 +212,14 @@ class KIAnfragenMixin:
             self.merke_ergebnis(eing.get("_titel", "KI"), r["text"], eing.get("text", ""))
         danach(r, eing)
 
-    @staticmethod
-    def _eingabe_gueltig(eing: dict) -> bool:
-        """Nur Antworten für genau das Dokument und die Revision vom Sendezeitpunkt dürfen weiterlaufen."""
+    def _eingabe_gueltig(self, eing: dict) -> bool:
+        """Nur Antworten für den aktiven Editor, das Dokument und die Revision vom Sendezeitpunkt dürfen weiterlaufen."""
         ed = eing.get("ed")
         try:
             doc = ed.document()
-            return doc is eing.get("dokument") and doc.revision() == eing["rev"]
+            return (self.w.current_editor() is ed
+                    and doc is eing.get("dokument")
+                    and doc.revision() == eing["rev"])
         except (AttributeError, KeyError, RuntimeError, TypeError):
             return False
 
