@@ -1,8 +1,8 @@
-"""Deutsche Sprechsilben: Soll-Liste (tests/silben_gold.py, 228 Wörter, von Hand geprüft) und eine harte Liste mit bekannten Fehlern."""
+"""Deutsche Sprechsilben: Soll-Liste (tests/proofing/silben_gold.py, 228 Wörter, von Hand geprüft) und eine harte Liste mit bekannten Fehlern."""
 import os
 
 from lunivo_writer.proofing.silben_de import silben
-from tests.silben_gold import GOLD
+from tests.proofing.silben_gold import GOLD
 
 
 def _paare(text):
@@ -16,7 +16,7 @@ def test_gold_alle_richtig():
 
 def test_harte_liste_quote_und_bekannte_fehler():
     """Seltenere Wörter, Fremdwörter, Zusammensetzungen: mindestens 90 % richtig; die bekannten Fehler stehen hier offen."""
-    pfad = os.path.join(os.path.dirname(__file__), "..", "silben_hart.txt")
+    pfad = os.path.join(os.path.dirname(__file__), "silben_hart.txt")
     paare = _paare(open(pfad, encoding="utf-8").read())
     falsch = {w: "-".join(silben(w)) for w, s in paare if "-".join(silben(w)).lower() != s.lower()}
     assert len(falsch) / len(paare) <= 0.10, falsch

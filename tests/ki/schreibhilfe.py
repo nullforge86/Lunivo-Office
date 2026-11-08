@@ -584,7 +584,7 @@ def test_mcp_und_websuche_im_chat(app, tmp_path, monkeypatch):
     d = KIEinstellungenDialog(w, 3)
     assert all(d.reiter.isTabEnabled(i) for i in range(5)) and d.reiter.currentIndex() == 3
     # MCP: Verbindung testen und Werkzeug aufrufen
-    befehl = f"{_sys.executable} {pathlib.Path(__file__).parent.parent / 'fake_mcp_server.py'}"
+    befehl = f"{_sys.executable} {pathlib.Path(__file__).parent / 'fake_mcp_server.py'}"
     assert [t["name"] for t in M.pruefen(befehl)] == ["echo"]
     e = k.mcp_speichern(None, "Fake", befehl, True)
     d.mcp.fuellen()

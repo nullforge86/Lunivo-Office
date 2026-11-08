@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: >
           python -m pytest -q
-          tests/test_plattform_pfade.py tests/test_plattform_sperre.py tests/test_plattform_protokoll.py
-          tests/test_speichern_sicher.py tests/test_storage.py tests/test_formats.py
-          tests/test_docx_roundtrip.py tests/test_odt_rtf.py tests/test_schreibhilfe.py tests/test_silben_de.py
-          tests/test_import_grenzen.py tests/test_speicher_konflikt.py tests/test_docx_korpus.py tests/test_proofing_issue.py tests/test_ki_einwilligung.py
+          tests/plattform/pfade.py tests/plattform/sperre.py tests/plattform/protokoll.py
+          tests/dokument/speichern_sicher.py tests/plattform/storage.py tests/dokument/formats.py
+          tests/dokument/docx_roundtrip.py tests/dokument/odt_rtf.py tests/ki/schreibhilfe.py tests/proofing/silben_de.py
+          tests/dokument/import_grenzen.py tests/dokument/speicher_konflikt.py tests/dokument/docx_korpus.py tests/proofing/issue.py tests/ki/ki_einwilligung.py
