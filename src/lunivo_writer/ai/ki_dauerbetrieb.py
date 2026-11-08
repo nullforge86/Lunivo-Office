@@ -192,8 +192,8 @@ class KIDauerbetriebMixin:
         if f != QMessageBox.Yes:
             self.status.emit(f"„{a['name']}“: nicht übernommen.")
             return
-        if ed.document().revision() != eing["rev"]:
-            self.status.emit(f"„{a['name']}“: Der Text hat sich inzwischen geändert — nichts wurde ersetzt.")
+        if not self._eingabe_gueltig(eing):
+            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — nichts wurde ersetzt.")
             return
         self._einsetzen({"text": text, "cent": r.get("cent")}, eing, a["name"] + ".", a["name"] + ".")
         self._dauer_zuletzt[(a["id"], "markierung" if eing["stelle"] == "markierung" else ed.textCursor().blockNumber())] = text
