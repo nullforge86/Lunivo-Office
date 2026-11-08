@@ -24,13 +24,13 @@ zeige_leer = zeige_leer_modell           # bleibt hier unter dem alten Namen err
 
 
 class _Signale(QObject):
-    fertig = Signal(int, list)
+    fertig = Signal(int, list, object)
 
 
 class _Lauf(QRunnable):
-    def __init__(self, rev: int, text: str, gelernt: dict, signale: _Signale, schalter: dict | None = None):
+    def __init__(self, rev: int, text: str, gelernt: dict, signale: _Signale, dokument, schalter: dict | None = None):
         super().__init__()
-        self.rev, self.text, self.gelernt, self.sig, self.schalter = rev, text, gelernt, signale, schalter
+        self.rev, self.text, self.gelernt, self.sig, self.dokument, self.schalter = rev, text, gelernt, signale, dokument, schalter
 
     def run(self):
         try:
@@ -38,7 +38,7 @@ class _Lauf(QRunnable):
         except Exception:        # Eine Prüfung, die abstürzt, darf das Schreiben nie stören
             _log.exception("Prüfung abgestürzt")
             funde = []
-        self.sig.fertig.emit(self.rev, funde)
+        self.sig.fertig.emit(self.rev, funde, self.dokument)
 
 
 class WritingAssistant(QObject):
@@ -178,7 +178,7 @@ class WritingAssistant(QObject):
         schalter = self.pruef_schalter()
         pruef_text = text[self._region[0]:self._region[1]] if self._region else text
         self._pruef_laenge = len(pruef_text)
-        self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, schalter))
+        self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, doc, schalter))
 
     def pruef_schalter(self) -> dict:
         """Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“."""
@@ -187,12 +187,12 @@ class WritingAssistant(QObject):
             schalter["pruefer_" + n] = self.settings.get_bool("schreibhilfe/pruefer_" + n, True)
         return schalter
 
-    def _fertig(self, rev: int, roh: list) -> None:
+    def _fertig(self, rev: int, roh: list, doc=None) -> None:
         self._laeuft = False
         ed = self.editor
         if ed is None:
             return
-        if rev != ed.document().revision():          # Text hat sich inzwischen geändert
+        if (doc is not None and (doc is not self._doc or doc is not ed.document())) or rev != ed.document().revision():          # Text hat sich inzwischen geändert
             self._timer.start()
             return
         self._geprueft_rev = rev
@@ -343,28 +343,30 @@ class WritingAssistant(QObject):
         pool = QThreadPool.globalInstance()
 
         class _LT(QRunnable):
-            def __init__(self, sig, rev):
-                super().__init__(); self.sig, self.rev = sig, rev
+            def __init__(self, sig, doc):
+                super().__init__(); self.sig, self.doc, self.rev = sig, doc, doc.revision()
 
             def run(self):
                 try:
                     funde = languagetool.pruefe(text)
                 except languagetool.LanguageToolFehler as e:
-                    self.sig.fertig.emit(-1, [str(e)])
+                    self.sig.fertig.emit(-1, [str(e)], self.doc)
                     return
-                self.sig.fertig.emit(self.rev, funde)
+                self.sig.fertig.emit(self.rev, funde, self.doc)
 
         self._lt_sig = _Signale()
         self._lt_sig.fertig.connect(self._lt_fertig)
         self.status.emit("LanguageTool prüft …")
-        pool.start(_LT(self._lt_sig, ed.document().revision()))
+        pool.start(_LT(self._lt_sig, ed.document()))
 
-    def _lt_fertig(self, rev: int, funde: list) -> None:
+    def _lt_fertig(self, rev: int, funde: list, doc=None) -> None:
+        if doc is not None and doc is not self._doc:
+            return
         if rev == -1:
             self.status.emit(str(funde[0]) if funde else "LanguageTool-Fehler.")
             return
         ed = self.editor
-        if ed is None or rev != ed.document().revision():
+        if ed is None or (doc is not None and doc is not ed.document()) or rev != ed.document().revision():
             return
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
