@@ -142,6 +142,11 @@ class WritingAssistant(QObject):
     def _geaendert(self, pos: int, entfernt: int, hinzu: int) -> None:
         """Bereichs-Invalidierung: Funde hinter der Änderung verschieben, Funde an der Änderung verwerfen, Bereich merken."""
         self._geprueft = {}
+        # Bereits angezeigte Funde gehören zum Textstand vor dieser Änderung.
+        # Die Revision allein ist bei Undo-/Redo- und Dokumentwechselpfaden
+        # kein ausreichender Identitätsnachweis.
+        if self._funde_doc is self._doc:
+            self._funde_rev = -1
         if not self._voll:
             return
         self._roh = inkrement.verschieben(self._roh, pos, entfernt, hinzu)
