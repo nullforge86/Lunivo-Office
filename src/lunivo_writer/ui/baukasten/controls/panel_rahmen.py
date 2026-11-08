@@ -6,8 +6,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QMenu, QToolButton, QVBoxLayout, QWidget
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.texte import trennlinie
-from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.texte import trennlinie
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_MITTEL, ICON_NORMAL, RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 
 

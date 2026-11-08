@@ -128,7 +128,7 @@ class TextToolsBefehle:
     def menue_ttUnter(self):
         """Wie bei Start: die Linienarten als Bild, „Mehr Unterstreichungen …“ und die Unterstreichungsfarbe; wirkt auf das Objekt."""
         from lunivo_writer.editor.textfx import unter_zeichnen
-        from lunivo_writer.ui.baukasten.linien import linien_menue_zeile
+        from lunivo_writer.ui.baukasten.basis.linien import linien_menue_zeile
         from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for art in self.UNTER_MENUE:
@@ -145,9 +145,9 @@ class TextToolsBefehle:
 
     def _tt_unter_dialog(self) -> None:
         """Das Fenster „Schriftart“ mit der Unterstreichung des Objekts; übernommen werden Art und Farbe der Linie."""
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.schriftart_dialog import SchriftartDialog
-        from lunivo_writer.ui.baukasten.text_format import ZEICHEN
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.formatierung.schriftart_dialog import SchriftartDialog
+        from lunivo_writer.ui.baukasten.formatierung.text_format import ZEICHEN
         d0 = self._wa()
         u = d0.get("unter")
         w = dict(ZEICHEN, unter=u if isinstance(u, str) else ("einfach" if u else ""), unterfarbe=d0.get("unterfarbe") or "")
@@ -238,7 +238,7 @@ class TextToolsBefehle:
 
 
     def _tt_listendialog(self, seite: str) -> None:
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         from lunivo_writer.ui.baukasten.liste_dialog import ListenDialog
         d = ListenDialog(self.w, self._wa().get("liste") if isinstance(self._wa().get("liste"), dict) else None, seite=seite)
         if ausfuehren(d):
@@ -265,7 +265,7 @@ class TextToolsBefehle:
     def menue_ttTextrichtung(self):
         """Textrichtung wie in der Vorlage (dieselben sechs Einträge mit Bildchen wie bei Start), wirkt auf den Text im Objekt."""
         from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import RasterAuswahl, zeilenkachel
-        from lunivo_writer.ui.baukasten.seiten_bildchen import textrichtung_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import textrichtung_zeichner
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(330, 44))
         for art, text in self.TEXTRICHTUNGEN:
             m.kachel(art, text, zeilenkachel(textrichtung_zeichner(art), text, bild_breite=40))

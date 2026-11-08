@@ -7,8 +7,8 @@ from __future__ import annotations
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QLineEdit, QPlainTextEdit
 
-from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt
-from lunivo_writer.ui.baukasten.mass import HOEHE_BEREICH_MITTEL
+from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt
+from lunivo_writer.ui.baukasten.basis.mass import HOEHE_BEREICH_MITTEL
 
 
 class AlternativtextAbschnitt(Abschnitt):

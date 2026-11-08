@@ -9,9 +9,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
 
 
 def objekte(ed) -> list[tuple[str, int, int]]:

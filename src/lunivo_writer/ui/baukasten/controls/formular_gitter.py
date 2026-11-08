@@ -16,7 +16,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import (QAbstractSpinBox, QComboBox, QGridLayout, QHBoxLayout, QPushButton, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget, QWidgetItem)
-from lunivo_writer.ui.baukasten.mass import (MARGIN_OBEN_GRUPPE_ZUSATZ, PADDING_ABSCHNITTSBAND, PADDING_ABSCHNITT_KNOPF, PADDING_GRUPPE_OBEN, PADDING_GRUPPENTITEL, RAND_KEIN,
+from lunivo_writer.ui.baukasten.basis.mass import (MARGIN_OBEN_GRUPPE_ZUSATZ, PADDING_ABSCHNITTSBAND, PADDING_ABSCHNITT_KNOPF, PADDING_GRUPPE_OBEN, PADDING_GRUPPENTITEL, RAND_KEIN,
                                                   SCHRIFT_KLEIN)
 
 ABSTAND = 6
@@ -504,7 +504,7 @@ class AngepassteReiter(QTabWidget):
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+        from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
         self.setTabBar(FlacheReiterLeiste(HAUPT))          # EINE Reiterleiste für alle Fenster: flach, die Beschriftung bricht um, nichts wird abgeschnitten
         self.currentChanged.connect(self._aktuelle_seite)
         self.setUsesScrollButtons(False)

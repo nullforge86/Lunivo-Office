@@ -21,8 +21,8 @@ import math
 
 from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtWidgets import QGridLayout, QLayout, QLayoutItem, QWidget
-from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
-from lunivo_writer.ui.baukasten.mass import RAND_KEIN
+from lunivo_writer.ui.baukasten.controls.formular_gitter import tabellen_gitter
+from lunivo_writer.ui.baukasten.basis.mass import RAND_KEIN
 
 SPANNE_STANDARD: tuple[int, int] = (1, 1)
 SPANNEN: dict[str, tuple[int, int]] = {          # die einzige Stelle, an der Rasterspannen festgelegt werden

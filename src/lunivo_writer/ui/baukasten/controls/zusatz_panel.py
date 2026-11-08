@@ -12,11 +12,11 @@ from typing import Callable
 
 from PySide6.QtCore import QEventLoop, Qt
 from PySide6.QtWidgets import QDialog, QFrame, QSizePolicy, QHBoxLayout, QLabel, QScrollArea, QStackedWidget, QToolButton, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.formular_gitter import felder_angleichen
+from lunivo_writer.ui.baukasten.controls.formular_gitter import felder_angleichen
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.texte import trennlinie
-from lunivo_writer.ui.baukasten.panel_rahmen import PANEL_INHALT_RAND, rollflaeche
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.texte import trennlinie
+from lunivo_writer.ui.baukasten.controls.panel_rahmen import PANEL_INHALT_RAND, rollflaeche
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_PANELKNOPF,
     ICON_NORMAL,
     MARGIN_OBEN_GRUPPE_ZUSATZ,
@@ -52,7 +52,7 @@ class _Seite(QWidget):
     @staticmethod
     def _anheften(d: QDialog):
         """Die Knopfzeile des Fensters aus seinem Layout nehmen (sie bleibt mit dem Fenster verbunden)."""
-        from lunivo_writer.ui.baukasten.dialog_rahmen import Knopfzeile
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import Knopfzeile
         z = d.findChild(Knopfzeile)
         if z is None or z.parentWidget() is None or z.parentWidget().layout() is None:
             return None
@@ -89,7 +89,7 @@ def zusatz_knopf(symbol: str, tipp: str, aktion: Callable | None, name: str = ""
 def zusatz_kopf(*teile: QWidget) -> QWidget:
     """Die Titelzeile der Seitenleistenfenster samt Linie darunter: ``teile`` von links nach rechts; das erste QLabel/der Titel nimmt den freien Platz.
     Dünne Hülle um ``panel_kopf`` (``panel_rahmen.py``). Gemeinsam benutzt von ``ZusatzPanel`` und dem Bereich „Formatierung“ der Seitenleiste."""
-    from lunivo_writer.ui.baukasten.panel_rahmen import panel_kopf
+    from lunivo_writer.ui.baukasten.controls.panel_rahmen import panel_kopf
     return panel_kopf(*teile)
 
 
@@ -123,11 +123,11 @@ class ZusatzPanel(QWidget):
         d.setMinimumSize(0, 0)
         if hasattr(d, "passe_an"):
             d.passe_an(self.verfuegbar, self.verfuegbar_hoehe)                         # Fenster, die sich an den echten Platz anpassen (Farbraster, Vorschau, volle Höhe)
-        from lunivo_writer.ui.baukasten.flache_reiter_leiste import alle_flach
+        from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import alle_flach
         alle_flach(d)                                                                  # alle Reiter im Fenster: dieselbe flache Leiste wie überall in der Seitenleiste
-        from lunivo_writer.ui.baukasten.karten_raster import kurze_gruppen_ins_raster
+        from lunivo_writer.ui.baukasten.controls.karten_raster import kurze_gruppen_ins_raster
         kurze_gruppen_ins_raster(d)                                                    # kurze Ankreuzfelder/Optionen/Knöpfe untereinander → nebeneinander im Raster
-        from lunivo_writer.ui.baukasten.schmal import schmal_machen
+        from lunivo_writer.ui.baukasten.controls.schmal import schmal_machen
         breite = self.verfuegbar
         for _ in range(6):                                                              # was nicht in die Breite der Seitenleiste passt, bricht um
             schmal_machen(d, breite)

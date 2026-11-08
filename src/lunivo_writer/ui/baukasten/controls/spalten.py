@@ -8,7 +8,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.mass import BREITE_AB_ZWEISPALTER, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import BREITE_AB_ZWEISPALTER, RAND_KEIN
 
 _MAX = 16777215   # QWIDGETSIZE_MAX
 

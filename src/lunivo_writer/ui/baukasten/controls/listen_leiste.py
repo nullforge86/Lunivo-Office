@@ -11,8 +11,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QListWidget, QToolButton, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_KNOPF_KLEIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_MITTEL, ICON_NORMAL, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, BREITE_KNOPF_KLEIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_MITTEL, ICON_NORMAL, RAND_KEIN
 from lunivo_writer.ui.widgets import icons
 
 

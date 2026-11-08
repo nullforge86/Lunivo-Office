@@ -9,9 +9,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QLabel, QSlider, QToolButton, QVBoxLayout, QWidget
 
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_SCHIENE_BESCHRIFTET, RAND_KEIN, SCHRIFT_KLEIN
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FELDHOEHE
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, BREITE_SCHIENE_BESCHRIFTET, RAND_KEIN, SCHRIFT_KLEIN
 
 
 def _knopf(text: str) -> QToolButton:

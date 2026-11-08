@@ -7,15 +7,15 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.karten_raster import KartenRaster
+from lunivo_writer.ui.baukasten.controls.karten_raster import KartenRaster
 from lunivo_writer.ui.schreibhilfe_katalog import Funktion, fuer_reiter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.texte import hinweis_label
-from lunivo_writer.ui.baukasten.schalter import CHIP_B, CHIP_H, schalter_an_stil, schalter_aus_stil
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, BREITE_FUNKTIONSSYMBOL, ICON_KLEIN, ICON_MITTEL, RAND_FUNKTIONSZEILE, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
+from lunivo_writer.ui.baukasten.controls.schalter import CHIP_B, CHIP_H, schalter_an_stil, schalter_aus_stil
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, BREITE_FUNKTIONSSYMBOL, ICON_KLEIN, ICON_MITTEL, RAND_FUNKTIONSZEILE, RAND_KEIN
 _an, AUS = schalter_an_stil, schalter_aus_stil()   # alte Namen bleiben
 
 
