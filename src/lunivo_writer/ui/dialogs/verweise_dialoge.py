@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox, QDialog, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QVBoxLayout
 
 from lunivo_writer.editor import verweise
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.editor.literatur import TYPEN, eintrag
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -14,9 +14,9 @@ def _knoepfe(dlg):
     return knopfzeile(dlg)
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_VERWEIS
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FENSTER_VERWEIS
 class TextmarkeDialog(PanelFaehig, QDialog):
     def __init__(self, parent, ed):
         super().__init__(parent)
