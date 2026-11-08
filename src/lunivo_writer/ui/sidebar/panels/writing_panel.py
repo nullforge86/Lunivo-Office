@@ -138,6 +138,8 @@ class FundKarte(QFrame):
         self.vorschlag_knopf.setEnabled(True); self.vorschlag_knopf.setText("Vorschlag"); self.vorschlag_knopf.show()
 
     def _zeigen(self):
+        if not self.a.fund_aktuell(self.fund):
+            return
         ed = self.a.editor
         if ed is not None:
             ed.select_range(self.fund.von, self.fund.bis)
