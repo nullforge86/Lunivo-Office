@@ -10,7 +10,7 @@ from PySide6.QtCore import QPoint, QRect, QTimer
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication, QWidget
 
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_BREITE_MIN, POPUP_RAND
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_BREITE_MIN, POPUP_RAND
 
 
 GRENZE = "popupGrenze"      # Eigenschaft eines Widgets: „Popups, die von hier aus aufklappen, bleiben innerhalb von mir“ (z. B. die Seitenleiste)

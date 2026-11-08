@@ -9,9 +9,9 @@ from PySide6.QtWidgets import (
     QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.basis.mass import (
     SCHRIFT_GRUPPENTITEL_PX,
     ABSTAND_ENG,
     ABSTAND_KLEIN,

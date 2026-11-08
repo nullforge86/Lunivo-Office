@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.linien import RAHMEN_EINTRAEGE, rahmen_symbol
+from lunivo_writer.ui.baukasten.basis.linien import RAHMEN_EINTRAEGE, rahmen_symbol
 
 
 class RahmenMenue(MenueListe):
