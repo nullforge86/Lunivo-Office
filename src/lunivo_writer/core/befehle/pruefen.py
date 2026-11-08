@@ -301,13 +301,33 @@ class PruefenBefehle:
     # ---- Überprüfen: Thesaurus, Barrierefreiheit, Korrektursprache ------------------------------------------
     def thesaurus(self, k=None):
         ki = getattr(self.w, "ki", None)
-        if not self.ed or ki is None:
+        ed = self.ed
+        if ed is None or ki is None:
+            return
+        try:
+            dokument = ed.document()
+            revision = dokument.revision()
+        except RuntimeError:
             return
 
         def danach(wort, lst, von, bis):
+            # Die Antwort darf nur auf den Editor angewendet werden, von dem
+            # aus die Anfrage gestartet wurde – niemals auf den inzwischen aktiven Tab.
+            try:
+                if (self.w.current_editor() is not ed or ed.document() is not dokument
+                        or dokument.revision() != revision):
+                    self.w.statusBar().showMessage("Das Dokument wurde gewechselt oder geändert — das Synonym wurde nicht eingesetzt.", 6000)
+                    return
+            except RuntimeError:
+                return
             n, ok = EingabeFenster.getItem(self.w, f"Wörter für „{wort}“", "Statt dessen:", lst, 0, False)
             if ok:
-                self.ed.replace_range(von, bis, self._wie_geschrieben(wort, n))
+                try:
+                    if (self.w.current_editor() is ed and ed.document() is dokument
+                            and dokument.revision() == revision):
+                        ed.replace_range(von, bis, self._wie_geschrieben(wort, n))
+                except RuntimeError:
+                    pass
         ki.thesaurus(danach)
 
 
