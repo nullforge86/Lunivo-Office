@@ -409,7 +409,7 @@ def test_fehler_meldet_kein_gespeichert_und_dokument_bleibt_bearbeitbar(app, tmp
 
 def test_pdf_export_ersetzt_alte_pdf_erst_nach_erfolg(app, tmp_path, monkeypatch):
     from PySide6.QtWidgets import QMessageBox
-    from lunivo_writer.ui.hauptfenster import dateien
+    from lunivo_writer.ui.hauptfenster import dateien_export as dateien      # dort steht ``export_pdf`` seit der Aufteilung von dateien.py
     alt = tmp_path / "x.pdf"; alt.write_bytes(b"%PDF-1.4\nalte Fassung\n%%EOF\n")
     w = _fenster(tmp_path); w.new_document(); w.current_editor().insertPlainText("PDF-Text")
 

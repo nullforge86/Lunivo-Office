@@ -11,7 +11,9 @@ class DateiBefehle:
 
 
     # ---- Datei (☰-Menü und Schnellzugriff) ----------------------------------------------------------------
-    def zuletztOeffnen(self, pfad): self.w.open_path(pfad)
+    def zuletztOeffnen(self, pfad):
+        if pfad:                                          # ohne Pfad (leerer Aufruf) gibt es nichts zu öffnen
+            self.w.open_path(pfad)
 
 
     def zuletztEntfernen(self, pfad): self.w.settings.remove_recent(pfad)

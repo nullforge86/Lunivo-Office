@@ -30,6 +30,16 @@ class _Eingabe:
         from PySide6.QtWidgets import QInputDialog
         return QInputDialog.getText(eltern, titel, frage, text=text)
 
+    @staticmethod
+    def zeigeAuswahl(eltern, optionen, global_pos, gewaehlt) -> None:
+        """Liste der Möglichkeiten an ``global_pos``; ein Eintrag ruft ``gewaehlt(eintrag)``."""
+        from PySide6.QtWidgets import QMenu
+        menu = QMenu(eltern)
+        for o in optionen:
+            menu.addAction(o, lambda o=o: gewaehlt(o))
+        if not menu.isEmpty():
+            menu.exec(global_pos)
+
 
 eingabe_anbieter = _Eingabe
 from lunivo_writer.core.farben import Farbe
@@ -154,12 +164,8 @@ def klick(ed, pos: int, fenster=None) -> bool:
         voll = wert_von(ed.document(), v, e) == KASTEN_VOLL
         _ersetzen(ed, v, e, m, KASTEN_LEER if voll else KASTEN_VOLL)
     elif art == "auswahl":
-        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-        menu = MenueListe(ed)
-        for o in m.get("optionen") or []:
-            menu.eintrag(o, lambda o=o: _ersetzen(ed, v, e, m, o))
-        if not menu.isEmpty():
-            menu.exec(ed.viewport().mapToGlobal(ed.cursorRect(_c(ed, v)).bottomLeft()))
+        eingabe_anbieter.zeigeAuswahl(ed, m.get("optionen") or [], ed.viewport().mapToGlobal(ed.cursorRect(_c(ed, v)).bottomLeft()),
+                                      lambda o: _ersetzen(ed, v, e, m, o))
     elif art == "datum":
         from PySide6.QtCore import QDate
         aktuell = QDate.fromString(wert_von(ed.document(), v, e), DATUMSFORMAT)

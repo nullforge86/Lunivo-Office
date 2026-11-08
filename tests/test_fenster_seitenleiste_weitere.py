@@ -120,6 +120,13 @@ FENSTER = {
     "KI-Einstellungen": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).KIEinstellungenDialog(_hauptfenster(tp)),
     "Schnelle KI-Aktion": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).SchnelleAktionDialog(_hauptfenster(tp)),
     "KI-Ergebnisse": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).ErgebnisseDialog(_hauptfenster(tp)),
+    "Drucken": lambda tp: __import__("lunivo_writer.ui.baukasten.druck_dialog", fromlist=["x"]).DruckDialog(None, 3),
+    "Erstellen": lambda tp: __import__("lunivo_writer.ui.baukasten.erstellen_fenster", fromlist=["x"]).ErstellenFenster(
+        _hauptfenster(tp), "Dokument erstellen", "Wählen Sie eine Vorlage.", ["Brief", "Bericht"], meldung="Erstellt."),
+    "Stimme und Tempo": lambda tp: __import__("lunivo_writer.ui.baukasten.stimme_dialog", fromlist=["x"]).StimmeDialog(
+        None, [{"kennung": "a", "name": "Stimme A"}, {"kennung": "b", "name": "Stimme B"}], "a", 100, (50, 200, 10)),
+    "Hilfe": lambda tp: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).HilfeFenster(_hauptfenster(tp)),
+    "KI-Assistent": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).KIAssistentDialog(_hauptfenster(tp)),
 }
 
 

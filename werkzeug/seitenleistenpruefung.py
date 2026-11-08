@@ -53,7 +53,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QCombo
                                QMenu, QPushButton, QRadioButton, QScrollArea, QWidgetAction, QSlider, QSpinBox, QTextEdit, QToolButton, QWidget)
 
 from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld  # noqa: E402
-from lunivo_writer.ui.baukasten.farbpalette import FarbFeld  # noqa: E402
+from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld  # noqa: E402
 from lunivo_writer.ui.baukasten.schiebe_feld import SchiebeFeld, SchrittFeld  # noqa: E402
 from lunivo_writer.ui.baukasten.texteffekt_dialog import Abschnitt  # noqa: E402
 
@@ -316,8 +316,8 @@ def _menue_fangen(selbst, *args, **kw):
 
 def _menues_umbiegen() -> None:
     """``QMenu.exec`` lässt sich bei Shiboken nicht für alle Unterklassen umbiegen; die Python-Unterklassen der Oberfläche einzeln."""
-    from lunivo_writer.ui.baukasten.farbpalette import FarbPalette
-    from lunivo_writer.ui.baukasten.voreinstellung_menue import VoreinstellungMenue
+    from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
+    from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
     for k in (VoreinstellungMenue, FarbPalette):
         k.exec = _menue_fangen
 
