@@ -12,11 +12,13 @@ MELDUNG_ANGEWENDET = "Diese Antwort wurde schon ins Dokument übernommen."
 MELDUNG_OHNE_MARKIERUNG = "Die Frage wurde ohne Markierung gestellt. Zum Ersetzen die Stelle markieren und neu fragen."
 
 
-def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, dokument) -> dict:
-    """{von, bis, markiert, revision, alt, dokument}. Ohne Markierung: von == bis == Schreibmarke, ``alt`` leer."""
+def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, dokument,
+                 editor_obj=None, dokument_obj=None) -> dict:
+    """Bezug mit Editor-Kennung und optionalen Objektidentitäten zur sicheren Dokumentzuordnung."""
     von, bis = min(von, bis), max(von, bis)
     return {"von": von, "bis": bis, "markiert": bool(markiert), "revision": revision,
-            "alt": alt if markiert else "", "dokument": dokument}
+            "alt": alt if markiert else "", "dokument": dokument,
+            "editor_obj": editor_obj, "dokument_obj": dokument_obj}
 
 
 def bezug_angewendet() -> dict:
@@ -24,13 +26,18 @@ def bezug_angewendet() -> dict:
     return {"angewendet": True}
 
 
-def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, editor_jetzt) -> tuple[bool, str]:
-    """(ok, Grund). Streng: nur gleiche Revision im selben Editor; kein Raten, keine Suche im Text."""
+def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, editor_jetzt,
+                   dokument_jetzt=None, editor_obj_jetzt=None) -> tuple[bool, str]:
+    """(ok, Grund). Gleiche Revision, Editor-Kennung und – sofern erfasst – dieselben Objektidentitäten."""
     if not bezug:
         return False, MELDUNG_KEIN_BEZUG
     if bezug.get("angewendet"):
         return False, MELDUNG_ANGEWENDET
     if editor_jetzt is None or revision_jetzt is None or bezug["dokument"] != editor_jetzt:
+        return False, MELDUNG_EDITOR
+    if bezug.get("editor_obj") is not None and bezug["editor_obj"] is not editor_obj_jetzt:
+        return False, MELDUNG_EDITOR
+    if bezug.get("dokument_obj") is not None and bezug["dokument_obj"] is not dokument_jetzt:
         return False, MELDUNG_EDITOR
     if bezug["revision"] != revision_jetzt:
         return False, MELDUNG_GEAENDERT

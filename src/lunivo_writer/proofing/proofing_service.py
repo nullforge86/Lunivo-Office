@@ -24,17 +24,13 @@ zeige_leer = zeige_leer_modell           # bleibt hier unter dem alten Namen err
 
 
 class _Signale(QObject):
-    fertig = Signal(int, list)
-
-
-class _LTSignale(QObject):
     fertig = Signal(int, list, object)
 
 
 class _Lauf(QRunnable):
-    def __init__(self, rev: int, text: str, gelernt: dict, signale: _Signale, schalter: dict | None = None):
+    def __init__(self, rev: int, text: str, gelernt: dict, signale: _Signale, dokument, schalter: dict | None = None):
         super().__init__()
-        self.rev, self.text, self.gelernt, self.sig, self.schalter = rev, text, gelernt, signale, schalter
+        self.rev, self.text, self.gelernt, self.sig, self.dokument, self.schalter = rev, text, gelernt, signale, dokument, schalter
 
     def run(self):
         try:
@@ -42,7 +38,10 @@ class _Lauf(QRunnable):
         except Exception:        # Eine Prüfung, die abstürzt, darf das Schreiben nie stören
             _log.exception("Prüfung abgestürzt")
             funde = []
-        self.sig.fertig.emit(self.rev, funde)
+        try:
+            self.sig.fertig.emit(self.rev, funde, self.dokument)
+        except RuntimeError:
+            pass                                      # Prüfdienst wurde beim Schließen bereits freigegeben
 
 
 class WritingAssistant(QObject):
@@ -57,6 +56,8 @@ class WritingAssistant(QObject):
         self.gelernt = gelernt or Gelernt()
         self.editor = None
         self.funde: list[ProofingIssue] = []
+        self._funde_doc = None
+        self._funde_rev = -1
         self._roh: list[ProofingIssue] = []
         self._geprueft: dict[str, list[tuple[int, int]]] = {}   # Quelle → Bereiche, die sie vollständig geprüft hat
         self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
@@ -68,7 +69,6 @@ class WritingAssistant(QObject):
         self._schmutz: tuple[int, int] | None = None    # seit der letzten Prüfung geänderter Bereich
         self._region: tuple[int, int] | None = None     # Bereich der laufenden Teilprüfung (None = ganzer Text)
         self._doc = None
-        self._lauf_doc = None  # Dokumentobjekt des laufenden Workers; Revisionen allein sind nicht dokumentübergreifend eindeutig
         self._pool = QThreadPool(self)
         self._pool.setMaxThreadCount(1)
         self._sig = _Signale()
@@ -113,7 +113,8 @@ class WritingAssistant(QObject):
 
     # ---- Anbindung an den Editor ---------------------------------------------
     def attach(self, editor) -> None:
-        if self.editor is editor:
+        doc = editor.document() if editor is not None else None
+        if self.editor is editor and self._doc is doc:
             return
         if self._doc is not None:
             try:
@@ -121,7 +122,7 @@ class WritingAssistant(QObject):
             except (RuntimeError, TypeError):
                 pass
         self.editor = editor
-        self._doc = editor.document() if editor is not None else None
+        self._doc = doc
         self._voll, self._schmutz, self._roh = False, None, []
         self._geprueft = {}
         if self._doc is not None:
@@ -141,6 +142,11 @@ class WritingAssistant(QObject):
     def _geaendert(self, pos: int, entfernt: int, hinzu: int) -> None:
         """Bereichs-Invalidierung: Funde hinter der Änderung verschieben, Funde an der Änderung verwerfen, Bereich merken."""
         self._geprueft = {}
+        # Bereits angezeigte Funde gehören zum Textstand vor dieser Änderung.
+        # Die Revision allein ist bei Undo-/Redo- und Dokumentwechselpfaden
+        # kein ausreichender Identitätsnachweis.
+        if self._funde_doc is self._doc:
+            self._funde_rev = -1
         if not self._voll:
             return
         self._roh = inkrement.verschieben(self._roh, pos, entfernt, hinzu)
@@ -180,11 +186,10 @@ class WritingAssistant(QObject):
             self._zeigen()                               # nichts geändert — nichts zu prüfen
             return
         self._laeuft = True
-        self._lauf_doc = doc
         schalter = self.pruef_schalter()
         pruef_text = text[self._region[0]:self._region[1]] if self._region else text
         self._pruef_laenge = len(pruef_text)
-        self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, schalter))
+        self._pool.start(_Lauf(doc.revision(), pruef_text, self.gelernt.daten, self._sig, doc, schalter))
 
     def pruef_schalter(self) -> dict:
         """Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“."""
@@ -193,12 +198,12 @@ class WritingAssistant(QObject):
             schalter["pruefer_" + n] = self.settings.get_bool("schreibhilfe/pruefer_" + n, True)
         return schalter
 
-    def _fertig(self, rev: int, roh: list) -> None:
+    def _fertig(self, rev: int, roh: list, doc=None) -> None:
         self._laeuft = False
         ed = self.editor
         if ed is None:
             return
-        if self._lauf_doc is not ed.document() or rev != ed.document().revision():  # Dokument gewechselt oder Text inzwischen geändert
+        if (doc is not None and (doc is not self._doc or doc is not ed.document())) or rev != ed.document().revision():          # Text hat sich inzwischen geändert
             self._timer.start()
             return
         self._geprueft_rev = rev
@@ -248,9 +253,25 @@ class WritingAssistant(QObject):
 
     def anzeigen(self, funde: list[ProofingIssue]) -> None:
         self.funde = funde
+        try:
+            self._funde_doc = self.editor.document() if self.editor is not None else None
+            self._funde_rev = self._funde_doc.revision() if self._funde_doc is not None else -1
+        except RuntimeError:
+            self._funde_doc, self._funde_rev = None, -1
         if self.editor is not None:
             self.editor.set_wellen(funde if self.an("wellen") else [])
         self.fundeGeaendert.emit(funde)
+
+    def fund_aktuell(self, fund: ProofingIssue | None = None) -> bool:
+        """Nur Karten/Funde der aktuellen Dokumentrevision dürfen Aktionen auslösen."""
+        ed = self.editor
+        try:
+            doc = ed.document() if ed is not None else None
+            if doc is None or doc is not self._funde_doc or doc.revision() != self._funde_rev:
+                return False
+            return fund is None or any(f is fund for f in self.funde)
+        except RuntimeError:
+            return False
 
     # ---- Rechtsklick-Menü ------------------------------------------------------------------
     def funde_an(self, pos: int) -> list[ProofingIssue]:
@@ -350,29 +371,41 @@ class WritingAssistant(QObject):
 
         class _LT(QRunnable):
             def __init__(self, sig, doc):
-                super().__init__(); self.sig, self.doc = sig, doc
-                self.rev = doc.revision()
+                super().__init__(); self.sig, self.doc, self.rev = sig, doc, doc.revision()
 
             def run(self):
                 try:
                     funde = languagetool.pruefe(text)
                 except languagetool.LanguageToolFehler as e:
-                    self.sig.fertig.emit(-1, [str(e)], self.doc)
+                    try:
+                        self.sig.fertig.emit(-1, [str(e)], self.doc)
+                    except RuntimeError:
+                        pass                          # Prüfdienst wurde beim Schließen bereits freigegeben
                     return
-                self.sig.fertig.emit(self.rev, funde, self.doc)
+                try:
+                    self.sig.fertig.emit(self.rev, funde, self.doc)
+                except RuntimeError:
+                    pass                              # Prüfdienst wurde beim Schließen bereits freigegeben
 
-        self._lt_sig = _LTSignale()
+        self._lt_sig = _Signale()
         self._lt_sig.fertig.connect(self._lt_fertig)
         self.status.emit("LanguageTool prüft …")
         pool.start(_LT(self._lt_sig, ed.document()))
 
-    def _lt_fertig(self, rev: int, funde: list, doc) -> None:
-        if rev == -1:
-            if doc is self._doc:
-                self.status.emit(str(funde[0]) if funde else "LanguageTool-Fehler.")
-            return
+    def _lt_fertig(self, rev: int, funde: list, doc=None) -> None:
         ed = self.editor
-        if ed is None or doc is not ed.document() or rev != ed.document().revision():
+        if ed is None:
+            return
+        try:
+            aktuell = ed.document()
+        except RuntimeError:
+            return
+        if doc is not None and (doc is not self._doc or doc is not aktuell):
+            return
+        if rev == -1:
+            self.status.emit(str(funde[0]) if funde else "LanguageTool-Fehler.")
+            return
+        if rev != aktuell.revision():
             return
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
@@ -411,8 +444,10 @@ class WritingAssistant(QObject):
 
     # ---- Annehmen / weglassen ----------------------------------------------------------
     def aendern(self, fund: ProofingIssue) -> bool:
+        # Wort-Vorschläge aus dem Rechtsklick-Menü entstehen live am Text und stehen nicht in ``funde``; ``replace_range(erwartet=…)`` schützt sie.
         ed = self.editor
-        if ed is None or not fund.neu and fund.art == "hinweis":
+        if ed is None or not (fund.wort_ebene or self.fund_aktuell(fund)) or not fund.neu and fund.art == "hinweis":
+            self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
             return False
         if not ed.replace_range(fund.von, fund.bis, fund.neu or "", erwartet=fund.alt):
             self.status.emit("Der Text hat sich an dieser Stelle geändert — bitte neu prüfen.")
@@ -425,12 +460,18 @@ class WritingAssistant(QObject):
         return True
 
     def lassen(self, fund: dict) -> None:
+        if not self.fund_aktuell(fund):
+            self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
+            return
         if getattr(fund, "quelle", None) == "ki":
             self.gelernt.ki_vermerken({"konfidenz": fund.konfidenz if fund.konfidenz is not None else 0.5}, False)
         self._weg.add(self._key(fund))
         self._zeigen()
 
     def alle_aendern(self) -> int:
+        if not self.fund_aktuell():
+            self.status.emit("Die Funde sind veraltet — bitte das Dokument neu prüfen.")
+            return 0
         n = 0
         for f in sorted((f for f in self.funde if f.art == "fehler" and f.neu), key=lambda f: -f.von):
             if self.editor.replace_range(f.von, f.bis, f.neu, erwartet=f.alt):

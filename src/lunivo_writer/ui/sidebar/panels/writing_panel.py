@@ -133,11 +133,17 @@ class FundKarte(QFrame):
             self.a.pruefen(voll=True)                        # der Hinweis verschwindet, wenn der Satz kürzer ist
 
     def _verwerfen(self):
+        if not self.a.fund_aktuell(self.fund):
+            self.d.status.emit("Dieser Fund ist veraltet — die Lernstatistik wurde nicht verändert.")
+            self.vorschlag_feld.hide()
+            return
         self.d.assistant.gelernt.ki_vermerken(self._v, False)
         self.vorschlag_feld.hide()
         self.vorschlag_knopf.setEnabled(True); self.vorschlag_knopf.setText("Vorschlag"); self.vorschlag_knopf.show()
 
     def _zeigen(self):
+        if not self.a.fund_aktuell(self.fund):
+            return
         ed = self.a.editor
         if ed is not None:
             ed.select_range(self.fund.von, self.fund.bis)
@@ -173,6 +179,10 @@ class VorschlagKarte(QFrame):
         lay.addLayout(z)
 
     def _lassen(self):
+        if not self.d.vorschlag_aktuell(self.v):
+            self.d.status.emit("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet. Die Lernstatistik wurde nicht verändert.")
+            self._weg()
+            return
         self.d.assistant.gelernt.ki_vermerken(self.v, False)
         self._weg()
 
@@ -190,6 +200,12 @@ class HinweisKarte(QFrame):
     def __init__(self, titel, text, cent, fenster, panel):
         super().__init__()
         self.text, self.w = text, fenster
+        self._editor = fenster.current_editor()
+        try:
+            self._dokument = self._editor.document() if self._editor is not None else None
+            self._revision = self._dokument.revision() if self._dokument is not None else -1
+        except RuntimeError:
+            self._dokument, self._revision = None, -1
         self.setObjectName("HinweisKarte")
         als_karte(self, "karte")
         lay = QVBoxLayout(self)
@@ -207,8 +223,14 @@ class HinweisKarte(QFrame):
 
     def _ende(self):
         e = self.w.current_editor()
-        if e is not None:
+        try:
+            if (e is None or e is not self._editor or e.document() is not self._dokument
+                    or e.document().revision() != self._revision):
+                self.w.statusBar().showMessage("Das Dokument wurde gewechselt oder geändert — das Ergebnis wurde nicht eingefügt.", 6000)
+                return
             c = e.textCursor(); c.movePosition(c.MoveOperation.End); c.insertBlock(); c.insertText(self.text)
+        except RuntimeError:
+            self.w.statusBar().showMessage("Das ursprüngliche Dokument ist nicht mehr verfügbar — das Ergebnis wurde nicht eingefügt.", 6000)
 
     def _weg(self):
         self.hide(); self.setParent(None); self.deleteLater()

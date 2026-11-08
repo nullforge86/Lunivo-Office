@@ -149,6 +149,12 @@ class KIAnfragenMixin:
             return
         eing = eing or self._eingabe()
         if eing is not None:
+            ed = eing.get("ed")
+            if ed is not None:
+                try:
+                    eing.setdefault("dokument", ed.document())
+                except RuntimeError:
+                    return
             eing["_titel"] = meldung.strip(" .…„“").strip() or "KI"
         if eing is None or not eing["text"].strip():
             self._hinweis_fenster("KI", "Es steht noch kein Text da. Schreiben Sie etwas oder markieren Sie eine Stelle.")
@@ -168,6 +174,19 @@ class KIAnfragenMixin:
         self._arbeit_laeuft = False
         self.laeuft.emit(False)
         if danach == "bild":
+            if not self._eingabe_gueltig(eing):
+                self.status.emit("Das Dokument wurde gewechselt oder geändert, während das Bild erzeugt wurde. Das Bild wurde verworfen.")
+                return
+            pos = eing.get("cursor")
+            try:
+                ed = eing["ed"]
+                cur = ed.textCursor()
+                aktuell = (cur.anchor(), cur.position())
+            except (KeyError, RuntimeError):
+                aktuell = None
+            if pos is None or aktuell != pos:
+                self.status.emit("Die Schreibposition wurde inzwischen geändert. Das Bild wurde nicht eingefügt.")
+                return
             self._bild_fertig(r, eing)
             return
         if danach == "dauer":
@@ -182,21 +201,27 @@ class KIAnfragenMixin:
             if "fehler" not in r:
                 self.merke_ergebnis("KI-Chat", r["text"])
             return
+        if not self._eingabe_gueltig(eing):
+            self.status.emit("Das Dokument wurde gewechselt oder geändert, während die KI gelesen hat. "
+                             "Die Antwort wurde verworfen.")
+            return
         if "fehler" in r:
             self.status.emit(r["fehler"])
             return
         if r.get("text"):
             self.merke_ergebnis(eing.get("_titel", "KI"), r["text"], eing.get("text", ""))
-        ed = eing["ed"]
-        try:
-            neu_rev = ed.document().revision()
-        except RuntimeError:
-            return
-        if neu_rev != eing["rev"]:
-            self.status.emit("Sie haben weitergeschrieben, während die KI gelesen hat. Ihre Antwort passt nicht mehr "
-                             "zu dem, was jetzt dasteht — nichts wurde geändert. Noch einmal drücken fragt sie neu.")
-            return
         danach(r, eing)
+
+    def _eingabe_gueltig(self, eing: dict) -> bool:
+        """Nur Antworten für den aktiven Editor, das Dokument und die Revision vom Sendezeitpunkt dürfen weiterlaufen."""
+        ed = eing.get("ed")
+        try:
+            doc = ed.document()
+            return (self.w.current_editor() is ed
+                    and doc is eing.get("dokument")
+                    and doc.revision() == eing["rev"])
+        except (AttributeError, KeyError, RuntimeError, TypeError):
+            return False
 
     # ---- Bild aus Text ------------------------------------------------------------------------
 
@@ -222,7 +247,16 @@ class KIAnfragenMixin:
         self._arbeit_laeuft = True
         self.laeuft.emit(True)
         self.status.emit("Die KI erzeugt das Bild …")
-        eing = {"ed": ed, "beschreibung": text, "ersetzen": c.hasSelection()}
+        try:
+            dokument = ed.document()
+            rev = dokument.revision()
+            cursor_stand = (c.anchor(), c.position())
+        except RuntimeError:
+            self._arbeit_laeuft = False
+            self.laeuft.emit(False)
+            return
+        eing = {"ed": ed, "dokument": dokument, "rev": rev, "cursor": cursor_stand,
+                "beschreibung": text, "ersetzen": c.hasSelection()}
         self._pool.start(_Lauf(("bild", eing), lambda: self.ki.bild_erzeugen(text), self._sig))
 
     def _bild_fertig(self, r, eing) -> None:

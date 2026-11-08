@@ -30,13 +30,45 @@ def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp
     assert erstes is not zweites
     assert erstes.revision() == zweites.revision()  # gleiche Revisionsnummer darf nicht verwechselt werden
 
-    assistant._lauf_doc = erstes
     assistant._laeuft = True
-    assistant._fertig(zweites.revision(), [])
+    assistant._fertig(zweites.revision(), [], erstes)
 
     assert not assistant._voll
     assert not assistant._laeuft
     assert assistant._timer.isActive()
+
+
+def test_attach_erkennt_dokumentwechsel_im_selben_editor(app, tmp_path, monkeypatch):
+    from PySide6.QtGui import QTextDocument
+    w = win(tmp_path, monkeypatch)
+    a = w.assistant
+    ed = w.current_editor()
+    alt = ed.document()
+    neu = QTextDocument(ed)
+    neu.setPlainText("Neues Dokument mit gleichem Revisionsstand.")
+    ed.setDocument(neu)
+
+    a.attach(ed)
+
+    assert a._doc is neu
+    assert a._doc is not alt
+
+
+def test_languagetool_fehler_fuer_altes_dokument_wird_verworfen(app, tmp_path, monkeypatch):
+    from PySide6.QtGui import QTextDocument
+    w = win(tmp_path, monkeypatch)
+    a = w.assistant
+    ed = w.current_editor()
+    alt = ed.document()
+    neu = QTextDocument(ed)
+    neu.setPlainText("Neues Dokument.")
+    ed.setDocument(neu)
+    meldungen = []
+    a.status.connect(meldungen.append)
+
+    a._lt_fertig(-1, ["Fehler des alten Auftrags"], alt)
+
+    assert meldungen == []
 
 
 def test_verspaetetes_languagetool_ergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp_path, monkeypatch):
@@ -78,6 +110,74 @@ def test_pruefen_findet_und_aendert(app, tmp_path, monkeypatch):
     f = next(f for f in funde if f.neu == "Wir haben")
     assert w.assistant.aendern(f)
     assert e.toPlainText().startswith("Wir haben keine")
+
+
+
+
+def test_ki_hinweiskarte_fuegt_nach_dokumentwechsel_nicht_falsch_ein(app, tmp_path, monkeypatch):
+    from lunivo_writer.ui.sidebar.panels.writing_panel import HinweisKarte
+    from PySide6.QtWidgets import QPushButton
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Ursprungsdokument")
+    w.sidebar.zeige_hinweis("Zusammenfassung", "Ergebnis aus Dokument A", None)
+    karte = w.sidebar.findChildren(HinweisKarte)[0]
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Zieldokument")
+    next(b for b in karte.findChildren(QPushButton) if b.text() == "Am Ende einfügen").click()
+
+    assert erstes.toPlainText() == "Ursprungsdokument"
+    assert zweites.toPlainText() == "Zieldokument"
+
+
+def test_veraltete_schreibhilfe_funde_nach_aenderung_oder_tabwechsel_sind_unwirksam(app, tmp_path, monkeypatch):
+    from lunivo_writer.models.proofing import ProofingIssue
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Wir hat keine Zahlung erhalten.")
+    fund = ProofingIssue(von=4, bis=7, alt="hat", neu="haben", grund="Grammatik", art="fehler")
+    w.assistant.anzeigen([fund])
+
+    # Schon eine Änderung nach der Prüfung macht die angezeigte Karte ungültig.
+    cursor = erstes.textCursor()
+    cursor.movePosition(QTextCursor.End)
+    erstes.setTextCursor(cursor)
+    erstes.insertPlainText(" Zusatz")
+    assert not w.assistant.aendern(fund)
+    assert erstes.toPlainText() == "Wir hat keine Zahlung erhalten. Zusatz"
+
+    # Auch gleiche Revisionsnummern in einem anderen Tab machen den alten Fund nicht gültig.
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Wir hat keine Zahlung erhalten.")
+    w.assistant.attach(zweites)
+    assert not w.assistant.aendern(fund)
+    assert zweites.toPlainText() == "Wir hat keine Zahlung erhalten."
+    assert not w.assistant.fund_aktuell(fund)
+
+
+
+def test_ki_satzvorschlag_startet_nicht_mit_fund_aus_anderm_dokument(app, tmp_path, monkeypatch):
+    from lunivo_writer.models.proofing import ProofingIssue
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Ein sehr langer Beispielsatz steht hier.")
+    fund = ProofingIssue(von=0, bis=40, alt="Ein sehr langer Beispielsatz steht hier.",
+                         neu="", grund="Langer Satz", art="hinweis", stelle="Ein sehr langer Beispielsatz steht hier.")
+    w.assistant.anzeigen([fund])
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Ein anderer Text.")
+    w.assistant.attach(zweites)
+    erhalten = []
+    w.ki.satz_vorschlag(fund, erhalten.append)
+
+    assert erhalten == []
+    assert zweites.toPlainText() == "Ein anderer Text."
+    assert not w.ki.beschaeftigt
 
 
 def test_lassen_blendet_aus_und_lernt_ruhe(app, tmp_path, monkeypatch):
@@ -212,11 +312,15 @@ def test_ki_korrektur_ende_zu_ende(app, tmp_path, monkeypatch):
 def test_ki_ohne_schluessel_oeffnet_nichts_nach_aussen(app, tmp_path, monkeypatch):
     w = win(tmp_path, monkeypatch)
     w.ki.konfig.d["modell"] = "claude-opus-5"; w.ki.konfig.d["apiKey"] = ""
-    aufgerufen = []
+    from PySide6.QtWidgets import QMessageBox
+    aufgerufen, meldungen = [], []
     monkeypatch.setattr(w.befehle, "w_kiEinstellungen", lambda k=None: aufgerufen.append("einstellungen"))
+    monkeypatch.setattr(QMessageBox, "information", staticmethod(lambda *a, **k: meldungen.append(a[1]) or QMessageBox.Ok))
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: False)
     w.current_editor().setPlainText("Text")
     w.ki.korrigieren()
-    assert aufgerufen == ["einstellungen"] and not w.sidebar.ki_banner.isHidden()
+    assert meldungen and not aufgerufen                      # ohne Modell: nur eine Meldung, nichts geht nach außen, kein fremdes Fenster
+    assert not w._pool_hat_arbeit() if hasattr(w, "_pool_hat_arbeit") else not w.ki._arbeit_laeuft
 
 
 def test_rechtschreib_ignorieren_schalter(app, tmp_path, monkeypatch):
@@ -746,6 +850,7 @@ def test_schreibhilfe_knoepfe_melden_sich_sichtbar(app, tmp_path, monkeypatch):
     monkeypatch.setattr(QMessageBox, "information", staticmethod(lambda *a, **k: meldungen.append(a[1]) or QMessageBox.Ok))
     monkeypatch.setattr(w.befehle, "w_kiEinstellungen", lambda k=None: fenster.append("einstellungen"))
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: False)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: False)   # „starte“ fragt das innere KI-Objekt, auch bei auto:/argos:-Aufgaben
     w.current_editor().setPlainText("")
     for befehl in ("w.pruefen", "vorlesen", "kiTextInBild", "thesaurus"):
         meldungen.clear(); w.befehle.tun(befehl)
@@ -853,6 +958,7 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: True)    # sonst öffnet „starte“ das Hinweisfenster „Modell fehlt“
     monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None, umfang="auszug", zeichen=0: True)
     satz = " ".join(["wort"] * 30) + "."
     monkeypatch.setattr(w.ki.ki, "satz_umschreiben", lambda s, g="": {"text": "Erster Satz. Zweiter Satz.", "cent": None})
@@ -970,3 +1076,109 @@ def test_ki_fertig_verwirft_antwort_fuer_anders_dokument(app, tmp_path, monkeypa
     assert a.ki_fertig(rev, v, dokument=object()) == 0
     assert a._roh == vorher
     assert a.ki_fertig(rev, v, dokument=e.document()) == 1
+
+
+
+def test_hintergrundpruefungen_verwerfen_anderes_dokument(app, tmp_path, monkeypatch):
+    """Gleiche Revisionen dürfen Ergebnisse aus einem früheren Dokument nicht gültig machen."""
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor()
+    e.setPlainText("Das ist vieleicht gut.")
+    a = w.assistant
+    vorher = list(a._roh)
+    rev = e.document().revision()
+
+    a._laeuft = True
+    a._fertig(rev, [], object())
+    assert a._roh == vorher
+    assert a._laeuft is False
+
+    a._lt_fertig(rev, [{"alt": "vieleicht"}], object())
+    assert a._roh == vorher
+    assert "languagetool" not in a._geprueft
+
+
+def test_ki_ergebnis_nach_editorwechsel_verwerfen(app, tmp_path, monkeypatch):
+    """Auch das ursprüngliche Dokument darf nach einem Tabwechsel nicht mehr verändert werden."""
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Text im ersten Dokument")
+    eing = {
+        "ed": erstes,
+        "dokument": erstes.document(),
+        "rev": erstes.document().revision(),
+        "text": erstes.toPlainText(),
+        "basis": 0,
+        "markiert": False,
+    }
+    assert w.ki._eingabe_gueltig(eing)
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Text im zweiten Dokument")
+
+    assert not w.ki._eingabe_gueltig(eing)
+    assert erstes.toPlainText() == "Text im ersten Dokument"
+    assert zweites.toPlainText() == "Text im zweiten Dokument"
+
+
+def test_fortlaufender_ki_timer_startet_nicht_im_neuen_tab(app, tmp_path, monkeypatch):
+    """Ein Debounce-Timer aus Dokument A darf nach dem Tabwechsel nicht Dokument B verarbeiten."""
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Änderung in Dokument A")
+    w.ki.konfig.d["assistenten_dauerbetrieb"] = True
+    w.ki._dauer_editor = erstes
+    w.ki._dauer_dokument = erstes.document()
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Unveränderter Text in Dokument B")
+
+    w.ki._dauer_los()
+
+    assert zweites.toPlainText() == "Unveränderter Text in Dokument B"
+    assert not w.ki.beschaeftigt
+
+
+def test_bildschirmfoto_nach_tabwechsel_nicht_in_neues_dokument_einfuegen(app, tmp_path, monkeypatch):
+    """Die verzögerte Screenshot-Aufnahme bleibt an das Dokument beim Start gebunden."""
+    from PySide6.QtGui import QPixmap
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Dokument A")
+    w.befehle._foto_editor = erstes
+    w.befehle._foto_dokument = erstes.document()
+    w.befehle._foto_revision = erstes.document().revision()
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Dokument B")
+    bild = QPixmap(8, 8)
+    bild.fill(Qt.black)
+
+    w.befehle._foto_einfuegen(bild)
+
+    assert erstes.toPlainText() == "Dokument A"
+    assert zweites.toPlainText() == "Dokument B"
+
+
+def test_veraltete_modelllisten_antwort_nach_urlwechsel_verwerfen(app, tmp_path, monkeypatch):
+    """Eine Antwort für die vorige Anbieter-URL darf die Modellliste der neuen URL nicht überschreiben."""
+    from lunivo_writer.ui.dialogs.ki_modelle_dialoge import AnbieterDialog
+    w = win(tmp_path, monkeypatch)
+    d = AnbieterDialog(w, w.ki.konfig)
+    d.modell.setCurrentText("bereits gewählt")
+    alte_kennung = d._modell_abfrage
+
+    d.url.setText("https://neuer-anbieter.example/v1")
+    aktuelle_kennung = d._modell_abfrage
+    assert aktuelle_kennung > alte_kennung
+
+    d._geholt({"kennung": alte_kennung, "namen": ["Altes Modell"]})
+    assert d.modell.findText("Altes Modell") == -1
+    assert d.modell.currentText() == "bereits gewählt"
+
+    d._geholt({"kennung": aktuelle_kennung, "namen": ["Neues Modell"]})
+    assert d.modell.findText("Neues Modell") >= 0
+    assert d.modell.currentText() == "bereits gewählt"

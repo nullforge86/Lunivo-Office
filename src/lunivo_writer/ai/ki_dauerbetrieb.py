@@ -78,6 +78,11 @@ class KIDauerbetriebMixin:
         if not aktiv:
             return
         self._dauer_art = art
+        self._dauer_editor = self.w.current_editor()
+        try:
+            self._dauer_dokument = self._dauer_editor.document() if self._dauer_editor is not None else None
+        except RuntimeError:
+            self._dauer_editor = self._dauer_dokument = None
         self._dauer_timer.start(int(min(AL.verzoegerung_begrenzen(a["verzoegerung"]) for a in aktiv) * 1000))
 
     def _dauer_eingabe(self, a: dict):
@@ -98,6 +103,15 @@ class KIDauerbetriebMixin:
     def _dauer_los(self) -> None:
         """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
         if self._arbeit_laeuft or not self.dauerbetrieb():
+            return
+        # Der Timer gehört zu dem Editor, dessen Änderung ihn ausgelöst hat.
+        # Ein zwischenzeitlicher Tabwechsel darf keinen Assistenten im neuen Tab starten.
+        ed = getattr(self, "_dauer_editor", None)
+        try:
+            if (ed is None or self.w.current_editor() is not ed
+                    or ed.document() is not getattr(self, "_dauer_dokument", None)):
+                return
+        except RuntimeError:
             return
         wartet = self._drossel.warten_noch()
         if wartet == float("inf"):
@@ -138,6 +152,9 @@ class KIDauerbetriebMixin:
         a = self.konfig.assistent_holen(eing.get("assistent"))
         if a is None:
             return
+        if not self._eingabe_gueltig(eing):
+            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — die Antwort wurde verworfen.")
+            return
         if "fehler" in r:
             self._dauer_aus(a, r["fehler"])
             return
@@ -149,12 +166,6 @@ class KIDauerbetriebMixin:
             return
         self.merke_ergebnis(a["name"], text + (f"\n\nBegründung: {begruendung}" if begruendung else ""), alt)
         ed = eing["ed"]
-        try:
-            if ed.document().revision() != eing["rev"]:
-                self.status.emit(f"„{a['name']}“: Sie haben weitergeschrieben — die Antwort passt nicht mehr und wurde verworfen.")
-                return
-        except RuntimeError:
-            return
         k = self._preis(r.get("cent"))
         self._dauer_eigen = True
         try:
@@ -195,8 +206,8 @@ class KIDauerbetriebMixin:
         if f != QMessageBox.Yes:
             self.status.emit(f"„{a['name']}“: nicht übernommen.")
             return
-        if ed.document().revision() != eing["rev"]:
-            self.status.emit(f"„{a['name']}“: Der Text hat sich inzwischen geändert — nichts wurde ersetzt.")
+        if not self._eingabe_gueltig(eing):
+            self.status.emit(f"„{a['name']}“: Das Dokument wurde gewechselt oder geändert — nichts wurde ersetzt.")
             return
         self._einsetzen({"text": text, "cent": r.get("cent")}, eing, a["name"] + ".", a["name"] + ".")
         self._dauer_zuletzt[(a["id"], "markierung" if eing["stelle"] == "markierung" else ed.textCursor().blockNumber())] = text

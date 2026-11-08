@@ -129,6 +129,9 @@ class AnbieterDialog(QDialog):
         v.addWidget(z)
         self._antwort = _Antwort()
         self._antwort.da.connect(self._geholt)
+        self._modell_abfrage = 0
+        self.url.textChanged.connect(self._modell_abfrage_ungueltig)
+        self.schluessel.textChanged.connect(self._modell_abfrage_ungueltig)
         self.vorlage.currentIndexChanged.connect(self._vorlage_gewaehlt)
         if bestehend:
             i = next((i for i in range(self.vorlage.count()) if self.vorlage.itemData(i) == bestehend["url"]), 0)
@@ -152,12 +155,18 @@ class AnbieterDialog(QDialog):
                 self.name.setText(self.vorlage.currentText())
             self._holen(True)
 
+    def _modell_abfrage_ungueltig(self, *_args) -> None:
+        """Antworten für eine alte URL oder einen alten Schlüssel dürfen die aktuelle Modellliste nicht überschreiben."""
+        self._modell_abfrage += 1
+
     def _holen(self, still: bool) -> None:
         url, schl = self.url.text().strip(), self.schluessel.text().strip()
         if not url:
             if not still:
                 self.stand.setText("Erst die URL eintragen.")
             return
+        self._modell_abfrage += 1
+        kennung = self._modell_abfrage
         self.stand.setText("Wird geholt …")
 
         class _L(QRunnable):
@@ -166,6 +175,7 @@ class AnbieterDialog(QDialog):
                     r = {"namen": K.anbieter_modelle(url, schl)}
                 except Exception as e:                  # Netz, Schlüssel, falsche Adresse — alles landet als Hinweis
                     r = {"fehler": str(e)}
+                r["kennung"] = kennung
                 try:
                     self._antwort.da.emit(r)
                 except RuntimeError:
@@ -173,6 +183,8 @@ class AnbieterDialog(QDialog):
         QThreadPool.globalInstance().start(_L())
 
     def _geholt(self, r: dict) -> None:
+        if r.get("kennung") != self._modell_abfrage:
+            return
         if "fehler" in r:
             self.stand.setText("Nicht abrufbar — Modell von Hand eintragen.")
             return

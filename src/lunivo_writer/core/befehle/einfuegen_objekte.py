@@ -306,6 +306,15 @@ class EinfuegenObjektBefehle:
         if antwort.clickedButton() not in (ganz, bereich):
             return
         nur_bereich = antwort.clickedButton() is bereich
+        # Ziel beim Start festhalten: die verzögerte Aufnahme darf später nicht
+        # versehentlich in einen inzwischen aktiven anderen Dokumentreiter einfügen.
+        self._foto_editor = self.ed
+        try:
+            self._foto_dokument = self._foto_editor.document() if self._foto_editor is not None else None
+            self._foto_revision = self._foto_dokument.revision() if self._foto_dokument is not None else -1
+        except RuntimeError:
+            self._foto_editor = self._foto_dokument = None
+            self._foto_revision = -1
         from PySide6.QtCore import QTimer
         self.w.hide()
         QTimer.singleShot(500, lambda: self._aufnehmen(nur_bereich))
@@ -329,10 +338,19 @@ class EinfuegenObjektBefehle:
 
 
     def _foto_einfuegen(self, pm):
-        if pm is not None and not pm.isNull() and self.ed:
+        ed = getattr(self, "_foto_editor", None)
+        try:
+            if (ed is None or self.ed is not ed or ed.document() is not getattr(self, "_foto_dokument", None)
+                    or ed.document().revision() != getattr(self, "_foto_revision", -1)):
+                self.w.statusBar().showMessage("Das ursprüngliche Dokument wurde gewechselt oder geändert — das Bildschirmfoto wurde nicht eingefügt.", 6000)
+                return
+        except RuntimeError:
+            self.w.statusBar().showMessage("Das ursprüngliche Dokument ist nicht mehr verfügbar — das Bildschirmfoto wurde nicht eingefügt.", 6000)
+            return
+        if pm is not None and not pm.isNull():
             from lunivo_writer.editor import frei_objekt as FO
             img = pm.toImage()
-            FO.bild_einfuegen(self.ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
+            FO.bild_einfuegen(ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
 
 
     def textfeld(self, k=None):

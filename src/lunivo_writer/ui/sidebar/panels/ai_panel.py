@@ -120,7 +120,16 @@ class ChatPanel(QWidget):
                 self._melden(meldung)
         self._phase = m.phase
         self.zustand()
-        QTimer.singleShot(0, lambda: self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum()))
+        QTimer.singleShot(0, self._zum_ende_scrollen)
+
+    def _zum_ende_scrollen(self) -> None:
+        """Scrollt nach dem Neuaufbau nach unten, sofern das Panel noch existiert."""
+        try:
+            scrollbar = self.scroll.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except RuntimeError:
+            # Das Panel bzw. seine Qt-Scrollfläche kann vor dem Timer gelöscht sein.
+            return
 
     def _teil_zeigen(self) -> None:
         """Streaming: nur das Textfeld der laufenden Antwort nachziehen — kein Neuaufbau aller Blasen."""
@@ -132,9 +141,14 @@ class ChatPanel(QWidget):
         except RuntimeError:
             self._teil_label = None
             return
-        sb = self.scroll.verticalScrollBar()
-        if sb.value() >= sb.maximum() - 40:
-            sb.setValue(sb.maximum())
+        try:
+            sb = self.scroll.verticalScrollBar()
+            if sb.value() >= sb.maximum() - 40:
+                sb.setValue(sb.maximum())
+        except RuntimeError:
+            # Das Panel oder seine Scrollfläche kann während des Streamings verschwinden.
+            self._teil_label = None
+            return
 
     # ---- Aktionen
     def _verlauf_fuellen(self) -> None:

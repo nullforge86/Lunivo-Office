@@ -50,6 +50,34 @@ def test_thesaurus_ersetzt_wort_mit_grossschreibung(app, tmp_path, monkeypatch):
     e.document().setModified(False); w.close()
 
 
+
+def test_thesaurus_antwort_nach_dokumentwechsel_verwerfen(app, tmp_path, monkeypatch):
+    from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+    w = MainWindow(Settings(QSettings(str(tmp_path / "wechsel.ini"), QSettings.IniFormat)))
+    w.new_document(); w.show()
+    erstes = w.current_editor()
+    erstes.insertPlainText("Das ist ein schönes Haus.")
+    c = erstes.textCursor(); c.setPosition(erstes.toPlainText().index("schönes") + 2); erstes.setTextCursor(c)
+    monkeypatch.setattr(K.KI, "verfuegbar", lambda self: True)
+    monkeypatch.setattr(K.KI, "schickt_nach_aussen", lambda self, m=None: None)
+    monkeypatch.setattr(K.KI, "synonyme", lambda self, wort, umg="": {"woerter": ["hübsches"], "cent": None})
+    dialog_aufrufe = []
+    monkeypatch.setattr(EingabeFenster, "getItem", staticmethod(lambda *a, **k: (dialog_aufrufe.append(True) or "hübsches", True)))
+
+    w.befehle.thesaurus()
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.insertPlainText("Anders: Das ist ein schönes Haus.")
+    w.ki._pool.waitForDone(5000)
+    for _ in range(50):
+        app.processEvents()
+
+    assert erstes.toPlainText() == "Das ist ein schönes Haus."
+    assert zweites.toPlainText() == "Anders: Das ist ein schönes Haus."
+    assert dialog_aufrufe == []
+    w.close()
+
+
 def test_dokumentsprache_roundtrip(app, tmp_path):
     from PySide6.QtGui import QTextDocument
     d = QTextDocument(); d.setPlainText("Text")

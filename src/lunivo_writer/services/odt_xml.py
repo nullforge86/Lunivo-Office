@@ -22,6 +22,16 @@ MAX_WIEDERHOLUNG = 1000                   # table:number-rows/columns-repeated: 
 _PX = {"in": 96.0, "cm": 96 / 2.54, "mm": 96 / 25.4, "pt": 96 / 72, "pc": 16.0, "px": 1.0}
 
 
+_PRAEFIX = {v: k for k, v in NS.items()}
+
+
+def _kurz(attr: str) -> str:
+    if attr.startswith("{"):
+        uri, lokal = attr[1:].split("}")
+        return f"{_PRAEFIX.get(uri, '?')}:{lokal}"
+    return attr
+
+
 def _q(name: str) -> str:
     pre, lokal = name.split(":")
     return f"{{{NS[pre]}}}{lokal}"
