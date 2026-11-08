@@ -80,6 +80,30 @@ def test_pruefen_findet_und_aendert(app, tmp_path, monkeypatch):
     assert e.toPlainText().startswith("Wir haben keine")
 
 
+
+def test_veraltete_schreibhilfe_funde_nach_aenderung_oder_tabwechsel_sind_unwirksam(app, tmp_path, monkeypatch):
+    from lunivo_writer.models.proofing import ProofingIssue
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Wir hat keine Zahlung erhalten.")
+    fund = ProofingIssue(von=4, bis=7, alt="hat", neu="haben", grund="Grammatik", art="fehler")
+    w.assistant.anzeigen([fund])
+
+    # Schon eine Änderung nach der Prüfung macht die angezeigte Karte ungültig.
+    erstes.insertPlainText(" Zusatz")
+    assert not w.assistant.aendern(fund)
+    assert erstes.toPlainText() == "Wir hat keine Zahlung erhalten. Zusatz"
+
+    # Auch gleiche Revisionsnummern in einem anderen Tab machen den alten Fund nicht gültig.
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Wir hat keine Zahlung erhalten.")
+    w.assistant.attach(zweites)
+    assert not w.assistant.aendern(fund)
+    assert zweites.toPlainText() == "Wir hat keine Zahlung erhalten."
+    assert not w.assistant.fund_aktuell(fund)
+
+
 def test_lassen_blendet_aus_und_lernt_ruhe(app, tmp_path, monkeypatch):
     w = win(tmp_path, monkeypatch)
     e = w.current_editor(); e.setPlainText("Das Wort steht steht doppelt.")
