@@ -251,6 +251,8 @@ class KIAnfragenMixin:
             rev = dokument.revision()
             cursor_stand = (c.anchor(), c.position())
         except RuntimeError:
+            self._arbeit_laeuft = False
+            self.laeuft.emit(False)
             return
         eing = {"ed": ed, "dokument": dokument, "rev": rev, "cursor": cursor_stand,
                 "beschreibung": text, "ersetzen": c.hasSelection()}
