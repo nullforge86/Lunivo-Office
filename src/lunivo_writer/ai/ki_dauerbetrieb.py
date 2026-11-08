@@ -162,7 +162,7 @@ class KIDauerbetriebMixin:
                 self._dauer_kommentar(ed, eing, text, a["name"])
                 self.status.emit(f"„{a['name']}“: Kommentar angelegt." + k)
             elif modus == "hervorheben":
-                self.assistant.ki_fertig(eing["rev"], [{"alt": alt, "neu": None, "grund": text + (f" ({begruendung})" if begruendung else ""), "konfidenz": 1.0}])
+                self.assistant.ki_fertig(eing["rev"], [{"alt": alt, "neu": None, "grund": text + (f" ({begruendung})" if begruendung else ""), "konfidenz": 1.0}], dokument=ed.document())
                 self.status.emit(f"„{a['name']}“: Stelle in der Schreibhilfe markiert." + k)
             elif modus == "ersetzen":
                 self._dauer_ersetzen(a, eing, text, begruendung, r)
