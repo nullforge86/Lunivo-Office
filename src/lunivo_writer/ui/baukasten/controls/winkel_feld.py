@@ -10,8 +10,8 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDial, QHBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
-from lunivo_writer.ui.baukasten.mass import ABSTAND_MITTEL, GROESSE_WINKELKNOPF, RAND_KEIN
+from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchrittFeld
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_MITTEL, GROESSE_WINKELKNOPF, RAND_KEIN
 
 
 class WinkelFeld(QWidget):
