@@ -10,7 +10,7 @@ from PySide6.QtGui import QPainter, QPalette
 from PySide6.QtWidgets import QAbstractButton
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import KIPP_BREITE, KIPP_HOEHE, KIPP_KNOPF_RAND, PADDING_SCHALTER_CHIP, RADIUS_CHIP
+from lunivo_writer.ui.baukasten.basis.mass import KIPP_BREITE, KIPP_HOEHE, KIPP_KNOPF_RAND, PADDING_SCHALTER_CHIP, RADIUS_CHIP
 
 CHIP_B, CHIP_H = 52, 26                      # Schalter-Chip „an/aus“: feste, großzügige Größe (Kapsel, Radius = halbe Höhe)
 

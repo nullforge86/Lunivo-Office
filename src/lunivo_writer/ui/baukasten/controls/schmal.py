@@ -10,8 +10,8 @@ from __future__ import annotations
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QAbstractButton, QBoxLayout, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
 
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, BREITE_SCHMAL_BESCHRIFTUNG, BREITE_UMBRUCHTEXT_MIN, RAND_KEIN
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, BREITE_SCHMAL_BESCHRIFTUNG, BREITE_UMBRUCHTEXT_MIN, RAND_KEIN
 
 
 def _alle_layouts(w: QWidget) -> list[QLayout]:
