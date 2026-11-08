@@ -1,1 +1,0 @@
-"""Wiederverwendbare Listen- und Auswahlbausteine."""

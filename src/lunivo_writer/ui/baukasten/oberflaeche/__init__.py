@@ -1,1 +1,0 @@
-"""Wiederverwendbare Oberflächen- und Containerbausteine."""

@@ -1,1 +1,0 @@
-"""masse Bausteine der Benutzeroberfläche."""

@@ -1,1 +1,0 @@
-"""gestaltung Bausteine der Benutzeroberfläche."""

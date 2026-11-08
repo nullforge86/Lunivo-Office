@@ -1,1 +1,1 @@
-"""Bild-, Medien- und Galeriebausteine der Oberfläche."""
+"""Wiederverwendbare UI-Bausteine: medien. """

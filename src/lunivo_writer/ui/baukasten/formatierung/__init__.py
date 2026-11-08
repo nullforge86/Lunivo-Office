@@ -1,1 +1,1 @@
-"""Formatierungs-Panels und Textformat-Bausteine."""
+"""Wiederverwendbare UI-Bausteine: formatierung. """
