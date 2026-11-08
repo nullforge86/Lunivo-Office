@@ -188,12 +188,12 @@ class KIAnfragenMixin:
             if "fehler" not in r:
                 self.merke_ergebnis("KI-Chat", r["text"])
             return
-        if "fehler" in r:
-            self.status.emit(r["fehler"])
-            return
         if not self._eingabe_gueltig(eing):
             self.status.emit("Das Dokument wurde gewechselt oder geändert, während die KI gelesen hat. "
                              "Die Antwort wurde verworfen.")
+            return
+        if "fehler" in r:
+            self.status.emit(r["fehler"])
             return
         if r.get("text"):
             self.merke_ergebnis(eing.get("_titel", "KI"), r["text"], eing.get("text", ""))
