@@ -14,9 +14,9 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QRadioButton, QScrollArea,
                                QSizePolicy, QStackedWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil, trennlinie
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_DICHT,
     ABSTAND_ENG,
     ABSTAND_KLEIN,
@@ -41,8 +41,8 @@ from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Grautöne der Diagramm-Sinnbilder: feste Farben, unabhängig vom Thema (core/farben.py).
 SINNBILD_HELL, SINNBILD_MITTEL, SINNBILD_DUNKEL = Farbe.SINNBILD_HELL, Farbe.SINNBILD_MITTEL, Farbe.SINNBILD_DUNKEL
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
-from lunivo_writer.ui.baukasten.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FELDHOEHE, abschnittsband, reiter_knopf_stil
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 

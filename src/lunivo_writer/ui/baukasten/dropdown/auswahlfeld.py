@@ -13,7 +13,7 @@ from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import (QComboBox, QFontComboBox, QStyle, QStyledItemDelegate, QStyleOptionComboBox, QStylePainter,
                                QStyleOptionViewItem)
 
-from lunivo_writer.ui.baukasten.mass import (DROPDOWN_BREITE, ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_HOEHE, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN,
+from lunivo_writer.ui.baukasten.basis.mass import (DROPDOWN_BREITE, ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_HOEHE, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN,
                                                 DROPDOWN_ZEILE_PAD_V)
 from lunivo_writer.ui.baukasten.dropdown.popup_lage import popup_bereich, popup_klemmen
 
