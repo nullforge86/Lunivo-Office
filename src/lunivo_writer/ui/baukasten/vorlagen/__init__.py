@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: vorlagen. """
+"""Vorlagenbausteine."""

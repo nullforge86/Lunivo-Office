@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: dropdown. """
+"""Dropdown- und Menübausteine."""

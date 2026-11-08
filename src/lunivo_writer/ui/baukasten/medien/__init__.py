@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: medien. """
+"""Medien- und Bildbausteine."""

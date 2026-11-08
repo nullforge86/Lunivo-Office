@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: diagramme. """
+"""Diagramm- und SmartArt-Bausteine."""

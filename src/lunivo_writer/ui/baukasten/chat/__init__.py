@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: chat. """
+"""Chat-Oberflächenbausteine."""

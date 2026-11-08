@@ -1,1 +1,1 @@
-"""Wiederverwendbare UI-Bausteine: basis. """
+"""Grundlegende UI-Bausteine."""
