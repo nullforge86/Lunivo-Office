@@ -956,3 +956,17 @@ def test_konsens_lt_und_ki_fertig_tragen_geprueft_ein(app, tmp_path, monkeypatch
     assert "ki" not in a._geprueft
     e.insertPlainText("x")
     assert a._geprueft == {}
+
+
+
+def test_ki_fertig_verwirft_antwort_fuer_anders_dokument(app, tmp_path, monkeypatch):
+    """Gleiche Revisionsnummer reicht nicht: eine Antwort für ein anderes Dokument wird verworfen."""
+    w = win(tmp_path, monkeypatch)
+    e = w.current_editor(); e.setPlainText("Das ist ein sehr langer Satz.")
+    a = w.assistant
+    v = [{"alt": "sehr langer Satz", "neu": "kurzer Satz", "grund": "kürzer"}]
+    rev = e.document().revision()
+    vorher = list(a._roh)
+    assert a.ki_fertig(rev, v, dokument=object()) == 0
+    assert a._roh == vorher
+    assert a.ki_fertig(rev, v, dokument=e.document()) == 1
