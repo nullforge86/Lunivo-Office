@@ -22,7 +22,7 @@ class AenderungsVorschau(QTextEdit):
     def __init__(self, stuecke: list | None = None):
         super().__init__()
         self._stuecke: list = []
-        self.setReadOnly(True); self.setFocusPolicy(Qt.NoFocus)
+        self.setReadOnly(True)               # lesbar und per Tab erreichbar (Bildschirmleser, Scrollen mit der Tastatur)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         als_karte(self, "karte")

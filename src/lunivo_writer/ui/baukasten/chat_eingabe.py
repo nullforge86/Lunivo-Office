@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ai import modellfaehigkeit as MF
@@ -142,7 +143,7 @@ class ChatEingabeKasten(QWidget):
             self._zustand()
 
     def _bild_waehlen(self) -> None:
-        pfad, _ = QFileDialog.getOpenFileName(self, "Lokales Bild hinzufügen", "", "Bilder (*.png *.jpg *.jpeg *.webp)")
+        pfad, _ = Dateifenster.getOpenFileName(self, "Lokales Bild hinzufügen", "", "Bilder (*.png *.jpg *.jpeg *.webp)")
         if not pfad:
             return
         p = MF.bild_pruefen(pfad)                                 # Fehler (Format, Größe) meldet der Dienst beim Senden genauso; hier schon beim Anhängen

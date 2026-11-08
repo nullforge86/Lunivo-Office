@@ -299,7 +299,10 @@ def entfernen(ed) -> bool:
         rest.watermark = {k: v for k, v in rest.watermark.items() if k != "abschnitt"}
     c = QTextCursor(doc)
     c.beginEditBlock()
+    ziel_bf = doc.findBlock(AB.beginn(doc, 1)).blockFormat()
+    eigener_umbruch = ziel_bf.property(AB.B_ABSCHNITT) if ziel_bf.hasProperty(AB.B_ABSCHNITT) else None
     c.setPosition(0); c.setPosition(AB.beginn(doc, 1), QTextCursor.KeepAnchor); c.removeSelectedText()
+    AB._setze(c, eigener_umbruch)                       # Qt behält das Format des ersten Blocks: dessen Deckblatt-Umbruch darf nicht am Text bleiben
     bf = c.blockFormat()
     if bf.hasProperty(B_DECKBLATT_UMBRUCH):
         bf.clearProperty(B_DECKBLATT_UMBRUCH); bf.setPageBreakPolicy(QTextFormat.PageBreak_Auto); c.setBlockFormat(bf)
