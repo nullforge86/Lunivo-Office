@@ -149,6 +149,12 @@ class KIAnfragenMixin:
             return
         eing = eing or self._eingabe()
         if eing is not None:
+            ed = eing.get("ed")
+            if ed is not None:
+                try:
+                    eing.setdefault("dokument", ed.document())
+                except RuntimeError:
+                    return
             eing["_titel"] = meldung.strip(" .…„“").strip() or "KI"
         if eing is None or not eing["text"].strip():
             self._hinweis_fenster("KI", "Es steht noch kein Text da. Schreiben Sie etwas oder markieren Sie eine Stelle.")
@@ -182,21 +188,26 @@ class KIAnfragenMixin:
             if "fehler" not in r:
                 self.merke_ergebnis("KI-Chat", r["text"])
             return
+        if not self._eingabe_gueltig(eing):
+            self.status.emit("Das Dokument wurde gewechselt oder geändert, während die KI gelesen hat. "
+                             "Die Antwort wurde verworfen.")
+            return
         if "fehler" in r:
             self.status.emit(r["fehler"])
             return
         if r.get("text"):
             self.merke_ergebnis(eing.get("_titel", "KI"), r["text"], eing.get("text", ""))
-        ed = eing["ed"]
-        try:
-            neu_rev = ed.document().revision()
-        except RuntimeError:
-            return
-        if neu_rev != eing["rev"]:
-            self.status.emit("Sie haben weitergeschrieben, während die KI gelesen hat. Ihre Antwort passt nicht mehr "
-                             "zu dem, was jetzt dasteht — nichts wurde geändert. Noch einmal drücken fragt sie neu.")
-            return
         danach(r, eing)
+
+    @staticmethod
+    def _eingabe_gueltig(eing: dict) -> bool:
+        """Nur Antworten für genau das Dokument und die Revision vom Sendezeitpunkt dürfen weiterlaufen."""
+        ed = eing.get("ed")
+        try:
+            doc = ed.document()
+            return doc is eing.get("dokument") and doc.revision() == eing["rev"]
+        except (AttributeError, KeyError, RuntimeError, TypeError):
+            return False
 
     # ---- Bild aus Text ------------------------------------------------------------------------
 
