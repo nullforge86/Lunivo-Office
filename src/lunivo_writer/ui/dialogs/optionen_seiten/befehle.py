@@ -108,7 +108,7 @@ class BefehleSeiten:
         from PySide6.QtWidgets import QMenu
         unten.addWidget(QLabel("Tastenkombinationen:"))
         tk = QPushButton("Anzeigen …")
-        tk.clicked.connect(lambda: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).exec())
+        tk.clicked.connect(lambda: __import__("lunivo_writer.ui.dialogs.lesen_hilfe.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).exec())
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel("Anpassungen:"))
         zr = DropdownTaste("Zurücksetzen ▾")
@@ -247,8 +247,8 @@ class BefehleSeiten:
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)
-        from lunivo_writer.editor import sprechblasen as SB
-        from lunivo_writer.ui.document.zusatz_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
+        from lunivo_writer.editor.objekte import sprechblasen as SB
+        from lunivo_writer.ui.document.bearbeitung.zusatz_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
         neu = lambda _=None: self.w.markup_neu()                                               # noqa: E731
         f = p.gruppe("Markup")
         p.auswahl(f, "aenderungen/ins_stil", "Einfügungen", INS_STILE, "Unterstrichen", neu)

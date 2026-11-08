@@ -166,7 +166,7 @@ class LesenRunsMixin:
 
     @staticmethod
     def _note_marke(art: str, n: int) -> str:
-        from lunivo_writer.editor.zusatz import roemisch
+        from lunivo_writer.editor.dokument.zusatz import roemisch
         return str(n) if art == "f" else roemisch(n)
 
     def _umbruch_seite(self, drawing, breite_px: float) -> str:
@@ -194,7 +194,7 @@ class LesenRunsMixin:
     def _eigene_vorlage(self, st, b) -> None:
         """Eine selbst angelegte Absatzvorlage des Dokuments: der Absatz behält ihren Namen; fehlt sie im Katalog, wird sie übernommen."""
         from docx.enum.style import WD_STYLE_TYPE
-        from lunivo_writer.editor import stile
+        from lunivo_writer.editor.text import stile
         if st.type != WD_STYLE_TYPE.PARAGRAPH or not st.name or "|" in st.name:
             return
         if not stile.ist_eigen(st.name):

@@ -2,7 +2,7 @@
 
 Gruppen von links nach rechts: Diagrammelement hinzufügen ▾ · Schnelllayout ▾ · Farbe ändern ▾ · Galerie der vier Diagrammstile ·
 Diagrammtyp ändern (Fenster, aktuelle Art vorgewählt) mit zehn kleinen Typ-Knöpfen (Klick ändert die Art direkt, Pfeil: Untertypen) · Daten auswählen · Daten bearbeiten · Formatieren und Formatvorlage zurücksetzen.
-Jeder Knopf ist ein ``diagramm…``-Befehl (core/befehle/diagrammtools.py) oder ein Popup des Bandes (ui/baukasten/diagramm_popups.py, dieselben wie
+Jeder Knopf ist ein ``diagramm…``-Befehl (core/befehle/kontextreiter/diagrammtools.py) oder ein Popup des Bandes (ui/baukasten/diagramm_popups.py, dieselben wie
 in der Schnellleiste am Diagramm); die Stilkacheln zeichnet ui/baukasten/bild_diagramm_menues.py. Ganz rechts steht das Auswahlfeld „Diagrammbereich“ mit
 „Formatieren“ und „Formatvorlage zurücksetzen“ darunter (``diagramm_bereich_feld``)."""
 from __future__ import annotations

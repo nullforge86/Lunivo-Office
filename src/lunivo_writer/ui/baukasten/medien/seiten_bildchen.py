@@ -63,9 +63,9 @@ def seitenzahl_zeichner(ort: str, ausrichtung: str) -> Zeichner:
 
 
 def wasserzeichen_vorschau(w: dict) -> Zeichner:
-    """Blatt mit einem beliebigen Wasserzeichen (Text oder Bild, Lage, Transparenz) wie in der Ausgabe (``editor/wasserzeichen.py``)."""
+    """Blatt mit einem beliebigen Wasserzeichen (Text oder Bild, Lage, Transparenz) wie in der Ausgabe (``editor/seite/wasserzeichen.py``)."""
     def f(p: QPainter, r: QRectF) -> None:
-        from lunivo_writer.editor import wasserzeichen as WZ
+        from lunivo_writer.editor.seite import wasserzeichen as WZ
         from lunivo_writer.models.page import mm_to_px
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         b = _blatt(p, r)
@@ -110,7 +110,7 @@ def plus_zeichner(beschriftung: str = "") -> Zeichner:
 
 
 def deckblatt_zeichner(vorlage: str) -> Zeichner:
-    """Die Deckblätter aus ``editor.einfuegen.DECKBLATT_VORLAGEN`` im Kleinen: Titel als dicker Balken, Angaben als dünne Zeilen."""
+    """Die Deckblätter aus ``editor.dokument.einfuegen.DECKBLATT_VORLAGEN`` im Kleinen: Titel als dicker Balken, Angaben als dünne Zeilen."""
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         b = _blatt(p, r)

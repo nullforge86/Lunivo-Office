@@ -38,7 +38,7 @@ class NameKiSeiten:
 
     def _anpassen(self, key: str) -> None:
         """Eines der Werkzeuge als Fenster zeigen; das Band wird danach neu gebaut, wenn es sich geändert hat."""
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import ausfuehren
         titel, bauer = self.FENSTER[key]
         d = QDialog(self)
         d.setWindowTitle(titel)

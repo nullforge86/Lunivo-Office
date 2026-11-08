@@ -52,10 +52,10 @@ class PageSettings:
     header: HeaderFooter = field(default_factory=HeaderFooter)
     footer: HeaderFooter = field(default_factory=HeaderFooter)
     color: str = ""                      # Seitenfarbe als „#rrggbb“; leer = keine
-    border: dict | None = None           # {"farbe": Farbe.SCHWARZ, "breite_pt": 1.0, "art": Linienart (editor/linie.py), "abstand_mm": 8.0, "seiten": "tblr"}
+    border: dict | None = None           # {"farbe": Farbe.SCHWARZ, "breite_pt": 1.0, "art": Linienart (editor/objekte/linie.py), "abstand_mm": 8.0, "seiten": "tblr"}
     watermark: dict | None = None        # {"text": …, "farbe": "#c0c0c0", "winkel": -45, "groesse_pt": 80}
     zeilennummern: bool = False
-    zeilennummern_neu: str = ""          # "" fortlaufend, "seite" auf jeder Seite neu (siehe editor/zeilennummern.py)
+    zeilennummern_neu: str = ""          # "" fortlaufend, "seite" auf jeder Seite neu (siehe editor/seite/zeilennummern.py)
     diff_first: bool = False                 # „Erste Seite anders“
     first_header: HeaderFooter = field(default_factory=HeaderFooter)
     first_footer: HeaderFooter = field(default_factory=HeaderFooter)
@@ -68,7 +68,7 @@ class PageSettings:
     silbentrennung: bool = False             # automatische Silbentrennung (Seitenansicht, Druck, PDF; DOCX: autoHyphenation)
     silben_sprache: str = "de_DE"
     kopf_verknuepft: bool = False            # Abschnitt ab dem zweiten: Kopfzeile wie im vorigen Abschnitt
-    bilder: list = field(default_factory=list)   # frei positionierte Bilder in Kopf-/Fußzeilen (siehe editor/freie_bilder.py)
+    bilder: list = field(default_factory=list)   # frei positionierte Bilder in Kopf-/Fußzeilen (siehe editor/objekte/freie_bilder.py)
     kopf_abstand_mm: float = 12.7            # Abstand der Kopfzeile vom oberen Blattrand (DOCX w:header)
     fuss_abstand_mm: float = 12.7            # Abstand der Fußzeile vom unteren Blattrand (DOCX w:footer)
     fuss_verknuepft: bool = False

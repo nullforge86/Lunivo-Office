@@ -42,7 +42,7 @@ def lade_json(settings, key: str, standard):
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 
 
 def _satz(text: str, gedaempft: bool = False) -> QLabel:

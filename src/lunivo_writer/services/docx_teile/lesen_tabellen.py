@@ -171,7 +171,7 @@ class TabellenMixin:
     def _zeilenhoehen(self, qt, table) -> None:
         """w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand)."""
         from PySide6.QtGui import QFontMetricsF
-        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_setzen
+        from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_setzen
         from lunivo_writer.models.page import mm_to_px
         zeile = QFontMetricsF(self.doc.defaultFont()).lineSpacing()
         for r, row in enumerate(table.rows):

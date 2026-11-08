@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QFont
 
-from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import KLAPPEN
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import KLAPPEN
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.widgets import icons

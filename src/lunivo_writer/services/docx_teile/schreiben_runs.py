@@ -111,8 +111,8 @@ class SchreibenRunsMixin:
             self._format_run(run, cf, in_head, bool(href))
             self._zusatz_anwenden(run, cf)
         if cf.hasProperty(P_INDEX) and cf.stringProperty(P_INDEX):
-            from lunivo_writer.editor.indexeintrag import aus_text, feld
-            from lunivo_writer.editor.zusatz import P_INDEX_OPT
+            from lunivo_writer.editor.dokument.indexeintrag import aus_text, feld
+            from lunivo_writer.editor.dokument.zusatz import P_INDEX_OPT
             self._fldchar(para, "begin")
             self._instr(para, feld(aus_text(cf.stringProperty(P_INDEX), cf.stringProperty(P_INDEX_OPT) if cf.hasProperty(P_INDEX_OPT) else "")))
             self._fldchar(para, "end")
@@ -170,7 +170,7 @@ class SchreibenRunsMixin:
 
     def _steuerelement(self, form: str, wert: str):
         """w:sdt für ein Formularfeld: Art (Text, Liste, Datum, Kontrollkästchen), Name als Titel, unsere Daten im Tag."""
-        from lunivo_writer.editor import formular as FO
+        from lunivo_writer.editor.dokument import formular as FO
         m = FO.meta_lesen(form) or {"art": "text", "name": ""}
         W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
         sdt = OxmlElement("w:sdt")
@@ -232,7 +232,7 @@ class SchreibenRunsMixin:
             rf = rpr.find(qn("w:rFonts"))
             for a in ("w:hAnsi", "w:cs", "w:eastAsia"):
                 rf.set(qn(a), fam)
-            from lunivo_writer.editor.zusatz import P_FONT_ASIEN, P_FONT_KOMPLEX
+            from lunivo_writer.editor.dokument.zusatz import P_FONT_ASIEN, P_FONT_KOMPLEX
             for prop, attr in ((P_FONT_ASIEN, "w:eastAsia"), (P_FONT_KOMPLEX, "w:cs")):      # Schrift für asiatische und komplexe Zeichen
                 if cf.hasProperty(prop) and cf.stringProperty(prop).split("|")[0]:
                     rf.set(qn(attr), cf.stringProperty(prop).split("|")[0])
@@ -245,7 +245,7 @@ class SchreibenRunsMixin:
         if _has(cf, QTextFormat.FontItalic):
             f.italic = cf.fontItalic()
         ustil = cf.underlineStyle()
-        from lunivo_writer.editor.zusatz import P_UNTER
+        from lunivo_writer.editor.dokument.zusatz import P_UNTER
         eigene = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) else ""
         if (ustil != QTextCharFormat.NoUnderline or eigene) and not is_link:
             from docx.enum.text import WD_UNDERLINE as U
@@ -254,7 +254,7 @@ class SchreibenRunsMixin:
                            "dick_wellig": U.WAVY_HEAVY, "doppelwellig": U.WAVY_DOUBLE}.get(eigene) or {
                 QTextCharFormat.DashUnderline: U.DASH, QTextCharFormat.DotLine: U.DOTTED, QTextCharFormat.DashDotLine: U.DOT_DASH,
                 QTextCharFormat.DashDotDotLine: U.DOT_DOT_DASH, QTextCharFormat.WaveUnderline: U.WAVY}.get(ustil, True)
-        from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_KOMPLEX
+        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_KOMPLEX
         if cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT):
             f.double_strike = True
         elif cf.fontStrikeOut():
@@ -269,7 +269,7 @@ class SchreibenRunsMixin:
                     _rpr_einfuegen(run._r.get_or_add_rPr(), sz)
             except ValueError:
                 pass
-        from lunivo_writer.editor.zusatz import P_RASTER
+        from lunivo_writer.editor.dokument.zusatz import P_RASTER
         rpr_ = run._r.get_or_add_rPr()
         if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() not in (0, 100):               # Skalieren
             e_ = OxmlElement("w:w"); e_.set(qn("w:val"), str(int(cf.fontStretch()))); _rpr_einfuegen(rpr_, e_)
@@ -303,9 +303,9 @@ class SchreibenRunsMixin:
                 run._r.get_or_add_rPr().append(shd)
         if cf.textOutline().style() != Qt.NoPen:
             f.outline = True
-        from lunivo_writer.editor.zusatz import P_EFFEKT
+        from lunivo_writer.editor.dokument.zusatz import P_EFFEKT
         if cf.textOutline().style() != Qt.NoPen or cf.stringProperty(P_EFFEKT) or (cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().color().alpha() < 255):
-            from lunivo_writer.editor import texteffekt
+            from lunivo_writer.editor.text import texteffekt
             texteffekt.in_rpr(run._r.get_or_add_rPr(), cf)
         if cf.hasProperty(P_VERSTECKT):
             f.hidden = True

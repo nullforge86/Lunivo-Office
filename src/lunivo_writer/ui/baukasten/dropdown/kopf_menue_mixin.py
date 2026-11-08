@@ -12,9 +12,9 @@ from __future__ import annotations
 from PySide6.QtGui import QColor, QIcon
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.dropdown.fuell_voreinstellungen import fuell_bild, fuell_menue, graduell_paar
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.fuell_voreinstellungen import fuell_bild, fuell_menue, graduell_paar
 from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown
-from lunivo_writer.ui.baukasten.dropdown.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel
 
 
 def _hex(farbe: str | None) -> str:

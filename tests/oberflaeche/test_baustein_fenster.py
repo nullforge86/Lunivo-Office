@@ -5,8 +5,8 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QPushButton, QTextEdit, QWidget
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import ZusatzPanel
-from lunivo_writer.ui.dialogs.einfuegen_dialoge import BausteinDialog
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import ZusatzPanel
+from lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge import BausteinDialog
 
 
 def _offen(app, breite, ed=None):

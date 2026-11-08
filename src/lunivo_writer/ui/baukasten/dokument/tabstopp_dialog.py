@@ -4,7 +4,7 @@
     if d.exec(): d.stopps(), d.standard_abstand()                                    # dieselbe Liste, sortiert; der Standardabstand der Tabstopps
 
 Das Fenster setzt keine Tabstopps; der Aufrufer (Absatz-Fenster, Editor, Formatvorlage) übernimmt die Liste (``zu_block`` / ``aus_block``).
-Die Füllzeichen zeichnet Lunivo selbst (``editor/tabfuell.py``).
+Die Füllzeichen zeichnet Lunivo selbst (``editor/text/tabfuell.py``).
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ ARTEN = (("links", "Links"), ("mitte", "Zentriert"), ("rechts", "Rechts"), ("dez
 def aus_block(bf) -> list[tuple[float, str, str]]:
     """Die Tabstopps eines Absatzformats als Liste aus Millimetern, Ausrichtung und Füllzeichen."""
     from PySide6.QtGui import QTextOption
-    from lunivo_writer.editor import tabfuell
+    from lunivo_writer.editor.text import tabfuell
     from lunivo_writer.models.page import px_to_mm
     art = {QTextOption.LeftTab: "links", QTextOption.CenterTab: "mitte", QTextOption.RightTab: "rechts", QTextOption.DelimiterTab: "dezimal"}
     fuell = tabfuell.lesen(bf)
@@ -34,7 +34,7 @@ def aus_block(bf) -> list[tuple[float, str, str]]:
 def zu_block(bf, stopps) -> None:
     """Tabstopps (mm, Ausrichtung, Füllzeichen) in ein Absatzformat schreiben."""
     from PySide6.QtGui import QTextOption
-    from lunivo_writer.editor import tabfuell
+    from lunivo_writer.editor.text import tabfuell
     from lunivo_writer.models.page import mm_to_px
     art = {"links": QTextOption.LeftTab, "mitte": QTextOption.CenterTab, "rechts": QTextOption.RightTab, "dezimal": QTextOption.DelimiterTab}
     bf.setTabPositions([QTextOption.Tab(mm_to_px(m), art[a]) for m, a, _f in stopps])
@@ -47,7 +47,7 @@ def als_text(stopps) -> str:
 
 
 def aus_text(text: str | None) -> list[tuple[float, str, str]]:
-    from lunivo_writer.editor.tabfuell import FUELL
+    from lunivo_writer.editor.text.tabfuell import FUELL
     arten = [k for k, _n in ARTEN]
     aus = []
     for teil in (text or "").split(";"):
@@ -61,12 +61,12 @@ def aus_text(text: str | None) -> list[tuple[float, str, str]]:
 
 
 def _text(mm: float, art: str, fuell: str = "") -> str:
-    from lunivo_writer.editor.tabfuell import FUELL
+    from lunivo_writer.editor.text.tabfuell import FUELL
     f, kurz = einheit()
     return f"{mm * f:.2f} {kurz}".replace(".", ",") + "  ·  " + dict(ARTEN)[art] + (f"  ·  {FUELL[fuell][1]}{FUELL[fuell][1]}{FUELL[fuell][1]}" if fuell else "")
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 class TabstoppDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, stopps=(), standard_mm: float | None = None):
@@ -98,7 +98,7 @@ class TabstoppDialog(PanelFaehig, QDialog):
         kopf.breit(bh)
         kopf.breit(abschnittstitel("Füllzeichen"))
         fg = FlussLayout(14); fg.setContentsMargins(*RAND_KEIN)
-        from lunivo_writer.editor.tabfuell import FUELL
+        from lunivo_writer.editor.text.tabfuell import FUELL
         self.fuell = QButtonGroup(self)
         self._fuell_schluessel = list(FUELL)
         for i, k in enumerate(self._fuell_schluessel):

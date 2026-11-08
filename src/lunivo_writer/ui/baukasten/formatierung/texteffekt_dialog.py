@@ -1,6 +1,6 @@
 """Das Fenster „Texteffekte formatieren“ als Baustein: Reiter „Textfüllung und -kontur“ und „Effekte“ (Schatten, Reflektion, Leuchten, 3D-Format).
 
-    d = TexteffektDialog(parent, werte)          # Wörterbuch wie in ``editor.texteffekt.EFFEKT``, dazu die Teile aus ``editor.textfx``
+    d = TexteffektDialog(parent, werte)          # Wörterbuch wie in ``editor.text.texteffekt.EFFEKT``, dazu die Teile aus ``editor.text.textfx``
     if d.exec(): d.werte()                        # ``texteffekt.zu_format(werte)`` macht ein Zeichenformat daraus
 
 Das Fenster formatiert nichts selbst: Der Editor (Schriftart-Fenster, Band) und die Formatvorlage rufen es auf und tun mit dem Ergebnis, was zu ihnen
@@ -14,15 +14,15 @@ from PySide6.QtWidgets import (
     QComboBox, QDialog, QScrollArea, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSizePolicy, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.editor import textfx as X
+from lunivo_writer.editor.text import texteffekt as T
+from lunivo_writer.editor.text import textfx as X
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld, SchrittFeld
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FELDHOEHE, AngepassteReiter, FormularGitter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.mass import (

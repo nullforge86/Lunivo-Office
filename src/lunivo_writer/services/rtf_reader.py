@@ -432,7 +432,7 @@ class _Zerleger:
         else:
             roh = re.sub(rb"[^0-9a-fA-F]", b"", b"".join(b["hex"]))
             daten = bytes.fromhex(roh[: len(roh) // 2 * 2].decode("ascii"))
-        from lunivo_writer.editor.freie_bilder import bild_aus_daten
+        from lunivo_writer.editor.objekte.freie_bilder import bild_aus_daten
         img = bild_aus_daten(daten) if b["art"] in ("pngblip", "jpegblip", "emfblip", None) else QImage()
         if img.isNull():
             self.report.warn("Ein Bild aus der RTF-Datei hat ein nicht lesbares Format und wurde übersprungen.")
@@ -623,7 +623,7 @@ def read_rtf(path: str):
     page.diff_first = z.titel_erste and (not page.first_header.is_empty() or not page.first_footer.is_empty() or True)
     if not z.titel_erste:
         page.first_header, page.first_footer = HeaderFooter(), HeaderFooter()
-    from lunivo_writer.editor.zusatz import leere_meta
+    from lunivo_writer.editor.dokument.zusatz import leere_meta
     meta = dict(z.meta)
     meta.update(leere_meta())
     doc.setModified(False)

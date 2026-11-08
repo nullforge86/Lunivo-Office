@@ -42,7 +42,7 @@ class LunivoApplication:
         from lunivo_writer.ui import theme
         theme.WEICH = self.settings.get_bool("ui/weich", False)
         apply_theme(self.app, self.settings.get("theme", "system"))
-        from lunivo_writer.ui.baukasten.controls.zugaenglichkeit import NamenFilter
+        from lunivo_writer.ui.baukasten.geruest.zugaenglichkeit import NamenFilter
         NamenFilter.einhaengen(self.app)                                  # Symbolknöpfe ohne Namen bekommen ihren Tooltip als Namen
         self.fenster = MainWindow(self.settings)
 

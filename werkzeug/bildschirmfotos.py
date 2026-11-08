@@ -129,7 +129,9 @@ def main():
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
     from PySide6.QtGui import QTextCursor
-    from lunivo_writer.editor import frei_objekt as FO, smartart as SA, tabellenstil as TS
+    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.objekte import smartart as SA
+    from lunivo_writer.editor.tabelle import tabellenstil as TS
     from PySide6.QtGui import QTextTableFormat
 
     w = fenster(app, "light")

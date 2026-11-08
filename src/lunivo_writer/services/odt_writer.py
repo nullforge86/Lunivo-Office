@@ -15,7 +15,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QUrl, Qt
 from PySide6.QtGui import (QImage, QPixmap, QTextBlock, QTextBlockFormat, QTextCharFormat, QTextDocument, QTextFormat, QTextLength,
                            QTextListFormat, QTextTable)
 
-from lunivo_writer.editor.zusatz import B_BILDANKER
+from lunivo_writer.editor.dokument.zusatz import B_BILDANKER
 from lunivo_writer.models.page import HeaderFooter, PageSettings
 from lunivo_writer.models.report import IOReport
 
@@ -82,7 +82,7 @@ def _styles_xml(page: PageSettings, doc: QTextDocument | None = None, bilder: di
                  f'fo:margin-top="5mm"/></style:footer-style>') if fuss else "<style:footer-style/>"
     hintergrund = f' fo:background-color="{escape(page.color)}"' if page.color else ""
     stile = []
-    from lunivo_writer.editor import seitenzahl as SZ
+    from lunivo_writer.editor.seite import seitenzahl as SZ
     # „außen“/„innen“: rechte (ungerade) Seiten in style:header, linke (gerade) in style:header-left mit gespiegelter Ausrichtung
     for name, hf, n in (("Kopf", page.header, 1), ("Fuss", page.footer, 1), ("KopfErste", page.first_header, 1),
                         ("FussErste", page.first_footer, 1), ("KopfLinks", page.header, 2), ("FussLinks", page.footer, 2),
@@ -193,7 +193,7 @@ def _laenge(px: float) -> str:
     return f"{px * 25.4 / 96:.2f}mm"
 
 
-# Frei positionierte Bilder (editor/freie_bilder.py) ↔ ODF-Rahmen am Absatz: Bezug und Ausrichtung je Achse.
+# Frei positionierte Bilder (editor/objekte/freie_bilder.py) ↔ ODF-Rahmen am Absatz: Bezug und Ausrichtung je Achse.
 BEZUG_H = {"seite": "page", "rand": "page-content", "spalte": "paragraph"}
 BEZUG_V = {"seite": "page", "rand": "page-content", "absatz": "paragraph"}
 AUSR_H = {"left": "left", "center": "center", "right": "right", "inside": "inside", "outside": "outside"}
@@ -329,7 +329,7 @@ class _Inhalt:
     def _freie_bilder(self, bf: QTextBlockFormat) -> list[str]:
         if not bf.hasProperty(B_BILDANKER):
             return []
-        from lunivo_writer.editor import freie_bilder as FB
+        from lunivo_writer.editor.objekte import freie_bilder as FB
         out = []
         for a in FB.aus_absatz(bf):
             img = FB.bild_im_dokument(self.doc, a.get("n", ""))

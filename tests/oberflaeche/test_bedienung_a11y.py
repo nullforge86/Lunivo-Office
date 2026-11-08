@@ -10,9 +10,9 @@ ARTEN = (QPushButton, QToolButton, QComboBox, QCheckBox, QRadioButton, QSlider, 
 # Bedienelemente, die bewusst nicht per Tab erreichbar sind; der Tastaturweg steht daneben. Die Liste darf nur kleiner werden.
 OHNE_FOKUS_ERLAUBT = {
     "ui/widgets/mini_leiste.py": "schwebende Leiste über dem Text, nimmt dem Text den Fokus nicht; Tastenkürzel für Fett/Kursiv/Schrift",
-    "ui/document/tabelle_griffe.py": "Maus-Ziehgriffe der Tabelle; Tastaturweg über das Tabellen-Fenster",
-    "ui/document/absatz_symbol.py": "Maus-Symbol am Absatz; dieselben Befehle stehen im Band",
-    "ui/document/document_editor.py": "Vorschlags-Popup: der Fokus bleibt im Editor, Auswahl mit Strg+1…6",
+    "ui/document/tabelle/tabelle_griffe.py": "Maus-Ziehgriffe der Tabelle; Tastaturweg über das Tabellen-Fenster",
+    "ui/document/ansicht/absatz_symbol.py": "Maus-Symbol am Absatz; dieselben Befehle stehen im Band",
+    "ui/document/bearbeitung/document_editor.py": "Vorschlags-Popup: der Fokus bleibt im Editor, Auswahl mit Strg+1…6",
 }
 MAX_OHNE_NAMEN = 28            # verborgene Panels des Hauptfensters; Ziel 0, darf nur sinken
 
@@ -67,7 +67,7 @@ def test_nicht_fokussierbare_stellen_sind_begruendet():
 
 
 def test_funktionszeile_nennt_art_zustand_und_kuerzel(app, tmp_path):
-    from lunivo_writer.ui.baukasten.controls.werkbank import FunktionsZeile
+    from lunivo_writer.ui.baukasten.geruest.werkbank import FunktionsZeile
     w = _fenster(tmp_path)
     zeilen = w.findChildren(FunktionsZeile)
     assert zeilen and all(z.accessibleName() and z.accessibleDescription() for z in zeilen)

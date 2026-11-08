@@ -9,8 +9,8 @@ nur Füllung und Linie gehören dem Objekt, und es kommen „Weiche Kanten“ un
     {"fuell": {…} | None, "rand": {…} | None, "schatten": {…}, "reflektion": {…}, "leuchten": {…}, "weich": {"radius": pt},
      "d3": {"tiefe", "tiefe_farbe", "kontur", "kontur_farbe", "material", "beleuchtung", "winkel"}, "drehung": {"x", "y", "z", "persp"}}
 
-— die Angaben, die ``editor/freie_bilder.py`` am Objekt kennt (gezeichnet von ``editor/bildeffekte.py``); wer das Panel einsetzt
-(``editor/bildlayout.py``), schreibt sie zurück. Die Textoptionen melden über ``text_geaendert(werte)`` (Format wie ``editor/texteffekt.py``);
+— die Angaben, die ``editor/objekte/freie_bilder.py`` am Objekt kennt (gezeichnet von ``editor/objekte/bildeffekte.py``); wer das Panel einsetzt
+(``editor/objekte/bildlayout.py``), schreibt sie zurück. Die Textoptionen melden über ``text_geaendert(werte)`` (Format wie ``editor/text/texteffekt.py``);
 ``setze_text(werte)`` füllt sie.
 """
 from __future__ import annotations
@@ -19,22 +19,22 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
-from lunivo_writer.editor import muster as M
-from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.editor import bildeffekte as BE
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.editor.text import muster as M
+from lunivo_writer.editor.text import texteffekt as T
+from lunivo_writer.editor.objekte import bildeffekte as BE
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, UmbruchSchalter
 from lunivo_writer.ui.baukasten.basis.linien import Linie, LinienWahl
-from lunivo_writer.ui.baukasten.dropdown.objekt_menues import TEXTUREN
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld
 from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt, TexteffektPanel, seitengitter
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 
-from lunivo_writer.editor.linie import OBJEKT_STRICHE
+from lunivo_writer.editor.objekte.linie import OBJEKT_STRICHE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_SPALTE, GROESSE_ABSCHLUSS_KACHEL, ICON_NORMAL, RAND_FORMATSEITE
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/linie.py)
+STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/objekte/linie.py)
 WEICH_STUFEN = (1, 2.5, 5, 10, 25, 50)
 LEER = {"fuell": None, "rand": None}
 
@@ -142,7 +142,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     TEXT_KLASSE = _TextPanel                      # die Textoptionen; ein Panel mit mehr Feldern (Diagramm) setzt eine eigene Klasse
     TITEL = ("Füllung und Linie", "Effekte")
     bild_gewuenscht = Signal()                    # „Bild …“ als Füllung: der Aufrufer fragt nach der Datei
-    text_geaendert = Signal(dict)                 # Änderung in den Textoptionen (Format von ``editor/texteffekt.py``)
+    text_geaendert = Signal(dict)                 # Änderung in den Textoptionen (Format von ``editor/text/texteffekt.py``)
 
     def __init__(self, parent=None, werte: dict | None = None):
         super().__init__(parent, werte)

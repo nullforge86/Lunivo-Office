@@ -6,7 +6,7 @@ LOREM = ("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonu
 
 
 def fuelle(ed, kapitel=6):
-    from lunivo_writer.editor import einfuegen as E
+    from lunivo_writer.editor.dokument import einfuegen as E
     c = ed.textCursor()
     for k in range(1, kapitel + 1):
         ed.setTextCursor(c)

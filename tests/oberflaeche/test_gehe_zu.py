@@ -1,6 +1,6 @@
 import pytest
-from lunivo_writer.editor import gehe_zu as G
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.editor.dokument import gehe_zu as G
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
-from lunivo_writer.ui.baukasten.controls.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.baukasten.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.proofing.vorhersage import EMPFAENGER
 from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte, HinweisKarte
 from lunivo_writer.ui.widgets import icons
@@ -198,7 +198,7 @@ class SchreibhilfePanel(QWidget):
     # ---- Werkbank --------------------------------------------------------------------------------
     def _werk_bauen(self) -> None:
         """Die Reiter Lesen, Schreiben und KI aus dem Katalog; der Reiter Prüfen sind die Funde plus die Wege dahin."""
-        from lunivo_writer.ui.baukasten.controls.werkbank import Werkbank
+        from lunivo_writer.ui.baukasten.geruest.werkbank import Werkbank
         self.ki_banner = QWidget()
         bl = QVBoxLayout(self.ki_banner); bl.setContentsMargins(*RAND_SCHREIBHILFE_BANNER)
         bl.addWidget(self.ki_info); bl.addWidget(self.ki_aktion)
@@ -322,8 +322,8 @@ class SchreibhilfePanel(QWidget):
 
     def _formatierung_host(self, panel_klasse, menue_text: str, werte: dict):
         """Der gemeinsame Rahmen der Bereiche „Formatierung“: Kopf mit „Formatierung ▾“, Anheften und Schließen, darunter das Panel."""
-        from lunivo_writer.ui.baukasten.controls.zusatz_panel import FLACHE_REITER, zusatz_knopf
-        from lunivo_writer.ui.baukasten.controls.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
+        from lunivo_writer.ui.baukasten.geruest.zusatz_panel import FLACHE_REITER, zusatz_knopf
+        from lunivo_writer.ui.baukasten.geruest.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
         host = QWidget(); host.setStyleSheet(FLACHE_REITER)        # dieselben flachen Reiter wie in den anderen Seitenleistenfenstern
         v = QVBoxLayout(host); v.setContentsMargins(*RAND_KEIN); v.setSpacing(0)
         titel = DropdownKnopf(); titel.setText("Formatierung"); titel.setAutoRaise(True)
@@ -418,7 +418,7 @@ class SchreibhilfePanel(QWidget):
 
     def zusatz_ausfuehren(self, d) -> bool:
         """Ein Zusatzfenster als Seite hier in der Seitenleiste zeigen, solange man es bearbeitet (wie ``d.exec()``). Die Breite bleibt."""
-        from lunivo_writer.ui.baukasten.controls.zusatz_panel import ZusatzPanel, ausfuehren_in
+        from lunivo_writer.ui.baukasten.geruest.zusatz_panel import ZusatzPanel, ausfuehren_in
         if getattr(self, "_zusatz", None) is not None:                       # es ist schon eines offen: das neue legt sich als Seite darüber
             return self._zusatz.unter_ausfuehren(d)
         seite = ZusatzPanel()
@@ -485,5 +485,5 @@ class SchreibhilfePanel(QWidget):
         self.a.status.emit(f"{n} Korrektur(en) übernommen.")
 
     def welche_hilfe(self):
-        from lunivo_writer.ui.dialogs.welche_hilfe import HilfeWannDialog
+        from lunivo_writer.ui.dialogs.lesen_hilfe.welche_hilfe import HilfeWannDialog
         HilfeWannDialog(self.fenster).exec()

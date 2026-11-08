@@ -7,7 +7,7 @@ from lunivo_writer.models.page import PAPER_MM, HeaderFooter, PageSettings
 from lunivo_writer.ui.baukasten.controls.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste, knopfzeile
 from lunivo_writer.ui.baukasten.basis.mass import RAND_KEIN
@@ -193,12 +193,12 @@ class ZoomDialog(PanelFaehig, QDialog):
         return self._art[i]
 
 
-from lunivo_writer.ui.dialogs.wasserzeichen_fenster import WasserzeichenDialog  # noqa: E402,F401  (früher hier)
+from lunivo_writer.ui.dialogs.einfuegen.wasserzeichen_fenster import WasserzeichenDialog  # noqa: E402,F401  (früher hier)
 
 
 class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
     """„Tabelleneigenschaften“ (Reiter „Tabelle“ und „Spalte und Zelle“). Ändert die Tabelle nicht selbst; der Aufrufer liest ``werte()``
-    (Format wie ``editor.tabelleneigenschaften.lesen``) oder die alten Felder breite/ausr/rand/pad/kopf.
+    (Format wie ``editor.tabelle.tabelleneigenschaften.lesen``) oder die alten Felder breite/ausr/rand/pad/kopf.
 
     ``werte`` (optional) überschreibt die Einzelargumente; fehlende Schlüssel stammen aus ``VORGABE``."""
     AUSRICHTUNGEN = ("Links", "Zentriert", "Rechts")
@@ -209,7 +209,7 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
     def __init__(self, parent, breite_prozent: int = 100, ausrichtung: int = 0, rand: float = 1.0, abstand: float = 4.0,
                  kopfzeile: bool = False, *, werte: dict | None = None):
         super().__init__(parent)
-        from lunivo_writer.editor.tabelleneigenschaften import VORGABE
+        from lunivo_writer.editor.tabelle.tabelleneigenschaften import VORGABE
         from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
         from lunivo_writer.ui.baukasten.controls.mass_feld import EinheitFeld
         self.setWindowTitle("Tabelleneigenschaften")

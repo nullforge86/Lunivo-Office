@@ -149,7 +149,7 @@ class StilMixin:
         raw = run.font.underline
         if raw not in (None, True, False):
             from docx.enum.text import WD_UNDERLINE as U
-            from lunivo_writer.editor.unterstreichung import unter_format
+            from lunivo_writer.editor.text.unterstreichung import unter_format
             art = {U.WORDS: "woerter", U.DOUBLE: "doppelt", U.THICK: "dick", U.DOTTED: "gepunktet", U.DOTTED_HEAVY: "dick_gepunktet", U.DASH: "gestrichelt",
                    U.DASH_HEAVY: "dick_gestrichelt", U.DASH_LONG: "lang", U.DASH_LONG_HEAVY: "dick_lang", U.DOT_DASH: "strichpunkt",
                    U.DOT_DASH_HEAVY: "dick_strichpunkt", U.DOT_DOT_DASH: "strichpunktpunkt", U.DOT_DOT_DASH_HEAVY: "dick_strichpunktpunkt",
@@ -182,13 +182,13 @@ class StilMixin:
         elif self._flag(run, para, "small_caps"):
             f.setFontCapitalization(QFont.SmallCaps)
         self._schrift_zusatz(run._r.rPr, f)
-        from lunivo_writer.editor import texteffekt
+        from lunivo_writer.editor.text import texteffekt
         texteffekt.aus_rpr(run._r.rPr, f)
         return f
 
     def _schrift_zusatz(self, rpr, f: QTextCharFormat) -> None:
         """Schrift für asiatische und komplexe Zeichen, Betonungszeichen und doppeltes Durchstreichen (Fenster „Schriftart“)."""
-        from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
         if rpr is None:
             return
         rf = rpr.find(qn("w:rFonts"))
@@ -221,7 +221,7 @@ class StilMixin:
                 pass
         sg = rpr.find(qn("w:snapToGrid"))
         if sg is not None and sg.get(qn("w:val")) in ("0", "false", "off"):
-            from lunivo_writer.editor.zusatz import P_RASTER
+            from lunivo_writer.editor.dokument.zusatz import P_RASTER
             f.setProperty(P_RASTER, 0)
         if rpr.find(qn("w:dstrike")) is not None and rpr.find(qn("w:dstrike")).get(qn("w:val")) not in ("0", "false"):
             f.setProperty(P_DOPPELT, 1); f.setFontStrikeOut(True)

@@ -7,7 +7,13 @@ from PySide6.QtCore import QSettings
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QWidget
 
-from lunivo_writer.editor import diagramm as D, diagramm_format as F, diagramm_teile as T, frei_objekt as FO
+from lunivo_writer.editor.objekte import frei_objekt as FO
+
+from lunivo_writer.editor.diagramme import diagramm as D
+
+from lunivo_writer.editor.diagramme import diagramm_format as F
+
+from lunivo_writer.editor.diagramme import diagramm_teile as T
 
 DATEN = {"art": "saeule_gruppiert", "titel": "Umsatz", "kategorien": ["A", "B", "C"], "reihen": {"X": [1, 2, 3], "Y": [3, 1, 2]}}
 
@@ -96,7 +102,7 @@ def test_teil_format_setzen_zusammenfuehren_und_diagrammbereich_effekt_am_objekt
 
 
 def test_docx_rundweg_teilformate(fenster, tmp_path):
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = fenster.current_editor()
     FO.einfuegen(ed, "diagramm", dict(DATEN), 400, 260)

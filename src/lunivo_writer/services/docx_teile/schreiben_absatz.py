@@ -108,7 +108,7 @@ class SchreibenAbsatzMixin:
 
     def _eigener_stil(self, name: str):
         """Selbst angelegte Formatvorlage als echte Word-Absatzvorlage (Schrift, Größe, Farbe, Abstände, Ausrichtung)."""
-        from lunivo_writer.editor import stile
+        from lunivo_writer.editor.text import stile
         if not stile.ist_eigen(name):
             return None
         if name in [x.name for x in self.d.styles]:
@@ -139,7 +139,7 @@ class SchreibenAbsatzMixin:
     def write_block(self, blk: QTextBlock, para):
         bf = blk.blockFormat()
         if bf.hasProperty(B_BILDANKER):                                   # frei positionierte Bilder dieses Absatzes
-            from lunivo_writer.editor import freie_bilder as FB
+            from lunivo_writer.editor.objekte import freie_bilder as FB
             for a in FB.aus_absatz(bf):
                 self._frei_bild(para, a, FB.bild_im_dokument(self.q, a.get("n", "")))
         style_name = bf.property(STYLE_PROP) if _has(bf, STYLE_PROP) else None
@@ -191,7 +191,7 @@ class SchreibenAbsatzMixin:
             pf.line_spacing = lh / 100.0
         elif int(lht) == LH_FIXED and lh:
             pf.line_spacing = Pt(lh * PX_TO_PT)
-        from lunivo_writer.editor.seitenfluss import ist_manuell
+        from lunivo_writer.editor.seite.seitenfluss import ist_manuell
         if ist_manuell(bf):
             if bf.hasProperty(B_SPALTE):                              # Spaltenumbruch: <w:br w:type="column"/> am Absatzanfang
                 from docx.enum.text import WD_BREAK
@@ -205,7 +205,7 @@ class SchreibenAbsatzMixin:
             art = {QTextOption.RightTab: WD_TAB_ALIGNMENT.RIGHT, QTextOption.CenterTab: WD_TAB_ALIGNMENT.CENTER,
                    QTextOption.DelimiterTab: WD_TAB_ALIGNMENT.DECIMAL}
             from docx.enum.text import WD_TAB_LEADER
-            from lunivo_writer.editor import tabfuell
+            from lunivo_writer.editor.text import tabfuell
             fuell = tabfuell.lesen(bf)
             leader = {"punkt": WD_TAB_LEADER.DOTS, "strich": WD_TAB_LEADER.DASHES, "linie": WD_TAB_LEADER.LINES, "mitte": WD_TAB_LEADER.MIDDLE_DOT}
             for t in tabs:
@@ -216,7 +216,7 @@ class SchreibenAbsatzMixin:
                     "w:autoSpaceDN", "w:bidi", "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
                     "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap",
                     "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange")
-        from lunivo_writer.editor import absatzopt
+        from lunivo_writer.editor.seite import absatzopt
         if bf.hasProperty(absatzopt_prop()):
             absatzopt.in_ppr(para._p.get_or_add_pPr(), absatzopt.lesen(bf))
         if bf.hasProperty(B_RAHMEN):

@@ -39,7 +39,8 @@ def _hat_befehl(w, e):
 
 
 def test_diagramm_zeigt_diagrammtools_mit_allen_befehlen(app, tmp_path):
-    from lunivo_writer.editor import diagramm as D, frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.diagramme import diagramm as D
     w = _fenster(tmp_path); w.show()
     i = w.band.kontext_index["diagramm"]
     assert w.band.reiter.tabText(i) == "Diagrammtools" and not w.band.reiter.isTabVisible(i)
@@ -52,7 +53,7 @@ def test_diagramm_zeigt_diagrammtools_mit_allen_befehlen(app, tmp_path):
     for e in _knoepfe(DIAGRAMMTOOLS):
         assert (e.get("tun") and b.hat(e["tun"])) or (e.get("klappe") and b.klappe(e["klappe"]) is not None), e["name"]
     galerie = next(g for g in DIAGRAMMTOOLS["gruppen"] if g.get("galerie"))
-    from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import GALERIEN
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import GALERIEN
     spec = GALERIEN[galerie["galerie"]](b)
     assert len(spec["kacheln"]) == 4 and len(D.STILE) >= 12 and spec["menue"] is not None
     spec["kacheln"][3][2]()                                                  # Kachel „Dunkel“ wirkt auf das Diagramm

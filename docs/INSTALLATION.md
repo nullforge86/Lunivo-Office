@@ -38,7 +38,7 @@ Einstellungen speichert Qt unter `~/.config/Lunivo/Lunivo Writer.conf`. Anwendun
 Gezielte Tests laufen ohne Bildschirm:
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_formats.py
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/dokument/formate/test_formats.py
 ```
 
 Die vollständige lokale Testausführung über `./starten-qt.sh --test` installiert bei Bedarf die Entwicklungsabhängigkeiten und startet pytest.

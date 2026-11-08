@@ -48,7 +48,7 @@ class BearbeitenBaustein:
         bf = e.textCursor().blockFormat()
         rtl = bf.layoutDirection() == Qt.RightToLeft
         d = AbsatzDialog(self, aus_block(bf))
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import ausfuehren
         if ausfuehren(d):
             w = d.werte()
             if w["ebene"] != bf.headingLevel():                       # die Gliederungsebene ist die Überschriftsebene des Absatzes
@@ -75,7 +75,7 @@ class BearbeitenBaustein:
 
 
     def _lesehilfe_auf(self, e):
-        from lunivo_writer.ui.dialogs.lesehilfe_dialog import PAPIERTOENE
+        from lunivo_writer.ui.dialogs.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
         s = self.settings
         e.set_lesehilfe(PAPIERTOENE.get(s.get("lesehilfe/papier", "Weiß"), Farbe.WEISS),
                         float(s.get("lesehilfe/buchstaben", 0)), float(s.get("lesehilfe/wort", 0)))
@@ -113,7 +113,7 @@ class BearbeitenBaustein:
 
 
     def silbenfarben_anwenden(self, e=None):
-        from lunivo_writer.editor import silbenfarben as S
+        from lunivo_writer.editor.text import silbenfarben as S
         k = S.konfig_lesen(self.settings)
         for ed in ([e] if e is not None else [t.editor for t in self._doc_tabs()]):
             ed.set_silbenfarben(k)

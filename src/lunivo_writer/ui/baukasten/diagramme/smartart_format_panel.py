@@ -1,8 +1,8 @@
 """„Formatierung“ für SmartArt in der rechten Seitenleiste: Füllung und Linie, Effekte, Textoptionen — für den gewählten Knoten, ohne Auswahl für alle.
 
 Das Panel ist das des Diagramms (``DiagrammFormatPanel``, gebaut aus ``ObjektFormatPanel``) ohne Teilliste, ohne „Optionen“ und ohne „Größe und Eigenschaften“.
-Werte und Meldungen sind dieselben wie beim Diagrammteil (Format wie ``teil_format`` in ``editor/diagramm_format.py``): ``setze({"format": {…}})``,
-``geaendert({"fuell": …, "linie": …, …})`` bzw. ``geaendert({"text": {…}})``. Zeichnen: ``editor/smartart.py``.
+Werte und Meldungen sind dieselben wie beim Diagrammteil (Format wie ``teil_format`` in ``editor/diagramme/diagramm_format.py``): ``setze({"format": {…}})``,
+``geaendert({"fuell": …, "linie": …, …})`` bzw. ``geaendert({"text": {…}})``. Zeichnen: ``editor/objekte/smartart.py``.
 """
 from __future__ import annotations
 

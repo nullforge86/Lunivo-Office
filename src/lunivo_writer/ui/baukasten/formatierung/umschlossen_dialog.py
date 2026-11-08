@@ -3,7 +3,7 @@
     d = UmschlosseneZeichenDialog(parent, "Hal", "kreis", "reduzieren")
     if d.exec(): d.werte()                              # {"text": str, "form": str, "vorlage": str}
 
-Das Fenster ändert keinen Text; der Aufrufer setzt ``P_UMSCHLOSSEN`` (``Befehle.umschlosseneZeichen``). Gezeichnet wird in ``editor/textfx.py``.
+Das Fenster ändert keinen Text; der Aufrufer setzt ``P_UMSCHLOSSEN`` (``Befehle.umschlosseneZeichen``). Gezeichnet wird in ``editor/text/textfx.py``.
 """
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QToolButton, QVBoxLayout
 
-from lunivo_writer.editor.zeichenzusatz import FORMEN, VORLAGEN
+from lunivo_writer.editor.text.zeichenzusatz import FORMEN, VORLAGEN
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, abschnittstitel
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_NORMAL,

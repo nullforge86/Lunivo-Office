@@ -22,7 +22,7 @@ Stand 2026-11-03. Quelltext wurde **nicht** verändert; dieser Bericht ist die e
 | F3 | **Kein Fehler:** Reiter „Abschnitt“ kommt aus `ui/ribbon/tabs/section_tab.py` (in Python gebaut, nicht in `register.json`). |
 | F4 | **Kein Fehler:** Das Band blättert bei Platzmangel mit Pfeilen ‹ › (`_BandSeite`), so gewollt. |
 | F5 / V4 | **Teilweise behoben:** Bandknöpfe mit Symbol sind mindestens 36 px breit (`MIN_KNOPF`). Die Höhe (24–25 px in der zweizeiligen Bandzeile) bleibt, sie zu ändern wäre ein Umbau des Bandes. Pfeilknöpfe und Hilfsknöpfe (Absatz-Layout, Zoom) sind weiter kleiner. |
-| F6 / V8 | **Behoben:** `NamenFilter` (`ui/baukasten/zugaenglichkeit.py`) gibt jedem Knopf ohne Namen seinen Tooltip als Namen; danach hat kein sichtbarer Knopf im Hauptfenster mehr keinen Namen (gemessen). Test: `test_namenfilter_gibt_symbolknoepfen_einen_namen`. |
+| F6 / V8 | **Behoben:** `NamenFilter` (`ui/baukasten/geruest/zugaenglichkeit.py`) gibt jedem Knopf ohne Namen seinen Tooltip als Namen; danach hat kein sichtbarer Knopf im Hauptfenster mehr keinen Namen (gemessen). Test: `test_namenfilter_gibt_symbolknoepfen_einen_namen`. |
 | F7 | **Bewusst so:** Blätterpfeile des Bandes und das Absatz-Layout-Symbol nehmen keinen Fokus, damit die Schreibmarke im Text bleibt; die Funktionen sind per Tastatur anders erreichbar [V]. |
 | F8 / V3 | **Messfehler, kein Fehler:** Mein erster Testaufruf übersprang `start()`. Das Programm beginnt mit einem leeren Blatt (`core/application.py`), Band und Blatt sind dann aktiv (Bildschirmfoto geprüft). |
 | V5 | **Umgesetzt:** Option *Anzeige ▸ Namen unter den Symbolen der Randleisten* (aus als Vorgabe). Beide Zustände am Bildschirmfoto geprüft. |

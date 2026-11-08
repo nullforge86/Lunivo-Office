@@ -8,16 +8,16 @@ from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QWidget
 
 from lunivo_writer import __version__
-from lunivo_writer.editor import stile
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.editor.text import stile
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ai.ai_service import KIDienst
 from lunivo_writer.proofing.proofing_service import WritingAssistant
 from lunivo_writer.core.document_manager import DocumentManager
 from lunivo_writer.ui.statusbar.status_bar import StatusBar
-from lunivo_writer.ui.document.document_tabs import DocTabs
-from lunivo_writer.ui.document.document_area import DocumentTab
-from lunivo_writer.ui.document.navigation import NavigationPanel
+from lunivo_writer.ui.document.dokumentfenster.document_tabs import DocTabs
+from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
+from lunivo_writer.ui.document.dokumentfenster.navigation import NavigationPanel
 from lunivo_writer.ui.sidebar.sidebar import SchreibhilfePanel
 from lunivo_writer.core.commands import Befehle
 
@@ -107,7 +107,7 @@ class MainWindow(DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, Oberfla
         mitte.addWidget(self._leiste_rechts())
         self.arbeit.setLayout(mitte)
         lay.addWidget(self.arbeit, 1)
-        from lunivo_writer.ui.document.noten_feld import NotenFeld
+        from lunivo_writer.ui.document.kopffuss.noten_feld import NotenFeld
         self.noten_feld = NotenFeld(self.current_editor)
         self.noten_feld.geaendert.connect(lambda: self.navigation.aktualisieren())
         lay.addWidget(self.noten_feld)
@@ -521,5 +521,5 @@ class MainWindow(DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, Oberfla
 
 
     def about(self):
-        from lunivo_writer.ui.dialogs import hilfe_dialoge
+        from lunivo_writer.ui.dialogs.lesen_hilfe import hilfe_dialoge
         hilfe_dialoge.ueber(self, __version__).exec()

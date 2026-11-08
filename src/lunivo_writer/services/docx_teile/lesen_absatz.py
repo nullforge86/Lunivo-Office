@@ -161,7 +161,7 @@ class LesenAbsatzMixin:
             b.setProperty(B_MUSTER, muster.als_text(art, mf, ff))
         elif shd and shd[0].get(qn("w:fill")) not in (None, "auto"):
             b.setBackground(QBrush(QColor("#" + shd[0].get(qn("w:fill")))))
-        from lunivo_writer.editor import absatzopt
+        from lunivo_writer.editor.seite import absatzopt
         opt = absatzopt.aus_ppr(para._p.pPr)
         if opt:
             absatzopt.setzen(b, {**absatzopt.VORGABE, **opt})
@@ -174,7 +174,7 @@ class LesenAbsatzMixin:
             b.setTabPositions([QTextOption.Tab(_emu_to_px(t.position), art.get(t.alignment, QTextOption.LeftTab))
                                for t in stops])
             from docx.enum.text import WD_TAB_LEADER
-            from lunivo_writer.editor import tabfuell
+            from lunivo_writer.editor.text import tabfuell
             lk = {WD_TAB_LEADER.DOTS: "punkt", WD_TAB_LEADER.DASHES: "strich", WD_TAB_LEADER.LINES: "linie", WD_TAB_LEADER.MIDDLE_DOT: "mitte"}
             tabfuell.setzen(b, {round(_emu_to_px(t.position), 2): lk[t.leader] for t in stops if t.leader in lk})
         lvl = self._heading_level(para)
@@ -185,7 +185,7 @@ class LesenAbsatzMixin:
         elif st is not None and not lvl and not st.builtin and st.name != "Normal":
             self._eigene_vorlage(st, b)
         if para._p.xpath("w:pPr/w:sectPr"):                       # letzter Absatz eines Abschnitts: der folgende Abschnitt wird hier beschrieben
-            from lunivo_writer.editor import abschnitte as AB
+            from lunivo_writer.editor.seite import abschnitte as AB
             k, secs = self._ab_zaehler, self.d.sections
             self._ab_zaehler += 1
             if k + 1 < len(secs):
@@ -340,8 +340,8 @@ class LesenAbsatzMixin:
             return
         teile = f["instr"].split()
         if teile and teile[0].upper() == "XE" and self._letzter:
-            from lunivo_writer.editor.indexeintrag import aus_feld
-            from lunivo_writer.editor.zusatz import P_INDEX_OPT
+            from lunivo_writer.editor.dokument.indexeintrag import aus_feld
+            from lunivo_writer.editor.dokument.zusatz import P_INDEX_OPT
             e = aus_feld(f["instr"])
             if e is None:
                 return
@@ -354,7 +354,7 @@ class LesenAbsatzMixin:
 
     def _form_meta(self, sdt) -> str:
         """Inhaltssteuerelement → Formularfeld-Daten (JSON); eigene Felder tragen sie im Tag, fremde (Word) werden aus der Art abgeleitet."""
-        from lunivo_writer.editor import formular as FO
+        from lunivo_writer.editor.dokument import formular as FO
         pr = sdt.find(qn("w:sdtPr"))
         if pr is None:
             return ""

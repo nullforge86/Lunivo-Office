@@ -26,15 +26,15 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.editor import diagramm_format as F
-from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.editor.textfx import WARP_FORMEN, pfad_verformen
+from lunivo_writer.editor.diagramme import diagramm_format as F
+from lunivo_writer.editor.text import texteffekt as T
+from lunivo_writer.editor.text.textfx import WARP_FORMEN, pfad_verformen
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown, keine_zeile
 from lunivo_writer.ui.baukasten.medien.alternativtext_abschnitt import AlternativtextAbschnitt
 from lunivo_writer.ui.baukasten.formatierung.auto_felder_mixin import AutoFelderMixin
 from lunivo_writer.ui.baukasten.formatierung.effekte_drei_mixin import NurDreiEffekteMixin
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.dropdown.kopf_menue_mixin import KopfMenueMixin
 from lunivo_writer.ui.baukasten.formatierung.textfeld_abschnitt import TextfeldAbschnitt
 from lunivo_writer.ui.baukasten.dropdown.teil_menue import TeilMenueKnopf
@@ -44,7 +44,7 @@ from lunivo_writer.ui.baukasten.dropdown.text_kopf_menue_mixin import TextKopfMe
 from lunivo_writer.ui.baukasten.formatierung.objektformat_panel import ObjektFormatPanel, _TextPanel
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld, SchrittFeld
 from lunivo_writer.ui.baukasten.formatierung.text_fuellarten_mixin import TextFuellartenMixin
-from lunivo_writer.ui.baukasten.dropdown.strich_auswahl import StrichAuswahl
+from lunivo_writer.ui.baukasten.dropdown.auswahl.strich_auswahl import StrichAuswahl
 from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.basis.mass import (
@@ -97,7 +97,7 @@ def _strich_zeichner(art: str):
 def _kombi_zeichner(form: str):
     """Zeichner für ``StrichAuswahl``: eine Linie des kombinierten Typs ``form`` (Flächen aus ``textfx._kontur_pfade``)."""
     def z(p, r, farbe):
-        from lunivo_writer.editor import textfx as X
+        from lunivo_writer.editor.text import textfx as X
         pf = QPainterPath(); pf.moveTo(r.left(), r.center().y()); pf.lineTo(r.right(), r.center().y())
         p.setPen(Qt.NoPen); p.setBrush(farbe)
         for fl in X._kontur_pfade(pf, 3.0, form):
@@ -181,7 +181,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         self.reiter.addTab(self._scroll(feldseite), icons.icon("square-text", ICON_MITTEL), "Textfeld")
         self._verbinde()
 
-    # ---- 3D-Drehung und Transformieren (Effekte, hinter dem 3D-Format): Datenmodell ``text_3d`` und ``warp`` (``editor/textfx.py``)
+    # ---- 3D-Drehung und Transformieren (Effekte, hinter dem 3D-Format): Datenmodell ``text_3d`` und ``warp`` (``editor/text/textfx.py``)
     def _dreh_warp_bauen(self) -> None:
         seite = self.reiter.widget(1).widget().layout()
         self.a_dreh = Abschnitt("3D-Drehung")

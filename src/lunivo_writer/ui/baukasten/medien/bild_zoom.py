@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QDialog, QFrame, QLabel, QScrollArea, QSizePolicy,
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import abschnittstitel
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_KEIN
 
 ZOOM_MIN, ZOOM_MAX = 10, 400

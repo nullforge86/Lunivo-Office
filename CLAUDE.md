@@ -7,7 +7,7 @@
 Lunivo besteht aus **Bausteinen und Modulen**. Sie werden überall wiederverwendet. Der Eigentümer will das nicht mehr jedes Mal sagen müssen.
 
 1. **Erst suchen, dann bauen:** `docs/README.md`, `docs/baukasten.md` lesen; mit grep nach vorhandenem Baustein, Befehl, Fenster, Menü, Farbe, Maß, Text suchen. Im Bericht nennen, was wiederverwendet wurde.
-2. **Keine Hardcodierung:** Farben, Maße, Schriftgrößen, Texte, Listen kommen aus Palette/Thema, `ui/baukasten/mass.py` und den Baukasten-Konstanten, nie als Einzelwert im Fenster.
+2. **Keine Hardcodierung:** Farben, Maße, Schriftgrößen, Texte, Listen kommen aus Palette/Thema, `ui/baukasten/basis/mass.py` und den Baukasten-Konstanten, nie als Einzelwert im Fenster.
 3. **Keine Parallel- oder Doppelstruktur:** kein zweites Fenster, keine zweite Leiste, kein zweiter Befehl oder Dropdown neben einem vorhandenen. Fehlt etwas, den Baukasten zentral erweitern, in `docs/baukasten.md` eintragen und verknüpfen.
 4. **Zuständigkeiten trennen:** Logik in Modulen/Services, Oberfläche in `ui/`, Gestaltung im Baukasten. Keine unbeteiligten Module ändern.
 5. **Selbstprüfung vor dem Bericht:** Entstand eine zweite Stelle für dasselbe? Steht ein fester Wert, der zentral sein sollte?
@@ -22,15 +22,15 @@ Deshalb gar nicht erst anfangen.
 - Text im Dokument: `QTextDocument`, `QTextCursor`, `QTextCharFormat`, `QTextBlockFormat` — niemals `toHtml`, `setHtml`,
   `insertHtml`, `fromHtml`.
 - Speichern und Öffnen: DOCX, ODT, TXT, PDF (keine Webseite).
-- Eigene Daten (Textbausteine u. a.): JSON ohne Markup, siehe `src/lunivo_writer/editor/textdaten.py`.
+- Eigene Daten (Textbausteine u. a.): JSON ohne Markup, siehe `src/lunivo_writer/editor/text/textdaten.py`.
 - Hilfe- und Infotexte: Markdown mit `QTextBrowser.setMarkdown`, Formeln und Vorschauen mit `QTextDocument` und `QPainter`.
 - Berichte und Dokumentation: Markdown. Werkzeuge in `werkzeug/` schreiben kein HTML.
 - Sieht eine Aufgabe nach HTML aus, einen Qt-Weg suchen. Gibt es keinen, dem Eigentümer melden — nicht ausweichen.
 
 Gemeint sind Lunivos **eigene** Dateien, Daten und Code. Einzige Ausnahme: das Einfügen aus der Zwischenablage nimmt Inhalte aus
-fremden Programmen an (`ui/document/base.py`, `document_editor.py`) — das ist keine Datei und kein Format von Lunivo.
+fremden Programmen an (`ui/document/bearbeitung/base.py`, `document_editor.py`) — das ist keine Datei und kein Format von Lunivo.
 
-Der Wächtertest `tests/test_main_window.py::test_kein_html_im_projekt` muss grün bleiben. Seine Liste `HTML_NOCH_ERLAUBT` darf
+Der Wächtertest `tests/integration/test_main_window.py::test_kein_html_im_projekt` muss grün bleiben. Seine Liste `HTML_NOCH_ERLAUBT` darf
 nur kleiner werden, nie größer.
 
 ## Arbeitsweise
@@ -40,7 +40,7 @@ nur kleiner werden, nie größer.
 - Aufbau des Projekts: `docs/README.md`. Gemeinsame Oberflächen-Bausteine (Farbpalette, Linien, Menüs, Dialoggerüst):
   `src/lunivo_writer/ui/baukasten/` und `docs/baukasten.md` — dort nachsehen, bevor etwas Neues gebaut wird.
 - **Fensterbau (Pflicht):** Fenster öffnen in der rechten Seitenleiste. Felder immer mit `FormularGitter` (`zeile`, `reihe`, `breit`),
-  `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/formular_gitter.py` bauen — Muster `ui/baukasten/absatz_dialog.py`.
+  `UmbruchSchalter`, `FlussLayout`, `abschnittstitel` aus `ui/baukasten/controls/formular_gitter.py` bauen — Muster `ui/baukasten/formatierung/absatz_dialog.py`.
   Kein festes `QGridLayout`, kein `schmal_nein`, keine breiten Mindestmaße. Was in der Vorlage rechts steht (Vorschau), kommt darunter.
   Bei 300 px Breite darf nichts herausragen.
 - Gezielter Test bei relevanter Verhaltensänderung: `.venv/bin/python -m pytest <testdatei> -k <testname>`. Nie `pytest` ohne Auswahl starten. Bandprüfung nur bei Änderungen am Band: `werkzeug/funktionspruefung.py`.

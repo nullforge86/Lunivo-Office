@@ -1,7 +1,7 @@
 """Das Fenster „Groß-/Kleinschreibung“ als Baustein: eine der fünf Arten wählen.
 
     d = SchreibweiseDialog(parent, "satz")
-    if d.exec(): d.art()                                       # Schlüssel aus ``editor.schreibweise.SCHREIBWEISEN``
+    if d.exec(): d.art()                                       # Schlüssel aus ``editor.text.schreibweise.SCHREIBWEISEN``
 
 Das Fenster ändert keinen Text; der Aufrufer wendet die Art an (``Befehle.schreibweise``).
 """
@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QButtonGroup, QDialog, QRadioButton, QVBoxLayout
 
-from lunivo_writer.editor.schreibweise import SCHREIBWEISEN
+from lunivo_writer.editor.text.schreibweise import SCHREIBWEISEN
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import abschnittstitel
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, RAND_PANEL_KLEIN
 
 

@@ -13,11 +13,11 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout
 
-from lunivo_writer.editor.zeichenzusatz import AUSRICHTUNGEN
+from lunivo_writer.editor.text.zeichenzusatz import AUSRICHTUNGEN
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.ui.baukasten.controls.mass_feld import spin
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl

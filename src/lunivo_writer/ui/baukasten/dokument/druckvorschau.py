@@ -1,6 +1,6 @@
 """Die Druckvorschau als ganzes Fenster: oben Drucken…, Blattwechsel, Ansicht (Eine/Zwei/Alle Seiten), Zoom, Einpassen, Vorschau schließen.
 
-    d = DruckVorschau(parent, quelle)          # quelle: editor.druck.Zwischenseiten
+    d = DruckVorschau(parent, quelle)          # quelle: editor.seite.druck.Zwischenseiten
     d.drucken.connect(...)                     # „Drucken…“ schließt die Vorschau und meldet sich
 """
 from __future__ import annotations

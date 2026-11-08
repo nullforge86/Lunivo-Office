@@ -5,9 +5,9 @@ import os
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QWidget
-from lunivo_writer.editor.pagination import export_pdf
+from lunivo_writer.editor.seite.pagination import export_pdf
 from lunivo_writer.services import sicher_schreiben
-from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
 
 
 class DateienExportBaustein:

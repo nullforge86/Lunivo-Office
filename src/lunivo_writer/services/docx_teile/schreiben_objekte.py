@@ -53,7 +53,7 @@ class ObjekteSchreiber:
             self._verankern(run, "right" if seite == "rechts" else "left")
 
     def _frei_bild(self, para, a: dict, img: QImage) -> None:
-        """Ein frei positioniertes Bild (siehe editor/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben."""
+        """Ein frei positioniertes Bild (siehe editor/objekte/freie_bilder.py) als wp:anchor ohne Umbruch in den Absatz schreiben."""
         if img is None or img.isNull():
             return
         buf = QBuffer()
@@ -120,7 +120,7 @@ class ObjekteSchreiber:
                 xf.set("rot", str(int(round(float(a["dreh"]) * 60000))))
         f = a.get("fuell")
         if f and f.get("art") in ("farbe", "verlauf", "graduell", "muster"):                     # Textur und Bild bleiben im Programm
-            from lunivo_writer.editor import muster as MU
+            from lunivo_writer.editor.text import muster as MU
             for sppr in run._r.xpath(".//pic:spPr"):
                 def farbe(hexwert):
                     c = OxmlElement("a:srgbClr"); c.set("val", str(hexwert).lstrip("#").upper()); return c
@@ -165,7 +165,7 @@ class ObjekteSchreiber:
     def _textfeld_ketten(self) -> dict:
         """{id des Textfelds: (Kettennummer, Stelle in der Kette)} — die Verknüpfungen aller Textfelder des Dokuments (``wps:linkedTxbx``)."""
         if getattr(self, "_tf_ketten", None) is None:
-            from lunivo_writer.editor import freie_bilder as FB
+            from lunivo_writer.editor.objekte import freie_bilder as FB
             felder = {}
             b = self.q.firstBlock()
             while b.isValid():
@@ -229,7 +229,7 @@ class ObjekteSchreiber:
     def _txbx_inhalt(self, inhalt, d: dict) -> None:
         """Absätze und Läufe des Textfelds (Text mit Zeichenformaten) als ``w:p``/``w:r`` in ``w:txbxContent``."""
         from lxml import etree
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
         def el(eltern, name, **at):

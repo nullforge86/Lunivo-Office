@@ -13,7 +13,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QLabel
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.controls.abschnitt_gruppe import EinzelOffen
+from lunivo_writer.ui.baukasten.geruest.abschnitt_gruppe import EinzelOffen
 from lunivo_writer.ui.baukasten.controls.winkel_feld import WinkelFeld
 
 

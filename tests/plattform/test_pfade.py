@@ -18,7 +18,7 @@ def test_zusatzorte_liegen_unter_dem_generischen_datenordner(app):
 
 
 def test_vorlagenordner_vorgabe_und_eigene_wahl(app):
-    from lunivo_writer.editor import vorlagen
+    from lunivo_writer.editor.dokument import vorlagen
 
     class S:
         def __init__(self, wert):

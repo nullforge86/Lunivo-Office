@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QMessageBox
 from lunivo_writer.models.report import DocumentIOError
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.ui.baukasten.dokument.speichern_fenster import speicherort_waehlen
-from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
 
 
 class DateienVorlagenBaustein:
@@ -31,7 +31,7 @@ class DateienVorlagenBaustein:
         if art == "leer":
             self.new_document()
         elif art == "geruest":
-            from lunivo_writer.editor import vorlagen
+            from lunivo_writer.editor.dokument import vorlagen
             from PySide6.QtCore import QDate, QLocale
             self.new_document()
             t = self.current_tab()
@@ -54,7 +54,7 @@ class DateienVorlagenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from lunivo_writer.editor import vorlagen
+        from lunivo_writer.editor.dokument import vorlagen
         ordner = ordner or vorlagen.vorlagenordner(self.settings)
         os.makedirs(ordner, exist_ok=True)
         wahl = speicherort_waehlen(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),

@@ -5,18 +5,18 @@ je mit Typ (Text, Zahl, Datum) und Richtung; „Meine Liste enthält“ eine Üb
     d = SortierenDialog(parent, texte)        # texte: die zu sortierenden Absätze — daraus ergibt sich die Zahl der Felder
     if ausfuehren(d): d.werte()               # {"schluessel": [(feld|None, typ, absteigend), …], "trenner", "gross_klein", "sprache", "kopfzeile"}
 
-Das Fenster sortiert nicht selbst; der Aufrufer ruft ``editor.schreibweise.reihenfolge`` mit ``**d.werte()`` auf (``Befehle.sortieren``).
+Das Fenster sortiert nicht selbst; der Aufrufer ruft ``editor.text.schreibweise.reihenfolge`` mit ``**d.werte()`` auf (``Befehle.sortieren``).
 """
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QFrame, QLabel, QLineEdit, QPushButton, QRadioButton, QVBoxLayout, QWidget
 
-from lunivo_writer.editor.schreibweise import SPRACHEN, feldzahl
+from lunivo_writer.editor.text.schreibweise import SPRACHEN, feldzahl
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import BREITE_SCHIENE, HOEHE_KNOPF, RAND_BOX_KOMPAKT
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 

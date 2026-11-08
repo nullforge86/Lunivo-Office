@@ -17,7 +17,7 @@ class SeiteMixin:
 
     # ---- Seite -------------------------------------------------------
     def read_page(self) -> PageSettings:
-        """Einrichtung des ERSTEN Abschnitts; weitere Abschnitte stehen als Umbrüche im Text (siehe editor/abschnitte.py)."""
+        """Einrichtung des ERSTEN Abschnitts; weitere Abschnitte stehen als Umbrüche im Text (siehe editor/seite/abschnitte.py)."""
         return self._section_page(self.d.sections[0], erster=True)
 
     def _section_page(self, s, erster: bool = False, basis: PageSettings | None = None) -> PageSettings:
@@ -94,7 +94,7 @@ class SeiteMixin:
         return out
 
     def _abschnitt_beginn(self, s) -> str:
-        from lunivo_writer.editor.abschnitte import VOM_DOCX
+        from lunivo_writer.editor.seite.abschnitte import VOM_DOCX
         t = s._sectPr.find(qn("w:type"))
         return VOM_DOCX.get(t.get(qn("w:val")) if t is not None else "nextPage", "naechste")
 
@@ -139,7 +139,7 @@ class SeiteMixin:
                              "breite_pt": int(e.get(qn("w:sz")) or 8) / 8.0,
                              "art": art_aus_docx(e.get(qn("w:val"))),
                              "abstand_mm": int(e.get(qn("w:space")) or 24) / 72 * 25.4}
-                from lunivo_writer.editor.seitenrahmen import KUNST
+                from lunivo_writer.editor.seite.seitenrahmen import KUNST
                 wert = e.get(qn("w:val"))
                 if wert in [k for k, _n in KUNST if k]:                              # Kunstrahmen
                     ps.border["kunst"] = wert
@@ -170,7 +170,7 @@ class SeiteMixin:
 
     def _seitenzahl_art(self, s, ps: PageSettings) -> None:
         """w:pgNumType: Zahlenart, „Beginnen mit“, Kapitelnummer."""
-        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.editor.seite import seitenzahl as SZ
         e = s._sectPr.find(qn("w:pgNumType"))
         if e is None:
             return

@@ -137,7 +137,7 @@ class TabellenSchreiber:
     @staticmethod
     def _zeilenhoehe(drow, qt, r: int) -> None:
         """Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten."""
-        from lunivo_writer.editor.tabelleneigenschaften import zeilenhoehe_lesen
+        from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_lesen
         from lunivo_writer.models.page import px_to_mm
         px = zeilenhoehe_lesen(qt, r)
         if px > 0:

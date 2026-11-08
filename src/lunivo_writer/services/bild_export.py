@@ -1,6 +1,6 @@
 """Das Dokument als Bild schreiben: jede Seite als eigene Datei oder alle Seiten untereinander als ein langes Bild.
 
-Die Seiten zeichnet ``editor.pagination.seiten_bilder`` (dieselbe Darstellung wie Druck und PDF). Seite für Seite: Bei hoher
+Die Seiten zeichnet ``editor.seite.pagination.seiten_bilder`` (dieselbe Darstellung wie Druck und PDF). Seite für Seite: Bei hoher
 Auflösung belegt ein Seitenbild Dutzende MB, alle auf einmal im Speicher zu halten, kann den Arbeitsspeicher füllen.
 """
 from __future__ import annotations
@@ -66,7 +66,7 @@ def _speichern(img: QImage, pfad: str, fmt: str) -> None:
 
 def bilder_schreiben(doc, page, noten, name: str, wahl: BildWahl) -> list[str]:
     """Schreibt die Bilder nach ``wahl.ordner``. → die geschriebenen Dateien."""
-    from lunivo_writer.editor.pagination import seiten_bilder, seitenzahl
+    from lunivo_writer.editor.seite.pagination import seiten_bilder, seitenzahl
     endung = FORMATE[wahl.format][0]
     stamm = os.path.join(wahl.ordner, os.path.splitext(os.path.basename(name))[0] or "Dokument")
     faktor = wahl.dpi / 96

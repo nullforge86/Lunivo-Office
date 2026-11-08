@@ -66,7 +66,7 @@ class DateiSeiten:
         p.haken(f, "bearbeiten/tippen_ersetzt", "Tippen ersetzt die Auswahl", False)
         p.haken(f, "bearbeiten/einfuegen_schaltflaeche", "Schaltfläche nach dem Einfügen", True)
         p.haken(f, "bearbeiten/mittlere_taste", "Mittlere Maustaste fügt ein", True)
-        from lunivo_writer.ui.document.editor_einfuegen import EINFUEGE_MODI
+        from lunivo_writer.ui.document.bearbeitung.editor_einfuegen import EINFUEGE_MODI
         p.wahl(f, "bearbeiten/einfuegen_standard", "Standardeinfügeformat", [(m, m) for m in EINFUEGE_MODI], EINFUEGE_MODI[0])
         f = p.unter(e, "Eigenes Wörterbuch und gelernte Schreibweisen")
         f.addRow(self._gedaechtnis(""))

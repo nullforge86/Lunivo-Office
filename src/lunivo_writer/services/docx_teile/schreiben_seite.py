@@ -19,7 +19,7 @@ class SeiteSchreiber:
     # ---- Seite --------------------------------------------------------
     def write_page(self):
         """Dokumentweite Einstellungen (Hintergrund, Silbentrennung) und der letzte Abschnitt in der Schlusseinrichtung des Textes."""
-        from lunivo_writer.editor import abschnitte as AB
+        from lunivo_writer.editor.seite import abschnitte as AB
         self.abschnitte = AB.alle_einrichtungen(self.q, self.page)
         self._ab_nr = 0
         self._dokument_ebene(self.page)
@@ -38,7 +38,7 @@ class SeiteSchreiber:
             s.start_type = {"naechste": WD_SECTION.NEW_PAGE, "fortlaufend": WD_SECTION.CONTINUOUS,
                             "gerade": WD_SECTION.EVEN_PAGE, "ungerade": WD_SECTION.ODD_PAGE}.get(typ, WD_SECTION.NEW_PAGE)
         self._seitenschmuck(s, p)
-        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.editor.seite import seitenzahl as SZ
         paare = [(s.header, p.header, p.kopf_verknuepft, "kopf"), (s.footer, p.footer, p.fuss_verknuepft, "fuss")]
         if p.diff_first:
             s.different_first_page_header_footer = True
@@ -71,7 +71,7 @@ class SeiteSchreiber:
 
     def _seitenzahl_art(self, s, p) -> None:
         """Zahlenart, „Beginnen mit“ und Kapitelnummer der Seitenzahl als w:pgNumType."""
-        from lunivo_writer.editor import seitenzahl as SZ
+        from lunivo_writer.editor.seite import seitenzahl as SZ
         sp = s._sectPr
         for alt in sp.findall(qn("w:pgNumType")):
             sp.remove(alt)
@@ -107,7 +107,7 @@ class SeiteSchreiber:
             sp.remove(alt)
         if p.border:
             b = p.border
-            from lunivo_writer.editor.seitenrahmen import abstaende_pt
+            from lunivo_writer.editor.seite.seitenrahmen import abstaende_pt
             pb = OxmlElement("w:pgBorders")
             pb.set(qn("w:offsetFrom"), "text" if b.get("messen") == "text" else "page")
             pb.set(qn("w:zOrder"), "front" if b.get("vordergrund", True) else "back")

@@ -1,6 +1,6 @@
 """Der Piktogramm-Katalog (Name → 24×24-Pfad) und das Bild eines Piktogramms — neutral, ohne Oberfläche.
 
-Gebraucht von ``editor/einfuegen.py`` (Piktogramm ins Dokument) und von ``ui/widgets/icons.py`` (Symbole der Oberfläche).
+Gebraucht von ``editor/dokument/einfuegen.py`` (Piktogramm ins Dokument) und von ``ui/widgets/icons.py`` (Symbole der Oberfläche).
 Gezeichnet wird mit ``QPainter`` und ``QSvgRenderer``; das SVG entsteht nur im Speicher als Zeichenvorschrift für den Renderer.
 """
 from __future__ import annotations

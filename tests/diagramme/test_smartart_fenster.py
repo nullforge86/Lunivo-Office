@@ -2,9 +2,9 @@
 import pytest
 from PySide6.QtWidgets import QWidget
 
-from lunivo_writer.editor import smartart as SA
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import ZusatzPanel
-from lunivo_writer.ui.dialogs.einfuegen_dialoge import SmartArtDialog
+from lunivo_writer.editor.objekte import smartart as SA
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import ZusatzPanel
+from lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge import SmartArtDialog
 
 
 @pytest.mark.parametrize("breite", [300, 444])
@@ -43,8 +43,8 @@ def fenster_kn(app, tmp_path):
 
 
 def test_knotenmasse_aufzaehlung_und_schnellleiste(fenster_kn):
-    from lunivo_writer.editor import bildlayout as BL
-    from lunivo_writer.ui.baukasten.controls import schnellleiste_zustand as SZ
+    from lunivo_writer.editor.objekte import bildlayout as BL
+    from lunivo_writer.ui.baukasten.geruest import schnellleiste_zustand as SZ
     ed, b = fenster_kn
     SA.einfuegen(ed, SA.LAYOUT_KATALOG[0])                                       # Organigramm
     assert b.smartartKnotenMasse() is None and not b.kann_smartartAufzaehlung()
@@ -62,7 +62,7 @@ def test_knotenmasse_aufzaehlung_und_schnellleiste(fenster_kn):
 
 
 def test_layoutoptionen_vorwahl_smartart_und_form(fenster_kn):
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     ed, _b = fenster_kn
     SA.einfuegen(ed, SA.LAYOUT_KATALOG[0])
     assert BL.lesen(ed, BL.ziel(ed))["verschieben_wahl"] is None                  # beide Radios leer
@@ -71,7 +71,7 @@ def test_layoutoptionen_vorwahl_smartart_und_form(fenster_kn):
 
 @pytest.mark.parametrize("breite", [300, 444])
 def test_foto_dialog_nichts_ragt_heraus(app, breite):
-    from lunivo_writer.ui.dialogs.smartart_dialog_foto import SmartArtDialogFoto
+    from lunivo_writer.ui.dialogs.einfuegen.smartart_dialog_foto import SmartArtDialogFoto
     p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = breite, 587; p.resize(breite + 36, 727)
     d = SmartArtDialogFoto(None); p.oeffne(d); p.show(); app.processEvents(); app.processEvents()
     for w in d.findChildren(QWidget):

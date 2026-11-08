@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QCalendarWidget, QDialog, QLabel, QLineEdit, QList
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import BREITE_EINGABEFENSTER, HOEHE_EINGABEFELD, HOEHE_EINGABE_TEXT
 
 
@@ -119,7 +119,7 @@ class EingabeFenster(PanelFaehig, QDialog):
 
 def _beim_editor_anmelden() -> None:
     """Der Editor fragt über ``formular.eingabe_anbieter``; er kennt die Oberfläche nicht, hier wird ihm dieses Fenster mitgegeben."""
-    from lunivo_writer.editor import formular
+    from lunivo_writer.editor.dokument import formular
     formular.eingabe_anbieter = EingabeFenster
 
 

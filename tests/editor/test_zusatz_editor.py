@@ -3,7 +3,7 @@ from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QKeyEvent, QTextCursor
 
 from lunivo_writer.services import docx_reader, docx_writer
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 
 
@@ -78,7 +78,7 @@ def test_aenderungen_verfolgen_annehmen_ablehnen(app, tmp_path):
 
 def test_noten_im_pdf_gesammelt(app, tmp_path):
     import pypdf
-    from lunivo_writer.editor.pagination import export_pdf
+    from lunivo_writer.editor.seite.pagination import export_pdf
     e = ed("Eins Zwei")
     c = e.textCursor(); c.setPosition(4); e.setTextCursor(c)
     e.note_neu("f", "Erklärung zur Eins")

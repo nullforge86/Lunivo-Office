@@ -386,7 +386,7 @@ def test_text_in_bild_ende_zu_ende(app, tmp_path, monkeypatch):
 
 
 def test_ki_dialoge(app, tmp_path, monkeypatch):
-    from lunivo_writer.ui.dialogs.ki_dialoge import AnbieterDialog, KIKonfigurationDialog, ModellListeDialog
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import AnbieterDialog, KIKonfigurationDialog, ModellListeDialog
     w = win(tmp_path, monkeypatch)
     k = w.ki.konfig
     d = AnbieterDialog(w, k)
@@ -403,7 +403,7 @@ def test_ki_dialoge(app, tmp_path, monkeypatch):
 
 
 def test_silbenfarben_befehl_und_dialog(app, tmp_path, monkeypatch):
-    from lunivo_writer.ui.dialogs.silben_dialog import SilbenDialog
+    from lunivo_writer.ui.dialogs.lesen_hilfe.silben_dialog import SilbenDialog
     w = win(tmp_path, monkeypatch)
     e = w.current_editor()
     e.setPlainText("Wanderung und Schmetterling")
@@ -488,8 +488,8 @@ def test_live_vorschau(app, tmp_path, monkeypatch):
 
 def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
     """Ein Fenster „KI-Einstellungen“ (Reiter grau, bis ein Modell da ist), Schnelle KI-Aktion als Assistent, Chat ohne Bandgruppen."""
-    from lunivo_writer.ui.dialogs import ki_dialoge
-    from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog, SchnelleAktionDialog
+    from lunivo_writer.ui.dialogs.ki import ki_dialoge
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog, SchnelleAktionDialog
     w = win(tmp_path, monkeypatch)
     k = w.ki.konfig
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: False)
@@ -519,7 +519,7 @@ def test_ki_einstellungen_schnelle_aktion_und_chat(app, tmp_path, monkeypatch):
 
 def test_ki_ergebnisse_und_band(app, tmp_path, monkeypatch):
     from PySide6.QtWidgets import QToolButton
-    from lunivo_writer.ui.dialogs.ki_dialoge import ErgebnisseDialog
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import ErgebnisseDialog
     w = win(tmp_path, monkeypatch)
     w.ki.merke_ergebnis("Zusammenfassen", "Kurz gesagt: ...", "langer Text")
     w.ki.merke_ergebnis("Übersetzen", "Hello")
@@ -540,7 +540,7 @@ def test_chat_erweiterte_einstellungen(app, tmp_path, monkeypatch):
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     k = w.ki.konfig
     c = w.sidebar.chat
-    from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
     r = KIEinstellungenDialog(w).chat_regler                       # die Regler liegen im Baustein ChatReglerBlock im Dialog
     r.s_temp.setValue(7); r.s_top.setValue(9); r.s_laenge.setValue(300); r.stopp.setText("ENDE, ###"); r.direkt.setChecked(True)
     o = k.chat_optionen()
@@ -577,7 +577,7 @@ def test_mcp_und_websuche_im_chat(app, tmp_path, monkeypatch):
     import pathlib
     import sys as _sys
     from lunivo_writer.ai import ki as K, mcp as M, websuche as W
-    from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
     w = win(tmp_path, monkeypatch)
     k = w.ki.konfig
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
@@ -647,7 +647,7 @@ def test_mcp_und_websuche_im_chat(app, tmp_path, monkeypatch):
 
 
 def test_sprache_tab(app, tmp_path, monkeypatch):
-    from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     d = KIEinstellungenDialog(w, 2)
@@ -660,8 +660,8 @@ def test_sprache_tab(app, tmp_path, monkeypatch):
 
 def test_ki_einstellungen_bleiben_in_einem_fenster(app, tmp_path, monkeypatch):
     """„+“, „✎“ in KI-Modelle und MCP-Server öffnen ihr Formular als Seite im selben Fenster (Fensterstapel), nicht als neues Fenster."""
-    from lunivo_writer.ui.baukasten.controls.fenster_stapel import FensterStapel
-    from lunivo_writer.ui.dialogs.ki_dialoge import AnbieterDialog, KIEinstellungenDialog, McpDialog
+    from lunivo_writer.ui.baukasten.geruest.fenster_stapel import FensterStapel
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import AnbieterDialog, KIEinstellungenDialog, McpDialog
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     d = KIEinstellungenDialog(w, 0)
@@ -719,8 +719,8 @@ def test_aktionen_in_schreibhilfe_und_chat(app, tmp_path, monkeypatch):
 def test_textbausteine_welche_hilfe_und_zusammenfassen(app, tmp_path, monkeypatch):
     from PySide6.QtGui import QTextCursor
     from lunivo_writer.services import bausteine
-    from lunivo_writer.ui.dialogs.einfuegen_dialoge import BausteinDialog
-    from lunivo_writer.ui.dialogs.welche_hilfe import HilfeWannDialog
+    from lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge import BausteinDialog
+    from lunivo_writer.ui.dialogs.lesen_hilfe.welche_hilfe import HilfeWannDialog
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(bausteine, "_pfad", lambda: str(tmp_path / "b.json"))
     # Seitenleiste: der vierte KI-Knopf
@@ -752,7 +752,7 @@ def test_textbausteine_welche_hilfe_und_zusammenfassen(app, tmp_path, monkeypatc
 
 def test_lesehilfe_fenster_nach_vorlage(app, tmp_path, monkeypatch):
     """Das Fenster „Lesehilfe“ hat die sieben Felder (Zeilenluft eingeschlossen) der Vorlage, wirkt sofort und „Abbrechen“ stellt den alten Stand wieder her."""
-    from lunivo_writer.ui.dialogs.lesehilfe_dialog import LesehilfeDialog
+    from lunivo_writer.ui.dialogs.lesen_hilfe.lesehilfe_dialog import LesehilfeDialog
     w = win(tmp_path, monkeypatch)
     d = LesehilfeDialog(w)
     assert list(d.felder) == ["papier", "buchstaben", "wort", "zeilenluft", "zeilenfokus", "groesser", "zurueck"]
@@ -768,8 +768,8 @@ def test_lesehilfe_fenster_nach_vorlage(app, tmp_path, monkeypatch):
 def test_zeilenluft_nur_in_der_anzeige(app, tmp_path, monkeypatch):
     """Die Zeilenluft der Lesehilfe vergrößert die Anzeige beim Bearbeiten; Datei, Druck und PDF bekommen den ursprünglichen Abstand."""
     from PySide6.QtGui import QTextBlockFormat, QTextCursor
-    from lunivo_writer.editor import lese_zeilenluft as LZ
-    from lunivo_writer.editor.pagination import paginated_copy
+    from lunivo_writer.editor.seite import lese_zeilenluft as LZ
+    from lunivo_writer.editor.seite.pagination import paginated_copy
     from lunivo_writer.services import file_service
     w = win(tmp_path, monkeypatch)
     e = w.current_editor()
@@ -835,7 +835,7 @@ def test_reiter_schreibhilfe_ist_durchgehend_verdrahtet(app, tmp_path, monkeypat
     assert w.assistant.an("wellen")
     # die Einstellungs-Knöpfe öffnen das eine Fenster auf dem richtigen Reiter
     gesehen = []
-    import lunivo_writer.ui.baukasten.controls.fenster_stapel as FS
+    import lunivo_writer.ui.baukasten.geruest.fenster_stapel as FS
     monkeypatch.setattr(FS, "ausfuehren", lambda d: gesehen.append(d.reiter.currentIndex()))
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
     w.befehle.tun("w.kiEinstellungen"); w.befehle.tun("w.kiKonfiguration"); w.befehle.tun("w.kiSprache"); w.befehle.tun("w.eigenenAnbieterHinzufuegen")
@@ -1165,7 +1165,7 @@ def test_bildschirmfoto_nach_tabwechsel_nicht_in_neues_dokument_einfuegen(app, t
 
 def test_veraltete_modelllisten_antwort_nach_urlwechsel_verwerfen(app, tmp_path, monkeypatch):
     """Eine Antwort für die vorige Anbieter-URL darf die Modellliste der neuen URL nicht überschreiben."""
-    from lunivo_writer.ui.dialogs.ki_modelle_dialoge import AnbieterDialog
+    from lunivo_writer.ui.dialogs.ki.ki_modelle_dialoge import AnbieterDialog
     w = win(tmp_path, monkeypatch)
     d = AnbieterDialog(w, w.ki.konfig)
     d.modell.setCurrentText("bereits gewählt")

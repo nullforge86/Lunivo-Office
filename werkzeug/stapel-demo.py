@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from PySide6.QtWidgets import QApplication
 
 from lunivo_writer.ui.theme import apply_theme
-from lunivo_writer.ui.baukasten.controls.fenster_stapel import FensterStapel
+from lunivo_writer.ui.baukasten.geruest.fenster_stapel import FensterStapel
 from lunivo_writer.ui.baukasten.formatierung.formatvorlage_dialog import FormatvorlageDialog
 
 

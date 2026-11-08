@@ -22,7 +22,7 @@ from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.geruest.spalten import ZweiSpalter
 from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ABSTAND_GROSS,

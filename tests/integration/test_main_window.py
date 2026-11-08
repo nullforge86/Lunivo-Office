@@ -112,7 +112,7 @@ def test_quelltext_ohne_web_oberflaeche():
 # Datei und kein Format von Lunivo. Für alles, was Lunivo selbst anlegt oder speichert, gilt: kein HTML. Neue Einträge: nicht vorgesehen.
 # Einzige weitere Ausnahme (Eigentümer, 2026-11-04): ui/baukasten/datei_symbole.py ordnet der Endung „.html“ ein Dateisymbol zu — das zeigt
 # nur fremde Dateien im Dateibrowser an und erzeugt, liest oder speichert kein HTML.
-HTML_NOCH_ERLAUBT = {"ui/document/base.py", "ui/document/editor_einfuegen.py", "ui/baukasten/medien/datei_symbole.py"}
+HTML_NOCH_ERLAUBT = {"ui/document/bearbeitung/base.py", "ui/document/bearbeitung/editor_einfuegen.py", "ui/baukasten/medien/datei_symbole.py"}
 
 
 def test_kein_html_im_projekt():
@@ -535,7 +535,7 @@ def test_linke_seitenleiste_suchen_kommentare_ueberschriften(app, tmp_path, monk
 
 def test_kommentar_nachbearbeiten_und_schriftgroesse(app, tmp_path):
     """Ein Kommentar lässt sich in seiner Karte bearbeiten (Blase und Karte zeigen den neuen Text); die Schriftgröße gilt für Karten und Blasen."""
-    from lunivo_writer.editor import sprechblasen as SB
+    from lunivo_writer.editor.objekte import sprechblasen as SB
     w = win(tmp_path)
     w.new_document(); w.show()
     e = w.current_editor()
@@ -962,10 +962,10 @@ def test_alle_dropdown_arten_haben_im_formular_gitter_dieselbe_hoehe(app):
     """Wächter: Auswahlfeld, Farbfeld, Kopf-Dropdown, Strichart-Auswahl und Teil-Menü-Knopf sind im ``FormularGitter`` gleich hoch (``DROPDOWN_HOEHE``)."""
     from PySide6.QtWidgets import QWidget
     from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-    from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+    from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
     from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown
     from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-    from lunivo_writer.ui.baukasten.dropdown.strich_auswahl import StrichAuswahl
+    from lunivo_writer.ui.baukasten.dropdown.auswahl.strich_auswahl import StrichAuswahl
     from lunivo_writer.ui.baukasten.dropdown.teil_menue import TeilMenueKnopf
     from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
     from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_HOEHE

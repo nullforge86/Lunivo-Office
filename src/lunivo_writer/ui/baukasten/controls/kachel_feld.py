@@ -14,7 +14,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QToolButton, QWidget
 
 from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
-from lunivo_writer.ui.baukasten.dropdown.raster_auswahl import _symbol
+from lunivo_writer.ui.baukasten.dropdown.auswahl.raster_auswahl import _symbol
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, GROESSE_KACHELFELD_STANDARD, RADIUS_KLEIN, RAND_KEIN
 
 

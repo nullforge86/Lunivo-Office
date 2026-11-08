@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (QCheckBox, QDialog, QFrame, QHBoxLayout, QLineEdi
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.geruest.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.geruest.spalten import ZweiSpalter
 from lunivo_writer.ui.dialogs.optionen_seiten.ansicht import AnsichtSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.datei import DateiSeiten
 from lunivo_writer.ui.dialogs.optionen_seiten.befehle import BefehleSeiten

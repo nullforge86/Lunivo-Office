@@ -55,19 +55,19 @@ _LIST_STYLES = {
 def _has(fmt, prop) -> bool:
     return fmt.hasProperty(prop)
 
-from lunivo_writer.editor.zusatz import abstand_davor_px, B_BILDANKER, B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
+from lunivo_writer.editor.dokument.zusatz import abstand_davor_px, B_BILDANKER, B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
 
-from lunivo_writer.editor.formular import P_FORM  # noqa: E402
+from lunivo_writer.editor.dokument.formular import P_FORM  # noqa: E402
 
-from lunivo_writer.editor.abschnitte import B_ABSCHNITT  # noqa: E402
+from lunivo_writer.editor.seite.abschnitte import B_ABSCHNITT  # noqa: E402
 
-from lunivo_writer.editor import umbruch
+from lunivo_writer.editor.seite import umbruch
 
-from lunivo_writer.editor.linie import Linie, art_aus_docx, docx_wert
+from lunivo_writer.editor.objekte.linie import Linie, art_aus_docx, docx_wert
 
-from lunivo_writer.editor import muster
+from lunivo_writer.editor.text import muster
 
-from lunivo_writer.editor.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE
+from lunivo_writer.editor.dokument.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE
 
 _RPR_FOLGE = ("w:rStyle", "w:rFonts", "w:b", "w:bCs", "w:i", "w:iCs", "w:caps", "w:smallCaps", "w:strike", "w:dstrike", "w:outline", "w:shadow",
               "w:emboss", "w:imprint", "w:noProof", "w:snapToGrid", "w:vanish", "w:webHidden", "w:color", "w:spacing", "w:w", "w:kern", "w:position",
@@ -82,7 +82,7 @@ def _rpr_einfuegen(rpr, el) -> None:
     rpr.insert_element_before(el, *nach)
 
 def absatzopt_prop():
-    from lunivo_writer.editor.zusatz import B_ABSATZOPT
+    from lunivo_writer.editor.dokument.zusatz import B_ABSATZOPT
     return B_ABSATZOPT
 
 def _split(text: str):

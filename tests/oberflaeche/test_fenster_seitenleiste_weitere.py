@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QLabel, QTabWidget, QWidget
 
 from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig, ZusatzPanel
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig, ZusatzPanel
 from lunivo_writer.ui.main_window import MainWindow
 
 
@@ -29,7 +29,7 @@ def _daten():
 
 def _kopffuss_optionen(tp):
     """Das Fenster „Optionen für Kopf- und Fußzeile“ (lokale Klasse in ``kfOptionen``): ``ausfuehren`` fängt es ab, statt es zu zeigen."""
-    from lunivo_writer.ui.baukasten.controls import fenster_stapel as F
+    from lunivo_writer.ui.baukasten.geruest import fenster_stapel as F
     w = _hauptfenster(tp); fang = []
     alt = F.ausfuehren
     F.ausfuehren = lambda d, *a, **k: (fang.append(d), False)[1]
@@ -54,31 +54,31 @@ FENSTER = {
     "Eigene Zeichnung": lambda tp: _o().EigeneZeichnungDialog(None),
     "Benutzeroberfläche": lambda tp: _o().OberflaecheDialog(None, _settings(tp)),
     # Reiter Schreibhilfe
-    "Lesehilfe": lambda tp: __import__("lunivo_writer.ui.dialogs.lesehilfe_dialog", fromlist=["x"]).LesehilfeDialog(_hauptfenster(tp)),
-    "Welche Hilfe wann": lambda tp: __import__("lunivo_writer.ui.dialogs.welche_hilfe", fromlist=["x"]).HilfeWannDialog(_hauptfenster(tp)),
+    "Lesehilfe": lambda tp: __import__("lunivo_writer.ui.dialogs.lesen_hilfe.lesehilfe_dialog", fromlist=["x"]).LesehilfeDialog(_hauptfenster(tp)),
+    "Welche Hilfe wann": lambda tp: __import__("lunivo_writer.ui.dialogs.lesen_hilfe.welche_hilfe", fromlist=["x"]).HilfeWannDialog(_hauptfenster(tp)),
     # kleine Abfragen (Sprache, Seriendruckfeld, Adressblock, Zitierweise, Zitat, Inhalte einfügen)
     "Abfrage Auswahl": lambda tp: EingabeFenster(None, "Sprache für die Korrekturhilfen", "Sprache des Dokuments (wird in der Datei vermerkt).\n"
                                                  "Die Schreibhilfe selbst prüft weiter auf Deutsch.",
                                                  ["Deutsch", "Deutsch (Österreich)", "Deutsch (Schweiz)", "Englisch", "Englisch (UK)", "Französisch"], 0),
     "Abfrage Text": lambda tp: EingabeFenster(None, "Seriendruckfeld", "Feldname (muss in der Kopfzeile der Empfängerliste stehen):", None, text="Name"),
     # Einfügen, Tabelle, Bild
-    "Diagrammdaten": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_dialoge", fromlist=["x"]).DiagrammDatenDialog(
+    "Diagrammdaten": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge", fromlist=["x"]).DiagrammDatenDialog(
         None, "Titel", ["A", "B", "C"], {"Reihe 1": [1.0, 2.0, 3.0], "Reihe 2": [2.0, 1.0, 4.0]}),
     "Tabelleneigenschaften": lambda tp: __import__("lunivo_writer.ui.dialogs.dokument_dialoge", fromlist=["x"]).TabellenEigenschaftenDialog(None, 100, 0, 1.0, 4.0, True),
     "Bild zuschneiden": lambda tp: __import__("lunivo_writer.ui.dialogs.dokument_dialoge", fromlist=["x"]).BildZuschneidenDialog(None),
     # Sendungen, Verweise, Formularfelder, Silben (alle mit FormularGitter/FlussLayout)
-    "Umschlag": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen_dialoge", fromlist=["x"]).UmschlagDialog(None),
-    "Etiketten": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen_dialoge", fromlist=["x"]).EtikettenDialog(None),
-    "Seriendruck": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen_dialoge", fromlist=["x"]).SeriendruckDialog(None, ["Name"], ""),
-    "Regel": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen_dialoge", fromlist=["x"]).RegelDialog(None),
-    "Quelle": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise_dialoge", fromlist=["x"]).QuelleDialog(None),
-    "Formularfeld": lambda tp: __import__("lunivo_writer.ui.dialogs.formular_dialog", fromlist=["x"]).FormFeldDialog(_hauptfenster(tp), "auswahl"),
+    "Umschlag": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen.sendungen_dialoge", fromlist=["x"]).UmschlagDialog(None),
+    "Etiketten": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen.sendungen_dialoge", fromlist=["x"]).EtikettenDialog(None),
+    "Seriendruck": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen.sendungen_dialoge", fromlist=["x"]).SeriendruckDialog(None, ["Name"], ""),
+    "Regel": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen.sendungen_dialoge", fromlist=["x"]).RegelDialog(None),
+    "Quelle": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise.verweise_dialoge", fromlist=["x"]).QuelleDialog(None),
+    "Formularfeld": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.formular_dialog", fromlist=["x"]).FormFeldDialog(_hauptfenster(tp), "auswahl"),
     # Umgestellt auf FormularGitter/FlussLayout (Schreibweise, Auswahl, Überprüfen, Mailings, Sortieren, Umschlossen, Formatvorlagen)
     "Schreibweise": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.schreibweise_dialog", fromlist=["x"]).SchreibweiseDialog(None),
     "Auswahlbereich": lambda tp: __import__("lunivo_writer.ui.baukasten.controls.auswahl_bereich", fromlist=["x"]).AuswahlBereich(None, None),
     "Wörter zählen": lambda tp: __import__("lunivo_writer.ui.dialogs.ueberpruefen_fenster", fromlist=["x"]).WoerterDialog(None, {"seiten": 1}, {"seiten": 1}),
     "Bearbeitung einschränken": lambda tp: __import__("lunivo_writer.ui.dialogs.ueberpruefen_fenster", fromlist=["x"]).SchutzDialog(None, None),
-    "Seriendruckfeld": lambda tp: __import__("lunivo_writer.ui.dialogs.serien_fenster", fromlist=["x"]).FeldDialog(None, ["Name", "Ort"]),
+    "Seriendruckfeld": lambda tp: __import__("lunivo_writer.ui.dialogs.sendungen.serien_fenster", fromlist=["x"]).FeldDialog(None, ["Name", "Ort"]),
     "Text sortieren": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.sortieren_dialog", fromlist=["x"]).SortierenDialog(None, ["a", "b"]),
     "Sortieroptionen": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.sortieren_dialog", fromlist=["x"]).SortierOptionenDialog(None),
     "Eingeschlossene Zeichen": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.umschlossen_dialog", fromlist=["x"]).UmschlosseneZeichenDialog(None, "A"),
@@ -92,41 +92,41 @@ FENSTER = {
     "Nummerierung anpassen": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.liste_dialog", fromlist=["x"]).NummerierungAnpassenDialog(None),
     "Gliederung anpassen": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.liste_dialog", fromlist=["x"]).GliederungAnpassenDialog(None),
     "Texteffekt": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog", fromlist=["x"]).TexteffektDialog(None),
-    "Wasserzeichen": lambda tp: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
-    "Inhaltsverzeichnis": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise_fenster", fromlist=["x"]).InhaltsverzeichnisDialog(None),
-    "Diagramm": lambda tp: __import__("lunivo_writer.ui.dialogs.diagramm_fenster", fromlist=["x"]).DiagrammDialog(None),
+    "Wasserzeichen": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
+    "Inhaltsverzeichnis": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise.verweise_fenster", fromlist=["x"]).InhaltsverzeichnisDialog(None),
+    "Diagramm": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.diagramm_fenster", fromlist=["x"]).DiagrammDialog(None),
     # Einfügen: Felder, Trenner, Seitenzahl, Hyperlink, Objekt, Datum, Piktogramm, Deckblatt
-    "Felder": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_fenster", fromlist=["x"]).FelderDialog(None, {}),
-    "Trenner": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_fenster", fromlist=["x"]).TrennerDialog(None, zu_tabelle=True, texte=["a;b"]),
-    "Seitenzahl": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_fenster", fromlist=["x"]).SeitenzahlDialog(None),
-    "Hyperlink": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_fenster", fromlist=["x"]).HyperlinkDialog(None),
-    "Objekt": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_fenster", fromlist=["x"]).ObjektDialog(None),
-    "Datum und Uhrzeit": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_dialoge", fromlist=["x"]).DatumDialog(None),
-    "Piktogramm": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_dialoge", fromlist=["x"]).PiktogrammDialog(None),
-    "Deckblatt": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_dialoge", fromlist=["x"]).DeckblattDialog(None, "Kay"),
-    "Silben farbig": lambda tp: __import__("lunivo_writer.ui.dialogs.silben_dialog", fromlist=["x"]).SilbenDialog(_hauptfenster(tp)),
+    "Felder": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_fenster", fromlist=["x"]).FelderDialog(None, {}),
+    "Trenner": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_fenster", fromlist=["x"]).TrennerDialog(None, zu_tabelle=True, texte=["a;b"]),
+    "Seitenzahl": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_fenster", fromlist=["x"]).SeitenzahlDialog(None),
+    "Hyperlink": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_fenster", fromlist=["x"]).HyperlinkDialog(None),
+    "Objekt": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_fenster", fromlist=["x"]).ObjektDialog(None),
+    "Datum und Uhrzeit": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge", fromlist=["x"]).DatumDialog(None),
+    "Piktogramm": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge", fromlist=["x"]).PiktogrammDialog(None),
+    "Deckblatt": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge", fromlist=["x"]).DeckblattDialog(None, "Kay"),
+    "Silben farbig": lambda tp: __import__("lunivo_writer.ui.dialogs.lesen_hilfe.silben_dialog", fromlist=["x"]).SilbenDialog(_hauptfenster(tp)),
     # Nachgetragen (Inventar 2026-11-04): alle weiteren PanelFaehig-Fenster der Seitenleiste
     "Rahmen und Schattierung": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.rahmen_schattierung", fromlist=["x"]).RahmenSchattierungDialog(None),
     "Farben": lambda tp: __import__("lunivo_writer.ui.baukasten.controls.farbwaehler", fromlist=["x"]).FarbenDialog(None),
     "Formatvorlage": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.formatvorlage_dialog", fromlist=["x"]).FormatvorlageDialog(None),
     "Kopf- und Fußzeile Optionen": _kopffuss_optionen,
     "Layout Objekt": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.layout_dialog_objekt", fromlist=["x"]).LayoutDialogObjekt(None),
-    "SmartArt Foto": lambda tp: __import__("lunivo_writer.ui.dialogs.smartart_dialog_foto", fromlist=["x"]).SmartArtDialogFoto(_hauptfenster(tp)),
+    "SmartArt Foto": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.smartart_dialog_foto", fromlist=["x"]).SmartArtDialogFoto(_hauptfenster(tp)),
     "Layout": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.layout_dialog", fromlist=["x"]).LayoutDialog(None),
     "Ruby": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.ruby_dialog", fromlist=["x"]).RubyDialog(None),
-    "Textbaustein": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen_dialoge", fromlist=["x"]).BausteinDialog(None, __import__("PySide6.QtWidgets", fromlist=["x"]).QTextEdit()),
-    "Textmarke": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise_dialoge", fromlist=["x"]).TextmarkeDialog(None, _hauptfenster(tp).current_editor()),
-    "Quellen": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise_dialoge", fromlist=["x"]).QuellenDialog(None, _hauptfenster(tp).current_editor()),
-    "KI-Einstellungen": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).KIEinstellungenDialog(_hauptfenster(tp)),
-    "Schnelle KI-Aktion": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).SchnelleAktionDialog(_hauptfenster(tp)),
-    "KI-Ergebnisse": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).ErgebnisseDialog(_hauptfenster(tp)),
+    "Textbaustein": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.einfuegen_dialoge", fromlist=["x"]).BausteinDialog(None, __import__("PySide6.QtWidgets", fromlist=["x"]).QTextEdit()),
+    "Textmarke": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise.verweise_dialoge", fromlist=["x"]).TextmarkeDialog(None, _hauptfenster(tp).current_editor()),
+    "Quellen": lambda tp: __import__("lunivo_writer.ui.dialogs.verweise.verweise_dialoge", fromlist=["x"]).QuellenDialog(None, _hauptfenster(tp).current_editor()),
+    "KI-Einstellungen": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).KIEinstellungenDialog(_hauptfenster(tp)),
+    "Schnelle KI-Aktion": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).SchnelleAktionDialog(_hauptfenster(tp)),
+    "KI-Ergebnisse": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).ErgebnisseDialog(_hauptfenster(tp)),
     "Drucken": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.druck_dialog", fromlist=["x"]).DruckDialog(None, 3),
     "Erstellen": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.erstellen_fenster", fromlist=["x"]).ErstellenFenster(
         _hauptfenster(tp), "Dokument erstellen", "Wählen Sie eine Vorlage.", ["Brief", "Bericht"], meldung="Erstellt."),
     "Stimme und Tempo": lambda tp: __import__("lunivo_writer.ui.baukasten.dokument.stimme_dialog", fromlist=["x"]).StimmeDialog(
         None, [{"kennung": "a", "name": "Stimme A"}, {"kennung": "b", "name": "Stimme B"}], "a", 100, (50, 200, 10)),
-    "Hilfe": lambda tp: __import__("lunivo_writer.ui.dialogs.hilfe_dialoge", fromlist=["x"]).HilfeFenster(_hauptfenster(tp)),
-    "KI-Assistent": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).KIAssistentDialog(_hauptfenster(tp)),
+    "Hilfe": lambda tp: __import__("lunivo_writer.ui.dialogs.lesen_hilfe.hilfe_dialoge", fromlist=["x"]).HilfeFenster(_hauptfenster(tp)),
+    "KI-Assistent": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).KIAssistentDialog(_hauptfenster(tp)),
 }
 
 
@@ -135,12 +135,12 @@ UNTERFENSTER = {
     "Rahmenoptionen Absatz": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.rahmen_schattierung", fromlist=["x"])._PolsterDialog(None, (1.0, 1.0, 4.0, 4.0)),
     "Rahmenoptionen Seitenrand": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.rahmen_schattierung", fromlist=["x"])._SeitenOptionenDialog(None, {'messen': 'text', 'abstand': (24.0, 24.0, 24.0, 24.0), 'ausrichten': True, 'vordergrund': True, 'kopf': True, 'fuss': True}),
     "Abstand Seitenrand": lambda tp: __import__("lunivo_writer.ui.baukasten.formatierung.rahmen_schattierung", fromlist=["x"])._AbstandDialog(None, 24.0),
-    "Anbieter": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).AnbieterDialog(None, _hauptfenster(tp).ki.konfig),
-    "Anbieter bearbeiten": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).AnbieterDialog(None, _hauptfenster(tp).ki.konfig, {"id": "x", "name": "Test", "url": "https://a.example/v1", "schluessel": "", "modell": "m", "verwendungFuer": ["text"]}),
-    "KI-Konfiguration": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).KIKonfigurationDialog(_hauptfenster(tp)),
-    "MCP-Server": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).McpDialog(None),
-    "Tastenkombination": lambda tp: __import__("lunivo_writer.ui.dialogs.sonderzeichen", fromlist=["x"])._TastenFenster(None, "", belegt={}),
-    "KI-Modellliste": lambda tp: __import__("lunivo_writer.ui.dialogs.ki_dialoge", fromlist=["x"]).ModellListeDialog(None, _hauptfenster(tp).ki.konfig),
+    "Anbieter": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).AnbieterDialog(None, _hauptfenster(tp).ki.konfig),
+    "Anbieter bearbeiten": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).AnbieterDialog(None, _hauptfenster(tp).ki.konfig, {"id": "x", "name": "Test", "url": "https://a.example/v1", "schluessel": "", "modell": "m", "verwendungFuer": ["text"]}),
+    "KI-Konfiguration": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).KIKonfigurationDialog(_hauptfenster(tp)),
+    "MCP-Server": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).McpDialog(None),
+    "Tastenkombination": lambda tp: __import__("lunivo_writer.ui.dialogs.einfuegen.sonderzeichen", fromlist=["x"])._TastenFenster(None, "", belegt={}),
+    "KI-Modellliste": lambda tp: __import__("lunivo_writer.ui.dialogs.ki.ki_dialoge", fromlist=["x"]).ModellListeDialog(None, _hauptfenster(tp).ki.konfig),
 }
 
 
@@ -195,7 +195,7 @@ def _in_der_seitenleiste_bestaetigen(app, w, aktion):
 
 
 def test_zitierweise_oeffnet_in_der_seitenleiste_und_wirkt(app, tmp_path):
-    from lunivo_writer.editor.literatur import ZITIERWEISEN
+    from lunivo_writer.editor.dokument.literatur import ZITIERWEISEN
     w = _hauptfenster(tmp_path); w.resize(1380, 860); w.show()
     ziel = [z for z in ZITIERWEISEN if z != w.current_editor().zitierweise][0]
     gesehen, _uhr = _in_der_seitenleiste_bestaetigen(app, w, lambda d: d.liste.setCurrentRow(ZITIERWEISEN.index(ziel)))

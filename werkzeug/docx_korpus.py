@@ -1,7 +1,7 @@
 """Testkorpus für DOCX: selbst erzeugte Dokumente (kein fremdes oder geschütztes Material, keine Personendaten) und der Roundtrip-Vergleich.
 
 Verwendung:  python werkzeug/docx_korpus.py [Ausgabedatei.md]   → schreibt den Bericht (Markdown) über Verluste und Abweichungen.
-Die Tests (tests/test_docx_korpus.py) benutzen dieselben Bausteine.
+Die Tests (tests/dokument/formate/test_docx_korpus.py) benutzen dieselben Bausteine.
 
 Ehrliche Grenze: Alle Dokumente stammen aus python-docx und eigenem XML, nicht aus Word, LibreOffice oder Google Docs. Dokumente aus
 anderen Programmen müssen vom Eigentümer beigesteuert werden (Ordner ``tests/korpus_extern/``, wird automatisch mitgeprüft, wenn er existiert).

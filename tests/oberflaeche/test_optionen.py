@@ -104,7 +104,7 @@ def test_lesehilfe_stufen_grammatik_und_kompatibilitaet(app, tmp_path, monkeypat
     """Absatz größer / Übriger Text blasser (nur am Schirm), Grammatik-Schalter der Prüfung, Kompatibilität und Bildkompression in DOCX."""
     import zipfile
     from PySide6.QtGui import QColor, QImage
-    from lunivo_writer.editor import einfuegen as E
+    from lunivo_writer.editor.dokument import einfuegen as E
     from lunivo_writer.models.page import PageSettings
     from lunivo_writer.proofing import pruefung
     from lunivo_writer.services import file_service as formats
@@ -206,7 +206,7 @@ def test_befehlslisten_kennwort_ki_und_erweitert(app, tmp_path, monkeypatch):
 def test_optionen_flach_suche_aufklappen_und_hell_dunkel(app, tmp_path, monkeypatch):
     """Sechs Seiten ohne Baum, Suche springt auch in eingeklappte Bereiche, Hell/Dunkel/System als eine Wahl."""
     from PySide6.QtCore import Qt
-    from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
+    from lunivo_writer.ui.baukasten.geruest.einklappgruppe import EinklappGruppe
     w = win(tmp_path, monkeypatch)
     d = OptionenDialog(w, "anzeige")
     a = d.ansicht

@@ -11,15 +11,15 @@ class FreiMenue:
 
     @staticmethod
     def formstile(cmd):
-        from lunivo_writer.ui.document.freie_bilder_bedienung import FreieBilderMixin as F
+        from lunivo_writer.ui.document.bearbeitung.freie_bilder_bedienung import FreieBilderMixin as F
         return F.frei_formstile_menue(None, None, lambda: cmd.ed)
 
     @staticmethod
     def fuell(cmd):
-        from lunivo_writer.ui.document.freie_bilder_bedienung import FreieBilderMixin as F
+        from lunivo_writer.ui.document.bearbeitung.freie_bilder_bedienung import FreieBilderMixin as F
         return F.frei_fuell_menue(None, None, lambda: cmd.ed)
 
     @staticmethod
     def kontur(cmd):
-        from lunivo_writer.ui.document.freie_bilder_bedienung import FreieBilderMixin as F
+        from lunivo_writer.ui.document.bearbeitung.freie_bilder_bedienung import FreieBilderMixin as F
         return F.frei_kontur_menue(None, None, lambda: cmd.ed)

@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
 from lunivo_writer.ui.baukasten.formatierung.text_format import groesse_feld, schrift_feld
-from lunivo_writer.ui.document.document_editor import STYLES
+from lunivo_writer.ui.document.bearbeitung.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import UeberlaufLeiste

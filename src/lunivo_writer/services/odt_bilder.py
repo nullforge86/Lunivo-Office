@@ -25,12 +25,12 @@ class _ODTBilder:
             daten = self.bilder(href.lstrip("./"))
         img = QImage()
         if not daten or not img.loadFromData(daten):
-            from lunivo_writer.editor.freie_bilder import bild_aus_daten
+            from lunivo_writer.editor.objekte.freie_bilder import bild_aus_daten
             img = bild_aus_daten(daten) if daten else QImage()
         return img
 
     def _frei_angabe(self, frame: ET.Element) -> dict | None:
-        """Ein Rahmen am Absatz oder an der Seite, den kein Text umfließt → Angabe wie in editor/freie_bilder.py, sonst None."""
+        """Ein Rahmen am Absatz oder an der Seite, den kein Text umfließt → Angabe wie in editor/objekte/freie_bilder.py, sonst None."""
         from lunivo_writer.services.odt_writer import AUSR_H, AUSR_V, BEZUG_H, BEZUG_V
         anker = frame.get(_q("text:anchor-type"), "as-char")
         if anker not in ("paragraph", "char", "page"):
@@ -64,7 +64,7 @@ class _ODTBilder:
             return
         angabe = self._frei_angabe(frame)
         if angabe is not None:                                 # frei auf dem Blatt (am Absatz): als Bildanker des Absatzes
-            from lunivo_writer.editor import freie_bilder as FB
+            from lunivo_writer.editor.objekte import freie_bilder as FB
             name = FB.neuer_name(self.doc)
             self.doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
             angabe.update(n=name, b=angabe["b"] or img.width(), h=angabe["h"] or img.height())

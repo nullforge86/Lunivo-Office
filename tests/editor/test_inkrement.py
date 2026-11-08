@@ -5,7 +5,7 @@ from lunivo_writer.proofing import fund, inkrement, pruefung
 from lunivo_writer.proofing.proofing_service import WritingAssistant
 from lunivo_writer.services.gelernt import Gelernt
 from lunivo_writer.services.settings_service import Settings
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 
 ABSATZ = "Das ist ein Sazt mit eienm Fehler und noch eine Satz ohne Komma weil es so ist.\n"
 

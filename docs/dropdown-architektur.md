@@ -7,7 +7,7 @@ Stand: 2026-11-06. Grundlage ist die Verfolgung der Aufrufketten im Code, nicht 
 | Stufe | Quelle | Datei |
 |---|---|---|
 | 1 Öffnungsverhalten (Lage in Fenster und Bildschirm) | `PopupVerhalten`, `popup_klemmen` | `ui/baukasten/dropdown/popup_lage.py` |
-| 2 Maße (Zeilenhöhe, Feldhöhe, Breiten, Kacheln) | Konstanten `DROPDOWN_*`, `PADDING_MENUE*` | `ui/baukasten/mass.py` |
+| 2 Maße (Zeilenhöhe, Feldhöhe, Breiten, Kacheln) | Konstanten `DROPDOWN_*`, `PADDING_MENUE*` | `ui/baukasten/basis/mass.py` |
 | 3 Aussehen (Farbe, Rand, Radius, Pfeil, Auswahl, Zeilen, Kacheln, Popup-Rahmen) | Themenregeln, Eigenschaften `variante`, `dropdownZeile`, `dropdownKachel`, `dropdownFenster`, `dropdownTitel`, `dropdownKopf`, `dropdownLink` | `ui/theme.py` |
 | 4 Bausteine | siehe Abschnitt 2 | `ui/baukasten/dropdown/` |
 
@@ -24,7 +24,7 @@ Stand: 2026-11-06. Grundlage ist die Verfolgung der Aufrufketten im Code, nicht 
 | `KopfDropdown` | `QToolButton` | eigenes Zeichnen mit `HOEHE_KOPFDROPDOWN` | `mass.py` |
 | Überlaufmenü „•••“ (`FlacheReiterLeiste`, `_ReiterLeiste`) | `MenueListe` | Thema | `mass.py` |
 
-Aufrufstellen: 91 × `MenueListe(`, 122 × `Auswahlfeld(`, 7 × `Schriftauswahl(`, 12 × `DropdownKnopf(`, 3 × `DropdownTaste(` außerhalb des Pakets (Band, Seitenleiste, Mini-Leiste, Dokument, Dialoge, Befehle). Außerhalb des Pakets entsteht kein rohes `QMenu`, `QComboBox` oder `addMenu("Text")`; die Wächtertests in `tests/test_main_window.py` und `tests/test_popup_lage.py` sichern das.
+Aufrufstellen: 91 × `MenueListe(`, 122 × `Auswahlfeld(`, 7 × `Schriftauswahl(`, 12 × `DropdownKnopf(`, 3 × `DropdownTaste(` außerhalb des Pakets (Band, Seitenleiste, Mini-Leiste, Dokument, Dialoge, Befehle). Außerhalb des Pakets entsteht kein rohes `QMenu`, `QComboBox` oder `addMenu("Text")`; die Wächtertests in `tests/integration/test_main_window.py` und `tests/oberflaeche/test_popup_lage.py` sichern das.
 
 ## 3. Abweichungen und Stand
 

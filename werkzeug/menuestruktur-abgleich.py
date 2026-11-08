@@ -42,7 +42,7 @@ bereich("2. Start",
     ("Absatz: Tabstopps", OK, "Dialog (links/zentriert/rechts/dezimal, mm); wird als DOCX-Tabstopp gespeichert — keine Füllzeichen (Punkte/Linie)"),
     ("Formatvorlagen: Standard · Überschrift · Titel · Untertitel · Zitat", OK, "Standard, Überschrift 1–9, Titel, Untertitel, Zitat, Kein Abstand"),
     ("Formatvorlagen: Listenformatvorlagen", FEHLT, "—"),
-    ("Formatvorlagen: erstellen / ändern · Aufgabenbereich", TEIL, "anlegen aus der Auswahl, ändern, löschen (Formatvorlagen verwalten); in DOCX echte Absatzvorlagen; kein Seitenbereich; keine Überschrift-/Listenvorlagen als eigene (tests/test_eigene_stile.py)"),
+    ("Formatvorlagen: erstellen / ändern · Aufgabenbereich", TEIL, "anlegen aus der Auswahl, ändern, löschen (Formatvorlagen verwalten); in DOCX echte Absatzvorlagen; kein Seitenbereich; keine Überschrift-/Listenvorlagen als eigene (tests/dokument/vorlagen/test_eigene_stile.py)"),
     ("Bearbeiten: Suchen · Ersetzen · Weitersuchen · Alles/Objekte auswählen", OK, "Start ▸ Suchen oder ersetzen, Auswählen"),
     ("Bearbeiten: Gehe zu (Seite/Abschnitt/Zeile/Objekt)", TEIL, "Strg+G: Seite, Zeile, Überschrift, Textmarke, Beschriftung, Kommentar, Fuß-/Endnote, Tabelle, Bild; Abschnitt: alle Abschnitte; Gleichungen/Felder fehlen"))
 
@@ -102,7 +102,7 @@ bereich("7. Überprüfen  (Rechtschreibung, Sprache, KI stehen laut Ihrer Vorgab
     ("Sprache: festlegen · Übersetzen", OK, "Schreibhilfe ▸ Sprache (Übersetzen mit KI)"),
     ("Kommentare: neu · bearbeiten · löschen · vorher/nächster · alle", OK, "Überprüfen ▸ Kommentare; Sprechblasen am Rand"),
     ("Änderungen: ein/aus · Anzeigeoptionen · Bereich · vorher/nächste · annehmen/ablehnen", OK, "Überprüfen ▸ Änderungen"),
-    ("Vergleichen: Dokumente vergleichen · zusammenführen (optional)", TEIL, "Überprüfen ▸ Vergleichen/Zusammenführen: Text und Absätze als verfolgte Änderungen; keine Formatänderungen, keine Tabellenstruktur (tests/test_vergleich.py)"),
+    ("Vergleichen: Dokumente vergleichen · zusammenführen (optional)", TEIL, "Überprüfen ▸ Vergleichen/Zusammenführen: Text und Absätze als verfolgte Änderungen; keine Formatänderungen, keine Tabellenstruktur (tests/dokument/inhalt/test_vergleich.py)"),
     ("Schützen: Dokument schützen", OK, "Überprüfen ▸ Schützen; Backstage ▸ Schützen"),
     ("Schützen: Bearbeitung einschränken · Schutz aufheben (optional)", TEIL, "Bearbeitung sperren/freigeben; Kennwort entfernen"))
 

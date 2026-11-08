@@ -4,10 +4,10 @@ Zentrale Übersicht über die Dateiformate, das Speichern und bekannte Grenzen.
 Code: `src/lunivo_writer/services/file_service.py` (Formate), `sicher_schreiben.py` (sicherer Schreibweg),
 `docx_writer.py` / `docx_reader.py` (DOCX), `odt_writer.py` / `odt_reader.py` (ODT, FODT),
 `rtf_writer.py` / `rtf_reader.py` (RTF) sowie `src/lunivo_writer/ui/hauptfenster/dateien.py`
-und `src/lunivo_writer/ui/baukasten/speichern_fenster.py` (Dateioberfläche).
+und `src/lunivo_writer/ui/baukasten/dokument/speichern_fenster.py` (Dateioberfläche).
 
 **Lunivo liest und schreibt die unterstützten Formate selbst.** Es startet beim Öffnen und Speichern kein anderes Office-Programm
-(geprüft mit `tests/test_odt_rtf.py::test_kein_fremdes_programm_beim_speichern_und_oeffnen`).
+(geprüft mit `tests/dokument/formate/test_odt_rtf.py::test_kein_fremdes_programm_beim_speichern_und_oeffnen`).
 
 ## Formate
 
@@ -113,7 +113,7 @@ Die **automatische Sicherung** (Wiederherstellung nach Absturz, `<Datenordner>/r
 Automatisch:
 
 ```bash
-.venv/bin/python -m pytest tests/test_speichern_sicher.py tests/test_formats.py tests/test_odt_rtf.py
+.venv/bin/python -m pytest tests/dokument/speichern/test_speichern_sicher.py tests/dokument/formate/test_formats.py tests/dokument/formate/test_odt_rtf.py
 .venv/bin/python werkzeug/speicherpruefung.py          # alle Formate speichern, prüfen, öffnen; Protokoll in SQLite
 ```
 

@@ -25,7 +25,7 @@ class ObjekteMixin:
     @staticmethod
     def _effekte_lesen(drawing) -> dict:
         """``a:effectLst`` am Bild → ``fx`` (Schatten, Leuchten, Spiegelung, weiche Kanten) in den Werten des Programms."""
-        from lunivo_writer.editor.freie_bilder import farbe_aus_element
+        from lunivo_writer.editor.objekte.freie_bilder import farbe_aus_element
         pt = 12700.0
         fx: dict = {}
 
@@ -53,8 +53,8 @@ class ObjekteMixin:
 
     def _frei(self, drawing, teil=None, inline_ok: bool = False):
         """Ein Bild, das frei auf dem Blatt liegt (wp:anchor ohne Textumbruch) → (Angabe, QImage); ``False``, wenn es nicht darstellbar ist
-        (Vektorbild); ``None``, wenn es kein solches Bild ist (steht im Text oder umflossen). Siehe editor/freie_bilder.py."""
-        from lunivo_writer.editor.freie_bilder import emu_zu_px
+        (Vektorbild); ``None``, wenn es kein solches Bild ist (steht im Text oder umflossen). Siehe editor/objekte/freie_bilder.py."""
+        from lunivo_writer.editor.objekte.freie_bilder import emu_zu_px
         anker = drawing.xpath("wp:anchor") or (drawing.xpath("wp:inline") if inline_ok else [])
         if not anker or _xp(anker[0], "wp:wrapSquare | wp:wrapTight | wp:wrapThrough | wp:wrapTopAndBottom"):
             return None
@@ -71,14 +71,14 @@ class ObjekteMixin:
             except KeyError:
                 self.report.warn("Ein Bild fehlt im Dokument und wurde übersprungen.")
                 return False
-            from lunivo_writer.editor.freie_bilder import bild_aus_daten
+            from lunivo_writer.editor.objekte.freie_bilder import bild_aus_daten
             img = bild_aus_daten(blob)
             if img.isNull():
                 self.report.warn("Ein Bild hat ein nicht lesbares Format (zum Beispiel eine Vektorzeichnung) und wird nicht angezeigt.")
                 return False
         duo = _xp(drawing, ".//a:blip/a:duotone")
         if duo and len(duo[0]) >= 2:                                   # zweifarbig umgefärbt (zum Beispiel grau statt grün)
-            from lunivo_writer.editor.freie_bilder import duoton, farbe_aus_element
+            from lunivo_writer.editor.objekte.freie_bilder import duoton, farbe_aus_element
             try:
                 img = duoton(img, farbe_aus_element(duo[0][0], _NS), farbe_aus_element(duo[0][1], _NS))
             except Exception:                                          # noqa: BLE001 — ein ungewöhnlicher Effekt darf das Laden nicht verhindern
@@ -88,13 +88,13 @@ class ObjekteMixin:
         h = emu_zu_px(ext[0].get("cy")) if ext else float(img.height() if img is not None else 50)
         tf_daten = None
         if textfeld:
-            from lunivo_writer.editor import frei_objekt as FO
+            from lunivo_writer.editor.objekte import frei_objekt as FO
             tf_daten = self._textfeld_daten(drawing, textfeld[0])
             img = FO.textfeld_zeichnen(tf_daten, b, h)
         rand = None
         for ln in _xp(drawing, ".//a:ln[a:solidFill]"):                  # Umrandung der Form (der weiße Ring um ein Foto)
             try:
-                from lunivo_writer.editor.freie_bilder import farbe_aus_element
+                from lunivo_writer.editor.objekte.freie_bilder import farbe_aus_element
                 f = farbe_aus_element(_xp(ln, "a:solidFill/*")[0], _NS)
                 rand = {"b": max(0.5, emu_zu_px(ln.get("w") or 9525)), "farbe": f.name()}
                 dash = _xp(ln, "a:prstDash/@val")
@@ -145,7 +145,7 @@ class ObjekteMixin:
         fl = _xp(drawing, ".//pic:spPr/a:solidFill/* | .//wps:spPr/a:solidFill/*")  # Füllung der Form hinter dem Bild
         if fl:
             try:
-                from lunivo_writer.editor.freie_bilder import farbe_aus_element
+                from lunivo_writer.editor.objekte.freie_bilder import farbe_aus_element
                 angabe["fuell"] = {"art": "farbe", "farbe": farbe_aus_element(fl[0], _NS).name()}
             except Exception:                                              # noqa: BLE001
                 pass
@@ -198,7 +198,7 @@ class ObjekteMixin:
 
     @staticmethod
     def _textfeld_daten(drawing, wsp) -> dict:
-        """Die Parameter eines Textfelds (``editor/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
+        """Die Parameter eines Textfelds (``editor/objekte/frei_objekt.py``): genau die gespeicherten aus dem Titel („lunivo:“), sonst aus dem Text des
         Kastens (``w:txbxContent``) und seiner Verknüpfung (``wps:linkedTxbx`` mit ``id`` und ``seq``)."""
         import json
         titel = _xp(drawing, ".//wp:docPr/@title")
@@ -265,8 +265,8 @@ class ObjekteMixin:
     def _ketten_bereinigen(self) -> None:
         """Nach dem Lesen: Verweise auf Folgefelder, die es nicht gibt, entfernen."""
         import json
-        from lunivo_writer.editor import freie_bilder as FB
-        from lunivo_writer.editor.zusatz import B_BILDANKER
+        from lunivo_writer.editor.objekte import freie_bilder as FB
+        from lunivo_writer.editor.dokument.zusatz import B_BILDANKER
         ids = set()
         b = self.doc.firstBlock()
         while b.isValid():
@@ -294,7 +294,7 @@ class ObjekteMixin:
         if frei is False:
             return
         if frei is not None:
-            from lunivo_writer.editor import freie_bilder as FB
+            from lunivo_writer.editor.objekte import freie_bilder as FB
             angabe, bild = frei
             name = FB.neuer_name(self.doc)
             self.doc.addResource(QTextDocument.ImageResource, QUrl(name), bild)
@@ -310,7 +310,7 @@ class ObjekteMixin:
         except KeyError:
             self.report.warn("Ein Bild fehlt im Dokument und wurde übersprungen.")
             return
-        from lunivo_writer.editor.freie_bilder import bild_aus_daten
+        from lunivo_writer.editor.objekte.freie_bilder import bild_aus_daten
         img = bild_aus_daten(blob)
         if img.isNull():
             self.report.warn("Ein Bild hat ein nicht lesbares Format und wurde übersprungen.")
@@ -335,7 +335,7 @@ class ObjekteMixin:
             imf.setProperty(P_OBJEKT, titel[0][len("lunivo:"):])
         seite = self._umbruch_seite(drawing, w)
         if seite:
-            from lunivo_writer.editor.umbruch import absatz_nach_rahmen, schwebend_einfuegen
+            from lunivo_writer.editor.seite.umbruch import absatz_nach_rahmen, schwebend_einfuegen
             bild_pos = schwebend_einfuegen(self.doc, cursor.block().position(), imf, seite)   # gehört zum Absatz: davor eingefügt
             text = absatz_nach_rahmen(self.doc, bild_pos)
             cursor.setPosition(text.position() + text.length() - 1)                          # weiter am Ende dieses Absatzes schreiben

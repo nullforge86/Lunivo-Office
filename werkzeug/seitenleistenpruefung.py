@@ -53,7 +53,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QCombo
                                QMenu, QPushButton, QRadioButton, QScrollArea, QWidgetAction, QSlider, QSpinBox, QTextEdit, QToolButton, QWidget)
 
 from lunivo_writer.ui.baukasten.controls.mass_feld import EinheitFeld  # noqa: E402
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld  # noqa: E402
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld  # noqa: E402
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld, SchrittFeld  # noqa: E402
 from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt  # noqa: E402
 
@@ -191,8 +191,8 @@ class DiagrammAnbindung(Anbindung):
         return [(a, {"saeule": "Säulendiagramm", "linie": "Liniendiagramm", "kreis": "Kreisdiagramm"}[a]) for a in self.arten]
 
     def aufbauen(self, gruppe: str):
-        from lunivo_writer.editor import diagramm as D
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.diagramme import diagramm as D
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         ed = self.ed
         ed.clear()
         self.daten0 = dict(DIAGRAMM_DATEN[gruppe])
@@ -220,8 +220,8 @@ class DiagrammAnbindung(Anbindung):
         ereignisse()
 
     def zuruecksetzen(self) -> None:
-        from lunivo_writer.editor import bildlayout as BL
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         w, ed = self.w, self.ed
         w.befehle.diagrammZuruecksetzen()
         FO.aendern(ed, "diagramm", breite=self.b0, hoehe=self.h0, alt_titel=None, alt_beschreibung=None)
@@ -230,7 +230,7 @@ class DiagrammAnbindung(Anbindung):
         self.neu_laden()
 
     def momentaufnahme(self) -> str:
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         z = FO.ziel(self.ed)
         if z is None:
             return ""
@@ -239,7 +239,7 @@ class DiagrammAnbindung(Anbindung):
         return _json({"daten": daten, "fx": a.get("fx"), "b": round(float(a["b"]), 2), "h": round(float(a["h"]), 2), "dreh": a.get("dreh", 0)})
 
     def bild_roh(self) -> QImage:
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         z = FO.ziel(self.ed)
         return z[4] if z is not None else QImage()
 
@@ -252,7 +252,7 @@ class ObjektAnbindung(Anbindung):
         return [("form", "Form"), ("bild", "Freies Bild")]
 
     def aufbauen(self, gruppe: str):
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         ed = self.ed
         ed.clear()
         if gruppe == "form":
@@ -262,7 +262,7 @@ class ObjektAnbindung(Anbindung):
             FO.bild_einfuegen(ed, img, 160, 100)
         self.w._sync_format()
         ereignisse()
-        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor.objekte import bildlayout as BL
         self.a0 = json.loads(_json({k: v for k, v in BL.ziel(ed)[2].items() if k in ("fuell", "rand", "fx", "dreh")}))
         return [(gruppe, "Form" if gruppe == "form" else "Freies Bild")]
 
@@ -273,26 +273,26 @@ class ObjektAnbindung(Anbindung):
         self.neu_laden()
 
     def neu_laden(self) -> None:
-        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor.objekte import bildlayout as BL
         werte = BL.format_lesen(self.ed, BL.ziel(self.ed))
         if werte is not None:
             self.panel.setze(werte)
         ereignisse()
 
     def zuruecksetzen(self) -> None:
-        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor.objekte import bildlayout as BL
         BL.frei_aendern(self.ed, BL.ziel(self.ed), **{k: None for k in ("fuell", "rand", "fx")}, dreh=0)
         BL.frei_aendern(self.ed, BL.ziel(self.ed), **{k: v for k, v in self.a0.items() if v is not None})
         self.neu_laden()
 
     def momentaufnahme(self) -> str:
-        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor.objekte import bildlayout as BL
         z = BL.ziel(self.ed)
         a = z[2] if z and z[0] == "frei" else {}
         return _json({k: a.get(k) for k in ("fuell", "rand", "fx", "dreh")})
 
     def bild_roh(self) -> QImage:
-        from lunivo_writer.editor import bildlayout as BL
+        from lunivo_writer.editor.objekte import bildlayout as BL
         z = BL.ziel(self.ed)
         return z[3] if z and z[0] == "frei" else QImage()
 
@@ -316,7 +316,7 @@ def _menue_fangen(selbst, *args, **kw):
 
 def _menues_umbiegen() -> None:
     """``QMenu.exec`` lässt sich bei Shiboken nicht für alle Unterklassen umbiegen; die Python-Unterklassen der Oberfläche einzeln."""
-    from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
+    from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbPalette
     from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
     for k in (VoreinstellungMenue, FarbPalette):
         k.exec = _menue_fangen

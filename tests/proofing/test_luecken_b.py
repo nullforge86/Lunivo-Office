@@ -5,7 +5,9 @@ import pytest
 from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QColor, QImage, QKeyEvent, QMouseEvent
 
-from lunivo_writer.editor import freiform as FF, frei_objekt as FO
+from lunivo_writer.editor.objekte import freiform as FF
+
+from lunivo_writer.editor.objekte import frei_objekt as FO
 
 
 @pytest.fixture
@@ -33,7 +35,7 @@ def _rect(ed):
 
 
 def test_diagramm_filter_name_und_typ_direkt(fenster):
-    from lunivo_writer.ui.baukasten.dropdown.diagramm_popups import DiagrammPopup
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.diagramm_popups import DiagrammPopup
     ed = fenster.current_editor(); b = fenster.befehle
     FO.einfuegen(ed, "diagramm", {"art": "saeule_gruppiert", "titel": "T", "kategorien": ["A", "B"], "reihen": {"X": [1, 2], "Y": [3, 1]}}, 400, 260)
     b.diagrammFilterSetzen(None, {"reihen": ["Y"]})
@@ -63,9 +65,9 @@ def test_diagramm_filter_name_und_typ_direkt(fenster):
 
 
 def test_linien_galerie_fuegt_ein(fenster):
-    from lunivo_writer.ui.baukasten.dropdown.form_menues import GALERIEN
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.form_menues import GALERIEN
     from lunivo_writer.ui.contextual.image_tools import ZEICHENTOOLS
-    from lunivo_writer.editor import formen_katalog as K
+    from lunivo_writer.editor.objekte import formen_katalog as K
     ed = fenster.current_editor(); b = fenster.befehle
     spec = GALERIEN["zeichenLinien"](b)
     assert len(spec["kacheln"]) == 10 and all(K.ist_linie(t) for t, _pm, _f in spec["kacheln"])
@@ -98,7 +100,7 @@ def test_freiform_punkte_ziehen_loeschen_einfuegen(fenster, tmp_path):
     # Punkt löschen: Rechtsklick auf einen Punkt (aus 4 wird 3), danach ist Schluss (Dreieck bleibt)
     r = _rect(ed)
     abb_p = FO.daten_lesen(ed, "form")["punkte"]
-    from lunivo_writer.ui.document import freiform_bedienung as FP
+    from lunivo_writer.ui.document.bearbeitung import freiform_bedienung as FP
     a = FO.ziel(ed)[3] and [t for t in ed._frei_treffer if t[0] == ed._frei_sel][0][1]
     abb = FP._Abb(a, r)
     ecke = abb.zu_schirm(abb_p[2][1], abb_p[2][2])
@@ -121,7 +123,7 @@ def test_freiform_punkte_ziehen_loeschen_einfuegen(fenster, tmp_path):
     ed._frei_taste(QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier))
     assert ed.__dict__.get("_fp_key") is None and ed._frei_sel is not None
     # DOCX-Rundweg: die Punkte stehen im lunivo:-Titel
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     pfad = str(tmp_path / "f.docx")
     docx_writer.write_docx(pfad, ed.document(), ed.page, {})
@@ -165,7 +167,9 @@ def test_live_vorschau_anpassungsgriff(fenster):
 
 
 def test_bild_helligkeit_kontrast_nicht_zerstoerend(fenster, tmp_path):
-    from lunivo_writer.editor import bildlayout as BL, bildwerkzeuge as BW, freie_bilder as FB
+    from lunivo_writer.editor.objekte import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildwerkzeuge as BW
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = fenster.current_editor(); b = fenster.befehle
     img = QImage(60, 40, QImage.Format_RGB32); img.fill(QColor(100, 100, 100)); pfad = str(tmp_path / "g.png"); img.save(pfad)
@@ -195,7 +199,7 @@ def test_bild_helligkeit_kontrast_nicht_zerstoerend(fenster, tmp_path):
 
 def test_zoom_ansicht_baut_sich_bei_300px(app):
     from lunivo_writer.ui.baukasten.medien.bild_zoom import BildZoomFenster
-    from lunivo_writer.ui.baukasten.controls.zusatz_panel import ZusatzPanel
+    from lunivo_writer.ui.baukasten.geruest.zusatz_panel import ZusatzPanel
     img = QImage(500, 300, QImage.Format_ARGB32); img.fill(QColor("steelblue"))
     p = ZusatzPanel(); p.verfuegbar, p.verfuegbar_hoehe = 300, 587; p.resize(336, 727)
     d = BildZoomFenster(None, img)
@@ -218,7 +222,7 @@ def test_zoom_ansicht_baut_sich_bei_300px(app):
 
 
 def test_smartart_radial_hat_pfeile(app):
-    from lunivo_writer.editor import smartart as SA
+    from lunivo_writer.editor.objekte import smartart as SA
     d = {"layout": "Radial", "text": "Kern\nA\nB\nC"}
     img = SA.zeichnen(d)
     assert img.width() > 100

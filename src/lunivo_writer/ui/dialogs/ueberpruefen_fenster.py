@@ -1,6 +1,6 @@
 """Fenster des Reiters „Überprüfen“ nach Kays Vorlagen (ueberpruefen/02, 10).
 
-    d = WoerterDialog(parent, ohne, mit)        # Statistiken; ohne/mit: Werte aus editor/statistik.zaehlen, mit = samt Noten
+    d = WoerterDialog(parent, ohne, mit)        # Statistiken; ohne/mit: Werte aus editor/text/statistik.zaehlen, mit = samt Noten
     d = SchutzDialog(parent, art)               # Bearbeitung einschränken (Seitenleiste); if d.exec(): d.ergebnis() → art | None
 
 Die Fenster ändern das Dokument nicht; der Aufrufer (``Befehle``) setzt das Ergebnis um.
@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KLEIN,
     ABSTAND_NORMAL,

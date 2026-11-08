@@ -195,7 +195,7 @@ UNTERSTREICHUNG = (("", "(Keine)"), ("woerter", "Nur Wörter"), ("einfach", "Ein
                    ("lang", "Lang gestrichelt"), ("dick_lang", "Dick lang gestrichelt"), ("strichpunkt", "Strich-Punkt"), ("dick_strichpunkt", "Dick Strich-Punkt"),
                    ("strichpunktpunkt", "Strich-Punkt-Punkt"), ("dick_strichpunktpunkt", "Dick Strich-Punkt-Punkt"), ("wellig", "Wellenlinie"),
                    ("dick_wellig", "Dicke Wellenlinie"), ("doppelwellig", "Doppelte Wellenlinie"))
-from lunivo_writer.editor.unterstreichung import _UNTER_QT, _UNTER_RUECKFALL, unter_format  # noqa: F401  (hier weiter erreichbar)
+from lunivo_writer.editor.text.unterstreichung import _UNTER_QT, _UNTER_RUECKFALL, unter_format  # noqa: F401  (hier weiter erreichbar)
 ZEICHEN = {"schrift": "", "fett": False, "kursiv": False, "groesse": 0.0, "farbe": "", "unter": "", "unterfarbe": "",
            "durch": False, "hoch": False, "tief": False, "kapital": False, "gross": False, "versteckt": False,
            "abstand": 0.0, "kerning": True, "doppelt": False, "betonung": "", "skala": 100.0, "position": 0.0, "kern_ab": 0.0, "raster": True,
@@ -205,7 +205,7 @@ BETONUNG = (("", "(Keine)"), ("punkt", "Punkt oberhalb"), ("kreis", "Kreis oberh
 
 def zu_format(w: dict) -> QTextCharFormat:
     """Die Werte eines Zeichenfensters als Zeichenformat (zum Anwenden im Editor und für Vorschauen)."""
-    from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+    from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
     f = QTextCharFormat()
     familien = [x for x in (w.get("schrift"), w.get("schrift_asien"), w.get("schrift_komplex")) if x]
     if familien:                                  # Qt nimmt für Zeichen, die die erste Schrift nicht hat, die nächste (asiatisch, komplex)
@@ -234,7 +234,7 @@ def zu_format(w: dict) -> QTextCharFormat:
     f.setFontStretch(int(round(float(w.get("skala") or 100))))                       # „Skalieren“: Breite der Zeichen in Prozent
     gr = float(w.get("groesse") or 11)
     f.setBaselineOffset(float(w.get("position") or 0) / gr * 100 if gr else 0.0)     # „Position“: Pt höher (+) oder tiefer (−), in Prozent der Schriftgröße
-    from lunivo_writer.editor.zusatz import P_RASTER
+    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     f.setProperty(P_RASTER, 1 if w.get("raster", True) else 0)
     return f
 
@@ -248,12 +248,12 @@ def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse
     w["groesse"] = cf.fontPointSize() or standard_groesse
     if cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().style() != Qt.NoBrush:
         w["farbe"] = cf.foreground().color().name()
-    from lunivo_writer.editor.zusatz import P_UNTER
+    from lunivo_writer.editor.dokument.zusatz import P_UNTER
     w["unter"] = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) and cf.stringProperty(P_UNTER) else \
         next((k for k, q in _UNTER_QT.items() if cf.underlineStyle() == q), "")
     if w["unter"] and cf.underlineColor().isValid():
         w["unterfarbe"] = cf.underlineColor().name()
-    from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
+    from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
     w["doppelt"] = bool(cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT))
     w["durch"] = cf.fontStrikeOut() and not w["doppelt"]
     w["betonung"] = cf.stringProperty(P_BETONUNG) if cf.hasProperty(P_BETONUNG) else ""
@@ -274,7 +274,7 @@ def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse
     w["skala"] = float(cf.fontStretch()) if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() else 100.0
     gr = w["groesse"] or standard_groesse or 11
     w["position"] = round(cf.baselineOffset() * gr / 100, 1) if cf.hasProperty(QTextFormat.TextBaselineOffset) else 0.0
-    from lunivo_writer.editor.zusatz import P_RASTER
+    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     w["raster"] = not (cf.hasProperty(P_RASTER) and not cf.property(P_RASTER))
     return w
 

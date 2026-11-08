@@ -5,9 +5,9 @@
 ## Geprüfte Ausgangspunkte
 
 - `pyproject.toml`: Python >= 3.10; PySide6/Qt Widgets; optionale Offline-Übersetzung; Ruff ist derzeit auf ausgewählte Fehlerregeln begrenzt (`E9`, `F63`, `F7`, `F82`).
-- `tests/test_schichten.py`: prüft, dass `editor/`, `services/`, `models/` und `proofing/` nicht aus `ui/` importieren. Die Ausnahmeliste ist leer.
+- `tests/editor/test_schichten.py`: prüft, dass `editor/`, `services/`, `models/` und `proofing/` nicht aus `ui/` importieren. Die Ausnahmeliste ist leer.
 - `proofing/proofing_service.py`: Schreibhilfe führt Prüfungen in einem `QThreadPool` mit maximal einem Worker aus, prüft Dokumentrevisionen und verwirft veraltete Ergebnisse.
-- `core/befehle/datei.py`: enthält einen direkten Import eines UI-Eingabedialogs. Das ist nicht durch den aktuellen Schichtentest verboten, zeigt aber eine Kopplung zwischen Befehlslogik und Oberfläche.
+- `core/befehle/hauptreiter/datei.py`: enthält einen direkten Import eines UI-Eingabedialogs. Das ist nicht durch den aktuellen Schichtentest verboten, zeigt aber eine Kopplung zwischen Befehlslogik und Oberfläche.
 - `core/application.py`: initialisiert die Anwendung und greift für Theme- und Accessibility-Setup direkt auf UI-Module zu. Das kann für den Composition Root angemessen sein; die Grenze sollte bewusst dokumentiert bleiben.
 
 ## Priorisierte Maßnahmen

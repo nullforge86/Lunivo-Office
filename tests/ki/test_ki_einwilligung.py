@@ -94,7 +94,7 @@ def test_bild_url_nur_http(ki, monkeypatch):
 
 
 def test_datenschutz_reiter_zeigt_und_widerruft(app, ki):
-    from lunivo_writer.ui.dialogs.ki_dialoge import EinwilligungenPanel
+    from lunivo_writer.ui.dialogs.ki.ki_dialoge import EinwilligungenPanel
     ki.k.einwilligung_geben("Anthropic (Claude)", "dokument")
     p = EinwilligungenPanel(ki.k)
     assert p.liste.count() == 1 and "Anthropic" in p.liste.item(0).text() and "ganzen Text" in p.liste.item(0).text()

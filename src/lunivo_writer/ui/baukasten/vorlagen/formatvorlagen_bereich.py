@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QLabel, QListWidget
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE_KNOPF, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -26,7 +26,7 @@ ANZEIGEN = (("gueltig", "Gültige Formatvorlagen"), ("verwendet", "Verwendete Fo
 
 def vorlagen_namen(art: str = "gueltig", ed=None) -> list[str]:
     """Die Namen für die Liste: gültige (Katalog und eigene), verwendete (im Dokument) oder alle."""
-    from lunivo_writer.editor import stile
+    from lunivo_writer.editor.text import stile
     from lunivo_writer.ui.ribbon.ribbon_bar import STILE_KATALOG
     alle = STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]
     if art != "verwendet" or ed is None:
@@ -39,7 +39,7 @@ def vorlagen_namen(art: str = "gueltig", ed=None) -> list[str]:
 
 def vorlagen_schrift(name: str, vorschau: bool = True) -> QFont:
     """Die Schrift, in der eine Vorlage in Listen erscheint (Größe gedämpft, damit die Liste ruhig bleibt)."""
-    from lunivo_writer.editor import stile
+    from lunivo_writer.editor.text import stile
     f = QFont()
     if not vorschau:
         return f
@@ -106,7 +106,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         return "Standard" if n in ("Fließtext", "") else n
 
     def fuellen(self) -> None:
-        from lunivo_writer.editor import stile
+        from lunivo_writer.editor.text import stile
         jetzt = self._stil_jetzt()
         namen = vorlagen_namen(self.anzeigen.currentData(), self.get_editor())
         self.liste.clear(); self.aktuell.clear()

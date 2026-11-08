@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QTextCursor
 
 from lunivo_writer.services import file_service as formats
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 
 
@@ -115,7 +115,7 @@ def test_autoformat_liste_und_url(app):
 
 
 def test_seitenliste_duplex_umgekehrt():
-    from lunivo_writer.editor.pagination import seiten_liste
+    from lunivo_writer.editor.seite.pagination import seiten_liste
     assert seiten_liste(5, 1, 5, {"duplex": "vorder"}) == [1, 3, 5]
     assert seiten_liste(5, 1, 5, {"duplex": "rueck"}) == [2, 4]
     assert seiten_liste(3, 1, 3, {"umgekehrt": True}) == [3, 2, 1]
@@ -141,7 +141,7 @@ def test_zeilennummern_im_pdf(app, tmp_path):
     import pypdf
     from PySide6.QtGui import QTextDocument
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import export_pdf
+    from lunivo_writer.editor.seite.pagination import export_pdf
     d = QTextDocument(); d.setPlainText("\n".join(f"Zeile{i}" for i in range(1, 8)))
     out = str(tmp_path / "n.pdf")
     export_pdf(out, d, PageSettings(zeilennummern=True), "t")
@@ -153,7 +153,7 @@ def test_zeilennummern_im_pdf(app, tmp_path):
 
 
 def test_formatvorlagen_verwalten_wirkt_auf_alle_absaetze(app):
-    from lunivo_writer.editor import stile
+    from lunivo_writer.editor.text import stile
     e = make(app, "Eins\nZwei\nDrei\nVier")
     select_all(e)
     e.apply_style("Überschrift 2")                           # mehrere Absätze auf einmal
@@ -191,7 +191,7 @@ def test_wortweise_markieren(app):
     from PySide6.QtCore import QPoint, Qt
     from PySide6.QtGui import QTextCursor
     from PySide6.QtTest import QTest
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor()
     ed.setPlainText("Das Wetter heute ist schön")
     c = ed.textCursor(); c.setPosition(6); c.setPosition(9, QTextCursor.KeepAnchor); ed.setTextCursor(c)   # „tte“ mitten im Wort
@@ -201,7 +201,7 @@ def test_wortweise_markieren(app):
 
 def test_einfuegen_modi_und_schaltflaeche(app):
     from PySide6.QtCore import QMimeData
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor()
     ed.setPlainText("Vorher: ")
     c = ed.textCursor(); c.movePosition(QTextCursor.End); ed.setTextCursor(c)
@@ -234,7 +234,7 @@ def test_einfuegen_modi_und_schaltflaeche(app):
 def test_ersetzen_behaelt_die_formatierung(app):
     """Suchen und ersetzen: der neue Text hat Schrift, Fett und Kursiv des ersetzten Textes (einzeln und „Alle ersetzen“)."""
     from PySide6.QtGui import QFont, QTextCharFormat, QTextCursor
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor()
     ed.setPlainText("Bewerbung als Änderungsschneider und Änderungsschneider")
     c = QTextCursor(ed.document()); c.setPosition(14); c.setPosition(32, QTextCursor.KeepAnchor)

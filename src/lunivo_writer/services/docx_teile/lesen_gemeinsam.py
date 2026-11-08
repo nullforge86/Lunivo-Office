@@ -46,15 +46,15 @@ from lunivo_writer.core.farben import Farbe
 
 STYLE_PROP = QTextFormat.UserProperty + 1       # Name der Formatvorlage am Block
 
-from lunivo_writer.editor.zusatz import B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
+from lunivo_writer.editor.dokument.zusatz import B_SPALTE, P_OBJEKT, P_VERSTECKT  # noqa: E402
 
-from lunivo_writer.editor.formular import P_FORM  # noqa: E402
+from lunivo_writer.editor.dokument.formular import P_FORM  # noqa: E402
 
-from lunivo_writer.editor.linie import Linie, art_aus_docx, docx_wert
+from lunivo_writer.editor.objekte.linie import Linie, art_aus_docx, docx_wert
 
-from lunivo_writer.editor import muster
+from lunivo_writer.editor.text import muster
 
-from lunivo_writer.editor.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, BESCHRIFTUNGEN, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE, P_ZITAT, leere_meta
+from lunivo_writer.editor.dokument.zusatz import B_ART, B_CAP, B_MUSTER, B_RAHMEN, B_TOC, BESCHRIFTUNGEN, P_AENDERUNG, P_AUTOR, P_DATUM, P_FELD, P_INDEX, P_KOMMENTAR, P_NOTE, P_ZITAT, leere_meta
 
 EMU_PER_PX = 9525
 

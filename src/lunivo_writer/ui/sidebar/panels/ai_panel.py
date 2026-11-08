@@ -9,7 +9,7 @@ from lunivo_writer.ui.baukasten.chat.chat_eingabe import ChatEingabe, ChatEingab
 from lunivo_writer.ui.baukasten.chat.chat_leerzustand import ChatLeerzustand
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, RAND_KEIN
-from lunivo_writer.ui.baukasten.controls.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.baukasten.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 
 

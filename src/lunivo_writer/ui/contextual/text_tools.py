@@ -3,7 +3,7 @@
 Gruppen von links nach rechts: Textfeld ▾ · Format übertragen · Schriftart/Größe, A⁺ A⁻, Formatierung löschen, F K U ▾, Durchgestrichen ▾, x² x₂,
 Hervorhebung ▾, Schriftfarbe ▾ · Aufzählung ▾, Nummerierung ▾, Einzug −/+, Textrichtung ▾, Sortieren, fünf Ausrichtungen, Zeilenabstand ▾ ·
 Galerie WordArt-Stile · Textfüllung ▾, Textkontur ▾, Texteffekte ▾ · Galerie Formstile · Füllung ▾, Kontur ▾, Formeffekte · Verknüpfung erstellen ▾
-mit „Voriges/Nächstes Textfeld“ · Einstellungen ▾. Jeder Knopf ist ein ``tt…``-Befehl (core/befehle/texttools.py) oder ein Menü des Bandes."""
+mit „Voriges/Nächstes Textfeld“ · Einstellungen ▾. Jeder Knopf ist ein ``tt…``-Befehl (core/befehle/kontextreiter/texttools.py) oder ein Menü des Bandes."""
 from __future__ import annotations
 
 from lunivo_writer.ui.ribbon.tabs.baustein import k as _k

@@ -16,11 +16,11 @@ from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.editor import diagramm_format as DF
-from lunivo_writer.editor import muster as M
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.editor.diagramme import diagramm_format as DF
+from lunivo_writer.editor.text import muster as M
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
-from lunivo_writer.ui.baukasten.dropdown.objekt_menues import TEXTUREN
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.objekt_menues import TEXTUREN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 _BILD_FILTER = "Bilder (*.png *.jpg *.jpeg *.bmp *.gif *.webp);;Alle Dateien (*)"

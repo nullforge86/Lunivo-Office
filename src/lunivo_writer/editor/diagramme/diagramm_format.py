@@ -25,10 +25,10 @@ import math
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt
 from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetricsF, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF)
 
-from lunivo_writer.editor import bildeffekte as E
-from lunivo_writer.editor import freie_bilder as FB
-from lunivo_writer.editor import textfx as X
-from lunivo_writer.editor import texteffekt as T
+from lunivo_writer.editor.objekte import bildeffekte as E
+from lunivo_writer.editor.objekte import freie_bilder as FB
+from lunivo_writer.editor.text import textfx as X
+from lunivo_writer.editor.text import texteffekt as T
 
 FX_SCHLUESSEL = ("schatten", "reflektion", "leuchten", "weich", "d3", "drehung")
 FX_NUR_HINTER = ("schatten", "reflektion", "leuchten", "d3")           # hinter einem Balken, den QtCharts selbst darüber zeichnet

@@ -3,8 +3,8 @@ import pytest
 from PySide6.QtGui import QImage, QTextCursor, QTextDocument
 
 from lunivo_writer.services import docx_reader, docx_writer, file_service as formats
-from lunivo_writer.editor import einfuegen as E
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.editor.dokument import einfuegen as E
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import bausteine
 

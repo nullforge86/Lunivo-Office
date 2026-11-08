@@ -10,10 +10,10 @@ from PySide6.QtWidgets import QFileDialog
 from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
 
 from lunivo_writer.services import docx_reader, docx_writer
-from lunivo_writer.editor import einfuegen as E
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.editor.dokument import einfuegen as E
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import HeaderFooter, PageSettings
-from lunivo_writer.editor.pagination import export_pdf
+from lunivo_writer.editor.seite.pagination import export_pdf
 from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ui.main_window import MainWindow
 
@@ -179,7 +179,7 @@ def test_dokument_schuetzen_und_abschnittsumbruch(app, tmp_path, monkeypatch):
 
 
 def test_absatzrahmen_pdf_docx(app, tmp_path):
-    from lunivo_writer.editor.zusatz import B_RAHMEN
+    from lunivo_writer.editor.dokument.zusatz import B_RAHMEN
     e = DocumentEditor(); e.setPlainText("Vor dem Rahmen\nIm Rahmen A\nIm Rahmen B\nNach dem Rahmen"); e.zusatz_binden({})
     e.select_range(len("Vor dem Rahmen\n"), len("Vor dem Rahmen\nIm Rahmen A\nIm Rahmen B"))
     e.set_absatzrahmen("#ff0000|1.5|doppelt")
@@ -250,9 +250,9 @@ def test_pdf_lesezeichen(app, tmp_path):
     """Überschriften und Textmarken erscheinen als PDF-Gliederung auf der richtigen Seite."""
     from PySide6.QtGui import QTextCursor
     from pypdf import PdfReader
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import export_pdf
+    from lunivo_writer.editor.seite.pagination import export_pdf
     ed = DocumentEditor()
     c = ed.textCursor()
     from PySide6.QtGui import QTextBlockFormat
@@ -275,10 +275,10 @@ def test_druckoptionen_der_ansicht(app, tmp_path):
     """Ohne Hervorhebungen, mit Textmarken in Klammern, Textgrenzen und Zuschnittsmarken: PDF entsteht, Text stimmt."""
     from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
     from pypdf import PdfReader
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import paginated_copy, render, _ohne_hervorhebungen, _textmarken_klammern
-    from lunivo_writer.editor import verweise as V
+    from lunivo_writer.editor.seite.pagination import paginated_copy, render, _ohne_hervorhebungen, _textmarken_klammern
+    from lunivo_writer.editor.dokument import verweise as V
     from PySide6.QtGui import QPdfWriter, QPageLayout
     ed = DocumentEditor()
     ed.setPlainText("Rot markiert und eine Marke hier")
@@ -305,9 +305,9 @@ def test_silbentrennung(app, tmp_path):
     import pypdf
     from PySide6.QtGui import QPdfWriter
     from lunivo_writer.services import file_service as formats
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import paginated_copy, render
+    from lunivo_writer.editor.seite.pagination import paginated_copy, render
     ed = DocumentEditor()
     ed.setPlainText("Die Donaudampfschifffahrtsgesellschaft verwaltet Silbentrennungsprogramme. " * 6)
     ed.document().firstBlock()
@@ -335,8 +335,9 @@ def test_textumbruch_um_bilder(app, tmp_path):
     import zipfile
     from PySide6.QtGui import QColor, QImage, QTextFormat
     from lunivo_writer.services import file_service as formats
-    from lunivo_writer.editor import einfuegen as E, umbruch as U
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.dokument import einfuegen as E
+    from lunivo_writer.editor.seite import umbruch as U
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
     ed = DocumentEditor()
     ed.setPlainText("Erster.\nZweiter Absatz lang. " + "Text " * 60 + "\nDritter.")
@@ -365,8 +366,8 @@ def test_silben_farbig(app, tmp_path, monkeypatch):
     """Silben abwechselnd farbig: nur Anzeige (Text bleibt), einstellbar, nur-Absatz, Dialog, PDF."""
     from PySide6.QtCore import QSettings
     from PySide6.QtGui import QColor, QTextCursor
-    from lunivo_writer.editor import silbenfarben as S
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.text import silbenfarben as S
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.services.settings_service import Settings
     assert S.silben("Schmetterling") == ("Schmet", "ter", "ling")
     assert S.silben("Haus") == ("Haus",)
@@ -397,7 +398,7 @@ def test_silben_farbig(app, tmp_path, monkeypatch):
     # PDF mit Silbenfarben entsteht
     from PySide6.QtGui import QPdfWriter
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import render
+    from lunivo_writer.editor.seite.pagination import render
     assert render(ed.document(), PageSettings(), QPdfWriter(str(tmp_path / "f.pdf")), opt={"silbenfarben": dict(k, an=True)}) == 1
 
 
@@ -406,16 +407,16 @@ def test_pdf_kommentare_und_formatvorlagen(app, tmp_path):
     from PySide6.QtGui import QTextBlockFormat, QTextCharFormat
     from pypdf import PdfReader
     from lunivo_writer.services.docx_reader import STYLE_PROP
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import export_pdf
+    from lunivo_writer.editor.seite.pagination import export_pdf
     ed = DocumentEditor()
     c = ed.textCursor()
     bf = QTextBlockFormat(); bf.setProperty(STYLE_PROP, "title")
     c.insertBlock(bf); c.insertText("Mein Titel")
     c.insertBlock(QTextBlockFormat()); c.insertText("Zeile\\n" * 3)
     pos = c.position()
-    from lunivo_writer.editor.zusatz import P_KOMMENTAR
+    from lunivo_writer.editor.dokument.zusatz import P_KOMMENTAR
     kf = QTextCharFormat(); kf.setProperty(P_KOMMENTAR, 1)
     c.insertText("Hier steht der kommentierte Text", kf)
     c.insertText("\\n" * 80 + "Ende")
@@ -432,9 +433,9 @@ def test_spalten_in_ausgabe_und_docx(app, tmp_path):
     import zipfile
     from pypdf import PdfReader
     from lunivo_writer.services import file_service as formats
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import ausgabe_seiten, export_pdf, page_count, paginated_copy
+    from lunivo_writer.editor.seite.pagination import ausgabe_seiten, export_pdf, page_count, paginated_copy
     ed = DocumentEditor()
     ed.setPlainText("\n".join(f"Zeile {i} mit etwas Text darin" for i in range(240)))
     eins = PageSettings()
@@ -448,7 +449,7 @@ def test_spalten_in_ausgabe_und_docx(app, tmp_path):
     text = " ".join(r.pages[0].extract_text().split())
     assert "Zeile 0 mit" in text and "Zeile 100 mit" in text       # einspaltig stünden auf Seite 1 nur etwa 50 Zeilen
     # DOCX-Rundreise mit Spaltenumbruch
-    from lunivo_writer.editor.zusatz import B_SPALTE
+    from lunivo_writer.editor.dokument.zusatz import B_SPALTE
     ed2 = DocumentEditor(); ed2.setPlainText("Links")
     c = ed2.textCursor(); c.movePosition(c.MoveOperation.End); ed2.setTextCursor(c)
     ed2.insert_column_break(); ed2.textCursor().insertText("Rechts")
@@ -468,8 +469,9 @@ def test_spalten_in_ausgabe_und_docx(app, tmp_path):
 def test_textumbruch_oben_unten(app):
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QColor, QImage, QTextCursor
-    from lunivo_writer.editor import einfuegen as E, umbruch as U
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.dokument import einfuegen as E
+    from lunivo_writer.editor.seite import umbruch as U
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor()
     ed.setPlainText("Davor Danach")
     c = ed.textCursor(); c.setPosition(6); ed.setTextCursor(c)
@@ -486,8 +488,8 @@ def test_textumbruch_oben_unten(app):
 
 def _bild_dokument():
     from PySide6.QtGui import QColor, QImage
-    from lunivo_writer.editor import einfuegen as E
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.dokument import einfuegen as E
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor()
     ed.setPlainText("Erster.\nZweiter Absatz lang. " + "Text " * 60 + "\nDritter.")
     c = ed.textCursor(); c.setPosition(ed.document().findBlockByNumber(1).position()); ed.setTextCursor(c)
@@ -500,8 +502,8 @@ def test_schwebendes_bild_ist_ein_qt_rahmen_ohne_leere_absaetze_in_docx(app, tmp
     import zipfile
     import docx
     from PySide6.QtGui import QTextFrameFormat
-    from lunivo_writer.editor import umbruch as U
-    from lunivo_writer.editor.zusatz import B_ANKER
+    from lunivo_writer.editor.seite import umbruch as U
+    from lunivo_writer.editor.dokument.zusatz import B_ANKER
     from lunivo_writer.models.page import PageSettings
     from lunivo_writer.services import file_service as formats
     ed = _bild_dokument(); doc = ed.document()
@@ -537,7 +539,7 @@ def _bloecke(doc):
 
 
 def test_schwebendes_bild_zurueck_in_die_zeile_und_rueckgaengig(app):
-    from lunivo_writer.editor import umbruch as U
+    from lunivo_writer.editor.seite import umbruch as U
     ed = _bild_dokument(); doc = ed.document()
     vorher = doc.toPlainText()
     assert vorher.count("￼") == 1 and doc.blockCount() == 3
@@ -557,9 +559,9 @@ def test_schwebendes_bild_zurueck_in_die_zeile_und_rueckgaengig(app):
 
 def test_schwebendes_bild_text_fliesst_herum_und_pdf(app, tmp_path):
     import pypdf
-    from lunivo_writer.editor import umbruch as U
+    from lunivo_writer.editor.seite import umbruch as U
     from lunivo_writer.models.page import PageSettings
-    from lunivo_writer.editor.pagination import export_pdf
+    from lunivo_writer.editor.seite.pagination import export_pdf
     ed = _bild_dokument(); doc = ed.document()
     doc.setTextWidth(500)
     zeilen = lambda blk: [blk.layout().lineAt(i).x() for i in range(blk.layout().lineCount())]      # noqa: E731

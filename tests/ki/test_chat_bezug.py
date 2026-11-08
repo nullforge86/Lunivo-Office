@@ -71,7 +71,7 @@ def dienst(app, tmp_path, monkeypatch):
     from PySide6.QtGui import QTextCursor
     from PySide6.QtWidgets import QPlainTextEdit
     from lunivo_writer.ai import ai_service as S
-    from lunivo_writer.ui.document.editor_schreibhilfe import SchreibhilfeBaustein
+    from lunivo_writer.ui.document.bearbeitung.editor_schreibhilfe import SchreibhilfeBaustein
 
     class Ed(SchreibhilfeBaustein, QPlainTextEdit):
         pass

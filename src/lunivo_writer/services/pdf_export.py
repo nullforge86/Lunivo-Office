@@ -1,6 +1,6 @@
 """PDF exportieren nach der Wahl im Fenster „PDF-Datei exportieren“: Seitenbereich, Exportoptionen, Berechtigungen und Kennwörter.
 
-Gezeichnet wird die PDF wie bisher in ``editor/pagination.export_pdf`` (dieselbe Darstellung wie Druck und Vorschau). Dieser Dienst übersetzt
+Gezeichnet wird die PDF wie bisher in ``editor/seite/pagination.export_pdf`` (dieselbe Darstellung wie Druck und Vorschau). Dieser Dienst übersetzt
 die Wahl in dessen Angaben, schneidet für „Markierung“ das Dokument zu und verschlüsselt die fertige Datei mit pypdf (AES-256).
 Das Fenster dazu liegt in ``ui/baukasten/pdf_export.py``; es kennt nur ``PdfWahl``.
 """

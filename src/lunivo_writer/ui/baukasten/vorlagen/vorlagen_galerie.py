@@ -20,7 +20,7 @@ from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter, kacheln_legen
 from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 
-from lunivo_writer.editor import vorlagen
+from lunivo_writer.editor.dokument import vorlagen
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
@@ -46,7 +46,7 @@ _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Än
 
 def _blatt_bild(doc, page) -> QPixmap:
     """Erste Seite eines Dokuments, auf Kachelbreite verkleinert."""
-    from lunivo_writer.editor.pagination import seite_als_bild
+    from lunivo_writer.editor.seite.pagination import seite_als_bild
     img = seite_als_bild(doc, page, 1, 0.8)
     return QPixmap.fromImage(img.scaled(KACHEL, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 

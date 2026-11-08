@@ -7,15 +7,15 @@ Lunivo Writer ist eine native Desktop-Anwendung. Die Oberfläche besteht ausschl
 | Bereich | Technik | Ort |
 |---|---|---|
 | Fenster, Dialoge, Seitenleisten | Qt Widgets (`QMainWindow`, `QDialog`, `QWidget`), Layouts | `ui/` |
-| Dokumenttext | `QTextEdit` mit `QTextDocument`, `QTextCursor`, `QTextCharFormat`, `QTextBlockFormat`, `QTextTable` — niemals `toHtml`/`setHtml` | `ui/document/document_editor.py`, `editor/` |
-| Seitenansicht | Eigene Zeichnung der Blätter, Spalten und Seitenränder in `paintEvent` mit `QPainter` auf dem Textfluss | `ui/document/editor_spalten.py`, `editor/pagination.py` |
+| Dokumenttext | `QTextEdit` mit `QTextDocument`, `QTextCursor`, `QTextCharFormat`, `QTextBlockFormat`, `QTextTable` — niemals `toHtml`/`setHtml` | `ui/document/bearbeitung/document_editor.py`, `editor/` |
+| Seitenansicht | Eigene Zeichnung der Blätter, Spalten und Seitenränder in `paintEvent` mit `QPainter` auf dem Textfluss | `ui/document/bearbeitung/editor_spalten.py`, `editor/seite/pagination.py` |
 | Registerband | Aufbau aus `resources/register.json` und `ui/ribbon/tabs/`; Befehle werden über `core/befehle/` vermittelt | `ui/ribbon/` |
 | Gemeinsame Bausteine | Farbpalette, Linien, Menüs, Dialoggerüst, `FormularGitter`, `FlussLayout` | `ui/baukasten/`, [baukasten.md](baukasten.md) |
 | Aussehen hell/dunkel | Stil „Fusion“ mit `QPalette`; Stylesheets (`QSS`) nur für einzelne Feinheiten, nicht fürs Grundlayout | `ui/theme.py` |
 | Symbole | Lucide-Liniensymbole als SVG-Pfade, per `QSvgRenderer` in den Farben der Palette gezeichnet | `ui/widgets/icons.py`, `assets/` |
 | Hilfe- und Infotexte | Markdown mit `QTextBrowser.setMarkdown` | `resources/handbuch.md` |
 | Formeln, Vorschauen, Diagramme, SmartArt | `QTextDocument` und `QPainter` | `editor/`, `ui/baukasten/` |
-| Drucken und PDF | `QPrinter`, `QPdfWriter` | `editor/druck.py`, `services/pdf_export.py` |
+| Drucken und PDF | `QPrinter`, `QPdfWriter` | `editor/seite/druck.py`, `services/pdf_export.py` |
 | Hintergrundarbeit | KI-Aufrufe laufen in `QThreadPool`/`QRunnable`, Ergebnisse kommen über Qt-Signale zurück | `ai/ai_service.py`, `ui/sidebar/sidebar.py` |
 
 ## Dateiformate

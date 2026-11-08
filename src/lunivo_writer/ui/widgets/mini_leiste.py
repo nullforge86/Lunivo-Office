@@ -9,7 +9,7 @@ from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QHBoxLayout, QMenu, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.core.tabellenaktionen import GRUPPEN
-from lunivo_writer.editor.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
+from lunivo_writer.editor.tabelle.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.basis.mass import (
@@ -172,7 +172,7 @@ class MiniLeiste(QFrame):
         b.menue_setzen(m, geteilt=False)
 
     def tabellenmodus(self) -> bool:
-        """Tabellenmodus (siehe ``editor/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
+        """Tabellenmodus (siehe ``editor/tabelle/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
         Rechtsklick ohne Textmarkierung in einer Zelle. Text in nur einer Zelle oder außerhalb einer Tabelle: Textmodus."""
         return tabellenmodus(self._ed, self._rechtsklick, self._per_griff)
 

@@ -4,7 +4,7 @@
     if d.exec(): neu = d.werte()
 
 ``werte`` und der Rückgabewert sind ein Wörterbuch (siehe ``STANDARD``); das Fenster verändert nichts selbst. Wer es aufruft
-(``editor/bildlayout.py``), liest die Werte vom Bild und schreibt sie zurück. Alle Längen sind in Millimetern; angezeigt wird in der
+(``editor/objekte/bildlayout.py``), liest die Werte vom Bild und schreibt sie zurück. Alle Längen sind in Millimetern; angezeigt wird in der
 Einheit der Oberfläche über ``EinheitFeld``.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QDoubleSpinBox, 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.kachel_feld import KachelFeld
 from lunivo_writer.ui.baukasten.controls.mass_feld import EinheitFeld
-from lunivo_writer.ui.baukasten.formatierung.umbruch_symbole import ARTEN, umbruch_zeichner
+from lunivo_writer.ui.baukasten.medien.umbruch_symbole import ARTEN, umbruch_zeichner
 from lunivo_writer.ui.baukasten.basis.mass import GROESSE_KACHELFELD_STANDARD, RAND_DIALOG_GRUPPE
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -29,7 +29,7 @@ BUCH = [("innen", "Innen"), ("aussen", "Außen")]
 ZEILEN = [("beide", "Beide Seiten"), ("links", "Nur links"), ("rechts", "Nur rechts"), ("groesste", "Nur größte Seite")]
 UMFLIESSEND = ("quadrat", "passend", "transparent")                 # nur hier gelten „Zeilenumbruch“ und „Abstand zum Text“
 
-from lunivo_writer.editor.bildlayout import STANDARD  # noqa: E402
+from lunivo_writer.editor.objekte.bildlayout import STANDARD  # noqa: E402
 
 
 def _combo(eintraege, aktuell) -> QComboBox:
@@ -47,7 +47,7 @@ def _zeile(g: FormularGitter, _r: int, radio: QRadioButton, *rest) -> None:
         g.zeile(rest[1], rest[2])
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter
 class LayoutDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None):

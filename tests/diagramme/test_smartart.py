@@ -2,11 +2,11 @@ import pytest
 
 from PySide6.QtGui import QTextCursor
 
-from lunivo_writer.editor import formen
-from lunivo_writer.editor import smartart as SA
+from lunivo_writer.editor.objekte import formen
+from lunivo_writer.editor.objekte import smartart as SA
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import file_service as formats
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 
 
 def test_punkte_ebenen():
@@ -42,7 +42,7 @@ def test_hoehe_waechst_mit_punkten(app):
 
 
 def test_einfuegen_aendern_docx_rundreise(app, tmp_path):
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     ed = DocumentEditor()
     SA.einfuegen(ed, {"layout": "Prozess", "farben": "Blau", "text": "Eins\nZwei\nDrei"})          # freies Objekt, gleich gewählt
     assert FO.art_gewaehlt(ed) == "smartart" and SA.daten_der_auswahl(ed)["layout"] == "Prozess"
@@ -65,7 +65,7 @@ def test_einfuegen_aendern_docx_rundreise(app, tmp_path):
 
 
 def test_altes_inline_smartart_bleibt_bearbeitbar(app):
-    from lunivo_writer.editor import einfuegen as E
+    from lunivo_writer.editor.dokument import einfuegen as E
     d = {"layout": "Liste", "farben": "Blau", "text": "A\nB"}
     ed = DocumentEditor()
     E.qimage_einfuegen(ed, SA.zeichnen(d), "SmartArt", "smartart", d)
@@ -119,7 +119,7 @@ def test_knoten_rechtecke_und_stile(app):
 
 
 def test_smartart_knotenbefehle(fenster_sa):
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     ed, b = fenster_sa
     SA.einfuegen(ed, SA.LAYOUT_KATALOG[0])                                                       # Organigramm mit Mustertext
     assert FO.art_gewaehlt(ed) == "smartart" and SA.daten_der_auswahl(ed)["layout"] == "Organigramm"
@@ -159,7 +159,7 @@ def fenster_sa(app, tmp_path):
 
 def test_formatierung_zeichnen_knoten_und_alle_und_docx(app, tmp_path):
     """Format pro Knoten / für alle Knoten wirkt aufs Bild, bleibt bei Knotenbefehlen erhalten und übersteht den DOCX-Rundweg."""
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     ed = DocumentEditor()
     SA.einfuegen(ed, {"layout": "Prozess", "farben": "Blau", "text": "Eins\nZwei\nDrei"})
     d0 = SA.daten_der_auswahl(ed)

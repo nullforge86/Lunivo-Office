@@ -8,7 +8,7 @@ def _doc(text):
 
 
 def test_suche_optionen_und_platzhalter(app):
-    from lunivo_writer.editor import suche as S
+    from lunivo_writer.editor.text import suche as S
     d = _doc("Haus haus Hausboot Gartenhaus\nZweite Zeile")
     assert len(S.treffer(d, S.Suchauftrag("haus"))) == 4
     assert len(S.treffer(d, S.Suchauftrag("haus", gross=True))) == 2
@@ -23,7 +23,7 @@ def test_suche_optionen_und_platzhalter(app):
 
 
 def test_suche_ersetzen_und_formate(app):
-    from lunivo_writer.editor import suche as S
+    from lunivo_writer.editor.text import suche as S
     d = _doc("eins zwei eins")
     assert S.ersatz_text(S.Suchauftrag("eins"), "[^&]", "eins") == "[eins]"
     assert S.alle_ersetzen(d, S.Suchauftrag("eins"), "drei") == 2 and d.toPlainText() == "drei zwei drei"
@@ -36,8 +36,8 @@ def test_suche_ersetzen_und_formate(app):
 
 
 def test_gehe_zu_ziel(app):
-    from lunivo_writer.editor import gehe_zu as G
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.dokument import gehe_zu as G
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor(); ed.setPlainText("\n".join(f"Zeile {i}" for i in range(1, 11)))
     assert len(G.ELEMENTE) == 13
     p = G.ziel(ed, "Zeile", "4")
@@ -48,8 +48,8 @@ def test_gehe_zu_ziel(app):
 
 
 def test_wort_extras_neue_eintraege(app):
-    from lunivo_writer.editor import wortextras as W
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
+    from lunivo_writer.editor.text import wortextras as W
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
     ed = DocumentEditor(); ed.setPlainText("   eins\n\tzwei")
     assert W.fuehrende_leerzeichen_loeschen(ed) == 2 and ed.toPlainText() == "eins\nzwei"
     ed.setPlainText(f"a{W.ZEILENUMBRUCH}b")
@@ -62,7 +62,7 @@ def test_wort_extras_neue_eintraege(app):
 
 
 def test_text_sortieren(app):
-    from lunivo_writer.editor import schreibweise as S
+    from lunivo_writer.editor.text import schreibweise as S
     from lunivo_writer.ui.baukasten.dokument.sortieren_dialog import SortierenDialog, SortierOptionenDialog
     t = ["Name\tAlter", "Özil\t30", "apfel\t5", "Zebra\t12"]
     assert [t[i] for i in S.reihenfolge(t, [(None, "text", False)], kopfzeile=True)] == ["Name\tAlter", "apfel\t5", "Özil\t30", "Zebra\t12"]
@@ -119,8 +119,8 @@ def test_suchen_feld_aufgeraeumt(app):
     """Unter dem Suchfeld: Pfeile und Trefferzahl, Optionen und Werkzeuge eingeklappt; Eingabe sucht weiter, Umschalt+Eingabe zurück."""
     from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest
-    from lunivo_writer.ui.document.document_editor import DocumentEditor
-    from lunivo_writer.ui.document.suchen_feld import SuchenFeld
+    from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
+    from lunivo_writer.ui.document.dokumentfenster.suchen_feld import SuchenFeld
     ed = DocumentEditor(); ed.setPlainText("eins zwei eins drei eins")
     f = SuchenFeld(lambda: ed, lambda d: False); f.resize(320, 600); f.show()
     assert not f.optionen_gruppe.ist_offen() and not f.werkzeuge.ist_offen()

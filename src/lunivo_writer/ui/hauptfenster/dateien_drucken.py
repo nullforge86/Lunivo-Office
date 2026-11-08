@@ -30,7 +30,7 @@ class DateienDruckenBaustein:
 
 
     def druck_vorschau(self, t):
-        from lunivo_writer.editor.druck import optionen_aus, vorschau_bild
+        from lunivo_writer.editor.seite.druck import optionen_aus, vorschau_bild
 
         def bilder(nummern, ein):
             opt = optionen_aus(self.druckoptionen(), ein, t.editor.noten)
@@ -39,7 +39,7 @@ class DateienDruckenBaustein:
 
 
     def _druck_args(self, t) -> dict:
-        from lunivo_writer.editor.pagination import seitenzahl
+        from lunivo_writer.editor.seite.pagination import seitenzahl
         start = self.druck_start()
         if self.settings.get("drucken/vorgabe", "Alle Seiten") == "Aktuelle Seite":
             start.update(bereich="seiten", seiten_text=str(t.editor.current_page()))
@@ -83,7 +83,7 @@ class DateienDruckenBaustein:
     def drucke_nach_wahl(self, t, e: dict) -> None:
         """Druckt das Blatt `t` nach der Wahl `e` (Druckfenster oder Menü ▸ Drucken)."""
         from PySide6.QtPrintSupport import QPrinterInfo
-        from lunivo_writer.editor.druck import drucken
+        from lunivo_writer.editor.seite.druck import drucken
         self.druck_merken(e)
         info = QPrinterInfo.printerInfo(e["drucker"]) if e["drucker"] else QPrinterInfo()
         pr = QPrinter(info, QPrinter.HighResolution if self.settings.get_bool("drucken/hoch", True) else QPrinter.ScreenResolution) \
@@ -109,7 +109,7 @@ class DateienDruckenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from lunivo_writer.editor.druck import Zwischenseiten, optionen_aus
+        from lunivo_writer.editor.seite.druck import Zwischenseiten, optionen_aus
         from lunivo_writer.ui.baukasten.dokument.druckvorschau import DruckVorschau
         opt = optionen_aus(self.druckoptionen(), self.druck_start(), t.editor.noten)
         dlg = DruckVorschau(self, Zwischenseiten(t.editor.document(), t.page, opt, t.editor.noten))
@@ -146,7 +146,7 @@ class DateienDruckenBaustein:
 
 
     def _blasen_fuer_druck(self):
-        from lunivo_writer.editor import sprechblasen as SB
+        from lunivo_writer.editor.objekte import sprechblasen as SB
         e = self.current_editor()
         k = SB.konfig_lesen(self.settings)
         if e is None or not self.settings.get_bool("sprechblasen/drucken", False) or not SB.aktiv(k):
@@ -157,7 +157,7 @@ class DateienDruckenBaustein:
 
 
     def _silben_fuer_druck(self):
-        from lunivo_writer.editor import silbenfarben as S
+        from lunivo_writer.editor.text import silbenfarben as S
         k = S.konfig_lesen(self.settings)
         return dict(k, nur_absatz=False) if k["an"] and k["drucken"] else None
 
@@ -169,5 +169,5 @@ class DateienDruckenBaustein:
     def _vor_dem_drucken(self, tab):
         """„Felder vor dem Drucken aktualisieren“: Verzeichnisse neu rechnen."""
         if self.settings.get_bool("drucken/felder", True):
-            from lunivo_writer.editor.verzeichnis import verzeichnis_aktualisieren
+            from lunivo_writer.editor.dokument.verzeichnis import verzeichnis_aktualisieren
             verzeichnis_aktualisieren(tab.editor)

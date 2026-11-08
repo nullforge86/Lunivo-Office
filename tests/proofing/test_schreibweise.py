@@ -1,4 +1,4 @@
-from lunivo_writer.editor.schreibweise import umwandeln, sortiert
+from lunivo_writer.editor.text.schreibweise import umwandeln, sortiert
 def test_arten():
     assert umwandeln("hallo welt. wie geht's? gut", "satz") == "Hallo welt. Wie geht's? Gut"
     assert umwandeln("hallo WELT", "title") == "Hallo Welt"

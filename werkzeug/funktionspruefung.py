@@ -32,7 +32,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QSettings, QStandardPaths, QTimer  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QTextCursor, QTextDocumentFragment  # noqa: E402
 
-from lunivo_writer.editor.textdaten import fragment_zu_daten  # noqa: E402
+from lunivo_writer.editor.text.textdaten import fragment_zu_daten  # noqa: E402
 from pruefhilfen import DialogWaechter, menue_eintraege  # noqa: E402  (gemeinsame Hilfen in werkzeug/)
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QMenu, QMessageBox, QStackedWidget, QTabBar,  # noqa: E402
                                QToolButton, QWidget)
@@ -47,7 +47,7 @@ LAGEN = ("text", "formatiert", "tabelle", "bild")
 class Pruefer:
     def __init__(self, tmp: str):
         from lunivo_writer.core.commands import Befehle
-        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.editor.dokument import einfuegen as E
         from lunivo_writer.services.settings_service import Settings
         from lunivo_writer.ui.main_window import MainWindow
         self.E, self.Befehle = E, Befehle
@@ -123,7 +123,7 @@ class Pruefer:
         """Fett, kursiv, unterstrichen, durchgestrichen, Farbe, Marker, zentriert, eingerückt, Liste, Schattierung, Rahmen:
         damit auch Befehle, die etwas ausschalten, eine Wirkung zeigen."""
         from PySide6.QtGui import QBrush, QFont, QTextCharFormat
-        from lunivo_writer.editor.zusatz import B_RAHMEN
+        from lunivo_writer.editor.dokument.zusatz import B_RAHMEN
         cf = QTextCharFormat()
         cf.setFontWeight(QFont.Bold); cf.setFontItalic(True); cf.setFontUnderline(True); cf.setFontStrikeOut(True)
         cf.setForeground(QColor("#c92a2a")); cf.setBackground(QColor("#ffec99")); cf.setFontPointSize(20)

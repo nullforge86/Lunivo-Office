@@ -6,13 +6,13 @@ import os
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QMessageBox
 
-from lunivo_writer.editor import stile
+from lunivo_writer.editor.text import stile
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.models.report import DocumentIOError, IOReport, PasswortNoetig
 from lunivo_writer.services import file_service as formats
 from lunivo_writer.services import sicher_schreiben
 from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
-from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
 
 
 class DateienOeffnenBaustein:
@@ -74,7 +74,7 @@ class DateienOeffnenBaustein:
         tab = DocumentTab(loaded, path)
         tab.datei_stand = sicher_schreiben.stand(path)
         self._add_tab(tab)
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         FO.kette_aktualisieren(tab.editor)                         # verknüpfte Textfelder: der Text läuft von Feld zu Feld
         tab.editor.document().setModified(False)
         if not self.settings.get_bool("sicherheit/markup_oeffnen", True):

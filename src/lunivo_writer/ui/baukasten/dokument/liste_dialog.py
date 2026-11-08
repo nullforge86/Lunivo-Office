@@ -1,7 +1,7 @@
 """Die Fenster „Nummerierung und Aufzählungszeichen“ und „Nummerierung anpassen“ als Bausteine.
 
     d = ListenDialog(parent, aktuell=spec | None, seite="aufzaehlung" | "nummerierung")
-    if d.exec(): d.ergebnis()          # spec (siehe ``editor.listen``) oder None = „Kein“
+    if d.exec(): d.ergebnis()          # spec (siehe ``editor.text.listen``) oder None = „Kein“
 
     d = NummerierungAnpassenDialog(parent, spec)
     if d.exec(): d.spec()
@@ -23,10 +23,10 @@ from PySide6.QtWidgets import (
 
 import copy
 
-from lunivo_writer.editor import listen as L
-from lunivo_writer.editor import mehrstufig as M
+from lunivo_writer.editor.text import listen as L
+from lunivo_writer.editor.text import mehrstufig as M
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.controls.listen_symbole import liste_zeichner
+from lunivo_writer.ui.baukasten.medien.listen_symbole import liste_zeichner
 from lunivo_writer.ui.baukasten.controls.mass_feld import EinheitFeld
 
 from lunivo_writer.core.farben import Farbe
@@ -96,7 +96,7 @@ def _raster(eintraege: list[dict | None], bild=None) -> QListWidget:
     return w
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 class _Zahlenformat(QWidget):
     """Zahlenformat, Zahlenart, Startzahl und „Schriftart …“ der Nummer — gemeinsam für „Nummerierung anpassen“ und „Gliederung anpassen“."""
@@ -136,7 +136,7 @@ class _Zahlenformat(QWidget):
         self.zeichen = dict(zeichen or {})
 
     def _schriftart(self) -> None:
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
         from lunivo_writer.ui.baukasten.formatierung.schriftart_dialog import ZEICHEN, SchriftartDialog
         d = SchriftartDialog(self, {**ZEICHEN, **(self.zeichen or {})}, umfang="vorlage")
 
@@ -318,7 +318,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.position = _Positionen(); ug.breit(self.position)
         self.norm = UmbruchSchalter("Nummerieren nach Norm")
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(Keine Formatvorlage)", "")
-        from lunivo_writer.editor import stile
+        from lunivo_writer.editor.text import stile
         for n in stile.namen():
             self.vorlage.addItem(n, n)
         self.danach = Auswahlfeld()
@@ -566,7 +566,7 @@ class ListenDialog(PanelFaehig, QDialog):
         self.vorschau.update()
 
     def _anpassen(self) -> None:
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
         s = self._auswahl()
         if s is not None and "ebenen" not in s and L.STILE[s["stil"]][1]:      # Punkt, Kreis, Quadrat: als eigenes Zeichen anpassen
             s = M.aufzaehlung({"disc": "●", "circle": "○", "square": "■"}[s["stil"]])

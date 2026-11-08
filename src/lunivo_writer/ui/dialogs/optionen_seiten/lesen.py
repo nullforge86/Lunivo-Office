@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QFrame, QHBoxL
 from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ui import lesestufen as LS
 from lunivo_writer.services import vorlesen
-from lunivo_writer.ui.dialogs.lesehilfe_dialog import PAPIERTOENE
+from lunivo_writer.ui.dialogs.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
 from lunivo_writer.ui.baukasten.basis.mass import (
@@ -151,7 +151,7 @@ class LesenSeiten:
 
 
     def _uebersetzung_oeffnen(self) -> None:
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
         ausfuehren(KIEinstellungenDialog(self.w, 2))
         self.w.ki.geaendert.emit()

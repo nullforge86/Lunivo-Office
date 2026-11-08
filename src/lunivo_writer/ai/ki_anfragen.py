@@ -268,7 +268,7 @@ class KIAnfragenMixin:
         if img.isNull():
             self.status.emit("Der Anbieter hat etwas geschickt, das kein Bild ist.")
             return
-        from lunivo_writer.editor import einfuegen as E
+        from lunivo_writer.editor.dokument import einfuegen as E
         ed = eing["ed"]
         if eing["ersetzen"] and ed.textCursor().hasSelection():
             ed.textCursor().removeSelectedText()

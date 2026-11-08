@@ -5,18 +5,18 @@ from __future__ import annotations
 import pytest
 from PySide6.QtWidgets import QTabWidget, QTextEdit, QWidget
 
-from lunivo_writer.editor.verzeichnis import TOC_VORGABE
+from lunivo_writer.editor.dokument.verzeichnis import TOC_VORGABE
 from lunivo_writer.ui.baukasten.formatierung.absatz_dialog import AbsatzDialog
 from lunivo_writer.ui.baukasten.controls.auswahl_bereich import AuswahlBereich
 from lunivo_writer.ui.baukasten.formatierung.schriftart_dialog import SchriftartDialog
 from lunivo_writer.ui.baukasten.dokument.sortieren_dialog import SortierenDialog, SortierOptionenDialog
 from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import TabstoppDialog
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig, ZusatzPanel
-from lunivo_writer.ui.dialogs import einfuegen_dialoge as ED
-from lunivo_writer.ui.dialogs import einfuegen_fenster as EF
-from lunivo_writer.ui.dialogs import serien_fenster as SF
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig, ZusatzPanel
+from lunivo_writer.ui.dialogs.einfuegen import einfuegen_dialoge as ED
+from lunivo_writer.ui.dialogs.einfuegen import einfuegen_fenster as EF
+from lunivo_writer.ui.dialogs.sendungen import serien_fenster as SF
 from lunivo_writer.ui.dialogs import ueberpruefen_fenster as UF
-from lunivo_writer.ui.dialogs import verweise_fenster as VF
+from lunivo_writer.ui.dialogs.verweise import verweise_fenster as VF
 
 FENSTER = {
     # Reiter Start
@@ -35,8 +35,8 @@ FENSTER = {
     "Diagramm": lambda: ED.DiagrammDialog(None), "Piktogramm": lambda: ED.PiktogrammDialog(None), "Formel": lambda: ED.FormelDialog(None),
     "Deckblatt": lambda: ED.DeckblattDialog(None, "Kay"),
     "Vergrößern": lambda: __import__("lunivo_writer.ui.baukasten.medien.bild_zoom", fromlist=["x"]).BildZoomFenster(None, __import__("PySide6.QtGui", fromlist=["x"]).QImage(500, 300, __import__("PySide6.QtGui", fromlist=["x"]).QImage.Format_ARGB32)),
-    "Symbol": lambda: __import__("lunivo_writer.ui.dialogs.sonderzeichen", fromlist=["x"]).SonderzeichenDialog(None, lambda z: None),
-    "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
+    "Symbol": lambda: __import__("lunivo_writer.ui.dialogs.einfuegen.sonderzeichen", fromlist=["x"]).SonderzeichenDialog(None, lambda z: None),
+    "Wasserzeichen": lambda: __import__("lunivo_writer.ui.dialogs.einfuegen.wasserzeichen_fenster", fromlist=["x"]).WasserzeichenDialog(None, None),
 }
 
 

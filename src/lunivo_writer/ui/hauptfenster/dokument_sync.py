@@ -25,9 +25,9 @@ class DokumentSyncMixin:
         self.band.aktualisieren(e is not None)
         self.band.kontext("tabelle", bool(e) and not e.isReadOnly() and e.textCursor().currentTable() is not None)
         bf = e.bild_format() if e else None
-        from lunivo_writer.editor import formen
+        from lunivo_writer.editor.objekte import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None
-        from lunivo_writer.editor import frei_objekt as FO
+        from lunivo_writer.editor.objekte import frei_objekt as FO
         frei_art = FO.art_gewaehlt(e) if e else None                  # WordArt, Textfeld, Form, Diagramm oder SmartArt als freies Objekt gewählt
         text_art = frei_art if frei_art in FO.TEXT_ARTEN else None
         if frei_art:

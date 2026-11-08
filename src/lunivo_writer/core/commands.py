@@ -12,26 +12,26 @@ from __future__ import annotations
 
 import json
 from PySide6.QtGui import QCursor, QTextCharFormat
-from lunivo_writer.core.befehle.ansicht import AnsichtBefehle
-from lunivo_writer.core.befehle.bearbeiten import BearbeitenBefehle
-from lunivo_writer.core.befehle.datei import DateiBefehle
-from lunivo_writer.core.befehle.einfuegen import EinfuegenBefehle
-from lunivo_writer.core.befehle.ki import KIBefehle
-from lunivo_writer.core.befehle.kommentare import KommentarBefehle
-from lunivo_writer.core.befehle.kopffuss import KopfFussBefehle
-from lunivo_writer.core.befehle.kontext import KontextBefehle
-from lunivo_writer.core.befehle.pruefen import PruefenBefehle
-from lunivo_writer.core.befehle.seite import SeiteBefehle
-from lunivo_writer.core.befehle.serien import SerienBefehle
-from lunivo_writer.core.befehle.text import TextBefehle
-from lunivo_writer.core.befehle.bildtools import BildToolsBefehle
-from lunivo_writer.core.befehle.diagrammtools import DiagrammToolsBefehle
-from lunivo_writer.core.befehle.formtools import FormToolsBefehle
-from lunivo_writer.core.befehle.smartart_knoten_zustand import SmartArtKnotenZustand
-from lunivo_writer.core.befehle.smartarttools import SmartArtToolsBefehle
-from lunivo_writer.core.befehle.texttools import TextToolsBefehle
-from lunivo_writer.core.befehle.ueberpruefen import UeberpruefenBefehle
-from lunivo_writer.core.befehle.verweise import VerweiseBefehle
+from lunivo_writer.core.befehle.hauptreiter.ansicht import AnsichtBefehle
+from lunivo_writer.core.befehle.hauptreiter.bearbeiten import BearbeitenBefehle
+from lunivo_writer.core.befehle.hauptreiter.datei import DateiBefehle
+from lunivo_writer.core.befehle.hauptreiter.einfuegen import EinfuegenBefehle
+from lunivo_writer.core.befehle.hauptreiter.ki import KIBefehle
+from lunivo_writer.core.befehle.hauptreiter.kommentare import KommentarBefehle
+from lunivo_writer.core.befehle.kontextreiter.kopffuss import KopfFussBefehle
+from lunivo_writer.core.befehle.kontextreiter.kontext import KontextBefehle
+from lunivo_writer.core.befehle.hauptreiter.pruefen import PruefenBefehle
+from lunivo_writer.core.befehle.hauptreiter.seite import SeiteBefehle
+from lunivo_writer.core.befehle.hauptreiter.serien import SerienBefehle
+from lunivo_writer.core.befehle.hauptreiter.text import TextBefehle
+from lunivo_writer.core.befehle.kontextreiter.bildtools import BildToolsBefehle
+from lunivo_writer.core.befehle.kontextreiter.diagrammtools import DiagrammToolsBefehle
+from lunivo_writer.core.befehle.kontextreiter.formtools import FormToolsBefehle
+from lunivo_writer.core.befehle.kontextreiter.smartart_knoten_zustand import SmartArtKnotenZustand
+from lunivo_writer.core.befehle.kontextreiter.smartarttools import SmartArtToolsBefehle
+from lunivo_writer.core.befehle.kontextreiter.texttools import TextToolsBefehle
+from lunivo_writer.core.befehle.hauptreiter.ueberpruefen import UeberpruefenBefehle
+from lunivo_writer.core.befehle.hauptreiter.verweise import VerweiseBefehle
 from lunivo_writer.core.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 

@@ -6,7 +6,7 @@ import os
 
 from PySide6.QtGui import QTextDocumentFragment
 
-from lunivo_writer.editor.textdaten import daten_zu_fragment, fragment_zu_daten
+from lunivo_writer.editor.text.textdaten import daten_zu_fragment, fragment_zu_daten
 from lunivo_writer.services.settings_service import data_dir
 
 

@@ -4,7 +4,7 @@
     if d.exec(): d.ergebnis()
 
 ``DruckAnsicht`` ist derselbe Inhalt ohne Knopfzeile (so liegt er auch im Menü unter „Drucken“). Der Baustein druckt nichts selbst;
-``ergebnis()`` liefert die Wahl als Wörterbuch, der Aufrufer druckt (siehe ``editor/druck.py``).
+``ergebnis()`` liefert die Wahl als Wörterbuch, der Aufrufer druckt (siehe ``editor/seite/druck.py``).
 """
 from __future__ import annotations
 
@@ -16,12 +16,12 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import (QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
-from lunivo_writer.editor.druck import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
+from lunivo_writer.editor.seite.druck import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
-from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.basis.mass import (

@@ -13,10 +13,10 @@ from lunivo_writer.ui.baukasten.controls.auswahl_liste import AuswahlListe
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.ui.baukasten.controls.formular_gitter import abschnittstitel
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, PANEL_HOEHE_ABZUG
-from lunivo_writer.ui.baukasten.controls.panel_rahmen import PANEL_INHALT_RAND
+from lunivo_writer.ui.baukasten.geruest.panel_rahmen import PANEL_INHALT_RAND
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchiebeFeld
 from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 
 PROZENT = " %"
 HINWEIS_TEMPO = "Links langsamer, rechts schneller; 0 ist das normale Tempo."

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter
 from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 
-from lunivo_writer.editor import vorlagen
+from lunivo_writer.editor.dokument import vorlagen
 
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile

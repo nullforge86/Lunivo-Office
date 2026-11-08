@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
 from lunivo_writer.core import paths
 from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
-from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.geruest.einklappgruppe import EinklappGruppe
 from lunivo_writer.ui.baukasten.controls.formular_gitter import gruppe, FormularGitter
 from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_BLOCK,

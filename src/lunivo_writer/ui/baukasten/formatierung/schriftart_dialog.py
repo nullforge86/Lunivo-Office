@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGro
 
 from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.controls.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.formatierung.text_format import BETONUNG, UNTERSTREICHUNG, ZEICHEN, groesse_feld, zeichne_absaetze, zu_format
 from lunivo_writer.ui.baukasten.basis.mass import (
@@ -58,7 +58,7 @@ def _schnitt_combo() -> QComboBox:
     return c
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
 def _ueberschrift(text: str) -> QLabel:
@@ -91,7 +91,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
         g.breit(self.asiat_knopf); g.breit(asiat)
         self.farbe = FarbFeld(w["farbe"], "Schriftfarbe", keine_text="Automatisch")
         self.unter = Auswahlfeld(); self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD))
-        from lunivo_writer.editor.textfx import unter_symbol
+        from lunivo_writer.editor.text.textfx import unter_symbol
         self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD_HOCH))
         for k, name in UNTERSTREICHUNG:
             self.unter.addItem(unter_symbol(k, (70, 16), Farbe.GITTER) if k and k != "woerter" else QIcon(), name if k in ("", "woerter") else "", k)
@@ -217,7 +217,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
 
     def _texteffekte(self) -> None:
         from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import TexteffektDialog
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
         d = TexteffektDialog(self, {**(self._effekt or {}), "farbe": self.farbe.farbe})
 
         def fertig() -> None:

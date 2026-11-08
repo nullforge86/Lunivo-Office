@@ -8,10 +8,10 @@ from PySide6.QtTest import QTest
 from pypdf import PdfReader
 
 from lunivo_writer.services import file_service as formats
-from lunivo_writer.editor import formular as FO
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.editor.dokument import formular as FO
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
-from lunivo_writer.editor.pagination import render
+from lunivo_writer.editor.seite.pagination import render
 
 
 def _formular():
@@ -113,6 +113,6 @@ def test_nur_formulardaten_drucken(app, tmp_path):
     text_alles = " ".join(R(str(tmp_path / "a.pdf")).pages[0].extract_text().split())
     # unsichtbarer Text bleibt im PDF extrahierbar (durchsichtig gezeichnet); entscheidend: Pixel — Name sichtbar, „Familienstand“ nicht
     from PySide6.QtGui import QImage
-    from lunivo_writer.editor.pagination import paginated_copy, seite_als_bild
+    from lunivo_writer.editor.seite.pagination import paginated_copy, seite_als_bild
     assert "KOPFZEILE" in text_alles and "KOPFZEILE" not in text_nur
     assert "Kay Mustermann" in text_nur

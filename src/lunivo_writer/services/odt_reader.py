@@ -278,7 +278,7 @@ class _Leser(_ODTBilder):
                 autor = self.meta_el.find(f".//{_q('dc:creator')}")
             meta["title"] = (titel.text or "") if titel is not None else ""
             meta["author"] = (autor.text or "") if autor is not None else ""
-        from lunivo_writer.editor.zusatz import leere_meta
+        from lunivo_writer.editor.dokument.zusatz import leere_meta
         meta.update(leere_meta())
         self.doc.setModified(False)
         return self.doc, page, meta, self.report

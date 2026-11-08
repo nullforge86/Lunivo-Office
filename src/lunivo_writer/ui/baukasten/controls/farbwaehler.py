@@ -22,7 +22,7 @@ MODELLE = ("RGB", "HSV", "HSL")
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FormularGitter, mittig
 class Modell(QObject):

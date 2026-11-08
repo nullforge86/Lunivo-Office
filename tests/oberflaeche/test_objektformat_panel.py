@@ -1,5 +1,5 @@
 """Seitenleiste „Formatierung“ für Objekte (``objektformat_panel.py``): Umschalter Form-/Textoptionen, Reiter, alle Effekt-Abschnitte mit Feldern,
-3D-Format und 3D-Drehung wirken am Objekt (``editor/bildeffekte.py``), bei 300 px ragt nichts heraus."""
+3D-Format und 3D-Drehung wirken am Objekt (``editor/objekte/bildeffekte.py``), bei 300 px ragt nichts heraus."""
 from __future__ import annotations
 
 import pytest
@@ -7,7 +7,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 from PySide6.QtWidgets import QScrollArea, QWidget
 
-from lunivo_writer.editor import bildeffekte as E
+from lunivo_writer.editor.objekte import bildeffekte as E
 from lunivo_writer.ui.baukasten.formatierung.objektformat_panel import ObjektFormatPanel
 from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt
 
@@ -64,7 +64,7 @@ def test_textoptionen_melden_und_nehmen_werte(app):
 
 @pytest.mark.parametrize("breite", [300, 444])
 def test_passt_in_die_seitenleiste(app, breite):
-    from lunivo_writer.ui.baukasten.controls.zusatz_panel import FLACHE_REITER
+    from lunivo_writer.ui.baukasten.geruest.zusatz_panel import FLACHE_REITER
     p = ObjektFormatPanel(None, {"fuell": None, "rand": None}); p.setStyleSheet(FLACHE_REITER)       # wie im Rahmen der Seitenleiste
     p.resize(breite - 24, 800); p.show()
     for optionen in (0, 1):

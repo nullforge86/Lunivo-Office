@@ -10,15 +10,15 @@ from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem, QVBoxLayout
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
 
 
 def objekte(ed) -> list[tuple[str, int, int]]:
     """[(Beschriftung, von, bis)] aller Objekte in Dokumentreihenfolge."""
     import json
-    from lunivo_writer.editor import gehe_zu as G
-    from lunivo_writer.editor.zusatz import P_OBJEKT
+    from lunivo_writer.editor.dokument import gehe_zu as G
+    from lunivo_writer.editor.dokument.zusatz import P_OBJEKT
     namen = {"form": "Form", "zeichenbereich": "Zeichenbereich", "wordart": "WordArt", "diagramm": "Diagramm", "smartart": "SmartArt", "formel": "Formel", "piktogramm": "Piktogramm"}
     out, zaehler = [], {}
     for f in G._fragmente(ed.document()):

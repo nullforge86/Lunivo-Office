@@ -194,7 +194,7 @@ class ChatEingabeKasten(QWidget):
     # ---- Modellwahl und Befehle
     def modelle_neu(self) -> None:
         """Modellfeld aus der KI-Konfiguration füllen; „Standard“ zeigt den Namen des tatsächlich genutzten Modells."""
-        from lunivo_writer.ui.dialogs.ki_dialoge import modell_felder_fuellen
+        from lunivo_writer.ui.dialogs.ki.ki_dialoge import modell_felder_fuellen
         name = self.d.kontext()[3]
         modell_felder_fuellen(self.modell, self.d.konfig, "chatbot", standard=name or "Standard")
 

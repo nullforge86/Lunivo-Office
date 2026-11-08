@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QToolButton, QVBoxLayout
 
-from lunivo_writer.ui.document.navigation import SEITEN, TITEL
+from lunivo_writer.ui.document.dokumentfenster.navigation import SEITEN, TITEL
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_NORMAL,
@@ -26,7 +26,7 @@ class BackstageSeitenleistenBaustein:
     def _leiste_links(self):
         """Schmale Leiste links: Suchen, Kommentare, Überschriften, Änderungen, Noten, Vorlesen. Ein Klick öffnet das Feld, ein zweiter schließt es."""
         from PySide6.QtWidgets import QFrame, QToolButton, QVBoxLayout
-        from lunivo_writer.ui.document.navigation import SEITEN, TITEL
+        from lunivo_writer.ui.document.dokumentfenster.navigation import SEITEN, TITEL
         from lunivo_writer.ui.widgets import icons
         leiste = QFrame()
         leiste.setObjectName("leisteLinks")

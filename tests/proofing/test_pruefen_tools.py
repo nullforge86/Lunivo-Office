@@ -2,7 +2,7 @@
 from PySide6.QtGui import QImage, QTextCharFormat, QTextCursor, QTextImageFormat
 
 from lunivo_writer.services import docx_reader, docx_writer
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.ai import ki as K
 from lunivo_writer.proofing.barrierefreiheit import kontrast, pruefe

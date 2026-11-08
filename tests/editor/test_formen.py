@@ -3,11 +3,11 @@ import json
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 
-from lunivo_writer.editor import einfuegen as E
-from lunivo_writer.editor import formen
+from lunivo_writer.editor.dokument import einfuegen as E
+from lunivo_writer.editor.objekte import formen
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import file_service as formats
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 
 
 def _form(ed, name="Rechteck", **d):
@@ -61,7 +61,7 @@ def test_gruppieren_braucht_zwei(app):
 
 def test_tabellenvorlage_docx(app, tmp_path):
     from PySide6.QtGui import QTextCharFormat, QTextTableFormat
-    from lunivo_writer.editor import tabellenstil as TS
+    from lunivo_writer.editor.tabelle import tabellenstil as TS
     ed = DocumentEditor()
     t = ed.textCursor().insertTable(3, 2, QTextTableFormat())
     assert TS.anwenden(t, "Blau", kopf=True, streifen=True, spalte=False)

@@ -22,10 +22,10 @@ from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QDoubleSpinBox, QLabel, QListWidget, QListWidgetItem, QPushButton, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.editor import muster as M
-from lunivo_writer.editor.linie import LINIENBREITEN, STILE, Linie
+from lunivo_writer.editor.text import muster as M
+from lunivo_writer.editor.objekte.linie import LINIENBREITEN, STILE, Linie
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.basis.linien import RahmenSeiten, rahmen_symbol
 from lunivo_writer.ui.baukasten.controls.mass_feld import _PT_MM, EinheitFeld
 
@@ -116,7 +116,7 @@ def _muster_symbol(schluessel: str, px: int = 16) -> QIcon:
 
 
 # ------------------------------------------------------------------------------------------------------ Vorschau
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel, mittig
 class _Vorschau(QWidget):
     """Blatt mit zwei Absätzen aus grauen Zeilen; zeigt Rahmen und Füllung und schaltet Kanten per Klick."""
@@ -302,7 +302,7 @@ class _RahmenSeite(QWidget):
         self.breite.zeichen(DROPDOWN_ZEICHEN_ZAHL)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
         self.kunst = Auswahlfeld()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
-        from lunivo_writer.editor.seitenrahmen import KUNST
+        from lunivo_writer.editor.seite.seitenrahmen import KUNST
         for k, name in KUNST:
             self.kunst.addItem(name, k)
         self.kunst.setVisible(seitenrand)
@@ -373,7 +373,7 @@ class _RahmenSeite(QWidget):
         self.abstand_mm = sum(o["abstand"]) / 4 / 72 * 25.4 if o["messen"] == "seitenrand" else 6.0
 
     def _optionen(self) -> None:
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
         if self.seitenrand:                              # Rahmen um die Seite: Abstand, Gemessen von, Optionen
             d = _SeitenOptionenDialog(self, self.rand_optionen, self.linie_wert())
 
@@ -576,7 +576,7 @@ class RahmenSchattierungDialog(PanelFaehig, QDialog):
             li = Linie(sr.get("farbe", Farbe.SCHWARZ), float(sr.get("breite_pt", 1.0)), sr.get("art", "einfach"), sr.get("seiten", "tblr")) if seitenrand else None
             self.p_rand = _RahmenSeite(li, seitenrand=True, fuer=["Gesamtes Dokument"], abstand_mm=float(sr.get("abstand_mm", 8.0)))
             if seitenrand:                                                                  # Optionen des vorhandenen Seitenrahmens
-                from lunivo_writer.editor.seitenrahmen import abstaende_pt
+                from lunivo_writer.editor.seite.seitenrahmen import abstaende_pt
                 self.p_rand.rand_optionen = {"messen": sr.get("messen", "seitenrand"), "abstand": abstaende_pt(sr), "ausrichten": bool(sr.get("ausrichten")),
                                              "vordergrund": sr.get("vordergrund", True), "kopf": bool(sr.get("kopf")), "fuss": bool(sr.get("fuss"))}
                 self.p_rand.kunst.setCurrentIndex(max(0, self.p_rand.kunst.findData(sr.get("kunst", ""))))

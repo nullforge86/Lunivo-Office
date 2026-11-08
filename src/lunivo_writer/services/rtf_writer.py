@@ -225,7 +225,7 @@ class _Rtf:
     # ---- Seite, Kopf- und Fußzeile ---------------------------------------------------------------------------------------------
     def kopf_fuss(self, art: str, hf: HeaderFooter, seite: int = 1) -> str:
         """``seite`` 2 für die Kopf-/Fußzeile linker (gerader) Seiten: „außen“/„innen“ werden dort gespiegelt."""
-        from lunivo_writer.editor.seitenzahl import ausrichtung
+        from lunivo_writer.editor.seite.seitenzahl import ausrichtung
         if hf.is_empty():
             return ""
         zeilen = []
@@ -284,7 +284,7 @@ def rtf_daten(doc: QTextDocument, page: PageSettings, meta: dict | None = None) 
     w = _Rtf(doc, page)
     daten = w.run()
     _verluste_melden(w.report, page, meta or {}, "RTF")
-    from lunivo_writer.editor.freie_bilder import hat_bilder
+    from lunivo_writer.editor.objekte.freie_bilder import hat_bilder
     if hat_bilder(doc):
         w.report.warn("Frei positionierte Bilder werden in RTF nicht gespeichert (in DOCX und ODT schon).")
     return daten, w.report

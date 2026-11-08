@@ -13,11 +13,11 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.editor import texteffekt as T
-from lunivo_writer.ui.baukasten.dropdown.fuell_voreinstellungen import FuellPalette, fuell_bild
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbPalette
+from lunivo_writer.editor.text import texteffekt as T
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.fuell_voreinstellungen import FuellPalette, fuell_bild
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbPalette
 from lunivo_writer.ui.baukasten.dropdown.kopf_dropdown import KopfDropdown
-from lunivo_writer.ui.baukasten.dropdown.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel
 
 
 def text_fuell_menue(parent=None, aktuell: str = "") -> FarbPalette:

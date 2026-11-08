@@ -12,7 +12,7 @@ from PySide6.QtCore import QPointF, QRectF
 
 from . import diagramm as D
 from . import diagramm_format as F
-from lunivo_writer.editor import frei_objekt as FO
+from lunivo_writer.editor.objekte import frei_objekt as FO
 
 # Angaben, die ``diagramm_teil_format_setzen`` kennt (Aufbau: ``diagramm_format``); die Wörterbücher in ``_ZUSAMMEN`` werden mit den vorhandenen
 # Angaben zusammengeführt (Angaben mit dem Wert None fallen dabei heraus). Die Effekte des Diagrammbereichs gehören dem Objekt (``a["fx"]``):

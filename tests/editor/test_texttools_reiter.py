@@ -75,7 +75,7 @@ def test_jeder_knopf_hat_einen_befehl(app, tmp_path):
             assert _hat_befehl(w, e), (plan["name"], e["name"])
         for g in plan["gruppen"]:
             if g.get("galerie"):
-                from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import GALERIEN
+                from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import GALERIEN
                 spec = GALERIEN[g["galerie"]](b) if g["galerie"] in GALERIEN else getattr(b, "galerie_" + g["galerie"])()
                 assert len(spec["kacheln"]) in (3, 6, 10) and spec["menue"] is not None
             if g.get("pfeil"):
@@ -91,7 +91,7 @@ def test_jeder_knopf_hat_einen_befehl(app, tmp_path):
 
 
 def _wordart(w):
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     w.band.b.wordartVorgabe(None, 0)
     w._sync_format()
     return w.current_editor(), FO
@@ -151,7 +151,7 @@ def test_texttools_wirken_auf_wordart(app, tmp_path):
 
 
 def test_texttools_wirken_auf_textfeld_und_navigation(app, tmp_path):
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     w = _fenster(tmp_path); w.show()
     b = w.band.b
     b.textfeld(); ed = w.current_editor()
@@ -168,7 +168,7 @@ def test_texttools_wirken_auf_textfeld_und_navigation(app, tmp_path):
 
 
 def test_verknuepfung_erstellen_ueber_die_knoepfe(app, tmp_path):
-    from lunivo_writer.editor import frei_objekt as FO
+    from lunivo_writer.editor.objekte import frei_objekt as FO
     w = _fenster(tmp_path); w.show()
     b = w.band.b; ed = w.current_editor()
     b.textfeld(); a = ed._frei_sel

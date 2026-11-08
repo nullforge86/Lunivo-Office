@@ -1,6 +1,6 @@
 """Diagramm: Elemente (Diagrammelemente-Liste), Teilformate und Zusätze, die QtCharts nicht selbst zeichnet. Keine Oberfläche.
 
-Die Daten des Diagramms (``a["daten"]``) kennen zusätzlich zu den Angaben aus ``editor/diagramm.py``:
+Die Daten des Diagramms (``a["daten"]``) kennen zusätzlich zu den Angaben aus ``editor/diagramme/diagramm.py``:
 ``elemente``      {achsen, achsentitel, datentabelle, fehlerindikatoren, gitter, trendlinie: bool} — fehlt ein Schlüssel, gilt ``STANDARD_ELEMENTE``;
                   Titel, Legende (mit Lage) und Datenbeschriftungen liegen weiter in ``titel_an``, ``legende``/``legende_pos``, ``labels``;
 ``ausgeblendet``  {"reihen": [Namen], "rubriken": [Namen]} (Diagrammfilter);
@@ -44,7 +44,7 @@ def trend(werte: list[float]) -> tuple[float, float]:
 
 def stift(linie: dict | None, standard_farbe: str = "#3c4043") -> QPen:
     """Stift aus {farbe, breite (Bildpunkte), art}; die Strichart kommt aus ``freie_bilder._stift`` (dieselbe wie bei Bildern und Formen)."""
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     linie = linie or {}
     return FB._stift({"b": float(linie.get("breite", 1.0)), "farbe": linie.get("farbe", standard_farbe), "art": linie.get("art", "einfach")})
 

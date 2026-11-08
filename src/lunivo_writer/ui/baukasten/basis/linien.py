@@ -7,8 +7,8 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QWidget
 
-from lunivo_writer.editor.linie import ALLE_SEITEN, LINIENARTEN, LINIENBREITEN, Linie  # noqa: F401
-from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
+from lunivo_writer.editor.objekte.linie import ALLE_SEITEN, LINIENARTEN, LINIENBREITEN, Linie  # noqa: F401
+from lunivo_writer.ui.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 

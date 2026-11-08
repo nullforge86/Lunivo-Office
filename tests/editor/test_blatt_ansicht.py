@@ -3,9 +3,9 @@ import pytest
 from PySide6.QtCore import QMimeData, QPoint, QPointF, Qt
 from PySide6.QtGui import QColor, QDropEvent, QTextCursor
 
-from lunivo_writer.editor.pagination import export_pdf
+from lunivo_writer.editor.seite.pagination import export_pdf
 from lunivo_writer.models.page import PageSettings, mm_to_px
-from lunivo_writer.ui.document.document_editor import DocumentEditor
+from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from tests.editor.blatt_dokument import fuelle
 
 

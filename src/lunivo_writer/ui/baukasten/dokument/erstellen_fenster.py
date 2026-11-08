@@ -14,7 +14,7 @@ from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, abschnittstitel
 from lunivo_writer.ui.baukasten.basis.mass import GEWICHT_SYMBOL_NAME, HOEHE_TEXT_NORMAL, NAME_MAX_ZEICHEN
 from lunivo_writer.ui.baukasten.vorlagen.vorlagen_chips import VorlagenChips
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 
 TITEL_VORLAGEN = "Mit einer Vorlage beginnen"
 

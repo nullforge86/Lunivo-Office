@@ -4,9 +4,9 @@ from __future__ import annotations
 import pytest
 from PySide6.QtWidgets import QWidget
 
-from lunivo_writer.editor import diagramm as D
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import ZusatzPanel
-from lunivo_writer.ui.dialogs.diagramm_fenster import DiagrammDialog
+from lunivo_writer.editor.diagramme import diagramm as D
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import ZusatzPanel
+from lunivo_writer.ui.dialogs.einfuegen.diagramm_fenster import DiagrammDialog
 
 @pytest.fixture
 def fenster(app, tmp_path):

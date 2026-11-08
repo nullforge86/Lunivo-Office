@@ -6,7 +6,7 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QKeySequence
 from PySide6.QtWidgets import QApplication, QMessageBox
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.document.document_area import DocumentTab
+from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
 
 
 class DateienReiterBaustein:

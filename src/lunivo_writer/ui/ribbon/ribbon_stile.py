@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
+from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
 from lunivo_writer.ui.baukasten.formatierung.text_format import groesse_feld, schrift_feld
-from lunivo_writer.ui.document.document_editor import STYLES
+from lunivo_writer.ui.document.bearbeitung.document_editor import STYLES
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import UeberlaufLeiste
@@ -89,7 +89,7 @@ class BandStileBaustein:
 
     def _stile_popup(self, unter: QWidget) -> None:
         """Alle Formatvorlagen als Galerie (Pfeil rechts neben der Reihe): Probe in der Vorlage, Name darunter; Überfahren zeigt live."""
-        from lunivo_writer.editor import stile
+        from lunivo_writer.editor.text import stile
         from lunivo_writer.ui.baukasten import GalerieAuswahl
         w = self.b.w
         m = GalerieAuswahl(w, titel="Stile")
@@ -129,8 +129,8 @@ class BandStileBaustein:
         m.popup(unter.mapToGlobal(QPoint(-m.sizeHint().width() + unter.width() + 4, unter.height())))
 
     def stile_aktualisieren(self) -> None:
-        """Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/stile.py)."""
-        from lunivo_writer.editor import stile
+        """Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/text/stile.py)."""
+        from lunivo_writer.editor.text import stile
         from lunivo_writer.ui.widgets.live_vorschau import Ueberfahren
         g = self._stile_gitter
         alt = {id(k) for k in self._stil_knoepfe}

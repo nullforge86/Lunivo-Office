@@ -5,13 +5,13 @@ Nichts committet. Tests nur gezielt (keine Vollsuite). Praxisprüfung mit Screen
 ## Erledigt
 | Bereich | Änderung | Dateien |
 |---|---|---|
-| Import-Grenzen | Dateigröße, Teilezahl, tatsächlich entpackte Größe, Kompressionsverhältnis, XML-Größe, DTD/Entitäten, XML-Tiefe, Bildpunkte; Prüfung vor jeder Verarbeitung | `services/import_grenzen.py`, `docx_reader.py`, `odt_reader.py`, `file_service.py`, `editor/freie_bilder.py` |
+| Import-Grenzen | Dateigröße, Teilezahl, tatsächlich entpackte Größe, Kompressionsverhältnis, XML-Größe, DTD/Entitäten, XML-Tiefe, Bildpunkte; Prüfung vor jeder Verarbeitung | `services/import_grenzen.py`, `docx_reader.py`, `odt_reader.py`, `file_service.py`, `editor/objekte/freie_bilder.py` |
 | MCP | Zeilen-, Nachrichten-, Ergebnis-, Laufzeitgrenze; Prozessgruppe beenden; Umgebung ohne Zugangsdaten; Rückfrage mit Startbefehl; Aktionsart + volle Argumente je Aufruf | `ai/mcp.py`, `ai/ki.py`, `ai/ai_service.py`, `plattform/prozess.py` |
 | LanguageTool | nur eigener Prozess auf freiem Port; fremder Dienst nur mit ausdrücklicher Erlaubnis; Status/Identität | `services/integrations/languagetool.py` |
-| KI-Datenschutz | Einwilligung je Anbieter und Umfang mit Datum, Widerruf (Reiter „Datenschutz“), Sperre an der Sendestelle, robuste Antwortauswertung, `file://`-Bildadresse abgelehnt, Lücke in `ist_lokale_url` geschlossen | `ai/ki.py`, `ai/ai_service.py`, `ui/dialogs/ki_dialoge.py` |
+| KI-Datenschutz | Einwilligung je Anbieter und Umfang mit Datum, Widerruf (Reiter „Datenschutz“), Sperre an der Sendestelle, robuste Antwortauswertung, `file://`-Bildadresse abgelehnt, Lücke in `ist_lokale_url` geschlossen | `ai/ki.py`, `ai/ai_service.py`, `ui/dialogs/ki/ki_dialoge.py` |
 | Speichern | Stand-Vergleich innerhalb der Sperre (`SchreibKonflikt`) | `services/sicher_schreiben.py`, `file_service.py`, `core/document_manager.py`, `ui/hauptfenster/dateien.py` |
 | Fehler gefunden | Verbundene Tabellenzellen gingen beim DOCX-Lesen/Speichern verloren (Spannweite wurde beim Befüllen gelöscht) – behoben | `docx_teile/lesen_tabellen.py` |
-| Schichten | beide Ausnahmen entfernt (`core/piktogramme.py`, Anbieter-Einhängung); Wächter für Betriebssystemaufrufe | `editor/formular.py`, `editor/einfuegen.py`, `tests/test_schichten.py` |
+| Schichten | beide Ausnahmen entfernt (`core/piktogramme.py`, Anbieter-Einhängung); Wächter für Betriebssystemaufrufe | `editor/dokument/formular.py`, `editor/dokument/einfuegen.py`, `tests/editor/test_schichten.py` |
 | Schreibhilfe | `ProofingIssue` ist Vertrag am Fund-Eingang (`bereinigen`) | `models/proofing.py`, `proofing/fund.py`, `proofing_service.py` |
 | DOCX-Aufbau | Reader/Writer in fachliche Teile (Stile, Tabellen, Seite, Objekte, Zusatz) | `services/docx_teile/` |
 | Korpus | 9 selbst erzeugte Dokumente, Roundtrip-Vergleich, Bericht | `werkzeug/docx_korpus.py`, `docs/docx-korpus-bericht.md` |
@@ -28,5 +28,5 @@ Nichts committet. Tests nur gezielt (keine Vollsuite). Praxisprüfung mit Screen
 - DOCX-Writer/Reader sind aufgeteilt, die Kernklassen bleiben groß; weitere Schnitte (Absatz/Lauf, Listen) nicht begonnen.
 - `ProofingIssue` ist jetzt durchgängig der Typ der Schreibhilfe (Prüfer bis Editor); Dicts nur noch als Brücke für Daten von außen.
 - Die ZIP-Prüfung entpackt einmal zum Zählen (Zeitaufwand bei sehr großen Paketen).
-- Beobachtet, nicht geändert: `core/befehle/seite.py` definiert `seitenraenderRahmen` doppelt; Windows/macOS-CI bleibt nicht blockierend.
+- Beobachtet, nicht geändert: `core/befehle/hauptreiter/seite.py` definiert `seitenraenderRahmen` doppelt; Windows/macOS-CI bleibt nicht blockierend.
 - Gesamtlauf (CI) steht aus: lokal nur gezielte Tests.

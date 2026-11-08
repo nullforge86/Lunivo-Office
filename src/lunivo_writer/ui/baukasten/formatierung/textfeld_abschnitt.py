@@ -9,7 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import QLocale, Signal
 from PySide6.QtWidgets import QComboBox, QLabel
 
-from lunivo_writer.editor import diagramm_format as F
+from lunivo_writer.editor.diagramme import diagramm_format as F
 from lunivo_writer.ui.baukasten.controls.formular_gitter import UmbruchSchalter
 from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchrittFeld
 from lunivo_writer.ui.baukasten.formatierung.texteffekt_dialog import Abschnitt

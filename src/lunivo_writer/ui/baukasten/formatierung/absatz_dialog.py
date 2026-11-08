@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.editor import absatzopt
+from lunivo_writer.editor.seite import absatzopt
 from lunivo_writer.ui.baukasten.controls.mass_feld import _PT_MM, EinheitFeld, spin
 from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import TabstoppDialog
 from lunivo_writer.ui.baukasten.formatierung.text_format import AUSRICHTUNG, zeichne_absaetze
@@ -32,16 +32,16 @@ _ZEILEN = (("faktor", 1.0, "Einfach"), ("faktor", 1.5, "1,5 Zeilen"), ("faktor",
            ("genau", 0.0, "Genau"), ("faktor", 0.0, "Mehrfach"))
 
 
-from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.core.farben import Farbe
 
 
 def aus_block(bf: QTextBlockFormat) -> dict:
     """Die Werte eines Absatzformats für das Fenster (Gegenstück zu ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
-    from lunivo_writer.editor import seitenfluss
-    from lunivo_writer.editor.querblatt import rechts_px
-    from lunivo_writer.editor.zusatz import abstand_davor_px
+    from lunivo_writer.editor.seite import seitenfluss
+    from lunivo_writer.editor.seite.querblatt import rechts_px
+    from lunivo_writer.editor.dokument.zusatz import abstand_davor_px
     from lunivo_writer.models.page import px_to_mm
     from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import aus_block as tabs_aus_block
     lh = bf.lineHeight() / 100 if bf.lineHeightType() == 1 and bf.lineHeight() else 1.0
@@ -190,7 +190,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         return o
 
     def _tabstopps(self) -> None:
-        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.geruest.fenster_stapel import zeige_unter
         d = TabstoppDialog(self, self._tabs)
         zeige_unter(self, d, lambda: setattr(self, "_tabs", d.stopps()))
 

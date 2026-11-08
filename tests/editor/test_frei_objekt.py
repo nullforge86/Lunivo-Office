@@ -5,8 +5,10 @@ import pytest
 from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QMouseEvent
 
-from lunivo_writer.editor import formen, frei_objekt as FO
-from lunivo_writer.editor.zusatz import B_BILDANKER
+from lunivo_writer.editor.objekte import formen
+
+from lunivo_writer.editor.objekte import frei_objekt as FO
+from lunivo_writer.editor.dokument.zusatz import B_BILDANKER
 
 
 def _ed(fenster):
@@ -113,13 +115,13 @@ def test_textfeld_drei_varianten_und_texttools_schluessel(fenster):
 
 
 def test_abstand_zum_text_und_transparenz(fenster):
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     ed = _ed(fenster); fenster.befehle.wordartVorgabe(None, 0)
     BL.anwenden(ed, BL.ziel(ed), {"umbruch": "vor", "abstand": {"oben": 2.0, "unten": 3.0, "links": 4.0, "rechts": 5.0}})
     assert BL.lesen(ed, BL.ziel(ed))["abstand"]["unten"] == 3.0
     BL.anwenden(ed, BL.ziel(ed), {"umbruch": "textfluss"})                     # frei → in den Text
     BL.anwenden(ed, BL.ziel(ed), {"umbruch": "quadrat", "zeilen": "rechts", "abstand": {"oben": 2.0, "unten": 3.0, "links": 4.0, "rechts": 5.0}})
-    from lunivo_writer.editor import umbruch as U
+    from lunivo_writer.editor.seite import umbruch as U
     c = ed._bild_cursor(); ff = U.schwebende_rahmen(ed.document())[c.selectionStart()].frameFormat()
     assert abs(ff.bottomMargin() - 3.0 * 96 / 25.4) < 0.5
     from PySide6.QtGui import QColor
@@ -151,7 +153,7 @@ def test_absatzsymbol_beim_textfeld_neben_drehgriff(fenster):
 
 
 def test_textoptionen_der_seitenleiste_wirken_auf_den_text(fenster):
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     ed = _ed(fenster); fenster.befehle.wordartVorgabe(None, 0)
     fenster.objektformat_seitenleiste(reiter=1)
     panel = fenster.sidebar.objekt_panel
@@ -164,7 +166,7 @@ def test_textoptionen_der_seitenleiste_wirken_auf_den_text(fenster):
 
 def test_schnellleiste_menues_wirken_auf_das_objekt(fenster):
     from PySide6.QtGui import QColor
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     ed = _ed(fenster); fenster.befehle.wordartVorgabe(None, 0)
     a = lambda: FO.ziel(ed)[3]
     m = ed.frei_fuell_menue(ed); m.gewaehlt.emit(QColor(255, 0, 0, 128))               # Füllung mit Transparenz
@@ -218,7 +220,7 @@ def test_textfeld_zeichnet_alle_texttools_schluessel(app):
 
 
 def test_listenmarken_und_richtungen(app):
-    from lunivo_writer.editor import listen
+    from lunivo_writer.editor.text import listen
     assert FO.listenmarken(listen.liste("disc"), 2) == ["\u25cf ", "\u25cf "]
     assert FO.listenmarken(listen.liste("dezimal", "(", ")", 3), 2) == ["(3) ", "(4) "]
     assert FO.listenmarken(listen.liste("roem_gross"), 4)[3] == "IV. " and FO.listenmarken(listen.liste("klein"), 2)[1] == "b. "
@@ -261,7 +263,7 @@ def test_textfelder_verknuepfen_und_loesen(fenster):
 def test_text_nicht_drehen(app):
     from PySide6.QtCore import QRectF
     from PySide6.QtGui import QImage, QPainter
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     bild = QImage(100, 40, QImage.Format_ARGB32); bild.fill(0)
     q = QPainter(bild); q.fillRect(0, 15, 100, 10, 0xffff0000); q.end()                # waagerechter roter Streifen als „Text“
     def malen(gerade):
@@ -279,7 +281,7 @@ def test_text_nicht_drehen(app):
 
 
 def test_docx_speichern_mit_3d_schluesseln(fenster, tmp_path):
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     from lunivo_writer.services import docx_writer
     ed = _ed(fenster); fenster.befehle.wordartVorgabe(None, 0); fenster.befehle.textfeld()
     BL.format_setzen(ed, BL.ziel(ed), fx={"schatten": {"farbe": "#000000", "transparenz": 50, "groesse": 100, "weich": 4, "abstand": 3, "winkel": 45},
@@ -350,7 +352,7 @@ def test_wordart_laeufe(fenster):
 
 def test_verknuepfte_textfelder_im_docx(fenster, tmp_path):
     import zipfile
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = _ed(fenster)
     fenster.befehle.textfeld(); a = ed._frei_sel
@@ -380,7 +382,7 @@ def test_verknuepfte_textfelder_im_docx(fenster, tmp_path):
 def test_textfeld_von_word_ohne_lunivo_daten(fenster, tmp_path):
     """Ein Word-Textfeld (nur ``wps:txbx`` mit Läufen und ``linkedTxbx``) wird als Textfeld mit Formaten gelesen."""
     import zipfile
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = _ed(fenster); fenster.befehle.textfeld(); FO.bearbeiten_beenden(ed)
     FO.aendern(ed, "textfeld", text="Hallo Welt", laeufe=[{"t": "Hallo", "fett": True}, {"t": " Welt"}])
@@ -419,7 +421,7 @@ def test_oeffnen_verteilt_den_text_der_kette(fenster, tmp_path):
 # ---- Form, Diagramm und SmartArt als freie Objekte --------------------------------------------------------------------------------
 def _docx_rundweg(ed, tmp_path):
     """Speichert als DOCX, liest wieder und gibt die freien Angaben (art == Form/Diagramm/SmartArt) in Lesereihenfolge zurück."""
-    from lunivo_writer.editor import freie_bilder as FB
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     pfad = str(tmp_path / "f.docx")
     docx_writer.write_docx(pfad, ed.document(), ed.page, {})
@@ -450,7 +452,7 @@ def test_form_als_freies_objekt_aendern_und_docx(fenster, tmp_path):
 
 
 def test_diagramm_als_freies_objekt_und_diagrammtools(fenster, tmp_path):
-    from lunivo_writer.editor import diagramm as D
+    from lunivo_writer.editor.diagramme import diagramm as D
     ed = _ed(fenster); b = fenster.befehle
     daten = {"art": "saeule_gruppiert", "titel": "Umsatz", "kategorien": list(D.BEISPIEL_KATEGORIEN), "reihen": dict(D.BEISPIEL_REIHEN)}
     FO.einfuegen(ed, "diagramm", daten, 480, 300)
@@ -479,7 +481,7 @@ def test_smartart_und_form_ohne_auswahl_aendern_nichts(fenster):
 
 
 def test_smartart_als_freies_objekt_menues(fenster, tmp_path):
-    from lunivo_writer.editor import smartart as SA
+    from lunivo_writer.editor.objekte import smartart as SA
     ed = _ed(fenster); b = fenster.befehle
     FO.einfuegen(ed, "smartart", {"layout": "Prozess", "farben": "Blau", "text": "A\nB\nC"})
     assert FO.art_gewaehlt(ed) == "smartart"
@@ -492,7 +494,8 @@ def test_smartart_als_freies_objekt_menues(fenster, tmp_path):
 
 def test_bild_und_piktogramm_als_freies_bild(fenster, tmp_path):
     from PySide6.QtGui import QColor, QImage
-    from lunivo_writer.editor import bildlayout as BL, freie_bilder as FB
+    from lunivo_writer.editor.objekte import bildlayout as BL
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = _ed(fenster); b = fenster.befehle
     img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red")); pfad = str(tmp_path / "r.png"); img.save(pfad)
@@ -520,7 +523,10 @@ def test_bild_und_piktogramm_als_freies_bild(fenster, tmp_path):
 
 def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     from PySide6.QtGui import QColor, QImage
-    from lunivo_writer.editor import bildlayout as BL, bildwerkzeuge as BW, bildzuschnitt as BZ, freie_bilder as FB
+    from lunivo_writer.editor.objekte import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildwerkzeuge as BW
+    from lunivo_writer.editor.objekte import bildzuschnitt as BZ
+    from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.services import docx_reader, docx_writer
     ed = _ed(fenster); b = fenster.befehle
     b.bildZuschneidenModus(); assert not b.an_bildZuschneidenModus()                                      # ohne Bild: nur Hinweis
@@ -539,7 +545,7 @@ def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     b.bildZuschneidenForm(None, "Ellipse"); z = BL.ziel(ed)
     assert z[2]["maske"] == "Ellipse" and z[3].pixelColor(0, 0).alpha() == 0 and z[3].pixelColor(100, 100).alpha() == 255
     assert any(n == "Herz" for _k, ns in BZ.formen_kategorien() for n in ns) and not any(BZ.formen_kategorien()[0][0] == "Linie" for _ in [0])
-    from lunivo_writer.ui.baukasten.dropdown.bild_diagramm_menues import KLAPPEN
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import KLAPPEN
     assert "bildZuschneiden" in KLAPPEN and not hasattr(b, "menue_bildZuschneiden")        # nur noch die Klappe der Vorlage
     pfad2 = str(tmp_path / "z.docx")
     docx_writer.write_docx(pfad2, ed.document(), ed.page, {})
@@ -580,7 +586,8 @@ def _dg(fenster, **zusatz):
 
 
 def test_diagramm_teile_rechtecke_und_treffer(fenster):
-    from lunivo_writer.editor import diagramm as D, diagramm_teile as T
+    from lunivo_writer.editor.diagramme import diagramm as D
+    from lunivo_writer.editor.diagramme import diagramm_teile as T
     ed, b = _dg(fenster)
     d = FO.daten_lesen(ed, "diagramm")
     schl = [k for k, _n in D.teile(d)]
@@ -598,7 +605,8 @@ def test_diagramm_teile_rechtecke_und_treffer(fenster):
 
 
 def test_diagramm_elemente_filter_format_und_zuruecksetzen(fenster):
-    from lunivo_writer.editor import diagramm as D, diagramm_teile as T
+    from lunivo_writer.editor.diagramme import diagramm as D
+    from lunivo_writer.editor.diagramme import diagramm_teile as T
     ed, b = _dg(fenster)
     glatt = D.bild_aus_daten(FO.daten_lesen(ed, "diagramm"), 400, 260)
     for name in ("achsentitel", "datentabelle", "fehlerindikatoren", "trendlinie", "gitter"):
@@ -629,7 +637,7 @@ def test_diagramm_elemente_filter_format_und_zuruecksetzen(fenster):
 
 
 def test_diagramm_stile_und_farbschemen():
-    from lunivo_writer.editor import diagramm as D
+    from lunivo_writer.editor.diagramme import diagramm as D
     assert len(D.STILE) >= 12 and D.STILE[0][0] == "Standard" and D.STILE[3][0] == "Dunkel" and len(D.stile_liste()) == len(D.STILE)
     assert len({(s[1], s[2], s[3]) for s in D.STILE}) >= 10                                            # gut unterscheidbar
     g = dict(D.farbschemen_gruppen())
@@ -649,7 +657,9 @@ def test_diagramm_docx_rundweg_mit_elementen_und_filter(fenster, tmp_path):
 
 def test_formstil_raster_und_anpassungsgriff(fenster):
     from PySide6.QtCore import QRectF
-    from lunivo_writer.editor import formen_anpassen as A, formen_katalog as K, formen_stile as S
+    from lunivo_writer.editor.objekte import formen_anpassen as A
+    from lunivo_writer.editor.objekte import formen_katalog as K
+    from lunivo_writer.editor.objekte import formen_stile as S
     ed = _ed(fenster); b = fenster.befehle
     raster = b.formstileRaster(); assert len(raster) == 6 and all(len(z) == 7 for z in raster)
     FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Stern mit 5 Zacken"}, 160, 120)
@@ -675,9 +685,9 @@ def test_formstil_raster_und_anpassungsgriff(fenster):
 
 def test_diagramm_namensquelle_und_elf_schnelllayouts(fenster):
     ed, b = _dg(fenster)
-    from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUTS
-    from lunivo_writer.editor import diagramm as D
-    from lunivo_writer.core.befehle.diagrammtools import SCHNELLLAYOUT_ANZEIGE
+    from lunivo_writer.core.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUTS
+    from lunivo_writer.editor.diagramme import diagramm as D
+    from lunivo_writer.core.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUT_ANZEIGE
     assert len(SCHNELLLAYOUTS) == 19 and len(SCHNELLLAYOUT_ANZEIGE) == 11 and max(SCHNELLLAYOUT_ANZEIGE) < len(SCHNELLLAYOUTS)
     b.diagrammSchnelllayout(6); assert FO.daten_lesen(ed, "diagramm")["elemente"]["datentabelle"] is True
     assert b.diagrammNamenQuelleLesen() == "zeile1"
@@ -688,7 +698,7 @@ def test_diagramm_namensquelle_und_elf_schnelllayouts(fenster):
 
 
 def test_formtools_ebene_nach_vorne_hinten(fenster):
-    from lunivo_writer.editor import bildlayout as BL
+    from lunivo_writer.editor.objekte import bildlayout as BL
     from lunivo_writer.ui.contextual.image_tools import FORMTOOLS
     namen = [e["name"] for g in FORMTOOLS["gruppen"] for e in g["knoepfe"]]
     assert "Eine Ebene nach vorne" in namen and "Eine Ebene nach hinten" in namen

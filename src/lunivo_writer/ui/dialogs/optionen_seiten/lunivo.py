@@ -55,7 +55,7 @@ class LunivoSeiten:
                     return m["name"]
             return mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid
 
-        from lunivo_writer.ui.dialogs.ki_dialoge import modell_felder_fuellen
+        from lunivo_writer.ui.dialogs.ki.ki_dialoge import modell_felder_fuellen
 
         def aufgaben_fuellen():
             for aufgabe, c in combos.items():
@@ -146,14 +146,14 @@ class LunivoSeiten:
             aufgaben_fuellen(); modell_fuellen(); anbieter_fuellen()
 
         def anbieter_neu():
-            from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
-            from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+            from lunivo_writer.ui.baukasten.geruest.fenster_stapel import ausfuehren
+            from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
             ausfuehren(KIEinstellungenDialog(self.w, 0))
             alles_neu(); geaendert.emit()
 
         def modelle_bearbeiten():
-            from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
-            from lunivo_writer.ui.dialogs.ki_dialoge import KIEinstellungenDialog
+            from lunivo_writer.ui.baukasten.geruest.fenster_stapel import ausfuehren
+            from lunivo_writer.ui.dialogs.ki.ki_dialoge import KIEinstellungenDialog
             ausfuehren(KIEinstellungenDialog(self.w, 0))
             alles_neu(); geaendert.emit()
         neuer.clicked.connect(anbieter_neu)

@@ -169,10 +169,10 @@ def _has_rich_content(doc: QTextDocument) -> bool:
 def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = None, sicherung: bool = True, erwartet=sicher_schreiben.UNGEPRUEFT) -> IOReport:
     """Speichert nach Endung über den sicheren Schreibweg (``sicher_schreiben``): Temp-Datei, Prüfung, Sicherungskopie der
     Vorfassung (abschaltbar mit `sicherung=False`), atomares Ersetzen. Jedes Format schreibt Lunivo selbst."""
-    from lunivo_writer.editor import lese_zeilenluft
+    from lunivo_writer.editor.seite import lese_zeilenluft
     if lese_zeilenluft.aktiv(doc):                       # der Zusatzabstand der Lesehilfe gehört nicht in die Datei
         doc = lese_zeilenluft.bereinigte_kopie(doc)
-    from lunivo_writer.editor import querblatt
+    from lunivo_writer.editor.seite import querblatt
     if querblatt.hat_zusatz(doc):                        # ebenso der Einzug, mit dem der Editor verschieden große Blätter zeigt
         doc = querblatt.bereinigte_kopie(doc)
     e = ext(path)

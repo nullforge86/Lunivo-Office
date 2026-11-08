@@ -4,7 +4,13 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtGui import QFont, QImage, QPainter, QPainterPath
 
-from lunivo_writer.editor import diagramm as D, diagramm_format as F, texteffekt as TE, textfx as X
+from lunivo_writer.editor.text import texteffekt as TE
+
+from lunivo_writer.editor.text import textfx as X
+
+from lunivo_writer.editor.diagramme import diagramm as D
+
+from lunivo_writer.editor.diagramme import diagramm_format as F
 
 DATEN = {"art": "saeule_gruppiert", "titel": "Umsatz", "kategorien": ["A", "B", "C"], "reihen": {"X": [1, 2, 3], "Y": [3, 1, 2]}}
 
@@ -98,7 +104,7 @@ def test_textfeld_ausrichtung_raender_und_nicht_drehen(app):
 
 def test_mehrfachlinien_folgen_der_strichart_und_standard_bleibt():
     from PySide6.QtGui import QPainterPath
-    from lunivo_writer.editor import textfx as X
+    from lunivo_writer.editor.text import textfx as X
     pf = QPainterPath(); pf.moveTo(0, 0); pf.lineTo(200, 0)
     for form in ("doppelt", "dick_duenn", "duenn_dick", "dreifach"):
         voll, gestr = X._kontur_pfade(pf, 3.0, form), X._kontur_pfade(pf, 3.0, form, "gestrichelt")
@@ -144,8 +150,8 @@ def test_textfuellung_fuenf_arten_und_fuell_pinsel(app):
 
 
 def test_kopfmenues_sind_kompakt_wie_die_vorlage(app):
-    from lunivo_writer.ui.baukasten.dropdown.fuell_voreinstellungen import fuell_menue
-    from lunivo_writer.ui.baukasten.dropdown.linien_voreinstellungen import linien_menue
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.fuell_voreinstellungen import fuell_menue
+    from lunivo_writer.ui.baukasten.dropdown.objektmenues.linien_voreinstellungen import linien_menue
     f = fuell_menue(None, ""); f.adjustSize()
     assert f.sizeHint().width() <= 230                       # Vorlage: ~222 px (vorher ~370)
     l = linien_menue(None, ""); l.adjustSize()
