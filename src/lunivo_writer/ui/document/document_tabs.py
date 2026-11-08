@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QTabBar, QToolButton, QWidget
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.theme import kopf_symbolfarbe
-from lunivo_writer.ui.baukasten.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
 
 
 class DocTabs(QObject):

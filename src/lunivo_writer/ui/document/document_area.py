@@ -10,7 +10,7 @@ from lunivo_writer.services.file_service import Loaded
 from lunivo_writer.ui.document.document_editor import DocumentEditor
 from lunivo_writer.models.page import PageSettings
 from lunivo_writer.services import recovery
-from lunivo_writer.ui.baukasten.mass import RAND_DOKUMENTFLAECHE
+from lunivo_writer.ui.baukasten.basis.mass import RAND_DOKUMENTFLAECHE
 
 
 class DocumentTab(QScrollArea):

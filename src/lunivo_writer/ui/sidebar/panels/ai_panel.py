@@ -4,13 +4,13 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.chat_blase import FehlerKarte, KiBlase, NutzerBlase
-from lunivo_writer.ui.baukasten.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar
-from lunivo_writer.ui.baukasten.chat_leerzustand import ChatLeerzustand
+from lunivo_writer.ui.baukasten.chat.chat_blase import FehlerKarte, KiBlase, NutzerBlase
+from lunivo_writer.ui.baukasten.chat.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar
+from lunivo_writer.ui.baukasten.chat.chat_leerzustand import ChatLeerzustand
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, RAND_KEIN
-from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
-from lunivo_writer.ui.baukasten.texte import hinweis_label
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, RAND_KEIN
+from lunivo_writer.ui.baukasten.controls.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
 
 
 class ChatPanel(QWidget):

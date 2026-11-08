@@ -6,10 +6,10 @@ import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
 from lunivo_writer.core import paths
-from lunivo_writer.ui.baukasten.beschriftung import text_label
-from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.formular_gitter import gruppe, FormularGitter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
+from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.controls.formular_gitter import gruppe, FormularGitter
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_BLOCK,
     ABSTAND_GROSS,
     ABSTAND_KEIN,
@@ -179,7 +179,7 @@ class _Seite(QWidget):
         k = QPushButton("Wählen …")
 
         def waehle():
-            from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+            from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
             ordner = Dateifenster.getExistingDirectory(self, text, e.text() or os.path.expanduser("~"))
             if ordner:
                 e.setText(ordner)

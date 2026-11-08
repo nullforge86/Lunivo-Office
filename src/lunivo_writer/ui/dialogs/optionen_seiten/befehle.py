@@ -4,10 +4,10 @@ from __future__ import annotations
 import json
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.beschriftung import md_label
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FormularGitter, tabellen_gitter
+from lunivo_writer.ui.baukasten.basis.beschriftung import md_label
+from lunivo_writer.ui.baukasten.controls.formular_gitter import UmbruchSchalter, FormularGitter, tabellen_gitter
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_GROSS,
     ABSTAND_MITTEL,
     ABSTAND_NORMAL,

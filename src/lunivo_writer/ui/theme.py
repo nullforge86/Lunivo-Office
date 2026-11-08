@@ -5,7 +5,7 @@ from PySide6.QtCore import QEvent, QObject, QRectF
 from PySide6.QtGui import QColor, QPainterPath, QPalette, QRegion
 from PySide6.QtWidgets import QApplication, QStyleFactory
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_BANDREITER_KNOPF,
     BREITE_FELDKNOPF_MIN,
     BREITE_KNOPF_KLEIN,
@@ -150,7 +150,7 @@ def apply_theme(app: QApplication, mode: str) -> None:
         if hasattr(w, "arbeit"):
             mint_abstaende(w)
     # Stylesheets mit palette(...) werden sonst nicht neu ausgewertet
-    from lunivo_writer.ui.baukasten.texte import auffrischen
+    from lunivo_writer.ui.baukasten.basis.texte import auffrischen
     for w in app.allWidgets():
         auffrischen(w)
         if w.property("seitenKarte"):                              # schon gebaute Seitenleisten-Karten: Innenrand passend zum Thema
@@ -379,7 +379,7 @@ def _stil(app: QApplication) -> None:
     f["akzent_hover"] = f["kopf_hover"] if _MINT else Farbe.AKZENT_DUNKEL
     f["kf_papier"] = Farbe.PAPIER
     f["kf_leiste"], f["kf_leiste_rand"], f["kf_gitter"], f["kf_tinte"] = Farbe.LEISTE, Farbe.LEISTE_RAND, Farbe.GITTER, Farbe.TINTE     # Knöpfe auf dem Papier: unabhängig vom Thema
-    from lunivo_writer.ui.baukasten.karte import karte_regeln
+    from lunivo_writer.ui.baukasten.basis.karte import karte_regeln
     qss = QSS % f + karte_regeln(f["akzent"], f["akzent"], Farbe.GRAU, Farbe.ROT_HELL if _ist_dunkel(app) else Farbe.ROT)           # Karten/Zeilen: eine Quelle (baukasten/karte.py)
     if _MINT:
         qss += MINT_QSS % f

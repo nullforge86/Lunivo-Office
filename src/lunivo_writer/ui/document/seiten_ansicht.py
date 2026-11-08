@@ -8,8 +8,8 @@ from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 from lunivo_writer.models.page import mm_to_px
 from lunivo_writer.editor.pagination import seiten_bilder
-from lunivo_writer.ui.baukasten.formular_gitter import tabellen_gitter
-from lunivo_writer.ui.baukasten.mass import ABSTAND_SEITENBILDER, RAND_SEITENBILDER
+from lunivo_writer.ui.baukasten.controls.formular_gitter import tabellen_gitter
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_SEITENBILDER, RAND_SEITENBILDER
 
 
 class SeitenAnsicht(QWidget):

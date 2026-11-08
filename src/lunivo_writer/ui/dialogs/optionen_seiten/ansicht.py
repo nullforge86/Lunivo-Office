@@ -4,11 +4,11 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QRadioButton, QPushButton, QSlider, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter
-from lunivo_writer.ui.baukasten.beschriftung import text_label
+from lunivo_writer.ui.baukasten.controls.formular_gitter import UmbruchSchalter
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ui.dialogs.optionen_seiten.gemeinsam import _Seite
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_GROSS,
     ABSTAND_MITTEL,
     HOEHE_FELD,

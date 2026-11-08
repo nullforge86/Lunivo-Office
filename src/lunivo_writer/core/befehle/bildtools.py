@@ -97,7 +97,7 @@ class BildToolsBefehle:
         z = self._bz()
         if z is None or z[3] is None:
             return False
-        from lunivo_writer.ui.baukasten.bild_zoom import BildZoomFenster
+        from lunivo_writer.ui.baukasten.medien.bild_zoom import BildZoomFenster
         BildZoomFenster(self.w, z[3]).exec()
         return True
 
@@ -121,7 +121,7 @@ class BildToolsBefehle:
         if z is None:
             return
         if not pfad:
-            from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+            from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
             pfad, _ = Dateifenster.getOpenFileName(self.w, "Bild ändern", self.w.settings.get("last_dir", os.path.expanduser("~")),
                                                    "Bilder (*.png *.jpg *.jpeg *.gif *.bmp *.webp);;Alle Dateien (*)")
         if pfad and not BW.aus_datei(self.ed, z, pfad):

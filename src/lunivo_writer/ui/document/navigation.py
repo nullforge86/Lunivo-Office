@@ -14,15 +14,15 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.ui.schreibhilfe_katalog import VORLESEN
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.panel_rahmen import PanelRahmen, rollflaeche
+from lunivo_writer.ui.baukasten.controls.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.ui.theme import karte_einrichten
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.texte import hinweis_label, marke_faerben
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label, marke_faerben
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_SEITENLEISTE_PANEL,
     ABSTAND_KARTENZEILE,
     ABSTAND_MITTEL,
@@ -194,7 +194,7 @@ class NavigationPanel(QWidget):
 
     def unterfenster(self, d) -> bool:
         """Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu."""
-        from lunivo_writer.ui.baukasten.zusatz_panel import ausfuehren_im_stapel
+        from lunivo_writer.ui.baukasten.controls.zusatz_panel import ausfuehren_im_stapel
         return ausfuehren_im_stapel(self.stapel, d, self.width() - 36, max(300, self.height() - 140))
 
     def suche_zeigen(self, text: str = "", reiter: str = "Suchen", element: str = "") -> None:
@@ -548,7 +548,7 @@ class NavigationPanel(QWidget):
     def _bau_vorlesen(self) -> PanelRahmen:
         r = PanelRahmen(TITEL["vorlesen"])
         if self.fenster is not None:
-            from lunivo_writer.ui.baukasten.werkbank import Werkbank
+            from lunivo_writer.ui.baukasten.controls.werkbank import Werkbank
             wb = Werkbank(self.fenster, "Lesen", nur=VORLESEN)
             r.inhalt.addWidget(wb, 1)
             self.vorlesen_zeilen = wb

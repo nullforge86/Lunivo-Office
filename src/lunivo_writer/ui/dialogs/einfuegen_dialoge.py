@@ -10,16 +10,16 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QSizePolicy, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.editor import einfuegen as E
 from lunivo_writer.ui.baukasten import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, abschnittstitel
 from lunivo_writer.services import bausteine
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.farben import VORGABE_LINIE, VORGABE_SCHRIFT
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.farben import VORGABE_LINIE, VORGABE_SCHRIFT
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_KACHEL_VORSCHAU,
     GROESSE_FENSTER_AUSWAHL,
     GROESSE_FENSTER_EINFUEGEN_GROSS,
@@ -46,8 +46,8 @@ def _ok(dlg):
 _Farbknopf = FarbFeld
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 class _Vorschau(QLabel):
     """Vorschaubild, das sich der Breite anpasst (in der Seitenleiste kleiner, nie breiter als 460 px)."""
 
@@ -133,7 +133,7 @@ class _LayoutGalerie(QWidget):
         self._bauen(3)
 
     def _bauen(self, spalten: int) -> None:
-        from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
+        from lunivo_writer.ui.baukasten.controls.kachel_feld import KachelFeld
         if self.feld is not None:
             self._v.removeWidget(self.feld); self.feld.deleteLater()
         self._spalten = spalten
@@ -291,9 +291,9 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
         super().__init__(parent)
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
         from PySide6.QtWidgets import QWidget
-        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
         self.setWindowTitle("Daten bearbeiten")
         v = QVBoxLayout(self)
         kopf = QWidget(); g = FormularGitter(kopf)
@@ -417,7 +417,7 @@ class DatumDialog(PanelFaehig, QDialog):
     def __init__(self, parent, sprache: str = "de_DE"):
         super().__init__(parent)
         from PySide6.QtWidgets import QCheckBox
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
         self.setWindowTitle("Datum und Uhrzeit")
         v = QVBoxLayout(self)
         g = FormularGitter(); v.addLayout(g)
@@ -468,8 +468,8 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Textbausteine")
         self.resize(*GROESSE_FENSTER_EINFUEGEN_GROSS)
         v = QVBoxLayout(self)
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, abschnittstitel
         felder = FormularGitter(); v.addLayout(felder)
         self.name = QLineEdit(); self.kuerzel = QLineEdit()
         felder.zeile("Name:", self.name)

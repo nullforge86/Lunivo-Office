@@ -147,9 +147,9 @@ class KopfFussBefehle:
 
     def kfOptionen(self, k=None):
         """Seitenleistenfenster: Erste Seite anders; Gerade und ungerade Seiten unterschiedlich."""
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
-        from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
         from PySide6.QtWidgets import QDialog
         t = self.w.current_tab()
         if not t:
@@ -161,7 +161,7 @@ class KopfFussBefehle:
         d = Fenster(self.w)
         d.setWindowTitle("Optionen für Kopf- und Fußzeile")
         from PySide6.QtWidgets import QWidget
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
         v = QVBoxLayout(d)
         erste = UmbruchSchalter("Erste Seite anders"); erste.setChecked(pg.diff_first)
         gu = UmbruchSchalter("Gerade und ungerade Seiten sind unterschiedlich"); gu.setChecked(pg.diff_even)
@@ -189,9 +189,9 @@ class KopfFussBefehle:
     def _kf_abstand(self, attr: str, name: str, symbol: str):
         from PySide6.QtCore import QLocale, QSize
         from PySide6.QtWidgets import QLabel, QToolButton, QWidget
-        from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
         from lunivo_writer.ui.widgets import icons
-        from lunivo_writer.ui.baukasten.schiebe_feld import SchrittFeld
+        from lunivo_writer.ui.baukasten.controls.schiebe_feld import SchrittFeld
         class _Zeile(QWidget):
             neu_laden = None
 

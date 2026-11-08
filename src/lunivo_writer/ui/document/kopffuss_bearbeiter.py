@@ -21,9 +21,9 @@ from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import seitenzahl as SZ
 from lunivo_writer.models.page import HeaderFooter, mm_to_px
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter, kacheln_legen
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter, kacheln_legen
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ABSTAND_GROSS,
     ABSTAND_NORMAL,
@@ -136,7 +136,7 @@ class _EinfuegenPanel(MenueListe):
         self.widget(w)
 
     def ort_setzen(self, ort: str) -> None:
-        from lunivo_writer.ui.baukasten.seiten_bildchen import seitenzahl_zeichner
+        from lunivo_writer.ui.baukasten.medien.seiten_bildchen import seitenzahl_zeichner
         self.ort = ort
         for schl, k in self.kacheln.items():
             pm = QPixmap(40, 50); pm.fill(Qt.transparent)

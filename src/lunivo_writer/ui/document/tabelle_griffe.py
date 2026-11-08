@@ -15,9 +15,9 @@ from PySide6.QtWidgets import QToolButton, QWidget
 from lunivo_writer.editor import tabelleneigenschaften as TE
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import RADIUS_LEISTENKNOPF
+from lunivo_writer.ui.baukasten.basis.mass import RADIUS_LEISTENKNOPF
 
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
 # Hell wie die übrigen Knöpfe auf dem Papier (siehe LEISTE_STIL in kopffuss_bearbeiter.py): unabhängig vom Thema des Fensters
 def dunkel(symbol: str, px: int = 16) -> QIcon:
     """Symbol in dunkler Tinte für die hellen Knöpfe (``icons.icon`` richtet sich nach der Fensterpalette und wäre auf Hellgrau weiß)."""

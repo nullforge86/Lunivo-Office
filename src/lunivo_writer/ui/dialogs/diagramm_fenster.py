@@ -17,9 +17,9 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm as D
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ABSTAND_KEIN,
     BREITE_LISTE_ARTEN,
@@ -39,7 +39,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_RAHMEN,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
@@ -56,7 +56,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent, vorhanden: dict | None = None):
         """``vorhanden``: Daten eines vorhandenen Diagramms (Diagrammart, Titel, Rubriken, Reihen, Kombination) — dann öffnet das Fenster damit."""
         super().__init__(parent)
-        from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
         self.setWindowTitle("Diagramm einfügen")
         self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
         self.kombi: list[tuple[str, bool]] = []
@@ -228,7 +228,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.aktualisieren()
 
     def _daten(self) -> None:
-        from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
         from lunivo_writer.ui.dialogs.einfuegen_dialoge import DiagrammDatenDialog
         d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
 

@@ -3,17 +3,17 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.editor import formular as FO
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
-from lunivo_writer.ui.baukasten.mass import HOEHE_TEXT_NORMAL
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.basis.mass import HOEHE_TEXT_NORMAL
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 class FormFeldDialog(PanelFaehig, QDialog):
     def __init__(self, fenster, art: str, bestehend: dict | None = None):
         super().__init__(fenster)

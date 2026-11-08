@@ -79,7 +79,7 @@ class AbsatzformatMixin:
 
     def set_tabstopps(self, stopps) -> None:
         """Tabstopps als Liste aus (Millimeter, Ausrichtung, Füllzeichen) setzen."""
-        from lunivo_writer.ui.baukasten.tabstopp_dialog import zu_block
+        from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import zu_block
         self._block_merge(lambda bf: zu_block(bf, stopps))
         self.viewport().update()
 
@@ -194,7 +194,7 @@ class AbsatzformatMixin:
         """Schrift der Nummern: Qt zeichnet sie mit dem Zeichenformat des Absatzes."""
         if not zeichen:
             return
-        from lunivo_writer.ui.baukasten.text_format import zu_format
+        from lunivo_writer.ui.baukasten.formatierung.text_format import zu_format
         for i in range(lst.count()):
             c = QTextCursor(lst.item(i))
             f = zu_format(zeichen)

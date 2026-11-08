@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.ribbon.plan import plan
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_KNOPF_KACHEL,
     GROESSE_SYMBOL_JETZT,
     GROESSE_VORSCHAU_QUADRAT,
@@ -40,9 +40,9 @@ def lade_json(settings, key: str, standard):
         return standard
 
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
 
 
 def _satz(text: str, gedaempft: bool = False) -> QLabel:

@@ -13,22 +13,22 @@ from PySide6.QtWidgets import (
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.beschriftung import text_label
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
 from lunivo_writer.ai import ki as K
-from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.ui.widgets import icons
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
-from lunivo_writer.ui.baukasten.auswahl_liste import AuswahlListe
-from lunivo_writer.ui.baukasten.karte import als_karte
-from lunivo_writer.ui.baukasten.listen_leiste import ListenLeiste
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.controls.auswahl_liste import AuswahlListe
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
+from lunivo_writer.ui.baukasten.controls.listen_leiste import ListenLeiste
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_KNOPF_KLEIN,
     GROESSE_FENSTER_ANBIETER,
     GROESSE_FENSTER_KI,
@@ -46,7 +46,7 @@ from lunivo_writer.ui.baukasten.mass import (
     RAND_OBEN_SEITE,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_LANG
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_LANG
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)
