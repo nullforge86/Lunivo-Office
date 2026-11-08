@@ -10,9 +10,9 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_KLEIN,
     ABSTAND_NORMAL,
     HOEHE_KNOPF_GROSS,
@@ -28,7 +28,7 @@ SCHUTZ_ARTEN = (("lesen", "Schreibgeschützt"), ("aenderungen", "Nachverfolgte �
                 ("formulare", "Ausfüllen von Formularen"))
 
 
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, UmbruchSchalter  # noqa: E402
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, UmbruchSchalter  # noqa: E402
 
 class WoerterDialog(PanelFaehig, QDialog):
     """„Wörter zählen“: die Statistiken untereinander, Werte rechtsbündig; der Haken nimmt Fuß- und Endnoten dazu."""

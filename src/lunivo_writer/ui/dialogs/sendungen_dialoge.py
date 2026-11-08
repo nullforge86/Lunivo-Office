@@ -5,11 +5,11 @@ from PySide6.QtWidgets import (
     QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit, QPushButton,
     QVBoxLayout,
 )
-from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import sendungen as S
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_FENSTER_SENDUNG,
     HOEHE_TEXT_KURZ,
     HOEHE_TEXT_MITTEL,
@@ -28,8 +28,8 @@ def _ok(dlg, text_ok: str | None = None):
     return knopfzeile(dlg, ok_text=text_ok or "OK")
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 class UmschlagDialog(PanelFaehig, QDialog):
     def __init__(self, parent, absender: str = ""):
         super().__init__(parent)

@@ -9,14 +9,14 @@ from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QTabWidget, QVBoxLayout,
     QWidget,
 )
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter
-from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter
+from lunivo_writer.ui.baukasten.dokument.speichern_fenster import Dateifenster
 
 from lunivo_writer.editor import vorlagen
 
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.mass import GROESSE_FENSTER_VORLAGEN
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_FENSTER_VORLAGEN
 class VorlagenDialog(QDialog):
     def __init__(self, parent, settings, kann_speichern: bool):
         super().__init__(parent)

@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste, knopfzeile
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_FENSTER_SERIENBRIEF,
     HOEHE_KNOPF,
     HOEHE_KNOPF_GROSS,
@@ -81,7 +81,7 @@ class FeldDialog(PanelFaehig, QDialog):
         self.name = QLineEdit(); self.name.setMinimumHeight(HOEHE_KNOPF); self.name.setAccessibleName("Feldname")
         self.name.setPlaceholderText("Name eines Feldes")
         t2 = QLabel("&Feldname:"); t2.setBuddy(self.name)
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
         z = FormularGitter(); z.zeile(t2, self.name); v.addLayout(z)
         self.zeile = knopfzeile(self, ok_text="Einfügen", bei_ok=self._melden)
         v.addWidget(self.zeile)
@@ -108,7 +108,7 @@ class ZuordnenDialog(PanelFaehig, QDialog):
         zuordnung = dict(zuordnung or {})
         spalten = list(spalten or [])
         v = QVBoxLayout(self)
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
         hinweis = QLabel("Hat ein Feld im Text einen anderen Namen als die Spalte der Empfängerliste, hier die Spalte wählen.")
         hinweis.setWordWrap(True); v.addWidget(hinweis)
         g = FormularGitter()                                                   # schmal: Spalte unter dem Feldnamen

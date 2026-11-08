@@ -16,15 +16,15 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QHBo
 
 from lunivo_writer.editor import wasserzeichen as WZ
 from lunivo_writer.models.page import PageSettings, mm_to_px
-from lunivo_writer.ui.baukasten.dialog_rahmen import VorschauFlaeche, fussleiste
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.ui.baukasten.dropdown.farbpalette import FarbFeld
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.mass_feld import MassSpin
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.mass_feld import MassSpin
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
+from lunivo_writer.ui.baukasten.basis.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
 
 AUTOMATISCH = "Automatisch"
 
@@ -158,7 +158,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self._zustand()
 
     def _bild_waehlen(self) -> None:
-        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        from lunivo_writer.ui.baukasten.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self, "Bild auswählen", self._ordner or os.path.expanduser("~"),
                              "Bilder (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.webp);;Alle Dateien (*)")
         if wahl:
