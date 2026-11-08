@@ -20,6 +20,25 @@ def win(tmp_path, monkeypatch):
     return w
 
 
+def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp_path, monkeypatch):
+    w = win(tmp_path, monkeypatch)
+    assistant = w.assistant
+    erstes = w.current_editor().document()
+    w.new_document()
+    zweites = w.current_editor().document()
+    assistant.attach(w.current_editor())
+    assert erstes is not zweites
+    assert erstes.revision() == zweites.revision()  # gleiche Revisionsnummer darf nicht verwechselt werden
+
+    assistant._lauf_doc = erstes
+    assistant._laeuft = True
+    assistant._fertig(zweites.revision(), [])
+
+    assert not assistant._voll
+    assert not assistant._laeuft
+    assert assistant._timer.isActive()
+
+
 def warte(sig_obj, timeout=8000):
     loop = QEventLoop()
     sig_obj.connect(lambda *_: loop.quit())
