@@ -192,6 +192,12 @@ class HinweisKarte(QFrame):
     def __init__(self, titel, text, cent, fenster, panel):
         super().__init__()
         self.text, self.w = text, fenster
+        self._editor = fenster.current_editor()
+        try:
+            self._dokument = self._editor.document() if self._editor is not None else None
+            self._revision = self._dokument.revision() if self._dokument is not None else -1
+        except RuntimeError:
+            self._dokument, self._revision = None, -1
         self.setObjectName("HinweisKarte")
         als_karte(self, "karte")
         lay = QVBoxLayout(self)
@@ -209,8 +215,14 @@ class HinweisKarte(QFrame):
 
     def _ende(self):
         e = self.w.current_editor()
-        if e is not None:
+        try:
+            if (e is None or e is not self._editor or e.document() is not self._dokument
+                    or e.document().revision() != self._revision):
+                self.w.statusBar().showMessage("Das Dokument wurde gewechselt oder geändert — das Ergebnis wurde nicht eingefügt.", 6000)
+                return
             c = e.textCursor(); c.movePosition(c.MoveOperation.End); c.insertBlock(); c.insertText(self.text)
+        except RuntimeError:
+            self.w.statusBar().showMessage("Das ursprüngliche Dokument ist nicht mehr verfügbar — das Ergebnis wurde nicht eingefügt.", 6000)
 
     def _weg(self):
         self.hide(); self.setParent(None); self.deleteLater()
