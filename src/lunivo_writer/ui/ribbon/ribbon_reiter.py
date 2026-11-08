@@ -5,7 +5,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QWidget
 
 from lunivo_writer.ui.ribbon.plan import plan
-from lunivo_writer.ui.baukasten.mass import RAND_BANDREITER
+from lunivo_writer.ui.baukasten.basis.mass import RAND_BANDREITER
 from lunivo_writer.ui.ribbon.ribbon_bausteine import (
     STANDARD_VERSTECKT, _BandSeite, _GruppenTrenner,
 )

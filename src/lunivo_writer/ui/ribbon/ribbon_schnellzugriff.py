@@ -5,7 +5,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import ICON_GROSS
+from lunivo_writer.ui.baukasten.basis.mass import ICON_GROSS
 from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.ribbon.ribbon_bausteine import _mit_kuerzel
 

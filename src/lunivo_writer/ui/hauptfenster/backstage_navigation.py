@@ -5,7 +5,7 @@ from PySide6.QtCore import QSize
 from lunivo_writer.ui.baukasten.dropdown.menue_tafel import MenueTafel
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.theme import kopf_symbolfarbe
-from lunivo_writer.ui.baukasten.mass import ICON_NORMAL, PADDING_BACKSTAGE_STEUERKNOPF
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL, PADDING_BACKSTAGE_STEUERKNOPF
 
 
 class BackstageNavigationBaustein:
