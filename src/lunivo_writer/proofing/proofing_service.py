@@ -375,10 +375,10 @@ class WritingAssistant(QObject):
         lt = len([f for f in self._roh if f.quelle == "languagetool"])
         self._zeigen(f"Gründlich geprüft: {lt} zusätzliche Hinweise von LanguageTool ({vorher} eigene Funde vorher).")
 
-    def ki_fertig(self, rev: int, vorschlaege: list) -> int:
-        """KI-Vorschläge (alt/neu/grund/konfidenz) als Funde der Quelle „ki“; veraltete Antworten (Text inzwischen geändert) werden verworfen."""
+    def ki_fertig(self, rev: int, vorschlaege: list, dokument=None) -> int:
+        """KI-Vorschläge übernehmen; Antworten für ein gewechseltes oder geändertes Dokument verwerfen."""
         ed = self.editor
-        if ed is None or rev != ed.document().revision():
+        if ed is None or (dokument is not None and dokument is not ed.document()) or rev != ed.document().revision():
             return 0
         text, pos, roh = self._text(), 0, []
         for v in vorschlaege or []:
