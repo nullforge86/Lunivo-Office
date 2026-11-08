@@ -132,6 +132,7 @@ def _setze(cursor: QTextCursor, wert: str | None) -> None:
     else:
         bf.setProperty(B_ABSCHNITT, wert)
     cursor.setBlockFormat(bf)
+    cursor.document()._umbrueche_zw = None               # eine reine Formatänderung erhöht die Revision nicht zuverlässig: Zwischenspeicher verwerfen
 
 
 def einfuegen(doc, cursor: QTextCursor, typ: str, basis: PageSettings) -> int:

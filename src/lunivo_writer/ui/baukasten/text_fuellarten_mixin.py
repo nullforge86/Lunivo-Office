@@ -12,7 +12,8 @@ Mixin für ``DiagrammTextPanel`` (vor ``TextKopfMenueMixin``); die Basis ``texte
 from __future__ import annotations
 
 from PySide6.QtGui import QImage
-from PySide6.QtWidgets import QComboBox, QFileDialog, QPushButton, QRadioButton, QWidget
+from lunivo_writer.ui.baukasten.speichern_fenster import Dateifenster
+from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.editor import diagramm_format as DF
@@ -70,7 +71,7 @@ class TextFuellartenMixin:
         self._neu()
 
     def _bild_waehlen(self) -> None:
-        pfad, _ = QFileDialog.getOpenFileName(self, "Bilddatei wählen", "", _BILD_FILTER)
+        pfad, _ = Dateifenster.getOpenFileName(self, "Bilddatei wählen", "", _BILD_FILTER)
         if not pfad:
             return
         text = DF.bild_kodieren(QImage(pfad))
