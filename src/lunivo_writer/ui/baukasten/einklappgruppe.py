@@ -1,45 +1,5 @@
-"""Eingeklappte Gruppe („Weitere Einstellungen“): ein Knopf mit Pfeil, darunter der Inhalt, der erst auf Wunsch aufgeht.
+"""Kompatibilitätsmodul für Oberflächenbausteine."""
+from importlib import import_module as _import_module
 
-Bedienbar mit Tab, Leertaste und Eingabetaste; ein Bildschirmleser meldet Namen und Zustand (ein-/ausgeklappt)."""
-from __future__ import annotations
-
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
-from lunivo_writer.ui.baukasten.mass import ABSTAND_NORMAL, HOEHE_FELD, RAND_KEIN, RAND_ZEILE
-
-
-class EinklappGruppe(QWidget):
-    """Knopf plus Inhalt. Der Inhalt kommt in ``innen`` (ein ``QVBoxLayout``)."""
-
-    def __init__(self, titel: str = "Weitere Einstellungen", parent: QWidget | None = None):
-        super().__init__(parent)
-        self.titel = titel
-        v = QVBoxLayout(self)
-        v.setContentsMargins(*RAND_ZEILE)
-        v.setSpacing(ABSTAND_NORMAL)
-        self.knopf = QToolButton()
-        self.knopf.setCheckable(True)
-        self.knopf.setAutoRaise(True)
-        self.knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.knopf.setText(titel)
-        self.knopf.setMinimumHeight(HOEHE_FELD)
-        self.knopf.setCursor(Qt.PointingHandCursor)
-        self.knopf.setProperty("optName", titel)
-        v.addWidget(self.knopf, 0, Qt.AlignLeft)
-        self.inhalt = QWidget()
-        self.innen = QVBoxLayout(self.inhalt)
-        self.innen.setContentsMargins(*RAND_KEIN)
-        v.addWidget(self.inhalt)
-        self.knopf.toggled.connect(self._zeigen)
-        self._zeigen(False)
-
-    def _zeigen(self, offen: bool) -> None:
-        self.inhalt.setVisible(offen)
-        self.knopf.setArrowType(Qt.DownArrow if offen else Qt.RightArrow)
-        self.knopf.setAccessibleName(f"{self.titel}, {'ausgeklappt' if offen else 'eingeklappt'}")
-
-    def ausklappen(self, offen: bool = True) -> None:
-        self.knopf.setChecked(offen)
-
-    def ist_offen(self) -> bool:
-        return self.knopf.isChecked()
+_modul = _import_module(f"lunivo_writer.ui.baukasten.oberflaeche.{__name__.rsplit('.', 1)[-1]}")
+globals().update({k: v for k, v in vars(_modul).items() if not k.startswith("_")})
