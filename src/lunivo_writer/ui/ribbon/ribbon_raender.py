@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QHBoxLayout, QToolButton, QWidget
 
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG, BREITE_BAND_GRUPPENKNOPF,
     HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT,
     RAND_KEIN,

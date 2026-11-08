@@ -8,14 +8,14 @@ import json
 import os
 
 from lunivo_writer.core import paths
-from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.baukasten.basis.texte import trennlinie
 
 from PySide6.QtCore import QSize, QTimer, Qt
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.theme import kopf_symbolfarbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ICON_NORMAL,
     RAND_KEIN,

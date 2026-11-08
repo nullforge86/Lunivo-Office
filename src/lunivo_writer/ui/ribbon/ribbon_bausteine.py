@@ -6,8 +6,8 @@ from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, QWidget
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import UeberlaufLeiste
-from lunivo_writer.ui.baukasten.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import UeberlaufLeiste
+from lunivo_writer.ui.baukasten.basis.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
 
 
 class _GruppenTrenner(QWidget):

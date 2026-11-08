@@ -11,14 +11,14 @@ from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QHBoxLayout, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.texte import trennlinie
+from lunivo_writer.ui.baukasten.basis.texte import trennlinie
 from lunivo_writer.ui.theme import kopf_symbolfarbe
 from lunivo_writer.ui.widgets import icons
 from lunivo_writer.ui.contextual.image_tools import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from lunivo_writer.ui.contextual.text_tools import TEXTTOOLS
 from lunivo_writer.ui.contextual.table_tools import TABELLENTOOLS
 from lunivo_writer.ui.ribbon.ribbon_bar import NICHT_DA, STILE_KATALOG
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     BREITE_LEISTENKNOPF_MIN,
     ICON_GROSS,

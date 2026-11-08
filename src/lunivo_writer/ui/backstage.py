@@ -17,13 +17,13 @@ from PySide6.QtWidgets import (
     QStyledItemDelegate, QToolButton, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.datei_symbole import datei_symbol
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.medien.datei_symbole import datei_symbol
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
 from lunivo_writer.ui.widgets import icons
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_ENG,
     ABSTAND_GROSS,
     ABSTAND_KEIN,
@@ -434,7 +434,7 @@ class Backstage(QWidget):
         return ph
 
     def _vorlage_zeigen(self) -> None:
-        from lunivo_writer.ui.baukasten.vorlagen_galerie import VorlagenGalerie
+        from lunivo_writer.ui.baukasten.vorlagen.vorlagen_galerie import VorlagenGalerie
         ph = self.seiten["vorlage"]
         if ph._ansicht is None:
             g = VorlagenGalerie(self.w.settings, self.w.current_tab() is not None, self.w.benutzerdaten())
