@@ -32,7 +32,7 @@ def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp
 
     assistant._lauf_doc = erstes
     assistant._laeuft = True
-    assistant._fertig(zweites.revision(), [])
+    assistant._fertig(zweites.revision(), [], erstes)
 
     assert not assistant._voll
     assert not assistant._laeuft
