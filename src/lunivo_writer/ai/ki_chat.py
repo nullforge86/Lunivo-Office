@@ -10,6 +10,7 @@ from lunivo_writer.ai import ki as K  # noqa: F401
 from lunivo_writer.ai import assistent_lauf as AL  # noqa: F401
 from lunivo_writer.ai import modellfaehigkeit as MF  # noqa: F401
 from lunivo_writer.ai import chat_bezug as CB  # noqa: F401
+from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.ai.chat_modell import ChatModell  # noqa: F401
 from lunivo_writer.ai.arbeitslauf import _Lauf  # noqa: F401
 
@@ -201,7 +202,7 @@ class KIChatMixin:
             sperre = QTextCursor(ed.document())
             sperre.beginEditBlock()
             try:
-                geklappt = ed.replace_range(von, bis, neu, erwartet=alt)
+                geklappt = ed.replace_range(von, bis, neu, erwartet=alt, markdown=ki_markdown.hat_struktur(neu))
             finally:
                 sperre.endEditBlock()
         except RuntimeError:                       # Tab/Editor wurde geschlossen

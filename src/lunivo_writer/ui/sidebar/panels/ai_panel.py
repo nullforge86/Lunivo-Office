@@ -4,6 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
+from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.ui.baukasten.chat.chat_blase import FehlerKarte, KiBlase, NutzerBlase
 from lunivo_writer.ui.baukasten.chat.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar
 from lunivo_writer.ui.baukasten.chat.chat_leerzustand import ChatLeerzustand
@@ -112,7 +113,7 @@ class ChatPanel(QWidget):
         if m.phase == "laufend":
             self._teil_label = hinweis_label(m.teil or "Die KI schreibt …", klein=not m.teil)
             self._teil_label.setWordWrap(True)
-            self._teil_label.setTextFormat(Qt.PlainText)             # KI-Text ist nie Markup
+            self._teil_label_format(m.teil)
             self.blasen.addWidget(self._teil_label)
         if self._phase == "laufend" and m.phase == "bereit" and self.d.konfig.chat_optionen()["direkt"]:
             ok, meldung = self.d.antwort_einfuegen(len(m.nachrichten) - 1)           # Option „direkt ins Dokument einfügen“ (derselbe Weg wie der Knopf)
@@ -131,13 +132,21 @@ class ChatPanel(QWidget):
             # Das Panel bzw. seine Qt-Scrollfläche kann vor dem Timer gelöscht sein.
             return
 
+    def _teil_label_format(self, teil: str) -> None:
+        """Streaming-Text wie die fertige Antwort: mit Struktur als Markdown (Qt, ``ki_markdown``), sonst einfacher Text — nie Markup."""
+        lb = self._teil_label
+        if teil and ki_markdown.hat_struktur(teil):
+            lb.setTextFormat(Qt.MarkdownText); lb.setText(ki_markdown.normalisieren(teil))
+        else:
+            lb.setTextFormat(Qt.PlainText); lb.setText(teil or "Die KI schreibt …")
+
     def _teil_zeigen(self) -> None:
         """Streaming: nur das Textfeld der laufenden Antwort nachziehen — kein Neuaufbau aller Blasen."""
         lb = getattr(self, "_teil_label", None)
         if lb is None or self.d.chat_modell.phase != "laufend":
             return
         try:
-            lb.setText(self.d.chat_modell.teil or "Die KI schreibt …")
+            self._teil_label_format(self.d.chat_modell.teil)
         except RuntimeError:
             self._teil_label = None
             return

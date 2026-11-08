@@ -12,7 +12,8 @@ from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QPushBu
 
 from lunivo_writer.ai import ki as K
 from lunivo_writer.ui.baukasten.dokument.aenderungs_vorschau import AenderungsVorschau
-from lunivo_writer.ui.baukasten.basis.beschriftung import text_label
+from lunivo_writer.editor.text import ki_markdown
+from lunivo_writer.ui.baukasten.basis.beschriftung import md_label, text_label
 from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
@@ -66,6 +67,16 @@ def _text(text: str):
     return t
 
 
+def antwort_label(text: str):
+    """Antwort der KI: mit Überschriften, Listen, Tabellen oder Hervorhebungen als Markdown (dieselben Regeln wie bei der Übernahme ins Dokument,
+    ``editor.text.ki_markdown``), sonst einfacher Text."""
+    if not ki_markdown.hat_struktur(text):
+        return _text(text)
+    l = md_label(ki_markdown.normalisieren(text))
+    l.setTextInteractionFlags(Qt.TextSelectableByMouse)
+    return l
+
+
 def _kopieren(text: str) -> None:
     QApplication.clipboard().setText(text)
 
@@ -108,7 +119,7 @@ class KiBlase(QWidget):
         super().__init__()
         self.d, self.text, self.index, self._ersetzen_modus = dienst, text, index, False
         v = QVBoxLayout(self); v.setContentsMargins(*RAND_KEIN); v.setSpacing(ABSTAND_KLEIN)
-        v.addWidget(_text(text))                         # Antwort der KI: Text ohne Kasten, wie in der Vorlage
+        v.addWidget(antwort_label(text))                 # Antwort der KI: Text ohne Kasten, wie in der Vorlage
         z = FlussLayout(ABSTAND_KLEIN)
         z.addWidget(SymbolKnopf("refresh-cw", "Antwort wiederholen", dienst.chat_wiederholen))
         z.addWidget(SymbolKnopf("copy", "Kopieren", lambda: _kopieren(text)))
@@ -150,7 +161,7 @@ class KiBlase(QWidget):
     def _oeffnen(self, ersetzen: bool) -> None:
         self._ersetzen_modus = ersetzen
         stuecke = self.d.antwort_vorschau(self.index, ersetzen)
-        self.vorschau.stuecke_setzen(stuecke)
+        self.vorschau.stuecke_setzen(stuecke, markdown=ki_markdown.hat_struktur(self.text))
         self.karte.show()
         self.kontext_neu()
 

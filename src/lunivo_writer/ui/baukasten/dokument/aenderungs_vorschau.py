@@ -5,10 +5,11 @@ Die Höhe folgt dem Text bis ``CHAT_VORSCHAU_MAX``, darüber rollt das Feld. Es 
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, Qt
-from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextDocumentFragment
 from PySide6.QtWidgets import QSizePolicy, QTextEdit
 
 from lunivo_writer.core.farben import Farbe
+from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.ui.baukasten.basis.karte import als_karte
 from lunivo_writer.ui.baukasten.basis.mass import AENDERUNG_DECKKRAFT, CHAT_VORSCHAU_MAX
 
@@ -28,7 +29,9 @@ class AenderungsVorschau(QTextEdit):
         als_karte(self, "karte")
         self.stuecke_setzen(stuecke or [])
 
-    def stuecke_setzen(self, stuecke: list) -> None:
+    def stuecke_setzen(self, stuecke: list, markdown: bool = False) -> None:
+        """``markdown``: „neu“-Stücke sind Markdown und erscheinen so, wie sie ins Dokument kommen (Überschriften, Listen, Tabellen, Hervorhebungen)."""
+        self._markdown = markdown
         self._stuecke = list(stuecke)
         self._zeichnen()
 
@@ -44,6 +47,12 @@ class AenderungsVorschau(QTextEdit):
         doc = self.document(); doc.clear()
         c = QTextCursor(doc)
         for art, text in self._stuecke:
+            if art == "neu" and getattr(self, "_markdown", False):
+                von = c.position()
+                c.insertFragment(QTextDocumentFragment(ki_markdown.dokument(text)))
+                m = QTextCursor(doc); m.setPosition(von); m.setPosition(c.position(), QTextCursor.KeepAnchor)
+                m.mergeCharFormat(self._format(art))
+                continue
             c.insertText(text, self._format(art))
         self._hoehe()
 

@@ -27,12 +27,18 @@ class SchreibhilfeBaustein:
         self._overlays_neu()
 
 
-    def replace_range(self, von: int, bis: int, neu: str, erwartet: str | None = None) -> bool:
+    def replace_range(self, von: int, bis: int, neu: str, erwartet: str | None = None, markdown: bool = False) -> bool:
+        """Text ersetzen. ``markdown``: ``neu`` ist Markdown — die Struktur geht mit den Werkzeugen des Editors ins Dokument (``editor.text.ki_markdown``)."""
         c = QTextCursor(self.document())
         c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor)
         if erwartet is not None and c.selectedText().replace("\u2029", "\n") != erwartet:
             return False
         fmt = QTextCharFormat(c.charFormat())
+        if markdown and neu:
+            from lunivo_writer.editor.text import ki_markdown
+            c.removeSelectedText()
+            ki_markdown.einfuegen(self, c, neu)
+            return True
         c.insertText(neu, fmt) if neu else c.removeSelectedText()
         return True
 

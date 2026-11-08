@@ -4,6 +4,7 @@ Der Bezug liegt nur im Speicher: ``alt`` (der markierte Text) wird nie gesendet,
 from __future__ import annotations
 
 from lunivo_writer.ai import ki as K
+from lunivo_writer.editor.text import ki_markdown
 
 MELDUNG_GEAENDERT = "Der Text hat sich seit der Frage geändert. Nichts wurde geändert."
 MELDUNG_EDITOR = "Die Frage gehört zu einem anderen Dokument. Nichts wurde geändert."
@@ -47,6 +48,8 @@ def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, editor_jetzt,
 def vorschau_stuecke(alt: str, neu: str) -> list[tuple[str, str]]:
     """Alt → neu als Stücke (art, text); art: „gleich“, „entfernt“, „neu“. Ohne Farben und Markup.
     Bei zu großen Texten (``ki.aenderungen`` liefert None) zwei Blöcke: alt entfernt, neu neu."""
+    if ki_markdown.hat_struktur(neu):         # formatierte Antwort: ganze Stelle ersetzt, ein Zeichenvergleich auf Markdown-Text wäre irreführend
+        return [s for s in (("entfernt", alt), ("neu", neu)) if s[1]]
     bl = K.aenderungen(alt, neu)
     if bl is None:
         return [s for s in (("entfernt", alt), ("neu", neu)) if s[1]]
