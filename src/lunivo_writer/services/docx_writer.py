@@ -1,0 +1,825 @@
+"""QTextDocument → DOCX (python-docx).
+
+Schreibt Absätze, Überschriften (Formatvorlagen „Heading n“), Titel/Untertitel/
+Zitat, Zeichenformat, Ausrichtung, Einzüge, Abstände, Zeilenabstand, Listen,
+Seitenumbrüche, Tabellen (mit verbundenen Zellen), Bilder, Hyperlinks,
+Seitengröße, Ränder, Kopf- und Fußzeile (mit Seitenzahlfeld).
+"""
+from __future__ import annotations
+
+from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F401
+    io,
+    logging,
+    os,
+    Optional,
+    docx,
+    WD_ORIENT,
+    WD_STYLE_TYPE,
+    WD_ALIGN_PARAGRAPH,
+    WD_LINE_SPACING,
+    RT,
+    OxmlElement,
+    qn,
+    Emu,
+    Mm,
+    Pt,
+    RGBColor,
+    QBuffer,
+    QIODevice,
+    QUrl,
+    Qt,
+    QFont,
+    QImage,
+    QTextBlock,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QTextDocument,
+    QTextFormat,
+    QTextFrameFormat,
+    QTextFrame,
+    QTextListFormat,
+    QTextTable,
+    PageSettings,
+    LH_FIXED,
+    LH_PROPORTIONAL,
+    STYLE_PROP,
+    DocumentIOError,
+    IOReport,
+    Farbe,
+    PX_TO_PT,
+    EMU_PER_PX,
+    _LIST_STYLES,
+    _has,
+    abstand_davor_px,
+    B_BILDANKER,
+    B_SPALTE,
+    P_OBJEKT,
+    P_VERSTECKT,
+    P_FORM,
+    B_ABSCHNITT,
+    umbruch,
+    Linie,
+    art_aus_docx,
+    docx_wert,
+    muster,
+    B_ART,
+    B_CAP,
+    B_MUSTER,
+    B_RAHMEN,
+    B_TOC,
+    P_AENDERUNG,
+    P_AUTOR,
+    P_DATUM,
+    P_FELD,
+    P_INDEX,
+    P_KOMMENTAR,
+    P_NOTE,
+    _RPR_FOLGE,
+    _rpr_einfuegen,
+    absatzopt_prop,
+    _split,
+    _rstyle_hyperlink,
+    _Body,
+    _CellBox,
+)
+from lunivo_writer.services.docx_teile.schreiben_seite import SeiteSchreiber
+from lunivo_writer.services.docx_teile.schreiben_tabellen import TabellenSchreiber
+from lunivo_writer.services.docx_teile.schreiben_objekte import ObjekteSchreiber
+from lunivo_writer.services.docx_teile.schreiben_zusatz import ZusatzSchreiber
+
+
+class _Writer(SeiteSchreiber, TabellenSchreiber, ObjekteSchreiber, ZusatzSchreiber):
+    def __init__(self, qdoc: QTextDocument, page: PageSettings, meta: dict):
+        self.q = qdoc
+        self.page = page
+        self.meta = meta
+        self.report = IOReport()
+        self.d = docx.Document()
+        self._clear_body()
+        self._num_ids: dict[tuple, int] = {}
+        self._vorab_bilder: list = []                    # schwebende Bilder, die am nächsten Absatz verankert werden
+        self.last_list_obj = None
+        self.last_num = None
+        self._komm_runs: dict[int, list] = {}
+        self._noten: dict[str, list] = {"f": [], "e": []}       # [(Ausgabe-Id, Text)]
+        self._note_ids: dict[tuple, int] = {}
+        self._aend_id = 0
+        self._lz_id = 0
+        self._lz_offen: dict[str, int] = {}
+
+    def _clear_body(self):
+        body = self.d.element.body
+        for el in list(body):
+            if el.tag != qn("w:sectPr"):
+                body.remove(el)
+
+
+    def _standard_tabstopp(self) -> None:
+        """Die Standardtabstopps des Dokuments als w:defaultTabStop (Twips) in die Einstellungen schreiben."""
+        from lunivo_writer.models.page import px_to_mm
+        dist = self.q.defaultTextOption().tabStopDistance()
+        st = self.d.settings.element
+        for alt in st.findall(qn("w:defaultTabStop")):
+            st.remove(alt)
+        if dist <= 0:
+            return
+        e = OxmlElement("w:defaultTabStop"); e.set(qn("w:val"), str(int(round(px_to_mm(dist) / 25.4 * 1440))))
+        nach = ("w:autoHyphenation", "w:consecutiveHyphenLimit", "w:hyphenationZone", "w:doNotHyphenateCaps", "w:showEnvelope", "w:summaryLength",
+                "w:clickAndTypeStyle", "w:defaultTableStyle", "w:evenAndOddHeaders", "w:bookFoldRevPrinting", "w:bookFoldPrinting", "w:bookFoldPrintingSheets",
+                "w:drawingGridHorizontalSpacing", "w:drawingGridVerticalSpacing", "w:displayHorizontalDrawingGridEvery", "w:displayVerticalDrawingGridEvery",
+                "w:doNotUseMarginsForDrawingGridOrigin", "w:drawingGridHorizontalOrigin", "w:drawingGridVerticalOrigin", "w:doNotShadeFormData",
+                "w:noPunctuationKerning", "w:characterSpacingControl", "w:printTwoOnOne", "w:strictFirstAndLastChars", "w:noLineBreaksAfter",
+                "w:noLineBreaksBefore", "w:savePreviewPicture", "w:doNotValidateAgainstSchema", "w:saveInvalidXml", "w:ignoreMixedContent",
+                "w:alwaysShowPlaceholderText", "w:doNotDemarcateInvalidXml", "w:saveXmlDataOnly", "w:useXSLTWhenSaving", "w:saveThroughXslt",
+                "w:showXMLTags", "w:alwaysMergeEmptyNamespace", "w:updateFields", "w:hdrShapeDefaults", "w:footnotePr", "w:endnotePr", "w:compat",
+                "w:docVars", "w:rsids", "w:mathPr", "w:attachedSchema", "w:themeFontLang", "w:clrSchemeMapping", "w:doNotIncludeSubdocsInStats",
+                "w:doNotAutoCompressPictures", "w:forceUpgrade", "w:captions", "w:readModeInkLockDown", "w:smartTagType", "w:schemaLibrary",
+                "w:shapeDefaults", "w:doNotEmbedSmartTags", "w:decimalSymbol", "w:listSeparator")
+        st.insert_element_before(e, *nach)
+
+    def _dokument_ebene(self, p) -> None:
+        self._standard_tabstopp()
+        doc_el = self.d.element
+        for alt in doc_el.findall(qn("w:background")):
+            doc_el.remove(alt)
+        if p.color:
+            bg = OxmlElement("w:background")
+            bg.set(qn("w:color"), p.color.lstrip("#").upper())
+            doc_el.insert(0, bg)
+            st = self.d.settings.element
+            if st.find(qn("w:displayBackgroundShape")) is None:
+                st.insert(0, OxmlElement("w:displayBackgroundShape"))
+        st = self.d.settings.element
+        for alt in st.findall(qn("w:autoHyphenation")):
+            st.remove(alt)
+        if p.silbentrennung:
+            ah = OxmlElement("w:autoHyphenation")
+            anker = st.find(qn("w:zoom"))
+            (anker.addnext(ah) if anker is not None else st.insert(0, ah))
+
+
+    def _text_with_fields(self, para, text: str):
+        import re
+        for tok in re.split(r"(\{PAGE\}|\{PAGES\})", text):
+            if tok in ("{PAGE}", "{PAGES}"):
+                self._field(para, "PAGE" if tok == "{PAGE}" else "NUMPAGES")
+            elif tok:
+                para.add_run(tok)
+
+    @staticmethod
+    def _field(para, name: str):
+        run = para.add_run()
+        for kind, extra in (("begin", None), (None, f" {name} "), ("separate", None), (None, "1"), ("end", None)):
+            if kind:
+                el = OxmlElement("w:fldChar")
+                el.set(qn("w:fldCharType"), kind)
+                run._r.append(el)
+            elif extra.strip() == name:
+                it = OxmlElement("w:instrText")
+                it.set(qn("xml:space"), "preserve")
+                it.text = extra
+                run._r.append(it)
+            else:
+                t = OxmlElement("w:t")
+                t.text = extra
+                run._r.append(t)
+
+    # ---- Grundschrift --------------------------------------------------
+    def _sprache(self) -> None:
+        # Ohne Angabe gilt die Sprache des Dokuments (Silbentrennung/Korrektur), nicht die Vorgabe „en-US“ der Vorlage —
+        # sonst prüfen andere Programme deutschen Text als Englisch und unterringeln jedes Wort.
+        kennung = self.meta.get("sprache") or str(getattr(self.page, "silben_sprache", "") or "").replace("_", "-")
+        if not kennung:
+            return
+        rpr = self.d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:rPrDefault") + "/" + qn("w:rPr"))
+        if rpr is None:
+            return
+        lang = rpr.find(qn("w:lang"))
+        if lang is None:
+            lang = OxmlElement("w:lang")
+            rpr.append(lang)
+        lang.set(qn("w:val"), kennung)
+
+    def write_defaults(self):
+        f: QFont = self.q.defaultFont()
+        normal = self.d.styles["Normal"]
+        normal.font.name = f.family()
+        if f.pointSizeF() > 0:
+            normal.font.size = Pt(f.pointSizeF())
+        rpr = normal.element.get_or_add_rPr()
+        rf = rpr.find(qn("w:rFonts"))
+        if rf is None:
+            rf = OxmlElement("w:rFonts")
+            rpr.insert(0, rf)
+        for a in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+            rf.set(qn(a), f.family())
+        for a in ("w:asciiTheme", "w:hAnsiTheme", "w:cstheme", "w:eastAsiaTheme"):
+            if rf.get(qn(a)) is not None:
+                del rf.attrib[qn(a)]
+        pf = normal.paragraph_format
+        pf.space_after = Pt(0)
+        pf.space_before = Pt(0)
+
+    # ---- Durchlauf -----------------------------------------------------
+    def write_frame(self, frame: QTextFrame, container):
+        it = frame.begin()
+        first_in_cell = isinstance(container, _CellBox)
+        while not it.atEnd():
+            blk = it.currentBlock()
+            if blk.isValid() and umbruch.ist_anker(blk):
+                it += 1                                          # Hilfsabsatz vor einem schwebenden Bild: kein Word-Absatz
+                continue
+            if blk.isValid():
+                para = container.first_paragraph() if first_in_cell else container.add_paragraph()
+                first_in_cell = False
+                self.write_block(blk, para)
+                if isinstance(container, _Body) and blk.blockFormat().hasProperty(B_ABSCHNITT):
+                    self._abschnitt_ende(para)
+            else:
+                fr = it.currentFrame()
+                if isinstance(fr, QTextTable):
+                    self.write_table(fr, container)
+                    first_in_cell = False
+                elif fr is not None and fr.frameFormat().position() in umbruch.SEITEN and umbruch.bild_im_rahmen(fr) is not None:
+                    self._vorab_bilder.append((umbruch.bild_im_rahmen(fr), umbruch.SEITEN[fr.frameFormat().position()]))
+                elif fr is not None:
+                    self.report.warn("Ein Rahmen im Text wurde nur als Fließtext gespeichert.")
+                    self.write_frame(fr, container)
+            it += 1
+
+    def _eigener_stil(self, name: str):
+        """Selbst angelegte Formatvorlage als echte Word-Absatzvorlage (Schrift, Größe, Farbe, Abstände, Ausrichtung)."""
+        from lunivo_writer.editor import stile
+        if not stile.ist_eigen(name):
+            return None
+        if name in [x.name for x in self.d.styles]:
+            return self.d.styles[name]
+        d = stile.definition(name)
+        st = self.d.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+        st.base_style = self.d.styles["Normal"]
+        if d["groesse"]:
+            st.font.size = Pt(d["groesse"])
+        if d["fett"]:
+            st.font.bold = True
+        if d["kursiv"]:
+            st.font.italic = True
+        if d["schrift"]:
+            st.font.name = d["schrift"]
+        if d["farbe"]:
+            st.font.color.rgb = RGBColor.from_string(d["farbe"].lstrip("#").upper())
+        st.paragraph_format.space_before, st.paragraph_format.space_after = Pt(d["vor"]), Pt(d["nach"])
+        if d.get("zeilen"):
+            st.paragraph_format.line_spacing = float(d["zeilen"])
+        if d.get("einzug"):
+            st.paragraph_format.left_indent = Mm(float(d["einzug"]))
+        if d["ausr"]:
+            st.paragraph_format.alignment = {"links": WD_ALIGN_PARAGRAPH.LEFT, "mitte": WD_ALIGN_PARAGRAPH.CENTER,
+                                             "rechts": WD_ALIGN_PARAGRAPH.RIGHT, "block": WD_ALIGN_PARAGRAPH.JUSTIFY}[d["ausr"]]
+        return st
+
+    def write_block(self, blk: QTextBlock, para):
+        bf = blk.blockFormat()
+        if bf.hasProperty(B_BILDANKER):                                   # frei positionierte Bilder dieses Absatzes
+            from lunivo_writer.editor import freie_bilder as FB
+            for a in FB.aus_absatz(bf):
+                self._frei_bild(para, a, FB.bild_im_dokument(self.q, a.get("n", "")))
+        style_name = bf.property(STYLE_PROP) if _has(bf, STYLE_PROP) else None
+        lvl = bf.headingLevel()
+        lst = blk.textList()
+        if bf.hasProperty(B_TOC):
+            kind = bf.property(B_TOC)
+            art = bf.property(B_ART) if bf.hasProperty(B_ART) else "toc"
+            name = ("TOC Heading" if kind == "kopf" else
+                    {"toc": f"TOC {kind[-1]}", "abb": "Table of Figures", "tab": "Table of Figures",
+                     "index": f"Index {kind[-1]}", "lit": "Bibliography"}.get(art, "TOC 1"))
+            para.style = self._stil(name)
+        elif bf.hasProperty(B_CAP):
+            para.style = self.d.styles["Caption"]
+        elif lvl:
+            para.style = self.d.styles[f"Heading {lvl}"]
+        elif style_name in ("Title", "Subtitle", "Quote", "No Spacing"):
+            para.style = self.d.styles[style_name]
+        elif lst is not None:
+            self._apply_list(para, lst)
+        elif style_name and str(style_name).startswith("x:") and self._eigener_stil(str(style_name)[2:]) is not None:
+            para.style = self._eigener_stil(str(style_name)[2:])
+        pf = para.paragraph_format
+        a = bf.alignment()
+        if a & Qt.AlignHCenter:
+            para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        elif a & Qt.AlignRight:
+            para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        elif a & Qt.AlignJustify:
+            para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        # Einzüge: bei Listen steckt der Listeneinzug in der Vorlage
+        if lst is None:
+            if bf.leftMargin():
+                pf.left_indent = Emu(int(bf.leftMargin() * EMU_PER_PX))
+            if bf.textIndent():
+                pf.first_line_indent = Emu(int(bf.textIndent() * EMU_PER_PX))
+        if bf.rightMargin():
+            pf.right_indent = Emu(int(bf.rightMargin() * EMU_PER_PX))
+        if bf.layoutDirection() == Qt.RightToLeft:
+            ppr = para._p.get_or_add_pPr()
+            bidi = OxmlElement("w:bidi")
+            ppr.insert_element_before(bidi, "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
+                                      "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment",
+                                      "w:textboxTightWrap", "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange")
+        pf.space_before = Pt(abstand_davor_px(bf) * PX_TO_PT)
+        pf.space_after = Pt(bf.bottomMargin() * PX_TO_PT)
+        lh, lht = bf.lineHeight(), bf.lineHeightType()
+        if int(lht) == LH_PROPORTIONAL and lh and lh != 100:
+            pf.line_spacing = lh / 100.0
+        elif int(lht) == LH_FIXED and lh:
+            pf.line_spacing = Pt(lh * PX_TO_PT)
+        from lunivo_writer.editor.seitenfluss import ist_manuell
+        if ist_manuell(bf):
+            if bf.hasProperty(B_SPALTE):                              # Spaltenumbruch: <w:br w:type="column"/> am Absatzanfang
+                from docx.enum.text import WD_BREAK
+                para.add_run().add_break(WD_BREAK.COLUMN)
+            else:
+                pf.page_break_before = True
+        tabs = bf.tabPositions()
+        if tabs:
+            from docx.enum.text import WD_TAB_ALIGNMENT
+            from PySide6.QtGui import QTextOption
+            art = {QTextOption.RightTab: WD_TAB_ALIGNMENT.RIGHT, QTextOption.CenterTab: WD_TAB_ALIGNMENT.CENTER,
+                   QTextOption.DelimiterTab: WD_TAB_ALIGNMENT.DECIMAL}
+            from docx.enum.text import WD_TAB_LEADER
+            from lunivo_writer.editor import tabfuell
+            fuell = tabfuell.lesen(bf)
+            leader = {"punkt": WD_TAB_LEADER.DOTS, "strich": WD_TAB_LEADER.DASHES, "linie": WD_TAB_LEADER.LINES, "mitte": WD_TAB_LEADER.MIDDLE_DOT}
+            for t in tabs:
+                f = next((fz for p_, fz in fuell.items() if abs(p_ - t.position) < 0.05), "")
+                pf.tab_stops.add_tab_stop(Emu(int(t.position * EMU_PER_PX)), art.get(t.type, WD_TAB_ALIGNMENT.LEFT),
+                                          leader.get(f, WD_TAB_LEADER.SPACES))
+        nach_shd = ("w:tabs", "w:suppressAutoHyphens", "w:kinsoku", "w:wordWrap", "w:overflowPunct", "w:topLinePunct", "w:autoSpaceDE",
+                    "w:autoSpaceDN", "w:bidi", "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
+                    "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap",
+                    "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange")
+        from lunivo_writer.editor import absatzopt
+        if bf.hasProperty(absatzopt_prop()):
+            absatzopt.in_ppr(para._p.get_or_add_pPr(), absatzopt.lesen(bf))
+        if bf.hasProperty(B_RAHMEN):
+            li = Linie.aus_text(bf.stringProperty(B_RAHMEN))
+            bdr = OxmlElement("w:pBdr")
+            val = docx_wert(li.art)
+            for seite, kurz in (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h")):
+                if kurz not in li.seiten:
+                    continue
+                e = OxmlElement(f"w:{seite}")
+                e.set(qn("w:val"), val)
+                e.set(qn("w:sz"), str(max(2, int(round(li.breite_pt * 8)))))
+                pol = li.polster()
+                e.set(qn("w:space"), str(int(round(pol[{"t": 0, "b": 1, "l": 2, "r": 3, "h": 0}[kurz]]))) if pol else "4")
+                e.set(qn("w:color"), (li.farbe or Farbe.SCHWARZ).lstrip("#").upper())
+                bdr.append(e)
+            if len(bdr):
+                para._p.get_or_add_pPr().insert_element_before(bdr, "w:shd", *nach_shd)
+        bg = bf.background()
+        mu = muster.aus_text(bf.stringProperty(B_MUSTER)) if bf.hasProperty(B_MUSTER) else None
+        if mu:                                                   # Muster über Füllfarbe: w:val = Musterart, w:color = Musterfarbe
+            shd = OxmlElement("w:shd")
+            shd.set(qn("w:val"), muster.ooxml_von(mu[0])); shd.set(qn("w:color"), mu[1][1:].upper()); shd.set(qn("w:fill"), mu[2][1:].upper() if mu[2] else "auto")
+            para._p.get_or_add_pPr().insert_element_before(shd, *nach_shd)
+        elif bg.style() != Qt.NoBrush and bg.color().isValid():
+            shd = OxmlElement("w:shd")
+            shd.set(qn("w:val"), "clear"); shd.set(qn("w:color"), "auto"); shd.set(qn("w:fill"), bg.color().name()[1:].upper())
+            para._p.get_or_add_pPr().insert_element_before(shd, *nach_shd)
+        # Läufe
+        for imf, seite in self._vorab_bilder:                    # schwebende Bilder vor diesem Absatz: hier verankern
+            self._image(imf, para, seite)
+        self._vorab_bilder = []
+        it = blk.begin()
+        in_head = bool(lvl) or style_name in ("Title", "Subtitle")
+        frags = []
+        while not it.atEnd():
+            if it.fragment().isValid():
+                frags.append(it.fragment())
+            it += 1
+        i = 0
+        while i < len(frags):
+            cf = frags[i].charFormat()
+            form = cf.stringProperty(P_FORM) if cf.hasProperty(P_FORM) else ""
+            if form:                                                   # Formularfeld → Inhaltssteuerelement (w:sdt)
+                j = i
+                while j < len(frags) and frags[j].charFormat().hasProperty(P_FORM) and frags[j].charFormat().stringProperty(P_FORM) == form:
+                    j += 1
+                sdt, inhalt = self._steuerelement(form, "".join(f.text() for f in frags[i:j]))
+                para._p.append(sdt)
+                self._ziel = inhalt
+                try:
+                    for k in range(i, j):
+                        self.write_fragment(frags[k], para, in_head)
+                finally:
+                    self._ziel = None
+                i = j
+                continue
+            instr = cf.stringProperty(P_FELD) if cf.hasProperty(P_FELD) else ""
+            if instr:
+                j = i
+                while j < len(frags) and frags[j].charFormat().hasProperty(P_FELD) and frags[j].charFormat().stringProperty(P_FELD) == instr:
+                    j += 1
+                self._textmarken(para, [])
+                self._fldchar(para, "begin"); self._instr(para, instr); self._fldchar(para, "separate")
+                for k in range(i, j):
+                    self.write_fragment(frags[k], para, in_head)
+                self._fldchar(para, "end")
+                i = j
+            else:
+                self.write_fragment(frags[i], para, in_head)
+                i += 1
+        self._textmarken(para, [])
+
+    def _stil(self, name: str):
+        from docx.enum.style import WD_STYLE_TYPE
+        if name not in [s.name for s in self.d.styles]:
+            st = self.d.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+            st.base_style = self.d.styles["Normal"]
+        return self.d.styles[name]
+
+    @staticmethod
+    def _fldchar(para, typ: str):
+        r = OxmlElement("w:r")
+        fc = OxmlElement("w:fldChar"); fc.set(qn("w:fldCharType"), typ)
+        r.append(fc)
+        para._p.append(r)
+
+    @staticmethod
+    def _instr(para, text: str):
+        r = OxmlElement("w:r")
+        it = OxmlElement("w:instrText"); it.set("{http://www.w3.org/XML/1998/namespace}space", "preserve"); it.text = f" {text} "
+        r.append(it)
+        para._p.append(r)
+
+    def _apply_list(self, para, lst):
+        fmt = lst.format()
+        kind = _LIST_STYLES.get(fmt.style(), "bullet")
+        level = max(1, fmt.indent())
+        base = "List Bullet" if kind == "bullet" else "List Number"
+        name = base if level == 1 else f"{base} {min(level, 3)}"
+        try:
+            para.style = self.d.styles[name]
+        except KeyError:
+            para.style = self.d.styles[base]
+        if kind == "number":
+            key = lst.item(0).blockNumber()
+            if key not in self._num_ids:
+                self._num_ids[key] = self._new_num_instance(para)
+            numpr = para._p.get_or_add_pPr().get_or_add_numPr()
+            numpr.get_or_add_ilvl().val = 0
+            numpr.get_or_add_numId().val = self._num_ids[key]
+
+    def _new_num_instance(self, para) -> int:
+        """Eigene Zählung je Liste, damit „1.“ neu beginnt."""
+        numbering = self.d.part.numbering_part.element
+        base = None
+        for s in (para.style, para.style.base_style):
+            if s is not None and s.element.pPr is not None and s.element.pPr.numPr is not None:
+                base = s.element.pPr.numPr.numId.val
+                break
+        if base is None:
+            return 1
+        src = numbering.xpath(f'w:num[@w:numId="{base}"]')[0]
+        abs_id = src.xpath("w:abstractNumId/@w:val")[0]
+        new_id = max([int(n) for n in numbering.xpath("w:num/@w:numId")] + [0]) + 1
+        num = OxmlElement("w:num")
+        num.set(qn("w:numId"), str(new_id))
+        an = OxmlElement("w:abstractNumId")
+        an.set(qn("w:val"), abs_id)
+        num.append(an)
+        ov = OxmlElement("w:lvlOverride")
+        ov.set(qn("w:ilvl"), "0")
+        so = OxmlElement("w:startOverride")
+        so.set(qn("w:val"), "1")
+        ov.append(so)
+        num.append(ov)
+        numbering.append(num)
+        return new_id
+
+    # ---- Läufe ----------------------------------------------------------
+    def write_fragment(self, frag, para, in_head: bool):
+        cf: QTextCharFormat = frag.charFormat()
+        text = frag.text()
+        if cf.isImageFormat():
+            self._image(cf.toImageFormat(), para)
+            return
+        parent = getattr(self, "_ziel", None) if getattr(self, "_ziel", None) is not None else para
+        href = cf.anchorHref() if cf.isAnchor() else ""
+        self._textmarken(para, [] if href else (list(cf.anchorNames()) if cf.isAnchor() else []))
+        if href:
+            hl = self._hyperlink(para, href, cf.toolTip())
+            parent = hl
+        note = cf.stringProperty(P_NOTE) if cf.hasProperty(P_NOTE) else ""
+        if note:
+            run = self._make_run(parent, para)
+            self._note_verweis(run, note)
+            self._zusatz_anwenden(run, cf)
+            return
+        for chunk, kind in _split(text):
+            run = self._make_run(parent, para)
+            if kind == "text":
+                run.text = chunk
+            elif kind == "tab":
+                run.add_tab()
+            elif kind == "br":
+                run.add_break()
+            elif kind == "img":
+                continue
+            self._format_run(run, cf, in_head, bool(href))
+            self._zusatz_anwenden(run, cf)
+        if cf.hasProperty(P_INDEX) and cf.stringProperty(P_INDEX):
+            from lunivo_writer.editor.indexeintrag import aus_text, feld
+            from lunivo_writer.editor.zusatz import P_INDEX_OPT
+            self._fldchar(para, "begin")
+            self._instr(para, feld(aus_text(cf.stringProperty(P_INDEX), cf.stringProperty(P_INDEX_OPT) if cf.hasProperty(P_INDEX_OPT) else "")))
+            self._fldchar(para, "end")
+
+    def _textmarken(self, para, namen: list) -> None:
+        """Offene Textmarken schließen, neue öffnen — je Name genau ein bookmarkStart/-End-Paar."""
+        for n in [n for n in self._lz_offen if n not in namen]:
+            e = OxmlElement("w:bookmarkEnd")
+            e.set(qn("w:id"), str(self._lz_offen.pop(n)))
+            para._p.append(e)
+        for n in namen:
+            if n not in self._lz_offen:
+                self._lz_id += 1
+                st = OxmlElement("w:bookmarkStart")
+                st.set(qn("w:id"), str(self._lz_id)); st.set(qn("w:name"), n)
+                para._p.append(st)
+                self._lz_offen[n] = self._lz_id
+
+    def _note_verweis(self, run, note: str) -> None:
+        art, _, nid = note.partition(":")
+        nid = int(nid)
+        key = (art, nid)
+        if key not in self._note_ids:
+            self._note_ids[key] = len(self._noten[art]) + 1
+            self._noten[art].append((self._note_ids[key], (self.meta.get("noten", {}).get(art, {}) or {}).get(nid, "")))
+        r = run._r
+        for k in list(r):
+            r.remove(k)
+        rpr = OxmlElement("w:rPr")
+        rs = OxmlElement("w:rStyle"); rs.set(qn("w:val"), "FootnoteReference" if art == "f" else "EndnoteReference")
+        rpr.append(rs)
+        r.append(rpr)
+        ref = OxmlElement("w:footnoteReference" if art == "f" else "w:endnoteReference")
+        ref.set(qn("w:id"), str(self._note_ids[key]))
+        r.append(ref)
+
+    def _zusatz_anwenden(self, run, cf: QTextCharFormat) -> None:
+        """Kommentarbereich merken, nachverfolgte Änderung als w:ins / w:del um den Lauf legen."""
+        if cf.hasProperty(P_KOMMENTAR):
+            self._komm_runs.setdefault(int(cf.property(P_KOMMENTAR)), []).append(run)
+        if cf.hasProperty(P_AENDERUNG):
+            art = cf.stringProperty(P_AENDERUNG)
+            if art in ("ins", "del"):
+                self._aend_id += 1
+                w = OxmlElement("w:ins" if art == "ins" else "w:del")
+                w.set(qn("w:id"), str(1000 + self._aend_id))
+                w.set(qn("w:author"), cf.stringProperty(P_AUTOR) or "Unbekannt")
+                if cf.stringProperty(P_DATUM):
+                    w.set(qn("w:date"), cf.stringProperty(P_DATUM))
+                run._r.addprevious(w)
+                w.append(run._r)
+                if art == "del":
+                    for t in run._r.findall(qn("w:t")):
+                        t.tag = qn("w:delText")
+
+    def _steuerelement(self, form: str, wert: str):
+        """w:sdt für ein Formularfeld: Art (Text, Liste, Datum, Kontrollkästchen), Name als Titel, unsere Daten im Tag."""
+        from lunivo_writer.editor import formular as FO
+        m = FO.meta_lesen(form) or {"art": "text", "name": ""}
+        W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
+        sdt = OxmlElement("w:sdt")
+        pr = OxmlElement("w:sdtPr")
+        sdt.append(pr)
+        if m.get("name"):
+            al = OxmlElement("w:alias"); al.set(qn("w:val"), str(m["name"])); pr.append(al)
+        tag = OxmlElement("w:tag"); tag.set(qn("w:val"), "lunivo:" + form); pr.append(tag)
+        if m.get("leer"):
+            pr.append(OxmlElement("w:showingPlcHdr"))
+        art = m["art"]
+        if art == "text":
+            pr.append(OxmlElement("w:text"))
+        elif art == "auswahl":
+            dd = OxmlElement("w:dropDownList")
+            for o in m.get("optionen") or []:
+                li = OxmlElement("w:listItem"); li.set(qn("w:displayText"), str(o)); li.set(qn("w:value"), str(o)); dd.append(li)
+            pr.append(dd)
+        elif art == "datum":
+            da = OxmlElement("w:date")
+            fm = OxmlElement("w:dateFormat"); fm.set(qn("w:val"), FO.DATUMSFORMAT); da.append(fm)
+            lid = OxmlElement("w:lid"); lid.set(qn("w:val"), "de-DE"); da.append(lid)
+            pr.append(da)
+        elif art == "kasten":
+            from lxml import etree
+            cb = etree.SubElement(pr, "{%s}checkbox" % W14)
+            for nm, val in (("checked", "1" if wert.strip() == FO.KASTEN_VOLL else "0"), ("checkedState", "2612"), ("uncheckedState", "2610")):
+                el = etree.SubElement(cb, "{%s}%s" % (W14, nm)); el.set("{%s}val" % W14, val)
+        inhalt = OxmlElement("w:sdtContent")
+        sdt.append(inhalt)
+        return sdt, inhalt
+
+    def _make_run(self, parent, para):
+        if parent is para:
+            return para.add_run()
+        from docx.text.run import Run
+        r = OxmlElement("w:r")
+        parent.append(r)
+        return Run(r, para)
+
+    def _hyperlink(self, para, href: str, tipp: str = ""):
+        h = OxmlElement("w:hyperlink")
+        if tipp:
+            h.set(qn("w:tooltip"), tipp)                        # QuickInfo aus dem Fenster „Hyperlink“
+        if href.startswith("#"):
+            h.set(qn("w:anchor"), href[1:])
+        else:
+            rid = para.part.relate_to(href, RT.HYPERLINK, is_external=True)
+            h.set(qn("r:id"), rid)
+        para._p.append(h)
+        return h
+
+    def _format_run(self, run, cf: QTextCharFormat, in_head: bool, is_link: bool):
+        f = run.font
+        if _has(cf, QTextFormat.FontFamilies) and cf.fontFamilies():
+            fam = cf.fontFamilies()[0]
+            f.name = fam
+            rpr = run._r.get_or_add_rPr()
+            rf = rpr.find(qn("w:rFonts"))
+            for a in ("w:hAnsi", "w:cs", "w:eastAsia"):
+                rf.set(qn(a), fam)
+            from lunivo_writer.editor.zusatz import P_FONT_ASIEN, P_FONT_KOMPLEX
+            for prop, attr in ((P_FONT_ASIEN, "w:eastAsia"), (P_FONT_KOMPLEX, "w:cs")):      # Schrift für asiatische und komplexe Zeichen
+                if cf.hasProperty(prop) and cf.stringProperty(prop).split("|")[0]:
+                    rf.set(qn(attr), cf.stringProperty(prop).split("|")[0])
+        elif _has(cf, QTextFormat.FontFamily):
+            f.name = cf.stringProperty(QTextFormat.FontFamily)
+        if _has(cf, QTextFormat.FontPointSize) and cf.fontPointSize() > 0:
+            f.size = Pt(cf.fontPointSize())
+        if _has(cf, QTextFormat.FontWeight):
+            f.bold = cf.fontWeight() >= QFont.DemiBold
+        if _has(cf, QTextFormat.FontItalic):
+            f.italic = cf.fontItalic()
+        ustil = cf.underlineStyle()
+        from lunivo_writer.editor.zusatz import P_UNTER
+        eigene = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) else ""
+        if (ustil != QTextCharFormat.NoUnderline or eigene) and not is_link:
+            from docx.enum.text import WD_UNDERLINE as U
+            f.underline = {"woerter": U.WORDS, "doppelt": U.DOUBLE, "dick": U.THICK, "dick_gepunktet": U.DOTTED_HEAVY, "dick_gestrichelt": U.DASH_HEAVY,
+                           "lang": U.DASH_LONG, "dick_lang": U.DASH_LONG_HEAVY, "dick_strichpunkt": U.DOT_DASH_HEAVY, "dick_strichpunktpunkt": U.DOT_DOT_DASH_HEAVY,
+                           "dick_wellig": U.WAVY_HEAVY, "doppelwellig": U.WAVY_DOUBLE}.get(eigene) or {
+                QTextCharFormat.DashUnderline: U.DASH, QTextCharFormat.DotLine: U.DOTTED, QTextCharFormat.DashDotLine: U.DOT_DASH,
+                QTextCharFormat.DashDotDotLine: U.DOT_DOT_DASH, QTextCharFormat.WaveUnderline: U.WAVY}.get(ustil, True)
+        from lunivo_writer.editor.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_KOMPLEX
+        if cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT):
+            f.double_strike = True
+        elif cf.fontStrikeOut():
+            f.strike = True
+        if cf.hasProperty(P_FONT_KOMPLEX):                       # Schnitt und Größe für komplexe Zeichen
+            _fam, schnitt, gr = (cf.stringProperty(P_FONT_KOMPLEX).split("|") + ["", "", ""])[:3]
+            f.cs_bold = True if "Fett" in schnitt else None
+            f.cs_italic = True if "Kursiv" in schnitt else None
+            try:
+                if float(gr or 0) > 0:
+                    sz = OxmlElement("w:szCs"); sz.set(qn("w:val"), str(int(round(float(gr) * 2))))
+                    _rpr_einfuegen(run._r.get_or_add_rPr(), sz)
+            except ValueError:
+                pass
+        from lunivo_writer.editor.zusatz import P_RASTER
+        rpr_ = run._r.get_or_add_rPr()
+        if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() not in (0, 100):               # Skalieren
+            e_ = OxmlElement("w:w"); e_.set(qn("w:val"), str(int(cf.fontStretch()))); _rpr_einfuegen(rpr_, e_)
+        if cf.hasProperty(QTextFormat.TextBaselineOffset) and cf.baselineOffset() and cf.verticalAlignment() == QTextCharFormat.AlignNormal:  # Position
+            gr = cf.fontPointSize() if cf.hasProperty(QTextFormat.FontPointSize) and cf.fontPointSize() > 0 else 11.0
+            e_ = OxmlElement("w:position"); e_.set(qn("w:val"), str(int(round(cf.baselineOffset() * gr / 100 * 2)))); _rpr_einfuegen(rpr_, e_)
+        if cf.hasProperty(P_RASTER) and not cf.property(P_RASTER):
+            e_ = OxmlElement("w:snapToGrid"); e_.set(qn("w:val"), "0"); _rpr_einfuegen(rpr_, e_)
+        if cf.hasProperty(P_BETONUNG) and cf.stringProperty(P_BETONUNG):
+            em = OxmlElement("w:em")
+            em.set(qn("w:val"), {"punkt": "dot", "kreis": "circle", "komma": "comma", "unten": "underDot"}.get(cf.stringProperty(P_BETONUNG), "dot"))
+            _rpr_einfuegen(run._r.get_or_add_rPr(), em)
+        va = cf.verticalAlignment()
+        if va == QTextCharFormat.AlignSuperScript:
+            f.superscript = True
+        elif va == QTextCharFormat.AlignSubScript:
+            f.subscript = True
+        fg = cf.foreground()
+        if fg.style() != Qt.NoBrush and not is_link:
+            c = fg.color()
+            if c.isValid() and c.name().lower() != Farbe.SCHWARZ:
+                f.color.rgb = RGBColor(c.red(), c.green(), c.blue())
+        bg = cf.background()
+        if bg.style() != Qt.NoBrush:
+            c = bg.color()
+            if c.isValid():
+                shd = OxmlElement("w:shd")
+                shd.set(qn("w:val"), "clear")
+                shd.set(qn("w:color"), "auto")
+                shd.set(qn("w:fill"), c.name()[1:].upper())
+                run._r.get_or_add_rPr().append(shd)
+        if cf.textOutline().style() != Qt.NoPen:
+            f.outline = True
+        from lunivo_writer.editor.zusatz import P_EFFEKT
+        if cf.textOutline().style() != Qt.NoPen or cf.stringProperty(P_EFFEKT) or (cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().color().alpha() < 255):
+            from lunivo_writer.editor import texteffekt
+            texteffekt.in_rpr(run._r.get_or_add_rPr(), cf)
+        if cf.hasProperty(P_VERSTECKT):
+            f.hidden = True
+        ls = cf.fontLetterSpacing()
+        if ls and cf.fontLetterSpacingType() == QFont.AbsoluteSpacing:
+            sp = OxmlElement("w:spacing")
+            sp.set(qn("w:val"), str(int(round(ls * 0.75 * 20))))             # px → pt → Zwanzigstelpunkt
+            run._r.get_or_add_rPr().insert_element_before(
+                sp, "w:w", "w:kern", "w:position", "w:sz", "w:szCs", "w:highlight", "w:u", "w:effect", "w:bdr", "w:shd",
+                "w:fitText", "w:vertAlign", "w:rtl", "w:cs", "w:em", "w:lang", "w:eastAsianLayout", "w:specVanish", "w:oMath")
+        cap = cf.fontCapitalization()
+        if cap == QFont.AllUppercase:
+            f.all_caps = True
+        elif cap == QFont.SmallCaps:
+            f.small_caps = True
+        if is_link:
+            run._r.get_or_add_rPr().append(_rstyle_hyperlink(self.d))
+
+    # Kompatibilitätsoptionen (Optionen ▸ Allgemein und Speichern): als echte Einstellungen in settings.xml; Reihenfolge nach ECMA-376
+    KOMPAT_VOR_FE = ("ulTrailSpace", "footnoteLayoutLikeWW8", "adjustLineHeightInTable")
+    KOMPAT_NACH_FE = ("doNotUseIndentAsNumberingTabStop", "splitPgBreakAndParaMark")
+
+    def _kompatibilitaet(self) -> None:
+        gewaehlt = set(self.meta.get("kompat") or [])
+        einst = self.d.settings.element
+        if "bilder_komprimieren" in self.meta:
+            wort = einst.find(qn("w:doNotAutoCompressPictures"))
+            if self.meta["bilder_komprimieren"] and wort is not None:
+                einst.remove(wort)                                    # Word darf Bilder beim Speichern selbst komprimieren
+        if not gewaehlt:
+            return
+        compat = einst.find(qn("w:compat"))
+        if compat is None:
+            return
+        for name in self.KOMPAT_VOR_FE[::-1]:
+            if name in gewaehlt and compat.find(qn(f"w:{name}")) is None:
+                compat.insert(0, OxmlElement(f"w:{name}"))
+        fe = compat.find(qn("w:useFELayout"))
+        stelle = list(compat).index(fe) + 1 if fe is not None else 0
+        for name in self.KOMPAT_NACH_FE:
+            if name in gewaehlt and compat.find(qn(f"w:{name}")) is None:
+                compat.insert(stelle, OxmlElement(f"w:{name}"))
+                stelle += 1
+
+
+    _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+    _MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+
+    _RAND_VAL = {QTextFrameFormat.BorderStyle_Dotted: "dotted", QTextFrameFormat.BorderStyle_Dashed: "dashed",
+                 QTextFrameFormat.BorderStyle_Double: "double"}
+
+
+    # ---- Hauptlauf --------------------------------------------------------
+    def run(self) -> bytes:
+        self.write_defaults()
+        self._sprache()
+        self.write_page()
+        self.write_frame(self.q.rootFrame(), _Body(self.d))
+        self._trim_trailing_empty()
+        self._noten_schreiben()
+        self._kommentare_schreiben()
+        self._quellen_schreiben()
+        self._kompatibilitaet()
+        cp = self.d.core_properties
+        cp.title = self.meta.get("title", "") or ""
+        cp.author = self.meta.get("author", "") or "Lunivo Writer"
+        out = io.BytesIO()
+        self.d.save(out)
+        return out.getvalue()
+
+
+    def _trim_trailing_empty(self):
+        body = self.d.element.body
+        kids = [k for k in body if k.tag != qn("w:sectPr")]
+        # Word verlangt nach einer Tabelle einen Absatz; leere Endabsätze sonst entfernen
+        while len(kids) > 1 and kids[-1].tag == qn("w:p") and not "".join(kids[-1].itertext()).strip() \
+                and kids[-2].tag == qn("w:p") and not kids[-1].xpath(".//w:drawing"):
+            body.remove(kids[-1])
+            kids.pop()
+
+
+def docx_daten(qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None) -> tuple[bytes, IOReport]:
+    """Baut die DOCX-Datei im Speicher. → (Inhalt, Bericht). Wirft DocumentIOError."""
+    w = _Writer(qdoc, page, meta or {})
+    try:
+        data = w.run()
+    except Exception as e:
+        logging.getLogger("lunivo.dateien").exception("DOCX konnte nicht aufgebaut werden")
+        raise DocumentIOError(f"Das Dokument konnte nicht als DOCX aufgebaut werden: {e}") from e
+    return data, w.report
+
+
+def write_docx(path: str, qdoc: QTextDocument, page: PageSettings, meta: Optional[dict] = None, sicherung: bool = True) -> IOReport:
+    """Schreibt über den sicheren Schreibweg (Temp-Datei, Prüfung, Umbenennen). Wirft DocumentIOError."""
+    from lunivo_writer.services import sicher_schreiben
+    data, report = docx_daten(qdoc, page, meta)
+    sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung)
+    return report

@@ -1,0 +1,63 @@
+"""Tabellenformatvorlagen und Formatoptionen (Kopfzeile, gebänderte Zeilen, erste Spalte).
+
+Die Vorlage wird auf die Zellen angewendet (Füllung, Fettdruck, Rahmen) — nicht als lebende Verknüpfung: spätere Änderungen an
+einzelnen Zellen bleiben erhalten, bis die Vorlage erneut angewendet wird. Alles wird als gewöhnliche DOCX-Zellenschattierung und
+Fettschrift gespeichert, geht also bei DOCX nicht verloren."""
+from __future__ import annotations
+
+from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextFrameFormat, QTextTable
+
+# Name: (Kopf-Füllung, Kopf-Schrift, Streifen-Füllung, Rahmen)
+from lunivo_writer.core.farben import Farbe
+VORLAGEN = {
+    "Gitternetz": (None, None, None, 1),
+    "Einfach": (None, None, None, 0),
+    "Blau": (Farbe.AKZENT, Farbe.WEISS, "#e7f0fa", 1),
+    "Grün": ("#2d8a4e", Farbe.WEISS, "#e6f4ea", 1),
+    "Orange": ("#e67700", Farbe.WEISS, "#fff0e0", 1),
+    "Grau": ("#495057", Farbe.WEISS, "#f1f3f5", 1),
+    "Hell": ("#dee2e6", Farbe.SCHWARZ, "#f8f9fa", 0),
+}
+
+
+def _zellen(t: QTextTable):
+    done = set()
+    for r in range(t.rows()):
+        for c in range(t.columns()):
+            cell = t.cellAt(r, c)
+            k = (cell.row(), cell.column())
+            if k not in done:
+                done.add(k)
+                yield r, c, cell
+
+
+def _fett(cell, an: bool, farbe: str | None = None) -> None:
+    c = cell.firstCursorPosition()
+    c.setPosition(cell.lastCursorPosition().position(), QTextCursor.KeepAnchor)
+    f = QTextCharFormat()
+    f.setFontWeight(700 if an else 400)
+    if farbe:
+        f.setForeground(QColor(farbe))
+    c.mergeCharFormat(f)
+
+
+def anwenden(t: QTextTable, name: str, kopf: bool = True, streifen: bool = True, spalte: bool = False) -> bool:
+    if name not in VORLAGEN:
+        return False
+    kopf_fill, kopf_schrift, streifen_fill, rahmen = VORLAGEN[name]
+    fmt = t.format(); fmt.setBorder(rahmen)
+    fmt.setBorderBrush(QColor('#333333')); fmt.setBorderStyle(QTextFrameFormat.BorderStyle_Solid); t.setFormat(fmt)
+    for r, c, cell in _zellen(t):
+        cf = cell.format().toTableCellFormat()
+        ist_kopf = kopf and r == 0
+        if ist_kopf and kopf_fill:
+            cf.setBackground(QBrush(QColor(kopf_fill)))
+        elif streifen and streifen_fill and (r - (1 if kopf else 0)) % 2 == 1:
+            cf.setBackground(QBrush(QColor(streifen_fill)))
+        else:
+            cf.clearBackground()
+        cell.setFormat(cf)
+        fett = ist_kopf or (spalte and c == 0)
+        if fett or c == 0 or r == 0:
+            _fett(cell, fett, kopf_schrift if ist_kopf and kopf_fill else None)
+    return True

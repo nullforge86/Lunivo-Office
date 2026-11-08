@@ -1,0 +1,50 @@
+# Python: Umgebung, Zwischenspeicher, Paketbau
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Betriebssystem
+.DS_Store
+
+# Git-Bundles (Sicherungen von Zweigen) gehören nicht ins Repository
+*.bundle
+
+# Protokolle
+*.log
+
+# Persönliches und Lokales
+*.local
+geheim*
+.env
+.env.*
+Lunivo Writer.desktop
+bilder/üBERARBEITUNG VON ICON lOGO/
+.claude/settings.local.json
+.claude/worktrees/
+
+# Zusatzprogramme (rund 700 MB) und LanguageTool (rund 400 MB) liegen unter
+# ~/.local/share/schreibprogramm/ und werden bei Bedarf dorthin gelegt.
+languagetool/
+
+# Was beim Arbeiten nebenbei entsteht: eigene Testdokumente, nur lokale Berichte
+*.doc
+*.docx
+*.epub
+*.fodt
+*.odt
+*.pdf
+*.rtf
+/docs/funktionsstand.md
+/docs/pruefstand-*.md
+/docs/menue-abgleich.md
+/docs/reiter-abgleich.md
+/docs/bildabgleich-ansicht.md
+/docs/MENUESTRUKTUR.md
+
+# Mitgelieferte Testdatei (siehe tests/test_lo_dokument.py)
+!tests/daten/*.docx

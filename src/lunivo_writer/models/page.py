@@ -1,0 +1,151 @@
+"""Seiteneinrichtung: Papier, Ränder, Ausrichtung, Kopf- und Fußzeile.
+
+Alle Maße in Millimetern. Umrechnung in Bildpunkte (96 dpi) nur hier.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from lunivo_writer.core.farben import Farbe
+PX_PER_MM = 96.0 / 25.4
+
+PAPER_MM = {
+    "A4": (210.0, 297.0),
+    "A5": (148.0, 210.0),
+    "A3": (297.0, 420.0),
+    "Letter": (215.9, 279.4),
+    "Legal": (215.9, 355.6),
+}
+
+
+def mm_to_px(mm: float) -> float:
+    return mm * PX_PER_MM
+
+
+def px_to_mm(px: float) -> float:
+    return px / PX_PER_MM
+
+
+@dataclass
+class HeaderFooter:
+    """Text mit Platzhalter {PAGE} und {PAGES}. Ausrichtung: left|center|right, dazu aussen|innen (ungerade Seiten rechts bzw. links,
+    gerade Seiten umgekehrt — wie bei gebundenen Büchern)."""
+    text: str = ""
+    align: str = "center"
+    fmt: dict = field(default_factory=dict)      # Zeichenformat der ganzen Zeile: family, size_pt, bold, italic, underline, color
+
+    def kopie(self, text: str | None = None, align: str | None = None) -> "HeaderFooter":
+        return HeaderFooter(self.text if text is None else text, self.align if align is None else align, dict(self.fmt))
+
+    def is_empty(self) -> bool:
+        return not self.text.strip()
+
+
+@dataclass
+class PageSettings:
+    width_mm: float = 210.0
+    height_mm: float = 297.0
+    margin_top_mm: float = 25.0
+    margin_bottom_mm: float = 25.0
+    margin_left_mm: float = 32.0
+    margin_right_mm: float = 32.0
+    header: HeaderFooter = field(default_factory=HeaderFooter)
+    footer: HeaderFooter = field(default_factory=HeaderFooter)
+    color: str = ""                      # Seitenfarbe als „#rrggbb“; leer = keine
+    border: dict | None = None           # {"farbe": Farbe.SCHWARZ, "breite_pt": 1.0, "art": Linienart (editor/linie.py), "abstand_mm": 8.0, "seiten": "tblr"}
+    watermark: dict | None = None        # {"text": …, "farbe": "#c0c0c0", "winkel": -45, "groesse_pt": 80}
+    zeilennummern: bool = False
+    zeilennummern_neu: str = ""          # "" fortlaufend, "seite" auf jeder Seite neu (siehe editor/zeilennummern.py)
+    diff_first: bool = False                 # „Erste Seite anders“
+    first_header: HeaderFooter = field(default_factory=HeaderFooter)
+    first_footer: HeaderFooter = field(default_factory=HeaderFooter)
+    diff_even: bool = False                  # „Gerade und ungerade Seiten sind unterschiedlich“: gerade Seiten haben eine eigene Kopf-/Fußzeile
+    even_header: HeaderFooter = field(default_factory=HeaderFooter)
+    even_footer: HeaderFooter = field(default_factory=HeaderFooter)
+    spalten: int = 1                         # Textspalten (Seitenansicht, Druck, PDF; die Bearbeitungsansicht bleibt einspaltig)
+    spalten_abstand_mm: float = 10.0
+    spalten_linie: bool = False              # Trennlinie zwischen den Spalten
+    silbentrennung: bool = False             # automatische Silbentrennung (Seitenansicht, Druck, PDF; DOCX: autoHyphenation)
+    silben_sprache: str = "de_DE"
+    kopf_verknuepft: bool = False            # Abschnitt ab dem zweiten: Kopfzeile wie im vorigen Abschnitt
+    bilder: list = field(default_factory=list)   # frei positionierte Bilder in Kopf-/Fußzeilen (siehe editor/freie_bilder.py)
+    kopf_abstand_mm: float = 12.7            # Abstand der Kopfzeile vom oberen Blattrand (DOCX w:header)
+    fuss_abstand_mm: float = 12.7            # Abstand der Fußzeile vom unteren Blattrand (DOCX w:footer)
+    fuss_verknuepft: bool = False
+    # Seitenzahl (Einfügen ▸ Seitenzahl ▸ Seitenzahl einfügen …; DOCX w:pgNumType)
+    seiten_format: str = "dezimal"           # Zahlenart von {PAGE}: dezimal, klein, gross, roem_klein, roem_gross (mehrstufig.nummer_text)
+    seiten_start: int = 0                    # 0 = fortsetzen vom vorherigen Abschnitt, sonst „Beginnen mit“
+    kapitel_ebene: int = 0                   # Kapitelnummer voranstellen: Nummer der letzten Überschrift dieser Ebene (0 = nein)
+    kapitel_trenner: str = "-"
+
+    @property
+    def landscape(self) -> bool:
+        return self.width_mm > self.height_mm
+
+    def set_orientation(self, landscape: bool) -> None:
+        if landscape != self.landscape:
+            self.width_mm, self.height_mm = self.height_mm, self.width_mm
+
+    def set_paper(self, name: str) -> None:
+        w, h = PAPER_MM[name]
+        if self.landscape:
+            w, h = h, w
+        self.width_mm, self.height_mm = w, h
+
+    def paper_name(self) -> str:
+        a, b = sorted((self.width_mm, self.height_mm))
+        for name, (w, h) in PAPER_MM.items():
+            if abs(a - w) < 1.0 and abs(b - h) < 1.0:
+                return name
+        return "Benutzerdefiniert"
+
+    @property
+    def content_width_px(self) -> float:
+        return mm_to_px(self.width_mm - self.margin_left_mm - self.margin_right_mm)
+
+    @property
+    def content_height_px(self) -> float:
+        return mm_to_px(self.height_mm - self.margin_top_mm - self.margin_bottom_mm)
+
+    ZEILE_KOPF_PX = 16.0                       # Höhe einer Zeile in Kopf-/Fußzeile (Schrift 11 pt mit Zeilenabstand)
+
+    def kopf_fuss_art(self, blatt: int, nummer: int) -> str:
+        """Welche Kopf-/Fußzeile ein Blatt trägt: "first" (Blatt 1 bei „Erste Seite anders“), "even" (gerade angezeigte Seitenzahl bei
+        „Gerade und ungerade Seiten unterschiedlich“) oder "" (die gewöhnliche). ``blatt`` ist 1-basiert, ``nummer`` die angezeigte Seitenzahl."""
+        if blatt == 1 and self.diff_first:
+            return "first"
+        if self.diff_even and nummer % 2 == 0:
+            return "even"
+        return ""
+
+    def kopf_fuss(self, blatt: int, nummer: int) -> tuple:
+        """(Kopfzeile, Fußzeile) für das Blatt, siehe ``kopf_fuss_art``."""
+        art = self.kopf_fuss_art(blatt, nummer)
+        if art:
+            return getattr(self, art + "_header"), getattr(self, art + "_footer")
+        return self.header, self.footer
+
+    def erste_seite_versatz_px(self) -> float:
+        """Wie weit der Text der ersten Seite nach unten rückt, weil die Kopfzeile länger ist als der obere Rand: Der Text beginnt erst unter der
+        Kopfzeile. Gilt für die Kopfzeile der ersten Seite, bei „Erste Seite anders“ für die eigene."""
+        hf = self.first_header if self.diff_first else self.header
+        if hf.is_empty():
+            return 0.0
+        unten = mm_to_px(self.kopf_abstand_mm) + len(hf.text.split("\n")) * self.ZEILE_KOPF_PX
+        return max(0.0, unten - mm_to_px(self.margin_top_mm))
+
+    def copy(self) -> "PageSettings":
+        import dataclasses
+        return dataclasses.replace(
+            self, header=self.header.kopie(), footer=self.footer.kopie(),
+            border=dict(self.border) if self.border else None, watermark=dict(self.watermark) if self.watermark else None,
+            first_header=self.first_header.kopie(),
+            first_footer=self.first_footer.kopie(),
+            even_header=self.even_header.kopie(),
+            even_footer=self.even_footer.kopie(), bilder=list(self.bilder))
+
+    @property
+    def spalten_breite_px(self) -> float:
+        """Breite einer Textspalte (bei einer Spalte: die ganze Textbreite)."""
+        n = max(1, int(self.spalten))
+        return (self.content_width_px - mm_to_px(self.spalten_abstand_mm) * (n - 1)) / n

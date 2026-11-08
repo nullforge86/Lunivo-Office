@@ -1,0 +1,2 @@
+[console_scripts]
+lunivo-writer = lunivo_writer.app:main

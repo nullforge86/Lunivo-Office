@@ -1,0 +1,34 @@
+feature,area,priority,original,clone,notes
+Tabelleneigenschaften öffnen,band,must,yes,yes,Fenster in der Seitenleiste (Tabelle; Spalte und Zelle)
+Gitternetzlinien anzeigen,band,should,yes,yes,Befehl tabelleGitternetz; nur bei Tabellen ohne Rahmen
+Tabelle zeichnen (Stift),band,should,yes,yes,Knopf in den Tabellentools; startet den Stift
+Radiergummi (Linien löschen),band,could,yes,yes,TabellenRadierer; Klick auf innere Linie verbindet Zellen (QTest)
+Zeile oberhalb einfügen,band,must,yes,yes,
+Zeile unterhalb einfügen,band,must,yes,yes,
+Spalte links einfügen,band,must,yes,yes,
+Spalte rechts einfügen,band,must,yes,yes,
+Löschen (Zeile/Spalte/Tabelle),band,must,yes,yes,drei Knöpfe statt Auswahlmenü
+Zellen zusammenführen,band,must,yes,yes,
+Zellen teilen,band,must,yes,yes,Eingabe Spalten und Zeilen; unverbundene Zellen über Verbinden; Dialog nur per Hand ungeprüft
+Tabelle teilen,band,should,yes,yes,teilt vor der Zeile der Schreibmarke
+AutoAnpassen,band,should,yes,yes,An Fenster/gleichmäßig/An Inhalt
+Zeilenhöhe als Feld im Band,band,should,yes,yes,Zellengröße Zahlenfeld
+Spaltenbreite als Feld im Band,band,should,yes,yes,Zellengröße Zahlenfeld
+Schrift und Größe im Tabellenband,band,could,yes,yes,Gruppe Schrift mit Feldern
+Fett/Kursiv/Unterstrichen im Tabellenband,band,could,yes,yes,Gruppe Schrift
+Zellausrichtung waagrecht und senkrecht,band,must,yes,yes,je drei Knöpfe; kein 3x3-Raster
+Textrichtung,band,could,yes,skip,vertikale Richtung zeichnet Qt nicht; waagrecht und rechts nach links vorhanden
+Tabellenstil-Vorlagen,band,must,yes,yes,
+Verschiebegriff oben links,dokument,must,yes,yes,markiert und verschiebt
+Zeile am Ende anhängen (+),dokument,must,yes,yes,
+Spalte am Ende anhängen (+),dokument,must,yes,yes,
+Aufziehgriff unten rechts,dokument,must,yes,yes,skaliert Spaltenbreiten
+Mini-Leiste über der Tabelle,dokument,must,yes,yes,Einfügen/Löschen/Eigenschaften/Fett/Ausrichtung/Schrift/Größe/Kursiv/Unterstrichen/Farbe
+Markierte Tabelle grau hinterlegt,dokument,should,yes,yes,Qt-Auswahl
+Spaltenränder mit der Maus ziehen,dokument,must,yes,yes,mit simulierten Mausereignissen geprüft
+Absatz-Layout-Symbol mit Menü,dokument,could,yes,yes,Zurücksetzen und Ausblenden; Option in Ansicht
+Zeilenhöhe im DOCX speichern,datei,should,yes,yes,w:trHeight atLeast; Rundlauf geprüft; exact wie atLeast
+Tabellen-Kontextmenü beim Rechtsklick,dokument,must,yes,yes,Reihenfolge nach WPS; Tabelleneinträge ohne Symbole; Aktionen mit Zähler geprüft
+Einfügen und Löschen als große Knöpfe in der Mini-Leiste,dokument,should,yes,yes,rechts neben den zwei Zeilen
+Rahmen und Schattierung für Tabelle,band,should,yes,partial,nur Rahmen der ganzen Tabelle und Füllfarbe; keine Einzelkanten
+Tabellenbeschriftung einfügen,band,could,yes,yes,Text immer „Tabelle N“; ohne Fenster
