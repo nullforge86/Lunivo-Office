@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOpt
 
 from lunivo_writer.ui.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
 
 
 def keine_symbol(groesse: int = 16) -> QIcon:

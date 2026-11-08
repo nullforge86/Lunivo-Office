@@ -12,10 +12,10 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QMenu, QPushButton, QScrollArea, QVBoxLayout, QWidget, QWidgetAction
 from lunivo_writer.ui.baukasten.dropdown.zeile import dropdown_zeile
-from lunivo_writer.ui.baukasten.texte import hinweis_stil, trennlinie
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil, trennlinie
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.basis.mass import (
     DROPDOWN_INNEN_GALERIE,
     SCHRIFT_GRUPPENTITEL_PX,
     ABSTAND_ENG,

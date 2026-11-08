@@ -11,18 +11,18 @@ from PySide6.QtWidgets import (
     QLabel, QLayout, QMenu, QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui.baukasten import farben as F
-from lunivo_writer.ui.baukasten.karten_raster import kachel_gitter
+from lunivo_writer.ui.baukasten.controls.karten_raster import kachel_gitter
 
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_FARBKACHEL, DROPDOWN_HOEHE, DROPDOWN_INNEN_FARBE, SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_FARBKACHEL, DROPDOWN_HOEHE, DROPDOWN_INNEN_FARBE, SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
     """„Weitere Farben …“: das Fenster „Farben“ (Standard · Benutzerdefiniert · Erweitert). Gibt die Farbe zurück oder ``None`` bei Abbruch."""
-    from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog
+    from lunivo_writer.ui.baukasten.controls.farbwaehler import FarbenDialog
     d = FarbenDialog(parent, start, titel)
     if not d.exec():
         return None
@@ -34,8 +34,8 @@ def weitere_farben(parent, start=None, titel: str = "Farbe") -> QColor | None:
 def weitere_farben_unter(parent, fertig, start=None, titel: str = "Farbe") -> None:
     """Wie ``weitere_farben``, aber als Unterfenster: Liegt ``parent`` in einem ``FensterStapel``, öffnet sich „Farben“ als Seite im selben Fenster;
     ``fertig(farbe)`` läuft nach „OK“ (sonst öffnet sich das Fenster wie bisher)."""
-    from lunivo_writer.ui.baukasten.farbwaehler import FarbenDialog
-    from lunivo_writer.ui.baukasten.fenster_stapel import zeige_unter
+    from lunivo_writer.ui.baukasten.controls.farbwaehler import FarbenDialog
+    from lunivo_writer.ui.baukasten.controls.fenster_stapel import zeige_unter
     d = FarbenDialog(parent, start, titel)
 
     def ok() -> None:
@@ -208,7 +208,7 @@ class FarbPalette(MenueListe):
 
     def _pipette(self) -> None:
         """„Pipette“: eine Farbe vom Bildschirm aufnehmen."""
-        from lunivo_writer.ui.baukasten.pipette import farbe_vom_bildschirm
+        from lunivo_writer.ui.baukasten.controls.pipette import farbe_vom_bildschirm
         self.close()
         c = farbe_vom_bildschirm(self.parentWidget())
         if c is not None:
