@@ -123,6 +123,28 @@ def test_veraltete_schreibhilfe_funde_nach_aenderung_oder_tabwechsel_sind_unwirk
     assert not w.assistant.fund_aktuell(fund)
 
 
+
+def test_ki_satzvorschlag_startet_nicht_mit_fund_aus_anderm_dokument(app, tmp_path, monkeypatch):
+    from lunivo_writer.models.proofing import ProofingIssue
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Ein sehr langer Beispielsatz steht hier.")
+    fund = ProofingIssue(von=0, bis=40, alt="Ein sehr langer Beispielsatz steht hier.",
+                         neu="", grund="Langer Satz", art="hinweis", stelle="Ein sehr langer Beispielsatz steht hier.")
+    w.assistant.anzeigen([fund])
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Ein anderer Text.")
+    w.assistant.attach(zweites)
+    erhalten = []
+    w.ki.satz_vorschlag(fund, erhalten.append)
+
+    assert erhalten == []
+    assert zweites.toPlainText() == "Ein anderer Text."
+    assert not w.ki.beschaeftigt
+
+
 def test_lassen_blendet_aus_und_lernt_ruhe(app, tmp_path, monkeypatch):
     w = win(tmp_path, monkeypatch)
     e = w.current_editor(); e.setPlainText("Das Wort steht steht doppelt.")
