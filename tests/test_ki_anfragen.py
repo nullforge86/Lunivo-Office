@@ -53,3 +53,26 @@ def test_ki_antwort_fuer_anders_dokument_wird_verworfen():
     assert dienst.ergebnisse == []
     assert dienst.status.werte
     assert dienst.laeuft.werte == [(False,)]
+
+
+
+def test_bildantwort_fuer_gewechseltes_dokument_wird_verworfen():
+    erstes = _Dokument()
+    zweites = _Dokument()
+    dienst = _Dienst()
+    eingefuegt = []
+    dienst._bild_fertig = lambda r, e: eingefuegt.append((r, e))
+    eingabe = {
+        "ed": _Editor(zweites),
+        "dokument": erstes,
+        "rev": erstes.revision(),
+        "cursor": (0, 0),
+    }
+
+    dienst._fertig(("bild", eingabe), {"bild": b"bilddaten"})
+
+    assert eingefuegt == []
+    assert dienst.status.werte == [
+        ("Das Dokument wurde gewechselt oder geändert, während das Bild erzeugt wurde. Das Bild wurde verworfen.",)
+    ]
+    assert dienst.laeuft.werte == [(False,)]
