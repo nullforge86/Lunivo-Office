@@ -27,7 +27,7 @@ from lunivo_writer.ui.hauptfenster.oberflaeche import OberflaecheBaustein
 from lunivo_writer.ui.hauptfenster.backstage_steuerung import BackstageBaustein
 from lunivo_writer.ui.hauptfenster.dokument_sync import DokumentSyncMixin
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.mass import ICON_NORMAL, ICON_TAB_GEAENDERT, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL, ICON_TAB_GEAENDERT, RAND_KEIN
 MARGIN_PRESETS = {
     "Normal (2,5 cm)": (25, 25, 25, 25),
     "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),

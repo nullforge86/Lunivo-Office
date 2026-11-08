@@ -4,18 +4,18 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
 
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout
 
-from lunivo_writer.ui.baukasten.beschriftung import md_escape, md_label, text_label
+from lunivo_writer.ui.baukasten.basis.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.ui.widgets import icons
 
 import re
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.karte import als_karte
+from lunivo_writer.ui.baukasten.basis.karte import als_karte
 from lunivo_writer.models.proofing import ProofingIssue
-from lunivo_writer.ui.baukasten.texte import hinweis_label
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_label
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_NORMAL,
     ICON_GROSS,
     PADDING_MARKE,
@@ -49,7 +49,7 @@ def marke(art: str, quelle: str = "") -> QLabel:
     marken = _marken()
     text, grund, schrift = marken["ki"] if quelle == "ki" else marken.get(art, marken["hinweis"])
     m = QLabel(text)
-    from lunivo_writer.ui.baukasten.texte import marke_faerben
+    from lunivo_writer.ui.baukasten.basis.texte import marke_faerben
     marke_faerben(m, grund, schrift, "border: none; border-radius: " f"{RADIUS_MARKE}" "px; padding: " f"{PADDING_MARKE}" "; font-size: " f"{SCHRIFT_KLEIN}" "pt; font-weight: 700; letter-spacing: 0.5px;")
     return m
 
