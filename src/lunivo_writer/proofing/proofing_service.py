@@ -53,6 +53,8 @@ class WritingAssistant(QObject):
         self.gelernt = gelernt or Gelernt()
         self.editor = None
         self.funde: list[ProofingIssue] = []
+        self._funde_doc = None
+        self._funde_rev = -1
         self._roh: list[ProofingIssue] = []
         self._geprueft: dict[str, list[tuple[int, int]]] = {}   # Quelle → Bereiche, die sie vollständig geprüft hat
         self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
@@ -242,9 +244,25 @@ class WritingAssistant(QObject):
 
     def anzeigen(self, funde: list[ProofingIssue]) -> None:
         self.funde = funde
+        try:
+            self._funde_doc = self.editor.document() if self.editor is not None else None
+            self._funde_rev = self._funde_doc.revision() if self._funde_doc is not None else -1
+        except RuntimeError:
+            self._funde_doc, self._funde_rev = None, -1
         if self.editor is not None:
             self.editor.set_wellen(funde if self.an("wellen") else [])
         self.fundeGeaendert.emit(funde)
+
+    def fund_aktuell(self, fund: ProofingIssue | None = None) -> bool:
+        """Nur Karten/Funde der aktuellen Dokumentrevision dürfen Aktionen auslösen."""
+        ed = self.editor
+        try:
+            doc = ed.document() if ed is not None else None
+            if doc is None or doc is not self._funde_doc or doc.revision() != self._funde_rev:
+                return False
+            return fund is None or any(f is fund for f in self.funde)
+        except RuntimeError:
+            return False
 
     # ---- Rechtsklick-Menü ------------------------------------------------------------------
     def funde_an(self, pos: int) -> list[ProofingIssue]:
@@ -406,7 +424,8 @@ class WritingAssistant(QObject):
     # ---- Annehmen / weglassen ----------------------------------------------------------
     def aendern(self, fund: ProofingIssue) -> bool:
         ed = self.editor
-        if ed is None or not fund.neu and fund.art == "hinweis":
+        if ed is None or not self.fund_aktuell(fund) or not fund.neu and fund.art == "hinweis":
+            self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
             return False
         if not ed.replace_range(fund.von, fund.bis, fund.neu or "", erwartet=fund.alt):
             self.status.emit("Der Text hat sich an dieser Stelle geändert — bitte neu prüfen.")
@@ -419,12 +438,18 @@ class WritingAssistant(QObject):
         return True
 
     def lassen(self, fund: dict) -> None:
+        if not self.fund_aktuell(fund):
+            self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
+            return
         if getattr(fund, "quelle", None) == "ki":
             self.gelernt.ki_vermerken({"konfidenz": fund.konfidenz if fund.konfidenz is not None else 0.5}, False)
         self._weg.add(self._key(fund))
         self._zeigen()
 
     def alle_aendern(self) -> int:
+        if not self.fund_aktuell():
+            self.status.emit("Die Funde sind veraltet — bitte das Dokument neu prüfen.")
+            return 0
         n = 0
         for f in sorted((f for f in self.funde if f.art == "fehler" and f.neu), key=lambda f: -f.von):
             if self.editor.replace_range(f.von, f.bis, f.neu, erwartet=f.alt):
