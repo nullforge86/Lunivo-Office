@@ -7,23 +7,23 @@ from PySide6.QtWidgets import (
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.controls.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
 from lunivo_writer.editor import silbenfarben as S
 from lunivo_writer.ui.baukasten import weitere_farben
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     GROESSE_KNOPF_SILBE,
     HOEHE_TEXT_NORMAL,
     RADIUS_FELD,
     RAND_KEIN,
     SCHRIFT_VORSCHAU,
 )
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_KURZ
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_KURZ
 class SilbenDialog(PanelFaehig, QDialog):
     def __init__(self, fenster):
         super().__init__(fenster)

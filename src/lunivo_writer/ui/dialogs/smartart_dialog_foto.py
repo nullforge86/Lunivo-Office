@@ -9,10 +9,10 @@ from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QVBoxLayout
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.dialog_rahmen import knopfzeile
-from lunivo_writer.ui.baukasten.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.ui.baukasten.controls.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
 from lunivo_writer.ui.dialogs.einfuegen_dialoge import SmartArtDialog, _layout_bildchen, _LayoutGalerie
-from lunivo_writer.ui.baukasten.mass import GROESSE_KACHEL_FOTO
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_KACHEL_FOTO
 
 KACHEL_B, KACHEL_H = GROESSE_KACHEL_FOTO                      # Außenmaß einer Kachel (Foto etwa 130 x 78)
 ABSTAND = 4
@@ -30,7 +30,7 @@ class _GrosseGalerie(_LayoutGalerie):
         self._bauen(2)                                # Start schmal (Seitenleiste 300 px); breiter wird beim Anpassen der Breite
 
     def _bauen(self, spalten: int) -> None:
-        from lunivo_writer.ui.baukasten.kachel_feld import KachelFeld
+        from lunivo_writer.ui.baukasten.controls.kachel_feld import KachelFeld
         if self.feld is not None:
             self._v.removeWidget(self.feld); _weg(self.feld)
         self._spalten = spalten

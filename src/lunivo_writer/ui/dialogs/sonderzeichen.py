@@ -23,11 +23,11 @@ from PySide6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
-from lunivo_writer.ui.baukasten.tasten_dialog import TastenDialog
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.dokument.tasten_dialog import TastenDialog
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_FELD_ZEICHENCODE,
     BREITE_ZEILENHINWEIS,
     GROESSE_FENSTER_SONDERZEICHEN,
@@ -38,7 +38,7 @@ from lunivo_writer.ui.baukasten.mass import (
     ZUGABE_RAHMEN,
 )
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_MITTEL
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
@@ -231,7 +231,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.bei_benutzer = QPushButton("Einfügen bei benutzerdefinierten Symbolen")
         self.bei_benutzer.clicked.connect(self._zu_benutzer)
         self.ok = fussleiste(self, v, self.bei_benutzer, bei_ok=self._einfuegen, ok_text="Einfügen", abbrechen_text="Abbrechen")
-        from lunivo_writer.ui.baukasten.dialog_rahmen import Knopfzeile
+        from lunivo_writer.ui.baukasten.basis.dialog_rahmen import Knopfzeile
         self.abbrechen = self.findChild(Knopfzeile).abbrechen
         self.reiter.currentChanged.connect(self._reiter)
         self._schrift_neu()
