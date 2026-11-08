@@ -19,4 +19,7 @@ class _Lauf(QRunnable):
             r = self.arbeit()
         except Exception as e:
             r = {"fehler": f"Es hat nicht geklappt: {e}"}
-        self.sig.fertig.emit(self.auftrag, r)
+        try:
+            self.sig.fertig.emit(self.auftrag, r)
+        except RuntimeError:
+            pass                                      # Empfänger wurde beim Schließen bereits freigegeben
