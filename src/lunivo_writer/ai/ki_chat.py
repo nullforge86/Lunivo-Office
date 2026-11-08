@@ -116,7 +116,9 @@ class KIChatMixin:
     def _aktion_bezug(eing: dict) -> dict | None:
         """Bezug einer Aktion aus ihrer Eingabe (Editor, Text, Basis, Revision zum Start); ganzes Dokument: Einfügen am Ende, kein Ersetzen."""
         try:
-            return CB.bezug_bauen(eing["basis"], eing["basis"] + len(eing["text"]), eing["markiert"], eing["rev"], eing["text"], id(eing["ed"]))
+            return CB.bezug_bauen(eing["basis"], eing["basis"] + len(eing["text"]), eing["markiert"],
+                                  eing["rev"], eing["text"], id(eing["ed"]),
+                                  editor_obj=eing["ed"], dokument_obj=eing.get("dokument"))
         except (KeyError, TypeError):
             return None
 
@@ -143,7 +145,9 @@ class KIChatMixin:
             c = ed.textCursor()
             alt = c.selectedText().replace("\u2029", "\n") if c.hasSelection() else ""
             von, bis = (min(c.anchor(), c.position()), max(c.anchor(), c.position())) if c.hasSelection() else (c.position(),) * 2
-            return CB.bezug_bauen(von, bis, c.hasSelection(), ed.document().revision(), alt, id(ed))
+            doc = ed.document()
+            return CB.bezug_bauen(von, bis, c.hasSelection(), doc.revision(), alt, id(ed),
+                                  editor_obj=ed, dokument_obj=doc)
         except RuntimeError:
             return None
 
@@ -152,10 +156,12 @@ class KIChatMixin:
         bezug = self.chat_modell.bezug_von(index)
         ed = self.w.current_editor()
         try:
-            rev = ed.document().revision() if ed is not None else None
+            doc = ed.document() if ed is not None else None
+            rev = doc.revision() if doc is not None else None
         except RuntimeError:
-            ed, rev = None, None
-        ok, grund = CB.bezug_pruefen(bezug, rev, id(ed) if ed is not None else None)
+            ed, doc, rev = None, None, None
+        ok, grund = CB.bezug_pruefen(bezug, rev, id(ed) if ed is not None else None,
+                                     dokument_jetzt=doc, editor_obj_jetzt=ed)
         return bezug, (ed if ok else None), grund
 
     def bezug_gueltig(self, index: int, ersetzen: bool = False) -> tuple[bool, str]:
