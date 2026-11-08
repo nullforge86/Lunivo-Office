@@ -1079,3 +1079,22 @@ def test_ki_ergebnis_nach_editorwechsel_verwerfen(app, tmp_path, monkeypatch):
     assert not w.ki._eingabe_gueltig(eing)
     assert erstes.toPlainText() == "Text im ersten Dokument"
     assert zweites.toPlainText() == "Text im zweiten Dokument"
+
+
+def test_fortlaufender_ki_timer_startet_nicht_im_neuen_tab(app, tmp_path, monkeypatch):
+    """Ein Debounce-Timer aus Dokument A darf nach dem Tabwechsel nicht Dokument B verarbeiten."""
+    w = win(tmp_path, monkeypatch)
+    erstes = w.current_editor()
+    erstes.setPlainText("Änderung in Dokument A")
+    w.ki.konfig.d["assistenten_dauerbetrieb"] = True
+    w.ki._dauer_editor = erstes
+    w.ki._dauer_dokument = erstes.document()
+
+    w.new_document()
+    zweites = w.current_editor()
+    zweites.setPlainText("Unveränderter Text in Dokument B")
+
+    w.ki._dauer_los()
+
+    assert zweites.toPlainText() == "Unveränderter Text in Dokument B"
+    assert not w.ki.beschaeftigt
