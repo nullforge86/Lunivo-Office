@@ -141,6 +141,9 @@ def test_veraltete_schreibhilfe_funde_nach_aenderung_oder_tabwechsel_sind_unwirk
     w.assistant.anzeigen([fund])
 
     # Schon eine Änderung nach der Prüfung macht die angezeigte Karte ungültig.
+    cursor = erstes.textCursor()
+    cursor.movePosition(QTextCursor.End)
+    erstes.setTextCursor(cursor)
     erstes.insertPlainText(" Zusatz")
     assert not w.assistant.aendern(fund)
     assert erstes.toPlainText() == "Wir hat keine Zahlung erhalten. Zusatz"
