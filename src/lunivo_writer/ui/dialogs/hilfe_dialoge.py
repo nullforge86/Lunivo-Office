@@ -2,17 +2,17 @@
 from __future__ import annotations
 
 import os
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.core import paths
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.einklappgruppe import EinklappGruppe
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, abschnittstitel
-from lunivo_writer.ui.baukasten.spalten import ZweiSpalter
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.einklappgruppe import EinklappGruppe
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, abschnittstitel
+from lunivo_writer.ui.baukasten.controls.spalten import ZweiSpalter
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
 
 from lunivo_writer.ui import kuerzel
 
@@ -20,7 +20,7 @@ from lunivo_writer.ui import kuerzel
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.mass import (
     ABSTAND_BLOCK,
     ABSTAND_ENG,
     ABSTAND_MITTEL,

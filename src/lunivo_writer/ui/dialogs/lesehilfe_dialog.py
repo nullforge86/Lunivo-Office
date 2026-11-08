@@ -7,11 +7,11 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QVBoxLayout, QWidget
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.ui import lesestufen as LS
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig, leiste_fuer
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig, leiste_fuer
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
