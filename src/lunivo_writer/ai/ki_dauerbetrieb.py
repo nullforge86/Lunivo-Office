@@ -78,6 +78,11 @@ class KIDauerbetriebMixin:
         if not aktiv:
             return
         self._dauer_art = art
+        self._dauer_editor = self.w.current_editor()
+        try:
+            self._dauer_dokument = self._dauer_editor.document() if self._dauer_editor is not None else None
+        except RuntimeError:
+            self._dauer_editor = self._dauer_dokument = None
         self._dauer_timer.start(int(min(AL.verzoegerung_begrenzen(a["verzoegerung"]) for a in aktiv) * 1000))
 
     def _dauer_eingabe(self, a: dict):
@@ -98,6 +103,15 @@ class KIDauerbetriebMixin:
     def _dauer_los(self) -> None:
         """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
         if self._arbeit_laeuft or not self.dauerbetrieb():
+            return
+        # Der Timer gehört zu dem Editor, dessen Änderung ihn ausgelöst hat.
+        # Ein zwischenzeitlicher Tabwechsel darf keinen Assistenten im neuen Tab starten.
+        ed = getattr(self, "_dauer_editor", None)
+        try:
+            if (ed is None or self.w.current_editor() is not ed
+                    or ed.document() is not getattr(self, "_dauer_dokument", None)):
+                return
+        except RuntimeError:
             return
         wartet = self._drossel.warten_noch()
         if wartet == float("inf"):
