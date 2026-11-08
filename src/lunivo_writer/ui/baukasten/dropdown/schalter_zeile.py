@@ -6,8 +6,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
-from lunivo_writer.ui.baukasten.mass import ABSTAND_BLOCK, ABSTAND_MITTEL, DROPDOWN_ZEILE_PAD_V, ICON_NORMAL
-from lunivo_writer.ui.baukasten.schalter import KippSchalter
+from lunivo_writer.ui.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_MITTEL, DROPDOWN_ZEILE_PAD_V, ICON_NORMAL
+from lunivo_writer.ui.baukasten.controls.schalter import KippSchalter
 
 
 class SchalterZeile(QWidget):

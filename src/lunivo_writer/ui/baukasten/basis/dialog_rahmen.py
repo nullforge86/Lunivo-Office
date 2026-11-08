@@ -7,9 +7,9 @@ from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QDialog, QLayout, QPushButton, QVBoxLayout, QWidget, QWidgetItem
 
-from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter, felder_angleichen
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter, felder_angleichen
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import ICON_NORMAL
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL
 
 
 

@@ -8,7 +8,7 @@ from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-from lunivo_writer.ui.baukasten.mass import BREITE_TEILMENUEKNOPF, DROPDOWN_HOEHE
+from lunivo_writer.ui.baukasten.basis.mass import BREITE_TEILMENUEKNOPF, DROPDOWN_HOEHE
 
 
 class TeilMenueKnopf(QToolButton):

@@ -13,9 +13,9 @@ from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
 
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.ui.baukasten.mass import DROPDOWN_ZEICHEN_SCHMAL, DROPDOWN_ZEICHEN_ZAHL
+from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_ZEICHEN_SCHMAL, DROPDOWN_ZEICHEN_ZAHL
 def linien_symbol(art: str, groesse: QSize = QSize(*GROESSE_LINIENART_BILD), farbe: str | None = None, breite_pt: float = 1.5) -> QIcon:
     farbe = Farbe.TINTE if farbe is None else farbe
     pm = QPixmap(groesse); pm.fill(Qt.transparent)
