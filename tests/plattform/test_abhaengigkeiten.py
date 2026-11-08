@@ -3,7 +3,8 @@ import os
 import re
 import tomllib
 
-WURZEL = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# tests/plattform/ -> tests/ -> Repository-Wurzel
+WURZEL = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def _zeilen(name):
