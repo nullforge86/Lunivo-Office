@@ -41,7 +41,7 @@ class DateienExportBaustein:
 
     def pdf_export_widget(self):
         """Baut die PDF-Exportseite des Datei-Menüs; alle Exportwahloptionen bleiben erhalten."""
-        from lunivo_writer.ui.baukasten.pdf_export import PdfExportAnsicht
+        from lunivo_writer.ui.baukasten.dokument.pdf_export import PdfExportAnsicht
         t = self.current_tab()
         if not t:
             return QWidget()
@@ -62,7 +62,7 @@ class DateienExportBaustein:
     def bild_export_widget(self):
         """Baut die Bildexportseite des Datei-Menüs; schreibt Bilder ohne ein separates Exportfenster."""
         from lunivo_writer.services.bild_export import bilder_schreiben
-        from lunivo_writer.ui.baukasten.bild_export import BildExportAnsicht
+        from lunivo_writer.ui.baukasten.medien.bild_export import BildExportAnsicht
         t = self.current_tab()
         if not t:
             return QWidget()

@@ -50,7 +50,7 @@ class DateienDruckenBaustein:
 
     def druck_ansicht(self, t, parent=None):
         """Das Druckfenster ohne Knopfzeile (Menü ▸ Drucken, zweite Spalte)."""
-        from lunivo_writer.ui.baukasten.druck_dialog import DruckAnsicht
+        from lunivo_writer.ui.baukasten.dokument.druck_dialog import DruckAnsicht
         a = DruckAnsicht(parent=parent, **self._druck_args(t))
         a.eigenschaften.connect(lambda name: self._drucker_eigenschaften(a, name))
         return a
@@ -67,7 +67,7 @@ class DateienDruckenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from lunivo_writer.ui.baukasten.druck_dialog import DruckDialog
+        from lunivo_writer.ui.baukasten.dokument.druck_dialog import DruckDialog
         dlg = DruckDialog(self, hilfe=self.druck_hilfe, **self._druck_args(t))
         dlg.ansicht.eigenschaften.connect(lambda name: self._drucker_eigenschaften(dlg.ansicht, name))
         if not dlg.exec():
@@ -110,7 +110,7 @@ class DateienDruckenBaustein:
         if not t:
             return
         from lunivo_writer.editor.druck import Zwischenseiten, optionen_aus
-        from lunivo_writer.ui.baukasten.druckvorschau import DruckVorschau
+        from lunivo_writer.ui.baukasten.dokument.druckvorschau import DruckVorschau
         opt = optionen_aus(self.druckoptionen(), self.druck_start(), t.editor.noten)
         dlg = DruckVorschau(self, Zwischenseiten(t.editor.document(), t.page, opt, t.editor.noten))
         dlg.drucken.connect(lambda: QTimer.singleShot(0, self.print_dialog))

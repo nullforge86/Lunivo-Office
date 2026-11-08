@@ -95,7 +95,7 @@ class UeberpruefenBefehle:
         from PySide6.QtGui import QStandardItemModel
         from PySide6.QtWidgets import QToolButton, QVBoxLayout, QWidget
         from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
-        from lunivo_writer.ui.baukasten.mass import DROPDOWN_BREITE_MIN, HOEHE_KNOPF_GROSS
+        from lunivo_writer.ui.baukasten.basis.mass import DROPDOWN_BREITE_MIN, HOEHE_KNOPF_GROSS
         from lunivo_writer.ui.baukasten.dropdown.dropdown_knopf import DropdownKnopf
         halter = QWidget()
         v = QVBoxLayout(halter); v.setContentsMargins(2, 4, 2, 4); v.setSpacing(4)

@@ -4,11 +4,11 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QApplication, QMessageBox
-from lunivo_writer.ui.baukasten.eingabe_fenster import EingabeFenster
+from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import weitere_farben
 from lunivo_writer.ui.dialogs.dokument_dialoge import PageSetupDialog
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.farben import VORGABE_MARKER
+from lunivo_writer.ui.baukasten.basis.farben import VORGABE_MARKER
 from lunivo_writer.ui.hauptfenster.gemeinsam import _QuickInfo
 
 
@@ -44,11 +44,11 @@ class BearbeitenBaustein:
         e = self.current_editor()
         if not e:
             return
-        from lunivo_writer.ui.baukasten.absatz_dialog import AbsatzDialog, aus_block
+        from lunivo_writer.ui.baukasten.formatierung.absatz_dialog import AbsatzDialog, aus_block
         bf = e.textCursor().blockFormat()
         rtl = bf.layoutDirection() == Qt.RightToLeft
         d = AbsatzDialog(self, aus_block(bf))
-        from lunivo_writer.ui.baukasten.fenster_stapel import ausfuehren
+        from lunivo_writer.ui.baukasten.controls.fenster_stapel import ausfuehren
         if ausfuehren(d):
             w = d.werte()
             if w["ebene"] != bf.headingLevel():                       # die Gliederungsebene ist die Überschriftsebene des Absatzes
