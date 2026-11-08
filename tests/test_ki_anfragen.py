@@ -1,4 +1,5 @@
 from lunivo_writer.ai.ki_anfragen import KIAnfragenMixin
+from lunivo_writer.ai.ki_aktionen import KIAktionenMixin
 
 
 class _Signal:
@@ -20,6 +21,10 @@ class _Editor:
 
     def document(self):
         return self._dokument
+
+    def replace_range(self, *args, **kwargs):
+        self.ersatz = (args, kwargs)
+        return True
 
 
 class _Dienst(KIAnfragenMixin):
@@ -76,3 +81,38 @@ def test_bildantwort_fuer_gewechseltes_dokument_wird_verworfen():
         ("Das Dokument wurde gewechselt oder geändert, während das Bild erzeugt wurde. Das Bild wurde verworfen.",)
     ]
     assert dienst.laeuft.werte == [(False,)]
+
+
+
+class _Fenster:
+    def __init__(self, editor):
+        self._editor = editor
+
+    def current_editor(self):
+        return self._editor
+
+
+class _DienstMitAktionen(_Dienst, KIAktionenMixin):
+    pass
+
+
+def test_ki_vorschlag_nach_dokumentwechsel_nicht_einsetzen():
+    erstes = _Dokument()
+    zweites = _Dokument()
+    editor = _Editor(zweites)
+    dienst = _DienstMitAktionen()
+    dienst.w = _Fenster(editor)
+
+    vorschlag = {
+        "alt": "Ursprünglicher Satz",
+        "neu": "Verbesserter Satz",
+        "_ed": editor,
+        "_dokument": erstes,
+        "_rev": erstes.revision(),
+    }
+
+    assert dienst.vorschlag_einsetzen(vorschlag) is False
+    assert not hasattr(editor, "ersatz")
+    assert dienst.status.werte == [
+        ("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet.",)
+    ]
