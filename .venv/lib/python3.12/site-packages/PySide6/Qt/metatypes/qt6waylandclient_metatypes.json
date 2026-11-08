@@ -1,0 +1,1035 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QWaylandDataControlSourceV1",
+                "lineNumber": 66,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDataControlSourceV1",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 76,
+                        "name": "cancelled",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwlr_data_control_source_v1"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandDataControlDeviceV1",
+                "lineNumber": 87,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDataControlDeviceV1",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwlr_data_control_device_v1"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddatacontrolv1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandFractionalScale",
+                "lineNumber": 30,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandFractionalScale",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 40,
+                        "name": "preferredScaleChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_fractional_scale_v1"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandfractionalscale_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandSession",
+                "lineNumber": 39,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandSession",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::xdg_session_v1"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandSessionManager",
+                "lineNumber": 54,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandSessionManager",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QPlatformSessionManager"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandsessionmanager_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandAbstractDecoration",
+                "lineNumber": 47,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandAbstractDecoration",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandabstractdecoration_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandClientBufferIntegrationPlugin",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandClientBufferIntegrationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandclientbufferintegrationplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandClientExtension",
+                "lineNumber": 23,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 27,
+                        "name": "protocolVersion",
+                        "notify": "versionChanged",
+                        "override": false,
+                        "read": "version",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 28,
+                        "name": "active",
+                        "notify": "activeChanged",
+                        "override": false,
+                        "read": "isActive",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QWaylandClientExtension",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 43,
+                        "name": "versionChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 44,
+                        "name": "activeChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "protected",
+                        "index": 2,
+                        "lineNumber": 47,
+                        "name": "initialize",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandclientextension.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "ColorManager",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 36,
+                        "name": "Feature",
+                        "values": [
+                            "ICC",
+                            "Parametric",
+                            "SetPrimaries",
+                            "PowerTransferFunction",
+                            "SetLuminances",
+                            "SetMasteringDisplayPrimaries",
+                            "ExtendedTargetVolume"
+                        ]
+                    }
+                ],
+                "lineNumber": 32,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::ColorManager",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_color_manager_v1"
+                    }
+                ]
+            },
+            {
+                "className": "ImageDescriptionInfo",
+                "lineNumber": 67,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::ImageDescriptionInfo",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 74,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_image_description_info_v1"
+                    }
+                ]
+            },
+            {
+                "className": "ImageDescription",
+                "lineNumber": 101,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::ImageDescription",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 108,
+                        "name": "ready",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_image_description_v1"
+                    }
+                ]
+            },
+            {
+                "className": "ColorManagementFeedback",
+                "lineNumber": 115,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::ColorManagementFeedback",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 122,
+                        "name": "preferredChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_color_management_surface_feedback_v1"
+                    }
+                ]
+            },
+            {
+                "className": "ColorManagementSurface",
+                "lineNumber": 135,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::ColorManagementSurface",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wp_color_management_surface_v1"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandcolormanagement_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandDataDevice",
+                "lineNumber": 50,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDataDevice",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 80,
+                        "name": "selectionSourceCancelled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 83,
+                        "name": "dragSourceCancelled",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_data_device"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddatadevice_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandDataSource",
+                "lineNumber": 35,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDataSource",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 43,
+                        "name": "cancelled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 44,
+                        "name": "finished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "accepted",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "action",
+                                "type": "Qt::DropAction"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 46,
+                        "name": "dndResponseUpdated",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "accepted",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "action",
+                                "type": "Qt::DropAction"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 47,
+                        "name": "dndDropped",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_data_source"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddatasource_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandDecorationPlugin",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDecorationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddecorationplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandDisplay",
+                "lineNumber": 107,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandDisplay",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 297,
+                        "name": "connected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "global",
+                                "type": "RegistryGlobal"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 298,
+                        "name": "globalAdded",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "global",
+                                "type": "RegistryGlobal"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 299,
+                        "name": "globalRemoved",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 294,
+                        "name": "flushRequests",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_registry"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddisplay_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandInputContext",
+                "lineNumber": 42,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "context",
+                                "type": "xkb_context*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 71,
+                        "name": "setXkbContext",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputContext",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformInputContext"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandinputcontext_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandInputDevice",
+                "lineNumber": 91,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputDevice",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_seat"
+                    }
+                ]
+            },
+            {
+                "className": "Keyboard",
+                "lineNumber": 234,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputDevice::Keyboard",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 291,
+                        "name": "handleFocusDestroyed",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 292,
+                        "name": "handleFocusLost",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_keyboard"
+                    }
+                ]
+            },
+            {
+                "className": "Pointer",
+                "lineNumber": 309,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputDevice::Pointer",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 347,
+                        "name": "handleFocusDestroyed",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_pointer"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandPointerEvent",
+                "gadget": true,
+                "lineNumber": 441,
+                "qualifiedClassName": "QtWaylandClient::QWaylandPointerEvent"
+            },
+            {
+                "className": "QWaylandPointerGestureSwipeEvent",
+                "gadget": true,
+                "lineNumber": 493,
+                "qualifiedClassName": "QtWaylandClient::QWaylandPointerGestureSwipeEvent"
+            },
+            {
+                "className": "QWaylandPointerGesturePinchEvent",
+                "gadget": true,
+                "lineNumber": 518,
+                "qualifiedClassName": "QtWaylandClient::QWaylandPointerGesturePinchEvent"
+            }
+        ],
+        "inputFile": "qwaylandinputdevice_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandInputDeviceIntegrationPlugin",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputDeviceIntegrationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandinputdeviceintegrationplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandInputMethodContext",
+                "lineNumber": 88,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandInputMethodContext",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformInputContext"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandinputmethodcontext_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandPrimarySelectionSourceV1",
+                "lineNumber": 71,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandPrimarySelectionSourceV1",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 81,
+                        "name": "cancelled",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_primary_selection_source_v1"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandPrimarySelectionDeviceV1",
+                "lineNumber": 93,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandPrimarySelectionDeviceV1",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_primary_selection_device_v1"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandprimaryselectionv1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandServerBufferIntegrationPlugin",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandServerBufferIntegrationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandserverbufferintegrationplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandShellIntegrationPlugin",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandShellIntegrationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandshellintegrationplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandShellSurface",
+                "lineNumber": 40,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandShellSurface",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandshellsurface_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandSurface",
+                "lineNumber": 32,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandSurface",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 46,
+                        "name": "screensChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 47,
+                        "name": "preferredBufferScaleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 48,
+                        "name": "preferredBufferTransformChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "qScreen",
+                                "type": "QScreen*"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 51,
+                        "name": "handleScreenRemoved",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::wl_surface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandsurface_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandTabletSeatV2",
+                "lineNumber": 62,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandTabletSeatV2",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_tablet_seat_v2"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandTabletV2",
+                "lineNumber": 89,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandTabletV2",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPointingDevice"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_tablet_v2"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandTabletToolV2",
+                "lineNumber": 108,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandTabletToolV2",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPointingDevice"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_tablet_tool_v2"
+                    }
+                ]
+            },
+            {
+                "className": "QWaylandTabletPadV2",
+                "lineNumber": 193,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandTabletPadV2",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPointingDevice"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QtWayland::zwp_tablet_pad_v2"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandtabletv2_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QWaylandWindow",
+                "lineNumber": 69,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::QWaylandWindow",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 274,
+                        "name": "wlSurfaceCreated",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 275,
+                        "name": "wlSurfaceDestroyed",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 271,
+                        "name": "applyConfigure",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QNativeInterface::Private::QWaylandWindow"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QPlatformWindow"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylandwindow_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "EventThread",
+                "lineNumber": 79,
+                "object": true,
+                "qualifiedClassName": "QtWaylandClient::EventThread",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 178,
+                        "name": "needReadAndDispatch",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 179,
+                        "name": "waylandError",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QThread"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwaylanddisplay.cpp",
+        "outputRevision": 69
+    }
+]

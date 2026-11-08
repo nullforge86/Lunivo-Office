@@ -1,0 +1,4876 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.bluez.GattCharacteristic1"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.bluez.GattCharacteristic1\\\">\\n    <method name=\\\"ReadValue\\\">\\n      <arg direction=\\\"in\\\" type=\\\"a{sv}\\\" name=\\\"options\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.In0\\\"/>\\n      <arg direction=\\\"out\\\" type=\\\"ay\\\" name=\\\"value\\\"/>\\n    </method>\\n    <method name=\\\"WriteValue\\\">\\n      <arg direction=\\\"in\\\" type=\\\"ay\\\" name=\\\"value\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"a{sv}\\\" name=\\\"options\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.In1\\\"/>\\n    </method>\\n    <method name=\\\"StartNotify\\\"/>\\n    <method name=\\\"StopNotify\\\"/>\\n    <property access=\\\"read\\\" type=\\\"s\\\" name=\\\"UUID\\\"/>\\n    <property access=\\\"read\\\" type=\\\"o\\\" name=\\\"Service\\\"/>\\n    <property access=\\\"read\\\" type=\\\"ay\\\" name=\\\"Value\\\"/>\\n    <property access=\\\"read\\\" type=\\\"b\\\" name=\\\"Notifying\\\"/>\\n    <property access=\\\"read\\\" type=\\\"as\\\" name=\\\"Flags\\\"/>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgBluezGattCharacteristic1Adaptor",
+                "lineNumber": 36,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 66,
+                        "name": "Flags",
+                        "override": false,
+                        "read": "flags",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 69,
+                        "name": "Notifying",
+                        "override": false,
+                        "read": "notifying",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 72,
+                        "name": "Service",
+                        "override": false,
+                        "read": "service",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 75,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 78,
+                        "name": "Value",
+                        "override": false,
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattCharacteristic1Adaptor",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 82,
+                        "name": "ReadValue",
+                        "returnType": "QByteArray"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 83,
+                        "name": "StartNotify",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 84,
+                        "name": "StopNotify",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 85,
+                        "name": "WriteValue",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattcharacteristic1adaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.bluez.GattDescriptor1"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.bluez.GattDescriptor1\\\">\\n    <method name=\\\"ReadValue\\\">\\n      <arg direction=\\\"in\\\" type=\\\"a{sv}\\\" name=\\\"options\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.In0\\\"/>\\n      <arg direction=\\\"out\\\" type=\\\"ay\\\" name=\\\"value\\\"/>\\n    </method>\\n    <method name=\\\"WriteValue\\\">\\n      <arg direction=\\\"in\\\" type=\\\"ay\\\" name=\\\"value\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"a{sv}\\\" name=\\\"options\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.In1\\\"/>\\n    </method>\\n    <property access=\\\"read\\\" type=\\\"s\\\" name=\\\"UUID\\\"/>\\n    <property access=\\\"read\\\" type=\\\"o\\\" name=\\\"Characteristic\\\"/>\\n    <property access=\\\"read\\\" type=\\\"ay\\\" name=\\\"Value\\\"/>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgBluezGattDescriptor1Adaptor",
+                "lineNumber": 36,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 62,
+                        "name": "Characteristic",
+                        "override": false,
+                        "read": "characteristic",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 65,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 68,
+                        "name": "Value",
+                        "override": false,
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattDescriptor1Adaptor",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 72,
+                        "name": "ReadValue",
+                        "returnType": "QByteArray"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 73,
+                        "name": "WriteValue",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattdescriptor1adaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.bluez.GattService1"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.bluez.GattService1\\\">\\n    <property access=\\\"read\\\" type=\\\"s\\\" name=\\\"UUID\\\"/>\\n    <property access=\\\"read\\\" type=\\\"o\\\" name=\\\"Device\\\"/>\\n    <property access=\\\"read\\\" type=\\\"b\\\" name=\\\"Primary\\\"/>\\n    <property access=\\\"read\\\" type=\\\"ao\\\" name=\\\"Includes\\\"/>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgBluezGattService1Adaptor",
+                "lineNumber": 36,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "Device",
+                        "override": false,
+                        "read": "device",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "Includes",
+                        "override": false,
+                        "read": "includes",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QDBusObjectPath>",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 59,
+                        "name": "Primary",
+                        "override": false,
+                        "read": "primary",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 62,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattService1Adaptor",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattservice1adaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.bluez.LEAdvertisement1"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.bluez.LEAdvertisement1\\\">\\n    <method name=\\\"Release\\\">\\n      <annotation value=\\\"true\\\" name=\\\"org.freedesktop.DBus.Method.NoReply\\\"/>\\n    </method>\\n    <property access=\\\"readwrite\\\" type=\\\"s\\\" name=\\\"Type\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"as\\\" name=\\\"ServiceUUIDs\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"a{qv}\\\" name=\\\"ManufacturerData\\\">\\n      <annotation value=\\\"ManufacturerDataList\\\" name=\\\"org.qtproject.QtDBus.QtTypeName\\\"/>\\n    </property>\\n    <property access=\\\"readwrite\\\" type=\\\"b\\\" name=\\\"Discoverable\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"as\\\" name=\\\"Includes\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"s\\\" name=\\\"LocalName\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"u\\\" name=\\\"MinInterval\\\"/>\\n    <property access=\\\"readwrite\\\" type=\\\"u\\\" name=\\\"MaxInterval\\\"/>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgBluezLEAdvertisement1Adaptor",
+                "lineNumber": 36,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 62,
+                        "name": "Discoverable",
+                        "override": false,
+                        "read": "discoverable",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setDiscoverable"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 66,
+                        "name": "Includes",
+                        "override": false,
+                        "read": "includes",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setIncludes"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 70,
+                        "name": "LocalName",
+                        "override": false,
+                        "read": "localName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setLocalName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 74,
+                        "name": "ManufacturerData",
+                        "override": false,
+                        "read": "manufacturerData",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ManufacturerDataList",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setManufacturerData"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 78,
+                        "name": "MaxInterval",
+                        "override": false,
+                        "read": "maxInterval",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMaxInterval"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 82,
+                        "name": "MinInterval",
+                        "override": false,
+                        "read": "minInterval",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMinInterval"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 86,
+                        "name": "ServiceUUIDs",
+                        "override": false,
+                        "read": "serviceUUIDs",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setServiceUUIDs"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 90,
+                        "name": "Type",
+                        "override": false,
+                        "read": "type",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setType"
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezLEAdvertisement1Adaptor",
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 95,
+                        "name": "Release",
+                        "returnType": "void",
+                        "tag": "Q_NOREPLY"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "leadvertisement1adaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.freedesktop.DBus.ObjectManager"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.freedesktop.DBus.ObjectManager\\\">\\n    <method name=\\\"GetManagedObjects\\\">\\n      <arg direction=\\\"out\\\" type=\\\"a{oa{sa{sv}}}\\\" name=\\\"object_paths_interfaces_and_properties\\\"/>\\n      <annotation value=\\\"ManagedObjectList\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.Out0\\\"/>\\n    </method>\\n    <signal name=\\\"InterfacesAdded\\\">\\n      <arg type=\\\"o\\\" name=\\\"object_path\\\"/>\\n      <arg type=\\\"a{sa{sv}}\\\" name=\\\"interfaces_and_properties\\\"/>\\n      <annotation value=\\\"InterfaceList\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.Out1\\\"/>\\n    </signal>\\n    <signal name=\\\"InterfacesRemoved\\\">\\n      <arg type=\\\"o\\\" name=\\\"object_path\\\"/>\\n      <arg type=\\\"as\\\" name=\\\"interfaces\\\"/>\\n    </signal>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgFreedesktopDBusObjectManagerAdaptor",
+                "lineNumber": 36,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgFreedesktopDBusObjectManagerAdaptor",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces_and_properties",
+                                "type": "InterfaceList"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "InterfacesAdded",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 66,
+                        "name": "InterfacesRemoved",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 63,
+                        "name": "GetManagedObjects",
+                        "returnType": "ManagedObjectList"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "objectmanageradaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.freedesktop.DBus.Properties"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.freedesktop.DBus.Properties\\\">\\n    <method name=\\\"Get\\\">\\n      <arg direction=\\\"in\\\" type=\\\"s\\\" name=\\\"interface\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"s\\\" name=\\\"name\\\"/>\\n      <arg direction=\\\"out\\\" type=\\\"v\\\" name=\\\"value\\\"/>\\n    </method>\\n    <method name=\\\"Set\\\">\\n      <arg direction=\\\"in\\\" type=\\\"s\\\" name=\\\"interface\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"s\\\" name=\\\"name\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"v\\\" name=\\\"value\\\"/>\\n    </method>\\n    <method name=\\\"GetAll\\\">\\n      <arg direction=\\\"in\\\" type=\\\"s\\\" name=\\\"interface\\\"/>\\n      <arg direction=\\\"out\\\" type=\\\"a{sv}\\\" name=\\\"properties\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.Out0\\\"/>\\n    </method>\\n    <signal name=\\\"PropertiesChanged\\\">\\n      <arg type=\\\"s\\\" name=\\\"interface\\\"/>\\n      <arg type=\\\"a{sv}\\\" name=\\\"changed_properties\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.Out1\\\"/>\\n      <arg type=\\\"as\\\" name=\\\"invalidated_properties\\\"/>\\n    </signal>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgFreedesktopDBusPropertiesAdaptor",
+                "lineNumber": 36,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgFreedesktopDBusPropertiesAdaptor",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changed_properties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidated_properties",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 75,
+                        "name": "PropertiesChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 71,
+                        "name": "Get",
+                        "returnType": "QDBusVariant"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 72,
+                        "name": "GetAll",
+                        "returnType": "QVariantMap"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QDBusVariant"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 73,
+                        "name": "Set",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractAdaptor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "propertiesadaptor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "inputFile": "qbluetoothdevicediscoveryagent_p.h",
+        "outputRevision": 69
+    },
+    {
+        "inputFile": "qbluetoothservicediscoveryagent_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothServiceInfoPrivate",
+                "lineNumber": 58,
+                "object": true,
+                "qualifiedClassName": "QBluetoothServiceInfoPrivate",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothserviceinfo_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLeDBusAdvertiser",
+                "lineNumber": 34,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 49,
+                        "name": "Release",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QLeDBusAdvertiser",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qleadvertiser_bluezdbus_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezAdapter1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "Address",
+                        "override": false,
+                        "read": "address",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "Alias",
+                        "override": false,
+                        "read": "alias",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAlias"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 62,
+                        "name": "Class",
+                        "override": false,
+                        "read": "classProperty",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 66,
+                        "name": "Discoverable",
+                        "override": false,
+                        "read": "discoverable",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setDiscoverable"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 72,
+                        "name": "DiscoverableTimeout",
+                        "override": false,
+                        "read": "discoverableTimeout",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setDiscoverableTimeout"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 78,
+                        "name": "Discovering",
+                        "override": false,
+                        "read": "discovering",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 82,
+                        "name": "Modalias",
+                        "override": false,
+                        "read": "modalias",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 86,
+                        "name": "Name",
+                        "override": false,
+                        "read": "name",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 90,
+                        "name": "Pairable",
+                        "override": false,
+                        "read": "pairable",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPairable"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 96,
+                        "name": "PairableTimeout",
+                        "override": false,
+                        "read": "pairableTimeout",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPairableTimeout"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 102,
+                        "name": "Powered",
+                        "override": false,
+                        "read": "powered",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPowered"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "lineNumber": 108,
+                        "name": "UUIDs",
+                        "override": false,
+                        "read": "uUIDs",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezAdapter1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "device",
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 113,
+                        "name": "RemoveDevice",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "properties",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 120,
+                        "name": "SetDiscoveryFilter",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 127,
+                        "name": "StartDiscovery",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 133,
+                        "name": "StopDiscovery",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "adapter1_bluez5_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezBattery1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "Percentage",
+                        "override": false,
+                        "read": "percentage",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uchar",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezBattery1Interface",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "battery1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "BluetoothManagement",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 39,
+                        "name": "EventCode",
+                        "values": [
+                            "CommandCompleteEvent",
+                            "CommandStatusEvent",
+                            "ControllerErrorEvent",
+                            "IndexAddedEvent",
+                            "IndexRemovedEvent",
+                            "NewSettingsEvent",
+                            "ClassOfDeviceChangedEvent",
+                            "LocalNameChangedEvent",
+                            "NewLinkKeyEvent",
+                            "NewLongTermKeyEvent",
+                            "DeviceConnectedEvent",
+                            "DeviceDisconnectedEvent",
+                            "ConnectFailedEvent",
+                            "PINCodeRequestEvent",
+                            "UserConfirmationRequestEvent",
+                            "UserPasskeyRequestEvent",
+                            "AuthenticationFailedEvent",
+                            "DeviceFoundEvent",
+                            "DiscoveringEvent",
+                            "DeviceBlockedEvent",
+                            "DeviceUnblockedEvent",
+                            "DeviceUnpairedEvent",
+                            "PasskeyNotifyEvent",
+                            "NewIdentityResolvingKeyEvent",
+                            "NewSignatureResolvingKeyEvent",
+                            "DeviceAddedEvent",
+                            "DeviceRemovedEvent",
+                            "NewConnectionParameterEvent",
+                            "UnconfiguredIndexAddedEvent",
+                            "UnconfiguredIndexRemovedEvent",
+                            "NewConfigurationOptionsEvent",
+                            "ExtendedIndexAddedEvent",
+                            "ExtendedIndexRemovedEvent",
+                            "LocalOutOfBandExtendedDataUpdatedEvent",
+                            "AdvertisingAddedEvent",
+                            "AdvertisingRemovedEvent",
+                            "ExtendedControllerInformationChangedEvent",
+                            "PHYConfigurationChangedEvent",
+                            "ExperimentalFeatureChangedEvent",
+                            "DefaultSystemConfigurationChangedEvent",
+                            "DefaultRuntimeConfigurationChangedEvent",
+                            "DeviceFlagsChangedEvent",
+                            "AdvertisementMonitorAddedEvent",
+                            "AdvertisementMonitorRemovedEvent",
+                            "ControllerSuspendEvent",
+                            "ControllerResumeEvent"
+                        ]
+                    }
+                ],
+                "lineNumber": 33,
+                "object": true,
+                "qualifiedClassName": "BluetoothManagement",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 96,
+                        "name": "_q_readNotifier",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 97,
+                        "name": "processRandomAddressFlagInformation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 2,
+                        "lineNumber": 98,
+                        "name": "cleanupOldAddressFlags",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "bluetoothmanagement_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QtBluezDiscoveryManager",
+                "lineNumber": 49,
+                "object": true,
+                "qualifiedClassName": "QtBluezDiscoveryManager",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "adapterPath",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 63,
+                        "name": "discoveryInterrupted",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 66,
+                        "name": "InterfacesRemoved",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changed_properties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidated_properties",
+                                "type": "QStringList"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 68,
+                        "name": "PropertiesChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "bluez5_helper_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluezConst",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 307,
+                        "name": "OpCodeGroupField",
+                        "values": [
+                            "OgfLinkControl"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 312,
+                        "name": "OpCodeCommandField",
+                        "values": [
+                            "OcfLeSetAdvParams",
+                            "OcfLeReadTxPowerLevel",
+                            "OcfLeSetAdvData",
+                            "OcfLeSetScanResponseData",
+                            "OcfLeSetAdvEnable",
+                            "OcfLeClearWhiteList",
+                            "OcfLeAddToWhiteList",
+                            "OcfLeConnectionUpdate"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 324,
+                        "name": "AttCommand",
+                        "type": "quint8",
+                        "values": [
+                            "ATT_OP_ERROR_RESPONSE",
+                            "ATT_OP_EXCHANGE_MTU_REQUEST",
+                            "ATT_OP_EXCHANGE_MTU_RESPONSE",
+                            "ATT_OP_FIND_INFORMATION_REQUEST",
+                            "ATT_OP_FIND_INFORMATION_RESPONSE",
+                            "ATT_OP_FIND_BY_TYPE_VALUE_REQUEST",
+                            "ATT_OP_FIND_BY_TYPE_VALUE_RESPONSE",
+                            "ATT_OP_READ_BY_TYPE_REQUEST",
+                            "ATT_OP_READ_BY_TYPE_RESPONSE",
+                            "ATT_OP_READ_REQUEST",
+                            "ATT_OP_READ_RESPONSE",
+                            "ATT_OP_READ_BLOB_REQUEST",
+                            "ATT_OP_READ_BLOB_RESPONSE",
+                            "ATT_OP_READ_MULTIPLE_REQUEST",
+                            "ATT_OP_READ_MULTIPLE_RESPONSE",
+                            "ATT_OP_READ_BY_GROUP_REQUEST",
+                            "ATT_OP_READ_BY_GROUP_RESPONSE",
+                            "ATT_OP_WRITE_REQUEST",
+                            "ATT_OP_WRITE_RESPONSE",
+                            "ATT_OP_PREPARE_WRITE_REQUEST",
+                            "ATT_OP_PREPARE_WRITE_RESPONSE",
+                            "ATT_OP_EXECUTE_WRITE_REQUEST",
+                            "ATT_OP_EXECUTE_WRITE_RESPONSE",
+                            "ATT_OP_HANDLE_VAL_NOTIFICATION",
+                            "ATT_OP_HANDLE_VAL_INDICATION",
+                            "ATT_OP_HANDLE_VAL_CONFIRMATION",
+                            "ATT_OP_WRITE_COMMAND",
+                            "ATT_OP_SIGNED_WRITE_COMMAND"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 356,
+                        "name": "AttError",
+                        "type": "quint8",
+                        "values": [
+                            "ATT_ERROR_NO_ERROR",
+                            "ATT_ERROR_INVALID_HANDLE",
+                            "ATT_ERROR_READ_NOT_PERM",
+                            "ATT_ERROR_WRITE_NOT_PERM",
+                            "ATT_ERROR_INVALID_PDU",
+                            "ATT_ERROR_INSUF_AUTHENTICATION",
+                            "ATT_ERROR_REQUEST_NOT_SUPPORTED",
+                            "ATT_ERROR_INVALID_OFFSET",
+                            "ATT_ERROR_INSUF_AUTHORIZATION",
+                            "ATT_ERROR_PREPARE_QUEUE_FULL",
+                            "ATT_ERROR_ATTRIBUTE_NOT_FOUND",
+                            "ATT_ERROR_ATTRIBUTE_NOT_LONG",
+                            "ATT_ERROR_INSUF_ENCR_KEY_SIZE",
+                            "ATT_ERROR_INVAL_ATTR_VALUE_LEN",
+                            "ATT_ERROR_UNLIKELY",
+                            "ATT_ERROR_INSUF_ENCRYPTION",
+                            "ATT_ERROR_UNSUPPRTED_GROUP_TYPE",
+                            "ATT_ERROR_INSUF_RESOURCES",
+                            "ATT_ERROR_APPLICATION_START",
+                            "ATT_ERROR_REQUEST_STALLED",
+                            "ATT_ERROR_APPLICATION_END"
+                        ]
+                    }
+                ],
+                "lineNumber": 305,
+                "namespace": true,
+                "qualifiedClassName": "QBluezConst"
+            }
+        ],
+        "inputFile": "bluez_data_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QtBluezPeripheralApplication",
+                "lineNumber": 39,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 68,
+                        "name": "GetManagedObjects",
+                        "returnType": "ManagedObjectList"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralApplication",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 71,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 72,
+                        "name": "registered",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "remoteDeviceObjectPath",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "mtu",
+                                "type": "quint16"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 75,
+                        "name": "remoteDeviceAccessEvent",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "handle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 78,
+                        "name": "characteristicValueUpdatedByRemote",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "characteristicHandle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "descriptorHandle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 79,
+                        "name": "descriptorValueUpdatedByRemote",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "bluezperipheralapplication_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QtBluezPeripheralConnectionManager",
+                "lineNumber": 35,
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralConnectionManager",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "connected",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 48,
+                        "name": "connectivityStateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            },
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "mtu",
+                                "type": "quint16"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 49,
+                        "name": "remoteDeviceChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "remoteDeviceObjectPath",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "mtu",
+                                "type": "quint16"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 45,
+                        "name": "remoteDeviceAccessEvent",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 52,
+                        "name": "remoteDeviceDisconnected",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "bluezperipheralconnectionmanager_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QtBluezPeripheralGattObject",
+                "lineNumber": 38,
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralGattObject",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "remoteDeviceObjectPath",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "mtu",
+                                "type": "quint16"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "remoteDeviceAccessEvent",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QtBluezPeripheralDescriptor",
+                "lineNumber": 74,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "error",
+                                "type": "QString&"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 88,
+                        "name": "ReadValue",
+                        "returnType": "QByteArray"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 92,
+                        "name": "WriteValue",
+                        "returnType": "QString"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralDescriptor",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "characteristicHandle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "descriptorHandle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 98,
+                        "name": "valueUpdatedByRemote",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QtBluezPeripheralGattObject"
+                    }
+                ]
+            },
+            {
+                "className": "QtBluezPeripheralCharacteristic",
+                "lineNumber": 112,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "error",
+                                "type": "QString&"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 125,
+                        "name": "ReadValue",
+                        "returnType": "QByteArray"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 129,
+                        "name": "WriteValue",
+                        "returnType": "QString"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 133,
+                        "name": "StartNotify",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 134,
+                        "name": "StopNotify",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralCharacteristic",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "handle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 140,
+                        "name": "valueUpdatedByRemote",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QtBluezPeripheralGattObject"
+                    }
+                ]
+            },
+            {
+                "className": "QtBluezPeripheralService",
+                "lineNumber": 155,
+                "object": true,
+                "qualifiedClassName": "QtBluezPeripheralService",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QtBluezPeripheralGattObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "bluezperipheralobjects_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezDevice1Interface",
+                "lineNumber": 41,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "Adapter",
+                        "override": false,
+                        "read": "adapter",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 57,
+                        "name": "Address",
+                        "override": false,
+                        "read": "address",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 61,
+                        "name": "Alias",
+                        "override": false,
+                        "read": "alias",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAlias"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 67,
+                        "name": "Appearance",
+                        "override": false,
+                        "read": "appearance",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ushort",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 71,
+                        "name": "Blocked",
+                        "override": false,
+                        "read": "blocked",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBlocked"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 77,
+                        "name": "Class",
+                        "override": false,
+                        "read": "classProperty",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uint",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 81,
+                        "name": "Connected",
+                        "override": false,
+                        "read": "connected",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 85,
+                        "name": "Icon",
+                        "override": false,
+                        "read": "icon",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 89,
+                        "name": "LegacyPairing",
+                        "override": false,
+                        "read": "legacyPairing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 93,
+                        "name": "ManufacturerData",
+                        "override": false,
+                        "read": "manufacturerData",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ManufacturerDataList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 97,
+                        "name": "Modalias",
+                        "override": false,
+                        "read": "modalias",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "lineNumber": 101,
+                        "name": "Name",
+                        "override": false,
+                        "read": "name",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 12,
+                        "lineNumber": 105,
+                        "name": "Paired",
+                        "override": false,
+                        "read": "paired",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 13,
+                        "lineNumber": 109,
+                        "name": "RSSI",
+                        "override": false,
+                        "read": "rSSI",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "short",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 14,
+                        "lineNumber": 113,
+                        "name": "ServiceData",
+                        "override": false,
+                        "read": "serviceData",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ServiceDataList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 15,
+                        "lineNumber": 117,
+                        "name": "ServicesResolved",
+                        "override": false,
+                        "read": "servicesResolved",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 16,
+                        "lineNumber": 121,
+                        "name": "Trusted",
+                        "override": false,
+                        "read": "trusted",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setTrusted"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 17,
+                        "lineNumber": 127,
+                        "name": "TxPower",
+                        "override": false,
+                        "read": "txPower",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "short",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 18,
+                        "lineNumber": 131,
+                        "name": "UUIDs",
+                        "override": false,
+                        "read": "uUIDs",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezDevice1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 136,
+                        "name": "CancelPairing",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 142,
+                        "name": "Connect",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "UUID",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 148,
+                        "name": "ConnectProfile",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 155,
+                        "name": "Disconnect",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "UUID",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 161,
+                        "name": "DisconnectProfile",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 168,
+                        "name": "Pair",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "device1_bluez5_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezGattCharacteristic1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "Flags",
+                        "override": false,
+                        "read": "flags",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "Notifying",
+                        "override": false,
+                        "read": "notifying",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "Service",
+                        "override": false,
+                        "read": "service",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 64,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 68,
+                        "name": "Value",
+                        "override": false,
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattCharacteristic1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 73,
+                        "name": "ReadValue",
+                        "returnType": "QDBusPendingReply<QByteArray>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 80,
+                        "name": "StartNotify",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 86,
+                        "name": "StopNotify",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 92,
+                        "name": "WriteValue",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattchar1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezGattDescriptor1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "Characteristic",
+                        "override": false,
+                        "read": "characteristic",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "Value",
+                        "override": false,
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattDescriptor1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "ReadValue",
+                        "returnType": "QDBusPendingReply<QByteArray>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 72,
+                        "name": "WriteValue",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattdesc1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezGattManager1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattManager1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "application",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "RegisterApplication",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "application",
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 60,
+                        "name": "UnregisterApplication",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattmanager1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezGattService1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "Device",
+                        "override": false,
+                        "read": "device",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QDBusObjectPath",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "Includes",
+                        "override": false,
+                        "read": "includes",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QDBusObjectPath>",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "Primary",
+                        "override": false,
+                        "read": "primary",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 64,
+                        "name": "UUID",
+                        "override": false,
+                        "read": "uUID",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezGattService1Interface",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "gattservice1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "HciManager",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 33,
+                        "name": "HciEvent",
+                        "values": [
+                            "EVT_INQUIRY_COMPLETE",
+                            "EVT_INQUIRY_RESULT",
+                            "EVT_CONN_COMPLETE",
+                            "EVT_CONN_REQUEST",
+                            "EVT_DISCONN_COMPLETE",
+                            "EVT_AUTH_COMPLETE",
+                            "EVT_REMOTE_NAME_REQ_COMPLETE",
+                            "EVT_ENCRYPT_CHANGE",
+                            "EVT_CHANGE_CONN_LINK_KEY_COMPLETE",
+                            "EVT_MASTER_LINK_KEY_COMPLETE",
+                            "EVT_READ_REMOTE_FEATURES_COMPLETE",
+                            "EVT_READ_REMOTE_VERSION_COMPLETE",
+                            "EVT_QOS_SETUP_COMPLETE",
+                            "EVT_CMD_COMPLETE",
+                            "EVT_CMD_STATUS",
+                            "EVT_HARDWARE_ERROR",
+                            "EVT_FLUSH_OCCURRED",
+                            "EVT_ROLE_CHANGE",
+                            "EVT_NUM_COMP_PKTS",
+                            "EVT_MODE_CHANGE",
+                            "EVT_RETURN_LINK_KEYS",
+                            "EVT_PIN_CODE_REQ",
+                            "EVT_LINK_KEY_REQ",
+                            "EVT_LINK_KEY_NOTIFY",
+                            "EVT_LOOPBACK_COMMAND",
+                            "EVT_DATA_BUFFER_OVERFLOW",
+                            "EVT_MAX_SLOTS_CHANGE",
+                            "EVT_READ_CLOCK_OFFSET_COMPLETE",
+                            "EVT_CONN_PTYPE_CHANGED",
+                            "EVT_QOS_VIOLATION",
+                            "EVT_PSCAN_REP_MODE_CHANGE",
+                            "EVT_FLOW_SPEC_COMPLETE",
+                            "EVT_INQUIRY_RESULT_WITH_RSSI",
+                            "EVT_READ_REMOTE_EXT_FEATURES_COMPLETE",
+                            "EVT_SYNC_CONN_COMPLETE",
+                            "EVT_SYNC_CONN_CHANGED",
+                            "EVT_SNIFF_SUBRATING",
+                            "EVT_EXTENDED_INQUIRY_RESULT",
+                            "EVT_ENCRYPTION_KEY_REFRESH_COMPLETE",
+                            "EVT_IO_CAPABILITY_REQUEST",
+                            "EVT_IO_CAPABILITY_RESPONSE",
+                            "EVT_USER_CONFIRM_REQUEST",
+                            "EVT_USER_PASSKEY_REQUEST",
+                            "EVT_REMOTE_OOB_DATA_REQUEST",
+                            "EVT_SIMPLE_PAIRING_COMPLETE",
+                            "EVT_LINK_SUPERVISION_TIMEOUT_CHANGED",
+                            "EVT_ENHANCED_FLUSH_COMPLETE",
+                            "EVT_USER_PASSKEY_NOTIFY",
+                            "EVT_KEYPRESS_NOTIFY",
+                            "EVT_REMOTE_HOST_FEATURES_NOTIFY",
+                            "EVT_LE_META_EVENT",
+                            "EVT_PHYSICAL_LINK_COMPLETE",
+                            "EVT_CHANNEL_SELECTED",
+                            "EVT_DISCONNECT_PHYSICAL_LINK_COMPLETE",
+                            "EVT_PHYSICAL_LINK_LOSS_EARLY_WARNING",
+                            "EVT_PHYSICAL_LINK_RECOVERY",
+                            "EVT_LOGICAL_LINK_COMPLETE",
+                            "EVT_DISCONNECT_LOGICAL_LINK_COMPLETE",
+                            "EVT_FLOW_SPEC_MODIFY_COMPLETE",
+                            "EVT_NUMBER_COMPLETED_BLOCKS",
+                            "EVT_AMP_STATUS_CHANGE",
+                            "EVT_TESTING",
+                            "EVT_VENDOR",
+                            "EVT_STACK_INTERNAL"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 101,
+                        "name": "HciError",
+                        "values": [
+                            "HCI_SUCCESS",
+                            "HCI_UNKNOWN_COMMAND",
+                            "HCI_NO_CONNECTION",
+                            "HCI_HARDWARE_FAILURE",
+                            "HCI_PAGE_TIMEOUT",
+                            "HCI_AUTHENTICATION_FAILURE",
+                            "HCI_PIN_OR_KEY_MISSING",
+                            "HCI_MEMORY_FULL",
+                            "HCI_CONNECTION_TIMEOUT",
+                            "HCI_MAX_NUMBER_OF_CONNECTIONS",
+                            "HCI_MAX_NUMBER_OF_SCO_CONNECTIONS",
+                            "HCI_ACL_CONNECTION_EXISTS",
+                            "HCI_COMMAND_DISALLOWED",
+                            "HCI_REJECTED_LIMITED_RESOURCES",
+                            "HCI_REJECTED_SECURITY",
+                            "HCI_REJECTED_PERSONAL",
+                            "HCI_HOST_TIMEOUT",
+                            "HCI_UNSUPPORTED_FEATURE",
+                            "HCI_INVALID_PARAMETERS",
+                            "HCI_OE_USER_ENDED_CONNECTION",
+                            "HCI_OE_LOW_RESOURCES",
+                            "HCI_OE_POWER_OFF",
+                            "HCI_CONNECTION_TERMINATED",
+                            "HCI_REPEATED_ATTEMPTS",
+                            "HCI_PAIRING_NOT_ALLOWED",
+                            "HCI_UNKNOWN_LMP_PDU",
+                            "HCI_UNSUPPORTED_REMOTE_FEATURE",
+                            "HCI_SCO_OFFSET_REJECTED",
+                            "HCI_SCO_INTERVAL_REJECTED",
+                            "HCI_AIR_MODE_REJECTED",
+                            "HCI_INVALID_LMP_PARAMETERS",
+                            "HCI_UNSPECIFIED_ERROR",
+                            "HCI_UNSUPPORTED_LMP_PARAMETER_VALUE",
+                            "HCI_ROLE_CHANGE_NOT_ALLOWED",
+                            "HCI_LMP_RESPONSE_TIMEOUT",
+                            "HCI_LMP_ERROR_TRANSACTION_COLLISION",
+                            "HCI_LMP_PDU_NOT_ALLOWED",
+                            "HCI_ENCRYPTION_MODE_NOT_ACCEPTED",
+                            "HCI_UNIT_LINK_KEY_USED",
+                            "HCI_QOS_NOT_SUPPORTED",
+                            "HCI_INSTANT_PASSED",
+                            "HCI_PAIRING_NOT_SUPPORTED",
+                            "HCI_TRANSACTION_COLLISION",
+                            "HCI_QOS_UNACCEPTABLE_PARAMETER",
+                            "HCI_QOS_REJECTED",
+                            "HCI_CLASSIFICATION_NOT_SUPPORTED",
+                            "HCI_INSUFFICIENT_SECURITY",
+                            "HCI_PARAMETER_OUT_OF_RANGE",
+                            "HCI_ROLE_SWITCH_PENDING",
+                            "HCI_SLOT_VIOLATION",
+                            "HCI_ROLE_SWITCH_FAILED",
+                            "HCI_EIR_TOO_LARGE",
+                            "HCI_SIMPLE_PAIRING_NOT_SUPPORTED",
+                            "HCI_HOST_BUSY_PAIRING"
+                        ]
+                    }
+                ],
+                "lineNumber": 29,
+                "object": true,
+                "qualifiedClassName": "HciManager",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            },
+                            {
+                                "name": "wasSuccess",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 178,
+                        "name": "encryptionChangedEvent",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "opCode",
+                                "type": "quint16"
+                            },
+                            {
+                                "name": "status",
+                                "type": "quint8"
+                            },
+                            {
+                                "name": "data",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 179,
+                        "name": "commandCompleted",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "handle",
+                                "type": "quint16"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 180,
+                        "name": "connectionComplete",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "handle",
+                                "type": "quint16"
+                            },
+                            {
+                                "name": "parameters",
+                                "type": "QLowEnergyConnectionParameters"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 181,
+                        "name": "connectionUpdate",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "connHandle",
+                                "type": "quint16"
+                            },
+                            {
+                                "name": "remoteKey",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "csrk",
+                                "type": "BluezUint128"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 182,
+                        "name": "signatureResolvingKeyReceived",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 5,
+                        "lineNumber": 185,
+                        "name": "_q_readNotify",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "hcimanager_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezLEAdvertisingManager1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "ActiveInstances",
+                        "override": false,
+                        "read": "activeInstances",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uchar",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 56,
+                        "name": "SupportedIncludes",
+                        "override": false,
+                        "read": "supportedIncludes",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "SupportedInstances",
+                        "override": false,
+                        "read": "supportedInstances",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "uchar",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezLEAdvertisingManager1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "advertisement",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "RegisterAdvertisement",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "advertisement",
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 72,
+                        "name": "UnregisterAdvertisement",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "leadvertisingmanager1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgFreedesktopDBusObjectManagerInterface",
+                "lineNumber": 41,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgFreedesktopDBusObjectManagerInterface",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces_and_properties",
+                                "type": "InterfaceList"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 61,
+                        "name": "InterfacesAdded",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 62,
+                        "name": "InterfacesRemoved",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 54,
+                        "name": "GetManagedObjects",
+                        "returnType": "QDBusPendingReply<ManagedObjectList>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "objectmanager_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezProfile1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezProfile1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "in0",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "in1",
+                                "type": "QDBusUnixFileDescriptor"
+                            },
+                            {
+                                "name": "in2",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "NewConnection",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 60,
+                        "name": "Release",
+                        "returnType": "void",
+                        "tag": "Q_NOREPLY"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "in0",
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 66,
+                        "name": "RequestDisconnection",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "profile1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "D-Bus Interface",
+                        "value": "org.bluez.Profile1"
+                    },
+                    {
+                        "name": "D-Bus Introspection",
+                        "value": "  <interface name=\\\"org.bluez.Profile1\\\">\\n    <method name=\\\"NewConnection\\\">\\n      <arg direction=\\\"in\\\" type=\\\"o\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"h\\\"/>\\n      <arg direction=\\\"in\\\" type=\\\"a{sv}\\\"/>\\n      <annotation value=\\\"QVariantMap\\\" name=\\\"org.qtproject.QtDBus.QtTypeName.In2\\\"/>\\n    </method>\\n    <method name=\\\"RequestDisconnection\\\">\\n      <arg direction=\\\"in\\\" type=\\\"o\\\"/>\\n    </method>\\n    <method name=\\\"Release\\\">\\n      <annotation value=\\\"true\\\" name=\\\"org.freedesktop.DBus.Method.NoReply\\\"/>\\n    </method>\\n  </interface>\\n"
+                    }
+                ],
+                "className": "OrgBluezProfile1ContextInterface",
+                "lineNumber": 26,
+                "object": true,
+                "qualifiedClassName": "OrgBluezProfile1ContextInterface",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "fd",
+                                "type": "QDBusUnixFileDescriptor"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 50,
+                        "name": "newConnection",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "type": "QDBusUnixFileDescriptor"
+                            },
+                            {
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 53,
+                        "name": "NewConnection",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 55,
+                        "name": "RequestDisconnection",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 56,
+                        "name": "Release",
+                        "returnType": "void",
+                        "tag": "Q_NOREPLY"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "protected",
+                        "name": "QDBusContext"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "profile1context_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgBluezProfileManager1Interface",
+                "lineNumber": 40,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgBluezProfileManager1Interface",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "profile",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "UUID",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "options",
+                                "type": "QVariantMap"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "RegisterProfile",
+                        "returnType": "QDBusPendingReply<>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "profile",
+                                "type": "QDBusObjectPath"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 60,
+                        "name": "UnregisterProfile",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "profilemanager1_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "OrgFreedesktopDBusPropertiesInterface",
+                "lineNumber": 40,
+                "object": true,
+                "qualifiedClassName": "QtBluetoothPrivate::OrgFreedesktopDBusPropertiesInterface",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changed_properties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidated_properties",
+                                "type": "QStringList"
+                            },
+                            {
+                                "name": "msg",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 75,
+                        "name": "PropertiesChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 53,
+                        "name": "Get",
+                        "returnType": "QDBusPendingReply<QDBusVariant>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "GetAll",
+                        "returnType": "QDBusPendingReply<QVariantMap>"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QDBusVariant"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 67,
+                        "name": "Set",
+                        "returnType": "QDBusPendingReply<>"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDBusAbstractInterface"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "properties_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetooth",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 19,
+                        "name": "Security",
+                        "values": [
+                            "NoSecurity",
+                            "Authorization",
+                            "Authentication",
+                            "Encryption",
+                            "Secure"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 30,
+                        "name": "AttAccessConstraint",
+                        "values": [
+                            "AttAuthorizationRequired",
+                            "AttAuthenticationRequired",
+                            "AttEncryptionRequired"
+                        ]
+                    }
+                ],
+                "lineNumber": 14,
+                "namespace": true,
+                "qualifiedClassName": "QBluetooth"
+            }
+        ],
+        "inputFile": "qbluetooth.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothDeviceDiscoveryAgent",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 25,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "InputOutputError",
+                            "PoweredOffError",
+                            "InvalidBluetoothAdapterError",
+                            "UnsupportedPlatformError",
+                            "UnsupportedDiscoveryMethod",
+                            "LocationServiceTurnedOffError",
+                            "MissingPermissionsError",
+                            "UnknownError"
+                        ]
+                    },
+                    {
+                        "alias": "DiscoveryMethod",
+                        "isClass": false,
+                        "isFlag": true,
+                        "lineNumber": 38,
+                        "name": "DiscoveryMethods",
+                        "values": [
+                            "NoMethod",
+                            "ClassicMethod",
+                            "LowEnergyMethod"
+                        ]
+                    }
+                ],
+                "lineNumber": 18,
+                "object": true,
+                "qualifiedClassName": "QBluetoothDeviceDiscoveryAgent",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QBluetoothDeviceInfo"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 69,
+                        "name": "deviceDiscovered",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QBluetoothDeviceInfo"
+                            },
+                            {
+                                "name": "updatedFields",
+                                "type": "QBluetoothDeviceInfo::Fields"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 70,
+                        "name": "deviceUpdated",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 71,
+                        "name": "finished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QBluetoothDeviceDiscoveryAgent::Error"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 72,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 73,
+                        "name": "canceled",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 64,
+                        "name": "start",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "method",
+                                "type": "DiscoveryMethods"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 65,
+                        "name": "start",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 66,
+                        "name": "stop",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothdevicediscoveryagent.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothLocalDevice",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 24,
+                        "name": "Pairing",
+                        "values": [
+                            "Unpaired",
+                            "Paired",
+                            "AuthorizedPaired"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 31,
+                        "name": "HostMode",
+                        "values": [
+                            "HostPoweredOff",
+                            "HostConnectable",
+                            "HostDiscoverable",
+                            "HostDiscoverableLimitedInquiry"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 39,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "PairingError",
+                            "MissingPermissionsError",
+                            "UnknownError"
+                        ]
+                    }
+                ],
+                "lineNumber": 19,
+                "object": true,
+                "qualifiedClassName": "QBluetoothLocalDevice",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "state",
+                                "type": "QBluetoothLocalDevice::HostMode"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 68,
+                        "name": "hostModeStateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 69,
+                        "name": "deviceConnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 70,
+                        "name": "deviceDisconnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            },
+                            {
+                                "name": "pairing",
+                                "type": "QBluetoothLocalDevice::Pairing"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 71,
+                        "name": "pairingFinished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QBluetoothLocalDevice::Error"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 73,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothlocaldevice.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothLocalDevicePrivate",
+                "lineNumber": 103,
+                "object": true,
+                "qualifiedClassName": "QBluetoothLocalDevicePrivate",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 131,
+                        "name": "pairingCompleted",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "address",
+                                "type": "QBluetoothAddress"
+                            },
+                            {
+                                "name": "targetPairing",
+                                "type": "QBluetoothLocalDevice::Pairing"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 132,
+                        "name": "requestPairing",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changed_properties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidated_properties",
+                                "type": "QStringList"
+                            },
+                            {
+                                "name": "signal",
+                                "type": "QDBusMessage"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 136,
+                        "name": "PropertiesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces_and_properties",
+                                "type": "InterfaceList"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 140,
+                        "name": "InterfacesAdded",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "object_path",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 142,
+                        "name": "InterfacesRemoved",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "objectPath",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "target",
+                                "type": "QBluetoothLocalDevice::Pairing"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 144,
+                        "name": "processPairing",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 6,
+                        "lineNumber": 145,
+                        "name": "pairingDiscoveryTimedOut",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothlocaldevice_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothServer",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 27,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "UnknownError",
+                            "PoweredOffError",
+                            "InputOutputError",
+                            "ServiceAlreadyRegisteredError",
+                            "UnsupportedProtocolError",
+                            "MissingPermissionsError"
+                        ]
+                    }
+                ],
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QBluetoothServer",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "newConnection",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QBluetoothServer::Error"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 66,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothserver.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothServiceDiscoveryAgent",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 31,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "InputOutputError",
+                            "PoweredOffError",
+                            "InvalidBluetoothAdapterError",
+                            "MissingPermissionsError",
+                            "UnknownError"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 43,
+                        "name": "DiscoveryMode",
+                        "values": [
+                            "MinimalDiscovery",
+                            "FullDiscovery"
+                        ]
+                    }
+                ],
+                "lineNumber": 25,
+                "object": true,
+                "qualifiedClassName": "QBluetoothServiceDiscoveryAgent",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QBluetoothServiceInfo"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 72,
+                        "name": "serviceDiscovered",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 73,
+                        "name": "finished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 74,
+                        "name": "canceled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QBluetoothServiceDiscoveryAgent::Error"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 75,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "mode",
+                                "type": "DiscoveryMode"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 67,
+                        "name": "start",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "isCloned": true,
+                        "lineNumber": 67,
+                        "name": "start",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 68,
+                        "name": "stop",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 69,
+                        "name": "clear",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothservicediscoveryagent.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothSocket",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 39,
+                        "name": "SocketState",
+                        "values": [
+                            "UnconnectedState",
+                            "ServiceLookupState",
+                            "ConnectingState",
+                            "ConnectedState",
+                            "BoundState",
+                            "ClosingState",
+                            "ListeningState"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 50,
+                        "name": "SocketError",
+                        "values": [
+                            "NoSocketError",
+                            "UnknownSocketError",
+                            "RemoteHostClosedError",
+                            "HostNotFoundError",
+                            "ServiceNotFoundError",
+                            "NetworkError",
+                            "UnsupportedProtocolError",
+                            "OperationError",
+                            "MissingPermissionsError"
+                        ]
+                    }
+                ],
+                "lineNumber": 21,
+                "object": true,
+                "qualifiedClassName": "QBluetoothSocket",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 121,
+                        "name": "connected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 122,
+                        "name": "disconnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QBluetoothSocket::SocketError"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 123,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "state",
+                                "type": "QBluetoothSocket::SocketState"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 124,
+                        "name": "stateChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "service",
+                                "type": "QBluetoothServiceInfo"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 136,
+                        "name": "serviceDiscovered",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 5,
+                        "lineNumber": 137,
+                        "name": "discoveryFinished",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QIODevice"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothsocket.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothSocketPrivateBluez",
+                "final": true,
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QBluetoothSocketPrivateBluez",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 66,
+                        "name": "_q_readNotify",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 67,
+                        "name": "_q_writeNotify",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QBluetoothSocketBasePrivate"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothsocket_bluez_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothSocketPrivateBluezDBus",
+                "final": true,
+                "lineNumber": 36,
+                "object": true,
+                "qualifiedClassName": "QBluetoothSocketPrivateBluezDBus",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 83,
+                        "name": "connectToServiceReplyHandler",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QBluetoothSocketBasePrivate"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothsocket_bluezdbus_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QBluetoothSocketBasePrivate",
+                "lineNumber": 56,
+                "object": true,
+                "qualifiedClassName": "QBluetoothSocketBasePrivate",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qbluetoothsocketbase_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLeAdvertiser",
+                "lineNumber": 30,
+                "object": true,
+                "qualifiedClassName": "QLeAdvertiser",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 38,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QLeAdvertiserBluez",
+                "lineNumber": 65,
+                "object": true,
+                "qualifiedClassName": "QLeAdvertiserBluez",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QLeAdvertiser"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qleadvertiser_bluez_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyController",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 25,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "UnknownError",
+                            "UnknownRemoteDeviceError",
+                            "NetworkError",
+                            "InvalidBluetoothAdapterError",
+                            "ConnectionError",
+                            "AdvertisingError",
+                            "RemoteHostClosedError",
+                            "AuthorizationError",
+                            "MissingPermissionsError",
+                            "RssiReadError"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 40,
+                        "name": "ControllerState",
+                        "values": [
+                            "UnconnectedState",
+                            "ConnectingState",
+                            "ConnectedState",
+                            "DiscoveringState",
+                            "DiscoveredState",
+                            "ClosingState",
+                            "AdvertisingState"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 51,
+                        "name": "RemoteAddressType",
+                        "values": [
+                            "PublicAddress",
+                            "RandomAddress"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 57,
+                        "name": "Role",
+                        "values": [
+                            "CentralRole",
+                            "PeripheralRole"
+                        ]
+                    }
+                ],
+                "lineNumber": 21,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyController",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 110,
+                        "name": "connected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 111,
+                        "name": "disconnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "state",
+                                "type": "QLowEnergyController::ControllerState"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 112,
+                        "name": "stateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newError",
+                                "type": "QLowEnergyController::Error"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 113,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "mtu",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 114,
+                        "name": "mtuChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rssi",
+                                "type": "qint16"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 115,
+                        "name": "rssiRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newService",
+                                "type": "QBluetoothUuid"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 117,
+                        "name": "serviceDiscovered",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 118,
+                        "name": "discoveryFinished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "parameters",
+                                "type": "QLowEnergyConnectionParameters"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 119,
+                        "name": "connectionUpdated",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergycontroller.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyControllerPrivateBluez",
+                "final": true,
+                "lineNumber": 44,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyControllerPrivateBluez",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 316,
+                        "name": "l2cpConnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 317,
+                        "name": "l2cpDisconnected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "type": "QBluetoothSocket::SocketError"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 318,
+                        "name": "l2cpErrorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 3,
+                        "lineNumber": 319,
+                        "name": "l2cpReadyRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "type": "QBluetoothAddress"
+                            },
+                            {
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 320,
+                        "name": "encryptionChangedEvent",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 5,
+                        "lineNumber": 321,
+                        "name": "handleGattRequestTimeout",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 6,
+                        "lineNumber": 322,
+                        "name": "activeConnectionTerminationDone",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QLowEnergyControllerPrivate"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergycontroller_bluez_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyControllerPrivateBluezDBus",
+                "final": true,
+                "lineNumber": 44,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyControllerPrivateBluezDBus",
+                "slots": [
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changedProperties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidatedProperties",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 99,
+                        "name": "devicePropertiesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "charHandle",
+                                "type": "QLowEnergyHandle"
+                            },
+                            {
+                                "name": "interface",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "changedProperties",
+                                "type": "QVariantMap"
+                            },
+                            {
+                                "name": "invalidatedProperties",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 101,
+                        "name": "characteristicPropertiesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "objectPath",
+                                "type": "QDBusObjectPath"
+                            },
+                            {
+                                "name": "interfaces",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 104,
+                        "name": "interfacesRemoved",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "call",
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 106,
+                        "name": "onCharReadFinished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "call",
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 107,
+                        "name": "onDescReadFinished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "call",
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 108,
+                        "name": "onCharWriteFinished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "call",
+                                "type": "QDBusPendingCallWatcher*"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 109,
+                        "name": "onDescWriteFinished",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QLowEnergyControllerPrivate"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergycontroller_bluezdbus_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyControllerPrivate",
+                "lineNumber": 29,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyControllerPrivate",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergycontrollerbase_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyService",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 18,
+                        "name": "ServiceType",
+                        "values": [
+                            "PrimaryService",
+                            "IncludedService"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 25,
+                        "name": "ServiceError",
+                        "values": [
+                            "NoError",
+                            "OperationError",
+                            "CharacteristicWriteError",
+                            "DescriptorWriteError",
+                            "UnknownError",
+                            "CharacteristicReadError",
+                            "DescriptorReadError"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 36,
+                        "name": "ServiceState",
+                        "values": [
+                            "InvalidService",
+                            "RemoteService",
+                            "RemoteServiceDiscovering",
+                            "RemoteServiceDiscovered",
+                            "LocalService",
+                            "DiscoveryRequired",
+                            "DiscoveringService",
+                            "ServiceDiscovered"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 61,
+                        "name": "DiscoveryMode",
+                        "values": [
+                            "FullDiscovery",
+                            "SkipValueDiscovery"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 67,
+                        "name": "WriteMode",
+                        "values": [
+                            "WriteWithResponse",
+                            "WriteWithoutResponse",
+                            "WriteSigned"
+                        ]
+                    }
+                ],
+                "lineNumber": 14,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyService",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newState",
+                                "type": "QLowEnergyService::ServiceState"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 102,
+                        "name": "stateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 103,
+                        "name": "characteristicChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 105,
+                        "name": "characteristicRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 107,
+                        "name": "characteristicWritten",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyDescriptor"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 109,
+                        "name": "descriptorRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyDescriptor"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 111,
+                        "name": "descriptorWritten",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QLowEnergyService::ServiceError"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 113,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergyservice.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QLowEnergyServicePrivate",
+                "lineNumber": 33,
+                "object": true,
+                "qualifiedClassName": "QLowEnergyServicePrivate",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newState",
+                                "type": "QLowEnergyService::ServiceState"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 65,
+                        "name": "stateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QLowEnergyService::ServiceError"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 66,
+                        "name": "errorOccurred",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "characteristic",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "newValue",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 67,
+                        "name": "characteristicChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 69,
+                        "name": "characteristicRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "characteristic",
+                                "type": "QLowEnergyCharacteristic"
+                            },
+                            {
+                                "name": "newValue",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 71,
+                        "name": "characteristicWritten",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "info",
+                                "type": "QLowEnergyDescriptor"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 73,
+                        "name": "descriptorRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "descriptor",
+                                "type": "QLowEnergyDescriptor"
+                            },
+                            {
+                                "name": "newValue",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 75,
+                        "name": "descriptorWritten",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qlowenergyserviceprivate_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "RemoteDeviceManager",
+                "lineNumber": 32,
+                "object": true,
+                "qualifiedClassName": "RemoteDeviceManager",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 47,
+                        "name": "finished",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 50,
+                        "name": "runQueue",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 2,
+                        "lineNumber": 51,
+                        "name": "prepareNextJob",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "remotedevicemanager_p.h",
+        "outputRevision": 69
+    }
+]

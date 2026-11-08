@@ -1,0 +1,3027 @@
+[
+    {
+        "classes": [
+            {
+                "className": "Q3DBarsWidgetItem",
+                "lineNumber": 19,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 22,
+                        "name": "multiSeriesUniform",
+                        "notify": "multiSeriesUniformChanged",
+                        "override": false,
+                        "read": "isMultiSeriesUniform",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMultiSeriesUniform"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 24,
+                        "name": "barThickness",
+                        "notify": "barThicknessChanged",
+                        "override": false,
+                        "read": "barThickness",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBarThickness"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 25,
+                        "name": "barSpacing",
+                        "notify": "barSpacingChanged",
+                        "override": false,
+                        "read": "barSpacing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSizeF",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBarSpacing"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 26,
+                        "name": "barSpacingRelative",
+                        "notify": "barSpacingRelativeChanged",
+                        "override": false,
+                        "read": "isBarSpacingRelative",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBarSpacingRelative"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 28,
+                        "name": "barSeriesMargin",
+                        "notify": "barSeriesMarginChanged",
+                        "override": false,
+                        "read": "barSeriesMargin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSizeF",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBarSeriesMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 30,
+                        "name": "rowAxis",
+                        "notify": "rowAxisChanged",
+                        "override": false,
+                        "read": "rowAxis",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QCategory3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setRowAxis"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 31,
+                        "name": "columnAxis",
+                        "notify": "columnAxisChanged",
+                        "override": false,
+                        "read": "columnAxis",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QCategory3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setColumnAxis"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 33,
+                        "name": "valueAxis",
+                        "notify": "valueAxisChanged",
+                        "override": false,
+                        "read": "valueAxis",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setValueAxis"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 34,
+                        "name": "primarySeries",
+                        "notify": "primarySeriesChanged",
+                        "override": false,
+                        "read": "primarySeries",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QBar3DSeries*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPrimarySeries"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 36,
+                        "name": "selectedSeries",
+                        "notify": "selectedSeriesChanged",
+                        "override": false,
+                        "read": "selectedSeries",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QBar3DSeries*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 37,
+                        "name": "floorLevel",
+                        "notify": "floorLevelChanged",
+                        "override": false,
+                        "read": "floorLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setFloorLevel"
+                    }
+                ],
+                "qualifiedClassName": "Q3DBarsWidgetItem",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "uniform",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 88,
+                        "name": "multiSeriesUniformChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "thicknessRatio",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 89,
+                        "name": "barThicknessChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "spacing",
+                                "type": "QSizeF"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 90,
+                        "name": "barSpacingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "relative",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 91,
+                        "name": "barSpacingRelativeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "QSizeF"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 92,
+                        "name": "barSeriesMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QCategory3DAxis*"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 93,
+                        "name": "rowAxisChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QCategory3DAxis*"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 94,
+                        "name": "columnAxisChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 7,
+                        "lineNumber": 95,
+                        "name": "valueAxisChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "series",
+                                "type": "QBar3DSeries*"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 96,
+                        "name": "primarySeriesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "series",
+                                "type": "QBar3DSeries*"
+                            }
+                        ],
+                        "index": 9,
+                        "lineNumber": 97,
+                        "name": "selectedSeriesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "level",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 10,
+                        "lineNumber": 98,
+                        "name": "floorLevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "image",
+                                "type": "QImage"
+                            }
+                        ],
+                        "index": 11,
+                        "lineNumber": 100,
+                        "name": "sliceImageChanged",
+                        "returnType": "void",
+                        "revision": 1546
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "series",
+                                "type": "QBar3DSeries*"
+                            }
+                        ],
+                        "index": 12,
+                        "lineNumber": 73,
+                        "name": "setPrimarySeries",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "uniform",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 13,
+                        "lineNumber": 74,
+                        "name": "setMultiSeriesUniform",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "thicknessRatio",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 14,
+                        "lineNumber": 75,
+                        "name": "setBarThickness",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "spacing",
+                                "type": "QSizeF"
+                            }
+                        ],
+                        "index": 15,
+                        "lineNumber": 76,
+                        "name": "setBarSpacing",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "relative",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 16,
+                        "lineNumber": 77,
+                        "name": "setBarSpacingRelative",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "QSizeF"
+                            }
+                        ],
+                        "index": 17,
+                        "lineNumber": 78,
+                        "name": "setBarSeriesMargin",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QCategory3DAxis*"
+                            }
+                        ],
+                        "index": 18,
+                        "lineNumber": 79,
+                        "name": "setRowAxis",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QCategory3DAxis*"
+                            }
+                        ],
+                        "index": 19,
+                        "lineNumber": 80,
+                        "name": "setColumnAxis",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 20,
+                        "lineNumber": 81,
+                        "name": "setValueAxis",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "level",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 21,
+                        "lineNumber": 82,
+                        "name": "setFloorLevel",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "Q3DGraphsWidgetItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "q3dbarswidgetitem.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "RegisterEnumClassesUnscoped",
+                        "value": "false"
+                    }
+                ],
+                "className": "Q3DGraphsWidgetItem",
+                "lineNumber": 27,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 31,
+                        "name": "activeTheme",
+                        "notify": "activeThemeChanged",
+                        "override": false,
+                        "read": "activeTheme",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QGraphsTheme*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setActiveTheme"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 32,
+                        "name": "selectionMode",
+                        "notify": "selectionModeChanged",
+                        "override": false,
+                        "read": "selectionMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::SelectionFlags",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setSelectionMode"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 34,
+                        "name": "shadowQuality",
+                        "notify": "shadowQualityChanged",
+                        "override": false,
+                        "read": "shadowQuality",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::ShadowQuality",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setShadowQuality"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 36,
+                        "name": "transparencyTechnique",
+                        "notify": "transparencyTechniqueChanged",
+                        "override": false,
+                        "read": "transparencyTechnique",
+                        "required": false,
+                        "revision": 1545,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::TransparencyTechnique",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setTransparencyTechnique"
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 38,
+                        "name": "scene",
+                        "override": false,
+                        "read": "scene",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Q3DScene*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 39,
+                        "name": "measureFps",
+                        "notify": "measureFpsChanged",
+                        "override": false,
+                        "read": "measureFps",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMeasureFps"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 40,
+                        "name": "currentFps",
+                        "notify": "currentFpsChanged",
+                        "override": false,
+                        "read": "currentFps",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 41,
+                        "name": "orthoProjection",
+                        "notify": "orthoProjectionChanged",
+                        "override": false,
+                        "read": "isOrthoProjection",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setOrthoProjection"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 43,
+                        "name": "selectedElement",
+                        "notify": "selectedElementChanged",
+                        "override": false,
+                        "read": "selectedElement",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::ElementType",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 45,
+                        "name": "aspectRatio",
+                        "notify": "aspectRatioChanged",
+                        "override": false,
+                        "read": "aspectRatio",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAspectRatio"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 46,
+                        "name": "optimizationHint",
+                        "notify": "optimizationHintChanged",
+                        "override": false,
+                        "read": "optimizationHint",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::OptimizationHint",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setOptimizationHint"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "lineNumber": 48,
+                        "name": "polar",
+                        "notify": "polarChanged",
+                        "override": false,
+                        "read": "isPolar",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPolar"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 12,
+                        "lineNumber": 49,
+                        "name": "labelMargin",
+                        "notify": "labelMarginChanged",
+                        "override": false,
+                        "read": "labelMargin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setLabelMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 13,
+                        "lineNumber": 50,
+                        "name": "radialLabelOffset",
+                        "notify": "radialLabelOffsetChanged",
+                        "override": false,
+                        "read": "radialLabelOffset",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setRadialLabelOffset"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 14,
+                        "lineNumber": 52,
+                        "name": "horizontalAspectRatio",
+                        "notify": "horizontalAspectRatioChanged",
+                        "override": false,
+                        "read": "horizontalAspectRatio",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setHorizontalAspectRatio"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 15,
+                        "lineNumber": 54,
+                        "name": "locale",
+                        "notify": "localeChanged",
+                        "override": false,
+                        "read": "locale",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QLocale",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setLocale"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 16,
+                        "lineNumber": 55,
+                        "name": "queriedGraphPosition",
+                        "notify": "queriedGraphPositionChanged",
+                        "override": false,
+                        "read": "queriedGraphPosition",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVector3D",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 17,
+                        "lineNumber": 57,
+                        "name": "margin",
+                        "notify": "marginChanged",
+                        "override": false,
+                        "read": "margin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 18,
+                        "lineNumber": 58,
+                        "name": "cutoffMargin",
+                        "notify": "cutoffMarginChanged",
+                        "override": false,
+                        "read": "cutoffMargin",
+                        "required": false,
+                        "revision": 1547,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCutoffMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 19,
+                        "lineNumber": 60,
+                        "name": "cameraPreset",
+                        "notify": "cameraPresetChanged",
+                        "override": false,
+                        "read": "cameraPreset",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::CameraPreset",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCameraPreset"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 20,
+                        "lineNumber": 62,
+                        "name": "cameraXRotation",
+                        "notify": "cameraXRotationChanged",
+                        "override": false,
+                        "read": "cameraXRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCameraXRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 21,
+                        "lineNumber": 64,
+                        "name": "cameraYRotation",
+                        "notify": "cameraYRotationChanged",
+                        "override": false,
+                        "read": "cameraYRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCameraYRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 22,
+                        "lineNumber": 66,
+                        "name": "cameraZoomLevel",
+                        "notify": "cameraZoomLevelChanged",
+                        "override": false,
+                        "read": "cameraZoomLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCameraZoomLevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 23,
+                        "lineNumber": 68,
+                        "name": "minCameraZoomLevel",
+                        "notify": "minCameraZoomLevelChanged",
+                        "override": false,
+                        "read": "minCameraZoomLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMinCameraZoomLevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 24,
+                        "lineNumber": 70,
+                        "name": "maxCameraZoomLevel",
+                        "notify": "maxCameraZoomLevelChanged",
+                        "override": false,
+                        "read": "maxCameraZoomLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMaxCameraZoomLevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 25,
+                        "lineNumber": 72,
+                        "name": "wrapCameraXRotation",
+                        "notify": "wrapCameraXRotationChanged",
+                        "override": false,
+                        "read": "wrapCameraXRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setWrapCameraXRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 26,
+                        "lineNumber": 74,
+                        "name": "wrapCameraYRotation",
+                        "notify": "wrapCameraYRotationChanged",
+                        "override": false,
+                        "read": "wrapCameraYRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setWrapCameraYRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 27,
+                        "lineNumber": 76,
+                        "name": "minCameraXRotation",
+                        "notify": "minCameraXRotationChanged",
+                        "override": false,
+                        "read": "minCameraXRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMinCameraXRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 28,
+                        "lineNumber": 78,
+                        "name": "maxCameraXRotation",
+                        "notify": "maxCameraXRotationChanged",
+                        "override": false,
+                        "read": "maxCameraXRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMaxCameraXRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 29,
+                        "lineNumber": 80,
+                        "name": "minCameraYRotation",
+                        "notify": "minCameraYRotationChanged",
+                        "override": false,
+                        "read": "minCameraYRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMinCameraYRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 30,
+                        "lineNumber": 82,
+                        "name": "maxCameraYRotation",
+                        "notify": "maxCameraYRotationChanged",
+                        "override": false,
+                        "read": "maxCameraYRotation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMaxCameraYRotation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 31,
+                        "lineNumber": 84,
+                        "name": "cameraTargetPosition",
+                        "notify": "cameraTargetPositionChanged",
+                        "override": false,
+                        "read": "cameraTargetPosition",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVector3D",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setCameraTargetPosition"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 32,
+                        "lineNumber": 86,
+                        "name": "msaaSamples",
+                        "notify": "msaaSamplesChanged",
+                        "override": false,
+                        "read": "msaaSamples",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setMsaaSamples"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 33,
+                        "lineNumber": 87,
+                        "name": "rotationEnabled",
+                        "notify": "rotationEnabledChanged",
+                        "override": false,
+                        "read": "isRotationEnabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setRotationEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 34,
+                        "lineNumber": 89,
+                        "name": "panEnabled",
+                        "notify": "panEnabledChanged",
+                        "override": false,
+                        "read": "isPanEnabled",
+                        "required": false,
+                        "revision": 1548,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setPanEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 35,
+                        "lineNumber": 91,
+                        "name": "dragMode",
+                        "notify": "dragModeChanged",
+                        "override": false,
+                        "read": "dragMode",
+                        "required": false,
+                        "revision": 1548,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::DragMode",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setDragMode"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 36,
+                        "lineNumber": 93,
+                        "name": "zoomAtTargetEnabled",
+                        "notify": "zoomAtTargetEnabledChanged",
+                        "override": false,
+                        "read": "isZoomAtTargetEnabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setZoomAtTargetEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 37,
+                        "lineNumber": 95,
+                        "name": "selectionEnabled",
+                        "notify": "selectionEnabledChanged",
+                        "override": false,
+                        "read": "isSelectionEnabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setSelectionEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 38,
+                        "lineNumber": 97,
+                        "name": "zoomEnabled",
+                        "notify": "zoomEnabledChanged",
+                        "override": false,
+                        "read": "isZoomEnabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setZoomEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 39,
+                        "lineNumber": 100,
+                        "name": "lightColor",
+                        "notify": "lightColorChanged",
+                        "override": false,
+                        "read": "lightColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setLightColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 40,
+                        "lineNumber": 101,
+                        "name": "ambientLightStrength",
+                        "notify": "ambientLightStrengthChanged",
+                        "override": false,
+                        "read": "ambientLightStrength",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAmbientLightStrength"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 41,
+                        "lineNumber": 103,
+                        "name": "lightStrength",
+                        "notify": "lightStrengthChanged",
+                        "override": false,
+                        "read": "lightStrength",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setLightStrength"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 42,
+                        "lineNumber": 105,
+                        "name": "shadowStrength",
+                        "notify": "shadowStrengthChanged",
+                        "override": false,
+                        "read": "shadowStrength",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "float",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setShadowStrength"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 43,
+                        "lineNumber": 107,
+                        "name": "gridLineType",
+                        "notify": "gridLineTypeChanged",
+                        "override": false,
+                        "read": "gridLineType",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QtGraphs3D::GridLineType",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setGridLineType"
+                    }
+                ],
+                "qualifiedClassName": "Q3DGraphsWidgetItem",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "activeTheme",
+                                "type": "QGraphsTheme*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 274,
+                        "name": "activeThemeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "quality",
+                                "type": "QtGraphs3D::ShadowQuality"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 275,
+                        "name": "shadowQualityChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "technique",
+                                "type": "QtGraphs3D::TransparencyTechnique"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 276,
+                        "name": "transparencyTechniqueChanged",
+                        "returnType": "void",
+                        "revision": 1545
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "selectionMode",
+                                "type": "QtGraphs3D::SelectionFlags"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 277,
+                        "name": "selectionModeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "type",
+                                "type": "QtGraphs3D::ElementType"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 278,
+                        "name": "selectedElementChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enabled",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 279,
+                        "name": "measureFpsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "fps",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 280,
+                        "name": "currentFpsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enabled",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 7,
+                        "lineNumber": 281,
+                        "name": "orthoProjectionChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "ratio",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 282,
+                        "name": "aspectRatioChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "hint",
+                                "type": "QtGraphs3D::OptimizationHint"
+                            }
+                        ],
+                        "index": 9,
+                        "lineNumber": 283,
+                        "name": "optimizationHintChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enabled",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 10,
+                        "lineNumber": 284,
+                        "name": "polarChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 11,
+                        "lineNumber": 285,
+                        "name": "labelMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "offset",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 12,
+                        "lineNumber": 286,
+                        "name": "radialLabelOffsetChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "ratio",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 13,
+                        "lineNumber": 287,
+                        "name": "horizontalAspectRatioChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "locale",
+                                "type": "QLocale"
+                            }
+                        ],
+                        "index": 14,
+                        "lineNumber": 288,
+                        "name": "localeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "data",
+                                "type": "QVector3D"
+                            }
+                        ],
+                        "index": 15,
+                        "lineNumber": 289,
+                        "name": "queriedGraphPositionChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 16,
+                        "lineNumber": 290,
+                        "name": "marginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newMargin",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 17,
+                        "lineNumber": 291,
+                        "name": "cutoffMarginChanged",
+                        "returnType": "void",
+                        "revision": 1547
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "preset",
+                                "type": "QtGraphs3D::CameraPreset"
+                            }
+                        ],
+                        "index": 18,
+                        "lineNumber": 292,
+                        "name": "cameraPresetChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 19,
+                        "lineNumber": 293,
+                        "name": "cameraXRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 20,
+                        "lineNumber": 294,
+                        "name": "cameraYRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "zoomLevel",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 21,
+                        "lineNumber": 295,
+                        "name": "cameraZoomLevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "target",
+                                "type": "QVector3D"
+                            }
+                        ],
+                        "index": 22,
+                        "lineNumber": 296,
+                        "name": "cameraTargetPositionChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "zoomLevel",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 23,
+                        "lineNumber": 297,
+                        "name": "minCameraZoomLevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "zoomLevel",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 24,
+                        "lineNumber": 298,
+                        "name": "maxCameraZoomLevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 25,
+                        "lineNumber": 299,
+                        "name": "minCameraXRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 26,
+                        "lineNumber": 300,
+                        "name": "minCameraYRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 27,
+                        "lineNumber": 301,
+                        "name": "maxCameraXRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 28,
+                        "lineNumber": 302,
+                        "name": "maxCameraYRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "wrap",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 29,
+                        "lineNumber": 303,
+                        "name": "wrapCameraXRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "wrap",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 30,
+                        "lineNumber": 304,
+                        "name": "wrapCameraYRotationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "samples",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 31,
+                        "lineNumber": 305,
+                        "name": "msaaSamplesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "eventPoint",
+                                "type": "QEventPoint"
+                            },
+                            {
+                                "name": "button",
+                                "type": "Qt::MouseButton"
+                            }
+                        ],
+                        "index": 32,
+                        "lineNumber": 307,
+                        "name": "tapped",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "eventPoint",
+                                "type": "QEventPoint"
+                            },
+                            {
+                                "name": "button",
+                                "type": "Qt::MouseButton"
+                            }
+                        ],
+                        "index": 33,
+                        "lineNumber": 308,
+                        "name": "doubleTapped",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 34,
+                        "lineNumber": 309,
+                        "name": "longPressed",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "delta",
+                                "type": "QVector2D"
+                            }
+                        ],
+                        "index": 35,
+                        "lineNumber": 310,
+                        "name": "dragged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "event",
+                                "type": "QWheelEvent*"
+                            }
+                        ],
+                        "index": 36,
+                        "lineNumber": 311,
+                        "name": "wheel",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "delta",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 37,
+                        "lineNumber": 312,
+                        "name": "pinch",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "mousePos",
+                                "type": "QPoint"
+                            }
+                        ],
+                        "index": 38,
+                        "lineNumber": 313,
+                        "name": "mouseMove",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 39,
+                        "lineNumber": 315,
+                        "name": "zoomEnabledChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 40,
+                        "lineNumber": 316,
+                        "name": "zoomAtTargetEnabledChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 41,
+                        "lineNumber": 317,
+                        "name": "rotationEnabledChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 42,
+                        "lineNumber": 318,
+                        "name": "panEnabledChanged",
+                        "returnType": "void",
+                        "revision": 1548
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "dragMode",
+                                "type": "QtGraphs3D::DragMode"
+                            }
+                        ],
+                        "index": 43,
+                        "lineNumber": 319,
+                        "name": "dragModeChanged",
+                        "returnType": "void",
+                        "revision": 1548
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 44,
+                        "lineNumber": 320,
+                        "name": "selectionEnabledChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 45,
+                        "lineNumber": 322,
+                        "name": "ambientLightStrengthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 46,
+                        "lineNumber": 323,
+                        "name": "lightStrengthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 47,
+                        "lineNumber": 324,
+                        "name": "shadowStrengthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 48,
+                        "lineNumber": 325,
+                        "name": "lightColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 49,
+                        "lineNumber": 326,
+                        "name": "gridLineTypeChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "activeTheme",
+                                "type": "QGraphsTheme*"
+                            }
+                        ],
+                        "index": 50,
+                        "lineNumber": 216,
+                        "name": "setActiveTheme",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "technique",
+                                "type": "QtGraphs3D::TransparencyTechnique"
+                            }
+                        ],
+                        "index": 51,
+                        "lineNumber": 217,
+                        "name": "setTransparencyTechnique",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "shadowQuality",
+                                "type": "QtGraphs3D::ShadowQuality"
+                            }
+                        ],
+                        "index": 52,
+                        "lineNumber": 218,
+                        "name": "setShadowQuality",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "selectionMode",
+                                "type": "QtGraphs3D::SelectionFlags"
+                            }
+                        ],
+                        "index": 53,
+                        "lineNumber": 219,
+                        "name": "setSelectionMode",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 54,
+                        "lineNumber": 220,
+                        "name": "setMeasureFps",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 55,
+                        "lineNumber": 221,
+                        "name": "setOrthoProjection",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "ratio",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 56,
+                        "lineNumber": 222,
+                        "name": "setAspectRatio",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "hint",
+                                "type": "QtGraphs3D::OptimizationHint"
+                            }
+                        ],
+                        "index": 57,
+                        "lineNumber": 223,
+                        "name": "setOptimizationHint",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 58,
+                        "lineNumber": 224,
+                        "name": "setPolar",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 59,
+                        "lineNumber": 225,
+                        "name": "setLabelMargin",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "offset",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 60,
+                        "lineNumber": 226,
+                        "name": "setRadialLabelOffset",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "ratio",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 61,
+                        "lineNumber": 227,
+                        "name": "setHorizontalAspectRatio",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "locale",
+                                "type": "QLocale"
+                            }
+                        ],
+                        "index": 62,
+                        "lineNumber": 228,
+                        "name": "setLocale",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 63,
+                        "lineNumber": 229,
+                        "name": "setMargin",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "margin",
+                                "type": "qreal"
+                            }
+                        ],
+                        "index": 64,
+                        "lineNumber": 230,
+                        "name": "setCutoffMargin",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "preset",
+                                "type": "QtGraphs3D::CameraPreset"
+                            }
+                        ],
+                        "index": 65,
+                        "lineNumber": 231,
+                        "name": "setCameraPreset",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 66,
+                        "lineNumber": 232,
+                        "name": "setCameraXRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 67,
+                        "lineNumber": 233,
+                        "name": "setCameraYRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 68,
+                        "lineNumber": 234,
+                        "name": "setMinCameraXRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 69,
+                        "lineNumber": 235,
+                        "name": "setMaxCameraXRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 70,
+                        "lineNumber": 236,
+                        "name": "setMinCameraYRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "rotation",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 71,
+                        "lineNumber": 237,
+                        "name": "setMaxCameraYRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 72,
+                        "lineNumber": 238,
+                        "name": "setZoomAtTargetEnabled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 73,
+                        "lineNumber": 239,
+                        "name": "setZoomEnabled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 74,
+                        "lineNumber": 240,
+                        "name": "setSelectionEnabled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 75,
+                        "lineNumber": 241,
+                        "name": "setRotationEnabled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "enable",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 76,
+                        "lineNumber": 242,
+                        "name": "setPanEnabled",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newDragMode",
+                                "type": "QtGraphs3D::DragMode"
+                            }
+                        ],
+                        "index": 77,
+                        "lineNumber": 243,
+                        "name": "setDragMode",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 78,
+                        "lineNumber": 244,
+                        "name": "setDefaultInputHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 79,
+                        "lineNumber": 245,
+                        "name": "unsetDefaultInputHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 80,
+                        "lineNumber": 246,
+                        "name": "unsetDefaultTapHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 81,
+                        "lineNumber": 247,
+                        "name": "unsetDefaultDragHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 82,
+                        "lineNumber": 248,
+                        "name": "unsetDefaultWheelHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 83,
+                        "lineNumber": 249,
+                        "name": "unsetDefaultPinchHandler",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "button",
+                                "type": "Qt::MouseButtons"
+                            }
+                        ],
+                        "index": 84,
+                        "lineNumber": 250,
+                        "name": "setDragButton",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "button",
+                                "type": "Qt::MouseButtons"
+                            }
+                        ],
+                        "index": 85,
+                        "lineNumber": 251,
+                        "name": "setPanButton",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "level",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 86,
+                        "lineNumber": 252,
+                        "name": "setCameraZoomLevel",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "level",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 87,
+                        "lineNumber": 253,
+                        "name": "setMinCameraZoomLevel",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "level",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 88,
+                        "lineNumber": 254,
+                        "name": "setMaxCameraZoomLevel",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "target",
+                                "type": "QVector3D"
+                            }
+                        ],
+                        "index": 89,
+                        "lineNumber": 255,
+                        "name": "setCameraTargetPosition",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "wrap",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 90,
+                        "lineNumber": 256,
+                        "name": "setWrapCameraXRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "wrap",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 91,
+                        "lineNumber": 257,
+                        "name": "setWrapCameraYRotation",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "horizontal",
+                                "type": "float"
+                            },
+                            {
+                                "name": "vertical",
+                                "type": "float"
+                            },
+                            {
+                                "name": "zoom",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 92,
+                        "lineNumber": 258,
+                        "name": "setCameraPosition",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "horizontal",
+                                "type": "float"
+                            },
+                            {
+                                "name": "vertical",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 93,
+                        "isCloned": true,
+                        "lineNumber": 258,
+                        "name": "setCameraPosition",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "samples",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 94,
+                        "lineNumber": 259,
+                        "name": "setMsaaSamples",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newAmbientLightStrength",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 95,
+                        "lineNumber": 260,
+                        "name": "setAmbientLightStrength",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newLightStrength",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 96,
+                        "lineNumber": 261,
+                        "name": "setLightStrength",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newShadowStrength",
+                                "type": "float"
+                            }
+                        ],
+                        "index": 97,
+                        "lineNumber": 262,
+                        "name": "setShadowStrength",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "newLightColor",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 98,
+                        "lineNumber": 263,
+                        "name": "setLightColor",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "gridLineType",
+                                "type": "QtGraphs3D::GridLineType"
+                            }
+                        ],
+                        "index": 99,
+                        "lineNumber": 264,
+                        "name": "setGridLineType",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "widget",
+                                "type": "QQuickWidget*"
+                            }
+                        ],
+                        "index": 100,
+                        "lineNumber": 265,
+                        "name": "setWidget",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "q3dgraphswidgetitem.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Q3DScatterWidgetItem",
+                "lineNumber": 18,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 21,
+                        "name": "axisX",
+                        "notify": "axisXChanged",
+                        "override": false,
+                        "read": "axisX",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisX"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 22,
+                        "name": "axisY",
+                        "notify": "axisYChanged",
+                        "override": false,
+                        "read": "axisY",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisY"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 23,
+                        "name": "axisZ",
+                        "notify": "axisZChanged",
+                        "override": false,
+                        "read": "axisZ",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisZ"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 24,
+                        "name": "selectedSeries",
+                        "notify": "selectedSeriesChanged",
+                        "override": false,
+                        "read": "selectedSeries",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QScatter3DSeries*",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "Q3DScatterWidgetItem",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "axisXChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 53,
+                        "name": "axisYChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 54,
+                        "name": "axisZChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "series",
+                                "type": "QScatter3DSeries*"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 55,
+                        "name": "selectedSeriesChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 44,
+                        "name": "setAxisX",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 45,
+                        "name": "setAxisY",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 46,
+                        "name": "setAxisZ",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "Q3DGraphsWidgetItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "q3dscatterwidgetitem.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Q3DSurfaceWidgetItem",
+                "lineNumber": 18,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 21,
+                        "name": "axisX",
+                        "notify": "axisXChanged",
+                        "override": false,
+                        "read": "axisX",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisX"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 22,
+                        "name": "axisY",
+                        "notify": "axisYChanged",
+                        "override": false,
+                        "read": "axisY",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisY"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 23,
+                        "name": "axisZ",
+                        "notify": "axisZChanged",
+                        "override": false,
+                        "read": "axisZ",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QValue3DAxis*",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAxisZ"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 24,
+                        "name": "selectedSeries",
+                        "notify": "selectedSeriesChanged",
+                        "override": false,
+                        "read": "selectedSeries",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSurface3DSeries*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 25,
+                        "name": "flipHorizontalGrid",
+                        "notify": "flipHorizontalGridChanged",
+                        "override": false,
+                        "read": "flipHorizontalGrid",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setFlipHorizontalGrid"
+                    }
+                ],
+                "qualifiedClassName": "Q3DSurfaceWidgetItem",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 61,
+                        "name": "axisXChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 62,
+                        "name": "axisYChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 63,
+                        "name": "axisZChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "series",
+                                "type": "QSurface3DSeries*"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 64,
+                        "name": "selectedSeriesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "flip",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 65,
+                        "name": "flipHorizontalGridChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "image",
+                                "type": "QImage"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 67,
+                        "name": "sliceImageChanged",
+                        "returnType": "void",
+                        "revision": 1546
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 52,
+                        "name": "setAxisX",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 7,
+                        "lineNumber": 53,
+                        "name": "setAxisY",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "axis",
+                                "type": "QValue3DAxis*"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 54,
+                        "name": "setAxisZ",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "flip",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 9,
+                        "lineNumber": 55,
+                        "name": "setFlipHorizontalGrid",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "Q3DGraphsWidgetItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "q3dsurfacewidgetitem.h",
+        "outputRevision": 69
+    }
+]
