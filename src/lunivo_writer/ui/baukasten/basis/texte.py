@@ -8,7 +8,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QFrame, QLabel
 
 from lunivo_writer.core.farben import Farbe
-from lunivo_writer.ui.baukasten.mass import PADDING_HINWEIS, SCHRIFT_HINWEIS
+from lunivo_writer.ui.baukasten.basis.mass import PADDING_HINWEIS, SCHRIFT_HINWEIS
 
 _EIGENSCHAFT = "hinweisKlein"          # 0 = normale Größe, 1 = klein; fehlt = kein Hinweistext
 
