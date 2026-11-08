@@ -13,14 +13,14 @@ from PySide6.QtWidgets import (
     QButtonGroup, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
-from lunivo_writer.ui.baukasten.texte import hinweis_stil
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.basis.texte import hinweis_stil
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
 from lunivo_writer.editor import felder as F
 from lunivo_writer.editor import tabelle_text as TT
 from lunivo_writer.editor import zahlformat as Z
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.mass import (
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.basis.mass import (
     BREITE_SCHIENE,
     BREITE_SEITENLEISTE,
     GROESSE_KNOPF_QUADRAT,
@@ -618,7 +618,7 @@ class ObjektDialog(PanelFaehig, QDialog):
         self._beschreiben()
 
     def _suchen(self) -> None:
-        from lunivo_writer.ui.baukasten.speichern_fenster import datei_waehlen
+        from lunivo_writer.ui.baukasten.dokument.speichern_fenster import datei_waehlen
         pfade = datei_waehlen(self, "Datei für das Objekt wählen", self.datei.text() or self._ordner, "Alle Dateien (*)")
         if pfade:
             self.datei.setText(pfade[0])

@@ -4,13 +4,13 @@ from __future__ import annotations
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget
 
 from lunivo_writer.models.page import PAPER_MM, HeaderFooter, PageSettings
-from lunivo_writer.ui.baukasten.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
+from lunivo_writer.ui.baukasten.controls.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
-from lunivo_writer.ui.baukasten.zusatz_panel import PanelFaehig
-from lunivo_writer.ui.baukasten.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from lunivo_writer.ui.baukasten.dialog_rahmen import fussleiste, knopfzeile
-from lunivo_writer.ui.baukasten.mass import RAND_KEIN
+from lunivo_writer.ui.baukasten.controls.zusatz_panel import PanelFaehig
+from lunivo_writer.ui.baukasten.controls.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.ui.baukasten.basis.dialog_rahmen import fussleiste, knopfzeile
+from lunivo_writer.ui.baukasten.basis.mass import RAND_KEIN
 from lunivo_writer.ui.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def _titel(text: str, feld) -> QLabel:
     t = QLabel(text); t.setBuddy(feld)
@@ -210,8 +210,8 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
                  kopfzeile: bool = False, *, werte: dict | None = None):
         super().__init__(parent)
         from lunivo_writer.editor.tabelleneigenschaften import VORGABE
-        from lunivo_writer.ui.baukasten.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
-        from lunivo_writer.ui.baukasten.mass_feld import EinheitFeld
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
+        from lunivo_writer.ui.baukasten.controls.mass_feld import EinheitFeld
         self.setWindowTitle("Tabelleneigenschaften")
         v = QVBoxLayout(self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
@@ -282,7 +282,7 @@ class BildZuschneidenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent):
         super().__init__(parent)
-        from lunivo_writer.ui.baukasten.formular_gitter import FormularGitter
+        from lunivo_writer.ui.baukasten.controls.formular_gitter import FormularGitter
         self.setWindowTitle("Bild zuschneiden")
         v = QVBoxLayout(self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
