@@ -30,7 +30,6 @@ def test_verspaetetes_pruefergebnis_nach_dokumentwechsel_wird_verworfen(app, tmp
     assert erstes is not zweites
     assert erstes.revision() == zweites.revision()  # gleiche Revisionsnummer darf nicht verwechselt werden
 
-    assistant._lauf_doc = erstes
     assistant._laeuft = True
     assistant._fertig(zweites.revision(), [], erstes)
 
