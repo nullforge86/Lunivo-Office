@@ -133,6 +133,10 @@ class FundKarte(QFrame):
             self.a.pruefen(voll=True)                        # der Hinweis verschwindet, wenn der Satz kürzer ist
 
     def _verwerfen(self):
+        if not self.a.fund_aktuell(self.fund):
+            self.d.status.emit("Dieser Fund ist veraltet — die Lernstatistik wurde nicht verändert.")
+            self.vorschlag_feld.hide()
+            return
         self.d.assistant.gelernt.ki_vermerken(self._v, False)
         self.vorschlag_feld.hide()
         self.vorschlag_knopf.setEnabled(True); self.vorschlag_knopf.setText("Vorschlag"); self.vorschlag_knopf.show()
@@ -175,6 +179,10 @@ class VorschlagKarte(QFrame):
         lay.addLayout(z)
 
     def _lassen(self):
+        if not self.d.vorschlag_aktuell(self.v):
+            self.d.status.emit("Das Dokument wurde gewechselt oder geändert — der KI-Vorschlag ist veraltet. Die Lernstatistik wurde nicht verändert.")
+            self._weg()
+            return
         self.d.assistant.gelernt.ki_vermerken(self.v, False)
         self._weg()
 
