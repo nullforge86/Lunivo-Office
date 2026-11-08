@@ -312,11 +312,15 @@ def test_ki_korrektur_ende_zu_ende(app, tmp_path, monkeypatch):
 def test_ki_ohne_schluessel_oeffnet_nichts_nach_aussen(app, tmp_path, monkeypatch):
     w = win(tmp_path, monkeypatch)
     w.ki.konfig.d["modell"] = "claude-opus-5"; w.ki.konfig.d["apiKey"] = ""
-    aufgerufen = []
+    from PySide6.QtWidgets import QMessageBox
+    aufgerufen, meldungen = [], []
     monkeypatch.setattr(w.befehle, "w_kiEinstellungen", lambda k=None: aufgerufen.append("einstellungen"))
+    monkeypatch.setattr(QMessageBox, "information", staticmethod(lambda *a, **k: meldungen.append(a[1]) or QMessageBox.Ok))
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: False)
     w.current_editor().setPlainText("Text")
     w.ki.korrigieren()
-    assert aufgerufen == ["einstellungen"] and not w.sidebar.ki_banner.isHidden()
+    assert meldungen and not aufgerufen                      # ohne Modell: nur eine Meldung, nichts geht nach außen, kein fremdes Fenster
+    assert not w._pool_hat_arbeit() if hasattr(w, "_pool_hat_arbeit") else not w.ki._arbeit_laeuft
 
 
 def test_rechtschreib_ignorieren_schalter(app, tmp_path, monkeypatch):
@@ -846,6 +850,7 @@ def test_schreibhilfe_knoepfe_melden_sich_sichtbar(app, tmp_path, monkeypatch):
     monkeypatch.setattr(QMessageBox, "information", staticmethod(lambda *a, **k: meldungen.append(a[1]) or QMessageBox.Ok))
     monkeypatch.setattr(w.befehle, "w_kiEinstellungen", lambda k=None: fenster.append("einstellungen"))
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: False)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: False)   # „starte“ fragt das innere KI-Objekt, auch bei auto:/argos:-Aufgaben
     w.current_editor().setPlainText("")
     for befehl in ("w.pruefen", "vorlesen", "kiTextInBild", "thesaurus"):
         meldungen.clear(); w.befehle.tun(befehl)
@@ -953,6 +958,7 @@ def test_langer_satz_bekommt_einen_vorschlag_zum_annehmen_oder_verwerfen(app, tm
     from lunivo_writer.ui.sidebar.panels.writing_panel import FundKarte
     w = win(tmp_path, monkeypatch)
     monkeypatch.setattr(type(w.ki), "verfuegbar", lambda self: True)
+    monkeypatch.setattr(type(w.ki.ki), "verfuegbar_fuer", lambda self, aufgabe=None: True)    # sonst öffnet „starte“ das Hinweisfenster „Modell fehlt“
     monkeypatch.setattr(w.ki, "_einwilligung", lambda modell=None, umfang="auszug", zeichen=0: True)
     satz = " ".join(["wort"] * 30) + "."
     monkeypatch.setattr(w.ki.ki, "satz_umschreiben", lambda s, g="": {"text": "Erster Satz. Zweiter Satz.", "cent": None})
@@ -1083,7 +1089,7 @@ def test_hintergrundpruefungen_verwerfen_anderes_dokument(app, tmp_path, monkeyp
     rev = e.document().revision()
 
     a._laeuft = True
-    a._fertig(rev, [], dokument=object())
+    a._fertig(rev, [], object())
     assert a._roh == vorher
     assert a._laeuft is False
 

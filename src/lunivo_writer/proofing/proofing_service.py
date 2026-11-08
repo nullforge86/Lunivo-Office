@@ -444,8 +444,9 @@ class WritingAssistant(QObject):
 
     # ---- Annehmen / weglassen ----------------------------------------------------------
     def aendern(self, fund: ProofingIssue) -> bool:
+        # Wort-Vorschläge aus dem Rechtsklick-Menü entstehen live am Text und stehen nicht in ``funde``; ``replace_range(erwartet=…)`` schützt sie.
         ed = self.editor
-        if ed is None or not self.fund_aktuell(fund) or not fund.neu and fund.art == "hinweis":
+        if ed is None or not (fund.wort_ebene or self.fund_aktuell(fund)) or not fund.neu and fund.art == "hinweis":
             self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
             return False
         if not ed.replace_range(fund.von, fund.bis, fund.neu or "", erwartet=fund.alt):
