@@ -115,6 +115,9 @@ class KIAktionenMixin:
         ed = self.w.current_editor()
         if ed is None:
             return
+        if not self.assistant.fund_aktuell(fund):
+            self.status.emit("Dieser Fund ist veraltet — bitte das Dokument neu prüfen.")
+            return
         satz = fund.stelle or ed.document().toPlainText()[fund.von:fund.bis]
         eing = {"ed": ed, "text": satz, "basis": fund.von, "markiert": True, "rev": ed.document().revision()}
         self.starte("Die KI schlägt kürzere Sätze vor …", lambda t: self.ki.satz_umschreiben(t, fund.grund),
