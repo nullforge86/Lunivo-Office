@@ -367,7 +367,9 @@ class NavigationPanel(QWidget):
         self._umbruch.toggled.connect(self._umbrechen)
         r = PanelRahmen(TITEL["ueberschriften"], "settings", m)
         self.baum = QTreeWidget(); self.baum.setHeaderHidden(True); self.baum.setFrameShape(QFrame.NoFrame)
-        self.baum.itemClicked.connect(self._klick)
+        self.baum.setFocusPolicy(Qt.StrongFocus)
+        self.baum.setAccessibleName("Dokumentüberschriften")
+        self.baum.currentItemChanged.connect(self._klick)       # Pfeiltasten und Maus führen zum gewählten Abschnitt
         self.baum.setUniformRowHeights(False)
         self._schrift(aktuell, speichern=False); self._umbrechen(self._umbruch.isChecked(), speichern=False)
         r.inhalt.addWidget(self.baum, 1)
@@ -430,9 +432,9 @@ class NavigationPanel(QWidget):
         self.baum.expandAll()
         self.leer.setVisible(n == 0)
 
-    def _klick(self, item, _col) -> None:
+    def _klick(self, item, _vorher) -> None:
         ed = self.get_editor()
-        if ed is not None:
+        if ed is not None and item is not None:
             pos = item.data(0, Qt.UserRole)
             ed.select_range(pos, pos)
             ed.ensureCursorVisible()
