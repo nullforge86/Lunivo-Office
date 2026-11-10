@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import Iterator
 
-from PySide6.QtGui import QTextBlock, QTextDocument, QTextLine
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtGui import QFont, QPainter, QTextBlock, QTextDocument, QTextLine
 
 ARTEN = {"": "Fortlaufend", "seite": "Jede Seite neu beginnen"}
 
@@ -35,3 +36,14 @@ def nummern(doc: QTextDocument, ch: float, art: str = "") -> Iterator[tuple[QTex
                 nr += 1
                 yield b, z, y, nr
         b = b.next()
+
+
+def zeichnen(p: QPainter, d: QTextDocument, n: int, ch: float, base: QFont, art: str = "") -> None:
+    """Zeilennummern am linken Rand der Seite n (Koordinaten: Textfläche, auf die Seite verschoben)."""
+    f = QFont(base)
+    f.setPixelSize(9)
+    p.setFont(f)
+    p.setPen(Qt.gray)
+    for _b, zeile, y, nr in nummern(d, ch, art):
+        if (n - 1) * ch <= y < n * ch:
+            p.drawText(QRectF(-48, y, 42, zeile.height()), Qt.AlignRight | Qt.AlignVCenter, str(nr))

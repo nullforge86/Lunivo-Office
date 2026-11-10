@@ -134,6 +134,61 @@ class FelderDialog(PanelFaehig, QDialog):
             b.addItem(t, (daten[i] if daten else t))
         return b
 
+    # Feldname → Methode, die dessen Assistentenfelder baut
+    _ASSISTENTEN = {"Formel": "_assistent_formel", "Hyperlink": "_assistent_adresse", "Seite": "_assistent_zahlenformat",
+                    "NumPages": "_assistent_zahlenformat", "SectionPages": "_assistent_zahlenformat", "PageRef": "_assistent_seitenverweis",
+                    "Seq": "_assistent_seq", "TC": "_assistent_tc", "Uhrzeit": "_assistent_datum", "PrintDate": "_assistent_datum",
+                    "TOC": "_assistent_toc", "Dokumentvariable": "_assistent_variable", "Seriendruckfeld": "_assistent_serienfeld",
+                    "StyleRef": "_assistent_formatvorlage"}
+
+    def _assistent_formel(self, name: str) -> None:
+        k = self.kontext
+        marken = list(k.get("textmarken", []))
+        fmt = self._zeile("format", "&Zahlenformat:", self._box([""] + F.ZAHLENFORMATE, bearbeitbar=True))
+        fkt = self._zeile("funktion", "Funktion &einfügen:", self._box([""] + F.FUNKTIONEN))
+        ber = self._zeile("bereich", "&Tabellenbereich:", self._box([""] + F.BEREICHE), bool(k.get("in_tabelle")))
+        mrk = self._zeile("marke", "Textmar&ke einfügen:", self._box([""] + marken), bool(marken))
+        fmt.currentTextChanged.connect(self._formel_format)
+        for box in (fkt, ber, mrk):
+            box.activated.connect(lambda _i, box=box: self._formel_einsetzen(box))
+
+    def _assistent_adresse(self, name: str) -> None:
+        self._zeile("text", "&Adresse:", QLineEdit())
+
+    def _assistent_zahlenformat(self, name: str) -> None:
+        self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
+
+    def _assistent_seitenverweis(self, name: str) -> None:
+        marken = list(self.kontext.get("textmarken", []))
+        self._zeile("text", "&Textmarke:", self._box(marken), bool(marken))
+
+    def _assistent_seq(self, name: str) -> None:
+        self._zeile("text", "&Kategorie:", self._box(F.SEQ_KATEGORIEN, bearbeitbar=True))
+        self._assistent_zahlenformat(name)
+
+    def _assistent_tc(self, name: str) -> None:
+        self._zeile("text", "&Eintragstext:", QLineEdit())
+        e = QSpinBox(); e.setRange(1, 9); self._zeile("ebene", "E&bene:", e)
+
+    def _assistent_datum(self, name: str) -> None:
+        vorgabe = "HH:mm" if name == "Uhrzeit" else "dd.MM.yyyy"
+        box = self._box(F.DATUMSFORMATE, bearbeitbar=True); box.setCurrentText(vorgabe)
+        self._zeile("datum", "&Datumsformat:", box)
+
+    def _assistent_toc(self, name: str) -> None:
+        von, bis = QSpinBox(), QSpinBox(); von.setRange(1, 9); bis.setRange(1, 9); bis.setValue(3)
+        self._zeile("von", "Ebenen &von:", von); self._zeile("bis", "Ebenen &bis:", bis)
+
+    def _assistent_variable(self, name: str) -> None:
+        self._zeile("text", "&Name:", QLineEdit())
+
+    def _assistent_serienfeld(self, name: str) -> None:
+        self._zeile("text", "&Feldname:", self._box(list(self.kontext.get("serienfelder", [])), bearbeitbar=True))
+
+    def _assistent_formatvorlage(self, name: str) -> None:
+        self._zeile("text", "&Formatvorlage:", self._box([f"Überschrift {i}" for i in range(1, 10)] + ["Titel", "Untertitel"],
+                                                         bearbeitbar=True))
+
     def _zeigen(self, name: str) -> None:
         if self._assistent_host is not None:
             self._assistent_platz.removeWidget(self._assistent_host); self._assistent_host.hide(); self._assistent_host.deleteLater()
@@ -141,42 +196,9 @@ class FelderDialog(PanelFaehig, QDialog):
         self._assistent_platz.addWidget(self._assistent_host)
         self._felder = {}
         self.name = name
-        k = self.kontext
-        marken = list(k.get("textmarken", []))
-        if name == "Formel":
-            fmt = self._zeile("format", "&Zahlenformat:", self._box([""] + F.ZAHLENFORMATE, bearbeitbar=True))
-            fkt = self._zeile("funktion", "Funktion &einfügen:", self._box([""] + F.FUNKTIONEN))
-            ber = self._zeile("bereich", "&Tabellenbereich:", self._box([""] + F.BEREICHE), bool(k.get("in_tabelle")))
-            mrk = self._zeile("marke", "Textmar&ke einfügen:", self._box([""] + marken), bool(marken))
-            fmt.currentTextChanged.connect(self._formel_format)
-            for box in (fkt, ber, mrk):
-                box.activated.connect(lambda _i, box=box: self._formel_einsetzen(box))
-        elif name == "Hyperlink":
-            self._zeile("text", "&Adresse:", QLineEdit())
-        elif name in ("Seite", "NumPages", "SectionPages"):
-            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
-        elif name == "PageRef":
-            self._zeile("text", "&Textmarke:", self._box(marken), bool(marken))
-        elif name == "Seq":
-            self._zeile("text", "&Kategorie:", self._box(F.SEQ_KATEGORIEN, bearbeitbar=True))
-            self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
-        elif name == "TC":
-            self._zeile("text", "&Eintragstext:", QLineEdit())
-            e = QSpinBox(); e.setRange(1, 9); self._zeile("ebene", "E&bene:", e)
-        elif name in ("Uhrzeit", "PrintDate"):
-            vorgabe = "HH:mm" if name == "Uhrzeit" else "dd.MM.yyyy"
-            box = self._box(F.DATUMSFORMATE, bearbeitbar=True); box.setCurrentText(vorgabe)
-            self._zeile("datum", "&Datumsformat:", box)
-        elif name == "TOC":
-            von, bis = QSpinBox(), QSpinBox(); von.setRange(1, 9); bis.setRange(1, 9); bis.setValue(3)
-            self._zeile("von", "Ebenen &von:", von); self._zeile("bis", "Ebenen &bis:", bis)
-        elif name == "Dokumentvariable":
-            self._zeile("text", "&Name:", QLineEdit())
-        elif name == "Seriendruckfeld":
-            self._zeile("text", "&Feldname:", self._box(list(k.get("serienfelder", [])), bearbeitbar=True))
-        elif name == "StyleRef":
-            self._zeile("text", "&Formatvorlage:", self._box([f"Überschrift {i}" for i in range(1, 10)] + ["Titel", "Untertitel"],
-                                                             bearbeitbar=True))
+        bauer = self._ASSISTENTEN.get(name)
+        if bauer:
+            getattr(self, bauer)(name)
         for w in self._felder.values():
             for sig in ("textChanged", "currentTextChanged", "valueChanged"):
                 if name != "Formel" and hasattr(w, sig):

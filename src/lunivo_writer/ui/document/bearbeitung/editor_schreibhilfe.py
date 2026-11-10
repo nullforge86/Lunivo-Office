@@ -129,53 +129,90 @@ class SchreibhilfeBaustein:
 
 
     def _taste(self, e) -> None:
-        if e.key() == Qt.Key_Tab and e.modifiers() == Qt.NoModifier and not self.isReadOnly() and not self.textCursor().currentTable():
-            from lunivo_writer.editor.dokument.vorlagen import naechste_luecke
-            ziel = naechste_luecke(self.document(), self.textCursor().selectionEnd())
-            if ziel:
-                self.select_range(*ziel)
-                return
-        if self.verfolgen and not self.isReadOnly() and self._verfolgte_taste(e):
+        if self._tab_luecke(e) or (self.verfolgen and not self.isReadOnly() and self._verfolgte_taste(e)):
             return
+        if self._gliederung_taste(e):
+            return
+        if self._popup.isVisible() and self._popup_taste(e):
+            return
+        c0 = self.textCursor()
+        if self._einzug_taste(c0, e.key(), e):
+            return
+        self._auswahl_ans_ende(c0, e)
+        if self._rechts_enter(c0, e):
+            self._rechts_leerzeichen_weg(c0)
+        super().keyPressEvent(e)
+        self._nach_taste(e)
+
+
+    def _gliederung_taste(self, e) -> bool:
+        """Alt+Umschalt+Links/Rechts ändert die Gliederungsebene."""
         if self.gliederung and (e.modifiers() & Qt.AltModifier) and (e.modifiers() & Qt.ShiftModifier) \
                 and e.key() in (Qt.Key_Left, Qt.Key_Right):
             self.gliederung_ebene(-1 if e.key() == Qt.Key_Left else 1)
-            return
-        if self._popup.isVisible():
-            k = e.key()
-            if k in (Qt.Key_Tab, Qt.Key_Return, Qt.Key_Enter):
-                it = self._popup.currentItem()
-                if it:
-                    self._vorschlag_nehmen(it.data(Qt.UserRole)); e.accept(); return
-            if (e.modifiers() & Qt.ControlModifier) and Qt.Key_1.value <= k <= Qt.Key_6.value:        # Strg+1…6: Vorschlag nehmen
-                n = k - Qt.Key_1.value
-                if n < self._popup.count():
-                    self._vorschlag_nehmen(self._popup.item(n).data(Qt.UserRole)); e.accept(); return
-            if k == Qt.Key_Escape:
-                self._popup.hide(); e.accept(); return
-            if k in (Qt.Key_Down, Qt.Key_Up):
-                r = self._popup.currentRow() + (1 if k == Qt.Key_Down else -1)
-                self._popup.setCurrentRow(max(0, min(self._popup.count() - 1, r))); e.accept(); return
-        c0 = self.textCursor()
+            return True
+        return False
+
+
+    def _rechts_enter(self, c0: QTextCursor, e) -> bool:
+        """Eingabetaste in einem rechtsbündigen Absatz, wenn die Option „Leerzeichen am Ende entfernen“ gilt."""
+        return e.key() in (Qt.Key_Return, Qt.Key_Enter) and self.opt("schreibhilfe/akRechtsLeer", False) and not c0.hasSelection() \
+            and bool(c0.blockFormat().alignment() & Qt.AlignRight)
+
+
+    def _tab_luecke(self, e) -> bool:
+        """Tab springt zur nächsten Lücke «…» der Vorlage."""
+        if not (e.key() == Qt.Key_Tab and e.modifiers() == Qt.NoModifier and not self.isReadOnly() and not self.textCursor().currentTable()):
+            return False
+        from lunivo_writer.editor.dokument.vorlagen import naechste_luecke
+        ziel = naechste_luecke(self.document(), self.textCursor().selectionEnd())
+        if ziel:
+            self.select_range(*ziel)
+        return bool(ziel)
+
+
+    def _popup_taste(self, e) -> bool:
+        """Tasten bei offener Vorschlagsliste; True, wenn die Taste verbraucht wurde."""
         k = e.key()
-        # Tab/Rücktaste setzen den Einzug (nur am Absatzanfang)
-        if self.opt("schreibhilfe/akTabEinzug", True) and not c0.hasSelection() and c0.atBlockStart() \
-                and not c0.currentList() and k in (Qt.Key_Tab, Qt.Key_Backspace):
-            bf = c0.blockFormat()
-            if k == Qt.Key_Tab:
-                self.change_indent(10); e.accept(); return
-            if bf.leftMargin() > 0:
-                self.change_indent(-10); e.accept(); return
-        # Tippen ersetzt die Auswahl nur, wenn die Option an ist (Standard: aus, Markieren löscht nichts) — sonst wird hinter die Auswahl
-        # geschrieben. Ausnahme: eine Lücke «…» wird immer ersetzt.
+        if k in (Qt.Key_Tab, Qt.Key_Return, Qt.Key_Enter):
+            it = self._popup.currentItem()
+            if it:
+                self._vorschlag_nehmen(it.data(Qt.UserRole)); e.accept(); return True
+        if (e.modifiers() & Qt.ControlModifier) and Qt.Key_1.value <= k <= Qt.Key_6.value:        # Strg+1…6: Vorschlag nehmen
+            n = k - Qt.Key_1.value
+            if n < self._popup.count():
+                self._vorschlag_nehmen(self._popup.item(n).data(Qt.UserRole)); e.accept(); return True
+        if k == Qt.Key_Escape:
+            self._popup.hide(); e.accept(); return True
+        if k in (Qt.Key_Down, Qt.Key_Up):
+            r = self._popup.currentRow() + (1 if k == Qt.Key_Down else -1)
+            self._popup.setCurrentRow(max(0, min(self._popup.count() - 1, r))); e.accept(); return True
+        return False
+
+
+    def _einzug_taste(self, c0: QTextCursor, k: int, e) -> bool:
+        """Tab/Rücktaste setzen den Einzug (nur am Absatzanfang)."""
+        if not (self.opt("schreibhilfe/akTabEinzug", True) and not c0.hasSelection() and c0.atBlockStart()
+                and not c0.currentList() and k in (Qt.Key_Tab, Qt.Key_Backspace)):
+            return False
+        if k == Qt.Key_Tab:
+            self.change_indent(10); e.accept(); return True
+        if c0.blockFormat().leftMargin() > 0:
+            self.change_indent(-10); e.accept(); return True
+        return False
+
+
+    def _auswahl_ans_ende(self, c0: QTextCursor, e) -> None:
+        """Tippen ersetzt die Auswahl nur, wenn die Option an ist (Standard: aus, Markieren löscht nichts) — sonst wird hinter die Auswahl
+        geschrieben. Ausnahme: eine Lücke «…» wird immer ersetzt."""
         if c0.hasSelection() and e.text() and e.text().isprintable() and not (e.modifiers() & (Qt.ControlModifier | Qt.AltModifier)) \
                 and not self.opt("bearbeiten/tippen_ersetzt", False) \
                 and not (c0.selectedText().startswith("«") and c0.selectedText().endswith("»")):
             c0.setPosition(max(c0.anchor(), c0.position())); self.setTextCursor(c0)
-        if k in (Qt.Key_Return, Qt.Key_Enter) and self.opt("schreibhilfe/akRechtsLeer", False) and not c0.hasSelection() \
-                and (c0.blockFormat().alignment() & Qt.AlignRight):
-            self._rechts_leerzeichen_weg(c0)
-        super().keyPressEvent(e)
+
+
+    def _nach_taste(self, e) -> None:
+        """AutoKorrektur und Vorschläge nach dem Einfügen des Zeichens."""
         t = e.text()
         if t == ")" and self.opt("schreibhilfe/akKreiszahl", False):
             self._kreiszahl()

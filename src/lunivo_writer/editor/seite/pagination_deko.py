@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat
 
 from lunivo_writer.core.farben import Farbe
 from lunivo_writer.models.page import PageSettings, mm_to_px
@@ -224,3 +224,97 @@ def seiten_liste(total: int, first: int, last: int, opt: dict | None) -> list[in
     return seiten
 
 
+def frei_zeichnen(p: QPainter, objekte: list, hinter: bool) -> None:
+    """Freie Bilder der Seite hinter oder vor dem Text (zum Beispiel ein Band im Briefkopf, Foto, Unterschrift)."""
+    from lunivo_writer.editor.objekte import freie_bilder as FB
+    for a, bild, r in FB.vorne_hinten(objekte, hinter):
+        FB.bild_zeichnen(p, bild, r, bool(a.get("ellipse")), a.get("rand"), float(a.get("dreh", 0.0)), a.get("fuell"),
+                         a.get("_fuellbild") or (a.get("fuell") or {}).get("bild"), a.get("fx"))
+
+
+def _druckmarken(p: QPainter, page: PageSettings, grenzen: bool, zuschnitt: bool) -> None:
+    """Textbegrenzungen (gestrichelter Rahmen um die Textfläche) und Zuschnittsmarken (Ecken) auf der gedruckten Seite."""
+    cw, ch = page.content_width_px, page.content_height_px
+    ml, mt = mm_to_px(page.margin_left_mm), mm_to_px(page.margin_top_mm)
+    p.save()
+    pen = QPen(QColor("#888888"))
+    pen.setWidthF(0.7)
+    if grenzen:
+        pen.setStyle(Qt.DashLine)
+        p.setPen(pen)
+        p.setBrush(Qt.NoBrush)
+        p.drawRect(QRectF(ml, mt, cw, ch))
+    if zuschnitt:
+        pen.setStyle(Qt.SolidLine)
+        p.setPen(pen)
+        l = mm_to_px(4)
+        for x, y, dx, dy in ((ml, mt, -1, -1), (ml + cw, mt, 1, -1), (ml, mt + ch, -1, 1), (ml + cw, mt + ch, 1, 1)):
+            p.drawLine(x + dx * 2, y, x + dx * (2 + l), y)
+            p.drawLine(x, y + dy * 2, x, y + dy * (2 + l))
+    p.restore()
+
+
+def _inhalt_zeichnen(p: QPainter, d: QTextDocument, rect: QRectF) -> None:
+    """Wie ``QTextDocument.drawContents``, aber mit schwarzer Grundschrift: Text ohne eigene Farbe nähme sonst die Textfarbe des
+    Programms — im dunklen Thema fast weiß, und das Papier (PDF, Druck) bekäme blasse Schrift."""
+    from PySide6.QtGui import QAbstractTextDocumentLayout, QPalette
+    ctx = QAbstractTextDocumentLayout.PaintContext()
+    pal = QPalette(ctx.palette)
+    pal.setColor(QPalette.Text, QColor(Farbe.SCHWARZ)); pal.setColor(QPalette.WindowText, QColor(Farbe.SCHWARZ))
+    ctx.palette = pal
+    p.save()
+    p.setClipRect(rect)
+    ctx.clip = rect
+    d.documentLayout().draw(p, ctx)
+    p.restore()
+
+
+def absatz_zusatz_zeichnen(p: QPainter, d: QTextDocument, faktor: float = 1.0) -> None:
+    """Was an den Absätzen nicht von Qt kommt: Rahmen und die Nummern mehrstufiger Listen."""
+    from lunivo_writer.editor.text.mehrstufig import nummern_zeichnen
+    from lunivo_writer.editor.text.tabfuell import zeichnen as tabfuell_zeichnen
+    from lunivo_writer.editor.text.textfx import absaetze_zeichnen as effekte_zeichnen
+    absatzrahmen_zeichnen(p, d, faktor)
+    effekte_zeichnen(p, d)
+    nummern_zeichnen(p, d, faktor)
+    tabfuell_zeichnen(p, d)
+
+
+def _rahmengruppen(d: QTextDocument) -> list[list]:
+    """[[Rahmenangabe, [Absätze], Nummer des letzten Absatzes]]: zusammenhängende sichtbare Absätze mit gleichem B_RAHMEN."""
+    from lunivo_writer.editor.dokument.zusatz import B_RAHMEN
+    gruppen: list[list] = []
+    b = d.firstBlock()
+    while b.isValid():
+        if b.blockFormat().hasProperty(B_RAHMEN) and b.isVisible():
+            w = b.blockFormat().stringProperty(B_RAHMEN)
+            if gruppen and gruppen[-1][0] == w and gruppen[-1][2] == b.blockNumber() - 1:
+                gruppen[-1][1].append(b); gruppen[-1][2] = b.blockNumber()
+            else:
+                gruppen.append([w, [b], b.blockNumber()])
+        b = b.next()
+    return gruppen
+
+
+def _rahmenrechteck(r: QRectF, linie, faktor: float, polster: float) -> QRectF:
+    """Rechteck des Rahmens: Absatzfläche plus Abstand (eigener Abstand der Linie in pt, sonst ``polster``)."""
+    eigen = linie.polster()
+    if eigen:                                                      # eigener Abstand (Rahmen und Schattierung ▸ Optionen), pt → Bildpunkte
+        o, u, l, rt = (x * 96 / 72 * faktor for x in eigen)
+        return r.adjusted(-l, -o, rt, u)
+    pd = polster * faktor
+    return r.adjusted(-pd, -pd + 1, pd, pd - 1)
+
+
+def absatzrahmen_zeichnen(p: QPainter, d: QTextDocument, faktor: float = 1.0, polster: float = 4.0) -> None:
+    """Rahmen um zusammenhängende Absätze mit gleichem B_RAHMEN. Koordinaten: Dokument (Layoutgerät); faktor = Zoom."""
+    from lunivo_writer.editor.objekte.linie import Linie
+    lay = d.documentLayout()
+    for w, bloecke, _n in _rahmengruppen(d):
+        linie = Linie.aus_text(w)
+        if linie is None:
+            continue
+        r = lay.blockBoundingRect(bloecke[0]).united(lay.blockBoundingRect(bloecke[-1]))
+        zwischen = [(lay.blockBoundingRect(x).bottom() + lay.blockBoundingRect(y).top()) / 2
+                    for x, y in zip(bloecke, bloecke[1:])]
+        linie.rahmen_zeichnen(p, _rahmenrechteck(r, linie, faktor, polster), 96 / 72 * faktor, zwischen)

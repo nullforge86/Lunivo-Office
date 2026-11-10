@@ -90,6 +90,15 @@ class LesenMetadatenMixin:
 
     def _laden_zusatz(self) -> None:
         """Kommentare (python-docx) und Fuß-/Endnoten (Teile footnotes.xml / endnotes.xml) einlesen."""
+        self._kommentare_lesen()
+        self._kommentare_geloest_lesen()
+        self._quellen_lesen()
+        for art, rel in (("f", "footnotes"), ("e", "endnotes")):
+            for r in self.d.part.rels.values():
+                if r.reltype.endswith("/" + rel) and not r.is_external:
+                    self._noten_lesen(art, r.target_part.blob)
+
+    def _kommentare_lesen(self) -> None:
         try:
             for c in self.d.comments:
                 self.zus["kommentare"][int(c.comment_id)] = {
@@ -98,34 +107,23 @@ class LesenMetadatenMixin:
                     "text": "\n".join(p.text for p in c.paragraphs)}
         except Exception:
             self.report.warn("Kommentare konnten nicht gelesen werden.")
-        self._kommentare_geloest_lesen()
-        self._quellen_lesen()
-        for art, rel in (("f", "footnotes"), ("e", "endnotes")):
-            for r in self.d.part.rels.values():
-                if r.reltype.endswith("/" + rel) and not r.is_external:
-                    from lxml import etree
-                    wurzel = etree.fromstring(r.target_part.blob, lxml_parser())
-                    tag = qn("w:footnote") if art == "f" else qn("w:endnote")
-                    for n in wurzel.iterchildren(tag):
-                        if n.get(qn("w:type")) in ("separator", "continuationSeparator", "continuationNotice"):
-                            continue
-                        zeilen = []
-                        for p in n.iterchildren(qn("w:p")):
-                            zeilen.append("".join(t.text or "" for t in p.iter(qn("w:t"))).strip())
-                        self.zus["noten"][art][int(n.get(qn("w:id")))] = "\n".join(zeilen)
+
+    def _noten_lesen(self, art: str, blob: bytes) -> None:
+        """Noten einer Art („f“ Fußnoten, „e“ Endnoten) aus dem Teil in ``zus["noten"]`` ablegen; Trenner und Hinweise entfallen."""
+        from lxml import etree
+        wurzel = etree.fromstring(blob, lxml_parser())
+        tag = qn("w:footnote") if art == "f" else qn("w:endnote")
+        for n in wurzel.iterchildren(tag):
+            if n.get(qn("w:type")) in ("separator", "continuationSeparator", "continuationNotice"):
+                continue
+            zeilen = ["".join(t.text or "" for t in p.iter(qn("w:t"))).strip() for p in n.iterchildren(qn("w:p"))]
+            self.zus["noten"][art][int(n.get(qn("w:id")))] = "\n".join(zeilen)
 
     def _kommentare_geloest_lesen(self) -> None:
         """Welche Kommentare Word als gelöst markiert hat (Teil commentsExtended: w15:done je Absatzkennung)."""
         try:
-            from lxml import etree
             W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}paraId"
-            W15 = "{http://schemas.microsoft.com/office/word/2012/wordml}"
-            fertig = set()
-            for r in self.d.part.rels.values():
-                if r.reltype.endswith("/commentsExtended") and not r.is_external:
-                    for e in etree.fromstring(r.target_part.blob, lxml_parser()).iter(W15 + "commentEx"):
-                        if e.get(W15 + "done") in ("1", "true"):
-                            fertig.add(e.get(W15 + "paraId"))
+            fertig = self._geloeste_kennungen()
             if not fertig:
                 return
             for c in self.d.comments:
@@ -134,6 +132,18 @@ class LesenMetadatenMixin:
                     self.zus["kommentare"][int(c.comment_id)]["geloest"] = True
         except Exception:                                              # noqa: BLE001 — ein unlesbarer Zusatzteil darf das Laden nicht verhindern
             pass
+
+    def _geloeste_kennungen(self) -> set:
+        """Absatzkennungen (w15:paraId) der Kommentare, die in commentsExtended als erledigt (done) stehen."""
+        from lxml import etree
+        W15 = "{http://schemas.microsoft.com/office/word/2012/wordml}"
+        fertig = set()
+        for r in self.d.part.rels.values():
+            if r.reltype.endswith("/commentsExtended") and not r.is_external:
+                for e in etree.fromstring(r.target_part.blob, lxml_parser()).iter(W15 + "commentEx"):
+                    if e.get(W15 + "done") in ("1", "true"):
+                        fertig.add(e.get(W15 + "paraId"))
+        return fertig
 
     def _quellen_lesen(self) -> None:
         """Literaturquellen aus dem Word-Bibliografieteil (customXml, Namensraum …/bibliography)."""
@@ -150,20 +160,24 @@ class LesenMetadatenMixin:
                 continue
             self.zus["zitierweise"] = (w.get("StyleName") or "APA")
             for q in w.iterchildren(B + "Source"):
-                def t(n):
-                    e = q.find(B + n)
-                    return (e.text or "") if e is not None else ""
-                personen = []
-                for pe in q.iter(B + "Person"):
-                    last = (pe.findtext(B + "Last") or "").strip(); first = (pe.findtext(B + "First") or "").strip()
-                    personen.append(f"{last}, {first}" if first else last)
-                corp = q.find(f"{B}Author/{B}Author/{B}Corporate")
-                if corp is not None and corp.text:
-                    personen.append(corp.text)
-                typ = {"Book": "Buch", "JournalArticle": "Aufsatz", "InternetSite": "Webseite", "Report": "Bericht"}.get(t("SourceType"), "Sonstiges")
-                self.zus["quellen"].append({"tag": t("Tag"), "typ": typ, "autor": "; ".join(personen), "titel": t("Title"),
-                                            "jahr": t("Year"), "verlag": t("Publisher"), "ort": t("City"), "url": t("URL")})
+                self.zus["quellen"].append(self._quelle_lesen(q, B))
 
+    @staticmethod
+    def _quelle_lesen(q, B: str) -> dict:
+        """Eine Quelle (b:Source) → Angaben des Programms (Tag, Art, Autoren, Titel, Jahr, Verlag, Ort, URL)."""
+        def t(n):
+            e = q.find(B + n)
+            return (e.text or "") if e is not None else ""
+        personen = []
+        for pe in q.iter(B + "Person"):
+            last = (pe.findtext(B + "Last") or "").strip(); first = (pe.findtext(B + "First") or "").strip()
+            personen.append(f"{last}, {first}" if first else last)
+        corp = q.find(f"{B}Author/{B}Author/{B}Corporate")
+        if corp is not None and corp.text:
+            personen.append(corp.text)
+        typ = {"Book": "Buch", "JournalArticle": "Aufsatz", "InternetSite": "Webseite", "Report": "Bericht"}.get(t("SourceType"), "Sonstiges")
+        return {"tag": t("Tag"), "typ": typ, "autor": "; ".join(personen), "titel": t("Title"),
+                "jahr": t("Year"), "verlag": t("Publisher"), "ort": t("City"), "url": t("URL")}
 
     _HL = {"yellow": "#FFFF00", "green": "#00FF00", "cyan": "#00FFFF", "magenta": "#FF00FF",
            "blue": "#0000FF", "red": "#FF0000", "darkBlue": "#000080", "darkCyan": "#008080",

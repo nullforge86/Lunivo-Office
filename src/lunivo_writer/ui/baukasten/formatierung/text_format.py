@@ -203,10 +203,9 @@ ZEICHEN = {"schrift": "", "fett": False, "kursiv": False, "groesse": 0.0, "farbe
 BETONUNG = (("", "(Keine)"), ("punkt", "Punkt oberhalb"), ("kreis", "Kreis oberhalb"), ("komma", "Komma oberhalb"), ("unten", "Punkt unterhalb"))
 
 
-def zu_format(w: dict) -> QTextCharFormat:
-    """Die Werte eines Zeichenfensters als Zeichenformat (zum Anwenden im Editor und für Vorschauen)."""
+def _zu_format_schrift(f: QTextCharFormat, w: dict) -> None:
+    """Schriftfamilien (lateinisch, asiatisch, komplex), Betonung, Doppeltes, Fett/Kursiv, Größe, Farbe."""
     from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
-    f = QTextCharFormat()
     familien = [x for x in (w.get("schrift"), w.get("schrift_asien"), w.get("schrift_komplex")) if x]
     if familien:                                  # Qt nimmt für Zeichen, die die erste Schrift nicht hat, die nächste (asiatisch, komplex)
         f.setFontFamilies(list(dict.fromkeys(familien)))
@@ -220,6 +219,10 @@ def zu_format(w: dict) -> QTextCharFormat:
         f.setFontPointSize(float(w["groesse"]))
     if w.get("farbe"):
         f.setForeground(QColor(w["farbe"]))
+
+
+def _zu_format_linien(f: QTextCharFormat, w: dict) -> None:
+    """Unterstreichung, Durchstreichung, Hoch/Tief, Kapitälchen/Großbuchstaben."""
     f.merge(unter_format(w.get("unter") or ""))
     if w.get("unter") and w.get("unterfarbe"):
         f.setUnderlineColor(QColor(w["unterfarbe"]))
@@ -227,6 +230,11 @@ def zu_format(w: dict) -> QTextCharFormat:
     f.setVerticalAlignment(QTextCharFormat.AlignSuperScript if w.get("hoch") else QTextCharFormat.AlignSubScript if w.get("tief")
                            else QTextCharFormat.AlignNormal)
     f.setFontCapitalization(QFont.AllUppercase if w.get("gross") else QFont.SmallCaps if w.get("kapital") else QFont.MixedCase)
+
+
+def _zu_format_abstand(f: QTextCharFormat, w: dict) -> None:
+    """Zeichenabstand, Unterschneidung, Skalierung, Position, Raster."""
+    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     f.setFontLetterSpacingType(QFont.AbsoluteSpacing)
     f.setFontLetterSpacing(float(w.get("abstand") or 0) / 0.75)
     kern_ab = float(w.get("kern_ab") or 0)                     # „Unterschneidung ab … Punkte“: erst ab dieser Größe
@@ -234,25 +242,28 @@ def zu_format(w: dict) -> QTextCharFormat:
     f.setFontStretch(int(round(float(w.get("skala") or 100))))                       # „Skalieren“: Breite der Zeichen in Prozent
     gr = float(w.get("groesse") or 11)
     f.setBaselineOffset(float(w.get("position") or 0) / gr * 100 if gr else 0.0)     # „Position“: Pt höher (+) oder tiefer (−), in Prozent der Schriftgröße
-    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     f.setProperty(P_RASTER, 1 if w.get("raster", True) else 0)
+
+
+def zu_format(w: dict) -> QTextCharFormat:
+    """Die Werte eines Zeichenfensters als Zeichenformat (zum Anwenden im Editor und für Vorschauen)."""
+    f = QTextCharFormat()
+    _zu_format_schrift(f, w)
+    _zu_format_linien(f, w)
+    _zu_format_abstand(f, w)
     return f
 
 
-def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse: float = 0.0) -> dict:
-    """Die Werte eines Zeichenformats (zum Vorbelegen eines Zeichenfensters)."""
-    w = dict(ZEICHEN)
-    fam = cf.fontFamilies()
-    w["schrift"] = (fam[0] if fam else "") or standard_schrift
-    w["fett"], w["kursiv"] = cf.fontWeight() >= 600, cf.fontItalic()
-    w["groesse"] = cf.fontPointSize() or standard_groesse
-    if cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().style() != Qt.NoBrush:
-        w["farbe"] = cf.foreground().color().name()
+def _aus_format_unter(cf: QTextCharFormat, w: dict) -> None:
     from lunivo_writer.editor.dokument.zusatz import P_UNTER
     w["unter"] = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) and cf.stringProperty(P_UNTER) else \
         next((k for k, q in _UNTER_QT.items() if cf.underlineStyle() == q), "")
     if w["unter"] and cf.underlineColor().isValid():
         w["unterfarbe"] = cf.underlineColor().name()
+
+
+def _aus_format_schriften(cf: QTextCharFormat, w: dict) -> None:
+    """Doppelt durchgestrichen, Betonung, asiatische und komplexe Schrift."""
     from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
     w["doppelt"] = bool(cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT))
     w["durch"] = cf.fontStrikeOut() and not w["doppelt"]
@@ -265,6 +276,10 @@ def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse
                 w[f"groesse_{art}"] = float(gr or 0)
             except ValueError:
                 pass
+
+
+def _aus_format_abstand(cf: QTextCharFormat, w: dict, standard_groesse: float) -> None:
+    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     w["hoch"] = cf.verticalAlignment() == QTextCharFormat.AlignSuperScript
     w["tief"] = cf.verticalAlignment() == QTextCharFormat.AlignSubScript
     w["kapital"] = cf.fontCapitalization() == QFont.SmallCaps
@@ -274,8 +289,21 @@ def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse
     w["skala"] = float(cf.fontStretch()) if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() else 100.0
     gr = w["groesse"] or standard_groesse or 11
     w["position"] = round(cf.baselineOffset() * gr / 100, 1) if cf.hasProperty(QTextFormat.TextBaselineOffset) else 0.0
-    from lunivo_writer.editor.dokument.zusatz import P_RASTER
     w["raster"] = not (cf.hasProperty(P_RASTER) and not cf.property(P_RASTER))
+
+
+def aus_format(cf: QTextCharFormat, standard_schrift: str = "", standard_groesse: float = 0.0) -> dict:
+    """Die Werte eines Zeichenformats (zum Vorbelegen eines Zeichenfensters)."""
+    w = dict(ZEICHEN)
+    fam = cf.fontFamilies()
+    w["schrift"] = (fam[0] if fam else "") or standard_schrift
+    w["fett"], w["kursiv"] = cf.fontWeight() >= 600, cf.fontItalic()
+    w["groesse"] = cf.fontPointSize() or standard_groesse
+    if cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().style() != Qt.NoBrush:
+        w["farbe"] = cf.foreground().color().name()
+    _aus_format_unter(cf, w)
+    _aus_format_schriften(cf, w)
+    _aus_format_abstand(cf, w, standard_groesse)
     return w
 
 

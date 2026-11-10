@@ -4,6 +4,11 @@ from __future__ import annotations
 from PySide6.QtGui import QFont
 
 
+def _feld_setzen(feld, setter: str, wert) -> None:
+    """Setzt den Wert eines Feldes, ohne dessen Signale auszulösen."""
+    feld.blockSignals(True); getattr(feld, setter)(wert); feld.blockSignals(False)
+
+
 class DokumentSyncMixin:
     """Hält UI-Felder und Statusanzeige mit dem aktiven Dokument synchron."""
 
@@ -24,6 +29,33 @@ class DokumentSyncMixin:
         e = self.current_editor()
         self.band.aktualisieren(e is not None)
         self.band.kontext("tabelle", bool(e) and not e.isReadOnly() and e.textCursor().currentTable() is not None)
+        text_art = self._sync_kontexte(e)
+        self._zeichen_masse(e)
+        self._tabelle_masse(e)
+        f = self.band.felder
+        if e is None or not f:
+            return
+        cf = e.textCursor().charFormat()
+        fam = cf.fontFamilies()[0] if cf.fontFamilies() else e.document().defaultFont().family()
+        _feld_setzen(f["font"], "setCurrentFont", QFont(fam))
+        size = cf.fontPointSize() or e.document().defaultFont().pointSizeF() or 11
+        _feld_setzen(f["groesse"], "setEditText", f"{size:g}")
+        self._sync_seitenmasse(f)
+        if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
+            from lunivo_writer.editor.objekte import frei_objekt as FO
+            d = FO.ziel(e)[1]
+            _feld_setzen(f["tt_font"], "setCurrentFont", QFont(d.get("schrift", "Liberation Sans")))
+            if not f["tt_groesse"].hasFocus():
+                _feld_setzen(f["tt_groesse"], "setEditText", f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}")
+        if "tab_font" in f and e.textCursor().currentTable() is not None:       # Schrift und Größe der Tabellentools
+            _feld_setzen(f["tab_font"], "setCurrentFont", QFont(fam))
+            if not f["tab_groesse"].hasFocus():
+                _feld_setzen(f["tab_groesse"], "setEditText", f"{size:g}")
+        st = e.current_style()
+        _feld_setzen(f["stil"], "setCurrentText", "Fließtext" if st == "Standard" else st)
+
+    def _sync_kontexte(self, e):
+        """Schaltet die Kontext-Reiter nach dem gewählten Objekt. → Art des Textobjekts (WordArt, Textfeld) oder None."""
         bf = e.bild_format() if e else None
         from lunivo_writer.editor.objekte import formen
         art = (formen.objekt(bf) or {}).get("art") if bf is not None else None
@@ -45,34 +77,18 @@ class DokumentSyncMixin:
             if frei_wahl:
                 ziel_reiter = {"wordart": "text", "smartart": "smartart", "diagramm": "diagramm", "piktogramm": "bild", "bild": "bild"}.get(frei_wahl, "zeichen")
                 self.band.kontext(ziel_reiter, True, aktivieren=True)
-        self._zeichen_masse(e)
-        self._tabelle_masse(e)
-        f = self.band.felder
-        if e is None or not f:
-            return
-        cf = e.textCursor().charFormat()
-        fam = cf.fontFamilies()[0] if cf.fontFamilies() else e.document().defaultFont().family()
-        f["font"].blockSignals(True); f["font"].setCurrentFont(QFont(fam)); f["font"].blockSignals(False)
-        size = cf.fontPointSize() or e.document().defaultFont().pointSizeF() or 11
-        f["groesse"].blockSignals(True); f["groesse"].setEditText(f"{size:g}"); f["groesse"].blockSignals(False)
+        return text_art
+
+    def _sync_seitenmasse(self, f: dict) -> None:
+        """Maßfelder im Reiter Seitenlayout."""
         t = self.current_tab()
-        if t is not None and "rand_oben" in f:                       # Maßfelder im Reiter Seitenlayout
-            p = t.page
-            for schl, wert in (("oben", p.margin_top_mm), ("unten", p.margin_bottom_mm), ("links", p.margin_left_mm), ("rechts", p.margin_right_mm)):
-                sp = f["rand_" + schl]
-                if not sp.hasFocus():
-                    sp.blockSignals(True); sp.setValue(wert); sp.blockSignals(False)
-        if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
-            d = FO.ziel(e)[1]
-            f["tt_font"].blockSignals(True); f["tt_font"].setCurrentFont(QFont(d.get("schrift", "Liberation Sans"))); f["tt_font"].blockSignals(False)
-            if not f["tt_groesse"].hasFocus():
-                f["tt_groesse"].blockSignals(True); f["tt_groesse"].setEditText(f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}"); f["tt_groesse"].blockSignals(False)
-        if "tab_font" in f and e.textCursor().currentTable() is not None:       # Schrift und Größe der Tabellentools
-            f["tab_font"].blockSignals(True); f["tab_font"].setCurrentFont(QFont(fam)); f["tab_font"].blockSignals(False)
-            if not f["tab_groesse"].hasFocus():
-                f["tab_groesse"].blockSignals(True); f["tab_groesse"].setEditText(f"{size:g}"); f["tab_groesse"].blockSignals(False)
-        st = e.current_style()
-        f["stil"].blockSignals(True); f["stil"].setCurrentText("Fließtext" if st == "Standard" else st); f["stil"].blockSignals(False)
+        if t is None or "rand_oben" not in f:
+            return
+        p = t.page
+        for schl, wert in (("oben", p.margin_top_mm), ("unten", p.margin_bottom_mm), ("links", p.margin_left_mm), ("rechts", p.margin_right_mm)):
+            sp = f["rand_" + schl]
+            if not sp.hasFocus():
+                _feld_setzen(sp, "setValue", wert)
 
     def _sync_status(self):
         e = self.current_editor()

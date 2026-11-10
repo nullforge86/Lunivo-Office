@@ -52,25 +52,31 @@ def zeilenstart(ed, n: int) -> int:
     return b.position()
 
 
-def ziele(ed, art: str) -> list[tuple[str, int]]:
-    """[(Beschriftung, Position)] für die Listen-Arten."""
-    doc = ed.document()
-    if art == "Überschrift":
-        return [(z["text"], z["pos"]) for z in verweise.querverweis_ziele(ed) if z["art"] == "Überschrift"]
-    if art == "Textmarke":
-        return [(d["name"], d["von"]) for d in verweise.lesezeichen_liste(ed, versteckte=False)]
-    if art == "Beschriftung":
-        return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in verweise.beschriftungen_liste(ed)]
-    if art == "Kommentar":
-        gesehen: dict[int, int] = {}
-        for f in _fragmente(doc):
-            cf = f.charFormat()
-            if cf.hasProperty(P_KOMMENTAR):
-                gesehen.setdefault(int(cf.property(P_KOMMENTAR)), f.position())
-        k = getattr(ed, "kommentare", {}) or {}
-        return [(f"Kommentar {i}: {_kurz((k.get(kid) or k.get(str(kid)) or {}).get('text', ''))}".rstrip(": "), pos)
-                for i, (kid, pos) in enumerate(sorted(gesehen.items(), key=lambda x: x[1]), start=1)]
-    if art in ("Fußnote", "Endnote"):
+def _ziele_ueberschrift(ed, doc):
+    return [(z["text"], z["pos"]) for z in verweise.querverweis_ziele(ed) if z["art"] == "Überschrift"]
+
+
+def _ziele_textmarke(ed, doc):
+    return [(d["name"], d["von"]) for d in verweise.lesezeichen_liste(ed, versteckte=False)]
+
+
+def _ziele_beschriftung(ed, doc):
+    return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in verweise.beschriftungen_liste(ed)]
+
+
+def _ziele_kommentar(ed, doc):
+    gesehen: dict[int, int] = {}
+    for f in _fragmente(doc):
+        cf = f.charFormat()
+        if cf.hasProperty(P_KOMMENTAR):
+            gesehen.setdefault(int(cf.property(P_KOMMENTAR)), f.position())
+    k = getattr(ed, "kommentare", {}) or {}
+    return [(f"Kommentar {i}: {_kurz((k.get(kid) or k.get(str(kid)) or {}).get('text', ''))}".rstrip(": "), pos)
+            for i, (kid, pos) in enumerate(sorted(gesehen.items(), key=lambda x: x[1]), start=1)]
+
+
+def _ziele_note(art: str):
+    def _liste(ed, doc):
         kenn = "f:" if art == "Fußnote" else "e:"
         out = []
         for f in _fragmente(doc):
@@ -78,16 +84,33 @@ def ziele(ed, art: str) -> list[tuple[str, int]]:
             if cf.hasProperty(P_NOTE) and cf.stringProperty(P_NOTE).startswith(kenn):
                 out.append((f"{art} {len(out) + 1}", f.position()))
         return out
-    if art == "Tabelle":
-        return [(f"Tabelle {i}: {t.rows()} × {t.columns()}", t.firstPosition()) for i, t in enumerate(
-            sorted(_tabellen(doc.rootFrame()), key=lambda t: t.firstPosition()), start=1)]
-    if art == "Bild":
-        return [(f"Bild {i}", f.position()) for i, f in enumerate((f for f in _fragmente(doc) if f.charFormat().isImageFormat()), start=1)]
-    if art == "Abschnitt":
-        from lunivo_writer.editor.seite import abschnitte as AB
-        n = AB.anzahl(doc)
-        return [(f"Abschnitt {i + 1}" + (f" ({AB.TYPEN[AB.alle_einrichtungen(doc, ed.page)[i][0]]})" if i else ""), AB.beginn(doc, i)) for i in range(n)]
-    return []
+    return _liste
+
+
+def _ziele_tabelle(ed, doc):
+    return [(f"Tabelle {i}: {t.rows()} × {t.columns()}", t.firstPosition()) for i, t in enumerate(
+        sorted(_tabellen(doc.rootFrame()), key=lambda t: t.firstPosition()), start=1)]
+
+
+def _ziele_bild(ed, doc):
+    return [(f"Bild {i}", f.position()) for i, f in enumerate((f for f in _fragmente(doc) if f.charFormat().isImageFormat()), start=1)]
+
+
+def _ziele_abschnitt(ed, doc):
+    from lunivo_writer.editor.seite import abschnitte as AB
+    n = AB.anzahl(doc)
+    return [(f"Abschnitt {i + 1}" + (f" ({AB.TYPEN[AB.alle_einrichtungen(doc, ed.page)[i][0]]})" if i else ""), AB.beginn(doc, i)) for i in range(n)]
+
+
+_ZIELE = {"Überschrift": _ziele_ueberschrift, "Textmarke": _ziele_textmarke, "Beschriftung": _ziele_beschriftung,
+          "Kommentar": _ziele_kommentar, "Fußnote": _ziele_note("Fußnote"), "Endnote": _ziele_note("Endnote"),
+          "Tabelle": _ziele_tabelle, "Bild": _ziele_bild, "Abschnitt": _ziele_abschnitt}
+
+
+def ziele(ed, art: str) -> list[tuple[str, int]]:
+    """[(Beschriftung, Position)] für die Listen-Arten."""
+    liste = _ZIELE.get(art)
+    return liste(ed, ed.document()) if liste else []
 
 
 def springen(ed, pos: int) -> None:
@@ -151,6 +174,15 @@ def positionen(ed, element: str) -> list[int]:
     return sorted({p for _t, p in ziele(ed, "Bild" if element == "Grafik" else element)})
 
 
+def _ziel_index_leer(alle: list[int], element: str, i: int, hier: int, richtung: int) -> int:
+    """Index für „Weiter“/„Zurück“ ohne Eingabe."""
+    if element == "Seite":
+        return i + richtung
+    if richtung > 0:
+        return next((k for k, p in enumerate(alle) if p > hier), len(alle))
+    return max((k for k, p in enumerate(alle) if p < hier), default=-1)
+
+
 def ziel(ed, element: str, eingabe: str = "", richtung: int = 1) -> int | None:
     """Wohin „Weiter“ (``richtung`` 1) oder „Zurück“ (-1) springt. ``eingabe``: leer = nächstes/voriges Element, „4“ = das vierte,
     „+2“/„-2“ = zwei weiter/zurück; bei Textmarken auch der Name."""
@@ -163,12 +195,7 @@ def ziel(ed, element: str, eingabe: str = "", richtung: int = 1) -> int | None:
         i = max(0, min(len(alle), ed.current_page()) - 1)
     t = (eingabe or "").strip().replace("–", "-")
     if not t:
-        if element == "Seite":
-            n = i + richtung
-        elif richtung > 0:
-            n = next((k for k, p in enumerate(alle) if p > hier), len(alle))
-        else:
-            n = max((k for k, p in enumerate(alle) if p < hier), default=-1)
+        n = _ziel_index_leer(alle, element, i, hier, richtung)
     elif t[0] in "+-" and t[1:].isdigit():
         n = i + int(t)
     elif t.isdigit():

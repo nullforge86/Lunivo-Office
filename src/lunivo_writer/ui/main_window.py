@@ -4,19 +4,17 @@ from __future__ import annotations
 import os
 
 from PySide6.QtCore import QTimer, Signal
-from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence, QPalette
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QWidget
+from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QPalette
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
 from lunivo_writer import __version__
 from lunivo_writer.editor.text import stile
-from lunivo_writer.ui.document.bearbeitung.document_editor import DocumentEditor
 from lunivo_writer.services.settings_service import Settings
 from lunivo_writer.ai.ai_service import KIDienst
 from lunivo_writer.proofing.proofing_service import WritingAssistant
 from lunivo_writer.core.document_manager import DocumentManager
 from lunivo_writer.ui.statusbar.status_bar import StatusBar
 from lunivo_writer.ui.document.dokumentfenster.document_tabs import DocTabs
-from lunivo_writer.ui.document.dokumentfenster.document_area import DocumentTab
 from lunivo_writer.ui.document.dokumentfenster.navigation import NavigationPanel
 from lunivo_writer.ui.sidebar.sidebar import SchreibhilfePanel
 from lunivo_writer.core.commands import Befehle
@@ -26,8 +24,10 @@ from lunivo_writer.ui.hauptfenster.bearbeiten import BearbeitenBaustein
 from lunivo_writer.ui.hauptfenster.oberflaeche import OberflaecheBaustein
 from lunivo_writer.ui.hauptfenster.backstage_steuerung import BackstageBaustein
 from lunivo_writer.ui.hauptfenster.dokument_sync import DokumentSyncMixin
+from lunivo_writer.ui.hauptfenster.reiter_zustand import ReiterZustandMixin
+from lunivo_writer.ui.hauptfenster.fenster_verwaltung import FensterVerwaltungMixin
 from lunivo_writer.ui.widgets import icons
-from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL, ICON_TAB_GEAENDERT, RAND_KEIN
+from lunivo_writer.ui.baukasten.basis.mass import ICON_NORMAL, RAND_KEIN
 MARGIN_PRESETS = {
     "Normal (2,5 cm)": (25, 25, 25, 25),
     "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),
@@ -38,7 +38,7 @@ MARGIN_PRESETS = {
 
 
 
-class MainWindow(DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, BackstageBaustein, QMainWindow):
+class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, OberflaecheBaustein, BackstageBaustein, QMainWindow):
     lesehilfe_geaendert = Signal()                  # Lesestufe, Papier, Abstände, Zeilenfokus, Silben farbig: Seitenleiste und Optionen ziehen nach
 
 
@@ -286,199 +286,6 @@ class MainWindow(DokumentSyncMixin, DateienBaustein, BearbeitenBaustein, Oberfla
         sb.zoom_stufe.connect(lambda: self.befehle.zoomStufe())
         sb.zoom_geaendert.connect(self._regler_bewegt)
         self.thema_anzeigen()
-
-
-    # ==== Hilfen ====================================================================
-    def current_tab(self) -> DocumentTab | None:
-        w = self.tabs.currentWidget()
-        return w if isinstance(w, DocumentTab) else None
-
-
-    def current_editor(self) -> DocumentEditor | None:
-        t = self.current_tab()
-        return t.editor if t else None
-
-
-    def _ed(self, fn):
-        self.vorschau.ende()
-        e = self.current_editor()
-        if e is not None:
-            fn(e)
-
-
-    def _doc_tabs(self) -> list[DocumentTab]:
-        return [self.tabs.widget(i) for i in range(self.tabs.count())
-                if isinstance(self.tabs.widget(i), DocumentTab)]
-
-
-    def _tab_title(self, tab: DocumentTab) -> str:
-        return tab.title
-
-
-    def _update_tab_titles(self):
-        for i in range(self.tabs.count()):
-            w = self.tabs.widget(i)
-            if isinstance(w, DocumentTab):
-                self.tabs.setTabText(i, self._tab_title(w))
-                self.tabs.setTabIcon(i, icons.icon("circle", ICON_TAB_GEAENDERT) if w.is_modified() else QIcon())
-                self.tabs.setTabToolTip(i, w.path or "Noch nicht gespeichert")
-        self._update_window_title()
-
-
-    def _update_window_title(self):
-        t = self.current_tab()
-        self.setWindowTitle(f"{self._tab_title(t)} — Lunivo Writer" if t else "Lunivo Writer")
-
-
-    def _tab_changed(self, _i):
-        t = self.current_tab()
-        self._refresh_ui()
-        self.ki.kontext_pruefen()
-        if t:
-            t.editor.setFocus()
-            t.editor._recount()
-
-
-    def _refresh_ui(self):
-        has = self.current_tab() is not None
-        self.docs.stack.setCurrentWidget(self.current_tab() if has else self.leer)
-        self.band.aktualisieren(has)
-        for a in (self.a_undo, self.a_redo):
-            a.setEnabled(has)
-        self._update_window_title()
-        self._sync_format()
-        self._sync_status()
-        self._zoom_anzeigen()
-        self.assistant.attach(self.current_editor())
-
-
-
-
-
-
-    def _connect_tab(self, tab: DocumentTab):
-        e = tab.editor
-        e.zoomChanged.connect(lambda f, ed=e: ed is self.current_editor() and self._zoom_anzeigen(f))
-        e.formatChanged.connect(self._sync_later)
-        e.freiAuswahlGeaendert.connect(self._sync_later)
-        e.leseschutzGeaendert.connect(self._sync_later)
-        from lunivo_writer.ui.widgets.schweb_knopf import SchwebKnopf
-        tab._chat_knopf = SchwebKnopf(tab, "chat", "KI-Chat", lambda: self.chat_oeffnen(""))
-        self.sidebar.bereich_geaendert.connect(lambda *_: self._chat_knopf_pruefen())
-        e.formatChanged.connect(self._effekt_sync)
-        e.pageInfoChanged.connect(lambda *_: self._sync_status())
-        e.document().modificationChanged.connect(lambda _m: self._update_tab_titles())
-        e.document().contentsChanged.connect(self._sync_status)
-        e.document().contentsChanged.connect(self.assistant.dokument_geaendert)
-        for sig in (e.selectionChanged, e.document().contentsChanged):       # KI-Chat: Markierung/leeres Dokument (nur der aktuelle Editor zählt)
-            sig.connect(lambda ed=e: ed is self.current_editor() and self.ki.kontext_pruefen())
-        e.document().contentsChanged.connect(self.navigation.spaeter)
-        e.document().contentsChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("absatz"))        # fortlaufende KI-Assistenten
-        e.selectionChanged.connect(lambda ed=e: ed is self.current_editor() and self.ki.dauer_geaendert("markierung"))
-        e.opt = lambda name, std=True: self.settings.get_bool(name, std)
-        e.opt_text = lambda name, std="": self.settings.get(name, std)
-        e.autor = self.autor_angaben
-        e.mini_hook = self.mini_zeigen
-        e.zusatzGeaendert.connect(self.navigation.spaeter)
-        e.noteAngeklickt.connect(lambda art, nid: self.noten_feld.oeffnen(art, nid))
-        e.set_marken(self.settings.get_bool("ui/marken", False))
-        self.formatzeichen_anwenden(e)
-        self.lineale_anwenden(tab)
-        self._lesehilfe_auf(e)
-        felder = self.band.felder
-        if felder and e is not None:
-            pass
-
-
-
-
-
-
-
-
-    def _verbinde_felder(self):
-        f = self.band.felder
-        if not f:
-            return
-        f["font"].activated.connect(lambda _: self._ed(lambda e: (e.set_font_family(f["font"].currentFont().family()), e.setFocus())))
-        f["groesse"].activated.connect(self._size_chosen)
-        f["groesse"].lineEdit().editingFinished.connect(self._size_chosen)
-        f["stil"].activated.connect(lambda _: self.stil_anwenden(f["stil"].currentText()))
-
-
-    def stil_anwenden(self, name: str):
-        name = "Standard" if name == "Fließtext" else name
-        self._ed(lambda e: e.apply_style(name))
-
-
-    def _size_chosen(self, *_):
-        try:
-            pt = float(self.band.felder["groesse"].currentText().replace(",", "."))
-        except ValueError:
-            return
-        self._ed(lambda e: (e.set_font_size(pt), e.setFocus()))
-
-
-    # ==== Fenster ====================================================================
-    @staticmethod
-    def alle_fenster() -> list["MainWindow"]:
-        return [w for w in QApplication.topLevelWidgets() if isinstance(w, MainWindow) and w.isVisible()]
-
-
-    def neues_fenster(self):
-        """Das aktuelle Dokument in einem zweiten Fenster öffnen (eigene Kopie, keine Synchronisation)."""
-        t = self.current_tab()
-        if t is None:
-            w = MainWindow(self.settings); w.show(); return w
-        if t.is_modified() or not t.path:
-            r = QMessageBox.question(self, "Neues Fenster",
-                                     "Das neue Fenster zeigt die gespeicherte Datei als eigene Kopie. Änderungen werden nicht zwischen "
-                                     "den Fenstern abgeglichen.\n\nJetzt speichern und das Fenster öffnen?")
-            if r != QMessageBox.Yes or not self.save():
-                return None
-        w = MainWindow(self.settings)
-        w.show()
-        w.open_path(t.path)
-        return w
-
-
-    def fenster_anordnen(self, art: str):
-        fenster = self.alle_fenster()
-        if len(fenster) < 2:
-            self.statusBar().showMessage("Zum Anordnen werden mindestens zwei Fenster gebraucht (Ansicht ▸ Neues Fenster).", 5000)
-            return
-        r = (self.screen() or QApplication.primaryScreen()).availableGeometry()
-        n = len(fenster)
-        if art == "nebeneinander":
-            spalten, zeilen = n, 1
-        elif art == "untereinander":
-            spalten, zeilen = 1, n
-        else:
-            spalten = int(n ** 0.5 + 0.999); zeilen = (n + spalten - 1) // spalten
-        bw, bh = r.width() // spalten, r.height() // zeilen
-        for i, f in enumerate(fenster):
-            f.showNormal()
-            f.setGeometry(r.x() + (i % spalten) * bw, r.y() + (i // spalten) * bh, bw, bh)
-
-
-    def fensterliste_menue(self) -> QMenu:
-        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
-        m = MenueListe()
-        for f in self.alle_fenster():
-            for t in f._doc_tabs():
-                m.eintrag(t.title + ("  (dieses Fenster)" if f is self else ""),
-                          lambda f=f, t=t: (f.raise_(), f.activateWindow(), f.tabs.setCurrentWidget(t)))
-        if m.isEmpty():
-            m.eintrag("Keine Dokumente geöffnet", aktiv=False)
-        return m
-
-
-    def closeEvent(self, ev):
-        for i in range(self.tabs.count() - 1, -1, -1):
-            if isinstance(self.tabs.widget(i), DocumentTab) and not self.close_tab(i):
-                ev.ignore(); return
-        self.settings.set("window/geometry", self.saveGeometry())
-        ev.accept()
 
 
     # ---- Backstage (Reiter „Datei“) ------------------------------------------------------------------------------

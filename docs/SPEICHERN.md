@@ -3,7 +3,7 @@
 Zentrale Übersicht über die Dateiformate, das Speichern und bekannte Grenzen.
 Code: `src/lunivo_writer/services/file_service.py` (Formate), `sicher_schreiben.py` (sicherer Schreibweg),
 `docx_writer.py` / `docx_reader.py` (DOCX), `odt_writer.py` / `odt_reader.py` (ODT, FODT),
-`rtf_writer.py` / `rtf_reader.py` (RTF) sowie `src/lunivo_writer/ui/hauptfenster/dateien.py`
+`rtf_writer.py` / `rtf/` (RTF) sowie `src/lunivo_writer/ui/hauptfenster/dateien.py`
 und `src/lunivo_writer/ui/baukasten/dokument/speichern_fenster.py` (Dateioberfläche).
 
 **Lunivo liest und schreibt die unterstützten Formate selbst.** Es startet beim Öffnen und Speichern kein anderes Office-Programm

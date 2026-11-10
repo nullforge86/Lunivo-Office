@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QFont
+from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.ui.baukasten.dropdown.objektmenues.bild_diagramm_menues import KLAPPEN
 from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
@@ -25,6 +26,30 @@ class BandKnopfBaustein:
         k.setAutoRaise(True)
         tun, klappe, menue = e.get("tun"), e.get("klappe"), e.get("menue")
         akt = QAction(k)
+        self._knopf_aktion(k, akt, name, sym, gross)
+        self._tausch_rechtsklick(k, sym)
+        if not icons.hat(sym):
+            self._knopf_buchstabe(k, sym)
+        self._knopf_darstellung(k, akt, e, gross)
+        ok, menu = self._knopf_menue(k, akt, e, gross)
+        if tun:
+            ok = ok or self.b.hat(tun)
+            akt.triggered.connect(lambda _=False, t=tun, kk=k: (self.b.tun(t, kk), self.aktualisieren()))
+        elif not menu:
+            ok = False
+        self._knopf_zustand(k, akt, e)
+        for n in (tun, klappe):
+            if n and not self.b.hat(n) and not (n == klappe and (n in KLAPPEN or self.b.klappe(n) is not None)):
+                self.fehlend.append(n)
+        if not ok:
+            k.setProperty("fehlt", True)
+            k.setEnabled(False)
+            k.setToolTip(NICHT_DA.format(name))
+        self.knoepfe.append((k, tun, True))
+        return k
+
+    def _knopf_aktion(self, k: QToolButton, akt: QAction, name: str, sym: str, gross: bool) -> None:
+        """Text, Tipp, Symbol und Größe des Symbols."""
         akt.setText(sym if not icons.hat(sym) else _kurz(name))
         akt.setToolTip(_mit_kuerzel(name))
         if icons.hat(sym):
@@ -34,16 +59,22 @@ class BandKnopfBaustein:
         k.setDefaultAction(akt)
         k.setToolTip(_mit_kuerzel(name))
         k.setAccessibleName(name)                      # Screenreader lesen den vollen Namen, nicht den Kurztext
-        self._tausch_rechtsklick(k, sym)
-        if not icons.hat(sym):
-            f = k.font()
-            if sym == "F":
-                f.setBold(True)
-            if sym == "K":
-                f.setItalic(True)
-            if sym == "U":
-                f.setUnderline(True)
-            k.setFont(f)
+
+    @staticmethod
+    def _knopf_buchstabe(k: QToolButton, sym: str) -> None:
+        """Knöpfe ohne Symbol zeigen den Buchstaben (F fett, K kursiv, U unterstrichen)."""
+        f = k.font()
+        if sym == "F":
+            f.setBold(True)
+        if sym == "K":
+            f.setItalic(True)
+        if sym == "U":
+            f.setUnderline(True)
+        k.setFont(f)
+
+    def _knopf_darstellung(self, k: QToolButton, akt: QAction, e: dict, gross: bool) -> None:
+        """Textstellung und Größenrolle je nach Art des Knopfes."""
+        name, sym = e["name"], e.get("symbol", "")
         if gross:
             k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             k.setText(_zweizeilig(_kurz(name)))
@@ -57,7 +88,11 @@ class BandKnopfBaustein:
             k.setToolButtonStyle(Qt.ToolButtonIconOnly)
             k.groesse_rolle("symbol", "band")                           # Projektvorgabe: Knöpfe nicht schmaler als ~36 px
         else:
-            k.groesse_rolle("menue" if (klappe or menue) else "symbol", "band")
+            k.groesse_rolle("menue" if (e.get("klappe") or e.get("menue")) else "symbol", "band")
+
+    def _knopf_menue(self, k: QToolButton, akt: QAction, e: dict, gross: bool) -> tuple:
+        """Menü oder Klappe des Knopfes. → (vorhanden?, Menü)."""
+        tun, klappe, menue = e.get("tun"), e.get("klappe"), e.get("menue")
         ok = False
         menu = None
         if menue:
@@ -72,26 +107,17 @@ class BandKnopfBaustein:
             k.menue_setzen(menu, geteilt=True, gross=gross, fuellend=not gross, besitzen=bool(klappe and not menue))         # Symbol und Pfeil getrennt; gestapelte Knöpfe füllen die Spalte
             if not gross:
                 k.groesse_rolle("zeile", "band")                                                       # Dropdown-Knopf in einer Bandzeile: Höhe wie jedes Dropdown
-        if tun:
-            ok = ok or self.b.hat(tun)
-            akt.triggered.connect(lambda _=False, t=tun, kk=k: (self.b.tun(t, kk), self.aktualisieren()))
-        elif not menu:
-            ok = False
+        return ok, menu
+
+    def _knopf_zustand(self, k: QToolButton, akt: QAction, e: dict) -> None:
+        """Wechselsymbol und Schaltzustand (Haken) des Befehls."""
+        tun = e.get("tun")
         if tun and self.b.symbolname(tun) is not None:
             self.wechsler.append((k, tun))
             akt.setIcon(icons.icon(self.b.symbolname(tun), k.iconSize().width()))
         if e.get("haken") or (tun and self.b.zustand(tun) is not None):
             akt.setCheckable(True)
             self.schalter.append((k, tun))
-        for n in (tun, klappe):
-            if n and not self.b.hat(n) and not (n == klappe and (n in KLAPPEN or self.b.klappe(n) is not None)):
-                self.fehlend.append(n)
-        if not ok:
-            k.setProperty("fehlt", True)
-            k.setEnabled(False)
-            k.setToolTip(NICHT_DA.format(name))
-        self.knoepfe.append((k, tun, True))
-        return k
 
     def _klappe(self, name: str):
         """Das Menü einer Klappe: erst die Bausteine der Oberfläche (``KLAPPEN``), sonst ``menue_<name>`` des Befehlsbausteins."""

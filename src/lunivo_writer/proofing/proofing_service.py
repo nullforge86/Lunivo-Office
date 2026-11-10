@@ -198,24 +198,32 @@ class WritingAssistant(QObject):
             schalter["pruefer_" + n] = self.settings.get_bool("schreibhilfe/pruefer_" + n, True)
         return schalter
 
+    def _fertig_veraltet(self, rev: int, doc) -> bool:
+        """Der Text (oder das Dokument) hat sich seit dem Start der Prüfung geändert."""
+        ed = self.editor
+        return (doc is not None and (doc is not self._doc or doc is not ed.document())) or rev != ed.document().revision()
+
+    def _eigene_funde_uebernehmen(self, roh: list) -> None:
+        """Eigene Funde (ganz oder nur die geprüfte Region) einsetzen; LanguageTool/KI gehen dabei nicht verloren."""
+        fremd = [f for f in self._roh if f.quelle != "eigen"]
+        if self._region is None:
+            self._roh = self._abstimmen(fundlib.loesen(roh + fremd) if fremd else roh)
+            return
+        von, bis = self._region
+        eigene = inkrement.einsetzen([f for f in self._roh if f.quelle == "eigen"], von, bis, roh)
+        fremd = [f for f in fremd if f.bis <= von or f.von >= bis]
+        self._roh = self._abstimmen(fundlib.loesen(eigene + fremd) if fremd else eigene)   # ohne fremde Funde nichts auflösen: Satz-Hinweise überlappen Wort-Funde gewollt
+
     def _fertig(self, rev: int, roh: list, doc=None) -> None:
         self._laeuft = False
         ed = self.editor
         if ed is None:
             return
-        if (doc is not None and (doc is not self._doc or doc is not ed.document())) or rev != ed.document().revision():          # Text hat sich inzwischen geändert
+        if self._fertig_veraltet(rev, doc):          # Text hat sich inzwischen geändert
             self._timer.start()
             return
         self._geprueft_rev = rev
-        roh = fundlib.markieren(roh, "eigen", self._pruef_laenge)
-        fremd = [f for f in self._roh if f.quelle != "eigen"]       # LanguageTool/KI gehen durch eigene Prüfung nicht verloren
-        if self._region is not None:
-            von, bis = self._region
-            eigene = inkrement.einsetzen([f for f in self._roh if f.quelle == "eigen"], von, bis, roh)
-            fremd = [f for f in fremd if f.bis <= von or f.von >= bis]
-            self._roh = self._abstimmen(fundlib.loesen(eigene + fremd) if fremd else eigene)   # ohne fremde Funde nichts auflösen: Satz-Hinweise überlappen Wort-Funde gewollt
-        else:
-            self._roh = self._abstimmen(fundlib.loesen(roh + fremd) if fremd else roh)
+        self._eigene_funde_uebernehmen(fundlib.markieren(roh, "eigen", self._pruef_laenge))
         self._region, self._schmutz, self._voll = None, None, True
         if getattr(self, "_zaehlen", False):
             self._zaehlen = False
@@ -277,28 +285,23 @@ class WritingAssistant(QObject):
     def funde_an(self, pos: int) -> list[ProofingIssue]:
         return [f for f in self.funde if f.von <= pos <= f.bis and f.von < f.bis]
 
-    def erweitere_menue(self, menu, pos: int) -> None:
-        """Ein Kopf, ein Vorschlag je Möglichkeit, drei Aktionen — wie im Prüfbogen (Kontextmenü für Fehler-Aktionen)."""
-        ed = self.editor
-        if ed is None:
-            return
-        gefunden = self.funde_an(pos)
-        wort = self._wort_an(pos)
-        vorschlaege: list[tuple[str, ProofingIssue | None]] = []
-        for f in gefunden:
-            if f.neu:                                     # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
-                vorschlaege.append((f.neu, f))
-        if wort and self.settings.get_bool("schreibhilfe/vorschlaege", True):
-            from lunivo_writer.proofing import pruefung
-            schon = {t for t, _f in vorschlaege}
-            for k in pruefung.vorschlaege_fuer(wort[0], 6, self.gelernt.daten):
-                if pruefung.uebernimm_schreibweise(wort[0], k) in schon:
-                    continue
-                vorschlaege.append((pruefung.uebernimm_schreibweise(wort[0], k), ProofingIssue(von=wort[1], bis=wort[2], alt=wort[0], neu=k,
-                                                                                                  wort_ebene=True, art="tipp", grund="Vorschlag")))
-        if not vorschlaege and not gefunden and not wort:
-            return
-        erste = menu.actions()[0] if menu.actions() else None
+    def _menue_vorschlaege(self, gefunden: list, wort) -> list:
+        """(Text, Fund)-Paare: erst die Funde an der Stelle, dann Wörterbuch-/Klangvorschläge für ein unbekanntes Wort."""
+        # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
+        vorschlaege: list[tuple[str, ProofingIssue | None]] = [(f.neu, f) for f in gefunden if f.neu]
+        if not (wort and self.settings.get_bool("schreibhilfe/vorschlaege", True)):
+            return vorschlaege
+        from lunivo_writer.proofing import pruefung
+        schon = {t for t, _f in vorschlaege}
+        for k in pruefung.vorschlaege_fuer(wort[0], 6, self.gelernt.daten):
+            text = pruefung.uebernimm_schreibweise(wort[0], k)
+            if text not in schon:
+                vorschlaege.append((text, ProofingIssue(von=wort[1], bis=wort[2], alt=wort[0], neu=k,
+                                                        wort_ebene=True, art="tipp", grund="Vorschlag")))
+        return vorschlaege
+
+    def _menue_aktionen(self, menu, gefunden: list, vorschlaege: list, wort) -> list:
+        """Kopf, fette Vorschläge und die Ignorieren-/Wörterbuch-Aktionen als QActions."""
         from PySide6.QtGui import QAction, QFont
         neu = []
         if gefunden:
@@ -309,23 +312,32 @@ class WritingAssistant(QObject):
             f.setBold(True); a.setFont(f)
             a.triggered.connect(lambda _=False, fd=fund: self.aendern(fd))
             neu.append(a)
-        if gefunden or vorschlaege or wort:
-            ziel = gefunden[0] if gefunden else (vorschlaege[0][1] if vorschlaege else None)
-            n1 = QAction("Einmal ignorieren", menu)
-            n2 = QAction("Alle ignorieren", menu)
-            if ziel is not None:
-                n1.triggered.connect(lambda _=False, fd=ziel: self.lassen(fd))
-                n2.triggered.connect(lambda _=False, fd=ziel: self.alle_ignorieren(fd.alt))
-            else:
-                n1.setEnabled(False); n2.setEnabled(False)
-            neu += [n1, n2]
-            if wort and not gefunden and vorschlaege == []:
-                pass
-            if wort:
-                n3 = QAction("Zum Wörterbuch hinzufügen", menu)
-                n3.triggered.connect(lambda _=False, w=wort[0]: self.zum_woerterbuch(w))
-                neu.append(n3)
-        for a in neu:
+        ziel = gefunden[0] if gefunden else (vorschlaege[0][1] if vorschlaege else None)
+        n1 = QAction("Einmal ignorieren", menu)
+        n2 = QAction("Alle ignorieren", menu)
+        if ziel is not None:
+            n1.triggered.connect(lambda _=False, fd=ziel: self.lassen(fd))
+            n2.triggered.connect(lambda _=False, fd=ziel: self.alle_ignorieren(fd.alt))
+        else:
+            n1.setEnabled(False); n2.setEnabled(False)
+        neu += [n1, n2]
+        if wort:
+            n3 = QAction("Zum Wörterbuch hinzufügen", menu)
+            n3.triggered.connect(lambda _=False, w=wort[0]: self.zum_woerterbuch(w))
+            neu.append(n3)
+        return neu
+
+    def erweitere_menue(self, menu, pos: int) -> None:
+        """Ein Kopf, ein Vorschlag je Möglichkeit, drei Aktionen — wie im Prüfbogen (Kontextmenü für Fehler-Aktionen)."""
+        if self.editor is None:
+            return
+        gefunden = self.funde_an(pos)
+        wort = self._wort_an(pos)
+        vorschlaege = self._menue_vorschlaege(gefunden, wort)
+        if not vorschlaege and not gefunden and not wort:
+            return
+        erste = menu.actions()[0] if menu.actions() else None
+        for a in self._menue_aktionen(menu, gefunden, vorschlaege, wort):
             menu.insertAction(erste, a)
         menu.insertSeparator(erste)
 
@@ -392,21 +404,26 @@ class WritingAssistant(QObject):
         self.status.emit("LanguageTool prüft …")
         pool.start(_LT(self._lt_sig, ed.document()))
 
-    def _lt_fertig(self, rev: int, funde: list, doc=None) -> None:
+    def _lt_ignorieren(self, rev: int, funde: list, doc) -> bool:
+        """Antwort verwerfen (True): anderes Dokument, Fehlermeldung (mit Status) oder geänderter Text."""
         ed = self.editor
         if ed is None:
-            return
+            return True
         try:
             aktuell = ed.document()
         except RuntimeError:
-            return
+            return True
         if doc is not None and (doc is not self._doc or doc is not aktuell):
-            return
+            return True
         if rev == -1:
             self.status.emit(str(funde[0]) if funde else "LanguageTool-Fehler.")
+            return True
+        return rev != aktuell.revision()
+
+    def _lt_fertig(self, rev: int, funde: list, doc=None) -> None:
+        if self._lt_ignorieren(rev, funde, doc):
             return
-        if rev != aktuell.revision():
-            return
+        ed = self.editor
         vorher = len(self._roh)
         # Konflikte nach Konfidenz, Art und Quelle auflösen: ein sicherer eigener Fund wird nicht von LanguageTool überschrieben
         laenge = ed.document().characterCount() - 1
@@ -416,12 +433,10 @@ class WritingAssistant(QObject):
         lt = len([f for f in self._roh if f.quelle == "languagetool"])
         self._zeigen(f"Gründlich geprüft: {lt} zusätzliche Hinweise von LanguageTool ({vorher} eigene Funde vorher).")
 
-    def ki_fertig(self, rev: int, vorschlaege: list, dokument=None) -> int:
-        """KI-Vorschläge übernehmen; Antworten für ein gewechseltes oder geändertes Dokument verwerfen."""
-        ed = self.editor
-        if ed is None or (dokument is not None and dokument is not ed.document()) or rev != ed.document().revision():
-            return 0
-        text, pos, roh = self._text(), 0, []
+    @staticmethod
+    def _ki_roh(text: str, vorschlaege: list) -> list:
+        """KI-Vorschläge als Fund-Dicts, der Reihe nach im Text verortet; nicht auffindbare entfallen."""
+        pos, roh = 0, []
         for v in vorschlaege or []:
             alt = str(v.get("alt") or "")
             von = text.find(alt, pos) if alt else -1
@@ -434,7 +449,14 @@ class WritingAssistant(QObject):
             if v.get("konfidenz") is not None:
                 d["konfidenz"] = v["konfidenz"]
             roh.append(d)
-        ki = fundlib.markieren(roh, "ki", ed.document().characterCount() - 1)
+        return roh
+
+    def ki_fertig(self, rev: int, vorschlaege: list, dokument=None) -> int:
+        """KI-Vorschläge übernehmen; Antworten für ein gewechseltes oder geändertes Dokument verwerfen."""
+        ed = self.editor
+        if ed is None or (dokument is not None and dokument is not ed.document()) or rev != ed.document().revision():
+            return 0
+        ki = fundlib.markieren(self._ki_roh(self._text(), vorschlaege), "ki", ed.document().characterCount() - 1)
         if vorschlaege:
             self._geprueft["ki"] = [(0, ed.document().characterCount() - 1)]
         self._roh = self._abstimmen(fundlib.loesen([f for f in self._roh if f.quelle != "ki"] + ki))

@@ -1,12 +1,14 @@
 """Befehle: Kontext-Reiter „Bildtools“ für frei positionierte Bilder (Datei, Bildschirmfoto, Piktogramm): Zuschneiden, Größe, Farbe.
 
 Die Fachlogik steht in ``editor/objekte/bildzuschnitt.py`` (Zuschneiden, nicht zerstörend) und ``editor/objekte/bildwerkzeuge.py``; hier nur die Befehle.
+Auch die Bildbefehle des Kontext-Reiters (Bild im Text und frei: Farbe, Zuschneiden, Drehen, Größe, Anordnen) stehen hier.
 Ein Baustein von ``Befehle`` (siehe ``core/commands.py``). Ohne gewähltes freies Bild zeigen alle Befehle einen Hinweis in der Statuszeile."""
 from __future__ import annotations
 
 import os
 
-
+from PySide6.QtCore import Qt
+from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.ui.baukasten import weitere_farben
 
 HINWEIS = "Bitte zuerst ein Bild auswählen."
@@ -142,3 +144,168 @@ class BildToolsBefehle:
         z = self._bz()
         if z is not None:
             BW.zuruecksetzen(self.ed, z)
+
+    # ---- Bild im Text und frei: Farbe, Zuschneiden, Drehen, Größe, Anordnen (aus dem Kontext-Reiter) ---------------------------------------------------
+    # ---- Bild, Tabelle, Schrift, Seite: der Rest der Werkzeug-Reiter ----------------------------------------------
+    def _bild_frei(self):
+        """(Editor, Ziel) des gewählten frei positionierten Bildes (Datei, Bildschirmfoto, Piktogramm …) oder (Editor, None)."""
+        from lunivo_writer.editor.objekte import bildlayout as BL
+        e = self.ed
+        z = BL.ziel(e) if e else None
+        return e, (z if z is not None and z[0] == "frei" else None)
+
+    def bildFarbe(self, k=None):
+        e, z = self._bild_frei()
+        if z is None:
+            e, f = self._bild()
+            if f is None:
+                return
+        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.dokument import einfuegen as E
+        modi = ["Original", "Graustufen", "Schwarzweiß", "Sepia", "Heller", "Dunkler"]
+        n, ok = EingabeFenster.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
+        if ok:
+            if n == "Original":
+                if z is not None:
+                    from lunivo_writer.editor.objekte import bildwerkzeuge as BW
+                    BW.korrektur_setzen(e, z, 0, 0)                               # Helligkeit/Kontrast zurück (nicht zerstörend)
+                    z = BL.ziel(e)
+                    BL.frei_original(e, z)
+                else:
+                    E.bild_original(e)
+            elif z is not None and n in ("Heller", "Dunkler"):                    # derselbe Weg wie die Knöpfe „Heller/Dunkler“ der Bildtools
+                self.bildHelligkeit(None, 10 if n == "Heller" else -10)
+            elif z is not None:
+                BL.frei_bild_ersetzen(e, z, lambda img, n=n: E.farbe_anwenden(img, n))
+            else:
+                E.bild_ersetzen(e, lambda img, n=n: E.farbe_anwenden(img, n))
+
+    def bildZuschneiden(self, k=None):
+        e, z = self._bild_frei()
+        if z is None:
+            e, f = self._bild()
+            if f is None:
+                return
+        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.dokument import einfuegen as E
+        from lunivo_writer.ui.dialogs.dokument_dialoge import BildZuschneidenDialog
+        d = BildZuschneidenDialog(self.w)
+        if d.exec():
+            l, o, r, u = d.werte()
+            if z is not None:                                            # freies Bild: nicht zerstörend als Anteil (editor/objekte/bildzuschnitt.py)
+                from lunivo_writer.editor.objekte import bildzuschnitt as BZ
+                q = BZ._quelle(e, z[2])
+                if q is not None:
+                    BZ.setzen(e, z, (l / q.width(), o / q.height(), r / q.width(), u / q.height()))
+            else:
+                E.bild_ersetzen(e, lambda img: E.zuschneiden(img, l, o, r, u))
+
+    def objektDrehen(self, k=None):
+        e, f = self._bild()
+        if f is None:
+            return
+        from lunivo_writer.editor.dokument import einfuegen as E
+        namen = {"90° nach rechts": "rechts", "90° nach links": "links", "Horizontal spiegeln": "horizontal", "Vertikal spiegeln": "vertikal"}
+        n, ok = EingabeFenster.getItem(self.w, "Drehen", "Bild:", list(namen), 0, False)
+        if ok:
+            E.bild_ersetzen(e, lambda img: E.drehen(img, namen[n]))
+
+    def objektAusrichten(self, k=None):
+        e, f = self._bild()
+        if f is None:
+            return
+        namen = {"Links": Qt.AlignLeft, "Zentriert": Qt.AlignHCenter, "Rechts": Qt.AlignRight}
+        n, ok = EingabeFenster.getItem(self.w, "Ausrichten", "Bild im Text:", list(namen), 0, False)
+        if ok:
+            e.set_alignment(namen[n])
+
+    # ==== Bildtools (Kontext) =========================================================================================================
+    def _bild(self):
+        e = self.ed
+        if not e:
+            return None, None
+        f = e.bild_format()
+        return (e, f) if f is not None else (e, None)
+
+    def bildGroesse(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor.objekte import bildlayout as BL
+            from lunivo_writer.ui.dialogs.dokument_dialoge import BildGroesseDialog
+            d = BildGroesseDialog(z[2]["b"], z[2]["h"], self.w)
+            if d.exec():
+                BL.frei_aendern(e, z, b=float(d.breite_px()), h=float(d.hoehe_px()))
+            return
+        e, f = self._bild()
+        if f is None:
+            return
+        from lunivo_writer.ui.dialogs.dokument_dialoge import BildGroesseDialog
+        d = BildGroesseDialog(f.width(), f.height(), self.w)
+        if d.exec():
+            e.bild_setzen(width=d.breite_px(), height=d.hoehe_px())
+
+    def bildBreite(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:                                                # auf Inhaltsbreite, Seitenverhältnis bleibt
+            from lunivo_writer.editor.objekte import bildlayout as BL
+            b = e.page.content_width_px
+            BL.frei_aendern(e, z, b=b, h=b * z[2]["h"] / max(1.0, z[2]["b"]))
+            return
+        e, f = self._bild()
+        if f is not None and f.width():
+            r = f.height() / f.width()
+            b = e.page.content_width_px
+            e.bild_setzen(width=b, height=b * r)
+
+    def anordnen(self, k=None):
+        """Textumbruch / Position: Bild mit Text in der Zeile oder links/rechts vom Text umflossen."""
+        e, f = self._bild()
+        if f is None:
+            self.w.statusBar().showMessage("Erst ein Bild anklicken.", 4000)
+            return
+        from lunivo_writer.editor.seite import umbruch as U
+        aktuell = U.schwebend(e.document(), e._bild_cursor().selectionStart()) or "zeile"
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        m = MenueListe()
+        for modus, text in (("zeile", "Mit Text in Zeile"), ("links", "Links, Text umfließt"), ("rechts", "Rechts, Text umfließt"),
+                             ("oben_unten", "Oben und unten (eigene Zeile)")):
+            m.eintrag(text, lambda modus=modus: U.umbruch_setzen(e, modus), haken=modus == aktuell)
+        self._popup(m)
+
+    def bildOriginal(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor.objekte import bildlayout as BL
+            BL.frei_original_groesse(e, z)
+            return
+        e, f = self._bild()
+        if f is not None:
+            img = e.document().resource(2, QUrl(f.name()))
+            if img is not None and not img.isNull():
+                e.bild_setzen(width=img.width(), height=img.height())
+
+    def bildAltText(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor.objekte import bildlayout as BL
+            t, ok = EingabeFenster.getText(self.w, "Alternativtext", "Beschreibung des Bildes:", text=z[2].get("alt", ""))
+            if ok:
+                BL.frei_aendern(e, z, alt=t)
+            return
+        e, f = self._bild()
+        if f is None:
+            return
+        akt = f.property(0x100000 + 0x101 + 1) if f.hasProperty(0x100000 + 0x101 + 1) else ""
+        t, ok = EingabeFenster.getText(self.w, "Alternativtext", "Beschreibung des Bildes:", text=akt or "")
+        if ok:
+            e.bild_setzen(alt=t)
+
+    def bildEntfernen(self, k=None):
+        e, z = self._bild_frei()
+        if z is not None:
+            from lunivo_writer.editor.objekte import bildlayout as BL
+            BL.frei_entfernen(e)
+            return
+        e, f = self._bild()
+        if f is not None:
+            e.textCursor().removeSelectedText()

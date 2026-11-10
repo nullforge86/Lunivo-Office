@@ -591,27 +591,35 @@ class Backstage(QWidget):
             v.addWidget(h)
             v.addStretch(1)
             return sa
-        ed = t.editor
-        text = ed.document().toPlainText()
-        absaetze = sum(1 for z in text.split("\n") if z.strip())
+        self._info_allgemein(v, t)
+        self._info_statistik(v, t.editor)
+        self._info_eigenschaften(v, t)
+        v.addStretch(1)
+        return sa
+
+    def _info_allgemein(self, v, t):
         groesse = os.path.getsize(t.path) if t.path and os.path.exists(t.path) else None
         self._gruppe(v, "Allgemein")
         for name, wert in (("Name", t.title), ("Ort", t.path or "noch nicht gespeichert"),
                            ("Größe", f"{groesse / 1024:.1f} KB" if groesse is not None else "–"),
                            ("Papier", f"{t.page.paper_name()} {'quer' if t.page.landscape else 'hoch'}")):
             self._zeile(v, name, QLabel(str(wert)))
+
+    def _info_statistik(self, v, ed):
+        text = ed.document().toPlainText()
+        absaetze = sum(1 for z in text.split("\n") if z.strip())
         self._gruppe(v, "Statistiken")
         for name, wert in (("Seiten", ed.page_count), ("Absätze", absaetze), ("Wörter", ed.word_count()),
                            ("Zeichen", len(text.replace(" ", "").replace("\n", ""))), ("Zeichen mit Leerzeichen", len(text.replace("\n", "")))):
             self._zeile(v, name, QLabel(str(wert)))
+
+    def _info_eigenschaften(self, v, t):
         self._gruppe(v, "Eigenschaften", "Werden mit dem Dokument gespeichert (DOCX: Titel und Verfasser).")
         for schl, name in (("author", "Verfasser"), ("title", "Titel")):
             e = QLineEdit(t.meta.get(schl, "") or "")
             e.setFixedWidth(BREITE_FELD_BACKSTAGE)
             e.editingFinished.connect(lambda e=e, s=schl, t=t: self._meta_setzen(t, s, e.text()))
             self._zeile(v, name, e)
-        v.addStretch(1)
-        return sa
 
     def _meta_setzen(self, t, schl: str, wert: str):
         if (t.meta.get(schl, "") or "") != wert:

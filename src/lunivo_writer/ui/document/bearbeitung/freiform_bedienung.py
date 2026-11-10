@@ -139,6 +139,70 @@ def _vorschau(ed, key, a, punkte) -> None:
     ed.viewport().update()
 
 
+def _maus_press(ed, e, punkte, abb, pos) -> bool:
+    i = _punkt_bei(punkte, abb, pos)
+    if e.button() == Qt.RightButton:
+        if i is None:
+            return False
+        neu = FF.loeschen(punkte, i)
+        if neu is not None:
+            ed.__dict__["_fp_sel"] = None
+            _speichern(ed, neu)
+        return True
+    if e.button() != Qt.LeftButton:
+        return False
+    if i is not None:
+        ed.__dict__["_fp_sel"] = i
+        ed.__dict__["_fp_zug"] = i
+        ed.__dict__["_fp_arbeit"] = [list(x) for x in punkte]
+        ed.viewport().update()
+        return True
+    x, y = abb.zu_anteil(pos)
+    k = FF.naechste_kante(punkte, x, y, abb.rect.width(), abb.rect.height())
+    if k is not None and k[0] <= KANTE:
+        ed.__dict__["_fp_sel"] = None
+        ed.viewport().update()
+        return True                                                          # auf einer Kante: nichts beenden (Doppelklick fügt ein)
+    beenden(ed)                                                              # Klick daneben: Modus aus, der Klick gilt normal weiter
+    return False
+
+
+def _maus_move(ed, e, key, a, abb, pos) -> bool:
+    zug = ed.__dict__.get("_fp_zug")
+    if zug is None or not (e.buttons() & Qt.LeftButton):
+        return False
+    x, y = abb.zu_anteil(pos)
+    x, y = min(1.0, max(0.0, x)), min(1.0, max(0.0, y))
+    arbeit = FF.verschieben(ed.__dict__["_fp_arbeit"], zug, x, y)
+    ed.__dict__["_fp_arbeit"] = arbeit
+    _vorschau(ed, key, a, arbeit)
+    return True
+
+
+def _maus_release(ed, a) -> bool:
+    if ed.__dict__.get("_fp_zug") is None:
+        return False
+    arbeit = ed.__dict__["_fp_arbeit"]
+    ed.__dict__["_fp_zug"] = None
+    if arbeit != (a.get("daten") or {}).get("punkte"):
+        _speichern(ed, arbeit)
+    else:
+        ed._frei_vorlaeufig.clear(); ed.__dict__["_fp_arbeit"] = None; ed.viewport().update()
+    return True
+
+
+def _maus_doppel(ed, punkte, abb, pos) -> bool:
+    x, y = abb.zu_anteil(pos)
+    if _punkt_bei(punkte, abb, pos) is not None:
+        return True
+    neu = FF.einfuegen(punkte, x, y, abb.rect.width(), abb.rect.height(), KANTE)
+    if neu is None:
+        return False
+    ed.__dict__["_fp_sel"] = neu[1]
+    _speichern(ed, neu[0])
+    return True
+
+
 def maus(ed, e, art: str) -> bool:
     """True, wenn das Ereignis zum Bearbeiten der Punkte gehört (art: press, move, release, doppel)."""
     t = _eintrag(ed)
@@ -150,61 +214,13 @@ def maus(ed, e, art: str) -> bool:
     punkte = _punkte(ed, a)
     abb = _Abb(a, r)
     if art == "press":
-        i = _punkt_bei(punkte, abb, pos)
-        if e.button() == Qt.RightButton:
-            if i is None:
-                return False
-            neu = FF.loeschen(punkte, i)
-            if neu is not None:
-                ed.__dict__["_fp_sel"] = None
-                _speichern(ed, neu)
-            return True
-        if e.button() != Qt.LeftButton:
-            return False
-        if i is not None:
-            ed.__dict__["_fp_sel"] = i
-            ed.__dict__["_fp_zug"] = i
-            ed.__dict__["_fp_arbeit"] = [list(x) for x in punkte]
-            ed.viewport().update()
-            return True
-        x, y = abb.zu_anteil(pos)
-        k = FF.naechste_kante(punkte, x, y, abb.rect.width(), abb.rect.height())
-        if k is not None and k[0] <= KANTE:
-            ed.__dict__["_fp_sel"] = None
-            ed.viewport().update()
-            return True                                                          # auf einer Kante: nichts beenden (Doppelklick fügt ein)
-        beenden(ed)                                                              # Klick daneben: Modus aus, der Klick gilt normal weiter
-        return False
+        return _maus_press(ed, e, punkte, abb, pos)
     if art == "move":
-        zug = ed.__dict__.get("_fp_zug")
-        if zug is None or not (e.buttons() & Qt.LeftButton):
-            return False
-        x, y = abb.zu_anteil(pos)
-        x, y = min(1.0, max(0.0, x)), min(1.0, max(0.0, y))
-        arbeit = FF.verschieben(ed.__dict__["_fp_arbeit"], zug, x, y)
-        ed.__dict__["_fp_arbeit"] = arbeit
-        _vorschau(ed, key, a, arbeit)
-        return True
+        return _maus_move(ed, e, key, a, abb, pos)
     if art == "release":
-        if ed.__dict__.get("_fp_zug") is None:
-            return False
-        arbeit = ed.__dict__["_fp_arbeit"]
-        ed.__dict__["_fp_zug"] = None
-        if arbeit != (a.get("daten") or {}).get("punkte"):
-            _speichern(ed, arbeit)
-        else:
-            ed._frei_vorlaeufig.clear(); ed.__dict__["_fp_arbeit"] = None; ed.viewport().update()
-        return True
+        return _maus_release(ed, a)
     if art == "doppel":
-        x, y = abb.zu_anteil(pos)
-        if _punkt_bei(punkte, abb, pos) is not None:
-            return True
-        neu = FF.einfuegen(punkte, x, y, abb.rect.width(), abb.rect.height(), KANTE)
-        if neu is None:
-            return False
-        ed.__dict__["_fp_sel"] = neu[1]
-        _speichern(ed, neu[0])
-        return True
+        return _maus_doppel(ed, punkte, abb, pos)
     return False
 
 

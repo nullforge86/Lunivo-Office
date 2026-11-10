@@ -73,48 +73,56 @@ def _entschluesseln(path: str, kennwort: str | None, ziel: str) -> None:
         raise PasswortNoetig(falsch=True) from ex
 
 
+def _docx_laden(path: str, kennwort: str | None) -> Loaded:
+    if _verschluesselt(path):
+        with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
+            klar = os.path.join(tmp, "klar.docx")
+            _entschluesseln(path, kennwort, klar)
+            doc, page, meta, rep = docx_reader.read_docx(klar)
+        meta["kennwort"] = kennwort
+        return Loaded(doc, page, meta, rep)
+    doc, page, meta, rep = docx_reader.read_docx(path)
+    return Loaded(doc, page, meta, rep)
+
+
+def _txt_laden(path: str) -> Loaded:
+    from lunivo_writer.services.import_grenzen import pruefe_dateigroesse
+    pruefe_dateigroesse(path, "TXT")
+    try:
+        with open(path, "rb") as fh:
+            raw = fh.read()
+    except OSError as ex:
+        raise DocumentIOError(f"Datei nicht lesbar: {ex.strerror or ex}") from ex
+    for enc in ("utf-8-sig", "cp1252"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        text = raw.decode("latin-1")
+    doc = QTextDocument()
+    doc.setDocumentMargin(0)
+    f = QFont("Liberation Sans")
+    f.setPointSizeF(11)
+    doc.setDefaultFont(f)
+    QTextCursor(doc).insertText(text.replace("\r\n", "\n"))
+    doc.setModified(False)
+    return Loaded(doc, PageSettings(), {}, IOReport())
+
+
 def load(path: str, kennwort: str | None = None) -> Loaded:
     if not os.path.isfile(path):
         raise DocumentIOError(f"Die Datei „{path}“ existiert nicht.")
     e = ext(path)
     if e == ".docx":
-        if _verschluesselt(path):
-            with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
-                klar = os.path.join(tmp, "klar.docx")
-                _entschluesseln(path, kennwort, klar)
-                doc, page, meta, rep = docx_reader.read_docx(klar)
-            meta["kennwort"] = kennwort
-            return Loaded(doc, page, meta, rep)
-        doc, page, meta, rep = docx_reader.read_docx(path)
-        return Loaded(doc, page, meta, rep)
+        return _docx_laden(path, kennwort)
     if e in (".txt", ".text", ""):
-        from lunivo_writer.services.import_grenzen import pruefe_dateigroesse
-        pruefe_dateigroesse(path, "TXT")
-        try:
-            with open(path, "rb") as fh:
-                raw = fh.read()
-        except OSError as ex:
-            raise DocumentIOError(f"Datei nicht lesbar: {ex.strerror or ex}") from ex
-        for enc in ("utf-8-sig", "cp1252"):
-            try:
-                text = raw.decode(enc)
-                break
-            except UnicodeDecodeError:
-                continue
-        else:
-            text = raw.decode("latin-1")
-        doc = QTextDocument()
-        doc.setDocumentMargin(0)
-        f = QFont("Liberation Sans")
-        f.setPointSizeF(11)
-        doc.setDefaultFont(f)
-        QTextCursor(doc).insertText(text.replace("\r\n", "\n"))
-        doc.setModified(False)
-        return Loaded(doc, PageSettings(), {}, IOReport())
+        return _txt_laden(path)
     if e in (".odt", ".fodt", ".rtf"):
         _kopf_pruefen(path, e)
         if e == ".rtf":
-            from lunivo_writer.services.rtf_reader import read_rtf
+            from lunivo_writer.services.rtf import read_rtf
             doc, page, meta, rep = read_rtf(path)
         else:
             from lunivo_writer.services import odt_reader

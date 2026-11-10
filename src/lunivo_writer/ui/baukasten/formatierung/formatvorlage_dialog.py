@@ -46,23 +46,36 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self._farbe = (start or {}).get("farbe", "")
         self._rs = {k: (start or {}).get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}      # Rahmen und Schattierung (kein Feld der Leiste)
         v = QVBoxLayout(self)
-        # --- Eigenschaften
-        eig = QWidget(); f = FormularGitter(eig)                    # flach: Abschnittstitel statt Rahmen im Rahmen
-        self.name = QLineEdit(aendern or self._freier_name(name))
-        self.name.setReadOnly(bool(aendern))
-        self.typ = Auswahlfeld(); self.typ.addItem("Absatz")
         namen = [n for n in (vorlagen if vorlagen is not None else stile.namen()) if n != aendern]
+        self._bauen_eigenschaften(v, name, namen)
+        self._bauen_formatierung(v)
+        self._bauen_fuss(v)
+        basis, start = self._anfangswerte(basis, start, namen)
+        self.basis.setCurrentIndex(max(0, self.basis.findData(basis if basis in namen else "")))
+        self.leiste.setze({**stile.definition("Standard"), **(start or {})} if not start else start)
+        if not self.leiste.werte()["groesse"]:
+            self.leiste.groesse.setCurrentText("11") # wie in der Vorlage steht eine Größe da, nicht ein leeres Feld
+        self.leiste.geaendert.connect(self._neu)
+        self.basis.currentIndexChanged.connect(self._basis_geaendert)
+        self.name.textChanged.connect(self._pruefen)
+        self._neu(); self._pruefen()
+
+    def _bauen_eigenschaften(self, v, name: str, namen: list[str]) -> None:
+        eig = QWidget(); f = FormularGitter(eig)                    # flach: Abschnittstitel statt Rahmen im Rahmen
+        self.name = QLineEdit(self.aendern or self._freier_name(name))
+        self.name.setReadOnly(bool(self.aendern))
+        self.typ = Auswahlfeld(); self.typ.addItem("Absatz")
         self.basis = Auswahlfeld(); self.basis.addItem(KEINE, ""); [self.basis.addItem("↵ " + n, n) for n in namen]
         self.folge = Auswahlfeld(); self.folge.addItem(GLEICHE, ""); [self.folge.addItem("↵ " + n, n) for n in namen]
-        for w in (self.name, self.typ, self.basis, self.folge):
-            pass
         f.breit(abschnittstitel("Eigenschaften"))
         f.reihe(("Name:", self.name), ("Typ:", self.typ), gewichte=(3, 2))
         f.reihe(("Basiert auf:", self.basis), ("Für folgenden Absatz:", self.folge))
         self.hinweis = QLabel(); self.hinweis.setWordWrap(True); self.hinweis.setStyleSheet(('color: ' + Farbe.ORANGE + ';'))
         f.breit(self.hinweis)
         v.addWidget(eig)
-        # --- Formatierung (dieselbe Leiste wie im Band)
+
+    def _bauen_formatierung(self, v) -> None:
+        """Formatierung (dieselbe Leiste wie im Band) mit Vorschau."""
         fo = QWidget(); fv = QVBoxLayout(fo); fv.setContentsMargins(*RAND_KEIN); fv.setSpacing(ABSTAND_NORMAL)
         fv.addWidget(abschnittstitel("Formatierung"))
         self.leiste = TextFormatLeiste()
@@ -71,10 +84,12 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self._w: dict = {}
         fv.addWidget(self.vorschau)
         v.addWidget(fo)
-        # --- Zur Vorlage hinzufügen, Knöpfe
+
+    def _bauen_fuss(self, v) -> None:
+        """Zur Vorlage hinzufügen, Format-Menü, Knöpfe."""
         self.zur_vorlage = UmbruchSchalter("Zur Vorlage hinzufügen")
         self.zur_vorlage.setToolTip("Die Formatvorlage auch für künftige Dokumente merken (sonst gilt sie nur, solange Lunivo läuft, und in den Dokumenten, die sie benutzen)")
-        self.zur_vorlage.setVisible(not aendern)
+        self.zur_vorlage.setVisible(not self.aendern)
         v.addWidget(self.zur_vorlage)
         self.format = DropdownTaste("Format")
         m = MenueListe(self.format)
@@ -83,7 +98,10 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
             m.eintrag(text, tun)
         self.format.menue_setzen(m)
         self.ok = fussleiste(self, v, self.format, bei_ok=self._ok)
-        # --- Anfangswerte und Verdrahtung
+
+    def _anfangswerte(self, basis: str, start, namen: list[str]):
+        """Beim Ändern einer vorhandenen Vorlage deren Werte übernehmen; liefert (Basis, Startwerte)."""
+        aendern = self.aendern
         if aendern:
             e = stile._NEU.get(aendern, {})
             basis, start = e.get("basis", ""), stile.definition(aendern)
@@ -93,14 +111,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
             self._farbe = start.get("farbe", "")
             self._rs = {k: start.get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}
             self._taste = start.get("taste", "")
-        self.basis.setCurrentIndex(max(0, self.basis.findData(basis if basis in namen else "")))
-        self.leiste.setze({**stile.definition("Standard"), **(start or {})} if not start else start)
-        if not self.leiste.werte()["groesse"]:
-            self.leiste.groesse.setCurrentText("11") # wie in der Vorlage steht eine Größe da, nicht ein leeres Feld
-        self.leiste.geaendert.connect(self._neu)
-        self.basis.currentIndexChanged.connect(self._basis_geaendert)
-        self.name.textChanged.connect(self._pruefen)
-        self._neu(); self._pruefen()
+        return basis, start
 
     @staticmethod
     def _freier_name(wunsch: str) -> str:

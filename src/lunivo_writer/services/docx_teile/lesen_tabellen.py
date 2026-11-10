@@ -18,6 +18,16 @@ from lunivo_writer.services.docx_teile.lesen_gemeinsam import (  # noqa: F401
 )
 
 
+# Rahmenstil Word → Qt (alles andere: durchgezogen)
+_RAND_STIL = {"dotted": QTextFrameFormat.BorderStyle_Dotted, "dashed": QTextFrameFormat.BorderStyle_Dashed,
+              "dashSmallGap": QTextFrameFormat.BorderStyle_Dashed, "double": QTextFrameFormat.BorderStyle_Double}
+
+
+def _px(tw: float) -> float:
+    """Zwanzigstelpunkte → Bildpunkte."""
+    return mm_to_px(tw / 1440 * 25.4)
+
+
 class TabellenMixin:
     """DOCX lesen: Tabellen (verbundene Zellen, Rahmen, Maße, Zeilenhöhen)."""
 
@@ -46,8 +56,24 @@ class TabellenMixin:
         tf = QTextTableFormat()
         self._tabellenformat(tf, table, cols)
         qt = self.cur.insertTable(rows, cols, tf)
+        placed = self._zellbereiche(table, rows, cols)
+        for r0, c0, _r1, _c1, cell in placed.values():
+            self._zelle_fuellen(qt, r0, c0, cell)
+        for r0, c0, r1, c1, _cell in placed.values():           # verbinden erst nach dem Befüllen: Text in einer schon verbundenen Zelle löscht deren Spannweite
+            if r1 > r0 or c1 > c0:
+                qt.mergeCells(r0, c0, r1 - r0 + 1, c1 - c0 + 1)
+        for r0, c0, _r1, _c1, cell in placed.values():          # erst nach dem Inhalt: das Einfügen von Text setzt das Zellenformat zurück
+            self._zelle_format(qt.cellAt(r0, c0), cell)
+        self._zeilenhoehen(qt, table)
+        self._kopfzeilen(qt, table)
+        self.cur = QTextCursor(self.doc)
+        self.cur.movePosition(QTextCursor.End)
+        self.fresh = True
+        self.last_list = None
 
-        # Zellen mit Rechteck: gleiche tc → eine Zelle
+    @staticmethod
+    def _zellbereiche(table: Table, rows: int, cols: int) -> dict:
+        """Zellen mit Rechteck: gleiche tc → eine Zelle → {id: [Zeile0, Spalte0, Zeile1, Spalte1, Zelle]}."""
         placed: dict[int, list] = {}
         for r in range(rows):
             for c in range(cols):
@@ -55,21 +81,22 @@ class TabellenMixin:
                 e = placed.setdefault(id(tc), [r, c, r, c, table.cell(r, c)])
                 e[2] = max(e[2], r)
                 e[3] = max(e[3], c)
-        for r0, c0, _r1, _c1, cell in placed.values():
-            ccur = qt.cellAt(r0, c0).firstCursorPosition()
-            first = True
-            for item in cell.iter_inner_content():
-                if isinstance(item, Paragraph):
-                    self.add_paragraph(item, ccur, reuse=first, in_table=True)
-                    first = False
-                else:
-                    self.report.warn("Verschachtelte Tabellen werden nicht dargestellt.")
-        for r0, c0, r1, c1, _cell in placed.values():           # verbinden erst nach dem Befüllen: Text in einer schon verbundenen Zelle löscht deren Spannweite
-            if r1 > r0 or c1 > c0:
-                qt.mergeCells(r0, c0, r1 - r0 + 1, c1 - c0 + 1)
-        for r0, c0, _r1, _c1, cell in placed.values():          # erst nach dem Inhalt: das Einfügen von Text setzt das Zellenformat zurück
-            self._zelle_format(qt.cellAt(r0, c0), cell)
-        self._zeilenhoehen(qt, table)
+        return placed
+
+    def _zelle_fuellen(self, qt, r0: int, c0: int, cell) -> None:
+        """Absätze der Zelle in die Qt-Zelle schreiben; verschachtelte Tabellen werden gemeldet, nicht dargestellt."""
+        ccur = qt.cellAt(r0, c0).firstCursorPosition()
+        first = True
+        for item in cell.iter_inner_content():
+            if isinstance(item, Paragraph):
+                self.add_paragraph(item, ccur, reuse=first, in_table=True)
+                first = False
+            else:
+                self.report.warn("Verschachtelte Tabellen werden nicht dargestellt.")
+
+    @staticmethod
+    def _kopfzeilen(qt, table: Table) -> None:
+        """Aufeinanderfolgende Kopfzeilen (w:tblHeader) ab der ersten Zeile."""
         kopf = 0
         for row in table.rows:
             if not row._tr.xpath("w:trPr/w:tblHeader"):
@@ -77,10 +104,6 @@ class TabellenMixin:
             kopf += 1
         if kopf:
             f = qt.format(); f.setHeaderRowCount(kopf); qt.setFormat(f)
-        self.cur = QTextCursor(self.doc)
-        self.cur.movePosition(QTextCursor.End)
-        self.fresh = True
-        self.last_list = None
 
     @staticmethod
     def _tw(el):
@@ -102,47 +125,80 @@ class TabellenMixin:
     def _tabellenformat(self, tf, table, cols: int) -> None:
         """Tabellenbreite, Ausrichtung, Zellabstand, Rahmen (Stärke, Farbe, Stil), Innenabstand und Spaltenbreiten aus w:tblPr/w:tblGrid/w:tcW.
         Vorgaben (100 %, Innenabstand 4, Rahmen #333333) gelten nur, wenn die Datei nichts angibt."""
-        px = lambda tw: mm_to_px(tw / 1440 * 25.4)                              # noqa: E731
         pr = table._tbl.tblPr
-        x = pr.xpath
-        w = self._tw(x("w:tblW")[0] if x("w:tblW") else None)
+        self._tf_breite(tf, pr)
+        jc = pr.xpath("w:jc/@w:val")
+        if jc and jc[0] in ("center", "right", "end"):
+            tf.setAlignment(Qt.AlignHCenter if jc[0] == "center" else Qt.AlignRight)
+        self._tf_abstaende(tf, pr)
+        tf.setBorderCollapse(True)
+        self._tf_rahmen(tf, pr, table)
+        self._tf_spalten(tf, table, cols)
+
+    def _tw_von(self, pr, pfad: str):
+        """(Art, Wert) des ersten Elements am Pfad unter w:tblPr, sonst None."""
+        el = pr.xpath(pfad)
+        return self._tw(el[0] if el else None)
+
+    def _tf_breite(self, tf, pr) -> None:
+        w = self._tw_von(pr, "w:tblW")
         if w is None:
             tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
         elif w[0] == "pct" and w[1] > 0:
             tf.setWidth(QTextLength(QTextLength.PercentageLength, w[1]))
         elif w[0] == "dxa" and w[1] > 0:
-            tf.setWidth(QTextLength(QTextLength.FixedLength, px(w[1])))
+            tf.setWidth(QTextLength(QTextLength.FixedLength, _px(w[1])))
         # Art "auto": Breite nach den Spalten (Qt: nicht gesetzt)
-        jc = x("w:jc/@w:val")
-        if jc and jc[0] in ("center", "right", "end"):
-            tf.setAlignment(Qt.AlignHCenter if jc[0] == "center" else Qt.AlignRight)
-        mar = {k: self._tw(x(f"w:tblCellMar/w:{k}")[0] if x(f"w:tblCellMar/w:{k}") else None) for k in ("left", "right", "top", "bottom")}
+
+    def _tf_abstaende(self, tf, pr) -> None:
+        """Innenabstand der Zellen (aus den Kanten) und Zellabstand."""
+        mar = {k: self._tw_von(pr, f"w:tblCellMar/w:{k}") for k in ("left", "right", "top", "bottom")}
         gelesen = [m[1] for k in ("left", "right", "top", "bottom") if (m := mar[k]) and m[0] == "dxa"]
-        tf.setCellPadding(px(max(gelesen[:2] or gelesen)) if gelesen else 4)
-        ab = self._tw(x("w:tblCellSpacing")[0] if x("w:tblCellSpacing") else None)
-        tf.setCellSpacing(px(ab[1]) if ab and ab[0] == "dxa" else 0)
-        tf.setBorderCollapse(True)
-        kanten = x("w:tblBorders")
+        tf.setCellPadding(_px(max(gelesen[:2] or gelesen)) if gelesen else 4)
+        ab = self._tw_von(pr, "w:tblCellSpacing")
+        tf.setCellSpacing(_px(ab[1]) if ab and ab[0] == "dxa" else 0)
+
+    def _tf_rahmen(self, tf, pr, table) -> None:
+        """Rahmen: Stärke, Farbe und Stil der ersten sichtbaren Kante; ohne w:tblBorders nur bei Tabellenstilen mit „Grid“."""
+        kanten = pr.xpath("w:tblBorders")
         farbe, stil, breite = "#333333", QTextFrameFormat.BorderStyle_Solid, 1
         if kanten:
             ein = [k for k in kanten[0] if k.get(qn("w:val")) not in (None, "nil", "none")]
             if ein:
-                k = ein[0]
-                farbe_roh = k.get(qn("w:color"))
-                if farbe_roh and farbe_roh != "auto":
-                    farbe = "#" + farbe_roh
-                stil = {"dotted": QTextFrameFormat.BorderStyle_Dotted, "dashed": QTextFrameFormat.BorderStyle_Dashed,
-                        "dashSmallGap": QTextFrameFormat.BorderStyle_Dashed, "double": QTextFrameFormat.BorderStyle_Double
-                        }.get(k.get(qn("w:val")), QTextFrameFormat.BorderStyle_Solid)
-                try:
-                    breite = max(1, int(round(int(k.get(qn("w:sz"))) / 6)))
-                except (TypeError, ValueError):
-                    breite = 1
+                farbe, stil, breite = self._kantenformat(ein[0], farbe)
             tf.setBorder(breite if ein else 0)
         else:
             tf.setBorder(1 if table.style is not None and "Grid" in (table.style.name or "") else 0)
         tf.setBorderBrush(QColor(farbe)); tf.setBorderStyle(stil)
-        # Spaltenbreiten: je Spalte tcW der ersten ungeteilten Zelle; fehlt tcW in der Spalte ganz, gilt die Gitterbreite
+
+    @staticmethod
+    def _kantenformat(k, farbe: str):
+        """(Farbe, Stil, Stärke) einer Rahmenkante; ohne Farbangabe bleibt ``farbe``."""
+        farbe_roh = k.get(qn("w:color"))
+        if farbe_roh and farbe_roh != "auto":
+            farbe = "#" + farbe_roh
+        stil = _RAND_STIL.get(k.get(qn("w:val")), QTextFrameFormat.BorderStyle_Solid)
+        try:
+            breite = max(1, int(round(int(k.get(qn("w:sz"))) / 6)))
+        except (TypeError, ValueError):
+            breite = 1
+        return farbe, stil, breite
+
+    def _tf_spalten(self, tf, table, cols: int) -> None:
+        """Spaltenbreiten: je Spalte tcW der ersten ungeteilten Zelle; fehlt tcW in der Spalte ganz, gilt die Gitterbreite."""
+        spalten, gefunden = self._spalten_tcw(table, cols)
+        grid = [self._tw(g) for g in table._tbl.tblGrid.gridCol_lst]
+        lang, echt = [], False
+        for i in range(cols):
+            a = spalten[i] if gefunden[i] else (grid[i] if i < len(grid) else None)
+            laenge = self._spaltenlaenge(a)
+            echt = echt or laenge is not None
+            lang.append(laenge if laenge is not None else QTextLength())
+        if echt:
+            tf.setColumnWidthConstraints(lang)
+
+    def _spalten_tcw(self, table, cols: int):
+        """Je Spalte das Breitenmaß (w:tcW) der ersten ungeteilten Zelle → (Maße, gefunden)."""
         spalten: list = [None] * cols
         gefunden = [False] * cols
         for tr in table._tbl.tr_lst:
@@ -155,18 +211,16 @@ class TabellenMixin:
                         spalten[i] = self._tw(el)
                         gefunden[i] = True
                 i += span
-        grid = [self._tw(g) for g in table._tbl.tblGrid.gridCol_lst]
-        lang, echt = [], False
-        for i in range(cols):
-            a = spalten[i] if gefunden[i] else (grid[i] if i < len(grid) else None)
-            if a and a[0] == "dxa" and a[1] > 0:
-                lang.append(QTextLength(QTextLength.FixedLength, px(a[1]))); echt = True
-            elif a and a[0] == "pct" and a[1] > 0:
-                lang.append(QTextLength(QTextLength.PercentageLength, a[1])); echt = True
-            else:
-                lang.append(QTextLength())
-        if echt:
-            tf.setColumnWidthConstraints(lang)
+        return spalten, gefunden
+
+    @staticmethod
+    def _spaltenlaenge(a):
+        """Qt-Länge aus (Art, Wert): dxa → fest, pct → Prozent; sonst None."""
+        if a and a[0] == "dxa" and a[1] > 0:
+            return QTextLength(QTextLength.FixedLength, _px(a[1]))
+        if a and a[0] == "pct" and a[1] > 0:
+            return QTextLength(QTextLength.PercentageLength, a[1])
+        return None
 
     def _zeilenhoehen(self, qt, table) -> None:
         """w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand)."""

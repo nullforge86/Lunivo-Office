@@ -218,35 +218,38 @@ def _verlauf_aus(g) -> dict:
             "winkel": round(_wert(lin, "ang", 5400000) / 60000) % 360 if lin is not None else 90}
 
 
-def aus_rpr(rpr, cf: QTextCharFormat) -> None:
-    """Das Gegenstück zu ``in_rpr``: die w14-Elemente von ``w:rPr`` ins Zeichenformat lesen."""
-    if rpr is None:
-        return
-    w: dict = dict(EFFEKT)
-    extra = False
+def _kontur_aus(rpr, w: dict) -> None:
     o = rpr.find(_q("textOutline"))
-    if o is not None:
-        w["kontur"] = True
-        g = o.find(_q("gradFill"))
-        farbe = o.find(f"{_q('solidFill')}/{_q('srgbClr')}")
-        dash = o.find(_q("prstDash"))
-        w["kontur_art"] = next((k for k, v in _DASH.items() if dash is not None and v == dash.get(_q("val"))), "einfach")
-        w["kontur_breite"] = max(0.1, _wert(o, "w", 9525) / _EMU_PT)
-        w["kontur_farbe"] = "#" + (farbe.get(_q("val")) if farbe is not None else "000000")
-        if g is not None:
-            w["kontur_verlauf"] = _verlauf_aus(g)
-        form = next((k for k, v in _FORM.items() if v == o.get(_q("cmpd"))), None)
-        if form:
-            w["kontur_form"] = form
+    if o is None:
+        return
+    w["kontur"] = True
+    g = o.find(_q("gradFill"))
+    farbe = o.find(f"{_q('solidFill')}/{_q('srgbClr')}")
+    dash = o.find(_q("prstDash"))
+    w["kontur_art"] = next((k for k, v in _DASH.items() if dash is not None and v == dash.get(_q("val"))), "einfach")
+    w["kontur_breite"] = max(0.1, _wert(o, "w", 9525) / _EMU_PT)
+    w["kontur_farbe"] = "#" + (farbe.get(_q("val")) if farbe is not None else "000000")
+    if g is not None:
+        w["kontur_verlauf"] = _verlauf_aus(g)
+    form = next((k for k, v in _FORM.items() if v == o.get(_q("cmpd"))), None)
+    if form:
+        w["kontur_form"] = form
+
+
+def _fuellung_aus(rpr, w: dict) -> None:
     f = rpr.find(_q("textFill"))
-    if f is not None:
-        if f.find(_q("noFill")) is not None:
-            w["fuell"] = "keine"
-        elif f.find(_q("gradFill")) is not None:
-            w["fuell"] = "verlauf"; w["verlauf"] = _verlauf_aus(f.find(_q("gradFill")))
-        else:
-            farbe, trans = _farbe_aus(f.find(_q("solidFill")))
-            w["farbe"] = farbe; w["transparenz"] = int(round(trans))
+    if f is None:
+        return
+    if f.find(_q("noFill")) is not None:
+        w["fuell"] = "keine"
+    elif f.find(_q("gradFill")) is not None:
+        w["fuell"] = "verlauf"; w["verlauf"] = _verlauf_aus(f.find(_q("gradFill")))
+    else:
+        farbe, trans = _farbe_aus(f.find(_q("solidFill")))
+        w["farbe"] = farbe; w["transparenz"] = int(round(trans))
+
+
+def _leuchten_schatten_aus(rpr, w: dict) -> None:
     g = rpr.find(_q("glow"))
     if g is not None:
         farbe, trans = _farbe_aus(g)
@@ -257,6 +260,9 @@ def aus_rpr(rpr, cf: QTextCharFormat) -> None:
         w["schatten"] = {"art": "persp" if _wert(s, "sy", 100000) < 0 else "aussen", "farbe": farbe, "transparenz": trans,
                          "groesse": abs(_wert(s, "sx", 100000)) / 1000, "weich": _wert(s, "blurRad") / _EMU_PT, "abstand": _wert(s, "dist") / _EMU_PT,
                          "winkel": round(_wert(s, "dir") / 60000) % 360}
+
+
+def _reflektion_3d_aus(rpr, w: dict) -> None:
     r = rpr.find(_q("reflection"))
     if r is not None:
         w["reflektion"] = {"groesse": _wert(r, "endPos", 50000) / 1000, "transparenz": 100 - _wert(r, "stA", 50000) / 1000, "weich": _wert(r, "blurRad") / _EMU_PT,
@@ -266,6 +272,17 @@ def aus_rpr(rpr, cf: QTextCharFormat) -> None:
         tf, _t = _farbe_aus(d.find(_q("extrusionClr"))); kf, _t = _farbe_aus(d.find(_q("contourClr")))
         w["d3"] = {"tiefe": _wert(d, "extrusionH") / _EMU_PT, "tiefe_farbe": tf, "kontur": _wert(d, "contourW") / _EMU_PT, "kontur_farbe": kf,
                    "material": next((k for k, v in _MATERIAL.items() if v == d.get(_q("prstMaterial"))), "matt"), "beleuchtung": "neutral", "winkel": 0}
+
+
+def aus_rpr(rpr, cf: QTextCharFormat) -> None:
+    """Das Gegenstück zu ``in_rpr``: die w14-Elemente von ``w:rPr`` ins Zeichenformat lesen."""
+    if rpr is None:
+        return
+    w: dict = dict(EFFEKT)
+    _kontur_aus(rpr, w)
+    _fuellung_aus(rpr, w)
+    _leuchten_schatten_aus(rpr, w)
+    _reflektion_3d_aus(rpr, w)
     if w == dict(EFFEKT):
         return
     fmt = zu_format(w)

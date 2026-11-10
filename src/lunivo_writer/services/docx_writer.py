@@ -85,6 +85,7 @@ from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F40
 from lunivo_writer.services.docx_teile.schreiben_seite import SeiteSchreiber
 from lunivo_writer.services.docx_teile.schreiben_tabellen import TabellenSchreiber
 from lunivo_writer.services.docx_teile.schreiben_objekte import ObjekteSchreiber
+from lunivo_writer.services.docx_teile.schreiben_textfelder import TextfeldSchreiber
 from lunivo_writer.services.docx_teile.schreiben_zusatz import ZusatzSchreiber
 from lunivo_writer.services.docx_teile.schreiben_dokument import SchreibenDokumentMixin
 from lunivo_writer.services.docx_teile.schreiben_absatz import SchreibenAbsatzMixin
@@ -92,7 +93,7 @@ from lunivo_writer.services.docx_teile.schreiben_runs import SchreibenRunsMixin
 
 
 
-class _Writer(SchreibenDokumentMixin, SchreibenAbsatzMixin, SchreibenRunsMixin, SeiteSchreiber, TabellenSchreiber, ObjekteSchreiber, ZusatzSchreiber):
+class _Writer(SchreibenDokumentMixin, SchreibenAbsatzMixin, SchreibenRunsMixin, SeiteSchreiber, TabellenSchreiber, ObjekteSchreiber, TextfeldSchreiber, ZusatzSchreiber):
     def __init__(self, qdoc: QTextDocument, page: PageSettings, meta: dict):
         self.q = qdoc
         self.page = page

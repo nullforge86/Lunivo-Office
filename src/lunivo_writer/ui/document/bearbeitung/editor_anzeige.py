@@ -291,94 +291,111 @@ class AnzeigeBaustein:
         """Objektanker, Änderungsbalken, Kopf- und Fußzeile im Rand der Seite."""
         if self.web:
             return
-        vp, z, pg = self.viewport(), self.zoom, self.page
         is_dark = self.palette().color(QPalette.Window).lightness() < 128
         line_color = QColor(Farbe.GRAU_HELL) if is_dark else QColor(Farbe.GRAU)
         accent_color = QColor(Farbe.AKZENT_HELL) if is_dark else QColor(Farbe.BLAU)
-
-        # Objektanker neben Bildern, die vom Text umflossen werden (bei sichtbaren Formatierungszeichen)
-        marks = bool(self.document().defaultTextOption().flags() & QTextOption.ShowTabsAndSpaces)
-        if marks and self.opt("ui/objektanker", True):
-            from lunivo_writer.editor.seite.umbruch import schwebende_rahmen
-            ankern = schwebende_rahmen(self.document())
-            if ankern:
-                from lunivo_writer.ui.widgets import icons
-                px = max(12, int(16 * z))
-                for pos in ankern:
-                    r = self.cursorRect(self._cursor_at(pos))
-                    img = icons.katalog_bild("anchor", px, accent_color.name())
-                    p.drawImage(max(0, r.x() - px - int(2 * z)), r.y() + (r.height() - px) // 2, img)
-        # Abschnittsumbrüche: gestrichelte Linie mit Beschriftung unter dem letzten Absatz des Abschnitts
+        self._objektanker_zeichnen(p, accent_color)
         if not self._mehrspaltig():
-            from lunivo_writer.editor.seite import abschnitte as AB
-            for nr, typ, _ps in AB.umbrueche(self.document()):
-                blk = self.document().findBlockByNumber(nr)
-                c = QTextCursor(blk); c.movePosition(QTextCursor.EndOfBlock)
-                r = self.cursorRect(c)
-                if r.bottom() < -20 or r.top() > vp.height():
-                    continue
-                y = r.bottom() + int(3 * z)
-                if getattr(self, "_qplan", None):
-                    bk = self._blatt(self._blatt_bei_y(y))
-                    x0, x1 = int(bk["x"] + bk["ml"]), int(bk["x"] + bk["ml"] + bk["cw"])
-                else:
-                    x0, x1 = int(mm_to_px(pg.margin_left_mm) * z), vp.width() - int(mm_to_px(pg.margin_right_mm) * z)
-                p.setPen(QPen(accent_color, 1, Qt.DashLine))
-                p.drawLine(x0, y, x1, y)
-                f = QFont(p.font()); f.setPointSizeF(max(6.5, 8 * z)); p.setFont(f)
-                txt = f"Abschnittsumbruch ({AB.TYPEN.get(typ, typ)})"
-                p.setPen(accent_color)
-                # bei Umbruch auf eine neue Seite steht unter der Linie nichts mehr: dort beschriften, sonst darüber
-                unten = typ != "fortlaufend"
-                p.drawText(x0 + int(8 * z), y + (QFontMetrics(f).ascent() + int(2 * z) if unten else -int(2 * z)), txt)
-        # Geänderte Zeilen
-        seite = self.opt_text("aenderungen/balken", "links")
-        if seite in ("links", "rechts", "außen"):
-            zeilen = self._aenderungszeilen_gecacht()
-            if zeilen:
-                p.setPen(QPen(QColor(Farbe.ROT_HELL) if is_dark else QColor(Farbe.ROT), 1.6))
-                for t, u in zeilen:
-                    g = self._sp_geo()
-                    vx, vy = self._sp_view(0, t)
-                    x = vx + (g["cb"] + 8 * z if seite == "rechts" else -8 * z)
-                    y0, y1 = vy, vy + (u - t)
-                    p.drawLine(int(x), int(y0), int(x), int(y1))
-        # Linien von den Sprechblasen zum Text: Textende bis zum Seitenrand (der Rest steht in der Blasenfläche)
-        if self._blasen_extra and self.blasen_linien():
-            rechts = self.blasen_rand() == "Rechts"
-            for bl, r, y_text in self.blasen_layout(self._blasen_extra):
-                pos = min(bl.bis, self.document().characterCount() - 1)
-                blk = self.document().findBlock(pos)
-                if blk.isValid() and blk.layout() is not None and blk.layout().lineCount():
-                    ln = blk.layout().lineForTextPosition(max(0, pos - blk.position()))
-                    pos = blk.position() + ln.textStart() + max(0, ln.textLength() - 1)       # Ende der Zeile, in der der Text endet
-                rc = self.cursorRect(self._cursor_at(pos))
-                p.setPen(QPen(QColor(bl.farbe), 1, Qt.DotLine))
-                y = int(rc.y() + rc.height() / 2)
-                p.drawLine(rc.x() + 4 if rechts else 0, y, vp.width() if rechts else rc.x(), y)
-        # Kopf- und Fußzeile auf jedem Blatt (Lage wie im Druck: 8 mm unter dem oberen, 18 mm über dem unteren Blattrand)
+            self._abschnittsumbrueche_zeichnen(p, accent_color)
+        self._aenderungsbalken_zeichnen(p, is_dark)
+        self._blasenlinien_zeichnen(p)
         if self.opt("ui/kopffuss_anzeigen", True):
-            from lunivo_writer.editor.seite.pagination import _draw_hf
+            self._kopf_fuss_zeichnen(p, line_color)
+
+    def _objektanker_zeichnen(self, p: QPainter, accent_color: QColor) -> None:
+        """Objektanker neben Bildern, die vom Text umflossen werden (bei sichtbaren Formatierungszeichen)."""
+        z = self.zoom
+        marks = bool(self.document().defaultTextOption().flags() & QTextOption.ShowTabsAndSpaces)
+        if not (marks and self.opt("ui/objektanker", True)):
+            return
+        from lunivo_writer.editor.seite.umbruch import schwebende_rahmen
+        from lunivo_writer.ui.widgets import icons
+        px = max(12, int(16 * z))
+        for pos in schwebende_rahmen(self.document()):
+            r = self.cursorRect(self._cursor_at(pos))
+            img = icons.katalog_bild("anchor", px, accent_color.name())
+            p.drawImage(max(0, r.x() - px - int(2 * z)), r.y() + (r.height() - px) // 2, img)
+
+    def _abschnittsumbrueche_zeichnen(self, p: QPainter, accent_color: QColor) -> None:
+        """Abschnittsumbrüche: gestrichelte Linie mit Beschriftung unter dem letzten Absatz des Abschnitts."""
+        from lunivo_writer.editor.seite import abschnitte as AB
+        vp, z, pg = self.viewport(), self.zoom, self.page
+        for nr, typ, _ps in AB.umbrueche(self.document()):
+            blk = self.document().findBlockByNumber(nr)
+            c = QTextCursor(blk); c.movePosition(QTextCursor.EndOfBlock)
+            r = self.cursorRect(c)
+            if r.bottom() < -20 or r.top() > vp.height():
+                continue
+            y = r.bottom() + int(3 * z)
+            if getattr(self, "_qplan", None):
+                bk = self._blatt(self._blatt_bei_y(y))
+                x0, x1 = int(bk["x"] + bk["ml"]), int(bk["x"] + bk["ml"] + bk["cw"])
+            else:
+                x0, x1 = int(mm_to_px(pg.margin_left_mm) * z), vp.width() - int(mm_to_px(pg.margin_right_mm) * z)
+            p.setPen(QPen(accent_color, 1, Qt.DashLine))
+            p.drawLine(x0, y, x1, y)
+            f = QFont(p.font()); f.setPointSizeF(max(6.5, 8 * z)); p.setFont(f)
+            p.setPen(accent_color)
+            # bei Umbruch auf eine neue Seite steht unter der Linie nichts mehr: dort beschriften, sonst darüber
+            unten = typ != "fortlaufend"
+            p.drawText(x0 + int(8 * z), y + (QFontMetrics(f).ascent() + int(2 * z) if unten else -int(2 * z)),
+                       f"Abschnittsumbruch ({AB.TYPEN.get(typ, typ)})")
+
+    def _aenderungsbalken_zeichnen(self, p: QPainter, is_dark: bool) -> None:
+        """Balken neben geänderten Zeilen."""
+        seite = self.opt_text("aenderungen/balken", "links")
+        zeilen = self._aenderungszeilen_gecacht() if seite in ("links", "rechts", "außen") else None
+        if not zeilen:
+            return
+        z = self.zoom
+        p.setPen(QPen(QColor(Farbe.ROT_HELL) if is_dark else QColor(Farbe.ROT), 1.6))
+        for t, u in zeilen:
             g = self._sp_geo()
-            base = QFont(self.font())
-            p.setPen(line_color)
-            quer = bool(getattr(self, "_qplan", None))
-            from lunivo_writer.editor.seite import seitenzahl as SZ
-            start = SZ.erste_nummer(pg)
-            kapitel = self._kapitel_je_blatt(pg)
-            for k in range(self._blatt_anzahl()):
-                oben = self.blatt_oben(k)
-                bk = self._blatt(k) if quer else {"x": 0.0, "H": g["H"], "pg": pg}
-                if oben > vp.height() or oben + bk["H"] < 0:
-                    continue
-                bp = bk["pg"]
-                kopf, fuss = bp.kopf_fuss(k + 1, k + start)
-                p.save()
-                p.translate(bk["x"], oben)
-                p.scale(z, z)
-                kap = kapitel[min(k, len(kapitel) - 1)] if kapitel else ""
-                _draw_hf(p, kopf, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(8), bp.content_width_px, mm_to_px(10)), k + start, self._pages,
-                         base, bp, kap)
-                _draw_hf(p, fuss, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(bp.height_mm) - mm_to_px(18), bp.content_width_px, mm_to_px(10)),
-                         k + start, self._pages, base, bp, kap)
-                p.restore()
+            vx, vy = self._sp_view(0, t)
+            x = vx + (g["cb"] + 8 * z if seite == "rechts" else -8 * z)
+            p.drawLine(int(x), int(vy), int(x), int(vy + (u - t)))
+
+    def _blasenlinien_zeichnen(self, p: QPainter) -> None:
+        """Linien von den Sprechblasen zum Text: Textende bis zum Seitenrand (der Rest steht in der Blasenfläche)."""
+        if not (self._blasen_extra and self.blasen_linien()):
+            return
+        vp = self.viewport()
+        rechts = self.blasen_rand() == "Rechts"
+        for bl, r, y_text in self.blasen_layout(self._blasen_extra):
+            pos = min(bl.bis, self.document().characterCount() - 1)
+            blk = self.document().findBlock(pos)
+            if blk.isValid() and blk.layout() is not None and blk.layout().lineCount():
+                ln = blk.layout().lineForTextPosition(max(0, pos - blk.position()))
+                pos = blk.position() + ln.textStart() + max(0, ln.textLength() - 1)       # Ende der Zeile, in der der Text endet
+            rc = self.cursorRect(self._cursor_at(pos))
+            p.setPen(QPen(QColor(bl.farbe), 1, Qt.DotLine))
+            y = int(rc.y() + rc.height() / 2)
+            p.drawLine(rc.x() + 4 if rechts else 0, y, vp.width() if rechts else rc.x(), y)
+
+    def _kopf_fuss_zeichnen(self, p: QPainter, line_color: QColor) -> None:
+        """Kopf- und Fußzeile auf jedem Blatt (Lage wie im Druck: 8 mm unter dem oberen, 18 mm über dem unteren Blattrand)."""
+        from lunivo_writer.editor.seite.pagination import _draw_hf
+        from lunivo_writer.editor.seite import seitenzahl as SZ
+        vp, z, pg = self.viewport(), self.zoom, self.page
+        g = self._sp_geo()
+        base = QFont(self.font())
+        p.setPen(line_color)
+        quer = bool(getattr(self, "_qplan", None))
+        start = SZ.erste_nummer(pg)
+        kapitel = self._kapitel_je_blatt(pg)
+        for k in range(self._blatt_anzahl()):
+            oben = self.blatt_oben(k)
+            bk = self._blatt(k) if quer else {"x": 0.0, "H": g["H"], "pg": pg}
+            if oben > vp.height() or oben + bk["H"] < 0:
+                continue
+            bp = bk["pg"]
+            kopf, fuss = bp.kopf_fuss(k + 1, k + start)
+            p.save()
+            p.translate(bk["x"], oben)
+            p.scale(z, z)
+            kap = kapitel[min(k, len(kapitel) - 1)] if kapitel else ""
+            _draw_hf(p, kopf, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(8), bp.content_width_px, mm_to_px(10)), k + start, self._pages,
+                     base, bp, kap)
+            _draw_hf(p, fuss, QRectF(mm_to_px(bp.margin_left_mm), mm_to_px(bp.height_mm) - mm_to_px(18), bp.content_width_px, mm_to_px(10)),
+                     k + start, self._pages, base, bp, kap)
+            p.restore()

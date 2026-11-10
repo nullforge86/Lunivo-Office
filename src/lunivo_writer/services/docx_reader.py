@@ -97,13 +97,14 @@ from lunivo_writer.services.docx_teile.lesen_stile import StilMixin
 from lunivo_writer.services.docx_teile.lesen_tabellen import TabellenMixin
 from lunivo_writer.services.docx_teile.lesen_seite import SeiteMixin
 from lunivo_writer.services.docx_teile.lesen_objekte import ObjekteMixin
+from lunivo_writer.services.docx_teile.lesen_textfelder import TextfeldMixin
 from lunivo_writer.services.docx_teile.lesen_metadaten import LesenMetadatenMixin
 from lunivo_writer.services.docx_teile.lesen_absatz import LesenAbsatzMixin
 from lunivo_writer.services.docx_teile.lesen_runs import LesenRunsMixin
 
 
 
-class _Reader(LesenMetadatenMixin, LesenAbsatzMixin, LesenRunsMixin, StilMixin, TabellenMixin, SeiteMixin, ObjekteMixin):
+class _Reader(LesenMetadatenMixin, LesenAbsatzMixin, LesenRunsMixin, StilMixin, TabellenMixin, SeiteMixin, ObjekteMixin, TextfeldMixin):
     def __init__(self, path: str):
         self.path = path
         self.report = IOReport()
@@ -151,41 +152,52 @@ class _Reader(LesenMetadatenMixin, LesenAbsatzMixin, LesenRunsMixin, StilMixin, 
 
 
     def run(self):
-        body = self.d.element.body
+        self._nicht_unterstuetztes_melden(self.d.element.body)
+        self._erste_seite = self.read_page()
+        self._koerper_lesen(self.d.element.body)
+        self._ketten_bereinigen()
+        # leeren Schlussblock nach Tabelle behalten (Qt braucht ihn)
+        df = QFont(self.def_font or "Calibri")
+        df.setPointSizeF(self.def_size or 11.0)
+        self.doc.setDefaultFont(df)
+        meta = self._meta_lesen()
+        self.doc.setModified(False)
+        return self.doc, self._erste_seite, meta, self.report
+
+    def _nicht_unterstuetztes_melden(self, body) -> None:
         for pat, msg in _UNSUPPORTED:
             try:
                 if _xp(body, pat):
                     self.report.warn(msg)
             except Exception:
                 pass
-        def kinder(eltern):
-            for c in eltern.iterchildren():
-                if c.tag == qn("w:sdt"):
-                    inhalt = c.find(qn("w:sdtContent"))
-                    if inhalt is not None:
-                        yield from kinder(inhalt)
-                else:
-                    yield c
-        self._erste_seite = self.read_page()
-        for child in kinder(body):
+
+    def _koerper_lesen(self, body) -> None:
+        for child in _kinder(body):
             if child.tag == qn("w:p"):
                 self.fresh = self.add_paragraph(Paragraph(child, self.d._body), self.cur, reuse=self.fresh)
             elif child.tag == qn("w:tbl"):
                 self.add_table(Table(child, self.d._body))
-        self._ketten_bereinigen()
-        # leeren Schlussblock nach Tabelle behalten (Qt braucht ihn)
-        page = self._erste_seite
-        df = QFont(self.def_font or "Calibri")
-        df.setPointSizeF(self.def_size or 11.0)
-        self.doc.setDefaultFont(df)
+
+    def _meta_lesen(self) -> dict:
         props = self.d.core_properties
         meta = {"title": props.title or "", "author": props.author or ""}
         meta.update(self.zus)
         lang = self.d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:rPrDefault") + "/" + qn("w:rPr") + "/" + qn("w:lang"))
         if lang is not None and lang.get(qn("w:val")):
             meta["sprache"] = lang.get(qn("w:val"))
-        self.doc.setModified(False)
-        return self.doc, page, meta, self.report
+        return meta
+
+
+def _kinder(eltern):
+    """Die Blockelemente eines Körpers; Inhaltssteuerelemente (``w:sdt``) werden aufgelöst."""
+    for c in eltern.iterchildren():
+        if c.tag == qn("w:sdt"):
+            inhalt = c.find(qn("w:sdtContent"))
+            if inhalt is not None:
+                yield from _kinder(inhalt)
+        else:
+            yield c
 
 
 def _schriften_ersatz() -> None:

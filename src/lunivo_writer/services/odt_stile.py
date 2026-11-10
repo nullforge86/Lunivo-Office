@@ -31,14 +31,19 @@ class _Stile:
             if b is None:
                 continue
             for s in b:
-                if s.tag == _q("style:style"):
-                    self.stile[(s.get(_q("style:family"), ""), s.get(_q("style:name"), ""))] = s
-                elif s.tag == _q("style:default-style"):
-                    self.standard[s.get(_q("style:family"), "")] = s
-                elif s.tag == _q("text:list-style"):
-                    self.listen[s.get(_q("style:name"), "")] = s
-                elif s.tag == _q("style:page-layout"):
-                    self.seiten[s.get(_q("style:name"), "")] = s
+                self._eintragen(s)
+
+    def _eintragen(self, s: ET.Element) -> None:
+        """Ein Kind von ``office:styles``/``office:automatic-styles`` in die passende Tabelle legen."""
+        familie, name = s.get(_q("style:family"), ""), s.get(_q("style:name"), "")
+        if s.tag == _q("style:style"):
+            self.stile[(familie, name)] = s
+        elif s.tag == _q("style:default-style"):
+            self.standard[familie] = s
+        elif s.tag == _q("text:list-style"):
+            self.listen[name] = s
+        elif s.tag == _q("style:page-layout"):
+            self.seiten[name] = s
 
     def eigenschaften(self, familie: str, name: str | None, art: str) -> dict[str, str]:
         """Aufgelöste Eigenschaften (lokale Attributnamen mit Präfix, z. B. „fo:font-weight“) aus `style:<art>-properties`."""
@@ -72,37 +77,60 @@ class _Stile:
 
 
 
-def _zeichenformat(p: dict[str, str], stile: _Stile) -> QTextCharFormat:
-    cf = QTextCharFormat()
+_FETT = ("bold", "600", "700", "800", "900")
+
+
+def _lage(pos: list[str]):
+    """``style:text-position`` (z. B. „super 58%“, „-33%“) → hoch-/tiefgestellt oder ``None``."""
+    if not pos:
+        return None
+    erste = pos[0]
+    if erste == "super" or (erste.rstrip("%").lstrip("-").replace(".", "").isdigit() and not erste.startswith("-")
+                            and erste.rstrip("%") not in ("0", "0.0")):
+        return QTextCharFormat.AlignSuperScript
+    if erste == "sub" or erste.startswith("-"):
+        return QTextCharFormat.AlignSubScript
+    return None
+
+
+def _farbe(wert: str | None, transparent_ok: bool = True) -> QBrush | None:
+    """Farbwert → Pinsel; ``None`` bei leerem, ungültigem (oder, wenn nicht erlaubt, „transparent“) Wert."""
+    if not wert or (not transparent_ok and wert == "transparent") or not QColor(wert).isValid():
+        return None
+    return QBrush(QColor(wert))
+
+
+def _schrift(cf: QTextCharFormat, p: dict[str, str], stile: _Stile) -> None:
     name = stile.schriften.get(p.get("style:font-name", ""), "") or p.get("fo:font-family", "").strip("'\"")
     if name:
         cf.setFontFamilies([name])
     groesse = _pt(p.get("fo:font-size"))
     if groesse:
         cf.setFontPointSize(groesse)
-    if p.get("fo:font-weight") in ("bold", "600", "700", "800", "900"):
+    if p.get("fo:font-weight") in _FETT:
         cf.setFontWeight(QFont.Bold)
     elif p.get("fo:font-weight") == "normal":
         cf.setFontWeight(QFont.Normal)
     if "fo:font-style" in p:
         cf.setFontItalic(p["fo:font-style"] in ("italic", "oblique"))
+
+
+def _zeichenformat(p: dict[str, str], stile: _Stile) -> QTextCharFormat:
+    cf = QTextCharFormat()
+    _schrift(cf, p, stile)
     if "style:text-underline-style" in p:
         cf.setFontUnderline(p["style:text-underline-style"] != "none")
     if "style:text-line-through-style" in p:
         cf.setFontStrikeOut(p["style:text-line-through-style"] != "none")
-    pos = p.get("style:text-position", "").split()
-    if pos:
-        if pos[0] == "super" or (pos[0].rstrip("%").lstrip("-").replace(".", "").isdigit() and not pos[0].startswith("-")
-                                 and pos[0].rstrip("%") not in ("0", "0.0")):
-            cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
-        elif pos[0] == "sub" or pos[0].startswith("-"):
-            cf.setVerticalAlignment(QTextCharFormat.AlignSubScript)
-    farbe = p.get("fo:color")
-    if farbe and QColor(farbe).isValid():
-        cf.setForeground(QBrush(QColor(farbe)))
-    hg = p.get("fo:background-color")
-    if hg and hg != "transparent" and QColor(hg).isValid():
-        cf.setBackground(QBrush(QColor(hg)))
+    lage = _lage(p.get("style:text-position", "").split())
+    if lage is not None:
+        cf.setVerticalAlignment(lage)
+    vorn = _farbe(p.get("fo:color"))
+    if vorn is not None:
+        cf.setForeground(vorn)
+    hinten = _farbe(p.get("fo:background-color"), transparent_ok=False)
+    if hinten is not None:
+        cf.setBackground(hinten)
     return cf
 
 

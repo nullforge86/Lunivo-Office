@@ -145,13 +145,9 @@ def _zeilen_laeufe(laeufe: list[dict]) -> list[list[dict]]:
 
 
 # ---- WordArt zeichnen ---------------------------------------------------------------------------------------------------
-def wordart_zeichnen(d: dict) -> QImage:
+def _wa_stil(d: dict, pt: float) -> tuple:
+    """Füllung, Kontur, Konturbreite und Schatten aus Vorlage und Objektangaben."""
     from lunivo_writer.editor.dokument import einfuegen as E
-    laeufe = anzeige_laeufe(d)
-    text = laeufe_text(laeufe) or " "
-    pt = float(d.get("pt", 36))
-    if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
-        return E.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", "#2f78bd"))
     _n, f1, f2, kontur, kb, schatten = E.WORDART_VORLAGEN[int(d["vorlage"])]
     if "fuell" in d:
         f1 = f2 = d["fuell"] or None
@@ -160,26 +156,38 @@ def wordart_zeichnen(d: dict) -> QImage:
         kb = float(d.get("kontur_breite", 1.5)) * 96 / 72 / max(1.0, pt / 36) if kontur else 0
     elif "kontur_breite" in d and kontur:
         kb = float(d["kontur_breite"]) * 96 / 72 / max(1.0, pt / 36)
+    return f1, f2, kontur, kb, schatten
 
-    def eff(r: dict) -> dict:                                          # das Format eines Laufs: seine eigenen Angaben vor denen des Objekts
-        return {k: r.get(k, d.get(k)) for k in ZEICHEN_SCHLUESSEL}
 
-    def schrift_von(e: dict) -> QFont:
-        f = QFont(e["schrift"] or "Liberation Sans"); f.setPointSizeF(float(e["pt"] or pt))
-        f.setBold(True if e["fett"] is None else bool(e["fett"])); f.setItalic(bool(e["kursiv"]))
-        if e["hoch"] or e["tief"]:
-            f.setPointSizeF(f.pointSizeF() * 0.6)
-        return f
+def _wa_format(d: dict, r: dict) -> dict:
+    """Das Format eines Laufs: seine eigenen Angaben vor denen des Objekts."""
+    return {k: r.get(k, d.get(k)) for k in ZEICHEN_SCHLUESSEL}
 
+
+def _wa_schrift(e: dict, pt: float) -> QFont:
+    f = QFont(e["schrift"] or "Liberation Sans"); f.setPointSizeF(float(e["pt"] or pt))
+    f.setBold(True if e["fett"] is None else bool(e["fett"])); f.setItalic(bool(e["kursiv"]))
+    if e["hoch"] or e["tief"]:
+        f.setPointSizeF(f.pointSizeF() * 0.6)
+    return f
+
+
+def _wa_segmente(d: dict, laeufe: list, pt: float) -> tuple:
+    """Je Zeile [(Text, Format, Schrift, Metrik)]; dazu die Listenmarken und das Grundformat."""
     zeilen = _zeilen_laeufe(laeufe) or [[]]
     marken = listenmarken(d.get("liste"), len(zeilen))
-    basis = eff({})
-    segmente = []                                                      # je Zeile: [(Text, Format, Schrift, Metrik)]
+    basis = _wa_format(d, {})
+    segmente = []
     for m_, zl in zip(marken, zeilen):
-        seg = ([(m_, basis)] if m_ else []) + [(r["t"], eff(r)) for r in zl]
-        segmente.append([(t, e, schrift_von(e), QFontMetricsF(schrift_von(e))) for t, e in seg])
+        seg = ([(m_, basis)] if m_ else []) + [(r["t"], _wa_format(d, r)) for r in zl]
+        segmente.append([(t, e, _wa_schrift(e, pt), QFontMetricsF(_wa_schrift(e, pt))) for t, e in seg])
+    return segmente, marken, basis
+
+
+def _wa_masse(d: dict, segmente: list, basis: dict, pt: float) -> dict:
+    """Zeilenhöhen, Grundlinien, Breiten und Bildgröße des WordArt-Bildes."""
     einzug = 24.0 * int(d.get("einzug") or 0)
-    fm0 = QFontMetricsF(schrift_von(basis))
+    fm0 = QFontMetricsF(_wa_schrift(basis, pt))
     hoehen = [max([m_[3].height() for m_ in sg] or [fm0.height()]) for sg in segmente]
     asz = [max([m_[3].ascent() for m_ in sg] or [fm0.ascent()]) for sg in segmente]
     faktor = float(d.get("zeilenabstand") or 1.0)
@@ -187,52 +195,72 @@ def wordart_zeichnen(d: dict) -> QImage:
     ys, y_ = [], 20.0
     for hh, aa in zip(hoehen, asz):
         ys.append(y_ + aa); y_ += hh * faktor
-    b, h = int(max(breiten)) + 40, int(y_ - (hoehen[-1] * faktor - hoehen[-1]) ) + 20
+    b, h = int(max(breiten)) + 40, int(y_ - (hoehen[-1] * faktor - hoehen[-1])) + 20
+    return {"einzug": einzug, "hoehen": hoehen, "asz": asz, "faktor": faktor, "breiten": breiten, "ys": ys, "b": b, "h": h}
+
+
+def _wa_effekte(d: dict) -> dict:
     ef = d.get("effekt") or {}
     if isinstance(ef, str):                                            # alte Schreibweise: Name
         ef = {({"schatten": "schatten", "spiegelung": "reflektion", "leuchten": "leuchten"}.get(ef.lower(), ef.lower())): {}}
-    spiegel = "reflektion" in ef
-    img = QImage(b * _SS, (h * 2 if spiegel else h) * _SS, QImage.Format_ARGB32)
-    img.fill(Qt.transparent)
-    p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing); p.scale(_SS, _SS)
-    gesamt = QPainterPath()
-    gruppen: dict[tuple, QPainterPath] = {}                           # nach Füllung und Kontur des Laufs
-    hervor: list[tuple[str, QPainterPath]] = []
-    linien: list[tuple] = []                                          # Unterstreichungen eigener Art/Farbe
-    ausr = d.get("ausr", "links")
-    for i, sg in enumerate(segmente):
-        x = {"mitte": (max(breiten) - breiten[i]) / 2, "rechts": max(breiten) - breiten[i]}.get(ausr, 0) + einzug
-        einzeln = len(sg) <= 1 or (len(sg) == 2 and bool(marken[i]))
-        woerter = (sg[-1][0].split(" ") if sg else [])
-        verteilen = ausr in ("block", "verteilt") and einzeln and len(woerter) > 1 and (ausr == "verteilt" or i < len(segmente) - 1)
-        xx = 20 + x
-        for t, e, f, fm in sg:
-            y = ys[i] + (-fm.height() * 0.35 if e["hoch"] else fm.height() * 0.2 if e["tief"] else 0)
-            teile = [t]
-            if verteilen and t is sg[-1][0]:
-                summe = sum(fm.horizontalAdvance(w_) for w_ in woerter)
-                luecke = (max(breiten) - einzug - summe - (fm.horizontalAdvance(sg[0][0]) if marken[i] else 0)) / (len(woerter) - 1)
-                teile = woerter
-            pf = QPainterPath()
-            x0 = xx
-            for w_ in teile:
-                pf.addText(xx, y, f, w_); xx += fm.horizontalAdvance(w_) + (luecke if verteilen and t is sg[-1][0] else 0)
-            breite_t = xx - x0
-            if e["unter"]:
-                art_u = e["unter"] if isinstance(e["unter"], str) else "einfach"
-                if art_u == "einfach" and not e["unterfarbe"]:
-                    pf.addRect(x0, y + fm.underlinePos() + 1, breite_t, max(1.0, fm.lineWidth()))
-                else:                                                # andere Linienart oder eigene Farbe: nach dem Text mit textfx gezeichnet
-                    linien.append((x0, x0 + breite_t, y, art_u, e["unterfarbe"] or e["fuell"] or f1 or "#000000", f.pointSizeF() * 96 / 72))
-            if e["durch"]:
-                pf.addRect(x0, y - fm.strikeOutPos(), breite_t, max(1.0, fm.lineWidth()))
-            if e["hervor"]:
-                hp = QPainterPath(); hp.addRect(x0, y - fm.ascent(), breite_t, fm.height()); hervor.append((e["hervor"], hp))
-            gesamt.addPath(pf)
-            kl = e["kontur"] if e["kontur"] is not None else kontur
-            fl = e["fuell"] if e["fuell"] is not None else None
-            gruppen.setdefault((fl, kl or None), QPainterPath()).addPath(pf)
+    return ef
+
+
+def _wa_verteilt(sg: list, marke, ausr: str, letzte: bool) -> bool:
+    einzeln = len(sg) <= 1 or (len(sg) == 2 and bool(marke))
+    woerter = (sg[-1][0].split(" ") if sg else [])
+    return ausr in ("block", "verteilt") and einzeln and len(woerter) > 1 and (ausr == "verteilt" or not letzte)
+
+
+def _wa_text_pfad(t: str, e: dict, f: QFont, fm: QFontMetricsF, xx: float, y: float, luecke) -> tuple:
+    """Pfad eines Laufs (bei `luecke` wortweise verteilt) und die Endposition."""
+    pf = QPainterPath()
+    for w_ in (t.split(" ") if luecke is not None else [t]):
+        pf.addText(xx, y, f, w_); xx += fm.horizontalAdvance(w_) + (luecke or 0)
+    return pf, xx
+
+
+def _wa_zeile(i: int, sg: list, ctx: dict, aus: tuple) -> None:
+    """Fügt die Pfade einer Zeile zu (gesamt, gruppen, hervor, linien) hinzu."""
+    gesamt, gruppen, hervor, linien = aus
+    breiten, einzug, marke = ctx["breiten"], ctx["einzug"], ctx["marken"][i]
+    ausr = ctx["ausr"]
+    x = {"mitte": (max(breiten) - breiten[i]) / 2, "rechts": max(breiten) - breiten[i]}.get(ausr, 0) + einzug
+    woerter = (sg[-1][0].split(" ") if sg else [])
+    verteilen = _wa_verteilt(sg, marke, ausr, i >= len(ctx["marken"]) - 1)
+    xx = 20 + x
+    for t, e, f, fm in sg:
+        y = ctx["ys"][i] + (-fm.height() * 0.35 if e["hoch"] else fm.height() * 0.2 if e["tief"] else 0)
+        luecke = None
+        if verteilen and t is sg[-1][0]:
+            summe = sum(fm.horizontalAdvance(w_) for w_ in woerter)
+            luecke = (max(breiten) - einzug - summe - (fm.horizontalAdvance(sg[0][0]) if marke else 0)) / (len(woerter) - 1)
+        x0 = xx
+        pf, xx = _wa_text_pfad(t, e, f, fm, xx, y, luecke)
+        _wa_dekoration(pf, e, f, fm, (x0, xx - x0, y), ctx["f1"], aus)
+        gesamt.addPath(pf)
+        kl = e["kontur"] if e["kontur"] is not None else ctx["kontur"]
+        gruppen.setdefault((e["fuell"], kl or None), QPainterPath()).addPath(pf)
+
+
+def _wa_dekoration(pf: QPainterPath, e: dict, f: QFont, fm: QFontMetricsF, lage: tuple, f1, aus: tuple) -> None:
+    """Unterstreichung, Durchstreichung und Hervorhebung eines Laufs."""
+    x0, breite_t, y = lage
+    _g, _gr, hervor, linien = aus
+    if e["unter"]:
+        art_u = e["unter"] if isinstance(e["unter"], str) else "einfach"
+        if art_u == "einfach" and not e["unterfarbe"]:
+            pf.addRect(x0, y + fm.underlinePos() + 1, breite_t, max(1.0, fm.lineWidth()))
+        else:                                                # andere Linienart oder eigene Farbe: nach dem Text mit textfx gezeichnet
+            linien.append((x0, x0 + breite_t, y, art_u, e["unterfarbe"] or e["fuell"] or f1 or "#000000", f.pointSizeF() * 96 / 72))
+    if e["durch"]:
+        pf.addRect(x0, y - fm.strikeOutPos(), breite_t, max(1.0, fm.lineWidth()))
+    if e["hervor"]:
+        hp = QPainterPath(); hp.addRect(x0, y - fm.ascent(), breite_t, fm.height()); hervor.append((e["hervor"], hp))
+
+
+def _wa_glut_schatten(p: QPainter, gesamt: QPainterPath, ef: dict, stil: tuple, pt: float) -> None:
+    f1, f2, kontur, schatten = stil
     if "leuchten" in ef:
         glut = QColor((ef["leuchten"] or {}).get("farbe") or f2 or kontur or "#4f93d1"); glut.setAlpha(60)
         for br in (14, 9, 5):
@@ -242,8 +270,10 @@ def wordart_zeichnen(d: dict) -> QImage:
     if schatten:
         dd = max(2.0, pt / 14)
         p.setPen(Qt.NoPen); p.setBrush(QColor(schatten)); p.translate(dd, dd); p.drawPath(gesamt); p.translate(-dd, -dd)
-    for farbe_h, hp in hervor:                                        # Texthervorhebung: Hintergrund hinter dem Text
-        p.setPen(Qt.NoPen); p.setBrush(QColor(farbe_h)); p.drawPath(hp)
+
+
+def _wa_fuellen(p: QPainter, gruppen: dict, stil: tuple, h: int, pt: float) -> None:
+    f1, f2, kb = stil
     for (fl, kl), pf in gruppen.items():
         if fl is not None:
             brush = QBrush(QColor(fl)) if fl else QBrush(Qt.NoBrush)
@@ -256,17 +286,51 @@ def wordart_zeichnen(d: dict) -> QImage:
         else:
             p.setPen(Qt.NoPen)
         p.setBrush(brush); p.drawPath(pf)
+
+
+def _wa_spiegeln(img: QImage, b: int, h: int) -> None:
+    """Spiegelbild unter das Bild setzen, nach unten verblassend."""
+    unten = img.copy(0, 0, b * _SS, h * _SS).mirrored(False, True)
+    q = QPainter(unten); q.setCompositionMode(QPainter.CompositionMode_DestinationIn)
+    g = QLinearGradient(0, 0, 0, h * _SS); g.setColorAt(0, QColor(0, 0, 0, 110)); g.setColorAt(0.6, QColor(0, 0, 0, 0))
+    q.fillRect(unten.rect(), g); q.end()
+    q = QPainter(img); q.drawImage(0, h * _SS, unten); q.end()
+
+
+def wordart_zeichnen(d: dict) -> QImage:
+    from lunivo_writer.editor.dokument import einfuegen as E
+    laeufe = anzeige_laeufe(d)
+    text = laeufe_text(laeufe) or " "
+    pt = float(d.get("pt", 36))
+    if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
+        return E.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", "#2f78bd"))
+    f1, f2, kontur, kb, schatten = _wa_stil(d, pt)
+    segmente, marken, basis = _wa_segmente(d, laeufe, pt)
+    m = _wa_masse(d, segmente, basis, pt)
+    b, h, faktor = m["b"], m["h"], m["faktor"]
+    ef = _wa_effekte(d)
+    spiegel = "reflektion" in ef
+    img = QImage(b * _SS, (h * 2 if spiegel else h) * _SS, QImage.Format_ARGB32)
+    img.fill(Qt.transparent)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing); p.scale(_SS, _SS)
+    aus = (QPainterPath(), {}, [], [])                                 # gesamt; Gruppen nach Füllung/Kontur; Hervorhebungen; eigene Linien
+    ctx = {**m, "marken": marken, "ausr": d.get("ausr", "links"), "kontur": kontur, "f1": f1}
+    for i, sg in enumerate(segmente):
+        _wa_zeile(i, sg, ctx, aus)
+    gesamt, gruppen, hervor, linien = aus
+    _wa_glut_schatten(p, gesamt, ef, (f1, f2, kontur, schatten), pt)
+    for farbe_h, hp in hervor:                                        # Texthervorhebung: Hintergrund hinter dem Text
+        p.setPen(Qt.NoPen); p.setBrush(QColor(farbe_h)); p.drawPath(hp)
+    _wa_fuellen(p, gruppen, (f1, f2, kb), h, pt)
     if linien:
         from lunivo_writer.editor.text.textfx import _unterstrich
         for x0_, x1_, y_u, art_u, farbe_u, px in linien:
             _unterstrich(p, [(x0_, x1_)], art_u, y_u, float(px), QColor(farbe_u))
     p.end()
-    if spiegel:                                                      # Spiegelbild darunter, nach unten verblassend
-        unten = img.copy(0, 0, b * _SS, h * _SS).mirrored(False, True)
-        q = QPainter(unten); q.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-        g = QLinearGradient(0, 0, 0, h * _SS); g.setColorAt(0, QColor(0, 0, 0, 110)); g.setColorAt(0.6, QColor(0, 0, 0, 0))
-        q.fillRect(unten.rect(), g); q.end()
-        q = QPainter(img); q.drawImage(0, h * _SS, unten); q.end()
+    if spiegel:
+        _wa_spiegeln(img, b, h)
+    ys, asz, hoehen = m["ys"], m["asz"], m["hoehen"]
     return richtung_anwenden(img, d.get("richtung"), [(int((ys[i] - asz[i]) * _SS), int(hoehen[i] * faktor * _SS)) for i in range(len(segmente))])
 
 
@@ -278,11 +342,26 @@ def _zeichenformat(d: dict, lauf: dict, vorlage, farbe_ueber: str | None = None)
     cf = QTextCharFormat()
     cf.setFontWeight(QFont.Bold if e["fett"] else QFont.Normal)
     cf.setFontItalic(bool(e["kursiv"])); cf.setFontUnderline(bool(e["unter"])); cf.setFontStrikeOut(bool(e["durch"]))
+    _zeichen_unterstrich(cf, e)
+    _zeichen_schrift(cf, e)
+    kontur = e["kontur"] if e["kontur"] is not None else (vorlage[3] if vorlage and "kontur" not in d else None)
+    if kontur:
+        cf.setTextOutline(QPen(QColor(kontur), float(d.get("kontur_breite", 0.75)) * 96 / 72))
+    _zeichen_farbe(cf, lauf, farbe_ueber)
+    return cf
+
+
+def _zeichen_unterstrich(cf, e: dict) -> None:
     if isinstance(e["unter"], str) and e["unter"]:
         from lunivo_writer.editor.text.unterstreichung import unter_format
         cf.merge(unter_format(e["unter"]))
     if e["unterfarbe"] and e["unter"]:
         cf.setUnderlineColor(QColor(e["unterfarbe"]))
+
+
+def _zeichen_schrift(cf, e: dict) -> None:
+    """Schriftart, Größe, Hoch-/Tiefstellung und Hervorhebung."""
+    from PySide6.QtGui import QTextCharFormat
     if e["schrift"]:
         cf.setFontFamilies([e["schrift"]])
     if e["pt"]:
@@ -293,14 +372,13 @@ def _zeichenformat(d: dict, lauf: dict, vorlage, farbe_ueber: str | None = None)
         cf.setVerticalAlignment(QTextCharFormat.AlignSubScript)
     if e["hervor"]:
         cf.setBackground(QColor(e["hervor"]))
-    kontur = e["kontur"] if e["kontur"] is not None else (vorlage[3] if vorlage and "kontur" not in d else None)
-    if kontur:
-        cf.setTextOutline(QPen(QColor(kontur), float(d.get("kontur_breite", 0.75)) * 96 / 72))
+
+
+def _zeichen_farbe(cf, lauf: dict, farbe_ueber: str | None) -> None:
     if farbe_ueber:
         cf.setForeground(QColor(farbe_ueber))
     elif "fuell" in lauf:
         cf.setForeground(QColor(lauf["fuell"]) if lauf["fuell"] else QColor(0, 0, 0, 0))
-    return cf
 
 
 def _textdoc(d: dict, laeufe: list[dict], b: float, h: float, farbe_ueber: str | None = None):

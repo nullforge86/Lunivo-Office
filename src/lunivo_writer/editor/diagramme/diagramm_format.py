@@ -391,25 +391,30 @@ def achse_anwenden(achse, opt: dict | None, wert: bool) -> None:
     if not opt:
         return
     if wert and hasattr(achse, "setRange"):
-        lo, hi = opt.get("min"), opt.get("max")
-        if lo is not None or hi is not None:
-            a = float(lo) if lo is not None else achse.min()
-            b = float(hi) if hi is not None else achse.max()
-            if b > a:
-                achse.setRange(a, b)
-        if opt.get("intervall") and hasattr(achse, "setTickInterval") and float(opt["intervall"]) > 0:
-            achse.setTickType(achse.TickType.TicksDynamic)
-            achse.setTickAnchor(achse.min()); achse.setTickInterval(float(opt["intervall"]))
-        neben = opt.get("neben")                                     # Nebenintervall → Anzahl der Hilfsstriche zwischen zwei Hauptstrichen
-        if neben and float(neben) > 0 and hasattr(achse, "setMinorTickCount"):
-            haupt = float(opt["intervall"]) if opt.get("intervall") else (achse.max() - achse.min()) / max(1, achse.tickCount() - 1)
-            achse.setMinorTickCount(max(0, int(round(haupt / float(neben))) - 1))
-        if opt.get("format") and hasattr(achse, "setLabelFormat"):   # QtCharts kennt nur printf-Muster („%.1f“, „%d“), keine Excel-Formatcodes
-            achse.setLabelFormat(str(opt["format"]))
+        _wertachse_anwenden(achse, opt)
     if opt.get("umkehren") and hasattr(achse, "setReverse"):
         achse.setReverse(True)
     if opt.get("beschriftung") == "keine":
         achse.setLabelsVisible(False)
+
+
+def _wertachse_anwenden(achse, opt: dict) -> None:
+    """Bereich, Hauptintervall, Nebenintervall und Zahlenmuster der Wertachse."""
+    lo, hi = opt.get("min"), opt.get("max")
+    if lo is not None or hi is not None:
+        a = float(lo) if lo is not None else achse.min()
+        b = float(hi) if hi is not None else achse.max()
+        if b > a:
+            achse.setRange(a, b)
+    if opt.get("intervall") and hasattr(achse, "setTickInterval") and float(opt["intervall"]) > 0:
+        achse.setTickType(achse.TickType.TicksDynamic)
+        achse.setTickAnchor(achse.min()); achse.setTickInterval(float(opt["intervall"]))
+    neben = opt.get("neben")                                     # Nebenintervall → Anzahl der Hilfsstriche zwischen zwei Hauptstrichen
+    if neben and float(neben) > 0 and hasattr(achse, "setMinorTickCount"):
+        haupt = float(opt["intervall"]) if opt.get("intervall") else (achse.max() - achse.min()) / max(1, achse.tickCount() - 1)
+        achse.setMinorTickCount(max(0, int(round(haupt / float(neben))) - 1))
+    if opt.get("format") and hasattr(achse, "setLabelFormat"):   # QtCharts kennt nur printf-Muster („%.1f“, „%d“), keine Excel-Formatcodes
+        achse.setLabelFormat(str(opt["format"]))
 
 
 def luecke_zu_breite(prozent: float) -> float:

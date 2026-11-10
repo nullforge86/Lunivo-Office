@@ -6,7 +6,8 @@ Werte und Meldungen sind dieselben wie beim Diagrammteil (Format wie ``teil_form
 """
 from __future__ import annotations
 
-from lunivo_writer.ui.baukasten.diagramme.diagramm_format_panel import DiagrammFormatPanel, DiagrammTextPanel
+from lunivo_writer.ui.baukasten.diagramme.diagramm_format_panel import DiagrammFormatPanel
+from lunivo_writer.ui.baukasten.diagramme.diagramm_text_panel import DiagrammTextPanel
 
 
 class SmartArtTextPanel(DiagrammTextPanel):

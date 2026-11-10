@@ -77,13 +77,10 @@ class _Rtf:
         return self.farben.index(n) + 1                   # Eintrag 0 ist „Automatisch“
 
     # ---- Zeichen ---------------------------------------------------------------------------------------------------------------
-    def zeichen(self, cf: QTextCharFormat) -> str:
-        teile = [r"\plain"]
-        fam = cf.fontFamilies() if hasattr(cf, "fontFamilies") else None
-        name = (fam[0] if isinstance(fam, (list, tuple)) and fam else None) or self.doc.defaultFont().family()
-        teile.append(f"\\f{self.schrift(name)}")
-        groesse = cf.fontPointSize() or self.doc.defaultFont().pointSizeF() or 11
-        teile.append(f"\\fs{round(groesse * 2)}")
+    @staticmethod
+    def _zeichen_stile(cf: QTextCharFormat) -> list[str]:
+        """Fett, kursiv, unterstrichen, durchgestrichen, hoch-/tiefgestellt."""
+        teile = []
         if cf.fontWeight() >= 600:
             teile.append(r"\b")
         if cf.fontItalic():
@@ -97,10 +94,25 @@ class _Rtf:
             teile.append(r"\super")
         elif va == QTextCharFormat.AlignSubScript:
             teile.append(r"\sub")
+        return teile
+
+    def _zeichen_farben(self, cf: QTextCharFormat) -> list[str]:
+        teile = []
         if cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().style() != Qt.NoBrush:
             teile.append(f"\\cf{self.farbe(cf.foreground().color())}")
         if cf.hasProperty(QTextFormat.BackgroundBrush) and cf.background().style() != Qt.NoBrush:
             teile.append(f"\\chcbpat{self.farbe(cf.background().color())}")
+        return teile
+
+    def zeichen(self, cf: QTextCharFormat) -> str:
+        teile = [r"\plain"]
+        fam = cf.fontFamilies() if hasattr(cf, "fontFamilies") else None
+        name = (fam[0] if isinstance(fam, (list, tuple)) and fam else None) or self.doc.defaultFont().family()
+        teile.append(f"\\f{self.schrift(name)}")
+        groesse = cf.fontPointSize() or self.doc.defaultFont().pointSizeF() or 11
+        teile.append(f"\\fs{round(groesse * 2)}")
+        teile += self._zeichen_stile(cf)
+        teile += self._zeichen_farben(cf)
         return "".join(teile) + " "
 
     def bild(self, cf: QTextCharFormat) -> str:
@@ -115,38 +127,34 @@ class _Rtf:
                 + _png(img).hex() + "}")
 
     # ---- Absätze ---------------------------------------------------------------------------------------------------------------
-    def absatz(self, block: QTextBlock, in_tabelle: bool = False) -> str:
-        bf = block.blockFormat()
-        teile = [r"\pard\plain"]
-        if in_tabelle:
-            teile.append(r"\intbl")
+    @staticmethod
+    def _ausrichtung(bf) -> str:
         a = bf.alignment()
         if a & Qt.AlignHCenter:
-            teile.append(r"\qc")
-        elif a & Qt.AlignRight:
-            teile.append(r"\qr")
-        elif a & Qt.AlignJustify:
-            teile.append(r"\qj")
+            return r"\qc"
+        if a & Qt.AlignRight:
+            return r"\qr"
+        if a & Qt.AlignJustify:
+            return r"\qj"
+        return r"\ql"
+
+    def _listen_praefix(self, block: QTextBlock, liste) -> tuple[float, str]:
+        """(zusätzlicher linker Einzug, RTF-Präfix) für einen Listenpunkt."""
+        lf = liste.format()
+        links = max(1, lf.indent()) * self.doc.indentWidth()
+        stil = lf.style()
+        if stil in (QTextListFormat.ListDisc, QTextListFormat.ListCircle, QTextListFormat.ListSquare):
+            zeichen = {QTextListFormat.ListDisc: "•", QTextListFormat.ListCircle: "◦", QTextListFormat.ListSquare: "▪"}[stil]
         else:
-            teile.append(r"\ql")
-        links = bf.leftMargin() + bf.indent() * self.doc.indentWidth()
-        liste = block.textList()
-        praefix = ""
-        if liste is not None:
-            lf = liste.format()
-            links += max(1, lf.indent()) * self.doc.indentWidth()
-            stil = lf.style()
-            if stil in (QTextListFormat.ListDisc, QTextListFormat.ListCircle, QTextListFormat.ListSquare):
-                zeichen = {QTextListFormat.ListDisc: "•", QTextListFormat.ListCircle: "◦", QTextListFormat.ListSquare: "▪"}[stil]
-            else:
-                zeichen = liste.itemText(block) or f"{liste.itemNumber(block) + 1}."
-            # \pntext ist der angezeigte Listentext (für Leser ohne Listen), \pn die Liste selbst (Word und andere)
-            art = r"\pnlvlblt{\pntxtb " + _text(zeichen) + "}" if zeichen in "\u2022\u25e6\u25aa" else (
-                r"\pnlvlbody\pndec\pnstart1{\pntxta .}")
-            praefix = "{\\pntext " + _text(zeichen) + r"\tab}{\*\pn" + art + "}"
-            teile.append(f"\\fi-{_px(self.doc.indentWidth() * 0.6)}")
-        elif bf.textIndent():
-            teile.append(f"\\fi{_px(bf.textIndent())}")
+            zeichen = liste.itemText(block) or f"{liste.itemNumber(block) + 1}."
+        # \pntext ist der angezeigte Listentext (für Leser ohne Listen), \pn die Liste selbst (Word und andere)
+        art = r"\pnlvlblt{\pntxtb " + _text(zeichen) + "}" if zeichen in "\u2022\u25e6\u25aa" else (
+            r"\pnlvlbody\pndec\pnstart1{\pntxta .}")
+        return links, "{\\pntext " + _text(zeichen) + r"\tab}{\*\pn" + art + "}"
+
+    def _absatz_abstaende(self, bf, links: float) -> list[str]:
+        """Einzüge, Abstände, Seitenumbruch und Gliederungsebene."""
+        teile = []
         if links:
             teile.append(f"\\li{_px(links)}")
         if bf.rightMargin():
@@ -160,6 +168,24 @@ class _Rtf:
         stufe = bf.headingLevel()
         if 1 <= stufe <= 9:
             teile.append(f"\\s{stufe}\\outlinelevel{stufe - 1}")
+        return teile
+
+    def absatz(self, block: QTextBlock, in_tabelle: bool = False) -> str:
+        bf = block.blockFormat()
+        teile = [r"\pard\plain"]
+        if in_tabelle:
+            teile.append(r"\intbl")
+        teile.append(self._ausrichtung(bf))
+        links = bf.leftMargin() + bf.indent() * self.doc.indentWidth()
+        liste = block.textList()
+        praefix = ""
+        if liste is not None:
+            mehr, praefix = self._listen_praefix(block, liste)
+            links += mehr
+            teile.append(f"\\fi-{_px(self.doc.indentWidth() * 0.6)}")
+        elif bf.textIndent():
+            teile.append(f"\\fi{_px(bf.textIndent())}")
+        teile += self._absatz_abstaende(bf, links)
         out = ["".join(teile) + " " + praefix]
         it = block.begin()
         while not it.atEnd():
@@ -172,38 +198,46 @@ class _Rtf:
             it += 1
         return "".join(out)
 
+    def _zeilenkopf(self, t: QTextTable, r: int, breite: int) -> str:
+        """Zeilenanfang mit Spaltengrenzen und Zellverbindungen."""
+        spalten = t.columns()
+        kopf = [r"\trowd\trgaph108"]
+        for c in range(spalten):
+            zelle = t.cellAt(r, c)
+            z0, s0 = zelle.row(), zelle.column()
+            breit, hoch = spannweite(t, z0, s0)
+            if (z0, s0) == (r, c):
+                kopf.append((r"\clmgf" if breit > 1 else "") + (r"\clvmgf" if hoch > 1 else ""))
+            else:
+                kopf.append((r"\clmrg" if s0 < c else "") + (r"\clvmrg" if z0 < r else ""))
+            kopf.append(r"\clbrdrt\brdrs\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs" + f"\\cellx{round(breite * (c + 1) / spalten)}")
+        return "".join(kopf)
+
+    def _zelle(self, zelle) -> str:
+        """Inhalt einer Ursprungszelle als RTF (Absätze, verschachtelte Tabellen als Text)."""
+        absaetze = []
+        it = zelle.begin()
+        while not it.atEnd():
+            fr, blk = it.currentFrame(), it.currentBlock()
+            if fr is not None:
+                self._warn("Verschachtelte Tabellen werden in RTF als Text in der Zelle gespeichert.")
+                absaetze.extend(self.absatz(b, True) for b in _bloecke(fr))
+            elif blk.isValid():
+                absaetze.append(self.absatz(blk, True))
+            it += 1
+        return r"\par ".join(absaetze) + r"\cell "
+
     def tabelle(self, t: QTextTable) -> str:
-        zeilen, spalten = t.rows(), t.columns()
         breite = _mm(self.page.width_mm - self.page.margin_left_mm - self.page.margin_right_mm)
         out = []
-        for r in range(zeilen):
-            kopf = [r"\trowd\trgaph108"]
-            for c in range(spalten):
-                zelle = t.cellAt(r, c)
-                z0, s0 = zelle.row(), zelle.column()
-                breit, hoch = spannweite(t, z0, s0)
-                if (z0, s0) == (r, c):
-                    kopf.append((r"\clmgf" if breit > 1 else "") + (r"\clvmgf" if hoch > 1 else ""))
-                else:
-                    kopf.append((r"\clmrg" if s0 < c else "") + (r"\clvmrg" if z0 < r else ""))
-                kopf.append(r"\clbrdrt\brdrs\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs" + f"\\cellx{round(breite * (c + 1) / spalten)}")
-            out.append("".join(kopf))
-            for c in range(spalten):
+        for r in range(t.rows()):
+            out.append(self._zeilenkopf(t, r, breite))
+            for c in range(t.columns()):
                 zelle = t.cellAt(r, c)
                 if (zelle.row(), zelle.column()) != (r, c):           # verbunden: Inhalt steht in der Ursprungszelle
                     out.append(r"\pard\intbl\cell ")
-                    continue
-                absaetze = []
-                it = zelle.begin()
-                while not it.atEnd():
-                    fr, blk = it.currentFrame(), it.currentBlock()
-                    if fr is not None:
-                        self._warn("Verschachtelte Tabellen werden in RTF als Text in der Zelle gespeichert.")
-                        absaetze.extend(self.absatz(b, True) for b in _bloecke(fr))
-                    elif blk.isValid():
-                        absaetze.append(self.absatz(blk, True))
-                    it += 1
-                out.append(r"\par ".join(absaetze) + r"\cell ")
+                else:
+                    out.append(self._zelle(zelle))
             out.append(r"\row ")
         return "\n".join(out)
 
@@ -234,14 +268,8 @@ class _Rtf:
             zeilen.append(t)
         return ("{\\" + art + r"\pard\plain" + _AUSRICHTUNG.get(ausrichtung(hf.align, seite), r"\qc") + " " + r"\par ".join(zeilen) + r"\par}" + "\n")
 
-    def run(self) -> bytes:
-        teile = self.rahmen(self.doc.rootFrame())
-        koerper = []
-        for i, (art, inhalt) in enumerate(teile):
-            koerper.append(inhalt)
-            letzter = i == len(teile) - 1
-            if art == "ABSATZ" and not letzter:
-                koerper.append(r"\par" + "\n")
+    def _seite_rtf(self) -> str:
+        """Seitengröße, Ränder, Nummernformat und Startnummer."""
         p = self.page
         seite = (f"\\paperw{_mm(p.width_mm)}\\paperh{_mm(p.height_mm)}\\margl{_mm(p.margin_left_mm)}\\margr{_mm(p.margin_right_mm)}"
                  f"\\margt{_mm(p.margin_top_mm)}\\margb{_mm(p.margin_bottom_mm)}\\headery{_mm(p.kopf_abstand_mm)}"
@@ -250,8 +278,12 @@ class _Rtf:
         seite += {"klein": r"\pgnlcltr", "gross": r"\pgnucltr", "roem_klein": r"\pgnlcrm", "roem_gross": r"\pgnucrm"}.get(p.seiten_format, "")
         if p.seiten_start:
             seite += f"\\pgnstarts{int(p.seiten_start)}\\pgnrestart"
+        return seite
+
+    def _kopf_rtf(self, seite: str) -> tuple:
+        """→ (Seitenangaben, Kopf- und Fußzeilen); bei „außen/innen“ rechte (ungerade) und linke (gerade) Seiten getrennt."""
+        p = self.page
         if any(h.align in ("aussen", "innen") and not h.is_empty() for h in (p.header, p.footer)):
-            # rechte (ungerade) und linke (gerade) Seiten getrennt
             seite = r"\facingp" + seite
             kopf = (self.kopf_fuss("headerr", p.header) + self.kopf_fuss("headerl", p.header, 2)
                     + self.kopf_fuss("footerr", p.footer) + self.kopf_fuss("footerl", p.footer, 2))
@@ -259,9 +291,24 @@ class _Rtf:
             kopf = self.kopf_fuss("header", p.header) + self.kopf_fuss("footer", p.footer)
         if p.diff_first:
             kopf += self.kopf_fuss("headerf", p.first_header) + self.kopf_fuss("footerf", p.first_footer)
+        return seite, kopf
+
+    def _tabellen_rtf(self) -> tuple:
+        """→ (Schriftentabelle, Farbtabelle, Überschriftenstile)."""
         schriften = "".join(f"{{\\f{i}\\fnil\\fcharset0 {_text(n)};}}" for i, n in enumerate(self.schriften or ["Liberation Sans"]))
         farben = ";" + "".join(f"\\red{int(c[1:3], 16)}\\green{int(c[3:5], 16)}\\blue{int(c[5:7], 16)};" for c in self.farben)
         stile = "".join(f"{{\\s{n}\\outlinelevel{n - 1} heading {n};}}" for n in range(1, 10))
+        return schriften, farben, stile
+
+    def run(self) -> bytes:
+        teile = self.rahmen(self.doc.rootFrame())
+        koerper = []
+        for i, (art, inhalt) in enumerate(teile):
+            koerper.append(inhalt)
+            if art == "ABSATZ" and i != len(teile) - 1:
+                koerper.append(r"\par" + "\n")
+        seite, kopf = self._kopf_rtf(self._seite_rtf())
+        schriften, farben, stile = self._tabellen_rtf()
         text = (r"{\rtf1\ansi\ansicpg1252\uc1\deff0" + "\n"
                 + "{\\fonttbl" + schriften + "}\n{\\colortbl" + farben + "}\n{\\stylesheet{\\s0 Normal;}" + stile + "}\n"
                 + "{\\*\\generator Lunivo Writer;}" + seite + "\n" + kopf + "".join(koerper) + "\n}")

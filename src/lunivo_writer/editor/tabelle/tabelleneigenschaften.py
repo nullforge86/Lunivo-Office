@@ -86,41 +86,25 @@ def optionen_setzen(t, *, kopf=None, streifen=None, spalte=None, vorlage=None) -
     t.setFormat(f)
 
 
-def zellen_loeschen(t, c, art: str) -> str | None:
-    """„Zellen löschen“ für die Zelle bzw. die markierten Zellen: ``art`` = ``zeile``, ``spalte``, ``links`` (Zellen rechts davon rücken
-    nach links) oder ``oben`` (Zellen darunter rücken nach oben). Bei „links“/„oben“ wird der Inhalt (QTextDocumentFragment je Zelle)
-    nach vorn kopiert und die letzten Zellen werden geleert. Ein Rückgängig-Schritt.
-
-    Rückgabe: ``None`` bei Erfolg, sonst ein Meldetext (verbundene Zellen im Weg, letzte Zeile/Spalte, unbekannte Art)."""
-    z = t.cellAt(c)
-    if not z.isValid():
-        return "Die Schreibmarke steht in keiner Tabellenzelle."
+def _loesch_bereich(t, c, z) -> tuple[int, int, int, int]:
+    """(erste Zeile, Zeilenzahl, erste Spalte, Spaltenzahl) der markierten Zellen, sonst der einen Zelle."""
     if c.hasSelection():
         r0, nr, s0, ns = c.selectedTableCells()
-        if nr <= 0 or ns <= 0:
-            r0, nr, s0, ns = z.row(), 1, z.column(), 1
-    else:
-        r0, nr, s0, ns = z.row(), 1, z.column(), 1
-    if art in ("zeile", "spalte"):
-        if art == "zeile" and t.rows() > nr:
-            c.beginEditBlock(); t.removeRows(r0, nr); c.endEditBlock(); return None
-        if art == "spalte" and t.columns() > ns:
-            c.beginEditBlock(); t.removeColumns(s0, ns); c.endEditBlock(); return None
-        return "Die letzte Zeile bzw. Spalte kann so nicht gelöscht werden; verwenden Sie „Tabelle löschen“."
-    if art not in ("links", "oben"):
-        return "Unbekannte Art des Löschens."
-    waagrecht = art == "links"
-    # Alle Zellen der betroffenen Zeilen (links) bzw. Spalten (oben) ab dem Löschbereich müssen einfache Zellen sein
-    linien = range(r0, r0 + nr) if waagrecht else range(s0, s0 + ns)
-    laenge = t.columns() if waagrecht else t.rows()
-    start = s0 if waagrecht else r0
-    schritt = ns if waagrecht else nr
-    for ln in linien:
-        for j in range(start, laenge):
-            x = t.cellAt(ln, j) if waagrecht else t.cellAt(j, ln)
-            if x.rowSpan() > 1 or x.columnSpan() > 1:
-                return "Verbundene Zellen sind im Weg; die Zellen können nicht verschoben werden."
+        if nr > 0 and ns > 0:
+            return r0, nr, s0, ns
+    return z.row(), 1, z.column(), 1
 
+
+def _zeile_spalte_loeschen(t, c, art: str, r0: int, nr: int, s0: int, ns: int) -> str | None:
+    if art == "zeile" and t.rows() > nr:
+        c.beginEditBlock(); t.removeRows(r0, nr); c.endEditBlock(); return None
+    if art == "spalte" and t.columns() > ns:
+        c.beginEditBlock(); t.removeColumns(s0, ns); c.endEditBlock(); return None
+    return "Die letzte Zeile bzw. Spalte kann so nicht gelöscht werden; verwenden Sie „Tabelle löschen“."
+
+
+def _zellen_verschieben(t, c, waagrecht: bool, linien, start: int, laenge: int, schritt: int) -> None:
+    """Inhalt der Zellen ab ``start`` um ``schritt`` nach vorn kopieren, die letzten Zellen leeren (ein Rückgängig-Schritt)."""
     def zelle(ln, j):
         return t.cellAt(ln, j) if waagrecht else t.cellAt(j, ln)
 
@@ -141,6 +125,34 @@ def zellen_loeschen(t, c, art: str) -> str | None:
                     cur.removeSelectedText()
     finally:
         c.endEditBlock()
+
+
+def zellen_loeschen(t, c, art: str) -> str | None:
+    """„Zellen löschen“ für die Zelle bzw. die markierten Zellen: ``art`` = ``zeile``, ``spalte``, ``links`` (Zellen rechts davon rücken
+    nach links) oder ``oben`` (Zellen darunter rücken nach oben). Bei „links“/„oben“ wird der Inhalt (QTextDocumentFragment je Zelle)
+    nach vorn kopiert und die letzten Zellen werden geleert. Ein Rückgängig-Schritt.
+
+    Rückgabe: ``None`` bei Erfolg, sonst ein Meldetext (verbundene Zellen im Weg, letzte Zeile/Spalte, unbekannte Art)."""
+    z = t.cellAt(c)
+    if not z.isValid():
+        return "Die Schreibmarke steht in keiner Tabellenzelle."
+    r0, nr, s0, ns = _loesch_bereich(t, c, z)
+    if art in ("zeile", "spalte"):
+        return _zeile_spalte_loeschen(t, c, art, r0, nr, s0, ns)
+    if art not in ("links", "oben"):
+        return "Unbekannte Art des Löschens."
+    waagrecht = art == "links"
+    # Alle Zellen der betroffenen Zeilen (links) bzw. Spalten (oben) ab dem Löschbereich müssen einfache Zellen sein
+    linien = range(r0, r0 + nr) if waagrecht else range(s0, s0 + ns)
+    laenge = t.columns() if waagrecht else t.rows()
+    start = s0 if waagrecht else r0
+    schritt = ns if waagrecht else nr
+    for ln in linien:
+        for j in range(start, laenge):
+            x = t.cellAt(ln, j) if waagrecht else t.cellAt(j, ln)
+            if x.rowSpan() > 1 or x.columnSpan() > 1:
+                return "Verbundene Zellen sind im Weg; die Zellen können nicht verschoben werden."
+    _zellen_verschieben(t, c, waagrecht, linien, start, laenge, schritt)
     return None
 
 

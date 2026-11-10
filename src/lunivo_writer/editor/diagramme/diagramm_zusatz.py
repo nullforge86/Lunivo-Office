@@ -12,6 +12,9 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetricsF, QPainter, QPen
 
+from . import diagramm_reihen as R
+from .diagramm_typen import hat_linien
+
 ELEMENTE = ("achsen", "achsentitel", "titel", "datenbeschriftung", "datentabelle", "fehlerindikatoren", "gitter", "legende", "trendlinie")
 ELEMENT_NAMEN = {"achsen": "Achsen", "achsentitel": "Achsentitel", "titel": "Diagrammtitel", "datenbeschriftung": "Datenbeschriftungen",
                  "datentabelle": "Datentabelle", "fehlerindikatoren": "Fehlerindikatoren", "gitter": "Gitternetzlinien", "legende": "Legende",
@@ -68,6 +71,12 @@ def hintergruende(p: QPainter, geo: dict, tf: dict, grund: QColor | None = None)
             F.flaeche_zeichnen(p, r, fmt.get("fuell"))
         else:
             F.teil_zeichnen(p, r, fmt, grund)
+    _reihen_effekte(p, geo, tf, grund)
+
+
+def _reihen_effekte(p: QPainter, geo: dict, tf: dict, grund: QColor) -> None:
+    """Effekte, die hinter den Balken einer Reihe liegen (Schatten u. ä.)."""
+    from . import diagramm_format as F
     for schl, fmt in tf.items():
         if schl.startswith("reihe_") and F.fx_normal(fmt):
             farbe = QColor(F.hauptfarbe(fmt.get("fuell")) or "#4a8fd8")
@@ -127,3 +136,52 @@ def tabelle(p: QPainter, r: QRectF, kategorien: list[str], namen: list[str], wer
         for j in range(len(kategorien)):
             if j < len(werte[i]):
                 p.drawText(QRectF(r.left() + namens_b + j * sb, y, sb, TABELLE_ZEILE), Qt.AlignCenter, f"{werte[i][j]:g}")
+
+
+def text_fuer(tf: dict, teil: str) -> dict:
+    """Das Textformat eines Teils: die Angaben des Diagrammbereichs gelten für alle, der Teil überschreibt sie."""
+    basis = (tf.get("diagrammbereich") or {}).get("text") or {}
+    return {**basis, **((tf.get(teil) or {}).get("text") or {})}
+
+
+def eigene_texte(p, ch, g: dict, tf: dict, titel: str, standard: str, legende_an: bool) -> None:
+    """Titel und Legende mit Textfüllung (Verlauf, Keine), Kontur und Effekten: QtCharts zeichnet sie durchsichtig, hier kommt der Text selbst darüber."""
+    from . import diagramm_format as F
+    from . import diagramm_geo as G
+    t = text_fuer(tf, "titel")
+    if titel and "titel" in g and F.text_eigen(t):
+        F.text_zeichnen(p, F.text_feld(g["titel"], t), titel, ch.titleFont(), t, standard, True)
+    tl = text_fuer(tf, "legende")
+    marken = [m for m in ch.legend().markers() if m.isVisible()]
+    if legende_an and F.text_eigen(tl):
+        for k, ((_e, tr), m) in enumerate(zip(G.legenden_items(ch), marken)):
+            te = {**tl, **((tf.get(f"legendeneintrag_{k}") or {}).get("text") or {})}
+            F.text_zeichnen(p, tr.adjusted(4, 2, -4, -2), m.label(), F.schrift_aus(ch.legend().font(), te), te, standard)
+
+
+def _pfeil_linie(tf: dict, nr: int) -> dict:
+    return (tf.get(f"reihe_{nr}") or {}).get("linie") or {}
+
+
+def pfeile(p, ch, u: str, kategorien, werte, namen, nummern, tf: dict) -> None:
+    """Pfeile und Linienenden an Linien- und Kurvenreihen (``linie.pfeil_anfang`` / ``pfeil_ende``)."""
+    if not (hat_linien(u) and namen):
+        return
+    wollen = [nr for nr in nummern if _pfeil_linie(tf, nr).get("pfeil_anfang", "keiner") != "keiner"
+              or _pfeil_linie(tf, nr).get("pfeil_ende", "keiner") != "keiner"]
+    if not wollen:
+        return
+    from . import diagramm_format as F
+    from . import diagramm_geo as G
+    pts = G.punkte(ch, u, kategorien, werte, namen)
+    for k, nr in enumerate(nummern):
+        lin = _pfeil_linie(tf, nr)
+        if nr not in wollen or k >= len(pts) or len(pts[k]) < 2:
+            continue
+        farbe = QColor(lin.get("farbe") or R.farbe(k).name())
+        farbe.setAlphaF(max(0.0, min(1.0, 1.0 - float(lin.get("transparenz", 0) or 0) / 100.0)))
+        br, (gr_a, gr_e) = float(lin.get("breite", 2.5)), F.pfeil_groessen(lin)
+        a, b2, y, z = pts[k][0], pts[k][1], pts[k][-1], pts[k][-2]
+        F.pfeil_zeichnen(p, QPointF(a[0], a[1]), QPointF(b2[0], b2[1]), lin.get("pfeil_anfang", "keiner"), br, gr_a, farbe)
+        F.pfeil_zeichnen(p, QPointF(y[0], y[1]), QPointF(z[0], z[1]), lin.get("pfeil_ende", "keiner"), br, gr_e, farbe)
+

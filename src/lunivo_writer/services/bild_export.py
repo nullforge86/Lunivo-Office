@@ -66,25 +66,34 @@ def _speichern(img: QImage, pfad: str, fmt: str) -> None:
 
 def bilder_schreiben(doc, page, noten, name: str, wahl: BildWahl) -> list[str]:
     """Schreibt die Bilder nach ``wahl.ordner``. → die geschriebenen Dateien."""
-    from lunivo_writer.editor.seite.pagination import seiten_bilder, seitenzahl
     endung = FORMATE[wahl.format][0]
     stamm = os.path.join(wahl.ordner, os.path.splitext(os.path.basename(name))[0] or "Dokument")
     faktor = wahl.dpi / 96
     if not wahl.lang:
-        bilder = seiten_bilder(doc, page, noten, faktor)
-        erstes = next(bilder, None)
-        if erstes is None:
-            return []
-        zweites = next(bilder, None)
-        mehrere = zweites is not None
-        geschrieben = []
-        for i, img, _ps in (b for teil in ((erstes, zweites), bilder) for b in teil if b is not None):
-            wasserzeichen(img, wahl.wasserzeichen)
-            pfad = _frei(f"{stamm}-{i}.{endung}" if mehrere else f"{stamm}.{endung}")
-            _speichern(img, pfad, wahl.format)
-            geschrieben.append(pfad)
-        return geschrieben
-    # Langes Bild: zuerst die Höhe abschätzen, damit es nicht zu groß für das Bildformat wird
+        return _seitenbilder_schreiben(doc, page, noten, stamm, endung, faktor, wahl)
+    return _langes_bild_schreiben(doc, page, noten, stamm, endung, faktor, wahl)
+
+
+def _seitenbilder_schreiben(doc, page, noten, stamm: str, endung: str, faktor: float, wahl: BildWahl) -> list[str]:
+    from lunivo_writer.editor.seite.pagination import seiten_bilder
+    bilder = seiten_bilder(doc, page, noten, faktor)
+    erstes = next(bilder, None)
+    if erstes is None:
+        return []
+    zweites = next(bilder, None)
+    mehrere = zweites is not None
+    geschrieben = []
+    for i, img, _ps in (b for teil in ((erstes, zweites), bilder) for b in teil if b is not None):
+        wasserzeichen(img, wahl.wasserzeichen)
+        pfad = _frei(f"{stamm}-{i}.{endung}" if mehrere else f"{stamm}.{endung}")
+        _speichern(img, pfad, wahl.format)
+        geschrieben.append(pfad)
+    return geschrieben
+
+
+def _langes_bild_schreiben(doc, page, noten, stamm: str, endung: str, faktor: float, wahl: BildWahl) -> list[str]:
+    """Langes Bild: zuerst die Höhe abschätzen, damit es nicht zu groß für das Bildformat wird."""
+    from lunivo_writer.editor.seite.pagination import seiten_bilder, seitenzahl
     from lunivo_writer.models.page import mm_to_px
     n = max(1, seitenzahl(doc, page, noten))
     hoehe = n * (mm_to_px(page.height_mm) + LUECKE_PX) * faktor

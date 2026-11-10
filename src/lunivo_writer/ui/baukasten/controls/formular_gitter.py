@@ -434,7 +434,26 @@ class FormularGitter(QLayout):
         """→ ([(Element, x, y, Breite, Höhe)], Gesamthöhe) bei dieser Breite."""
         self._gleich_hoch()
         einheiten = [e for e in self._einheiten if not e.f.isEmpty()]            # ausgeblendete Felder (und Feldgruppen) lassen keinen Abstand stehen
-        paare = [e for e in einheiten if e.b is not None]
+        bw, spalten, gestapelt = self._spaltenmass([e for e in einheiten if e.b is not None], breite)
+        out, y = [], 0
+        i = 0
+        n = len(einheiten)
+        while i < n:
+            e = einheiten[i]
+            if e.reihe is not None:
+                y = self._reihe_legen(e, breite, y, out); i += 1
+            elif e.b is None:                                                     # breites Element: eine ganze Zeile
+                y, i = self._breit_legen(einheiten, i, breite, y, out)
+            else:
+                zeile = [e]
+                while spalten == 2 and len(zeile) < 2 and i + len(zeile) < n and einheiten[i + len(zeile)].b is not None:
+                    zeile.append(einheiten[i + len(zeile)])
+                y = self._paarzeile_legen(zeile, (breite, bw, gestapelt), y, out)
+                i += len(zeile)
+        return out, max(0, y - self.zeilenabstand)
+
+    def _spaltenmass(self, paare: list, breite: int) -> tuple:
+        """→ (Breite der Beschriftungen, Spaltenzahl, Beschriftung darüber?)."""
         bw = max((_natuerlich(e.b) for e in paare), default=0)                    # Breite der Beschriftungen
         fw = max((_natuerlich(e.f) for e in paare), default=0)                    # Breite, die ein Feld gern hätte
         wunsch = bw + self.beschriftungsabstand + fw
@@ -444,59 +463,55 @@ class FormularGitter(QLayout):
             gestapelt = breite < self.feldbreite + self.beschriftungsabstand + 90
             spalten = 1
             bw = max(0, breite - self.feldbreite - self.beschriftungsabstand)
-        out, y = [], 0
-        i = 0
-        n = len(einheiten)
-        while i < n:
-            e = einheiten[i]
-            if e.reihe is not None:
-                y = self._reihe_legen(e, breite, y, out); i += 1
-                continue
-            if e.b is None:                                                       # breites Element: eine ganze Zeile
-                if self._kurz(e, breite):                                         # kurze Einzelelemente (Ankreuzfeld, Option, Knopf) stehen zu zweit/zu dritt nebeneinander
-                    for n_sp in (3, 2):
-                        gruppe = einheiten[i:i + n_sp]
-                        cw = (breite - (n_sp - 1) * SPALTEN_ABSTAND) // n_sp
-                        if len(gruppe) == n_sp and all(g.reihe is None and g.b is None and self._kurz(g, breite) and _natuerlich(g.f) <= cw for g in gruppe):
-                            h = max(_hoehe_bei(g.f, cw) for g in gruppe)
-                            for k, g in enumerate(gruppe):
-                                out.append((g.f, k * (cw + SPALTEN_ABSTAND), y, cw, h))
-                            y += h + self.zeilenabstand; i += n_sp
-                            break
-                    else:
-                        h = _hoehe_bei(e.f, breite)
-                        out.append((e.f, 0, y, breite, h)); y += h + self.zeilenabstand; i += 1
-                    continue
-                h = _hoehe_bei(e.f, breite)
-                out.append((e.f, 0, y, breite, h)); y += h + self.zeilenabstand; i += 1
-                continue
-            zeile = [e]
-            while spalten == 2 and len(zeile) < 2 and i + len(zeile) < n and einheiten[i + len(zeile)].b is not None:
-                zeile.append(einheiten[i + len(zeile)])
-            sp = (breite - (len(zeile) - 1) * SPALTEN_ABSTAND) // len(zeile) if len(zeile) > 1 else breite
-            hmax = 0
-            plaetze = []
-            for k, u in enumerate(zeile):
-                x0 = k * (sp + SPALTEN_ABSTAND)
-                if gestapelt:
-                    hb = u.b.sizeHint().height()
-                    hf = _hoehe_bei(u.f, sp)
-                    plaetze.append((u.b, x0, 0, sp, hb)); plaetze.append((u.f, x0, hb + 2, sp, hf)); hmax = max(hmax, hb + 2 + hf)
-                else:
-                    fb = self.feldbreite if self.feldbreite else max(40, sp - bw - self.beschriftungsabstand)
-                    hf = _hoehe_bei(u.f, fb)
-                    if self.feldbreite and einzeilig(u.f) and not ist_dropdown(u.f.widget()):
-                        u.f.widget().setFixedHeight(FELDHOEHE); hf = FELDHOEHE
-                    hb = u.b.sizeHint().height()
-                    h = max(hb, hf)
-                    bb = min(bw, _natuerlich(u.b)) if self.beschriftung_natuerlich else bw
-                    plaetze.append((u.b, x0, 0, bb, h) if self.beschriftung_voll else (u.b, x0, (h - hb) // 2, bb, hb))
-                    plaetze.append((u.f, x0 + sp - fb if self.feldbreite else x0 + bw + self.beschriftungsabstand, 0, fb, hf)); hmax = max(hmax, h)
-            for it, x, dy, w, h in plaetze:
-                out.append((it, x, y + dy, w, h))
-            y += hmax + self.zeilenabstand
-            i += len(zeile)
-        return out, max(0, y - self.zeilenabstand)
+        return bw, spalten, gestapelt
+
+    def _breit_legen(self, einheiten: list, i: int, breite: int, y: int, out: list) -> tuple:
+        """Ein Element ohne Beschriftung; kurze Einzelelemente (Ankreuzfeld, Option, Knopf) stehen zu zweit/zu dritt nebeneinander. → (y, i)."""
+        e = einheiten[i]
+        if self._kurz(e, breite):
+            for n_sp in (3, 2):
+                gruppe = einheiten[i:i + n_sp]
+                cw = (breite - (n_sp - 1) * SPALTEN_ABSTAND) // n_sp
+                if len(gruppe) == n_sp and all(g.reihe is None and g.b is None and self._kurz(g, breite) and _natuerlich(g.f) <= cw for g in gruppe):
+                    h = max(_hoehe_bei(g.f, cw) for g in gruppe)
+                    for k, g in enumerate(gruppe):
+                        out.append((g.f, k * (cw + SPALTEN_ABSTAND), y, cw, h))
+                    return y + h + self.zeilenabstand, i + n_sp
+        h = _hoehe_bei(e.f, breite)
+        out.append((e.f, 0, y, breite, h))
+        return y + h + self.zeilenabstand, i + 1
+
+    def _paarzeile_legen(self, zeile: list, mass: tuple, y: int, out: list) -> int:
+        """Eine Zeile aus ein oder zwei Beschriftung/Feld-Paaren. → neues y."""
+        breite, bw, gestapelt = mass
+        sp = (breite - (len(zeile) - 1) * SPALTEN_ABSTAND) // len(zeile) if len(zeile) > 1 else breite
+        hmax = 0
+        plaetze = []
+        for k, u in enumerate(zeile):
+            x0 = k * (sp + SPALTEN_ABSTAND)
+            if gestapelt:
+                hb = u.b.sizeHint().height()
+                hf = _hoehe_bei(u.f, sp)
+                plaetze.append((u.b, x0, 0, sp, hb)); plaetze.append((u.f, x0, hb + 2, sp, hf)); hmax = max(hmax, hb + 2 + hf)
+            else:
+                pl, h = self._paar_daneben(u, x0, sp, bw)
+                plaetze += pl; hmax = max(hmax, h)
+        for it, x, dy, w, h in plaetze:
+            out.append((it, x, y + dy, w, h))
+        return y + hmax + self.zeilenabstand
+
+    def _paar_daneben(self, u, x0: int, sp: int, bw: int) -> tuple:
+        """Beschriftung links, Feld rechts. → ([Plätze], Zeilenhöhe)."""
+        fb = self.feldbreite if self.feldbreite else max(40, sp - bw - self.beschriftungsabstand)
+        hf = _hoehe_bei(u.f, fb)
+        if self.feldbreite and einzeilig(u.f) and not ist_dropdown(u.f.widget()):
+            u.f.widget().setFixedHeight(FELDHOEHE); hf = FELDHOEHE
+        hb = u.b.sizeHint().height()
+        h = max(hb, hf)
+        bb = min(bw, _natuerlich(u.b)) if self.beschriftung_natuerlich else bw
+        beschr = (u.b, x0, 0, bb, h) if self.beschriftung_voll else (u.b, x0, (h - hb) // 2, bb, hb)
+        feld = (u.f, x0 + sp - fb if self.feldbreite else x0 + bw + self.beschriftungsabstand, 0, fb, hf)
+        return [beschr, feld], h
 
 
 class AngepassteReiter(QTabWidget):

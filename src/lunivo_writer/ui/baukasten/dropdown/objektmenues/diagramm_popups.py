@@ -72,6 +72,62 @@ def _ueberschrift(text: str) -> QLabel:
 
 
 # ---- Kacheln -------------------------------------------------------------------------------------------------------------------------
+def _bild_titel_achsentitel(p, fl, kw, el, w, h, mittel) -> None:
+    """Titelbalken und Achsentitel; verkleinern die Zeichenfläche ``fl``."""
+    p.setPen(Qt.NoPen); p.setBrush(mittel)
+    if kw.get("titel_an"):
+        p.drawRect(QRectF(w * 0.34, 8, w * 0.32, 3)); fl.setTop(17)
+    if el.get("achsentitel"):
+        p.drawRect(QRectF(6, h * 0.36, 3, h * 0.26)); fl.setLeft(fl.left() + 6)
+        p.drawRect(QRectF(w * 0.40, h - 9, w * 0.20, 2)); fl.setBottom(fl.bottom() - 6)
+
+
+def _bild_legende(p, fl, pos, w, h, mittel) -> None:
+    feld = lambda r: (p.setPen(QPen(mittel, 1)), p.setBrush(Qt.NoBrush), p.drawRect(r), p.setPen(Qt.NoPen), p.setBrush(mittel))
+    if pos == "unten":
+        p.drawRect(QRectF(w * 0.30, h - 8, w * 0.40, 3)); fl.setBottom(min(fl.bottom(), h - 12))
+    elif pos == "oben":
+        feld(QRectF(w * 0.28, fl.top() - 1, w * 0.44, 7)); fl.setTop(fl.top() + 9)
+    elif pos == "links":
+        feld(QRectF(5, h * 0.40, 10, 14)); fl.setLeft(max(fl.left(), 19))
+    else:
+        feld(QRectF(w - 15, h * 0.40, 10, 14)); fl.setRight(min(fl.right(), w - 19))
+
+
+def _bild_achsenmarken_gitter(p, fl, el, hell) -> None:
+    if el.get("achsen"):
+        fl.setLeft(fl.left() + 5)
+        for k in range(4):                                               # Zahlenmarken links
+            y = fl.top() + 2 + k * (fl.height() - 4) / 3
+            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(fl.left() - 6, y - 0.5, 4, 1.5))
+    if el.get("gitter"):
+        p.setPen(QPen(hell, 1))
+        for k in range(4):
+            y = fl.top() + 2 + k * (fl.height() - 4) / 3
+            p.drawLine(QPointF(fl.left(), y), QPointF(fl.right(), y))
+
+
+def _bild_saeulen(p, fl, kw, el, tab, n, farben) -> None:
+    hell, mittel, dunkel, balken = farben
+    breite = (fl.width() - 4) / n
+    for i, hh in enumerate((0.55, 0.85, 0.40, 0.70)):
+        x = fl.left() + 3 + i * breite
+        r = QRectF(x, fl.bottom() - (fl.height() - 4) * hh, breite * 0.62, (fl.height() - 4) * hh)
+        p.setPen(QPen(mittel, 1)); p.setBrush(balken if i % 2 else QColor(Farbe.WEISS)); p.drawRect(r)
+        if kw.get("labels"):
+            p.setPen(Qt.NoPen); p.setBrush(dunkel); p.drawRect(QRectF(r.center().x() - 3, r.top() - 4, 6, 1.5))
+        if el.get("achsen") and tab is None:
+            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(r.center().x() - 3, fl.bottom() + 2, 6, 1.5))
+
+
+def _bild_tabelle(p, tab, n, mittel) -> None:
+    p.setPen(QPen(mittel, 1.2)); p.setBrush(Qt.NoBrush); p.drawRect(tab)
+    p.drawLine(QPointF(tab.left(), tab.center().y()), QPointF(tab.right(), tab.center().y()))
+    for k in range(1, n):
+        xx = tab.left() + k * tab.width() / n
+        p.drawLine(QPointF(xx, tab.top()), QPointF(xx, tab.bottom()))
+
+
 def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) -> QPixmap:
     """Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
     Achsen, Achsentitel, Gitternetz, Datentabelle, Trendlinie — grau gezeichnet wie die Kacheln der Vorlage."""
@@ -85,59 +141,24 @@ def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) ->
     hell, mittel, dunkel = QColor(SINNBILD_HELL), QColor(SINNBILD_MITTEL), QColor(SINNBILD_DUNKEL)
     balken = QColor(Farbe.LEISTE_RAND)
     fl = QRectF(10, 8, w - 20, h - 16)                                   # Zeichenfläche des Diagramms
-    p.setPen(Qt.NoPen); p.setBrush(mittel)
-    if kw.get("titel_an"):
-        p.drawRect(QRectF(w * 0.34, 8, w * 0.32, 3)); fl.setTop(17)
-    if el.get("achsentitel"):
-        p.drawRect(QRectF(6, h * 0.36, 3, h * 0.26)); fl.setLeft(fl.left() + 6)
-        p.drawRect(QRectF(w * 0.40, h - 9, w * 0.20, 2)); fl.setBottom(fl.bottom() - 6)
+    _bild_titel_achsentitel(p, fl, kw, el, w, h, mittel)
     if kw.get("legende"):
-        pos = kw.get("legende_pos", "unten")
-        feld = lambda r: (p.setPen(QPen(mittel, 1)), p.setBrush(Qt.NoBrush), p.drawRect(r), p.setPen(Qt.NoPen), p.setBrush(mittel))
-        if pos == "unten":
-            p.drawRect(QRectF(w * 0.30, h - 8, w * 0.40, 3)); fl.setBottom(min(fl.bottom(), h - 12))
-        elif pos == "oben":
-            feld(QRectF(w * 0.28, fl.top() - 1, w * 0.44, 7)); fl.setTop(fl.top() + 9)
-        elif pos == "links":
-            feld(QRectF(5, h * 0.40, 10, 14)); fl.setLeft(max(fl.left(), 19))
-        else:
-            feld(QRectF(w - 15, h * 0.40, 10, 14)); fl.setRight(min(fl.right(), w - 19))
+        _bild_legende(p, fl, kw.get("legende_pos", "unten"), w, h, mittel)
     tab = None
     if el.get("datentabelle"):
         th = 14.0
         tab = QRectF(fl.left(), fl.bottom() - th, fl.width(), th); fl.setBottom(fl.bottom() - th - 1)
-    if el.get("achsen"):
-        fl.setLeft(fl.left() + 5)
-        for k in range(4):                                               # Zahlenmarken links
-            y = fl.top() + 2 + k * (fl.height() - 4) / 3
-            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(fl.left() - 6, y - 0.5, 4, 1.5))
-    if el.get("gitter"):
-        p.setPen(QPen(hell, 1))
-        for k in range(4):
-            y = fl.top() + 2 + k * (fl.height() - 4) / 3
-            p.drawLine(QPointF(fl.left(), y), QPointF(fl.right(), y))
+    _bild_achsenmarken_gitter(p, fl, el, hell)
     p.setPen(QPen(dunkel if not el.get("achsen") else mittel, 1.2)); p.drawLine(fl.bottomLeft(), fl.bottomRight())
     if el.get("achsen"):
         p.drawLine(fl.topLeft(), fl.bottomLeft())
     n = 4
-    breite = (fl.width() - 4) / n
-    for i, hh in enumerate((0.55, 0.85, 0.40, 0.70)):
-        x = fl.left() + 3 + i * breite
-        r = QRectF(x, fl.bottom() - (fl.height() - 4) * hh, breite * 0.62, (fl.height() - 4) * hh)
-        p.setPen(QPen(mittel, 1)); p.setBrush(balken if i % 2 else QColor(Farbe.WEISS)); p.drawRect(r)
-        if kw.get("labels"):
-            p.setPen(Qt.NoPen); p.setBrush(dunkel); p.drawRect(QRectF(r.center().x() - 3, r.top() - 4, 6, 1.5))
-        if el.get("achsen") and tab is None:
-            p.setPen(Qt.NoPen); p.setBrush(hell); p.drawRect(QRectF(r.center().x() - 3, fl.bottom() + 2, 6, 1.5))
+    _bild_saeulen(p, fl, kw, el, tab, n, (hell, mittel, dunkel, balken))
     if el.get("trendlinie"):
         pen = QPen(dunkel, 1.2, Qt.DashLine); p.setPen(pen)
         p.drawLine(QPointF(fl.left() + 3, fl.bottom() - fl.height() * 0.30), QPointF(fl.right() - 3, fl.bottom() - fl.height() * 0.78))
     if tab is not None:
-        p.setPen(QPen(mittel, 1.2)); p.setBrush(Qt.NoBrush); p.drawRect(tab)
-        p.drawLine(QPointF(tab.left(), tab.center().y()), QPointF(tab.right(), tab.center().y()))
-        for k in range(1, n):
-            xx = tab.left() + k * tab.width() / n
-            p.drawLine(QPointF(xx, tab.top()), QPointF(xx, tab.bottom()))
+        _bild_tabelle(p, tab, n, mittel)
     p.setPen(QPen(mittel, 1)); p.setBrush(Qt.NoBrush); p.drawRect(QRectF(0.5, 0.5, w - 1, h - 1))
     p.end()
     return pm

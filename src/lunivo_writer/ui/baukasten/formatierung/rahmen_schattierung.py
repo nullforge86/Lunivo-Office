@@ -258,7 +258,16 @@ class _RahmenSeite(QWidget):
         basis = linie or Linie(Farbe.SCHWARZ, 0.75, "einfach")
         self.seiten = linie.seiten if linie else ""
         g = FormularGitter(self); g.setContentsMargins(*RAND_RAHMEN_SEITE)
-        # --- Einstellung: eine Reihe Symbole (der Name steht im Tipp), bei Platzmangel in der nächsten Zeile weiter
+        self._bauen_einstellung(g)
+        self._bauen_vorschau(g)
+        self._bauen_farbe_breite_art(g, basis)
+        self._bauen_linienart(g)
+        self._bauen_fuer(g, fuer, linie)
+        self._anfangswerte(basis)
+
+    def _bauen_einstellung(self, g) -> None:
+        """Einstellung: eine Reihe Symbole (der Name steht im Tipp), bei Platzmangel in der nächsten Zeile weiter."""
+        innen_h, seitenrand = self.innen_h, self.seitenrand
         g.breit(abschnittstitel("Einstellung"))
         reihe = FlussLayout(4)
         self.einstellung: dict[str, QToolButton] = {}
@@ -276,7 +285,10 @@ class _RahmenSeite(QWidget):
         self.einstellung["alle"].setToolTip("Alle" if innen_h else "Alle: nur, wenn mehrere Absätze oder Tabellenzellen gemeint sind")
         if seitenrand:                                           # um eine Seite gibt es nur Ohne, Kontur und Anpassen
             self.einstellung["alle"].setVisible(False); self.einstellung["raster"].setVisible(False)
-        # --- Vorschau mit Kantenknöpfen (wächst mit der Breite), darunter Farbe und Breite
+
+    def _bauen_vorschau(self, g) -> None:
+        """Vorschau mit Kantenknöpfen (wächst mit der Breite)."""
+        innen_h = self.innen_h
         g.breit(abschnittstitel("Vorschau"))
         self.vorschau = _Vorschau(); self.vorschau.setToolTip(HINWEIS)
         self.vorschau.mit_h = innen_h
@@ -295,6 +307,9 @@ class _RahmenSeite(QWidget):
                                      self.kantenknoepfe["l"], self.kantenknoepfe["r"])
         g.breit(self.kasten)
         self.vorschau.kante.connect(lambda k: self.kantenknoepfe[k].toggle() if k in self.kantenknoepfe else None)
+
+    def _bauen_farbe_breite_art(self, g, basis) -> None:
+        seitenrand = self.seitenrand
         self.farbe = FarbFeld("" if basis.farbe in ("", Farbe.SCHWARZ) else basis.farbe, "Rahmenfarbe", keine_text="Automatisch")
         self.breite = Auswahlfeld(); self.breite.setIconSize(QSize(*GROESSE_LINIENBREITE_BILD))
         for b in LINIENBREITEN:
@@ -308,21 +323,27 @@ class _RahmenSeite(QWidget):
         self.kunst.setVisible(seitenrand)
         g.reihe(("Art:", self.kunst))
         self.kunst.currentIndexChanged.connect(lambda _i: self._neu())
-        # --- Linienart
+
+    def _bauen_linienart(self, g) -> None:
+        seitenrand = self.seitenrand
         g.breit(abschnittstitel("Linienart"))
         self.arten = QListWidget(); self.arten.setIconSize(QSize(*GROESSE_RAHMENART_BILD)); self.arten.setFixedHeight(46 if seitenrand else 104)    # Seitenrand hat zusätzlich „Art:“: sonst rollt die Seite
         for k in STILE:
             it = QListWidgetItem(_stil_symbol(k), ""); it.setData(Qt.UserRole, k); it.setToolTip(STILE[k][0])
             self.arten.addItem(it)
         g.breit(self.arten)
-        # --- Übernehmen für, Optionen
+
+    def _bauen_fuer(self, g, fuer, linie) -> None:
+        """Übernehmen für, Optionen."""
         self.fuer = Auswahlfeld(); self.fuer.addItems(fuer or ["Absatz"]); self.fuer.setToolTip("Übernehmen für")
         self.optionen = QPushButton("Optionen …")
         self.optionen.clicked.connect(self._optionen)
         self.polster = linie.polster() if linie and linie.polster() else (1.0, 1.0, 4.0, 4.0)    # Abstand zum Text: oben, unten, links, rechts (pt)
         g.reihe(("Für:", self.fuer))
         g.breit(self.optionen)
-        # --- Anfangswerte, Verkabelung
+
+    def _anfangswerte(self, basis) -> None:
+        """Anfangswerte, Verkabelung."""
         i = self.arten.row(next((self.arten.item(r) for r in range(self.arten.count()) if self.arten.item(r).data(Qt.UserRole) == basis.art), self.arten.item(0)))
         self.arten.setCurrentRow(i)
         self.breite.setCurrentIndex(min(range(self.breite.count()), key=lambda j: abs(self.breite.itemData(j) - basis.breite_pt)))

@@ -1,6 +1,9 @@
 """DOCX schreiben: Tabellen (Zellen, Rahmen, Maße)."""
 from __future__ import annotations
 
+from PySide6.QtGui import QTextLength
+
+from lunivo_writer.models.page import px_to_mm
 from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F401
     OxmlElement,
     qn,
@@ -10,6 +13,19 @@ from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F40
     _Body,
     _CellBox,
 )
+
+
+def _twips(px: float) -> int:
+    """Bildpunkte → Zwanzigstelpunkte."""
+    return int(round(px_to_mm(px) / 25.4 * 1440))
+
+
+def _wel(tag: str, **attr):
+    """Word-Element mit Attributen im Namensraum w."""
+    e = OxmlElement(tag)
+    for k, v in attr.items():
+        e.set(qn("w:" + k), str(v))
+    return e
 
 
 class TabellenSchreiber:
@@ -30,83 +46,94 @@ class TabellenSchreiber:
                 if key in done:
                     continue
                 done.add(key)
-                rs, cs = cell.rowSpan(), cell.columnSpan()
-                dcell = t.cell(r, c)
-                if rs > 1 or cs > 1:
-                    dcell = dcell.merge(t.cell(r + rs - 1, c + cs - 1))
-                self._zelle_format(dcell, cell.format().toTableCellFormat())
-                box = _CellBox(dcell)
-                # Zelleninhalt: Rahmen der Zelle durchlaufen
-                cit = cell.begin()
-                first = True
-                while not cit.atEnd():
-                    blk = cit.currentBlock()
-                    if blk.isValid():
-                        para = box.first_paragraph() if first else box.add_paragraph()
-                        first = False
-                        self.write_block(blk, para)
-                    cit += 1
+                self._zelle_schreiben(t, cell, r, c)
         self._tabelle_eigenschaften(t, qt)
-        if isinstance(container, _Body):
-            pass
+
+    def _zelle_schreiben(self, t, cell, r: int, c: int) -> None:
+        """Eine Zelle (bei verbundenen Zellen den ganzen Bereich) mit Format und den Absätzen ihres Inhalts."""
+        rs, cs = cell.rowSpan(), cell.columnSpan()
+        dcell = t.cell(r, c)
+        if rs > 1 or cs > 1:
+            dcell = dcell.merge(t.cell(r + rs - 1, c + cs - 1))
+        self._zelle_format(dcell, cell.format().toTableCellFormat())
+        box = _CellBox(dcell)
+        cit = cell.begin()                                  # Zelleninhalt: Rahmen der Zelle durchlaufen
+        first = True
+        while not cit.atEnd():
+            blk = cit.currentBlock()
+            if blk.isValid():
+                para = box.first_paragraph() if first else box.add_paragraph()
+                first = False
+                self.write_block(blk, para)
+            cit += 1
 
     def _tabelle_eigenschaften(self, t, qt: QTextTable) -> None:
         """Tabellenbreite, Ausrichtung, Zellabstand, Rahmen, Innenabstand (w:tblPr, in Schema-Reihenfolge), Spaltenbreiten
         (w:tblGrid, w:tcW) und Kopfzeile (w:tblHeader) der Qt-Tabelle schreiben."""
-        from PySide6.QtGui import QTextLength
-        from lunivo_writer.models.page import px_to_mm
-        tw = lambda px: int(round(px_to_mm(px) / 25.4 * 1440))                # noqa: E731  Bildpunkte -> Zwanzigstelpunkte
         f = qt.format()
-        inhalt = tw(self.page.content_width_px) if self.page is not None else 9000
-        b = f.width()
-        if b.type() == QTextLength.PercentageLength:
-            breite, art, wert = inhalt * b.rawValue() / 100, "pct", int(round(b.rawValue() * 50))
-        elif b.type() == QTextLength.FixedLength:
-            breite = tw(b.rawValue()); art, wert = "dxa", int(breite)
-        else:
-            breite, art, wert = inhalt, "auto", 0
+        inhalt = _twips(self.page.content_width_px) if self.page is not None else 9000
+        breite, art, wert = self._tabellenbreite(f, inhalt)
         pr = t._tbl.tblPr
         for tag in ("w:tblW", "w:jc", "w:tblCellSpacing", "w:tblBorders", "w:tblLayout", "w:tblCellMar"):
             for alt in pr.findall(qn(tag)):
                 pr.remove(alt)
-        neu = []
+        look = pr.find(qn("w:tblLook"))
+        for e in self._tblpr_elemente(f, art, wert):
+            look.addprevious(e) if look is not None else pr.append(e)
+        lang, w = self._spaltenbreiten(f, qt.columns(), breite)
+        for g, x in zip(t._tbl.tblGrid.gridCol_lst, w):
+            g.set(qn("w:w"), str(int(round(x))))
+        self._zellbreiten(t, lang, w, qt.columns())
+        for r in range(min(f.headerRowCount(), len(t.rows))):
+            t.rows[r]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))
 
-        def el(tag, **attr):
-            e = OxmlElement(tag)
-            for k, v in attr.items():
-                e.set(qn("w:" + k), str(v))
-            return e
-        neu.append(el("w:tblW", type=art, w=wert))
+    @staticmethod
+    def _tabellenbreite(f, inhalt: int):
+        """Breite der Tabelle in Zwanzigstelpunkten → (Breite, Art pct/dxa/auto, Wert für w:tblW)."""
+        b = f.width()
+        if b.type() == QTextLength.PercentageLength:
+            return inhalt * b.rawValue() / 100, "pct", int(round(b.rawValue() * 50))
+        if b.type() == QTextLength.FixedLength:
+            breite = _twips(b.rawValue())
+            return breite, "dxa", int(breite)
+        return inhalt, "auto", 0
+
+    def _tblpr_elemente(self, f, art: str, wert: int) -> list:
+        """Neue Kindelemente von w:tblPr in Schema-Reihenfolge: Breite, Ausrichtung, Zellabstand, Rahmen, Innenabstand."""
+        neu = [_wel("w:tblW", type=art, w=wert)]
         al = f.alignment()
         if al & Qt.AlignHCenter:
-            neu.append(el("w:jc", val="center"))
+            neu.append(_wel("w:jc", val="center"))
         elif al & Qt.AlignRight:
-            neu.append(el("w:jc", val="right"))
+            neu.append(_wel("w:jc", val="right"))
         if f.cellSpacing() > 0:
-            neu.append(el("w:tblCellSpacing", w=tw(f.cellSpacing()), type="dxa"))
+            neu.append(_wel("w:tblCellSpacing", w=_twips(f.cellSpacing()), type="dxa"))
         if f.border() > 0:
-            rb = el("w:tblBorders")
-            val = self._RAND_VAL.get(f.borderStyle(), "single")
-            for kante in ("top", "left", "bottom", "right", "insideH", "insideV"):
-                rb.append(el("w:" + kante, val=val, sz=max(2, int(round(f.border() * 6))), space=0,
-                             color=f.borderBrush().color().name()[1:].upper()))
-            neu.append(rb)
-        pad = tw(f.cellPadding())
-        mar = el("w:tblCellMar")
+            neu.append(self._tabellenrahmen(f))
+        pad = _twips(f.cellPadding())
+        mar = _wel("w:tblCellMar")
         for kante in ("top", "left", "bottom", "right"):
-            mar.append(el("w:" + kante, w=pad, type="dxa"))
+            mar.append(_wel("w:" + kante, w=pad, type="dxa"))
         neu.append(mar)
-        look = pr.find(qn("w:tblLook"))
-        for e in neu:
-            look.addprevious(e) if look is not None else pr.append(e)
-        # Spalten: Fest -> dxa, Prozent -> pct, sonst auto (Gitterbreite aus dem Rest)
+        return neu
+
+    def _tabellenrahmen(self, f):
+        rb = _wel("w:tblBorders")
+        val = self._RAND_VAL.get(f.borderStyle(), "single")
+        for kante in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            rb.append(_wel("w:" + kante, val=val, sz=max(2, int(round(f.border() * 6))), space=0,
+                           color=f.borderBrush().color().name()[1:].upper()))
+        return rb
+
+    @staticmethod
+    def _spaltenbreiten(f, n: int, breite: float):
+        """Spalten: Fest -> dxa, Prozent -> pct, sonst auto (Gitterbreite aus dem Rest) → (Vorgaben, Gitterbreiten)."""
         lang = list(f.columnWidthConstraints())
-        n = qt.columns()
         lang += [QTextLength()] * (n - len(lang))
         w = [0.0] * n
         for i, x in enumerate(lang[:n]):
             if x.type() == QTextLength.FixedLength:
-                w[i] = float(tw(x.rawValue()))
+                w[i] = float(_twips(x.rawValue()))
             elif x.type() == QTextLength.PercentageLength:
                 w[i] = breite * x.rawValue() / 100
         frei = [i for i in range(n) if w[i] == 0.0]
@@ -114,8 +141,11 @@ class TabellenSchreiber:
             rest = max(breite - sum(w), 120.0 * len(frei))
             for i in frei:
                 w[i] = rest / len(frei)
-        for g, x in zip(t._tbl.tblGrid.gridCol_lst, w):
-            g.set(qn("w:w"), str(int(round(x))))
+        return lang, w
+
+    @staticmethod
+    def _zellbreiten(t, lang: list, w: list, n: int) -> None:
+        """w:tcW jeder Zelle: eigene Vorgabe bei einfacher Zelle, Summe der Gitterbreiten bei verbundenen."""
         for tr in t._tbl.tr_lst:
             i = 0
             for tc in tr.tc_lst:
@@ -131,18 +161,15 @@ class TabellenSchreiber:
                 else:
                     tcw.set(qn("w:type"), "dxa"); tcw.set(qn("w:w"), str(int(round(sum(w[i:i + span])))))
                 i += span
-        for r in range(min(f.headerRowCount(), len(t.rows))):
-            t.rows[r]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))
 
     @staticmethod
     def _zeilenhoehe(drow, qt, r: int) -> None:
         """Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten."""
         from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_lesen
-        from lunivo_writer.models.page import px_to_mm
         px = zeilenhoehe_lesen(qt, r)
         if px > 0:
             h = OxmlElement("w:trHeight")
-            h.set(qn("w:val"), str(int(round(px_to_mm(px) / 25.4 * 1440)))); h.set(qn("w:hRule"), "atLeast")
+            h.set(qn("w:val"), str(_twips(px))); h.set(qn("w:hRule"), "atLeast")
             drow._tr.get_or_add_trPr().append(h)
 
     @staticmethod

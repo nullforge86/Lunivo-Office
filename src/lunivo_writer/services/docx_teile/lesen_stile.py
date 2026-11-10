@@ -1,6 +1,8 @@
 """DOCX lesen: Formatvorlagen, Schrift und Zeichenformat (Vererbung, Standardwerte, Hervorhebung)."""
 from __future__ import annotations
 
+from docx.enum.text import WD_UNDERLINE as U
+
 from lunivo_writer.services.docx_teile.lesen_gemeinsam import (  # noqa: F401
     Optional,
     docx,
@@ -16,6 +18,14 @@ from lunivo_writer.services.docx_teile.lesen_gemeinsam import (  # noqa: F401
     NAMED_STYLE_DEFAULT,
     Qt,
 )
+
+
+# Unterstreichung Word → eigene Art; Betonungszeichen Word → Lunivo
+_UNTER_ART = {U.WORDS: "woerter", U.DOUBLE: "doppelt", U.THICK: "dick", U.DOTTED: "gepunktet", U.DOTTED_HEAVY: "dick_gepunktet", U.DASH: "gestrichelt",
+              U.DASH_HEAVY: "dick_gestrichelt", U.DASH_LONG: "lang", U.DASH_LONG_HEAVY: "dick_lang", U.DOT_DASH: "strichpunkt",
+              U.DOT_DASH_HEAVY: "dick_strichpunkt", U.DOT_DOT_DASH: "strichpunktpunkt", U.DOT_DOT_DASH_HEAVY: "dick_strichpunktpunkt",
+              U.WAVY: "wellig", U.WAVY_HEAVY: "dick_wellig", U.WAVY_DOUBLE: "doppelwellig"}
+_BETONUNG = {"dot": "punkt", "circle": "kreis", "comma": "komma", "underDot": "unten"}
 
 
 class StilMixin:
@@ -78,24 +88,35 @@ class StilMixin:
         return v or self.def_font or "Calibri"
 
     def _font_size_pt(self, run, para) -> float:
+        v = self._font_size_gesetzt(run, para)
+        if v is not None:
+            return v.pt
+        ersatz = self._font_size_ersatz(para)
+        if ersatz:
+            return ersatz
+        if self.normal is not None and self.normal.font.size is not None:
+            return self.normal.font.size.pt
+        return self.def_size or 11.0
+
+    def _font_size_gesetzt(self, run, para):
+        """Größe am Lauf, sonst aus dessen Zeichenvorlage, sonst aus der Absatzvorlage; sonst None."""
         v = run.font.size
         rs = self._rs(run) if hasattr(run, "_r") else None
         if v is None and rs is not None:
             v = self._stil_font(rs, "size")
         if v is None and para is not None:
             v = self._stil_font(self._ps(para), "size")
-        if v is not None:
-            return v.pt
-        if para is not None:
-            lvl = self._heading_level(para)
-            if lvl:
-                return HEADING_DEFAULT_PT[lvl]
-            nm = NAMED_STYLE_DEFAULT.get(self._ps(para).name)
-            if nm and nm[0]:
-                return nm[0]
-        if self.normal is not None and self.normal.font.size is not None:
-            return self.normal.font.size.pt
-        return self.def_size or 11.0
+        return v
+
+    def _font_size_ersatz(self, para):
+        """Standardgröße einer Überschrift oder benannten Vorlage, wenn nirgends eine Größe steht; sonst None."""
+        if para is None:
+            return None
+        lvl = self._heading_level(para)
+        if lvl:
+            return HEADING_DEFAULT_PT[lvl]
+        nm = NAMED_STYLE_DEFAULT.get(self._ps(para).name)
+        return nm[0] if nm and nm[0] else None
 
     def _flag(self, run, para, attr):
         v = getattr(run.font, attr)
@@ -134,6 +155,17 @@ class StilMixin:
         f = QTextCharFormat()
         f.setFontFamilies([self._font_name(run, para)])
         f.setFontPointSize(self._font_size_pt(run, para))
+        self._cf_stil(run, para, f)
+        self._cf_unterstreichung(run, f)
+        self._cf_kontur_abstand(run, f)
+        self._cf_hochtief_farben(run, para, f)
+        self._schrift_zusatz(run._r.rPr, f)
+        from lunivo_writer.editor.text import texteffekt
+        texteffekt.aus_rpr(run._r.rPr, f)
+        return f
+
+    def _cf_stil(self, run, para, f: QTextCharFormat) -> None:
+        """Fett, Kursiv (auch aus Überschrift und Standardvorlage) und das Unterstreichungs-Kennzeichen."""
         lvl = self._heading_level(para) if para is not None else 0
         named = NAMED_STYLE_DEFAULT.get(self._ps(para).name) if para is not None else None
         bold = self._flag(run, para, "bold")
@@ -144,18 +176,21 @@ class StilMixin:
         if ital is None and named:
             ital = named[2]
         f.setFontItalic(bool(ital))
-        ul = self._flag(run, para, "underline")
-        f.setFontUnderline(bool(ul))
+        f.setFontUnderline(bool(self._flag(run, para, "underline")))
+
+    @staticmethod
+    def _cf_unterstreichung(run, f: QTextCharFormat) -> None:
+        """Besondere Unterstreichungsarten (doppelt, gestrichelt, wellig …) als eigenes Zeichenformat."""
         raw = run.font.underline
         if raw not in (None, True, False):
-            from docx.enum.text import WD_UNDERLINE as U
             from lunivo_writer.editor.text.unterstreichung import unter_format
-            art = {U.WORDS: "woerter", U.DOUBLE: "doppelt", U.THICK: "dick", U.DOTTED: "gepunktet", U.DOTTED_HEAVY: "dick_gepunktet", U.DASH: "gestrichelt",
-                   U.DASH_HEAVY: "dick_gestrichelt", U.DASH_LONG: "lang", U.DASH_LONG_HEAVY: "dick_lang", U.DOT_DASH: "strichpunkt",
-                   U.DOT_DASH_HEAVY: "dick_strichpunkt", U.DOT_DOT_DASH: "strichpunktpunkt", U.DOT_DOT_DASH_HEAVY: "dick_strichpunktpunkt",
-                   U.WAVY: "wellig", U.WAVY_HEAVY: "dick_wellig", U.WAVY_DOUBLE: "doppelwellig"}.get(raw)
+            art = _UNTER_ART.get(raw)
             if art:
                 f.merge(unter_format(art))
+
+    @staticmethod
+    def _cf_kontur_abstand(run, f: QTextCharFormat) -> None:
+        """Kontur, verborgener Text, Zeichenabstand."""
         if run.font.outline:
             from PySide6.QtGui import QPen
             f.setTextOutline(QPen(QColor(Farbe.SCHWARZ)))
@@ -166,6 +201,9 @@ class StilMixin:
         if sp is not None and sp.get(qn("w:val")):
             f.setFontLetterSpacingType(QFont.AbsoluteSpacing)
             f.setFontLetterSpacing(int(sp.get(qn("w:val"))) / 20 / 0.75)
+
+    def _cf_hochtief_farben(self, run, para, f: QTextCharFormat) -> None:
+        """Durchgestrichen, Hoch-/Tiefstellung, Schriftfarbe, Hervorhebung, Versalien."""
         f.setFontStrikeOut(bool(self._flag(run, para, "strike")))
         if self._flag(run, para, "superscript"):
             f.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
@@ -181,34 +219,44 @@ class StilMixin:
             f.setFontCapitalization(QFont.AllUppercase)
         elif self._flag(run, para, "small_caps"):
             f.setFontCapitalization(QFont.SmallCaps)
-        self._schrift_zusatz(run._r.rPr, f)
-        from lunivo_writer.editor.text import texteffekt
-        texteffekt.aus_rpr(run._r.rPr, f)
-        return f
 
     def _schrift_zusatz(self, rpr, f: QTextCharFormat) -> None:
         """Schrift für asiatische und komplexe Zeichen, Betonungszeichen und doppeltes Durchstreichen (Fenster „Schriftart“)."""
-        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_ASIEN, P_FONT_KOMPLEX
         if rpr is None:
             return
+        self._zs_schriften(rpr, f)
+        self._zs_skalieren_position(rpr, f)
+        self._zs_raster_durchstreichung_betonung(rpr, f)
+
+    @staticmethod
+    def _zs_schriften(rpr, f: QTextCharFormat) -> None:
+        """Schrift für asiatische (eastAsia) und komplexe (cs) Zeichen; weitere Familien kommen hinter die Hauptschrift."""
+        from lunivo_writer.editor.dokument.zusatz import P_FONT_ASIEN, P_FONT_KOMPLEX
         rf = rpr.find(qn("w:rFonts"))
+        if rf is None:
+            return
         haupt = f.fontFamilies()[0] if f.fontFamilies() else ""
-        if rf is not None:
-            fam = [haupt]
-            for attr, prop in (("w:eastAsia", P_FONT_ASIEN), ("w:cs", P_FONT_KOMPLEX)):
-                n = rf.get(qn(attr))
-                if n and n != haupt:
-                    schnitt = ""; gr = ""
-                    if attr == "w:cs":
-                        bcs, ics = rpr.find(qn("w:bCs")), rpr.find(qn("w:iCs"))
-                        schnitt = ("Fett " if bcs is not None and bcs.get(qn("w:val")) not in ("0", "false") else "") + \
-                                  ("Kursiv" if ics is not None and ics.get(qn("w:val")) not in ("0", "false") else "")
-                        sz = rpr.find(qn("w:szCs"))
-                        gr = f"{int(sz.get(qn('w:val'))) / 2:g}" if sz is not None and sz.get(qn("w:val")) else ""
-                    f.setProperty(prop, f"{n}|{schnitt.strip()}|{gr}")
-                    fam.append(n)
-            if len(fam) > 1:
-                f.setFontFamilies(list(dict.fromkeys(fam)))
+        fam = [haupt]
+        for attr, prop in (("w:eastAsia", P_FONT_ASIEN), ("w:cs", P_FONT_KOMPLEX)):
+            n = rf.get(qn(attr))
+            if n and n != haupt:
+                schnitt, gr = StilMixin._zs_komplex_schnitt(rpr) if attr == "w:cs" else ("", "")
+                f.setProperty(prop, f"{n}|{schnitt.strip()}|{gr}")
+                fam.append(n)
+        if len(fam) > 1:
+            f.setFontFamilies(list(dict.fromkeys(fam)))
+
+    @staticmethod
+    def _zs_komplex_schnitt(rpr):
+        """Schnitt („Fett Kursiv“) und Größe der komplexen Schrift → (Schnitt, Größe in pt als Text)."""
+        bcs, ics = rpr.find(qn("w:bCs")), rpr.find(qn("w:iCs"))
+        schnitt = ("Fett " if bcs is not None and bcs.get(qn("w:val")) not in ("0", "false") else "") + \
+                  ("Kursiv" if ics is not None and ics.get(qn("w:val")) not in ("0", "false") else "")
+        sz = rpr.find(qn("w:szCs"))
+        return schnitt, (f"{int(sz.get(qn('w:val'))) / 2:g}" if sz is not None and sz.get(qn("w:val")) else "")
+
+    @staticmethod
+    def _zs_skalieren_position(rpr, f: QTextCharFormat) -> None:
         w_ = rpr.find(qn("w:w"))
         if w_ is not None and w_.get(qn("w:val")) and w_.get(qn("w:val")).isdigit():
             f.setFontStretch(int(w_.get(qn("w:val"))))                                    # Skalieren
@@ -219,15 +267,18 @@ class StilMixin:
                 f.setBaselineOffset(int(pos.get(qn("w:val"))) / 2 / gr * 100)
             except ValueError:
                 pass
+
+    @staticmethod
+    def _zs_raster_durchstreichung_betonung(rpr, f: QTextCharFormat) -> None:
+        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_RASTER
         sg = rpr.find(qn("w:snapToGrid"))
         if sg is not None and sg.get(qn("w:val")) in ("0", "false", "off"):
-            from lunivo_writer.editor.dokument.zusatz import P_RASTER
             f.setProperty(P_RASTER, 0)
         if rpr.find(qn("w:dstrike")) is not None and rpr.find(qn("w:dstrike")).get(qn("w:val")) not in ("0", "false"):
             f.setProperty(P_DOPPELT, 1); f.setFontStrikeOut(True)
         em = rpr.find(qn("w:em"))
         if em is not None and em.get(qn("w:val")) not in (None, "none"):
-            f.setProperty(P_BETONUNG, {"dot": "punkt", "circle": "kreis", "comma": "komma", "underDot": "unten"}.get(em.get(qn("w:val")), "punkt"))
+            f.setProperty(P_BETONUNG, _BETONUNG.get(em.get(qn("w:val")), "punkt"))
 
     def _highlight(self, run) -> Optional[str]:
         rpr = run._r.rPr

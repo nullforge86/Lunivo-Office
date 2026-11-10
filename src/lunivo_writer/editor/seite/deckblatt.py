@@ -151,6 +151,140 @@ def _blume(p: QPainter, cx: float, cy: float, s: float) -> None:
     p.setBrush(QColor("#5b3a12")); p.drawEllipse(QPointF(cx, cy), s * 0.48, s * 0.48)
 
 
+def _g_mosaik(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    farben = ("#e8175d", "#f05a28", "#f7b500", "#ff8c00", "#d4145a", "#ff4e50", "#fc913a", "#f9d423")
+    n = 9
+    for i in range(n):
+        for j in range(int(0.56 * h / (w / n))):                     # Mosaik bis gut zur Hälfte, darunter Platz für den Titel
+            k = (i * 7 + j * 3) % len(farben)
+            gr = 0.9 - 0.05 * ((i + j) % 4)
+            p.setPen(Qt.NoPen); p.setBrush(QColor(farben[k]))
+            p.drawRect(QRectF(x0 + (i + (1 - gr) / 2) * w / n, y0 + (j + (1 - gr) / 2) * w / n, gr * w / n, gr * w / n))
+    p.fillRect(R(0, 0.57, 1, 0.012), QColor("#e8175d"))
+
+
+def _g_himmel(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(R(0, 0, 1, 0.55), _verlauf(R(0, 0, 1, 0.55), ("#9fd3f2", "#e6f4fc", "#ffffff")))
+    p.setOpacity(0.7); _wolken(p, r, 0.12, "#ffffff", 4); p.setOpacity(1)
+
+
+def _g_sonne(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(R(0, 0, 1, 0.68), _verlauf(R(0, 0, 1, 0.68), ("#f7a600", "#fbd34d", "#fff1b8")))
+    g = QRadialGradient(QPointF(x0 + 0.7 * w, y0 + 0.36 * h), 0.3 * w)
+    g.setColorAt(0, QColor("#ffffff")); g.setColorAt(0.25, QColor("#fff6c9")); g.setColorAt(1, QColor(255, 246, 201, 0))
+    p.setPen(Qt.NoPen); p.setBrush(QBrush(g)); p.drawEllipse(QPointF(x0 + 0.7 * w, y0 + 0.36 * h), 0.3 * w, 0.3 * w)
+    p.setOpacity(0.8); _wolken(p, r, 0.16, "#ffffff", 5); p.setOpacity(1)
+    p.setBrush(QColor("#1a1a1a")); p.drawEllipse(QPointF(x0 + 0.88 * w, y0 + 0.6 * h), 0.03 * w, 0.06 * h)
+
+
+def _g_kopfbalken(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(R(0.06, 0.04, 0.88, 0.14), _verlauf(R(0.06, 0.04, 0.88, 0.14), ("#2f6eba", "#8fc1ef"), False))
+    p.fillRect(R(0.06, 0.035, 0.88, 0.004), QColor("#9dc3e6"))
+
+
+def _g_wellen(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.setPen(QPen(QColor("#7b2f8f"), max(1.0, w * 0.004))); p.setBrush(Qt.NoBrush)
+    p.drawRect(R(0.15, 0.045, 0.28, 0.04))
+    for i in range(7):
+        pfad = QPainterPath(QPointF(x0, y0 + (0.55 + i * 0.06) * h))
+        for k in range(1, 9):
+            pfad.quadTo(QPointF(x0 + (k - 0.5) / 8 * w, y0 + (0.52 + i * 0.06 + 0.05 * ((k % 2) * 2 - 1)) * h),
+                        QPointF(x0 + k / 8 * w, y0 + (0.55 + i * 0.06) * h))
+        p.setPen(QPen(QColor(200, 200, 210, 140), max(1.0, w * 0.01))); p.drawPath(pfad)
+
+
+def _g_blaurand(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    for x in (0.0, 0.94):
+        p.fillRect(R(x, 0, 0.06, 1), QColor("#2f6eba"))
+    p.fillRect(R(0, 0, 1, 0.012), QColor("#2f6eba")); p.fillRect(R(0, 0.988, 1, 0.012), QColor("#2f6eba"))
+
+
+def _g_stadt(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.setPen(Qt.NoPen); p.setBrush(QColor("#e3e3e3"))
+    hoehen = (0.10, 0.16, 0.08, 0.20, 0.13, 0.18, 0.09, 0.15, 0.22, 0.11, 0.17, 0.12)
+    for i, hh in enumerate(hoehen):
+        p.drawRect(R(i / len(hoehen), 1 - hh, 1 / len(hoehen) * 0.9, hh))
+    p.setBrush(QColor("#f2f2f2"))
+    for i, hh in enumerate(hoehen[::-1]):
+        p.drawRect(R((i + 0.4) / len(hoehen), 1 - hh * 0.6, 1 / len(hoehen) * 0.6, hh * 0.6))
+
+
+def _g_notizzettel(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(r, QColor("#5b8fd6"))
+    for i in range(9):
+        _puzzle(p, x0 + (0.04 + 0.025 * i + 0.01 * (i % 2)) * w, y0 + (0.05 + 0.03 * i) * h, 0.05 * w, "#f6d32d")
+    p.save(); p.translate(x0 + 0.62 * w, y0 + 0.47 * h); p.rotate(-6)
+    p.setPen(Qt.NoPen); p.setBrush(QColor(0, 0, 0, 50)); p.drawRect(QRectF(-0.25 * w + 4, -0.08 * h + 4, 0.52 * w, 0.18 * h))
+    p.setBrush(QColor("#f6d32d")); p.drawRect(QRectF(-0.25 * w, -0.08 * h, 0.52 * w, 0.18 * h)); p.restore()
+
+
+def _g_sonnenblume(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(R(0, 0, 1, 0.7), _verlauf(R(0, 0, 1, 0.7), ("#5aa9e6", "#bfe1f7", "#ffffff")))
+    p.setOpacity(0.9); _wolken(p, r, 0.42, "#ffffff", 5); p.setOpacity(1)
+    p.setPen(QPen(QColor("#3c7a1e"), max(1.0, w * 0.02)))
+    for cx in (0.2, 0.42):
+        p.drawLine(QPointF(x0 + cx * w, y0 + 0.82 * h), QPointF(x0 + cx * w, y0 + h))
+    _blume(p, x0 + 0.2 * w, y0 + 0.8 * h, 0.14 * w); _blume(p, x0 + 0.42 * w, y0 + 0.9 * h, 0.1 * w)
+
+
+def _g_gruen(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.setPen(Qt.NoPen)
+    for i, (fx, fy, s, f) in enumerate(((0.86, 0.62, 0.22, "#c5e17a"), (0.95, 0.72, 0.18, "#9acd32"), (0.80, 0.80, 0.16, "#e2f0b8"))):
+        p.save(); p.translate(x0 + fx * w, y0 + fy * h); p.rotate(30 + i * 40); p.setBrush(QColor(f))
+        p.drawEllipse(QPointF(0, 0), s * w, s * w * 0.35); p.restore()
+
+
+def _g_puzzle(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    pfad = QPainterPath(QPointF(x0, y0 + 0.02 * h)); pfad.quadTo(QPointF(x0 + 0.5 * w, y0 + 0.02 * h), QPointF(x0 + w, y0 + 0.24 * h))
+    pfad.lineTo(x0 + w, y0); pfad.lineTo(x0, y0); pfad.closeSubpath()
+    p.setPen(Qt.NoPen); p.setBrush(_verlauf(R(0, 0, 1, 0.24), ("#3a8dde", "#bfe0fb"), False)); p.drawPath(pfad)
+    for i, (fx, fy, f) in enumerate(((0.62, 0.10, "#2e86de"), (0.72, 0.08, "#20bf6b"), (0.66, 0.18, "#f7b731"), (0.78, 0.17, "#2e86de"),
+                                     (0.86, 0.12, "#20bf6b"), (0.02, 0.92, "#2e86de"))):
+        _puzzle(p, x0 + fx * w, y0 + fy * h, 0.09 * w, f)
+
+
+def _g_segel(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(r, _verlauf(r, ("#0b1f44", "#1b3f7a", "#5c86c4")))
+    p.fillRect(R(0, 0.82, 1, 0.18), _verlauf(R(0, 0.82, 1, 0.18), ("#2c5aa0", "#0b1f44")))
+    _segelboot(p, x0 + 0.3 * w, y0 + 0.86 * h, 0.12 * w); _segelboot(p, x0 + 0.66 * w, y0 + 0.88 * h, 0.09 * w)
+    p.setPen(QPen(QColor("#ffffff"), max(1.0, w * 0.003))); p.drawLine(QPointF(x0 + 0.18 * w, y0 + 0.43 * h), QPointF(x0 + 0.82 * w, y0 + 0.43 * h))
+
+
+def _g_rahmen(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.setPen(QPen(QColor("#2f5597"), max(1.0, w * 0.004))); p.setBrush(Qt.NoBrush); p.drawRect(R(0.07, 0.05, 0.86, 0.9))
+    p.setPen(QPen(QColor("#9dc3e6"), max(1.0, w * 0.002))); p.drawRect(R(0.38, 0.08, 0.24, 0.04))
+
+
+def _g_linien(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.fillRect(R(0, 0, 1, 0.012), QColor("#2f5597")); p.fillRect(R(0, 0.985, 1, 0.015), QColor("#2f5597"))
+    p.setPen(QPen(QColor("#9dc3e6"), max(1.0, w * 0.002))); p.setBrush(Qt.NoBrush); p.drawRect(R(0.38, 0.045, 0.24, 0.035))
+
+
+def _g_siegel(p: QPainter, r: QRectF, w: float, h: float, x0: float, y0: float, R) -> None:
+    p.setPen(QPen(QColor("#404040"), max(1.0, w * 0.006))); p.setBrush(Qt.NoBrush)
+    p.drawEllipse(QPointF(x0 + 0.2 * w, y0 + 0.1 * h), 0.06 * w, 0.06 * w)
+    p.drawEllipse(QPointF(x0 + 0.2 * w, y0 + 0.1 * h), 0.035 * w, 0.035 * w)
+
+
+_GRAFIKEN = {
+    "Mosaik": _g_mosaik,
+    "Himmel": _g_himmel,
+    "Sonne": _g_sonne,
+    "Kopfbalken": _g_kopfbalken,
+    "Wellen": _g_wellen,
+    "Blaurand": _g_blaurand,
+    "Stadt": _g_stadt,
+    "Notizzettel": _g_notizzettel,
+    "Sonnenblume": _g_sonnenblume,
+    "Grün": _g_gruen,
+    "Puzzle": _g_puzzle,
+    "Segel": _g_segel,
+    "Rahmen": _g_rahmen,
+    "Linien": _g_linien,
+    "Siegel": _g_siegel,
+}
+
+
 def _grafik(p: QPainter, name: str, r: QRectF) -> None:
     """Die Grafik einer Gestaltung (ohne Text) auf das Blatt ``r``."""
     w, h, x0, y0 = r.width(), r.height(), r.left(), r.top()
@@ -158,91 +292,9 @@ def _grafik(p: QPainter, name: str, r: QRectF) -> None:
     def R(x, y, b, hh) -> QRectF:
         return QRectF(x0 + x * w, y0 + y * h, b * w, hh * h)
     p.save(); p.setRenderHint(QPainter.Antialiasing); p.setClipRect(r)
-    if name == "Mosaik":
-        farben = ("#e8175d", "#f05a28", "#f7b500", "#ff8c00", "#d4145a", "#ff4e50", "#fc913a", "#f9d423")
-        n = 9
-        for i in range(n):
-            for j in range(int(0.56 * h / (w / n))):                     # Mosaik bis gut zur Hälfte, darunter Platz für den Titel
-                k = (i * 7 + j * 3) % len(farben)
-                gr = 0.9 - 0.05 * ((i + j) % 4)
-                p.setPen(Qt.NoPen); p.setBrush(QColor(farben[k]))
-                p.drawRect(QRectF(x0 + (i + (1 - gr) / 2) * w / n, y0 + (j + (1 - gr) / 2) * w / n, gr * w / n, gr * w / n))
-        p.fillRect(R(0, 0.57, 1, 0.012), QColor("#e8175d"))
-    elif name == "Himmel":
-        p.fillRect(R(0, 0, 1, 0.55), _verlauf(R(0, 0, 1, 0.55), ("#9fd3f2", "#e6f4fc", "#ffffff")))
-        p.setOpacity(0.7); _wolken(p, r, 0.12, "#ffffff", 4); p.setOpacity(1)
-    elif name == "Sonne":
-        p.fillRect(R(0, 0, 1, 0.68), _verlauf(R(0, 0, 1, 0.68), ("#f7a600", "#fbd34d", "#fff1b8")))
-        g = QRadialGradient(QPointF(x0 + 0.7 * w, y0 + 0.36 * h), 0.3 * w)
-        g.setColorAt(0, QColor("#ffffff")); g.setColorAt(0.25, QColor("#fff6c9")); g.setColorAt(1, QColor(255, 246, 201, 0))
-        p.setPen(Qt.NoPen); p.setBrush(QBrush(g)); p.drawEllipse(QPointF(x0 + 0.7 * w, y0 + 0.36 * h), 0.3 * w, 0.3 * w)
-        p.setOpacity(0.8); _wolken(p, r, 0.16, "#ffffff", 5); p.setOpacity(1)
-        p.setBrush(QColor("#1a1a1a")); p.drawEllipse(QPointF(x0 + 0.88 * w, y0 + 0.6 * h), 0.03 * w, 0.06 * h)
-    elif name == "Kopfbalken":
-        p.fillRect(R(0.06, 0.04, 0.88, 0.14), _verlauf(R(0.06, 0.04, 0.88, 0.14), ("#2f6eba", "#8fc1ef"), False))
-        p.fillRect(R(0.06, 0.035, 0.88, 0.004), QColor("#9dc3e6"))
-    elif name == "Wellen":
-        p.setPen(QPen(QColor("#7b2f8f"), max(1.0, w * 0.004))); p.setBrush(Qt.NoBrush)
-        p.drawRect(R(0.15, 0.045, 0.28, 0.04))
-        for i in range(7):
-            pfad = QPainterPath(QPointF(x0, y0 + (0.55 + i * 0.06) * h))
-            for k in range(1, 9):
-                pfad.quadTo(QPointF(x0 + (k - 0.5) / 8 * w, y0 + (0.52 + i * 0.06 + 0.05 * ((k % 2) * 2 - 1)) * h),
-                            QPointF(x0 + k / 8 * w, y0 + (0.55 + i * 0.06) * h))
-            p.setPen(QPen(QColor(200, 200, 210, 140), max(1.0, w * 0.01))); p.drawPath(pfad)
-    elif name == "Blaurand":
-        for x in (0.0, 0.94):
-            p.fillRect(R(x, 0, 0.06, 1), QColor("#2f6eba"))
-        p.fillRect(R(0, 0, 1, 0.012), QColor("#2f6eba")); p.fillRect(R(0, 0.988, 1, 0.012), QColor("#2f6eba"))
-    elif name == "Stadt":
-        p.setPen(Qt.NoPen); p.setBrush(QColor("#e3e3e3"))
-        hoehen = (0.10, 0.16, 0.08, 0.20, 0.13, 0.18, 0.09, 0.15, 0.22, 0.11, 0.17, 0.12)
-        for i, hh in enumerate(hoehen):
-            p.drawRect(R(i / len(hoehen), 1 - hh, 1 / len(hoehen) * 0.9, hh))
-        p.setBrush(QColor("#f2f2f2"))
-        for i, hh in enumerate(hoehen[::-1]):
-            p.drawRect(R((i + 0.4) / len(hoehen), 1 - hh * 0.6, 1 / len(hoehen) * 0.6, hh * 0.6))
-    elif name == "Notizzettel":
-        p.fillRect(r, QColor("#5b8fd6"))
-        for i in range(9):
-            _puzzle(p, x0 + (0.04 + 0.025 * i + 0.01 * (i % 2)) * w, y0 + (0.05 + 0.03 * i) * h, 0.05 * w, "#f6d32d")
-        p.save(); p.translate(x0 + 0.62 * w, y0 + 0.47 * h); p.rotate(-6)
-        p.setPen(Qt.NoPen); p.setBrush(QColor(0, 0, 0, 50)); p.drawRect(QRectF(-0.25 * w + 4, -0.08 * h + 4, 0.52 * w, 0.18 * h))
-        p.setBrush(QColor("#f6d32d")); p.drawRect(QRectF(-0.25 * w, -0.08 * h, 0.52 * w, 0.18 * h)); p.restore()
-    elif name == "Sonnenblume":
-        p.fillRect(R(0, 0, 1, 0.7), _verlauf(R(0, 0, 1, 0.7), ("#5aa9e6", "#bfe1f7", "#ffffff")))
-        p.setOpacity(0.9); _wolken(p, r, 0.42, "#ffffff", 5); p.setOpacity(1)
-        p.setPen(QPen(QColor("#3c7a1e"), max(1.0, w * 0.02)))
-        for cx in (0.2, 0.42):
-            p.drawLine(QPointF(x0 + cx * w, y0 + 0.82 * h), QPointF(x0 + cx * w, y0 + h))
-        _blume(p, x0 + 0.2 * w, y0 + 0.8 * h, 0.14 * w); _blume(p, x0 + 0.42 * w, y0 + 0.9 * h, 0.1 * w)
-    elif name == "Grün":
-        p.setPen(Qt.NoPen)
-        for i, (fx, fy, s, f) in enumerate(((0.86, 0.62, 0.22, "#c5e17a"), (0.95, 0.72, 0.18, "#9acd32"), (0.80, 0.80, 0.16, "#e2f0b8"))):
-            p.save(); p.translate(x0 + fx * w, y0 + fy * h); p.rotate(30 + i * 40); p.setBrush(QColor(f))
-            p.drawEllipse(QPointF(0, 0), s * w, s * w * 0.35); p.restore()
-    elif name == "Puzzle":
-        pfad = QPainterPath(QPointF(x0, y0 + 0.02 * h)); pfad.quadTo(QPointF(x0 + 0.5 * w, y0 + 0.02 * h), QPointF(x0 + w, y0 + 0.24 * h))
-        pfad.lineTo(x0 + w, y0); pfad.lineTo(x0, y0); pfad.closeSubpath()
-        p.setPen(Qt.NoPen); p.setBrush(_verlauf(R(0, 0, 1, 0.24), ("#3a8dde", "#bfe0fb"), False)); p.drawPath(pfad)
-        for i, (fx, fy, f) in enumerate(((0.62, 0.10, "#2e86de"), (0.72, 0.08, "#20bf6b"), (0.66, 0.18, "#f7b731"), (0.78, 0.17, "#2e86de"),
-                                         (0.86, 0.12, "#20bf6b"), (0.02, 0.92, "#2e86de"))):
-            _puzzle(p, x0 + fx * w, y0 + fy * h, 0.09 * w, f)
-    elif name == "Segel":
-        p.fillRect(r, _verlauf(r, ("#0b1f44", "#1b3f7a", "#5c86c4")))
-        p.fillRect(R(0, 0.82, 1, 0.18), _verlauf(R(0, 0.82, 1, 0.18), ("#2c5aa0", "#0b1f44")))
-        _segelboot(p, x0 + 0.3 * w, y0 + 0.86 * h, 0.12 * w); _segelboot(p, x0 + 0.66 * w, y0 + 0.88 * h, 0.09 * w)
-        p.setPen(QPen(QColor("#ffffff"), max(1.0, w * 0.003))); p.drawLine(QPointF(x0 + 0.18 * w, y0 + 0.43 * h), QPointF(x0 + 0.82 * w, y0 + 0.43 * h))
-    elif name == "Rahmen":
-        p.setPen(QPen(QColor("#2f5597"), max(1.0, w * 0.004))); p.setBrush(Qt.NoBrush); p.drawRect(R(0.07, 0.05, 0.86, 0.9))
-        p.setPen(QPen(QColor("#9dc3e6"), max(1.0, w * 0.002))); p.drawRect(R(0.38, 0.08, 0.24, 0.04))
-    elif name == "Linien":
-        p.fillRect(R(0, 0, 1, 0.012), QColor("#2f5597")); p.fillRect(R(0, 0.985, 1, 0.015), QColor("#2f5597"))
-        p.setPen(QPen(QColor("#9dc3e6"), max(1.0, w * 0.002))); p.setBrush(Qt.NoBrush); p.drawRect(R(0.38, 0.045, 0.24, 0.035))
-    elif name == "Siegel":
-        p.setPen(QPen(QColor("#404040"), max(1.0, w * 0.006))); p.setBrush(Qt.NoBrush)
-        p.drawEllipse(QPointF(x0 + 0.2 * w, y0 + 0.1 * h), 0.06 * w, 0.06 * w)
-        p.drawEllipse(QPointF(x0 + 0.2 * w, y0 + 0.1 * h), 0.035 * w, 0.035 * w)
+    zeichne = _GRAFIKEN.get(name)
+    if zeichne:
+        zeichne(p, r, w, h, x0, y0, R)
     p.restore()
 
 

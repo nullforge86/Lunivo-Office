@@ -168,16 +168,8 @@ def aendern(ed, art: str, **kw) -> bool:
     return ok
 
 
-def _aendern_innen(ed, art: str, **kw) -> bool:
-    """Parameter des gewählten Objekts ändern und neu zeichnen. ``breite``/``hoehe`` (px) ändern die Größe; ``form_fuell`` (Farbe oder ``""``)
-    und ``form_linie`` (Farbe oder ``""``) die Füllung und den Rand des Objekts; alle anderen Schlüssel gehören zu ``daten``."""
-    from lunivo_writer.editor.objekte import bildlayout as BL
-    z = ziel(ed)
-    if z is None or z[0] != art:
-        return False
-    _art, d, key, a, bild = z
-    neu = dict(a)
-    b, h = float(a["b"]), float(a["h"])
+def _daten_vorbereiten(d: dict, kw: dict) -> None:
+    """Vor dem Ändern: Vorlage und neuer Text setzen Altes zurück, ein Zeichenformat fürs ganze Objekt löscht gleiche Angaben der Läufe."""
     if kw.get("vorlage") is not None:                                # eine Vorlage setzt Füllung, Kontur und Effekt neu
         for k in ("fuell", "kontur", "kontur_breite", "effekt"):
             if k not in kw:
@@ -189,54 +181,90 @@ def _aendern_innen(ed, art: str, **kw) -> bool:
             d["laeufe"] = laeufe_zusammen([{x: y for x, y in r.items() if x != k} for r in d["laeufe"]])
             if all(len(r) == 1 for r in d["laeufe"]):
                 d.pop("laeufe")
+
+
+def _form_daten_setzen(d: dict, k: str, v) -> None:
+    """Bei einer Form: Farben der Form selbst, kein Kasten ums Bild."""
+    if k == "form_fuell":
+        d["fuell"] = v or ""
+    elif k == "form_linie":
+        d["linie"] = v or ""
+    else:
+        d["strich"] = float(v)
+
+
+def _kasten_setzen(neu: dict, a: dict, k: str, v) -> None:
+    """Füllung, Strichstärke, Effekt und Linie des Kastens ums Objekt."""
+    if k == "form_fuell":
+        neu["fuell"] = {"art": "farbe", "farbe": v} if v else None
+    elif k == "form_strich":
+        neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "b": float(v) * 96 / 72}
+    elif k == "form_effekt":
+        if v:
+            neu["fx"] = v
+        else:
+            neu.pop("fx", None)
+    else:                                                            # form_linie
+        neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "farbe": v} if v else None
+
+
+def _eintrag_setzen(art: str, k: str, v, d: dict, neu: dict, a: dict) -> None:
+    """Ein Schlüssel von ``kw`` (außer Größe) in ``daten`` oder in den Kasten schreiben."""
+    if k == "laeufe":
+        if v:
+            d["laeufe"] = v
+        else:
+            d.pop("laeufe", None)
+    elif art == "form" and k in ("form_fuell", "form_linie", "form_strich"):
+        _form_daten_setzen(d, k, v)
+    elif k == "untertyp":                                          # Diagramm: Diagrammart (in den Daten unter „art“)
+        d["art"] = v
+    elif k in ("form_fuell", "form_strich", "form_effekt", "form_linie"):
+        _kasten_setzen(neu, a, k, v)
+    elif v is None:
+        d.pop(k, None)
+    else:
+        d[k] = v
+
+
+def _bild_erneuern(ed, art: str, d: dict, a: dict, bild, b: float, h: float) -> tuple:
+    """Neues Bild des Objekts zeichnen und als Dokument-Ressource anlegen: (Name, Breite, Höhe)."""
+    if art == "smartart":                                        # Breite bleibt, die Höhe folgt dem neuen Bild
+        img = zeichnen(art, d, b, h)
+        h = b * img.height() / max(1, img.width())
+    elif art == "wordart":                                         # die Größe folgt dem Bild: gleicher Maßstab wie vorher
+        faktor = a["b"] / max(1.0, bild.width() / _SS)
+        img = wordart_zeichnen(d)
+        b, h = img.width() / _SS * faktor, img.height() / _SS * faktor
+    else:
+        img = zeichnen(art, d, b, h)
+    n = FB.neuer_name(ed.document())
+    ed.document().addResource(QTextDocument.ImageResource, QUrl(n), img)
+    return n, b, h
+
+
+def _aendern_innen(ed, art: str, **kw) -> bool:
+    """Parameter des gewählten Objekts ändern und neu zeichnen. ``breite``/``hoehe`` (px) ändern die Größe; ``form_fuell`` (Farbe oder ``""``)
+    und ``form_linie`` (Farbe oder ``""``) die Füllung und den Rand des Objekts; alle anderen Schlüssel gehören zu ``daten``."""
+    from lunivo_writer.editor.objekte import bildlayout as BL
+    z = ziel(ed)
+    if z is None or z[0] != art:
+        return False
+    _art, d, key, a, bild = z
+    neu = dict(a)
+    b, h = float(a["b"]), float(a["h"])
+    _daten_vorbereiten(d, kw)
     for k, v in kw.items():
-        if k == "laeufe":
-            if v:
-                d["laeufe"] = v
-            else:
-                d.pop("laeufe", None)
-        elif k == "breite":
+        if k == "breite":
             b = float(v)
         elif k == "hoehe":
             h = float(v)
-        elif art == "form" and k in ("form_fuell", "form_linie", "form_strich"):     # bei einer Form: Farben der Form selbst, kein Kasten ums Bild
-            if k == "form_fuell":
-                d["fuell"] = v or ""
-            elif k == "form_linie":
-                d["linie"] = v or ""
-            else:
-                d["strich"] = float(v)
-        elif k == "untertyp":                                          # Diagramm: Diagrammart (in den Daten unter „art“)
-            d["art"] = v
-        elif k == "form_fuell":
-            neu["fuell"] = {"art": "farbe", "farbe": v} if v else None
-        elif k == "form_strich":
-            neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "b": float(v) * 96 / 72}
-        elif k == "form_effekt":
-            if v:
-                neu["fx"] = v
-            else:
-                neu.pop("fx", None)
-        elif k == "form_linie":
-            neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "farbe": v} if v else None
-        elif v is None:
-            d.pop(k, None)
         else:
-            d[k] = v
+            _eintrag_setzen(art, k, v, d, neu, a)
     neu_zeichnen = set(kw) - {"form_fuell", "form_linie", "form_strich", "form_effekt"} or (
         art == "form" and set(kw) & {"form_fuell", "form_linie", "form_strich"})
     if neu_zeichnen:
-        if art == "smartart":                                        # Breite bleibt, die Höhe folgt dem neuen Bild
-            img = zeichnen(art, d, b, h)
-            h = b * img.height() / max(1, img.width())
-        elif art == "wordart":                                         # die Größe folgt dem Bild: gleicher Maßstab wie vorher
-            faktor = a["b"] / max(1.0, bild.width() / _SS)
-            img = wordart_zeichnen(d)
-            b, h = img.width() / _SS * faktor, img.height() / _SS * faktor
-        else:
-            img = zeichnen(art, d, b, h)
-        n = FB.neuer_name(ed.document())
-        ed.document().addResource(QTextDocument.ImageResource, QUrl(n), img)
+        n, b, h = _bild_erneuern(ed, art, d, a, bild, b, h)
         neu["n"], neu["b"], neu["h"], neu["daten"] = n, b, h, d
     BL._speichern_frei(ed, key, neu)
     if art == "textfeld":
@@ -282,37 +310,54 @@ def text_bereich(a: dict, bild: QImage) -> QRectF | None:
 
 
 # ---- Schreiben im Objekt ---------------------------------------------------------------------------------------------------
+def _fmt_unter(cf, k, v) -> None:
+    cf.setFontUnderline(bool(v))
+    if isinstance(v, str) and v:
+        from lunivo_writer.editor.text.unterstreichung import unter_format
+        cf.merge(unter_format(v))
+
+
+def _fmt_hoch_tief(cf, k, v) -> None:
+    from PySide6.QtGui import QTextCharFormat
+    cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript if k == "hoch" and v else QTextCharFormat.AlignSubScript if k == "tief" and v
+                            else QTextCharFormat.AlignNormal)
+
+
+def _fmt_schrift(cf, k, v) -> None:
+    if v:
+        cf.setFontFamilies([v])
+
+
+def _fmt_pt(cf, k, v) -> None:
+    if v:
+        cf.setFontPointSize(float(v))
+
+
+# Schlüssel der Texttools -> Setzer auf dem Zeichenformat (cf, Schlüssel, Wert)
+_FORMAT_SETZER = {
+    "fett": lambda cf, k, v: cf.setFontWeight(QFont.Bold if v else QFont.Normal),
+    "kursiv": lambda cf, k, v: cf.setFontItalic(bool(v)),
+    "unter": _fmt_unter,
+    "unterfarbe": lambda cf, k, v: cf.setUnderlineColor(QColor(v) if v else QColor()),
+    "durch": lambda cf, k, v: cf.setFontStrikeOut(bool(v)),
+    "hoch": _fmt_hoch_tief,
+    "tief": _fmt_hoch_tief,
+    "hervor": lambda cf, k, v: cf.setBackground(QColor(v) if v else QColor(0, 0, 0, 0)),
+    "fuell": lambda cf, k, v: cf.setForeground(QColor(v) if v else QColor(0, 0, 0, 0)),
+    "kontur": lambda cf, k, v: cf.setTextOutline(QPen(QColor(v), 1.0) if v else QPen(Qt.NoPen)),
+    "schrift": _fmt_schrift,
+    "pt": _fmt_pt,
+}
+
+
 def _format_aus_kw(kw: dict):
     """Zeichenformat für das Eingabefeld aus Schlüsseln der Texttools (nur die genannten)."""
     from PySide6.QtGui import QTextCharFormat
     cf = QTextCharFormat()
     for k, v in kw.items():
-        if k == "fett":
-            cf.setFontWeight(QFont.Bold if v else QFont.Normal)
-        elif k == "kursiv":
-            cf.setFontItalic(bool(v))
-        elif k == "unter":
-            cf.setFontUnderline(bool(v))
-            if isinstance(v, str) and v:
-                from lunivo_writer.editor.text.unterstreichung import unter_format
-                cf.merge(unter_format(v))
-        elif k == "unterfarbe":
-            cf.setUnderlineColor(QColor(v) if v else QColor())
-        elif k == "durch":
-            cf.setFontStrikeOut(bool(v))
-        elif k == "hoch" or k == "tief":
-            cf.setVerticalAlignment(QTextCharFormat.AlignSuperScript if k == "hoch" and v else QTextCharFormat.AlignSubScript if k == "tief" and v
-                                    else QTextCharFormat.AlignNormal)
-        elif k == "hervor":
-            cf.setBackground(QColor(v) if v else QColor(0, 0, 0, 0))
-        elif k == "fuell":
-            cf.setForeground(QColor(v) if v else QColor(0, 0, 0, 0))
-        elif k == "kontur":
-            cf.setTextOutline(QPen(QColor(v), 1.0) if v else QPen(Qt.NoPen))
-        elif k == "schrift" and v:
-            cf.setFontFamilies([v])
-        elif k == "pt" and v:
-            cf.setFontPointSize(float(v))
+        setzer = _FORMAT_SETZER.get(k)
+        if setzer:
+            setzer(cf, k, v)
     return cf
 
 
@@ -631,6 +676,38 @@ def ist_verknuepft(ed, key: tuple) -> bool:
     return bool(d.get("weiter") or d.get("von"))
 
 
+def _kette_glieder(k, a, nach_id: dict) -> list:
+    """Alle Felder einer Kette ab ``(k, a)`` in Reihenfolge."""
+    kette = [(k, a)]
+    nxt = a.get("daten", {})
+    while nxt.get("weiter") and nxt["weiter"] in nach_id:
+        kette.append(nach_id[nxt["weiter"]]); nxt = kette[-1][1].get("daten", {})
+    return kette
+
+
+def _kette_verteilen(ed, kette: list, voll: list, hat_laeufe: bool, gesehen: set) -> None:
+    """Den vollen Text auf die Felder der Kette verteilen; nur Felder mit geändertem Anteil neu setzen."""
+    frisch = {kk: aa for kk, aa in _textfelder(ed)}               # aktuelle Angaben (Schlüssel bleiben)
+    off = 0
+    for kk, aa in kette:
+        aa = frisch.get(kk, aa); dd = dict(aa.get("daten", {}))
+        gesehen.add(kk)
+        rest = laeufe_ab(voll, off)
+        cut = _text_passt(dd, rest, aa["b"], aa["h"]) if dd.get("weiter") else len(laeufe_text(rest))
+        zeigt = laeufe_ab(rest, 0, cut)
+        skip = len(laeufe_text(rest)[cut:]) - len(laeufe_text(rest)[cut:].lstrip("\n "))
+        off += cut + skip
+        text = laeufe_text(zeigt).rstrip("\n")
+        neu_l = laeufe_zusammen(laeufe_ab(zeigt, 0, len(text))) if hat_laeufe else None
+        if dd.get("gezeigt") != text or dd.get("gezeigt_laeufe") != neu_l or "gezeigt" not in dd:
+            dd["gezeigt"] = text
+            if neu_l is not None:
+                dd["gezeigt_laeufe"] = neu_l
+            else:
+                dd.pop("gezeigt_laeufe", None)
+            _neu_setzen(ed, kk, dict(aa, daten=dd))
+
+
 def kette_aktualisieren(ed) -> None:
     """Jede Kette neu verteilen: der Text des ersten Feldes (mit seinen Zeichenformaten) füllt ein Feld nach dem anderen; geändert werden nur
     Felder, deren Anteil sich ändert."""
@@ -646,29 +723,4 @@ def kette_aktualisieren(ed) -> None:
                 d2 = {x: y for x, y in d.items() if x not in ("gezeigt", "gezeigt_laeufe")}; _neu_setzen(ed, k, dict(a, daten=d2))
             continue
         voll = d.get("laeufe") or [{"t": d.get("text", "")}]
-        kette = [(k, a)]
-        nxt = d
-        while nxt.get("weiter") and nxt["weiter"] in nach_id:
-            kette.append(nach_id[nxt["weiter"]]); nxt = kette[-1][1].get("daten", {})
-        frisch = {kk: aa for kk, aa in _textfelder(ed)}               # aktuelle Angaben (Schlüssel bleiben)
-        gesamt, off = laeufe_text(voll), 0
-        for kk, aa in kette:
-            aa = frisch.get(kk, aa); dd = dict(aa.get("daten", {}))
-            gesehen.add(kk)
-            rest = laeufe_ab(voll, off)
-            if dd.get("weiter"):
-                cut = _text_passt(dd, rest, aa["b"], aa["h"])
-            else:
-                cut = len(laeufe_text(rest))
-            zeigt = laeufe_ab(rest, 0, cut)
-            skip = len(laeufe_text(rest)[cut:]) - len(laeufe_text(rest)[cut:].lstrip("\n "))
-            off += cut + skip
-            text = laeufe_text(zeigt).rstrip("\n")
-            neu_l = laeufe_zusammen(laeufe_ab(zeigt, 0, len(text))) if d.get("laeufe") else None
-            if dd.get("gezeigt") != text or dd.get("gezeigt_laeufe") != neu_l or "gezeigt" not in dd:
-                dd["gezeigt"] = text
-                if neu_l is not None:
-                    dd["gezeigt_laeufe"] = neu_l
-                else:
-                    dd.pop("gezeigt_laeufe", None)
-                _neu_setzen(ed, kk, dict(aa, daten=dd))
+        _kette_verteilen(ed, _kette_glieder(k, a, nach_id), voll, bool(d.get("laeufe")), gesehen)

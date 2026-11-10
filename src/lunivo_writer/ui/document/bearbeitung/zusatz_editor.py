@@ -451,97 +451,113 @@ class ZusatzMixin:
         self.markup = an
         self._overlays_neu()
 
+    @staticmethod
+    def _zusatzauswahl(doc, von: int, bis: int, fmt: QTextCharFormat):
+        """Eine Zusatzauswahl (nur Anzeige) von ``von`` bis ``bis``."""
+        c = QTextCursor(doc)
+        c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor)
+        e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
+        return e
+
+    @staticmethod
+    def _hintergrund(farbe: QColor) -> QTextCharFormat:
+        fmt = QTextCharFormat(); fmt.setBackground(farbe)
+        return fmt
+
     def _overlays_neu(self) -> None:
         """Wellenlinien der Schreibhilfe plus Markup (Kommentare, Änderungen) als Zusatzauswahl — nichts davon landet im Format."""
         sel = self._lese_blasse_auswahl() if hasattr(self, "_lese_blasse_auswahl") else []      # zuerst: alles Übrige tritt zurück
         doc = self.document()
-        n = doc.characterCount()
-        for f in getattr(self, "_wellen", []):
-            if f.bis > n or f.von >= f.bis:
-                continue
-            c = QTextCursor(doc)
-            c.setPosition(f.von); c.setPosition(f.bis, QTextCursor.KeepAnchor)
-            fmt = QTextCharFormat()
-            fmt.setUnderlineStyle(QTextCharFormat.WaveUnderline)
-            fmt.setUnderlineColor(QColor(self.WELLE.get(f.art, Farbe.GRAU)))
-            e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-            sel.append(e)
-        n_text = doc.characterCount()
-        if n_text < 300000:                                  # Lücken «…» der Vorlagen und Textbausteine: gelb nur in der Ansicht, nie in der Datei
-            from lunivo_writer.editor.dokument.vorlagen import LUECKE, LUECKE_FARBE
-            text = doc.toPlainText()
-            self._luecken_da = "«" in text
-            if self._luecken_da:
-                fmt = QTextCharFormat(); fmt.setBackground(QColor(LUECKE_FARBE))
-                for m in LUECKE.finditer(text):
-                    c = QTextCursor(doc)
-                    c.setPosition(m.start()); c.setPosition(m.end(), QTextCursor.KeepAnchor)
-                    e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-                    sel.append(e)
-        modus = self.opt_text("ui/feldschattierung", "Bei Auswahl") if hasattr(self, "opt_text") else "Nie"
-        if modus != "Nie":
-            from lunivo_writer.editor.seite.anzeige_extra import feldbereiche
-            pos = self.textCursor().position()
-            for von, bis in feldbereiche(doc):
-                if modus == "Immer" or von <= pos <= bis:
-                    c = QTextCursor(doc)
-                    c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor)
-                    fmt = QTextCharFormat(); fmt.setBackground(QColor(150, 160, 175, 70))
-                    e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-                    sel.append(e)
-        if self.opt("ui/formular_schattierung", True):
-            from lunivo_writer.editor.dokument.formular import bereiche as form_bereiche
-            for von, bis, _m in form_bereiche(doc):
-                c = QTextCursor(doc)
-                c.setPosition(von); c.setPosition(bis, QTextCursor.KeepAnchor)
-                fmt = QTextCharFormat(); fmt.setBackground(QColor(76, 110, 245, 38))
-                e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-                sel.append(e)
+        sel += self._overlay_wellen(doc)
+        sel += self._overlay_luecken(doc)
+        sel += self._overlay_felder(doc)
+        sel += self._overlay_formular(doc)
         if self.markup and (self._hat_zusatz or self.verfolgen):
-            for b in (self.kommentar_bereiche() if self.markup_filter["kommentare"] else []):
-                c = QTextCursor(doc)
-                c.setPosition(b["von"]); c.setPosition(b["bis"], QTextCursor.KeepAnchor)
-                geloest = bool((self.kommentare.get(int(b["wert"])) or {}).get("geloest"))
-                farbe = QColor(173, 181, 189, 90) if geloest else QColor(255, 236, 153, 140)            # gelb; gelöst: grau
-                fmt = QTextCharFormat(); fmt.setBackground(farbe)
-                e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-                sel.append(e)
-            ins_stil = self.opt_text("aenderungen/ins_stil", "Unterstrichen")
-            del_stil = self.opt_text("aenderungen/del_stil", "Durchgestrichen")
-            farb_wahl = self.opt_text("aenderungen/farbe", "Nach Autor")
-            for b in self.aenderungen():
-                if not self.aenderung_sichtbar(b):
-                    continue
-                c = QTextCursor(doc)
-                c.setPosition(b["von"]); c.setPosition(b["bis"], QTextCursor.KeepAnchor)
-                farbe = autor_farbe(b["cf"].stringProperty(P_AUTOR))
-                if farb_wahl in FESTE_FARBEN:
-                    farbe = QColor(FESTE_FARBEN[farb_wahl])
-                fmt = QTextCharFormat()
-                stil = del_stil if b["wert"] == "del" else ins_stil
-                if stil == "Keine":
-                    continue
-                fmt.setForeground(farbe)
-                if stil == "Durchgestrichen":
-                    fmt.setFontStrikeOut(True)
-                elif stil == "Unterstrichen":
-                    fmt.setUnderlineStyle(QTextCharFormat.SingleUnderline); fmt.setUnderlineColor(farbe)
-                elif stil == "Doppelt unterstrichen":
-                    fmt.setUnderlineStyle(QTextCharFormat.SingleUnderline); fmt.setUnderlineColor(farbe)
-                    fmt.setFontOverline(True); fmt.setProperty(QTextFormat.TextUnderlineColor, farbe)
-                elif stil == "Fett":
-                    fmt.setFontWeight(QFont.Bold)
-                elif stil == "Kursiv":
-                    fmt.setFontItalic(True)
-                e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-                sel.append(e)
+            sel += self._overlay_kommentare(doc)
+            sel += self._overlay_aenderungen(doc)
         for von, bis in getattr(self, "_such_bereiche", ()):                     # alle Treffer des Feldes „Suchen und ersetzen“
-            c = QTextCursor(doc)
-            c.setPosition(von); c.setPosition(min(bis, doc.characterCount() - 1), QTextCursor.KeepAnchor)
-            fmt = QTextCharFormat(); fmt.setBackground(QColor(255, 176, 46, 130))
-            e = QTextEdit.ExtraSelection(); e.cursor = c; e.format = fmt
-            sel.append(e)
+            sel.append(self._zusatzauswahl(doc, von, min(bis, doc.characterCount() - 1), self._hintergrund(QColor(255, 176, 46, 130))))
         self.setExtraSelections(sel)
         fl = getattr(self, "_blasen_flaeche", None)
         if fl is not None and fl.isVisible():
             fl.update()
+
+    def _overlay_wellen(self, doc) -> list:
+        n = doc.characterCount()
+        out = []
+        for f in getattr(self, "_wellen", []):
+            if f.bis > n or f.von >= f.bis:
+                continue
+            fmt = QTextCharFormat()
+            fmt.setUnderlineStyle(QTextCharFormat.WaveUnderline)
+            fmt.setUnderlineColor(QColor(self.WELLE.get(f.art, Farbe.GRAU)))
+            out.append(self._zusatzauswahl(doc, f.von, f.bis, fmt))
+        return out
+
+    def _overlay_luecken(self, doc) -> list:
+        """Lücken «…» der Vorlagen und Textbausteine: gelb nur in der Ansicht, nie in der Datei."""
+        if doc.characterCount() >= 300000:
+            return []
+        from lunivo_writer.editor.dokument.vorlagen import LUECKE, LUECKE_FARBE
+        text = doc.toPlainText()
+        self._luecken_da = "«" in text
+        if not self._luecken_da:
+            return []
+        fmt = self._hintergrund(QColor(LUECKE_FARBE))
+        return [self._zusatzauswahl(doc, m.start(), m.end(), fmt) for m in LUECKE.finditer(text)]
+
+    def _overlay_felder(self, doc) -> list:
+        modus = self.opt_text("ui/feldschattierung", "Bei Auswahl") if hasattr(self, "opt_text") else "Nie"
+        if modus == "Nie":
+            return []
+        from lunivo_writer.editor.seite.anzeige_extra import feldbereiche
+        pos = self.textCursor().position()
+        return [self._zusatzauswahl(doc, von, bis, self._hintergrund(QColor(150, 160, 175, 70)))
+                for von, bis in feldbereiche(doc) if modus == "Immer" or von <= pos <= bis]
+
+    def _overlay_formular(self, doc) -> list:
+        if not self.opt("ui/formular_schattierung", True):
+            return []
+        from lunivo_writer.editor.dokument.formular import bereiche as form_bereiche
+        return [self._zusatzauswahl(doc, von, bis, self._hintergrund(QColor(76, 110, 245, 38))) for von, bis, _m in form_bereiche(doc)]
+
+    def _overlay_kommentare(self, doc) -> list:
+        out = []
+        for b in (self.kommentar_bereiche() if self.markup_filter["kommentare"] else []):
+            geloest = bool((self.kommentare.get(int(b["wert"])) or {}).get("geloest"))
+            farbe = QColor(173, 181, 189, 90) if geloest else QColor(255, 236, 153, 140)            # gelb; gelöst: grau
+            out.append(self._zusatzauswahl(doc, b["von"], b["bis"], self._hintergrund(farbe)))
+        return out
+
+    @staticmethod
+    def _aenderung_format(stil: str, farbe: QColor) -> QTextCharFormat:
+        """Darstellung einer verfolgten Änderung nach der gewählten Stilart."""
+        fmt = QTextCharFormat()
+        fmt.setForeground(farbe)
+        if stil == "Durchgestrichen":
+            fmt.setFontStrikeOut(True)
+        elif stil == "Unterstrichen":
+            fmt.setUnderlineStyle(QTextCharFormat.SingleUnderline); fmt.setUnderlineColor(farbe)
+        elif stil == "Doppelt unterstrichen":
+            fmt.setUnderlineStyle(QTextCharFormat.SingleUnderline); fmt.setUnderlineColor(farbe)
+            fmt.setFontOverline(True); fmt.setProperty(QTextFormat.TextUnderlineColor, farbe)
+        elif stil == "Fett":
+            fmt.setFontWeight(QFont.Bold)
+        elif stil == "Kursiv":
+            fmt.setFontItalic(True)
+        return fmt
+
+    def _overlay_aenderungen(self, doc) -> list:
+        ins_stil = self.opt_text("aenderungen/ins_stil", "Unterstrichen")
+        del_stil = self.opt_text("aenderungen/del_stil", "Durchgestrichen")
+        farb_wahl = self.opt_text("aenderungen/farbe", "Nach Autor")
+        out = []
+        for b in self.aenderungen():
+            stil = del_stil if b["wert"] == "del" else ins_stil
+            if not self.aenderung_sichtbar(b) or stil == "Keine":
+                continue
+            farbe = autor_farbe(b["cf"].stringProperty(P_AUTOR))
+            if farb_wahl in FESTE_FARBEN:
+                farbe = QColor(FESTE_FARBEN[farb_wahl])
+            out.append(self._zusatzauswahl(doc, b["von"], b["bis"], self._aenderung_format(stil, farbe)))
+        return out

@@ -5,6 +5,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF
 
+from lunivo_writer.core.befehle.hilfen import _farbfeld
+from lunivo_writer.core.farben import Farbe
+from lunivo_writer.ui.baukasten import FarbPalette, weitere_farben
+from lunivo_writer.ui.baukasten.dokument.eingabe_fenster import EingabeFenster
+
 
 class FormToolsBefehle:
     def _form(self) -> dict | None:
@@ -76,3 +81,71 @@ class FormToolsBefehle:
 
     def kann_formPunkteBearbeiten(self) -> bool:
         return self._form() is not None
+
+    # ---- Form-Menüs, Vorlagen, Text in der Form, Gruppieren (aus dem Kontext-Reiter) ---------------------------------------------------
+    # ---- Form- und WordArt-Tools --------------------------------------------------------------------------------------------
+    FARBEN = (Farbe.AKZENT_DUNKEL, "#6bbf59", "#f4a259", "#e5645f", "#ffd43b", "#ced4da", "#495057", Farbe.WEISS, Farbe.SCHWARZ)
+
+    def _form_farbe(self, feld: str, titel: str):
+        c = weitere_farben(self.w, Farbe.AKZENT_DUNKEL, titel)
+        if c is not None:
+            self._form_aendern(**{feld: c.name()})
+
+    def _form_aendern(self, **kw):
+        from lunivo_writer.editor.objekte import formen
+        if not (self.ed and formen.aendern(self.ed, **kw)):
+            self.w.lbl_msg.setText("Bitte zuerst eine Form auswählen (Schreibmarke vor der Form oder Form markieren).")
+
+    def menue_formFuellung(self):
+        m = FarbPalette(self.w, keine_text="Keine Füllung", start=Farbe.AKZENT_DUNKEL, titel="Füllfarbe")
+        m.gewaehlt.connect(lambda c: self._form_aendern(fuell=c.name() if c is not None else ""))
+        return m
+
+    def menue_formKontur(self):
+        m = FarbPalette(self.w, keine_text=None, start=Farbe.AKZENT_DUNKEL, titel="Linienfarbe")
+        m.gewaehlt.connect(lambda c: self._form_aendern(linie=c.name()))
+        m.addSeparator()
+        st = m.untermenue("Linienstärke")
+        for w in (0.5, 1.0, 2.0, 3.0, 5.0, 8.0):
+            st.eintrag(f"{w:g} pt".replace(".", ","), lambda w=w: self._form_aendern(strich=w))
+        return m
+
+    def menue_formVorlagen(self):
+        from lunivo_writer.editor.objekte import formen
+        from lunivo_writer.ui.baukasten.dropdown.menue_liste import MenueListe
+        m = MenueListe()
+        for n, fu, li, _st in formen.VORLAGEN:
+            m.eintrag(n, lambda n=n: self._form_vorlage(n), symbol=_farbfeld(fu or Farbe.WEISS))
+        return m
+
+    def _form_vorlage(self, name):
+        from lunivo_writer.editor.objekte import formen
+        if not (self.ed and formen.vorlage(self.ed, name)):
+            self.w.lbl_msg.setText("Bitte zuerst eine Form auswählen.")
+
+    def formText(self, k=None):
+        from lunivo_writer.editor.objekte import formen
+        frei = formen.frei_daten(self.ed) if self.ed else None            # als freies Objekt gewählte Form
+        if frei is not None:
+            akt = frei.get("text", "")
+        else:
+            e, f = self._bild()
+            if f is None:
+                return
+            o = formen.objekt(f) or {}
+            akt = o.get("daten", {}).get("text", "")
+        t, ok = EingabeFenster.getText(self.w, "Text in der Form", "Text:", text=akt)
+        if ok:
+            self._form_aendern(text=t)
+
+    def gruppieren(self, k=None):
+        from lunivo_writer.editor.objekte import formen
+        if self.ed:
+            r = formen.gruppieren(self.ed)
+            self.w.lbl_msg.setText(r or "Formen gruppiert.")
+
+    def gruppeAufheben(self, k=None):
+        from lunivo_writer.editor.objekte import formen
+        if self.ed:
+            r = formen.gruppe_aufheben(self.ed)
+            self.w.lbl_msg.setText(r or "Gruppierung aufgehoben.")

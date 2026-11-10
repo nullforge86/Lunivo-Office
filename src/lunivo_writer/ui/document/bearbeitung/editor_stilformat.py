@@ -32,10 +32,9 @@ class StilformatMixin:
         cur.endEditBlock()
         self.setFocus()
 
-    def _stil_auf_block(self, blk, name: str) -> None:
-        d = stile.definition(name)
-        cc = QTextCursor(blk)
-        bf = cc.blockFormat()
+    @staticmethod
+    def _bf_grundlagen(bf, d: dict) -> None:
+        """Überschriftsebene, Vorlagenschlüssel, Abstände, Zeilenhöhe."""
         level = d["ebene"]
         bf.setHeadingLevel(level)
         key = d.get("key")
@@ -48,6 +47,10 @@ class StilformatMixin:
             bf.setLineHeight(d.get("zeilen_pt", 12.0) / 0.75, 2 if d["zeilen_art"] == "genau" else 3)
         elif d.get("zeilen"):
             bf.setLineHeight(d["zeilen"] * 100, LH_PROPORTIONAL)
+
+    @staticmethod
+    def _bf_einzuege(bf, d: dict) -> None:
+        """Einzüge, Schreibrichtung, Umbruch, Gliederung, Absatzoptionen, Ausrichtung."""
         if d.get("rechts"):
             from lunivo_writer.editor.seite.querblatt import rechts_setzen
             rechts_setzen(bf, mm_to_px(d["rechts"]))
@@ -66,6 +69,10 @@ class StilformatMixin:
             bf.setLeftMargin(mm_to_px(d["einzug"]))
         if d["ausr"]:
             bf.setAlignment({"links": Qt.AlignLeft, "mitte": Qt.AlignHCenter, "rechts": Qt.AlignRight, "block": Qt.AlignJustify}[d["ausr"]])
+
+    @staticmethod
+    def _bf_rahmen_fuellung(bf, d: dict) -> None:
+        """Rahmen, Muster und Füllung."""
         if d.get("rahmen"):
             from lunivo_writer.editor.dokument.zusatz import B_RAHMEN
             bf.setProperty(B_RAHMEN, d["rahmen"])
@@ -78,6 +85,14 @@ class StilformatMixin:
                 bf.setProperty(B_MUSTER, M.als_text(d["muster"], d.get("musterfarbe") or Farbe.SCHWARZ, fuell))
             else:
                 bf.setBackground(QBrush(QColor(fuell)))
+
+    def _stil_auf_block(self, blk, name: str) -> None:
+        d = stile.definition(name)
+        cc = QTextCursor(blk)
+        bf = cc.blockFormat()
+        self._bf_grundlagen(bf, d)
+        self._bf_einzuege(bf, d)
+        self._bf_rahmen_fuellung(bf, d)
         cc.setBlockFormat(bf)
         if d.get("tabs"):
             from lunivo_writer.ui.baukasten.dokument.tabstopp_dialog import aus_text as tabs_aus, zu_block
@@ -85,6 +100,10 @@ class StilformatMixin:
             QTextCursor(blk).setBlockFormat(bf)
         if d.get("liste"):
             self._liste_auf_block(blk, d["liste"])
+        self._zeichen_auf_block(blk, d)
+        self._ebene_der_vorlage(blk, name)
+
+    def _zeichen_auf_block(self, blk, d: dict) -> None:
         sel = QTextCursor(blk)
         sel.movePosition(QTextCursor.StartOfBlock)
         sel.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
@@ -97,7 +116,6 @@ class StilformatMixin:
             e = texteffekt.aus_text(d["effekt"], d.get("farbe", ""))
             if e:
                 sel.mergeCharFormat(texteffekt.zu_format(e))
-        self._ebene_der_vorlage(blk, name)
 
     def _zeichen_der_vorlage(self, d: dict) -> QTextCharFormat:
         """Das Zeichenformat einer Vorlage (alle Felder des Fensters „Schriftart“). Was die Vorlage nicht setzt, bleibt in der Auswahl, wie es ist."""

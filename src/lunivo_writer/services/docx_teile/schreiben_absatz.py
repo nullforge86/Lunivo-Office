@@ -1,6 +1,9 @@
 """DOCX schreiben: Absatz – fachlich gekapselte Verarbeitung."""
 from __future__ import annotations
 
+from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from PySide6.QtGui import QTextOption
+
 from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F401
     io,
     logging,
@@ -77,6 +80,23 @@ from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F40
     _CellBox,
 )
 
+# Ausrichtung Qt → Word (erste passende gewinnt); Tabstopp-Art und Füllzeichen
+_AUSRICHTUNG = ((Qt.AlignHCenter, WD_ALIGN_PARAGRAPH.CENTER), (Qt.AlignRight, WD_ALIGN_PARAGRAPH.RIGHT), (Qt.AlignJustify, WD_ALIGN_PARAGRAPH.JUSTIFY))
+_TAB_ART = {QTextOption.RightTab: WD_TAB_ALIGNMENT.RIGHT, QTextOption.CenterTab: WD_TAB_ALIGNMENT.CENTER, QTextOption.DelimiterTab: WD_TAB_ALIGNMENT.DECIMAL}
+_TAB_FUELLUNG = {"punkt": WD_TAB_LEADER.DOTS, "strich": WD_TAB_LEADER.DASHES, "linie": WD_TAB_LEADER.LINES, "mitte": WD_TAB_LEADER.MIDDLE_DOT}
+_STIL_AUSRICHTUNG = {"links": WD_ALIGN_PARAGRAPH.LEFT, "mitte": WD_ALIGN_PARAGRAPH.CENTER,
+                     "rechts": WD_ALIGN_PARAGRAPH.RIGHT, "block": WD_ALIGN_PARAGRAPH.JUSTIFY}
+# Rahmenseiten (Word-Name, Kürzel) und Index der Polsterung je Kürzel (oben, unten, links, rechts)
+_RAHMEN_SEITEN = (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h"))
+_POLSTER_INDEX = {"t": 0, "b": 1, "l": 2, "r": 3, "h": 0}
+# Reihenfolge der Kindelemente von w:pPr (ECMA-376): Elemente, vor denen bidi bzw. shd/pBdr einzufügen sind
+_PPR_NACH_BIDI = ("w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents", "w:suppressOverlap",
+                  "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap", "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr",
+                  "w:sectPr", "w:pPrChange")
+_PPR_NACH_SHD = ("w:tabs", "w:suppressAutoHyphens", "w:kinsoku", "w:wordWrap", "w:overflowPunct", "w:topLinePunct", "w:autoSpaceDE",
+                 "w:autoSpaceDN", "w:bidi") + _PPR_NACH_BIDI
+
+
 class SchreibenAbsatzMixin:
     """Fachliche Teilverantwortung des DOCX-Writers."""
 
@@ -94,17 +114,21 @@ class SchreibenAbsatzMixin:
                 self.write_block(blk, para)
                 if isinstance(container, _Body) and blk.blockFormat().hasProperty(B_ABSCHNITT):
                     self._abschnitt_ende(para)
-            else:
-                fr = it.currentFrame()
-                if isinstance(fr, QTextTable):
-                    self.write_table(fr, container)
-                    first_in_cell = False
-                elif fr is not None and fr.frameFormat().position() in umbruch.SEITEN and umbruch.bild_im_rahmen(fr) is not None:
-                    self._vorab_bilder.append((umbruch.bild_im_rahmen(fr), umbruch.SEITEN[fr.frameFormat().position()]))
-                elif fr is not None:
-                    self.report.warn("Ein Rahmen im Text wurde nur als Fließtext gespeichert.")
-                    self.write_frame(fr, container)
+            elif self._unterrahmen_schreiben(it.currentFrame(), container):
+                first_in_cell = False
             it += 1
+
+    def _unterrahmen_schreiben(self, fr, container) -> bool:
+        """Tabelle, schwebendes Bild im Rahmen oder sonstiger Rahmen (als Fließtext). → True, wenn eine Tabelle geschrieben wurde."""
+        if isinstance(fr, QTextTable):
+            self.write_table(fr, container)
+            return True
+        if fr is not None and fr.frameFormat().position() in umbruch.SEITEN and umbruch.bild_im_rahmen(fr) is not None:
+            self._vorab_bilder.append((umbruch.bild_im_rahmen(fr), umbruch.SEITEN[fr.frameFormat().position()]))
+        elif fr is not None:
+            self.report.warn("Ein Rahmen im Text wurde nur als Fließtext gespeichert.")
+            self.write_frame(fr, container)
+        return False
 
     def _eigener_stil(self, name: str):
         """Selbst angelegte Formatvorlage als echte Word-Absatzvorlage (Schrift, Größe, Farbe, Abstände, Ausrichtung)."""
@@ -116,6 +140,12 @@ class SchreibenAbsatzMixin:
         d = stile.definition(name)
         st = self.d.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
         st.base_style = self.d.styles["Normal"]
+        self._eigener_stil_schrift(st, d)
+        self._eigener_stil_absatz(st, d)
+        return st
+
+    @staticmethod
+    def _eigener_stil_schrift(st, d: dict) -> None:
         if d["groesse"]:
             st.font.size = Pt(d["groesse"])
         if d["fett"]:
@@ -126,32 +156,61 @@ class SchreibenAbsatzMixin:
             st.font.name = d["schrift"]
         if d["farbe"]:
             st.font.color.rgb = RGBColor.from_string(d["farbe"].lstrip("#").upper())
-        st.paragraph_format.space_before, st.paragraph_format.space_after = Pt(d["vor"]), Pt(d["nach"])
+
+    @staticmethod
+    def _eigener_stil_absatz(st, d: dict) -> None:
+        pf = st.paragraph_format
+        pf.space_before, pf.space_after = Pt(d["vor"]), Pt(d["nach"])
         if d.get("zeilen"):
-            st.paragraph_format.line_spacing = float(d["zeilen"])
+            pf.line_spacing = float(d["zeilen"])
         if d.get("einzug"):
-            st.paragraph_format.left_indent = Mm(float(d["einzug"]))
+            pf.left_indent = Mm(float(d["einzug"]))
         if d["ausr"]:
-            st.paragraph_format.alignment = {"links": WD_ALIGN_PARAGRAPH.LEFT, "mitte": WD_ALIGN_PARAGRAPH.CENTER,
-                                             "rechts": WD_ALIGN_PARAGRAPH.RIGHT, "block": WD_ALIGN_PARAGRAPH.JUSTIFY}[d["ausr"]]
-        return st
+            pf.alignment = _STIL_AUSRICHTUNG[d["ausr"]]
 
     def write_block(self, blk: QTextBlock, para):
         bf = blk.blockFormat()
-        if bf.hasProperty(B_BILDANKER):                                   # frei positionierte Bilder dieses Absatzes
-            from lunivo_writer.editor.objekte import freie_bilder as FB
-            for a in FB.aus_absatz(bf):
-                self._frei_bild(para, a, FB.bild_im_dokument(self.q, a.get("n", "")))
+        self._freie_bilder_des_absatzes(bf, para)
         style_name = bf.property(STYLE_PROP) if _has(bf, STYLE_PROP) else None
         lvl = bf.headingLevel()
         lst = blk.textList()
+        self._absatz_vorlage(bf, para, style_name, lvl, lst)
+        self._absatz_einzuege(bf, para, lst)
+        self._absatz_abstaende(bf, para)
+        self._absatz_umbruch(bf, para)
+        self._absatz_tabs(bf, para.paragraph_format)
+        from lunivo_writer.editor.seite import absatzopt
+        if bf.hasProperty(absatzopt_prop()):
+            absatzopt.in_ppr(para._p.get_or_add_pPr(), absatzopt.lesen(bf))
+        self._absatz_rahmen(bf, para)
+        self._absatz_schattierung(bf, para)
+        for imf, seite in self._vorab_bilder:                    # schwebende Bilder vor diesem Absatz: hier verankern
+            self._image(imf, para, seite)
+        self._vorab_bilder = []
+        self._absatz_laufe(blk, para, bool(lvl) or style_name in ("Title", "Subtitle"))
+        self._textmarken(para, [])
+
+    def _freie_bilder_des_absatzes(self, bf: QTextBlockFormat, para) -> None:
+        """Frei positionierte Bilder dieses Absatzes."""
+        if bf.hasProperty(B_BILDANKER):
+            from lunivo_writer.editor.objekte import freie_bilder as FB
+            for a in FB.aus_absatz(bf):
+                self._frei_bild(para, a, FB.bild_im_dokument(self.q, a.get("n", "")))
+
+    @staticmethod
+    def _toc_stilname(bf: QTextBlockFormat) -> str:
+        """Word-Formatvorlage eines Verzeichnisabsatzes (Inhalt, Abbildungen, Index, Literatur)."""
+        kind = bf.property(B_TOC)
+        art = bf.property(B_ART) if bf.hasProperty(B_ART) else "toc"
+        if kind == "kopf":
+            return "TOC Heading"
+        return {"toc": f"TOC {kind[-1]}", "abb": "Table of Figures", "tab": "Table of Figures",
+                "index": f"Index {kind[-1]}", "lit": "Bibliography"}.get(art, "TOC 1")
+
+    def _absatz_vorlage(self, bf: QTextBlockFormat, para, style_name, lvl: int, lst) -> None:
+        """Formatvorlage des Absatzes: verzeichnis, Beschriftung, Überschrift, Standardvorlage, Liste, eigene Vorlage."""
         if bf.hasProperty(B_TOC):
-            kind = bf.property(B_TOC)
-            art = bf.property(B_ART) if bf.hasProperty(B_ART) else "toc"
-            name = ("TOC Heading" if kind == "kopf" else
-                    {"toc": f"TOC {kind[-1]}", "abb": "Table of Figures", "tab": "Table of Figures",
-                     "index": f"Index {kind[-1]}", "lit": "Bibliography"}.get(art, "TOC 1"))
-            para.style = self._stil(name)
+            para.style = self._stil(self._toc_stilname(bf))
         elif bf.hasProperty(B_CAP):
             para.style = self.d.styles["Caption"]
         elif lvl:
@@ -162,15 +221,16 @@ class SchreibenAbsatzMixin:
             self._apply_list(para, lst)
         elif style_name and str(style_name).startswith("x:") and self._eigener_stil(str(style_name)[2:]) is not None:
             para.style = self._eigener_stil(str(style_name)[2:])
+
+    @staticmethod
+    def _absatz_einzuege(bf: QTextBlockFormat, para, lst) -> None:
+        """Ausrichtung, Einzüge (bei Listen steckt der Listeneinzug in der Vorlage) und Schreibrichtung."""
         pf = para.paragraph_format
         a = bf.alignment()
-        if a & Qt.AlignHCenter:
-            para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        elif a & Qt.AlignRight:
-            para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        elif a & Qt.AlignJustify:
-            para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        # Einzüge: bei Listen steckt der Listeneinzug in der Vorlage
+        for qt_ausr, wd_ausr in _AUSRICHTUNG:
+            if a & qt_ausr:
+                para.alignment = wd_ausr
+                break
         if lst is None:
             if bf.leftMargin():
                 pf.left_indent = Emu(int(bf.leftMargin() * EMU_PER_PX))
@@ -179,11 +239,13 @@ class SchreibenAbsatzMixin:
         if bf.rightMargin():
             pf.right_indent = Emu(int(bf.rightMargin() * EMU_PER_PX))
         if bf.layoutDirection() == Qt.RightToLeft:
-            ppr = para._p.get_or_add_pPr()
             bidi = OxmlElement("w:bidi")
-            ppr.insert_element_before(bidi, "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
-                                      "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment",
-                                      "w:textboxTightWrap", "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange")
+            para._p.get_or_add_pPr().insert_element_before(bidi, *_PPR_NACH_BIDI)
+
+    @staticmethod
+    def _absatz_abstaende(bf: QTextBlockFormat, para) -> None:
+        """Abstand davor/danach und Zeilenabstand."""
+        pf = para.paragraph_format
         pf.space_before = Pt(abstand_davor_px(bf) * PX_TO_PT)
         pf.space_after = Pt(bf.bottomMargin() * PX_TO_PT)
         lh, lht = bf.lineHeight(), bf.lineHeightType()
@@ -191,67 +253,72 @@ class SchreibenAbsatzMixin:
             pf.line_spacing = lh / 100.0
         elif int(lht) == LH_FIXED and lh:
             pf.line_spacing = Pt(lh * PX_TO_PT)
+
+    @staticmethod
+    def _absatz_umbruch(bf: QTextBlockFormat, para) -> None:
+        """Manueller Seiten- oder Spaltenumbruch vor dem Absatz."""
         from lunivo_writer.editor.seite.seitenfluss import ist_manuell
-        if ist_manuell(bf):
-            if bf.hasProperty(B_SPALTE):                              # Spaltenumbruch: <w:br w:type="column"/> am Absatzanfang
-                from docx.enum.text import WD_BREAK
-                para.add_run().add_break(WD_BREAK.COLUMN)
-            else:
-                pf.page_break_before = True
+        if not ist_manuell(bf):
+            return
+        if bf.hasProperty(B_SPALTE):                              # Spaltenumbruch: <w:br w:type="column"/> am Absatzanfang
+            from docx.enum.text import WD_BREAK
+            para.add_run().add_break(WD_BREAK.COLUMN)
+        else:
+            para.paragraph_format.page_break_before = True
+
+    @staticmethod
+    def _absatz_tabs(bf: QTextBlockFormat, pf) -> None:
+        """Tabstopps mit Art und Füllzeichen."""
         tabs = bf.tabPositions()
-        if tabs:
-            from docx.enum.text import WD_TAB_ALIGNMENT
-            from PySide6.QtGui import QTextOption
-            art = {QTextOption.RightTab: WD_TAB_ALIGNMENT.RIGHT, QTextOption.CenterTab: WD_TAB_ALIGNMENT.CENTER,
-                   QTextOption.DelimiterTab: WD_TAB_ALIGNMENT.DECIMAL}
-            from docx.enum.text import WD_TAB_LEADER
-            from lunivo_writer.editor.text import tabfuell
-            fuell = tabfuell.lesen(bf)
-            leader = {"punkt": WD_TAB_LEADER.DOTS, "strich": WD_TAB_LEADER.DASHES, "linie": WD_TAB_LEADER.LINES, "mitte": WD_TAB_LEADER.MIDDLE_DOT}
-            for t in tabs:
-                f = next((fz for p_, fz in fuell.items() if abs(p_ - t.position) < 0.05), "")
-                pf.tab_stops.add_tab_stop(Emu(int(t.position * EMU_PER_PX)), art.get(t.type, WD_TAB_ALIGNMENT.LEFT),
-                                          leader.get(f, WD_TAB_LEADER.SPACES))
-        nach_shd = ("w:tabs", "w:suppressAutoHyphens", "w:kinsoku", "w:wordWrap", "w:overflowPunct", "w:topLinePunct", "w:autoSpaceDE",
-                    "w:autoSpaceDN", "w:bidi", "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
-                    "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap",
-                    "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange")
-        from lunivo_writer.editor.seite import absatzopt
-        if bf.hasProperty(absatzopt_prop()):
-            absatzopt.in_ppr(para._p.get_or_add_pPr(), absatzopt.lesen(bf))
-        if bf.hasProperty(B_RAHMEN):
-            li = Linie.aus_text(bf.stringProperty(B_RAHMEN))
-            bdr = OxmlElement("w:pBdr")
-            val = docx_wert(li.art)
-            for seite, kurz in (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h")):
-                if kurz not in li.seiten:
-                    continue
-                e = OxmlElement(f"w:{seite}")
-                e.set(qn("w:val"), val)
-                e.set(qn("w:sz"), str(max(2, int(round(li.breite_pt * 8)))))
-                pol = li.polster()
-                e.set(qn("w:space"), str(int(round(pol[{"t": 0, "b": 1, "l": 2, "r": 3, "h": 0}[kurz]]))) if pol else "4")
-                e.set(qn("w:color"), (li.farbe or Farbe.SCHWARZ).lstrip("#").upper())
-                bdr.append(e)
-            if len(bdr):
-                para._p.get_or_add_pPr().insert_element_before(bdr, "w:shd", *nach_shd)
+        if not tabs:
+            return
+        from lunivo_writer.editor.text import tabfuell
+        fuell = tabfuell.lesen(bf)
+        for t in tabs:
+            f = next((fz for p_, fz in fuell.items() if abs(p_ - t.position) < 0.05), "")
+            pf.tab_stops.add_tab_stop(Emu(int(t.position * EMU_PER_PX)), _TAB_ART.get(t.type, WD_TAB_ALIGNMENT.LEFT),
+                                      _TAB_FUELLUNG.get(f, WD_TAB_LEADER.SPACES))
+
+    @staticmethod
+    def _absatz_rahmen(bf: QTextBlockFormat, para) -> None:
+        """Absatzrahmen (w:pBdr) aus der Linie des Absatzes."""
+        if not bf.hasProperty(B_RAHMEN):
+            return
+        li = Linie.aus_text(bf.stringProperty(B_RAHMEN))
+        bdr = OxmlElement("w:pBdr")
+        val = docx_wert(li.art)
+        for seite, kurz in _RAHMEN_SEITEN:
+            if kurz not in li.seiten:
+                continue
+            e = OxmlElement(f"w:{seite}")
+            e.set(qn("w:val"), val)
+            e.set(qn("w:sz"), str(max(2, int(round(li.breite_pt * 8)))))
+            pol = li.polster()
+            e.set(qn("w:space"), str(int(round(pol[_POLSTER_INDEX[kurz]]))) if pol else "4")
+            e.set(qn("w:color"), (li.farbe or Farbe.SCHWARZ).lstrip("#").upper())
+            bdr.append(e)
+        if len(bdr):
+            para._p.get_or_add_pPr().insert_element_before(bdr, "w:shd", *_PPR_NACH_SHD)
+
+    @staticmethod
+    def _absatz_schattierung(bf: QTextBlockFormat, para) -> None:
+        """Hintergrund des Absatzes: Muster (Musterart + Farben) oder einfache Füllfarbe als w:shd."""
         bg = bf.background()
         mu = muster.aus_text(bf.stringProperty(B_MUSTER)) if bf.hasProperty(B_MUSTER) else None
         if mu:                                                   # Muster über Füllfarbe: w:val = Musterart, w:color = Musterfarbe
             shd = OxmlElement("w:shd")
             shd.set(qn("w:val"), muster.ooxml_von(mu[0])); shd.set(qn("w:color"), mu[1][1:].upper()); shd.set(qn("w:fill"), mu[2][1:].upper() if mu[2] else "auto")
-            para._p.get_or_add_pPr().insert_element_before(shd, *nach_shd)
         elif bg.style() != Qt.NoBrush and bg.color().isValid():
             shd = OxmlElement("w:shd")
             shd.set(qn("w:val"), "clear"); shd.set(qn("w:color"), "auto"); shd.set(qn("w:fill"), bg.color().name()[1:].upper())
-            para._p.get_or_add_pPr().insert_element_before(shd, *nach_shd)
-        # Läufe
-        for imf, seite in self._vorab_bilder:                    # schwebende Bilder vor diesem Absatz: hier verankern
-            self._image(imf, para, seite)
-        self._vorab_bilder = []
-        it = blk.begin()
-        in_head = bool(lvl) or style_name in ("Title", "Subtitle")
+        else:
+            return
+        para._p.get_or_add_pPr().insert_element_before(shd, *_PPR_NACH_SHD)
+
+    def _absatz_laufe(self, blk: QTextBlock, para, in_head: bool) -> None:
+        """Fragmente des Absatzes schreiben; zusammengehörige Formularfelder und Felder werden gebündelt."""
         frags = []
+        it = blk.begin()
         while not it.atEnd():
             if it.fragment().isValid():
                 frags.append(it.fragment())
@@ -260,35 +327,42 @@ class SchreibenAbsatzMixin:
         while i < len(frags):
             cf = frags[i].charFormat()
             form = cf.stringProperty(P_FORM) if cf.hasProperty(P_FORM) else ""
-            if form:                                                   # Formularfeld → Inhaltssteuerelement (w:sdt)
-                j = i
-                while j < len(frags) and frags[j].charFormat().hasProperty(P_FORM) and frags[j].charFormat().stringProperty(P_FORM) == form:
-                    j += 1
-                sdt, inhalt = self._steuerelement(form, "".join(f.text() for f in frags[i:j]))
-                para._p.append(sdt)
-                self._ziel = inhalt
-                try:
-                    for k in range(i, j):
-                        self.write_fragment(frags[k], para, in_head)
-                finally:
-                    self._ziel = None
-                i = j
-                continue
             instr = cf.stringProperty(P_FELD) if cf.hasProperty(P_FELD) else ""
-            if instr:
-                j = i
-                while j < len(frags) and frags[j].charFormat().hasProperty(P_FELD) and frags[j].charFormat().stringProperty(P_FELD) == instr:
-                    j += 1
-                self._textmarken(para, [])
-                self._fldchar(para, "begin"); self._instr(para, instr); self._fldchar(para, "separate")
-                for k in range(i, j):
-                    self.write_fragment(frags[k], para, in_head)
-                self._fldchar(para, "end")
-                i = j
+            if form:                                                   # Formularfeld → Inhaltssteuerelement (w:sdt)
+                j = self._gruppe_ende(frags, i, P_FORM, form)
+                self._formularfeld_schreiben(para, form, frags[i:j], in_head)
+            elif instr:
+                j = self._gruppe_ende(frags, i, P_FELD, instr)
+                self._feld_schreiben(para, instr, frags[i:j], in_head)
             else:
                 self.write_fragment(frags[i], para, in_head)
-                i += 1
+                j = i + 1
+            i = j
+
+    @staticmethod
+    def _gruppe_ende(frags: list, i: int, prop: int, wert: str) -> int:
+        """Index hinter dem letzten aufeinanderfolgenden Fragment mit demselben Wert der Eigenschaft."""
+        j = i
+        while j < len(frags) and frags[j].charFormat().hasProperty(prop) and frags[j].charFormat().stringProperty(prop) == wert:
+            j += 1
+        return j
+
+    def _formularfeld_schreiben(self, para, form: str, gruppe: list, in_head: bool) -> None:
+        sdt, inhalt = self._steuerelement(form, "".join(f.text() for f in gruppe))
+        para._p.append(sdt)
+        self._ziel = inhalt
+        try:
+            for frag in gruppe:
+                self.write_fragment(frag, para, in_head)
+        finally:
+            self._ziel = None
+
+    def _feld_schreiben(self, para, instr: str, gruppe: list, in_head: bool) -> None:
         self._textmarken(para, [])
+        self._fldchar(para, "begin"); self._instr(para, instr); self._fldchar(para, "separate")
+        for frag in gruppe:
+            self.write_fragment(frag, para, in_head)
+        self._fldchar(para, "end")
 
     def _stil(self, name: str):
         from docx.enum.style import WD_STYLE_TYPE

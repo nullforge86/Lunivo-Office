@@ -235,16 +235,9 @@ class SpaltenBaustein:
         return self.palette().color(QPalette.Dark)
 
 
-    def _blatt_zeichnen(self, e) -> None:
-        """Arbeitsfläche, Blätter mit Schatten, dann Text, Auswahl, Schreibmarke und Wellenlinien: jede Seite des Textflusses
-        in ihre Spalte auf ihrem Blatt."""
+    def _blaetter_zeichnen(self, p, g, sicht, papier, quer) -> None:
+        """Blätter mit Schatten und Papier; die Grafik eines Deckblatts liegt hinter dem Text."""
         vp = self.viewport()
-        p = QPainter(vp)
-        g = self._sp_geo()
-        p.fillRect(e.rect(), self._arbeitsflaeche())
-        papier = QColor(self._lese_papier or self.page.color or Farbe.PAPIER)
-        sicht = QRectF(e.rect())
-        quer = bool(getattr(self, "_qplan", None))
         for k in range(self._blatt_anzahl()):
             if quer:
                 bk = self._blatt(k)
@@ -261,6 +254,10 @@ class SpaltenBaustein:
                 p.fillRect(QRectF(blatt.left() + i * 0.5, blatt.bottom(), blatt.width() - i, i), QColor(16, 24, 40, alpha))
             p.fillRect(blatt, papier)
             self._deckblatt_grafik(p, k, blatt)                              # Grafik eines Deckblatts liegt hinter dem Text
+
+    def _rahmen_hinter_text(self, p, g, sicht, quer) -> None:
+        """Seitenrahmen hinter dem Text."""
+        vp = self.viewport()
         if self.page.border and not self.page.border.get("vordergrund", True):      # Seitenrahmen hinter dem Text
             from lunivo_writer.editor.seite.pagination import seitenschmuck
             z = self.zoom
@@ -271,9 +268,9 @@ class SpaltenBaustein:
                     p.save(); p.scale(z, z)
                     seitenschmuck(p, bk["pg"], False, QRectF(bk["x"] / z, a / z, bk["W"] / z, bk["H"] / z), "hinten", False)
                     p.restore()
-        self._frei_zeichnen(p, sicht, True)                                  # frei positionierte Bilder hinter dem Text
-        doc = self.document()
-        lay = doc.documentLayout()
+
+    def _text_kontext(self):
+        """Zeichenkontext des Textes: Farben, Auswahl (auch Zusatzauswahlen), Schreibmarke."""
         ctx = QAbstractTextDocumentLayout.PaintContext()
         pal = QPalette(self.palette())
         pal.setColor(QPalette.Text, QColor(self._lese_text or Farbe.SCHWARZ))
@@ -293,6 +290,12 @@ class SpaltenBaustein:
         ctx.selections = auswahl
         ctx.cursorPosition = c.position() if (self._sp_caret and self.hasFocus() and not c.hasSelection()
                                               and not self.isReadOnly()) else -1
+        return ctx
+
+    def _text_seiten_zeichnen(self, p, g, sicht, quer, ctx) -> None:
+        """Jede Seite des Textflusses in ihre Spalte auf ihrem Blatt."""
+        doc = self.document()
+        lay = doc.documentLayout()
         for lp in range(max(1, doc.pageCount())):
             x0, y0 = self._sp_ursprung(lp)
             hoehe = self._blatt(lp)["ch"] + 1 if quer else g["ch"]
@@ -305,6 +308,20 @@ class SpaltenBaustein:
             ctx.clip = QRectF(-6, lp * g["ch"], g["cb"] + 12, hoehe)
             lay.draw(p, ctx)
             p.restore()
+
+    def _blatt_zeichnen(self, e) -> None:
+        """Arbeitsfläche, Blätter mit Schatten, dann Text, Auswahl, Schreibmarke und Wellenlinien: jede Seite des Textflusses
+        in ihre Spalte auf ihrem Blatt."""
+        p = QPainter(self.viewport())
+        g = self._sp_geo()
+        p.fillRect(e.rect(), self._arbeitsflaeche())
+        papier = QColor(self._lese_papier or self.page.color or Farbe.PAPIER)
+        sicht = QRectF(e.rect())
+        quer = bool(getattr(self, "_qplan", None))
+        self._blaetter_zeichnen(p, g, sicht, papier, quer)
+        self._rahmen_hinter_text(p, g, sicht, quer)
+        self._frei_zeichnen(p, sicht, True)                                  # frei positionierte Bilder hinter dem Text
+        self._text_seiten_zeichnen(p, g, sicht, quer, self._text_kontext())
         self._frei_zeichnen(p, sicht, False)                                 # … und davor (Foto, Unterschrift)
         p.end()
 

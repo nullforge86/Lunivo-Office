@@ -39,8 +39,8 @@ src/lunivo_writer/
     dokument/               Einfügen, Felder, Formular, Verweise, Verzeichnisse, Vergleich, Sendungen, Vorlagen
     diagramme/              Diagrammzeichnung, Geometrie, Formatierung und Teil-Auswahl
   models/                   Dokument- und Seitendaten
-  services/                 Datei-, Einstellungs-, Wiederherstellungs- und Exportdienste
-  ai/                       KI-Anbieter und KI-Aufgaben
+  services/                 Datei-, Einstellungs-, Wiederherstellungs- und Exportdienste; rtf/ (RTF-Import: Zerleger, Steuerwörter, Gruppen, Aufbau), docx_teile/ (DOCX), odt_*.py (ODT)
+  ai/                       KI-Anbieter und KI-Aufgaben; ki.py (Klasse KI) mit ki_transport, ki_claude, ki_ollama, ki_eigen, ki_werkzeugschleife, ki_textaktionen, ki_bildgenerierung
   proofing/                 Rechtschreibprüfung, Vorhersage und Barrierefreiheit
   resources/                Handbuch, Registerdefinitionen und Wörterdaten
 assets/                     Symbole, Logos und weitere Laufzeitressourcen

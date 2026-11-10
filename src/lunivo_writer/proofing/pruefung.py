@@ -13,6 +13,9 @@ import os
 from lunivo_writer.models.proofing import ProofingIssue
 from lunivo_writer.core import paths
 import re
+from lunivo_writer.proofing.phonetik import (  # noqa: F401
+    DE_ERSATZ as _DE_ERSATZ, abstand, de_schluessel as _de_schluessel, gleicher_anfang, ist_teilfolge, koelner_phonetik)
+from lunivo_writer.proofing.haeufig import HAEUFIG
 
 
 
@@ -418,18 +421,14 @@ def _klang_kandidaten(w):
     return kandidaten
 
 
-def klang_vorschlag(wort):
-    """Das eine Wort, das gemeint sein muss, oder None. Nur kleingeschrieben, ohne Rücksicht auf Satzstellung."""
-    woerter = lade_woerter()
-    w = wort.lower()
-    if not woerter or w in woerter or not 4 <= len(w) <= 20:
-        return None
-    # Feste Hörregeln zuerst: ein einziges Wort (Umlaut-Paare zählen als eins) ist die Antwort.
+def _regel_vorschlag(w):
+    """Feste Hörregeln: ein einziges Wort (Umlaut-Paare zählen als eins) ist die Antwort, sonst None."""
     regeln = {''.join(_DE_ERSATZ.get(c, c) for c in k): k for k in sorted(regel_varianten(w), reverse=True)}
-    if len(regeln) == 1:
-        return next(iter(regeln.values()))
-    if len(w) < 5:
-        return None
+    return next(iter(regeln.values())) if len(regeln) == 1 else None
+
+
+def _klang_bewertet(w):
+    """Kandidaten mit Abstand (höchstens 3) als [(d, k)]; None, wenn w selbst eine Zusammensetzung ist."""
     bewertet = []
     for k in _klang_kandidaten(w):
         if abs(len(k) - len(w)) > 2:
@@ -442,9 +441,11 @@ def klang_vorschlag(wort):
         d = wort_abstand(w, k)
         if d <= 3:
             bewertet.append((d, k))
-    if not bewertet:
-        return None
-    # Umlaut-Paare (vogel/vögel) zählen als ein Treffer.
+    return bewertet
+
+
+def _klang_reihe(bewertet):
+    """Nach Umlaut-Paaren zusammengefasst und gewichtet sortiert: [(Gewicht, Wort)]."""
     gruppen = {}
     for d, k in bewertet:
         g = ''.join(_DE_ERSATZ.get(c, c) for c in k)
@@ -456,27 +457,52 @@ def klang_vorschlag(wort):
                    key=lambda t: (t[0], _de_schluessel(t[1])))
     # Beugungsformen desselben Wortes (spiel/spiele) stören die Eindeutigkeit nicht.
     k0 = reihe[0][1]
-    reihe = [reihe[0]] + [t for t in reihe[1:] if not (t[1].startswith(k0[:-2]) and len(k0) > 4)]
-    if len(reihe) > 1:
-        (d1, k1), (d2, k2) = reihe[0], reihe[1]
-        klar = d2 - d1 >= 2 or (k1 in HAEUFIG and k2 not in HAEUFIG and d2 > d1)
-        if not klar:
-            return None
-    return reihe[0][1]
+    return [reihe[0]] + [t for t in reihe[1:] if not (t[1].startswith(k0[:-2]) and len(k0) > 4)]
+
+
+def _klang_eindeutig(reihe):
+    if len(reihe) < 2:
+        return True
+    (d1, k1), (d2, k2) = reihe[0], reihe[1]
+    return d2 - d1 >= 2 or (k1 in HAEUFIG and k2 not in HAEUFIG and d2 > d1)
+
+
+def klang_vorschlag(wort):
+    """Das eine Wort, das gemeint sein muss, oder None. Nur kleingeschrieben, ohne Rücksicht auf Satzstellung."""
+    woerter = lade_woerter()
+    w = wort.lower()
+    if not woerter or w in woerter or not 4 <= len(w) <= 20:
+        return None
+    eindeutig = _regel_vorschlag(w)
+    if eindeutig:
+        return eindeutig
+    if len(w) < 5:
+        return None
+    bewertet = _klang_bewertet(w)
+    if not bewertet:
+        return None
+    reihe = _klang_reihe(bewertet)
+    return reihe[0][1] if _klang_eindeutig(reihe) else None
+
+
+def _klang_ausgeschlossen(text, m, gelernt, schalter):
+    """Wörter, bei denen der Klang-Prüfer nicht rät (Name, Adresse, schon bekannt, zusammengeschrieben ...)."""
+    wort = m.group(0)
+    if '-' in wort or not 4 <= len(wort) <= 20 or re.search(r'[A-ZÄÖÜ]', wort[1:]):
+        return True
+    if uebergehen(wort, text, m.start(), schalter or SCHALTER_STANDARD) or ist_adresse(text, m.start()):
+        return True
+    w = wort.lower()
+    gelernt = gelernt or {}
+    if WOERTERBUCH.get(w) or w in (gelernt.get('woerter') or {}) or w in (gelernt.get('inRuhe') or {}):
+        return True
+    return not lade_woerter() or w in lade_woerter()
 
 
 def _klang_fund_wort(text, m, gelernt, schalter):
     """Die Verbesserung für das Wort, falls der Klang-Prüfer sicher genug ist, sonst None."""
     wort = m.group(0)
-    if '-' in wort or not 4 <= len(wort) <= 20 or re.search(r'[A-ZÄÖÜ]', wort[1:]):
-        return None
-    if uebergehen(wort, text, m.start(), schalter or SCHALTER_STANDARD) or ist_adresse(text, m.start()):
-        return None
-    w = wort.lower()
-    gelernt = gelernt or {}
-    if WOERTERBUCH.get(w) or w in (gelernt.get('woerter') or {}) or w in (gelernt.get('inRuhe') or {}):
-        return None
-    if not lade_woerter() or w in lade_woerter():
+    if _klang_ausgeschlossen(text, m, gelernt, schalter):
         return None
     davor = text[:m.start()]
     satz_anfang = davor.strip() == '' or bool(re.search(r'[.!?:]\s+$', davor))
@@ -522,24 +548,7 @@ def nachbar_woerter(w):
     return aus
 
 
-# Deutsche Sortierung: ä zählt wie a, ö wie o, ü wie u, ß wie ss. Pythons eigener Vergleich sortiert nach
-# Zahlenwert und stellte alle Umlaute ans Ende.
-_DE_ERSATZ = {'ä': 'a', 'ö': 'o', 'ü': 'u', 'ß': 'ss'}
-
-
-def _de_schluessel(wort):
-    grob = ''.join(_DE_ERSATZ.get(c, c) for c in wort)
-    return (grob, wort)
-
-
-def tippfehler_vorschlag(wort):
-    woerter = lade_woerter()
-    if not woerter:
-        return None
-    w = wort.lower()
-    if len(w) < 4 or len(w) > 20 or w in woerter:
-        return None
-
+def _tippfehler_treffer(w, woerter):
     treffer = []
     for k in nachbar_woerter(w):
         if k not in woerter:
@@ -550,52 +559,55 @@ def tippfehler_vorschlag(wort):
         if k == w[1:]:
             continue
         treffer.append(k)
+    return treffer
+
+
+def tippfehler_vorschlag(wort):
+    woerter = lade_woerter()
+    if not woerter:
+        return None
+    w = wort.lower()
+    if len(w) < 4 or len(w) > 20 or w in woerter:
+        return None
+    treffer = _tippfehler_treffer(w, woerter)
     if not treffer:
         return None
-
-    def ist_teilfolge(kurz, lang):
-        i = 0
-        for c in lang:
-            if i < len(kurz) and kurz[i] == c:
-                i += 1
-        return i == len(kurz)
 
     def rang(k):
         return 0 if ist_teilfolge(w, k) else (1 if ist_teilfolge(k, w) else 2)
 
-    def gleicher_anfang(k):
-        i = 0
-        while i < len(k) and i < len(w) and k[i] == w[i]:
-            i += 1
-        return i
-
-    treffer.sort(key=lambda k: (rang(k), -gleicher_anfang(k),
+    treffer.sort(key=lambda k: (rang(k), -gleicher_anfang(k, w),
                                 0 if k in TRENN_KURZ else 1,
                                 len(k), _de_schluessel(k)))
     return treffer[0]
 
 
+def _tippfehler_fund(text, m, gelernt, schalter, klang_an):
+    wort = m.group(0)
+    # Hat der Klang-Prüfer das Wort schon, bleibt es bei ihm.
+    if klang_an and _klang_fund_wort(text, m, gelernt, schalter):
+        return None
+    # Was eine andere Regel schon anfasst, bleibt hier außen vor.
+    if WOERTERBUCH.get(wort.lower()) or trenne_zusammen(wort):
+        return None
+    # In Adressen und Pfaden steht kein Deutsch — dort nichts vorschlagen.
+    if ist_adresse(text, m.start()):
+        return None
+    vorschlag = tippfehler_vorschlag(wort)
+    if not vorschlag:
+        return None
+    neu = (vorschlag[0].upper() + vorschlag[1:]) if GROSS_ANFANG.match(wort) else vorschlag
+    if neu == wort:
+        return None
+    return mach_fund(m.start(), m.start() + len(wort), wort, neu, 'Tippfehler? Ein Buchstabe daneben', 'tipp')
+
+
 def pruefe_tippfehler(text, funde, gelernt=None, schalter=None):
     klang_an = pruefer_aktiv("klang", schalter)
     for m in WORT_MUSTER.finditer(text):
-        wort = m.group(0)
-        # Hat der Klang-Prüfer das Wort schon, bleibt es bei ihm.
-        if klang_an and _klang_fund_wort(text, m, gelernt, schalter):
-            continue
-        # Was eine andere Regel schon anfasst, bleibt hier außen vor.
-        if WOERTERBUCH.get(wort.lower()) or trenne_zusammen(wort):
-            continue
-        # In Adressen und Pfaden steht kein Deutsch — dort nichts vorschlagen.
-        if ist_adresse(text, m.start()):
-            continue
-        vorschlag = tippfehler_vorschlag(wort)
-        if not vorschlag:
-            continue
-        neu = (vorschlag[0].upper() + vorschlag[1:]) if GROSS_ANFANG.match(wort) else vorschlag
-        if neu == wort:
-            continue
-        funde.append(mach_fund(m.start(), m.start() + len(wort), wort, neu,
-                               'Tippfehler? Ein Buchstabe daneben', 'tipp'))
+        fund = _tippfehler_fund(text, m, gelernt, schalter, klang_an)
+        if fund:
+            funde.append(fund)
 
 
 def wort_abstand(a, b):
@@ -642,6 +654,25 @@ def uebergehen(wort, text, stelle, schalter):
     return False
 
 
+def _wort_fund(wort, stelle, eigene):
+    """Fund für ein Wort aus der mitgelieferten Liste oder aus selbst Gelerntem, sonst None."""
+    aus_liste = WOERTERBUCH.get(wort.lower())
+    selbst = None if aus_liste else eigene.get(wort.lower())
+    richtig = aus_liste or selbst
+    # Selbst Gelerntes muss dem Wort ähnlich sehen, sonst war es nie eine Korrektur.
+    if not richtig or (selbst and not ist_korrektur(wort, selbst)):
+        return None
+    ersatz = uebernimm_schreibweise(wort, richtig)
+    if ersatz == wort:
+        return None
+    # Was aus der mitgelieferten Liste kommt, ist sicher falsch. Was dieser
+    # Mensch selbst beigebracht hat, kam aus EINEM Antippen — ein guter
+    # Hinweis, keine Gewissheit.
+    return mach_fund(stelle, stelle + len(wort), wort, ersatz,
+                     'So hast du es schon einmal geändert' if selbst else 'Schreibweise',
+                     'tipp' if selbst else 'fehler')
+
+
 def pruefe_woerter(text, funde, gelernt=None, schalter=None):
     eigene = (gelernt or {}).get('woerter', {})
     schalter = schalter or SCHALTER_STANDARD
@@ -649,25 +680,9 @@ def pruefe_woerter(text, funde, gelernt=None, schalter=None):
         wort = m.group(0)
         if uebergehen(wort, text, m.start(), schalter):
             continue
-        aus_liste = WOERTERBUCH.get(wort.lower())
-        selbst = None if aus_liste else eigene.get(wort.lower())
-        richtig = aus_liste or selbst
-        if not richtig:
-            continue
-        # Selbst Gelerntes muss dem Wort ähnlich sehen, sonst war es nie eine
-        # Korrektur.
-        if selbst and not ist_korrektur(wort, selbst):
-            continue
-        ersatz = uebernimm_schreibweise(wort, richtig)
-        if ersatz == wort:
-            continue
-        # Was aus der mitgelieferten Liste kommt, ist sicher falsch. Was dieser
-        # Mensch selbst beigebracht hat, kam aus EINEM Antippen — ein guter
-        # Hinweis, keine Gewissheit.
-        funde.append(mach_fund(
-            m.start(), m.start() + len(wort), wort, ersatz,
-            'So hast du es schon einmal geändert' if selbst else 'Schreibweise',
-            'tipp' if selbst else 'fehler'))
+        fund = _wort_fund(wort, m.start(), eigene)
+        if fund:
+            funde.append(fund)
 
 
 def pruefe_satzende(text, funde):
@@ -807,167 +822,7 @@ def finde_probleme(text, gelernt=None, schalter=None):
 
 
 # --------------------------------------------------------------------------
-# Vorschläge für ein einzelnes Wort (Rechtsklick-Menü) (Vorschläge, Klangvergleich, Kölner Phonetik, Abstand)
+# Vorschläge für ein einzelnes Wort (Rechtsklick-Menü): Phonetik in phonetik.py, Rangfolge in klang.py.
+# Hier unten eingebunden, weil klang.py das Wörterbuch (lade_woerter, nachbar_woerter) von hier holt.
 # --------------------------------------------------------------------------
-from lunivo_writer.proofing.haeufig import HAEUFIG  # noqa: E402
-
-
-def abstand(a, b):
-    if a == b:
-        return 0
-    m, n = len(a), len(b)
-    if not m:
-        return n
-    if not n:
-        return m
-    zeile = list(range(n + 1))
-    for i in range(1, m + 1):
-        vorherige = zeile[0]
-        zeile[0] = i
-        for j in range(1, n + 1):
-            diagonal = vorherige
-            vorherige = zeile[j]
-            zeile[j] = min(zeile[j] + 1, zeile[j - 1] + 1, diagonal + (0 if a[i - 1] == b[j - 1] else 1))
-    return zeile[n]
-
-
-def koelner_phonetik(wort):
-    w = str(wort).upper().replace('Ä', 'A').replace('Ö', 'O').replace('Ü', 'U').replace('ß', 'SS')
-    w = w.replace('QU', 'KW').replace('PH', 'F')
-    w = re.sub(r'[^A-Z]', '', w)
-    if not w:
-        return ''
-    laute = []
-    for i, c in enumerate(w):
-        vor = w[i - 1] if i > 0 else ''
-        nach = w[i + 1] if i + 1 < len(w) else ''
-        code = None
-        if c in 'AEIOUYJ':
-            code = '0'
-        elif c == 'B':
-            code = '1'
-        elif c == 'P':
-            code = '3' if nach == 'H' else '1'
-        elif c in 'DT':
-            code = '8' if (nach and nach in 'CSZ') else '2'
-        elif c in 'FVW':
-            code = '3'
-        elif c in 'GKQ':
-            code = '4'
-        elif c == 'C':
-            if i == 0:
-                code = '4' if (nach and nach in 'AHKLOQRUX') else '8'
-            elif vor and vor in 'SZ':
-                code = '8'
-            else:
-                code = '4' if (nach and nach in 'AHKOQUX') else '8'
-        elif c == 'X':
-            code = '8' if (vor and vor in 'CKQ') else '48'
-        elif c == 'L':
-            code = '5'
-        elif c in 'MN':
-            code = '6'
-        elif c == 'R':
-            code = '7'
-        elif c in 'SZ':
-            code = '8'
-        elif c == 'H':
-            code = None
-        if code is not None:
-            laute.append(code)
-    aus = ''
-    for l in laute:
-        for z in l:
-            if not aus or z != aus[-1]:
-                aus += z
-    return aus[0] + aus[1:].replace('0', '') if aus else ''
-
-
-_KLANGTAFEL = None
-
-
-def _klangtafel():
-    global _KLANGTAFEL
-    if _KLANGTAFEL is None:
-        _KLANGTAFEL = {}
-        for wort in lade_woerter():
-            if len(wort) < 4:
-                continue
-            k = koelner_phonetik(wort)
-            if k:
-                _KLANGTAFEL.setdefault(k, []).append(wort)
-    return _KLANGTAFEL
-
-
-def klingt_wie(wort, hoechstens=15):
-    w = str(wort).lower()
-    if len(w) < 4 or not lade_woerter():
-        return []
-    klang = koelner_phonetik(w)
-    if not klang:
-        return []
-    gleiche = [k for k in _klangtafel().get(klang, []) if k != w]
-    if len(gleiche) <= 1:
-        return gleiche
-
-    def gewicht(k):
-        return abstand(w, k) - (2 if k in HAEUFIG else 0)
-    return sorted(gleiche, key=lambda k: (gewicht(k), abs(len(k) - len(w)), _de_schluessel(k)))[:hoechstens]
-
-
-def vorschlaege_fuer(wort, hoechstens=6, gelernt=None):
-    woerter = lade_woerter()
-    if not woerter:
-        return []
-    w = str(wort).lower()
-    if len(w) < 2 or len(w) > 24 or w in woerter:
-        return []
-    treffer = [k for k in nachbar_woerter(w) if k in woerter]
-    for k in klingt_wie(w):
-        if k not in treffer:
-            treffer.append(k)
-    eigen = ((gelernt or {}).get('woerter') or {}).get(w)
-    if eigen and eigen not in treffer:
-        treffer.insert(0, eigen)
-
-    def ist_teilfolge(kurz, lang):
-        i = 0
-        for c in lang:
-            if i < len(kurz) and kurz[i] == c:
-                i += 1
-        return i == len(kurz)
-    klang_gleich = set(klingt_wie(w))
-    klang_nah = min((abstand(w, k) for k in klang_gleich), default=0) + 1
-
-    def klang_vorn(k):
-        # Wer so schreibt, wie er hört, meint meist das gleich klingende Wort — vor dem, das nur einen Buchstaben abweicht.
-        return 0 if k in klang_gleich and abstand(w, k) <= klang_nah else 1
-
-    def rang(k):
-        if k == eigen:
-            return -1
-        if k in klang_gleich and k in HAEUFIG:
-            return 0
-        if ist_teilfolge(w, k):
-            return 0
-        if ist_teilfolge(k, w):
-            return 1
-        if k in klang_gleich:
-            return 1
-        return 2
-
-    def gleicher_anfang(k):
-        i = 0
-        while i < len(k) and i < len(w) and k[i] == w[i]:
-            i += 1
-        return i
-
-    def gewicht(k):
-        return abstand(w, k) - (2 if k in HAEUFIG else 0)
-    treffer.sort(key=lambda k: (rang(k), klang_vorn(k), gewicht(k), -gleicher_anfang(k), len(k), _de_schluessel(k)))
-    seen, out = set(), []
-    for k in treffer:
-        if k not in seen:
-            seen.add(k)
-            out.append(k)
-    return out[:hoechstens]
+from lunivo_writer.proofing.klang import klingt_wie, vorschlaege_fuer  # noqa: E402,F401

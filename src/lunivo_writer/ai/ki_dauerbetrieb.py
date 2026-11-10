@@ -100,29 +100,54 @@ class KIDauerbetriebMixin:
             text, basis, stelle = b.text(), b.position(), "absatz"
         return {"ed": ed, "text": AL.eingabe_kuerzen(text), "basis": basis, "markiert": True, "rev": ed.document().revision(), "stelle": stelle}
 
-    def _dauer_los(self) -> None:
-        """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
-        if self._arbeit_laeuft or not self.dauerbetrieb():
-            return
-        # Der Timer gehört zu dem Editor, dessen Änderung ihn ausgelöst hat.
-        # Ein zwischenzeitlicher Tabwechsel darf keinen Assistenten im neuen Tab starten.
+    def _dauer_editor_passt(self) -> bool:
+        """Der Timer gehört zu dem Editor, dessen Änderung ihn ausgelöst hat; ein Tabwechsel darf keinen Assistenten im neuen Tab starten."""
         ed = getattr(self, "_dauer_editor", None)
         try:
-            if (ed is None or self.w.current_editor() is not ed
-                    or ed.document() is not getattr(self, "_dauer_dokument", None)):
-                return
+            return not (ed is None or self.w.current_editor() is not ed
+                        or ed.document() is not getattr(self, "_dauer_dokument", None))
         except RuntimeError:
-            return
+            return False
+
+    def _dauer_drossel_frei(self) -> bool:
+        """False, wenn die Drossel noch wartet (Timer neu gestellt) oder die Stundengrenze erreicht ist (Pause gemeldet)."""
         wartet = self._drossel.warten_noch()
         if wartet == float("inf"):
             if not self._dauer_pause:
                 self._dauer_pause = True
                 self.status.emit("Fortlaufende Assistenten pausieren: Höchstzahl der Anfragen in dieser Stunde erreicht.")
-            return
+            return False
         if wartet > 0:
             self._dauer_timer.start(int(wartet * 1000) + 50)
-            return
+            return False
         self._dauer_pause = False
+        return True
+
+    def _dauer_erlaubt(self, a: dict, modell) -> bool:
+        """Modell eingerichtet und Erlaubnis vorhanden? Sonst wird der Assistent mit Meldung ausgeschaltet."""
+        if not self.ki.verfuegbar():
+            self._dauer_aus(a, "Es ist kein KI-Modell eingerichtet.")
+            return False
+        if (sperre := self.ki.zustimmung_fehlt(modell, "auszug")) is not None or \
+                (self.ki.schickt_nach_aussen(modell) and not self.konfig.hat_einwilligung(self.ki.schickt_nach_aussen(modell), "dauer")):
+            self._dauer_aus(a, (sperre or {}).get("fehler", "Die Erlaubnis für fortlaufende Assistenten fehlt."))
+            return False
+        return True
+
+    def _dauer_starten(self, a: dict, eing: dict, schluessel, modell) -> None:
+        self._dauer_zuletzt[schluessel] = eing["text"]
+        eing.update(assistent=a["id"], _titel=a["name"])
+        self._drossel.gesendet()
+        nur = a["modus"] == "kommentar"
+        self.starte(f"„{a['name']}“ …", lambda t, a=a, nur=nur: self.ki.eigener_assistent(t, a["prompt"], a["kommentar"] and not nur, a.get("modell", ""), nur),
+                    "dauer", eing, modell=modell)
+
+    def _dauer_los(self) -> None:
+        """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
+        if self._arbeit_laeuft or not self.dauerbetrieb():
+            return
+        if not self._dauer_editor_passt() or not self._dauer_drossel_frei():
+            return
         for a in self.konfig.assistenten("fortlaufend"):
             if not a["an"] or a["ausloeser"] != self._dauer_art:
                 continue
@@ -133,19 +158,8 @@ class KIDauerbetriebMixin:
             if not AL.absatz_geaendert(self._dauer_zuletzt.get(schluessel), eing["text"]):
                 continue
             modell = a.get("modell") or None
-            if not self.ki.verfuegbar():
-                self._dauer_aus(a, "Es ist kein KI-Modell eingerichtet.")
-                return
-            if (sperre := self.ki.zustimmung_fehlt(modell, "auszug")) is not None or \
-                    (self.ki.schickt_nach_aussen(modell) and not self.konfig.hat_einwilligung(self.ki.schickt_nach_aussen(modell), "dauer")):
-                self._dauer_aus(a, (sperre or {}).get("fehler", "Die Erlaubnis für fortlaufende Assistenten fehlt."))
-                return
-            self._dauer_zuletzt[schluessel] = eing["text"]
-            eing.update(assistent=a["id"], _titel=a["name"])
-            self._drossel.gesendet()
-            nur = a["modus"] == "kommentar"
-            self.starte(f"„{a['name']}“ …", lambda t, a=a, nur=nur: self.ki.eigener_assistent(t, a["prompt"], a["kommentar"] and not nur, a.get("modell", ""), nur),
-                        "dauer", eing, modell=modell)
+            if self._dauer_erlaubt(a, modell):
+                self._dauer_starten(a, eing, schluessel, modell)
             return
 
     def _dauer_fertig(self, r, eing) -> None:

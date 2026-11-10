@@ -370,44 +370,48 @@ class BandGruppenBaustein:
         self.felder[vor + "verhaeltnis"] = verhaeltnis
         inhalt.addWidget(host, 0, Qt.AlignTop)
 
+    _FELDER_BAUER = {"raender": "_knoepfe_raender", "masse": "_knoepfe_masse", "zeile": "_knoepfe_schrift", "tt_zeile": "_knoepfe_tt_schrift"}
+
     def _knoepfe(self, g: dict, inhalt: QHBoxLayout):
-        if g.get("felder") == "raender":
-            return self._knoepfe_raender(g, inhalt)
-        if g.get("felder") == "masse":
-            return self._knoepfe_masse(g, inhalt)
-        if g.get("felder") == "zeile":
-            return self._knoepfe_schrift(g, inhalt)
-        if g.get("felder") == "tt_zeile":
-            return self._knoepfe_tt_schrift(g, inhalt)
-        if g.get("felder") == "tab_zeile":
+        art = g.get("felder")
+        if art in self._FELDER_BAUER:
+            return getattr(self, self._FELDER_BAUER[art])(g, inhalt)
+        if art == "tab_zeile":
             return self._knoepfe_tt_schrift(g, inhalt, "tab")
         if g.get("galerie"):
             return self._knoepfe_galerie(g, inhalt)
         if g.get("reihenfolge"):
             return self._knoepfe_geordnet(g, inhalt)
-        eintraege = g["knoepfe"]
-        if g.get("felder"):
-            spalte = QVBoxLayout()
-            spalte.setSpacing(ABSTAND_ENG)
-            from lunivo_writer.ui.widgets.live_vorschau import VorschauCombo, VorschauFontCombo
-            vs = self.b.w.vorschau
+        if art:
+            self._knoepfe_formatfelder(inhalt)
+        self._knoepfe_gitter(g["knoepfe"], inhalt)
 
-            def _zu_pt(t):
-                try:
-                    return float(t.replace(",", "."))
-                except ValueError:
-                    return None
-            stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
-            stil.setAccessibleName("Formatvorlage")
-            stil.rolle("formatvorlage", "band")
-            stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
-            font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
-            groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
-            font.setAccessibleName("Schriftart"); groesse.setAccessibleName("Schriftgröße")
-            for w in (stil, font, groesse):
-                spalte.addWidget(w)
-            inhalt.addLayout(spalte)
-            self.felder.update(stil=stil, font=font, groesse=groesse)
+    def _knoepfe_formatfelder(self, inhalt: QHBoxLayout) -> None:
+        """Formatvorlage, Schriftart und Größe als Spalte vor den Knöpfen."""
+        spalte = QVBoxLayout()
+        spalte.setSpacing(ABSTAND_ENG)
+        from lunivo_writer.ui.widgets.live_vorschau import VorschauCombo, VorschauFontCombo
+        vs = self.b.w.vorschau
+
+        def _zu_pt(t):
+            try:
+                return float(t.replace(",", "."))
+            except ValueError:
+                return None
+        stil = VorschauCombo(lambda n: vs.zeigen(lambda e: e.apply_style("Standard" if n == "Fließtext" else n)), vs.ende)
+        stil.setAccessibleName("Formatvorlage")
+        stil.rolle("formatvorlage", "band")
+        stil.addItems(["Fließtext"] + [n for n in STYLES if n != "Standard"])
+        font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
+        groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
+        font.setAccessibleName("Schriftart"); groesse.setAccessibleName("Schriftgröße")
+        for w in (stil, font, groesse):
+            spalte.addWidget(w)
+        inhalt.addLayout(spalte)
+        self.felder.update(stil=stil, font=font, groesse=groesse)
+
+    def _knoepfe_gitter(self, eintraege: list, inhalt: QHBoxLayout) -> None:
+        """Große Knöpfe nebeneinander, kleine im Gitter (zwei Zeilen oder explizite Zeilen)."""
         grosse = [e for e in eintraege if e.get("gross")]
         kleine = [e for e in eintraege if not e.get("gross") and not e.get("hinweis") and e.get("symbol") != "//"]
         for e in grosse:

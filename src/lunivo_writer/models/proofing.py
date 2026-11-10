@@ -64,24 +64,33 @@ class ProofingIssue:
     bestaetigt_von: tuple[str, ...] = ()       # andere Quellen (QUELLEN), die denselben Vorschlag melden (Konsens, siehe fund.abstimmen)
     weitere: tuple = field(default_factory=tuple)  # unbekannte Schlüssel als (Name, Wert)-Paare
 
-    def pruefen(self, text_laenge: int | None = None) -> "ProofingIssue":
-        """Wirft ``FundFehler``, wenn der Fund nicht dem Vertrag entspricht. → self."""
+    def _pruefe_bereich(self, text_laenge: int | None) -> None:
         if not (isinstance(self.von, int) and isinstance(self.bis, int)) or isinstance(self.von, bool) or isinstance(self.bis, bool):
             raise FundFehler("von/bis sind keine ganzen Zahlen")
         if self.von < 0 or self.bis <= self.von:
             raise FundFehler("leerer oder verkehrter Textbereich")
         if text_laenge is not None and self.bis > text_laenge:
             raise FundFehler("Textbereich liegt außerhalb des Textes")
+
+    def _pruefe_texte(self) -> None:
         if not isinstance(self.alt, str) or not isinstance(self.grund, str) or not (self.neu is None or isinstance(self.neu, str)):
             raise FundFehler("alt, neu oder grund haben den falschen Typ")
         if self.art not in ARTEN:
             raise FundFehler(f"unbekannte Art „{self.art}“")
+
+    def _pruefe_herkunft(self) -> None:
         if self.quelle is not None and self.quelle not in QUELLEN:
             raise FundFehler(f"unbekannte Quelle „{self.quelle}“")
         if self.konfidenz is not None and not (isinstance(self.konfidenz, (int, float)) and 0.0 <= self.konfidenz <= 1.0):
             raise FundFehler("Konfidenz außerhalb von 0 bis 1")
         if not isinstance(self.bestaetigt_von, tuple) or any(q not in QUELLEN for q in self.bestaetigt_von):
             raise FundFehler("bestaetigt_von enthält unbekannte Quellen")
+
+    def pruefen(self, text_laenge: int | None = None) -> "ProofingIssue":
+        """Wirft ``FundFehler``, wenn der Fund nicht dem Vertrag entspricht. → self."""
+        self._pruefe_bereich(text_laenge)
+        self._pruefe_texte()
+        self._pruefe_herkunft()
         return self
 
     @property

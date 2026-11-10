@@ -136,8 +136,32 @@ class SpeichernFenster(QDialog):
         if not ordner or not os.path.isdir(ordner):
             ordner = _ordner(QStandardPaths.DocumentsLocation) or QDir.homePath()
 
+        links = self._bauen_links(titel)
+        rechts = QWidget()
+        rv = QVBoxLayout(rechts); rv.setContentsMargins(*RAND_SPEICHERN_RECHTS); rv.setSpacing(ABSTAND_GROSS)
+        self._bauen_leiste(rv)
+        self._bauen_ansichten(rv)
+        l1, l2 = self._bauen_unten(rv, name, vorwahl, oeffnen)
+        self._modus_anpassen(l1, l2, oeffnen, mehrere)
+        self.spalten = ZweiSpalter(links, rechts, links_breite=BREITE_NAVIGATION_OPTIONEN, oben="links", gestapelt_stretch=(1, 3))   # schmal: die Orte oben
+        haupt = QVBoxLayout(self); haupt.setContentsMargins(*RAND_KEIN); haupt.setSpacing(0); haupt.addWidget(self.spalten)
 
-        # ---- links: Titel und Orte -------------------------------------------------------------------------------------
+        self.k_speichern.clicked.connect(self.speichern)
+        self.k_abbrechen.clicked.connect(self.reject)
+        self.typ.currentIndexChanged.connect(self._typ_gewechselt)
+        self.name.lineEdit().textChanged.connect(lambda s: self.k_speichern.setEnabled(bool(s.strip())))
+        self.k_speichern.setEnabled(bool(name.strip()))
+
+        self.ordner = ""
+        self._filter_setzen()
+        self.ansicht(0)
+        self.gehe_zu(ordner, merken=False)
+        self.name.lineEdit().setFocus()
+        stamm = os.path.splitext(name)[0]
+        self.name.lineEdit().setSelection(0, len(stamm))
+
+    def _bauen_links(self, titel: str) -> QWidget:
+        """Links: Titel und Orte."""
         links = QWidget(); links.setObjectName("sfLinks")
         lv = QVBoxLayout(links); lv.setContentsMargins(*RAND_SPEICHERN_LINKS)
         t = QLabel(titel); t.setObjectName("sfTitel"); t.setWordWrap(True)
@@ -157,10 +181,10 @@ class SpeichernFenster(QDialog):
         self._ort("Andere Orte", "/", _symbol("ellipsis"))
         self.orte.itemClicked.connect(lambda it: self.gehe_zu(it.data(Qt.UserRole)))
         lv.addWidget(self.orte, 1)
+        return links
 
-        # ---- rechts: Leiste, Dateien, Name und Typ ---------------------------------------------------------------------
-        rechts = QWidget()
-        rv = QVBoxLayout(rechts); rv.setContentsMargins(*RAND_SPEICHERN_RECHTS); rv.setSpacing(ABSTAND_GROSS)
+    def _bauen_leiste(self, rv) -> None:
+        """Rechts oben: Zurück/Vor/Hoch, Pfad, Neuer Ordner, Ansichten."""
         leiste = QHBoxLayout(); leiste.setSpacing(ABSTAND_KLEIN)
         self.k_zurueck = self._knopf(_symbol("arrow-left"), "Zurück", self.zurueck)
         self.k_vor = self._knopf(_symbol("arrow-right"), "Vor", self.vor)
@@ -177,6 +201,8 @@ class SpeichernFenster(QDialog):
         leiste.addWidget(self.k_liste); leiste.addWidget(self.k_kacheln)
         rv.addLayout(leiste)
 
+    def _bauen_ansichten(self, rv) -> None:
+        """Dateiliste (Baum) und Kacheln im Stapel."""
         self.modell = _DateiModell(self)
         self._symbole = _Symbole()
         self.modell.setIconProvider(self._symbole)
@@ -205,6 +231,8 @@ class SpeichernFenster(QDialog):
             v.doubleClicked.connect(self._doppelklick)
         rv.addWidget(self.ansichten, 1)
 
+    def _bauen_unten(self, rv, name: str, vorwahl: str, oeffnen: bool):
+        """Name und Typ mit den Knöpfen; liefert die beiden Beschriftungen."""
         unten = FormularGitter(); unten.einspaltig = True; unten.beschriftung_voll = True
         unten.beschriftungsabstand = ABSTAND_GROSS; unten.zeilenabstand = ABSTAND_GROSS
         self.name = Auswahlfeld(); self.name.setEditable(True); self.name.setInsertPolicy(QComboBox.NoInsert)
@@ -226,6 +254,10 @@ class SpeichernFenster(QDialog):
             z.addWidget(feld, 1); z.addWidget(knopf)
             unten.zeile(beschriftung, z)
         rv.addLayout(unten)
+        return l1, l2
+
+    def _modus_anpassen(self, l1, l2, oeffnen: bool, mehrere: bool) -> None:
+        """Öffnen (auch mehrere) und Ordner wählen weichen von „Speichern“ ab."""
         if oeffnen:
             self.k_speichern.setText("Ö&ffnen")
             if mehrere:
@@ -236,22 +268,6 @@ class SpeichernFenster(QDialog):
             l1.setText("&Ordner:"); l2.hide(); self.typ.hide()
             self.k_speichern.setText("&Auswählen")
             self.modell.setFilter(QDir.AllDirs | QDir.NoDotAndDotDot)
-        self.spalten = ZweiSpalter(links, rechts, links_breite=BREITE_NAVIGATION_OPTIONEN, oben="links", gestapelt_stretch=(1, 3))   # schmal: die Orte oben
-        haupt = QVBoxLayout(self); haupt.setContentsMargins(*RAND_KEIN); haupt.setSpacing(0); haupt.addWidget(self.spalten)
-
-        self.k_speichern.clicked.connect(self.speichern)
-        self.k_abbrechen.clicked.connect(self.reject)
-        self.typ.currentIndexChanged.connect(self._typ_gewechselt)
-        self.name.lineEdit().textChanged.connect(lambda s: self.k_speichern.setEnabled(bool(s.strip())))
-        self.k_speichern.setEnabled(bool(name.strip()))
-
-        self.ordner = ""
-        self._filter_setzen()
-        self.ansicht(0)
-        self.gehe_zu(ordner, merken=False)
-        self.name.lineEdit().setFocus()
-        stamm = os.path.splitext(name)[0]
-        self.name.lineEdit().setSelection(0, len(stamm))
 
     # ---- Bausteine ---------------------------------------------------------------------------------------------------------
     def _ort(self, text: str, pfad: str, ic: QIcon) -> None:

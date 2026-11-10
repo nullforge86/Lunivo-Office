@@ -66,17 +66,26 @@ def teil_bei(ed, pos) -> str | None:
     r = next((x[3] for x in ed._frei_liste() if x[0] == key), None)
     if r is None or r.width() <= 0 or r.height() <= 0:
         return None
-    from PySide6.QtGui import QTransform
-    p = QPointF(pos)
-    dreh = float(a.get("dreh", 0.0) or 0.0)
-    if dreh:
-        p = QTransform().translate(r.center().x(), r.center().y()).rotate(-dreh).translate(-r.center().x(), -r.center().y()).map(p)
     b, h = float(a["b"]), float(a["h"])
-    lp = QPointF((p.x() - r.x()) * b / r.width(), (p.y() - r.y()) * h / r.height())
+    lp = _diagramm_punkt(pos, r, float(a.get("dreh", 0.0) or 0.0), b, h)
     if not QRectF(0, 0, b, h).contains(lp):
         return None
     geo = _geo(ed, d, b, h)
-    erlaubt = {k for k, _n in D.teile(d)}
+    treffer = _treffer(geo, {k for k, _n in D.teile(d)}, lp)
+    return min(treffer)[1] if treffer else "diagrammbereich"
+
+
+def _diagramm_punkt(pos, r: QRectF, dreh: float, b: float, h: float) -> QPointF:
+    """``pos`` im Editor als Punkt im Diagramm (Breite ``b`` × Höhe ``h``); die Drehung um die Mitte von ``r`` wird zurückgenommen."""
+    from PySide6.QtGui import QTransform
+    p = QPointF(pos)
+    if dreh:
+        p = QTransform().translate(r.center().x(), r.center().y()).rotate(-dreh).translate(-r.center().x(), -r.center().y()).map(p)
+    return QPointF((p.x() - r.x()) * b / r.width(), (p.y() - r.y()) * h / r.height())
+
+
+def _treffer(geo: dict, erlaubt: set, lp: QPointF) -> list:
+    """(Rang, Teil) aller Teile, die ``lp`` enthalten; kleinster Rang gewinnt (Balken vor Gitterstreifen vor Flächen nach Größe)."""
     treffer = []
     for k in erlaubt:
         rr = geo.get(k)
@@ -90,7 +99,7 @@ def teil_bei(ed, pos) -> str | None:
                 treffer.append((1.0, k))
         elif rr.contains(lp):
             treffer.append((rr.width() * rr.height(), k))
-    return min(treffer)[1] if treffer else "diagrammbereich"
+    return treffer
 
 
 # ---- Formate je Teil -------------------------------------------------------------------------------------------------------------
@@ -112,6 +121,52 @@ def _ohne_leer(w: dict) -> dict:
     return {k: v for k, v in w.items() if v is not None}
 
 
+def _objekt_effekt_setzen(obj_fx: dict, k: str, v) -> None:
+    if v is None or v is False:
+        obj_fx.pop(k, None)
+    else:
+        obj_fx[k] = dict(v) if isinstance(v, dict) else dict(F.fx_normal({k: True})[k])
+
+
+def _format_wert_setzen(fmt: dict, k: str, v) -> None:
+    """Einen Wert ins Teilformat: None/False entfernt, Wörterbücher der ``_ZUSAMMEN`` werden mit den vorhandenen zusammengeführt (leer = entfernt)."""
+    if v is None or v is False:
+        fmt.pop(k, None)
+    elif k in _ZUSAMMEN and isinstance(v, dict):
+        neu = _ohne_leer({**(fmt.get(k) or {}), **v})
+        if neu:
+            fmt[k] = neu
+        else:
+            fmt.pop(k, None)
+    else:
+        fmt[k] = v
+
+
+def _objekt_effekte_lesen(ed) -> dict:
+    z = FO.ziel(ed)
+    return dict(z[3].get("fx") or {}) if z else {}
+
+
+def _werte_setzen(fmt: dict, obj_fx: dict | None, kw: dict) -> bool:
+    """Werte ins Teilformat bzw. (Effekte des Diagrammbereichs) ins Objekt; True, wenn Objekteffekte berührt wurden."""
+    geaendert_fx = False
+    for k, v in kw.items():
+        if obj_fx is not None and k in EFFEKTE:
+            geaendert_fx = True
+            _objekt_effekt_setzen(obj_fx, k, v)
+        else:
+            _format_wert_setzen(fmt, k, v)
+    return geaendert_fx
+
+
+def _text_drehung(ed, kw: dict) -> dict:
+    """„Text nicht drehen“: die Drehung des Objekts merkt sich das Diagramm für das Zeichnen."""
+    if "text" in kw and isinstance(kw["text"], dict) and (kw["text"].get("feld") or {}).get("gerade"):
+        z = FO.ziel(ed)
+        return {"objekt_dreh": float(z[3].get("dreh", 0.0) or 0.0) if z else 0.0}
+    return {}
+
+
 def diagramm_teil_format_setzen(ed, teil: str | None = None, **kw) -> bool:
     """Format des gewählten Teils (``teil`` nennt einen anderen) ändern und das Diagramm neu zeichnen. ``fuell`` (Farbe, Wörterbuch, ``""`` = keine
     Füllung, None entfernt = Automatisch), ``linie``/``text``/``achse``/``reihe`` (Wörterbuch, wird mit den vorhandenen Angaben zusammengeführt; None
@@ -123,38 +178,13 @@ def diagramm_teil_format_setzen(ed, teil: str | None = None, **kw) -> bool:
     t = teil or teil_gewaehlt(ed) or "diagrammbereich"
     alle = {k: dict(v) for k, v in (d.get("teil_format") or {}).items()}
     fmt = alle.get(t, {})
-    obj_fx = None
-    if t == "diagrammbereich":                                       # Effekte außerhalb des Bildes: am Objekt
-        z = FO.ziel(ed)
-        obj_fx = dict(z[3].get("fx") or {}) if z else {}
-    geaendert_fx = False
-    for k, v in kw.items():
-        if obj_fx is not None and k in EFFEKTE:
-            geaendert_fx = True
-            if v is None or v is False:
-                obj_fx.pop(k, None)
-            else:
-                obj_fx[k] = dict(v) if isinstance(v, dict) else dict(F.fx_normal({k: True})[k])
-            continue
-        if v is None or v is False:
-            fmt.pop(k, None)
-        elif k in _ZUSAMMEN and isinstance(v, dict):
-            neu = _ohne_leer({**(fmt.get(k) or {}), **v})
-            if neu:
-                fmt[k] = neu
-            else:
-                fmt.pop(k, None)
-        else:
-            fmt[k] = v
+    obj_fx = _objekt_effekte_lesen(ed) if t == "diagrammbereich" else None      # Effekte außerhalb des Bildes: am Objekt
+    geaendert_fx = _werte_setzen(fmt, obj_fx, kw)
     if fmt:
         alle[t] = fmt
     else:
         alle.pop(t, None)
-    extra = {}
-    if "text" in kw and isinstance(kw["text"], dict) and (kw["text"].get("feld") or {}).get("gerade"):
-        z = FO.ziel(ed)                                              # „Text nicht drehen“: die Drehung des Objekts merkt sich das Diagramm für das Zeichnen
-        extra["objekt_dreh"] = float(z[3].get("dreh", 0.0) or 0.0) if z else 0.0
-    ok = FO.aendern(ed, "diagramm", teil_format=alle or None, **extra)
+    ok = FO.aendern(ed, "diagramm", teil_format=alle or None, **_text_drehung(ed, kw))
     if ok and geaendert_fx:
         ok = FO.aendern(ed, "diagramm", form_effekt=obj_fx or None)
     return ok

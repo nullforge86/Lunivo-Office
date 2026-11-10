@@ -279,24 +279,35 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if self.__dict__.get("_fp_key") is not None and self._frei_maus(e, "doppel"):          # Doppelklick auf eine Kante: Punkt einfügen
             return
         zone = self._kopffuss_zone(e.position().y())
-        kf = getattr(self, "_kopffuss", None)
-        if kf is not None and kf.aktiv and not zone:                   # Doppelklick in den Text beendet das Bearbeiten der Kopfzeile
-            kf.beende()
+        if self._doppelklick_kopffuss(zone) or self._doppelklick_objekt(e):
             return
+        super().mouseDoubleClickEvent(self._maus_abgebildet(e))
+
+    def _doppelklick_kopffuss(self, zone) -> bool:
+        """Doppelklick in die Kopf-/Fußzone öffnet sie; Doppelklick in den Text beendet das Bearbeiten der Kopfzeile."""
+        kf = getattr(self, "_kopffuss", None)
+        if kf is not None and kf.aktiv and not zone:
+            kf.beende()
+            return True
         fenster = self.window()
         if zone and hasattr(fenster, "edit_header_footer"):
             fenster.edit_header_footer(zone == "kopf")
-            return
+            return True
+        return False
+
+    def _doppelklick_objekt(self, e) -> bool:
+        """Doppelklick auf einen SmartArt-Knoten oder ein WordArt/Textfeld: direkt im Objekt schreiben."""
         t = self._frei_bild_bei(e.position(), True) if hasattr(self, "_frei_treffer") else None
-        if t is not None and t[0] == getattr(self, "_frei_sel", None) and t[1].get("art") == "smartart":        # Doppelklick auf einen SmartArt-Knoten: im Knoten schreiben
+        if t is None or t[0] != getattr(self, "_frei_sel", None):
+            return False
+        if t[1].get("art") == "smartart":
             from lunivo_writer.editor.objekte import smartart as SA
             if SA.knoten_bei(self, e.position()) is not None and self.frei_knoten_edit_starten():
-                return
-        if t is not None and t[0] == getattr(self, "_frei_sel", None) and hasattr(fenster, "befehle"):        # Doppelklick auf WordArt/Textfeld: bearbeiten
+                return True
+        if hasattr(self.window(), "befehle"):
             from lunivo_writer.editor.objekte import frei_objekt as FO
-            if FO.bearbeiten_starten(self):                                   # direkt im Objekt schreiben
-                return
-        super().mouseDoubleClickEvent(self._maus_abgebildet(e))
+            return bool(FO.bearbeiten_starten(self))
+        return False
 
 
     def resizeEvent(self, e) -> None:
@@ -335,6 +346,18 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         if self.kontext_hook is not None:
             pos = self.cursorForPosition(e.pos()).position()
             self.kontext_hook(m, pos)
+        self._kontext_objekt_eintraege(m)
+        self._kontext_text_eintraege(m)
+        mini = self.mini_hook is not None and self.opt("ui/mini_rechtsklick", True) and not self.isReadOnly()
+        if mini:
+            self.mini_hook(self, e.globalPos(), True, m.sizeHint())      # die Leiste richtet sich nach dem Menü
+        m.exec(e.globalPos())
+        m.deleteLater()
+        if mini:
+            self.mini_hook(None, None, True)
+
+    def _kontext_objekt_eintraege(self, m) -> None:
+        """Layout und Textumbruch für ein gewähltes Objekt oder Bild."""
         from lunivo_writer.editor.objekte import bildlayout as BL
         if BL.ziel(self) is not None and not self.isReadOnly():
             m.addSeparator()
@@ -350,7 +373,10 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                                 ("rechts", "Bild: rechts, Text umfließt"),
                                 ("oben_unten", "Bild: oben und unten (eigene Zeile)")):
                 m.eintrag(text, lambda modus=modus: U.umbruch_setzen(self, modus), haken=(modus == aktuell))
-        in_tabelle = self.textCursor().currentTable() is not None        # das Tabellenmenü bleibt wie in der Vorlage: ohne Anhängsel
+
+    def _kontext_text_eintraege(self, m) -> None:
+        """Ausgeblendeter Text und KI-Aktionen für markierten Text (nicht in Tabellen: das Tabellenmenü bleibt wie in der Vorlage)."""
+        in_tabelle = self.textCursor().currentTable() is not None
         if self.textCursor().hasSelection() and not self.isReadOnly() and not in_tabelle:
             m.addSeparator()
             m.eintrag("Ausgeblendeter Text", lambda: self.set_versteckt(not self.ist_versteckt()), haken=self.ist_versteckt())
@@ -363,13 +389,6 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
                 sub = m.untermenue("KI-Aktionen")
                 for a in aktionen:
                     sub.eintrag(a["name"], lambda a=a: ki.assistent(a))
-        mini = self.mini_hook is not None and self.opt("ui/mini_rechtsklick", True) and not self.isReadOnly()
-        if mini:
-            self.mini_hook(self, e.globalPos(), True, m.sizeHint())      # die Leiste richtet sich nach dem Menü
-        m.exec(e.globalPos())
-        m.deleteLater()
-        if mini:
-            self.mini_hook(None, None, True)
 
 
     def mouseReleaseEvent(self, e) -> None:
@@ -381,30 +400,46 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
         super().mouseReleaseEvent(self._maus_abgebildet(e))
         if e.button() == Qt.LeftButton and self.opt("bearbeiten/wortweise", True) and self.textCursor().hasSelection():
             self._wortweise()
+        self._mini_nach_auswahl(e)
+        if self._strg_klick_link(e):
+            return
+        if e.button() == Qt.LeftButton and not self.textCursor().hasSelection() and not self.isReadOnly() and self._klick_auf_marke(e):
+            return
+        self._bild_vor_klick_waehlen(e)
+
+    def _mini_nach_auswahl(self, e) -> None:
         if (e.button() == Qt.LeftButton and self.mini_hook is not None and self.textCursor().hasSelection()
                 and not self.isReadOnly() and self.opt("ui/mini_auswahl", True) and not self._bild_cursor()):
             c = QTextCursor(self.textCursor())
             c.setPosition(c.selectionStart())
             self.mini_hook(self, self.viewport().mapToGlobal(self.cursorRect(c).topLeft()), False)
-        if (e.modifiers() & Qt.ControlModifier) and self.opt("ui/strg_klick_link", True):
-            href = self.anchorAt(e.pos())
-            if href and href.startswith("#"):
-                from lunivo_writer.editor.dokument.verweise import intern_springen
-                intern_springen(self, href)
-                return
-            if href:
-                from PySide6.QtCore import QUrl as _U
-                from PySide6.QtGui import QDesktopServices
-                QDesktopServices.openUrl(_U(href))
-                return
-        if e.button() == Qt.LeftButton and not self.textCursor().hasSelection() and not self.isReadOnly():
-            from lunivo_writer.editor.dokument.sendungen import kasten_umschalten
-            from lunivo_writer.editor.dokument import formular as FO
-            pos = self.cursorForPosition(e.pos()).position()
-            if FO.klick(self, pos, self.window()) or kasten_umschalten(self, pos):
-                return
-            if (n := self.note_an(pos)) is not None and self.cursorRect(self.cursorForPosition(e.pos())).adjusted(-6, 0, 6, 0).contains(e.pos()):
-                self.noteAngeklickt.emit(*n)
+
+    def _strg_klick_link(self, e) -> bool:
+        """Strg+Klick auf einen Verweis springt dorthin bzw. öffnet die Adresse. → behandelt?"""
+        if not ((e.modifiers() & Qt.ControlModifier) and self.opt("ui/strg_klick_link", True)):
+            return False
+        href = self.anchorAt(e.pos())
+        if href and href.startswith("#"):
+            from lunivo_writer.editor.dokument.verweise import intern_springen
+            intern_springen(self, href)
+        elif href:
+            from PySide6.QtCore import QUrl as _U
+            from PySide6.QtGui import QDesktopServices
+            QDesktopServices.openUrl(_U(href))
+        return bool(href)
+
+    def _klick_auf_marke(self, e) -> bool:
+        """Klick auf ein Formularfeld, einen Kasten oder eine Notiz-Marke. → behandelt?"""
+        from lunivo_writer.editor.dokument.sendungen import kasten_umschalten
+        from lunivo_writer.editor.dokument import formular as FO
+        pos = self.cursorForPosition(e.pos()).position()
+        if FO.klick(self, pos, self.window()) or kasten_umschalten(self, pos):
+            return True
+        if (n := self.note_an(pos)) is not None and self.cursorRect(self.cursorForPosition(e.pos())).adjusted(-6, 0, 6, 0).contains(e.pos()):
+            self.noteAngeklickt.emit(*n)
+        return False
+
+    def _bild_vor_klick_waehlen(self, e) -> None:
         c = self.cursorForPosition(e.pos())
         c2 = QTextCursor(c)
         c2.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
@@ -420,73 +455,97 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             self._blatt_zeichnen(e)
         else:
             super().paintEvent(e)
-        
         vp = self.viewport()
         p = QPainter(vp)
+        self._dekoration_zeichnen(p, vp, sp)
+        p.end()
+        self._lese_wachstum_zeichnen()
 
-        is_dark = self.palette().color(QPalette.Window).lightness() < 128
-        line_color = QColor(Farbe.GRAU_HELL) if is_dark else QColor(Farbe.GRAU)
-        accent_color = QColor(Farbe.AKZENT_HELL) if is_dark else QColor(Farbe.BLAU)
-        strip_color = QColor(STREIFEN_DUNKEL) if is_dark else QColor(STREIFEN_HELL)
+    def _dekoration_zeichnen(self, p: QPainter, vp, sp) -> None:
+        """Alles, was über dem Text liegt: Schmuck, Gitter, Absatzzusatz, Zeilennummern, Eckmarken, Spaltenlinien, Zeilenfokus."""
+        self._deko_flaechen(p, sp)
+        self._deko_marken(p, vp, sp)
 
+    def _deko_flaechen(self, p: QPainter, sp) -> None:
+        """Schmuck, Gitter, Absatzzusatz und Zeilennummern."""
+        fliess = not self.web
         self._schmuck_zeichnen(p)
         if self.gitter:
             self._gitter_zeichnen(p)
-        if not self.web and (self._hat_rahmen() or self._hat_mehrstufig() or self._hat_tabfuell() or self._hat_effekt()):
-            from lunivo_writer.editor.seite.pagination import absatz_zusatz_zeichnen
-            if sp:
-                g = self._sp_geo()
-                for lp in range(max(1, self.document().pageCount())):
-                    x0, y0 = self._sp_ursprung(lp)
-                    p.save()
-                    p.setClipRect(QRectF(x0 - 6, y0, g["cb"] + 12, g["ch"]))
-                    p.translate(x0, y0 - lp * g["ch"])
-                    absatz_zusatz_zeichnen(p, self.document(), self.zoom)
-                    p.restore()
-            else:
-                p.save()
-                p.translate(0, -self.verticalScrollBar().value())
-                absatz_zusatz_zeichnen(p, self.document(), self.zoom)
-                p.restore()
-        if self.page.zeilennummern and not self.web and not self._mehrspaltig():
+        if fliess and self._hat_absatzzusatz():
+            self._absatzzusatz_zeichnen(p, sp)
+        if fliess and self.page.zeilennummern and not self._mehrspaltig():
             self._zeilennummern_zeichnen(p)
+
+    def _deko_marken(self, p: QPainter, vp, sp) -> None:
+        """Eckmarken, Zusätze, Spaltenlinien und Zeilenfokus."""
+        is_dark = self.palette().color(QPalette.Window).lightness() < 128
+        line_color = QColor(Farbe.GRAU_HELL) if is_dark else QColor(Farbe.GRAU)
         if self.marken and not self.web:
-            g = self._sp_geo()
-            L = 14
-            p.setPen(QPen(line_color, 1))
-            quer = bool(getattr(self, "_qplan", None))
-            for k in range(self._blatt_anzahl()):
-                bk = self._blatt(k) if quer else None
-                oben = int(self.blatt_oben(k) + (bk or g)["mt"])
-                unten = int(self.blatt_oben(k) + (bk or g)["H"] - (bk or g)["mb"])
-                links = bk["x"] + bk["ml"] if bk else g["ml"]
-                rechts = links + bk["cw"] if bk else g["ml"] + g["cb"] * g["n"] + g["g"] * (g["n"] - 1)
-                # Eckmarken liegen außerhalb der Textfläche und zeigen von ihrer Ecke nach außen
-                for x, ox in ((int(links), -1), (int(rechts), 1)):
-                    for y, oy in ((oben, -1), (unten, 1)):
-                        p.drawLine(x, y, x + ox * L, y)
-                        p.drawLine(x, y, x, y + oy * L)
+            self._eckmarken_zeichnen(p, line_color)
         self._extras_zeichnen(p, sp)
         if sp and self._mehrspaltig() and self.page.spalten_linie:
-            g = self._sp_geo()
-            p.setPen(QPen(line_color, 1))
-            for k in range(self._blatt_anzahl()):
-                for j in range(1, g["n"]):
-                    x = int(g["ml"] + j * (g["cb"] + g["g"]) - g["g"] / 2)
-                    y0 = self.blatt_oben(k) + g["mt"]
-                    p.drawLine(x, int(y0), x, int(y0 + g["ch"]))
-
+            self._spaltenlinien_zeichnen(p, line_color)
         if self.zeilenfokus and self.hasFocus() and not self.textCursor().hasSelection():
-            r = self.cursorRect()
-            zeile = QRect(0, r.top() - 1, vp.width(), r.height() + 2)
-            dunkel = QColor(self.palette().color(self.viewport().backgroundRole()))
-            dunkel.setAlpha(170)
-            p.setPen(Qt.NoPen)
-            p.setBrush(dunkel)
-            p.drawRect(QRect(0, 0, vp.width(), zeile.top()))
-            p.drawRect(QRect(0, zeile.bottom() + 1, vp.width(), vp.height()))
-        p.end()
-        self._lese_wachstum_zeichnen()
+            self._zeilenfokus_zeichnen(p, vp)
+
+    def _hat_absatzzusatz(self) -> bool:
+        return self._hat_rahmen() or self._hat_mehrstufig() or self._hat_tabfuell() or self._hat_effekt()
+
+    def _absatzzusatz_zeichnen(self, p: QPainter, sp) -> None:
+        """Rahmen, Mehrstufiges, Tabfüllung und Effekte der Absätze (je Blatt oder fortlaufend)."""
+        from lunivo_writer.editor.seite.pagination_deko import absatz_zusatz_zeichnen
+        if sp:
+            g = self._sp_geo()
+            for lp in range(max(1, self.document().pageCount())):
+                x0, y0 = self._sp_ursprung(lp)
+                p.save()
+                p.setClipRect(QRectF(x0 - 6, y0, g["cb"] + 12, g["ch"]))
+                p.translate(x0, y0 - lp * g["ch"])
+                absatz_zusatz_zeichnen(p, self.document(), self.zoom)
+                p.restore()
+        else:
+            p.save()
+            p.translate(0, -self.verticalScrollBar().value())
+            absatz_zusatz_zeichnen(p, self.document(), self.zoom)
+            p.restore()
+
+    def _eckmarken_zeichnen(self, p: QPainter, line_color: QColor) -> None:
+        """Eckmarken liegen außerhalb der Textfläche und zeigen von ihrer Ecke nach außen."""
+        g = self._sp_geo()
+        L = 14
+        p.setPen(QPen(line_color, 1))
+        quer = bool(getattr(self, "_qplan", None))
+        for k in range(self._blatt_anzahl()):
+            bk = self._blatt(k) if quer else None
+            oben = int(self.blatt_oben(k) + (bk or g)["mt"])
+            unten = int(self.blatt_oben(k) + (bk or g)["H"] - (bk or g)["mb"])
+            links = bk["x"] + bk["ml"] if bk else g["ml"]
+            rechts = links + bk["cw"] if bk else g["ml"] + g["cb"] * g["n"] + g["g"] * (g["n"] - 1)
+            for x, ox in ((int(links), -1), (int(rechts), 1)):
+                for y, oy in ((oben, -1), (unten, 1)):
+                    p.drawLine(x, y, x + ox * L, y)
+                    p.drawLine(x, y, x, y + oy * L)
+
+    def _spaltenlinien_zeichnen(self, p: QPainter, line_color: QColor) -> None:
+        g = self._sp_geo()
+        p.setPen(QPen(line_color, 1))
+        for k in range(self._blatt_anzahl()):
+            for j in range(1, g["n"]):
+                x = int(g["ml"] + j * (g["cb"] + g["g"]) - g["g"] / 2)
+                y0 = self.blatt_oben(k) + g["mt"]
+                p.drawLine(x, int(y0), x, int(y0 + g["ch"]))
+
+    def _zeilenfokus_zeichnen(self, p: QPainter, vp) -> None:
+        """Alles außer der Zeile mit der Schreibmarke wird abgedunkelt."""
+        r = self.cursorRect()
+        zeile = QRect(0, r.top() - 1, vp.width(), r.height() + 2)
+        dunkel = QColor(self.palette().color(self.viewport().backgroundRole()))
+        dunkel.setAlpha(170)
+        p.setPen(Qt.NoPen)
+        p.setBrush(dunkel)
+        p.drawRect(QRect(0, 0, vp.width(), zeile.top()))
+        p.drawRect(QRect(0, zeile.bottom() + 1, vp.width(), vp.height()))
 
 
     # ---- Schreibhilfe: Wellenlinien, Ersetzen, Vorhersage, AutoKorrektur -------------------

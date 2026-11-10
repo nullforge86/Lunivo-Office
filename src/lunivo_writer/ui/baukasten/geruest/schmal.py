@@ -61,6 +61,10 @@ def _zeile_zu_fluss(l: QHBoxLayout) -> None:
         eltern.insertLayout(i, fluss, stretch) if hasattr(eltern, "insertLayout") else None
 
 
+def _abstand(g: QGridLayout) -> int:
+    return max(4, g.horizontalSpacing() if g.horizontalSpacing() >= 0 else 6)
+
+
 def _tabelle_umbrechen(g: QGridLayout, avail: int) -> None:
     zeilen: dict[int, list] = {}
     for i in range(g.count()):
@@ -70,46 +74,61 @@ def _tabelle_umbrechen(g: QGridLayout, avail: int) -> None:
         return
     if any(rs > 1 for z in zeilen.values() for (_c, rs, _cs, _it) in z):                 # Spalten mit Feldern über mehrere Zeilen
         g.setProperty("schmal_fertig", True)
-        spacing = max(4, g.horizontalSpacing() if g.horizontalSpacing() >= 0 else 6)
-        breiten: dict[int, int] = {}
-        for z in zeilen.values():
-            for (c, _rs, cs, it) in z:
-                breiten[c] = max(breiten.get(c, 0), max(it.sizeHint().width(), it.minimumSize().width()) // max(1, cs))
-        spalten = sorted(breiten)
-        k, summe = 0, 0
-        for c in spalten:                                                               # so viele Spalten nebeneinander, wie hineinpassen; der Rest darunter
-            if k > 0 and summe + breiten[c] + spacing > avail:
-                break
-            summe += breiten[c] + spacing; k += 1
-        bleibt = set(spalten[:k])
-        alle = [(c, r, rs, cs, it) for r, z in zeilen.items() for (c, rs, cs, it) in z]
-        ausr = {id(it): it.alignment() for (_c, _r, _rs, _cs, it) in alle}                  # die Ausrichtung (Mitte, oben …) bleibt erhalten
-        for i in range(g.count() - 1, -1, -1):
-            g.takeAt(i)
-        letzte = 0
-        for (c, r, rs, cs, it) in alle:
-            if c in bleibt:
-                g.addItem(it, r, c, rs, min(cs, k - spalten.index(c)), ausr[id(it)])
-                letzte = max(letzte, r + rs)
-        n = letzte
-        for (c, r, rs, cs, it) in sorted((t for t in alle if t[0] not in bleibt), key=lambda t: (t[0], t[1])):
-            g.addItem(it, n, 0, 1, k, ausr[id(it)])
-            n += 1
+        _spalten_umbrechen(g, zeilen, avail)
         return
+    _zeilen_umbrechen(g, zeilen, avail)
+
+
+def _spalten_umbrechen(g: QGridLayout, zeilen: dict, avail: int) -> None:
+    """So viele Spalten nebeneinander, wie hineinpassen; der Rest darunter."""
+    spacing = _abstand(g)
+    breiten: dict[int, int] = {}
+    for z in zeilen.values():
+        for (c, _rs, cs, it) in z:
+            breiten[c] = max(breiten.get(c, 0), max(it.sizeHint().width(), it.minimumSize().width()) // max(1, cs))
+    spalten = sorted(breiten)
+    k, summe = 0, 0
+    for c in spalten:
+        if k > 0 and summe + breiten[c] + spacing > avail:
+            break
+        summe += breiten[c] + spacing; k += 1
+    bleibt = set(spalten[:k])
+    alle = [(c, r, rs, cs, it) for r, z in zeilen.items() for (c, rs, cs, it) in z]
+    ausr = {id(it): it.alignment() for (_c, _r, _rs, _cs, it) in alle}                  # die Ausrichtung (Mitte, oben …) bleibt erhalten
+    for i in range(g.count() - 1, -1, -1):
+        g.takeAt(i)
+    letzte = 0
+    for (c, r, rs, cs, it) in alle:
+        if c in bleibt:
+            g.addItem(it, r, c, rs, min(cs, k - spalten.index(c)), ausr[id(it)])
+            letzte = max(letzte, r + rs)
+    n = letzte
+    for (c, r, rs, cs, it) in sorted((t for t in alle if t[0] not in bleibt), key=lambda t: (t[0], t[1])):
+        g.addItem(it, n, 0, 1, k, ausr[id(it)])
+        n += 1
+
+
+def _zeile_einheiten(items: list) -> list:
+    """Beschriftung und das folgende Feld bleiben zusammen (eine Einheit)."""
+    einheiten, i = [], 0
+    while i < len(items):
+        c, rs, cs, it = items[i]
+        if cs == 1 and isinstance(it.widget(), QLabel) and i + 1 < len(items) and not isinstance(items[i + 1][3].widget(), QLabel) and items[i + 1][2] == 1:
+            einheiten.append([items[i], items[i + 1]]); i += 2
+        else:
+            einheiten.append([items[i]]); i += 1
+    return einheiten
+
+
+def _zeilen_umbrechen(g: QGridLayout, zeilen: dict, avail: int) -> None:
+    """Jede Zeile läuft über mehrere Gitterzeilen, wenn sie nicht passt."""
     for it in range(g.count() - 1, -1, -1):
         g.takeAt(it)
-    spacing = max(4, g.horizontalSpacing() if g.horizontalSpacing() >= 0 else 6)
+    spacing = _abstand(g)
     nr = 0
     for r in sorted(zeilen):
-        einheiten, i, items = [], 0, sorted(zeilen[r], key=lambda t: t[0])
-        while i < len(items):
-            c, rs, cs, it = items[i]
-            if cs == 1 and isinstance(it.widget(), QLabel) and i + 1 < len(items) and not isinstance(items[i + 1][3].widget(), QLabel) and items[i + 1][2] == 1:
-                einheiten.append([items[i], items[i + 1]]); i += 2
-            else:
-                einheiten.append([items[i]]); i += 1
-        x, col, sub = 0, 0, 0
-        for e in einheiten:
+        x, col = 0, 0
+        for e in _zeile_einheiten(sorted(zeilen[r], key=lambda t: t[0])):
             b = sum(max(t[3].sizeHint().width(), t[3].minimumSize().width()) for t in e) + spacing * len(e)
             if x > 0 and x + b > avail:
                 nr += 1; x, col = 0, 0
@@ -167,33 +186,42 @@ def _nein(l: QLayout) -> bool:
     return False
 
 
-def schmal_machen(d: QWidget, breite: int) -> None:
-    """Alles in ``d``, was breiter als ``breite`` Pixel ist, umbrechen."""
-    for lb in d.findChildren(QLabel):                                        # lange Texte laufen in die nächste Zeile statt über den Rand
+def _beschriftungen_umbrechen(d: QWidget, breite: int) -> None:
+    """Lange Texte laufen in die nächste Zeile statt über den Rand."""
+    for lb in d.findChildren(QLabel):
         if not lb.wordWrap() and lb.pixmap().isNull() and lb.minimumSizeHint().width() > breite - 30:
             lb.setWordWrap(True)
             lb.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
             lb.setMinimumWidth(BREITE_SCHMAL_BESCHRIFTUNG)
+
+
+def _kontrollfelder_umbrechen(l: QLayout, breite: int) -> None:
+    for i in range(l.count()):
+        it = l.itemAt(i)
+        w = it.widget() if it is not None else None
+        if isinstance(w, (QCheckBox, QRadioButton)) and w.text() and w.minimumSizeHint().width() > max(breite - 30, 220):
+            _knopf_umbrechen(l, w)
+
+
+def _layout_umbrechen(l: QLayout, breite: int) -> None:
+    if isinstance(l, QGridLayout):
+        if max(_breite_gitter(l), l.minimumSize().width()) > breite:
+            _tabelle_umbrechen(l, breite)
+    elif isinstance(l, QHBoxLayout) and l.direction() in (QBoxLayout.TopToBottom, QBoxLayout.BottomToTop):
+        return                                                           # schon senkrecht gestellt (kompakt_machen): steht untereinander
+    elif isinstance(l, QHBoxLayout) and l.parent() is not None and max(_breite(l), l.minimumSize().width()) > breite:
+        _zeile_zu_fluss(l)
+
+
+def schmal_machen(d: QWidget, breite: int) -> None:
+    """Alles in ``d``, was breiter als ``breite`` Pixel ist, umbrechen."""
+    _beschriftungen_umbrechen(d, breite)
     for l in _alle_layouts(d):
-        if _nein(l):
-            continue
-        if isinstance(l, (FormularGitter, FlussLayout)):                     # ein Formular und eine Fließzeile passen sich selbst an
-            continue
-        for i in range(l.count()):
-            it = l.itemAt(i)
-            w = it.widget() if it is not None else None
-            if isinstance(w, (QCheckBox, QRadioButton)) and w.text() and w.minimumSizeHint().width() > max(breite - 30, 220):
-                _knopf_umbrechen(l, w)
+        if not _nein(l) and not isinstance(l, (FormularGitter, FlussLayout)):     # ein Formular und eine Fließzeile passen sich selbst an
+            _kontrollfelder_umbrechen(l, breite)
     for l in _alle_layouts(d):
-        if _nein(l):
-            continue
-        if isinstance(l, QGridLayout):
-            if max(_breite_gitter(l), l.minimumSize().width()) > breite:
-                _tabelle_umbrechen(l, breite)
-        elif isinstance(l, QHBoxLayout) and l.direction() in (QBoxLayout.TopToBottom, QBoxLayout.BottomToTop):
-            continue                                                         # schon senkrecht gestellt (kompakt_machen): steht untereinander
-        elif isinstance(l, QHBoxLayout) and l.parent() is not None and max(_breite(l), l.minimumSize().width()) > breite:
-            _zeile_zu_fluss(l)
+        if not _nein(l):
+            _layout_umbrechen(l, breite)
 
 
 def _breite_gitter(g: QGridLayout) -> int:

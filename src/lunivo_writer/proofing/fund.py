@@ -50,6 +50,33 @@ def loesen(funde: list[ProofingIssue]) -> list[ProofingIssue]:
     return sorted(belegt, key=lambda f: f.stellenschluessel)
 
 
+def _bestaetigen(f: ProofingIssue) -> ProofingIssue:
+    """Punkt a): Quellen mit gleichem Vorschlag bestätigen den Fund und heben seine Konfidenz."""
+    quellen = tuple(q for q in dict.fromkeys(v.quelle for v in f.verdraengt if v.neu == f.neu)
+                    if q and q != f.quelle)
+    neue = [q for q in quellen if q not in f.bestaetigt_von]
+    if not neue:
+        return f
+    mehr = max([f.konfidenz or 0.0] + [v.konfidenz or 0.0 for v in f.verdraengt if v.quelle in neue])
+    return f.ersetzt(bestaetigt_von=f.bestaetigt_von + tuple(neue), konfidenz=min(1.0, mehr + 0.1))
+
+
+def _konsens(f: ProofingIssue) -> ProofingIssue:
+    """Punkte a) und b): Bestätigung durch andere Quellen, ein abweichender Vorschlag macht aus „fehler“ einen „tipp“."""
+    f = _bestaetigen(f)
+    if f.art == "fehler" and any(v.neu and v.neu != f.neu and v.quelle and v.quelle != f.quelle for v in f.verdraengt):
+        f = f.ersetzt(art="tipp")
+    return f
+
+
+def _gegenprobe_faellig(f: ProofingIssue, geprueft: dict) -> bool:
+    """Punkt c): unbestätigter, unsicherer Fehler, den eine andere Quelle im ganzen Bereich geprüft und nicht beanstandet hat."""
+    if not (f.art == "fehler" and not f.bestaetigt_von and f.konfidenz is not None and f.konfidenz < 0.9):
+        return False
+    return any(q != f.quelle and not any(v.quelle == q for v in f.verdraengt)
+               and any(a <= f.von and f.bis <= b for a, b in bereiche) for q, bereiche in geprueft.items())
+
+
 def abstimmen(funde: list[ProofingIssue], geprueft: dict | None = None, in_ruhe: dict | None = None, selbst: dict | None = None,
               gegenprobe: bool = False) -> list[ProofingIssue]:
     """Konsens zwischen den Quellen nach ``loesen`` (reine Funktion, idempotent).
@@ -67,17 +94,8 @@ def abstimmen(funde: list[ProofingIssue], geprueft: dict | None = None, in_ruhe:
         if f.art == "fehler" and in_ruhe.get(w) and w not in selbst:
             continue
         if f.neu:
-            quellen = tuple(q for q in dict.fromkeys(v.quelle for v in f.verdraengt if v.neu == f.neu)
-                            if q and q != f.quelle)
-            neue = [q for q in quellen if q not in f.bestaetigt_von]
-            if neue:
-                mehr = max([f.konfidenz or 0.0] + [v.konfidenz or 0.0 for v in f.verdraengt if v.quelle in neue])
-                f = f.ersetzt(bestaetigt_von=f.bestaetigt_von + tuple(neue), konfidenz=min(1.0, mehr + 0.1))
-            if f.art == "fehler" and any(v.neu and v.neu != f.neu and v.quelle and v.quelle != f.quelle for v in f.verdraengt):
-                f = f.ersetzt(art="tipp")
-        if (gegenprobe and f.art == "fehler" and not f.bestaetigt_von and f.konfidenz is not None and f.konfidenz < 0.9
-                and any(q != f.quelle and not any(v.quelle == q for v in f.verdraengt)
-                        and any(a <= f.von and f.bis <= b for a, b in bereiche) for q, bereiche in geprueft.items())):
+            f = _konsens(f)
+        if gegenprobe and _gegenprobe_faellig(f, geprueft):
             f = f.ersetzt(art="tipp")
         aus.append(f)
     return aus

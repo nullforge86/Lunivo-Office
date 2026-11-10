@@ -77,22 +77,12 @@ class _Lesefeld(QTextBrowser):
         self.document().setDocumentMargin(rand)
 
 
-def _handbuch_gestalten(b: QTextBrowser) -> None:
-    """Gibt dem Markdown-Text die Gestalt der Vorlage: Antiqua mit Luft, Überschriften, Tabellen ohne Gitter, Merkkästen, Tastenchips."""
-    from PySide6.QtGui import QBrush, QColor, QFont, QPalette, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextFrameFormat, QTextLength, QTextTable
-    d = b.document()
-    pal = b.palette()
-    stumm = pal.color(QPalette.PlaceholderText) if hasattr(QPalette, "PlaceholderText") else pal.color(QPalette.Mid)
-    linie = pal.color(QPalette.Mid); linie.setAlpha(90)
-    grund2 = QColor(pal.color(QPalette.Text)); grund2.setAlpha(18)
-    akzent = pal.color(QPalette.Highlight)
-    serif = QFont("Georgia"); serif.setStyleHint(QFont.Serif); serif.setPointSizeF(12.5)
-    d.setDefaultFont(serif)
-    c = QTextCursor(d)
+def _hb_bloecke(d, grund2) -> None:
+    """Absätze und Überschriften: Abstände, Zeilenhöhe, Merkkästen."""
+    from PySide6.QtGui import QBrush, QFont, QTextBlockFormat, QTextCharFormat, QTextCursor
     blk = d.begin()
     while blk.isValid():
-        bf, cf = QTextBlockFormat(), QTextCharFormat()
-        cur = QTextCursor(blk)
+        cf = QTextCharFormat()
         ebene = blk.blockFormat().headingLevel()
         bf = blk.blockFormat()
         if ebene:
@@ -106,12 +96,15 @@ def _handbuch_gestalten(b: QTextBrowser) -> None:
         if blk.blockFormat().intProperty(0x1080):
             bf.setBackground(QBrush(grund2)); bf.setLeftMargin(10); bf.setRightMargin(6); bf.setTopMargin(4); bf.setBottomMargin(4)
             bf.setIndent(0)
-        cur.setBlockFormat(bf)
+        QTextCursor(blk).setBlockFormat(bf)
         if ebene:
-            cur.select(QTextCursor.BlockUnderCursor) if False else None
             cur2 = QTextCursor(blk); cur2.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor); cur2.mergeCharFormat(cf)
         blk = blk.next()
-    # Tastenchips und Wege (Schrift mit fester Breite)
+
+
+def _hb_tastenchips(d, grund2) -> None:
+    """Tastenchips und Wege (Schrift mit fester Breite)."""
+    from PySide6.QtGui import QBrush, QTextCharFormat, QTextCursor
     blk = d.begin()
     while blk.isValid():
         it = blk.begin()
@@ -123,7 +116,11 @@ def _handbuch_gestalten(b: QTextBrowser) -> None:
                 cur.mergeCharFormat(cf)
             it += 1
         blk = blk.next()
-    # Tabellen: kein Gitter, nur feine Linien zwischen den Zeilen; leere Kopfzeile fällt weg
+
+
+def _hb_tabellen(d, linie) -> None:
+    """Tabellen: kein Gitter, nur feine Linien zwischen den Zeilen; leere Kopfzeile fällt weg."""
+    from PySide6.QtGui import QBrush, QTextFrameFormat, QTextLength, QTextTable
     tabellen = [fr for fr in d.rootFrame().childFrames() if isinstance(fr, QTextTable)]
     for t in tabellen:
         if all(not t.cellAt(0, k).firstCursorPosition().block().text().strip() for k in range(t.columns())):
@@ -141,6 +138,20 @@ def _handbuch_gestalten(b: QTextBrowser) -> None:
                 cf.setBorder(0); cf.setBorderBrush(QBrush(linie)); cf.setBottomBorder(1); cf.setBottomBorderStyle(QTextFrameFormat.BorderStyle_Solid)
                 cf.setBottomBorderBrush(QBrush(linie))
                 cell.setFormat(cf)
+
+
+def _handbuch_gestalten(b: QTextBrowser) -> None:
+    """Gibt dem Markdown-Text die Gestalt der Vorlage: Antiqua mit Luft, Überschriften, Tabellen ohne Gitter, Merkkästen, Tastenchips."""
+    from PySide6.QtGui import QColor, QFont, QPalette
+    d = b.document()
+    pal = b.palette()
+    linie = pal.color(QPalette.Mid); linie.setAlpha(90)
+    grund2 = QColor(pal.color(QPalette.Text)); grund2.setAlpha(18)
+    serif = QFont("Georgia"); serif.setStyleHint(QFont.Serif); serif.setPointSizeF(12.5)
+    d.setDefaultFont(serif)
+    _hb_bloecke(d, grund2)
+    _hb_tastenchips(d, grund2)
+    _hb_tabellen(d, linie)
 
 
 def handbuch(parent) -> QDialog:

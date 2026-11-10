@@ -84,19 +84,7 @@ def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=No
     fm = _format_von(nr)
     _fuellen(p, c, r)
     if fm:                                                                   # eigenes Format (Füllung, Linie, Effekte, Text) über dem Formenstil
-        fu, li, fx = fm.get("fuell"), fm.get("linie"), F.fx_normal(fm)
-        if fx:
-            F.teil_zeichnen(p, r, {"fuell": fu if fu is not None else c.name(), **fx}, c); p.setBrush(Qt.NoBrush)
-        elif fu is not None:
-            br, opaz = F.pinsel(fu, r)
-            if br is None:
-                p.setBrush(Qt.NoBrush)
-            else:
-                if opaz < 1 and br.style() == Qt.SolidPattern:
-                    col = QColor(br.color()); col.setAlphaF(opaz); br = QBrush(col)
-                p.setBrush(br)
-        if li:
-            p.setPen(Qt.NoPen if F.linie_keine(li) else F.stift(li, c.darker(125).name(), r))
+        _kasten_format(p, r, c, fm)
     p.drawRoundedRect(r, rund, rund)
     if _ZU["stil"] == 4:                                                    # Glanz: die obere Hälfte heller
         p.setPen(Qt.NoPen); p.setBrush(QColor(255, 255, 255, 55))
@@ -110,6 +98,27 @@ def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=No
             p.setPen(F.textfarbe(t, p.pen().color().name()))
     _text_zeichnen(p, r.adjusted(6, 3, -6, -3), Qt.AlignCenter | Qt.TextWordWrap, text)
     _merke(nr, r)
+
+
+def _kasten_format(p: QPainter, r: QRectF, c: QColor, fm: dict) -> None:
+    """Füllung, Effekte und Linie des eigenen Formats auf Pinsel und Stift setzen."""
+    fu, li, fx = fm.get("fuell"), fm.get("linie"), F.fx_normal(fm)
+    if fx:
+        F.teil_zeichnen(p, r, {"fuell": fu if fu is not None else c.name(), **fx}, c); p.setBrush(Qt.NoBrush)
+    elif fu is not None:
+        _pinsel_setzen(p, r, fu)
+    if li:
+        p.setPen(Qt.NoPen if F.linie_keine(li) else F.stift(li, c.darker(125).name(), r))
+
+
+def _pinsel_setzen(p: QPainter, r: QRectF, fu) -> None:
+    br, opaz = F.pinsel(fu, r)
+    if br is None:
+        p.setBrush(Qt.NoBrush)
+        return
+    if opaz < 1 and br.style() == Qt.SolidPattern:
+        col = QColor(br.color()); col.setAlphaF(opaz); br = QBrush(col)
+    p.setBrush(br)
 
 
 def _pfeil(p: QPainter, a: QPointF, b: QPointF, c: QColor) -> None:

@@ -1,6 +1,9 @@
 """DOCX lesen: Absatz – fachlich gekapselte Verarbeitung."""
 from __future__ import annotations
 
+from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from PySide6.QtGui import QTextOption
+
 from lunivo_writer.services.docx_teile.lesen_gemeinsam import (  # noqa: F401
     io,
     logging,
@@ -85,30 +88,74 @@ from lunivo_writer.services.docx_teile.lesen_gemeinsam import (  # noqa: F401
     _ERSATZ,
 )
 
+# Tabstopp: Word → Qt (Art) und Füllzeichen → Lunivo-Schlüssel
+_TAB_ART = {WD_TAB_ALIGNMENT.RIGHT: QTextOption.RightTab, WD_TAB_ALIGNMENT.CENTER: QTextOption.CenterTab,
+            WD_TAB_ALIGNMENT.DECIMAL: QTextOption.DelimiterTab}
+_TAB_FUELLUNG = {WD_TAB_LEADER.DOTS: "punkt", WD_TAB_LEADER.DASHES: "strich", WD_TAB_LEADER.LINES: "linie", WD_TAB_LEADER.MIDDLE_DOT: "mitte"}
+
+
+# Kindelemente eines Absatzes → Methode, die sie liest (nicht aufgeführte werden übergangen)
+_LAUF_ELEMENTE = {
+    qn("w:r"): "_lauf_run", qn("w:hyperlink"): "_lauf_hyperlink", qn("w:ins"): "_lauf_aenderung", qn("w:del"): "_lauf_aenderung",
+    qn("w:commentRangeStart"): "_lauf_kommentar_start", qn("w:commentRangeEnd"): "_lauf_kommentar_ende",
+    qn("w:bookmarkStart"): "_lauf_textmarke_start", qn("w:bookmarkEnd"): "_lauf_textmarke_ende",
+    qn("w:sdt"): "_lauf_steuerelement", qn("w:fldSimple"): "_lauf_feld_einfach", qn("w:smartTag"): "_lauf_durchreichen",
+}
+
+# Rahmenseiten (Word-Name, Kürzel)
+_RAHMEN_SEITEN = (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h"))
+
+
+def _listeneintraege(liste) -> list:
+    """Anzeigetexte der Einträge einer Auswahlliste (w:listItem), ersatzweise deren Werte."""
+    return [li.get(qn("w:displayText")) or li.get(qn("w:value")) or "" for li in liste.findall(qn("w:listItem"))]
+
+
 class LesenAbsatzMixin:
     """Fachliche Teilverantwortung des DOCX-Readers."""
+
+    @staticmethod
+    def _sicher(fn, *a):
+        try:
+            return fn(*a)
+        except (ValueError, KeyError, AttributeError):        # ungewöhnliche Werte (z. B. jc="start")
+            return None
+
+    def _para_attr(self, getter, pf, st):
+        """Absatzeigenschaft: direkt am Absatz, sonst aus der Formatvorlage (samt Vorlagenkette)."""
+        v = self._sicher(getter, pf)
+        if v is None and st is not None:
+            v = self._style_attr(st, lambda s: self._sicher(getter, s.paragraph_format))
+        return v
 
     def _block_format(self, para: Paragraph) -> QTextBlockFormat:
         pf = para.paragraph_format
         st = self._ps(para)
         b = QTextBlockFormat()
 
-        def sicher(fn, *a):
-            try:
-                return fn(*a)
-            except (ValueError, KeyError, AttributeError):        # ungewöhnliche Werte (z. B. jc="start")
-                return None
-
         def eff(getter):
-            v = sicher(getter, pf)
-            if v is None and st is not None:
-                v = self._style_attr(st, lambda s: sicher(getter, s.paragraph_format))
-            return v
+            return self._para_attr(getter, pf, st)
 
         ppr = para._p.pPr
         if ppr is not None and ppr.find(qn("w:bidi")) is not None:
             b.setLayoutDirection(Qt.RightToLeft)
         b.setAlignment(self._ausrichtung(para, st))
+        self._bf_einzuege(b, para, eff)
+        self._bf_abstaende(b, para, ppr, eff)
+        if eff(lambda p: p.page_break_before) or self.pending_break:
+            self._bf_seitenumbruch(b)
+        self._bf_schattierung(b, para)
+        from lunivo_writer.editor.seite import absatzopt
+        opt = absatzopt.aus_ppr(para._p.pPr)
+        if opt:
+            absatzopt.setzen(b, {**absatzopt.VORGABE, **opt})
+        self._bf_tabs(b, pf)
+        self._bf_vorlage(b, para, st)
+        self._bf_abschnitt(b, para)
+        return b
+
+    def _bf_einzuege(self, b: QTextBlockFormat, para: Paragraph, eff) -> None:
+        """Links-, Rechts- und Erstzeileneinzug (Listenabsätze: Qt rückt selbst ein)."""
         left = eff(lambda p: p.left_indent)
         right = eff(lambda p: p.right_indent)
         first = eff(lambda p: p.first_line_indent)
@@ -125,31 +172,49 @@ class LesenAbsatzMixin:
             # Hängender Einzug einer Liste: Das Zeichen steht links vom Text, alle Zeilen beginnen bei „links“ — Qt setzt das Zeichen selbst
             # vor den Text; ein negativer Erstzeileneinzug würde die erste Zeile gegenüber den folgenden verschieben.
             b.setTextIndent(0 if hanging_liste else _emu_to_px(first))
+
+    def _bf_abstaende(self, b: QTextBlockFormat, para: Paragraph, ppr, eff) -> None:
+        """Abstand davor/danach (auch „Automatisch“ aus Webseiten), danach der Zeilenabstand."""
         sb = eff(lambda p: p.space_before)
         sa = eff(lambda p: p.space_after)
         b.setTopMargin(_pt_to_px(sb.pt) if sb is not None else 0)
         b.setBottomMargin(_pt_to_px(sa.pt) if sa is not None else 0)
+        self._bf_automatisch(b, para, ppr)
+        self._bf_zeilenabstand(b, eff)
+
+    @staticmethod
+    def _bf_automatisch(b: QTextBlockFormat, para: Paragraph, ppr) -> None:
+        """„Automatisch“ (aus Webseiten): 14 pt davor/danach; leere Absätze behalten nur ihre Höhe."""
         sp = ppr.find(qn("w:spacing")) if ppr is not None else None
         leer = not "".join(para._p.xpath(".//w:t/text()")).strip() if hasattr(para._p, "xpath") else False
-        if sp is not None and not leer:                               # „Automatisch“ (aus Webseiten): 14 pt davor/danach; leere Absätze behalten nur ihre Höhe
-            wahr = ("1", "true", "on")
-            if (sp.get(qn("w:beforeAutospacing")) or "").lower() in wahr:
-                b.setTopMargin(_pt_to_px(14.0))
-            if (sp.get(qn("w:afterAutospacing")) or "").lower() in wahr:
-                b.setBottomMargin(_pt_to_px(14.0))
+        if sp is None or leer:
+            return
+        wahr = ("1", "true", "on")
+        if (sp.get(qn("w:beforeAutospacing")) or "").lower() in wahr:
+            b.setTopMargin(_pt_to_px(14.0))
+        if (sp.get(qn("w:afterAutospacing")) or "").lower() in wahr:
+            b.setBottomMargin(_pt_to_px(14.0))
+
+    @staticmethod
+    def _bf_zeilenabstand(b: QTextBlockFormat, eff) -> None:
         ls = eff(lambda p: p.line_spacing)
         if ls is not None:
             if isinstance(ls, float) or (isinstance(ls, int) and ls < 100):
                 b.setLineHeight(float(ls) * 100, LH_PROPORTIONAL)
             else:  # Length in EMU → feste Höhe
-                pt = ls.pt
-                b.setLineHeight(pt / PT_PER_PX, LH_FIXED)
-        if eff(lambda p: p.page_break_before) or self.pending_break:
-            b.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
-            if self.pending_break and getattr(self, "pending_col", False):
-                b.setProperty(B_SPALTE, 1)
-            self.pending_break = False
-            self.pending_col = False
+                b.setLineHeight(ls.pt / PT_PER_PX, LH_FIXED)
+
+    def _bf_seitenumbruch(self, b: QTextBlockFormat) -> None:
+        """Seiten- (und ggf. Spalten-)Umbruch vor dem Absatz; ein vorgemerkter Umbruch ist damit verbraucht."""
+        b.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
+        if self.pending_break and getattr(self, "pending_col", False):
+            b.setProperty(B_SPALTE, 1)
+        self.pending_break = False
+        self.pending_col = False
+
+    @staticmethod
+    def _bf_schattierung(b: QTextBlockFormat, para: Paragraph) -> None:
+        """Absatzhintergrund aus w:shd: Muster über Füllfarbe oder einfache Füllfarbe."""
         shd = para._p.xpath("w:pPr/w:shd")
         art = muster.schluessel_von_ooxml(shd[0].get(qn("w:val"))) if shd else None
         if shd and art and art != "loeschen":                    # Muster über Füllfarbe
@@ -161,22 +226,19 @@ class LesenAbsatzMixin:
             b.setProperty(B_MUSTER, muster.als_text(art, mf, ff))
         elif shd and shd[0].get(qn("w:fill")) not in (None, "auto"):
             b.setBackground(QBrush(QColor("#" + shd[0].get(qn("w:fill")))))
-        from lunivo_writer.editor.seite import absatzopt
-        opt = absatzopt.aus_ppr(para._p.pPr)
-        if opt:
-            absatzopt.setzen(b, {**absatzopt.VORGABE, **opt})
+
+    @staticmethod
+    def _bf_tabs(b: QTextBlockFormat, pf) -> None:
+        """Tabstopps mit Art und Füllzeichen."""
         stops = list(pf.tab_stops)
-        if stops:
-            from docx.enum.text import WD_TAB_ALIGNMENT
-            from PySide6.QtGui import QTextOption
-            art = {WD_TAB_ALIGNMENT.RIGHT: QTextOption.RightTab, WD_TAB_ALIGNMENT.CENTER: QTextOption.CenterTab,
-                   WD_TAB_ALIGNMENT.DECIMAL: QTextOption.DelimiterTab}
-            b.setTabPositions([QTextOption.Tab(_emu_to_px(t.position), art.get(t.alignment, QTextOption.LeftTab))
-                               for t in stops])
-            from docx.enum.text import WD_TAB_LEADER
-            from lunivo_writer.editor.text import tabfuell
-            lk = {WD_TAB_LEADER.DOTS: "punkt", WD_TAB_LEADER.DASHES: "strich", WD_TAB_LEADER.LINES: "linie", WD_TAB_LEADER.MIDDLE_DOT: "mitte"}
-            tabfuell.setzen(b, {round(_emu_to_px(t.position), 2): lk[t.leader] for t in stops if t.leader in lk})
+        if not stops:
+            return
+        from lunivo_writer.editor.text import tabfuell
+        b.setTabPositions([QTextOption.Tab(_emu_to_px(t.position), _TAB_ART.get(t.alignment, QTextOption.LeftTab)) for t in stops])
+        tabfuell.setzen(b, {round(_emu_to_px(t.position), 2): _TAB_FUELLUNG[t.leader] for t in stops if t.leader in _TAB_FUELLUNG})
+
+    def _bf_vorlage(self, b: QTextBlockFormat, para: Paragraph, st) -> None:
+        """Überschriftenebene, Standardvorlage (Titel, Zitat …) oder eigene Formatvorlage."""
         lvl = self._heading_level(para)
         if lvl:
             b.setHeadingLevel(lvl)
@@ -184,36 +246,45 @@ class LesenAbsatzMixin:
             b.setProperty(STYLE_PROP, st.name)
         elif st is not None and not lvl and not st.builtin and st.name != "Normal":
             self._eigene_vorlage(st, b)
-        if para._p.xpath("w:pPr/w:sectPr"):                       # letzter Absatz eines Abschnitts: der folgende Abschnitt wird hier beschrieben
+
+    def _bf_abschnitt(self, b: QTextBlockFormat, para: Paragraph) -> None:
+        """Letzter Absatz eines Abschnitts: der folgende Abschnitt wird hier beschrieben."""
+        if para._p.xpath("w:pPr/w:sectPr"):
             from lunivo_writer.editor.seite import abschnitte as AB
             k, secs = self._ab_zaehler, self.d.sections
             self._ab_zaehler += 1
             if k + 1 < len(secs):
                 nxt = secs[k + 1]
                 b.setProperty(AB.B_ABSCHNITT, AB.eintrag(self._abschnitt_beginn(nxt), self._section_page(nxt, basis=self._erste_seite)))
-        return b
 
     # ---- Listen ------------------------------------------------------
 
     def _list_info(self, para: Paragraph):
         """→ (numId, ilvl, 'bullet'|'decimal'|…) oder None."""
-        ppr = para._p.pPr
-        numpr = ppr.numPr if ppr is not None else None
-        num_id = ilvl = None
-        if numpr is not None:
-            num_id = numpr.numId.val if numpr.numId is not None else None
-            ilvl = numpr.ilvl.val if numpr.ilvl is not None else 0
+        num_id, ilvl = self._numpr_direkt(para)
         if num_id is None and self._ps(para) is not None:
-            for s in self._kette(self._ps(para)):
-                sp = s.element.pPr
-                if sp is not None and sp.numPr is not None and sp.numPr.numId is not None:
-                    num_id = sp.numPr.numId.val
-                    ilvl = sp.numPr.ilvl.val if sp.numPr.ilvl is not None else 0
-                    break
+            num_id, ilvl = self._numpr_aus_vorlage(self._ps(para))
         if not num_id:
             return None
         fmt = self._num_format(num_id, ilvl or 0)
         return num_id, ilvl or 0, fmt
+
+    @staticmethod
+    def _numpr_direkt(para: Paragraph):
+        """(numId, ilvl) aus w:numPr des Absatzes, sonst (None, None)."""
+        ppr = para._p.pPr
+        numpr = ppr.numPr if ppr is not None else None
+        if numpr is None:
+            return None, None
+        return (numpr.numId.val if numpr.numId is not None else None), (numpr.ilvl.val if numpr.ilvl is not None else 0)
+
+    def _numpr_aus_vorlage(self, stil):
+        """(numId, ilvl) aus der ersten Formatvorlage der Kette mit Nummerierung, sonst (None, None)."""
+        for s in self._kette(stil):
+            sp = s.element.pPr
+            if sp is not None and sp.numPr is not None and sp.numPr.numId is not None:
+                return sp.numPr.numId.val, (sp.numPr.ilvl.val if sp.numPr.ilvl is not None else 0)
+        return None, None
 
     def _num_format(self, num_id, ilvl) -> str:
         try:
@@ -288,49 +359,71 @@ class LesenAbsatzMixin:
         """Kinder eines Absatzes der Reihe nach: Läufe, Links, nachverfolgte Änderungen, Kommentar- und Textmarkenbereiche."""
         had = False
         for el in eltern:
-            tag = el.tag
-            if tag == qn("w:r"):
-                had |= self._add_run(Run(el, para), para, cursor, href=href)
-            elif tag == qn("w:hyperlink"):
-                h = Hyperlink(el, para)
-                url = h.url or ("#" + h.fragment if h.fragment else "")
-                alt_tipp, self._link_tipp = getattr(self, "_link_tipp", ""), el.get(qn("w:tooltip")) or ""
-                had |= self._laufe(el, para, cursor, href=url)
-                self._link_tipp = alt_tipp
-            elif tag in (qn("w:ins"), qn("w:del")):
-                alt = self._aend
-                self._aend = ("ins" if tag == qn("w:ins") else "del", el.get(qn("w:author")) or "", el.get(qn("w:date")) or "")
-                had |= self._laufe(el, para, cursor, href=href)
-                self._aend = alt
-            elif tag == qn("w:commentRangeStart"):
-                self._komm_offen.append(int(el.get(qn("w:id"))))
-            elif tag == qn("w:commentRangeEnd"):
-                i = int(el.get(qn("w:id")))
-                if i in self._komm_offen:
-                    self._komm_offen.remove(i)
-            elif tag == qn("w:bookmarkStart"):
-                n = el.get(qn("w:name")) or ""
-                if n and not n.startswith("_"):
-                    self._lz_offen[el.get(qn("w:id"))] = n
-                    self._lz_pos[el.get(qn("w:id"))] = cursor.position()
-            elif tag == qn("w:bookmarkEnd"):
-                i = el.get(qn("w:id"))
-                n = self._lz_offen.pop(i, None)
-                if n is not None and self._lz_pos.pop(i, None) == cursor.position():
-                    self._lz_wartend.append(n)         # leere Textmarke: hängt am folgenden Text
-            elif tag in (qn("w:sdt"),):
-                inhalt = el.find(qn("w:sdtContent"))
-                if inhalt is not None:
-                    alt_form, self._form = self._form, self._form_meta(el) or self._form
-                    had |= self._laufe(inhalt, para, cursor, href=href)
-                    self._form = alt_form
-            elif tag == qn("w:fldSimple"):
-                self._feld = {"instr": el.get(qn("w:instr")) or "", "phase": "r"}
-                had |= self._laufe(el, para, cursor, href=href)
-                self._feld_ende()
-            elif tag == qn("w:smartTag"):
-                had |= self._laufe(el, para, cursor, href=href)
+            handler = _LAUF_ELEMENTE.get(el.tag)
+            if handler:
+                had |= bool(getattr(self, handler)(el, para, cursor, href))
         return had
+
+    def _lauf_run(self, el, para, cursor, href) -> bool:
+        return self._add_run(Run(el, para), para, cursor, href=href)
+
+    def _lauf_hyperlink(self, el, para, cursor, href) -> bool:
+        h = Hyperlink(el, para)
+        url = h.url or ("#" + h.fragment if h.fragment else "")
+        alt_tipp, self._link_tipp = getattr(self, "_link_tipp", ""), el.get(qn("w:tooltip")) or ""
+        had = self._laufe(el, para, cursor, href=url)
+        self._link_tipp = alt_tipp
+        return had
+
+    def _lauf_aenderung(self, el, para, cursor, href) -> bool:
+        """Nachverfolgte Änderung (w:ins / w:del): Art, Autor und Datum gelten für die enthaltenen Läufe."""
+        alt = self._aend
+        self._aend = ("ins" if el.tag == qn("w:ins") else "del", el.get(qn("w:author")) or "", el.get(qn("w:date")) or "")
+        had = self._laufe(el, para, cursor, href=href)
+        self._aend = alt
+        return had
+
+    def _lauf_kommentar_start(self, el, para, cursor, href) -> bool:
+        self._komm_offen.append(int(el.get(qn("w:id"))))
+        return False
+
+    def _lauf_kommentar_ende(self, el, para, cursor, href) -> bool:
+        i = int(el.get(qn("w:id")))
+        if i in self._komm_offen:
+            self._komm_offen.remove(i)
+        return False
+
+    def _lauf_textmarke_start(self, el, para, cursor, href) -> bool:
+        n = el.get(qn("w:name")) or ""
+        if n and not n.startswith("_"):
+            self._lz_offen[el.get(qn("w:id"))] = n
+            self._lz_pos[el.get(qn("w:id"))] = cursor.position()
+        return False
+
+    def _lauf_textmarke_ende(self, el, para, cursor, href) -> bool:
+        i = el.get(qn("w:id"))
+        n = self._lz_offen.pop(i, None)
+        if n is not None and self._lz_pos.pop(i, None) == cursor.position():
+            self._lz_wartend.append(n)         # leere Textmarke: hängt am folgenden Text
+        return False
+
+    def _lauf_steuerelement(self, el, para, cursor, href) -> bool:
+        inhalt = el.find(qn("w:sdtContent"))
+        if inhalt is None:
+            return False
+        alt_form, self._form = self._form, self._form_meta(el) or self._form
+        had = self._laufe(inhalt, para, cursor, href=href)
+        self._form = alt_form
+        return had
+
+    def _lauf_feld_einfach(self, el, para, cursor, href) -> bool:
+        self._feld = {"instr": el.get(qn("w:instr")) or "", "phase": "r"}
+        had = self._laufe(el, para, cursor, href=href)
+        self._feld_ende()
+        return had
+
+    def _lauf_durchreichen(self, el, para, cursor, href) -> bool:
+        return self._laufe(el, para, cursor, href=href)
 
     FELDER_BEHALTEN = ("SEQ", "CITATION")
 
@@ -365,86 +458,117 @@ class LesenAbsatzMixin:
             if m:
                 return FO.meta_text(m)
         al = pr.find(qn("w:alias"))
-        name = al.get(qn("w:val")) if al is not None else ""
-        leer = pr.find(qn("w:showingPlcHdr")) is not None
-        if pr.find(qn("w:dropDownList")) is not None or pr.find(qn("w:comboBox")) is not None:
-            liste = pr.find(qn("w:dropDownList"))
-            if liste is None:
-                liste = pr.find(qn("w:comboBox"))
-            opt = [li.get(qn("w:displayText")) or li.get(qn("w:value")) or "" for li in liste.findall(qn("w:listItem"))]
-            m = FO.meta("auswahl", name, optionen=[o for o in opt if o])
-        elif pr.find(qn("w:date")) is not None:
-            m = FO.meta("datum", name)
-        elif any(el.tag.endswith("}checkbox") for el in pr):
-            m = FO.meta("kasten", name)
-        elif pr.find(qn("w:text")) is not None:
-            m = FO.meta("text", name)
-        else:
+        m = self._form_meta_fremd(pr, al.get(qn("w:val")) if al is not None else "")
+        if m is None:
             return ""
-        if leer:
+        if pr.find(qn("w:showingPlcHdr")) is not None:
             m["leer"] = True
         return FO.meta_text(m)
 
+    @staticmethod
+    def _form_meta_fremd(pr, name: str):
+        """Art des fremden Steuerelements (Auswahl, Datum, Kontrollkästchen, Text) → Formularfeld-Daten oder None."""
+        from lunivo_writer.editor.dokument import formular as FO
+        liste = pr.find(qn("w:dropDownList"))
+        if liste is None:
+            liste = pr.find(qn("w:comboBox"))
+        if liste is not None:
+            return FO.meta("auswahl", name, optionen=[o for o in _listeneintraege(liste) if o])
+        art = next((a for a, vorhanden in (("datum", pr.find(qn("w:date")) is not None),
+                                           ("kasten", any(el.tag.endswith("}checkbox") for el in pr)),
+                                           ("text", pr.find(qn("w:text")) is not None)) if vorhanden), None)
+        return FO.meta(art, name) if art else None
+
     def _zusatz_formate(self, cfmt: QTextCharFormat) -> None:
+        self._zusatz_feld(cfmt)
+        if self._komm_offen:
+            cfmt.setProperty(P_KOMMENTAR, self._komm_offen[-1])
+        if self._form:
+            cfmt.setProperty(P_FORM, self._form)
+        self._zusatz_aenderung(cfmt)
+        namen = list(self._lz_offen.values()) + self._lz_wartend
+        if namen and not cfmt.isAnchor():
+            cfmt.setAnchor(True)
+            cfmt.setAnchorNames(namen)
+
+    def _zusatz_aenderung(self, cfmt: QTextCharFormat) -> None:
+        """Nachverfolgte Änderung: Art, Autor, Datum."""
+        if self._aend:
+            cfmt.setProperty(P_AENDERUNG, self._aend[0])
+            cfmt.setProperty(P_AUTOR, self._aend[1])
+            cfmt.setProperty(P_DATUM, self._aend[2])
+
+    def _zusatz_feld(self, cfmt: QTextCharFormat) -> None:
+        """Felder, die erhalten bleiben (SEQ, CITATION): Anweisung (und Zitatschlüssel) am Zeichenformat."""
         if self._feld and self._feld["phase"] == "r":
             teile = self._feld["instr"].split()
             if teile and teile[0].upper() in self.FELDER_BEHALTEN:
                 cfmt.setProperty(P_FELD, self._feld["instr"].strip())
                 if teile[0].upper() == "CITATION" and len(teile) > 1:
                     cfmt.setProperty(P_ZITAT, teile[1])
-        if self._komm_offen:
-            cfmt.setProperty(P_KOMMENTAR, self._komm_offen[-1])
-        if self._form:
-            cfmt.setProperty(P_FORM, self._form)
-        if self._aend:
-            cfmt.setProperty(P_AENDERUNG, self._aend[0])
-            cfmt.setProperty(P_AUTOR, self._aend[1])
-            cfmt.setProperty(P_DATUM, self._aend[2])
-        namen = list(self._lz_offen.values()) + self._lz_wartend
-        if namen and not cfmt.isAnchor():
-            cfmt.setAnchor(True)
-            cfmt.setAnchorNames(namen)
 
     _TOC_STILE = {"TOC Heading": "kopf", **{f"TOC {i}": f"zeile{i}" for i in range(1, 10)}, "Table of Figures": "zeile1",
                   "Index 1": "zeile1", "Index 2": "zeile2", "Bibliography": "zeile1"}
 
     def _block_zusatz(self, bfmt: QTextBlockFormat, para: Paragraph) -> None:
         """Verzeichnis- und Beschriftungsabsätze an ihrer Formatvorlage wiedererkennen; Absatzrahmen aus w:pBdr."""
-        ppr = para._p.pPr
-        bdr = ppr.find(qn("w:pBdr")) if ppr is not None else None
-        if bdr is not None:
-            da = [(kurz, bdr.find(qn(f"w:{x}"))) for x, kurz in (("top", "t"), ("left", "l"), ("bottom", "b"), ("right", "r"), ("between", "h"))]
-            da = [(k, e) for k, e in da if e is not None and e.get(qn("w:val"), "nil") not in ("nil", "none")]
-            if da:
-                e = da[0][1]
-                col = e.get(qn("w:color")) or "000000"
-                art = art_aus_docx(e.get(qn("w:val")))
-                li = Linie(f"#{col.lower() if col.lower() != 'auto' else '000000'}", int(e.get(qn("w:sz")) or 8) / 8, art).mit_seiten("".join(k for k, _e in da))
-                abst = {k: e2.get(qn("w:space")) for k, e2 in da}
-                if any(v not in (None, "4") for v in abst.values()):          # eigener Abstand zum Text (w:space in pt)
-                    li.abstand = ",".join(str(int(abst.get(k) or 4)) for k in "tblr")
-                bfmt.setProperty(B_RAHMEN, li.text())
+        self._absatzrahmen_lesen(bfmt, para)
         try:
             name = self._ps(para).name
         except Exception:
             return
         if name in self._TOC_STILE:
-            art = "toc" if name.startswith("TOC ") else {"Index 1": "index", "Index 2": "index", "Bibliography": "lit"}.get(name)
-            if name == "Table of Figures":
-                art = "tab" if para.text.strip().lower().startswith(("tabelle", "table")) else "abb"
-            elif name == "TOC Heading":
-                nxt = para._p.getnext()
-                art = "toc"
-                if nxt is not None and nxt.tag == qn("w:p"):
-                    nn = Paragraph(nxt, para._parent).style.name
-                    art = {"Table of Figures": "abb", "Index 1": "index", "Bibliography": "lit"}.get(nn, "toc")
-                    if nn == "Table of Figures" and Paragraph(nxt, para._parent).text.strip().lower().startswith(("tabelle", "table")):
-                        art = "tab"
             bfmt.setProperty(B_TOC, self._TOC_STILE[name])
-            bfmt.setProperty(B_ART, art or "toc")
+            bfmt.setProperty(B_ART, self._toc_art(name, para) or "toc")
         elif name == "Caption":
             erstes = para.text.strip().split(" ")[0] if para.text.strip() else ""
             bfmt.setProperty(B_CAP, erstes if erstes in BESCHRIFTUNGEN else (erstes or "Abbildung"))
+
+    def _absatzrahmen_lesen(self, bfmt: QTextBlockFormat, para: Paragraph) -> None:
+        """Absatzrahmen aus w:pBdr: Linie der ersten sichtbaren Seite, alle sichtbaren Seiten, eigener Abstand zum Text."""
+        ppr = para._p.pPr
+        bdr = ppr.find(qn("w:pBdr")) if ppr is not None else None
+        if bdr is None:
+            return
+        da = [(kurz, bdr.find(qn(f"w:{x}"))) for x, kurz in _RAHMEN_SEITEN]
+        da = [(k, e) for k, e in da if e is not None and e.get(qn("w:val"), "nil") not in ("nil", "none")]
+        if da:
+            bfmt.setProperty(B_RAHMEN, self._rahmenlinie(da).text())
+
+    @staticmethod
+    def _rahmenlinie(da: list) -> Linie:
+        """Linie aus der ersten sichtbaren Rahmenseite; Seiten und eigener Abstand (w:space in pt) aus allen."""
+        e = da[0][1]
+        col = e.get(qn("w:color")) or "000000"
+        art = art_aus_docx(e.get(qn("w:val")))
+        li = Linie(f"#{col.lower() if col.lower() != 'auto' else '000000'}", int(e.get(qn("w:sz")) or 8) / 8, art).mit_seiten("".join(k for k, _e in da))
+        abst = {k: e2.get(qn("w:space")) for k, e2 in da}
+        if any(v not in (None, "4") for v in abst.values()):
+            li.abstand = ",".join(str(int(abst.get(k) or 4)) for k in "tblr")
+        return li
+
+    def _toc_art(self, name: str, para: Paragraph):
+        """Art des Verzeichnisses: toc, abb, tab, index, lit — bei Überschriften nach dem folgenden Absatz."""
+        if name == "Table of Figures":
+            return self._abb_oder_tab(para)
+        if name == "TOC Heading":
+            return self._toc_art_nach_kopf(para)
+        return "toc" if name.startswith("TOC ") else {"Index 1": "index", "Index 2": "index", "Bibliography": "lit"}.get(name)
+
+    @staticmethod
+    def _abb_oder_tab(para: Paragraph) -> str:
+        return "tab" if para.text.strip().lower().startswith(("tabelle", "table")) else "abb"
+
+    def _toc_art_nach_kopf(self, para: Paragraph) -> str:
+        """Verzeichnisüberschrift: die Art ergibt sich aus der Formatvorlage des folgenden Absatzes."""
+        nxt = para._p.getnext()
+        if nxt is None or nxt.tag != qn("w:p"):
+            return "toc"
+        folge = Paragraph(nxt, para._parent)
+        nn = folge.style.name
+        if nn == "Table of Figures" and folge.text.strip().lower().startswith(("tabelle", "table")):
+            return "tab"
+        return {"Table of Figures": "abb", "Index 1": "index", "Bibliography": "lit"}.get(nn, "toc")
 
     def _flush_break(self, cursor: QTextCursor):
         if self.deferred_break:

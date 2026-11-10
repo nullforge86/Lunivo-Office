@@ -1,6 +1,8 @@
 """DOCX schreiben: Runs – fachlich gekapselte Verarbeitung."""
 from __future__ import annotations
 
+from docx.enum.text import WD_UNDERLINE as U
+
 from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F401
     io,
     logging,
@@ -77,39 +79,63 @@ from lunivo_writer.services.docx_teile.schreiben_gemeinsam import (  # noqa: F40
     _CellBox,
 )
 
+# Unterstreichungsarten: eigene Namen (P_UNTER) und Qt-Stile → Word
+_UNTER_EIGEN = {"woerter": U.WORDS, "doppelt": U.DOUBLE, "dick": U.THICK, "dick_gepunktet": U.DOTTED_HEAVY, "dick_gestrichelt": U.DASH_HEAVY,
+                "lang": U.DASH_LONG, "dick_lang": U.DASH_LONG_HEAVY, "dick_strichpunkt": U.DOT_DASH_HEAVY,
+                "dick_strichpunktpunkt": U.DOT_DOT_DASH_HEAVY, "dick_wellig": U.WAVY_HEAVY, "doppelwellig": U.WAVY_DOUBLE}
+_UNTER_QT = {QTextCharFormat.DashUnderline: U.DASH, QTextCharFormat.DotLine: U.DOTTED, QTextCharFormat.DashDotLine: U.DOT_DASH,
+             QTextCharFormat.DashDotDotLine: U.DOT_DOT_DASH, QTextCharFormat.WaveUnderline: U.WAVY}
+_BETONUNG = {"punkt": "dot", "kreis": "circle", "komma": "comma", "unten": "underDot"}
+
+_W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
+# Art des Formularfelds → Methode, die den Inhalt von w:sdtPr baut
+_SDT_ART = {"text": "_sdt_text", "auswahl": "_sdt_auswahl", "datum": "_sdt_datum", "kasten": "_sdt_kasten"}
+
+
 class SchreibenRunsMixin:
     """Fachliche Teilverantwortung des DOCX-Writers."""
 
     def write_fragment(self, frag, para, in_head: bool):
         cf: QTextCharFormat = frag.charFormat()
-        text = frag.text()
         if cf.isImageFormat():
             self._image(cf.toImageFormat(), para)
             return
-        parent = getattr(self, "_ziel", None) if getattr(self, "_ziel", None) is not None else para
-        href = cf.anchorHref() if cf.isAnchor() else ""
-        self._textmarken(para, [] if href else (list(cf.anchorNames()) if cf.isAnchor() else []))
-        if href:
-            hl = self._hyperlink(para, href, cf.toolTip())
-            parent = hl
+        parent, href = self._fragment_ziel(para, cf)
         note = cf.stringProperty(P_NOTE) if cf.hasProperty(P_NOTE) else ""
         if note:
             run = self._make_run(parent, para)
             self._note_verweis(run, note)
             self._zusatz_anwenden(run, cf)
             return
-        for chunk, kind in _split(text):
+        for chunk, kind in _split(frag.text()):
             run = self._make_run(parent, para)
-            if kind == "text":
-                run.text = chunk
-            elif kind == "tab":
-                run.add_tab()
-            elif kind == "br":
-                run.add_break()
-            elif kind == "img":
-                continue
-            self._format_run(run, cf, in_head, bool(href))
-            self._zusatz_anwenden(run, cf)
+            self._lauf_inhalt(run, chunk, kind)
+            if kind != "img":
+                self._format_run(run, cf, in_head, bool(href))
+                self._zusatz_anwenden(run, cf)
+        self._indexeintrag(para, cf)
+
+    def _fragment_ziel(self, para, cf: QTextCharFormat):
+        """Textmarken und Hyperlink des Fragments anlegen → (Elternelement der Läufe, Linkziel)."""
+        parent = getattr(self, "_ziel", None) if getattr(self, "_ziel", None) is not None else para
+        href = cf.anchorHref() if cf.isAnchor() else ""
+        self._textmarken(para, [] if href else (list(cf.anchorNames()) if cf.isAnchor() else []))
+        if href:
+            parent = self._hyperlink(para, href, cf.toolTip())
+        return parent, href
+
+    @staticmethod
+    def _lauf_inhalt(run, chunk: str, kind: str) -> None:
+        """Text, Tabulator oder Zeilenumbruch in den Lauf schreiben."""
+        if kind == "text":
+            run.text = chunk
+        elif kind == "tab":
+            run.add_tab()
+        elif kind == "br":
+            run.add_break()
+
+    def _indexeintrag(self, para, cf: QTextCharFormat) -> None:
+        """Indexeintrag (XE-Feld) hinter dem Fragment."""
         if cf.hasProperty(P_INDEX) and cf.stringProperty(P_INDEX):
             from lunivo_writer.editor.dokument.indexeintrag import aus_text, feld
             from lunivo_writer.editor.dokument.zusatz import P_INDEX_OPT
@@ -172,7 +198,6 @@ class SchreibenRunsMixin:
         """w:sdt für ein Formularfeld: Art (Text, Liste, Datum, Kontrollkästchen), Name als Titel, unsere Daten im Tag."""
         from lunivo_writer.editor.dokument import formular as FO
         m = FO.meta_lesen(form) or {"art": "text", "name": ""}
-        W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
         sdt = OxmlElement("w:sdt")
         pr = OxmlElement("w:sdtPr")
         sdt.append(pr)
@@ -181,27 +206,39 @@ class SchreibenRunsMixin:
         tag = OxmlElement("w:tag"); tag.set(qn("w:val"), "lunivo:" + form); pr.append(tag)
         if m.get("leer"):
             pr.append(OxmlElement("w:showingPlcHdr"))
-        art = m["art"]
-        if art == "text":
-            pr.append(OxmlElement("w:text"))
-        elif art == "auswahl":
-            dd = OxmlElement("w:dropDownList")
-            for o in m.get("optionen") or []:
-                li = OxmlElement("w:listItem"); li.set(qn("w:displayText"), str(o)); li.set(qn("w:value"), str(o)); dd.append(li)
-            pr.append(dd)
-        elif art == "datum":
-            da = OxmlElement("w:date")
-            fm = OxmlElement("w:dateFormat"); fm.set(qn("w:val"), FO.DATUMSFORMAT); da.append(fm)
-            lid = OxmlElement("w:lid"); lid.set(qn("w:val"), "de-DE"); da.append(lid)
-            pr.append(da)
-        elif art == "kasten":
-            from lxml import etree
-            cb = etree.SubElement(pr, "{%s}checkbox" % W14)
-            for nm, val in (("checked", "1" if wert.strip() == FO.KASTEN_VOLL else "0"), ("checkedState", "2612"), ("uncheckedState", "2610")):
-                el = etree.SubElement(cb, "{%s}%s" % (W14, nm)); el.set("{%s}val" % W14, val)
+        bauer = getattr(self, _SDT_ART.get(m["art"], ""), None)                 # Art → Baumethode (unbekannte Art: nur Grunddaten)
+        if bauer:
+            bauer(pr, m, wert)
         inhalt = OxmlElement("w:sdtContent")
         sdt.append(inhalt)
         return sdt, inhalt
+
+    @staticmethod
+    def _sdt_text(pr, m, wert) -> None:
+        pr.append(OxmlElement("w:text"))
+
+    @staticmethod
+    def _sdt_auswahl(pr, m, wert) -> None:
+        dd = OxmlElement("w:dropDownList")
+        for o in m.get("optionen") or []:
+            li = OxmlElement("w:listItem"); li.set(qn("w:displayText"), str(o)); li.set(qn("w:value"), str(o)); dd.append(li)
+        pr.append(dd)
+
+    @staticmethod
+    def _sdt_datum(pr, m, wert) -> None:
+        from lunivo_writer.editor.dokument import formular as FO
+        da = OxmlElement("w:date")
+        fm = OxmlElement("w:dateFormat"); fm.set(qn("w:val"), FO.DATUMSFORMAT); da.append(fm)
+        lid = OxmlElement("w:lid"); lid.set(qn("w:val"), "de-DE"); da.append(lid)
+        pr.append(da)
+
+    @staticmethod
+    def _sdt_kasten(pr, m, wert) -> None:
+        from lxml import etree
+        from lunivo_writer.editor.dokument import formular as FO
+        cb = etree.SubElement(pr, "{%s}checkbox" % _W14)
+        for nm, val in (("checked", "1" if wert.strip() == FO.KASTEN_VOLL else "0"), ("checkedState", "2612"), ("uncheckedState", "2610")):
+            el = etree.SubElement(cb, "{%s}%s" % (_W14, nm)); el.set("{%s}val" % _W14, val)
 
     def _make_run(self, parent, para):
         if parent is para:
@@ -224,12 +261,38 @@ class SchreibenRunsMixin:
         return h
 
     def _format_run(self, run, cf: QTextCharFormat, in_head: bool, is_link: bool):
+        """Zeichenformat eines Fragments auf den Lauf übertragen; die Reihenfolge der Teilschritte bestimmt die Reihenfolge in w:rPr."""
+        self._run_schrift(run, cf)
+        self._run_unterstreichung(run, cf, is_link)
+        self._run_durchstreichung(run, cf)
+        self._run_komplexschrift(run, cf)
+        self._run_rpr_zusatz(run, cf)
+        self._run_hochtief(run, cf)
+        self._run_farben(run, cf, is_link)
+        self._run_effekte(run, cf)
+        self._run_abstand_und_versalien(run, cf)
+        if is_link:
+            run._r.get_or_add_rPr().append(_rstyle_hyperlink(self.d))
+
+    @staticmethod
+    def _run_schrift(run, cf: QTextCharFormat) -> None:
+        """Schriftfamilie, Größe, Fett, Kursiv."""
         f = run.font
+        SchreibenRunsMixin._run_familie(run, cf)
+        if _has(cf, QTextFormat.FontPointSize) and cf.fontPointSize() > 0:
+            f.size = Pt(cf.fontPointSize())
+        if _has(cf, QTextFormat.FontWeight):
+            f.bold = cf.fontWeight() >= QFont.DemiBold
+        if _has(cf, QTextFormat.FontItalic):
+            f.italic = cf.fontItalic()
+
+    @staticmethod
+    def _run_familie(run, cf: QTextCharFormat) -> None:
+        """Schriftfamilie, auch für asiatische und komplexe Zeichen."""
         if _has(cf, QTextFormat.FontFamilies) and cf.fontFamilies():
             fam = cf.fontFamilies()[0]
-            f.name = fam
-            rpr = run._r.get_or_add_rPr()
-            rf = rpr.find(qn("w:rFonts"))
+            run.font.name = fam
+            rf = run._r.get_or_add_rPr().find(qn("w:rFonts"))
             for a in ("w:hAnsi", "w:cs", "w:eastAsia"):
                 rf.set(qn(a), fam)
             from lunivo_writer.editor.dokument.zusatz import P_FONT_ASIEN, P_FONT_KOMPLEX
@@ -237,61 +300,78 @@ class SchreibenRunsMixin:
                 if cf.hasProperty(prop) and cf.stringProperty(prop).split("|")[0]:
                     rf.set(qn(attr), cf.stringProperty(prop).split("|")[0])
         elif _has(cf, QTextFormat.FontFamily):
-            f.name = cf.stringProperty(QTextFormat.FontFamily)
-        if _has(cf, QTextFormat.FontPointSize) and cf.fontPointSize() > 0:
-            f.size = Pt(cf.fontPointSize())
-        if _has(cf, QTextFormat.FontWeight):
-            f.bold = cf.fontWeight() >= QFont.DemiBold
-        if _has(cf, QTextFormat.FontItalic):
-            f.italic = cf.fontItalic()
-        ustil = cf.underlineStyle()
+            run.font.name = cf.stringProperty(QTextFormat.FontFamily)
+
+    @staticmethod
+    def _run_unterstreichung(run, cf: QTextCharFormat, is_link: bool) -> None:
         from lunivo_writer.editor.dokument.zusatz import P_UNTER
+        ustil = cf.underlineStyle()
         eigene = cf.stringProperty(P_UNTER) if cf.hasProperty(P_UNTER) else ""
         if (ustil != QTextCharFormat.NoUnderline or eigene) and not is_link:
-            from docx.enum.text import WD_UNDERLINE as U
-            f.underline = {"woerter": U.WORDS, "doppelt": U.DOUBLE, "dick": U.THICK, "dick_gepunktet": U.DOTTED_HEAVY, "dick_gestrichelt": U.DASH_HEAVY,
-                           "lang": U.DASH_LONG, "dick_lang": U.DASH_LONG_HEAVY, "dick_strichpunkt": U.DOT_DASH_HEAVY, "dick_strichpunktpunkt": U.DOT_DOT_DASH_HEAVY,
-                           "dick_wellig": U.WAVY_HEAVY, "doppelwellig": U.WAVY_DOUBLE}.get(eigene) or {
-                QTextCharFormat.DashUnderline: U.DASH, QTextCharFormat.DotLine: U.DOTTED, QTextCharFormat.DashDotLine: U.DOT_DASH,
-                QTextCharFormat.DashDotDotLine: U.DOT_DOT_DASH, QTextCharFormat.WaveUnderline: U.WAVY}.get(ustil, True)
-        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_DOPPELT, P_FONT_KOMPLEX
+            run.font.underline = _UNTER_EIGEN.get(eigene) or _UNTER_QT.get(ustil, True)
+
+    @staticmethod
+    def _run_durchstreichung(run, cf: QTextCharFormat) -> None:
+        from lunivo_writer.editor.dokument.zusatz import P_DOPPELT
         if cf.hasProperty(P_DOPPELT) and cf.property(P_DOPPELT):
-            f.double_strike = True
+            run.font.double_strike = True
         elif cf.fontStrikeOut():
-            f.strike = True
-        if cf.hasProperty(P_FONT_KOMPLEX):                       # Schnitt und Größe für komplexe Zeichen
-            _fam, schnitt, gr = (cf.stringProperty(P_FONT_KOMPLEX).split("|") + ["", "", ""])[:3]
-            f.cs_bold = True if "Fett" in schnitt else None
-            f.cs_italic = True if "Kursiv" in schnitt else None
-            try:
-                if float(gr or 0) > 0:
-                    sz = OxmlElement("w:szCs"); sz.set(qn("w:val"), str(int(round(float(gr) * 2))))
-                    _rpr_einfuegen(run._r.get_or_add_rPr(), sz)
-            except ValueError:
-                pass
-        from lunivo_writer.editor.dokument.zusatz import P_RASTER
-        rpr_ = run._r.get_or_add_rPr()
+            run.font.strike = True
+
+    @staticmethod
+    def _run_komplexschrift(run, cf: QTextCharFormat) -> None:
+        """Schnitt und Größe für komplexe Zeichen."""
+        from lunivo_writer.editor.dokument.zusatz import P_FONT_KOMPLEX
+        if not cf.hasProperty(P_FONT_KOMPLEX):
+            return
+        _fam, schnitt, gr = (cf.stringProperty(P_FONT_KOMPLEX).split("|") + ["", "", ""])[:3]
+        run.font.cs_bold = True if "Fett" in schnitt else None
+        run.font.cs_italic = True if "Kursiv" in schnitt else None
+        try:
+            if float(gr or 0) > 0:
+                sz = OxmlElement("w:szCs"); sz.set(qn("w:val"), str(int(round(float(gr) * 2))))
+                _rpr_einfuegen(run._r.get_or_add_rPr(), sz)
+        except ValueError:
+            pass
+
+    @staticmethod
+    def _run_rpr_zusatz(run, cf: QTextCharFormat) -> None:
+        """Skalieren, Position, Raster, Betonung — Elemente, die python-docx nicht kennt."""
+        from lunivo_writer.editor.dokument.zusatz import P_BETONUNG, P_RASTER
+        rpr = run._r.get_or_add_rPr()
         if cf.hasProperty(QTextFormat.FontStretch) and cf.fontStretch() not in (0, 100):               # Skalieren
-            e_ = OxmlElement("w:w"); e_.set(qn("w:val"), str(int(cf.fontStretch()))); _rpr_einfuegen(rpr_, e_)
-        if cf.hasProperty(QTextFormat.TextBaselineOffset) and cf.baselineOffset() and cf.verticalAlignment() == QTextCharFormat.AlignNormal:  # Position
-            gr = cf.fontPointSize() if cf.hasProperty(QTextFormat.FontPointSize) and cf.fontPointSize() > 0 else 11.0
-            e_ = OxmlElement("w:position"); e_.set(qn("w:val"), str(int(round(cf.baselineOffset() * gr / 100 * 2)))); _rpr_einfuegen(rpr_, e_)
+            e = OxmlElement("w:w"); e.set(qn("w:val"), str(int(cf.fontStretch()))); _rpr_einfuegen(rpr, e)
+        SchreibenRunsMixin._run_position(run, cf, rpr)
         if cf.hasProperty(P_RASTER) and not cf.property(P_RASTER):
-            e_ = OxmlElement("w:snapToGrid"); e_.set(qn("w:val"), "0"); _rpr_einfuegen(rpr_, e_)
+            e = OxmlElement("w:snapToGrid"); e.set(qn("w:val"), "0"); _rpr_einfuegen(rpr, e)
         if cf.hasProperty(P_BETONUNG) and cf.stringProperty(P_BETONUNG):
             em = OxmlElement("w:em")
-            em.set(qn("w:val"), {"punkt": "dot", "kreis": "circle", "komma": "comma", "unten": "underDot"}.get(cf.stringProperty(P_BETONUNG), "dot"))
+            em.set(qn("w:val"), _BETONUNG.get(cf.stringProperty(P_BETONUNG), "dot"))
             _rpr_einfuegen(run._r.get_or_add_rPr(), em)
+
+    @staticmethod
+    def _run_position(run, cf: QTextCharFormat, rpr) -> None:
+        """Hoch-/Tiefstellung in Prozent der Schriftgröße (nur ohne Hoch-/Tiefgestellt-Attribut)."""
+        if cf.hasProperty(QTextFormat.TextBaselineOffset) and cf.baselineOffset() and cf.verticalAlignment() == QTextCharFormat.AlignNormal:
+            gr = cf.fontPointSize() if cf.hasProperty(QTextFormat.FontPointSize) and cf.fontPointSize() > 0 else 11.0
+            e = OxmlElement("w:position"); e.set(qn("w:val"), str(int(round(cf.baselineOffset() * gr / 100 * 2)))); _rpr_einfuegen(rpr, e)
+
+    @staticmethod
+    def _run_hochtief(run, cf: QTextCharFormat) -> None:
         va = cf.verticalAlignment()
         if va == QTextCharFormat.AlignSuperScript:
-            f.superscript = True
+            run.font.superscript = True
         elif va == QTextCharFormat.AlignSubScript:
-            f.subscript = True
+            run.font.subscript = True
+
+    @staticmethod
+    def _run_farben(run, cf: QTextCharFormat, is_link: bool) -> None:
+        """Vordergrundfarbe (nicht bei Links, nicht Schwarz) und Hintergrund als w:shd."""
         fg = cf.foreground()
         if fg.style() != Qt.NoBrush and not is_link:
             c = fg.color()
             if c.isValid() and c.name().lower() != Farbe.SCHWARZ:
-                f.color.rgb = RGBColor(c.red(), c.green(), c.blue())
+                run.font.color.rgb = RGBColor(c.red(), c.green(), c.blue())
         bg = cf.background()
         if bg.style() != Qt.NoBrush:
             c = bg.color()
@@ -301,14 +381,22 @@ class SchreibenRunsMixin:
                 shd.set(qn("w:color"), "auto")
                 shd.set(qn("w:fill"), c.name()[1:].upper())
                 run._r.get_or_add_rPr().append(shd)
-        if cf.textOutline().style() != Qt.NoPen:
-            f.outline = True
+
+    @staticmethod
+    def _run_effekte(run, cf: QTextCharFormat) -> None:
+        """Kontur, Texteffekte (Schatten, Transparenz u. a.) und verborgener Text."""
         from lunivo_writer.editor.dokument.zusatz import P_EFFEKT
-        if cf.textOutline().style() != Qt.NoPen or cf.stringProperty(P_EFFEKT) or (cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().color().alpha() < 255):
+        kontur = cf.textOutline().style() != Qt.NoPen
+        if kontur:
+            run.font.outline = True
+        if kontur or cf.stringProperty(P_EFFEKT) or (cf.hasProperty(QTextFormat.ForegroundBrush) and cf.foreground().color().alpha() < 255):
             from lunivo_writer.editor.text import texteffekt
             texteffekt.in_rpr(run._r.get_or_add_rPr(), cf)
         if cf.hasProperty(P_VERSTECKT):
-            f.hidden = True
+            run.font.hidden = True
+
+    @staticmethod
+    def _run_abstand_und_versalien(run, cf: QTextCharFormat) -> None:
         ls = cf.fontLetterSpacing()
         if ls and cf.fontLetterSpacingType() == QFont.AbsoluteSpacing:
             sp = OxmlElement("w:spacing")
@@ -318,11 +406,9 @@ class SchreibenRunsMixin:
                 "w:fitText", "w:vertAlign", "w:rtl", "w:cs", "w:em", "w:lang", "w:eastAsianLayout", "w:specVanish", "w:oMath")
         cap = cf.fontCapitalization()
         if cap == QFont.AllUppercase:
-            f.all_caps = True
+            run.font.all_caps = True
         elif cap == QFont.SmallCaps:
-            f.small_caps = True
-        if is_link:
-            run._r.get_or_add_rPr().append(_rstyle_hyperlink(self.d))
+            run.font.small_caps = True
 
     # Kompatibilitätsoptionen (Optionen ▸ Allgemein und Speichern): als echte Einstellungen in settings.xml; Reihenfolge nach ECMA-376
     KOMPAT_VOR_FE = ("ulTrailSpace", "footnoteLayoutLikeWW8", "adjustLineHeightInTable")

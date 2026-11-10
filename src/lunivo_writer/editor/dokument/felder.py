@@ -83,6 +83,35 @@ def zahl_formatieren(wert: float, muster: str | None) -> str:
     return text + zusatz
 
 
+def _seitenzahl(wort: str, k: dict, art) -> str:
+    """NUMPAGES / SECTIONPAGES."""
+    return schreibweise(int(k.get("abschnittsseiten" if wort == "SECTIONPAGES" else "seiten", k.get("seiten", 1))), art)
+
+
+def _zeitfeld(wort: str, roh: str, k: dict) -> str:
+    """TIME / DATE / PRINTDATE."""
+    muster = _schalter(roh, "@") or ("HH:mm" if wort == "TIME" else "dd.MM.yyyy")
+    zeit = k.get("druckdatum") if wort == "PRINTDATE" else QDateTime.currentDateTime()
+    return QLocale(QLocale.German, QLocale.Germany).toString(zeit, muster) if zeit is not None else "00.00.0000"
+
+
+# Feldwort → Funktion(wort, roh, rest, art, kontext); nicht aufgeführte Worte (TC, TOC …) ergeben leeren Text
+_FELD_ERGEBNIS = {
+    "PAGE": lambda w, roh, rest, art, k: schreibweise(int(k.get("seite", 1)), art),
+    "NUMPAGES": lambda w, roh, rest, art, k: _seitenzahl(w, k, art),
+    "SECTIONPAGES": lambda w, roh, rest, art, k: _seitenzahl(w, k, art),
+    "PAGEREF": lambda w, roh, rest, art, k: str(k.get("textmarken_seiten", {}).get(rest.split()[0] if rest else "", "")) or "Fehler! Textmarke nicht definiert.",
+    "SEQ": lambda w, roh, rest, art, k: schreibweise(int(k.get("seq", {}).get(rest.split()[0] if rest else "Abbildung", 0)) + 1, art),
+    "TIME": lambda w, roh, rest, art, k: _zeitfeld(w, roh, k),
+    "DATE": lambda w, roh, rest, art, k: _zeitfeld(w, roh, k),
+    "PRINTDATE": lambda w, roh, rest, art, k: _zeitfeld(w, roh, k),
+    "HYPERLINK": lambda w, roh, rest, art, k: rest,
+    "DOCVARIABLE": lambda w, roh, rest, art, k: str(k.get("variablen", {}).get(rest, "")),
+    "MERGEFIELD": lambda w, roh, rest, art, k: f"«{rest}»" if rest else "",
+    "STYLEREF": lambda w, roh, rest, art, k: str(k.get("stilref", {}).get(rest, "")) or "Fehler! Kein Text mit angegebener Formatvorlage im Dokument.",
+}
+
+
 def ergebnis(anweisung: str, kontext: dict) -> str:
     """Das Feldergebnis jetzt. ``kontext`` aus ``kontext_sammeln`` (alle Angaben freiwillig)."""
     roh = anweisung.strip()
@@ -93,38 +122,12 @@ def ergebnis(anweisung: str, kontext: dict) -> str:
             return zahl_formatieren(formel(roh[1:], kontext), _schalter(roh, "#"))
         except ValueError:
             return "!Syntaxfehler"
-    kern = _ohne_schalter(roh)
-    teile = kern.split(None, 1)
+    teile = _ohne_schalter(roh).split(None, 1)
     wort, rest = teile[0].upper(), (teile[1] if len(teile) > 1 else "").strip().strip('"')
     art = _schalter(roh, "*")
     art = art if art and art.upper() != "MERGEFORMAT" else None
-    de = QLocale(QLocale.German, QLocale.Germany)
-    if wort == "PAGE":
-        return schreibweise(int(kontext.get("seite", 1)), art)
-    if wort in ("NUMPAGES", "SECTIONPAGES"):
-        return schreibweise(int(kontext.get("abschnittsseiten" if wort == "SECTIONPAGES" else "seiten", kontext.get("seiten", 1))), art)
-    if wort == "PAGEREF":
-        return str(kontext.get("textmarken_seiten", {}).get(rest.split()[0] if rest else "", "")) or "Fehler! Textmarke nicht definiert."
-    if wort == "SEQ":
-        kat = rest.split()[0] if rest else "Abbildung"
-        return schreibweise(int(kontext.get("seq", {}).get(kat, 0)) + 1, art)
-    if wort == "TC":
-        return ""
-    if wort in ("TIME", "DATE", "PRINTDATE"):
-        muster = _schalter(roh, "@") or ("HH:mm" if wort == "TIME" else "dd.MM.yyyy")
-        zeit = kontext.get("druckdatum") if wort == "PRINTDATE" else QDateTime.currentDateTime()
-        return de.toString(zeit, muster) if zeit is not None else "00.00.0000"
-    if wort == "HYPERLINK":
-        return rest
-    if wort == "DOCVARIABLE":
-        return str(kontext.get("variablen", {}).get(rest, ""))
-    if wort == "MERGEFIELD":
-        return f"«{rest}»" if rest else ""
-    if wort == "STYLEREF":
-        return str(kontext.get("stilref", {}).get(rest, "")) or "Fehler! Kein Text mit angegebener Formatvorlage im Dokument."
-    if wort == "TOC":
-        return ""
-    return ""
+    fn = _FELD_ERGEBNIS.get(wort)
+    return fn(wort, roh, rest, art, kontext) if fn else ""
 
 
 # ---- Formel ------------------------------------------------------------------------------------------------------------
@@ -231,27 +234,38 @@ def formel(text: str, kontext: dict) -> float:
     return ergebnis_
 
 
-def _funktion(n: str, w: list[float]) -> float:
-    if n == "SUM": return sum(w)
-    if n == "PRODUCT": return math.prod(w) if w else 0.0
-    if n == "AVERAGE":
-        if not w: raise ValueError(n)
-        return sum(w) / len(w)
-    if n == "COUNT": return float(len(w))
-    if n == "MAX": return max(w) if w else 0.0
-    if n == "MIN": return min(w) if w else 0.0
-    if n == "ABS" and len(w) == 1: return abs(w[0])
-    if n == "INT" and len(w) == 1: return float(math.trunc(w[0]))
-    if n == "SIGN" and len(w) == 1: return float((w[0] > 0) - (w[0] < 0))
-    if n == "ROUND" and len(w) == 2: return float(round(w[0], int(w[1])))
-    if n == "MOD" and len(w) == 2 and w[1]: return math.fmod(w[0], w[1])
-    if n == "AND": return float(all(w))
-    if n == "OR": return float(any(w))
-    if n == "NOT" and len(w) == 1: return float(not w[0])
-    if n == "IF" and len(w) == 3: return w[1] if w[0] else w[2]
-    if n == "DEFINED": return 1.0
-    if n in ("TRUE", "FALSE") and not w: return 1.0 if n == "TRUE" else 0.0
+def _fehler(n: str):
     raise ValueError(n)
+
+
+# Name → (Zahl der Argumente oder None für beliebig viele, Rechnung)
+_FUNKTION_TABELLE = {
+    "SUM": (None, sum),
+    "PRODUCT": (None, lambda w: math.prod(w) if w else 0.0),
+    "AVERAGE": (None, lambda w: sum(w) / len(w) if w else _fehler("AVERAGE")),
+    "COUNT": (None, lambda w: float(len(w))),
+    "MAX": (None, lambda w: max(w) if w else 0.0),
+    "MIN": (None, lambda w: min(w) if w else 0.0),
+    "ABS": (1, lambda w: abs(w[0])),
+    "INT": (1, lambda w: float(math.trunc(w[0]))),
+    "SIGN": (1, lambda w: float((w[0] > 0) - (w[0] < 0))),
+    "ROUND": (2, lambda w: float(round(w[0], int(w[1])))),
+    "MOD": (2, lambda w: math.fmod(w[0], w[1]) if w[1] else _fehler("MOD")),
+    "AND": (None, lambda w: float(all(w))),
+    "OR": (None, lambda w: float(any(w))),
+    "NOT": (1, lambda w: float(not w[0])),
+    "IF": (3, lambda w: w[1] if w[0] else w[2]),
+    "DEFINED": (None, lambda w: 1.0),
+    "TRUE": (0, lambda w: 1.0),
+    "FALSE": (0, lambda w: 0.0),
+}
+
+
+def _funktion(n: str, w: list[float]) -> float:
+    anzahl, rechnen = _FUNKTION_TABELLE.get(n, (-1, None))
+    if rechnen is None or (anzahl is not None and len(w) != anzahl):
+        raise ValueError(n)
+    return rechnen(w)
 
 
 # ---- Kontext aus dem Dokument ------------------------------------------------------------------------------------------

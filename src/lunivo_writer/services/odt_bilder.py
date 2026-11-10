@@ -31,7 +31,7 @@ class _ODTBilder:
 
     def _frei_angabe(self, frame: ET.Element) -> dict | None:
         """Ein Rahmen am Absatz oder an der Seite, den kein Text umfließt → Angabe wie in editor/objekte/freie_bilder.py, sonst None."""
-        from lunivo_writer.services.odt_writer import AUSR_H, AUSR_V, BEZUG_H, BEZUG_V
+        from lunivo_writer.services.odt_schreiben_basis import AUSR_H, AUSR_V, BEZUG_H, BEZUG_V
         anker = frame.get(_q("text:anchor-type"), "as-char")
         if anker not in ("paragraph", "char", "page"):
             return None

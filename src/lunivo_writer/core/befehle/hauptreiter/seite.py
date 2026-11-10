@@ -412,7 +412,7 @@ class SeiteBefehle:
     def silbentrennung(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.editor.seite.pagination import _trenner
+        from lunivo_writer.editor.seite.silbentrennung import _trenner
         pg = self.ed.page
         sprache = self.w.settings.get("silben/sprache", "de_DE")
         if _trenner(sprache) is None:

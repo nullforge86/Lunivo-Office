@@ -68,6 +68,85 @@ def form_pinsel(fuell: str, art: str, r: QRectF) -> QBrush:
     return QBrush(g)
 
 
+def _form_dreieck(p, r) -> None:
+    p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.bottom()), QPointF(r.left(), r.bottom())]))
+
+
+def _form_raute(p, r) -> None:
+    p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.center().y()),
+                             QPointF(r.center().x(), r.bottom()), QPointF(r.left(), r.center().y())]))
+
+
+def _form_pfeil(p, r) -> None:
+    h4 = r.height() / 4
+    p.drawPolygon(QPolygonF([QPointF(r.left(), r.top() + h4), QPointF(r.right() - r.width() * .3, r.top() + h4),
+                             QPointF(r.right() - r.width() * .3, r.top()), QPointF(r.right(), r.center().y()),
+                             QPointF(r.right() - r.width() * .3, r.bottom()), QPointF(r.right() - r.width() * .3, r.bottom() - h4),
+                             QPointF(r.left(), r.bottom() - h4)]))
+
+
+def _form_stern(p, r) -> None:
+    c, ra, ri = r.center(), min(r.width(), r.height()) / 2, min(r.width(), r.height()) / 4.6
+    pts = []
+    for i in range(10):
+        ang = -math.pi / 2 + i * math.pi / 5
+        rad = ra if i % 2 == 0 else ri
+        pts.append(QPointF(c.x() + rad * math.cos(ang), c.y() + rad * math.sin(ang)))
+    p.drawPolygon(QPolygonF(pts))
+
+
+def _form_sprechblase(p, r) -> None:
+    koerper = QRectF(r.left(), r.top(), r.width(), r.height() * 0.78)
+    pfad = QPainterPath()
+    pfad.addRoundedRect(koerper, 14, 14)
+    spitze = QPainterPath()
+    spitze.addPolygon(QPolygonF([QPointF(r.left() + r.width() * .2, koerper.bottom() - 1),
+                                 QPointF(r.left() + r.width() * .12, r.bottom()),
+                                 QPointF(r.left() + r.width() * .36, koerper.bottom() - 1)]))
+    p.drawPath(pfad.united(spitze))
+
+
+_FORM_ZEICHNER = {
+    "Rechteck": lambda p, r: p.drawRect(r),
+    "Abgerundetes Rechteck": lambda p, r: p.drawRoundedRect(r, 16, 16),
+    "Ellipse": lambda p, r: p.drawEllipse(r),
+    "Dreieck": _form_dreieck,
+    "Raute": _form_raute,
+    "Pfeil nach rechts": _form_pfeil,
+    "Stern": _form_stern,
+    "Sprechblase": _form_sprechblase,
+    "Linie": lambda p, r: p.drawLine(QPointF(r.left(), r.center().y()), QPointF(r.right(), r.center().y())),
+}
+
+
+def _form_zeichnen(p, art: str, r, adj, punkte) -> None:
+    """Der Pfad der Form: Freiform-Punkte, Anpassungsgriffe, eingebaute Form oder Formenkatalog."""
+    if punkte:
+        from lunivo_writer.editor.objekte import freiform as FF
+        if not FF.geschlossen(punkte):
+            p.setBrush(Qt.NoBrush)
+        p.drawPath(FF.pfad(punkte, r))
+    elif adj and K.anpassbar(art):
+        p.drawPath(K.pfad(art, r, adj))
+    elif art in _FORM_ZEICHNER:
+        _FORM_ZEICHNER[art](p, r)
+    elif K.hat(art):
+        if K.ist_linie(art):
+            p.setBrush(Qt.NoBrush)
+        p.drawPath(K.pfad(art, r))
+
+
+def _form_text(p, art: str, r, text: str, fuell: str) -> None:
+    p.setPen(QColor(Farbe.WEISS if fuell and QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
+    f = p.font(); f.setPointSizeF(12); p.setFont(f)
+    if art == TEXTFELD_VERTIKAL:
+        p.translate(r.center()); p.rotate(90)
+        p.drawText(QRectF(-r.height() / 2 + 6, -r.width() / 2 + 6, r.height() - 12, r.width() - 12),
+                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, text)
+    else:
+        p.drawText(r, Qt.AlignCenter | Qt.TextWordWrap, text)
+
+
 def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.AKZENT_DUNKEL, linie: str = "#1f3864",
               strich: float = 2.0, text: str = "", skala: float = 1.0, adj=None, fuell_art: str = "", punkte=None) -> QImage:
     """``skala``: Bild in dieser Auflösung (Maße und Strich bleiben logisch, das Bild ist ``skala``-mal so groß) — für scharfe freie Formen.
@@ -82,64 +161,11 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
     p.setPen(pen)
     r = QRectF(strich, strich, breite - 2 * strich, hoehe - 2 * strich)
     p.setBrush(form_pinsel(fuell, fuell_art, r) if fuell else Qt.NoBrush)
-    if punkte:
-        from lunivo_writer.editor.objekte import freiform as FF
-        if not FF.geschlossen(punkte):
-            p.setBrush(Qt.NoBrush)
-        p.drawPath(FF.pfad(punkte, r))
-    elif adj and K.anpassbar(art):
-        p.drawPath(K.pfad(art, r, adj))
-    elif art == "Rechteck":
-        p.drawRect(r)
-    elif art == "Abgerundetes Rechteck":
-        p.drawRoundedRect(r, 16, 16)
-    elif art == "Ellipse":
-        p.drawEllipse(r)
-    elif art == "Dreieck":
-        p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.bottom()), QPointF(r.left(), r.bottom())]))
-    elif art == "Raute":
-        p.drawPolygon(QPolygonF([QPointF(r.center().x(), r.top()), QPointF(r.right(), r.center().y()),
-                                 QPointF(r.center().x(), r.bottom()), QPointF(r.left(), r.center().y())]))
-    elif art == "Pfeil nach rechts":
-        h4 = r.height() / 4
-        p.drawPolygon(QPolygonF([QPointF(r.left(), r.top() + h4), QPointF(r.right() - r.width() * .3, r.top() + h4),
-                                 QPointF(r.right() - r.width() * .3, r.top()), QPointF(r.right(), r.center().y()),
-                                 QPointF(r.right() - r.width() * .3, r.bottom()), QPointF(r.right() - r.width() * .3, r.bottom() - h4),
-                                 QPointF(r.left(), r.bottom() - h4)]))
-    elif art == "Stern":
-        c, ra, ri = r.center(), min(r.width(), r.height()) / 2, min(r.width(), r.height()) / 4.6
-        pts = []
-        for i in range(10):
-            ang = -math.pi / 2 + i * math.pi / 5
-            rad = ra if i % 2 == 0 else ri
-            pts.append(QPointF(c.x() + rad * math.cos(ang), c.y() + rad * math.sin(ang)))
-        p.drawPolygon(QPolygonF(pts))
-    elif art == "Sprechblase":
-        koerper = QRectF(r.left(), r.top(), r.width(), r.height() * 0.78)
-        pfad = QPainterPath()
-        pfad.addRoundedRect(koerper, 14, 14)
-        spitze = QPainterPath()
-        spitze.addPolygon(QPolygonF([QPointF(r.left() + r.width() * .2, koerper.bottom() - 1),
-                                     QPointF(r.left() + r.width() * .12, r.bottom()),
-                                     QPointF(r.left() + r.width() * .36, koerper.bottom() - 1)]))
-        p.drawPath(pfad.united(spitze))
-    elif art == "Linie":
-        p.drawLine(QPointF(r.left(), r.center().y()), QPointF(r.right(), r.center().y()))
-    elif K.hat(art):
-        if K.ist_linie(art):
-            p.setBrush(Qt.NoBrush)
-        p.drawPath(K.pfad(art, r))
+    _form_zeichnen(p, art, r, adj, punkte)
     if art == TEXTFELD_VERTIKAL:                                     # Textfeld mit senkrecht laufendem Text (90° gedreht)
         p.drawRect(r)
     if text:
-        p.setPen(QColor(Farbe.WEISS if fuell and QColor(fuell).lightness() < 140 else Farbe.SCHWARZ))
-        f = p.font(); f.setPointSizeF(12); p.setFont(f)
-        if art == TEXTFELD_VERTIKAL:
-            p.translate(r.center()); p.rotate(90)
-            p.drawText(QRectF(-r.height() / 2 + 6, -r.width() / 2 + 6, r.height() - 12, r.width() - 12),
-                       Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, text)
-        else:
-            p.drawText(r, Qt.AlignCenter | Qt.TextWordWrap, text)
+        _form_text(p, art, r, text, fuell)
     p.end()
     return img
 

@@ -71,10 +71,22 @@ def _drei_d(p: QPainter, pa: QRectF, werte, farben, beschriftung: bool) -> None:
             _text(p, QPointF(cx + 0.62 * rx * math.cos(m), cy + 0.62 * ry * math.sin(m)), f"{abs(v):g}", QColor("white"))
 
 
-def _von_kreis(p: QPainter, pa: QRectF, balken: bool, werte, farben, beschriftung: bool, schrift: QColor) -> None:
+def _kleine_indizes(werte) -> list[int]:
+    """Die Rubriken mit den kleinsten Beträgen, die zum Rest („Weitere“) zusammengefasst werden."""
     n = len(werte)
-    klein = sorted(range(n), key=lambda i: abs(werte[i]))[:max(2, n // 3) if n > 2 else 1]
-    gross = [i for i in range(n) if i not in klein]
+    return sorted(range(n), key=lambda i: abs(werte[i]))[:max(2, n // 3) if n > 2 else 1]
+
+
+def _rest_ansatz(c1: QPointF, r1: float, a0: float, span0: float) -> tuple[QPointF, QPointF]:
+    """Die beiden Randpunkte des Rest-Kreisstücks (oben, unten), von denen die Verbindungslinien ausgehen."""
+    oben = QPointF(c1.x() + r1 * math.cos(math.radians(a0 + span0)), c1.y() + r1 * math.sin(math.radians(a0 + span0)))
+    unten = QPointF(c1.x() + r1 * math.cos(math.radians(a0)), c1.y() + r1 * math.sin(math.radians(a0)))
+    return (unten, oben) if oben.y() > unten.y() else (oben, unten)
+
+
+def _von_kreis(p: QPainter, pa: QRectF, balken: bool, werte, farben, beschriftung: bool, schrift: QColor) -> None:
+    klein = _kleine_indizes(werte)
+    gross = [i for i in range(len(werte)) if i not in klein]
     rest = sum(abs(werte[i]) for i in klein)
     haupt = [werte[i] for i in gross] + [rest]
     # „Weitere“ mittig bei 3 Uhr: Start = Hälfte der Restspanne vor 3 Uhr, Reihenfolge: Rest zuerst gedreht
@@ -83,31 +95,37 @@ def _von_kreis(p: QPainter, pa: QRectF, balken: bool, werte, farben, beschriftun
     r1 = min(pa.width() * 0.27, pa.height() * 0.44)
     c1 = QPointF(pa.left() + pa.width() * 0.29, pa.center().y())
     sc = _flach(p, c1, r1, haupt, [farben[i] for i in gross] + [REST], beschriftung, schrift, start=rest_span / 2)
-    a0, span0 = sc[-1]
-    oben = QPointF(c1.x() + r1 * math.cos(math.radians(a0 + span0)), c1.y() + r1 * math.sin(math.radians(a0 + span0)))
-    unten = QPointF(c1.x() + r1 * math.cos(math.radians(a0)), c1.y() + r1 * math.sin(math.radians(a0)))
-    if oben.y() > unten.y():
-        oben, unten = unten, oben
+    oben, unten = _rest_ansatz(c1, r1, *sc[-1])
     p.setPen(QPen(QColor("#9aa0a6"), 1)); p.setBrush(Qt.NoBrush)
     kl = [werte[i] for i in klein]
     if balken:
-        bw, bh = pa.width() * 0.09, r1 * 1.5
-        x0, y0 = pa.left() + pa.width() * 0.72, pa.center().y() - bh / 2
-        p.drawLine(oben, QPointF(x0, y0)); p.drawLine(unten, QPointF(x0, y0 + bh))
-        summe_k = sum(abs(v) for v in kl) or 1.0
-        y = y0 + bh
-        p.setPen(QPen(QColor("white"), 1.0))
-        for i, v in zip(klein, kl):
-            h = abs(v) / summe_k * bh
-            p.setBrush(farben[i]); p.drawRect(QRectF(x0, y - h, bw, h))
-            if beschriftung and h > 12:
-                _text(p, QPointF(x0 + bw / 2, y - h / 2), f"{abs(v):g}", QColor("white"))
-            y -= h
+        _rest_balken(p, pa, oben, unten, r1, klein, kl, farben, beschriftung)
     else:
-        r2 = r1 * 0.6
-        c2 = QPointF(pa.left() + pa.width() * 0.78, pa.center().y())
-        p.drawLine(oben, QPointF(c2.x(), c2.y() - r2)); p.drawLine(unten, QPointF(c2.x(), c2.y() + r2))
-        _flach(p, c2, r2, kl, [farben[i] for i in klein], beschriftung, schrift)
+        _rest_kreis(p, pa, oben, unten, r1, klein, kl, farben, beschriftung, schrift)
+
+
+def _rest_balken(p: QPainter, pa: QRectF, oben: QPointF, unten: QPointF, r1: float, klein, kl, farben, beschriftung: bool) -> None:
+    """Gestapelter Balken für die zusammengefassten kleinen Werte, mit Verbindungslinien vom Hauptkreis."""
+    bw, bh = pa.width() * 0.09, r1 * 1.5
+    x0, y0 = pa.left() + pa.width() * 0.72, pa.center().y() - bh / 2
+    p.drawLine(oben, QPointF(x0, y0)); p.drawLine(unten, QPointF(x0, y0 + bh))
+    summe_k = sum(abs(v) for v in kl) or 1.0
+    y = y0 + bh
+    p.setPen(QPen(QColor("white"), 1.0))
+    for i, v in zip(klein, kl):
+        h = abs(v) / summe_k * bh
+        p.setBrush(farben[i]); p.drawRect(QRectF(x0, y - h, bw, h))
+        if beschriftung and h > 12:
+            _text(p, QPointF(x0 + bw / 2, y - h / 2), f"{abs(v):g}", QColor("white"))
+        y -= h
+
+
+def _rest_kreis(p: QPainter, pa: QRectF, oben: QPointF, unten: QPointF, r1: float, klein, kl, farben, beschriftung: bool, schrift: QColor) -> None:
+    """Zweiter Kreis für die zusammengefassten kleinen Werte, mit Verbindungslinien vom Hauptkreis."""
+    r2 = r1 * 0.6
+    c2 = QPointF(pa.left() + pa.width() * 0.78, pa.center().y())
+    p.drawLine(oben, QPointF(c2.x(), c2.y() - r2)); p.drawLine(unten, QPointF(c2.x(), c2.y() + r2))
+    _flach(p, c2, r2, kl, [farben[i] for i in klein], beschriftung, schrift)
 
 
 def zeichnen(p: QPainter, pa: QRectF, u: str, kategorien: list[str], werte: list[float], farben: list[QColor], beschriftung: bool, schrift: QColor) -> None:

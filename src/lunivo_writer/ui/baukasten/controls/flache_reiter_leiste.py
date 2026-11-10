@@ -330,6 +330,37 @@ class UeberlaufLeiste(ReiterUeberlauf, QTabBar):
     def _versteckte(self) -> list[int]:
         return [i for i in range(min(self.count(), len(self._will))) if self._will[i] and not QTabBar.isTabVisible(self, i)]      # Qt fragt die Größe, bevor ``tabInserted`` den Reiter eingetragen hat
 
+    def _sichtbare_waehlen(self, wollen: list[int], gesamt: int) -> set[int]:
+        """Welche Reiter bei der verfügbaren Breite sichtbar bleiben (der aktive immer)."""
+        breite = {i: self.tabSizeHint(i).width() for i in wollen}
+        if sum(breite.values()) <= gesamt:
+            return set(wollen)
+        frei, summe, zeige_l = gesamt - _MEHR, 0, []
+        for i in wollen:
+            if summe + breite[i] > frei:
+                break
+            zeige_l.append(i); summe += breite[i]
+        aktiv = self.currentIndex()
+        if aktiv in breite and aktiv not in zeige_l:
+            while zeige_l and summe + breite[aktiv] > frei:
+                summe -= breite[zeige_l.pop()]
+            zeige_l.append(aktiv)
+        return set(zeige_l)
+
+    def _sichtbarkeit_setzen(self, zeige: set[int]) -> None:
+        if any(QTabBar.isTabVisible(self, i) != (i in zeige) for i in range(self.count())):
+            for i in range(self.count()):
+                QTabBar.setTabVisible(self, i, i in zeige)
+            self.setUsesScrollButtons(True); self.setUsesScrollButtons(False)       # setzt den alten Rollversatz von Qt zurück (sonst steht der erste Reiter angeschnitten)
+
+    def _mehr_knopf_setzen(self) -> None:
+        mehr = bool(self._versteckte())
+        self._mehr.setVisible(mehr)
+        if mehr:
+            letzte = max((self.tabRect(i).right() for i in range(self.count()) if QTabBar.isTabVisible(self, i)), default=0)
+            self._mehr.setGeometry(min(letzte + 1, max(0, self.width() - _MEHR)), 0, _MEHR, max(HOEHE_BANDREITER_KNOPF, self.height()))
+            self._mehr.raise_()
+
     def neu_verteilen(self) -> None:
         if self._im_verteilen or len(self._will) != self.count():
             return
@@ -339,31 +370,8 @@ class UeberlaufLeiste(ReiterUeberlauf, QTabBar):
             return
         self._im_verteilen = True
         try:
-            breite = {i: self.tabSizeHint(i).width() for i in wollen}
-            if sum(breite.values()) <= gesamt:
-                zeige = set(wollen)
-            else:
-                frei, summe, zeige_l = gesamt - _MEHR, 0, []
-                for i in wollen:
-                    if summe + breite[i] > frei:
-                        break
-                    zeige_l.append(i); summe += breite[i]
-                aktiv = self.currentIndex()
-                if aktiv in breite and aktiv not in zeige_l:
-                    while zeige_l and summe + breite[aktiv] > frei:
-                        summe -= breite[zeige_l.pop()]
-                    zeige_l.append(aktiv)
-                zeige = set(zeige_l)
-            if any(QTabBar.isTabVisible(self, i) != (i in zeige) for i in range(self.count())):
-                for i in range(self.count()):
-                    QTabBar.setTabVisible(self, i, i in zeige)
-                self.setUsesScrollButtons(True); self.setUsesScrollButtons(False)       # setzt den alten Rollversatz von Qt zurück (sonst steht der erste Reiter angeschnitten)
-            mehr = bool(self._versteckte())
-            self._mehr.setVisible(mehr)
-            if mehr:
-                letzte = max((self.tabRect(i).right() for i in range(self.count()) if QTabBar.isTabVisible(self, i)), default=0)
-                self._mehr.setGeometry(min(letzte + 1, max(0, self.width() - _MEHR)), 0, _MEHR, max(HOEHE_BANDREITER_KNOPF, self.height()))
-                self._mehr.raise_()
+            self._sichtbarkeit_setzen(self._sichtbare_waehlen(wollen, gesamt))
+            self._mehr_knopf_setzen()
         finally:
             self._im_verteilen = False
         self.updateGeometry()

@@ -333,6 +333,9 @@ class SuchenFeld(QWidget):
         if self.bereich is not None:
             teile.append("Aktuelle Auswahl")
         self.optionen_text.setText("Gilt jetzt: " + ", ".join(teile))
+        self._format_zeilen_neu()
+
+    def _format_zeilen_neu(self) -> None:
         for feld, label in (("suchen", self.such_format), ("ersetzen", self.ersatz_format)):
             t = _format_text(self.formate[feld])
             label.setText("Format: " + t if t else ""); label.setVisible(bool(t) and (feld == "suchen" or self.reiter.currentIndex() == 1))
@@ -348,6 +351,10 @@ class SuchenFeld(QWidget):
 
     def _bedingungen(self, a: S.Suchauftrag, f: dict) -> None:
         ed = self.get_editor()
+        self._zeichen_bedingungen(a, f, ed)
+        self._absatz_bedingungen(a, f, ed)
+
+    def _zeichen_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
         if f.get("zeichen"):
             from lunivo_writer.ui.baukasten.formatierung.text_format import aus_format
             soll = dict(f["zeichen"])
@@ -356,6 +363,8 @@ class SuchenFeld(QWidget):
         if f.get("hervor") is not None:
             an = f["hervor"]
             a.zeichen.append(lambda cf: (cf.background().style() != Qt.NoBrush) == an)
+
+    def _absatz_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
         if f.get("absatz"):
             from lunivo_writer.ui.baukasten.formatierung.absatz_dialog import aus_block
             soll_a = dict(f["absatz"])
