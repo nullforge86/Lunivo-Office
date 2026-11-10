@@ -57,5 +57,7 @@ class OberflaecheBaustein:
         alt.setParent(None); alt.deleteLater()
         self._backstage_verbinden()
         self._verbinde_felder()
-        self._bereiche_bauen()
+        # Das Registerband und die Seitenleiste sind getrennte Bereiche.
+        # Beim Band-Neubau darf setze_bereiche() den bestehenden Chat nicht ersetzen.
+        self.ki_schnell_zeigen()
         self._refresh_ui()
