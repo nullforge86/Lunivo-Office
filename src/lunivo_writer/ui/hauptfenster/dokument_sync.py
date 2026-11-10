@@ -95,6 +95,10 @@ class DokumentSyncMixin:
         if e is None:
             self.statusleiste.seite(None, None); self.statusleiste.zaehler(0, 0)
             return
-        txt = e.document().toPlainText()
         self.statusleiste.seite(e.current_page(), e.page_count)
-        self.statusleiste.zaehler(len(txt.split()), len(txt))
+        doc = e.document()
+        zw = getattr(e, "_zaehler_zw", None)             # Wörter zählen kopiert das ganze Dokument: je Revision einmal, nicht bei jeder Bewegung der Schreibmarke
+        if zw is None or zw[0] is not doc or zw[1] != doc.revision():
+            txt = doc.toPlainText()
+            zw = e._zaehler_zw = (doc, doc.revision(), len(txt.split()), len(txt))
+        self.statusleiste.zaehler(zw[2], zw[3])

@@ -383,7 +383,7 @@ class AnzeigeBaustein:
         quer = bool(getattr(self, "_qplan", None))
         start = SZ.erste_nummer(pg)
         kapitel = self._kapitel_je_blatt(pg)
-        for k in range(self._blatt_anzahl()):
+        for k in self._blatt_bereich(0, vp.height()):
             oben = self.blatt_oben(k)
             bk = self._blatt(k) if quer else {"x": 0.0, "H": g["H"], "pg": pg}
             if oben > vp.height() or oben + bk["H"] < 0:

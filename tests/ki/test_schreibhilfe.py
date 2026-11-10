@@ -1182,3 +1182,24 @@ def test_veraltete_modelllisten_antwort_nach_urlwechsel_verwerfen(app, tmp_path,
     d._geholt({"kennung": aktuelle_kennung, "namen": ["Neues Modell"]})
     assert d.modell.findText("Neues Modell") >= 0
     assert d.modell.currentText() == "bereits gewählt"
+
+
+def test_chat_verdraengt_fortlaufenden_assistenten(app, tmp_path, monkeypatch):
+    """Der Chat hat Vorrang: ein laufender fortlaufender Assistent wird abgebrochen, sein spätes Ergebnis ändert weder Zustand noch Dokument."""
+    import threading
+    w = win(tmp_path, monkeypatch)
+    ed = w.current_editor()
+    ed.setPlainText("Ein Absatz im Dokument")
+    abbruch = threading.Event()
+    eing = {"ed": ed, "dokument": ed.document(), "rev": ed.document().revision(), "text": "Ein Absatz im Dokument", "assistent": "x"}
+    w.ki._arbeit_laeuft = True
+    w.ki._dauer_lauf = (eing, abbruch, ("x", 0))
+    w.ki._dauer_zuletzt[("x", 0)] = eing["text"]
+    assert not w.ki.chat_beschaeftigt                      # die Chat-Eingabe bleibt frei
+
+    assert w.ki.dauer_verdraengen()
+
+    assert abbruch.is_set() and not w.ki.beschaeftigt and ("x", 0) not in w.ki._dauer_zuletzt
+    w.ki._arbeit_laeuft = True                             # inzwischen läuft die Chat-Anfrage
+    w.ki._fertig(("dauer", eing), {"text": "Späte Antwort"})
+    assert w.ki.beschaeftigt and ed.toPlainText() == "Ein Absatz im Dokument"

@@ -74,6 +74,11 @@ class KIAnfragenMixin:
     def beschaeftigt(self) -> bool:
         return self._arbeit_laeuft
 
+    @property
+    def chat_beschaeftigt(self) -> bool:
+        """Für die Chat-Eingabe: ein fortlaufender Assistent im Hintergrund sperrt sie nicht (``dauer_verdraengen`` räumt ihn beim Senden weg)."""
+        return self._arbeit_laeuft and getattr(self, "_dauer_lauf", None) is None
+
     def kontext_pruefen(self) -> None:
         """Von Editor-Signalen gerufen: ``kontextGeaendert`` nur, wenn sich Markierung oder Leer-Sein wirklich geändert haben."""
         jetzt = (*self.kontext()[:2], self._bezug_stand())
@@ -171,6 +176,10 @@ class KIAnfragenMixin:
 
     def _fertig(self, auftrag, r) -> None:
         danach, eing = auftrag
+        if danach == "dauer":
+            if eing.get("_verworfen"):                  # vom Chat verdrängt (``dauer_verdraengen``): der Zustand gehört schon der neuen Anfrage
+                return
+            self._dauer_lauf = None
         self._arbeit_laeuft = False
         self.laeuft.emit(False)
         if danach == "bild":
@@ -195,6 +204,7 @@ class KIAnfragenMixin:
         if danach == "chat":
             kennung = eing["anfrage"]
             angenommen = (self.chat_modell.fehler(kennung, r["fehler"]) if "fehler" in r else self.chat_modell.antwort(kennung, r["text"], r.get("cent")))
+            self._dauer_nach_vorrang()
             if not angenommen:                                      # nach „Neues Gespräch“/Abbruch: veraltete Antwort verwerfen
                 return
             self.chatGeaendert.emit()

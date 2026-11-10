@@ -139,8 +139,35 @@ class KIDauerbetriebMixin:
         eing.update(assistent=a["id"], _titel=a["name"])
         self._drossel.gesendet()
         nur = a["modus"] == "kommentar"
-        self.starte(f"„{a['name']}“ …", lambda t, a=a, nur=nur: self.ki.eigener_assistent(t, a["prompt"], a["kommentar"] and not nur, a.get("modell", ""), nur),
+        abbruch = threading.Event()                       # der Chat hat Vorrang: ``dauer_verdraengen`` schließt damit die Verbindung
+        optionen = {"_strom": lambda _t: None, "_abbruch": abbruch}
+        self.starte(f"„{a['name']}“ …", lambda t, a=a, nur=nur: self.ki.eigener_assistent(t, a["prompt"], a["kommentar"] and not nur, a.get("modell", ""), nur, optionen),
                     "dauer", eing, modell=modell)
+        if self._arbeit_laeuft:
+            self._dauer_lauf = (eing, abbruch, schluessel)
+
+    def dauer_verdraengen(self) -> bool:
+        """Interaktive Anfragen (Chat) haben Vorrang: einen laufenden fortlaufenden Assistenten abbrechen und sein Ergebnis verwerfen.
+        → True, wenn danach nichts mehr läuft. Der Absatz kommt nach der interaktiven Anfrage wieder dran."""
+        lauf = getattr(self, "_dauer_lauf", None)
+        if lauf is None:
+            return not self._arbeit_laeuft
+        eing, abbruch, schluessel = lauf
+        self._dauer_lauf = None
+        eing["_verworfen"] = True
+        abbruch.set()
+        self._dauer_zuletzt.pop(schluessel, None)         # nicht als gesendet merken: der Absatz wird später erneut geprüft
+        self._dauer_nachholen = True
+        self._arbeit_laeuft = False
+        self.laeuft.emit(False)
+        return True
+
+    def _dauer_nach_vorrang(self) -> None:
+        """Nach der interaktiven Anfrage: den verdrängten Assistenten wieder einplanen."""
+        if getattr(self, "_dauer_nachholen", False) and not self._arbeit_laeuft:
+            self._dauer_nachholen = False
+            if self.dauerbetrieb():
+                self._dauer_timer.start(int(AL.MINDESTABSTAND * 1000))
 
     def _dauer_los(self) -> None:
         """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""

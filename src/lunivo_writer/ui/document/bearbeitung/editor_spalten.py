@@ -230,6 +230,18 @@ class SpaltenBaustein:
         return ""
 
 
+    def _blatt_bereich(self, y0: float, y1: float) -> range:
+        """Blätter, die den senkrechten Bereich y0…y1 (Editorkoordinaten) berühren können, mit je einem Blatt Rand — damit das Zeichnen
+        nicht bei jedem Vorgang alle Blätter des Dokuments durchläuft. Die genaue Prüfung (Schnitt mit der Sichtfläche) bleibt beim Aufrufer."""
+        n = self._blatt_anzahl()
+        von = max(0, self._blatt_bei_y(y0) - 1)
+        bis = self._blatt_bei_y(y1) + 2
+        plan = getattr(self, "_qplan", None)
+        if plan and bis >= len(plan):                  # hinter dem Plan liegende Blätter (z. B. Noten-Seiten) kennt ``_blatt_bei_y`` nicht
+            bis = n
+        return range(min(von, n), min(max(bis, 0), n))
+
+
     def _arbeitsflaeche(self) -> QColor:
         """Grauer Arbeitsbereich zwischen und um die Blätter (gleich dem Grund hinter dem Editor)."""
         return self.palette().color(QPalette.Dark)
@@ -238,7 +250,7 @@ class SpaltenBaustein:
     def _blaetter_zeichnen(self, p, g, sicht, papier, quer) -> None:
         """Blätter mit Schatten und Papier; die Grafik eines Deckblatts liegt hinter dem Text."""
         vp = self.viewport()
-        for k in range(self._blatt_anzahl()):
+        for k in self._blatt_bereich(sicht.top(), sicht.bottom()):
             if quer:
                 bk = self._blatt(k)
                 blatt = QRectF(bk["x"], self.blatt_oben(k), bk["W"], bk["H"])
@@ -261,7 +273,7 @@ class SpaltenBaustein:
         if self.page.border and not self.page.border.get("vordergrund", True):      # Seitenrahmen hinter dem Text
             from lunivo_writer.editor.seite.pagination import seitenschmuck
             z = self.zoom
-            for k in range(self._blatt_anzahl()):
+            for k in self._blatt_bereich(sicht.top(), sicht.bottom()):
                 a = self.blatt_oben(k)
                 bk = self._blatt(k) if quer else {"x": 0.0, "W": vp.width(), "H": g["H"], "pg": self.page}
                 if QRectF(bk["x"], a, bk["W"], bk["H"]).intersects(sicht):
@@ -296,7 +308,9 @@ class SpaltenBaustein:
         """Jede Seite des Textflusses in ihre Spalte auf ihrem Blatt."""
         doc = self.document()
         lay = doc.documentLayout()
-        for lp in range(max(1, doc.pageCount())):
+        blaetter = self._blatt_bereich(sicht.top(), sicht.bottom())
+        n = 1 if quer else g["n"]                                            # logische Seiten (Spalten) je Blatt
+        for lp in range(blaetter.start * n, min(blaetter.stop * n, max(1, doc.pageCount()))):
             x0, y0 = self._sp_ursprung(lp)
             hoehe = self._blatt(lp)["ch"] + 1 if quer else g["ch"]
             feld = QRectF(x0 - 6, y0, g["cb"] + 12, hoehe)
@@ -514,6 +528,18 @@ class SpaltenBaustein:
             return self._effekt_cache
         self._effekt_cache = self._effekt_in(None, None)
         return self._effekt_cache
+
+
+    def _hat_blockzusatz(self) -> bool:
+        """Rahmen, Mehrstufiges oder Tabfüllung an irgendeinem Absatz — ein Durchgang statt dreier (``_hat_rahmen``/``_hat_mehrstufig``/``_hat_tabfuell``)."""
+        from lunivo_writer.editor.dokument.zusatz import B_MEHRSTUFIG, B_RAHMEN, B_TABFUELL
+        b = self.document().firstBlock()
+        while b.isValid():
+            bf = b.blockFormat()
+            if bf.hasProperty(B_RAHMEN) or bf.hasProperty(B_MEHRSTUFIG) or bf.hasProperty(B_TABFUELL):
+                return True
+            b = b.next()
+        return False
 
 
     def _hat_tabfuell(self) -> bool:

@@ -91,7 +91,7 @@ class ChatPanel(QWidget):
         self.scroll.setVisible(phase != "leer")
         self.neu_knopf.setVisible(phase != "leer")
         self.verlauf_knopf.setEnabled(True)
-        self.eingabe.zustand_setzen(verbunden, self.d.beschaeftigt)
+        self.eingabe.zustand_setzen(verbunden, self.d.chat_beschaeftigt)
 
     def anzeige(self) -> None:
         """Nachrichten aus ``dienst.chat_modell`` neu aufbauen."""

@@ -232,11 +232,11 @@ class KI:
         return {"text": r["ergebnis"], "cent": r.get("cent"), "methode": "KI"}
     def zusammenfassen(self, text): return self._text(ANWEISUNG_ZUSAMMENFASSUNG, text, "zusammenfassen")
     def text_analyse(self, text): return self._text(ANWEISUNG_ANALYSE, text, "textanalyse")
-    def eigener_assistent(self, text, prompt, kommentar: bool = False, modell: str = "", nur_kommentar: bool = False):
+    def eigener_assistent(self, text, prompt, kommentar: bool = False, modell: str = "", nur_kommentar: bool = False, optionen: dict | None = None):
         """``kommentar``: die KI begründet ihre Änderung nach ``KOMMENTAR_ZUSATZ``; ``nur_kommentar``: sie antwortet nur mit einem Kommentar;
-        ``modell``: Modell des Assistenten (leer = Standard)."""
+        ``modell``: Modell des Assistenten (leer = Standard); ``optionen``: z. B. ``_strom``/``_abbruch`` (abbrechbare Hintergrundanfrage)."""
         prompt = prompt + (KOMMENTAR_NUR if nur_kommentar else KOMMENTAR_ZUSATZ if kommentar else "")
-        r = self.anfrage(prompt, text, None, modell or self.modell(None))
+        r = self.anfrage(prompt, text, None, modell or self.modell(None), optionen)
         if "fehler" in r:
             return r
         self._kosten(r.get("cent"))

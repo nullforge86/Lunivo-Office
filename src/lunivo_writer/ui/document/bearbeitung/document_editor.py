@@ -490,7 +490,13 @@ class DocumentEditor(AnzeigeBaustein, SpaltenBaustein, SeitenBaustein, Formatier
             self._zeilenfokus_zeichnen(p, vp)
 
     def _hat_absatzzusatz(self) -> bool:
-        return self._hat_rahmen() or self._hat_mehrstufig() or self._hat_tabfuell() or self._hat_effekt()
+        """Rahmen, Mehrstufiges oder Tabfüllung an irgendeinem Absatz (je Dokumentrevision nur einmal gesucht, nicht bei jedem Zeichnen) oder ein Texteffekt."""
+        doc = self.document()
+        schl = (id(doc), doc.revision())
+        if getattr(self, "_absatzzusatz_schl", None) != schl:
+            self._absatzzusatz_schl = schl
+            self._absatzzusatz_hat = self._hat_blockzusatz()
+        return self._absatzzusatz_hat or self._hat_effekt()
 
     def _absatzzusatz_zeichnen(self, p: QPainter, sp) -> None:
         """Rahmen, Mehrstufiges, Tabfüllung und Effekte der Absätze (je Blatt oder fortlaufend)."""

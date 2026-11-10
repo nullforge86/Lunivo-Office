@@ -21,7 +21,7 @@ class KIChatMixin:
     def chat_senden(self, text: str, bild: str | None = None) -> bool:
         """Neue Nutzernachricht in ``chat_modell`` aufnehmen und senden. False, wenn nichts gesendet wurde (leer, beschäftigt, keine Zustimmung).
         ``bild``: Pfad eines Anhangs; er wird vorher geprüft (Format, Größe), bei einem Fehler kommt die Meldung über ``status`` und nichts geht raus."""
-        if (not text.strip() and not bild) or self._arbeit_laeuft:
+        if (not text.strip() and not bild) or not self.dauer_verdraengen():      # der Chat hat Vorrang vor fortlaufenden Assistenten
             return False
         bilder = None
         if bild:
@@ -96,7 +96,7 @@ class KIChatMixin:
 
     def chat_wiederholen(self) -> bool:
         """Die letzte Nutzernachricht erneut senden; die davorliegende Antwort/der Fehler fällt weg."""
-        if self._arbeit_laeuft:
+        if not self.dauer_verdraengen():
             return False
         text = self.chat_modell.wiederholen()
         self.chatGeaendert.emit()

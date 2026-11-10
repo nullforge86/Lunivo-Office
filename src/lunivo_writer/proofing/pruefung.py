@@ -499,13 +499,21 @@ def _klang_ausgeschlossen(text, m, gelernt, schalter):
     return not lade_woerter() or w in lade_woerter()
 
 
+def _am_satzanfang(text, stelle):
+    """Steht davor nur Leerraum oder ein Satzzeichen (. ! ? :) mit Leerraum? Schaut nur rückwärts bis zum ersten Zeichen, das kein Leerraum
+    ist — nicht über den ganzen Text davor (das machte die Prüfung langer Dokumente quadratisch langsam)."""
+    j = stelle
+    while j > 0 and text[j - 1].isspace():
+        j -= 1
+    return j == 0 or (j < stelle and text[j - 1] in '.!?:')
+
+
 def _klang_fund_wort(text, m, gelernt, schalter):
     """Die Verbesserung für das Wort, falls der Klang-Prüfer sicher genug ist, sonst None."""
     wort = m.group(0)
     if _klang_ausgeschlossen(text, m, gelernt, schalter):
         return None
-    davor = text[:m.start()]
-    satz_anfang = davor.strip() == '' or bool(re.search(r'[.!?:]\s+$', davor))
+    satz_anfang = _am_satzanfang(text, m.start())
     if GROSS_ANFANG.match(wort) and not satz_anfang:
         return None                                   # Name, Fachwort oder Hauptwort: nicht raten
     if trenne_zusammen(wort):
@@ -562,6 +570,10 @@ def _tippfehler_treffer(w, woerter):
     return treffer
 
 
+_TIPP_ZW = [None, {}]                # [Wörterliste, {wort: Vorschlag}] — dasselbe unbekannte Wort kommt in langen Texten oft wieder
+_TIPP_ZW_GRENZE = 20000
+
+
 def tippfehler_vorschlag(wort):
     woerter = lade_woerter()
     if not woerter:
@@ -569,6 +581,15 @@ def tippfehler_vorschlag(wort):
     w = wort.lower()
     if len(w) < 4 or len(w) > 20 or w in woerter:
         return None
+    if _TIPP_ZW[0] is not woerter or len(_TIPP_ZW[1]) > _TIPP_ZW_GRENZE:
+        _TIPP_ZW[0], _TIPP_ZW[1] = woerter, {}
+    zw = _TIPP_ZW[1]
+    if w not in zw:
+        zw[w] = _tippfehler_berechnen(w, woerter)
+    return zw[w]
+
+
+def _tippfehler_berechnen(w, woerter):
     treffer = _tippfehler_treffer(w, woerter)
     if not treffer:
         return None
