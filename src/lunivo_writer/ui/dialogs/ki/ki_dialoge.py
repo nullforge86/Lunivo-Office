@@ -373,6 +373,8 @@ class WebsuchePanel(QWidget):
 
 
 class DokumentePanel(QWidget):
+    werkzeug_eingetragen = Signal()                  # die Dokumentensuche steht jetzt in der Liste „KI-Werkzeuge“
+
     """Lokale Dokumentensuche für den KI-Chat: freigegebene Ordner, Zahl der Abschnitte, Index aufbauen. Der Text bleibt auf dem Rechner, solange das
     Chat-Modell lokal ist; bei einem Online-Modell fragt der Chat vorher nach der Zustimmung für Auszüge."""
 
@@ -404,8 +406,11 @@ class DokumentePanel(QWidget):
         f.zeile("Abschnitte je Frage", self.anzahl)
         v.addLayout(f)
         self.los = QPushButton("Jetzt indexieren"); self.los.clicked.connect(self._indexieren)
+        self.werkzeug = QPushButton("Als KI-Werkzeug eintragen"); self.werkzeug.clicked.connect(self._werkzeug_eintragen)
+        self.werkzeug.setToolTip("Macht die Suche als MCP-Server für den KI-Chat verfügbar (Ollama und eigene Anbieter). Jeder Aufruf wird einzeln abgefragt.")
         self.stand = QLabel(""); self.stand.setWordWrap(True)
-        v.addWidget(self.los, 0, Qt.AlignLeft); v.addWidget(self.stand); v.addStretch(1)
+        fl = FlussLayout(); fl.addWidget(self.los); fl.addWidget(self.werkzeug); v.addLayout(fl)
+        v.addWidget(self.stand); v.addStretch(1)
         self._sender = _NetzSender(); self._sender.fertig.connect(self._fertig)
         self._pool = QThreadPool(self)
         self._stand_zeigen()
@@ -444,6 +449,15 @@ class DokumentePanel(QWidget):
         self._stand_zeigen()
         self.stand.setText(self.stand.text() + f" Neu: {b['neu']}, geändert: {b['geaendert']}, entfernt: {b['entfernt']}"
                            + (f", nicht lesbar: {b['fehler']}" if b["fehler"] else "") + ".")
+
+    def _werkzeug_eintragen(self) -> None:
+        self.uebernehmen()
+        if not self.ordner():
+            self.stand.setText("Zuerst mindestens einen Ordner freigeben.")
+            return
+        self.k.suchdienst_eintragen()
+        self.werkzeug_eingetragen.emit()
+        self.stand.setText("Eingetragen unter „KI-Werkzeuge“. Nach Änderungen der Ordner bitte erneut auf den Knopf drücken.")
 
     def uebernehmen(self) -> None:
         self.k.dokumentsuche_setzen(an=self.an.isChecked(), ordner=self.ordner(), anzahl=self.anzahl.value())
@@ -507,6 +521,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         av.addWidget(self.assistenten); av.addStretch(1)
         self.stapel.addWidget(seite)
         self.dokumente = DokumentePanel(self.k)
+        self.dokumente.werkzeug_eingetragen.connect(self.mcp.fuellen)
         self.stapel.addWidget(self.dokumente)
         v.addWidget(knopfzeile(self, bei_ok=self._ok))
         self.reiter.currentChanged.connect(self.stapel.setCurrentIndex)

@@ -139,7 +139,7 @@ def unter_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, fx: dict
         alpha0 = max(0.0, min(1.0, 1 - refl.get("transparenz", 50) / 100))
 
         def bauen_r():
-            m = _maske(bild, (w, h), ellipse).mirrored(False, True).copy(0, 0, w, hoehe)     # gespiegelt, nur der obere Streifen
+            m = _maske(bild, (w, h), ellipse).flipped(Qt.Vertical).copy(0, 0, w, hoehe)     # gespiegelt, nur der obere Streifen
             out = QImage(w, hoehe, QImage.Format_ARGB32_Premultiplied); out.fill(Qt.transparent)
             q = QPainter(out); q.drawImage(0, 0, m)
             q.setCompositionMode(QPainter.CompositionMode_DestinationIn)

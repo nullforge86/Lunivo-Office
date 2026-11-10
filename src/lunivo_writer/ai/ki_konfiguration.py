@@ -262,6 +262,20 @@ class KIKonfig:
         self.speichern()
         return e
 
+    SUCHDIENST_NAME = "Lunivo Dokumentensuche"
+
+    def suchdienst_eintragen(self) -> dict:
+        """Die Dokumentensuche als KI-Werkzeug (MCP-Server ``ai/suchdienst.py``) eintragen oder aktualisieren — mit den jetzt freigegebenen Ordnern.
+        Der Server bekommt nur diese Ordner und den Index; jeder Aufruf wird im Chat weiterhin einzeln abgefragt."""
+        import shlex
+        import sys
+        from lunivo_writer.ai import suchdienst
+        ordner = self.dokumentsuche_optionen()["ordner"]
+        befehl = shlex.join([sys.executable, os.path.abspath(suchdienst.__file__), "--index", self.dokumentindex_pfad(),
+                             *[a for o in ordner for a in ("--ordner", o)]])
+        alt = next((m for m in self.d["mcp"] if m.get("name") == self.SUCHDIENST_NAME), None)
+        return self.mcp_speichern(alt["id"] if alt else None, self.SUCHDIENST_NAME, befehl, True)
+
     def mcp_entfernen(self, id_: str) -> None:
         self.d["mcp"] = [m for m in self.d["mcp"] if m["id"] != id_]
         self.speichern()
