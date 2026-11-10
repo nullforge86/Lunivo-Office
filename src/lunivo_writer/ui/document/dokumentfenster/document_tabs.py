@@ -36,6 +36,7 @@ class DocTabs(QObject):
         plus.setIcon(icons.icon("plus", ICON_NORMAL, kopf_symbolfarbe()))
         plus.setAutoRaise(True)
         plus.setToolTip("Neues Dokument (Strg+N)")
+        plus.setAccessibleName("Neues Dokument")
         plus.clicked.connect(self.newRequested)
         h.addWidget(plus)
         h.addStretch(1)
