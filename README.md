@@ -84,6 +84,7 @@ Im Programm: **☰ Menü → Hilfe → Handbuch**.
 - [Installation](docs/INSTALLATION.md)
 - [Lesen und Schreiben](docs/lesen-und-schreiben.md)
 - [Prüfung, Vorhersage und KI](docs/pruefung-und-ki.md)
+- [KI-Handbuch: Funktionen, Bedienung und Einstellungen](docs/HANDBUCH-KI.md)
 - [Schreiben und Dokumente](docs/schreiben-und-dokumente.md)
 - [Einstellungen](docs/einstellungen.md)
 - [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
