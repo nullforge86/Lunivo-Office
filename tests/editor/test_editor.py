@@ -1,0 +1,287 @@
+import docx
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QFont, QTextCursor
+
+from lunivo_writer.dienste import datei_dienst as formats
+from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+from lunivo_writer.modelle.seite import PageSettings
+
+
+def make(app, text="Hallo Welt\nZweite Zeile"):
+    e = DocumentEditor(); e.setPlainText(text); return e
+
+
+def select_all(e):
+    c = e.textCursor(); c.select(QTextCursor.Document); e.setTextCursor(c)
+
+
+def test_format_commands_land_in_docx(app, tmp_path):
+    e = make(app)
+    select_all(e)
+    e.toggle_bold(True); e.set_font_size(16); e.set_font_family("DejaVu Sans")
+    e.set_text_color(QColor("#ff0000")); e.set_alignment(Qt.AlignHCenter); e.set_line_spacing(1.5)
+    e.change_indent(10)
+    out = str(tmp_path / "f.docx")
+    formats.save(out, e.document(), e.page)
+    d = docx.Document(out)
+    p = d.paragraphs[0]
+    assert p.alignment == 1
+    assert p.runs[0].bold and p.runs[0].font.size.pt == 16 and p.runs[0].font.name == "DejaVu Sans"
+    assert str(p.runs[0].font.color.rgb) == "FF0000"
+    assert abs(p.paragraph_format.left_indent.mm - 10) < 0.5
+    assert abs(p.paragraph_format.line_spacing - 1.5) < 0.01
+
+
+def test_styles_and_lists(app, tmp_path):
+    e = make(app, "Kopf\nA\nB")
+    c = e.textCursor(); c.setPosition(0); e.setTextCursor(c)
+    e.apply_style("Überschrift 2")
+    assert e.current_style() == "Überschrift 2"
+    c = e.textCursor(); c.movePosition(QTextCursor.NextBlock); c.movePosition(QTextCursor.NextBlock, QTextCursor.KeepAnchor); e.setTextCursor(c)
+    e.toggle_list("bullet")
+    out = str(tmp_path / "s.docx"); formats.save(out, e.document(), e.page)
+    d = docx.Document(out)
+    assert [p.style.name for p in d.paragraphs] == ["Heading 2", "List Bullet", "List Bullet"]
+
+
+def test_find_replace_all(app):
+    e = make(app, "foo Foo bar foo")
+    assert e.replace_all("foo", "X") == 3 and e.toPlainText() == "X X bar X"
+    e.undo()
+    assert e.toPlainText() == "foo Foo bar foo"          # ein Schritt rückgängig
+    assert e.replace_all("foo", "X", case=True) == 2
+
+
+def test_find_wraps(app):
+    e = make(app, "abc abc")
+    assert e.find_text("abc") and e.find_text("abc") and e.find_text("abc")
+
+
+def test_page_count_and_margin_change(app):
+    e = make(app, "\n".join(f"Zeile {i}" for i in range(120)))
+    e._recount()
+    n = e.page_count
+    assert n >= 2
+    pg = e.page.copy(); pg.margin_left_mm = pg.margin_right_mm = 60
+    e.page_settings_changed(pg); e._recount()
+    assert e.page_count >= n and e.document().isModified()
+
+
+def test_table_image_pagebreak_roundtrip(app, tmp_path):
+    from PySide6.QtGui import QImage
+    img = QImage(100, 50, QImage.Format_RGB32); img.fill(QColor("blue")); ip = str(tmp_path / "i.png"); img.save(ip)
+    e = make(app, "Vor")
+    e.moveCursor(QTextCursor.End)
+    e.insert_table(2, 3); e.moveCursor(QTextCursor.End)
+    assert e.insert_image(ip)
+    e.insert_page_break(); e.insertPlainText("Nach")
+    out = str(tmp_path / "t.docx"); formats.save(out, e.document(), e.page)
+    d = docx.Document(out)
+    assert len(d.tables) == 1 and len(d.tables[0].rows) == 2 and len(d.tables[0].columns) == 3
+    assert len(d.element.body.xpath(".//pic:pic")) == 1                  # das Bild ist ein freies Bild (verankert)
+    assert any(p.paragraph_format.page_break_before for p in d.paragraphs)
+    # und wieder einlesen
+    l = formats.load(out)
+    assert "Nach" in l.doc.toPlainText()
+
+
+def test_seitenwechsel_werden_gefunden(app):
+    e = make(app, "\n".join(f"Zeile {i}" for i in range(150)))
+    e._recount()
+    b = e.seitenwechsel
+    assert len(b) == e.page_count - 1 >= 2
+    assert b == sorted(b) and all(0 < x < e.document().characterCount() for x in b)
+    # Seitenumbruch erzwingt einen Wechsel
+    e2 = make(app, "A"); e2.moveCursor(QTextCursor.End); e2.insert_page_break(); e2.insertPlainText("B"); e2._recount()
+    assert len(e2.seitenwechsel) == 1
+
+
+def _tippe(e, text):
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtCore import QEvent
+    for ch in text:
+        e.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Space if ch == " " else 0, Qt.NoModifier, ch))
+
+
+def test_autoformat_liste_und_url(app):
+    e = make(app, "")
+    e.opt = lambda n, std=True: True
+    _tippe(e, "1. ")
+    assert e.textCursor().currentList() is not None
+    e2 = make(app, "")
+    e2.opt = lambda n, std=True: True
+    _tippe(e2, "- ")
+    assert e2.textCursor().currentList() is not None
+
+
+def test_seitenliste_duplex_umgekehrt():
+    from lunivo_writer.editor.seite.seiten_aufteilung import seiten_liste
+    assert seiten_liste(5, 1, 5, {"duplex": "vorder"}) == [1, 3, 5]
+    assert seiten_liste(5, 1, 5, {"duplex": "rueck"}) == [2, 4]
+    assert seiten_liste(3, 1, 3, {"umgekehrt": True}) == [3, 2, 1]
+
+
+def test_design_und_absatzabstand(app):
+    from lunivo_writer.kern.befehlsliste import Befehle
+    e = make(app, "Titel\nText")
+    c = e.textCursor(); c.setPosition(0); e.setTextCursor(c)
+    e.apply_style("Überschrift 1")
+    e.apply_design("Liberation Serif", "DejaVu Sans", "#2f6fb5")
+    k = e.document().firstBlock().begin().fragment().charFormat()
+    assert "DejaVu Sans" in k.fontFamilies() and k.foreground().color().name() == "#2f6fb5"
+    t = e.document().firstBlock().next().begin().fragment().charFormat()
+    assert "Liberation Serif" in t.fontFamilies() and t.foreground().color().name() != "#2f6fb5"
+    e.select_range(0, e.document().characterCount() - 1)
+    e.set_paragraph_spacing(6, 12)
+    bf = e.document().firstBlock().next().blockFormat()
+    assert abs(bf.bottomMargin() - 16) < 0.1
+
+
+def test_zeilennummern_im_pdf(app, tmp_path):
+    import pypdf
+    from PySide6.QtGui import QTextDocument
+    from lunivo_writer.modelle.seite import PageSettings
+    from lunivo_writer.editor.seite.seiten_aufteilung import export_pdf
+    d = QTextDocument(); d.setPlainText("\n".join(f"Zeile{i}" for i in range(1, 8)))
+    out = str(tmp_path / "n.pdf")
+    export_pdf(out, d, PageSettings(zeilennummern=True), "t")
+    txt = pypdf.PdfReader(out).pages[0].extract_text()
+    assert all(str(i) in txt for i in range(1, 8))
+    out2 = str(tmp_path / "m.pdf")
+    export_pdf(out2, d, PageSettings(), "t")
+    assert pypdf.PdfReader(out2).pages[0].extract_text().count("7") <= pypdf.PdfReader(out).pages[0].extract_text().count("7")
+
+
+def test_formatvorlagen_verwalten_wirkt_auf_alle_absaetze(app):
+    from lunivo_writer.editor.text import stile
+    e = make(app, "Eins\nZwei\nDrei\nVier")
+    select_all(e)
+    e.apply_style("Überschrift 2")                           # mehrere Absätze auf einmal
+    assert all(b.blockFormat().headingLevel() == 2 for b in _blk(e.document()))
+    c = e.textCursor(); c.setPosition(0); e.setTextCursor(c); e.apply_style("Standard")
+    try:
+        stile.aendern("Überschrift 2", groesse=30, farbe="#336699", fett=False, nach=20)
+        n = e.stil_neu_anwenden("Überschrift 2")
+        assert n == 3
+        b = e.document().findBlockByNumber(1)
+        cf = QTextCursor(b).charFormat()
+        c2 = QTextCursor(b); c2.movePosition(QTextCursor.EndOfBlock)
+        assert c2.charFormat().fontPointSize() == 30 and c2.charFormat().foreground().color().name() == "#336699"
+        assert abs(b.blockFormat().bottomMargin() - 20 / 0.75) < 0.01
+        assert e.document().findBlockByNumber(0).blockFormat().headingLevel() == 0          # „Standard“ unberührt
+        assert "Überschrift 2" in stile.als_json()
+        stile.laden(stile.als_json())
+        assert stile.definition("Überschrift 2")["groesse"] == 30
+    finally:
+        stile.zuruecksetzen()
+    assert stile.definition("Überschrift 2")["groesse"] == 16
+    # „Kein Abstand“ ist eine eigene Vorlage und überlebt DOCX („No Spacing“)
+    e2 = make(app, "Text"); e2.apply_style("Kein Abstand")
+    assert e2.current_style() == "Kein Abstand"
+
+
+def _blk(doc):
+    b = doc.firstBlock()
+    while b.isValid():
+        yield b
+        b = b.next()
+
+
+def test_wortweise_markieren(app):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtGui import QTextCursor
+    from PySide6.QtTest import QTest
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Das Wetter heute ist schön")
+    c = ed.textCursor(); c.setPosition(6); c.setPosition(9, QTextCursor.KeepAnchor); ed.setTextCursor(c)   # „tte“ mitten im Wort
+    ed._wortweise()
+    assert ed.textCursor().selectedText().strip() == "Wetter"
+
+
+def test_einfuegen_modi_und_schaltflaeche(app):
+    from PySide6.QtCore import QMimeData
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Vorher: ")
+    c = ed.textCursor(); c.movePosition(QTextCursor.End); ed.setTextCursor(c)
+    mime = QMimeData()
+    mime.setHtml('<p><b style="font-size:30pt;color:#ff0000;font-family:Courier">Fett</b> und normal</p>')
+    mime.setText("Fett und normal")
+
+    def zeichen_format(nr):
+        c = QTextCursor(ed.document()); c.setPosition(nr + 1)
+        return c.charFormat()
+    ed.insertFromMimeData(mime)                                                   # Quellformatierung: fett, rot, groß
+    f = zeichen_format(len("Vorher: "))
+    assert ed.toPlainText() == "Vorher: Fett und normal" and f.fontWeight() >= 600 and f.foreground().color().name() == "#ff0000"
+    assert ed._paste_btn.isHidden() is False
+    ed._einfuegen_neu(mime, len("Vorher: "), "Zielformatierung verwenden")           # fett bleibt, Farbe/Größe/Schrift vom Ziel
+    f = zeichen_format(len("Vorher: "))
+    assert ed.toPlainText() == "Vorher: Fett und normal" and f.fontWeight() >= 600 and f.foreground().style() == Qt.NoBrush
+    ed._einfuegen_neu(mime, len("Vorher: "), "Nur Text")
+    f = zeichen_format(len("Vorher: "))
+    assert ed.toPlainText() == "Vorher: Fett und normal" and f.fontWeight() < 600
+    ed.setPlainText("Vorher: ")                                                    # Standard aus den Optionen: „Nur Text“
+    ed.opt_text = lambda n, s="": "Nur Text"
+    c = ed.textCursor(); c.movePosition(QTextCursor.End); ed.setTextCursor(c)
+    ed.insertFromMimeData(mime)
+    assert zeichen_format(len("Vorher: ")).fontWeight() < 600
+    ed.document().undo()                                                           # ein einziger Rückgängig-Schritt
+    assert ed.toPlainText() == "Vorher: "
+
+
+def test_ersetzen_behaelt_die_formatierung(app):
+    """Suchen und ersetzen: der neue Text hat Schrift, Fett und Kursiv des ersetzten Textes (einzeln und „Alle ersetzen“)."""
+    from PySide6.QtGui import QFont, QTextCharFormat, QTextCursor
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Bewerbung als Änderungsschneider und Änderungsschneider")
+    c = QTextCursor(ed.document()); c.setPosition(14); c.setPosition(32, QTextCursor.KeepAnchor)
+    f = QTextCharFormat(); f.setFontWeight(QFont.Bold); f.setFontItalic(True); f.setFontFamilies(["Liberation Serif"]); c.mergeCharFormat(f)
+    ed.select_range(14, 32)
+    assert ed.replace_current("Änderungsschneider", "Maßschneider")
+    c2 = QTextCursor(ed.document()); c2.setPosition(16); c2.setPosition(17, QTextCursor.KeepAnchor)
+    cf = c2.charFormat()
+    assert ed.toPlainText().startswith("Bewerbung als Maßschneider") and cf.fontWeight() >= 600 and cf.fontItalic() and cf.fontFamilies() == ["Liberation Serif"]
+    ed.replace_all("Änderungsschneider", "Kürschner")
+    c3 = QTextCursor(ed.document()); c3.setPosition(ed.toPlainText().index("Kürschner") + 2); c3.setPosition(c3.position() + 1, QTextCursor.KeepAnchor)
+    assert ed.toPlainText().endswith("Kürschner") and c3.charFormat().fontWeight() < 600          # das zweite war nicht fett und bleibt es nicht
+
+
+def test_zelle_teilen_laesst_das_uebrige_gitter_stehen(app):
+    from PySide6.QtGui import QTextCursor, QTextDocument
+    from lunivo_writer.editor.tabelle.tabelleneigenschaften import zelle_teilen
+
+    def tabelle():
+        d = QTextDocument(); t = QTextCursor(d).insertTable(3, 3)
+        for r in range(3):
+            for s in range(3):
+                t.cellAt(r, s).firstCursorPosition().insertText(f"{r}{s}")
+        return d, t
+    d, t = tabelle()                                                     # unverbundene Zelle in 2 Spalten und 2 Zeilen
+    assert zelle_teilen(t, t.cellAt(1, 1).firstCursorPosition(), 2, 2)
+    assert (t.rows(), t.columns()) == (4, 4)
+    assert t.cellAt(0, 1).columnSpan() == 2 and t.cellAt(3, 1).columnSpan() == 2      # die Nachbarn der Spalte reichen über die neue hinweg
+    assert t.cellAt(1, 0).rowSpan() == 2 and t.cellAt(1, 3).rowSpan() == 2            # die Nachbarn der Zeile ebenso
+    assert [t.cellAt(r, s).rowSpan() * t.cellAt(r, s).columnSpan() for r in (1, 2) for s in (1, 2)] == [1, 1, 1, 1]
+    assert [w for w in d.toPlainText().split("\n") if w] == ["00", "01", "02", "10", "11", "12", "20", "21", "22"]
+    d.undo()
+    assert (t.rows(), t.columns()) == (3, 3)                             # ein Rückgängig-Schritt
+    d, t = tabelle()                                                     # verbundene Zelle: nur innerhalb ihrer Spannweite
+    t.mergeCells(0, 0, 2, 2)
+    assert zelle_teilen(t, t.cellAt(0, 0).firstCursorPosition(), 3, 3) and (t.rows(), t.columns()) == (3, 3)
+    assert t.cellAt(0, 0).rowSpan() == 1 and t.cellAt(0, 0).columnSpan() == 1
+    d, t = tabelle()                                                     # 2 x 2 verbunden, in zwei Spalten: zwei Zellen über beide Zeilen
+    t.mergeCells(0, 0, 2, 2)
+    assert zelle_teilen(t, t.cellAt(0, 0).firstCursorPosition(), 2, 1)
+    assert [(t.cellAt(0, s).rowSpan(), t.cellAt(0, s).columnSpan()) for s in (0, 1)] == [(2, 1), (2, 1)]
+    assert t.cellAt(1, 1).row() == 0 and t.cellAt(1, 1).column() == 1
+    assert not zelle_teilen(t, t.cellAt(2, 2).firstCursorPosition(), 1, 1)
+    d, t = tabelle()                                                     # verbundene Nachbarn, die in der Zeile oder Spalte enden, wachsen mit
+    t.mergeCells(0, 0, 2, 1); t.mergeCells(2, 1, 1, 2)
+    assert zelle_teilen(t, t.cellAt(1, 1).firstCursorPosition(), 2, 2) and (t.rows(), t.columns()) == (4, 4)
+    assert (t.cellAt(0, 0).rowSpan(), t.cellAt(2, 0).row()) == (3, 0)                 # reichte von oben bis in die geteilte Zeile
+    assert (t.cellAt(3, 1).columnSpan(), t.cellAt(3, 3).column()) == (3, 1)           # reichte bis in die geteilte Spalte (jetzt Zeile 3)
+    zellen = {(t.cellAt(r, s).row(), t.cellAt(r, s).column()) for r in range(4) for s in range(4)}
+    assert len(zellen) == 10                                             # vorher 7 Zellen, die geteilte zerfällt in 4: keine überzählige Einzelzelle

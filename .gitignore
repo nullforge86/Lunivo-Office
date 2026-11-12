@@ -1,0 +1,17 @@
+.claude/worktrees/
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Werkzeug-Reste: Abdeckungsmessung, Editor-Einstellungen, Installationsdaten
+.coverage
+.vscode/
+*.egg-info/
+
+# Ergebnis von werkzeuge/erstellung/deb-bauen.sh (Paket, Zwischenstände, Sprachmodelle)
+/erstellung/
+
+# Ausgaben von Analysewerkzeugen (radon, ruff, vulture)
+/analyse/

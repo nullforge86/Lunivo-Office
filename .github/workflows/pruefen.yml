@@ -1,0 +1,53 @@
+# Was bei jedem Push geprüft wird: die Tests der nativen Qt-Fassung (ohne Bildschirm, offscreen).
+# Ubuntu führt alle Tests aus. Windows und macOS prüfen vorerst die plattformnahen Bereiche (Pfade, Sperre, Speichern,
+# Dateiformate, Schreibhilfe, Importgrenzen, Speicherkonflikte, DOCX-Korpus) und blockieren das Ergebnis noch nicht (continue-on-error), bis ihre
+# Läufe stabil sind. Windows und macOS gelten erst als offiziell unterstützt, wenn diese Läufe grün sind und continue-on-error entfällt (dokumentation/entwicklung/plattformen.md).
+name: Prüfen
+
+on: [push, pull_request]
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Systempakete für Qt
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libgl1
+      - uses: astral-sh/setup-uv@v5
+      - name: Abhängigkeiten (aus uv.lock)
+        run: uv sync --frozen --extra dev
+      - name: Fehlerprüfung (ruff, nur echte Fehler)
+        run: uv run --frozen ruff check .
+      - name: Tests
+        run: uv run --frozen python -m pytest -q tests
+
+  plattformen:
+    name: Prüfen (${{ matrix.os }}, Auswahl)
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Abhängigkeiten
+        run: pip install -r requirements-dev.txt
+      - name: Tests (Auswahl)
+        shell: bash
+        run: >
+          python -m pytest -q
+          tests/plattform/test_pfade.py tests/plattform/test_sperre.py tests/plattform/test_protokoll.py
+          tests/dokument/speichern/test_speichern_sicher.py tests/plattform/test_wiederherstellung.py tests/dokument/formate/test_formate.py
+          tests/dokument/formate/test_docx_hin_und_zurueck.py tests/dokument/formate/test_odt_rtf.py tests/ki/test_schreibhilfe.py tests/korrektur/test_silben_de.py
+          tests/dokument/formate/test_import_grenzen.py tests/dokument/speichern/test_speicher_konflikt.py tests/dokument/formate/test_docx_korpus.py tests/korrektur/test_fund.py tests/ki/test_ki_einwilligung.py
