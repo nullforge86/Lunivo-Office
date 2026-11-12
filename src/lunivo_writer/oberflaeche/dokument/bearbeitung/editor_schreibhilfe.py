@@ -19,6 +19,12 @@ class SchreibhilfeBaustein:
             c = self.textCursor()
             self._loesche_verfolgt(c.selectionStart(), c.selectionEnd(), ende=True)
             return
+        c = self.textCursor()
+        if c.hasSelection() and not self.isReadOnly() and not self.modell_spiegel().zu_gross():       # Ausschneiden: Kopieren, dann Löschen über Modell und Sitzung
+            self.copy()
+            self.modell_spiegel().loeschen(c)
+            self.setTextCursor(c)
+            return
         super().cut()
 
 

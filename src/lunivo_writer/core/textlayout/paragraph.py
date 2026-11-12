@@ -1,5 +1,6 @@
 """Absatzsatz über eine beliebige ``TextLayoutEngine``: Läufe in verschiedenen Schriften und Bilder in der Zeile, Zeilen mit Einzug und Ausrichtung
-(links, rechts, zentriert, Blocksatz), Zeilenhöhen, Cursorstelle zu einem Zeichen und Treffertest (Punkt → Zeichen).
+(links, rechts, zentriert, Blocksatz), Tabstopps (links, rechts, zentriert, Standardabstand, hängender Einzug), Zeilenhöhen, Cursorstelle zu einem Zeichen
+und Treffertest (Punkt → Zeichen).
 Rechnet nur mit Zahlen; die Engine liefert Maße und Vorschübe."""
 from __future__ import annotations
 
@@ -12,6 +13,9 @@ from lunivo_writer.core.textlayout.hb_engine import LEERZEICHEN, zeilen_umbreche
 AUSRICHTUNGEN = ("left", "right", "center", "justify")
 OBJEKT = "￼"
 MIN_ZEILENBREITE = 40.0                 # schmaler als das darf neben einem schwebenden Rahmen keine Zeile werden
+TAB = "\t"
+TAB_LINKS, TAB_RECHTS, TAB_MITTE, TAB_TRENNZEICHEN = 0, 1, 2, 3          # Art eines Tabstopps (Zählung wie ``core.document.values.TabStop``)
+TAB_DURCHLAEUFE = 4                     # so oft werden Tabbreiten und Zeilenumbruch höchstens gegeneinander abgeglichen
 
 
 @dataclass(frozen=True)
@@ -51,6 +55,7 @@ class Absatzsatz:
     zeilen: list[SatzZeile]
     vorschuebe: list[float]
     laeufe: list = field(default_factory=list)
+    tab_fuell: dict = field(default_factory=dict)        # Zeichenstelle eines Tabulators → Füllzeichen seiner Strecke (".", "-", "_", "·")
 
     @property
     def hoehe(self) -> float:
@@ -108,6 +113,44 @@ def zeilenmasse(engine: TextLayoutEngine, font: FontSpec) -> tuple[float, float]
     return float(math.ceil(m.ascent - 1e-6)), float(math.ceil(m.descent - 1e-6))
 
 
+def _naechster_stopp(x: float, tabs: tuple, abstand: float, haengend: float | None) -> tuple:
+    """Der nächste Tabstopp rechts von ``x`` (vom linken Rand der Spalte): ein gesetzter Stopp, der linke Einzug bei hängendem Einzug, sonst das nächste Vielfache des Standardabstands."""
+    kandidaten = [(t[0], t[1], t[2] if len(t) > 2 else "") for t in tabs if t[0] > x + 0.01]
+    if haengend is not None and haengend > x + 0.01:
+        kandidaten.append((haengend, TAB_LINKS, ""))
+    if kandidaten:
+        return min(kandidaten)
+    return (math.floor((x + 0.01) / abstand) + 1) * abstand, TAB_LINKS, ""
+
+
+def _tab_vorschuebe(text: str, adv: list[float], plan: list, tabs: tuple, abstand: float, einzug_links: float, einzug_erste: float) -> tuple[dict[int, float], dict[int, float]]:
+    """(Breite, Stopp) jedes Tabulators bei diesem Zeilenplan: bis zum nächsten Stopp; bei rechtsbündigem oder zentriertem Stopp rückt das folgende Stück an bzw. um den Stopp,
+    beim Stopp mit Trennzeichen (Dezimalstopp) steht das Trennzeichen am Stopp."""
+    neu: dict[int, float] = {}
+    stopps: dict[int, float] = {}
+    for nr, (b, dl, _raum, _luecke) in enumerate(plan):
+        x = einzug_links + (einzug_erste if nr == 0 else 0.0) + dl
+        ende, i = b.start + b.length, b.start
+        while i < ende:
+            if text[i] != TAB:
+                x += adv[i]
+                i += 1
+                continue
+            stopp, art, trenner = _naechster_stopp(x, tabs, abstand, einzug_links if nr == 0 and einzug_erste < 0 else None)
+            w = stopp - x
+            if art in (TAB_RECHTS, TAB_MITTE, TAB_TRENNZEICHEN):
+                j, stueck = i + 1, 0.0
+                while j < ende and text[j] not in "\t\n\u2028" and not (art == TAB_TRENNZEICHEN and text[j] in (trenner or ",.")):
+                    stueck += adv[j]
+                    j += 1
+                w = max(0.0, w - (stueck / 2 if art == TAB_MITTE else stueck))
+            neu[i] = w
+            stopps[i] = stopp
+            x += w
+            i += 1
+    return neu, stopps
+
+
 def _lauf_maße(engine: TextLayoutEngine, laeufe: list) -> tuple[str, list[float], list[tuple[float, float]], list[Lauf]]:
     """Text, Vorschub je Zeichen, (Oberlänge, Zeilenhöhe) je Zeichen und die Läufe aus ``(text, FontSpec | Objekt[, Stil])``."""
     text, adv, hoehen, info = [], [], [], []
@@ -123,17 +166,24 @@ def _lauf_maße(engine: TextLayoutEngine, laeufe: list) -> tuple[str, list[float
             continue
         steig, tief = zeilenmasse(engine, f)
         text.append(t)
-        adv.extend(g.advance for g in engine.shape_text(t, f))
+        breiten = [g.advance for g in engine.shape_text(t, f)]
+        if stil.get("sperrung_prozent"):                                         # Laufweite in Prozent des Vorschubs
+            breiten = [a * stil["sperrung_prozent"] / 100.0 for a in breiten]
+        if stil.get("sperrung") or stil.get("wortabstand"):                      # feste Laufweite nach jedem Zeichen, Wortabstand nach jedem Leerzeichen
+            breiten = [a + stil.get("sperrung", 0.0) + (stil.get("wortabstand", 0.0) if c in LEERZEICHEN else 0.0) for a, c in zip(breiten, t)]
+        adv.extend(breiten)
         hoehen.extend([(steig, steig + tief)] * len(t))
     return "".join(text), adv, hoehen, info
 
 
 def absatz_setzen(engine: TextLayoutEngine, laeufe: list, breite: float, ausrichtung: str = "left", einzug_erste: float = 0.0,
                   einzug_links: float = 0.0, einzug_rechts: float = 0.0, zeilen_art: str = "single", zeilen_wert: float = 100.0,
-                  leer_schrift: FontSpec | None = None, ausschluss=None) -> Absatzsatz:
+                  leer_schrift: FontSpec | None = None, ausschluss=None, tabs: tuple = (), tab_abstand: float = 0.0,
+                  tab_fuell: dict | None = None) -> Absatzsatz:
     """Den Absatz in Zeilen setzen. ``laeufe`` = [(Text, FontSpec)] (ein Bild: (U+FFFC, Objekt)). ``einzug_erste`` gilt zusätzlich in der ersten Zeile
     (negativ: hängender Einzug). Ein leerer Absatz hat eine Zeile in ``leer_schrift``.
-    ``ausschluss(y, h)`` → (Einengung links, Einengung rechts, Unterkante oder None): schwebende Rahmen, um die der Text läuft (y relativ zum Absatzanfang)."""
+    ``ausschluss(y, h)`` → (Einengung links, Einengung rechts, Unterkante oder None): schwebende Rahmen, um die der Text läuft (y relativ zum Absatzanfang).
+    ``tabs`` = ((Position vom linken Rand der Spalte, Art[, Trennzeichen]), …), ``tab_fuell`` = {Position: Füllzeichen} und ``tab_abstand`` (Standardabstand; 0: Tabulatoren behalten die Breite ihres Zeichens)."""
     text, adv, hoehen, info = _lauf_maße(engine, laeufe)
     if not text:
         steig, tief = zeilenmasse(engine, leer_schrift or FontSpec("Liberation Sans", 11))
@@ -151,31 +201,46 @@ def absatz_setzen(engine: TextLayoutEngine, laeufe: list, breite: float, ausrich
         steig = max(s[0] for s in stuecke)
         return steig, max(max(s[1] - s[0] for s in stuecke) + steig, max(s[1] for s in stuecke))
 
-    # Zeilen als (Zeichenbereich, Versatz links, verfügbare Breite, Lücke davor); ohne ``ausschluss`` mit gleichbleibender Breite
-    plan: list[tuple[LineBox, float, float, float]] = []
-    if ausschluss is None:
-        boxen = zeilen_ab(0, erste_b)
-        if len(boxen) > 1 and abs(erste_b - verf) > 0.01:
-            boxen = boxen[:1] + zeilen_ab(boxen[0].length, verf)
-        plan = [(b, 0.0, erste_b if i == 0 else verf, 0.0) for i, b in enumerate(boxen)]
-    else:
-        start, y = 0, 0.0
-        while start < len(text):
-            raum = erste_b if start == 0 else verf
-            luecke = 0.0
-            h_est = max(h[1] for h in hoehen[start:start + 40] or hoehen[-1:])
-            for _ in range(40):
-                dl, dr, unter = ausschluss(y + luecke, h_est)
-                if raum - dl - dr >= MIN_ZEILENBREITE or unter is None:
+    def planen() -> list[tuple[LineBox, float, float, float]]:
+        """Zeilen als (Zeichenbereich, Versatz links, verfügbare Breite, Lücke davor); ohne ``ausschluss`` mit gleichbleibender Breite."""
+        plan: list[tuple[LineBox, float, float, float]] = []
+        if ausschluss is None:
+            boxen = zeilen_ab(0, erste_b)
+            if len(boxen) > 1 and abs(erste_b - verf) > 0.01:
+                boxen = boxen[:1] + zeilen_ab(boxen[0].length, verf)
+            plan = [(b, 0.0, erste_b if i == 0 else verf, 0.0) for i, b in enumerate(boxen)]
+        else:
+            start, y = 0, 0.0
+            while start < len(text):
+                raum = erste_b if start == 0 else verf
+                luecke = 0.0
+                h_est = max(h[1] for h in hoehen[start:start + 40] or hoehen[-1:])
+                for _ in range(40):
+                    dl, dr, unter = ausschluss(y + luecke, h_est)
+                    if raum - dl - dr >= MIN_ZEILENBREITE or unter is None:
+                        break
+                    luecke += max(unter - y - luecke, 1.0)                           # zu schmal neben dem Rahmen: die Zeile beginnt darunter
+                breite_zeile = max(1.0, raum - dl - dr)
+                box = zeilen_ab(start, breite_zeile)[0]
+                plan.append((box, dl, breite_zeile, luecke))
+                y += luecke + zeilenhoehe(hoehe_von(box)[1], zeilen_art, zeilen_wert)
+                if box.length == 0:
                     break
-                luecke += max(unter - y - luecke, 1.0)                           # zu schmal neben dem Rahmen: die Zeile beginnt darunter
-            breite_zeile = max(1.0, raum - dl - dr)
-            box = zeilen_ab(start, breite_zeile)[0]
-            plan.append((box, dl, breite_zeile, luecke))
-            y += luecke + zeilenhoehe(hoehe_von(box)[1], zeilen_art, zeilen_wert)
-            if box.length == 0:
-                break
-            start = box.start + box.length
+                start = box.start + box.length
+        return plan
+
+    tab_stellen = [i for i, c in enumerate(text) if c == TAB] if tab_abstand > 0 else []
+    for i in tab_stellen:
+        adv[i] = 0.0
+    plan = planen()
+    tab_stopp: dict[int, float] = {}
+    for _ in range(TAB_DURCHLAEUFE if tab_stellen else 0):                       # Tabbreiten hängen von der Stelle in der Zeile ab, der Umbruch von den Breiten
+        neu, tab_stopp = _tab_vorschuebe(text, adv, plan, tabs, tab_abstand, einzug_links, einzug_erste)
+        if all(abs(neu.get(i, 0.0) - adv[i]) < 0.01 for i in tab_stellen):
+            break
+        for i in tab_stellen:
+            adv[i] = neu.get(i, 0.0)
+        plan = planen()
     res, y = [], 0.0
     for i, (b, dl, raum, luecke) in enumerate(plan):
         y += luecke
@@ -188,7 +253,7 @@ def absatz_setzen(engine: TextLayoutEngine, laeufe: list, breite: float, ausrich
             x = links + raum - b.width
         elif ausrichtung == "center":
             x = links + (raum - b.width) / 2
-        elif ausrichtung == "justify" and not letzte and not zeilentext.endswith(("\n", "\u2028")):
+        elif ausrichtung == "justify" and not letzte and not zeilentext.endswith(("\n", "\u2028")) and not (tab_stellen and TAB in zeilentext):
             luecken = sum(1 for c in zeilentext.rstrip(" \t") if c in LEERZEICHEN)
             if luecken:
                 extra = max(0.0, (raum - b.width) / luecken)
@@ -198,4 +263,5 @@ def absatz_setzen(engine: TextLayoutEngine, laeufe: list, breite: float, ausrich
     if text.endswith(("\n", " ")):                                             # Zeilenumbruch am Ende: eine leere Zeile folgt
         m = hoehen[-1]
         res.append(SatzZeile(LineBox(len(text), 0, 0.0, m[1], m[0]), einzug_links, y, zeilenhoehe(m[1], zeilen_art, zeilen_wert)))
-    return Absatzsatz(text, res, adv, info)
+    fuell = {i: z for i, stopp in tab_stopp.items() for pos, z in (tab_fuell or {}).items() if z and abs(pos - stopp) < 0.5}
+    return Absatzsatz(text, res, adv, info, fuell)

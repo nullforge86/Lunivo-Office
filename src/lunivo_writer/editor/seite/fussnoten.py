@@ -12,10 +12,7 @@ from lunivo_writer.editor.dokument.zusatz import B_NOTENZIEL, P_NOTE, roemisch
 from lunivo_writer.editor.text.fragmente import absatz_fragmente
 from lunivo_writer.modelle.seite import PageSettings
 
-NOTEN_ABSTAND = 3.0            # px zwischen zwei Fußnoten
-NOTEN_TRENNER = 12.0           # px für den Trennstrich über den Fußnoten
-NOTEN_SCHRIFT = 0.85           # Fußnotenschrift im Verhältnis zur Grundschrift
-NOTEN_SEITENANTEIL = 0.85      # füllen die Fußnoten mehr als diesen Teil der Seite, läuft der Rest über
+from lunivo_writer.core.layout.seitenumbruch import NOTEN_ABSTAND, NOTEN_SCHRIFT, NOTEN_SEITENANTEIL, NOTEN_TRENNER   # noqa: E402,F401  (die Maße der Fußnoten stehen einmal, im Kern)
 NOTEN_RUNDEN = 60              # höchstens so viele Umbruchrunden
 
 

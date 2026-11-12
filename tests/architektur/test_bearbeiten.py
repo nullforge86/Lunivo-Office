@@ -438,3 +438,45 @@ def test_absaetze_verschmelzen_ueber_den_spiegel(app):
     assert ed.toPlainText() == "EinsZweiDrei"
     ed.document().undo()
     assert ed.toPlainText() == "EinsZwei\nDrei"
+
+
+def test_ausschneiden_ueber_den_spiegel(app):
+    from PySide6.QtGui import QGuiApplication, QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo schöne Welt")
+    c = ed.textCursor(); c.setPosition(5); c.setPosition(12, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+    ed.cut()
+    assert ed.toPlainText() == "Hallo Welt" and QGuiApplication.clipboard().text() == " schöne" and ed.textCursor().position() == 5
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo schöne Welt"
+
+
+def test_einfuegen_nur_text_ueber_den_spiegel(app):
+    from PySide6.QtCore import QMimeData
+    from PySide6.QtGui import QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    c = ed.textCursor(); c.setPosition(6); c.setPosition(10, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+    m = QMimeData(); m.setText("Du\nda")
+    ed.insertFromMimeData(m)
+    assert ed.toPlainText() == "Hallo Du\nda" and ed.textCursor().position() == 11
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo Welt"
+
+
+def test_auswahl_der_ansicht_in_der_sitzung(app):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    ed.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.ShiftModifier))
+    ed.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.ShiftModifier))
+    s = ed.modell_spiegel().sitzung()
+    assert s.auswahl() is not None and s.text(*s.auswahl()) == "Ha"

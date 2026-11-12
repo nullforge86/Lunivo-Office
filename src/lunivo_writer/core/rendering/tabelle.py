@@ -1,4 +1,4 @@
-"""Füllung und Rahmen einer Tabellenzelle als Zeichenanweisungen, ohne Qt: aus den Eigenschaften des Zellformats und des Tabellenformats (Namen wie im Modell, siehe ``core/document``)
+"""Füllung und Rahmen einer Tabellenzelle (und eines Rahmens im Text) als Zeichenanweisungen, ohne Qt: aus den Eigenschaften des Zellformats und des Tabellenformats (Namen wie im Modell, siehe ``core/document``)
 entstehen ``("rect", Rect, Style)`` und ``("line", Point, Point, Style)``; ``ausfuehren`` gibt sie an ein ``RenderBackend``. Die Rechnung hängt nicht vom Backend ab."""
 from __future__ import annotations
 
@@ -39,6 +39,22 @@ def zelle_anweisungen(rect: Rect, zelle: dict, tabelle: dict, rand: float, zoom:
         farbe = _farbe(zelle.get(f"TableCell{name}BorderBrush") if eigen else tabelle.get("FrameBorderBrush")) or (0, 0, 0, 255)
         a, b = _kante(name, rect)
         aus.append(("line", a, b, Style(color=farbe, width=max(1.0, breite), dash={RAND_PUNKTE: "dot", RAND_STRICHE: "dash"}.get(stil))))
+    return aus
+
+
+def rahmen_anweisungen(rect: Rect, rahmen: dict) -> list[Anweisung]:
+    """Füllung und Rahmenstrich eines Rahmens im Text (``rahmen``: Eigenschaften des Rahmenformats)."""
+    aus: list[Anweisung] = []
+    fuell = _farbe(rahmen.get("BackgroundBrush"))
+    if fuell is not None:
+        aus.append(("rect", rect, Style(color=fuell, width=0, filled=True)))
+    breite = float(rahmen.get("FrameBorder", 0.0) or 0.0)
+    stil = int(rahmen.get("FrameBorderStyle", STANDARD_RANDSTIL))
+    if breite > 0 and stil != RAND_KEIN:
+        farbe = _farbe(rahmen.get("FrameBorderBrush")) or (0, 0, 0, 255)
+        for name in KANTEN:
+            a, b = _kante(name, rect)
+            aus.append(("line", a, b, Style(color=farbe, width=max(1.0, breite), dash={RAND_PUNKTE: "dot", RAND_STRICHE: "dash"}.get(stil))))
     return aus
 
 

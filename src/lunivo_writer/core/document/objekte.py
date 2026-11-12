@@ -174,7 +174,7 @@ class ImageObject:
     def aus_angabe(a: dict, data: bytes | None = None) -> "ImageObject":
         """Aus der Angabe eines frei positionierten Bildes (``freie_bilder``)."""
         anker = Anchor(str(a.get("bh", "spalte")), float(a.get("xh", 0)), str(a.get("ah") or ""), str(a.get("bv", "absatz")), float(a.get("yv", 0)), str(a.get("av") or ""))
-        umfluss = WrapSettings(behind=bool(a.get("hinter", False)), mode="none")
+        umfluss = WrapSettings(behind=bool(a.get("hinter", False)), mode="none", overlap=bool(a.get("ueberlappen", True)), lock_anchor=bool(a.get("verankern", False)))
         return ImageObject(float(a.get("b", 0)), float(a.get("h", 0)), data, anker, umfluss, Transform(float(a.get("dreh", 0.0))), bool(a.get("ellipse", False)),
                            a.get("zu"), str(a.get("maske") or ""), FillStyle.aus_dict(a.get("fuell")), StrokeStyle.aus_dict(a.get("rand")), a.get("fx"),
                            alt_text=str(a.get("alt", "")), title=str(a.get("titel", "")), caption=str(a.get("beschriftung", "")), name=str(a.get("n", a.get("name", ""))),

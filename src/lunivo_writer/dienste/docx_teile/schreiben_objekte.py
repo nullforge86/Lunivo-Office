@@ -174,14 +174,16 @@ class ObjekteSchreiber:
 
     def _frei_verankern(self, inline, a: dict) -> None:
         """wp:inline → wp:anchor ohne Umbruch (wp:wrapNone), Lage nach Bezug und Ausrichtung/Versatz."""
+        from lunivo_writer.core.document.objekte import ImageObject
+        obj = ImageObject.aus_angabe(a)                         # Lage und Umfluss kommen aus dem Objektmodell (``core/document/objekte.py``)
         anker = OxmlElement("wp:anchor")
         for k, v in (("distT", "0"), ("distB", "0"), ("distL", "0"), ("distR", "0"), ("simplePos", "0"),
-                     ("relativeHeight", "251658240" if a.get("hinter") else "251659264"), ("behindDoc", _eins(a.get("hinter"))),
-                     ("locked", _eins(a.get("verankern"))), ("layoutInCell", "1"), ("allowOverlap", _eins(a.get("ueberlappen", True)))):
+                     ("relativeHeight", "251658240" if obj.wrap.behind else "251659264"), ("behindDoc", _eins(obj.wrap.behind)),
+                     ("locked", _eins(obj.wrap.lock_anchor)), ("layoutInCell", "1"), ("allowOverlap", _eins(obj.wrap.overlap))):
             anker.set(k, v)
         sp = OxmlElement("wp:simplePos"); sp.set("x", "0"); sp.set("y", "0")
-        ph = self._anker_lage("wp:positionH", _BEZUG.get(a.get("bh"), "column"), a.get("ah"), a.get("xh"))
-        pv = self._anker_lage("wp:positionV", _BEZUG.get(a.get("bv"), "paragraph"), a.get("av"), a.get("yv"))
+        ph = self._anker_lage("wp:positionH", _BEZUG.get(a.get("bh"), "column"), obj.anchor.h_align or None, a.get("xh"))
+        pv = self._anker_lage("wp:positionV", _BEZUG.get(a.get("bv"), "paragraph"), obj.anchor.v_align or None, a.get("yv"))
         extent = inline.find(qn("wp:extent"))
         ee = OxmlElement("wp:effectExtent")
         for k in ("l", "t", "r", "b"):

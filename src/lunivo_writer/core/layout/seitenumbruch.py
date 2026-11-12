@@ -2,21 +2,25 @@
 
 Abschnitte (``next_page``-Art: neue Seite; ``continuous``: gleiche Seite, neue Spalteneinteilung), Spalten, Absätze (Läufe in verschiedenen Schriften, Bilder
 in der Zeile, Ausrichtung, Einzüge, Abstände mit Zusammenfall, Zeilenabstand, Seitenumbruch davor/danach), Tabellen (Spaltenbreiten aus Vorgaben, verbundene Zellen,
-Zeilen wandern ungeteilt auf die nächste Seite) und Rahmen (als Block in der Spalte), Fußnoten (Platz unten auf der Seite der Marke), schwebende Rahmen mit Textumfluss (Text läuft links/rechts herum). Nicht berücksichtigt wird und in ``Ergebnis.hinweise`` gemeldet:
-Endnoten.
+Ausrichtung der Tabelle, Zellabstände je Seite, senkrechte Ausrichtung, Mindesthöhe der Zeile, wiederholte Kopfzeilen; eine Zeile bleibt ungeteilt, außer sie ist höher als eine Seite),
+Rahmen (mit Rand, Abstand und Füllung als Block in der Spalte), Fußnoten (Platz unten auf der Seite der Marke), Endnoten (am Ende des Dokuments), schwebende Rahmen mit Textumfluss
+(Text läuft links/rechts herum), Tabstopps und Absatzhintergrund.
 
 Die Seiteneinrichtung eines Abschnitts (``Section.page``) wird nur gelesen (``width_mm``, ``height_mm``, ``margin_*_mm``, ``spaltenraster_px()``, ``content_height_px``)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from lunivo_writer.core.document.model import Document, Frame, Image, Paragraph, Section, Table, TableCell, TextRun
+from lunivo_writer.core.document.model import Document, Frame, Paragraph, Section, Table, TableCell, TextRun
+from lunivo_writer.core.document.values import Length
 from lunivo_writer.core.geometry import Point, Rect
+from lunivo_writer.modelle.seite import mm_to_px
 from lunivo_writer.core.layout import eigenschaften as E, regeln
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 from lunivo_writer.core.textlayout.paragraph import OBJEKT, Absatzsatz, Objekt, absatz_setzen
 
 MM_JE_PX = 96.0 / 25.4
+BLATT_ABSTAND_PX = 32.0               # grauer Zwischenraum zwischen zwei Blättern (wie der Seitenlauf, bei 100 % Zoom)
 ZELLEN_ABSTAND = 4.0                  # Standard von Qt: Abstand zwischen Zelle und Inhalt
 ZELLEN_ZWISCHENRAUM = 2.0
 STANDARD_BILD = (64.0, 64.0)
@@ -25,6 +29,14 @@ NOTEN_TRENNER = 12.0                  # px für den Trennstrich über den Fußno
 NOTEN_SCHRIFT = 0.85                  # Fußnotenschrift im Verhältnis zur Grundschrift
 NOTEN_SEITENANTEIL = 0.85             # füllen die Fußnoten mehr als diesen Teil der Seite, läuft der Rest über
 P_ABSATZOPT = "user:1048614"           # Absatzoptionen "Schlüssel=Wert;…" (nur Abweichungen von der Vorgabe), siehe editor/seite/absatzopt.py
+ABSCHNITT_FORTLAUFEND = ("fortlaufend", "continuous")         # Lunivo-Name und DOCX-Name: gleiche Seite, neue Spalteneinteilung
+ABSCHNITT_SEITE_GERADE = ("gerade", "even_page")             # nur gerade Seiten (Leerseite davor, wenn nötig)
+ABSCHNITT_SEITE_UNGERADE = ("ungerade", "odd_page")
+P_ZEILE_MINHOEHE = "user:1048638"      # an jeder Zelle einer Zeile: Mindesthöhe der Zeile in Bildpunkten (``Z_MINHOEHE``, DOCX: w:trHeight)
+MIN_TEILHOEHE = 40.0                  # weniger Platz als das bleibt am Seitenende: eine zu hohe Tabellenzeile beginnt erst auf der nächsten Seite
+MIN_TABELLENBREITE = 20.0
+MIN_SPALTENBREITE = 10.0
+NOTEN_LINIE_ANTEIL = 1 / 3            # Länge des Trennstrichs über den Noten im Verhältnis zur Spaltenbreite
 P_NOTE = "user:21"                    # Eigenschaft des Textstücks mit der Notenmarke: "f:3" (Fußnote Nr. 3) oder "e:2" (Endnote)
 
 
@@ -36,16 +48,19 @@ class AbsatzOrt:
     zeilen: list[tuple[int, int, Rect]] = field(default_factory=list)       # (Seitenindex, Zeilenindex im Satz, Rechteck der Zeile auf der Seite)
     marke: str | None = None                                                 # Aufzählungszeichen oder Nummer der Liste (nur erste Zeile): "•", "◦", "▪" oder "3."
     ohne_zeilennummer: bool = False                                          # „Zeilennummern unterdrücken“ (``ohne_zeilennr`` der Absatzoptionen)
+    hintergrund: tuple | None = None                                         # Füllfarbe des Absatzes (r, g, b, a)
+    rahmen: str | None = None                                                # Absatzrahmen („Farbe|Breite pt|Art|Seiten|Abstände“); gleiche Angabe an Nachbarn = ein gemeinsamer Rahmen
 
 
 @dataclass
 class Platz:
-    """Ein Stück Seite: eine Absatzzeile, eine Tabellenzelle oder ein Rahmen (für Zeichnen, Treffertest und Cursor)."""
-    art: str                         # "zeile" | "zelle" | "tabelle"
+    """Ein Stück Seite: eine Absatzzeile, eine Tabellenzelle, ein Rahmen, eine Note oder der Trennstrich über den Noten (für Zeichnen, Treffertest und Cursor)."""
+    art: str                         # "zeile" | "zelle" | "rahmen" | "fussnote" | "endnote" | "notenlinie"
     rect: Rect
     pfad: tuple
     zeile: int = -1
-    daten: object = None             # Zelle: (Zellformat-Eigenschaften, Tabellenformat-Eigenschaften); Fußnote: der gesetzte Text (``Absatzsatz``)
+    daten: object = None             # Zelle: (Zellformat-Eigenschaften, Tabellenformat-Eigenschaften); Rahmen: Eigenschaften; Fuß-/Endnote: der gesetzte Text (``Absatzsatz``)
+    kopie: bool = False              # wiederholte Kopfzeile einer Tabelle: wird gezeichnet, zählt aber nicht für Cursor, Treffertest und Zeilennummern
 
 
 @dataclass
@@ -54,6 +69,7 @@ class Seite:
     abschnitt: int
     einrichtung: object
     plaetze: list[Platz] = field(default_factory=list)
+    oben: float = 0.0                 # y der Blattoberkante im Blattraum (wie der Seitenlauf: Blätter stehen untereinander mit Abstand)
 
 
 @dataclass
@@ -79,7 +95,7 @@ class Ergebnis:
         nr, aktuell = 0, -1
         for seite in self.seiten:
             for p in seite.plaetze:
-                if p.art != "zeile" or self.absaetze[p.pfad].ohne_zeilennummer:
+                if p.art != "zeile" or p.kopie or self.absaetze[p.pfad].ohne_zeilennummer:
                     continue
                 if art == "seite" and seite.index != aktuell:
                     nr = 0
@@ -89,7 +105,7 @@ class Ergebnis:
 
     def treffer(self, seite: int, punkt: Point) -> tuple[tuple, int] | None:
         """Absatz (Pfad) und Zeichenstelle für einen Punkt auf der Seite (die nächste Textzeile); ``None``, wenn die Seite keinen Text hat."""
-        zeilen = [p for p in self.seiten[seite].plaetze if p.art == "zeile"]
+        zeilen = [p for p in self.seiten[seite].plaetze if p.art == "zeile" and not p.kopie]
         if not zeilen:
             return None
 
@@ -123,10 +139,15 @@ class _Fluss:
         self.noten_zaehler = 0
         self.listen_zaehler: dict[int, int] = {}                    # Liste → bisher gezählte Absätze (für die Nummern)
         self.ausschluesse: list = []                 # schwebende Rahmen: (Seitenindex, Spalte, Rect, 'links' | 'rechts'), um die der Text läuft
+        self.endnoten: list[int] = []                # Ids der Endnoten in der Reihenfolge ihrer Marken
 
     # ---- Seiten und Spalten ----
     def neue_seite(self) -> None:
-        self.seite = Seite(len(self.erg.seiten), self.abschnitt, self.einr)
+        oben = 0.0
+        if self.erg.seiten:
+            letzte = self.erg.seiten[-1]
+            oben = letzte.oben + (mm_to_px(letzte.einrichtung.height_mm) if letzte.einrichtung is not None else 0.0) + BLATT_ABSTAND_PX
+        self.seite = Seite(len(self.erg.seiten), self.abschnitt, self.einr, oben=oben)
         self.erg.seiten.append(self.seite)
         self.spalte, self.y, self.y0, self.leer, self.unten = 0, 0.0, 0.0, True, 0.0
 
@@ -158,10 +179,14 @@ class _Fluss:
         return min(gesamt, self.hoehe * NOTEN_SEITENANTEIL)
 
     def note_satz(self, nr: int, nid: int) -> Absatzsatz:
+        breite = self.spalten[0][1] if len(self.spalten) == 1 else sum(b for _x, b in self.spalten)
+        return self.noten_satz(str(nr), self.noten_text.get(nid, ""), breite)
+
+    def noten_satz(self, marke: str, text: str, breite: float) -> Absatzsatz:
+        """Eine Fuß- oder Endnote gesetzt: Marke, zwei Leerzeichen, Text in der kleineren Notenschrift."""
         g = E.schrift(None, self.grund)
         klein = FontSpec(g.family, max(6.0, g.size_pt * NOTEN_SCHRIFT), g.weight, g.italic)
-        breite = self.spalten[0][1] if len(self.spalten) == 1 else sum(b for _x, b in self.spalten)
-        return absatz_setzen(self.engine, [(f"{nr}  {self.noten_text.get(nid, '')}", klein)], breite)
+        return absatz_setzen(self.engine, [(f"{marke}  {text}", klein)], breite)
 
     def abschnitt_beginnt(self, nr: int, s: Section) -> None:
         self.abschnitt, self.einr = nr, s.page
@@ -170,16 +195,15 @@ class _Fluss:
         self.rand_oben = float(getattr(p, "margin_top_mm", 25.0)) * MM_JE_PX
         self.hoehe = float(getattr(p, "content_height_px", 0.0)) or (float(getattr(p, "height_mm", 297.0)) - float(getattr(p, "margin_top_mm", 25.0)) - float(getattr(p, "margin_bottom_mm", 25.0))) * MM_JE_PX
         self.spalten = list(p.spaltenraster_px()) if hasattr(p, "spaltenraster_px") else [(0.0, (float(getattr(p, "width_mm", 210.0)) - float(getattr(p, "margin_left_mm", 20.0)) - float(getattr(p, "margin_right_mm", 20.0))) * MM_JE_PX)]
-        fortlaufend = s.kind == "continuous" and self.seite is not None and nr > 0
+        fortlaufend = s.kind in ABSCHNITT_FORTLAUFEND and self.seite is not None and nr > 0
         if fortlaufend:
             self.spalte, self.y0, self.leer = 0, self.y, True       # neue Spalteneinteilung ab hier, auf derselben Seite
-            self.seite.einrichtung = self.seite.einrichtung
         else:
             self.neue_seite()
             if nr == 0 and hasattr(p, "erste_seite_versatz_px"):          # lange Kopfzeile: der Text der ersten Seite beginnt darunter
                 self.y = self.y0 = float(p.erste_seite_versatz_px())
-            if s.kind in ("even_page", "odd_page"):
-                gerade = s.kind == "even_page"
+            if s.kind in ABSCHNITT_SEITE_GERADE + ABSCHNITT_SEITE_UNGERADE:
+                gerade = s.kind in ABSCHNITT_SEITE_GERADE
                 if (len(self.erg.seiten) % 2 == 0) != gerade:
                     self.neue_seite()                                  # Leerseite
 
@@ -249,7 +273,11 @@ class _Fluss:
         for r in p.runs:
             if isinstance(r, TextRun):
                 if r.text:
-                    laeufe.append((r.text, E.schrift(r.format, self.grund), E.stil(r.format, self.grund)))
+                    schrift, stil = E.schrift(r.format, self.grund), E.stil(r.format, self.grund)
+                    if E.kapitaelchen(r.format, self.grund):
+                        laeufe.extend((t, f, stil) for t, f in E.kapitaelchen_stuecke(r.text, schrift))
+                    else:
+                        laeufe.append((E.schreibweise(r.text, r.format, self.grund), schrift, stil))
             else:
                 b = E._zahl(r.format.properties.get("ImageWidth"), STANDARD_BILD[0])
                 h = E._zahl(r.format.properties.get("ImageHeight"), STANDARD_BILD[1])
@@ -259,16 +287,18 @@ class _Fluss:
             links += E._zahl(self.dok.lists[p.format.list_id].properties.get("ListIndent")) * self.dok.indent_width
         art, wert = E.zeilenabstand(p.format)
         leer = E.schrift(p.format.char_format, self.grund)
-        return absatz_setzen(self.engine, laeufe, breite, E.ausrichtung(p.format), erste, links, rechts, art, wert, leer, ausschluss), E.abstaende(p.format)
+        tabs, tab_abstand = E.tabstopps(p.format, self.dok)
+        return absatz_setzen(self.engine, laeufe, breite, E.ausrichtung(p.format), erste, links, rechts, art, wert, leer, ausschluss, tabs, tab_abstand,
+                             E.tabfuellung(p.format)), E.abstaende(p.format)
 
     @staticmethod
-    def marken_von(p: Paragraph) -> list[tuple[int, int]]:
-        """[(Zeichenstelle, Fußnoten-Id)] der Notenmarken im Absatz."""
+    def marken_von(p: Paragraph, art: str = "f") -> list[tuple[int, int]]:
+        """[(Zeichenstelle, Noten-Id)] der Notenmarken im Absatz; ``art`` „f“ Fußnoten, „e“ Endnoten."""
         res, pos = [], 0
         for r in p.runs:
             if isinstance(r, TextRun):
                 v = r.format.properties.get(P_NOTE)
-                if isinstance(v, str) and v.startswith("f:") and v[2:].isdigit():
+                if isinstance(v, str) and v.startswith(art + ":") and v[2:].isdigit():
                     res.append((pos, int(v[2:])))
                 pos += len(r.text)
             else:
@@ -293,8 +323,9 @@ class _Fluss:
         if not self.leer:                                                  # Abstand oben und unten fallen zusammen: der größere gilt; am Spaltenanfang entfällt er
             self.y += max(0.0, oben - self.unten)
         satz, _ = self.satz(p, self.breite(), self.ausschluss_fuer() if self.ausschluesse else None)
-        ort = AbsatzOrt(pfad, satz, marke=self.listenmarke(p), ohne_zeilennummer=self.absatz_opt(p, "ohne_zeilennr"))
+        ort = AbsatzOrt(pfad, satz, marke=self.listenmarke(p), ohne_zeilennummer=self.absatz_opt(p, "ohne_zeilennr"), hintergrund=E.hintergrund(p.format), rahmen=E.absatzrahmen(p.format))
         self.erg.absaetze[pfad] = ort
+        self.endnoten.extend(nid for _stelle, nid in self.marken_von(p, "e"))
         marken = self.marken_von(p)
         bruch = self.umbruch_stelle([z.hoehe for z in satz.zeilen], self.absatz_regeln(p), list(folge)) if self.regeln_an() and satz.zeilen else None
         for i, z in enumerate(satz.zeilen):
@@ -320,21 +351,7 @@ class _Fluss:
         if E.umbruch_nach(p.format):
             self.neue_seite()
 
-    # ---- Tabellen ----
-    def spaltenbreiten(self, t: Table, gesamt: float) -> list[float]:
-        vorgaben = t.properties.get("TableColumnWidthConstraints") or ()
-        feste = [E.laenge(v, gesamt) for v in vorgaben][: t.columns]
-        feste += [None] * (t.columns - len(feste))
-        rest = gesamt - sum(f for f in feste if f is not None)
-        offen = [i for i, f in enumerate(feste) if f is None]
-        if offen:
-            je = max(0.0, rest) / len(offen)
-            feste = [f if f is not None else je for f in feste]
-        elif sum(feste) > 0:
-            k = gesamt / sum(feste)
-            feste = [f * k for f in feste]
-        return feste
-
+    # ---- Teilflüsse (Zelle, Rahmen) ----
     def teilfluss(self, bloecke: list, breite: float, pfad: tuple) -> tuple[float, list[Platz]]:
         """Blöcke in einer festen Breite setzen (Zelle, Rahmen): → (Höhe, Plätze relativ zur oberen linken Ecke). Die Absätze werden mit ihren Sätzen vermerkt, ihre Rechtecke setzt der Aufrufer."""
         fl = _Fluss(self.engine, self.dok)
@@ -342,6 +359,7 @@ class _Fluss:
         fl.seite = Seite(-1, self.abschnitt, self.einr)
         fl.abschnitt, fl.einr = self.abschnitt, self.einr
         fl.noten_text = {}
+        fl.listen_zaehler = self.listen_zaehler                             # Listen zählen über Zellen und Rahmen hinweg weiter
         fl.blocks(bloecke, pfad)
         for k, v in fl.erg.absaetze.items():
             v.zeilen = []                                                   # die Rechtecke der Zeilen setzt der Aufrufer an ihrem Ort auf der Seite
@@ -349,84 +367,272 @@ class _Fluss:
         for h in fl.erg.hinweise:
             if h not in self.erg.hinweise:
                 self.erg.hinweise.append(h)
+        self.endnoten.extend(fl.endnoten)
         return fl.y, fl.seite.plaetze
 
-    def zelle_hoehe(self, c: TableCell, breite: float, pfad: tuple) -> tuple[float, list[Platz]]:
-        return self.teilfluss(c.content, breite, pfad)
-
-    def auf_seite_setzen(self, plaetze: list[Platz], dx: float, dy: float) -> None:
-        """Plätze aus einem Teilfluss an ihren Ort auf der Seite verschieben und eintragen."""
+    def auf_seite_setzen(self, plaetze: list[Platz], dx: float, dy: float, seite: Seite | None = None, kopie: bool = False) -> None:
+        """Plätze aus einem Teilfluss (Zeilen, Zellen und Rahmen darin) an ihren Ort auf der Seite verschieben und eintragen."""
+        seite = seite or self.seite
         for p in plaetze:
-            if p.art != "zeile":
-                continue
             r = Rect(dx + p.rect.x, dy + p.rect.y, p.rect.width, p.rect.height)
-            self.seite.plaetze.append(Platz("zeile", r, p.pfad, p.zeile))
-            ort = self.erg.absaetze.get(p.pfad)
+            ist_kopie = kopie or p.kopie
+            seite.plaetze.append(Platz(p.art, r, p.pfad, p.zeile, p.daten, ist_kopie))
+            ort = self.erg.absaetze.get(p.pfad) if p.art == "zeile" and not ist_kopie else None
             if ort is not None:
-                ort.zeilen.append((self.seite.index, p.zeile, r))
+                ort.zeilen.append((seite.index, p.zeile, r))
 
+    def abstand_vor(self, a: float) -> None:
+        """Abstand vor einem Block: fällt mit dem Abstand unter dem vorigen zusammen und entfällt am Anfang der Spalte."""
+        a, self.unten = max(0.0, a - self.unten), 0.0
+        if not self.leer:
+            self.y += a
+
+    # ---- Rahmen ----
     def rahmen(self, fr: Frame, pfad: tuple) -> None:
-        """Ein Rahmen im Text. Schwebend (links oder rechts): am Rand der Spalte an der aktuellen Höhe, der folgende Text läuft darum herum. Sonst oder in einer Zelle: Block im Fluss."""
-        art = {1: "links", 2: "rechts"}.get(int(E._zahl(fr.properties.get("CssFloat"))))
-        if art is None or self.seite is None or self.seite.index < 0:
-            self.blocks(fr.content, pfad)
+        """Ein Rahmen im Text. Schwebend (links oder rechts): am Rand der Spalte an der aktuellen Höhe, der folgende Text läuft darum herum.
+        Sonst: Block in der Spalte mit Rand, Rahmenstrich, Innenabstand und Füllung; ein Rahmen ohne all das (oder höher als die Spalte) fließt wie sein Inhalt."""
+        eig = fr.properties
+        art = {1: "links", 2: "rechts"}.get(int(E._zahl(eig.get("CssFloat"))))
+        rand = max(0.0, E._zahl(eig.get("FrameMargin")))
+        innen = max(0.0, E._zahl(eig.get("FramePadding"))) + max(0.0, E._zahl(eig.get("FrameBorder")))
+        w_fest, h_fest = eig.get("FrameWidth"), eig.get("FrameHeight")
+        fest = E.laenge(w_fest, self.breite()) if isinstance(w_fest, Length) else None
+        im_fluss = self.seite is not None and self.seite.index >= 0
+        if art is None or not im_fluss:
+            schlicht = rand == 0 and innen == 0 and fest is None and E._brush_farbe(eig.get("BackgroundBrush")) is None
+            if schlicht:
+                self.blocks(fr.content, pfad)
+                return
+            breite = max(MIN_SPALTENBREITE, min(fest, self.breite() - 2 * rand) - 2 * innen if fest is not None else self.breite() - 2 * rand - 2 * innen)
+            zaehler = dict(self.listen_zaehler)
+            h, plaetze = self.teilfluss(fr.content, breite, pfad)
+            hoehe = max(h, E.laenge(h_fest, h) or 0.0) if isinstance(h_fest, Length) else h
+            aussen_h = hoehe + 2 * innen
+            if im_fluss and aussen_h + 2 * rand > self.frei():             # höher als die Spalte: der Inhalt fließt über die Seiten
+                self.listen_zaehler.clear()
+                self.listen_zaehler.update(zaehler)
+                self.blocks(fr.content, pfad)
+                return
+            self.abstand_vor(rand)
+            self.platz_fuer(aussen_h + rand)
+            x, y = self.links() + rand, self.rand_oben + self.y
+            self.seite.plaetze.append(Platz("rahmen", Rect(x, y, breite + 2 * innen, aussen_h), pfad, daten=eig))
+            self.auf_seite_setzen(plaetze, x + innen, y + innen)
+            self.y += aussen_h + rand
+            self.unten, self.leer = rand, False
             return
-        rand = max(0.0, E._zahl(fr.properties.get("FrameMargin")))
-        innen = max(0.0, E._zahl(fr.properties.get("FramePadding"))) + max(0.0, E._zahl(fr.properties.get("FrameBorder")))
-        w_fest = fr.properties.get("FrameWidth")
-        breite = w_fest.value if getattr(w_fest, "kind", "") == "fixed" else self.breite() / 3
-        h, plaetze = self.teilfluss(fr.content, max(10.0, breite), pfad)
-        h_fest = fr.properties.get("FrameHeight")
+        breite = fest if fest is not None else self.breite() / 3
+        h, plaetze = self.teilfluss(fr.content, max(MIN_SPALTENBREITE, breite), pfad)
         hoehe = h_fest.value if getattr(h_fest, "kind", "") == "fixed" else h
         links = self.links()
         x = links + rand if art == "links" else links + self.breite() - breite - 2 * innen - rand
         y = self.rand_oben + self.y + rand
+        self.seite.plaetze.append(Platz("rahmen", Rect(x, y, breite + 2 * innen, hoehe + 2 * innen), pfad, daten=eig))
         self.auf_seite_setzen(plaetze, x + innen, y + innen)
         self.ausschluesse.append((self.seite.index, self.spalte, Rect(x - rand, y - rand, breite + 2 * innen + 2 * rand, hoehe + 2 * innen + 2 * rand), art))
-        self.seite.plaetze.append(Platz("rahmen", Rect(x, y, breite + 2 * innen, hoehe + 2 * innen), pfad))
+
+    # ---- Tabellen ----
+    @staticmethod
+    def tabellenbreite(eig: dict, verfuegbar: float) -> float:
+        w = eig.get("FrameWidth", eig.get("TableWidth"))
+        if isinstance(w, Length) and w.kind == "fixed":
+            return min(verfuegbar, max(MIN_TABELLENBREITE, w.value))
+        if isinstance(w, Length) and w.kind == "percentage":
+            return max(MIN_TABELLENBREITE, verfuegbar * w.value / 100.0)
+        return verfuegbar
+
+    @staticmethod
+    def spaltenbreiten(t: Table, breite_tab: float, luecke: float) -> list[float]:
+        """Spaltenbreiten aus den Vorgaben (fest, Prozent, frei): freie Spalten teilen sich den Rest; passt die Summe nicht, wird auf die Tabellenbreite gebracht."""
+        n = t.columns
+        vorgaben = list(t.properties.get("TableColumnWidthConstraints") or ())[:n]
+        vorgaben += [None] * (n - len(vorgaben))
+        innen = max(MIN_SPALTENBREITE, breite_tab - luecke * (n + 1))
+        b, frei = [0.0] * n, []
+        for i, v in enumerate(vorgaben):
+            if isinstance(v, Length) and v.kind == "fixed":
+                b[i] = v.value
+            elif isinstance(v, Length) and v.kind == "percentage":
+                b[i] = innen * v.value / 100.0
+            else:
+                frei.append(i)
+        rest = innen - sum(b)
+        for i in frei:
+            b[i] = max(MIN_SPALTENBREITE, rest / len(frei)) if rest > 0 else MIN_SPALTENBREITE
+        summe = sum(b)
+        if summe > 0 and abs(summe - innen) > 0.5 and (summe > innen or not frei):
+            b = [w * innen / summe for w in b]
+        return b
 
     def tabelle(self, t: Table, pfad: tuple) -> None:
-        gesamt = E.laenge(t.properties.get("TableWidth"), self.breite()) or self.breite()
-        abstand = E._zahl(t.properties.get("TableCellPadding"), ZELLEN_ABSTAND)
-        zwischen = E._zahl(t.properties.get("TableCellSpacing"), ZELLEN_ZWISCHENRAUM)
-        breiten = self.spaltenbreiten(t, gesamt - zwischen * (t.columns + 1))
-        x_spalte = [zwischen + sum(breiten[:i]) + zwischen * i for i in range(t.columns)]
+        """Eine Tabelle setzen: Spaltenbreiten aus den Vorgaben, Zeilenhöhen aus dem Inhalt (und der Mindesthöhe), Zeilen untereinander. Passt eine Zeile nicht mehr, beginnt sie in der
+        nächsten Spalte oder Seite; dort stehen die Kopfzeilen noch einmal. Eine Zeile, die höher ist als eine ganze Seite, wird zwischen ihren Textzeilen geteilt."""
+        if not t.columns or not t.rows:
+            return
+        eig = t.properties
+        aussen = max(0.0, E._zahl(eig.get("FrameMargin")))
+        luecke = max(0.0, E._zahl(eig.get("TableCellSpacing"), ZELLEN_ZWISCHENRAUM))
+        polster = max(0.0, E._zahl(eig.get("TableCellPadding"), ZELLEN_ABSTAND))
+        rand = max(0.0, E._zahl(eig.get("FrameBorder")))
+        verfuegbar = max(MIN_TABELLENBREITE, self.breite() - 2 * aussen)
+        breite_tab = self.tabellenbreite(eig, verfuegbar)
+        breiten = self.spaltenbreiten(t, breite_tab, luecke)
+        xs = [luecke]
+        for b in breiten[:-1]:
+            xs.append(xs[-1] + b + luecke)
+        ausr = int(E._zahl(eig.get("BlockAlignment")))
+        frei_b = max(0.0, verfuegbar - breite_tab)
+        dx_tab = aussen + (frei_b / 2 if ausr & E.MITTE else frei_b if ausr & E.RECHTS else 0.0)
+
+        def breite_von(c: TableCell) -> float:
+            return sum(breiten[c.column:c.column + c.column_span]) + luecke * (c.column_span - 1)
+
+        def innen(c: TableCell) -> tuple[float, float, float, float]:
+            def pad(name: str) -> float:
+                v = c.properties.get(f"TableCell{name}Padding")
+                return max(0.0, E._zahl(v)) if v is not None else polster
+            return pad("Left"), pad("Top"), pad("Right"), pad("Bottom")
+
+        def zelle_platz(c: TableCell, seite: Seite, links: float, y: float, h: float, kopie: bool = False) -> Rect:
+            zr = Rect(links + dx_tab + xs[c.column], y, breite_von(c), h)
+            seite.plaetze.append(Platz("zelle", zr, pfad + (c.row, c.column), daten=(c.properties, eig), kopie=kopie))
+            return zr
+
+        zellen: list[TableCell] = []
+        inhalt: dict[int, tuple[float, list[Platz]]] = {}
         hoehen = [0.0] * t.rows
-        zellen, inhalte = [], {}
         for ri, zeile in enumerate(t.table_rows):
             for ci, c in enumerate(zeile.cells):
-                b = sum(breiten[c.column:c.column + c.column_span]) + zwischen * (c.column_span - 1) - 2 * abstand
-                h, plaetze = self.zelle_hoehe(c, max(1.0, b), pfad + (ri, ci))
-                inhalte[id(c)] = plaetze
-                zellen.append((c, h + 2 * abstand))
-        for c, h in zellen:
-            if c.row_span == 1:
-                hoehen[c.row] = max(hoehen[c.row], h)
-        for c, h in zellen:
+                l, o, r, u = innen(c)
+                inhalt[id(c)] = self.teilfluss(c.content, max(MIN_SPALTENBREITE, breite_von(c) - l - r - rand), pfad + (ri, ci))
+                zellen.append(c)
+                if c.row_span == 1 and c.row < t.rows:
+                    hoehen[c.row] = max(hoehen[c.row], inhalt[id(c)][0] + o + u + rand, E._zahl(c.properties.get(P_ZEILE_MINHOEHE)))
+        ueberspannt: set[int] = set()
+        for c in zellen:
             if c.row_span > 1:
+                _l, o, _r, u = innen(c)
                 letzte = min(t.rows - 1, c.row + c.row_span - 1)
-                fehlt = h - sum(hoehen[c.row:letzte + 1]) - zwischen * (letzte - c.row)
-                if fehlt > 0:
+                ueberspannt.update(range(c.row, letzte + 1))
+                fehlt = inhalt[id(c)][0] + o + u + rand - sum(hoehen[c.row:letzte + 1]) - luecke * (letzte - c.row)
+                if fehlt > 0:                                               # fehlende Höhe geht an die letzte Zeile der Zelle
                     hoehen[letzte] += fehlt
-        y_zeile = [zwischen + sum(hoehen[:i]) + zwischen * i for i in range(t.rows)]
-        # Zeilenweise auf die Seite: eine Zeile bleibt ungeteilt; was nicht passt, beginnt in der nächsten Spalte oder Seite
-        ri = 0
-        while ri < t.rows:
-            self.platz_fuer(hoehen[ri] + zwischen)
-            y_basis = self.rand_oben + self.y
-            zeilen_h = hoehen[ri] + zwischen
-            for c, h in zellen:
-                if c.row == ri:
-                    zb = sum(breiten[c.column:c.column + c.column_span]) + zwischen * (c.column_span - 1)
-                    zh = sum(hoehen[c.row:c.row + c.row_span]) + zwischen * (c.row_span - 1)
-                    zr = Rect(self.links() + x_spalte[c.column], y_basis + zwischen, zb, zh)
-                    self.seite.plaetze.append(Platz("zelle", zr, pfad + (c.row, c.column), daten=(c.properties, t.properties)))
-                    self.auf_seite_setzen(inhalte[id(c)], zr.x + abstand, zr.y + abstand)
-            self.y += zeilen_h
+        im_fluss = self.seite.index >= 0
+        kopf_n = min(max(0, int(E._zahl(eig.get("TableHeaderRowCount")))), t.rows - 1) if im_fluss else 0
+        self.abstand_vor(aussen + luecke + rand)
+        orte: list = [None] * t.rows                                        # je Zeile (Seite, linker Rand der Spalte, y auf der Seite)
+        kopien: list[list] = []                                             # je Seitenwechsel die Orte der wiederholten Kopfzeilen
+        geteilt: set[int] = set()
+        for r in range(t.rows):
+            h = hoehen[r]
+            passt_nicht = self.y + h + luecke > self.frei() + 0.01
+            if im_fluss and passt_nicht and h + luecke > self.frei() and r not in ueberspannt:
+                self.zeile_teilen([c for c in zellen if c.row == r], inhalt, innen, zelle_platz, rand, luecke)
+                geteilt.add(r)
+                continue
+            if kopf_n and r >= kopf_n and not self.leer and passt_nicht and sum(hoehen[:kopf_n]) + h < self.frei():
+                self.weiter()                                               # die Zeile steht auf der nächsten Seite: die Kopfzeilen davor wiederholen
+                neu = []
+                for k in range(kopf_n):
+                    neu.append((self.seite, self.links(), self.rand_oben + self.y))
+                    self.y += hoehen[k] + luecke
+                self.leer = False
+                kopien.append(neu)
+            else:
+                self.platz_fuer(h + luecke)
+            orte[r] = (self.seite, self.links(), self.rand_oben + self.y)
+            self.y += h + luecke
             self.leer = False
-            ri += 1
-        self.unten = 0.0
+        for c in zellen:
+            if c.row in geteilt or c.row >= t.rows:
+                continue
+            seite, links, y0 = orte[c.row]
+            bis = min(t.rows - 1, c.row + c.row_span - 1)
+            h = hoehen[c.row]
+            if bis > c.row and orte[bis] is not None and orte[bis][0] is seite and orte[bis][2] > y0:      # über einen Seitenwechsel reicht die Zelle nur bis zum Ende ihrer ersten Zeile
+                h = orte[bis][2] + hoehen[bis] - y0
+            l, o, _r, u = innen(c)
+            zr = zelle_platz(c, seite, links, y0, h)
+            h_inhalt, plaetze = inhalt[id(c)]
+            frei_h = max(0.0, h - o - u - rand - h_inhalt)
+            senkrecht = int(E._zahl(c.properties.get("TextVerticalAlignment")))
+            versatz = frei_h / 2 if senkrecht == E.SENKRECHT_MITTE else frei_h if senkrecht == E.SENKRECHT_UNTEN else 0.0
+            self.auf_seite_setzen(plaetze, zr.x + rand / 2 + l, zr.y + rand / 2 + o + versatz, seite)
+        for neu in kopien:
+            for c in zellen:
+                if c.row < kopf_n and c.row_span == 1:
+                    seite, links, y = neu[c.row]
+                    l, o, _r, _u = innen(c)
+                    zr = zelle_platz(c, seite, links, y, hoehen[c.row], kopie=True)
+                    self.auf_seite_setzen(inhalt[id(c)][1], zr.x + rand / 2 + l, zr.y + rand / 2 + o, seite, kopie=True)
+        self.unten = aussen + rand
+        self.y += self.unten
 
+    def zeile_teilen(self, zellen: list[TableCell], inhalt: dict, innen, zelle_platz, rand: float, luecke: float) -> None:
+        """Eine Tabellenzeile, die höher ist als eine ganze Seite, über mehrere Seiten setzen: je Seite so viele Zeilen jeder Zelle, wie passen; die Zelle steht auf jeder Seite mit ihrem Teil."""
+        rest = {id(c): list(inhalt[id(c)][1]) for c in zellen}
+        ab = {id(c): 0.0 for c in zellen}                                   # bis zu dieser Höhe ist der Inhalt der Zelle gesetzt
+        while True:
+            raum = self.frei() - self.y - luecke
+            if raum < MIN_TEILHOEHE and not self.leer:
+                self.weiter()
+                continue
+            teile, teil_h, fertig = [], 0.0, True
+            for c in zellen:
+                _l, o, _r, u = innen(c)
+                liste = rest[id(c)]
+                grenze = ab[id(c)] + raum - o - u - rand
+                n = 0
+                while n < len(liste) and liste[n].rect.bottom <= grenze + 0.01:
+                    n += 1
+                if n == 0 and liste and self.leer:                          # passt auf keine Seite: das erste Stück (mit allem, was darin liegt) steht trotzdem hier
+                    n = 1
+                    while n < len(liste) and liste[n].rect.bottom <= liste[0].rect.bottom + 0.01:
+                        n += 1
+                nimm, rest[id(c)] = liste[:n], liste[n:]
+                unten = max((p.rect.bottom for p in nimm), default=ab[id(c)])
+                teile.append((c, nimm, ab[id(c)]))
+                teil_h = max(teil_h, unten - ab[id(c)] + o + u + rand)
+                if rest[id(c)]:
+                    fertig = False
+                    ab[id(c)] = min(p.rect.y for p in rest[id(c)])
+            if not fertig and not self.leer and not any(nimm for _c, nimm, _a in teile):
+                for c, _nimm, a in teile:
+                    ab[id(c)] = a
+                self.weiter()
+                continue
+            if not fertig:
+                teil_h = max(teil_h, raum)                                  # die Zelle reicht bis zum Seitenende
+            y0 = self.rand_oben + self.y
+            for c, nimm, a in teile:
+                l, o, _r, _u = innen(c)
+                zr = zelle_platz(c, self.seite, self.links(), y0, teil_h)
+                self.auf_seite_setzen(nimm, zr.x + rand / 2 + l, zr.y + rand / 2 + o - a)
+            self.y += teil_h + luecke
+            self.leer = False
+            if fertig:
+                return
+            self.weiter()
+
+    # ---- Endnoten ----
+    def endnoten_setzen(self) -> None:
+        """Die Endnoten am Ende des Dokuments: Trennstrich, dann jede Note mit kleiner römischer Nummer in der Reihenfolge ihrer Marken; sie fließen wie Text über die Seiten."""
+        texte = {n.id: n.text for n in self.dok.notes if n.kind == "e"}
+        ids = [nid for nid in dict.fromkeys(self.endnoten) if nid in texte]
+        if not ids or self.seite is None:
+            return
+        erste = self.noten_satz(E._roemisch(1), texte[ids[0]], self.breite())
+        self.abstand_vor(NOTEN_TRENNER)
+        self.platz_fuer(erste.zeilen[0].hoehe)
+        self.seite.plaetze.append(Platz("notenlinie", Rect(self.links(), self.rand_oben + self.y - NOTEN_TRENNER / 2, self.breite() * NOTEN_LINIE_ANTEIL, 0.0), ("note",)))
+        for n, nid in enumerate(ids, 1):
+            satz = self.noten_satz(E._roemisch(n), texte[nid], self.breite())
+            for i, z in enumerate(satz.zeilen):
+                self.platz_fuer(z.hoehe)
+                self.seite.plaetze.append(Platz("endnote", Rect(self.links(), self.rand_oben + self.y, self.breite(), z.hoehe), ("note", nid), i, satz))
+                self.y += z.hoehe
+                self.leer = False
+            self.y += NOTEN_ABSTAND
 
 def _noten_platzieren(self) -> None:
     """Die Fußnoten unten auf jede Seite mit Marken setzen (Rechtecke in Seitenkoordinaten)."""
@@ -434,6 +640,7 @@ def _noten_platzieren(self) -> None:
         seite = self.erg.seiten[index]
         unten = self.rand_oben + self.hoehe
         y = unten - self.noten_hoehe(eintraege) + NOTEN_TRENNER
+        seite.plaetze.append(Platz("notenlinie", Rect(self.rand_links, y - NOTEN_TRENNER / 2, self.spalten[0][1] * NOTEN_LINIE_ANTEIL, 0.0), ("note",)))
         for nr, nid in eintraege:
             satz = self.note_satz(nr, nid)
             seite.plaetze.append(Platz("fussnote", Rect(self.rand_links, y, self.spalten[0][1], satz.hoehe), ("note", nid), 0, satz))
@@ -459,5 +666,6 @@ def umbrechen(dok: Document, engine: TextLayoutEngine) -> Ergebnis:
         f.blocks(s.content, (nr,))
     if not f.erg.seiten:
         f.neue_seite()
+    f.endnoten_setzen()
     f.noten_platzieren()
     return f.erg

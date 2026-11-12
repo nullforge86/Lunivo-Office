@@ -110,6 +110,10 @@ class RenderBackend:
         ``effects`` = Effekte (``editor/text/textfx.py``), ``contour`` = {"farbe", "breite", "stil"}, ``highlight`` = Farbe hinter der Zeile."""
         raise NotImplementedError
 
+    def draw_text_path(self, text: str, font, origin: Point, style: Style) -> None:
+        """Den Umriss der Buchstaben als Pfad füllen und/oder mit einer Kontur zeichnen (``origin`` = Anfang der Grundlinie; Füllung auch als Verlauf)."""
+        raise NotImplementedError
+
     def draw_shadow(self, ops: list, color: RGBA, blur: float, dx: float, dy: float) -> None:
         """Schatten eines Pfades: die Fläche in ``color`` (mit ihrem Alphawert), um (dx, dy) versetzt und mit Radius ``blur`` weichgezeichnet."""
         raise NotImplementedError

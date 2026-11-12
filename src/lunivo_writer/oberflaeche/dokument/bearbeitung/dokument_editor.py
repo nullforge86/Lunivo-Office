@@ -582,6 +582,16 @@ class DocumentEditor(LaufBaustein, AnzeigeBaustein, SpaltenBaustein, SeitenBaust
             self._teilen_danach(teilen)
         if folge:
             self._folge_danach(*folge)
+        self._auswahl_uebernehmen()                                # die Sitzung kennt Schreibmarke und Auswahl nach jeder Taste
+
+    def _auswahl_uebernehmen(self) -> None:
+        """Schreibmarke und Auswahl des Editors in die Bearbeitungssitzung übernehmen (Oberfläche → Adapter → Sitzung)."""
+        if self.zu_gross_fuer_spiegel():
+            return
+        self.modell_spiegel().cursor_uebernehmen(self.textCursor())
+
+    def zu_gross_fuer_spiegel(self) -> bool:
+        return self.modell_spiegel().zu_gross()
 
 
     def _teilen_vorher(self, e):

@@ -1,5 +1,5 @@
 """Eine Seite aus dem Ergebnis des Qt-freien Seitenumbruchs (``core.layout.umbrechen``) auf ein ``RenderBackend`` zeichnen: Seitenfarbe, Tabellenzellen (Füllung, Rahmen), Absatzzeilen mit
-Läufen (Schrift, Farbe, Unterstreichen, Hervorheben, Bilder in der Zeile), Aufzählungszeichen und Fußnoten. Alle Maße kommen aus dem Layout; hier wird nur gezeichnet."""
+Läufen (Schrift, Farbe, Unterstreichen, Hervorheben, hoch-/tiefgestellt, Tabulatoren, Bilder in der Zeile), Rahmen, Absatzhintergrund, Aufzählungszeichen, Fuß- und Endnoten mit Trennstrich. Alle Maße kommen aus dem Layout; hier wird nur gezeichnet."""
 from __future__ import annotations
 
 import json
@@ -9,11 +9,17 @@ from lunivo_writer.core.geometry import Point, Rect
 from lunivo_writer.core.layout.objekte import objekt_rechteck
 from lunivo_writer.core.layout.seitenumbruch import Ergebnis
 from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.linien import zeichne_absatzrahmen
 from lunivo_writer.core.rendering.objekte import zeichne_bild
-from lunivo_writer.core.rendering.tabelle import ausfuehren, zelle_anweisungen
+from lunivo_writer.core.rendering.tabelle import ausfuehren, rahmen_anweisungen, zelle_anweisungen
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 from lunivo_writer.core.textlayout.hb_engine import LEERZEICHEN
-from lunivo_writer.core.textlayout.paragraph import Absatzsatz, Objekt
+from lunivo_writer.core.textlayout.paragraph import TAB, Absatzsatz, Objekt
+
+PX_JE_PT = 96.0 / 72.0
+NOTENLINIE = Style(color=(128, 128, 128, 255), width=1.0)             # Trennstrich über Fuß- und Endnoten
+FUELL_STRICH = {".": "dot", "·": "dot", "-": "dash", "_": None}       # Füllzeichen der Tabstrecke → Strichart der Linie auf der Grundlinie
+FUELL_LUECKE = 2.0                                                    # Abstand der Füllung zum Text davor und dahinter
 
 
 def zeichne_zeile(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
@@ -35,18 +41,69 @@ def zeichne_zeile(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) ->
         farbe = lauf.stil.get("color") or (0, 0, 0, 255)
         if lauf.stil.get("highlight"):
             b.draw_rect(Rect(x, rect.y, breite, z.box.height), Style(color=lauf.stil["highlight"], width=0, filled=True))
-        if z.wort_zuschlag:                                           # Blocksatz: Wort für Wort, die Lücken sind breiter
+        text_y = grundlinie + lauf.stil.get("versatz", 0.0) * lauf.schrift.size_pt * PX_JE_PT      # hoch-/tiefgestellt: eigene Grundlinie
+        gesperrt = lauf.stil.get("sperrung") or lauf.stil.get("sperrung_prozent")
+        if gesperrt:                                                  # Laufweite: Zeichen für Zeichen an seiner Stelle
+            for i in range(start, ende):
+                if satz.text[i].strip():
+                    b.draw_text(satz.text[i], Point(rect.x + satz.cursor_x(i, zeile), text_y), lauf.schrift, Style(color=farbe))
+        elif z.wort_zuschlag or TAB in text or lauf.stil.get("wortabstand"):      # Blocksatz, Tabulatoren, Wortabstand: Wort für Wort, die Lücken sind breiter
             i = start
             for wort in _woerter(text):
-                if wort.strip(" \t"):
-                    b.draw_text(wort, Point(rect.x + satz.cursor_x(i, zeile), grundlinie), lauf.schrift, Style(color=farbe))
+                if wort.strip(" \t\n\u2028"):
+                    b.draw_text(wort, Point(rect.x + satz.cursor_x(i, zeile), text_y), lauf.schrift, Style(color=farbe))
                 i += len(wort)
         else:
-            b.draw_text(text.replace("\n", "").replace(" ", ""), Point(x, grundlinie), lauf.schrift, Style(color=farbe))
+            b.draw_text(text.replace("\n", "").replace("\u2028", ""), Point(x, text_y), lauf.schrift, Style(color=farbe))
         if lauf.stil.get("underline"):
-            b.draw_line(Point(x, grundlinie + 2), Point(x + breite, grundlinie + 2), Style(color=farbe, width=1.0))
+            strich = Style(color=lauf.stil.get("underline_color") or farbe, width=1.0, dash=lauf.stil.get("underline_dash"))
+            b.draw_line(Point(x, grundlinie + 2), Point(x + breite, grundlinie + 2), strich)
+        if lauf.stil.get("overline"):
+            b.draw_line(Point(x, rect.y + 1), Point(x + breite, rect.y + 1), Style(color=farbe, width=1.0))
         if lauf.stil.get("strike"):
             b.draw_line(Point(x, grundlinie - z.box.ascent / 3), Point(x + breite, grundlinie - z.box.ascent / 3), Style(color=farbe, width=1.0))
+
+
+def zeichne_tabfuellung(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
+    """Die Füllzeichen (Punkte, Striche, Linie) in den Strecken der Tabulatoren dieser Zeile, als Linie knapp unter der Grundlinie."""
+    z = satz.zeilen[zeile]
+    for i, zeichen in satz.tab_fuell.items():
+        if not z.box.start <= i < z.ende:
+            continue
+        x1, x2 = rect.x + satz.cursor_x(i, zeile) + FUELL_LUECKE, rect.x + satz.cursor_x(i + 1, zeile) - FUELL_LUECKE
+        if x2 <= x1:
+            continue
+        lauf = next((la for la in satz.laeufe if la.start <= i < la.ende), None)
+        farbe = (lauf.stil.get("color") if lauf is not None else None) or (0, 0, 0, 255)
+        y = rect.y + z.box.ascent + (0.0 if zeichen in ".·" else 1.0) - (z.box.ascent / 3 if zeichen in "·-" else 0.0)
+        b.draw_line(Point(x1, y), Point(x2, y), Style(color=farbe, width=1.0, dash=FUELL_STRICH.get(zeichen)))
+
+
+def zeichne_absatzrahmen_der_seite(b: RenderBackend, erg: Ergebnis, index: int) -> None:
+    """Die Rahmen um Absätze der Seite: aufeinanderfolgende Absätze mit gleicher Rahmenangabe teilen sich einen Rahmen (mit Linien dazwischen, wenn die Angabe „h“ nennt)."""
+    gruppen: list[list] = []                                           # [Angabe, letzter Pfad, [Fläche je Absatz]]
+    flaechen: dict[tuple, Rect] = {}
+    for p in erg.seiten[index].plaetze:
+        if p.art != "zeile" or p.kopie or not erg.absaetze[p.pfad].rahmen:
+            continue
+        alt = flaechen.get(p.pfad)
+        neu = p.rect if alt is None else Rect(min(alt.x, p.rect.x), min(alt.y, p.rect.y), max(alt.right, p.rect.right) - min(alt.x, p.rect.x),
+                                               max(alt.bottom, p.rect.bottom) - min(alt.y, p.rect.y))
+        if alt is None:
+            angabe = erg.absaetze[p.pfad].rahmen
+            letzte = gruppen[-1] if gruppen else None
+            nachbar = letzte is not None and letzte[0] == angabe and letzte[1][:-1] == p.pfad[:-1] and letzte[1][-1] + 1 == p.pfad[-1] and abs(flaechen[letzte[1]].x - p.rect.x) < 0.5
+            if nachbar:
+                letzte[1] = p.pfad
+                letzte[2].append(p.pfad)
+            else:
+                gruppen.append([angabe, p.pfad, [p.pfad]])
+        flaechen[p.pfad] = neu
+    for angabe, _letzter, pfade in gruppen:
+        rs = [flaechen[k] for k in pfade]
+        x, y = min(r.x for r in rs), min(r.y for r in rs)
+        gesamt = Rect(x, y, max(r.right for r in rs) - x, max(r.bottom for r in rs) - y)
+        zeichne_absatzrahmen(b, angabe, gesamt, [(a.bottom + c.y) / 2 for a, c in zip(rs, rs[1:])])
 
 
 def _woerter(text: str) -> list[str]:
@@ -123,24 +180,46 @@ def zeichne_seite(b: RenderBackend, erg: Ergebnis, index: int, engine: TextLayou
     if hintergrund and getattr(einr, "color", None):
         pw, ph = einr.width_mm * 96 / 25.4, einr.height_mm * 96 / 25.4
         b.draw_rect(Rect(0, 0, pw, ph), Style(color=rgba(einr.color), width=0, filled=True))
-    for p in seite.plaetze:
+    for p in seite.plaetze:                                           # hinter dem Text: Rahmen, Zellen, Absatzhintergrund (in der Reihenfolge des Layouts)
         if p.art == "zelle":
             zelle, tabelle = p.daten
             ausfuehren(b, zelle_anweisungen(p.rect, zelle, tabelle, float(tabelle.get("FrameBorder", 0.0) or 0.0), 1.0))
+        elif p.art == "rahmen" and isinstance(p.daten, dict):
+            ausfuehren(b, rahmen_anweisungen(p.rect, p.daten))
+        elif p.art == "zeile" and erg.absaetze[p.pfad].hintergrund:
+            b.draw_rect(p.rect, Style(color=erg.absaetze[p.pfad].hintergrund, width=0, filled=True))
     if dok is not None:
         zeichne_freie_bilder(b, dok, erg, index, True)
+    zeichne_absatzrahmen_der_seite(b, erg, index)
     for p in seite.plaetze:
         if p.art == "zeile":
             ort = erg.absaetze[p.pfad]
             zeichne_zeile(b, ort.satz, p.zeile, p.rect)
+            if ort.satz.tab_fuell:
+                zeichne_tabfuellung(b, ort.satz, p.zeile, p.rect)
             if p.zeile == 0 and ort.marke:
                 zeichne_marke(b, engine, ort.satz, ort.marke, p.rect)
+        elif p.art == "endnote" and p.daten is not None:
+            zeichne_zeile(b, p.daten, p.zeile, p.rect)
+        elif p.art == "notenlinie":
+            b.draw_line(Point(p.rect.x, p.rect.y), Point(p.rect.right, p.rect.y), NOTENLINIE)
         elif p.art == "fussnote" and p.daten is not None:
             for i in range(len(p.daten.zeilen)):
                 z = p.daten.zeilen[i]
                 zeichne_zeile(b, p.daten, i, Rect(p.rect.x, p.rect.y + z.y, p.rect.width, z.hoehe))
     if dok is not None:
         zeichne_freie_bilder(b, dok, erg, index, False)
+
+
+def zeichne_auswahl(b: RenderBackend, rechtecke: list[Rect], farbe: tuple[int, int, int, int]) -> None:
+    """Die Flächen einer Auswahl auf der Seite (``core.layout.navigation.auswahl_rechtecke``) in der Auswahlfarbe."""
+    for r in rechtecke:
+        b.draw_rect(r, Style(color=farbe, width=0, filled=True))
+
+
+def zeichne_cursor(b: RenderBackend, rect: Rect, farbe: tuple[int, int, int, int]) -> None:
+    """Die Schreibmarke (``core.layout.navigation.cursor_rechteck``)."""
+    b.draw_rect(rect, Style(color=farbe, width=0, filled=True))
 
 
 def zeichne_zeilennummern(b: RenderBackend, erg: Ergebnis, index: int, grund: FontSpec) -> None:

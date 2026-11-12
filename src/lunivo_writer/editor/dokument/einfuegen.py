@@ -241,28 +241,15 @@ WORDART_STANDARDTEXT = "Hier Text einfügen"
 
 
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
-    """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten."""
-    _n, f1, f2, kontur, kb, schatten = WORDART_VORLAGEN[nr]
-    f = QFont(schrift); f.setPointSizeF(pt); f.setBold(True)
-    fm = QFontMetricsF(f)
-    b, h = int(fm.horizontalAdvance(text)) + 40, int(fm.height()) + 40
+    """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten (gezeichnet über ``core/rendering/wordart.py``)."""
+    from lunivo_writer.adapter.qt.rendering import QtRenderBackend
+    from lunivo_writer.core.rendering import wordart
+    from lunivo_writer.dienste.textsatz import standard_engine
+    engine = standard_engine()
+    b, h = wordart.masse(engine, text, schrift, pt)
     img = _leer(b, h)
     p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing)
-    pfad = QPainterPath()
-    pfad.addText(20, 20 + fm.ascent(), f, text)
-    if schatten:
-        d = max(2.0, pt / 14)
-        p.setPen(Qt.NoPen); p.setBrush(QColor(schatten))
-        p.translate(d, d); p.drawPath(pfad); p.translate(-d, -d)
-    g = QLinearGradient(0, 20, 0, h - 20)
-    g.setColorAt(0, QColor(f1)); g.setColorAt(1, QColor(f2))
-    if kontur:
-        pen = QPen(QColor(kontur)); pen.setWidthF(kb * max(1.0, pt / 36)); pen.setJoinStyle(Qt.RoundJoin); p.setPen(pen)
-    else:
-        p.setPen(Qt.NoPen)
-    p.setBrush(QBrush(g))
-    p.drawPath(pfad)
+    wordart.zeichne(QtRenderBackend(p), engine, text, WORDART_VORLAGEN[nr], schrift, pt)
     p.end()
     return img
 

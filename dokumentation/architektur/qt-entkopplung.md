@@ -235,3 +235,47 @@ Ursachen der Abweichungen, soweit untersucht: (1) Schriften, die auf dem Rechner
 | Modell als PDF | `adapter/qt/pdf_modell.py`, `dienste/modell_speichern.py` | Speichern aus dem Modell (`.pdf`) |
 
 Weiterhin direkt am `QTextDocument`: Auswahl und Cursorbewegung, Löschen über Absatz- und Zellgrenzen, Zwischenablage (fremder Inhalt), Eingabemethoden und Überschreibmodus, WordArt/SmartArt/Diagramme, der Seitenlauf selbst und die Anzeige. Ab 1500 Absätzen führen die Befehle das Modell nicht nach (Schwelle `GROSS` in `adapter/qt/bearbeitung.py`), weil der Neuaufbau nach Änderungen der Oberfläche sonst zu langsam wäre; ein Spiegel mit schrittweisem Abgleich ist der nächste Schritt dafür.
+
+### Nachtrag 2 (nach dem Aufräumen der Versionsverwaltung)
+
+| Baustein | Dateien | Eingebunden in |
+|---|---|---|
+| Ausschneiden und Einfügen von reinem Text über Modell und Sitzung | `ModellSpiegel.loeschen/ersetzen`, `editor_schreibhilfe.cut`, `editor_einfuegen._einfuegen_mit` | Strg+X, Einfügen „Nur Text“ und Einfügen ohne Formatierung |
+| WordArt-Vorlagen ohne Qt | `core/rendering/wordart.py`, Backend-Operation `draw_text_path` | `einfuegen.wordart_vorlage_bild` (15 Stile pixelgleich) |
+| Cursor/Auswahl zwischen Qt und Sitzung | `ModellSpiegel.cursor_uebernehmen/cursor_setzen` | Sitzung (Navigation und Auswahl im Modell) |
+| Doppelte Konstanten entfernt | Fußnotenmaße (`core/layout/seitenumbruch.py`), Mindestbreite neben Rahmen (`core/textlayout/paragraph.py`) | `editor/seite/fussnoten.py`, `editor/layout/seitenplatz.py` |
+| Zwei alte Tests | `test_seitenfluss_*` prüfen die Qt-Anordnung (``seitenfluss.py``) und wählen sie jetzt ausdrücklich | `tests/oberflaeche/test_baukasten.py` |
+
+**Bleibt Qt (bewusste Grenze):** Auswahl und Cursorbewegung der Ansicht (`QTextCursor` ist die Quelle, die Sitzung übernimmt sie), Einfügen von Inhalten mit Formatierung aus fremden Programmen (Ausnahme der Projektregel „Kein HTML“), Eingabemethoden, SmartArt (`smartart_zeichnen.py`, 739 Zeilen Qt-Zeichnen in Bilder) und Diagramme, der Seitenlauf als `QAbstractTextDocumentLayout` des Editors.
+
+### Befund: Geometrie der Ansicht gegen den Kern-Seitenumbruch (SampleDoc.docx)
+
+Der Editor fragt pro Absatz das Rechteck beim Seitenlauf ab (`Seitenlauf.blockBoundingRect` aus `erg.rechtecke`). Der Kern-Seitenumbruch (`core/layout`) liefert für dieselben Absätze andere y-Werte:
+
+- Seite 1: Der Kern liegt um rund 96–100 px über Qt, weil er den oberen Seitenrand in den Rechtecken mitführt, Qt nicht.
+- Ab Seite 2 kommt ein zweiter, mit dem Blattabstand wachsender Versatz dazu.
+
+Eine Umstellung der Ansicht auf den Kern würde deshalb jede Seite verschieben. Vorher muss der Kern das Blatt wie der Seitenlauf in Blattkoordinaten (mit Blattabstand und ohne Randversatz in den Rechtecken) liefern; erst dann ist ein Pixelvergleich sinnvoll.
+
+**Nachtrag:** Der Kern-Seitenumbruch setzt jede Seite jetzt mit ihrer Blattoberkante (`Seite.oben`, Blattabstand wie im Seitenlauf). Die Kern-Rechtecke der Folgeseiten stimmen mit dem Seitenlauf überein (Seite 2 beginnt bei 96 px im Blatt). Die verbleibende Abweichung zu den Qt-Werten kommt aus einer anderen Blattbasis der Ansicht, nicht aus dem Umbruch. Damit ist die Geometrie vergleichbar; die Ansicht selbst ist noch nicht umgestellt.
+
+### Befund: Zeilenhöhen Kern gegen Seitenlauf (0013bcb8)
+
+Bei 4 von 5 geprüften Dokumenten stimmt die Seitenzahl des Kern-Umbruchs mit dem Seitenlauf überein. Bei 0013bcb8 erzeugt der Kern im letzten Abschnitt zwei Seiten mehr, weil er die Zeilen höher setzt (13 px gegen 9 bis 11 px an derselben Stelle). Ursache ist die Zeilenhöhe der Schrift und des Zeilenabstands, nicht die Seitenlogik. Die Ansicht ist deshalb noch nicht auf den Kern umgestellt; nächster Schritt: Zeilenhöhen im Textsatz an die Qt-Werte angleichen (ganzzahlige Zeilenhöhen, Zeilenabstand wie `QTextBlockFormat`).
+
+### Nachtrag 3 (2026-11-12): Kern-Seitenumbruch und Seitenbild erweitert
+
+| Baustein | Dateien | Wirkt in |
+|---|---|---|
+| Tabstopps (links, rechts, zentriert, Standardabstand des Dokuments, hängender Einzug als Stopp) | `core/textlayout/paragraph.py` (`absatz_setzen(tabs, tab_abstand)`), `core/layout/eigenschaften.tabstopps` | Kern-Seitenumbruch, Modell-Seitenbild, Modell-PDF |
+| Tabellen wie im Seitenlauf: Tabellenbreite und -ausrichtung, Außenrand, Rahmenstärke, Zellabstand je Seite, senkrechte Ausrichtung, Mindesthöhe der Zeile, wiederholte Kopfzeilen (`Platz.kopie`), verschachtelte Tabellen mit ihren Zellen | `core/layout/seitenumbruch.py` (`tabelle`, `spaltenbreiten`, `tabellenbreite`) | wie oben |
+| Tabellenzeile höher als eine Seite: wird zwischen ihren Textzeilen geteilt (der Seitenlauf kann das nicht) | `_Fluss.zeile_teilen` | wie oben |
+| Rahmen als Block mit Rand, Rahmenstrich, Innenabstand, Füllung, fester Breite/Höhe | `_Fluss.rahmen`, `core/rendering/tabelle.rahmen_anweisungen` | wie oben |
+| Endnoten am Dokumentende (kleine römische Nummern, fließen über Seiten), Trennstrich über Fuß- und Endnoten (`notenlinie`) | `_Fluss.endnoten_setzen`, `core/rendering/seite.py` | wie oben |
+| Absatzhintergrund, hoch-/tiefgestellt, Schreibweise (groß, klein, Wortanfänge), Laufweite, Wortabstand, Unterstreichungsart und -farbe, Überstreichen | `core/layout/eigenschaften.py` (`stil`, `schreibweise`, `hintergrund`), `core/rendering/seite.zeichne_zeile` | wie oben |
+
+Prüfung: `tests/architektur/test_seitenumbruch_modell.py` (13 Tests), `test_textsatz_hb.py`, `test_core_ohne_qt.py` grün. Seitenzahl Kern gegen Seitenlauf an den ersten 60 Prüfdateien
+(`seitenumbruch_modell_vergleich.py --max 60`): vorher 53 gleich, jetzt 56, keine Datei schlechter. Nicht geprüft: das Aussehen der neuen Teile im Modell-Seitenbild (kein Bildvergleich).
+
+**Offen im Kern:** Kapitälchen, Absatzrahmen, Füllzeichen an Tabstopps, Dezimal-Tabstopp, Blocksatz vor Tabulatoren. **Nächster Schritt:** die Ansicht des Editors auf den Kern stützen
+(`LUNIVO_KERN_RECHTECKE` zum Standard machen: Tabellenzellen und Rahmen des Seitenlaufs aus `Ergebnis.seiten[*].plaetze`), danach der DOCX-Schreiber aus dem Modell.

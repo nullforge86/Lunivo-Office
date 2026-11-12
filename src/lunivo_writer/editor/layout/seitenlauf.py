@@ -42,6 +42,9 @@ def unterstuetzt(doc) -> bool:
     return True
 
 
+KERN_RECHTECKE = os.environ.get("LUNIVO_KERN_RECHTECKE", "0") == "1"       # "1": die Absatzrechtecke kommen aus dem Kern-Umbruch statt aus dem Seitenlauf (Umstellung, siehe Doku)
+
+
 class Seitenlauf(QAbstractTextDocumentLayout):
     """Setzt ein ``QTextDocument`` nach dem Seitenplan. Der Plan wird bei jeder Änderung des Dokuments neu aus den Abschnittsumbrüchen gebildet;
     ``basis`` ist die Einrichtung des ersten Abschnitts."""
@@ -834,7 +837,29 @@ class Seitenlauf(QAbstractTextDocumentLayout):
 
     def blockBoundingRect(self, block) -> QRectF:
         self._sicher()
+        if KERN_RECHTECKE:
+            r = self._kern_rechteck(block)
+            if r is not None:
+                return rect_to_qt(r)
         return rect_to_qt(self.erg.rechtecke.get(block.blockNumber(), Rect()))
+
+    def _kern_rechteck(self, block) -> Rect | None:
+        """Das Rechteck des ersten Zeilenstücks des Absatzes aus dem Qt-freien Seitenumbruch (``core/layout``); ``None``, wenn der Absatz dort nicht steht."""
+        from lunivo_writer.adapter.qt.dokument import document_from_qt
+        from lunivo_writer.core.layout import umbrechen
+        from lunivo_writer.dienste.textsatz import standard_engine
+        if self.__dict__.get("_kern_stand") != self.document().revision():
+            self._kern = umbrechen(document_from_qt(self.document(), self.basis), standard_engine())
+            self._kern_stand = self.document().revision()
+        ort = self._kern.absaetze.get(self._kern_pfad(block))
+        if ort is None or not ort.zeilen:
+            return None
+        seite, _z, r = ort.zeilen[0]
+        return Rect(r.x, r.y, r.width, ort.satz.hoehe)
+
+    def _kern_pfad(self, block):
+        """Der Pfad des Absatzes im Kern (Abschnitt, Absatz): wie ``core/editing.absaetze``, nur für Absätze auf der obersten Ebene."""
+        return (0, block.blockNumber())
 
     # ---- Bilder in der Zeile: Größe über den Bild-Handler, Zeichnen hier (Vektor für SVG und Metafile) -------------------------
     def drawInlineObject(self, painter, rechteck, objekt, position: int, format) -> None:

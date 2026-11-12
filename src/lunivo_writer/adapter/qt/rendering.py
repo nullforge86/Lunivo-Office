@@ -284,6 +284,16 @@ class QtRenderBackend(RenderBackend):
             p.drawLine(QPointF(origin.x, origin.y + 2), QPointF(origin.x + width, origin.y + 2))
         p.restore()
 
+    def draw_text_path(self, text: str, font, origin: Point, style: Style) -> None:
+        pf = QPainterPath()
+        pf.addText(origin.x, origin.y, _qfont(font), text)
+        self.p.save()
+        self.p.setRenderHint(QPainter.Antialiasing)
+        self.p.setPen(self._stift(style) if style.width > 0 else Qt.NoPen)
+        self.p.setBrush(_pinsel(style) if style.filled else Qt.NoBrush)
+        self.p.drawPath(pf)
+        self.p.restore()
+
     def draw_shadow(self, ops: list, color: tuple, blur: float, dx: float, dy: float) -> None:
         from lunivo_writer.editor.objekte import bildeffekte as E
         pf = self._vereinigt(self._pfade(ops), False)
