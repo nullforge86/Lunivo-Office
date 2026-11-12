@@ -53,11 +53,16 @@ class DocumentTab(QScrollArea):
             self.meta = loaded.meta
         self.editor.document().setDefaultFont(self.editor.document().defaultFont())
         self.editor.zusatz_binden(self.meta)
+        if loaded is not None and loaded.modell is not None:
+            self.editor.modell_spiegel(loaded.modell)
+        from lunivo_writer.oberflaeche.dokument.ansicht.modell_ansicht import KERN_ANSICHT
+        if KERN_ANSICHT:
+            self.set_layout("kern")
 
     def set_layout(self, art: str) -> None:
-        """blatt (Drucklayout) | web (Weblayout) | doppelt (Zwei Seiten, nur Ansicht)."""
+        """blatt (Drucklayout) | web (Weblayout) | doppelt (Zwei Seiten, nur Ansicht) | kern (Drucklayout aus dem Dokumentenkern, bearbeitbar über die Sitzung)."""
         from lunivo_writer.oberflaeche.dokument.ansicht.seiten_ansicht import SeitenAnsicht
-        if self.layout_art == "doppelt" and art != "doppelt":
+        if self.layout_art in ("doppelt", "kern") and art != self.layout_art:
             alt = self.takeWidget()
             if alt is not self._holder and alt is not None:
                 alt.deleteLater()
@@ -73,6 +78,16 @@ class DocumentTab(QScrollArea):
             self.takeWidget()
             self._holder.hide()
             self.setWidget(ansicht)
+        if art == "kern":
+            from lunivo_writer.oberflaeche.dokument.ansicht.modell_ansicht import ModellAnsicht
+            ansicht = ModellAnsicht(lambda: self.editor.modell_spiegel().sitzung())
+            ansicht.setReadOnly(self.editor.isReadOnly())
+            ansicht.set_zoom(self.editor.zoom)
+            self.editor.zoomChanged.connect(ansicht.set_zoom)
+            self.takeWidget()
+            self._holder.hide()
+            self.setWidget(ansicht)
+            ansicht.setFocus()
         self.layout_geaendert.emit(art)
 
     def resizeEvent(self, ev):

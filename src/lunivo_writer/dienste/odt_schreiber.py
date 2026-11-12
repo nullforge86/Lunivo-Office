@@ -20,11 +20,11 @@ from PySide6.QtGui import (QTextBlock, QTextBlockFormat, QTextCharFormat, QTextD
 
 from lunivo_writer.editor.objekte import bilddaten as BD
 from lunivo_writer.editor.text.fragmente import absatz_fragmente
-from lunivo_writer.editor.dokument.zusatz import B_BILDANKER, P_DEKORATIV
+from lunivo_writer.editor.dokument.zusatz import B_BILDANKER, P_DEKORATIV, P_NOTE
 from lunivo_writer.modelle.seite import PageSettings
 from lunivo_writer.modelle.bericht import IOReport
 from lunivo_writer.dienste.odt_schreiben_basis import (                       # noqa: F401  (rtf_writer, odt_bilder greifen hier zu)
-    _NS, AUSR_H, AUSR_V, BEZUG_H, BEZUG_V, MIMETYPE, _bild_elemente, _bild_stil, _frei_rahmen, _frei_stil, _laenge, _mm, _odf, _png, bild_aus_format, spannweite,
+    _NS, AUSR_H, AUSR_V, BEZUG_H, BEZUG_V, MIMETYPE, _bild_elemente, _bild_stil, _frei_form, _frei_rahmen, _frei_stil, _laenge, _mm, _odf, _png, bild_aus_format, spannweite,
 )
 from lunivo_writer.dienste.odt_seite_schreiben import ODF_ZAHL, _styles_xml          # noqa: F401
 
@@ -132,8 +132,9 @@ def _listen_ebene_xml(stil, n: int) -> str:
 class _Inhalt:
     """Baut content.xml aus dem QTextDocument: Absätze, Überschriften, Zeichenformat, Listen, Tabellen, Bilder."""
 
-    def __init__(self, doc: QTextDocument, rep: IOReport):
+    def __init__(self, doc: QTextDocument, rep: IOReport, meta: dict | None = None):
         self.doc, self.rep = doc, rep
+        self.noten = (meta or {}).get("noten", {})
         self.absatz_stile: dict[tuple, str] = {}
         self.text_stile: dict[tuple, str] = {}
         self.listen_stile: dict[int, tuple[str, str]] = {}      # id(QTextList) → (Name, XML)
@@ -194,6 +195,16 @@ class _Inhalt:
         from lunivo_writer.editor.objekte import freie_bilder as FB
         out = []
         for a in FB.aus_absatz(bf):
+            if a.get("art") == "form":
+                nr = len(self.rahmen_stile) + 1
+                stil = f"Fr{nr}"
+                self.rahmen_stile.append(_frei_stil(stil, a))
+                form = _frei_form(a, nr, stil)
+                if form:
+                    out.append(form)
+                else:
+                    self.rep.warn("Eine freie Form wurde nicht in die ODT-Datei übernommen.")
+                continue
             img = FB.bild_im_dokument(self.doc, a.get("n", ""))
             if img is None:
                 self.rep.warn("Ein Bild war nicht lesbar und fehlt in der ODT-Datei.")
@@ -203,6 +214,27 @@ class _Inhalt:
             out.append(_frei_rahmen(a, img, nr, f"Fr{nr}", self.bilder))
         return out
 
+    def _note(self, text: str, cf: QTextCharFormat) -> str | None:
+        marke = cf.stringProperty(P_NOTE)
+        if ":" not in marke:
+            return None
+        art, nummer = marke.split(":", 1)
+        if art not in ("f", "e") or not nummer.isdigit():
+            return None
+        eintraege = self.noten.get(art, {})
+        inhalt = eintraege.get(int(nummer), eintraege.get(nummer)) if isinstance(eintraege, dict) else None
+        if inhalt is None:
+            return None
+        klass = "endnote" if art == "e" else "footnote"
+        ident = ("etn" if art == "e" else "ftn") + nummer
+        absatz = f"<text:p>{_text_xml(str(inhalt))}</text:p>"
+        stil = self._text_stil(cf)
+        citation = _text_xml(text)
+        citation_xml = f'<text:span text:style-name="{stil}">{citation}</text:span>' if stil else citation
+        return (f'<text:note text:id="{ident}" text:note-class="{klass}">'
+                f"<text:note-citation>{citation_xml}</text:note-citation>"
+                f"<text:note-body>{absatz}</text:note-body></text:note>")
+
     def absatz(self, block: QTextBlock) -> str:
         bf = block.blockFormat()
         inhalt = self._freie_bilder(bf)
@@ -211,6 +243,10 @@ class _Inhalt:
             if cf.isImageFormat():
                 inhalt.append(self._bild(cf))
             else:
+                note = self._note(frag.text(), cf)
+                if note is not None:
+                    inhalt.append(note)
+                    continue
                 t = _text_xml(frag.text())
                 stil = self._text_stil(cf)
                 inhalt.append(f'<text:span text:style-name="{stil}">{t}</text:span>' if stil and t else t)
@@ -324,7 +360,7 @@ def _meta_xml(meta: dict) -> str:
 def odt_daten(doc: QTextDocument, page: PageSettings, meta: dict | None = None) -> tuple[bytes, IOReport]:
     """Baut die ODT-Datei im Speicher. → (Inhalt, Bericht über nicht Übernommenes)."""
     rep = IOReport()
-    inhalt = _Inhalt(doc, rep)
+    inhalt = _Inhalt(doc, rep, meta)
     kf_bilder: dict[str, bytes] = {}
     teile = {"content.xml": inhalt.xml().encode("utf-8"), "styles.xml": _styles_xml(page, doc, kf_bilder).encode("utf-8"),
              "meta.xml": _meta_xml(meta or {}).encode("utf-8")}
@@ -343,7 +379,7 @@ def odt_daten(doc: QTextDocument, page: PageSettings, meta: dict | None = None) 
 def _verluste_melden(rep: IOReport, page: PageSettings, meta: dict, fmt: str) -> None:
     """Was der direkte ODT-/RTF-Weg nicht mitnimmt — damit nichts still verloren geht."""
     noten = meta.get("noten") or {}
-    verluste = ((any(noten.get(a) for a in noten), f"Fuß- und Endnoten werden in {fmt} nicht gespeichert (nur in DOCX)."),
+    verluste = ((any(noten.get(a) for a in noten) and fmt != "ODT", f"Fuß- und Endnoten werden in {fmt} nicht gespeichert (nur in DOCX)."),
                 (meta.get("kommentare"), f"Kommentare werden in {fmt} nicht gespeichert (nur in DOCX)."),
                 (page.watermark, f"Das Wasserzeichen wird in {fmt} nicht gespeichert."),
                 (page.border, f"Der Seitenrahmen wird in {fmt} nicht gespeichert."),

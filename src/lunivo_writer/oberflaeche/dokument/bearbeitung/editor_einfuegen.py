@@ -54,18 +54,23 @@ class EinfuegenMixin:
     def _einfuegen_mit(self, source, modus: str, neu: bool) -> None:
         """Einfügen als EIN Rückgängig-Schritt; danach bietet die kleine Schaltfläche die anderen Formen an (Optionen ▸ Bearbeiten)."""
         c = self.textCursor()
-        c.beginEditBlock()
         start = c.selectionStart()
-        c.removeSelectedText()
-        if modus == "Nur Text" or not source.hasHtml():
-            c.insertText(source.text() if source.hasText() else "")
-        elif modus == "Zielformatierung verwenden":
-            c.insertFragment(_ziel_fragment(source.html(), self.document().defaultFont()))
+        if (modus == "Nur Text" or not source.hasHtml()) and not self.modell_spiegel().zu_gross():
+            self.text_ersetzen(c, source.text() if source.hasText() else "")                  # Oberfläche → Adapter → Kern → Ansicht
+            ende = c.position()
+            self.setTextCursor(c)
         else:
-            c.insertFragment(QTextDocumentFragment.fromHtml(source.html()))
-        ende = c.position()
-        c.endEditBlock()
-        self.setTextCursor(c)
+            c.beginEditBlock()
+            c.removeSelectedText()
+            if modus == "Nur Text" or not source.hasHtml():
+                c.insertText(source.text() if source.hasText() else "")
+            elif modus == "Zielformatierung verwenden":
+                c.insertFragment(_ziel_fragment(source.html(), self.document().defaultFont()))
+            else:
+                c.insertFragment(QTextDocumentFragment.fromHtml(source.html()))
+            ende = c.position()
+            c.endEditBlock()
+            self.setTextCursor(c)
         if neu and self.opt("bearbeiten/einfuegen_schaltflaeche", True) and ende > start and not self.isReadOnly():
             kopie = QMimeData()
             for f in source.formats():

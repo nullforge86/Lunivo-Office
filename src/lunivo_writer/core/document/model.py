@@ -2,19 +2,25 @@
 
 Formate sind benannte Eigenschaften (``properties``: Name → Wert, Werte siehe ``values.py``). Benannt wird nach der Eigenschaft des Formats (zum Beispiel
 ``FontWeight``, ``BlockAlignment``); Eigenschaften, die Lunivo selbst anlegt (Notenmarken, Änderungen, Abschnittsdaten, Effekte …), heißen ``user:<Zahl>``.
-Das Modell lässt keine Eigenschaft fallen: was ein Format trägt, steht in ``properties``. Eine Zuordnung zu fachlichen Namen (fett, Schriftgröße …) folgt in
-einer späteren Phase; bis dahin liest und schreibt der Qt-Adapter (``adapter/qt/dokument.py``) diese Namen verlustfrei."""
+Das Modell lässt keine Eigenschaft fallen: was ein Format trägt, steht verlustfrei in ``properties``. Häufige Zeichenmerkmale stehen zusätzlich in
+``CharacterFormat`` als semantische Felder; der Qt-Adapter (``adapter/qt/dokument.py``) hält beide Ansichten beim Rundlauf zusammen."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Union
 
-from lunivo_writer.core.document.values import PropertyValue
+from lunivo_writer.core.document.values import Color, LineSpacing, PropertyValue, RowHeight
 
 
 @dataclass
 class CharacterFormat:
     properties: dict[str, PropertyValue] = field(default_factory=dict)
+    family: str | None = None
+    size_pt: float | None = None
+    weight: int | None = None
+    italic: bool | None = None
+    foreground_color: Color | None = None
+    underline: bool | None = None
 
     def get(self, name: str, default: PropertyValue = None) -> PropertyValue:
         return self.properties.get(name, default)
@@ -26,6 +32,13 @@ class ParagraphFormat:
     char_format: CharacterFormat = field(default_factory=CharacterFormat)     # Format am Absatzende und für einen leeren Absatz
     list_id: int | None = None                                                # Zugehörigkeit zu einer Liste (``Document.lists``), None: keine
     visible: bool = True
+    alignment: str | None = None                                              # left | right | center | justify; sonst ``properties`` als Rückfall
+    space_before_px: float | None = None
+    space_after_px: float | None = None
+    left_indent_px: float | None = None
+    right_indent_px: float | None = None
+    first_line_indent_px: float | None = None
+    line_spacing: LineSpacing | None = None
 
 
 @dataclass
@@ -77,6 +90,8 @@ class TableCell:
 @dataclass
 class TableRow:
     cells: list[TableCell] = field(default_factory=list)                       # nur Zellen, die in dieser Zeile beginnen (verbundene Zellen stehen einmal)
+    minimum_height_px: float | None = None
+    row_height: RowHeight | None = None
 
 
 @dataclass

@@ -11,12 +11,17 @@ from lunivo_writer.modelle.seite import PageSettings
 
 
 def test_zeilenabstand_mindestens_hin_und_zurueck(app, tmp_path):
+    from lunivo_writer.adapter.qt.dokument import document_from_qt, document_to_qt
+    from lunivo_writer.core.document import LineSpacing
     d = QTextDocument()
     c = QTextCursor(d)
     bf = QTextBlockFormat()
     bf.setLineHeight(20.0, QTextBlockFormat.LineHeightTypes.MinimumHeight.value)
     c.setBlockFormat(bf)
     c.insertText("Zeile")
+    modell = document_from_qt(d, PageSettings())
+    assert modell.sections[0].content[0].format.line_spacing == LineSpacing("minimum", 20.0)
+    d = document_to_qt(modell)
     daten = docx_schreiber.docx_daten(d, PageSettings(), {})[0]
     assert 'w:lineRule="atLeast"' in zipfile.ZipFile(io.BytesIO(daten)).read("word/document.xml").decode()
     p = tmp_path / "m.docx"

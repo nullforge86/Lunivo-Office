@@ -41,12 +41,14 @@ class ZeichenformatMixin:
             return
         sp.ersetzen(cursor, text, fmt)
 
-    def modell_spiegel(self):
+    def modell_spiegel(self, modell=None):
         """Der Spiegel zwischen dem Textdokument des Editors und der Qt-freien Bearbeitungssitzung (``adapter/qt/bearbeitung.py``)."""
         from lunivo_writer.adapter.qt.bearbeitung import ModellSpiegel
         sp = self.__dict__.get("_modell_spiegel_obj")
         if sp is None or sp.qdoc is not self.document():
-            sp = self.__dict__["_modell_spiegel_obj"] = ModellSpiegel(self.document(), getattr(self, "page", None))
+            sp = self.__dict__["_modell_spiegel_obj"] = ModellSpiegel(self.document(), getattr(self, "page", None), modell)
+        elif modell is not None:
+            sp.modell_vorbelegen(modell)
         return sp
 
     def toggle_bold(self, on: bool) -> None:

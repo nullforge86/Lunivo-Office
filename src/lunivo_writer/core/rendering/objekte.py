@@ -53,11 +53,22 @@ def zeichne_bild(b: RenderBackend, obj: ImageObject, rect: Rect, daten: bytes | 
     ``daten`` überschreibt die Bilddaten des Objekts (zum Beispiel ein zugeschnittenes Bild), ``fuellbild`` ist das Bild einer Bildfüllung; ohne Bilddaten wird ein Platzhalter gezeichnet."""
     if rect.width <= 0 or rect.height <= 0:
         return
-    drehung = obj.transform.rotation
-    b.push_state(opacity=obj.opacity, translate=Point(rect.x + rect.width / 2, rect.y + rect.height / 2) if drehung else None, rotate=drehung, antialias=True)
-    ziel = Rect(-rect.width / 2, -rect.height / 2, rect.width, rect.height) if drehung else rect
+    transform = obj.transform
+    veraendert = bool(transform.rotation or transform.flip_h or transform.flip_v)
+    b.push_state(opacity=obj.opacity, translate=Point(rect.x + rect.width / 2, rect.y + rect.height / 2) if veraendert else None,
+                 rotate=transform.rotation, antialias=True, flip_h=transform.flip_h, flip_v=transform.flip_v)
+    ziel = Rect(-rect.width / 2, -rect.height / 2, rect.width, rect.height) if veraendert else rect
     bytes_ = daten if daten is not None else obj.data
-    ellipse = obj.ellipse
+    ellipse = obj.ellipse or str(obj.mask).casefold() in ("ellipse", "kreis")
+    source_rect = None
+    if bytes_ and isinstance(obj.crop, (list, tuple)) and len(obj.crop) == 4:
+        try:
+            links, oben, rechts, unten = (max(0.0, min(1.0, float(v))) for v in obj.crop)
+            breite, hoehe = max(0.0, 1.0 - links - rechts), max(0.0, 1.0 - oben - unten)
+            if breite > 0.0 and hoehe > 0.0 and (links or oben or rechts or unten):
+                source_rect = Rect(links, oben, breite, hoehe)
+        except (TypeError, ValueError):
+            source_rect = None
     if obj.effects and bytes_:
         b.draw_effects_behind(bytes_, ziel, ellipse, obj.effects)
         bytes_, ellipse = b.apply_image_effects(bytes_, ziel, ellipse, obj.effects)
@@ -66,7 +77,10 @@ def zeichne_bild(b: RenderBackend, obj: ImageObject, rect: Rect, daten: bytes | 
     if stil is not None:
         b.draw_rect(ziel, stil)
     if bytes_:
-        b.draw_image(bytes_, ziel, smooth=True)
+        if source_rect is None:
+            b.draw_image(bytes_, ziel, smooth=True)
+        else:
+            b.draw_image(bytes_, ziel, smooth=True, source_rect=source_rect)
     else:
         zeichne_platzhalter(b, ziel)
     b.pop_state()
@@ -111,9 +125,11 @@ def zeichne_form(b: RenderBackend, s: ShapeObject, rect: Rect) -> bool:
     pfad = form_pfad(s, rect)
     if pfad is None:
         return False
-    drehung = s.transform.rotation
-    b.push_state(opacity=s.opacity, translate=Point(rect.x + rect.width / 2, rect.y + rect.height / 2) if drehung else None, rotate=drehung, antialias=True)
-    if drehung and s.path is None:
+    transform = s.transform
+    veraendert = bool(transform.rotation or transform.flip_h or transform.flip_v)
+    b.push_state(opacity=s.opacity, translate=Point(rect.x + rect.width / 2, rect.y + rect.height / 2) if veraendert else None,
+                 rotate=transform.rotation, antialias=True, flip_h=transform.flip_h, flip_v=transform.flip_v)
+    if veraendert and s.path is None:
         rect = Rect(-rect.width / 2, -rect.height / 2, rect.width, rect.height)
         pfad = form_pfad(s, rect)
     if s.shadow:

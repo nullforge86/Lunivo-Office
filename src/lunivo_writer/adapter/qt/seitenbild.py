@@ -32,34 +32,55 @@ def _kopf_fuss(p: QPainter, einr, n: int, nr_offset: int, total: int, grund, eng
             return
 
 
-def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> list[QImage]:
-    """Alle Seiten des Modells als Bilder (``faktor`` 1.0 = 96 dpi)."""
+def grundschrift(modell: Document):
+    """Die Grundschrift des Modells als ``QFont`` (für Kopf-/Fußzeile und Zeilennummern)."""
     from lunivo_writer.adapter.qt.dokument import _setzen
-    from lunivo_writer.adapter.qt.textlayout import _fontspec_aus
-    from lunivo_writer.editor.seite.seiten_aufteilung import _start_nummer
-    engine = engine or standard_engine()
-    erg = umbrechen(modell, engine)
     cf = QTextCharFormat()
     _setzen(cf, modell.default_format.properties)
-    grund = cf.font()
+    return cf.font()
+
+
+def seite_malen(p: QPainter, modell: Document, erg, i: int, engine, grund, darunter=None) -> None:
+    """Seite ``i`` des gesetzten Modells auf den Painter (Ursprung = obere linke Blattecke, 96 dpi): Seitenschmuck, Kopf-/Fußzeile, Inhalt, Zeilennummern.
+    ``darunter(backend)`` zeichnet zwischen Seitenschmuck und Text (zum Beispiel die Auswahl)."""
+    from lunivo_writer.adapter.qt.textlayout import _fontspec_aus
+    from lunivo_writer.editor.objekte import freie_bilder as FB
+    from lunivo_writer.editor.seite.seiten_aufteilung_deko import frei_zeichnen
+    from lunivo_writer.editor.seite.seiten_aufteilung import _start_nummer
+    einr = erg.seiten[i].einrichtung
+    backend = QtRenderBackend(p)
+    seitenbilder = FB.objekte_der_seite(einr, None, i + 1, {}) if einr is not None else []
+    if einr is not None and hasattr(einr, "kopf_fuss"):                              # Seitenschmuck und Kopf-/Fußzeile: die Bausteine des Editors (Seitenfarbe, Rahmen, Wasserzeichen)
+        zeichne_seitenschmuck(backend, engine, einr, True, None, "hinten")
+        frei_zeichnen(p, seitenbilder, True)                                           # Kopf-/Fußbilder hinter Text und Wasserzeichen
+        _kopf_fuss(p, einr, i + 1, _start_nummer(einr), len(erg.seiten), grund, engine)
+    if darunter is not None:
+        darunter(backend)
+    zeichne_seite(backend, erg, i, engine, False, modell)
+    zeichne_zeilennummern(backend, erg, i, _fontspec_aus(grund))
+    if einr is not None and hasattr(einr, "kopf_fuss"):
+        frei_zeichnen(p, seitenbilder, False)                                          # Vordergrundbilder über Dokument und Kopf-/Fußtext
+        zeichne_seitenschmuck(backend, engine, einr, False, None, "vorn", False)
+
+
+def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> list[QImage]:
+    """Alle Seiten des Modells als Bilder (``faktor`` 1.0 = 96 dpi)."""
+    from lunivo_writer.kern.farben import Farbe
+    engine = engine or standard_engine()
+    erg = umbrechen(modell, engine)
+    grund = grundschrift(modell)
     bilder = []
     for i, s in enumerate(erg.seiten):
         einr = s.einrichtung
         w = round((einr.width_mm if einr is not None else 210.0) * 96 / 25.4 * faktor)
         h = round((einr.height_mm if einr is not None else 297.0) * 96 / 25.4 * faktor)
         img = QImage(w, h, QImage.Format_RGB32)
-        img.fill(QColor("white"))
+        img.fill(QColor(Farbe.PAPIER))
         p = QPainter(img)
         p.setRenderHint(QPainter.Antialiasing)
         p.setRenderHint(QPainter.TextAntialiasing)
         p.scale(faktor, faktor)
-        if einr is not None and hasattr(einr, "kopf_fuss"):                              # Seitenschmuck und Kopf-/Fußzeile: die Bausteine des Editors (Seitenfarbe, Rahmen, Wasserzeichen)
-            zeichne_seitenschmuck(QtRenderBackend(p), engine, einr, True, None, "hinten")
-            _kopf_fuss(p, einr, i + 1, _start_nummer(einr), len(erg.seiten), grund, engine)
-        zeichne_seite(QtRenderBackend(p), erg, i, engine, False, modell)
-        zeichne_zeilennummern(QtRenderBackend(p), erg, i, _fontspec_aus(grund))
-        if einr is not None and hasattr(einr, "kopf_fuss"):
-            zeichne_seitenschmuck(QtRenderBackend(p), engine, einr, False, None, "vorn", False)
+        seite_malen(p, modell, erg, i, engine, grund)
         p.end()
         bilder.append(img)
     return bilder

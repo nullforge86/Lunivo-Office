@@ -12,9 +12,8 @@ Koordinaten: Blattraum in Bildpunkten der Anzeige, also schon mit dem Zoom (``zo
 (``BLATT_ABSTAND_PX`` dazwischen), links ausgerichtet. Schrift und Zeilen setzt Qt über das Zeichengerät des Zooms, Maße des Dokuments
 (Ränder, Einzüge, Bildgrößen) multipliziert der Lauf selbst mit dem Zoom.
 
-Stand: Absätze mit Ausrichtung, Rändern, Einzug, Zeilenabstand, Seitenumbruch davor, Spalten, Seitenumbruch und Bilder in der Zeile.
-Tabellen, Rahmen, schwebende Bilder und Fußnoten kennt der Seitenlauf noch nicht. ``unterstuetzt(doc)`` sagt, ob ein Dokument nur aus Absätzen
-und Zeilenobjekten besteht; sonst bleibt das Dokument bei der Qt-Anordnung."""
+Stand: Absätze, Listen, Tabellen (auch verschachtelte Tabellen), Bilder in der Zeile, schwebende Rahmen und Fußnoten. Der Editor und der Blattweg
+für Druck und PDF verwenden dieselbe Anordnung. Dokumente mit Tabellen, Rahmen oder Fußnoten werden derzeit vollständig neu gesetzt."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -40,6 +39,9 @@ def unterstuetzt(doc) -> bool:
     """Kennt der Seitenlauf alles, was im Dokument steht? Absätze, Listen, Tabellen (auch verschachtelt), Bilder in der Zeile und schwebende Rahmen
     (Bilder mit Textumfluss) setzt er; ein Rahmen anderer Art wird wie ein Absatzblock gesetzt. Das Dokument braucht keinen Rückfall."""
     return True
+
+
+KERN_RECHTECKE = os.environ.get("LUNIVO_KERN_RECHTECKE", "0") == "1"       # "1": die Absatzrechtecke kommen aus dem Kern-Umbruch statt aus dem Seitenlauf (Umstellung, siehe Doku)
 
 
 class Seitenlauf(QAbstractTextDocumentLayout):
@@ -510,7 +512,12 @@ class Seitenlauf(QAbstractTextDocumentLayout):
                 es += 1
             return
         w_fest = fmt.width()
-        breite = (w_fest.rawValue() * z if w_fest.type() == QTextLength.FixedLength else platz.breite() / 3) + 0.0
+        if w_fest.type() == QTextLength.FixedLength:
+            breite = w_fest.rawValue() * z
+        elif w_fest.type() == QTextLength.PercentageLength:
+            breite = platz.breite() * w_fest.rawValue() / 100.0
+        else:
+            breite = platz.breite() / 3
         # Inhalt messen (Höhe), dann an die Stelle setzen
         messen = _FreiPlatz(0.0, 0.0, max(10.0, breite))
         marke = len(erg.zellen)
@@ -826,7 +833,7 @@ class Seitenlauf(QAbstractTextDocumentLayout):
 
     def frameBoundingRect(self, rahmen) -> QRectF:
         self._sicher()
-        if isinstance(rahmen, QTextTable):
+        if isinstance(rahmen, QTextFrame):
             r = self.erg.tabellen.get(rahmen.firstPosition())
             if r is not None:
                 return rect_to_qt(r)
@@ -834,7 +841,29 @@ class Seitenlauf(QAbstractTextDocumentLayout):
 
     def blockBoundingRect(self, block) -> QRectF:
         self._sicher()
+        if KERN_RECHTECKE:
+            r = self._kern_rechteck(block)
+            if r is not None:
+                return rect_to_qt(r)
         return rect_to_qt(self.erg.rechtecke.get(block.blockNumber(), Rect()))
+
+    def _kern_rechteck(self, block) -> Rect | None:
+        """Das Rechteck des ersten Zeilenstücks des Absatzes aus dem Qt-freien Seitenumbruch (``core/layout``); ``None``, wenn der Absatz dort nicht steht."""
+        from lunivo_writer.adapter.qt.dokument import document_from_qt
+        from lunivo_writer.core.layout import umbrechen
+        from lunivo_writer.dienste.textsatz import standard_engine
+        if self.__dict__.get("_kern_stand") != self.document().revision():
+            self._kern = umbrechen(document_from_qt(self.document(), self.basis), standard_engine())
+            self._kern_stand = self.document().revision()
+        ort = self._kern.absaetze.get(self._kern_pfad(block))
+        if ort is None or not ort.zeilen:
+            return None
+        seite, _z, r = ort.zeilen[0]
+        return Rect(r.x, r.y, r.width, ort.satz.hoehe)
+
+    def _kern_pfad(self, block):
+        """Der Pfad des Absatzes im Kern (Abschnitt, Absatz): wie ``core/editing.absaetze``, nur für Absätze auf der obersten Ebene."""
+        return (0, block.blockNumber())
 
     # ---- Bilder in der Zeile: Größe über den Bild-Handler, Zeichnen hier (Vektor für SVG und Metafile) -------------------------
     def drawInlineObject(self, painter, rechteck, objekt, position: int, format) -> None:

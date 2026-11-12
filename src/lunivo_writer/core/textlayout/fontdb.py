@@ -16,6 +16,13 @@ ERSATZ = {
     "segoe ui": "dejavu sans", "tahoma": "dejavu sans", "verdana": "dejavu sans", "georgia": "dejavu serif",
 }
 STANDARD = ("liberation sans", "dejavu sans", "carlito")
+# Qt-Wahl für Familien, die auf diesem System fehlen und die Fontconfig-Regeln nicht abdecken: so trifft der Kern dieselbe Ersatzschrift wie die Anzeige
+QT_ERSATZ = {"book antiqua": "noto sans", "garamond": "noto serif", "bookman old style": "urw bookman", "palatino linotype": "p052"}
+
+
+def ersatz_von_qt(familie: str) -> tuple[str, ...]:
+    """Die Ersatzfamilie, die Qt für ``familie`` wählt (leer, wenn sie nicht in ``QT_ERSATZ`` steht)."""
+    return (QT_ERSATZ[familie],) if familie in QT_ERSATZ else ()
 
 
 @dataclass(frozen=True)
@@ -74,7 +81,7 @@ class SchriftDatenbank:
         db = self._lesen()
         schluessel = familie.lower().strip()
         from lunivo_writer.core.textlayout.fontconfig import familien_liste
-        for k in (*familien_liste(schluessel), ERSATZ.get(schluessel, ""), *STANDARD):
+        for k in (*familien_liste(schluessel), *ersatz_von_qt(schluessel), ERSATZ.get(schluessel, ""), *STANDARD):
             if k in db:
                 break
         else:

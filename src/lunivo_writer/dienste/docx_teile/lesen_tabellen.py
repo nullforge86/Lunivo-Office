@@ -378,6 +378,7 @@ class TabellenMixin:
         """w:trHeight je Zeile als Mindesthöhe übernehmen (wie der Befehl „Zeilenhöhe“: Eigenschaft plus Innenabstand)."""
         from PySide6.QtGui import QFontMetricsF
         from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_setzen
+        from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART
         from lunivo_writer.modelle.seite import mm_to_px
         from PySide6.QtGui import QTextFrameFormat
         if qt.frameFormat().position() != QTextFrameFormat.InFlow:       # schwebende Tabelle (w:tblpPr): Qt stürzt beim Layout des halbfertigen Dokuments ab
@@ -386,6 +387,7 @@ class TabellenMixin:
         lay.documentSize()                                   # Layout jetzt setzen: vorher liefert blockBoundingRect 0
         for r, row in enumerate(table.rows):
             h = row._tr.xpath("w:trPr/w:trHeight/@w:val")
+            rules = row._tr.xpath("w:trPr/w:trHeight/@w:hRule")
             try:
                 tw = float(h[0]) if h else 0.0
             except ValueError:
@@ -401,4 +403,12 @@ class TabellenMixin:
                         if blk.isValid():
                             inhalt += lay.blockBoundingRect(blk).height()
                         b += 1
-                zeilenhoehe_setzen(qt, r, mm_to_px(tw / 1440 * 25.4), inhalt or QFontMetricsF(self.doc.defaultFont()).lineSpacing())
+                px = mm_to_px(tw / 1440 * 25.4)
+                zeilenhoehe_setzen(qt, r, px, inhalt or QFontMetricsF(self.doc.defaultFont()).lineSpacing())
+                art = "exact" if rules and rules[0] == "exact" else "minimum"
+                for c in range(qt.columns()):
+                    cell = qt.cellAt(r, c)
+                    if cell.isValid() and cell.row() == r:
+                        f = cell.format().toTableCellFormat()
+                        f.setProperty(int(P_ZEILE_HOEHE_ART.split(":")[1]), art)
+                        cell.setFormat(f)

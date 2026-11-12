@@ -83,7 +83,7 @@ class RenderBackend:
         raise NotImplementedError
 
     def push_state(self, opacity: float = 1.0, translate: Point | None = None, rotate: float = 0.0, clip: Rect | None = None,
-                   antialias: bool | None = None, clip_ellipse: Rect | None = None) -> None:
+                   antialias: bool | None = None, clip_ellipse: Rect | None = None, flip_h: bool = False, flip_v: bool = False) -> None:
         """Zeichenzustand sichern und ändern: Ausschnitt ``clip`` (Rechteck) oder ``clip_ellipse`` (Ellipse im Rechteck, im bisherigen Koordinatensystem), Kantenglättung, Deckkraft (mit der bisherigen multipliziert),
         dann Verschiebung, dann Drehung (Grad) um den neuen Ursprung."""
         raise NotImplementedError
@@ -92,8 +92,8 @@ class RenderBackend:
         """Den mit ``push_state`` gesicherten Zustand wiederherstellen."""
         raise NotImplementedError
 
-    def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0) -> None:
-        """Bild aus den Bytes einer Bilddatei (PNG, JPEG, GIF, BMP, TIFF, WebP; SVG und EMF/WMF als Vektor) in ``rect``; ``wash`` 0…1: so weit zum Weiß hin ausgewaschen."""
+    def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0, source_rect: Rect | None = None) -> None:
+        """Bild aus Bytes zeichnen. ``source_rect`` wählt einen normalisierten Quellausschnitt (0…1), ohne Quelldaten zu verändern."""
         raise NotImplementedError
 
     def apply_image_effects(self, data: bytes, rect: Rect, ellipse: bool, effects: dict) -> tuple[bytes, bool]:
@@ -108,6 +108,10 @@ class RenderBackend:
                           width: float, line_height: float, ascent: float, underline: bool = False) -> None:
         """Eine Textzeile mit Texteffekten (Schatten, Spiegelung, Leuchten, 3D, Kontur, Füllarten …): ``origin`` = Anfang der Grundlinie, ``width`` = Breite der Zeile,
         ``effects`` = Effekte (``editor/text/textfx.py``), ``contour`` = {"farbe", "breite", "stil"}, ``highlight`` = Farbe hinter der Zeile."""
+        raise NotImplementedError
+
+    def draw_text_path(self, text: str, font, origin: Point, style: Style) -> None:
+        """Den Umriss der Buchstaben als Pfad füllen und/oder mit einer Kontur zeichnen (``origin`` = Anfang der Grundlinie; Füllung auch als Verlauf)."""
         raise NotImplementedError
 
     def draw_shadow(self, ops: list, color: RGBA, blur: float, dx: float, dy: float) -> None:

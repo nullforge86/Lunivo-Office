@@ -10,7 +10,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QUrl, Qt
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QGradient, QImage, QLinearGradient, QPen, QRadialGradient, QPixmap, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat, QTextFrameFormat,
                            QTextImageFormat, QTextListFormat, QTextLength, QTextOption, QTextTable, QTextTableFormat)
 
-from lunivo_writer.core.document import (Brush, CharacterFormat, Color, Document, Frame, GradientBrush, Image, Length, ListFormat, Paragraph, ParagraphFormat, Pen, Section, Table, TextureBrush,
+from lunivo_writer.core.document import (Brush, CharacterFormat, Color, Document, Frame, GradientBrush, Image, Length, LineSpacing, ListFormat, Paragraph, ParagraphFormat, Pen, RowHeight, Section, Table, TextureBrush,
                                          TableCell, TableRow, TabStop, TextRun)
 from lunivo_writer.editor.objekte import bilddaten
 from lunivo_writer.editor.seite import abschnitte as AB
@@ -136,6 +136,131 @@ def _setzen(fmt: QTextFormat, props: dict) -> None:
         fmt.setProperty(_id(name), _zurueck(v))
 
 
+_ALIGNMENT_QT = {"left": 0x1, "right": 0x2, "center": 0x4, "justify": 0x8}
+
+
+def absatzformat_aus_qt(fmt: QTextBlockFormat, char_format: CharacterFormat | None = None,
+                        list_id: int | None = None, visible: bool = True) -> ParagraphFormat:
+    """Absatzformat samt unverändertem Qt-Eigenschaften-Bag und semantischen Ausrichtungs-, Abstands- und Einzugswerten lesen."""
+    props = eigenschaften(fmt)
+    roh = props.get("BlockAlignment")
+    try:
+        horizontal = int(roh) & 0xF
+    except (TypeError, ValueError):
+        horizontal = 0
+    ausrichtung = next((name for name, bit in (("justify", 0x8), ("center", 0x4), ("right", 0x2), ("left", 0x1))
+                        if horizontal & bit), None)
+    pixelwerte = {}
+    for feld, eigenschaft in (("space_before_px", "BlockTopMargin"), ("space_after_px", "BlockBottomMargin"),
+                              ("left_indent_px", "BlockLeftMargin"), ("right_indent_px", "BlockRightMargin"),
+                              ("first_line_indent_px", "TextIndent")):
+        wert = props.get(eigenschaft)
+        pixelwerte[feld] = float(wert) if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
+    zeilenabstand = None
+    if "LineHeightType" in props:
+        try:
+            art = {0: "single", 1: "proportional", 2: "fixed", 3: "minimum"}.get(int(props["LineHeightType"]))
+            wert = props.get("LineHeight", 0.0)
+            if art is not None and isinstance(wert, (int, float)) and not isinstance(wert, bool):
+                zeilenabstand = LineSpacing(art, float(wert))
+        except (TypeError, ValueError):
+            pass
+    return ParagraphFormat(props, char_format or CharacterFormat(), list_id, visible, ausrichtung, **pixelwerte, line_spacing=zeilenabstand)
+
+
+def absatzformat_zu_qt_properties(fmt: ParagraphFormat) -> dict:
+    """Semantische Absatzwerte in den Qt-Eigenschafts-Bag schreiben; unbekannte Werte und Alignment-Bits bleiben erhalten."""
+    props = dict(fmt.properties)
+    if fmt.alignment in _ALIGNMENT_QT:
+        try:
+            bisher = int(props.get("BlockAlignment", 0))
+        except (TypeError, ValueError):
+            bisher = 0
+        props["BlockAlignment"] = (bisher & ~0xF) | _ALIGNMENT_QT[fmt.alignment]
+    for feld, eigenschaft in (("space_before_px", "BlockTopMargin"), ("space_after_px", "BlockBottomMargin"),
+                              ("left_indent_px", "BlockLeftMargin"), ("right_indent_px", "BlockRightMargin"),
+                              ("first_line_indent_px", "TextIndent")):
+        wert = getattr(fmt, feld)
+        if wert is not None:
+            props[eigenschaft] = wert
+    if fmt.line_spacing is not None:
+        zeilenarten = {"single": (0, 1.0), "proportional": (1, 1.0), "multiple": (1, 100.0),
+                       "fixed": (2, 1.0), "minimum": (3, 1.0)}
+        umrechnung = zeilenarten.get(fmt.line_spacing.kind)
+        if umrechnung is not None:
+            art, faktor = umrechnung
+            props["LineHeightType"] = art
+            props["LineHeight"] = fmt.line_spacing.value * faktor
+    return props
+
+
+def zeichenformat_aus_qt(fmt: QTextFormat) -> CharacterFormat:
+    """Zeichenformat samt verlustfreiem Qt-Eigenschaften-Bag und häufigen semantischen Feldern lesen."""
+    props = eigenschaften(fmt)
+    familie = props.get("FontFamilies", props.get("FontFamily"))
+    if isinstance(familie, (tuple, list)):
+        familie = familie[0] if familie else None
+    if not isinstance(familie, str):
+        familie = None
+    groesse = props.get("FontPointSize")
+    if not isinstance(groesse, (int, float)) or groesse <= 0:
+        px = props.get("FontPixelSize")
+        groesse = float(px) * 72.0 / 96.0 if isinstance(px, (int, float)) and px > 0 else None
+    gewicht = props.get("FontWeight")
+    if not isinstance(gewicht, (int, float)) or isinstance(gewicht, bool):
+        gewicht = None
+    kursiv = props.get("FontItalic") if "FontItalic" in props else None
+    if kursiv is not None:
+        kursiv = bool(kursiv)
+    pinsel = props.get("ForegroundBrush")
+    farbe = pinsel.color if isinstance(pinsel, Brush) and pinsel.style == 1 else pinsel if isinstance(pinsel, Color) else None
+    unter = None
+    if "FontUnderline" in props or "TextUnderlineStyle" in props:
+        unter = bool(props.get("FontUnderline") or props.get("TextUnderlineStyle", 0))
+    return CharacterFormat(props, familie, float(groesse) if groesse is not None else None,
+                          int(gewicht) if gewicht is not None else None, kursiv, farbe, unter)
+
+
+def zeichenformat_zu_qt_properties(fmt: CharacterFormat) -> dict:
+    """Semantische Zeichenfelder in den verlustfreien Qt-Eigenschaften-Bag überführen; unbekannte Werte bleiben erhalten."""
+    props = dict(fmt.properties)
+    familie = props.get("FontFamilies", props.get("FontFamily"))
+    if isinstance(familie, (tuple, list)):
+        familie = familie[0] if familie else None
+    if fmt.family is not None and fmt.family != familie:
+        if isinstance(props.get("FontFamilies"), (tuple, list)):
+            alt = tuple(props["FontFamilies"])
+            props["FontFamilies"] = (fmt.family, *alt[1:])
+        elif "FontFamily" in props:
+            props["FontFamily"] = fmt.family
+        else:
+            props["FontFamilies"] = (fmt.family,)
+    groesse = props.get("FontPointSize")
+    if not isinstance(groesse, (int, float)) or groesse <= 0:
+        px = props.get("FontPixelSize")
+        groesse = float(px) * 72.0 / 96.0 if isinstance(px, (int, float)) and px > 0 else None
+    if fmt.size_pt is not None and fmt.size_pt != groesse:
+        if "FontPointSize" in props or "FontPixelSize" not in props:
+            props["FontPointSize"] = fmt.size_pt
+        if "FontPixelSize" in props:
+            props["FontPixelSize"] = fmt.size_pt * 96.0 / 72.0
+    if fmt.weight is not None and fmt.weight != props.get("FontWeight"):
+        props["FontWeight"] = fmt.weight
+    if fmt.italic is not None and fmt.italic != props.get("FontItalic"):
+        props["FontItalic"] = fmt.italic
+    pinsel = props.get("ForegroundBrush")
+    aktuelle_farbe = pinsel.color if isinstance(pinsel, Brush) and pinsel.style == 1 else pinsel if isinstance(pinsel, Color) else None
+    if fmt.foreground_color is not None and fmt.foreground_color != aktuelle_farbe:
+        stil = pinsel.style if isinstance(pinsel, Brush) else 1
+        props["ForegroundBrush"] = Brush(stil, fmt.foreground_color)
+    unter = bool(props.get("FontUnderline") or props.get("TextUnderlineStyle", 0))
+    if fmt.underline is not None and fmt.underline != unter:
+        props["FontUnderline"] = fmt.underline
+        if not fmt.underline and "TextUnderlineStyle" in props:
+            props["TextUnderlineStyle"] = 0
+    return props
+
+
 # ---- Qt → Modell --------------------------------------------------------------------------------------------------------------
 class _Lesen:
     def __init__(self, doc: QTextDocument):
@@ -163,7 +288,7 @@ def _png(img: QImage) -> bytes:
 def _bild(cf: QTextCharFormat, ctx: _Lesen, name: str | None = None) -> Image:
     img = _bild_daten(ctx.doc, name if name is not None else cf.toImageFormat().name())
     quelle = bilddaten.quelle_zu(img) if img is not None else None
-    return Image(_png(img) if img is not None else b"", CharacterFormat(eigenschaften(cf)),
+    return Image(_png(img) if img is not None else b"", zeichenformat_aus_qt(cf),
                  quelle.daten if quelle else None, quelle.format if quelle else None, quelle.ersatz_png if quelle else None,
                  bool(quelle.nur_raster) if quelle else False)
 
@@ -203,9 +328,11 @@ def _absatz(b, ctx: _Lesen, oberste_ebene: bool):
         if cf.isImageFormat():
             runs += [_bild(cf, ctx) for _ in range(max(1, len(f.text())))]
         else:
-            runs.append(TextRun(f.text(), CharacterFormat(eigenschaften(cf))))
+            runs.append(TextRun(f.text(), zeichenformat_aus_qt(cf)))
         it += 1
-    return Paragraph(ParagraphFormat(props, CharacterFormat(eigenschaften(b.charFormat())), list_id, b.isVisible()), runs), abschnitt
+    absatzformat = absatzformat_aus_qt(bf, zeichenformat_aus_qt(b.charFormat()), list_id, b.isVisible())
+    absatzformat.properties = props
+    return Paragraph(absatzformat, runs), abschnitt
 
 
 def _inhalt(it, ctx: _Lesen, oberste_ebene: bool = False, abschnitte: list | None = None) -> list:
@@ -228,6 +355,7 @@ def _inhalt(it, ctx: _Lesen, oberste_ebene: bool = False, abschnitte: list | Non
 
 
 def _tabelle(t: QTextTable, ctx: _Lesen) -> Table:
+    from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART, P_ZEILE_MINHOEHE
     tab = Table(t.rows(), t.columns(), eigenschaften(t.format()))
     for r in range(t.rows()):
         zeile = TableRow()
@@ -235,6 +363,14 @@ def _tabelle(t: QTextTable, ctx: _Lesen) -> Table:
             z = t.cellAt(r, c)
             if z.isValid() and z.row() == r and z.column() == c:
                 zeile.cells.append(TableCell(r, c, z.rowSpan(), z.columnSpan(), eigenschaften(z.format()), _inhalt(z.begin(), ctx)))
+        werte = [z.properties.get(P_ZEILE_MINHOEHE) for z in zeile.cells]
+        werte = [v for v in werte if isinstance(v, (int, float)) and v > 0]
+        zeile.minimum_height_px = max(werte) if werte else None
+        art = next((z.properties.get(P_ZEILE_HOEHE_ART) for z in zeile.cells if z.properties.get(P_ZEILE_HOEHE_ART) in ("minimum", "exact")), None)
+        if art is not None and zeile.minimum_height_px is not None:
+            zeile.row_height = RowHeight(art, zeile.minimum_height_px)
+        elif zeile.minimum_height_px is not None:
+            zeile.row_height = RowHeight("minimum", zeile.minimum_height_px)
         tab.table_rows.append(zeile)
     return tab
 
@@ -312,7 +448,7 @@ def document_from_qt(doc: QTextDocument, page=None) -> Document:
     schnitte = schnitte_bilden(oben, marken, page)
     grund = QTextCharFormat()
     grund.setFont(doc.defaultFont())
-    modell = Document(schnitte, CharacterFormat(eigenschaften(grund)), doc.documentMargin(), doc.indentWidth(),
+    modell = Document(schnitte, zeichenformat_aus_qt(grund), doc.documentMargin(), doc.indentWidth(),
                       eigenschaften(doc.rootFrame().frameFormat()), textoption_lesen(doc.defaultTextOption()), dict(ctx.listenformate))
     modell.media = medien_sammeln(modell, doc)
     return modell
@@ -331,12 +467,12 @@ def _runs_schreiben(cursor: QTextCursor, p: Paragraph, ctx: _Schreiben) -> None:
     for r in p.runs:
         cf = QTextCharFormat()
         if isinstance(r, TextRun):
-            _setzen(cf, r.format.properties)
+            _setzen(cf, zeichenformat_zu_qt_properties(r.format))
             if r.text:
                 cursor.insertText(r.text, cf)
             continue
         fmt = QTextImageFormat()
-        _setzen(fmt, r.format.properties)
+        _setzen(fmt, zeichenformat_zu_qt_properties(r.format))
         if r.raster_png:
             img = QImage.fromData(r.raster_png, "PNG")
             ctx.doc.addResource(QTextDocument.ImageResource, QUrl(fmt.name()), img)
@@ -346,12 +482,12 @@ def _runs_schreiben(cursor: QTextCursor, p: Paragraph, ctx: _Schreiben) -> None:
 
 
 def _absatz_schreiben(cursor: QTextCursor, p: Paragraph, ctx: _Schreiben, frisch: bool, marke: str | None) -> None:
-    props = dict(p.format.properties)
+    props = absatzformat_zu_qt_properties(p.format)
     if marke is not None:
         props[_name(int(AB.B_ABSCHNITT))] = marke
     bf, cf = QTextBlockFormat(), QTextCharFormat()
     _setzen(bf, props)
-    _setzen(cf, p.format.char_format.properties)
+    _setzen(cf, zeichenformat_zu_qt_properties(p.format.char_format))
     if frisch:
         cursor.setBlockFormat(bf)
         cursor.setBlockCharFormat(cf)
@@ -376,6 +512,7 @@ def _inhalt_schreiben(cursor: QTextCursor, bloecke: list, ctx: _Schreiben, frisc
             _absatz_schreiben(cursor, blk, ctx, frisch, letzte_marke if i == len(bloecke) - 1 else None)
             frisch = False
         elif isinstance(blk, Table):
+            from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART, P_ZEILE_MINHOEHE
             tf = QTextTableFormat()
             _setzen(tf, blk.properties)
             tabelle = cursor.insertTable(blk.rows, blk.columns, tf)
@@ -386,7 +523,17 @@ def _inhalt_schreiben(cursor: QTextCursor, bloecke: list, ctx: _Schreiben, frisc
             for z in zellen:
                 zelle = tabelle.cellAt(z.row, z.column)
                 zf = QTextCharFormat()
-                _setzen(zf, z.properties)
+                eig = dict(z.properties)
+                if z.row < len(blk.table_rows):
+                    zeile = blk.table_rows[z.row]
+                    hoehe = zeile.row_height
+                    if hoehe is not None:
+                        eig[P_ZEILE_MINHOEHE] = float(hoehe.value_px)
+                        eig[P_ZEILE_HOEHE_ART] = hoehe.kind
+                    elif zeile.minimum_height_px is not None:
+                        eig[P_ZEILE_MINHOEHE] = float(zeile.minimum_height_px)
+                        eig[P_ZEILE_HOEHE_ART] = "minimum"
+                _setzen(zf, eig)
                 zelle.setFormat(zf)
                 _inhalt_schreiben(zelle.firstCursorPosition(), z.content, ctx)
             cursor.setPosition(tabelle.lastPosition() + 1)
@@ -405,7 +552,7 @@ def document_to_qt(modell: Document) -> QTextDocument:
     """Aus dem Modell ein neues ``QTextDocument`` (Abschnittsmarken, Listen, Tabellen, Rahmen und Bilder inbegriffen)."""
     doc = QTextDocument()
     grund = QTextCharFormat()
-    _setzen(grund, modell.default_format.properties)
+    _setzen(grund, zeichenformat_zu_qt_properties(modell.default_format))
     doc.setDefaultFont(grund.font())
     doc.setDocumentMargin(modell.document_margin)
     doc.setIndentWidth(modell.indent_width)

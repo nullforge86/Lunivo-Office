@@ -47,14 +47,14 @@ class _ODTBilder:
             daten = self.bilder(href.lstrip("./"))
         return daten
 
-    def _frei_angabe(self, frame: ET.Element) -> dict | None:
+    def _frei_angabe(self, frame: ET.Element, form: bool = False) -> dict | None:
         """Ein Rahmen am Absatz oder an der Seite, den kein Text umfließt → Angabe wie in editor/objekte/freie_bilder.py, sonst None."""
         from lunivo_writer.dienste.odt_schreiben_basis import AUSR_H, AUSR_V, BEZUG_H, BEZUG_V
         anker = frame.get(_q("text:anchor-type"), "as-char")
         if anker not in ("paragraph", "char", "page"):
             return None
         g = self.stile.eigenschaften("graphic", frame.get(_q("draw:style-name")), "graphic")
-        if g.get("style:wrap") != "run-through":                # umflossene Bilder bleiben Bilder im Text
+        if not form and g.get("style:wrap") != "run-through":   # umflossene Bilder bleiben Bilder im Text
             return None
         zurueck = lambda tab, wert, standard: next((k for k, v in tab.items() if v == wert), standard)   # noqa: E731
         hpos, vpos = g.get("style:horizontal-pos", "from-left"), g.get("style:vertical-pos", "from-top")
@@ -65,9 +65,39 @@ class _ODTBilder:
                 "ah": zurueck(AUSR_H, hpos, ""), "av": zurueck(AUSR_V, vpos, ""),
                 "xh": _px(frame.get(_q("svg:x")), 0.0), "yv": _px(frame.get(_q("svg:y")), 0.0), "ellipse": False}
 
+    def form(self, node: ET.Element, cur: QTextCursor) -> None:
+        """Einfache freie ODT-Rechtecke und Ellipsen als native Formangabe übernehmen."""
+        formen = {_q("draw:rect"): "rechteck", _q("draw:ellipse"): "ellipse"}
+        art = formen.get(node.tag)
+        angabe = self._frei_angabe(node, form=True) if art else None
+        if angabe is None:
+            self.report.warn("Diese Zeichnung aus der ODT-Datei wurde nicht übernommen.")
+            return
+        eig = self.stile.eigenschaften("graphic", node.get(_q("draw:style-name")), "graphic")
+        fill_art = node.get(_q("draw:fill"), eig.get("draw:fill", "solid"))
+        fill = node.get(_q("draw:fill-color"), eig.get("draw:fill-color", "")) if fill_art != "none" else ""
+        stroke_art = node.get(_q("draw:stroke"), eig.get("draw:stroke", "solid"))
+        stroke = node.get(_q("svg:stroke-color"), eig.get("svg:stroke-color", "#000000")) if stroke_art != "none" else ""
+        stroke_width = _px(node.get(_q("svg:stroke-width"), eig.get("svg:stroke-width")), 1.0)
+        breite = _px(node.get(_q("svg:width")), 1.0)
+        hoehe = _px(node.get(_q("svg:height")), 1.0)
+        daten = {"form": art, "breite": breite, "hoehe": hoehe, "fuell": fill, "linie": stroke, "strich": stroke_width}
+        from PySide6.QtGui import QImage
+        from lunivo_writer.editor.objekte import freie_bilder as FB
+        name = FB.neuer_name(self.doc)
+        placeholder = QImage(1, 1, QImage.Format_ARGB32)
+        placeholder.fill(0)
+        self.doc.addResource(QTextDocument.ImageResource, QUrl(name), placeholder)
+        angabe.update(n=name, b=breite, h=hoehe, art="form", daten=daten)
+        FB.an_absatz(cur, angabe)
+
     def rahmen(self, frame: ET.Element, cur: QTextCursor) -> None:
         bild = frame.find(_q("draw:image"))
         if bild is None:
+            form = next((k for k in frame if k.tag in (_q("draw:rect"), _q("draw:ellipse"))), None)
+            if form is not None:
+                self.form(form, cur)
+                return
             if frame.find(_q("draw:text-box")) is not None:
                 self.report.warn("Textrahmen aus der ODT-Datei wurden als Text übernommen.")
                 for k in frame.find(_q("draw:text-box")).iter():

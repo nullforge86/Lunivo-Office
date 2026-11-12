@@ -98,16 +98,30 @@ def test_editor_absatzformat_laeuft_ueber_den_spiegel(app):
     c.setPosition(0); c.setPosition(7, QTextCursor.KeepAnchor)
     ed.setTextCursor(c)
     ed.set_alignment(Qt.AlignHCenter)
-    ed.change_indent(5)
+    ed.set_line_spacing(1.5)
+    ed.set_indents(5, 2, 3)
     b = ed.document().firstBlock()
     gesetzt = []
     while b.isValid():
         gesetzt.append((bool(b.blockFormat().alignment() & Qt.AlignHCenter), b.blockFormat().leftMargin() > 0))
         b = b.next()
     assert gesetzt == [(True, True), (True, True), (False, False)]                           # nur die ausgewählten Absätze
+    absatzformate = ed.modell_spiegel().sitzung().dok.sections[0].content
+    assert [p.format.alignment for p in absatzformate] == ["center", "center", None]
+    assert [(p.format.line_spacing.kind, p.format.line_spacing.value) if p.format.line_spacing else None for p in absatzformate] == [
+        ("proportional", 150), ("proportional", 150), None]
+    bf = ed.document().firstBlock().blockFormat()
+    assert (absatzformate[0].format.left_indent_px, absatzformate[0].format.right_indent_px,
+            absatzformate[0].format.first_line_indent_px) == pytest.approx((bf.leftMargin(), bf.rightMargin(), bf.textIndent()))
     assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
-    ed.document().undo()
+    assert ed.modell_spiegel().rueckgaengig()
     assert ed.document().firstBlock().blockFormat().leftMargin() == 0 and ed.document().firstBlock().blockFormat().alignment() & Qt.AlignHCenter
+    after = ed.modell_spiegel().sitzung().dok.sections[0].content[0].format
+    assert after.alignment == "center" and after.line_spacing.kind == "proportional" and after.line_spacing.value == 150
+    assert tuple(v or 0 for v in (after.left_indent_px, after.right_indent_px, after.first_line_indent_px)) == pytest.approx((0, 0, 0))
+    assert ed.modell_spiegel().rueckgaengig()
+    after = ed.modell_spiegel().sitzung().dok.sections[0].content[0].format
+    assert after.alignment == "center" and after.line_spacing is None
 
 
 def test_modell_bearbeiten_und_speichern(app, tmp_path):
@@ -346,6 +360,84 @@ def test_modell_als_pdf(app, tmp_path):
     assert n >= 2 and roh.startswith(b"%PDF") and roh.count(b"/Type /Page\n") + roh.count(b"/Type /Page ") + roh.count(b"/Type/Page") >= 2
 
 
+def test_drucken_modell_mehrere_abschnitte_druckbereich_und_reihenfolge(app, tmp_path):
+    from PySide6.QtGui import QTextCursor, QTextDocument
+    from PySide6.QtPrintSupport import QPrinter
+    from pypdf import PdfReader
+    from lunivo_writer.editor.seite import abschnitte
+    from lunivo_writer.editor.seite.seiten_aufteilung import print_document
+    from lunivo_writer.modelle.seite import PageSettings
+
+    erste = PageSettings(width_mm=180, height_mm=240, margin_top_mm=12, margin_bottom_mm=12,
+                         margin_left_mm=12, margin_right_mm=12)
+    zweite = PageSettings(width_mm=130, height_mm=190, margin_top_mm=10, margin_bottom_mm=10,
+                          margin_left_mm=10, margin_right_mm=10)
+    d = QTextDocument()
+    c = QTextCursor(d)
+    c.insertText("ERSTER ABSCHNITT")
+    abschnitte.einfuegen(d, c, "naechste", erste)
+    c.insertText("ZWEITER ABSCHNITT")
+    abschnitte.setzen(d, 1, zweite)
+
+    def pdf(name, start, end, opt=None):
+        printer = QPrinter(QPrinter.HighResolution)
+        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer.setResolution(96)
+        printer.setOutputFileName(str(tmp_path / name))
+        printer.setPrintRange(QPrinter.PageRange)
+        printer.setFromTo(start, end)
+        total = print_document(printer, d, erste, opt)
+        return total, PdfReader(str(tmp_path / name)).pages
+
+    total, nur_zweite = pdf("auswahl.pdf", 2, 2, {"nur_seiten": {2}})
+    assert total == 2 and len(nur_zweite) == 1
+    assert abs(float(nur_zweite[0].mediabox.width) - 130 * 72 / 25.4) < 1
+    assert abs(float(nur_zweite[0].mediabox.height) - 190 * 72 / 25.4) < 1
+    text = " ".join((nur_zweite[0].extract_text() or "").split())
+    assert "ZWEITER ABSCHNITT" in text
+    assert "ERSTER ABSCHNITT" not in text
+
+    _, umgekehrt = pdf("umgekehrt.pdf", 1, 2, {"umgekehrt": True})
+    assert len(umgekehrt) == 2
+    assert abs(float(umgekehrt[0].mediabox.width) - 130 * 72 / 25.4) < 1
+    assert "ZWEITER ABSCHNITT" in " ".join((umgekehrt[0].extract_text() or "").split())
+    assert abs(float(umgekehrt[1].mediabox.width) - 180 * 72 / 25.4) < 1
+    assert "ERSTER ABSCHNITT" in " ".join((umgekehrt[1].extract_text() or "").split())
+
+
+def test_drucken_modell_fussnote_aus_optionen(app, tmp_path, monkeypatch):
+    from PySide6.QtGui import QTextCharFormat, QTextCursor, QTextDocument
+    from PySide6.QtPrintSupport import QPrinter
+    from pypdf import PdfReader
+    from lunivo_writer.editor.dokument.zusatz import P_NOTE
+    from lunivo_writer.editor.seite import seiten_aufteilung as SA
+    from lunivo_writer.modelle.seite import PageSettings
+
+    d = QTextDocument()
+    c = QTextCursor(d)
+    c.insertText("Text mit Marke ")
+    marke = QTextCharFormat()
+    marke.setProperty(P_NOTE, "f:7")
+    c.insertText("7", marke)
+
+    def kein_qt_fallback(*_args, **_kwargs):
+        raise AssertionError("Fußnoten-Druck sollte über den Modellpfad laufen")
+
+    monkeypatch.setattr(SA, "render_dokument", kein_qt_fallback)
+    printer = QPrinter(QPrinter.HighResolution)
+    printer.setOutputFormat(QPrinter.PdfFormat)
+    printer.setResolution(96)
+    ziel = str(tmp_path / "fussnote.pdf")
+    printer.setOutputFileName(ziel)
+    total = SA.print_document(printer, d, PageSettings(), {"noten": {"f": {7: "Fußnotentext aus dem Modell"}}})
+
+    seiten = PdfReader(ziel).pages
+    assert total == 1 and len(seiten) == 1
+    text = " ".join((seiten[0].extract_text() or "").split())
+    assert "Text mit Marke 7" in text
+    assert "Fußnotentext aus dem Modell" in text
+
+
 def test_zelle_teilen_kern():
     from lunivo_writer.core.document import Paragraph, Table, TableCell, TableRow
     from lunivo_writer.core.editing import tabelle as T
@@ -438,3 +530,45 @@ def test_absaetze_verschmelzen_ueber_den_spiegel(app):
     assert ed.toPlainText() == "EinsZweiDrei"
     ed.document().undo()
     assert ed.toPlainText() == "EinsZwei\nDrei"
+
+
+def test_ausschneiden_ueber_den_spiegel(app):
+    from PySide6.QtGui import QGuiApplication, QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo schöne Welt")
+    c = ed.textCursor(); c.setPosition(5); c.setPosition(12, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+    ed.cut()
+    assert ed.toPlainText() == "Hallo Welt" and QGuiApplication.clipboard().text() == " schöne" and ed.textCursor().position() == 5
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo schöne Welt"
+
+
+def test_einfuegen_nur_text_ueber_den_spiegel(app):
+    from PySide6.QtCore import QMimeData
+    from PySide6.QtGui import QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    c = ed.textCursor(); c.setPosition(6); c.setPosition(10, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+    m = QMimeData(); m.setText("Du\nda")
+    ed.insertFromMimeData(m)
+    assert ed.toPlainText() == "Hallo Du\nda" and ed.textCursor().position() == 11
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo Welt"
+
+
+def test_auswahl_der_ansicht_in_der_sitzung(app):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    ed.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.ShiftModifier))
+    ed.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.ShiftModifier))
+    s = ed.modell_spiegel().sitzung()
+    assert s.auswahl() is not None and s.text(*s.auswahl()) == "Ha"

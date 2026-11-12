@@ -34,6 +34,68 @@ def test_seitenbereich_und_markierung(app, tmp_path):
     assert teil.toPlainText() == "Seite 1" and d.toPlainText().startswith("Seite 1 ")
 
 
+def test_einfacher_pdf_export_nutzt_dokumentenmodell_und_behaelt_seitenbereich(app, tmp_path, monkeypatch):
+    import lunivo_writer.editor.seite.seiten_aufteilung as SA
+    d = QTextDocument()
+    c = QTextCursor(d)
+    for i in range(3):
+        if i:
+            bf = QTextBlockFormat(); bf.setPageBreakPolicy(QTextBlockFormat.PageBreak_AlwaysBefore); c.insertBlock(bf)
+        c.insertText(f"Modellseite {i + 1}")
+    monkeypatch.setattr(SA, "render_dokument", lambda *a, **k: (_ for _ in ()).throw(AssertionError("Qt-Rückfall unerwartet")))
+    pfad = tmp_path / "modell.pdf"
+    assert export_pdf(str(pfad), d, PageSettings(), "Modell-Titel", "Autor", extra={"hyperlinks": True}, erste=2, letzte=2) == 1
+    r = PdfReader(str(pfad))
+    assert len(r.pages) == 1 and "Modellseite 2" in " ".join(r.pages[0].extract_text().split())
+    assert r.metadata.title == "Modell-Titel"
+    assert r.xmp_metadata.dc_creator == ["Autor"]
+
+
+def test_modell_pdf_export_zeichnet_verknuepfte_kopf_und_fusszeile(app, tmp_path, monkeypatch):
+    import lunivo_writer.editor.seite.seiten_aufteilung as SA
+    from lunivo_writer.modelle.seite import HeaderFooter
+
+    d = QTextDocument()
+    d.setPlainText("Dokumenttext")
+    page = PageSettings()
+    page.header = HeaderFooter(text="Verknuepfte Kopfzeile")
+    page.footer = HeaderFooter(text="Verknuepfte Fusszeile")
+    page.kopf_verknuepft = True
+    page.fuss_verknuepft = True
+    monkeypatch.setattr(SA, "render_dokument", lambda *a, **k: (_ for _ in ()).throw(AssertionError("Qt-Rückfall unerwartet")))
+    pfad = tmp_path / "kopf_fuss_modell.pdf"
+    assert export_pdf(str(pfad), d, page) == 1
+    text = " ".join(PdfReader(str(pfad)).pages[0].extract_text().split())
+    assert "Verknuepfte Kopfzeile" in text
+    assert "Verknuepfte Fusszeile" in text
+
+
+def test_druckpfad_modellrenderer_beachtet_druckerbereich_und_nur_seiten(app, tmp_path, monkeypatch):
+    from PySide6.QtPrintSupport import QPrinter
+    import lunivo_writer.editor.seite.seiten_aufteilung as SA
+    from lunivo_writer.editor.seite.seiten_aufteilung import print_document
+
+    d = QTextDocument()
+    c = QTextCursor(d)
+    for i in range(3):
+        if i:
+            bf = QTextBlockFormat(); bf.setPageBreakPolicy(QTextBlockFormat.PageBreak_AlwaysBefore); c.insertBlock(bf)
+        c.insertText(f"Druckseite {i + 1}")
+    printer = QPrinter(QPrinter.HighResolution)
+    printer.setOutputFormat(QPrinter.PdfFormat)
+    printer.setResolution(144)
+    printer.setOutputFileName(str(tmp_path / "druck.pdf"))
+    printer.setPrintRange(QPrinter.PageRange)
+    printer.setFromTo(2, 3)
+    monkeypatch.setattr(SA, "render_dokument", lambda *a, **k: (_ for _ in ()).throw(AssertionError("Qt-Rückfall unerwartet")))
+
+    assert print_document(printer, d, PageSettings(), {"nur_seiten": {3}}) == 3
+    r = PdfReader(str(tmp_path / "druck.pdf"))
+    assert len(r.pages) == 1
+    text = " ".join(r.pages[0].extract_text().split())
+    assert "Druckseite 3" in text and "Druckseite 2" not in text
+
+
 def test_ohne_hyperlinks_und_eigene_formatvorlagen(app, tmp_path):
     d = _dokument()
     c = QTextCursor(d); c.movePosition(QTextCursor.End)

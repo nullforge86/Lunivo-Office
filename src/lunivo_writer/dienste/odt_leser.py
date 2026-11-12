@@ -4,7 +4,7 @@ Gelesen werden ``content.xml`` (Text), ``styles.xml`` (Vorlagen, Seite, Kopf- un
 aus ``Pictures/``; FODT ist dasselbe als eine einzige XML-Datei. Übernommen: Absätze und Überschriften mit Ausrichtung, Einzügen,
 Abständen und Seitenumbruch; Zeichenformat (Schrift, Größe, fett, kursiv, unterstrichen, durchgestrichen, hoch/tief, Farbe,
 Hintergrund); Listen; Tabellen (auch verbundene Zellen); Bilder; Seitengröße, Seitenränder, Kopf- und Fußzeile mit Seitenzahl.
-Was nicht übernommen wird (Fußnoten, Kommentare, Textrahmen, Zeichnungen), meldet der Bericht.
+Was nicht übernommen wird (Kommentare, Textrahmen und komplexe Zeichnungen), meldet der Bericht; einfache freie Rechtecke und Ellipsen laufen als native Formen.
 """
 from __future__ import annotations
 
@@ -35,8 +35,7 @@ class _Ort:
 
 # Inline-Elemente: Zeichen, Warnungen und stillschweigend Übergangenes (alles übrige — Verweise, Felder — zeigt seinen Text)
 _INLINE_ZEICHEN = {_q("text:tab"): "\t", _q("text:line-break"): "\u2028"}
-_INLINE_WARNUNG = {_q("text:note"): "Fuß- und Endnoten aus der ODT-Datei wurden nicht übernommen.",
-                   _q("office:annotation"): "Kommentare aus der ODT-Datei wurden nicht übernommen."}
+_INLINE_WARNUNG = {_q("office:annotation"): "Kommentare aus der ODT-Datei wurden nicht übernommen."}
 _INLINE_UEBERSPRINGEN = frozenset(_q(t) for t in (
     "office:annotation-end", "text:soft-page-break", "text:bookmark", "text:bookmark-start", "text:bookmark-end",
     "text:reference-mark", "text:reference-mark-start", "text:reference-mark-end", "text:alphabetical-index-mark",
@@ -67,6 +66,8 @@ class _Leser(_ODTBilder, _ODTSeite, _ODTListen):
         self.doc = QTextDocument()
         self.doc.setDocumentMargin(0)
         self.bild_n = 0
+        self.noten = {"f": {}, "e": {}}
+        self._noten_zaehler = {"f": 0, "e": 0}
 
     # ---- Absätze --------------------------------------------------------------------------------------------------------
     def absatz(self, el: ET.Element, ort: _Ort, liste: tuple | None = None) -> None:
@@ -111,6 +112,10 @@ class _Leser(_ODTBilder, _ODTSeite, _ODTListen):
             cur.insertText(_INLINE_ZEICHEN[t], cf)
         elif t == _q("draw:frame"):
             self.rahmen(k, cur)
+        elif t in (_q("draw:rect"), _q("draw:ellipse")):
+            self.form(k, cur)
+        elif t == _q("text:note"):
+            self._note(k, cur, cf)
         elif t in _INLINE_WARNUNG:
             self.report.warn(_INLINE_WARNUNG[t])
         elif t in _INLINE_UEBERSPRINGEN:
@@ -119,6 +124,27 @@ class _Leser(_ODTBilder, _ODTSeite, _ODTListen):
             self.report.warn("Zeichnungen und Formen aus der ODT-Datei wurden nicht übernommen.")
         else:                                                 # Verweise, Meta, Felder (Datum, Seitenzahl …): der angezeigte Text
             self.inline(k, cur, eltern)
+
+    def _note(self, node: ET.Element, cur: QTextCursor, cf: QTextCharFormat) -> None:
+        """ODT-Fuß-/Endnote: sichtbare Marke im Text, Inhalt in den Dokumentzusatzdaten."""
+        art = "e" if node.get(_q("text:note-class")) == "endnote" else "f"
+        self._noten_zaehler[art] += 1
+        raw_id = node.get(_q("text:id"), "")
+        suffix = raw_id.rstrip("0123456789")
+        ziffern = raw_id[len(suffix):]
+        nid = int(ziffern) if ziffern else self._noten_zaehler[art]
+        while nid in self.noten[art]:
+            nid += 1
+        citation = node.find(_q("text:note-citation"))
+        marke = "".join(citation.itertext()) if citation is not None else str(self._noten_zaehler[art])
+        from lunivo_writer.editor.dokument.zusatz import P_NOTE
+        nf = QTextCharFormat(cf)
+        nf.setVerticalAlignment(QTextCharFormat.AlignSuperScript)
+        nf.setProperty(P_NOTE, f"{art}:{nid}")
+        cur.insertText(marke, nf)
+        body = node.find(_q("text:note-body"))
+        zeilen = ["".join(p.itertext()).strip() for p in body.iter(_q("text:p"))] if body is not None else []
+        self.noten[art][nid] = "\n".join(zeilen)
 
     # ---- Tabellen -------------------------------------------------------------------------------------------------------
     def tabelle(self, el: ET.Element, ort: _Ort) -> None:
@@ -142,6 +168,9 @@ class _Leser(_ODTBilder, _ODTSeite, _ODTListen):
             elif t == _q("draw:frame"):
                 self.rahmen(k, ort.cur)
                 ort.frei = False
+            elif t in (_q("draw:rect"), _q("draw:ellipse")):
+                self.form(k, ort.cur)
+                ort.frei = False
 
     def _standardschrift(self) -> QFont:
         tp = self.stile.eigenschaften("paragraph", "Standard", "text")
@@ -162,6 +191,7 @@ class _Leser(_ODTBilder, _ODTSeite, _ODTListen):
             meta["author"] = (autor.text or "") if autor is not None else ""
         from lunivo_writer.editor.dokument.zusatz import leere_meta
         meta.update(leere_meta())
+        meta["noten"] = {art: dict(eintraege) for art, eintraege in self.noten.items()}
         return meta
 
     def run(self):

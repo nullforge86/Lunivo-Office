@@ -94,12 +94,19 @@ def _bild_stil(name: str) -> str:
 
 def _frei_stil(name: str, a: dict) -> str:
     """Rahmenvorlage (Familie „graphic“) für ein frei positioniertes Bild: ohne Textumfluss, vor oder hinter dem Text."""
+    daten = a.get("daten") if a.get("art") == "form" and isinstance(a.get("daten"), dict) else {}
+    fuell = daten.get("fuell", "")
+    linie = daten.get("linie", "")
+    fuell_xml = (f' draw:fill="solid" draw:fill-color="{escape(str(fuell), {chr(34): "&quot;"})}"'
+                 if fuell else ' draw:fill="none"' if daten else "")
+    strich_xml = (f' draw:stroke="solid" svg:stroke-color="{escape(str(linie), {chr(34): "&quot;"})}" '
+                  f'svg:stroke-width="{_laenge(float(daten.get("strich") or 1.0))}"' if linie else ' draw:stroke="none"' if daten else "")
     return (f'<style:style style:name="{name}" style:family="graphic"><style:graphic-properties style:wrap="run-through" '
             f'style:run-through="{"background" if a.get("hinter") else "foreground"}" '
             f'style:horizontal-pos="{AUSR_H.get(a.get("ah") or "", "from-left")}" '
             f'style:horizontal-rel="{BEZUG_H.get(a.get("bh"), "paragraph")}" '
             f'style:vertical-pos="{AUSR_V.get(a.get("av") or "", "from-top")}" '
-            f'style:vertical-rel="{BEZUG_V.get(a.get("bv"), "paragraph")}"{_dekorativ(a.get("dekor"))}/></style:style>')
+            f'style:vertical-rel="{BEZUG_V.get(a.get("bv"), "paragraph")}"{fuell_xml}{strich_xml}{_dekorativ(a.get("dekor"))}/></style:style>')
 
 
 def _bild_elemente(img: QImage, stamm: str, bilder: dict[str, bytes]) -> str:
@@ -130,3 +137,20 @@ def _frei_rahmen(a: dict, img: QImage, nr: int, stil: str, bilder: dict[str, byt
     return (f'<draw:frame draw:style-name="{stil}" draw:name="Frei{nr}" text:anchor-type="paragraph"{lage} '
             f'svg:width="{_laenge(b)}" svg:height="{_laenge(h)}" draw:z-index="{0 if a.get("hinter") else nr}">'
             f'{bild}</draw:frame>')
+
+
+def _frei_form(a: dict, nr: int, stil: str) -> str:
+    """Einfache freie ODT-Form (Rechteck/Ellipse) ohne Rasterbild speichern."""
+    daten = a.get("daten") or {}
+    element = {"rechteck": "rect", "ellipse": "ellipse"}.get(str(daten.get("form", "")).casefold())
+    if element is None:
+        return ""
+    lage = ""
+    if not AUSR_H.get(a.get("ah") or ""):
+        lage += f' svg:x="{_laenge(float(a.get("xh") or 0))}"'
+    if not AUSR_V.get(a.get("av") or ""):
+        lage += f' svg:y="{_laenge(float(a.get("yv") or 0))}"'
+    breite = float(a.get("b") or daten.get("breite") or 1)
+    hoehe = float(a.get("h") or daten.get("hoehe") or 1)
+    return (f'<draw:{element} draw:style-name="{stil}" draw:name="Form{nr}" text:anchor-type="paragraph"{lage} '
+            f'svg:width="{_laenge(breite)}" svg:height="{_laenge(hoehe)}" draw:z-index="{0 if a.get("hinter") else nr}"/>')

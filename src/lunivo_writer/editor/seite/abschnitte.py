@@ -9,6 +9,7 @@ Seitenansicht, Druck, PDF und DOCX kennen die Maße jedes Abschnitts."""
 from __future__ import annotations
 
 import dataclasses
+import base64
 import json
 
 from PySide6.QtGui import QImage, QTextCursor, QTextFormat
@@ -24,16 +25,50 @@ VOM_DOCX = {v: k for k, v in DOCX_TYP.items()}
 
 # ---- Seiteneinrichtung <-> JSON ----------------------------------------------------------------------------------
 _BILD_MARKE = "__bild__"                             # ein Bild einer Kopf-/Fußzeile steht im JSON als {_BILD_MARKE: Text}
+_BILD_QUELLE = "__bildquelle__"
+_BILD_ERSATZ = "__bildersatz__"
+_BILD_NUR_RASTER = "__bild_nur_raster__"
 
 
 def _bilder_zu_text(angabe: dict) -> dict:
     from lunivo_writer.editor.seite.wasserzeichen import bild_zu_text
-    return {k: ({_BILD_MARKE: bild_zu_text(v)} if isinstance(v, QImage) else v) for k, v in angabe.items()}
+    from lunivo_writer.editor.objekte import bilddaten as BD
+    aus = {}
+    for k, v in angabe.items():
+        if not isinstance(v, QImage):
+            aus[k] = v
+            continue
+        eintrag = {_BILD_MARKE: bild_zu_text(v)}
+        quelle = BD.quelle_zu(v)
+        if quelle is not None:
+            eintrag[_BILD_QUELLE] = base64.b64encode(quelle.daten).decode("ascii")
+            if quelle.ersatz_png:
+                eintrag[_BILD_ERSATZ] = base64.b64encode(quelle.ersatz_png).decode("ascii")
+            if quelle.nur_raster:
+                eintrag[_BILD_NUR_RASTER] = True
+        aus[k] = eintrag
+    return aus
 
 
 def _bilder_aus_text(angabe: dict) -> dict:
     from lunivo_writer.editor.seite.wasserzeichen import bild_aus_text
-    return {k: (bild_aus_text(v[_BILD_MARKE]) if isinstance(v, dict) and _BILD_MARKE in v else v) for k, v in angabe.items()}
+    from lunivo_writer.editor.objekte import bilddaten as BD
+    aus = {}
+    for k, v in angabe.items():
+        if not isinstance(v, dict) or _BILD_MARKE not in v:
+            aus[k] = v
+            continue
+        img = bild_aus_text(v[_BILD_MARKE])
+        quelle = v.get(_BILD_QUELLE)
+        if not img.isNull() and quelle:
+            try:
+                daten = base64.b64decode(quelle, validate=True)
+                ersatz = base64.b64decode(v[_BILD_ERSATZ], validate=True) if v.get(_BILD_ERSATZ) else None
+                BD.merken(img, daten, ersatz, bool(v.get(_BILD_NUR_RASTER)))
+            except (ValueError, TypeError):
+                pass
+        aus[k] = img
+    return aus
 
 
 def seite_zu_dict(ps: PageSettings) -> dict:

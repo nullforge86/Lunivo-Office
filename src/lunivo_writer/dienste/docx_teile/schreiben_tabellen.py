@@ -208,12 +208,15 @@ class TabellenSchreiber:
 
     @staticmethod
     def _zeilenhoehe(drow, qt, r: int) -> None:
-        """Mindesthöhe der Zeile (Z_MINHOEHE, Bildpunkte) als w:trHeight mit hRule=atLeast, in Zwanzigstelpunkten."""
+        """Mindest- oder exakte Zeilenhöhe als w:trHeight in Zwanzigstelpunkten."""
         from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_lesen
+        from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART
         px = zeilenhoehe_lesen(qt, r)
         if px > 0:
+            exakt = any(qt.cellAt(r, c).format().property(int(P_ZEILE_HOEHE_ART.split(":")[1])) == "exact"
+                        for c in range(qt.columns()) if qt.cellAt(r, c).row() == r)
             h = OxmlElement("w:trHeight")
-            h.set(qn("w:val"), str(_twips(px))); h.set(qn("w:hRule"), "atLeast")
+            h.set(qn("w:val"), str(_twips(px))); h.set(qn("w:hRule"), "exact" if exakt else "atLeast")
             drow._tr.get_or_add_trPr().append(h)
 
     @staticmethod

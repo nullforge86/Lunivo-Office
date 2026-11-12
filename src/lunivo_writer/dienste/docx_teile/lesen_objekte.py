@@ -112,6 +112,7 @@ class ObjekteMixin:
             angabe = {"b": b, "h": h, "hinter": (a.get("behindDoc") or "0").lower() in ("1", "true"), "bh": "spalte", "bv": "absatz",
                       "xh": 0.0, "yv": 0.0, "ah": "", "av": "", "ellipse": False}
             self._frei_lage(angabe, a)
+            self._frei_drehung(angabe, drawing)
             angabe["art"], angabe["daten"] = "form", form
             if self._dekorativ(drawing):                                   # Form als dekorativ markiert (Word: wp:docPr)
                 angabe["dekor"] = True
@@ -286,6 +287,11 @@ class ObjekteMixin:
         rot = _xp(drawing, ".//a:xfrm/@rot")
         if rot and rot[0].lstrip("-").isdigit() and int(rot[0]):
             angabe["dreh"] = int(rot[0]) / 60000.0
+        xfrm = _xp(drawing, ".//a:xfrm")
+        if xfrm:
+            for attr in ("flipH", "flipV"):
+                if (xfrm[0].get(attr) or "").lower() in ("1", "true"):
+                    angabe[attr] = True
 
     @staticmethod
     def _frei_lage(angabe: dict, anker) -> None:
@@ -474,6 +480,7 @@ class ObjekteMixin:
         korr = ((b2 - b) / 2, (h2 - h) / 2)
         b, h = b2, h2
         angabe = {"b": b, "h": h, "_kx": korr[0], "_ky": korr[1], "hinter": False, "bh": "spalte", "bv": "absatz", "xh": 0.0, "yv": 0.0, "ah": "", "av": "", "ellipse": False}
+        self._frei_drehung(angabe, leaf)                       # Kindrotation aus a:xfrm; Elterngruppen bleiben unangetastet
         if leaf.tag == _WPS + "wsp":
             if _xp(leaf, "wps:txbx | wps:linkedTxbx"):
                 tf = self._textfeld_daten(leaf, leaf)

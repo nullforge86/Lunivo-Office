@@ -66,3 +66,36 @@ def zeichne_rahmen(b: RenderBackend, farbe: str, breite_pt: float, art: str, sei
     if "h" in seiten:
         for y in innen_y:
             zeichne_linie(b, farbe, breite_pt, art, r.x, y, r.right, y, massstab)
+
+
+ALLE_SEITEN = "tblr"
+RAHMEN_POLSTER = 4.0                                                   # Abstand des Absatzrahmens zum Text in Bildpunkten, wenn die Angabe keinen nennt
+PX_JE_PT = 96.0 / 72.0
+
+
+def rahmen_aus_text(text: str | None) -> tuple[str, float, str, str, tuple[float, float, float, float] | None] | None:
+    """Die Rahmenangabe eines Absatzes „Farbe|Breite pt|Art|Seiten|oben,unten,links,rechts“ → (Farbe, Breite pt, Art, Seiten, Abstände pt oder ``None``)."""
+    if not text:
+        return None
+    t = text.split("|")
+    try:
+        breite = float(t[1]) if len(t) > 1 and t[1] else 1.0
+        abstand = tuple(float(x) for x in t[4].split(",")) if len(t) > 4 and t[4] else None
+    except ValueError:
+        return None
+    return t[0] or "#000000", breite, t[2] if len(t) > 2 and t[2] else "einfach", t[3] if len(t) > 3 else ALLE_SEITEN, abstand if abstand and len(abstand) == 4 else None
+
+
+def zeichne_absatzrahmen(b: RenderBackend, text: str, flaeche: Rect, innen_y=()) -> None:
+    """Der Rahmen um die Fläche zusammenhängender Absätze (``flaeche`` = ihre Zeilen auf der Seite), mit dem Abstand der Angabe zum Text."""
+    angabe = rahmen_aus_text(text)
+    if angabe is None:
+        return
+    farbe, breite, art, seiten, abstand = angabe
+    if abstand:
+        o, u, l, r = (x * PX_JE_PT for x in abstand)
+        rect = Rect(flaeche.x - l, flaeche.y - o, flaeche.width + l + r, flaeche.height + o + u)
+    else:
+        pd = RAHMEN_POLSTER
+        rect = Rect(flaeche.x - pd, flaeche.y - pd + 1, flaeche.width + 2 * pd, flaeche.height + 2 * pd - 2)
+    zeichne_rahmen(b, farbe, breite, art, seiten, rect, PX_JE_PT, innen_y)

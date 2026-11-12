@@ -804,6 +804,31 @@ def export_pdf(path: str, qdoc: QTextDocument, page: PageSettings, title: str = 
                lesezeichen: dict | None = None, silben: dict | None = None, kommentare: list | None = None,
                extra: dict | None = None, erste: int = 1, letzte: int | None = None) -> int:
     """Schreibt die Seiten ``erste`` bis ``letzte`` (``None``: bis zum Ende) als PDF. → Seitenzahl des Dokuments."""
+    optionen = extra or {}
+    # Die Modell-Ausgabe kennt Seitenbereiche und normale Dokumentformate. PDF-Anmerkungen, Sonderdruckoptionen
+    # und aktive Links brauchen weiterhin den vorhandenen Qt-Ausgabepfad.
+    links_aktiv = False
+    if optionen.get("hyperlinks"):
+        b = qdoc.begin()
+        while b.isValid() and not links_aktiv:
+            it = b.begin()
+            while not it.atEnd():
+                fmt = it.fragment().charFormat()
+                if fmt.isAnchor() and fmt.anchorHref():
+                    links_aktiv = True
+                    break
+                it += 1
+            b = b.next()
+    modelloptionen = {k: v for k, v in optionen.items() if k not in ("hyperlinks", "notenlinks") and v}
+    if not noten and not lesezeichen and not silben and not kommentare and not modelloptionen and not links_aktiv:
+        from lunivo_writer.adapter.qt.dokument import NichtUebertragbar, document_from_qt
+        try:
+            modell = document_from_qt(qdoc, page)
+        except NichtUebertragbar:
+            pass                                      # aktive Formate ohne Modellabbildung rendert weiter der Qt-Pfad
+        else:
+            from lunivo_writer.adapter.qt.pdf_modell import modell_als_pdf
+            return modell_als_pdf(modell, path, title, autor=author, erste=erste, letzte=letzte)
     geo = blasen_geometrie(page, extra)
     w = _pdf_schreiber(path, page, geo, title, author)
     opt = {"noten": noten} if noten else {}
@@ -823,5 +848,61 @@ def print_document(printer: QPrinter, qdoc: QTextDocument, page: PageSettings, o
     first, last = 1, None
     if printer.printRange() == QPrinter.PageRange and printer.fromPage():
         first, last = printer.fromPage(), printer.toPage() or None
+    optionen = opt or {}
+    druckoptionen = {
+        "nur_seiten", "duplex", "umgekehrt", "hintergrund", "leere", "hervorhebungen", "textmarken", "textgrenzen",
+        "zuschnitt", "silbenfarben", "versteckt", "felder_code", "zeichnungen", "balken", "notenlinks", "blasen",
+        "nur_formular", "noten", "platzhalter", "steuerelemente", "schwarz",
+    }
+    noten_opt = optionen.get("noten")
+    noten_modellgeeignet = not noten_opt or (
+        isinstance(noten_opt, dict) and all(k in ("f", "e") and isinstance(v, dict)
+                                            for k, v in noten_opt.items())
+    )
+    modellgeeignet = set(optionen) <= druckoptionen and noten_modellgeeignet and not any(optionen.get(k) for k in (
+        "blasen", "kommentare", "silbenfarben", "versteckt", "felder_code", "textmarken",
+        "textgrenzen", "zuschnitt", "schwarz", "platzhalter", "nur_formular",
+    )) and not any(optionen.get(k) is False for k in (
+        "hintergrund", "zeichnungen", "steuerelemente", "hervorhebungen", "leere",
+    ))
+    if modellgeeignet and optionen.get("balken"):
+        from lunivo_writer.editor.seite.anzeige_extra import aenderungszeilen
+        modellgeeignet = not aenderungszeilen(qdoc)
+    if modellgeeignet:
+        from lunivo_writer.adapter.qt.dokument import NichtUebertragbar, document_from_qt
+        try:
+            modell = document_from_qt(qdoc, page)
+        except NichtUebertragbar:
+            pass                                  # nicht übertragbare Formate bleiben beim bestehenden Seitenlauf
+        else:
+            if noten_opt:
+                from lunivo_writer.core.document import Footnote
+                modell.notes = [Footnote(int(nid), kind, str(text))
+                                for kind, eintraege in noten_opt.items() for nid, text in eintraege.items()]
+            from lunivo_writer.adapter.qt.seitenbild import grundschrift, seite_malen
+            from lunivo_writer.core.layout import umbrechen
+            from lunivo_writer.dienste.textsatz import standard_engine
+            engine = standard_engine()
+            erg = umbrechen(modell, engine)
+            total = len(erg.seiten)
+            ende = total if last is None else min(last, total)
+            seiten = seiten_liste(total, max(1, first), ende, optionen) if first <= ende else []
+            if optionen.get("nur_seiten") is not None:
+                seiten = [n for n in seiten if n in optionen["nur_seiten"]]
+            if seiten:
+                einr = erg.seiten[seiten[0] - 1].einrichtung or page
+                printer.setPageLayout(_page_layout(einr, _quer(geo)))
+                p = QPainter(printer)
+                p.scale((printer.logicalDpiX() or printer.resolution()) / 96.0,
+                        (printer.logicalDpiY() or printer.resolution()) / 96.0)
+                grund = grundschrift(modell)
+                for i, nr in enumerate(seiten):
+                    if i:
+                        einr = erg.seiten[nr - 1].einrichtung or page
+                        printer.setPageLayout(_page_layout(einr, _quer(geo)))
+                        printer.newPage()
+                    seite_malen(p, modell, erg, nr - 1, engine, grund)
+                p.end()
+            return total
     return render_dokument(qdoc, page, printer, first, last, opt=opt,
                            layout=lambda ps: printer.setPageLayout(_page_layout(ps, _quer(geo))))

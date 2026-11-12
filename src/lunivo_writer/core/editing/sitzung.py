@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Iterator
 
 from lunivo_writer.core.document.model import CharacterFormat, Document, Frame, Image, ListFormat, Paragraph, ParagraphFormat, Table, TableCell, TableRow, TextRun
+from lunivo_writer.core.document.values import LineSpacing
 
 Pfad = tuple[int, ...]
 
@@ -447,7 +448,10 @@ class Sitzung:
         if ers:
             self._buchen_ohne_bewegung(Aenderung("zeichenformat", ers, {"von": sel[0], "bis": sel[1], "eigenschaften": copy.deepcopy(eigenschaften), "entfernen": entfernen}))
 
-    def absatzformat(self, eigenschaften: dict, von: Caret | None = None, bis: Caret | None = None, entfernen: tuple = ()) -> None:
+    def absatzformat(self, eigenschaften: dict, von: Caret | None = None, bis: Caret | None = None, entfernen: tuple = (),
+                     ausrichtung: str | None = None, space_before_px: float | None = None, space_after_px: float | None = None,
+                     left_indent_px: float | None = None, right_indent_px: float | None = None,
+                     first_line_indent_px: float | None = None, line_spacing: LineSpacing | None = None) -> None:
         """Absatzformat aller Absätze im Bereich (ohne Angaben: die Auswahl oder der Absatz der Schreibmarke) setzen."""
         sel = (von, bis) if von is not None and bis is not None else (self.auswahl() or (self.cursor, self.cursor))
         ers = []
@@ -456,19 +460,34 @@ class Sitzung:
             for k in entfernen:
                 neu.format.properties.pop(k, None)
             neu.format.properties.update(copy.deepcopy(eigenschaften))
+            neu.format.alignment = ausrichtung
+            neu.format.space_before_px = space_before_px
+            neu.format.space_after_px = space_after_px
+            neu.format.left_indent_px = left_indent_px
+            neu.format.right_indent_px = right_indent_px
+            neu.format.first_line_indent_px = first_line_indent_px
+            neu.format.line_spacing = line_spacing
             ers.append(self._ersetzung(pfad, 1, [neu]))
         if ers:
-            self._buchen_ohne_bewegung(Aenderung("absatzformat", ers, {"von": sel[0], "bis": sel[1], "eigenschaften": copy.deepcopy(eigenschaften), "entfernen": entfernen}))
+            self._buchen_ohne_bewegung(Aenderung("absatzformat", ers, {"von": sel[0], "bis": sel[1], "eigenschaften": copy.deepcopy(eigenschaften),
+                                                                         "entfernen": entfernen, "ausrichtung": ausrichtung,
+                                                                         "space_before_px": space_before_px, "space_after_px": space_after_px,
+                                                                         "left_indent_px": left_indent_px, "right_indent_px": right_indent_px,
+                                                                         "first_line_indent_px": first_line_indent_px, "line_spacing": line_spacing}))
 
     def absatzformate(self, aenderungen: list[tuple[Pfad, dict, tuple]]) -> None:
         """Das Absatzformat einzelner Absätze ändern, jeder mit eigenen Werten: ``[(Pfad, Eigenschaften setzen, Namen entfernen)]`` — als ein Schritt (Rückgängig macht alle zusammen rückgängig)."""
         ers = []
-        for pfad, setzen, entfernen in aenderungen:
+        for aenderung in aenderungen:
+            pfad, setzen, entfernen = aenderung[:3]
             p = absatz_bei(self.dok, pfad)
             neu = Paragraph(copy.deepcopy(p.format), copy.deepcopy(p.runs))
             for k in entfernen:
                 neu.format.properties.pop(k, None)
             neu.format.properties.update(copy.deepcopy(setzen))
+            semantisch = aenderung[3:]
+            for feld, wert in zip(("alignment", "space_before_px", "space_after_px", "left_indent_px", "right_indent_px", "first_line_indent_px", "line_spacing"), semantisch):
+                setattr(neu.format, feld, wert)
             ers.append(self._ersetzung(pfad, 1, [neu]))
         if ers:
             self._buchen_ohne_bewegung(Aenderung("absatzformate", ers, {"liste": copy.deepcopy(aenderungen)}))

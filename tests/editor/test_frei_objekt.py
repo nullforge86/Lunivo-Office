@@ -379,13 +379,13 @@ def test_verknuepfte_textfelder_im_docx(fenster, tmp_path):
     assert abs(kopf["b"] - 200) < 1 and abs(kopf["h"] - 60) < 1
 
 
-def test_textfeld_von_word_ohne_lunivo_daten(fenster, tmp_path):
+def test_textfeld_von_word_ohne_lunivo_daten(fenster, tmp_path, monkeypatch):
     """Ein Word-Textfeld (nur ``wps:txbx`` mit Läufen und ``linkedTxbx``) wird als Textfeld mit Formaten gelesen."""
     import zipfile
     from lunivo_writer.editor.objekte import freie_bilder as FB
     from lunivo_writer.dienste import docx_leser, docx_schreiber
     ed = _ed(fenster); fenster.befehle.textfeld(); FO.bearbeiten_beenden(ed)
-    FO.aendern(ed, "textfeld", text="Hallo Welt", laeufe=[{"t": "Hallo", "fett": True}, {"t": " Welt"}])
+    FO.aendern(ed, "textfeld", text="Hallo Welt", schrift="Liberation Sans", pt=11, farbe="#1f1f1f")
     pfad = str(tmp_path / "w.docx"); docx_schreiber.write_docx(pfad, ed.document(), ed.page, {})
     zin = zipfile.ZipFile(pfad); xml = zin.read("word/document.xml").decode("utf-8")
     import re
@@ -399,7 +399,16 @@ def test_textfeld_von_word_ohne_lunivo_daten(fenster, tmp_path):
     while blk.isValid():
         felder += [x for x in FB.aus_absatz(blk.blockFormat()) if x.get("art") == "textfeld"]; blk = blk.next()
     assert len(felder) == 1 and felder[0]["daten"]["text"] == "Hallo Welt"
-    assert felder[0]["daten"]["laeufe"][0] == {"t": "Hallo", "fett": True}
+    from lunivo_writer.adapter.qt.rendering import QtRenderBackend
+    from lunivo_writer.adapter.qt.seitenbild import seiten_aus_modell
+    from lunivo_writer.dienste.datei_dienst import load
+    text_box, bitmap = [], []
+    draw_text_box, draw_image = QtRenderBackend.draw_text_box, QtRenderBackend.draw_image
+    monkeypatch.setattr(QtRenderBackend, "draw_text_box", lambda self, text, *args, **kwargs: (text_box.append(text), draw_text_box(self, text, *args, **kwargs))[1])
+    monkeypatch.setattr(QtRenderBackend, "draw_image", lambda self, data, *args, **kwargs: (bitmap.append(data), draw_image(self, data, *args, **kwargs))[1])
+    geladen = load(neu)
+    assert geladen.modell is not None
+    assert seiten_aus_modell(geladen.modell) and "Hallo Welt" in text_box and not bitmap
 
 
 def test_oeffnen_verteilt_den_text_der_kette(fenster, tmp_path):
@@ -433,7 +442,7 @@ def _docx_rundweg(ed, tmp_path):
     return out
 
 
-def test_form_als_freies_objekt_aendern_und_docx(fenster, tmp_path):
+def test_form_als_freies_objekt_aendern_und_docx(fenster, tmp_path, monkeypatch):
     ed = _ed(fenster)
     FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Ellipse"}, 200, 100)
     assert FO.art_gewaehlt(ed) == "form" and fenster.befehle.tt_art() is None            # keine Texttools für Formen
@@ -449,6 +458,17 @@ def test_form_als_freies_objekt_aendern_und_docx(fenster, tmp_path):
     assert bild.width() == 300 * FO._SS and bild.height() == 150 * FO._SS
     (a,) = _docx_rundweg(ed, tmp_path)
     assert a["art"] == "form" and a["daten"]["fuell"] == "#0000ff" and a["daten"]["form"] == "Ellipse"
+    from lunivo_writer.adapter.qt.rendering import QtRenderBackend
+    from lunivo_writer.adapter.qt.seitenbild import seiten_aus_modell
+    from lunivo_writer.dienste.datei_dienst import load
+    paths, raster = [], []
+    draw_path, draw_image = QtRenderBackend.draw_path, QtRenderBackend.draw_image
+    monkeypatch.setattr(QtRenderBackend, "draw_path", lambda self, ops, style, *args, **kwargs: (paths.append(ops), draw_path(self, ops, style, *args, **kwargs))[1])
+    monkeypatch.setattr(QtRenderBackend, "draw_image", lambda self, data, rect, *args, **kwargs: (raster.append(data), draw_image(self, data, rect, *args, **kwargs))[1])
+    geladen = load(str(tmp_path / "f.docx"))
+    assert geladen.modell is not None
+    seiten = seiten_aus_modell(geladen.modell)
+    assert seiten and paths and not raster                                                # bekannte Ellipse wird als Pfad statt aus dem PNG gezeichnet
 
 
 def test_diagramm_als_freies_objekt_und_diagrammtools(fenster, tmp_path):
@@ -522,7 +542,7 @@ def test_bild_und_piktogramm_als_freies_bild(fenster, tmp_path):
 
 
 def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
-    from PySide6.QtGui import QColor, QImage
+    from PySide6.QtGui import QColor, QImage, QPainter
     from lunivo_writer.editor.objekte import bildlayout as BL
     from lunivo_writer.editor.objekte import bildwerkzeuge as BW
     from lunivo_writer.editor.objekte import bildzuschnitt as BZ
@@ -530,7 +550,9 @@ def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     from lunivo_writer.dienste import docx_leser, docx_schreiber
     ed = _ed(fenster); b = fenster.befehle
     b.bildZuschneidenModus(); assert not b.an_bildZuschneidenModus()                                      # ohne Bild: nur Hinweis
-    img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red")); pfad = str(tmp_path / "r.png"); img.save(pfad)
+    img = QImage(400, 200, QImage.Format_RGB32); img.fill(QColor("red"))
+    painter = QPainter(img); painter.fillRect(300, 0, 100, 200, QColor("blue")); painter.end()
+    pfad = str(tmp_path / "r.png"); img.save(pfad)
     assert ed.insert_image(pfad)
     b.bildZuschneidenModus(); assert b.an_bildZuschneidenModus()
     # Ziehen am rechten Mittelgriff im Zuschneiden-Modus schneidet ab, das Bild selbst bleibt unverändert
@@ -549,6 +571,39 @@ def test_bild_zuschneiden_nicht_zerstoerend_masken_docx(fenster, tmp_path):
     assert "bildZuschneiden" in KLAPPEN and not hasattr(b, "menue_bildZuschneiden")        # nur noch die Klappe der Vorlage
     pfad2 = str(tmp_path / "z.docx")
     docx_schreiber.write_docx(pfad2, ed.document(), ed.page, {})
+    from lunivo_writer.adapter.qt.seitenbild import seiten_aus_modell
+    from lunivo_writer.dienste.datei_dienst import load
+    geladen = load(pfad2)
+    assert geladen.modell is not None
+    import json
+    from lunivo_writer.core.document.objekte import ImageObject, P_BILDANKER
+    from lunivo_writer.core.layout import umbrechen
+    from lunivo_writer.core.layout.objekte import objekt_rechteck
+    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.kern.farben import Farbe
+    anker_key = P_BILDANKER
+    fund = next(( (si, bi, ImageObject.aus_angabe(a))
+                  for si, abschnitt in enumerate(geladen.modell.sections)
+                  for bi, block in enumerate(abschnitt.content)
+                  if (roh := block.format.properties.get(anker_key))
+                  for a in json.loads(roh) if a.get("art") is None), None)
+    assert fund is not None
+    si, bi, bildobj = fund
+    assert bildobj.mask == "Ellipse"
+    quelle = QImage.fromData(next(iter(geladen.modell.media.values())).raster_png)
+    assert quelle.size() == img.size() and quelle.pixelColor(50, 100) == QColor("red") and quelle.pixelColor(350, 100) == QColor("blue")
+    seite = seiten_aus_modell(geladen.modell)[0]
+    farben = [seite.pixelColor(x, y) for y in range(seite.height()) for x in range(seite.width())]
+    assert any(f == QColor("red") for f in farben) and not any(f == QColor("blue") for f in farben)  # der abgeschnittene blaue Quellrand ist nicht sichtbar
+    erg = umbrechen(geladen.modell, standard_engine())
+    objekt = next(a for a in json.loads(geladen.modell.sections[si].content[bi].format.properties[anker_key]) if a.get("art") is None)
+    ort = erg.absaetze[(si, bi)].zeilen[0][2]
+    einr = erg.seiten[0].einrichtung
+    ml, mt = einr.margin_left_mm * 96 / 25.4, einr.margin_top_mm * 96 / 25.4
+    rect = objekt_rechteck(bildobj.anchor, bildobj.width, bildobj.height, einr.width_mm * 96 / 25.4, einr.height_mm * 96 / 25.4,
+                           ml, mt, einr.content_width_px, einr.content_height_px, ort.y, ort.x, 1)
+    assert seite.pixelColor(round(rect.x + 5), round(rect.y + 5)) == QColor(Farbe.PAPIER)
+    assert seite.pixelColor(round(rect.x + rect.width / 2), round(rect.y + rect.height / 2)) == QColor("red")
     doc = docx_leser.read_docx(pfad2)[0]
     angaben, blk = [], doc.firstBlock()
     while blk.isValid():

@@ -9,7 +9,8 @@ from __future__ import annotations
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QImage, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextImageFormat, QTextListFormat, QTextTableCellFormat, QTextTableFormat
 
-from lunivo_writer.adapter.qt.dokument import _Schreiben, _absatz_schreiben, _id, _setzen, document_from_qt, eigenschaften
+from lunivo_writer.adapter.qt.dokument import (_Schreiben, _absatz_schreiben, _id, _setzen, absatzformat_aus_qt,
+                                               document_from_qt, eigenschaften, zeichenformat_aus_qt)
 from lunivo_writer.core.document.model import Paragraph, Table
 from lunivo_writer.core.editing import Aenderung, Caret, Sitzung, absaetze
 from lunivo_writer.core.editing.sitzung import behaelter, innerste_tabelle
@@ -20,13 +21,22 @@ GROSS = 6000                       # ab so vielen Absätzen baut ein Befehl das 
 
 
 class ModellSpiegel:
-    def __init__(self, qdoc: QTextDocument, seite=None):
+    def __init__(self, qdoc: QTextDocument, seite=None, modell=None):
         self.qdoc = qdoc
         self._seite = seite
         self._sitzung: Sitzung | None = None
         self._revision = -1
+        self._vorgegebenes_modell = modell
+        self._modell_revision = qdoc.revision() if modell is not None else -1
         self._pfade: list = []
         self._eigen = False
+
+    def modell_vorbelegen(self, modell) -> None:
+        """Ein schon beim Laden erzeugtes Modell für die erste Sitzung übernehmen, solange sein Qt-Spiegel unverändert ist."""
+        self._vorgegebenes_modell = modell
+        self._modell_revision = self.qdoc.revision()
+        self._sitzung = None
+        self._revision = -1
 
     # -- Modell und Sitzung --
     def seite_setzen(self, seite) -> None:
@@ -36,7 +46,9 @@ class ModellSpiegel:
     def sitzung(self) -> Sitzung:
         """Die Sitzung zum jetzigen Stand des Textdokuments (neu aufgebaut, wenn die Oberfläche das Dokument seit dem letzten Zugriff selbst geändert hat)."""
         if self._sitzung is None or self.qdoc.revision() != self._revision:
-            self._sitzung = Sitzung(document_from_qt(self.qdoc, self._seite))
+            modell = self._vorgegebenes_modell if self.qdoc.revision() == self._modell_revision else None
+            self._vorgegebenes_modell = None
+            self._sitzung = Sitzung(modell if modell is not None else document_from_qt(self.qdoc, self._seite))
             self._sitzung.beobachter.append(self._beobachten)
             self._pfade = [p for p, _a in absaetze(self._sitzung.dok)]
             self._revision = self.qdoc.revision()
@@ -85,7 +97,9 @@ class ModellSpiegel:
     def absatzformat(self, cursor: QTextCursor, fmt: QTextBlockFormat, entfernen: tuple = ()) -> None:
         s = self.sitzung()
         a, b = self.caret(cursor.selectionStart()), self.caret(cursor.selectionEnd())
-        s.absatzformat(eigenschaften(fmt), a, b, entfernen)
+        absatz = absatzformat_aus_qt(fmt)
+        s.absatzformat(absatz.properties, a, b, entfernen, absatz.alignment, absatz.space_before_px, absatz.space_after_px,
+                       absatz.left_indent_px, absatz.right_indent_px, absatz.first_line_indent_px, absatz.line_spacing)
 
     def absatzformate(self, cursor: QTextCursor, fn) -> bool:
         """``fn(QTextBlockFormat)`` auf jeden Absatz der Auswahl anwenden (jeder Absatz mit seinen eigenen Werten), über Modell und Sitzung. False bei sehr großem Dokument."""
@@ -99,11 +113,13 @@ class ModellSpiegel:
             alt = blk.blockFormat()
             neu = QTextBlockFormat(alt)
             fn(neu)
-            p_alt, p_neu = eigenschaften(alt), eigenschaften(neu)
+            alt_format, neu_format = absatzformat_aus_qt(alt), absatzformat_aus_qt(neu)
+            p_alt, p_neu = alt_format.properties, neu_format.properties
             setzen = {k: v for k, v in p_neu.items() if p_alt.get(k) != v}
             entfernen = tuple(k for k in p_alt if k not in p_neu)
-            if setzen or entfernen:
-                liste.append((self._pfade[blk.blockNumber()], setzen, entfernen))
+            felder = ("alignment", "space_before_px", "space_after_px", "left_indent_px", "right_indent_px", "first_line_indent_px", "line_spacing")
+            if setzen or entfernen or any(getattr(alt_format, f) != getattr(neu_format, f) for f in felder):
+                liste.append((self._pfade[blk.blockNumber()], setzen, entfernen, *(getattr(neu_format, f) for f in felder)))
             blk = blk.next()
         s.absatzformate(liste)
         return True
@@ -116,8 +132,7 @@ class ModellSpiegel:
             ziel = s.cursor
         else:
             ziel = self.caret(cursor.position())
-        from lunivo_writer.core.document.model import CharacterFormat
-        neu = s.einfuegen(text, ziel, CharacterFormat(eigenschaften(fmt)) if fmt is not None else None)
+        neu = s.einfuegen(text, ziel, zeichenformat_aus_qt(fmt) if fmt is not None else None)
         cursor.setPosition(self.position(neu))
 
     def tippen(self, cursor: QTextCursor, text: str, fmt: QTextCharFormat) -> bool:
@@ -326,7 +341,8 @@ class ModellSpiegel:
             {"zeilen_einfuegen": t.insertRows, "zeilen_loeschen": t.removeRows, "spalten_einfuegen": t.insertColumns, "spalten_loeschen": t.removeColumns}[p["art"]](p["index"], p["anzahl"])
             self._revision_ungueltig = True                              # Qt vergibt die Zellformate: das Modell wird beim nächsten Zugriff aus dem Textdokument neu gelesen
         elif a.art == "absatzformate":
-            for pfad, setzen, entfernen in p["liste"]:
+            for eintrag in p["liste"]:
+                pfad, setzen, entfernen = eintrag[:3]
                 blk = self.qdoc.findBlockByNumber(self._index(pfad))
                 bf = blk.blockFormat()
                 for name in entfernen:

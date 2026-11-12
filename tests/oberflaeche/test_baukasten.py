@@ -756,12 +756,14 @@ def test_tabstopp_fuellzeichen(app, tmp_path):
     assert aus_block(geladen.doc.firstBlock().blockFormat()) == [(100.0, "rechts", "punkt")]
 
 
-def test_seitenfluss_zusammenhalten_und_kontrolle(app):
+def test_seitenfluss_zusammenhalten_und_kontrolle(app, monkeypatch):
     from PySide6.QtCore import QEventLoop, QTimer
     from PySide6.QtGui import QTextBlockFormat, QTextCursor, QTextFormat
     from lunivo_writer.editor.seite import absatzopt
     from lunivo_writer.editor.seite import seitenfluss
     from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    from lunivo_writer.oberflaeche.dokument.bearbeitung import dokument_editor as _de
+    monkeypatch.setattr(_de, "LAUF_STANDARD", False)                 # „seitenfluss“ setzt Umbrüche für die Qt-Anordnung; der Seitenlauf hat die Regeln selbst (``core/layout/regeln.py``)
     e = DocumentEditor()
     e.setPlainText("\n".join(f"Absatz {i}" for i in range(80)))
     ch = e.page.content_height_px
@@ -818,11 +820,13 @@ def test_seitenfluss_nicht_trennen(app):
     assert not seitenfluss.ist_manuell(doc.findBlockByNumber(letzter).blockFormat())
 
 
-def test_seitenfluss_abstand_am_seitenanfang(app):
+def test_seitenfluss_abstand_am_seitenanfang(app, monkeypatch):
     from PySide6.QtGui import QTextCursor, QTextFormat
     from lunivo_writer.editor.dokument.zusatz import B_VORHER
     from lunivo_writer.editor.seite import seitenfluss
     from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+    from lunivo_writer.oberflaeche.dokument.bearbeitung import dokument_editor as _de
+    monkeypatch.setattr(_de, "LAUF_STANDARD", False)                 # „seitenfluss“ setzt Umbrüche für die Qt-Anordnung; der Seitenlauf hat die Regeln selbst (``core/layout/regeln.py``)
     e = DocumentEditor()
     e.setPlainText("\n".join(f"Absatz {i}" for i in range(400)))
     doc = e.document()

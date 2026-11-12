@@ -205,7 +205,7 @@ class QtRenderBackend(RenderBackend):
         self.p.restore()
 
     def push_state(self, opacity: float = 1.0, translate: Point | None = None, rotate: float = 0.0, clip: Rect | None = None,
-                   antialias: bool | None = None, clip_ellipse: Rect | None = None) -> None:
+                   antialias: bool | None = None, clip_ellipse: Rect | None = None, flip_h: bool = False, flip_v: bool = False) -> None:
         self.p.save()
         if clip is not None:
             self.p.setClipRect(_qrect(clip))
@@ -220,21 +220,23 @@ class QtRenderBackend(RenderBackend):
             self.p.translate(translate.x, translate.y)
         if rotate:
             self.p.rotate(rotate)
+        if flip_h or flip_v:
+            self.p.scale(-1.0 if flip_h else 1.0, -1.0 if flip_v else 1.0)
 
     def pop_state(self) -> None:
         self.p.restore()
 
-    def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0) -> None:
+    def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0, source_rect: Rect | None = None) -> None:
         from lunivo_writer.core.document.bildformat import format_erkennen
         fmt = format_erkennen(data[:2048]) if data else None
-        if fmt == "svg":
+        if fmt == "svg" and source_rect is None:
             from PySide6.QtSvg import QSvgRenderer
             from lunivo_writer.editor.objekte import bilddaten as BD
             rd = QSvgRenderer(QByteArray(BD.svg_bereinigen(data)))
             if rd.isValid():
                 rd.render(self.p, _qrect(rect))
             return
-        if fmt in ("emf", "wmf"):
+        if fmt in ("emf", "wmf") and source_rect is None:
             from lunivo_writer.dienste import vektor_bilder as V
             if (V.emf_zeichnen if fmt == "emf" else V.wmf_zeichnen)(data, self.p, _qrect(rect)):
                 return
@@ -244,7 +246,16 @@ class QtRenderBackend(RenderBackend):
                 self.p.setRenderHint(QPainter.SmoothPixmapTransform)
             if wash > 0:
                 img = _ausgewaschen(img, wash)
-            self.p.drawImage(_qrect(rect), img)
+            if source_rect is None:
+                self.p.drawImage(_qrect(rect), img)
+            else:
+                x = max(0.0, min(1.0, source_rect.x))
+                y = max(0.0, min(1.0, source_rect.y))
+                w = max(0.0, min(1.0 - x, source_rect.width))
+                h = max(0.0, min(1.0 - y, source_rect.height))
+                if w > 0 and h > 0:
+                    quelle = QRectF(x * img.width(), y * img.height(), w * img.width(), h * img.height())
+                    self.p.drawImage(_qrect(rect), img, quelle)
 
     def apply_image_effects(self, data: bytes, rect: Rect, ellipse: bool, effects: dict) -> tuple[bytes, bool]:
         from lunivo_writer.editor.objekte import bildeffekte as E
@@ -283,6 +294,16 @@ class QtRenderBackend(RenderBackend):
             p.setPen(QPen(farbe, 1))
             p.drawLine(QPointF(origin.x, origin.y + 2), QPointF(origin.x + width, origin.y + 2))
         p.restore()
+
+    def draw_text_path(self, text: str, font, origin: Point, style: Style) -> None:
+        pf = QPainterPath()
+        pf.addText(origin.x, origin.y, _qfont(font), text)
+        self.p.save()
+        self.p.setRenderHint(QPainter.Antialiasing)
+        self.p.setPen(self._stift(style) if style.width > 0 else Qt.NoPen)
+        self.p.setBrush(_pinsel(style) if style.filled else Qt.NoBrush)
+        self.p.drawPath(pf)
+        self.p.restore()
 
     def draw_shadow(self, ops: list, color: tuple, blur: float, dx: float, dy: float) -> None:
         from lunivo_writer.editor.objekte import bildeffekte as E

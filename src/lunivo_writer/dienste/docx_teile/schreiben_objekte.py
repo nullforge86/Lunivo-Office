@@ -78,46 +78,49 @@ class ObjekteSchreiber:
         self._svg_anhaengen(run, img)
         self._metafile_anhaengen(run, img)
 
+    def _bildquelle_beziehung(self, run, q, speicher: str, muster: str):
+        """Die Originalquelle eines Bildes im passenden DOCX-Part verknüpfen (Dokument, Kopf- oder Fußzeile)."""
+        from docx.opc.constants import RELATIONSHIP_TYPE as RT
+        from docx.opc.packuri import PackURI
+        from docx.opc.part import Part
+        quelle = self.__dict__.setdefault(speicher, {})
+        eintrag = quelle.get(id(q))
+        if eintrag is None:
+            teil = Part(PackURI(muster.format(n=len(quelle) + 1, endung=q.endung)), q.medientyp, q.daten, self.d.part.package)
+            eintrag = quelle[id(q)] = (teil, {})
+        teil, beziehungen = eintrag
+        part = run.part
+        rid = beziehungen.get(id(part))
+        if rid is None:
+            rid = beziehungen[id(part)] = part.relate_to(teil, RT.IMAGE)
+        return rid
+
     def _metafile_anhaengen(self, run, img: QImage) -> None:
         """EMF/WMF wie in Word: das Bild zeigt unmittelbar auf das Original (eigener Bildteil in word/media); die PNG-Rasterfassung, mit der
         python-docx das Bild angelegt hat, entfällt wieder."""
         q = BD.quelle_zu(img)
         if q is None or q.format not in BD.ORIGINAL_DOCX_METAFILE:
             return
-        from docx.opc.constants import RELATIONSHIP_TYPE as RT
-        from docx.opc.packuri import PackURI
-        from docx.opc.part import Part
         blips = run._r.xpath(".//pic:blipFill/a:blip")
         if not blips:
             return
-        teile = self.__dict__.setdefault("_metafile_teile", {})
-        rid = teile.get(id(q))
-        if rid is None:
-            teil = Part(PackURI(f"/word/media/metafile{len(teile) + 1}.{q.endung}"), q.medientyp, q.daten, self.d.part.package)
-            rid = teile[id(q)] = self.d.part.relate_to(teil, RT.IMAGE)
+        rid = self._bildquelle_beziehung(run, q, "_metafile_teile", "/word/media/metafile{n}.{endung}")
         alt = blips[0].get(qn("r:embed"))
         blips[0].set(qn("r:embed"), rid)
         for pic in run._r.xpath(".//pic:cNvPr"):                  # Bildname mit Endung der Datei
             pic.set("name", f"metafile.{q.endung}")
-        self.d.part.drop_rel(alt)
+        run.part.drop_rel(alt)
 
     def _svg_anhaengen(self, run, img: QImage) -> None:
         """Wie Word: das Bild zeigt auf die PNG-Ersatzgrafik, ``a:blip/a:extLst`` verweist auf das SVG (eigener Teil in word/media)."""
         q = BD.quelle_zu(img)
         if q is None or q.format != "svg":
             return
-        from docx.opc.constants import RELATIONSHIP_TYPE as RT
-        from docx.opc.packuri import PackURI
-        from docx.opc.part import Part
         from lxml import etree
         blips = run._r.xpath(".//pic:blipFill/a:blip")
         if not blips:
             return
-        teile = self.__dict__.setdefault("_svg_teile", {})
-        rid = teile.get(id(q))
-        if rid is None:
-            teil = Part(PackURI(f"/word/media/svg{len(teile) + 1}.svg"), "image/svg+xml", q.daten, self.d.part.package)
-            rid = teile[id(q)] = self.d.part.relate_to(teil, RT.IMAGE)
+        rid = self._bildquelle_beziehung(run, q, "_svg_teile", "/word/media/svg{n}.{endung}")
         liste = etree.SubElement(blips[0], qn("a:extLst"))
         ext = etree.SubElement(liste, qn("a:ext"))
         ext.set("uri", SVG_ERWEITERUNG)
@@ -174,14 +177,16 @@ class ObjekteSchreiber:
 
     def _frei_verankern(self, inline, a: dict) -> None:
         """wp:inline → wp:anchor ohne Umbruch (wp:wrapNone), Lage nach Bezug und Ausrichtung/Versatz."""
+        from lunivo_writer.core.document.objekte import ImageObject
+        obj = ImageObject.aus_angabe(a)                         # Lage und Umfluss kommen aus dem Objektmodell (``core/document/objekte.py``)
         anker = OxmlElement("wp:anchor")
         for k, v in (("distT", "0"), ("distB", "0"), ("distL", "0"), ("distR", "0"), ("simplePos", "0"),
-                     ("relativeHeight", "251658240" if a.get("hinter") else "251659264"), ("behindDoc", _eins(a.get("hinter"))),
-                     ("locked", _eins(a.get("verankern"))), ("layoutInCell", "1"), ("allowOverlap", _eins(a.get("ueberlappen", True)))):
+                     ("relativeHeight", "251658240" if obj.wrap.behind else "251659264"), ("behindDoc", _eins(obj.wrap.behind)),
+                     ("locked", _eins(obj.wrap.lock_anchor)), ("layoutInCell", "1"), ("allowOverlap", _eins(obj.wrap.overlap))):
             anker.set(k, v)
         sp = OxmlElement("wp:simplePos"); sp.set("x", "0"); sp.set("y", "0")
-        ph = self._anker_lage("wp:positionH", _BEZUG.get(a.get("bh"), "column"), a.get("ah"), a.get("xh"))
-        pv = self._anker_lage("wp:positionV", _BEZUG.get(a.get("bv"), "paragraph"), a.get("av"), a.get("yv"))
+        ph = self._anker_lage("wp:positionH", _BEZUG.get(a.get("bh"), "column"), obj.anchor.h_align or None, a.get("xh"))
+        pv = self._anker_lage("wp:positionV", _BEZUG.get(a.get("bv"), "paragraph"), obj.anchor.v_align or None, a.get("yv"))
         extent = inline.find(qn("wp:extent"))
         ee = OxmlElement("wp:effectExtent")
         for k in ("l", "t", "r", "b"):
@@ -233,9 +238,14 @@ class ObjekteSchreiber:
 
     @staticmethod
     def _bild_drehung(run, a: dict) -> None:
-        if a.get("dreh"):
+        if a.get("dreh") or a.get("flipH") or a.get("flipV"):
             for xf in run._r.xpath(".//pic:spPr/a:xfrm"):
-                xf.set("rot", str(int(round(float(a["dreh"]) * 60000))))
+                if a.get("dreh"):
+                    xf.set("rot", str(int(round(float(a["dreh"]) * 60000))))
+                if a.get("flipH"):
+                    xf.set("flipH", "1")
+                if a.get("flipV"):
+                    xf.set("flipV", "1")
 
     @classmethod
     def _bild_fuellung(cls, run, a: dict) -> None:

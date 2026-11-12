@@ -37,3 +37,56 @@ def test_von_fremdem_programm_erzeugtes_docx_lesen(app):
     assert [t[b["von"]:b["bis"]] for b in e.kommentar_bereiche()] == ["kommentiertem Wort"]
     assert [m["name"] for m in verweise.lesezeichen_liste(e)] == ["Marke1"]
     assert not rep.warnings
+
+
+def test_fodt_fussnote_bleibt_im_dokumentenmodell(app, tmp_path):
+    from lunivo_writer.dienste.datei_dienst import load
+    from lunivo_writer.dienste.modell_laden import lade_modell
+    from lunivo_writer.core.layout import umbrechen
+    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.dienste.odt_schreiber import odt_daten
+
+    pfad = tmp_path / "mit_fussnote.fodt"
+    pfad.write_text(FODT, encoding="utf-8")
+    geladen = lade_modell(str(pfad))
+    assert any(n.kind == "f" and n.text == "Die Fußnote von LibreOffice." for n in geladen.document.notes)
+    seiten = umbrechen(geladen.document, standard_engine()).seiten
+    assert any(p.art == "fussnote" for s in seiten for p in s.plaetze)
+    quelle = load(str(pfad))
+    daten, _bericht = odt_daten(quelle.doc, quelle.page, quelle.meta)
+    ausgabe = tmp_path / "rundlauf.odt"
+    ausgabe.write_bytes(daten)
+    zurueck = load(str(ausgabe))
+    assert list(zurueck.meta["noten"]["f"].values()) == ["Die Fußnote von LibreOffice."]
+
+
+def test_fodt_freies_rechteck_wird_nativ_im_modell_gezeichnet(app, tmp_path):
+    from lunivo_writer.dienste.datei_dienst import load
+    from lunivo_writer.adapter.qt.seitenbild import seiten_aus_modell
+    from lunivo_writer.dienste.modell_laden import lade_modell
+    from lunivo_writer.dienste.odt_schreiber import odt_daten
+
+    fodt = '''<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+ xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+ xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+ office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
+ <office:automatic-styles><style:style style:name="G1" style:family="graphic"><style:graphic-properties
+ style:horizontal-rel="page" style:vertical-rel="page" style:horizontal-pos="from-left" style:vertical-pos="from-top"/></style:style></office:automatic-styles>
+ <office:body><office:text><text:p>Zeichnung</text:p><draw:rect draw:style-name="G1" text:anchor-type="page"
+ svg:x="20mm" svg:y="50mm" svg:width="20mm" svg:height="10mm" draw:fill="solid" draw:fill-color="#ff0000" draw:stroke="none"/>
+ </office:text></office:body></office:document>'''
+    pfad = tmp_path / "rechteck.fodt"
+    pfad.write_text(fodt, encoding="utf-8")
+    modell = lade_modell(str(pfad)).document
+    bild = seiten_aus_modell(modell)[0]
+    assert bild.pixelColor(110, 205).red() > 220 and bild.pixelColor(110, 205).green() < 60
+    geladen = load(str(pfad))
+    daten, _bericht = odt_daten(geladen.doc, geladen.page, geladen.meta)
+    ausgabe = tmp_path / "rechteck_rundlauf.odt"
+    ausgabe.write_bytes(daten)
+    zurueck = lade_modell(str(ausgabe)).document
+    bild_zurueck = seiten_aus_modell(zurueck)[0]
+    assert bild_zurueck.pixelColor(110, 205).red() > 220 and bild_zurueck.pixelColor(110, 205).green() < 60

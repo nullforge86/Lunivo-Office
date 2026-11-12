@@ -13,6 +13,7 @@ from lunivo_writer.modelle.seite import PageSettings
 from lunivo_writer.dienste import docx_leser, docx_schreiber
 from lunivo_writer.dienste import sicher_schreiben
 from lunivo_writer.modelle.bericht import DocumentIOError, IOReport
+from lunivo_writer.core.document import Document
 
 _log = logging.getLogger("lunivo.dateien")
 OPEN_FILTER = ("Dokumente (*.docx *.dotx *.docm *.odt *.fodt *.rtf *.txt);;DOCX-Dokument (*.docx);;OpenDocument-Text (*.odt);;"
@@ -41,6 +42,7 @@ class Loaded:
     page: PageSettings
     meta: dict
     report: IOReport
+    modell: Document | None = None
 
 
 def ext(path: str) -> str:
@@ -75,15 +77,15 @@ def _entschluesseln(path: str, kennwort: str | None, ziel: str) -> None:
 
 
 def _docx_lesen(path: str):
-    """DOCX → (QTextDocument, PageSettings, meta, IOReport). Zuerst der Modell-Leser (Phase 5b der Qt-Entkopplung); was er noch nicht
-    kann (Tabellen mit Textmaß, Felder mit Nachformatierung, Positionen), liest der bisherige Leser ``docx_leser.read_docx``."""
+    """DOCX → Qt-Dokument, Seiteneinrichtung, Metadaten, Bericht und optional das bereits gelesene Modell.
+    Was der Modell-Leser noch nicht kann (Tabellen mit Textmaß, Felder mit Nachformatierung, Positionen), liest ``docx_leser.read_docx``."""
     from lunivo_writer.dienste import docx_modell_leser
     from lunivo_writer.adapter.qt.dokument import document_to_qt
     gelesen = docx_modell_leser.lese_docx_modell(path)
     if gelesen is None:
-        return docx_leser.read_docx(path)
+        return (*docx_leser.read_docx(path), None)
     modell, page, meta, rep = gelesen
-    return document_to_qt(modell), page, meta, rep
+    return document_to_qt(modell), page, meta, rep, modell
 
 
 def _docx_laden(path: str, kennwort: str | None) -> Loaded:
@@ -91,11 +93,11 @@ def _docx_laden(path: str, kennwort: str | None) -> Loaded:
         with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
             klar = os.path.join(tmp, "klar.docx")
             _entschluesseln(path, kennwort, klar)
-            doc, page, meta, rep = _docx_lesen(klar)
+            doc, page, meta, rep, modell = _docx_lesen(klar)
         meta["kennwort"] = kennwort
-        return Loaded(doc, page, meta, rep)
-    doc, page, meta, rep = _docx_lesen(path)
-    return Loaded(doc, page, meta, rep)
+        return Loaded(doc, page, meta, rep, modell)
+    doc, page, meta, rep, modell = _docx_lesen(path)
+    return Loaded(doc, page, meta, rep, modell)
 
 
 def _txt_laden(path: str) -> Loaded:

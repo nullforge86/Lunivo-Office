@@ -257,6 +257,23 @@ def test_schwebendes_bild_text_laeuft_darum_herum(app):
     assert lay.erg.ausschluesse and lay.erg.ausschluesse[0][3] == "links"
 
 
+def test_schwebender_rahmen_mit_prozentbreite_nutzt_spaltenbreite(app):
+    from PySide6.QtGui import QTextFrameFormat, QTextLength
+    d = QTextDocument()
+    d.setDefaultFont(QFont("Liberation Sans", 11))
+    d.setPlainText("Text " * 80)
+    f = QTextFrameFormat()
+    f.setPosition(QTextFrameFormat.FloatLeft)
+    f.setWidth(QTextLength(QTextLength.PercentageLength, 50))
+    c = QTextCursor(d)
+    c.movePosition(QTextCursor.End)
+    rahmen = c.insertFrame(f)
+    rahmen.firstCursorPosition().insertText("Schwebender Inhalt")
+    lay = _lauf(d, _basis())
+    erwartete_breite = mm_to_px(170) / 2
+    assert lay.frameBoundingRect(rahmen).width() == pytest.approx(erwartete_breite, abs=2)
+
+
 def test_zelle_mitte_und_unten_ausgerichtet(app):
     from PySide6.QtGui import QTextCharFormat
     d, t = _tabellen_doc(1, 3)

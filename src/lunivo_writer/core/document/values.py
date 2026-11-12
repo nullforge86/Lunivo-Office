@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,20 @@ class Length:
     """Längenangabe: ``kind`` ist ``variable``, ``fixed`` (Bildpunkte) oder ``percentage`` (Prozent)."""
     kind: str
     value: float
+
+
+@dataclass(frozen=True)
+class LineSpacing:
+    """Absatzzeilenabstand: ``single``, ``proportional`` (Prozent), ``multiple`` (Faktor), ``fixed`` oder ``minimum`` (Bildpunkte)."""
+    kind: str
+    value: float
+
+
+@dataclass(frozen=True)
+class RowHeight:
+    """Tabellenzeilenhöhe: ``minimum`` oder ``exact`` in Bildpunkten."""
+    kind: Literal["minimum", "exact"]
+    value_px: float
 
 
 @dataclass(frozen=True)

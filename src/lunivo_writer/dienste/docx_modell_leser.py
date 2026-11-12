@@ -11,8 +11,9 @@ from __future__ import annotations
 
 from PySide6.QtGui import QTextBlockFormat, QTextCharFormat, QTextCursor, QTextDocument, QTextImageFormat, QTextLength, QTextTableCellFormat
 
-from lunivo_writer.adapter.qt.dokument import bild_aus_format, document_from_qt, eigenschaften, schnitte_bilden
-from lunivo_writer.core.document import CharacterFormat, ListFormat, Paragraph, ParagraphFormat, Table, TableCell, TableRow, TextRun
+from lunivo_writer.adapter.qt.dokument import (absatzformat_aus_qt, bild_aus_format, document_from_qt, eigenschaften,
+                                               schnitte_bilden, zeichenformat_aus_qt)
+from lunivo_writer.core.document import CharacterFormat, ListFormat, Paragraph, ParagraphFormat, RowHeight, Table, TableCell, TableRow, TextRun
 from lunivo_writer.core.textlayout import FontSpec
 from lunivo_writer.dienste import docx_leser
 from lunivo_writer.editor.seite import abschnitte as AB
@@ -104,6 +105,7 @@ class _TabelleRef:
         return getattr(self._qt, name)
 
     def als_modell(self) -> Table:
+        from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART, P_ZEILE_MINHOEHE
         qt = self._qt
         tab = Table(qt.rows(), qt.columns(), eigenschaften(qt.format()))
         for r in range(qt.rows()):
@@ -117,6 +119,12 @@ class _TabelleRef:
                     if bloecke and isinstance(bloecke[0], Paragraph):
                         bloecke[0].format.char_format = CharacterFormat(dict(props))           # in Qt ist es dasselbe Format wie das der Zelle
                     zeile.cells.append(TableCell(r, c, z.rowSpan(), z.columnSpan(), props, bloecke))
+            werte = [z.properties.get(P_ZEILE_MINHOEHE) for z in zeile.cells]
+            werte = [v for v in werte if isinstance(v, (int, float)) and v > 0]
+            zeile.minimum_height_px = max(werte) if werte else None
+            art = next((z.properties.get(P_ZEILE_HOEHE_ART) for z in zeile.cells if z.properties.get(P_ZEILE_HOEHE_ART) in ("minimum", "exact")), None)
+            if zeile.minimum_height_px is not None:
+                zeile.row_height = RowHeight(art or "minimum", zeile.minimum_height_px)
             tab.table_rows.append(zeile)
         return tab
 
@@ -151,8 +159,8 @@ class ModellCursor:
             elif isinstance(e, _TabelleRef):
                 aus.append(e.als_modell())
             else:
-                runs = [bild_aus_format(cf, self._doc) if cf.isImageFormat() else TextRun(t, CharacterFormat(eigenschaften(cf))) for t, cf, _st in e.runs if t]
-                aus.append(Paragraph(ParagraphFormat(eigenschaften(e.bf), CharacterFormat(eigenschaften(e.cf)), e.list_id, True), runs))
+                runs = [bild_aus_format(cf, self._doc) if cf.isImageFormat() else TextRun(t, zeichenformat_aus_qt(cf)) for t, cf, _st in e.runs if t]
+                aus.append(Paragraph(absatzformat_aus_qt(e.bf, zeichenformat_aus_qt(e.cf), e.list_id, True), runs))
         return aus
 
     def vorab_einfuegen(self, bloecke: list, zeichen: int) -> None:
@@ -269,6 +277,7 @@ class _ModellReader(docx_leser._Reader):
         from lunivo_writer.core.layout import hoehe_von_bloecken
         from lunivo_writer.dienste.textsatz import standard_engine
         from lunivo_writer.editor.tabelle.tabelleneigenschaften import zeilenhoehe_setzen
+        from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_HOEHE_ART
         from lunivo_writer.modelle.seite import mm_to_px
         if qt.frameFormat().position() != QTextFrameFormat.InFlow:
             return
@@ -282,6 +291,7 @@ class _ModellReader(docx_leser._Reader):
         pad = max(0.0, tf.cellPadding())
         for r, row in enumerate(table.rows):
             h = row._tr.xpath("w:trPr/w:trHeight/@w:val")
+            rules = row._tr.xpath("w:trPr/w:trHeight/@w:hRule")
             try:
                 tw = float(h[0]) if h else 0.0
             except ValueError:
@@ -296,7 +306,15 @@ class _ModellReader(docx_leser._Reader):
                 bloecke = inhalt_ref.als_modell()
                 if any(getattr(b, "text", "").strip() for b in bloecke):                    # nur Zellen mit Text: leere Zellen messen wie im alten Leser mit der Standardschrift
                     inhalt = hoehe_von_bloecken(dok, engine, bloecke, max(10.0, breite - 2 * pad))
-            zeilenhoehe_setzen(qt, r, mm_to_px(tw / 1440 * 25.4), inhalt or engine.font_metrics(FontSpec(grund.family(), max(1.0, grund.pointSizeF()))).line_spacing)
+            px = mm_to_px(tw / 1440 * 25.4)
+            zeilenhoehe_setzen(qt, r, px, inhalt or engine.font_metrics(FontSpec(grund.family(), max(1.0, grund.pointSizeF()))).line_spacing)
+            art = "exact" if rules and rules[0] == "exact" else "minimum"
+            for c in range(qt.columns()):
+                cell = qt._qt.cellAt(r, c)
+                if cell.isValid() and cell.row() == r:
+                    f = cell.format().toTableCellFormat()
+                    f.setProperty(int(P_ZEILE_HOEHE_ART.split(":")[1]), art)
+                    cell.setFormat(f)
 
     @staticmethod
     def _block_format_setzen(block, vf) -> None:
@@ -385,6 +403,10 @@ class _ModellReader(docx_leser._Reader):
         self.doc.setDefaultFont(df)
         meta = self._meta_lesen()
         modell = document_from_qt(self.doc, self._erste_seite)           # Grundeinstellungen des Dokuments (Grundschrift, Rand, Textsatz); self.doc hat sonst keinen Inhalt
+        from lunivo_writer.core.document import Footnote
+        modell.notes = [Footnote(int(nid), art, str(text))
+                        for art, eintraege in meta.get("noten", {}).items() if art in ("f", "e")
+                        for nid, text in eintraege.items()]
         oben, marken, listen = [], [], {}
         for e, p in zip(self.cur.elemente, self.cur.als_modell()):
             if isinstance(e, _Absatz) and e.bf.hasProperty(AB.B_ABSCHNITT):

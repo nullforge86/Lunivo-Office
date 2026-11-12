@@ -1,7 +1,8 @@
 """Seitenumbruch ohne Qt über dem Dokumentenmodell: Seiten, Spalten, Abschnitte, Tabellen, Bilder, Cursor und Treffertest."""
 import pytest
 
-from lunivo_writer.core.document.model import (CharacterFormat, Document, Image, Paragraph, ParagraphFormat, Section, Table, TableCell, TableRow, TextRun)
+from lunivo_writer.core.document.model import (CharacterFormat, Document, Image, LineSpacing, Paragraph, ParagraphFormat, Section, Table, TableCell, TableRow, TextRun)
+from lunivo_writer.core.document.values import RowHeight
 from lunivo_writer.core.geometry import Point
 from lunivo_writer.core.layout import umbrechen
 from lunivo_writer.core.textlayout.hb_engine import HarfBuzzEngine
@@ -47,6 +48,67 @@ def test_umbruch_abstaende_und_bild(eng):
     r1, r2 = erg.absaetze[(0, 0)].zeilen[0][2], erg.absaetze[(0, 1)].zeilen[0][2]
     assert r2.y - r1.bottom == pytest.approx(30)                                                # Abstände fallen zusammen: der größere gilt
     assert len(erg.seiten) == 2 and erg.absaetze[(0, 2)].zeilen[0][2].height >= 200
+    semantisch = Document([Section("naechste", PageSettings(), [
+        Paragraph(ParagraphFormat(space_after_px=40), [TextRun("Davor", CharacterFormat())]),
+        Paragraph(ParagraphFormat({"BlockTopMargin": 70}, space_before_px=50), [TextRun("Danach", CharacterFormat())]),
+    ])])
+    geom = umbrechen(semantisch, eng)
+    s1, s2 = geom.absaetze[(0, 0)].zeilen[0][2], geom.absaetze[(0, 1)].zeilen[0][2]
+    assert s2.y - s1.bottom == pytest.approx(50)                                                # Semantik gewinnt über Bag, und angrenzende Abstände fallen zusammen
+
+
+def test_semantische_absatzausrichtung_ist_in_der_seitengeometrie_sichtbar(eng):
+    seite = PageSettings()
+    lauf = TextRun("Kurzer Absatz", CharacterFormat({"FontFamilies": ("Liberation Sans",), "FontPointSize": 12.0}))
+    ausrichtungen = ("left", "center", "right")
+    bloecke = [Paragraph(ParagraphFormat({"BlockTopMargin": 0, "BlockBottomMargin": 0}, alignment=art), [lauf])
+               for art in ausrichtungen]
+    lang = "Viele Wörter bilden eine lange Zeile und füllen den Absatz mit genug Inhalt damit er in mehrere Zeilen umbricht und verteilt wird " * 2
+    bloecke.append(Paragraph(ParagraphFormat({"BlockTopMargin": 0, "BlockBottomMargin": 0}, alignment="justify"),
+                             [TextRun(lang, lauf.format)]))
+    erg = umbrechen(Document([Section("naechste", seite, bloecke)]), eng)
+    x_links = erg.absaetze[(0, 0)].satz.zeilen[0].x
+    x_mitte = erg.absaetze[(0, 1)].satz.zeilen[0].x
+    x_rechts = erg.absaetze[(0, 2)].satz.zeilen[0].x
+    justify = erg.absaetze[(0, 3)].satz.zeilen
+    assert x_links == pytest.approx(0)
+    assert 0 < x_mitte < x_rechts
+    assert len(justify) > 1 and justify[0].wort_zuschlag > 0
+
+
+def test_semantische_und_raw_absatzeinzuege_sind_in_der_geometrie_sichtbar(eng):
+    seite = PageSettings()
+    text = "Ein langer Absatz mit genügend Wörtern für mehrere Zeilen " * 20
+    lauf = TextRun(text, CharacterFormat({"FontFamilies": ("Liberation Sans",), "FontPointSize": 12.0}))
+    semantisch = Paragraph(ParagraphFormat(left_indent_px=10, right_indent_px=100, first_line_indent_px=5), [lauf])
+    roh = Paragraph(ParagraphFormat({"BlockLeftMargin": 10, "BlockRightMargin": 100, "TextIndent": 5, "BlockIndent": 1}), [lauf])
+    basis = Paragraph(ParagraphFormat(), [lauf])
+    dok = Document([Section("naechste", seite, [semantisch, roh, basis])])
+    erg = umbrechen(dok, eng)
+    s_sem, s_roh, s_basis = (erg.absaetze[(0, i)].satz for i in range(3))
+    assert s_sem.zeilen[0].x == pytest.approx(15)
+    assert s_roh.zeilen[0].x == pytest.approx(55)                                             # BlockIndent bleibt als zusätzliche Stufe erhalten
+    assert len(s_sem.zeilen) > len(s_basis.zeilen) and len(s_roh.zeilen) > len(s_basis.zeilen)
+
+
+def test_semantische_zeilenabstaende_und_raw_fallback_im_seitenumbruch(eng):
+    seite = PageSettings()
+    text = "Zeile mit normaler Schrift"
+    run = TextRun(text, CharacterFormat({"FontFamilies": ("Liberation Sans",), "FontPointSize": 12.0}))
+    formatte = [
+        ParagraphFormat(line_spacing=LineSpacing("single", 0)),
+        ParagraphFormat(line_spacing=LineSpacing("proportional", 150)),
+        ParagraphFormat(line_spacing=LineSpacing("multiple", 1.5)),
+        ParagraphFormat(line_spacing=LineSpacing("fixed", 42)),
+        ParagraphFormat(line_spacing=LineSpacing("minimum", 42)),
+        ParagraphFormat({"LineHeightType": 1, "LineHeight": 125}),
+    ]
+    dok = Document([Section("naechste", seite, [Paragraph(pf, [run]) for pf in formatte])])
+    erg = umbrechen(dok, eng)
+    hoehen = [erg.absaetze[(0, i)].satz.zeilen[0].hoehe for i in range(len(formatte))]
+    assert hoehen[0] == pytest.approx(hoehen[1] / 1.5)
+    assert hoehen[1] == pytest.approx(hoehen[2]) == pytest.approx(hoehen[5] * 1.2)
+    assert hoehen[3] == pytest.approx(42) and hoehen[4] == pytest.approx(42)
 
 
 def test_tabelle_cursor_treffer(eng):
@@ -116,3 +178,168 @@ def test_zeilennummern(eng):
     erg = umbrechen(dok, eng)
     assert [n for *_r, n in erg.zeilennummern()] == [1, 2, 3]
     assert [n for *_r, n in erg.zeilennummern("seite")] == [1, 2, 1]
+
+
+def test_tabstopps_links_rechts_und_standard(eng):
+    from lunivo_writer.core.document.values import TabStop
+    dok = Document([Section("naechste", PageSettings(), [absatz("a\tb\tc", TabPositions=(TabStop(100.0, 0), TabStop(300.0, 1))), absatz("a\tb")])], text_option={"tab_stop_distance": 50.0})
+    erg = umbrechen(dok, eng)
+    satz = erg.absaetze[(0, 0)].satz
+    assert satz.cursor_x(2) == pytest.approx(100.0)                                             # „b“ beginnt am linken Stopp
+    assert satz.cursor_x(5) == pytest.approx(300.0, abs=0.5)                                     # „c“ endet am rechtsbündigen Stopp
+    assert erg.absaetze[(0, 1)].satz.cursor_x(2) == pytest.approx(50.0)                         # ohne eigene Stopps: Standardabstand des Dokuments
+
+
+def _tabelle(zeilen, eig=None, text=lambda r: f"Zeile {r}"):
+    return Table(zeilen, 2, eig or {}, [TableRow([TableCell(r, 0, content=[absatz(text(r))]), TableCell(r, 1, content=[absatz("x")])]) for r in range(zeilen)])
+
+
+def test_tabelle_kopfzeile_wiederholt_und_ausgerichtet(eng):
+    from lunivo_writer.core.document.values import Length
+    tab = _tabelle(80, {"TableHeaderRowCount": 1, "FrameWidth": Length("fixed", 300.0), "BlockAlignment": 0x4})
+    erg = umbrechen(Document([Section("naechste", PageSettings(), [tab])]), eng)
+    assert len(erg.seiten) >= 2
+    kopien = [p for p in erg.seiten[1].plaetze if p.kopie]
+    assert {p.art for p in kopien} == {"zelle", "zeile"} and kopien[0].pfad[-2:] == (0, 0)       # die Kopfzeile steht oben auf Seite 2 noch einmal
+    assert len(erg.absaetze[(0, 0, 0, 0, 0)].zeilen) == 1                                       # der Cursor kennt nur das Original
+    zellen = [p for p in erg.seiten[0].plaetze if p.art == "zelle"]
+    seite = PageSettings()
+    mitte = seite.margin_left_mm * 96 / 25.4 + seite.content_width_px / 2
+    assert (min(z.rect.x for z in zellen) + max(z.rect.right for z in zellen)) / 2 == pytest.approx(mitte, abs=3)
+
+
+def test_semantische_mindesthoehe_der_tabellenzeile_und_raw_fallback(eng):
+    from lunivo_writer.core.layout.seitenumbruch import P_ZEILE_MINHOEHE
+    zelle = lambda props=None: TableCell(0, 0, properties=props or {}, content=[absatz("Kurz")])
+    faelle = (
+        (TableRow([zelle({P_ZEILE_MINHOEHE: 30.0})], row_height=RowHeight("minimum", 80.0)), 80.0),
+        (TableRow([zelle({P_ZEILE_MINHOEHE: 90.0})], row_height=RowHeight("exact", 20.0)), 20.0),
+        (TableRow([zelle({P_ZEILE_MINHOEHE: 60.0})]), 60.0),
+    )
+    for zeile, erwartung in faelle:
+        tab = Table(1, 1, {}, [zeile])
+        erg = umbrechen(Document([Section("naechste", PageSettings(), [tab])]), eng)
+        rz = next(p.rect for p in erg.seiten[0].plaetze if p.art == "zelle")
+        assert rz.height == pytest.approx(erwartung)
+
+
+def test_exakte_tabellenzeile_clippt_ueberhohen_zelltext(eng):
+    from lunivo_writer.core.rendering.backend import RenderBackend
+    from lunivo_writer.core.rendering.seite import zeichne_seite
+    zeile = TableRow([TableCell(0, 0, content=[absatz("Sehr langer Zelltext " * 40)])], row_height=RowHeight("exact", 25.0))
+    erg = umbrechen(Document([Section("naechste", PageSettings(), [Table(1, 1, {}, [zeile])])]), eng)
+
+    class ClipMitschnitt(RenderBackend):
+        def __init__(self):
+            self.clips, self.texte, self.zustand = [], [], []
+        def push_state(self, **kwargs):
+            self.zustand.append(kwargs.get("clip"))
+            if kwargs.get("clip") is not None:
+                self.clips.append(kwargs["clip"])
+        def pop_state(self):
+            self.zustand.pop()
+        def draw_text(self, text, position, font, style):
+            self.texte.append((text, position.y, self.zustand[-1] if self.zustand else None))
+        def draw_line(self, *args): pass
+        def draw_rect(self, *args): pass
+        def draw_image(self, *args): pass
+        def draw_text_box(self, *args): pass
+        def text_bounds(self, *args): raise NotImplementedError
+
+    backend = ClipMitschnitt()
+    zeichne_seite(backend, erg, 0, eng, False)
+    assert backend.clips and all(c.height == pytest.approx(25.0) for c in backend.clips)
+    assert len(backend.texte) > 1 and all(c is not None for _text, _y, c in backend.texte)
+
+
+def test_tabellenzeile_hoeher_als_die_seite_wird_geteilt(eng):
+    tab = _tabelle(1, text=lambda r: "Wort " * 3000)
+    erg = umbrechen(Document([Section("naechste", PageSettings(), [absatz("Davor"), tab])]), eng)
+    seiten = sorted({s for s, _z, _r in erg.absaetze[(0, 1, 0, 0, 0)].zeilen})
+    assert len(seiten) >= 2 and seiten[0] == 0                                                   # die Zelle beginnt auf Seite 1 und läuft weiter
+    unten = PageSettings().margin_top_mm * 96 / 25.4 + PageSettings().content_height_px
+    assert all(r.bottom <= unten + 1 for _s, _z, r in erg.absaetze[(0, 1, 0, 0, 0)].zeilen)
+
+
+def test_endnoten_am_ende_und_rahmen_als_block(eng):
+    from lunivo_writer.core.document.model import Footnote, Frame
+    marke = TextRun("i", CharacterFormat({"user:21": "e:4", "FontPointSize": 12.0}))
+    rahmen = Frame({"FrameBorder": 2.0, "FramePadding": 10.0, "FrameMargin": 5.0}, [absatz("Im Rahmen")])
+    dok = Document([Section("naechste", PageSettings(), [Paragraph(ParagraphFormat({}), [TextRun("Text", CharacterFormat({"FontPointSize": 12.0})), marke]), rahmen, absatz("Danach")])],
+                   notes=[Footnote(4, "e", "Eine Endnote")])
+    erg = umbrechen(dok, eng)
+    plaetze = erg.seiten[-1].plaetze
+    note = next(p for p in plaetze if p.art == "endnote")
+    assert note.daten.text.startswith("i  Eine Endnote") and note.rect.y > erg.absaetze[(0, 2)].zeilen[0][2].bottom
+    assert any(p.art == "notenlinie" for p in plaetze)
+    r = next(p for p in plaetze if p.art == "rahmen")
+    innen = erg.absaetze[(0, 1, 0)].zeilen[0][2]
+    assert innen.x == pytest.approx(r.rect.x + 12.0) and innen.y == pytest.approx(r.rect.y + 12.0)   # Rahmenstrich und Innenabstand
+    assert erg.absaetze[(0, 2)].zeilen[0][2].y >= r.rect.bottom + 5.0                                 # Rand unter dem Rahmen
+
+
+def test_zeichenformat_schreibweise_laufweite_unterstreichung(eng):
+    from lunivo_writer.core.layout import eigenschaften as E
+    def lauf(**eig):
+        return Paragraph(ParagraphFormat({}), [TextRun("Maß und Zahl", CharacterFormat({"FontPointSize": 12.0, **eig}))])
+    dok = Document([Section("naechste", PageSettings(), [lauf(), lauf(FontCapitalization=1), lauf(FontLetterSpacing=3.0, FontLetterSpacingType=1), lauf(FontWordSpacing=10.0)])])
+    erg = umbrechen(dok, eng)
+    normal, gross, gesperrt, weit = (erg.absaetze[(0, i)].satz for i in range(4))
+    assert gross.text == "MAß UND ZAHL"                                                          # „ß“ bliebe als „SS“ nicht ein Zeichen: es bleibt stehen
+    assert gesperrt.cursor_x(12) == pytest.approx(normal.cursor_x(12) + 12 * 3.0)
+    assert weit.cursor_x(12) == pytest.approx(normal.cursor_x(12) + 2 * 10.0)
+    stil = E.stil(CharacterFormat({"TextUnderlineStyle": 3, "FontOverline": True}))
+    assert stil["underline"] and stil["underline_dash"] == "dot" and stil["overline"]
+
+
+def test_dezimalstopp_fuellzeichen_kapitaelchen_absatzrahmen(eng):
+    from lunivo_writer.core.document.values import TabStop
+    from lunivo_writer.core.rendering.backend import RenderBackend
+    from lunivo_writer.core.rendering.seite import zeichne_seite
+    dezimal = absatz("x\t12,50", **{"TabPositions": (TabStop(200.0, 3, ","),), "user:1048613": "200.00:punkt", "user:1048581": "#ff0000|1|einfach"})
+    kap = Paragraph(ParagraphFormat({"user:1048581": "#ff0000|1|einfach"}), [TextRun("Abc", CharacterFormat({"FontPointSize": 12.0, "FontCapitalization": 3}))])
+    erg = umbrechen(Document([Section("naechste", PageSettings(), [dezimal, kap])]), eng)
+    satz = erg.absaetze[(0, 0)].satz
+    assert satz.cursor_x(4) == pytest.approx(200.0, abs=0.5) and satz.tab_fuell == {1: "."}     # das Komma steht am Stopp, die Strecke davor ist gepunktet
+    k = erg.absaetze[(0, 1)].satz
+    assert k.text == "ABC" and k.laeufe[1].schrift.size_pt == pytest.approx(12.0 * 0.8)
+
+    class Mitschnitt(RenderBackend):
+        def __init__(self):
+            self.linien, self.texte = [], []
+        def draw_line(self, start, end, style):
+            self.linien.append((start, end, style))
+        def draw_text(self, text, position, font, style):
+            self.texte.append(text)
+        def draw_rect(self, rect, style):
+            pass
+    m = Mitschnitt()
+    zeichne_seite(m, erg, 0, eng, False)
+    rot = [li for li in m.linien if li[2].color[:3] == (255, 0, 0)]
+    assert len(rot) == 4                                                                       # ein gemeinsamer Rahmen um beide Absätze
+    assert any(li[2].dash == "dot" for li in m.linien) and "12,50" in "".join(m.texte)
+
+
+def test_navigation_cursor_auswahl_bewegung(eng):
+    from lunivo_writer.core.editing import Caret
+    from lunivo_writer.core.layout import navigation as NAV
+    dok = Document([Section("naechste", PageSettings(), [absatz("Erste Zeile hier"), absatz("Wort " * 60), absatz("Ende")])])
+    erg = umbrechen(dok, eng)
+    seite, r = NAV.cursor_rechteck(erg, Caret((0, 0), 6))
+    assert seite == 0 and r.x == pytest.approx(erg.absaetze[(0, 0)].zeilen[0][2].x + erg.absaetze[(0, 0)].satz.cursor_x(6))
+    fl = NAV.auswahl_rechtecke(erg, Caret((0, 0), 6), Caret((0, 1), 3))[0]
+    assert len(fl) == 2 and fl[0].y < fl[1].y                                                   # Rest des ersten Absatzes (mit Absatzende) und Anfang des zweiten
+    assert NAV.bewegen(erg, Caret((0, 0), 16), "rechts")[0] == Caret((0, 1), 0)                 # über das Absatzende
+    assert NAV.bewegen(erg, Caret((0, 1), 0), "links")[0] == Caret((0, 0), 16)
+    assert NAV.bewegen(erg, Caret((0, 0), 8), "wort_rechts")[0] == Caret((0, 0), 11)
+    assert NAV.bewegen(erg, Caret((0, 0), 8), "wort_links")[0] == Caret((0, 0), 6)
+    unten, x = NAV.bewegen(erg, Caret((0, 0), 6), "runter")
+    assert unten.pfad == (0, 1) and abs(erg.absaetze[(0, 1)].satz.cursor_x(unten.versatz) - erg.absaetze[(0, 0)].satz.cursor_x(6)) < 6
+    zweite, _x = NAV.bewegen(erg, unten, "runter", x)
+    assert erg.absaetze[(0, 1)].satz.zeile_von(zweite.versatz) == 1
+    assert NAV.bewegen(erg, zweite, "hoch", x)[0] == unten
+    ende = NAV.bewegen(erg, unten, "zeilenende")[0]
+    assert erg.absaetze[(0, 1)].satz.zeile_von(ende.versatz) == 0 and ende.versatz > unten.versatz
+    assert NAV.bewegen(erg, ende, "zeilenanfang")[0] == Caret((0, 1), 0)
+    assert NAV.bewegen(erg, unten, "ende")[0] == Caret((0, 2), 4) and NAV.bewegen(erg, unten, "anfang")[0] == Caret((0, 0), 0)
+    assert NAV.wort_bei(erg, Caret((0, 0), 8)) == (Caret((0, 0), 6), Caret((0, 0), 11))
