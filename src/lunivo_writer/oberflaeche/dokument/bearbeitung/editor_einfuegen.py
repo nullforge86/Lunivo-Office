@@ -55,7 +55,7 @@ class EinfuegenMixin:
         """Einfügen als EIN Rückgängig-Schritt; danach bietet die kleine Schaltfläche die anderen Formen an (Optionen ▸ Bearbeiten)."""
         c = self.textCursor()
         start = c.selectionStart()
-        if (modus == "Nur Text" or not source.hasHtml()) and not self.modell_spiegel().zu_gross():
+        if modus == "Nur Text" or not source.hasHtml():
             self.text_ersetzen(c, source.text() if source.hasText() else "")                  # Oberfläche → Adapter → Kern → Ansicht
             ende = c.position()
             self.setTextCursor(c)

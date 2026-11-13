@@ -36,6 +36,11 @@ class DocumentManager:
     def speichern(self, path: str, dokument, seite, meta: dict, erwartet=None):
         """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück. ``erwartet``: der zuletzt gesehene ``stand`` der Zieldatei
         (siehe ``sicher_schreiben.schreiben``); ohne Angabe wird nicht verglichen."""
+        from lunivo_writer.core.document import Document
+        if isinstance(dokument, Document):
+            from lunivo_writer.dienste import modell_speichern, sicher_schreiben
+            stand = erwartet[0] if erwartet is not None else sicher_schreiben.UNGEPRUEFT
+            return modell_speichern.speichere_modell(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=stand)
         if erwartet is None:
             return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta))
         return formats.save(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=erwartet[0])
@@ -61,7 +66,12 @@ class DocumentManager:
                 continue
             docx_path, _ = wiederherstellung.paths(t.token)
             try:
-                formats.save(docx_path, t.editor.document(), t.page, t.meta, sicherung=False)
+                modell = t.modell_fuer_speichern() if hasattr(t, "modell_fuer_speichern") else None
+                if modell is None:
+                    formats.save(docx_path, t.editor.document(), t.page, t.meta, sicherung=False)
+                else:
+                    from lunivo_writer.dienste.modell_speichern import speichere_modell
+                    speichere_modell(docx_path, modell, t.page, t.meta, sicherung=False)
                 wiederherstellung.write_meta(t.token, t.path or "", t.title)
                 if self.settings.get_bool("sicherung/staende", False):
                     wiederherstellung.zwischenstand(t.token, t.title, self.settings.get_int("sicherung/tage", 7))

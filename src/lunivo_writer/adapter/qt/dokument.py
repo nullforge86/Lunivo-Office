@@ -293,11 +293,43 @@ def _bild(cf: QTextCharFormat, ctx: _Lesen, name: str | None = None) -> Image:
                  bool(quelle.nur_raster) if quelle else False)
 
 
+def _bild_aus_modell(bild: Image) -> QImage:
+    """Rasterbytes des Modells an der Qt-Grenze dekodieren, einschließlich Vektorquellen."""
+    daten = bild.raster_png or bild.original or b""
+    img = QImage.fromData(daten)
+    if img.isNull() and bild.original:
+        from lunivo_writer.dienste.vektor_bilder import bild_lesen
+        img = bild_lesen(bild.original)
+    if not img.isNull() and bild.original:
+        bilddaten.merken(img, bild.original, bild.fallback_png, bild.raster_only)
+    return img
+
+
 def bild_aus_qimage(img: QImage) -> Image:
     """Ein ``QImage`` (mit seinem Original aus der Ablage) als Modell-``Image``."""
     quelle = bilddaten.quelle_zu(img)
     return Image(_png(img), CharacterFormat(), quelle.daten if quelle else None, quelle.format if quelle else None, quelle.ersatz_png if quelle else None,
                  bool(quelle.nur_raster) if quelle else False)
+
+
+def seite_bilder_zu_qt(page):
+    """Qt-freie Bytes in Seiteneinrichtungen an der Oberfläche als Bilder bereitstellen."""
+    kopie = page.copy()
+    bilder = []
+    for angabe in page.bilder:
+        neu = dict(angabe)
+        data = neu.get("bild")
+        if isinstance(data, bytes):
+            img = QImage.fromData(data)
+            if img.isNull():
+                from lunivo_writer.dienste.vektor_bilder import bild_lesen
+                img = bild_lesen(data)
+            neu["bild"] = img
+            if not img.isNull():
+                bilddaten.merken(img, data)
+        bilder.append(neu)
+    kopie.bilder = bilder
+    return kopie
 
 
 def bild_aus_format(cf: QTextCharFormat, doc: QTextDocument) -> Image:
@@ -474,10 +506,8 @@ def _runs_schreiben(cursor: QTextCursor, p: Paragraph, ctx: _Schreiben) -> None:
         fmt = QTextImageFormat()
         _setzen(fmt, zeichenformat_zu_qt_properties(r.format))
         if r.raster_png:
-            img = QImage.fromData(r.raster_png, "PNG")
+            img = _bild_aus_modell(r)
             ctx.doc.addResource(QTextDocument.ImageResource, QUrl(fmt.name()), img)
-            if r.original:
-                bilddaten.merken(img, r.original, r.fallback_png, r.raster_only)
         cursor.insertImage(fmt)
 
 
@@ -565,10 +595,8 @@ def document_to_qt(modell: Document) -> QTextDocument:
     ctx = _Schreiben(doc, modell)
     for name, bild in modell.media.items():                                     # Bilder, auf die nur ein Name verweist
         if bild.raster_png:
-            img = QImage.fromData(bild.raster_png, "PNG")
+            img = _bild_aus_modell(bild)
             doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
-            if bild.original:
-                bilddaten.merken(img, bild.original, bild.fallback_png, bild.raster_only)
     cursor = QTextCursor(doc)
     frisch = True
     for i, s in enumerate(modell.sections):

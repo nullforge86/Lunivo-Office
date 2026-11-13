@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 
+class NichtImModell(Exception):
+    """RTF-Konstrukt, das noch nicht verlustfrei ins Kernmodell überführt wird."""
+
+
 class Absatz:
     def __init__(self, props: dict, laeufe: list, liste: str | None):
         self.props, self.laeufe, self.liste = props, laeufe, liste

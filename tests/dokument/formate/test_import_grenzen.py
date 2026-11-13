@@ -57,6 +57,15 @@ def test_dtd_und_entitaeten_im_paket(tmp_path, klein):
         G.pruefe_paket(paket(tmp_path / "f.docx", {"word/document.xml": xml}), "DOCX")
 
 
+def test_odt_manifest_mit_standard_dtd_wird_angenommen(tmp_path, klein):
+    manifest = ('<?xml version="1.0" encoding="UTF-8"?>'
+                '<!DOCTYPE manifest:manifest PUBLIC "-//OpenOffice.org//DTD Manifest 1.0//EN" "Manifest.dtd">'
+                '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"/>')
+    p = paket(tmp_path / "odt.odt", {"META-INF/manifest.xml": manifest,
+                                     "content.xml": "<document-content/>"})
+    G.pruefe_paket(p, "ODT")
+
+
 def test_kein_zip_und_abgeschnittenes_zip(tmp_path, klein):
     kaputt = tmp_path / "g.docx"; kaputt.write_bytes(b"PK\x03\x04 nur Muell")
     with pytest.raises(DocumentIOError, match="kein gültiges DOCX"):

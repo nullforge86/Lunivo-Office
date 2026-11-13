@@ -140,6 +140,10 @@ class DocumentTab(QScrollArea):
     def page(self) -> PageSettings:
         return self.editor.page
 
+    def modell_fuer_speichern(self):
+        """Das aktuelle Kernmodell des Tabs."""
+        return self.editor.modell_spiegel().modell()
+
     def is_modified(self) -> bool:
         return self.editor.document().isModified()
 

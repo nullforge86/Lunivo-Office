@@ -1,4 +1,4 @@
-"""Wasserzeichen einer Seite ohne Qt: Text oder Bild mit Lage, Größe, Drehung und Deckkraft als Zeichenanweisungen für ein ``RenderBackend``.
+"""Wasserzeichen einer Seite ohne Qt: Text oder Bild mit Lage, Größe, Drehung und Deckkraft als Zeichenanweisungen für ein ``RenderTarget``.
 
 Das Wasserzeichen ist ein Wörterbuch (``PageSettings.watermark``): ``text``, ``schrift``, ``groesse_pt`` (0 = automatisch), ``farbe``, ``winkel``, ``bild`` (Bilddatei als Base64), ``zoom`` (0 = automatisch),
 ``auswaschen``, ``h``/``h_mm``, ``v``/``v_mm``, ``transparenz`` (0…100), ``ganzseitig`` (das Bild füllt das ganze Blatt)."""
@@ -8,7 +8,7 @@ import base64
 
 from lunivo_writer.core.document.bildformat import format_erkennen, masse
 from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 
 PX_JE_MM = 96.0 / 25.4
@@ -57,7 +57,7 @@ def schrift(engine: TextLayoutEngine, w: dict, r: Rect) -> FontSpec:
     return FontSpec(familie, px * 72 / 96, 700)
 
 
-def zeichne(b: RenderBackend, engine: TextLayoutEngine, w: dict | None, r: Rect) -> None:
+def zeichne(b: RenderTarget, engine: TextLayoutEngine, w: dict | None, r: Rect) -> None:
     """Das Wasserzeichen ``w`` auf die Seite ``r`` (96-dpi-Bildpunkte) zeichnen."""
     if not da(w):
         return

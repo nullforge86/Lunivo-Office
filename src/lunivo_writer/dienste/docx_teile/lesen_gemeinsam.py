@@ -85,7 +85,7 @@ _MC_CHOICE = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Choic
 _UNSUPPORTED = [
     ("//w:txbxContent[not(ancestor::wps:wsp[wps:txbx or wps:linkedTxbx]) and not(ancestor::v:shape) and not(ancestor::mc:Fallback)]", "Textfelder werden nicht dargestellt und gehen beim Speichern verloren."),
     ("//m:oMath", "Formeln werden nicht dargestellt und gehen beim Speichern verloren."),
-    ("//w:pict[not(ancestor::mc:Fallback) and not(.//v:shape[v:textbox or v:imagedata or @id])] | //wps:wsp[not(.//a:blip) and not(wps:txbx or wps:linkedTxbx) and not(wps:spPr/a:prstGeom[@prst] or wps:spPr/a:custGeom)]",
+    ("//w:pict[not(ancestor::mc:Fallback) and not(.//v:shape[v:textbox or v:imagedata or @id] | .//v:rect | .//v:oval | .//v:roundrect)] | //wps:wsp[not(.//a:blip) and not(wps:txbx or wps:linkedTxbx) and not(wps:spPr/a:prstGeom[@prst] or wps:spPr/a:custGeom)]",
      "Formen und gezeichnete Objekte werden nicht dargestellt."),
     ("//w:drawing[.//wp:anchor[.//wp:wrapTopAndBottom]]",
      "Bilder mit „Oben und unten“-Umbruch werden als Bild im Text eingefügt."),

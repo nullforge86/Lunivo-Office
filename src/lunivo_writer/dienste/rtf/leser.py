@@ -1,11 +1,8 @@
 """RTF-Import: ``read_rtf`` — Datei prüfen, zerlegen, QTextDocument, Seiteneinstellungen und Kopf-/Fußzeilen übernehmen."""
 from __future__ import annotations
 
-from PySide6.QtGui import QFont, QTextCursor, QTextDocument
-
 from lunivo_writer.modelle.seite import HeaderFooter
 from lunivo_writer.modelle.bericht import DocumentIOError
-from lunivo_writer.dienste.rtf.aufbau import Bauer, kopf_fuss_text
 from lunivo_writer.dienste.rtf.zerleger import Zerleger
 
 GRENZE_BYTES = 512 * 1024 * 1024
@@ -24,7 +21,9 @@ def _daten_lesen(path: str) -> bytes:
     return daten
 
 
-def _dokument_bauen(z: Zerleger) -> QTextDocument:
+def _dokument_bauen(z: Zerleger) -> "QTextDocument":
+    from PySide6.QtGui import QFont, QTextCursor, QTextDocument
+    from lunivo_writer.dienste.rtf.aufbau import Bauer
     doc = QTextDocument()
     doc.setDocumentMargin(0)
     df = QFont(z.schriften.get(z.standard_schrift) or "Liberation Serif")
@@ -35,6 +34,7 @@ def _dokument_bauen(z: Zerleger) -> QTextDocument:
 
 
 def _seite_fertig(z: Zerleger):
+    from lunivo_writer.dienste.rtf.aufbau import kopf_fuss_text
     page = z.seite
     for schl, (ziel, _a) in z.kopf_fuss.items():
         if "?" in schl:                                       # linke/rechte Seiten: nur, wenn es keine allgemeine gibt

@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from lunivo_writer.core.geometry import Rect
 from lunivo_writer.core.rendering import seitenrahmen as SR, wasserzeichen as WZ
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 from lunivo_writer.core.textlayout.engine import TextLayoutEngine
 
 PX_JE_MM = 96.0 / 25.4
 
 
-def zeichne_seitenschmuck(b: RenderBackend, engine: TextLayoutEngine, page, hintergrund: bool = True, flaeche: Rect | None = None, rahmen: str = "immer",
+def zeichne_seitenschmuck(b: RenderTarget, engine: TextLayoutEngine, page, hintergrund: bool = True, flaeche: Rect | None = None, rahmen: str = "immer",
                           wasserzeichen: bool = True) -> None:
     """Seitenfarbe, Seitenrahmen und Wasserzeichen. Maße in 96-dpi-Bildpunkten, Ursprung links oben; ``flaeche`` überschreibt das Seitenrechteck.
     ``rahmen``: der Rahmen liegt über dem Text (``"vorn"``) oder dahinter (``"hinten"``, „Immer im Vordergrund anzeigen“ aus); ``"immer"`` zeichnet ihn in jedem Fall."""

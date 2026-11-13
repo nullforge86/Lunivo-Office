@@ -38,6 +38,8 @@ src/lunivo_writer/
     tabelle/                Tabellenstil, -zustand, -eigenschaften, Text in Tabelle
     dokument/               Einfügen, Felder, Formular, Verweise, Verzeichnisse, Vergleich, Sendungen, Vorlagen
     diagramme/              Diagrammzeichnung, Geometrie, Formatierung und Teil-Auswahl
+  core/                     Qt-freies Dokumentmodell, Bearbeitungssitzung, Textsatz, Seitenumbruch und Rendering
+  adapter/qt/               Brücke zwischen Qt-Widgets/Textdokument und den Qt-freien Kernmodulen
   modelle/                  Dokument- und Seitendaten
   dienste/                  Datei-, Einstellungs-, Wiederherstellungs- und Exportdienste; rtf/ (RTF-Import: Zerleger, Steuerwörter, Gruppen, Aufbau), docx_teile/ (DOCX), odt_*.py (ODT)
   ki/                       KI-Anbieter und KI-Aufgaben; ki.py (Klasse KI) mit ki_transport, ki_claude, ki_ollama, ki_eigen, ki_werkzeugschleife, ki_textaktionen, ki_bildgenerierung
@@ -61,6 +63,8 @@ skripte/                    Startskript (starten-qt.sh) und Lade-Skripte (schrif
 - **editor** führt Dokumentänderungen aus.
 - **editor/** ist in `seite`, `text`, `objekte`, `tabelle`, `dokument` und `diagramme` gegliedert. Alte Weiterleitungen gibt es nicht mehr; `werkzeuge/pruefungen/importpruefung.py` (und `tests/plattform/test_importpfade.py`) prüft nach jedem Verschieben alle Importpfade. `werkzeuge/erstellung/module_verschieben.py` verschiebt Module und zieht alle Verweise mit.
 - **modelle** hält Dokument- und Seitendaten.
+- **core** enthält das Qt-freie Dokumentmodell sowie Bearbeitung, Textsatz, Seitenumbruch und Rendering. Die Modellansicht ist der Standard; die Qt-Oberfläche verbindet sie über **adapter/qt** mit Editor, Dateioperationen und Qt-Zeichnung.
+- **adapter/qt** übersetzt Dokumente, Geometrie, Bearbeitung und Rendering zwischen Qt und `core`, ohne Qt-Abhängigkeiten in den Kern einzuführen.
 - **dienste** liest und schreibt Dateien, Einstellungen und Sicherungen.
 - **plattform** kapselt Pfade, Dateisperre und Protokoll; nur dort steht Code, der je nach Betriebssystem verschieden ist.
 - **korrektur** prüft und erklärt Textstellen (jeder Prüfer in `korrektur/pruefung.py` hat einen Namen und lässt sich über `schreibhilfe/pruefer_<name>` ausschalten; `modelle/korrektur.py` hat das gemeinsame Fundmodell `ProofingIssue`); **ai** stellt optionale KI-Aufgaben bereit.
@@ -82,6 +86,7 @@ Diese Richtung prüft `tests/editor/test_schichten.py`: `editor/`, `dienste/`, `
 - Banddefinition und Reiter: `src/lunivo_writer/ressourcen/register.json` und `src/lunivo_writer/oberflaeche/band/reiter/`.
 - Gemeinsame Qt-Bausteine: `src/lunivo_writer/oberflaeche/baukasten/`; Konventionen stehen in [baukasten.md](entwicklung/baukasten.md).
 - Dokumentformate: `src/lunivo_writer/dienste/`; DOCX-Lese- und Schreiblogik ist nach Metadaten, Absätzen, Runs, Dokumentaufbau und Tabellen/Objekten getrennt in `dienste/docx_teile/`.
+- Qt-freie Dokument-, Layout- und Rendering-Schichten: `src/lunivo_writer/core/`; ihre Qt-Anbindung liegt in `src/lunivo_writer/adapter/qt/`.
 - Eingebautes Handbuch: `src/lunivo_writer/ressourcen/handbuch.md`.
 - Abhängigkeiten und Start: `pyproject.toml`, `requirements.txt` und `skripte/starten-qt.sh`.
 

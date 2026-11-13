@@ -68,7 +68,9 @@ class DateienExportBaustein:
             return QWidget()
 
         def exportieren(wahl):
-            bilder = bilder_schreiben(t.editor.document(), t.page, t.editor.noten, t.title, wahl)
+            modell = t.modell_fuer_speichern()
+            dokument = modell if modell is not None else t.editor.document()
+            bilder = bilder_schreiben(dokument, t.page, t.editor.noten, t.title, wahl)
             self.settings.set("export/bild_ordner", wahl.ordner)
             if bilder:
                 self.statusBar().showMessage(f"{len(bilder)} Bild{'er' if len(bilder) != 1 else ''} exportiert.", 5000)
@@ -93,15 +95,22 @@ class DateienExportBaustein:
                      if k in ("versteckt", "felder_code", "zeichnungen", "balken", "hervorhebungen", "textmarken", "textgrenzen", "zuschnitt",
                               "blasen", "nur_formular")}
             extra.update(notenlinks=wahl.notenlinks, hyperlinks=wahl.hyperlinks)
-            doc = t.editor.document()
             erste, letzte = PE.seiten(wahl, t.editor.current_page())
-            if wahl.bereich == "markierung" and t.editor.textCursor().hasSelection():
-                c = t.editor.textCursor()
-                doc = PE.nur_markierung(doc, c.selectionStart(), c.selectionEnd())
+            modell = t.modell_fuer_speichern() if wahl.bereich != "markierung" else None
+            kern_rendern = (modell is not None and not wahl.kommentare and not wahl.hyperlinks and not wahl.notenlinks
+                            and PE.lesezeichen(wahl) is None and not any(extra.values()))
 
             def erzeugen(tmp):
-                n = export_pdf(tmp, doc, t.page, titel, autor, t.editor.noten, PE.lesezeichen(wahl),
-                               self._silben_fuer_druck(), komm, extra, erste, letzte)
+                if kern_rendern:
+                    from lunivo_writer.adapter.qt.pdf_modell import modell_als_pdf
+                    n = modell_als_pdf(modell, tmp, titel, autor=autor, erste=erste, letzte=letzte)
+                else:
+                    doc = t.editor.document()
+                    if wahl.bereich == "markierung" and t.editor.textCursor().hasSelection():
+                        c = t.editor.textCursor()
+                        doc = PE.nur_markierung(doc, c.selectionStart(), c.selectionEnd())
+                    n = export_pdf(tmp, doc, t.page, titel, autor, t.editor.noten, PE.lesezeichen(wahl),
+                                   self._silben_fuer_druck(), komm, extra, erste, letzte)
                 PE.verschluesseln(tmp, wahl)
                 return n
             n = sicher_schreiben.schreiben(path, erzeugen, endung=".pdf")

@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 
 PX_JE_PT = 96.0 / 72.0
@@ -26,7 +26,7 @@ def _mit_effekt(hf) -> bool:
     return any((fmt or {}).get("effekt") or (fmt or {}).get("kontur") for _t, fmt in hf.laeufe())
 
 
-def zeichne_zeile(b: RenderBackend, engine: TextLayoutEngine, hf, rect: Rect, text_fn: Callable[[str], str], ausrichtung: str, grund: FontSpec) -> bool:
+def zeichne_zeile(b: RenderTarget, engine: TextLayoutEngine, hf, rect: Rect, text_fn: Callable[[str], str], ausrichtung: str, grund: FontSpec) -> bool:
     """Eine Kopf- oder Fußzeile in ``rect``. ``text_fn`` ersetzt Felder (Seitenzahl …) im Text. ``False``, wenn sie Texteffekte trägt und der Aufrufer sie anders zeichnen muss."""
     if hf.is_empty():
         return True

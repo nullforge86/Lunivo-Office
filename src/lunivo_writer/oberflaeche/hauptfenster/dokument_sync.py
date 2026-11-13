@@ -37,9 +37,13 @@ class DokumentSyncMixin:
             return
         cf = e.textCursor().charFormat()
         fam = cf.fontFamilies()[0] if cf.fontFamilies() else e.document().defaultFont().family()
-        _feld_setzen(f["font"], "setCurrentFont", QFont(fam))
+        font_feld = f.get("font")
+        if font_feld is not None:
+            _feld_setzen(font_feld, "setCurrentFont", QFont(fam))
         size = cf.fontPointSize() or e.document().defaultFont().pointSizeF() or 11
-        _feld_setzen(f["groesse"], "setEditText", f"{size:g}")
+        groesse_feld = f.get("groesse")
+        if groesse_feld is not None:
+            _feld_setzen(groesse_feld, "setEditText", f"{size:g}")
         self._sync_seitenmasse(f)
         if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
             from lunivo_writer.editor.objekte import frei_objekt as FO
@@ -47,12 +51,14 @@ class DokumentSyncMixin:
             _feld_setzen(f["tt_font"], "setCurrentFont", QFont(d.get("schrift", "Liberation Sans")))
             if not f["tt_groesse"].hasFocus():
                 _feld_setzen(f["tt_groesse"], "setEditText", f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}")
-        if "tab_font" in f and e.textCursor().currentTable() is not None:       # Schrift und Größe der Tabellentools
+        if e.textCursor().currentTable() is not None and "tab_font" in f:       # Schrift und Größe der Tabellentools
             _feld_setzen(f["tab_font"], "setCurrentFont", QFont(fam))
             if not f["tab_groesse"].hasFocus():
                 _feld_setzen(f["tab_groesse"], "setEditText", f"{size:g}")
         st = e.current_style()
-        _feld_setzen(f["stil"], "setCurrentText", "Fließtext" if st == "Standard" else st)
+        stil_feld = f.get("stil")
+        if stil_feld is not None:
+            _feld_setzen(stil_feld, "setCurrentText", "Fließtext" if st == "Standard" else st)
 
     def _sync_kontexte(self, e):
         """Schaltet die Kontext-Reiter nach dem gewählten Objekt. → Art des Textobjekts (WordArt, Textfeld) oder None."""
@@ -82,7 +88,7 @@ class DokumentSyncMixin:
     def _sync_seitenmasse(self, f: dict) -> None:
         """Maßfelder im Reiter Seitenlayout."""
         t = self.current_tab()
-        if t is None or "rand_oben" not in f:
+        if t is None or not dict.__contains__(f, "rand_oben"):
             return
         p = t.page
         for schl, wert in (("oben", p.margin_top_mm), ("unten", p.margin_bottom_mm), ("links", p.margin_left_mm), ("rechts", p.margin_right_mm)):

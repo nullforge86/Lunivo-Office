@@ -110,6 +110,7 @@ def test_png_export_pro_seite(app, tmp_path):
 def test_bild_export_langes_bild_wasserzeichen_und_formate(app, tmp_path):
     """„Langes Bild“ legt alle Seiten untereinander in eine Datei; JPG, BMP und TIF werden geschrieben, nichts wird überschrieben."""
     from PySide6.QtGui import QTextDocument
+    from lunivo_writer.adapter.qt.dokument import document_from_qt
     from lunivo_writer.modelle.seite import PageSettings
     from lunivo_writer.dienste.bild_export import BildWahl, bilder_schreiben
     doc = QTextDocument(); doc.setPlainText("\n".join(f"Zeile {i}" for i in range(140)))
@@ -125,6 +126,10 @@ def test_bild_export_langes_bild_wasserzeichen_und_formate(app, tmp_path):
         assert not QImage(d[0]).isNull()
     zweit = bilder_schreiben(doc, page, None, "Brief.docx", BildWahl(lang=True, ordner=str(tmp_path), dpi=96, format="JPG"))
     assert zweit[0].endswith("Brief (2).jpg")
+    modell = document_from_qt(doc, page)
+    modell_lang = bilder_schreiben(modell, page, None, "Modellbrief.docx",
+                                   BildWahl(lang=True, ordner=str(tmp_path), dpi=96, format="PNG"))
+    assert QImage(modell_lang[0]).height() > QImage(einzeln[0]).height() * 2
 
 
 def test_bild_export_fenster(app, tmp_path):

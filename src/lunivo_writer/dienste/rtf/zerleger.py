@@ -32,8 +32,9 @@ def _unicode_zeichen(g: dict, zahl: int) -> str:
 
 
 class Zerleger:
-    def __init__(self, daten: bytes):
+    def __init__(self, daten: bytes, modell: bool = False):
         self.daten = daten
+        self.modell = modell
         self.report = IOReport()
         self.schriften: dict[int, str] = {}
         self.farben: list[str | None] = []
@@ -103,6 +104,13 @@ class Zerleger:
         return False
 
     def _bild_fertig(self, b: dict) -> None:
+        if self.modell:
+            lauf = bilder.bild_lauf_modell(b)
+            if lauf is None:
+                from lunivo_writer.dienste.rtf.modell import NichtImModell
+                raise NichtImModell("RTF-Bildformat nicht im Kernmodell")
+            self._g["ziel"].laeufe.append(lauf)
+            return
         lauf = bilder.bild_lauf(b)
         if lauf is None:
             self.report.warn("Ein Bild aus der RTF-Datei hat ein nicht lesbares Format und wurde übersprungen.")

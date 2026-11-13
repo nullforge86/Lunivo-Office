@@ -1,8 +1,8 @@
-"""WordArt ohne Qt: Text mit Farbverlauf, Kontur und Schatten als Zeichenanweisungen für ein ``RenderBackend`` (die Galerie „Formatvorlage“ von WordArt)."""
+"""WordArt ohne Qt: Text mit Farbverlauf, Kontur und Schatten als Zeichenanweisungen für ein ``RenderTarget`` (die Galerie „Formatvorlage“ von WordArt)."""
 from __future__ import annotations
 
 from lunivo_writer.core.geometry import Point
-from lunivo_writer.core.rendering.backend import LinearGradient, RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import LinearGradient, RenderTarget, Style, rgba
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 
 RAND = 20                                        # Bildpunkte Rand um den Text
@@ -15,7 +15,7 @@ def masse(engine: TextLayoutEngine, text: str, schrift: str, pt: float) -> tuple
     return int(engine.measure_text(text, f)) + 2 * RAND, int(m.ascent + m.descent) + 2 * RAND
 
 
-def zeichne(b: RenderBackend, engine: TextLayoutEngine, text: str, vorlage: tuple, schrift: str = "Liberation Sans", pt: float = 48) -> None:
+def zeichne(b: RenderTarget, engine: TextLayoutEngine, text: str, vorlage: tuple, schrift: str = "Liberation Sans", pt: float = 48) -> None:
     """WordArt nach einer Vorlage ``(Name, Füllung oben, Füllung unten, Kontur oder None, Konturbreite, Schatten oder None)``: Schatten, dann Verlaufsfüllung mit Kontur."""
     _n, f1, f2, kontur, kb, schatten = vorlage
     f = FontSpec(schrift, pt, 700)

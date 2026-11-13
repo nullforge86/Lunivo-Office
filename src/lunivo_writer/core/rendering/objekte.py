@@ -7,7 +7,7 @@ import colorsys
 
 from lunivo_writer.core.document.objekte import FillStyle, ImageObject, ShapeObject, StrokeStyle, VectorPath
 from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import ImageFill, LinearGradient, PatternFill, RenderBackend, Style, TextureFill, rgba
+from lunivo_writer.core.rendering.backend import ImageFill, LinearGradient, PatternFill, RenderTarget, Style, TextureFill, rgba
 
 STRICH = {"einfach": None, "gepunktet": "dot", "fein_gestrichelt": (3.0, 2.0), "gestrichelt": "dash", "strichpunkt": "dashdot", "strichpunktpunkt": "dashdotdot"}
 
@@ -48,7 +48,7 @@ def kontur_stil(s: StrokeStyle) -> Style:
     return Style(color=rgba(s.color), width=s.width, dash=STRICH.get(s.dash))
 
 
-def zeichne_bild(b: RenderBackend, obj: ImageObject, rect: Rect, daten: bytes | None = None, fuellbild: bytes | None = None) -> None:
+def zeichne_bild(b: RenderTarget, obj: ImageObject, rect: Rect, daten: bytes | None = None, fuellbild: bytes | None = None) -> None:
     """Das Bildobjekt in ``rect`` zeichnen: Drehung um die Mitte, Effekte hinter dem Bild, Füllung, Bild (bei ``ellipse`` im Oval beschnitten), Kontur innerhalb des Rechtecks.
     ``daten`` überschreibt die Bilddaten des Objekts (zum Beispiel ein zugeschnittenes Bild), ``fuellbild`` ist das Bild einer Bildfüllung; ohne Bilddaten wird ein Platzhalter gezeichnet."""
     if rect.width <= 0 or rect.height <= 0:
@@ -94,7 +94,7 @@ def zeichne_bild(b: RenderBackend, obj: ImageObject, rect: Rect, daten: bytes | 
     b.pop_state()
 
 
-def zeichne_platzhalter(b: RenderBackend, r: Rect) -> None:
+def zeichne_platzhalter(b: RenderTarget, r: Rect) -> None:
     """Ersatz für ein fehlendes Bild: graue Fläche mit Rahmen und Kreuz."""
     b.draw_rect(r, Style(color=(235, 235, 235, 255), width=0, filled=True))
     b.draw_rect(r, Style(color=(160, 160, 160, 255), width=1))
@@ -120,7 +120,7 @@ def form_pfad(s: ShapeObject, r: Rect) -> VectorPath | None:
     return None
 
 
-def zeichne_form(b: RenderBackend, s: ShapeObject, rect: Rect) -> bool:
+def zeichne_form(b: RenderTarget, s: ShapeObject, rect: Rect) -> bool:
     """Eine Form in ``rect`` zeichnen (Schatten, Füllung, Kontur, Drehung, Deckkraft). ``False``, wenn die Art nur das Qt-Zeichnen der Anwendung kennt."""
     pfad = form_pfad(s, rect)
     if pfad is None:

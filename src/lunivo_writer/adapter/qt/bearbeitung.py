@@ -17,9 +17,6 @@ from lunivo_writer.core.editing.sitzung import behaelter, innerste_tabelle
 from lunivo_writer.editor.objekte import bilddaten
 
 
-GROSS = 6000                       # ab so vielen Absätzen baut ein Befehl das Modell nach einer Änderung der Oberfläche nicht neu auf (Neuaufbau: etwa 15 ms je 1000 Absätze, mit Formaten ein Mehrfaches): er arbeitet direkt am Textdokument
-
-
 class ModellSpiegel:
     def __init__(self, qdoc: QTextDocument, seite=None, modell=None):
         self.qdoc = qdoc
@@ -54,10 +51,6 @@ class ModellSpiegel:
             self._revision = self.qdoc.revision()
         return self._sitzung
 
-    def zu_gross(self) -> bool:
-        """Soll der Befehl direkt am Textdokument arbeiten, weil das Modell neu aufgebaut werden müsste und das Dokument sehr groß ist (``GROSS``)?"""
-        return self.veraltet() and self.qdoc.blockCount() > GROSS
-
     def veraltet(self) -> bool:
         """Hat die Oberfläche das Textdokument seit dem letzten Aufbau des Modells selbst geändert?"""
         return self._sitzung is None or self.qdoc.revision() != self._revision
@@ -88,7 +81,7 @@ class ModellSpiegel:
     # -- Befehle der Oberfläche --
     def zeichenformat(self, cursor: QTextCursor, fmt: QTextCharFormat, entfernen: tuple = ()) -> bool:
         """Das Zeichenformat ``fmt`` auf die Auswahl des Cursors anwenden (über Modell und Sitzung). False, wenn nichts ausgewählt ist."""
-        if not cursor.hasSelection() or (self.zu_gross()):
+        if not cursor.hasSelection():
             return False
         s = self.sitzung()
         s.zeichenformat(eigenschaften(fmt), self.caret(cursor.selectionStart()), self.caret(cursor.selectionEnd()), entfernen)
@@ -103,8 +96,6 @@ class ModellSpiegel:
 
     def absatzformate(self, cursor: QTextCursor, fn) -> bool:
         """``fn(QTextBlockFormat)`` auf jeden Absatz der Auswahl anwenden (jeder Absatz mit seinen eigenen Werten), über Modell und Sitzung. False bei sehr großem Dokument."""
-        if self.zu_gross():
-            return False
         s = self.sitzung()
         von, bis = sorted((cursor.anchor(), cursor.position()))
         liste = []
@@ -135,10 +126,35 @@ class ModellSpiegel:
         neu = s.einfuegen(text, ziel, zeichenformat_aus_qt(fmt) if fmt is not None else None)
         cursor.setPosition(self.position(neu))
 
+    def absatzumbruch(self, cursor: QTextCursor, fmt: QTextBlockFormat) -> None:
+        """Einen neuen Absatz mit seinem Qt-Format über die Kern-Sitzung einfügen."""
+        s = self.sitzung()
+        absatz = absatzformat_aus_qt(fmt)
+        if cursor.hasSelection():
+            s.loeschen(self.caret(cursor.selectionStart()), self.caret(cursor.selectionEnd()))
+            ziel = s.cursor
+        else:
+            ziel = self.caret(cursor.position())
+        with s.gruppiert():
+            neu = s.einfuegen("\n", ziel)
+            s.absatzformat(absatz.properties, neu, neu, ausrichtung=absatz.alignment,
+                           space_before_px=absatz.space_before_px, space_after_px=absatz.space_after_px,
+                           left_indent_px=absatz.left_indent_px, right_indent_px=absatz.right_indent_px,
+                           first_line_indent_px=absatz.first_line_indent_px, line_spacing=absatz.line_spacing)
+        cursor.setPosition(self.position(neu))
+
+    def link_setzen(self, cursor: QTextCursor, text: str, fmt: QTextCharFormat) -> None:
+        """Einen Link in der Auswahl formatieren oder an der Schreibmarke als Text einfügen."""
+        s = self.sitzung()
+        if cursor.hasSelection():
+            von, bis = self.caret(cursor.selectionStart()), self.caret(cursor.selectionEnd())
+            s.zeichenformat(eigenschaften(fmt), von, bis)
+        else:
+            ziel = s.einfuegen(text, self.caret(cursor.position()), zeichenformat_aus_qt(fmt))
+            cursor.setPosition(self.position(ziel))
+
     def tippen(self, cursor: QTextCursor, text: str, fmt: QTextCharFormat) -> bool:
         """Getippten Text mit dem Schreibformat ``fmt`` an die Stelle des Cursors setzen (über Modell und Sitzung); mit Auswahl ersetzt er sie. False in sehr großen Dokumenten."""
-        if self.zu_gross():
-            return False
         if cursor.hasSelection():
             self.ersetzen(cursor, text, fmt)
             return True
@@ -152,8 +168,6 @@ class ModellSpiegel:
     def entfernen(self, cursor: QTextCursor, rueckwaerts: bool) -> bool:
         """Ein Zeichen vor (Rückschritt) oder hinter (Entf) dem Cursor löschen, solange es im selben Absatz liegt; mit Auswahl diese löschen (über Modell und Sitzung).
         False, wenn Qt es tun soll (Absatzgrenze, Dokumentanfang, sehr großes Dokument)."""
-        if self.zu_gross():
-            return False
         if cursor.hasSelection():
             self.loeschen(cursor)
             return True
@@ -255,6 +269,10 @@ class ModellSpiegel:
             for k, stueck in enumerate(p["text"].split("\n")):
                 if k:
                     c.insertBlock(c.blockFormat(), c.blockCharFormat())          # der neue Absatz erbt Absatz- und Zeichenformat des geteilten
+                    from lunivo_writer.core.document.objekte import P_BILDANKER
+                    bf = c.blockFormat()
+                    bf.clearProperty(_id(P_BILDANKER))                            # frei positionierte Objekte bleiben am ursprünglichen Absatz
+                    c.setBlockFormat(bf)
                 if stueck:
                     c.insertText(stueck, cf)
         elif a.art == "loeschen":
@@ -396,7 +414,7 @@ class ModellSpiegel:
     def zellen_verbinden(self, cursor: QTextCursor) -> bool:
         """Die markierten Tabellenzellen verbinden (über Modell und Sitzung)."""
         t = cursor.currentTable()
-        if t is None or not cursor.hasSelection() or (self.zu_gross()):
+        if t is None or not cursor.hasSelection():
             return False
         r, n, c, m = cursor.selectedTableCells()
         s = self.sitzung()
@@ -408,8 +426,6 @@ class ModellSpiegel:
 
     def liste_umschalten(self, cursor: QTextCursor, stil) -> bool:
         """Liste am Absatz des Cursors an- oder ausschalten (gleicher Stil schaltet aus); über Modell und Sitzung. False in sehr großen Dokumenten."""
-        if self.zu_gross():
-            return False
         s = self.sitzung()
         pfad = self._pfade[cursor.block().blockNumber()]
         lst = cursor.currentList()
@@ -426,8 +442,6 @@ class ModellSpiegel:
 
     def tabellenformat(self, tabelle, fn) -> bool:
         """``fn(QTextTableFormat)`` auf das Format der Qt-Tabelle ``tabelle`` anwenden (über Modell und Sitzung). False in sehr großen Dokumenten."""
-        if self.zu_gross():
-            return False
         s = self.sitzung()
         alt = tabelle.format()
         neu = QTextTableFormat(alt)
@@ -445,8 +459,6 @@ class ModellSpiegel:
 
     def zellformat(self, zelle, fn) -> bool:
         """``fn(QTextTableCellFormat)`` auf das Format der Qt-Zelle ``zelle`` anwenden (über Modell und Sitzung). False in sehr großen Dokumenten."""
-        if self.zu_gross():
-            return False
         s = self.sitzung()
         alt = zelle.format().toTableCellFormat()
         neu = QTextTableCellFormat(alt)
@@ -465,7 +477,7 @@ class ModellSpiegel:
     def zelle_teilen(self, cursor: QTextCursor, spalten: int, zeilen: int) -> bool:
         """Die Zelle am Cursor teilen (über Modell und Sitzung). False bei verbundener Zelle oder sehr großem Dokument (dann teilt die Oberfläche wie bisher)."""
         t = cursor.currentTable()
-        if t is None or (self.zu_gross()):
+        if t is None:
             return False
         s = self.sitzung()
         tabelle = innerste_tabelle(s.dok, self._pfade[cursor.block().blockNumber()])
@@ -476,7 +488,7 @@ class ModellSpiegel:
         """Zeilen oder Spalten der Tabelle am Cursor einfügen oder löschen: ``art`` ``zeile_oben`` | ``zeile_unten`` | ``spalte_links`` | ``spalte_rechts`` | ``zeile_loeschen`` | ``spalte_loeschen``.
         False, wenn der Cursor in keiner Tabelle steht oder das Dokument sehr groß ist."""
         t = cursor.currentTable()
-        if t is None or (self.zu_gross()):
+        if t is None:
             return False
         z = t.cellAt(cursor)
         s = self.sitzung()

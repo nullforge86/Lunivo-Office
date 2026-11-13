@@ -146,13 +146,150 @@ def test_modell_bearbeiten_und_speichern(app, tmp_path):
         geladen = lade_modell(a)
         s = Sitzung(geladen.document)
         s.einfuegen("Neu: ", Caret((0, 0), 0))
-        s.zeichenformat({"FontWeight": 700}, Caret((0, 1), 0), Caret((0, 1), 6))
+        s.zeichenformat({"FontWeight": 700, "FontItalic": True}, Caret((0, 1), 0), Caret((0, 1), 6))
         b = str(tmp_path / f"b.{ext}")
         speichere_modell(b, geladen.document, geladen.page)
         neu = datei_dienst.load(b)
         assert neu.doc.toPlainText() == "Neu: Erster Absatz\nZweiter Absatz"
-        assert neu.doc.firstBlock().next().begin().fragment().charFormat().fontWeight() >= 700
+        assert neu.doc.firstBlock().next().begin().fragment().charFormat().fontWeight() >= 700, ext
+        assert neu.doc.firstBlock().next().begin().fragment().charFormat().fontItalic(), ext
         assert FB.bild_im_dokument(neu.doc, FB.aus_absatz(neu.doc.firstBlock().blockFormat())[0]["n"]) is not None
+
+
+def test_grosses_dokument_bleibt_bei_formatierung_im_kern(app):
+    from PySide6.QtGui import QFont, QTextCharFormat, QTextCursor, QTextDocument
+    from lunivo_writer.adapter.qt.bearbeitung import ModellSpiegel
+
+    doc = QTextDocument()
+    doc.setPlainText("\n".join(f"Absatz {i}" for i in range(6100)))
+    spiegel = ModellSpiegel(doc)
+    letzter = doc.lastBlock()
+    cursor = QTextCursor(letzter)
+    cursor.select(QTextCursor.BlockUnderCursor)
+    fmt = QTextCharFormat()
+    fmt.setFontWeight(QFont.Bold)
+
+    assert spiegel.zeichenformat(cursor, fmt)
+    assert letzter.begin().fragment().charFormat().fontWeight() == QFont.Bold
+    assert spiegel.modell().sections[0].content[-1].runs[0].format.weight == QFont.Bold
+
+
+def test_einfaches_modell_direkt_als_docx_ohne_qt_bruecke(app, tmp_path, monkeypatch):
+    from PySide6.QtCore import QByteArray, QBuffer, QIODevice
+    from PySide6.QtGui import QColor, QImage, QTextDocument
+    from lunivo_writer.core.document import CharacterFormat, Document, Image, Paragraph, ParagraphFormat, Section, TextRun
+    from lunivo_writer.core.document.values import Color
+    from lunivo_writer.adapter.qt.dokument import document_from_qt
+    from lunivo_writer.dienste import docx_schreiber
+    from lunivo_writer.dienste import modell_speichern
+    from lunivo_writer.dienste.modell_laden import lade_modell
+    from lunivo_writer.modelle.seite import PageSettings
+
+    seite = PageSettings()
+    absatz = ParagraphFormat(alignment="center", left_indent_px=20, first_line_indent_px=5,
+                             space_before_px=12, space_after_px=8)
+    format_rot = CharacterFormat(family="Liberation Serif", size_pt=14, weight=700, italic=True,
+                                 foreground_color=Color(200, 20, 30), underline=True)
+    quelle = QImage(4, 3, QImage.Format_RGB32); quelle.fill(QColor("blue"))
+    puffer = QByteArray(); geraet = QBuffer(puffer); geraet.open(QIODevice.WriteOnly); quelle.save(geraet, "PNG"); geraet.close()
+    bild = Image(bytes(puffer), CharacterFormat({"ImageWidth": 24.0, "ImageHeight": 18.0}), bytes(puffer), "png")
+    modell = Document([Section("naechste", seite, [
+        Paragraph(absatz, [TextRun("Direkt ", format_rot), bild, TextRun("gespeichert", CharacterFormat())]),
+        Paragraph(ParagraphFormat(alignment="right"), [TextRun("Zweiter Absatz")]),
+    ])])
+    aus_qt = QTextDocument()
+    aus_qt.setPlainText("einfach")
+    assert docx_schreiber.docx_modell_daten(document_from_qt(aus_qt, seite), seite) is not None
+
+    def keine_qt_bruecke(*_args, **_kwargs):
+        raise AssertionError("Der unterstützte Modellweg darf document_to_qt nicht aufrufen.")
+
+    monkeypatch.setattr(modell_speichern, "document_to_qt", keine_qt_bruecke)
+    ziel = str(tmp_path / "modell.docx")
+    modell_speichern.speichere_modell(ziel, modell, seite, sicherung=False)
+    geladen = lade_modell(ziel).document
+    erster, zweiter = geladen.sections[0].content
+    assert erster.text == "Direkt \ufffcgespeichert" and zweiter.text == "Zweiter Absatz"
+    assert erster.format.alignment == "center" and erster.format.left_indent_px == pytest.approx(20, abs=0.2)
+    assert erster.format.first_line_indent_px == pytest.approx(5, abs=0.2)
+    assert erster.format.space_before_px == pytest.approx(12, abs=0.2) and erster.format.space_after_px == pytest.approx(8, abs=0.2)
+    f = erster.runs[0].format
+    assert (f.family, f.size_pt, f.weight, f.italic, f.underline) == ("Liberation Serif", 14.0, 700, True, True)
+    assert f.foreground_color == Color(200, 20, 30)
+    assert isinstance(erster.runs[1], Image)
+    assert erster.runs[1].format.properties["ImageWidth"] == pytest.approx(24.0, abs=0.1)
+    assert erster.runs[1].format.properties["ImageHeight"] == pytest.approx(18.0, abs=0.1)
+    assert erster.runs[1].raster_png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_docx_modell_schreibt_einfache_tabelle_direkt_ohne_qt_bruecke(app, tmp_path, monkeypatch):
+    from docx import Document as WordDocument
+    from docx.oxml.ns import qn
+    from lunivo_writer.core.document import Document, Paragraph, Section, Table, TableCell, TableRow, TextRun
+    from lunivo_writer.core.document.values import Brush, Color, Length, RowHeight
+    from lunivo_writer.dienste import docx_schreiber
+    from lunivo_writer.dienste import modell_speichern
+    from lunivo_writer.kern.dokument_verwaltung import DocumentManager
+    from lunivo_writer.modelle.seite import PageSettings
+
+    seite = PageSettings()
+    tabelle = Table(2, 2, {"TableHeaderRowCount": 1, "TableCellPadding": 4.0, "TableCellSpacing": 2.0,
+                           "FrameBorder": 1.0, "FrameBorderBrush": Brush(1, Color(30, 40, 50)), "FrameBorderStyle": 3,
+                           "FrameWidth": Length("fixed", 300.0),
+                           "TableColumnWidthConstraints": (Length("fixed", 100.0), Length("variable", 0.0))}, [
+        TableRow([TableCell(0, 0, column_span=2, content=[Paragraph(runs=[TextRun("verbunden")])])], row_height=RowHeight("exact", 24.0)),
+        TableRow([TableCell(1, 0, properties={"BackgroundBrush": Brush(1, Color(255, 220, 0))},
+                            content=[Paragraph(runs=[TextRun("unten links")])]),
+                  TableCell(1, 1, properties={"TableCellVerticalAlignment": 5},
+                            content=[Paragraph(runs=[TextRun("unten rechts")])])], row_height=RowHeight("minimum", 40.0)),
+    ])
+    modell = Document([Section("naechste", seite, [Paragraph(runs=[TextRun("Vor")]), tabelle])])
+
+    def keine_qt_bruecke(*_args, **_kwargs):
+        raise AssertionError("Der Anwendungs-Speicherweg soll dieses Modell direkt schreiben.")
+
+    class Einstellungen:
+        @staticmethod
+        def get_bool(_name, default=False):
+            return default
+
+        @staticmethod
+        def get(_name, default=None):
+            return default
+
+    monkeypatch.setattr(modell_speichern, "document_to_qt", keine_qt_bruecke)
+    assert docx_schreiber.docx_modell_daten(modell, seite) is not None
+
+    ziel = str(tmp_path / "tabelle.docx")
+    DocumentManager(Einstellungen()).speichern(ziel, modell, seite, {}, erwartet=(None,))
+    neu = WordDocument(ziel)
+    assert neu.paragraphs[0].text == "Vor"
+    assert len(neu.tables) == 1 and len(neu.tables[0].rows) == 2 and len(neu.tables[0].columns) == 2
+    assert neu.tables[0].cell(0, 0).text == "verbunden" and neu.tables[0].cell(0, 1).text == "verbunden"
+    assert neu.tables[0].cell(1, 0).text == "unten links" and neu.tables[0].cell(1, 1).text == "unten rechts"
+    assert neu.tables[0].rows[0]._tr.get_or_add_trPr().find(qn("w:tblHeader")) is not None
+    tblpr = neu.tables[0]._tbl.tblPr
+    assert tblpr.find(qn("w:tblCellSpacing")).get(qn("w:w")) == "30"
+    assert tblpr.find(qn("w:tblCellMar")).find(qn("w:top")).get(qn("w:w")) == "60"
+    tabellenrand = tblpr.find(qn("w:tblBorders")).find(qn("w:top"))
+    assert tabellenrand.get(qn("w:val")) == "single" and tabellenrand.get(qn("w:color")) == "1E2832"
+    gitter = neu.tables[0]._tbl.tblGrid.gridCol_lst
+    assert [int(spalte.get(qn("w:w"))) for spalte in gitter] == [1500, 3000]
+    monkeypatch.undo()
+    from lunivo_writer.dienste.datei_dienst import load
+    wieder = load(ziel)
+    modell_tabelle = wieder.modell.sections[0].content[1]
+    assert modell_tabelle.table_rows[0].cells[0].content[0].text == "verbunden"
+    assert modell_tabelle.table_rows[1].cells[0].content[0].text == "unten links"
+    schattierung = neu.tables[0].cell(1, 0)._tc.tcPr.find(qn("w:shd"))
+    assert schattierung is not None and schattierung.get(qn("w:fill")) == "FFDC00"
+    vertikal = neu.tables[0].cell(1, 1)._tc.tcPr.find(qn("w:vAlign"))
+    assert vertikal is not None and vertikal.get(qn("w:val")) == "bottom"
+    from docx.enum.table import WD_ROW_HEIGHT_RULE
+    assert neu.tables[0].rows[0].height_rule == WD_ROW_HEIGHT_RULE.EXACTLY
+    assert neu.tables[0].rows[0].height.pt == pytest.approx(18.0)
+    assert neu.tables[0].rows[1].height_rule == WD_ROW_HEIGHT_RULE.AT_LEAST
+    assert neu.tables[0].rows[1].height.pt == pytest.approx(30.0)
 
 
 def test_seite_aus_dem_modell_zeichnen(app):
@@ -200,6 +337,81 @@ def test_editor_text_ersetzen_ein_schritt(app):
     sp.ersetzen(c2, "Test")
     assert sp.rueckgaengig() and ed.toPlainText() == "Das ist ein Tset von Text"
     assert sp.wiederholen() and ed.toPlainText() == "Das ist ein Test von Text"
+
+
+def test_editor_ime_komposition_und_commit_ueber_den_spiegel(app):
+    from PySide6.QtGui import QInputMethodEvent, QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    c = ed.textCursor(); c.setPosition(6); c.setPosition(10, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+
+    komposition = QInputMethodEvent("仮名", [])
+    ed.inputMethodEvent(komposition)
+    assert ed.modell_spiegel().sitzung().text() == "Hallo Welt"                   # Qt kann die Auswahl vorübergehend aus der Ansicht nehmen; das Modell bleibt unverändert
+
+    commit = QInputMethodEvent("", [])
+    commit.setCommitString("かな")
+    ed.inputMethodEvent(commit)
+    assert ed.toPlainText() == "Hallo かな"                                      # Bestätigter Text ersetzt die Auswahl
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    assert ed.document().isUndoAvailable()
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo Welt"                                     # Bestätigter IME-Text ist ein Rückgängig-Schritt
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+
+    c = ed.textCursor(); c.setPosition(6); c.setPosition(10, QTextCursor.KeepAnchor); ed.setTextCursor(c)
+    ed.inputMethodEvent(QInputMethodEvent("仮名", []))
+    ed.inputMethodEvent(QInputMethodEvent())
+    assert ed.toPlainText() == "Hallo Welt"                                     # Abbruch stellt die vorläufig ersetzte Auswahl wieder her
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+
+    ed.setReadOnly(True)
+    gesperrt = QInputMethodEvent("", [])
+    gesperrt.setCommitString("文字")
+    ed.inputMethodEvent(gesperrt)
+    assert ed.toPlainText() == "Hallo Welt"
+
+
+def test_editor_ime_ersetzungsbereich_relativ_zum_cursor(app):
+    from PySide6.QtGui import QInputMethodEvent, QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo Welt")
+    c = ed.textCursor(); c.setPosition(8); ed.setTextCursor(c)
+    commit = QInputMethodEvent("", [])
+    commit.setCommitString("X", -2, 2)
+    ed.inputMethodEvent(commit)
+
+    assert ed.toPlainText() == "Hallo Xlt"
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
+    ed.document().undo()
+    assert ed.toPlainText() == "Hallo Welt"
+
+
+def test_editor_ime_commit_mit_neuer_vorabbearbeitung(app):
+    from PySide6.QtGui import QInputMethodEvent, QTextCursor
+    from lunivo_writer.adapter.qt.dokument import document_to_qt, vergleichen
+    from lunivo_writer.oberflaeche.dokument.bearbeitung.dokument_editor import DocumentEditor
+
+    ed = DocumentEditor()
+    ed.setPlainText("Hallo")
+    c = ed.textCursor(); c.movePosition(QTextCursor.End); ed.setTextCursor(c)
+    erster = QInputMethodEvent("次", [])
+    erster.setCommitString("かな")
+    ed.inputMethodEvent(erster)
+    assert ed.toPlainText() == "Halloかな"
+    assert ed.modell_spiegel().sitzung().text() == "Halloかな"
+
+    zweiter = QInputMethodEvent("", [])
+    zweiter.setCommitString("字")
+    ed.inputMethodEvent(zweiter)
+    assert ed.toPlainText() == "Halloかな字"
+    assert vergleichen(ed.document(), document_to_qt(ed.modell_spiegel().modell())) == []
 
 
 def test_editor_tabelle_einfuegen_ueber_den_spiegel(app):
@@ -352,12 +564,21 @@ def test_modell_als_pdf(app, tmp_path):
     from PySide6.QtGui import QTextDocument
     from lunivo_writer.adapter.qt.dokument import document_from_qt
     from lunivo_writer.adapter.qt.pdf_modell import modell_als_pdf
+    from lunivo_writer.dienste.modell_speichern import speichere_modell
+    from lunivo_writer.dienste.sicher_schreiben import SchreibKonflikt
     from lunivo_writer.modelle.seite import PageSettings
     d = QTextDocument(); d.setPlainText("\n".join(f"Zeile {i} mit etwas Text" for i in range(120)))
+    modell = document_from_qt(d, PageSettings())
     ziel = str(tmp_path / "a.pdf")
-    n = modell_als_pdf(document_from_qt(d, PageSettings()), ziel, "Test")
+    n = modell_als_pdf(modell, ziel, "Test")
     roh = open(ziel, "rb").read()
     assert n >= 2 and roh.startswith(b"%PDF") and roh.count(b"/Type /Page\n") + roh.count(b"/Type /Page ") + roh.count(b"/Type/Page") >= 2
+    sicher = str(tmp_path / "sicher.pdf")
+    speichere_modell(sicher, modell, PageSettings(), erwartet=None)
+    alt = open(sicher, "rb").read()
+    with pytest.raises(SchreibKonflikt):
+        speichere_modell(sicher, modell, PageSettings(), erwartet=None)
+    assert open(sicher, "rb").read() == alt
 
 
 def test_drucken_modell_mehrere_abschnitte_druckbereich_und_reihenfolge(app, tmp_path):

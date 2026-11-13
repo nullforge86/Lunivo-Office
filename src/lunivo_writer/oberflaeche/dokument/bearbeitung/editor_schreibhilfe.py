@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QBrush, QColor, QInputMethodEvent, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QListWidgetItem
 from lunivo_writer.modelle.seite import mm_to_px
 from lunivo_writer.korrektur.autokorrektur import kleinste_aenderung
@@ -20,7 +20,7 @@ class SchreibhilfeBaustein:
             self._loesche_verfolgt(c.selectionStart(), c.selectionEnd(), ende=True)
             return
         c = self.textCursor()
-        if c.hasSelection() and not self.isReadOnly() and not self.modell_spiegel().zu_gross():       # Ausschneiden: Kopieren, dann Löschen über Modell und Sitzung
+        if c.hasSelection() and not self.isReadOnly():       # Ausschneiden: Kopieren, dann Löschen über Modell und Sitzung
             self.copy()
             self.modell_spiegel().loeschen(c)
             self.setTextCursor(c)
@@ -169,6 +169,77 @@ class SchreibhilfeBaustein:
                 e.accept()
                 return
         super().keyPressEvent(e)
+
+
+    def inputMethodEvent(self, e: QInputMethodEvent) -> None:
+        """Vorläufige IME-Zeichen bleiben Qt-Komposition; bestätigter Text läuft über den Modellspiegel."""
+        sp = self.modell_spiegel()
+        zustand = self.__dict__.get("_ime_zustand")
+        if not e.commitString():
+            if e.preeditString() and zustand is None:
+                zustand = self._ime_zustand_starten(sp)
+            super().inputMethodEvent(e)
+            if e.preeditString():
+                # QTextEdit kann eine markierte Stelle vorübergehend aus dem
+                # QTextDocument nehmen. Sie gehört weiterhin zum bestätigten
+                # Modellstand und wird bei Commit oder Abbruch zurückgesetzt.
+                sp._revision = self.document().revision()
+            elif zustand is not None:
+                self._ime_zustand_zuruecksetzen(zustand, sp)
+            return
+
+        if self.isReadOnly():
+            if zustand is not None:
+                super().inputMethodEvent(QInputMethodEvent())
+                self._ime_zustand_zuruecksetzen(zustand, sp)
+            e.accept()
+            return
+        # Den alten Vorabbearbeitungstext beenden, bevor das Textdokument über
+        # die Sitzung geändert wird. Ein neues Preedit aus demselben Event
+        # wird anschließend wieder von QTextEdit angezeigt.
+        if zustand is not None:
+            super().inputMethodEvent(QInputMethodEvent())
+            self._ime_zustand_zuruecksetzen(zustand, sp)
+            cursor = self.textCursor()
+            cursor.setPosition(zustand["anker"])
+            cursor.setPosition(zustand["position"], QTextCursor.KeepAnchor)
+        else:
+            cursor = self.textCursor()
+        if e.replacementLength():
+            anfang = cursor.position() + e.replacementStart()
+            cursor.setPosition(anfang)
+            cursor.setPosition(anfang + e.replacementLength(), QTextCursor.KeepAnchor)
+        sp.ersetzen(cursor, e.commitString(), self.currentCharFormat())
+        self.setTextCursor(cursor)
+
+        if e.preeditString() or e.attributes():
+            if e.preeditString():
+                self._ime_zustand_starten(sp)
+            super().inputMethodEvent(QInputMethodEvent(e.preeditString(), e.attributes()))
+            if e.preeditString():
+                sp._revision = self.document().revision()
+        e.accept()
+
+
+    def _ime_zustand_starten(self, spiegel) -> dict:
+        """Den bestätigten Modellstand festhalten, bevor Qt Vorabbearbeitung im Dokument darstellt."""
+        spiegel.sitzung()
+        cursor = self.textCursor()
+        zustand = {"text": self.toPlainText(), "anker": cursor.anchor(), "position": cursor.position()}
+        self.__dict__["_ime_zustand"] = zustand
+        return zustand
+
+
+    def _ime_zustand_zuruecksetzen(self, zustand: dict, spiegel) -> None:
+        """Vorübergehende Qt-Änderungen beim Abbruch/Commit der IME-Komposition aus dem bestätigten Dokument entfernen."""
+        if self.toPlainText() != zustand["text"] and self.document().isUndoAvailable():
+            self.document().undo()
+        spiegel._revision = -1                                             # nach dem Wiederherstellen Modell und Qt-Dokument erneut abgleichen
+        self.__dict__.pop("_ime_zustand", None)
+        cursor = self.textCursor()
+        cursor.setPosition(zustand["anker"])
+        cursor.setPosition(zustand["position"], QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
 
     def _gliederung_taste(self, e) -> bool:
         """Alt+Umschalt+Links/Rechts ändert die Gliederungsebene."""

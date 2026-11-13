@@ -45,8 +45,8 @@ class Lauf:
     """Ein Stück des Absatztextes in einer Schrift (oder ein Objekt) mit seinem Stil (Farbe, Unterstreichen … für das Zeichnen)."""
     start: int
     ende: int
-    schrift: object                      # FontSpec oder Objekt
-    stil: dict
+    schrift: FontSpec | Objekt
+    stil: dict[str, object]
 
 
 @dataclass
@@ -54,8 +54,8 @@ class Absatzsatz:
     text: str
     zeilen: list[SatzZeile]
     vorschuebe: list[float]
-    laeufe: list = field(default_factory=list)
-    tab_fuell: dict = field(default_factory=dict)        # Zeichenstelle eines Tabulators → Füllzeichen seiner Strecke (".", "-", "_", "·")
+    laeufe: list[Lauf] = field(default_factory=list)
+    tab_fuell: dict[int, str] = field(default_factory=dict)  # Zeichenstelle eines Tabulators → Füllzeichen seiner Strecke (".", "-", "_", "·")
 
     @property
     def hoehe(self) -> float:

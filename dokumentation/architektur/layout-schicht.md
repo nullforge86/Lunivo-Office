@@ -1,18 +1,18 @@
 # Layout-Schicht
 
-Ziel: Lunivo setzt Dokumente mit einer eigenen Layout-Schicht wie Word und WPS, statt das Ergebnis von Qt nachträglich zu korrigieren.
-Grundlage ist der Plan des Architektur-Agenten vom 2026-11-12; der Eigentümer hat den ganzen Weg freigegeben.
+Die aktive Dokumentpipeline ist Qt-frei im Paket `core/`: `core/document` hält das Modell, `core/textlayout` setzt Absätze, `core/layout` bricht Seiten um und `core/rendering` zeichnet sie über ein Backend. `adapter/qt/` bindet diese Pipeline an die Qt-Oberfläche. Die `ModellAnsicht` ist standardmäßig aktiv; `LUNIVO_KERN_ANSICHT=0` schaltet auf den älteren Qt-Dokumentpfad zurück.
+
+Die folgenden Phasen beschreiben diesen Qt-Kompatibilitätspfad (`editor/layout/` und `QTextDocument.setDocumentLayout`). Sie bleiben für den Rückfall und bestehende Qt-Druckwege relevant, sind aber nicht die Beschreibung der aktiven Kernpipeline.
 
 ## Schichten
 
 | Schicht | Aufgabe | Stand |
 |---|---|---|
-| Dokumentmodell | `QTextDocument` hält Inhalt, Formate, Undo; Leser und Schreiber hängen daran | bleibt |
-| Seitenplan | Bereiche (Abschnitte), Spaltenraster, Ränder — eine Quelle | Phase 1 erledigt: `editor/layout/seitenplan.py` |
-| Seitenlauf | eigene Dokument-Layout-Klasse (`QAbstractTextDocumentLayout`): Absätze nach dem Seitenplan auf Blätter und Spalten setzen, `QTextLayout` je Absatz für Shaping und Zeilenumbruch | im Editor sowie beim Druck und PDF angeschlossen |
-| Tabellen, Rahmen, Objekte im Lauf | Tabellenlayout, Bilder in der Zeile, Umfluss, Fußnoten | umgesetzt; Tabellenkopfzeilen werden auf Folgeseiten wiederholt |
-| Anzeige | Zeichnen der Blätter, Zoom, Spaltenlinien | im Editor angeschlossen; Zoom und Auswahl laufen über `QTextEdit` |
-| Inkrementeller Reflow | nur ab dem geänderten Block neu setzen | bei einfachem Text; Dokumente mit Tabellen, Rahmen oder Fußnoten werden vollständig neu gesetzt |
+| Dokumentmodell | `core/document` hält Inhalt, Formate, Tabellen, Objekte und Noten; `adapter/qt/dokument.py` überträgt Qt-Dokumente verlustfrei | Modellansicht und Bearbeitungssitzung sind verbunden |
+| Textsatz | `core/textlayout` misst und bricht Text ohne Qt um | eigene Engine mit Qt-Textbackend als Plattformadapter |
+| Seitenlayout | `core/layout` setzt Abschnitte, Spalten, Tabellen, Fußnoten und Objekte auf Seiten | aktiv in der Standardansicht und im Modell-PDF |
+| Rendering | `core/rendering` zeichnet Seiten über `RenderTarget`; `adapter/qt/seitenbild.py` verbindet Qt | für Ansicht, PDF und Vorschaubilder angebunden |
+| Qt-Kompatibilitätspfad | `editor/layout/seitenlauf.py` setzt `QTextDocument` über `QAbstractTextDocumentLayout` | Rückfall bei `LUNIVO_KERN_ANSICHT=0`; Details und Grenzen folgen unten |
 
 Wichtige Erkenntnis (2026-11-12, mit Prototyp belegt): Das `QTextEdit` fragt für Cursor, Markierung, Hit-Test und Eingabe nur die Layout-Klasse des
 Dokuments (`QTextDocument.setDocumentLayout`) und die `QTextLayout` der Absätze. Eine eigene Layout-Klasse in PySide6 funktioniert deshalb mit dem
@@ -29,6 +29,8 @@ Regeln: Layout und Zeichnen getrennt; die Schicht liest das Modell und schreibt 
 Eine Phase darf erst umschalten, wenn der Vergleich keine Verschlechterung zeigt.
 
 ## Phase 1: Seitenplan (erledigt)
+
+> Die folgenden Phasen dokumentieren ausschließlich den Qt-Kompatibilitätspfad. Die gleichnamigen Kernaufgaben liegen in `core/layout/` und `core/rendering/`.
 
 - `PageSettings.spalten_raster_mm` und `spaltenraster_px()`: ungleich breite Spalten, die einzige Stelle, die das Raster berechnet.
 - DOCX liest und schreibt `w:cols` mit `w:col` (`equalWidth="0"`).

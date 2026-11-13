@@ -1,14 +1,15 @@
-"""Eine Seite aus dem Ergebnis des Qt-freien Seitenumbruchs (``core.layout.umbrechen``) auf ein ``RenderBackend`` zeichnen: Seitenfarbe, Tabellenzellen (Füllung, Rahmen), Absatzzeilen mit
+"""Eine Seite aus dem Ergebnis des Qt-freien Seitenumbruchs (``core.layout.umbrechen``) auf ein ``RenderTarget`` zeichnen: Seitenfarbe, Tabellenzellen (Füllung, Rahmen), Absatzzeilen mit
 Läufen (Schrift, Farbe, Unterstreichen, Hervorheben, hoch-/tiefgestellt, Tabulatoren, Bilder in der Zeile), Rahmen, Absatzhintergrund, Aufzählungszeichen, Fuß- und Endnoten mit Trennstrich. Alle Maße kommen aus dem Layout; hier wird nur gezeichnet."""
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 
 from lunivo_writer.core.document.objekte import P_BILDANKER, ImageObject
 from lunivo_writer.core.geometry import Point, Rect
 from lunivo_writer.core.layout.objekte import objekt_rechteck
 from lunivo_writer.core.layout.seitenumbruch import Ergebnis
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 from lunivo_writer.core.rendering.linien import zeichne_absatzrahmen
 from lunivo_writer.core.rendering.objekte import zeichne_bild
 from lunivo_writer.core.rendering.tabelle import ausfuehren, rahmen_anweisungen, zelle_anweisungen
@@ -22,7 +23,7 @@ FUELL_STRICH = {".": "dot", "·": "dot", "-": "dash", "_": None}       # Füllze
 FUELL_LUECKE = 2.0                                                    # Abstand der Füllung zum Text davor und dahinter
 
 
-def zeichne_zeile(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
+def zeichne_zeile(b: RenderTarget, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
     """Zeile ``zeile`` des gesetzten Absatzes; ``rect`` = ihr Rechteck auf der Seite (Oberkante der Zeile, linker Rand der Spalte)."""
     z = satz.zeilen[zeile]
     grundlinie = rect.y + z.box.ascent
@@ -64,7 +65,7 @@ def zeichne_zeile(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) ->
             b.draw_line(Point(x, grundlinie - z.box.ascent / 3), Point(x + breite, grundlinie - z.box.ascent / 3), Style(color=farbe, width=1.0))
 
 
-def zeichne_tabfuellung(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
+def zeichne_tabfuellung(b: RenderTarget, satz: Absatzsatz, zeile: int, rect: Rect) -> None:
     """Die Füllzeichen (Punkte, Striche, Linie) in den Strecken der Tabulatoren dieser Zeile, als Linie knapp unter der Grundlinie."""
     z = satz.zeilen[zeile]
     for i, zeichen in satz.tab_fuell.items():
@@ -79,7 +80,7 @@ def zeichne_tabfuellung(b: RenderBackend, satz: Absatzsatz, zeile: int, rect: Re
         b.draw_line(Point(x1, y), Point(x2, y), Style(color=farbe, width=1.0, dash=FUELL_STRICH.get(zeichen)))
 
 
-def zeichne_absatzrahmen_der_seite(b: RenderBackend, erg: Ergebnis, index: int) -> None:
+def zeichne_absatzrahmen_der_seite(b: RenderTarget, erg: Ergebnis, index: int) -> None:
     """Die Rahmen um Absätze der Seite: aufeinanderfolgende Absätze mit gleicher Rahmenangabe teilen sich einen Rahmen (mit Linien dazwischen, wenn die Angabe „h“ nennt)."""
     gruppen: list[list] = []                                           # [Angabe, letzter Pfad, [Fläche je Absatz]]
     flaechen: dict[tuple, Rect] = {}
@@ -121,7 +122,7 @@ def _woerter(text: str) -> list[str]:
     return aus
 
 
-def zeichne_marke(b: RenderBackend, engine: TextLayoutEngine, satz: Absatzsatz, marke: str, rect: Rect) -> None:
+def zeichne_marke(b: RenderTarget, engine: TextLayoutEngine, satz: Absatzsatz, marke: str, rect: Rect) -> None:
     """Aufzählungszeichen oder Nummer links vor der ersten Zeile (wie bei Qt: Zeichen als Form, Nummer als Text)."""
     if not satz.laeufe or not satz.zeilen:
         return
@@ -143,7 +144,7 @@ def zeichne_marke(b: RenderBackend, engine: TextLayoutEngine, satz: Absatzsatz, 
         b.draw_text(marke, Point(x - engine.measure_text(marke + " ", erste.schrift), grundlinie), erste.schrift, Style(color=farbe))
 
 
-def zeichne_freie_bilder(b: RenderBackend, dok, erg: Ergebnis, index: int, hinter: bool) -> None:
+def zeichne_freie_bilder(b: RenderTarget, dok, erg: Ergebnis, index: int, hinter: bool) -> None:
     """Frei positionierte Bilder und Formen der Absätze auf dieser Seite; Formen werden nativ gezeichnet, sofern unterstützt."""
     from lunivo_writer.core.editing import absatz_bei
     seite = erg.seiten[index]
@@ -185,7 +186,7 @@ def zeichne_freie_bilder(b: RenderBackend, dok, erg: Ergebnis, index: int, hinte
             zeichne_bild(b, obj, r, None, fuell.raster_png if fuell is not None else None)
 
 
-def _textfeld_einfach_zeichnen(b: RenderBackend, obj: ImageObject, rect: Rect, daten: dict) -> bool:
+def _textfeld_einfach_zeichnen(b: RenderTarget, obj: ImageObject, rect: Rect, daten: dict) -> bool:
     """Ein Klartextfeld mit einem Format nativ zeichnen; für Runs, Ketten und Effekte bleibt das Bild der Rückfall."""
     if not isinstance(daten.get("text", ""), str) or daten.get("laeufe") or daten.get("von") or daten.get("weiter"):
         return False
@@ -220,7 +221,7 @@ def _textfeld_einfach_zeichnen(b: RenderBackend, obj: ImageObject, rect: Rect, d
     return True
 
 
-def zeichne_seite(b: RenderBackend, erg: Ergebnis, index: int, engine: TextLayoutEngine, hintergrund: bool = True, dok=None) -> None:
+def zeichne_seite(b: RenderTarget, erg: Ergebnis, index: int, engine: TextLayoutEngine, hintergrund: bool = True, dok=None) -> None:
     """Seite ``index`` des Layout-Ergebnisses: erst Seitenfarbe und Zellen (hinter dem Text), dann Zeilen, Aufzählungszeichen und Fußnoten."""
     seite = erg.seiten[index]
     einr = seite.einrichtung
@@ -243,17 +244,12 @@ def zeichne_seite(b: RenderBackend, erg: Ergebnis, index: int, engine: TextLayou
         if p.art == "zeile":
             ort = erg.absaetze[p.pfad]
             zelle = next((z for z in exakte_zellen if p.pfad[:len(z.pfad)] == z.pfad), None)
-            if zelle is not None:
-                b.push_state(clip=zelle.rect)
-            try:
+            with b.state(clip=zelle.rect) if zelle is not None else nullcontext(b):
                 zeichne_zeile(b, ort.satz, p.zeile, p.rect)
                 if ort.satz.tab_fuell:
                     zeichne_tabfuellung(b, ort.satz, p.zeile, p.rect)
                 if p.zeile == 0 and ort.marke:
                     zeichne_marke(b, engine, ort.satz, ort.marke, p.rect)
-            finally:
-                if zelle is not None:
-                    b.pop_state()
         elif p.art == "endnote" and p.daten is not None:
             zeichne_zeile(b, p.daten, p.zeile, p.rect)
         elif p.art == "notenlinie":
@@ -266,18 +262,18 @@ def zeichne_seite(b: RenderBackend, erg: Ergebnis, index: int, engine: TextLayou
         zeichne_freie_bilder(b, dok, erg, index, False)
 
 
-def zeichne_auswahl(b: RenderBackend, rechtecke: list[Rect], farbe: tuple[int, int, int, int]) -> None:
+def zeichne_auswahl(b: RenderTarget, rechtecke: list[Rect], farbe: tuple[int, int, int, int]) -> None:
     """Die Flächen einer Auswahl auf der Seite (``core.layout.navigation.auswahl_rechtecke``) in der Auswahlfarbe."""
     for r in rechtecke:
         b.draw_rect(r, Style(color=farbe, width=0, filled=True))
 
 
-def zeichne_cursor(b: RenderBackend, rect: Rect, farbe: tuple[int, int, int, int]) -> None:
+def zeichne_cursor(b: RenderTarget, rect: Rect, farbe: tuple[int, int, int, int]) -> None:
     """Die Schreibmarke (``core.layout.navigation.cursor_rechteck``)."""
     b.draw_rect(rect, Style(color=farbe, width=0, filled=True))
 
 
-def zeichne_zeilennummern(b: RenderBackend, erg: Ergebnis, index: int, grund: FontSpec) -> None:
+def zeichne_zeilennummern(b: RenderTarget, erg: Ergebnis, index: int, grund: FontSpec) -> None:
     """Zeilennummern links neben dem Text der Seite (kleine graue Schrift, rechtsbündig), wenn die Seiteneinrichtung ``zeilennummern`` verlangt."""
     einr = erg.seiten[index].einrichtung
     if einr is None or not getattr(einr, "zeilennummern", False):

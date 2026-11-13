@@ -1,6 +1,9 @@
 """DOCX lesen: Absatz – fachlich gekapselte Verarbeitung."""
 from __future__ import annotations
 
+from copy import deepcopy
+
+from docx.oxml import OxmlElement
 from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from PySide6.QtGui import QTextOption
 
@@ -123,14 +126,30 @@ class LesenAbsatzMixin:
             return None
 
     def _para_attr(self, getter, pf, st):
-        """Absatzeigenschaft: direkt am Absatz, sonst aus der Formatvorlage (samt Vorlagenkette)."""
+        """Absatzeigenschaft: direkt, aus Vorlage, Tabellenstil und zuletzt aus den Dokumentvorgaben."""
         v = self._sicher(getter, pf)
         if v is None and st is not None:
             v = self._style_attr(st, lambda s: self._sicher(getter, s.paragraph_format))
         tab = getattr(self, "_tabellen_stil", None)
         if v is None and tab is not None:                  # Absatz in einer Tabelle: die Tabellenvorlage gilt vor den Vorgaben des Dokuments
             v = self._style_attr(tab, lambda s: self._sicher(getter, s.paragraph_format))
+        if v is None:
+            defaults = self._para_doc_defaults()
+            if defaults is not None:
+                v = self._sicher(getter, defaults)
         return v
+
+    def _para_doc_defaults(self):
+        """Die niedrig priorisierten Absatzvorgaben aus ``w:docDefaults/pPrDefault`` als python-docx-Format."""
+        if not hasattr(self, "_para_doc_defaults_cache"):
+            defaults = self.d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:pPrDefault") + "/" + qn("w:pPr"))
+            if defaults is None:
+                self._para_doc_defaults_cache = None
+            else:
+                p = OxmlElement("w:p")
+                p.append(deepcopy(defaults))
+                self._para_doc_defaults_cache = Paragraph(p, self.d).paragraph_format
+        return self._para_doc_defaults_cache
 
     def _block_format(self, para: Paragraph) -> QTextBlockFormat:
         pf = para.paragraph_format

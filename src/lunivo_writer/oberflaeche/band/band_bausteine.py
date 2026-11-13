@@ -312,7 +312,7 @@ class _SperrKasten(QCheckBox):
 
 
 class _FelderDict(dict):
-    """Felder des Bandes: Reiter werden erst nach dem Anzeigen fertig gebaut; wer ein noch fehlendes Feld braucht, bekommt zuerst alle Reiter."""
+    """Felder des Bandes: Reiter werden schrittweise gebaut; expliziter Zugriff auf ein fehlendes Feld baut alle Reiter."""
 
     def __init__(self, band):
         super().__init__()
@@ -323,13 +323,9 @@ class _FelderDict(dict):
         return dict.__getitem__(self, key)
 
     def get(self, key, default=None):
-        if key not in self:
-            self._band._alle_bauen()
         return dict.get(self, key, default)
 
     def __contains__(self, key):
-        if not dict.__contains__(self, key):
-            self._band._alle_bauen()
         return dict.__contains__(self, key)
 
 

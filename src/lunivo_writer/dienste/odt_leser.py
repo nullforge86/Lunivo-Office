@@ -1,4 +1,4 @@
-"""ODT und FODT (OpenDocument-Text) direkt lesen — ohne Umwandlungsprogramm.
+"""Qt-Importadapter für ODT und FODT (OpenDocument-Text), wenn Inhalte im Modell-Leser noch nicht vollständig abgebildet sind.
 
 Gelesen werden ``content.xml`` (Text), ``styles.xml`` (Vorlagen, Seite, Kopf- und Fußzeile), ``meta.xml`` (Titel, Autor) und die Bilder
 aus ``Pictures/``; FODT ist dasselbe als eine einzige XML-Datei. Übernommen: Absätze und Überschriften mit Ausrichtung, Einzügen,

@@ -29,17 +29,13 @@ class ZeichenformatMixin:
             kf.format_anwenden(fmt); self._kf_fertig(kf)
             return
         cur = self.textCursor()
-        if not self.modell_spiegel().zeichenformat(cur, fmt):         # Auswahl: Oberfläche → Adapter → Kern → Ansicht; sonst (keine Auswahl, sehr großes Dokument) wie bisher
+        if not self.modell_spiegel().zeichenformat(cur, fmt):         # Auswahl: Oberfläche → Adapter → Kern → Ansicht; ohne Auswahl gilt das Format für die nächste Eingabe
             cur.mergeCharFormat(fmt)
         self.mergeCurrentCharFormat(fmt)
 
     def text_ersetzen(self, cursor: QTextCursor, text: str, fmt: QTextCharFormat | None = None) -> None:
-        """Die Auswahl des Cursors durch Text ersetzen (Rechtschreibkorrektur, Ersetzen, Autokorrektur): Oberfläche → Adapter → Kern → Ansicht; in sehr großen Dokumenten direkt am Textdokument."""
-        sp = self.modell_spiegel()
-        if sp.zu_gross():
-            cursor.insertText(text, fmt) if fmt is not None else cursor.insertText(text)
-            return
-        sp.ersetzen(cursor, text, fmt)
+        """Die Auswahl des Cursors durch Text ersetzen (Rechtschreibkorrektur, Ersetzen, Autokorrektur): Oberfläche → Adapter → Kern → Ansicht."""
+        self.modell_spiegel().ersetzen(cursor, text, fmt)
 
     def modell_spiegel(self, modell=None):
         """Der Spiegel zwischen dem Textdokument des Editors und der Qt-freien Bearbeitungssitzung (``adapter/qt/bearbeitung.py``)."""

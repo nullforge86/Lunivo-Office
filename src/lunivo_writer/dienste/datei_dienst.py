@@ -6,7 +6,7 @@ import tempfile
 import logging
 from dataclasses import dataclass
 
-from PySide6.QtGui import QFont, QTextBlockFormat, QTextCursor, QTextDocument
+from PySide6.QtGui import QTextBlockFormat, QTextDocument
 
 from lunivo_writer.editor.text.fragmente import absatz_fragmente
 from lunivo_writer.modelle.seite import PageSettings
@@ -101,29 +101,12 @@ def _docx_laden(path: str, kennwort: str | None) -> Loaded:
 
 
 def _txt_laden(path: str) -> Loaded:
-    from lunivo_writer.dienste.import_grenzen import pruefe_dateigroesse
-    pruefe_dateigroesse(path, "TXT")
-    try:
-        with open(path, "rb") as fh:
-            raw = fh.read()
-    except OSError as ex:
-        raise DocumentIOError(f"Datei nicht lesbar: {ex.strerror or ex}") from ex
-    for enc in ("utf-8-sig", "cp1252"):
-        try:
-            text = raw.decode(enc)
-            break
-        except UnicodeDecodeError:
-            continue
-    else:
-        text = raw.decode("latin-1")
-    doc = QTextDocument()
-    doc.setDocumentMargin(0)
-    f = QFont("Liberation Sans")
-    f.setPointSizeF(11)
-    doc.setDefaultFont(f)
-    QTextCursor(doc).insertText(text.replace("\r\n", "\n"))
+    from lunivo_writer.dienste.txt_modell import modell_laden
+    from lunivo_writer.adapter.qt.dokument import document_to_qt
+    modell, page = modell_laden(path)
+    doc = document_to_qt(modell)
     doc.setModified(False)
-    return Loaded(doc, PageSettings(), {}, IOReport())
+    return Loaded(doc, page, {}, IOReport(), modell)
 
 
 def load(path: str, kennwort: str | None = None) -> Loaded:
@@ -137,12 +120,32 @@ def load(path: str, kennwort: str | None = None) -> Loaded:
     if e in (".odt", ".fodt", ".rtf"):
         _kopf_pruefen(path, e)
         if e == ".rtf":
-            from lunivo_writer.dienste.rtf import read_rtf
-            doc, page, meta, rep = read_rtf(path)
+            from lunivo_writer.dienste.rtf_modell_leser import lese_rtf_modell
+            gelesen = lese_rtf_modell(path)
+            if gelesen is None:
+                from lunivo_writer.dienste.rtf import read_rtf
+                doc, page, meta, rep = read_rtf(path)
+                modell = None
+            else:
+                from lunivo_writer.adapter.qt.dokument import document_to_qt, seite_bilder_zu_qt
+                modell, page, meta, rep = gelesen
+                doc = document_to_qt(modell)
+                page = seite_bilder_zu_qt(page)
+                doc.setModified(False)
         else:
-            from lunivo_writer.dienste import odt_leser
-            doc, page, meta, rep = (odt_leser.read_odt if e == ".odt" else odt_leser.read_fodt)(path)
-        return Loaded(doc, page, meta, rep)
+            from lunivo_writer.dienste.odt_modell_leser import lese_odt_modell
+            gelesen = lese_odt_modell(path, flach=e == ".fodt")
+            if gelesen is None:
+                from lunivo_writer.dienste import odt_leser
+                doc, page, meta, rep = (odt_leser.read_odt if e == ".odt" else odt_leser.read_fodt)(path)
+                modell = None
+            else:
+                from lunivo_writer.adapter.qt.dokument import document_to_qt, seite_bilder_zu_qt
+                modell, page, meta, rep = gelesen
+                doc = document_to_qt(modell)
+                page = seite_bilder_zu_qt(page)
+                doc.setModified(False)
+        return Loaded(doc, page, meta, rep, modell)
     if e in (".dotx", ".docm"):
         _kopf_pruefen(path, e)
         with tempfile.TemporaryDirectory(prefix="lunivo-") as tmp:
@@ -199,11 +202,7 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
     e = ext(path)
     if e == ".docx":
         data, rep = docx_schreiber.docx_daten(doc, page, meta)
-        kw = (meta or {}).get("kennwort")
-        if kw:
-            data = _verschluesseln(data, kw)
-        sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung, erwartet=erwartet)
-        return rep
+        return save_docx_daten(path, data, rep, meta, sicherung, erwartet)
     rep = IOReport()
     if e == ".txt":
         if _has_rich_content(doc):
@@ -221,6 +220,16 @@ def save(path: str, doc: QTextDocument, page: PageSettings, meta: dict | None = 
         sicher_schreiben.bytes_schreiben(path, data, endung=e, sicherung=sicherung, erwartet=erwartet)
         return rep
     raise DocumentIOError(f"Das Format „{e}“ kann nicht gespeichert werden.")
+
+
+def save_docx_daten(path: str, data: bytes, report: IOReport, meta: dict | None = None, sicherung: bool = True,
+                    erwartet=sicher_schreiben.UNGEPRUEFT) -> IOReport:
+    """Schreibt bereits gebaute DOCX-Bytes mit demselben Kennwort- und sicheren Austauschweg wie ``save``."""
+    kw = (meta or {}).get("kennwort")
+    if kw:
+        data = _verschluesseln(data, kw)
+    sicher_schreiben.bytes_schreiben(path, data, endung=".docx", sicherung=sicherung, erwartet=erwartet)
+    return report
 
 
 _DOCX_HAUPTTEIL = b"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"

@@ -1,7 +1,7 @@
 # Qt-Entkopplung des Dokumentenkerns
 
-Stand 2026-11-12. Auftrag des Eigentümers: Dokumenten-, Seiten- und Textlayout-Logik schrittweise unabhängig von Qt machen; PySide6 bleibt für die Oberfläche.
-Dieses Dokument hält den Ist-Zustand (Phase 1), den Zielzustand und die Phasen fest. Gebaut sind bisher Phase 1 bis 3.
+Stand 2026-11-13. Auftrag des Eigentümers: Dokumenten-, Seiten- und Textlayout-Logik unabhängig von Qt machen; PySide6 bleibt für die Oberfläche.
+Dieses Dokument hält den Ist-Zustand, den Zielzustand und die Umsetzung fest. Die Qt-freien Kernschichten sind Dokumentmodell, Textsatz/Layout und Rendering; Qt bleibt in Oberfläche und Adaptern.
 
 ## Zielbild und Regeln
 
@@ -61,7 +61,7 @@ Rohdaten (alle Klassen mit Dateien): bei Bedarf mit dem Skript im Bericht der Si
 |---|---|---|
 | Geometrie (`QRectF`…) | ersetzen | `core/geometry` — **gebaut (Phase 2)**, Adapter **gebaut (Phase 3)** |
 | `QTextDocument` samt Formaten, `QTextCursor` | ersetzen, größter Block | `core/document` (Phase 4), Import/Export schrittweise darauf (Phase 5) |
-| `QTextLayout`, `QFont*`, Glyphen | hinter Schnittstelle | `core/textlayout` (`TextLayoutEngine`, Phase 6); Qt-Implementierung bleibt zunächst Standard |
+| `QTextLayout`, `QFont*`, Glyphen | hinter Schnittstelle | `core/textlayout` (`TextLayoutEngine`); HarfBuzz/FreeType ist Standard im Kern, Qt-Implementierung bleibt als UI-Adapter |
 | `Seitenplan` | fast frei | nur `aus_dokument` auf das neue Modell umstellen (Phase 7) |
 | `Seitenlauf` | schrittweise | Phase 7: erst Geometrie, dann Dokumentzugriff und Textsatz über Schnittstellen |
 | `QPainter` im Seitenaufbau | hinter Schnittstelle | `core/rendering` (`RenderBackend`, Phase 8); Qt-Backend zuerst |
@@ -78,7 +78,7 @@ Rohdaten (alle Klassen mit Dateien): bei Bedarf mit dem Skript im Bericht der Si
 | 4 | Dokumentenmodell `core/document` | erledigt als **zusätzliches** Modell mit verlustfreier Brücke (`adapter/qt/dokument.py`); der Editor arbeitet weiter auf `QTextDocument` |
 | 5 | DOCX-Import an das Modell anbinden | 5a erledigt; 5b **teilweise**: neuer Modell-Leser (`dienste/docx_modell_leser.py`) ist im DOCX-Import angeschlossen (`datei_dienst._docx_lesen`), mit Rückfall auf den alten Leser für 43 von 104 Prüfdateien |
 | 6 | `core/textlayout` | Schnittstelle `TextLayoutEngine` und Qt-Umsetzung (`adapter/qt/textlayout.py`) erledigt; eine Qt-freie Umsetzung (HarfBuzz/FreeType) nicht begonnen |
-| 7 | `Seitenplan`/`Seitenlauf` entkoppeln | **teilweise**: Rechtecke im Seitenlauf sind `core.geometry.Rect` (Commit `32e2e62`); Umrechnung zu Qt nur an der Grenze. Blätter, Zellen, Stand/Ergebnis und die Platzvergabe (Spalten, Seitenwechsel, Ausschlüsse) stehen Qt-frei in `editor/layout/seitenplatz.py` (Wächter `test_seitenplatz_ohne_qt.py`); Text, Tabellen und Rahmen laufen weiter über `QTextDocument`/`QTextLayout` (Blocker: Phase 6) |
+| 7 | `Seitenplan`/`Seitenlauf` entkoppeln | **teilweise**: `core.layout` ist Standardquelle für Absatz-, Tabellenzellen- und Rahmenrechtecke sowie Cursor-Treffertests; Modellpfade ordnen auch verschachtelte Tabellen und Rahmen zu. Die Qt-Hülle bleibt für `QTextDocument`, Zeilenformen, Zeichnen und Cursorpositionen zuständig. Blatt-/Platzvergabe liegt Qt-frei in `editor/layout/seitenplatz.py`. |
 | 8 | `core/rendering` | Schnittstelle `RenderBackend` und Qt-Backend (`adapter/qt/rendering.py`) erledigt; Spaltenlinien, Änderungsbalken, Fußnoten-Trennlinie, Zeilennummern, Seitenfarbe, Druckmarken, Kunstrahmen (`draw_path`), Wasserzeichen (`push_state`/`pop_state` für Deckkraft, Verschiebung, Drehung) und einfache Kopf-/Fußzeilen laufen darüber (`Style` kennt auch `dashed`); Pixelvergleich alt/neu identisch; der übrige Seitenaufbau noch nicht |
 | 9 | Adapter für Oberfläche vervollständigen | teilweise: Geometrie, Dokument, Textsatz und Zeichnen haben je einen Adapter; die Oberfläche selbst ist noch nicht umgestellt |
 | 10 | Abschlussdokumentation | Stand dieses Dokuments; siehe Abschnitt „Stand am Ende der Sitzung“ |
@@ -160,7 +160,7 @@ Zwei Voraussetzungen aus den anderen Phasen: die fachliche Benennung der Formate
 ## Phasen 6 bis 10: Stand (2026-11-12)
 
 - **Phase 6:** `core/textlayout/engine.py` mit `FontSpec`, `FontMetrics`, `GlyphPosition`, `LineBox` und der Schnittstelle `TextLayoutEngine` (`font_metrics`, `measure_text`, `shape_text`,
-  `layout_paragraph`). Die Basisklasse meldet jede fehlende Umsetzung. `adapter/qt/textlayout.py` setzt sie mit `QFontMetricsF` und `QTextLayout` um. Eine Qt-freie Umsetzung fehlt.
+  `layout_paragraph`). `core/textlayout/hb_engine.py` setzt sie mit HarfBuzz und FreeType Qt-frei um und ist der Standard für Kernlayout und Modellrendering. `adapter/qt/textlayout.py` bleibt als Qt-Umsetzung für die Oberfläche.
 - **Phase 7 (nicht begonnen):** `editor/layout/seitenlauf.py` (1188 Zeilen) ist eine `QAbstractTextDocumentLayout`-Unterklasse und benutzt `QTextDocument`, `QTextBlock`, `QTextLayout`,
   `QRectF`, `QPointF`, `QSizeF`, `QPainter`-nahe Typen. Die Umstellung braucht zuerst: (a) den Seitenlauf auf `core.document` und `core.textlayout` schreiben, (b) die Qt-Hülle als
   Adapter herausziehen, (c) den Cursor-Hit-Test im Adapter lassen. Das ist ein eigenes Vorhaben mit der Bedingung „keine Funktion verlieren“ (Vergleich über das Messnetz).
@@ -188,7 +188,7 @@ Zwei Voraussetzungen aus den anderen Phasen: die fachliche Benennung der Formate
 | Fußnoten, Textumfluss, Absatzregeln, Zeilennummern, Kopfzeilen-Versatz im Qt-freien Seitenumbruch | erledigt (`core/layout/seitenumbruch.py`); Textumfluss und Rahmen vergleichen mit dem Seitenlauf bei den geprüften Dateien seitengleich | `test_seitenumbruch_modell.py` |
 | Effekte, Muster-/Textur-/Bildfüllung, SVG/EMF, Texteffekte im Backend | erledigt als Backend-Operationen (`draw_effects_behind`, `apply_image_effects`, `draw_text_effects`, `draw_shadow`, `PatternFill`, `TextureFill`, `ImageFill`, Vektorbilder in `draw_image`); die Qt-Umsetzung nutzt die vorhandenen Effektbausteine; freie Bilder und Kopf-/Fußzeilen-Effekte laufen darüber | Pixelvergleich alt/neu |
 | Bilddaten im Modell | **Fehler behoben**: frei positionierte Bilder gingen beim DOCX-Import über den Modell-Leser verloren; `Document.media` trägt sie jetzt mit | `test_frei_positioniertes_bild_wandert_mit_dem_modell`, DOCX/ODT-Rundlauf von Inline-, freiem und Kopfzeilenbild geprüft; RTF meldet, was es nicht speichert |
-| Seitenlauf (`editor/layout/seitenlauf.py`) ohne Qt | **offen**: er ist die `QAbstractTextDocumentLayout` des `QTextDocument` und bleibt Qt-Hülle; Blatt/Platz/Ergebnis sind Qt-frei (`seitenplatz.py`) | — |
+| Seitenlauf (`editor/layout/seitenlauf.py`) ohne Qt | **teilweise**: Kernlayout liefert standardmäßig Absatzeckrechtecke, Tabellen-/Rahmenrechtecke und Treffertests; Qt-Hülle setzt sie auf `QTextDocument` um. Zeilenlayout, Cursorpositionen, Zeichnen und Eingabeverbindung hängen weiter an Qt. | `tests/editor/test_seitenlauf.py` |
 | DOCX-Import ohne Umweg über Qt | **teilweise**: Modell-Leser mit Rückfall; Zeilenhöhen mit dem Qt-freien Textsatz und schwebende Bilder sind jetzt im Modell; Rückfall bleibt bei verschachtelten Tabellen und einigen Formaten (Umriss-Stift, Farbverlauf als Hintergrund). Von 120 Prüfdateien liest der Modell-Leser 114 selbst | `werkzeuge/pruefungen/docx_modellleser_vergleich.py` |
 | Oberfläche nur über Adapter | **offen**: 212 Dateien in `oberflaeche/` benutzen Qt-Dokumentklassen direkt; Editor, Cursor, Auswahl, Einfügen, Löschen und Formatieren arbeiten auf `QTextDocument` | — |
 | WordArt, SmartArt, Diagramme | **offen**: werden von Qt-Code (`einfuegen.wordart_vorlage_bild`, `smartart_zeichnen.py`, `diagramme/`) in Bilder gezeichnet; das Dokument speichert Bild und Parameter | — |
@@ -218,6 +218,14 @@ Ursachen der Abweichungen, soweit untersucht: (1) Schriften, die auf dem Rechner
 **Fertigstellungsstatus:** Der Kern (`core/`) ist frei von Qt; Bearbeitung, Seitenumbruch, Rendering und Bilder/Formen laufen über Modell und Backend. **Nicht fertig:** Tippen, Einfügen aus der Zwischenablage, Tabellen- und Bildbefehle, Auswahlverhalten und die Anzeige des Editors (`QTextEdit` mit dem Seitenlauf) arbeiten weiter direkt am `QTextDocument`; der Seitenlauf ist weiter die Qt-Hülle. Das Seitenbild aus dem Modell kennt Kopf-/Fußzeile, Seitenrahmen und Wasserzeichen nur über die Qt-Bausteine des Editors (`seitenschmuck`, `_kopf_fuss_zeichnen`).
 
 **Nächster Schritt:** die übrigen Befehle der Reiter „Tabelle“ (Zeilen/Spalten, Verbinden, Zellformat) und „Einfügen“ (Bild, Form) wie `insert_table` über `ModellSpiegel` führen (Sitzung um Tabellen- und Rahmenoperationen erweitern), danach das Tippen (`keyPressEvent`/`inputMethodEvent`) über `ModellSpiegel.einfuegen`; zuletzt den Seitenlauf auf `core.layout` stützen.
+
+**Fortsetzung (2026-11-13):** `KERN_RECHTECKE` ist standardmäßig aktiv. `seitenlauf.py` ordnet Qt-Absätze in Dokument, Tabellenzellen und Rahmen an Modellpfade zu; `blockBoundingRect`, `frameBoundingRect` und `hitTest` verwenden das Qt-freie Layout. Seitenversatz und Zoom werden an der Qt-Grenze ergänzt. Die Größen-Ausnahme im Modellspiegel ist entfernt: Formatierung, Löschen, Tippen, Listen, Tabellenstruktur, Zell-/Tabellenformat, Bilder, Seiten-/Spaltenumbrüche und Links laufen für große wie kleine Dokumente über das Kernmodell. Kopf-/Fußzeilen- und IME-Vorabbearbeitung sowie Qt-Zeilenformen, Zeichnen und Widgets bleiben Qt-Adapteraufgaben.
+
+**Ergänzung (2026-11-13):** Der Standard-Textsatz lädt ausschließlich die Qt-freie HarfBuzz/FreeType-Engine; die Qt-Engine bleibt im Qt-Adapter für Ansichtsaufgaben verfügbar. TXT wird vor der Qt-Ansicht direkt als Kernmodell gelesen und dieses Modell bleibt beim Laden im `Loaded`-Ergebnis erhalten. Die Oberfläche erhält daraus weiterhin ihr `QTextDocument` über den Qt-Adapter.
+
+RTF-Text, Absätze, Listen, Tabellen, Seiteneinrichtung, Kopf-/Fußzeilentext und Bildbytes werden ebenfalls direkt in `core.document` aufgebaut. Bilder in Kopf-/Fußzeilen bleiben vorerst beim Qt-Leser.
+
+ODT/FODT-Absätze, Zeichenformate, Listen, Tabellen, Seiteneinrichtung, Kopf-/Fußzeilentext, Metadaten, Inlinebilder und Bilder in Kopf-/Fußzeilen gehen nun direkt ins Kernmodell. Frei verankerte Bilder, Zeichnungen, Textrahmen und Noten bleiben Qt-Rückfälle; die Modellroute verweigert diese Inhalte, damit sie unverändert vom vollständigen Leser übernommen werden.
 
 
 ### Nachtrag (später Teil der Bausitzung)

@@ -75,8 +75,13 @@ def bilder_schreiben(doc, page, noten, name: str, wahl: BildWahl) -> list[str]:
 
 
 def _seitenbilder_schreiben(doc, page, noten, stamm: str, endung: str, faktor: float, wahl: BildWahl) -> list[str]:
-    from lunivo_writer.editor.seite.seiten_aufteilung import seiten_bilder
-    bilder = seiten_bilder(doc, page, noten, faktor)
+    from lunivo_writer.core.document import Document
+    if isinstance(doc, Document):
+        from lunivo_writer.adapter.qt.seitenbild import seiten_bilder_modell
+        bilder = seiten_bilder_modell(doc, faktor)
+    else:
+        from lunivo_writer.editor.seite.seiten_aufteilung import seiten_bilder
+        bilder = seiten_bilder(doc, page, noten, faktor)
     erstes = next(bilder, None)
     if erstes is None:
         return []
@@ -93,6 +98,9 @@ def _seitenbilder_schreiben(doc, page, noten, stamm: str, endung: str, faktor: f
 
 def _langes_bild_schreiben(doc, page, noten, stamm: str, endung: str, faktor: float, wahl: BildWahl) -> list[str]:
     """Langes Bild: zuerst die Höhe abschätzen, damit es nicht zu groß für das Bildformat wird."""
+    from lunivo_writer.core.document import Document
+    if isinstance(doc, Document):
+        return _langes_modellbild_schreiben(doc, stamm, endung, faktor, wahl)
     from lunivo_writer.editor.seite.seiten_aufteilung import seiten_bilder, seitenzahl
     from lunivo_writer.modelle.seite import mm_to_px
     n = max(1, seitenzahl(doc, page, noten))
@@ -114,6 +122,47 @@ def _langes_bild_schreiben(doc, page, noten, stamm: str, endung: str, faktor: fl
         y += s.height() + luecke
     p.end()
     del seiten
+    pfad = _frei(f"{stamm}.{endung}")
+    _speichern(gesamt, pfad, wahl.format)
+    return [pfad]
+
+
+def _langes_modellbild_schreiben(modell, stamm: str, endung: str, faktor: float, wahl: BildWahl) -> list[str]:
+    """Rendert ein Modell-Langbild direkt über Layout und Seitengenerator, ohne QDoc-Zwischenmodell."""
+    from lunivo_writer.adapter.qt.seitenbild import seiten_bilder_modell
+    from lunivo_writer.core.layout import umbrechen
+    from lunivo_writer.modelle.seite import mm_to_px
+    from lunivo_writer.dienste.textsatz import standard_engine
+
+    engine = standard_engine()
+    layout = umbrechen(modell, engine)
+    if not layout.seiten:
+        return []
+    mm_groessen = []
+    for seite in layout.seiten:
+        einrichtung = seite.einrichtung
+        breite = einrichtung.width_mm if einrichtung is not None else 210.0
+        hoehe = einrichtung.height_mm if einrichtung is not None else 297.0
+        mm_groessen.append((breite, hoehe))
+
+    luecke = int(LUECKE_PX * faktor)
+    groessen = [(round(mm_to_px(w) * faktor), round(mm_to_px(h) * faktor)) for w, h in mm_groessen]
+    gesamt_hoehe = sum(h for _w, h in groessen) + luecke * (len(groessen) - 1)
+    if gesamt_hoehe > LANG_MAX_PX:
+        faktor *= LANG_MAX_PX / gesamt_hoehe
+        groessen = [(round(mm_to_px(w) * faktor), round(mm_to_px(h) * faktor)) for w, h in mm_groessen]
+        luecke = int(LUECKE_PX * faktor)
+
+    breite = max(w for w, _h in groessen)
+    gesamt = QImage(breite, sum(h for _w, h in groessen) + luecke * (len(groessen) - 1), QImage.Format_RGB32)
+    gesamt.fill(QColor(Farbe.GRAU_HELL))
+    p = QPainter(gesamt)
+    y = 0
+    for _nummer, bild, _einrichtung in seiten_bilder_modell(modell, faktor, engine, layout):
+        wasserzeichen(bild, wahl.wasserzeichen)
+        p.drawImage((breite - bild.width()) // 2, y, bild)
+        y += bild.height() + luecke
+    p.end()
     pfad = _frei(f"{stamm}.{endung}")
     _speichern(gesamt, pfad, wahl.format)
     return [pfad]

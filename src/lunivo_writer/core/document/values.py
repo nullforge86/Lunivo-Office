@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TypeAlias
 
 
 @dataclass(frozen=True)
@@ -41,7 +41,7 @@ class TextureBrush:
 @dataclass(frozen=True)
 class Pen:
     """Stift (zum Beispiel die Kontur von Text): Pinsel, Breite, Strichart, Linienende und Ecken (Zahlen wie bei Qt)."""
-    brush: object
+    brush: Color | Brush | GradientBrush | TextureBrush
     width: float
     style: int = 1
     cap: int = 0
@@ -77,5 +77,5 @@ class TabStop:
     delimiter: str = ""
 
 
-# Ein Wert ist ein Grundtyp, einer der Typen oben oder ein Tupel solcher Werte (Listen).
-PropertyValue = object
+# Werte des Dokumentenmodells bleiben auf native, Qt-freie Datentypen begrenzt.
+PropertyValue: TypeAlias = str | int | float | bool | None | bytes | Color | Brush | GradientBrush | TextureBrush | Pen | Length | LineSpacing | RowHeight | TabStop | tuple["PropertyValue", ...]

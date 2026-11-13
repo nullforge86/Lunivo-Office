@@ -92,10 +92,11 @@ class ObjekteMixin:
             return {}
         return fx
 
-    def _frei(self, drawing, teil=None, inline_ok: bool = False):
+    def _frei(self, drawing, teil=None, inline_ok: bool = False, anchored_wrap_ok: bool = False):
         """Ein Bild, das frei auf dem Blatt liegt (wp:anchor ohne Textumbruch) → (Angabe, QImage); ``False``, wenn es nicht darstellbar ist
-        (Vektorbild); ``None``, wenn es kein solches Bild ist (steht im Text oder umflossen). Siehe editor/objekte/freie_bilder.py."""
-        a = self._frei_anker(drawing, inline_ok)
+        (Vektorbild); ``None``, wenn es kein solches Bild ist (steht im Text oder umflossen). Kopf-/Fußzeilen können verankerte Bilder trotz Textumbruch
+        als Seitenbild übernehmen. Siehe editor/objekte/freie_bilder.py."""
+        a = self._frei_anker(drawing, inline_ok, anchored_wrap_ok)
         textfeld = _xp(drawing, ".//wps:wsp[wps:txbx or wps:linkedTxbx]")             # Textfeld (auch verknüpft), kein Bild
         blips = drawing.xpath(".//a:blip")
         form = None if (blips or textfeld) else self._form_aus_docx(drawing)
@@ -140,10 +141,10 @@ class ObjekteMixin:
         return angabe, img
 
     @staticmethod
-    def _frei_anker(drawing, inline_ok: bool):
+    def _frei_anker(drawing, inline_ok: bool, anchored_wrap_ok: bool = False):
         """Anker des Bildes ohne Textumbruch (sonst None: das Bild steht im Text oder wird umflossen)."""
         anker = drawing.xpath("wp:anchor") or (drawing.xpath("wp:inline") if inline_ok else [])
-        if not anker or _xp(anker[0], "wp:wrapSquare | wp:wrapTight | wp:wrapThrough | wp:wrapTopAndBottom"):
+        if not anker or (not anchored_wrap_ok and _xp(anker[0], "wp:wrapSquare | wp:wrapTight | wp:wrapThrough | wp:wrapTopAndBottom")):
             return None
         return anker[0]
 

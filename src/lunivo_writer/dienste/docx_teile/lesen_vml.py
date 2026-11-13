@@ -95,6 +95,12 @@ class VmlMixin:
             return angabe, img
         name = _VML_FORMEN.get(re.sub(r"\s*\d+$", "", shape.get("id") or ""))
         if name is None:
+            # Einige Word-/Office-Versionen vergeben für einfache VML-Formen nur
+            # generierte IDs (zum Beispiel _x0000_i1025). Der Elementtyp selbst
+            # bestimmt dann die vorhandene Grundform.
+            name = {"rect": "Rechteck", "oval": "Ellipse", "roundrect": "Abgerundetes Rechteck"}.get(
+                shape.tag.rsplit("}", 1)[-1].lower())
+        if name is None:
             self.report.warn("Formen und gezeichnete Objekte werden nicht dargestellt.")
             return None
         daten = {"form": name, "fuell": fuell or "", "linie": linie, "strich": strich, "text": ""}

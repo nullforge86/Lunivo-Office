@@ -61,6 +61,88 @@ def test_read_basic(app, sample):
     assert qd.firstBlock().blockFormat().headingLevel() == 1
 
 
+def test_read_uses_docx_paragraph_defaults_after_style_values(app, tmp_path):
+    from docx.enum.style import WD_STYLE_TYPE
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    d = docx.Document()
+    ppr_default = d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:pPrDefault") + "/" + qn("w:pPr"))
+    if ppr_default is None:
+        ppr_default = OxmlElement("w:pPr")
+        ppr_default_default = d.styles.element.find(qn("w:docDefaults") + "/" + qn("w:pPrDefault"))
+        if ppr_default_default is None:
+            ppr_default_default = OxmlElement("w:pPrDefault")
+            d.styles.element.find(qn("w:docDefaults")).append(ppr_default_default)
+        ppr_default_default.append(ppr_default)
+    spacing = ppr_default.find(qn("w:spacing"))
+    if spacing is None:
+        spacing = OxmlElement("w:spacing")
+        ppr_default.append(spacing)
+    spacing.set(qn("w:after"), "200")
+    spacing.set(qn("w:line"), "276")
+    spacing.set(qn("w:lineRule"), "auto")
+
+    explicit = d.styles.add_style("Explicit Paragraph", WD_STYLE_TYPE.PARAGRAPH)
+    explicit.base_style = d.styles["Normal"]
+    explicit.paragraph_format.space_after = Pt(3)
+    explicit.paragraph_format.line_spacing = 1.5
+    d.add_paragraph("Dokumentstandard")
+    d.add_paragraph("Stilvorgabe", style=explicit)
+    path = tmp_path / "doc-defaults.docx"
+    d.save(path)
+
+    qd, _page, _meta, _report = read_docx(str(path))
+    standard = qd.firstBlock().blockFormat()
+    stil = qd.lastBlock().blockFormat()
+    assert standard.bottomMargin() == pytest.approx(200 * 96 / 1440)
+    assert standard.lineHeight() == pytest.approx(115)
+    assert stil.bottomMargin() == pytest.approx(3 * 96 / 72)
+    assert stil.lineHeight() == pytest.approx(150)
+
+
+def test_vml_rect_with_generated_id_uses_builtin_shape(app, tmp_path):
+    from docx.oxml import parse_xml
+    from docx.oxml import OxmlElement
+    from lunivo_writer.editor.objekte import freie_bilder as FB
+    from lunivo_writer.dienste.docx_teile.lesen_vml import VmlMixin
+
+    class Bericht:
+        def __init__(self):
+            self.warnings = []
+
+        def warn(self, text):
+            self.warnings.append(text)
+
+    class Reader(VmlMixin):
+        def __init__(self):
+            self.report = Bericht()
+
+    d = docx.Document()
+    pict = OxmlElement("w:pict")
+    ns = 'xmlns:v="urn:schemas-microsoft-com:vml"'
+    rect = parse_xml(f'<v:rect {ns} id="_x0000_i1025" style="width:226.9pt;height:1pt"/>')
+    pict.append(rect)
+    d.add_paragraph().add_run()._r.append(pict)
+    path = tmp_path / "vml-rect.docx"
+    d.save(path)
+    qd, _page, _meta, report = read_docx(str(path))
+    objekte = []
+    block = qd.firstBlock()
+    while block.isValid():
+        objekte.extend(FB.aus_absatz(block.blockFormat()))
+        block = block.next()
+    assert any(o["art"] == "form" and o["daten"]["form"] == "Rechteck" for o in objekte)
+    assert not any("Formen und gezeichnete Objekte" in w for w in report.warnings)
+
+    reader = Reader()
+    assert reader.report.warnings == []
+
+    unbekannt = parse_xml(f'<v:shape {ns} id="unbekannt"/>')
+    assert reader._vml_frei(unbekannt) is None
+    assert reader.report.warnings == ["Formen und gezeichnete Objekte werden nicht dargestellt."]
+
+
 def test_roundtrip_preserves_content_and_format(app, sample, tmp_path):
     qd, page, meta, _ = read_docx(sample)
     out = str(tmp_path / "out.docx")

@@ -10,7 +10,7 @@ import os
 from lunivo_writer.kern import pfade
 from lunivo_writer.oberflaeche.baukasten.basis.texte import trennlinie
 
-from PySide6.QtCore import QSize, QTimer, Qt
+from PySide6.QtCore import QSize, QTimer, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 
 from lunivo_writer.oberflaeche.bauteile import symbole
@@ -52,6 +52,8 @@ from lunivo_writer.oberflaeche.band.band_bausteine import (
 
 class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBaustein, BandZustandBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
+
+    seiteGebaut = Signal()
 
     # Maße des Bandes: normal und kompakt (Optionen ▸ Ansicht ▸ „Kompaktes Menüband“): niedrigeres Band, keine Gruppenunterschriften
     BAND_HOEHE = {False: 112, True: 88}

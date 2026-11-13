@@ -586,12 +586,7 @@ class DocumentEditor(LaufBaustein, AnzeigeBaustein, SpaltenBaustein, SeitenBaust
 
     def _auswahl_uebernehmen(self) -> None:
         """Schreibmarke und Auswahl des Editors in die Bearbeitungssitzung übernehmen (Oberfläche → Adapter → Sitzung)."""
-        if self.zu_gross_fuer_spiegel():
-            return
         self.modell_spiegel().cursor_uebernehmen(self.textCursor())
-
-    def zu_gross_fuer_spiegel(self) -> bool:
-        return self.modell_spiegel().zu_gross()
 
 
     def _teilen_vorher(self, e):

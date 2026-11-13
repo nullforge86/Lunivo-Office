@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from lunivo_writer.core.geometry.units import PX_PER_MM, mm_to_px, px_to_mm, umbruchraster
 from lunivo_writer.kern.farben import Farbe
-PX_PER_MM = 96.0 / 25.4
 
 PAPER_MM = {
     "A4": (210.0, 297.0),
@@ -16,20 +16,6 @@ PAPER_MM = {
     "Letter": (215.9, 279.4),
     "Legal": (215.9, 355.6),
 }
-
-
-def mm_to_px(mm: float) -> float:
-    return mm * PX_PER_MM
-
-
-def px_to_mm(px: float) -> float:
-    return px / PX_PER_MM
-
-
-def umbruchraster(px: float) -> float:
-    """Eine Seitenhöhe so, wie Qt mit ihr umbricht: auf 1/64 Bildpunkt abgeschnitten. Jede Rechnung „y → Seite“ muss diese Höhe nehmen;
-    mit dem ungerundeten Maß wandert die berechnete Seitengrenze je Seite um bis zu 1/64 Bildpunkt (nach rund 40 Seiten eine falsche Seite)."""
-    return int(px * 64) / 64
 
 
 @dataclass

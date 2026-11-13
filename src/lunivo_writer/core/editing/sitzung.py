@@ -12,9 +12,42 @@ from dataclasses import dataclass, field
 from typing import Iterator
 
 from lunivo_writer.core.document.model import CharacterFormat, Document, Frame, Image, ListFormat, Paragraph, ParagraphFormat, Table, TableCell, TableRow, TextRun
-from lunivo_writer.core.document.values import LineSpacing
+from lunivo_writer.core.document.values import Brush, Color, LineSpacing
 
 Pfad = tuple[int, ...]
+
+
+def _zeichenfelder_aktualisieren(fmt: CharacterFormat, gesetzt: dict, entfernen: tuple) -> None:
+    """Die semantischen Kurzfelder mit den geänderten Format-Eigenschaften synchron halten."""
+    props = fmt.properties
+    familie_keys = {"FontFamilies", "FontFamily"}
+    if familie_keys.intersection(gesetzt) or familie_keys.intersection(entfernen):
+        familie = props.get("FontFamilies", props.get("FontFamily"))
+        if isinstance(familie, (tuple, list)):
+            familie = familie[0] if familie else None
+        fmt.family = familie if isinstance(familie, str) else None
+
+    groesse_keys = {"FontPointSize", "FontPixelSize"}
+    if groesse_keys.intersection(gesetzt) or groesse_keys.intersection(entfernen):
+        groesse = props.get("FontPointSize")
+        if not isinstance(groesse, (int, float)) or isinstance(groesse, bool) or groesse <= 0:
+            px = props.get("FontPixelSize")
+            groesse = float(px) * 72.0 / 96.0 if isinstance(px, (int, float)) and not isinstance(px, bool) and px > 0 else None
+        fmt.size_pt = float(groesse) if groesse is not None else None
+
+    if "FontWeight" in gesetzt or "FontWeight" in entfernen:
+        gewicht = props.get("FontWeight")
+        fmt.weight = int(gewicht) if isinstance(gewicht, (int, float)) and not isinstance(gewicht, bool) else None
+    if "FontItalic" in gesetzt or "FontItalic" in entfernen:
+        kursiv = props.get("FontItalic")
+        fmt.italic = bool(kursiv) if kursiv is not None else None
+
+    if "ForegroundBrush" in gesetzt or "ForegroundBrush" in entfernen:
+        pinsel = props.get("ForegroundBrush")
+        fmt.foreground_color = pinsel.color if isinstance(pinsel, Brush) and pinsel.style == 1 else pinsel if isinstance(pinsel, Color) else None
+    unter_keys = {"FontUnderline", "TextUnderlineStyle"}
+    if unter_keys.intersection(gesetzt) or unter_keys.intersection(entfernen):
+        fmt.underline = bool(props.get("FontUnderline") or props.get("TextUnderlineStyle", 0))
 
 
 @dataclass(frozen=True, order=True)
@@ -282,7 +315,10 @@ class Sitzung:
             if k == 0:
                 neue.append(_neuer(p, links + lauf))
             else:
-                neue.append(Paragraph(copy.deepcopy(p.format), []))
+                absatzformat = copy.deepcopy(p.format)
+                from lunivo_writer.core.document.objekte import P_BILDANKER
+                absatzformat.properties.pop(P_BILDANKER, None)       # Absatzobjekte gehören beim Teilen nur zum ursprünglichen Absatz
+                neue.append(Paragraph(absatzformat, []))
                 neue[-1].runs = _verschmelzen(lauf)
         ende_laenge = sum(len(r.text) for r in neue[-1].runs if isinstance(r, TextRun)) + sum(1 for r in neue[-1].runs if isinstance(r, Image))
         neue[-1] = Paragraph(neue[-1].format, _verschmelzen(neue[-1].runs + rechts))
@@ -442,8 +478,12 @@ class Sitzung:
                     for k in entfernen:
                         r.format.properties.pop(k, None)
                     r.format.properties.update(copy.deepcopy(eigenschaften))
+                    _zeichenfelder_aktualisieren(r.format, eigenschaften, entfernen)
                 else:
+                    for k in entfernen:
+                        r.format.properties.pop(k, None)
                     r.format.properties.update(copy.deepcopy(eigenschaften))
+                    _zeichenfelder_aktualisieren(r.format, eigenschaften, entfernen)
             ers.append(self._ersetzung(pfad, 1, [_neuer(p, links + mitte + rechts)]))
         if ers:
             self._buchen_ohne_bewegung(Aenderung("zeichenformat", ers, {"von": sel[0], "bis": sel[1], "eigenschaften": copy.deepcopy(eigenschaften), "entfernen": entfernen}))

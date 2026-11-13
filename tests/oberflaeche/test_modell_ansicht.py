@@ -65,6 +65,13 @@ def test_tippen_loeschen_rueckgaengig_stehen_im_editor(app):
     assert tab.editor.document().lastBlock().text() == ""
 
 
+def test_document_tab_liefert_aktuelles_kernmodell_zum_speichern(app):
+    tab, ansicht = _tab("Vorher")
+    ansicht.einfuegen("Nachher")
+    modell = tab.modell_fuer_speichern()
+    assert modell.sections[0].content[0].text == "NachherVorher"
+
+
 def test_klick_setzt_die_schreibmarke_und_die_seite_wird_gezeichnet(app):
     tab, a = _tab("Erster Absatz\nZweiter Absatz")
     tab.show()

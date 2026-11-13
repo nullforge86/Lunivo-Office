@@ -106,15 +106,7 @@ def bild_einfuegen(ed, img: QImage, bb: float, hh: float, art: str | None = None
     c = ed.textCursor(); c.clearSelection()
     c.beginEditBlock()
     neuer_absatz = bool(c.block().text().strip() or c.block().length() > 1)
-    if neuer_absatz and (ed.modell_spiegel().zu_gross()):               # sehr großes Dokument: direkt am Textdokument
-        from PySide6.QtGui import QTextBlockFormat
-        c.movePosition(QTextCursor.EndOfBlock); c.insertBlock(QTextBlockFormat())
-        neuer_absatz = False
-        direkt = True
-    else:
-        direkt = bool(ed.modell_spiegel().zu_gross())
-    name = FB.neuer_name(doc)
-    a = {"n": name, "b": bb, "h": hh, "bh": "spalte", "xh": 0.0, "bv": "absatz", "yv": 0.0, "ah": "", "av": "", "hinter": False,
+    a = {"b": bb, "h": hh, "bh": "spalte", "xh": 0.0, "bv": "absatz", "yv": 0.0, "ah": "", "av": "", "hinter": False,
          "ellipse": False, "dreh": 0.0}
     if art:
         a["art"], a["daten"] = art, dict(daten or {})
@@ -122,14 +114,8 @@ def bild_einfuegen(ed, img: QImage, bb: float, hh: float, art: str | None = None
         a["alt"] = alt
     if art == "textfeld":
         a["fuell"], a["rand"] = dict(TEXTFELD_FUELL), dict(TEXTFELD_RAND)
-    if direkt:
-        doc.addResource(QTextDocument.ImageResource, QUrl(name), img)
-        FB.an_absatz(QTextCursor(c.block()), a)
-        blk, idx = c.block().blockNumber(), len(FB.aus_absatz(c.block().blockFormat())) - 1
-    else:                                                                       # Oberfläche → Adapter → Kern → Ansicht
-        a.pop("n")
-        blk, idx = ed.modell_spiegel().freies_bild_einfuegen(c, img, a, neuer_absatz)
-        c = QTextCursor(doc.findBlockByNumber(blk))
+    blk, idx = ed.modell_spiegel().freies_bild_einfuegen(c, img, a, neuer_absatz)
+    c = QTextCursor(doc.findBlockByNumber(blk))
     c.endEditBlock()
     ed.setTextCursor(c)
     doc.setModified(True)

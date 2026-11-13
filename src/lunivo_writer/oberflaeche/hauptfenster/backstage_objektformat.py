@@ -216,7 +216,7 @@ class BackstageObjektformatBaustein:
     def _tabelle_masse(self, e) -> None:
         """Zahlenfelder Höhe/Breite im Reiter Tabellentools (``tab_…``) mit der Zeile und Spalte der Schreibmarke abgleichen."""
         f = self.band.felder
-        if e is None or "tab_breite" not in f or e.textCursor().currentTable() is None:
+        if e is None or e.textCursor().currentTable() is None or not dict.__contains__(f, "tab_breite"):
             return
         m = self.befehle.tabelleMasseLesen()
         if m is None:

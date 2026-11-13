@@ -106,6 +106,77 @@ def test_zoom_skaliert_blatt_und_raender(app):
     assert lay.blockBoundingRect(d.firstBlock()).x() == pytest.approx(mm_to_px(20), abs=1.5)
 
 
+def test_kernrechtecke_skaliert_position_und_groesse_mit_zoom(app, monkeypatch):
+    from lunivo_writer.editor.layout import seitenlauf as SL
+
+    monkeypatch.setattr(SL, "KERN_RECHTECKE", True)
+    d = _doc(2, 10)
+    lay = Seitenlauf(d, _basis(), zoom=2.0)
+    d.setDocumentLayout(lay)
+    lay.anordnen()
+    rect = lay.blockBoundingRect(d.firstBlock())
+    roh = lay._kern.absaetze[(0, 0)].zeilen[0][2]
+
+    assert rect.x() == pytest.approx(roh.x * 2.0)
+    assert rect.y() == pytest.approx(roh.y * 2.0)
+    assert rect.width() == pytest.approx(roh.width * 2.0)
+    assert rect.height() == pytest.approx(lay._kern.absaetze[(0, 0)].satz.hoehe * 2.0)
+
+
+def test_kernrechtecke_zuordnen_absatzpfade_ueber_spalten_und_seiten(app):
+    d = _doc(8, 250)
+    basis = _basis(spalten=2, spalten_abstand_mm=8.0)
+    lay = _lauf(d, basis)
+    assert lay._kern_rechteck(d.firstBlock()) is not None
+    pfade = lay._kern_pfade
+
+    assert lay.pageCount() >= 2
+    assert len(pfade) == d.blockCount()
+    for i in range(d.blockCount()):
+        block = d.findBlockByNumber(i)
+        assert lay._kern_pfad(block) == (0, i)
+        assert lay._kern_rechteck(block) is not None
+    erste_zeilen = [lay._kern.absaetze[(0, i)].zeilen[0] for i in range(d.blockCount())]
+    assert {seite for seite, _zeile, _rechteck in erste_zeilen} >= {0, 1}
+    assert len({round(rechteck.x) for _seite, _zeile, rechteck in erste_zeilen}) >= 2
+
+
+def test_kernrechtecke_zuordnen_tabellen_und_rahmen(app):
+    from PySide6.QtGui import QTextFrameFormat
+
+    d, t = _tabellen_doc(1, 1)
+    c = QTextCursor(d)
+    c.movePosition(QTextCursor.End)
+    rahmen = c.insertFrame(QTextFrameFormat())
+    rahmen.firstCursorPosition().insertText("Rahmentext")
+    lay = _lauf(d, _basis())
+    lay._kern_rechteck(d.firstBlock())                                      # baut die Zuordnung auf
+
+    innen_tabelle = t.cellAt(0, 0).firstCursorPosition().block()
+    innen_rahmen = rahmen.firstCursorPosition().block()
+    assert lay._kern_pfad(innen_tabelle) == (0, 2, 0, 0, 0) and lay._kern_rechteck(innen_tabelle) is not None
+    pfad_rahmen = lay._kern_pfad(innen_rahmen)
+    assert pfad_rahmen is not None and pfad_rahmen[0] == 0 and len(pfad_rahmen) == 3
+    assert lay._kern_rechteck(innen_rahmen) is not None
+    assert not lay.frameBoundingRect(t).isEmpty() and not lay.frameBoundingRect(rahmen).isEmpty()
+
+
+def test_kernrechtecke_cache_wird_bei_dokumentrevision_neu_gebaut(app):
+    d = _doc(3, 10)
+    lay = _lauf(d, _basis())
+    erster = lay._kern_rechteck(d.firstBlock())
+    kern_alt = lay._kern
+    revision_alt = lay._kern_stand
+
+    c = QTextCursor(d.findBlockByNumber(1))
+    c.insertText("Geändert ")
+    neuer = lay._kern_rechteck(d.firstBlock())
+
+    assert erster is not None and neuer is not None
+    assert d.revision() != revision_alt and lay._kern_stand == d.revision()
+    assert lay._kern is not kern_alt
+
+
 def test_bild_in_der_zeile_nimmt_hoehe_ein_und_wird_gezeichnet(app):
     from PySide6.QtCore import QUrl
     from PySide6.QtGui import QColor, QImage, QPainter, QTextImageFormat

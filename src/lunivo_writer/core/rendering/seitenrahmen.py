@@ -1,4 +1,4 @@
-"""Der Rahmen um die Seite („Rahmen und Schattierung“ ▸ Seitenrand) ohne Qt: Lage, Abstände, Kunstrahmen und Linienrahmen als Zeichenanweisungen für ein ``RenderBackend``.
+"""Der Rahmen um die Seite („Rahmen und Schattierung“ ▸ Seitenrand) ohne Qt: Lage, Abstände, Kunstrahmen und Linienrahmen als Zeichenanweisungen für ein ``RenderTarget``.
 
 Ein Seitenrahmen ist ein Wörterbuch (``PageSettings.border``): ``farbe``, ``breite_pt``, ``art`` (Linienart), ``seiten`` („tblr“), ``abstand`` („oben,unten,links,rechts“ in pt, sonst ``abstand_mm``),
 ``messen`` („text“ oder „seitenrand“), ``kopf``/``fuss`` (Kopf-/Fußzeile umgeben), ``kunst`` (Art des Rahmens, leer = Linie). ``page`` liefert die Ränder in mm (``margin_*_mm``)."""
@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 
 from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 from lunivo_writer.core.rendering.linien import zeichne_rahmen
 
 PX_JE_MM = 96.0 / 25.4
@@ -42,7 +42,7 @@ def _vieleck(punkte: list[tuple[float, float]]) -> list:
 
 
 def _figur(art: str, mitte: tuple[float, float], groesse: float) -> list:
-    """Umriss einer Figur als Pfadanweisungen (``core.rendering.RenderBackend.draw_path``)."""
+    """Umriss einer Figur als Pfadanweisungen (``core.rendering.RenderTarget.draw_path``)."""
     mx, my = mitte
     r = groesse / 2
     if art == "stars":
@@ -58,7 +58,7 @@ def _figur(art: str, mitte: tuple[float, float], groesse: float) -> list:
     return _vieleck([(mx, my - r), (mx + r * 0.7, my), (mx, my + r), (mx - r * 0.7, my)])      # Edelsteine: Rauten
 
 
-def kunst_zeichnen(backend: RenderBackend, rect: Rect, art: str, breite_px: float, farbe: tuple[int, int, int, int]) -> None:
+def kunst_zeichnen(backend: RenderTarget, rect: Rect, art: str, breite_px: float, farbe: tuple[int, int, int, int]) -> None:
     """Einen Kunstrahmen entlang der Kanten: Figuren in regelmäßigem Abstand (Zickzack als Linienzug)."""
     g = max(8.0, breite_px)
     figur_stil = Style(color=farbe, width=1, filled=True)
@@ -82,7 +82,7 @@ def kunst_zeichnen(backend: RenderBackend, rect: Rect, art: str, breite_px: floa
             backend.draw_path(_figur(art, (a[0] + (z[0] - a[0]) * t, a[1] + (z[1] - a[1]) * t), g), figur_stil)
 
 
-def zeichnen(backend: RenderBackend, b: dict, page, seite: Rect) -> None:
+def zeichnen(backend: RenderTarget, b: dict, page, seite: Rect) -> None:
     """Den Seitenrahmen auf eine Seite zeichnen (Linie in ihrer Art oder Kunstrahmen)."""
     rect = rechteck(b, page, seite)
     breite = float(b.get("breite_pt", 1.0))

@@ -101,7 +101,7 @@ class SeiteMixin:
             return []
         out = []
         for dr in teil._element.iter(qn("w:drawing")):
-            frei = self._frei(dr, teil.part, inline_ok=True)
+            frei = self._frei(dr, teil.part, inline_ok=True, anchored_wrap_ok=True)
             if not frei:
                 continue
             angabe, bild = frei

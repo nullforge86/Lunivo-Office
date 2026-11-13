@@ -1,10 +1,10 @@
 """Füllung und Rahmen einer Tabellenzelle (und eines Rahmens im Text) als Zeichenanweisungen, ohne Qt: aus den Eigenschaften des Zellformats und des Tabellenformats (Namen wie im Modell, siehe ``core/document``)
-entstehen ``("rect", Rect, Style)`` und ``("line", Point, Point, Style)``; ``ausfuehren`` gibt sie an ein ``RenderBackend``. Die Rechnung hängt nicht vom Backend ab."""
+entstehen ``("rect", Rect, Style)`` und ``("line", Point, Point, Style)``; ``ausfuehren`` gibt sie an ein ``RenderTarget``. Die Rechnung hängt nicht vom Backend ab."""
 from __future__ import annotations
 
 from lunivo_writer.core.document.values import Brush
 from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import RenderBackend, Style
+from lunivo_writer.core.rendering.backend import RenderTarget, Style
 
 RAND_KEIN, RAND_PUNKTE, RAND_STRICHE = 0, 1, 2                       # Werte von QTextFrameFormat.BorderStyle
 STANDARD_RANDSTIL = 10                                                # Qt-Standard der Tabelle (Outset): wird als durchgezogene Linie gezeichnet
@@ -58,7 +58,7 @@ def rahmen_anweisungen(rect: Rect, rahmen: dict) -> list[Anweisung]:
     return aus
 
 
-def ausfuehren(backend: RenderBackend, anweisungen: list[Anweisung]) -> None:
+def ausfuehren(backend: RenderTarget, anweisungen: list[Anweisung]) -> None:
     for a in anweisungen:
         if a[0] == "rect":
             backend.draw_rect(a[1], a[2])

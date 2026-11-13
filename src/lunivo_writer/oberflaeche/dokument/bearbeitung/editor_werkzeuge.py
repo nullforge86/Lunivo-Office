@@ -18,13 +18,15 @@ class EditorWerkzeugeMixin:
     def insert_page_break(self) -> None:
         cur = self.textCursor()
         bf = QTextBlockFormat(); bf.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore)
-        cur.insertBlock(bf)
+        self.modell_spiegel().absatzumbruch(cur, bf)
+        self.setTextCursor(cur)
 
     def insert_column_break(self) -> None:
         from lunivo_writer.editor.dokument.zusatz import B_SPALTE
         cur = self.textCursor()
         bf = QTextBlockFormat(); bf.setPageBreakPolicy(QTextFormat.PageBreak_AlwaysBefore); bf.setProperty(B_SPALTE, 1)
-        cur.insertBlock(bf)
+        self.modell_spiegel().absatzumbruch(cur, bf)
+        self.setTextCursor(cur)
 
     def insert_table(self, rows: int, cols: int, borders: bool = True, spaltenbreite: float | None = None) -> None:
         """Tabelle an der Schreibmarke; ``spaltenbreite`` (Bildpunkte): feste Spalten, sonst passt sie sich der Seitenbreite an."""
@@ -36,12 +38,7 @@ class EditorWerkzeugeMixin:
             tf.setColumnWidthConstraints([QTextLength(QTextLength.FixedLength, spaltenbreite)] * cols)
         else:
             tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
-        sp = self.modell_spiegel()
-        if sp.zu_gross():                          # sehr großes Dokument: direkt am Textdokument
-            t = self.textCursor().insertTable(rows, cols, tf)
-            self.setTextCursor(t.cellAt(0, 0).firstCursorPosition())
-            return
-        self.setTextCursor(sp.tabelle_einfuegen(self.textCursor(), rows, cols, tf))
+        self.setTextCursor(self.modell_spiegel().tabelle_einfuegen(self.textCursor(), rows, cols, tf))
 
     def insert_image(self, path: str) -> bool:
         from lunivo_writer.editor.objekte.bilddaten import bild_aus_datei
@@ -62,10 +59,8 @@ class EditorWerkzeugeMixin:
         if tipp:
             f.setToolTip(tipp)
         f.setForeground(QBrush(QColor("#0563C1"))); f.setFontUnderline(True)
-        if cur.hasSelection():
-            cur.mergeCharFormat(f)
-        else:
-            cur.insertText(text or url, f)
+        self.modell_spiegel().link_setzen(cur, text or url, f)
+        self.setTextCursor(cur)
 
 
     # ---- Suchen/Ersetzen ---------------------------------------------------------------

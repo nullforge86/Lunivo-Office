@@ -6,8 +6,7 @@ from PySide6.QtGui import QColor, QImage, QPainter, QTextCharFormat
 from lunivo_writer.adapter.qt.rendering import QtRenderBackend
 from lunivo_writer.core.document import Document
 from lunivo_writer.core.layout import umbrechen
-from lunivo_writer.core.rendering.seite import zeichne_seite, zeichne_zeilennummern
-from lunivo_writer.core.rendering.seitenschmuck import zeichne_seitenschmuck
+from lunivo_writer.core.rendering import zeichne_dokumentseite
 from lunivo_writer.dienste.textsatz import standard_engine
 
 
@@ -48,28 +47,31 @@ def seite_malen(p: QPainter, modell: Document, erg, i: int, engine, grund, darun
     from lunivo_writer.editor.seite.seiten_aufteilung_deko import frei_zeichnen
     from lunivo_writer.editor.seite.seiten_aufteilung import _start_nummer
     einr = erg.seiten[i].einrichtung
+    from lunivo_writer.adapter.qt.dokument import seite_bilder_zu_qt
+    einr = seite_bilder_zu_qt(einr) if einr is not None and any(isinstance(a.get("bild"), bytes) for a in einr.bilder) else einr
     backend = QtRenderBackend(p)
     seitenbilder = FB.objekte_der_seite(einr, None, i + 1, {}) if einr is not None else []
-    if einr is not None and hasattr(einr, "kopf_fuss"):                              # Seitenschmuck und Kopf-/Fußzeile: die Bausteine des Editors (Seitenfarbe, Rahmen, Wasserzeichen)
-        zeichne_seitenschmuck(backend, engine, einr, True, None, "hinten")
-        frei_zeichnen(p, seitenbilder, True)                                           # Kopf-/Fußbilder hinter Text und Wasserzeichen
-        _kopf_fuss(p, einr, i + 1, _start_nummer(einr), len(erg.seiten), grund, engine)
-    if darunter is not None:
-        darunter(backend)
-    zeichne_seite(backend, erg, i, engine, False, modell)
-    zeichne_zeilennummern(backend, erg, i, _fontspec_aus(grund))
-    if einr is not None and hasattr(einr, "kopf_fuss"):
-        frei_zeichnen(p, seitenbilder, False)                                          # Vordergrundbilder über Dokument und Kopf-/Fußtext
-        zeichne_seitenschmuck(backend, engine, einr, False, None, "vorn", False)
+
+    def vor_inhalt(rb, seite, index):
+        if hasattr(seite, "kopf_fuss"):
+            frei_zeichnen(p, seitenbilder, True)                                       # Kopf-/Fußbilder hinter Text und Wasserzeichen
+            _kopf_fuss(p, seite, index + 1, _start_nummer(seite), len(erg.seiten), grund, engine)
+        if darunter is not None:
+            darunter(rb)
+
+    def nach_inhalt(_rb, seite, _index):
+        if hasattr(seite, "kopf_fuss"):
+            frei_zeichnen(p, seitenbilder, False)                                      # Vordergrundbilder über Dokument und Kopf-/Fußtext
+
+    zeichne_dokumentseite(backend, modell, erg, i, engine, _fontspec_aus(grund), vor_inhalt, nach_inhalt)
 
 
-def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> list[QImage]:
-    """Alle Seiten des Modells als Bilder (``faktor`` 1.0 = 96 dpi)."""
+def seiten_bilder_modell(modell: Document, faktor: float = 1.0, engine=None, layout=None):
+    """Die Seiten des Modells einzeln als ``(Seitennummer, Bild, Seiteneinrichtung)`` liefern (``faktor`` 1.0 = 96 dpi)."""
     from lunivo_writer.kern.farben import Farbe
     engine = engine or standard_engine()
-    erg = umbrechen(modell, engine)
+    erg = layout if layout is not None else umbrechen(modell, engine)
     grund = grundschrift(modell)
-    bilder = []
     for i, s in enumerate(erg.seiten):
         einr = s.einrichtung
         w = round((einr.width_mm if einr is not None else 210.0) * 96 / 25.4 * faktor)
@@ -82,5 +84,9 @@ def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> lis
         p.scale(faktor, faktor)
         seite_malen(p, modell, erg, i, engine, grund)
         p.end()
-        bilder.append(img)
-    return bilder
+        yield i + 1, img, einr
+
+
+def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> list[QImage]:
+    """Alle Seiten des Modells als Bilder (``faktor`` 1.0 = 96 dpi)."""
+    return [bild for _nummer, bild, _einrichtung in seiten_bilder_modell(modell, faktor, engine)]

@@ -1,4 +1,4 @@
-"""Linienarten ohne Qt: einfach, gepunktet, gestrichelt, Strich-Punkt, doppelt, dreifach, Dünn-Dick-Folgen und Wellenlinien, als Zeichenanweisungen für ein ``RenderBackend``.
+"""Linienarten ohne Qt: einfach, gepunktet, gestrichelt, Strich-Punkt, doppelt, dreifach, Dünn-Dick-Folgen und Wellenlinien, als Zeichenanweisungen für ein ``RenderTarget``.
 
 ``STILE``: Schlüssel → (Name, Strichart, DOCX-Wert, Bahnen, wellig). Eine Bahn ist (Abstand von der Mitte, Dicke), beides in Linienbreiten; Mehrfachlinien sind mehrere Bahnen nebeneinander.
 Die Strichart ist ``None`` (durchgezogen), ``"dot"``, ``"dash"``, ``"dashdot"``, ``"dashdotdot"`` oder ein Muster (Strich, Lücke, …) in Linienbreiten."""
@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 
 from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import RenderBackend, Style, rgba
+from lunivo_writer.core.rendering.backend import RenderTarget, Style, rgba
 
 
 def _bauen() -> dict:
@@ -33,7 +33,7 @@ def _bauen() -> dict:
 STILE = _bauen()
 
 
-def zeichne_linie(b: RenderBackend, farbe: str, breite_pt: float, art: str, x1: float, y1: float, x2: float, y2: float, massstab: float = 1.0) -> None:
+def zeichne_linie(b: RenderTarget, farbe: str, breite_pt: float, art: str, x1: float, y1: float, x2: float, y2: float, massstab: float = 1.0) -> None:
     """Eine einzelne Linie in ihrer Art; ``massstab`` rechnet pt in Bildpunkte um (96/72 am Bildschirm, mal Zoom)."""
     _n, strich, _d, bahnen, wellig = STILE.get(art, STILE["einfach"])
     w = max(0.6, breite_pt * massstab)
@@ -57,7 +57,7 @@ def zeichne_linie(b: RenderBackend, farbe: str, breite_pt: float, art: str, x1: 
         b.draw_path(ops, stil, antialias=None)
 
 
-def zeichne_rahmen(b: RenderBackend, farbe: str, breite_pt: float, art: str, seiten: str, r: Rect, massstab: float = 1.0, innen_y=()) -> None:
+def zeichne_rahmen(b: RenderTarget, farbe: str, breite_pt: float, art: str, seiten: str, r: Rect, massstab: float = 1.0, innen_y=()) -> None:
     """Die gemeinten Seiten (``t``, ``b``, ``l``, ``r``; ``h`` = Linien zwischen Absätzen bei ``innen_y``) eines Rechtecks in der Linienart."""
     for kennz, (a, c) in (("t", ((r.x, r.y), (r.right, r.y))), ("b", ((r.x, r.bottom), (r.right, r.bottom))),
                           ("l", ((r.x, r.y), (r.x, r.bottom))), ("r", ((r.right, r.y), (r.right, r.bottom)))):
@@ -86,7 +86,7 @@ def rahmen_aus_text(text: str | None) -> tuple[str, float, str, str, tuple[float
     return t[0] or "#000000", breite, t[2] if len(t) > 2 and t[2] else "einfach", t[3] if len(t) > 3 else ALLE_SEITEN, abstand if abstand and len(abstand) == 4 else None
 
 
-def zeichne_absatzrahmen(b: RenderBackend, text: str, flaeche: Rect, innen_y=()) -> None:
+def zeichne_absatzrahmen(b: RenderTarget, text: str, flaeche: Rect, innen_y=()) -> None:
     """Der Rahmen um die Fläche zusammenhängender Absätze (``flaeche`` = ihre Zeilen auf der Seite), mit dem Abstand der Angabe zum Text."""
     angabe = rahmen_aus_text(text)
     if angabe is None:

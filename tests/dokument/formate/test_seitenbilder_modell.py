@@ -58,6 +58,56 @@ def test_docx_und_odt_rundlauf_erhaelt_kopf_fussbilder_im_modell_rendern(app, tm
         assert bildseite.pixelColor(72, 72) == QColor("red")
 
 
+def test_docx_kopfzeilenbild_mit_wrapthrough_wird_im_modell_gezeichnet(app, tmp_path):
+    from copy import deepcopy
+    from io import BytesIO
+    from docx import Document
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from PySide6.QtCore import QBuffer, QByteArray, QIODevice
+
+    logo = _bild("#3366cc", 16, 16)
+    puffer = QByteArray(); ausgabe = QBuffer(puffer); ausgabe.open(QIODevice.WriteOnly)
+    logo.save(ausgabe, "PNG"); ausgabe.close()
+    dokument = Document()
+    dokument.add_paragraph("Dokumentinhalt")
+    header = dokument.sections[0].header
+    run = header.paragraphs[0].add_run()
+    run.add_picture(BytesIO(bytes(puffer)))
+    inline = run._r.xpath("./w:drawing/wp:inline")[0]
+    anchor = OxmlElement("wp:anchor")
+    for schluessel, wert in (("distT", "0"), ("distB", "0"), ("distL", "0"), ("distR", "0"),
+                             ("simplePos", "0"), ("relativeHeight", "0"), ("behindDoc", "0"),
+                             ("locked", "0"), ("layoutInCell", "1"), ("allowOverlap", "1")):
+        anchor.set(schluessel, wert)
+    simple = OxmlElement("wp:simplePos"); simple.set("x", "0"); simple.set("y", "0")
+    position_h = OxmlElement("wp:positionH"); position_h.set("relativeFrom", "page")
+    offset_h = OxmlElement("wp:posOffset"); offset_h.text = str(20 * 9525); position_h.append(offset_h)
+    position_v = OxmlElement("wp:positionV"); position_v.set("relativeFrom", "page")
+    offset_v = OxmlElement("wp:posOffset"); offset_v.text = str(20 * 9525); position_v.append(offset_v)
+    wrap = OxmlElement("wp:wrapThrough"); wrap.set("wrapText", "bothSides")
+    anchor.append(simple); anchor.append(position_h); anchor.append(position_v)
+    for tag in ("extent", "effectExtent"):
+        el = inline.find(qn("wp:" + tag))
+        if el is not None:
+            anchor.append(deepcopy(el))
+    anchor.append(wrap)
+    for tag in ("docPr", "cNvGraphicFramePr", "graphic"):
+        el = inline.find(qn("wp:" + tag))
+        if el is None and tag == "graphic":
+            el = inline.find(qn("a:graphic"))
+        if el is not None:
+            anchor.append(deepcopy(el))
+    inline.addprevious(anchor); inline.getparent().remove(inline)
+
+    pfad = tmp_path / "kopf_wrapthrough.docx"
+    dokument.save(pfad)
+    geladen = dateien.load(str(pfad))
+    assert len(geladen.page.bilder) == 1
+    bildseite = seiten_aus_modell(document_from_qt(geladen.doc, geladen.page))[0]
+    assert bildseite.pixelColor(22, 22) == QColor("#3366cc")
+
+
 def test_normaler_pdf_export_nutzt_modellpfad_mit_seitenbild(app, tmp_path, monkeypatch):
     from pypdf import PdfReader
     import lunivo_writer.editor.seite.seiten_aufteilung as SA

@@ -89,12 +89,18 @@ def pruefe_paket(pfad: str, art: str) -> None:
             grenze = g.xml_eintrag if i.filename.lower().endswith(_XML_ENDUNGEN) else g.bild_eintrag
             if i.file_size > grenze:           # schnelle Absage nach der Angabe im Kopf; die echte Prüfung folgt unten
                 raise _zu_gross(art, f"in einem Teil („{i.filename}“) zu groß ({_mb(i.file_size)})")
-            echt = _entpacken_zaehlen(z, i, art, grenze, g.entpackt_gesamt - gesamt)
+            # ODF-Exporte enthalten im Manifest regelmäßig eine externe DTD-Referenz.
+            # Das Manifest wird nicht gelesen; alle eigentlichen Dokument-XMLs bleiben
+            # weiterhin gegen DTDs und Entitäten geschützt.
+            odt_manifest = art.upper() == "ODT" and i.filename == "META-INF/manifest.xml"
+            echt = _entpacken_zaehlen(z, i, art, grenze, g.entpackt_gesamt - gesamt,
+                                      dtd_pruefen=not odt_manifest)
             gesamt += echt
     _log.debug("%s-Paket geprüft: %d Teile, %s entpackt", art, len(infos), _mb(gesamt))
 
 
-def _entpacken_zaehlen(z: zipfile.ZipFile, info: zipfile.ZipInfo, art: str, grenze: int, rest: int) -> int:
+def _entpacken_zaehlen(z: zipfile.ZipFile, info: zipfile.ZipInfo, art: str, grenze: int, rest: int,
+                       dtd_pruefen: bool = True) -> int:
     """Entpackt einen Eintrag nur zum Zählen. Prüft Größe, Gesamtgröße, Verhältnis und (bei XML) DTD/Entitäten."""
     g = GRENZEN
     ist_xml = info.filename.lower().endswith(_XML_ENDUNGEN)
@@ -106,7 +112,7 @@ def _entpacken_zaehlen(z: zipfile.ZipFile, info: zipfile.ZipInfo, art: str, gren
                 if not stueck:
                     break
                 n += len(stueck)
-                if ist_xml and len(kopf) < g.kopf_pruefung:
+                if dtd_pruefen and ist_xml and len(kopf) < g.kopf_pruefung:
                     kopf += stueck[:g.kopf_pruefung - len(kopf)]
                     if any(v in kopf for v in _VERBOTEN):
                         raise _zu_gross(art, f"unzulässig aufgebaut („{info.filename}“ enthält eine DTD oder Entitäten)")

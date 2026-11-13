@@ -41,7 +41,7 @@ def unterstuetzt(doc) -> bool:
     return True
 
 
-KERN_RECHTECKE = os.environ.get("LUNIVO_KERN_RECHTECKE", "0") == "1"       # "1": die Absatzrechtecke kommen aus dem Kern-Umbruch statt aus dem Seitenlauf (Umstellung, siehe Doku)
+KERN_RECHTECKE = os.environ.get("LUNIVO_KERN_RECHTECKE", "1") != "0"       # Kernlayout ist der Standard; "0" bleibt für gezielte Vergleiche
 
 
 class Seitenlauf(QAbstractTextDocumentLayout):
@@ -799,6 +799,10 @@ class Seitenlauf(QAbstractTextDocumentLayout):
     def hitTest(self, punkt, genauigkeit) -> int:
         """Die Textposition am Punkt (Blattraum): die nächste Zeile, dann das Zeichen in ihr."""
         self._sicher()
+        if KERN_RECHTECKE and not self.fluss and self.endlos is None:
+            position = self._kern_treffer(punkt, genauigkeit)
+            if position is not None:
+                return position
         beste, abstand = None, float("inf")
         b = self.document().begin()
         while b.isValid():
@@ -819,6 +823,44 @@ class Seitenlauf(QAbstractTextDocumentLayout):
         b, zeile = beste
         return b.position() + zeile.xToCursor(punkt.x() - b.layout().position().x())
 
+    def _kern_treffer(self, punkt, genauigkeit) -> int | None:
+        """Qt-Punkt → Kernabsatz und Zeichenstelle; gibt ``None`` zurück, wenn der Qt-Fallback gebraucht wird."""
+        self._kern_aktualisieren()
+        bloecke = {pfad: nummer for nummer, pfad in self._kern_pfade.items()}
+        beste = None
+        abstand = float("inf")
+        for seite in self._kern.seiten:
+            if seite.index >= len(self.erg.blaetter):
+                continue
+            blatt = self.erg.blaetter[seite.index]
+            x = punkt.x() - blatt.x
+            y = punkt.y() - seite.oben
+            for platz in seite.plaetze:
+                if platz.art != "zeile" or platz.kopie:
+                    continue
+                r = platz.rect
+                dy = max(r.y - y, 0.0, y - r.bottom)
+                dx = max(r.x - x, 0.0, x - r.right)
+                abstand_zeile = (dx * dx + dy * dy) ** 0.5
+                if abstand_zeile < abstand:
+                    abstand = abstand_zeile
+                    beste = (platz, x, y)
+        if beste is None:
+            return None
+        if genauigkeit == Qt.ExactHit and abstand > 0.0:
+            return -1
+        platz, x, y = beste
+        blocknummer = bloecke.get(platz.pfad)
+        ort = self._kern.absaetze.get(platz.pfad)
+        if blocknummer is None or ort is None:
+            return None
+        zeile = ort.satz.zeilen[platz.zeile]
+        zeichen = ort.satz.treffer(x - platz.rect.x, zeile.y + 0.1)
+        block = self.document().findBlockByNumber(blocknummer)
+        if not block.isValid():
+            return None
+        return block.position() + zeichen
+
     def pageCount(self) -> int:
         self._sicher()
         if self.fluss:                                               # logische Seiten: eine je Spalte und Blatt
@@ -833,6 +875,12 @@ class Seitenlauf(QAbstractTextDocumentLayout):
 
     def frameBoundingRect(self, rahmen) -> QRectF:
         self._sicher()
+        if KERN_RECHTECKE and isinstance(rahmen, QTextFrame):
+            self._kern_aktualisieren()
+            kern_rechteck = self._kern_rahmen_rechtecke.get(rahmen.firstPosition())
+            if kern_rechteck is not None:
+                return rect_to_qt(Rect(kern_rechteck.x * self.zoom, kern_rechteck.y * self.zoom,
+                                       kern_rechteck.width * self.zoom, kern_rechteck.height * self.zoom))
         if isinstance(rahmen, QTextFrame):
             r = self.erg.tabellen.get(rahmen.firstPosition())
             if r is not None:
@@ -849,21 +897,100 @@ class Seitenlauf(QAbstractTextDocumentLayout):
 
     def _kern_rechteck(self, block) -> Rect | None:
         """Das Rechteck des ersten Zeilenstücks des Absatzes aus dem Qt-freien Seitenumbruch (``core/layout``); ``None``, wenn der Absatz dort nicht steht."""
+        self._kern_aktualisieren()
+        pfad = self._kern_pfad(block)
+        ort = self._kern.absaetze.get(pfad) if pfad is not None else None
+        if ort is None or not ort.zeilen:
+            return None
+        zeilen = [Rect(r.x, r.y + self._kern.seiten[seite].oben, r.width, r.height)
+                  for seite, _z, r in ort.zeilen]
+        links = min(r.x for r in zeilen)
+        oben = min(r.y for r in zeilen)
+        rechts = max(r.right for r in zeilen)
+        unten = max(r.bottom for r in zeilen)
+        return Rect(links * self.zoom, oben * self.zoom, (rechts - links) * self.zoom, (unten - oben) * self.zoom)
+
+    def _kern_aktualisieren(self) -> None:
+        """Das Kernlayout und alle Qt-zu-Modellpfade für den aktuellen Dokumentstand aufbauen."""
         from lunivo_writer.adapter.qt.dokument import document_from_qt
         from lunivo_writer.core.layout import umbrechen
         from lunivo_writer.dienste.textsatz import standard_engine
-        if self.__dict__.get("_kern_stand") != self.document().revision():
-            self._kern = umbrechen(document_from_qt(self.document(), self.basis), standard_engine())
-            self._kern_stand = self.document().revision()
-        ort = self._kern.absaetze.get(self._kern_pfad(block))
-        if ort is None or not ort.zeilen:
-            return None
-        seite, _z, r = ort.zeilen[0]
-        return Rect(r.x, r.y, r.width, ort.satz.hoehe)
+        revision = self.document().revision()
+        if self.__dict__.get("_kern_stand") != revision:
+            modell = document_from_qt(self.document(), self.basis)
+            self._kern = umbrechen(modell, standard_engine())
+            self._kern_pfade = self._kern_pfade_bilden(modell)
+            self._kern_rahmen_rechtecke = self._kern_rahmen_bilden()
+            self._kern_stand = revision
 
     def _kern_pfad(self, block):
-        """Der Pfad des Absatzes im Kern (Abschnitt, Absatz): wie ``core/editing.absaetze``, nur für Absätze auf der obersten Ebene."""
-        return (0, block.blockNumber())
+        """Modellpfad eines eindeutig zuordenbaren Absatzes; verschachtelte Blöcke bleiben beim Qt-Rechteck."""
+        return self.__dict__.get("_kern_pfade", {}).get(block.blockNumber())
+
+    def _kern_pfade_bilden(self, modell) -> dict[int, tuple]:
+        """Qt-Blocknummer → Modellpfad für Absätze in Dokument, Tabelle und Rahmen; Rahmenpositionen werden nebenbei erfasst."""
+        from lunivo_writer.core.document.model import Frame, Paragraph, Table
+        from lunivo_writer.editor.seite import abschnitte as AB
+
+        aus: dict[int, tuple] = {}
+        rahmen: dict[int, tuple] = {}
+
+        def container(it, bloecke, abschnitt: int, eltern: tuple, oberste: bool = False) -> int:
+            index = 0
+            while not it.atEnd():
+                block = it.currentBlock()
+                knoten = bloecke[index] if index < len(bloecke) else None
+                pfad = (abschnitt, index) if oberste else eltern + (index,)
+                if block.isValid():
+                    if isinstance(knoten, Paragraph):
+                        aus[block.blockNumber()] = pfad
+                    naechster_abschnitt = oberste and block.blockFormat().hasProperty(AB.B_ABSCHNITT)
+                    index += 1
+                    if naechster_abschnitt:
+                        abschnitt += 1
+                        while abschnitt < len(modell.sections) and not modell.sections[abschnitt].content:
+                            abschnitt += 1
+                        bloecke = modell.sections[abschnitt].content if abschnitt < len(modell.sections) else ()
+                        index = 0
+                else:
+                    qt_rahmen = it.currentFrame()
+                    if isinstance(knoten, Table) and isinstance(qt_rahmen, QTextTable):
+                        rahmen[qt_rahmen.firstPosition()] = pfad
+                        for zeile in knoten.table_rows:
+                            for zelle in zeile.cells:
+                                qt_zelle = qt_rahmen.cellAt(zelle.row, zelle.column)
+                                container(qt_zelle.begin(), zelle.content, abschnitt,
+                                          pfad + (zelle.row, zelle.column))
+                    elif isinstance(knoten, Frame) and qt_rahmen is not None:
+                        rahmen[qt_rahmen.firstPosition()] = pfad
+                        container(qt_rahmen.begin(), knoten.content, abschnitt, pfad)
+                    index += 1
+                it += 1
+            return abschnitt
+
+        container(self.document().rootFrame().begin(), modell.sections[0].content if modell.sections else (), 0, (0,), True)
+        self._kern_rahmen_pfade = rahmen
+        return aus
+
+    def _kern_rahmen_bilden(self) -> dict[int, Rect]:
+        """Tabellen- und Rahmenrechtecke nach ihrer QTextFrame-Position aus den Kern-Plätzen zusammensetzen."""
+        from lunivo_writer.core.geometry import Rect
+
+        rechtecke: dict[tuple, Rect] = {}
+        for seite in self._kern.seiten:
+            for platz in seite.plaetze:
+                if platz.kopie or platz.art not in ("zelle", "rahmen"):
+                    continue
+                pfad = platz.pfad[:-2] if platz.art == "zelle" else platz.pfad
+                alt = rechtecke.get(pfad)
+                r = Rect(platz.rect.x, platz.rect.y + seite.oben, platz.rect.width, platz.rect.height)
+                if alt is None:
+                    rechtecke[pfad] = r
+                else:
+                    links, oben = min(alt.x, r.x), min(alt.y, r.y)
+                    rechts, unten = max(alt.right, r.right), max(alt.bottom, r.bottom)
+                    rechtecke[pfad] = Rect(links, oben, rechts - links, unten - oben)
+        return {pos: rechtecke[pfad] for pos, pfad in self._kern_rahmen_pfade.items() if pfad in rechtecke}
 
     # ---- Bilder in der Zeile: Größe über den Bild-Handler, Zeichnen hier (Vektor für SVG und Metafile) -------------------------
     def drawInlineObject(self, painter, rechteck, objekt, position: int, format) -> None:

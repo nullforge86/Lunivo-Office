@@ -11,15 +11,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from lunivo_writer.core.document.model import Document, Frame, Paragraph, Section, Table, TableCell, TextRun
+from lunivo_writer.core.document.model import Document, Frame, PageLayout, Paragraph, Section, Table, TableCell, TextRun
 from lunivo_writer.core.document.values import Length
-from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.modelle.seite import mm_to_px
+from lunivo_writer.core.geometry import PX_PER_MM, Point, Rect, mm_to_px
 from lunivo_writer.core.layout import eigenschaften as E, regeln
 from lunivo_writer.core.textlayout.engine import FontSpec, TextLayoutEngine
 from lunivo_writer.core.textlayout.paragraph import OBJEKT, Absatzsatz, Objekt, absatz_setzen
 
-MM_JE_PX = 96.0 / 25.4
+MM_JE_PX = PX_PER_MM
 BLATT_ABSTAND_PX = 32.0               # grauer Zwischenraum zwischen zwei Blättern (wie der Seitenlauf, bei 100 % Zoom)
 ZELLEN_ABSTAND = 4.0                  # Standard von Qt: Abstand zwischen Zelle und Inhalt
 ZELLEN_ZWISCHENRAUM = 2.0
@@ -44,7 +43,7 @@ P_NOTE = "user:1048597"                # QTextFormat.UserProperty + 21: "f:3" (F
 @dataclass
 class AbsatzOrt:
     """Wo ein Absatz steht: je Zeile Seite, Spalte und Rechteck (Seitenkoordinaten, Bildpunkte)."""
-    pfad: tuple
+    pfad: tuple[int | str, ...]
     satz: Absatzsatz
     zeilen: list[tuple[int, int, Rect]] = field(default_factory=list)       # (Seitenindex, Zeilenindex im Satz, Rechteck der Zeile auf der Seite)
     marke: str | None = None                                                 # Aufzählungszeichen oder Nummer der Liste (nur erste Zeile): "•", "◦", "▪" oder "3."
@@ -68,7 +67,7 @@ class Platz:
 class Seite:
     index: int
     abschnitt: int
-    einrichtung: object
+    einrichtung: PageLayout | None
     plaetze: list[Platz] = field(default_factory=list)
     oben: float = 0.0                 # y der Blattoberkante im Blattraum (wie der Seitenlauf: Blätter stehen untereinander mit Abstand)
 
@@ -76,7 +75,7 @@ class Seite:
 @dataclass
 class Ergebnis:
     seiten: list[Seite] = field(default_factory=list)
-    absaetze: dict = field(default_factory=dict)                           # Pfad → AbsatzOrt
+    absaetze: dict[tuple[int | str, ...], AbsatzOrt] = field(default_factory=dict)  # Pfad → AbsatzOrt
     hinweise: list[str] = field(default_factory=list)
 
     def cursor(self, pfad: tuple, index: int) -> tuple[int, Point] | None:

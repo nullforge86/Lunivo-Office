@@ -7,7 +7,7 @@ Das Modell lässt keine Eigenschaft fallen: was ein Format trägt, steht verlust
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Union
+from typing import Protocol, Union
 
 from lunivo_writer.core.document.values import Color, LineSpacing, PropertyValue, RowHeight
 
@@ -54,7 +54,7 @@ class TextRun:
 
 @dataclass
 class Image:
-    """Ein Bild in der Zeile. ``raster_png`` ist die Rasterfassung (PNG, verlustfrei); ``original`` die Originalbytes (zum Beispiel JPEG, SVG, EMF), falls vorhanden.
+    """Ein Bild in der Zeile. ``raster_png`` enthält das decodierbare Raster oder, solange das Backend es direkt decodieren kann, die Originalbytes; ``original`` erhält die Quelle (JPEG, SVG, EMF usw.), falls vorhanden.
     ``format`` trägt die Eigenschaften des Bildes (Name, Breite, Höhe, Zeichenformat) wie ein Textstück."""
     raster_png: bytes
     format: CharacterFormat = field(default_factory=CharacterFormat)
@@ -112,6 +112,28 @@ class Frame:
 Block = Union[Paragraph, Table, Frame]
 
 
+class PageLayout(Protocol):
+    """Schreibgeschützte Seiteneinrichtung, die ein Dokumentabschnitt zum Umbruch bereitstellt.
+
+    Das Modell kennt weder Qt noch die konkrete Implementierung der Seiteneinstellungen. Die
+    vorhandenen Seiteneinstellungen erfüllen dieses Protokoll strukturell.
+    """
+
+    width_mm: float
+    height_mm: float
+    margin_top_mm: float
+    margin_bottom_mm: float
+    margin_left_mm: float
+    margin_right_mm: float
+    content_width_px: float
+    content_height_px: float
+    color: str
+    border: dict | None
+    watermark: dict | None
+
+    def spaltenraster_px(self) -> list[tuple[float, float]]: ...
+
+
 @dataclass
 class Footnote:
     """Fuß- oder Endnote: ``kind`` ist ``f`` oder ``e``; im Text steht die Marke als Eigenschaft des Textstücks."""
@@ -122,9 +144,9 @@ class Footnote:
 
 @dataclass
 class Section:
-    """Ein Abschnitt: wie er beginnt (``next_page``, ``continuous``, ``even_page``, ``odd_page``) und seine Seiteneinrichtung (``lunivo_writer.modelle.seite.PageSettings``)."""
+    """Ein Abschnitt: wie er beginnt und seine Qt-unabhängig konsumierte Seiteneinrichtung."""
     kind: str = "naechste"
-    page: object = None
+    page: PageLayout | None = None
     content: list[Block] = field(default_factory=list)
 
 

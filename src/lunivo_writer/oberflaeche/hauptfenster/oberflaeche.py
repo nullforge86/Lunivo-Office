@@ -23,9 +23,11 @@ class OberflaecheBaustein:
             sym = Symbolleisten(self.befehle)
             sym.daten = daten
             return sym
-        return RegisterBand(self.befehle, daten, lade_json(self.settings, "ui/register_plan", {}),
+        band = RegisterBand(self.befehle, daten, lade_json(self.settings, "ui/register_plan", {}),
                             lade_json(self.settings, "ui/schnellzugriff", None),
                             self.settings.get_bool("ui/band_kompakt", True))
+        band.seiteGebaut.connect(self._sync_format)
+        return band
 
 
     def oberflaeche_aendern(self, art: str, menueleiste: bool):

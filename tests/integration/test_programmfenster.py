@@ -746,6 +746,26 @@ def test_oberflaeche_wechseln_register_anpassen_symbole_tauschen(app, tmp_path):
     _schliesse(w)
 
 
+def test_band_felder_pruefen_baut_ungewaehlte_reiter_nicht(app, tmp_path):
+    w = win(tmp_path)
+    band = w.band
+    noch_offen = len(band._offen)
+    assert noch_offen > 0
+
+    assert "rand_oben" not in band.felder
+    assert band.felder.get("rand_oben") is None
+    assert len(band._offen) == noch_offen
+
+    w.new_document()
+    assert len(band._offen) == noch_offen
+
+    seitenlayout = next(i for i in range(band.reiter.count()) if band.reiter.tabText(i) == "Seitenlayout")
+    band.reiter.setCurrentIndex(seitenlayout)
+    assert "rand_oben" in band.felder
+    assert band.felder["rand_oben"].value() == w.current_tab().page.margin_top_mm
+    _schliesse(w)
+
+
 def test_symbolleisten_bauen_kein_verstecktes_register(app, tmp_path, monkeypatch):
     from lunivo_writer.oberflaeche.band.band_leiste import RegisterBand
     from lunivo_writer.oberflaeche.band.werkzeugleisten import Symbolleisten

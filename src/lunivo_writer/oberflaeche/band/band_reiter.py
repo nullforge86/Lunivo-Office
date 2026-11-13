@@ -34,6 +34,7 @@ class BandReiterBaustein:
         h.addStretch(1)
         scroll.setWidget(seite)
         self.aktualisieren(self._hat_dok)                  # Zustand (aktiv/Haken) auch für die neuen Knöpfe
+        self.seiteGebaut.emit()                            # aufrufendes Fenster gleicht neu verfügbare Felder ab
 
     def _alle_bauen(self) -> None:
         for i in list(self._offen):
