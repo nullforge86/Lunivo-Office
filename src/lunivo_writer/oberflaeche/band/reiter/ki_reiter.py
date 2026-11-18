@@ -1,0 +1,64 @@
+"""Reiter „Schreibhilfe“: Lesen, Prüfen, Beim Schreiben, Vorlesen, Sprache, Bausteine, KI und Anzeigen — jede Funktion einmal, jede mit eigenem Symbol.
+
+Die Knöpfe kommen aus ``oberflaeche/schreibhilfe_katalog.py`` (derselbe Katalog wie die Werkbank in der Seitenleiste); nur die Menüknöpfe Dokumentprüfung, Vorlesen und
+Textbausteine sowie die Seitenleiste kommen aus register.json."""
+from __future__ import annotations
+
+from lunivo_writer.oberflaeche.band.reiter.baustein import k as _k
+from lunivo_writer.oberflaeche.schreibhilfe_katalog import fuer_gruppe
+
+
+def _knoepfe(gruppe: str) -> list[dict]:
+    """Die Band-Knöpfe einer Gruppe: erst die kleinen, dann die großen."""
+    out = []
+    for f in sorted(fuer_gruppe(gruppe), key=lambda f: f.gross):
+        if f.tun == "lesemodus":                      # steht im Reiter Ansicht (Dokumentansichten); hier keine Doppelung
+            continue
+        kw = {"klappe": f.klappe} if f.klappe else {}
+        if f.art == "schalter":
+            kw["haken"] = True
+        out.append(_k(f.symbol, f.name.removesuffix(" …"), f.tun or None, f.gross, text=not f.gross, **kw))
+    return out
+
+
+def _ki_knoepfe() -> list[dict]:
+    """KI: die vier Textbefehle (entwerfen, umformulieren, zusammenfassen, Text in Bild) stehen in einem Menü „Text mit KI“; Chat und Aktionen
+    bleiben groß, die Einstellungen sind ein kleiner Knopf."""
+    alle = _knoepfe("KI")
+    menue = [e for e in alle if not e.get("gross") and e.get("tun")]
+    rest = [e for e in alle if e not in menue]
+    kopf = {"symbol": "ki", "name": "Text mit KI", "gross": True, "menue": [{"name": e["name"], "tun": e["tun"]} for e in menue]}
+    rest = [dict(e, gross=False, text=False) if e["name"] == "KI-Einstellungen" else e for e in rest]
+    return ([kopf] if menue else []) + rest
+
+
+def _pruefen_menue(e: dict) -> dict:
+    """Das eine Prüfmenü: wann geprüft wird (F7), gründlich, mit KI (F8), Hilfen."""
+    e = {k: v for k, v in e.items() if k != "klappe"}
+    e["menue"] = [
+        {"name": "Prüfen", "tun": "w.pruefen"}, {"name": "Gründlich prüfen", "tun": "gruendlichPruefen"},
+        {"name": "KI-Korrektur", "tun": "kiKorrektur"}, {"name": "Verbesserungsvorschläge", "tun": "kiVorschlaege"}, {"trenner": True},
+        {"name": "Barrierefreiheit prüfen", "tun": "barrierefrei"}, {"name": "Welche Hilfe wann", "tun": "welcheHilfe"}]
+    return e
+
+
+def bauen(register: dict) -> dict:
+    sh = dict(next(t for t in register["register"] if t["name"] == "Schreibhilfe"))
+    reg = {k["name"]: dict(k) for g in sh["gruppen"] for k in g["knoepfe"]}
+    pfeile = {g["name"]: g.get("pfeil") for g in sh["gruppen"]}
+
+    def gruppe(name: str, knoepfe: list, **kw) -> dict:
+        g = {"name": name, "knoepfe": knoepfe}
+        g.update({k: v for k, v in kw.items() if v})
+        return g
+    sh["gruppen"] = [
+        gruppe("Lesen", _knoepfe("Lesen"), pfeil=pfeile.get("Lesen")),
+        gruppe("Prüfen", [_pruefen_menue(reg["Dokumentprüfung"])]),
+        gruppe("Beim Schreiben", _knoepfe("Beim Schreiben")),
+        gruppe("Vorlesen", [reg["Vorlesen"]]),
+        gruppe("Sprache", _knoepfe("Sprache"), pfeil="w.kiSprache"),
+        gruppe("Bausteine", [reg["Textbausteine"]]),
+        gruppe("KI", _ki_knoepfe()),
+        gruppe("Anzeigen", [reg["Seitenleiste Schreibhilfe"]]),
+    ]
+    return sh
