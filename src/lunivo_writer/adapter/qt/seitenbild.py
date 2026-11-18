@@ -1,0 +1,92 @@
+"""Seiten aus dem Dokumentenmodell als Bild: Modell → Qt-freier Seitenumbruch → Rendering-Backend (Qt) — ohne ``QTextDocument`` dazwischen."""
+from __future__ import annotations
+
+from PySide6.QtGui import QColor, QImage, QPainter, QTextCharFormat
+
+from lunivo_writer.adapter.qt.rendering import QtRenderBackend
+from lunivo_writer.core.document import Document
+from lunivo_writer.core.layout import umbrechen
+from lunivo_writer.core.rendering import zeichne_dokumentseite
+from lunivo_writer.dienste.textsatz import standard_engine
+
+
+def _kopf_fuss(p: QPainter, einr, n: int, nr_offset: int, total: int, grund, engine) -> None:
+    """Kopf- und Fußzeile: Qt-frei über ``core.rendering.kopffuss``; Zeilen mit Texteffekten zeichnet der Editor."""
+    from lunivo_writer.adapter.qt.textlayout import _fontspec_aus
+    from lunivo_writer.core.geometry import Rect
+    from lunivo_writer.core.rendering.kopffuss import zeichne_zeile
+    from lunivo_writer.editor.seite import seitenzahl as SZ
+    from lunivo_writer.editor.seite.seiten_aufteilung import KOPF_HOEHE_MM, _kopf_fuss_zeichnen
+    from lunivo_writer.modelle.seite import mm_to_px
+    angezeigt = n + nr_offset
+    kopf, fuss = einr.kopf_fuss(n, angezeigt)
+    backend = QtRenderBackend(p)
+    spec = _fontspec_aus(grund)
+    ml, cw, ph = mm_to_px(einr.margin_left_mm), einr.content_width_px, mm_to_px(einr.height_mm)
+    for hf, y in ((kopf, mm_to_px(einr.kopf_abstand_mm)), (fuss, ph - mm_to_px(einr.fuss_abstand_mm))):
+        ok = zeichne_zeile(backend, engine, hf, Rect(ml, y, cw, mm_to_px(KOPF_HOEHE_MM)), lambda t: SZ.text(t, angezeigt, total, einr, ""),
+                           SZ.ausrichtung(hf.align, angezeigt), spec)
+        if not ok:                                                                  # Texteffekte: der Editor zeichnet beide Zeilen
+            _kopf_fuss_zeichnen(p, einr, n, nr_offset, total, None, grund, "")
+            return
+
+
+def grundschrift(modell: Document):
+    """Die Grundschrift des Modells als ``QFont`` (für Kopf-/Fußzeile und Zeilennummern)."""
+    from lunivo_writer.adapter.qt.dokument import _setzen
+    cf = QTextCharFormat()
+    _setzen(cf, modell.default_format.properties)
+    return cf.font()
+
+
+def seite_malen(p: QPainter, modell: Document, erg, i: int, engine, grund, darunter=None) -> None:
+    """Seite ``i`` des gesetzten Modells auf den Painter (Ursprung = obere linke Blattecke, 96 dpi): Seitenschmuck, Kopf-/Fußzeile, Inhalt, Zeilennummern.
+    ``darunter(backend)`` zeichnet zwischen Seitenschmuck und Text (zum Beispiel die Auswahl)."""
+    from lunivo_writer.adapter.qt.textlayout import _fontspec_aus
+    from lunivo_writer.editor.objekte import freie_bilder as FB
+    from lunivo_writer.editor.seite.seiten_aufteilung_deko import frei_zeichnen
+    from lunivo_writer.editor.seite.seiten_aufteilung import _start_nummer
+    einr = erg.seiten[i].einrichtung
+    from lunivo_writer.adapter.qt.dokument import seite_bilder_zu_qt
+    einr = seite_bilder_zu_qt(einr) if einr is not None and any(isinstance(a.get("bild"), bytes) for a in einr.bilder) else einr
+    backend = QtRenderBackend(p)
+    seitenbilder = FB.objekte_der_seite(einr, None, i + 1, {}) if einr is not None else []
+
+    def vor_inhalt(rb, seite, index):
+        if hasattr(seite, "kopf_fuss"):
+            frei_zeichnen(p, seitenbilder, True)                                       # Kopf-/Fußbilder hinter Text und Wasserzeichen
+            _kopf_fuss(p, seite, index + 1, _start_nummer(seite), len(erg.seiten), grund, engine)
+        if darunter is not None:
+            darunter(rb)
+
+    def nach_inhalt(_rb, seite, _index):
+        if hasattr(seite, "kopf_fuss"):
+            frei_zeichnen(p, seitenbilder, False)                                      # Vordergrundbilder über Dokument und Kopf-/Fußtext
+
+    zeichne_dokumentseite(backend, modell, erg, i, engine, _fontspec_aus(grund), vor_inhalt, nach_inhalt)
+
+
+def seiten_bilder_modell(modell: Document, faktor: float = 1.0, engine=None, layout=None):
+    """Die Seiten des Modells einzeln als ``(Seitennummer, Bild, Seiteneinrichtung)`` liefern (``faktor`` 1.0 = 96 dpi)."""
+    from lunivo_writer.kern.farben import Farbe
+    engine = engine or standard_engine()
+    erg = layout if layout is not None else umbrechen(modell, engine)
+    grund = grundschrift(modell)
+    for i, s in enumerate(erg.seiten):
+        einr = s.einrichtung
+        w = round((einr.width_mm if einr is not None else 210.0) * 96 / 25.4 * faktor)
+        h = round((einr.height_mm if einr is not None else 297.0) * 96 / 25.4 * faktor)
+        img = QImage(w, h, QImage.Format_RGB32)
+        img.fill(QColor(Farbe.PAPIER))
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.TextAntialiasing)
+        p.scale(faktor, faktor)
+        seite_malen(p, modell, erg, i, engine, grund)
+        p.end()
+        yield i + 1, img, einr
+
+
+def seiten_aus_modell(modell: Document, faktor: float = 1.0, engine=None) -> list[QImage]:
+    """Alle Seiten des Modells als Bilder (``faktor`` 1.0 = 96 dpi)."""
+    return [bild for _nummer, bild, _einrichtung in seiten_bilder_modell(modell, faktor, engine)]

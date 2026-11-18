@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Lunivo Compatibility Tester
+Comment=Dateiformat-Kompatibilität von Lunivo Office prüfen
+Exec=/home/kaysiebke/Videos/Lunivo-Office-aufgeraeumt/Lunivo-Office-aufgeraeumt/.venv/bin/python -m kompatibilitaetspruefer
+Path=/home/kaysiebke/Videos/Lunivo-Office-aufgeraeumt/Lunivo-Office-aufgeraeumt/werkzeuge
+Icon=/home/kaysiebke/Videos/Lunivo-Office-aufgeraeumt/Lunivo-Office-aufgeraeumt/ressourcen/symbole/varianten/Abstrakt/icon-128.png
+Terminal=false
+Categories=Development;Office;

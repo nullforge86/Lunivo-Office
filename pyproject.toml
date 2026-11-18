@@ -8,11 +8,11 @@ version = "0.1.0"
 description = "Lunivo Writer — native Textverarbeitung für Linux (Python 3, PySide6/Qt Widgets)"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["PySide6-Essentials>=6.6,<7", "PySide6-Addons>=6.6,<7", "PySide6-Pdf>=6.6", "python-docx>=1.1", "msoffcrypto-tool>=5", "pyphen>=0.14", "pypdf>=4"]
+dependencies = ["PySide6-Essentials>=6.6,<7", "PySide6-Addons>=6.6,<7", "PySide6-Pdf>=6.6", "python-docx>=1.1", "msoffcrypto-tool>=5", "pyphen>=0.14", "pypdf>=4", "uharfbuzz>=0.40", "freetype-py>=2.4"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.5"]
-# Lokale Offline-Übersetzung (Argos). Optional: Lunivo startet auch ohne. Zieht torch nach — für die .deb als CPU-Version, siehe werkzeug/deb-bauen.sh.
+# Lokale Offline-Übersetzung (Argos). Optional: Lunivo startet auch ohne. Zieht torch nach — für die .deb als CPU-Version, siehe werkzeuge/erstellung/deb-bauen.sh.
 offline = ["argostranslate>=1.9"]
 
 [project.scripts]
@@ -22,7 +22,7 @@ lunivo-writer = "lunivo_writer.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-lunivo_writer = ["resources/*", "resources/daten/*"]
+lunivo_writer = ["ressourcen/*", "ressourcen/daten/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

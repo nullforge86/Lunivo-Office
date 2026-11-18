@@ -10,10 +10,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         import PySide6.QtWidgets  # noqa: F401
     except ImportError:
-        print("PySide6 fehlt. Installieren mit:  ./starten-qt.sh   (legt eine eigene Umgebung an)\n"
+        print("PySide6 fehlt. Installieren mit:  ./skripte/starten-qt.sh   (legt eine eigene Umgebung an)\n"
               "oder:  pip install -r requirements.txt", file=sys.stderr)
         return 2
-    from lunivo_writer.core.application import LunivoApplication
+    from lunivo_writer.kern.anwendung import LunivoApplication
     return LunivoApplication(argv).start()
 
 

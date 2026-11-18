@@ -6,3 +6,5 @@ python-docx>=1.1
 msoffcrypto-tool>=5
 pyphen>=0.14
 pypdf>=4
+uharfbuzz>=0.40
+freetype-py>=2.4
