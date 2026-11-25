@@ -1,33 +1,20 @@
-"""Flache Reiterleiste nach der Vorlage: Beschriftung in Großbuchstaben, kein Kasten, Linie unter dem aktiven Reiter.
-
-Zwei Arten (eine Aufgabe: das Zeichnen der Leiste):
-- ``HAUPT``: Hauptreiter (zum Beispiel „DIAGRAMM OPTIONEN | TEXTOPTIONEN“). Der aktive Reiter ist fett, die Linie darunter hat die Textfarbe.
-- ``UNTER``: Unterreiter mit Symbol OBEN und Beschriftung DARUNTER. Der aktive Reiter ist blau (Hervorhebungsfarbe) mit blauer Linie.
-
-Trägt ein Hauptreiter einen Knopf (``setTabButton``, z. B. ``TeilMenueKnopf``), zeichnet die Leiste den Pfeil „▾“ selbst direkt hinter dem Text; ein Klick auf den
-Pfeil löst den Knopf aus (der Knopf selbst bleibt unsichtbar und liefert nur das Popup).
-
-Passen die Hauptreiter nicht nebeneinander (Beschriftungen gemessen), ersetzt EIN Dropdown (``DropdownTaste`` + ``MenueListe``, zeigt den aktuellen Reiter, Haken in der
-Liste) die Leiste; die Wahl geht über ``setCurrentIndex``/``currentChanged`` wie ein Klick. Die ``UeberlaufLeiste`` (Band, Dokumente) behält „•••“: sie hat eine andere Aufgabe.
-
-Die Beschriftung bricht bei Platzmangel um und wird nie mit „…“ gekürzt; passt ein Wort nicht, wird die Schrift etwas kleiner.
-``flach_machen(reiter, art)`` setzt die Leiste in ein vorhandenes ``QTabWidget`` (die Seiten, Symbole und Namen bleiben; die Basis ``AngepassteReiter`` bleibt unverändert).
-"""
 from __future__ import annotations
-
-from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
-
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPolygonF
-from PySide6.QtWidgets import QTabBar, QTabWidget, QToolButton
-
+from PySide6.QtWidgets import QTabBar, QTabWidget
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownTaste
-from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_UNTER_REITER, BREITE_KNOPF_KLEIN, DROPDOWN_HOEHE, HOEHE_BANDREITER_KNOPF, REITER_DROPDOWN_RAND
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_UNTER_REITER, DROPDOWN_HOEHE, REITER_DROPDOWN_RAND
+
 
 HAUPT, UNTER = "haupt", "unter"
+
+
 _RAND = 6                      # Abstand der Beschriftung zum Rand des Reiters
+
+
 _SYMBOL = 18
-_MEHR = BREITE_KNOPF_KLEIN     # Breite des Knopfes „•••“ (Überlaufmenü der ``UeberlaufLeiste``)
+
+
 _PFEIL = 18                    # Platz für den Teil-Pfeil „▾“ hinter dem Text des Hauptreiters (mit ``TeilMenueKnopf`` als Reiterknopf)
 
 
@@ -39,29 +26,6 @@ def _mische(a: QColor, b: QColor, anteil: float) -> QColor:
     """Farbe a zum Anteil (0…1) mit b gemischt."""
     return QColor(round(a.red() + (b.red() - a.red()) * anteil), round(a.green() + (b.green() - a.green()) * anteil),
                   round(a.blue() + (b.blue() - a.blue()) * anteil))
-
-
-MEHR_TEXT = "•••"                 # Beschriftung des Überlaufknopfs aller Reiterleisten (an einer Stelle)
-MEHR_TIPP = "Weitere Reiter"      # Tooltip und Name des Überlaufknopfs
-
-
-class ReiterUeberlauf:
-    """Basis der Reiterleisten mit Knopf „•••“ (Band, Dokumente, Register: ``UeberlaufLeiste``) und Menü der Reiter, die nicht mehr in die Leiste passen.
-    Reihenfolge: ``class X(ReiterUeberlauf, QTabBar)``. Die Leiste liefert ``_versteckte()`` (Indizes der ausgelagerten Reiter) und setzt den Knopf selbst.
-    Die flachen Leisten der Fenster nutzen stattdessen ``ReiterDropdown``."""
-
-    def _mehr_einrichten(self) -> None:
-        self._mehr = werkzeugknopf("standard", flach=False, eltern=self)
-        self._mehr.setText(MEHR_TEXT); self._mehr.setAutoRaise(True); self._mehr.setCursor(Qt.PointingHandCursor)
-        self._mehr.setToolTip(MEHR_TIPP); self._mehr.setAccessibleName(MEHR_TIPP)
-        self._mehr.clicked.connect(self._mehr_menue); self._mehr.hide()
-
-    def _mehr_menue(self) -> None:
-        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
-        m = MenueListe(self)
-        for i in self._versteckte():
-            m.eintrag(self.tabText(i), lambda i=i: self.setCurrentIndex(i), aktiv=self.isTabEnabled(i))
-        m.exec(self.mapToGlobal(QPoint(max(0, self._mehr.x() + self._mehr.width() - m.sizeHint().width()), self.height())))
 
 
 class ReiterDropdown:
@@ -279,120 +243,6 @@ class FlacheReiterLeiste(ReiterDropdown, QTabBar):
             if aktiv:
                 p.fillRect(QRect(r.left() + 2, r.bottom() - 1, r.width() - 4, 2), farbe)
         p.end()
-
-
-class UeberlaufLeiste(ReiterUeberlauf, QTabBar):
-    """Gewöhnliche Reiterleiste (Band, Dokumente, Register) nach derselben Regel wie ``FlacheReiterLeiste``: keine Rollpfeile, kein angeschnittener Reiter.
-
-    Zu wenig Platz: so viele Reiter wie ganz passen (der aktive immer), der Rest steht hinter dem Knopf „•••“. ``setTabVisible``/``isTabVisible`` behalten ihren Sinn
-    (gewollte Sichtbarkeit, z. B. Kontext-Reiter); ``gezeigt(i)`` sagt, ob der Reiter wirklich in der Leiste steht. ``platz`` (optional) liefert die verfügbare Breite,
-    wenn die Leiste nicht den ganzen Platz bekommt (Standard: ihre eigene Breite).
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._will: list[bool] = []
-        self._im_verteilen = False
-        self.platz = None
-        self.setUsesScrollButtons(False); self.setElideMode(Qt.ElideNone); self.setExpanding(False)       # Reiter in natürlicher Breite: die Summe stimmt mit der Rechnung überein
-        self._mehr_einrichten()
-        self.currentChanged.connect(lambda _i: self.neu_verteilen())
-        self.tabMoved.connect(self._verschoben)
-
-    # ---- gewollte Sichtbarkeit -------------------------------------------------------------------------------------------------
-    def setTabVisible(self, index: int, sichtbar: bool) -> None:
-        if 0 <= index < len(self._will):
-            self._will[index] = sichtbar
-        self.neu_verteilen()
-
-    def isTabVisible(self, index: int) -> bool:
-        return self._will[index] if 0 <= index < len(self._will) else QTabBar.isTabVisible(self, index)
-
-    def gezeigt(self, index: int) -> bool:
-        return QTabBar.isTabVisible(self, index)
-
-    def tabInserted(self, index: int) -> None:
-        self._will.insert(index, True)
-        super().tabInserted(index)
-
-    def tabRemoved(self, index: int) -> None:
-        if 0 <= index < len(self._will):
-            self._will.pop(index)
-        super().tabRemoved(index)
-        self.neu_verteilen()
-
-    def _verschoben(self, von: int, nach: int) -> None:
-        if 0 <= von < len(self._will) and 0 <= nach < len(self._will):
-            self._will.insert(nach, self._will.pop(von))
-
-    # ---- Überlauf --------------------------------------------------------------------------------------------------------------
-    def _verfuegbar(self) -> int:
-        return int(self.platz()) if self.platz else self.width()
-
-    def _versteckte(self) -> list[int]:
-        return [i for i in range(min(self.count(), len(self._will))) if self._will[i] and not QTabBar.isTabVisible(self, i)]      # Qt fragt die Größe, bevor ``tabInserted`` den Reiter eingetragen hat
-
-    def _sichtbare_waehlen(self, wollen: list[int], gesamt: int) -> set[int]:
-        """Welche Reiter bei der verfügbaren Breite sichtbar bleiben (der aktive immer)."""
-        breite = {i: self.tabSizeHint(i).width() for i in wollen}
-        if sum(breite.values()) <= gesamt:
-            return set(wollen)
-        frei, summe, zeige_l = gesamt - _MEHR, 0, []
-        for i in wollen:
-            if summe + breite[i] > frei:
-                break
-            zeige_l.append(i); summe += breite[i]
-        aktiv = self.currentIndex()
-        if aktiv in breite and aktiv not in zeige_l:
-            while zeige_l and summe + breite[aktiv] > frei:
-                summe -= breite[zeige_l.pop()]
-            zeige_l.append(aktiv)
-        return set(zeige_l)
-
-    def _sichtbarkeit_setzen(self, zeige: set[int]) -> None:
-        if any(QTabBar.isTabVisible(self, i) != (i in zeige) for i in range(self.count())):
-            for i in range(self.count()):
-                QTabBar.setTabVisible(self, i, i in zeige)
-            self.setUsesScrollButtons(True); self.setUsesScrollButtons(False)       # setzt den alten Rollversatz von Qt zurück (sonst steht der erste Reiter angeschnitten)
-
-    def _mehr_knopf_setzen(self) -> None:
-        mehr = bool(self._versteckte())
-        self._mehr.setVisible(mehr)
-        if mehr:
-            letzte = max((self.tabRect(i).right() for i in range(self.count()) if QTabBar.isTabVisible(self, i)), default=0)
-            self._mehr.setGeometry(min(letzte + 1, max(0, self.width() - _MEHR)), 0, _MEHR, max(HOEHE_BANDREITER_KNOPF, self.height()))
-            self._mehr.raise_()
-
-    def neu_verteilen(self) -> None:
-        if self._im_verteilen or len(self._will) != self.count():
-            return
-        gesamt = self._verfuegbar()
-        wollen = [i for i in range(self.count()) if self._will[i]]
-        if gesamt < 2 * _MEHR or not wollen:
-            return
-        self._im_verteilen = True
-        try:
-            self._sichtbarkeit_setzen(self._sichtbare_waehlen(wollen, gesamt))
-            self._mehr_knopf_setzen()
-        finally:
-            self._im_verteilen = False
-        self.updateGeometry()
-
-    def sizeHint(self) -> QSize:
-        sh = super().sizeHint()
-        return QSize(sh.width() + (_MEHR if self._versteckte() else 0), sh.height())
-
-    def minimumSizeHint(self) -> QSize:
-        return QSize(2 * _MEHR, super().sizeHint().height())
-
-    def resizeEvent(self, e) -> None:
-        super().resizeEvent(e)
-        self.neu_verteilen()
-
-    def tabLayoutChange(self) -> None:
-        super().tabLayoutChange()
-        if not self._im_verteilen:
-            self.neu_verteilen()
 
 
 def abstand_unter_reiter(lay, leiste) -> None:

@@ -5,7 +5,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject
 
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 
 
 class LiveVorschau:

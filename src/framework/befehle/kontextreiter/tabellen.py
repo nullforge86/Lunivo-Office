@@ -85,7 +85,7 @@ class TabellenBefehle:
         if not t:
             return
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
-        from vcl.qt.widgets.dialoge.dokument_dialoge import TabellenEigenschaftenDialog
+        from vcl.qt.widgets.dialoge.tabellen_eigenschaften_dialog import TabellenEigenschaftenDialog
         d = TabellenEigenschaftenDialog(self.w, werte={"kopf": bool(t.tabelle.format.get("kopfzeilen"))})
         if ausfuehren(d):
             e.tabellenformat({"kopfzeilen": 1 if d.kopf.isChecked() else None})

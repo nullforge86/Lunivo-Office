@@ -12,7 +12,8 @@ from PySide6.QtWidgets import QCheckBox, QDialog, QLabel, QPushButton, QSpinBox,
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter, FormularGitter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from core.formatierung.schrift import silbenfarben as S
 from PySide6.QtGui import QBrush, QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 from vcl.qt.widgets.bausteine import weitere_farben

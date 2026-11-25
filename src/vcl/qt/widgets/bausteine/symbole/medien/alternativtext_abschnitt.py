@@ -12,7 +12,7 @@ from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QCheckBox, QLineEdit, QPlainTextEdit
 
-from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_BEREICH_MITTEL
 
 

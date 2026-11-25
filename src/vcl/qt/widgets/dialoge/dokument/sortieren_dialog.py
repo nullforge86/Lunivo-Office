@@ -22,7 +22,8 @@ from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QFrame, QLabel, 
 from core.formatierung.schrift.schreibweise import SPRACHEN, feldzahl
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_SCHIENE, HOEHE_KNOPF, RAND_BOX_KOMPAKT
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

@@ -12,7 +12,10 @@ from vcl.qt.widgets.bausteine.symbole.medien.datei_symbole import datei_symbol
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import DialogRahmen, VorschauFlaeche
 from vcl.qt.widgets.menues.dropdown.galerie_auswahl import GalerieAuswahl
 from vcl.qt.widgets.dialoge.formatierung.text_format import TextFormatLeiste, groesse_feld, schrift_feld
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld, FarbKnopf, FarbPalette, farb_symbol, weitere_farben
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_knopf import FarbKnopf
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
+from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import farb_symbol, weitere_farben
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie, LinienWahl, RahmenSeiten
 from vcl.qt.widgets.menues.dropdown.auswahl.rahmen_menue import RahmenMenue
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import MassSpin, einheit, set_einheit, spin

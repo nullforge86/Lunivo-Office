@@ -88,7 +88,7 @@ class SeitenRenderer:
     def _seitenbilder(b: RenderTarget, dok: Dokument, erg: Ergebnis, seite, hinten: bool) -> None:
         """Bilder der Kopf- und Fußzeilen (``PageSettings.bilder``): Angaben mit ``ort`` kopf/fuss (kopf1/fuss1 auf dem ersten Blatt bei „Erste Seite anders“) und
         ``ressource`` (Schlüssel der Bilddaten im Dokument); Lage und Größe in Bildpunkten wie bei frei positionierten Bildern."""
-        from core.objekte.anordnung.objekte import ImageObject
+        from core.objekte.anordnung.image_object import ImageObject
         from core.geometrie import mm_to_px
         from core.layout.drucklayout.objekte import objekt_rechteck
         from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild

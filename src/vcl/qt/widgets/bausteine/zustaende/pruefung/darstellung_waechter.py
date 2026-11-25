@@ -39,22 +39,22 @@ AUSGENOMMEN = tuple(os.path.join(BAUKASTEN, n) + os.sep for n in (
 
 # Datei (Pfad ab ``src/``, mit ``/``) → Anzahl der Stellen. Zu Beginn mit dem Ist-Stand gefüllt; darf nur kleiner werden.
 DARSTELLUNG_NOCH_NICHT_UMGESTELLT: dict[str, int] = {
-    "vcl/qt/widgets/ribbon/band_stile.py": 1,
-    "vcl/qt/widgets/dialoge/dokument/aenderungs_vorschau.py": 1, "vcl/qt/widgets/dialoge/dokument/eingabe_fenster.py": 1,
-    "vcl/qt/widgets/dialoge/dokument/liste_dialog.py": 2,
-    "vcl/qt/widgets/menues/dropdown/auswahl/farbpalette.py": 3, "vcl/qt/widgets/menues/dropdown/auswahl/raster_auswahl.py": 2,
-    "vcl/qt/widgets/menues/dropdown/galerie_auswahl.py": 1,
-    "vcl/qt/widgets/menues/dropdown/objektmenues/diagramm_popups.py": 4, "vcl/qt/widgets/menues/dropdown/objektmenues/objekt_menues.py": 1,
-    "vcl/qt/widgets/bausteine/interaktion/felder/farbwaehler.py": 2,
-    "vcl/qt/widgets/dialoge/formatierung/rahmen_schattierung.py": 2, "vcl/qt/widgets/dialoge/formatierung/ruby_dialog.py": 1,
-    "vcl/qt/widgets/dialoge/formatierung/texteffekt_dialog.py": 1, "vcl/qt/widgets/dialoge/formatierung/umschlossen_dialog.py": 1,
+    "vcl/qt/fenster/fenster/bearbeiten.py": 1, "vcl/qt/fenster/fenster/programmfenster.py": 1,
+    "vcl/qt/widgets/bausteine/interaktion/felder/kacheln.py": 1, "vcl/qt/widgets/bausteine/interaktion/felder/ring.py": 1,
     "vcl/qt/widgets/bausteine/symbole/medien/listen_symbole.py": 1, "vcl/qt/widgets/bausteine/symbole/medien/seiten_bildchen.py": 6,
     "vcl/qt/widgets/bausteine/symbole/medien/umbruch_symbole.py": 1,
-    "vcl/qt/widgets/seitenleisten/vorlagen/formatvorlagen_bereich.py": 1,
+    "vcl/qt/widgets/dialoge/dokument/aenderungs_vorschau.py": 1, "vcl/qt/widgets/dialoge/dokument/eingabe_fenster.py": 1,
+    "vcl/qt/widgets/dialoge/dokument/gliederung_anpassen_dialog.py": 2,
+    "vcl/qt/widgets/dialoge/formatierung/rahmen_seite.py": 2, "vcl/qt/widgets/dialoge/formatierung/ruby_dialog.py": 1,
+    "vcl/qt/widgets/dialoge/formatierung/texteffekt_dialog.py": 1, "vcl/qt/widgets/dialoge/formatierung/umschlossen_dialog.py": 1,
     "vcl/qt/widgets/dialoge/lesen_hilfe/hilfe_dialoge.py": 1,
     "vcl/qt/widgets/dokumentansicht/bearbeitung/freie_bilder_knoten.py": 1, "vcl/qt/widgets/dokumentansicht/bearbeitung/objekt_texteingabe.py": 1,
-    "vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation.py": 1,
-    "vcl/qt/widgets/menues/backstage/backstage_seitenleisten.py": 1, "vcl/qt/fenster/fenster/bearbeiten.py": 1, "vcl/qt/fenster/fenster/programmfenster.py": 1,
+    "vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_hilfen.py": 1,
+    "vcl/qt/widgets/menues/backstage/backstage_seitenleisten.py": 1,
+    "vcl/qt/widgets/menues/dropdown/auswahl/farbpalette_hilfen.py": 3, "vcl/qt/widgets/menues/dropdown/auswahl/raster_auswahl.py": 2,
+    "vcl/qt/widgets/menues/dropdown/galerie_auswahl.py": 1,
+    "vcl/qt/widgets/menues/dropdown/objektmenues/diagramm_popups.py": 4, "vcl/qt/widgets/menues/dropdown/objektmenues/objekt_menues.py": 1,
+    "vcl/qt/widgets/ribbon/band_stile.py": 1, "vcl/qt/widgets/seitenleisten/vorlagen/formatvorlagen_bereich.py": 1,
 }
 
 

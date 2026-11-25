@@ -24,7 +24,7 @@ class TabellenFormatBefehle:
         e, c, t = self._tab()
         if not t:
             return
-        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung import RahmenSchattierungDialog
+        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog import RahmenSchattierungDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         d = RahmenSchattierungDialog(self.w, rahmen=e.tabelle_rahmen_lesen(), fuell=e.zell_fuellung(), mit_seitenrand=False, innen_h=False, fuer=["Tabelle"])
         if ausfuehren(d):

@@ -16,7 +16,8 @@ from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.dialoge.verweise.dialog_hilfen import titel as _titel

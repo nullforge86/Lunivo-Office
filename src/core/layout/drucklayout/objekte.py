@@ -1,7 +1,7 @@
 """Lage von Bildern und Formen auf dem Blatt, ohne Qt: aus Verankerung und Größe das Rechteck in Blattkoordinaten (Ursprung links oben, Bildpunkte)."""
 from __future__ import annotations
 
-from core.objekte.anordnung.objekte import Anchor
+from core.objekte.anordnung.objekte_hilfen import Anchor
 from core.geometrie import Rect
 
 

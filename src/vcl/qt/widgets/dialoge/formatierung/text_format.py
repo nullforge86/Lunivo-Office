@@ -14,7 +14,8 @@ from PySide6.QtWidgets import QButtonGroup, QComboBox, QFontComboBox, QFrame, QT
 from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, BREITE_KNOPF_KLEIN, ICON_GROSS, ICON_TEXTFORMATLEISTE, RAND_KEIN
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 
 GROESSEN = (8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72)
 AUSRICHTUNG = (("links", "Linksbündig"), ("mitte", "Zentriert"), ("rechts", "Rechtsbündig"), ("block", "Blocksatz"))
@@ -82,7 +83,7 @@ class TextFormatLeiste(QWidget):
         self.vor = self.nach = self.einzug = 0.0
         self.zeilen = 0.0
         v = spalte("eng", self)
-        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout
+        from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
         z1 = FlussLayout(4); v.addLayout(z1)
         self.schrift = schrift_feld(); self.groesse = groesse_feld()
         self.groesse.setCurrentIndex(-1)

@@ -17,13 +17,15 @@ from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboB
 
 from core.formatierung.schrift.zeichenzusatz import AUSRICHTUNGEN
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_RUBY_VORSCHAU_PX
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 
 STANDARD = {"ausrichtung": "zentriert", "abstand": 0.0, "groesse": 7.0}
 

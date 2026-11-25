@@ -17,7 +17,7 @@ from core.formatierung.fuellung import muster as M
 from vcl.qt.widgets.bausteine.farben import farben
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import keine_symbol
 from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import TEXTUREN, _textur, graduell_pixmap
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbPalette
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FUELLVORGABE_KACHEL, GROESSE_MUSTER_KACHEL
 
 KACHEL = QSize(*GROESSE_FUELLVORGABE_KACHEL)

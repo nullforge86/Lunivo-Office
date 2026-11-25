@@ -210,7 +210,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         """Format ▸ Rahmen …: das Fenster „Rahmen und Schattierung“ ohne den Reiter Seitenrand (der gehört nicht zu einer Vorlage)."""
         from core.objekte.formen.linie import Linie
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
-        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung import RahmenSchattierungDialog
+        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog import RahmenSchattierungDialog
         r = self._rs
         d = RahmenSchattierungDialog(self, rahmen=Linie.aus_text(r["rahmen"]) if r["rahmen"] else None, fuell=r["fuell"] or None,
                                      muster=(r["muster"], r["musterfarbe"] or Farbe.SCHWARZ) if r["muster"] else None,
@@ -228,7 +228,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         """Format ▸ Nummerierung …: dasselbe Fenster wie im Band; die Vorlage merkt sich die gewählte Liste."""
         from core.listen.aufzaehlungen import listen
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
-        from vcl.qt.widgets.dialoge.dokument.liste_dialog import ListenDialog
+        from vcl.qt.widgets.dialoge.dokument.listen_dialog import ListenDialog
         d = ListenDialog(self, listen.aus_text(self._rs["liste"]))
 
         def fertig() -> None:

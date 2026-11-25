@@ -21,7 +21,8 @@ from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QLabel, QListWidget, QListWidgetItem, QPushButton, QStyledItemDelegate
 
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, HOEHE_KNOPF, HOEHE_LISTE_REITER, RAND_PANEL_KLEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

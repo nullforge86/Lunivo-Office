@@ -11,9 +11,11 @@ from __future__ import annotations
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt
 from PySide6.QtWidgets import QAbstractButton, QCheckBox, QGridLayout, QLabel, QLayout, QRadioButton, QSizePolicy, QWidget
 
-from vcl.qt.widgets.bausteine.abstaende.raster import PlanRaster, RasterLinie
+from vcl.qt.widgets.bausteine.abstaende.plan_raster import PlanRaster
+from vcl.qt.widgets.bausteine.abstaende.raster_linie import RasterLinie
 
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, tabellen_gitter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, tabellen_gitter
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, BREITE_SCHMAL_BESCHRIFTUNG, BREITE_UMBRUCHTEXT_MIN, RAND_KEIN
 
 

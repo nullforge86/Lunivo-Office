@@ -20,7 +20,7 @@ import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
-from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.ueberlauf_leiste import UeberlaufLeiste
 from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QScrollArea, QToolButton, QWidget
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster

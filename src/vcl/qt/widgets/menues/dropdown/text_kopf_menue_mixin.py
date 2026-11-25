@@ -15,7 +15,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from framework.schnittstellen.datentypen.farben import Farbe
 from core.formatierung.effekte import texteffekt as T
 from vcl.qt.widgets.menues.dropdown.objektmenues.fuell_voreinstellungen import FuellPalette, fuell_bild
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbPalette
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import KopfDropdown
 from vcl.qt.widgets.menues.dropdown.objektmenues.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel
 

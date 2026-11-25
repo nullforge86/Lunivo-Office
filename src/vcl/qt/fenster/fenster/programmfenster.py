@@ -18,7 +18,7 @@ from core.korrektur.korrektur_dienst import WritingAssistant
 from framework.sitzungen.dokumentverwaltung import DocumentManager
 from vcl.qt.widgets.statusleiste.statusleiste import StatusBar
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_reiter import DocTabs
-from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation import NavigationPanel
+from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel import NavigationPanel
 from vcl.qt.widgets.seitenleisten.seitenleiste import SchreibhilfePanel
 from framework.befehle.befehlsliste import Befehle
 
@@ -69,7 +69,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         self.ki = KIDienst(self.assistant, self)
         self.ki.status.connect(lambda t: self.lbl_msg.setText(t))
         self.ki.geaendert.connect(lambda: hasattr(self, "band") and self.ki_schnell_zeigen())
-        from vcl.qt.widgets.dialoge import dokument_dialoge as _dlg
+        from vcl.qt.widgets.bausteine.interaktion.felder import mass_feld as _dlg
         _dlg.set_einheit(self.settings.get("ui/masseinheit", "Millimeter"))
         from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import LiveVorschau
         self.vorschau = LiveVorschau(self)

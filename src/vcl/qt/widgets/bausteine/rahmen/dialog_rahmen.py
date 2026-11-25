@@ -7,7 +7,9 @@ from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QDialog, QPushButton, QWidget
 
-from vcl.qt.widgets.bausteine.abstaende.raster import Anordnung, PlanRaster, kanten_anordnung
+from vcl.qt.widgets.bausteine.abstaende.raster_hilfen import Anordnung
+from vcl.qt.widgets.bausteine.abstaende.plan_raster import PlanRaster
+from vcl.qt.widgets.bausteine.abstaende.raster import kanten_anordnung
 
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, felder_angleichen
 from framework.schnittstellen.datentypen.farben import Farbe

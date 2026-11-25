@@ -19,12 +19,21 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
 from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_KI, RAND_OBEN_SEITE
-from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge import AnbieterDialog, KIKonfigurationDialog, ModellListe, ModellListeDialog, ModellZuweisung, _Antwort, _tags_text, modell_combo, modell_felder_fuellen, modell_passt
+from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge_hilfen import AnbieterDialog, _Antwort
+from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge import KIKonfigurationDialog, ModellListeDialog
+from vcl.qt.widgets.dialoge.ki.modell_liste import ModellListe, _tags_text
+from vcl.qt.widgets.dialoge.ki.modell_zuweisung import ModellZuweisung, modell_combo, modell_felder_fuellen, modell_passt
 
 REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten", "Dokumente")
 
 
-from vcl.qt.widgets.dialoge.ki.ki_einstellungen_panels import DokumentePanel, EinwilligungenPanel, McpDialog, McpListe, OfflineSprachen, SprachePanel, WebsuchePanel
+from vcl.qt.widgets.dialoge.ki.dokumente_panel import DokumentePanel
+from vcl.qt.widgets.dialoge.ki.einwilligungen_panel import EinwilligungenPanel
+from vcl.qt.widgets.dialoge.ki.mcp_dialog import McpDialog
+from vcl.qt.widgets.dialoge.ki.mcp_liste import McpListe
+from vcl.qt.widgets.dialoge.ki.ki_einstellungen_panels_hilfen import OfflineSprachen
+from vcl.qt.widgets.dialoge.ki.sprache_panel import SprachePanel
+from vcl.qt.widgets.dialoge.ki.websuche_panel import WebsuchePanel
 from vcl.qt.widgets.dialoge.ki.ki_aktions_dialoge import AKTION_TEXTE, ASSISTENT_DATENSCHUTZ, AUSLOESER_TEXTE, ERGEBNIS_ARTEN, TEXTE_AKTION, TEXTE_ASSISTENT, UMFANG_TEXTE, VORLAGEN_AKTION, ErgebnisseDialog, KIAssistentDialog, SchnelleAktionDialog
 
 

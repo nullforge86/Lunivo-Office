@@ -6,7 +6,9 @@ from __future__ import annotations
 import colorsys
 import math
 
-from core.objekte.anordnung.objekte import FillStyle, ImageObject, ShapeObject, StrokeStyle, VectorPath
+from core.objekte.anordnung.objekte_hilfen import FillStyle, StrokeStyle, VectorPath
+from core.objekte.anordnung.image_object import ImageObject
+from core.objekte.anordnung.shape_object import ShapeObject
 from core.geometrie import Point, Rect
 from core.layout.drucklayout.ausgabe.backend import ImageFill, LinearGradient, PatternFill, RenderTarget, Style, TextureFill, rgba
 

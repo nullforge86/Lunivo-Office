@@ -69,7 +69,8 @@ class BefehleSeiten:
 
 
     def _menueband(self, titel):
-        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import IMMER, lade_json
+        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import IMMER
+        from vcl.qt.widgets.dialoge.oberflaeche_dialoge_hilfen import lade_json
         from writer.werkzeugleisten.plan import plan
         from vcl.qt.widgets.ribbon.band_leiste import STANDARD_VERSTECKT
         p = _Seite(self.w, titel)
@@ -125,7 +126,7 @@ class BefehleSeiten:
 
 
     def _schnellzugriff(self, titel):
-        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import lade_json
+        from vcl.qt.widgets.dialoge.oberflaeche_dialoge_hilfen import lade_json
         from vcl.qt.widgets.ribbon.band_leiste import RegisterBand
         from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         p = _Seite(self.w, titel)

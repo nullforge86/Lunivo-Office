@@ -23,8 +23,9 @@ from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QDialog, QLabe
 
 from framework.dokumentverwaltung.ausgabe.drucken import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import AngepassteReiter
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole

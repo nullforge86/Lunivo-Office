@@ -6,7 +6,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QStackedWidget, QTabBar, QToolButton, QWidget
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.ueberlauf_leiste import UeberlaufLeiste
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER

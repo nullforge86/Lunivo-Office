@@ -90,7 +90,7 @@ class DateiSeiten:
         f = p.gruppe(_t("optionen.datei.speichern"))
         p.wahl(f, "speichern/standard", _t("optionen.datei.dateien_als_standard_speichern"), [(_t("optionen.datei.docx_dokument_docx"), ".docx"), (_t("optionen.datei.textdatei_txt"), ".txt")], ".docx")
         p.pfad(f, "speichern/ordner", _t("optionen.datei.ordner_zum_speichern"), _t("optionen.datei.zuletzt_benutzter_ordner"))
-        from vcl.qt.widgets.dialoge import dokument_dialoge as _d
+        from vcl.qt.widgets.bausteine.interaktion.felder import mass_feld as _d
         p.wahl(f, "ui/masseinheit", _t("optionen.datei.masseinheit"), [(n, n) for n in _d.EINHEITEN], _t("optionen.datei.millimeter"), _d.set_einheit)
         f = p.gruppe(_t("optionen.datei.sicherung"))
         p.wahl(f, "sicherung/aktiv", _t("optionen.datei.wann_gesichert_wird"), [(_t("optionen.datei.laufend_nach_jeder_aenderung"), True), (_t("optionen.datei.nie"), False)], True)

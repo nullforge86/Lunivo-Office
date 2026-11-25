@@ -11,7 +11,8 @@ from PySide6.QtWidgets import QFrame
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen
 
-from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation import SEITEN, TITEL
+from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen import SEITEN
+from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel import TITEL
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole as icons
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, BREITE_SCHIENE, BREITE_SCHIENE_BESCHRIFTET, GROESSE_KNOPF_SCHIENE, GROESSE_KNOPF_SCHIENE_TEXT, ICON_ASSISTENT, ICON_KNOPF_GROSS, ICON_LISTE, ICON_MITTEL, RAND_SCHIENE
 
@@ -21,7 +22,8 @@ class BackstageSeitenleistenBaustein:
 
     def _leiste_links(self):
         """Schmale Leiste links: Suchen, Kommentare, Überschriften, Änderungen, Noten, Vorlesen. Ein Klick öffnet das Feld, ein zweiter schließt es."""
-        from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation import SEITEN, TITEL
+        from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen import SEITEN
+        from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel import TITEL
         leiste = rahmen("flach", name="leisteLinks")
         leiste.setFixedWidth(BREITE_SCHIENE)
         v = _spalte("panel", leiste)

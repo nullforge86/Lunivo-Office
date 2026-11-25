@@ -53,9 +53,9 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QCombo
                                QMenu, QPushButton, QRadioButton, QScrollArea, QWidgetAction, QSlider, QSpinBox, QTextEdit, QToolButton, QWidget)
 
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import EinheitFeld  # noqa: E402
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld  # noqa: E402
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld  # noqa: E402
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld, SchrittFeld  # noqa: E402
-from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt  # noqa: E402
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt  # noqa: E402
 
 LIMIT_ELEMENT, LIMIT_TEIL = 5.0, 60.0
 TESTFARBE = "#12ab34"
@@ -316,7 +316,7 @@ def _menue_fangen(selbst, *args, **kw):
 
 def _menues_umbiegen() -> None:
     """``QMenu.exec`` lässt sich bei Shiboken nicht für alle Unterklassen umbiegen; die Python-Unterklassen der Oberfläche einzeln."""
-    from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbPalette
+    from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
     from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
     for k in (VoreinstellungMenue, FarbPalette):
         k.exec = _menue_fangen

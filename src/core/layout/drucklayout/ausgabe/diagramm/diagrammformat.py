@@ -56,7 +56,7 @@ def fuell_style(f, rect: Rect) -> Style | None:
     d = fuell_dict(f)
     if not d or d.get("art") == "keine":
         return None
-    from core.objekte.anordnung.objekte import FillStyle
+    from core.objekte.anordnung.objekte_hilfen import FillStyle
     from core.layout.drucklayout.ausgabe.objekte.objekte import fuellstil
     bild = None
     if d.get("art") == "bild":

@@ -13,7 +13,8 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QPushButton, QWidget
 
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, RAND_KEIN, RAND_ZEILE
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 

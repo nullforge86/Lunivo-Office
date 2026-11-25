@@ -50,7 +50,7 @@ class TextAbsatzBefehle:
         """Fenster „Nummerierung und Aufzählungszeichen“ (Baukasten); das Ergebnis gilt für den Absatz an der Schreibmarke."""
         if not self.ed:
             return
-        from vcl.qt.widgets.dialoge.dokument.liste_dialog import ListenDialog
+        from vcl.qt.widgets.dialoge.dokument.listen_dialog import ListenDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         d = ListenDialog(self.w, self.ed.liste_spec(), seite=seite)
         if ausfuehren(d):
@@ -196,7 +196,7 @@ class TextAbsatzBefehle:
         """Fenster „Rahmen und Schattierung“ (Reiter Rahmen · Seitenrand · Schattierung); ``seite`` wählt den Reiter."""
         if not self.ed:
             return
-        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung import RahmenSchattierungDialog
+        from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog import RahmenSchattierungDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         fuell, muster = self.ed.absatzschatten()
         alt_rand = self.ed.page.border

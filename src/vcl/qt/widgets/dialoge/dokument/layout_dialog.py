@@ -53,7 +53,9 @@ def _zeile(g: FormularGitter, _r: int, radio: QRadioButton, *rest) -> None:
 
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, FormularGitter, UmbruchSchalter
+from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 class LayoutDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, werte: dict | None = None):
         super().__init__(parent)

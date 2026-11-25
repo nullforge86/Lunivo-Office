@@ -7,7 +7,7 @@ from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_SENDUNG
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.dialoge.sendungen.dialog_hilfen import ok_zeile

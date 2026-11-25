@@ -22,13 +22,15 @@ from core.dokument.wasserzeichen import wasserzeichen as WZ
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from core.dokument.abschnitte.seite import PageSettings, mm_to_px
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import MassSpin
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
 
 AUTOMATISCH = "Automatisch"

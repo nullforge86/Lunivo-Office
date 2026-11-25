@@ -21,7 +21,9 @@ import math
 
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QGridLayout, QLayout, QLayoutItem, QWidget
-from vcl.qt.widgets.bausteine.abstaende.raster import Anordnung, PlanRaster, RasterLinie
+from vcl.qt.widgets.bausteine.abstaende.raster_hilfen import Anordnung
+from vcl.qt.widgets.bausteine.abstaende.plan_raster import PlanRaster
+from vcl.qt.widgets.bausteine.abstaende.raster_linie import RasterLinie
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import tabellen_gitter
 from vcl.qt.widgets.bausteine.abstaende.mass import RAND_KEIN
 

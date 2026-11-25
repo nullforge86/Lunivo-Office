@@ -22,7 +22,8 @@ from PySide6.QtCore import QRectF, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath
 
 from vcl.qt.rendering.formen.geometrie import rect_from_qt, rect_to_qt
-from core.objekte.anordnung.objekte import Anchor, FillStyle, ImageObject, StrokeStyle, Transform
+from core.objekte.anordnung.objekte_hilfen import Anchor, FillStyle, StrokeStyle, Transform
+from core.objekte.anordnung.image_object import ImageObject
 from core.geometrie import Rect
 from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild
 from core.layout.drucklayout.objekte import objekt_rechteck

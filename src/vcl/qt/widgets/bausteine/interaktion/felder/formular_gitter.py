@@ -1,28 +1,18 @@
-"""Formular, das sich der Breite anpasst — der Baustein für Felder in Zusatzfenstern (Seitenleiste) und in breiten Fenstern.
-
-Statt Felder in feste Spalten eines ``QGridLayout`` zu setzen, nennt man nur, was zusammengehört:
-
-    f = FormularGitter(gruppe)                       # Layout für eine Gruppe oder Seite
-    f.zeile("Vor Text:", self.links)                 # Beschriftung + Feld
-    f.zeile("Sondereinzug:", self.sonder)
-    f.breit(self.rest_einzug)                        # ein Feld über die ganze Breite (Ankreuzfeld, Liste, Vorschau …)
-
-Das Gitter entscheidet bei jeder Breite neu: reicht der Platz, stehen zwei Paare nebeneinander; sonst eines je Zeile mit der Beschriftung links;
-ist es noch enger, steht die Beschriftung über dem Feld. Nichts wird abgeschnitten, kein seitliches Rollen. ``UmbruchSchalter`` ist ein
-Ankreuzfeld, dessen langer Text in die nächste Zeile läuft.
-"""
 from __future__ import annotations
-
 from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
-
-
 from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import (QAbstractSpinBox, QComboBox, QGridLayout, QPushButton, QTabWidget, QCheckBox, QLabel, QLayout, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget)
-from vcl.qt.widgets.bausteine.abstaende.raster import Anordnung, PlanRaster, RasterLayout, kanten_anordnung
-from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_UNTER_REITER, MARGIN_OBEN_GRUPPE_ZUSATZ, PADDING_ABSCHNITTSBAND, PADDING_ABSCHNITT_KNOPF, PADDING_GRUPPE_OBEN, PADDING_GRUPPENTITEL, RAND_KEIN, SCHRIFT_KLEIN
+from PySide6.QtWidgets import QAbstractSpinBox, QComboBox, QGridLayout, QPushButton, QCheckBox, QLabel, QLayoutItem, QSizePolicy, QStyle, QStyleOptionButton, QWidget
+from vcl.qt.widgets.bausteine.abstaende.raster_hilfen import Anordnung, RasterLayout
+from vcl.qt.widgets.bausteine.abstaende.plan_raster import PlanRaster
+from vcl.qt.widgets.bausteine.abstaende.raster import kanten_anordnung
+from vcl.qt.widgets.bausteine.abstaende.mass import RAND_KEIN
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter_hilfen import _natuerlich
+
 
 ABSTAND = 6
+
+
 SPALTEN_ABSTAND = 10
 
 
@@ -89,98 +79,6 @@ class UmbruchSchalter(QCheckBox):
         p.drawText(QRect(rand, 0, self.width() - rand, self.height()), Qt.TextWordWrap | Qt.TextShowMnemonic | Qt.AlignVCenter | Qt.AlignLeft, self.text())
 
 
-class FlussLayout(PlanRaster):
-    """Elemente in gleich breiten Gitterspalten, die umbrechen: so viele Spalten, wie in die Breite passen, der Rest in den nächsten
-    Gitterzeilen — Ankreuzfelder, Optionen und Knöpfe stehen dadurch in sauberen Spalten untereinander. Eine Beschriftung und das Feld dahinter
-    bleiben eine Einheit (Beschriftungs- und Feldspalte). ``zentriert``: die Spalten stehen mittig statt links."""
-
-    def __init__(self, abstand: int = 6, zentriert: bool = False):
-        super().__init__()
-        self._abstand = abstand
-        self._zentriert = zentriert
-
-    def _neu_aufnehmen(self, it) -> None:
-        self.invalidate()
-
-    def _einheiten(self) -> list[list]:
-        """Beschriftung + nächstes Feld sind eine Einheit, alles andere steht für sich (ausgeblendete Elemente zählen nicht)."""
-        items = [i for i in self.elemente() if not i.isEmpty()]
-        out, i = [], 0
-        while i < len(items):
-            it = items[i]
-            if isinstance(it.widget(), QLabel) and i + 1 < len(items) and not isinstance(items[i + 1].widget(), QLabel):
-                out.append([it, items[i + 1]]); i += 2
-            else:
-                out.append([it]); i += 1
-        return out
-
-    def _masse(self, einheiten: list) -> tuple[int, int, int]:
-        """→ (Breite der Beschriftungsspalte, Breite der Feldspalte, Breite einer Einheit)."""
-        nat = lambda i: max(_natuerlich(i), i.minimumSize().width())
-        lb = max((nat(e[0]) for e in einheiten if len(e) == 2), default=0)
-        fb = max((nat(e[1]) for e in einheiten if len(e) == 2), default=0)
-        for e in einheiten:
-            if len(e) == 1:
-                fb = max(fb, nat(e[0]) - (lb + self._abstand if lb else 0))
-        return lb, fb, lb + (self._abstand if lb else 0) + fb
-
-    def spalten(self, breite: int) -> int:
-        einheiten = self._einheiten()
-        if not einheiten:
-            return 1
-        b = self._masse(einheiten)[2]
-        return max(1, min(len(einheiten), (breite + self._abstand) // max(1, b + self._abstand)))
-
-    def _anordnung(self, breite: int) -> Anordnung:
-        einheiten = self._einheiten()
-        a = self._abstand
-        an = Anordnung(waagerecht=a, senkrecht=a)
-        if not einheiten:
-            return an
-        lb, fb, _ub = self._masse(einheiten)
-        n = self.spalten(breite)
-        je = 2 if lb else 1                                                  # Gitterspalten je Einheit
-        start = 0
-        hoehen: dict[int, int] = {}
-        for k, e in enumerate(einheiten):
-            zl, sp = divmod(k, n)
-            c = start + sp * je
-            if len(e) == 2:
-                an.zellen.append((e[0], zl, c, 1, 1, Qt.AlignVCenter | Qt.AlignLeft))
-                an.zellen.append((e[1], zl, c + 1, 1, 1, Qt.AlignVCenter))
-            else:
-                an.zellen.append((e[0], zl, c, 1, je, Qt.AlignVCenter))
-            hoehen[zl] = max([hoehen.get(zl, 0)] + [i.sizeHint().height() for i in e])
-        for sp in range(n):
-            c = start + sp * je
-            if lb:
-                an.spalten[c] = lb
-            an.spalten[c + je - 1] = fb
-            an.spalten_dehnung[c + je - 1] = 0 if self._zentriert else 1
-        an.hoehe = sum(hoehen.values()) + a * (len(hoehen) - 1)
-        return an
-
-    def setGeometry(self, r) -> None:
-        """``zentriert``: das ganze Gitter (nicht jedes Element) steht mittig in der verfügbaren Breite."""
-        if self._zentriert and self._einheiten():
-            m = self.contentsMargins()
-            innen = max(1, r.width() - m.left() - m.right())
-            n, ub = self.spalten(innen), self._masse(self._einheiten())[2]
-            b = min(r.width(), n * ub + (n - 1) * self._abstand + m.left() + m.right())
-            r = r.adjusted((r.width() - b) // 2, 0, 0, 0); r.setWidth(b)
-        super().setGeometry(r)
-
-    def sizeHint(self) -> QSize:
-        return self.minimumSize()
-
-    def minimumSize(self) -> QSize:
-        m = self.contentsMargins()
-        einheiten = self._einheiten()
-        b = self._masse(einheiten)[2] if einheiten else 0
-        h = max((i.sizeHint().height() for e in einheiten for i in e), default=0)
-        return QSize(b + m.left() + m.right(), h + m.top() + m.bottom())
-
-
 def abschnittstitel(text: str) -> QLabel:
     """Die Überschrift eines Abschnitts: klein, gedämpft, Großbuchstaben — überall gleich (Gruppen, Spalten, Bereiche in Fenstern)."""
     l = QLabel(text.rstrip(":").replace("ß", "ẞ").upper())          # ß groß als ẞ, nicht „SS“
@@ -225,14 +123,9 @@ def _hoehe_bei(item: QLayoutItem, breite: int) -> int:
     return item.sizeHint().height()
 
 
-def _natuerlich(item: QLayoutItem) -> int:
-    w = item.widget()
-    if w is not None and hasattr(w, "natuerliche_breite"):             # ein Widget mit Umbruch (Policy „Ignored“) meldet über das Layout sonst Breite 0
-        return w.natuerliche_breite()
-    return max(item.sizeHint().width(), item.minimumSize().width())
-
-
 FELDHOEHE = 32                                                # einzeilige Felder (Zahl, Text, Farbe) in der Feldspalte der Seitenleiste: alle gleich hoch; Dropdowns nicht: ihre Höhe kommt aus DROPDOWN_HOEHE (mass.py)
+
+
 _EINZEILIG = ("QComboBox", "QPushButton", "QLineEdit", "QDoubleSpinBox", "QSpinBox", "FarbFeld", "KopfDropdown", "SchrittFeld", "StrichAuswahl")
 
 
@@ -511,64 +404,6 @@ class FormularGitter(PlanRaster):
         beschr = (u.b, x0, 0, bb, h) if self.beschriftung_voll else (u.b, x0, (h - hb) // 2, bb, hb)
         feld = (u.f, x0 + sp - fb if self.feldbreite else x0 + bw + self.beschriftungsabstand, 0, fb, hf)
         return [beschr, feld], h
-
-
-class AngepassteReiter(QTabWidget):
-    """Reiter, deren Höhe dem gewählten Reiter folgt (ein ``QTabWidget`` richtet sich sonst nach dem höchsten und lässt kürzeren Reitern leeren Platz)."""
-
-    def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
-        from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
-        self.setTabBar(FlacheReiterLeiste(HAUPT))          # EINE Reiterleiste für alle Fenster: flach, die Beschriftung bricht um, nichts wird abgeschnitten
-        self.currentChanged.connect(self._aktuelle_seite)
-        self.setUsesScrollButtons(False)
-
-    def _aktuelle_seite(self, _i: int = 0) -> None:
-        """Nur die gewählte Seite bestimmt die Höhe: die anderen zählen für das Layout nicht mit (sonst bleibt unter kürzeren Reitern leerer Platz)."""
-        for k in range(self.count()):
-            w = self.widget(k)
-            sp = w.sizePolicy()
-            sp.setVerticalPolicy(QSizePolicy.Preferred if k == self.currentIndex() else QSizePolicy.Ignored)
-            w.setSizePolicy(sp)
-        self.updateGeometry()
-        e = self.parentWidget()
-        while e is not None:                                      # die Layouts darüber merken sich sonst die Höhe des vorigen Reiters
-            if e.layout() is not None:
-                e.layout().invalidate()
-            e = e.parentWidget()
-
-    def tabInserted(self, index: int) -> None:
-        super().tabInserted(index)
-        self._aktuelle_seite()
-        self.tabBar().setTabToolTip(index, self.tabText(index))
-
-    def _mass(self, minimum: bool) -> QSize:
-        w = self.currentWidget()
-        if w is None:
-            return super().minimumSizeHint() if minimum else super().sizeHint()
-        ws = w.minimumSizeHint() if minimum else w.sizeHint()
-        h = max(ws.height(), w.minimumHeight())                                       # ein Reiter mit fester Höhe (zum Beispiel Kachelraster) gilt mit dieser
-        if w.maximumHeight() < 16777215:
-            h = min(h, w.maximumHeight())
-        ws = QSize(ws.width(), h)
-        tb = self.tabBar().sizeHint()
-        return QSize(ws.width() + 6, ws.height() + tb.height() + 8 + ABSTAND_UNTER_REITER)               # die Leiste kürzt ihre Namen, sie bestimmt die Breite nicht
-
-    def hasHeightForWidth(self) -> bool:
-        w = self.currentWidget()
-        return w is not None and w.hasHeightForWidth()
-
-    def heightForWidth(self, breite: int) -> int:
-        """Die Höhe der gewählten Seite bei dieser Breite (Seiten aus ``FormularGitter`` brechen um): so bleibt unter kürzeren Reitern kein leerer Platz."""
-        w = self.currentWidget()
-        tb = self.tabBar().sizeHint()
-        return w.heightForWidth(max(1, breite - 6)) + tb.height() + 8 + ABSTAND_UNTER_REITER
-
-    def sizeHint(self) -> QSize:
-        return self._mass(False)
-
-    def minimumSizeHint(self) -> QSize:
-        return self._mass(True)
 
 
 def gruppe(titel: str, *, karte: bool = False):

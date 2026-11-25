@@ -11,7 +11,8 @@ from PySide6.QtCore import QSize
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
-from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import SmartArtDialog, _layout_bildchen, _LayoutGalerie
+from vcl.qt.widgets.dialoge.einfuegen.smart_art_dialog import SmartArtDialog, _layout_bildchen
+from vcl.qt.widgets.dialoge.einfuegen.layout_galerie import _LayoutGalerie
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_KACHEL_FOTO
 
 KACHEL_B, KACHEL_H = GROESSE_KACHEL_FOTO                      # Außenmaß einer Kachel (Foto etwa 130 x 78)

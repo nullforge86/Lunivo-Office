@@ -12,7 +12,9 @@ import dataclasses
 import math
 
 from core.dokument.dokument import Dokument
-from core.objekte.anordnung.objekte import FillStyle, ImageObject, Shadow, ShapeObject, StrokeStyle
+from core.objekte.anordnung.objekte_hilfen import FillStyle, Shadow, StrokeStyle
+from core.objekte.anordnung.image_object import ImageObject
+from core.objekte.anordnung.shape_object import ShapeObject
 from core.geometrie import Point, Rect
 from core.layout.drucklayout.ausgabe.backend import RenderTarget
 from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild, zeichne_form, zeichne_platzhalter
@@ -129,7 +131,7 @@ _WARP_WELLE = ("textWave1", "textWave2", "textWave4", "textDoubleWave1")
 
 def _wordart_stil(d: dict, breite: float, hoehe: float):
     from core.layout.drucklayout.ausgabe.objekte.objekte import fuellstil
-    from core.objekte.anordnung.objekte import FillStyle
+    from core.objekte.anordnung.objekte_hilfen import FillStyle
     voll = FillStyle.aus_dict(d["fuell"]) if isinstance(d.get("fuell"), dict) and d.get("fuell") else FillStyle("farbe", str(d.get("farbe") or "#000000"))
     stil = fuellstil(voll, Rect(0.0, 0.0, breite, hoehe))
     kontur = d.get("kontur") if isinstance(d.get("kontur"), dict) else None
@@ -191,7 +193,7 @@ def zeichne_wordart(b: RenderTarget, engine, rect: Rect, d: dict) -> bool:
     if engine is None:
         return False
     from core.layout.drucklayout.ausgabe.objekte.objekte import fuellstil
-    from core.objekte.anordnung.objekte import FillStyle
+    from core.objekte.anordnung.objekte_hilfen import FillStyle
     text = str(d.get("text") or "")
     font = FontSpec(str(d.get("schrift") or "Liberation Sans"), float(d.get("pt") or 36.0), 700 if d.get("fett", True) else 400, bool(d.get("kursiv")))
     m = engine.font_metrics(font)

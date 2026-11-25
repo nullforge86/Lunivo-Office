@@ -30,15 +30,15 @@ from core.formatierung.effekte import texteffekt as T
 from vcl.qt.widgets.bausteine.symbole.medien.alternativtext_abschnitt import AlternativtextAbschnitt
 from vcl.qt.widgets.dialoge.formatierung.auto_felder_mixin import AutoFelderMixin
 from vcl.qt.widgets.dialoge.formatierung.effekte_drei_mixin import NurDreiEffekteMixin
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.menues.dropdown.kopf_menue_mixin import KopfMenueMixin
 from vcl.qt.widgets.menues.dropdown.teil_menue import TeilMenueKnopf
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
-from vcl.qt.widgets.dialoge.formatierung.objektformat_panel import ObjektFormatPanel
+from vcl.qt.widgets.dialoge.formatierung.objekt_format_panel import ObjektFormatPanel
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld, SchrittFeld
 from vcl.qt.widgets.menues.dropdown.auswahl.strich_auswahl import StrichAuswahl
-from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_SPALTE, ICON_MITTEL, RAND_FORMATSEITE
 from vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine import LEGENDEN_LAGEN, ABSCHLUSS, VERKNUEPFUNG, _combo, _strich_zeichner, _kombi_zeichner, _still, _AutoWert

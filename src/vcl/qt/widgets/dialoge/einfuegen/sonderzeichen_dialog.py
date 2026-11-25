@@ -1,46 +1,25 @@
-"""Das Fenster „Symbol“ (Einfügen › Symbol › Weitere Symbole …) in der Seitenleiste, nach der Vorlage mit drei Reitern:
-
-    Symbole                    Schriftart, Zeichenraster, „Zuletzt verwendete Symbole“, Zeichencode und „Von“ (Dezimal oder Hex)
-    Sonderzeichen              Liste „Zeichen:“ mit Zeichen und Name
-    Benutzerdefinierte Symbole Liste der Klappe: Haken, Tastenkombination, Nach oben/unten, Entfernen, Zurücksetzen
-
-    d = SonderzeichenDialog(parent, einfuegen, SymbolDaten(settings, standard, anzahl))
-    d.exec()                                   # „Einfügen“ ruft ``einfuegen(zeichen)`` und schließt das Fenster nicht
-
-``SymbolDaten`` ist die eine Datenbasis für dieses Fenster und die Klappe „Symbol“ (``kern/befehle/hauptreiter/einfuegen.py``): zuletzt verwendete
-Symbole, die benutzerdefinierte Liste (mit Haken) und deren Tastenkombinationen, alles als JSON ohne Markup in den Einstellungen.
-Das Fenster fügt selbst nichts ein; der Aufrufer bekommt das Zeichen.
-"""
+"""Sonderzeichen dialog: aus ``vcl.qt.widgets.dialoge.einfuegen.sonderzeichen`` herausgelöst."""
 from __future__ import annotations
-
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
-
 from core.formatierung.schrift import standard_datenbank
-from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
-
-import json
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from typing import Callable
-
-from PySide6.QtCore import QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QPainter, QPen
-from PySide6.QtWidgets import (
-    QAbstractItemView, QApplication, QComboBox, QDialog, QFrame, QHeaderView, QLabel, QLineEdit, QPushButton, QScrollArea,
-    QSizePolicy, QTreeWidget, QTreeWidgetItem, QWidget,
-)
-
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QFont, QFontMetrics, QKeySequence
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QDialog, QHeaderView, QLabel, QScrollArea, QSizePolicy, QTreeWidget, QTreeWidgetItem, QWidget
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
-from vcl.qt.widgets.dialoge.dokument.tasten_dialog import TastenDialog
+from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_SONDERZEICHEN_PX, SONDERZEICHEN_KOPF_ZEILEN, SONDERZEICHEN_SONDER_ZEILEN, SONDERZEICHEN_ZELLEN_REIHEN
-from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_FELD_ZEICHENCODE, BREITE_ZEILENHINWEIS, GROESSE_FENSTER_SONDERZEICHEN, HOEHE_ZEILE_SONDER, HOEHE_ZELLE_SONDER, ZUGABE_LISTE_KOPF, ZUGABE_LISTE_SONDER, ZUGABE_RAHMEN
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_FELD_ZEICHENCODE, BREITE_ZEILENHINWEIS, GROESSE_FENSTER_SONDERZEICHEN, HOEHE_ZEILE_SONDER, ZUGABE_LISTE_KOPF, ZUGABE_LISTE_SONDER, ZUGABE_RAHMEN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
+from vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_hilfen import SymbolDaten, ZELLE, _TastenFenster
+from vcl.qt.widgets.dialoge.einfuegen.zeichenraster import Zeichenraster
 
-KEY_ZULETZT = "einfuegen/symbole_zuletzt"
-KEY_BENUTZER = "einfuegen/symbole_benutzer"
-KEY_TASTEN = "einfuegen/symbole_tasten"
 
 # Zeichen und Name wie in der Vorlage (die Bildlaufleiste dort zeigt genau einen Eintrag mehr: das schließende einfache Anführungszeichen); ein Leerzeichen-Zeichen steht dort ohne Bild (leer), das geschützte Leerzeichen als „°“.
 SONDERZEICHEN = (
@@ -50,164 +29,12 @@ SONDERZEICHEN = (
     ("¶", "Absatz", "¶"), ("…", "Ellipse", "…"), ("‘", "Einfaches Anführungszeichen", "‘"),
     ("’", "Einfaches Anführungszeichen, rechts", "’"),
 )
+
+
 VON = (("Symbol(DEC)", 10), ("Unicode(HEX)", 16))
+
+
 NORMAL = "(Normaler Text)"
-ZELLE = HOEHE_ZELLE_SONDER
-
-
-class SymbolDaten:
-    """Zuletzt verwendet, benutzerdefinierte Symbole (Zeichen, Haken) und Tastenkombinationen — in den Einstellungen (``get``/``set``)."""
-
-    def __init__(self, einstellungen=None, standard: tuple = (), anzahl: int = 24):
-        self.e = einstellungen if einstellungen is not None else _Speicher()
-        self.standard, self.anzahl = tuple(standard), anzahl
-
-    def _lesen(self, key: str, leer):
-        try:
-            wert = json.loads(str(self.e.get(key, "") or ""))
-        except ValueError:
-            return leer
-        return wert if isinstance(wert, type(leer)) else leer
-
-    def zuletzt(self) -> list[str]:
-        return [z for z in self._lesen(KEY_ZULETZT, []) if isinstance(z, str) and z]
-
-    def merken(self, z: str) -> None:
-        liste = [z] + [x for x in self.zuletzt() if x != z]
-        self.e.set(KEY_ZULETZT, json.dumps(liste[:self.anzahl], ensure_ascii=False))
-
-    def benutzer(self) -> list[tuple[str, bool]]:
-        """Die Liste „Benutzerdefinierte Symbole“ in ihrer Reihenfolge, je Zeichen mit Haken (``True``: in der Klappe zu sehen)."""
-        if not str(self.e.get(KEY_BENUTZER, "") or ""):
-            return [(z, True) for z in self.standard]
-        return [(p[0], bool(p[1])) for p in self._lesen(KEY_BENUTZER, []) if isinstance(p, list) and len(p) == 2 and isinstance(p[0], str) and p[0]]
-
-    def setze_benutzer(self, liste: list[tuple[str, bool]]) -> None:
-        self.e.set(KEY_BENUTZER, json.dumps([[z, an] for z, an in liste], ensure_ascii=False) if liste else "[]")
-
-    def sichtbar(self) -> list[str]:
-        return [z for z, an in self.benutzer() if an]
-
-    def zuruecksetzen(self) -> None:
-        self.e.set(KEY_BENUTZER, ""); self.e.set(KEY_TASTEN, "")
-
-    def tasten(self) -> dict[str, str]:
-        return {z: t for z, t in self._lesen(KEY_TASTEN, {}).items() if isinstance(z, str) and isinstance(t, str) and t}
-
-    def setze_tasten(self, tasten: dict[str, str]) -> None:
-        self.e.set(KEY_TASTEN, json.dumps({z: t for z, t in tasten.items() if t}, ensure_ascii=False))
-
-
-class _Speicher:
-    def __init__(self):
-        self.d: dict = {}
-
-    def get(self, key, default=None):
-        return self.d.get(key, default)
-
-    def set(self, key, wert) -> None:
-        self.d[key] = wert
-
-
-class Zeichenraster(QWidget):
-    """Zeichen in Zellen, die sich der Breite anpassen: Spaltenzahl = Breite / Zelle, Höhe folgt der Zahl der Zeilen (``heightForWidth``)."""
-    gewaehlt = Signal(int)
-    gewaehlt_doppelt = Signal(int)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._zeichen: list[int] = []
-        self._schrift = QFont(QApplication.font())
-        self._aktuell = -1
-        self.setFocusPolicy(Qt.StrongFocus)
-        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
-        self.setMinimumWidth(0)
-
-    def setze(self, zeichen: list[int], schrift: QFont | None = None) -> None:
-        self._zeichen = list(zeichen)
-        if schrift is not None:
-            self._schrift = QFont(schrift); self._schrift.setPixelSize(SCHRIFT_SONDERZEICHEN_PX)
-        self._aktuell = -1
-        self.updateGeometry(); self.update()
-
-    def zeichen(self) -> list[int]:
-        return self._zeichen
-
-    def waehle(self, code: int | None) -> None:
-        self._aktuell = self._zeichen.index(code) if code in self._zeichen else -1
-        self.update()
-
-    def spalten(self) -> int:
-        return max(1, self.width() // ZELLE)
-
-    def hasHeightForWidth(self) -> bool:
-        return True
-
-    def heightForWidth(self, breite: int) -> int:
-        sp = max(1, breite // ZELLE)
-        return max(1, -(-len(self._zeichen) // sp)) * ZELLE + 1
-
-    def sizeHint(self) -> QSize:
-        return QSize(ZELLE * 8 + 1, self.heightForWidth(ZELLE * 8))
-
-    def minimumSizeHint(self) -> QSize:
-        return QSize(ZELLE, ZELLE + 1)
-
-    def zelle_von(self, i: int) -> QRect:
-        sp = self.spalten()
-        return QRect((i % sp) * ZELLE, (i // sp) * ZELLE, ZELLE, ZELLE)
-
-    def paintEvent(self, _ev) -> None:
-        p = QPainter(self)
-        pal = self.palette()
-        p.fillRect(self.rect(), pal.base())
-        p.setFont(self._schrift)
-        for i, cp in enumerate(self._zeichen):
-            r = self.zelle_von(i)
-            if i == self._aktuell:
-                p.fillRect(r, pal.highlight() if self.hasFocus() else pal.midlight())
-            p.setPen(QPen(pal.mid().color(), 1)); p.drawRect(r.adjusted(0, 0, -1, -1))
-            p.setPen(pal.highlightedText().color() if i == self._aktuell and self.hasFocus() else pal.text().color())
-            p.drawText(r, Qt.AlignCenter, chr(cp))
-        p.end()
-
-    def _index_bei(self, pos) -> int:
-        i = (pos.y() // ZELLE) * self.spalten() + pos.x() // ZELLE
-        return i if 0 <= i < len(self._zeichen) and pos.x() < self.spalten() * ZELLE else -1
-
-    def mousePressEvent(self, ev) -> None:
-        i = self._index_bei(ev.position().toPoint())
-        if i >= 0:
-            self._setze_index(i)
-        self.setFocus(Qt.MouseFocusReason)
-
-    def mouseDoubleClickEvent(self, ev) -> None:
-        i = self._index_bei(ev.position().toPoint())
-        if i >= 0:
-            self.gewaehlt_doppelt.emit(self._zeichen[i])
-
-    def _setze_index(self, i: int) -> None:
-        self._aktuell = i
-        self.update()
-        self.gewaehlt.emit(self._zeichen[i])
-
-    def keyPressEvent(self, ev) -> None:
-        sp = self.spalten()
-        schritt = {Qt.Key_Left: -1, Qt.Key_Right: 1, Qt.Key_Up: -sp, Qt.Key_Down: sp}.get(ev.key())
-        if schritt is None or not self._zeichen:
-            return super().keyPressEvent(ev)
-        i = min(len(self._zeichen) - 1, max(0, (self._aktuell if self._aktuell >= 0 else 0) + (schritt if self._aktuell >= 0 else 0)))
-        self._setze_index(i)
-
-    def focusInEvent(self, ev) -> None:
-        super().focusInEvent(ev); self.update()
-
-    def focusOutEvent(self, ev) -> None:
-        super().focusOutEvent(ev); self.update()
-
-
-class _TastenFenster(PanelFaehig, TastenDialog):
-    """„Tastenkombination“ als Seite über dem Fenster „Symbol“."""
 
 
 class SonderzeichenDialog(PanelFaehig, QDialog):

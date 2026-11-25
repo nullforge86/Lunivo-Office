@@ -42,27 +42,41 @@ vcl.qt.widgets.menues.dropdown.objektmenues.form_menues vcl.qt.widgets.menues.dr
 vcl.qt.widgets.menues.dropdown.objektmenues.linien_voreinstellungen vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues
 vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues vcl.qt.widgets.menues.dropdown.text_kopf_menue_mixin
 vcl.qt.widgets.bausteine.interaktion.felder.auswahl_bereich vcl.qt.widgets.dialoge.formatierung.absatz_dialog
-vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog vcl.qt.widgets.dialoge.formatierung.objektformat_panel
-vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung vcl.qt.widgets.dialoge.formatierung.ruby_dialog
+vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog vcl.qt.widgets.dialoge.formatierung.ruby_dialog
 vcl.qt.widgets.dialoge.formatierung.schreibweise_dialog vcl.qt.widgets.dialoge.formatierung.schriftart_dialog
 vcl.qt.widgets.dialoge.formatierung.text_format vcl.qt.widgets.dialoge.formatierung.text_fuellarten_mixin
-vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog vcl.qt.widgets.dialoge.formatierung.textfeld_abschnitt
+vcl.qt.widgets.dialoge.formatierung.textfeld_abschnitt
+vcl.qt.widgets.dialoge.dokument.gliederung_anpassen_dialog vcl.qt.widgets.dialoge.dokument.liste_dialog_hilfen
+vcl.qt.widgets.dialoge.dokument.listen_dialog vcl.qt.widgets.dialoge.dokument.nummerierung_anpassen_dialog
+vcl.qt.widgets.dialoge.einfuegen.baustein_dialog vcl.qt.widgets.dialoge.einfuegen.datum_dialog vcl.qt.widgets.dialoge.einfuegen.felder_dialog
+vcl.qt.widgets.dialoge.einfuegen.form_dialog vcl.qt.widgets.dialoge.einfuegen.seitenzahl_dialog vcl.qt.widgets.dialoge.einfuegen.smart_art_dialog
+vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_dialog vcl.qt.widgets.dialoge.einfuegen.trenner_dialog vcl.qt.widgets.dialoge.einfuegen.word_art_dialog
+vcl.qt.widgets.dialoge.formatierung.objekt_format_panel vcl.qt.widgets.dialoge.formatierung.objektformat_panel_hilfen
+vcl.qt.widgets.dialoge.formatierung.polster_dialog vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog
+vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_hilfen vcl.qt.widgets.dialoge.formatierung.rahmen_seite
+vcl.qt.widgets.dialoge.formatierung.schattierung_seite vcl.qt.widgets.dialoge.formatierung.seiten_optionen_dialog
+vcl.qt.widgets.dialoge.formatierung.texteffekt_panel vcl.qt.widgets.dialoge.ki.dokumente_panel vcl.qt.widgets.dialoge.ki.einwilligungen_panel
+vcl.qt.widgets.dialoge.ki.ki_einstellungen_panels_hilfen vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge_hilfen vcl.qt.widgets.dialoge.ki.mcp_dialog
+vcl.qt.widgets.dialoge.ki.mcp_liste vcl.qt.widgets.dialoge.ki.modell_liste vcl.qt.widgets.dialoge.ki.modell_zuweisung
+vcl.qt.widgets.dialoge.ki.sprache_panel vcl.qt.widgets.dialoge.ki.websuche_panel vcl.qt.widgets.dialoge.tabellen_eigenschaften_dialog
+vcl.qt.widgets.dokumentansicht.ansicht.lineal_h vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen vcl.qt.widgets.dokumentansicht.ansicht.lineal_v
+vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel
 vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog vcl.qt.widgets.bausteine.symbole.medien.bild_export vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
 vcl.qt.widgets.bausteine.symbole.medien.design_bildchen vcl.qt.widgets.bausteine.symbole.medien.seiten_bildchen vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
 vcl.qt.widgets.seitenleisten.vorlagen.formatvorlagen_bereich vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_galerie vcl.qt.widgets.dialoge.dokument_dialoge
 vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge
-vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster vcl.qt.widgets.dialoge.einfuegen.formular_dialog vcl.qt.widgets.dialoge.einfuegen.sonderzeichen
-vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster vcl.qt.widgets.dialoge.ki.ki_aktions_dialoge vcl.qt.widgets.dialoge.ki.ki_einstellungen_panels
+vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster vcl.qt.widgets.dialoge.einfuegen.formular_dialog
+vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster vcl.qt.widgets.dialoge.ki.ki_aktions_dialoge
 vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.silben_dialog
 vcl.qt.widgets.dialoge.optionen_seiten.befehle vcl.qt.widgets.dialoge.optionen_seiten.datei vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
 vcl.qt.widgets.dialoge.optionen_seiten.lesen vcl.qt.widgets.dialoge.optionen_seiten.lunivo vcl.qt.widgets.dokumentansicht.ansicht.blasen_bedienung
-vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht vcl.qt.widgets.dokumentansicht.ansicht.eingabe vcl.qt.widgets.dokumentansicht.ansicht.lineal
+vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht vcl.qt.widgets.dokumentansicht.ansicht.eingabe
 vcl.qt.widgets.dokumentansicht.ansicht.objekt_bedienung vcl.qt.widgets.dokumentansicht.ansicht.vorschau_ansicht
 vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_geometrie vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe
 vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoten vcl.qt.widgets.dokumentansicht.bearbeitung.freiform_bedienung
 vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor
 vcl.qt.widgets.dokumentansicht.bearbeitung.kern_objekte vcl.qt.widgets.dokumentansicht.bearbeitung.objekt_texteingabe
-vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation
+vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich
 vcl.qt.widgets.dokumentansicht.dokumentfenster.suchen_feld vcl.qt.widgets.dokumentansicht.kopffuss.noten_feld vcl.qt.widgets.ribbon.band_gruppen
 vcl.qt.widgets.ribbon.band_leiste vcl.qt.widgets.ribbon.band_stile vcl.qt.widgets.seitenleisten.ki_panel
 vcl.qt.widgets.seitenleisten.schreib_panel vcl.qt.widgets.seitenleisten.seitenleiste vcl.rendering.seitenlayout.pdf_ausgabe

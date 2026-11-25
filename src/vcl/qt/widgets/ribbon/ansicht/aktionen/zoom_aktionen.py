@@ -1,7 +1,7 @@
 """Aktionen des Zooms: größer, kleiner, normal, Seitenbreite, ganze Seite, Zoomstufe wählen. Der Zoomwert liegt im Editor, die Befehle im Farmwork."""
 from __future__ import annotations
 
-from vcl.qt.widgets.dialoge.dokument_dialoge import ZoomDialog
+from vcl.qt.widgets.dialoge.zoom_dialog import ZoomDialog
 
 
 class ZoomAktionen:

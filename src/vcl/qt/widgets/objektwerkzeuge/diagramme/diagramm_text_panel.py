@@ -11,21 +11,21 @@ from core.diagramme.formatierung import diagramm_format as F
 from core.formatierung.effekte import texteffekt as T
 from core.objekte.wordart.textfx import WARP_FORMEN
 from core.layout.drucklayout.ausgabe.text.texteffekte import pfad_verformen
-from core.objekte.anordnung.objekte import VectorPath
+from core.objekte.anordnung.objekte_hilfen import VectorPath
 from vcl.qt.rendering.formen.pfad import pfad_zu_vektor, vektor_zu_pfad
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import KopfDropdown, keine_zeile
 from vcl.qt.widgets.dialoge.formatierung.textfeld_abschnitt import TextfeldAbschnitt
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
 from vcl.qt.widgets.menues.dropdown.text_kopf_menue_mixin import TextKopfMenueMixin
-from vcl.qt.widgets.dialoge.formatierung.objektformat_panel import _TextPanel
+from vcl.qt.widgets.dialoge.formatierung.objektformat_panel_hilfen import _TextPanel
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchrittFeld
 from vcl.qt.widgets.dialoge.formatierung.text_fuellarten_mixin import TextFuellartenMixin
-from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_SPALTE, GROESSE_TEXTVERFORMUNG_KACHEL, ICON_MITTEL, RAND_FORMATSEITE, FAMILIE_TEXTVERFORMUNG_KACHEL, SCHRIFT_TEXTVERFORMUNG_PFAD_PT
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine import RICHTUNGEN, _combo, _still
 
 

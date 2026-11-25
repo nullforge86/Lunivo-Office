@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QPainterPath
 
-from core.objekte.anordnung.objekte import VectorPath
+from core.objekte.anordnung.objekte_hilfen import VectorPath
 
 
 def pfad_zu_vektor(pfad: QPainterPath) -> VectorPath:

@@ -238,7 +238,7 @@ class BildToolsBefehle:
         e, z = self._bild_frei()
         if z is not None:
             from core.objekte.bilder.positionierung import bildlayout as BL
-            from vcl.qt.widgets.dialoge.dokument_dialoge import BildGroesseDialog
+            from vcl.qt.widgets.dialoge.bild_groesse_dialog import BildGroesseDialog
             d = BildGroesseDialog(z[2]["b"], z[2]["h"], self.w)
             if d.exec():
                 BL.frei_aendern(e, z, b=float(d.breite_px()), h=float(d.hoehe_px()))
@@ -246,7 +246,7 @@ class BildToolsBefehle:
         e, f = self._bild()
         if f is None:
             return
-        from vcl.qt.widgets.dialoge.dokument_dialoge import BildGroesseDialog
+        from vcl.qt.widgets.dialoge.bild_groesse_dialog import BildGroesseDialog
         d = BildGroesseDialog(f.width(), f.height(), self.w)
         if d.exec():
             e.bild_setzen(width=d.breite_px(), height=d.hoehe_px())

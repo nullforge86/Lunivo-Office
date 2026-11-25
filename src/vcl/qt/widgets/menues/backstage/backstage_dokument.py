@@ -12,7 +12,8 @@ from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from core.dokument.abschnitte.seite import HeaderFooter
-from vcl.qt.widgets.dialoge.dokument_dialoge import HeaderFooterDialog, TableDialog
+from vcl.qt.widgets.dialoge.dokument_dialoge import HeaderFooterDialog
+from vcl.qt.widgets.dialoge.table_dialog import TableDialog
 
 
 class BackstageDokumentBaustein:

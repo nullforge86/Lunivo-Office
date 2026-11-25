@@ -19,7 +19,7 @@ from vcl.qt.widgets.dialoge.formatierung.text_format import groesse_feld, schrif
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import STYLES
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.ueberlauf_leiste import UeberlaufLeiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import tabellen_gitter
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter
 from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
@@ -32,7 +32,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 from vcl.qt.widgets.bausteine.abstaende.mass import BANDGRUPPE_ABSTAND, BANDGRUPPE_KNOPF_ZUGABE, BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL, BANDGRUPPE_RAND_OBEN
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 

@@ -14,12 +14,13 @@ from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from framework.ki.dienst import ki as K
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 
 
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_LISTE_AUSWAHL, HOEHE_LISTE_KURZ, RAND_KEIN
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_LANG
-from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge import modell_felder_fuellen
+from vcl.qt.widgets.dialoge.ki.modell_zuweisung import modell_felder_fuellen
 
 
 

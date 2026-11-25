@@ -22,7 +22,8 @@ from writer.kontextmenues.text_werkzeuge import TEXTTOOLS
 from writer.kontextmenues.tabellen_werkzeuge import TABELLENTOOLS
 from vcl.qt.widgets.ribbon.band_leiste import NICHT_DA, STILE_KATALOG
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, BREITE_LEISTENKNOPF_MIN, ICON_GROSS, ICON_NORMAL, RAND_KEIN, RAND_SYMBOLLEISTE
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 T = "trenner"

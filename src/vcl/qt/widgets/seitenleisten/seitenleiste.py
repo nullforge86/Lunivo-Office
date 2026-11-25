@@ -93,7 +93,8 @@ class SchreibhilfePanel(QWidget):
         # Für wen?
         v.addWidget(trennlinie(tief=True))
         # Eine Zeile statt zwei Reihen Chips: „Für wen?“ als Auswahl, daneben „Worum geht's?“ — der Platz gehört den Funden
-        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
+        from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
         kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
         fw = kleintext_label("Für wen")
         self.thema = Auswahlfeld()

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, 
 
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.ueberlauf_leiste import UeberlaufLeiste
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
 
 

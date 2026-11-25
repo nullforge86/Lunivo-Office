@@ -8,7 +8,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen
 

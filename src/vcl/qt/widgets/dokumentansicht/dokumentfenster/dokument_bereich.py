@@ -35,7 +35,8 @@ class DocumentTab(QScrollArea):
         for name, vorlage in eingebaute_vorlagen().items():
             dokument.vorlagen.setdefault(name, vorlage)
         self.editor = KernEditor(dokument)
-        from vcl.qt.widgets.dokumentansicht.ansicht.lineal import LinealH, LinealV
+        from vcl.qt.widgets.dokumentansicht.ansicht.lineal_h import LinealH
+        from vcl.qt.widgets.dokumentansicht.ansicht.lineal_v import LinealV
         # Die Lineale stehen fest am Rand des Fensters (im Rand des Viewports) und folgen dem Blatt beim Rollen
         self.lineal_h = LinealH(self); self.lineal_v = LinealV(self)
         self.lineal_h.hide(); self.lineal_v.hide()
@@ -79,7 +80,7 @@ class DocumentTab(QScrollArea):
 
     def _lineale_anordnen(self) -> None:
         """Lineale in den Rand des Viewports legen; nur im Drucklayout."""
-        from vcl.qt.widgets.dokumentansicht.ansicht.lineal import HOEHE
+        from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE
         h, v = self._lineale if self.layout_art in ("blatt", "kern") else (False, False)
         self.setViewportMargins(HOEHE if v else 0, HOEHE if h else 0, 0, 0)
         self.lineal_h.setVisible(h); self.lineal_v.setVisible(v)

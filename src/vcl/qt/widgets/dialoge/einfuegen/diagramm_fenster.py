@@ -21,7 +21,8 @@ from PySide6.QtWidgets import (
 
 from framework.schnittstellen.datentypen.farben import Farbe
 from core.diagramme import diagramm as D
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.abstaende.mass import QWIDGETSIZE_MAX, SCHRIFT_DIAGRAMMNAME_FAKTOR
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
@@ -219,7 +220,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
 
     def _daten(self) -> None:
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DiagrammDatenDialog
+        from vcl.qt.widgets.dialoge.einfuegen.diagramm_daten_dialog import DiagrammDatenDialog
         d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
 
         def fertig():

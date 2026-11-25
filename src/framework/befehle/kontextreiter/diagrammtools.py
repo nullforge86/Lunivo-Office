@@ -87,7 +87,7 @@ class DiagrammToolsBefehle:
             self._dg_set()
             return
         from core.diagramme import diagramm as D
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DiagrammDatenDialog
+        from vcl.qt.widgets.dialoge.einfuegen.diagramm_daten_dialog import DiagrammDatenDialog
         dlg = DiagrammDatenDialog(self.w, d.get("titel", ""), list(d.get("kategorien") or D.BEISPIEL_KATEGORIEN),
                                   dict(d.get("reihen") or D.BEISPIEL_REIHEN))
         if dlg.exec():

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QComboBox, QLabel
 from core.diagramme.formatierung import diagramm_format as F
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchrittFeld
-from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 RICHTUNGEN = (("waagerecht", "Horizontal"), ("dreh90", "Um 90° drehen"), ("dreh270", "Um 270° drehen"), ("gestapelt", "Gestapelt"))

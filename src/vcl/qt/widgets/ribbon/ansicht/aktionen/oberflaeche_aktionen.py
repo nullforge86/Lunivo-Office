@@ -27,7 +27,8 @@ class OberflaecheAktionen:
             self.w.neu_bauen_band()
 
     def schnellzugriffAnpassen(self, k=None):
-        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import SchnellzugriffDialog, lade_json
+        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import SchnellzugriffDialog
+        from vcl.qt.widgets.dialoge.oberflaeche_dialoge_hilfen import lade_json
         from vcl.qt.widgets.ribbon.band_leiste import RegisterBand
         akt = lade_json(self.w.settings, "ui/schnellzugriff", None)
         if akt is None:
@@ -37,7 +38,7 @@ class OberflaecheAktionen:
 
     def symbolTauschen(self, k=None, name=None):
         """Symbol austauschen (Ansicht ▸ Oberfläche, Optionen — und Rechtsklick auf einen Knopf, dann mit dessen Symbol)."""
-        from vcl.qt.widgets.dialoge.oberflaeche_dialoge import SymbolTauschenDialog
+        from vcl.qt.widgets.dialoge.symbol_tauschen_dialog import SymbolTauschenDialog
         d = SymbolTauschenDialog(self.w, self.w.settings, name)
         d.exec()
         if d.geaendert:

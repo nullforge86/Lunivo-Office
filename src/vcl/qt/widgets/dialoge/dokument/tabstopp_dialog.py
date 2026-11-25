@@ -61,7 +61,8 @@ def _text(mm: float, art: str, fuell: str = "") -> str:
 
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 class TabstoppDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, stopps=(), standard_mm: float | None = None):
         """``standard_mm``: Standardabstand der Tabstopps des Dokuments (``None``: das Feld bleibt weg)."""

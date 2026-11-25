@@ -22,11 +22,12 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGro
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import _PT_MM, EinheitFeld, spin
 from vcl.qt.widgets.dialoge.formatierung.text_format import BETONUNG, UNTERSTREICHUNG, ZEICHEN, groesse_feld, zeichne_absaetze, zu_zeichen
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_SCHRIFTART, GROESSE_UNTERSTREICHUNG_BILD, GROESSE_UNTERSTREICHUNG_BILD_HOCH, RAND_DIALOG_GRUPPE, SCHRIFT_HINWEIS
-from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_MIN_ZEICHEN, DROPDOWN_ZEICHEN_MITTEL
 
 SCHNITTE = ("Regulär", "Kursiv", "Fett", "Fett Kursiv")
@@ -56,7 +57,9 @@ def _schnitt_combo() -> QComboBox:
 
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from framework.schnittstellen.datentypen.farben import Farbe
 def _ueberschrift(text: str) -> QLabel:
     return abschnittstitel(text)

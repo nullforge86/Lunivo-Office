@@ -1,23 +1,9 @@
-"""Die Schnittstelle der Oberfläche zum Dokumentenkern: Der Editor des Dokument-Tabs.
-
-``KernEditor`` hält weder Dokumentinhalt noch eine eigene Bearbeitungslogik. Er übersetzt die Befehle des Bandes (``fett``, ``set_alignment``,
-``insert_table`` …) in Operationen der Bearbeitungssitzung (``core.editing.Bearbeitungssitzung``) und liest Zustände (Zeichenformat an der
-Schreibmarke, Ausrichtung, Seiteneinrichtung) aus Modell und Layout. Gezeichnet und bedient wird über die Zeichenfläche
-(``oberflaeche/dokument/ansicht/dokument_ansicht.py``), die er als ``ansicht`` besitzt.
-
-Ein Befehl, für den die Schnittstelle noch keine Operation hat, wird im Protokoll als „noch nicht angebunden“ gemeldet und tut nichts; so entsteht die
-Liste dessen, was noch fehlt, von selbst (``nicht_angebunden``).
-"""
 from __future__ import annotations
-
 import logging
-
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
-
 from core.dokument import Dokument
 from core.dokument.dokument import Auswahl, Position
-from core.formatvorlagen.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
 from core.bearbeitung import Bearbeitungssitzung
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
@@ -26,19 +12,33 @@ from vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht import DokumentAnsi
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoten import FreieBilderKnotenMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_objekte import KernObjekte
-from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle import KernBefehle, katalog_zu_vorlage
+from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle import KernBefehle
+from core.formatvorlagen.zeichen import stile
+from vcl.qt.widgets.bausteine.farben.farben import TABELLENRAND_SCHWARZ
+from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_cursor import KernCursor
+
 
 log = logging.getLogger(__name__)
-from framework.schnittstellen.datentypen.farben import Farbe
-from core.formatvorlagen.zeichen import stile
+
 
 STYLES = dict.fromkeys(stile.NAMEN)         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
+
+
 EINFUEGE_MODI = ["Quellformatierung beibehalten", "Zielformatierung verwenden", "Nur Text"]
-from vcl.qt.widgets.bausteine.farben.farben import FESTE_FARBEN, TABELLENRAND_SCHWARZ  # noqa: E402,F401   (Farben nachverfolgter Änderungen)
+
+
 INS_STILE = ["Unterstrichen", "Doppelt unterstrichen", "Fett", "Kursiv", "Keine"]
+
+
 DEL_STILE = ["Durchgestrichen", "Fett", "Kursiv", "Keine"]
+
+
 nicht_angebunden: set = set()                       # Namen der Befehle, die der Editor noch nicht kennt (für die Aufgabenliste)
+
+
 STANDARD_PT = 11.0
+
+
 LISTEN_ART = {"bullet": "disc", "number": "dezimal"}
 
 
@@ -129,166 +129,6 @@ class KernListe:
     def stil(self) -> str:
         """Art der Liste auf der Ebene des Absatzes: ``disc``, ``circle``, ``square``, ``dezimal``, ``klein``, ``gross`` …"""
         return self.definition.ebenen[min(self.ebene, len(self.definition.ebenen) - 1)].stil
-
-
-class KernCursor:
-    """Ein Textzeiger mit den gebräuchlichen Aufrufen eines Qt-Textcursors, aber auf dem Dokumentmodell: Stellen sind Zeichenstellen im Rohtext
-    (Absätze durch ein Zeichen getrennt). Er startet an der Auswahl des Editors; ``KernEditor.setTextCursor`` übernimmt seine Stellen.
-    Schreibende Aufrufe (``insertText``, ``removeSelectedText``) wirken über die Bearbeitungssitzung an der Auswahl des Editors."""
-
-    class MoveMode:
-        MoveAnchor, KeepAnchor = 0, 1
-
-    class MoveOperation:
-        NoMove, Start, StartOfLine, StartOfBlock, StartOfWord, PreviousBlock, PreviousCharacter, PreviousWord = 0, 1, 2, 3, 4, 5, 6, 7
-        EndOfLine, EndOfWord, EndOfBlock, NextBlock, NextCharacter, NextWord, End = 8, 9, 10, 11, 12, 13, 14
-
-    class SelectionType:
-        WordUnderCursor, LineUnderCursor, BlockUnderCursor, Document = 0, 1, 2, 3
-
-    MoveAnchor, KeepAnchor = 0, 1
-    NoMove, Start, StartOfLine, StartOfBlock, StartOfWord, PreviousBlock, PreviousCharacter, PreviousWord = 0, 1, 2, 3, 4, 5, 6, 7
-    EndOfLine, EndOfWord, EndOfBlock, NextBlock, NextCharacter, NextWord, End = 8, 9, 10, 11, 12, 13, 14
-    WordUnderCursor, LineUnderCursor, BlockUnderCursor, Document = 0, 1, 2, 3
-
-    def __init__(self, editor: "KernEditor"):
-        self._e = editor
-        a = editor.sitzung.auswahl
-        self._anker, self._kopf = editor.position_im_text(a.anker), editor.position_im_text(a.kopf)
-
-    # ---- Stellen ---------------------------------------------------------------------------------------------------------------------
-    def _text(self) -> str:
-        return self._e.rohtext()
-
-    def _ende(self) -> int:
-        return len(self._text())
-
-    def position(self) -> int:
-        return self._kopf
-
-    def anchor(self) -> int:
-        return self._anker
-
-    def hasSelection(self) -> bool:
-        return self._anker != self._kopf
-
-    def selectionStart(self) -> int:
-        return min(self._anker, self._kopf)
-
-    def selectionEnd(self) -> int:
-        return max(self._anker, self._kopf)
-
-    def selectedText(self) -> str:
-        return self._text()[self.selectionStart():self.selectionEnd()]
-
-    def setPosition(self, pos: int, mode: int = 0) -> None:
-        pos = max(0, min(int(pos), self._ende()))
-        self._kopf = pos
-        if not mode:
-            self._anker = pos
-
-    def clearSelection(self) -> None:
-        self._anker = self._kopf
-
-    def atBlockEnd(self) -> bool:
-        return self._kopf >= self._absatz_grenzen(self._kopf)[1]
-
-    def atBlockStart(self) -> bool:
-        return self._kopf <= self._absatz_grenzen(self._kopf)[0]
-
-    def atStart(self) -> bool:
-        return self._kopf == 0
-
-    def atEnd(self) -> bool:
-        return self._kopf >= self._ende()
-
-    def _absatz_grenzen(self, pos: int) -> tuple:
-        """(Anfang, Ende) des Absatzes, in dem die Stelle liegt (Stellen im Rohtext)."""
-        n = 0
-        for a in self._e.sitzung.dokument.absaetze():
-            if pos <= n + a.laenge:
-                return n, n + a.laenge
-            n += a.laenge + 1
-        return n, n
-
-    def movePosition(self, op: int, mode: int = 0, n: int = 1) -> bool:
-        t, k = self._text(), self._kopf
-        for _ in range(max(1, n)):
-            if op == self.Start:
-                k = 0
-            elif op == self.End:
-                k = len(t)
-            elif op in (self.StartOfBlock, self.StartOfLine):
-                k = self._absatz_grenzen(k)[0]
-            elif op in (self.EndOfBlock, self.EndOfLine):
-                k = self._absatz_grenzen(k)[1]
-            elif op == self.NextCharacter:
-                k = min(len(t), k + 1)
-            elif op == self.PreviousCharacter:
-                k = max(0, k - 1)
-            elif op == self.NextBlock:
-                k = min(len(t), self._absatz_grenzen(k)[1] + 1)
-            elif op == self.PreviousBlock:
-                von = self._absatz_grenzen(k)[0]
-                k = self._absatz_grenzen(max(0, von - 1))[0] if von > 0 else 0
-            elif op in (self.StartOfWord, self.PreviousWord):
-                while k > 0 and not t[k - 1].isalnum():
-                    k -= 1
-                while k > 0 and t[k - 1].isalnum():
-                    k -= 1
-            elif op in (self.EndOfWord, self.NextWord):
-                while k < len(t) and not t[k].isalnum():
-                    k += 1
-                while k < len(t) and t[k].isalnum():
-                    k += 1
-        self._kopf = k
-        if not mode:
-            self._anker = k
-        return True
-
-    def select(self, art: int) -> None:
-        t, k = self._text(), self._kopf
-        if art == self.Document:
-            self._anker, self._kopf = 0, len(t)
-        elif art in (self.BlockUnderCursor, self.LineUnderCursor):
-            self._anker, self._kopf = self._absatz_grenzen(k)
-        else:
-            von = bis = k
-            while von > 0 and t[von - 1].isalnum():
-                von -= 1
-            while bis < len(t) and t[bis].isalnum():
-                bis += 1
-            self._anker, self._kopf = von, bis
-
-    # ---- Schreiben (über die Sitzung des Editors) ----------------------------------------------------------------------------------
-    def _uebernehmen(self) -> None:
-        self._e.setTextCursor(self)
-
-    def insertText(self, text: str, _format=None) -> None:
-        """Fügt Text an dieser Stelle ein (eine Auswahl wird ersetzt); ein übergebenes Qt-Format bedeutet: ohne Zeichenformat des Umfelds."""
-        self._uebernehmen()
-        self._e.ansicht._aendern(lambda s: s.text_einfuegen(text, format={} if _format is not None else None))
-        self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
-
-    def removeSelectedText(self) -> None:
-        self._uebernehmen()
-        self._e.ansicht._aendern(lambda s: s.loeschen())
-        self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
-
-    def beginEditBlock(self) -> None:
-        pass
-
-    def endEditBlock(self) -> None:
-        pass
-
-    # ---- Umfeld ----------------------------------------------------------------------------------------------------------------------
-    def currentTable(self):
-        """Die Tabelle, in der die Schreibmarke steht (sonst ``None``)."""
-        return self._e.tabelle_an_marke()
-
-    def currentList(self):
-        """Die Liste des Absatzes an der Schreibmarke (sonst ``None``)."""
-        return self._e.liste_an_marke()
 
 
 class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderKnotenMixin, QObject):

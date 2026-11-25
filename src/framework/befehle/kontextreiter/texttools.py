@@ -236,7 +236,7 @@ class TextToolsBefehle:
 
     def _tt_listendialog(self, seite: str) -> None:
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
-        from vcl.qt.widgets.dialoge.dokument.liste_dialog import ListenDialog
+        from vcl.qt.widgets.dialoge.dokument.listen_dialog import ListenDialog
         d = ListenDialog(self.w, self._wa().get("liste") if isinstance(self._wa().get("liste"), dict) else None, seite=seite)
         if ausfuehren(d):
             self._tt_liste_setzen(d.ergebnis())

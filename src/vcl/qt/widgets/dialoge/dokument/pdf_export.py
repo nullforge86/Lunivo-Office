@@ -25,7 +25,8 @@ from PySide6.QtWidgets import (
 
 from filter.pdf.pdf_export import DRUCK, PdfWahl, kennwort_fehler
 
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FELDHOEHE as FELD_H, FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FELDHOEHE as FELD_H, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_EXPORT_ABSCHNITT, ABSTAND_KLEIN, ABSTAND_NORMAL, ABSTAND_ZEILE, RAND_EXPORT_ABSCHNITT, RAND_EXPORT_FENSTER, RAND_EXPORT_SCHUTZ, RAND_EXPORT_SEITENZEILE, RAND_EXPORT_WEITERE, RAND_KEIN, RAND_OBEN_SEITE, RAND_ZEILE
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 

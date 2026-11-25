@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel, QWidget
 
-from vcl.qt.widgets.bausteine.abstaende.raster import RasterLayout, RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
+from vcl.qt.widgets.bausteine.abstaende.raster_hilfen import RasterLayout
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRaster
 
 from framework.schnittstellen.datentypen.farben import Farbe

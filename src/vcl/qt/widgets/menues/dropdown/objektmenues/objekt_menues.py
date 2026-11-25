@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QMenu
 
 from core.formatierung.fuellung import muster as M
 from core.objekte.formen.linie import LINIENBREITEN, Linie
-from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbPalette
+from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
 from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile, linien_symbol
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole

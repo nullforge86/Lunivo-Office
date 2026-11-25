@@ -48,7 +48,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         import json
         from core.referenzen.querverweise import querverweis
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import HyperlinkDialog
+        from vcl.qt.widgets.dialoge.einfuegen.hyperlink_dialog import HyperlinkDialog
         try:
             adressen = json.loads(str(self.w.settings.get("einfuegen/mail_zuletzt", "") or "[]"))
         except ValueError:
@@ -77,7 +77,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         e = self.ed
         if not e:
             return
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import ObjektDialog
+        from vcl.qt.widgets.dialoge.einfuegen.objekt_dialog import ObjektDialog
         d = ObjektDialog(self.w, als_symbol=bool(als_symbol), ordner=self.w.settings.get("last_dir", ""))
         if not d.exec():
             return
@@ -176,7 +176,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         Anfang der Seite mit der Schreibmarke einen neuen Abschnitt (wie in der Vorlage)."""
         if not self.ed:
             return
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import SeitenzahlDialog
+        from vcl.qt.widgets.dialoge.einfuegen.seitenzahl_dialog import SeitenzahlDialog
         d = SeitenzahlDialog(self.w, self.ed.abschnitt_seite())
         if d.exec():
             self.ed.seitenzahl_anwenden(d.werte())
@@ -278,7 +278,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
     def sonderzeichen(self, k=None):
         """Fenster „Symbol“ (Weitere Symbole …) in der Seitenleiste; „Einfügen“ setzt das Zeichen an die Schreibmarke."""
-        from vcl.qt.widgets.dialoge.einfuegen.sonderzeichen import SonderzeichenDialog
+        from vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_dialog import SonderzeichenDialog
         e = self.ed
         if e:
             SonderzeichenDialog(self.w, e.insertPlainText, self._symbol_daten(), bei_tasten=self.symbol_tasten_anwenden).exec()
@@ -286,7 +286,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
     def _symbol_daten(self):
         """Die eine Datenbasis von Klappe und Fenster „Symbol“: zuletzt verwendet, benutzerdefinierte Liste, Tastenkombinationen."""
-        from vcl.qt.widgets.dialoge.einfuegen.sonderzeichen import SymbolDaten
+        from vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_hilfen import SymbolDaten
         return SymbolDaten(self.w.settings, self.BENUTZER_SYMBOLE, self.ZULETZT_ANZAHL)
 
 
@@ -467,7 +467,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         import re
         from core.dokument import felder as F
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import FelderDialog
+        from vcl.qt.widgets.dialoge.einfuegen.felder_dialog import FelderDialog
         t = self.w.current_tab()
         kontext = F.kontext_sammeln(self.ed, self.w.settings.get("benutzer/name", ""), getattr(t, "path", "") or "")
         kontext["serienfelder"] = list((getattr(t, "serie", None) or {}).get("spalten", []))
@@ -546,7 +546,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def textInTabelle(self, k=None):
         if not self.ed:
             return
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import TrennerDialog
+        from vcl.qt.widgets.dialoge.einfuegen.trenner_dialog import TrennerDialog
         s = self.ed.sitzung
         texte = s.text().split("\n") if s.auswahl.leer is False else []
         if s.auswahl.leer is False:
@@ -562,7 +562,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def tabelleInText(self, k=None):
         if not self.ed:
             return
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import TrennerDialog
+        from vcl.qt.widgets.dialoge.einfuegen.trenner_dialog import TrennerDialog
         t = self.ed.tabelle_an_marke()
         if t is None:
             self.w.statusBar().showMessage("Die Schreibmarke steht in keiner Tabelle.", 5000)

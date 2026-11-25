@@ -66,7 +66,7 @@ class EinfuegenObjektBefehle:
 
     def zeichnen(self, k=None):
         if self.ed:
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import FormDialog
+            from vcl.qt.widgets.dialoge.einfuegen.form_dialog import FormDialog
             d = FormDialog(self.w)
             if d.exec():
                 from core.objekte.basis import frei_objekt as FO
@@ -86,7 +86,7 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from core.objekte.smartart import smartart as SA
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import SmartArtDialog
+        from vcl.qt.widgets.dialoge.einfuegen.smart_art_dialog import SmartArtDialog
         daten = SA.daten_der_auswahl(self.ed)
         if daten is None:
             self.w.statusBar().showMessage("Bitte zuerst ein SmartArt-Bild auswählen (Schreibmarke davor oder Bild markieren).", 5000)
@@ -117,7 +117,7 @@ class EinfuegenObjektBefehle:
     def wordart(self, k=None):
         if self.ed:
             from core.objekte.basis import frei_objekt as FO
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import WordArtDialog
+            from vcl.qt.widgets.dialoge.einfuegen.word_art_dialog import WordArtDialog
             d = WordArtDialog(self.w, self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or "Ihr Text")
             if d.exec():
                 daten = {"text": d.text.text() or " ", "vorlage": d.vorlage_nr(), "schrift": d.schrift.text() or "Liberation Sans",
@@ -141,7 +141,7 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from core.objekte.basis import frei_objekt as FO
-        from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import WordArtDialog
+        from vcl.qt.widgets.dialoge.einfuegen.word_art_dialog import WordArtDialog
         d0 = FO.daten_lesen(self.ed, "wordart")
         if d0 is None:
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt-Objekt markieren.")
@@ -284,7 +284,7 @@ class EinfuegenObjektBefehle:
     def piktogramm(self, k=None):
         if self.ed:
             from core.bearbeitung import einfuegen as E
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import PiktogrammDialog
+            from vcl.qt.widgets.dialoge.einfuegen.piktogramm_dialog import PiktogrammDialog
             d = PiktogrammDialog(self.w)
             if d.exec():
                 n, farbe = d.ergebnis()
@@ -416,7 +416,7 @@ class EinfuegenObjektBefehle:
     def datumUhrzeit(self, k=None):
         if self.ed:
             from core.dokument import felder as F
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DatumDialog
+            from vcl.qt.widgets.dialoge.einfuegen.datum_dialog import DatumDialog
             d = DatumDialog(self.w, self.w.settings.get("einfuegen/datum_sprache", "de_DE") or "de_DE")
             if d.exec() and d.ergebnis():
                 self.w.settings.set("einfuegen/datum_sprache", d.sprache.currentData())
@@ -429,7 +429,7 @@ class EinfuegenObjektBefehle:
 
     def textbaustein(self, k=None):
         if self.ed:
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import BausteinDialog
+            from vcl.qt.widgets.dialoge.einfuegen.baustein_dialog import BausteinDialog
             BausteinDialog(self.w, self.ed).exec()
 
 

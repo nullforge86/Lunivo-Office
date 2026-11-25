@@ -20,7 +20,8 @@ from core.text import ki_markdown
 from vcl.qt.widgets.bausteine.schrift.beschriftung import md_label, text_label
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittstitel
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from vcl.qt.widgets.bausteine.drag_drop.zwischenablage import in_zwischenablage
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, ABSTAND_NORMAL, CHAT_AUSZUG_ZEILEN, CHAT_KNOPF, CHAT_MINIATUR, CHAT_NUTZER_BLASE, CHAT_NUTZER_LEER, HOEHE_KNOPF_GROSS, ICON_NORMAL, RAND_BOX_KOMPAKT, RAND_KEIN
