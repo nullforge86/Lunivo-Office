@@ -74,17 +74,10 @@ oberflaeche.zeichnen.rendering
 
 NOCH_NICHT_UMGESTELLT: frozenset[str] = frozenset("lunivo_writer." + n for n in _NAMEN)
 
-# Module der Oberfläche mit Festwerten für das Aussehen (Größen, Ränder, Schriftgrößen, Stile als Zahlen oder Zeichenketten in der Datei). Sie sollen nur noch Rollen und Maße aus
-# ``oberflaeche/baukasten/basis`` nennen, damit eine Änderung an einer Stelle alle Elemente gleichzeitig ändert. Auch diese Liste darf nur kleiner werden.
-NOCH_NICHT_UMGESTELLT_FESTWERTE: frozenset[str] = frozenset("lunivo_writer.oberflaeche." + n for n in """
-baukasten.dropdown.auswahl.zellen_raster baukasten.thema.thema baukasten.felder.farbwaehler
-""".split())
+# Die Übergangsliste der Darstellung (Bausteine, Farben, Maße, Schriften, Stile) steht beim Wächter selbst:
+# ``oberflaeche/baukasten/pruefung/darstellung_waechter.py`` (``DARSTELLUNG_NOCH_NICHT_UMGESTELLT``, Datei → Anzahl; darf nur kleiner werden).
 
 # Schnittstellen, die noch ``object`` oder fehlende Typangaben enthalten (die Editor-Fassade gibt dort noch Objekte des Kerns weiter). Auch diese Liste darf nur
 # kleiner werden; sie ist leer, wenn das Farmwork die Dokumente selbst hält und nur eigene ``frozen``-Datentypen herausgibt.
 NOCH_NICHT_UMGESTELLT_TYPEN: frozenset[str] = frozenset("lunivo_writer.farmwork.schnittstellen." + n for n in (
     "dokument", "seiten_port", "aenderungs_port", "vorschau"))
-
-# Module der Oberfläche, die Knöpfe, Haken, Auswahlknöpfe oder Zeilenfelder noch direkt bauen (``QPushButton(…)`` usw.), statt die Bausteine aus
-# ``oberflaeche/baukasten/bausteine`` zu verwenden (Form, Inhalt und Verhalten getrennt). Die Liste darf nur kleiner werden; neue Dateien kommen nie darauf.
-NOCH_NICHT_UMGESTELLT_BAUSTEINE: frozenset[str] = frozenset()      # leer: der Wächter ist ohne Ausnahmen scharf

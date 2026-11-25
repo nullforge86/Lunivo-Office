@@ -5,6 +5,7 @@ aus dem Thema, der Fokusrahmen über die Eigenschaft ``fokus``. Die Logik bleibt
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -76,7 +77,7 @@ class ChatEingabeKasten(QWidget):
         self._frei, self._beschaeftigt = True, False
         self._anhang: AnhangChip | None = None
         aussen = _spalte("eng", self)
-        self.kasten = QFrame(); als_karte(self.kasten, "eingabe"); self.kasten.setProperty("fokus", False)
+        self.kasten = rahmen_baustein("flach"); als_karte(self.kasten, "eingabe"); self.kasten.setProperty("fokus", False)
         kv = _spalte("standard", self.kasten); kv.setContentsMargins(ABSTAND_KLEIN, ABSTAND_KLEIN, ABSTAND_KLEIN, ABSTAND_KLEIN); kv.setSpacing(0)
         self.anhang_zeile = _spalte("kein")
         kv.addLayout(self.anhang_zeile)                       # leer, solange kein Bild angehängt ist

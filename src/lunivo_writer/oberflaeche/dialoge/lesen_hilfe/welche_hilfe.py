@@ -5,6 +5,7 @@ Tastenkürzel rufen."""
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
@@ -67,13 +68,13 @@ class HilfeWannDialog(PanelFaehig, QDialog):
         h.addWidget(_text("Jede Stufe ist langsamer als die darüber und klüger als sie. Fang oben an und geh nur so weit hinunter, wie du musst. "
                           "Die Stufen 1 bis 5 brauchen kein Internet und kein Konto."))
         h.addWidget(abschnittstitel("Die Stufen"))
-        karte = QFrame(); karte.setFrameShape(QFrame.StyledPanel); kv = _spalte("kein", karte)
+        karte = rahmen_baustein("panel"); kv = _spalte("kein", karte)
         for i, zeile in enumerate(STUFEN):
             kv.addWidget(self._zeile(*zeile, trenner=i > 0))
         h.addWidget(karte)
         h.addWidget(abschnittstitel("Wie sicher ein Fund ist"))
         h.addWidget(_text("Auch innerhalb von F7 gibt es Stufen. Jede Karte in der Seitenleiste trägt eins von vier Etiketten."))
-        karte2 = QFrame(); karte2.setFrameShape(QFrame.StyledPanel); k2 = _spalte("kein", karte2)
+        karte2 = rahmen_baustein("panel"); k2 = _spalte("kein", karte2)
         chips = []
         for i, (name, farbe, schrift, satz, rechts) in enumerate(_etiketten()):
             z = QWidget(); zv = _spalte("karte", z)

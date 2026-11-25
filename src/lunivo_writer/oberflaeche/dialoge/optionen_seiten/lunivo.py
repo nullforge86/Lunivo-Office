@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
@@ -288,7 +289,7 @@ class LunivoSeiten:
         ]
         f = p.gruppe(_t("optionen.lunivo.was_zusaetzlich_geholt_wurde"))
         for name, beschr, da, pfad, fehlt in karten:
-            k = QFrame(); k.setObjectName("optSchriftkarte")
+            k = rahmen_baustein("flach", name="optSchriftkarte")
             h = _reihe("karte", k)
             badge = QLabel("DA" if da else "—")
             badge.setAlignment(Qt.AlignCenter); badge.setFixedWidth(BREITE_KNOPF_KLEIN)

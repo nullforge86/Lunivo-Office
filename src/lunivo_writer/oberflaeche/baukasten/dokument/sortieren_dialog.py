@@ -12,6 +12,7 @@ from __future__ import annotations
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -129,7 +130,7 @@ class SortierenDialog(PanelFaehig, QDialog):
             g.breit(abschnittstitel(titel))
             self.schluessel.append(_Schluessel(g, self, mit_keine=n > 0))
         g.breit(abschnittstitel("Meine Liste enthält"))
-        kz = QFrame(); kz.setFrameShape(QFrame.StyledPanel); h = FlussLayout(14); h.setContentsMargins(*RAND_BOX_KOMPAKT); kz.setLayout(h)
+        kz = rahmen_baustein("panel"); h = FlussLayout(14); h.setContentsMargins(*RAND_BOX_KOMPAKT); kz.setLayout(h)
         self._kopf = QButtonGroup(self)
         self.mit_kopf, self.ohne_kopf = option("standard", "Überschriftenzeile"), option("standard", "Keine Überschriftenzeile")
         self._kopf.addButton(self.mit_kopf, 1); self._kopf.addButton(self.ohne_kopf, 0); self.ohne_kopf.setChecked(True)

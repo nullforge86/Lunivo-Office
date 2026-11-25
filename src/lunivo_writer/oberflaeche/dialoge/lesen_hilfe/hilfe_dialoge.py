@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from lunivo_writer.core.schrift import standard_datenbank
@@ -272,7 +273,7 @@ def erweiterungen_inhalt() -> QWidget:
     hin = QLabel(_t("hilfe.drei_teile_liegen_ausserhalb_des_program"))
     hin.setWordWrap(True); v.addWidget(hin)
     for da, name, text, groesse in _erweiterungen_liste():
-        karte = QFrame(); karte.setObjectName("erwKarte")
+        karte = rahmen_baustein("flach", name="erwKarte")
         h = _reihe("karte", karte)
         b = QLabel("DA" if da else "—"); b.setAlignment(Qt.AlignCenter); b.setFixedSize(*GROESSE_PLAKETTE)
         _rolle(b, "plakette", status="an" if da else "aus")

@@ -4,6 +4,7 @@ from __future__ import annotations
 from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, farbflaeche, rolle as _rolle
@@ -145,7 +146,7 @@ class LesenSeiten:
                         _t("optionen.lesen.atkinson_hyperlegible"): _t("optionen.lesen.unterscheidet_zeichen_wie_i_l_und_1")}
         reihe = QWidget(); rh = _reihe("zeile", reihe)
         for n in LESESCHRIFTEN:
-            k = QFrame(); k.setObjectName("optSchriftkarte")
+            k = rahmen_baustein("flach", name="optSchriftkarte")
             kv = _spalte("standard", k)
             name = QLabel(n)
             if n.lower() in vorhanden:

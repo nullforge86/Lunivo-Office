@@ -24,6 +24,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.mass import EINFUEGEN_LISTE_ZEILE
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_SCHIENE, BREITE_SEITENLEISTE, GROESSE_KNOPF_QUADRAT, GROESSE_RASTER_DATEIEN, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, HOEHE_KNOPF_HOCH, HOEHE_LISTE_MITTEL, ICON_GROSS, ICON_LISTE, RAND_KEIN, ZUGABE_LISTE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -622,7 +623,7 @@ class ObjektDialog(PanelFaehig, QDialog):
         g.breit(self.symbol)
         g.breit(abschnittstitel("Ergebnis"))
         v.addLayout(g)
-        kasten = QFrame(); kasten.setFrameShape(QFrame.StyledPanel); kh = _spalte("standard", kasten)
+        kasten = rahmen_baustein("panel"); kh = _spalte("standard", kasten)
         self.ergebnis_text = QLabel(); self.ergebnis_text.setWordWrap(True); kh.addWidget(self.ergebnis_text)
         v.addWidget(kasten)
         self.ok = fussleiste(self, v)

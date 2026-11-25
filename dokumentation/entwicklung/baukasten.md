@@ -57,7 +57,11 @@ Funktionsdatei nennt nur den Baustein und den Namen der Form. Jeder Baustein bes
 | `rahmen/` | `rahmen(form, karte=, name=, eigenschaften=)` | flach, panel, linie_waagerecht, linie_senkrecht |
 
 Eine neue Form entsteht in `form.py` des Bausteins mit einem Maß aus `basis/mass.py`, nie in der Funktionsdatei. Fachliche Farben haben sprechende Namen in `basis/farben.py`.
-Wächter: `tests/architektur/test_oberflaeche_nur_bausteine.py` (Übergangsliste `NOCH_NICHT_UMGESTELLT_BAUSTEINE` darf nur kleiner werden).
+Maße, Linienbreiten, Radien und Schriftgrößen stehen in `basis/mass.py`, Schriftarten in `basis/schriftarten.py`; Gestaltung nur über Rollen (`darstellung.rolle`, Aussehen in `oberflaeche_regeln.py`).
+Die Knöpfe haben zusätzlich Optionen wie `umschaltbar=`, `hand=`, `ohne_rand=`, `symbol_merken=` (Symbol folgt dem Themenwechsel), `symbolfarbe=`, `groesse=` und `objektname=`/`rolle=`;
+das Eingabefeld hat `passwort=`, die Option hat `gruppe=`.
+Wächter: `oberflaeche/baukasten/pruefung/darstellung_waechter.py` mit `tests/architektur/test_darstellung_baukasten.py` – meldet direkt gebaute Bedienelemente und Rahmen, `QGridLayout`,
+eigene `setStyleSheet`, Farbtexte, feste Zahlen (außer 0, 1, -1; Halbieren erlaubt) und Schriftartnamen. `DARSTELLUNG_NOCH_NICHT_UMGESTELLT` (Datei → Anzahl) darf nur kleiner werden.
 
 ## Regeln
 

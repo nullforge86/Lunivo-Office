@@ -5,6 +5,7 @@ den Editor: Ergebnisse melden sie über Signale (``vergleichOeffnen``, ``einstel
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -96,7 +97,7 @@ class NutzerBlase(QWidget):
         v = _spalte("eng", self)
         v.addWidget(abschnittstitel(TITEL_NUTZER), 0, Qt.AlignRight)
         zeile = _reihe("standard")
-        rahmen = QFrame(); als_karte(rahmen, "nutzer")
+        rahmen = rahmen_baustein("flach"); als_karte(rahmen, "nutzer")
         rv = _spalte("panel", rahmen)
         for b in bilder or []:
             rv.addWidget(miniatur(b.get("pfad", "")), 0, Qt.AlignLeft)
@@ -141,7 +142,7 @@ class KiBlase(QWidget):
             v.addLayout(z)
             return
         if titel == TITEL_DOKUMENT:                        # Dokumenttext: eine Karte mit Auszug und Knopf
-            kasten = QFrame(); als_karte(kasten, "karte")
+            kasten = rahmen_baustein("flach"); als_karte(kasten, "karte")
             kv0 = _spalte("panel", kasten)
             kv0.addWidget(abschnittstitel(titel))
             self.auszug = self._auszug(text); kv0.addWidget(self.auszug)
@@ -201,7 +202,7 @@ class FehlerKarte(QWidget):
     def __init__(self, dienst, fehler: dict):
         super().__init__()
         v = _spalte("standard", self)
-        rahmen = QFrame(); als_karte(rahmen, "fehler")
+        rahmen = rahmen_baustein("flach"); als_karte(rahmen, "fehler")
         rv = _spalte("standard", rahmen)
         rv.addWidget(text_label(fehler["titel"], fett=True))
         rv.addWidget(hinweis_label(fehler["text"]))

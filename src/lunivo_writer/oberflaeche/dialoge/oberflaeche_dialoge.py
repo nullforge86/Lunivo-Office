@@ -4,6 +4,7 @@ from __future__ import annotations
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
@@ -184,7 +185,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         t = QLabel("Symbol austauschen"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + SCHRIFT_UEBERSCHRIFT_PLUS_PT); t.setFont(f)
         g.breit(t)
         g.breit(_satz("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.", True))
-        kopf = QFrame(); kopf.setObjectName("tauschKopf")
+        kopf = rahmen_baustein("flach", name="tauschKopf")
         eigenschaft(kopf, rolle="rahmen")
         kh = FormularGitter(kopf); kh.setContentsMargins(*RAND_BOX)           # Symbol, darunter der Text: bei 300 px bricht nichts ab
         self.jetzt = QLabel(); self.jetzt.setFixedSize(*GROESSE_SYMBOL_JETZT); self.jetzt.setAlignment(Qt.AlignCenter)

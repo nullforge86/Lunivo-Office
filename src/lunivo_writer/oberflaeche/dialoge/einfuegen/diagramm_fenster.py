@@ -25,6 +25,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayo
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.basis.mass import QWIDGETSIZE_MAX, SCHRIFT_DIAGRAMMNAME_FAKTOR
 from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_KEIN, BREITE_LISTE_ARTEN, BREITE_VORSCHAU_DIAGRAMM, BREITE_VORSCHAU_DIAGRAMM_SCHMAL, GROESSE_BILD_DIAGRAMM, GROESSE_BILD_DIAGRAMM_SCHMAL, HOEHE_FELD, HOEHE_VORSCHAU_DIAGRAMM, ICON_MITTEL, RAND_BOX_KOMPAKT, RAND_KARTE_ZEILE, RAND_KEIN, RAND_OBEN_SEITE, ZUGABE_KNOPF, ZUGABE_LISTE_ARTEN, ZUGABE_RAHMEN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
@@ -50,7 +51,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
         self.kombi: list[tuple[str, bool]] = []
         v = _spalte("standard", self)
-        rahmen = QFrame(); rahmen.setFrameShape(QFrame.StyledPanel); h = _reihe("kein", rahmen)
+        rahmen = rahmen_baustein("panel"); h = _reihe("kein", rahmen)
         self._kompakt = False
         self.arten = QListWidget(); self.arten.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL)); self.arten.setFixedWidth(BREITE_LISTE_ARTEN)
         self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(ABSTAND_ENG)
@@ -105,7 +106,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
     def _kombi_tabelle(self) -> QWidget:
         w = QWidget(); v = _spalte("oben", w)
         v.addWidget(QLabel("Kombinationsdiagramme erstellen."))
-        self._kombi_rahmen = QFrame(); self._kombi_rahmen.setFrameShape(QFrame.StyledPanel)
+        self._kombi_rahmen = rahmen_baustein("panel")
         self._kombi_box = _spalte("panel", self._kombi_rahmen)
         self._kombi_gitter = None
         v.addWidget(self._kombi_rahmen)

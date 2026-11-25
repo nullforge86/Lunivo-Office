@@ -23,5 +23,4 @@ jobs:
             tests/architektur/test_farmwork_grenze.py \
             tests/architektur/test_farmwork_typen.py \
             tests/architektur/test_core_ohne_qt.py \
-            tests/architektur/test_oberflaeche_ohne_festwerte.py \
-            tests/architektur/test_oberflaeche_nur_bausteine.py
+            tests/architektur/test_darstellung_baukasten.py

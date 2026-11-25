@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
 
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
@@ -156,7 +157,7 @@ class SpeichernFenster(QDialog):
         self.k_hoch = self._knopf(_symbol("arrow-up"), _t("speichern.uebergeordneter_ordner"), self.hoch)
         for k in (self.k_zurueck, self.k_vor, self.k_hoch):
             leiste.addWidget(k)
-        self.pfad_leiste = QFrame(); self.pfad_leiste.setObjectName("sfPfad"); self.pfad_leiste.setMinimumHeight(HOEHE_KNOPF_GROSS)
+        self.pfad_leiste = rahmen_baustein("flach", name="sfPfad"); self.pfad_leiste.setMinimumHeight(HOEHE_KNOPF_GROSS)
         self.pfad_layout = _reihe("pfadleiste", self.pfad_leiste)
         leiste.addWidget(self.pfad_leiste, 1)
         leiste.addSpacing(_A_MITTEL)
