@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 from PySide6.QtWidgets import QMessageBox
-from framework.ki.dienst import assistent_lauf as AL
+from writer.funktionen import ki as KD
 
 
 class KIDauerbetriebMixin:
@@ -76,7 +76,7 @@ class KIDauerbetriebMixin:
             self._dauer_dokument = self._dauer_editor.document() if self._dauer_editor is not None else None
         except RuntimeError:
             self._dauer_editor = self._dauer_dokument = None
-        self._dauer_timer.start(int(min(AL.verzoegerung_begrenzen(a["verzoegerung"]) for a in aktiv) * 1000))
+        self._dauer_timer.start(int(min(KD.verzoegerung_begrenzen(a["verzoegerung"]) for a in aktiv) * 1000))
 
     def _dauer_eingabe(self, a: dict):
         ed = self.w.current_editor()
@@ -91,7 +91,7 @@ class KIDauerbetriebMixin:
         else:
             b = c.block()
             text, basis, stelle = b.text(), b.position(), "absatz"
-        return {"ed": ed, "text": AL.eingabe_kuerzen(text), "basis": basis, "markiert": True, "rev": ed.document().revision(), "stelle": stelle}
+        return {"ed": ed, "text": KD.eingabe_kuerzen(text), "basis": basis, "markiert": True, "rev": ed.document().revision(), "stelle": stelle}
 
     def _dauer_editor_passt(self) -> bool:
         """Der Timer gehört zu dem Editor, dessen Änderung ihn ausgelöst hat; ein Tabwechsel darf keinen Assistenten im neuen Tab starten."""
@@ -160,7 +160,7 @@ class KIDauerbetriebMixin:
         if getattr(self, "_dauer_nachholen", False) and not self._arbeit_laeuft:
             self._dauer_nachholen = False
             if self.dauerbetrieb():
-                self._dauer_timer.start(int(AL.MINDESTABSTAND * 1000))
+                self._dauer_timer.start(int(KD.MINDESTABSTAND * 1000))
 
     def _dauer_los(self) -> None:
         """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
@@ -175,7 +175,7 @@ class KIDauerbetriebMixin:
             if eing is None:
                 continue
             schluessel = (a["id"], eing["stelle"] if eing["stelle"] == "markierung" else eing["ed"].textCursor().blockNumber())
-            if not AL.absatz_geaendert(self._dauer_zuletzt.get(schluessel), eing["text"]):
+            if not KD.absatz_geaendert(self._dauer_zuletzt.get(schluessel), eing["text"]):
                 continue
             modell = a.get("modell") or None
             if self._dauer_erlaubt(a, modell):
@@ -193,8 +193,8 @@ class KIDauerbetriebMixin:
             self._dauer_aus(a, r["fehler"])
             return
         modus, alt = a["modus"], eing["text"]
-        text, begruendung = AL.trenne_begruendung(r.get("text", ""))
-        wirkt = AL.ergebnis_wirkt(alt, text) if modus in ("ersetzen", "anhaengen", "hervorheben") else bool(text.strip())
+        text, begruendung = KD.trenne_begruendung(r.get("text", ""))
+        wirkt = KD.ergebnis_wirkt(alt, text) if modus in ("ersetzen", "anhaengen", "hervorheben") else bool(text.strip())
         if not wirkt:
             self.status.emit(f"„{a['name']}“: nichts zu ändern." + self._preis(r.get("cent")))
             return
@@ -217,7 +217,7 @@ class KIDauerbetriebMixin:
         finally:
             self._dauer_eigen = False
         if self._dauer_timer.isActive() is False and self.dauerbetrieb():
-            self._dauer_timer.start(int(AL.MINDESTABSTAND * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
+            self._dauer_timer.start(int(KD.MINDESTABSTAND * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
 
     def _dauer_kommentar(self, ed, eing, text: str, autor: str) -> None:
         alt = ed.sitzung.auswahl

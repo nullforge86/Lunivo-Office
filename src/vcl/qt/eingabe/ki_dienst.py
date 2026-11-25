@@ -5,9 +5,7 @@ import os
 import threading
 
 from system.plattform.pfade import data_dir
-from framework.ki.dienst import ki as K
-from framework.ki.dienst import assistent_lauf as AL
-from framework.ki.chat.chat_modell import ChatModell
+from writer.funktionen import ki as KD
 
 from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal
 from vcl.qt.eingabe.ki.ki_anfragen import KIAnfragenMixin
@@ -34,10 +32,10 @@ class KIDienst(KIAnfragenMixin, KIAktionenMixin, KIDauerbetriebMixin, KIChatMixi
         super().__init__(parent)
         self.w = fenster
         self.assistant = assistant
-        self.konfig = K.KIKonfig(os.path.join(data_dir(), "ki.json"))
-        self.ki = K.KI(self.konfig, assistant.gelernt.daten)
+        self.konfig = KD.ki_konfiguration(os.path.join(data_dir(), "ki.json"))
+        self.ki = KD.ki_anbinden(self.konfig, assistant.gelernt.daten)
         self._arbeit_laeuft = False
-        self.chat_modell = ChatModell()
+        self.chat_modell = KD.chat_verlauf()
         self.ergebnisse: list[dict] = []          # „Alle Ergebnisse anzeigen“: die KI-Antworten dieser Sitzung (neueste zuletzt)
         self._pool = QThreadPool(self)
         self._sig = _Sig()
@@ -50,7 +48,7 @@ class KIDienst(KIAnfragenMixin, KIAktionenMixin, KIDauerbetriebMixin, KIChatMixi
         self.ki.server_frage = self._server_erlaubt
         self.ki.faehigkeit_bekannt = self.geaendert.emit          # Ollama hat die Fähigkeiten des Modells gemeldet: Menüs neu lesen
         self.konfig.d["empfaenger"] = assistant.thema
-        self._drossel = AL.Drossel()                  # fortlaufende Assistenten: Mindestabstand und Höchstzahl je Stunde
+        self._drossel = KD.assistenten_drossel()                  # fortlaufende Assistenten: Mindestabstand und Höchstzahl je Stunde
         self._dauer_timer = QTimer(self)
         self._dauer_timer.setSingleShot(True)
         self._dauer_timer.timeout.connect(self._dauer_los)

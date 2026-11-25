@@ -15,7 +15,7 @@ from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QFrame, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QWidget
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from framework.ki.anbieter import modellfaehigkeit as MF
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.seitenleisten.chat.chat_anhang import AnhangChip
 from vcl.qt.widgets.seitenleisten.chat.chat_blase import SymbolKnopf
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -25,7 +25,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, CHAT_EINGABE_
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-WERKZEUG_NAMEN = {"fragen": "Vor Ausführung fragen", "automatisch": "Automatisch genehmigen"}      # Reihenfolge wie ``MF.WERKZEUG_MODI``
+WERKZEUG_NAMEN = {"fragen": "Vor Ausführung fragen", "automatisch": "Automatisch genehmigen"}      # Reihenfolge wie ``KD.WERKZEUG_MODI``
 PLATZHALTER = "Frag mich etwas …"
 FUSSZEILE = "KI-Chat kann Fehler machen. Überprüfen Sie wichtige Informationen."
 
@@ -151,7 +151,7 @@ class ChatEingabeKasten(QWidget):
         pfad, _ = Dateifenster.getOpenFileName(self, "Lokales Bild hinzufügen", "", "Bilder (*.png *.jpg *.jpeg *.webp)")
         if not pfad:
             return
-        p = MF.bild_pruefen(pfad)                                 # Fehler (Format, Größe) meldet der Dienst beim Senden genauso; hier schon beim Anhängen
+        p = KD.bild_pruefen(pfad)                                 # Fehler (Format, Größe) meldet der Dienst beim Senden genauso; hier schon beim Anhängen
         if "fehler" in p:
             self.meldung.emit(p["fehler"]); return
         self.anhang_setzen(p["pfad"], p["bytes"])
@@ -220,8 +220,8 @@ class ChatEingabeKasten(QWidget):
         """Zeilen unter der Modellliste: Denktiefe und Berechtigungen, je mit dem aktuellen Wert rechts und einem Untermenü. Grau mit Hinweis, wenn nicht möglich."""
         d = self.d
         stufe = d.denktiefe()
-        sub = menue.untermenue("Denktiefe", symbole.icon("brain", ICON_NORMAL), d.kann_denken(), wert=MF.DENKSTUFEN[stufe]["name"], tip=d.denken_hinweis())
-        for k, v in MF.DENKSTUFEN.items():
+        sub = menue.untermenue("Denktiefe", symbole.icon("brain", ICON_NORMAL), d.kann_denken(), wert=KD.DENKSTUFEN[stufe]["name"], tip=d.denken_hinweis())
+        for k, v in KD.DENKSTUFEN.items():
             sub.eintrag(v["name"], lambda k=k: d.denktiefe_setzen(k), haken=k == stufe)
         modus = d.werkzeugmodus()
         sub = menue.untermenue("Berechtigungen", symbole.icon("shield-check", ICON_NORMAL), d.werkzeuge_vorhanden(),
@@ -238,9 +238,8 @@ class ChatEingabeKasten(QWidget):
 
     def _vorlagen_fuellen(self, menue: MenueListe) -> None:
         """Untermenü „Vorlagen“: dieselben Anweisungen wie die Chips (Datenquelle ``chat_vorschlaege``); Klick füllt das Eingabefeld."""
-        from framework.ki.chat.chat_vorschlaege import chat_vorschlaege
         auswahl, leer = self.d.kontext()[:2]
-        for e in chat_vorschlaege(auswahl, leer, self.d.konfig):
+        for e in KD.chat_vorschlaege(auswahl, leer, self.d.konfig):
             if e["id"].startswith("assistent:"):
                 continue
             menue.eintrag(e["titel"], lambda a=e["anweisung"]: self.setText(a), tip=e["hinweis"])

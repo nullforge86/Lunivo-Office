@@ -1,8 +1,7 @@
 """KIAktionen: fachlich abgegrenzte KI-Dienstlogik."""
 from __future__ import annotations
 
-from framework.ki.dienst import ki as K
-from framework.ki.chat import chat_bezug as CB
+from writer.funktionen import ki as KD
 
 
 class KIAktionenMixin:
@@ -37,7 +36,7 @@ class KIAktionenMixin:
         return f" ({r['methode']})" if r.get("methode") else ""
 
     def text_aktion(self, aktion: str) -> None:
-        namen = dict(K.TEXT_AKTIONEN)
+        namen = dict(KD.TEXT_AKTIONEN)
         n = namen.get(aktion, aktion)
         self.starte(f"„{n}“ …", lambda t: self.ki.text_aktion(t, aktion),
                     lambda r, e: self._einsetzen(r, e, n + ".", "Markierung: " + n + "."))
@@ -48,7 +47,7 @@ class KIAktionenMixin:
         arbeit = lambda t: self.ki.eigener_assistent(t, a["prompt"])           # noqa: E731
 
         def melden(r, e=None) -> None:         # ersetzen/anhängen haben das Ergebnis schon ins Dokument geschrieben: kein zweites Anwenden
-            self.aktionErgebnis.emit(a["name"], r["text"], r.get("cent"), self._aktion_bezug(e) if e else CB.bezug_angewendet())
+            self.aktionErgebnis.emit(a["name"], r["text"], r.get("cent"), self._aktion_bezug(e) if e else KD.bezug_angewendet())
         if a["modus"] == "ersetzen":
             self.starte(f"„{a['name']}“ …", arbeit, lambda r, e: (self._einsetzen(r, e, a["name"] + ".", "Markierung: " + a["name"] + "."), melden(r)))
         elif a["modus"] == "anhaengen":

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import QMessageBox
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.eingabe.ki.arbeitslauf import _Lauf
 
 
@@ -95,7 +95,7 @@ class KIAnfragenMixin:
         leer = ed is None or not ed.document().toPlainText().strip()
         verbunden = self.verfuegbar() and self.ki.verfuegbar_fuer("chatbot")
         mid = self.ki.modell("chatbot") if verbunden else ""
-        name = next((m["name"] for m in self.konfig.alle_modelle() if m["id"] == mid), mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid)
+        name = next((m["name"] for m in self.konfig.alle_modelle() if m["id"] == mid), mid[len(KD.OLLAMA_MARKE):] if mid.startswith(KD.OLLAMA_MARKE) else mid)
         return auswahl, leer, verbunden, name
 
     def verfuegbar(self) -> bool:
@@ -153,7 +153,7 @@ class KIAnfragenMixin:
             return
         modell = modell or (self.ki.modell(aufgabe) if aufgabe else None)
         abgelehnt = not self._einwilligung(modell, "auszug" if eing.get("markiert") else "dokument", len(eing["text"]))
-        if abgelehnt and not (modell or "").startswith(K.AUTO_MARKE):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
+        if abgelehnt and not (modell or "").startswith(KD.AUTO_MARKE):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
             self.status.emit("Abgebrochen — es wurde nichts gesendet.")
             return
         self._arbeit_laeuft = True
@@ -256,7 +256,7 @@ class KIAnfragenMixin:
         if not text:
             self._hinweis_fenster("Text in Bild", "Markieren Sie zuerst den Text, der das Bild beschreibt.")
             return
-        if not self.konfig["aufgaben"].get("bildgenerierung", "").startswith(K.EIGEN_MARKE):
+        if not self.konfig["aufgaben"].get("bildgenerierung", "").startswith(KD.EIGEN_MARKE):
             self.status.emit("Dafür fehlt ein Modell mit „Bilder“ — in der KI-Konfiguration eintragen.")
             self.w.befehle.w_kiKonfiguration()
             return
@@ -297,14 +297,14 @@ class KIAnfragenMixin:
     # ---- Anwenden ---------------------------------------------------------------------------
 
     def _preis(self, cent) -> str:
-        return (" · " + K.als_geld(cent)) if cent is not None else ""
+        return (" · " + KD.als_geld(cent)) if cent is not None else ""
 
     def _einsetzen(self, r, eing, ganz_text, markiert_text) -> None:
         if r["text"].strip() == eing["text"].strip():
             self.status.emit("Die KI hat nichts zu ändern gefunden." + self._preis(r.get("cent")))
             return
         ed = eing["ed"]
-        ops, ganz, n = K.ersetze_ergebnis(eing["text"], r["text"])
+        ops, ganz, n = KD.ersetze_ergebnis(eing["text"], r["text"])
         with ed.sitzung.gruppe("KI"):
             for von, bis, t in ops:
                 ed.replace_range(eing["basis"] + von, eing["basis"] + bis, t)
