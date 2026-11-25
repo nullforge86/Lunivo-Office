@@ -483,7 +483,7 @@
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/freie_bilder_knoepfe.py": 10,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/freie_bilder_knoten.py": 3,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/freiform_bedienung.py": 3,
-  "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_befehle.py": 17,
+  "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_befehle.py": 16,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_editor.py": 11,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/objekt_texteingabe.py": 4,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_bereich.py": 6,

@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor
 from core.dokument.dokument import Auswahl, Position
 from framework.sitzungen.altlast import zugang_fuer_editor
 from writer import hauptfenster as _dokumente
+from writer.funktionen import bearbeiten as _bearbeiten
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import formatwerte as F
@@ -423,10 +424,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self._af({"seitenumbruch_vor": True if an else None})
 
     def apply_style(self, name: str) -> None:
-        name = "Standard" if name == "Fließtext" else name
-        self._vorlage_abgleichen(name)
-        if name in self.sitzung.dokument.vorlagen:
-            self.ansicht._aendern(lambda s: s.vorlage_anwenden(name))
+        """Formatvorlage ``name`` auf die Auswahl anwenden – das Framework holt sie aus dem Katalog ins Dokument."""
+        _bearbeiten.formatvorlage_anwenden(self.kennung, name)
 
     def toggle_list(self, art: str, stil=None) -> None:
         a = self._absatz_an_marke()

@@ -35,25 +35,6 @@ def aus_absatz(af: dict, dokument) -> list[tuple[float, str, str]]:
             for pos, art, _z in F.tabstopps(af, dokument)[0]]
 
 
-def als_text(stopps) -> str:
-    """Tabstopps als Text für eine Formatvorlage: ``30.0:rechts:punkt;80.0:mitte:`` (leer = keine)."""
-    return ";".join(f"{m:g}:{a}:{f}" for m, a, f in stopps)
-
-
-def aus_text(text: str | None) -> list[tuple[float, str, str]]:
-    from core.formatierung.absatz.tabfuell import FUELL
-    arten = [k for k, _n in ARTEN]
-    aus = []
-    for teil in (text or "").split(";"):
-        try:
-            m, a, *f = teil.split(":")
-            if a in arten:
-                aus.append((float(m), a, f[0] if f and f[0] in FUELL else ""))
-        except ValueError:
-            continue
-    return aus
-
-
 def _text(mm: float, art: str, fuell: str = "") -> str:
     from core.formatierung.absatz.tabfuell import FUELL
     f, kurz = einheit()

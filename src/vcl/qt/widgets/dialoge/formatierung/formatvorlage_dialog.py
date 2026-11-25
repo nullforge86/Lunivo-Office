@@ -189,8 +189,8 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
     def _absatz(self) -> None:
         """Format ▸ Absatz …: dasselbe Fenster wie im Band, mit beiden Reitern; die Vorlage merkt sich alle Felder (auch Tabstopps und Umbruchregeln)."""
         from core.formatierung.absatz import absatzopt
+        from writer.funktionen.bearbeiten import tabs_als_text as als_text, tabs_aus_text as aus_text
         from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import AbsatzDialog
-        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import als_text, aus_text
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         w, r = self.leiste.werte(), self._rs
         d = AbsatzDialog(self, {"ausr": w["ausr"] or "links", "einzug": w["einzug"], "vor": w["vor"], "nach": w["nach"], "zeilen": w["zeilen"] or 1.0,
@@ -258,7 +258,8 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
     def _tabs(self) -> None:
         """Format ▸ Tabstopps …: dasselbe Fenster wie im Absatz; die Vorlage merkt sich die Tabstopps."""
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
-        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import TabstoppDialog, als_text, aus_text
+        from writer.funktionen.bearbeiten import tabs_als_text as als_text, tabs_aus_text as aus_text
+        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import TabstoppDialog
         d = TabstoppDialog(self, aus_text(self._rs["tabs"]), self._tab_std if self._tab_std is not None else 12.7)
 
         def fertig() -> None:

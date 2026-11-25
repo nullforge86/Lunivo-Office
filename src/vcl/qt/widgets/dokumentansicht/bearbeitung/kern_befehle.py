@@ -12,14 +12,14 @@ import re
 from PySide6.QtCore import Qt
 
 from core.suche.textsuche.suche import offset_zu_position
-from core.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, Formatvorlage, ListenEbene, Position
+from core.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, ListenEbene, Position
 from core.listen.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
 from core.geometrie import mm_to_px, px_to_mm
+from writer.funktionen import bearbeiten as _bearbeiten
 from core.layout.drucklayout import formatwerte as F
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
-TAB_NAME = {0: "links", 1: "rechts", 2: "mitte", 3: "dezimal"}
 from vcl.qt.widgets.bausteine.farben.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
 
 
@@ -83,66 +83,6 @@ def ebenen_zu_spec(ebenen: list) -> dict:
         else:
             aus.append(M.ebene(e.stil, e.format or PLATZHALTER[len(aus)] + ".", e.start, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
     return {"ebenen": aus}
-
-
-def katalog_zu_vorlage(name: str, d: dict) -> Formatvorlage:
-    """Eine Formatvorlage des Katalogs (``editor/text/stile.py``) als Vorlage des Dokumentmodells."""
-    zeichen = {}
-    for k, v in (("groesse_pt", float(d["groesse"]) if d.get("groesse") else None), ("fett", True if d.get("fett") else None),
-                 ("kursiv", True if d.get("kursiv") else None), ("farbe", d.get("farbe") or None), ("schrift", d.get("schrift") or None),
-                 ("durchgestrichen", True if d.get("durch") else None), ("doppelt_durch", True if d.get("doppelt") else None),
-                 ("hoch_tief", "hoch" if d.get("hoch") else "tief" if d.get("tief") else None),
-                 ("kapitaelchen", True if d.get("kapital") else None), ("grossbuchstaben", True if d.get("gross") else None),
-                 ("versteckt", True if d.get("versteckt") else None), ("zeichenabstand", float(d["abstand"]) if d.get("abstand") else None),
-                 ("skalierung", float(d["skala"]) if d.get("skala") and float(d["skala"]) != 100.0 else None),
-                 ("versatz_pt", float(d["position"]) if d.get("position") else None), ("unterstrichen", True if d.get("unter") else None),
-                 ("unter_farbe", d.get("unterfarbe") or None), ("betonung", d.get("betonung") or None), ("effekt", d.get("effekt") or None)):
-        if v is not None:
-            zeichen[k] = v
-    absatz = {}
-    zeilen_art = d.get("zeilen_art", "faktor")
-    for k, v in (("abstand_vor", d["vor"] / 0.75 if d.get("vor") else None), ("abstand_nach", d["nach"] / 0.75 if d.get("nach") else None),
-                 ("ausrichtung", d.get("ausr") or None),
-                 ("zeilenabstand_art", ("vielfach" if zeilen_art == "faktor" else zeilen_art) if (d.get("zeilen") or zeilen_art != "faktor") else None),
-                 ("zeilenabstand", d["zeilen"] * 100.0 if zeilen_art == "faktor" and d.get("zeilen") else d["zeilen_pt"] / 0.75 if zeilen_art != "faktor" and d.get("zeilen_pt") else None),
-                 ("einzug_links", mm_to_px(d["einzug"]) if d.get("einzug") else None), ("einzug_rechts", mm_to_px(d["rechts"]) if d.get("rechts") else None),
-                 ("einzug_erste", mm_to_px(d["erste"]) if d.get("erste") else None), ("seitenumbruch_vor", True if d.get("umbruch") else None),
-                 ("gliederungsebene", int(d["gliederung"]) if d.get("gliederung") else None), ("richtung", "rtl" if d.get("rtl") else None),
-                 ("rahmen", d.get("rahmen") or None), ("hintergrund", d.get("fuell") or None),
-                 ("muster", (d["muster"] + ("|" + d["musterfarbe"] if d.get("musterfarbe") else "")) if d.get("muster") else None),
-                 ("optionen", d.get("opt") or None)):
-        if v is not None:
-            absatz[k] = v
-    if d.get("tabs"):
-        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import aus_text
-        stopps = aus_text(d["tabs"])
-        absatz["tabstopps"] = [[mm_to_px(m), art, ""] for m, art, _f in stopps]
-        fuell = ";".join(f"{mm_to_px(m):.2f}:{f}" for m, _a, f in stopps if f)
-        if fuell:
-            absatz["tabfuell"] = fuell
-    zusatz = {k: d[k] for k in ("taste", "key", "liste") if d.get(k)}
-    return Formatvorlage(name, "absatz", d.get("basis") or ("" if name == "Standard" else "Standard"), d.get("folge") or ("Standard" if d.get("ebene") else ""),
-                         int(d.get("ebene") or 0), zeichen, absatz, zusatz)
-
-
-def vorlage_zu_katalog(v: Formatvorlage) -> dict:
-    """Die Felder einer Katalogvorlage (``stile.VORLAGE``), soweit das Modell sie führt — für das Fenster „Formatvorlage“."""
-    z, a = v.zeichen, v.absatz
-    d = {"ebene": v.ebene, "groesse": z.get("groesse_pt") or 0, "fett": bool(z.get("fett")), "kursiv": bool(z.get("kursiv")), "farbe": z.get("farbe", ""),
-         "schrift": z.get("schrift", "") if isinstance(z.get("schrift", ""), str) else "", "vor": round(a.get("abstand_vor", 0) * 0.75, 1),
-         "nach": round(a.get("abstand_nach", 0) * 0.75, 1), "ausr": a.get("ausrichtung", ""), "einzug": round(px_to_mm(a.get("einzug_links", 0)), 1),
-         "rechts": round(px_to_mm(a.get("einzug_rechts", 0)), 1), "erste": round(px_to_mm(a.get("einzug_erste", 0)), 1),
-         "rtl": a.get("richtung") in ("rtl", 1), "umbruch": bool(a.get("seitenumbruch_vor")), "gliederung": a.get("gliederungsebene", 0),
-         "rahmen": a.get("rahmen", ""), "fuell": a.get("hintergrund", ""), "durch": bool(z.get("durchgestrichen")), "versteckt": bool(z.get("versteckt")),
-         "hoch": z.get("hoch_tief") == "hoch", "tief": z.get("hoch_tief") == "tief", "kapital": bool(z.get("kapitaelchen")), "gross": bool(z.get("grossbuchstaben"))}
-    art = a.get("zeilenabstand_art")
-    if art == "vielfach":
-        d["zeilen"] = a.get("zeilenabstand", 100.0) / 100.0
-    elif art in ("genau", "mindestens"):
-        d.update(zeilen_art=art, zeilen_pt=a.get("zeilenabstand", 0.0) * 0.75)
-    if isinstance(a.get("optionen"), str):
-        d["opt"] = a["optionen"]
-    return d
 
 
 from core.text.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
@@ -265,37 +205,17 @@ class KernBefehle:
 
     # ---- Formatvorlagen -----------------------------------------------------------------------------------------------------------------
     def stil_aus_auswahl(self) -> dict:
-        """Die Werte des Absatzes an der Schreibmarke als Vorgabe für „Neue Formatvorlage“."""
-        d = self.sitzung.dokument
-        a = self._absatz_an_marke()
-        z = self._zeichen()
-        af = F.absatzformat(d, a)
-        probe = Formatvorlage("", "absatz", "", "", 0, {k: v for k, v in z.items() if k != "vorlage"}, {k: v for k, v in af.items() if k != "vorlage"})
-        werte = vorlage_zu_katalog(probe)
-        werte["basis"] = a.format.get("vorlage") or "Standard"
+        """Die Werte des Absatzes an der Schreibmarke als Vorgabe für „Neue Formatvorlage“ (aus dem Framework; die Liste ergänzt der Editor)."""
+        werte = dict(_bearbeiten.formatvorlage_aus_auswahl(self.kennung))
         spec = self.liste_spec()
         if spec:
             from core.listen.mehrstufig import mehrstufig as M
             werte["liste"] = M.liste_als_text(spec)
-        if af.get("tabstopps"):
-            from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import als_text
-            fuell = F.tabfuellung(af)
-            werte["tabs"] = als_text([(round(px_to_mm(t[0]), 1), TAB_NAME.get(t[1], "links"), next((k for k, v in F.FUELLZEICHEN.items() for p, z in fuell.items() if abs(p - t[0]) < 0.05 and z == v), ""))
-                                      for t in F.tabstopps(af, d)[0]])
         return {k: v for k, v in werte.items() if v not in (None, "", 0, 0.0, False)}
 
-    def _vorlage_abgleichen(self, name: str) -> None:
-        """Legt die Vorlage des Katalogs im Dokument an oder aktualisiert sie, wenn sie dort anders steht."""
-        from core.formatvorlagen.zeichen import stile
-        if name not in stile.namen():
-            return
-        neu = katalog_zu_vorlage(name, stile.definition(name))
-        if self.sitzung.dokument.vorlagen.get(name) != neu:
-            self.ansicht._aendern(lambda s: s.vorlage_setzen(neu))
-
     def stil_neu_anwenden(self, name: str) -> None:
-        """Nach dem Ändern einer Vorlage im Katalog: das Dokument übernimmt die neue Definition."""
-        self._vorlage_abgleichen(name)
+        """Nach dem Ändern einer Vorlage im Katalog: das Dokument übernimmt die neue Definition (über das Framework)."""
+        _bearbeiten.formatvorlage_abgleichen(self.kennung, name)
 
     def stil_entfernen(self, name: str) -> None:
         if name in self.sitzung.dokument.vorlagen:
