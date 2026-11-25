@@ -2,8 +2,7 @@ from __future__ import annotations
 import base64
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QImage, QPainter
-from core.geometrie import Rect
-from core.layout.drucklayout.ausgabe.seite.wasserzeichen import zeichne
+from writer.anbindung import zeichnen as ZW
 
 
 def bild_zu_text(img: QImage) -> str:
@@ -24,6 +23,5 @@ def bild_aus_text(text: str) -> QImage:
 
 def zeichnen(p: QPainter, w: dict | None, r: QRectF) -> None:
     """Das Wasserzeichen ``w`` auf die Seite ``r`` (96-dpi-Bildpunkte) zeichnen: Lage, Größe und Deckkraft rechnet ``core/rendering/wasserzeichen.py``, gezeichnet wird über das Backend."""
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    from vcl.qt.rendering.formen import kern_malen
-    kern_malen(p, r, lambda z: zeichne(z, standard_engine(), w, Rect(r.x(), r.y(), r.width(), r.height())), rand=0.0)
+    from vcl.qt.rendering.formen import raster_malen
+    raster_malen(p, r, lambda f: ZW.wasserzeichen(f, w, (r.x(), r.y(), r.width(), r.height())), rand=0.0)

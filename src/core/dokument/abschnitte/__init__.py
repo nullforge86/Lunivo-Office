@@ -21,6 +21,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "SERIF": ("deckblatt_vorlagen", "SERIF"),
     "entfernen": ("deckblatt_vorlagen", "entfernen"),
     "gestaltung": ("deckblatt_vorlagen", "gestaltung"),
+    "grafik": ("deckblatt_vorlagen", "grafik"),
     "hat_deckblatt": ("deckblatt_vorlagen", "hat_deckblatt"),
     "zeichnen_mit": ("deckblatt_vorlagen", "zeichnen_mit"),
 }

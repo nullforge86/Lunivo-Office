@@ -235,14 +235,14 @@ def zeichnen(p: QPainter, r: QRectF, img: QImage) -> None:
     """Das Bild in ``r`` zeichnen; ein unverändertes SVG als Vektor (scharf in jeder Zoomstufe, auch im PDF), sonst die Bildpunkte."""
     q = quelle_zu(img)
     if q is not None and q.format == "svg":
-        from vcl.qt.rendering.formen.anzeige import kern_malen
-        from core.geometrie import Rect
-        from core.layout.drucklayout.ausgabe.bild.svg import svg_zeichnen
+        from vcl.qt.rendering.formen.anzeige import raster_malen
+        from writer.anbindung import zeichnen as ZW
         gelungen = [False]
 
-        def los(z) -> None:
-            gelungen[0] = svg_zeichnen(BD_svg_daten(q), z, Rect(r.x(), r.y(), r.width(), r.height()))
-        kern_malen(p, r, los, rand=0.0)                         # der Kern zeichnet das SVG (scharf in jeder Zoomstufe), Qt legt das Bild auf
+        def los(f: tuple) -> tuple:
+            bild, gelungen[0] = ZW.svg(f, BD_svg_daten(q), (r.x(), r.y(), r.width(), r.height()))
+            return bild
+        raster_malen(p, r, los, rand=0.0)                       # der Kern zeichnet das SVG (scharf in jeder Zoomstufe), Qt legt das Bild auf
         if gelungen[0]:
             return
         rd = _renderer(q)
@@ -259,11 +259,10 @@ def zeichnen(p: QPainter, r: QRectF, img: QImage) -> None:
 # ---- Bilddatei laden ----------------------------------------------------------------------------------------------------------
 def platzhalter(breite: float, hoehe: float) -> QImage:
     """Ersatz für ein Bild, dessen Daten fehlen oder nicht lesbar sind: graue Fläche mit Rahmen und Kreuz in der Größe des Bildes (gezeichnet über das Rendering-Backend)."""
-    from vcl.qt.rendering.formen.anzeige import kern_bild
-    from core.geometrie import Rect
-    from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_platzhalter
+    from vcl.qt.rendering.formen.anzeige import raster_bild
+    from writer.anbindung import zeichnen as ZW
     b, h = max(8, round(breite)), max(8, round(hoehe))
-    return kern_bild(b, h, lambda z: zeichne_platzhalter(z, Rect(0.5, 0.5, b - 1, h - 1)))
+    return raster_bild(b, h, lambda f: ZW.platzhalter(f, (0.5, 0.5, b - 1, h - 1)))
 
 
 def bild_aus_datei(pfad: str, still: bool = False) -> QImage:

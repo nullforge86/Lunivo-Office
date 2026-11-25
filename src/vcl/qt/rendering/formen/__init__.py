@@ -1,7 +1,7 @@
-"""Tür des Pakets ``vcl.qt.rendering.formen``: alle öffentlichen Namen des Pakets. Aufrufer außerhalb des Pakets importieren nur von hier.
+"""Tür des Pakets ``vcl.qt.rendering.formen``: alle öffentlichen Namen seiner Dateien. Aufrufer außerhalb des Pakets importieren nur von hier.
 
-Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen (keine zusätzlichen Importzyklen). Gibt es einen Namen in
-mehreren Dateien, heißt er hier ``<datei>_<name>``."""
+Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt es einen Namen in mehreren Dateien, heißt er hier
+``<datei>_<name>``."""
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
@@ -75,6 +75,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "bild_aus_svg": ("bilddaten", "bild_aus_svg"),
     "bild_einfuegen_drehen": ("bild_einfuegen", "drehen"),
     "bild_ersetzen": ("bild_einfuegen", "bild_ersetzen"),
+    "bild_lesen": ("vektor_bilder", "bild_lesen"),
     "bild_nachbearbeiten": ("bildeffekte", "bild_nachbearbeiten"),
     "bild_original": ("bild_einfuegen", "bild_original"),
     "bild_zeichnen": ("freie_bilder", "bild_zeichnen"),
@@ -100,6 +101,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "drehung_3d": ("bildeffekte", "drehung_3d"),
     "duoton": ("freie_bilder", "duoton"),
     "ebene": ("bildlayout", "ebene"),
+    "emf_bild": ("vektor_bilder", "emf_bild"),
+    "emf_zeichnen": ("vektor_bilder", "emf_zeichnen"),
     "entpacken": ("bilddaten", "entpacken"),
     "extrusion_zeichnen": ("bildeffekte", "extrusion_zeichnen"),
     "farbe_anwenden": ("bild_einfuegen", "farbe_anwenden"),
@@ -181,6 +184,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "point_to_qt": ("geometrie", "point_to_qt"),
     "qimage_einfuegen": ("bild_einfuegen", "qimage_einfuegen"),
     "quelle_zu": ("bilddaten", "quelle_zu"),
+    "raster_bild": ("anzeige", "raster_bild"),
+    "raster_malen": ("anzeige", "raster_malen"),
     "rect_from_qt": ("geometrie", "rect_from_qt"),
     "rect_to_qt": ("geometrie", "rect_to_qt"),
     "rollen": ("freiform", "rollen"),
@@ -216,6 +221,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "weiche_kanten": ("bildeffekte", "weiche_kanten"),
     "wert_aus_punkt": ("formen_anpassen", "wert_aus_punkt"),
     "werte": ("bildwerkzeuge", "werte"),
+    "wmf_bild": ("vektor_bilder", "wmf_bild"),
+    "wmf_zeichnen": ("vektor_bilder", "wmf_zeichnen"),
     "zeichenbereich_bild": ("formen", "zeichenbereich_bild"),
     "zeichenbereich_einfuegen": ("formen", "zeichenbereich_einfuegen"),
     "zuschneiden": ("bild_einfuegen", "zuschneiden"),
@@ -274,6 +281,8 @@ def __getattr__(name: str):
         from . import sprechblasen as _datei
     elif datei == "textur":
         from . import textur as _datei
+    elif datei == "vektor_bilder":
+        from . import vektor_bilder as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
     wert = getattr(_datei, original)

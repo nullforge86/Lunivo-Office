@@ -12,13 +12,15 @@ from writer.funktionen.objekte import deckblatt_entfernen
 
 def zeichnen(p, name: str, r, mit_text: bool = True) -> None:
     """Gestaltung ``name`` auf das Blatt ``r`` (QPainter, QRectF): für die Galerie."""
-    from vcl.qt.rendering.formen import kern_malen
-    kern_malen(p, r, lambda z: zeichnen_mit(z, name, rect_from_qt(r), mit_text, standard_engine()))                  # der Kern zeichnet, Qt legt nur das fertige Bild auf
+    from vcl.qt.rendering.formen import raster_malen
+    from writer.anbindung import zeichnen as ZW
+    raster_malen(p, r, lambda f: ZW.deckblatt(f, name, (r.x(), r.y(), r.width(), r.height()), mit_text))                  # der Kern zeichnet, Qt legt nur das fertige Bild auf
 
 
 def grafik_bild(name: str, breite_px: int, hoehe_px: int) -> QImage:
-    from vcl.qt.rendering.formen import kern_bild
-    return kern_bild(breite_px, hoehe_px, lambda z: _grafik(z, name, Rect(0, 0, breite_px, hoehe_px)), (255, 255, 255, 255))
+    from vcl.qt.rendering.formen import raster_bild
+    from writer.anbindung import zeichnen as ZW
+    return raster_bild(breite_px, hoehe_px, lambda f: ZW.deckblatt_grafik(f, name, (0, 0, breite_px, hoehe_px)), (255, 255, 255, 255))
 
 
 def einfuegen(ed, name: str, quer: bool = False) -> None:

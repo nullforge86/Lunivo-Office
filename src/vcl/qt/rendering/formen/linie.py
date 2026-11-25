@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
-from core.layout.drucklayout.ausgabe.objekte.linien import zeichne_linie, zeichne_rahmen
+from writer.anbindung import zeichnen as ZW
 from writer.anbindung.linien import stile
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_LINIE_MIN
@@ -89,12 +89,11 @@ class Linie:
 
     def zeichne(self, p: QPainter, x1: float, y1: float, x2: float, y2: float, massstab: float = 1.0) -> None:
         """Eine einzelne Linie in ihrer Art: einfach, gestrichelt, mehrfach (Bahnen nebeneinander) oder wellig (gezeichnet über ``core/rendering/linien.py``)."""
-        from vcl.qt.rendering.formen.anzeige import kern_malen
+        from vcl.qt.rendering.formen.anzeige import raster_malen
         rand = max(4.0, self.breite_pt * 3)
-        kern_malen(p, QRectF(min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1)), lambda z: zeichne_linie(z, self.farbe, self.breite_pt, self.art, x1, y1, x2, y2, massstab), rand=rand)
+        raster_malen(p, QRectF(min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1)), lambda f: ZW.linie(f, self.farbe, self.breite_pt, self.art, x1, y1, x2, y2, massstab), rand=rand)
 
     def rahmen_zeichnen(self, p: QPainter, r: QRectF, massstab: float = 1.0, innen_y=()) -> None:
         """Zeichnet die gemeinten Seiten eines Rechtecks in der Linienart. ``innen_y``: Höhen der Linien zwischen Absätzen (nur wenn ``h`` gesetzt ist)."""
-        from vcl.qt.rendering.formen.anzeige import kern_malen
-        from core.geometrie import Rect
-        kern_malen(p, r, lambda z: zeichne_rahmen(z, self.farbe, self.breite_pt, self.art, self.seiten, Rect(r.x(), r.y(), r.width(), r.height()), massstab, innen_y), rand=max(4.0, self.breite_pt * 3))
+        from vcl.qt.rendering.formen.anzeige import raster_malen
+        raster_malen(p, r, lambda f: ZW.rahmen(f, self.farbe, self.breite_pt, self.art, self.seiten, (r.x(), r.y(), r.width(), r.height()), massstab, tuple(innen_y)), rand=max(4.0, self.breite_pt * 3))

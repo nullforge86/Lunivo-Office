@@ -1,10 +1,9 @@
 from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QPainter
-from vcl.qt.rendering.formen import kern_bild, kern_malen
+from vcl.qt.rendering.formen import raster_bild, raster_malen
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.geometrie import Rect
-from core.layout.drucklayout.ausgabe.text import zeichenzusatz as Z
+from writer.anbindung import zeichnen as ZW
 
 
 def _rgba(farbe) -> tuple:
@@ -17,7 +16,7 @@ def _unterstrich(p: QPainter, strecken: list[tuple[float, float]], art: str, gru
     if not strecken:
         return
     x0, x1 = min(s[0] for s in strecken), max(s[1] for s in strecken)
-    kern_malen(p, QRectF(x0, grundlinie - groesse, x1 - x0, groesse * 2.5), lambda z: Z.unterstrich(z, strecken, art, grundlinie, groesse, _rgba(farbe)), rand=groesse * 0.6 + 4)
+    raster_malen(p, QRectF(x0, grundlinie - groesse, x1 - x0, groesse * 2.5), lambda f: ZW.unterstrich(f, strecken, art, grundlinie, groesse, _rgba(farbe)), rand=groesse * 0.6 + 4)
 
 
 def unter_zeichnen(p: QPainter, x0: float, y: float, x1: float, art: str, farbe, groesse: float = 11.0) -> None:
@@ -29,13 +28,13 @@ def unter_symbol(art: str, groesse=(70, 16), farbe: str = Farbe.SYMBOL_HELL):
     """Bildchen einer Unterstreichungsart für Auswahllisten (dieselbe Zeichnung wie im Text)."""
     from PySide6.QtGui import QIcon, QPixmap
     c = _rgba(farbe)
-    img = kern_bild(groesse[0], groesse[1], lambda z: Z.unterstrich(z, [(3, groesse[0] - 3)], art, groesse[1] * 0.38, 9.0, c) if art else None)
+    img = raster_bild(groesse[0], groesse[1], lambda f: ZW.unterstrich(f, [(3, groesse[0] - 3)], art, groesse[1] * 0.38, 9.0, c))
     return QIcon(QPixmap.fromImage(img))
 
 
 def _doppelt_durch(p: QPainter, rect: QRectF, grundlinie: float, groesse: float, farbe: QColor) -> None:
     """Die zweite Durchstreichlinie (die erste zeichnet der Textsatz): zwei Linien in Höhe der Kleinbuchstaben."""
-    kern_malen(p, rect, lambda z: Z.doppelt_durch(z, Rect(rect.left(), rect.top(), rect.width(), rect.height()), grundlinie, groesse, _rgba(farbe)), rand=4.0)
+    raster_malen(p, rect, lambda f: ZW.doppelt_durch(f, (rect.left(), rect.top(), rect.width(), rect.height()), grundlinie, groesse, _rgba(farbe)), rand=4.0)
 
 
 def _betonung(p: QPainter, glyphen: list[tuple[float, float, float]], art: str, grundlinie: float, groesse: float, farbe: QColor) -> None:
@@ -43,15 +42,14 @@ def _betonung(p: QPainter, glyphen: list[tuple[float, float, float]], art: str, 
     if not glyphen:
         return
     xs = [g[0] for g in glyphen]
-    kern_malen(p, QRectF(min(xs), grundlinie - groesse * 1.4, max(xs) - min(xs), groesse * 2.2), lambda z: Z.betonung(z, glyphen, art, grundlinie, groesse, _rgba(farbe)), rand=groesse)
+    raster_malen(p, QRectF(min(xs), grundlinie - groesse * 1.4, max(xs) - min(xs), groesse * 2.2), lambda f: ZW.betonung(f, glyphen, art, grundlinie, groesse, _rgba(farbe)), rand=groesse)
 
 
 def _umschlossen(p: QPainter, kasten: QRectF, wie: tuple[str, str], farbe: QColor, groesse: float) -> None:
     """Die Form um die Zeichen: „reduzieren“ legt sie eng an, „erweitern“ lässt dem Symbol Raum."""
-    kern_malen(p, kasten, lambda z: Z.umschlossen(z, Rect(kasten.left(), kasten.top(), kasten.width(), kasten.height()), wie, _rgba(farbe), groesse), rand=groesse)
+    raster_malen(p, kasten, lambda f: ZW.umschlossen(f, (kasten.left(), kasten.top(), kasten.width(), kasten.height()), wie, _rgba(farbe), groesse), rand=groesse)
 
 
 def _ruby(p: QPainter, x0: float, x1: float, grundlinie: float, groesse: float, ruby: dict, farbe: QColor) -> None:
     """Der Leittext über dem Basistext, in kleinerer Schrift, nach der gewählten Ausrichtung."""
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    kern_malen(p, QRectF(x0, grundlinie - groesse * 2, x1 - x0, groesse * 2.2), lambda z: Z.ruby(z, standard_engine(), x0, x1, grundlinie, groesse, ruby, _rgba(farbe)), rand=groesse)
+    raster_malen(p, QRectF(x0, grundlinie - groesse * 2, x1 - x0, groesse * 2.2), lambda f: ZW.ruby(f, x0, x1, grundlinie, groesse, ruby, _rgba(farbe)), rand=groesse)

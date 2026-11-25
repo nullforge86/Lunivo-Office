@@ -7,12 +7,10 @@ from writer.anbindung.einfuegen_hilfen import wordart_vorlagen
 
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
     """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten (gezeichnet über ``core/rendering/wordart.py``)."""
-    from vcl.qt.rendering.formen import kern_bild
-    from core.layout.drucklayout.ausgabe.text import wordart
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    engine = standard_engine()
-    b, h = wordart.masse(engine, text, schrift, pt)
-    return kern_bild(b, h, lambda z: wordart.zeichne(z, engine, text, wordart_vorlagen()[nr], schrift, pt))
+    from vcl.qt.rendering.formen import raster_bild
+    from writer.anbindung import zeichnen as ZW
+    b, h = ZW.wordart_masse(text, schrift, pt)
+    return raster_bild(b, h, lambda f: ZW.wordart(f, text, nr, schrift, pt))
 
 
 def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT,

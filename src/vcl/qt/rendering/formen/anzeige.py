@@ -62,6 +62,27 @@ def kern_malen(p: QPainter, bereich: QRectF, zeichne, rand: float = 8.0, hoechst
         p.restore()
 
 
+def raster_malen(p: QPainter, bereich: QRectF, erzeuge, rand: float = 8.0, hoechst: float = 4.0, ueber: float = 1.0) -> None:
+    """Wie ``kern_malen``, aber der Kern zeichnet über ``writer.anbindung.zeichnen``: ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``; ``flaeche`` ist
+    ``(Breite, Höhe, Faktor, x, y, Papierfarbe)`` in Koordinaten des Zeichners. Qt legt das fertige Bild passgenau auf."""
+    b, h = max(1.0, bereich.width() + 2 * rand), max(1.0, bereich.height() + 2 * rand)
+    basis, x, y, bb, hh = _ausgerichtet(p, bereich.x() - rand, bereich.y() - rand, b, h, hoechst)
+    faktor = basis * ueber
+    breite, hoehe, roh = erzeuge((bb, hh, faktor, x, y, (255, 255, 255, 0)))
+    if ueber != 1.0:
+        p.save()
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+    p.drawImage(QRectF(x, y, breite / faktor, hoehe / faktor), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))
+    if ueber != 1.0:
+        p.restore()
+
+
+def raster_bild(breite_px: float, hoehe_px: float, erzeuge, grund: tuple = (255, 255, 255, 0), faktor: float = 1.0) -> QImage:
+    """Wie ``kern_bild``, gezeichnet über ``writer.anbindung.zeichnen``: ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``."""
+    breite, hoehe, roh = erzeuge((breite_px, hoehe_px, faktor, 0.0, 0.0, tuple(grund)))
+    return QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888).copy()
+
+
 def kern_bild(breite_px: float, hoehe_px: float, zeichne, grund: tuple = (255, 255, 255, 0), faktor: float = 1.0) -> QImage:
     """Das Bild von ``zeichne(ziel)`` (Kern-Zeichenfläche der Größe ``breite_px`` × ``hoehe_px``, Ursprung links oben) als ``QImage``; ``grund``: Papierfarbe (Standard durchsichtig)."""
     ziel = RasterZiel(_engine(), breite_px, hoehe_px, faktor, grund)

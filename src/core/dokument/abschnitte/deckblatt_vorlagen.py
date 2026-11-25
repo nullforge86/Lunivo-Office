@@ -278,6 +278,11 @@ _GRAFIKEN = {
 }
 
 
+def grafik(b: RenderBackend, name: str, r: Rect) -> None:
+    """Die Grafik einer Gestaltung (ohne Text) auf das Blatt ``r``."""
+    _grafik(b, name, r)
+
+
 def _grafik(b: RenderBackend, name: str, r: Rect) -> None:
     """Die Grafik einer Gestaltung (ohne Text) auf das Blatt ``r``."""
     w, h, x0, y0 = r.width, r.height, r.x, r.y
