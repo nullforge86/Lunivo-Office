@@ -7,9 +7,9 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from lunivo_writer.core.document import Dokument
+from lunivo_writer.kern.dokument import Dokument
 from lunivo_writer.dienste import dateiformate as D
-from lunivo_writer.modelle.bericht import DocumentIOError, IOReport
+from lunivo_writer.kern.dokument.bericht import DocumentIOError, IOReport
 
 
 @dataclass

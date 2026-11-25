@@ -13,7 +13,7 @@ Das Fenster fügt selbst nichts ein; der Aufrufer bekommt das Zeichen.
 """
 from __future__ import annotations
 
-from lunivo_writer.core.schrift import standard_datenbank
+from lunivo_writer.kern.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import json

@@ -12,7 +12,7 @@ from lunivo_writer.ki.dokumentensuche import abschnitte_bilden
 
 def _aus_modell(dokument) -> list[tuple[str, str, str]]:
     """Abschnitte aus dem Dokumentmodell (Qt-frei): Überschriftenebene und Text je Absatz."""
-    from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
+    from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
     zeilen = [(ueberschriftsebene(dokument, a), a.text()) for a in dokument.absaetze()]
     return [(titel, titel, text) for titel, text in abschnitte_bilden(zeilen)]
 

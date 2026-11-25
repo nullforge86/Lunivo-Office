@@ -399,7 +399,7 @@ class NavigationPanel(QWidget):
             self.leer.show()
             return
         eltern = {0: self.baum.invisibleRootItem()}
-        from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
+        from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
         dok, stelle = ed.sitzung.dokument, 0
         n = 0
         for a in dok.absaetze():

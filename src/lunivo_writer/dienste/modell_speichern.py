@@ -3,10 +3,10 @@
 PDF entsteht nicht hier, sondern über die Ausgabeschnittstelle der Oberfläche (``adapter/qt/pdf_ausgabe``)."""
 from __future__ import annotations
 
-from lunivo_writer.core.document import Dokument
+from lunivo_writer.kern.dokument import Dokument
 from lunivo_writer.dienste import dateiformate as D
 from lunivo_writer.dienste import sicher_schreiben
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 
 
 def meta_aus_dokument(neu: Dokument, meta: dict | None = None) -> dict:
@@ -23,7 +23,7 @@ def meta_aus_dokument(neu: Dokument, meta: dict | None = None) -> dict:
 def speichere_modell(path: str, modell: Dokument, page, meta: dict | None = None, sicherung: bool = True,
                      erwartet=sicher_schreiben.UNGEPRUEFT):
     """Wirft ``DocumentIOError``; liefert den ``IOReport`` des Schreibens."""
-    from lunivo_writer.modelle.bericht import IOReport
+    from lunivo_writer.kern.dokument.bericht import IOReport
 
     angaben = meta_aus_dokument(modell, meta)
     endung = path.lower().rsplit(".", 1)[-1] if "." in path else ""

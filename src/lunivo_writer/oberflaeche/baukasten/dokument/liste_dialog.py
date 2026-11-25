@@ -28,8 +28,8 @@ from PySide6.QtWidgets import (
 
 import copy
 
-from lunivo_writer.editor.text import listen as L
-from lunivo_writer.editor.text import mehrstufig as M
+from lunivo_writer.kern.funktionen.absatz import listen as L
+from lunivo_writer.kern.funktionen.absatz import mehrstufig as M
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.medien.listen_symbole import liste_zeichner
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import EinheitFeld

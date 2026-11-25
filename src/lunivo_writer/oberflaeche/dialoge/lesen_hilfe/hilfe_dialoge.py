@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
-from lunivo_writer.core.schrift import standard_datenbank
+from lunivo_writer.kern.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_KLEIN as _A_KLEIN
 
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import rolle as _rolle
@@ -14,7 +14,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 import os
 from lunivo_writer.oberflaeche.bauteile.textfeld_fragmente import absatz_fragmente
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
-from lunivo_writer.plattform.pfade import ressourcen_pfade as pfade
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QLabel, QLineEdit, QPushButton, QTextBrowser, QWidget

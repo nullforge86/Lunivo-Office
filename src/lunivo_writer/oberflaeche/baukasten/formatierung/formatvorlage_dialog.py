@@ -224,7 +224,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _liste(self) -> None:
         """Format ▸ Nummerierung …: dasselbe Fenster wie im Band; die Vorlage merkt sich die gewählte Liste."""
-        from lunivo_writer.editor.text import listen
+        from lunivo_writer.kern.funktionen.absatz import listen
         from lunivo_writer.oberflaeche.baukasten.geruest.fenster_stapel import zeige_unter
         from lunivo_writer.oberflaeche.baukasten.dokument.liste_dialog import ListenDialog
         d = ListenDialog(self, listen.aus_text(self._rs["liste"]))

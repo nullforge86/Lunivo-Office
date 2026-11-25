@@ -19,9 +19,9 @@ import base64
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QColor, QImage, QPainter
 
-from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.wasserzeichen import zeichne
-from lunivo_writer.modelle.seite import mm_to_px
+from lunivo_writer.kern.geometrie import Point, Rect
+from lunivo_writer.kern.rendering.wasserzeichen import zeichne
+from lunivo_writer.kern.dokument.seite import mm_to_px
 
 VORGABEN = ("VERTRAULICH", "NICHT KOPIEREN", "ORIGINAL", "BEISPIEL", "STRENG GEHEIM", "EILT", "ENTWURF", "MUSTER", "KOPIE", "DRINGEND")
 GROESSEN = (36, 40, 44, 48, 54, 60, 66, 72, 80, 90, 96, 105, 120, 144)

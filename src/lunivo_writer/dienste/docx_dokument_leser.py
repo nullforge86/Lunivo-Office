@@ -17,13 +17,13 @@ from __future__ import annotations
 
 import re
 
-from lunivo_writer.core.document.bildformat import format_erkennen
+from lunivo_writer.kern.dokument.bildformat import format_erkennen
 from lunivo_writer.dienste.docx_bildeffekte import effekte_aus_element
-from lunivo_writer.core.document.dokument import Abschnitt, Absatz, Formatvorlage, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
-from lunivo_writer.core.document.formatvorlagen import eingebaute_vorlagen
+from lunivo_writer.kern.dokument.dokument import Abschnitt, Absatz, Formatvorlage, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
+from lunivo_writer.kern.dokument.formatvorlagen import eingebaute_vorlagen
 from lunivo_writer.dienste import docx_erhalt as E, docx_formen as F
-from lunivo_writer.modelle.bericht import IOReport
-from lunivo_writer.modelle.seite import HeaderFooter, PageSettings
+from lunivo_writer.kern.dokument.bericht import IOReport
+from lunivo_writer.kern.dokument.seite import HeaderFooter, PageSettings
 
 PX_JE_TWIP = 1.0 / 15.0
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -1362,7 +1362,7 @@ class _Leser:
         kern = self.d.core_properties
         meta = {"title": kern.title or "", "author": kern.author or ""}
         dok.eigenschaften.update({k: v for k, v in meta.items() if v})
-        from lunivo_writer.core.document.kompatibilitaet import hinweis_erhalten
+        from lunivo_writer.kern.dokument.kompatibilitaet import hinweis_erhalten
         hinweis = hinweis_erhalten(dok)
         if hinweis:
             self.report.warn(hinweis)
@@ -1373,7 +1373,7 @@ def lese_docx_dokument(path: str):
     """→ ``(Dokument, PageSettings, meta, IOReport)``. Wirft ``DocumentIOError``, auch wenn die Datei etwas enthält, das dieser Leser noch nicht abbildet
     (es gibt keinen Rückfallweg; die Meldung nennt die Stelle, damit sie hier ergänzt werden kann)."""
     from lunivo_writer.dienste.import_grenzen import pruefe_paket
-    from lunivo_writer.modelle.bericht import DocumentIOError
+    from lunivo_writer.kern.dokument.bericht import DocumentIOError
     pruefe_paket(path, "DOCX")
     try:
         return _Leser(path).lesen()

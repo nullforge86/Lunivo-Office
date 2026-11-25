@@ -3,7 +3,7 @@
 Der Editor kommt über den ``EditorPort`` herein; die Fassungen (Bearbeiter, Zeiten) liefert ``editor/dokument/fassungen.py``."""
 from __future__ import annotations
 
-from lunivo_writer.editor.dokument import fassungen
+from lunivo_writer.kern.funktionen.ueberpruefen import fassungen
 from lunivo_writer.farmwork.datentypen.ereignisdaten import Art, Ereignis
 from lunivo_writer.farmwork.funktionen.ueberpruefen import einstellungen as ueberpruefen_einstellungen
 from lunivo_writer.farmwork.funktionen.ueberpruefen.schutz import SCHUTZ_HINWEIS, ist_geschuetzt

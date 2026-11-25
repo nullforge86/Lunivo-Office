@@ -2,12 +2,12 @@
 als einfache Werte."""
 from __future__ import annotations
 
-from lunivo_writer.editor.dokument import verweise
-from lunivo_writer.editor.dokument.literatur import TYPEN, ZITIERWEISEN
-from lunivo_writer.editor.dokument.verzeichnis import TOC_FUELL, TOC_VORGABE
+from lunivo_writer.kern.funktionen.verweise import verweise
+from lunivo_writer.kern.funktionen.verweise.literatur import TYPEN, ZITIERWEISEN
+from lunivo_writer.kern.funktionen.verweise.verzeichnis import TOC_FUELL, TOC_VORGABE
 from lunivo_writer.editor.dokument.zusatz import BESCHRIFTUNGEN
 from lunivo_writer.editor.text import zahlformat
-from lunivo_writer.editor.text.tabfuell import FUELL
+from lunivo_writer.kern.funktionen.absatz.tabfuell import FUELL
 
 QUELLENTYPEN: tuple[str, ...] = tuple(TYPEN)
 ZITIERWEISEN_NAMEN: tuple[str, ...] = tuple(ZITIERWEISEN)

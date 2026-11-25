@@ -5,9 +5,9 @@ from __future__ import annotations
 from PySide6.QtCore import QByteArray, QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QRadialGradient
 
-from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering import ImageFill, LinearGradient, PatternFill, RadialGradient, RenderBackend, Style, TextureFill
-from lunivo_writer.core.textlayout import FontSpec
+from lunivo_writer.kern.geometrie import Point, Rect
+from lunivo_writer.kern.rendering import ImageFill, LinearGradient, PatternFill, RadialGradient, RenderBackend, Style, TextureFill
+from lunivo_writer.kern.textsatz import FontSpec
 
 
 def _farbe(style: Style) -> QColor:
@@ -102,7 +102,7 @@ class QtRenderBackend(RenderBackend):
 
     def draw_text(self, text: str, position: Point, font, style: Style) -> None:
         if isinstance(font, FontSpec):                     # Schrift des Dokuments: Stellen und Konturen liefert der Kern (HarfBuzz/FreeType), Qt füllt nur die fertigen Pfade
-            from lunivo_writer.core.rendering.textpfad import gemeinsame_engine
+            from lunivo_writer.kern.rendering.textpfad import gemeinsame_engine
             ops = gemeinsame_engine().glyphen_pfad(text, font, position.x, position.y)
             if ops:
                 self.draw_path(ops, Style(color=style.color, width=0, filled=True), True, True)
@@ -214,7 +214,7 @@ class QtRenderBackend(RenderBackend):
         self.p.restore()
 
     def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0, source_rect: Rect | None = None) -> None:
-        from lunivo_writer.core.document.bildformat import format_erkennen
+        from lunivo_writer.kern.dokument.bildformat import format_erkennen
         fmt = format_erkennen(data[:2048]) if data else None
         if fmt == "svg" and source_rect is None:
             from PySide6.QtSvg import QSvgRenderer

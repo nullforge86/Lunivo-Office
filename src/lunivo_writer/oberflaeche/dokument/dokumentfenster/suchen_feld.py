@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.editor.dokument import gehe_zu as G
-from lunivo_writer.core.editing import suche as S
+from lunivo_writer.kern.bearbeitung import suche as S
 from lunivo_writer.oberflaeche.baukasten.geruest.einklappgruppe import EinklappGruppe
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.oberflaeche.bauteile import symbole
@@ -588,7 +588,7 @@ class SuchenFeld(QWidget):
 
 def _absatz_format(w: dict) -> dict:
     """Die geänderten Absatzwerte als Absatzformat des Dokumentenmodells (für „Ersetzen durch“): nur, was im Fenster geändert wurde."""
-    from lunivo_writer.modelle.seite import mm_to_px
+    from lunivo_writer.kern.dokument.seite import mm_to_px
     af: dict = {}
     if "ausr" in w:
         af["ausrichtung"] = w["ausr"]

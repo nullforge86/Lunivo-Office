@@ -66,7 +66,7 @@ class Kontext:
 
 
 def import_fehler(e: BaseException) -> dict:
-    from lunivo_writer.modelle.bericht import DocumentIOError, PasswortNoetig
+    from lunivo_writer.kern.dokument.bericht import DocumentIOError, PasswortNoetig
     text = " ".join(str(e).split())[:300]
     if isinstance(e, PasswortNoetig):
         return K.nicht_pruefbar("Import", "Das Dokument ist durch ein Kennwort geschützt; ohne Kennwort ist es nicht prüfbar")
@@ -468,7 +468,7 @@ def pruefe_roundtrip(ctx: Kontext) -> dict:
 
 def _roundtrip_bearbeitung(ctx: Kontext, ziel_endung: str) -> list[dict]:
     """Gezielte Bearbeitung: Marke am Dokumentanfang einfügen (über die Bearbeitungssitzung), speichern, neu öffnen, Text vergleichen."""
-    from lunivo_writer.core.editing import Bearbeitungssitzung
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
     punkt = "Roundtrip mit Bearbeitung"
     try:
         g = LZ.lade(ctx.pfad, ctx.job.get("kennwort"))

@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF
 
-from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.rendering.seitenrahmen import KOPF_MM, abstaende_pt, kunst_zeichnen, rechteck as _rechteck, zeichnen as _zeichnen  # noqa: F401  (Rechnung und Zeichnen: Kern)
+from lunivo_writer.kern.geometrie import Rect
+from lunivo_writer.kern.rendering.seitenrahmen import KOPF_MM, abstaende_pt, kunst_zeichnen, rechteck as _rechteck, zeichnen as _zeichnen  # noqa: F401  (Rechnung und Zeichnen: Kern)
 
 KUNST = (("", "(keine)"), ("stars", "Sterne"), ("hearts", "Herzen"), ("triangles", "Dreiecke"), ("gems", "Edelsteine"), ("zigZag", "Zickzack"))
 

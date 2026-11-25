@@ -47,7 +47,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not e:
             return
         import json
-        from lunivo_writer.editor.dokument import verweise
+        from lunivo_writer.kern.funktionen.verweise import verweise
         from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_fenster import HyperlinkDialog
         try:
             adressen = json.loads(str(self.w.settings.get("einfuegen/mail_zuletzt", "") or "[]"))
@@ -98,7 +98,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
                 return
         if art == "text":
             from lunivo_writer.editor.dokument import einfuegen as E
-            from lunivo_writer.modelle.bericht import DocumentIOError
+            from lunivo_writer.kern.dokument.bericht import DocumentIOError
             try:
                 self.w._show_report(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
                 return
@@ -152,7 +152,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         """Seitenzahl wie in der Vorlage: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
         „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
-        from lunivo_writer.editor.seite import seitenzahl as SZ
+        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
         from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
         from lunivo_writer.oberflaeche.baukasten.medien.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
@@ -165,7 +165,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
 
     def _seitenzahl_vorgabe(self, schl: str) -> None:
-        from lunivo_writer.editor.seite import seitenzahl as SZ
+        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
         _s, _t, ort, ausr = next(v for v in SZ.VORGABEN if v[0] == schl)
         if self.ed:
             self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr))
@@ -185,7 +185,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def seitenzahlenEntfernen(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.editor.seite import seitenzahl as SZ
+        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
         page = self.ed.abschnitt_seite()
         if SZ.seitenzahlen_entfernen(page):
             self.ed.page_settings_changed(page)
@@ -476,7 +476,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         anweisung, text = d.feld()
         if anweisung.upper().startswith("TOC"):
-            from lunivo_writer.editor.dokument import verzeichnis as V
+            from lunivo_writer.kern.funktionen.verweise import verzeichnis as V
             m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
             V.verzeichnis_einfuegen(self.ed, "toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
             return
@@ -577,7 +577,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         vorhandene mit den neuen Einstellungen neu."""
         if not self.ed:
             return
-        from lunivo_writer.editor.dokument import verzeichnis as V
+        from lunivo_writer.kern.funktionen.verweise import verzeichnis as V
         from lunivo_writer.oberflaeche.funktionen.verweise.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
         d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or V.TOC_VORGABE)
         if d.exec() and not V.verzeichnis_einfuegen(self.ed, "toc", d.ergebnis()):
@@ -587,5 +587,5 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
     def verzeichnisseAktualisieren(self, k=None):
         if self.ed:
-            from lunivo_writer.editor.dokument.verzeichnis import verzeichnis_aktualisieren
+            from lunivo_writer.kern.funktionen.verweise.verzeichnis import verzeichnis_aktualisieren
             verzeichnis_aktualisieren(self.ed)

@@ -9,7 +9,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 import json
 import os
 
-from lunivo_writer.plattform.pfade import ressourcen_pfade as pfade
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 from lunivo_writer.oberflaeche.baukasten.basis.texte import trennlinie
 
 from PySide6.QtCore import QSize, QTimer, Qt, Signal

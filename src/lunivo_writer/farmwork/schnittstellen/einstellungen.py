@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import os
 
-from lunivo_writer.plattform.einstellungen.speicher import JsonSpeicher, gemeinsamer_speicher
-from lunivo_writer.plattform.pfade.pfade import ORGANISATION, PROGRAMM  # noqa: F401  (Namen des Programms für Oberfläche und Übernahme)
+from lunivo_writer.farmwork.datentypen.einstellungsdaten import Wert
+from lunivo_writer.infrastruktur.einstellungen.speicher import JsonSpeicher, gemeinsamer_speicher
+from lunivo_writer.infrastruktur.pfade.pfade import ORGANISATION, PROGRAMM  # noqa: F401  (Namen des Programms für Oberfläche und Übernahme)
 
 MAX_ZULETZT = 12
 ERSTSTART_MARKE = "_qsettings_uebernommen"
@@ -18,10 +19,10 @@ class Einstellungen:
         self.speicher = speicher or gemeinsamer_speicher()
 
     # Werte
-    def get(self, key: str, default=None):
+    def get(self, key: str, default: Wert = None) -> Wert:
         return self.speicher.lesen(key, default)
 
-    def set(self, key: str, value) -> None:
+    def set(self, key: str, value: Wert) -> None:
         self.speicher.schreiben(key, value)
 
     def remove(self, key: str) -> None:

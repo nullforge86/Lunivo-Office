@@ -280,8 +280,8 @@ def externe(ordner: str = os.path.join(os.path.dirname(os.path.abspath(__file__)
 # ---- Vergleich -----------------------------------------------------------------------------------------------------------------
 def abbild(dok) -> dict:
     """Was beim Roundtrip erhalten bleiben soll: Text, Zeichenformat-Läufe, Tabellenstruktur, Bilder (aus dem Dokumentenmodell ``core.document.Dokument``)."""
-    from lunivo_writer.core.document.dokument import InlineObjekt, Lauf, Tabelle
-    from lunivo_writer.core.document.formatvorlagen import wirksames_zeichenformat
+    from lunivo_writer.kern.dokument.dokument import InlineObjekt, Lauf, Tabelle
+    from lunivo_writer.kern.dokument.formatvorlagen import wirksames_zeichenformat
     laeufe, tabellen = [], []
     bilder = sum(1 for o in dok.objekte.values() if getattr(o, "art", "") in ("bild", "roh"))              # frei positionierte Bilder
     for a in dok.absaetze():

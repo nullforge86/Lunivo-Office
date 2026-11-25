@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QImage
 
-from lunivo_writer.core.geometry import mm_to_px, px_to_mm
+from lunivo_writer.kern.geometrie import mm_to_px, px_to_mm
 from lunivo_writer.editor.objekte import freie_bilder as FB
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 

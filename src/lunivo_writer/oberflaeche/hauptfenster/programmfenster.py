@@ -13,6 +13,7 @@ from lunivo_writer import __version__
 from lunivo_writer.editor.text import stile
 from lunivo_writer.farmwork.schnittstellen.einstellungen import Einstellungen
 from lunivo_writer.ki.ki_dienst import KIDienst
+from lunivo_writer.farmwork.funktionen.korrektur.anbieter import KorrekturEinstellungenAnbieter
 from lunivo_writer.korrektur.korrektur_dienst import WritingAssistant
 from lunivo_writer.farmwork.steuerung.dokumentverwaltung import DocumentManager
 from lunivo_writer.oberflaeche.statusleiste.statusleiste import StatusBar
@@ -63,7 +64,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         self.leer.setAutoFillBackground(True)
         self.docs.stack.insertWidget(0, self.leer)
         self.docs.stack.setCurrentWidget(self.leer)
-        self.assistant = WritingAssistant(self.settings, parent=self)
+        self.assistant = WritingAssistant(KorrekturEinstellungenAnbieter(self.settings), parent=self)       # das Farmwork meldet seinen Anbieter beim Dienst an
         self.assistant.status.connect(lambda t: self.lbl_msg.setText(t))
         self.ki = KIDienst(self.assistant, self)
         self.ki.status.connect(lambda t: self.lbl_msg.setText(t))

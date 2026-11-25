@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import colorsys
 
-from lunivo_writer.core.document.musterschluessel import patt_von_schluessel, schluessel_von_patt
+from lunivo_writer.kern.dokument.musterschluessel import patt_von_schluessel, schluessel_von_patt
 
 _A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 _R = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"

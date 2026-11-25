@@ -196,8 +196,8 @@ class TextToolsBefehle:
 
 
     def _tt_liste_ist(self, aufzaehlung: bool) -> bool:
-        from lunivo_writer.editor.text import listen as L
-        from lunivo_writer.editor.text import mehrstufig as M
+        from lunivo_writer.kern.funktionen.absatz import listen as L
+        from lunivo_writer.kern.funktionen.absatz import mehrstufig as M
         spec = self._wa().get("liste")
         if not isinstance(spec, dict):
             return False
@@ -207,13 +207,13 @@ class TextToolsBefehle:
 
 
     def ttPunkte(self, k=None):
-        from lunivo_writer.editor.text import listen as L
+        from lunivo_writer.kern.funktionen.absatz import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(True) else L.liste("disc"))
 
     def an_ttPunkte(self): return self._tt_liste_ist(True)
 
     def ttZahlen(self, k=None):
-        from lunivo_writer.editor.text import listen as L
+        from lunivo_writer.kern.funktionen.absatz import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(False) else L.liste("dezimal", "", "."))
 
     def an_ttZahlen(self): return self._tt_liste_ist(False)

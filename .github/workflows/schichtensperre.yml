@@ -21,5 +21,5 @@ jobs:
           python -m pip install pytest PySide6-Essentials
           PYTHONPATH=src QT_QPA_PLATFORM=offscreen python -m pytest -q -p no:cacheprovider \
             tests/architektur/test_farmwork_grenze.py \
-            tests/architektur/test_farmwork_ohne_programmkern_typen.py \
-            tests/architektur/test_core_ohne_qt.py
+            tests/architektur/test_farmwork_typen.py \
+            tests/architektur/test_kern_ohne_qt.py

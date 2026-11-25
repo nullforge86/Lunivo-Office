@@ -12,9 +12,8 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
-from lunivo_writer.modelle.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
+from lunivo_writer.kern.dokument.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
 from lunivo_writer.dienste.gelernt import Gelernt
-from lunivo_writer.farmwork.funktionen.korrektur import einstellungen as korrektur_einstellungen
 from lunivo_writer.korrektur import autokorrektur, fund as fundlib, inkrement, pruefung, vorhersage
 
 _log = logging.getLogger("lunivo.proofing")
@@ -78,17 +77,17 @@ class WritingAssistant(QObject):
         self._timer.setSingleShot(True)
         self._timer.setInterval(900)
         self._timer.timeout.connect(lambda: self.pruefen())
-        self.thema = korrektur_einstellungen.thema(settings)
+        self.thema = settings.thema()
         if self.thema != "egal":                       # Wörterbuch (~0,4 s) erst nach dem ersten Zeichnen des Fensters laden
             QTimer.singleShot(0, lambda t=self.thema: vorhersage.thema_aufnehmen(vorhersage.thema_woerter(t)))
 
     # ---- Schalter ---------------------------------------------------------
     def an(self, name: str) -> bool:
         std = {"wellen": True, "vorhersage": True, "autokorr": True}.get(name, True)
-        return korrektur_einstellungen.schalter(self.settings, name, std)
+        return self.settings.schalter(name, std)
 
     def setze(self, name: str, wert: bool) -> None:
-        korrektur_einstellungen.schalter_setzen(self.settings, name, wert)
+        self.settings.schalter_setzen(name, wert)
         if name == "wellen":
             if wert:
                 self.pruefen(voll=True)
@@ -105,13 +104,13 @@ class WritingAssistant(QObject):
 
     def setze_thema(self, name: str) -> None:
         self.thema = name
-        korrektur_einstellungen.thema_setzen(self.settings, name)
+        self.settings.thema_setzen(name)
         if name != "egal":
             vorhersage.thema_aufnehmen(vorhersage.thema_woerter(name))
         self.themaGeaendert.emit(name)
 
     def ak_an(self, name: str) -> bool:
-        return korrektur_einstellungen.schalter(self.settings, name, autokorrektur.SCHALTER[name][0])
+        return self.settings.schalter(name, autokorrektur.SCHALTER[name][0])
 
     # ---- Anbindung an den Editor ---------------------------------------------
     def attach(self, editor) -> None:
@@ -197,7 +196,7 @@ class WritingAssistant(QObject):
         """Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“."""
         schalter = {k: self.settings.get_bool(k, True) for k in ("rsGrossIgnorieren", "rsZahlenIgnorieren", "rsPfadeIgnorieren", "rsGrammatik")}
         for n in pruefung.PRUEFER_NAMEN:
-            schalter["pruefer_" + n] = korrektur_einstellungen.pruefer_aktiv(self.settings, n)
+            schalter["pruefer_" + n] = self.settings.pruefer_aktiv(n)
         return schalter
 
     def _fertig_veraltet(self, rev: int, doc) -> bool:
@@ -236,7 +235,7 @@ class WritingAssistant(QObject):
     def _abstimmen(self, funde: list) -> list:
         """Konsens zwischen den Quellen (``fund.abstimmen``) mit den gelernten Daten und dem Schalter der Gegenprobe."""
         return fundlib.abstimmen(funde, self._geprueft, self.gelernt.daten["inRuhe"], self.gelernt.daten["woerter"],
-                                 korrektur_einstellungen.konsens_gegenprobe(self.settings))
+                                 self.settings.konsens_gegenprobe())
 
     def _text(self) -> str:
         """Dokumenttext, je Dokumentrevision nur einmal gebildet (``toPlainText`` kopiert das ganze Dokument)."""
@@ -291,7 +290,7 @@ class WritingAssistant(QObject):
         """(Text, Fund)-Paare: erst die Funde an der Stelle, dann Wörterbuch-/Klangvorschläge für ein unbekanntes Wort."""
         # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
         vorschlaege: list[tuple[str, ProofingIssue | None]] = [(f.neu, f) for f in gefunden if f.neu]
-        if not (wort and korrektur_einstellungen.vorschlaege_anzeigen(self.settings)):
+        if not (wort and self.settings.vorschlaege_anzeigen()):
             return vorschlaege
         from lunivo_writer.korrektur import pruefung
         schon = {t for t, _f in vorschlaege}

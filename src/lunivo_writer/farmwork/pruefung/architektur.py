@@ -1,13 +1,15 @@
 """Richtungsregeln der Architektur – eine einzige Quelle für den Importwächter und die Architekturtests.
 
-    Qt-Oberfläche  →  Farmwork  →  Programmkern (core, editor, dienste, ki, korrektur, modelle, plattform)
+    Qt-Oberfläche  →  Farmwork (Qt-frei)  →  Kern und Infrastruktur (Qt-frei)
 
-    oberflaeche   darf Qt, sich selbst und ``farmwork`` importieren, nie den Programmkern
-    farmwork      darf sich selbst und den Programmkern importieren, nie ``oberflaeche``; Qt nur in ``farmwork.qt``
-    core          darf core, modelle und plattform importieren, kein Qt, nie ``oberflaeche``/``farmwork``
-    editor, dienste, ki, korrektur   dürfen den Programmkern importieren, nie ``oberflaeche``/``farmwork``
-    modelle       darf modelle, core und plattform importieren
-    plattform     darf nur sich selbst importieren, kein Qt
+    oberflaeche    darf Qt, sich selbst und ``farmwork`` importieren, nie ``kern`` oder ``infrastruktur``
+    farmwork       darf sich selbst, ``kern`` und ``infrastruktur`` importieren, kein Qt, nie ``oberflaeche``
+    kern           darf nur ``kern`` importieren, kein Qt
+    infrastruktur  darf nur ``infrastruktur`` importieren, kein Qt
+
+Bis zur vollständigen Umstellung gibt es die alten Ordner ``editor``, ``dienste``, ``ki`` und ``korrektur`` (Programmteile, die noch nicht nach ``kern``
+gewandert sind). Sie dürfen ``kern``, ``infrastruktur`` und sich gegenseitig importieren, nie ``farmwork`` oder ``oberflaeche``; das Farmwork darf sie
+vorübergehend importieren. Jeder Verstoß steht auf der Übergangsliste, die nur kleiner werden darf.
 
 Keine Direktverbindungen, keine Rückfallwege, keine alternativen Schnittstellen, keine Ausnahmen. Dieses Modul importiert nur die Standardbibliothek."""
 from __future__ import annotations
@@ -15,21 +17,16 @@ from __future__ import annotations
 PAKET = "lunivo_writer"
 OBERFLAECHE = "oberflaeche"
 FARMWORK = "farmwork"
-PROGRAMMKERN = frozenset({"core", "editor", "dienste", "ki", "korrektur", "modelle", "plattform"})
-SCHICHTEN = (OBERFLAECHE, FARMWORK, *sorted(PROGRAMMKERN))
+ALTE_ORDNER = frozenset({"editor", "dienste", "ki", "korrektur"})
+SCHICHTEN = (OBERFLAECHE, FARMWORK, "kern", "infrastruktur", *sorted(ALTE_ORDNER))
 QT_PAKETE = ("PySide6", "PyQt5", "PyQt6", "PyQt", "shiboken6", "shiboken")
-QT_FARMWORK = PAKET + "." + FARMWORK + ".qt"          # die einzige Stelle im Farmwork, die Qt kennt
 
 ERLAUBTE_ZIELE = {
     OBERFLAECHE: frozenset({OBERFLAECHE, FARMWORK}),
-    FARMWORK: frozenset({FARMWORK}) | PROGRAMMKERN,
-    "core": frozenset({"core", "modelle", "plattform"}),
-    "modelle": frozenset({"modelle", "core", "plattform"}),
-    "plattform": frozenset({"plattform"}),
-    "editor": PROGRAMMKERN,
-    "dienste": PROGRAMMKERN,
-    "ki": PROGRAMMKERN,
-    "korrektur": PROGRAMMKERN,
+    FARMWORK: frozenset({FARMWORK, "kern", "infrastruktur"}) | ALTE_ORDNER,
+    "kern": frozenset({"kern"}),
+    "infrastruktur": frozenset({"infrastruktur"}),
+    **{alt: frozenset({"kern", "infrastruktur"}) | ALTE_ORDNER for alt in ALTE_ORDNER},
 }
 
 
@@ -46,7 +43,8 @@ def ist_qt(modul: str) -> bool:
 
 
 def qt_erlaubt(importeur: str) -> bool:
-    return schicht_von(importeur) == OBERFLAECHE or importeur == QT_FARMWORK or importeur.startswith(QT_FARMWORK + ".")
+    """Qt gibt es ausschließlich in der Oberfläche."""
+    return schicht_von(importeur) == OBERFLAECHE
 
 
 def verstoss(importeur: str, ziel: str) -> str | None:
@@ -55,7 +53,7 @@ def verstoss(importeur: str, ziel: str) -> str | None:
     if von not in ERLAUBTE_ZIELE:
         return None
     if ist_qt(ziel):
-        return None if qt_erlaubt(importeur) else f"Qt ({ziel}) ist nur in oberflaeche und farmwork.qt erlaubt, nicht in {von}"
+        return None if qt_erlaubt(importeur) else f"Qt ({ziel}) ist nur in oberflaeche erlaubt, nicht in {von}"
     nach = schicht_von(ziel)
     if nach is None:
         return None

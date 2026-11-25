@@ -42,9 +42,9 @@ from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 def aus_absatz(af: dict, dokument) -> dict:
     """Die Werte eines wirksamen Absatzformats (Wörterbuch des Dokumentenmodells, siehe ``formatwerte.absatzformat``) für das Fenster (Gegenstück zu
     ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
-    from lunivo_writer.core.layout import formatwerte as F
+    from lunivo_writer.kern.layout import formatwerte as F
     from lunivo_writer.editor.seite import absatzopt
-    from lunivo_writer.modelle.seite import px_to_mm
+    from lunivo_writer.kern.dokument.seite import px_to_mm
     from lunivo_writer.oberflaeche.baukasten.dokument.tabstopp_dialog import aus_absatz as tabs_aus_absatz
     art, wert = F.zeilenabstand(af)
     links, rechts, erste = F.einzuege(af)
@@ -60,7 +60,7 @@ def aus_absatz(af: dict, dokument) -> dict:
 
 def werte_von(editor, absatz) -> dict:
     """Die Fensterwerte des Absatzes ``absatz`` im Dokument des Editors."""
-    from lunivo_writer.core.layout import formatwerte as F
+    from lunivo_writer.kern.layout import formatwerte as F
     d = editor.sitzung.dokument
     return aus_absatz(F.absatzformat(d, absatz), d)
 

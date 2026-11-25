@@ -1,7 +1,7 @@
 """Optionen: Schreiben, Speichern, Drucken und PDF."""
 from __future__ import annotations
 
-from lunivo_writer.core.schrift import standard_datenbank
+from lunivo_writer.kern.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
 from lunivo_writer.oberflaeche.baukasten.geruest.module import anmelden

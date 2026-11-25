@@ -13,8 +13,8 @@ import copy
 import difflib
 import re
 
-from lunivo_writer.core.document.dokument import Auswahl, Dokument, Lauf, Position
-from lunivo_writer.core.editing import Bearbeitungssitzung
+from lunivo_writer.kern.dokument.dokument import Auswahl, Dokument, Lauf, Position
+from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
 
 TOKEN = re.compile(r"\s+|\w+|[^\w\s]", re.UNICODE)
 AEHNLICH = 0.4

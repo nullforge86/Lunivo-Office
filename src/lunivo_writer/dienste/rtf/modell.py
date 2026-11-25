@@ -1,7 +1,7 @@
 """RTF-Zwischenmodell: Absätze, Tabellen und das Sammelziel (Haupttext, Kopf- oder Fußzeile)."""
 from __future__ import annotations
 
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 
 GRENZE_BYTES = 512 * 1024 * 1024
 

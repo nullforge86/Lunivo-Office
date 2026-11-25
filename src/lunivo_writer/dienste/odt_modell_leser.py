@@ -6,10 +6,10 @@ from __future__ import annotations
 import base64
 import xml.etree.ElementTree as ET
 
-from lunivo_writer.core.document.values import Brush, Color, Length
+from lunivo_writer.kern.dokument.values import Brush, Color, Length
 from lunivo_writer.dienste.odt_xml import GRENZE_BYTES, MAX_WIEDERHOLUNG, NS, _kurz, _px, _pt, _q, _text_von
-from lunivo_writer.modelle.bericht import DocumentIOError, IOReport
-from lunivo_writer.modelle.seite import HeaderFooter, PageSettings, px_to_mm
+from lunivo_writer.kern.dokument.bericht import DocumentIOError, IOReport
+from lunivo_writer.kern.dokument.seite import HeaderFooter, PageSettings, px_to_mm
 
 class NichtImModell(Exception):
     """ODT-Inhalt, der noch nicht ohne Qt vollständig übernommen wird."""

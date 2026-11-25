@@ -47,8 +47,8 @@ def _blatt_bild(dokument) -> QPixmap:
 
 def _geruest_bild(muster: dict, benutzer: dict) -> QPixmap:
     from PySide6.QtCore import QDate, QLocale
-    from lunivo_writer.core.document import neues_dokument
-    from lunivo_writer.core.editing import Bearbeitungssitzung
+    from lunivo_writer.kern.dokument import neues_dokument
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
     sitzung = Bearbeitungssitzung(neues_dokument())
     vorlagen.geruest_schreiben(sitzung, muster["zeilen"], benutzer, QLocale("de_DE").toString(QDate.currentDate(), _t("vorlagen.d_mmmm_yyyy")))
     return _blatt_bild(sitzung.dokument)

@@ -17,7 +17,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, HOEHE
 
 def objekte(ed) -> list[tuple]:
     """[(Beschriftung, Ziel)] aller Objekte in Dokumentreihenfolge; Ziel ``("text", von, bis)``, ``("frei", Id)`` oder ``("tabelle", von, bis)``."""
-    from lunivo_writer.core.document.dokument import InlineObjekt
+    from lunivo_writer.kern.dokument.dokument import InlineObjekt
     from lunivo_writer.editor.dokument import gehe_zu as G
     namen = {"form": "Form", "zeichenbereich": "Zeichenbereich", "wordart": "WordArt", "diagramm": "Diagramm", "smartart": "SmartArt", "formel": "Formel",
              "piktogramm": "Piktogramm", "textfeld": "Textfeld", "gruppe": "Gruppe", "bild": "Bild"}

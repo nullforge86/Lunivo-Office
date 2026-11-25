@@ -5,7 +5,7 @@ Optionen ▸ Ansicht: „Minisymbolleiste bei Auswahl“ und „Minisymbolleiste
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterZeile
-from lunivo_writer.core.schrift import standard_datenbank
+from lunivo_writer.kern.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
@@ -230,7 +230,7 @@ class MiniLeiste(QFrame):
             if z is not None:
                 b.setChecked(bool(z))
         if self._ed is not None:                                      # Schrift und Größe an der Schreibmarke / in der Auswahl
-            from lunivo_writer.core.layout.formatwerte import schrift as schrift_von
+            from lunivo_writer.kern.layout.formatwerte import schrift as schrift_von
             z = self._ed.zeichenformat()
             grund_fam, grund_pt = self._ed.document().standardschrift()
             fam = schrift_von(z).family if z.get("schrift") else grund_fam

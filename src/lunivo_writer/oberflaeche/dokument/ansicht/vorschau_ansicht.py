@@ -13,7 +13,7 @@ def aktiv(tab, art: str | None = None) -> bool:
 
 
 def zeigen(tab, dokument, art: str = "serien") -> None:
-    from lunivo_writer.core.editing import Bearbeitungssitzung
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
     from lunivo_writer.oberflaeche.dokument.ansicht.dokument_ansicht import DokumentAnsicht
     beenden(tab)
     v = DokumentAnsicht(Bearbeitungssitzung(dokument))

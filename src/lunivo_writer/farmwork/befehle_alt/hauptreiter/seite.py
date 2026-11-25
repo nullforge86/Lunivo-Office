@@ -1,7 +1,7 @@
 """Befehle: Seite, Abschnitte, Spalten."""
 from __future__ import annotations
 
-from lunivo_writer.core.layout.formatwerte import richtung as richtung_von
+from lunivo_writer.kern.layout.formatwerte import richtung as richtung_von
 from PySide6.QtCore import Qt
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu
@@ -412,7 +412,7 @@ class SeiteBefehle:
     def silbentrennung(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.core.textlayout.trennung import trenner_fuer
+        from lunivo_writer.kern.textsatz.trennung import trenner_fuer
         pg = self.ed.abschnitt_seite()
         sprache = self.w.settings.get("silben/sprache", "de_DE")
         if trenner_fuer(sprache) is None:

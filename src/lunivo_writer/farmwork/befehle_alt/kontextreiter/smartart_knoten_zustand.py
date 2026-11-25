@@ -5,7 +5,7 @@ Die Knotenmaße kommen aus dem Zeichnen (``SA.knoten_rechtecke``) und sind nur a
 das Layout bestimmt sie. Das Band zeigt sie schreibgeschützt."""
 from __future__ import annotations
 
-from lunivo_writer.modelle.seite import px_to_mm
+from lunivo_writer.kern.dokument.seite import px_to_mm
 
 
 class SmartArtKnotenZustand:

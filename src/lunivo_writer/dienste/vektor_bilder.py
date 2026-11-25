@@ -6,9 +6,9 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QImage
 
-from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.rendering import metafile as MF
-from lunivo_writer.core.rendering.metafile import MAX_SEITE_PX, ist_emf, ist_wmf, masse_px  # noqa: F401  (Namen der bisherigen Schnittstelle)
+from lunivo_writer.kern.geometrie import Rect
+from lunivo_writer.kern.rendering import metafile as MF
+from lunivo_writer.kern.rendering.metafile import MAX_SEITE_PX, ist_emf, ist_wmf, masse_px  # noqa: F401  (Namen der bisherigen Schnittstelle)
 from lunivo_writer.editor.objekte import bilddaten as BD
 
 

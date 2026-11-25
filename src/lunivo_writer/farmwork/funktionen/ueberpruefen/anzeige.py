@@ -1,7 +1,7 @@
 """Anzeige zur Überprüfung: mit oder ohne Markup, oder das Original ohne die verfolgten Änderungen (schreibgeschützt)."""
 from __future__ import annotations
 
-from lunivo_writer.editor.dokument import fassungen
+from lunivo_writer.kern.funktionen.ueberpruefen import fassungen
 from lunivo_writer.farmwork.schnittstellen.dokument import EditorPort
 from lunivo_writer.farmwork.schnittstellen.vorschau import VorschauPort
 

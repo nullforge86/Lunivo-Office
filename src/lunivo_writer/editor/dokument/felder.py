@@ -284,9 +284,9 @@ def tabellen_bereiche(ed) -> dict[str, list[float]]:
 
 
 def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
-    from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
-    from lunivo_writer.core.editing.suche import roh_text
-    from lunivo_writer.editor.dokument import verweise as V
+    from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
+    from lunivo_writer.kern.bearbeitung.suche import roh_text
+    from lunivo_writer.kern.funktionen.verweise import verweise as V
     dok = ed.sitzung.dokument
     pos = ed.textCursor().position()
     marken = V.lesezeichen_liste(ed, versteckte=False)

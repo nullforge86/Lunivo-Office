@@ -32,9 +32,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QSettings, QStandardPaths, QTimer  # noqa: E402
 from PySide6.QtGui import QColor, QImage  # noqa: E402
 
-from lunivo_writer.core.document import neues_dokument  # noqa: E402
-from lunivo_writer.core.document.dokument import Auswahl, InlineObjekt, Position, Tabelle  # noqa: E402
-from lunivo_writer.core.document.serialisierung import dokument_zu_daten  # noqa: E402
+from lunivo_writer.kern.dokument import neues_dokument  # noqa: E402
+from lunivo_writer.kern.dokument.dokument import Auswahl, InlineObjekt, Position, Tabelle  # noqa: E402
+from lunivo_writer.kern.dokument.serialisierung import dokument_zu_daten  # noqa: E402
 from pruefhilfen import DialogWaechter, menue_eintraege  # noqa: E402  (gemeinsame Hilfen in werkzeuge/)
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QMenu, QMessageBox, QStackedWidget, QTabBar,  # noqa: E402
                                QToolButton, QWidget)

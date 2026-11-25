@@ -9,7 +9,7 @@ from lunivo_writer.farmwork.datentypen.ereignisdaten import Art, Ereignis
 from lunivo_writer.farmwork.steuerung.ereignissteuerung import Melder
 from lunivo_writer.farmwork.funktionen.kopffuss import menues
 from lunivo_writer.farmwork.funktionen.kopffuss.typen import KopfFussOptionen, MenueEintrag
-from lunivo_writer.editor.seite import kopffuss_optionen as kern_optionen
+from lunivo_writer.kern.funktionen.kopffuss import optionen as kern_optionen
 
 KEIN_VORGAENGER = "Der erste Abschnitt hat keinen Vorgänger."
 KEINE_VORIGE = "Es gibt keine vorige Kopfzeile."

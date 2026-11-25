@@ -4,9 +4,9 @@ Beschriftung, Abschnitt. Die Oberfläche ist der Reiter „Gehe zu“ im Feld �
 Alle Stellen sind Zeichenstellen im Rohtext (Absätze durch ein Zeichen getrennt, wie ``textCursor().position()``)."""
 from __future__ import annotations
 
-from lunivo_writer.core.document.dokument import InlineObjekt, Tabelle
-from lunivo_writer.core.editing.suche import position_zu_offset
-from lunivo_writer.editor.dokument import verweise
+from lunivo_writer.kern.dokument.dokument import InlineObjekt, Tabelle
+from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
+from lunivo_writer.kern.funktionen.verweise import verweise
 
 NUMMERN = ("Seite", "Zeile")                                    # man gibt eine Zahl ein
 LISTEN = ("Überschrift", "Textmarke", "Beschriftung", "Kommentar", "Fußnote", "Endnote", "Tabelle", "Bild", "Abschnitt")

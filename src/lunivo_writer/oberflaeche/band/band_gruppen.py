@@ -5,7 +5,7 @@ import json
 import os
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte, RasterZeile
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil, trennlinie
-from lunivo_writer.plattform.pfade import ressourcen_pfade as pfade
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter

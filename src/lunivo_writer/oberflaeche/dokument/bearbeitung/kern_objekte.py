@@ -13,7 +13,7 @@ import dataclasses
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QImage
 
-from lunivo_writer.core.document.dokument import UMBRUCH_ARTEN, Auswahl, InlineObjekt, Position
+from lunivo_writer.kern.dokument.dokument import UMBRUCH_ARTEN, Auswahl, InlineObjekt, Position
 
 ANGABE_FELDER = {"b", "h", "bh", "xh", "ah", "bv", "yv", "av", "hinter", "art", "n", "alt", "umbruch"}
 
@@ -240,7 +240,7 @@ class KernObjekte:
         if von is None or bis is None:
             return None
         o = self.sitzung._inline(objekt_id)[2]
-        from lunivo_writer.core.geometry import Rect
+        from lunivo_writer.kern.geometrie import Rect
         return von[0], Rect(von[1].x, von[1].y, max(bis[1].x - von[1].x, 1.0), o.hoehe)
 
     def inline_bei(self, ziel: Position, punkt) -> int | None:

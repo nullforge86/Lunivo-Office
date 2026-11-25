@@ -1,16 +1,16 @@
 """Ausgang des Frameworks: Prüfung aller Objekte, die an die Oberfläche gehen (Befehlsergebnisse, Ereignisdaten).
 
-Stammt der Typ eines Objekts – oder eines darin enthaltenen Objekts – aus ``lunivo_writer.core``, gibt es sofort einen Fehler. So verlässt kein
+Stammt der Typ eines Objekts – oder eines darin enthaltenen Objekts – aus ``lunivo_writer.kern``, gibt es sofort einen Fehler. So verlässt kein
 Kern-Objekt (Dokument, Absatz, Lauf, Format) das Framework."""
 from __future__ import annotations
 
 import dataclasses
 
-KERN_PRAEFIX = "lunivo_writer.core"
+KERN_PRAEFIX = "lunivo_writer.kern"
 
 
 class KernObjektAmAusgang(TypeError):
-    """Ein Objekt aus ``lunivo_writer.core`` sollte an die Oberfläche gehen."""
+    """Ein Objekt aus ``lunivo_writer.kern`` sollte an die Oberfläche gehen."""
 
 
 def pruefe(objekt, pfad: str = "Ausgabe"):

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 
-from lunivo_writer.core.rendering.linien import STILE as KERN_STILE, zeichne_linie, zeichne_rahmen
+from lunivo_writer.kern.rendering.linien import STILE as KERN_STILE, zeichne_linie, zeichne_rahmen
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 LINIENBREITEN = (0.25, 0.5, 0.75, 1.0, 1.5, 2.25, 3.0, 4.5, 6.0)                       # pt
 ALLE_SEITEN = "tblr"
@@ -104,5 +104,5 @@ class Linie:
     def rahmen_zeichnen(self, p: QPainter, r: QRectF, massstab: float = 1.0, innen_y=()) -> None:
         """Zeichnet die gemeinten Seiten eines Rechtecks in der Linienart. ``innen_y``: Höhen der Linien zwischen Absätzen (nur wenn ``h`` gesetzt ist)."""
         from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-        from lunivo_writer.core.geometry import Rect
+        from lunivo_writer.kern.geometrie import Rect
         kern_malen(p, r, lambda z: zeichne_rahmen(z, self.farbe, self.breite_pt, self.art, self.seiten, Rect(r.x(), r.y(), r.width(), r.height()), massstab, innen_y), rand=max(4.0, self.breite_pt * 3))

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QMarginsF, QPointF, QRectF, QSizeF
 
-from lunivo_writer.core.geometry import Margins, Point, Rect, Size
+from lunivo_writer.kern.geometrie import Margins, Point, Rect, Size
 
 
 def point_from_qt(p) -> Point:

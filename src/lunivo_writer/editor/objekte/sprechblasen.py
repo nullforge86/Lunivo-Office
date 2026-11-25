@@ -77,7 +77,7 @@ def _kuerzen(t: str, n: int = 90) -> str:
 
 def sammeln_modell(sitzung, verwenden: str = "Nur für Kommentare") -> list[Blase]:
     """Alle Blasen des Dokuments in Textreihenfolge (Stellen im Rohtext) aus dem Dokumentmodell."""
-    from lunivo_writer.core.editing.suche import position_zu_offset, roh_text
+    from lunivo_writer.kern.bearbeitung.suche import position_zu_offset, roh_text
     if verwenden == "Nie":
         return []
     d = sitzung.dokument
@@ -127,14 +127,14 @@ KOPF_HOEHE = 24.0                                  # die Kopfzeile: Kreis mit In
 
 def blasen_schrift(px: float):
     """Die Schrift der Blasen als Beschreibung des Kerns: Grundschrift des Dokuments, Größe aus Bildpunkten (96 dpi) in Punkt. Keine Qt-Schrift."""
-    from lunivo_writer.core.layout.formatwerte import STANDARD_FAMILIE
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.layout.formatwerte import STANDARD_FAMILIE
+    from lunivo_writer.kern.textsatz import FontSpec
     return FontSpec(STANDARD_FAMILIE, max(1.0, px) * 72.0 / 96.0, 400, False)
 
 
 def messen(bl: Blase, breite: float, font) -> float:
     """Höhe der Blase bei gegebener Breite (alles in Bildpunkten des Zeichengeräts); gemessen vom Kern."""
-    from lunivo_writer.core.rendering import blasen
+    from lunivo_writer.kern.rendering import blasen
     from lunivo_writer.dienste.textsatz import standard_engine
     return blasen.messen(standard_engine(), bl.text or " ", breite, font)
 
@@ -174,8 +174,8 @@ def zeichnen(p: QPainter, bl: Blase, r: QRectF, font, druck: bool = False) -> No
     """Eine Blase zeichnen wie eine Karte: Kreis mit Initial, Name fett, Datum, Menüzeichen, darunter der Text — Farben des Designs, Kreis in der Farbe des Kommentars. Gezeichnet vom Kern."""
     from PySide6.QtGui import QGuiApplication, QPalette
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-    from lunivo_writer.core.geometry import Rect
-    from lunivo_writer.core.rendering import blasen
+    from lunivo_writer.kern.geometrie import Rect
+    from lunivo_writer.kern.rendering import blasen
     from lunivo_writer.dienste.textsatz import standard_engine
     pal = QPalette() if druck else QGuiApplication.palette()                # im Druck immer helle Farben, nie die des dunklen Designs
 
@@ -190,8 +190,8 @@ def zeichnen(p: QPainter, bl: Blase, r: QRectF, font, druck: bool = False) -> No
 def verbindung(p: QPainter, bl: Blase, x_text: float, y_text: float, r: QRectF, rechts: bool) -> None:
     """Linie vom Text zur Blase: waagerecht aus dem Seitenrand, dann zur Mitte der Kopfzeile."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-    from lunivo_writer.core.geometry import Rect
-    from lunivo_writer.core.rendering import blasen
+    from lunivo_writer.kern.geometrie import Rect
+    from lunivo_writer.kern.rendering import blasen
     c = QColor(bl.farbe)
     flaeche = QRectF(min(x_text, r.left()) - 12, min(y_text, r.top()) - 2, abs(r.left() - x_text) + r.width() + 24, abs(y_text - r.top()) + r.height() + 4)
     kern_malen(p, flaeche, lambda z: blasen.verbindung(z, (c.red(), c.green(), c.blue(), c.alpha()), x_text, y_text, Rect(r.x(), r.y(), r.width(), r.height()), rechts), rand=BLASE_RAND, ueber=BLASE_UEBERABTASTUNG)

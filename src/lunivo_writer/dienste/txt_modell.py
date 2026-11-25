@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from lunivo_writer.dienste.import_grenzen import pruefe_dateigroesse
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 
 
 def textdatei_lesen(path: str) -> str:
@@ -23,7 +23,7 @@ def textdatei_lesen(path: str) -> str:
 
 def dokument_laden(path: str):
     """Eine Textdatei als ``Dokument`` (ein Abschnitt, ein Absatz je Zeile) laden → (Dokument, Seiteneinrichtung)."""
-    from lunivo_writer.core.document.dokument import Absatz, Lauf, neues_dokument
+    from lunivo_writer.kern.dokument.dokument import Absatz, Lauf, neues_dokument
     text = textdatei_lesen(path)
     dok = neues_dokument()
     dok.standardformat = {"schrift": "Liberation Sans", "groesse_pt": 11.0}
@@ -33,7 +33,7 @@ def dokument_laden(path: str):
 
 def dokument_als_text(dok, seite) -> tuple[bytes, list[str]]:
     """Das Dokument als UTF-8-Text (ein Absatz je Zeile) und die Hinweise, was dabei verloren geht."""
-    from lunivo_writer.core.document.dokument import Tabelle
+    from lunivo_writer.kern.dokument.dokument import Tabelle
     hinweise: list[str] = []
     reich = bool(dok.listen or dok.objekte or len(dok.abschnitte) > 1)
     zeilen: list[str] = []

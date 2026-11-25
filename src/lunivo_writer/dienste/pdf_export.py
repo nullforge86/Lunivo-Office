@@ -58,8 +58,8 @@ def nur_markierung(dokument, auswahl):
     """Eine Kopie des ``Dokument``s, in der nur der markierte Teil steht (erster Abschnitt mit seiner Seiteneinrichtung, Vorlagen, Listen, Noten und
     Ressourcen bleiben; das Original bleibt unberührt). Der Ausschnitt kommt aus der zentralen Bearbeitung (``ausschnitt``)."""
     import copy
-    from lunivo_writer.core.document.dokument import Absatz, Rahmen
-    from lunivo_writer.core.editing import Bearbeitungssitzung
+    from lunivo_writer.kern.dokument.dokument import Absatz, Rahmen
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
     kopie = copy.deepcopy(dokument)
     bloecke = Bearbeitungssitzung(kopie).ausschnitt(auswahl)
     if not bloecke:

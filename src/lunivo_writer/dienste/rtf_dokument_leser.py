@@ -6,12 +6,12 @@ Tabellen (Spaltenbreiten aus den Zellgrenzen), Bilder im Text sowie Seiteneinric
 auf; dann gibt ``lese_rtf_dokument`` ``None`` zurück und der Aufrufer nimmt den bisherigen Weg."""
 from __future__ import annotations
 
-from lunivo_writer.core.document.dokument import Abschnitt, Absatz, Dokument, FreiesObjekt, InlineObjekt, Kommentar, Lauf, Note, ListenDefinition, ListenEbene, Tabelle, Zelle, neues_dokument
-from lunivo_writer.core.document.formatvorlagen import eingebaute_vorlagen
+from lunivo_writer.kern.dokument.dokument import Abschnitt, Absatz, Dokument, FreiesObjekt, InlineObjekt, Kommentar, Lauf, Note, ListenDefinition, ListenEbene, Tabelle, Zelle, neues_dokument
+from lunivo_writer.kern.dokument.formatvorlagen import eingebaute_vorlagen
 from lunivo_writer.dienste.rtf.modell import Abschnittswechsel, daten_lesen as _daten_lesen, Absatz as RtfAbsatz, NichtImModell, Tabelle as RtfTabelle, Ziel
 from lunivo_writer.dienste.rtf.zerleger import Zerleger
-from lunivo_writer.modelle.bericht import IOReport
-from lunivo_writer.modelle.seite import HeaderFooter
+from lunivo_writer.kern.dokument.bericht import IOReport
+from lunivo_writer.kern.dokument.seite import HeaderFooter
 
 _TWIP_JE_PX = 15.0
 

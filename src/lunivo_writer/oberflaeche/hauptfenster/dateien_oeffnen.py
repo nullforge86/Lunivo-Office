@@ -7,8 +7,8 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QMessageBox
 
 from lunivo_writer.editor.text import stile
-from lunivo_writer.modelle.seite import PageSettings
-from lunivo_writer.modelle.bericht import DocumentIOError, IOReport, PasswortNoetig
+from lunivo_writer.kern.dokument.seite import PageSettings
+from lunivo_writer.kern.dokument.bericht import DocumentIOError, IOReport, PasswortNoetig
 from lunivo_writer.dienste import dateiformate as formats
 from lunivo_writer.dienste import sicher_schreiben
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster

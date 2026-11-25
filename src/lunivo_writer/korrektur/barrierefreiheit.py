@@ -32,9 +32,9 @@ def _bild_ohne_alt(o) -> bool:
 
 def _text_durchsuchen(dok, seite: QColor) -> tuple[dict, list, int]:
     """Durchläuft alle Absätze: (Zähler, Überschriftenebenen, Wortzahl)."""
-    from lunivo_writer.core.document.dokument import InlineObjekt, Lauf
-    from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
-    from lunivo_writer.core.layout import formatwerte as F
+    from lunivo_writer.kern.dokument.dokument import InlineObjekt, Lauf
+    from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
+    from lunivo_writer.kern.layout import formatwerte as F
     z = {"bilder": 0, "farben": 0, "links": 0}
     ebenen: list = []
     woerter = 0
@@ -101,7 +101,7 @@ def pruefe(editor) -> list[str]:
 
 def _tabellen(dok):
     """Alle Tabellen des Dokuments (auch geschachtelte) in Dokumentreihenfolge."""
-    from lunivo_writer.core.document.dokument import Tabelle
+    from lunivo_writer.kern.dokument.dokument import Tabelle
 
     def lauf(bloecke):
         for b in bloecke:

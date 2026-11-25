@@ -10,8 +10,8 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 from lunivo_writer.editor.diagramme import diagramm_format as F
 from lunivo_writer.editor.text import texteffekt as T
 from lunivo_writer.editor.text.textfx import WARP_FORMEN
-from lunivo_writer.core.rendering.texteffekte import pfad_verformen
-from lunivo_writer.core.document.objekte import VectorPath
+from lunivo_writer.kern.rendering.texteffekte import pfad_verformen
+from lunivo_writer.kern.dokument.objekte import VectorPath
 from lunivo_writer.oberflaeche.zeichnen.pfad import pfad_zu_vektor, vektor_zu_pfad
 from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.oberflaeche.baukasten.dropdown.kopf_dropdown import KopfDropdown, keine_zeile

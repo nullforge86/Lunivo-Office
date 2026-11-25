@@ -368,7 +368,7 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from lunivo_writer.dienste import dateiformate as formats
-        from lunivo_writer.modelle.bericht import DocumentIOError
+        from lunivo_writer.kern.dokument.bericht import DocumentIOError
         from lunivo_writer.editor.dokument import einfuegen as E
         from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.OPEN_FILTER)
@@ -442,7 +442,7 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         import re
-        from lunivo_writer.core.document.dokument import Auswahl, Position
+        from lunivo_writer.kern.dokument.dokument import Auswahl, Position
         from lunivo_writer.dienste import bausteine
         s = self.ed.sitzung
         if s.auswahl.leer:

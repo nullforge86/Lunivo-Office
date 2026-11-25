@@ -37,7 +37,7 @@ def speichere(geladen, pfad: str):
 
 def layout(dokument):
     """Layoutberechnung der Anwendung. → (LayoutEngine, Ergebnis)."""
-    from lunivo_writer.core.layout import LayoutEngine
+    from lunivo_writer.kern.layout import LayoutEngine
     le = LayoutEngine(None)
     return le, le.berechnen(dokument)
 
@@ -48,10 +48,10 @@ def seite_mm(einrichtung) -> tuple[float, float]:
 
 def seitenbilder(dokument, le, erg, ordner: str, praefix: str, faktor: float = 1.0, max_seiten: int = 80) -> list[str]:
     """Rendert die Seiten mit dem Renderer der Anwendung nach PNG (96 dpi · ``faktor``). → Dateipfade."""
-    from lunivo_writer.core.layout import formatwerte as F
-    from lunivo_writer.core.rendering import DokumentRenderer
-    from lunivo_writer.core.rendering.bildeffekte import png_bytes
-    from lunivo_writer.core.rendering.rasterziel import RasterZiel
+    from lunivo_writer.kern.layout import formatwerte as F
+    from lunivo_writer.kern.rendering import DokumentRenderer
+    from lunivo_writer.kern.rendering.bildeffekte import png_bytes
+    from lunivo_writer.kern.rendering.rasterziel import RasterZiel
     os.makedirs(ordner, exist_ok=True)
     renderer = DokumentRenderer(le.engine)
     grund = F.schrift(dict(dokument.standardformat))
@@ -70,7 +70,7 @@ def seitenbilder(dokument, le, erg, ordner: str, praefix: str, faktor: float = 1
 
 def metriken(dokument) -> dict:
     """Zählwerte und Formatsummen des Dokumentmodells (nur Lesen)."""
-    from lunivo_writer.core.document.dokument import InlineObjekt, Lauf, Tabelle
+    from lunivo_writer.kern.dokument.dokument import InlineObjekt, Lauf, Tabelle
     m = {"absaetze": 0, "nichtleere_absaetze": 0, "zeichen": 0, "woerter": 0, "listen_absaetze": 0, "ueberschriften": 0,
          "fett_zeichen": 0, "kursiv_zeichen": 0, "unterstrichen_zeichen": 0, "mitte_absaetze": 0, "rechts_absaetze": 0, "block_absaetze": 0,
          "bilder": 0}

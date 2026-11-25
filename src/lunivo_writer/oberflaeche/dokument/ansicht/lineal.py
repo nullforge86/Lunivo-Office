@@ -11,7 +11,7 @@ from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QWidget
 
-from lunivo_writer.modelle.seite import PX_PER_MM, px_to_mm
+from lunivo_writer.kern.dokument.seite import PX_PER_MM, px_to_mm
 
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 HOEHE = 26          # Dicke des Lineals
@@ -57,7 +57,7 @@ class LinealH(_Lineal):
     einzugGeaendert = Signal(float, float, float)  # links, rechts, erste Zeile (mm)
 
     def _einzuege(self):
-        from lunivo_writer.core.layout.formatwerte import einzuege
+        from lunivo_writer.kern.layout.formatwerte import einzuege
         links, rechts, erste = einzuege(self.e.absatzformat())
         return px_to_mm(links), px_to_mm(rechts), px_to_mm(erste)
 

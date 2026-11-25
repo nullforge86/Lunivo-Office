@@ -18,7 +18,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe, spalte
 from lunivo_writer.editor.objekte.bilddaten import bild_aus_datei
 from lunivo_writer.editor.seite import wasserzeichen as WZ
 from lunivo_writer.oberflaeche.baukasten.medien.bildformate import BILD_FILTER
-from lunivo_writer.modelle.seite import PageSettings, mm_to_px
+from lunivo_writer.kern.dokument.seite import PageSettings, mm_to_px
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel

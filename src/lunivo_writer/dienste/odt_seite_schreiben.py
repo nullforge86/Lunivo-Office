@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape
 
-from lunivo_writer.modelle.seite import HeaderFooter, PageSettings
+from lunivo_writer.kern.dokument.seite import HeaderFooter, PageSettings
 from lunivo_writer.dienste.rtf_basis import _ausrichtung_seite
 from lunivo_writer.dienste.odt_basis import _NS, _mm, frei_rahmen as _frei_rahmen, frei_stil as _frei_stil
 

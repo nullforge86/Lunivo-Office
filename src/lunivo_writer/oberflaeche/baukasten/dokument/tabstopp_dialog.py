@@ -25,8 +25,8 @@ TAB_ART_NAMEN = {0: "links", 1: "rechts", 2: "mitte", 3: "dezimal"}
 
 def aus_absatz(af: dict, dokument) -> list[tuple[float, str, str]]:
     """Die Tabstopps eines wirksamen Absatzformats (Wörterbuch des Dokumentenmodells) als Liste aus Millimetern, Ausrichtung und Füllzeichen."""
-    from lunivo_writer.core.layout import formatwerte as F
-    from lunivo_writer.modelle.seite import px_to_mm
+    from lunivo_writer.kern.layout import formatwerte as F
+    from lunivo_writer.kern.dokument.seite import px_to_mm
     fuell = F.tabfuellung(af)
     return [(round(px_to_mm(pos), 1), TAB_ART_NAMEN.get(art, "links"), next((f for p, f in fuell.items() if abs(p - pos) < 0.05), ""))
             for pos, art, _z in F.tabstopps(af, dokument)[0]]
@@ -38,7 +38,7 @@ def als_text(stopps) -> str:
 
 
 def aus_text(text: str | None) -> list[tuple[float, str, str]]:
-    from lunivo_writer.editor.text.tabfuell import FUELL
+    from lunivo_writer.kern.funktionen.absatz.tabfuell import FUELL
     arten = [k for k, _n in ARTEN]
     aus = []
     for teil in (text or "").split(";"):
@@ -52,7 +52,7 @@ def aus_text(text: str | None) -> list[tuple[float, str, str]]:
 
 
 def _text(mm: float, art: str, fuell: str = "") -> str:
-    from lunivo_writer.editor.text.tabfuell import FUELL
+    from lunivo_writer.kern.funktionen.absatz.tabfuell import FUELL
     f, kurz = einheit()
     return f"{mm * f:.2f} {kurz}".replace(".", ",") + "  ·  " + dict(ARTEN)[art] + (f"  ·  {FUELL[fuell][1]}{FUELL[fuell][1]}{FUELL[fuell][1]}" if fuell else "")
 
@@ -89,7 +89,7 @@ class TabstoppDialog(PanelFaehig, QDialog):
         kopf.breit(bh)
         kopf.breit(abschnittstitel("Füllzeichen"))
         fg = FlussLayout(14); fg.setContentsMargins(*RAND_KEIN)
-        from lunivo_writer.editor.text.tabfuell import FUELL
+        from lunivo_writer.kern.funktionen.absatz.tabfuell import FUELL
         self.fuell = QButtonGroup(self)
         self._fuell_schluessel = list(FUELL)
         for i, k in enumerate(self._fuell_schluessel):

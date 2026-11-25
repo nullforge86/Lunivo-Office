@@ -92,7 +92,7 @@ def modell_roh(dok) -> collections.Counter:
         for t in liste or ():
             z[f"{art}/{_lokal(etree.fromstring(t))}"] += 1
 
-    from lunivo_writer.core.document.dokument import Lauf
+    from lunivo_writer.kern.dokument.dokument import Lauf
     for ab in dok.abschnitte:
         zaehle("sectPr", ab.seite.docx_roh)
     for a in dok.absaetze():
@@ -126,7 +126,7 @@ def importieren(pfad: str):
         return None, [f"Rückfall auf den bisherigen Leser: {ex}"]
     except Exception as ex:                                                              # noqa: BLE001 — im Bericht sichtbar machen
         return None, [f"FEHLER beim Lesen: {type(ex).__name__}: {str(ex)[:120]}"]
-    from lunivo_writer.core.document import pruefung
+    from lunivo_writer.kern.dokument import pruefung
     for f in pruefung.pruefe_dokument(gelesen[0])[:5]:
         befund.append(f"Aufbau des Modells: {f}")
     return gelesen, befund
@@ -134,7 +134,7 @@ def importieren(pfad: str):
 
 def importpruefung(pfad: str, dok) -> list[str]:
     """Vergleicht die Eigenschaften der Quelle mit dem Modell nach den Kompatibilitätsregeln."""
-    from lunivo_writer.core.document import kompatibilitaet as K
+    from lunivo_writer.kern.dokument import kompatibilitaet as K
     xml = teil(pfad)
     if xml is None:
         return ["document.xml nicht lesbar"]
@@ -178,7 +178,7 @@ def seiten_im_pdf(pfad: str) -> int | None:
 
 
 def layoutpruefung(dok, referenz: str | None) -> tuple[int | None, list[str]]:
-    from lunivo_writer.core.layout import LayoutEngine
+    from lunivo_writer.kern.layout import LayoutEngine
     befund = []
     try:
         erg = LayoutEngine().berechnen(dok)

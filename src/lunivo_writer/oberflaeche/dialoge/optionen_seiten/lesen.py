@@ -1,7 +1,7 @@
 """Optionen: Leichter lesen, Sprache."""
 from __future__ import annotations
 
-from lunivo_writer.core.schrift import standard_datenbank
+from lunivo_writer.kern.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, farbflaeche, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte

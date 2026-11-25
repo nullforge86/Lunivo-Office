@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape
 
-from lunivo_writer.core.document.bildformat import FORMATE, format_erkennen
+from lunivo_writer.kern.dokument.bildformat import FORMATE, format_erkennen
 from lunivo_writer.dienste.docx_formen import _GEOMETRIE_UMGEKEHRT
 from lunivo_writer.dienste.odt_basis import ATTR_QUOTE, AUSR_H, AUSR_V, BEZUG_H, BEZUG_V, ODT_BILDFORMATE, _laenge
 

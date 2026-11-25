@@ -11,7 +11,7 @@ import json
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QLabel, QLineEdit, QPushButton, QSpinBox, QWidget
-from lunivo_writer.plattform.pfade import ressourcen_pfade as pfade
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 from lunivo_writer.oberflaeche.baukasten.basis import daten
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
 from lunivo_writer.oberflaeche.baukasten.geruest.einklappgruppe import EinklappGruppe

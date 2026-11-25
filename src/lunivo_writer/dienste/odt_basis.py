@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape
 
-from lunivo_writer.core.document.bildformat import FORMATE, format_erkennen, masse
-from lunivo_writer.modelle.bericht import IOReport
+from lunivo_writer.kern.dokument.bildformat import FORMATE, format_erkennen, masse
+from lunivo_writer.kern.dokument.bericht import IOReport
 
 MIMETYPE = b"application/vnd.oasis.opendocument.text"
 _NS = ('xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '

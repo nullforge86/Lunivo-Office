@@ -43,7 +43,7 @@ def dateien_sammeln(quellen: list[str]) -> list[str]:
 def messen(pfad: str) -> dict:
     """Eine Datei setzen und messen (läuft in einem eigenen Prozess), mit der Layout-Engine des Kerns."""
     sys.path.insert(0, os.path.join(WURZEL, "src"))
-    from lunivo_writer.core.layout import LayoutEngine
+    from lunivo_writer.kern.layout import LayoutEngine
     from lunivo_writer.dienste.modell_laden import lade_modell
     geladen = lade_modell(pfad)
     dok = geladen.document
@@ -54,7 +54,7 @@ def messen(pfad: str) -> dict:
 
 def _absaetze(bloecke: list):
     """Die Absätze eines Abschnitts in Dokumentreihenfolge (Tabellen- und Rahmeninhalt eingeschlossen)."""
-    from lunivo_writer.core.document.dokument import absaetze_in
+    from lunivo_writer.kern.dokument.dokument import absaetze_in
     return list(absaetze_in(bloecke))
 
 

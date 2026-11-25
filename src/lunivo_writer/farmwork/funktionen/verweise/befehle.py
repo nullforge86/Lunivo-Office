@@ -4,9 +4,9 @@ Der Editor kommt über den ``EditorPort`` herein; die Fachlogik steht in ``edito
 Datenwörterbücher und die Datentypen aus ``typen.py``; Meldungen für die Statusleiste gehen als Ereignis an den ``Melder``."""
 from __future__ import annotations
 
-from lunivo_writer.editor.dokument import verweise, verzeichnis
-from lunivo_writer.editor.dokument.indexeintrag import Eintrag
-from lunivo_writer.editor.dokument.literatur import eintrag as literatur_eintrag
+from lunivo_writer.kern.funktionen.verweise import verweise, verzeichnis
+from lunivo_writer.kern.funktionen.verweise.indexeintrag import Eintrag
+from lunivo_writer.kern.funktionen.verweise.literatur import eintrag as literatur_eintrag
 from lunivo_writer.farmwork.datentypen.ereignisdaten import Art, Ereignis
 from lunivo_writer.farmwork.funktionen.verweise import einstellungen as verweise_einstellungen
 from lunivo_writer.farmwork.funktionen.verweise.typen import BeschriftungsStart, IndexEintrag, IndexStart

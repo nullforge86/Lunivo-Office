@@ -5,7 +5,7 @@ import json
 import os
 import re
 import tempfile
-from lunivo_writer.plattform.pfade import ressourcen_pfade as paths
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as paths
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 
 from PySide6.QtCore import QByteArray, QRectF, Qt

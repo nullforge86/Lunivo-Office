@@ -7,7 +7,7 @@ import logging
 import os
 
 from lunivo_writer.dienste import sicher_schreiben
-from lunivo_writer.modelle.bericht import DocumentIOError, IOReport
+from lunivo_writer.kern.dokument.bericht import DocumentIOError, IOReport
 
 _log = logging.getLogger("lunivo.dateien")
 OPEN_FILTER = ("Dokumente (*.docx *.dotx *.docm *.odt *.fodt *.rtf *.txt);;DOCX-Dokument (*.docx);;OpenDocument-Text (*.odt);;"
@@ -45,7 +45,7 @@ def _verschluesselt(path: str) -> bool:
 
 
 def _entschluesseln(path: str, kennwort: str | None, ziel: str) -> None:
-    from lunivo_writer.modelle.bericht import PasswortNoetig
+    from lunivo_writer.kern.dokument.bericht import PasswortNoetig
     if not kennwort:
         raise PasswortNoetig()
     try:

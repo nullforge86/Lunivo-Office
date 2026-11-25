@@ -11,7 +11,7 @@ from lunivo_writer.editor.objekte.bilddaten import BildFehler
 from lunivo_writer.oberflaeche.baukasten.medien.bildformate import BILD_FILTER
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
-from lunivo_writer.modelle.seite import HeaderFooter
+from lunivo_writer.kern.dokument.seite import HeaderFooter
 from lunivo_writer.oberflaeche.dialoge.dokument_dialoge import HeaderFooterDialog, TableDialog
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
-from lunivo_writer.core.layout.formatwerte import schrift as schrift_von
+from lunivo_writer.kern.layout.formatwerte import schrift as schrift_von
 from lunivo_writer.editor.objekte.linie import Linie  # noqa: F401
 from lunivo_writer.oberflaeche.baukasten import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe  # noqa: F401

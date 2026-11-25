@@ -14,7 +14,7 @@ import subprocess
 import threading
 import time
 
-from lunivo_writer.plattform.prozess import prozess
+from lunivo_writer.infrastruktur.prozess import prozess
 
 ZEIT = 25.0                                    # Sekunden je Antwort des Servers
 LEBENSDAUER = 600.0                            # Sekunden, die ein Server höchstens läuft

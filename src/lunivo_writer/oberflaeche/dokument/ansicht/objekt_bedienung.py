@@ -14,8 +14,8 @@ import math
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
-from lunivo_writer.core.geometry import Point, Rect
-from lunivo_writer.core.rendering.backend import Style
+from lunivo_writer.kern.geometrie import Point, Rect
+from lunivo_writer.kern.rendering.backend import Style
 
 GRIFF_TREFFER = 7.0                    # Trefferfläche eines Griffs (Bildpunkte der Ansicht)
 GRIFF_GROESSE = 7.0

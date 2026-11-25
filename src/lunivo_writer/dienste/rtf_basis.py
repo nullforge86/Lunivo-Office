@@ -3,8 +3,8 @@
 Die Umrechnung der Bildpunkte (96 dpi) in Twip steht hier einmal; ``rtf_modell_schreiber`` baut darauf auf."""
 from __future__ import annotations
 
-from lunivo_writer.modelle.bericht import IOReport
-from lunivo_writer.modelle.seite import HeaderFooter, PageSettings
+from lunivo_writer.kern.dokument.bericht import IOReport
+from lunivo_writer.kern.dokument.seite import HeaderFooter, PageSettings
 
 TWIP_PRO_MM = 1440 / 25.4
 TWIP_PRO_PX = 15

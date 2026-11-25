@@ -5,7 +5,7 @@ import os
 from PySide6.QtWidgets import QMessageBox
 from lunivo_writer.dienste import dateiformate as formats
 from lunivo_writer.dienste import sicher_schreiben
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 from lunivo_writer.oberflaeche.dokument.dokumentfenster.dokument_bereich import DocumentTab
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import speicherort_waehlen
 

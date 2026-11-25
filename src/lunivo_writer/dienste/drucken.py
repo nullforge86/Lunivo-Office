@@ -10,11 +10,11 @@ import math
 from PySide6.QtCore import QMarginsF, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPageLayout, QPageSize, QPainter
 
-from lunivo_writer.core.document import Dokument
-from lunivo_writer.core.geometry import mm_to_px
-from lunivo_writer.core.layout import LayoutEngine
-from lunivo_writer.core.layout import formatwerte as F
-from lunivo_writer.core.rendering import DokumentRenderer
+from lunivo_writer.kern.dokument import Dokument
+from lunivo_writer.kern.geometrie import mm_to_px
+from lunivo_writer.kern.layout import LayoutEngine
+from lunivo_writer.kern.layout import formatwerte as F
+from lunivo_writer.kern.rendering import DokumentRenderer
 
 PAPIER = {"A3": (297, 420), "A4": (210, 297), "A5": (148, 210), "B5": (176, 250), "Letter": (216, 279), "Legal": (216, 356)}
 PRO_BLATT = {1: (1, 1), 2: (2, 1), 4: (2, 2), 6: (3, 2), 9: (3, 3), 16: (4, 4)}
@@ -114,8 +114,8 @@ class Ausgabe:
 
     def _blasen_sammeln(self) -> dict:
         """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
-        from lunivo_writer.core.editing import Bearbeitungssitzung
-        from lunivo_writer.core.editing.suche import offset_zu_position
+        from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
+        from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
         from lunivo_writer.editor.objekte import sprechblasen as SB
         k = self._blasen["konfig"]
         if not SB.aktiv(k):
@@ -131,7 +131,7 @@ class Ausgabe:
 
     def _seite_malen(self, p: QPainter, n: int, wasserzeichen: str = "") -> None:
         """Die Seite ``n`` ist vom Kern gerendert (``RasterZiel``, ohne Qt) und wird hier nur auf den Zeichner gelegt; Auflösung nach dem Maßstab des Zeichners (höchstens 300 dpi)."""
-        from lunivo_writer.core.rendering.rasterziel import RasterZiel
+        from lunivo_writer.kern.rendering.rasterziel import RasterZiel
         t = p.worldTransform()
         faktor = max(0.1, min(300.0 / 96.0, math.hypot(t.m11(), t.m12())))
         einr = self._erg.seiten[n - 1].einrichtung
@@ -139,8 +139,8 @@ class Ausgabe:
         ziel = RasterZiel(self._layout.engine, b, h, faktor)
         self._renderer.zeichne_seite(ziel, self.dokument, self._erg, n - 1, self._grund)
         if wasserzeichen.strip():                                                    # Wasserzeichen des Bildexports: schräg und blass über die Seite, vom Kern gezeichnet
-            from lunivo_writer.core.geometry import Rect
-            from lunivo_writer.core.rendering import wasserzeichen as WZ
+            from lunivo_writer.kern.geometrie import Rect
+            from lunivo_writer.kern.rendering import wasserzeichen as WZ
             WZ.zeichne(ziel, self._layout.engine, {"text": wasserzeichen.strip(), "farbe": "#868e96", "transparenz": 73, "winkel": -35}, Rect(0, 0, b, h))
         breite, hoehe, roh = ziel.als_rgba()
         p.drawImage(QRectF(0, 0, b, h), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))

@@ -10,12 +10,12 @@ import base64
 import xml.etree.ElementTree as ET
 import zipfile
 
-from lunivo_writer.core.document.dokument import Abschnitt, Absatz, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
-from lunivo_writer.core.document.formatvorlagen import eingebaute_vorlagen
+from lunivo_writer.kern.dokument.dokument import Abschnitt, Absatz, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
+from lunivo_writer.kern.dokument.formatvorlagen import eingebaute_vorlagen
 from lunivo_writer.dienste import odt_formen as OF
 from lunivo_writer.dienste.odt_modell_leser import _Leser, _farbe, _xml
 from lunivo_writer.dienste.odt_xml import GRENZE_BYTES, _kurz, _px, _pt, _q
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 
 _ZAHLENART = {"1": "dezimal", "a": "klein", "A": "gross", "i": "roem_klein", "I": "roem_gross"}
 _PUNKT = {"◦": "circle", "○": "circle", "▪": "square", "■": "square"}

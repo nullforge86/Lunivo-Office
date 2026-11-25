@@ -16,7 +16,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from lunivo_writer.dienste.docx_modell_schreiber import docx_dokument_daten  # noqa: E402
 from lunivo_writer.dienste.modell_laden import lade_modell  # noqa: E402
-from lunivo_writer.modelle.bericht import DocumentIOError  # noqa: E402
+from lunivo_writer.kern.dokument.bericht import DocumentIOError  # noqa: E402
 
 
 def pruefen(pfad: str) -> tuple[str, str]:

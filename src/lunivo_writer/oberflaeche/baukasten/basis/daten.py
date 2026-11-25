@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import os
 
-from lunivo_writer.plattform.pfade import ressourcen_pfade as pfade
+from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 
 _ZWISCHENSPEICHER: dict[str, dict] = {}
 

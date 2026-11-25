@@ -94,7 +94,7 @@ class BackstageObjektformatBaustein:
         from lunivo_writer.editor.diagramme import diagramm as D
         from lunivo_writer.editor.diagramme import diagramm_teile as T
         from lunivo_writer.editor.objekte import frei_objekt as FO
-        from lunivo_writer.modelle.seite import px_to_mm
+        from lunivo_writer.kern.dokument.seite import px_to_mm
         z = FO.ziel(e) if e is not None else None
         d = FO.daten_lesen(e, "diagramm") if e is not None else None
         if d is None or z is None:
@@ -126,7 +126,7 @@ class BackstageObjektformatBaustein:
         def anwenden(angaben: dict):
             from lunivo_writer.editor.objekte import bildlayout as BL
             from lunivo_writer.editor.objekte import frei_objekt as FO
-            from lunivo_writer.modelle.seite import mm_to_px
+            from lunivo_writer.kern.dokument.seite import mm_to_px
             angaben = dict(angaben)
             ed = self.current_editor()
             obj, gr, dreh = angaben.pop("objekt", None), angaben.pop("groesse", None), angaben.pop("dreh", None)

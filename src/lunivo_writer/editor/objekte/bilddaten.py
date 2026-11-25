@@ -24,8 +24,8 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
-from lunivo_writer.core.document.bildformat import FORMATE, BildFehler, format_erkennen  # noqa: F401  (Qt-freie Erkennung im Kern)
-from lunivo_writer.core.document.bildformat import MAX_ENTPACKT_BYTES, entpacken as _entpacken
+from lunivo_writer.kern.dokument.bildformat import FORMATE, BildFehler, format_erkennen  # noqa: F401  (Qt-freie Erkennung im Kern)
+from lunivo_writer.kern.dokument.bildformat import MAX_ENTPACKT_BYTES, entpacken as _entpacken
 
 MAX_DATEI_BYTES = 50 * 1024 * 1024                  # größere Bilddateien werden beim Einfügen abgelehnt
 NS_SVG = "http://schemas.microsoft.com/office/drawing/2016/SVG/main"      # Word-Erweiterung für SVG in DOCX (a:blip/a:extLst/asvg:svgBlip)
@@ -207,7 +207,7 @@ def anzeigegroesse(img: QImage) -> tuple[float, float]:
     """Startgröße auf dem Blatt in px: bei SVG das Maß aus ``width``/``height`` bzw. ``viewBox``, sonst die Bildgröße."""
     q = quelle_zu(img)
     if q is not None and q.format == "svg":
-        from lunivo_writer.core.rendering.svg import svg_masse
+        from lunivo_writer.kern.rendering.svg import svg_masse
         m = svg_masse(q.daten)                                  # die Größe liest der Kern
         if m is not None:
             return m
@@ -233,8 +233,8 @@ def zeichnen(p: QPainter, r: QRectF, img: QImage) -> None:
     q = quelle_zu(img)
     if q is not None and q.format == "svg":
         from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-        from lunivo_writer.core.geometry import Rect
-        from lunivo_writer.core.rendering.svg import svg_zeichnen
+        from lunivo_writer.kern.geometrie import Rect
+        from lunivo_writer.kern.rendering.svg import svg_zeichnen
         gelungen = [False]
 
         def los(z) -> None:
@@ -257,8 +257,8 @@ def zeichnen(p: QPainter, r: QRectF, img: QImage) -> None:
 def platzhalter(breite: float, hoehe: float) -> QImage:
     """Ersatz für ein Bild, dessen Daten fehlen oder nicht lesbar sind: graue Fläche mit Rahmen und Kreuz in der Größe des Bildes (gezeichnet über das Rendering-Backend)."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.core.geometry import Rect
-    from lunivo_writer.core.rendering.objekte import zeichne_platzhalter
+    from lunivo_writer.kern.geometrie import Rect
+    from lunivo_writer.kern.rendering.objekte import zeichne_platzhalter
     b, h = max(8, round(breite)), max(8, round(hoehe))
     return kern_bild(b, h, lambda z: zeichne_platzhalter(z, Rect(0.5, 0.5, b - 1, h - 1)))
 

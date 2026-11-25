@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import threading
 
-from lunivo_writer.plattform.pfade.pfade import data_dir
+from lunivo_writer.infrastruktur.pfade.pfade import data_dir
 from lunivo_writer.ki import ki as K
 from lunivo_writer.ki import assistent_lauf as AL
 from lunivo_writer.ki.chat_modell import ChatModell

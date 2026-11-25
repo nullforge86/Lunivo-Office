@@ -11,7 +11,7 @@ from PySide6.QtCore import QRectF, QUrl, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 
 from lunivo_writer.editor.objekte import freie_bilder as FB
-from lunivo_writer.editor.text.mehrstufig import nummer_text
+from lunivo_writer.kern.funktionen.absatz.mehrstufig import nummer_text
 
 from lunivo_writer.editor.objekte.frei_objekt_text import ARTEN, TEXT_ARTEN, STANDARD_MASS, FORM_STANDARD, TEXTFELD_STANDARD, TEXTFELD_FUELL, TEXTFELD_RAND, WORDART_STANDARD, _SS, RICHTUNGEN, _PUNKTE, ZEICHEN_SCHLUESSEL, listenmarken, richtung_anwenden, _gedreht, effekte_auf_text, anzeige_laeufe, laeufe_text, laeufe_ab, laeufe_zusammen, _zeilen_laeufe, wordart_zeichnen, _text_passt, textfeld_zeichnen
 
@@ -19,7 +19,7 @@ from lunivo_writer.editor.objekte.frei_objekt_text import ARTEN, TEXT_ARTEN, STA
 def _pfad_festhalten(d: dict, k: dict) -> None:
     """Eine Katalogform behält ihren Umriss als Vektorpfad (0…1) in den Parametern des Modells; der Kern zeichnet sie damit selbst (scharf in jeder Größe, im Editor und im PDF
     gleich), das Qt-Bild bleibt die Vorschau beim Bearbeiten. Grundformen und Freiformen kennt der Kern ohne Pfad."""
-    from lunivo_writer.core.geometry.grundformen import FORMEN
+    from lunivo_writer.kern.geometrie.grundformen import FORMEN
     from lunivo_writer.editor.objekte import formen_katalog as K
     name = str(k["form"])
     if name.casefold() in {"rechteck", "abgerundet", "ellipse", "kreis", "linie", "pfeil", "freiform"} | set(FORMEN) or k.get("punkte") or not K.hat(name):

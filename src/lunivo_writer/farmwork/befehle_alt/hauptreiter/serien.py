@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 
-from lunivo_writer.editor.dokument.sendungen import konstanten, serienbrief, serienfelder, serienquelle
+from lunivo_writer.kern.funktionen.sendungen import konstanten, serienbrief, serienfelder, serienquelle
 from lunivo_writer.farmwork.funktionen.sendungen import befehle as sendungen_befehle
 
 

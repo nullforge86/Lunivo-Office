@@ -72,8 +72,8 @@ def _text_zeichnen(p: QPainter, r: QRectF, flags, t: str) -> None:
     """Text immer ungespiegelt (auch bei „von rechts nach links“, wo die Formen gespiegelt werden). Gesetzt und gezeichnet wird vom Kern; hier
     liegt nur das fertige Bild auf dem Zeichner."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-    from lunivo_writer.core.geometry import Rect
-    from lunivo_writer.core.rendering.backend import Style
+    from lunivo_writer.kern.geometrie import Rect
+    from lunivo_writer.kern.rendering.backend import Style
     c = p.pen().color()
     spec = _ZU["schrift"] or _grundschrift(11.0)
     stil = Style(color=(c.red(), c.green(), c.blue(), c.alpha()))
@@ -90,8 +90,8 @@ def _text_zeichnen(p: QPainter, r: QRectF, flags, t: str) -> None:
 
 def _grundschrift(pt: float):
     """Grundschrift des Dokuments als Beschreibung des Kerns; gesetzt und gezeichnet wird der Text vom Kern, nicht von Qt."""
-    from lunivo_writer.core.layout.formatwerte import STANDARD_FAMILIE
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.layout.formatwerte import STANDARD_FAMILIE
+    from lunivo_writer.kern.textsatz import FontSpec
     return FontSpec(STANDARD_FAMILIE, pt, 400, False)
 
 

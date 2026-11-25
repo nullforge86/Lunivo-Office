@@ -10,7 +10,7 @@ import json
 
 from PySide6.QtCore import Qt
 
-from lunivo_writer.core.document.dokument import Position
+from lunivo_writer.kern.dokument.dokument import Position
 
 
 
@@ -143,8 +143,8 @@ def feld_an(dok, pos: int):
 
 
 def _auswahl(ed, v: int, e: int):
-    from lunivo_writer.core.document.dokument import Auswahl
-    from lunivo_writer.core.editing.suche import offset_zu_position
+    from lunivo_writer.kern.dokument.dokument import Auswahl
+    from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
     d = ed.sitzung.dokument
     return Auswahl(offset_zu_position(d, v), offset_zu_position(d, e))
 
@@ -243,7 +243,7 @@ def alle_zuruecksetzen(ed) -> int:
 
 def daten(dok) -> list[tuple[str, str]]:
     """[(Name, Wert)] aller Felder mit Wert (ohne Platzhalter und Schaltflächen)."""
-    from lunivo_writer.core.editing.suche import roh_text
+    from lunivo_writer.kern.bearbeitung.suche import roh_text
     text = roh_text(dok)
     out = []
     for v, e, m in bereiche(dok):
@@ -257,9 +257,9 @@ def daten(dok) -> list[tuple[str, str]]:
 
 def nur_formulardaten(dok) -> int:
     """„Nur Formulardaten drucken“ in der KOPIE ``dok``: Text außerhalb der Felder wird unsichtbar, Bilder entfallen. → Zahl der Felder."""
-    from lunivo_writer.core.document.dokument import Auswahl
-    from lunivo_writer.core.editing import Bearbeitungssitzung
-    from lunivo_writer.core.editing.suche import offset_zu_position
+    from lunivo_writer.kern.dokument.dokument import Auswahl
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
+    from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
     s = Bearbeitungssitzung(dok)
     for oid in list(dok.objekte):
         s.objekt_entfernen(oid)

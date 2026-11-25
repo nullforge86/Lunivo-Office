@@ -6,14 +6,14 @@ Original; anderes wird PNG), Seitengröße, Seitenränder, Kopf- und Fußzeile. 
 ``rtf_basis`` (nur ``PageSettings``, ohne Qt). Maße im Modell sind Bildpunkte (96 dpi): 1 px = 15 Twip."""
 from __future__ import annotations
 
-from lunivo_writer.core.document.bildformat import format_erkennen
-from lunivo_writer.core.document.dokument import Absatz, Dokument, InlineObjekt, Rahmen, Tabelle
-from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
-from lunivo_writer.core.document.listen import listenmarken
-from lunivo_writer.core.document.bildformat import masse
+from lunivo_writer.kern.dokument.bildformat import format_erkennen
+from lunivo_writer.kern.dokument.dokument import Absatz, Dokument, InlineObjekt, Rahmen, Tabelle
+from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
+from lunivo_writer.kern.dokument.listen import listenmarken
+from lunivo_writer.kern.dokument.bildformat import masse
 from lunivo_writer.dienste.rtf.formen_schreiben import shape_rtf
 from lunivo_writer.dienste.rtf_basis import RtfBasis, _px, _text, verluste_melden
-from lunivo_writer.modelle.bericht import IOReport
+from lunivo_writer.kern.dokument.bericht import IOReport
 
 _AUSRICHTUNG = {"mitte": r"\qc", "rechts": r"\qr", "block": r"\qj"}
 _PUNKTE = {"scheibe": "•", "kreis": "◦", "quadrat": "▪", "disc": "•", "circle": "◦", "square": "▪"}
@@ -269,7 +269,7 @@ class _RtfModell(RtfBasis):
 
 
 def _absaetze(block):
-    from lunivo_writer.core.document.dokument import absaetze_in
+    from lunivo_writer.kern.dokument.dokument import absaetze_in
     return list(absaetze_in([block]))
 
 

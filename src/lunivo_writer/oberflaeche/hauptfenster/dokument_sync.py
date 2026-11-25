@@ -35,7 +35,7 @@ class DokumentSyncMixin:
         f = self.band.felder
         if e is None or not f:
             return
-        from lunivo_writer.core.layout.formatwerte import schrift as schrift_von
+        from lunivo_writer.kern.layout.formatwerte import schrift as schrift_von
         z = e.zeichenformat()
         fam = schrift_von(z).family if z.get("schrift") else e.document().defaultFont().family()
         font_feld = f.get("font")

@@ -6,9 +6,9 @@ import math
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtGui import QImage, QPainter
 
-from lunivo_writer.core.geometry import mm_to_px
-from lunivo_writer.core.rendering import DokumentRenderer
-from lunivo_writer.core.rendering.rasterziel import RasterZiel
+from lunivo_writer.kern.geometrie import mm_to_px
+from lunivo_writer.kern.rendering import DokumentRenderer
+from lunivo_writer.kern.rendering.rasterziel import RasterZiel
 
 
 def _ausgerichtet(p: QPainter, x: float, y: float, b: float, h: float, hoechst: float) -> tuple:
@@ -49,7 +49,7 @@ def kern_malen(p: QPainter, bereich: QRectF, zeichne, rand: float = 8.0, hoechst
     b, h = max(1.0, bereich.width() + 2 * rand), max(1.0, bereich.height() + 2 * rand)
     basis, x, y, bb, hh = _ausgerichtet(p, bereich.x() - rand, bereich.y() - rand, b, h, hoechst)
     faktor = basis * ueber
-    from lunivo_writer.core.geometry import Point
+    from lunivo_writer.kern.geometrie import Point
     ziel = RasterZiel(_engine(), bb, hh, faktor, (255, 255, 255, 0))
     ziel.push_state(translate=Point(-x, -y))                                       # die Fläche beginnt am ausgerichteten Ursprung; der Inhalt behält seine Koordinaten
     zeichne(ziel)

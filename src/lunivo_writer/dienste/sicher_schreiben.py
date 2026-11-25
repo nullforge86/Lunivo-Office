@@ -31,9 +31,9 @@ from contextlib import contextmanager
 from typing import Callable, TypeVar
 from xml.etree import ElementTree
 
-from lunivo_writer.modelle.bericht import DocumentIOError
-from lunivo_writer.plattform.dateisystem import dateisystem
-from lunivo_writer.plattform.sperre import sperre as _sperre
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
+from lunivo_writer.infrastruktur.dateisystem import dateisystem
+from lunivo_writer.infrastruktur.sperre import sperre as _sperre
 
 T = TypeVar("T")
 

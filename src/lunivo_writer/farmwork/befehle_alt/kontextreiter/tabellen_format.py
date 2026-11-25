@@ -43,7 +43,7 @@ class TabellenFormatBefehle:
         e, c, t = self._tab()
         if not t:
             return
-        from lunivo_writer.editor.dokument import verweise
+        from lunivo_writer.kern.funktionen.verweise import verweise
         from lunivo_writer.oberflaeche.funktionen.verweise.beschriftung_dialog import BeschriftungDialog
         try:
             eigene = [str(x) for x in json.loads(self.w.settings.get("verweise/beschriftungen", "[]") or "[]")]
@@ -169,7 +169,7 @@ class TabellenFormatBefehle:
 
     def tabelleMasseLesen(self):
         """(Breite der Spalte, Höhe der Zeile) der Schreibmarke in mm für die Zahlenfelder des Bandes; ``None`` außerhalb einer Tabelle."""
-        from lunivo_writer.core.geometry import px_to_mm
+        from lunivo_writer.kern.geometrie import px_to_mm
         e, c, t = self._tab()
         if not t:
             return None

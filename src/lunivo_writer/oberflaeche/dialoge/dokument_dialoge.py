@@ -5,7 +5,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QWidget
 
-from lunivo_writer.modelle.seite import PAPER_MM, HeaderFooter, PageSettings
+from lunivo_writer.kern.dokument.seite import PAPER_MM, HeaderFooter, PageSettings
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 

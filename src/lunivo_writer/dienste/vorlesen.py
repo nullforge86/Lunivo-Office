@@ -8,9 +8,9 @@ import os
 import subprocess
 import threading
 
-from lunivo_writer.plattform.pfade import pfade
-from lunivo_writer.plattform.prozess import prozess
-from lunivo_writer.plattform.sprachausgabe import sprachausgabe
+from lunivo_writer.infrastruktur.pfade import pfade
+from lunivo_writer.infrastruktur.prozess import prozess
+from lunivo_writer.infrastruktur.sprachausgabe import sprachausgabe
 
 PIPER_NAMEN = {
     "de_DE-thorsten-medium": "Thorsten (männlich)", "de_DE-thorsten-high": "Thorsten, feiner (männlich)",
@@ -103,7 +103,7 @@ def beenden() -> None:
 def vorlesetext(dok, von: int = 0, bis: int | None = None) -> str:
     """Der Text des Dokuments (``Dokument``) von ``von`` bis ``bis`` (Stellen im Rohtext) zum Vorlesen. Bilder mit Beschreibung werden angesagt
     („Bild: …“), dekorative Bilder und Bilder ohne Beschreibung übersprungen. Frei positionierte Bilder stehen vor dem Absatz, an dem sie verankert sind."""
-    from lunivo_writer.core.document.dokument import InlineObjekt
+    from lunivo_writer.kern.dokument.dokument import InlineObjekt
 
     def ansage(o) -> str:
         alt = str(o.alt_text or "").strip()

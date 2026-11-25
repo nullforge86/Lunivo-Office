@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import os
 
-from lunivo_writer.core.document.dokument import InlineObjekt
-from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
+from lunivo_writer.kern.dokument.dokument import InlineObjekt
+from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
 
 PT_JE_PX = 0.75                                             # PDF-Punkte je Bildpunkt (96 dpi)
 STILE_ANDERE = ("title", "subtitle", "quote", "Title", "Subtitle", "Quote", "Titel", "Untertitel", "Zitat")

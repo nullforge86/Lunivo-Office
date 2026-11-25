@@ -8,9 +8,9 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter
 
 from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild, kern_malen
-from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.rendering import zeichenzusatz as Z
-from lunivo_writer.core.rendering.zeichenzusatz import UNTER_MUSTER as _UNTER_MUSTER  # noqa: F401  (Strichmuster der Unterstreichungen)
+from lunivo_writer.kern.geometrie import Rect
+from lunivo_writer.kern.rendering import zeichenzusatz as Z
+from lunivo_writer.kern.rendering.zeichenzusatz import UNTER_MUSTER as _UNTER_MUSTER  # noqa: F401  (Strichmuster der Unterstreichungen)
 from lunivo_writer.editor.text import zeichenzusatz
 from lunivo_writer.editor.text.textfx import PX, aus_text, fx_zeichnen  # noqa: F401
 

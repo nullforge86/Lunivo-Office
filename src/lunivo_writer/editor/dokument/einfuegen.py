@@ -10,8 +10,8 @@ import math
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter
 
-from lunivo_writer.core.document.dokument import Auswahl, Position
-from lunivo_writer.core.layout import formatwerte as F
+from lunivo_writer.kern.dokument.dokument import Auswahl, Position
+from lunivo_writer.kern.layout import formatwerte as F
 
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 from lunivo_writer.editor.objekte import formen_katalog as K
@@ -92,9 +92,9 @@ def _grundform_ops(art: str, x: float, y: float, w: float, h: float) -> tuple[li
 
 def _fuellstil(fuell: str, art: str, x: float, y: float, w: float, h: float):
     """Füllung einer Form als ``Style``: einfarbig, ``verlauf`` (hell nach Farbe), ``abgestuft`` (drei Stufen), ``glanz`` (obere Hälfte heller)."""
-    from lunivo_writer.core.geometry import Point
-    from lunivo_writer.core.rendering.backend import LinearGradient, Style, rgba
-    from lunivo_writer.core.rendering.objekte import dunkler, heller
+    from lunivo_writer.kern.geometrie import Point
+    from lunivo_writer.kern.rendering.backend import LinearGradient, Style, rgba
+    from lunivo_writer.kern.rendering.objekte import dunkler, heller
     c = rgba(fuell)
     if art not in ("verlauf", "abgestuft", "glanz"):
         return Style(color=c, width=0, filled=True)
@@ -114,9 +114,9 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
     Gezeichnet wird vom Kern (``RasterZiel``); Qt liefert nur den Pfad der Katalog- und Freiformen als Geometrie."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
     from lunivo_writer.oberflaeche.zeichnen.pfad import pfad_zu_vektor
-    from lunivo_writer.core.geometry import Point, Rect
-    from lunivo_writer.core.rendering.backend import Style, rgba
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.geometrie import Point, Rect
+    from lunivo_writer.kern.rendering.backend import Style, rgba
+    from lunivo_writer.kern.textsatz import FontSpec
     strich = max(float(strich), 1.0)                         # eine Haarlinie (Word: 0,25–0,75 pt) bleibt auf dem Bildschirm mindestens einen Bildpunkt dick
     x, y, w, h = strich, strich, breite - 2 * strich, hoehe - 2 * strich
     r = QRectF(x, y, w, h)
@@ -176,7 +176,7 @@ WORDART_STANDARDTEXT = "Hier Text einfügen"
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
     """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten (gezeichnet über ``core/rendering/wordart.py``)."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.core.rendering import wordart
+    from lunivo_writer.kern.rendering import wordart
     from lunivo_writer.dienste.textsatz import standard_engine
     engine = standard_engine()
     b, h = wordart.masse(engine, text, schrift, pt)
@@ -190,10 +190,10 @@ def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sa
         return wordart_vorlage_bild(text, vorlage, schrift, pt)
     import math as _m
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.core.geometry import Point
-    from lunivo_writer.core.rendering.backend import LinearGradient, Style, rgba
-    from lunivo_writer.core.rendering.objekte import dunkler, heller
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.geometrie import Point
+    from lunivo_writer.kern.rendering.backend import LinearGradient, Style, rgba
+    from lunivo_writer.kern.rendering.objekte import dunkler, heller
+    from lunivo_writer.kern.textsatz import FontSpec
     from lunivo_writer.dienste.textsatz import standard_engine
     engine = standard_engine()
     f = FontSpec(schrift, float(pt), 700)
@@ -286,9 +286,9 @@ GLEICHUNGEN = [("Kreisfläche", "A = \\pi r^2"),
 def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
     """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie): kursive Stücke, Hoch- und Tiefgestelltes verkleinert und versetzt; gezeichnet vom Kern."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.core.geometry import Point
-    from lunivo_writer.core.rendering.backend import Style, rgba
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.geometrie import Point
+    from lunivo_writer.kern.rendering.backend import Style, rgba
+    from lunivo_writer.kern.textsatz import FontSpec
     from lunivo_writer.dienste.textsatz import standard_engine
     engine = standard_engine()
     basis, klein = FontSpec("DejaVu Serif", float(pt), 400, True), FontSpec("DejaVu Serif", pt * 2 / 3, 400, True)
@@ -397,10 +397,10 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
 def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
     """Dateisymbol mit Namen darunter (Einfügen ▸ Objekt ▸ Als Symbol anzeigen); Name und Zusammensetzung zeichnet der Kern."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.core.geometry import Point, Rect
-    from lunivo_writer.core.rendering.backend import Style, rgba
-    from lunivo_writer.core.rendering.bildeffekte import png_bytes
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.geometrie import Point, Rect
+    from lunivo_writer.kern.rendering.backend import Style, rgba
+    from lunivo_writer.kern.rendering.bildeffekte import png_bytes
+    from lunivo_writer.kern.textsatz import FontSpec
     from lunivo_writer.dienste.textsatz import standard_engine
     engine = standard_engine()
     f = FontSpec("Liberation Sans", 9.0)
@@ -428,7 +428,7 @@ def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
 def _fremde_bloecke(s, fremd) -> list:
     """Die Blöcke des Haupttextes eines geladenen Dokuments für die Sitzung ``s``: Listen werden angelegt, Bilddaten unter neuen Namen abgelegt."""
     import copy
-    from lunivo_writer.core.document.dokument import Absatz, InlineObjekt, Rahmen, Tabelle
+    from lunivo_writer.kern.dokument.dokument import Absatz, InlineObjekt, Rahmen, Tabelle
     bloecke = copy.deepcopy([b for a in fremd.abschnitte for b in a.bloecke])
     listen: dict = {}
     namen: dict = {}

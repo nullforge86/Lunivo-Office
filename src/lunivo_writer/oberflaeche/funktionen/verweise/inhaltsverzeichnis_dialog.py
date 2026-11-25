@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QCheckBox, QDialog, QLabel, QPushButton, QSpinBox,
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import FUELLZEICHEN, INHALTSVERZEICHNIS_FUELL, INHALTSVERZEICHNIS_VORGABE
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.oberflaeche.baukasten.basis.mass import (ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN)
+from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, gruppe

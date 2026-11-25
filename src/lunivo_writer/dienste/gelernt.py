@@ -8,8 +8,8 @@ import json
 import os
 import re
 
-from lunivo_writer.modelle.korrektur import ProofingIssue
-from lunivo_writer.plattform.pfade.pfade import data_dir
+from lunivo_writer.kern.dokument.korrektur import ProofingIssue
+from lunivo_writer.infrastruktur.pfade.pfade import data_dir
 
 WORT = re.compile(r"^[A-Za-zÄÖÜäöüß-]+$")
 LERN_SCHWELLE = 5      # so oft darf ein Fund bei ausdrücklichem „Prüfen“ angezeigt und nie geändert werden

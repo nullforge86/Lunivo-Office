@@ -19,7 +19,7 @@ import zipfile
 from dataclasses import dataclass
 from xml.etree import ElementTree as ET
 
-from lunivo_writer.modelle.bericht import DocumentIOError
+from lunivo_writer.kern.dokument.bericht import DocumentIOError
 
 _log = logging.getLogger("lunivo.dateien")
 MB = 1024 * 1024

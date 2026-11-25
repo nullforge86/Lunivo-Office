@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.textlayout.paragraph import MIN_ZEILENBREITE  # noqa: F401  (die Mindestbreite einer Zeile neben einem Rahmen steht einmal, im Kern)
+from lunivo_writer.kern.geometrie import Rect
+from lunivo_writer.kern.textsatz.paragraph import MIN_ZEILENBREITE  # noqa: F401  (die Mindestbreite einer Zeile neben einem Rahmen steht einmal, im Kern)
 from lunivo_writer.editor.layout.seitenplan import Bereich
-from lunivo_writer.modelle.seite import PageSettings, mm_to_px
+from lunivo_writer.kern.dokument.seite import PageSettings, mm_to_px
 
 
 

@@ -18,7 +18,7 @@ _SS = 2                                                              # Zeichnen 
 
 # ---- Gemeinsame Hilfen: Listenmarken, Textrichtung, Effekte ---------------------------------------------------------------
 RICHTUNGEN = ("waagerecht", "senkrecht_rl", "senkrecht_lr", "dreh90", "dreh270", "asiatisch270")
-from lunivo_writer.core.rendering.wordartobjekt import _PUNKTE, listenmarken  # noqa: E402,F401  (Listenmarken: reine Datenhilfe des Kerns)
+from lunivo_writer.kern.rendering.wordartobjekt import _PUNKTE, listenmarken  # noqa: E402,F401  (Listenmarken: reine Datenhilfe des Kerns)
 
 
 def richtung_anwenden(img: QImage, richtung: str | None, zeilenbaender: list | None = None) -> QImage:
@@ -74,7 +74,7 @@ def effekte_auf_text(img: QImage, ef: dict, text_hoehe: float, farbe: str) -> QI
 
 
 # ---- Läufe: Text mit Zeichenformat je Abschnitt -------------------------------------------------------------------------------
-from lunivo_writer.core.rendering.wordartobjekt import ZEICHEN_SCHLUESSEL, anzeige_laeufe, laeufe_text  # noqa: E402,F401
+from lunivo_writer.kern.rendering.wordartobjekt import ZEICHEN_SCHLUESSEL, anzeige_laeufe, laeufe_text  # noqa: E402,F401
 
 
 def laeufe_ab(laeufe: list[dict], von: int, bis: int | None = None) -> list[dict]:
@@ -101,13 +101,13 @@ def laeufe_zusammen(laeufe: list[dict]) -> list[dict]:
     return out
 
 
-from lunivo_writer.core.rendering.wordartobjekt import zeilen_laeufe as _zeilen_laeufe  # noqa: E402,F401
+from lunivo_writer.kern.rendering.wordartobjekt import zeilen_laeufe as _zeilen_laeufe  # noqa: E402,F401
 
 
 # ---- WordArt zeichnen ---------------------------------------------------------------------------------------------------
 def wordart_zeichnen(d: dict) -> QImage:
     """Das WordArt-Objekt als Bild in doppelter Auflösung; Satz und Zeichnung kommen vom Kern (``core/rendering/wordartobjekt.py``), hier wird nur die Textrichtung am Bild angewendet."""
-    from lunivo_writer.core.rendering.wordartobjekt import wordart_rgba
+    from lunivo_writer.kern.rendering.wordartobjekt import wordart_rgba
     from lunivo_writer.dienste.textsatz import standard_engine
     from lunivo_writer.editor.dokument import einfuegen as E
     laeufe = anzeige_laeufe(d)
@@ -175,10 +175,10 @@ class _Satz:
     passt, steht auf Seite 2 — daran erkennen verknüpfte Felder, wie viel Text in ein Feld passt."""
 
     def __init__(self, d: dict, laeufe: list[dict], b: float, h: float, farbe_ueber: str | None = None):
-        from lunivo_writer.core.document import neues_dokument
-        from lunivo_writer.core.document.dokument import Absatz, Lauf
-        from lunivo_writer.core.layout import LayoutEngine
-        from lunivo_writer.modelle.seite import PageSettings
+        from lunivo_writer.kern.dokument import neues_dokument
+        from lunivo_writer.kern.dokument.dokument import Absatz, Lauf
+        from lunivo_writer.kern.layout import LayoutEngine
+        from lunivo_writer.kern.dokument.seite import PageSettings
         vorlage = None
         if d.get("vorlage") is not None:
             from lunivo_writer.editor.dokument import einfuegen as E

@@ -11,11 +11,11 @@ import re
 
 from PySide6.QtCore import Qt
 
-from lunivo_writer.core.editing.suche import offset_zu_position
-from lunivo_writer.core.document.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, Formatvorlage, ListenEbene, Position
-from lunivo_writer.core.document.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
-from lunivo_writer.core.geometry import mm_to_px, px_to_mm
-from lunivo_writer.core.layout import formatwerte as F
+from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
+from lunivo_writer.kern.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, Formatvorlage, ListenEbene, Position
+from lunivo_writer.kern.dokument.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
+from lunivo_writer.kern.geometrie import mm_to_px, px_to_mm
+from lunivo_writer.kern.layout import formatwerte as F
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
@@ -64,8 +64,8 @@ def spec_zu_ebenen(spec: dict) -> list:
 
 def ebenen_zu_spec(ebenen: list) -> dict:
     """Das Gegenstück: die Beschreibung der Liste für die Listenfenster (einfach, wenn sie genau so entstanden sein kann, sonst Gliederung)."""
-    from lunivo_writer.editor.text import listen as L
-    from lunivo_writer.editor.text import mehrstufig as M
+    from lunivo_writer.kern.funktionen.absatz import listen as L
+    from lunivo_writer.kern.funktionen.absatz import mehrstufig as M
     if ebenen and all(e.stil in PUNKTE for e in ebenen) and spec_zu_ebenen(L.liste(ebenen[0].stil)) == ebenen:
         return L.liste(ebenen[0].stil)
     e0 = ebenen[0]
@@ -275,7 +275,7 @@ class KernBefehle:
         werte["basis"] = a.format.get("vorlage") or "Standard"
         spec = self.liste_spec()
         if spec:
-            from lunivo_writer.editor.text import listen as L
+            from lunivo_writer.kern.funktionen.absatz import listen as L
             werte["liste"] = L.als_text(spec)
         if af.get("tabstopps"):
             from lunivo_writer.oberflaeche.baukasten.dokument.tabstopp_dialog import als_text
@@ -380,13 +380,13 @@ class KernBefehle:
     # ---- Ersetzen im Rohtext ---------------------------------------------------------------------------------------------------------------
     def rohtext(self) -> str:
         """Der Text des Dokuments mit U+2029 zwischen den Absätzen (Stellen wie bei ``textCursor().position()``)."""
-        from lunivo_writer.core.editing.suche import roh_text
+        from lunivo_writer.kern.bearbeitung.suche import roh_text
         return roh_text(self.sitzung.dokument)
 
     def replace_range(self, von: int, bis: int, neu: str, erwartet: str | None = None, markdown: bool = False) -> bool:
         """Ersetzt [von, bis) des Rohtextes durch ``neu``; mit ``erwartet`` nur, wenn dort noch dieser Text steht. ``markdown``: Auszeichnungen
         (Überschriften, Listen, Fett) werden als Formate umgesetzt."""
-        from lunivo_writer.core.editing.suche import roh_text
+        from lunivo_writer.kern.bearbeitung.suche import roh_text
         roh = roh_text(self.sitzung.dokument)
         if erwartet is not None and roh[von:bis] != erwartet:
             return False
@@ -396,7 +396,7 @@ class KernBefehle:
         return True
 
     def _markdown_ersetzen(self, von: int, bis: int, neu: str) -> bool:
-        from lunivo_writer.core.editing.suche import offset_zu_position
+        from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
         bloecke = markdown_bloecke(neu)
         anfang = offset_zu_position(self.sitzung.dokument, von)
         for b in bloecke:
@@ -797,7 +797,7 @@ class KernBefehle:
 
     def seitenzahl_anwenden(self, w: dict) -> None:
         """Seitenzahl nach den Werten des Fensters: für das ganze Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from lunivo_writer.editor.seite import seitenzahl as SZ
+        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
 
         def f(s):
             with s.gruppe("Seitenzahl"):
@@ -879,7 +879,7 @@ class KernBefehle:
 
     def seitenzahl_zone(self, bereich: str, zone: str, ausr: str, muster: str, zahl: str) -> None:
         """Seitenzahl in Kopf- oder Fußzeile (``zone``) für das Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from lunivo_writer.editor.seite import seitenzahl as SZ
+        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
 
         def f(s):
             with s.gruppe("Seitenzahl"):
@@ -899,7 +899,7 @@ class KernBefehle:
 
     def gliederung_ebene(self, delta: int) -> None:
         """Gliederungsansicht: Überschrift des Absatzes um ``delta`` Ebenen herauf- (−1) oder herabstufen (+1); Ebene 0 ist Fließtext."""
-        from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene
+        from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
         a = self._absatz_an_marke()
         neu = max(0, min(9, ueberschriftsebene(self.sitzung.dokument, a) + delta))
         self.apply_style("Standard" if neu == 0 else f"Überschrift {neu}")
@@ -978,7 +978,7 @@ class KernBefehle:
 
     def naechstes_objekt_waehlen(self) -> bool:
         """Springt zum nächsten Objekt (im Text oder frei positioniert) hinter der Schreibmarke und wählt es (am Ende geht es vorn weiter)."""
-        from lunivo_writer.core.document.dokument import InlineObjekt
+        from lunivo_writer.kern.dokument.dokument import InlineObjekt
         from lunivo_writer.editor.dokument import gehe_zu as G
         dok = self.sitzung.dokument
         stellen = G._stellen(dok)

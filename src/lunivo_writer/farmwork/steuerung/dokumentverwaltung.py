@@ -35,7 +35,7 @@ class DocumentManager:
     def speichern(self, path: str, dokument, seite, meta: dict, erwartet=None):
         """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück. ``erwartet``: der zuletzt gesehene ``stand`` der Zieldatei
         (siehe ``sicher_schreiben.schreiben``); ohne Angabe wird nicht verglichen."""
-        from lunivo_writer.core.document import Dokument
+        from lunivo_writer.kern.dokument import Dokument
         if not isinstance(dokument, Dokument):
             raise TypeError("Gespeichert wird nur das Dokumentmodell (core.document.Dokument), kein Qt-Textdokument.")
         from lunivo_writer.dienste import modell_speichern, sicher_schreiben

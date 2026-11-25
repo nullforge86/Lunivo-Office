@@ -17,7 +17,7 @@ import re
 
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
-from lunivo_writer.modelle.korrektur import ProofingIssue
+from lunivo_writer.kern.dokument.korrektur import ProofingIssue
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, ICON_GROSS, PADDING_MARKE, RADIUS_MARKE, RAND_FUNDKARTE, RAND_KEIN, RAND_VORSCHLAGKARTE, SCHRIFT_KLEIN, SCHRIFT_LISTE
 _LAUF = re.compile(r"(.)\1{5,}")

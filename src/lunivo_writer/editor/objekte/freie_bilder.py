@@ -22,10 +22,10 @@ from PySide6.QtCore import QRectF, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath
 
 from lunivo_writer.oberflaeche.zeichnen.geometrie import rect_from_qt, rect_to_qt
-from lunivo_writer.core.document.objekte import Anchor, FillStyle, ImageObject, StrokeStyle, Transform
-from lunivo_writer.core.geometry import Rect
-from lunivo_writer.core.rendering.objekte import zeichne_bild
-from lunivo_writer.core.layout.objekte import objekt_rechteck
+from lunivo_writer.kern.dokument.objekte import Anchor, FillStyle, ImageObject, StrokeStyle, Transform
+from lunivo_writer.kern.geometrie import Rect
+from lunivo_writer.kern.rendering.objekte import zeichne_bild
+from lunivo_writer.kern.layout.objekte import objekt_rechteck
 from lunivo_writer.editor.objekte import bilddaten as BD
 
 from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
@@ -244,7 +244,7 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
 # ---- Alle Bilder eines Blattes -----------------------------------------------------------------------------------------------
 def versatz_fuer(a: dict, r: QRectF, page, n: int) -> dict:
     """Die Angaben ``xh``/``yv`` (ohne Ausrichtung), mit denen das Bild im Rechteck ``r`` steht — zum Verschieben und Verändern der Größe."""
-    from lunivo_writer.modelle.seite import mm_to_px
+    from lunivo_writer.kern.dokument.seite import mm_to_px
     bw, bh = mm_to_px(page.width_mm), mm_to_px(page.height_mm)
     ml, mt = mm_to_px(page.margin_left_mm), mm_to_px(page.margin_top_mm)
     null = dict(a, ah="", av="", xh=0.0, yv=0.0)

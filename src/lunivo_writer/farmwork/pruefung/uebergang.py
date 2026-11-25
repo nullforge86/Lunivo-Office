@@ -22,9 +22,9 @@ farmwork.befehle_alt.hauptreiter.text_vorlagen farmwork.befehle_alt.hauptreiter.
 farmwork.befehle_alt.hilfen
 farmwork.befehle_alt.kontextreiter.bildtools farmwork.befehle_alt.kontextreiter.diagrammtools farmwork.befehle_alt.kontextreiter.formtools
 farmwork.befehle_alt.kontextreiter.kontext farmwork.befehle_alt.kontextreiter.tabellen farmwork.befehle_alt.kontextreiter.tabellen_format
-farmwork.befehle_alt.kontextreiter.texttools farmwork.befehle_alt.kontextreiter.zeichentools farmwork.qt.anwendung
+farmwork.befehle_alt.kontextreiter.texttools farmwork.befehle_alt.kontextreiter.zeichentools
 ki.arbeitslauf ki.ki_aktionen ki.ki_anfragen ki.ki_chat ki.ki_dauerbetrieb ki.ki_dienst
-korrektur.barrierefreiheit korrektur.korrektur_dienst modelle.seite
+korrektur.barrierefreiheit korrektur.korrektur_dienst kern.dokument.seite kern.schrift.datenbank
 oberflaeche.band.band_gruppen oberflaeche.band.band_leiste oberflaeche.band.band_stile
 oberflaeche.baukasten.basis.daten oberflaeche.baukasten.basis.linien
 oberflaeche.baukasten.chat.chat_blase oberflaeche.baukasten.chat.chat_eingabe oberflaeche.baukasten.chat.chat_leerzustand
@@ -65,10 +65,15 @@ oberflaeche.dokument.dokumentfenster.navigation oberflaeche.dokument.dokumentfen
 oberflaeche.hauptfenster.backstage_dokument oberflaeche.hauptfenster.backstage_fenster oberflaeche.hauptfenster.backstage_objektformat
 oberflaeche.hauptfenster.bearbeiten oberflaeche.hauptfenster.dateien_drucken oberflaeche.hauptfenster.dateien_export
 oberflaeche.hauptfenster.dateien_oeffnen oberflaeche.hauptfenster.dateien_speichern oberflaeche.hauptfenster.dateien_vorlagen
-oberflaeche.hauptfenster.dokument_sync oberflaeche.hauptfenster.programmfenster oberflaeche.hauptfenster.reiter_zustand
+oberflaeche.hauptfenster.anwendung oberflaeche.hauptfenster.dokument_sync oberflaeche.hauptfenster.programmfenster oberflaeche.hauptfenster.reiter_zustand
 oberflaeche.seitenleiste.panels.ki_panel oberflaeche.seitenleiste.panels.schreib_panel oberflaeche.seitenleiste.seitenleiste
 oberflaeche.zeichnen.anzeige oberflaeche.zeichnen.geometrie oberflaeche.zeichnen.pdf_ausgabe oberflaeche.zeichnen.pfad
 oberflaeche.zeichnen.rendering
 """.split()
 
 NOCH_NICHT_UMGESTELLT: frozenset[str] = frozenset("lunivo_writer." + n for n in _NAMEN)
+
+# Schnittstellen, die noch ``object`` oder fehlende Typangaben enthalten (die Editor-Fassade gibt dort noch Objekte des Kerns weiter). Auch diese Liste darf nur
+# kleiner werden; sie ist leer, wenn das Farmwork die Dokumente selbst hält und nur eigene ``frozen``-Datentypen herausgibt.
+NOCH_NICHT_UMGESTELLT_TYPEN: frozenset[str] = frozenset("lunivo_writer.farmwork.schnittstellen." + n for n in (
+    "dokument", "seiten_port", "aenderungs_port", "vorschau"))

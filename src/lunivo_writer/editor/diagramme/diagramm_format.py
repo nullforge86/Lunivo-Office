@@ -304,7 +304,7 @@ def textfarbe(t: dict | None, standard: str = "#3c4043") -> QColor:
 
 def schrift_aus(basis, t: dict | None):
     """Die Schrift (``FontSpec`` des Kerns) mit den Angaben des Textformats ``t`` (Name, Größe, fett, kursiv) über der Grundschrift ``basis``."""
-    from lunivo_writer.core.textlayout import FontSpec
+    from lunivo_writer.kern.textsatz import FontSpec
     if not t:
         return basis
     return FontSpec(t.get("name") or basis.family, float(t["groesse"]) if t.get("groesse") else basis.size_pt,

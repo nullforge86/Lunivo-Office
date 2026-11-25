@@ -66,11 +66,11 @@ def _kategorie(e: BaseException) -> str:
 
 
 def pruefen(formate: list[str], db: str) -> list[tuple]:
-    from lunivo_writer.core.document import neues_dokument
-    from lunivo_writer.core.editing import Bearbeitungssitzung
+    from lunivo_writer.kern.dokument import neues_dokument
+    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
     from lunivo_writer.dienste.modell_laden import lade_modell
     from lunivo_writer.dienste.modell_speichern import speichere_modell
-    from lunivo_writer.modelle.seite import PageSettings
+    from lunivo_writer.kern.dokument.seite import PageSettings
     from lunivo_writer.dienste import sicher_schreiben as S
     lauf = uuid.uuid4().hex[:12]
     zeilen = []

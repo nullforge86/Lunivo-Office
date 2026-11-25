@@ -1,11 +1,11 @@
 """PDF-Ausgabe des Dokuments ohne Qt: dieselbe Layoutberechnung und derselbe Renderer des Kerns wie die Zeichenfläche, geschrieben von ``core.rendering.pdfziel``."""
 from __future__ import annotations
 
-from lunivo_writer.core.document import Dokument
-from lunivo_writer.core.layout import LayoutEngine
-from lunivo_writer.core.layout import formatwerte as F
-from lunivo_writer.core.rendering import DokumentRenderer
-from lunivo_writer.core.rendering.pdfziel import PdfZiel
+from lunivo_writer.kern.dokument import Dokument
+from lunivo_writer.kern.layout import LayoutEngine
+from lunivo_writer.kern.layout import formatwerte as F
+from lunivo_writer.kern.rendering import DokumentRenderer
+from lunivo_writer.kern.rendering.pdfziel import PdfZiel
 
 
 def dokument_als_pdf(dokument: Dokument, ziel: str, titel: str = "", autor: str = "", engine=None, erste: int = 1, letzte: int | None = None, struktur: dict | None = None,

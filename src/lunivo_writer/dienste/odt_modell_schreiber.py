@@ -9,15 +9,15 @@ import io
 import zipfile
 from xml.sax.saxutils import escape
 
-from lunivo_writer.core.document.dokument import Absatz, Dokument, InlineObjekt, Rahmen, Tabelle
-from lunivo_writer.core.document.formatvorlagen import ueberschriftsebene, wirksames_absatzformat, wirksames_zeichenformat
-from lunivo_writer.core.document.listen import ZEICHEN_DER_AUFZAEHLUNG
+from lunivo_writer.kern.dokument.dokument import Absatz, Dokument, InlineObjekt, Rahmen, Tabelle
+from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene, wirksames_absatzformat, wirksames_zeichenformat
+from lunivo_writer.kern.dokument.listen import ZEICHEN_DER_AUFZAEHLUNG
 from lunivo_writer.dienste.odt_basis import ATTR_QUOTE as _ATTR_QUOTE, BILDTYPEN as _BILDTYPEN, MIMETYPE, InhaltBasis as _Inhalt, _NS, _laenge, _odf, bild_elemente, bild_stil as _bild_stil, frei_form as _frei_form, frei_rahmen as _frei_rahmen, frei_stil as _frei_stil, manifest as _manifest, meta_xml as _meta_xml, text_xml as _text_xml
-from lunivo_writer.core.document.bildformat import masse
+from lunivo_writer.kern.dokument.bildformat import masse
 from lunivo_writer.dienste.odt_formen_schreiben import FORMEN as _ZEICHENARTEN, FormenSchreiber
 from lunivo_writer.dienste.odt_seite_schreiben import _styles_xml
 from lunivo_writer.dienste.rtf_basis import verluste_melden
-from lunivo_writer.modelle.bericht import IOReport
+from lunivo_writer.kern.dokument.bericht import IOReport
 
 _AUSRICHTUNG = {"mitte": "center", "rechts": "end", "block": "justify"}
 _ZAHLENART = {"dezimal": "1", "klein": "a", "gross": "A", "roem_klein": "i", "roem_gross": "I"}
@@ -87,7 +87,7 @@ class _InhaltModell(_Inhalt):
         roh = self.dok.ressourcen.get(x.ressource)
         bild = bild_elemente(roh, f"bild{len(self.bilder) + 1}", self.bilder) if roh else None
         if bild is None:
-            from lunivo_writer.core.document.bildformat import format_erkennen as _fe
+            from lunivo_writer.kern.dokument.bildformat import format_erkennen as _fe
             self.rep.warn(f"Ein Bild im Format {(_fe(roh) or 'unbekannt').upper()} lässt sich nicht nach ODT schreiben und fehlt in der ODT-Datei." if roh else "Ein Bild war nicht lesbar und fehlt in der ODT-Datei.")
             return ""
         groesse = masse(roh) or (64.0, 64.0)

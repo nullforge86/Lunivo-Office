@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from PySide6.QtWidgets import QMessageBox
-from lunivo_writer.editor.dokument.sendungen import serienbrief, serienfelder, serienquelle
+from lunivo_writer.kern.funktionen.sendungen import serienbrief, serienfelder, serienquelle
 from lunivo_writer.farmwork.funktionen.korrektur import einstellungen as korrektur_einstellungen
 from lunivo_writer.farmwork.funktionen.sendungen import befehle as sendungen_befehle
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
