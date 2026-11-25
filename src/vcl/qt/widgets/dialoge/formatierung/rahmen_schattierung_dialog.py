@@ -32,7 +32,7 @@ class RahmenSchattierungDialog(PanelFaehig, QDialog):
             li = Linie(sr.get("farbe", Farbe.SCHWARZ), float(sr.get("breite_pt", 1.0)), sr.get("art", "einfach"), sr.get("seiten", "tblr")) if seitenrand else None
             self.p_rand = _RahmenSeite(li, seitenrand=True, fuer=["Gesamtes Dokument"], abstand_mm=float(sr.get("abstand_mm", 8.0)))
             if seitenrand:                                                                  # Optionen des vorhandenen Seitenrahmens
-                from core.formatierung.rahmen.seitenrahmen import abstaende_pt
+                from vcl.qt.rendering.formen.seitenrahmen import abstaende_pt
                 self.p_rand.rand_optionen = {"messen": sr.get("messen", "seitenrand"), "abstand": abstaende_pt(sr), "ausrichten": bool(sr.get("ausrichten")),
                                              "vordergrund": sr.get("vordergrund", True), "kopf": bool(sr.get("kopf")), "fuss": bool(sr.get("fuss"))}
                 self.p_rand.kunst.setCurrentIndex(max(0, self.p_rand.kunst.findData(sr.get("kunst", ""))))

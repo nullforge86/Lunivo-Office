@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 app = QApplication([])
 from writer.werkzeugleisten.plan import plan  # noqa: E402
-from framework.befehle.befehlsliste import Befehle  # noqa: E402
+from vcl.qt.widgets.menues.befehlsliste import Befehle  # noqa: E402
 
 B = Befehle(None)
 bogen = json.load(open(os.path.join(WURZEL, "dokumentation/pruefbogen/pruefbogen.json"), encoding="utf-8"))

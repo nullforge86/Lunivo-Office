@@ -9,6 +9,10 @@ from __future__ import annotations
 class Farbe:
     SCHWARZ = "#000000"
     WEISS = "#ffffff"
+    PIKTOGRAMM = "#1f2328"          # Standardfarbe eines eingefügten Piktogramms
+    HOLZ = "#d9b98a"                # Holzton der Bildvorlagen (Rahmen „Holz“)
+    FORM_LINIE = "#1f3864"          # Standardlinie eingefügter Formen
+    REGENBOGEN = ("#e03131", "#f08c00", "#ffd43b", "#2f9e44", "#1971c2", "#7048a8")   # Farbfolge der WordArt-Vorlage „Regenbogen“
     TINTE = "#343a40"               # dunkle Schrift und Striche auf hellem Grund
     TINTE_DUNKEL = "#212529"
     GRAU = "#868e96"                # gedämpft: Rahmen, Hinweise, Platzhalter

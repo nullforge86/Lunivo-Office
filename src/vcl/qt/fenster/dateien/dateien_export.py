@@ -60,7 +60,7 @@ class DateienExportBaustein:
 
     def bild_export_widget(self):
         """Baut die Bildexportseite des Datei-Menüs; schreibt Bilder ohne ein separates Exportfenster."""
-        from framework.dokumentverwaltung.ausgabe.bild_export import bilder_schreiben
+        from vcl.qt.drucken.bild_export import bilder_schreiben
         from vcl.qt.widgets.bausteine.symbole.medien.bild_export import BildExportAnsicht
         t = self.current_tab()
         if not t:

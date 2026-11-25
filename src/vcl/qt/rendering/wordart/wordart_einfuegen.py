@@ -44,7 +44,7 @@ def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sa
             z.draw_path(ops, Style(color=rgba(farbe), width=2.2), True, True)
             return
         if stil == "Regenbogen":
-            cs = ("#e03131", "#f08c00", "#ffd43b", Farbe.GRUEN, "#1971c2", "#7048a8")
+            cs = Farbe.REGENBOGEN
             fill = LinearGradient(Point(0, 0), Point(b, 0), tuple((i / 5, rgba(c)) for i, c in enumerate(cs)))
         else:
             c = rgba(farbe)

@@ -85,7 +85,7 @@ def _fuellstil(fuell: str, art: str, x: float, y: float, w: float, h: float):
     return Style(color=c, width=0, filled=True, fill=LinearGradient(Point(x, y), Point(x, y + h), stops))
 
 
-def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.AKZENT_DUNKEL, linie: str = "#1f3864",
+def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.AKZENT_DUNKEL, linie: str = Farbe.FORM_LINIE,
               strich: float = 2.0, text: str = "", skala: float = 1.0, adj=None, fuell_art: str = "", punkte=None) -> QImage:
     """``skala``: Bild in dieser Auflösung (Maße und Strich bleiben logisch, das Bild ist ``skala``-mal so groß) — für scharfe freie Formen.
     ``adj``: Parameter der Anpassungsgriffe (``formen_anpassen``); ``fuell_art``: Verlauf der Füllung; ``punkte``: Punktliste einer Freiform (``editor/objekte/freiform.py``).

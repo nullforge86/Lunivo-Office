@@ -7,24 +7,24 @@ from __future__ import annotations
 _NAMEN = """
 core.diagramme.diagramm core.diagramme.formatierung.diagramm_format core.diagramme.formatierung.diagramm_stile core.diagramme.daten.diagramm_teile
 core.bearbeitung.einfuegen core.dokument.felder core.dokument.formular core.objekte.bilder.modell.bilddaten
-core.objekte.bilder.modell.bild_einfuegen core.objekte.formeln.modell.formel_einfuegen core.objekte.formen.form_einfuegen core.objekte.wordart.wordart_einfuegen
+vcl.qt.rendering.formen.bild_einfuegen vcl.qt.rendering.textfelder.formel_einfuegen vcl.qt.rendering.formen.form_einfuegen vcl.qt.rendering.wordart.wordart_einfuegen
 core.objekte.bilder.modell.bildeffekte core.objekte.bilder.positionierung.bildlayout core.objekte.bilder.skalierung.bildwerkzeuge core.objekte.bilder.zuschneiden.bildzuschnitt
 core.objekte.bilder.positionierung.freie_bilder core.objekte.formen.formen core.objekte.formen.formen_anpassen
 core.objekte.formen.formen_katalog core.objekte.formen.formen_stile core.objekte.formen.freiform core.objekte.formen.linie
 core.objekte.formen.sprechblasen core.objekte.basis.frei_objekt core.objekte.textfelder.modell.frei_objekt_text
-core.objekte.smartart.smartart core.objekte.smartart.smartart_zeichnen core.dokument.abschnitte.deckblatt core.formatierung.rahmen.seitenrahmen
+core.objekte.smartart.smartart core.objekte.smartart.smartart_zeichnen core.dokument.abschnitte.deckblatt vcl.qt.rendering.formen.seitenrahmen
 core.dokument.wasserzeichen.wasserzeichen core.formatierung.fuellung.muster core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben core.formatierung.effekte.texteffekt
 core.objekte.wordart.textfx core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.formatierung.fuellung.textur core.barrierefreiheit.barrierefreiheit
-core.korrektur.korrektur_dienst core.formatierung.schrift.datenbank framework.befehle.befehlsliste framework.befehle.hauptreiter.datei
+vcl.qt.eingabe.korrektur_dienst core.formatierung.schrift.datenbank framework.befehle.hauptreiter.datei
 framework.befehle.hauptreiter.einfuegen framework.befehle.hauptreiter.einfuegen_objekte framework.befehle.hauptreiter.ki
 framework.befehle.hauptreiter.pruefen framework.befehle.hauptreiter.seite framework.befehle.hauptreiter.serien
 framework.befehle.hauptreiter.text_absatz framework.befehle.hauptreiter.text_vorlagen framework.befehle.hauptreiter.text_zeichen
 framework.befehle.hilfen framework.befehle.kontextreiter.bildtools framework.befehle.kontextreiter.diagrammtools
 framework.befehle.kontextreiter.formtools framework.befehle.kontextreiter.kontext framework.befehle.kontextreiter.tabellen
 framework.befehle.kontextreiter.tabellen_format framework.befehle.kontextreiter.texttools framework.befehle.kontextreiter.zeichentools
-framework.dokumentverwaltung.ausgabe.bild_export framework.dokumentverwaltung.ausgabe.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
+vcl.qt.drucken.bild_export framework.dokumentverwaltung.ausgabe.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
 framework.ki.chat.ki_chat framework.ki.dienst.arbeitslauf framework.ki.dienst.ki_aktionen framework.ki.dienst.ki_anfragen
-framework.ki.dienst.ki_dauerbetrieb framework.ki.dienst.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
+framework.ki.dienst.ki_dauerbetrieb vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
 vcl.qt.widgets.menues.backstage.backstage_fenster vcl.qt.widgets.menues.backstage.backstage_objektformat vcl.qt.fenster.dateien.dateien_drucken
 vcl.qt.fenster.dateien.dateien_export vcl.qt.fenster.dateien.dateien_oeffnen vcl.qt.fenster.dateien.dateien_speichern
 vcl.qt.fenster.dateien.dateien_vorlagen vcl.qt.fenster.fenster.anwendung vcl.qt.fenster.fenster.bearbeiten vcl.qt.fenster.fenster.dokument_sync
@@ -61,7 +61,7 @@ vcl.qt.widgets.dialoge.ki.mcp_liste vcl.qt.widgets.dialoge.ki.modell_liste vcl.q
 vcl.qt.widgets.dialoge.ki.sprache_panel vcl.qt.widgets.dialoge.ki.websuche_panel vcl.qt.widgets.dialoge.tabellen_eigenschaften_dialog
 vcl.qt.widgets.dokumentansicht.ansicht.lineal_h vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen vcl.qt.widgets.dokumentansicht.ansicht.lineal_v
 vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel
-vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog vcl.qt.widgets.bausteine.symbole.medien.bild_export vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
+vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
 vcl.qt.widgets.bausteine.symbole.medien.design_bildchen vcl.qt.widgets.bausteine.symbole.medien.seiten_bildchen vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
 vcl.qt.widgets.seitenleisten.vorlagen.formatvorlagen_bereich vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_galerie vcl.qt.widgets.dialoge.dokument_dialoge
 vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge
@@ -94,9 +94,9 @@ core.diagramme.formatierung.diagramm_format core.diagramme.formatierung.diagramm
 core.dokument.abschnitte.deckblatt core.dokument.felder core.dokument.felder_ergebnis_kern core.dokument.felder_text_kern core.dokument.formular
 core.dokument.gehe_zu core.dokument.je_stand core.dokument.vorlagen core.dokument.wasserzeichen.wasserzeichen core.dokument.zusatz
 core.formatierung.absatz.absatzopt core.formatierung.effekte.texteffekt core.formatierung.fuellung.muster core.formatierung.fuellung.textur
-core.formatierung.rahmen.seitenrahmen core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben
+vcl.qt.rendering.formen.seitenrahmen core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben
 core.formatierung.schrift.zeichenzusatz core.formatvorlagen.zeichen.designs core.formatvorlagen.zeichen.stile core.korrektur.fund
-core.korrektur.inkrement core.korrektur.korrektur_dienst core.korrektur.rechtschreibung.autokorrektur core.korrektur.rechtschreibung.pruefung
+core.korrektur.inkrement vcl.qt.eingabe.korrektur_dienst core.korrektur.rechtschreibung.autokorrektur core.korrektur.rechtschreibung.pruefung
 core.korrektur.silbentrennung.silben_de core.korrektur.sprache.klang core.korrektur.sprache.phonetik core.korrektur.woerterbuecher.haeufig
 core.korrektur.woerterbuecher.vorhersage core.layout.seitenumbruch.seitenplan core.layout.seitenumbruch.seitenplatz core.objekte.basis.frei_objekt
 core.objekte.bilder.modell.bilddaten core.objekte.bilder.modell.bildeffekte core.objekte.bilder.positionierung.bildlayout
@@ -107,7 +107,7 @@ core.objekte.smartart.smartart_zeichnen core.objekte.textfelder.modell.frei_obje
 core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.tabellen.formatierung.tabellenstil core.tabellen.modell.tabelle_text
 core.tabellen.modell.tabelleneigenschaften core.tabellen.modell.tabellenzustand core.text.ki_markdown core.text.statistik core.text.wortextras
 core.text.zahlformat
-core.objekte.bilder.modell.bild_einfuegen core.objekte.formeln.modell.formel_einfuegen core.objekte.formen.form_einfuegen core.objekte.wordart.wordart_einfuegen
+vcl.qt.rendering.formen.bild_einfuegen vcl.qt.rendering.textfelder.formel_einfuegen vcl.qt.rendering.formen.form_einfuegen vcl.qt.rendering.wordart.wordart_einfuegen
 core.tabellen.modell.tabelle_einfuegen core.bearbeitung.einfuegen_hilfen core.korrektur.rechtschreibung.pruefung_hilfen core.korrektur.sprache.klangpruefung
 core.korrektur.grammatik.satzbau core.korrektur.grammatik.zusammenschreibung core.korrektur.rechtschreibung.pruefung
 framework.serienbriefe.datenquellen.serienquelle framework.serienbriefe.erstellung.etiketten framework.serienbriefe.erstellung.serienbrief

@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import BILDVORLAGE_DUNKEL, BILDVORLAGE_HELL
 
 
 def qimage_einfuegen(ed, img: QImage, alt: str = "", art: str | None = None, daten: dict | None = None) -> None:
@@ -12,7 +13,7 @@ def qimage_einfuegen(ed, img: QImage, alt: str = "", art: str | None = None, dat
 
 
 # ---- Piktogramm -------------------------------------------------------------------------------------------------------
-def piktogramm_bild(name: str, px: int = 96, farbe: str = "#1f2328") -> QImage:
+def piktogramm_bild(name: str, px: int = 96, farbe: str = Farbe.PIKTOGRAMM) -> QImage:
     from vcl.qt.widgets.bausteine.symbole.piktogramme import piktogramme
     return piktogramme.katalog_bild(name, px, farbe, 1.7 if px < 128 else 1.5)
 
@@ -83,7 +84,7 @@ def farbe_anwenden(img: QImage, modus: str) -> QImage:
         if modus == "Sepia":
             p = QPainter(g)
             p.setCompositionMode(QPainter.CompositionMode_Multiply)
-            p.fillRect(g.rect(), QColor("#d9b98a"))
+            p.fillRect(g.rect(), QColor(Farbe.HOLZ))
             p.end()
             return g
         if modus == "Schwarzweiß":
@@ -92,7 +93,7 @@ def farbe_anwenden(img: QImage, modus: str) -> QImage:
     if modus in ("Heller", "Dunkler"):
         out = img.convertToFormat(QImage.Format_ARGB32)
         p = QPainter(out)
-        farbe = QColor(255, 255, 255, 70) if modus == "Heller" else QColor(0, 0, 0, 70)
+        farbe = QColor(*BILDVORLAGE_HELL) if modus == "Heller" else QColor(*BILDVORLAGE_DUNKEL)
         p.setCompositionMode(QPainter.CompositionMode_SourceAtop)
         p.fillRect(out.rect(), farbe)
         p.end()

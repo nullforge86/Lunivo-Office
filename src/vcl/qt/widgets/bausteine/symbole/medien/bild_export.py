@@ -29,7 +29,7 @@ from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.farben.farben import BILDCHEN_AKZENT_DUNKEL, BILDCHEN_BLATT_DUNKEL   # Sinnbild „dunkles Blatt“: bewusst fest, unabhängig vom Thema
-from framework.dokumentverwaltung.ausgabe.bild_export import FORMATE, QUALITAET, BildWahl
+from vcl.qt.drucken.bild_export import FORMATE, QUALITAET, BildWahl
 
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FELDHOEHE, FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout

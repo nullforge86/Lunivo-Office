@@ -12,15 +12,15 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 from framework.schnittstellen.version import __version__
 from core.formatvorlagen.zeichen import stile
 from framework.schnittstellen.einstellungen import Einstellungen
-from framework.ki.dienst.ki_dienst import KIDienst
+from vcl.qt.eingabe.ki_dienst import KIDienst
 from framework.befehle.korrektur.anbieter import KorrekturEinstellungenAnbieter
-from core.korrektur.korrektur_dienst import WritingAssistant
+from vcl.qt.eingabe.korrektur_dienst import WritingAssistant
 from framework.sitzungen.dokumentverwaltung import DocumentManager
 from vcl.qt.widgets.statusleiste.statusleiste import StatusBar
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_reiter import DocTabs
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel import NavigationPanel
 from vcl.qt.widgets.seitenleisten.seitenleiste import SchreibhilfePanel
-from framework.befehle.befehlsliste import Befehle
+from vcl.qt.widgets.menues.befehlsliste import Befehle
 
 from vcl.qt.fenster.dateien.dateien import DateienBaustein
 from vcl.qt.fenster.fenster.bearbeiten import BearbeitenBaustein

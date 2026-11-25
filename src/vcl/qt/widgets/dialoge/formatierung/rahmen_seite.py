@@ -140,7 +140,7 @@ class _RahmenSeite(QWidget):
         self.breite.zeichen(DROPDOWN_ZEICHEN_ZAHL)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
         self.kunst = Auswahlfeld()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
-        from core.formatierung.rahmen.seitenrahmen import KUNST
+        from vcl.qt.rendering.formen.seitenrahmen import KUNST
         for k, name in KUNST:
             self.kunst.addItem(name, k)
         self.kunst.setVisible(seitenrand)
