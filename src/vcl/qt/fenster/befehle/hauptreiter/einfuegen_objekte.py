@@ -137,8 +137,8 @@ class EinfuegenObjektBefehle:
         from dataclasses import asdict
         from vcl.qt.rendering import formen as FO
         from writer.funktionen.objekte import freie_objekte as FW
-        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FW.WORDART_STANDARD.text
-        FO.frei_objekt_einfuegen(self.ed, "wordart", {**asdict(FW.WORDART_STANDARD), "text": text, "vorlage": nr})
+        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FW.wordart_standard().text
+        FO.frei_objekt_einfuegen(self.ed, "wordart", {**asdict(FW.wordart_standard()), "text": text, "vorlage": nr})
         self.w._sync_format()
 
 
@@ -235,7 +235,7 @@ class EinfuegenObjektBefehle:
         def fuellen(quer: bool) -> None:
             m.leeren(QUER if quer else HOCH)
             m.quer = quer
-            for name in DBW.NAMEN:
+            for name in DBW.deckblatt_namen():
                 m.kachel(name, f"{name} ({DB.gestaltung(name).gruppe})", zeichner(name)).setCheckable(False)
             if m.isVisible():
                 m.neu_messen()
@@ -266,7 +266,7 @@ class EinfuegenObjektBefehle:
             return
         from vcl.qt.rendering import textfelder as DB
         from writer.funktionen.objekte import deckblatt as DBW
-        name = vorlage or (k if isinstance(k, str) and k in DBW.NAMEN else DBW.NAMEN[0])
+        name = vorlage or (k if isinstance(k, str) and k in DBW.deckblatt_namen() else DBW.deckblatt_namen()[0])
         DB.deckblatt_einfuegen(self.ed, name, quer)
         self.ed.ansicht.nach_bewegung()
         self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
@@ -365,7 +365,7 @@ class EinfuegenObjektBefehle:
             from dataclasses import asdict
             from vcl.qt.rendering import formen as FO
             from writer.funktionen.objekte import freie_objekte as FW
-            FO.frei_objekt_einfuegen(self.ed, "textfeld", asdict(FW.TEXTFELD_STANDARD), 240, 60)
+            FO.frei_objekt_einfuegen(self.ed, "textfeld", asdict(FW.textfeld_standard()), 240, 60)
 
 
     def initiale(self, k=None):
@@ -409,7 +409,7 @@ class EinfuegenObjektBefehle:
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         from writer.funktionen.objekte import schnelltabelle as ST
         m = MenueListe()
-        for n in ST.SCHNELLTABELLEN:
+        for n in ST.schnelltabellen_namen():
             m.eintrag(n, lambda n=n: ST.einfuegen(self.ed, n))
         self._popup(m)
 

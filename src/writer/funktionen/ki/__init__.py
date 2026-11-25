@@ -53,7 +53,6 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "text_aktionen": ("ki_dienst", "text_aktionen"),
     "trenne_begruendung": ("ki_dienst", "trenne_begruendung"),
     "umfaenge": ("ki_einstellungen", "umfaenge"),
-    "unveraenderlich": ("werte", "unveraenderlich"),
     "verzoegerung_begrenzen": ("ki_dienst", "verzoegerung_begrenzen"),
     "verzoegerung_max": ("ki_einstellungen", "verzoegerung_max"),
     "verzoegerung_min": ("ki_einstellungen", "verzoegerung_min"),
@@ -78,8 +77,6 @@ def __getattr__(name: str):
         from . import ki_dienst as _datei
     elif datei == "ki_einstellungen":
         from . import ki_einstellungen as _datei
-    elif datei == "werte":
-        from . import werte as _datei
     elif datei == "zettel":
         from . import zettel as _datei
     else:

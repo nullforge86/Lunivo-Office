@@ -12,7 +12,7 @@ from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QMenu, QToolButton, QWidget
 
 from vcl.qt.fenster.befehle.tabellenaktionen import GRUPPEN
-from writer.funktionen.objekte import TABELLE_GEWAEHLT, tabellen_zustand, tabellenmodus
+from writer.funktionen.objekte import tabelle_gewaehlt_zustaende, tabellen_zustand, tabellenmodus
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ICON_KNOPF_GROSS, ICON_NORMAL, RAND_KEIN, RAND_MINILEISTE
@@ -311,7 +311,7 @@ class MiniLeiste(QFrame):
         if not editor.textCursor().hasSelection() and not self._rechtsklick:
             self.hide()
             return
-        if self._per_griff and tabellen_zustand(editor.kennung) not in TABELLE_GEWAEHLT:
+        if self._per_griff and tabellen_zustand(editor.kennung) not in tabelle_gewaehlt_zustaende():
             self._per_griff = False                                   # die Tabellenwahl über den Griff ist aufgehoben
         if self._modus_anwenden():                                  # Zelle ↔ mehrere Zellen ↔ außerhalb: sofort umschalten
             self._platzieren()

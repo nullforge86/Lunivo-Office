@@ -36,7 +36,6 @@ from vcl.qt.rendering.formen import textur_textur as _textur  # noqa: E402
 
 
 TEXTUREN = [("papier", "Papier"), ("granit", "Granit"), ("holz", "Holz"), ("stoff", "Stoff"), ("marmor", "Marmor"), ("sand", "Sand")]
-GRADUELL = list(Farbe.GRADUELL)                         # die Paare stehen in kern/farben.py
 
 
 def graduell_pixmap(dunkel: str, hell: str, w: int = 34, h: int = 24) -> QPixmap:
@@ -61,11 +60,11 @@ class FuellMenue(FarbPalette):
                          weitere_text="Weitere Füllfarben(M)…", automatisch="Automatisch", zuletzt=False)
         self.addSeparator()
         self._raster_untermenue("Graduell", "verlauf", "Weitere Farbverläufe…", [
-            (f"{d}|{h}", "Graduell", graduell_pixmap(d, h)) for d, h in GRADUELL], QSize(*GROESSE_VERLAUF_KACHEL), 4,
+            (f"{d}|{h}", "Graduell", graduell_pixmap(d, h)) for d, h in Farbe.GRADUELL], QSize(*GROESSE_VERLAUF_KACHEL), 4,
             lambda k: self.graduell_gewaehlt.emit(*k.split("|")))
         self._raster_untermenue("Textur", "textur", "Weitere Texturen…", [(k, n, _textur(k, 30)) for k, n in TEXTUREN], QSize(*GROESSE_TEXTUR_MUSTER_KACHEL), 6,
                                 self.textur_gewaehlt.emit)
-        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in MW.MUSTER if k != "loeschen"]
+        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in MW.muster_vorlagen() if k != "loeschen"]
         self._raster_untermenue("Muster(N)", "muster", "Weitere Muster…", muster, QSize(*GROESSE_TEXTUR_MUSTER_KACHEL), 8, self.muster_gewaehlt.emit)
         self.eintrag("Bild(P)", lambda: (self.close(), self.bild_gewaehlt.emit()), symbol=symbole.icon("image", ICON_NORMAL))
 

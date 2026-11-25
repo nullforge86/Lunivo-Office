@@ -79,8 +79,6 @@ def flaeche_bild(fuell, w: int, h: int, aufl: float = 2.0) -> QImage:
     return img
 
 
-# Kombinierte Typen (Foto 28): Schlüssel → Name; gezeichnet von ``textfx._kontur_pfade``
-KOMBI_TYPEN = tuple(T.KONTUR_FORMEN)
 
 
 def _strichmuster(art: str):

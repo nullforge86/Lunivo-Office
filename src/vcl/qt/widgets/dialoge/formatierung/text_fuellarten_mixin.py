@@ -50,7 +50,7 @@ class TextFuellartenMixin:
         self.f_bild = QWidget(); fb = FormularGitter(self.f_bild)
         fb.zeile("Textur:", self.p_textur); fb.breit(self.p_bildknopf)
         self.p_muster = Auswahlfeld()
-        for schl, _n, _o in M.MUSTER:
+        for schl, _n, _o in M.muster_vorlagen():
             if schl != "loeschen":
                 self.p_muster.addItem(M.name_von(schl), schl)
         self.p_vorn, self.p_grund = FarbFeld(Farbe.SCHWARZ, "Vordergrundfarbe"), FarbFeld(Farbe.WEISS, "Hintergrundfarbe", keine_text="Keine")

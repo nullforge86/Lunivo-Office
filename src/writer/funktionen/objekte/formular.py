@@ -4,13 +4,27 @@ from __future__ import annotations
 from framework.befehle.felder import formular as befehle
 from framework.schnittstellen.aenderungs_port import AenderungsPort
 from framework.schnittstellen.datentypen.formulardaten import FeldTreffer, Feldbeschreibung
+from writer.werte import unveraenderlich
 
-AKTIONEN: tuple[str, ...] = befehle.AKTIONEN
-DATUMSFORMAT: str = befehle.DATUMSFORMAT
-AKTION_ZURUECKSETZEN: str = befehle.AKTION_ZURUECKSETZEN
-AKTION_DRUCKEN: str = befehle.AKTION_DRUCKEN
-AKTION_PDF: str = befehle.AKTION_PDF
 
+def formular_aktionen() -> tuple[str, ...]:
+    return unveraenderlich(befehle.AKTIONEN)
+
+
+def formular_datumsformat() -> str:
+    return str(befehle.DATUMSFORMAT)
+
+
+def formular_aktion_zuruecksetzen() -> str:
+    return str(befehle.AKTION_ZURUECKSETZEN)
+
+
+def formular_aktion_drucken() -> str:
+    return str(befehle.AKTION_DRUCKEN)
+
+
+def formular_aktion_pdf() -> str:
+    return str(befehle.AKTION_PDF)
 
 def meta(art: str, name: str = "", platzhalter: str = "", beschriftung: str = "", optionen: tuple[str, ...] = (), aufschrift: str = "",
          aktion: str = "") -> Feldbeschreibung:

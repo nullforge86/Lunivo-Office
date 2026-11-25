@@ -4,9 +4,13 @@ from __future__ import annotations
 from framework.befehle.objekte import freie_objekte as befehle
 from framework.schnittstellen.datentypen.objektdaten import TextfeldVorgabe, WordartVorgabe
 
-TEXTFELD_STANDARD: TextfeldVorgabe = befehle.TEXTFELD_STANDARD
-WORDART_STANDARD: WordartVorgabe = befehle.WORDART_STANDARD
 
+def textfeld_standard() -> TextfeldVorgabe:
+    return befehle.TEXTFELD_STANDARD
+
+
+def wordart_standard() -> WordartVorgabe:
+    return befehle.WORDART_STANDARD
 
 def ist_verknuepft(kennung: int, schluessel: tuple[str, int]) -> bool:
     return befehle.ist_verknuepft(kennung, schluessel)

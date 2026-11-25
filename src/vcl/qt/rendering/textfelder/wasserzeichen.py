@@ -4,7 +4,6 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QImage, QPainter
 from core.geometrie import Rect
 from core.layout.drucklayout.ausgabe.seite.wasserzeichen import zeichne
-from writer.funktionen.objekte.wasserzeichen import FORMATE, GROESSEN, HORIZONTAL, STANDARD_FARBE, VERTIKAL, VORGABEN, ZOOMS  # noqa: F401  (Namen der Oberfläche)
 
 
 def bild_zu_text(img: QImage) -> str:

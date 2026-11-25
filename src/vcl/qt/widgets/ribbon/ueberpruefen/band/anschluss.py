@@ -2,8 +2,8 @@
 Statusleiste und kennt den Dokumentschutz des Dokumentfensters. ``self.w`` ist das Hauptfenster, ``self.ed`` der Editor."""
 from __future__ import annotations
 
-from writer.ueberpruefung.befehle import (SCHUTZ_HINWEIS, aenderungen_befehle, anzeige_befehle, ist_geschuetzt, kommentare_befehle, markup_befehle,
-                                         meldungen_an, noten_befehle)
+from writer.ueberpruefung.befehle import (aenderungen_befehle, anzeige_befehle, ist_geschuetzt, kommentare_befehle, markup_befehle,
+                                         meldungen_an, noten_befehle, schutz_hinweis)
 from vcl.qt.widgets.ribbon.ueberpruefen.band.vorschau_adapter import VorschauAdapter
 
 
@@ -50,6 +50,6 @@ class UeberpruefenAnschluss:
     def _geschuetzt(self, *arten) -> bool:
         """Steht ein Dokumentschutz dieser Art (Überprüfen ▸ Bearbeitung einschränken), Hinweis in der Statusleiste und True."""
         if ist_geschuetzt(self._schutz_wert(), *arten):
-            self.w.statusBar().showMessage(SCHUTZ_HINWEIS, 4000)
+            self.w.statusBar().showMessage(schutz_hinweis(), 4000)
             return True
         return False

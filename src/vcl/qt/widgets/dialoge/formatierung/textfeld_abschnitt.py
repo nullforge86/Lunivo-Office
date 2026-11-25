@@ -29,7 +29,7 @@ class TextfeldAbschnitt(Abschnitt):
     def __init__(self, parent=None):
         super().__init__("Ausrichtung")
         self.vertikal, self.richtung = Auswahlfeld(), Auswahlfeld()
-        for k, n in F.VERTIKAL:
+        for k, n in F.diagramm_vertikal_ausrichtungen():
             self.vertikal.addItem(n, k)
         for k, n in RICHTUNGEN:
             self.richtung.addItem(n, k)

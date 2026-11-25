@@ -2,12 +2,23 @@
 from __future__ import annotations
 
 from framework.befehle.objekte import diagrammformat as befehle
+from writer.werte import unveraenderlich
 
-VERTIKAL: tuple[tuple[str, str], ...] = befehle.VERTIKAL
-STRICHTYPEN: tuple[tuple[str, str], ...] = befehle.STRICHTYPEN
-PFEILE: tuple[tuple[str, str], ...] = befehle.PFEILE
-PFEIL_GROESSEN: tuple[tuple[float, str], ...] = befehle.PFEIL_GROESSEN
 
+def diagramm_vertikal_ausrichtungen() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.VERTIKAL)
+
+
+def diagramm_strichtypen() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.STRICHTYPEN)
+
+
+def diagramm_pfeile() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.PFEILE)
+
+
+def diagramm_pfeil_groessen() -> tuple[tuple[float, str], ...]:
+    return unveraenderlich(befehle.PFEIL_GROESSEN)
 
 def strich_schluessel(art: str | None) -> str:
     return befehle.strich_schluessel(art)

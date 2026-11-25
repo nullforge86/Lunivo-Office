@@ -19,6 +19,7 @@ TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from writer.funktionen.objekte import formular_aktionen
 class FormFeldDialog(PanelFaehig, QDialog):
     def __init__(self, fenster, art: str, bestehend: Feldbeschreibung | None = None):
         super().__init__(fenster)
@@ -33,7 +34,7 @@ class FormFeldDialog(PanelFaehig, QDialog):
         self.beschriftung = zeilenfeld("frei", m.beschriftung)
         self.liste = QPlainTextEdit("\n".join(m.optionen))
         self.aufschrift = zeilenfeld("frei", m.aufschrift or "Absenden")
-        self.aktion = Auswahlfeld(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.aktion or "Keine")
+        self.aktion = Auswahlfeld(); self.aktion.addItems(formular_aktionen()); self.aktion.setCurrentText(m.aktion or "Keine")
         if art in ("text", "auswahl", "datum"):
             self.platz.setPlaceholderText({"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[art])
             f.zeile("Hinweis im leeren Feld", self.platz)

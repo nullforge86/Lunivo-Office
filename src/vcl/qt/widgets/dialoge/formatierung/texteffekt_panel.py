@@ -20,6 +20,7 @@ from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_TEXTEFFEKT_LINIENART_BILD, ICON_NORMAL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt, seitengitter
+from writer.funktionen.objekte import wordart_beleuchtungen, wordart_materialien, wordart_px
 
 
 def _linien_icon(art: str, form: str, groesse: QSize = QSize(*GROESSE_TEXTEFFEKT_LINIENART_BILD)) -> QIcon:
@@ -269,21 +270,21 @@ class TexteffektPanel(QWidget):
 
     def _material_auswahl(self) -> None:
         m = VoreinstellungMenue(self, keine=None)
-        m.abschnitt("Material", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "material": k}}), n) for k, n in X.MATERIAL], 3)
+        m.abschnitt("Material", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "material": k}}), n) for k, n in wordart_materialien()], 3)
         m.gewaehlt.connect(lambda k: self._setze_material(k, None))
         self._menue_zeigen(m, self.d_material)
 
     def _licht_auswahl(self) -> None:
         m = VoreinstellungMenue(self, keine=None)
-        m.abschnitt("Beleuchtung", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "beleuchtung": k}}), n) for k, n in X.BELEUCHTUNG], 3)
+        m.abschnitt("Beleuchtung", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "beleuchtung": k}}), n) for k, n in wordart_beleuchtungen()], 3)
         m.gewaehlt.connect(lambda k: self._setze_material(None, k))
         self._menue_zeigen(m, self.d_licht)
 
     def _setze_material(self, material: str | None, licht: str | None) -> None:
         if material:
-            self._material = material; self.d_material.setText(dict(X.MATERIAL)[material])
+            self._material = material; self.d_material.setText(dict(wordart_materialien())[material])
         if licht:
-            self._licht = licht; self.d_licht.setText(dict(X.BELEUCHTUNG)[licht])
+            self._licht = licht; self.d_licht.setText(dict(wordart_beleuchtungen())[licht])
         self._neu()
 
     def _setze_teil(self, name: str, wert: dict | None, text: str) -> None:
@@ -431,6 +432,6 @@ class TexteffektPanel(QWidget):
             face = QColor(w["verlauf"]["farbe1"])
         kontur = None
         if w["kontur"]:
-            kontur = (QColor(w["kontur_farbe"]), w["kontur_breite"] * X.PX, w.get("kontur_form", "einfach"), w["kontur_art"])
+            kontur = (QColor(w["kontur_farbe"]), w["kontur_breite"] * wordart_px(), w.get("kontur_form", "einfach"), w["kontur_art"])
         X.vorschau_zeichnen(p, QRectF(rect), "Beispieltext", f, {k: v for k, v in w.items() if k in ("verlauf", "kontur_verlauf", "kontur_form", "schatten", "reflektion", "leuchten", "d3")},
                             face, kontur)

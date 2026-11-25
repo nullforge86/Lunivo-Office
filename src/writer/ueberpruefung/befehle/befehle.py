@@ -10,7 +10,9 @@ from framework.ereignisse import Melder
 from framework.schnittstellen.datentypen import Art
 from framework.schnittstellen import Einstellungen, VorschauPort
 
-SCHUTZ_HINWEIS: str = _HINWEIS
+def schutz_hinweis() -> str:
+    """Hinweis in der Statusleiste, wenn ein Dokumentschutz einen Befehl verhindert."""
+    return str(_HINWEIS)
 
 
 def ist_geschuetzt(schutz: str | None, *arten: str) -> bool:

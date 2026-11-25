@@ -386,7 +386,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             from dataclasses import asdict
             from vcl.qt.rendering import formen as FO
             from writer.funktionen.objekte import freie_objekte as FW
-            FO.frei_objekt_einfuegen(self.ed, "textfeld", {**asdict(FW.TEXTFELD_STANDARD), "richtung": "senkrecht_rl"}, 70, 180)
+            FO.frei_objekt_einfuegen(self.ed, "textfeld", {**asdict(FW.textfeld_standard()), "richtung": "senkrecht_rl"}, 70, 180)
 
 
     def textfeldMehrzeilig(self, k=None):
@@ -395,7 +395,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             from vcl.qt.rendering import formen as E
             from vcl.qt.rendering import formen as FO
             from writer.funktionen.objekte import freie_objekte as FW
-            FO.frei_objekt_einfuegen(self.ed, "textfeld", {**asdict(FW.TEXTFELD_STANDARD), "text": "Text hier eingeben\n\n"}, 400, 110)
+            FO.frei_objekt_einfuegen(self.ed, "textfeld", {**asdict(FW.textfeld_standard()), "text": "Text hier eingeben\n\n"}, 400, 110)
 
 
     def menue_schnellbausteineKlappe(self):

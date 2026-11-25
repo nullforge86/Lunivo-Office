@@ -14,7 +14,8 @@ Prüft den Quellbaum ``src/`` statisch über den Syntaxbaum (``ast``), auch tran
     altlast_sitzungszugang  Nutzung des einen freigegebenen Übergangszugangs ``framework.sitzungen.altlast`` (nur kern_editor, bis Schritt 5)
     zerbrochener_zugriff    ``Modul.Name`` oder ``from modul import Name``, wobei es ``Name`` in diesem Modul nicht gibt (AttributeError/ImportError zur Laufzeit)
     an_paket_vorbei         Import von außerhalb eines Pakets direkt in eine seiner Dateien statt über dessen ``__init__.py`` (je Datei und Zielmodul)
-    weiterleitung           Weiterleitungsname in vcl/writer (``name = modul.name``), der alte Zugriffe am Leben hält (Legacy-Wrapper)
+    weiterleitung           Weiterleitungsname in vcl/writer (``name = modul.name``, auch mit Typangabe ``name: Typ = …`` oder ``name = X`` mit X aus
+                            framework/core): reicht Werte oder Objekte der unteren Schichten durch statt einer Funktion mit unveränderlichem Ergebnis
     dynamischer_import      ``importlib.import_module`` / ``__import__``
     platzhalter             ``.gitkeep`` und Reste unter ``src/lunivo_writer``
     zyklen                  Importzyklen (Anzahl und beteiligte Module)
@@ -188,10 +189,17 @@ def analysieren():
                     funde["kern_ruft_oberflaeche"][rel(m)] += 1
         if s_m in ("vcl_qt", "vcl_basis", "writer"):
             importiert = {(a.asname or a.name).split(".")[0] for x in baum.body if isinstance(x, (ast.Import, ast.ImportFrom)) for a in x.names}
+            # aus Framework/Kern geholte Namen (``from framework… import X``): ``Y = X`` reicht sie genauso durch wie ``Y = modul.X``
+            von_unten = {a.asname or a.name for x in baum.body if isinstance(x, ast.ImportFrom) and (x.module or "").split(".")[0] in ("framework", "core")
+                         for a in x.names}
             for x in baum.body:
-                if isinstance(x, ast.Assign) and all(isinstance(t, ast.Name) for t in x.targets):
-                    w = x.value.args[0] if isinstance(x.value, ast.Call) and isinstance(x.value.func, ast.Name) and x.value.func.id in ("list", "tuple") and x.value.args else x.value
-                    if isinstance(w, ast.Attribute) and isinstance(w.value, ast.Name) and (w.value.id in importiert or w.value.id.startswith("_")):
+                # mit und ohne Typangabe: ``name = modul.name`` und ``name: Typ = modul.name`` sind beide Weiterleitungen
+                ziele = x.targets if isinstance(x, ast.Assign) else [x.target] if isinstance(x, ast.AnnAssign) and x.value is not None else []
+                if ziele and all(isinstance(t, ast.Name) for t in ziele):
+                    w = x.value.args[0] if (isinstance(x.value, ast.Call) and isinstance(x.value.func, ast.Name)
+                                            and x.value.func.id in ("list", "tuple", "frozenset", "dict", "set") and x.value.args) else x.value
+                    if ((isinstance(w, ast.Attribute) and isinstance(w.value, ast.Name) and (w.value.id in importiert or w.value.id.startswith("_")))
+                            or (isinstance(w, ast.Name) and w.id in von_unten)):
                         funde["weiterleitung"][rel(m)] += 1
     # zerbrochene Zugriffe: Name existiert im angesprochenen Projektmodul nicht
     def _namen(mod: str) -> set[str]:

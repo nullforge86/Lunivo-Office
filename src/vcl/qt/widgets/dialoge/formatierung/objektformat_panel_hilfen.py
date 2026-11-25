@@ -66,13 +66,13 @@ class _DreiDUntereinander:
     # ---- Oberer / Unterer Abschluss: Auswahl der Art (Bildchen), Breite und Höhe
     def _abschluss_menue(self, k: str) -> None:
         m = VoreinstellungMenue(self, keine=("Kein Abschluss", QIcon(BE.abschluss_symbol("keine"))), kachel=QSize(*GROESSE_ABSCHLUSS_KACHEL))
-        m.abschnitt("Abschluss", [(a, QIcon(BE.abschluss_symbol(a)), n) for a, n in BEW.ABSCHLUSS], 3)
+        m.abschnitt("Abschluss", [(a, QIcon(BE.abschluss_symbol(a)), n) for a, n in BEW.bildeffekte_abschluesse()], 3)
         m.gewaehlt.connect(lambda a: self._abschluss_setzen(k, a or "keine"))
         m.exec(self.ab_knopf[k].mapToGlobal(self.ab_knopf[k].rect().bottomLeft()))
 
     def _abschluss_setzen(self, k: str, art: str) -> None:
         self.ab_art[k] = art
-        self.ab_knopf[k].setText("Keine" if art == "keine" else dict(BEW.ABSCHLUSS)[art])
+        self.ab_knopf[k].setText("Keine" if art == "keine" else dict(BEW.bildeffekte_abschluesse())[art])
         self._neu()
 
     def _abschluss_regler(self, k: str) -> None:
@@ -92,7 +92,7 @@ class _DreiDUntereinander:
             for k in ("oben", "unten"):
                 ab = d3.get(k) or {}
                 self.ab_art[k] = ab.get("art", "keine")
-                self.ab_knopf[k].setText("Keine" if self.ab_art[k] == "keine" else dict(BEW.ABSCHLUSS).get(self.ab_art[k], "Eigene"))
+                self.ab_knopf[k].setText("Keine" if self.ab_art[k] == "keine" else dict(BEW.bildeffekte_abschluesse()).get(self.ab_art[k], "Eigene"))
                 self.ab_breite[k].setValue(ab.get("breite", 4.0)); self.ab_hoehe[k].setValue(ab.get("hoehe", 6.0))
             self._ab_stumm = False
 

@@ -89,7 +89,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
             self.textur.addItem(name, schl)
         self.g_textur.zeile("Struktur:", self.textur)
         self.muster = Auswahlfeld()
-        for schl, name, _o in M.MUSTER:
+        for schl, name, _o in M.muster_vorlagen():
             if schl != "loeschen":
                 self.muster.addItem(M.name_von(schl), schl)
         self.m_farbe = FarbFeld(Farbe.TINTE, "Musterfarbe")

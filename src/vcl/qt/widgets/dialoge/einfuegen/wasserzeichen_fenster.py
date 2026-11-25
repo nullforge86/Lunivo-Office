@@ -32,6 +32,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_REGLER_MIN, HOEHE_KNO
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
+from writer.funktionen.objekte import wasserzeichen_formate, wasserzeichen_groessen, wasserzeichen_horizontal, wasserzeichen_standard_farbe, wasserzeichen_vertikal, wasserzeichen_vorgaben, wasserzeichen_zooms
 
 AUTOMATISCH = "Automatisch"
 
@@ -76,7 +77,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self.bild_name.setWordWrap(True)
         bz = FlussLayout(6); bz.addWidget(self.bild_knopf); bz.addWidget(self.bild_name); g.breit(bz)
         self.zoom = _feld(Auswahlfeld()); self.zoom.addItem(AUTOMATISCH, 0)
-        for n in WZ.ZOOMS:
+        for n in wasserzeichen_zooms():
             self.zoom.addItem(f"{n} %", n)
         self.auswaschen = UmbruchSchalter("Aus&waschen")
         g.breit(self.auswaschen)
@@ -85,12 +86,12 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
                             self.bild_v, self.bild_v_mm]
         # ---- Textwasserzeichen ----
         self.mit_text = UmbruchSchalter("Te&xtwasserzeichen"); g.breit(self.mit_text)
-        self.inhalt = _feld(Auswahlfeld()); self.inhalt.setEditable(True); self.inhalt.addItems(list(WZ.VORGABEN))
+        self.inhalt = _feld(Auswahlfeld()); self.inhalt.setEditable(True); self.inhalt.addItems(list(wasserzeichen_vorgaben()))
         self.schrift = _feld(Schriftauswahl()); self.schrift.zeichen(DROPDOWN_ZEICHEN_MITTEL)
         self.groesse = _feld(Auswahlfeld()); self.groesse.setEditable(True); self.groesse.addItem(AUTOMATISCH)
-        for n in WZ.GROESSEN:
+        for n in wasserzeichen_groessen():
             self.groesse.addItem(str(n))
-        self.farbe = _feld(FarbFeld(a.get("farbe") or WZ.STANDARD_FARBE, "Farbe"))
+        self.farbe = _feld(FarbFeld(a.get("farbe") or wasserzeichen_standard_farbe(), "Farbe"))
         g.zeile(_titel("&Inhalt:", self.inhalt), self.inhalt)
         g.reihe((_titel("&Schriftart:", self.schrift), self.schrift), (_titel("&Größe:", self.groesse), self.groesse))
         self.text_format, self.text_h, self.text_h_mm, self.text_v, self.text_v_mm = self._lage_felder(g, "t", (_titel("&Farbe:", self.farbe), self.farbe))
@@ -130,12 +131,12 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
     def _lage_felder(self, g: FormularGitter, kuerzel: str, partner: tuple):
         """Format, Horizontal und Vertikal (je Liste und Abstand vom Rand)."""
         fmt = _feld(Auswahlfeld())
-        for w, t in WZ.FORMATE:
+        for w, t in wasserzeichen_formate():
             fmt.addItem(t, w)
         felder = [fmt]
         g.reihe((_titel("F&ormat:" if kuerzel else "Fo&rmat:", fmt), fmt), partner)
-        for titel, werte in (("&Horizontal:" if not kuerzel else "Hori&zontal:", WZ.HORIZONTAL),
-                             ("Verti&kal:" if not kuerzel else "&Vertikal:", WZ.VERTIKAL)):
+        for titel, werte in (("&Horizontal:" if not kuerzel else "Hori&zontal:", wasserzeichen_horizontal()),
+                             ("Verti&kal:" if not kuerzel else "&Vertikal:", wasserzeichen_vertikal())):
             c = _feld(Auswahlfeld())
             for k, t in werte:
                 c.addItem(t, k)

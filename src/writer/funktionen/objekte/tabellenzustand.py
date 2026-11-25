@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from framework.befehle.objekte import TABELLE_GEWAEHLT as _GEWAEHLT
 from framework.befehle.objekte import tabellen_zustand as _zustand, tabellenmodus as _modus
+from writer.werte import unveraenderlich
 
-TABELLE_GEWAEHLT: tuple[str, ...] = _GEWAEHLT
 
+def tabelle_gewaehlt_zustaende() -> tuple[str, ...]:
+    return unveraenderlich(_GEWAEHLT)
 
 def tabellen_zustand(kennung: int) -> str:
     return _zustand(kennung)

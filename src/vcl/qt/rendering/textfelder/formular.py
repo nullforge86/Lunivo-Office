@@ -1,6 +1,6 @@
 from __future__ import annotations
 from writer.funktionen.objekte import formular as FW
-from writer.funktionen.objekte.formular import AKTIONEN, DATUMSFORMAT, Feldbeschreibung, meta  # noqa: F401  (Namen der Oberfläche)
+from writer.funktionen.objekte.formular import formular_datumsformat, Feldbeschreibung, meta  # noqa: F401  (Namen der Oberfläche)
 
 
 # ---- Änderungen am Dokument: Befehle des Frameworks über den Änderungs-Port des Editors ------------------------------------------------------
@@ -39,11 +39,11 @@ def _klick_knopf(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:
     """Die Aktion der Schaltfläche: Felder zurücksetzen, Drucken oder als PDF exportieren."""
     fenster = fenster or ed.fenster
     a = m.aktion or "Keine"
-    if a == FW.AKTION_ZURUECKSETZEN:
+    if a == FW.formular_aktion_zuruecksetzen():
         alle_zuruecksetzen(ed)
-    elif a == FW.AKTION_DRUCKEN and hasattr(fenster, "print_dialog"):
+    elif a == FW.formular_aktion_drucken() and hasattr(fenster, "print_dialog"):
         fenster.print_dialog()
-    elif a == FW.AKTION_PDF and hasattr(fenster, "export_pdf_dialog"):
+    elif a == FW.formular_aktion_pdf() and hasattr(fenster, "export_pdf_dialog"):
         fenster.export_pdf_dialog()
 
 
@@ -55,8 +55,8 @@ class _Eingabe:
     def getDatum(eltern, titel, frage="Datum:", datum=None):
         from PySide6.QtCore import QDate
         from PySide6.QtWidgets import QInputDialog
-        text, ok = QInputDialog.getText(eltern, titel, frage, text=(datum or QDate.currentDate()).toString(DATUMSFORMAT))
-        tag = QDate.fromString(text, DATUMSFORMAT)
+        text, ok = QInputDialog.getText(eltern, titel, frage, text=(datum or QDate.currentDate()).toString(formular_datumsformat()))
+        tag = QDate.fromString(text, formular_datumsformat())
         return (tag if tag.isValid() else QDate.currentDate()), ok and tag.isValid()
 
     @staticmethod
@@ -85,10 +85,10 @@ def _klick_auswahl(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:
 
 def _klick_datum(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:
     from PySide6.QtCore import QDate
-    aktuell = QDate.fromString(wert_von(ed, v, e), DATUMSFORMAT)
+    aktuell = QDate.fromString(wert_von(ed, v, e), formular_datumsformat())
     tag, ok = eingabe_anbieter.getDatum(fenster or ed.widget().window(), m.name or "Datum", "Datum:", aktuell)
     if ok:
-        _ersetzen(ed, v, e, m, tag.toString(DATUMSFORMAT))
+        _ersetzen(ed, v, e, m, tag.toString(formular_datumsformat()))
 
 
 def _klick_text(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:

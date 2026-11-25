@@ -5,7 +5,7 @@ from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ANTEIL_SCHRIFT_KACHEL, ANTEIL_SCHRIFT_KACHEL_GROSS, STIFT_VORGABE_KONTUR
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
-from writer.funktionen.objekte.wordart import PX
+from writer.funktionen.objekte.wordart import wordart_px
 from vcl.qt.rendering.wordart.textfx import fx_zeichnen, vorschau_zeichnen
 
 
@@ -49,7 +49,7 @@ def wordart_icon(w: dict, groesse=(52, 40)):
     p = QPainter(pm)
     f = QFont(SANS); f.setPixelSize(int(groesse[1] * ANTEIL_SCHRIFT_KACHEL_GROSS)); f.setBold(True)
     face = QColor(*DURCHSICHTIG) if w.get("fuell") == "keine" else QColor((w.get("verlauf") or {}).get("farbe1") or w.get("farbe") or Farbe.WORDART_TINTE)
-    kontur = (QColor(w["kontur_farbe"]), w.get("kontur_breite", 1.0) * PX, "einfach", "einfach") if w.get("kontur") else None
+    kontur = (QColor(w["kontur_farbe"]), w.get("kontur_breite", 1.0) * wordart_px(), "einfach", "einfach") if w.get("kontur") else None
     fx = {k: v for k, v in w.items() if k in ("verlauf", "schatten", "reflektion", "leuchten", "d3")}
     vorschau_zeichnen(p, QRectF(0, 0, groesse[0], groesse[1] * 0.95), "A", f, fx, face, kontur)
     p.end()

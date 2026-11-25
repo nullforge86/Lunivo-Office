@@ -5,7 +5,6 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
-    "SCHUTZ_HINWEIS": ("befehle", "SCHUTZ_HINWEIS"),
     "aenderungen_befehle": ("befehle", "aenderungen_befehle"),
     "anzeige_befehle": ("befehle", "anzeige_befehle"),
     "ist_geschuetzt": ("befehle", "ist_geschuetzt"),
@@ -13,6 +12,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "markup_befehle": ("befehle", "markup_befehle"),
     "meldungen_an": ("befehle", "meldungen_an"),
     "noten_befehle": ("befehle", "noten_befehle"),
+    "schutz_hinweis": ("befehle", "schutz_hinweis"),
 }
 
 __all__ = sorted(_NAMEN)

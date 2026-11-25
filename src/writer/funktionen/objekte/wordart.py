@@ -3,12 +3,23 @@ from __future__ import annotations
 
 from framework.befehle.objekte import wordart as befehle
 from framework.schnittstellen.datentypen.effektdaten import EffektDaten, EffektVorgabe
+from writer.werte import unveraenderlich
 
-PX: float = befehle.PX
-MATERIAL: tuple[tuple[str, str], ...] = befehle.MATERIAL
-BELEUCHTUNG: tuple[tuple[str, str], ...] = befehle.BELEUCHTUNG
-WARP_FORMEN: tuple[tuple[str, str], ...] = befehle.WARP_FORMEN
 
+def wordart_px() -> float:
+    return float(befehle.PX)
+
+
+def wordart_materialien() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.MATERIAL)
+
+
+def wordart_beleuchtungen() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.BELEUCHTUNG)
+
+
+def wordart_warp_formen() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.WARP_FORMEN)
 
 def schatten_vorgaben() -> tuple[EffektVorgabe, ...]:
     return befehle.schatten_vorgaben()

@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from framework.ki import anbieter as _anbieter, chat as _chat, dienst as _dienst
-from writer.funktionen.ki.werte import unveraenderlich
+from writer.werte import unveraenderlich
 
 # ---- Marken der Modelle, Textaktionen, Meldungen (als unveränderliche Werte, nie die Objekte des Frameworks) ------------------------
 

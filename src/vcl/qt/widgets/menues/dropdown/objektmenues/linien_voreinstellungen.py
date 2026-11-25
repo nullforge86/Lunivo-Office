@@ -50,7 +50,7 @@ def linien_menue(parent: QWidget | None = None, aktuell: str = "", arten: dict[s
     m.aktuell = aktuell
     keine_zeile(m, "Keine Linie")
     farbe = (parent.palette() if parent is not None else m.palette()).color(QPalette.WindowText).name()
-    namen = arten or dict(F.STRICHTYPEN)                 # Schlüssel → Name der Zeilen (Standard: die Strichtypen des Diagramms; Text: ``texteffekt.KONTUR_ARTEN``)
+    namen = arten or dict(F.diagramm_strichtypen())                 # Schlüssel → Name der Zeilen (Standard: die Strichtypen des Diagramms; Text: ``texteffekt.KONTUR_ARTEN``)
     eintraege = [(linien_schluessel(art, form, br), QIcon(linien_bild({"art": art, "form": form, "breite": br, "farbe": farbe}, KACHEL)),
                   f"{namen[art]}, {_FORMEN[form]}, {br:g} pt") for art in namen for form, br in SPALTEN]
     m.abschnitt("Voreingestellte Linie", eintraege, len(SPALTEN))

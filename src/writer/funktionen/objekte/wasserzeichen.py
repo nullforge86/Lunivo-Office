@@ -3,15 +3,35 @@ from __future__ import annotations
 
 from framework.befehle.objekte import wasserzeichen as befehle
 from framework.schnittstellen.datentypen.wasserzeichendaten import Wasserzeichenangabe
+from writer.werte import unveraenderlich
 
-VORGABEN: tuple[str, ...] = befehle.VORGABEN
-GROESSEN: tuple[int, ...] = befehle.GROESSEN
-ZOOMS: tuple[int, ...] = befehle.ZOOMS
-HORIZONTAL: tuple[tuple[str, str], ...] = befehle.HORIZONTAL
-VERTIKAL: tuple[tuple[str, str], ...] = befehle.VERTIKAL
-FORMATE: tuple[tuple[int, str], ...] = befehle.FORMATE
-STANDARD_FARBE: str = befehle.STANDARD_FARBE
 
+def wasserzeichen_vorgaben() -> tuple[str, ...]:
+    return unveraenderlich(befehle.VORGABEN)
+
+
+def wasserzeichen_groessen() -> tuple[int, ...]:
+    return unveraenderlich(befehle.GROESSEN)
+
+
+def wasserzeichen_zooms() -> tuple[int, ...]:
+    return unveraenderlich(befehle.ZOOMS)
+
+
+def wasserzeichen_horizontal() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.HORIZONTAL)
+
+
+def wasserzeichen_vertikal() -> tuple[tuple[str, str], ...]:
+    return unveraenderlich(befehle.VERTIKAL)
+
+
+def wasserzeichen_formate() -> tuple[tuple[int, str], ...]:
+    return unveraenderlich(befehle.FORMATE)
+
+
+def wasserzeichen_standard_farbe() -> str:
+    return str(befehle.STANDARD_FARBE)
 
 def da(w: Wasserzeichenangabe | None) -> bool:
     return befehle.da(w)

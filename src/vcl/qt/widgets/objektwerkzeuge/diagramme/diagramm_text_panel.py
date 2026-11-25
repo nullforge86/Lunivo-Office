@@ -62,7 +62,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
             self._verbinde()
             return
         self.a_feld = Abschnitt("Textfeld")
-        self.f_vertikal, self.f_richtung = _combo(FW.VERTIKAL), _combo(RICHTUNGEN)
+        self.f_vertikal, self.f_richtung = _combo(FW.diagramm_vertikal_ausrichtungen()), _combo(RICHTUNGEN)
         self.f_winkel = SchrittFeld(-180, 180, "°", 5, 0, 0)
         self.f_rand = {k: SchrittFeld(0, 60, " pt", 1, 0, 0) for k in "lrou"}
         self.f_anpassen = UmbruchSchalter("Größe der Form dem Text anpassen"); self.f_anpassen.setChecked(True)

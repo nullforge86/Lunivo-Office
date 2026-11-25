@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from framework.ki import anbieter as _anbieter, dienst as _dienst, suche as _suche
-from writer.funktionen.ki.werte import unveraenderlich
+from writer.werte import unveraenderlich
 
 
 def argos_marke() -> str:

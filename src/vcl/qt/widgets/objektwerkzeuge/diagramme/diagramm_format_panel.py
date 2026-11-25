@@ -115,9 +115,9 @@ class DiagrammFormatPanel(DiagrammFormatWerteMixin, KopfMenueMixin, NurDreiEffek
         self.l_kombi.gewaehlt.connect(lambda *_: (self._linie_waehlen(), self._neu()))
         self.k_wahl.breite.hide(); self.k_wahl.art.hide()                  # sie bleiben die Datenhalter der Basis; sichtbar sind Zähler und Strichauswahl
         self.k_art.clear()
-        for k, n in F.STRICHTYPEN:
+        for k, n in F.diagramm_strichtypen():
             self.k_art.addItem(n, k)
-        self.s_art = StrichAuswahl([(k, _strich_zeichner(k), n) for k, n in F.STRICHTYPEN])
+        self.s_art = StrichAuswahl([(k, _strich_zeichner(k), n) for k, n in F.diagramm_strichtypen()])
         self.s_art.gewaehlt.connect(lambda k: self.k_art.setCurrentIndex(max(0, self.k_art.findData(k))))
         self.k_art.currentIndexChanged.connect(lambda *_: self.s_art.setze(str(self.k_art.currentData())))
         self.s_breite = SchrittFeld(0, 1584, "pt", 0.25, 2, 0.75)
@@ -133,8 +133,8 @@ class DiagrammFormatPanel(DiagrammFormatWerteMixin, KopfMenueMixin, NurDreiEffek
         f.zeile("Verknüpfungstyp:", self.l_verknuepfung)
         # Pfeile (wie in der Vorlage in der Linie, immer zu sehen, grau außer bei Linienreihen): je Pfeil Art und Größe
         self._linienreihe = False
-        self.p_anfang, self.p_ende = _combo(F.PFEILE), _combo(F.PFEILE)
-        self.p_groesse_anfang, self.p_groesse_ende = _combo(F.PFEIL_GROESSEN), _combo(F.PFEIL_GROESSEN)
+        self.p_anfang, self.p_ende = _combo(F.diagramm_pfeile()), _combo(F.diagramm_pfeile())
+        self.p_groesse_anfang, self.p_groesse_ende = _combo(F.diagramm_pfeil_groessen()), _combo(F.diagramm_pfeil_groessen())
         self.l_pfeil_anfang, self.l_pfeil_ende = QLabel("Anfangspfeil:"), QLabel("Endpfeil:")
         for l, a, g in ((self.l_pfeil_anfang, self.p_anfang, self.p_groesse_anfang), (self.l_pfeil_ende, self.p_ende, self.p_groesse_ende)):
             f.zeile(l, a); f.zeile("Größe:", g)

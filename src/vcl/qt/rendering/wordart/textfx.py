@@ -7,7 +7,7 @@ from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from core.objekte.wordart.textfx_daten import _BAHNEN, _tiefe_faktor
 from vcl.qt.rendering.wordart.effekt_umwandlung import zu_daten, zu_dict
 from writer.funktionen.objekte import wordart as _wa
-from writer.funktionen.objekte.wordart import BELEUCHTUNG, MATERIAL, PX
+from writer.funktionen.objekte.wordart import wordart_px
 
 
 def schatten_vorgaben() -> list[tuple[str, str, dict]]:
@@ -173,15 +173,15 @@ def _basisname(basis_farbe: QColor | None) -> str:
 
 def _fx_reflektion(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, r: dict, grundlinie: float, schrift_px: float, basis_farbe: QColor | None) -> None:
     """Spiegelung unter der Grundlinie, nur außerhalb der Buchstaben."""
-    sp = QTransform().translate(0, 2 * grundlinie + r.get("abstand", 0) * PX).scale(1, -1)
+    sp = QTransform().translate(0, 2 * grundlinie + r.get("abstand", 0) * wordart_px()).scale(1, -1)
     spiegel = sp.map(pfad)
     hoch = max(1.0, schrift_px * 1.0 * r.get("groesse", 50) / 100)
-    g = QLinearGradient(0, grundlinie + r.get("abstand", 0) * PX, 0, grundlinie + r.get("abstand", 0) * PX + hoch)
+    g = QLinearGradient(0, grundlinie + r.get("abstand", 0) * wordart_px(), 0, grundlinie + r.get("abstand", 0) * wordart_px() + hoch)
     g.setColorAt(0, _farbe(_basisname(basis_farbe), r.get("transparenz", 50)))
     g.setColorAt(1, QColor(*DURCHSICHTIG))
     p.save(); p.setClipPath(aussen)
     if r.get("weich", 0) > 0:
-        _weich(p, spiegel, _farbe(_basisname(basis_farbe), 85), r["weich"] * PX * 0.5)
+        _weich(p, spiegel, _farbe(_basisname(basis_farbe), 85), r["weich"] * wordart_px() * 0.5)
     else:
         p.fillPath(spiegel, QBrush(g))
     p.restore()
@@ -198,7 +198,7 @@ def _tiefe_farbe(basis: QColor, f: float, licht: str) -> QColor:
 
 def _fx_3d(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, d3: dict) -> None:
     """3D-Format: Tiefenschichten hinter dem Text, optional mit Kontur."""
-    tiefe = d3["tiefe"] * PX
+    tiefe = d3["tiefe"] * wordart_px()
     richt = _richtung(d3.get("winkel", 45) + 45)
     n = max(2, int(tiefe))
     basis = QColor(d3.get("tiefe_farbe", Farbe.GRAU_MITTEL))
@@ -209,7 +209,7 @@ def _fx_3d(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, d3: dict) -> N
         c = _tiefe_farbe(basis, _tiefe_faktor(mat, licht, t), licht)
         p.fillPath(QTransform().translate(richt.x() * tiefe * t, richt.y() * tiefe * t).map(pfad), c)
     if d3.get("kontur", 0) > 0:
-        pen = QPen(QColor(d3.get("kontur_farbe", Farbe.GRAU_DUNKEL)), d3["kontur"] * PX)
+        pen = QPen(QColor(d3.get("kontur_farbe", Farbe.GRAU_DUNKEL)), d3["kontur"] * wordart_px())
         pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen); p.drawPath(QTransform().translate(richt.x() * tiefe, richt.y() * tiefe).map(pfad)); p.drawPath(pfad)
     p.restore()
@@ -217,7 +217,7 @@ def _fx_3d(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, d3: dict) -> N
 
 def _fx_schatten_aussen(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, s: dict, rect: QRectF, grundlinie: float) -> None:
     """Schatten hinter dem Text (``aussen`` oder ``persp``)."""
-    abst = s.get("abstand", 3) * PX
+    abst = s.get("abstand", 3) * wordart_px()
     dr = _richtung(s.get("winkel", 45))
     sk = s.get("groesse", 100) / 100
     farbe = _farbe(s.get("farbe", Farbe.SCHWARZ), s.get("transparenz", 50))
@@ -228,14 +228,14 @@ def _fx_schatten_aussen(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, s
         t = QTransform().translate(rect.center().x(), rect.center().y()).scale(sk, sk).translate(-rect.center().x(), -rect.center().y()) \
             * QTransform().translate(dr.x() * abst, dr.y() * abst)
     p.save(); p.setClipPath(aussen); p.setPen(Qt.NoPen)
-    _weich(p, t.map(pfad), farbe, s.get("weich", 4) * PX * 0.6)
+    _weich(p, t.map(pfad), farbe, s.get("weich", 4) * wordart_px() * 0.6)
     p.restore()
 
 
 def _fx_leuchten(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, g: dict) -> None:
     farbe = _farbe(g.get("farbe", Farbe.BLAU), g.get("transparenz", 60))
     p.save(); p.setClipPath(aussen); p.setPen(Qt.NoPen)
-    _weich(p, pfad, farbe, g["groesse"] * PX)
+    _weich(p, pfad, farbe, g["groesse"] * wordart_px())
     p.restore()
 
 
@@ -250,13 +250,13 @@ def _fx_fuellung(p: QPainter, pfad: QPainterPath, fx: dict, rect: QRectF) -> Non
 
 
 def _fx_schatten_innen(p: QPainter, pfad: QPainterPath, s: dict, rect: QRectF) -> None:
-    abst = s.get("abstand", 3) * PX
+    abst = s.get("abstand", 3) * wordart_px()
     dr = _richtung(s.get("winkel", 45))
     farbe = _farbe(s.get("farbe", Farbe.SCHWARZ), s.get("transparenz", 50))
     innen = QPainterPath(); innen.addRect(rect.adjusted(-50, -50, 50, 50))
     loch = QTransform().translate(dr.x() * abst, dr.y() * abst).map(pfad)
     p.save(); p.setClipPath(pfad); p.setPen(Qt.NoPen)
-    _weich(p, innen.subtracted(loch), farbe, s.get("weich", 4) * PX * 0.5)
+    _weich(p, innen.subtracted(loch), farbe, s.get("weich", 4) * wordart_px() * 0.5)
     p.restore()
 
 
@@ -264,7 +264,7 @@ def _fx_kontur(p: QPainter, pfad: QPainterPath, fx: dict, rect: QRectF, kontur: 
     """Konturlinie (einfach/mehrfach, Farbe oder Verlauf), wenn sie Lunivo zeichnet."""
     if kontur is None and "kontur_verlauf" not in fx and fx.get("kontur_form", "einfach") == "einfach":
         return
-    farbe, breite, form, *rest = kontur if kontur else (QColor(Farbe.SCHWARZ), 0.75 * PX, fx.get("kontur_form", "einfach"))
+    farbe, breite, form, *rest = kontur if kontur else (QColor(Farbe.SCHWARZ), 0.75 * wordart_px(), fx.get("kontur_form", "einfach"))
     brush = QBrush(_verlauf(rect, fx["kontur_verlauf"])) if "kontur_verlauf" in fx else QBrush(farbe)
     for flaeche in _kontur_pfade(pfad, breite, fx.get("kontur_form", form), rest[0] if rest else fx.get("kontur_art", "einfach")):
         p.fillPath(flaeche, brush)

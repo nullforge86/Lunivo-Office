@@ -12,7 +12,7 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
-from core.korrektur.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
+from core.korrektur.korrektur import ProofingIssue
 from framework.dokumentverwaltung.dokumentpflege.gelernt import Gelernt
 from core.korrektur.rechtschreibung import autokorrektur, pruefung
 from core.korrektur import fund as fundlib, inkrement
@@ -21,8 +21,6 @@ from core.korrektur.woerterbuecher import vorhersage
 _log = logging.getLogger("lunivo.proofing")
 ART_REIHENFOLGE = {"fehler": 0, "tipp": 1, "hinweis": 2}
 
-
-zeige_leer = zeige_leer_modell           # bleibt hier unter dem alten Namen erreichbar
 
 
 class _Signale(QObject):

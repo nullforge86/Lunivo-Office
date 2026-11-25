@@ -32,7 +32,7 @@ class _SchattierungSeite(QWidget):
         g = FormularGitter(self); g.setContentsMargins(*RAND_SCHATTIERUNG_SEITE)
         self.fuell = FarbFeld(fuell or "", "Füllfarbe", keine_text="Keine Farbe")
         self.art = Auswahlfeld(); self.art.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
-        for k, name, _o in MW.MUSTER:
+        for k, name, _o in MW.muster_vorlagen():
             self.art.addItem(_muster_symbol(k), name, k)
         self.farbe = FarbFeld("" if not muster or muster[1] in ("", Farbe.SCHWARZ) else muster[1], "Musterfarbe", keine_text="Automatisch")
         self.vorschau = _Vorschau(kanten_klick=False); self.vorschau.setFixedSize(*GROESSE_RAHMENVORSCHAU)         # klein, in der Mitte
