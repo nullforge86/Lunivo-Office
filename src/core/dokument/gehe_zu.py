@@ -4,6 +4,8 @@ Beschriftung, Abschnitt. Die Oberfläche ist der Reiter „Gehe zu“ im Feld �
 Alle Stellen sind Zeichenstellen im Rohtext (Absätze durch ein Zeichen getrennt, wie ``textCursor().position()``)."""
 from __future__ import annotations
 
+from core.bearbeitung import Kontext
+
 from core.dokument.dokument import InlineObjekt, Tabelle
 from core.suche.textsuche.suche import position_zu_offset
 from core.verzeichnisse.abbildungsverzeichnis import beschriftung
@@ -55,15 +57,15 @@ def zeilenstart(ed, n: int) -> int:
 
 
 def _ziele_ueberschrift(ed):
-    return [(z["text"], z["pos"]) for z in querverweis.querverweis_ziele(ed) if z["art"] == "Überschrift"]
+    return [(z["text"], z["pos"]) for z in querverweis.querverweis_ziele(Kontext(ed.sitzung)) if z["art"] == "Überschrift"]
 
 
 def _ziele_textmarke(ed):
-    return [(d["name"], d["von"]) for d in textmarke.lesezeichen_liste(ed, versteckte=False)]
+    return [(d["name"], d["von"]) for d in textmarke.lesezeichen_liste(Kontext(ed.sitzung), versteckte=False)]
 
 
 def _ziele_beschriftung(ed):
-    return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in beschriftung.beschriftungen_liste(ed)]
+    return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in beschriftung.beschriftungen_liste(Kontext(ed.sitzung))]
 
 
 def _ziele_kommentar(ed):

@@ -81,9 +81,9 @@ class VerweiseAktionen:
             fw.verzeichnis_aktualisieren("toc", "Im Dokument gibt es noch kein Inhaltsverzeichnis (Verweise ▸ TOC einfügen).")
 
     def inhaltsEbene(self, k=None, ebene: int = 0):
-        fw = self._vw()
-        if fw is not None:
-            fw.ebene_setzen(ebene)
+        e = self.ed
+        if e is not None:                                   # Formatvorlage anwenden: noch über den Editor (Katalog der Vorlagen liegt dort)
+            e.apply_style(f"Überschrift {ebene}" if ebene else "Standard")
 
     # ---- Fuß- und Endnoten einzeln durchgehen -----------------------------------------------------------------------------
     def _note_gehe(self, delta, art, titel):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from framework.befehle import GEAENDERT
+from framework.befehle import AUSWAHL, GEAENDERT
 from framework.ereignisse import melder
 from framework.schnittstellen.datentypen import Art, Ereignis, Geoeffnet
 from framework.sitzungen import sitzung
@@ -37,5 +37,13 @@ def bei_aenderung(empfaenger: Callable[[int], None]) -> Callable[[], None]:
     """Meldet ``empfaenger(kennung)`` an, sobald das Framework ein Dokument geändert hat; gibt die Abmeldung zurück."""
     def weiter(e: Ereignis) -> None:
         if e.text == GEAENDERT:
+            empfaenger(int(e.daten.get("kennung", 0)))
+    return melder.abonnieren(Art.GEAENDERT, weiter)
+
+
+def bei_auswahl(empfaenger: Callable[[int], None]) -> Callable[[], None]:
+    """Meldet ``empfaenger(kennung)`` an, sobald das Framework nur die Auswahl gesetzt hat (Sprung); gibt die Abmeldung zurück."""
+    def weiter(e: Ereignis) -> None:
+        if e.text == AUSWAHL:
             empfaenger(int(e.daten.get("kennung", 0)))
     return melder.abonnieren(Art.GEAENDERT, weiter)

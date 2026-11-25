@@ -14,6 +14,7 @@ from framework.schnittstellen.datentypen import Art, Ereignis
 from framework.sitzungen import sitzung as _steuerung
 
 GEAENDERT = "dokument_geaendert"
+AUSWAHL = "auswahl_geaendert"                 # nur die Auswahl wurde gesetzt (Sprung): die Oberfläche zeigt die Stelle
 
 
 def ausfuehren(kennung: int, arbeit: Callable[..., int]) -> int | None:
@@ -30,4 +31,21 @@ def ausfuehren(kennung: int, arbeit: Callable[..., int]) -> int | None:
     except BearbeitungsFehler:
         return None
     melder.melden(Ereignis(Art.GEAENDERT, GEAENDERT, {"kennung": kennung}))
+    return ergebnis
+
+
+def lesen(kennung: int, abfrage: Callable[..., int]) -> int | None:
+    """``abfrage(sitzung)`` ohne Änderung des Dokuments; ``None``, wenn es das Dokument nicht gibt."""
+    satz = _steuerung._sitzungen.get(kennung)
+    return None if satz is None else abfrage(satz.sitzung)
+
+
+def bewegen(kennung: int, arbeit: Callable[..., int]) -> int | None:
+    """``arbeit(sitzung)`` setzt nur die Auswahl (Sprung); danach ``auswahl_geaendert`` melden. Auch bei Schreibschutz erlaubt."""
+    satz = _steuerung._sitzungen.get(kennung)
+    if satz is None:
+        return None
+    ergebnis = arbeit(satz.sitzung)
+    if ergebnis:
+        melder.melden(Ereignis(Art.GEAENDERT, AUSWAHL, {"kennung": kennung}))
     return ergebnis

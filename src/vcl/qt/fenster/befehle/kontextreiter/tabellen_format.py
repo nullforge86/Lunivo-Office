@@ -43,20 +43,20 @@ class TabellenFormatBefehle:
         e, c, t = self._tab()
         if not t:
             return
-        from core.verzeichnisse.abbildungsverzeichnis import beschriftung
+        from writer import referenzwerkzeuge as RW
         from vcl.qt.widgets.dialoge.verweise.beschriftung_dialog import BeschriftungDialog
         try:
             eigene = [str(x) for x in json.loads(self.w.settings.get("verweise/beschriftungen", "[]") or "[]")]
         except (ValueError, TypeError):
             eigene = []
-        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: beschriftung.naechste_nummer(e, label, zahl), objekt=True, label="Tabelle")
+        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: RW.verweise_befehle(e.kennung).naechste_nummer(label, zahl), objekt=True, label="Tabelle")
         d.pos.setCurrentIndex(1 if oben else 0)
         ok = d.exec()
         if d.eigene != eigene:
             self.w.settings.set("verweise/beschriftungen", json.dumps(d.eigene, ensure_ascii=False))
         if ok:
             r = d.ergebnis()
-            beschriftung.beschriftung_einfuegen(e, r["label"], "", r["oben"], nach=r["nach"], ohne_bezeichnung=r["ohne"], zahl=r["zahl"])
+            RW.verweise_befehle(e.kennung).beschriftung_einfuegen(r["label"], r["oben"], r["nach"], r["ohne"], r["zahl"])
 
     def menue_tabelleSchattierung(self):
         def setze(col):

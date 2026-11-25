@@ -286,11 +286,11 @@ def tabellen_bereiche(ed) -> dict[str, list[float]]:
 def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
     from core.formatvorlagen.formatvorlagen import ueberschriftsebene
     from core.suche.textsuche.suche import roh_text
-    from core.verzeichnisse.abbildungsverzeichnis import beschriftung
-    from core.referenzen.querverweise import textmarke
+    from writer import referenzwerkzeuge as RW
     dok = ed.sitzung.dokument
     pos = ed.textCursor().position()
-    marken = textmarke.lesezeichen_liste(ed, versteckte=False)
+    vw = RW.verweise_befehle(ed.kennung)
+    marken = vw.textmarken_liste(versteckte=False)
     text = roh_text(dok)
     try:
         seiten_marken = dict(zip([m["name"] for m in marken], ed.seiten_von([m["von"] for m in marken]))) if marken else {}
@@ -299,7 +299,7 @@ def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
         seiten_marken, seite = {}, 1
     werte = {m["name"]: v for m in marken if (v := _zahl(text[m["von"]:m["bis"]])) is not None}
     seq: dict[str, int] = {}
-    for k in beschriftung.beschriftungen_liste(ed):
+    for k in vw.beschriftungen_liste():
         if k["pos"] < pos:
             seq[k["label"]] = seq.get(k["label"], 0) + 1
     stilref: dict[str, str] = {}

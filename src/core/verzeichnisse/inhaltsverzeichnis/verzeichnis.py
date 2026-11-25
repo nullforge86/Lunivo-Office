@@ -85,9 +85,9 @@ def _beschriftungen(dok, label: str):
             yield 1, a.text().strip(), a.id, stellen[a.id]
 
 
-def _toc_marken(editor, ueberschriften: list) -> dict:
+def _toc_marken(k, ueberschriften: list) -> dict:
     """Absatz-Id → Name der verborgenen Textmarke „_Toc…“ an der Überschrift; fehlende werden gesetzt (in einem Schritt mit dem Verzeichnis)."""
-    s = editor.sitzung
+    s = k.sitzung
     marken = s.textmarken()
     vorhanden_ = {n for n in marken}
     aus = {}
@@ -107,13 +107,13 @@ def _toc_marken(editor, ueberschriften: list) -> dict:
     return aus
 
 
-def _stichwoerter(editor):
+def _stichwoerter(k):
     """[(Eintrag, Stelle)] aus den markierten Textstellen (eine Stelle je zusammenhängender Markierung)."""
     from core.referenzen.querverweise.indexeintrag import aus_text
-    dok = editor.sitzung.dokument
+    dok = k.sitzung.dokument
     aus = []
-    for fund in editor.sitzung.bereiche(lambda f: "index" in f, lambda f: (f["index"], f.get("index_opt", ""))):
-        a = editor.sitzung._absatz(fund.anker.absatz_id)
+    for fund in k.sitzung.bereiche(lambda f: "index" in f, lambda f: (f["index"], f.get("index_opt", ""))):
+        a = k.sitzung._absatz(fund.anker.absatz_id)
         versatz, schl = 0, None
         for x in a.inhalte:
             n = len(x.text) if hasattr(x, "text") else 1
@@ -125,43 +125,43 @@ def _stichwoerter(editor):
     return aus
 
 
-def _index_zeilen(editor) -> list:
+def _index_zeilen(k) -> list:
     """Zeilen des Stichwortverzeichnisses: Haupteinträge, darunter eingerückt die Untereinträge; „Siehe …“ statt Seitenzahl,
     Seitenbereiche aus Textmarken, fette/kursive Seitenzahlen als Stücke (Text, fett, kursiv)."""
     from core.referenzen.querverweise.textmarke import lesezeichen_liste
-    eintraege = _stichwoerter(editor)
-    marken = {d["name"]: d for d in lesezeichen_liste(editor)}
+    eintraege = _stichwoerter(k)
+    marken = {d["name"]: d for d in lesezeichen_liste(k)}
     pos = []
     for e, p in eintraege:
         pos.append(p)
         if e.marke in marken:
             pos += [marken[e.marke]["von"], max(marken[e.marke]["von"], marken[e.marke]["bis"] - 1)]
-    seiten = iter(editor.seiten_von(pos)) if pos else iter(())
+    seiten = iter(k.seiten_von(pos)) if pos else iter(())
     from core.verzeichnisse.inhaltsverzeichnis.verzeichnis_kern import index_zeilen_bilden
     return index_zeilen_bilden(eintraege, seiten, marken)
 
 
-def zeilen_fuer(editor, art: str, opt: dict | None = None) -> list[tuple]:
+def zeilen_fuer(k, art: str, opt: dict | None = None) -> list[tuple]:
     """→ [(Ebene, Text, Seitenangabe)]; beim Inhaltsverzeichnis mit Verknüpfungen (``opt["links"]``) als viertes die Textmarke.
     Die Seitenangabe ist Text oder eine Liste von Stücken (Text, fett, kursiv)."""
-    dok = editor.sitzung.dokument
+    dok = k.sitzung.dokument
     if art == "toc":
         o = {**TOC_VORGABE, **(opt or {})}
         ue = list(_ueberschriften(dok, int(o["ebenen"])))
-        s = editor.seiten_von([p for _l, _t, _i, p in ue]) if ue else []
+        s = k.seiten_von([p for _l, _t, _i, p in ue]) if ue else []
         if o["links"]:
-            marken = _toc_marken(editor, ue)
+            marken = _toc_marken(k, ue)
             return [(l, t, n, marken[aid]) for (l, t, aid, _p), n in zip(ue, s)]
         return [(l, t, n) for (l, t, _i, _p), n in zip(ue, s)]
     if art in ("abb", "tab"):
         ue = list(_beschriftungen(dok, "Abbildung" if art == "abb" else "Tabelle"))
-        s = editor.seiten_von([p for _l, _t, _i, p in ue]) if ue else []
+        s = k.seiten_von([p for _l, _t, _i, p in ue]) if ue else []
         return [(l, t, n) for (l, t, _i, _p), n in zip(ue, s)]
     if art == "index":
-        return _index_zeilen(editor)
+        return _index_zeilen(k)
     if art == "lit":
         from core.referenzen.literaturverzeichnis.literatur import literaturverzeichnis
-        return [(1, z, "") for z in literaturverzeichnis(editor.quellen, editor.zitierweise)]
+        return [(1, z, "") for z in literaturverzeichnis(k.quellen, k.zitierweise)]
     return []
 
 
@@ -170,10 +170,10 @@ def _seite_text(seite) -> str:
     return seite if isinstance(seite, str) else "".join(t for t, _f, _k in seite)
 
 
-def _schreiben(editor, s, art: str, zeilen: list, opt: dict | None) -> None:
+def _schreiben(k, s, art: str, zeilen: list, opt: dict | None) -> None:
     """Schreibt das Verzeichnis (ersetzt ein vorhandenes der Art) im Rahmen eines laufenden Schrittes."""
     o = {**TOC_VORGABE, **(opt or {})} if art == "toc" else {**TOC_VORGABE, "fuell": "", "links": False}
-    breite = editor.page.content_width_px
+    breite = k.seite.content_width_px
     eintraege = []
     for lvl, text, seite, *marke in zeilen:
         angabe = _seite_text(seite) if o["seitenzahlen"] else ""
@@ -195,23 +195,23 @@ def _schreiben(editor, s, art: str, zeilen: list, opt: dict | None) -> None:
             s.absatzformat_anwenden(fmt, absatz_ids=[aid])
 
 
-def verzeichnis_einfuegen(editor, art: str = "toc", opt: dict | None = None) -> int:
+def verzeichnis_einfuegen(k, art: str = "toc", opt: dict | None = None) -> int:
     """Verzeichnis an der Schreibmarke einfügen. Gibt es schon eines der Art, wird es mit ``opt`` neu geschrieben."""
     anzahl = [0]
 
     def f(s):
         with s.gruppe("Verzeichnis"):
-            zeilen = zeilen_fuer(editor, art, opt)
+            zeilen = zeilen_fuer(k, art, opt)
             anzahl[0] = len(zeilen)
             if zeilen:
-                _schreiben(editor, s, art, zeilen, opt)
-    editor.ansicht._aendern(f)
+                _schreiben(k, s, art, zeilen, opt)
+    k.aendern(f)
     if anzahl[0]:
-        verzeichnis_aktualisieren(editor)       # Seitenzahlen nach dem Einfügen (das Verzeichnis schiebt den Text)
+        verzeichnis_aktualisieren(k)       # Seitenzahlen nach dem Einfügen (das Verzeichnis schiebt den Text)
     return anzahl[0]
 
 
-def verzeichnis_aktualisieren(editor, nur: str | None = None) -> int:
+def verzeichnis_aktualisieren(k, nur: str | None = None) -> int:
     """Alle Verzeichnisse (oder nur die der Art ``nur``) neu schreiben; gibt die Zahl der Zeilen zurück."""
     n = [0]
 
@@ -222,8 +222,8 @@ def verzeichnis_aktualisieren(editor, nur: str | None = None) -> int:
                 if nur and art != nur:
                     continue
                 opt = toc_opt_lesen(kopf.format.get("toc_opt")) if art == "toc" else None
-                zeilen = zeilen_fuer(editor, art, opt)
-                _schreiben(editor, s, art, zeilen, opt)
+                zeilen = zeilen_fuer(k, art, opt)
+                _schreiben(k, s, art, zeilen, opt)
                 n[0] += len(zeilen)
-    editor.ansicht._aendern(f)
+    k.aendern(f)
     return n[0]

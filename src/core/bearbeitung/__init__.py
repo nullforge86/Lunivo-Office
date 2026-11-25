@@ -8,4 +8,11 @@ from core.bearbeitung.verlauf import Aenderung as SitzungsAenderung, Bearbeitung
 
 Sitzung = Bearbeitungssitzung
 
-__all__ = ["Bearbeitungssitzung", "BearbeitungsFehler", "Sitzung", "SitzungsAenderung"]
+__all__ = ["Kontext", "Bearbeitungssitzung", "BearbeitungsFehler", "Sitzung", "SitzungsAenderung"]
+
+
+def __getattr__(name: str):
+    if name == "Kontext":                                 # erst beim ersten Zugriff laden (keine zusätzlichen Importzyklen)
+        from core.bearbeitung.kontext import Kontext
+        return Kontext
+    raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")

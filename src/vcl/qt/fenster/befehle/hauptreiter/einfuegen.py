@@ -47,20 +47,20 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not e:
             return
         import json
-        from core.referenzen.querverweise import querverweis
+        from writer import referenzwerkzeuge as RW
         from vcl.qt.widgets.dialoge.einfuegen.hyperlink_dialog import HyperlinkDialog
         try:
             adressen = json.loads(str(self.w.settings.get("einfuegen/mail_zuletzt", "") or "[]"))
         except ValueError:
             adressen = []
         markiert = e.textCursor().selectedText().replace("\u2029", " ").strip()
-        d = HyperlinkDialog(self.w, text=markiert, ziele=querverweis.querverweis_ziele(e), ordner=self.w.settings.get("last_dir", ""),
+        d = HyperlinkDialog(self.w, text=markiert, ziele=RW.verweise_befehle(e.kennung).querverweis_ziele(), ordner=self.w.settings.get("last_dir", ""),
                             adressen=[a for a in adressen if isinstance(a, str)])
         if not d.exec():
             return
         r = d.ergebnis()
         if r["art"] == "dokument":
-            href = "#" + querverweis.marke_sichern(e, r["ziel"])
+            href = "#" + RW.verweise_befehle(e.kennung).marke_sichern(r["ziel"])
         else:
             href = r["href"]
         if r["art"] == "mail":
@@ -482,7 +482,8 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if anweisung.upper().startswith("TOC"):
             from core.verzeichnisse.inhaltsverzeichnis import verzeichnis as V
             m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
-            V.verzeichnis_einfuegen(self.ed, "toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
+            from writer import referenzwerkzeuge as RW
+            RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
             return
         F.feld_einfuegen(self.ed, anweisung, text, versteckt=anweisung.upper().startswith("TC"))
 
@@ -584,12 +585,13 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         from core.verzeichnisse.inhaltsverzeichnis import verzeichnis as V
         from vcl.qt.widgets.dialoge.verweise.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
         d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or V.TOC_VORGABE)
-        if d.exec() and not V.verzeichnis_einfuegen(self.ed, "toc", d.ergebnis()):
+        from writer import referenzwerkzeuge as RW
+        if d.exec() and not RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", d.ergebnis()):
             self.w.statusBar().showMessage("Im Dokument gibt es keine Überschriften. Legen Sie sie mit Verweise ▸ Inhaltsverzeichnis "
                                            "(Ebene 1–9) oder den Formatvorlagen „Überschrift 1–9“ fest.", 6000)
 
 
     def verzeichnisseAktualisieren(self, k=None):
         if self.ed:
-            from core.verzeichnisse.inhaltsverzeichnis.verzeichnis import verzeichnis_aktualisieren
-            verzeichnis_aktualisieren(self.ed)
+            from writer import referenzwerkzeuge as RW
+            RW.verweise_befehle(self.ed.kennung).verzeichnis_alle_aktualisieren()

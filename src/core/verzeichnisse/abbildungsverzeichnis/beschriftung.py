@@ -33,9 +33,9 @@ def seq_lauf(a):
     return None
 
 
-def beschriftungen_liste(ed) -> list[dict]:
+def beschriftungen_liste(k) -> list[dict]:
     """[{label, text, pos, block}] — die Beschriftungsabsätze in Dokumentreihenfolge (``pos``: Stelle im Rohtext, ``block``: Id des Absatzes)."""
-    d = ed.sitzung.dokument
+    d = k.sitzung.dokument
     aus, n = [], 0
     for a in d.absaetze():
         if a.format.get("beschriftung") and a.text().strip():
@@ -44,19 +44,19 @@ def beschriftungen_liste(ed) -> list[dict]:
     return aus
 
 
-def naechste_nummer(ed, label: str, zahl: str = "arabisch") -> str:
+def naechste_nummer(k, label: str, zahl: str = "arabisch") -> str:
     """Nummer, die eine neue Beschriftung ``label`` an der Schreibmarke bekäme (für die Anzeige im Fenster)."""
-    pos = ed.textCursor().position()
-    n = 1 + sum(1 for k in beschriftungen_liste(ed) if k["label"] == label and k["pos"] < pos)
+    pos = k.position()
+    n = 1 + sum(1 for k in beschriftungen_liste(k) if k["label"] == label and k["pos"] < pos)
     return nummer_text(ZAHLENART.get(zahl, "dezimal"), n)
 
 
-def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False, *, nach: str | None = None,
+def beschriftung_einfuegen(k, label: str, text: str, oben: bool = False, *, nach: str | None = None,
                            ohne_bezeichnung: bool = False, zahl: str = "arabisch") -> None:
     """Beschriftung „Abbildung 1: Text“ unter (``oben``: über) dem Objekt oder Absatz. ``nach`` ersetzt „: Text“ durch genau diesen
     Text hinter der Nummer, ``ohne_bezeichnung`` lässt „Abbildung “ weg, ``zahl`` ist die Schreibweise der Nummer."""
-    s = ed.sitzung
-    t = ed.tabelle_an_marke()
+    s = k.sitzung
+    t = k.tabelle_an_marke()
     if t is not None:
         block = t.id
     else:
@@ -74,8 +74,8 @@ def beschriftung_einfuegen(ed, label: str, text: str, oben: bool = False, *, nac
             sitz.absatzformat_anwenden({"abstand_vor": 4 / 0.75, "abstand_nach": 8 / 0.75}, absatz_ids=[neu])
             sitz.zeichenformat_anwenden({"kursiv": True, "groesse_pt": 9.0, "farbe": "#44546a"}, Auswahl(Position(neu, 0), Position(neu, sitz._absatz(neu).laenge)))
             sitz.setze_auswahl(Position(neu, sitz._absatz(neu).laenge))
-    ed.ansicht._aendern(f)
+    k.aendern(f)
 
 
-def beschriftungen_nummerieren(ed) -> None:
-    ed.ansicht._aendern(lambda s: s.beschriftungen_nummerieren())
+def beschriftungen_nummerieren(k) -> None:
+    k.aendern(lambda s: s.beschriftungen_nummerieren())

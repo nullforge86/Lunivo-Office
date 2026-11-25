@@ -172,7 +172,12 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.mini_hook = None
         self.kontext_hook = None
         abmelden = _dokumente.bei_aenderung(self._im_framework_geaendert)    # Rückweg: das Framework meldet, die Ansicht zeichnet neu
-        self.destroyed.connect(lambda *_: abmelden())
+        abmelden_auswahl = _dokumente.bei_auswahl(self._im_framework_bewegt)
+        self.destroyed.connect(lambda *_: (abmelden(), abmelden_auswahl()))
+
+    def _im_framework_bewegt(self, kennung: int) -> None:
+        if kennung == self.kennung:
+            self.ansicht.nach_bewegung()
 
     def _im_framework_geaendert(self, kennung: int) -> None:
         if kennung == self.kennung:

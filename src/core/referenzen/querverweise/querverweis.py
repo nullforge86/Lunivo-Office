@@ -31,9 +31,9 @@ def verweisen_auf(art: str) -> list[tuple[str, str]]:
 _AUFZAEHLUNG = ("•", "◦", "▪", "–", "-")                 # Listenzeichen ohne Nummer: kein Ziel für einen Querverweis
 
 
-def _ziele_absaetze(ed) -> list[dict]:
+def _ziele_absaetze(k) -> list[dict]:
     """Überschriften und nummerierte Absätze."""
-    d = ed.sitzung.dokument
+    d = k.sitzung.dokument
     marken = listenmarken(d)
     z, n = [], 0
     for a in d.absaetze():
@@ -61,41 +61,41 @@ def _beschriftungstext(a) -> str:
     return re.sub(r"^\s*[:.–-]?\s*", "", rest).strip()
 
 
-def _ziele_beschriftungen(ed) -> list[dict]:
-    d = ed.sitzung.dokument
+def _ziele_beschriftungen(k) -> list[dict]:
+    d = k.sitzung.dokument
     z = []
-    for k in beschriftungen_liste(ed):
-        a = ed.sitzung._absatz(k["block"])
+    for k in beschriftungen_liste(k):
+        a = k.sitzung._absatz(k["block"])
         z.append({"art": k["label"], "text": k["text"], "pos": k["pos"], "block": a.id, "von": k["pos"], "bis": k["pos"] + a.laenge,
                   "nummer": _bezeichnung_nummer(a) or k["text"], "inhalt": _beschriftungstext(a)})
     return z
 
 
-def _ziele_textmarken(ed) -> list[dict]:
-    marken = lesezeichen_liste(ed, versteckte=False)
-    text = ed.sitzung.text() if marken else ""
+def _ziele_textmarken(k) -> list[dict]:
+    marken = lesezeichen_liste(k, versteckte=False)
+    text = k.sitzung.text() if marken else ""
     return [{"art": "Textmarke", "text": d["name"], "pos": d["von"], "name": d["name"], "inhalt": text[d["von"]:d["bis"]].replace("\n", " ")} for d in marken]
 
 
-def _ziele_noten(ed) -> list[dict]:
+def _ziele_noten(k) -> list[dict]:
     """Fußnoten (1, 2, …) und Endnoten (i, ii, …) in Textreihenfolge."""
     z = []
     zaehler = {"f": 0, "e": 0}
-    for n in ed.noten_stellen():
+    for n in k.noten_stellen():
         zaehler[n["art"]] += 1
         nr = str(zaehler[n["art"]]) if n["art"] == "f" else nummer_text("roem_klein", zaehler[n["art"]])
-        text = ((ed.noten or {}).get(n["art"], {}) or {}).get(n["id"], "")
+        text = ((k.noten or {}).get(n["art"], {}) or {}).get(n["id"], "")
         z.append({"art": "Fußnote" if n["art"] == "f" else "Endnote", "text": f"{nr} {text}".strip(), "pos": n["von"], "von": n["von"], "bis": n["bis"], "nummer": nr})
     return z
 
 
-def querverweis_ziele(ed) -> list[dict]:
+def querverweis_ziele(k) -> list[dict]:
     """Mögliche Ziele: nummerierte Absätze, Überschriften, Textmarken, Fuß- und Endnoten, Beschriftungen.
     Jedes Ziel: art, text (Anzeige), pos, von/bis (Bereich für die Textmarke), nummer (wenn es eine hat)."""
-    return _ziele_absaetze(ed) + _ziele_beschriftungen(ed) + _ziele_textmarken(ed) + _ziele_noten(ed)
+    return _ziele_absaetze(k) + _ziele_beschriftungen(k) + _ziele_textmarken(k) + _ziele_noten(k)
 
 
-def marke_sichern(ed, ziel: dict) -> str:
+def marke_sichern(k, ziel: dict) -> str:
     """Name der Textmarke am Ziel. Fehlt eine, bekommt der Bereich des Ziels eine verborgene Textmarke „_Ref…“."""
     if "name" in ziel:
         return ziel["name"]
@@ -103,7 +103,7 @@ def marke_sichern(ed, ziel: dict) -> str:
     if bis <= von:
         bis = von + 1
     vorhanden = set()
-    for d in lesezeichen_liste(ed):
+    for d in lesezeichen_liste(k):
         vorhanden.add(d["name"])
         if d["von"] == von and d["bis"] == bis and d["name"].startswith(("_Ref", "Ziel_")):
             return d["name"]
@@ -111,22 +111,22 @@ def marke_sichern(ed, ziel: dict) -> str:
     while f"_Ref{n:06d}" in vorhanden:
         n += 1
     name = f"_Ref{n:06d}"
-    dok = ed.sitzung.dokument
-    ed.ansicht._aendern(lambda s: s.textmarke_setzen(name, Auswahl(offset_zu_position(dok, von), offset_zu_position(dok, bis))))
+    dok = k.sitzung.dokument
+    k.aendern(lambda s: s.textmarke_setzen(name, Auswahl(offset_zu_position(dok, von), offset_zu_position(dok, bis))))
     return name
 
 
-def querverweis_text(ed, ziel: dict, wie: str, oben_unten: bool = False) -> str:
+def querverweis_text(k, ziel: dict, wie: str, oben_unten: bool = False) -> str:
     seitenzahl = None
     if wie == "seite":
-        seitenzahl = ed.seiten_von([ziel["pos"]])[0]
-    return querverweis_text_bilden(ziel, wie, ed.textCursor().position(), seitenzahl, oben_unten)
+        seitenzahl = k.seiten_von([ziel["pos"]])[0]
+    return querverweis_text_bilden(ziel, wie, k.position(), seitenzahl, oben_unten)
 
 
-def querverweis_einfuegen(ed, ziel: dict, wie: str, *, link: bool = True, oben_unten: bool = False) -> None:
+def querverweis_einfuegen(k, ziel: dict, wie: str, *, link: bool = True, oben_unten: bool = False) -> None:
     """Querverweis an der Schreibmarke (siehe ``querverweis_text``); ``link`` macht ihn zum internen Hyperlink (Strg+Klick)."""
-    text = querverweis_text(ed, ziel, wie, oben_unten)
-    name = marke_sichern(ed, ziel) if link else ""
+    text = querverweis_text(k, ziel, wie, oben_unten)
+    name = marke_sichern(k, ziel) if link else ""
 
     def f(s):
         with s.gruppe("Querverweis"):
@@ -135,4 +135,4 @@ def querverweis_einfuegen(ed, ziel: dict, wie: str, *, link: bool = True, oben_u
             else:
                 s.text_einfuegen(text)
             s.text_einfuegen(" ", format={})
-    ed.ansicht._aendern(f)
+    k.aendern(f)

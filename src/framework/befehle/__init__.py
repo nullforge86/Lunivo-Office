@@ -5,10 +5,13 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "AUSWAHL": ("aenderung", "AUSWAHL"),
     "Ausfuehrung": ("befehlssteuerung", "Ausfuehrung"),
     "GEAENDERT": ("aenderung", "GEAENDERT"),
     "Verteiler": ("befehlssteuerung", "Verteiler"),
     "ausfuehren": ("aenderung", "ausfuehren"),
+    "bewegen": ("aenderung", "bewegen"),
+    "lesen": ("aenderung", "lesen"),
     "verteiler": ("befehlssteuerung", "verteiler"),
 }
 
