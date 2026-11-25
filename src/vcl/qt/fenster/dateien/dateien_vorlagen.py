@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMessageBox
 
 from core.dokument.bericht import DocumentIOError
 from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
+from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import speicherort_waehlen
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 
@@ -39,13 +40,13 @@ class DateienVorlagenBaustein:
             t.editor.geruest_aufbauen(wert["zeilen"], self.benutzerdaten(), QLocale("de_DE").toString(QDate.currentDate(), "d. MMMM yyyy"))
         else:
             try:
-                geladen = self.dokumente.laden(wert)
+                geoeffnet = dokumente.oeffnen_datei(wert)
             except DocumentIOError as e:
                 QMessageBox.warning(self, "Vorlage", str(e)); return
-            tab = DocumentTab(geladen, None, title=os.path.splitext(os.path.basename(wert))[0])
+            tab = DocumentTab(geoeffnet.kennung, None, title=os.path.splitext(os.path.basename(wert))[0])
             self._add_tab(tab)
             tab.editor.document().setModified(True)
-            self._show_report(geladen.report, "Hinweise zur Vorlage", "beim Öffnen")
+            self._zeige_hinweise(geoeffnet.hinweise, "Hinweise zur Vorlage", "beim Öffnen")
 
 
     def als_vorlage_speichern(self, ordner: str | None = None):
@@ -80,10 +81,10 @@ class DateienVorlagenBaustein:
         if box.exec() == QMessageBox.Yes:
             for e in entries:
                 try:
-                    loaded = self.dokumente.laden(e.docx_path)
+                    geoeffnet = dokumente.oeffnen_datei(e.docx_path)
                 except DocumentIOError:
                     continue
-                tab = DocumentTab(loaded, None, title=f"Wiederhergestellt – {e.title}")
+                tab = DocumentTab(geoeffnet.kennung, None, title=f"Wiederhergestellt – {e.title}")
                 tab.token = e.token
                 tab.editor.document().setModified(True)
                 self._add_tab(tab)

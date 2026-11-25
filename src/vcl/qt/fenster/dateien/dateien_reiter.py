@@ -6,6 +6,7 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QKeySequence
 from PySide6.QtWidgets import QApplication, QMessageBox
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from writer.hauptfenster import dokumente as hauptfenster_dokumente
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 
 
@@ -52,6 +53,7 @@ class DateienReiterBaustein:
             if r == QMessageBox.Save and not self._save_tab(w):
                 return False
         self.dokumente.verwerfen(w.token)
+        hauptfenster_dokumente.schliessen(w.kennung)
         self.tabs.removeTab(index)
         w.deleteLater()
         self._refresh_ui()

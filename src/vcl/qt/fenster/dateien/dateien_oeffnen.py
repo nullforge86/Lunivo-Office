@@ -11,6 +11,7 @@ from core.dokument.abschnitte.seite import PageSettings
 from core.dokument.bericht import DocumentIOError, IOReport, PasswortNoetig
 from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
 from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
+from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 
@@ -20,7 +21,7 @@ class DateienOeffnenBaustein:
 
     # ==== Dateien ======================================================================
     def new_document(self):
-        tab = DocumentTab(grundschrift=(self.settings.get("standard/schrift", "Liberation Sans"), float(self.settings.get("standard/groesse", 11))))
+        tab = DocumentTab(dokumente.neu((self.settings.get("standard/schrift", "Liberation Sans"), float(self.settings.get("standard/groesse", 11)))))
         self._add_tab(tab)
 
 
@@ -49,7 +50,7 @@ class DateienOeffnenBaustein:
         kennwort = None
         while True:
             try:
-                loaded = self.dokumente.laden(path, kennwort)
+                geoeffnet = dokumente.oeffnen_datei(path, kennwort)
                 break
             except PasswortNoetig as e:
                 kennwort, ok = EingabeFenster.getText(
@@ -59,26 +60,31 @@ class DateienOeffnenBaustein:
                     return False
                 continue
             except DocumentIOError as e:
-                loaded, fehler = None, e
+                geoeffnet, fehler = None, e
                 break
-        if loaded is None:
+        if geoeffnet is None:
             QMessageBox.warning(self, "Öffnen nicht möglich", f"{os.path.basename(path)}\n\n{fehler}")
             self.dokumente.vergessen(path)
             return False
-        tab = DocumentTab(loaded, path)
+        tab = DocumentTab(geoeffnet.kennung, path)
         tab.datei_stand = sicher_schreiben.stand(path)
         self._add_tab(tab)
         tab.editor.document().setModified(False)
         if not self.settings.get_bool("sicherheit/markup_oeffnen", True):
             tab.editor.set_markup(False)
         self.dokumente.gelesen(path)
-        self._show_report(loaded.report, f"Hinweise zu „{os.path.basename(path)}“", "beim Öffnen")
+        self._zeige_hinweise(geoeffnet.hinweise, f"Hinweise zu „{os.path.basename(path)}“", "beim Öffnen")
         return True
 
 
     def _show_report(self, rep: IOReport, title: str, when: str):
         if rep:
+            self._zeige_hinweise(tuple(rep.warnings), title, when)
+
+
+    def _zeige_hinweise(self, hinweise: tuple[str, ...], title: str, when: str):
+        if hinweise:
             QMessageBox.information(self, title,
-                                    f"Nicht alles konnte {when} übernommen werden:\n\n• " + "\n• ".join(rep.warnings))
+                                    f"Nicht alles konnte {when} übernommen werden:\n\n• " + "\n• ".join(hinweise))
 
 

@@ -2,9 +2,8 @@ from __future__ import annotations
 import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
-from core.dokument import Dokument
 from core.dokument.dokument import Auswahl, Position
-from core.bearbeitung import Bearbeitungssitzung
+from framework.sitzungen.altlast import zugang_fuer_editor
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import formatwerte as F
@@ -144,9 +143,12 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     zusatzGeaendert = Signal()               # Kommentare, Noten oder Änderungen haben sich geändert
     noteAngeklickt = Signal(str, int)        # Art und Id der Note, deren Zeichen angeklickt wurde
 
-    def __init__(self, dokument: Dokument, parent=None):
+    def __init__(self, kennung: int, parent=None):
         super().__init__(parent)
-        self.sitzung = Bearbeitungssitzung(dokument)
+        self.kennung = kennung
+        zugang = zugang_fuer_editor(kennung)
+        self.sitzung = zugang.sitzung
+        self.meta = zugang.meta
         self.ansicht = DokumentAnsicht(self.sitzung)
         self._dok = KernDokument(self)
         self.revision = 0

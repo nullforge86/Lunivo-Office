@@ -9,10 +9,7 @@ import os
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QScrollArea
 
-from core.dokument import neues_dokument
-from core.formatvorlagen.formatvorlagen import eingebaute_vorlagen
 from framework.dokumentverwaltung.dokumentpflege import wiederherstellung
-from framework.dokumentverwaltung.dateizugriff.modell_laden import ModellGeladen
 from core.dokument.abschnitte.seite import PageSettings, mm_to_px
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor
 
@@ -20,21 +17,13 @@ from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor
 class DocumentTab(QScrollArea):
     layout_geaendert = Signal(str)
 
-    def __init__(self, loaded: ModellGeladen | None = None, path: str | None = None, title: str | None = None,
-                 grundschrift: tuple | None = None):
+    def __init__(self, kennung: int, path: str | None = None, title: str | None = None):
         super().__init__()
         self.setWidgetResizable(True)
         self.setFrameShape(QScrollArea.NoFrame)
         self.setBackgroundRole(self.backgroundRole().Dark)
-        if loaded is not None:
-            dokument = loaded.document
-        else:
-            dokument = neues_dokument()
-            if grundschrift is not None:
-                dokument.standardformat = {"schrift": grundschrift[0], "groesse_pt": float(grundschrift[1])}
-        for name, vorlage in eingebaute_vorlagen().items():
-            dokument.vorlagen.setdefault(name, vorlage)
-        self.editor = KernEditor(dokument)
+        self.kennung = kennung
+        self.editor = KernEditor(kennung)
         from vcl.qt.widgets.dokumentansicht.ansicht.lineal_h import LinealH
         from vcl.qt.widgets.dokumentansicht.ansicht.lineal_v import LinealV
         # Die Lineale stehen fest am Rand des Fensters (im Rand des Viewports) und folgen dem Blatt beim Rollen
@@ -50,7 +39,7 @@ class DocumentTab(QScrollArea):
         self.layout_art = "blatt"
         self.path = path
         self.title = title or (os.path.basename(path) if path else "Unbenannt")
-        self.meta: dict = dict(loaded.meta) if loaded is not None else {"kommentare": {}, "noten": {"f": {}, "e": {}}, "quellen": [], "zitierweise": "APA"}
+        self.meta: dict = self.editor.meta
         self.token = wiederherstellung.new_token()
         self.untitled = path is None
         self.editor.ansicht.setFocus()
