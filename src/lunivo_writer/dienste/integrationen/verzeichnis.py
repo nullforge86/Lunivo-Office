@@ -38,7 +38,7 @@ def _languagetool(_k: dict) -> tuple[str, str]:
 
 
 def _vorlesen(_k: dict) -> tuple[str, str]:
-    from lunivo_writer.dienste import vorlesen
+    from lunivo_writer.dienste.dokumentpflege import vorlesen
     from lunivo_writer.infrastruktur.sprachausgabe import sprachausgabe
     if vorlesen.verfuegbar():
         return "bereit", "Text bleibt auf diesem Rechner"

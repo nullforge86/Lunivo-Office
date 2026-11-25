@@ -23,7 +23,7 @@ from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 MODELLE = ("RGB", "HSV", "HSL")
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import AngepassteReiter, FormularGitter, mittig

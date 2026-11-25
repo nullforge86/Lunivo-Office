@@ -2,13 +2,13 @@
 
     Qt-Oberfläche  →  Farmwork (Qt-frei)  →  Kern und Infrastruktur (Qt-frei)
 
-    oberflaeche    darf Qt, sich selbst und ``farmwork`` importieren, nie ``kern`` oder ``infrastruktur``
-    farmwork       darf sich selbst, ``kern`` und ``infrastruktur`` importieren, kein Qt, nie ``oberflaeche``
-    kern           darf nur ``kern`` importieren, kein Qt
+    oberflaeche    darf Qt, sich selbst und ``farmwork`` importieren, nie ``core`` oder ``infrastruktur``
+    farmwork       darf sich selbst, ``core`` und ``infrastruktur`` importieren, kein Qt, nie ``oberflaeche``
+    core           darf nur ``core`` importieren, kein Qt
     infrastruktur  darf nur ``infrastruktur`` importieren, kein Qt
 
 Bis zur vollständigen Umstellung gibt es die alten Ordner ``editor``, ``dienste``, ``ki`` und ``korrektur`` (Programmteile, die noch nicht nach ``kern``
-gewandert sind). Sie dürfen ``kern``, ``infrastruktur`` und sich gegenseitig importieren, nie ``farmwork`` oder ``oberflaeche``; das Farmwork darf sie
+gewandert sind). Sie dürfen ``core``, ``infrastruktur`` und sich gegenseitig importieren, nie ``farmwork`` oder ``oberflaeche``; das Farmwork darf sie
 vorübergehend importieren. Jeder Verstoß steht auf der Übergangsliste, die nur kleiner werden darf.
 
 Keine Direktverbindungen, keine Rückfallwege, keine alternativen Schnittstellen, keine Ausnahmen. Dieses Modul importiert nur die Standardbibliothek."""
@@ -18,15 +18,15 @@ PAKET = "lunivo_writer"
 OBERFLAECHE = "oberflaeche"
 FARMWORK = "farmwork"
 ALTE_ORDNER = frozenset({"editor", "dienste", "ki", "korrektur"})
-SCHICHTEN = (OBERFLAECHE, FARMWORK, "kern", "infrastruktur", *sorted(ALTE_ORDNER))
+SCHICHTEN = (OBERFLAECHE, FARMWORK, "core", "infrastruktur", *sorted(ALTE_ORDNER))
 QT_PAKETE = ("PySide6", "PyQt5", "PyQt6", "PyQt", "shiboken6", "shiboken")
 
 ERLAUBTE_ZIELE = {
     OBERFLAECHE: frozenset({OBERFLAECHE, FARMWORK}),
-    FARMWORK: frozenset({FARMWORK, "kern", "infrastruktur"}) | ALTE_ORDNER,
-    "kern": frozenset({"kern"}),
+    FARMWORK: frozenset({FARMWORK, "core", "infrastruktur"}) | ALTE_ORDNER,
+    "core": frozenset({"core"}),
     "infrastruktur": frozenset({"infrastruktur"}),
-    **{alt: frozenset({"kern", "infrastruktur"}) | ALTE_ORDNER for alt in ALTE_ORDNER},
+    **{alt: frozenset({"core", "infrastruktur"}) | ALTE_ORDNER for alt in ALTE_ORDNER},
 }
 
 

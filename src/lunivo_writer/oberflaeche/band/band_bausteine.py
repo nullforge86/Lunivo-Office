@@ -7,7 +7,7 @@ from PySide6.QtCore import QPropertyAnimation, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, QWidget
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
 

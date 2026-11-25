@@ -1,7 +1,7 @@
 """Optionen: KI, Gedächtnis, Erweitert."""
 from __future__ import annotations
 
-from lunivo_writer.kern.schrift import standard_datenbank
+from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -13,12 +13,12 @@ import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QWidget
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
-from lunivo_writer.ki import ki as K
-from lunivo_writer.dienste import vorlesen
+from lunivo_writer.ki.dienst import ki as K
+from lunivo_writer.dienste.dokumentpflege import vorlesen
 from lunivo_writer.infrastruktur.pfade import pfade
 from lunivo_writer.korrektur.vorhersage import EMPFAENGER
 from lunivo_writer.oberflaeche.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_NORMAL, BREITE_KNOPF_KLEIN, HOEHE_VORSCHAU_KLEIN, PADDING_PLAKETTE, PADDING_STARTKNOPF_LINK, RADIUS_KLEIN, RAND_KARTE_ZEILE, RAND_KEIN, RAND_ZEILE, RAND_ZEILE_ENG, SCHRIFT_HINWEIS, SCHRIFT_LISTE, SCHRIFT_KLEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 

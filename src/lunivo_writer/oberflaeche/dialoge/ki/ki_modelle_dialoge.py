@@ -17,7 +17,7 @@ from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
-from lunivo_writer.ki import ki as K
+from lunivo_writer.ki.dienst import ki as K
 from lunivo_writer.oberflaeche.baukasten.geruest.fenster_stapel import zeige_unter
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
@@ -25,7 +25,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayo
 from lunivo_writer.oberflaeche.bauteile import symbole
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
 from lunivo_writer.oberflaeche.baukasten.felder.auswahl_liste import AuswahlListe
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte

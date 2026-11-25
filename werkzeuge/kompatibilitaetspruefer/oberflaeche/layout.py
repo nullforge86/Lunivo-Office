@@ -13,7 +13,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterLayout, Raste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import KartenRaster
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import mass as M
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, RAND_KEIN
 

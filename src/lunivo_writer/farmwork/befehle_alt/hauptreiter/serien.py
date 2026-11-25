@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 
-from lunivo_writer.kern.funktionen.sendungen import konstanten, serienbrief, serienfelder, serienquelle
+from lunivo_writer.core.funktionen.sendungen.serienbrief import konstanten, serienbrief, serienfelder, serienquelle
 from lunivo_writer.farmwork.funktionen.sendungen import befehle as sendungen_befehle
 
 
@@ -104,7 +104,7 @@ class SerienBefehle:
         return m
 
     def serienEmpfaenger(self, k=None):
-        from lunivo_writer.oberflaeche.funktionen.sendungen.empfaenger_dialog import EmpfaengerDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.empfaenger_dialog import EmpfaengerDialog
         s = self._serie()
         if not self._hat_quelle():
             return
@@ -116,7 +116,7 @@ class SerienBefehle:
 
     # ---- Felder -------------------------------------------------------------------------------------------------
     def serienFeld(self, k=None):
-        from lunivo_writer.oberflaeche.funktionen.sendungen.feld_dialog import FeldDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.feld_dialog import FeldDialog
         e = self.ed
         if not e:
             return
@@ -140,7 +140,7 @@ class SerienBefehle:
         sendungen_befehle.felder_hervorheben(self.ed, s["hervorheben"])
 
     def serienZuordnen(self, k=None):
-        from lunivo_writer.oberflaeche.funktionen.sendungen.zuordnen_dialog import ZuordnenDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.zuordnen_dialog import ZuordnenDialog
         s = self._serie()
         if not self._hat_quelle() or not self.ed:
             return
@@ -238,7 +238,7 @@ class SerienBefehle:
 
     def serienEinzeln(self, k=None):
         """In anderem neuen Dokument zusammenführen: jeder Brief als eigene DOCX-Datei in einem Ordner."""
-        from lunivo_writer.dienste.modell_speichern import speichere_modell
+        from lunivo_writer.dienste.dateizugriff.modell_speichern import speichere_modell
         from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import ordner_waehlen
         e = self.ed
         if not e or not self._hat_quelle():

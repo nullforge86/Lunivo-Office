@@ -19,7 +19,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, abschnittstitel
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_TASTENKOMBINATION
 class TastenDialog(QDialog):
     def __init__(self, parent=None, aktuell: str = "", *, belegt=None):

@@ -10,11 +10,11 @@ import math
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter
 
-from lunivo_writer.kern.dokument.dokument import Auswahl, Position
-from lunivo_writer.kern.layout import formatwerte as F
+from lunivo_writer.core.dokument.dokument import Auswahl, Position
+from lunivo_writer.core.layout import formatwerte as F
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
-from lunivo_writer.editor.objekte import formen_katalog as K
+from lunivo_writer.core.dokument.farben import Farbe
+from lunivo_writer.editor.objekte.formen import formen_katalog as K
 FORMEN = ["Rechteck", "Abgerundetes Rechteck", "Ellipse", "Dreieck", "Raute", "Pfeil nach rechts", "Stern", "Sprechblase", "Linie"]
 FORMEN += [n for n in K.namen() if n not in FORMEN]           # die ganze Galerie (Einfügen ▸ Formen), auch im Fenster „Form“
 
@@ -55,7 +55,7 @@ def _polygon(punkte: list) -> list:
 def _form_pfad(art: str, r, adj, punkte):
     """(Umriss als Pfad, offen?) für Freiformen, Anpassungsformen und Katalogformen; ``None`` für die eingebauten Grundformen."""
     if punkte:
-        from lunivo_writer.editor.objekte import freiform as FF
+        from lunivo_writer.editor.objekte.formen import freiform as FF
         return FF.pfad(punkte, r), not FF.geschlossen(punkte)
     if adj and K.anpassbar(art):
         return K.pfad(art, r, adj), False
@@ -92,9 +92,9 @@ def _grundform_ops(art: str, x: float, y: float, w: float, h: float) -> tuple[li
 
 def _fuellstil(fuell: str, art: str, x: float, y: float, w: float, h: float):
     """Füllung einer Form als ``Style``: einfarbig, ``verlauf`` (hell nach Farbe), ``abgestuft`` (drei Stufen), ``glanz`` (obere Hälfte heller)."""
-    from lunivo_writer.kern.geometrie import Point
-    from lunivo_writer.kern.rendering.backend import LinearGradient, Style, rgba
-    from lunivo_writer.kern.rendering.objekte import dunkler, heller
+    from lunivo_writer.core.geometrie import Point
+    from lunivo_writer.core.rendering.ausgabe.backend import LinearGradient, Style, rgba
+    from lunivo_writer.core.rendering.objekte.objekte import dunkler, heller
     c = rgba(fuell)
     if art not in ("verlauf", "abgestuft", "glanz"):
         return Style(color=c, width=0, filled=True)
@@ -114,9 +114,9 @@ def form_bild(art: str, breite: int = 240, hoehe: int = 140, fuell: str = Farbe.
     Gezeichnet wird vom Kern (``RasterZiel``); Qt liefert nur den Pfad der Katalog- und Freiformen als Geometrie."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
     from lunivo_writer.oberflaeche.zeichnen.pfad import pfad_zu_vektor
-    from lunivo_writer.kern.geometrie import Point, Rect
-    from lunivo_writer.kern.rendering.backend import Style, rgba
-    from lunivo_writer.kern.textsatz import FontSpec
+    from lunivo_writer.core.geometrie import Point, Rect
+    from lunivo_writer.core.rendering.ausgabe.backend import Style, rgba
+    from lunivo_writer.core.textsatz import FontSpec
     strich = max(float(strich), 1.0)                         # eine Haarlinie (Word: 0,25–0,75 pt) bleibt auf dem Bildschirm mindestens einen Bildpunkt dick
     x, y, w, h = strich, strich, breite - 2 * strich, hoehe - 2 * strich
     r = QRectF(x, y, w, h)
@@ -176,8 +176,8 @@ WORDART_STANDARDTEXT = "Hier Text einfügen"
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
     """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten (gezeichnet über ``core/rendering/wordart.py``)."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.kern.rendering import wordart
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.core.rendering.text import wordart
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     b, h = wordart.masse(engine, text, schrift, pt)
     return kern_bild(b, h, lambda z: wordart.zeichne(z, engine, text, WORDART_VORLAGEN[nr], schrift, pt))
@@ -190,11 +190,11 @@ def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sa
         return wordart_vorlage_bild(text, vorlage, schrift, pt)
     import math as _m
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.kern.geometrie import Point
-    from lunivo_writer.kern.rendering.backend import LinearGradient, Style, rgba
-    from lunivo_writer.kern.rendering.objekte import dunkler, heller
-    from lunivo_writer.kern.textsatz import FontSpec
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.core.geometrie import Point
+    from lunivo_writer.core.rendering.ausgabe.backend import LinearGradient, Style, rgba
+    from lunivo_writer.core.rendering.objekte.objekte import dunkler, heller
+    from lunivo_writer.core.textsatz import FontSpec
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     f = FontSpec(schrift, float(pt), 700)
     m = engine.font_metrics(f)
@@ -286,10 +286,10 @@ GLEICHUNGEN = [("Kreisfläche", "A = \\pi r^2"),
 def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
     """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie): kursive Stücke, Hoch- und Tiefgestelltes verkleinert und versetzt; gezeichnet vom Kern."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.kern.geometrie import Point
-    from lunivo_writer.kern.rendering.backend import Style, rgba
-    from lunivo_writer.kern.textsatz import FontSpec
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.core.geometrie import Point
+    from lunivo_writer.core.rendering.ausgabe.backend import Style, rgba
+    from lunivo_writer.core.textsatz import FontSpec
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     basis, klein = FontSpec("DejaVu Serif", float(pt), 400, True), FontSpec("DejaVu Serif", pt * 2 / 3, 400, True)
     stuecke, x = [], 0.0
@@ -397,11 +397,11 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
 def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
     """Dateisymbol mit Namen darunter (Einfügen ▸ Objekt ▸ Als Symbol anzeigen); Name und Zusammensetzung zeichnet der Kern."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.kern.geometrie import Point, Rect
-    from lunivo_writer.kern.rendering.backend import Style, rgba
-    from lunivo_writer.kern.rendering.bildeffekte import png_bytes
-    from lunivo_writer.kern.textsatz import FontSpec
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.core.geometrie import Point, Rect
+    from lunivo_writer.core.rendering.ausgabe.backend import Style, rgba
+    from lunivo_writer.core.rendering.bild.bildeffekte import png_bytes
+    from lunivo_writer.core.textsatz import FontSpec
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     f = FontSpec("Liberation Sans", 9.0)
     zeile = name
@@ -428,7 +428,7 @@ def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
 def _fremde_bloecke(s, fremd) -> list:
     """Die Blöcke des Haupttextes eines geladenen Dokuments für die Sitzung ``s``: Listen werden angelegt, Bilddaten unter neuen Namen abgelegt."""
     import copy
-    from lunivo_writer.kern.dokument.dokument import Absatz, InlineObjekt, Rahmen, Tabelle
+    from lunivo_writer.core.dokument.dokument import Absatz, InlineObjekt, Rahmen, Tabelle
     bloecke = copy.deepcopy([b for a in fremd.abschnitte for b in a.bloecke])
     listen: dict = {}
     namen: dict = {}
@@ -462,7 +462,7 @@ def _fremde_bloecke(s, fremd) -> list:
 
 def text_aus_datei(ed, pfad: str):
     """Fügt den Inhalt einer Datei (DOCX, ODT, RTF, TXT …) an der Schreibmarke ein; → Bericht über Nicht-Übernommenes."""
-    from lunivo_writer.dienste.modell_laden import lade_modell
+    from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
     geladen = lade_modell(pfad)
 
     def f(s):
@@ -586,6 +586,6 @@ def drehen(img: QImage, art: str) -> QImage:
     if art == "links":
         return img.transformed(QTransform().rotate(-90))
     if art in ("horizontal", "vertikal"):
-        from lunivo_writer.editor.objekte.bildeffekte import gespiegelt
+        from lunivo_writer.editor.objekte.bild.bildeffekte import gespiegelt
         return gespiegelt(img, waagrecht=art == "horizontal", senkrecht=art == "vertikal")
     return img

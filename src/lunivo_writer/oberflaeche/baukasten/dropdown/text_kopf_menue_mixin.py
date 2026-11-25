@@ -12,7 +12,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.text import texteffekt as T
 from lunivo_writer.oberflaeche.baukasten.dropdown.objektmenues.fuell_voreinstellungen import FuellPalette, fuell_bild
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbPalette

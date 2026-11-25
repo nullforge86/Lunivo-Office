@@ -21,7 +21,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlae
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.oberflaeche.baukasten.formatierung.text_format import TextFormatLeiste, zeichne_absaetze, zu_zeichen
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownTaste
@@ -206,7 +206,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _rahmen(self) -> None:
         """Format ▸ Rahmen …: das Fenster „Rahmen und Schattierung“ ohne den Reiter Seitenrand (der gehört nicht zu einer Vorlage)."""
-        from lunivo_writer.editor.objekte.linie import Linie
+        from lunivo_writer.editor.objekte.formen.linie import Linie
         from lunivo_writer.oberflaeche.baukasten.geruest.fenster_stapel import zeige_unter
         from lunivo_writer.oberflaeche.baukasten.formatierung.rahmen_schattierung import RahmenSchattierungDialog
         r = self._rs
@@ -224,7 +224,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _liste(self) -> None:
         """Format ▸ Nummerierung …: dasselbe Fenster wie im Band; die Vorlage merkt sich die gewählte Liste."""
-        from lunivo_writer.kern.funktionen.absatz import listen
+        from lunivo_writer.core.funktionen.absatz import listen
         from lunivo_writer.oberflaeche.baukasten.geruest.fenster_stapel import zeige_unter
         from lunivo_writer.oberflaeche.baukasten.dokument.liste_dialog import ListenDialog
         d = ListenDialog(self, listen.aus_text(self._rs["liste"]))

@@ -8,7 +8,7 @@ from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextDocument, QTextDocumentFragment
 from PySide6.QtWidgets import QSizePolicy, QTextEdit
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
 from lunivo_writer.oberflaeche.baukasten.basis.mass import AENDERUNG_DECKKRAFT, CHAT_VORSCHAU_MAX

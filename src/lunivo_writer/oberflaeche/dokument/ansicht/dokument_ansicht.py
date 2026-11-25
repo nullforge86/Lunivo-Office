@@ -12,18 +12,18 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QAbstractScrollArea, QApplication, QScrollArea, QWidget
 
 from lunivo_writer.oberflaeche.zeichnen.rendering import QtRenderBackend
-from lunivo_writer.kern.dokument import Position
-from lunivo_writer.kern.dokument.dokument import Auswahl
-from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
-from lunivo_writer.kern.geometrie import Point, mm_to_px
-from lunivo_writer.kern.layout import LayoutEngine, LayoutErgebnis
-from lunivo_writer.kern.layout import formatwerte as F, schreibmarke as SM
-from lunivo_writer.kern.layout.seitenlayout import BLATT_ABSTAND_PX
-from lunivo_writer.kern.rendering import DokumentRenderer
-from lunivo_writer.kern.rendering.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
-from lunivo_writer.kern.rendering.backend import rgba
-from lunivo_writer.kern.textsatz.engine import TextLayoutEngine
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument import Position
+from lunivo_writer.core.dokument.dokument import Auswahl
+from lunivo_writer.core.bearbeitung import Bearbeitungssitzung
+from lunivo_writer.core.geometrie import Point, mm_to_px
+from lunivo_writer.core.layout import LayoutEngine, LayoutErgebnis
+from lunivo_writer.core.layout import formatwerte as F, schreibmarke as SM
+from lunivo_writer.core.layout.seitenlayout import BLATT_ABSTAND_PX
+from lunivo_writer.core.rendering import DokumentRenderer
+from lunivo_writer.core.rendering.seite.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
+from lunivo_writer.core.rendering.ausgabe.backend import rgba
+from lunivo_writer.core.textsatz.engine import TextLayoutEngine
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 
 from .eingabe import EingabeTeil
 from .objekt_bedienung import ObjektBedienung
@@ -136,8 +136,8 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         erg, s = self.ergebnis(), self.sitzung
         aus: dict = {}
         if self.markup:
-            from lunivo_writer.kern.dokument.dokument import teile
-            from lunivo_writer.kern.rendering.backend import rgba
+            from lunivo_writer.core.dokument.dokument import teile
+            from lunivo_writer.core.rendering.ausgabe.backend import rgba
 
             def format_bei(pos) -> dict:
                 rest = teile(s.dokument.absatz(pos.absatz_id).inhalte, pos.versatz)[1]
@@ -312,7 +312,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         else:
             while c[3] and sum(b.sizeInBytes() for b in c[3].values()) > BILDCACHE_MAX_BYTES:       # Speicher begrenzen: die am längsten nicht gezeigten Blätter zuerst
                 c[3].pop(next(iter(c[3])))
-            from lunivo_writer.kern.rendering.rasterziel import RasterZiel
+            from lunivo_writer.core.rendering.ausgabe.rasterziel import RasterZiel
             einr = erg.seiten[i].einrichtung
             ziel = RasterZiel(self._layout.engine, mm_to_px(einr.width_mm), mm_to_px(einr.height_mm), self.zoom * dpr, rgba(self.papier))
             self._renderer.zeichne_seite(ziel, dok, erg, i, grund)
@@ -324,7 +324,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
     def _ueberlagerung(self, erg) -> "Ueberlagerung":
         """Was über dem Text liegt, als Daten für den Kern (Flächen je Seite); gezeichnet wird es nicht hier."""
         s, dok = self.sitzung, self.sitzung.dokument
-        from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
+        from lunivo_writer.core.bearbeitung.suche import offset_zu_position
         wellen: dict = {}
         for fund in self.wellen[:3000]:
             for seite_nr, rects in SM.auswahl_rechtecke(erg, Auswahl(offset_zu_position(dok, fund.von), offset_zu_position(dok, fund.bis))).items():

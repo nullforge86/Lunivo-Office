@@ -13,7 +13,7 @@ import dataclasses
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QImage
 
-from lunivo_writer.kern.dokument.dokument import UMBRUCH_ARTEN, Auswahl, InlineObjekt, Position
+from lunivo_writer.core.dokument.dokument import UMBRUCH_ARTEN, Auswahl, InlineObjekt, Position
 
 ANGABE_FELDER = {"b", "h", "bh", "xh", "ah", "bv", "yv", "av", "hinter", "art", "n", "alt", "umbruch"}
 
@@ -240,7 +240,7 @@ class KernObjekte:
         if von is None or bis is None:
             return None
         o = self.sitzung._inline(objekt_id)[2]
-        from lunivo_writer.kern.geometrie import Rect
+        from lunivo_writer.core.geometrie import Rect
         return von[0], Rect(von[1].x, von[1].y, max(bis[1].x - von[1].x, 1.0), o.hoehe)
 
     def inline_bei(self, ziel: Position, punkt) -> int | None:
@@ -403,13 +403,13 @@ class KernObjekte:
 
     def zuschnitt_lesen(self, objekt_id: int) -> tuple:
         """Der Zuschnitt (links, oben, rechts, unten) als Anteile des freien Objekts."""
-        from lunivo_writer.editor.objekte import bildzuschnitt as BZ
+        from lunivo_writer.editor.objekte.bild import bildzuschnitt as BZ
         o = self.sitzung.dokument.objekte.get(objekt_id)
         return BZ.lesen(angabe_von(o)) if o is not None else (0.0, 0.0, 0.0, 0.0)
 
     def objekt_zuschneiden(self, objekt_id: int, seite: int, rect, zu: tuple) -> None:
         """Zuschneiden-Modus: die Kanten sind gezogen; das Objekt bekommt den neuen sichtbaren Ausschnitt und seine Lage (ein Schritt)."""
-        from lunivo_writer.editor.objekte import bildzuschnitt as BZ
+        from lunivo_writer.editor.objekte.bild import bildzuschnitt as BZ
         with self.sitzung.gruppe("Zuschneiden"):
             self.objekt_verschieben(objekt_id, seite, rect)
             BZ.setzen(self, self.objekt_ziel(), zu=tuple(zu), b=float(rect.width), h=float(rect.height))

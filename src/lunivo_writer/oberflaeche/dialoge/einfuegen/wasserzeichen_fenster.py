@@ -15,16 +15,16 @@ from PySide6.QtGui import QColor, QFont, QImage, QPen
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QLabel, QPushButton, QSlider, QSpinBox
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe, spalte
 
-from lunivo_writer.editor.objekte.bilddaten import bild_aus_datei
+from lunivo_writer.editor.objekte.bild.bilddaten import bild_aus_datei
 from lunivo_writer.editor.seite import wasserzeichen as WZ
 from lunivo_writer.oberflaeche.baukasten.medien.bildformate import BILD_FILTER
-from lunivo_writer.kern.dokument.seite import PageSettings, mm_to_px
+from lunivo_writer.core.dokument.seite import PageSettings, mm_to_px
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import MassSpin
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL

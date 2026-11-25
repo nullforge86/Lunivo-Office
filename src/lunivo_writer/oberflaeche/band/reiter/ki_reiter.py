@@ -5,7 +5,7 @@ Textbausteine sowie die Seitenleiste kommen aus register.json."""
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.band.reiter.baustein import k as _k
-from lunivo_writer.oberflaeche.funktionen.korrektur.schreibhilfe_katalog import fuer_gruppe
+from lunivo_writer.oberflaeche.funktionen.korrektur.band.schreibhilfe_katalog import fuer_gruppe
 
 
 def _knoepfe(gruppe: str) -> list[dict]:

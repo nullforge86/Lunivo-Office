@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QPen
 from lunivo_writer.editor.text import textfx
 
 # Schlüssel → (Name, Qt-Strichart oder Strichmuster in Linienbreiten, DOCX-Wert ``a:prstDash``)
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 KONTUR_ARTEN = {"einfach": ("Durchgezogen", Qt.SolidLine, "solid"), "gepunktet": ("Gepunktet", Qt.DotLine, "sysDot"),
                 "fein": ("Fein gestrichelt", [3.0, 1.0], "sysDash"), "gestrichelt": ("Gestrichelt", Qt.DashLine, "dash"),
                 "lang": ("Lang gestrichelt", [8.0, 3.0], "lgDash"), "strichpunkt": ("Strich-Punkt", Qt.DashDotLine, "dashDot"),
@@ -101,4 +101,4 @@ def aus_text(text: str | None, farbe: str = "") -> dict | None:
 
 
 # DOCX-Erweiterung w14: Qt-frei in ``dienste/docx_effekte``; hier weiter erreichbar
-from lunivo_writer.dienste.docx_effekte import aus_rpr, in_rpr  # noqa: E402,F401
+from lunivo_writer.dienste.docx.docx_effekte import aus_rpr, in_rpr  # noqa: E402,F401

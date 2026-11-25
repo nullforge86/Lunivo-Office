@@ -3,9 +3,9 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor, QFont  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
-from lunivo_writer.editor.objekte.linie import Linie  # noqa: F401
+from lunivo_writer.editor.objekte.formen.linie import Linie  # noqa: F401
 from lunivo_writer.oberflaeche.baukasten import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe  # noqa: F401
+from lunivo_writer.core.dokument.farben import Farbe  # noqa: F401
 from lunivo_writer.oberflaeche.baukasten.basis import farben as BF  # noqa: F401
 
 ZEILENABSTAENDE = (1.0, 1.5, 2.0, 2.5, 3.0)

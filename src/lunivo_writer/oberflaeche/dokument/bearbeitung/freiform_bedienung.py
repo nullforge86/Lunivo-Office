@@ -10,8 +10,8 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPen, QTransform
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
-from lunivo_writer.editor.objekte import freiform as FF
+from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.editor.objekte.formen import freiform as FF
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
 KANTE = 6.0                                                   # so nah trifft sie eine Kante
@@ -25,7 +25,7 @@ def aktiv(ed) -> bool:
 
 def starten(ed) -> bool:
     """Die gewählte Form in eine Freiform umwandeln (falls nötig; ein Schritt für Rückgängig) und den Modus einschalten."""
-    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
     z = FO.ziel(ed)
     if z is None or z[0] != "form":
         return False
@@ -122,7 +122,7 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
 
 # ---- Maus und Tasten -------------------------------------------------------------------------------------------------------------
 def _speichern(ed, punkte: list) -> None:
-    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
     ed._frei_vorlaeufig.clear()
     ed.__dict__["_fp_arbeit"] = None
     FO.aendern(ed, "form", punkte=punkte)
@@ -131,7 +131,7 @@ def _speichern(ed, punkte: list) -> None:
 
 def _vorschau(ed, key, a, punkte) -> None:
     """Das Bild der Form mit den vorläufigen Punkten neu zeichnen — ohne Dokumentschritt."""
-    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
     d = {**FO.FORM_STANDARD, **(a.get("daten") or {}), "form": FF.NAME, "punkte": punkte}
     n = ed.__dict__.get("_fp_vz", 0) + 1
     ed.__dict__["_fp_vz"] = n

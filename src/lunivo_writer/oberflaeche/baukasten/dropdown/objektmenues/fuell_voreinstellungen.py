@@ -12,7 +12,7 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.text import muster as M
 from lunivo_writer.oberflaeche.baukasten.basis import farben
 from lunivo_writer.oberflaeche.baukasten.dropdown.kopf_dropdown import keine_symbol

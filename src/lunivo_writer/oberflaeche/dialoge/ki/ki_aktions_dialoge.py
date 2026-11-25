@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QPushButton
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
-from lunivo_writer.ki import ki as K
+from lunivo_writer.ki.dienst import ki as K
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
@@ -91,7 +91,7 @@ class KIAssistentDialog(ErstellenFenster):
     ``werte()`` liefert ``(name, prompt, modus, mehr)``; der Befehl ``w_kiAssistentErstellen`` speichert mit ``art="fortlaufend"``."""
 
     def __init__(self, fenster):
-        from lunivo_writer.ki.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
+        from lunivo_writer.ki.dienst.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
         from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.symbol_auswahl import SymbolWahl
         from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import spin
         t = TEXTE_ASSISTENT

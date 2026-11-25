@@ -17,7 +17,7 @@ from lunivo_writer.editor.text.zeichenzusatz import FORMEN, VORLAGEN
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, GROESSE_UMSCHLOSSEN_VORLAGENBILD, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF, HOEHE_VORSCHAU_KLEIN, ICON_FORMENLISTE, RAND_PANEL_KLEIN
 
 VORSCHLAEGE = ("√", "A", "a", "!", "?", "1", "2", "3", "★", "●", "✓", "※")

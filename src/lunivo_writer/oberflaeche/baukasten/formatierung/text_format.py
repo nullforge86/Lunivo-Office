@@ -231,7 +231,7 @@ def zu_zeichen(w: dict) -> dict:
 
 def aus_zeichen(z: dict, standard_schrift: str = "", standard_groesse: float = 0.0) -> dict:
     """Die Werte eines Zeichenformats des Dokumentenmodells (zum Vorbelegen eines Zeichenfensters)."""
-    from lunivo_writer.kern.layout import formatwerte as F
+    from lunivo_writer.core.layout import formatwerte as F
     w = dict(ZEICHEN)
     fam = z.get("schrift")
     fam = fam[0] if isinstance(fam, (list, tuple)) and fam else fam
@@ -268,11 +268,11 @@ def zeichne_absaetze(p: QPainter, rect, absaetze: list[tuple[dict, dict, str]], 
     """Absätze (Absatzformat, Zeichenformat — beides Wörterbücher des Dokumentenmodells —, Text) in ein Rechteck zeichnen: die Vorschau der
     Formatierungsfenster. Gesetzt und gezeichnet wird vom Kern (``LayoutEngine``, ``DokumentRenderer``), nicht von Qt."""
     from lunivo_writer.oberflaeche.zeichnen.rendering import QtRenderBackend
-    from lunivo_writer.kern.dokument import neues_dokument
-    from lunivo_writer.kern.dokument.dokument import Absatz, Lauf
-    from lunivo_writer.kern.layout import LayoutEngine
-    from lunivo_writer.kern.rendering import DokumentRenderer
-    from lunivo_writer.kern.dokument.seite import PageSettings
+    from lunivo_writer.core.dokument import neues_dokument
+    from lunivo_writer.core.dokument.dokument import Absatz, Lauf
+    from lunivo_writer.core.layout import LayoutEngine
+    from lunivo_writer.core.rendering import DokumentRenderer
+    from lunivo_writer.core.dokument.seite import PageSettings
     px_mm = 25.4 / 96.0
     seite = PageSettings(width_mm=max(1.0, rect.width() * px_mm), height_mm=max(1.0, rect.height() * px_mm), margin_top_mm=0.0, margin_bottom_mm=0.0,
                          margin_left_mm=0.0, margin_right_mm=0.0)

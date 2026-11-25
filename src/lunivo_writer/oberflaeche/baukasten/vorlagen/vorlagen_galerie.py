@@ -30,7 +30,7 @@ from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Datei
 from lunivo_writer.editor.dokument import vorlagen
 from lunivo_writer.oberflaeche.bauteile import symbole
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_PAAR, BREITE_GALERIE_HINWEIS_MIN, BREITE_VORLAGENSUCHE, GROESSE_VORLAGE_KACHEL, HOEHE_FELD, HOEHE_KNOPF, ICON_GROSS, ICON_NORMAL, ICON_VORLAGE_PLATZHALTER, RAND_VORLAGENGALERIE, RAND_VORLAGEN_FUSS
 
 _FLAECHE_HELL = "#f1f3f5"   # Vordergrund der Stapel-Kachel: bewusst fest (Gruppe C)
@@ -40,22 +40,22 @@ _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Än
 
 def _blatt_bild(dokument) -> QPixmap:
     """Erste Seite eines ``Dokument``s, auf Kachelbreite verkleinert (Layout und Rendering im Kern; Qt rastert nur)."""
-    from lunivo_writer.dienste.drucken import Ausgabe
+    from lunivo_writer.dienste.ausgabe.drucken import Ausgabe
     img = Ausgabe(dokument).bild(1, 0.8)
     return QPixmap.fromImage(img.scaled(KACHEL, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 
 def _geruest_bild(muster: dict, benutzer: dict) -> QPixmap:
     from PySide6.QtCore import QDate, QLocale
-    from lunivo_writer.kern.dokument import neues_dokument
-    from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
+    from lunivo_writer.core.dokument import neues_dokument
+    from lunivo_writer.core.bearbeitung import Bearbeitungssitzung
     sitzung = Bearbeitungssitzung(neues_dokument())
     vorlagen.geruest_schreiben(sitzung, muster["zeilen"], benutzer, QLocale("de_DE").toString(QDate.currentDate(), _t("vorlagen.d_mmmm_yyyy")))
     return _blatt_bild(sitzung.dokument)
 
 
 def _datei_bild(pfad: str) -> QPixmap:
-    from lunivo_writer.dienste.modell_laden import lade_modell
+    from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
     return _blatt_bild(lade_modell(pfad).document)                                  # Kern: Laden, Layout, Rendering; Qt zeigt nur das Bild
 
 

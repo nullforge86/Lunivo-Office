@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from lunivo_writer.dienste.einstellungen_dienst import Settings  # noqa: E402
 from lunivo_writer.oberflaeche.dialoge.optionen import OptionenDialog  # noqa: E402
-from lunivo_writer.oberflaeche.hauptfenster.programmfenster import MainWindow  # noqa: E402
+from lunivo_writer.oberflaeche.hauptfenster.fenster.programmfenster import MainWindow  # noqa: E402
 from lunivo_writer.oberflaeche.baukasten.thema.thema import apply_theme  # noqa: E402
 from lunivo_writer.oberflaeche.bauteile import symbole  # noqa: E402
 
@@ -129,8 +129,8 @@ def main():
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
     from PySide6.QtGui import QTextCursor
-    from lunivo_writer.editor.objekte import frei_objekt as FO
-    from lunivo_writer.editor.objekte import smartart as SA
+    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
+    from lunivo_writer.editor.objekte.smartart import smartart as SA
     from lunivo_writer.editor.tabelle import tabellenstil as TS
     from PySide6.QtGui import QTextTableFormat
 

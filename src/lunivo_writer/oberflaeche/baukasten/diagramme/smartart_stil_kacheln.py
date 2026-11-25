@@ -9,7 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPixmap
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP
 
@@ -50,7 +50,7 @@ def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str | None = None
 
 
 def stile_menue_org(b) -> RasterAuswahl:
-    from lunivo_writer.editor.objekte import smartart as SA
+    from lunivo_writer.editor.objekte.smartart import smartart as SA
     from lunivo_writer.oberflaeche.baukasten.dropdown.objektmenues.smartart_menues import _sa
     m = RasterAuswahl(b.w, spalten=len(SA.STILE), groesse=POPUP_KACHEL)
     aktuell = _sa(b).get("stil", 1)
@@ -61,6 +61,6 @@ def stile_menue_org(b) -> RasterAuswahl:
 
 
 def stile_galerie_org(b) -> dict:
-    from lunivo_writer.editor.objekte import smartart as SA
+    from lunivo_writer.editor.objekte.smartart import smartart as SA
     return {"kacheln": [(name, stil_bild_org(i), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
             "menue": stile_menue_org(b), "name": "SmartArt-Stile"}

@@ -67,12 +67,12 @@ class DiagrammToolsBefehle:
     # ==== Hilfen =====================================================================================================================
     def _dg(self) -> dict | None:
         """Die Daten des gewählten Diagramms (Kopie) oder None."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         return FO.daten_lesen(self.ed, "diagramm") if self.ed else None
 
     def _dg_set(self, **kw) -> bool:
         """Daten des gewählten Diagramms ändern (None entfernt die Angabe) und neu zeichnen; ohne Diagramm ein Hinweis in der Statuszeile."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         if not (self.ed and self._dg() is not None and FO.aendern(self.ed, "diagramm", **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein Diagramm auswählen.")
             return False

@@ -5,7 +5,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QPushButton
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_LESEENDEKNOPF, PADDING_LESEENDEKNOPF, RADIUS_KARTE, SCHRIFT_LESEENDEKNOPF
 
 

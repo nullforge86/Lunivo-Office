@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import re
 
-from lunivo_writer.kern.dokument.seite import PageSettings
-from lunivo_writer.kern.dokument.bericht import DocumentIOError, IOReport
+from lunivo_writer.core.dokument.seite import PageSettings
+from lunivo_writer.core.dokument.bericht import DocumentIOError, IOReport
 from lunivo_writer.dienste.rtf import bilder
 from lunivo_writer.dienste.rtf.gruppen import gruppe_ende, gruppentext, ziel_beginnen
 from lunivo_writer.dienste.rtf.modell import Ziel

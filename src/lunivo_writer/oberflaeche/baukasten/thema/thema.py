@@ -87,7 +87,7 @@ def mint_abstaende(fenster) -> None:
 def apply_theme(app: QApplication, mode: str) -> None:
     global _MINT
     _MINT = mode == "mint"
-    from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+    from lunivo_writer.farmwork.datentypen.farben import Farbe
     Farbe.AN, Farbe.AN_SCHRIFT = (MINT_FARBEN["akzent"], AUF_AKZENT) if _MINT else ("#2f9e75", "#ffffff")
     Farbe.AUF_AKZENT = AUF_AKZENT if _MINT else "#ffffff"
     Farbe.SYMBOL_AUS_AKZENT = "#5d7a45"   # ausgegraute Symbole auf dem hellen Akzent (nur Mint: Hellgrün); in allen Themen gleich
@@ -325,7 +325,7 @@ def _stil(app: QApplication) -> None:
     f["pfeil_unten"], f["pfeil_oben"] = _pfeile(f["text"])
     f["x_bild"] = _kreuz(f["grau"])
     f["x_dunkel"] = _kreuz(AUF_AKZENT)
-    from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+    from lunivo_writer.farmwork.datentypen.farben import Farbe
     f.setdefault("auf_akzent", Farbe.AUF_AKZENT)                       # Schrift auf der Akzentfläche (Mint: dunkel, sonst weiß)
     f["akzent_hover"] = f["kopf_hover"] if _MINT else Farbe.AKZENT_DUNKEL
     f["kf_papier"] = Farbe.PAPIER

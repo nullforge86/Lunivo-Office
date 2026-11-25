@@ -15,13 +15,13 @@ import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
 
-from lunivo_writer.kern.dokument import Dokument
-from lunivo_writer.kern.dokument.dokument import Auswahl, Position
-from lunivo_writer.kern.dokument.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
-from lunivo_writer.kern.bearbeitung import Bearbeitungssitzung
-from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
-from lunivo_writer.kern.geometrie import mm_to_px
-from lunivo_writer.kern.layout import formatwerte as F
+from lunivo_writer.core.dokument import Dokument
+from lunivo_writer.core.dokument.dokument import Auswahl, Position
+from lunivo_writer.core.dokument.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
+from lunivo_writer.core.bearbeitung import Bearbeitungssitzung
+from lunivo_writer.core.bearbeitung.suche import offset_zu_position
+from lunivo_writer.core.geometrie import mm_to_px
+from lunivo_writer.core.layout import formatwerte as F
 from lunivo_writer.oberflaeche.dokument.ansicht.dokument_ansicht import DokumentAnsicht
 from lunivo_writer.oberflaeche.dokument.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
 from lunivo_writer.oberflaeche.dokument.bearbeitung.freie_bilder_knoten import FreieBilderKnotenMixin
@@ -29,7 +29,7 @@ from lunivo_writer.oberflaeche.dokument.bearbeitung.kern_objekte import KernObje
 from lunivo_writer.oberflaeche.dokument.bearbeitung.kern_befehle import KernBefehle, katalog_zu_vorlage
 
 log = logging.getLogger(__name__)
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.text import stile
 
 STYLES = dict.fromkeys(stile.NAMEN)         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
@@ -668,7 +668,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Suchen und Ersetzen ---------------------------------------------------------------------------------------------------------------------
     def select_range(self, von: int, bis: int) -> None:
         """Wählt die Stellen [von, bis) des Rohtextes (Absätze durch ein Zeichen getrennt) aus."""
-        from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
+        from lunivo_writer.core.bearbeitung.suche import offset_zu_position
         d = self.sitzung.dokument
         self.sitzung.setze_auswahl(offset_zu_position(d, von), offset_zu_position(d, bis))
         self.ansicht.nach_bewegung()
@@ -706,14 +706,14 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Kommentare, Noten und nachverfolgte Änderungen --------------------------------------------------------------------------------------------
     def _bereiche_offsets(self, trifft, wert) -> list:
         """Die Bereiche, deren Format ``trifft``: Liste von {"von", "bis", "wert"} mit Stellen im Rohtext (Absätze durch ein Zeichen getrennt)."""
-        from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
+        from lunivo_writer.core.bearbeitung.suche import position_zu_offset
         d = self.sitzung.dokument
         return [{"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": w, "auswahl": b}
                 for b in self.sitzung.bereiche(trifft, wert) for w in [wert(self._format_bei(b.anker))]]
 
     def _format_bei(self, pos) -> dict:
         a = self.sitzung._absatz(pos.absatz_id)
-        from lunivo_writer.kern.dokument.dokument import teile
+        from lunivo_writer.core.dokument.dokument import teile
         rest = teile(a.inhalte, pos.versatz)[1]
         return rest[0].format if rest else {}
 
@@ -815,8 +815,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return self._springe(self.aenderungen(), delta)
 
     def aenderung_annehmen(self, b: dict, annehmen: bool = True) -> None:
-        from lunivo_writer.kern.dokument.dokument import Auswahl
-        from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
+        from lunivo_writer.core.dokument.dokument import Auswahl
+        from lunivo_writer.core.bearbeitung.suche import offset_zu_position
         d = self.sitzung.dokument
         bereich = Auswahl(offset_zu_position(d, b["von"]), offset_zu_position(d, b["bis"]))
         self.ansicht._aendern(lambda s: (s.aenderungen_annehmen if annehmen else s.aenderungen_ablehnen)(bereich))
@@ -846,7 +846,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return n
 
     def noten_stellen(self) -> list:
-        from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
+        from lunivo_writer.core.bearbeitung.suche import position_zu_offset
         d = self.sitzung.dokument
         aus = []
         for b in self.sitzung.bereiche(lambda f: "note" in f):
@@ -924,7 +924,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         if t is None or t.zeile < 1:
             return False
         import copy
-        from lunivo_writer.kern.dokument.dokument import Absatz, Tabelle
+        from lunivo_writer.core.dokument.dokument import Absatz, Tabelle
 
         def teilen(s):
             with s.gruppe("Tabelle teilen"):
@@ -956,7 +956,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     @staticmethod
     def _png(img) -> bytes:
         """Die Bytes des Bildes fürs Dokument: ein Rasterbild aus einer Datei (JPEG, GIF …) bleibt im Original, sonst PNG."""
-        from lunivo_writer.editor.objekte import bilddaten as BD
+        from lunivo_writer.editor.objekte.bild import bilddaten as BD
         q = BD.quelle_zu(img)
         if q is not None and q.format in ("jpeg", "gif", "bmp", "tiff", "webp"):
             return q.daten
@@ -1065,7 +1065,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
             self.ansicht.set_ansicht(silben=None)
             return
         from lunivo_writer.editor.text import silbenfarben as SF
-        from lunivo_writer.kern.rendering.backend import rgba
+        from lunivo_writer.core.rendering.ausgabe.backend import rgba
         farben = [rgba(f) for f in SF.farben(k)]
         self.ansicht.set_ansicht(silben={"funktion": lambda w: SF.silben(w, k.get("sprache", "de_DE")), "farben": farben, "darstellung": k["darstellung"],
                                          "einsilbig": k["einsilbig"], "neu_pro_wort": k["neu_pro_wort"], "mindestens": k["mindestens"]})
@@ -1080,7 +1080,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         erg = self.ansicht.ergebnis()
         o = self.sitzung.dokument.objekte[objekt_id]
         anker = o.anker
-        treffer = erg.treffer(seite, __import__("lunivo_writer.kern.geometrie", fromlist=["Point"]).Point(rect.x + 1, rect.y + 1))
+        treffer = erg.treffer(seite, __import__("lunivo_writer.core.geometrie", fromlist=["Point"]).Point(rect.x + 1, rect.y + 1))
         if treffer is not None and erg.seite_von(treffer[0]) == seite:
             anker = treffer[0]
         self.objekt_setzen(objekt_id, anker=anker, bezug_h="seite", x=float(rect.x), ausr_h="", bezug_v="seite", y=float(rect.y), ausr_v="",

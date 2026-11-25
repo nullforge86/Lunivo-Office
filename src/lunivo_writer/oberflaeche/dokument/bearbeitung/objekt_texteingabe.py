@@ -7,7 +7,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPen, QTextCursor
 
-from lunivo_writer.editor.objekte.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen, ziel
+from lunivo_writer.editor.objekte.frei.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen, ziel
 from lunivo_writer.oberflaeche.bauteile.textfeld_fragmente import absatz_fragmente
 
 

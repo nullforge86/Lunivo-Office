@@ -10,12 +10,12 @@ from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QWidget
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
-from lunivo_writer.oberflaeche.funktionen.ansicht import lesestufen as LS
+from lunivo_writer.oberflaeche.funktionen.ansicht.aktionen import lesestufen as LS
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig, leiste_fuer
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 PAPIERTOENE = {"Weiß": Farbe.WEISS, "Creme": "#fbf4e2", "Gelblich": "#fff7cc", "Hellblau": "#e6f0fa",
                "Hellgrün": "#e8f5e9", "Hellgrau": "#eceff1"}

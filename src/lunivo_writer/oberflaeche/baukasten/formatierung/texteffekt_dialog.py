@@ -24,7 +24,7 @@ from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import Vo
 
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FELDHOEHE, AngepassteReiter, FormularGitter, abschnittstitel
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_NORMAL, ABSTAND_SPALTE, GROESSE_FENSTER_TEXTEFFEKT, GROESSE_TEXTEFFEKT_LINIENART_BILD, HOEHE_FELD, ICON_NORMAL, RAND_FORMATSEITE, RAND_KEIN, RAND_TEXTEFFEKT_GITTER
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)

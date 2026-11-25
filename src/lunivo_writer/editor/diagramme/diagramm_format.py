@@ -25,8 +25,8 @@ import math
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt
 from PySide6.QtGui import (QBrush, QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF)
 
-from lunivo_writer.editor.objekte import bildeffekte as E
-from lunivo_writer.editor.objekte import freie_bilder as FB
+from lunivo_writer.editor.objekte.bild import bildeffekte as E
+from lunivo_writer.editor.objekte.bild import freie_bilder as FB
 from lunivo_writer.editor.text import textfx as X
 from lunivo_writer.editor.text import texteffekt as T
 
@@ -304,7 +304,7 @@ def textfarbe(t: dict | None, standard: str = "#3c4043") -> QColor:
 
 def schrift_aus(basis, t: dict | None):
     """Die Schrift (``FontSpec`` des Kerns) mit den Angaben des Textformats ``t`` (Name, Größe, fett, kursiv) über der Grundschrift ``basis``."""
-    from lunivo_writer.kern.textsatz import FontSpec
+    from lunivo_writer.core.textsatz import FontSpec
     if not t:
         return basis
     return FontSpec(t.get("name") or basis.family, float(t["groesse"]) if t.get("groesse") else basis.size_pt,

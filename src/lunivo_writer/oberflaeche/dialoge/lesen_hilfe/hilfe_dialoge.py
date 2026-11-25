@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
-from lunivo_writer.kern.schrift import standard_datenbank
+from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_KLEIN as _A_KLEIN
 
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import rolle as _rolle
@@ -30,7 +30,7 @@ from lunivo_writer.oberflaeche.baukasten.tastenkuerzel import kuerzel
 
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
 
 
@@ -254,7 +254,7 @@ def tastenkuerzel(parent) -> QDialog:
 
 
 def _erweiterungen_liste() -> list[tuple[bool, str, str, str]]:
-    from lunivo_writer.dienste import vorlesen
+    from lunivo_writer.dienste.dokumentpflege import vorlesen
     from lunivo_writer.dienste.integrationen import languagetool
     schriften = [f for f in ("OpenDyslexic", "Lexend", _t("hilfe.atkinson_hyperlegible")) if standard_datenbank.hat_familie(f)]
     return [(bool(languagetool.verfuegbar()), "LanguageTool", _t("hilfe.gruendlich_pruefen_grammatik_ueber_die_e"), _t("hilfe.ca_386_mb")),

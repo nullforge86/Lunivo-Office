@@ -28,13 +28,13 @@ from PySide6.QtWidgets import (
 
 import copy
 
-from lunivo_writer.kern.funktionen.absatz import listen as L
-from lunivo_writer.kern.funktionen.absatz import mehrstufig as M
+from lunivo_writer.core.funktionen.absatz import listen as L
+from lunivo_writer.core.funktionen.absatz import mehrstufig as M
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.medien.listen_symbole import liste_zeichner
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import EinheitFeld
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, BREITE_LISTENVORSCHAU, GROESSE_EBENENZEILE, GROESSE_FENSTER_GLIEDERUNG_ANPASSEN, GROESSE_FENSTER_LISTE, GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN, GROESSE_LISTENSTIL_KACHEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF_HOCH, HOEHE_LISTENVORSCHAU, HOEHE_TEXT_NORMAL, HOEHE_ZEILE_ZULETZT, RAND_DIALOG_GRUPPE, RAND_FENSTER_LISTE, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_KURZ

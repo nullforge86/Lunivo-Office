@@ -4,9 +4,14 @@ Der Editor kommt über den ``EditorPort`` herein; die Fachlogik steht in ``edito
 Datenwörterbücher und die Datentypen aus ``typen.py``; Meldungen für die Statusleiste gehen als Ereignis an den ``Melder``."""
 from __future__ import annotations
 
-from lunivo_writer.kern.funktionen.verweise import verweise, verzeichnis
-from lunivo_writer.kern.funktionen.verweise.indexeintrag import Eintrag
-from lunivo_writer.kern.funktionen.verweise.literatur import eintrag as literatur_eintrag
+from lunivo_writer.core.funktionen.verweise.beschriftungen import beschriftung
+from lunivo_writer.core.funktionen.verweise.querverweise import querverweis
+from lunivo_writer.core.funktionen.verweise.quellen import quelle_tag, zitat
+from lunivo_writer.core.funktionen.verweise.stichwoerter import stichwort
+from lunivo_writer.core.funktionen.verweise.textmarken import textmarke
+from lunivo_writer.core.funktionen.verweise.verzeichnisse import verzeichnis
+from lunivo_writer.core.funktionen.verweise.stichwoerter.indexeintrag import Eintrag
+from lunivo_writer.core.funktionen.verweise.quellen.literatur import eintrag as literatur_eintrag
 from lunivo_writer.farmwork.datentypen.ereignisdaten import Art, Ereignis
 from lunivo_writer.farmwork.funktionen.verweise import einstellungen as verweise_einstellungen
 from lunivo_writer.farmwork.funktionen.verweise.typen import BeschriftungsStart, IndexEintrag, IndexStart
@@ -32,13 +37,13 @@ class VerweiseBefehle:
         return BeschriftungsStart(verweise_einstellungen.eigene_beschriftungen(self._einstellungen), bool(objekt), "Tabelle" if tabelle else "Abbildung")
 
     def naechste_nummer(self, label: str, zahl: str) -> str:
-        return verweise.naechste_nummer(self._editor, label, zahl)
+        return beschriftung.naechste_nummer(self._editor, label, zahl)
 
     def eigene_beschriftungen_speichern(self, eigene: list[str]) -> None:
         verweise_einstellungen.eigene_beschriftungen_setzen(self._einstellungen, eigene)
 
     def beschriftung_einfuegen(self, label: str, oben: bool, nach: str | None, ohne: bool, zahl: str) -> None:
-        verweise.beschriftung_einfuegen(self._editor, label, "", oben, nach=nach, ohne_bezeichnung=ohne, zahl=zahl)
+        beschriftung.beschriftung_einfuegen(self._editor, label, "", oben, nach=nach, ohne_bezeichnung=ohne, zahl=zahl)
 
     # ---- Verzeichnisse ------------------------------------------------------------------------------------------------------------
     def verzeichnis_einfuegen(self, art: str) -> int:
@@ -53,27 +58,27 @@ class VerweiseBefehle:
 
     # ---- Textmarken ---------------------------------------------------------------------------------------------------------------
     def lesezeichen_namen(self, versteckte: bool = False) -> tuple[str, ...]:
-        return tuple(m["name"] for m in verweise.lesezeichen_liste(self._editor, versteckte=versteckte))
+        return tuple(m["name"] for m in textmarke.lesezeichen_liste(self._editor, versteckte=versteckte))
 
     @staticmethod
     def lesezeichen_name_gueltig(name: str) -> bool:
-        return verweise.lesezeichen_name_gueltig(name)
+        return textmarke.lesezeichen_name_gueltig(name)
 
     def lesezeichen_setzen(self, name: str) -> bool:
-        return verweise.lesezeichen_setzen(self._editor, name)
+        return textmarke.lesezeichen_setzen(self._editor, name)
 
     def lesezeichen_loeschen(self, name: str) -> None:
-        verweise.lesezeichen_loeschen(self._editor, name)
+        textmarke.lesezeichen_loeschen(self._editor, name)
 
     def lesezeichen_gehe(self, name: str) -> bool:
-        return verweise.lesezeichen_gehe(self._editor, name)
+        return textmarke.lesezeichen_gehe(self._editor, name)
 
     # ---- Querverweis --------------------------------------------------------------------------------------------------------------
     def querverweis_ziele(self) -> list[dict]:
-        return verweise.querverweis_ziele(self._editor)
+        return querverweis.querverweis_ziele(self._editor)
 
     def querverweis_einfuegen(self, ziel: dict, wie: str, link: bool, oben_unten: bool) -> None:
-        verweise.querverweis_einfuegen(self._editor, ziel, wie, link=link, oben_unten=oben_unten)
+        querverweis.querverweis_einfuegen(self._editor, ziel, wie, link=link, oben_unten=oben_unten)
 
     # ---- Index --------------------------------------------------------------------------------------------------------------------
     def index_vorbereiten(self) -> IndexStart:
@@ -81,7 +86,7 @@ class VerweiseBefehle:
         return IndexStart(c.selectedText().strip() if c.hasSelection() else "", self.lesezeichen_namen(), bool(c.hasSelection()))
 
     def index_markieren(self, eintrag: IndexEintrag, alle: bool) -> int:
-        n = verweise.index_eintragen(self._editor, Eintrag(**{f: getattr(eintrag, f) for f in ("haupt", "unter", "lesung", "lesung_unter", "siehe", "marke", "fett", "kursiv")}), alle)
+        n = stichwort.index_eintragen(self._editor, Eintrag(**{f: getattr(eintrag, f) for f in ("haupt", "unter", "lesung", "lesung_unter", "siehe", "marke", "fett", "kursiv")}), alle)
         self._melden(f"{n} Indexeintrag markiert." if n == 1 else f"{n} Indexeinträge markiert." if n else "Bitte Text markieren oder in ein Wort klicken.")
         return n
 
@@ -112,7 +117,7 @@ class VerweiseBefehle:
 
     def quelle_neu(self, quelle: dict) -> None:
         quelle = dict(quelle)
-        quelle["tag"] = verweise.quelle_tag(self._editor.quellen, quelle)
+        quelle["tag"] = quelle_tag.quelle_tag(self._editor.quellen, quelle)
         self._editor.quelle_hinzufuegen(quelle)
 
     def quelle_aendern(self, tag: str, werte: dict) -> None:
@@ -127,4 +132,4 @@ class VerweiseBefehle:
     def zitat_einfuegen(self, tag: str) -> None:
         q = next((q for q in self._editor.quellen if q["tag"] == tag), None)
         if q is not None:
-            verweise.zitat_einfuegen(self._editor, q)
+            zitat.zitat_einfuegen(self._editor, q)

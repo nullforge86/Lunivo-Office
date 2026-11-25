@@ -6,7 +6,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QPushButton, QWidget
 
-from lunivo_writer.ki.chat_antwort import kern_von
+from lunivo_writer.ki.chat.chat_antwort import kern_von
 from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.oberflaeche.baukasten.chat.chat_blase import TITEL_DOKUMENT, TITEL_KI, FehlerKarte, KiBlase, NutzerBlase
 from lunivo_writer.oberflaeche.baukasten.chat.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar

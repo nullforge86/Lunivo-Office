@@ -18,10 +18,10 @@ from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.editor.dokument import einfuegen as E
 from lunivo_writer.oberflaeche.baukasten import FarbFeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, abschnittstitel
-from lunivo_writer.dienste import bausteine
+from lunivo_writer.dienste.dokumentpflege import bausteine
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.farben import VORGABE_LINIE, VORGABE_SCHRIFT
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_KACHEL_VORSCHAU, GROESSE_FENSTER_AUSWAHL, GROESSE_FENSTER_EINFUEGEN_GROSS, GROESSE_FENSTER_TABELLE, GROESSE_MINIATUR_LAYOUT, GROESSE_RASTER_SYMBOLE, HOEHE_BEREICH_MITTEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_LISTE_HOCH, HOEHE_LISTE_MITTEL, HOEHE_VORSCHAU_KLEIN, ICON_VORSCHAU, RAND_KEIN, RAND_ZEILE, SCHRIFT_HINWEIS, ZUGABE_KACHEL
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
@@ -182,7 +182,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
@@ -646,7 +646,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)

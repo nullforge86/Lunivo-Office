@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
 

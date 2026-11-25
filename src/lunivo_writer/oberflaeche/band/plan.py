@@ -7,12 +7,12 @@ Die Prüfungen der Schreibhilfe stehen zusätzlich in der rechten Seitenleiste.
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.kontext.diagramm_werkzeuge import DIAGRAMMTOOLS
-from lunivo_writer.oberflaeche.funktionen.kopffuss.kontext_reiter import KOPFFUSS
-from lunivo_writer.oberflaeche.funktionen.ansicht import reiter as ansicht_reiter
-from lunivo_writer.oberflaeche.funktionen.sendungen import reiter as sendungen_reiter
-from lunivo_writer.oberflaeche.funktionen.ueberpruefen import reiter as ueberpruefen_reiter
-from lunivo_writer.oberflaeche.funktionen.verweise import reiter as verweise_reiter
-from lunivo_writer.oberflaeche.funktionen.sendungen.kontext_reiter import SERIENDRUCK
+from lunivo_writer.oberflaeche.funktionen.kopffuss.band.kontext_reiter import KOPFFUSS
+from lunivo_writer.oberflaeche.funktionen.ansicht.band import reiter as ansicht_reiter
+from lunivo_writer.oberflaeche.funktionen.sendungen.band import reiter as sendungen_reiter
+from lunivo_writer.oberflaeche.funktionen.ueberpruefen.band import reiter as ueberpruefen_reiter
+from lunivo_writer.oberflaeche.funktionen.verweise.band import reiter as verweise_reiter
+from lunivo_writer.oberflaeche.funktionen.sendungen.band.kontext_reiter import SERIENDRUCK
 from lunivo_writer.oberflaeche.kontext.bild_werkzeuge import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from lunivo_writer.oberflaeche.kontext.tabellen_werkzeuge import TABELLENSTIL, TABELLENTOOLS
 from lunivo_writer.oberflaeche.kontext.text_werkzeuge import TEXTTOOLS

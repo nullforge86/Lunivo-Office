@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from lunivo_writer.kern.dokument.seite import PageSettings, mm_to_px
+from lunivo_writer.core.dokument.seite import PageSettings, mm_to_px
 
 
 @dataclass(frozen=True)

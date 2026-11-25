@@ -21,14 +21,14 @@ from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QDialog, QLabel, QLineEdit, QPushButton, QRadioButton, QSpinBox, QTabWidget, QWidget
 
-from lunivo_writer.dienste.drucken import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
+from lunivo_writer.dienste.ausgabe.drucken import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import AngepassteReiter
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.spalten import ZweiSpalter
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.bauteile import symbole
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_MITTEL, BREITE_AB_ZWEISPALTER, BREITE_KNOPF_KLEIN, GROESSE_FENSTER_DRUCKEN, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_DRUCK_FUSS, RAND_DRUCK_SEITE, RAND_DRUCK_SPALTEN, RAND_FENSTER_DRUCKEN, RAND_FUSS_BACKSTAGE, RAND_KEIN, RAND_OBEN_SEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 

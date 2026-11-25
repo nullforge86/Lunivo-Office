@@ -94,7 +94,7 @@ class KIBefehle:
 
 
     def vorlesenStopp(self, k=None):
-        from lunivo_writer.dienste import vorlesen as v
+        from lunivo_writer.dienste.dokumentpflege import vorlesen as v
         v.beenden()
         self.w.lbl_msg.setText("Vorlesen angehalten.")
 

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QDialog, QPushButton, QWidget
 from lunivo_writer.oberflaeche.baukasten.basis.raster import Anordnung, PlanRaster, kanten_anordnung
 
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, felder_angleichen
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ICON_NORMAL, RAND_KEIN
 
 

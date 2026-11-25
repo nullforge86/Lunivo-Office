@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QSizePolicy, QDialog, QLabel, QLineEdit, QListWidg
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
-from lunivo_writer.ki import ki as K
+from lunivo_writer.ki.dienst import ki as K
 from lunivo_writer.oberflaeche.baukasten.geruest.fenster_stapel import zeige_unter
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
@@ -69,7 +69,7 @@ class OfflineSprachen(QWidget):
         self.aktualisieren()
 
     def aktualisieren(self) -> None:
-        from lunivo_writer.ki import argos
+        from lunivo_writer.ki.anbieter import argos
         r = argos.installierte_richtungen()                       # lokal, kein Netz
         self.installiert.setText("Installiert: " + ", ".join(x["name"] for x in r) if r else
                                  "Keine Sprachpakete gefunden. Deutsch ↔ Englisch gehört zum Programm; weitere Sprachen laden Sie bei Bedarf.")
@@ -80,7 +80,7 @@ class OfflineSprachen(QWidget):
             b.setEnabled(not an)
 
     def _verfuegbare_holen(self) -> None:
-        from lunivo_writer.ki import argos
+        from lunivo_writer.ki.anbieter import argos
         self._modus = "liste"; self._sperren(True)
         self.stand.setText("Verfügbare Sprachen werden aus dem Internet abgefragt …")
         self._pool.start(_NetzLauf(self._sender, argos.verfuegbare_richtungen))
@@ -89,7 +89,7 @@ class OfflineSprachen(QWidget):
         gr = f" (ca. {mb} MB)" if mb else ""
         if QMessageBox.question(self, "Sprachpaket laden", f"„{name}“{gr} jetzt aus dem Internet herunterladen und installieren?") != QMessageBox.Yes:
             return
-        from lunivo_writer.ki import argos
+        from lunivo_writer.ki.anbieter import argos
         self._modus = "paket"; self._ziel = (von, nach); self._sperren(True)
         self.stand.setText(f"„{name}“ wird geladen und installiert … Das kann etwas dauern.")
         self._pool.start(_NetzLauf(self._sender, argos.richtung_installieren, von, nach))
@@ -184,7 +184,7 @@ class McpDialog(QDialog):
         v.addWidget(knopfzeile(self, bei_ok=self._ok, ok_text="Speichern"))
 
     def _testen(self) -> None:
-        from lunivo_writer.ki import mcp as M
+        from lunivo_writer.ki.anbieter import mcp as M
         try:
             w = M.pruefen(self.befehl.text())
             self.stand.setText(f"Verbunden — {len(w)} Werkzeug(e): " + ", ".join(t["name"] for t in w[:12]))
@@ -301,7 +301,7 @@ class WebsuchePanel(QWidget):
     def __init__(self, konfig: K.KIKonfig):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
-        from lunivo_writer.ki import websuche as W
+        from lunivo_writer.ki.suche import websuche as W
         self.k = konfig
         o = konfig.websuche_optionen()
         v = _spalte("oben", self)
@@ -331,7 +331,7 @@ class WebsuchePanel(QWidget):
                 "schluessel": self.schluessel.text().strip(), "anzahl": self.anzahl.value()}
 
     def _testen(self) -> None:
-        from lunivo_writer.ki import websuche as W
+        from lunivo_writer.ki.suche import websuche as W
         try:
             t = W.suche(self.werte(), "Lunivo Writer")
             self.stand.setText(f"Verbunden — {len(t)} Treffer.")
@@ -351,7 +351,7 @@ class DokumentePanel(QWidget):
     def __init__(self, konfig: K.KIKonfig):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
-        from lunivo_writer.ki import dokumentensuche as DS
+        from lunivo_writer.ki.suche import dokumentensuche as DS
         from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
         self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
         o = konfig.dokumentsuche_optionen()

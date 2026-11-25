@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from lunivo_writer.oberflaeche.baukasten.medien.bildformate import BILD_ENDUNGEN, BILD_MUSTER
 from lunivo_writer.farmwork.befehle_alt.hilfen import _farbfeld
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import farben as BF
 
 
@@ -47,20 +47,20 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not e:
             return
         import json
-        from lunivo_writer.kern.funktionen.verweise import verweise
+        from lunivo_writer.core.funktionen.verweise.querverweise import querverweis
         from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_fenster import HyperlinkDialog
         try:
             adressen = json.loads(str(self.w.settings.get("einfuegen/mail_zuletzt", "") or "[]"))
         except ValueError:
             adressen = []
         markiert = e.textCursor().selectedText().replace("\u2029", " ").strip()
-        d = HyperlinkDialog(self.w, text=markiert, ziele=verweise.querverweis_ziele(e), ordner=self.w.settings.get("last_dir", ""),
+        d = HyperlinkDialog(self.w, text=markiert, ziele=querverweis.querverweis_ziele(e), ordner=self.w.settings.get("last_dir", ""),
                             adressen=[a for a in adressen if isinstance(a, str)])
         if not d.exec():
             return
         r = d.ergebnis()
         if r["art"] == "dokument":
-            href = "#" + verweise.marke_sichern(e, r["ziel"])
+            href = "#" + querverweis.marke_sichern(e, r["ziel"])
         else:
             href = r["href"]
         if r["art"] == "mail":
@@ -89,7 +89,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         import os
         e = self.ed
         if art == "bild":
-            from lunivo_writer.editor.objekte.bilddaten import BildFehler
+            from lunivo_writer.editor.objekte.bild.bilddaten import BildFehler
             try:
                 if e.insert_image(pfad):
                     return
@@ -98,7 +98,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
                 return
         if art == "text":
             from lunivo_writer.editor.dokument import einfuegen as E
-            from lunivo_writer.kern.dokument.bericht import DocumentIOError
+            from lunivo_writer.core.dokument.bericht import DocumentIOError
             try:
                 self.w._show_report(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
                 return
@@ -152,7 +152,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         """Seitenzahl wie in der Vorlage: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
         „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
-        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
+        from lunivo_writer.core.funktionen.kopffuss import seitenzahl as SZ
         from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
         from lunivo_writer.oberflaeche.baukasten.medien.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
@@ -165,7 +165,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
 
     def _seitenzahl_vorgabe(self, schl: str) -> None:
-        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
+        from lunivo_writer.core.funktionen.kopffuss import seitenzahl as SZ
         _s, _t, ort, ausr = next(v for v in SZ.VORGABEN if v[0] == schl)
         if self.ed:
             self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr))
@@ -185,7 +185,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def seitenzahlenEntfernen(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
+        from lunivo_writer.core.funktionen.kopffuss import seitenzahl as SZ
         page = self.ed.abschnitt_seite()
         if SZ.seitenzahlen_entfernen(page):
             self.ed.page_settings_changed(page)
@@ -383,14 +383,14 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def textfeldVertikal(self, k=None):
         """Textfeld mit senkrecht laufendem Text: dasselbe freie Objekt wie das waagerechte (Rahmen, Griffe, Schnellleiste), Richtung vertikal."""
         if self.ed:
-            from lunivo_writer.editor.objekte import frei_objekt as FO
+            from lunivo_writer.editor.objekte.frei import frei_objekt as FO
             FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "richtung": "senkrecht_rl"}, 70, 180)
 
 
     def textfeldMehrzeilig(self, k=None):
         if self.ed:
             from lunivo_writer.editor.dokument import einfuegen as E
-            from lunivo_writer.editor.objekte import frei_objekt as FO
+            from lunivo_writer.editor.objekte.frei import frei_objekt as FO
             FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "text": "Text hier eingeben\n\n"}, 400, 110)
 
 
@@ -412,7 +412,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def _bausteine_fuellen(self, m) -> None:
         """AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
         „AutoText hinzufügen …“ (nur mit Markierung)."""
-        from lunivo_writer.dienste import bausteine
+        from lunivo_writer.dienste.dokumentpflege import bausteine
         for name, teile in self.AUTOTEXTE_SEITE:
             m.eintrag(name, lambda teile=teile: self._autotext_seite(teile))
         for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
@@ -447,7 +447,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         """Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“."""
         if not self.ed or not self.ed.textCursor().hasSelection():
             return
-        from lunivo_writer.dienste import bausteine
+        from lunivo_writer.dienste.dokumentpflege import bausteine
         from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_fenster import AutoTextDialog
         c = self.ed.textCursor()
         d = AutoTextDialog(self.w, c.selectedText().replace("\u2029", " "))
@@ -476,7 +476,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         anweisung, text = d.feld()
         if anweisung.upper().startswith("TOC"):
-            from lunivo_writer.kern.funktionen.verweise import verzeichnis as V
+            from lunivo_writer.core.funktionen.verweise.verzeichnisse import verzeichnis as V
             m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
             V.verzeichnis_einfuegen(self.ed, "toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
             return
@@ -577,8 +577,8 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         vorhandene mit den neuen Einstellungen neu."""
         if not self.ed:
             return
-        from lunivo_writer.kern.funktionen.verweise import verzeichnis as V
-        from lunivo_writer.oberflaeche.funktionen.verweise.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
+        from lunivo_writer.core.funktionen.verweise.verzeichnisse import verzeichnis as V
+        from lunivo_writer.oberflaeche.funktionen.verweise.dialoge.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
         d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or V.TOC_VORGABE)
         if d.exec() and not V.verzeichnis_einfuegen(self.ed, "toc", d.ergebnis()):
             self.w.statusBar().showMessage("Im Dokument gibt es keine Überschriften. Legen Sie sie mit Verweise ▸ Inhaltsverzeichnis "
@@ -587,5 +587,5 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
     def verzeichnisseAktualisieren(self, k=None):
         if self.ed:
-            from lunivo_writer.kern.funktionen.verweise.verzeichnis import verzeichnis_aktualisieren
+            from lunivo_writer.core.funktionen.verweise.verzeichnisse.verzeichnis import verzeichnis_aktualisieren
             verzeichnis_aktualisieren(self.ed)

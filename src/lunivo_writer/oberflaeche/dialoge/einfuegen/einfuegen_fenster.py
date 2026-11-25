@@ -350,7 +350,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, page=None):
         super().__init__(parent)
-        from lunivo_writer.kern.funktionen.kopffuss import seitenzahl as SZ
+        from lunivo_writer.core.funktionen.kopffuss import seitenzahl as SZ
         self.setWindowTitle("Seitenzahl einfügen")
         v = _spalte("standard", self)
         g = FormularGitter()                                                # passt sich der Breite an (Seitenleiste), nichts wird abgeschnitten

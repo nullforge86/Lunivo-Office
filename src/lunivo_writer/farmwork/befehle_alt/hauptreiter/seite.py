@@ -1,12 +1,12 @@
 """Befehle: Seite, Abschnitte, Spalten."""
 from __future__ import annotations
 
-from lunivo_writer.kern.layout.formatwerte import richtung as richtung_von
+from lunivo_writer.core.layout.formatwerte import richtung as richtung_von
 from PySide6.QtCore import Qt
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu
 from lunivo_writer.farmwork.funktionen.ansicht import einstellungen as ansicht_einstellungen
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 
 
 _UNVERAENDERT = object()
@@ -285,7 +285,7 @@ class SeiteBefehle:
         m.eintrag("Raster …", aktiv=False)
 
         def auffrischen():
-            from lunivo_writer.editor.objekte import bildlayout as BL
+            from lunivo_writer.editor.objekte.bild import bildlayout as BL
             z = BL.ziel(self.ed) if self.ed else None
             for a in objekt:
                 a.setEnabled(z is not None and z[0] == "frei")
@@ -412,7 +412,7 @@ class SeiteBefehle:
     def silbentrennung(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.kern.textsatz.trennung import trenner_fuer
+        from lunivo_writer.core.textsatz.trennung import trenner_fuer
         pg = self.ed.abschnitt_seite()
         sprache = self.w.settings.get("silben/sprache", "de_DE")
         if trenner_fuer(sprache) is None:
@@ -537,7 +537,7 @@ class SeiteBefehle:
 
     def effektSetzen(self, k=None, name="Schlicht"):
         """Effekt an die markierte Form bzw. das markierte freie Bild; ist nichts markiert, an alle im Dokument."""
-        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.objekte.bild import bildlayout as BL
         from lunivo_writer.editor.text import designs as D
         if not self.ed or name not in D.EFFEKTE:
             return

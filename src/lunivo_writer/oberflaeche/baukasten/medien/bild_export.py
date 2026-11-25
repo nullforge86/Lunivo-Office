@@ -21,14 +21,14 @@ from PySide6.QtCore import QPointF, QRectF, QSize, QStandardPaths, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPalette, QPen
 from PySide6.QtWidgets import QAbstractButton, QButtonGroup, QComboBox, QLabel, QLineEdit, QLayout, QPushButton, QWidget
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_EXPORT_ABSCHNITT, ABSTAND_MITTEL, GROESSE_EXPORTKARTE, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_EXPORT_BILD, RAND_OBEN_SEITE, RAND_ZEILE_LOCKER
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
 # Sinnbild „dunkles Blatt“ im Exportdialog: bewusst feste Farben, unabhängig vom Thema.
 BILDCHEN_BLATT_DUNKEL = "#3a3f45"
 BILDCHEN_AKZENT_DUNKEL = "#6b5442"
-from lunivo_writer.dienste.bild_export import FORMATE, QUALITAET, BildWahl
+from lunivo_writer.dienste.ausgabe.bild_export import FORMATE, QUALITAET, BildWahl
 
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
 

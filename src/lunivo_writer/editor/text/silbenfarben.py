@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from PySide6.QtGui import QColor
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 PALETTEN = {
     "Blau / Rot": ["#1f5fbf", Farbe.ROT],
     "Blau / Orange": ["#1f5fbf", "#d9480f"],

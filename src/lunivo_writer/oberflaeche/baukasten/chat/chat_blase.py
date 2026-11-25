@@ -12,7 +12,7 @@ from PySide6.QtCore import QEvent, QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QWidget
 
-from lunivo_writer.ki import ki as K
+from lunivo_writer.ki.dienst import ki as K
 from lunivo_writer.editor.text import ki_markdown
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import md_label, text_label
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownKnopf

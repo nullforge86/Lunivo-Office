@@ -9,7 +9,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QWidget
 
-from lunivo_writer.ki.chat_vorschlaege import chat_vorschlaege
+from lunivo_writer.ki.chat.chat_vorschlaege import chat_vorschlaege
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import KartenRaster
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_NORMAL, BREITE_RASTERZELLE_CHIP, CHAT_CHIP_HOEHE, CHAT_LEER_ICON, RAND_KEIN

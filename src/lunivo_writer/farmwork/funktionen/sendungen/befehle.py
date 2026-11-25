@@ -4,7 +4,8 @@ Der Editor kommt über den ``AenderungsPort`` herein; die Fachlogik steht in ``k
 from __future__ import annotations
 
 from lunivo_writer.farmwork.schnittstellen.aenderungs_port import AenderungsPort
-from lunivo_writer.kern.funktionen.sendungen import etiketten, serienfelder, umschlag
+from lunivo_writer.core.funktionen.sendungen import etiketten, umschlag
+from lunivo_writer.core.funktionen.sendungen.serienbrief import serienfelder
 
 
 def umschlag_aufbauen(editor: AenderungsPort, format_name: str, absender: str, empfaenger: str) -> None:

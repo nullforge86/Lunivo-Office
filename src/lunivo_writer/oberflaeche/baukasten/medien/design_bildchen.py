@@ -14,7 +14,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QApplication
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
 _RAND = QColor("#adb5bd")
@@ -79,7 +79,7 @@ def effekt_zeichner(fx: dict) -> Zeichner:
     """Blauer Blockpfeil auf hellem Feld, mit dem Effekt gezeichnet (wie er an Formen erscheint)."""
     def f(p: QPainter, r: QRectF) -> None:
         from lunivo_writer.editor.dokument import einfuegen as E
-        from lunivo_writer.editor.objekte import freie_bilder as FB
+        from lunivo_writer.editor.objekte.bild import freie_bilder as FB
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = r.adjusted(1, 1, -1, -1)
         p.setPen(QPen(_RAND, 1)); p.setBrush(QColor(Farbe.PAPIER)); p.drawRect(k)

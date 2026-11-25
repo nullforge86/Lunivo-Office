@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QToolButton, QWidget,
 )
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.diagramme import diagramm as D
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig

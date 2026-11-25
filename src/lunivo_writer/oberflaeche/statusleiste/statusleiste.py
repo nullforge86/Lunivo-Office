@@ -6,7 +6,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QSlider, QStatusBar, QToolButton
 from lunivo_writer.oberflaeche.bauteile import symbole
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_ZOOMANZEIGE, BREITE_ZOOM_REGLER, HOEHE_LESEENDE_KNOPF, HOEHE_THEMAKNOPF, ICON_KLEIN, PADDING_LESEENDE_STATUS, RADIUS_FELD, RAND_STATUSLEISTE
 
 

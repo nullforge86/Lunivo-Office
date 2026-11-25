@@ -15,9 +15,9 @@ from lunivo_writer.oberflaeche.bauteile import symbole
 
 import re
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
-from lunivo_writer.kern.dokument.korrektur import ProofingIssue
+from lunivo_writer.core.dokument.korrektur import ProofingIssue
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, ICON_GROSS, PADDING_MARKE, RADIUS_MARKE, RAND_FUNDKARTE, RAND_KEIN, RAND_VORSCHLAGKARTE, SCHRIFT_KLEIN, SCHRIFT_LISTE
 _LAUF = re.compile(r"(.)\1{5,}")
@@ -74,7 +74,7 @@ class FundKarte(QFrame):
             b = QPushButton("Ändern")
             b.clicked.connect(lambda: self.a.aendern(self.fund))
             z.addWidget(b)
-        from lunivo_writer.dienste import vorlesen
+        from lunivo_writer.dienste.dokumentpflege import vorlesen
         if vorlesen.verfuegbar():                                        # gleich neben den anderen Knöpfen: immer sichtbar
             ohr = QPushButton()
             ohr.setIcon(symbole.icon("vorlesen", ICON_GROSS)); ohr.setCursor(Qt.PointingHandCursor)
@@ -142,7 +142,7 @@ class FundKarte(QFrame):
             ed.setFocus()
 
     def _hoeren(self):
-        from lunivo_writer.dienste import vorlesen
+        from lunivo_writer.dienste.dokumentpflege import vorlesen
         f = self.fund
         vorlesen.lies_vor(f.zeige_neu if f.art != "hinweis" and f.neu else f.zeige_alt)
 

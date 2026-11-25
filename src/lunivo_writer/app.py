@@ -13,7 +13,7 @@ def main(argv: list[str] | None = None) -> int:
         print("PySide6 fehlt. Installieren mit:  ./skripte/starten-qt.sh   (legt eine eigene Umgebung an)\n"
               "oder:  pip install -r requirements.txt", file=sys.stderr)
         return 2
-    from lunivo_writer.oberflaeche.hauptfenster.anwendung import LunivoApplication
+    from lunivo_writer.oberflaeche.hauptfenster.fenster.anwendung import LunivoApplication
     return LunivoApplication(argv).start()
 
 

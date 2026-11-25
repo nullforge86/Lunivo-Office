@@ -16,7 +16,7 @@ BAND_STILE = ((0, 6), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4))
 
 
 def form_bearbeiten_menue(b) -> MenueListe:
-    from lunivo_writer.editor.objekte import formen_katalog as K
+    from lunivo_writer.editor.objekte.formen import formen_katalog as K
     from lunivo_writer.oberflaeche.baukasten.dropdown.objektmenues.bild_diagramm_menues import _form_bild
     m = MenueListe()
     aendern = m.untermenue("Form ändern")
@@ -46,7 +46,7 @@ def linien_galerie(b) -> dict:
     from PySide6.QtCore import QRectF as R
     from PySide6.QtGui import QPalette, QPen
     from PySide6.QtWidgets import QApplication
-    from lunivo_writer.editor.objekte import formen_katalog as K
+    from lunivo_writer.editor.objekte.formen import formen_katalog as K
     from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl, _symbol
     namen = list(dict(K.KATEGORIEN)["Linie"])
 

@@ -14,14 +14,14 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QMenu
 
 from lunivo_writer.editor.text import muster as M
-from lunivo_writer.editor.objekte.linie import LINIENBREITEN, Linie
+from lunivo_writer.editor.objekte.formen.linie import LINIENBREITEN, Linie
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbPalette
 from lunivo_writer.oberflaeche.baukasten.basis.linien import linien_menue_zeile, linien_symbol
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from lunivo_writer.oberflaeche.bauteile import symbole
 
-from lunivo_writer.editor.objekte.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.editor.objekte.formen.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_INNEN_OBJEKT, GROESSE_SPALTENRASTER_KACHEL, GROESSE_STRICHART_MENUEBILD, GROESSE_STRICHART_MENUESYMBOL, GROESSE_TEXTUR_MUSTER_KACHEL, GROESSE_VERLAUF_KACHEL, ICON_NORMAL
 
 
@@ -112,7 +112,7 @@ class KonturMenue(FarbPalette):
 def formstil_werte(schluessel: str) -> dict:
     """Füllung und Kontur des Stils ``z{Zeile}{Spalte}`` für Bilder und Textfelder: {"fuell": …, "rand": …} (``None`` = keine). Die Werte kommen aus
     ``formen_stile.formstil`` (dasselbe Raster wie ``formStilRaster`` bei Formen); Effekte (3D) und Glanz gelten nur bei Formen."""
-    from lunivo_writer.editor.objekte import formen_stile as S
+    from lunivo_writer.editor.objekte.formen import formen_stile as S
     w = S.formstil(int(schluessel[1]), int(schluessel[2]))
     fuell = None
     if w["fuell"]:
@@ -122,7 +122,7 @@ def formstil_werte(schluessel: str) -> dict:
 
 def formstil_zeichner(schluessel: str):
     """Zeichnet die Kachel „Abc“ des Stils: Füllung (auch Verlauf), Rand und Schrift in passender Farbe."""
-    from lunivo_writer.editor.objekte import formen_stile as S
+    from lunivo_writer.editor.objekte.formen import formen_stile as S
 
     def zeichne(p: QPainter, r: QRectF) -> None:
         w = S.formstil(int(schluessel[1]), int(schluessel[2]))
@@ -148,7 +148,7 @@ def formstil_zeichner(schluessel: str):
 
 def formstile(parent=None) -> RasterAuswahl:
     """Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“."""
-    from lunivo_writer.editor.objekte import formen_stile as S
+    from lunivo_writer.editor.objekte.formen import formen_stile as S
     m = RasterAuswahl(parent, spalten=len(S.SPALTEN), groesse=QSize(*GROESSE_SPALTENRASTER_KACHEL))
     for z in range(len(S.ZEILEN)):
         for s in range(len(S.SPALTEN)):

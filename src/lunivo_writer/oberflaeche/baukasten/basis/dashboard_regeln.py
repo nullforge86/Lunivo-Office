@@ -10,7 +10,7 @@ sie kennzeichnen ihre Widgets nur mit einem Namen (``setObjectName``) oder einer
 """
 from __future__ import annotations
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import mass as m
 
 _REGELN = """

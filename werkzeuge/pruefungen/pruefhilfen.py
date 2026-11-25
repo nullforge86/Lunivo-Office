@@ -28,7 +28,7 @@ def app_starten(name: str = "lunivo-writer-pruefung") -> QApplication:
 def fenster_bauen(tmp: str, breite: int = 1500, hoehe: int = 900):
     """Ein Hauptfenster mit leerem Dokument und eigener Einstellungsdatei in ``tmp``, sichtbar (ohne Bildschirm)."""
     from lunivo_writer.dienste.einstellungen_dienst import Settings
-    from lunivo_writer.oberflaeche.hauptfenster.programmfenster import MainWindow
+    from lunivo_writer.oberflaeche.hauptfenster.fenster.programmfenster import MainWindow
     w = MainWindow(Settings(QSettings(os.path.join(tmp, "s.ini"), QSettings.IniFormat)))
     w.new_document(); w.resize(breite, hoehe); w.show()
     QApplication.instance().processEvents()

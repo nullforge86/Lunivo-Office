@@ -54,7 +54,7 @@ def _schnitt_combo() -> QComboBox:
 
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import gruppe, AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 def _ueberschrift(text: str) -> QLabel:
     return abschnittstitel(text)
 

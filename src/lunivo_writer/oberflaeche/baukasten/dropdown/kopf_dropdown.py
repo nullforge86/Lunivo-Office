@@ -18,7 +18,7 @@ from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPix
 from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter, QWidget
 
 from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
 
 

@@ -28,7 +28,7 @@ def katalog() -> dict:
 
 
 def katalog_bild(name: str, px: int = 96, farbe: str | None = None, strich: float = STRICH) -> QImage:
-    from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+    from lunivo_writer.farmwork.datentypen.farben import Farbe
     farbe = farbe or Farbe.SYMBOL
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)

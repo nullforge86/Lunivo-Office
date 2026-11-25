@@ -8,9 +8,9 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter
 
 from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild, kern_malen
-from lunivo_writer.kern.geometrie import Rect
-from lunivo_writer.kern.rendering import zeichenzusatz as Z
-from lunivo_writer.kern.rendering.zeichenzusatz import UNTER_MUSTER as _UNTER_MUSTER  # noqa: F401  (Strichmuster der Unterstreichungen)
+from lunivo_writer.core.geometrie import Rect
+from lunivo_writer.core.rendering.text import zeichenzusatz as Z
+from lunivo_writer.core.rendering.text.zeichenzusatz import UNTER_MUSTER as _UNTER_MUSTER  # noqa: F401  (Strichmuster der Unterstreichungen)
 from lunivo_writer.editor.text import zeichenzusatz
 from lunivo_writer.editor.text.textfx import PX, aus_text, fx_zeichnen  # noqa: F401
 
@@ -73,5 +73,5 @@ def _umschlossen(p: QPainter, kasten: QRectF, wie: tuple[str, str], farbe: QColo
 
 def _ruby(p: QPainter, x0: float, x1: float, grundlinie: float, groesse: float, ruby: dict, farbe: QColor) -> None:
     """Der Leittext über dem Basistext, in kleinerer Schrift, nach der gewählten Ausrichtung."""
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     kern_malen(p, QRectF(x0, grundlinie - groesse * 2, x1 - x0, groesse * 2.2), lambda z: Z.ruby(z, standard_engine(), x0, x1, grundlinie, groesse, ruby, _rgba(farbe)), rand=groesse)

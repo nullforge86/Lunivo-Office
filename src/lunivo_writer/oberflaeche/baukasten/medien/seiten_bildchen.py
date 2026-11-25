@@ -12,7 +12,7 @@ from typing import Callable
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPainter, QPen
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
 _LINIE = QColor("#5c636a")
@@ -66,7 +66,7 @@ def wasserzeichen_vorschau(w: dict) -> Zeichner:
     """Blatt mit einem beliebigen Wasserzeichen (Text oder Bild, Lage, Transparenz) wie in der Ausgabe (``editor/seite/wasserzeichen.py``)."""
     def f(p: QPainter, r: QRectF) -> None:
         from lunivo_writer.editor.seite import wasserzeichen as WZ
-        from lunivo_writer.kern.dokument.seite import mm_to_px
+        from lunivo_writer.core.dokument.seite import mm_to_px
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         b = _blatt(p, r)
         pw, ph = mm_to_px(210), mm_to_px(297)

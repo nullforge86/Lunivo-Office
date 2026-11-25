@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from lunivo_writer.farmwork.schnittstellen.aenderungs_port import AenderungsPort
-from lunivo_writer.kern.funktionen.felder import formularfelder
+from lunivo_writer.core.funktionen.felder import formularfelder
 
 
 def form_textfeld(editor: AenderungsPort, text: str = "Text eingeben") -> None:

@@ -25,7 +25,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitt
 from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
 from lunivo_writer.oberflaeche.band.plan import plan
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Schriftauswahl
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownKnopf

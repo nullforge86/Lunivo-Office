@@ -284,12 +284,13 @@ def tabellen_bereiche(ed) -> dict[str, list[float]]:
 
 
 def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
-    from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
-    from lunivo_writer.kern.bearbeitung.suche import roh_text
-    from lunivo_writer.kern.funktionen.verweise import verweise as V
+    from lunivo_writer.core.dokument.formatvorlagen import ueberschriftsebene
+    from lunivo_writer.core.bearbeitung.suche import roh_text
+    from lunivo_writer.core.funktionen.verweise.beschriftungen import beschriftung
+    from lunivo_writer.core.funktionen.verweise.textmarken import textmarke
     dok = ed.sitzung.dokument
     pos = ed.textCursor().position()
-    marken = V.lesezeichen_liste(ed, versteckte=False)
+    marken = textmarke.lesezeichen_liste(ed, versteckte=False)
     text = roh_text(dok)
     try:
         seiten_marken = dict(zip([m["name"] for m in marken], ed.seiten_von([m["von"] for m in marken]))) if marken else {}
@@ -298,7 +299,7 @@ def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
         seiten_marken, seite = {}, 1
     werte = {m["name"]: v for m in marken if (v := _zahl(text[m["von"]:m["bis"]])) is not None}
     seq: dict[str, int] = {}
-    for k in V.beschriftungen_liste(ed):
+    for k in beschriftung.beschriftungen_liste(ed):
         if k["pos"] < pos:
             seq[k["label"]] = seq.get(k["label"], 0) + 1
     stilref: dict[str, str] = {}

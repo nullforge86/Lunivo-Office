@@ -11,8 +11,8 @@ from PySide6.QtGui import QTextCursor
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QFrame, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QWidget
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
-from lunivo_writer.ki import modellfaehigkeit as MF
+from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.ki.anbieter import modellfaehigkeit as MF
 from lunivo_writer.oberflaeche.baukasten.chat.chat_anhang import AnhangChip
 from lunivo_writer.oberflaeche.baukasten.chat.chat_blase import SymbolKnopf
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
@@ -235,7 +235,7 @@ class ChatEingabeKasten(QWidget):
 
     def _vorlagen_fuellen(self, menue: MenueListe) -> None:
         """Untermenü „Vorlagen“: dieselben Anweisungen wie die Chips (Datenquelle ``chat_vorschlaege``); Klick füllt das Eingabefeld."""
-        from lunivo_writer.ki.chat_vorschlaege import chat_vorschlaege
+        from lunivo_writer.ki.chat.chat_vorschlaege import chat_vorschlaege
         auswahl, leer = self.d.kontext()[:2]
         for e in chat_vorschlaege(auswahl, leer, self.d.konfig):
             if e["id"].startswith("assistent:"):

@@ -1,7 +1,7 @@
 """Optionen: Leichter lesen, Sprache."""
 from __future__ import annotations
 
-from lunivo_writer.kern.schrift import standard_datenbank
+from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, farbflaeche, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -13,10 +13,10 @@ from lunivo_writer.oberflaeche.baukasten.geruest.module import anmelden
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QFrame, QLabel, QRadioButton, QPushButton, QWidget
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
-from lunivo_writer.oberflaeche.funktionen.ansicht import lesestufen as LS
-from lunivo_writer.dienste import vorlesen
+from lunivo_writer.oberflaeche.funktionen.ansicht.aktionen import lesestufen as LS
+from lunivo_writer.dienste.dokumentpflege import vorlesen
 from lunivo_writer.oberflaeche.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_SPALTEN, PADDING_LESEN_VORSCHAU, RADIUS_FELD, RAND_ZEILE, SCHRIFT_HINWEIS
 

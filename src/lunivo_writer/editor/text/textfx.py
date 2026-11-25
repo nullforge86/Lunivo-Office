@@ -25,7 +25,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QPolygonF, QTransform
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 PX = 96 / 72                                    # Punkt → Bildpunkt
 
 MATERIAL = (("matt", "Matt"), ("plastik", "Plastik"), ("metall", "Metall"), ("dunkel", "Dunkle Kanten"), ("weich", "Weicher Rand"), ("hell", "Hell"))
@@ -343,10 +343,10 @@ def _fx_ueber(p: QPainter, pfad: QPainterPath, fx: dict, rect: QRectF, kontur: t
 def vorschau_zeichnen(p: QPainter, rect: QRectF, text: str, font, fx: dict, farbe: QColor, kontur: tuple[QColor, float, str] | None = None) -> None:
     """Text mit Effekt zentriert in ein Rechteck zeichnen (Kacheln und Vorschau der Fenster); der Text selbst wird hier mitgezeichnet."""
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
-    from lunivo_writer.kern.geometrie import Point
-    from lunivo_writer.kern.rendering.texteffekte import zeichne_text_mit_effekt
-    from lunivo_writer.kern.textsatz import FontSpec
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.core.geometrie import Point
+    from lunivo_writer.core.rendering.text.texteffekte import zeichne_text_mit_effekt
+    from lunivo_writer.core.textsatz import FontSpec
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     pt = (font.pixelSize() * 72.0 / 96.0) if font.pixelSize() > 0 else font.pointSizeF()      # die Schrift wird als Beschreibung gelesen, gemessen und gezeichnet wird vom Kern
     fs = FontSpec(font.family(), pt, 700 if font.bold() else 400, font.italic())

@@ -12,10 +12,10 @@ from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QScrollArea, QSizePolicy, QWidget
 
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import KartenRaster
-from lunivo_writer.oberflaeche.funktionen.korrektur.schreibhilfe_katalog import Funktion, fuer_reiter
+from lunivo_writer.oberflaeche.funktionen.korrektur.band.schreibhilfe_katalog import Funktion, fuer_reiter
 from lunivo_writer.oberflaeche.bauteile import symbole
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label
 from lunivo_writer.oberflaeche.baukasten.felder.schalter import CHIP_B, CHIP_H, schalter_an_stil, schalter_aus_stil

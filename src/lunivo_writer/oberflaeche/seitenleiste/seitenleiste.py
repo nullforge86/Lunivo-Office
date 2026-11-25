@@ -12,13 +12,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from lunivo_writer.oberflaeche.funktionen.korrektur.schreibhilfe_katalog import VORLESEN
+from lunivo_writer.oberflaeche.funktionen.korrektur.band.schreibhilfe_katalog import VORLESEN
 from lunivo_writer.oberflaeche.baukasten.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.korrektur.vorhersage import EMPFAENGER
 from lunivo_writer.oberflaeche.seitenleiste.panels.schreib_panel import FundKarte, HinweisKarte
 from lunivo_writer.oberflaeche.bauteile import symbole
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.thema.thema import karte_einrichten, karten_rand
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label, kleintext_label, trennlinie
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS
@@ -54,7 +54,7 @@ class SchreibhilfePanel(QWidget):
         self.stapel.addWidget(seite0)
         w0 = _spalte("kein", seite0)
         # Werkbank: vier Reiter nach dem, was man gerade braucht — Prüfen (die Funde), Lesen, Schreiben, KI
-        from lunivo_writer.oberflaeche.funktionen.korrektur.schreibhilfe_katalog import REITER
+        from lunivo_writer.oberflaeche.funktionen.korrektur.band.schreibhilfe_katalog import REITER
         leiste = _reihe("leiste")
         self.werk_reiter = QButtonGroup(self)
         self._werk_namen = list(REITER)
@@ -299,7 +299,7 @@ class SchreibhilfePanel(QWidget):
         import os
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        from lunivo_writer.dienste import sicher_schreiben
+        from lunivo_writer.dienste.dateizugriff import sicher_schreiben
         ordner = sicher_schreiben.sicherungs_ordner()
         os.makedirs(ordner, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(ordner))

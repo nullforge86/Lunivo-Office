@@ -10,7 +10,7 @@ from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QMenu
 
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.text import ZEILENABSTAENDE
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import farben as BF
 from lunivo_writer.oberflaeche.baukasten import FarbPalette
 
@@ -27,20 +27,20 @@ class TextToolsBefehle:
     # ==== Erkennung ===================================================================================================================
     def tt_art(self) -> str | None:
         """Welches freie Textobjekt ist markiert? ``wordart`` | ``textfeld`` | None."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         art = FO.art_gewaehlt(self.ed) if self.ed else None
         return art if art in FO.TEXT_ARTEN else None
 
 
     def _wa(self) -> dict:
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         z = FO.ziel(self.ed) if self.ed else None
         return z[1] if z and z[0] in FO.TEXT_ARTEN else {}
 
 
     def _wa_set(self, **kw) -> bool:
         """Angaben des markierten WordArt/Textfelds ändern; ohne Auswahl ein Hinweis in der Statuszeile."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         art = self.tt_art()
         if not (art and FO.aendern(self.ed, art, **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt oder Textfeld markieren.")
@@ -196,8 +196,8 @@ class TextToolsBefehle:
 
 
     def _tt_liste_ist(self, aufzaehlung: bool) -> bool:
-        from lunivo_writer.kern.funktionen.absatz import listen as L
-        from lunivo_writer.kern.funktionen.absatz import mehrstufig as M
+        from lunivo_writer.core.funktionen.absatz import listen as L
+        from lunivo_writer.core.funktionen.absatz import mehrstufig as M
         spec = self._wa().get("liste")
         if not isinstance(spec, dict):
             return False
@@ -207,13 +207,13 @@ class TextToolsBefehle:
 
 
     def ttPunkte(self, k=None):
-        from lunivo_writer.kern.funktionen.absatz import listen as L
+        from lunivo_writer.core.funktionen.absatz import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(True) else L.liste("disc"))
 
     def an_ttPunkte(self): return self._tt_liste_ist(True)
 
     def ttZahlen(self, k=None):
-        from lunivo_writer.kern.funktionen.absatz import listen as L
+        from lunivo_writer.core.funktionen.absatz import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(False) else L.liste("dezimal", "", "."))
 
     def an_ttZahlen(self): return self._tt_liste_ist(False)
@@ -433,7 +433,7 @@ class TextToolsBefehle:
 
     def menue_ttFormEffekte(self):
         """Schatten, Spiegelung und Leuchteffekt der Form (wie die Voreinstellungen der Seitenleiste), darunter „Weitere Effekte …“."""
-        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.objekte.bild import bildlayout as BL
 
         def setze(**teile):
             z = BL.ziel(self.ed) if self.ed else None
@@ -457,7 +457,7 @@ class TextToolsBefehle:
     def ttFormatUebertragen(self, k=None):
         """Format des markierten WordArt/Textfelds (Schrift, Auszeichnungen, Farben, Effekte, Form) aufnehmen; beim nächsten markierten Objekt
         denselben Knopf noch einmal drücken, dann wird es übertragen."""
-        from lunivo_writer.editor.objekte import bildlayout as BL
+        from lunivo_writer.editor.objekte.bild import bildlayout as BL
         d = self._wa()
         schluessel = ("schrift", "pt", "fett", "kursiv", "unter", "durch", "hoch", "tief", "hervor", "fuell", "farbe", "kontur", "kontur_breite",
                       "effekt", "vorlage", "ausr", "liste", "einzug", "richtung", "zeilenabstand")
@@ -482,7 +482,7 @@ class TextToolsBefehle:
     # ---- Verknüpfung erstellen: Textfelder verketten (Text läuft von A nach B), wie in der Vorlage ---------------------------------------------
     def _tt_felder(self):
         """Die Textfelder, mit denen das markierte verknüpft werden kann (Schlüssel, Anzeigename): nicht es selbst, keins mit Vorgänger."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         e = self.ed
         jetzt = getattr(e, "_frei_sel", None)
         out = []
@@ -496,7 +496,7 @@ class TextToolsBefehle:
 
     def menue_ttVerknuepfung(self):
         """Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
@@ -518,7 +518,7 @@ class TextToolsBefehle:
 
     def ttVerknuepfen(self, k=None, ziel=None):
         """Das markierte Textfeld mit ``ziel`` verknüpfen: was nicht mehr hineinpasst, läuft dort weiter."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         if self.tt_art() != "textfeld" or ziel is None or not FO.verknuepfen(self.ed, self.ed._frei_sel, ziel):
             self.w.lbl_msg.setText("Verknüpfen geht nur von einem markierten Textfeld zu einem freien Textfeld ohne Vorgänger.")
             return
@@ -526,7 +526,7 @@ class TextToolsBefehle:
 
 
     def ttVerknuepfungLoesen(self, k=None):
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         if self.tt_art() != "textfeld" or not FO.loesen(self.ed, self.ed._frei_sel):
             self.w.lbl_msg.setText("Bitte zuerst ein verknüpftes Textfeld markieren.")
             return
@@ -557,7 +557,7 @@ class TextToolsBefehle:
     # ==== Navigation zwischen Textobjekten (WordArt und Textfelder) ======================================================================
     def _tt_gehe(self, richtung: int) -> None:
         """Das vorige/nächste WordArt oder Textfeld des Dokuments markieren (am Ende springt es an den Anfang)."""
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         e = self.ed
         if not e:
             return

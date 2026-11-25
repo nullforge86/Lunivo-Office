@@ -14,13 +14,13 @@ from PySide6.QtCore import QMimeData, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QApplication
 
-from lunivo_writer.kern.dokument import Position
-from lunivo_writer.kern.geometrie import Rect
-from lunivo_writer.kern.dokument.dokument import Auswahl, InlineObjekt, absaetze_in
-from lunivo_writer.kern.dokument.serialisierung import bloecke_aus_daten, bloecke_zu_daten
-from lunivo_writer.kern.bearbeitung import BearbeitungsFehler
-from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
-from lunivo_writer.kern.layout import schreibmarke as SM
+from lunivo_writer.core.dokument import Position
+from lunivo_writer.core.geometrie import Rect
+from lunivo_writer.core.dokument.dokument import Auswahl, InlineObjekt, absaetze_in
+from lunivo_writer.core.dokument.serialisierung import bloecke_aus_daten, bloecke_zu_daten
+from lunivo_writer.core.bearbeitung import BearbeitungsFehler
+from lunivo_writer.core.bearbeitung.suche import position_zu_offset
+from lunivo_writer.core.layout import schreibmarke as SM
 
 MIME_AUSSCHNITT = "application/x-lunivo-ausschnitt"
 ZEILENWECHSEL = " "                       # Umschalt+Eingabe: neue Zeile im selben Absatz
@@ -284,7 +284,7 @@ class EingabeTeil:
 
     def contextMenuEvent(self, ev) -> None:
         """Rechtsklick: Auswahl an die Stelle setzen (außerhalb der Auswahl) bzw. das Objekt wählen, dann das Menü anfordern."""
-        from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
+        from lunivo_writer.core.bearbeitung.suche import position_zu_offset
         d = self.sitzung.dokument
         objekt = self.objekt_bei(ev.pos())
         if objekt is not None:

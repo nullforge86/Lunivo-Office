@@ -5,14 +5,14 @@ Die Knotenmaße kommen aus dem Zeichnen (``SA.knoten_rechtecke``) und sind nur a
 das Layout bestimmt sie. Das Band zeigt sie schreibgeschützt."""
 from __future__ import annotations
 
-from lunivo_writer.kern.dokument.seite import px_to_mm
+from lunivo_writer.core.dokument.seite import px_to_mm
 
 
 class SmartArtKnotenZustand:
     def smartartKnotenMasse(self) -> tuple[float, float] | None:
         """(Breite, Höhe) des gewählten Knotens in mm; ohne gewählten Knoten None (dann gelten die Maße des Objekts)."""
-        from lunivo_writer.editor.objekte import bildlayout as BL
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.bild import bildlayout as BL
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         ed = self.ed
         if not ed:
             return None
@@ -29,7 +29,7 @@ class SmartArtKnotenZustand:
 
     def kann_smartartAufzaehlung(self) -> bool:
         """Ein Knoten ist gewählt und das Layout erlaubt Aufzählungspunkte (im Organigramm sind Unterpunkte eigene Knoten: im Foto grau)."""
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         d = self._sa()
         return self._sa_kann("knoten") and d is not None and d.get("layout", "Liste") not in SA.HIERARCHIE_LAYOUTS
 

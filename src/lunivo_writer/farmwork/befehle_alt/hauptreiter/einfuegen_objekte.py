@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from lunivo_writer.farmwork.befehle_alt.hilfen import _farbfeld
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import farben as BF
 
 
@@ -24,9 +24,9 @@ class EinfuegenObjektBefehle:
         """Formen wie in der Vorlage: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPalette, QPen
-        from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+        from lunivo_writer.core.dokument.farben import Farbe
         from lunivo_writer.editor.dokument import einfuegen as E
-        from lunivo_writer.editor.objekte import formen_katalog as K
+        from lunivo_writer.editor.objekte.formen import formen_katalog as K
         from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = None
         for gruppe, formen in K.KATEGORIEN:
@@ -50,9 +50,9 @@ class EinfuegenObjektBefehle:
 
     def formEinfuegen(self, k=None, name=None):
         """Die Form ``name`` (Katalog ``formen_katalog``, auch Linien und Pfeile) einfügen: im Zeichenbereich dort, sonst als freies Objekt."""
-        from lunivo_writer.editor.objekte import formen as F
-        from lunivo_writer.editor.objekte import formen_katalog as K
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.formen import formen as F
+        from lunivo_writer.editor.objekte.formen import formen_katalog as K
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         if self.ed and name and K.hat(name) and not F.in_zeichenbereich(self.ed, name):
             return FO.einfuegen(self.ed, "form", {**FO.FORM_STANDARD, "form": name}, *((240, 60) if K.ist_linie(name) else (160, 120)))
 
@@ -60,7 +60,7 @@ class EinfuegenObjektBefehle:
     def zeichenbereich(self, k=None):
         """Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/objekte/formen.py``)."""
         if self.ed and not self.ed.isReadOnly():
-            from lunivo_writer.editor.objekte import formen as F
+            from lunivo_writer.editor.objekte.formen import formen as F
             F.zeichenbereich_einfuegen(self.ed)
 
 
@@ -69,13 +69,13 @@ class EinfuegenObjektBefehle:
             from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import FormDialog
             d = FormDialog(self.w)
             if d.exec():
-                from lunivo_writer.editor.objekte import frei_objekt as FO
+                from lunivo_writer.editor.objekte.frei import frei_objekt as FO
                 FO.einfuegen(self.ed, "form", d.daten(), d.breite.value(), d.hoehe.value())
 
 
     def smartart(self, k=None):
         if self.ed:
-            from lunivo_writer.editor.objekte import smartart as SA
+            from lunivo_writer.editor.objekte.smartart import smartart as SA
             from lunivo_writer.oberflaeche.dialoge.einfuegen.smartart_dialog_foto import SmartArtDialogFoto
             d = SmartArtDialogFoto(self.w)
             if d.exec():
@@ -85,7 +85,7 @@ class EinfuegenObjektBefehle:
     def smartartText(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import SmartArtDialog
         daten = SA.daten_der_auswahl(self.ed)
         if daten is None:
@@ -97,7 +97,7 @@ class EinfuegenObjektBefehle:
 
 
     def menue_smartartLayout(self):
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for e in SA.LAYOUT_KATALOG:
@@ -106,7 +106,7 @@ class EinfuegenObjektBefehle:
 
 
     def menue_smartartFarben(self):
-        from lunivo_writer.editor.objekte import smartart as SA
+        from lunivo_writer.editor.objekte.smartart import smartart as SA
         from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n, f in SA.FARBEN.items():
@@ -116,7 +116,7 @@ class EinfuegenObjektBefehle:
 
     def wordart(self, k=None):
         if self.ed:
-            from lunivo_writer.editor.objekte import frei_objekt as FO
+            from lunivo_writer.editor.objekte.frei import frei_objekt as FO
             from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import WordArtDialog
             d = WordArtDialog(self.w, self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or "Ihr Text")
             if d.exec():
@@ -130,7 +130,7 @@ class EinfuegenObjektBefehle:
         Drehgriff, Schnellleiste), der Text grau hinterlegt; Text ändern: Doppelklick oder „WordArt bearbeiten …“."""
         if not self.ed:
             return
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FO.WORDART_STANDARD["text"]
         FO.einfuegen(self.ed, "wordart", {**FO.WORDART_STANDARD, "text": text, "vorlage": nr})
         self.w._sync_format()
@@ -140,7 +140,7 @@ class EinfuegenObjektBefehle:
         """Text und Stil des gewählten WordArt-Objekts im Fenster „WordArt“ ändern."""
         if not self.ed:
             return
-        from lunivo_writer.editor.objekte import frei_objekt as FO
+        from lunivo_writer.editor.objekte.frei import frei_objekt as FO
         from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import WordArtDialog
         d0 = FO.daten_lesen(self.ed, "wordart")
         if d0 is None:
@@ -211,7 +211,7 @@ class EinfuegenObjektBefehle:
         from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
         from PySide6.QtWidgets import QButtonGroup, QLabel, QToolButton, QWidget
         from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe
-        from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+        from lunivo_writer.core.dokument.farben import Farbe
         from lunivo_writer.editor.seite import deckblatt as DB
         from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
         HOCH, QUER = QSize(130, 184), QSize(184, 130)
@@ -277,7 +277,7 @@ class EinfuegenObjektBefehle:
             from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import DiagrammDialog
             d = DiagrammDialog(self.w)
             if d.exec():
-                from lunivo_writer.editor.objekte import frei_objekt as FO
+                from lunivo_writer.editor.objekte.frei import frei_objekt as FO
                 FO.einfuegen(self.ed, "diagramm", d.daten(), *FO.STANDARD_MASS["diagramm"])
 
 
@@ -289,7 +289,7 @@ class EinfuegenObjektBefehle:
             if d.exec():
                 n, farbe = d.ergebnis()
                 if n:
-                    from lunivo_writer.editor.objekte import frei_objekt as FO
+                    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
                     FO.einfuegen(self.ed, "piktogramm", {"name": n, "farbe": farbe}, 96, 96)
 
 
@@ -346,14 +346,14 @@ class EinfuegenObjektBefehle:
             self.w.statusBar().showMessage("Das ursprüngliche Dokument ist nicht mehr verfügbar — das Bildschirmfoto wurde nicht eingefügt.", 6000)
             return
         if pm is not None and not pm.isNull():
-            from lunivo_writer.editor.objekte import frei_objekt as FO
+            from lunivo_writer.editor.objekte.frei import frei_objekt as FO
             img = pm.toImage()
             FO.bild_einfuegen(ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
 
 
     def textfeld(self, k=None):
         if self.ed:
-            from lunivo_writer.editor.objekte import frei_objekt as FO
+            from lunivo_writer.editor.objekte.frei import frei_objekt as FO
             FO.einfuegen(self.ed, "textfeld", dict(FO.TEXTFELD_STANDARD), 240, 60)
 
 
@@ -367,8 +367,8 @@ class EinfuegenObjektBefehle:
     def textAusDatei(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.dienste import dateiformate as formats
-        from lunivo_writer.kern.dokument.bericht import DocumentIOError
+        from lunivo_writer.dienste.dateizugriff import dateiformate as formats
+        from lunivo_writer.core.dokument.bericht import DocumentIOError
         from lunivo_writer.editor.dokument import einfuegen as E
         from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.OPEN_FILTER)
@@ -442,8 +442,8 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         import re
-        from lunivo_writer.kern.dokument.dokument import Auswahl, Position
-        from lunivo_writer.dienste import bausteine
+        from lunivo_writer.core.dokument.dokument import Auswahl, Position
+        from lunivo_writer.dienste.dokumentpflege import bausteine
         s = self.ed.sitzung
         if s.auswahl.leer:
             a = s._absatz(s.auswahl.kopf.absatz_id)

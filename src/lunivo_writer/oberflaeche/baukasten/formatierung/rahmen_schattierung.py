@@ -25,13 +25,13 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QSizePolicy, QComboBox, QDialog, QDoubleSpinBox, QLabel, QListWidget, QListWidgetItem, QPushButton, QToolButton, QWidget
 
 from lunivo_writer.editor.text import muster as M
-from lunivo_writer.editor.objekte.linie import LINIENBREITEN, STILE, Linie
+from lunivo_writer.editor.objekte.formen.linie import LINIENBREITEN, STILE, Linie
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.oberflaeche.baukasten.basis.linien import RahmenSeiten, rahmen_symbol
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import _PT_MM, EinheitFeld
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_RAHMENABSTAND, GROESSE_FENSTER_RAHMEN_SCHATTIERUNG, GROESSE_FENSTER_SEITENRAND, GROESSE_LINIENBREITE_BILD, GROESSE_LINIENBREITE_BILD_STANDARD, GROESSE_RAHMENART_BILD, GROESSE_RAHMENKANTEN_MIN, GROESSE_RAHMENKANTEN_WUNSCH, GROESSE_RAHMENSEITE_KNOPF, GROESSE_RAHMENVORSCHAU, HOEHE_BEREICH_MITTEL, ICON_KNOPF_GROSS, ICON_MITTEL, ICON_NORMAL, RADIUS_FELD, RAND_RAHMEN_SEITE, RAND_SCHATTIERUNG_SEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_ZAHL

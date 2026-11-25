@@ -52,7 +52,7 @@ class PanelRahmen(QWidget):
         v = _spalte("kein", self)
         self.titel = QLabel(titel); f = self.titel.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 1); self.titel.setFont(f)
         if titel_teile:
-            from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+            from lunivo_writer.farmwork.datentypen.farben import Farbe
             self.titel = QWidget(); t = _reihe("kein", self.titel)
             for teil, farbe in titel_teile:
                 lb = QLabel(teil); lb.setFont(f)

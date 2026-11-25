@@ -15,8 +15,8 @@ from PySide6.QtGui import QImage
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
-from lunivo_writer.editor.objekte.bilddaten import bild_aus_datei
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.editor.objekte.bild.bilddaten import bild_aus_datei
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.medien.bildformate import BILD_FILTER
 from lunivo_writer.editor.diagramme import diagramm_format as DF
 from lunivo_writer.editor.text import muster as M

@@ -5,7 +5,7 @@ Alle Befehle wirken über den ``KernEditor`` auf das Dokumentmodell (Tabellen- u
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 from lunivo_writer.farmwork.befehle_alt.hilfen import _farbfeld
 
 
@@ -43,20 +43,20 @@ class TabellenFormatBefehle:
         e, c, t = self._tab()
         if not t:
             return
-        from lunivo_writer.kern.funktionen.verweise import verweise
-        from lunivo_writer.oberflaeche.funktionen.verweise.beschriftung_dialog import BeschriftungDialog
+        from lunivo_writer.core.funktionen.verweise.beschriftungen import beschriftung
+        from lunivo_writer.oberflaeche.funktionen.verweise.dialoge.beschriftung_dialog import BeschriftungDialog
         try:
             eigene = [str(x) for x in json.loads(self.w.settings.get("verweise/beschriftungen", "[]") or "[]")]
         except (ValueError, TypeError):
             eigene = []
-        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: verweise.naechste_nummer(e, label, zahl), objekt=True, label="Tabelle")
+        d = BeschriftungDialog(self.w, eigene, lambda label, zahl: beschriftung.naechste_nummer(e, label, zahl), objekt=True, label="Tabelle")
         d.pos.setCurrentIndex(1 if oben else 0)
         ok = d.exec()
         if d.eigene != eigene:
             self.w.settings.set("verweise/beschriftungen", json.dumps(d.eigene, ensure_ascii=False))
         if ok:
             r = d.ergebnis()
-            verweise.beschriftung_einfuegen(e, r["label"], "", r["oben"], nach=r["nach"], ohne_bezeichnung=r["ohne"], zahl=r["zahl"])
+            beschriftung.beschriftung_einfuegen(e, r["label"], "", r["oben"], nach=r["nach"], ohne_bezeichnung=r["ohne"], zahl=r["zahl"])
 
     def menue_tabelleSchattierung(self):
         def setze(col):
@@ -169,7 +169,7 @@ class TabellenFormatBefehle:
 
     def tabelleMasseLesen(self):
         """(Breite der Spalte, Höhe der Zeile) der Schreibmarke in mm für die Zahlenfelder des Bandes; ``None`` außerhalb einer Tabelle."""
-        from lunivo_writer.kern.geometrie import px_to_mm
+        from lunivo_writer.core.geometrie import px_to_mm
         e, c, t = self._tab()
         if not t:
             return None

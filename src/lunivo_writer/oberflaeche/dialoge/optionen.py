@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QWidget,
 )
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis import daten
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 from lunivo_writer.oberflaeche.baukasten.geruest import module

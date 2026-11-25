@@ -41,7 +41,7 @@ class ChatReglerBlock(QWidget):
                              int(round(float(o["temperatur"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(temperatur=w / 10))
         self.s_top = regler("Top P", "Wie viele der wahrscheinlichsten Wörter zur Wahl stehen. Gilt für Ollama und eigene Anbieter.", 10,
                             int(round(float(o["topP"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(topP=w / 10))
-        from lunivo_writer.ki import ki as _ki
+        from lunivo_writer.ki.dienst import ki as _ki
         stufen = _ki.NUM_CTX_STUFEN
         self.s_alive = regler("Modell im Speicher halten", "Minuten, die Ollama das Modell nach der letzten Antwort geladen lässt. "
                               "Länger = schneller, belegt aber Arbeitsspeicher. 0 = sofort entladen.", _ki.KEEP_ALIVE_MAX,

@@ -5,9 +5,9 @@ from __future__ import annotations
 from PySide6.QtCore import QByteArray, QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QRadialGradient
 
-from lunivo_writer.kern.geometrie import Point, Rect
-from lunivo_writer.kern.rendering import ImageFill, LinearGradient, PatternFill, RadialGradient, RenderBackend, Style, TextureFill
-from lunivo_writer.kern.textsatz import FontSpec
+from lunivo_writer.core.geometrie import Point, Rect
+from lunivo_writer.core.rendering import ImageFill, LinearGradient, PatternFill, RadialGradient, RenderBackend, Style, TextureFill
+from lunivo_writer.core.textsatz import FontSpec
 
 
 def _farbe(style: Style) -> QColor:
@@ -102,7 +102,7 @@ class QtRenderBackend(RenderBackend):
 
     def draw_text(self, text: str, position: Point, font, style: Style) -> None:
         if isinstance(font, FontSpec):                     # Schrift des Dokuments: Stellen und Konturen liefert der Kern (HarfBuzz/FreeType), Qt füllt nur die fertigen Pfade
-            from lunivo_writer.kern.rendering.textpfad import gemeinsame_engine
+            from lunivo_writer.core.rendering.text.textpfad import gemeinsame_engine
             ops = gemeinsame_engine().glyphen_pfad(text, font, position.x, position.y)
             if ops:
                 self.draw_path(ops, Style(color=style.color, width=0, filled=True), True, True)
@@ -214,17 +214,17 @@ class QtRenderBackend(RenderBackend):
         self.p.restore()
 
     def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0, source_rect: Rect | None = None) -> None:
-        from lunivo_writer.kern.dokument.bildformat import format_erkennen
+        from lunivo_writer.core.dokument.bildformat import format_erkennen
         fmt = format_erkennen(data[:2048]) if data else None
         if fmt == "svg" and source_rect is None:
             from PySide6.QtSvg import QSvgRenderer
-            from lunivo_writer.editor.objekte import bilddaten as BD
+            from lunivo_writer.editor.objekte.bild import bilddaten as BD
             rd = QSvgRenderer(QByteArray(BD.svg_bereinigen(data)))
             if rd.isValid():
                 rd.render(self.p, _qrect(rect))
             return
         if fmt in ("emf", "wmf") and source_rect is None:
-            from lunivo_writer.dienste import vektor_bilder as V
+            from lunivo_writer.dienste.ausgabe import vektor_bilder as V
             if (V.emf_zeichnen if fmt == "emf" else V.wmf_zeichnen)(data, self.p, _qrect(rect)):
                 return
         img = _bild(data)
@@ -245,7 +245,7 @@ class QtRenderBackend(RenderBackend):
                     self.p.drawImage(_qrect(rect), img, quelle)
 
     def draw_shadow(self, ops: list, color: tuple, blur: float, dx: float, dy: float) -> None:
-        from lunivo_writer.editor.objekte import bildeffekte as E
+        from lunivo_writer.editor.objekte.bild import bildeffekte as E
         pf = self._vereinigt(self._pfade(ops), False)
         grenzen = pf.boundingRect()
         rand = int(blur * 2) + 2

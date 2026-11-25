@@ -23,7 +23,7 @@ from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
 from lunivo_writer.editor.text import muster as M
 from lunivo_writer.editor.text import texteffekt as T
-from lunivo_writer.editor.objekte import bildeffekte as BE
+from lunivo_writer.editor.objekte.bild import bildeffekte as BE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.farbpalette import FarbFeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import AngepassteReiter, UmbruchSchalter
 from lunivo_writer.oberflaeche.baukasten.basis.linien import Linie, LinienWahl
@@ -32,8 +32,8 @@ from lunivo_writer.oberflaeche.baukasten.felder.schiebe_feld import SchiebeFeld
 from lunivo_writer.oberflaeche.baukasten.formatierung.texteffekt_dialog import Abschnitt, TexteffektPanel, seitengitter
 from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 
-from lunivo_writer.editor.objekte.linie import OBJEKT_STRICHE
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.editor.objekte.formen.linie import OBJEKT_STRICHE
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_SPALTE, GROESSE_ABSCHLUSS_KACHEL, ICON_NORMAL, RAND_FORMATSEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 STRICHE = [k for k, _name in OBJEKT_STRICHE]                                    # die eine Liste der Strichlinien (editor/objekte/linie.py)

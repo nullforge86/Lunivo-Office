@@ -4,9 +4,11 @@ Beschriftung, Abschnitt. Die Oberfläche ist der Reiter „Gehe zu“ im Feld �
 Alle Stellen sind Zeichenstellen im Rohtext (Absätze durch ein Zeichen getrennt, wie ``textCursor().position()``)."""
 from __future__ import annotations
 
-from lunivo_writer.kern.dokument.dokument import InlineObjekt, Tabelle
-from lunivo_writer.kern.bearbeitung.suche import position_zu_offset
-from lunivo_writer.kern.funktionen.verweise import verweise
+from lunivo_writer.core.dokument.dokument import InlineObjekt, Tabelle
+from lunivo_writer.core.bearbeitung.suche import position_zu_offset
+from lunivo_writer.core.funktionen.verweise.beschriftungen import beschriftung
+from lunivo_writer.core.funktionen.verweise.querverweise import querverweis
+from lunivo_writer.core.funktionen.verweise.textmarken import textmarke
 
 NUMMERN = ("Seite", "Zeile")                                    # man gibt eine Zahl ein
 LISTEN = ("Überschrift", "Textmarke", "Beschriftung", "Kommentar", "Fußnote", "Endnote", "Tabelle", "Bild", "Abschnitt")
@@ -53,15 +55,15 @@ def zeilenstart(ed, n: int) -> int:
 
 
 def _ziele_ueberschrift(ed):
-    return [(z["text"], z["pos"]) for z in verweise.querverweis_ziele(ed) if z["art"] == "Überschrift"]
+    return [(z["text"], z["pos"]) for z in querverweis.querverweis_ziele(ed) if z["art"] == "Überschrift"]
 
 
 def _ziele_textmarke(ed):
-    return [(d["name"], d["von"]) for d in verweise.lesezeichen_liste(ed, versteckte=False)]
+    return [(d["name"], d["von"]) for d in textmarke.lesezeichen_liste(ed, versteckte=False)]
 
 
 def _ziele_beschriftung(ed):
-    return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in verweise.beschriftungen_liste(ed)]
+    return [(f"{k['label']}: {_kurz(k['text'])}", k["pos"]) for k in beschriftung.beschriftungen_liste(ed)]
 
 
 def _ziele_kommentar(ed):

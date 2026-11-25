@@ -5,7 +5,7 @@ eigener Gruppenstruktur, die Word nicht verlangt). Was RTF nicht ausdrückt, ste
 from __future__ import annotations
 
 from lunivo_writer.dienste.rtf.formen import _FORM
-from lunivo_writer.dienste.rtf_basis import _text
+from lunivo_writer.dienste.rtf.rtf_basis import _text
 
 _TYP = {v: k for k, v in _FORM.items()}
 _UMBRUCH = {"oben_unten": 1, "quadrat": 2, "vor": 3, "hinter": 3, "eng": 4}

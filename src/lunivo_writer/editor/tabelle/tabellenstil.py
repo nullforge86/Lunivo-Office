@@ -6,7 +6,7 @@ einzelnen Zellen bleiben erhalten, bis die Vorlage erneut angewendet wird. Angew
 from __future__ import annotations
 
 # Name: (Kopf-Füllung, Kopf-Schrift, Streifen-Füllung, Rahmen)
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 VORLAGEN = {
     "Gitternetz": (None, None, None, 1),
     "Einfach": (None, None, None, 0),

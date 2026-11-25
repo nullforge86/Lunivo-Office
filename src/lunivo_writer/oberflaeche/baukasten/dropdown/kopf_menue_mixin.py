@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor, QIcon
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.objektmenues.fuell_voreinstellungen import fuell_bild, fuell_menue, graduell_paar
 from lunivo_writer.oberflaeche.baukasten.dropdown.kopf_dropdown import KopfDropdown
 from lunivo_writer.oberflaeche.baukasten.dropdown.objektmenues.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel

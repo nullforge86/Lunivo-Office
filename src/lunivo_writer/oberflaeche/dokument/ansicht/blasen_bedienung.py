@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt
 
-from lunivo_writer.kern.bearbeitung.suche import offset_zu_position
-from lunivo_writer.kern.geometrie import mm_to_px
-from lunivo_writer.kern.layout import schreibmarke as SM
-from lunivo_writer.editor.objekte import sprechblasen as SB
+from lunivo_writer.core.bearbeitung.suche import offset_zu_position
+from lunivo_writer.core.geometrie import mm_to_px
+from lunivo_writer.core.layout import schreibmarke as SM
+from lunivo_writer.editor.objekte.formen import sprechblasen as SB
 
 
 class BlasenBedienung:

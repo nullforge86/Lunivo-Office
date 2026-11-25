@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QToolButton, QWidget,
 )
 
-from lunivo_writer.dienste.pdf_export import DRUCK, PdfWahl, kennwort_fehler
+from lunivo_writer.dienste.pdf.pdf_export import DRUCK, PdfWahl, kennwort_fehler
 
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FELDHOEHE as FELD_H, FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_EXPORT_ABSCHNITT, ABSTAND_KLEIN, ABSTAND_NORMAL, ABSTAND_ZEILE, RAND_EXPORT_ABSCHNITT, RAND_EXPORT_FENSTER, RAND_EXPORT_SCHUTZ, RAND_EXPORT_SEITENZEILE, RAND_EXPORT_WEITERE, RAND_KEIN, RAND_OBEN_SEITE, RAND_ZEILE

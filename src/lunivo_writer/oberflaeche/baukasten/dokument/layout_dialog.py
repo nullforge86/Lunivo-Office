@@ -31,7 +31,7 @@ BUCH = [("innen", "Innen"), ("aussen", "Außen")]
 ZEILEN = [("beide", "Beide Seiten"), ("links", "Nur links"), ("rechts", "Nur rechts"), ("groesste", "Nur größte Seite")]
 UMFLIESSEND = ("quadrat", "passend", "transparent")                 # nur hier gelten „Zeilenumbruch“ und „Abstand zum Text“
 
-from lunivo_writer.editor.objekte.bildlayout import STANDARD  # noqa: E402
+from lunivo_writer.editor.objekte.bild.bildlayout import STANDARD  # noqa: E402
 
 
 def _combo(eintraege, aktuell) -> QComboBox:

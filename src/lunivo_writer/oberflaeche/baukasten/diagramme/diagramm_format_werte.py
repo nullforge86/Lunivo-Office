@@ -3,7 +3,7 @@
 Mixin zu ``diagramm_format_panel.DiagrammFormatPanel`` und steht dort vor den Panel-Basen (``super()`` führt weiter zu ``ObjektFormatPanel``)."""
 from __future__ import annotations
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.diagramme import diagramm_format as F
 from lunivo_writer.oberflaeche.baukasten.basis.linien import Linie
 from lunivo_writer.oberflaeche.baukasten.diagramme.diagramm_format_bausteine import _OHNE, _optionen_name, _text_teil, _still

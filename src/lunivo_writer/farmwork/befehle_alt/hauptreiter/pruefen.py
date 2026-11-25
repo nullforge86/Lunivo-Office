@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from PySide6.QtWidgets import QMessageBox
-from lunivo_writer.kern.funktionen.sendungen import serienbrief, serienfelder, serienquelle
+from lunivo_writer.core.funktionen.sendungen.serienbrief import serienbrief, serienfelder, serienquelle
 from lunivo_writer.farmwork.funktionen.korrektur import einstellungen as korrektur_einstellungen
 from lunivo_writer.farmwork.funktionen.sendungen import befehle as sendungen_befehle
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
@@ -20,7 +20,7 @@ class PruefenBefehle:
         if not self.ed:
             return
         from lunivo_writer.editor.text import statistik as S
-        from lunivo_writer.oberflaeche.funktionen.ueberpruefen.woerter_dialog import WoerterDialog
+        from lunivo_writer.oberflaeche.funktionen.ueberpruefen.dialoge.woerter_dialog import WoerterDialog
         texte = S.texte_des_dokuments(self.ed.sitzung.dokument)
         noten = [t for art in ("f", "e") for t in self.ed.noten.get(art, {}).values()]
         seiten = self.ed.page_count
@@ -109,7 +109,7 @@ class PruefenBefehle:
     # ---- Sendungen --------------------------------------------------------------------------------------------
     # ---- Vergleichen und Zusammenführen ---------------------------------------------------------------------------------------
     def _fassung_laden(self, pfad: str):
-        from lunivo_writer.dienste.modell_laden import lade_modell
+        from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
         try:
             return lade_modell(pfad).document
         except Exception as e:                                  # unlesbare Datei: melden, nicht abbrechen
@@ -178,7 +178,7 @@ class PruefenBefehle:
 
 
     def umschlag(self, k=None):
-        from lunivo_writer.oberflaeche.funktionen.sendungen.umschlag_dialog import UmschlagDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.umschlag_dialog import UmschlagDialog
         b = self.w.benutzerdaten()
         absender = "\n".join(x for x in (b["name"], b["strasse"], b["plz_ort"]) if x)
         d = UmschlagDialog(self.w, absender)
@@ -189,7 +189,7 @@ class PruefenBefehle:
 
 
     def etiketten(self, k=None):
-        from lunivo_writer.oberflaeche.funktionen.sendungen.etiketten_dialog import EtikettenDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.etiketten_dialog import EtikettenDialog
         d = EtikettenDialog(self.w)
         if d.exec():
             t = self._neues_blatt("Etiketten")
@@ -216,7 +216,7 @@ class PruefenBefehle:
 
     def seriendruckregel(self, k=None):
         if self.ed:
-            from lunivo_writer.oberflaeche.funktionen.sendungen.regel_dialog import RegelDialog
+            from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.regel_dialog import RegelDialog
             d = RegelDialog(self.w)
             if d.exec() and d.feld.text().strip():
                 sendungen_befehle.regel_einfuegen(self.ed, d.feld.text().strip(), d.wert.text().strip(), d.dann.text(), d.sonst.text())
@@ -225,7 +225,7 @@ class PruefenBefehle:
     def seriendruck(self, k=None):
         if not self.ed:
             return
-        from lunivo_writer.oberflaeche.funktionen.sendungen.seriendruck_dialog import SeriendruckDialog
+        from lunivo_writer.oberflaeche.funktionen.sendungen.dialoge.seriendruck_dialog import SeriendruckDialog
         d = SeriendruckDialog(self.w, serienfelder.felder_im_text(self.ed.sitzung.dokument), self.w.settings.get("serien/liste", ""))
         if not d.exec():
             return

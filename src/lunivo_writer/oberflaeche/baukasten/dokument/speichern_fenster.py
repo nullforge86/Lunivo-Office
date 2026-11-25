@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
     QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QStackedWidget, QToolButton, QTreeView, QWidget,
 )
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
 from lunivo_writer.oberflaeche.baukasten.geruest.spalten import ZweiSpalter

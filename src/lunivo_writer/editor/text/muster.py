@@ -9,11 +9,11 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QImage, QPixmap
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 _BAYER = ((0, 32, 8, 40, 2, 34, 10, 42), (48, 16, 56, 24, 50, 18, 58, 26), (12, 44, 4, 36, 14, 46, 6, 38), (60, 28, 52, 20, 62, 30, 54, 22),
           (3, 35, 11, 43, 1, 33, 9, 41), (51, 19, 59, 27, 49, 17, 57, 25), (15, 47, 7, 39, 13, 45, 5, 37), (63, 31, 55, 23, 61, 29, 53, 21))
 
-from lunivo_writer.kern.dokument.musterschluessel import LINIEN as _LINIEN, MUSTER, PROZENT, _pct_name  # noqa: F401 — die Schlüsseltabelle liegt Qt-frei im Kern
+from lunivo_writer.core.dokument.musterschluessel import LINIEN as _LINIEN, MUSTER, PROZENT, _pct_name  # noqa: F401 — die Schlüsseltabelle liegt Qt-frei im Kern
 
 _NAME = {k: n for k, n, _o in MUSTER}
 _OOXML = {k: o for k, _n, o in MUSTER}

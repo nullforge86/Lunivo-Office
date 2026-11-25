@@ -1,7 +1,7 @@
 """Einstellungen der Funktion „Überprüfen“: Darstellung des Markups in Sprechblasen."""
 from __future__ import annotations
 
-from lunivo_writer.editor.objekte import sprechblasen
+from lunivo_writer.editor.objekte.formen import sprechblasen
 from lunivo_writer.farmwork.schnittstellen.einstellungen import Einstellungen
 
 BALLONS = "sprechblasen/verwenden"

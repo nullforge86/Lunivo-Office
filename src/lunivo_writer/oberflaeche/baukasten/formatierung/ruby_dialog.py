@@ -18,7 +18,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlae
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import spin
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 

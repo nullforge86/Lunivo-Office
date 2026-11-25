@@ -42,12 +42,12 @@ def _schritt(ed, arbeit) -> int:
 
 
 def _auswahl(a, von: int, bis: int):
-    from lunivo_writer.kern.dokument.dokument import Auswahl, Position
+    from lunivo_writer.core.dokument.dokument import Auswahl, Position
     return Auswahl(Position(a.id, von), Position(a.id, bis))
 
 
 def leere_loeschen(ed) -> int:
-    from lunivo_writer.kern.dokument.dokument import Auswahl, Position
+    from lunivo_writer.core.dokument.dokument import Auswahl, Position
 
     def arbeit(s, bloecke):
         n = 0
@@ -60,7 +60,7 @@ def leere_loeschen(ed) -> int:
 
 
 def leere_einfuegen(ed) -> int:
-    from lunivo_writer.kern.dokument.dokument import Position
+    from lunivo_writer.core.dokument.dokument import Position
 
     def arbeit(s, bloecke):
         n = 0
@@ -84,8 +84,8 @@ def zeilenumbruch_in_return(ed) -> int:
 
 def absaetze_neu_anordnen(ed) -> int:
     """Absätze, die mitten im Satz enden (hartes Return in einem Satz, etwa aus PDF-Text), werden zu einem Absatz."""
-    from lunivo_writer.kern.dokument.dokument import Auswahl, Position
-    from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
+    from lunivo_writer.core.dokument.dokument import Auswahl, Position
+    from lunivo_writer.core.dokument.formatvorlagen import ueberschriftsebene
 
     def arbeit(s, bloecke):
         n = 0
@@ -117,7 +117,7 @@ def leerzeichen_bereinigen(ed) -> int:
 
 
 def _punkte(s, a) -> float:
-    from lunivo_writer.kern.layout import formatwerte as F
+    from lunivo_writer.core.layout import formatwerte as F
     return float(F.zeichenformat(s.dokument, a, {}).get("groesse_pt") or 11.0)
 
 
@@ -182,8 +182,8 @@ def leerabsatz_modus_wechseln(ed) -> int:
 
 def einzug_in_leerzeichen(ed) -> int:
     """Den Erstzeileneinzug eines Absatzes in Leerzeichen am Absatzanfang umwandeln (gleich breit), der Einzug selbst wird 0."""
-    from lunivo_writer.kern.dokument.dokument import Position
-    from lunivo_writer.kern.layout import formatwerte as F
+    from lunivo_writer.core.dokument.dokument import Position
+    from lunivo_writer.core.layout import formatwerte as F
 
     def arbeit(s, bloecke):
         n = 0

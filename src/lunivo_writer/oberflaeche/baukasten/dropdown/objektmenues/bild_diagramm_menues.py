@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QMenu, QPushButton, QScrollArea, Q
 
 from lunivo_writer.oberflaeche.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.oberflaeche.baukasten.basis.texte import trennlinie
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import abschnittsband, reiter_knopf_stil
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitter
@@ -29,7 +29,7 @@ BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfe
 
 # ---- Zuschneiden --------------------------------------------------------------------------------------------------------------
 def _form_bild(name: str) -> QIcon:
-    from lunivo_writer.editor.objekte import formen_katalog as K
+    from lunivo_writer.editor.objekte.formen import formen_katalog as K
     pm = QPixmap(QSize(*GROESSE_FORMBILD_KACHEL)); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
@@ -44,7 +44,7 @@ def _abschnittsleiste(text: str) -> QLabel:
 
 def zuschneiden_menue(b) -> QMenu:
     """Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``)."""
-    from lunivo_writer.editor.objekte import bildzuschnitt as BZ
+    from lunivo_writer.editor.objekte.bild import bildzuschnitt as BZ
     from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
     m = MenueListe(b.w)
     wid = QWidget()

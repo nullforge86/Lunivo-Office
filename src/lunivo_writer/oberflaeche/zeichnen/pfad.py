@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QPainterPath
 
-from lunivo_writer.kern.dokument.objekte import VectorPath
+from lunivo_writer.core.dokument.objekte import VectorPath
 
 
 def pfad_zu_vektor(pfad: QPainterPath) -> VectorPath:

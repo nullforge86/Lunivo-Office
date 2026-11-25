@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import os
 
-from lunivo_writer.dienste import dateiformate as formats
-from lunivo_writer.dienste import wiederherstellung
+from lunivo_writer.dienste.dateizugriff import dateiformate as formats
+from lunivo_writer.dienste.dokumentpflege import wiederherstellung
 from lunivo_writer.farmwork.schnittstellen.einstellungen import Einstellungen
 from lunivo_writer.farmwork.funktionen.datei import einstellungen as datei_einstellungen
 
@@ -19,7 +19,7 @@ class DocumentManager:
     # ---- Laden und Speichern -------------------------------------------------------------------------
     def laden(self, path: str, kennwort: str | None = None):
         """Liest eine Datei; Fehler (DocumentIOError, PasswortNoetig) gehen an den Aufrufer."""
-        from lunivo_writer.dienste.modell_laden import lade_modell
+        from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
         return lade_modell(path, kennwort)
 
     def meta_fuer_speichern(self, meta: dict) -> dict:
@@ -35,10 +35,10 @@ class DocumentManager:
     def speichern(self, path: str, dokument, seite, meta: dict, erwartet=None):
         """Schreibt das Dokument; gibt den Bericht über nicht Übernommenes zurück. ``erwartet``: der zuletzt gesehene ``stand`` der Zieldatei
         (siehe ``sicher_schreiben.schreiben``); ohne Angabe wird nicht verglichen."""
-        from lunivo_writer.kern.dokument import Dokument
+        from lunivo_writer.core.dokument import Dokument
         if not isinstance(dokument, Dokument):
             raise TypeError("Gespeichert wird nur das Dokumentmodell (core.document.Dokument), kein Qt-Textdokument.")
-        from lunivo_writer.dienste import modell_speichern, sicher_schreiben
+        from lunivo_writer.dienste.dateizugriff import modell_speichern, sicher_schreiben
         stand = erwartet[0] if erwartet is not None else sicher_schreiben.UNGEPRUEFT
         return modell_speichern.speichere_modell(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=stand)
 
@@ -66,7 +66,7 @@ class DocumentManager:
                 modell = t.modell_fuer_speichern() if hasattr(t, "modell_fuer_speichern") else None
                 if modell is None:
                     continue
-                from lunivo_writer.dienste.modell_speichern import speichere_modell
+                from lunivo_writer.dienste.dateizugriff.modell_speichern import speichere_modell
                 speichere_modell(docx_path, modell, t.page, t.meta, sicherung=False)
                 wiederherstellung.write_meta(t.token, t.path or "", t.title)
                 if datei_einstellungen.staende_sichern(self.settings):

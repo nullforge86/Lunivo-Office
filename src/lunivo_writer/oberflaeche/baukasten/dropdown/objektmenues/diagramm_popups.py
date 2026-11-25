@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte_rolle
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil, trennlinie
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, ABSTAND_NORMAL, BREITE_BEREICHSLISTE_POPUP, GROESSE_DIAGRAMMSTIL_POPUP, GROESSE_SCHNELLLAYOUT_BILD, GROESSE_SCHNELLLAYOUT_KNOPF, GROESSE_STILKACHEL_RAND, HOEHE_POPUP_SEITE, ICON_NORMAL, RAND_BOX, RAND_BOX_KOMPAKT, RAND_KEIN, RAND_POPUP_FILTERGRUPPE, RAND_POPUP_FUSS, RAND_POPUP_KOPF, RAND_POPUP_SEITE, RAND_POPUP_UNTERTEXT
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -36,7 +36,7 @@ BREITE = 340
 
 
 def _dg(b) -> dict:
-    from lunivo_writer.editor.objekte import frei_objekt as FO
+    from lunivo_writer.editor.objekte.frei import frei_objekt as FO
     return (FO.daten_lesen(b.ed, "diagramm") if getattr(b, "ed", None) else None) or {}
 
 

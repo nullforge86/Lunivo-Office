@@ -17,7 +17,7 @@ from lunivo_writer.oberflaeche.baukasten import weitere_farben
 
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_KNOPF_SILBE, HOEHE_TEXT_NORMAL, RADIUS_FELD, RAND_KEIN, SCHRIFT_VORSCHAU
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_KURZ
 class SilbenDialog(PanelFaehig, QDialog):

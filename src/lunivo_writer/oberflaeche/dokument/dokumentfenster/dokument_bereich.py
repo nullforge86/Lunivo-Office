@@ -9,11 +9,11 @@ import os
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QScrollArea
 
-from lunivo_writer.kern.dokument import neues_dokument
-from lunivo_writer.kern.dokument.formatvorlagen import eingebaute_vorlagen
-from lunivo_writer.dienste import wiederherstellung
-from lunivo_writer.dienste.modell_laden import ModellGeladen
-from lunivo_writer.kern.dokument.seite import PageSettings, mm_to_px
+from lunivo_writer.core.dokument import neues_dokument
+from lunivo_writer.core.dokument.formatvorlagen import eingebaute_vorlagen
+from lunivo_writer.dienste.dokumentpflege import wiederherstellung
+from lunivo_writer.dienste.dateizugriff.modell_laden import ModellGeladen
+from lunivo_writer.core.dokument.seite import PageSettings, mm_to_px
 from lunivo_writer.oberflaeche.dokument.bearbeitung.kern_editor import KernEditor
 
 

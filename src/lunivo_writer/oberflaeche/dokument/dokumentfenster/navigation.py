@@ -18,14 +18,14 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QWidget,
 )
 
-from lunivo_writer.oberflaeche.funktionen.korrektur.schreibhilfe_katalog import VORLESEN
+from lunivo_writer.oberflaeche.funktionen.korrektur.band.schreibhilfe_katalog import VORLESEN
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.oberflaeche.baukasten.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from lunivo_writer.oberflaeche.baukasten.thema.thema import karte_einrichten
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label, marke_faerben
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_SEITENLEISTE_PANEL, ABSTAND_KARTENZEILE, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_VERFOLGEN_KNOPF, GROESSE_STUFE, HOEHE_FELD, HOEHE_TEXT_MITTEL, HOEHE_TEXT_NORMAL, PADDING_MARKE, PADDING_NAVIGATION_KNOPF, RADIUS_MARKE, RADIUS_STUFE, RAND_KARTE_NAVIGATION, RAND_KEIN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
 
@@ -324,7 +324,7 @@ class NavigationPanel(QWidget):
                       "oben": (lambda e: e[0]["von"], False), "unten": (lambda e: e[0]["von"], True)}[self.sortierung]
         eintraege.sort(key=schluessel[0], reverse=schluessel[1])
         for i, (b, k) in enumerate(eintraege):
-            from lunivo_writer.editor.objekte.sprechblasen import karten_pt
+            from lunivo_writer.editor.objekte.formen.sprechblasen import karten_pt
             karte = KommentarKarte(b, k, ed, self.aktualisieren, karten_pt(self._einstellung("kommentare/schrift", "mittel")),
                                    bearbeiten=int(b["wert"]) == self._bearbeite, speichern=self._bearbeiten_speichern,
                                    abbrechen=self._bearbeiten_abbrechen, bearbeite_los=self.kommentar_bearbeiten)
@@ -399,7 +399,7 @@ class NavigationPanel(QWidget):
             self.leer.show()
             return
         eltern = {0: self.baum.invisibleRootItem()}
-        from lunivo_writer.kern.dokument.formatvorlagen import ueberschriftsebene
+        from lunivo_writer.core.dokument.formatvorlagen import ueberschriftsebene
         dok, stelle = ed.sitzung.dokument, 0
         n = 0
         for a in dok.absaetze():

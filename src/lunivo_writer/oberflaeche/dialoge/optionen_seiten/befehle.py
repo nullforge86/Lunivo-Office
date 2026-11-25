@@ -241,7 +241,7 @@ class BefehleSeiten:
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)
-        from lunivo_writer.editor.objekte import sprechblasen as SB
+        from lunivo_writer.editor.objekte.formen import sprechblasen as SB
         from lunivo_writer.oberflaeche.dokument.bearbeitung.kern_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
         neu = lambda _=None: self.w.markup_neu()                                               # noqa: E731
         f = p.gruppe(_t("optionen.befehle.markup"))

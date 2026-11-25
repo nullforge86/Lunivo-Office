@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import json
 from PySide6.QtGui import QCursor
-from lunivo_writer.oberflaeche.funktionen.ansicht.band_befehle import AnsichtBandBefehle
-from lunivo_writer.oberflaeche.funktionen.bearbeiten.band_befehle import BearbeitenBandBefehle
+from lunivo_writer.oberflaeche.funktionen.ansicht.band.band_befehle import AnsichtBandBefehle
+from lunivo_writer.oberflaeche.funktionen.bearbeiten.band.band_befehle import BearbeitenBandBefehle
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.datei import DateiBefehle
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.einfuegen import EinfuegenBefehle
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.ki import KIBefehle
-from lunivo_writer.oberflaeche.funktionen.ueberpruefen.band_befehle import UeberpruefenBandBefehle
-from lunivo_writer.oberflaeche.funktionen.kopffuss.band_befehle import KopfFussBandBefehle
+from lunivo_writer.oberflaeche.funktionen.ueberpruefen.band.band_befehle import UeberpruefenBandBefehle
+from lunivo_writer.oberflaeche.funktionen.kopffuss.band.band_befehle import KopfFussBandBefehle
 from lunivo_writer.farmwork.befehle_alt.kontextreiter.kontext import KontextBefehle
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.pruefen import PruefenBefehle
 from lunivo_writer.farmwork.befehle_alt.hauptreiter.seite import SeiteBefehle
@@ -31,7 +31,7 @@ from lunivo_writer.farmwork.befehle_alt.kontextreiter.smartart_knoten_zustand im
 from lunivo_writer.farmwork.befehle_alt.kontextreiter.smartarttools import SmartArtToolsBefehle
 from lunivo_writer.farmwork.befehle_alt.kontextreiter.texttools import TextToolsBefehle
 
-from lunivo_writer.oberflaeche.funktionen.verweise.band_befehle import VerweiseBandBefehle
+from lunivo_writer.oberflaeche.funktionen.verweise.band.band_befehle import VerweiseBandBefehle
 from lunivo_writer.farmwork.befehle_alt.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 

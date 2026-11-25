@@ -1,7 +1,7 @@
 """Optionen: Schreiben, Speichern, Drucken und PDF."""
 from __future__ import annotations
 
-from lunivo_writer.kern.schrift import standard_datenbank
+from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
 from lunivo_writer.oberflaeche.baukasten.geruest.module import anmelden
@@ -127,7 +127,7 @@ class DateiSeiten:
 
     def _zwischenstaende_loeschen(self):
         import shutil
-        from lunivo_writer.dienste import wiederherstellung
+        from lunivo_writer.dienste.dokumentpflege import wiederherstellung
         ordner = wiederherstellung.recovery_dir()
         if QMessageBox.question(self, _t("optionen.datei.zwischenstaende_loeschen"), _t("optionen.datei.alle_gesicherten_zwischenstaende_in_0_wi").format(ordner)) != QMessageBox.Yes:
             return
@@ -145,7 +145,7 @@ class DateiSeiten:
     def _sicherungskopien_oeffnen(self):
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        from lunivo_writer.dienste import sicher_schreiben
+        from lunivo_writer.dienste.dateizugriff import sicher_schreiben
         ordner = sicher_schreiben.sicherungs_ordner()
         os.makedirs(ordner, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(ordner))

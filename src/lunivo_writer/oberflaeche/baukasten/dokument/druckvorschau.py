@@ -20,7 +20,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QComboBox, QDialog, QFrame, QLabel, QPushButton, QScrollArea, QSpinBox, QWidget
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import trennlinie
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_DRUCKVORSCHAU_SEITEN, ABSTAND_MITTEL, BREITE_DRUCKVORSCHAU_SYMBOLKNOPF, BREITE_DRUCKVORSCHAU_ZOOMKNOPF, BREITE_SCHIENE, GROESSE_FENSTER_DRUCKVORSCHAU, HOEHE_FELD, ICON_GROSS, RAND_DRUCKVORSCHAU_SEITEN, RAND_KEIN, RAND_ZEILE_KARTE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld

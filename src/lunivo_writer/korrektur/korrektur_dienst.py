@@ -12,8 +12,8 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
-from lunivo_writer.kern.dokument.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
-from lunivo_writer.dienste.gelernt import Gelernt
+from lunivo_writer.core.dokument.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
+from lunivo_writer.dienste.dokumentpflege.gelernt import Gelernt
 from lunivo_writer.korrektur import autokorrektur, fund as fundlib, inkrement, pruefung, vorhersage
 
 _log = logging.getLogger("lunivo.proofing")

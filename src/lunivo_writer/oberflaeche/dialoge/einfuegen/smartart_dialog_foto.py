@@ -8,7 +8,7 @@ from __future__ import annotations
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from PySide6.QtCore import QSize
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
 from lunivo_writer.oberflaeche.dialoge.einfuegen.einfuegen_dialoge import SmartArtDialog, _layout_bildchen, _LayoutGalerie

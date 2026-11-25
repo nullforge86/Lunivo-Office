@@ -19,9 +19,9 @@ import base64
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QColor, QImage, QPainter
 
-from lunivo_writer.kern.geometrie import Point, Rect
-from lunivo_writer.kern.rendering.wasserzeichen import zeichne
-from lunivo_writer.kern.dokument.seite import mm_to_px
+from lunivo_writer.core.geometrie import Point, Rect
+from lunivo_writer.core.rendering.seite.wasserzeichen import zeichne
+from lunivo_writer.core.dokument.seite import mm_to_px
 
 VORGABEN = ("VERTRAULICH", "NICHT KOPIEREN", "ORIGINAL", "BEISPIEL", "STRENG GEHEIM", "EILT", "ENTWURF", "MUSTER", "KOPIE", "DRINGEND")
 GROESSEN = (36, 40, 44, 48, 54, 60, 66, 72, 80, 90, 96, 105, 120, 144)
@@ -56,6 +56,6 @@ def bild_aus_text(text: str) -> QImage:
 
 def zeichnen(p: QPainter, w: dict | None, r: QRectF) -> None:
     """Das Wasserzeichen ``w`` auf die Seite ``r`` (96-dpi-Bildpunkte) zeichnen: Lage, Größe und Deckkraft rechnet ``core/rendering/wasserzeichen.py``, gezeichnet wird über das Backend."""
-    from lunivo_writer.dienste.textsatz import standard_engine
+    from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_malen
     kern_malen(p, r, lambda z: zeichne(z, standard_engine(), w, Rect(r.x(), r.y(), r.width(), r.height())), rand=0.0)

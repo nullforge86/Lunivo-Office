@@ -16,7 +16,7 @@ from lunivo_writer.oberflaeche.baukasten.basis import farben as F
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitter
 
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_FARBKACHEL, DROPDOWN_HOEHE, DROPDOWN_INNEN_FARBE, SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, ICON_KLEIN, ICON_MITTEL, PADDING_PALETTE_TITEL_OBEN, RAND_KEIN, RAND_PANEL_KLEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe

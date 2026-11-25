@@ -21,7 +21,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QLabel, QTabBar, QLineEdit, QRadioButton, QWidget
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.diagramme import diagramm_format as F
 from lunivo_writer.editor.text import texteffekt as T
 from lunivo_writer.oberflaeche.baukasten.medien.alternativtext_abschnitt import AlternativtextAbschnitt

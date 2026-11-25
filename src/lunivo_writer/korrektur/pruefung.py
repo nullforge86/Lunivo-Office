@@ -10,7 +10,7 @@ Was hier bleibt, sind die Regeln selbst; die tragen Baustücke als Code und lass
 
 import json
 import os
-from lunivo_writer.kern.dokument.korrektur import ProofingIssue
+from lunivo_writer.core.dokument.korrektur import ProofingIssue
 from lunivo_writer.infrastruktur.pfade import ressourcen_pfade as pfade
 import re
 from lunivo_writer.korrektur.phonetik import DE_ERSATZ as _DE_ERSATZ, abstand, de_schluessel as _de_schluessel, gleicher_anfang, ist_teilfolge, koelner_phonetik

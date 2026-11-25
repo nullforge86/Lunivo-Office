@@ -13,7 +13,7 @@ from PySide6.QtCore import QEventLoop, QPoint, QRect, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QCursor, QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 ZEIT_S = 10                                     # nach so vielen Sekunden bricht die Pipette von selbst ab
 AKTIV = True                                    # False: der Eintrag „Pipette“ erscheint in keiner Farbpalette (Schalter zum Abschalten)
 

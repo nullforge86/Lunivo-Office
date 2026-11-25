@@ -52,8 +52,8 @@ def bild(untertyp: str, titel: str, kategorien: list[str], reihen: dict[str, lis
 
 def _kern_bild(d: dict, b: float, h: float, skala: float, geo: dict | None) -> QImage:
     from lunivo_writer.oberflaeche.zeichnen.anzeige import kern_bild
-    from lunivo_writer.kern.geometrie import Rect
-    from lunivo_writer.kern.rendering.diagrammzeichner import zeichne_diagramm
+    from lunivo_writer.core.geometrie import Rect
+    from lunivo_writer.core.rendering.diagramm.diagrammzeichner import zeichne_diagramm
     b, h = max(1, round(b)), max(1, round(h))
     kern_geo: dict | None = {} if geo is not None else None
     bild = kern_bild(b, h, lambda ziel: zeichne_diagramm(ziel, Rect(0, 0, b, h), d, kern_geo), (255, 255, 255, 255), skala)

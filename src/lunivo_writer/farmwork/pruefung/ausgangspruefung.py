@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import dataclasses
 
-KERN_PRAEFIX = "lunivo_writer.kern"
+KERN_PRAEFIX = "lunivo_writer.core"
 
 
 class KernObjektAmAusgang(TypeError):

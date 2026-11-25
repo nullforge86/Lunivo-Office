@@ -8,7 +8,7 @@ nur noch Namen, Farben und Hilfen für die Fenster. Die Texte der Kommentare und
 """
 from __future__ import annotations
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.core.dokument.farben import Farbe
 KI_AUTOR = "KI"                                   # Autor nachverfolgter Änderungen, die die KI-Überarbeitung einträgt
 
 ROEMISCH = [(1000, "m"), (900, "cm"), (500, "d"), (400, "cd"), (100, "c"), (90, "xc"), (50, "l"), (40, "xl"),

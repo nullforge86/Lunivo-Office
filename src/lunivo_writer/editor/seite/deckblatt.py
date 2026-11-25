@@ -20,13 +20,13 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 
 from lunivo_writer.oberflaeche.zeichnen.geometrie import rect_from_qt
-from lunivo_writer.kern.dokument.dokument import Auswahl, Position
-from lunivo_writer.kern.geometrie import Point, Rect
-from lunivo_writer.kern.rendering import LinearGradient, RadialGradient, RenderBackend, Style, rgba
-from lunivo_writer.kern.textsatz import FontSpec, TextLayoutEngine
-from lunivo_writer.dienste.textsatz import standard_engine
+from lunivo_writer.core.dokument.dokument import Auswahl, Position
+from lunivo_writer.core.geometrie import Point, Rect
+from lunivo_writer.core.rendering import LinearGradient, RadialGradient, RenderBackend, Style, rgba
+from lunivo_writer.core.textsatz import FontSpec, TextLayoutEngine
+from lunivo_writer.dienste.ausgabe.textsatz import standard_engine
 
-from lunivo_writer.kern.dokument.seite import mm_to_px
+from lunivo_writer.core.dokument.seite import mm_to_px
 
 
 ARTIKEL, FIRMA, LEBENSLAUF, ARBEIT = "Artikel", "Firma", "Lebenslauf", "Abschlussarbeit"

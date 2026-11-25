@@ -17,7 +17,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import abschnitt
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.basis.texte import marke_faerben
 
-from lunivo_writer.oberflaeche.baukasten.farben.farben import Farbe
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_ZEILE, BREITE_NUMMER, GROESSE_SCHALTER, GROESSE_STUFE, PADDING_HILFE_CHIP, PADDING_TASTENKUERZEL, RADIUS_MARKE, RADIUS_PILLE, RADIUS_STUFE, RAND_KEIN, RAND_ZEILE_KARTE, SCHRIFT_KLEIN
 STUFEN = [
     # (Stufe, Titel, Kürzel, Frage, Hinweis rechts, Schalter | Befehl)
