@@ -364,8 +364,11 @@ def main(argv: list[str]) -> int:
     if "--stand-senken" in argv:
         neu = {r: {d: min(z, ist.get(r, {}).get(d, 0)) for d, z in dateien.items()} for r, dateien in stand.items()}
         neu = {r: {d: z for d, z in v.items() if z > 0} for r, v in neu.items()}
-        if "altlast_sitzungszugang" in stand and os.path.exists(os.path.join(SRC, *ALTLAST_ZUGANG.split(".")) + ".py"):
-            neu["altlast_sitzungszugang"] = stand["altlast_sitzungszugang"]     # Freigabe bleibt, bis das Altlast-Modul in Schritt 5 entfernt ist
+        editor = os.path.join(SRC, *ALTLAST_ERLAUBT_AUS.split(".")) + ".py"
+        schritt5_offen = os.path.exists(os.path.join(SRC, *ALTLAST_ZUGANG.split(".")) + ".py") or (
+            os.path.exists(editor) and "Bearbeitungssitzung(" in open(editor, encoding="utf-8").read())
+        if "altlast_sitzungszugang" in stand and schritt5_offen:
+            neu["altlast_sitzungszugang"] = stand["altlast_sitzungszugang"]     # Freigabe bleibt bis Schritt 5: Altlast-Modul weg UND kern_editor erzeugt keine Sitzung mehr
         stand_schreiben(neu)
         print(bericht(ist, neu))
         return 0
