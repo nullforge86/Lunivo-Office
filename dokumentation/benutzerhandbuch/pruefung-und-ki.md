@@ -57,7 +57,7 @@ Buchstaben findet weiter der Tippfehler-Prüfer.
 
 **Die Wortliste.** Alle Stufen, die ein Wort nachschlagen — Rechtschreibung,
 Klang, Vorhersage, Rechtsklick-Vorschläge —, benutzen dieselbe Liste
-(`src/lunivo_writer/ressourcen/daten/woerter.txt`, rund 355.000 Wörter). Sie
+(`src/system/ressourcen/daten/woerter.txt`, rund 355.000 Wörter). Sie
 stammt aus dem früheren Projekt des Autors,
 [schreibhilfe](https://github.com/nullforge86/schreibhilfe), und ist
 eigene Arbeit; Fremdlizenzen gelten für sie nicht.

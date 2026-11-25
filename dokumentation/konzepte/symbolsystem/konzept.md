@@ -12,7 +12,7 @@ Das Hauptfenster wurde unsichtbar gestartet und jede Symbolanforderung mitgeschr
 | Lucide-Symbole (ISC-Lizenz) direkt verwendet | 65 | `ressourcen/icons/symbolkatalog.json` (1801 Symbole) |
 | Nicht auffindbar | 0 | — |
 
-Wiedergabe: `src/lunivo_writer/oberflaeche/bauteile/symbole.py` setzt **genau einen `<path>`** je Symbol in ein SVG im Speicher, Strich `STRICH = 1.05`, runde Enden/Ecken, Farbe aus der Palette (hell/dunkel, deaktiviert grau), `QSvgRenderer`, Zwischenspeicher je (Name, Farbe, Größe). Austausch zur Laufzeit über `uebersteuern()`. `ressourcen/symbole/varianten/` enthält Programm-/Logo-Bilder, keine Oberflächensymbole; `ressourcen/icons/dateitypen/` die Dateityp-Symbole.
+Wiedergabe: `src/vcl/qt/widgets/bausteine/bauteile/symbole.py` setzt **genau einen `<path>`** je Symbol in ein SVG im Speicher, Strich `STRICH = 1.05`, runde Enden/Ecken, Farbe aus der Palette (hell/dunkel, deaktiviert grau), `QSvgRenderer`, Zwischenspeicher je (Name, Farbe, Größe). Austausch zur Laufzeit über `uebersteuern()`. `ressourcen/symbole/varianten/` enthält Programm-/Logo-Bilder, keine Oberflächensymbole; `ressourcen/icons/dateitypen/` die Dateityp-Symbole.
 
 **Befunde am Bestand**
 1. **Strich zu dünn:** 1,05 auf 24 Einheiten sind bei 16 px nur **0,7 px**, bei 20 px 0,9 px. Auf dem Kontaktbogen sind die bisherigen Symbole bei 16 px blass und fransig.
@@ -89,7 +89,7 @@ Erzeugt mit `.venv/bin/python werkzeuge/symbole/symbol_kontaktbogen.py` (QPainte
 
 ## 7. Integration (Stand nach Stufe 2)
 
-**Strich:** Nach Rückmeldung des Eigentümers („zu fett, die alte war besser“) steht `STRICH` in `src/lunivo_writer/oberflaeche/bauteile/symbole.py` auf **1,25** statt 1,6. Der Wert ist eine einzige Zahl; 1,05 stellt den alten Zustand wieder her. Die Bögen in `dokumentation/konzepte/symbolsystem/` sind mit 1,25 gezeichnet (Entwurf) gegen 1,05 (bisher).
+**Strich:** Nach Rückmeldung des Eigentümers („zu fett, die alte war besser“) steht `STRICH` in `src/vcl/qt/widgets/bausteine/bauteile/symbole.py` auf **1,25** statt 1,6. Der Wert ist eine einzige Zahl; 1,05 stellt den alten Zustand wieder her. Die Bögen in `dokumentation/konzepte/symbolsystem/` sind mit 1,25 gezeichnet (Entwurf) gegen 1,05 (bisher).
 
 **Neu gezeichnet: 128 von 325** (Stufe 3: Serienbrief, Diagramme, Listen, Hyperlink, Vorschau, Export u. a., Funktion jeweils an der Beschriftung der Aufrufstelle geprüft) angeforderten Symbolen (Quelle: `ressourcen/icons/entwurf/`, eingebaut in `ressourcen/icons/symbole.json`). Stufe 2 brachte Text/Farbe, Datei, Kommentar, Tabelle, Seite und Spalten. Etliche Namen sind Verweise auf ein bereits gezeichnetes Symbol (z. B. `save` → `speichern`), damit gleiche Funktionen gleich aussehen.
 

@@ -113,8 +113,8 @@ def eine(docx: str, ref: str, aus: str) -> dict:
     try:
         from PySide6.QtWidgets import QApplication
         app = QApplication.instance() or QApplication([])  # noqa: F841
-        from lunivo_writer.oberflaeche.zeichnen.pdf_ausgabe import dokument_als_pdf
-        from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
+        from vcl.rendering.zeichnen.pdf_ausgabe import dokument_als_pdf
+        from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
         t = time.time()
         g = lade_modell(docx)
         erg["laden_s"] = round(time.time() - t, 2)

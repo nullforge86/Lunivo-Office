@@ -1,8 +1,8 @@
 # Der Aufbau des Bandes
 
-Quelle des Bandes: `src/lunivo_writer/ressourcen/register.json` und die Reiter-Module unter
-`src/lunivo_writer/oberflaeche/band/reiter/`; zusammengesetzt werden sie in `src/lunivo_writer/oberflaeche/band/plan.py`. Die Kontext-Reiter stehen unter
-`src/lunivo_writer/oberflaeche/kontext/`. Eine lokale Funktionsprüfung lässt sich mit
+Quelle des Bandes: `src/system/ressourcen/register.json` und die Reiter-Module unter
+`src/writer/werkzeugleisten/reiter/`; zusammengesetzt werden sie in `src/writer/werkzeugleisten/plan.py`. Die Kontext-Reiter stehen unter
+`src/writer/kontextmenues/`. Eine lokale Funktionsprüfung lässt sich mit
 `werkzeuge/pruefungen/funktionspruefung.py` gezielt für einzelne Reiter ausführen.
 
 Das Band hat zehn Reiter. Standardmäßig sind acht sichtbar: Der Reiter *Datei* bleibt verborgen, weil seine Befehle im **☰ Menü** links vor dem Schnellzugriff

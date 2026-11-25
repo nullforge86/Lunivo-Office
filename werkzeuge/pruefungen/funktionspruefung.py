@@ -32,9 +32,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QSettings, QStandardPaths, QTimer  # noqa: E402
 from PySide6.QtGui import QColor, QImage  # noqa: E402
 
-from lunivo_writer.core.dokument import neues_dokument  # noqa: E402
-from lunivo_writer.core.dokument.dokument import Auswahl, InlineObjekt, Position, Tabelle  # noqa: E402
-from lunivo_writer.core.dokument.serialisierung import dokument_zu_daten  # noqa: E402
+from core.dokument import neues_dokument  # noqa: E402
+from core.dokument.dokument import Auswahl, InlineObjekt, Position, Tabelle  # noqa: E402
+from core.dokument.serialisierung import dokument_zu_daten  # noqa: E402
 from pruefhilfen import DialogWaechter, menue_eintraege  # noqa: E402  (gemeinsame Hilfen in werkzeuge/)
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QMenu, QMessageBox, QStackedWidget, QTabBar,  # noqa: E402
                                QToolButton, QWidget)
@@ -48,10 +48,10 @@ LAGEN = ("text", "formatiert", "tabelle", "bild")
 
 class Pruefer:
     def __init__(self, tmp: str):
-        from lunivo_writer.farmwork.befehle_alt.befehlsliste import Befehle
-        from lunivo_writer.editor.dokument import einfuegen as E
+        from framework.befehle_alt.befehlsliste import Befehle
+        from core.editor.dokument import einfuegen as E
         from lunivo_writer.dienste.einstellungen_dienst import Settings
-        from lunivo_writer.oberflaeche.hauptfenster.fenster.programmfenster import MainWindow
+        from vcl.qt.fenster.fenster.programmfenster import MainWindow
         self.E, self.Befehle = E, Befehle
         self.waechter = DialogWaechter()
         self.fenster_log: list[str] = self.waechter.fenster_log      # dieselbe Liste: der Wächter trägt dort ein

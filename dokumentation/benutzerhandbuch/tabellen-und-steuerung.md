@@ -1,7 +1,7 @@
 # Tabellen, Dokumentensteuerung und Bilder
 
 **Woher diese Liste stammt.** Aus dem Programm selbst: Die Namen und Orte stammen aus der Banddefinition
-(`src/lunivo_writer/ressourcen/register.json`, `src/lunivo_writer/oberflaeche/band/reiter/`, `src/lunivo_writer/oberflaeche/kontext/`) und den Befehlen unter
+(`src/system/ressourcen/register.json`, `src/writer/werkzeugleisten/reiter/`, `src/writer/kontextmenues/`) und den Befehlen unter
 `src/lunivo_writer/kern/befehle/`. Welche Knöpfe in welchem Reiter stehen, zeigt [Aufbau des Bandes](../architektur/aufbau-band.md).
 
 ---

@@ -83,11 +83,11 @@ Diese Richtung prüft `tests/editor/test_schichten.py`: `editor/`, `dienste/`, `
 
 ## Einstiegspunkte
 
-- Banddefinition und Reiter: `src/lunivo_writer/ressourcen/register.json` und `src/lunivo_writer/oberflaeche/band/reiter/`.
+- Banddefinition und Reiter: `src/system/ressourcen/register.json` und `src/writer/werkzeugleisten/reiter/`.
 - Gemeinsame Qt-Bausteine: `src/lunivo_writer/oberflaeche/baukasten/`; Konventionen stehen in [baukasten.md](entwicklung/baukasten.md).
 - Dokumentformate: `src/lunivo_writer/dienste/`; DOCX-Lese- und Schreiblogik ist nach Metadaten, Absätzen, Runs, Dokumentaufbau und Tabellen/Objekten getrennt in `dienste/docx_teile/`.
-- Qt-freie Dokument-, Layout- und Rendering-Schichten: `src/lunivo_writer/core/`; ihre Qt-Anbindung liegt in `src/lunivo_writer/adapter/qt/` und `oberflaeche/dokument/`.
-- Eingebautes Handbuch: `src/lunivo_writer/ressourcen/handbuch.md`.
+- Qt-freie Dokument-, Layout- und Rendering-Schichten: `src/core/`; ihre Qt-Anbindung liegt in `src/lunivo_writer/adapter/qt/` und `oberflaeche/dokument/`.
+- Eingebautes Handbuch: `src/system/ressourcen/handbuch.md`.
 - Abhängigkeiten und Start: `pyproject.toml`, `requirements.txt` und `skripte/starten-qt.sh`.
 
 Die wichtigsten Benutzerfunktionen sind in der [Oberfläche](benutzerhandbuch/oberflaeche.md), den [Einstellungen](benutzerhandbuch/einstellungen.md) und unter [Speichern und Dateiformate](benutzerhandbuch/speichern.md) beschrieben.

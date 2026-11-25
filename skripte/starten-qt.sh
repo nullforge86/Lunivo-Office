@@ -218,5 +218,5 @@ cd "$HIER"
 
 export PYTHONPATH="$HIER/src"
 
-exec "$VENV/bin/python" -m lunivo_writer "$@"
+exec "$VENV/bin/python" "$(dirname "$0")/../main.py" "$@"
 

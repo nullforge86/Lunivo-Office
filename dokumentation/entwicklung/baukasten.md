@@ -84,7 +84,7 @@ eigene `setStyleSheet`, Farbtexte, feste Zahlen (außer 0, 1, -1; Halbieren erla
 ## Neues Fenster oder neue Farbstelle
 
 ```python
-from lunivo_writer.oberflaeche.baukasten import DialogRahmen, FarbFeld, LinienWahl, Linie
+from vcl.qt.widgets.bausteine import DialogRahmen, FarbFeld, LinienWahl, Linie
 
 class MeinDialog(DialogRahmen):
     def __init__(self, parent):

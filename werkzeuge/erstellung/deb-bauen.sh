@@ -54,7 +54,7 @@ cp "$SPRACHEN"/*.argosmodel "$ROOT$APP/argos/"
 cat > "$ROOT$APP/lunivo-office" <<'S'
 #!/bin/sh
 D=/opt/stevie-empire/lunivo-office
-PYTHONPATH="$D/src" exec "$D/venv/bin/python" -m lunivo_writer "$@"
+PYTHONPATH="$D/src" exec "$D/venv/bin/python" "$D/main.py" "$@"
 S
 chmod 755 "$ROOT$APP/lunivo-office"
 ln -s "$APP/lunivo-office" "$ROOT/usr/bin/lunivo-office"

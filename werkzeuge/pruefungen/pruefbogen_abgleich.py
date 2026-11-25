@@ -18,12 +18,12 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 app = QApplication([])
-from lunivo_writer.oberflaeche.band.plan import plan  # noqa: E402
-from lunivo_writer.farmwork.befehle_alt.befehlsliste import Befehle  # noqa: E402
+from writer.werkzeugleisten.plan import plan  # noqa: E402
+from framework.befehle_alt.befehlsliste import Befehle  # noqa: E402
 
 B = Befehle(None)
 bogen = json.load(open(os.path.join(WURZEL, "dokumentation/pruefbogen/pruefbogen.json"), encoding="utf-8"))
-reg = json.load(open(os.path.join(WURZEL, "src/lunivo_writer/ressourcen/register.json"), encoding="utf-8"))
+reg = json.load(open(os.path.join(WURZEL, "src/system/ressourcen/register.json"), encoding="utf-8"))
 zpfad = os.path.join(WURZEL, "dokumentation/pruefbogen/zuordnung.json")
 zuordnung = json.load(open(zpfad, encoding="utf-8")) if os.path.exists(zpfad) else {}
 

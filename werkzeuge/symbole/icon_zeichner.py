@@ -20,8 +20,8 @@ from PySide6.QtWidgets import (
     QTabWidget, QToolBar, QWidget,
 )
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "src"))   # das Raster der Anwendung (Layouts)
-from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter as _Formular
-from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte, RasterZeile
+from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter as _Formular
+from vcl.qt.widgets.bausteine.basis.raster import RasterSpalte, RasterZeile
 
 
 class Formular(_Formular):

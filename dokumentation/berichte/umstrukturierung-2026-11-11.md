@@ -83,7 +83,7 @@ Lunivo-Office/
 | `src/lunivo_writer/models/page.py` | `src/lunivo_writer/modelle/seite.py` |
 | `src/lunivo_writer/models/proofing.py` | `src/lunivo_writer/modelle/korrektur.py` |
 | `src/lunivo_writer/models/report.py` | `src/lunivo_writer/modelle/bericht.py` |
-| `src/lunivo_writer/proofing/proofing_service.py` | `src/lunivo_writer/korrektur/korrektur_dienst.py` |
+| `src/lunivo_writer/proofing/proofing_service.py` | `src/core/korrektur/korrektur_dienst.py` |
 | `src/lunivo_writer/services/docx_reader.py` | `src/lunivo_writer/dienste/docx_leser.py` |
 | `src/lunivo_writer/services/docx_writer.py` | `src/lunivo_writer/dienste/docx_schreiber.py` |
 | `src/lunivo_writer/services/file_service.py` | `src/lunivo_writer/dienste/datei_dienst.py` |
@@ -92,45 +92,45 @@ Lunivo-Office/
 | `src/lunivo_writer/services/recovery.py` | `src/lunivo_writer/dienste/wiederherstellung.py` |
 | `src/lunivo_writer/services/rtf_writer.py` | `src/lunivo_writer/dienste/rtf_schreiber.py` |
 | `src/lunivo_writer/services/settings_service.py` | `src/lunivo_writer/dienste/einstellungen_dienst.py` |
-| `src/lunivo_writer/ui/contextual/diagramm_tools.py` | `src/lunivo_writer/oberflaeche/kontext/diagramm_werkzeuge.py` |
+| `src/lunivo_writer/ui/contextual/diagramm_tools.py` | `src/writer/kontextmenues/diagramm_werkzeuge.py` |
 | `src/lunivo_writer/ui/contextual/header_footer_tools.py` | `src/lunivo_writer/oberflaeche/kontext/kopf_fuss_werkzeuge.py` |
-| `src/lunivo_writer/ui/contextual/image_tools.py` | `src/lunivo_writer/oberflaeche/kontext/bild_werkzeuge.py` |
+| `src/lunivo_writer/ui/contextual/image_tools.py` | `src/writer/kontextmenues/bild_werkzeuge.py` |
 | `src/lunivo_writer/ui/contextual/serien_tools.py` | `src/lunivo_writer/oberflaeche/kontext/serien_werkzeuge.py` |
-| `src/lunivo_writer/ui/contextual/table_tools.py` | `src/lunivo_writer/oberflaeche/kontext/tabellen_werkzeuge.py` |
-| `src/lunivo_writer/ui/contextual/text_tools.py` | `src/lunivo_writer/oberflaeche/kontext/text_werkzeuge.py` |
+| `src/lunivo_writer/ui/contextual/table_tools.py` | `src/writer/kontextmenues/tabellen_werkzeuge.py` |
+| `src/lunivo_writer/ui/contextual/text_tools.py` | `src/writer/kontextmenues/text_werkzeuge.py` |
 | `src/lunivo_writer/ui/document/bearbeitung/base.py` | `src/lunivo_writer/oberflaeche/dokument/bearbeitung/basis.py` |
 | `src/lunivo_writer/ui/document/bearbeitung/document_editor.py` | `src/lunivo_writer/oberflaeche/dokument/bearbeitung/dokument_editor.py` |
-| `src/lunivo_writer/ui/document/dokumentfenster/document_area.py` | `src/lunivo_writer/oberflaeche/dokument/dokumentfenster/dokument_bereich.py` |
-| `src/lunivo_writer/ui/document/dokumentfenster/document_tabs.py` | `src/lunivo_writer/oberflaeche/dokument/dokumentfenster/dokument_reiter.py` |
+| `src/lunivo_writer/ui/document/dokumentfenster/document_area.py` | `src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_bereich.py` |
+| `src/lunivo_writer/ui/document/dokumentfenster/document_tabs.py` | `src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_reiter.py` |
 | `src/lunivo_writer/ui/main_window.py` | `src/lunivo_writer/oberflaeche/programmfenster.py` |
-| `src/lunivo_writer/ui/ribbon/menubar.py` | `src/lunivo_writer/oberflaeche/band/menueleiste.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_bar.py` | `src/lunivo_writer/oberflaeche/band/band_leiste.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_bausteine.py` | `src/lunivo_writer/oberflaeche/band/band_bausteine.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_gruppen.py` | `src/lunivo_writer/oberflaeche/band/band_gruppen.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_knoepfe.py` | `src/lunivo_writer/oberflaeche/band/band_knoepfe.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_raender.py` | `src/lunivo_writer/oberflaeche/band/band_raender.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_reiter.py` | `src/lunivo_writer/oberflaeche/band/band_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_schnellzugriff.py` | `src/lunivo_writer/oberflaeche/band/band_schnellzugriff.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_stile.py` | `src/lunivo_writer/oberflaeche/band/band_stile.py` |
-| `src/lunivo_writer/ui/ribbon/ribbon_zustand.py` | `src/lunivo_writer/oberflaeche/band/band_zustand.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/ai_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/ki_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/file_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/datei_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/home_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/start_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/insert_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/einfuegen_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/layout_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/layout_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/menubar.py` | `src/vcl/qt/widgets/ribbon/menueleiste.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_bar.py` | `src/vcl/qt/widgets/ribbon/band_leiste.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_bausteine.py` | `src/vcl/qt/widgets/ribbon/band_bausteine.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_gruppen.py` | `src/vcl/qt/widgets/ribbon/band_gruppen.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_knoepfe.py` | `src/vcl/qt/widgets/ribbon/band_knoepfe.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_raender.py` | `src/vcl/qt/widgets/ribbon/band_raender.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_reiter.py` | `src/vcl/qt/widgets/ribbon/band_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_schnellzugriff.py` | `src/vcl/qt/widgets/ribbon/band_schnellzugriff.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_stile.py` | `src/vcl/qt/widgets/ribbon/band_stile.py` |
+| `src/lunivo_writer/ui/ribbon/ribbon_zustand.py` | `src/vcl/qt/widgets/ribbon/band_zustand.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/ai_tab.py` | `src/writer/werkzeugleisten/reiter/ki_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/file_tab.py` | `src/writer/werkzeugleisten/reiter/datei_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/home_tab.py` | `src/writer/werkzeugleisten/reiter/start_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/insert_tab.py` | `src/writer/werkzeugleisten/reiter/einfuegen_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/layout_tab.py` | `src/writer/werkzeugleisten/reiter/layout_reiter.py` |
 | `src/lunivo_writer/ui/ribbon/tabs/mailings_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/sendungen_reiter.py` |
 | `src/lunivo_writer/ui/ribbon/tabs/references_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/verweise_reiter.py` |
 | `src/lunivo_writer/ui/ribbon/tabs/review_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/ueberpruefen_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/tabs/section_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/abschnitt_reiter.py` |
+| `src/lunivo_writer/ui/ribbon/tabs/section_tab.py` | `src/writer/werkzeugleisten/reiter/abschnitt_reiter.py` |
 | `src/lunivo_writer/ui/ribbon/tabs/view_tab.py` | `src/lunivo_writer/oberflaeche/band/reiter/ansicht_reiter.py` |
-| `src/lunivo_writer/ui/ribbon/toolbars.py` | `src/lunivo_writer/oberflaeche/band/werkzeugleisten.py` |
-| `src/lunivo_writer/ui/sidebar/panels/ai_panel.py` | `src/lunivo_writer/oberflaeche/seitenleiste/panels/ki_panel.py` |
-| `src/lunivo_writer/ui/sidebar/panels/writing_panel.py` | `src/lunivo_writer/oberflaeche/seitenleiste/panels/schreib_panel.py` |
-| `src/lunivo_writer/ui/sidebar/sidebar.py` | `src/lunivo_writer/oberflaeche/seitenleiste/seitenleiste.py` |
-| `src/lunivo_writer/ui/statusbar/status_bar.py` | `src/lunivo_writer/oberflaeche/statusleiste/statusleiste.py` |
+| `src/lunivo_writer/ui/ribbon/toolbars.py` | `src/vcl/qt/widgets/ribbon/werkzeugleisten.py` |
+| `src/lunivo_writer/ui/sidebar/panels/ai_panel.py` | `src/vcl/qt/widgets/seitenleisten/panels/ki_panel.py` |
+| `src/lunivo_writer/ui/sidebar/panels/writing_panel.py` | `src/vcl/qt/widgets/seitenleisten/panels/schreib_panel.py` |
+| `src/lunivo_writer/ui/sidebar/sidebar.py` | `src/vcl/qt/widgets/seitenleisten/seitenleiste.py` |
+| `src/lunivo_writer/ui/statusbar/status_bar.py` | `src/vcl/qt/widgets/statusleiste/statusleiste.py` |
 | `src/lunivo_writer/ui/theme.py` | `src/lunivo_writer/oberflaeche/thema.py` |
 | `src/lunivo_writer/ui/widgets/flow_layout.py` | `src/lunivo_writer/oberflaeche/bauteile/fluss_layout.py` |
-| `src/lunivo_writer/ui/widgets/icons.py` | `src/lunivo_writer/oberflaeche/bauteile/symbole.py` |
+| `src/lunivo_writer/ui/widgets/icons.py` | `src/vcl/qt/widgets/bausteine/bauteile/symbole.py` |
 | `tests/dokument/formate/test_docx_roundtrip.py` | `tests/dokument/formate/test_docx_hin_und_zurueck.py` |
 | `tests/dokument/formate/test_formats.py` | `tests/dokument/formate/test_formate.py` |
 | `tests/dokument/seite/test_layout_tab.py` | `tests/dokument/seite/test_layout_reiter.py` |
@@ -177,19 +177,19 @@ Lunivo-Office/
 | `docs/berichte/` | `dokumentation/berichte/` | 6 |
 | `docs/symbolsystem/` | `dokumentation/konzepte/symbolsystem/` | 3 |
 | `./` | `skripte/` | 3 |
-| `src/lunivo_writer/ai/` | `src/lunivo_writer/ki/` | 31 |
-| `src/lunivo_writer/core/` | `src/lunivo_writer/kern/` | 8 |
+| `src/lunivo_writer/ai/` | `src/framework/ki/` | 31 |
+| `src/core/` | `src/lunivo_writer/kern/` | 8 |
 | `src/lunivo_writer/core/befehle/` | `src/lunivo_writer/kern/befehle/` | 2 |
 | `src/lunivo_writer/core/befehle/hauptreiter/` | `src/lunivo_writer/kern/befehle/hauptreiter/` | 17 |
 | `src/lunivo_writer/core/befehle/kontextreiter/` | `src/lunivo_writer/kern/befehle/kontextreiter/` | 12 |
 | `src/lunivo_writer/models/` | `src/lunivo_writer/modelle/` | 4 |
-| `src/lunivo_writer/proofing/` | `src/lunivo_writer/korrektur/` | 12 |
-| `src/lunivo_writer/resources/` | `src/lunivo_writer/ressourcen/` | 4 |
-| `src/lunivo_writer/resources/daten/` | `src/lunivo_writer/ressourcen/daten/` | 4 |
+| `src/lunivo_writer/proofing/` | `src/core/korrektur/` | 12 |
+| `src/lunivo_writer/resources/` | `src/system/ressourcen/` | 4 |
+| `src/lunivo_writer/resources/daten/` | `src/system/ressourcen/daten/` | 4 |
 | `src/lunivo_writer/services/` | `src/lunivo_writer/dienste/` | 25 |
 | `src/lunivo_writer/services/docx_teile/` | `src/lunivo_writer/dienste/docx_teile/` | 19 |
-| `src/lunivo_writer/services/integrations/` | `src/lunivo_writer/dienste/integrationen/` | 3 |
-| `src/lunivo_writer/services/rtf/` | `src/lunivo_writer/dienste/rtf/` | 8 |
+| `src/lunivo_writer/services/integrations/` | `src/framework/dokumentverwaltung/integrationen/` | 3 |
+| `src/lunivo_writer/services/rtf/` | `src/filter/rtf/` | 8 |
 | `src/lunivo_writer/ui/` | `src/lunivo_writer/oberflaeche/` | 7 |
 | `src/lunivo_writer/ui/baukasten/` | `src/lunivo_writer/oberflaeche/baukasten/` | 1 |
 | `src/lunivo_writer/ui/baukasten/basis/` | `src/lunivo_writer/oberflaeche/baukasten/basis/` | 9 |
@@ -204,7 +204,7 @@ Lunivo-Office/
 | `src/lunivo_writer/ui/baukasten/geruest/` | `src/lunivo_writer/oberflaeche/baukasten/geruest/` | 11 |
 | `src/lunivo_writer/ui/baukasten/medien/` | `src/lunivo_writer/oberflaeche/baukasten/medien/` | 9 |
 | `src/lunivo_writer/ui/baukasten/vorlagen/` | `src/lunivo_writer/oberflaeche/baukasten/vorlagen/` | 4 |
-| `src/lunivo_writer/ui/contextual/` | `src/lunivo_writer/oberflaeche/kontext/` | 7 |
+| `src/lunivo_writer/ui/contextual/` | `src/writer/kontextmenues/` | 7 |
 | `src/lunivo_writer/ui/dialogs/` | `src/lunivo_writer/oberflaeche/dialoge/` | 6 |
 | `src/lunivo_writer/ui/dialogs/einfuegen/` | `src/lunivo_writer/oberflaeche/dialoge/einfuegen/` | 8 |
 | `src/lunivo_writer/ui/dialogs/ki/` | `src/lunivo_writer/oberflaeche/dialoge/ki/` | 4 |
@@ -217,10 +217,10 @@ Lunivo-Office/
 | `src/lunivo_writer/ui/document/bearbeitung/` | `src/lunivo_writer/oberflaeche/dokument/bearbeitung/` | 22 |
 | `src/lunivo_writer/ui/document/dokumentfenster/` | `src/lunivo_writer/oberflaeche/dokument/dokumentfenster/` | 4 |
 | `src/lunivo_writer/ui/document/kopffuss/` | `src/lunivo_writer/oberflaeche/dokument/kopffuss/` | 3 |
-| `src/lunivo_writer/ui/document/tabelle/` | `src/lunivo_writer/oberflaeche/dokument/tabelle/` | 3 |
+| `src/lunivo_writer/ui/document/tabelle/` | `src/writer/dokumentansicht/tabelle/` | 3 |
 | `src/lunivo_writer/ui/hauptfenster/` | `src/lunivo_writer/oberflaeche/hauptfenster/` | 19 |
 | `src/lunivo_writer/ui/ribbon/` | `src/lunivo_writer/oberflaeche/band/` | 13 |
-| `src/lunivo_writer/ui/ribbon/tabs/` | `src/lunivo_writer/oberflaeche/band/reiter/` | 12 |
+| `src/lunivo_writer/ui/ribbon/tabs/` | `src/writer/werkzeugleisten/reiter/` | 12 |
 | `src/lunivo_writer/ui/sidebar/` | `src/lunivo_writer/oberflaeche/seitenleiste/` | 2 |
 | `src/lunivo_writer/ui/sidebar/panels/` | `src/lunivo_writer/oberflaeche/seitenleiste/panels/` | 3 |
 | `src/lunivo_writer/ui/statusbar/` | `src/lunivo_writer/oberflaeche/statusleiste/` | 2 |

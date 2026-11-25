@@ -25,19 +25,19 @@ def lunivo_version() -> str:
 
 def lade(pfad: str, kennwort: str | None = None):
     """Die tatsächliche Lunivo-Importfunktion. Wirft ``DocumentIOError``/``PasswortNoetig``."""
-    from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
+    from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
     return lade_modell(pfad, kennwort)
 
 
 def speichere(geladen, pfad: str):
     """Die tatsächliche Lunivo-Speicherfunktion (ohne Sicherungskopie, in eine fremde Zieldatei). Liefert den ``IOReport``."""
-    from lunivo_writer.dienste.dateizugriff.modell_speichern import speichere_modell
+    from framework.dokumentverwaltung.dateizugriff.modell_speichern import speichere_modell
     return speichere_modell(pfad, geladen.document, geladen.page, geladen.meta, sicherung=False)
 
 
 def layout(dokument):
     """Layoutberechnung der Anwendung. → (LayoutEngine, Ergebnis)."""
-    from lunivo_writer.core.layout import LayoutEngine
+    from core.layout import LayoutEngine
     le = LayoutEngine(None)
     return le, le.berechnen(dokument)
 
@@ -48,10 +48,10 @@ def seite_mm(einrichtung) -> tuple[float, float]:
 
 def seitenbilder(dokument, le, erg, ordner: str, praefix: str, faktor: float = 1.0, max_seiten: int = 80) -> list[str]:
     """Rendert die Seiten mit dem Renderer der Anwendung nach PNG (96 dpi · ``faktor``). → Dateipfade."""
-    from lunivo_writer.core.layout import formatwerte as F
-    from lunivo_writer.core.rendering import DokumentRenderer
-    from lunivo_writer.core.rendering.bild.bildeffekte import png_bytes
-    from lunivo_writer.core.rendering.ausgabe.rasterziel import RasterZiel
+    from core.layout import formatwerte as F
+    from core.rendering import DokumentRenderer
+    from core.rendering.bild.bildeffekte import png_bytes
+    from core.rendering.ausgabe.rasterziel import RasterZiel
     os.makedirs(ordner, exist_ok=True)
     renderer = DokumentRenderer(le.engine)
     grund = F.schrift(dict(dokument.standardformat))
@@ -70,7 +70,7 @@ def seitenbilder(dokument, le, erg, ordner: str, praefix: str, faktor: float = 1
 
 def metriken(dokument) -> dict:
     """Zählwerte und Formatsummen des Dokumentmodells (nur Lesen)."""
-    from lunivo_writer.core.dokument.dokument import InlineObjekt, Lauf, Tabelle
+    from core.dokument.dokument import InlineObjekt, Lauf, Tabelle
     m = {"absaetze": 0, "nichtleere_absaetze": 0, "zeichen": 0, "woerter": 0, "listen_absaetze": 0, "ueberschriften": 0,
          "fett_zeichen": 0, "kursiv_zeichen": 0, "unterstrichen_zeichen": 0, "mitte_absaetze": 0, "rechts_absaetze": 0, "block_absaetze": 0,
          "bilder": 0}

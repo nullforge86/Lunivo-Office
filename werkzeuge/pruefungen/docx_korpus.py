@@ -280,8 +280,8 @@ def externe(ordner: str = os.path.join(os.path.dirname(os.path.abspath(__file__)
 # ---- Vergleich -----------------------------------------------------------------------------------------------------------------
 def abbild(dok) -> dict:
     """Was beim Roundtrip erhalten bleiben soll: Text, Zeichenformat-Läufe, Tabellenstruktur, Bilder (aus dem Dokumentenmodell ``core.document.Dokument``)."""
-    from lunivo_writer.core.dokument.dokument import InlineObjekt, Lauf, Tabelle
-    from lunivo_writer.core.dokument.formatvorlagen import wirksames_zeichenformat
+    from core.dokument.dokument import InlineObjekt, Lauf, Tabelle
+    from core.dokument.formatvorlagen import wirksames_zeichenformat
     laeufe, tabellen = [], []
     bilder = sum(1 for o in dok.objekte.values() if getattr(o, "art", "") in ("bild", "roh"))              # frei positionierte Bilder
     for a in dok.absaetze():
@@ -312,8 +312,8 @@ def abbild(dok) -> dict:
 
 def roundtrip(pfad: str) -> dict:
     """Einlesen → ohne Änderung speichern → erneut einlesen (alles über das Dokumentenmodell). → Ergebnis mit beiden Abbildern, den Berichten und den Abweichungen."""
-    from lunivo_writer.dienste.docx.docx_modell_schreiber import docx_dokument_daten
-    from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
+    from filter.docx.docx_modell_schreiber import docx_dokument_daten
+    from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
     g1 = lade_modell(pfad)
     with tempfile.TemporaryDirectory(prefix="korpus-") as tmp:
         aus = os.path.join(tmp, "zurueck.docx")

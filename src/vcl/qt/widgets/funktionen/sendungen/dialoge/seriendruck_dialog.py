@@ -1,0 +1,40 @@
+"""Dialog „Seriendruck“: Empfängerliste eingeben oder aus einer Datei laden."""
+from __future__ import annotations
+
+from PySide6.QtWidgets import QDialog, QPlainTextEdit
+
+from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
+from writer.baukasten.basis.mass import GROESSE_FENSTER_SENDUNG
+from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
+from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout
+from vcl.qt.widgets.bausteine.geruest.rollen import spalte as _spalte
+from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.funktionen.sendungen.dialoge.dialog_hilfen import ok_zeile
+
+
+class SeriendruckDialog(PanelFaehig, QDialog):
+    def __init__(self, parent, felder: list[str], gespeichert: str):
+        super().__init__(parent)
+        self.setWindowTitle("Seriendruck")
+        self.resize(*GROESSE_FENSTER_SENDUNG)
+        v = _spalte("standard", self)
+        v.addWidget(text_label(                                                  # bricht um: in der Seitenleiste wird nichts abgeschnitten
+            ("Im Text gefunden: " + ", ".join("{{" + x + "}}" for x in felder) + "\nDie erste Zeile unten muss diese Namen enthalten.")
+            if felder else "Im Text stehen noch keine Platzhalter. Fügen Sie Felder über Sendungen ▸ Seriendruckfeld ein\n"
+                           "(oder schreiben Sie {{Name}} in den Text) und kommen Sie dann hierher zurück."))
+        self.daten = QPlainTextEdit(gespeichert or (";".join(felder) + "\n" if felder else "Name;Ort\nFrau Meier;Kiel\nHerr Schmidt;Bonn"))
+        v.addWidget(self.daten)
+        z = FlussLayout()
+        z.addWidget(knopf("standard", "Aus Datei laden (CSV/TXT) …", aktion=self._laden))
+        v.addLayout(z)
+        v.addWidget(ok_zeile(self, "Briefe erzeugen"))
+
+    def _laden(self):
+        pfad, _ = Dateifenster.getOpenFileName(self, "Empfängerliste", "", "Tabellen (*.csv *.txt *.tsv);;Alle Dateien (*)")
+        if pfad:
+            for enc in ("utf-8-sig", "cp1252"):
+                try:
+                    self.daten.setPlainText(open(pfad, encoding=enc).read()); break
+                except (UnicodeDecodeError, OSError):
+                    continue

@@ -39,7 +39,7 @@ QFormLayout/QStackedLayout kamen nicht vor.
 
 ## Geänderte Dateien
 
-Neu: `src/lunivo_writer/oberflaeche/baukasten/basis/raster.py`, `tests/oberflaeche/test_raster_architektur.py`  
+Neu: `src/vcl/qt/widgets/bausteine/basis/raster.py`, `tests/oberflaeche/test_raster_architektur.py`  
 Gelöscht: `src/lunivo_writer/oberflaeche/bauteile/fluss_layout.py`
 
 * `kern/befehle/hauptreiter/einfuegen_objekte.py`

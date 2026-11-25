@@ -1,7 +1,7 @@
 """Module in Unterpakete verschieben und alle Verweise mitziehen (Quelltext, Tests, Werkzeuge, Doku).
 
 Aufruf: ``python werkzeuge/erstellung/module_verschieben.py <Paket> <Ziel-Unterpaket>:<modul>,<modul> ...``
-Beispiel: ``python werkzeuge/erstellung/module_verschieben.py lunivo_writer.editor seite:pagination,umbruch``
+Beispiel: ``python werkzeuge/erstellung/module_verschieben.py core.editor seite:pagination,umbruch``
 Angepasst werden ``lunivo_writer.<Paket>.<modul>`` (auch in Text), ``from <Paket> import <modul>`` (je Name getrennt)
 und Weiterleitungen. Schreibt kein HTML; arbeitet nur auf Textdateien.
 """

@@ -16,13 +16,13 @@ dev = ["pytest>=8", "ruff>=0.5"]
 offline = ["argostranslate>=1.9"]
 
 [project.scripts]
-lunivo-writer = "lunivo_writer.app:main"
+lunivo-writer = "vcl.qt.fenster.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-lunivo_writer = ["ressourcen/*", "ressourcen/daten/*"]
+system = ["ressourcen/*", "ressourcen/daten/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

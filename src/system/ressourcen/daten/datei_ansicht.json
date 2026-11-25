@@ -1,0 +1,270 @@
+{
+  "menue": [
+    {
+      "schluessel": "neu",
+      "text": "datei.menue.neu",
+      "symbol": "file-plus",
+      "art": "seite",
+      "ziel": "vorlage",
+      "pfeil": true
+    },
+    {
+      "schluessel": "oeffnen",
+      "text": "datei.menue.oeffnen",
+      "symbol": "folder-open",
+      "art": "seite",
+      "ziel": "zuletzt",
+      "pfeil": true
+    },
+    {
+      "schluessel": "speichern",
+      "text": "datei.menue.speichern",
+      "symbol": "save",
+      "art": "tun",
+      "ziel": "speichern",
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "speichern_als",
+      "text": "datei.menue.speichern_als",
+      "symbol": "file-pen",
+      "art": "seite",
+      "ziel": "speichern_als",
+      "pfeil": true,
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "pdf",
+      "text": "datei.menue.pdf",
+      "symbol": "file-text",
+      "art": "seite",
+      "ziel": "pdf",
+      "pfeil": true,
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "bild",
+      "text": "datei.menue.bild",
+      "symbol": "image",
+      "art": "seite",
+      "ziel": "bild",
+      "pfeil": true,
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "drucken",
+      "text": "datei.menue.drucken",
+      "symbol": "printer",
+      "art": "seite",
+      "ziel": "drucken",
+      "pfeil": true,
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "-1",
+      "art": "trenner"
+    },
+    {
+      "schluessel": "schuetzen",
+      "text": "datei.menue.schuetzen",
+      "symbol": "file-lock",
+      "art": "seite",
+      "ziel": "schuetzen",
+      "pfeil": true,
+      "mit_dokument": true
+    },
+    {
+      "schluessel": "-2",
+      "art": "trenner"
+    },
+    {
+      "schluessel": "hilfe",
+      "text": "datei.menue.hilfe",
+      "symbol": "circle-question-mark",
+      "art": "seite",
+      "ziel": "hilfe",
+      "pfeil": true
+    },
+    {
+      "schluessel": "optionen",
+      "text": "datei.menue.optionen",
+      "symbol": "settings",
+      "art": "seite",
+      "ziel": "optionen"
+    },
+    {
+      "schluessel": "beenden",
+      "text": "datei.menue.beenden",
+      "symbol": "log-out",
+      "art": "tun",
+      "ziel": "beenden"
+    }
+  ],
+  "symbole": {
+    "datei": "file-text",
+    "weg": "x",
+    "oeffnen": "folder-open"
+  },
+  "seiten": {
+    "hilfe": {
+      "titel": "datei.hilfe.titel",
+      "gruppen": [
+        {
+          "knoepfe": [
+            {
+              "text": "datei.hilfe.knopf.handbuch",
+              "symbol": "buch",
+              "seite": "hilfe_handbuch"
+            },
+            {
+              "text": "datei.hilfe.knopf.tastenHilfe",
+              "symbol": "tasten",
+              "seite": "hilfe_tastenkuerzel"
+            },
+            {
+              "text": "datei.hilfe.knopf.erweiterungen",
+              "symbol": "zahnrad",
+              "seite": "hilfe_erweiterungen"
+            },
+            {
+              "text": "datei.hilfe.knopf.ueber",
+              "symbol": "inhalt",
+              "seite": "hilfe_ueber"
+            }
+          ]
+        }
+      ]
+    },
+    "speichern_als": {
+      "titel": "datei.speichern_als.titel",
+      "gruppen": [
+        {
+          "name": "datei.speichern_als.gruppe0.name",
+          "hinweis": "datei.speichern_als.gruppe0.hinweis",
+          "knoepfe": [
+            {
+              "text": "datei.speichern_als.knopf.speichernUnter",
+              "befehl": "speichernUnter",
+              "symbol": "speichern"
+            },
+            {
+              "text": "datei.speichern_als.knopf.kopieSpeichern",
+              "befehl": "kopieSpeichern",
+              "symbol": "kopie"
+            }
+          ]
+        },
+        {
+          "name": "datei.speichern_als.gruppe1.name",
+          "hinweis": "datei.speichern_als.gruppe1.hinweis",
+          "knoepfe": [
+            {
+              "text": "datei.speichern_als.knopf.speichernPdf",
+              "befehl": "speichernPdf",
+              "symbol": "pdf",
+              "datei": ".pdf"
+            },
+            {
+              "text": "datei.speichern_als.knopf.exportierenDocx",
+              "befehl": "exportierenDocx",
+              "symbol": "ausdatei",
+              "datei": ".docx"
+            },
+            {
+              "text": "datei.speichern_als.knopf.exportierenOdt",
+              "befehl": "exportierenOdt",
+              "symbol": "ausdatei",
+              "datei": ".odt"
+            },
+            {
+              "text": "datei.speichern_als.knopf.exportierenRtf",
+              "befehl": "exportierenRtf",
+              "symbol": "ausdatei",
+              "datei": ".rtf"
+            },
+            {
+              "text": "datei.speichern_als.knopf.exportierenTxt",
+              "befehl": "exportierenTxt",
+              "symbol": "ausdatei",
+              "datei": ".txt"
+            },
+            {
+              "text": "datei.speichern_als.knopf.exportierenPng",
+              "befehl": "exportierenPng",
+              "symbol": "ausdatei",
+              "datei": ".png"
+            }
+          ]
+        },
+        {
+          "name": "datei.speichern_als.gruppe2.name",
+          "knoepfe": [
+            {
+              "text": "datei.speichern_als.knopf.info",
+              "seite": "info",
+              "symbol": "inhalt"
+            },
+            {
+              "text": "datei.speichern_als.knopf.oeffnen_mit",
+              "seite": "oeffnen_mit",
+              "symbol": "buch"
+            },
+            {
+              "text": "datei.speichern_als.knopf.speicherort",
+              "aktion": "speicherort",
+              "symbol": "oeffnen"
+            }
+          ]
+        }
+      ]
+    },
+    "oeffnen_mit": {
+      "titel": "datei.oeffnen_mit.titel",
+      "gruppen": [
+        {
+          "name": "datei.oeffnen_mit.gruppe0.name",
+          "knoepfe": [
+            {
+              "text": "datei.oeffnen_mit.knopf.dokumentTeilen",
+              "befehl": "dokumentTeilen",
+              "symbol": "verknuepft"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "zusatzseiten": [
+    "info"
+  ],
+  "inhaltsseiten": {
+    "hilfe_handbuch": {
+      "titel": "datei.hilfe_handbuch.titel",
+      "modul": "vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge",
+      "bauer": "handbuch_inhalt",
+      "scrollen": false,
+      "gehoert_zu": "hilfe"
+    },
+    "hilfe_tastenkuerzel": {
+      "titel": "datei.hilfe_tastenkuerzel.titel",
+      "modul": "vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge",
+      "bauer": "tastenkuerzel_inhalt",
+      "scrollen": true,
+      "gehoert_zu": "hilfe"
+    },
+    "hilfe_erweiterungen": {
+      "titel": "datei.hilfe_erweiterungen.titel",
+      "modul": "vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge",
+      "bauer": "erweiterungen_inhalt",
+      "scrollen": true,
+      "gehoert_zu": "hilfe"
+    },
+    "hilfe_ueber": {
+      "titel": "datei.hilfe_ueber.titel",
+      "modul": "vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge",
+      "bauer": "ueber_inhalt",
+      "scrollen": true,
+      "gehoert_zu": "hilfe"
+    }
+  }
+}

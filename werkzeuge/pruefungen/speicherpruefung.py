@@ -66,12 +66,12 @@ def _kategorie(e: BaseException) -> str:
 
 
 def pruefen(formate: list[str], db: str) -> list[tuple]:
-    from lunivo_writer.core.dokument import neues_dokument
-    from lunivo_writer.core.bearbeitung import Bearbeitungssitzung
-    from lunivo_writer.dienste.dateizugriff.modell_laden import lade_modell
-    from lunivo_writer.dienste.dateizugriff.modell_speichern import speichere_modell
-    from lunivo_writer.core.dokument.seite import PageSettings
-    from lunivo_writer.dienste.dateizugriff import sicher_schreiben as S
+    from core.dokument import neues_dokument
+    from core.bearbeitung import Bearbeitungssitzung
+    from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
+    from framework.dokumentverwaltung.dateizugriff.modell_speichern import speichere_modell
+    from core.dokument.seite import PageSettings
+    from framework.dokumentverwaltung.dateizugriff import sicher_schreiben as S
     lauf = uuid.uuid4().hex[:12]
     zeilen = []
     with tempfile.TemporaryDirectory(prefix="lunivo-speicherpruefung-") as ordner:

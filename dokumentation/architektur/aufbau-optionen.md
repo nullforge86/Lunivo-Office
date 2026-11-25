@@ -1,6 +1,6 @@
 # Der Aufbau der Optionen
 
-Quelle: `src/lunivo_writer/oberflaeche/dialoge/optionen.py`, Seiten in `optionen_seiten/`. Konzept und Begründung: [konzept-optionen.md](../konzepte/konzept-optionen.md).
+Quelle: `src/vcl/qt/widgets/dialoge/optionen.py`, Seiten in `optionen_seiten/`. Konzept und Begründung: [konzept-optionen.md](../konzepte/konzept-optionen.md).
 
 Das Optionen-Fenster geht mit **F9** auf, oder über *Datei ▸ Optionen*. Links oben die **Suche** (Strg+F), darunter eine
 flache Liste mit **sechs Seiten**, rechts die Seite. Jede Seite zeigt das Häufige; der Rest steht unter *Weitere Einstellungen*

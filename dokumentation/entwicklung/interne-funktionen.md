@@ -3095,7 +3095,7 @@ Diagramm: Elemente (Diagrammelemente-Liste), Teilformate und Zusätze, die QtCha
 
 ### `editor/dokument/__init__.py`
 
-Unterpaket ``dokument`` von ``lunivo_writer.editor``.
+Unterpaket ``dokument`` von ``core.editor``.
 
 
 ### `editor/dokument/einfuegen.py`
@@ -3526,7 +3526,7 @@ Platz im Seitenfluss ohne Qt: Blätter, gesetzte Zellen, Stand und Ergebnis des 
 
 ### `editor/objekte/__init__.py`
 
-Unterpaket ``objekte`` von ``lunivo_writer.editor``.
+Unterpaket ``objekte`` von ``core.editor``.
 
 
 ### `editor/objekte/bilddaten.py`
@@ -4012,7 +4012,7 @@ Sprechblasen: Kommentare und verfolgte Änderungen als Blasen im Seitenrand, mit
 
 ### `editor/seite/__init__.py`
 
-Unterpaket ``seite`` von ``lunivo_writer.editor``.
+Unterpaket ``seite`` von ``core.editor``.
 
 
 ### `editor/seite/absatzopt.py`
@@ -4399,7 +4399,7 @@ Zeilennummern (Seitenlayout ▸ Zeilennummern): welche Zeile welche Nummer träg
 
 ### `editor/tabelle/__init__.py`
 
-Unterpaket ``tabelle`` von ``lunivo_writer.editor``.
+Unterpaket ``tabelle`` von ``core.editor``.
 
 
 ### `editor/tabelle/tabelle_text.py`
@@ -4473,7 +4473,7 @@ Der Zustand der Schreibmarke gegenüber einer Tabelle - an einer Stelle festgele
 
 ### `editor/text/__init__.py`
 
-Unterpaket ``text`` von ``lunivo_writer.editor``.
+Unterpaket ``text`` von ``core.editor``.
 
 
 ### `editor/text/designs.py`
@@ -7855,7 +7855,7 @@ Dropdown-Zeile: die eine Gestalt jeder Zeilentaste in aufklappenden Fenstern (Me
 
 ### `oberflaeche/baukasten/dropdown/auswahl/__init__.py`
 
-Unterpaket ``auswahl`` von ``lunivo_writer.oberflaeche.baukasten.dropdown``.
+Unterpaket ``auswahl`` von ``writer.baukasten.dropdown``.
 
 
 ### `oberflaeche/baukasten/dropdown/auswahl/farbpalette.py`
@@ -7978,7 +7978,7 @@ Zellenraster: wie in der Vorlage die Tabelle einfügen — mit der Maus über Ze
 
 ### `oberflaeche/baukasten/dropdown/objektmenues/__init__.py`
 
-Unterpaket ``objektmenues`` von ``lunivo_writer.oberflaeche.baukasten.dropdown``.
+Unterpaket ``objektmenues`` von ``writer.baukasten.dropdown``.
 
 
 ### `oberflaeche/baukasten/dropdown/objektmenues/bild_diagramm_menues.py`
@@ -9426,7 +9426,7 @@ Neu aus Vorlage: die mitgelieferten Gerüste und die Dateien aus dem Vorlagenord
 
 ### `oberflaeche/dialoge/einfuegen/__init__.py`
 
-Unterpaket ``einfuegen`` von ``lunivo_writer.oberflaeche.dialoge``.
+Unterpaket ``einfuegen`` von ``writer.dialoge``.
 
 
 ### `oberflaeche/dialoge/einfuegen/bildschirmfoto.py`
@@ -9753,7 +9753,7 @@ Fenster „Wasserzeichen“ nach der Vorlage: oben Bildwasserzeichen, darunter T
 
 ### `oberflaeche/dialoge/ki/__init__.py`
 
-Unterpaket ``ki`` von ``lunivo_writer.oberflaeche.dialoge``.
+Unterpaket ``ki`` von ``writer.dialoge``.
 
 
 ### `oberflaeche/dialoge/ki/ki_aktions_dialoge.py`
@@ -9875,7 +9875,7 @@ KI-Konfiguration: Aufgaben-Modellzuweisung, Liste der KI-Modelle, „Eigenen Anb
 
 ### `oberflaeche/dialoge/lesen_hilfe/__init__.py`
 
-Unterpaket ``lesen_hilfe`` von ``lunivo_writer.oberflaeche.dialoge``.
+Unterpaket ``lesen_hilfe`` von ``writer.dialoge``.
 
 
 ### `oberflaeche/dialoge/lesen_hilfe/hilfe_dialoge.py`
@@ -9949,7 +9949,7 @@ Die Seiten des Optionen-Fensters, je Thema ein Baustein (``oberflaeche/dialoge/o
 
 Optionen: Ansicht und Darstellung.
 
-- **class `AnsichtSeiten`** — Optionen: Ansicht und Darstellung. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `AnsichtSeiten`** — Optionen: Ansicht und Darstellung. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_ansicht(titel)`
   - `_aussehen(p)` — Hell, Dunkel, Mint oder wie das System: vier große Schaltflächen, genau eine ist gewählt (kein ausgegrauter Zusatzschalter).
   - `_oberflaeche_wahl(p, f)`
@@ -9959,7 +9959,7 @@ Optionen: Ansicht und Darstellung.
 
 Optionen: Menüband, Schnellzugriff, Sicherheit.
 
-- **class `BefehleSeiten`** — Optionen: Menüband, Schnellzugriff, Sicherheit. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `BefehleSeiten`** — Optionen: Menüband, Schnellzugriff, Sicherheit. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_zwei_listen(p, links_kopf, rechts_kopf, hinzu, weg, kategorie)` — Gerüst der Vorlage: links „Befehle auswählen“ (Auswahl, Suche, Liste), in der Mitte Hinzufügen/Entfernen, rechts die Liste
   - `_schieben(liste, d)`
   - `_menueband(titel)`
@@ -9971,7 +9971,7 @@ Optionen: Menüband, Schnellzugriff, Sicherheit.
 
 Optionen: Schreiben, Speichern, Drucken und PDF.
 
-- **class `DateiSeiten`** — Optionen: Schreiben, Speichern, Drucken und PDF. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `DateiSeiten`** — Optionen: Schreiben, Speichern, Drucken und PDF. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_schreiben(titel)` — Schrift für neuen Text, Prüfung, AutoKorrektur; im Einzelnen eingeklappt (alle AutoKorrektur-Fälle bleiben erhalten).
   - `_speichern(titel)`
   - `_zwischenstaende_loeschen()`
@@ -10015,7 +10015,7 @@ Gemeinsame Werte der Bausteine.
 
 Optionen: Leichter lesen, Sprache.
 
-- **class `LesenSeiten`** — Optionen: Leichter lesen, Sprache. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `LesenSeiten`** — Optionen: Leichter lesen, Sprache. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_lesehilfe(titel)`
   - `_silbentrennung_haken(p, f)` — Haken „Silbentrennung“: gilt für das Dokument, das gerade offen ist (derselbe Schalter wie im Reiter Schreibhilfe).
   - `_lese_schriften(p, e)` — Die drei Schriften zum leichteren Lesen mit Probe; sagt, ob sie da sind.
@@ -10025,7 +10025,7 @@ Optionen: Leichter lesen, Sprache.
 
 Optionen: KI, Gedächtnis, Erweitert.
 
-- **class `LunivoSeiten`** — Optionen: KI, Gedächtnis, Erweitert. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `LunivoSeiten`** — Optionen: KI, Gedächtnis, Erweitert. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_ki(titel)`
   - `_gedaechtnis(titel)`
   - `_erweitert(titel)`
@@ -10034,7 +10034,7 @@ Optionen: KI, Gedächtnis, Erweitert.
 
 Optionen: Name und KI, dazu die Werkzeug-Fenster (Menüband, Schnellzugriff, Kennwort, Änderungen verfolgen).
 
-- **class `NameKiSeiten`** — Optionen: Name und KI. Baustein von ``OptionenAnsicht`` (siehe ``lunivo_writer/oberflaeche/dialoge/optionen.py``).
+- **class `NameKiSeiten`** — Optionen: Name und KI. Baustein von ``OptionenAnsicht`` (siehe ``vcl/qt/widgets/dialoge/optionen.py``).
   - `_name_ki(titel)`
   - `_anpassen(key)` — Eines der Werkzeuge als Fenster zeigen; das Band wird danach neu gebaut, wenn es sich geändert hat.
 
@@ -10042,7 +10042,7 @@ Optionen: Name und KI, dazu die Werkzeug-Fenster (Menüband, Schnellzugriff, Ken
 
 ### `oberflaeche/dialoge/sendungen/__init__.py`
 
-Unterpaket ``sendungen`` von ``lunivo_writer.oberflaeche.dialoge``.
+Unterpaket ``sendungen`` von ``writer.dialoge``.
 
 
 ### `oberflaeche/dialoge/sendungen/sendungen_dialoge.py`
@@ -10080,7 +10080,7 @@ Fenster des Reiters „Mailings“ (Seriendruck): Empfänger auswählen, Seriend
 
 ### `oberflaeche/dialoge/verweise/__init__.py`
 
-Unterpaket ``verweise`` von ``lunivo_writer.oberflaeche.dialoge``.
+Unterpaket ``verweise`` von ``writer.dialoge``.
 
 
 ### `oberflaeche/dialoge/verweise/verweise_dialoge.py`
@@ -10150,7 +10150,7 @@ Dokumentbereich: Editor, Seitenfläche, Dokumentreiter, Lineal, Navigation.
 
 ### `oberflaeche/dokument/ansicht/__init__.py`
 
-Unterpaket ``ansicht`` von ``lunivo_writer.oberflaeche.dokument``.
+Unterpaket ``ansicht`` von ``writer.dokumentansicht``.
 
 
 ### `oberflaeche/dokument/ansicht/absatz_symbol.py`
@@ -10331,7 +10331,7 @@ Vorschau im Dokumentfenster: statt des Dokuments steht eine schreibgeschützte Z
 
 ### `oberflaeche/dokument/bearbeitung/__init__.py`
 
-Unterpaket ``bearbeitung`` von ``lunivo_writer.oberflaeche.dokument``.
+Unterpaket ``bearbeitung`` von ``writer.dokumentansicht``.
 
 
 ### `oberflaeche/dokument/bearbeitung/freie_bilder_geometrie.py`
@@ -10779,7 +10779,7 @@ Objekte im Editor: Auswahl, Angaben und Ändern von Bildern, Formen, Textfeldern
 
 ### `oberflaeche/dokument/dokumentfenster/__init__.py`
 
-Unterpaket ``dokumentfenster`` von ``lunivo_writer.oberflaeche.dokument``.
+Unterpaket ``dokumentfenster`` von ``writer.dokumentansicht``.
 
 
 ### `oberflaeche/dokument/dokumentfenster/dokument_bereich.py`
@@ -10933,7 +10933,7 @@ Die linke Seitenleiste: Suchen und ersetzen, Kommentare, Überschriften, Änderu
 
 ### `oberflaeche/dokument/kopffuss/__init__.py`
 
-Unterpaket ``kopffuss`` von ``lunivo_writer.oberflaeche.dokument``.
+Unterpaket ``kopffuss`` von ``writer.dokumentansicht``.
 
 
 ### `oberflaeche/dokument/kopffuss/kopffuss_bearbeiter.py`
@@ -11036,7 +11036,7 @@ Notenfeld unten im Fenster: hier schreibt man den Text einer Fuß- oder Endnote,
 
 ### `oberflaeche/dokument/tabelle/__init__.py`
 
-Unterpaket ``tabelle`` von ``lunivo_writer.oberflaeche.dokument``.
+Unterpaket ``tabelle`` von ``writer.dokumentansicht``.
 
 
 ## `oberflaeche/hauptfenster`
