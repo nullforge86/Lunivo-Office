@@ -611,6 +611,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.sitzung.nachverfolgen = bool(an)
         self.zusatzGeaendert.emit()
 
+    def bearbeiter_melden(self) -> None:
+        """Den Namen des Bearbeiters (Einstellungen) ans Framework geben: er steht an Änderungen und Kommentaren, die das Framework ausführt."""
+        angaben = self.autor() if callable(getattr(self, "autor", None)) else ("", "")
+        _dokumente.bearbeiter_setzen(self.kennung, angaben[0] if angaben else "")
+
     def vor_aenderung(self, s) -> None:
         """Vor jeder Änderung: Bearbeiter und Zeit für nachverfolgte Änderungen und Kommentare setzen."""
         import datetime

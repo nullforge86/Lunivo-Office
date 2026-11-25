@@ -15,10 +15,15 @@ class UeberpruefenAnschluss:
         return symbole.icon(name, 18)
 
     def _markup(self):
-        return markup_befehle(self.ed.kennung, self.w.settings, self._ue_melder()) if self.ed is not None else None
+        return markup_befehle(self._kennung(), self.w.settings, self._ue_melder()) if self.ed is not None else None
 
     def _anzeige(self):
         return anzeige_befehle(self.ed.kennung if self.ed is not None else None, VorschauAdapter(self.w.current_tab()))
+
+    def _kennung(self) -> int:
+        """Kennung des Dokuments; vorher erfährt das Framework den aktuellen Bearbeiter (Name aus den Einstellungen)."""
+        self.ed.bearbeiter_melden()
+        return self.ed.kennung
 
     def _ue_melder(self):
         if getattr(self, "_ue_melder_objekt", None) is None:
@@ -29,13 +34,13 @@ class UeberpruefenAnschluss:
         self.w.statusBar().showMessage(text, dauer_ms)
 
     def _kommentare(self):
-        return kommentare_befehle(self.ed.kennung, self._ue_melder()) if self.ed is not None else None
+        return kommentare_befehle(self._kennung(), self._ue_melder()) if self.ed is not None else None
 
     def _aenderungen(self):
-        return aenderungen_befehle(self.ed.kennung, self._ue_melder()) if self.ed is not None else None
+        return aenderungen_befehle(self._kennung(), self._ue_melder()) if self.ed is not None else None
 
     def _noten(self):
-        return noten_befehle(self.ed.kennung) if self.ed is not None else None
+        return noten_befehle(self._kennung()) if self.ed is not None else None
 
     def _schutz_wert(self) -> str | None:
         """Der Dokumentschutz des aktuellen Dokumentfensters (``None``, ``lesen``, ``aenderungen``, ``kommentare``)."""

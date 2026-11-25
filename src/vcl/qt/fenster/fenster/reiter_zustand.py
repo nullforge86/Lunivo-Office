@@ -89,6 +89,7 @@ class ReiterZustandMixin:
         e.opt = lambda name, std=True: self.settings.get_bool(name, std)
         e.opt_text = lambda name, std="": self.settings.get(name, std)
         e.autor = self.autor_angaben
+        e.bearbeiter_melden()
         e.mini_hook = self.mini_zeigen
         e.fenster = self
         e.zusatzGeaendert.connect(self.navigation.spaeter)
