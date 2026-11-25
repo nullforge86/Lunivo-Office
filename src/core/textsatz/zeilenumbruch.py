@@ -1,8 +1,8 @@
 """Zeilenumbruch aus den Vorschüben der Zeichen: Wortumbruch, zu lange Wörter brechen an der Zeichengrenze. Ohne Qt."""
 from __future__ import annotations
 
-from .engine import LineBox
-from .wortumbruch import LEERZEICHEN, umbruch_stellen
+from core.textsatz.engine import LineBox
+from core.textsatz.wortumbruch import LEERZEICHEN, umbruch_stellen
 
 
 def zeilen_umbrechen(text: str, vorschuebe: list[float], breite: float, hoehe: float, steig: float, silben: frozenset = frozenset(), strich: float = 0.0) -> list[LineBox]:

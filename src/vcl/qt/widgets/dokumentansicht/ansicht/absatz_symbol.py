@@ -13,17 +13,17 @@ from PySide6.QtCore import QObject, QTimer, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QToolButton
 
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
 
 
 def dunkel(symbol: str, px: int = 16) -> QIcon:
     """Symbol in dunkler Tinte für die hellen Knöpfe auf dem Papier."""
     return QIcon(symbole._pixmap(symbol, Farbe.TINTE, max(10, px)))
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 OPTION = "ui/absatz_symbol"
 

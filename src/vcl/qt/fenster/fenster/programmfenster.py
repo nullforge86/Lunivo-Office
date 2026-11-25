@@ -1,7 +1,7 @@
 """Hauptfenster: Menüleiste, Schnellzugriff, Ribbon, Dokumentreiter, Statusleiste."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
 
@@ -10,27 +10,27 @@ from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
 from framework.schnittstellen.version import __version__
-from core.editor.text import stile
+from core.formatvorlagen.zeichen import stile
 from framework.schnittstellen.einstellungen import Einstellungen
 from framework.ki.dienst.ki_dienst import KIDienst
-from framework.funktionen.korrektur.anbieter import KorrekturEinstellungenAnbieter
+from framework.befehle.korrektur.anbieter import KorrekturEinstellungenAnbieter
 from core.korrektur.korrektur_dienst import WritingAssistant
-from framework.steuerung.dokumentverwaltung import DocumentManager
+from framework.sitzungen.dokumentverwaltung import DocumentManager
 from vcl.qt.widgets.statusleiste.statusleiste import StatusBar
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_reiter import DocTabs
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation import NavigationPanel
 from vcl.qt.widgets.seitenleisten.seitenleiste import SchreibhilfePanel
-from framework.befehle_alt.befehlsliste import Befehle
+from framework.befehle.befehlsliste import Befehle
 
 from vcl.qt.fenster.dateien.dateien import DateienBaustein
 from vcl.qt.fenster.fenster.bearbeiten import BearbeitenBaustein
 from vcl.qt.fenster.fenster.oberflaeche import OberflaecheBaustein
-from vcl.qt.fenster.backstage.backstage_steuerung import BackstageBaustein
+from vcl.qt.widgets.menues.backstage.backstage_steuerung import BackstageBaustein
 from vcl.qt.fenster.fenster.dokument_sync import DokumentSyncMixin
 from vcl.qt.fenster.fenster.reiter_zustand import ReiterZustandMixin
 from vcl.qt.fenster.fenster.fenster_verwaltung import FensterVerwaltungMixin
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import ICON_NORMAL, RAND_KEIN
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import ICON_NORMAL, RAND_KEIN
 MARGIN_PRESETS = {
     "Normal (2,5 cm)": (25, 25, 25, 25),
     "Schmal (1,3 cm)": (12.7, 12.7, 12.7, 12.7),
@@ -71,7 +71,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         self.ki.geaendert.connect(lambda: hasattr(self, "band") and self.ki_schnell_zeigen())
         from vcl.qt.widgets.dialoge import dokument_dialoge as _dlg
         _dlg.set_einheit(self.settings.get("ui/masseinheit", "Millimeter"))
-        from vcl.qt.widgets.bausteine.bauteile.live_vorschau import LiveVorschau
+        from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import LiveVorschau
         self.vorschau = LiveVorschau(self)
         self.dokumente = DocumentManager(self.settings)
         self.befehle = Befehle(self)
@@ -112,14 +112,14 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         self.noten_feld = NotenFeld(self.current_editor)
         self.noten_feld.geaendert.connect(lambda: self.navigation.aktualisieren())
         lay.addWidget(self.noten_feld)
-        from vcl.qt.fenster.backstage.backstage import Backstage
+        from vcl.qt.widgets.menues.backstage.backstage import Backstage
         self.backstage = Backstage(self)
         self.backstage.schliessen.connect(self.backstage_schliessen)
         self.backstage.hide()
         lay.addWidget(self.backstage, 1)
         self._backstage_verbinden()
         self.setCentralWidget(central)
-        from vcl.qt.widgets.bausteine.thema.thema import mint_abstaende
+        from vcl.qt.widgets.bausteine.farben.thema.thema import mint_abstaende
         mint_abstaende(self)                                           # Thema Mint: Außenränder, Bandkarte, runde Dokumentfläche
         geo = self.settings.get("window/geometry")
         if geo:
@@ -230,7 +230,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
 
     # ==== Menü ============================================================
     def _build_menu(self):
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         mb = self.menuBar()
         m = MenueListe.in_leiste(mb, "&Datei")
         m.vorhanden(self.a_new); m.vorhanden(self.a_open)

@@ -12,7 +12,7 @@ from framework.ki.suche.dokumentensuche import abschnitte_bilden
 
 def _aus_modell(dokument) -> list[tuple[str, str, str]]:
     """Abschnitte aus dem Dokumentmodell (Qt-frei): Überschriftenebene und Text je Absatz."""
-    from core.dokument.formatvorlagen import ueberschriftsebene
+    from core.formatvorlagen.formatvorlagen import ueberschriftsebene
     zeilen = [(ueberschriftsebene(dokument, a), a.text()) for a in dokument.absaetze()]
     return [(titel, titel, text) for titel, text in abschnitte_bilden(zeilen)]
 

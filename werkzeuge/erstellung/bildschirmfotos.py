@@ -20,8 +20,8 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from lunivo_writer.dienste.einstellungen_dienst import Settings  # noqa: E402
 from vcl.qt.widgets.dialoge.optionen import OptionenDialog  # noqa: E402
 from vcl.qt.fenster.fenster.programmfenster import MainWindow  # noqa: E402
-from vcl.qt.widgets.bausteine.thema.thema import apply_theme  # noqa: E402
-from vcl.qt.widgets.bausteine.bauteile import symbole  # noqa: E402
+from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme  # noqa: E402
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole  # noqa: E402
 
 BRIEF = """Anna Meyer
 Bahnhofstraße 12
@@ -129,9 +129,9 @@ def main():
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
     from PySide6.QtGui import QTextCursor
-    from core.editor.objekte.frei import frei_objekt as FO
-    from core.editor.objekte.smartart import smartart as SA
-    from core.editor.tabelle import tabellenstil as TS
+    from core.objekte.basis import frei_objekt as FO
+    from core.objekte.smartart import smartart as SA
+    from core.tabellen.formatierung import tabellenstil as TS
     from PySide6.QtGui import QTextTableFormat
 
     w = fenster(app, "light")

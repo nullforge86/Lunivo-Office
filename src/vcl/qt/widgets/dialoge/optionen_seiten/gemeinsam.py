@@ -1,28 +1,28 @@
 """Gemeinsame Werte der Bausteine."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken as haken_baustein
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf as knopf_baustein
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken as haken_baustein
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf as knopf_baustein
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, rolle as _rolle
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 import json
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QLabel, QLineEdit, QPushButton, QSpinBox, QWidget
-from system.pfade import ressourcen_pfade as pfade
-from writer.baukasten.basis import daten
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
-from vcl.qt.widgets.bausteine.geruest.einklappgruppe import EinklappGruppe
-from vcl.qt.widgets.bausteine.geruest.kachelraster import Kachelraster
-from vcl.qt.widgets.bausteine.felder.formular_gitter import gruppe, FormularGitter
-from writer.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_PAAR, HOEHE_FELD, RAND_ABSCHNITT, RAND_KEIN, RAND_OPTIONEN_GRUPPE, RAND_SEITE_TITEL, RAND_ZEILE_LOCKER, RAND_ZEILE_PAAR, RAND_ZEILE_SPALTEN, SCHRIFT_UEBERSCHRIFT
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from system.plattform import ressourcen_pfade as pfade
+from vcl.qt.widgets.bausteine.skalierung import daten
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
+from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
+from vcl.qt.widgets.bausteine.zustaende.geruest.kachelraster import Kachelraster
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, FormularGitter
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_PAAR, HOEHE_FELD, RAND_ABSCHNITT, RAND_KEIN, RAND_OPTIONEN_GRUPPE, RAND_SEITE_TITEL, RAND_ZEILE_LOCKER, RAND_ZEILE_PAAR, RAND_ZEILE_SPALTEN, SCHRIFT_UEBERSCHRIFT
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 MIN_HOEHE = HOEHE_FELD                                      # Mindesthöhe der Bedienelemente (leicht zu treffen)
 
@@ -170,7 +170,7 @@ class _Seite(QWidget):
         k = knopf_baustein("standard", _t("optionen.gemeinsam.waehlen"))
 
         def waehle():
-            from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
+            from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
             ordner = Dateifenster.getExistingDirectory(self, text, e.text() or os.path.expanduser("~"))
             if ordner:
                 e.setText(ordner)

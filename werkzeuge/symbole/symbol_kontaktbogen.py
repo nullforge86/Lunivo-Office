@@ -88,7 +88,7 @@ def main() -> None:
     ap.add_argument("--bisher", help="symbole.json aus der Zeit vor dem Einbau (Gegenstück rechts); ohne Angabe gilt die aktuelle Wiedergabe")
     a = ap.parse_args()
     app = QApplication([])
-    from vcl.qt.widgets.bausteine.bauteile import symbole
+    from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
     daten = json.load(open(os.path.join(WURZEL, "ressourcen", "icons", "entwurf", "entwurf.json"), encoding="utf-8"))
     if a.bisher:
         vorher = json.load(open(a.bisher, encoding="utf-8"))

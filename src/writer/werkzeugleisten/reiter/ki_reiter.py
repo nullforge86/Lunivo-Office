@@ -5,7 +5,7 @@ Textbausteine sowie die Seitenleiste kommen aus register.json."""
 from __future__ import annotations
 
 from writer.werkzeugleisten.reiter.baustein import k as _k
-from writer.funktionen.korrektur.band.schreibhilfe_katalog import fuer_gruppe
+from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import fuer_gruppe
 
 
 def _knoepfe(gruppe: str) -> list[dict]:

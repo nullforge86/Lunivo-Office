@@ -17,13 +17,13 @@ from __future__ import annotations
 
 import re
 
-from core.dokument.bildformat import format_erkennen
+from core.objekte.bilder.modell.bildformat import format_erkennen
 from filter.docx.docx_bildeffekte import effekte_aus_element
 from core.dokument.dokument import Abschnitt, Absatz, Formatvorlage, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
-from core.dokument.formatvorlagen import eingebaute_vorlagen
+from core.formatvorlagen.formatvorlagen import eingebaute_vorlagen
 from filter.docx import docx_erhalt as E, docx_formen as F
 from core.dokument.bericht import IOReport
-from core.dokument.seite import HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 
 PX_JE_TWIP = 1.0 / 15.0
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"

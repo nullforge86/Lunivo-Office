@@ -4,20 +4,20 @@ Das Fenster klappt unter dem Knopf „Lesehilfe“ auf (Titel, Erklärung, siebe
 ``oberflaeche/lesestufen.py`` und sind dieselben wie in den Optionen ▸ Lesehilfe; geschrieben wird in dieselben Einstellungen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QWidget
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from writer.funktionen.ansicht.aktionen import lesestufen as LS
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig, leiste_fuer
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from writer.werkzeugleisten.ansicht.aktionen import lesestufen as LS
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig, leiste_fuer
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from vcl.qt.widgets.bausteine.basis.farben import PAPIERTOENE  # noqa: F401
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.farben.farben import PAPIERTOENE  # noqa: F401
 VORGABEN = {"papier": "Weiß", "buchstaben": 0.0, "wort": 0.0, "zeilenluft": 1.0, "zeilenfokus": False, "groesser": "keine", "zurueck": "keine"}
 
 

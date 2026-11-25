@@ -1,13 +1,13 @@
 """Reiter-, Seiten- und Kontextnavigation des Menübands."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QFrame, QWidget
 
 from writer.werkzeugleisten.plan import plan
-from writer.baukasten.basis.mass import RAND_BANDREITER
+from vcl.qt.widgets.bausteine.abstaende.mass import RAND_BANDREITER
 from vcl.qt.widgets.ribbon.band_bausteine import STANDARD_VERSTECKT, _BandSeite, _GruppenTrenner
 
 

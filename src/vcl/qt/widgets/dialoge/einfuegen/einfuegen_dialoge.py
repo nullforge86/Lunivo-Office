@@ -1,9 +1,9 @@
 """Dialoge zum Einfügen: Formen, WordArt, Diagramm, Piktogramm, Formel, Deckblatt, Datum, Textbausteine."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import math
 
@@ -14,22 +14,22 @@ from PySide6.QtWidgets import (
     QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QSizePolicy, QWidget,
 )
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from core.editor.dokument import einfuegen as E
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from core.bearbeitung import einfuegen as E
 from vcl.qt.widgets.bausteine import FarbFeld
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from framework.dokumentverwaltung.dokumentpflege import bausteine
 
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.farben import VORGABE_LINIE, VORGABE_SCHRIFT
-from writer.baukasten.basis.mass import KACHEL_SEITENVERHAELTNIS, SCHRIFT_EINFUEGEN_VORSCHAU_PT, SCHRIFT_GRUPPENKOPF_FAKTOR
-from writer.baukasten.basis.schriftarten import SANS, SERIF
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from writer.baukasten.basis.mass import BREITE_KACHEL_VORSCHAU, GROESSE_FENSTER_AUSWAHL, GROESSE_FENSTER_EINFUEGEN_GROSS, GROESSE_FENSTER_TABELLE, GROESSE_MINIATUR_LAYOUT, GROESSE_RASTER_SYMBOLE, HOEHE_BEREICH_MITTEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_LISTE_HOCH, HOEHE_LISTE_MITTEL, HOEHE_VORSCHAU_KLEIN, ICON_VORSCHAU, RAND_KEIN, RAND_ZEILE, SCHRIFT_HINWEIS, ZUGABE_KACHEL
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import VORGABE_LINIE, VORGABE_SCHRIFT
+from vcl.qt.widgets.bausteine.abstaende.mass import KACHEL_SEITENVERHAELTNIS, SCHRIFT_EINFUEGEN_VORSCHAU_PT, SCHRIFT_GRUPPENKOPF_FAKTOR
+from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS, SERIF
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_KACHEL_VORSCHAU, GROESSE_FENSTER_AUSWAHL, GROESSE_FENSTER_EINFUEGEN_GROSS, GROESSE_FENSTER_TABELLE, GROESSE_MINIATUR_LAYOUT, GROESSE_RASTER_SYMBOLE, HOEHE_BEREICH_MITTEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_LISTE_HOCH, HOEHE_LISTE_MITTEL, HOEHE_VORSCHAU_KLEIN, ICON_VORSCHAU, RAND_KEIN, RAND_ZEILE, SCHRIFT_HINWEIS, ZUGABE_KACHEL
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 def _ok(dlg):
     return knopfzeile(dlg)
 
@@ -37,8 +37,8 @@ def _ok(dlg):
 _Farbknopf = FarbFeld
 
 
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 class _Vorschau(QLabel):
     """Vorschaubild, das sich der Breite anpasst (in der Seitenleiste kleiner, nie breiter als 460 px)."""
 
@@ -124,7 +124,7 @@ class _LayoutGalerie(QWidget):
         self._bauen(3)
 
     def _bauen(self, spalten: int) -> None:
-        from vcl.qt.widgets.bausteine.felder.kachel_feld import KachelFeld
+        from vcl.qt.widgets.bausteine.interaktion.felder.kachel_feld import KachelFeld
         if self.feld is not None:
             self._v.removeWidget(self.feld); self.feld.deleteLater()
         self._spalten = spalten
@@ -161,7 +161,7 @@ _BILDCHEN: dict = {}
 
 def _layout_bildchen(p, r, name: str) -> None:
     """Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``oberflaeche/baukasten/dropdown/objektmenues/smartart_menues.py``)."""
-    from vcl.qt.widgets.bausteine.dropdown.objektmenues.smartart_menues import zeichne_miniatur
+    from vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues import zeichne_miniatur
     zeichne_miniatur(p, r.adjusted(3, 3, -3, -3), name, True)
 
 
@@ -187,7 +187,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from core.editor.objekte.smartart import smartart as SA
+        from core.objekte.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
@@ -238,7 +238,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
-            from vcl.qt.widgets.bausteine.dropdown.objektmenues.smartart_menues import miniatur
+            from vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues import miniatur
             self._zeige(miniatur(d["layout"], False, QSize(*GROESSE_MINIATUR_LAYOUT)).toImage())
 
 
@@ -282,9 +282,9 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
         super().__init__(parent)
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         from PySide6.QtWidgets import QWidget
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
         self.setWindowTitle("Daten bearbeiten")
         v = _spalte("standard", self)
         kopf = QWidget(); g = FormularGitter(kopf)
@@ -334,7 +334,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Piktogramm einfügen")
         self.resize(*GROESSE_FENSTER_AUSWAHL)
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         v = _spalte("standard", self)
         self.suche = zeilenfeld("frei", platzhalter="Suchen (englische Symbolnamen, z. B. heart, home, star)")
         v.addWidget(self.suche)
@@ -351,7 +351,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         self._fuellen("")
 
     def _fuellen(self, q):
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         self.liste.clear()
         q = (q or "").lower().strip()
         for n in self.namen:
@@ -408,7 +408,7 @@ class DatumDialog(PanelFaehig, QDialog):
     def __init__(self, parent, sprache: str = "de_DE"):
         super().__init__(parent)
         from PySide6.QtWidgets import QCheckBox
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         self.setWindowTitle("Datum und Uhrzeit")
         v = _spalte("standard", self)
         g = FormularGitter(); v.addLayout(g)
@@ -459,8 +459,8 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Textbausteine")
         self.resize(*GROESSE_FENSTER_EINFUEGEN_GROSS)
         v = _spalte("standard", self)
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter, abschnittstitel
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
         felder = FormularGitter(); v.addLayout(felder)
         self.name = zeilenfeld("frei"); self.kuerzel = zeilenfeld("frei")
         felder.zeile("Name:", self.name)
@@ -588,7 +588,7 @@ class _LayoutGalerie(QWidget):
         self._bauen(3)
 
     def _bauen(self, spalten: int) -> None:
-        from vcl.qt.widgets.bausteine.felder.kachel_feld import KachelFeld
+        from vcl.qt.widgets.bausteine.interaktion.felder.kachel_feld import KachelFeld
         if self.feld is not None:
             self._v.removeWidget(self.feld); self.feld.deleteLater()
         self._spalten = spalten
@@ -625,7 +625,7 @@ _BILDCHEN: dict = {}
 
 def _layout_bildchen(p, r, name: str) -> None:
     """Graue Miniatur eines SmartArt-Layouts (selbst gezeichnet, ``oberflaeche/baukasten/dropdown/objektmenues/smartart_menues.py``)."""
-    from vcl.qt.widgets.bausteine.dropdown.objektmenues.smartart_menues import zeichne_miniatur
+    from vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues import zeichne_miniatur
     zeichne_miniatur(p, r.adjusted(3, 3, -3, -3), name, True)
 
 
@@ -651,7 +651,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from core.editor.objekte.smartart import smartart as SA
+        from core.objekte.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
@@ -702,7 +702,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
-            from vcl.qt.widgets.bausteine.dropdown.objektmenues.smartart_menues import miniatur
+            from vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues import miniatur
             self._zeige(miniatur(d["layout"], False, QSize(*GROESSE_MINIATUR_LAYOUT)).toImage())
 
 
@@ -746,9 +746,9 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent, titel: str, kategorien: list[str], reihen: dict[str, list[float]]):
         super().__init__(parent)
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         from PySide6.QtWidgets import QWidget
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
         self.setWindowTitle("Daten bearbeiten")
         v = _spalte("standard", self)
         kopf = QWidget(); g = FormularGitter(kopf)
@@ -798,7 +798,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Piktogramm einfügen")
         self.resize(*GROESSE_FENSTER_AUSWAHL)
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         v = _spalte("standard", self)
         self.suche = zeilenfeld("frei", platzhalter="Suchen (englische Symbolnamen, z. B. heart, home, star)")
         v.addWidget(self.suche)
@@ -815,7 +815,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         self._fuellen("")
 
     def _fuellen(self, q):
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         self.liste.clear()
         q = (q or "").lower().strip()
         for n in self.namen:
@@ -872,7 +872,7 @@ class DatumDialog(PanelFaehig, QDialog):
     def __init__(self, parent, sprache: str = "de_DE"):
         super().__init__(parent)
         from PySide6.QtWidgets import QCheckBox
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         self.setWindowTitle("Datum und Uhrzeit")
         v = _spalte("standard", self)
         g = FormularGitter(); v.addLayout(g)
@@ -923,8 +923,8 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Textbausteine")
         self.resize(*GROESSE_FENSTER_EINFUEGEN_GROSS)
         v = _spalte("standard", self)
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter, abschnittstitel
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
         felder = FormularGitter(); v.addLayout(felder)
         self.name = zeilenfeld("frei"); self.kuerzel = zeilenfeld("frei")
         felder.zeile("Name:", self.name)

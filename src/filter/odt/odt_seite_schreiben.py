@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape
 
-from core.dokument.seite import HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 from filter.rtf.rtf_basis import _ausrichtung_seite
 from filter.odt.odt_basis import _NS, _mm, frei_rahmen as _frei_rahmen, frei_stil as _frei_stil
 

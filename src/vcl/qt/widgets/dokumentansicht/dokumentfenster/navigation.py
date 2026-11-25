@@ -4,10 +4,10 @@ Die schmale Leiste mit den Symbolen links davon baut das Hauptfenster (``_leiste
 Alles, was hier geschieht, ruft die Funktionen des Editors (Suchen, Kommentare, Änderungen, Noten) und dieselben Befehle wie das Band (Vorlesen)."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.raster import RasterSpalte
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, stufe_mit_farbe
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, stufe_mit_farbe
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import datetime
 
@@ -18,19 +18,19 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QWidget,
 )
 
-from writer.funktionen.korrektur.band.schreibhilfe_katalog import VORLESEN
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.basis.karte import als_karte
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.geruest.panel_rahmen import PanelRahmen, rollflaeche
-from vcl.qt.widgets.bausteine.thema.thema import karte_einrichten
+from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import VORLESEN
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.farben.karte import als_karte
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen, rollflaeche
+from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen
-from vcl.qt.widgets.bausteine.basis.farben import FUSSNOTE_VIOLETT
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_label, marke_faerben
-from writer.baukasten.basis.mass import BREITE_SEITENLEISTE_PANEL, ABSTAND_KARTENZEILE, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_VERFOLGEN_KNOPF, GROESSE_STUFE, HOEHE_FELD, HOEHE_TEXT_MITTEL, HOEHE_TEXT_NORMAL, PADDING_MARKE, PADDING_NAVIGATION_KNOPF, RADIUS_MARKE, RADIUS_STUFE, RAND_KARTE_NAVIGATION, RAND_KEIN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen
+from vcl.qt.widgets.bausteine.farben.farben import FUSSNOTE_VIOLETT
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label, marke_faerben
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_SEITENLEISTE_PANEL, ABSTAND_KARTENZEILE, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_VERFOLGEN_KNOPF, GROESSE_STUFE, HOEHE_FELD, HOEHE_TEXT_MITTEL, HOEHE_TEXT_NORMAL, PADDING_MARKE, PADDING_NAVIGATION_KNOPF, RADIUS_MARKE, RADIUS_STUFE, RAND_KARTE_NAVIGATION, RAND_KEIN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
 
 SEITEN = ("suche", "kommentare", "ueberschriften", "aenderungen", "noten", "vorlesen")
 TABS = SEITEN                                                             # alter Name
@@ -54,7 +54,7 @@ class KommentarKarte(QFrame):
 
     def __init__(self, b: dict, k: dict, ed, aktualisieren, pt: float = 11.5, bearbeiten: bool = False, speichern=None, abbrechen=None, bearbeite_los=None):
         super().__init__()
-        from core.editor.dokument.zusatz import kommentar_farbe
+        from core.dokument.zusatz import kommentar_farbe
         self.setObjectName("kommentarKarte")
         geloest = bool(k.get("geloest"))
         farbe = kommentar_farbe(geloest)                                  # orange Kreis wie in der alten Fassung, gelöste grau
@@ -181,7 +181,7 @@ class NavigationPanel(QWidget):
 
     def unterfenster(self, d) -> bool:
         """Ein Unterfenster (Schriftart, Absatz … für „Format“) als Seite hier in der linken Leiste zeigen — die rechte Seitenleiste bleibt zu."""
-        from vcl.qt.widgets.bausteine.geruest.zusatz_panel import ausfuehren_im_stapel
+        from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import ausfuehren_im_stapel
         return ausfuehren_im_stapel(self.stapel, d, self.width() - 36, max(300, self.height() - 140))
 
     def suche_zeigen(self, text: str = "", reiter: str = "Suchen", element: str = "") -> None:
@@ -325,7 +325,7 @@ class NavigationPanel(QWidget):
                       "oben": (lambda e: e[0]["von"], False), "unten": (lambda e: e[0]["von"], True)}[self.sortierung]
         eintraege.sort(key=schluessel[0], reverse=schluessel[1])
         for i, (b, k) in enumerate(eintraege):
-            from core.editor.objekte.formen.sprechblasen import karten_pt
+            from core.objekte.formen.sprechblasen import karten_pt
             karte = KommentarKarte(b, k, ed, self.aktualisieren, karten_pt(self._einstellung("kommentare/schrift", "mittel")),
                                    bearbeiten=int(b["wert"]) == self._bearbeite, speichern=self._bearbeiten_speichern,
                                    abbrechen=self._bearbeiten_abbrechen, bearbeite_los=self.kommentar_bearbeiten)
@@ -400,7 +400,7 @@ class NavigationPanel(QWidget):
             self.leer.show()
             return
         eltern = {0: self.baum.invisibleRootItem()}
-        from core.dokument.formatvorlagen import ueberschriftsebene
+        from core.formatvorlagen.formatvorlagen import ueberschriftsebene
         dok, stelle = ed.sitzung.dokument, 0
         n = 0
         for a in dok.absaetze():
@@ -534,7 +534,7 @@ class NavigationPanel(QWidget):
     def _bau_vorlesen(self) -> PanelRahmen:
         r = PanelRahmen(TITEL["vorlesen"])
         if self.fenster is not None:
-            from vcl.qt.widgets.bausteine.geruest.werkbank import Werkbank
+            from vcl.qt.widgets.bausteine.zustaende.geruest.werkbank import Werkbank
             wb = Werkbank(self.fenster, "Lesen", nur=VORLESEN)
             r.inhalt.addWidget(wb, 1)
             self.vorlesen_zeilen = wb

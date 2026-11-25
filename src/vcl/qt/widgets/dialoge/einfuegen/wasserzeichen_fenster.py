@@ -8,28 +8,28 @@ Das Fenster ändert das Dokument nicht. Aufbau des Wörterbuchs: ``editor/seite/
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
 import os
 
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPen
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QLabel, QPushButton, QSlider, QSpinBox
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe, spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
 
-from core.editor.objekte.bild.bilddaten import bild_aus_datei
-from core.editor.seite import wasserzeichen as WZ
-from writer.baukasten.medien.bildformate import BILD_FILTER
-from core.dokument.seite import PageSettings, mm_to_px
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from vcl.qt.widgets.bausteine.dropdown.auswahl.farbpalette import FarbFeld
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from vcl.qt.widgets.bausteine.felder.mass_feld import MassSpin
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
+from core.objekte.bilder.modell.bilddaten import bild_aus_datei
+from core.dokument.wasserzeichen import wasserzeichen as WZ
+from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
+from core.dokument.abschnitte.seite import PageSettings, mm_to_px
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
+from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import MassSpin
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_REGLER_MIN, HOEHE_KNOPF
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
 
 AUTOMATISCH = "Automatisch"
 
@@ -167,7 +167,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         self._zustand()
 
     def _bild_waehlen(self) -> None:
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import datei_waehlen
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self, "Bild auswählen", self._ordner or os.path.expanduser("~"),
                              BILD_FILTER)
         if wahl:

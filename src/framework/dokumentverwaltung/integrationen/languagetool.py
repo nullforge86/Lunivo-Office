@@ -20,8 +20,8 @@ import time
 import urllib.parse
 import urllib.request
 
-from system.prozess import prozess
-from system.pfade.pfade import data_dir
+from system.plattform import prozess
+from system.plattform.pfade import data_dir
 
 PORT = 8081                                  # übliche Nummer eines von Hand gestarteten Servers; wird nur mit ausdrücklicher Erlaubnis benutzt
 MAX_ANTWORT = 5 * 1024 * 1024                # Byte, die ein Dienst zurückgeben darf

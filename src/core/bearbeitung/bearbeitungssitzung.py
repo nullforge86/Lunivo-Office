@@ -25,13 +25,13 @@ from __future__ import annotations
 
 from core.dokument.dokument import Auswahl, Dokument, neues_dokument
 from core.dokument.pruefung import pruefe_dokument
-from core.bearbeitung.abschnittsbearbeitung import AbschnittTeil
-from core.bearbeitung.auswahl import AuswahlTeil
-from core.bearbeitung.ersatzbearbeitung import ErsatzTeil
-from core.bearbeitung.formatbearbeitung import FormatTeil
-from core.bearbeitung.objektbearbeitung import ObjektTeil
-from core.bearbeitung.suche import SuchTeil
-from core.bearbeitung.tabellenbearbeitung import TabellenTeil
+from core.dokument.abschnitte.abschnittsbearbeitung import AbschnittTeil
+from core.auswahl.text.auswahl import AuswahlTeil
+from core.suche.ersetzen.ersatzbearbeitung import ErsatzTeil
+from core.formatierung.formatbearbeitung import FormatTeil
+from core.objekte.basis.objektbearbeitung import ObjektTeil
+from core.suche.textsuche.suche import SuchTeil
+from core.tabellen.modell.tabellenbearbeitung import TabellenTeil
 from core.bearbeitung.texteingabe import TextTeil
 from core.bearbeitung.verlauf import Verlauf, schritt
 from core.bearbeitung.zusatzbearbeitung import ZusatzTeil

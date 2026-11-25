@@ -1,30 +1,30 @@
 """Optionen: KI, Gedächtnis, Erweitert."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from core.schrift import standard_datenbank
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, rolle as _rolle
+from core.formatierung.schrift import standard_datenbank
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 import json
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QWidget
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from framework.ki.dienst import ki as K
 from framework.dokumentverwaltung.dokumentpflege import vorlesen
-from system.pfade import pfade
-from core.korrektur.vorhersage import EMPFAENGER
+from system.plattform import pfade
+from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_NORMAL, BREITE_KNOPF_KLEIN, HOEHE_VORSCHAU_KLEIN, PADDING_PLAKETTE, PADDING_STARTKNOPF_LINK, RADIUS_KLEIN, RAND_KARTE_ZEILE, RAND_KEIN, RAND_ZEILE, RAND_ZEILE_ENG, SCHRIFT_HINWEIS, SCHRIFT_LISTE, SCHRIFT_KLEIN
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_NORMAL, BREITE_KNOPF_KLEIN, HOEHE_VORSCHAU_KLEIN, PADDING_PLAKETTE, PADDING_STARTKNOPF_LINK, RADIUS_KLEIN, RAND_KARTE_ZEILE, RAND_KEIN, RAND_ZEILE, RAND_ZEILE_ENG, SCHRIFT_HINWEIS, SCHRIFT_LISTE, SCHRIFT_KLEIN
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 
 class LunivoSeiten:
@@ -141,13 +141,13 @@ class LunivoSeiten:
             aufgaben_fuellen(); modell_fuellen(); anbieter_fuellen()
 
         def anbieter_neu():
-            from vcl.qt.widgets.bausteine.geruest.fenster_stapel import ausfuehren
+            from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
             from vcl.qt.widgets.dialoge.ki.ki_dialoge import KIEinstellungenDialog
             ausfuehren(KIEinstellungenDialog(self.w, 0))
             alles_neu(); geaendert.emit()
 
         def modelle_bearbeiten():
-            from vcl.qt.widgets.bausteine.geruest.fenster_stapel import ausfuehren
+            from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
             from vcl.qt.widgets.dialoge.ki.ki_dialoge import KIEinstellungenDialog
             ausfuehren(KIEinstellungenDialog(self.w, 0))
             alles_neu(); geaendert.emit()
@@ -155,7 +155,7 @@ class LunivoSeiten:
         mb.clicked.connect(modelle_bearbeiten)
 
         f.addRow(QLabel(_t("optionen.lunivo.assistenten")))
-        from vcl.qt.widgets.bausteine.felder.assistenten_liste import AssistentenListe
+        from vcl.qt.widgets.bausteine.interaktion.felder.assistenten_liste import AssistentenListe
         ass = AssistentenListe(self.w); ass.setProperty("optName", _t("optionen.lunivo.assistenten"))
         f.addRow(ass)
 
@@ -182,7 +182,7 @@ class LunivoSeiten:
 
     def _gedaechtnis(self, titel):
         from PySide6.QtWidgets import QListWidget
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         p = _Seite(self.w, titel)
         g = self.w.assistant.gelernt
         f = p.gruppe(_t("optionen.lunivo.gelernte_schreibweisen"))
@@ -259,7 +259,7 @@ class LunivoSeiten:
 
     def _erweitert(self, titel):
         from framework.dokumentverwaltung.integrationen import languagetool
-        from framework.funktionen.datei.orte import data_dir
+        from framework.befehle.datei.orte import data_dir
         p = _Seite(self.w, titel)
 
         def groesse(pfad) -> str:

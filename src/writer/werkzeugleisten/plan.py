@@ -7,12 +7,12 @@ Die Prüfungen der Schreibhilfe stehen zusätzlich in der rechten Seitenleiste.
 from __future__ import annotations
 
 from writer.kontextmenues.diagramm_werkzeuge import DIAGRAMMTOOLS
-from writer.funktionen.kopffuss.band.kontext_reiter import KOPFFUSS
-from writer.funktionen.ansicht.band import reiter as ansicht_reiter
-from writer.funktionen.sendungen.band import reiter as sendungen_reiter
-from writer.funktionen.ueberpruefen.band import reiter as ueberpruefen_reiter
-from writer.funktionen.verweise.band import reiter as verweise_reiter
-from writer.funktionen.sendungen.band.kontext_reiter import SERIENDRUCK
+from writer.werkzeugleisten.kopffuss.band.kontext_reiter import KOPFFUSS
+from writer.werkzeugleisten.ansicht.band import reiter as ansicht_reiter
+from writer.serienbriefwerkzeuge.band import reiter as sendungen_reiter
+from writer.ueberpruefung.band import reiter as ueberpruefen_reiter
+from writer.referenzwerkzeuge.band import reiter as verweise_reiter
+from writer.serienbriefwerkzeuge.band.kontext_reiter import SERIENDRUCK
 from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from writer.kontextmenues.tabellen_werkzeuge import TABELLENSTIL, TABELLENTOOLS
 from writer.kontextmenues.text_werkzeuge import TEXTTOOLS

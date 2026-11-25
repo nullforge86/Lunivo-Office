@@ -4,11 +4,11 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QApplication, QMessageBox
-from vcl.qt.widgets.bausteine.dokument.eingabe_fenster import EingabeFenster
+from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.bausteine import weitere_farben
 from vcl.qt.widgets.dialoge.dokument_dialoge import PageSetupDialog
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.farben import VORGABE_MARKER
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import VORGABE_MARKER
 from vcl.qt.fenster.fenster.gemeinsam import _QuickInfo
 
 
@@ -44,11 +44,11 @@ class BearbeitenBaustein:
         e = self.current_editor()
         if not e:
             return
-        from vcl.qt.widgets.bausteine.formatierung.absatz_dialog import AbsatzDialog, werte_an_marke
+        from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import AbsatzDialog, werte_an_marke
         vorher = werte_an_marke(e)
         rtl = vorher["rtl"]
         d = AbsatzDialog(self, vorher)
-        from vcl.qt.widgets.bausteine.geruest.fenster_stapel import ausfuehren
+        from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         if ausfuehren(d):
             w = d.werte()
             if w["ebene"] != vorher["ebene"]:                       # die Gliederungsebene ist die Überschriftsebene des Absatzes
@@ -68,8 +68,8 @@ class BearbeitenBaustein:
         e = self.current_editor()
         if not e:
             return
-        from vcl.qt.widgets.bausteine.formatierung.absatz_dialog import werte_an_marke
-        from vcl.qt.widgets.bausteine.dokument.tabstopp_dialog import TabstoppDialog
+        from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import werte_an_marke
+        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import TabstoppDialog
         d = TabstoppDialog(self, werte_an_marke(e)["tabs"])
         if d.exec():
             e.set_tabstopps(d.stopps())
@@ -90,7 +90,7 @@ class BearbeitenBaustein:
 
 
     def mini_zeigen(self, ed, pos, rechtsklick: bool = False, menue=None):
-        from vcl.qt.widgets.bausteine.bauteile.mini_leiste import MiniLeiste
+        from vcl.qt.widgets.bausteine.symbole.bauteile.mini_leiste import MiniLeiste
         if getattr(self, "_mini", None) is None:
             self._mini = MiniLeiste(self)
         if ed is None:
@@ -101,7 +101,7 @@ class BearbeitenBaustein:
 
     def markup_neu(self) -> None:
         """Markup- und Sprechblasen-Einstellungen haben sich geändert: Seitenrand für Blasen und Auszeichnung neu aufbauen."""
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.objekte.formen import sprechblasen as SB
         for t in self._doc_tabs():
             t.editor.blasen_setzen(SB.konfig_lesen(self.settings), self.settings.get("kommentare/schrift", "mittel"))
             t.editor.viewport().update()
@@ -114,7 +114,7 @@ class BearbeitenBaustein:
 
 
     def silbenfarben_anwenden(self, e=None):
-        from core.editor.text import silbenfarben as S
+        from core.formatierung.schrift import silbenfarben as S
         k = S.konfig_lesen(self.settings)
         for ed in ([e] if e is not None else [t.editor for t in self._doc_tabs()]):
             ed.set_silbenfarben(k)
@@ -177,7 +177,7 @@ class BearbeitenBaustein:
             f.setPointSizeF(max(6.0, self._app_font0.pointSizeF() * prozent / 100))
         if f != app.font():
             app.setFont(f)
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         faktor = {"klein": 0.8, "mittel": 1.0, "gross": 1.3}.get(self.settings.get("ui/icongroesse", "mittel"), 1.0)
         if abs(symbole.FAKTOR - faktor) > 1e-6:
             symbole.FAKTOR = faktor
@@ -236,7 +236,7 @@ class BearbeitenBaustein:
         if not liste:
             QMessageBox.information(self, "Stimme", "Es ist keine Stimme eingerichtet. Siehe dokumentation/benutzerhandbuch/installation.md.")
             return
-        from vcl.qt.widgets.bausteine.dokument.stimme_dialog import StimmeDialog
+        from vcl.qt.widgets.dialoge.dokument.stimme_dialog import StimmeDialog
         d = StimmeDialog(self, liste, self.settings.get(v.EINSTELLUNG_STIMME, ""), self.settings.get_int(v.EINSTELLUNG_TEMPO, 0),
                          (v.TEMPO_MIN, v.TEMPO_MAX, v.TEMPO_SCHRITT))
         if d.exec():
@@ -292,15 +292,15 @@ class BearbeitenBaustein:
         if hasattr(sb, "lesen_ende"):
             sb.lesen_ende.setVisible(self.lesemodus)
         if not hasattr(self, "_lese_ende"):
-            from vcl.qt.widgets.bausteine.bauteile.lese_ende_knopf import LeseEndeKnopf
+            from vcl.qt.widgets.bausteine.symbole.bauteile.lese_ende_knopf import LeseEndeKnopf
             self._lese_ende = LeseEndeKnopf(self, self.toggle_lesemodus)
         self._lese_ende.zeigen(self.lesemodus)
 
 
     def set_theme(self, wahl: str):
-        from vcl.qt.widgets.bausteine.thema.thema import apply_theme
-        from vcl.qt.widgets.bausteine.bauteile import symbole
-        from vcl.qt.widgets.bausteine.thema import thema
+        from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+        from vcl.qt.widgets.bausteine.farben.thema import thema
         self.settings.set("theme", wahl)
         thema.WEICH = self.settings.get_bool("ui/weich", False)
         QApplication.setOverrideCursor(Qt.WaitCursor)               # das Umstellen dauert einen Moment: Sanduhr statt scheinbarem Stillstand

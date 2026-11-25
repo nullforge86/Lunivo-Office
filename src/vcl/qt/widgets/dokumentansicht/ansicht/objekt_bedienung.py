@@ -15,7 +15,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
 from core.geometrie import Point, Rect
-from core.rendering.ausgabe.backend import Style
+from core.layout.drucklayout.ausgabe.backend import Style
 
 GRIFF_TREFFER = 7.0                    # Trefferfläche eines Griffs (Bildpunkte der Ansicht)
 GRIFF_GROESSE = 7.0
@@ -42,8 +42,8 @@ KNOEPFE = {
                  ("sa_stil", "paintbrush", "Stile"), ("sa_bullet", "list", "Aufzählung"), ("zahnrad", "settings", "Formatieren")),
 }
 STANDARD_KNOEPFE = (_LAYOUT,)
-from vcl.qt.widgets.bausteine.basis.farben import KNOPF_SYMBOLFARBE, OBJEKT_KNOPF_FLAECHE, OBJEKT_KNOPF_RAND
-from writer.baukasten.basis.mass import RADIUS_ZEICHNUNG_GROSS # Symbole auf dem hellen Knopfgrund (in jedem Thema gleich)
+from vcl.qt.widgets.bausteine.farben.farben import KNOPF_SYMBOLFARBE, OBJEKT_KNOPF_FLAECHE, OBJEKT_KNOPF_RAND
+from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG_GROSS # Symbole auf dem hellen Knopfgrund (in jedem Thema gleich)
 
 
 class ObjektBedienung:
@@ -176,7 +176,7 @@ class ObjektBedienung:
         sel = self._auswahl_objekt()
         if sel is None or self.nur_lesen or self._objekt_zug is not None:
             return
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
         for _n, symbol, _h, rc in self.knopf_liste(sel):

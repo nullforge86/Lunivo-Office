@@ -4,24 +4,24 @@ Die Schalter der ersten Stufe sind dieselben wie in der Seitenleiste und in den 
 Tastenkürzel rufen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QLabel, QPushButton, QWidget
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil, trennlinie
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import abschnittstitel
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.basis.texte import marke_faerben
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittstitel
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.schrift.texte import marke_faerben
 
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_ZEILE, BREITE_NUMMER, GROESSE_SCHALTER, GROESSE_STUFE, PADDING_HILFE_CHIP, PADDING_TASTENKUERZEL, RADIUS_MARKE, RADIUS_PILLE, RADIUS_STUFE, RAND_KEIN, RAND_ZEILE_KARTE, SCHRIFT_KLEIN
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_ZEILE, BREITE_NUMMER, GROESSE_SCHALTER, GROESSE_STUFE, PADDING_HILFE_CHIP, PADDING_TASTENKUERZEL, RADIUS_MARKE, RADIUS_PILLE, RADIUS_STUFE, RAND_KEIN, RAND_ZEILE_KARTE, SCHRIFT_KLEIN
 STUFEN = [
     # (Stufe, Titel, Kürzel, Frage, Hinweis rechts, Schalter | Befehl)
     (1, "Rote Wellenlinien", "", "Gibt es das Wort überhaupt?", "sofort beim Tippen", ("schalter", "wellen")),

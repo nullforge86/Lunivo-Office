@@ -11,11 +11,11 @@ from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QWidget
 
-from core.dokument.seite import PX_PER_MM, px_to_mm
+from core.dokument.abschnitte.seite import PX_PER_MM, px_to_mm
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.farben import ABDUNKELUNG
-from writer.baukasten.basis.mass import SCHRIFT_LINEAL_PX
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_LINEAL_PX
 HOEHE = 26          # Dicke des Lineals
 FANG = 6            # so nahe (Bildpunkte) muss die Maus an einer Marke sein
 AKZENT = QColor(Farbe.AKZENT_DUNKEL)
@@ -59,7 +59,7 @@ class LinealH(_Lineal):
     einzugGeaendert = Signal(float, float, float)  # links, rechts, erste Zeile (mm)
 
     def _einzuege(self):
-        from core.layout.formatwerte import einzuege
+        from core.layout.drucklayout.formatwerte import einzuege
         links, rechts, erste = einzuege(self.e.absatzformat())
         return px_to_mm(links), px_to_mm(rechts), px_to_mm(erste)
 

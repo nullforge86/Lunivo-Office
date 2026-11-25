@@ -49,7 +49,7 @@ class DateienDruckenBaustein:
 
     def druck_ansicht(self, t, parent=None):
         """Das Druckfenster ohne Knopfzeile (Menü ▸ Drucken, zweite Spalte)."""
-        from vcl.qt.widgets.bausteine.dokument.druck_dialog import DruckAnsicht
+        from vcl.qt.widgets.dialoge.dokument.druck_dialog import DruckAnsicht
         a = DruckAnsicht(parent=parent, **self._druck_args(t))
         a.eigenschaften.connect(lambda name: self._drucker_eigenschaften(a, name))
         return a
@@ -66,7 +66,7 @@ class DateienDruckenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from vcl.qt.widgets.bausteine.dokument.druck_dialog import DruckDialog
+        from vcl.qt.widgets.dialoge.dokument.druck_dialog import DruckDialog
         dlg = DruckDialog(self, hilfe=self.druck_hilfe, **self._druck_args(t))
         dlg.ansicht.eigenschaften.connect(lambda name: self._drucker_eigenschaften(dlg.ansicht, name))
         if not dlg.exec():
@@ -110,7 +110,7 @@ class DateienDruckenBaustein:
         if not t:
             return
         from framework.dokumentverwaltung.ausgabe.drucken import Zwischenseiten
-        from vcl.qt.widgets.bausteine.dokument.druckvorschau import DruckVorschau
+        from vcl.qt.widgets.dialoge.dokument.druckvorschau import DruckVorschau
         dlg = DruckVorschau(self, Zwischenseiten(t.modell_fuer_speichern(), self.druckoptionen()))
         dlg.drucken.connect(lambda: QTimer.singleShot(0, self.print_dialog))
         dlg.showMaximized()
@@ -145,7 +145,7 @@ class DateienDruckenBaustein:
 
 
     def _blasen_fuer_druck(self):
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.objekte.formen import sprechblasen as SB
         e = self.current_editor()
         k = SB.konfig_lesen(self.settings)
         if e is None or not self.settings.get_bool("sprechblasen/drucken", False) or not SB.aktiv(k):
@@ -154,7 +154,7 @@ class DateienDruckenBaustein:
 
 
     def _silben_fuer_druck(self):
-        from core.editor.text import silbenfarben as S
+        from core.formatierung.schrift import silbenfarben as S
         k = S.konfig_lesen(self.settings)
         return dict(k, nur_absatz=False) if k["an"] and k["drucken"] else None
 

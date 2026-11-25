@@ -4,10 +4,10 @@ Der Anbieter wird hier festgelegt — in „KI-Konfiguration“ (Reiter Schreibh
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
 
@@ -16,26 +16,26 @@ from PySide6.QtWidgets import (
     QSizePolicy, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QToolButton,
     QWidget,
 )
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from framework.ki.dienst import ki as K
-from vcl.qt.widgets.bausteine.geruest.fenster_stapel import zeige_unter
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from vcl.qt.widgets.bausteine.bauteile import symbole
+from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
-from vcl.qt.widgets.bausteine.felder.auswahl_liste import AuswahlListe
-from vcl.qt.widgets.bausteine.basis.karte import als_karte
-from vcl.qt.widgets.bausteine.felder.listen_leiste import ListenLeiste
-from writer.baukasten.basis.mass import BREITE_KNOPF_KLEIN, GROESSE_FENSTER_ANBIETER, GROESSE_FENSTER_KI, GROESSE_FENSTER_MCP, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF_GROSS, HOEHE_LISTE_ANBIETER, HOEHE_LISTE_AUSWAHL, HOEHE_LISTE_KURZ, HOEHE_LISTE_MITTEL, HOEHE_LISTE_REITER, HOEHE_TEXT_NORMAL, ICON_NORMAL, RAND_KEIN, RAND_OBEN_SEITE
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_LANG
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.auswahl_liste import AuswahlListe
+from vcl.qt.widgets.bausteine.farben.karte import als_karte
+from vcl.qt.widgets.bausteine.interaktion.felder.listen_leiste import ListenLeiste
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_KNOPF_KLEIN, GROESSE_FENSTER_ANBIETER, GROESSE_FENSTER_KI, GROESSE_FENSTER_MCP, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF_GROSS, HOEHE_LISTE_ANBIETER, HOEHE_LISTE_AUSWAHL, HOEHE_LISTE_KURZ, HOEHE_LISTE_MITTEL, HOEHE_LISTE_REITER, HOEHE_TEXT_NORMAL, ICON_NORMAL, RAND_KEIN, RAND_OBEN_SEITE
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_LANG
 def _tags_text(a: dict) -> str:
     n = dict(K.ANBIETER_TAGS)
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)

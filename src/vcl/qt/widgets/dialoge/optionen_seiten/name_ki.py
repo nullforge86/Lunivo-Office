@@ -1,17 +1,17 @@
 """Optionen: Name und KI, dazu die Werkzeug-Fenster (Menüband, Schnellzugriff, Kennwort, Änderungen verfolgen)."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
-from writer.baukasten.geruest.module import anmelden
+from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
 
 from PySide6.QtWidgets import QDialog, QScrollArea
 
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import _Seite
-from writer.baukasten.basis.mass import GROESSE_FENSTER_NAME_KI, RAND_DIALOG_KI
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_NAME_KI, RAND_DIALOG_KI
 
 
 anmelden("optionen", "ki", "optionen.seite.ki", "_name_ki", 60)
@@ -46,7 +46,7 @@ class NameKiSeiten:
 
     def _anpassen(self, key: str) -> None:
         """Eines der Werkzeuge als Fenster zeigen; das Band wird danach neu gebaut, wenn es sich geändert hat."""
-        from vcl.qt.widgets.bausteine.geruest.fenster_stapel import ausfuehren
+        from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         titel, bauer = self.FENSTER[key]
         d = QDialog(self)
         d.setWindowTitle(titel)

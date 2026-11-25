@@ -281,7 +281,7 @@ def externe(ordner: str = os.path.join(os.path.dirname(os.path.abspath(__file__)
 def abbild(dok) -> dict:
     """Was beim Roundtrip erhalten bleiben soll: Text, Zeichenformat-Läufe, Tabellenstruktur, Bilder (aus dem Dokumentenmodell ``core.document.Dokument``)."""
     from core.dokument.dokument import InlineObjekt, Lauf, Tabelle
-    from core.dokument.formatvorlagen import wirksames_zeichenformat
+    from core.formatvorlagen.formatvorlagen import wirksames_zeichenformat
     laeufe, tabellen = [], []
     bilder = sum(1 for o in dok.objekte.values() if getattr(o, "art", "") in ("bild", "roh"))              # frei positionierte Bilder
     for a in dok.absaetze():

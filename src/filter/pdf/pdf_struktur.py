@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 
 from core.dokument.dokument import InlineObjekt
-from core.dokument.formatvorlagen import ueberschriftsebene
+from core.formatvorlagen.formatvorlagen import ueberschriftsebene
 
 PT_JE_PX = 0.75                                             # PDF-Punkte je Bildpunkt (96 dpi)
 STILE_ANDERE = ("title", "subtitle", "quote", "Title", "Subtitle", "Quote", "Titel", "Untertitel", "Zitat")

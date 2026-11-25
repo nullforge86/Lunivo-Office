@@ -3,7 +3,7 @@ Zoom und Scrollen.
 
 Die Ansicht hält keinen eigenen Inhalt. Sie arbeitet auf der Bearbeitungssitzung (``core.editing.Bearbeitungssitzung``), die dem Dokument-Tab gehört, und
 ändert das Dokument nur über sie. Das Layout (``core.layout.LayoutEngine``) wird bei jeder Änderung der Sitzung neu berechnet; gezeichnet wird mit
-``core.rendering.DokumentRenderer`` über das Qt-Backend (``QPainter`` ist nur Ausgabe). Eingabe und Zwischenablage stehen in ``eingabe.py``.
+``core.layout.drucklayout.ausgabe.DokumentRenderer`` über das Qt-Backend (``QPainter`` ist nur Ausgabe). Eingabe und Zwischenablage stehen in ``eingabe.py``.
 """
 from __future__ import annotations
 
@@ -11,20 +11,20 @@ from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QAbstractScrollArea, QApplication, QScrollArea, QWidget
 
-from vcl.qt.rendering.zeichnen.rendering import QtRenderBackend
+from vcl.qt.rendering.formen.rendering import QtRenderBackend
 from core.dokument import Position
 from core.dokument.dokument import Auswahl
 from core.bearbeitung import Bearbeitungssitzung
 from core.geometrie import Point, mm_to_px
 from core.layout import LayoutEngine, LayoutErgebnis
-from core.layout import formatwerte as F, schreibmarke as SM
-from core.layout.seitenlayout import BLATT_ABSTAND_PX
-from core.rendering import DokumentRenderer
-from core.rendering.seite.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
-from core.rendering.ausgabe.backend import rgba
+from core.layout.drucklayout import formatwerte as F, schreibmarke as SM
+from core.layout.drucklayout.seitenlayout import BLATT_ABSTAND_PX
+from core.layout.drucklayout.ausgabe import DokumentRenderer
+from core.layout.drucklayout.ausgabe.seite.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
+from core.layout.drucklayout.ausgabe.backend import rgba
 from core.textsatz.engine import TextLayoutEngine
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.farben import AUTOR_FARBEN, WELLEN_FARBE, WELLEN_STANDARD
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import AUTOR_FARBEN, WELLEN_FARBE, WELLEN_STANDARD
 
 from vcl.qt.widgets.dokumentansicht.ansicht.eingabe import EingabeTeil
 from vcl.qt.widgets.dokumentansicht.ansicht.objekt_bedienung import ObjektBedienung
@@ -135,7 +135,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         aus: dict = {}
         if self.markup:
             from core.dokument.dokument import teile
-            from core.rendering.ausgabe.backend import rgba
+            from core.layout.drucklayout.ausgabe.backend import rgba
 
             def format_bei(pos) -> dict:
                 rest = teile(s.dokument.absatz(pos.absatz_id).inhalte, pos.versatz)[1]
@@ -310,7 +310,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         else:
             while c[3] and sum(b.sizeInBytes() for b in c[3].values()) > BILDCACHE_MAX_BYTES:       # Speicher begrenzen: die am längsten nicht gezeigten Blätter zuerst
                 c[3].pop(next(iter(c[3])))
-            from core.rendering.ausgabe.rasterziel import RasterZiel
+            from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
             einr = erg.seiten[i].einrichtung
             ziel = RasterZiel(self._layout.engine, mm_to_px(einr.width_mm), mm_to_px(einr.height_mm), self.zoom * dpr, rgba(self.papier))
             self._renderer.zeichne_seite(ziel, dok, erg, i, grund)
@@ -322,7 +322,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
     def _ueberlagerung(self, erg) -> "Ueberlagerung":
         """Was über dem Text liegt, als Daten für den Kern (Flächen je Seite); gezeichnet wird es nicht hier."""
         s, dok = self.sitzung, self.sitzung.dokument
-        from core.bearbeitung.suche import offset_zu_position
+        from core.suche.textsuche.suche import offset_zu_position
         wellen: dict = {}
         for fund in self.wellen[:3000]:
             for seite_nr, rects in SM.auswahl_rechtecke(erg, Auswahl(offset_zu_position(dok, fund.von), offset_zu_position(dok, fund.bis))).items():

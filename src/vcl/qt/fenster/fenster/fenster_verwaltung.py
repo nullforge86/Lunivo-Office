@@ -55,7 +55,7 @@ class FensterVerwaltungMixin:
             f.setGeometry(r.x() + (i % spalten) * bw, r.y() + (i // spalten) * bh, bw, bh)
 
     def fensterliste_menue(self) -> QMenu:
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for f in self.alle_fenster():
             for t in f._doc_tabs():

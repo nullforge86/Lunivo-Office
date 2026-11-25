@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .margins import Margins
-from .point import Point
-from .size import Size
+from core.geometrie.margins import Margins
+from core.geometrie.point import Point
+from core.geometrie.size import Size
 
 
 @dataclass(frozen=True)

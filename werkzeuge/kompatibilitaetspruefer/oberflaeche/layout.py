@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel, QWidget
 
-from vcl.qt.widgets.bausteine.basis.raster import RasterLayout, RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
-from vcl.qt.widgets.bausteine.felder.karten_raster import KartenRaster
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterLayout, RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
+from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRaster
 
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis import mass as M
-from writer.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, RAND_KEIN
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende import mass as M
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, RAND_KEIN
 
 # ---- Ränder (links, oben, rechts, unten) ---------------------------------------------------------------------------------------------------------------
 RAND_SEITE = M.RAND_SEITE_TITEL                                        # Seite mit Titel
@@ -200,5 +200,5 @@ class Formular(FormularGitter):
     def __init__(self, eltern: QWidget | None = None):
         super().__init__(eltern)
         if eltern is not None:
-            from vcl.qt.widgets.bausteine.geruest.rollen import raender
+            from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import raender
             raender(self, "gruppe")

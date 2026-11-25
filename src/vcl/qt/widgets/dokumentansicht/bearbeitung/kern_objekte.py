@@ -403,13 +403,13 @@ class KernObjekte:
 
     def zuschnitt_lesen(self, objekt_id: int) -> tuple:
         """Der Zuschnitt (links, oben, rechts, unten) als Anteile des freien Objekts."""
-        from core.editor.objekte.bild import bildzuschnitt as BZ
+        from core.objekte.bilder.zuschneiden import bildzuschnitt as BZ
         o = self.sitzung.dokument.objekte.get(objekt_id)
         return BZ.lesen(angabe_von(o)) if o is not None else (0.0, 0.0, 0.0, 0.0)
 
     def objekt_zuschneiden(self, objekt_id: int, seite: int, rect, zu: tuple) -> None:
         """Zuschneiden-Modus: die Kanten sind gezogen; das Objekt bekommt den neuen sichtbaren Ausschnitt und seine Lage (ein Schritt)."""
-        from core.editor.objekte.bild import bildzuschnitt as BZ
+        from core.objekte.bilder.zuschneiden import bildzuschnitt as BZ
         with self.sitzung.gruppe("Zuschneiden"):
             self.objekt_verschieben(objekt_id, seite, rect)
             BZ.setzen(self, self.objekt_ziel(), zu=tuple(zu), b=float(rect.width), h=float(rect.height))

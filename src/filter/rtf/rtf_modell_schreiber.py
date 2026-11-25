@@ -6,11 +6,11 @@ Original; anderes wird PNG), Seitengröße, Seitenränder, Kopf- und Fußzeile. 
 ``rtf_basis`` (nur ``PageSettings``, ohne Qt). Maße im Modell sind Bildpunkte (96 dpi): 1 px = 15 Twip."""
 from __future__ import annotations
 
-from core.dokument.bildformat import format_erkennen
+from core.objekte.bilder.modell.bildformat import format_erkennen
 from core.dokument.dokument import Absatz, Dokument, InlineObjekt, Rahmen, Tabelle
-from core.dokument.formatvorlagen import ueberschriftsebene
-from core.dokument.listen import listenmarken
-from core.dokument.bildformat import masse
+from core.formatvorlagen.formatvorlagen import ueberschriftsebene
+from core.listen.listen import listenmarken
+from core.objekte.bilder.modell.bildformat import masse
 from filter.rtf.formen_schreiben import shape_rtf
 from filter.rtf.rtf_basis import RtfBasis, _px, _text, verluste_melden
 from core.dokument.bericht import IOReport

@@ -11,16 +11,16 @@ import re
 
 from PySide6.QtCore import Qt
 
-from core.bearbeitung.suche import offset_zu_position
+from core.suche.textsuche.suche import offset_zu_position
 from core.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, Formatvorlage, ListenEbene, Position
-from core.dokument.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
+from core.listen.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
 from core.geometrie import mm_to_px, px_to_mm
-from core.layout import formatwerte as F
+from core.layout.drucklayout import formatwerte as F
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
 TAB_NAME = {0: "links", 1: "rechts", 2: "mitte", 3: "dezimal"}
-from vcl.qt.widgets.bausteine.basis.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
+from vcl.qt.widgets.bausteine.farben.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
 
 
 # ---- Listen: Beschreibung der Oberfläche ↔ Ebenen des Modells -------------------------------------------------------------------------------------
@@ -64,8 +64,8 @@ def spec_zu_ebenen(spec: dict) -> list:
 
 def ebenen_zu_spec(ebenen: list) -> dict:
     """Das Gegenstück: die Beschreibung der Liste für die Listenfenster (einfach, wenn sie genau so entstanden sein kann, sonst Gliederung)."""
-    from core.funktionen.absatz import listen as L
-    from core.funktionen.absatz import mehrstufig as M
+    from core.listen.aufzaehlungen import listen as L
+    from core.listen.mehrstufig import mehrstufig as M
     if ebenen and all(e.stil in PUNKTE for e in ebenen) and spec_zu_ebenen(L.liste(ebenen[0].stil)) == ebenen:
         return L.liste(ebenen[0].stil)
     e0 = ebenen[0]
@@ -114,7 +114,7 @@ def katalog_zu_vorlage(name: str, d: dict) -> Formatvorlage:
         if v is not None:
             absatz[k] = v
     if d.get("tabs"):
-        from vcl.qt.widgets.bausteine.dokument.tabstopp_dialog import aus_text
+        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import aus_text
         stopps = aus_text(d["tabs"])
         absatz["tabstopps"] = [[mm_to_px(m), art, ""] for m, art, _f in stopps]
         fuell = ";".join(f"{mm_to_px(m):.2f}:{f}" for m, _a, f in stopps if f)
@@ -145,7 +145,7 @@ def vorlage_zu_katalog(v: Formatvorlage) -> dict:
     return d
 
 
-from core.editor.text.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
+from core.text.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
 
 
 class KernBefehle:
@@ -185,19 +185,19 @@ class KernBefehle:
 
     def absatz_option(self, name: str):
         """Eine Absatzoption (``editor/seite/absatzopt.py``) des Absatzes an der Schreibmarke."""
-        from core.editor.seite import absatzopt
+        from core.formatierung.absatz import absatzopt
         roh = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("optionen")
         return absatzopt.aus_text(roh if isinstance(roh, str) else "").get(name, absatzopt.VORGABE.get(name))
 
     def absatz_option_setzen(self, name: str, wert) -> None:
-        from core.editor.seite import absatzopt
+        from core.formatierung.absatz import absatzopt
         roh = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("optionen")
         w = absatzopt.aus_text(roh if isinstance(roh, str) else "")
         w[name] = wert
         self._af({"optionen": absatzopt.als_text(w) or None})
 
     def set_absatzopt(self, opt) -> None:
-        from core.editor.seite import absatzopt
+        from core.formatierung.absatz import absatzopt
         text = opt if isinstance(opt, str) else absatzopt.als_text(opt)
         self._af({"optionen": text or None})
 
@@ -218,7 +218,7 @@ class KernBefehle:
         self._af({"richtung": "ltr" if F.richtung(a) == "rtl" else "rtl", "ausrichtung": None if a.get("ausrichtung") in (None, "links", "rechts") else a["ausrichtung"]})
 
     def absatzrahmen(self):
-        from core.editor.objekte.formen.linie import Linie
+        from core.objekte.formen.linie import Linie
         return Linie.aus_text(F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("rahmen"))
 
     def set_absatzrahmen(self, text) -> None:
@@ -275,10 +275,10 @@ class KernBefehle:
         werte["basis"] = a.format.get("vorlage") or "Standard"
         spec = self.liste_spec()
         if spec:
-            from core.funktionen.absatz import listen as L
+            from core.listen.aufzaehlungen import listen as L
             werte["liste"] = L.als_text(spec)
         if af.get("tabstopps"):
-            from vcl.qt.widgets.bausteine.dokument.tabstopp_dialog import als_text
+            from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import als_text
             fuell = F.tabfuellung(af)
             werte["tabs"] = als_text([(round(px_to_mm(t[0]), 1), TAB_NAME.get(t[1], "links"), next((k for k, v in F.FUELLZEICHEN.items() for p, z in fuell.items() if abs(p - t[0]) < 0.05 and z == v), ""))
                                       for t in F.tabstopps(af, d)[0]])
@@ -286,7 +286,7 @@ class KernBefehle:
 
     def _vorlage_abgleichen(self, name: str) -> None:
         """Legt die Vorlage des Katalogs im Dokument an oder aktualisiert sie, wenn sie dort anders steht."""
-        from core.editor.text import stile
+        from core.formatvorlagen.zeichen import stile
         if name not in stile.namen():
             return
         neu = katalog_zu_vorlage(name, stile.definition(name))
@@ -304,7 +304,7 @@ class KernBefehle:
     def stil_tasten(self) -> None:
         """Tastenkombinationen der Formatvorlagen (``taste`` im Katalog) auf der Zeichenfläche setzen."""
         from PySide6.QtGui import QKeySequence, QShortcut
-        from core.editor.text import stile
+        from core.formatvorlagen.zeichen import stile
         for k in getattr(self, "_stil_kuerzel", []):
             k.setParent(None)
             k.deleteLater()
@@ -380,13 +380,13 @@ class KernBefehle:
     # ---- Ersetzen im Rohtext ---------------------------------------------------------------------------------------------------------------
     def rohtext(self) -> str:
         """Der Text des Dokuments mit U+2029 zwischen den Absätzen (Stellen wie bei ``textCursor().position()``)."""
-        from core.bearbeitung.suche import roh_text
+        from core.suche.textsuche.suche import roh_text
         return roh_text(self.sitzung.dokument)
 
     def replace_range(self, von: int, bis: int, neu: str, erwartet: str | None = None, markdown: bool = False) -> bool:
         """Ersetzt [von, bis) des Rohtextes durch ``neu``; mit ``erwartet`` nur, wenn dort noch dieser Text steht. ``markdown``: Auszeichnungen
         (Überschriften, Listen, Fett) werden als Formate umgesetzt."""
-        from core.bearbeitung.suche import roh_text
+        from core.suche.textsuche.suche import roh_text
         roh = roh_text(self.sitzung.dokument)
         if erwartet is not None and roh[von:bis] != erwartet:
             return False
@@ -396,7 +396,7 @@ class KernBefehle:
         return True
 
     def _markdown_ersetzen(self, von: int, bis: int, neu: str) -> bool:
-        from core.bearbeitung.suche import offset_zu_position
+        from core.suche.textsuche.suche import offset_zu_position
         bloecke = markdown_bloecke(neu)
         anfang = offset_zu_position(self.sitzung.dokument, von)
         for b in bloecke:
@@ -461,7 +461,7 @@ class KernBefehle:
         return self.tabellenformat({"rahmen_breite": max(1.0, linie.breite_pt / 0.75), "rahmen_farbe": linie.farbe, "rahmen_art": linie.art})
 
     def tabelle_rahmen_lesen(self):
-        from core.editor.objekte.formen.linie import Linie
+        from core.objekte.formen.linie import Linie
         t = self.tabelle_an_marke()
         f = t.tabelle.format if t is not None else {}
         if float(f.get("rahmen_breite") or 0) <= 0:
@@ -481,7 +481,7 @@ class KernBefehle:
 
     def tabelle_vorlage_anwenden(self, name: str, kopf: bool, streifen: bool, spalte: bool) -> bool:
         """Wendet eine Tabellenvorlage (Füllungen, Fettdruck, Rahmen) auf die Zellen an; die Optionen bleiben an der Tabelle gespeichert."""
-        from core.editor.tabelle import tabellenstil as TS
+        from core.tabellen.formatierung import tabellenstil as TS
         t = self.tabelle_an_marke()
         if t is None or name not in TS.VORLAGEN:
             return False
@@ -636,9 +636,9 @@ class KernBefehle:
         """Das Rechtsklickmenü an der Stelle zeigen (Text, Tabelle oder gewähltes Objekt); die Schreibhilfe ergänzt Vorschläge, die Minileiste steht daneben."""
         if self.fenster is None:
             return
-        from vcl.qt.widgets.bausteine.bauteile.kontextmenue import menue_bauen
+        from vcl.qt.widgets.bausteine.symbole.bauteile.kontextmenue import menue_bauen
         if self.objekt_gewaehlt() is not None:
-            from vcl.qt.widgets.bausteine.bauteile.kontextmenue import objektmenue_bauen
+            from vcl.qt.widgets.bausteine.symbole.bauteile.kontextmenue import objektmenue_bauen
             m = objektmenue_bauen(self, self.fenster)
         else:
             m = menue_bauen(self, self.fenster)
@@ -772,7 +772,7 @@ class KernBefehle:
 
     def _formular_klick(self, pos: int) -> bool:
         """Klick auf ein Formularfeld (Kontrollkästchen, Auswahl, Datum, Text, Schaltfläche)."""
-        from core.editor.dokument import formular
+        from core.dokument import formular
         return formular.klick(self, pos, self.fenster)
 
 
@@ -797,7 +797,7 @@ class KernBefehle:
 
     def seitenzahl_anwenden(self, w: dict) -> None:
         """Seitenzahl nach den Werten des Fensters: für das ganze Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from core.funktionen.kopffuss import seitenzahl as SZ
+        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
 
         def f(s):
             with s.gruppe("Seitenzahl"):
@@ -879,7 +879,7 @@ class KernBefehle:
 
     def seitenzahl_zone(self, bereich: str, zone: str, ausr: str, muster: str, zahl: str) -> None:
         """Seitenzahl in Kopf- oder Fußzeile (``zone``) für das Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from core.funktionen.kopffuss import seitenzahl as SZ
+        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
 
         def f(s):
             with s.gruppe("Seitenzahl"):
@@ -899,7 +899,7 @@ class KernBefehle:
 
     def gliederung_ebene(self, delta: int) -> None:
         """Gliederungsansicht: Überschrift des Absatzes um ``delta`` Ebenen herauf- (−1) oder herabstufen (+1); Ebene 0 ist Fließtext."""
-        from core.dokument.formatvorlagen import ueberschriftsebene
+        from core.formatvorlagen.formatvorlagen import ueberschriftsebene
         a = self._absatz_an_marke()
         neu = max(0, min(9, ueberschriftsebene(self.sitzung.dokument, a) + delta))
         self.apply_style("Standard" if neu == 0 else f"Überschrift {neu}")
@@ -918,7 +918,7 @@ class KernBefehle:
         if art == "bearbeiten":
             self.kommentar_bearbeiten(kid)
             return
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         k = self.kommentare.get(kid, {})
         geloest = bool(k.get("geloest"))
         m = MenueListe(self.widget())
@@ -941,7 +941,7 @@ class KernBefehle:
     # ---- Auswählen ---------------------------------------------------------------------------------------------------------------------
     def tabelle_ohne_rahmen_waehlen(self) -> bool:
         """Markiert die nächste Tabelle ohne Rahmen hinter der Schreibmarke (am Ende geht es vorn weiter). → ``False``, wenn es keine gibt."""
-        from core.editor.dokument import gehe_zu as G
+        from core.dokument import gehe_zu as G
         dok = self.sitzung.dokument
         stellen = G._stellen(dok)
         alle = sorted((p, t) for a in dok.abschnitte for t, p in G._tabellen(a.bloecke, stellen) if float(t.format.get("rahmen_breite") or 0) <= 0)
@@ -979,7 +979,7 @@ class KernBefehle:
     def naechstes_objekt_waehlen(self) -> bool:
         """Springt zum nächsten Objekt (im Text oder frei positioniert) hinter der Schreibmarke und wählt es (am Ende geht es vorn weiter)."""
         from core.dokument.dokument import InlineObjekt
-        from core.editor.dokument import gehe_zu as G
+        from core.dokument import gehe_zu as G
         dok = self.sitzung.dokument
         stellen = G._stellen(dok)
         liste = []

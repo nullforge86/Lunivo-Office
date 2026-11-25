@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from core.dokument.values import Brush, Color, Length
 from filter.odt.odt_xml import GRENZE_BYTES, MAX_WIEDERHOLUNG, NS, _kurz, _px, _pt, _q, _text_von
 from core.dokument.bericht import DocumentIOError, IOReport
-from core.dokument.seite import HeaderFooter, PageSettings, px_to_mm
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings, px_to_mm
 
 class NichtImModell(Exception):
     """ODT-Inhalt, der noch nicht ohne Qt vollständig übernommen wird."""

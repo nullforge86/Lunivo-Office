@@ -5,18 +5,18 @@ from PySide6.QtCore import QEvent, QLibraryInfo, QSize, QTranslator
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from system.protokoll import protokoll
+from system.plattform import protokoll
 from framework.schnittstellen.einstellungen import ORGANISATION as APP_ORG, PROGRAMM as APP_NAME, Einstellungen
-from framework.funktionen.ansicht import einstellungen as ansicht_einstellungen
-from framework.funktionen.datei import einstellungen as datei_einstellungen
+from framework.befehle.ansicht import einstellungen as ansicht_einstellungen
+from framework.befehle.datei import einstellungen as datei_einstellungen
 from vcl.qt.fenster.fenster.programmfenster import MainWindow
-from vcl.qt.widgets.bausteine.thema.thema import apply_theme
+from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme
 
 
 def programm_symbol() -> QIcon:
     """Lunivos Programmsymbol (ressourcen/symbole/varianten/Abstrakt) in allen vorhandenen Größen."""
     import os
-    from system.pfade.ressourcen_pfade import ASSETS
+    from system.plattform.ressourcen_pfade import ASSETS
     ordner = os.path.join(ASSETS, "symbole", "varianten", "Abstrakt")
     ic = QIcon()
     for px in (16, 24, 32, 48, 128, 256):
@@ -43,10 +43,10 @@ class LunivoApplication:
         self.settings = Einstellungen()
         from vcl.qt.fenster.fenster.einstellungen_uebernahme import einmalig_uebernehmen
         einmalig_uebernehmen(self.settings)                               # einmalig: frühere QSettings-Werte ins JSON übernehmen
-        from vcl.qt.widgets.bausteine.thema import thema
+        from vcl.qt.widgets.bausteine.farben.thema import thema
         thema.WEICH = ansicht_einstellungen.weich(self.settings)
         apply_theme(self.app, ansicht_einstellungen.thema(self.settings))
-        from vcl.qt.widgets.bausteine.geruest.zugaenglichkeit import NamenFilter
+        from vcl.qt.widgets.bausteine.zustaende.geruest.zugaenglichkeit import NamenFilter
         NamenFilter.einhaengen(self.app)                                  # Symbolknöpfe ohne Namen bekommen ihren Tooltip als Namen
         self.fenster = MainWindow(self.settings)
 

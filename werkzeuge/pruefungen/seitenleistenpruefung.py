@@ -52,10 +52,10 @@ from PySide6.QtGui import QColor, QImage  # noqa: E402
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPlainTextEdit,  # noqa: E402
                                QMenu, QPushButton, QRadioButton, QScrollArea, QWidgetAction, QSlider, QSpinBox, QTextEdit, QToolButton, QWidget)
 
-from vcl.qt.widgets.bausteine.felder.mass_feld import EinheitFeld  # noqa: E402
-from vcl.qt.widgets.bausteine.dropdown.auswahl.farbpalette import FarbFeld  # noqa: E402
-from vcl.qt.widgets.bausteine.felder.schiebe_feld import SchiebeFeld, SchrittFeld  # noqa: E402
-from vcl.qt.widgets.bausteine.formatierung.texteffekt_dialog import Abschnitt  # noqa: E402
+from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import EinheitFeld  # noqa: E402
+from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbFeld  # noqa: E402
+from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld, SchrittFeld  # noqa: E402
+from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import Abschnitt  # noqa: E402
 
 LIMIT_ELEMENT, LIMIT_TEIL = 5.0, 60.0
 TESTFARBE = "#12ab34"
@@ -191,8 +191,8 @@ class DiagrammAnbindung(Anbindung):
         return [(a, {"saeule": "Säulendiagramm", "linie": "Liniendiagramm", "kreis": "Kreisdiagramm"}[a]) for a in self.arten]
 
     def aufbauen(self, gruppe: str):
-        from core.editor.diagramme import diagramm as D
-        from core.editor.objekte.frei import frei_objekt as FO
+        from core.diagramme import diagramm as D
+        from core.objekte.basis import frei_objekt as FO
         ed = self.ed
         ed.clear()
         self.daten0 = dict(DIAGRAMM_DATEN[gruppe])
@@ -220,8 +220,8 @@ class DiagrammAnbindung(Anbindung):
         ereignisse()
 
     def zuruecksetzen(self) -> None:
-        from core.editor.objekte.bild import bildlayout as BL
-        from core.editor.objekte.frei import frei_objekt as FO
+        from core.objekte.bilder.positionierung import bildlayout as BL
+        from core.objekte.basis import frei_objekt as FO
         w, ed = self.w, self.ed
         w.befehle.diagrammZuruecksetzen()
         FO.aendern(ed, "diagramm", breite=self.b0, hoehe=self.h0, alt_titel=None, alt_beschreibung=None)
@@ -230,7 +230,7 @@ class DiagrammAnbindung(Anbindung):
         self.neu_laden()
 
     def momentaufnahme(self) -> str:
-        from core.editor.objekte.frei import frei_objekt as FO
+        from core.objekte.basis import frei_objekt as FO
         z = FO.ziel(self.ed)
         if z is None:
             return ""
@@ -239,7 +239,7 @@ class DiagrammAnbindung(Anbindung):
         return _json({"daten": daten, "fx": a.get("fx"), "b": round(float(a["b"]), 2), "h": round(float(a["h"]), 2), "dreh": a.get("dreh", 0)})
 
     def bild_roh(self) -> QImage:
-        from core.editor.objekte.frei import frei_objekt as FO
+        from core.objekte.basis import frei_objekt as FO
         z = FO.ziel(self.ed)
         return z[4] if z is not None else QImage()
 
@@ -252,7 +252,7 @@ class ObjektAnbindung(Anbindung):
         return [("form", "Form"), ("bild", "Freies Bild")]
 
     def aufbauen(self, gruppe: str):
-        from core.editor.objekte.frei import frei_objekt as FO
+        from core.objekte.basis import frei_objekt as FO
         ed = self.ed
         ed.clear()
         if gruppe == "form":
@@ -262,7 +262,7 @@ class ObjektAnbindung(Anbindung):
             FO.bild_einfuegen(ed, img, 160, 100)
         self.w._sync_format()
         ereignisse()
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         self.a0 = json.loads(_json({k: v for k, v in BL.ziel(ed)[2].items() if k in ("fuell", "rand", "fx", "dreh")}))
         return [(gruppe, "Form" if gruppe == "form" else "Freies Bild")]
 
@@ -273,26 +273,26 @@ class ObjektAnbindung(Anbindung):
         self.neu_laden()
 
     def neu_laden(self) -> None:
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         werte = BL.format_lesen(self.ed, BL.ziel(self.ed))
         if werte is not None:
             self.panel.setze(werte)
         ereignisse()
 
     def zuruecksetzen(self) -> None:
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         BL.frei_aendern(self.ed, BL.ziel(self.ed), **{k: None for k in ("fuell", "rand", "fx")}, dreh=0)
         BL.frei_aendern(self.ed, BL.ziel(self.ed), **{k: v for k, v in self.a0.items() if v is not None})
         self.neu_laden()
 
     def momentaufnahme(self) -> str:
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         z = BL.ziel(self.ed)
         a = z[2] if z and z[0] == "frei" else {}
         return _json({k: a.get(k) for k in ("fuell", "rand", "fx", "dreh")})
 
     def bild_roh(self) -> QImage:
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         z = BL.ziel(self.ed)
         return z[3] if z and z[0] == "frei" else QImage()
 
@@ -316,8 +316,8 @@ def _menue_fangen(selbst, *args, **kw):
 
 def _menues_umbiegen() -> None:
     """``QMenu.exec`` lässt sich bei Shiboken nicht für alle Unterklassen umbiegen; die Python-Unterklassen der Oberfläche einzeln."""
-    from vcl.qt.widgets.bausteine.dropdown.auswahl.farbpalette import FarbPalette
-    from vcl.qt.widgets.bausteine.dropdown.voreinstellung_menue import VoreinstellungMenue
+    from vcl.qt.widgets.menues.dropdown.auswahl.farbpalette import FarbPalette
+    from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
     for k in (VoreinstellungMenue, FarbPalette):
         k.exec = _menue_fangen
 

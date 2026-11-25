@@ -5,15 +5,15 @@ Lesen · Anzeige · Schreiben · Speichern · Drucken und PDF · Name und KI. Je
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 
-from vcl.qt.widgets.bausteine.basis.darstellung import grundschrift
+from vcl.qt.widgets.bausteine.farben.darstellung import grundschrift
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 from PySide6.QtCore import QEvent, QTimer, Qt
 from PySide6.QtGui import QKeySequence, QShortcut
@@ -22,14 +22,14 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QWidget,
 )
 
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis import daten
-from writer.baukasten.basis.daten import text as _t
-from writer.baukasten.geruest import module
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.geruest.einklappgruppe import EinklappGruppe
-from vcl.qt.widgets.bausteine.geruest.spalten import ZweiSpalter
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.skalierung import daten
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
+from vcl.qt.widgets.bausteine.zustaende.geruest import module
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
+from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
 from vcl.qt.widgets.dialoge.optionen_seiten.ansicht import AnsichtSeiten
 from vcl.qt.widgets.dialoge.optionen_seiten.datei import DateiSeiten
 from vcl.qt.widgets.dialoge.optionen_seiten.befehle import BefehleSeiten
@@ -37,7 +37,7 @@ from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import erklaerung as _erkl
 from vcl.qt.widgets.dialoge.optionen_seiten.lesen import LesenSeiten
 from vcl.qt.widgets.dialoge.optionen_seiten.lunivo import LunivoSeiten
 from vcl.qt.widgets.dialoge.optionen_seiten.name_ki import NameKiSeiten
-from writer.baukasten.basis.mass import ABSTAND_KEIN, ABSTAND_NORMAL, BREITE_NAVIGATION_OPTIONEN, GROESSE_FENSTER_OPTIONEN, HOEHE_FELD, HOEHE_LISTE_ANBIETER, MARGIN_NAVIGATION_EINTRAG, MARGIN_OBEN_OPTIONEN_GRUPPE, PADDING_LINKS_OPTIONEN_HINWEIS, PADDING_NAVIGATION_EINTRAG, PADDING_OPTIONEN_ERKLAERUNG, PADDING_OPTIONEN_GRUPPE, PADDING_OPTIONEN_VORSCHAU, PADDING_OPTIONEN_WAHL, RADIUS_FELD, RADIUS_KARTE, RADIUS_KLEIN, RADIUS_MITTEL, RAND_BOX, RAND_KEIN, RAND_UNTEN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KEIN, ABSTAND_NORMAL, BREITE_NAVIGATION_OPTIONEN, GROESSE_FENSTER_OPTIONEN, HOEHE_FELD, HOEHE_LISTE_ANBIETER, MARGIN_NAVIGATION_EINTRAG, MARGIN_OBEN_OPTIONEN_GRUPPE, PADDING_LINKS_OPTIONEN_HINWEIS, PADDING_NAVIGATION_EINTRAG, PADDING_OPTIONEN_ERKLAERUNG, PADDING_OPTIONEN_GRUPPE, PADDING_OPTIONEN_VORSCHAU, PADDING_OPTIONEN_WAHL, RADIUS_FELD, RADIUS_KARTE, RADIUS_KLEIN, RADIUS_MITTEL, RAND_BOX, RAND_KEIN, RAND_UNTEN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
 
 ERKLAERUNG_LEER = _t("optionen.rahmen.zeig_auf_eine_einstellung_hier_steht_was")
 

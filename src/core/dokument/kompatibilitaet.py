@@ -198,7 +198,7 @@ def erhaltene_elemente(dok) -> dict[str, int]:
             if r is None or r.wirkt:
                 zaehler[f"{art}/{name}"] = zaehler.get(f"{art}/{name}", 0) + 1
 
-    from .dokument import Absatz, Lauf
+    from core.dokument.dokument import Absatz, Lauf
     for ab in dok.abschnitte:
         zaehle("sectPr", getattr(ab.seite, "docx_roh", None))
     for a in dok.absaetze():

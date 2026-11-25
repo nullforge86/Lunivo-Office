@@ -3,7 +3,7 @@
 Start (aus dem Ordner ``werkzeuge``):  ``../.venv/bin/python -m kompatibilitaetspruefer``
 
 Das Werkzeug enthält keine eigene Dokument-, Layout- oder Importimplementierung: Laden, Speichern, Layout und Rendering laufen über die vorhandenen
-Komponenten von ``lunivo_writer`` (``dienste.modell_laden``, ``dienste.modell_speichern``, ``core.layout``, ``core.rendering``).
+Komponenten von ``lunivo_writer`` (``dienste.modell_laden``, ``dienste.modell_speichern``, ``core.layout``, ``core.layout.drucklayout.ausgabe``).
 """
 import os
 import sys

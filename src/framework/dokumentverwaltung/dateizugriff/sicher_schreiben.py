@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 from core.dokument.bericht import DocumentIOError
 from system.dateisystem import dateisystem
-from system.sperre import sperre as _sperre
+from system.plattform import sperre as _sperre
 
 T = TypeVar("T")
 

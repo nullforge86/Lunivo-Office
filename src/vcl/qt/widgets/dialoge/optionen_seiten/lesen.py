@@ -1,30 +1,30 @@
 """Optionen: Leichter lesen, Sprache."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from core.schrift import standard_datenbank
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, farbflaeche, rolle as _rolle
+from core.formatierung.schrift import standard_datenbank
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, farbflaeche, rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
-from writer.baukasten.geruest.module import anmelden
+from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
 
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QFrame, QLabel, QRadioButton, QPushButton, QWidget
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
-from writer.funktionen.ansicht.aktionen import lesestufen as LS
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
+from writer.werkzeugleisten.ansicht.aktionen import lesestufen as LS
 from framework.dokumentverwaltung.dokumentpflege import vorlesen
 from vcl.qt.widgets.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
-from framework.datentypen.farben import Farbe
+from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
-from writer.baukasten.basis.mass import SCHRIFT_PAPIERTON_NAME_PT
-from writer.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_SPALTEN, PADDING_LESEN_VORSCHAU, RADIUS_FELD, RAND_ZEILE, SCHRIFT_HINWEIS
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_PAPIERTON_NAME_PT
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_GROSS, ABSTAND_SPALTEN, PADDING_LESEN_VORSCHAU, RADIUS_FELD, RAND_ZEILE, SCHRIFT_HINWEIS
 
 
 anmelden("optionen", "lesen", "optionen.seite.lesen", "_lesehilfe", 10)
@@ -161,7 +161,7 @@ class LesenSeiten:
 
 
     def _uebersetzung_oeffnen(self) -> None:
-        from vcl.qt.widgets.bausteine.geruest.fenster_stapel import ausfuehren
+        from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         from vcl.qt.widgets.dialoge.ki.ki_dialoge import KIEinstellungenDialog
         ausfuehren(KIEinstellungenDialog(self.w, 2))
         self.w.ki.geaendert.emit()

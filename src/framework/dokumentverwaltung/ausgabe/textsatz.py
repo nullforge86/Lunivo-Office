@@ -10,7 +10,7 @@ def standard_engine() -> TextLayoutEngine:
     """Die Qt-freie HarfBuzz/FreeType-Engine für Kernlayout und Modellrendering."""
     global _engine
     if _engine is None:
-        from core.schrift import HarfBuzzEngine
+        from core.formatierung.schrift import HarfBuzzEngine
         _engine = HarfBuzzEngine()
     return _engine
 

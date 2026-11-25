@@ -1,42 +1,42 @@
 """Hilfe: Handbuch, Tastenkürzel, Erweiterungen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from vcl.qt.widgets.bausteine.basis.raster import RasterSpalte
-from core.schrift import standard_datenbank
-from writer.baukasten.basis.mass import ABSTAND_KLEIN as _A_KLEIN
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte
+from core.formatierung.schrift import standard_datenbank
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN as _A_KLEIN
 
-from vcl.qt.widgets.bausteine.basis.darstellung import rolle as _rolle
+from vcl.qt.widgets.bausteine.farben.darstellung import rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 import os
-from writer.baukasten.bauteile.textfeld_fragmente import absatz_fragmente
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from system.pfade import ressourcen_pfade as pfade
+from vcl.qt.widgets.bausteine.symbole.bauteile.textfeld_fragmente import absatz_fragmente
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from system.plattform import ressourcen_pfade as pfade
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QLabel, QLineEdit, QPushButton, QTextBrowser, QWidget
 
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.geruest.einklappgruppe import EinklappGruppe
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter, abschnittstitel
-from vcl.qt.widgets.bausteine.geruest.spalten import ZweiSpalter
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
-from writer.baukasten.tastenkuerzel import kuerzel
-
-
+from vcl.qt.widgets.bausteine.tastaturnavigation import kuerzel
 
 
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_SERIF_PT, SCHRIFT_HILFE_TITEL_PLUS_PT
-from writer.baukasten.basis.schriftarten import GENERISCH_MONOSPACE, GENERISCH_SERIF
-from writer.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
+
+
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_SERIF_PT, SCHRIFT_HILFE_TITEL_PLUS_PT
+from vcl.qt.widgets.bausteine.schrift.schriftarten import GENERISCH_MONOSPACE, GENERISCH_SERIF
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
 
 
 

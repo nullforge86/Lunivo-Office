@@ -17,7 +17,7 @@ import zipfile
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from core.layout import LayoutEngine  # noqa: E402
-from core.schrift import HarfBuzzEngine  # noqa: E402
+from core.formatierung.schrift import HarfBuzzEngine  # noqa: E402
 from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell  # noqa: E402
 
 ENDUNGEN = (".docx", ".odt", ".rtf", ".txt")

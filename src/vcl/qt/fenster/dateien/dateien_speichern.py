@@ -7,7 +7,7 @@ from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
 from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
 from core.dokument.bericht import DocumentIOError
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
-from vcl.qt.widgets.bausteine.dokument.speichern_fenster import speicherort_waehlen
+from vcl.qt.widgets.dialoge.dokument.speichern_fenster import speicherort_waehlen
 
 
 class DateienSpeichernBaustein:

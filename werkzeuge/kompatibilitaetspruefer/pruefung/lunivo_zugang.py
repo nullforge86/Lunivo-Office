@@ -1,5 +1,5 @@
 """Die einzige Stelle, die Lunivo-Komponenten aufruft: Laden, Speichern, Layout, Rendering. Hier steht keine eigene Dokumentlogik — alles geht über
-``dienste.modell_laden``, ``dienste.modell_speichern``, ``core.layout.LayoutEngine`` und ``core.rendering.DokumentRenderer`` (dieselben Aufrufe wie der PDF-Export)."""
+``dienste.modell_laden``, ``dienste.modell_speichern``, ``core.layout.LayoutEngine`` und ``core.layout.drucklayout.ausgabe.DokumentRenderer`` (dieselben Aufrufe wie der PDF-Export)."""
 from __future__ import annotations
 
 import hashlib
@@ -48,10 +48,10 @@ def seite_mm(einrichtung) -> tuple[float, float]:
 
 def seitenbilder(dokument, le, erg, ordner: str, praefix: str, faktor: float = 1.0, max_seiten: int = 80) -> list[str]:
     """Rendert die Seiten mit dem Renderer der Anwendung nach PNG (96 dpi · ``faktor``). → Dateipfade."""
-    from core.layout import formatwerte as F
-    from core.rendering import DokumentRenderer
-    from core.rendering.bild.bildeffekte import png_bytes
-    from core.rendering.ausgabe.rasterziel import RasterZiel
+    from core.layout.drucklayout import formatwerte as F
+    from core.layout.drucklayout.ausgabe import DokumentRenderer
+    from core.layout.drucklayout.ausgabe.bild.bildeffekte import png_bytes
+    from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
     os.makedirs(ordner, exist_ok=True)
     renderer = DokumentRenderer(le.engine)
     grund = F.schrift(dict(dokument.standardformat))

@@ -5,8 +5,8 @@ from PySide6.QtGui import QIcon
 
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor as DocumentEditor
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import ICON_TAB_GEAENDERT
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import ICON_TAB_GEAENDERT
 
 
 class ReiterZustandMixin:
@@ -73,7 +73,7 @@ class ReiterZustandMixin:
         e.formatChanged.connect(self._sync_later)
         e.freiAuswahlGeaendert.connect(self._sync_later)
         e.leseschutzGeaendert.connect(self._sync_later)
-        from vcl.qt.widgets.bausteine.bauteile.schweb_knopf import SchwebKnopf
+        from vcl.qt.widgets.bausteine.symbole.bauteile.schweb_knopf import SchwebKnopf
         tab._chat_knopf = SchwebKnopf(tab, "chat", "KI-Chat", lambda: self.chat_oeffnen(""))
         self.sidebar.bereich_geaendert.connect(lambda *_: self._chat_knopf_pruefen())
         e.formatChanged.connect(self._effekt_sync)
@@ -94,7 +94,7 @@ class ReiterZustandMixin:
         e.zusatzGeaendert.connect(self.navigation.spaeter)
         e.noteAngeklickt.connect(lambda art, nid: self.noten_feld.oeffnen(art, nid))
         e.set_marken(self.settings.get_bool("ui/marken", False))
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.objekte.formen import sprechblasen as SB
         e.blasen_setzen(SB.konfig_lesen(self.settings), self.settings.get("kommentare/schrift", "mittel"))
         self.formatzeichen_anwenden(e)
         self.lineale_anwenden(tab)

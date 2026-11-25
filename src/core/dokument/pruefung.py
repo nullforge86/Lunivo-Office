@@ -5,8 +5,8 @@ was sie gebaut haben.
 """
 from __future__ import annotations
 
-from .dokument import ABSCHNITT_BEGINN, OBJEKT_ARTEN, UMBRUCH_ARTEN, Absatz, Dokument, InlineObjekt, Lauf, Rahmen, Tabelle
-from .formate import FormatFehler, pruefe
+from core.dokument.dokument import ABSCHNITT_BEGINN, OBJEKT_ARTEN, UMBRUCH_ARTEN, Absatz, Dokument, InlineObjekt, Lauf, Rahmen, Tabelle
+from core.dokument.formate import FormatFehler, pruefe
 
 
 def pruefe_dokument(d: Dokument) -> list:

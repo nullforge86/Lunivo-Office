@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-from .engine import FontSpec, TextLayoutEngine
+from core.textsatz.engine import FontSpec, TextLayoutEngine
 
 
 def zeilenhoehe(natuerlich: float, art: str = "single", wert: float = 100.0) -> float:

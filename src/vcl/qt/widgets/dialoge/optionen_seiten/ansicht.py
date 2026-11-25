@@ -1,27 +1,27 @@
 """Optionen: Ansicht und Darstellung."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, rolle as _rolle
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
-from writer.baukasten.geruest.module import anmelden
+from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QButtonGroup, QCheckBox, QLabel, QRadioButton, QPushButton, QSlider, QWidget
-from vcl.qt.widgets.bausteine.felder.formular_gitter import UmbruchSchalter
-from vcl.qt.widgets.bausteine.basis.beschriftung import text_label
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
+from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import _Seite
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import SCHRIFT_ANSICHT_PROBE_PT
-from writer.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_MITTEL, HOEHE_FELD, HOEHE_WAHLKARTE, ICON_NORMAL, RAND_ABSCHNITT, RAND_ZEILE_LOCKER, SCHRIFT_HINWEIS
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_ANSICHT_PROBE_PT
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_GROSS, ABSTAND_MITTEL, HOEHE_FELD, HOEHE_WAHLKARTE, ICON_NORMAL, RAND_ABSCHNITT, RAND_ZEILE_LOCKER, SCHRIFT_HINWEIS
 
 
 anmelden("optionen", "anzeige", "optionen.seite.anzeige", "_ansicht", 20)

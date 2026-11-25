@@ -1,9 +1,9 @@
 """Die Schreibhilfe-Seitenleiste: Prüfen, Wellen/Vorhersage/AutoKorr, Funde, „Für wen?“, KI-Knöpfe."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QPalette
@@ -12,20 +12,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from writer.funktionen.korrektur.band.schreibhilfe_katalog import VORLESEN
-from vcl.qt.widgets.bausteine.geruest.panel_rahmen import PanelRahmen, rollflaeche
-from core.korrektur.vorhersage import EMPFAENGER
-from vcl.qt.widgets.seitenleisten.panels.schreib_panel import FundKarte, HinweisKarte
-from vcl.qt.widgets.bausteine.bauteile import symbole
+from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import VORLESEN
+from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen, rollflaeche
+from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
+from vcl.qt.widgets.seitenleisten.schreib_panel import FundKarte, HinweisKarte
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.thema.thema import karte_einrichten, karten_rand
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_label, kleintext_label, trennlinie
-from writer.baukasten.basis.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten, karten_rand
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label, kleintext_label, trennlinie
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -56,7 +56,7 @@ class SchreibhilfePanel(QWidget):
         self.stapel.addWidget(seite0)
         w0 = _spalte("kein", seite0)
         # Werkbank: vier Reiter nach dem, was man gerade braucht — Prüfen (die Funde), Lesen, Schreiben, KI
-        from writer.funktionen.korrektur.band.schreibhilfe_katalog import REITER
+        from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import REITER
         leiste = _reihe("leiste")
         self.werk_reiter = QButtonGroup(self)
         self._werk_namen = list(REITER)
@@ -93,7 +93,7 @@ class SchreibhilfePanel(QWidget):
         # Für wen?
         v.addWidget(trennlinie(tief=True))
         # Eine Zeile statt zwei Reihen Chips: „Für wen?“ als Auswahl, daneben „Worum geht's?“ — der Platz gehört den Funden
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter
         kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
         fw = kleintext_label("Für wen")
         self.thema = Auswahlfeld()
@@ -112,7 +112,7 @@ class SchreibhilfePanel(QWidget):
         kontext_gitter.reihe((fw, self.thema), (fw2, self.worum), gewichte=(2, 3))
         v.addWidget(kontext)
         # Unten, wo man nach dem Schreiben hinschaut: „Prüfen“ mit seiner Erklärung, darunter die beiden KI-Wege
-        from vcl.qt.widgets.bausteine.felder.karten_raster import KartenRaster
+        from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRaster
         zk = KartenRaster(min_breite=BREITE_AKTIONSKNOPF_MIN, abstand=ABSTAND_NORMAL)  # Raster: Prüfen · KI-Korrektur · Vorschläge gleich breit und gleich hoch
         self.pruefen = knopf("standard", "Prüfen", name="Prüfen", aktion=lambda: self.a.pruefen(True),
                              tooltip="Prüfen (F7) — sucht die Fehler, die ein Rechtschreibprüfer nicht finden kann")
@@ -178,7 +178,7 @@ class SchreibhilfePanel(QWidget):
     # ---- Werkbank --------------------------------------------------------------------------------
     def _werk_bauen(self) -> None:
         """Die Reiter Lesen, Schreiben und KI aus dem Katalog; der Reiter Prüfen sind die Funde plus die Wege dahin."""
-        from vcl.qt.widgets.bausteine.geruest.werkbank import Werkbank
+        from vcl.qt.widgets.bausteine.zustaende.geruest.werkbank import Werkbank
         self.ki_banner = QWidget()
         bl = _spalte("standard", self.ki_banner)
         bl.addWidget(self.ki_info); bl.addWidget(self.ki_aktion)
@@ -279,8 +279,8 @@ class SchreibhilfePanel(QWidget):
 
     def _bereiche_menue(self, eltern, menue_text: str):
         """Das Menü am Titel „Formatierung ▾“: die Bereiche der Seitenleiste wie in der Vorlage (der eigene Bereich trägt den Haken)."""
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         m = MenueListe(eltern)
         tun = lambda name: (lambda: self.fenster.befehle.tun(name))
         m.eintrag("Formatvorlagen und Formatierung", tun("formatvorlagenBereich"), symbol=symbole.icon("pen-line", ICON_NORMAL))
@@ -303,12 +303,12 @@ class SchreibhilfePanel(QWidget):
 
     def _formatierung_host(self, panel_klasse, menue_text: str, werte: dict):
         """Der gemeinsame Rahmen der Bereiche „Formatierung“: Kopf mit „Formatierung ▾“, Anheften und Schließen, darunter das Panel."""
-        from vcl.qt.widgets.bausteine.geruest.zusatz_panel import FLACHE_REITER, zusatz_knopf
-        from vcl.qt.widgets.bausteine.geruest.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
+        from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import FLACHE_REITER, zusatz_knopf
+        from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PANEL_INHALT_RAND, panel_kopf
         host = QWidget(); eigenschaft(host, reiterart="flach")        # dieselben flachen Reiter wie in den anderen Seitenleistenfenstern
         v = _spalte("kein", host)
         titel = DropdownKnopf(); titel.setText("Formatierung"); titel.setAutoRaise(True)
-        from vcl.qt.widgets.bausteine.bauteile import symbole as _ic
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole as _ic
         titel.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); titel.setIcon(_ic.icon("chevron-down", 12))           # der Pfeil „▾“ ist sichtbar: das Titelmenü
         titel.setLayoutDirection(Qt.RightToLeft)   # Symbol hinter dem Text
         tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 1); titel.setFont(tf)       # Titel wie in der Titelzeile der anderen Seitenleistenfenster
@@ -319,17 +319,17 @@ class SchreibhilfePanel(QWidget):
         v.addWidget(panel_kopf(titel, stretch, anheften, zu, dehnen=stretch))
         rumpf = QWidget(); rv = _spalte("panel_inhalt", rumpf); v.addWidget(rumpf, 1)      # Innenrand wie in allen Seitenleistenfenstern
         panel = panel_klasse(rumpf, werte)
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import felder_angleichen
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import felder_angleichen
         felder_angleichen(panel)                                                     # Felder und beschriftete Knöpfe gleich hoch (FELDHOEHE)
         rv.addWidget(panel, 1)
-        from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import alle_flach
+        from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import alle_flach
         alle_flach(host)                                                             # alle Reiter: dieselbe flache Leiste wie in allen Seitenleisten-Fenstern
         return host, panel, anheften
 
     def zeige_format(self, schluessel: str, werte: dict, **verbindungen) -> None:
         """Den Bereich „Formatierung“ für ``schluessel`` zeigen. ``verbindungen``: Signalname des Panels -> Empfänger (``None`` wird übergangen)."""
         import importlib
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import felder_angleichen
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import felder_angleichen
         modul, klasse, menue_text, signale = self.FORMATE[schluessel]
         zustand = self._format_zustand()
         if schluessel not in zustand:
@@ -357,7 +357,7 @@ class SchreibhilfePanel(QWidget):
     def aktualisiere_format(self, schluessel: str, werte: dict) -> None:
         """Die Werte des Panels an die Markierung anpassen (wenn der Benutzer gerade nicht darin bedient)."""
         from PySide6.QtWidgets import QApplication
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import felder_angleichen
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import felder_angleichen
         panel = self.format_panel(schluessel)
         f = QApplication.focusWidget()
         if panel is not None and not (f is not None and panel.isAncestorOf(f)):
@@ -404,7 +404,7 @@ class SchreibhilfePanel(QWidget):
 
     def zusatz_ausfuehren(self, d) -> bool:
         """Ein Zusatzfenster als Seite hier in der Seitenleiste zeigen, solange man es bearbeitet (wie ``d.exec()``). Die Breite bleibt."""
-        from vcl.qt.widgets.bausteine.geruest.zusatz_panel import ZusatzPanel, ausfuehren_in
+        from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import ZusatzPanel, ausfuehren_in
         if getattr(self, "_zusatz", None) is not None:                       # es ist schon eines offen: das neue legt sich als Seite darüber
             return self._zusatz.unter_ausfuehren(d)
         seite = ZusatzPanel()
@@ -442,7 +442,7 @@ class SchreibhilfePanel(QWidget):
         host = QWidget()
         lay = _spalte("standard", host)                      # Kopf und Ränder bringt der Rahmen des Chats mit
         lay.setSpacing(ABSTAND_MITTEL)
-        from vcl.qt.widgets.seitenleisten.panels.ki_panel import ChatPanel
+        from vcl.qt.widgets.seitenleisten.ki_panel import ChatPanel
         self.chat = ChatPanel(self.ki, self.fenster)
         self.chat.zurueck.connect(lambda: self.zeige_bereich(0))
         lay.addWidget(self.chat, 1)

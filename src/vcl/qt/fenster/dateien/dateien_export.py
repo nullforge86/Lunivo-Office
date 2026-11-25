@@ -40,7 +40,7 @@ class DateienExportBaustein:
 
     def pdf_export_widget(self):
         """Baut die PDF-Exportseite des Datei-Menüs; alle Exportwahloptionen bleiben erhalten."""
-        from vcl.qt.widgets.bausteine.dokument.pdf_export import PdfExportAnsicht
+        from vcl.qt.widgets.dialoge.dokument.pdf_export import PdfExportAnsicht
         t = self.current_tab()
         if not t:
             return QWidget()
@@ -61,7 +61,7 @@ class DateienExportBaustein:
     def bild_export_widget(self):
         """Baut die Bildexportseite des Datei-Menüs; schreibt Bilder ohne ein separates Exportfenster."""
         from framework.dokumentverwaltung.ausgabe.bild_export import bilder_schreiben
-        from vcl.qt.widgets.bausteine.medien.bild_export import BildExportAnsicht
+        from vcl.qt.widgets.bausteine.symbole.medien.bild_export import BildExportAnsicht
         t = self.current_tab()
         if not t:
             return QWidget()

@@ -1,25 +1,25 @@
 """Optionen: Menüband, Schnellzugriff, Sicherheit."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken as haken_baustein
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken as haken_baustein
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, rolle as _rolle
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, rolle as _rolle
 
-from vcl.qt.widgets.bausteine.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
 
-from writer.baukasten.basis.daten import text as _t
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 import json
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QWidget
-from vcl.qt.widgets.bausteine.basis.beschriftung import md_label
-from vcl.qt.widgets.bausteine.felder.formular_gitter import UmbruchSchalter, FormularGitter, tabellen_gitter
+from vcl.qt.widgets.bausteine.schrift.beschriftung import md_label
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter, FormularGitter, tabellen_gitter
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import _Seite
-from writer.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, BREITE_KNOPF_PFEIL, HOEHE_LISTE_BEFEHLE, ICON_GROSS, RAND_KEIN, RAND_OBEN_KLEIN, RAND_OBEN_SEITE, RAND_ZEILE
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownTaste
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_GROSS, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, BREITE_KNOPF_PFEIL, HOEHE_LISTE_BEFEHLE, ICON_GROSS, RAND_KEIN, RAND_OBEN_KLEIN, RAND_OBEN_SEITE, RAND_ZEILE
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownTaste
 
 
 class BefehleSeiten:
@@ -110,7 +110,7 @@ class BefehleSeiten:
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel(_t("optionen.befehle.anpassungen")))
         zr = DropdownTaste(_t("optionen.befehle.zuruecksetzen"))
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe(zr)
         m.eintrag(_t("optionen.befehle.nur_das_menueband"), lambda: (self.w.settings.remove("ui/register_plan"), self._band_merken(), self._band_jetzt()))
         m.eintrag(_t("optionen.befehle.alle_anpassungen_register_schnellzugriff"), self.w.befehle.vorlagenZurueck)
@@ -127,7 +127,7 @@ class BefehleSeiten:
     def _schnellzugriff(self, titel):
         from vcl.qt.widgets.dialoge.oberflaeche_dialoge import lade_json
         from vcl.qt.widgets.ribbon.band_leiste import RegisterBand
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         p = _Seite(self.w, titel)
         links, rechts, suche, b_hinzu, b_weg, auf, ab, unten = self._zwei_listen(
             p, _t("optionen.befehle.befehle_auswaehlen"), _t("optionen.befehle.derzeit_angezeigte_optionen"), _t("optionen.befehle.hinzufuegen_pfeil"), _t("optionen.befehle.entfernen_pfeil"), _t("optionen.befehle.haeufig_verwendete_befehle"))
@@ -245,7 +245,7 @@ class BefehleSeiten:
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.objekte.formen import sprechblasen as SB
         from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
         neu = lambda _=None: self.w.markup_neu()                                               # noqa: E731
         f = p.gruppe(_t("optionen.befehle.markup"))

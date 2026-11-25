@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import json
 import os
-from vcl.qt.widgets.bausteine.basis.raster import RasterSpalte, RasterZeile
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil, trennlinie
-from system.pfade import ressourcen_pfade as pfade
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte, RasterZeile
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
+from system.plattform import ressourcen_pfade as pfade
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
@@ -14,26 +14,26 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from vcl.qt.widgets.bausteine.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
-from vcl.qt.widgets.bausteine.formatierung.text_format import groesse_feld, schrift_feld
+from vcl.qt.widgets.menues.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
+from vcl.qt.widgets.dialoge.formatierung.text_format import groesse_feld, schrift_feld
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import STYLES
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import UeberlaufLeiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import tabellen_gitter
-from vcl.qt.widgets.bausteine.felder.karten_raster import kachel_gitter
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import tabellen_gitter
+from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from writer.werkzeugleisten.plan import plan
 from vcl.qt.widgets.ribbon.band_bausteine import _SperrKasten
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
-from writer.baukasten.basis.mass import BANDGRUPPE_ABSTAND, BANDGRUPPE_KNOPF_ZUGABE, BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL, BANDGRUPPE_RAND_OBEN
-from writer.baukasten.basis.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Schriftauswahl
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.abstaende.mass import BANDGRUPPE_ABSTAND, BANDGRUPPE_KNOPF_ZUGABE, BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL, BANDGRUPPE_RAND_OBEN
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 
 def _zeilen_teilen(eintraege: list) -> tuple[bool, list]:
@@ -142,7 +142,7 @@ class BandGruppenBaustein:
 
     def _knoepfe_schrift(self, g: dict, inhalt: RasterZeile):
         """Wie in der Vorlage: oben Schriftname und -größe, daneben die Größen-/Löschknöpfe; darunter die Zeichenformate."""
-        from vcl.qt.widgets.bausteine.bauteile.live_vorschau import VorschauCombo, VorschauFontCombo
+        from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import VorschauCombo, VorschauFontCombo
         vs = self.b.w.vorschau
 
         def _zu_pt(t):
@@ -376,7 +376,7 @@ class BandGruppenBaustein:
         """Formatvorlage, Schriftart und Größe als Spalte vor den Knöpfen."""
         spalte = RasterSpalte()
         spalte.setSpacing(ABSTAND_ENG)
-        from vcl.qt.widgets.bausteine.bauteile.live_vorschau import VorschauCombo, VorschauFontCombo
+        from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import VorschauCombo, VorschauFontCombo
         vs = self.b.w.vorschau
 
         def _zu_pt(t):

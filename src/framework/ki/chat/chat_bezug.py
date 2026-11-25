@@ -4,7 +4,7 @@ Der Bezug liegt nur im Speicher: ``alt`` (der markierte Text) wird nie gesendet,
 from __future__ import annotations
 
 from framework.ki.dienst import ki as K
-from core.editor.text import ki_markdown
+from core.text import ki_markdown
 
 MELDUNG_GEAENDERT = "Der Text hat sich seit der Frage geändert. Nichts wurde geändert."
 MELDUNG_EDITOR = "Die Frage gehört zu einem anderen Dokument. Nichts wurde geändert."

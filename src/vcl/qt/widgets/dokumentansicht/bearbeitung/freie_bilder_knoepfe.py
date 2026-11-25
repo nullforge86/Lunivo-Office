@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor
 
-from framework.datentypen.farben import Farbe
+from framework.schnittstellen.datentypen.farben import Farbe
 
 
 class FreieBilderKnoepfeMixin:
@@ -38,7 +38,7 @@ class FreieBilderKnoepfeMixin:
         if name == "lupe":
             b.bildVergroessern()
         elif name == "zuschnitt":
-            from vcl.qt.widgets.bausteine.dropdown.objektmenues.bild_diagramm_menues import zuschneiden_menue
+            from vcl.qt.widgets.menues.dropdown.objektmenues.bild_diagramm_menues import zuschneiden_menue
             if not b.an_bildZuschneidenModus():                    # Klick schaltet den Zuschneiden-Modus ein und öffnet die Klappe
                 b.bildZuschneidenModus()
             m = zuschneiden_menue(b)
@@ -46,8 +46,8 @@ class FreieBilderKnoepfeMixin:
         elif name == "sa_bullet":
             b.smartartAufzaehlung(); self.viewport().update()
         else:
-            from vcl.qt.widgets.bausteine.dropdown.objektmenues import diagramm_popups as DP
-            from vcl.qt.widgets.bausteine.dropdown.objektmenues import smartart_menues as SM
+            from vcl.qt.widgets.menues.dropdown.objektmenues import diagramm_popups as DP
+            from vcl.qt.widgets.menues.dropdown.objektmenues import smartart_menues as SM
             bau = {"dg_element": DP.elemente_popup, "dg_stile": DP.stile_popup, "dg_filter": DP.filter_popup, "sa_form": SM.form_menue,
                    "sa_layout": lambda bb: SM.hierarchie_menue(bb, True), "sa_level": SM.level_menue, "sa_stil": SM.stile_menue}[name]
             m = bau(b)
@@ -55,7 +55,7 @@ class FreieBilderKnoepfeMixin:
 
     def _frei_anker_menue(self, pos) -> None:
         """Menü des Absatz-Symbols links vom Rahmen: Absatzformat zurücksetzen, Symbol ausblenden."""
-        from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+        from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe(self.ansicht)
         m.eintrag("Absatzformat zurücksetzen", self._frei_absatz_zuruecksetzen)
         m.eintrag("Symbol vom Absatz-Layout ausblenden", self._frei_anker_ausblenden)
@@ -72,7 +72,7 @@ class FreieBilderKnoepfeMixin:
             self.ansicht._aendern(lambda s: s.absatzformat_anwenden({}, absatz_ids=[o.anker], ersetzen=True))
 
     def _frei_wirken(self, **teile) -> None:
-        from core.editor.objekte.bild import bildlayout as BL
+        from core.objekte.bilder.positionierung import bildlayout as BL
         BL.format_setzen(self, BL.ziel(self), **teile)
 
     def _frei_formstile(self, pos) -> None:
@@ -81,11 +81,11 @@ class FreieBilderKnoepfeMixin:
 
     def frei_formstile_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from vcl.qt.widgets.bausteine.dropdown.objektmenues.objekt_menues import formstil_werte, formstile
+        from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import formstil_werte, formstile
         m = formstile(parent)
         def waehlen(k: str) -> None:
             ed = E()
-            from core.editor.objekte.frei import frei_objekt as FO
+            from core.objekte.basis import frei_objekt as FO
             if FO.art_gewaehlt(ed) == "form" and hasattr(ed.fenster, "befehle"):        # Form: Füllung, Verlauf, Linie und Effekt des Rasters (formStilRaster)
                 ed.fenster.befehle.formStilRaster(None, int(k[1]), int(k[2]))
             else:                                                                           # Bild, Textfeld, WordArt: Füllung und Rand
@@ -114,10 +114,10 @@ class FreieBilderKnoepfeMixin:
 
     def frei_fuell_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         from PySide6.QtGui import QImage
-        from core.editor.objekte.bild import bildlayout as BL
-        from vcl.qt.widgets.bausteine.dropdown.objektmenues.objekt_menues import FuellMenue
+        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import FuellMenue
         m = FuellMenue(parent)
         m.gewaehlt.connect(lambda c: E()._frei_wirken(fuell=None if c is None else {"art": "farbe", "farbe": c.name(QColor.HexArgb)}))
         m.verlauf_gewaehlt.connect(lambda c: E()._frei_wirken(fuell={"art": "verlauf", "farbe": c.name(QColor.HexArgb)}))
@@ -126,8 +126,8 @@ class FreieBilderKnoepfeMixin:
         m.textur_gewaehlt.connect(lambda k: E()._frei_wirken(fuell={"art": "textur", "key": k}))
 
         def bild():
-            from writer.baukasten.medien.bildformate import BILD_FILTER
-            from core.editor.objekte.bild.bilddaten import bild_aus_datei
+            from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
+            from core.objekte.bilder.modell.bilddaten import bild_aus_datei
             pfad, _ = Dateifenster.getOpenFileName(E().fenster, "Bild als Füllung", "", BILD_FILTER)
             if pfad:
                 BL.fuellbild_setzen(E(), BL.ziel(E()), bild_aus_datei(pfad, still=True))
@@ -147,7 +147,7 @@ class FreieBilderKnoepfeMixin:
 
     def frei_kontur_menue(self, parent=None, ed=None):
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
-        from vcl.qt.widgets.bausteine.dropdown.objektmenues.objekt_menues import KonturMenue
+        from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import KonturMenue
         m = KonturMenue(parent)
         m.gewaehlt.connect(lambda c: E()._frei_wirken(rand=None) if c is None else E()._frei_wirken(rand_teil={"farbe": c.name(QColor.HexArgb)}))
         m.breite_gewaehlt.connect(lambda pt: E()._frei_wirken(rand_teil={"b": pt * 96 / 72}))
@@ -166,8 +166,8 @@ class FreieBilderKnoepfeMixin:
         self._frei_layout_popup(global_pos)
 
     def _frei_layout_popup(self, global_pos) -> None:
-        from core.editor.objekte.bild import bildlayout as BL
-        from vcl.qt.widgets.bausteine.dropdown.objektmenues.layout_optionen_objekt import LayoutOptionenObjekt
+        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.widgets.menues.dropdown.objektmenues.layout_optionen_objekt import LayoutOptionenObjekt
         z = BL.ziel(self)
         if z is None:
             return
@@ -182,8 +182,8 @@ class FreieBilderKnoepfeMixin:
 
     def bild_layout_dialog(self) -> None:
         """Das Fenster „Layout“ für das markierte Bild (frei oder im Text)."""
-        from core.editor.objekte.bild import bildlayout as BL
-        from vcl.qt.widgets.bausteine.dokument.layout_dialog_objekt import layout_dialog_fuer
+        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.widgets.dialoge.dokument.layout_dialog_objekt import layout_dialog_fuer
         z = BL.ziel(self)
         if z is None:
             return

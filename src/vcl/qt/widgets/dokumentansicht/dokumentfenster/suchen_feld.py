@@ -8,33 +8,33 @@ Seitenleiste bleibt, wie sie ist. Die Suche selbst steht ohne Oberfläche in ``e
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil, trennlinie
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QFrame, QLabel, QLineEdit, QListWidget, QPushButton, QStackedWidget,
     QTabBar, QToolButton, QWidget,
 )
 
-from core.editor.dokument import gehe_zu as G
-from core.bearbeitung import suche as S
-from vcl.qt.widgets.bausteine.geruest.einklappgruppe import EinklappGruppe
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import SUCHEN_ELEMENTE_ZUGABE, SUCHEN_KNOPF_ZUGABE
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from writer.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, HOEHE_SUCHOPTION, ICON_GROSS, RAND_KEIN, RAND_OBEN_KLEIN, RAND_OBEN_SEITE
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownTaste
+from core.dokument import gehe_zu as G
+from core.suche.textsuche import suche as S
+from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import SUCHEN_ELEMENTE_ZUGABE, SUCHEN_KNOPF_ZUGABE
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, HOEHE_SUCHOPTION, ICON_GROSS, RAND_KEIN, RAND_OBEN_KLEIN, RAND_OBEN_SEITE
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownTaste
 
-from vcl.qt.widgets.bausteine.basis.farben import HERVORHEBUNG_GELB   # Textmarker beim Hervorheben: bewusst fest
+from vcl.qt.widgets.bausteine.farben.farben import HERVORHEBUNG_GELB   # Textmarker beim Hervorheben: bewusst fest
 
 RICHTUNGEN = (("abwaerts", "Abwärts"), ("aufwaerts", "Aufwärts"), ("alles", "Alles"))
 ZEICHEN_NAMEN = {"schrift": "Schriftart", "groesse": "Größe", "fett": "Fett", "kursiv": "Kursiv", "farbe": "Schriftfarbe", "unter": "Unterstreichung",
@@ -82,8 +82,8 @@ class FormatvorlageWahl(QDialog):
 
     def __init__(self, parent=None, aktuell: str = ""):
         super().__init__(parent)
-        from core.editor.text import stile
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from core.formatvorlagen.zeichen import stile
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         from vcl.qt.widgets.ribbon.band_leiste import STILE_KATALOG
         self.setWindowTitle("Formatvorlage suchen")
         v = _spalte("standard", self)
@@ -351,7 +351,7 @@ class SuchenFeld(QWidget):
 
     def _zeichen_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
         if f.get("zeichen"):
-            from vcl.qt.widgets.bausteine.formatierung.text_format import aus_zeichen
+            from vcl.qt.widgets.dialoge.formatierung.text_format import aus_zeichen
             soll = dict(f["zeichen"])
             fam, gr = ed.document().standardschrift() if ed is not None else ("", 0.0)
             a.zeichen.append(lambda fmt: (lambda w: all(_gleich(w.get(k), v) for k, v in soll.items()))(aus_zeichen(fmt, fam, gr)))
@@ -361,11 +361,11 @@ class SuchenFeld(QWidget):
 
     def _absatz_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
         if f.get("absatz"):
-            from vcl.qt.widgets.bausteine.formatierung.absatz_dialog import werte_von
+            from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import werte_von
             soll_a = dict(f["absatz"])
             a.absatz.append(lambda b: (lambda w: all(_gleich(w.get(k), v) for k, v in soll_a.items()))(werte_von(ed, b)))
         if f.get("tabs"):
-            from vcl.qt.widgets.bausteine.formatierung.absatz_dialog import werte_von
+            from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import werte_von
             soll_t = list(f["tabs"])
             a.absatz.append(lambda b: all(any(abs(m - t[0]) < 0.6 for t in werte_von(ed, b)["tabs"]) for m in soll_t))
         if f.get("stil") and ed is not None:
@@ -531,8 +531,8 @@ class SuchenFeld(QWidget):
         self._optionen_neu(); self.zaehlen()
 
     def _format_schrift(self) -> None:
-        from vcl.qt.widgets.bausteine.formatierung.schriftart_dialog import SchriftartDialog
-        from vcl.qt.widgets.bausteine.formatierung.text_format import ZEICHEN, aus_zeichen, zu_zeichen
+        from vcl.qt.widgets.dialoge.formatierung.schriftart_dialog import SchriftartDialog
+        from vcl.qt.widgets.dialoge.formatierung.text_format import ZEICHEN, aus_zeichen, zu_zeichen
         d = SchriftartDialog(self)
         vorher = d.werte()
         if not self.unterfenster(d):
@@ -550,7 +550,7 @@ class SuchenFeld(QWidget):
         self._geaendert()
 
     def _format_absatz(self) -> None:
-        from vcl.qt.widgets.bausteine.formatierung.absatz_dialog import ABSATZ, AbsatzDialog
+        from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import ABSATZ, AbsatzDialog
         d = AbsatzDialog(self, dict(ABSATZ))
         vorher = d.werte()
         if not self.unterfenster(d):
@@ -564,7 +564,7 @@ class SuchenFeld(QWidget):
         self._geaendert()
 
     def _format_tabs(self) -> None:
-        from vcl.qt.widgets.bausteine.dokument.tabstopp_dialog import TabstoppDialog
+        from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import TabstoppDialog
         d = TabstoppDialog(self, [])
         if self.unterfenster(d) and d.stopps():
             self.formate[self._fokus]["tabs"] = [m for m, _a, _f in d.stopps()]
@@ -591,7 +591,7 @@ class SuchenFeld(QWidget):
 
 def _absatz_format(w: dict) -> dict:
     """Die geänderten Absatzwerte als Absatzformat des Dokumentenmodells (für „Ersetzen durch“): nur, was im Fenster geändert wurde."""
-    from core.dokument.seite import mm_to_px
+    from core.dokument.abschnitte.seite import mm_to_px
     af: dict = {}
     if "ausr" in w:
         af["ausrichtung"] = w["ausr"]

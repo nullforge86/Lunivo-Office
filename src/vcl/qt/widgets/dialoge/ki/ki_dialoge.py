@@ -4,21 +4,21 @@ Der Anbieter wird hier festgelegt — in „KI-Konfiguration“ (Reiter Schreibh
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QSizePolicy, QDialog, QLabel, QPushButton, QWidget
 
-from vcl.qt.widgets.bausteine.geruest.fenster_stapel import zeige_unter
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
 
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
-from writer.baukasten.basis.mass import GROESSE_FENSTER_KI, RAND_OBEN_SEITE
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_KI, RAND_OBEN_SEITE
 from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge import AnbieterDialog, KIKonfigurationDialog, ModellListe, ModellListeDialog, ModellZuweisung, _Antwort, _tags_text, modell_combo, modell_felder_fuellen, modell_passt
 
 REITER = ("KI-Modelle", "Modellzuweisung", "Sprache", "KI-Werkzeuge", "Websuche", "Datenschutz", "Assistenten", "Dokumente")
@@ -59,7 +59,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         z = QWidget(); zv = _spalte("oben", z)
         self.zuweisung = ModellZuweisung(fenster)
         zv.addWidget(self.zuweisung)
-        from vcl.qt.widgets.bausteine.chat.chat_regler import ChatReglerBlock
+        from vcl.qt.widgets.seitenleisten.chat.chat_regler import ChatReglerBlock
         self.chat_regler = ChatReglerBlock(self.k)                 # Länge, Temperatur, Top P, Stoppfolgen, direkt einfügen (zugeklappt)
         zv.addWidget(self.chat_regler)
         self.stapel.addWidget(z)
@@ -72,7 +72,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         self.stapel.addWidget(self.websuche)
         self.datenschutz = EinwilligungenPanel(self.k)
         self.stapel.addWidget(self.datenschutz)
-        from vcl.qt.widgets.bausteine.felder.assistenten_liste import AssistentenListe
+        from vcl.qt.widgets.bausteine.interaktion.felder.assistenten_liste import AssistentenListe
         seite = QWidget(); av = _spalte("oben", seite)
         self.assistenten = AssistentenListe(fenster)
         av.addWidget(self.assistenten); av.addStretch(1)

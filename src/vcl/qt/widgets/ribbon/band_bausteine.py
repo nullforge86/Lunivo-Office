@@ -1,16 +1,16 @@
 """Hilfswidgets und Kurztexte des Menübandes."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, QWidget
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import UeberlaufLeiste
-from writer.baukasten.basis.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
 
 
 class _GruppenTrenner(QWidget):
@@ -218,7 +218,7 @@ def _kurz(name: str) -> str:
 
 def _mit_kuerzel(name: str) -> str:
     """Hinweistext eines Knopfes; steht der Name in der Kürzel-Tabelle (``oberflaeche/kuerzel.py``), kommt das Tastenkürzel dahinter."""
-    from writer.baukasten.tastenkuerzel.kuerzel import HILFE
+    from vcl.qt.widgets.bausteine.tastaturnavigation.kuerzel import HILFE
     for _gruppe, zeilen in HILFE:
         for taste, text in zeilen:
             if text == name and " / " not in taste:

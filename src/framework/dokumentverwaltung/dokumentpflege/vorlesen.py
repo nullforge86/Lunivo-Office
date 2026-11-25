@@ -8,9 +8,9 @@ import os
 import subprocess
 import threading
 
-from system.pfade import pfade
-from system.prozess import prozess
-from system.sprachausgabe import sprachausgabe
+from system.plattform import pfade
+from system.plattform import prozess
+from system.plattform import sprachausgabe
 
 PIPER_NAMEN = {
     "de_DE-thorsten-medium": "Thorsten (männlich)", "de_DE-thorsten-high": "Thorsten, feiner (männlich)",

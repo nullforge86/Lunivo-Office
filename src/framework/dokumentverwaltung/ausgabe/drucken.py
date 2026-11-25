@@ -13,8 +13,8 @@ from PySide6.QtGui import QImage, QPageLayout, QPageSize, QPainter
 from core.dokument import Dokument
 from core.geometrie import mm_to_px
 from core.layout import LayoutEngine
-from core.layout import formatwerte as F
-from core.rendering import DokumentRenderer
+from core.layout.drucklayout import formatwerte as F
+from core.layout.drucklayout.ausgabe import DokumentRenderer
 
 PAPIER = {"A3": (297, 420), "A4": (210, 297), "A5": (148, 210), "B5": (176, 250), "Letter": (216, 279), "Legal": (216, 356)}
 PRO_BLATT = {1: (1, 1), 2: (2, 1), 4: (2, 2), 6: (3, 2), 9: (3, 3), 16: (4, 4)}
@@ -86,7 +86,7 @@ class Ausgabe:
     def __init__(self, dokument: Dokument, engine=None, nur_formular: bool = False, optionen: dict | None = None):
         if nur_formular:                                   # „Nur Formulardaten drucken“: in einer Kopie bleibt nur der Inhalt der Felder sichtbar
             import copy
-            from core.editor.dokument import formular
+            from core.dokument import formular
             dokument = copy.deepcopy(dokument)
             formular.nur_formulardaten(dokument)
         self.dokument = dokument
@@ -115,8 +115,8 @@ class Ausgabe:
     def _blasen_sammeln(self) -> dict:
         """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
         from core.bearbeitung import Bearbeitungssitzung
-        from core.bearbeitung.suche import offset_zu_position
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.suche.textsuche.suche import offset_zu_position
+        from core.objekte.formen import sprechblasen as SB
         k = self._blasen["konfig"]
         if not SB.aktiv(k):
             return {}
@@ -131,7 +131,7 @@ class Ausgabe:
 
     def _seite_malen(self, p: QPainter, n: int, wasserzeichen: str = "") -> None:
         """Die Seite ``n`` ist vom Kern gerendert (``RasterZiel``, ohne Qt) und wird hier nur auf den Zeichner gelegt; Auflösung nach dem Maßstab des Zeichners (höchstens 300 dpi)."""
-        from core.rendering.ausgabe.rasterziel import RasterZiel
+        from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
         t = p.worldTransform()
         faktor = max(0.1, min(300.0 / 96.0, math.hypot(t.m11(), t.m12())))
         einr = self._erg.seiten[n - 1].einrichtung
@@ -140,7 +140,7 @@ class Ausgabe:
         self._renderer.zeichne_seite(ziel, self.dokument, self._erg, n - 1, self._grund)
         if wasserzeichen.strip():                                                    # Wasserzeichen des Bildexports: schräg und blass über die Seite, vom Kern gezeichnet
             from core.geometrie import Rect
-            from core.rendering.seite import wasserzeichen as WZ
+            from core.layout.drucklayout.ausgabe.seite import wasserzeichen as WZ
             WZ.zeichne(ziel, self._layout.engine, {"text": wasserzeichen.strip(), "farbe": "#868e96", "transparenz": 73, "winkel": -35}, Rect(0, 0, b, h))
         breite, hoehe, roh = ziel.als_rgba()
         p.drawImage(QRectF(0, 0, b, h), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))
@@ -151,7 +151,7 @@ class Ausgabe:
         if not self._blasen_je_seite.get(n - 1):
             self._seite_malen(p, n)
             return
-        from core.editor.objekte.formen import sprechblasen as SB
+        from core.objekte.formen import sprechblasen as SB
         k = self._blasen["konfig"]
         b, h = self.groesse_px(n)
         luecke, breite = mm_to_px(SB.LUECKE_MM), mm_to_px(SB.breite_mm(k))

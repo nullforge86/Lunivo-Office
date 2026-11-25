@@ -1,11 +1,11 @@
-"""PDF-Ausgabe des Dokuments ohne Qt: dieselbe Layoutberechnung und derselbe Renderer des Kerns wie die Zeichenfläche, geschrieben von ``core.rendering.pdfziel``."""
+"""PDF-Ausgabe des Dokuments ohne Qt: dieselbe Layoutberechnung und derselbe Renderer des Kerns wie die Zeichenfläche, geschrieben von ``core.layout.drucklayout.ausgabe.pdfziel``."""
 from __future__ import annotations
 
 from core.dokument import Dokument
 from core.layout import LayoutEngine
-from core.layout import formatwerte as F
-from core.rendering import DokumentRenderer
-from core.rendering.ausgabe.pdfziel import PdfZiel
+from core.layout.drucklayout import formatwerte as F
+from core.layout.drucklayout.ausgabe import DokumentRenderer
+from core.layout.drucklayout.ausgabe.pdfziel import PdfZiel
 
 
 def dokument_als_pdf(dokument: Dokument, ziel: str, titel: str = "", autor: str = "", engine=None, erste: int = 1, letzte: int | None = None, struktur: dict | None = None,

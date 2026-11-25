@@ -8,9 +8,9 @@ Das Fenster ändert das Dokument nicht. „Daten bearbeiten …“ öffnet Titel
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -19,17 +19,17 @@ from PySide6.QtWidgets import (
     QToolButton, QWidget,
 )
 
-from framework.datentypen.farben import Farbe
-from core.editor.diagramme import diagramm as D
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from writer.baukasten.basis.mass import QWIDGETSIZE_MAX, SCHRIFT_DIAGRAMMNAME_FAKTOR
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf, werkzeugknopf
-from writer.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_KEIN, BREITE_LISTE_ARTEN, BREITE_VORSCHAU_DIAGRAMM, BREITE_VORSCHAU_DIAGRAMM_SCHMAL, GROESSE_BILD_DIAGRAMM, GROESSE_BILD_DIAGRAMM_SCHMAL, HOEHE_FELD, HOEHE_VORSCHAU_DIAGRAMM, ICON_MITTEL, RAND_BOX_KOMPAKT, RAND_KARTE_ZEILE, RAND_KEIN, RAND_OBEN_SEITE, ZUGABE_KNOPF, ZUGABE_LISTE_ARTEN, ZUGABE_RAHMEN
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
+from framework.schnittstellen.datentypen.farben import Farbe
+from core.diagramme import diagramm as D
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.abstaende.mass import QWIDGETSIZE_MAX, SCHRIFT_DIAGRAMMNAME_FAKTOR
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_KEIN, BREITE_LISTE_ARTEN, BREITE_VORSCHAU_DIAGRAMM, BREITE_VORSCHAU_DIAGRAMM_SCHMAL, GROESSE_BILD_DIAGRAMM, GROESSE_BILD_DIAGRAMM_SCHMAL, HOEHE_FELD, HOEHE_VORSCHAU_DIAGRAMM, ICON_MITTEL, RAND_BOX_KOMPAKT, RAND_KARTE_ZEILE, RAND_KEIN, RAND_OBEN_SEITE, ZUGABE_KNOPF, ZUGABE_LISTE_ARTEN, ZUGABE_RAHMEN
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
@@ -39,14 +39,14 @@ def art_symbol(sym: str, px: int = 22) -> QIcon:
         "kurs": "chart-candlestick", "netz": "radar", "kombination": "chart-no-axes-combined",
         "vorlagen": "palette",
     }
-    from vcl.qt.widgets.bausteine.bauteile import symbole
+    from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
     return symbole.icon(namen.get(sym, "chart-column"), px)
 
 class DiagrammDialog(PanelFaehig, QDialog):
     def __init__(self, parent, vorhanden: dict | None = None):
         """``vorhanden``: Daten eines vorhandenen Diagramms (Diagrammart, Titel, Rubriken, Reihen, Kombination) — dann öffnet das Fenster damit."""
         super().__init__(parent)
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         self.setWindowTitle("Diagramm einfügen")
         self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
         self.kombi: list[tuple[str, bool]] = []
@@ -218,7 +218,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.aktualisieren()
 
     def _daten(self) -> None:
-        from vcl.qt.widgets.bausteine.geruest.fenster_stapel import zeige_unter
+        from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DiagrammDatenDialog
         d = DiagrammDatenDialog(self, self.titel_text, self.kategorien, self.reihen)
 

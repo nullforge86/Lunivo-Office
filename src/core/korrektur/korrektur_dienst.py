@@ -12,9 +12,11 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
-from core.dokument.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
+from core.korrektur.korrektur import ProofingIssue, zeige_leer as zeige_leer_modell
 from framework.dokumentverwaltung.dokumentpflege.gelernt import Gelernt
-from core.korrektur import autokorrektur, fund as fundlib, inkrement, pruefung, vorhersage
+from core.korrektur.rechtschreibung import autokorrektur, pruefung
+from core.korrektur import fund as fundlib, inkrement
+from core.korrektur.woerterbuecher import vorhersage
 
 _log = logging.getLogger("lunivo.proofing")
 ART_REIHENFOLGE = {"fehler": 0, "tipp": 1, "hinweis": 2}
@@ -292,7 +294,7 @@ class WritingAssistant(QObject):
         vorschlaege: list[tuple[str, ProofingIssue | None]] = [(f.neu, f) for f in gefunden if f.neu]
         if not (wort and self.settings.vorschlaege_anzeigen()):
             return vorschlaege
-        from core.korrektur import pruefung
+        from core.korrektur.rechtschreibung import pruefung
         schon = {t for t, _f in vorschlaege}
         for k in pruefung.vorschlaege_fuer(wort[0], 6, self.gelernt.daten):
             text = pruefung.uebernimm_schreibweise(wort[0], k)
@@ -344,7 +346,7 @@ class WritingAssistant(QObject):
 
     def _wort_an(self, pos: int):
         """(Wort, von, bis), wenn an der Stelle ein Wort steht, das das Wörterbuch nicht kennt."""
-        from core.korrektur import pruefung
+        from core.korrektur.rechtschreibung import pruefung
         text = self._text()
         for m in pruefung.WORT_MUSTER.finditer(text):
             if m.start() <= pos <= m.end():

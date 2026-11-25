@@ -1,28 +1,28 @@
 """Einstellungen für „Silben farbig“: alles, was jemand mit Legasthenie braucht, um es für sich passend zu machen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft, farbknopf
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, farbknopf
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QCheckBox, QDialog, QLabel, QPushButton, QSpinBox, QTextEdit, QWidget
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.felder.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
-from core.editor.text import silbenfarben as S
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter, FlussLayout, FormularGitter
+from core.formatierung.schrift import silbenfarben as S
 from PySide6.QtGui import QBrush, QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 from vcl.qt.widgets.bausteine import weitere_farben
 
 
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import GROESSE_KNOPF_SILBE, HOEHE_TEXT_NORMAL, RADIUS_FELD, RAND_KEIN, SCHRIFT_VORSCHAU
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_KURZ
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_KNOPF_SILBE, HOEHE_TEXT_NORMAL, RADIUS_FELD, RAND_KEIN, SCHRIFT_VORSCHAU
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_KURZ
 class SilbenDialog(PanelFaehig, QDialog):
     def __init__(self, fenster):
         super().__init__(fenster)

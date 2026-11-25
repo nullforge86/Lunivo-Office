@@ -8,25 +8,25 @@ Die Fenster ändern das Dokument nicht; der Aufrufer (``Befehle``) fügt das Erg
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QRadioButton, QSpinBox, QWidget
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from core.editor.dokument import felder as F
-from core.editor.tabelle import tabelle_text as TT
-from core.editor.text import zahlformat as Z
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from writer.baukasten.basis.mass import EINFUEGEN_LISTE_ZEILEN, EINFUEGEN_TYP_ZEILEN
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf, werkzeugknopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
-from writer.baukasten.basis.mass import BREITE_SCHIENE, BREITE_SEITENLEISTE, GROESSE_KNOPF_QUADRAT, GROESSE_RASTER_DATEIEN, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, HOEHE_KNOPF_HOCH, HOEHE_LISTE_MITTEL, ICON_GROSS, ICON_LISTE, RAND_KEIN, ZUGABE_LISTE
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from core.dokument import felder as F
+from core.tabellen.modell import tabelle_text as TT
+from core.text import zahlformat as Z
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.abstaende.mass import EINFUEGEN_LISTE_ZEILEN, EINFUEGEN_TYP_ZEILEN
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_SCHIENE, BREITE_SEITENLEISTE, GROESSE_KNOPF_QUADRAT, GROESSE_RASTER_DATEIEN, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, HOEHE_KNOPF_HOCH, HOEHE_LISTE_MITTEL, ICON_GROSS, ICON_LISTE, RAND_KEIN, ZUGABE_LISTE
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 
 def _titel(text: str, feld) -> QLabel:
@@ -355,7 +355,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, page=None):
         super().__init__(parent)
-        from core.funktionen.kopffuss import seitenzahl as SZ
+        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
         self.setWindowTitle("Seitenzahl einfügen")
         v = _spalte("standard", self)
         g = FormularGitter()                                                # passt sich der Breite an (Seitenleiste), nichts wird abgeschnitten
@@ -445,7 +445,7 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         from PySide6.QtWidgets import (
             QFileSystemModel, QInputDialog, QListView, QPushButton, QStackedWidget, QToolButton, QTreeWidget, QTreeWidgetItem, QWidget,
         )
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         self._os, self._QInputDialog = os, QInputDialog
         self.setWindowTitle("Hyperlink")
         self.tipp = ""
@@ -631,7 +631,7 @@ class ObjektDialog(PanelFaehig, QDialog):
         self._beschreiben()
 
     def _suchen(self) -> None:
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import datei_waehlen
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
         pfade = datei_waehlen(self, "Datei für das Objekt wählen", self.datei.text() or self._ordner, "Alle Dateien (*)")
         if pfade:
             self.datei.setText(pfade[0])

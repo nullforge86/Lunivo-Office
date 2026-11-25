@@ -5,14 +5,14 @@ import os  # noqa: F401
 import threading  # noqa: F401
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal  # noqa: F401
 from PySide6.QtWidgets import QMessageBox  # noqa: F401
-from system.pfade.pfade import data_dir  # noqa: F401
+from system.plattform.pfade import data_dir  # noqa: F401
 from framework.ki.dienst import ki as K  # noqa: F401
 from framework.ki.dienst import assistent_lauf as AL  # noqa: F401
 from framework.ki.anbieter import modellfaehigkeit as MF  # noqa: F401
 from framework.ki.chat import chat_bezug as CB  # noqa: F401
 from framework.ki.chat import chat_antwort as CA
-from core.editor.text import ki_markdown
-from core.editor.dokument.zusatz import KI_AUTOR
+from core.text import ki_markdown
+from core.dokument.zusatz import KI_AUTOR
 from framework.ki.chat.chat_modell import ChatModell  # noqa: F401
 from framework.ki.dienst.arbeitslauf import _Lauf  # noqa: F401
 

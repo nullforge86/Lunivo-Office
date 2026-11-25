@@ -70,7 +70,7 @@ def pruefen(formate: list[str], db: str) -> list[tuple]:
     from core.bearbeitung import Bearbeitungssitzung
     from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
     from framework.dokumentverwaltung.dateizugriff.modell_speichern import speichere_modell
-    from core.dokument.seite import PageSettings
+    from core.dokument.abschnitte.seite import PageSettings
     from framework.dokumentverwaltung.dateizugriff import sicher_schreiben as S
     lauf = uuid.uuid4().hex[:12]
     zeilen = []

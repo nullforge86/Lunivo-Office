@@ -39,7 +39,7 @@ def _languagetool(_k: dict) -> tuple[str, str]:
 
 def _vorlesen(_k: dict) -> tuple[str, str]:
     from framework.dokumentverwaltung.dokumentpflege import vorlesen
-    from system.sprachausgabe import sprachausgabe
+    from system.plattform import sprachausgabe
     if vorlesen.verfuegbar():
         return "bereit", "Text bleibt auf diesem Rechner"
     return ("nicht eingerichtet" if sprachausgabe.LINUX else "auf diesem System nicht unterstützt"), "Text bleibt auf diesem Rechner"

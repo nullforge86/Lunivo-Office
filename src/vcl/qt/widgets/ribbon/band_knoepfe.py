@@ -5,11 +5,11 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QFont
 from PySide6.QtWidgets import QToolButton
 
-from vcl.qt.widgets.bausteine.dropdown.objektmenues.bild_diagramm_menues import KLAPPEN
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from writer.baukasten.basis.mass import GROESSE_BANDKNOPF_ICON_KLEIN, ICON_GROSS
+from vcl.qt.widgets.menues.dropdown.objektmenues.bild_diagramm_menues import KLAPPEN
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_BANDKNOPF_ICON_KLEIN, ICON_GROSS
 
 from vcl.qt.widgets.ribbon.band_bausteine import _kurz, _mit_kuerzel, _zweizeilig
 

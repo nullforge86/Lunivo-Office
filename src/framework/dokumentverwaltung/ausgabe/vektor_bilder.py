@@ -7,9 +7,9 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QImage
 
 from core.geometrie import Rect
-from core.rendering.bild import metafile as MF
-from core.rendering.bild.metafile import MAX_SEITE_PX, ist_emf, ist_wmf, masse_px  # noqa: F401  (Namen der bisherigen Schnittstelle)
-from core.editor.objekte.bild import bilddaten as BD
+from core.layout.drucklayout.ausgabe.bild import metafile as MF
+from core.layout.drucklayout.ausgabe.bild.metafile import MAX_SEITE_PX, ist_emf, ist_wmf, masse_px  # noqa: F401  (Namen der bisherigen Schnittstelle)
+from core.objekte.bilder.modell import bilddaten as BD
 
 
 def _qimage(erg) -> QImage | None:
@@ -27,7 +27,7 @@ def bild_lesen(blob: bytes) -> QImage:
             blob = BD.entpacken(blob)
         except BD.BildFehler:
             return QImage()
-    from core.editor.objekte.bild.freie_bilder import bild_aus_daten
+    from core.objekte.bilder.positionierung.freie_bilder import bild_aus_daten
     if ist_emf(blob) or ist_wmf(blob):                        # Metafile: zuerst als Vektor; leer gezeichnet → eingebettetes Bitmap (Rückfall)
         img = _qimage(MF.metafile_rgba(blob)) or QImage()
         if not img.isNull() and not _leer(img):
@@ -58,7 +58,7 @@ def wmf_bild(blob: bytes, breite_px: int = 0, hoehe_px: int = 0) -> QImage | Non
 
 
 def _auf_zeichner(blob: bytes, p, ziel: QRectF, zeichne) -> bool:
-    from vcl.qt.rendering.zeichnen.anzeige import kern_malen
+    from vcl.qt.rendering.formen.anzeige import kern_malen
     gelungen = [False]
 
     def los(z) -> None:

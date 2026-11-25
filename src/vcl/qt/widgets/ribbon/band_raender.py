@@ -1,13 +1,13 @@
 """Randvorgaben-Steuerung für das Menüband."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QWidget
 
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 
-from writer.baukasten.basis.mass import ABSTAND_ENG, BREITE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, RAND_KEIN
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, BREITE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, RAND_KEIN
 
 
 class BandRaenderBaustein:

@@ -7,11 +7,11 @@ auf; dann gibt ``lese_rtf_dokument`` ``None`` zurück und der Aufrufer nimmt den
 from __future__ import annotations
 
 from core.dokument.dokument import Abschnitt, Absatz, Dokument, FreiesObjekt, InlineObjekt, Kommentar, Lauf, Note, ListenDefinition, ListenEbene, Tabelle, Zelle, neues_dokument
-from core.dokument.formatvorlagen import eingebaute_vorlagen
+from core.formatvorlagen.formatvorlagen import eingebaute_vorlagen
 from filter.rtf.modell import Abschnittswechsel, daten_lesen as _daten_lesen, Absatz as RtfAbsatz, NichtImModell, Tabelle as RtfTabelle, Ziel
 from filter.rtf.zerleger import Zerleger
 from core.dokument.bericht import IOReport
-from core.dokument.seite import HeaderFooter
+from core.dokument.abschnitte.seite import HeaderFooter
 
 _TWIP_JE_PX = 15.0
 

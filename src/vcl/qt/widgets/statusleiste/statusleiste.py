@@ -1,12 +1,12 @@
 """Statusleiste: Meldung, Wörter/Zeichen, Seite, Zoom (− Regler + Anzeige)."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QSlider, QStatusBar
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf, werkzeugknopf
-from writer.baukasten.basis.mass import BREITE_ZOOM_REGLER, RAND_STATUSLEISTE
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_ZOOM_REGLER, RAND_STATUSLEISTE
 
 
 class StatusBar(QStatusBar):

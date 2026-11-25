@@ -5,7 +5,7 @@ import os  # noqa: F401
 import threading  # noqa: F401
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal  # noqa: F401
 from PySide6.QtWidgets import QMessageBox  # noqa: F401
-from system.pfade.pfade import data_dir  # noqa: F401
+from system.plattform.pfade import data_dir  # noqa: F401
 from framework.ki.dienst import ki as K  # noqa: F401
 from framework.ki.dienst import assistent_lauf as AL  # noqa: F401
 from framework.ki.anbieter import modellfaehigkeit as MF  # noqa: F401

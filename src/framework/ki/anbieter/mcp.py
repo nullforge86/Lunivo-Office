@@ -14,7 +14,7 @@ import subprocess
 import threading
 import time
 
-from system.prozess import prozess
+from system.plattform import prozess
 
 ZEIT = 25.0                                    # Sekunden je Antwort des Servers
 LEBENSDAUER = 600.0                            # Sekunden, die ein Server höchstens läuft

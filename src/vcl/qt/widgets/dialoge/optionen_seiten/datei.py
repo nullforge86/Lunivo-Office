@@ -1,20 +1,20 @@
 """Optionen: Schreiben, Speichern, Drucken und PDF."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from core.schrift import standard_datenbank
-from writer.baukasten.basis.daten import text as _t
+from core.formatierung.schrift import standard_datenbank
+from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
-from writer.baukasten.geruest.module import anmelden
+from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
 
 import os
 from PySide6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QSpinBox
-from core.korrektur import autokorrektur
+from core.korrektur.rechtschreibung import autokorrektur
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import _Seite
-from writer.baukasten.basis.mass import HOEHE_FELD
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_FELD
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 
 anmelden("optionen", "schreiben", "optionen.seite.schreiben", "_schreiben", 30)
@@ -156,8 +156,8 @@ class DateiSeiten:
 
     def _daten_sichern(self):
         import zipfile
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
-        from framework.funktionen.datei.orte import data_dir
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
+        from framework.befehle.datei.orte import data_dir
         pfad, _ = Dateifenster.getSaveFileName(self, _t("optionen.datei.sichern_2"), "lunivo-sicherung.zip", _t("optionen.datei.zip_zip"))
         if not pfad:
             return
@@ -171,8 +171,8 @@ class DateiSeiten:
 
     def _daten_zurueckholen(self):
         import zipfile
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
-        from framework.funktionen.datei.orte import data_dir
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
+        from framework.befehle.datei.orte import data_dir
         pfad, _ = Dateifenster.getOpenFileName(self, _t("optionen.datei.zurueckholen"), "", _t("optionen.datei.zip_zip"))
         if not pfad:
             return

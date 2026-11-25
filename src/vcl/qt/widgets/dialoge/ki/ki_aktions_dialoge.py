@@ -1,30 +1,30 @@
 """KI-Aktionsfenster: Schnelle KI-Aktion, Neuer Assistent, Alle Ergebnisse (Erstellen-Fenster nach dem Baukasten)."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QPushButton
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from framework.ki.dienst import ki as K
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 
 
-from writer.baukasten.basis.mass import HOEHE_LISTE_AUSWAHL, HOEHE_LISTE_KURZ, RAND_KEIN
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_LANG
+from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_LISTE_AUSWAHL, HOEHE_LISTE_KURZ, RAND_KEIN
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_LANG
 from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge import modell_felder_fuellen
 
 
 
-from vcl.qt.widgets.bausteine.vorlagen.vorlagen_chips import AufklappBereich
-from vcl.qt.widgets.bausteine.dokument.erstellen_fenster import ErstellenFenster
+from vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_chips import AufklappBereich
+from vcl.qt.widgets.dialoge.dokument.erstellen_fenster import ErstellenFenster
 
 
 
@@ -95,8 +95,8 @@ class KIAssistentDialog(ErstellenFenster):
 
     def __init__(self, fenster):
         from framework.ki.dienst.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
-        from vcl.qt.widgets.bausteine.dropdown.auswahl.symbol_auswahl import SymbolWahl
-        from vcl.qt.widgets.bausteine.felder.mass_feld import spin
+        from vcl.qt.widgets.menues.dropdown.auswahl.symbol_auswahl import SymbolWahl
+        from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin
         t = TEXTE_ASSISTENT
         super().__init__(fenster, t["titel"], t["hinweis"], [e[0] for e in K.VORLAGEN_ASSISTENT], meldung=t["meldung"])
         g = self.gitter

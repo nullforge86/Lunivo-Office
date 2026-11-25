@@ -4,21 +4,21 @@ register.json beschreibt Reiter, Gruppen und Knöpfe. Was `Befehle` nicht kennt,
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import json
 import os
 
-from system.pfade import ressourcen_pfade as pfade
-from vcl.qt.widgets.bausteine.basis.texte import trennlinie
+from system.plattform import ressourcen_pfade as pfade
+from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
 
 from PySide6.QtCore import QSize, QTimer, Qt, Signal
 from PySide6.QtWidgets import QStackedWidget, QToolButton, QWidget
 
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
-from writer.baukasten.basis.mass import ABSTAND_ENG, ICON_NORMAL, RAND_KEIN, RAND_POPUP_KOPF
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ICON_NORMAL, RAND_KEIN, RAND_POPUP_KOPF
 
 NICHT_DA = "{} — in der nativen Fassung noch nicht umgesetzt"
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]

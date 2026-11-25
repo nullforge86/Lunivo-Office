@@ -13,11 +13,11 @@ Das Fenster fügt selbst nichts ein; der Aufrufer bekommt das Zeichen.
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from core.schrift import standard_datenbank
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from core.formatierung.schrift import standard_datenbank
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import json
 from typing import Callable
@@ -29,14 +29,14 @@ from PySide6.QtWidgets import (
     QSizePolicy, QTreeWidget, QTreeWidgetItem, QWidget,
 )
 
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
-from vcl.qt.widgets.bausteine.dokument.tasten_dialog import TastenDialog
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from writer.baukasten.basis.mass import SCHRIFT_SONDERZEICHEN_PX, SONDERZEICHEN_KOPF_ZEILEN, SONDERZEICHEN_SONDER_ZEILEN, SONDERZEICHEN_ZELLEN_REIHEN
-from writer.baukasten.basis.mass import BREITE_FELD_ZEICHENCODE, BREITE_ZEILENHINWEIS, GROESSE_FENSTER_SONDERZEICHEN, HOEHE_ZEILE_SONDER, HOEHE_ZELLE_SONDER, ZUGABE_LISTE_KOPF, ZUGABE_LISTE_SONDER, ZUGABE_RAHMEN
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
-from writer.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
+from vcl.qt.widgets.dialoge.dokument.tasten_dialog import TastenDialog
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_SONDERZEICHEN_PX, SONDERZEICHEN_KOPF_ZEILEN, SONDERZEICHEN_SONDER_ZEILEN, SONDERZEICHEN_ZELLEN_REIHEN
+from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_FELD_ZEICHENCODE, BREITE_ZEILENHINWEIS, GROESSE_FENSTER_SONDERZEICHEN, HOEHE_ZEILE_SONDER, HOEHE_ZELLE_SONDER, ZUGABE_LISTE_KOPF, ZUGABE_LISTE_SONDER, ZUGABE_RAHMEN
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
 
 KEY_ZULETZT = "einfuegen/symbole_zuletzt"
 KEY_BENUTZER = "einfuegen/symbole_benutzer"
@@ -229,7 +229,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.bei_benutzer = knopf("standard", "Einfügen bei benutzerdefinierten Symbolen")
         self.bei_benutzer.clicked.connect(self._zu_benutzer)
         self.ok = fussleiste(self, v, self.bei_benutzer, bei_ok=self._einfuegen, ok_text="Einfügen", abbrechen_text="Abbrechen")
-        from vcl.qt.widgets.bausteine.basis.dialog_rahmen import Knopfzeile
+        from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import Knopfzeile
         self.abbrechen = self.findChild(Knopfzeile).abbrechen
         self.reiter.currentChanged.connect(self._reiter)
         self._schrift_neu()

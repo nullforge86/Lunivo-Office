@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterator, NamedTuple
 
-from core.dokument.seite import PageSettings
+from core.dokument.abschnitte.seite import PageSettings
 
 OBJEKT_ZEICHEN = "￼"           # steht in ``Absatz.text()`` für ein Objekt im Text
 OBJEKT_ARTEN = ("bild", "form", "textfeld", "wordart", "diagramm", "smartart", "formel", "piktogramm", "zeichenbereich", "gruppe", "roh")

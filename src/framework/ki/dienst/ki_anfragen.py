@@ -5,7 +5,7 @@ import os  # noqa: F401
 import threading  # noqa: F401
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal  # noqa: F401
 from PySide6.QtWidgets import QMessageBox  # noqa: F401
-from system.pfade.pfade import data_dir  # noqa: F401
+from system.plattform.pfade import data_dir  # noqa: F401
 from framework.ki.dienst import ki as K  # noqa: F401
 from framework.ki.dienst import assistent_lauf as AL  # noqa: F401
 from framework.ki.anbieter import modellfaehigkeit as MF  # noqa: F401
@@ -294,7 +294,7 @@ class KIAnfragenMixin:
         if img.isNull():
             self.status.emit("Der Anbieter hat etwas geschickt, das kein Bild ist.")
             return
-        from core.editor.dokument import einfuegen as E
+        from core.bearbeitung import einfuegen as E
         ed = eing["ed"]
         if eing["ersetzen"] and ed.textCursor().hasSelection():
             ed.textCursor().removeSelectedText()

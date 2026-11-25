@@ -1,23 +1,23 @@
 """Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QWidget
 
-from core.dokument.seite import PAPER_MM, HeaderFooter, PageSettings
-from vcl.qt.widgets.bausteine.felder.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
+from core.dokument.abschnitte.seite import PAPER_MM, HeaderFooter, PageSettings
+from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import EINHEITEN, MassSpin as _MassSpin, einheit, set_einheit, spin as _spin  # noqa: F401
 
 
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste, knopfzeile
-from writer.baukasten.basis.mass import RAND_KEIN
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste, knopfzeile
+from vcl.qt.widgets.bausteine.abstaende.mass import RAND_KEIN
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 def _titel(text: str, feld) -> QLabel:
     t = QLabel(text); t.setBuddy(feld)
     return t
@@ -215,9 +215,9 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
     def __init__(self, parent, breite_prozent: int = 100, ausrichtung: int = 0, rand: float = 1.0, abstand: float = 4.0,
                  kopfzeile: bool = False, *, werte: dict | None = None):
         super().__init__(parent)
-        from core.editor.tabelle.tabelleneigenschaften import VORGABE
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
-        from vcl.qt.widgets.bausteine.felder.mass_feld import EinheitFeld
+        from core.tabellen.modell.tabelleneigenschaften import VORGABE
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import AngepassteReiter, FormularGitter, UmbruchSchalter, abschnittstitel
+        from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import EinheitFeld
         self.setWindowTitle("Tabelleneigenschaften")
         v = _spalte("standard", self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
@@ -288,7 +288,7 @@ class BildZuschneidenDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent):
         super().__init__(parent)
-        from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter
+        from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
         self.setWindowTitle("Bild zuschneiden")
         v = _spalte("standard", self)
         inhalt = QWidget(); g = FormularGitter(inhalt)

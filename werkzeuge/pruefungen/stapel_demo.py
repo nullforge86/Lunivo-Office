@@ -12,9 +12,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from PySide6.QtWidgets import QApplication
 
-from vcl.qt.widgets.bausteine.thema.thema import apply_theme
-from vcl.qt.widgets.bausteine.geruest.fenster_stapel import FensterStapel
-from vcl.qt.widgets.bausteine.formatierung.formatvorlage_dialog import FormatvorlageDialog
+from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme
+from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import FensterStapel
+from vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog import FormatvorlageDialog
 
 
 def main() -> None:

@@ -16,12 +16,12 @@ from __future__ import annotations
 import io
 import re
 
-from core.dokument.bildformat import format_erkennen
+from core.objekte.bilder.modell.bildformat import format_erkennen
 from core.dokument.dokument import Absatz, Dokument, InlineObjekt, Lauf, Rahmen, Tabelle
-from core.dokument.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
+from core.formatvorlagen.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
 from filter.docx import docx_erhalt as E, docx_formen as F
 from core.dokument.bericht import IOReport
-from core.dokument.seite import HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 
 PT_JE_PX = 0.75
 EMU_JE_PX = 9525
@@ -353,13 +353,13 @@ class _Schreiber:
         if f.get("richtung") == "rtl":                                    # Schreibrichtung von rechts nach links: ``w:bidi``
             from docx.oxml import OxmlElement
             from docx.oxml.ns import qn
-            from core.dokument import absatzoptionen as absatzopt
+            from core.formatierung.absatz import absatzoptionen as absatzopt
             ppr = para._p.get_or_add_pPr()
             if ppr.find(qn("w:bidi")) is None:
                 folge = tuple(absatzopt._FOLGE[absatzopt._FOLGE.index("w:bidi") + 1:])
                 ppr.insert_element_before(OxmlElement("w:bidi"), *folge)
         if f.get("optionen"):                                              # Absatzoptionen (Umbruchregeln, Raster …) als die zugehörigen Elemente
-            from core.dokument import absatzoptionen as absatzopt
+            from core.formatierung.absatz import absatzoptionen as absatzopt
             absatzopt.in_ppr(para._p.get_or_add_pPr(), absatzopt.aus_text(f["optionen"] if isinstance(f["optionen"], str) else ""))
         if f.get(E.ROH):
             E.einsetzen(para._p.get_or_add_pPr(), f[E.ROH], "pPr")
@@ -811,7 +811,7 @@ class _Schreiber:
     def _bild_roh(self, para, roh: bytes, x: InlineObjekt) -> bool:
         """Ein Bild, das python-docx nicht kennt (EMF, WMF, SVG, WebP), unverändert als Bildteil schreiben — nichts geht verloren, nichts wird umgerechnet.
         Word zeigt EMF und WMF immer; SVG und WebP je nach Version (ältere Fassungen zeigen einen Platzhalter): darauf weist der Bericht hin."""
-        from core.dokument.bildformat import FORMATE
+        from core.objekte.bilder.modell.bildformat import FORMATE
         fmt = format_erkennen(roh)
         if fmt not in FORMATE:
             return False
@@ -1206,7 +1206,7 @@ class _Schreiber:
         Abschnitts davor und ist der Teil verknüpft, gelten die davor."""
         import io
         from docx.oxml import parse_xml
-        from core.dokument.bildformat import FORMATE
+        from core.objekte.bilder.modell.bildformat import FORMATE
         teile = {"kopf": s.header, "fuss": s.footer, "kopf1": s.first_page_header if p.diff_first else None, "fuss1": s.first_page_footer if p.diff_first else None,
                  "kopf2": s.even_page_header if p.diff_even else None, "fuss2": s.even_page_footer if p.diff_even else None}
         for ort, teil in teile.items():

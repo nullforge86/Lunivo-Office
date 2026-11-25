@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from core.dokument.dokument import Abschnitt, Absatz, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Tabelle, Zelle, neues_dokument, normalisiere
-from core.dokument.formatvorlagen import eingebaute_vorlagen
+from core.formatvorlagen.formatvorlagen import eingebaute_vorlagen
 from filter.odt import odt_formen as OF
 from filter.odt.odt_modell_leser import _Leser, _farbe, _xml
 from filter.odt.odt_xml import GRENZE_BYTES, _kurz, _px, _pt, _q

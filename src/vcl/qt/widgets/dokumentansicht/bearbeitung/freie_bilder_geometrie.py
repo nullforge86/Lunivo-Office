@@ -10,7 +10,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QTransform
 
-from vcl.qt.widgets.bausteine.basis.farben import SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR  # noqa: F401  (Sinnbilder des Schwebeknopfs, bewusst fest)
+from vcl.qt.widgets.bausteine.farben.farben import SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR  # noqa: F401  (Sinnbilder des Schwebeknopfs, bewusst fest)
 GRIFF = 9.0                                                  # Seitenlänge eines Griffs in Bildschirmpunkten
 GRIFFE = {"nw": (0, 0), "n": (0.5, 0), "ne": (1, 0), "e": (1, 0.5), "se": (1, 1), "s": (0.5, 1), "sw": (0, 1), "w": (0, 0.5)}
 ROT_ABSTAND = 24.0                                           # Drehgriff: so weit über der Oberkante des Rahmens
@@ -43,7 +43,7 @@ def adj_lagen(r: QRectF, a: dict | None, vorlaeufig: tuple[int, float] | None = 
     ``vorlaeufig``: (Nummer, Wert) des Griffs, der gerade gezogen wird."""
     if a is None or a.get("art") != "form":
         return {}
-    from core.editor.objekte.formen import formen as F
+    from core.objekte.formen import formen as F
     d = a.get("daten") or {}
     form = d.get("form", "Rechteck")
     adj = d.get("adj")

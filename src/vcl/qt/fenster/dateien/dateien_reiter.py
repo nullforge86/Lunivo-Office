@@ -5,7 +5,7 @@ import os
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QKeySequence
 from PySide6.QtWidgets import QApplication, QMessageBox
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 
 

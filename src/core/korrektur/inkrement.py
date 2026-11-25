@@ -6,7 +6,7 @@ Grenzen (bewusst): Ein Fund, der über eine Absatzgrenze hinweg reicht, wird bei
 „Gründlich prüfen“ und F7 prüfen immer den ganzen Text. Bei kurzen Texten und großen Änderungen wird ebenfalls alles geprüft."""
 from __future__ import annotations
 
-from core.dokument.korrektur import ProofingIssue
+from core.korrektur.korrektur import ProofingIssue
 
 MIN_ZEICHEN = 2000          # darunter kostet die Gesamtprüfung nichts — dort lohnt der Aufwand nicht
 SICHERHEIT_ABSAETZE = 1     # so viele Absätze vor und hinter der Änderung werden mitgeprüft

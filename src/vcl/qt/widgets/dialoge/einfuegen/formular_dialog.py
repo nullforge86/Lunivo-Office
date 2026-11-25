@@ -1,23 +1,23 @@
 """Dialog zum Anlegen eines Formularfelds (Textfeld, Auswahlliste, Datum, Kontrollkästchen, Schaltfläche)."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from core.editor.dokument import formular as FO
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FormularGitter
-from writer.baukasten.basis.mass import HOEHE_TEXT_NORMAL
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from core.dokument import formular as FO
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
+from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_TEXT_NORMAL
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "kasten": "Kontrollkästchen", "knopf": "Schaltfläche"}
 
 
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 class FormFeldDialog(PanelFaehig, QDialog):
     def __init__(self, fenster, art: str, bestehend: dict | None = None):
         super().__init__(fenster)

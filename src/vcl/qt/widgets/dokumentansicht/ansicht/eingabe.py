@@ -19,8 +19,8 @@ from core.geometrie import Rect
 from core.dokument.dokument import Auswahl, InlineObjekt, absaetze_in
 from core.dokument.serialisierung import bloecke_aus_daten, bloecke_zu_daten
 from core.bearbeitung import BearbeitungsFehler
-from core.bearbeitung.suche import position_zu_offset
-from core.layout import schreibmarke as SM
+from core.suche.textsuche.suche import position_zu_offset
+from core.layout.drucklayout import schreibmarke as SM
 
 MIME_AUSSCHNITT = "application/x-lunivo-ausschnitt"
 ZEILENWECHSEL = " "                       # Umschalt+Eingabe: neue Zeile im selben Absatz
@@ -284,7 +284,7 @@ class EingabeTeil:
 
     def contextMenuEvent(self, ev) -> None:
         """Rechtsklick: Auswahl an die Stelle setzen (außerhalb der Auswahl) bzw. das Objekt wählen, dann das Menü anfordern."""
-        from core.bearbeitung.suche import position_zu_offset
+        from core.suche.textsuche.suche import position_zu_offset
         d = self.sitzung.dokument
         objekt = self.objekt_bei(ev.pos())
         if objekt is not None:

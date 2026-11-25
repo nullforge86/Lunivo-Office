@@ -113,7 +113,7 @@ def eine(docx: str, ref: str, aus: str) -> dict:
     try:
         from PySide6.QtWidgets import QApplication
         app = QApplication.instance() or QApplication([])  # noqa: F841
-        from vcl.rendering.zeichnen.pdf_ausgabe import dokument_als_pdf
+        from vcl.rendering.seitenlayout.pdf_ausgabe import dokument_als_pdf
         from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
         t = time.time()
         g = lade_modell(docx)

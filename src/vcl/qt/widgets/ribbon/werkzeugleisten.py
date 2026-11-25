@@ -11,19 +11,19 @@ from PySide6.QtWidgets import (
     QComboBox, QFontComboBox, QFrame, QToolButton, QWidget,
 )
 
-from vcl.qt.widgets.bausteine.basis.texte import trennlinie
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.basis.raster import RasterZeile
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe, spalte
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
-from vcl.qt.widgets.bausteine.bauteile import symbole
+from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterZeile
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from writer.kontextmenues.text_werkzeuge import TEXTTOOLS
 from writer.kontextmenues.tabellen_werkzeuge import TABELLENTOOLS
 from vcl.qt.widgets.ribbon.band_leiste import NICHT_DA, STILE_KATALOG
-from writer.baukasten.basis.mass import ABSTAND_ENG, BREITE_LEISTENKNOPF_MIN, ICON_GROSS, ICON_NORMAL, RAND_KEIN, RAND_SYMBOLLEISTE
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, BREITE_LEISTENKNOPF_MIN, ICON_GROSS, ICON_NORMAL, RAND_KEIN, RAND_SYMBOLLEISTE
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 T = "trenner"
 # (Symbol, Tooltip, Aktion)

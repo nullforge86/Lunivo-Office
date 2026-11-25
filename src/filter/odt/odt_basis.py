@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape
 
-from core.dokument.bildformat import FORMATE, format_erkennen, masse
+from core.objekte.bilder.modell.bildformat import FORMATE, format_erkennen, masse
 from core.dokument.bericht import IOReport
 
 MIMETYPE = b"application/vnd.oasis.opendocument.text"

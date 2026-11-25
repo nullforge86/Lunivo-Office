@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 
-from .rect import Rect
+from core.geometrie.rect import Rect
 
 
 def _vieleck(punkte, r: Rect) -> tuple:

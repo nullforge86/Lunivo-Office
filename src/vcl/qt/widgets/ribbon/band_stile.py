@@ -1,44 +1,44 @@
 """Galerie und Vorschau der Formatvorlagen im Menüband."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import json
 import os
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil, trennlinie
-from system.pfade import ressourcen_pfade as pfade
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
+from system.plattform import ressourcen_pfade as pfade
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import QCheckBox, QFrame, QLabel, QMenu, QScrollArea, QSizePolicy, QStackedWidget, QToolButton, QWidget
 
-from vcl.qt.widgets.bausteine.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
-from vcl.qt.widgets.bausteine.formatierung.text_format import groesse_feld, schrift_feld
+from vcl.qt.widgets.menues.dropdown.objektmenues.bild_diagramm_menues import FELDER, GALERIEN, KLAPPEN
+from vcl.qt.widgets.dialoge.formatierung.text_format import groesse_feld, schrift_feld
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import STYLES
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import UeberlaufLeiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import tabellen_gitter
-from vcl.qt.widgets.bausteine.felder.karten_raster import kachel_gitter
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import tabellen_gitter
+from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from writer.werkzeugleisten.plan import plan
 
-from framework.datentypen.farben import Farbe
-from writer.baukasten.basis.mass import BANDSTIL_SPALTENBREITE, BANDSTIL_ZUGABE_BREIT, BANDSTIL_ZUGABE_HOCH, SCHRIFT_BANDSTIL_PT
-from writer.baukasten.basis.schriftarten import SANS
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from writer.baukasten.basis.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Schriftauswahl
-from vcl.qt.widgets.bausteine.dropdown.dropdown_knopf import DropdownKnopf
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.abstaende.mass import BANDSTIL_SPALTENBREITE, BANDSTIL_ZUGABE_BREIT, BANDSTIL_ZUGABE_HOCH, SCHRIFT_BANDSTIL_PT
+from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Schriftauswahl
+from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
 STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3", "Überschrift 4", "Überschrift 5", "Überschrift 6", "Überschrift 7", "Überschrift 8", "Überschrift 9", "Titel", "Untertitel", "Zitat", "Kein Abstand"]
 
 
 def _kacheln(m, aktuell: str | None, mehr: bool) -> None:
     """Je Formatvorlage eine Kachel: in ihrer Schrift und Farbe, mit Hinweis; „Weitere Stile“ aus blendet die selten gebrauchten aus."""
-    from core.editor.text import stile
+    from core.formatvorlagen.zeichen import stile
     selten = {f"Überschrift {i}" for i in range(5, 10)}
     for name in STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]:
         if not mehr and name in selten and name != aktuell:
@@ -84,7 +84,7 @@ class BandStileBaustein:
 
     def _stile_popup(self, unter: QWidget) -> None:
         """Alle Formatvorlagen als Galerie (Pfeil rechts neben der Reihe): Probe in der Vorlage, Name darunter; Überfahren zeigt live."""
-        from core.editor.text import stile
+        from core.formatvorlagen.zeichen import stile
         from vcl.qt.widgets.bausteine import GalerieAuswahl
         w = self.b.w
         m = GalerieAuswahl(w, titel="Stile")
@@ -102,7 +102,7 @@ class BandStileBaustein:
         m.aktion("Weitere Stile anzeigen", lambda an: w.settings.set("ui/stile_mehr", an), haken=mehr)
 
         def kontext(name, pos):
-            from vcl.qt.widgets.bausteine.dropdown.menue_liste import MenueListe
+            from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
             km = MenueListe(m)
             km.eintrag("Ändern …", lambda: (m.close(), self.b.formatvorlageAendern(name)))
             if stile.ist_eigen(name):
@@ -115,8 +115,8 @@ class BandStileBaustein:
 
     def stile_aktualisieren(self) -> None:
         """Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/text/stile.py)."""
-        from core.editor.text import stile
-        from vcl.qt.widgets.bausteine.bauteile.live_vorschau import Ueberfahren
+        from core.formatvorlagen.zeichen import stile
+        from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import Ueberfahren
         g = self._stile_gitter
         alt = {id(k) for k in self._stil_knoepfe}
         self.knoepfe = [e for e in self.knoepfe if id(e[0]) not in alt]

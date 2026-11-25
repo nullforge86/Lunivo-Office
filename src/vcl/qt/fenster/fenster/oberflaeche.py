@@ -10,7 +10,7 @@ class OberflaecheBaustein:
 
     # ---- Oberfläche: Register oder Symbolleisten, angepasst ----------------------------------------------------
     def _symbole_anwenden(self):
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         from vcl.qt.widgets.dialoge.oberflaeche_dialoge import lade_json
         symbole.uebersteuern(lade_json(self.settings, "ui/symbol_tausch", {}))
 

@@ -5,14 +5,14 @@ Die Kacheln sind 126 x 76 px (Foto: etwa 130 x 78): in der Seitenleiste bei 300 
 """
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.basis.raster import RasterSpalte
+from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte
 from PySide6.QtCore import QSize
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
 from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import SmartArtDialog, _layout_bildchen, _LayoutGalerie
-from writer.baukasten.basis.mass import GROESSE_KACHEL_FOTO
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_KACHEL_FOTO
 
 KACHEL_B, KACHEL_H = GROESSE_KACHEL_FOTO                      # Außenmaß einer Kachel (Foto etwa 130 x 78)
 ABSTAND = 4
@@ -30,7 +30,7 @@ class _GrosseGalerie(_LayoutGalerie):
         self._bauen(2)                                # Start schmal (Seitenleiste 300 px); breiter wird beim Anpassen der Breite
 
     def _bauen(self, spalten: int) -> None:
-        from vcl.qt.widgets.bausteine.felder.kachel_feld import KachelFeld
+        from vcl.qt.widgets.bausteine.interaktion.felder.kachel_feld import KachelFeld
         if self.feld is not None:
             self._v.removeWidget(self.feld); _weg(self.feld)
         self._spalten = spalten

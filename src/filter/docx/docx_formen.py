@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from lxml import etree
 
-from core.rendering.objekte.linien import STILE
+from core.layout.drucklayout.ausgabe.objekte.linien import STILE
 from filter.docx.docx_erhalt import Beziehung, W, W_NS, als_text, hat_beziehung
 from filter.docx.docx_fuellung import custgeom_lesen, custgeom_xml, fuellung_lesen, fuellung_xml, linie_lesen, linie_xml, pfeil_lesen, schatten_lesen, schatten_xml
 
@@ -78,7 +78,7 @@ def absatzrahmen_aus_xml(bdr) -> str | None:
 
 def absatzrahmen_zu_xml(text: str):
     """Rahmenangabe des Absatzes → ``w:pBdr``; ``None``, wenn die Angabe nicht lesbar ist."""
-    from core.rendering.objekte.linien import rahmen_aus_text
+    from core.layout.drucklayout.ausgabe.objekte.linien import rahmen_aus_text
     a = rahmen_aus_text(text)
     if a is None:
         return None
@@ -139,7 +139,7 @@ def seitenrahmen_aus_xml(pb, einstellungen) -> dict | None:
 
 def seitenrahmen_zu_xml(b: dict):
     """``PageSettings.border`` → ``w:pgBorders``."""
-    from core.rendering.seite.seitenrahmen import abstaende_pt
+    from core.layout.drucklayout.ausgabe.seite.seitenrahmen import abstaende_pt
     if b.get("docx_roh"):
         from docx.oxml import parse_xml
         return parse_xml(b["docx_roh"])

@@ -1,15 +1,15 @@
 """Dokumentreiter ganz oben (mit „+“) und der Stapel der Dokumente darunter."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QStackedWidget, QTabBar, QToolButton, QWidget
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from vcl.qt.widgets.bausteine.felder.flache_reiter_leiste import UeberlaufLeiste
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
-from writer.baukasten.basis.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import UeberlaufLeiste
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ICON_NORMAL, RAND_DOKUMENTREITER
 
 
 class DocTabs(QObject):

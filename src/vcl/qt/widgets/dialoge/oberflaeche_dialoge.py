@@ -1,14 +1,14 @@
 """Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, Symbole austauschen, Oberfläche wählen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf, werkzeugknopf
-from vcl.qt.widgets.bausteine.bausteine.option.option import option
-from vcl.qt.widgets.bausteine.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
+from vcl.qt.widgets.bausteine.interaktion.option.option import option
+from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from vcl.qt.widgets.bausteine.basis.darstellung import eigenschaft
+from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import json
 
@@ -19,11 +19,11 @@ from PySide6.QtWidgets import (
     QScrollArea, QToolButton, QWidget,
 )
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
-from vcl.qt.widgets.bausteine.bauteile import symbole
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from writer.werkzeugleisten.plan import plan
-from writer.baukasten.basis.mass import SCHRIFT_UEBERSCHRIFT_PLUS_PT
-from writer.baukasten.basis.mass import GROESSE_KNOPF_KACHEL, GROESSE_SYMBOL_JETZT, GROESSE_VORSCHAU_QUADRAT, HOEHE_BEREICH_MITTEL, HOEHE_LISTE_KNOEPFE, HOEHE_LISTE_MITTEL, HOEHE_LISTE_REITER, ICON_GROSS, ICON_KACHEL, ICON_KNOPF_GROSS, RADIUS_MITTEL, RAND_BOX, RAND_GITTER
+from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_UEBERSCHRIFT_PLUS_PT
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_KNOPF_KACHEL, GROESSE_SYMBOL_JETZT, GROESSE_VORSCHAU_QUADRAT, HOEHE_BEREICH_MITTEL, HOEHE_LISTE_KNOEPFE, HOEHE_LISTE_MITTEL, HOEHE_LISTE_REITER, ICON_GROSS, ICON_KACHEL, ICON_KNOPF_GROSS, RADIUS_MITTEL, RAND_BOX, RAND_GITTER
 
 IMMER = ("Datei",)          # dieser Reiter lässt sich nicht ausblenden
 
@@ -36,9 +36,9 @@ def lade_json(settings, key: str, standard):
         return standard
 
 
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import fussleiste
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
-from vcl.qt.widgets.bausteine.geruest.zusatz_panel import PanelFaehig
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
+from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
 
 def _satz(text: str, gedaempft: bool = False) -> QLabel:

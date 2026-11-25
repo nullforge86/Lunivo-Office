@@ -6,9 +6,9 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QPlainTextEdit
 
-from core.editor.dokument.zusatz import roemisch
-from vcl.qt.widgets.bausteine.geruest.panel_rahmen import PanelRahmen
-from writer.baukasten.basis.mass import HOEHE_NOTENFELD
+from core.dokument.zusatz import roemisch
+from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen
+from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_NOTENFELD
 
 
 class _Eingabe(QPlainTextEdit):

@@ -37,7 +37,7 @@ PAARE = [
 
 
 def tafeln() -> dict[str, dict]:
-    from vcl.qt.widgets.bausteine.thema import thema as theme
+    from vcl.qt.widgets.bausteine.farben.thema import thema as theme
     return {"hell": theme.FARBEN[False], "dunkel": theme.FARBEN[True], "hell weich": theme.WEICHE_FARBEN[False],
             "dunkel weich": theme.WEICHE_FARBEN[True], "mint": theme.MINT_FARBEN}
 

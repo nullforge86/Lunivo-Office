@@ -11,14 +11,14 @@ ALLE_ARTEN = ("import", "struktur", "format", "layout", "export", "roundtrip")
 
 def datenordner() -> str:
     """``<Programmdaten>/kompatibilitaetspruefer`` (Qt-Standardpfade; Anwendungsname muss vorher gesetzt sein)."""
-    from system.pfade.pfade import data_dir
+    from system.plattform.pfade import data_dir
     ordner = os.path.join(data_dir(), "kompatibilitaetspruefer")
     os.makedirs(ordner, exist_ok=True)
     return ordner
 
 
 def cacheordner() -> str:
-    from system.pfade.pfade import cache_dir
+    from system.plattform.pfade import cache_dir
     ordner = os.path.join(cache_dir(), "kompatibilitaetspruefer")
     os.makedirs(ordner, exist_ok=True)
     return ordner

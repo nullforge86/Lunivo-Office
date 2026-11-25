@@ -6,9 +6,9 @@ from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
 
-from framework.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.basis.farben import ABDUNKELUNG
-from writer.baukasten.basis.mass import STIFT_BETONT
+from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
+from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BETONT
 class BereichWahl(QWidget):
     """Vollbild mit eingefrorenem Bildschirm; mit der Maus einen Bereich aufziehen (Esc bricht ab)."""
     fertig = Signal(object)          # QPixmap oder None

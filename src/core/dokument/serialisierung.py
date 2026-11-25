@@ -7,7 +7,7 @@ from __future__ import annotations
 import base64
 import dataclasses
 
-from core.dokument.seite import HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 
 from core.dokument.dokument import Absatz, Abschnitt, Dokument, Formatvorlage, FreiesObjekt, InlineObjekt, Kommentar, Lauf, ListenDefinition, ListenEbene, Note, Rahmen, Tabelle, Zelle
 

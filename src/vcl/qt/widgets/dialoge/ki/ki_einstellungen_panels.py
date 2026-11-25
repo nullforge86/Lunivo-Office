@@ -3,29 +3,29 @@
 Die Seiten setzt ``KIEinstellungenDialog`` (ki_dialoge.py) zusammen."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bausteine.feld.feld import zeilenfeld
-from vcl.qt.widgets.bausteine.bausteine.haken.haken import haken
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import knopf
+from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from vcl.qt.widgets.bausteine.geruest.rollen import reihe as _reihe, spalte as _spalte
+from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Qt, Signal
 from PySide6.QtWidgets import QSizePolicy, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QWidget
-from vcl.qt.widgets.bausteine.dropdown.auswahlfeld import Auswahlfeld
+from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
-from vcl.qt.widgets.bausteine.basis.texte import hinweis_stil
+from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from framework.ki.dienst import ki as K
-from vcl.qt.widgets.bausteine.geruest.fenster_stapel import zeige_unter
-from vcl.qt.widgets.bausteine.basis.dialog_rahmen import knopfzeile
-from vcl.qt.widgets.bausteine.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
+from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 
 
-from vcl.qt.widgets.bausteine.felder.auswahl_liste import AuswahlListe
-from vcl.qt.widgets.bausteine.basis.karte import als_karte
-from vcl.qt.widgets.bausteine.felder.listen_leiste import ListenLeiste
-from writer.baukasten.basis.mass import GROESSE_FENSTER_MCP, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF_GROSS, HOEHE_LISTE_KURZ, RAND_KEIN, RAND_OBEN_SEITE
+from vcl.qt.widgets.bausteine.interaktion.felder.auswahl_liste import AuswahlListe
+from vcl.qt.widgets.bausteine.farben.karte import als_karte
+from vcl.qt.widgets.bausteine.interaktion.felder.listen_leiste import ListenLeiste
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_MCP, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF_GROSS, HOEHE_LISTE_KURZ, RAND_KEIN, RAND_OBEN_SEITE
 
 
 class _NetzLauf(QRunnable):
@@ -356,7 +356,7 @@ class DokumentePanel(QWidget):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
         from framework.ki.suche import dokumentensuche as DS
-        from vcl.qt.widgets.bausteine.dokument.speichern_fenster import Dateifenster
+        from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
         o = konfig.dokumentsuche_optionen()
         v = _spalte("oben", self)

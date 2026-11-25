@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import threading
 
-from system.pfade.pfade import data_dir
+from system.plattform.pfade import data_dir
 from framework.ki.dienst import ki as K
 from framework.ki.dienst import assistent_lauf as AL
 from framework.ki.chat.chat_modell import ChatModell

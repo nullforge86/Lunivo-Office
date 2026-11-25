@@ -5,7 +5,7 @@ import json
 import os
 
 from core.dokument.serialisierung import bloecke_aus_daten, bloecke_zu_daten
-from system.pfade.pfade import data_dir
+from system.plattform.pfade import data_dir
 
 
 def _pfad() -> str:
@@ -34,7 +34,7 @@ def speichern(liste: list[dict]) -> None:
 def standard() -> list[dict]:
     """Die mitgelieferten Bausteine (Briefe, Bewerbungen …); sie lassen sich einfügen, aber nicht ändern."""
     try:
-        from system.pfade import ressourcen_pfade as pfade
+        from system.plattform import ressourcen_pfade as pfade
         with open(os.path.join(pfade.RESSOURCEN, "bausteine_standard.json"), encoding="utf-8") as fh:
             return [dict(b, standard=True) for b in json.load(fh)]
     except (OSError, ValueError, ImportError):

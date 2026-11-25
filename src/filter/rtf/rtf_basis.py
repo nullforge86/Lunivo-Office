@@ -4,7 +4,7 @@ Die Umrechnung der Bildpunkte (96 dpi) in Twip steht hier einmal; ``rtf_modell_s
 from __future__ import annotations
 
 from core.dokument.bericht import IOReport
-from core.dokument.seite import HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 
 TWIP_PRO_MM = 1440 / 25.4
 TWIP_PRO_PX = 15

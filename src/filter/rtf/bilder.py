@@ -87,7 +87,7 @@ def bild_lauf_modell(b: dict) -> tuple | None:
     daten = bilddaten(b)
     if b.get("art") == "dibitmap" and daten:
         daten = dib_zu_png(daten) or daten
-    from core.dokument.bildformat import format_erkennen, masse
+    from core.objekte.bilder.modell.bildformat import format_erkennen, masse
     art = format_erkennen(daten)
     if not daten or art not in ("png", "jpeg", "emf", "wmf"):
         return None

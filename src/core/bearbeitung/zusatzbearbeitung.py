@@ -11,8 +11,8 @@ import re
 
 from core.dokument.dokument import Absatz, Auswahl, Kommentar, Lauf, Note, Position, format_an, normalisiere, teile
 from core.dokument.formate import pruefe, verschmelze
-from core.dokument.formatvorlagen import ueberschriftsebene
-from core.dokument.listen import nummer_text
+from core.formatvorlagen.formatvorlagen import ueberschriftsebene
+from core.listen.listen import nummer_text
 from core.bearbeitung.texteingabe import ohne_marken
 from core.bearbeitung.verlauf import BearbeitungsFehler, schritt
 

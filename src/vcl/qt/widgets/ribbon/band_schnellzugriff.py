@@ -4,10 +4,10 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QToolButton
 
-from vcl.qt.widgets.bausteine.bauteile import symbole
-from vcl.qt.widgets.bausteine.bausteine.knopf.knopf import werkzeugknopf
-from writer.baukasten.basis.mass import ICON_GROSS, ICON_MITTEL
-from vcl.qt.widgets.bausteine.thema.thema import kopf_symbolfarbe
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from vcl.qt.widgets.bausteine.abstaende.mass import ICON_GROSS, ICON_MITTEL
+from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from vcl.qt.widgets.ribbon.band_bausteine import _mit_kuerzel
 
 

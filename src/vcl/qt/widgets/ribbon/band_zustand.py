@@ -1,7 +1,7 @@
 """Zustandsaktualisierung für das Menüband."""
 from __future__ import annotations
 
-from vcl.qt.widgets.bausteine.bauteile import symbole
+from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 
 class BandZustandBaustein:

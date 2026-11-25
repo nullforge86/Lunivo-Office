@@ -10,10 +10,10 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QScrollArea
 
 from core.dokument import neues_dokument
-from core.dokument.formatvorlagen import eingebaute_vorlagen
+from core.formatvorlagen.formatvorlagen import eingebaute_vorlagen
 from framework.dokumentverwaltung.dokumentpflege import wiederherstellung
 from framework.dokumentverwaltung.dateizugriff.modell_laden import ModellGeladen
-from core.dokument.seite import PageSettings, mm_to_px
+from core.dokument.abschnitte.seite import PageSettings, mm_to_px
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor
 
 

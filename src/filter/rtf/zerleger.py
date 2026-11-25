@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from core.dokument.seite import PageSettings
+from core.dokument.abschnitte.seite import PageSettings
 from core.dokument.bericht import DocumentIOError, IOReport
 from filter.rtf import bilder
 from filter.rtf.gruppen import gruppe_ende, gruppentext, ziel_beginnen

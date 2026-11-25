@@ -17,11 +17,11 @@ from PySide6.QtGui import QColor
 
 from core.dokument import Dokument
 from core.dokument.dokument import Auswahl, Position
-from core.dokument.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
+from core.formatvorlagen.formatvorlagen import wirksames_absatzformat, wirksames_zeichenformat
 from core.bearbeitung import Bearbeitungssitzung
-from core.bearbeitung.suche import offset_zu_position
+from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
-from core.layout import formatwerte as F
+from core.layout.drucklayout import formatwerte as F
 from vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht import DokumentAnsicht
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoten import FreieBilderKnotenMixin
@@ -29,12 +29,12 @@ from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_objekte import KernObjekte
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle import KernBefehle, katalog_zu_vorlage
 
 log = logging.getLogger(__name__)
-from framework.datentypen.farben import Farbe
-from core.editor.text import stile
+from framework.schnittstellen.datentypen.farben import Farbe
+from core.formatvorlagen.zeichen import stile
 
 STYLES = dict.fromkeys(stile.NAMEN)         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
 EINFUEGE_MODI = ["Quellformatierung beibehalten", "Zielformatierung verwenden", "Nur Text"]
-from vcl.qt.widgets.bausteine.basis.farben import FESTE_FARBEN, TABELLENRAND_SCHWARZ  # noqa: E402,F401   (Farben nachverfolgter Änderungen)
+from vcl.qt.widgets.bausteine.farben.farben import FESTE_FARBEN, TABELLENRAND_SCHWARZ  # noqa: E402,F401   (Farben nachverfolgter Änderungen)
 INS_STILE = ["Unterstrichen", "Doppelt unterstrichen", "Fett", "Kursiv", "Keine"]
 DEL_STILE = ["Durchgestrichen", "Fett", "Kursiv", "Keine"]
 nicht_angebunden: set = set()                       # Namen der Befehle, die der Editor noch nicht kennt (für die Aufgabenliste)
@@ -658,7 +658,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Vorlagen ---------------------------------------------------------------------------------------------------------------------------------
     def geruest_aufbauen(self, zeilen: list, benutzer: dict, heute: str) -> None:
         """Schreibt das Gerüst einer Dokumentvorlage in das (leere) Dokument: Absätze, Auszeichnungen und die Lücken « … » zum Ausfüllen."""
-        from core.editor.dokument.vorlagen import geruest_schreiben
+        from core.dokument.vorlagen import geruest_schreiben
 
         def schreiben(s):
             geruest_schreiben(s, zeilen, benutzer, heute)
@@ -668,7 +668,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Suchen und Ersetzen ---------------------------------------------------------------------------------------------------------------------
     def select_range(self, von: int, bis: int) -> None:
         """Wählt die Stellen [von, bis) des Rohtextes (Absätze durch ein Zeichen getrennt) aus."""
-        from core.bearbeitung.suche import offset_zu_position
+        from core.suche.textsuche.suche import offset_zu_position
         d = self.sitzung.dokument
         self.sitzung.setze_auswahl(offset_zu_position(d, von), offset_zu_position(d, bis))
         self.ansicht.nach_bewegung()
@@ -706,7 +706,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Kommentare, Noten und nachverfolgte Änderungen --------------------------------------------------------------------------------------------
     def _bereiche_offsets(self, trifft, wert) -> list:
         """Die Bereiche, deren Format ``trifft``: Liste von {"von", "bis", "wert"} mit Stellen im Rohtext (Absätze durch ein Zeichen getrennt)."""
-        from core.bearbeitung.suche import position_zu_offset
+        from core.suche.textsuche.suche import position_zu_offset
         d = self.sitzung.dokument
         return [{"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": w, "auswahl": b}
                 for b in self.sitzung.bereiche(trifft, wert) for w in [wert(self._format_bei(b.anker))]]
@@ -816,7 +816,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def aenderung_annehmen(self, b: dict, annehmen: bool = True) -> None:
         from core.dokument.dokument import Auswahl
-        from core.bearbeitung.suche import offset_zu_position
+        from core.suche.textsuche.suche import offset_zu_position
         d = self.sitzung.dokument
         bereich = Auswahl(offset_zu_position(d, b["von"]), offset_zu_position(d, b["bis"]))
         self.ansicht._aendern(lambda s: (s.aenderungen_annehmen if annehmen else s.aenderungen_ablehnen)(bereich))
@@ -846,7 +846,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return n
 
     def noten_stellen(self) -> list:
-        from core.bearbeitung.suche import position_zu_offset
+        from core.suche.textsuche.suche import position_zu_offset
         d = self.sitzung.dokument
         aus = []
         for b in self.sitzung.bereiche(lambda f: "note" in f):
@@ -956,7 +956,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     @staticmethod
     def _png(img) -> bytes:
         """Die Bytes des Bildes fürs Dokument: ein Rasterbild aus einer Datei (JPEG, GIF …) bleibt im Original, sonst PNG."""
-        from core.editor.objekte.bild import bilddaten as BD
+        from core.objekte.bilder.modell import bilddaten as BD
         q = BD.quelle_zu(img)
         if q is not None and q.format in ("jpeg", "gif", "bmp", "tiff", "webp"):
             return q.daten
@@ -1064,8 +1064,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         if not k or not k.get("an"):
             self.ansicht.set_ansicht(silben=None)
             return
-        from core.editor.text import silbenfarben as SF
-        from core.rendering.ausgabe.backend import rgba
+        from core.formatierung.schrift import silbenfarben as SF
+        from core.layout.drucklayout.ausgabe.backend import rgba
         farben = [rgba(f) for f in SF.farben(k)]
         self.ansicht.set_ansicht(silben={"funktion": lambda w: SF.silben(w, k.get("sprache", "de_DE")), "farben": farben, "darstellung": k["darstellung"],
                                          "einsilbig": k["einsilbig"], "neu_pro_wort": k["neu_pro_wort"], "mindestens": k["mindestens"]})

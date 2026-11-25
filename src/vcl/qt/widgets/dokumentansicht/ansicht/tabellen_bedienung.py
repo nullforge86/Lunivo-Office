@@ -13,8 +13,8 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
-from vcl.qt.widgets.bausteine.basis.farben import GRIFF_FLAECHE, KNOPF_SYMBOLFARBE, TABELLE_AKZENT, TABELLE_AKZENT_FLAECHE, TABELLE_GRIFF_RAND
-from writer.baukasten.basis.mass import RADIUS_ZEICHNUNG, STIFT_AUSWAHL, STIFT_BILDCHEN
+from vcl.qt.widgets.bausteine.farben.farben import GRIFF_FLAECHE, KNOPF_SYMBOLFARBE, TABELLE_AKZENT, TABELLE_AKZENT_FLAECHE, TABELLE_GRIFF_RAND
+from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG, STIFT_AUSWAHL, STIFT_BILDCHEN
 
 GRIFF = 14.0                    # Seitenlänge der Griffe (Bildpunkte der Ansicht)
 RAND_TREFFER = 4.0              # Abstand zu einem Zellenrand, bis zu dem er getroffen wird
@@ -95,7 +95,7 @@ class TabellenBedienung:
     # ---- Zeichnen --------------------------------------------------------------------------------------------------------------------
     def tabellen_zeichnen(self, p: QPainter) -> None:
         """Griffe der Tabelle, die Vorschau beim Ziehen und die Stift-Vorschau (in Koordinaten der Ansicht)."""
-        from vcl.qt.widgets.bausteine.bauteile import symbole
+        from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
         for name, rc in self.tabellen_griffe().items():

@@ -17,6 +17,8 @@ Jeder Verstoß steht auf der Übergangsliste, die nur kleiner werden darf.
 Keine Direktverbindungen, keine Rückfallwege, keine alternativen Schnittstellen, keine Ausnahmen. Dieses Modul importiert nur die Standardbibliothek."""
 from __future__ import annotations
 
+from framework.pruefung.uebergang import ALT_MODULE_KERN
+
 OBERFLAECHE = "vcl.qt"
 VCL = "vcl"
 WRITER = "writer"
@@ -26,7 +28,7 @@ SYSTEM = "system"
 ALT = "uebergang"
 WURZELN = frozenset({"core", "framework", "vcl", "writer", "filter", "system"})
 UEBERGANGSORDNER = (
-    "core.editor", "core.korrektur", "filter", "framework.ki",
+    "filter", "framework.ki",
     "framework.dokumentverwaltung.ausgabe", "framework.dokumentverwaltung.dateizugriff",
     "framework.dokumentverwaltung.dokumentpflege", "framework.dokumentverwaltung.integrationen",
 )
@@ -52,7 +54,7 @@ def schicht_von(modul: str) -> str | None:
     """Schicht eines Moduls (``vcl.qt``, ``vcl``, ``writer``, ``framework``, ``core``, ``system`` oder ``uebergang``); ``None`` für Fremdmodule."""
     if modul.split(".")[0] not in WURZELN:
         return None
-    if any(_beginnt(modul, o) for o in UEBERGANGSORDNER):
+    if any(_beginnt(modul, o) for o in (*UEBERGANGSORDNER, *ALT_MODULE_KERN)):          # auch Namen in einem Modul (Modul.Name) zählen zum Modul
         return ALT
     for vorsatz, schicht in SCHICHT_PRAEFIXE:
         if _beginnt(modul, vorsatz):

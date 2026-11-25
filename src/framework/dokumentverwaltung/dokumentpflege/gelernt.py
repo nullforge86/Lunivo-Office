@@ -8,8 +8,8 @@ import json
 import os
 import re
 
-from core.dokument.korrektur import ProofingIssue
-from system.pfade.pfade import data_dir
+from core.korrektur.korrektur import ProofingIssue
+from system.plattform.pfade import data_dir
 
 WORT = re.compile(r"^[A-Za-zÄÖÜäöüß-]+$")
 LERN_SCHWELLE = 5      # so oft darf ein Fund bei ausdrücklichem „Prüfen“ angezeigt und nie geändert werden
