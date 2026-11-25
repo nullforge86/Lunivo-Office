@@ -3,6 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QComboBox, QDialog, QDoubleSpinBox, QLineEdit, QSpinBox
 from vcl.qt.rendering.formen import einfuegen as E
+from vcl.qt.rendering.formen import form_einfuegen as FE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import VORGABE_LINIE
@@ -36,7 +37,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.aktualisieren()
 
     def bild(self):
-        return E.form_bild(self.art.currentText(), self.breite.value(), self.hoehe.value(), self.fuell.farbe, self.linie.farbe,
+        return FE.form_bild(self.art.currentText(), self.breite.value(), self.hoehe.value(), self.fuell.farbe, self.linie.farbe,
                            self.strich.value(), self.text.text())
 
     def daten(self):
@@ -71,7 +72,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.aktualisieren()
 
     def bild(self):
-        return E.form_bild(self.art.currentText(), self.breite.value(), self.hoehe.value(), self.fuell.farbe, self.linie.farbe,
+        return FE.form_bild(self.art.currentText(), self.breite.value(), self.hoehe.value(), self.fuell.farbe, self.linie.farbe,
                            self.strich.value(), self.text.text())
 
     def daten(self):

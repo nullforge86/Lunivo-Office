@@ -36,11 +36,11 @@ def _pfad_festhalten(d: dict, k: dict) -> None:
 
 def _form_zeichnen(d: dict, b: float, h: float) -> QImage:
     """Eine Form (``editor/objekte/formen.py``/``einfuegen.py``) in b × h Bildpunkten, in doppelter Auflösung."""
-    from vcl.qt.rendering.formen import einfuegen as E
+    from vcl.qt.rendering.formen import form_einfuegen as FE
     k = {**FORM_STANDARD, **d}
     b, h = (b, h) if b and h else STANDARD_MASS["form"]
     _pfad_festhalten(d, k)
-    return E.form_bild(k["form"], max(2, round(b)), max(2, round(h)), k["fuell"] or "", k["linie"] or Farbe.DURCHSICHTIG_HEX,
+    return FE.form_bild(k["form"], max(2, round(b)), max(2, round(h)), k["fuell"] or "", k["linie"] or Farbe.DURCHSICHTIG_HEX,
                        float(k["strich"]), k["text"], skala=_SS, adj=k.get("adj"), fuell_art=k.get("fuell_art") or "",
                        punkte=k.get("punkte"))
 
@@ -58,7 +58,7 @@ def _smartart_zeichnen(d: dict, _b: float, _h: float) -> QImage:
 
 
 def _piktogramm_zeichnen(d: dict, _b: float, _h: float) -> QImage:
-    from vcl.qt.rendering.formen import einfuegen as E
+    from vcl.qt.rendering.formen import bild_einfuegen as E
     return E.piktogramm_bild(d.get("name", "star"), 96, d.get("farbe", Farbe.PIKTOGRAMM))
 
 
@@ -284,7 +284,8 @@ def text_werte_anwenden(ed, werte: dict) -> bool:
 
 
 def _speichern_angabe(ed, key: tuple, a: dict) -> None:
-    ed.angabe_speichern(key[1], FB.ohne_hilfsangaben(a))
+    from writer.funktionen.objekte import freie_objekte as FW
+    ed.angabe_speichern(key[1], {k: a[k] for k in FW.ohne_hilfsangaben(tuple(a))})
 
 
 def _neu_setzen(ed, key: tuple, a: dict) -> dict:

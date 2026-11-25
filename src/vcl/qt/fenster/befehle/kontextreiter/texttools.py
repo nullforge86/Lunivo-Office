@@ -123,7 +123,7 @@ class TextToolsBefehle:
 
     def menue_ttUnter(self):
         """Wie bei Start: die Linienarten als Bild, „Mehr Unterstreichungen …“ und die Unterstreichungsfarbe; wirkt auf das Objekt."""
-        from vcl.qt.rendering.wordart.textfx import unter_zeichnen
+        from vcl.qt.rendering.wordart.textfx_zeichen import unter_zeichnen
         from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -315,9 +315,9 @@ class TextToolsBefehle:
 
     @staticmethod
     def _wa_kachel(i: int) -> QPixmap:
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
         pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))              # heller Kachelgrund: auch das schwarze „A“ ist im dunklen Thema zu sehen
-        img = E.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        img = WE.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
         p.drawImage((40 - img.width()) // 2, (40 - img.height()) // 2, img)
         p.end()
@@ -327,12 +327,13 @@ class TextToolsBefehle:
     def menue_ttStile(self):
         """Alle 15 Stile als „A“ auf hellem Grund (wie das Menü neben Einfügen ▸ WordArt), wirkt auf das markierte WordArt."""
         from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
             pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-            img = E.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            img = WE.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             p.drawImage((40 - img.width()) // 2, (40 - img.height()) // 2, img); p.end()
             m.kachel(str(i), name, pm).setCheckable(False)
         m.gewaehlt.connect(lambda schl: self.ttStil(int(schl)))
@@ -498,19 +499,20 @@ class TextToolsBefehle:
         """Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen."""
         from vcl.qt.rendering.formen import frei_objekt as FO
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+        from writer.funktionen.objekte import freie_objekte as FW
         m = MenueListe()
 
         def fuellen():
             m.clear()
             ist = self.tt_art() == "textfeld"
-            felder = self._tt_felder() if ist and not (FO.ist_verknuepft(self.ed, self.ed._frei_sel) and
+            felder = self._tt_felder() if ist and not (FW.ist_verknuepft(self.ed, self.ed._frei_sel) and
                                                         dict(FO._textfelder(self.ed))[self.ed._frei_sel]["daten"].get("weiter")) else []
             for key, name in felder:
                 m.eintrag("Verknüpfen mit " + name, lambda k=key: self.ttVerknuepfen(None, k))
             if not felder:
                 m.eintrag("Kein Textfeld zum Verknüpfen", None, aktiv=False)
             m.trenner()
-            m.eintrag("Verknüpfung aufheben", self.ttVerknuepfungLoesen, aktiv=ist and FO.ist_verknuepft(self.ed, self.ed._frei_sel))
+            m.eintrag("Verknüpfung aufheben", self.ttVerknuepfungLoesen, aktiv=ist and FW.ist_verknuepft(self.ed, self.ed._frei_sel))
         m.aboutToShow.connect(fuellen)
         fuellen()
         return m

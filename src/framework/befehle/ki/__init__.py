@@ -1,0 +1,1 @@
+"""Funktion „KI“ im Framework."""

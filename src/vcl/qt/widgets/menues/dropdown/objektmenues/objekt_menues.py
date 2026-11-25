@@ -14,6 +14,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QMenu
 
 from vcl.qt.rendering.formen import muster as M
+from writer.funktionen.objekte import muster as MW
 from core.objekte.formen.linie_daten import LINIENBREITEN
 from vcl.qt.rendering.formen.linie import Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
@@ -64,7 +65,7 @@ class FuellMenue(FarbPalette):
             lambda k: self.graduell_gewaehlt.emit(*k.split("|")))
         self._raster_untermenue("Textur", "textur", "Weitere Texturen…", [(k, n, _textur(k, 30)) for k, n in TEXTUREN], QSize(*GROESSE_TEXTUR_MUSTER_KACHEL), 6,
                                 self.textur_gewaehlt.emit)
-        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in M.MUSTER if k != "loeschen"]
+        muster = [(k, n, M.kachel(k, Farbe.TINTE, Farbe.WEISS).scaled(30, 30)) for k, n, _o in MW.MUSTER if k != "loeschen"]
         self._raster_untermenue("Muster(N)", "muster", "Weitere Muster…", muster, QSize(*GROESSE_TEXTUR_MUSTER_KACHEL), 8, self.muster_gewaehlt.emit)
         self.eintrag("Bild(P)", lambda: (self.close(), self.bild_gewaehlt.emit()), symbol=symbole.icon("image", ICON_NORMAL))
 

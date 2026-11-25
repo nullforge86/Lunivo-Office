@@ -6,7 +6,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-from vcl.qt.rendering.formen import muster as M
+from writer.funktionen.objekte import muster as M
 from vcl.qt.rendering.wordart import texteffekt as T
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter

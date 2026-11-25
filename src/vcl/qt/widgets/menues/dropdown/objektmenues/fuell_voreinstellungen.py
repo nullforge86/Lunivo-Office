@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QWidget
 
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.rendering.formen import muster as M
+from writer.funktionen.objekte import muster as MW
 from vcl.qt.widgets.bausteine.farben import farben
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import keine_symbol
 from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import TEXTUREN, _textur, graduell_pixmap
@@ -77,6 +78,6 @@ class FuellPalette(FarbPalette):
 
 def fuell_menue(parent: QWidget | None = None, aktuell: str = "") -> FarbPalette:
     namen = dict(TEXTUREN)
-    reihen = [("Musterfüllung", [(f"muster:{k}", _gekachelt(_muster_kachel(k), QSize(*GROESSE_MUSTER_KACHEL)), M.name_von(k)) for k in MUSTER_AUSWAHL]),
+    reihen = [("Musterfüllung", [(f"muster:{k}", _gekachelt(_muster_kachel(k), QSize(*GROESSE_MUSTER_KACHEL)), MW.name_von(k)) for k in MUSTER_AUSWAHL]),
               ("Strukturfüllung", [(f"textur:{k}", _textur(k, 18), namen[k]) for k in TEXTUR_AUSWAHL])]
     return FuellPalette(parent, aktuell, keine_text="Keine Füllung", verlauf=True, reihen=reihen, titel="Füllung")

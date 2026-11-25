@@ -101,7 +101,7 @@ class BearbeitenBaustein:
 
     def markup_neu(self) -> None:
         """Markup- und Sprechblasen-Einstellungen haben sich geändert: Seitenrand für Blasen und Auszeichnung neu aufbauen."""
-        from vcl.qt.rendering.formen import sprechblasen as SB
+        from writer.funktionen.ansicht import sprechblasen as SB
         for t in self._doc_tabs():
             t.editor.blasen_setzen(SB.konfig_lesen(self.settings), self.settings.get("kommentare/schrift", "mittel"))
             t.editor.viewport().update()

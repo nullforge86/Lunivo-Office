@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.rendering.diagramme import diagramm_format as F
+from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine import _OHNE, _optionen_name, _text_teil, _still
 
@@ -124,8 +125,8 @@ class DiagrammFormatWerteMixin:
 
     def _setze_linienfelder(self, li: dict) -> None:
         self.k_farbe.keine_text = "Automatisch"
-        _still(self.k_wahl, Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), F.strich_schluessel(li.get("art"))), "setLinie")
-        self.s_art.setze(F.strich_schluessel(li.get("art"))); _still(self.s_breite, float(li.get("breite", 1.0 if li else 0.75)))      # still: sonst wählt die Änderung „Durchgezogene Linie“
+        _still(self.k_wahl, Linie(li.get("farbe", ""), float(li.get("breite", 1.0)), FW.strich_schluessel(li.get("art"))), "setLinie")
+        self.s_art.setze(FW.strich_schluessel(li.get("art"))); _still(self.s_breite, float(li.get("breite", 1.0 if li else 0.75)))      # still: sonst wählt die Änderung „Durchgezogene Linie“
         self.k_trans.setValue(float(li.get("transparenz", 0)))
         self.l_kombi.setze(li.get("kombiniert", "einfach"))
         for c, k, vorgabe in ((self.l_abschluss, "abschluss", "flach"), (self.l_verknuepfung, "verknuepfung", "rund"),

@@ -111,7 +111,8 @@ class KIAnfragenMixin:
         return self.ki.verfuegbar()
 
     def zettel(self, text: str) -> None:
-        self.konfig.d["zettel"] = (text or "")[:K.ZETTEL_GRENZE]
+        from writer.funktionen.ki import zettel as Z
+        self.konfig.d["zettel"] = (text or "")[:Z.ZETTEL_GRENZE]
 
     def _einwilligung(self, modell: str | None = None, umfang: str = "auszug", zeichen: int = 0) -> bool:
         """Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
@@ -294,7 +295,7 @@ class KIAnfragenMixin:
         if img.isNull():
             self.status.emit("Der Anbieter hat etwas geschickt, das kein Bild ist.")
             return
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.formen import bild_einfuegen as E
         ed = eing["ed"]
         if eing["ersetzen"] and ed.textCursor().hasSelection():
             ed.textCursor().removeSelectedText()

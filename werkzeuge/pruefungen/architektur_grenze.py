@@ -12,6 +12,7 @@ Prüft den Quellbaum ``src/`` statisch über den Syntaxbaum (``ast``), auch tran
     schnittstelle_auftrag   Framework-Funktion gibt ``Callable``/``lambda`` zurück, den die Oberfläche mit eigener Sitzung ausführt (leere Fassade)
     kern_ruft_oberflaeche   core-Funktion mit Parameter ``ed``/``editor`` (Rückruf an ein Objekt der Oberfläche)
     altlast_sitzungszugang  Nutzung des einen freigegebenen Übergangszugangs ``framework.sitzungen.altlast`` (nur kern_editor, bis Schritt 5)
+    zerbrochener_zugriff    ``Modul.Name`` oder ``from modul import Name``, wobei es ``Name`` in diesem Modul nicht gibt (AttributeError/ImportError zur Laufzeit)
     weiterleitung           Weiterleitungsname in vcl/writer (``name = modul.name``), der alte Zugriffe am Leben hält (Legacy-Wrapper)
     dynamischer_import      ``importlib.import_module`` / ``__import__``
     platzhalter             ``.gitkeep`` und Reste unter ``src/lunivo_writer``
@@ -58,7 +59,7 @@ ERLAUBT = {
 ALTLAST_ZUGANG = "framework.sitzungen.altlast"
 ALTLAST_ERLAUBT_AUS = "vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor"
 
-GESCHUETZT = ("werkzeuge/pruefungen/architektur_grenze.py", "werkzeuge/pruefungen/architektur_grenze_stand.json",
+GESCHUETZT = ("werkzeuge/pruefungen/architektur_grenze.py", "werkzeuge/pruefungen/startpruefung.py", "werkzeuge/pruefungen/architektur_grenze_stand.json",
               ".claude/settings.json", ".claude/settings.local.json", ".githooks/", "CLAUDE.md", "AGENTS.md")
 
 
@@ -191,6 +192,53 @@ def analysieren():
                     w = x.value.args[0] if isinstance(x.value, ast.Call) and isinstance(x.value.func, ast.Name) and x.value.func.id in ("list", "tuple") and x.value.args else x.value
                     if isinstance(w, ast.Attribute) and isinstance(w.value, ast.Name) and (w.value.id in importiert or w.value.id.startswith("_")):
                         funde["weiterleitung"][rel(m)] += 1
+    # zerbrochene Zugriffe: Name existiert im angesprochenen Projektmodul nicht
+    def _namen(mod: str) -> set[str]:
+        t = baeume.get(mod)
+        if t is None:
+            return {"*"}
+        s_ = set()
+        for x in ast.walk(t):
+            if isinstance(x, ast.FunctionDef) and x.name == "__getattr__" and x in t.body:
+                s_.add("*")
+        for x in t.body:
+            for y in ast.walk(x):
+                if isinstance(y, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and (y in t.body or not isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))):
+                    s_.add(y.name)
+                elif isinstance(y, ast.Name) and isinstance(y.ctx, ast.Store) and not isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    s_.add(y.id)
+                elif isinstance(y, (ast.Import, ast.ImportFrom)) and not isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    for a in y.names:
+                        s_.add("*" if a.name == "*" else (a.asname or a.name).split(".")[0])
+        if mods[mod].endswith("__init__.py"):
+            s_ |= {k[len(mod) + 1:].split(".")[0] for k in mods if k.startswith(mod + ".")}
+        return s_
+    namen_cache: dict[str, set[str]] = {}
+
+    def namen_von(mod: str) -> set[str]:
+        if mod not in namen_cache:
+            namen_cache[mod] = _namen(mod)
+        return namen_cache[mod]
+    for m, baum in baeume.items():
+        paket = m.split(".") if mods[m].endswith("__init__.py") else m.split(".")[:-1]
+        alias: dict[str, str] = {}
+        for n in ast.walk(baum):
+            if isinstance(n, ast.Import):
+                for a in n.names:
+                    if a.asname and a.name in mods:
+                        alias[a.asname] = a.name
+            elif isinstance(n, ast.ImportFrom):
+                basis = ".".join(paket[:len(paket) - n.level + 1] + ([n.module] if n.module else [])) if n.level else (n.module or "")
+                for a in n.names:
+                    if f"{basis}.{a.name}" in mods:
+                        alias[a.asname or a.name] = f"{basis}.{a.name}"
+                    elif basis in mods and a.name != "*" and not (namen_von(basis) & {a.name, "*"}):
+                        funde["zerbrochener_zugriff"][rel(m)] += 1
+        for n in ast.walk(baum):
+            if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id in alias and isinstance(n.ctx, ast.Load):
+                ziel = alias[n.value.id]
+                if not n.attr.startswith("__") and not (namen_von(ziel) & {n.attr, "*"}) and f"{ziel}.{n.attr}" not in mods:
+                    funde["zerbrochener_zugriff"][rel(m)] += 1
     # transitiv Qt (auch über übergeordnete Pakete, die beim Import mitgeladen werden)
     voll = {m: set(z) | {".".join(z_.split(".")[:i]) for z_ in z for i in range(1, len(z_.split("."))) if ".".join(z_.split(".")[:i]) in mods}
             for m, z in kanten.items()}

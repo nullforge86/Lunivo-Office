@@ -8,6 +8,7 @@ from PySide6.QtGui import QFont, QIcon, QPainter, QPainterPath, QPalette, QPixma
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QWidget
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte_rolle
 from vcl.qt.rendering.diagramme import diagramm_format as F
+from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.rendering.wordart import texteffekt as T
 from core.objekte.wordart.textfx_daten import WARP_FORMEN
 from core.layout.drucklayout.ausgabe.text.texteffekte import pfad_verformen
@@ -61,7 +62,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
             self._verbinde()
             return
         self.a_feld = Abschnitt("Textfeld")
-        self.f_vertikal, self.f_richtung = _combo(F.VERTIKAL), _combo(RICHTUNGEN)
+        self.f_vertikal, self.f_richtung = _combo(FW.VERTIKAL), _combo(RICHTUNGEN)
         self.f_winkel = SchrittFeld(-180, 180, "°", 5, 0, 0)
         self.f_rand = {k: SchrittFeld(0, 60, " pt", 1, 0, 0) for k in "lrou"}
         self.f_anpassen = UmbruchSchalter("Größe der Form dem Text anpassen"); self.f_anpassen.setChecked(True)

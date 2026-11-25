@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from core.listen.aufzaehlungen.listen import STILE, zeichen_filtern
+from core.listen.aufzaehlungen.listen import STILE, liste, zeichen_filtern
 
 PLATZHALTER = "①②③④⑤⑥⑦⑧⑨"
 EBENEN = 9
@@ -127,6 +127,31 @@ def aus_text(text: str | None) -> dict | None:
             return None
         return {"ebenen": [ebene_aus(x) for x in e]}
     except (ValueError, KeyError, TypeError):
+        return None
+
+
+def liste_als_text(spec: dict | None) -> str:
+    """Eine Liste (einfach oder mehrstufig) als Text für eine Formatvorlage; ein leerer Text heißt: keine Liste."""
+    if not spec:
+        return ""
+    if "ebenen" in spec:
+        return als_text(spec)
+    t = "|".join((spec["stil"], spec["praefix"].replace("|", ""), spec["suffix"].replace("|", ""), str(spec["start"])))
+    extra = {k: spec[k] for k in ("zeichen", "pos") if spec.get(k)}
+    return t + "|" + json.dumps(extra, ensure_ascii=False) if extra else t
+
+
+def liste_aus_text(text: str | None) -> dict | None:
+    """Die Liste (einfach oder mehrstufig) aus dem Text einer Formatvorlage."""
+    if (text or "").startswith("g:"):
+        return aus_text(text)
+    t = (text or "").split("|", 4)
+    if len(t) not in (4, 5) or t[0] not in STILE:
+        return None
+    try:
+        extra = json.loads(t[4]) if len(t) == 5 else {}
+        return liste(t[0], t[1], t[2], int(t[3]), extra.get("zeichen"), extra.get("pos"))
+    except ValueError:
         return None
 
 

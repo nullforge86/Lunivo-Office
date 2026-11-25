@@ -3,6 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QDialog, QSpinBox
 from vcl.qt.rendering.formen import einfuegen as E
+from vcl.qt.rendering.wordart import wordart_einfuegen as WE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
@@ -40,7 +41,7 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         return i if i >= 0 else None
 
     def bild(self):
-        return E.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
+        return WE.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
                               self.pt.value(), self.farbe.farbe, self.vorlage_nr())
 
     def aktualisieren(self, *_):
@@ -75,7 +76,7 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         return i if i >= 0 else None
 
     def bild(self):
-        return E.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
+        return WE.wordart_bild(self.text.text() or " ", self.stil.currentText(), self.schrift.text() or "Liberation Sans",
                               self.pt.value(), self.farbe.farbe, self.vorlage_nr())
 
     def aktualisieren(self, *_):

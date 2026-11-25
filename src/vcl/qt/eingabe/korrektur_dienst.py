@@ -295,8 +295,10 @@ class WritingAssistant(QObject):
         if not (wort and self.settings.vorschlaege_anzeigen()):
             return vorschlaege
         from core.korrektur.rechtschreibung import pruefung
+        from writer.funktionen.korrektur import vorschlaege as V
         schon = {t for t, _f in vorschlaege}
-        for k in pruefung.vorschlaege_fuer(wort[0], 6, self.gelernt.daten):
+        eigenes = (self.gelernt.daten.get("woerter") or {}).get(str(wort[0]).lower()) or ""
+        for k in V.vorschlaege_fuer(wort[0], 6, eigenes):
             text = pruefung.uebernimm_schreibweise(wort[0], k)
             if text not in schon:
                 vorschlaege.append((text, ProofingIssue(von=wort[1], bis=wort[2], alt=wort[0], neu=k,

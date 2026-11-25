@@ -168,7 +168,7 @@ class BildToolsBefehle:
             if f is None:
                 return
         from vcl.qt.rendering.formen import bildlayout as BL
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.formen import bild_einfuegen as E
         modi = ["Original", "Graustufen", "Schwarzweiß", "Sepia", "Heller", "Dunkler"]
         n, ok = EingabeFenster.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
         if ok:
@@ -194,7 +194,7 @@ class BildToolsBefehle:
             if f is None:
                 return
         from vcl.qt.rendering.formen import bildlayout as BL
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.formen import bild_einfuegen as E
         from vcl.qt.widgets.dialoge.dokument_dialoge import BildZuschneidenDialog
         d = BildZuschneidenDialog(self.w)
         if d.exec():
@@ -211,7 +211,7 @@ class BildToolsBefehle:
         e, f = self._bild()
         if f is None:
             return
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.formen import bild_einfuegen as E
         namen = {"90° nach rechts": "rechts", "90° nach links": "links", "Horizontal spiegeln": "horizontal", "Vertikal spiegeln": "vertikal"}
         n, ok = EingabeFenster.getItem(self.w, "Drehen", "Bild:", list(namen), 0, False)
         if ok:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from framework.ki.dienst import ki as K
+from framework.ki.dienst import ki_konfiguration as KK
 
 def _eintrag(id_: str, konfig) -> dict | None:
     if id_ in K.VORLAGE_ANWEISUNG:
@@ -12,8 +13,8 @@ def _eintrag(id_: str, konfig) -> dict | None:
     if id_ == "uebersetzen":
         sprache = konfig["sprache"] if konfig is not None else "Englisch"
         return {"id": id_, "titel": "Text übersetzen", "anweisung": K.anweisung_uebersetzung(sprache)}
-    if id_ in K._AKTION_SATZ:
-        return {"id": id_, "titel": dict(K.TEXT_AKTIONEN).get(id_, id_), "anweisung": K._AKTION_SATZ[id_]}
+    if id_ in KK._AKTION_SATZ:
+        return {"id": id_, "titel": dict(K.TEXT_AKTIONEN).get(id_, id_), "anweisung": KK._AKTION_SATZ[id_]}
     return None
 
 

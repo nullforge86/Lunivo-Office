@@ -63,7 +63,7 @@ class TextZeichenBefehle:
     def menue_unterstrichKlappe(self):
         """Wie in der Vorlage: die Linienarten als Bild, „Mehr Unterstreichungen …“ (Fenster Schriftart) und „Unterstreichungsfarbe“ mit der
         gemeinsamen Farbpalette."""
-        from vcl.qt.rendering.wordart.textfx import unter_zeichnen
+        from vcl.qt.rendering.wordart.textfx_zeichen import unter_zeichnen
         from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()

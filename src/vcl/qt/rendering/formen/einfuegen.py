@@ -51,9 +51,6 @@ GLEICHUNGEN = [("Kreisfläche", "A = \\pi r^2"),
                ("Taylor-Entwicklung", "e^x = 1 + x/1! + x^2/2! + x^3/3! + …,  −\\infty < x < \\infty")]
 
 
-SCHNELLTABELLEN = ["Tabelle mit Kopfzeile (3 × 4)", "Zwei Spalten", "Kalender (Monat)", "Matrix (3 × 3)", "Zeitplan"]
-
-
 # ---- Deckblatt ----------------------------------------------------------------------------------------------------------------
 DECKBLATT_VORLAGEN = ["Schlicht", "Mit Linie", "Zentriert", "Farbband"]
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
-import copy
 from PySide6.QtGui import QColor
-from vcl.qt.rendering.formen import bildeffekte as BE
 from core.objekte.formen.formen_stile_daten import SPALTEN, ZEILEN
 
 
@@ -21,7 +19,9 @@ def formstil(zeile: int, spalte: int) -> dict:
         return {"fuell": farbe, "fuell_art": "abgestuft", "linie": dunkel, "strich": 1.5, "effekt": None}
     if zeile == 4:
         return {"fuell": farbe, "fuell_art": "glanz", "linie": dunkel, "strich": 1.5, "effekt": None}
-    d3 = copy.deepcopy(BE.VORGABE["d3"]); d3["tiefe"] = 8.0; d3["tiefe_farbe"] = dunkel
+    from vcl.qt.rendering.wordart.effekt_umwandlung import zu_dict
+    from writer.funktionen.objekte import bildeffekte as BEW
+    d3 = zu_dict(BEW.vorgabe())["d3"]; d3["tiefe"] = 8.0; d3["tiefe_farbe"] = dunkel
     return {"fuell": farbe, "fuell_art": "verlauf", "linie": dunkel, "strich": 1.0, "effekt": {"d3": d3}}
 
 

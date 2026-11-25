@@ -267,7 +267,7 @@ class BandGruppenBaustein:
 
     def _knoepfe_raender(self, g: dict, inhalt: RasterZeile):
         """Der Rand-Knopf und daneben wie in der Vorlage die vier Maßfelder Oben/Unten/Links/Rechts (in der gewählten Maßeinheit)."""
-        from vcl.qt.widgets.dialoge.dokument_dialoge import _MassSpin
+        from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import MassSpin as _MassSpin
         self._knoepfe_geordnet(g, inhalt)
         host = QWidget()
         gitter = tabellen_gitter(host, waagerecht=ABSTAND_KLEIN, senkrecht=ABSTAND_ENG)       # Menüband: Beschriftung und Maßfeld in festen Zellen
@@ -295,7 +295,7 @@ class BandGruppenBaustein:
         (Sperre = Schalter ``bildSeitenverhaeltnis``, dann „Größe zurücksetzen“).
         ``"befehl"`` nennt den Aufruf (Vorgabe ``zeichenMasse(breite_mm, hoehe_mm)``); ``"verhaeltnis": False`` lässt Sperre und Verhältnis weg
         und meldet nur das geänderte Maß (Tabellentools: ``tabelleMasse``)."""
-        from vcl.qt.widgets.dialoge.dokument_dialoge import _MassSpin
+        from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import MassSpin as _MassSpin
         bild = g.get("sperre") == "bild"
         befehl = g.get("befehl", "zeichenMasse")
         verh = g.get("verhaeltnis", True)

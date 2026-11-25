@@ -164,7 +164,8 @@ def anwenden(ed, z, werte: dict) -> None:
 
 
 def _speichern_frei(ed, key, neu: dict) -> None:
-    ed.angabe_speichern(key[1], FB.ohne_hilfsangaben(neu))
+    from writer.funktionen.objekte import freie_objekte as FW
+    ed.angabe_speichern(key[1], {k: neu[k] for k in FW.ohne_hilfsangaben(tuple(neu))})
 
 
 # ---- Füllung und Kontur ---------------------------------------------------------------------------------------------------

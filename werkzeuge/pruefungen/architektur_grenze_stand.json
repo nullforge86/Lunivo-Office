@@ -117,7 +117,6 @@
   "src/core/referenzen/querverweise/querverweis.py": 8,
   "src/core/referenzen/querverweise/stichwort.py": 2,
   "src/core/referenzen/querverweise/textmarke.py": 5,
-  "src/core/tabellen/modell/tabelle_einfuegen.py": 2,
   "src/core/tabellen/modell/tabellenzustand.py": 2,
   "src/core/text/wortextras.py": 13,
   "src/core/verzeichnisse/abbildungsverzeichnis/beschriftung.py": 4,
@@ -490,6 +489,11 @@
  "weiterleitung": {
   "src/vcl/qt/rendering/diagramme/diagramm_format.py": 1,
   "src/vcl/qt/widgets/menues/dropdown/objektmenues/objekt_menues.py": 1
+ },
+ "zerbrochener_zugriff": {
+  "src/vcl/qt/fenster/befehle/hauptreiter/einfuegen_objekte.py": 2,
+  "src/vcl/qt/fenster/befehle/kontextreiter/formtools.py": 3,
+  "src/vcl/qt/rendering/smartart/smartart_zeichnen.py": 1
  },
  "zyklen": {
   "anzahl": 13,

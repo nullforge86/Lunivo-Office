@@ -12,7 +12,7 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import QWidget
 
-from vcl.qt.rendering.diagramme import diagramm_format as F
+from writer.funktionen.objekte import diagrammformat as F
 from vcl.qt.rendering.wordart import textfx as X
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import keine_zeile
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue

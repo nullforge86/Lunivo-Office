@@ -1,13 +1,15 @@
 from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage, QPainter
+from vcl.qt.rendering.formen import bild_einfuegen as BE
 from vcl.qt.rendering.formen import einfuegen as E
+from vcl.qt.rendering.formen import form_einfuegen as FE
 from core.formatierung.farben.farben import Farbe
 from core.objekte.formen.formen_daten import GRUPPEN_ABSTAND, STANDARD, VORLAGEN, _FO_SCHLUESSEL, form_daten
 
 
 def _zeichnen(d: dict) -> QImage:
-    return E.form_bild(d["form"], d["breite"], d["hoehe"], d["fuell"], d["linie"], d["strich"], d["text"], adj=d.get("adj"),
+    return FE.form_bild(d["form"], d["breite"], d["hoehe"], d["fuell"], d["linie"], d["strich"], d["text"], adj=d.get("adj"),
                        fuell_art=d.get("fuell_art") or "", punkte=d.get("punkte"))
 
 
@@ -65,7 +67,7 @@ def gruppieren(ed) -> str:
     alt = "Gruppe aus " + ", ".join(k["form"] for k in kinder)
     with ed.sitzung.gruppe("Gruppieren"):
         ed.sitzung.loeschen()
-        E.qimage_einfuegen(ed, img, alt, "gruppe", {"kinder": kinder})
+        BE.qimage_einfuegen(ed, img, alt, "gruppe", {"kinder": kinder})
     return ""
 
 
@@ -79,7 +81,7 @@ def gruppe_aufheben(ed) -> str:
     with ed.sitzung.gruppe("Gruppierung aufheben"):
         ed.sitzung.loeschen()
         for k in kinder:
-            E.qimage_einfuegen(ed, _zeichnen(k), "Form: " + k["form"], "form", k)
+            BE.qimage_einfuegen(ed, _zeichnen(k), "Form: " + k["form"], "form", k)
     return ""
 
 
@@ -94,10 +96,48 @@ def zeichenbereich_bild(d: dict, skala: float = 1.0) -> QImage:
     p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1, Qt.DashLine)); p.drawRect(QRectF(0.5, 0.5, b - 1, h - 1))
     for k in d.get("kinder", []):
         f = {**STANDARD, **k}
-        bild = E.form_bild(f["form"], int(f["breite"]), int(f["hoehe"]), f["fuell"], f["linie"], float(f["strich"]), f["text"], skala=skala)
+        bild = FE.form_bild(f["form"], int(f["breite"]), int(f["hoehe"]), f["fuell"], f["linie"], float(f["strich"]), f["text"], skala=skala)
         p.drawImage(QRectF(float(f["x"]), float(f["y"]), float(f["breite"]), float(f["hoehe"])), bild)
     p.end()
     return img
+
+
+# ---- Anpassungsgriff (die gelbe Raute) und Formwechsel ----------------------------------------------------------------------------
+def anpass_griffe(form: str, rect, adj=None) -> list:
+    """Lage aller Anpassungsgriffe der Form im Rechteck ``rect`` (QRectF, beliebiges Koordinatensystem; Ergebnis im selben) — leer, wenn die Form
+    keine hat. ``adj`` = Parameterliste aus ``daten["adj"]`` (fehlt sie: Standardwerte)."""
+    from vcl.qt.rendering.formen import formen_anpassen as A
+    return A.griffe(form, rect, adj)
+
+
+def anpass_griff(form: str, rect, adj=None, index: int = 0):
+    """Lage des Griffs ``index`` (QPointF) oder None, wenn die Form keinen hat."""
+    g = anpass_griffe(form, rect, adj)
+    return g[index] if 0 <= index < len(g) else None
+
+
+def anpassen(form: str, wert: float, adj=None, index: int = 0) -> list[float]:
+    """Neue Parameterliste für ``daten["adj"]``: Parameter ``index`` = ``wert`` (begrenzt), die übrigen bleiben; leer bei einer Form ohne Griff."""
+    from vcl.qt.rendering.formen import formen_anpassen as A
+    return A.setzen(form, wert, adj, index)
+
+
+def anpass_setzen(ed, wert: float, index: int = 0) -> bool:
+    """Parameter ``index`` der gewählten freien Form setzen und neu zeichnen."""
+    from vcl.qt.rendering.formen import frei_objekt as FO
+    d = FO.daten_lesen(ed, "form")
+    if d is None or not anpass_griffe(d.get("form", "Rechteck"), QRectF(0, 0, 1, 1)):
+        return False
+    return FO.aendern(ed, "form", adj=anpassen(d["form"], wert, d.get("adj"), index))
+
+
+def form_wechseln(ed, name: str) -> bool:
+    """Die gewählte freie Form durch ``name`` ersetzen; Größe, Füllung und Kontur bleiben, die Anpassung (``adj``) fällt weg."""
+    from vcl.qt.rendering.formen import formen_katalog as K
+    from vcl.qt.rendering.formen import frei_objekt as FO
+    if FO.daten_lesen(ed, "form") is None or not (K.hat(name) or name in ("Rechteck", "Textfeld")):
+        return False
+    return FO.aendern(ed, "form", form=name, adj=None, punkte=None)
 
 
 def frei_daten(ed) -> dict | None:

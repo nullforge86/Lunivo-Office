@@ -151,18 +151,21 @@ def rahmen_zeichnen(p: QPainter, r: QRectF, linie: dict | None) -> None:
 # ---- Effekte ---------------------------------------------------------------------------------------------------------------------
 def fx_normal(fmt: dict | None) -> dict:
     """Die Effekte eines Teils im Format von ``bildeffekte`` (``True`` und ältere Angaben ergänzt)."""
+    from vcl.qt.rendering.wordart.effekt_umwandlung import zu_dict
+    from writer.funktionen.objekte import bildeffekte as BEW
     fmt = fmt or {}
     fx = {}
+    vorgabe = zu_dict(BEW.vorgabe())
     for k in FX_SCHLUESSEL:
         v = fmt.get(k)
         if not v:
             continue
         v = {} if v is True else dict(v)
         if k == "schatten" and "winkel" not in v:                                   # ältere Angabe {"farbe", "abstand"}
-            v = {**E.VORGABE["schatten"], **({"farbe": v["farbe"]} if "farbe" in v else {}), **({"abstand": v["abstand"]} if "abstand" in v else {})}
+            v = {**vorgabe["schatten"],**({"farbe": v["farbe"]} if "farbe" in v else {}), **({"abstand": v["abstand"]} if "abstand" in v else {})}
         elif k == "leuchten" and "radius" in v:                                     # ältere Angabe {"farbe", "radius"}
-            v = {**E.VORGABE["leuchten"], "farbe": v.get("farbe", Farbe.LEUCHTEN_GELB), "groesse": v["radius"]}
-        basis = {a: b for a, b in E.VORGABE[k].items() if a not in ("oben", "unten")}          # ein Abschluss gilt nur, wenn er gewählt wurde
+            v = {**vorgabe["leuchten"],"farbe": v.get("farbe", Farbe.LEUCHTEN_GELB), "groesse": v["radius"]}
+        basis = {a: b for a, b in vorgabe[k].items() if a not in ("oben", "unten")}          # ein Abschluss gilt nur, wenn er gewählt wurde
         fx[k] = {**basis, **v}
     return fx
 

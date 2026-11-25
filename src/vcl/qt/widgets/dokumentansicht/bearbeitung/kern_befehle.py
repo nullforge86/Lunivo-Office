@@ -275,8 +275,8 @@ class KernBefehle:
         werte["basis"] = a.format.get("vorlage") or "Standard"
         spec = self.liste_spec()
         if spec:
-            from core.listen.aufzaehlungen import listen as L
-            werte["liste"] = L.als_text(spec)
+            from core.listen.mehrstufig import mehrstufig as M
+            werte["liste"] = M.liste_als_text(spec)
         if af.get("tabstopps"):
             from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import als_text
             fuell = F.tabfuellung(af)

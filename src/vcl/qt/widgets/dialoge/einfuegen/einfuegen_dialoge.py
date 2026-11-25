@@ -3,6 +3,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QDialog, QLabel
 from vcl.qt.rendering.formen import einfuegen as E
+from vcl.qt.rendering.textfelder import formel_einfuegen as FE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
@@ -28,7 +29,7 @@ class FormelDialog(PanelFaehig, QDialog):
 
     def _zeige(self, *_):
         from PySide6.QtGui import QColor, QPainter, QPixmap
-        img = E.formel_bild(self.eingabe.text())
+        img = FE.formel_bild(self.eingabe.text())
         pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor(Farbe.PAPIER))
         p = QPainter(pm); p.drawImage(8, 6, img); p.end()
         self.vorschau.setze(pm.toImage())
@@ -64,7 +65,7 @@ class FormelDialog(PanelFaehig, QDialog):
 
     def _zeige(self, *_):
         from PySide6.QtGui import QColor, QPainter, QPixmap
-        img = E.formel_bild(self.eingabe.text())
+        img = FE.formel_bild(self.eingabe.text())
         pm = QPixmap(img.width() + 16, img.height() + 12); pm.fill(QColor(Farbe.PAPIER))
         p = QPainter(pm); p.drawImage(8, 6, img); p.end()
         self.vorschau.setze(pm.toImage())

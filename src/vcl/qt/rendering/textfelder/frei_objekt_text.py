@@ -67,7 +67,8 @@ def wordart_zeichnen(d: dict) -> QImage:
     text = laeufe_text(laeufe) or " "
     pt = float(d.get("pt", 36))
     if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
-        return E.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", Farbe.WORDART_BLAU))
+        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
+        return WE.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", Farbe.WORDART_BLAU))
     erg = wordart_rgba(d, standard_engine(), E.WORDART_VORLAGEN, _SS)
     img = QImage(bytes(erg["rgba"]), erg["w"], erg["h"], erg["w"] * 4, QImage.Format_RGBA8888).copy()
     ys, asz, hoehen, faktor = erg["ys"], erg["asz"], erg["hoehen"], erg["faktor"]

@@ -13,8 +13,8 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 class EinfuegenObjektBefehle:
     # ---- Einfügen: Illustrationen, Text, Symbole, Tabellen, Seiten ----------------------------------------------------
     def _bild_einfuegen(self, img, alt, art=None, daten=None):
-        from vcl.qt.rendering.formen import einfuegen as E
-        E.qimage_einfuegen(self.ed, img, alt, art, daten)
+        from vcl.qt.rendering.formen import bild_einfuegen as BE
+        BE.qimage_einfuegen(self.ed, img, alt, art, daten)
 
 
     def formenGalerie(self, k=None):
@@ -134,9 +134,11 @@ class EinfuegenObjektBefehle:
         Drehgriff, Schnellleiste), der Text grau hinterlegt; Text ändern: Doppelklick oder „WordArt bearbeiten …“."""
         if not self.ed:
             return
+        from dataclasses import asdict
         from vcl.qt.rendering.formen import frei_objekt as FO
-        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FO.WORDART_STANDARD["text"]
-        FO.einfuegen(self.ed, "wordart", {**FO.WORDART_STANDARD, "text": text, "vorlage": nr})
+        from writer.funktionen.objekte import freie_objekte as FW
+        text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FW.WORDART_STANDARD.text
+        FO.einfuegen(self.ed, "wordart", {**asdict(FW.WORDART_STANDARD), "text": text, "vorlage": nr})
         self.w._sync_format()
 
 
@@ -170,10 +172,11 @@ class EinfuegenObjektBefehle:
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=9, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
-            img = E.wordart_bild("A", vorlage=i, pt=80)
+            img = WE.wordart_bild("A", vorlage=i, pt=80)
             pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
             p.setBrush(QColor(BF.KACHEL_GRUND)); p.setPen(QPen(QColor(BF.KACHEL_RAND), 1)); p.drawRoundedRect(QRectF(1 / 2, 1 / 2, GROESSE_OBJEKTKACHEL_INNEN, GROESSE_OBJEKTKACHEL_INNEN), RADIUS_ZEICHNUNG_MITTEL, RADIUS_ZEICHNUNG_MITTEL)
@@ -191,11 +194,12 @@ class EinfuegenObjektBefehle:
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QColor, QPainter, QPixmap
         from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.textfelder import formel_einfuegen as FE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         groesse = QSize(380, 54)
         m = RasterAuswahl(self.w, titel="Integriert", spalten=1, groesse=groesse, beschriftet=True)
         for i, (name, formel) in enumerate(E.GLEICHUNGEN):
-            img = E.formel_bild(formel, 13)
+            img = FE.formel_bild(formel, 13)
             pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
             p = QPainter(pm); p.setPen(Qt.lightGray); p.drawRect(0, 0, groesse.width() - 1, groesse.height() - 1)
             bild = img.scaled(groesse.width() - 12, groesse.height() - 8, Qt.KeepAspectRatio, Qt.SmoothTransformation) \
@@ -203,7 +207,7 @@ class EinfuegenObjektBefehle:
             p.drawImage((groesse.width() - bild.width()) // 2, (groesse.height() - bild.height()) // 2, bild); p.end()
             b = m.kachel(str(i), name, pm)
             b.setCheckable(False)
-        m.gewaehlt.connect(lambda schl: self.ed and E.formel_einfuegen(self.ed, E.GLEICHUNGEN[int(schl)][1]))
+        m.gewaehlt.connect(lambda schl: self.ed and FE.formel_einfuegen(self.ed, E.GLEICHUNGEN[int(schl)][1]))
         m.fuss("Neue Gleichung einfügen …", self.formel)
         return m
 
@@ -218,6 +222,7 @@ class EinfuegenObjektBefehle:
         from core.formatierung.farben.farben import Farbe
         from vcl.qt.rendering.textfelder import deckblatt as DB
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
+        from writer.funktionen.objekte import deckblatt as DBW
         HOCH, QUER = QSize(130, 184), QSize(184, 130)
         m = RasterAuswahl(self.w, spalten=4, groesse=HOCH, hoehe_max=640)
 
@@ -230,7 +235,7 @@ class EinfuegenObjektBefehle:
         def fuellen(quer: bool) -> None:
             m.leeren(QUER if quer else HOCH)
             m.quer = quer
-            for name in DB.NAMEN:
+            for name in DBW.NAMEN:
                 m.kachel(name, f"{name} ({DB.gestaltung(name).gruppe})", zeichner(name)).setCheckable(False)
             if m.isVisible():
                 m.neu_messen()
@@ -260,7 +265,8 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from vcl.qt.rendering.textfelder import deckblatt as DB
-        name = vorlage or (k if isinstance(k, str) and k in DB.NAMEN else DB.NAMEN[0])
+        from writer.funktionen.objekte import deckblatt as DBW
+        name = vorlage or (k if isinstance(k, str) and k in DBW.NAMEN else DBW.NAMEN[0])
         DB.einfuegen(self.ed, name, quer)
         self.ed.ansicht.nach_bewegung()
         self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
@@ -277,7 +283,7 @@ class EinfuegenObjektBefehle:
 
     def diagramm(self, k=None):
         if self.ed:
-            from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DiagrammDialog
+            from vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster import DiagrammDialog
             d = DiagrammDialog(self.w)
             if d.exec():
                 from vcl.qt.rendering.formen import frei_objekt as FO
@@ -356,8 +362,10 @@ class EinfuegenObjektBefehle:
 
     def textfeld(self, k=None):
         if self.ed:
+            from dataclasses import asdict
             from vcl.qt.rendering.formen import frei_objekt as FO
-            FO.einfuegen(self.ed, "textfeld", dict(FO.TEXTFELD_STANDARD), 240, 60)
+            from writer.funktionen.objekte import freie_objekte as FW
+            FO.einfuegen(self.ed, "textfeld", asdict(FW.TEXTFELD_STANDARD), 240, 60)
 
 
     def initiale(self, k=None):
@@ -388,21 +396,21 @@ class EinfuegenObjektBefehle:
 
     def formel(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.formen import einfuegen as E
+            from vcl.qt.rendering.textfelder import formel_einfuegen as FE
             from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import FormelDialog
             d = FormelDialog(self.w)
             if d.exec() and d.eingabe.text().strip():
-                E.formel_einfuegen(self.ed, d.eingabe.text())
+                FE.formel_einfuegen(self.ed, d.eingabe.text())
 
 
     def schnelltabelle(self, k=None):
         if not self.ed:
             return
-        from vcl.qt.rendering.formen import einfuegen as E
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
+        from writer.funktionen.objekte import schnelltabelle as ST
         m = MenueListe()
-        for n in E.SCHNELLTABELLEN:
-            m.eintrag(n, lambda n=n: E.schnelltabelle(self.ed, n))
+        for n in ST.SCHNELLTABELLEN:
+            m.eintrag(n, lambda n=n: ST.einfuegen(self.ed, n))
         self._popup(m)
 
 

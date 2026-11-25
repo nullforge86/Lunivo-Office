@@ -80,7 +80,7 @@ def schriftpaar_zeichner(name: str, kopf: str, text: str) -> Zeichner:
 def effekt_zeichner(fx: dict) -> Zeichner:
     """Blauer Blockpfeil auf hellem Feld, mit dem Effekt gezeichnet (wie er an Formen erscheint)."""
     def f(p: QPainter, r: QRectF) -> None:
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering.formen import form_einfuegen as E
         from vcl.qt.rendering.formen import freie_bilder as FB
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = r.adjusted(1, 1, -1, -1)

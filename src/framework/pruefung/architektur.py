@@ -81,6 +81,9 @@ def verstoss(importeur: str, ziel: str) -> str | None:
     nach = schicht_von(ziel)
     if nach is None:
         return None
-    if nach not in ERLAUBTE_ZIELE[von]:
+    erlaubt = ERLAUBTE_ZIELE[von]
+    if von == ALT and _beginnt(importeur, FARMWORK):           # Übergang stellt ein Modul nie strenger als seine Heimatschicht
+        erlaubt = erlaubt | ERLAUBTE_ZIELE[FARMWORK]
+    if nach not in erlaubt:
         return f"{von} darf {nach} nicht importieren ({ziel})"
     return None

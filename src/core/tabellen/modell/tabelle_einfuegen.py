@@ -3,7 +3,7 @@ from __future__ import annotations
 
 
 # ---- Schnelltabellen -----------------------------------------------------------------------------------------------------------
-def _tabelle(ed, zeilen: list[list[str]], kopf: bool = True, breit: bool = True):
+def _tabelle(aendern, zeilen: list[list[str]], kopf: bool = True, breit: bool = True):
     """Fügt eine Tabelle mit Rahmen und dem Text je Zelle ein (erste Zeile als Kopfzeile, wenn ``kopf``)."""
     spalten = max(len(z) for z in zeilen)
 
@@ -20,14 +20,17 @@ def _tabelle(ed, zeilen: list[list[str]], kopf: bool = True, breit: bool = True)
             if kopf:
                 sitz.zellformat_anwenden(tid, {"hintergrund": "#e7eef8"}, [(0, k) for k in range(spalten)])
             sitz.setze_auswahl(sitz.zelle_anfang(tid, 0, 0))
-    ed.ansicht._aendern(f)
+    aendern(f)
 
 
-def schnelltabelle(ed, name: str) -> None:
+SCHNELLTABELLEN = ("Tabelle mit Kopfzeile (3 × 4)", "Zwei Spalten", "Kalender (Monat)", "Matrix (3 × 3)", "Zeitplan")
+
+
+def schnelltabelle(aendern, name: str) -> None:
     if name.startswith("Tabelle mit Kopfzeile"):
-        _tabelle(ed, [["Spalte 1", "Spalte 2", "Spalte 3"]] + [["", "", ""] for _ in range(3)])
+        _tabelle(aendern, [["Spalte 1", "Spalte 2", "Spalte 3"]] + [["", "", ""] for _ in range(3)])
     elif name == "Zwei Spalten":
-        _tabelle(ed, [["Begriff", "Erklärung"]] + [["", ""] for _ in range(4)])
+        _tabelle(aendern, [["Begriff", "Erklärung"]] + [["", ""] for _ in range(4)])
     elif name.startswith("Kalender"):
         import calendar
         import datetime
@@ -36,8 +39,8 @@ def schnelltabelle(ed, name: str) -> None:
         zeilen = [tage]
         for woche in calendar.Calendar(0).monthdayscalendar(h.year, h.month):
             zeilen.append([str(d) if d else "" for d in woche])
-        _tabelle(ed, zeilen)
+        _tabelle(aendern, zeilen)
     elif name.startswith("Matrix"):
-        _tabelle(ed, [["", "A", "B"], ["A", "", ""], ["B", "", ""]], kopf=True)
+        _tabelle(aendern, [["", "A", "B"], ["A", "", ""], ["B", "", ""]], kopf=True)
     else:
-        _tabelle(ed, [["Zeit", "Was", "Wer"]] + [["", "", ""] for _ in range(5)])
+        _tabelle(aendern, [["Zeit", "Was", "Wer"]] + [["", "", ""] for _ in range(5)])

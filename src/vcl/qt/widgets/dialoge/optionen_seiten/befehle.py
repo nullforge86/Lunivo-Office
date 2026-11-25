@@ -246,8 +246,10 @@ class BefehleSeiten:
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)
-        from vcl.qt.rendering.formen import sprechblasen as SB
-        from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
+        from writer.funktionen.ansicht import sprechblasen as SB
+        kat = SB.katalog()
+        from vcl.qt.widgets.bausteine.farben.farben import FESTE_FARBEN
+        from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import DEL_STILE, INS_STILE
         neu = lambda _=None: self.w.markup_neu()                                               # noqa: E731
         f = p.gruppe(_t("optionen.befehle.markup"))
         p.auswahl(f, "aenderungen/ins_stil", _t("optionen.befehle.einfuegungen"), INS_STILE, _t("optionen.befehle.unterstrichen"), neu)
@@ -255,14 +257,14 @@ class BefehleSeiten:
         p.auswahl(f, "aenderungen/balken", _t("optionen.befehle.geaenderte_zeilen_balken_im_rand"), ["links", "rechts", "außen", "keine"], "links", neu)
         p.auswahl(f, "aenderungen/farbe", _t("optionen.befehle.farbe"), [_t("optionen.befehle.nach_autor")] + list(FESTE_FARBEN), _t("optionen.befehle.nach_autor"), neu)
         f = p.gruppe(_t("optionen.befehle.sprechblasen"))
-        p.auswahl(f, "sprechblasen/verwenden", _t("optionen.befehle.sprechblasen_verwenden"), SB.VERWENDEN, SB.STANDARD["verwenden"], neu)
+        p.auswahl(f, "sprechblasen/verwenden", _t("optionen.befehle.sprechblasen_verwenden"), kat.verwenden, kat.standard.verwenden, neu)
         p.haken(f, "sprechblasen/empfohlen", _t("optionen.befehle.empfohlene_breite_verwenden_60_mm"), True, neu)
         p.zahl(f, "sprechblasen/breite_mm", _t("optionen.befehle.bevorzugte_breite"), 30, 120, 60, _t("optionen.befehle.mm"), 1, neu)
-        p.auswahl(f, "sprechblasen/rand", _t("optionen.befehle.seitenrand"), SB.RAND, _t("optionen.befehle.rechts"), neu)
+        p.auswahl(f, "sprechblasen/rand", _t("optionen.befehle.seitenrand"), kat.rand,_t("optionen.befehle.rechts"), neu)
         p.haken(f, "sprechblasen/linien", _t("optionen.befehle.verbindungslinien_zum_text_anzeigen"), True, neu)
         f = p.gruppe(_t("optionen.befehle.drucken_mit_sprechblasen"))
         p.haken(f, "sprechblasen/drucken", _t("optionen.befehle.sprechblasen_mitdrucken_und_exportieren"), False)
-        p.auswahl(f, "sprechblasen/ausrichtung", _t("optionen.befehle.papierausrichtung"), SB.AUSRICHTUNG, _t("optionen.befehle.automatisch"))
+        p.auswahl(f, "sprechblasen/ausrichtung", _t("optionen.befehle.papierausrichtung"), kat.ausrichtung,_t("optionen.befehle.automatisch"))
         p.hinweis(_t("optionen.befehle.einfuegungen_und_loeschungen_stehen_in_e"))
         p.abschluss()
         return p

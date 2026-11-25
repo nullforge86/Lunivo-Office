@@ -27,10 +27,10 @@ vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kont
 vcl.qt.drucken.bild_export vcl.qt.drucken.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
 vcl.qt.eingabe.ki.ki_chat vcl.qt.eingabe.ki.ki_aktionen vcl.qt.eingabe.ki.ki_anfragen
 vcl.qt.eingabe.ki.ki_dauerbetrieb vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
-vcl.qt.widgets.menues.backstage.backstage_fenster vcl.qt.widgets.menues.backstage.backstage_objektformat vcl.qt.fenster.dateien.dateien_drucken
+vcl.qt.widgets.menues.backstage.backstage_fenster vcl.qt.widgets.menues.backstage.backstage_objektformat
 vcl.qt.fenster.dateien.dateien_export vcl.qt.fenster.dateien.dateien_oeffnen vcl.qt.fenster.dateien.dateien_speichern
 vcl.qt.fenster.dateien.dateien_vorlagen vcl.qt.fenster.fenster.anwendung vcl.qt.fenster.fenster.bearbeiten vcl.qt.fenster.fenster.dokument_sync
-vcl.qt.fenster.fenster.programmfenster vcl.qt.fenster.fenster.reiter_zustand vcl.qt.rendering.formen.anzeige vcl.qt.rendering.formen.geometrie
+vcl.qt.fenster.fenster.programmfenster vcl.qt.rendering.formen.anzeige vcl.qt.rendering.formen.geometrie
 vcl.qt.rendering.formen.pfad vcl.qt.rendering.formen.rendering vcl.qt.widgets.bausteine.rahmen.linien vcl.qt.widgets.bausteine.symbole.bauteile.mini_leiste
 vcl.qt.widgets.bausteine.symbole.bauteile.symbole vcl.qt.widgets.seitenleisten.chat.chat_blase vcl.qt.widgets.seitenleisten.chat.chat_eingabe
 vcl.qt.widgets.seitenleisten.chat.chat_leerzustand vcl.qt.widgets.seitenleisten.chat.chat_regler vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine
@@ -47,7 +47,6 @@ vcl.qt.widgets.bausteine.interaktion.felder.auswahl_bereich vcl.qt.widgets.dialo
 vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog vcl.qt.widgets.dialoge.formatierung.ruby_dialog
 vcl.qt.widgets.dialoge.formatierung.schreibweise_dialog vcl.qt.widgets.dialoge.formatierung.schriftart_dialog
 vcl.qt.widgets.dialoge.formatierung.text_format vcl.qt.widgets.dialoge.formatierung.text_fuellarten_mixin
-vcl.qt.widgets.dialoge.formatierung.textfeld_abschnitt
 vcl.qt.widgets.dialoge.dokument.gliederung_anpassen_dialog vcl.qt.widgets.dialoge.dokument.liste_dialog_hilfen
 vcl.qt.widgets.dialoge.dokument.listen_dialog vcl.qt.widgets.dialoge.dokument.nummerierung_anpassen_dialog
 vcl.qt.widgets.dialoge.einfuegen.baustein_dialog vcl.qt.widgets.dialoge.einfuegen.datum_dialog vcl.qt.widgets.dialoge.einfuegen.felder_dialog
@@ -70,7 +69,7 @@ vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster vcl.qt.widgets.dialoge.einfueg
 vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster vcl.qt.widgets.dialoge.einfuegen.formular_dialog
 vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster vcl.qt.widgets.dialoge.ki.ki_aktions_dialoge
 vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge
-vcl.qt.widgets.dialoge.optionen_seiten.befehle vcl.qt.widgets.dialoge.optionen_seiten.datei vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
+vcl.qt.widgets.dialoge.optionen_seiten.datei vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
 vcl.qt.widgets.dialoge.optionen_seiten.lesen vcl.qt.widgets.dialoge.optionen_seiten.lunivo vcl.qt.widgets.dokumentansicht.ansicht.blasen_bedienung
 vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht vcl.qt.widgets.dokumentansicht.ansicht.eingabe
 vcl.qt.widgets.dokumentansicht.ansicht.objekt_bedienung vcl.qt.widgets.dokumentansicht.ansicht.vorschau_ansicht

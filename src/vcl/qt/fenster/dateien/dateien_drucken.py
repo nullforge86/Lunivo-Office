@@ -145,7 +145,7 @@ class DateienDruckenBaustein:
 
 
     def _blasen_fuer_druck(self):
-        from vcl.qt.rendering.formen import sprechblasen as SB
+        from writer.funktionen.ansicht import sprechblasen as SB
         e = self.current_editor()
         k = SB.konfig_lesen(self.settings)
         if e is None or not self.settings.get_bool("sprechblasen/drucken", False) or not SB.aktiv(k):

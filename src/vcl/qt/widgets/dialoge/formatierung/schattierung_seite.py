@@ -4,6 +4,7 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 from vcl.qt.rendering.formen import muster as M
+from writer.funktionen.objekte import muster as MW
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_RAHMENVORSCHAU, ICON_NORMAL, RAND_SCHATTIERUNG_SEITE
@@ -31,7 +32,7 @@ class _SchattierungSeite(QWidget):
         g = FormularGitter(self); g.setContentsMargins(*RAND_SCHATTIERUNG_SEITE)
         self.fuell = FarbFeld(fuell or "", "Füllfarbe", keine_text="Keine Farbe")
         self.art = Auswahlfeld(); self.art.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
-        for k, name, _o in M.MUSTER:
+        for k, name, _o in MW.MUSTER:
             self.art.addItem(_muster_symbol(k), name, k)
         self.farbe = FarbFeld("" if not muster or muster[1] in ("", Farbe.SCHWARZ) else muster[1], "Musterfarbe", keine_text="Automatisch")
         self.vorschau = _Vorschau(kanten_klick=False); self.vorschau.setFixedSize(*GROESSE_RAHMENVORSCHAU)         # klein, in der Mitte
