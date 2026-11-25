@@ -33,6 +33,11 @@ def nur_lesen_setzen(kennung: int, an: bool) -> None:
     sitzung.nur_lesen_setzen(kennung, an)
 
 
+def layout_option_setzen(kennung: int, name: str, wert: float | bool | None) -> None:
+    """Layout-Option der Ansicht (Lesehilfe, Web-Layout), damit Seitenzahlen im Framework wie auf dem Bildschirm zählen."""
+    sitzung.layout_option_setzen(kennung, name, None if wert is None else (bool(wert) if isinstance(wert, bool) else float(wert)))
+
+
 def bei_aenderung(empfaenger: Callable[[int], None]) -> Callable[[], None]:
     """Meldet ``empfaenger(kennung)`` an, sobald das Framework ein Dokument geändert hat; gibt die Abmeldung zurück."""
     def weiter(e: Ereignis) -> None:

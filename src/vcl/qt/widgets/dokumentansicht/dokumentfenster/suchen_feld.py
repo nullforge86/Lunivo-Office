@@ -4,7 +4,7 @@ das Ersatzfeld mit „Ersetzen“ und „Alle ersetzen“; darunter zwei einklap
 „Weitere Werkzeuge“ (Format, Sonderzeichen, Hervorheben, Suchen in). Eingabe sucht weiter, Umschalt+Eingabe zurück, Esc schließt.
 
 Unterfenster (Schriftart, Absatz, Tabstopps, Formatvorlage für „Format“) öffnen sich als Seite in derselben linken Leiste — die rechte
-Seitenleiste bleibt, wie sie ist. Die Suche selbst steht ohne Oberfläche in ``editor/text/suche.py``, die Sprungziele in ``editor/dokument/gehe_zu.py``.
+Seitenleiste bleibt, wie sie ist. Die Suche selbst steht ohne Oberfläche in ``editor/text/suche.py``, die Sprungziele kommen über ``writer.funktionen.bearbeiten`` aus dem Framework.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QTabBar, QToolButton, QWidget,
 )
 
-from core.dokument import gehe_zu as G
+from writer.funktionen import bearbeiten as G
 from core.suche.textsuche import suche as S
 from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
@@ -252,13 +252,13 @@ class SuchenFeld(QWidget):
     # ---- Aufbau: Gehe zu ---------------------------------------------------------------------------------------------------------
     def _bau_gehe_zu(self) -> QWidget:
         w = QWidget(); v = _spalte("standard", w)
-        self.elemente = QListWidget(); self.elemente.addItems(list(G.ELEMENTE)); self.elemente.setCurrentRow(0)
+        self.elemente = QListWidget(); self.elemente.addItems(list(G.gehe_zu_elemente())); self.elemente.setCurrentRow(0)
         self.elemente.setAccessibleName("Gehe zu Element")
         v.addWidget(self._titel("Gehe zu &Element", self.elemente))
-        self.elemente.setMinimumHeight(self.elemente.sizeHintForRow(0) * len(G.ELEMENTE) + SUCHEN_ELEMENTE_ZUGABE)          # alle Elemente ohne Rollen
+        self.elemente.setMinimumHeight(self.elemente.sizeHintForRow(0) * len(G.gehe_zu_elemente()) + SUCHEN_ELEMENTE_ZUGABE)          # alle Elemente ohne Rollen
         v.addWidget(self.elemente)
         self.eingabe = zeilenfeld("frei"); self.eingabe.setMinimumHeight(KNOPF_H)
-        self.eingabe_titel = QLabel(G.EINGABE["Seite"]); self.eingabe_titel.setBuddy(self.eingabe)
+        self.eingabe_titel = QLabel(G.gehe_zu_eingabe_titel("Seite")); self.eingabe_titel.setBuddy(self.eingabe)
         v.addWidget(self.eingabe_titel); v.addWidget(self.eingabe)
         hilfe = QLabel("Geben Sie + und – ein, um sich relativ zur derzeitigen Position zu bewegen.\nBeispiel: Mit +4 springen Sie um vier "
                        "Elemente weiter.")
@@ -278,19 +278,19 @@ class SuchenFeld(QWidget):
         return w
 
     def _element_gewaehlt(self, t: str) -> None:
-        self.eingabe_titel.setText(G.EINGABE.get(t, "Nummer eingeben:")); self.gehe_meldung.clear()
+        self.eingabe_titel.setText(G.gehe_zu_eingabe_titel(t)); self.gehe_meldung.clear()
 
     def gehe(self, richtung: int) -> None:
         ed = self.get_editor()
         if ed is None:
             return
         art = self.elemente.currentItem().text() if self.elemente.currentItem() else "Seite"
-        pos = G.ziel(ed, art, self.eingabe.text(), richtung)
-        if pos is None:
-            self.gehe_meldung.setText(f"Kein Element „{art}“ an dieser Stelle." if G.positionen(ed, art) else f"Das Dokument enthält kein Element „{art}“.")
+        if not G.gehe_zu_element(ed.kennung, art, self.eingabe.text(), richtung):            # das Framework meldet den Sprung, die Ansicht zeigt die Stelle
+            self.gehe_meldung.setText(f"Kein Element „{art}“ an dieser Stelle." if G.gehe_zu_hat_elemente(ed.kennung, art)
+                                      else f"Das Dokument enthält kein Element „{art}“.")
             return
         self.gehe_meldung.clear()
-        G.springen(ed, pos)
+        ed.setFocus()
 
     # ---- Steuerung ------------------------------------------------------------------------------------------------------------------
     def zeige(self, reiter: str = "Suchen", element: str = "") -> None:

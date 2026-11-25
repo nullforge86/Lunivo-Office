@@ -11,6 +11,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "Verteiler": ("befehlssteuerung", "Verteiler"),
     "ausfuehren": ("aenderung", "ausfuehren"),
     "bewegen": ("aenderung", "bewegen"),
+    "im_kontext_bewegen": ("aenderung", "im_kontext_bewegen"),
+    "im_kontext_lesen": ("aenderung", "im_kontext_lesen"),
     "lesen": ("aenderung", "lesen"),
     "verteiler": ("befehlssteuerung", "verteiler"),
 }

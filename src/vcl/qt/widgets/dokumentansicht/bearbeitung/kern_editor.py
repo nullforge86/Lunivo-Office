@@ -156,6 +156,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.ansicht.zoomChanged.connect(self.zoomChanged)
         self.ansicht.geaendert.connect(self._geaendert)
         self.ansicht.cursorBewegt.connect(self._bewegt)
+        self.ansicht.layoutOptionGeaendert.connect(lambda name, wert: _dokumente.layout_option_setzen(self.kennung, name, wert))
         self.ansicht.vor_aenderung = self.vor_aenderung
         self.objekte_verbinden()
         self.tabellen_verbinden()

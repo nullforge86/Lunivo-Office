@@ -6,6 +6,10 @@ from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
     "BearbeitenBefehle": ("befehle", "BearbeitenBefehle"),
+    "ELEMENTE": ("gehe_zu", "ELEMENTE"),
+    "eingabe_titel": ("gehe_zu", "eingabe_titel"),
+    "gehe_zu_element": ("gehe_zu", "gehe_zu_element"),
+    "hat_elemente": ("gehe_zu", "hat_elemente"),
     "MENUE": ("wortextras", "MENUE"),
     "wortextra_ausfuehren": ("wortextras", "wortextra_ausfuehren"),
 }
@@ -17,6 +21,8 @@ def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
     if datei == "befehle":
         from . import befehle as _datei
+    elif datei == "gehe_zu":
+        from . import gehe_zu as _datei
     elif datei == "wortextras":
         from . import wortextras as _datei
     else:

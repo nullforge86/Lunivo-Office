@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import Callable
 
-from core.bearbeitung import BearbeitungsFehler
+from core.bearbeitung import BearbeitungsFehler, Kontext
 from framework.ereignisse import melder
 from framework.schnittstellen.datentypen import Art, Ereignis
 from framework.sitzungen import sitzung as _steuerung
@@ -47,5 +47,23 @@ def bewegen(kennung: int, arbeit: Callable[..., int]) -> int | None:
         return None
     ergebnis = arbeit(satz.sitzung)
     if ergebnis:
+        melder.melden(Ereignis(Art.GEAENDERT, AUSWAHL, {"kennung": kennung}))
+    return ergebnis
+
+
+def im_kontext_lesen(kennung: int, abfrage: Callable[..., int]) -> int | None:
+    """``abfrage(kontext)`` mit dem Kontext des Dokuments (Layout mit den Optionen der Ansicht); ``None``, wenn es das Dokument nicht gibt."""
+    satz = _steuerung._sitzungen.get(kennung)
+    return None if satz is None else abfrage(Kontext(satz.sitzung, satz.layout_optionen))
+
+
+def im_kontext_bewegen(kennung: int, arbeit: Callable[..., int]) -> int | None:
+    """``arbeit(kontext)`` setzt nur die Auswahl; hat sie das getan, ``auswahl_geaendert`` melden. Auch bei Schreibschutz erlaubt."""
+    satz = _steuerung._sitzungen.get(kennung)
+    if satz is None:
+        return None
+    k = Kontext(satz.sitzung, satz.layout_optionen)
+    ergebnis = arbeit(k)
+    if k.bewegt:
         melder.melden(Ereignis(Art.GEAENDERT, AUSWAHL, {"kennung": kennung}))
     return ergebnis

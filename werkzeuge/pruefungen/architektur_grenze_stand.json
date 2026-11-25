@@ -491,7 +491,7 @@
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_reiter.py": 6,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_hilfen.py": 7,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_panel.py": 18,
-  "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/suchen_feld.py": 24,
+  "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/suchen_feld.py": 23,
   "src/vcl/qt/widgets/dokumentansicht/kopffuss/noten_feld.py": 3,
   "src/vcl/qt/widgets/menues/backstage/backstage.py": 16,
   "src/vcl/qt/widgets/menues/backstage/backstage_dokument.py": 7,
@@ -726,7 +726,6 @@
  },
  "kern_ruft_oberflaeche": {
   "src/core/dokument/abschnitte/deckblatt_vorlagen.py": 1,
-  "src/core/dokument/gehe_zu.py": 17,
   "src/core/objekte/formen/frei_objekt_daten.py": 3,
   "src/core/tabellen/modell/tabellenzustand.py": 2
  },
@@ -858,7 +857,7 @@
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_bereich.py": 1,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_hilfen.py": 1,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_panel.py": 1,
-  "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/suchen_feld.py": 4,
+  "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/suchen_feld.py": 3,
   "src/vcl/qt/widgets/dokumentansicht/kopffuss/noten_feld.py": 1,
   "src/vcl/qt/widgets/menues/backstage/backstage_dokument.py": 1,
   "src/vcl/qt/widgets/menues/backstage/backstage_objektformat.py": 1,

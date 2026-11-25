@@ -40,12 +40,16 @@ RAND_UNTEN = 28.0
 SEITEN_LUECKE = 16.0                    # Abstand der beiden Blätter in der Zwei-Seiten-Ansicht
 
 
+LAYOUT_OPTIONEN = ("buchstaben", "wort", "zeilenluft", "versteckt", "web")      # bestimmen den Umbruch und damit die Seitenzahlen
+
+
 class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBedienung, QWidget):
     freiAuswahlGeaendert = Signal()                # ein Objekt wurde gewählt oder die Wahl aufgehoben
     objektKnopf = Signal(str, object)              # Klick auf eine Schaltfläche neben dem Objekt: Name und globale Stelle
     zoomChanged = Signal(float)
     geaendert = Signal()                   # das Dokument wurde geändert (über diese Ansicht oder von außen über die Sitzung)
     cursorBewegt = Signal()
+    layoutOptionGeaendert = Signal(str, object)    # Name und Wert einer Layout-Option (``LAYOUT_OPTIONEN``)
     linkAngeklickt = Signal(str)                   # Strg+Klick auf eine Verknüpfung: ihr Ziel
     noteAngeklickt = Signal(str, int)              # Klick auf das Zeichen einer Fuß- oder Endnote: Art und Id
     kontextGewuenscht = Signal(object)             # Rechtsklick: globale Stelle für das Menü
@@ -162,6 +166,8 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
             elif self._layout.optionen.get(k) != v:
                 self._layout.optionen[k] = v
                 neu_setzen = True
+                if k in LAYOUT_OPTIONEN:
+                    self.layoutOptionGeaendert.emit(k, v)          # der Editor gibt sie ans Framework weiter (Seitenzahlen wie in der Ansicht)
         if neu_setzen:
             self._erg = None
             self._markup_cache = None

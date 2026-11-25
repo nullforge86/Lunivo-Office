@@ -4,7 +4,7 @@ Das Framework erzeugt und besitzt die Bearbeitungssitzungen (je Kennung ein priv
 Die Qt-freien Teile von ``anwendung.py`` und ``dokument_verwaltung.py`` kommen schrittweise hierher (Übergang: ``NOCH_NICHT_UMGESTELLT``)."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from core.bearbeitung import Bearbeitungssitzung
 from core.dokument import neues_dokument
@@ -22,6 +22,7 @@ class _Datensatz:
     page: object
     bearbeiter: str = ""                 # Name für nachverfolgte Änderungen und Kommentare
     nur_lesen: bool = False
+    layout_optionen: dict = field(default_factory=dict)   # Ansichtsoptionen des Layouts (Lesehilfe, Web-Layout): Seitenzahlen wie in der Ansicht
 
 
 class Sitzung:
@@ -72,6 +73,16 @@ class Sitzung:
         """Schreibschutz des Dokuments: Änderungen über das Framework werden dann abgelehnt."""
         if nummer in self._sitzungen:
             self._sitzungen[nummer].nur_lesen = bool(an)
+
+    def layout_option_setzen(self, nummer: int, name: str, wert: float | bool | None) -> None:
+        """Eine Layout-Option der Ansicht (``buchstaben``, ``wort``, ``zeilenluft``, ``versteckt``, ``web``); ``None`` nimmt sie heraus."""
+        satz = self._sitzungen.get(nummer)
+        if satz is None:
+            return
+        if wert is None:
+            satz.layout_optionen.pop(name, None)
+        else:
+            satz.layout_optionen[name] = wert
 
     @property
     def aktiv(self) -> int | None:

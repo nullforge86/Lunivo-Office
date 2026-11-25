@@ -10,8 +10,10 @@ from core.suche.textsuche import offset_zu_position, position_zu_offset
 
 
 class Kontext:
-    def __init__(self, sitzung) -> None:
+    def __init__(self, sitzung, layout_optionen: dict | None = None) -> None:
         self.sitzung = sitzung
+        self._optionen = dict(layout_optionen or {})       # Layout-Optionen der Ansicht: Seitenzahlen wie auf dem Bildschirm
+        self._layout = None
         self.bewegt = False                  # die Auswahl wurde gesetzt (Sprung): das Framework meldet es der Oberfläche
 
     # ---- Ändern und Auswählen -------------------------------------------------------------------------------------------------------
@@ -51,11 +53,22 @@ class Kontext:
         a, k = position_zu_offset(d, self.sitzung.auswahl.anker), position_zu_offset(d, self.sitzung.auswahl.kopf)
         return min(a, k), max(a, k)
 
+    def layout(self):
+        """Das Layout des Dokuments (einmal je Kontext berechnet)."""
+        if self._layout is None:
+            from core.layout import LayoutEngine
+            self._layout = LayoutEngine(optionen=dict(self._optionen)).berechnen(self.sitzung.dokument)
+        return self._layout
+
+    def aktuelle_seite(self) -> int:
+        """Seite der Schreibmarke (ab 1)."""
+        s = self.layout().seite_von(self.sitzung.auswahl.kopf.absatz_id)
+        return (s if s is not None else 0) + 1
+
     def seiten_von(self, stellen: list) -> list:
         """Die Seitenzahlen der Stellen (``"?"``, wenn eine Stelle nirgends steht) – aus dem Druck-Layout."""
-        from core.layout import LayoutEngine
         d = self.sitzung.dokument
-        erg = LayoutEngine().berechnen(d)
+        erg = self.layout()
         aus = []
         for o in stellen:
             seite = erg.seite_von(offset_zu_position(d, o).absatz_id)
@@ -83,6 +96,21 @@ class Kontext:
     @property
     def noten(self) -> dict:
         return {art: {n.id: n.text for n in noten.values()} for art, noten in self.sitzung.dokument.noten.items()}
+
+    @property
+    def kommentare(self) -> dict:
+        return {k.id: {"autor": k.autor, "initialen": k.initialen, "datum": k.datum, "text": k.text, "geloest": k.geloest}
+                for k in self.sitzung.dokument.kommentare.values()}
+
+    def _format_bei(self, pos) -> dict:
+        rest = teile(self.sitzung._absatz(pos.absatz_id).inhalte, pos.versatz)[1]
+        return rest[0].format if rest else {}
+
+    def kommentar_bereiche(self) -> list:
+        """[{"von", "bis", "wert"}] der kommentierten Bereiche (``wert``: Kommentar-Id)."""
+        d = self.sitzung.dokument
+        return [{"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": self._format_bei(b.anker).get("kommentar")}
+                for b in self.sitzung.bereiche(lambda f: "kommentar" in f, lambda f: f.get("kommentar"))]
 
     def noten_stellen(self) -> list:
         d = self.sitzung.dokument
