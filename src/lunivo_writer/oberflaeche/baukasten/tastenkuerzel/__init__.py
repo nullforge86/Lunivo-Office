@@ -1,0 +1,1 @@
+"""Tastenkürzel der Oberfläche."""

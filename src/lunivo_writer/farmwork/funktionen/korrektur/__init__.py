@@ -1,0 +1,1 @@
+"""Funktion „Korrektur“ im Framework."""

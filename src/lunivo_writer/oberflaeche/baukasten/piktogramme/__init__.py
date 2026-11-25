@@ -1,0 +1,1 @@
+"""Piktogramme (Symbole) der Oberfläche."""

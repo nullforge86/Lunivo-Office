@@ -1,0 +1,30 @@
+{
+  "alias": {
+    "lesehilfe": "lesen",
+    "schriften": "schreiben",
+    "sprache": "schreiben",
+    "rechtschreibung": "schreiben",
+    "bearbeiten": "schreiben",
+    "gedaechtnis": "schreiben",
+    "ansicht": "anzeige",
+    "menueband": "anzeige",
+    "schnellzugriff": "anzeige",
+    "sicherung": "speichern",
+    "speicherort": "speichern",
+    "sicherheit": "speichern",
+    "verfolgen": "speichern",
+    "pdf": "drucken",
+    "benutzer": "ki",
+    "erweitert": "ki"
+  },
+  "aufklappen": {
+    "ki": "KI einrichten",
+    "erweitert": "Was zusätzlich",
+    "gedaechtnis": "Weitere",
+    "schriften": "Weitere",
+    "menueband": "Menüband",
+    "schnellzugriff": "Menüband",
+    "sicherheit": "Weitere",
+    "verfolgen": "Weitere"
+  }
+}

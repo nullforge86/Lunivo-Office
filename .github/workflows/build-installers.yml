@@ -1,0 +1,151 @@
+name: Installationspakete bauen
+
+on:
+  push:
+    branches: [aufgeraeumt]
+    paths: ["src/**", "ressourcen/**", "main.py", "pyproject.toml", "requirements.txt", "installationspakete/**", ".github/workflows/build-installers.yml"]
+  pull_request:
+    paths: ["installationspakete/**", ".github/workflows/build-installers.yml"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  linux:
+    name: Linux (.deb + portabel)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip, cache-dependency-path: requirements.txt }
+      - name: Systembibliotheken für Qt
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libdbus-1-3 libfontconfig1
+      - name: Python-Pakete (torch nur CPU)
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements.txt argostranslate pyinstaller pillow
+          if python -m pip list | grep -i '^nvidia-'; then echo 'CUDA-Pakete gefunden'; exit 1; fi
+      - name: Version lesen
+        run: echo "VERSION=$(sed -n 's/^version *= *"\(.*\)"/\1/p' pyproject.toml | head -1)" >> "$GITHUB_ENV"
+      - run: python installationspakete/icons_erzeugen.py
+      - run: pyinstaller installationspakete/lunivo-office.spec --noconfirm
+      - name: Argos-Sprachpakete Deutsch/Englisch einbauen
+        shell: bash
+        run: |
+          werkzeuge/erstellung/argos-holen.sh erstellung/argos-modelle "$(command -v python)"
+          mkdir -p dist/lunivo-office/argos && cp erstellung/argos-modelle/*.argosmodel dist/lunivo-office/argos/
+      - name: .deb bauen
+        run: installationspakete/linux-deb/deb-bauen.sh "$VERSION"
+      - name: Portables Archiv (ohne Installation startbar)
+        run: tar -C dist -czf "erstellung/Lunivo-Office_${VERSION}_linux-portable.tar.gz" lunivo-office
+      - name: .deb prüfen (Inhalt, Metadaten)
+        run: dpkg-deb -I erstellung/Lunivo-Office_*_amd64.deb && dpkg-deb -c erstellung/Lunivo-Office_*_amd64.deb | grep -E "lunivo-writer.desktop|usr/bin/lunivo-office|hicolor/256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            erstellung/Lunivo-Office_*_amd64.deb
+            erstellung/Lunivo-Office_*_linux-portable.tar.gz
+          if-no-files-found: error
+
+  windows:
+    name: Windows (Setup.exe + portabel)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip, cache-dependency-path: requirements.txt }
+      - name: Python-Pakete (torch nur CPU)
+        shell: bash
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements.txt argostranslate pyinstaller pillow
+      - name: Version lesen
+        shell: bash
+        run: echo "VERSION=$(sed -n 's/^version *= *"\(.*\)"/\1/p' pyproject.toml | head -1)" >> "$GITHUB_ENV"
+      - run: python installationspakete/icons_erzeugen.py
+      - run: pyinstaller installationspakete/lunivo-office.spec --noconfirm
+      - name: Argos-Sprachpakete Deutsch/Englisch einbauen
+        shell: bash
+        run: |
+          werkzeuge/erstellung/argos-holen.sh erstellung/argos-modelle "$(command -v python)"
+          mkdir -p dist/lunivo-office/argos && cp erstellung/argos-modelle/*.argosmodel dist/lunivo-office/argos/
+      - name: Inno Setup bereitstellen
+        run: if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup -y --no-progress }
+      - name: Installer bauen
+        shell: pwsh
+        run: |
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=$env:VERSION" installationspakete\windows\lunivo-office.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Portables Archiv
+        shell: pwsh
+        run: Compress-Archive -Path dist\lunivo-office -DestinationPath "erstellung\Lunivo-Office_${env:VERSION}_windows-portable.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            erstellung/Lunivo-Office_*_Setup.exe
+            erstellung/Lunivo-Office_*_windows-portable.zip
+          if-no-files-found: error
+
+  macos:
+    name: macOS ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.optional }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "Apple Silicon (arm64)", runner: macos-14, suffix: "", optional: false }
+          - { name: "Intel (x86_64)", runner: macos-13, suffix: "_Intel", optional: true }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip, cache-dependency-path: requirements.txt }
+      - run: python -m pip install -r requirements.txt argostranslate pyinstaller pillow
+      - name: Version lesen
+        run: echo "VERSION=$(sed -n 's/^version *= *"\(.*\)"/\1/p' pyproject.toml | head -1)" >> "$GITHUB_ENV"
+      - run: python installationspakete/icons_erzeugen.py
+      - run: pyinstaller installationspakete/lunivo-office.spec --noconfirm
+      - name: Argos-Sprachpakete in die App
+        run: |
+          werkzeuge/erstellung/argos-holen.sh erstellung/argos-modelle "$(command -v python)"
+          mkdir -p "dist/Lunivo Office.app/Contents/argos" && cp erstellung/argos-modelle/*.argosmodel "dist/Lunivo Office.app/Contents/argos/"
+      - name: .dmg bauen (Signatur/Notarisierung nur mit hinterlegten Secrets)
+        env:
+          APPLE_SIGN_IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          installationspakete/macos/dmg-bauen.sh "$VERSION"
+          mv "erstellung/Lunivo-Office_${VERSION}_macOS.dmg" "erstellung/Lunivo-Office_${VERSION}_macOS${{ matrix.suffix }}.dmg"
+          ditto -c -k --keepParent "dist/Lunivo Office.app" "erstellung/Lunivo-Office_${VERSION}_macOS${{ matrix.suffix }}-portable.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos${{ matrix.suffix }}
+          path: erstellung/Lunivo-Office_*
+          if-no-files-found: error
+
+  release:
+    name: Release-Assets hochladen
+    if: github.event_name == 'release'
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: artefakte, merge-multiple: true }
+      - name: Hochladen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" artefakte/* --clobber --repo "${{ github.repository }}"

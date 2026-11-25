@@ -1,0 +1,1 @@
+"""Funktion „Ansicht“ im Framework."""
