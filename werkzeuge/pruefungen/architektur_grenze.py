@@ -13,6 +13,7 @@ Prüft den Quellbaum ``src/`` statisch über den Syntaxbaum (``ast``), auch tran
     kern_ruft_oberflaeche   core-Funktion mit Parameter ``ed``/``editor`` (Rückruf an ein Objekt der Oberfläche)
     altlast_sitzungszugang  Nutzung des einen freigegebenen Übergangszugangs ``framework.sitzungen.altlast`` (nur kern_editor, bis Schritt 5)
     zerbrochener_zugriff    ``Modul.Name`` oder ``from modul import Name``, wobei es ``Name`` in diesem Modul nicht gibt (AttributeError/ImportError zur Laufzeit)
+    an_paket_vorbei         Import von außerhalb eines Pakets direkt in eine seiner Dateien statt über dessen ``__init__.py`` (je Datei und Zielmodul)
     weiterleitung           Weiterleitungsname in vcl/writer (``name = modul.name``), der alte Zugriffe am Leben hält (Legacy-Wrapper)
     dynamischer_import      ``importlib.import_module`` / ``__import__``
     platzhalter             ``.gitkeep`` und Reste unter ``src/lunivo_writer``
@@ -239,6 +240,23 @@ def analysieren():
                 ziel = alias[n.value.id]
                 if not n.attr.startswith("__") and not (namen_von(ziel) & {n.attr, "*"}) and f"{ziel}.{n.attr}" not in mods:
                     funde["zerbrochener_zugriff"][rel(m)] += 1
+    # Paket-Tür: von außerhalb eines Pakets nur über dessen __init__.py importieren
+    pakete = {x for x, pf in mods.items() if pf.endswith("__init__.py")}
+    for m, baum in baeume.items():
+        eigen = m if m in pakete else m.rpartition(".")[0]
+        gesehen: set[str] = set()
+        for n in ast.walk(baum):
+            ziele = []
+            if isinstance(n, ast.Import):
+                ziele = [a.name for a in n.names]
+            elif isinstance(n, ast.ImportFrom) and not n.level and n.module:
+                ziele = [f"{n.module}.{a.name}" if f"{n.module}.{a.name}" in mods else n.module for a in n.names]
+            for z in ziele:
+                if z in mods and z not in pakete and z not in gesehen:
+                    paket = z.rpartition(".")[0]
+                    if not (eigen == paket or eigen.startswith(paket + ".")):
+                        gesehen.add(z)
+                        funde["an_paket_vorbei"][rel(m)] += 1
     # transitiv Qt (auch über übergeordnete Pakete, die beim Import mitgeladen werden)
     voll = {m: set(z) | {".".join(z_.split(".")[:i]) for z_ in z for i in range(1, len(z_.split("."))) if ".".join(z_.split(".")[:i]) in mods}
             for m, z in kanten.items()}
