@@ -1,6 +1,7 @@
 """Smartart zeichnen daten: aus ``vcl.qt.rendering.smartart.smartart_zeichnen`` herausgelöst."""
 from __future__ import annotations
 
+from core.diagramme.formatierung import schrift_aus
 
 _ZU: dict = {"schrift": None, "stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "knoten": [], "hier": "standard", "fmt": [], "fmt_alle": {}}
 
@@ -16,6 +17,11 @@ def _format_von(nr) -> dict | None:
         if alle.get(k) and (eigen or {}).get(k):
             f[k] = {**alle[k], **eigen[k]}
     return f
+
+
+def schrift_uebernehmen(t: dict | None) -> None:
+    """Die Schrift des Kastens bekommt die Angaben des Textformats ``t`` (Name, Größe, fett, kursiv) über der aktuellen Schrift."""
+    _ZU["schrift"] = schrift_aus(_ZU["schrift"] or _grundschrift(11.0), t)
 
 
 def _grundschrift(pt: float):

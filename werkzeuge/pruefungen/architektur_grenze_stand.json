@@ -1090,9 +1090,6 @@
   "src/vcl/qt/rendering/diagramme/diagramm_format.py": 1,
   "src/vcl/qt/widgets/menues/dropdown/objektmenues/objekt_menues.py": 1
  },
- "zerbrochener_zugriff": {
-  "src/vcl/qt/rendering/smartart/smartart_zeichnen.py": 1
- },
  "zyklen": {
   "anzahl": 2,
   "module_in_zyklen": 4

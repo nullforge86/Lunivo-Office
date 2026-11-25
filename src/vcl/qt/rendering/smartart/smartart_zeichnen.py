@@ -8,7 +8,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import (ABSTAND_STAPEL, HOEHE_STAPE
 from vcl.qt.widgets.bausteine.farben.farben import WEISS_GLANZ
 from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import smartart as SM
-from core.objekte.smartart.smartart_zeichnen_daten import _ZU, _alle, _baum, _format_von, _grundschrift, _gruppen
+from core.objekte.smartart.smartart_zeichnen_daten import _ZU, _alle, _baum, _format_von, _grundschrift, _gruppen, schrift_uebernehmen
 
 
 def _spiegel(r: QRectF) -> QRectF:
@@ -90,7 +90,7 @@ def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=No
     _schrift(p, text, 11)
     t = (fm or {}).get("text")
     if t:
-        _ZU["schrift"] = F.schrift_aus(_ZU["schrift"], t)
+        schrift_uebernehmen(t)
         if t.get("farbe") or t.get("effekt"):
             p.setPen(F.textfarbe(t, p.pen().color().name()))
     _text_zeichnen(p, r.adjusted(6, 3, -6, -3), Qt.AlignCenter | Qt.TextWordWrap, text)
