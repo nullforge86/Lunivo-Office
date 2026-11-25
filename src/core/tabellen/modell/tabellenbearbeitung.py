@@ -1,18 +1,11 @@
-"""Tabellenoperationen der Sitzung: anlegen, löschen, Zeilen und Spalten, Zellen verbinden und teilen, Formate, Tabelle ↔ Text.
-
-Eine Tabelle ist immer ein volles Gitter. Eine verbundene Zelle steht an ihrer linken oberen Gitterstelle und trägt
-``zeilenspanne``/``spaltenspanne``; die übrigen Gitterstellen, die sie bedeckt, sind Platzhalter mit ``verdeckt_von``.
-Jede Operation rechnet ein neues Gitter aus (Zellen werden dabei nie an Ort und Stelle geändert) und setzt es in einem Stück —
-so ist sie mit einem Eintrag rückgängig zu machen.
-"""
 from __future__ import annotations
-
 import dataclasses
-
 from core.dokument.dokument import Absatz, Auswahl, Lauf, Position, Rahmen, Tabelle, Zelle, normalisiere, teile
 from core.dokument.formate import pruefe, verschmelze
 from core.bearbeitung.texteingabe import alle_absaetze
 from core.bearbeitung.verlauf import BearbeitungsFehler, schritt
+from core.tabellen.zeilen.zeilenbearbeitung import zeilen_dehnen, zeilen_einfuegen, zeilen_loeschen
+from core.tabellen.zellen.zellenverbund import _aufteilung, verbinden
 
 
 # ---- Gitterrechnung (reine Funktionen) -------------------------------------------------------------------------------
@@ -60,89 +53,6 @@ def abgleichen(gitter: list, frisch) -> list:
             elif c is None or c.verdeckt_von is not None:
                 gitter[z][s] = frisch(z, s)
     return gitter
-
-
-def _anker(gitter: list):
-    for z, zeile in enumerate(gitter):
-        for s, c in enumerate(zeile):
-            if c is not None and c.verdeckt_von is None:
-                yield z, s, c
-
-
-def zeilen_einfuegen(gitter: list, index: int, anzahl: int) -> list:
-    g = [list(zeile) for zeile in gitter]
-    for z, s, c in list(_anker(g)):
-        if z < index < z + c.zeilenspanne:
-            g[z][s] = dataclasses.replace(c, zeilenspanne=c.zeilenspanne + anzahl)
-    spalten = len(g[0])
-    g[index:index] = [[None] * spalten for _ in range(anzahl)]
-    return g
-
-
-def zeilen_loeschen(gitter: list, index: int, anzahl: int) -> list:
-    g = [list(zeile) for zeile in gitter]
-    ende = index + anzahl
-    for z, s, c in list(_anker(g)):
-        unten = z + c.zeilenspanne
-        if z < index and unten > index:
-            g[z][s] = dataclasses.replace(c, zeilenspanne=c.zeilenspanne - (min(unten, ende) - index))
-        elif index <= z < ende and unten > ende:             # die Zelle beginnt in einer gelöschten Zeile und reicht darunter
-            g[ende][s] = dataclasses.replace(c, zeilenspanne=unten - ende)
-    del g[index:ende]
-    return g
-
-
-def zeilen_dehnen(gitter: list, index: int, anzahl: int) -> list:
-    """Fügt Zeilen ein, die keine neuen Zellen bringen: Jede Zelle, die bis zur Zeile ``index - 1`` reicht, wird höher."""
-    g = [list(zeile) for zeile in gitter]
-    gesehen = set()
-    for s in range(len(g[0])):
-        c = g[index - 1][s]
-        z0, s0 = c.verdeckt_von or (index - 1, s)
-        if (z0, s0) not in gesehen:
-            gesehen.add((z0, s0))
-            g[z0][s0] = dataclasses.replace(g[z0][s0], zeilenspanne=g[z0][s0].zeilenspanne + anzahl)
-    g[index:index] = [[None] * len(g[0]) for _ in range(anzahl)]
-    return g
-
-
-def verbinden(gitter: list, zeile: int, spalte: int, zeilen: int, spalten: int) -> tuple:
-    """Verbindet das Rechteck zu einer Zelle. Gibt (Gitter, weggefallene leere Absätze) zurück."""
-    if zeilen < 1 or spalten < 1 or zeile < 0 or spalte < 0 or zeile + zeilen > len(gitter) or spalte + spalten > len(gitter[0]):
-        raise BearbeitungsFehler("Der Zellbereich liegt nicht in der Tabelle")
-    g = [list(z) for z in gitter]
-    inhalt: list = []
-    weg: list = []
-    for z, s, c in list(_anker(g)):
-        drin_z = zeile <= z and z + c.zeilenspanne <= zeile + zeilen
-        drin_s = spalte <= s and s + c.spaltenspanne <= spalte + spalten
-        beruehrt = z < zeile + zeilen and z + c.zeilenspanne > zeile and s < spalte + spalten and s + c.spaltenspanne > spalte
-        if not beruehrt:
-            continue
-        if not (drin_z and drin_s):
-            raise BearbeitungsFehler("Der Bereich schneidet eine verbundene Zelle")
-        if ist_leer(c):
-            weg += c.bloecke
-        else:
-            inhalt += c.bloecke
-        if (z, s) != (zeile, spalte):
-            g[z][s] = None
-    erste = g[zeile][spalte]
-    if erste is None or erste.verdeckt_von is not None:
-        raise BearbeitungsFehler("Der Bereich schneidet eine verbundene Zelle")
-    if not inhalt:
-        inhalt, weg = list(erste.bloecke), [b for b in weg if b not in erste.bloecke]
-    g[zeile][spalte] = dataclasses.replace(erste, bloecke=inhalt, zeilenspanne=zeilen, spaltenspanne=spalten)
-    return g, weg
-
-
-def ist_leer(zelle: Zelle) -> bool:
-    return len(zelle.bloecke) == 1 and isinstance(zelle.bloecke[0], Absatz) and zelle.bloecke[0].laenge == 0
-
-
-def _aufteilung(gesamt: int, teile_: int) -> list:
-    grund, rest = divmod(gesamt, teile_)
-    return [grund + (1 if i < rest else 0) for i in range(teile_)]
 
 
 class TabellenTeil:

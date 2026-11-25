@@ -7,6 +7,7 @@ from __future__ import annotations
 _NAMEN = """
 core.diagramme.diagramm core.diagramme.formatierung.diagramm_format core.diagramme.formatierung.diagramm_stile core.diagramme.daten.diagramm_teile
 core.bearbeitung.einfuegen core.dokument.felder core.dokument.formular core.objekte.bilder.modell.bilddaten
+core.objekte.bilder.modell.bild_einfuegen core.objekte.formeln.modell.formel_einfuegen core.objekte.formen.form_einfuegen core.objekte.wordart.wordart_einfuegen
 core.objekte.bilder.modell.bildeffekte core.objekte.bilder.positionierung.bildlayout core.objekte.bilder.skalierung.bildwerkzeuge core.objekte.bilder.zuschneiden.bildzuschnitt
 core.objekte.bilder.positionierung.freie_bilder core.objekte.formen.formen core.objekte.formen.formen_anpassen
 core.objekte.formen.formen_katalog core.objekte.formen.formen_stile core.objekte.formen.freiform core.objekte.formen.linie
@@ -92,6 +93,9 @@ core.objekte.smartart.smartart_zeichnen core.objekte.textfelder.modell.frei_obje
 core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.tabellen.formatierung.tabellenstil core.tabellen.modell.tabelle_text
 core.tabellen.modell.tabelleneigenschaften core.tabellen.modell.tabellenzustand core.text.ki_markdown core.text.statistik core.text.wortextras
 core.text.zahlformat
+core.objekte.bilder.modell.bild_einfuegen core.objekte.formeln.modell.formel_einfuegen core.objekte.formen.form_einfuegen core.objekte.wordart.wordart_einfuegen
+core.tabellen.modell.tabelle_einfuegen core.bearbeitung.einfuegen_hilfen core.korrektur.rechtschreibung.pruefung_hilfen core.korrektur.sprache.klangpruefung
+core.korrektur.grammatik.satzbau core.korrektur.grammatik.zusammenschreibung core.korrektur.rechtschreibung.pruefung
 framework.serienbriefe.datenquellen.serienquelle framework.serienbriefe.erstellung.etiketten framework.serienbriefe.erstellung.serienbrief
 framework.serienbriefe.erstellung.umschlag framework.serienbriefe.platzhalter.konstanten framework.serienbriefe.platzhalter.serienfelder
 """.split())

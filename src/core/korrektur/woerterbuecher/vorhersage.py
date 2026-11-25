@@ -7,7 +7,7 @@ import os
 import re
 
 from core.korrektur.woerterbuecher.haeufig import HAEUFIG
-from core.korrektur.rechtschreibung.pruefung import daten_ordner, lade_woerter
+from core.korrektur.rechtschreibung.pruefung_hilfen import daten_ordner, lade_woerter
 
 EMPFAENGER = ["egal", "Amt", "Arbeit", "Freunde", "Forum", "Bewerbung"]
 _THEMEN: dict[str, frozenset] | None = None
