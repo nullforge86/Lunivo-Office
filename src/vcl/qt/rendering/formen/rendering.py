@@ -225,7 +225,7 @@ class QtRenderBackend(RenderBackend):
                 rd.render(self.p, _qrect(rect))
             return
         if fmt in ("emf", "wmf") and source_rect is None:
-            from framework.dokumentverwaltung.ausgabe import vektor_bilder as V
+            from vcl.qt.rendering.formen import vektor_bilder as V
             if (V.emf_zeichnen if fmt == "emf" else V.wmf_zeichnen)(data, self.p, _qrect(rect)):
                 return
         img = _bild(data)

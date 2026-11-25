@@ -165,7 +165,7 @@
   "src/framework/befehle/verweise/befehle.py": 12,
   "src/framework/befehle/verweise/einstellungen.py": 1,
   "src/framework/befehle/verweise/konstanten.py": 7,
-  "src/framework/dokumentverwaltung/ausgabe/vektor_bilder.py": 2,
+  "src/framework/dokumentverwaltung/ausgabe/vektor_bilder.py": 1,
   "src/framework/dokumentverwaltung/dateizugriff/dateiformate.py": 1,
   "src/framework/dokumentverwaltung/dateizugriff/import_grenzen.py": 1,
   "src/framework/dokumentverwaltung/dateizugriff/modell_laden.py": 5,
@@ -254,7 +254,7 @@
   "src/vcl/qt/rendering/diagramme/diagramm_stile.py": 1,
   "src/vcl/qt/rendering/formen/anzeige.py": 2,
   "src/vcl/qt/rendering/formen/bild_einfuegen.py": 6,
-  "src/vcl/qt/rendering/formen/bilddaten.py": 4,
+  "src/vcl/qt/rendering/formen/bilddaten.py": 3,
   "src/vcl/qt/rendering/formen/bildeffekte.py": 4,
   "src/vcl/qt/rendering/formen/bildlayout.py": 2,
   "src/vcl/qt/rendering/formen/einfuegen.py": 5,
@@ -266,7 +266,7 @@
   "src/vcl/qt/rendering/formen/linie.py": 4,
   "src/vcl/qt/rendering/formen/muster.py": 3,
   "src/vcl/qt/rendering/formen/pfad.py": 1,
-  "src/vcl/qt/rendering/formen/rendering.py": 4,
+  "src/vcl/qt/rendering/formen/rendering.py": 3,
   "src/vcl/qt/rendering/formen/seitenrahmen.py": 1,
   "src/vcl/qt/rendering/formen/sprechblasen.py": 3,
   "src/vcl/qt/rendering/formen/textur.py": 1,
@@ -625,7 +625,6 @@
  },
  "kern_durchgereicht": {
   "src/vcl/qt/fenster/fenster/bearbeiten.py": 1,
-  "src/vcl/qt/rendering/formen/bilddaten.py": 1,
   "src/vcl/qt/widgets/bausteine/farben/darstellung.py": 1,
   "src/vcl/qt/widgets/bausteine/farben/dashboard_regeln.py": 1,
   "src/vcl/qt/widgets/bausteine/farben/farben.py": 1,
@@ -737,17 +736,11 @@
   "src/framework/serienbriefe/erstellung/umschlag.py": 1,
   "src/framework/serienbriefe/platzhalter/serienfelder.py": 1
  },
- "qt_ausserhalb_vcl_qt": {
-  "src/framework/dokumentverwaltung/ausgabe/vektor_bilder.py": 3
- },
  "richtung:filter->framework": {
   "src/filter/docx/docx_dokument_leser.py": 1,
   "src/filter/odt/odt_dokument_leser.py": 1,
   "src/filter/odt/odt_modell_leser.py": 1,
   "src/filter/txt/txt_modell.py": 1
- },
- "richtung:framework->vcl_qt": {
-  "src/framework/dokumentverwaltung/ausgabe/vektor_bilder.py": 2
  },
  "richtung:vcl_basis->filter": {
   "src/vcl/rendering/seitenlayout/pdf_ausgabe.py": 1
@@ -895,9 +888,7 @@
   "src/vcl/qt/fenster/fenster/programmfenster.py": 4,
   "src/vcl/qt/rendering/formen/anzeige.py": 1,
   "src/vcl/qt/rendering/formen/bild_einfuegen.py": 1,
-  "src/vcl/qt/rendering/formen/bilddaten.py": 1,
   "src/vcl/qt/rendering/formen/einfuegen.py": 1,
-  "src/vcl/qt/rendering/formen/rendering.py": 1,
   "src/vcl/qt/rendering/formen/sprechblasen.py": 1,
   "src/vcl/qt/rendering/textfelder/deckblatt.py": 1,
   "src/vcl/qt/rendering/textfelder/formel_einfuegen.py": 1,

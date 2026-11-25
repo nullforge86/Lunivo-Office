@@ -47,6 +47,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "formular_einfuegen": ("formular", "einfuegen"),
     "hat_effekt": ("wordart", "hat_effekt"),
     "ist_leer": ("formular", "ist_leer"),
+    "ist_metafile_emf": ("vektorbilder", "ist_metafile_emf"),
+    "ist_metafile_wmf": ("vektorbilder", "ist_metafile_wmf"),
     "ist_verknuepft": ("freie_objekte", "ist_verknuepft"),
     "kann": ("smartart", "kann"),
     "kasten_umschalten": ("formular", "kasten_umschalten"),
@@ -60,6 +62,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "leuchten_vorgaben": ("wordart", "leuchten_vorgaben"),
     "level": ("smartart", "level"),
     "meta": ("formular", "meta"),
+    "metafile_masse_px": ("vektorbilder", "metafile_masse_px"),
+    "metafile_rgba": ("vektorbilder", "metafile_rgba"),
     "name_von": ("muster", "name_von"),
     "nur_formulardaten": ("formular", "nur_formulardaten"),
     "ohne_hilfsangaben": ("freie_objekte", "ohne_hilfsangaben"),
@@ -102,6 +106,8 @@ def __getattr__(name: str):
         from . import smartart as _datei
     elif datei == "tabellenzustand":
         from . import tabellenzustand as _datei
+    elif datei == "vektorbilder":
+        from . import vektorbilder as _datei
     elif datei == "wasserzeichen":
         from . import wasserzeichen as _datei
     elif datei == "wordart":

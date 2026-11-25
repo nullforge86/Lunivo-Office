@@ -1,76 +1,31 @@
-"""Vektorbilder aus Textprogrammen lesen: EMF und WMF (Windows-Metafiles) sowie SVG. Ausgewertet und gezeichnet wird vom Qt-freien Kern (``core/rendering/metafile.py``, ``svg.py``);
-Qt ist hier nur noch der Behälter (``QImage``) für das fertig gerasterte Bild und die Fläche, auf die es gelegt wird. Gebraucht vom Qt-Backend (``adapter/qt``) und von
-``editor/objekte/bilddaten.py``."""
+"""Vektorbilder aus Textprogrammen (EMF und WMF, Windows-Metafiles): erkennen, Größe bestimmen und vom Kern rastern lassen – ohne Qt.
+
+Ausgewertet und gezeichnet wird vom Kern (``core.layout.drucklayout.ausgabe.bild.metafile``); die Oberfläche legt das fertige Rasterbild nur
+auf ihre Zeichenfläche (``vcl.qt.rendering.formen.vektor_bilder``)."""
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QImage
-
-from core.geometrie import Rect
-from core.layout.drucklayout.ausgabe.bild import metafile as MF
-from core.layout.drucklayout.ausgabe.bild.metafile import MAX_SEITE_PX, ist_emf, ist_wmf, masse_px  # noqa: F401  (Namen der bisherigen Schnittstelle)
-from vcl.qt.rendering.formen import bilddaten as BD
+from core.layout.drucklayout.ausgabe.bild import metafile as _mf
 
 
-def _qimage(erg) -> QImage | None:
-    """``(breite, hoehe, RGBA)`` des Kerns als ``QImage``."""
+def ist_emf(blob: bytes) -> bool:
+    return bool(_mf.ist_emf(blob))
+
+
+def ist_wmf(blob: bytes) -> bool:
+    return bool(_mf.ist_wmf(blob))
+
+
+def masse_px(blob: bytes) -> tuple[float, float] | None:
+    """Die Größe, die das Metafile auf dem Blatt haben soll (96 dpi); ``None``, wenn sie sich nicht bestimmen lässt."""
+    m = _mf.masse_px(blob)
+    return None if m is None else (float(m[0]), float(m[1]))
+
+
+def metafile_rgba(blob: bytes, breite_px: int = 0, hoehe_px: int = 0) -> tuple[int, int, bytes] | None:
+    """Das EMF oder WMF gerastert: ``(breite, hoehe, RGBA)`` – in der angegebenen Größe oder aus dem Rahmen (doppelt so fein wie 96 dpi,
+    höchstens ``MAX_SEITE_PX``); ``None``, wenn es kein lesbares Metafile ist."""
+    erg = _mf.metafile_rgba(blob, breite_px, hoehe_px)
     if erg is None:
         return None
     b, h, roh = erg
-    return QImage(bytes(roh), b, h, b * 4, QImage.Format_RGBA8888).copy()
-
-
-def bild_lesen(blob: bytes) -> QImage:
-    """Ein eingebettetes Bild lesen: Pixelformate direkt, EMF/WMF über den Interpreter des Kerns (auch gepackt als EMZ/WMZ). Leeres QImage, wenn es sich nicht lesen lässt."""
-    if blob[:2] == b"\x1f\x8b":
-        try:
-            blob = BD.entpacken(blob)
-        except BD.BildFehler:
-            return QImage()
-    from vcl.qt.rendering.formen import bild_aus_daten
-    if ist_emf(blob) or ist_wmf(blob):                        # Metafile: zuerst als Vektor; leer gezeichnet → eingebettetes Bitmap (Rückfall)
-        img = _qimage(MF.metafile_rgba(blob)) or QImage()
-        if not img.isNull() and not _leer(img):
-            BD.merken(img, blob)
-            return img
-        roh = bild_aus_daten(blob)
-        if not roh.isNull():
-            return roh
-        if not img.isNull():
-            BD.merken(img, blob)
-        return img
-    return bild_aus_daten(blob)
-
-
-def _leer(img: QImage) -> bool:
-    """Ist das Bild ganz durchsichtig? (zur Probe auf 16 × 16 verkleinert)"""
-    klein = img.scaled(16, 16, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-    return all(klein.pixelColor(x, y).alpha() == 0 for x in range(16) for y in range(16))
-
-
-def emf_bild(blob: bytes, hoehe_px: int = 0, breite_px: int = 0) -> QImage | None:
-    """Das EMF gezeichnet in ein Bild (Größe: ``breite_px``/``hoehe_px`` oder aus dem Rahmen, doppelt so fein wie 96 dpi, höchstens ``MAX_SEITE_PX``); ``None``, wenn unlesbar."""
-    return _qimage(MF.metafile_rgba(blob, breite_px, hoehe_px)) if ist_emf(blob) else None
-
-
-def wmf_bild(blob: bytes, breite_px: int = 0, hoehe_px: int = 0) -> QImage | None:
-    return _qimage(MF.metafile_rgba(blob, breite_px, hoehe_px)) if ist_wmf(blob) else None
-
-
-def _auf_zeichner(blob: bytes, p, ziel: QRectF, zeichne) -> bool:
-    from vcl.qt.rendering.formen import kern_malen
-    gelungen = [False]
-
-    def los(z) -> None:
-        gelungen[0] = zeichne(blob, z, Rect(ziel.x(), ziel.y(), ziel.width(), ziel.height()))
-    kern_malen(p, ziel, los, rand=0.0)
-    return gelungen[0]
-
-
-def emf_zeichnen(blob: bytes, p, ziel: QRectF) -> bool:
-    """Das EMF als Vektorzeichnung in ``ziel`` legen (der Kern zeichnet in der Auflösung des Zeichners). ``False``, wenn es kein lesbares EMF ist."""
-    return ist_emf(blob) and MF._emf_kopf(blob) is not None and _auf_zeichner(blob, p, ziel, MF.emf_zeichnen)
-
-
-def wmf_zeichnen(blob: bytes, p, ziel: QRectF) -> bool:
-    return ist_wmf(blob) and MF._wmf_kopf(blob) is not None and _auf_zeichner(blob, p, ziel, MF.wmf_zeichnen)
+    return int(b), int(h), bytes(roh)

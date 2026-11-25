@@ -216,8 +216,8 @@ def anzeigegroesse(img: QImage) -> tuple[float, float]:
             g = _svg_groesse(r)
             return g.width(), g.height()
     if q is not None and q.format in ("emf", "wmf"):
-        from framework.dokumentverwaltung.ausgabe.vektor_bilder import masse_px
-        m = masse_px(q.daten)
+        from writer.funktionen.objekte import metafile_masse_px
+        m = metafile_masse_px(q.daten)
         if m is not None:
             return m
     return float(img.width()), float(img.height())
@@ -247,7 +247,7 @@ def zeichnen(p: QPainter, r: QRectF, img: QImage) -> None:
             rd.render(p, r)
             return
     if q is not None and q.format in ("emf", "wmf") and not q.nur_raster:
-        from framework.dokumentverwaltung.ausgabe import vektor_bilder as V
+        from vcl.qt.rendering.formen import vektor_bilder as V
         if (V.emf_zeichnen if q.format == "emf" else V.wmf_zeichnen)(q.daten, p, r):
             return
     p.drawImage(r, img)
@@ -286,7 +286,7 @@ def _aus_datei(pfad: str) -> QImage:
             blob = entpacken(f.read())
     except OSError:
         return QImage()
-    from framework.dokumentverwaltung.ausgabe.vektor_bilder import bild_lesen
+    from vcl.qt.rendering.formen.vektor_bilder import bild_lesen
     img = bild_lesen(blob)
     if img.isNull():
         img = QImage(pfad)                      # Rückfall: Qt entscheidet nach Dateiendung

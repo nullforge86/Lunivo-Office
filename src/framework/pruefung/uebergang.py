@@ -24,7 +24,7 @@ vcl.qt.fenster.befehle.hauptreiter.text_absatz vcl.qt.fenster.befehle.hauptreite
 vcl.qt.fenster.befehle.kontextreiter.diagrammtools
 vcl.qt.fenster.befehle.kontextreiter.formtools 
 vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools 
-vcl.qt.drucken.bild_export vcl.qt.drucken.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
+vcl.qt.drucken.bild_export vcl.qt.drucken.drucken 
 vcl.qt.eingabe.ki.ki_chat vcl.qt.eingabe.ki.ki_aktionen vcl.qt.eingabe.ki.ki_anfragen
 vcl.qt.eingabe.ki.ki_dauerbetrieb vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
 vcl.qt.widgets.menues.backstage.backstage_objektformat
