@@ -2,7 +2,7 @@
 from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
-from core.dokument.abschnitte.seite import PX_PER_MM, px_to_mm
+from writer.werte import px_zu_mm as px_to_mm, px_je_mm
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
 from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE, _Lineal
@@ -58,7 +58,7 @@ class LinealH(_Lineal):
         zahl, ticks = QColor(c["schrift"]), QColor(c["schrift"])
         zahl.setAlpha(225); ticks.setAlpha(170)
         z = self.e.zoom
-        feiner = PX_PER_MM * z >= 2.4                                       # jeder Millimeter nur, wenn er sich noch trennen lässt
+        feiner = px_je_mm() * z >= 2.4                                       # jeder Millimeter nur, wenn er sich noch trennen lässt
         k0, k1 = -int(pg.margin_left_mm), int(pg.width_mm - pg.margin_left_mm)
         for k in range(k0, k1 + 1):                                        # k = Millimeter von der linken Textkante
             x = m["links"] + self.px(k)
@@ -102,7 +102,7 @@ class LinealH(_Lineal):
 
     def _mm(self, x, name):
         pg = self.e.page
-        mm = (x - self._x0()) / (PX_PER_MM * self.e.zoom)
+        mm = (x - self._x0()) / (px_je_mm() * self.e.zoom)
         l0 = pg.margin_left_mm
         r0 = pg.width_mm - pg.margin_right_mm
         if name == "links":

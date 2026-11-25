@@ -82,7 +82,7 @@ class FormatvorlageWahl(QDialog):
 
     def __init__(self, parent=None, aktuell: str = ""):
         super().__init__(parent)
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         from vcl.qt.widgets.ribbon.band_leiste import STILE_KATALOG
         self.setWindowTitle("Formatvorlage suchen")
@@ -591,7 +591,7 @@ class SuchenFeld(QWidget):
 
 def _absatz_format(w: dict) -> dict:
     """Die geänderten Absatzwerte als Absatzformat des Dokumentenmodells (für „Ersetzen durch“): nur, was im Fenster geändert wurde."""
-    from core.dokument.abschnitte.seite import mm_to_px
+    from writer.werte import mm_zu_px as mm_to_px
     af: dict = {}
     if "ausr" in w:
         af["ausrichtung"] = w["ausr"]

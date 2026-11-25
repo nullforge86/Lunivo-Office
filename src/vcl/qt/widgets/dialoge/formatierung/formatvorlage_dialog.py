@@ -18,7 +18,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPushButton, QWidget
 
-from core.formatvorlagen.zeichen import stile
+from writer import vorlagenkatalog as stile
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.dialoge.formatierung.text_format import TextFormatLeiste, zeichne_absaetze, zu_zeichen
@@ -50,7 +50,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Formatvorlage ändern" if aendern else "Neue Formatvorlage")
         self.resize(*GROESSE_FENSTER_FORMATVORLAGE)
         self._farbe = (start or {}).get("farbe", "")
-        self._rs = {k: (start or {}).get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}      # Rahmen und Schattierung (kein Feld der Leiste)
+        self._rs = {k: (start or {}).get(k, stile.vorlage()[k]) for k in RAHMEN_FELDER}      # Rahmen und Schattierung (kein Feld der Leiste)
         v = _spalte("standard", self)
         namen = [n for n in (vorlagen if vorlagen is not None else stile.namen()) if n != aendern]
         self._bauen_eigenschaften(v, name, namen)
@@ -109,13 +109,13 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         """Beim Ändern einer vorhandenen Vorlage deren Werte übernehmen; liefert (Basis, Startwerte)."""
         aendern = self.aendern
         if aendern:
-            e = stile._NEU.get(aendern, {})
+            e = stile.eigene_angaben(aendern)
             basis, start = e.get("basis", ""), stile.definition(aendern)
             self.folge.setCurrentIndex(max(0, self.folge.findData(e.get("folge", ""))))
-            if aendern not in stile._NEU:                           # eingebaute Vorlagen haben weder Basis noch Folgevorlage
+            if not stile.ist_eigen(aendern):                           # eingebaute Vorlagen haben weder Basis noch Folgevorlage
                 self.basis.setEnabled(False); self.folge.setEnabled(False)
             self._farbe = start.get("farbe", "")
-            self._rs = {k: start.get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}
+            self._rs = {k: start.get(k, stile.vorlage()[k]) for k in RAHMEN_FELDER}
             self._taste = start.get("taste", "")
         return basis, start
 
@@ -161,7 +161,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
         if b:
             d = stile.definition(b)
             self._farbe = d.get("farbe", "")
-            self._rs = {k: d.get(k, stile.VORLAGE[k]) for k in RAHMEN_FELDER}
+            self._rs = {k: d.get(k, stile.vorlage()[k]) for k in RAHMEN_FELDER}
             self.leiste.setze(d)
         self._neu()
 

@@ -460,31 +460,31 @@ class SeiteBefehle:
     # Designs, Farben, Schriftarten, Effekte: Galerien wie in der Vorlage; die Werte stehen in editor/text/designs.py
     def menue_designsKlappe(self):
         from PySide6.QtCore import QSize
-        from core.formatvorlagen.zeichen import designs as D
+        from writer import vorlagenkatalog as D
         from vcl.qt.widgets.bausteine.symbole.medien.design_bildchen import design_zeichner
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(72, 50), hoehe_max=620)
-        for name, (schema, paar) in D.DESIGNS.items():
-            m.kachel(name, name, design_zeichner(D.FARBSCHEMEN[schema], D.SCHRIFTPAARE[paar][0]))
+        for name, (schema, paar) in D.designs().items():
+            m.kachel(name, name, design_zeichner(D.farbschemen()[schema], D.schriftpaare()[paar][0]))
         m.gewaehlt.connect(lambda n: self.designSetzen(None, n))
         return m
 
 
     def designSetzen(self, k=None, name="Lunivo"):
         """Design: Schrift der Überschriften und des Textes, Farbe der Überschriften — für das ganze Dokument (ein Schritt)."""
-        from core.formatvorlagen.zeichen import designs as D
-        if self.ed and name in D.DESIGNS:
+        from writer import vorlagenkatalog as D
+        if self.ed and name in D.designs():
             d = D.design(name)
             self.ed.apply_design(d["text"], d["kopf"], d["farbe"])
 
 
     def menue_farbenKlappe(self):
         from PySide6.QtCore import QSize
-        from core.formatvorlagen.zeichen import designs as D
+        from writer import vorlagenkatalog as D
         from vcl.qt.widgets.bausteine.symbole.medien.design_bildchen import farbreihe_zeichner
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Farbschemen", spalten=1, groesse=QSize(310, 24), hoehe_max=620)
-        for name, farben in D.FARBSCHEMEN.items():
+        for name, farben in D.farbschemen().items():
             m.kachel(name, name, farbreihe_zeichner(farben, name))
         m.trenner()
         m.fuss("Benutzerdefinierte Farbe …", self._farbe_eigen)
@@ -493,8 +493,8 @@ class SeiteBefehle:
 
 
     def farbschemaSetzen(self, k=None, name="Lunivo"):
-        from core.formatvorlagen.zeichen import designs as D
-        if self.ed and name in D.FARBSCHEMEN:
+        from writer import vorlagenkatalog as D
+        if self.ed and name in D.farbschemen():
             self.ed.apply_design(None, None, D.ueberschrift_farbe(name))
 
 
@@ -506,30 +506,30 @@ class SeiteBefehle:
 
     def menue_schriftartenKlappe(self):
         from PySide6.QtCore import QSize
-        from core.formatvorlagen.zeichen import designs as D
+        from writer import vorlagenkatalog as D
         from vcl.qt.widgets.bausteine.symbole.medien.design_bildchen import schriftpaar_zeichner
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=1, groesse=QSize(290, 70), hoehe_max=640)
-        for name, (kopf, text) in D.SCHRIFTPAARE.items():
+        for name, (kopf, text) in D.schriftpaare().items():
             m.kachel(name, f"{name}: Überschriften {kopf}, Text {text}", schriftpaar_zeichner(name, kopf, text))
         m.gewaehlt.connect(lambda n: self.schriftpaarSetzen(None, n))
         return m
 
 
     def schriftpaarSetzen(self, k=None, name="Lunivo"):
-        from core.formatvorlagen.zeichen import designs as D
-        if self.ed and name in D.SCHRIFTPAARE:
-            kopf, text = D.SCHRIFTPAARE[name]
+        from writer import vorlagenkatalog as D
+        if self.ed and name in D.schriftpaare():
+            kopf, text = D.schriftpaare()[name]
             self.ed.apply_design(text, kopf, None)
 
 
     def menue_effekteKlappe(self):
         from PySide6.QtCore import QSize
-        from core.formatvorlagen.zeichen import designs as D
+        from writer import vorlagenkatalog as D
         from vcl.qt.widgets.bausteine.symbole.medien.design_bildchen import effekt_zeichner
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, spalten=4, groesse=QSize(112, 60), beschriftet=True, hoehe_max=640)
-        for name, fx in D.EFFEKTE.items():
+        for name, fx in D.effekte().items():
             m.kachel(name, name, effekt_zeichner(fx))
         m.gewaehlt.connect(lambda n: self.effektSetzen(None, n))
         return m
@@ -538,13 +538,13 @@ class SeiteBefehle:
     def effektSetzen(self, k=None, name="Schlicht"):
         """Effekt an die markierte Form bzw. das markierte freie Bild; ist nichts markiert, an alle im Dokument."""
         from vcl.qt.rendering import formen as BL
-        from core.formatvorlagen.zeichen import designs as D
-        if not self.ed or name not in D.EFFEKTE:
+        from writer import vorlagenkatalog as D
+        if not self.ed or name not in D.effekte():
             return
         z = BL.bildlayout_ziel(self.ed)
         if z is not None and z[0] == "frei":
-            BL.format_setzen(self.ed, z, fx=dict(D.EFFEKTE[name]))
-        elif not BL.fx_alle(self.ed, D.EFFEKTE[name]):
+            BL.format_setzen(self.ed, z, fx=dict(D.effekte()[name]))
+        elif not BL.fx_alle(self.ed, D.effekte()[name]):
             self.w.statusBar().showMessage("Effekte gelten für Formen und frei liegende Bilder — im Dokument gibt es keine.", 5000)
 
 

@@ -5,7 +5,7 @@ Die Knotenmaße kommen aus dem Zeichnen (``SA.knoten_rechtecke``) und sind nur a
 das Layout bestimmt sie. Das Band zeigt sie schreibgeschützt."""
 from __future__ import annotations
 
-from core.dokument.abschnitte.seite import px_to_mm
+from writer.werte import px_zu_mm as px_to_mm
 
 
 class SmartArtKnotenZustand:

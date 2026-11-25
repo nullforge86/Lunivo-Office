@@ -10,7 +10,7 @@ from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
 from framework.schnittstellen.version import __version__
-from core.formatvorlagen.zeichen import stile
+from writer import vorlagenkatalog as stile
 from framework.schnittstellen.einstellungen import Einstellungen
 from vcl.qt.eingabe.ki_dienst import KIDienst
 from framework.befehle.korrektur.anbieter import KorrekturEinstellungenAnbieter

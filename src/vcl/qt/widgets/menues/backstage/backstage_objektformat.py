@@ -94,7 +94,7 @@ class BackstageObjektformatBaustein:
         from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.rendering import diagramme as T
         from vcl.qt.rendering import formen as FO
-        from core.dokument.abschnitte.seite import px_to_mm
+        from writer.werte import px_zu_mm as px_to_mm
         z = FO.frei_objekt_ziel(e) if e is not None else None
         d = FO.daten_lesen(e, "diagramm") if e is not None else None
         if d is None or z is None:
@@ -126,7 +126,7 @@ class BackstageObjektformatBaustein:
         def anwenden(angaben: dict):
             from vcl.qt.rendering import formen as BL
             from vcl.qt.rendering import formen as FO
-            from core.dokument.abschnitte.seite import mm_to_px
+            from writer.werte import mm_zu_px as mm_to_px
             angaben = dict(angaben)
             ed = self.current_editor()
             obj, gr, dreh = angaben.pop("objekt", None), angaben.pop("groesse", None), angaben.pop("dreh", None)

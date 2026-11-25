@@ -32,7 +32,7 @@ ANZEIGEN = (("gueltig", "Gültige Formatvorlagen"), ("verwendet", "Verwendete Fo
 
 def vorlagen_namen(art: str = "gueltig", ed=None) -> list[str]:
     """Die Namen für die Liste: gültige (Katalog und eigene), verwendete (im Dokument) oder alle."""
-    from core.formatvorlagen.zeichen import stile
+    from writer import vorlagenkatalog as stile
     from vcl.qt.widgets.ribbon.band_leiste import STILE_KATALOG
     alle = STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]
     if art != "verwendet" or ed is None:
@@ -43,7 +43,7 @@ def vorlagen_namen(art: str = "gueltig", ed=None) -> list[str]:
 
 def vorlagen_schrift(name: str, vorschau: bool = True) -> QFont:
     """Die Schrift, in der eine Vorlage in Listen erscheint (Größe gedämpft, damit die Liste ruhig bleibt)."""
-    from core.formatvorlagen.zeichen import stile
+    from writer import vorlagenkatalog as stile
     f = QFont()
     if not vorschau:
         return f
@@ -110,7 +110,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         return "Standard" if n in ("Fließtext", "") else n
 
     def fuellen(self) -> None:
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         jetzt = self._stil_jetzt()
         namen = vorlagen_namen(self.anzeigen.currentData(), self.get_editor())
         self.liste.clear(); self.aktuell.clear()

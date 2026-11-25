@@ -20,7 +20,8 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
 from vcl.qt.rendering.formen import bild_aus_datei
 from vcl.qt.rendering.textfelder import wasserzeichen as WZ
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-from core.dokument.abschnitte.seite import PageSettings, mm_to_px
+from core.dokument.abschnitte.seite import PageSettings
+from writer.werte import mm_zu_px as mm_to_px
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout

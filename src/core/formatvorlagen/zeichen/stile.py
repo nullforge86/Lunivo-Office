@@ -46,6 +46,11 @@ def ist_eigen(name: str) -> bool:
     return name in _NEU
 
 
+def eigene_angaben(name: str) -> dict:
+    """Die selbst gesetzten Felder einer eigenen Vorlage (leer bei eingebauten)."""
+    return dict(_NEU.get(name, {}))
+
+
 def laden_neu(text: str) -> None:
     global _NEU
     try:

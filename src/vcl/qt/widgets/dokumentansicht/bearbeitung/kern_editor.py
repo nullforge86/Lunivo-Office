@@ -7,14 +7,14 @@ from framework.sitzungen.altlast import zugang_fuer_editor
 from writer import hauptfenster as _dokumente
 from writer.funktionen import bearbeiten as _bearbeiten
 from core.suche.textsuche.suche import offset_zu_position
-from core.geometrie import mm_to_px
+from writer.werte import mm_zu_px as mm_to_px
 from core.layout.drucklayout import formatwerte as F
 from vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht import DokumentAnsicht
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoten import FreieBilderKnotenMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_objekte import KernObjekte
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle import KernBefehle
-from core.formatvorlagen.zeichen import stile
+from writer import vorlagenkatalog as stile
 from vcl.qt.widgets.bausteine.farben.farben import TABELLENRAND_SCHWARZ
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_cursor import KernCursor
 
@@ -22,7 +22,7 @@ from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_cursor import KernCursor
 log = logging.getLogger(__name__)
 
 
-STYLES = dict.fromkeys(stile.NAMEN)         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
+STYLES = dict.fromkeys(stile.eingebaute_namen())         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
 
 
 EINFUEGE_MODI = ["Quellformatierung beibehalten", "Zielformatierung verwenden", "Nur Text"]

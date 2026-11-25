@@ -20,7 +20,7 @@ class TextVorlagenBefehle:
     def _taste_belegt(self, taste: str, eigene: str | None = None) -> str | None:
         """Name dessen, was die Tastenkombination schon hat (Befehl im Fenster oder andere Vorlage), sonst None."""
         from PySide6.QtGui import QAction, QKeySequence
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         seq = QKeySequence(taste)
         for a in self.w.findChildren(QAction):
             if any(s == seq for s in a.shortcuts()):
@@ -32,7 +32,7 @@ class TextVorlagenBefehle:
 
     def neueFormatvorlage(self, k=None):
         """Fenster „Neue Formatvorlage“ (Baukasten); die Werte kommen vom Absatz an der Schreibmarke."""
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog import FormatvorlageDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         d = FormatvorlageDialog(self.w, start=(self.ed.stil_aus_auswahl() if self.ed else None), belegt=self._taste_belegt,
@@ -54,7 +54,7 @@ class TextVorlagenBefehle:
 
     def formatvorlageAendern(self, name: str):
         """Rechtsklick auf eine Vorlage in der Galerie ▸ Ändern …: dasselbe Fenster, der Name steht fest."""
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog import FormatvorlageDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         d = FormatvorlageDialog(self.w, aendern=name, belegt=self._taste_belegt, standard_tab_mm=self.ed.standard_tab_mm() if self.ed else None)
@@ -78,7 +78,7 @@ class TextVorlagenBefehle:
         self._stile_fertig()
 
     def formatvorlageLoeschen(self, name: str):
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         if not stile.ist_eigen(name):
             return
         if QMessageBox.question(self.w, "Formatvorlage löschen", f"„{name}“ löschen? Absätze behalten ihr Aussehen, gelten aber wieder als „Standard“.") != QMessageBox.Yes:

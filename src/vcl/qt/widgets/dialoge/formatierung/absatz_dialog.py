@@ -49,7 +49,7 @@ def aus_absatz(af: dict, dokument) -> dict:
     ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
     from core.layout.drucklayout import formatwerte as F
     from core.formatierung.absatz import absatzopt
-    from core.dokument.abschnitte.seite import px_to_mm
+    from writer.werte import px_zu_mm as px_to_mm
     from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import aus_absatz as tabs_aus_absatz
     art, wert = F.zeilenabstand(af)
     links, rechts, erste = F.einzuege(af)

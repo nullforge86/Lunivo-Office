@@ -38,7 +38,7 @@ STILE_KATALOG = ["Standard", "Überschrift 1", "Überschrift 2", "Überschrift 3
 
 def _kacheln(m, aktuell: str | None, mehr: bool) -> None:
     """Je Formatvorlage eine Kachel: in ihrer Schrift und Farbe, mit Hinweis; „Weitere Stile“ aus blendet die selten gebrauchten aus."""
-    from core.formatvorlagen.zeichen import stile
+    from writer import vorlagenkatalog as stile
     selten = {f"Überschrift {i}" for i in range(5, 10)}
     for name in STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]:
         if not mehr and name in selten and name != aktuell:
@@ -84,7 +84,7 @@ class BandStileBaustein:
 
     def _stile_popup(self, unter: QWidget) -> None:
         """Alle Formatvorlagen als Galerie (Pfeil rechts neben der Reihe): Probe in der Vorlage, Name darunter; Überfahren zeigt live."""
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.bausteine import GalerieAuswahl
         w = self.b.w
         m = GalerieAuswahl(w, titel="Stile")
@@ -115,7 +115,7 @@ class BandStileBaustein:
 
     def stile_aktualisieren(self) -> None:
         """Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/text/stile.py)."""
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import Ueberfahren
         g = self._stile_gitter
         alt = {id(k) for k in self._stil_knoepfe}

@@ -17,20 +17,20 @@ vcl.qt.rendering.textfelder.wasserzeichen vcl.qt.rendering.formen.muster vcl.qt.
 vcl.qt.rendering.wordart.textfx vcl.qt.rendering.wordart.textfx_vorgaben vcl.qt.rendering.wordart.textfx_zeichen vcl.qt.rendering.formen.textur vcl.qt.eingabe.barrierefreiheit
 vcl.qt.eingabe.korrektur_dienst
 
-vcl.qt.fenster.befehle.kontextreiter.smartart_knoten_zustand 
+
 vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte 
 vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite 
-vcl.qt.fenster.befehle.hauptreiter.text_vorlagen vcl.qt.fenster.befehle.hauptreiter.text_zeichen
+vcl.qt.fenster.befehle.hauptreiter.text_zeichen
 vcl.qt.fenster.befehle.kontextreiter.diagrammtools
 
 vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools 
 vcl.qt.drucken.drucken 
 vcl.qt.eingabe.ki.ki_chat 
 vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
-vcl.qt.widgets.menues.backstage.backstage_objektformat
+
 vcl.qt.fenster.dateien.dateien_export vcl.qt.fenster.dateien.dateien_oeffnen vcl.qt.fenster.dateien.dateien_speichern
 vcl.qt.fenster.dateien.dateien_vorlagen vcl.qt.fenster.fenster.anwendung vcl.qt.fenster.fenster.dokument_sync
-vcl.qt.fenster.fenster.programmfenster vcl.qt.rendering.formen.anzeige vcl.qt.rendering.formen.geometrie
+vcl.qt.rendering.formen.anzeige vcl.qt.rendering.formen.geometrie
 vcl.qt.rendering.formen.pfad vcl.qt.rendering.formen.rendering vcl.qt.widgets.bausteine.rahmen.linien vcl.qt.widgets.bausteine.symbole.bauteile.mini_leiste
 vcl.qt.widgets.bausteine.symbole.bauteile.symbole vcl.qt.widgets.seitenleisten.chat.chat_blase 
 
@@ -60,11 +60,11 @@ vcl.qt.widgets.dialoge.formatierung.rahmen_seite
 
 
 vcl.qt.widgets.dialoge.tabellen_eigenschaften_dialog
-vcl.qt.widgets.dokumentansicht.ansicht.lineal_h vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen vcl.qt.widgets.dokumentansicht.ansicht.lineal_v
+vcl.qt.widgets.dokumentansicht.ansicht.lineal_h 
 vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel
 vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
-vcl.qt.widgets.bausteine.symbole.medien.seiten_bildchen vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
-vcl.qt.widgets.seitenleisten.vorlagen.formatvorlagen_bereich vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_galerie vcl.qt.widgets.dialoge.dokument_dialoge
+vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
+vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_galerie vcl.qt.widgets.dialoge.dokument_dialoge
 
 vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster 
 vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster 

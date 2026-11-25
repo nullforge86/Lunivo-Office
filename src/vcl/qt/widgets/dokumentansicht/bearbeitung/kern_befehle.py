@@ -14,7 +14,7 @@ from PySide6.QtCore import Qt
 from core.suche.textsuche.suche import offset_zu_position
 from core.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, ListenEbene, Position
 from core.listen.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
-from core.geometrie import mm_to_px, px_to_mm
+from writer.werte import mm_zu_px as mm_to_px, px_zu_mm as px_to_mm
 from writer.funktionen import bearbeiten as _bearbeiten
 from core.layout.drucklayout import formatwerte as F
 
@@ -224,7 +224,7 @@ class KernBefehle:
     def stil_tasten(self) -> None:
         """Tastenkombinationen der Formatvorlagen (``taste`` im Katalog) auf der Zeichenfläche setzen."""
         from PySide6.QtGui import QKeySequence, QShortcut
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         for k in getattr(self, "_stil_kuerzel", []):
             k.setParent(None)
             k.deleteLater()

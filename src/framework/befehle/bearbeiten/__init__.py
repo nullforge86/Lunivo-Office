@@ -5,17 +5,40 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "Angabe": ("vorlagenkatalog", "Angabe"),
     "BearbeitenBefehle": ("befehle", "BearbeitenBefehle"),
     "ELEMENTE": ("gehe_zu", "ELEMENTE"),
+    "Katalogwert": ("formatvorlagen", "Katalogwert"),
+    "MENUE": ("wortextras", "MENUE"),
+    "Tabstopp": ("formatvorlagen", "Tabstopp"),
+    "aendern": ("vorlagenkatalog", "aendern"),
+    "als_json": ("vorlagenkatalog", "als_json"),
+    "als_json_neu": ("vorlagenkatalog", "als_json_neu"),
+    "anlegen": ("vorlagenkatalog", "anlegen"),
+    "definition": ("vorlagenkatalog", "definition"),
+    "design": ("vorlagenkatalog", "design"),
+    "design_namen": ("vorlagenkatalog", "design_namen"),
+    "effekte": ("vorlagenkatalog", "effekte"),
+    "eigene_angaben": ("vorlagenkatalog", "eigene_angaben"),
     "eingabe_titel": ("gehe_zu", "eingabe_titel"),
+    "eingebaute_namen": ("vorlagenkatalog", "eingebaute_namen"),
+    "farbschemen": ("vorlagenkatalog", "farbschemen"),
     "formatvorlage_abgleichen": ("formatvorlagen", "formatvorlage_abgleichen"),
-    "formatvorlage_aus_auswahl": ("formatvorlagen", "formatvorlage_aus_auswahl"),
     "formatvorlage_anwenden": ("formatvorlagen", "formatvorlage_anwenden"),
+    "formatvorlage_aus_auswahl": ("formatvorlagen", "formatvorlage_aus_auswahl"),
     "gehe_zu_element": ("gehe_zu", "gehe_zu_element"),
     "hat_elemente": ("gehe_zu", "hat_elemente"),
+    "ist_eigen": ("vorlagenkatalog", "ist_eigen"),
+    "laden": ("vorlagenkatalog", "laden"),
+    "laden_neu": ("vorlagenkatalog", "laden_neu"),
+    "loeschen": ("vorlagenkatalog", "loeschen"),
+    "namen": ("vorlagenkatalog", "namen"),
+    "pruefe_name": ("vorlagenkatalog", "pruefe_name"),
+    "schriftpaare": ("vorlagenkatalog", "schriftpaare"),
     "tabs_als_text": ("formatvorlagen", "tabs_als_text"),
     "tabs_aus_text": ("formatvorlagen", "tabs_aus_text"),
-    "MENUE": ("wortextras", "MENUE"),
+    "ueberschrift_farbe": ("vorlagenkatalog", "ueberschrift_farbe"),
+    "vorlage": ("vorlagenkatalog", "vorlage"),
     "wortextra_ausfuehren": ("wortextras", "wortextra_ausfuehren"),
 }
 
@@ -30,6 +53,8 @@ def __getattr__(name: str):
         from . import formatvorlagen as _datei
     elif datei == "gehe_zu":
         from . import gehe_zu as _datei
+    elif datei == "vorlagenkatalog":
+        from . import vorlagenkatalog as _datei
     elif datei == "wortextras":
         from . import wortextras as _datei
     else:

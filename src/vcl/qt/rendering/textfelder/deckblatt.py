@@ -5,7 +5,7 @@ from vcl.qt.rendering.formen import rect_from_qt
 from core.dokument.dokument import Auswahl, Position
 from core.geometrie import Rect
 from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-from core.dokument.abschnitte.seite import mm_to_px
+from writer.werte import mm_zu_px as mm_to_px
 from core.dokument.abschnitte.deckblatt_vorlagen import _grafik, _schrift, gestaltung, zeichnen_mit
 from writer.funktionen.objekte import deckblatt_entfernen
 

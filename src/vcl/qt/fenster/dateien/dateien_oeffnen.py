@@ -6,7 +6,7 @@ import os
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QMessageBox
 
-from core.formatvorlagen.zeichen import stile
+from writer import vorlagenkatalog as stile
 from core.dokument.abschnitte.seite import PageSettings
 from core.dokument.bericht import DocumentIOError, IOReport, PasswortNoetig
 from framework.dokumentverwaltung.dateizugriff import dateiformate as formats

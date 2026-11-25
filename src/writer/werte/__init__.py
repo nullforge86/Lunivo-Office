@@ -6,6 +6,9 @@ from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
     "grundfarben": ("farben", "grundfarben"),
+    "mm_zu_px": ("einheiten", "mm_zu_px"),
+    "px_je_mm": ("einheiten", "px_je_mm"),
+    "px_zu_mm": ("einheiten", "px_zu_mm"),
     "unveraenderlich": ("werte", "unveraenderlich"),
 }
 
@@ -14,7 +17,9 @@ __all__ = sorted(_NAMEN)
 
 def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
-    if datei == "farben":
+    if datei == "einheiten":
+        from . import einheiten as _datei
+    elif datei == "farben":
         from . import farben as _datei
     elif datei == "werte":
         from . import werte as _datei

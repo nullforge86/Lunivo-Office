@@ -6,7 +6,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtGui import QImage, QPainter
 
-from core.geometrie import mm_to_px
+from writer.werte import mm_zu_px as mm_to_px
 from core.layout.drucklayout.ausgabe import DokumentRenderer
 from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
 

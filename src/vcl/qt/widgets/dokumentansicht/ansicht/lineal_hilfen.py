@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPoint
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QWidget
-from core.dokument.abschnitte.seite import PX_PER_MM
+from writer.werte import px_je_mm
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_LINEAL_PX
 
@@ -28,7 +28,7 @@ class _Lineal(QWidget):
         return self.e.ansicht.mapTo(self.tab.viewport(), QPoint(0, 0))
 
     def px(self, mm: float) -> float:
-        return mm * PX_PER_MM * self.e.zoom
+        return mm * px_je_mm() * self.e.zoom
 
     def farben(self) -> dict:
         pal = self.palette()

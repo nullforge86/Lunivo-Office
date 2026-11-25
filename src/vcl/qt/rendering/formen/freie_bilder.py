@@ -198,7 +198,7 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
 # ---- Alle Bilder eines Blattes -----------------------------------------------------------------------------------------------
 def versatz_fuer(a: dict, r: QRectF, page, n: int) -> dict:
     """Die Angaben ``xh``/``yv`` (ohne Ausrichtung), mit denen das Bild im Rechteck ``r`` steht — zum Verschieben und Verändern der Größe."""
-    from core.dokument.abschnitte.seite import mm_to_px
+    from writer.werte import mm_zu_px as mm_to_px
     bw, bh = mm_to_px(page.width_mm), mm_to_px(page.height_mm)
     ml, mt = mm_to_px(page.margin_left_mm), mm_to_px(page.margin_top_mm)
     null = dict(a, ah="", av="", xh=0.0, yv=0.0)

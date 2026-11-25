@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QImage
 
-from core.geometrie import mm_to_px, px_to_mm
+from writer.werte import mm_zu_px as mm_to_px, px_zu_mm as px_to_mm
 from vcl.qt.rendering.formen import freie_bilder as FB
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 

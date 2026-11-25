@@ -2,7 +2,7 @@
 from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen
-from core.dokument.abschnitte.seite import PX_PER_MM
+from writer.werte import px_je_mm
 from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE, _Lineal
 
 
@@ -41,7 +41,7 @@ class LinealV(_Lineal):
         self._schrift(p)
         zahl, ticks = QColor(c["schrift"]), QColor(c["schrift"])
         zahl.setAlpha(225); ticks.setAlpha(170)
-        feiner = PX_PER_MM * self.e.zoom >= 2.4
+        feiner = px_je_mm() * self.e.zoom >= 2.4
         k0, k1 = -int(pg.margin_top_mm), int(pg.height_mm - pg.margin_top_mm)
         for k in range(k0, k1 + 1):                                        # k = Millimeter von der oberen Textkante
             y = t + self.px(k)
@@ -70,7 +70,7 @@ class LinealV(_Lineal):
     def mouseMoveEvent(self, ev):
         if self._zieh:
             pg = self.e.page
-            mm = (ev.position().y() - self._o()) / (PX_PER_MM * self.e.zoom)
+            mm = (ev.position().y() - self._o()) / (px_je_mm() * self.e.zoom)
             if self._zieh == "oben":
                 self._wert = max(0.0, min(mm, pg.height_mm - pg.margin_bottom_mm - 40))
             else:

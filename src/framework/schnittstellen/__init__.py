@@ -20,6 +20,9 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "SmartArtLayout": ("smartart", "SmartArtLayout"),
     "Sprechblase": ("sprechblasen", "Sprechblase"),
     "VorschauPort": ("vorschau", "VorschauPort"),
+    "mm_zu_px": ("einheiten", "mm_zu_px"),
+    "px_je_mm": ("einheiten", "px_je_mm"),
+    "px_zu_mm": ("einheiten", "px_zu_mm"),
 }
 
 __all__ = sorted(_NAMEN)
@@ -31,6 +34,8 @@ def __getattr__(name: str):
         from . import aenderungs_port as _datei
     elif datei == "dokument":
         from . import dokument as _datei
+    elif datei == "einheiten":
+        from . import einheiten as _datei
     elif datei == "einstellungen":
         from . import einstellungen as _datei
     elif datei == "seiten_port":

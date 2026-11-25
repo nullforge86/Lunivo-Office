@@ -21,6 +21,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "anlegen": ("stile", "anlegen"),
     "definition": ("stile", "definition"),
     "design": ("designs", "design"),
+    "eigene_angaben": ("stile", "eigene_angaben"),
     "ist_eigen": ("stile", "ist_eigen"),
     "key_zu_name": ("stile", "key_zu_name"),
     "laden": ("stile", "laden"),

@@ -15,7 +15,8 @@ from vcl.qt.rendering.formen import QtRenderBackend
 from core.dokument import Position
 from core.dokument.dokument import Auswahl
 from core.bearbeitung import Bearbeitungssitzung
-from core.geometrie import Point, mm_to_px
+from core.geometrie import Point
+from writer.werte import mm_zu_px as mm_to_px
 from core.layout import LayoutEngine, LayoutErgebnis
 from core.layout.drucklayout import formatwerte as F, schreibmarke as SM
 from core.layout.drucklayout.seitenlayout import BLATT_ABSTAND_PX

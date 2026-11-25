@@ -52,7 +52,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.position = _Positionen(); ug.breit(self.position)
         self.norm = UmbruchSchalter("Nummerieren nach Norm")
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(Keine Formatvorlage)", "")
-        from core.formatvorlagen.zeichen import stile
+        from writer import vorlagenkatalog as stile
         for n in stile.namen():
             self.vorlage.addItem(n, n)
         self.danach = Auswahlfeld()

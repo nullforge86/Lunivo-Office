@@ -8,7 +8,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 
 from core.suche.textsuche.suche import offset_zu_position
-from core.geometrie import mm_to_px
+from writer.werte import mm_zu_px as mm_to_px
 from core.layout.drucklayout import schreibmarke as SM
 from vcl.qt.rendering import formen as SB
 from writer.funktionen.ansicht import sprechblasen as SW

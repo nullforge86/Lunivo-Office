@@ -169,7 +169,7 @@ class TabellenFormatBefehle:
 
     def tabelleMasseLesen(self):
         """(Breite der Spalte, Höhe der Zeile) der Schreibmarke in mm für die Zahlenfelder des Bandes; ``None`` außerhalb einer Tabelle."""
-        from core.geometrie import px_to_mm
+        from writer.werte import px_zu_mm as px_to_mm
         e, c, t = self._tab()
         if not t:
             return None
