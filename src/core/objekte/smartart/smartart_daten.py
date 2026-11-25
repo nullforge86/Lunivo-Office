@@ -301,10 +301,9 @@ def neue_daten(eintrag=None, farben: str = "Blau") -> dict:
 def einfuegen(ed, daten) -> None:
     """Fügt das SmartArt als freies Objekt ein (``editor/objekte/frei_objekt.py``): Rahmen, Griffe und Schnellleiste wie bei WordArt. ``daten`` = Daten
     (``layout``, ``text`` …), ein Eintrag aus ``LAYOUT_KATALOG`` oder dessen Schlüssel."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
     if not isinstance(daten, dict) or ("muster" in daten and "schluessel" in daten):
         daten = neue_daten(daten)
-    FO.einfuegen(ed, "smartart", dict(daten))
+    ed.frei_einfuegen("smartart", dict(daten))
 
 
 def _inline_daten(ed) -> dict | None:
@@ -314,8 +313,7 @@ def _inline_daten(ed) -> dict | None:
 
 def daten_der_auswahl(ed) -> dict | None:
     """Daten des gewählten SmartArt: zuerst das freie Objekt, sonst ein älteres Bild im Text."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
-    d = FO.daten_lesen(ed, "smartart")
+    d = ed.frei_daten_lesen("smartart")
     return d if d is not None else _inline_daten(ed)
 
 
@@ -335,19 +333,17 @@ def _text_gegen_knoten(ed, neu: dict) -> None:
 # ---- Knoten im gewählten SmartArt (Auswahl, Treffer, Text, Befehle) --------------------------------------------------------------------
 def knoten_gewaehlt(ed) -> str | None:
     """Id des gewählten Knotens des gewählten SmartArt (freies Objekt) oder None."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
-    d = FO.daten_lesen(ed, "smartart")
+    d = ed.frei_daten_lesen("smartart")
     a = d.get("auswahl") if d else None
     return a if a and _index(knoten_von(d), a) is not None else None
 
 
 def knoten_waehlen(ed, ident) -> bool:
     """Knoten wählen (None: Auswahl aufheben). Das Bild wird nicht neu gezeichnet."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
-    d = FO.daten_lesen(ed, "smartart")
+    d = ed.frei_daten_lesen("smartart")
     if d is None or (ident and _index(knoten_von(d), ident) is None):
         return False
-    return FO.daten_still(ed, "smartart", auswahl=ident or None)
+    return ed.frei_daten_still("smartart", auswahl=ident or None)
 
 
 def knoten_text(ed, ident) -> str | None:

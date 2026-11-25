@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import json
 import os
-from system.plattform import ressourcen_pfade as paths
-from system.plattform import pfade
+from core.dokument import orte
 import re
 
 
@@ -19,7 +18,7 @@ LUECKE_FARBE = "#fff3bf"
 
 
 def muster() -> list[dict]:
-    pfad = os.path.join(paths.RESSOURCEN, "vorlagenmuster.json")
+    pfad = os.path.join(orte.ressourcen(), "vorlagenmuster.json")
     with open(pfad, encoding="utf-8") as fh:
         return json.load(fh)
 
@@ -81,7 +80,7 @@ ENDUNGEN = (".docx", ".dotx", ".odt", ".ott", ".txt")
 
 
 def vorlagenordner(settings) -> str:
-    return settings.get("vorlagen/ordner", "") or pfade.vorlagen_dir()
+    return settings.get("vorlagen/ordner", "") or orte.vorlagen_dir()
 
 
 def rubriken(ordner: str) -> tuple[dict[str, list[str]], list[str]]:

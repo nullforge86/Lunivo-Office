@@ -12,7 +12,7 @@ from core.dokument.abschnitte.deckblatt_vorlagen import _grafik, _schrift, entfe
 def zeichnen(p, name: str, r, mit_text: bool = True) -> None:
     """Gestaltung ``name`` auf das Blatt ``r`` (QPainter, QRectF): für die Galerie."""
     from vcl.qt.rendering.formen.anzeige import kern_malen
-    kern_malen(p, r, lambda z: zeichnen_mit(z, name, rect_from_qt(r), mit_text))                  # der Kern zeichnet, Qt legt nur das fertige Bild auf
+    kern_malen(p, r, lambda z: zeichnen_mit(z, name, rect_from_qt(r), mit_text, standard_engine()))                  # der Kern zeichnet, Qt legt nur das fertige Bild auf
 
 
 def grafik_bild(name: str, breite_px: int, hoehe_px: int) -> QImage:

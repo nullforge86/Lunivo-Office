@@ -6,7 +6,6 @@ from core.dokument.dokument import Auswahl, Position
 from core.geometrie import Point, Rect
 from core.layout.drucklayout.ausgabe import LinearGradient, RadialGradient, RenderBackend, Style, rgba
 from core.textsatz import FontSpec, TextLayoutEngine
-from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
 
 
 ARTIKEL, FIRMA, LEBENSLAUF, ARBEIT = "Artikel", "Firma", "Lebenslauf", "Abschlussarbeit"
@@ -305,8 +304,7 @@ def zeichnen_mit(b: RenderBackend, name: str, r: Rect, mit_text: bool = True, en
     b.push_state()
     b.draw_rect(r, _stil("#ffffff"))
     _grafik(b, name, r)
-    if mit_text:
-        engine = engine or standard_engine()
+    if mit_text:                                                      # die Textsatz-Maschine bringt der Aufrufer mit (``engine``)
         for f in g.felder:
             s = _schrift(f, r.height if not quer else r.width, quer)
             m = engine.font_metrics(s)

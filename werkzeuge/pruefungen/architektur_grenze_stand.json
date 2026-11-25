@@ -124,23 +124,6 @@
  "qt_ausserhalb_vcl_qt": {
   "src/framework/dokumentverwaltung/ausgabe/vektor_bilder.py": 3
  },
- "qt_transitiv": {
-  "src/core/objekte/formen/formen_daten.py": 1,
-  "src/core/objekte/smartart/smartart_daten.py": 1
- },
- "richtung:core->framework": {
-  "src/core/dokument/abschnitte/deckblatt_vorlagen.py": 1,
-  "src/core/objekte/formen/sprechblasen_modell.py": 1
- },
- "richtung:core->system": {
-  "src/core/dokument/vorlagen.py": 2,
-  "src/core/formatierung/schrift/datenbank.py": 1,
-  "src/core/korrektur/rechtschreibung/pruefung_hilfen.py": 1
- },
- "richtung:core->vcl_qt": {
-  "src/core/objekte/formen/formen_daten.py": 4,
-  "src/core/objekte/smartart/smartart_daten.py": 4
- },
  "richtung:filter->framework": {
   "src/filter/docx/docx_dokument_leser.py": 1,
   "src/filter/odt/odt_dokument_leser.py": 1,
@@ -445,6 +428,6 @@
  },
  "zyklen": {
   "anzahl": 13,
-  "module_in_zyklen": 51
+  "module_in_zyklen": 48
  }
 }

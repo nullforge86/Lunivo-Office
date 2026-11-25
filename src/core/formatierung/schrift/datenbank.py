@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import freetype
 
-from system.plattform.schriften import schrift_ordner
+from core.dokument.orte import schrift_ordner
 
 from core.formatierung.schrift.ersatz import ersatzfamilien
 
@@ -77,8 +77,12 @@ def _schnitte_der_datei(pfad: str):
 
 class SchriftDatenbank:
     def __init__(self, ordner: tuple[str, ...] | None = None):
-        self._ordner = [os.path.expanduser(o) for o in (schrift_ordner() if ordner is None else ordner)]
+        self._ordner_vorgabe = ordner                      # ohne Angabe: die Schriftordner, die das Framework angemeldet hat (erst beim ersten Lesen abgefragt)
         self._index: dict[str, list[Schnitt]] | None = None
+
+    @property
+    def _ordner(self) -> list[str]:
+        return [os.path.expanduser(o) for o in (schrift_ordner() if self._ordner_vorgabe is None else self._ordner_vorgabe)]
 
     def _gelesen(self) -> dict[str, list[Schnitt]]:
         if self._index is not None:

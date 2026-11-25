@@ -854,6 +854,22 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         """Ändert Felder eines frei positionierten Objekts (``daten``, ``breite``, ``hoehe``, ``bilddaten`` …) in einem Schritt."""
         return self.ansicht._aendern(lambda s: s.objekt_aendern(objekt_id, **felder))
 
+    # ---- Freie Objekte: Rückrufe der Kerndaten (der Kern kennt die Zeichenfunktionen nicht) ------------------------------------------------------------
+    def frei_daten_lesen(self, art: str) -> dict | None:
+        """Die Daten des gewählten freien Objekts dieser Art (WordArt, Form, SmartArt …) oder ``None``."""
+        from vcl.qt.rendering.formen import frei_objekt as FO
+        return FO.daten_lesen(self, art)
+
+    def frei_daten_still(self, art: str, **kw) -> bool:
+        """Daten des gewählten freien Objekts ändern, ohne das Bild neu zu zeichnen."""
+        from vcl.qt.rendering.formen import frei_objekt as FO
+        return FO.daten_still(self, art, **kw)
+
+    def frei_einfuegen(self, art: str, daten: dict):
+        """Ein freies Objekt dieser Art mit diesen Daten einfügen und auswählen. → Id."""
+        from vcl.qt.rendering.formen import frei_objekt as FO
+        return FO.einfuegen(self, art, daten)
+
     # ---- Ansicht ---------------------------------------------------------------------------------------------------------------------------------------
     autor = None                             # Rückruf des Hauptfensters: (Name, Initialen) des Benutzers
 

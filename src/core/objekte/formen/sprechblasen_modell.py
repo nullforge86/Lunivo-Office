@@ -134,11 +134,10 @@ def blasen_schrift(px: float):
     return FontSpec(STANDARD_FAMILIE, max(1.0, px) * 72.0 / 96.0, 400, False)
 
 
-def messen(bl: Blase, breite: float, font) -> float:
-    """Höhe der Blase bei gegebener Breite (alles in Bildpunkten des Zeichengeräts); gemessen vom Kern."""
+def messen(engine, bl: Blase, breite: float, font) -> float:
+    """Höhe der Blase bei gegebener Breite (alles in Bildpunkten des Zeichengeräts); gemessen vom Kern mit der Textsatz-Maschine ``engine`` des Aufrufers."""
     from core.layout.drucklayout.ausgabe.objekte import blasen
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    return blasen.messen(standard_engine(), bl.text or " ", breite, font)
+    return blasen.messen(engine, bl.text or " ", breite, font)
 
 
 def stapeln(anker_y: list[float], hoehen: list[float], unten: float, abstand: float = 6.0) -> list[float]:

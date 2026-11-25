@@ -15,9 +15,8 @@ vcl.qt.rendering.formen.sprechblasen vcl.qt.rendering.formen.frei_objekt vcl.qt.
 vcl.qt.rendering.smartart.smartart vcl.qt.rendering.smartart.smartart_zeichnen vcl.qt.rendering.textfelder.deckblatt vcl.qt.rendering.formen.seitenrahmen
 vcl.qt.rendering.textfelder.wasserzeichen vcl.qt.rendering.formen.muster vcl.qt.schrift.schreibweise vcl.qt.schrift.silbenfarben vcl.qt.rendering.wordart.texteffekt
 vcl.qt.rendering.wordart.textfx vcl.qt.rendering.wordart.textfx_vorgaben vcl.qt.rendering.wordart.textfx_zeichen vcl.qt.rendering.formen.textur vcl.qt.eingabe.barrierefreiheit
-vcl.qt.eingabe.korrektur_dienst core.formatierung.schrift.datenbank
+vcl.qt.eingabe.korrektur_dienst
 core.formatierung.schrift.silbenfarben_modell core.objekte.formen.sprechblasen_modell
-core.dokument.abschnitte.deckblatt_vorlagen core.objekte.formen.formen_daten core.objekte.smartart.smartart_daten
 vcl.qt.fenster.befehle.kontextreiter.smartart_knoten_zustand vcl.qt.fenster.befehle.kontextreiter.smartarttools
 vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte vcl.qt.fenster.befehle.hauptreiter.ki
 vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite vcl.qt.fenster.befehle.hauptreiter.serien

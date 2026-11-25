@@ -2,7 +2,7 @@
 import json
 import os
 from core.korrektur.korrektur import ProofingIssue
-from system.plattform import ressourcen_pfade as pfade
+from core.dokument import orte
 import re
 
 
@@ -12,7 +12,7 @@ def daten_ordner():
     Reihenfolge: Umgebungsvariable LUNIVO_DATEN, dann system/ressourcen/daten.
     """
     kandidaten = [os.environ.get('LUNIVO_DATEN', ''),
-                  os.path.join(pfade.RESSOURCEN, 'daten')]
+                  os.path.join(orte.ressourcen(), 'daten')]
     return [k for k in kandidaten if k]
 
 
