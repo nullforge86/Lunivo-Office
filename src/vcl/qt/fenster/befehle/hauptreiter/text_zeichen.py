@@ -186,7 +186,7 @@ class TextZeichenBefehle:
         """Menü am Knopf „Texteffekte“ wie in der Vorlage: WordArt, Schatten, Spiegelung, Leuchteffekt (je mit Bildchen zum Anklicken), 3D-Drehung und
         Transformieren (nur für Formen und Textfelder, hier ausgegraut), „Weitere Texteffekte …“ öffnet die Seitenleiste."""
         from vcl.qt.rendering.wordart import texteffekt
-        from vcl.qt.rendering.wordart import textfx
+        from vcl.qt.rendering.wordart import textfx, textfx_vorgaben
         from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -196,20 +196,20 @@ class TextZeichenBefehle:
             return u
         wa = untermenue("WordArt", None)
         vor = textfx.wordart_vorgaben()
-        wa.abschnitt("Formatvorlage", [(str(i), textfx.wordart_icon(w, (56, 44)), n) for i, (n, w) in enumerate(vor)], 6)
+        wa.abschnitt("Formatvorlage", [(str(i), textfx_vorgaben.wordart_icon(w, (56, 44)), n) for i, (n, w) in enumerate(vor)], 6)
         wa.gewaehlt.connect(lambda k: self.ed and self.ed._zf(texteffekt.zu_zeichen({**texteffekt.EFFEKT, **vor[int(k)][1]})))
-        sc = untermenue("Schatten", ("Kein Schatten", textfx.voreinstellung_icon({})))
+        sc = untermenue("Schatten", ("Kein Schatten", textfx_vorgaben.voreinstellung_icon({})))
         sv = textfx.schatten_vorgaben()
         for abschnitt in ("Außen", "Innen", "Perspektive"):
-            sc.abschnitt(abschnitt, [(str(i), textfx.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(sv) if a == abschnitt], 3)
+            sc.abschnitt(abschnitt, [(str(i), textfx_vorgaben.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(sv) if a == abschnitt], 3)
         sc.gewaehlt.connect(lambda k: self._effekt_setzen(schatten=sv[int(k)][2] if k else None))
-        sp = untermenue("Spiegelung(&R)", ("Keine Spiegelung", textfx.voreinstellung_icon({})))
+        sp = untermenue("Spiegelung(&R)", ("Keine Spiegelung", textfx_vorgaben.voreinstellung_icon({})))
         rv = textfx.reflektion_vorgaben()
-        sp.abschnitt("Spiegelungsvarianten", [(str(i), textfx.voreinstellung_icon({"reflektion": r}), n) for i, (n, r) in enumerate(rv)], 3)
+        sp.abschnitt("Spiegelungsvarianten", [(str(i), textfx_vorgaben.voreinstellung_icon({"reflektion": r}), n) for i, (n, r) in enumerate(rv)], 3)
         sp.gewaehlt.connect(lambda k: self._effekt_setzen(reflektion=rv[int(k)][1] if k else None))
-        le = untermenue("Leuchteffekt(&G)", ("Kein Leuchteffekt", textfx.voreinstellung_icon({})))
+        le = untermenue("Leuchteffekt(&G)", ("Kein Leuchteffekt", textfx_vorgaben.voreinstellung_icon({})))
         lv = textfx.leuchten_vorgaben()
-        le.abschnitt("Leuchtvarianten", [(str(i), textfx.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(lv)], 6)
+        le.abschnitt("Leuchtvarianten", [(str(i), textfx_vorgaben.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(lv)], 6)
         le.gewaehlt.connect(lambda k: self._effekt_setzen(leuchten=lv[int(k)][1] if k else None))
         for titel in ("3D-Drehung", "Transformieren"): # wie in der Vorlage: nur für Formen und Textfelder, sonst ausgegraut
             a = m.untermenue(titel, aktiv=False)

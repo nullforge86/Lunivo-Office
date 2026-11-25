@@ -298,30 +298,20 @@ def neue_daten(eintrag=None, farben: str = "Blau") -> dict:
     return {"layout": e["schluessel"], "farben": farben, "text": e["muster"]}
 
 
-def einfuegen(ed, daten) -> None:
-    """Fügt das SmartArt als freies Objekt ein (``editor/objekte/frei_objekt.py``): Rahmen, Griffe und Schnellleiste wie bei WordArt. ``daten`` = Daten
-    (``layout``, ``text`` …), ein Eintrag aus ``LAYOUT_KATALOG`` oder dessen Schlüssel."""
+def einfuegen_daten(daten) -> dict:
+    """Die Daten, mit denen ein SmartArt als freies Objekt eingefügt wird. ``daten`` = Daten (``layout``, ``text`` …), ein Eintrag aus
+    ``LAYOUT_KATALOG`` oder dessen Schlüssel."""
     if not isinstance(daten, dict) or ("muster" in daten and "schluessel" in daten):
         daten = neue_daten(daten)
-    ed.frei_einfuegen("smartart", dict(daten))
+    return dict(daten)
 
 
-def _inline_daten(ed) -> dict | None:
-    """Daten eines SmartArt, das als Bild im Text sitzt."""
-    return ed.inline_daten("smartart")
-
-
-def daten_der_auswahl(ed) -> dict | None:
-    """Daten des gewählten SmartArt: zuerst das freie Objekt, sonst ein älteres Bild im Text."""
-    d = ed.frei_daten_lesen("smartart")
-    return d if d is not None else _inline_daten(ed)
-
-
-def _text_gegen_knoten(ed, neu: dict) -> None:
-    """Ein neuer ``text`` ohne neue Knoten: weicht er vom Text der vorhandenen Knoten ab, ersetzt er sie; sonst bleibt alles, wie es ist."""
+def text_gegen_knoten(d0: dict | None, neu: dict) -> None:
+    """Ein neuer ``text`` ohne neue Knoten: weicht er vom Text der vorhandenen Knoten (``d0`` = Daten des gewählten SmartArt) ab, ersetzt er sie;
+    sonst bleibt alles, wie es ist."""
     if "text" not in neu or "knoten" in neu:
         return
-    d0 = daten_der_auswahl(ed) or {}
+    d0 = d0 or {}
     if not d0.get("knoten"):
         return
     if neu["text"] != text_aus_knoten(knoten_von(d0)):
@@ -331,24 +321,19 @@ def _text_gegen_knoten(ed, neu: dict) -> None:
 
 
 # ---- Knoten im gewählten SmartArt (Auswahl, Treffer, Text, Befehle) --------------------------------------------------------------------
-def knoten_gewaehlt(ed) -> str | None:
-    """Id des gewählten Knotens des gewählten SmartArt (freies Objekt) oder None."""
-    d = ed.frei_daten_lesen("smartart")
+def knoten_gewaehlt(d: dict | None) -> str | None:
+    """Id des gewählten Knotens im SmartArt mit den Daten ``d`` oder None."""
     a = d.get("auswahl") if d else None
     return a if a and _index(knoten_von(d), a) is not None else None
 
 
-def knoten_waehlen(ed, ident) -> bool:
-    """Knoten wählen (None: Auswahl aufheben). Das Bild wird nicht neu gezeichnet."""
-    d = ed.frei_daten_lesen("smartart")
-    if d is None or (ident and _index(knoten_von(d), ident) is None):
-        return False
-    return ed.frei_daten_still("smartart", auswahl=ident or None)
+def knoten_waehlbar(d: dict | None, ident) -> bool:
+    """Ob der Knoten gewählt werden kann (``ident`` leer: die Auswahl aufheben geht immer, sofern es ein SmartArt gibt)."""
+    return d is not None and not (ident and _index(knoten_von(d), ident) is None)
 
 
-def knoten_text(ed, ident) -> str | None:
+def knoten_text(d: dict | None, ident) -> str | None:
     """Der Text des Knotens (ohne Aufzählungspunkte) oder None."""
-    d = daten_der_auswahl(ed)
     kn = knoten_von(d) if d else []
     i = _index(kn, ident)
     return kn[i]["text"] if i is not None else None
@@ -375,22 +360,20 @@ def _format_mischen(fmt: dict, kw: dict) -> dict:
     return fmt
 
 
-def format_lesen(ed) -> dict | None:
+def format_lesen(d: dict | None) -> dict | None:
     """Werte für die Seitenleiste: ``{"format": …, "gewaehlt": Id | None}`` — das Format des gewählten Knotens, ohne Auswahl das von allen Knoten."""
-    d = daten_der_auswahl(ed)
     if d is None:
         return None
-    ident = knoten_gewaehlt(ed)
+    ident = knoten_gewaehlt(d)
     if ident:
         kn = knoten_von(d)
         return {"teil": "diagrammbereich", "format": kn[_index(kn, ident)].get("format") or {}, "gewaehlt": ident}
     return {"teil": "diagrammbereich", "format": d.get("format") or {}, "gewaehlt": None}
 
 
-def kann(ed, was: str, richtung: str = "") -> bool:
+def kann(d: dict | None, was: str, richtung: str = "") -> bool:
     """Ob ein Knotenbefehl gerade geht (zum Ausgrauen): ``level`` (erhoehen/reduzieren), ``verschieben`` (vor/zurueck), ``knoten`` (ein Knoten ist
     gewählt), ``hierarchie`` (das Layout kennt Hierarchie-Varianten und Assistenten)."""
-    d = daten_der_auswahl(ed)
     if d is None:
         return False
     kn, a = knoten_von(d), d.get("auswahl")

@@ -5,7 +5,7 @@ from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ANTEIL_SCHRIFT_KACHEL, ANTEIL_SCHRIFT_KACHEL_GROSS, STIFT_VORGABE_KONTUR
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
-from core.objekte.wordart.textfx_daten import PX
+from writer.funktionen.objekte.wordart import PX
 from vcl.qt.rendering.wordart.textfx import fx_zeichnen, vorschau_zeichnen
 
 

@@ -4,7 +4,7 @@
 
     vcl.qt       darf Qt, sich selbst, ``vcl``, ``writer`` und ``framework`` importieren, nie ``core``, ``filter`` oder ``system``
     vcl          (Qt-freie Darstellungsverträge und Zeichnen) darf nur sich selbst importieren, kein Qt
-    writer       Steuerung der Oberfläche: darf sich selbst und ``framework`` importieren, kein Qt, nie ``core``
+    writer       Steuerung der Oberfläche: darf sich selbst, ``framework`` und ``system`` importieren, kein Qt, nie ``core``
     framework    darf sich selbst, ``core``, ``system`` und die Übergangsordner importieren, kein Qt, nie ``vcl`` oder ``writer``
     core         darf nur ``core`` importieren, kein Qt
     system       darf nur ``system`` importieren, kein Qt
@@ -38,7 +38,7 @@ QT_PAKETE = ("PySide6", "PyQt5", "PyQt6", "PyQt", "shiboken6", "shiboken")
 ERLAUBTE_ZIELE = {
     OBERFLAECHE: frozenset({OBERFLAECHE, VCL, WRITER, FARMWORK}),
     VCL: frozenset({VCL}),
-    WRITER: frozenset({WRITER, FARMWORK}),
+    WRITER: frozenset({WRITER, FARMWORK, SYSTEM}),
     FARMWORK: frozenset({FARMWORK, KERN, SYSTEM, ALT}),
     KERN: frozenset({KERN}),
     SYSTEM: frozenset({SYSTEM}),

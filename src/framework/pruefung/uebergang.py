@@ -13,7 +13,7 @@ vcl.qt.rendering.formen.freie_bilder vcl.qt.rendering.formen.formen vcl.qt.rende
 vcl.qt.rendering.formen.formen_katalog vcl.qt.rendering.formen.formen_stile vcl.qt.rendering.formen.freiform vcl.qt.rendering.formen.linie
 vcl.qt.rendering.formen.sprechblasen vcl.qt.rendering.formen.frei_objekt vcl.qt.rendering.textfelder.frei_objekt_text
 vcl.qt.rendering.smartart.smartart vcl.qt.rendering.smartart.smartart_zeichnen vcl.qt.rendering.textfelder.deckblatt vcl.qt.rendering.formen.seitenrahmen
-vcl.qt.rendering.textfelder.wasserzeichen vcl.qt.rendering.formen.muster vcl.qt.schrift.schreibweise vcl.qt.schrift.silbenfarben vcl.qt.rendering.wordart.texteffekt
+vcl.qt.rendering.textfelder.wasserzeichen vcl.qt.rendering.formen.muster vcl.qt.schrift.schreibweise vcl.qt.rendering.wordart.texteffekt
 vcl.qt.rendering.wordart.textfx vcl.qt.rendering.wordart.textfx_vorgaben vcl.qt.rendering.wordart.textfx_zeichen vcl.qt.rendering.formen.textur vcl.qt.eingabe.barrierefreiheit
 vcl.qt.eingabe.korrektur_dienst
 core.formatierung.schrift.silbenfarben_modell core.objekte.formen.sprechblasen_modell
@@ -35,7 +35,7 @@ vcl.qt.rendering.formen.pfad vcl.qt.rendering.formen.rendering vcl.qt.widgets.ba
 vcl.qt.widgets.bausteine.symbole.bauteile.symbole vcl.qt.widgets.seitenleisten.chat.chat_blase vcl.qt.widgets.seitenleisten.chat.chat_eingabe
 vcl.qt.widgets.seitenleisten.chat.chat_leerzustand vcl.qt.widgets.seitenleisten.chat.chat_regler vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine
 vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_panel vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_werte
-vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_text_panel vcl.qt.widgets.objektwerkzeuge.diagramme.smartart_stil_kacheln
+vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_text_panel
 vcl.qt.widgets.dialoge.dokument.aenderungs_vorschau vcl.qt.widgets.dialoge.dokument.eingabe_fenster
 vcl.qt.widgets.dialoge.dokument.layout_dialog vcl.qt.widgets.dialoge.dokument.liste_dialog vcl.qt.widgets.dialoge.dokument.pdf_export
 vcl.qt.widgets.dialoge.dokument.sortieren_dialog vcl.qt.widgets.dialoge.dokument.tabstopp_dialog
@@ -69,7 +69,7 @@ vcl.qt.widgets.seitenleisten.vorlagen.formatvorlagen_bereich vcl.qt.widgets.seit
 vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge
 vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster vcl.qt.widgets.dialoge.einfuegen.formular_dialog
 vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster vcl.qt.widgets.dialoge.ki.ki_aktions_dialoge
-vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.silben_dialog
+vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge
 vcl.qt.widgets.dialoge.optionen_seiten.befehle vcl.qt.widgets.dialoge.optionen_seiten.datei vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
 vcl.qt.widgets.dialoge.optionen_seiten.lesen vcl.qt.widgets.dialoge.optionen_seiten.lunivo vcl.qt.widgets.dokumentansicht.ansicht.blasen_bedienung
 vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht vcl.qt.widgets.dokumentansicht.ansicht.eingabe
@@ -96,7 +96,7 @@ vcl.qt.rendering.diagramme.diagramm_format vcl.qt.rendering.diagramme.diagramm_s
 vcl.qt.rendering.textfelder.deckblatt vcl.qt.rendering.textfelder.felder core.dokument.felder_ergebnis_kern core.dokument.felder_text_kern vcl.qt.rendering.textfelder.formular
 core.dokument.gehe_zu core.dokument.je_stand core.dokument.vorlagen vcl.qt.rendering.textfelder.wasserzeichen core.dokument.zusatz
 core.formatierung.absatz.absatzopt vcl.qt.rendering.wordart.texteffekt vcl.qt.rendering.formen.muster vcl.qt.rendering.formen.textur
-vcl.qt.rendering.formen.seitenrahmen vcl.qt.schrift.schreibweise vcl.qt.schrift.silbenfarben
+vcl.qt.rendering.formen.seitenrahmen vcl.qt.schrift.schreibweise
 core.formatierung.schrift.zeichenzusatz core.formatvorlagen.zeichen.designs core.formatvorlagen.zeichen.stile core.korrektur.fund
 core.korrektur.inkrement vcl.qt.eingabe.korrektur_dienst core.korrektur.rechtschreibung.autokorrektur core.korrektur.rechtschreibung.pruefung
 core.korrektur.silbentrennung.silben_de core.korrektur.sprache.klang core.korrektur.sprache.phonetik core.korrektur.woerterbuecher.haeufig

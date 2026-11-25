@@ -100,18 +100,20 @@ class EinfuegenObjektBefehle:
 
     def menue_smartartLayout(self):
         from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for e in SA.LAYOUT_KATALOG:
-            m.eintrag(e["name"], lambda n=e["schluessel"]: self.ed and SA.aendern(self.ed, layout=n))
+        for e in SW.katalog().galerie:
+            m.eintrag(e.name, lambda n=e.schluessel: self.ed and SA.aendern(self.ed, layout=n))
         return m
 
 
     def menue_smartartFarben(self):
         from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for n, f in SA.FARBEN.items():
+        for n, f in SW.katalog().farben.items():
             m.eintrag(n, lambda n=n: self.ed and SA.aendern(self.ed, farben=n), symbol=_farbfeld(f[0]))
         return m
 

@@ -50,17 +50,18 @@ def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str | None = None
 
 
 def stile_menue_org(b) -> RasterAuswahl:
-    from vcl.qt.rendering.smartart import smartart as SA
+    from writer.funktionen.objekte import smartart as SW
     from vcl.qt.widgets.menues.dropdown.objektmenues.smartart_menues import _sa
-    m = RasterAuswahl(b.w, spalten=len(SA.STILE), groesse=POPUP_KACHEL)
+    stile = SW.katalog().stile
+    m = RasterAuswahl(b.w, spalten=len(stile), groesse=POPUP_KACHEL)
     aktuell = _sa(b).get("stil", 1)
-    for i, name in enumerate(SA.STILE):
+    for i, name in enumerate(stile):
         m.kachel(str(i), name, stil_bild_org(i, POPUP_KACHEL), aktuell=i == aktuell)
     m.gewaehlt.connect(lambda k: b.smartartStil(None, int(k)))
     return m
 
 
 def stile_galerie_org(b) -> dict:
-    from vcl.qt.rendering.smartart import smartart as SA
-    return {"kacheln": [(name, stil_bild_org(i), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
+    from writer.funktionen.objekte import smartart as SW
+    return {"kacheln": [(name, stil_bild_org(i), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SW.katalog().stile)],
             "menue": stile_menue_org(b), "name": "SmartArt-Stile"}

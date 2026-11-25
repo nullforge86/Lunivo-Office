@@ -114,8 +114,8 @@ class BearbeitenBaustein:
 
 
     def silbenfarben_anwenden(self, e=None):
-        from vcl.qt.schrift import silbenfarben as S
-        k = S.konfig_lesen(self.settings)
+        from writer.formatierungswerkzeuge.schrift import silbenfarben as W
+        k = W.einstellung_lesen(self.settings)
         for ed in ([e] if e is not None else [t.editor for t in self._doc_tabs()]):
             ed.set_silbenfarben(k)
         if e is None:

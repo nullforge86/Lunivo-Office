@@ -11,23 +11,24 @@ from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import schreibmarke as SM
 from vcl.qt.rendering.formen import sprechblasen as SB
+from writer.funktionen.ansicht import sprechblasen as SW
 
 
 class BlasenBedienung:
     def _blasen_init(self) -> None:
-        self.blasen_konfig: dict | None = None        # ``sprechblasen.konfig_lesen``; ``None``: keine Blasen
+        self.blasen_konfig: SW.BlasenEinstellung | None = None        # ``sprechblasen.konfig_lesen``; ``None``: keine Blasen
         self.blasen_schrift = "mittel"
         self.blasen_hook = None                       # Rückruf(Art, Kommentar-Id, globale Stelle): ``menue`` oder ``bearbeiten``
         self._blasen_treffer: list = []
 
     def blasen_breite(self) -> float:
-        return mm_to_px(SB.breite_mm(self.blasen_konfig)) if self.blasen_konfig else 0.0
+        return mm_to_px(SW.breite_mm(self.blasen_konfig)) if self.blasen_konfig else 0.0
 
     def blasen_aktiv(self) -> bool:
-        return bool(self.blasen_konfig) and SB.aktiv(self.blasen_konfig)
+        return bool(self.blasen_konfig) and SW.aktiv(self.blasen_konfig)
 
     def _blasen_schrift(self):
-        return SB.blasen_schrift(max(7, int(SB.blasen_px(self.blasen_schrift) * self.zoom)))
+        return SW.blasen_schrift(max(7, int(SW.blasen_px(self.blasen_schrift) * self.zoom)))
 
     def blasen_layout(self) -> list:
         """[(Blase, Rechteck in der Ansicht, y der Textstelle, x des Textendes)] aller Blasen, je Blatt gestapelt. ``y`` ist die Mitte der Zeile, ``x`` das Ende der
@@ -36,12 +37,12 @@ class BlasenBedienung:
             return []
         erg = self.ergebnis()
         d = self.sitzung.dokument
-        rechts = self.blasen_konfig.get("rand", "Rechts") == "Rechts"
+        rechts = self.blasen_konfig.rand == "Rechts"
         breite = self.blasen_breite() * self.zoom
-        luecke = mm_to_px(SB.LUECKE_MM) * self.zoom
+        luecke = mm_to_px(SW.katalog().luecke_mm) * self.zoom
         font = self._blasen_schrift()
         je_seite: dict[int, list] = {}
-        for bl in SB.sammeln_modell(self.sitzung, self.blasen_konfig["verwenden"]):
+        for bl in SW.sammeln(self, self.blasen_konfig.verwenden):
             pos = offset_zu_position(d, bl.von)
             stelle = erg.cursor(pos.absatz_id, pos.versatz)
             if stelle is None:
@@ -57,8 +58,8 @@ class BlasenBedienung:
         aus = []
         for seite, liste in je_seite.items():
             blatt = self.blatt(seite)
-            hoehen = [SB.messen(bl, breite, font) for bl, _y, _x, _m in liste]
-            ys = SB.stapeln([y for _b, y, _x, _m in liste], hoehen, blatt.bottom())
+            hoehen = [SW.messen(bl, breite, font) for bl, _y, _x, _m in liste]
+            ys = SW.stapeln([y for _b, y, _x, _m in liste], hoehen, blatt.bottom())
             x = blatt.right() + luecke if rechts else blatt.left() - luecke - breite
             for (bl, _ytop, xtext, ymitte), y, h in zip(liste, ys, hoehen):
                 aus.append((bl, QRectF(x, y, breite, h), ymitte, xtext))
@@ -66,16 +67,17 @@ class BlasenBedienung:
 
     def blasen_zeichnen(self, p) -> None:
         self._blasen_treffer = []
-        rechts = bool(self.blasen_konfig) and self.blasen_konfig.get("rand", "Rechts") == "Rechts"
+        rechts = bool(self.blasen_konfig) and self.blasen_konfig.rand == "Rechts"
         font = self._blasen_schrift()
         for bl, r, y_text, x_text in self.blasen_layout():
-            if self.blasen_konfig.get("linien", True):
+            if self.blasen_konfig.linien:
                 SB.verbindung(p, bl, x_text, y_text, r, rechts)                        # vom Ende der kommentierten Stelle quer über den Rand zur Blase
             SB.zeichnen(p, bl, r, font)
             self._blasen_treffer.append((r, bl))
 
     def _blatt_kante(self, r: QRectF, rechts: bool) -> float:
-        return r.left() - mm_to_px(SB.LUECKE_MM) * self.zoom if rechts else r.right() + mm_to_px(SB.LUECKE_MM) * self.zoom
+        luecke = mm_to_px(SW.katalog().luecke_mm) * self.zoom
+        return r.left() - luecke if rechts else r.right() + luecke
 
     def blase_bei(self, pos):
         for r, bl in self._blasen_treffer:

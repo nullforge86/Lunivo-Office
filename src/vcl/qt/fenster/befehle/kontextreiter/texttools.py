@@ -371,7 +371,7 @@ class TextToolsBefehle:
 
     def _effekt_menue(self, setzen, _schl):
         """Schatten, Spiegelung und Leuchteffekt mit Bildchen (wie bei Start ▸ Texteffekte); ``setzen(**teil)`` schreibt den Teil."""
-        from vcl.qt.rendering.wordart import textfx
+        from vcl.qt.rendering.wordart import textfx, textfx_vorgaben
         from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -379,18 +379,18 @@ class TextToolsBefehle:
         def untermenue(titel, keine):
             u = VoreinstellungMenue(m, keine=keine); u.setTitle(titel); m.addMenu(u)
             return u
-        sc = untermenue("Schatten", ("Kein Schatten", textfx.voreinstellung_icon({})))
+        sc = untermenue("Schatten", ("Kein Schatten", textfx_vorgaben.voreinstellung_icon({})))
         sv = textfx.schatten_vorgaben()
         for abschnitt in ("Außen", "Innen", "Perspektive"):
-            sc.abschnitt(abschnitt, [(str(i), textfx.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(sv) if a == abschnitt], 3)
+            sc.abschnitt(abschnitt, [(str(i), textfx_vorgaben.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(sv) if a == abschnitt], 3)
         sc.gewaehlt.connect(lambda k: setzen(schatten=sv[int(k)][2] if k else None))
-        sp = untermenue("Spiegelung", ("Keine Spiegelung", textfx.voreinstellung_icon({})))
+        sp = untermenue("Spiegelung", ("Keine Spiegelung", textfx_vorgaben.voreinstellung_icon({})))
         rv = textfx.reflektion_vorgaben()
-        sp.abschnitt("Spiegelungsvarianten", [(str(i), textfx.voreinstellung_icon({"reflektion": r}), n) for i, (n, r) in enumerate(rv)], 3)
+        sp.abschnitt("Spiegelungsvarianten", [(str(i), textfx_vorgaben.voreinstellung_icon({"reflektion": r}), n) for i, (n, r) in enumerate(rv)], 3)
         sp.gewaehlt.connect(lambda k: setzen(reflektion=rv[int(k)][1] if k else None))
-        le = untermenue("Leuchteffekt", ("Kein Leuchteffekt", textfx.voreinstellung_icon({})))
+        le = untermenue("Leuchteffekt", ("Kein Leuchteffekt", textfx_vorgaben.voreinstellung_icon({})))
         lv = textfx.leuchten_vorgaben()
-        le.abschnitt("Leuchtvarianten", [(str(i), textfx.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(lv)], 6)
+        le.abschnitt("Leuchtvarianten", [(str(i), textfx_vorgaben.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(lv)], 6)
         le.gewaehlt.connect(lambda k: setzen(leuchten=lv[int(k)][1] if k else None))
         return m
 

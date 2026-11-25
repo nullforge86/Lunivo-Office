@@ -16,6 +16,14 @@ LINIE_BREITE = 1.4                                  # Verbindungslinie zum Text
 ANKER_RADIUS = 2.6                                  # Ankerpunkt am Textende
 
 
+def schrift_von(font) -> FontSpec:
+    """Die Schrift als ``FontSpec``: eine fertige ``FontSpec`` bleibt, eine Beschreibung mit ``familie``, ``groesse_pt``, ``gewicht`` und ``kursiv``
+    (die Schrift der Blasen aus dem Framework) wird umgesetzt."""
+    if isinstance(font, FontSpec):
+        return font
+    return FontSpec(font.familie, font.groesse_pt, font.gewicht, font.kursiv)
+
+
 def zeilen(engine, text: str, font: FontSpec, breite: float) -> list[str]:
     """Der Text in Zeilen der Breite ``breite`` (Absätze bleiben, Wörter brechen um)."""
     aus = []
@@ -30,6 +38,7 @@ def zeilen(engine, text: str, font: FontSpec, breite: float) -> list[str]:
 
 def messen(engine, text: str, breite: float, font: FontSpec) -> float:
     """Höhe der Blase bei gegebener Breite."""
+    font = schrift_von(font)
     innen = max(10.0, breite - 16)
     return 8 + KOPF_HOEHE + 6 + len(zeilen(engine, text, font, innen)) * engine.font_metrics(font).line_spacing + 8
 
@@ -43,6 +52,7 @@ def _rund(x: float, y: float, w: float, h: float, rad: float) -> list:
 def zeichne_blase(b, engine, autor: str, datum: str, farbe: tuple, text: str, r: Rect, font: FontSpec, farben: tuple) -> None:
     """Eine Blase zeichnen wie eine Karte: Kreis mit Initial, Name fett, Datum, Menüzeichen, darunter der Text."""
     karte, rand, schrift = farben
+    font = schrift_von(font)
     form = _rund(r.x, r.y, r.width, r.height, 8)
     b.draw_shadow(form, (0, 0, 0, SCHATTEN_DECKKRAFT), SCHATTEN_WEICH, 0.0, SCHATTEN_VERSATZ)          # weicher Schatten: die Karte hebt sich vom Blatt ab
     b.draw_path(form, Style(color=karte, width=1.0, filled=True, outline=rand), True, False)

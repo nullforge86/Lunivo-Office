@@ -4,7 +4,42 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QTransform
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
-from core.objekte.wordart.textfx_daten import PX, _BAHNEN, _tiefe_faktor
+from core.objekte.wordart.textfx_daten import _BAHNEN, _tiefe_faktor
+from vcl.qt.rendering.wordart.effekt_umwandlung import zu_daten, zu_dict
+from writer.funktionen.objekte import wordart as _wa
+from writer.funktionen.objekte.wordart import BELEUCHTUNG, MATERIAL, PX
+
+
+def schatten_vorgaben() -> list[tuple[str, str, dict]]:
+    """[(Abschnitt, Name, Schatten)]."""
+    return [(v.abschnitt, v.name, zu_dict(v.effekt)) for v in _wa.schatten_vorgaben()]
+
+
+def reflektion_vorgaben() -> list[tuple[str, dict]]:
+    """[(Name, Spiegelung)]."""
+    return [(v.name, zu_dict(v.effekt)) for v in _wa.reflektion_vorgaben()]
+
+
+def leuchten_vorgaben() -> list[tuple[str, dict]]:
+    """[(Name, Leuchteffekt)]."""
+    return [(v.name, zu_dict(v.effekt)) for v in _wa.leuchten_vorgaben()]
+
+
+def wordart_vorgaben() -> list[tuple[str, dict]]:
+    """[(Name, vollständiger Effekt)]."""
+    return [(v.name, zu_dict(v.effekt)) for v in _wa.wordart_vorgaben()]
+
+
+def hat_effekt(fx: dict | None) -> bool:
+    return _wa.hat_effekt(zu_daten(fx))
+
+
+def als_text(fx: dict | None) -> str:
+    return _wa.als_text(zu_daten(fx))
+
+
+def aus_text(text: str | None) -> dict:
+    return zu_dict(_wa.aus_text(text))
 
 
 def _farbe(hexwert: str, transparenz: float = 0.0) -> QColor:

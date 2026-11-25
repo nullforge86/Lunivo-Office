@@ -73,7 +73,7 @@ def level_menue(b) -> MenueListe:
 
 def hierarchie_menue(b, mit_rechts_links: bool = False) -> MenueListe:
     """Die Layoutvarianten des Organigramms; ``mit_rechts_links``: oben noch „Layout von rechts nach links“ (Schnellleiste am Knoten)."""
-    from vcl.qt.rendering.smartart import smartart as SA
+    from writer.funktionen.objekte import smartart as SW
     sym = {"standard": "network", "beide": "workflow", "haengend_links": "list-tree", "haengend_rechts": "list-tree"}
 
     def bau(m: MenueListe) -> None:
@@ -82,20 +82,20 @@ def hierarchie_menue(b, mit_rechts_links: bool = False) -> MenueListe:
             m.eintrag("Layout von rechts nach links", lambda: b.smartartRechtsLinks(), symbol=_sym("arrow-left-right"),
                       haken=bool(b.an_smartartRechtsLinks()), aktiv=bool(b.kann_smartartRechtsLinks()))
         aktuell = _sa(b).get("hierarchie") or "standard"
-        for schl, text in SA.HIERARCHIEN:
+        for schl, text in SW.katalog().hierarchien:
             m.eintrag(text, lambda s=schl: b.smartartHierarchie(None, s), symbol=_sym(sym[schl]), haken=geht and aktuell == schl, aktiv=geht)
     return _Auffrischend(bau)
 
 
 def layout_menue(b) -> MenueListe:
     """„Layout ändern“: die 15 Layouts des Katalogs mit ihren Anzeigenamen; das gewählte trägt einen Haken."""
-    from vcl.qt.rendering.smartart import smartart as SA
+    from writer.funktionen.objekte import smartart as SW
 
     def bau(m: MenueListe) -> None:
         aktuell, geht = _sa(b).get("layout"), bool(b.kann_smartartStil())
-        for e in SA.LAYOUT_KATALOG:
-            k = e["schluessel"]
-            m.eintrag(e["name"], lambda k=k: b.smartartLayout(None, k), symbol=QIcon(miniatur(k, True, QSize(*GROESSE_SMARTART_LAYOUT_MINIATUR))), haken=aktuell == k, aktiv=geht)
+        for e in SW.katalog().galerie:
+            k = e.schluessel
+            m.eintrag(e.name,lambda k=k: b.smartartLayout(None, k), symbol=QIcon(miniatur(k, True, QSize(*GROESSE_SMARTART_LAYOUT_MINIATUR))), haken=aktuell == k, aktiv=geht)
     return _Auffrischend(bau)
 
 
@@ -126,18 +126,19 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str | None = None) ->
 
 
 def stile_menue(b) -> RasterAuswahl:
-    from vcl.qt.rendering.smartart import smartart as SA
-    m = RasterAuswahl(b.w, spalten=len(SA.STILE), groesse=STIL_KACHEL)
+    from writer.funktionen.objekte import smartart as SW
+    stile = SW.katalog().stile
+    m = RasterAuswahl(b.w, spalten=len(stile), groesse=STIL_KACHEL)
     aktuell = _sa(b).get("stil", 1)
-    for i, name in enumerate(SA.STILE):
+    for i, name in enumerate(stile):
         m.kachel(str(i), name, stil_bild(i), aktuell=i == aktuell)
     m.gewaehlt.connect(lambda k: b.smartartStil(None, int(k)))
     return m
 
 
 def stile_galerie(b) -> dict:
-    from vcl.qt.rendering.smartart import smartart as SA
-    return {"kacheln": [(name, stil_bild(i, QSize(*GROESSE_SMARTART_STIL_GALERIE)), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
+    from writer.funktionen.objekte import smartart as SW
+    return {"kacheln": [(name, stil_bild(i, QSize(*GROESSE_SMARTART_STIL_GALERIE)), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SW.katalog().stile)],
             "menue": stile_menue(b), "name": "Formenstile"}
 
 

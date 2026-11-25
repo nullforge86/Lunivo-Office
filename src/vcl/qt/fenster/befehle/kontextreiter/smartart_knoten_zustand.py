@@ -29,9 +29,9 @@ class SmartArtKnotenZustand:
 
     def kann_smartartAufzaehlung(self) -> bool:
         """Ein Knoten ist gewählt und das Layout erlaubt Aufzählungspunkte (im Organigramm sind Unterpunkte eigene Knoten: im Foto grau)."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         d = self._sa()
-        return self._sa_kann("knoten") and d is not None and d.get("layout", "Liste") not in SA.HIERARCHIE_LAYOUTS
+        return self._sa_kann("knoten") and d is not None and d.get("layout", "Liste") not in SW.katalog().hierarchie_layouts
 
     def smartartAufzaehlung(self, k=None):
         """Ohne Wirkung, solange der Knopf grau ist."""

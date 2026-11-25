@@ -35,6 +35,14 @@ PFEILE = {Qt.Key_Left: (-1, 0), Qt.Key_Right: (1, 0), Qt.Key_Up: (0, -1), Qt.Key
 
 class EingabeTeil:
     # ---- Bearbeiten ------------------------------------------------------------------------------------------------------------
+    def aendern(self, fn) -> bool:
+        """Anschluss für das Framework (``AenderungsPort``): ``fn(sitzung)`` als eine Änderung ausführen."""
+        return self._aendern(fn)
+
+    def lesen(self, abfrage):
+        """Anschluss für das Framework (``AenderungsPort``): ``abfrage(sitzung)``, ohne das Dokument zu ändern."""
+        return abfrage(self.sitzung)
+
     def _aendern(self, fn) -> bool:
         """Eine Änderung über die Sitzung ausführen; was die Sitzung ablehnt, lässt das Dokument unverändert."""
         if self.nur_lesen:

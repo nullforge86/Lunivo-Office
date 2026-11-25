@@ -54,15 +54,12 @@ def _anzeige(m: dict, wert: str | None) -> tuple[str, bool]:
     return (wert or m.get("platzhalter") or vorgabe), not wert
 
 
-def einfuegen(ed, m: dict, wert: str | None = None) -> None:
-    """Feld an der Schreibmarke (oder anstelle der Markierung) einfügen."""
+def einfuegen(s, m: dict, wert: str | None = None) -> None:
+    """Feld an der Schreibmarke (oder anstelle der Markierung) der Sitzung ``s`` einfügen."""
     text, leer = _anzeige(m, wert)
-
-    def f(s):
-        with s.gruppe("Formularfeld"):
-            s.text_einfuegen(text, format=_zeichenformat(m, leer))
-            s.tippformat = {}                              # was danach getippt wird, gehört nicht mehr zum Feld
-    ed.ansicht._aendern(f)
+    with s.gruppe("Formularfeld"):
+        s.text_einfuegen(text, format=_zeichenformat(m, leer))
+        s.tippformat = {}                                  # was danach getippt wird, gehört nicht mehr zum Feld
 
 
 def _zeichenformat(m: dict, leer: bool = False) -> dict:
@@ -111,62 +108,47 @@ def feld_an(dok, pos: int):
     return None
 
 
-def _auswahl(ed, v: int, e: int):
+def _auswahl(s, v: int, e: int):
     from core.dokument.dokument import Auswahl
     from core.suche.textsuche.suche import offset_zu_position
-    d = ed.sitzung.dokument
+    d = s.dokument
     return Auswahl(offset_zu_position(d, v), offset_zu_position(d, e))
 
 
-def _ersetzen(ed, v: int, e: int, m: dict, text: str, leer: bool = False) -> None:
-    ed.ansicht._aendern(lambda s: s.ersetzen(text, _auswahl(ed, v, e), format=_zeichenformat(m, leer)))
+def ersetzen(s, v: int, e: int, m: dict, text: str, leer: bool = False) -> None:
+    """Den Text des Feldes (Stellen ``v`` bis ``e``) in der Sitzung ``s`` ersetzen."""
+    s.ersetzen(text, _auswahl(s, v, e), format=_zeichenformat(m, leer))
 
 
-def wert_von(ed, v: int, e: int) -> str:
-    return ed.sitzung.text(_auswahl(ed, v, e))
+def wert_von(s, v: int, e: int) -> str:
+    return s.text(_auswahl(s, v, e))
 
 
-def _klick_kasten(ed, v: int, e: int, m: dict, fenster) -> None:
-    voll = wert_von(ed, v, e) == KASTEN_VOLL
-    _ersetzen(ed, v, e, m, KASTEN_LEER if voll else KASTEN_VOLL)
+def kasten_umschalten(s, v: int, e: int, m: dict) -> None:
+    """Das Kontrollkästchen wechselt zwischen leer und angekreuzt."""
+    voll = wert_von(s, v, e) == KASTEN_VOLL
+    ersetzen(s, v, e, m, KASTEN_LEER if voll else KASTEN_VOLL)
 
 
-def _klick_knopf(ed, v: int, e: int, m: dict, fenster) -> None:
-    _knopf_aktion(ed, m, fenster or ed.fenster)
-
-
-def _ist_leer(ed, pos: int) -> bool:
-    treffer = feld_an(ed.sitzung.dokument, pos)
+def ist_leer(s, pos: int) -> bool:
+    treffer = feld_an(s.dokument, pos)
     return bool(treffer and treffer[2].get("leer"))
 
 
-def _knopf_aktion(ed, m: dict, fenster) -> None:
-    a = m.get("aktion", "Keine")
-    if a == "Felder zurücksetzen":
-        alle_zuruecksetzen(ed)
-    elif a == "Drucken" and hasattr(fenster, "print_dialog"):
-        fenster.print_dialog()
-    elif a == "Als PDF exportieren" and hasattr(fenster, "export_pdf_dialog"):
-        fenster.export_pdf_dialog()
-
-
-def alle_zuruecksetzen(ed) -> int:
-    """Alle Felder auf ihren Anfangswert (Platzhalter, leeres Kästchen) zurücksetzen."""
-    zaehler = [0]
-
-    def f(s):
-        with s.gruppe("Felder zurücksetzen"):
-            for v, e, m in reversed(bereiche(s.dokument)):
-                if m["art"] == "kasten":
-                    s.ersetzen(KASTEN_LEER, _auswahl(ed, v, e), format=_zeichenformat(m))
-                elif m["art"] in ("text", "auswahl", "datum"):
-                    ph = m.get("platzhalter") or {"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[m["art"]]
-                    s.ersetzen(ph, _auswahl(ed, v, e), format=_zeichenformat(m, True))
-                else:
-                    continue
-                zaehler[0] += 1
-    ed.ansicht._aendern(f)
-    return zaehler[0]
+def alle_zuruecksetzen(s) -> int:
+    """Alle Felder der Sitzung ``s`` auf ihren Anfangswert (Platzhalter, leeres Kästchen) zurücksetzen. → Zahl der zurückgesetzten Felder."""
+    zaehler = 0
+    with s.gruppe("Felder zurücksetzen"):
+        for v, e, m in reversed(bereiche(s.dokument)):
+            if m["art"] == "kasten":
+                s.ersetzen(KASTEN_LEER, _auswahl(s, v, e), format=_zeichenformat(m))
+            elif m["art"] in ("text", "auswahl", "datum"):
+                ph = m.get("platzhalter") or {"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[m["art"]]
+                s.ersetzen(ph, _auswahl(s, v, e), format=_zeichenformat(m, True))
+            else:
+                continue
+            zaehler += 1
+    return zaehler
 
 
 def daten(dok) -> list[tuple[str, str]]:

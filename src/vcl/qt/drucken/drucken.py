@@ -81,6 +81,24 @@ def blatt_zeichnen(p: QPainter, rect: QRectF, bilder: list, pro_blatt: int, rand
         p.drawImage(QRectF(feld.left() + (feld.width() - w) / 2, feld.top() + (feld.height() - h) / 2, w, h), img)
 
 
+class _DokumentAnschluss:
+    """Der Änderungs-Port (``lesen``/``aendern``) für ein Dokument ohne Editor: jede Anfrage läuft auf einer eigenen Sitzung über dasselbe Dokument."""
+
+    def __init__(self, dokument: Dokument):
+        self._dokument = dokument
+
+    def _sitzung(self):
+        from core.bearbeitung import Bearbeitungssitzung
+        return Bearbeitungssitzung(self._dokument)
+
+    def lesen(self, abfrage):
+        return abfrage(self._sitzung())
+
+    def aendern(self, aenderung) -> bool:
+        aenderung(self._sitzung())
+        return True
+
+
 class Ausgabe:
     """Das Dokument einmal gesetzt; jede Seite lässt sich in beliebiger Größe rastern oder auf einen Zeichner malen (Vorschau, Druck)."""
 
@@ -89,7 +107,7 @@ class Ausgabe:
             import copy
             from vcl.qt.rendering.textfelder import formular
             dokument = copy.deepcopy(dokument)
-            formular.nur_formulardaten(dokument)
+            formular.nur_formulardaten(_DokumentAnschluss(dokument))
         self.dokument = dokument
         opt = optionen or {}
         self._layout_opt = {"versteckt": True} if opt.get("versteckt") else None
@@ -115,15 +133,13 @@ class Ausgabe:
 
     def _blasen_sammeln(self) -> dict:
         """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
-        from core.bearbeitung import Bearbeitungssitzung
         from core.suche.textsuche.suche import offset_zu_position
-        from vcl.qt.rendering.formen import sprechblasen as SB
+        from writer.funktionen.ansicht import sprechblasen as SW
         k = self._blasen["konfig"]
-        if not SB.aktiv(k):
+        if not SW.aktiv(k):
             return {}
-        sitzung = Bearbeitungssitzung(self.dokument)                      # nur lesen: dasselbe Dokument, keine Kopie
         je_seite: dict = {}
-        for bl in SB.sammeln_modell(sitzung, k["verwenden"]):
+        for bl in SW.sammeln(_DokumentAnschluss(self.dokument), k.verwenden):    # nur lesen: dasselbe Dokument, keine Kopie
             pos = offset_zu_position(self.dokument, bl.von)
             stelle = self._erg.cursor(pos.absatz_id, pos.versatz)
             if stelle is not None:
@@ -153,15 +169,16 @@ class Ausgabe:
             self._seite_malen(p, n)
             return
         from vcl.qt.rendering.formen import sprechblasen as SB
+        from writer.funktionen.ansicht import sprechblasen as SW
         k = self._blasen["konfig"]
         b, h = self.groesse_px(n)
-        luecke, breite = mm_to_px(SB.LUECKE_MM), mm_to_px(SB.breite_mm(k))
+        luecke, breite = mm_to_px(SW.katalog().luecke_mm), mm_to_px(SW.breite_mm(k))
         f = b / (b + luecke + breite)
-        rechts = k.get("rand", "Rechts") == "Rechts"
-        font = SB.blasen_schrift(max(7, SB.blasen_px(self._blasen.get("schrift", "mittel"))))
+        rechts = k.rand == "Rechts"
+        font = SW.blasen_schrift(max(7, SW.blasen_px(self._blasen.get("schrift", "mittel"))))
         liste = self._blasen_je_seite[n - 1]
-        hoehen = [SB.messen(bl, breite, font) for bl, _y in liste]
-        ys = SB.stapeln([y for _b, y in liste], hoehen, h)
+        hoehen = [SW.messen(bl, breite, font) for bl, _y in liste]
+        ys = SW.stapeln([y for _b, y in liste], hoehen, h)
         p.save()
         p.scale(f, f)
         x_seite = 0.0 if rechts else breite + luecke
@@ -171,7 +188,7 @@ class Ausgabe:
         x_blase = b + luecke if rechts else 0.0
         for (bl, y_text), y, hh in zip(liste, ys, hoehen):
             r = QRectF(x_blase, y, breite, hh)
-            if k.get("linien", True):
+            if k.linien:
                 SB.verbindung(p, bl, x_seite + b if rechts else x_seite, y_text, r, rechts)
             SB.zeichnen(p, bl, r, font, druck=True)
         p.restore()

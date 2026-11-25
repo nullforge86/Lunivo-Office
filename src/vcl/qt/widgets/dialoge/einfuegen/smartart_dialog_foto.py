@@ -63,7 +63,7 @@ class SmartArtDialogFoto(SmartArtDialog):
         v.replaceWidget(titel, self.reiter); _weg(titel); abstand_unter_reiter(v, self.reiter)
         # große Kacheln statt der kleinen
         alt = self.galerie
-        self.galerie = _GrosseGalerie([e["schluessel"] for e in self.SA.LAYOUT_KATALOG], _layout_bildchen, alt.aktuell())
+        self.galerie = _GrosseGalerie([e.schluessel for e in self.SW.katalog().galerie], _layout_bildchen, alt.aktuell())
         v.replaceWidget(alt, self.galerie); _weg(alt)
         self.galerie.gewaehlt.connect(self._layout)
         # Reihenfolge wie im Foto: Vorschau, darunter Name und Beschreibung

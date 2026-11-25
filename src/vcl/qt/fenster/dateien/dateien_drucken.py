@@ -154,9 +154,8 @@ class DateienDruckenBaustein:
 
 
     def _silben_fuer_druck(self):
-        from vcl.qt.schrift import silbenfarben as S
-        k = S.konfig_lesen(self.settings)
-        return dict(k, nur_absatz=False) if k["an"] and k["drucken"] else None
+        from writer.formatierungswerkzeuge.schrift import silbenfarben as W
+        return W.fuer_den_druck(W.einstellung_lesen(self.settings))
 
 
     def _neuer_drucker(self):

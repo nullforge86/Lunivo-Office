@@ -3,11 +3,16 @@
 
 Prüft den Quellbaum ``src/`` statisch über den Syntaxbaum (``ast``), auch transitiv:
 
-    richtung:A->B           Import zwischen Schichten, den die README verbietet
+    richtung:A->B           verbotene Verbindung zwischen Schichten (je Datei und Zielmodul einmal gezählt)
     qt_ausserhalb_vcl_qt    Qt-Import außerhalb von ``vcl/qt``
     qt_transitiv            Modul außerhalb von ``vcl/qt``, das über andere Module Qt lädt
     kern_durchgereicht      writer/vcl importiert über ``framework`` einen Namen, den das Framework aus ``core`` holt (Re-Export)
     offene_schnittstelle    öffentliche Framework-Funktion mit ``object``/``Any`` oder einem core-Typ in der Signatur
+    schnittstelle_veraenderbar  ``dict``/``list``/``set`` in der Signatur einer öffentlichen Framework-Funktion (statt unveränderlicher Typen)
+    schnittstelle_auftrag   Framework-Funktion gibt ``Callable``/``lambda`` zurück, den die Oberfläche mit eigener Sitzung ausführt (leere Fassade)
+    kern_ruft_oberflaeche   core-Funktion mit Parameter ``ed``/``editor`` (Rückruf an ein Objekt der Oberfläche)
+    altlast_sitzungszugang  Nutzung des einen freigegebenen Übergangszugangs ``framework.sitzungen.altlast`` (nur kern_editor, bis Schritt 5)
+    weiterleitung           Weiterleitungsname in vcl/writer (``name = modul.name``), der alte Zugriffe am Leben hält (Legacy-Wrapper)
     dynamischer_import      ``importlib.import_module`` / ``__import__``
     platzhalter             ``.gitkeep`` und Reste unter ``src/lunivo_writer``
     zyklen                  Importzyklen (Anzahl und beteiligte Module)
@@ -47,6 +52,11 @@ ERLAUBT = {
     "vcl_basis": {"vcl_basis", "system"},
     "vcl_qt": {"vcl_qt", "vcl_basis", "writer", "system"},
 }
+
+# Der eine vom Eigentümer freigegebene Übergangszugang (Weg 1, 2026-11-25): Das Framework besitzt die einzige Sitzung; bis Schritt 5 des Pakets
+# „Sitzung gehört dem Framework“ erreicht KernEditor sie nur über dieses Modul. Eigene Regel ``altlast_sitzungszugang``, Stand darf nur sinken.
+ALTLAST_ZUGANG = "framework.sitzungen.altlast"
+ALTLAST_ERLAUBT_AUS = "vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor"
 
 GESCHUETZT = ("werkzeuge/pruefungen/architektur_grenze.py", "werkzeuge/pruefungen/architektur_grenze_stand.json",
               ".claude/settings.json", ".claude/settings.local.json", ".githooks/", "CLAUDE.md", "AGENTS.md")
@@ -89,6 +99,7 @@ def analysieren():
     nutzungen = []                                                      # (modul, framework-modul, name, rel)
     rel = lambda m: os.path.relpath(mods[m], PROJEKT)
     baeume = {}
+    gezaehlt: set[tuple[str, str]] = set()
     for m, pfad in mods.items():
         try:
             baeume[m] = ast.parse(open(pfad, encoding="utf-8").read())
@@ -120,7 +131,13 @@ def analysieren():
                     continue
                 kanten[m].add(ziel)
                 zs = schicht(ziel)
-                if quelle and zs and zs not in ERLAUBT[quelle]:
+                if ziel == ALTLAST_ZUGANG or ziel.startswith(ALTLAST_ZUGANG + "."):
+                    if (m, ziel) not in gezaehlt:
+                        gezaehlt.add((m, ziel))
+                        funde["altlast_sitzungszugang"][rel(m)] += 1          # jede Nutzung zählt; erlaubt laut Stand nur aus kern_editor
+                    continue
+                if quelle and zs and zs not in ERLAUBT[quelle] and (m, ziel) not in gezaehlt:
+                    gezaehlt.add((m, ziel))                                          # je Datei und Zielmodul einmal, nicht je Name
                     funde[f"richtung:{quelle}->{zs}"][rel(m)] += 1
                 if quelle == "framework" and zs == "core" and name:
                     aus_core[m].add(name)
@@ -131,7 +148,7 @@ def analysieren():
             funde["kern_durchgereicht"][rel(m)] += 1
     # offene Schnittstellen im Framework
     for m, baum in baeume.items():
-        if schicht(m) != "framework":
+        if schicht(m) != "framework" or m == ALTLAST_ZUGANG:
             continue
         kern_namen = aus_core.get(m, set())
         for n in ast.walk(baum):
@@ -144,6 +161,36 @@ def analysieren():
                     texte = {x.value for x in ast.walk(a) if isinstance(x, ast.Constant) and isinstance(x.value, str)}
                     if namen & ({"object", "Any"} | kern_namen) or any(re.search(r"\b(object|Any)\b", t) for t in texte):
                         funde["offene_schnittstelle"][rel(m)] += 1
+    # veränderbare Daten und Aufträge an Framework-Schnittstellen; Rückrufe des Kerns; Weiterleitungsnamen
+    VERAENDERBAR = {"dict", "list", "set", "Dict", "List", "Set", "MutableMapping", "MutableSequence"}
+    for m, baum in baeume.items():
+        s_m = schicht(m)
+        if s_m == "framework" and not m.startswith("framework.pruefung") and m != ALTLAST_ZUGANG:
+            for n in ast.walk(baum):
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith("_"):
+                    anm = [a.annotation for a in n.args.args + n.args.kwonlyargs + n.args.posonlyargs if a.annotation is not None]
+                    if n.returns is not None:
+                        anm.append(n.returns)
+                    for a in anm:
+                        namen = {x.id for x in ast.walk(a) if isinstance(x, ast.Name)} | {x.attr for x in ast.walk(a) if isinstance(x, ast.Attribute)}
+                        texte = " ".join(x.value for x in ast.walk(a) if isinstance(x, ast.Constant) and isinstance(x.value, str))
+                        if namen & VERAENDERBAR or re.search(r"\b(dict|list|set)\b", texte):
+                            funde["schnittstelle_veraenderbar"][rel(m)] += 1
+                    rueck = {x.id for x in ast.walk(n.returns) if isinstance(x, ast.Name)} | {x.attr for x in ast.walk(n.returns) if isinstance(x, ast.Attribute)} if n.returns is not None else set()
+                    gibt_lambda = any(isinstance(r, ast.Return) and isinstance(r.value, ast.Lambda) for r in ast.walk(n))
+                    if "Callable" in rueck or gibt_lambda:
+                        funde["schnittstelle_auftrag"][rel(m)] += 1
+        if s_m == "core":
+            for n in ast.walk(baum):
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and {a.arg for a in n.args.args + n.args.kwonlyargs + n.args.posonlyargs} & {"ed", "editor"}:
+                    funde["kern_ruft_oberflaeche"][rel(m)] += 1
+        if s_m in ("vcl_qt", "vcl_basis", "writer"):
+            importiert = {(a.asname or a.name).split(".")[0] for x in baum.body if isinstance(x, (ast.Import, ast.ImportFrom)) for a in x.names}
+            for x in baum.body:
+                if isinstance(x, ast.Assign) and all(isinstance(t, ast.Name) for t in x.targets):
+                    w = x.value.args[0] if isinstance(x.value, ast.Call) and isinstance(x.value.func, ast.Name) and x.value.func.id in ("list", "tuple") and x.value.args else x.value
+                    if isinstance(w, ast.Attribute) and isinstance(w.value, ast.Name) and (w.value.id in importiert or w.value.id.startswith("_")):
+                        funde["weiterleitung"][rel(m)] += 1
     # transitiv Qt (auch über übergeordnete Pakete, die beim Import mitgeladen werden)
     voll = {m: set(z) | {".".join(z_.split(".")[:i]) for z_ in z for i in range(1, len(z_.split("."))) if ".".join(z_.split(".")[:i]) in mods}
             for m, z in kanten.items()}
@@ -317,6 +364,8 @@ def main(argv: list[str]) -> int:
     if "--stand-senken" in argv:
         neu = {r: {d: min(z, ist.get(r, {}).get(d, 0)) for d, z in dateien.items()} for r, dateien in stand.items()}
         neu = {r: {d: z for d, z in v.items() if z > 0} for r, v in neu.items()}
+        if "altlast_sitzungszugang" in stand and os.path.exists(os.path.join(SRC, *ALTLAST_ZUGANG.split(".")) + ".py"):
+            neu["altlast_sitzungszugang"] = stand["altlast_sitzungszugang"]     # Freigabe bleibt, bis das Altlast-Modul in Schritt 5 entfernt ist
         stand_schreiben(neu)
         print(bericht(ist, neu))
         return 0

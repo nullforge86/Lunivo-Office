@@ -1,0 +1,1 @@
+"""Funktion „Objekte“ im Framework."""

@@ -75,9 +75,10 @@ class SmartArtToolsBefehle:
     def smartartHierarchie(self, k=None, art="standard"):
         """Organigramm-Variante: ``standard`` | ``beide`` | ``haengend_links`` | ``haengend_rechts`` (nur bei den Layouts Organigramm/Hierarchie)."""
         from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
-        if not SA.kann(self.ed, "hierarchie") or art not in dict(SA.HIERARCHIEN):
+        if not SA.kann(self.ed, "hierarchie") or art not in dict(SW.katalog().hierarchien):
             return False
         ok = SA.aendern(self.ed, hierarchie=None if art == "standard" else art)
         self.w.band.aktualisieren()
@@ -86,18 +87,20 @@ class SmartArtToolsBefehle:
     def smartartStil(self, k=None, nr=1):
         """Formenstil 0 bis 4 (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D)."""
         from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
-        ok = SA.aendern(self.ed, stil=max(0, min(int(nr), len(SA.STILE) - 1)))
+        ok = SA.aendern(self.ed, stil=max(0, min(int(nr), len(SW.katalog().stile) - 1)))
         self.w.band.aktualisieren()
         return ok
 
     def smartartLayout(self, k=None, name=None):
         """Layout wechseln (Schlüssel aus ``SA.LAYOUTS``); Knoten und Farben bleiben."""
         from vcl.qt.rendering.smartart import smartart as SA
+        from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
-        if name not in SA.LAYOUTS:
+        if name not in SW.katalog().layouts:
             return False
         ok = SA.aendern(self.ed, layout=name)
         self.w.band.aktualisieren()

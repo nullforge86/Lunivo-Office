@@ -251,8 +251,8 @@ class PruefenBefehle:
         if d.exec():
             m = d.meta()
             FO.einfuegen(self.ed, m)
-            if art == "kasten" and m.get("beschriftung"):
-                self.ed.textCursor().insertText(" " + m["beschriftung"])
+            if art == "kasten" and m.beschriftung:
+                self.ed.textCursor().insertText(" " + m.beschriftung)
 
 
     def formTextfeld(self, k=None): self._form_dialog("text")

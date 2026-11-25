@@ -7,7 +7,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import (ABSTAND_STAPEL, HOEHE_STAPE
                                                      RAND_SPALTE_OBEN, STIFT_AUSWAHL, STIFT_BETONT, STIFT_STARK)
 from vcl.qt.widgets.bausteine.farben.farben import WEISS_GLANZ
 from vcl.qt.rendering.diagramme import diagramm_format as F
-from core.objekte.smartart.smartart_daten import BULLET, FARBEN
+from writer.funktionen.objekte import smartart as SM
 from core.objekte.smartart.smartart_zeichnen_daten import _ZU, _alle, _baum, _format_von, _grundschrift, _gruppen
 
 
@@ -22,7 +22,8 @@ def _merke(i, r: QRectF) -> None:
 
 
 def _farbe(daten: dict, ebene: int) -> QColor:
-    f = FARBEN.get(daten.get("farben", "Blau"), FARBEN["Blau"])
+    farben = SM.katalog().farben
+    f = farben.get(daten.get("farben", "Blau"), farben["Blau"])
     return QColor(f[min(ebene, 2)] if daten.get("farben") != "Bunt" else f[ebene % 3])
 
 
@@ -466,11 +467,12 @@ def _pyramide(daten: dict, pts, b: int) -> QImage:
 def _eintraege(pts) -> list[tuple[int, str, list[str], list[int]]]:
     """Oberste Ebene als Eintrag: [(Nr., Überschrift, Textzeilen (Aufzählungspunkte und Unterpunkte), [Nr. der Unterpunkte])]."""
     out = []
+    punkt = SM.katalog().aufzaehlungspunkt
     for ni, t, kinder in _gruppen(pts):
         kopf, *rest = t.split("\n")
-        zeilen = [z.removeprefix(BULLET).strip() for z in rest]
+        zeilen = [z.removeprefix(punkt).strip() for z in rest]
         for _nj, k in kinder:
-            zeilen += [z.removeprefix(BULLET).strip() for z in k.split("\n")]
+            zeilen += [z.removeprefix(punkt).strip() for z in k.split("\n")]
         out.append((ni, kopf, zeilen, [nj for nj, _k in kinder]))
     return out
 
@@ -483,7 +485,8 @@ def _merke_mehrere(nummern, r: QRectF) -> None:
 def _zeilen(p: QPainter, r: QRectF, zeilen: list[str], grund: QColor, kopf: str = "") -> None:
     """Aufzählungszeilen linksbündig in ``r`` (Textfarbe nach dem Untergrund ``grund``); ``kopf`` steht vorweg, wenn gegeben."""
     p.setPen(_text_farbe(_stilfarbe(grund))); _schrift(p, "x", 10)
-    t = "\n".join(([kopf] if kopf else []) + [BULLET + z for z in zeilen])
+    punkt = SM.katalog().aufzaehlungspunkt
+    t = "\n".join(([kopf] if kopf else []) + [punkt + z for z in zeilen])
     _text_zeichnen(p, r, Qt.AlignLeft | Qt.AlignVCenter, t)
 
 

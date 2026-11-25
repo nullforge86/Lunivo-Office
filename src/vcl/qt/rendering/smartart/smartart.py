@@ -2,7 +2,56 @@ from __future__ import annotations
 import json
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtGui import QImage
-from core.objekte.smartart.smartart_daten import FORMAT_SCHLUESSEL, _format_mischen, _index, _inline_daten, _knotentext, _text_gegen_knoten, aufzaehlung, daten_der_auswahl, form_einfuegen, knoten_gewaehlt, knoten_von, level, text_aus_knoten, verschieben
+from writer.funktionen.objekte import smartart as SM
+from writer.funktionen.objekte.smartart import aufzaehlung, form_einfuegen, knoten_von, level, text_aus_knoten, verschieben
+from writer.funktionen.objekte.smartart import format_mischen as _format_mischen, knoten_index as _index, knotentext as _knotentext
+
+
+# ---- Daten des gewählten SmartArt (aus dem Editor gelesen, an den Editor zurückgeschrieben) -------------------------------------------------
+def _inline_daten(ed) -> dict | None:
+    """Daten eines SmartArt, das als Bild im Text sitzt."""
+    return ed.inline_daten("smartart")
+
+
+def daten_der_auswahl(ed) -> dict | None:
+    """Daten des gewählten SmartArt: zuerst das freie Objekt, sonst ein älteres Bild im Text."""
+    d = ed.frei_daten_lesen("smartart")
+    return d if d is not None else _inline_daten(ed)
+
+
+def einfuegen(ed, daten) -> None:
+    """Fügt das SmartArt als freies Objekt ein: Rahmen, Griffe und Schnellleiste wie bei WordArt. ``daten`` = Daten, ein Katalogeintrag oder dessen Schlüssel."""
+    ed.frei_einfuegen("smartart", SM.einfuegen_daten(daten))
+
+
+def knoten_gewaehlt(ed) -> str | None:
+    """Id des gewählten Knotens des gewählten SmartArt (freies Objekt) oder None."""
+    return SM.knoten_gewaehlt(ed.frei_daten_lesen("smartart"))
+
+
+def knoten_waehlen(ed, ident) -> bool:
+    """Knoten wählen (None: Auswahl aufheben). Das Bild wird nicht neu gezeichnet."""
+    if not SM.knoten_waehlbar(ed.frei_daten_lesen("smartart"), ident):
+        return False
+    return ed.frei_daten_still("smartart", auswahl=ident or None)
+
+
+def knoten_text(ed, ident) -> str | None:
+    """Der Text des Knotens (ohne Aufzählungspunkte) oder None."""
+    return SM.knoten_text(daten_der_auswahl(ed), ident)
+
+
+def format_lesen(ed) -> dict | None:
+    """Werte für die Seitenleiste (siehe Framework): Format des gewählten Knotens, ohne Auswahl das von allen Knoten."""
+    d = daten_der_auswahl(ed)
+    if d is None:
+        return None
+    return SM.format_lesen({**d, "auswahl": knoten_gewaehlt(ed)})
+
+
+def kann(ed, was: str, richtung: str = "") -> bool:
+    """Ob ein Knotenbefehl gerade geht (zum Ausgrauen); siehe Framework."""
+    return SM.kann(daten_der_auswahl(ed), was, richtung)
 
 
 # ---- Zeichnen: gemeinsamer Zustand, Hilfen ---------------------------------------------------------------------------------------------
@@ -53,7 +102,7 @@ def aendern(ed, **felder) -> bool:
     Knoten gehörende) ersetzt die Knoten; ``knoten=None``, ``auswahl=None``, ``hierarchie=None`` und ``rtl=None`` entfernen die Angabe."""
     from vcl.qt.rendering.formen import frei_objekt as FO
     neu = {k: v for k, v in felder.items() if v is not None or k in ("knoten", "auswahl", "hierarchie", "rtl", "format")}
-    _text_gegen_knoten(ed, neu)
+    neu = SM.text_gegen_knoten(daten_der_auswahl(ed), neu)
     if FO.art_gewaehlt(ed) == "smartart":
         return FO.aendern(ed, "smartart", **neu) if neu else True
     return _inline_aendern(ed, neu)
@@ -113,7 +162,7 @@ def _knoten_schreiben(ed, kn: list[dict], auswahl) -> bool:
 def format_setzen(ed, **kw) -> bool:
     """Format des gewählten Knotens (ohne Auswahl: aller Knoten) ändern; ``kw`` wie ``teil_format`` des Diagramms (``fuell``, ``linie``, ``schatten`` …, ``text``)."""
     d = daten_der_auswahl(ed)
-    if d is None or not (set(kw) & set(FORMAT_SCHLUESSEL)):
+    if d is None or not (set(kw) & set(SM.format_schluessel())):
         return False
     ident = knoten_gewaehlt(ed)
     kn = knoten_von(d)

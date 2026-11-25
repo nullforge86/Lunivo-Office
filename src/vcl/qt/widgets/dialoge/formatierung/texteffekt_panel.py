@@ -6,6 +6,7 @@ from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QScrollArea, QLabel, QPushButton, QSizePolicy, QWidget
 from vcl.qt.rendering.wordart import texteffekt as T
 from vcl.qt.rendering.wordart import textfx as X
+from vcl.qt.rendering.wordart import textfx_vorgaben as XV
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld, SchrittFeld
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
@@ -245,36 +246,36 @@ class TexteffektPanel(QWidget):
         m.exec(knopf.mapToGlobal(knopf.rect().bottomLeft()))
 
     def _schatten_auswahl(self) -> None:
-        m = VoreinstellungMenue(self, keine=("Kein Schatten", X.voreinstellung_icon({})))
+        m = VoreinstellungMenue(self, keine=("Kein Schatten", XV.voreinstellung_icon({})))
         vor = X.schatten_vorgaben()
         for abschnitt in ("Außen", "Innen", "Perspektive"):
-            m.abschnitt(abschnitt, [(str(i), X.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(vor) if a == abschnitt], 3)
+            m.abschnitt(abschnitt, [(str(i), XV.voreinstellung_icon({"schatten": s}), n) for i, (a, n, s) in enumerate(vor) if a == abschnitt], 3)
         m.gewaehlt.connect(lambda k: self._setze_teil("schatten", vor[int(k)][2] if k else None, vor[int(k)][1] if k else "Keine"))
         self._menue_zeigen(m, self.schatten_knopf)
 
     def _refl_auswahl(self) -> None:
-        m = VoreinstellungMenue(self, keine=("Keine Spiegelung", X.voreinstellung_icon({})))
+        m = VoreinstellungMenue(self, keine=("Keine Spiegelung", XV.voreinstellung_icon({})))
         vor = X.reflektion_vorgaben()
-        m.abschnitt("Spiegelungsvarianten", [(str(i), X.voreinstellung_icon({"reflektion": r}, text="A"), n) for i, (n, r) in enumerate(vor)], 3)
+        m.abschnitt("Spiegelungsvarianten", [(str(i), XV.voreinstellung_icon({"reflektion": r}, text="A"), n) for i, (n, r) in enumerate(vor)], 3)
         m.gewaehlt.connect(lambda k: self._setze_teil("reflektion", vor[int(k)][1] if k else None, vor[int(k)][0] if k else "Keine"))
         self._menue_zeigen(m, self.refl_knopf)
 
     def _leucht_auswahl(self) -> None:
-        m = VoreinstellungMenue(self, keine=("Kein Leuchteffekt", X.voreinstellung_icon({})))
+        m = VoreinstellungMenue(self, keine=("Kein Leuchteffekt", XV.voreinstellung_icon({})))
         vor = X.leuchten_vorgaben()
-        m.abschnitt("Leuchtvarianten", [(str(i), X.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(vor)], 6)
+        m.abschnitt("Leuchtvarianten", [(str(i), XV.voreinstellung_icon({"leuchten": g}), n) for i, (n, g) in enumerate(vor)], 6)
         m.gewaehlt.connect(lambda k: self._setze_teil("leuchten", vor[int(k)][1] if k else None, vor[int(k)][0] if k else "Keine"))
         self._menue_zeigen(m, self.leucht_knopf)
 
     def _material_auswahl(self) -> None:
         m = VoreinstellungMenue(self, keine=None)
-        m.abschnitt("Material", [(k, X.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "material": k}}), n) for k, n in X.MATERIAL], 3)
+        m.abschnitt("Material", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "material": k}}), n) for k, n in X.MATERIAL], 3)
         m.gewaehlt.connect(lambda k: self._setze_material(k, None))
         self._menue_zeigen(m, self.d_material)
 
     def _licht_auswahl(self) -> None:
         m = VoreinstellungMenue(self, keine=None)
-        m.abschnitt("Beleuchtung", [(k, X.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "beleuchtung": k}}), n) for k, n in X.BELEUCHTUNG], 3)
+        m.abschnitt("Beleuchtung", [(k, XV.voreinstellung_icon({"d3": {"tiefe": 4, "tiefe_farbe": Farbe.GRAU, "beleuchtung": k}}), n) for k, n in X.BELEUCHTUNG], 3)
         m.gewaehlt.connect(lambda k: self._setze_material(None, k))
         self._menue_zeigen(m, self.d_licht)
 

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextE
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.rendering.textfelder import formular as FO
+from vcl.qt.rendering.textfelder.formular import Feldbeschreibung
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_TEXT_NORMAL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -19,20 +20,20 @@ TITEL = {"text": "Textfeld", "auswahl": "Auswahlliste", "datum": "Datumsfeld", "
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 class FormFeldDialog(PanelFaehig, QDialog):
-    def __init__(self, fenster, art: str, bestehend: dict | None = None):
+    def __init__(self, fenster, art: str, bestehend: Feldbeschreibung | None = None):
         super().__init__(fenster)
         self.art = art
-        m = bestehend or {}
+        m = bestehend or Feldbeschreibung(art)
         self.setWindowTitle(TITEL[art] + " einfügen" if not bestehend else TITEL[art] + " bearbeiten")
         f = FormularGitter()
-        self.name = zeilenfeld("frei", m.get("name", ""))
+        self.name = zeilenfeld("frei", m.name)
         self.name.setPlaceholderText("z. B. Vorname")
         f.zeile("Name des Feldes", self.name)
-        self.platz = zeilenfeld("frei", m.get("platzhalter", ""))
-        self.beschriftung = zeilenfeld("frei", m.get("beschriftung", ""))
-        self.liste = QPlainTextEdit("\n".join(m.get("optionen", [])))
-        self.aufschrift = zeilenfeld("frei", m.get("aufschrift", "Absenden"))
-        self.aktion = Auswahlfeld(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.get("aktion", "Keine"))
+        self.platz = zeilenfeld("frei", m.platzhalter)
+        self.beschriftung = zeilenfeld("frei", m.beschriftung)
+        self.liste = QPlainTextEdit("\n".join(m.optionen))
+        self.aufschrift = zeilenfeld("frei", m.aufschrift or "Absenden")
+        self.aktion = Auswahlfeld(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.aktion or "Keine")
         if art in ("text", "auswahl", "datum"):
             self.platz.setPlaceholderText({"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[art])
             f.zeile("Hinweis im leeren Feld", self.platz)
@@ -59,10 +60,10 @@ class FormFeldDialog(PanelFaehig, QDialog):
             return
         self.accept()
 
-    def meta(self) -> dict:
+    def meta(self) -> Feldbeschreibung:
         if self.art == "auswahl":
             return FO.meta("auswahl", self.name.text().strip(), platzhalter=self.platz.text().strip(),
-                           optionen=[z.strip() for z in self.liste.toPlainText().splitlines() if z.strip()])
+                           optionen=tuple(z.strip() for z in self.liste.toPlainText().splitlines() if z.strip()))
         if self.art == "kasten":
             return FO.meta("kasten", self.name.text().strip(), beschriftung=self.beschriftung.text().strip())
         if self.art == "knopf":

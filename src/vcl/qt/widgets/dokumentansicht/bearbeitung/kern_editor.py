@@ -915,16 +915,16 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def setAcceptDrops(self, an: bool) -> None:
         self.ansicht.setAcceptDrops(bool(an))
 
-    def set_silbenfarben(self, k: dict) -> None:
-        """Lesehilfe „Silbenfarben“ (Einstellungen aus ``editor/text/silbenfarben.konfig_lesen``): reine Anzeige, das Dokument bleibt unverändert."""
-        if not k or not k.get("an"):
+    def set_silbenfarben(self, k) -> None:
+        """Lesehilfe „Silbenfarben“ (``k``: ``SilbenEinstellung`` vom Framework): reine Anzeige, das Dokument bleibt unverändert."""
+        if not k or not k.an:
             self.ansicht.set_ansicht(silben=None)
             return
-        from vcl.qt.schrift import silbenfarben as SF
+        from writer.formatierungswerkzeuge.schrift import silbenfarben as W
         from core.layout.drucklayout.ausgabe.backend import rgba
-        farben = [rgba(f) for f in SF.farben(k)]
-        self.ansicht.set_ansicht(silben={"funktion": lambda w: SF.silben(w, k.get("sprache", "de_DE")), "farben": farben, "darstellung": k["darstellung"],
-                                         "einsilbig": k["einsilbig"], "neu_pro_wort": k["neu_pro_wort"], "mindestens": k["mindestens"]})
+        farben = [rgba(f) for f in W.farben(k)]
+        self.ansicht.set_ansicht(silben={"funktion": lambda w: W.silben(w, k.sprache), "farben": farben, "darstellung": k.darstellung,
+                                         "einsilbig": k.einsilbig, "neu_pro_wort": k.neu_pro_wort, "mindestens": k.mindestens})
 
     def set_lesefokus(self, groesser: float = 1.0, zurueck: float = 1.0) -> None:
         """Lesehilfe: Alles außer dem Absatz der Schreibmarke tritt zurück (``zurueck`` kleiner als 1 = blasser)."""

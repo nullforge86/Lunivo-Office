@@ -36,22 +36,24 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         super().__init__(parent)
         from vcl.qt.rendering.smartart import smartart as SA
         self.SA = SA
+        from writer.funktionen.objekte import smartart as SW
+        self.SW = SW
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
         bearbeiten = bool(daten)
         self._bearbeiten = bearbeiten
         daten = daten or {}
-        start = daten.get("layout", SA.STANDARD_LAYOUT)
-        self.galerie = _LayoutGalerie([e["schluessel"] for e in SA.LAYOUT_KATALOG], _layout_bildchen, start)
+        start = daten.get("layout", SW.katalog().standard_layout)
+        self.galerie = _LayoutGalerie([e.schluessel for e in SW.katalog().galerie], _layout_bildchen, start)
         v.addWidget(abschnittstitel("Layout")); v.addWidget(self.galerie)
         self.name = QLabel(); eigenschaft(self.name, rolle="fett")
         self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
         self.beschreibung.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
         v.addWidget(self.name); v.addWidget(self.beschreibung)
         self._vorschau_bauen(v)
-        self.farben = Auswahlfeld(); self.farben.addItems(list(SA.FARBEN))
+        self.farben = Auswahlfeld(); self.farben.addItems(list(SW.katalog().farben))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
-        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
+        self.text = QPlainTextEdit(daten.get("text") or SW.katalog().muster[start])
         self.text.setMinimumHeight(HOEHE_EINGABE_TEXT)
         self.bearbeiten = QWidget()
         f = FormularGitter(); b = _spalte("standard", self.bearbeiten); b.addLayout(f)
@@ -71,8 +73,8 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         return self.galerie
 
     def _layout(self, name):
-        if not self._eigener_text or self.text.toPlainText() in self.SA.MUSTER.values():
-            self.text.blockSignals(True); self.text.setPlainText(self.SA.MUSTER.get(name, "")); self.text.blockSignals(False)
+        if not self._eigener_text or self.text.toPlainText() in self.SW.katalog().muster.values():
+            self.text.blockSignals(True); self.text.setPlainText(self.SW.katalog().muster.get(name, "")); self.text.blockSignals(False)
         self.aktualisieren()
 
     def daten(self):
@@ -80,8 +82,8 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def aktualisieren(self, *_):
         d = self.daten()
-        self.name.setText(self.SA.ANZEIGENAMEN.get(d["layout"], d["layout"]))
-        self.beschreibung.setText(self.SA.BESCHREIBUNGEN.get(d["layout"]) or self.BESCHREIBUNG.get(d["layout"], ""))
+        self.name.setText(self.SW.katalog().anzeigenamen.get(d["layout"], d["layout"]))
+        self.beschreibung.setText(self.SW.katalog().beschreibungen.get(d["layout"]) or self.BESCHREIBUNG.get(d["layout"], ""))
         if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
@@ -119,22 +121,24 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         super().__init__(parent)
         from vcl.qt.rendering.smartart import smartart as SA
         self.SA = SA
+        from writer.funktionen.objekte import smartart as SW
+        self.SW = SW
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
         bearbeiten = bool(daten)
         self._bearbeiten = bearbeiten
         daten = daten or {}
-        start = daten.get("layout", SA.STANDARD_LAYOUT)
-        self.galerie = _LayoutGalerie([e["schluessel"] for e in SA.LAYOUT_KATALOG], _layout_bildchen, start)
+        start = daten.get("layout", SW.katalog().standard_layout)
+        self.galerie = _LayoutGalerie([e.schluessel for e in SW.katalog().galerie], _layout_bildchen, start)
         v.addWidget(abschnittstitel("Layout")); v.addWidget(self.galerie)
         self.name = QLabel(); eigenschaft(self.name, rolle="fett")
         self.beschreibung = QLabel(); self.beschreibung.setWordWrap(True)
         self.beschreibung.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Minimum)
         v.addWidget(self.name); v.addWidget(self.beschreibung)
         self._vorschau_bauen(v)
-        self.farben = Auswahlfeld(); self.farben.addItems(list(SA.FARBEN))
+        self.farben = Auswahlfeld(); self.farben.addItems(list(SW.katalog().farben))
         self.farben.setCurrentText(daten.get("farben", "Blau"))
-        self.text = QPlainTextEdit(daten.get("text") or SA.MUSTER[start])
+        self.text = QPlainTextEdit(daten.get("text") or SW.katalog().muster[start])
         self.text.setMinimumHeight(HOEHE_EINGABE_TEXT)
         self.bearbeiten = QWidget()
         f = FormularGitter(); b = _spalte("standard", self.bearbeiten); b.addLayout(f)
@@ -154,8 +158,8 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
         return self.galerie
 
     def _layout(self, name):
-        if not self._eigener_text or self.text.toPlainText() in self.SA.MUSTER.values():
-            self.text.blockSignals(True); self.text.setPlainText(self.SA.MUSTER.get(name, "")); self.text.blockSignals(False)
+        if not self._eigener_text or self.text.toPlainText() in self.SW.katalog().muster.values():
+            self.text.blockSignals(True); self.text.setPlainText(self.SW.katalog().muster.get(name, "")); self.text.blockSignals(False)
         self.aktualisieren()
 
     def daten(self):
@@ -163,8 +167,8 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def aktualisieren(self, *_):
         d = self.daten()
-        self.name.setText(self.SA.ANZEIGENAMEN.get(d["layout"], d["layout"]))
-        self.beschreibung.setText(self.SA.BESCHREIBUNGEN.get(d["layout"]) or self.BESCHREIBUNG.get(d["layout"], ""))
+        self.name.setText(self.SW.katalog().anzeigenamen.get(d["layout"], d["layout"]))
+        self.beschreibung.setText(self.SW.katalog().beschreibungen.get(d["layout"]) or self.BESCHREIBUNG.get(d["layout"], ""))
         if self._bearbeiten:                                           # beim Bearbeiten: die echte Zeichnung mit Text und Farben
             self._zeige(self.SA.zeichnen(d))
         else:                                                          # beim Einfügen: die Miniatur des Layouts, größer und blau
