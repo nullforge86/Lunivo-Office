@@ -1,14 +1,9 @@
 """Mehrere Hauptfenster: Liste, Neues Fenster, Anordnen, Fensterliste, Schließen."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
-
-if TYPE_CHECKING:
-    from vcl.qt.fenster.fenster.programmfenster import MainWindow
 
 
 class FensterVerwaltungMixin:
@@ -16,9 +11,9 @@ class FensterVerwaltungMixin:
 
     # ==== Fenster ====================================================================
     @staticmethod
-    def alle_fenster() -> list["MainWindow"]:
-        from vcl.qt.fenster.fenster.programmfenster import MainWindow
-        return [w for w in QApplication.topLevelWidgets() if isinstance(w, MainWindow) and w.isVisible()]
+    def alle_fenster() -> list["FensterVerwaltungMixin"]:
+        """Alle sichtbaren Programmfenster (``MainWindow`` ist das einzige Fenster mit diesem Baustein)."""
+        return [w for w in QApplication.topLevelWidgets() if isinstance(w, FensterVerwaltungMixin) and w.isVisible()]
 
     def neues_fenster(self):
         """Das aktuelle Dokument in einem zweiten Fenster öffnen (eigene Kopie, keine Synchronisation)."""

@@ -7,7 +7,9 @@ from __future__ import annotations
 from core.textsatz.engine import FontMetrics, FontSpec, GlyphPosition, LineBox, TextLayoutEngine
 from core.textsatz.zeilenumbruch import zeilen_umbrechen
 
-from core.formatierung.schrift import formen, konturen, raster
+import core.formatierung.schrift.formen as formen                # die Dateien direkt: die Tür des Pakets lädt diese Datei selbst
+import core.formatierung.schrift.konturen as konturen
+import core.formatierung.schrift.raster as raster
 from core.formatierung.schrift.datenbank import SchriftDatenbank, Schnitt, standard_datenbank
 from core.formatierung.schrift.schrift import Schrift, laden
 
