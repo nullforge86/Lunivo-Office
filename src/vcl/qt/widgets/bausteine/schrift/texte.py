@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QFrame, QLabel
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import PADDING_HINWEIS, SCHRIFT_HINWEIS
 
 _EIGENSCHAFT = "hinweisKlein"          # 0 = normale Größe, 1 = klein; fehlt = kein Hinweistext
@@ -62,7 +62,7 @@ def auffrischen(widget) -> None:
 def marke_faerben(w, grund: str, schrift: str, rest: str) -> None:
     """Farbige Marke (Chip-Label): ``grund``/``schrift`` sind Farben; ist ``grund`` die Akzentfarbe, kommen Fläche und Schrift aus dem Thema
     (Eigenschaft ``akzentFlaeche``, Regel in oberflaeche/thema.py), das Widget-Stylesheet trägt dann nur ``rest`` (Nicht-Farbwerte)."""
-    from framework.schnittstellen.datentypen.farben import Farbe
+    from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
     if grund == Farbe.AKZENT:
         w.setProperty("akzentFlaeche", True)
         w.setStyleSheet(rest)

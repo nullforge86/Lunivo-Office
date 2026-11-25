@@ -2,7 +2,7 @@ from __future__ import annotations
 import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QImage, QLinearGradient, QPainter, QPen, QPolygonF
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import (ABSTAND_STAPEL, HOEHE_STAPEL, RADIUS_ZEICHNUNG_KACHEL, RADIUS_ZEICHNUNG_MITTEL, RAND_SPALTE_ABZUG,
                                                      RAND_SPALTE_OBEN, STIFT_AUSWAHL, STIFT_BETONT, STIFT_STARK)
 from vcl.qt.widgets.bausteine.farben.farben import WEISS_GLANZ

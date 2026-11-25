@@ -10,7 +10,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 
 # Schlüssel → Beschriftung, in der Reihenfolge des Reiters „Textumbruch“
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG_KLEIN
 from vcl.qt.widgets.bausteine.farben.farben import UMBRUCH_FLAECHE, UMBRUCH_LINIE, UMBRUCH_LINIE_HINTER
 ARTEN = [("quadrat", "Quadrat"), ("passend", "Passend"), ("transparent", "Transparent"), ("obenunten", "Oben und Unten"),

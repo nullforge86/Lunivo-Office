@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QDialog
 from vcl.qt.rendering.formen import Linie
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import _PT_MM, EinheitFeld
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_RAHMENABSTAND, HOEHE_BEREICH_MITTEL
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_hilfen import _blatt_vorschau

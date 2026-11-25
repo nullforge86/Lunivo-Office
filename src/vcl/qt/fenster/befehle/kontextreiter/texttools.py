@@ -10,7 +10,7 @@ from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QMenu
 
 from vcl.qt.fenster.befehle.hauptreiter.text import ZEILENABSTAENDE
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 from vcl.qt.widgets.bausteine import FarbPalette
 

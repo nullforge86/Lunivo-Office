@@ -16,7 +16,7 @@ from writer.funktionen.objekte import diagrammformat as F
 from vcl.qt.rendering.wordart import textfx as X
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import keine_zeile
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LINIENVORGABE_KACHEL
 
 KACHEL = QSize(*GROESSE_LINIENVORGABE_KACHEL)                        # Vorlage: Kachelabstand 107 x 29 px

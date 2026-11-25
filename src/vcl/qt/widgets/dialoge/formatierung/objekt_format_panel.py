@@ -17,7 +17,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_panel import TexteffektPanel
 from core.objekte.formen.linie_daten import OBJEKT_STRICHE
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ICON_NORMAL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.dialoge.formatierung.objektformat_panel_hilfen import _DreiDUntereinander, _Felder, _TextPanel

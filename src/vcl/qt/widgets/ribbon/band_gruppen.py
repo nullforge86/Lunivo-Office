@@ -26,7 +26,7 @@ from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from writer.werkzeugleisten.plan import plan
 from vcl.qt.widgets.ribbon.band_bausteine import _SperrKasten
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein

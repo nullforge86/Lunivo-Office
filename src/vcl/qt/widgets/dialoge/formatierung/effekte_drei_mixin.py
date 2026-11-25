@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.zustaende.geruest.abschnitt_gruppe import EinzelOffen
 from vcl.qt.widgets.bausteine.interaktion.felder.winkel_feld import WinkelFeld
 

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QListView, QListWidget, QWidget
 import copy
 from core.listen.mehrstufig import mehrstufig as M
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, GROESSE_EBENENZEILE, GROESSE_FENSTER_GLIEDERUNG_ANPASSEN, HOEHE_KNOPF_HOCH, RAND_DIALOG_GRUPPE, RAND_KEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf

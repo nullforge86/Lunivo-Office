@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QWidget
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import AUSWAHL_OBJEKTTEXT
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_FELD, RADIUS_STUFE
 

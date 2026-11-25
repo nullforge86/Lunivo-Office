@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QMenu, QPushButton, QScrollArea, Q
 
 from vcl.qt.widgets.menues.dropdown.zeile import dropdown_zeile
 from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittsband, reiter_knopf_stil
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor, QIcon
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.menues.dropdown.objektmenues.fuell_voreinstellungen import fuell_bild, fuell_menue, graduell_paar
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import KopfDropdown
 from vcl.qt.widgets.menues.dropdown.objektmenues.linien_voreinstellungen import linien_bild, linien_menue, linien_schluessel

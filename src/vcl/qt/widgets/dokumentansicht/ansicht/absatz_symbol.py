@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QToolButton
 
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_GRIFF as GRIFF       # Seitenlänge der Griffe: eine Quelle in mass.py
 

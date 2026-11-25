@@ -6,7 +6,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF
 
 from vcl.qt.fenster.befehle.hilfen import _farbfeld
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine import FarbPalette, weitere_farben
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 

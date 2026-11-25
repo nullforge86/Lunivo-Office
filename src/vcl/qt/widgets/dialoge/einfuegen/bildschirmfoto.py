@@ -6,7 +6,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BETONT
 class BereichWahl(QWidget):

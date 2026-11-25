@@ -38,7 +38,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import ABSATZ_VORSCHAU_GRAU
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
 from vcl.qt.widgets.bausteine.interaktion.option.option import option

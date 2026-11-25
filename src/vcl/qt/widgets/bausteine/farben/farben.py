@@ -1,7 +1,7 @@
 """Farbdaten für jede Palette im Programm: Themenfarben mit Abstufungen, Standardfarben, zuletzt benutzte."""
 from __future__ import annotations
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from framework.schnittstellen.einstellungen import Einstellungen
 from PySide6.QtGui import QColor
 

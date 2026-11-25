@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.bausteine import weitere_farben
 from vcl.qt.widgets.dialoge.dokument_dialoge import PageSetupDialog
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import VORGABE_MARKER
 from vcl.qt.fenster.fenster.gemeinsam import _QuickInfo
 

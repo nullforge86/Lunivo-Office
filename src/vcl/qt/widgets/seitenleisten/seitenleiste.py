@@ -18,7 +18,7 @@ from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
 from vcl.qt.widgets.seitenleisten.schreib_panel import FundKarte, HinweisKarte
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten, karten_rand
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label, kleintext_label, trennlinie
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS

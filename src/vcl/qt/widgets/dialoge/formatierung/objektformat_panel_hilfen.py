@@ -10,7 +10,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt, seitengitter
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_panel import TexteffektPanel
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_ABSCHLUSS_KACHEL
 
 

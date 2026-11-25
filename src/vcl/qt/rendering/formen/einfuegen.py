@@ -1,10 +1,10 @@
 from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.dokument.dokument import Auswahl, Position
 from core.layout.drucklayout import formatwerte as F
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import formen_katalog as K
 from core.bearbeitung.einfuegen_hilfen import WORDART_VORLAGEN
 

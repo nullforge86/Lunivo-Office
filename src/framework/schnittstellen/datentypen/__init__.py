@@ -13,6 +13,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "EffektWert": ("effektdaten", "EffektWert"),
     "Ereignis": ("ereignisdaten", "Ereignis"),
     "Ergebnis": ("befehlsdaten", "Ergebnis"),
+    "Farbwert": ("farben", "Farbwert"),
     "FeldTreffer": ("formulardaten", "FeldTreffer"),
     "Feldbeschreibung": ("formulardaten", "Feldbeschreibung"),
     "Geoeffnet": ("geoeffnet", "Geoeffnet"),
@@ -27,6 +28,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "WordartVorgabe": ("objektdaten", "WordartVorgabe"),
     "Zeichenbefehl": ("zeichenliste", "Zeichenbefehl"),
     "Zeichenliste": ("zeichenliste", "Zeichenliste"),
+    "grundfarben": ("farben", "grundfarben"),
 }
 
 __all__ = sorted(_NAMEN)
@@ -46,6 +48,8 @@ def __getattr__(name: str):
         from . import einstellungsdaten as _datei
     elif datei == "ereignisdaten":
         from . import ereignisdaten as _datei
+    elif datei == "farben":
+        from . import farben as _datei
     elif datei == "formulardaten":
         from . import formulardaten as _datei
     elif datei == "geoeffnet":

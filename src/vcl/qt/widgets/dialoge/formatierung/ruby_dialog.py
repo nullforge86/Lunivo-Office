@@ -21,7 +21,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_RUBY_VORSCHAU_PX
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

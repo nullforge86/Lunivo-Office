@@ -3,7 +3,7 @@
 Mixin zu ``diagramm_format_panel.DiagrammFormatPanel`` und steht dort vor den Panel-Basen (``super()`` führt weiter zu ``ObjektFormatPanel``)."""
 from __future__ import annotations
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie

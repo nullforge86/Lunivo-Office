@@ -29,7 +29,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import Formular
 from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_MITTEL, BREITE_AB_ZWEISPALTER, BREITE_KNOPF_KLEIN, GROESSE_FENSTER_DRUCKEN, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_DRUCK_FUSS, RAND_DRUCK_SEITE, RAND_DRUCK_SPALTEN, RAND_FENSTER_DRUCKEN, RAND_FUSS_BACKSTAGE, RAND_KEIN, RAND_OBEN_SEITE
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.farben.farben import SCHATTEN_BLATT

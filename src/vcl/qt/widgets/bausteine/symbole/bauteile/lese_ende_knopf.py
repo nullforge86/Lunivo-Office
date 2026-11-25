@@ -5,7 +5,7 @@ from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QPushButton
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LESEENDEKNOPF, PADDING_LESEENDEKNOPF, RADIUS_KARTE, SCHRIFT_LESEENDEKNOPF
 
 

@@ -60,7 +60,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import gruppe, FormularGitter, UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 def _ueberschrift(text: str) -> QLabel:
     return abschnittstitel(text)
 

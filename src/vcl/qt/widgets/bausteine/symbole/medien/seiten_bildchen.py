@@ -12,7 +12,7 @@ from typing import Callable
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPainter, QPen
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
 from vcl.qt.widgets.bausteine.farben import farben as _f  # noqa: E402

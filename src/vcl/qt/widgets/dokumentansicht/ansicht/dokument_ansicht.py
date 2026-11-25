@@ -23,7 +23,7 @@ from core.layout.drucklayout.ausgabe import DokumentRenderer
 from core.layout.drucklayout.ausgabe.seite.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
 from core.layout.drucklayout.ausgabe.backend import rgba
 from core.textsatz.engine import TextLayoutEngine
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import AUTOR_FARBEN, WELLEN_FARBE, WELLEN_STANDARD
 
 from vcl.qt.widgets.dokumentansicht.ansicht.eingabe import EingabeTeil

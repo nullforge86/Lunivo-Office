@@ -18,7 +18,7 @@ from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_RUBY_VORSCHAU_PX, SCHRIFT_VORSCHAU, STIFT_BILDCHEN_LINIE
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SERIF
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld

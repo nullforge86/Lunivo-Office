@@ -8,7 +8,7 @@ from core.objekte.formen.linie_daten import LINIENBREITEN
 from vcl.qt.rendering.formen import STILE, Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.rahmen.linien import RahmenSeiten, rahmen_symbol
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LINIENBREITE_BILD, GROESSE_LINIENBREITE_BILD_STANDARD, GROESSE_RAHMENART_BILD, GROESSE_RAHMENSEITE_KNOPF, ICON_KNOPF_GROSS, ICON_MITTEL, RAND_RAHMEN_SEITE
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_ZAHL, STIFT_BETONT

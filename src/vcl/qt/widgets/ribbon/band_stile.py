@@ -25,7 +25,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_git
 from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from writer.werkzeugleisten.plan import plan
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import BANDSTIL_SPALTENBREITE, BANDSTIL_ZUGABE_BREIT, BANDSTIL_ZUGABE_HOCH, SCHRIFT_BANDSTIL_PT
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf

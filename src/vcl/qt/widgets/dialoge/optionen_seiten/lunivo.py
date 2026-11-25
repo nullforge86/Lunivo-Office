@@ -22,7 +22,7 @@ from framework.dokumentverwaltung.dokumentpflege import vorlesen
 from system.plattform import pfade
 from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_NORMAL, BREITE_KNOPF_KLEIN, HOEHE_VORSCHAU_KLEIN, PADDING_PLAKETTE, PADDING_STARTKNOPF_LINK, RADIUS_KLEIN, RAND_KARTE_ZEILE, RAND_KEIN, RAND_ZEILE, RAND_ZEILE_ENG, SCHRIFT_HINWEIS, SCHRIFT_LISTE, SCHRIFT_KLEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 

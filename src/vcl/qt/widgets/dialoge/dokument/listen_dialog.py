@@ -10,7 +10,7 @@ from core.listen.aufzaehlungen import listen as L
 from core.listen.mehrstufig import mehrstufig as M
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.symbole.medien.listen_symbole import liste_zeichner
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_LISTE, HOEHE_EINGABE_TEXT, HOEHE_LISTENVORSCHAU, HOEHE_TEXT_NORMAL, HOEHE_ZEILE_ZULETZT, RAND_FENSTER_LISTE, RAND_KEIN
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.abstaende.mass import LISTE_KACHEL_ZUGABE, LISTE_KACHELN_REIHEN, SCHRIFT_LISTE_TITEL_PT

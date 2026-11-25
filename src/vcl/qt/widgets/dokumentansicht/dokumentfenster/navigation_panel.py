@@ -12,7 +12,7 @@ from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen
 from vcl.qt.widgets.bausteine.farben.farben import FUSSNOTE_VIOLETT

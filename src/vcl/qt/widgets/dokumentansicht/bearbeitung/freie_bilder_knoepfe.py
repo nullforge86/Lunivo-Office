@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtGui import QColor
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 
 class FreieBilderKnoepfeMixin:

@@ -30,7 +30,7 @@ from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from core.dokument import vorlagen
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_GROSS, ABSTAND_PAAR, BREITE_GALERIE_HINWEIS_MIN, BREITE_VORLAGENSUCHE, GROESSE_VORLAGE_KACHEL, HOEHE_FELD, HOEHE_KNOPF, ICON_GROSS, ICON_NORMAL, ICON_VORLAGE_PLATZHALTER, RAND_VORLAGENGALERIE, RAND_VORLAGEN_FUSS
 
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld

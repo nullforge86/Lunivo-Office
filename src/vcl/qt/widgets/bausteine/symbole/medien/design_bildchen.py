@@ -14,7 +14,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QApplication
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
 from vcl.qt.widgets.bausteine.farben.farben import DESIGN_BILDCHEN_RAND  # noqa: E402

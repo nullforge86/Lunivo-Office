@@ -2,7 +2,7 @@ from __future__ import annotations
 import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QTransform
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from core.objekte.wordart.textfx_daten import _BAHNEN, _tiefe_faktor
 from vcl.qt.rendering.wordart.effekt_umwandlung import zu_daten, zu_dict

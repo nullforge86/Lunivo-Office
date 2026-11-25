@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QWidget,
 )
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.skalierung import daten
 from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 from vcl.qt.widgets.bausteine.zustaende.geruest import module

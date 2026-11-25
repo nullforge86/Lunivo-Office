@@ -6,7 +6,7 @@ from PySide6.QtGui import QBrush, QColor, QConicalGradient, QImage, QPainter, QP
 from PySide6.QtWidgets import QWidget
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BETONT, STIFT_KREIS
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FARBRING
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.felder.farbwaehler_hilfen import Modell
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import freie_bilder as FB
 from core.objekte.textfelder.modell.frei_objekt_text_daten import ARTEN, TEXT_ARTEN, STANDARD_MASS, FORM_STANDARD, TEXTFELD_FUELL, TEXTFELD_RAND, _SS, laeufe_ab, laeufe_zusammen
 from vcl.qt.rendering.textfelder import wordart_zeichnen, textfeld_zeichnen

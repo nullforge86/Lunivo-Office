@@ -19,7 +19,7 @@ from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
 from vcl.qt.rendering.formen import bild_aus_datei
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from vcl.qt.rendering import diagramme as DF
 from writer.funktionen.objekte import muster as M

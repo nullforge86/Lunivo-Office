@@ -23,7 +23,7 @@ from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 from core.objekte.formen.linie_daten import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG_GROSS
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_INNEN_OBJEKT, GROESSE_SPALTENRASTER_KACHEL, GROESSE_STRICHART_MENUEBILD, GROESSE_STRICHART_MENUESYMBOL, GROESSE_TEXTUR_MUSTER_KACHEL, GROESSE_VERLAUF_KACHEL, ICON_NORMAL
 

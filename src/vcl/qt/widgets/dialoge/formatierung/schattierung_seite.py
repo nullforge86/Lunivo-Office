@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget
 from vcl.qt.rendering import formen as M
 from writer.funktionen.objekte import muster as MW
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_RAHMENVORSCHAU, ICON_NORMAL, RAND_SCHATTIERUNG_SEITE
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel, mittig

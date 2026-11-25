@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from PySide6.QtGui import QColor, QImage, QPainter
 
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 FORMATE = {"JPG": ("jpg", "JPG"), "PNG": ("png", "PNG"), "BMP": ("bmp", "BMP"), "TIF": ("tif", "TIFF")}
 QUALITAET = [("Normal", 96), ("Standard", 150), ("Hoch", 200), ("Sehr hoch", 300)]

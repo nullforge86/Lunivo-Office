@@ -2,7 +2,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QPainter
 from vcl.qt.rendering.formen import kern_bild, kern_malen
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.geometrie import Rect
 from core.layout.drucklayout.ausgabe.text import zeichenzusatz as Z
 

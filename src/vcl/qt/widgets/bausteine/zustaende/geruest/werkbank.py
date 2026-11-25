@@ -15,7 +15,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRast
 from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import Funktion, fuer_reiter
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label
 from vcl.qt.widgets.bausteine.interaktion.felder.schalter import CHIP_B, CHIP_H, schalter_an_stil, schalter_aus_stil

@@ -4,7 +4,7 @@ from PySide6.QtCore import QPoint
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QWidget
 from core.dokument.abschnitte.seite import PX_PER_MM
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_LINEAL_PX
 
 

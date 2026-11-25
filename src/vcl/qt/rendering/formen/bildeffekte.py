@@ -2,7 +2,7 @@ from __future__ import annotations
 import math
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter, QPainterPath
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STAERKE_BILDEFFEKT_DUNKEL, STAERKE_BILDEFFEKT_HELL, STAERKE_BILDEFFEKT_RAND
 from vcl.qt.widgets.bausteine.farben.farben import ALPHA_VOLL, DURCHSICHTIG, GRAU_RGB, SCHWARZ_RGB, WEISS_RGB
 from core.objekte.formen.bildeffekte_daten import PX_PT, _dreht, _merken, hat_abschluss, tiefe_richtung

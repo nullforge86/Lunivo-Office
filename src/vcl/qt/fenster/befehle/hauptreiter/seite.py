@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu
 from framework.befehle.ansicht import einstellungen as ansicht_einstellungen
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 
 _UNVERAENDERT = object()

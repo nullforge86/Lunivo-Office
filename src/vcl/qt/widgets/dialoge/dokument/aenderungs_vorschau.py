@@ -8,7 +8,7 @@ from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextDocument, QTextDocumentFragment
 from PySide6.QtWidgets import QSizePolicy, QTextEdit
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.text import ki_markdown
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from vcl.qt.widgets.bausteine.abstaende.mass import AENDERUNG_DECKKRAFT, CHAT_VORSCHAU_MAX

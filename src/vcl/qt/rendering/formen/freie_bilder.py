@@ -7,7 +7,7 @@ from core.objekte.anordnung.image_object import ImageObject
 from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild
 from core.layout.drucklayout.objekte import objekt_rechteck
 from vcl.qt.rendering.formen import bilddaten as BD
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.objekte.formen.freie_bilder_daten import MAX_BILDPUNKTE, SCHEMA, _PNG_ABLAGE, _text_gerade
 
 

@@ -5,7 +5,7 @@ from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPen, QPoly
 from PySide6.QtWidgets import QLabel, QWidget
 from vcl.qt.widgets.bausteine.abstaende.mass import FARBWAEHLER_ZUGABE_LINKS, FARBWAEHLER_ZUGABE_RECHTS
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FARBPROBE, GROESSE_FARBREGLER
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 
 class Modell(QObject):

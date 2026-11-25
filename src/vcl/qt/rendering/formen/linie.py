@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from core.layout.drucklayout.ausgabe.objekte.linien import STILE as KERN_STILE, zeichne_linie, zeichne_rahmen
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_LINIE_MIN
 from core.objekte.formen.linie_daten import ALLE_SEITEN
 

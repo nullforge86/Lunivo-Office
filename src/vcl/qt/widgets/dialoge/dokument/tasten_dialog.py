@@ -19,7 +19,7 @@ from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_TASTENKOMBINATION
 class TastenDialog(QDialog):
     def __init__(self, parent=None, aktuell: str = "", *, belegt=None):

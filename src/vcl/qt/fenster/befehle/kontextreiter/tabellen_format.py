@@ -5,7 +5,7 @@ Alle Befehle wirken über den ``KernEditor`` auf das Dokumentmodell (Tabellen- u
 from __future__ import annotations
 
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.fenster.befehle.hilfen import _farbfeld
 
 

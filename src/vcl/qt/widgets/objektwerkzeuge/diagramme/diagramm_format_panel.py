@@ -24,7 +24,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QLabel, QTabBar, QLineEdit, QRadioButton, QWidget
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from writer.funktionen.objekte import diagrammformat as F
 from vcl.qt.rendering import wordart as T
 from vcl.qt.widgets.bausteine.symbole.medien.alternativtext_abschnitt import AlternativtextAbschnitt

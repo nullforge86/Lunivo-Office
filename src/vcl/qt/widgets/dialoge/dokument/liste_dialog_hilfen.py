@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QSpinBox, QWidget
 from core.listen.aufzaehlungen import listen as L
 from core.listen.mehrstufig import mehrstufig as M
 from vcl.qt.widgets.bausteine.symbole.medien.listen_symbole import liste_zeichner
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LISTENSTIL_KACHEL, RAND_KEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_KURZ

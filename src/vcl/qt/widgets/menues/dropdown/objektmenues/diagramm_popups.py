@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte_rolle
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_KACHEL_ABZUG_FLACH, DROPDOWN_KACHEL_ABZUG_ZEILE, STIFT_BILDCHEN
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, ABSTAND_NORMAL, BREITE_BEREICHSLISTE_POPUP, GROESSE_DIAGRAMMSTIL_POPUP, GROESSE_SCHNELLLAYOUT_BILD, GROESSE_SCHNELLLAYOUT_KNOPF, GROESSE_STILKACHEL_RAND, HOEHE_POPUP_SEITE, ICON_NORMAL, RAND_BOX, RAND_BOX_KOMPAKT, RAND_KEIN, RAND_POPUP_FILTERGRUPPE, RAND_POPUP_FUSS, RAND_POPUP_KOPF, RAND_POPUP_SEITE, RAND_POPUP_UNTERTEXT
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

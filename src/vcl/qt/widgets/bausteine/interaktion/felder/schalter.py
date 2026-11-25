@@ -9,7 +9,7 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QPainter, QPalette
 from PySide6.QtWidgets import QAbstractButton
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import KIPP_BREITE, KIPP_HOEHE, KIPP_KNOPF_RAND, PADDING_SCHALTER_CHIP, RADIUS_CHIP
 
 CHIP_B, CHIP_H = 52, 26                      # Schalter-Chip „an/aus“: feste, großzügige Größe (Kapsel, Radius = halbe Höhe)

@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
     QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QStackedWidget, QToolButton, QTreeView, QWidget,
 )
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter

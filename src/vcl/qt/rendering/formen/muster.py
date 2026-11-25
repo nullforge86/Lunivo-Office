@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QImage, QPixmap
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from core.objekte.formen.muster_daten import _an
 

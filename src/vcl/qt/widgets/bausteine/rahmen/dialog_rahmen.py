@@ -12,7 +12,7 @@ from vcl.qt.widgets.bausteine.abstaende.plan_raster import PlanRaster
 from vcl.qt.widgets.bausteine.abstaende.raster import kanten_anordnung
 
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, felder_angleichen
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ICON_NORMAL, RAND_KEIN
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 

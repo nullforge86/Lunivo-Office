@@ -17,7 +17,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPen, QPixmap, QPolygonF
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole

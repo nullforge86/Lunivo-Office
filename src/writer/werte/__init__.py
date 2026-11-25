@@ -5,6 +5,7 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "grundfarben": ("farben", "grundfarben"),
     "unveraenderlich": ("werte", "unveraenderlich"),
 }
 
@@ -13,7 +14,9 @@ __all__ = sorted(_NAMEN)
 
 def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
-    if datei == "werte":
+    if datei == "farben":
+        from . import farben as _datei
+    elif datei == "werte":
         from . import werte as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")

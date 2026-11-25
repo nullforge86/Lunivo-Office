@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPen
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ANTEIL_SCHRIFT_KACHEL, ANTEIL_SCHRIFT_KACHEL_GROSS, STIFT_VORGABE_KONTUR
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS

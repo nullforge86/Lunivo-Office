@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QLabel, QLayout, QWidget
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.farben import farben as F
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ICON_KLEIN, PADDING_PALETTE_TITEL_OBEN
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe

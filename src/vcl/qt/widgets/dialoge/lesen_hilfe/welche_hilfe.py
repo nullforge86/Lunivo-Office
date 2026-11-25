@@ -20,7 +20,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnit
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.schrift.texte import marke_faerben
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_ZEILE, BREITE_NUMMER, GROESSE_SCHALTER, GROESSE_STUFE, PADDING_HILFE_CHIP, PADDING_TASTENKUERZEL, RADIUS_MARKE, RADIUS_PILLE, RADIUS_STUFE, RAND_KEIN, RAND_ZEILE_KARTE, SCHRIFT_KLEIN
 STUFEN = [
     # (Stufe, Titel, Kürzel, Frage, Hinweis rechts, Schalter | Befehl)

@@ -18,7 +18,7 @@ from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPix
 from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QStylePainter, QWidget
 
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN, STIFT_SYMBOL
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
 

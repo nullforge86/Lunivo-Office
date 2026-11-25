@@ -16,7 +16,7 @@ from PySide6.QtGui import QImage
 
 from core.geometrie import mm_to_px, px_to_mm
 from vcl.qt.rendering.formen import freie_bilder as FB
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 # Vorgabewerte des Fensters „Layout“ (oberflaeche/baukasten/dokument/layout_dialog.py) – hier, damit der Editor nichts aus der Oberfläche braucht
 STANDARD = {

@@ -8,7 +8,7 @@ import json
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.darstellung import knoten_eingabe
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 

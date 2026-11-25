@@ -33,7 +33,7 @@ from vcl.qt.widgets.bausteine.tastaturnavigation import kuerzel
 
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_SERIF_PT, SCHRIFT_HILFE_TITEL_PLUS_PT
 from vcl.qt.widgets.bausteine.schrift.schriftarten import GENERISCH_MONOSPACE, GENERISCH_SERIF
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN

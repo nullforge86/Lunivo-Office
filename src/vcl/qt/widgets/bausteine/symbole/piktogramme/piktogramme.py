@@ -28,7 +28,7 @@ def katalog() -> dict:
 
 
 def katalog_bild(name: str, px: int = 96, farbe: str | None = None, strich: float = STRICH) -> QImage:
-    from framework.schnittstellen.datentypen.farben import Farbe
+    from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
     farbe = farbe or Farbe.SYMBOL
     img = QImage(px, px, QImage.Format_ARGB32)
     img.fill(Qt.transparent)

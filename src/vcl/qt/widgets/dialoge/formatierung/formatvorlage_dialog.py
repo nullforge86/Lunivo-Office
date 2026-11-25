@@ -23,7 +23,7 @@ from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussl
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.dialoge.formatierung.text_format import TextFormatLeiste, zeichne_absaetze, zu_zeichen
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, GROESSE_FENSTER_FORMATVORLAGE, RAND_KEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownTaste

@@ -10,7 +10,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPen, QTransform
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering import formen as FF
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
 

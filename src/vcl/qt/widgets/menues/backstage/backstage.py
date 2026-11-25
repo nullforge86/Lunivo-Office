@@ -32,7 +32,7 @@ from vcl.qt.widgets.bausteine.symbole.medien.datei_symbole import datei_symbol
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_SPALTE, ABSTAND_BLOCK, ABSTAND_NORMAL, BREITE_FELD_ORT, BREITE_NAMENSFELD, BREITE_NAVIGATION_BACKSTAGE, BREITE_NAVIGATION_OPTIONEN, BREITE_ZEILENHINWEIS, HOEHE_ABSTAND_LISTE, HOEHE_TRENNER_LISTE, HOEHE_ZEILE_ZULETZT, ICON_GROSS, ICON_KACHEL, ICON_KLEIN, ICON_KNOPF_GROSS, ICON_LISTE, ICON_NORMAL, PADDING_BACKSTAGE_KNOPF, PADDING_BACKSTAGE_ZURUECK, PADDING_LINKS_BACKSTAGE_LISTE, PADDING_NAVIGATION_EINTRAG, RADIUS_FELD, RADIUS_KLEIN, RAND_BACKSTAGE_SEITE, RAND_FUSS_BACKSTAGE, RAND_FUSS_RECHTS, RAND_KEIN, RAND_KOPF_LINKS, RAND_LISTENKOPF, RAND_ZEILE, RAND_ZEILE_BACKSTAGE, RAND_ZULETZT_ZEILE, SCHRIFT_LISTE, SCHRIFT_UEBERSCHRIFT, SCHRIFT_UEBERSCHRIFT_KLEIN
 

@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor
 
 
 
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 def _hell(c: QColor) -> float:
     def lin(v):
         v /= 255

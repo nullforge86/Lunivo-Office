@@ -4,7 +4,7 @@ from PySide6.QtGui import QColor, QImage, QPainter
 from vcl.qt.rendering.formen import bild_einfuegen as BE
 from vcl.qt.rendering.formen import einfuegen as E
 from vcl.qt.rendering.formen import form_einfuegen as FE
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.objekte.formen.formen_daten import GRUPPEN_ABSTAND, STANDARD, VORLAGEN, _FO_SCHLUESSEL, form_daten
 
 

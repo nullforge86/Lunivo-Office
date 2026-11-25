@@ -8,7 +8,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte
 from PySide6.QtCore import QSize
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.felder.flache_reiter_leiste import HAUPT, FlacheReiterLeiste, abstand_unter_reiter
 from vcl.qt.widgets.dialoge.einfuegen.smart_art_dialog import SmartArtDialog, _layout_bildchen

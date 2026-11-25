@@ -5,7 +5,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 def liste_zeichner(marke: str | None):
     """``marke``: 'disc', 'circle', 'square' oder die Zeichenfolge der ersten drei Nummern (z. B. '1.|2.|3.'); None = Keine."""
     def zeichne(p: QPainter, r: QRectF) -> None:

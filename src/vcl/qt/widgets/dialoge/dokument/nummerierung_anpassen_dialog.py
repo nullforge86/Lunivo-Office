@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor, QPen
 from PySide6.QtWidgets import QDialog, QLabel
 from core.listen.aufzaehlungen import listen as L
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_LISTENVORSCHAU, GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_LISTE_ZAHL_PX, STIFT_STARK

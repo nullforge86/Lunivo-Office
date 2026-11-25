@@ -12,7 +12,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering import wordart as T
 from vcl.qt.widgets.menues.dropdown.objektmenues.fuell_voreinstellungen import FuellPalette, fuell_bild
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette

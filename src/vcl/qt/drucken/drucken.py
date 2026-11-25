@@ -11,7 +11,7 @@ from PySide6.QtCore import QMarginsF, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPageLayout, QPageSize, QPainter
 
 from core.dokument import Dokument
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from core.geometrie import mm_to_px
 from core.layout import LayoutEngine
 from core.layout.drucklayout import formatwerte as F

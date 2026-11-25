@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QPen
 from vcl.qt.rendering.wordart import textfx
 
 # Schlüssel → (Name, Qt-Strichart oder Strichmuster in Linienbreiten, DOCX-Wert ``a:prstDash``)
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 KONTUR_ARTEN = {"einfach": ("Durchgezogen", Qt.SolidLine, "solid"), "gepunktet": ("Gepunktet", Qt.DotLine, "sysDot"),
                 "fein": ("Fein gestrichelt", [3.0, 1.0], "sysDash"), "gestrichelt": ("Gestrichelt", Qt.DashLine, "dash"),
                 "lang": ("Lang gestrichelt", [8.0, 3.0], "lgDash"), "strichpunkt": ("Strich-Punkt", Qt.DashDotLine, "dashDot"),

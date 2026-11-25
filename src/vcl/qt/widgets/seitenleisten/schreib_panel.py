@@ -17,7 +17,7 @@ from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 import re
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from core.korrektur.korrektur import ProofingIssue
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label

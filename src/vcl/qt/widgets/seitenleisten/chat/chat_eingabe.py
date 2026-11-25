@@ -14,7 +14,7 @@ from PySide6.QtGui import QTextCursor
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QFrame, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QWidget
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from writer.funktionen import ki as KD
 from vcl.qt.widgets.seitenleisten.chat.chat_anhang import AnhangChip
 from vcl.qt.widgets.seitenleisten.chat.chat_blase import SymbolKnopf

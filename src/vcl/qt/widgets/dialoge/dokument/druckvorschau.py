@@ -22,7 +22,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QComboBox, QDialog, QFrame, QLabel, QPushButton, QScrollArea, QSpinBox, QWidget
 
 from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_DRUCKVORSCHAU_SEITEN, ABSTAND_MITTEL, BREITE_DRUCKVORSCHAU_SYMBOLKNOPF, BREITE_DRUCKVORSCHAU_ZOOMKNOPF, BREITE_SCHIENE, GROESSE_FENSTER_DRUCKVORSCHAU, HOEHE_FELD, ICON_GROSS, RAND_DRUCKVORSCHAU_SEITEN, RAND_KEIN, RAND_ZEILE_KARTE
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
 from core.layout.drucklayout.formatwerte import schrift as schrift_von
 from vcl.qt.rendering.formen import Linie  # noqa: F401
 from vcl.qt.widgets.bausteine import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
-from core.formatierung.farben.farben import Farbe  # noqa: F401
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe  # noqa: F401
 from vcl.qt.widgets.bausteine.farben import farben as BF  # noqa: F401
 
 

@@ -10,7 +10,7 @@ sie kennzeichnen ihre Widgets nur mit einem Namen (``setObjectName``) oder einer
 """
 from __future__ import annotations
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende import mass as m
 
 _REGELN = """

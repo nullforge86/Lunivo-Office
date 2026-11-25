@@ -13,7 +13,7 @@ from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LINIENART_AUSWAHL_BILD, GROESSE_LINIENART_BILD, HOEHE_LINIENZEILE, RAND_KEIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_SCHMAL, DROPDOWN_ZEICHEN_ZAHL

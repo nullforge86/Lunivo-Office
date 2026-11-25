@@ -9,7 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPixmap
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP, STIFT_BETONT
 

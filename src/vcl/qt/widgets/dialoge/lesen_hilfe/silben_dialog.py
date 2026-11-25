@@ -24,7 +24,7 @@ from vcl.qt.widgets.bausteine import weitere_farben
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_KNOPF_SILBE, HOEHE_TEXT_NORMAL, RADIUS_FELD, RAND_KEIN, SCHRIFT_VORSCHAU
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_KURZ
 _WORT = re.compile(W.katalog().wortmuster, re.UNICODE)                            # was ein Wort ist, bestimmt der Kern; hier nur zum Durchlaufen des Vorschautextes

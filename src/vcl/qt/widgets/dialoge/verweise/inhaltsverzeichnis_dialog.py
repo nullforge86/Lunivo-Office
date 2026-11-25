@@ -15,7 +15,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, DROPDOWN_ZEIC
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, gruppe
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig

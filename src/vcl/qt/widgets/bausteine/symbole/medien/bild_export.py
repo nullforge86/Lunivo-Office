@@ -21,7 +21,7 @@ from PySide6.QtCore import QPointF, QRectF, QSize, QStandardPaths, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPalette, QPen
 from PySide6.QtWidgets import QAbstractButton, QButtonGroup, QComboBox, QLabel, QLineEdit, QLayout, QPushButton, QWidget
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG, STIFT_BETONT, STIFT_SYMBOL
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_EXPORT_ABSCHNITT, ABSTAND_MITTEL, GROESSE_EXPORTKARTE, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_EXPORT_BILD, RAND_OBEN_SEITE, RAND_ZEILE_LOCKER
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QDialog, QSpinBox
 from vcl.qt.rendering.formen import einfuegen as E
 from vcl.qt.rendering import wordart as WE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

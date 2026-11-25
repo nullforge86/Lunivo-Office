@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QToolButton
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_SCHWEBKNOPF, ICON_SCHWEBKNOPF, RADIUS_MITTEL
 class SchwebKnopf(QToolButton):
     RAND = 16

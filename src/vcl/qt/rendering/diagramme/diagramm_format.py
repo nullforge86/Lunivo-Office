@@ -3,7 +3,7 @@ import base64
 import math
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt
 from PySide6.QtGui import (QBrush, QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF)
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
 from vcl.qt.rendering import formen as E

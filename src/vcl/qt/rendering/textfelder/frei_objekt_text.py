@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter
 from vcl.qt.rendering.formen import gespiegelt
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, SCHATTENANSATZ
 from core.layout.drucklayout.ausgabe.text.wordartobjekt import listenmarken
 from core.layout.drucklayout.ausgabe.text.wordartobjekt import anzeige_laeufe, laeufe_text

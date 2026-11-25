@@ -21,7 +21,7 @@ from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from writer.werkzeugleisten.ansicht.aktionen import lesestufen as LS
 from framework.dokumentverwaltung.dokumentpflege import vorlesen
 from vcl.qt.widgets.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_PAPIERTON_NAME_PT
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_GROSS, ABSTAND_SPALTEN, PADDING_LESEN_VORSCHAU, RADIUS_FELD, RAND_ZEILE, SCHRIFT_HINWEIS

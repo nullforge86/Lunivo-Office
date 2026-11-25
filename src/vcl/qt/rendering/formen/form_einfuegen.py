@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QImage
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import formen_katalog as K
 
 

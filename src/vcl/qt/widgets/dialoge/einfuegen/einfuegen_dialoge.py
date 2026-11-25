@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QDialog, QLabel
 from vcl.qt.rendering import formen as E
 from vcl.qt.rendering import textfelder as FE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
-from framework.schnittstellen.datentypen.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig

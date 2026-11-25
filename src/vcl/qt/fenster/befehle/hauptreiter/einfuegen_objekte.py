@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from vcl.qt.fenster.befehle.hilfen import _farbfeld
-from core.formatierung.farben.farben import Farbe
+from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_OBJEKTKACHEL_INNEN, RADIUS_ZEICHNUNG_MITTEL, STIFT_BILDCHEN_LINIE
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
@@ -26,7 +26,7 @@ class EinfuegenObjektBefehle:
         """Formen wie in der Vorlage: Gruppen (Linie, Rechteck, Standardformen, Blockpfeile, …) mit kleinen Umrissbildern."""
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPalette, QPen
-        from core.formatierung.farben.farben import Farbe
+        from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
         from vcl.qt.rendering import formen as E
         from vcl.qt.rendering import formen as K
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
@@ -219,7 +219,7 @@ class EinfuegenObjektBefehle:
         from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
         from PySide6.QtWidgets import QButtonGroup, QLabel, QToolButton, QWidget
         from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe
-        from core.formatierung.farben.farben import Farbe
+        from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
         from vcl.qt.rendering.textfelder import deckblatt as DB
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         from writer.funktionen.objekte import deckblatt as DBW
