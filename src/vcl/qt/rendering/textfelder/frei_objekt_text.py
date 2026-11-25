@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter
-from vcl.qt.rendering.formen.bildeffekte import gespiegelt
+from vcl.qt.rendering.formen import gespiegelt
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, SCHATTENANSATZ
 from core.layout.drucklayout.ausgabe.text.wordartobjekt import listenmarken
@@ -67,7 +67,7 @@ def wordart_zeichnen(d: dict) -> QImage:
     text = laeufe_text(laeufe) or " "
     pt = float(d.get("pt", 36))
     if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
-        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
+        from vcl.qt.rendering import wordart as WE
         return WE.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", Farbe.WORDART_BLAU))
     erg = wordart_rgba(d, standard_engine(), E.WORDART_VORLAGEN, _SS)
     img = QImage(bytes(erg["rgba"]), erg["w"], erg["h"], erg["w"] * 4, QImage.Format_RGBA8888).copy()
@@ -127,7 +127,7 @@ class _Satz:
         return max([r.bottom for r in self.zeilen_seite1()] + [self.innen_oben])
 
     def malen(self, p: QPainter) -> None:
-        from vcl.qt.rendering.formen.anzeige import seite_malen
+        from vcl.qt.rendering.formen import seite_malen
         seite_malen(p, self.layout.engine, self.dok, self.erg, 0, None)
 
 

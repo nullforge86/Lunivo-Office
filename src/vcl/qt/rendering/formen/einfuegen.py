@@ -37,7 +37,7 @@ DIAGRAMMARTEN = ["Säulen", "Balken", "Linie", "Kreis"]
 
 def diagramm_bild(art: str, titel: str, kategorien: list[str], reihen: dict[str, list[float]], b: int = 640, h: int = 400) -> QImage:
     """``art``: Untertyp aus ``editor.diagramme.diagramm.TYPEN`` oder einer der früheren Namen (Säulen, Balken, Linie, Kreis)."""
-    from vcl.qt.rendering.diagramme import diagramm as D
+    from vcl.qt.rendering import diagramme as D
     return D.bild(art, titel, kategorien, reihen, b, h)
 
 

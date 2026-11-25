@@ -67,13 +67,13 @@ class DiagrammToolsBefehle:
     # ==== Hilfen =====================================================================================================================
     def _dg(self) -> dict | None:
         """Die Daten des gewählten Diagramms (Kopie) oder None."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         return FO.daten_lesen(self.ed, "diagramm") if self.ed else None
 
     def _dg_set(self, **kw) -> bool:
         """Daten des gewählten Diagramms ändern (None entfernt die Angabe) und neu zeichnen; ohne Diagramm ein Hinweis in der Statuszeile."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
-        if not (self.ed and self._dg() is not None and FO.aendern(self.ed, "diagramm", **kw)):
+        from vcl.qt.rendering import formen as FO
+        if not (self.ed and self._dg() is not None and FO.frei_objekt_aendern(self.ed, "diagramm", **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein Diagramm auswählen.")
             return False
         self.w.band.aktualisieren()
@@ -238,27 +238,27 @@ class DiagrammToolsBefehle:
     # ==== Diagrammteile, Filter, Formate, Alternativtext =============================================================================
     def diagrammTeile(self, k=None) -> list[tuple[str, str]]:
         """Die wählbaren Teile des gewählten Diagramms [(Schlüssel, Anzeigename)] für das Feld „Diagrammbereich“ (leer ohne Diagramm)."""
-        from vcl.qt.rendering.diagramme import diagramm as D
+        from vcl.qt.rendering import diagramme as D
         d = self._dg()
         return D.teile(d) if d is not None else []
 
     def diagrammTeilWaehlen(self, k=None, schluessel=None):
         """Einen Diagrammteil wählen (``diagrammTeilWaehlen:["reihe_0"]``; ohne Schlüssel: Auswahl aufheben). Zeichnet nicht neu."""
-        from vcl.qt.rendering.diagramme import diagramm_teile as T
+        from vcl.qt.rendering import diagramme as T
         if self._dg() is None:
             return self._dg_set()
         return T.teil_waehlen(self.ed, schluessel)
 
     def feld_diagrammTeil(self) -> str:
         """Anzeigename des gewählten Teils fürs Feld „Diagrammbereich“ (ohne Auswahl: „Diagrammbereich“)."""
-        from vcl.qt.rendering.diagramme import diagramm_teile as T
+        from vcl.qt.rendering import diagramme as T
         return (T.teil_name(self.ed) if self.ed else "") or "Diagrammbereich"
 
     def diagrammTeilFormat(self, k=None, angaben=None, **kw):
         """Format des gewählten Teils ändern: ``fuell`` (Farbe oder Wörterbuch), ``linie``, ``schatten``, ``reflektion``, ``leuchten``, ``weich``, ``d3``, ``drehung``,
         ``text``, ``achse``, ``reihe`` (Aufbau in ``editor/diagramme/diagramm_format.py``); ``teil`` wählt einen anderen Teil. Als Bandbefehl: ``diagrammTeilFormat:[{"fuell": "#ff0000"}]``. Lesen:
         ``editor.diagramme.diagramm_teile.diagramm_teil_format_lesen(ed)``."""
-        from vcl.qt.rendering.diagramme import diagramm_teile as T
+        from vcl.qt.rendering import diagramme as T
         if self._dg() is None:
             return self._dg_set()
         ok = T.diagramm_teil_format_setzen(self.ed, **{**(angaben or {}), **kw})
@@ -288,7 +288,7 @@ class DiagrammToolsBefehle:
     def diagrammNamenQuelle(self, k=None, quelle=None):
         """Namensquelle wählen: ``"zeile1"`` (Standard: Reihennamen und Rubriken wie eingegeben), ``"spalte_a"`` (Reihen und Rubriken tauschen die
         Namensrolle: Reihen heißen wie die Rubriken) oder ``"keine"`` (Reihen „Reihe 1 …“, Rubriken „1 …“). Die Daten bleiben unverändert."""
-        from vcl.qt.rendering.diagramme import diagramm as D
+        from vcl.qt.rendering import diagramme as D
         if quelle not in D.NAMEN_QUELLEN:
             return False
         return self._dg_set(namen_quelle=None if quelle == "zeile1" else quelle)

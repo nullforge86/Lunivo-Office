@@ -105,7 +105,7 @@ class Ausgabe:
     def __init__(self, dokument: Dokument, engine=None, nur_formular: bool = False, optionen: dict | None = None):
         if nur_formular:                                   # „Nur Formulardaten drucken“: in einer Kopie bleibt nur der Inhalt der Felder sichtbar
             import copy
-            from vcl.qt.rendering.textfelder import formular
+            from vcl.qt.rendering import textfelder as formular
             dokument = copy.deepcopy(dokument)
             formular.nur_formulardaten(_DokumentAnschluss(dokument))
         self.dokument = dokument
@@ -168,7 +168,7 @@ class Ausgabe:
         if not self._blasen_je_seite.get(n - 1):
             self._seite_malen(p, n)
             return
-        from vcl.qt.rendering.formen import sprechblasen as SB
+        from vcl.qt.rendering import formen as SB
         from writer.funktionen.ansicht import sprechblasen as SW
         k = self._blasen["konfig"]
         b, h = self.groesse_px(n)
@@ -190,7 +190,7 @@ class Ausgabe:
             r = QRectF(x_blase, y, breite, hh)
             if k.linien:
                 SB.verbindung(p, bl, x_seite + b if rechts else x_seite, y_text, r, rechts)
-            SB.zeichnen(p, bl, r, font, druck=True)
+            SB.sprechblasen_zeichnen(p, bl, r, font, druck=True)
         p.restore()
 
     def bild(self, n: int, zoom: float = 1.0, wasserzeichen: str = "") -> QImage:

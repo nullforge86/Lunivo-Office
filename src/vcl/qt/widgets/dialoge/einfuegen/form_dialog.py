@@ -2,8 +2,8 @@
 from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QComboBox, QDialog, QDoubleSpinBox, QLineEdit, QSpinBox
-from vcl.qt.rendering.formen import einfuegen as E
-from vcl.qt.rendering.formen import form_einfuegen as FE
+from vcl.qt.rendering import formen as E
+from vcl.qt.rendering import formen as FE
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import VORGABE_LINIE

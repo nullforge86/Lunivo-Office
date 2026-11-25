@@ -42,7 +42,7 @@ def formel_teile(text: str) -> list[tuple[str, str]]:
 
 def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
     """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie): kursive Stücke, Hoch- und Tiefgestelltes verkleinert und versetzt; gezeichnet vom Kern."""
-    from vcl.qt.rendering.formen.anzeige import kern_bild
+    from vcl.qt.rendering.formen import kern_bild
     from core.geometrie import Point
     from core.layout.drucklayout.ausgabe.backend import Style, rgba
     from core.textsatz import FontSpec

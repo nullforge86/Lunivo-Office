@@ -245,12 +245,12 @@ class PruefenBefehle:
     def _form_dialog(self, art: str):
         if not self.ed:
             return
-        from vcl.qt.rendering.textfelder import formular as FO
+        from vcl.qt.rendering import textfelder as FO
         from vcl.qt.widgets.dialoge.einfuegen.formular_dialog import FormFeldDialog
         d = FormFeldDialog(self.w, art)
         if d.exec():
             m = d.meta()
-            FO.einfuegen(self.ed, m)
+            FO.formular_einfuegen(self.ed, m)
             if art == "kasten" and m.beschriftung:
                 self.ed.textCursor().insertText(" " + m.beschriftung)
 
@@ -282,7 +282,7 @@ class PruefenBefehle:
 
     def formLeeren(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.textfelder import formular as FO
+            from vcl.qt.rendering import textfelder as FO
             n = FO.alle_zuruecksetzen(self.ed)
             self.w.statusBar().showMessage(f"{n} Formularfeld{'er' if n != 1 else ''} zurückgesetzt.", 4000)
 

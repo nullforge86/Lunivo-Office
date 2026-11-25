@@ -12,7 +12,7 @@ from PySide6.QtCore import QPointF, QRectF
 
 from vcl.qt.rendering.diagramme import diagramm as D
 from vcl.qt.rendering.diagramme import diagramm_format as F
-from vcl.qt.rendering.formen import frei_objekt as FO
+from vcl.qt.rendering import formen as FO
 
 # Angaben, die ``diagramm_teil_format_setzen`` kennt (Aufbau: ``diagramm_format``); die Wörterbücher in ``_ZUSAMMEN`` werden mit den vorhandenen
 # Angaben zusammengeführt (Angaben mit dem Wert None fallen dabei heraus). Die Effekte des Diagrammbereichs gehören dem Objekt (``a["fx"]``):
@@ -59,7 +59,7 @@ def _geo(ed, d: dict, b: float, h: float) -> dict:
 def teil_bei(ed, pos) -> str | None:
     """Der Diagrammteil unter ``pos`` (QPointF im Editor, dieselben Koordinaten wie die Rechtecke von ``ed._frei_liste()``) für das gewählte
     Diagramm; Drehung und Zoom sind berücksichtigt. Innerhalb des Diagramms ohne anderen Treffer: ``diagrammbereich``; außerhalb: None."""
-    z = FO.ziel(ed)
+    z = FO.frei_objekt_ziel(ed)
     if z is None or z[0] != "diagramm":
         return None
     _art, d, key, a, _bild = z
@@ -106,7 +106,7 @@ def _treffer(geo: dict, erlaubt: set, lp: QPointF) -> list:
 def diagramm_teil_format_lesen(ed, teil: str | None = None) -> dict:
     """Das Format des gewählten Teils (oder von ``teil``) als Kopie; leer, wenn nichts gesetzt ist oder kein Diagramm gewählt ist. Beim Diagrammbereich
     kommen die Effekte des Objekts (``a["fx"]``) dazu."""
-    z = FO.ziel(ed)
+    z = FO.frei_objekt_ziel(ed)
     d = FO.daten_lesen(ed, "diagramm")
     if d is None:
         return {}
@@ -143,7 +143,7 @@ def _format_wert_setzen(fmt: dict, k: str, v) -> None:
 
 
 def _objekt_effekte_lesen(ed) -> dict:
-    z = FO.ziel(ed)
+    z = FO.frei_objekt_ziel(ed)
     return dict(z[3].get("fx") or {}) if z else {}
 
 
@@ -162,7 +162,7 @@ def _werte_setzen(fmt: dict, obj_fx: dict | None, kw: dict) -> bool:
 def _text_drehung(ed, kw: dict) -> dict:
     """„Text nicht drehen“: die Drehung des Objekts merkt sich das Diagramm für das Zeichnen."""
     if "text" in kw and isinstance(kw["text"], dict) and (kw["text"].get("feld") or {}).get("gerade"):
-        z = FO.ziel(ed)
+        z = FO.frei_objekt_ziel(ed)
         return {"objekt_dreh": float(z[3].get("dreh", 0.0) or 0.0) if z else 0.0}
     return {}
 
@@ -184,7 +184,7 @@ def diagramm_teil_format_setzen(ed, teil: str | None = None, **kw) -> bool:
         alle[t] = fmt
     else:
         alle.pop(t, None)
-    ok = FO.aendern(ed, "diagramm", teil_format=alle or None, **_text_drehung(ed, kw))
+    ok = FO.frei_objekt_aendern(ed, "diagramm", teil_format=alle or None, **_text_drehung(ed, kw))
     if ok and geaendert_fx:
-        ok = FO.aendern(ed, "diagramm", form_effekt=obj_fx or None)
+        ok = FO.frei_objekt_aendern(ed, "diagramm", form_effekt=obj_fx or None)
     return ok

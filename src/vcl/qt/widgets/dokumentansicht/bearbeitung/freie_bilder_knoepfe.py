@@ -72,8 +72,8 @@ class FreieBilderKnoepfeMixin:
             self.ansicht._aendern(lambda s: s.absatzformat_anwenden({}, absatz_ids=[o.anker], ersetzen=True))
 
     def _frei_wirken(self, **teile) -> None:
-        from vcl.qt.rendering.formen import bildlayout as BL
-        BL.format_setzen(self, BL.ziel(self), **teile)
+        from vcl.qt.rendering import formen as BL
+        BL.format_setzen(self, BL.bildlayout_ziel(self), **teile)
 
     def _frei_formstile(self, pos) -> None:
         m = self.frei_formstile_menue(self.ansicht)
@@ -85,7 +85,7 @@ class FreieBilderKnoepfeMixin:
         m = formstile(parent)
         def waehlen(k: str) -> None:
             ed = E()
-            from vcl.qt.rendering.formen import frei_objekt as FO
+            from vcl.qt.rendering import formen as FO
             if FO.art_gewaehlt(ed) == "form" and hasattr(ed.fenster, "befehle"):        # Form: Füllung, Verlauf, Linie und Effekt des Rasters (formStilRaster)
                 ed.fenster.befehle.formStilRaster(None, int(k[1]), int(k[2]))
             else:                                                                           # Bild, Textfeld, WordArt: Füllung und Rand
@@ -116,7 +116,7 @@ class FreieBilderKnoepfeMixin:
         E = ed or (lambda: self)                               # der Editor, auf den die Wahl wirkt (zur Wahlzeit, nicht zur Bauzeit)
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         from PySide6.QtGui import QImage
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import FuellMenue
         m = FuellMenue(parent)
         m.gewaehlt.connect(lambda c: E()._frei_wirken(fuell=None if c is None else {"art": "farbe", "farbe": c.name(QColor.HexArgb)}))
@@ -127,10 +127,10 @@ class FreieBilderKnoepfeMixin:
 
         def bild():
             from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-            from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
+            from vcl.qt.rendering.formen import bild_aus_datei
             pfad, _ = Dateifenster.getOpenFileName(E().fenster, "Bild als Füllung", "", BILD_FILTER)
             if pfad:
-                BL.fuellbild_setzen(E(), BL.ziel(E()), bild_aus_datei(pfad, still=True))
+                BL.fuellbild_setzen(E(), BL.bildlayout_ziel(E()), bild_aus_datei(pfad, still=True))
         m.bild_gewaehlt.connect(bild)
         m.weitere_fuellung.connect(lambda art: E()._frei_fuell_fenster(art))
         return m
@@ -166,29 +166,29 @@ class FreieBilderKnoepfeMixin:
         self._frei_layout_popup(global_pos)
 
     def _frei_layout_popup(self, global_pos) -> None:
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         from vcl.qt.widgets.menues.dropdown.objektmenues.layout_optionen_objekt import LayoutOptionenObjekt
-        z = BL.ziel(self)
+        z = BL.bildlayout_ziel(self)
         if z is None:
             return
-        w = BL.lesen(self, z)
+        w = BL.bildlayout_lesen(self, z)
         p = LayoutOptionenObjekt(self.ansicht, w["umbruch"], w.get("verschieben_wahl", "mit_text" if w.get("mit_text") else "fest") == "mit_text")
         p.verschieben_wahl = w.get("verschieben_wahl")               # None (SmartArt): beide Radios leer – die Oberfläche greift das auf
-        p.gewaehlt.connect(lambda art: BL.anwenden(self, BL.ziel(self), {"umbruch": art}) if BL.ziel(self) else None)
-        p.verschieben.connect(lambda an: BL.anwenden(self, BL.ziel(self), {"mit_text": bool(an)}) if BL.ziel(self) else None)
+        p.gewaehlt.connect(lambda art: BL.anwenden(self, BL.bildlayout_ziel(self), {"umbruch": art}) if BL.bildlayout_ziel(self) else None)
+        p.verschieben.connect(lambda an: BL.anwenden(self, BL.bildlayout_ziel(self), {"mit_text": bool(an)}) if BL.bildlayout_ziel(self) else None)
         p.mehr.connect(self.bild_layout_dialog)
         p.zeigen_bei(global_pos)
         self._frei_popup = p
 
     def bild_layout_dialog(self) -> None:
         """Das Fenster „Layout“ für das markierte Bild (frei oder im Text)."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         from vcl.qt.widgets.dialoge.dokument.layout_dialog_objekt import layout_dialog_fuer
-        z = BL.ziel(self)
+        z = BL.bildlayout_ziel(self)
         if z is None:
             return
-        d = layout_dialog_fuer(z[2].get("art") if z[0] == "frei" else None)(self.fenster, BL.lesen(self, z))
+        d = layout_dialog_fuer(z[2].get("art") if z[0] == "frei" else None)(self.fenster, BL.bildlayout_lesen(self, z))
         if d.exec():
-            z = BL.ziel(self)
+            z = BL.bildlayout_ziel(self)
             if z is not None:
                 BL.anwenden(self, z, d.werte())

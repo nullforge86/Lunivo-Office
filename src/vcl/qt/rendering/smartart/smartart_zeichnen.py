@@ -56,7 +56,7 @@ def _fuellen(p: QPainter, c: QColor, r: QRectF) -> None:
 def _text_zeichnen(p: QPainter, r: QRectF, flags, t: str) -> None:
     """Text immer ungespiegelt (auch bei „von rechts nach links“, wo die Formen gespiegelt werden). Gesetzt und gezeichnet wird vom Kern; hier
     liegt nur das fertige Bild auf dem Zeichner."""
-    from vcl.qt.rendering.formen.anzeige import kern_malen
+    from vcl.qt.rendering.formen import kern_malen
     from core.geometrie import Rect
     from core.layout.drucklayout.ausgabe.backend import Style
     c = p.pen().color()

@@ -5,7 +5,7 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QToolButton, QWidget
 from core.objekte.formen.linie_daten import LINIENBREITEN
-from vcl.qt.rendering.formen.linie import STILE, Linie
+from vcl.qt.rendering.formen import STILE, Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.rahmen.linien import RahmenSeiten, rahmen_symbol
 from framework.schnittstellen.datentypen.farben import Farbe
@@ -141,7 +141,7 @@ class _RahmenSeite(QWidget):
         self.breite.zeichen(DROPDOWN_ZEICHEN_ZAHL)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))
         self.kunst = Auswahlfeld()                                 # Art: Kunstrahmen aus Figuren statt einer Linie (nur um die Seite)
-        from vcl.qt.rendering.formen.seitenrahmen import KUNST
+        from vcl.qt.rendering.formen import KUNST
         for k, name in KUNST:
             self.kunst.addItem(name, k)
         self.kunst.setVisible(seitenrand)

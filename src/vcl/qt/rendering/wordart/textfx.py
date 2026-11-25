@@ -63,13 +63,13 @@ def fuell_pinsel_von(d: dict, rect: QRectF) -> QBrush | None:
     """Der Pinsel zu ``fuell_pinsel`` (Muster, Textur, Bild); ``rect``: Fläche, über die ein Bild gestreckt wird."""
     art = d.get("art", "muster")
     if art == "muster":
-        from vcl.qt.rendering.formen import muster as M
+        from vcl.qt.rendering import formen as M
         return M.pinsel(d.get("key", "rein"), d.get("farbe", Farbe.SCHWARZ), d.get("grund") or None)
     if art == "textur":
-        from vcl.qt.rendering.formen.textur import textur
+        from vcl.qt.rendering.formen import textur_textur as textur
         return QBrush(textur(d.get("key", "papier"), 64))
     if art == "bild":
-        from vcl.qt.rendering.diagramme.diagramm_format import bild_dekodieren
+        from vcl.qt.rendering.diagramme import bild_dekodieren
         img = bild_dekodieren(d.get("bild_b64", ""))
         if img.isNull():
             return None
@@ -312,7 +312,7 @@ def _fx_ueber(p: QPainter, pfad: QPainterPath, fx: dict, rect: QRectF, kontur: t
 
 def vorschau_zeichnen(p: QPainter, rect: QRectF, text: str, font, fx: dict, farbe: QColor, kontur: tuple[QColor, float, str] | None = None) -> None:
     """Text mit Effekt zentriert in ein Rechteck zeichnen (Kacheln und Vorschau der Fenster); der Text selbst wird hier mitgezeichnet."""
-    from vcl.qt.rendering.formen.anzeige import kern_malen
+    from vcl.qt.rendering.formen import kern_malen
     from core.geometrie import Point
     from core.layout.drucklayout.ausgabe.text.texteffekte import zeichne_text_mit_effekt
     from core.textsatz import FontSpec

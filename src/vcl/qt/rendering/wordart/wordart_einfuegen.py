@@ -7,7 +7,7 @@ from core.bearbeitung.einfuegen_hilfen import WORDART_VORLAGEN
 
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
     """WordArt nach einem der 15 Stile der Galerie: Füllverlauf, Kontur und Schatten (gezeichnet über ``core/rendering/wordart.py``)."""
-    from vcl.qt.rendering.formen.anzeige import kern_bild
+    from vcl.qt.rendering.formen import kern_bild
     from core.layout.drucklayout.ausgabe.text import wordart
     from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
     engine = standard_engine()
@@ -21,7 +21,7 @@ def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sa
     if vorlage is not None:
         return wordart_vorlage_bild(text, vorlage, schrift, pt)
     import math as _m
-    from vcl.qt.rendering.formen.anzeige import kern_bild
+    from vcl.qt.rendering.formen import kern_bild
     from core.geometrie import Point
     from core.layout.drucklayout.ausgabe.backend import LinearGradient, Style, rgba
     from core.layout.drucklayout.ausgabe.objekte.objekte import dunkler, heller

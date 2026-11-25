@@ -8,7 +8,7 @@ from __future__ import annotations
 
 class SmartArtToolsBefehle:
     def _sa(self) -> dict | None:
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         return SA.daten_der_auswahl(self.ed) if self.ed else None
 
     def _sa_hinweis(self) -> bool:
@@ -16,7 +16,7 @@ class SmartArtToolsBefehle:
         return False
 
     def _sa_tun(self, f, *args) -> bool:
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         if self._sa() is None:
             return self._sa_hinweis()
         ok = getattr(SA, f)(self.ed, *args)
@@ -26,7 +26,7 @@ class SmartArtToolsBefehle:
     # ---- Knoten wählen und beschriften ------------------------------------------------------------------------------------------------
     def smartartKnotenWaehlen(self, k=None, ident=None):
         """Knoten wählen (``smartartKnotenWaehlen:["k2"]``; ohne Id: Auswahl aufheben). Zeichnet nicht neu."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         return SA.knoten_waehlen(self.ed, ident) if self._sa() is not None else self._sa_hinweis()
 
     def smartartKnotenText(self, k=None, ident=None, text=""):
@@ -61,7 +61,7 @@ class SmartArtToolsBefehle:
 
     def smartartRechtsLinks(self, k=None):
         """„Layout von rechts nach links“ umschalten (``rtl``); Zustand: ``an_smartartRechtsLinks``."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         d = self._sa()
         if d is None:
             return self._sa_hinweis()
@@ -74,7 +74,7 @@ class SmartArtToolsBefehle:
 
     def smartartHierarchie(self, k=None, art="standard"):
         """Organigramm-Variante: ``standard`` | ``beide`` | ``haengend_links`` | ``haengend_rechts`` (nur bei den Layouts Organigramm/Hierarchie)."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
@@ -86,7 +86,7 @@ class SmartArtToolsBefehle:
 
     def smartartStil(self, k=None, nr=1):
         """Formenstil 0 bis 4 (``SA.STILE``: Flach, Einfach, Hell, Kräftig, 3D)."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
@@ -96,7 +96,7 @@ class SmartArtToolsBefehle:
 
     def smartartLayout(self, k=None, name=None):
         """Layout wechseln (Schlüssel aus ``SA.LAYOUTS``); Knoten und Farben bleiben."""
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from writer.funktionen.objekte import smartart as SW
         if self._sa() is None:
             return self._sa_hinweis()
@@ -108,7 +108,7 @@ class SmartArtToolsBefehle:
 
     # ---- Zustände zum Ausgrauen -------------------------------------------------------------------------------------------------------------
     def _sa_kann(self, was, richtung="") -> bool:
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         return bool(self.ed) and SA.kann(self.ed, was, richtung)
 
     def kann_smartartKnotenWaehlen(self) -> bool: return self._sa() is not None

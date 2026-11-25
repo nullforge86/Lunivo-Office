@@ -8,7 +8,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QComboBox, QWidget
 
 from core.objekte.formen.linie_daten import ALLE_SEITEN, LINIENBREITEN
-from vcl.qt.rendering.formen.linie import LINIENARTEN, Linie  # noqa: F401
+from vcl.qt.rendering.formen import LINIENARTEN, Linie  # noqa: F401
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 

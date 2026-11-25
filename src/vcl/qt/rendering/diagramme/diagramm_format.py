@@ -6,10 +6,10 @@ from PySide6.QtGui import (QBrush, QColor, QImage, QLinearGradient, QPainter, QP
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
-from vcl.qt.rendering.formen import bildeffekte as E
+from vcl.qt.rendering import formen as E
 from vcl.qt.rendering.formen import freie_bilder as FB
 from vcl.qt.rendering.wordart import textfx as X
-from vcl.qt.rendering.wordart import texteffekt as T
+from vcl.qt.rendering import wordart as T
 from core.diagramme.formatierung.diagramm_format_daten import FX_NUR_HINTER, FX_SCHLUESSEL, PX_PT, _BILDER, effekt_von, feld_von, fuell_dict, linie_keine
 
 
@@ -151,7 +151,7 @@ def rahmen_zeichnen(p: QPainter, r: QRectF, linie: dict | None) -> None:
 # ---- Effekte ---------------------------------------------------------------------------------------------------------------------
 def fx_normal(fmt: dict | None) -> dict:
     """Die Effekte eines Teils im Format von ``bildeffekte`` (``True`` und ältere Angaben ergänzt)."""
-    from vcl.qt.rendering.wordart.effekt_umwandlung import zu_dict
+    from vcl.qt.rendering.wordart import zu_dict
     from writer.funktionen.objekte import bildeffekte as BEW
     fmt = fmt or {}
     fx = {}

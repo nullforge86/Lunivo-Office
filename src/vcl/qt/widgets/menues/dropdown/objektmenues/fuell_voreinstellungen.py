@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from vcl.qt.rendering.formen import muster as M
+from vcl.qt.rendering import formen as M
 from writer.funktionen.objekte import muster as MW
 from vcl.qt.widgets.bausteine.farben import farben
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import keine_symbol

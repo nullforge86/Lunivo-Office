@@ -26,7 +26,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QLabel, QTabBar, QLineEdit, QRadioButton, QWidget
 from framework.schnittstellen.datentypen.farben import Farbe
 from writer.funktionen.objekte import diagrammformat as F
-from vcl.qt.rendering.wordart import texteffekt as T
+from vcl.qt.rendering import wordart as T
 from vcl.qt.widgets.bausteine.symbole.medien.alternativtext_abschnitt import AlternativtextAbschnitt
 from vcl.qt.widgets.dialoge.formatierung.auto_felder_mixin import AutoFelderMixin
 from vcl.qt.widgets.dialoge.formatierung.effekte_drei_mixin import NurDreiEffekteMixin

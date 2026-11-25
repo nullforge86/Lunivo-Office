@@ -4,7 +4,8 @@ from PySide6.QtGui import QColor, QImage
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.rendering.formen import freie_bilder as FB
 from core.objekte.textfelder.modell.frei_objekt_text_daten import ARTEN, TEXT_ARTEN, STANDARD_MASS, FORM_STANDARD, TEXTFELD_FUELL, TEXTFELD_RAND, _SS, laeufe_ab, laeufe_zusammen
-from vcl.qt.rendering.textfelder.frei_objekt_text import laeufe_text, wordart_zeichnen, _text_passt, textfeld_zeichnen
+from vcl.qt.rendering.textfelder import wordart_zeichnen, textfeld_zeichnen
+from vcl.qt.rendering.textfelder.frei_objekt_text import laeufe_text, _text_passt
 from core.layout.drucklayout.ausgabe.text.wordartobjekt import ZEICHEN_SCHLUESSEL
 from core.objekte.formen.frei_objekt_daten import _form_daten_setzen, _kette_glieder, _textfelder, _verknuepfbar
 
@@ -47,13 +48,13 @@ def _form_zeichnen(d: dict, b: float, h: float) -> QImage:
 
 def _diagramm_zeichnen(d: dict, b: float, h: float) -> QImage:
     """Ein Diagramm (``editor/diagramme/diagramm.py``) aus den gespeicherten Daten, in b × h Bildpunkten, in doppelter Auflösung."""
-    from vcl.qt.rendering.diagramme import diagramm as D
+    from vcl.qt.rendering import diagramme as D
     b, h = (b, h) if b and h else STANDARD_MASS["diagramm"]
     return D.bild_aus_daten(d, b, h, _SS)
 
 
 def _smartart_zeichnen(d: dict, _b: float, _h: float) -> QImage:
-    from vcl.qt.rendering.smartart import smartart as SA
+    from vcl.qt.rendering import smartart as SA
     return SA.zeichnen(d)
 
 

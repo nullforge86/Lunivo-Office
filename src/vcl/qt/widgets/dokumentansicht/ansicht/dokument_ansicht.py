@@ -11,7 +11,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QAbstractScrollArea, QApplication, QScrollArea, QWidget
 
-from vcl.qt.rendering.formen.rendering import QtRenderBackend
+from vcl.qt.rendering.formen import QtRenderBackend
 from core.dokument import Position
 from core.dokument.dokument import Auswahl
 from core.bearbeitung import Bearbeitungssitzung

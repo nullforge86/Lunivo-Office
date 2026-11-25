@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-from vcl.qt.rendering.formen import bildeffekte as BE
+from vcl.qt.rendering import formen as BE
 from writer.funktionen.objekte import bildeffekte as BEW
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt, seitengitter

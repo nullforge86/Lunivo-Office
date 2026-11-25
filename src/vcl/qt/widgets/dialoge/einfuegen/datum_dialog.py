@@ -3,7 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem
-from vcl.qt.rendering.formen import einfuegen as E
+from vcl.qt.rendering import formen as E
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

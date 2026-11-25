@@ -10,7 +10,7 @@ from PySide6.QtCore import QRectF, Qt
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import schreibmarke as SM
-from vcl.qt.rendering.formen import sprechblasen as SB
+from vcl.qt.rendering import formen as SB
 from writer.funktionen.ansicht import sprechblasen as SW
 
 
@@ -72,7 +72,7 @@ class BlasenBedienung:
         for bl, r, y_text, x_text in self.blasen_layout():
             if self.blasen_konfig.linien:
                 SB.verbindung(p, bl, x_text, y_text, r, rechts)                        # vom Ende der kommentierten Stelle quer über den Rand zur Blase
-            SB.zeichnen(p, bl, r, font)
+            SB.sprechblasen_zeichnen(p, bl, r, font)
             self._blasen_treffer.append((r, bl))
 
     def _blatt_kante(self, r: QRectF, rechts: bool) -> float:

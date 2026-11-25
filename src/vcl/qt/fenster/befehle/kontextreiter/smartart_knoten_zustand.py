@@ -11,12 +11,12 @@ from core.dokument.abschnitte.seite import px_to_mm
 class SmartArtKnotenZustand:
     def smartartKnotenMasse(self) -> tuple[float, float] | None:
         """(Breite, Höhe) des gewählten Knotens in mm; ohne gewählten Knoten None (dann gelten die Maße des Objekts)."""
-        from vcl.qt.rendering.formen import bildlayout as BL
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import formen as BL
+        from vcl.qt.rendering import smartart as SA
         ed = self.ed
         if not ed:
             return None
-        ident, d, z = SA.knoten_gewaehlt(ed), SA.daten_der_auswahl(ed), BL.ziel(ed)
+        ident, d, z = SA.knoten_gewaehlt(ed), SA.daten_der_auswahl(ed), BL.bildlayout_ziel(ed)
         if ident is None or d is None or z is None or z[0] != "frei":
             return None
         b, h = float(z[2]["b"]), float(z[2]["h"])

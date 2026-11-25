@@ -19,7 +19,7 @@ def formstil(zeile: int, spalte: int) -> dict:
         return {"fuell": farbe, "fuell_art": "abgestuft", "linie": dunkel, "strich": 1.5, "effekt": None}
     if zeile == 4:
         return {"fuell": farbe, "fuell_art": "glanz", "linie": dunkel, "strich": 1.5, "effekt": None}
-    from vcl.qt.rendering.wordart.effekt_umwandlung import zu_dict
+    from vcl.qt.rendering.wordart import zu_dict
     from writer.funktionen.objekte import bildeffekte as BEW
     d3 = zu_dict(BEW.vorgabe())["d3"]; d3["tiefe"] = 8.0; d3["tiefe_farbe"] = dunkel
     return {"fuell": farbe, "fuell_art": "verlauf", "linie": dunkel, "strich": 1.0, "effekt": {"d3": d3}}

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 from PySide6.QtGui import QImage
-from vcl.qt.rendering.formen.geometrie import rect_from_qt
+from vcl.qt.rendering.formen import rect_from_qt
 from core.dokument.dokument import Auswahl, Position
 from core.geometrie import Rect
 from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
@@ -11,12 +11,12 @@ from core.dokument.abschnitte.deckblatt_vorlagen import _grafik, _schrift, entfe
 
 def zeichnen(p, name: str, r, mit_text: bool = True) -> None:
     """Gestaltung ``name`` auf das Blatt ``r`` (QPainter, QRectF): für die Galerie."""
-    from vcl.qt.rendering.formen.anzeige import kern_malen
+    from vcl.qt.rendering.formen import kern_malen
     kern_malen(p, r, lambda z: zeichnen_mit(z, name, rect_from_qt(r), mit_text, standard_engine()))                  # der Kern zeichnet, Qt legt nur das fertige Bild auf
 
 
 def grafik_bild(name: str, breite_px: int, hoehe_px: int) -> QImage:
-    from vcl.qt.rendering.formen.anzeige import kern_bild
+    from vcl.qt.rendering.formen import kern_bild
     return kern_bild(breite_px, hoehe_px, lambda z: _grafik(z, name, Rect(0, 0, breite_px, hoehe_px)), (255, 255, 255, 255))
 
 

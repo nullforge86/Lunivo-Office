@@ -13,7 +13,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 class EinfuegenObjektBefehle:
     # ---- Einfügen: Illustrationen, Text, Symbole, Tabellen, Seiten ----------------------------------------------------
     def _bild_einfuegen(self, img, alt, art=None, daten=None):
-        from vcl.qt.rendering.formen import bild_einfuegen as BE
+        from vcl.qt.rendering import formen as BE
         BE.qimage_einfuegen(self.ed, img, alt, art, daten)
 
 
@@ -27,8 +27,8 @@ class EinfuegenObjektBefehle:
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPalette, QPen
         from core.formatierung.farben.farben import Farbe
-        from vcl.qt.rendering.formen import einfuegen as E
-        from vcl.qt.rendering.formen import formen_katalog as K
+        from vcl.qt.rendering import formen as E
+        from vcl.qt.rendering import formen as K
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = None
         for gruppe, formen in K.KATEGORIEN:
@@ -40,7 +40,7 @@ class EinfuegenObjektBefehle:
                 def zeichne(p, r, name=name):
                     from PySide6.QtWidgets import QApplication
                     p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), STIFT_BILDCHEN_LINIE)); p.setBrush(Qt.NoBrush)
-                    p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
+                    p.drawPath(K.formen_katalog_pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
                 m.kachel(name, name, zeichne).setCheckable(False)
 
         m.gewaehlt.connect(lambda f: self.formEinfuegen(None, f))
@@ -52,17 +52,17 @@ class EinfuegenObjektBefehle:
 
     def formEinfuegen(self, k=None, name=None):
         """Die Form ``name`` (Katalog ``formen_katalog``, auch Linien und Pfeile) einfügen: im Zeichenbereich dort, sonst als freies Objekt."""
-        from vcl.qt.rendering.formen import formen as F
-        from vcl.qt.rendering.formen import formen_katalog as K
+        from vcl.qt.rendering import formen as F
+        from vcl.qt.rendering import formen as K
         from vcl.qt.rendering.formen import frei_objekt as FO
-        if self.ed and name and K.hat(name) and not F.in_zeichenbereich(self.ed, name):
+        if self.ed and name and K.formen_katalog_hat(name) and not F.in_zeichenbereich(self.ed, name):
             return FO.einfuegen(self.ed, "form", {**FO.FORM_STANDARD, "form": name}, *((240, 60) if K.ist_linie(name) else (160, 120)))
 
 
     def zeichenbereich(self, k=None):
         """Einfügen ▸ Formen ▸ Neuer Zeichenbereich (siehe ``editor/objekte/formen.py``)."""
         if self.ed and not self.ed.isReadOnly():
-            from vcl.qt.rendering.formen import formen as F
+            from vcl.qt.rendering import formen as F
             F.zeichenbereich_einfuegen(self.ed)
 
 
@@ -71,13 +71,13 @@ class EinfuegenObjektBefehle:
             from vcl.qt.widgets.dialoge.einfuegen.form_dialog import FormDialog
             d = FormDialog(self.w)
             if d.exec():
-                from vcl.qt.rendering.formen import frei_objekt as FO
-                FO.einfuegen(self.ed, "form", d.daten(), d.breite.value(), d.hoehe.value())
+                from vcl.qt.rendering import formen as FO
+                FO.frei_objekt_einfuegen(self.ed, "form", d.daten(), d.breite.value(), d.hoehe.value())
 
 
     def smartart(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.smartart import smartart as SA
+            from vcl.qt.rendering import smartart as SA
             from vcl.qt.widgets.dialoge.einfuegen.smartart_dialog_foto import SmartArtDialogFoto
             d = SmartArtDialogFoto(self.w)
             if d.exec():
@@ -87,7 +87,7 @@ class EinfuegenObjektBefehle:
     def smartartText(self, k=None):
         if not self.ed:
             return
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from vcl.qt.widgets.dialoge.einfuegen.smart_art_dialog import SmartArtDialog
         daten = SA.daten_der_auswahl(self.ed)
         if daten is None:
@@ -99,7 +99,7 @@ class EinfuegenObjektBefehle:
 
 
     def menue_smartartLayout(self):
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from writer.funktionen.objekte import smartart as SW
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -109,7 +109,7 @@ class EinfuegenObjektBefehle:
 
 
     def menue_smartartFarben(self):
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         from writer.funktionen.objekte import smartart as SW
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -120,13 +120,13 @@ class EinfuegenObjektBefehle:
 
     def wordart(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.formen import frei_objekt as FO
+            from vcl.qt.rendering import formen as FO
             from vcl.qt.widgets.dialoge.einfuegen.word_art_dialog import WordArtDialog
             d = WordArtDialog(self.w, self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or "Ihr Text")
             if d.exec():
                 daten = {"text": d.text.text() or " ", "vorlage": d.vorlage_nr(), "schrift": d.schrift.text() or "Liberation Sans",
                          "pt": d.pt.value(), "stil": d.stil.currentText(), "farbe": d.farbe.farbe}
-                FO.einfuegen(self.ed, "wordart", daten)
+                FO.frei_objekt_einfuegen(self.ed, "wordart", daten)
 
 
     def wordartVorgabe(self, k=None, nr=0):
@@ -135,10 +135,10 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from dataclasses import asdict
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         from writer.funktionen.objekte import freie_objekte as FW
         text = self.ed.textCursor().selectedText().replace("\u2029", " ").strip() or FW.WORDART_STANDARD.text
-        FO.einfuegen(self.ed, "wordart", {**asdict(FW.WORDART_STANDARD), "text": text, "vorlage": nr})
+        FO.frei_objekt_einfuegen(self.ed, "wordart", {**asdict(FW.WORDART_STANDARD), "text": text, "vorlage": nr})
         self.w._sync_format()
 
 
@@ -146,7 +146,7 @@ class EinfuegenObjektBefehle:
         """Text und Stil des gewählten WordArt-Objekts im Fenster „WordArt“ ändern."""
         if not self.ed:
             return
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         from vcl.qt.widgets.dialoge.einfuegen.word_art_dialog import WordArtDialog
         d0 = FO.daten_lesen(self.ed, "wordart")
         if d0 is None:
@@ -154,7 +154,7 @@ class EinfuegenObjektBefehle:
             return
         d = WordArtDialog(self.w, d0.get("text", ""), d0.get("stil", "Verlauf"), d0.get("farbe", BF.VORGABE_WORDART), d0.get("vorlage"))
         if d.exec():
-            FO.aendern(self.ed, "wordart", text=d.text.text() or " ", vorlage=d.vorlage_nr(), schrift=d.schrift.text() or "Liberation Sans",
+            FO.frei_objekt_aendern(self.ed, "wordart", text=d.text.text() or " ", vorlage=d.vorlage_nr(), schrift=d.schrift.text() or "Liberation Sans",
                        pt=d.pt.value(), stil=d.stil.currentText(), farbe=d.farbe.farbe)
             self.w._sync_format()
 
@@ -172,7 +172,7 @@ class EinfuegenObjektBefehle:
         from PySide6.QtCore import QRectF, QSize
         from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
         from vcl.qt.rendering.formen import einfuegen as E
-        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
+        from vcl.qt.rendering import wordart as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=9, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
@@ -193,8 +193,8 @@ class EinfuegenObjektBefehle:
         """Gleichung wie in der Vorlage: eingebaute Gleichungen als große Kacheln mit Namen, darunter „Neue Gleichung einfügen …“."""
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QColor, QPainter, QPixmap
-        from vcl.qt.rendering.formen import einfuegen as E
-        from vcl.qt.rendering.textfelder import formel_einfuegen as FE
+        from vcl.qt.rendering import formen as E
+        from vcl.qt.rendering import textfelder as FE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         groesse = QSize(380, 54)
         m = RasterAuswahl(self.w, titel="Integriert", spalten=1, groesse=groesse, beschriftet=True)
@@ -207,7 +207,7 @@ class EinfuegenObjektBefehle:
             p.drawImage((groesse.width() - bild.width()) // 2, (groesse.height() - bild.height()) // 2, bild); p.end()
             b = m.kachel(str(i), name, pm)
             b.setCheckable(False)
-        m.gewaehlt.connect(lambda schl: self.ed and FE.formel_einfuegen(self.ed, E.GLEICHUNGEN[int(schl)][1]))
+        m.gewaehlt.connect(lambda schl: self.ed and FE.formel_einfuegen_formel_einfuegen(self.ed, E.GLEICHUNGEN[int(schl)][1]))
         m.fuss("Neue Gleichung einfügen …", self.formel)
         return m
 
@@ -264,10 +264,10 @@ class EinfuegenObjektBefehle:
         """Aus der Galerie (``gewaehlt`` liefert den Namen als ``k``) oder als Befehl ``deckblattVorlage:["Sonne"]``."""
         if not self.ed:
             return
-        from vcl.qt.rendering.textfelder import deckblatt as DB
+        from vcl.qt.rendering import textfelder as DB
         from writer.funktionen.objekte import deckblatt as DBW
         name = vorlage or (k if isinstance(k, str) and k in DBW.NAMEN else DBW.NAMEN[0])
-        DB.einfuegen(self.ed, name, quer)
+        DB.deckblatt_einfuegen(self.ed, name, quer)
         self.ed.ansicht.nach_bewegung()
         self.w.statusBar().showMessage(f"Deckblatt „{name}“ eingefügt — die Platzhalter in [ ] überschreiben.", 6000)
 
@@ -292,14 +292,14 @@ class EinfuegenObjektBefehle:
 
     def piktogramm(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.formen import einfuegen as E
+            from vcl.qt.rendering import formen as E
             from vcl.qt.widgets.dialoge.einfuegen.piktogramm_dialog import PiktogrammDialog
             d = PiktogrammDialog(self.w)
             if d.exec():
                 n, farbe = d.ergebnis()
                 if n:
-                    from vcl.qt.rendering.formen import frei_objekt as FO
-                    FO.einfuegen(self.ed, "piktogramm", {"name": n, "farbe": farbe}, 96, 96)
+                    from vcl.qt.rendering import formen as FO
+                    FO.frei_objekt_einfuegen(self.ed, "piktogramm", {"name": n, "farbe": farbe}, 96, 96)
 
 
     def screenshot(self, k=None):
@@ -355,22 +355,22 @@ class EinfuegenObjektBefehle:
             self.w.statusBar().showMessage("Das ursprüngliche Dokument ist nicht mehr verfügbar — das Bildschirmfoto wurde nicht eingefügt.", 6000)
             return
         if pm is not None and not pm.isNull():
-            from vcl.qt.rendering.formen import frei_objekt as FO
+            from vcl.qt.rendering import formen as FO
             img = pm.toImage()
-            FO.bild_einfuegen(ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
+            FO.frei_objekt_bild_einfuegen(ed, img, float(img.width()), float(img.height()), alt="Bildschirmfoto")
 
 
     def textfeld(self, k=None):
         if self.ed:
             from dataclasses import asdict
-            from vcl.qt.rendering.formen import frei_objekt as FO
+            from vcl.qt.rendering import formen as FO
             from writer.funktionen.objekte import freie_objekte as FW
-            FO.einfuegen(self.ed, "textfeld", asdict(FW.TEXTFELD_STANDARD), 240, 60)
+            FO.frei_objekt_einfuegen(self.ed, "textfeld", asdict(FW.TEXTFELD_STANDARD), 240, 60)
 
 
     def initiale(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.formen import einfuegen as E
+            from vcl.qt.rendering import formen as E
             if not E.initiale(self.ed):
                 self.w.statusBar().showMessage("Der Absatz ist leer.", 3000)
 
@@ -380,7 +380,7 @@ class EinfuegenObjektBefehle:
             return
         from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
         from core.dokument.bericht import DocumentIOError
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering import formen as E
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.OPEN_FILTER)
         if not wahl:
@@ -396,11 +396,11 @@ class EinfuegenObjektBefehle:
 
     def formel(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.textfelder import formel_einfuegen as FE
+            from vcl.qt.rendering import textfelder as FE
             from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import FormelDialog
             d = FormelDialog(self.w)
             if d.exec() and d.eingabe.text().strip():
-                FE.formel_einfuegen(self.ed, d.eingabe.text())
+                FE.formel_einfuegen_formel_einfuegen(self.ed, d.eingabe.text())
 
 
     def schnelltabelle(self, k=None):
@@ -417,7 +417,7 @@ class EinfuegenObjektBefehle:
     def deckblatt(self, k=None):
         if not self.ed:
             return
-        from vcl.qt.rendering.formen import einfuegen as E
+        from vcl.qt.rendering import formen as E
         from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge import DeckblattDialog
         d = DeckblattDialog(self.w, self.w.settings.get("benutzer/name", ""))
         if d.exec():
@@ -426,7 +426,7 @@ class EinfuegenObjektBefehle:
 
     def datumUhrzeit(self, k=None):
         if self.ed:
-            from vcl.qt.rendering.textfelder import felder as F
+            from vcl.qt.rendering import textfelder as F
             from vcl.qt.widgets.dialoge.einfuegen.datum_dialog import DatumDialog
             d = DatumDialog(self.w, self.w.settings.get("einfuegen/datum_sprache", "de_DE") or "de_DE")
             if d.exec() and d.ergebnis():

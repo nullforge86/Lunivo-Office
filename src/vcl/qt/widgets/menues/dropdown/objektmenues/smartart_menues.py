@@ -28,7 +28,7 @@ STIL_KACHEL = QSize(*GROESSE_SMARTART_STIL_MENUE)
 
 
 def _sa(b) -> dict:
-    from vcl.qt.rendering.smartart import smartart as SA
+    from vcl.qt.rendering import smartart as SA
     return (SA.daten_der_auswahl(b.ed) if getattr(b, "ed", None) else None) or {}
 
 

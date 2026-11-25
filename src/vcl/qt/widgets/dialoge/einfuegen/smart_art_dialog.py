@@ -34,7 +34,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         self.SA = SA
         from writer.funktionen.objekte import smartart as SW
         self.SW = SW
@@ -119,7 +119,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from vcl.qt.rendering.smartart import smartart as SA
+        from vcl.qt.rendering import smartart as SA
         self.SA = SA
         from writer.funktionen.objekte import smartart as SW
         self.SW = SW

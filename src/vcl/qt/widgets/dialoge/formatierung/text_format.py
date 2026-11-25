@@ -269,7 +269,7 @@ def aus_zeichen(z: dict, standard_schrift: str = "", standard_groesse: float = 0
 def zeichne_absaetze(p: QPainter, rect, absaetze: list[tuple[dict, dict, str]], mittig: bool = False) -> None:
     """Absätze (Absatzformat, Zeichenformat — beides Wörterbücher des Dokumentenmodells —, Text) in ein Rechteck zeichnen: die Vorschau der
     Formatierungsfenster. Gesetzt und gezeichnet wird vom Kern (``LayoutEngine``, ``DokumentRenderer``), nicht von Qt."""
-    from vcl.qt.rendering.formen.rendering import QtRenderBackend
+    from vcl.qt.rendering.formen import QtRenderBackend
     from core.dokument import neues_dokument
     from core.dokument.dokument import Absatz, Lauf
     from core.layout import LayoutEngine

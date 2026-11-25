@@ -4,9 +4,9 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QScrollArea, QLabel, QPushButton, QSizePolicy, QWidget
-from vcl.qt.rendering.wordart import texteffekt as T
+from vcl.qt.rendering import wordart as T
 from vcl.qt.rendering.wordart import textfx as X
-from vcl.qt.rendering.wordart import textfx_vorgaben as XV
+from vcl.qt.rendering import wordart as XV
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld, SchrittFeld
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue

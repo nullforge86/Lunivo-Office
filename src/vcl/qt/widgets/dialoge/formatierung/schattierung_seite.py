@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
-from vcl.qt.rendering.formen import muster as M
+from vcl.qt.rendering import formen as M
 from writer.funktionen.objekte import muster as MW
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from framework.schnittstellen.datentypen.farben import Farbe

@@ -68,13 +68,13 @@ def seitenzahl_zeichner(ort: str, ausrichtung: str) -> Zeichner:
 def wasserzeichen_vorschau(w: dict) -> Zeichner:
     """Blatt mit einem beliebigen Wasserzeichen (Text oder Bild, Lage, Transparenz) wie in der Ausgabe (``editor/seite/wasserzeichen.py``)."""
     def f(p: QPainter, r: QRectF) -> None:
-        from vcl.qt.rendering.textfelder import wasserzeichen as WZ
+        from vcl.qt.rendering import textfelder as WZ
         from core.dokument.abschnitte.seite import mm_to_px
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         b = _blatt(p, r)
         pw, ph = mm_to_px(210), mm_to_px(297)
         p.translate(b.topLeft()); p.scale(b.width() / pw, b.height() / ph)
-        WZ.zeichnen(p, w, QRectF(0, 0, pw, ph))
+        WZ.wasserzeichen_zeichnen(p, w, QRectF(0, 0, pw, ph))
         p.restore()
     return f
 

@@ -10,7 +10,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QPointF, Qt, Signal
 from PySide6.QtGui import QPainterPath
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QWidget
-from vcl.qt.rendering.diagramme import diagramm_format as F
+from vcl.qt.rendering import diagramme as F
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.strich_auswahl import StrichAuswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, RAND_KEIN

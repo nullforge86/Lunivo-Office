@@ -7,7 +7,8 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPen, QTextCursor
 
-from vcl.qt.rendering.formen.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen, ziel
+from vcl.qt.rendering.formen import frei_objekt_ziel as ziel
+from vcl.qt.rendering.formen.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen
 from vcl.qt.widgets.bausteine.symbole.bauteile.textfeld_fragmente import absatz_fragmente
 from vcl.qt.widgets.bausteine.farben.darstellung import objekttext_eingabe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, TEXTOBJEKT_FUELLUNG, WORDART_FUELLUNG

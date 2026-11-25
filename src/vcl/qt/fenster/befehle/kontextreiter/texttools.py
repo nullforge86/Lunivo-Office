@@ -40,9 +40,9 @@ class TextToolsBefehle:
 
     def _wa_set(self, **kw) -> bool:
         """Angaben des markierten WordArt/Textfelds ändern; ohne Auswahl ein Hinweis in der Statuszeile."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         art = self.tt_art()
-        if not (art and FO.aendern(self.ed, art, **kw)):
+        if not (art and FO.frei_objekt_aendern(self.ed, art, **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt oder Textfeld markieren.")
             return False
         self.w.band.aktualisieren()
@@ -123,7 +123,7 @@ class TextToolsBefehle:
 
     def menue_ttUnter(self):
         """Wie bei Start: die Linienarten als Bild, „Mehr Unterstreichungen …“ und die Unterstreichungsfarbe; wirkt auf das Objekt."""
-        from vcl.qt.rendering.wordart.textfx_zeichen import unter_zeichnen
+        from vcl.qt.rendering.wordart import unter_zeichnen
         from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -315,7 +315,7 @@ class TextToolsBefehle:
 
     @staticmethod
     def _wa_kachel(i: int) -> QPixmap:
-        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
+        from vcl.qt.rendering import wordart as WE
         pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))              # heller Kachelgrund: auch das schwarze „A“ ist im dunklen Thema zu sehen
         img = WE.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
@@ -327,7 +327,7 @@ class TextToolsBefehle:
     def menue_ttStile(self):
         """Alle 15 Stile als „A“ auf hellem Grund (wie das Menü neben Einfügen ▸ WordArt), wirkt auf das markierte WordArt."""
         from vcl.qt.rendering.formen import einfuegen as E
-        from vcl.qt.rendering.wordart import wordart_einfuegen as WE
+        from vcl.qt.rendering import wordart as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
@@ -372,7 +372,8 @@ class TextToolsBefehle:
 
     def _effekt_menue(self, setzen, _schl):
         """Schatten, Spiegelung und Leuchteffekt mit Bildchen (wie bei Start ▸ Texteffekte); ``setzen(**teil)`` schreibt den Teil."""
-        from vcl.qt.rendering.wordart import textfx, textfx_vorgaben
+        from vcl.qt.rendering import wordart as textfx
+        from vcl.qt.rendering import wordart as textfx_vorgaben
         from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -434,10 +435,10 @@ class TextToolsBefehle:
 
     def menue_ttFormEffekte(self):
         """Schatten, Spiegelung und Leuchteffekt der Form (wie die Voreinstellungen der Seitenleiste), darunter „Weitere Effekte …“."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
 
         def setze(**teile):
-            z = BL.ziel(self.ed) if self.ed else None
+            z = BL.bildlayout_ziel(self.ed) if self.ed else None
             if z is None or z[0] != "frei":
                 self.w.lbl_msg.setText("Bitte zuerst ein WordArt oder Textfeld markieren.")
                 return
@@ -458,7 +459,7 @@ class TextToolsBefehle:
     def ttFormatUebertragen(self, k=None):
         """Format des markierten WordArt/Textfelds (Schrift, Auszeichnungen, Farben, Effekte, Form) aufnehmen; beim nächsten markierten Objekt
         denselben Knopf noch einmal drücken, dann wird es übertragen."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         d = self._wa()
         schluessel = ("schrift", "pt", "fett", "kursiv", "unter", "durch", "hoch", "tief", "hervor", "fuell", "farbe", "kontur", "kontur_breite",
                       "effekt", "vorlage", "ausr", "liste", "einzug", "richtung", "zeilenabstand")
@@ -466,14 +467,14 @@ class TextToolsBefehle:
             if not d:
                 self.w.lbl_msg.setText("Bitte zuerst ein WordArt oder Textfeld markieren.")
                 return
-            self._tt_pinsel = ({s: d.get(s) for s in schluessel}, BL.format_merken(BL.ziel(self.ed)))
+            self._tt_pinsel = ({s: d.get(s) for s in schluessel}, BL.format_merken(BL.bildlayout_ziel(self.ed)))
             self.w.lbl_msg.setText("Format aufgenommen — jetzt ein anderes WordArt oder Textfeld markieren und den Knopf noch einmal drücken.")
             return
         text, form = self._tt_pinsel
         self._tt_pinsel = None
         if self._wa_set(**text):
             if form:
-                BL.format_uebertragen(self.ed, BL.ziel(self.ed), form)
+                BL.format_uebertragen(self.ed, BL.bildlayout_ziel(self.ed), form)
             self.w.lbl_msg.setText("Format übertragen.")
 
 
@@ -520,7 +521,7 @@ class TextToolsBefehle:
 
     def ttVerknuepfen(self, k=None, ziel=None):
         """Das markierte Textfeld mit ``ziel`` verknüpfen: was nicht mehr hineinpasst, läuft dort weiter."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         if self.tt_art() != "textfeld" or ziel is None or not FO.verknuepfen(self.ed, self.ed._frei_sel, ziel):
             self.w.lbl_msg.setText("Verknüpfen geht nur von einem markierten Textfeld zu einem freien Textfeld ohne Vorgänger.")
             return
@@ -528,7 +529,7 @@ class TextToolsBefehle:
 
 
     def ttVerknuepfungLoesen(self, k=None):
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         if self.tt_art() != "textfeld" or not FO.loesen(self.ed, self.ed._frei_sel):
             self.w.lbl_msg.setText("Bitte zuerst ein verknüpftes Textfeld markieren.")
             return

@@ -11,7 +11,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPen, QTransform
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from vcl.qt.rendering.formen import freiform as FF
+from vcl.qt.rendering import formen as FF
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
@@ -26,13 +26,13 @@ def aktiv(ed) -> bool:
 
 def starten(ed) -> bool:
     """Die gewählte Form in eine Freiform umwandeln (falls nötig; ein Schritt für Rückgängig) und den Modus einschalten."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
-    z = FO.ziel(ed)
+    from vcl.qt.rendering import formen as FO
+    z = FO.frei_objekt_ziel(ed)
     if z is None or z[0] != "form":
         return False
     _art, d, _key, a, _bild = z
     if not d.get("punkte"):
-        if not FO.aendern(ed, "form", form=FF.NAME, punkte=FF.aus_form(d, float(a["b"]), float(a["h"])), adj=None):
+        if not FO.frei_objekt_aendern(ed, "form", form=FF.NAME, punkte=FF.aus_form(d, float(a["b"]), float(a["h"])), adj=None):
             return False
     ed.__dict__["_fp_key"] = ed._frei_sel
     ed.__dict__["_fp_sel"] = None
@@ -123,10 +123,10 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
 
 # ---- Maus und Tasten -------------------------------------------------------------------------------------------------------------
 def _speichern(ed, punkte: list) -> None:
-    from vcl.qt.rendering.formen import frei_objekt as FO
+    from vcl.qt.rendering import formen as FO
     ed._frei_vorlaeufig.clear()
     ed.__dict__["_fp_arbeit"] = None
-    FO.aendern(ed, "form", punkte=punkte)
+    FO.frei_objekt_aendern(ed, "form", punkte=punkte)
     ed.viewport().update()
 
 
@@ -196,7 +196,7 @@ def _maus_doppel(ed, punkte, abb, pos) -> bool:
     x, y = abb.zu_anteil(pos)
     if _punkt_bei(punkte, abb, pos) is not None:
         return True
-    neu = FF.einfuegen(punkte, x, y, abb.rect.width(), abb.rect.height(), KANTE)
+    neu = FF.freiform_einfuegen(punkte, x, y, abb.rect.width(), abb.rect.height(), KANTE)
     if neu is None:
         return False
     ed.__dict__["_fp_sel"] = neu[1]

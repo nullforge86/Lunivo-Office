@@ -100,11 +100,11 @@ def _inline_aendern(ed, neu: dict) -> bool:
 def aendern(ed, **felder) -> bool:
     """Daten des gewählten SmartArt ändern und neu zeichnen (Breite bleibt, Seitenverhältnis folgt). Ein neuer ``text`` (anders als der zu den
     Knoten gehörende) ersetzt die Knoten; ``knoten=None``, ``auswahl=None``, ``hierarchie=None`` und ``rtl=None`` entfernen die Angabe."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
+    from vcl.qt.rendering import formen as FO
     neu = {k: v for k, v in felder.items() if v is not None or k in ("knoten", "auswahl", "hierarchie", "rtl", "format")}
     neu = SM.text_gegen_knoten(daten_der_auswahl(ed), neu)
     if FO.art_gewaehlt(ed) == "smartart":
-        return FO.aendern(ed, "smartart", **neu) if neu else True
+        return FO.frei_objekt_aendern(ed, "smartart", **neu) if neu else True
     return _inline_aendern(ed, neu)
 
 
@@ -130,8 +130,8 @@ def _knoten_rechtecke_gemerkt(ed, d: dict, b: float, h: float) -> dict:
 def knoten_bei(ed, pos) -> str | None:
     """Die Id des Knotens unter ``pos`` (QPointF im Editor, dieselben Koordinaten wie die Rechtecke von ``ed._frei_liste()``) im gewählten SmartArt;
     Drehung und Zoom sind berücksichtigt. Kein Treffer: None."""
-    from vcl.qt.rendering.formen import frei_objekt as FO
-    z = FO.ziel(ed)
+    from vcl.qt.rendering import formen as FO
+    z = FO.frei_objekt_ziel(ed)
     if z is None or z[0] != "smartart":
         return None
     _art, d, key, a, _bild_ = z

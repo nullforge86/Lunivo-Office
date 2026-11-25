@@ -32,11 +32,11 @@ BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfe
 
 # ---- Zuschneiden --------------------------------------------------------------------------------------------------------------
 def _form_bild(name: str) -> QIcon:
-    from vcl.qt.rendering.formen import formen_katalog as K
+    from vcl.qt.rendering import formen as K
     pm = QPixmap(QSize(*GROESSE_FORMBILD_KACHEL)); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(Farbe.AKZENT), STIFT_BILDCHEN_LINIE)); p.setBrush(Qt.NoBrush)
-    p.drawPath(K.pfad(name, QRectF(4, 4, 20, 20)))
+    p.drawPath(K.formen_katalog_pfad(name, QRectF(4, 4, 20, 20)))
     p.end()
     return QIcon(pm)
 
@@ -47,7 +47,7 @@ def _abschnittsleiste(text: str) -> QLabel:
 
 def zuschneiden_menue(b) -> QMenu:
     """Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``)."""
-    from vcl.qt.rendering.formen import bildzuschnitt as BZ
+    from vcl.qt.rendering import formen as BZ
     from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
     m = MenueListe(b.w)
     wid = QWidget()
@@ -169,7 +169,7 @@ def diagramm_stile_menue(b) -> RasterAuswahl:
 
 def diagramm_stile_galerie(b) -> dict:
     """Die Galerie im Band: eine Kachel je Stil und das Menü mit allen (Aufbau wie ``galerie_ttFormstile``)."""
-    from vcl.qt.rendering.diagramme import diagramm as D
+    from vcl.qt.rendering import diagramme as D
     kacheln = [(_stilname(i), stil_bild(i), lambda i=i: b.diagrammStil(None, i)) for i in range(BAND_STILE)]      # wie in der Vorlage vier im Band, alle im Popup
     from vcl.qt.widgets.menues.dropdown.objektmenues.diagramm_popups import stile_popup
     return {"kacheln": kacheln, "menue": stile_popup(b), "name": "Diagrammstile"}                  # der Pfeil öffnet dasselbe Popup wie die Schnellleiste

@@ -42,7 +42,7 @@ BREITE = 340
 
 
 def _dg(b) -> dict:
-    from vcl.qt.rendering.formen import frei_objekt as FO
+    from vcl.qt.rendering import formen as FO
     return (FO.daten_lesen(b.ed, "diagramm") if getattr(b, "ed", None) else None) or {}
 
 

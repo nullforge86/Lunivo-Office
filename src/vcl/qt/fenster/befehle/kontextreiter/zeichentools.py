@@ -11,9 +11,9 @@ class ZeichenToolsBefehle:
     # ---- Zeichentools (Kontext-Reiter für frei positionierte Bilder und Formen) --------------------------------------------------
     def _zeichen(self):
         """(Editor, Ziel) des markierten Bildes oder (Editor, None)."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e = self.ed
-        return (e, BL.ziel(e)) if e else (None, None)
+        return (e, BL.bildlayout_ziel(e)) if e else (None, None)
 
     def _zeichen_edit(self):
         return self.ed
@@ -56,7 +56,7 @@ class ZeichenToolsBefehle:
             e._frei_effekte()
 
     def zeichenFormatUebertragen(self, k=None):
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e, z = self._zeichen()
         merk = BL.format_merken(z)
         if merk is None:
@@ -66,18 +66,18 @@ class ZeichenToolsBefehle:
         self.w.statusBar().showMessage("Jetzt das Bild anklicken, das dieses Format bekommen soll.", 6000)
 
     def zeichenAusrichten(self, k=None, wie="links"):
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e, z = self._zeichen()
         BL.ausrichten(e, z, wie)
 
     def zeichenDrehen(self, k=None, grad=90):
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e, z = self._zeichen()
         if z is not None and z[0] == "frei":
-            BL.frei_aendern(e, z, dreh=0.0) if grad == 0 else BL.drehen(e, z, float(grad))
+            BL.frei_aendern(e, z, dreh=0.0) if grad == 0 else BL.bildlayout_drehen(e, z, float(grad))
 
     def zeichenEbene(self, k=None, wo="vor"):
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e, z = self._zeichen()
         BL.ebene(e, z, wo == "vor")
 
@@ -96,6 +96,6 @@ class ZeichenToolsBefehle:
             e.bild_layout_dialog()
 
     def zeichenMasse(self, breite_mm=None, hoehe_mm=None):
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e, z = self._zeichen()
         BL.masse_setzen(e, z, breite_mm, hoehe_mm)

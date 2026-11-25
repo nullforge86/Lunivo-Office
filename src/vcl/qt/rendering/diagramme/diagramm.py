@@ -48,7 +48,7 @@ def bild(untertyp: str, titel: str, kategorien: list[str], reihen: dict[str, lis
 
 
 def _kern_bild(d: dict, b: float, h: float, skala: float, geo: dict | None) -> QImage:
-    from vcl.qt.rendering.formen.anzeige import kern_bild
+    from vcl.qt.rendering.formen import kern_bild
     from core.geometrie import Rect
     from core.layout.drucklayout.ausgabe.diagramm.diagrammzeichner import zeichne_diagramm
     b, h = max(1, round(b)), max(1, round(h))

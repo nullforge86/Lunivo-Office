@@ -208,7 +208,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _rahmen(self) -> None:
         """Format ▸ Rahmen …: das Fenster „Rahmen und Schattierung“ ohne den Reiter Seitenrand (der gehört nicht zu einer Vorlage)."""
-        from vcl.qt.rendering.formen.linie import Linie
+        from vcl.qt.rendering.formen import Linie
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog import RahmenSchattierungDialog
         r = self._rs
@@ -238,10 +238,10 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _effekte(self) -> None:
         """Format ▸ Texteffekte …: Füllung (Farbe der Vorlage, Transparenz) und Kontur."""
-        from vcl.qt.rendering.wordart import texteffekt
+        from vcl.qt.rendering import wordart as texteffekt
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import TexteffektDialog
-        w = texteffekt.aus_text(self._rs["effekt"], self._farbe) or {**texteffekt.EFFEKT, "farbe": self._farbe}
+        w = texteffekt.texteffekt_aus_text(self._rs["effekt"], self._farbe) or {**texteffekt.EFFEKT, "farbe": self._farbe}
         if w["transparenz"] >= 100:
             w["fuell"] = "keine"
         d = TexteffektDialog(self, w)
@@ -251,7 +251,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
             if n["fuell"] == "keine":
                 n["transparenz"] = 100
             self._farbe = n["farbe"]
-            self._rs["effekt"] = texteffekt.als_text(n)
+            self._rs["effekt"] = texteffekt.texteffekt_als_text(n)
             self._neu()
         zeige_unter(self, d, fertig)
 

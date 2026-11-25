@@ -123,7 +123,7 @@ class EingabeFenster(PanelFaehig, QDialog):
 
 def _beim_editor_anmelden() -> None:
     """Der Editor fragt über ``formular.eingabe_anbieter``; er kennt die Oberfläche nicht, hier wird ihm dieses Fenster mitgegeben."""
-    from vcl.qt.rendering.textfelder import formular
+    from vcl.qt.rendering import textfelder as formular
     formular.eingabe_anbieter = EingabeFenster
 
 

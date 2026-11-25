@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPen
 from PySide6.QtWidgets import QDialog
-from vcl.qt.rendering.formen.linie import Linie
+from vcl.qt.rendering.formen import Linie
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import _PT_MM, EinheitFeld
 from framework.schnittstellen.datentypen.farben import Farbe

@@ -27,7 +27,7 @@ def bild_lesen(blob: bytes) -> QImage:
             blob = BD.entpacken(blob)
         except BD.BildFehler:
             return QImage()
-    from vcl.qt.rendering.formen.freie_bilder import bild_aus_daten
+    from vcl.qt.rendering.formen import bild_aus_daten
     if ist_emf(blob) or ist_wmf(blob):                        # Metafile: zuerst als Vektor; leer gezeichnet → eingebettetes Bitmap (Rückfall)
         img = _qimage(MF.metafile_rgba(blob)) or QImage()
         if not img.isNull() and not _leer(img):
@@ -58,7 +58,7 @@ def wmf_bild(blob: bytes, breite_px: int = 0, hoehe_px: int = 0) -> QImage | Non
 
 
 def _auf_zeichner(blob: bytes, p, ziel: QRectF, zeichne) -> bool:
-    from vcl.qt.rendering.formen.anzeige import kern_malen
+    from vcl.qt.rendering.formen import kern_malen
     gelungen = [False]
 
     def los(z) -> None:

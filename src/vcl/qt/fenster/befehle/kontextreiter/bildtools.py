@@ -17,7 +17,7 @@ HINWEIS = "Bitte zuerst ein Bild auswählen."
 class BildToolsBefehle:
     def _bz(self):
         """Das gewählte freie Bild (``bildlayout``-Ziel) oder None (dann Hinweis in der Statuszeile)."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = BW.frei_bild(self.ed) if self.ed else None
         if z is None:
             self.w.lbl_msg.setText(HINWEIS)
@@ -37,14 +37,14 @@ class BildToolsBefehle:
 
     def bildZuschneidenForm(self, k=None, name=None):
         """Nach Form zuschneiden: ``name`` ist eine Form des Formenkatalogs (zum Beispiel „Ellipse“, „Herz“)."""
-        from vcl.qt.rendering.formen import bildzuschnitt as BZ
+        from vcl.qt.rendering import formen as BZ
         z = self._bz()
         if z is not None and not BZ.form(self.ed, z, str(name or "")):
             self.w.lbl_msg.setText("Diese Form gibt es nicht oder sie lässt sich nicht zum Zuschneiden nutzen.")
 
     def bildZuschneidenSkala(self, k=None, verhaeltnis="1:1"):
         """Nach Skala zuschneiden: Seitenverhältnis wie ``"16:9"``, ``"4:3"``, ``"1:1"`` (mittiger Ausschnitt)."""
-        from vcl.qt.rendering.formen import bildzuschnitt as BZ
+        from vcl.qt.rendering import formen as BZ
         z = self._bz()
         if z is not None and str(verhaeltnis).strip().lower() == "frei":
             self.bildZuschneidenModus()                               # „Frei“: Zuschneiden ohne festes Seitenverhältnis
@@ -57,36 +57,36 @@ class BildToolsBefehle:
 
     def bildZuschneidenZuruecksetzen(self, k=None):
         """Form und Größe zurücksetzen: Maske und Zuschnitt entfernen, das ganze Bild im ursprünglichen Seitenverhältnis."""
-        from vcl.qt.rendering.formen import bildzuschnitt as BZ
+        from vcl.qt.rendering import formen as BZ
         z = self._bz()
         if z is not None:
-            BZ.zuruecksetzen(self.ed, z)
+            BZ.bildzuschnitt_zuruecksetzen(self.ed, z)
             self.ed.__dict__["_frei_zuschnitt"] = False
 
     # ==== Größe, Seitenverhältnis ====================================================================================================
     def bildGroesseZuruecksetzen(self, k=None):
         """Größe zurücksetzen: Originalgröße des sichtbaren Ausschnitts in Bildpunkten."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         z = self._bz()
         if z is not None:
             BL.frei_original_groesse(self.ed, z)
 
     def bildSeitenverhaeltnis(self, k=None):
         """Seitenverhältnis sperren ein/aus (auch Ziehen an den Kanten hält es dann)."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         if z is not None:
             BW.sperre_umschalten(self.ed, z)
             self.w.band.aktualisieren()
 
     def an_bildSeitenverhaeltnis(self):
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         return bool(self.ed and BW.sperre(BW.frei_bild(self.ed)))
 
     # ==== Farbe, Inhalt =============================================================================================================
     def bildTransparent(self, k=None, toleranz=12):
         """Transparente Farbe: eine Farbe des Bildes wählen (Farbfenster), alle gleichen Bildpunkte werden durchsichtig."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         if z is None:
             return
@@ -106,19 +106,19 @@ class BildToolsBefehle:
     def bildHelligkeit(self, k=None, schritt=10):
         """Heller (+10) oder dunkler (-10): Helligkeit des Bildes um ``schritt`` Prozent ändern (-100 bis 100). Nicht zerstörend: der Wert steht als
         ``hell`` in der Angabe des Bildes (``editor/objekte/bildwerkzeuge.py``); „Bild zurücksetzen“ und „Farbe ▸ Original“ nehmen ihn zurück."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         return z is not None and BW.korrektur_schritt(self.ed, z, hell=int(schritt))
 
     def bildKontrast(self, k=None, schritt=10):
         """Kontrast erhöhen (+10) oder verringern (-10) um ``schritt`` Prozent (Angabe ``kontrast``, nicht zerstörend)."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         return z is not None and BW.korrektur_schritt(self.ed, z, kontrast=int(schritt))
 
     def bildAendern(self, k=None, pfad=None):
         """Bild ändern: eine andere Bilddatei an die Stelle des Bildes setzen (Größe, Lage und Rahmen bleiben)."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         if z is None:
             return
@@ -138,7 +138,7 @@ class BildToolsBefehle:
 
     def bildKomprimieren(self, k=None):
         """Bilder komprimieren: weggeschnittene Bereiche löschen und auf 144 dpi (Anzeigegröße) verkleinern."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         if z is None:
             return
@@ -147,18 +147,18 @@ class BildToolsBefehle:
 
     def bildZuruecksetzen(self, k=None):
         """Bild zurücksetzen: Zuschnitt, Farbe, Rahmen, Füllung, Effekte und Drehung zurück (Lage und Alternativtext bleiben)."""
-        from vcl.qt.rendering.formen import bildwerkzeuge as BW
+        from vcl.qt.rendering import formen as BW
         z = self._bz()
         if z is not None:
-            BW.zuruecksetzen(self.ed, z)
+            BW.bildwerkzeuge_zuruecksetzen(self.ed, z)
 
     # ---- Bild im Text und frei: Farbe, Zuschneiden, Drehen, Größe, Anordnen (aus dem Kontext-Reiter) ---------------------------------------------------
     # ---- Bild, Tabelle, Schrift, Seite: der Rest der Werkzeug-Reiter ----------------------------------------------
     def _bild_frei(self):
         """(Editor, Ziel) des gewählten frei positionierten Bildes (Datei, Bildschirmfoto, Piktogramm …) oder (Editor, None)."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         e = self.ed
-        z = BL.ziel(e) if e else None
+        z = BL.bildlayout_ziel(e) if e else None
         return e, (z if z is not None and z[0] == "frei" else None)
 
     def bildFarbe(self, k=None):
@@ -167,16 +167,16 @@ class BildToolsBefehle:
             e, f = self._bild()
             if f is None:
                 return
-        from vcl.qt.rendering.formen import bildlayout as BL
-        from vcl.qt.rendering.formen import bild_einfuegen as E
+        from vcl.qt.rendering import formen as BL
+        from vcl.qt.rendering import formen as E
         modi = ["Original", "Graustufen", "Schwarzweiß", "Sepia", "Heller", "Dunkler"]
         n, ok = EingabeFenster.getItem(self.w, "Bildfarbe", "Darstellung:", modi, 0, False)
         if ok:
             if n == "Original":
                 if z is not None:
-                    from vcl.qt.rendering.formen import bildwerkzeuge as BW
+                    from vcl.qt.rendering import formen as BW
                     BW.korrektur_setzen(e, z, 0, 0)                               # Helligkeit/Kontrast zurück (nicht zerstörend)
-                    z = BL.ziel(e)
+                    z = BL.bildlayout_ziel(e)
                     BL.frei_original(e, z)
                 else:
                     E.bild_original(e)
@@ -193,8 +193,8 @@ class BildToolsBefehle:
             e, f = self._bild()
             if f is None:
                 return
-        from vcl.qt.rendering.formen import bildlayout as BL
-        from vcl.qt.rendering.formen import bild_einfuegen as E
+        from vcl.qt.rendering import formen as BL
+        from vcl.qt.rendering import formen as E
         from vcl.qt.widgets.dialoge.dokument_dialoge import BildZuschneidenDialog
         d = BildZuschneidenDialog(self.w)
         if d.exec():
@@ -211,11 +211,11 @@ class BildToolsBefehle:
         e, f = self._bild()
         if f is None:
             return
-        from vcl.qt.rendering.formen import bild_einfuegen as E
+        from vcl.qt.rendering import formen as E
         namen = {"90° nach rechts": "rechts", "90° nach links": "links", "Horizontal spiegeln": "horizontal", "Vertikal spiegeln": "vertikal"}
         n, ok = EingabeFenster.getItem(self.w, "Drehen", "Bild:", list(namen), 0, False)
         if ok:
-            E.bild_ersetzen(e, lambda img: E.drehen(img, namen[n]))
+            E.bild_ersetzen(e, lambda img: E.bild_einfuegen_drehen(img, namen[n]))
 
     def objektAusrichten(self, k=None):
         e, f = self._bild()
@@ -237,7 +237,7 @@ class BildToolsBefehle:
     def bildGroesse(self, k=None):
         e, z = self._bild_frei()
         if z is not None:
-            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering import formen as BL
             from vcl.qt.widgets.dialoge.bild_groesse_dialog import BildGroesseDialog
             d = BildGroesseDialog(z[2]["b"], z[2]["h"], self.w)
             if d.exec():
@@ -254,7 +254,7 @@ class BildToolsBefehle:
     def bildBreite(self, k=None):
         e, z = self._bild_frei()
         if z is not None:                                                # auf Inhaltsbreite, Seitenverhältnis bleibt
-            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering import formen as BL
             b = e.page.content_width_px
             BL.frei_aendern(e, z, b=b, h=b * z[2]["h"] / max(1.0, z[2]["b"]))
             return
@@ -271,8 +271,8 @@ class BildToolsBefehle:
         if z is None:
             self.w.statusBar().showMessage("Erst ein Bild anklicken.", 4000)
             return
-        from vcl.qt.rendering.formen import bildlayout as BL
-        aktuell = BL.lesen(e, z)["umbruch"]
+        from vcl.qt.rendering import formen as BL
+        aktuell = BL.bildlayout_lesen(e, z)["umbruch"]
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for modus, text in (("textfluss", "Mit Text in Zeile"), ("quadrat", "Quadrat, Text umfließt"), ("passend", "Passend, Text umfließt eng"),
@@ -283,7 +283,7 @@ class BildToolsBefehle:
     def bildOriginal(self, k=None):
         e, z = self._bild_frei()
         if z is not None:
-            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering import formen as BL
             BL.frei_original_groesse(e, z)
             return
         e, f = self._bild()
@@ -296,11 +296,11 @@ class BildToolsBefehle:
         """Alternativtext und „Als dekorativ markieren“ in der Seitenleiste (``BildAlternativtextPanel``); Änderungen gelten sofort."""
         e, z = self._bild_frei()
         if z is not None:
-            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering import formen as BL
             werte = {"alt": z[2].get("alt", ""), "dekor": bool(z[2].get("dekor"))}
 
             def anwenden(w: dict) -> None:
-                aktuell = BL.ziel(e)                                 # die Angabe kann sich seit dem Öffnen geändert haben
+                aktuell = BL.bildlayout_ziel(e)                                 # die Angabe kann sich seit dem Öffnen geändert haben
                 if aktuell is not None and aktuell[0] == "frei":
                     BL.frei_aendern(e, aktuell, alt=w["alt"], dekor=bool(w["dekor"]))
         else:
@@ -318,7 +318,7 @@ class BildToolsBefehle:
     def bildEntfernen(self, k=None):
         e, z = self._bild_frei()
         if z is not None:
-            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering import formen as BL
             BL.frei_entfernen(e)
             return
         e, f = self._bild()

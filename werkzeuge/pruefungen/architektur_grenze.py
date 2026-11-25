@@ -199,9 +199,16 @@ def analysieren():
         if t is None:
             return {"*"}
         s_ = set()
-        for x in ast.walk(t):
-            if isinstance(x, ast.FunctionDef) and x.name == "__getattr__" and x in t.body:
-                s_.add("*")
+        tuer_namen = None
+        for x in t.body:
+            if isinstance(x, (ast.Assign, ast.AnnAssign)) and any(isinstance(z, ast.Name) and z.id == "_NAMEN" for z in ([x.target] if isinstance(x, ast.AnnAssign) else x.targets)) and isinstance(x.value, ast.Dict):
+                tuer_namen = {k.value for k in x.value.keys if isinstance(k, ast.Constant)}
+        for x in t.body:
+            if isinstance(x, ast.FunctionDef) and x.name == "__getattr__":
+                if tuer_namen is None:
+                    s_.add("*")
+                else:
+                    s_ |= tuer_namen
         for x in t.body:
             for y in ast.walk(x):
                 if isinstance(y, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and (y in t.body or not isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))):
@@ -222,22 +229,40 @@ def analysieren():
         return namen_cache[mod]
     for m, baum in baeume.items():
         paket = m.split(".") if mods[m].endswith("__init__.py") else m.split(".")[:-1]
-        alias: dict[str, str] = {}
+        eltern_z: dict = {}
+        for n in ast.walk(baum):
+            for k in ast.iter_child_nodes(n):
+                eltern_z[k] = n
+
+        def bereich(n):
+            while n in eltern_z:
+                n = eltern_z[n]
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    return n
+            return baum
+        alias_b: dict = {}
         for n in ast.walk(baum):
             if isinstance(n, ast.Import):
                 for a in n.names:
                     if a.asname and a.name in mods:
-                        alias[a.asname] = a.name
+                        alias_b[(bereich(n), a.asname)] = a.name
             elif isinstance(n, ast.ImportFrom):
                 basis = ".".join(paket[:len(paket) - n.level + 1] + ([n.module] if n.module else [])) if n.level else (n.module or "")
                 for a in n.names:
                     if f"{basis}.{a.name}" in mods:
-                        alias[a.asname or a.name] = f"{basis}.{a.name}"
+                        alias_b[(bereich(n), a.asname or a.name)] = f"{basis}.{a.name}"
                     elif basis in mods and a.name != "*" and not (namen_von(basis) & {a.name, "*"}):
                         funde["zerbrochener_zugriff"][rel(m)] += 1
         for n in ast.walk(baum):
-            if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id in alias and isinstance(n.ctx, ast.Load):
-                ziel = alias[n.value.id]
+            if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and isinstance(n.ctx, ast.Load):
+                b_ = bereich(n); ziel = None
+                while True:
+                    ziel = alias_b.get((b_, n.value.id))
+                    if ziel or b_ is baum:
+                        break
+                    b_ = bereich(b_)
+                if not ziel:
+                    continue
                 if not n.attr.startswith("__") and not (namen_von(ziel) & {n.attr, "*"}) and f"{ziel}.{n.attr}" not in mods:
                     funde["zerbrochener_zugriff"][rel(m)] += 1
     # Paket-Tür: von außerhalb eines Pakets nur über dessen __init__.py importieren
@@ -280,6 +305,33 @@ def analysieren():
     if os.path.isdir(os.path.join(SRC, "lunivo_writer")):
         funde["platzhalter"]["src/lunivo_writer"] += 1
     # Zyklen (Tarjan, nur direkte Importkanten)
+    lade_kanten: dict[str, set[str]] = collections.defaultdict(set)
+    for m, baum in baeume.items():
+        paket_l = m.split(".") if mods[m].endswith("__init__.py") else m.split(".")[:-1]
+        eltern_l: dict = {}
+        for n in ast.walk(baum):
+            for k in ast.iter_child_nodes(n):
+                eltern_l[k] = n
+        for n in ast.walk(baum):
+            if not isinstance(n, (ast.Import, ast.ImportFrom)):
+                continue
+            x = n; in_funktion = False
+            while x in eltern_l:
+                x = eltern_l[x]
+                if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                    in_funktion = True
+                    break
+            if in_funktion:
+                continue
+            if isinstance(n, ast.Import):
+                zz = [a.name for a in n.names]
+            else:
+                b0 = ".".join(paket_l[:len(paket_l) - n.level + 1] + ([n.module] if n.module else [])) if n.level else (n.module or "")
+                zz = [f"{b0}.{a.name}" for a in n.names] + [b0]
+            for z in zz:
+                r = aufloesen(z, mods)
+                if r and r != m:
+                    lade_kanten[m].add(r)
     index, tief, stapel, auf, zaehler, sccs = {}, {}, [], set(), [0], []
     sys.setrecursionlimit(10000)
 
@@ -288,7 +340,7 @@ def analysieren():
         zaehler[0] += 1
         stapel.append(v)
         auf.add(v)
-        for w in kanten.get(v, ()):
+        for w in lade_kanten.get(v, ()):
             if w not in index:
                 stark(w)
                 tief[v] = min(tief[v], tief[w])

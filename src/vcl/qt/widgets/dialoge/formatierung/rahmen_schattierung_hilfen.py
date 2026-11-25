@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
-from vcl.qt.rendering.formen.linie import Linie
+from vcl.qt.rendering.formen import Linie
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_RAHMENKANTEN_MIN, GROESSE_RAHMENKANTEN_WUNSCH
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN

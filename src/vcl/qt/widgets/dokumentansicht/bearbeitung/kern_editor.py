@@ -798,7 +798,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     @staticmethod
     def _png(img) -> bytes:
         """Die Bytes des Bildes fürs Dokument: ein Rasterbild aus einer Datei (JPEG, GIF …) bleibt im Original, sonst PNG."""
-        from vcl.qt.rendering.formen import bilddaten as BD
+        from vcl.qt.rendering import formen as BD
         q = BD.quelle_zu(img)
         if q is not None and q.format in ("jpeg", "gif", "bmp", "tiff", "webp"):
             return q.daten
@@ -859,18 +859,18 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Freie Objekte: Rückrufe der Kerndaten (der Kern kennt die Zeichenfunktionen nicht) ------------------------------------------------------------
     def frei_daten_lesen(self, art: str) -> dict | None:
         """Die Daten des gewählten freien Objekts dieser Art (WordArt, Form, SmartArt …) oder ``None``."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         return FO.daten_lesen(self, art)
 
     def frei_daten_still(self, art: str, **kw) -> bool:
         """Daten des gewählten freien Objekts ändern, ohne das Bild neu zu zeichnen."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from vcl.qt.rendering import formen as FO
         return FO.daten_still(self, art, **kw)
 
     def frei_einfuegen(self, art: str, daten: dict):
         """Ein freies Objekt dieser Art mit diesen Daten einfügen und auswählen. → Id."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
-        return FO.einfuegen(self, art, daten)
+        from vcl.qt.rendering import formen as FO
+        return FO.frei_objekt_einfuegen(self, art, daten)
 
     # ---- Ansicht ---------------------------------------------------------------------------------------------------------------------------------------
     autor = None                             # Rückruf des Hauptfensters: (Name, Initialen) des Benutzers

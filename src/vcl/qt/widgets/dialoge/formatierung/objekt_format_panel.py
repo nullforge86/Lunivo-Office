@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
 from writer.funktionen.objekte import muster as M
-from vcl.qt.rendering.wordart import texteffekt as T
+from vcl.qt.rendering import wordart as T
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter

@@ -285,8 +285,8 @@ class SeiteBefehle:
         m.eintrag("Raster …", aktiv=False)
 
         def auffrischen():
-            from vcl.qt.rendering.formen import bildlayout as BL
-            z = BL.ziel(self.ed) if self.ed else None
+            from vcl.qt.rendering import formen as BL
+            z = BL.bildlayout_ziel(self.ed) if self.ed else None
             for a in objekt:
                 a.setEnabled(z is not None and z[0] == "frei")
             netz.setChecked(self.an_netzlinien())
@@ -537,11 +537,11 @@ class SeiteBefehle:
 
     def effektSetzen(self, k=None, name="Schlicht"):
         """Effekt an die markierte Form bzw. das markierte freie Bild; ist nichts markiert, an alle im Dokument."""
-        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering import formen as BL
         from core.formatvorlagen.zeichen import designs as D
         if not self.ed or name not in D.EFFEKTE:
             return
-        z = BL.ziel(self.ed)
+        z = BL.bildlayout_ziel(self.ed)
         if z is not None and z[0] == "frei":
             BL.format_setzen(self.ed, z, fx=dict(D.EFFEKTE[name]))
         elif not BL.fx_alle(self.ed, D.EFFEKTE[name]):
@@ -628,7 +628,7 @@ class SeiteBefehle:
                 self.w.statusBar().showMessage("Die Schrift gilt jetzt als Standard für neue Dokumente.", 5000)
             self.ed._zf(zu_zeichen(neu))
             if "effekt" in neu:
-                from vcl.qt.rendering.wordart import texteffekt
+                from vcl.qt.rendering import wordart as texteffekt
                 self.ed._zf(texteffekt.zu_zeichen(neu["effekt"]))
             if neu["versteckt"] != w["versteckt"]:
                 self.ed.set_versteckt(neu["versteckt"])
