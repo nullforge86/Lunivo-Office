@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import os
 
-from framework.serienbriefe.platzhalter import konstanten, serienfelder
 from framework.serienbriefe.erstellung import serienbrief
 from framework.serienbriefe.datenquellen import serienquelle
-from framework.serienbriefe import befehle as sendungen_befehle
+from writer import serienbriefwerkzeuge as sendungen
 
 
 class SerienBefehle:
@@ -124,13 +123,13 @@ class SerienBefehle:
             return
         s = self._serie()
         d = FeldDialog(self.w, s["spalten"] if s else [])
-        d.einfuegen.connect(lambda name: sendungen_befehle.feld_einfuegen(e, name))
+        d.einfuegen.connect(lambda name: sendungen.seriendruckfeld_einfuegen(e.kennung, name))
         d.exec()
         self._vorschau_auffrischen()
 
     def serienNaechster(self, k=None):
         if self.ed:
-            sendungen_befehle.naechster_einfuegen(self.ed)
+            sendungen.naechster_datensatz_einfuegen(self.ed.kennung)
             self._vorschau_auffrischen()
 
     def serienHervorheben(self, k=None):
@@ -139,14 +138,14 @@ class SerienBefehle:
         if not s or not self.ed:
             return
         s["hervorheben"] = not s["hervorheben"]
-        sendungen_befehle.felder_hervorheben(self.ed, s["hervorheben"])
+        sendungen.seriendruckfelder_hervorheben(self.ed.kennung, s["hervorheben"])
 
     def serienZuordnen(self, k=None):
         from vcl.qt.widgets.dialoge.sendungen.zuordnen_dialog import ZuordnenDialog
         s = self._serie()
         if not self._hat_quelle() or not self.ed:
             return
-        felder = [f for f in serienfelder.felder_im_text(self.ed.sitzung.dokument) if f != konstanten.NAECHSTER]
+        felder = list(sendungen.zuordenbare_seriendruckfelder(self.ed.kennung))
         d = ZuordnenDialog(self.w, felder, s["spalten"], s["zuordnung"])
         if d.exec():
             s["zuordnung"] = d.ergebnis()

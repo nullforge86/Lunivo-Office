@@ -4,10 +4,9 @@ from __future__ import annotations
 import os
 from PySide6.QtWidgets import QMessageBox
 from framework.serienbriefe.erstellung import serienbrief
-from framework.serienbriefe.platzhalter import serienfelder
 from framework.serienbriefe.datenquellen import serienquelle
-from framework.befehle.korrektur import einstellungen as korrektur_einstellungen
-from framework.serienbriefe import befehle as sendungen_befehle
+from writer.ueberpruefung.korrektur.einstellungen import pruefsprache, pruefsprache_setzen
+from writer import serienbriefwerkzeuge as sendungen
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 
@@ -186,7 +185,7 @@ class PruefenBefehle:
         d = UmschlagDialog(self.w, absender)
         if d.exec():
             t = self._neues_blatt("Umschlag")
-            sendungen_befehle.umschlag_aufbauen(t.editor, d.format.currentText(), d.absender.toPlainText(), d.empfaenger.toPlainText())
+            sendungen.umschlag_aufbauen(t.editor.kennung, d.format.currentText(), d.absender.toPlainText(), d.empfaenger.toPlainText())
             self.w.statusBar().showMessage(f"Umschlag im Format {d.format.currentText()} angelegt.", 5000)
 
 
@@ -195,7 +194,7 @@ class PruefenBefehle:
         d = EtikettenDialog(self.w)
         if d.exec():
             t = self._neues_blatt("Etiketten")
-            sendungen_befehle.etiketten_aufbauen(t.editor, d.bogen.currentText(), d.text.toPlainText(), d.gleich.currentIndex() == 0)
+            sendungen.etiketten_aufbauen(t.editor.kennung, d.bogen.currentText(), d.text.toPlainText(), d.gleich.currentIndex() == 0)
             self.w.statusBar().showMessage("Bogen angelegt.", 5000)
 
 
@@ -204,7 +203,7 @@ class PruefenBefehle:
             from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
             n, ok = EingabeFenster.getText(self.w, "Seriendruckfeld", "Feldname (muss in der Kopfzeile der Empfängerliste stehen):", text="Name")
             if ok and n.strip():
-                sendungen_befehle.feld_einfuegen(self.ed, n.strip().replace("{", "").replace("}", ""))
+                sendungen.seriendruckfeld_einfuegen(self.ed.kennung, n.strip().replace("{", "").replace("}", ""))
 
 
     def adressblock(self, k=None):
@@ -213,7 +212,7 @@ class PruefenBefehle:
             from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
             n, ok = EingabeFenster.getItem(self.w, "Adressblock und Grußzeile", "Einfügen:", list(namen), 0, False)
             if ok:
-                sendungen_befehle.adressblock_einfuegen(self.ed, namen[n])
+                sendungen.adressblock_einfuegen(self.ed.kennung, namen[n])
 
 
     def seriendruckregel(self, k=None):
@@ -221,14 +220,14 @@ class PruefenBefehle:
             from vcl.qt.widgets.dialoge.sendungen.regel_dialog import RegelDialog
             d = RegelDialog(self.w)
             if d.exec() and d.feld.text().strip():
-                sendungen_befehle.regel_einfuegen(self.ed, d.feld.text().strip(), d.wert.text().strip(), d.dann.text(), d.sonst.text())
+                sendungen.seriendruckregel_einfuegen(self.ed.kennung, d.feld.text().strip(), d.wert.text().strip(), d.dann.text(), d.sonst.text())
 
 
     def seriendruck(self, k=None):
         if not self.ed:
             return
         from vcl.qt.widgets.dialoge.sendungen.seriendruck_dialog import SeriendruckDialog
-        d = SeriendruckDialog(self.w, serienfelder.felder_im_text(self.ed.sitzung.dokument), self.w.settings.get("serien/liste", ""))
+        d = SeriendruckDialog(self.w, list(sendungen.seriendruckfelder_im_text(self.ed.kennung)), self.w.settings.get("serien/liste", ""))
         if not d.exec():
             return
         tab = serienquelle.tabelle_lesen(d.daten.toPlainText())
@@ -346,7 +345,7 @@ class PruefenBefehle:
 
     def pruefsprache_aktuell(self) -> str:
         t = self.w.current_tab()
-        return (t.meta.get("sprache") if t is not None else "") or korrektur_einstellungen.pruefsprache(self.w.settings)
+        return (t.meta.get("sprache") if t is not None else "") or pruefsprache(self.w.settings)
 
 
     def pruefsprache_setzen(self, kennung: str) -> None:
@@ -356,5 +355,5 @@ class PruefenBefehle:
             self.w.current_tab().meta["sprache"] = kennung
             if self.ed:
                 self.ed.document().setModified(True)
-        korrektur_einstellungen.pruefsprache_setzen(self.w.settings, kennung)
+        pruefsprache_setzen(self.w.settings, kennung)
         self.w.statusBar().showMessage(f"Dokumentsprache: {n}.", 4000)

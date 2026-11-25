@@ -186,6 +186,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         if kennung == self.kennung:
             self.ansicht.nach_aenderung()
             self.zusatzGeaendert.emit()                  # Kommentare, Noten, Änderungen: die Seitenleisten lesen neu
+            self.pageApplied.emit()                      # Seiteneinrichtung (Umschlag, Etiketten …): das Lineal folgt
 
     # ---- Signale der Ansicht ----------------------------------------------------------------------------------------------------
     def _geaendert(self) -> None:
