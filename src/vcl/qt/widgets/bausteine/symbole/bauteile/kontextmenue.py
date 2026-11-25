@@ -68,7 +68,7 @@ def _tabellenmenue(m: MenueListe, punkt, b, editor, lesen: bool, auswahl: bool) 
     punkt("Einfügen", "einfuegen", "Ctrl+V", "kleben", frei)
     punkt("Inhalte einfügen …", "inhalteEinfuegen", "Ctrl+Alt+V", "inhalteEinfuegen", frei)
     m.trenner()
-    from framework.befehle.tabellenaktionen import EINFUEGEN, LOESCHEN       # dieselbe Definition wie Band und Mini-Leiste
+    from vcl.qt.fenster.befehle.tabellenaktionen import EINFUEGEN, LOESCHEN       # dieselbe Definition wie Band und Mini-Leiste
     for titel, symbol, gruppe in (("Einfügen", "tabelleEinfuegen", EINFUEGEN), ("Löschen", "tabelleLoeschen", LOESCHEN)):
         sub = m.untermenue(titel, _symbol(symbol), not lesen)
         for a in gruppe:

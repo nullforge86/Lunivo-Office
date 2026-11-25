@@ -122,7 +122,7 @@ def _bild_tabelle(p, tab, n, mittel) -> None:
 def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) -> QPixmap:
     """Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
     Achsen, Achsentitel, Gitternetz, Datentabelle, Trendlinie — grau gezeichnet wie die Kacheln der Vorlage."""
-    from framework.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUTS
+    from vcl.qt.fenster.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUTS
     from core.diagramme.daten import diagramm_zusatz as Z
     kw = SCHNELLLAYOUTS[nr][1]
     el = {**Z.STANDARD_ELEMENTE, **(kw.get("elemente") or {})}
@@ -234,7 +234,7 @@ class DiagrammPopup(MenueListe):
         return w
 
     def _seite_schnelllayout(self) -> QWidget:
-        from framework.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUT_ANZEIGE, SCHNELLLAYOUTS
+        from vcl.qt.fenster.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUT_ANZEIGE, SCHNELLLAYOUTS
         w = QWidget(); kacheln = []
         for platz, i in enumerate(SCHNELLLAYOUT_ANZEIGE):                # Reihenfolge wie im Foto der Vorlage; i ist die gespeicherte Layoutnummer
             name = SCHNELLLAYOUTS[i][0]

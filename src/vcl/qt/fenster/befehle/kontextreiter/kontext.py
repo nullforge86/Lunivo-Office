@@ -4,9 +4,9 @@
 ``bildtools.py`` und ``formtools.py``. Hier bleiben Absatzformat, Wort-Extras und RTF-Export. Ein Baustein von ``Befehle`` (siehe ``kern/befehlsliste.py``)."""
 from __future__ import annotations
 
-from framework.befehle.kontextreiter.tabellen import TabellenBefehle
-from framework.befehle.kontextreiter.tabellen_format import TabellenFormatBefehle
-from framework.befehle.kontextreiter.zeichentools import ZeichenToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.tabellen import TabellenBefehle
+from vcl.qt.fenster.befehle.kontextreiter.tabellen_format import TabellenFormatBefehle
+from vcl.qt.fenster.befehle.kontextreiter.zeichentools import ZeichenToolsBefehle
 
 
 class KontextBefehle(TabellenBefehle, TabellenFormatBefehle, ZeichenToolsBefehle):

@@ -14,25 +14,25 @@ import json
 from PySide6.QtGui import QCursor
 from vcl.qt.widgets.ribbon.ansicht.band.band_befehle import AnsichtBandBefehle
 from vcl.qt.widgets.ribbon.bearbeiten.band.band_befehle import BearbeitenBandBefehle
-from framework.befehle.hauptreiter.datei import DateiBefehle
-from framework.befehle.hauptreiter.einfuegen import EinfuegenBefehle
-from framework.befehle.hauptreiter.ki import KIBefehle
+from vcl.qt.fenster.befehle.hauptreiter.datei import DateiBefehle
+from vcl.qt.fenster.befehle.hauptreiter.einfuegen import EinfuegenBefehle
+from vcl.qt.fenster.befehle.hauptreiter.ki import KIBefehle
 from vcl.qt.widgets.ribbon.ueberpruefen.band.band_befehle import UeberpruefenBandBefehle
 from vcl.qt.widgets.ribbon.kopffuss.band.band_befehle import KopfFussBandBefehle
-from framework.befehle.kontextreiter.kontext import KontextBefehle
-from framework.befehle.hauptreiter.pruefen import PruefenBefehle
-from framework.befehle.hauptreiter.seite import SeiteBefehle
-from framework.befehle.hauptreiter.serien import SerienBefehle
-from framework.befehle.hauptreiter.text import TextBefehle
-from framework.befehle.kontextreiter.bildtools import BildToolsBefehle
-from framework.befehle.kontextreiter.diagrammtools import DiagrammToolsBefehle
-from framework.befehle.kontextreiter.formtools import FormToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.kontext import KontextBefehle
+from vcl.qt.fenster.befehle.hauptreiter.pruefen import PruefenBefehle
+from vcl.qt.fenster.befehle.hauptreiter.seite import SeiteBefehle
+from vcl.qt.fenster.befehle.hauptreiter.serien import SerienBefehle
+from vcl.qt.fenster.befehle.hauptreiter.text import TextBefehle
+from vcl.qt.fenster.befehle.kontextreiter.bildtools import BildToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.diagrammtools import DiagrammToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.formtools import FormToolsBefehle
 from framework.befehle.kontextreiter.smartart_knoten_zustand import SmartArtKnotenZustand
 from framework.befehle.kontextreiter.smartarttools import SmartArtToolsBefehle
-from framework.befehle.kontextreiter.texttools import TextToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.texttools import TextToolsBefehle
 
 from vcl.qt.widgets.ribbon.verweise.band.band_befehle import VerweiseBandBefehle
-from framework.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
+from vcl.qt.fenster.befehle.hilfen import FreiMenue, _farbfeld  # noqa: F401  (andere Module holen sie hier)
 
 
 class Befehle(AnsichtBandBefehle, BearbeitenBandBefehle, BildToolsBefehle, DateiBefehle, DiagrammToolsBefehle, EinfuegenBefehle, FormToolsBefehle, KIBefehle, UeberpruefenBandBefehle, KopfFussBandBefehle, KontextBefehle, PruefenBefehle, SeiteBefehle, SerienBefehle, SmartArtKnotenZustand, SmartArtToolsBefehle, TextBefehle, TextToolsBefehle, VerweiseBandBefehle):

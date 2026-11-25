@@ -15,13 +15,13 @@ core.objekte.formen.sprechblasen core.objekte.basis.frei_objekt core.objekte.tex
 core.objekte.smartart.smartart core.objekte.smartart.smartart_zeichnen core.dokument.abschnitte.deckblatt vcl.qt.rendering.formen.seitenrahmen
 core.dokument.wasserzeichen.wasserzeichen core.formatierung.fuellung.muster core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben core.formatierung.effekte.texteffekt
 core.objekte.wordart.textfx core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.formatierung.fuellung.textur core.barrierefreiheit.barrierefreiheit
-vcl.qt.eingabe.korrektur_dienst core.formatierung.schrift.datenbank framework.befehle.hauptreiter.datei
-framework.befehle.hauptreiter.einfuegen framework.befehle.hauptreiter.einfuegen_objekte framework.befehle.hauptreiter.ki
-framework.befehle.hauptreiter.pruefen framework.befehle.hauptreiter.seite framework.befehle.hauptreiter.serien
-framework.befehle.hauptreiter.text_absatz framework.befehle.hauptreiter.text_vorlagen framework.befehle.hauptreiter.text_zeichen
-framework.befehle.hilfen framework.befehle.kontextreiter.bildtools framework.befehle.kontextreiter.diagrammtools
-framework.befehle.kontextreiter.formtools framework.befehle.kontextreiter.kontext framework.befehle.kontextreiter.tabellen
-framework.befehle.kontextreiter.tabellen_format framework.befehle.kontextreiter.texttools framework.befehle.kontextreiter.zeichentools
+vcl.qt.eingabe.korrektur_dienst core.formatierung.schrift.datenbank
+vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte vcl.qt.fenster.befehle.hauptreiter.ki
+vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite vcl.qt.fenster.befehle.hauptreiter.serien
+vcl.qt.fenster.befehle.hauptreiter.text_absatz vcl.qt.fenster.befehle.hauptreiter.text_vorlagen vcl.qt.fenster.befehle.hauptreiter.text_zeichen
+vcl.qt.fenster.befehle.kontextreiter.bildtools vcl.qt.fenster.befehle.kontextreiter.diagrammtools
+vcl.qt.fenster.befehle.kontextreiter.formtools vcl.qt.fenster.befehle.kontextreiter.kontext
+vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools vcl.qt.fenster.befehle.kontextreiter.zeichentools
 vcl.qt.drucken.bild_export framework.dokumentverwaltung.ausgabe.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
 framework.ki.chat.ki_chat framework.ki.dienst.arbeitslauf framework.ki.dienst.ki_aktionen framework.ki.dienst.ki_anfragen
 framework.ki.dienst.ki_dauerbetrieb vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument

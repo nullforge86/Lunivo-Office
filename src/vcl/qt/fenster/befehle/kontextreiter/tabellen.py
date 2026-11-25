@@ -92,7 +92,7 @@ class TabellenBefehle:
 
     def _tabellen_aktionsmenue(self, name: str):
         """Menü „Einfügen“ bzw. „Löschen“ aus der gemeinsamen Definition (``kern/tabellenaktionen.py``): Band, Mini-Leiste und Kontextmenü."""
-        from framework.befehle.tabellenaktionen import GRUPPEN
+        from vcl.qt.fenster.befehle.tabellenaktionen import GRUPPEN
         from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()

@@ -4,12 +4,12 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_ENDUNGEN, BILD_MUSTER
-from framework.befehle.hilfen import _farbfeld
+from vcl.qt.fenster.befehle.hilfen import _farbfeld
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 
 
-from framework.befehle.hauptreiter.einfuegen_objekte import EinfuegenObjektBefehle
+from vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte import EinfuegenObjektBefehle
 
 
 class EinfuegenBefehle(EinfuegenObjektBefehle):

@@ -4,7 +4,7 @@ Ein Baustein von ``KontextBefehle`` (``kern/befehle/kontextreiter/kontext.py``).
 from __future__ import annotations
 
 from PySide6.QtGui import QCursor
-from framework.befehle.hilfen import FreiMenue
+from vcl.qt.fenster.befehle.hilfen import FreiMenue
 
 
 class ZeichenToolsBefehle:

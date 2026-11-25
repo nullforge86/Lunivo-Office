@@ -11,7 +11,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QMenu, QToolButton, QWidget
 
-from framework.befehle.tabellenaktionen import GRUPPEN
+from vcl.qt.fenster.befehle.tabellenaktionen import GRUPPEN
 from core.tabellen.modell.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe

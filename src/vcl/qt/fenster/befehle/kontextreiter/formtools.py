@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF
 
-from framework.befehle.hilfen import _farbfeld
+from vcl.qt.fenster.befehle.hilfen import _farbfeld
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine import FarbPalette, weitere_farben
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
@@ -84,7 +84,7 @@ class FormToolsBefehle:
 
     # ---- Form-Menüs, Vorlagen, Text in der Form, Gruppieren (aus dem Kontext-Reiter) ---------------------------------------------------
     # ---- Form- und WordArt-Tools --------------------------------------------------------------------------------------------
-    FARBEN = (Farbe.AKZENT_DUNKEL, "#6bbf59", "#f4a259", "#e5645f", "#ffd43b", "#ced4da", "#495057", Farbe.WEISS, Farbe.SCHWARZ)
+    FARBEN = Farbe.FORMFARBEN
 
     def _form_farbe(self, feld: str, titel: str):
         c = weitere_farben(self.w, Farbe.AKZENT_DUNKEL, titel)

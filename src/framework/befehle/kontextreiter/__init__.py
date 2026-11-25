@@ -1,1 +1,1 @@
-"""Unterpaket ``kontextreiter`` von ``framework.befehle``."""
+"""Paket."""

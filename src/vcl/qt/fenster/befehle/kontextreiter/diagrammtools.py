@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QMenu
 
-from framework.befehle.hilfen import _farbfeld
+from vcl.qt.fenster.befehle.hilfen import _farbfeld
 from core.diagramme.daten import diagramm_zusatz as Z
 
 # Schnelllayouts: (Name, Angaben) — jedes setzt Titel, Legende und Beschriftungen zugleich

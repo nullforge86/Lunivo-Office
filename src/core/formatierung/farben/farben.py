@@ -14,6 +14,7 @@ class Farbe:
     FORM_LINIE = "#1f3864"          # Standardlinie eingefügter Formen
     REGENBOGEN = ("#e03131", "#f08c00", "#ffd43b", "#2f9e44", "#1971c2", "#7048a8")   # Farbfolge der WordArt-Vorlage „Regenbogen“
     TINTE = "#343a40"               # dunkle Schrift und Striche auf hellem Grund
+    FORMFARBEN = ("#4a8fd8", "#6bbf59", "#f4a259", "#e5645f", "#ffd43b", "#ced4da", "#495057", "#ffffff", "#000000")   # Farbfelder für Formen (Füllung, Linie)
     TINTE_DUNKEL = "#212529"
     GRAU = "#868e96"                # gedämpft: Rahmen, Hinweise, Platzhalter
     GRAU_HELL = "#adb5bd"

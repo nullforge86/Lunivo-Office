@@ -9,7 +9,7 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QMenu
 
-from framework.befehle.hauptreiter.text import ZEILENABSTAENDE
+from vcl.qt.fenster.befehle.hauptreiter.text import ZEILENABSTAENDE
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 from vcl.qt.widgets.bausteine import FarbPalette
@@ -411,17 +411,17 @@ class TextToolsBefehle:
             pm = QPixmap(QSize(52, 36)); pm.fill(QColor(Farbe.PAPIER))
             p = QPainter(pm); formstil_zeichner(k)(p, QRectF(0, 0, 52, 36)); p.end()
             kacheln.append(("Formstil", pm, lambda k=k: self.ttFormstil(k)))
-        from framework.befehle.hilfen import FreiMenue
+        from vcl.qt.fenster.befehle.hilfen import FreiMenue
         return {"kacheln": kacheln, "menue": FreiMenue.formstile(self), "name": "Formstile"}
 
 
     def menue_ttFormFuellung(self):
-        from framework.befehle.hilfen import FreiMenue
+        from vcl.qt.fenster.befehle.hilfen import FreiMenue
         return FreiMenue.fuell(self)
 
 
     def menue_ttFormKontur(self):
-        from framework.befehle.hilfen import FreiMenue
+        from vcl.qt.fenster.befehle.hilfen import FreiMenue
         return FreiMenue.kontur(self)
 
 

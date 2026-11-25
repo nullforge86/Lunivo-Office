@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
-from framework.befehle.hilfen import _farbfeld
+from vcl.qt.fenster.befehle.hilfen import _farbfeld
 from core.formatierung.farben.farben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
+from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_OBJEKTKACHEL_INNEN, RADIUS_ZEICHNUNG_MITTEL, STIFT_BILDCHEN_LINIE
+from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 
 
 class EinfuegenObjektBefehle:
@@ -37,7 +39,7 @@ class EinfuegenObjektBefehle:
             for name in formen:
                 def zeichne(p, r, name=name):
                     from PySide6.QtWidgets import QApplication
-                    p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), 1.3)); p.setBrush(Qt.NoBrush)
+                    p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), STIFT_BILDCHEN_LINIE)); p.setBrush(Qt.NoBrush)
                     p.drawPath(K.pfad(name, QRectF(r).adjusted(2, 3, -2, -3)))
                 m.kachel(name, name, zeichne).setCheckable(False)
 
@@ -172,7 +174,7 @@ class EinfuegenObjektBefehle:
             img = E.wordart_bild("A", vorlage=i, pt=80)
             pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
-            p.setBrush(QColor(BF.KACHEL_GRUND)); p.setPen(QPen(QColor(BF.KACHEL_RAND), 1)); p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 4, 4)
+            p.setBrush(QColor(BF.KACHEL_GRUND)); p.setPen(QPen(QColor(BF.KACHEL_RAND), 1)); p.drawRoundedRect(QRectF(1 / 2, 1 / 2, GROESSE_OBJEKTKACHEL_INNEN, GROESSE_OBJEKTKACHEL_INNEN), RADIUS_ZEICHNUNG_MITTEL, RADIUS_ZEICHNUNG_MITTEL)
             z = img.scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             p.drawImage((40 - z.width()) // 2, (40 - z.height()) // 2, z)
             p.end()
@@ -242,8 +244,7 @@ class EinfuegenObjektBefehle:
         h.addWidget(QLabel("Stil")); h.addStretch(1)
         gruppe = QButtonGroup(kopf)
         for text, quer in (("Hochformat", False), ("Querformat", True)):
-            k = QToolButton(); k.setText(text); k.setIcon(symbol(not quer)); k.setCheckable(True); k.setAutoRaise(True)
-            k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setChecked(not quer); k.setAccessibleName(f"Deckblätter im {text}")
+            k = werkzeugknopf("band_menue", text, symbolbild=symbol(not quer), umschaltbar=True, an=not quer, name=f"Deckblätter im {text}")
             k.clicked.connect(lambda _c=False, q=quer: fuellen(q))
             gruppe.addButton(k); h.addWidget(k)
         m.kopf(kopf)

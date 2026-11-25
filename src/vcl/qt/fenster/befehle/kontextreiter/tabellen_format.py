@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from core.formatierung.farben.farben import Farbe
-from framework.befehle.hilfen import _farbfeld
+from vcl.qt.fenster.befehle.hilfen import _farbfeld
 
 
 class TabellenFormatBefehle:

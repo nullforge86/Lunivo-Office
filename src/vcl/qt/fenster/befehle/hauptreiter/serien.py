@@ -208,8 +208,8 @@ class SerienBefehle:
         """Das Feld zwischen „Vorheriger“ und „Nächster Datensatz“: Nummer des gezeigten Datensatzes (Eingabe springt dorthin)."""
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QIntValidator
-        from PySide6.QtWidgets import QLineEdit
-        f = QLineEdit(); f.setFixedWidth(80); f.setMinimumHeight(36); f.setAlignment(Qt.AlignCenter)
+        from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
+        f = zeilenfeld("zahl"); f.setAlignment(Qt.AlignCenter)
         f.setAccessibleName("Datensatz"); f.setToolTip("Datensatz"); f.setValidator(QIntValidator(1, 999999, f))
         f.returnPressed.connect(lambda: f.text() and self._gehe_satz(lambda _i, _n: int(f.text()) - 1))
         return f
