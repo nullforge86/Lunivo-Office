@@ -74,6 +74,10 @@ class Sitzung:
         if nummer in self._sitzungen:
             self._sitzungen[nummer].nur_lesen = bool(an)
 
+    def ist_nur_lesen(self, nummer: int) -> bool:
+        satz = self._sitzungen.get(nummer)
+        return satz is not None and satz.nur_lesen
+
     def layout_option_setzen(self, nummer: int, name: str, wert: float | bool | None) -> None:
         """Eine Layout-Option der Ansicht (``buchstaben``, ``wort``, ``zeilenluft``, ``versteckt``, ``web``); ``None`` nimmt sie heraus."""
         satz = self._sitzungen.get(nummer)

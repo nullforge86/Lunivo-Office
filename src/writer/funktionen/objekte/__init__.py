@@ -24,6 +24,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "SCHNELLTABELLEN": ("schnelltabelle", "SCHNELLTABELLEN"),
     "STANDARD_FARBE": ("wasserzeichen", "STANDARD_FARBE"),
     "STRICHTYPEN": ("diagrammformat", "STRICHTYPEN"),
+    "TABELLE_GEWAEHLT": ("tabellenzustand", "TABELLE_GEWAEHLT"),
     "TEXTFELD_STANDARD": ("freie_objekte", "TEXTFELD_STANDARD"),
     "VORGABEN": ("wasserzeichen", "VORGABEN"),
     "WARP_FORMEN": ("wordart", "WARP_FORMEN"),
@@ -66,6 +67,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "schatten_vorgaben": ("wordart", "schatten_vorgaben"),
     "schnelltabelle_einfuegen": ("schnelltabelle", "einfuegen"),
     "strich_schluessel": ("diagrammformat", "strich_schluessel"),
+    "tabellen_zustand": ("tabellenzustand", "tabellen_zustand"),
+    "tabellenmodus": ("tabellenzustand", "tabellenmodus"),
     "text_aus_knoten": ("smartart", "text_aus_knoten"),
     "text_gegen_knoten": ("smartart", "text_gegen_knoten"),
     "textfeld_hat_nachfolger": ("freie_objekte", "textfeld_hat_nachfolger"),
@@ -97,6 +100,8 @@ def __getattr__(name: str):
         from . import schnelltabelle as _datei
     elif datei == "smartart":
         from . import smartart as _datei
+    elif datei == "tabellenzustand":
+        from . import tabellenzustand as _datei
     elif datei == "wasserzeichen":
         from . import wasserzeichen as _datei
     elif datei == "wordart":

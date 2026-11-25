@@ -12,7 +12,7 @@ from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, QTimer, Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QMenu, QToolButton, QWidget
 
 from vcl.qt.fenster.befehle.tabellenaktionen import GRUPPEN
-from core.tabellen.modell.tabellenzustand import EINZELZELLE_GANZ, GANZE_TABELLE, MEHRERE_ZELLEN, tabellenmodus, zustand
+from writer.funktionen.objekte import TABELLE_GEWAEHLT, tabellen_zustand, tabellenmodus
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ICON_KNOPF_GROSS, ICON_NORMAL, RAND_KEIN, RAND_MINILEISTE
@@ -168,9 +168,9 @@ class MiniLeiste(QFrame):
         b.menue_setzen(m, geteilt=False)
 
     def tabellenmodus(self) -> bool:
-        """Tabellenmodus (siehe ``editor/tabelle/tabellenzustand.py``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
+        """Tabellenmodus (Regel im Kern, abgefragt über ``writer.funktionen.objekte``): mehrere Zellen oder die ganze Tabelle markiert, über den Verschiebegriff gewählt oder
         Rechtsklick ohne Textmarkierung in einer Zelle. Text in nur einer Zelle oder außerhalb einer Tabelle: Textmodus."""
-        return tabellenmodus(self._ed, self._rechtsklick, self._per_griff)
+        return self._ed is not None and tabellenmodus(self._ed.kennung, self._rechtsklick, self._per_griff)
 
     def _modus_anwenden(self) -> bool:
         """Knöpfe des Modus anordnen; ``True``, wenn sich der Modus geändert hat (Größe und Platz müssen neu gesetzt werden)."""
@@ -311,7 +311,7 @@ class MiniLeiste(QFrame):
         if not editor.textCursor().hasSelection() and not self._rechtsklick:
             self.hide()
             return
-        if self._per_griff and zustand(editor) not in (MEHRERE_ZELLEN, GANZE_TABELLE, EINZELZELLE_GANZ):
+        if self._per_griff and tabellen_zustand(editor.kennung) not in TABELLE_GEWAEHLT:
             self._per_griff = False                                   # die Tabellenwahl über den Griff ist aufgehoben
         if self._modus_anwenden():                                  # Zelle ↔ mehrere Zellen ↔ außerhalb: sofort umschalten
             self._platzieren()

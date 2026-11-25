@@ -327,7 +327,7 @@
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/kontextmenue.py": 3,
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/lese_ende_knopf.py": 3,
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/live_vorschau.py": 2,
-  "src/vcl/qt/widgets/bausteine/symbole/bauteile/mini_leiste.py": 10,
+  "src/vcl/qt/widgets/bausteine/symbole/bauteile/mini_leiste.py": 9,
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/schweb_knopf.py": 3,
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/symbole.py": 5,
   "src/vcl/qt/widgets/bausteine/symbole/bauteile/symbole_hybrid.py": 1,
@@ -723,9 +723,6 @@
   "src/vcl/qt/widgets/seitenleisten/seitenleiste.py": 1,
   "src/vcl/qt/widgets/seitenleisten/vorlagen/vorlagen_galerie.py": 1
  },
- "kern_ruft_oberflaeche": {
-  "src/core/tabellen/modell/tabellenzustand.py": 2
- },
  "offene_schnittstelle": {
   "src/framework/dokumentverwaltung/ausgabe/textsatz.py": 2,
   "src/framework/dokumentverwaltung/dateizugriff/dateiformate.py": 2,
@@ -813,7 +810,7 @@
   "src/vcl/qt/rendering/wordart/wordart_einfuegen.py": 7,
   "src/vcl/qt/widgets/bausteine/interaktion/felder/auswahl_bereich.py": 2,
   "src/vcl/qt/widgets/bausteine/rahmen/linien.py": 1,
-  "src/vcl/qt/widgets/bausteine/symbole/bauteile/mini_leiste.py": 3,
+  "src/vcl/qt/widgets/bausteine/symbole/bauteile/mini_leiste.py": 2,
   "src/vcl/qt/widgets/bausteine/symbole/medien/seiten_bildchen.py": 1,
   "src/vcl/qt/widgets/dialoge/dokument/aenderungs_vorschau.py": 1,
   "src/vcl/qt/widgets/dialoge/dokument/gliederung_anpassen_dialog.py": 2,
