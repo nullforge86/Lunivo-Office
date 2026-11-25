@@ -8,7 +8,7 @@ ZEILENUMBRUCH = " "
 SATZENDE = tuple(".!?:;…\"“”»«)")
 
 
-def _bloecke(ed, s) -> list:
+def _bloecke(s) -> list:
     """Die Absätze der Markierung (ohne Markierung: alle) außerhalb von Tabellen, in Dokumentreihenfolge."""
     alle = [b for ab in s.dokument.abschnitte for b in ab.bloecke if hasattr(b, "inhalte")]
     if s.auswahl.leer:
@@ -30,15 +30,10 @@ def _nachbar(s, a, schritt: int):
     return n if n is not None and hasattr(n, "inhalte") else None
 
 
-def _schritt(ed, arbeit) -> int:
+def _schritt(s, arbeit) -> int:
     """Führt ``arbeit(sitzung, absaetze)`` als einen Rückgängig-Schritt aus. → Zahl der Änderungen."""
-    zahl = [0]
-
-    def f(s):
-        with s.gruppe("Wort-Extras"):
-            zahl[0] = arbeit(s, _bloecke(ed, s)) or 0
-    ed.ansicht._aendern(f)
-    return zahl[0]
+    with s.gruppe("Wort-Extras"):
+        return arbeit(s, _bloecke(s)) or 0
 
 
 def _auswahl(a, von: int, bis: int):
@@ -46,7 +41,7 @@ def _auswahl(a, von: int, bis: int):
     return Auswahl(Position(a.id, von), Position(a.id, bis))
 
 
-def leere_loeschen(ed) -> int:
+def leere_loeschen(s) -> int:
     from core.dokument.dokument import Auswahl, Position
 
     def arbeit(s, bloecke):
@@ -56,10 +51,10 @@ def leere_loeschen(ed) -> int:
             if _leer(a) and nxt is not None:
                 s.loeschen(Auswahl(Position(a.id, 0), Position(nxt.id, 0))); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def leere_einfuegen(ed) -> int:
+def leere_einfuegen(s) -> int:
     from core.dokument.dokument import Position
 
     def arbeit(s, bloecke):
@@ -69,20 +64,20 @@ def leere_einfuegen(ed) -> int:
             if not _leer(a) and nxt is not None and not _leer(nxt):
                 s.absatz_teilen(Position(a.id, a.laenge)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def zeilenumbruch_in_return(ed) -> int:
+def zeilenumbruch_in_return(s) -> int:
     def arbeit(s, bloecke):
         n = 0
         for a in reversed(bloecke):
             while (i := s._absatz(a.id).text().rfind(ZEILENUMBRUCH)) >= 0:
                 s.ersetzen("\n", _auswahl(a, i, i + 1)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def absaetze_neu_anordnen(ed) -> int:
+def absaetze_neu_anordnen(s) -> int:
     """Absätze, die mitten im Satz enden (hartes Return in einem Satz, etwa aus PDF-Text), werden zu einem Absatz."""
     from core.dokument.dokument import Auswahl, Position
     from core.formatvorlagen.formatvorlagen import ueberschriftsebene
@@ -96,10 +91,10 @@ def absaetze_neu_anordnen(ed) -> int:
                     and ueberschriftsebene(s.dokument, a) == 0:
                 s.ersetzen(" ", Auswahl(Position(a.id, a.laenge), Position(nxt.id, 0))); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def leerzeichen_bereinigen(ed) -> int:
+def leerzeichen_bereinigen(s) -> int:
     """Doppelte Leerzeichen und Leerzeichen am Anfang und Ende der Absätze entfernen."""
     import re
 
@@ -113,7 +108,7 @@ def leerzeichen_bereinigen(ed) -> int:
                     von += 1
                 s.loeschen(_auswahl(a, von, bis)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
 def _punkte(s, a) -> float:
@@ -121,7 +116,7 @@ def _punkte(s, a) -> float:
     return float(F.zeichenformat(s.dokument, a, {}).get("groesse_pt") or 11.0)
 
 
-def einzug_zwei_zeichen(ed) -> int:
+def einzug_zwei_zeichen(s) -> int:
     """Erstzeileneinzug um zwei Zeichen der Schriftgröße des Absatzes."""
     def arbeit(s, bloecke):
         n = 0
@@ -130,21 +125,16 @@ def einzug_zwei_zeichen(ed) -> int:
                 continue
             s.absatzformat_anwenden({"einzug_erste": 2 * _punkte(s, a) * 96 / 72}, absatz_ids=[a.id]); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def smart_anordnen(ed) -> int:
+def smart_anordnen(s) -> int:
     """Leerzeichen bereinigen, leere Absätze löschen, Erstzeileneinzug um zwei Zeichen (zusammen ein Schritt für Rückgängig)."""
-    zahl = [0]
-
-    def f(s):
-        with s.gruppe("Smart-Anordnen"):
-            zahl[0] = leerzeichen_bereinigen(ed) + leere_loeschen(ed) + einzug_zwei_zeichen(ed)
-    ed.ansicht._aendern(f)
-    return zahl[0]
+    with s.gruppe("Smart-Anordnen"):
+        return leerzeichen_bereinigen(s) + leere_loeschen(s) + einzug_zwei_zeichen(s)
 
 
-def fuehrende_leerzeichen_loeschen(ed) -> int:
+def fuehrende_leerzeichen_loeschen(s) -> int:
     """Leerzeichen und Tabs am Anfang der Absätze entfernen."""
     def arbeit(s, bloecke):
         n = 0
@@ -154,10 +144,10 @@ def fuehrende_leerzeichen_loeschen(ed) -> int:
             if k and t.strip():
                 s.loeschen(_auswahl(a, 0, k)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def zeilenumbrueche_loeschen(ed) -> int:
+def zeilenumbrueche_loeschen(s) -> int:
     """Manuelle Zeilenumbrüche (Umschalt+Enter) entfernen; die Zeilen laufen zusammen, zwischen zwei Wörtern bleibt ein Leerzeichen."""
     def arbeit(s, bloecke):
         n = 0
@@ -167,20 +157,19 @@ def zeilenumbrueche_loeschen(ed) -> int:
                 luecke = 0 < i < len(t) - 1 and not t[i - 1].isspace() and not t[i + 1].isspace()
                 s.ersetzen(" " if luecke else "", _auswahl(a, i, i + 1)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
-def leerabsatz_modus_wechseln(ed) -> int:
+def leerabsatz_modus_wechseln(s) -> int:
     """Trennung durch leere Absätze umschalten: Stehen zwischen den Absätzen leere Absätze, verschwinden sie; sonst kommt zwischen
     je zwei Absätzen einer."""
-    s = ed.sitzung
-    bloecke = _bloecke(ed, s)
+    bloecke = _bloecke(s)
     zwischen = any(_leer(a) and (v := _nachbar(s, a, -1)) is not None and not _leer(v) and (nx := _nachbar(s, a, 1)) is not None and not _leer(nx)
                    for a in bloecke)
-    return leere_loeschen(ed) if zwischen else leere_einfuegen(ed)
+    return leere_loeschen(s) if zwischen else leere_einfuegen(s)
 
 
-def einzug_in_leerzeichen(ed) -> int:
+def einzug_in_leerzeichen(s) -> int:
     """Den Erstzeileneinzug eines Absatzes in Leerzeichen am Absatzanfang umwandeln (gleich breit), der Einzug selbst wird 0."""
     from core.dokument.dokument import Position
     from core.layout.drucklayout import formatwerte as F
@@ -195,21 +184,27 @@ def einzug_in_leerzeichen(ed) -> int:
             s.absatzformat_anwenden({"einzug_erste": None}, absatz_ids=[a.id])
             s.text_einfuegen(" " * max(1, round(erste / breite)), Position(a.id, 0)); n += 1
         return n
-    return _schritt(ed, arbeit)
+    return _schritt(s, arbeit)
 
 
 # Das Menü am Knopf „Wort-Extras“ in der Anordnung der Vorlage: (Text, Symbol, Funktion), "-" = Trennlinie,
 # („Löschen“, Symbol, [Untereinträge]) = Untermenü
-MENUE = [("Absätze neu anordnen", "weNeu", absaetze_neu_anordnen),
-         ("Smart-Anordnen", "weSmart", smart_anordnen),
-         ("Leerabsatz-Trennung umschalten", "weLeerModus", leerabsatz_modus_wechseln),
+# Menü „Wort-Extras“: (Text, Symbol, Befehl) oder (Text, Symbol, [Untereinträge]) oder "-" für einen Trenner
+MENUE = [("Absätze neu anordnen", "weNeu", "absaetze_neu_anordnen"),
+         ("Smart-Anordnen", "weSmart", "smart_anordnen"),
+         ("Leerabsatz-Trennung umschalten", "weLeerModus", "leerabsatz_modus_wechseln"),
          "-",
-         ("Löschen", "weLoeschen", [("Leere Absätze löschen", "weLeerWeg", leere_loeschen),
-                                    ("Führende Leerzeichen löschen", "weFuehrend", fuehrende_leerzeichen_loeschen),
-                                    ("Leerzeichen löschen", "weLeerz", leerzeichen_bereinigen),
-                                    ("Zeilenumbrüche löschen", "weZeilenWeg", zeilenumbrueche_loeschen)]),
-         ("Zeilenumbruch in Absatzmarke umwandeln", "weReturn", zeilenumbruch_in_return),
+         ("Löschen", "weLoeschen", [("Leere Absätze löschen", "weLeerWeg", "leere_loeschen"),
+                                    ("Führende Leerzeichen löschen", "weFuehrend", "fuehrende_leerzeichen_loeschen"),
+                                    ("Leerzeichen löschen", "weLeerz", "leerzeichen_bereinigen"),
+                                    ("Zeilenumbrüche löschen", "weZeilenWeg", "zeilenumbrueche_loeschen")]),
+         ("Zeilenumbruch in Absatzmarke umwandeln", "weReturn", "zeilenumbruch_in_return"),
          "-",
-         ("Absatzeinzug um 2 Zeichen", "weEinzug", einzug_zwei_zeichen),
-         ("Absatzeinzug in Leerzeichen umwandeln", "weEinzugLeer", einzug_in_leerzeichen),
-         ("Leere Absätze einfügen", "weLeerEin", leere_einfuegen)]
+         ("Absatzeinzug um 2 Zeichen", "weEinzug", "einzug_zwei_zeichen"),
+         ("Absatzeinzug in Leerzeichen umwandeln", "weEinzugLeer", "einzug_in_leerzeichen"),
+         ("Leere Absätze einfügen", "weLeerEin", "leere_einfuegen")]
+
+# Befehl → Arbeit auf der Sitzung (jede gibt die Zahl der geänderten Stellen zurück)
+AKTIONEN = {n: globals()[n] for n in ("absaetze_neu_anordnen", "smart_anordnen", "leerabsatz_modus_wechseln", "leere_loeschen",
+                                       "fuehrende_leerzeichen_loeschen", "leerzeichen_bereinigen", "zeilenumbrueche_loeschen",
+                                       "zeilenumbruch_in_return", "einzug_zwei_zeichen", "einzug_in_leerzeichen", "leere_einfuegen")}

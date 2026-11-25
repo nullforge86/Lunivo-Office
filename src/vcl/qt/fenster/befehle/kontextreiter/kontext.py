@@ -25,24 +25,25 @@ class KontextBefehle(TabellenBefehle, TabellenFormatBefehle, ZeichenToolsBefehle
 
     def menue_wortExtrasKlappe(self):
         """Das Menü „Wort-Extras“ wie in der Vorlage, mit dem Untermenü „Löschen“; jeder Eintrag ist ein Schritt für Rückgängig."""
-        from core.text import wortextras as W
+        from writer.funktionen import bearbeiten as WX
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-        def fuellen(m, zeilen):
-            for z in zeilen:
-                if z == "-":
+        def fuellen(m, eintraege):
+            for e in eintraege:
+                if e.trenner:
                     m.trenner()
-                elif isinstance(z[2], list):
-                    fuellen(m.untermenue(z[0], symbole.icon(z[1], 16)), z[2])
+                elif e.unter:
+                    fuellen(m.untermenue(e.text, symbole.icon(e.symbol, 16)), e.unter)
                 else:
-                    m.eintrag(z[0], lambda t=z[0], f=z[2]: self.ed and self._wort_extra(t, f), symbol=symbole.icon(z[1], 16))
+                    m.eintrag(e.text, lambda t=e.text, b=e.befehl: self.ed and self._wort_extra(t, b), symbol=symbole.icon(e.symbol, 16))
         m = MenueListe()
-        fuellen(m, W.MENUE)
+        fuellen(m, WX.wortextras_menue())
         return m
 
-    def _wort_extra(self, text, f):
-        n = f(self.ed)
+    def _wort_extra(self, text, befehl):
+        from writer.funktionen import bearbeiten as WX
+        n = WX.wortextra_ausfuehren(self.ed.kennung, befehl)
         self.w.statusBar().showMessage(f"{text}: {n} Stelle(n) geändert." if n else f"{text}: nichts zu ändern.", 5000)
 
     def exportierenRtf(self, k=None): self.w.export_as(".rtf")

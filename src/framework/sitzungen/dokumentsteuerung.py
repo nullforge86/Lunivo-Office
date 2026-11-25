@@ -20,6 +20,8 @@ class _Datensatz:
     sitzung: Bearbeitungssitzung
     meta: dict
     page: object
+    bearbeiter: str = ""                 # Name für nachverfolgte Änderungen und Kommentare
+    nur_lesen: bool = False
 
 
 class Sitzung:
@@ -60,6 +62,16 @@ class Sitzung:
         if nummer in self._sitzungen:
             self._aktiv = nummer
             melder.melden(Ereignis(Art.GEAENDERT, "dokument_aktiv", {"nummer": nummer}))
+
+    def bearbeiter_setzen(self, nummer: int, name: str) -> None:
+        """Wer bearbeitet: steht an nachverfolgten Änderungen und Kommentaren."""
+        if nummer in self._sitzungen:
+            self._sitzungen[nummer].bearbeiter = name
+
+    def nur_lesen_setzen(self, nummer: int, an: bool) -> None:
+        """Schreibschutz des Dokuments: Änderungen über das Framework werden dann abgelehnt."""
+        if nummer in self._sitzungen:
+            self._sitzungen[nummer].nur_lesen = bool(an)
 
     @property
     def aktiv(self) -> int | None:

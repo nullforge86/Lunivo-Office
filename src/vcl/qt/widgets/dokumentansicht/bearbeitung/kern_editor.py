@@ -4,6 +4,7 @@ from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
 from core.dokument.dokument import Auswahl, Position
 from framework.sitzungen.altlast import zugang_fuer_editor
+from writer import hauptfenster as _dokumente
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import formatwerte as F
@@ -170,6 +171,12 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.fenster = None                  # das Hauptfenster; setzt der Dokument-Tab beim Anschließen
         self.mini_hook = None
         self.kontext_hook = None
+        abmelden = _dokumente.bei_aenderung(self._im_framework_geaendert)    # Rückweg: das Framework meldet, die Ansicht zeichnet neu
+        self.destroyed.connect(lambda *_: abmelden())
+
+    def _im_framework_geaendert(self, kennung: int) -> None:
+        if kennung == self.kennung:
+            self.ansicht.nach_aenderung()
 
     # ---- Signale der Ansicht ----------------------------------------------------------------------------------------------------
     def _geaendert(self) -> None:
@@ -217,6 +224,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def setReadOnly(self, an: bool) -> None:
         alt = self.ansicht.isReadOnly()
         self.ansicht.setReadOnly(an)
+        _dokumente.nur_lesen_setzen(self.kennung, bool(an))
         if alt != bool(an):
             self.leseschutzGeaendert.emit(bool(an))
 
@@ -603,6 +611,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         angaben = self.autor() if callable(getattr(self, "autor", None)) else ("", "")
         s.autor = angaben[0] if angaben else ""
         s.datum = datetime.datetime.now().replace(microsecond=0).isoformat()
+        _dokumente.bearbeiter_setzen(self.kennung, s.autor)
 
     def kommentar_bereiche(self) -> list:
         return self._bereiche_offsets(lambda f: "kommentar" in f, lambda f: f.get("kommentar"))

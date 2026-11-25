@@ -22,7 +22,7 @@ vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.
 vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite 
 vcl.qt.fenster.befehle.hauptreiter.text_absatz vcl.qt.fenster.befehle.hauptreiter.text_vorlagen vcl.qt.fenster.befehle.hauptreiter.text_zeichen
 vcl.qt.fenster.befehle.kontextreiter.diagrammtools
-vcl.qt.fenster.befehle.kontextreiter.formtools vcl.qt.fenster.befehle.kontextreiter.kontext
+vcl.qt.fenster.befehle.kontextreiter.formtools 
 vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools 
 vcl.qt.drucken.bild_export vcl.qt.drucken.drucken framework.dokumentverwaltung.ausgabe.vektor_bilder
 vcl.qt.eingabe.ki.ki_chat vcl.qt.eingabe.ki.ki_aktionen vcl.qt.eingabe.ki.ki_anfragen
