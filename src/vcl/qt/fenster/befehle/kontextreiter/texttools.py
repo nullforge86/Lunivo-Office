@@ -498,22 +498,21 @@ class TextToolsBefehle:
 
     def menue_ttVerknuepfung(self):
         """Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
-        from writer.funktionen.objekte import freie_objekte as FW
+        from writer.funktionen.objekte import ist_verknuepft, textfeld_hat_nachfolger
         m = MenueListe()
 
         def fuellen():
             m.clear()
             ist = self.tt_art() == "textfeld"
-            felder = self._tt_felder() if ist and not (FW.ist_verknuepft(self.ed, self.ed._frei_sel) and
-                                                        dict(FO._textfelder(self.ed))[self.ed._frei_sel]["daten"].get("weiter")) else []
+            felder = self._tt_felder() if ist and not (ist_verknuepft(self.ed.kennung, self.ed._frei_sel) and
+                                                        textfeld_hat_nachfolger(self.ed.kennung, self.ed._frei_sel)) else []
             for key, name in felder:
                 m.eintrag("Verknüpfen mit " + name, lambda k=key: self.ttVerknuepfen(None, k))
             if not felder:
                 m.eintrag("Kein Textfeld zum Verknüpfen", None, aktiv=False)
             m.trenner()
-            m.eintrag("Verknüpfung aufheben", self.ttVerknuepfungLoesen, aktiv=ist and FW.ist_verknuepft(self.ed, self.ed._frei_sel))
+            m.eintrag("Verknüpfung aufheben", self.ttVerknuepfungLoesen, aktiv=ist and ist_verknuepft(self.ed.kennung, self.ed._frei_sel))
         m.aboutToShow.connect(fuellen)
         fuellen()
         return m

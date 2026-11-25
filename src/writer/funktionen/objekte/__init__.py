@@ -68,6 +68,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "strich_schluessel": ("diagrammformat", "strich_schluessel"),
     "text_aus_knoten": ("smartart", "text_aus_knoten"),
     "text_gegen_knoten": ("smartart", "text_gegen_knoten"),
+    "textfeld_hat_nachfolger": ("freie_objekte", "textfeld_hat_nachfolger"),
     "verschieben": ("smartart", "verschieben"),
     "vorgabe": ("bildeffekte", "vorgabe"),
     "wasserzeichen_VERTIKAL": ("wasserzeichen", "VERTIKAL"),

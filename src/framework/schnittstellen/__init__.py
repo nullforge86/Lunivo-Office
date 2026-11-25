@@ -12,7 +12,6 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "ERSTSTART_MARKE": ("einstellungen", "ERSTSTART_MARKE"),
     "EditorPort": ("dokument", "EditorPort"),
     "Einstellungen": ("einstellungen", "Einstellungen"),
-    "FreieObjektePort": ("freie_objekte_port", "FreieObjektePort"),
     "MAX_ZULETZT": ("einstellungen", "MAX_ZULETZT"),
     "SeitenPort": ("seiten_port", "SeitenPort"),
     "SilbenEinstellung": ("silbenfarben", "SilbenEinstellung"),
@@ -34,8 +33,6 @@ def __getattr__(name: str):
         from . import dokument as _datei
     elif datei == "einstellungen":
         from . import einstellungen as _datei
-    elif datei == "freie_objekte_port":
-        from . import freie_objekte_port as _datei
     elif datei == "seiten_port":
         from . import seiten_port as _datei
     elif datei == "silbenfarben":

@@ -150,7 +150,7 @@
   "src/framework/befehle/objekte/bildeffekte.py": 2,
   "src/framework/befehle/objekte/deckblatt.py": 1,
   "src/framework/befehle/objekte/diagrammformat.py": 1,
-  "src/framework/befehle/objekte/freie_objekte.py": 5,
+  "src/framework/befehle/objekte/freie_objekte.py": 4,
   "src/framework/befehle/objekte/muster.py": 1,
   "src/framework/befehle/objekte/schnelltabelle.py": 2,
   "src/framework/befehle/objekte/smartart.py": 3,
@@ -233,7 +233,7 @@
   "src/vcl/qt/fenster/befehle/kontextreiter/smartarttools.py": 1,
   "src/vcl/qt/fenster/befehle/kontextreiter/tabellen.py": 5,
   "src/vcl/qt/fenster/befehle/kontextreiter/tabellen_format.py": 7,
-  "src/vcl/qt/fenster/befehle/kontextreiter/texttools.py": 19,
+  "src/vcl/qt/fenster/befehle/kontextreiter/texttools.py": 18,
   "src/vcl/qt/fenster/befehle/kontextreiter/zeichentools.py": 1,
   "src/vcl/qt/fenster/dateien/dateien_drucken.py": 5,
   "src/vcl/qt/fenster/dateien/dateien_export.py": 7,
@@ -485,7 +485,6 @@
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/freiform_bedienung.py": 3,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_befehle.py": 17,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_editor.py": 11,
-  "src/vcl/qt/widgets/dokumentansicht/bearbeitung/kern_objekte.py": 1,
   "src/vcl/qt/widgets/dokumentansicht/bearbeitung/objekt_texteingabe.py": 4,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_bereich.py": 6,
   "src/vcl/qt/widgets/dokumentansicht/dokumentfenster/dokument_reiter.py": 6,
@@ -592,7 +591,7 @@
   "src/writer/funktionen/objekte/deckblatt.py": 1,
   "src/writer/funktionen/objekte/diagrammformat.py": 1,
   "src/writer/funktionen/objekte/formular.py": 3,
-  "src/writer/funktionen/objekte/freie_objekte.py": 3,
+  "src/writer/funktionen/objekte/freie_objekte.py": 2,
   "src/writer/funktionen/objekte/muster.py": 1,
   "src/writer/funktionen/objekte/schnelltabelle.py": 2,
   "src/writer/funktionen/objekte/smartart.py": 3,
@@ -725,7 +724,6 @@
   "src/vcl/qt/widgets/seitenleisten/vorlagen/vorlagen_galerie.py": 1
  },
  "kern_ruft_oberflaeche": {
-  "src/core/objekte/formen/frei_objekt_daten.py": 3,
   "src/core/tabellen/modell/tabellenzustand.py": 2
  },
  "offene_schnittstelle": {
