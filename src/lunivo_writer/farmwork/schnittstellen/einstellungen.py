@@ -18,6 +18,10 @@ class Einstellungen:
     def __init__(self, speicher: JsonSpeicher | None = None):
         self.speicher = speicher or gemeinsamer_speicher()
 
+    def datei(self) -> str:
+        """Pfad der Einstellungsdatei (zur Anzeige in den Optionen)."""
+        return self.speicher.datei
+
     # Werte
     def get(self, key: str, default: Wert = None) -> Wert:
         return self.speicher.lesen(key, default)

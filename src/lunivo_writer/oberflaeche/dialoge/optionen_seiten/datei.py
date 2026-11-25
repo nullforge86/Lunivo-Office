@@ -116,7 +116,7 @@ class DateiSeiten:
         p.aktion(_t("optionen.datei.sichern_und_zurueckholen"), _t("optionen.datei.sichern"), self._daten_sichern)
         zb = QPushButton(_t("optionen.datei.einspielen")); zb.clicked.connect(self._daten_zurueckholen)
         f.addRow(zb)
-        ort = QLineEdit(p.s.q.fileName()); ort.setReadOnly(True); ort.setAccessibleName(_t("optionen.datei.ort_der_einstellungsdatei"))
+        ort = QLineEdit(p.s.datei()); ort.setReadOnly(True); ort.setAccessibleName(_t("optionen.datei.ort_der_einstellungsdatei"))
         f.addRow(_t("optionen.datei.einstellungsdatei"), ort)
         f = p.unter(e, _t("optionen.datei.dokument_schuetzen_und_aenderungen"))
         p.aktion(_t("optionen.datei.kennwort_bearbeitung_sperren_datenschutz"), _t("optionen.datei.kennwort_und_datenschutz"), lambda: self._anpassen("sicherheit"))
