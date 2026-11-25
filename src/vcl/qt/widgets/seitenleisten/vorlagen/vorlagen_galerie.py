@@ -43,7 +43,7 @@ _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Än
 
 def _blatt_bild(dokument) -> QPixmap:
     """Erste Seite eines ``Dokument``s, auf Kachelbreite verkleinert (Layout und Rendering im Kern; Qt rastert nur)."""
-    from framework.dokumentverwaltung.ausgabe.drucken import Ausgabe
+    from vcl.qt.drucken.drucken import Ausgabe
     img = Ausgabe(dokument).bild(1, 0.8)
     return QPixmap.fromImage(img.scaled(KACHEL, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 

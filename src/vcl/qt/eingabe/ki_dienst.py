@@ -10,11 +10,11 @@ from framework.ki.dienst import assistent_lauf as AL
 from framework.ki.chat.chat_modell import ChatModell
 
 from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal
-from framework.ki.dienst.ki_anfragen import KIAnfragenMixin
-from framework.ki.dienst.ki_aktionen import KIAktionenMixin
-from framework.ki.dienst.ki_dauerbetrieb import KIDauerbetriebMixin
-from framework.ki.chat.ki_chat import KIChatMixin
-from framework.ki.dienst.arbeitslauf import _Sig
+from vcl.qt.eingabe.ki.ki_anfragen import KIAnfragenMixin
+from vcl.qt.eingabe.ki.ki_aktionen import KIAktionenMixin
+from vcl.qt.eingabe.ki.ki_dauerbetrieb import KIDauerbetriebMixin
+from vcl.qt.eingabe.ki.ki_chat import KIChatMixin
+from vcl.qt.eingabe.ki.arbeitslauf import _Sig
 
 
 

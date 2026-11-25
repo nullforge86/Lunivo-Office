@@ -14,7 +14,7 @@ from framework.ki.chat import chat_antwort as CA
 from core.text import ki_markdown
 from core.dokument.zusatz import KI_AUTOR
 from framework.ki.chat.chat_modell import ChatModell  # noqa: F401
-from framework.ki.dienst.arbeitslauf import _Lauf  # noqa: F401
+from vcl.qt.eingabe.ki.arbeitslauf import _Lauf  # noqa: F401
 
 
 class KIChatMixin:

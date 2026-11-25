@@ -30,7 +30,7 @@ class DateienDruckenBaustein:
 
 
     def druck_vorschau(self, t):
-        from framework.dokumentverwaltung.ausgabe.drucken import vorschau_bild
+        from vcl.qt.drucken.drucken import vorschau_bild
 
         def bilder(nummern, ein):
             return vorschau_bild(t.modell_fuer_speichern(), nummern, optionen=self.druckoptionen())
@@ -38,7 +38,7 @@ class DateienDruckenBaustein:
 
 
     def _druck_args(self, t) -> dict:
-        from framework.dokumentverwaltung.ausgabe.drucken import seitenzahl
+        from vcl.qt.drucken.drucken import seitenzahl
         start = self.druck_start()
         if self.settings.get("drucken/vorgabe", "Alle Seiten") == "Aktuelle Seite":
             start.update(bereich="seiten", seiten_text=str(t.editor.current_page()))
@@ -82,7 +82,7 @@ class DateienDruckenBaustein:
     def drucke_nach_wahl(self, t, e: dict) -> None:
         """Druckt das Blatt `t` nach der Wahl `e` (Druckfenster oder Menü ▸ Drucken)."""
         from PySide6.QtPrintSupport import QPrinterInfo
-        from framework.dokumentverwaltung.ausgabe.drucken import drucken
+        from vcl.qt.drucken.drucken import drucken
         self.druck_merken(e)
         info = QPrinterInfo.printerInfo(e["drucker"]) if e["drucker"] else QPrinterInfo()
         pr = QPrinter(info, QPrinter.HighResolution if self.settings.get_bool("drucken/hoch", True) else QPrinter.ScreenResolution) \
@@ -109,7 +109,7 @@ class DateienDruckenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from framework.dokumentverwaltung.ausgabe.drucken import Zwischenseiten
+        from vcl.qt.drucken.drucken import Zwischenseiten
         from vcl.qt.widgets.dialoge.dokument.druckvorschau import DruckVorschau
         dlg = DruckVorschau(self, Zwischenseiten(t.modell_fuer_speichern(), self.druckoptionen()))
         dlg.drucken.connect(lambda: QTimer.singleShot(0, self.print_dialog))

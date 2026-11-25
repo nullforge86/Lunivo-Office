@@ -11,7 +11,7 @@ from framework.ki.dienst import assistent_lauf as AL  # noqa: F401
 from framework.ki.anbieter import modellfaehigkeit as MF  # noqa: F401
 from framework.ki.chat import chat_bezug as CB  # noqa: F401
 from framework.ki.chat.chat_modell import ChatModell  # noqa: F401
-from framework.ki.dienst.arbeitslauf import _Lauf  # noqa: F401
+from vcl.qt.eingabe.ki.arbeitslauf import _Lauf  # noqa: F401
 
 
 class KIAnfragenMixin:

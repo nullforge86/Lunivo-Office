@@ -51,7 +51,7 @@ def bilder_schreiben(dokument, name: str, wahl: BildWahl) -> list[str]:
 
     ``dokument`` ist das maßgebliche ``Dokument``; gesetzt und gezeichnet wird es von derselben Layout-Engine und demselben Renderer wie die
     Zeichenfläche, der Druck und das PDF (``dienste.drucken.Ausgabe``)."""
-    from framework.dokumentverwaltung.ausgabe.drucken import Ausgabe
+    from vcl.qt.drucken.drucken import Ausgabe
     endung = FORMATE[wahl.format][0]
     stamm = os.path.join(wahl.ordner, os.path.splitext(os.path.basename(name))[0] or "Dokument")
     faktor = wahl.dpi / 96

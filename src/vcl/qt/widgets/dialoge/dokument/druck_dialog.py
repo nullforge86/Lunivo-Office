@@ -21,7 +21,7 @@ from PySide6.QtCore import QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QDialog, QLabel, QLineEdit, QPushButton, QRadioButton, QSpinBox, QTabWidget, QWidget
 
-from framework.dokumentverwaltung.ausgabe.drucken import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
+from vcl.qt.drucken.drucken import PAPIER, PRO_BLATT, blatt_zeichnen, papier_name, seiten_nach_wahl
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
