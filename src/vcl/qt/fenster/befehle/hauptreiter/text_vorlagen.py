@@ -5,7 +5,6 @@ from PySide6.QtGui import QColor, QFont  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
 from vcl.qt.rendering.formen import Linie  # noqa: F401
 from vcl.qt.widgets.bausteine import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
-from core.formatierung.farben.farben import Farbe  # noqa: F401
 from vcl.qt.widgets.bausteine.farben import farben as BF  # noqa: F401
 
 

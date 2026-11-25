@@ -15,7 +15,6 @@ from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig, leiste_fuer
 
-from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.farben.farben import PAPIERTOENE  # noqa: F401
 VORGABEN = {"papier": "Weiß", "buchstaben": 0.0, "wort": 0.0, "zeilenluft": 1.0, "zeilenfokus": False, "groesser": "keine", "zurueck": "keine"}

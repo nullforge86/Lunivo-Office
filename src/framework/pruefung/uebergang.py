@@ -25,8 +25,8 @@ vcl.qt.fenster.befehle.kontextreiter.diagrammtools
 vcl.qt.fenster.befehle.kontextreiter.formtools 
 vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools 
 vcl.qt.drucken.bild_export vcl.qt.drucken.drucken 
-vcl.qt.eingabe.ki.ki_chat vcl.qt.eingabe.ki.ki_aktionen vcl.qt.eingabe.ki.ki_anfragen
-vcl.qt.eingabe.ki.ki_dauerbetrieb vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
+vcl.qt.eingabe.ki.ki_chat 
+vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
 vcl.qt.widgets.menues.backstage.backstage_objektformat
 vcl.qt.fenster.dateien.dateien_export vcl.qt.fenster.dateien.dateien_oeffnen vcl.qt.fenster.dateien.dateien_speichern
 vcl.qt.fenster.dateien.dateien_vorlagen vcl.qt.fenster.fenster.anwendung vcl.qt.fenster.fenster.dokument_sync
