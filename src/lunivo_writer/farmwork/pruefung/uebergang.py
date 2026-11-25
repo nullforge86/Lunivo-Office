@@ -74,6 +74,18 @@ oberflaeche.zeichnen.rendering
 
 NOCH_NICHT_UMGESTELLT: frozenset[str] = frozenset("lunivo_writer." + n for n in _NAMEN)
 
+# Module der Oberfläche mit Festwerten für das Aussehen (Größen, Ränder, Schriftgrößen, Stile als Zahlen oder Zeichenketten in der Datei). Sie sollen nur noch Rollen und Maße aus
+# ``oberflaeche/baukasten/basis`` nennen, damit eine Änderung an einer Stelle alle Elemente gleichzeitig ändert. Auch diese Liste darf nur kleiner werden.
+NOCH_NICHT_UMGESTELLT_FESTWERTE: frozenset[str] = frozenset("lunivo_writer.oberflaeche." + n for n in """
+baukasten.dropdown.galerie_auswahl baukasten.dropdown.auswahlfeld baukasten.dropdown.auswahl.raster_auswahl baukasten.dropdown.auswahl.zellen_raster
+baukasten.dropdown.objektmenues.bild_diagramm_menues baukasten.dropdown.objektmenues.diagramm_popups baukasten.thema.thema baukasten.felder.farbwaehler
+baukasten.formatierung.ruby_dialog baukasten.formatierung.texteffekt_dialog baukasten.diagramme.diagramm_text_panel baukasten.vorlagen.vorlagen_galerie
+baukasten.medien.seiten_bildchen baukasten.dokument.liste_dialog band.band_gruppen band.band_stile dialoge.einfuegen.einfuegen_dialoge
+dialoge.einfuegen.diagramm_fenster dialoge.einfuegen.einfuegen_fenster dialoge.einfuegen.sonderzeichen dialoge.lesen_hilfe.silben_dialog
+dialoge.lesen_hilfe.hilfe_dialoge dokument.bearbeitung.objekt_texteingabe dokument.bearbeitung.freie_bilder_knoten
+dokument.dokumentfenster.suchen_feld dokument.dokumentfenster.navigation dokument.ansicht.lineal
+""".split())
+
 # Schnittstellen, die noch ``object`` oder fehlende Typangaben enthalten (die Editor-Fassade gibt dort noch Objekte des Kerns weiter). Auch diese Liste darf nur
 # kleiner werden; sie ist leer, wenn das Farmwork die Dokumente selbst hält und nur eigene ``frozen``-Datentypen herausgibt.
 NOCH_NICHT_UMGESTELLT_TYPEN: frozenset[str] = frozenset("lunivo_writer.farmwork.schnittstellen." + n for n in (

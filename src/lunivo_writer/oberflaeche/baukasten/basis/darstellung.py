@@ -34,6 +34,12 @@ def grundschrift(wurzel: QWidget) -> QWidget:
     return wurzel
 
 
+def zahlfeld_ohne_pfeilknoepfe(feld: QWidget) -> QWidget:
+    """Zahlfeld mit schmalem Innenrand und ohne gezeichnete Auf-/Ab-Knöpfe (Stil der Höhenfelder im Band) — der eine Ort dieses Stils."""
+    feld.setStyleSheet("QDoubleSpinBox { padding: 0px 3px; } QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 0px; border: none; }")
+    return feld
+
+
 def schriftfarbe(widget: QWidget, farbe: str) -> QWidget:
     """Schriftfarbe, die erst zur Laufzeit feststeht (Name aus Daten, z. B. der Titel einer Panel-Beschreibung) — zweite zugelassene Ausnahme neben ``farbflaeche``."""
     widget.setStyleSheet(f"color: {farbe};")

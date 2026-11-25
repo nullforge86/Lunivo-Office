@@ -11,7 +11,8 @@ from PySide6.QtWidgets import QCheckBox, QDialog, QLabel, QPushButton, QSpinBox,
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import FUELLZEICHEN, INHALTSVERZEICHNIS_FUELL, INHALTSVERZEICHNIS_VORGABE
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
-from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN,
+                                                                      SCHRIFT_VORSCHAU_VERZEICHNIS)
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, gruppe
@@ -81,7 +82,7 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
 
     def _male(self, p: QPainter, r) -> None:
         o = self.ergebnis()
-        f = p.font(); f.setPixelSize(13); p.setFont(f)
+        f = p.font(); f.setPixelSize(SCHRIFT_VORSCHAU_VERZEICHNIS); p.setFont(f)
         fm = QFontMetricsF(f)
         p.setPen(QColor(Farbe.TINTE_DUNKEL))
         zeichen = FUELLZEICHEN.get(o["fuell"], ("", "", ""))[1] if o["rechts"] else ""

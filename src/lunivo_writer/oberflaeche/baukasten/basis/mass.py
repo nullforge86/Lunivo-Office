@@ -624,3 +624,12 @@ GROESSE_SYMBOLWAHL_KACHEL = (36, 36)   # Kachel im Aufklappraster der Symbolwahl
 GEWICHT_SYMBOL_NAME = (1, 5)   # Breitenverhältnis Symbolwahl : Namensfeld in Erstellen-Fenstern
 NAME_MAX_ZEICHEN = 40   # längster Name einer Aktion / eines Assistenten
 REITER_DROPDOWN_RAND = 2          # Abstand oben/unten um das Dropdown, das eine zu schmale Reiterleiste ersetzt
+
+# Höhenfelder im Band („Kopfzeilenhöhe“, „Fußzeilenhöhe“): Zahlfeld mit kleinen Auf-/Ab-Knöpfen
+BREITE_ZAHLFELD_BAND = 72         # Mindestbreite des Zahlfeldes
+HOEHE_ZAHLFELD_BAND = 22          # Höhe des Zahlfeldes und seiner Knöpfe
+GROESSE_ZAHLFELD_KNOPF = (22, 22)
+ICON_ZAHLFELD = 16                # Symbol vor dem Zahlfeld
+
+# Vorschau im Fenster „Inhaltsverzeichnis“
+SCHRIFT_VORSCHAU_VERZEICHNIS = 13   # Pixelgröße der gemalten Beispielzeilen

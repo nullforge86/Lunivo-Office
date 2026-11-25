@@ -22,4 +22,5 @@ jobs:
           PYTHONPATH=src QT_QPA_PLATFORM=offscreen python -m pytest -q -p no:cacheprovider \
             tests/architektur/test_farmwork_grenze.py \
             tests/architektur/test_farmwork_typen.py \
-            tests/architektur/test_core_ohne_qt.py
+            tests/architektur/test_core_ohne_qt.py \
+            tests/architektur/test_oberflaeche_ohne_festwerte.py
