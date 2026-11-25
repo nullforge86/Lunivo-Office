@@ -38,6 +38,10 @@ from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, BREITE_LISTENVORSCHAU, GROESSE_EBENENZEILE, GROESSE_FENSTER_GLIEDERUNG_ANPASSEN, GROESSE_FENSTER_LISTE, GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN, GROESSE_LISTENSTIL_KACHEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF_HOCH, HOEHE_LISTENVORSCHAU, HOEHE_TEXT_NORMAL, HOEHE_ZEILE_ZULETZT, RAND_DIALOG_GRUPPE, RAND_FENSTER_LISTE, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_KURZ
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (LISTE_KACHEL_ZUGABE, LISTE_KACHELN_REIHEN, SCHRIFT_LISTE_BEISPIEL_PX, SCHRIFT_LISTE_KLEIN_PX,
+                                                            SCHRIFT_LISTE_TITEL_PT, SCHRIFT_LISTE_ZAHL_PX, STIFT_STARK)
 PLATZHALTER = "①"
 _SCHLUESSEL = "listen/benutzer"
 _KACHEL = QSize(*GROESSE_LISTENSTIL_KACHEL) # die Kacheln füllen das Raster wie in der Vorlage: vier je Zeile, jede mit Rahmen
@@ -78,7 +82,7 @@ def _bild(spec: dict | None, groesse: QSize = _KACHEL) -> QIcon:
 def _raster(eintraege: list[dict | None], bild=None) -> QListWidget:
     w = QListWidget(); w.setViewMode(QListView.IconMode); w.setResizeMode(QListView.Adjust); w.setMovement(QListView.Static)
     w.setIconSize(_KACHEL); w.setGridSize(QSize(_KACHEL.width() + 12, _KACHEL.height() + 8)); w.setSpacing(0)
-    w.setMinimumHeight(2 * (_KACHEL.height() + 8) + 8)
+    w.setMinimumHeight(LISTE_KACHELN_REIHEN * (_KACHEL.height() + LISTE_KACHEL_ZUGABE) + LISTE_KACHEL_ZUGABE)
     for s in eintraege:
         it = QListWidgetItem((bild or _bild)(s), ""); it.setData(Qt.UserRole, s)
         w.addItem(it)
@@ -96,8 +100,8 @@ class _Zahlenformat(QWidget):
         „Schriftart …“ setzt der Aufrufer, z. B. neben die vorherige Ebene). Sonst die der einfachen Nummerierung."""
         super().__init__()
         g = FormularGitter(self); g.setContentsMargins(*RAND_KEIN)
-        self.format = QLineEdit(); self.format.setToolTip(tipp)
-        self.schrift = QPushButton("Schriftart …"); self.schrift.clicked.connect(self._schriftart)
+        self.format = zeilenfeld("frei"); self.format.setToolTip(tipp)
+        self.schrift = knopf("standard", "Schriftart …", aktion=self._schriftart)
         self.zeichen: dict = {}
         self.art = Auswahlfeld()
         for k, st in L.STILE.items():
@@ -182,7 +186,7 @@ class NummerierungAnpassenDialog(PanelFaehig, QDialog):
         vh.addStretch(1); vh.addWidget(self.vorschau); vh.addStretch(1)
         v.addWidget(vg)
         self.hinweis = QLabel(); eigenschaft(self.hinweis, rolle="warnung"); v.addWidget(self.hinweis)
-        self.mehr = QPushButton("Erweitern"); self.mehr.setCheckable(True); self.mehr.toggled.connect(self._erweitern)
+        self.mehr = knopf("standard", "Erweitern", umschaltbar=True); self.mehr.toggled.connect(self._erweitern)
         self.ok = fussleiste(self, v, self.mehr)
         self.position = _Positionen(); v.addWidget(self.position); self.position.setVisible(False)
         pos = s.get("pos") or {}
@@ -226,12 +230,12 @@ class NummerierungAnpassenDialog(PanelFaehig, QDialog):
         """Vorschau wie in der Vorlage: oben und unten graue Balken, dazwischen drei Nummern mit je zwei schwarzen Zeilen."""
         s = self.spec()
         r = QRectF(rect)
-        grau, schwarz = QPen(QColor(Farbe.GRAU_HELL), 3), QPen(QColor(Farbe.SCHWARZ), 3)
+        grau, schwarz = QPen(QColor(Farbe.GRAU_HELL), STIFT_STARK), QPen(QColor(Farbe.SCHWARZ), STIFT_STARK)
         for y in (r.top() + 6, r.top() + 20):
             p.setPen(grau); p.drawLine(int(r.left() + 4), int(y), int(r.right() - 4), int(y))
         if s:
             marken = L.marke({**s, "start": 1}).split("|") if L.marke({**s, "start": 1}) else ["", "", ""]
-            f = p.font(); f.setPixelSize(13); p.setFont(f)
+            f = p.font(); f.setPixelSize(SCHRIFT_LISTE_ZAHL_PX); p.setFont(f)
             y = r.top() + 50
             for t in marken[:3]:
                 p.setPen(QColor(Farbe.TINTE_DUNKEL)); p.drawText(QRectF(r.left() + 6, y - 9, 36, 18), Qt.AlignVCenter | Qt.AlignLeft, t)
@@ -252,7 +256,7 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
     pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     if M.ist_aufzaehlung(defn):                              # Aufzählung mit eigenem Zeichen: drei Zeilen mit dem Zeichen davor
-        f = p.font(); f.setPixelSize(16); p.setFont(f)
+        f = p.font(); f.setPixelSize(SCHRIFT_LISTE_BEISPIEL_PX); p.setFont(f)
         for i in range(3):
             y = groesse.height() / 2 - 24 + i * 24
             p.setPen(QColor(Farbe.TINTE)); p.drawText(QRectF(groesse.width() * 0.3, y - 10, 22, 20), Qt.AlignCenter, defn["ebenen"][0]["format"])
@@ -260,7 +264,7 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
         _rahmen(p, groesse); p.end()
         return QIcon(pm)
     zaehler = [0] * M.EBENEN
-    f = p.font(); f.setPixelSize(10); p.setFont(f)
+    f = p.font(); f.setPixelSize(SCHRIFT_LISTE_KLEIN_PX); p.setFont(f)
     for i, n in enumerate((1, 2, 2, 3)):
         M.zaehlen(zaehler, defn, n)
         t = M.nummer_der_ebene(defn, zaehler, n)
@@ -300,7 +304,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         v.addWidget(grp)
         v.addWidget(abschnittstitel("Vorschau"))
         self.vorschau = VorschauFlaeche(self._male, 150); v.addWidget(self.vorschau)
-        self.mehr = QPushButton("Erweitern"); self.mehr.setCheckable(True); self.mehr.toggled.connect(self._erweitern)
+        self.mehr = knopf("standard", "Erweitern", umschaltbar=True); self.mehr.toggled.connect(self._erweitern)
         self.ok = fussleiste(self, v, self.mehr)
  # ---- erweiterter Teil (wie in der Vorlage unter „Reduzieren“)
         self.unten = QWidget(); ug = FormularGitter(self.unten); ug.setContentsMargins(*RAND_KEIN)
@@ -484,7 +488,7 @@ class ListenDialog(PanelFaehig, QDialog):
         self.reiter.addTab(b, "Benutzerdefinierte Liste")
         self._fuelle_benutzer()
         # ---- Knöpfe
-        self.anpassen = QPushButton("Anpassen …"); self.loeschen = QPushButton("Löschen")
+        self.anpassen = knopf("standard", "Anpassen …"); self.loeschen = knopf("standard", "Löschen")
         self.anpassen.clicked.connect(self._anpassen); self.loeschen.clicked.connect(self._loeschen)
         gruppe = QWidget(); gh = FlussLayout(6); gruppe.setLayout(gh); gh.setContentsMargins(*RAND_KEIN)       # unter allen Reitern dieselbe Zeile, ohne Rahmen
         gh.addWidget(self.anpassen); gh.addWidget(self.loeschen)
@@ -535,7 +539,7 @@ class ListenDialog(PanelFaehig, QDialog):
         if s:
             liste_zeichner(L.marke(s))(p, QRectF(rect).adjusted(50, 10, -50, -10))
         else:
-            p.setPen(QColor(Farbe.TINTE)); f = p.font(); f.setPointSize(18); p.setFont(f)
+            p.setPen(QColor(Farbe.TINTE)); f = p.font(); f.setPointSize(SCHRIFT_LISTE_TITEL_PT); p.setFont(f)
             p.drawText(QRectF(rect), Qt.AlignCenter, "Keine")
 
     def _eintragen(self, s: dict) -> None:

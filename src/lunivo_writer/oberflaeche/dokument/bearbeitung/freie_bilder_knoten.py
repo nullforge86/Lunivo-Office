@@ -9,6 +9,8 @@ import json
 from PySide6.QtCore import QPointF, QRectF, Qt
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.darstellung import knoten_eingabe
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 
 
 class FreieBilderKnotenMixin:
@@ -88,15 +90,14 @@ class FreieBilderKnotenMixin:
     # ---- Text im SmartArt-Knoten schreiben -------------------------------------------------------------------------------------------
     def _frei_knoten_feld(self, kn: QRectF, ident, text: str | None):
         """Das Eingabefeld über dem Knoten ``ident``: Knotentext, dahinter (oder statt seiner, mit „Tippen ersetzt die Auswahl“) die getippten Zeichen."""
-        from PySide6.QtWidgets import QLineEdit
         from lunivo_writer.editor.objekte.smartart import smartart as SA
-        w = QLineEdit(self.viewport())
+        w = zeilenfeld("frei", eltern=self.viewport())
         bisher = SA.knoten_text(self, ident) or ""
         ersetzt = bool(self.opt("bearbeiten/tippen_ersetzt", False)) if callable(getattr(self, "opt", None)) else False
         w.setText(text if (text is not None and ersetzt) else bisher + (text or ""))
         w.setAlignment(Qt.AlignCenter)
         f = w.font(); f.setPixelSize(max(8, int(kn.height() * 0.3))); w.setFont(f)
-        w.setStyleSheet(f"QLineEdit {{ background: {Farbe.PAPIER}; color: {Farbe.SYMBOL}; border: 1px solid palette(highlight); }}")
+        knoten_eingabe(w)
         w.setGeometry(kn.toRect())
         return w
 

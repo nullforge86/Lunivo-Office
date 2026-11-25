@@ -7,6 +7,8 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import ABDUNKELUNG
+from lunivo_writer.oberflaeche.baukasten.basis.mass import STIFT_BETONT
 class BereichWahl(QWidget):
     """Vollbild mit eingefrorenem Bildschirm; mit der Maus einen Bereich aufziehen (Esc bricht ab)."""
     fertig = Signal(object)          # QPixmap oder None
@@ -21,11 +23,11 @@ class BereichWahl(QWidget):
     def paintEvent(self, ev):
         p = QPainter(self)
         p.drawPixmap(self.rect(), self.bild)
-        p.fillRect(self.rect(), QColor(0, 0, 0, 90))
+        p.fillRect(self.rect(), QColor(*ABDUNKELUNG))
         if self.a and self.b:
             r = QRect(self.a, self.b).normalized()
             p.drawPixmap(r, self.bild, self._quelle(r))
-            p.setPen(QPen(QColor(Farbe.AKZENT_DUNKEL), 2)); p.drawRect(r)
+            p.setPen(QPen(QColor(Farbe.AKZENT_DUNKEL), STIFT_BETONT)); p.drawRect(r)
         p.end()
 
     def _quelle(self, r: QRect) -> QRect:

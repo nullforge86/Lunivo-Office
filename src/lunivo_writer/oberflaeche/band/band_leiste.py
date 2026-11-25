@@ -16,6 +16,7 @@ from PySide6.QtCore import QSize, QTimer, Qt, Signal
 from PySide6.QtWidgets import QStackedWidget, QToolButton, QWidget
 
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, ICON_NORMAL, RAND_KEIN, RAND_POPUP_KOPF
 
@@ -70,11 +71,8 @@ class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBa
         self._hat_dok = None
         lay = _spalte("kein", self)
         self.kopf = _reihe("popup")
-        self.menue_knopf = QToolButton()
-        self.menue_knopf.setText("Menü")
-        self.menue_knopf.setIcon(symbole.icon("menu", ICON_NORMAL, kopf_symbolfarbe())); self.menue_knopf.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
-        self.menue_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); self.menue_knopf.setLayoutDirection(Qt.RightToLeft)
-        self.menue_knopf.setAutoRaise(True); self.menue_knopf.setObjectName("menueKnopf")
+        self.menue_knopf = werkzeugknopf("band_menue_kopf", "Menü", symbol="menu", symbolfarbe=kopf_symbolfarbe(), symbol_einpassen=True)
+        self.menue_knopf.setObjectName("menueKnopf")
         self.kopf.addWidget(self.menue_knopf)
         self.schnell = _reihe("kein")
         self.kopf.addLayout(self.schnell)

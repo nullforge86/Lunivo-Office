@@ -5,7 +5,7 @@ Alles, was hier geschieht, ruft die Funktionen des Editors (Suchen, Kommentare, 
 from __future__ import annotations
 
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
-from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
+from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, stufe_mit_farbe
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -26,10 +26,12 @@ from lunivo_writer.oberflaeche.baukasten.geruest.panel_rahmen import PanelRahmen
 from lunivo_writer.oberflaeche.baukasten.thema.thema import karte_einrichten
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen
+from lunivo_writer.oberflaeche.baukasten.basis.farben import FUSSNOTE_VIOLETT
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label, marke_faerben
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_SEITENLEISTE_PANEL, ABSTAND_KARTENZEILE, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_VERFOLGEN_KNOPF, GROESSE_STUFE, HOEHE_FELD, HOEHE_TEXT_MITTEL, HOEHE_TEXT_NORMAL, PADDING_MARKE, PADDING_NAVIGATION_KNOPF, RADIUS_MARKE, RADIUS_STUFE, RAND_KARTE_NAVIGATION, RAND_KEIN, SCHRIFT_HINWEIS, SCHRIFT_KLEIN
 
-FUSSNOTE_VIOLETT = "#7048a8"     # Kennfarbe der Endnoten-Karten: bewusst fest (Gruppe C)
 SEITEN = ("suche", "kommentare", "ueberschriften", "aenderungen", "noten", "vorlesen")
 TABS = SEITEN                                                             # alter Name
 TITEL = {"suche": "Suchen und ersetzen", "kommentare": "Kommentare", "ueberschriften": "Überschriften", "aenderungen": "Änderungen",
@@ -60,7 +62,7 @@ class KommentarKarte(QFrame):
         v = _spalte("panel", self)
         kopf = _reihe("inhalt")
         ini = QLabel((k.get("initialen") or (k.get("autor") or "?")[:1]).upper()[:2]); ini.setAlignment(Qt.AlignCenter); ini.setFixedSize(*GROESSE_STUFE)
-        ini.setStyleSheet(f"background: {farbe}; color: {Farbe.WEISS}; font-weight: bold; border-radius: {RADIUS_STUFE}px;")
+        stufe_mit_farbe(ini, farbe)
         kopf.addWidget(ini)
         name = QLabel(k.get("autor", "?")); f = name.font(); f.setBold(True); f.setPointSizeF(pt); name.setFont(f)
         kopf.addWidget(name, 1)
@@ -74,8 +76,8 @@ class KommentarKarte(QFrame):
             fe = self.eingabe.font(); fe.setPointSizeF(pt); self.eingabe.setFont(fe)
             v.addWidget(self.eingabe)
             z = _reihe("standard")
-            ok = QPushButton("Speichern"); ok.clicked.connect(lambda: speichern(kid, self.eingabe.toPlainText().strip()))
-            ab = QPushButton("Abbrechen"); ab.clicked.connect(lambda: abbrechen())
+            ok = knopf("standard", "Speichern", aktion=lambda: speichern(kid, self.eingabe.toPlainText().strip()))
+            ab = knopf("standard", "Abbrechen", aktion=lambda: abbrechen())
             z.addWidget(ok); z.addWidget(ab); z.addStretch(1)
             v.addLayout(z)
             return
@@ -86,11 +88,10 @@ class KommentarKarte(QFrame):
         v.addWidget(text)
         feld = QWidget(); z = _reihe("standard", feld)                  # eine Zeile, die Knöpfe knapp geschnitten
         eigenschaft(feld, rolle="kompaktleiste")
-        zeigen = QPushButton("Zeigen"); zeigen.clicked.connect(lambda: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus()))
-        bearb = QPushButton("Bearbeiten"); bearb.clicked.connect(lambda: bearbeite_los(kid))
-        loesen = QPushButton("Wieder öffnen" if geloest else "Gelöst")
-        loesen.clicked.connect(lambda: (ed.kommentar_geloest(kid, not geloest), aktualisieren()))
-        weg = QPushButton("Löschen"); weg.clicked.connect(lambda: (ed.kommentar_loeschen(kid), aktualisieren()))
+        zeigen = knopf("standard", "Zeigen", aktion=lambda: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus()))
+        bearb = knopf("standard", "Bearbeiten", aktion=lambda: bearbeite_los(kid))
+        loesen = knopf("standard", "Wieder öffnen" if geloest else "Gelöst", aktion=lambda: (ed.kommentar_geloest(kid, not geloest), aktualisieren()))
+        weg = knopf("standard", "Löschen", aktion=lambda: (ed.kommentar_loeschen(kid), aktualisieren()))
         for b_ in (zeigen, bearb, loesen, weg):
             z.addWidget(b_)
         z.addStretch(1)
@@ -233,12 +234,12 @@ class NavigationPanel(QWidget):
         sc = rollflaeche(host)
         r.inhalt.addWidget(sc, 1)
         # Eingabe eines neuen Kommentars
-        self.neu_feld = QFrame(); nv = _spalte("standard", self.neu_feld)
+        self.neu_feld = rahmen("flach"); nv = _spalte("standard", self.neu_feld)
         self.neu_text = QPlainTextEdit(); self.neu_text.setPlaceholderText("Geben Sie Ihren Kommentar hier ein"); self.neu_text.setFixedHeight(HOEHE_TEXT_MITTEL)
         nv.addWidget(self.neu_text)
         nz = _reihe("standard")
-        self.neu_ok = QPushButton("Kommentar hinzufügen"); self.neu_ok.setEnabled(False)
-        ab = QPushButton("Abbrechen")
+        self.neu_ok = knopf("standard", "Kommentar hinzufügen", aktiv=False)
+        ab = knopf("standard", "Abbrechen")
         nz.addWidget(self.neu_ok); nz.addWidget(ab); nz.addStretch(1)
         nv.addLayout(nz)
         self.neu_feld.hide()
@@ -442,9 +443,9 @@ class NavigationPanel(QWidget):
         r = PanelRahmen(TITEL["aenderungen"], "ellipsis", m)
         zeile = _reihe("standard")
         zeile.addWidget(QLabel("Änderungen verfolgen"), 1)
-        self.verfolgen_knopf = QPushButton(); self.verfolgen_knopf.setCheckable(True); self.verfolgen_knopf.setFixedWidth(BREITE_VERFOLGEN_KNOPF)
-        self.verfolgen_knopf.setToolTip("Jede Änderung am Text wird festgehalten; Sie nehmen sie hier an oder lehnen sie ab")
-        self.verfolgen_knopf.clicked.connect(lambda: (self._befehl("verfolgen"), self._verfolgen_zeigen()))
+        self.verfolgen_knopf = knopf("standard", umschaltbar=True, tooltip="Jede Änderung am Text wird festgehalten; Sie nehmen sie hier an oder lehnen sie ab",
+                                     name="Änderungen verfolgen", aktion=lambda: (self._befehl("verfolgen"), self._verfolgen_zeigen()))
+        self.verfolgen_knopf.setFixedWidth(BREITE_VERFOLGEN_KNOPF)
         zeile.addWidget(self.verfolgen_knopf)
         r.inhalt.addLayout(zeile)
         self._aend_layout, self._aend_leer = self._kartenfeld(r, "Keine Änderungen. Schalten Sie „Änderungen verfolgen“ ein: Dann erscheint hier jede Änderung am Text, und Sie nehmen sie an oder lehnen sie ab.")
@@ -466,9 +467,8 @@ class NavigationPanel(QWidget):
         r = PanelRahmen(TITEL["noten"])
         zeile = _reihe("standard")
         for text, befehl in (("＋ Fußnote", "fussnote"), ("＋ Endnote", "endnote")):
-            b = QPushButton(text); b.setMinimumHeight(HOEHE_FELD)
-            b.setToolTip("Fügt an der Schreibmarke eine " + text[2:] + " ein")
-            b.clicked.connect(lambda _=False, n=befehl: self._befehl(n))
+            b = knopf("standard", text, tooltip="Fügt an der Schreibmarke eine " + text[2:] + " ein", name=text, aktion=lambda n=befehl: self._befehl(n))
+            b.setMinimumHeight(HOEHE_FELD)
             zeile.addWidget(b)
         zeile.addStretch(1)
         r.inhalt.addLayout(zeile)
@@ -478,7 +478,7 @@ class NavigationPanel(QWidget):
 
     @staticmethod
     def _karte(titel: str, text: str, farbe: str, kopf_rechts: str = "") -> tuple[QFrame, RasterSpalte]:
-        k = QFrame(); k.setObjectName("sKarte")
+        k = rahmen("flach", name="sKarte")
         als_karte(k, "kompakt")
         v = _spalte("panel", k)
         kopf = _reihe("standard")
@@ -509,7 +509,7 @@ class NavigationPanel(QWidget):
             z = _reihe("standard")
             for text, fn in (("Zeigen", lambda b=b: (ed.select_range(b["von"], b["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
                              ("Annehmen", lambda b=b: self._aend_aktion("aenderung_an", b)), ("Ablehnen", lambda b=b: self._aend_aktion("aenderung_ab", b))):
-                kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
+                z.addWidget(knopf("standard", text, aktion=fn))
             z.addStretch(1); v.addLayout(z)
             self._aend_layout.insertWidget(i, k); self._aend_karten.append(k)
         self._aend_leer.setVisible(not self._aend_karten)
@@ -521,7 +521,7 @@ class NavigationPanel(QWidget):
             z = _reihe("standard")
             for text, fn in (("Zeigen", lambda st=st: (ed.select_range(st["von"], st["bis"]), ed.ensureCursorVisible(), ed.setFocus())),
                              ("Bearbeiten", lambda st=st: self._aend_aktion("note_bearbeiten", st)), ("Löschen", lambda st=st: self._aend_aktion("note_weg", st))):
-                kn = QPushButton(text); kn.clicked.connect(lambda _=False, fn=fn: fn()); z.addWidget(kn)
+                z.addWidget(knopf("standard", text, aktion=fn))
             z.addStretch(1); v.addLayout(z)
             self._noten_layout.insertWidget(i, k); self._noten_karten.append(k)
         self._noten_leer.setVisible(not self._noten_karten)

@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -19,7 +21,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_KLEIN, BREITE
 
 
 def _knopf(text: str) -> QToolButton:
-    k = QToolButton(); k.setText(text); k.setAutoRaise(False); k.setFixedSize(FELDHOEHE, FELDHOEHE); k.setAutoRepeat(True)
+    k = werkzeugknopf("fest", text, groesse=(FELDHOEHE, FELDHOEHE), flach=False); k.setAutoRepeat(True)
     return k
 
 

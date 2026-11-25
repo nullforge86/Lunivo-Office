@@ -8,7 +8,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
-    QComboBox, QButtonGroup, QFrame, QLabel, QLineEdit, QPushButton, QScrollArea, QStackedWidget, QToolButton, QSizePolicy,
+    QComboBox, QButtonGroup, QFrame, QLabel, QScrollArea, QStackedWidget, QToolButton, QSizePolicy,
     QWidget,
 )
 
@@ -24,6 +24,8 @@ from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_label, klein
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownKnopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 def werk_reiter_stil() -> str:
     """Stylesheet beim Aufruf formatiert, damit das Thema gilt."""
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
@@ -59,7 +61,7 @@ class SchreibhilfePanel(QWidget):
         self.werk_reiter = QButtonGroup(self)
         self._werk_namen = list(REITER)
         for i, name in enumerate(REITER):
-            b = QPushButton(name); b.setCheckable(True); b.setChecked(i == 0); b.setMinimumHeight(HOEHE_KNOPF_GROSS); b.setCursor(Qt.PointingHandCursor)
+            b = knopf("gross", name, umschaltbar=True, an=(i == 0), hand=True)
             eigenschaft(b, rolle="werkreiter")
             self.werk_reiter.addButton(b, i); leiste.addWidget(b, 1)
         self._werk_leiste = QWidget(); self._werk_leiste.setLayout(leiste); self._werk_leiste.hide()      # die Reiter stehen in der Leiste rechts (Seitenleiste), nicht mehr oben: mehr Platz
@@ -85,8 +87,7 @@ class SchreibhilfePanel(QWidget):
         sc = rollflaeche(host)                                                       # nie seitlich rollen müssen: alles auf der Karte bleibt erreichbar
         sc.setMinimumHeight(HOEHE_LISTE_HOCH)                                        # der Hauptinhalt: die Funde bekommen immer Platz, auch auf kleinen Bildschirmen
         v.addWidget(sc, 1)
-        self.alle = QPushButton("Alle sicheren Fehler ändern")
-        self.alle.clicked.connect(self._alle)
+        self.alle = knopf("standard", "Alle sicheren Fehler ändern", aktion=self._alle)
         self.alle.hide()
         v.addWidget(self.alle)
         # Für wen?
@@ -103,9 +104,7 @@ class SchreibhilfePanel(QWidget):
         self.thema.setToolTip("Für wen schreiben Sie? Danach richtet sich, was als Fehler zählt und welche Wörter vorgeschlagen werden.")
         self.thema.setAccessibleName("Für wen")
         self.thema.currentTextChanged.connect(self.a.setze_thema)
-        self.worum = QLineEdit()
-        self.worum.setPlaceholderText("Worum geht's? (freiwillig)")
-        self.worum.setAccessibleName("Worum geht es im Text (freiwillig)")
+        self.worum = zeilenfeld("frei", platzhalter="Worum geht's? (freiwillig)", name="Worum geht es im Text (freiwillig)")
         self.worum.setMaxLength(300)
         eigenschaft(self.worum, rolle="worum")
         pal = self.worum.palette(); pal.setColor(QPalette.PlaceholderText, QColor(Farbe.WARNUNG)); self.worum.setPalette(pal)
@@ -115,19 +114,17 @@ class SchreibhilfePanel(QWidget):
         # Unten, wo man nach dem Schreiben hinschaut: „Prüfen“ mit seiner Erklärung, darunter die beiden KI-Wege
         from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import KartenRaster
         zk = KartenRaster(min_breite=BREITE_AKTIONSKNOPF_MIN, abstand=ABSTAND_NORMAL)  # Raster: Prüfen · KI-Korrektur · Vorschläge gleich breit und gleich hoch
-        self.pruefen = QPushButton("Prüfen")
-        self.pruefen.setToolTip("Prüfen (F7) — sucht die Fehler, die ein Rechtschreibprüfer nicht finden kann")
-        self.pruefen.clicked.connect(lambda: self.a.pruefen(True))
-        self.ki_korrektur = QPushButton("KI-Korrektur"); self.ki_korrektur.setToolTip("KI-Korrektur (F8)")
-        self.ki_vorschlaege = QPushButton("Vorschläge"); self.ki_vorschlaege.setToolTip("Verbesserungsvorschläge")
+        self.pruefen = knopf("standard", "Prüfen", name="Prüfen", aktion=lambda: self.a.pruefen(True),
+                             tooltip="Prüfen (F7) — sucht die Fehler, die ein Rechtschreibprüfer nicht finden kann")
+        self.ki_korrektur = knopf("standard", "KI-Korrektur", name="KI-Korrektur", tooltip="KI-Korrektur (F8)")
+        self.ki_vorschlaege = knopf("standard", "Vorschläge", name="Vorschläge", tooltip="Verbesserungsvorschläge")
         for b_ in (self.pruefen, self.ki_korrektur, self.ki_vorschlaege):
             b_.setMinimumWidth(b_.sizeHint().width())                    # Beschriftung nie abschneiden: Zelle mindestens so breit wie der Text samt Rand
             zk.addWidget(b_)
         v.addLayout(zk)
         self.ki_info = hinweis_label("")                                 # steht auf dem Reiter KI, solange kein Modell verbunden ist
-        self.ki_aktion = QPushButton("")
         self._ki_fn = None
-        self.ki_aktion.clicked.connect(lambda: self._ki_fn() if self._ki_fn else None)
+        self.ki_aktion = knopf("standard", aktion=lambda: self._ki_fn() if self._ki_fn else None)
         self.a.fundeGeaendert.connect(self.zeige)
         self.a.schalterGeaendert.connect(self._schalter_nachziehen)
         self.a.themaGeaendert.connect(self._thema_nachziehen)

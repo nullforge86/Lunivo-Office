@@ -13,6 +13,9 @@ für Zeichen, die die erste Schrift nicht hat.
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFontDatabase, QIcon
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QGroupBox, QLabel, QPushButton, QToolButton, QWidget
@@ -80,7 +83,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
         ag.breit(_ueberschrift("Komplexe Schriftzeichen"))
         ag.reihe(("Schriftart:", self.komplex), ("Schriftschnitt:", self.schnitt_komplex), ("Größe:", self.groesse_komplex), gewichte=gew)
         asiat.setVisible(False)
-        self.asiat_knopf = QToolButton(); self.asiat_knopf.setText("Asiatische und komplexe Schrift"); self.asiat_knopf.setArrowType(Qt.RightArrow)
+        self.asiat_knopf = werkzeugknopf("standard", "Asiatische und komplexe Schrift", flach=False); self.asiat_knopf.setArrowType(Qt.RightArrow)
         self.asiat_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); self.asiat_knopf.setAutoRaise(True); self.asiat_knopf.setCheckable(True)
         self.asiat_knopf.toggled.connect(lambda an: (asiat.setVisible(an), self.asiat_knopf.setArrowType(Qt.DownArrow if an else Qt.RightArrow)))
         g.breit(self.asiat_knopf); g.breit(asiat)
@@ -98,7 +101,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self.effekte = gruppe("Effekte"); eg = FlussLayout(12); eg.setContentsMargins(*RAND_DIALOG_GRUPPE); self.effekte.setLayout(eg)
         namen = (("durch", "Durchgestrichen"), ("doppelt", "Doppelt durchgestrichen"), ("hoch", "Hochgestellt"), ("tief", "Tiefgestellt"),
                  ("kapital", "Kapitälchen"), ("gross", "Großbuchstaben"), ("versteckt", "Ausgeblendet"))
-        self.cb = {k: QCheckBox(t) for k, t in namen}
+        self.cb = {k: haken("standard", t) for k, t in namen}
         for k, _t in namen:
             eg.addWidget(self.cb[k])
         g.breit(self.effekte)
@@ -122,9 +125,9 @@ class SchriftartDialog(PanelFaehig, QDialog):
         self._w = dict(ZEICHEN)
         self.hinweis = QLabel(); self.hinweis.setWordWrap(True); hinweis_stil(self.hinweis, klein=True)
         v.addWidget(self.hinweis)
-        self.standard_knopf = QPushButton("Standard …"); self.standard_knopf.setToolTip("Diese Schrift für neue Dokumente merken")
+        self.standard_knopf = knopf("standard", "Standard …", name="Standard …", tooltip="Diese Schrift für neue Dokumente merken")
         self.standard_knopf.clicked.connect(self._standard)
-        self.effekt_knopf = QPushButton("Texteffekte …"); self.effekt_knopf.clicked.connect(self._texteffekte)
+        self.effekt_knopf = knopf("standard", "Texteffekte …", aktion=self._texteffekte)
         fussleiste(self, v, self.standard_knopf, self.effekt_knopf)
         if umfang == "vorlage":                                     # in der Formatvorlage hat „Format ▸ Texteffekte …“ ihren eigenen Platz
             self.effekt_knopf.setVisible(False); self.standard_knopf.setVisible(False)

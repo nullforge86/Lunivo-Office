@@ -8,6 +8,8 @@ Das Fenster legt nichts an; es liefert die Werte, der Aufrufer ruft ``stile.anle
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -66,7 +68,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _bauen_eigenschaften(self, v, name: str, namen: list[str]) -> None:
         eig = QWidget(); f = FormularGitter(eig)                    # flach: Abschnittstitel statt Rahmen im Rahmen
-        self.name = QLineEdit(self.aendern or self._freier_name(name))
+        self.name = zeilenfeld("frei", self.aendern or self._freier_name(name))
         self.name.setReadOnly(bool(self.aendern))
         self.typ = Auswahlfeld(); self.typ.addItem("Absatz")
         self.basis = Auswahlfeld(); self.basis.addItem(KEINE, ""); [self.basis.addItem("↵ " + n, n) for n in namen]

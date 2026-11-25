@@ -1,6 +1,7 @@
 """Farbdaten für jede Palette im Programm: Themenfarben mit Abstufungen, Standardfarben, zuletzt benutzte."""
 from __future__ import annotations
 
+from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.farmwork.schnittstellen.einstellungen import Einstellungen
 from PySide6.QtGui import QColor
 
@@ -18,6 +19,46 @@ VORGABE_TABELLENRAND = "#333333"       # Rand einer per Befehl umrandeten Tabell
 # Heller Kachelgrund für Vorschauen mit dunkler Schrift (in allen Themen gleich hell, damit auch das schwarze „A“ zu sehen ist).
 KACHEL_GRUND = "#f3f4f6"
 KACHEL_RAND = "#d0d4d9"
+
+# Fachliche Farben der Dokumentansicht und der Symbole – eine Stelle, sprechende Namen (Werte exakt wie bisher in den Funktionsdateien).
+WELLEN_FEHLER, WELLEN_TIPP, WELLEN_HINWEIS = "#e03131", "#1971c2", "#f08c00"                       # Wellenlinien der Korrektur je Art
+WELLEN_STANDARD = WELLEN_FEHLER
+WELLEN_FARBE = {"fehler": WELLEN_FEHLER, "tipp": WELLEN_TIPP, "hinweis": WELLEN_HINWEIS}           # Wellenlinie je Art des Fundes
+AUTOR_FARBEN = ("#c92a2a", "#1971c2", "#2f9e44", "#e8590c", "#7048a8", "#0b7285", "#a61e4d", "#5c940d")   # Farben der Autoren (Änderungen, Kommentare)
+SYMBOL_AKZENT_SCHRIFTFARBE, SYMBOL_AKZENT_MARKER, SYMBOL_AKZENT_TOENUNG = "#e03131", "#fcc419", "#74c0fc"   # Farbstreifen unter den Symbolen
+SYMBOL_AKZENT = {"schriftfarbe": SYMBOL_AKZENT_SCHRIFTFARBE, "marker": SYMBOL_AKZENT_MARKER, "absatztoenung": SYMBOL_AKZENT_TOENUNG,
+                 "toenung": SYMBOL_AKZENT_TOENUNG}                                                 # Farbstrich unter dem Symbol je Name
+SYMBOL_STRICH_DUNKEL, SYMBOL_STRICH_HELL = "#243062", "#F3F6FF"                                    # Strichsymbole ohne Hybrid-Entsprechung (heller/dunkler Grund)
+KNOPF_SYMBOLFARBE = "#283c5a"                                                                      # Symbole auf dem hellen Knopfgrund (in jedem Thema gleich)
+GITTER_FARBE = "#c8c8c8"                                                                           # Tabellengitter in der Ansicht
+FUSSNOTE_VIOLETT = "#7048a8"                                                                       # Kennfarbe der Endnoten-Karten
+HERVORHEBUNG_GELB = "#ffec99"                                                                      # Textmarker beim Hervorheben der Suche
+SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR = "#f2c200", "#ffe45c", "#1c3faa"              # Sinnbilder der freien Bilder
+BILDCHEN_BLATT_DUNKEL, BILDCHEN_AKZENT_DUNKEL = "#3a3f45", "#6b5442"                              # Bildchen im dunklen Thema
+BILDCHEN_LINIE, BILDCHEN_RAND, BILDCHEN_STRICH_HELL, BILDCHEN_FLAECHE_HELL = "#5c636a", "#495057", "#ced4da", "#f1f3f5"   # Papier-Sinnbilder
+DESIGN_BILDCHEN_RAND = "#adb5bd"
+AUSWAHL_OBJEKTTEXT = "#8a9ab0"                                                                    # Auswahlgrund beim Schreiben im Objekt
+ABSATZ_VORSCHAU_GRAU = "#808080"                                                                   # vorhergehender/folgender Absatz in der Absatzvorschau
+WASSERZEICHEN_VORSCHAU = "#b4b9be"                                                                 # Vorschaufarbe des Wasserzeichens
+PAPIERTOENE = {"Weiß": Farbe.WEISS, "Creme": "#fbf4e2", "Gelblich": "#fff7cc", "Hellblau": "#e6f0fa", "Hellgrün": "#e8f5e9", "Hellgrau": "#eceff1"}   # Lesehilfe
+NACHVERFOLGT_BLAU, NACHVERFOLGT_SCHWARZ, NACHVERFOLGT_VIOLETT = "#1971c2", "#222222", "#7048a8"    # feste Farben nachverfolgter Änderungen
+FESTE_FARBEN = {"Rot": Farbe.ROT, "Blau": NACHVERFOLGT_BLAU, "Grün": Farbe.GRUEN, "Schwarz": NACHVERFOLGT_SCHWARZ, "Violett": NACHVERFOLGT_VIOLETT}   # Autorenfarbe wählbar
+WORDART_FUELLUNG, TEXTOBJEKT_FUELLUNG = "#2f78bd", "#1f1f1f"                                       # Vorgaben im Textobjekt
+TABELLENRAND_STANDARD, TABELLENRAND_SCHWARZ = "#333333", "#000000"                                 # Rand einer neuen Tabelle
+LINIE_VORLAGE_GRAU, FUELLUNG_VORLAGE_BLAU = "#868e96", "#1971c2"                                  # Beispiele der Voreinstellungsmenüs
+# Zeichenfarben als (R, G, B, A) – gebraucht mit ``QColor(*NAME)``; Werte exakt wie bisher an den Stellen.
+DURCHSICHTIG = (0, 0, 0, 0)                                      # keine Farbe (Hintergrund/Vordergrund zurücksetzen)
+SCHATTEN_KACHEL = (0, 0, 0, 190)                                 # Beschriftungsband über der Kachel
+SCHATTEN_BLATT = (0, 0, 0, 60)                                   # Schatten unter dem Blatt in der Druckvorschau
+ABDUNKELUNG = (0, 0, 0, 90)                                      # Abdunklung außerhalb des Ausschnitts / Lineal-Rand
+WEISS_FLAECHE = (255, 255, 255)                                  # weiße Fläche (Deckkraft getrennt)
+TABELLE_AKZENT = (47, 111, 181)                                  # Griffe und Rahmen der Tabellenbedienung
+TABELLE_AKZENT_FLAECHE = (47, 111, 181, 30)                      # Füllung dazu
+TABELLE_GRIFF_RAND = (120, 130, 150)                             # Rand der Minileiste
+GRIFF_FLAECHE = (255, 255, 255, 235)                             # Grund der Minileiste
+OBJEKT_KNOPF_RAND = (150, 160, 175)                              # Rand der Schaltflächen neben Objekten
+OBJEKT_KNOPF_FLAECHE = (255, 255, 255, 240)                      # Grund der Schaltflächen neben Objekten
+UMBRUCH_LINIE, UMBRUCH_LINIE_HINTER, UMBRUCH_FLAECHE = (110, 118, 130), (90, 96, 108), (76, 110, 245, 140)   # Sinnbilder der Textumbrüche
 ZULETZT_SCHLUESSEL = "baukasten/zuletzt_farben"
 ZULETZT_MAX = 10
 

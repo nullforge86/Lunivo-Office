@@ -6,6 +6,7 @@ from PySide6.QtCore import QByteArray, QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QRadialGradient
 
 from lunivo_writer.core.geometrie import Point, Rect
+from lunivo_writer.oberflaeche.baukasten.basis.farben import WEISS_FLAECHE
 from lunivo_writer.core.rendering import ImageFill, LinearGradient, PatternFill, RadialGradient, RenderBackend, Style, TextureFill
 from lunivo_writer.core.textsatz import FontSpec
 
@@ -70,7 +71,7 @@ def _ausgewaschen(img: QImage, grad: float) -> QImage:
     out = img.convertToFormat(QImage.Format_ARGB32)
     q = QPainter(out)
     q.setCompositionMode(QPainter.CompositionMode_SourceAtop)
-    q.fillRect(out.rect(), QColor(255, 255, 255, round(255 * grad)))
+    q.fillRect(out.rect(), QColor(*WEISS_FLAECHE, round(255 * grad)))
     q.end()
     return out
 

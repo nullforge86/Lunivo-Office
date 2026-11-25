@@ -6,7 +6,10 @@ from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK as _A_B
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import QFrame, QToolButton
+from PySide6.QtWidgets import QFrame
+
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen
 
 from lunivo_writer.oberflaeche.dokument.dokumentfenster.navigation import SEITEN, TITEL
 from lunivo_writer.oberflaeche.bauteile import symbole as icons
@@ -18,22 +21,15 @@ class BackstageSeitenleistenBaustein:
 
     def _leiste_links(self):
         """Schmale Leiste links: Suchen, Kommentare, Überschriften, Änderungen, Noten, Vorlesen. Ein Klick öffnet das Feld, ein zweiter schließt es."""
-        from PySide6.QtWidgets import QFrame, QToolButton
         from lunivo_writer.oberflaeche.dokument.dokumentfenster.navigation import SEITEN, TITEL
-        from lunivo_writer.oberflaeche.bauteile import symbole as icons
-        leiste = QFrame()
-        leiste.setObjectName("leisteLinks")
+        leiste = rahmen("flach", name="leisteLinks")
         leiste.setFixedWidth(BREITE_SCHIENE)
         v = _spalte("panel", leiste)
         self._links = {}
         symbole = {"suche": "lupe", "kommentare": "notiz", "ueberschriften": "gliederung", "aenderungen": "verfolgt", "noten": "fussnote", "vorlesen": "vorlesen"}
         for key in SEITEN:
-            b = QToolButton()
-            icons.setze(b, symbole[key], ICON_MITTEL); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
-            b.setToolTip(TITEL[key]); b.setAccessibleName(TITEL[key])
-            b.setCheckable(True)
-            b.setFixedSize(*GROESSE_KNOPF_SCHIENE)
-            b.clicked.connect(lambda _=False, k=key: self._links_klick(k))
+            b = werkzeugknopf("fest", symbol=symbole[key], symbolgroesse="mittel", symbol_merken=True, symbol_einpassen=True, tooltip=TITEL[key], name=TITEL[key],
+                              umschaltbar=True, groesse=GROESSE_KNOPF_SCHIENE, flach=False, aktion=lambda k=key: self._links_klick(k))
             v.addWidget(b)
             self._links[key] = b
         v.addStretch(1)
@@ -86,10 +82,7 @@ class BackstageSeitenleistenBaustein:
 
     def _leiste_rechts(self):
         """Schmale Leiste rechts: Die vier Reiter der Schreibhilfe (Prüfen, Lesen, Schreiben, KI) und der KI-Chat schalten die Seitenleiste um."""
-        from PySide6.QtWidgets import QFrame, QToolButton
-        from lunivo_writer.oberflaeche.bauteile import symbole as icons
-        leiste = QFrame()
-        leiste.setObjectName("leisteRechts")
+        leiste = rahmen("flach", name="leisteRechts")
         leiste.setFixedWidth(BREITE_SCHIENE)
         v = _spalte("panel", leiste)
         self._rechts = {}
@@ -98,13 +91,8 @@ class BackstageSeitenleistenBaustein:
         for name, sym, tip in (("Prüfen", "haken", "Prüfen — die Funde der Schreibhilfe"), ("Lesen", "brille", "Lesen — Lesehilfe, Vorlesen"),
                                ("Schreiben", "stift", "Schreiben — Schalter, Textbausteine, Sprache"), ("KI", "assistent", "KI — Korrektur, Übersetzen, Aktionen"),
                                ("Chat", "chat", "KI-Chat")):
-            b = QToolButton()
-            px = px_rechts.get(sym, ICON_MITTEL)
-            icons.setze(b, sym, px); b.setIconSize(QSize(px, px))
-            b.setToolTip(tip); b.setAccessibleName(name)
-            b.setCheckable(True)
-            b.setFixedSize(*GROESSE_KNOPF_SCHIENE)
-            b.clicked.connect(lambda _=False, n=name: self._rechts_klick(n))
+            b = werkzeugknopf("fest", symbol=sym, symbolgroesse=px_rechts.get(sym, ICON_MITTEL), symbol_merken=True, symbol_einpassen=True, tooltip=tip, name=name,
+                              umschaltbar=True, groesse=GROESSE_KNOPF_SCHIENE, flach=False, aktion=lambda n=name: self._rechts_klick(n))
             if name == "Chat":
                 v.addSpacing(_A_MITTEL)
             v.addWidget(b)

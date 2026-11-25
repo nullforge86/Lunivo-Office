@@ -24,6 +24,9 @@ from PySide6.QtWidgets import (
 
 from lunivo_writer.oberflaeche.baukasten.basis import daten
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.geruest.befehlsseite import befehlsseite, gruppenkopf, inhaltsseite, seitenrahmen
 from lunivo_writer.oberflaeche.baukasten.medien.datei_symbole import datei_symbol
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
@@ -179,10 +182,8 @@ class Backstage(QWidget):
             kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)         # die linke Fläche beginnt schon in der Kopfzeile
             kopf_links.setAttribute(Qt.WA_StyledBackground, True)
             kl = _reihe("kopf", kopf_links)
-            zurueck = QPushButton(_t("datei.optionen.zurueck")); zurueck.setIcon(symbole.icon("arrow-left", ICON_NORMAL))
-            zurueck.setObjectName("optZurueck"); zurueck.setFlat(True); zurueck.setCursor(Qt.PointingHandCursor)
-            zurueck.setToolTip(_t("datei.optionen.zurueck.tipp"))
-            zurueck.clicked.connect(self.schliessen)
+            zurueck = knopf("standard", _t("datei.optionen.zurueck"), symbol="arrow-left", objektname="optZurueck", ohne_rand=True, hand=True,
+                            tooltip=_t("datei.optionen.zurueck.tipp"), name=_t("datei.optionen.zurueck"), aktion=self.schliessen.emit)
             kl.addWidget(zurueck); kl.addStretch(1)
             kh.addWidget(kopf_links); kh.addStretch(1)
             ph._ansicht = OptionenAnsicht(self.w, getattr(self, "_optionen_unter", None))
@@ -190,8 +191,7 @@ class Backstage(QWidget):
             unten_links = QWidget(); unten_links.setObjectName("optLinks"); unten_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)     # die linke Fläche läuft bis ganz unten durch
             unten_links.setAttribute(Qt.WA_StyledBackground, True)
             rechts_fuss = _reihe("fuss")
-            fertig = QPushButton(_t("datei.optionen.fertig")); fertig.setObjectName("optFertig"); fertig.setCursor(Qt.PointingHandCursor)
-            fertig.clicked.connect(self.schliessen)
+            fertig = knopf("standard", _t("datei.optionen.fertig"), objektname="optFertig", hand=True, aktion=self.schliessen.emit)
             rechts_fuss.addStretch(1); rechts_fuss.addWidget(fertig)
             fh.addWidget(unten_links); fh.addLayout(rechts_fuss, 1)
             ph._kopf, ph._fertig, ph._zurueck = kopf, fertig, zurueck
@@ -267,12 +267,8 @@ class Backstage(QWidget):
         anwenden(v, "zuletzt_liste")
         kopf = _reihe("standard")
         t = QLabel(_t("datei.zuletzt.titel")); t.setObjectName("bsZuletzt")
-        oeffnen = QPushButton(_t("datei.zuletzt.weitere"))
-        oeffnen.setObjectName("optFertig")
-        oeffnen.setIcon(symbol("oeffnen", ICON_GROSS)); oeffnen.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
-        oeffnen.setCursor(Qt.PointingHandCursor)
-        oeffnen.setToolTip(_t("datei.zuletzt.weitere.tipp"))
-        oeffnen.clicked.connect(lambda: (self.schliessen.emit(), self.w.open_dialog()))
+        oeffnen = knopf("standard", _t("datei.zuletzt.weitere"), objektname="optFertig", symbol="oeffnen", symbolgroesse="gross", symbol_einpassen=True, hand=True,
+                        tooltip=_t("datei.zuletzt.weitere.tipp"), name=_t("datei.zuletzt.weitere"), aktion=lambda: (self.schliessen.emit(), self.w.open_dialog()))
         kopf.addWidget(t); kopf.addStretch(1)
         v.addLayout(kopf)
         v.addSpacing(ABSTAND_NORMAL)
@@ -287,18 +283,13 @@ class Backstage(QWidget):
         heim = os.path.expanduser("~")
         for p in pfade:
             zeile = _reihe("eng")
-            k = QPushButton()
-            k.setObjectName("bsDatei")
-            k.setCursor(Qt.PointingHandCursor)
             ordner = os.path.dirname(p)
             ordner = ("~" + ordner[len(heim):] if ordner.startswith(heim) else ordner) + "/"
-            k.setAccessibleName(os.path.basename(p))               # sichtbar sind Name, Ordner und Datum als eigene Zeilen
-            k.setToolTip(p)
             sym = datei_symbol(p)                                    # vollständiges, formatspezifisches Blatt
+            k = knopf("standard", objektname="bsDatei", hand=True, name=os.path.basename(p), tooltip=p,              # sichtbar sind Name, Ordner und Datum als eigene Zeilen
+                      symbol_einpassen=False, aktiv=os.path.exists(p), aktion=lambda p=p: (self.schliessen.emit(), self.w.open_path(p)))
             k.setIcon(sym if not sym.isNull() else symbol("datei", ICON_KACHEL))
             k.setIconSize(QSize(ICON_KACHEL, ICON_KACHEL))
-            k.setEnabled(os.path.exists(p))
-            k.clicked.connect(lambda _=False, p=p: (self.schliessen.emit(), self.w.open_path(p)))
             text = _spalte("kein")
             name = QLabel(os.path.basename(p)); name.setAttribute(Qt.WA_TransparentForMouseEvents)
             ort = QLabel(ordner); ort.setObjectName("bsHinweis"); ort.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -315,9 +306,8 @@ class Backstage(QWidget):
                 d = QLabel("")
             d.setObjectName("bsHinweis"); d.setAttribute(Qt.WA_TransparentForMouseEvents)
             innen.addWidget(d)
-            weg = QToolButton(); weg.setObjectName("bsKlein"); weg.setIcon(symbol("weg", ICON_KLEIN)); weg.setIconSize(QSize(ICON_KLEIN, ICON_KLEIN))
-            weg.setToolTip(_t("datei.zuletzt.entfernen")); weg.setCursor(Qt.PointingHandCursor)
-            weg.clicked.connect(lambda _=False, p=p: (self.w.settings.remove_recent(p), self.oeffnen("zuletzt")))
+            weg = werkzeugknopf("standard", objektname="bsKlein", symbolbild=symbol("weg", ICON_KLEIN), bildgroesse=QSize(ICON_KLEIN, ICON_KLEIN), flach=False,
+                                tooltip=_t("datei.zuletzt.entfernen"), hand=True, aktion=lambda p=p: (self.w.settings.remove_recent(p), self.oeffnen("zuletzt")))
             zeile.addWidget(k, 1); zeile.addWidget(weg)
             v.addLayout(zeile)
         v.addStretch(1)
@@ -387,8 +377,8 @@ class Backstage(QWidget):
         ph._ansicht = self.w.druck_ansicht(t)
         v.addWidget(ph._ansicht, 1)
         fuss = _reihe("fuss")
-        hilfe = _rolle(QPushButton(_t("datei.drucken.hilfe")), "aktion"); hilfe.clicked.connect(self.w.druck_hilfe)
-        drucken = QPushButton(_t("datei.drucken.drucken")); drucken.setObjectName("optFertig"); drucken.setDefault(True); drucken.setCursor(Qt.PointingHandCursor)
+        hilfe = knopf("standard", _t("datei.drucken.hilfe"), rolle="aktion", aktion=self.w.druck_hilfe)
+        drucken = knopf("standard", _t("datei.drucken.drucken"), objektname="optFertig", standard=True, hand=True)
         drucken.clicked.connect(lambda: (self.schliessen.emit(), self.w.drucke_nach_wahl(t, ph._ansicht.ergebnis())))
         ph._ansicht.geaendert.connect(lambda: drucken.setEnabled(ph._ansicht.gueltig()))
         fuss.addWidget(hilfe); fuss.addStretch(1); fuss.addWidget(drucken)
@@ -400,8 +390,8 @@ class Backstage(QWidget):
         self._gruppe(v, _t("datei.schuetzen.gruppe.kennwort"), _t("datei.schuetzen.gruppe.kennwort.hinweis"))
         kennwort_form = QWidget(); kg = FormularGitter(kennwort_form); raender(kg, "zeile"); kg.einspaltig = True; kg.beschriftung_voll = True
         kg.beschriftungsabstand = ABSTAND_GROSS; kg.zeilenabstand = ABSTAND_MITTEL
-        kennwort = QLineEdit(); kennwort.setEchoMode(QLineEdit.Password); kennwort.setPlaceholderText(_t("datei.schuetzen.kennwort"))
-        bestaetigung = QLineEdit(); bestaetigung.setEchoMode(QLineEdit.Password); bestaetigung.setPlaceholderText(_t("datei.schuetzen.bestaetigung"))
+        kennwort = zeilenfeld("frei", platzhalter=_t("datei.schuetzen.kennwort"), passwort=True)
+        bestaetigung = zeilenfeld("frei", platzhalter=_t("datei.schuetzen.bestaetigung"), passwort=True)
         kennwort.setAccessibleName(_t("datei.schuetzen.kennwort")); bestaetigung.setAccessibleName(_t("datei.schuetzen.bestaetigung.name"))
         kennwort.setEnabled(t is not None); bestaetigung.setEnabled(t is not None)
         kg.zeile(_t("datei.schuetzen.kennwort.beschriftung"), kennwort); kg.zeile(_t("datei.schuetzen.bestaetigung.beschriftung"), bestaetigung)
@@ -419,8 +409,8 @@ class Backstage(QWidget):
         v.addWidget(status)
 
         aktionen = _reihe("standard")
-        setzen = QPushButton(_t("datei.schuetzen.setzen")); setzen.setObjectName("optFertig"); setzen.setEnabled(t is not None)
-        entfernen = _rolle(QPushButton(_t("datei.schuetzen.entfernen")), "aktion"); entfernen.setEnabled(bool(t and t.meta.get("kennwort")))
+        setzen = knopf("standard", _t("datei.schuetzen.setzen"), objektname="optFertig", aktiv=t is not None)
+        entfernen = knopf("standard", _t("datei.schuetzen.entfernen"), rolle="aktion", aktiv=bool(t and t.meta.get("kennwort")))
         aktionen.addWidget(setzen); aktionen.addWidget(entfernen); aktionen.addStretch(1); v.addLayout(aktionen)
 
         def setze_kennwort():
@@ -444,26 +434,20 @@ class Backstage(QWidget):
             ("sicherheit/markup_oeffnen", _t("datei.schuetzen.markup"), True),
             ("sicherheit/personendaten_weg", _t("datei.schuetzen.personendaten"), False),
         ):
-            box = QCheckBox(label); box.setChecked(self.w.settings.get_bool(key, default))
+            box = haken("standard", label, an=self.w.settings.get_bool(key, default))
             box.toggled.connect(lambda an, k=key: self.w.settings.set(k, an))
             v.addWidget(box)
 
         self._gruppe(v, _t("datei.schuetzen.gruppe.dokument"), _t("datei.schuetzen.gruppe.dokument.hinweis"))
-        eigenschaften = QPushButton(_t("datei.schuetzen.eigenschaften"))
-        eigenschaften.setObjectName("bsKnopf")
-        eigenschaften.setCursor(Qt.PointingHandCursor); symbole.setze(eigenschaften, "info", ICON_GROSS)
-        eigenschaften.setToolTip(_t("datei.schuetzen.eigenschaften.tipp"))
-        eigenschaften.clicked.connect(lambda: self._zeigen("info"))
+        eigenschaften = knopf("standard", _t("datei.schuetzen.eigenschaften"), objektname="bsKnopf", hand=True, symbol="info", symbolgroesse="gross", symbol_merken=True,
+                              tooltip=_t("datei.schuetzen.eigenschaften.tipp"), name=_t("datei.schuetzen.eigenschaften"), aktion=lambda: self._zeigen("info"))
         v.addWidget(eigenschaften)
         self._gruppe(v, _t("datei.schuetzen.gruppe.bearbeitung"), _t("datei.schuetzen.gruppe.bearbeitung.hinweis"))
-        sperren = QCheckBox(_t("datei.schuetzen.sperren"))
-        sperren.setChecked(bool(t and getattr(t, "gesperrt", False))); sperren.setEnabled(t is not None)
+        sperren = haken("standard", _t("datei.schuetzen.sperren"), an=bool(t and getattr(t, "gesperrt", False)), aktiv=t is not None)
         sperren.toggled.connect(lambda an: t and an != bool(getattr(t, "gesperrt", False)) and self.w.toggle_sperre())
         v.addWidget(sperren)
         self._gruppe(v, _t("datei.schuetzen.gruppe.signatur"), _t("datei.schuetzen.gruppe.signatur.hinweis"))
-        k = QPushButton(_t("datei.schuetzen.signatur"))
-        k.setObjectName("bsKnopf")
-        k.setEnabled(False)
+        k = knopf("standard", _t("datei.schuetzen.signatur"), objektname="bsKnopf", aktiv=False)
         v.addWidget(k)
         v.addStretch(1)
         return sa
@@ -502,7 +486,7 @@ class Backstage(QWidget):
     def _info_eigenschaften(self, v, t):
         self._gruppe(v, _t("datei.info.gruppe.eigenschaften"), _t("datei.info.gruppe.eigenschaften.hinweis"))
         for schl, name in (("author", _t("datei.info.verfasser")), ("title", _t("datei.info.titel_feld"))):
-            e = QLineEdit(t.meta.get(schl, "") or "")
+            e = zeilenfeld("frei", t.meta.get(schl, "") or "")
             e.editingFinished.connect(lambda e=e, s=schl, t=t: self._meta_setzen(t, s, e.text()))
             self._zeile(v, name, e)
 

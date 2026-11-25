@@ -1,10 +1,11 @@
 """Dialog „Beschriftungsnummerierung“: Schreibweise der Nummer. Kapitelnummern kennt Lunivo noch nicht (grau)."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox, QDialog, QWidget
+from PySide6.QtWidgets import QDialog, QWidget
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import NUMMERIERUNGSFORMATE
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
@@ -24,7 +25,7 @@ class NummerierungDialog(PanelFaehig, QDialog):
             self.format.addItem(t, k)
         self.format.setCurrentIndex(max(0, self.format.findData(zahl)))
         fw = QWidget(); fg = FormularGitter(fw)
-        kapitel = QCheckBox("&Kapitelnummer einbeziehen"); kapitel.setEnabled(False)
+        kapitel = haken("standard", "&Kapitelnummer einbeziehen", aktiv=False)
         fg.zeile(_titel("&Format:", self.format), self.format); fg.breit(kapitel); v.addWidget(fw)
         fussleiste(self, v)
 

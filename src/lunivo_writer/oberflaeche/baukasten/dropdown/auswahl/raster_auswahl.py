@@ -1,6 +1,8 @@
 """Kachel-Auswahl: ein Popup mit Bildchen im Raster und einem „Mehr …“-Fuß (Aufzählung, Vorlagen, Ränder, Deckblätter …)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from typing import Callable
@@ -11,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QFrame, QLabel, QMenu, QPushButton, 
 from lunivo_writer.oberflaeche.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil, trennlinie
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitter
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RASTER_ROLLE_ZUGABE, SCHRIFT_RASTER_ZAHL_PX
 from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_KLEIN, GROESSE_RASTERKACHEL_RAND, GROESSE_RASTER_STANDARD_KACHEL, RAND_PANEL_KLEIN, RAND_RASTER_FUSS
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 
@@ -49,7 +52,7 @@ def zeilenkachel(bild, titel: str, angaben: list[str] = (), spalten: int = 1, bi
         x = r.left() + bild_breite + 12
         zeilen = 1 + (len(angaben) + spalten - 1) // spalten
         h = r.height() / zeilen if angaben else r.height()
-        schrift = p.font(); schrift.setPixelSize(13); schrift.setBold(True); p.setFont(schrift)
+        schrift = p.font(); schrift.setPixelSize(SCHRIFT_RASTER_ZAHL_PX); schrift.setBold(True); p.setFont(schrift)
         p.setPen(QApplication.palette().text().color())
         p.drawText(QRectF(x, r.top(), r.right() - x, h), Qt.AlignLeft | Qt.AlignVCenter, titel)
         schrift.setBold(False); p.setFont(schrift)
@@ -91,11 +94,11 @@ class RasterAuswahl(MenueListe):
 
     def _rollen_masse(self) -> None:
         inhalt = self._wid.sizeHint()
-        self._rollen.setFixedSize(inhalt.width() + self._rollen.verticalScrollBar().sizeHint().width() + 2, min(inhalt.height(), self._hoehe_max))
+        self._rollen.setFixedSize(inhalt.width() + self._rollen.verticalScrollBar().sizeHint().width() + RASTER_ROLLE_ZUGABE, min(inhalt.height(), self._hoehe_max))
 
     def kachel(self, schluessel: str, beschriftung: str = "", bild=None, *, aktuell: bool = False, aktiv: bool = True) -> QToolButton:
         """``aktiv=False``: die Kachel bleibt sichtbar, aber grau (blass gezeichnet) und nicht wählbar."""
-        b = QToolButton()
+        b = werkzeugknopf("standard", flach=False)
         b.setIcon(_symbol(bild, self._groesse, blass=not aktiv)); b.setIconSize(self._groesse); b.setEnabled(aktiv)
         b.setToolTip(beschriftung or schluessel); b.setAccessibleName(beschriftung or schluessel); b.setCheckable(True); b.setChecked(aktuell)
         b.setFixedSize(self._groesse + QSize(*GROESSE_RASTERKACHEL_RAND))
@@ -129,7 +132,7 @@ class RasterAuswahl(MenueListe):
 
     def fuss(self, text: str, aktion: Callable) -> QPushButton:
         """Zeile unter dem Raster, z. B. „Weitere Aufzählungszeichen …“."""
-        b = QPushButton(text); b.setFlat(True); dropdown_zeile(b)
+        b = knopf("standard", text, ohne_rand=True); dropdown_zeile(b)
         b.clicked.connect(lambda: (self.close(), aktion()))
         self._fuss_v.addWidget(b)
         return b

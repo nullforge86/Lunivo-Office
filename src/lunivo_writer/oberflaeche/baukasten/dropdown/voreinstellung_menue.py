@@ -10,6 +10,8 @@ Das Popup merkt nichts: es meldet nur den Schlüssel des gewählten Bildchens; w
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QSize, Qt, Signal
@@ -41,7 +43,7 @@ class VoreinstellungMenue(MenueListe):
     def _gitter(self, eintraege: list[tuple[str, QIcon, str]], spalten: int) -> None:
         w = QWidget(); kacheln = []
         for i, (schl, icon, tipp) in enumerate(eintraege):
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(icon); k.setIconSize(self._kachel); k.setToolTip(tipp)
+            k = werkzeugknopf("standard"); k.setIcon(icon); k.setIconSize(self._kachel); k.setToolTip(tipp)
             k.setFixedSize(self._kachel + QSize(*GROESSE_VORGABEMENUE_RAND)); k.setCheckable(True); k.setChecked(schl == self.aktuell)
             k.setProperty("dropdownKachel", "kachel")
             k.clicked.connect(lambda _=False, s=schl: self._waehle(s))

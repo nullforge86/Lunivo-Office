@@ -1,10 +1,11 @@
 """Dialog „Quelle“: Typ und Angaben einer Literaturquelle eingeben oder ändern."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialog, QLineEdit
+from PySide6.QtWidgets import QDialog
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import QUELLENTYPEN
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
@@ -23,7 +24,7 @@ class QuelleDialog(PanelFaehig, QDialog):
         f.zeile("Typ", self.typ)
         self.eingaben = {}
         for k, t in self.FELDER:
-            e = QLineEdit(q.get(k, "")); self.eingaben[k] = e; f.zeile(t, e)
+            e = zeilenfeld("frei", q.get(k, "")); self.eingaben[k] = e; f.zeile(t, e)
         f.breit(knopfzeile(self))
 
     def ergebnis(self) -> dict:

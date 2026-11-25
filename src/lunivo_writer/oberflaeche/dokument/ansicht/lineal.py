@@ -14,6 +14,8 @@ from PySide6.QtWidgets import QWidget
 from lunivo_writer.core.dokument.seite import PX_PER_MM, px_to_mm
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import ABDUNKELUNG
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_LINEAL_PX
 HOEHE = 26          # Dicke des Lineals
 FANG = 6            # so nahe (Bildpunkte) muss die Maus an einer Marke sein
 AKZENT = QColor(Farbe.AKZENT_DUNKEL)
@@ -48,7 +50,7 @@ class _Lineal(QWidget):
 
     def _schrift(self, p: QPainter) -> None:
         f = QFont(p.font())
-        f.setPixelSize(11); f.setBold(False)
+        f.setPixelSize(SCHRIFT_LINEAL_PX); f.setBold(False)
         p.setFont(f)
 
 
@@ -110,7 +112,7 @@ class LinealH(_Lineal):
             elif feiner:
                 p.setPen(QPen(ticks, 1)); p.drawLine(QPointF(x, HOEHE - 4), QPointF(x, HOEHE - 2))
         # Marken: erste Zeile (Dreieck nach unten, oben), linker und rechter Einzug (Dreiecke nach oben, unten)
-        p.setPen(QPen(QColor(0, 0, 0, 90), 1)); p.setBrush(AKZENT)
+        p.setPen(QPen(QColor(*ABDUNKELUNG), 1)); p.setBrush(AKZENT)
         x = m["einzug_erste"]
         p.drawPolygon(QPolygonF([QPointF(x - 5, 1.5), QPointF(x + 5, 1.5), QPointF(x, 8.5)]))
         for n in ("einzug_links", "einzug_rechts"):

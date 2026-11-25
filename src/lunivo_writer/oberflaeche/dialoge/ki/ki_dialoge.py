@@ -4,6 +4,8 @@ Der Anbieter wird hier festgelegt — in „KI-Konfiguration“ (Reiter Schreibh
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 
@@ -50,7 +52,7 @@ class KIEinstellungenDialog(PanelFaehig, QDialog):
         sv.addWidget(QLabel("Verbinden Sie Ihre eigene KI-Quelle — entweder über den API-Schlüssel eines Anbieters oder ein lokal gehostetes Modell."))
         self.liste = ModellListe(fenster, self.k)
         sv.addWidget(self.liste, 1)
-        neu = QPushButton("Neues KI-Modell verbinden …"); neu.clicked.connect(self.neues_modell)
+        neu = knopf("standard", "Neues KI-Modell verbinden …", aktion=self.neues_modell)
         sv.addWidget(neu, 0, Qt.AlignLeft)
         self.stapel.addWidget(seite)
         # 2 Modellzuweisung

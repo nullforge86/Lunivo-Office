@@ -8,6 +8,8 @@ Das Fenster ändert das Dokument nicht. Aufbau des Wörterbuchs: ``editor/seite/
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 import os
 
 from PySide6.QtCore import QRectF, Qt
@@ -68,7 +70,7 @@ class WasserzeichenDialog(PanelFaehig, QDialog):
         g.breit(QLabel("Wasserzeichen einstellen"))
         # ---- Bildwasserzeichen ----
         self.mit_bild = UmbruchSchalter("&Bildwasserzeichen"); g.breit(self.mit_bild)
-        self.bild_knopf = _feld(QPushButton("Bild a&uswählen")); self.bild_name = QLabel("(Keine Grafik)")
+        self.bild_knopf = _feld(knopf("standard", "Bild a&uswählen")); self.bild_name = QLabel("(Keine Grafik)")
         self.bild_name.setWordWrap(True)
         bz = FlussLayout(6); bz.addWidget(self.bild_knopf); bz.addWidget(self.bild_name); g.breit(bz)
         self.zoom = _feld(Auswahlfeld()); self.zoom.addItem(AUTOMATISCH, 0)

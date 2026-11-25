@@ -1,6 +1,8 @@
 """Das ☰ Menü: links die Datei-Befehle, rechts der Inhalt (zuletzt verwendete Dateien oder die Punkte eines Untermenüs)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
@@ -67,7 +69,7 @@ class MenueTafel(PopupVerhalten, QFrame):
                 continue
             name = p["name"]
             taste = p.get("taste", "")
-            b = QPushButton(name)
+            b = knopf("standard", name)
             sym = _menue_symbol(name)
             if not sym.isNull():
                 b.setIcon(sym); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
@@ -112,7 +114,7 @@ class MenueTafel(PopupVerhalten, QFrame):
         t = text_label("Zuletzt verwendete Dokumente", fett=True, umbruch=False)
         kopf.addWidget(t)
         kopf.addStretch(1)
-        r = QToolButton(); r.setText("↻"); r.setAutoRaise(True); r.setToolTip("Liste neu holen")
+        r = werkzeugknopf("standard", "↻", tooltip="Liste neu holen")
         r.clicked.connect(self._zeige_zuletzt)
         kopf.addWidget(r)
         kw = QWidget(); kw.setLayout(kopf)
@@ -122,13 +124,12 @@ class MenueTafel(PopupVerhalten, QFrame):
             self.rechts.addWidget(QLabel("Noch keine Dokumente geöffnet."))
         for pfad in items[:10]:
             z = _reihe("standard")
-            b = QPushButton(f"{os.path.basename(pfad)}\n{os.path.dirname(pfad)}")
+            b = knopf("standard", f"{os.path.basename(pfad)}\n{os.path.dirname(pfad)}")
             b.setIcon(datei_symbol(pfad)); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)
             dropdown_zeile(b, hinweis=True)
             b.clicked.connect(lambda _=False, p=pfad: (self.close(), self.b.zuletztOeffnen(p)))
-            x = QToolButton(); x.setText("×"); x.setAutoRaise(True)
-            x.setToolTip("Aus der Liste nehmen — die Datei bleibt liegen")
+            x = werkzeugknopf("standard", "×", tooltip="Aus der Liste nehmen — die Datei bleibt liegen")
             x.clicked.connect(lambda _=False, p=pfad: (self.b.zuletztEntfernen(p), self._zeige_zuletzt()))
             datum = text_label(_datum(pfad), umbruch=False)
             hinweis_stil(datum, klein=True)
@@ -142,7 +143,7 @@ class MenueTafel(PopupVerhalten, QFrame):
         for u in p["unter"]:
             if u.get("trenner"):
                 continue
-            b = QPushButton(u["name"])
+            b = knopf("standard", u["name"])
             if u.get("datei"):                                     # passendes, lokal gebündeltes Dateiformat-SVG
                 b.setIcon(datei_symbol(u["datei"])); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             b.setFlat(True)

@@ -1,6 +1,10 @@
 """Optionen: Leichter lesen, Sprache."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, farbflaeche, rolle as _rolle
 
@@ -18,6 +22,7 @@ from lunivo_writer.dienste.dokumentpflege import vorlesen
 from lunivo_writer.oberflaeche.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_PAPIERTON_NAME_PT
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_SPALTEN, PADDING_LESEN_VORSCHAU, RADIUS_FELD, RAND_ZEILE, SCHRIFT_HINWEIS
 
 
@@ -62,7 +67,7 @@ class LesenSeiten:
         erlaeutert = text_label(" ".join(stufen[aktuell]["text"] if aktuell else LS.EIGENE))
         _rolle(erlaeutert, "hinweis")
         for name in stufen:
-            r = QRadioButton(name)
+            r = option("standard", name)
             r.setProperty("optName", _t("optionen.lesen.lesestufe"))
             r.setChecked(name == aktuell)
             gruppe.addButton(r)
@@ -110,7 +115,7 @@ class LesenSeiten:
         e = p.mehr()
         f = p.unter(e, _t("optionen.lesen.silben_farbig_lesehilfe_fuer_legasthenie"))
         p.haken(f, "lesehilfe/silben/an", _t("optionen.lesen.silben_farbig_anzeigen"), False, lambda _: self.w.silbenfarben_anwenden())
-        b = QPushButton(_t("optionen.lesen.farben_darstellung_und_mindestlaenge_ein"))
+        b = knopf("standard", _t("optionen.lesen.farben_darstellung_und_mindestlaenge_ein"))
         b.clicked.connect(lambda: self.w.befehle.silbenEinstellen())
         f.addRow(b)
         f = p.unter(e, _t("optionen.lesen.silbentrennung"))
@@ -123,7 +128,7 @@ class LesenSeiten:
 
     def _silbentrennung_haken(self, p, f):
         """Haken „Silbentrennung“: gilt für das Dokument, das gerade offen ist (derselbe Schalter wie im Reiter Schreibhilfe)."""
-        c = QCheckBox(_t("optionen.lesen.silbentrennung"))
+        c = haken("standard", _t("optionen.lesen.silbentrennung"))
         c.setProperty("optName", _t("optionen.lesen.silbentrennung"))
         c.setChecked(bool(self.w.befehle.an_silbentrennung()))
         c.toggled.connect(lambda on: on != bool(self.w.befehle.an_silbentrennung()) and self.w.befehle.silbentrennung())
@@ -144,7 +149,7 @@ class LesenSeiten:
             kv = _spalte("standard", k)
             name = QLabel(n)
             if n.lower() in vorhanden:
-                fnt = QFont(n); fnt.setPointSizeF(13); name.setFont(fnt)
+                fnt = QFont(n); fnt.setPointSizeF(SCHRIFT_PAPIERTON_NAME_PT); name.setFont(fnt)
             kv.addWidget(name)
             t = text_label(beschreibung.get(n, "") + ("" if n.lower() in vorhanden else _t("optionen.lesen.fehlt_skripte_schrift_holen_sh_holt_sie")))
             _rolle(t, "hinweis")

@@ -1,6 +1,10 @@
 """Kleine Dialoge: Seite einrichten, Absatz, Kopf-/Fußzeile, Tabelle, Suchen/Ersetzen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QWidget
@@ -38,7 +42,7 @@ class PageSetupDialog(PanelFaehig, QDialog):
         form.breit(abschnittstitel("Spalten"))
         self.spalten = QSpinBox(); self.spalten.setRange(1, 4); self.spalten.setValue(max(1, int(page.spalten)))
         self.spalten_abstand = _spin(page.spalten_abstand_mm, 2, 40)
-        self.spalten_linie = QCheckBox("Linie zwischen den Spalten"); self.spalten_linie.setChecked(page.spalten_linie)
+        self.spalten_linie = haken("standard", "Linie zwischen den Spalten", an=page.spalten_linie)
         form.reihe(("Spalten", self.spalten), ("Abstand der Spalten", self.spalten_abstand))
         form.breit(self.spalten_linie)
         bb = knopfzeile(self)
@@ -74,7 +78,7 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         self.text.setPlaceholderText("Text eingeben. {PAGE} = Seitenzahl, {PAGES} = Seitenanzahl")
         self.align = Auswahlfeld(); self.align.addItems(["Links", "Zentriert", "Rechts", "Außen", "Innen"])
         self.align.setCurrentIndex({"left": 0, "center": 1, "right": 2, "aussen": 3, "innen": 4}.get(hf.align, 1))
-        b = QPushButton("Seitenzahl einfügen")
+        b = knopf("standard", "Seitenzahl einfügen")
         b.clicked.connect(lambda: self.text.insertPlainText("{PAGE}"))
         lay = _spalte("standard", self)
         lay.addWidget(self.text)
@@ -107,8 +111,8 @@ class TableDialog(PanelFaehig, QDialog):
         g.reihe((_titel("Spaltenan&zahl:", self.cols), self.cols), (_titel("Zeilenan&zahl:", self.rows), self.rows))
         lay.addWidget(gi)
         lay.addWidget(QLabel("Einstellung für optimale Breite"))
-        self.fest = QRadioButton("Feste Spalten&breite:")
-        self.auto = QRadioButton("Spaltenbreite automatisch anpassen (&S)"); self.auto.setChecked(True)
+        self.fest = option("standard", "Feste Spalten&breite:")
+        self.auto = option("standard", "Spaltenbreite automatisch anpassen (&S)", an=True)
         gruppe = QButtonGroup(self); gruppe.addButton(self.fest); gruppe.addButton(self.auto)
         self.breite = _spin(30.0, 2.0, 500.0)
         self.breite.setAccessibleName("Feste Spaltenbreite")
@@ -133,7 +137,7 @@ class BildGroesseDialog(PanelFaehig, QDialog):
         self.verh = (hoehe_px / breite_px) if breite_px else 1.0
         self.b = _spin(breite_px * 25.4 / 96, 1, 2000)
         self.h = _spin(hoehe_px * 25.4 / 96, 1, 2000)
-        self.fest = QCheckBox("Seitenverhältnis beibehalten"); self.fest.setChecked(True)
+        self.fest = haken("standard", "Seitenverhältnis beibehalten", an=True)
         self._sperre = False
         self.b.valueChanged.connect(self._b)
         self.h.valueChanged.connect(self._h)
@@ -169,13 +173,13 @@ class ZoomDialog(PanelFaehig, QDialog):
         eintraege = [(f"{n} %", ("wert", n / 100)) for n in self.STUFEN] + \
                     [("Seitenbreite", ("breite", 0)), ("Ganze Seite", ("seite", 0))]
         for i, (text, art) in enumerate(eintraege):
-            r = QRadioButton(text)
+            r = option("standard", text)
             self.gruppe.addButton(r, i)
             self._art[i] = art
             fl.addWidget(r)
             if art[0] == "wert" and abs(art[1] - aktuell) < 0.005:
                 r.setChecked(True)
-        eigen = QRadioButton("Eigener Wert:")
+        eigen = option("standard", "Eigener Wert:")
         self.gruppe.addButton(eigen, 100)
         self.spin = QSpinBox(); self.spin.setRange(10, 500); self.spin.setSuffix(" %")
         self.spin.setValue(int(round(aktuell * 100)))

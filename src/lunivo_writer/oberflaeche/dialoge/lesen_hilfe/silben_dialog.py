@@ -1,7 +1,10 @@
 """Einstellungen für „Silben farbig“: alles, was jemand mit Legasthenie braucht, um es für sich passend zu machen."""
 from __future__ import annotations
 
-from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
+from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, farbknopf
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -33,7 +36,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         info.setWordWrap(True)
         hinweis_stil(info)
         v.addWidget(info)
-        self.an = QCheckBox("Silben farbig anzeigen")
+        self.an = haken("standard", "Silben farbig anzeigen")
         self.an.setChecked(k["an"])
         v.addWidget(self.an)
         f = FormularGitter()
@@ -47,7 +50,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.eigene = list(k["eigene"])
         self.eigene_knoepfe = []
         for i in range(3):
-            b = QPushButton()
+            b = knopf("standard")
             b.setFixedSize(*GROESSE_KNOPF_SILBE)
             b.clicked.connect(lambda _=False, i=i: self._farbe_waehlen(i))
             self.eigene_knoepfe.append(b)
@@ -63,7 +66,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.darstellung.setCurrentText(k["darstellung"])
         f.reihe(("Farben", self.palette), ("Darstellung", self.darstellung))
         f.zeile("Eigene Farben", self.eigene_box)
-        self.fett = QCheckBox("Fett")
+        self.fett = haken("standard", "Fett")
         self.fett.setChecked(k["fett"])
         self.mindestens = QSpinBox()
         self.mindestens.setRange(2, 10)
@@ -79,7 +82,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.absatz = UmbruchSchalter("Nur im Absatz mit dem Cursor (ruhigeres Bild)")
         self.absatz.setChecked(k["nur_absatz"])
         f.breit(self.absatz)
-        self.drucken = QCheckBox("Auch beim Drucken und im PDF")
+        self.drucken = haken("standard", "Auch beim Drucken und im PDF")
         self.drucken.setChecked(k["drucken"])
         f.breit(self.drucken)
         v.addLayout(f)
@@ -94,7 +97,7 @@ class SilbenDialog(PanelFaehig, QDialog):
         self.hinweis = QLabel("")
         eigenschaft(self.hinweis, rolle="fehler")
         v.addWidget(self.hinweis)
-        standard = QPushButton("Standard"); standard.clicked.connect(self._standard)
+        standard = knopf("standard", "Standard", aktion=self._standard)
         v.addWidget(knopfzeile(self, standard))
         for c in (self.an, self.fett, self.einsilbig, self.neu, self.absatz, self.drucken):
             c.toggled.connect(lambda *_: self.anwenden())
@@ -114,7 +117,7 @@ class SilbenDialog(PanelFaehig, QDialog):
 
     def _knoepfe_faerben(self) -> None:
         for b, c in zip(self.eigene_knoepfe, self.eigene):
-            b.setStyleSheet(f"QPushButton {{ background: {c}; border: 1px solid palette(mid); border-radius: {RADIUS_FELD}px; }}")
+            farbknopf(b, c)
 
     def _zustand(self) -> None:
         eigene = self.palette.currentText() == "Eigene Farben"

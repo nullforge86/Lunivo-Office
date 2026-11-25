@@ -4,6 +4,8 @@ Baut nur auf Bausteinen auf (Karte ``eingabe`` und ``senden`` aus ``karte.py``, 
 aus dem Thema, der Fokusrahmen über die Eigenschaft ``fokus``. Die Logik bleibt im Dienst: der Kasten meldet ``senden(text)`` (dazu ``anhang()``), ``bild(text)``, ``stopp``, ``meldung(text)``."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QEvent, Qt, Signal
@@ -107,7 +109,7 @@ class ChatEingabeKasten(QWidget):
         self.modell.setToolTip("KI-Modell für den Chat")
         self.modell.currentIndexChanged.connect(self._modell_gewaehlt)
         z.addWidget(self.modell, 1)
-        self.knopf = QPushButton(); als_karte(self.knopf, "senden"); self.knopf.setFixedSize(CHAT_SENDEN, CHAT_SENDEN)
+        self.knopf = knopf_baustein("standard"); als_karte(self.knopf, "senden"); self.knopf.setFixedSize(CHAT_SENDEN, CHAT_SENDEN)
         self.knopf.setCursor(Qt.PointingHandCursor); self.knopf.clicked.connect(self._knopf)
         z.addWidget(self.knopf)
         kv.addLayout(z)

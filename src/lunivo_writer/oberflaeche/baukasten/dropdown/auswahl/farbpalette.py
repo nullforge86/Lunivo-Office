@@ -5,6 +5,8 @@ Aufrufer damit tun, was er will: Schriftfarbe, Schattierung, Seitenfarbe, Rahmen
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPoint, QRectF, QSize, Qt, Signal
@@ -141,7 +143,7 @@ class FarbPalette(MenueListe):
         wid = QWidget()
         v = _spalte("panel", wid)
         if keine_text:
-            keine = QPushButton(keine_text); keine.setFlat(True); keine.setProperty("listenzeile", True)
+            keine = knopf("standard", keine_text, ohne_rand=True); keine.setProperty("listenzeile", True)
             keine.setIcon(self._keine_symbol()); keine.clicked.connect(lambda: self.waehle(None))
             v.addWidget(keine)
         v.addWidget(self._titel_zeile("Thema-Farben"))
@@ -160,16 +162,16 @@ class FarbPalette(MenueListe):
             v.addWidget(self._titel_zeile("Zuletzt benutzt"))
             v.addLayout(self._raster([letzte]))
         if automatisch:                                    # „Automatisch“ mit schwarzem Feld (Vorlage: Füllung)
-            auto = QPushButton(automatisch); auto.setFlat(True); auto.setProperty("listenzeile", True)
+            auto = knopf("standard", automatisch, ohne_rand=True); auto.setProperty("listenzeile", True)
             pm = QPixmap(14, 14); pm.fill(QColor(Farbe.SCHWARZ)); auto.setIcon(QIcon(pm)); auto.clicked.connect(lambda: self.waehle(QColor(Farbe.SCHWARZ)))
             v.addWidget(auto)
         if weitere:
-            mehr = QPushButton(weitere_text); mehr.setFlat(True); mehr.setProperty("listenzeile", True); mehr.setIcon(symbole.icon("palette", ICON_KLEIN))
+            mehr = knopf("standard", weitere_text, ohne_rand=True); mehr.setProperty("listenzeile", True); mehr.setIcon(symbole.icon("palette", ICON_KLEIN))
             mehr.clicked.connect(self._weitere)
             v.addWidget(mehr)
             from lunivo_writer.oberflaeche.baukasten.felder import pipette as _pip
             if _pip.AKTIV and pipette:
-                pip = QPushButton("Pipette"); pip.setFlat(True); pip.setProperty("listenzeile", True); pip.setIcon(symbole.icon("pipette", ICON_KLEIN))
+                pip = knopf("standard", "Pipette", ohne_rand=True); pip.setProperty("listenzeile", True); pip.setIcon(symbole.icon("pipette", ICON_KLEIN))
                 pip.clicked.connect(self._pipette)
                 v.addWidget(pip)
         self._spalte = v
@@ -177,7 +179,7 @@ class FarbPalette(MenueListe):
 
     def zusatz_eintrag(self, text: str, aktion) -> None:
         """Ein weiterer Eintrag unter „Weitere Farben …“ (z. B. „Rahmen und Schattierung …“); schließt die Palette und ruft ``aktion``."""
-        k = QPushButton(text); k.setFlat(True); k.setProperty("listenzeile", True)
+        k = knopf("standard", text, ohne_rand=True); k.setProperty("listenzeile", True)
         k.clicked.connect(lambda: (self.close(), aktion()))
         self._spalte.addWidget(k)
 

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton
+from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem
 
 from lunivo_writer.farmwork.funktionen.verweise.befehle import VerweiseBefehle
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_VERWEIS
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
@@ -23,7 +24,7 @@ class QuellenDialog(PanelFaehig, QDialog):
         self.liste = QListWidget(); v.addWidget(self.liste)
         z = FlussLayout()
         for text, fn in (("Neu …", self._neu), ("Bearbeiten …", self._bearb), ("Löschen", self._weg), ("Zitat einfügen", self._zitat)):
-            b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
+            z.addWidget(knopf("standard", text, aktion=fn))
         v.addLayout(z)
         bb = knopfzeile(self, schliessen=True); v.addWidget(bb)
         self._fuellen()

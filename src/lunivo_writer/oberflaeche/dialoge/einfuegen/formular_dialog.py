@@ -1,6 +1,8 @@
 """Dialog zum Anlegen eines Formularfelds (Textfeld, Auswahlliste, Datum, Kontrollkästchen, Schaltfläche)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit
@@ -23,13 +25,13 @@ class FormFeldDialog(PanelFaehig, QDialog):
         m = bestehend or {}
         self.setWindowTitle(TITEL[art] + " einfügen" if not bestehend else TITEL[art] + " bearbeiten")
         f = FormularGitter()
-        self.name = QLineEdit(m.get("name", ""))
+        self.name = zeilenfeld("frei", m.get("name", ""))
         self.name.setPlaceholderText("z. B. Vorname")
         f.zeile("Name des Feldes", self.name)
-        self.platz = QLineEdit(m.get("platzhalter", ""))
-        self.beschriftung = QLineEdit(m.get("beschriftung", ""))
+        self.platz = zeilenfeld("frei", m.get("platzhalter", ""))
+        self.beschriftung = zeilenfeld("frei", m.get("beschriftung", ""))
         self.liste = QPlainTextEdit("\n".join(m.get("optionen", [])))
-        self.aufschrift = QLineEdit(m.get("aufschrift", "Absenden"))
+        self.aufschrift = zeilenfeld("frei", m.get("aufschrift", "Absenden"))
         self.aktion = Auswahlfeld(); self.aktion.addItems(FO.AKTIONEN); self.aktion.setCurrentText(m.get("aktion", "Keine"))
         if art in ("text", "auswahl", "datum"):
             self.platz.setPlaceholderText({"text": "Text eingeben", "auswahl": "Auswahl treffen", "datum": "Datum wählen"}[art])

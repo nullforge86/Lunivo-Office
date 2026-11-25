@@ -5,6 +5,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QToolButton
 
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ICON_GROSS, ICON_MITTEL
 from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
 from lunivo_writer.oberflaeche.band.band_bausteine import _mit_kuerzel
@@ -35,12 +36,8 @@ class BandSchnellzugriffBaustein:
     def _schnellzugriff(self):
         liste = self.SCHNELL if self._schnell_wahl is None else [e for e in self.SCHNELL_ALLE if e[2] in self._schnell_wahl]
         for sym, name, aktion in liste:
-            k = QToolButton()
-            k.setAutoRaise(True)
-            k.setToolTip(_mit_kuerzel(name))
-            k.setIcon(symbole.icon(sym, ICON_MITTEL, kopf_symbolfarbe()))
-            k.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
-            k.clicked.connect(lambda _=False, a=aktion: self.b.tun(a))
+            k = werkzeugknopf("standard", symbol=sym, symbolgroesse="mittel", symbolfarbe=kopf_symbolfarbe(), symbol_einpassen=True,
+                              tooltip=_mit_kuerzel(name), aktion=lambda a=aktion: self.b.tun(a))
             self._tausch_rechtsklick(k, sym)
             self.schnell.addWidget(k)
             self.knoepfe.append((k, aktion, sym in ("speichern", "pdf", "drucken", "vorschau", "zurueck", "vor")))
@@ -51,8 +48,7 @@ class BandSchnellzugriffBaustein:
             self.schnell.removeWidget(k); k.hide(); k.setParent(None); k.deleteLater()
         self._ki_schnell_knoepfe = []
         for a in aktionen:
-            k = QToolButton(); k.setAutoRaise(True); k.setToolTip("KI: " + a["name"])
-            k.setIcon(symbole.icon("assistent", ICON_MITTEL, kopf_symbolfarbe())); k.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
-            k.clicked.connect(lambda _=False, a=a: ausfuehren(a))
+            k = werkzeugknopf("standard", symbol="assistent", symbolgroesse="mittel", symbolfarbe=kopf_symbolfarbe(), symbol_einpassen=True,
+                              tooltip="KI: " + a["name"], aktion=lambda a=a: ausfuehren(a))
             self.schnell.addWidget(k)
             self._ki_schnell_knoepfe.append(k)

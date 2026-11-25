@@ -34,7 +34,8 @@ from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import _PT_MM, Einheit
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_RAHMENABSTAND, GROESSE_FENSTER_RAHMEN_SCHATTIERUNG, GROESSE_FENSTER_SEITENRAND, GROESSE_LINIENBREITE_BILD, GROESSE_LINIENBREITE_BILD_STANDARD, GROESSE_RAHMENART_BILD, GROESSE_RAHMENKANTEN_MIN, GROESSE_RAHMENKANTEN_WUNSCH, GROESSE_RAHMENSEITE_KNOPF, GROESSE_RAHMENVORSCHAU, HOEHE_BEREICH_MITTEL, ICON_KNOPF_GROSS, ICON_MITTEL, ICON_NORMAL, RADIUS_FELD, RAND_RAHMEN_SEITE, RAND_SCHATTIERUNG_SEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
-from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_ZAHL
+from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_ZAHL, STIFT_BETONT, STIFT_BILDCHEN
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 KANTEN = (("t", "Oben", RahmenSeiten.OBEN), ("b", "Unten", RahmenSeiten.UNTEN), ("l", "Links", RahmenSeiten.LINKS),
           ("r", "Rechts", RahmenSeiten.RECHTS), ("h", "Zwischen Absätzen", RahmenSeiten.INNEN_H))
 HINWEIS = "Diagramm oder Schaltflächen klicken, um Rahmen hinzuzufügen"
@@ -53,7 +54,7 @@ def _einstellung_symbol(art: str, px: int = 28) -> QIcon:
     p.setPen(Qt.NoPen); p.setBrush(QColor(Farbe.GRAU_HELL))
     for i in range(5):
         p.drawRect(QRectF(r.left() + 3, r.top() + 4 + i * (r.height() - 8) / 5, r.width() - 6 - (i == 4) * 6, 1.6))
-    stark, blass = QPen(QColor(Farbe.GITTER), 2), QPen(QColor(Farbe.GRAU), 1, Qt.DotLine)
+    stark, blass = QPen(QColor(Farbe.GITTER), STIFT_BETONT), QPen(QColor(Farbe.GRAU), 1, Qt.DotLine)
     p.setBrush(Qt.NoBrush)
     if art == "kontur":
         p.setPen(stark); p.drawRect(r)
@@ -256,7 +257,7 @@ class _RahmenSeite(QWidget):
         reihe = FlussLayout(4)
         self.einstellung: dict[str, QToolButton] = {}
         for art, text in (("ohne", "Ohne"), ("kontur", "Kontur"), ("alle", "Alle"), ("raster", "Raster"), ("anpassen", "Anpassen")):
-            b = QToolButton(); b.setCheckable(True); b.setAutoExclusive(True); b.setToolTip(text); b.setAccessibleName(text)
+            b = werkzeugknopf("standard", umschaltbar=True, tooltip=text, name=text, flach=False); b.setAutoExclusive(True)
             b.setIcon(_einstellung_symbol("ohne" if art == "ohne" else art)); b.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS)); b.setFixedSize(*GROESSE_RAHMENSEITE_KNOPF); b.setAutoRaise(True)
             eigenschaft(b, rolle="rahmenwahl")
             b.clicked.connect(lambda _c=False, a=art: self._setze_einstellung(a))
@@ -279,7 +280,7 @@ class _RahmenSeite(QWidget):
         for k, text, flagge in KANTEN:
             if k == "h" and not innen_h:
                 continue
-            b = QToolButton(); b.setCheckable(True); b.setIcon(rahmen_symbol(flagge, 22)); b.setToolTip(text); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
+            b = werkzeugknopf("standard", umschaltbar=True, flach=False); b.setIcon(rahmen_symbol(flagge, 22)); b.setToolTip(text); b.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL))
             b.setAutoRaise(True); b.setFixedSize(_KANTE, _KANTE)
             eigenschaft(b, rolle="rahmenknopf")
             b.toggled.connect(lambda an, k=k: self._kante(k, an))
@@ -317,7 +318,7 @@ class _RahmenSeite(QWidget):
     def _bauen_fuer(self, g, fuer, linie) -> None:
         """Übernehmen für, Optionen."""
         self.fuer = Auswahlfeld(); self.fuer.addItems(fuer or ["Absatz"]); self.fuer.setToolTip("Übernehmen für")
-        self.optionen = QPushButton("Optionen …")
+        self.optionen = knopf("standard", "Optionen …")
         self.optionen.clicked.connect(self._optionen)
         self.polster = linie.polster() if linie and linie.polster() else (1.0, 1.0, 4.0, 4.0)    # Abstand zum Text: oben, unten, links, rechts (pt)
         g.reihe(("Für:", self.fuer))
@@ -400,7 +401,7 @@ def _blatt_vorschau(p: QPainter, rect) -> tuple[QRectF, QRectF]:
     blatt = QRectF(r.center().x() - 96, r.top(), 192, r.height() + 60)
     p.fillRect(blatt, QColor(Farbe.PAPIER)); p.setPen(QColor(Farbe.GRAU_HELL)); p.drawRect(blatt)
     text = QRectF(blatt.left() + 32, blatt.top() + 32, 128, 70)
-    p.setPen(QPen(QColor(Farbe.GRAU), 1.2))
+    p.setPen(QPen(QColor(Farbe.GRAU), STIFT_BILDCHEN))
     y, n = text.top(), 0
     while y < text.bottom() - 0.5:
         p.drawLine(int(text.left() + (42 if n == 0 else 0)), int(y), int(text.right()), int(y)); y += 5; n += 1

@@ -13,6 +13,9 @@ Das Fenster fügt selbst nichts ein; der Aufrufer bekommt das Zeichen.
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -30,6 +33,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.dokument.tasten_dialog import TastenDialog
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_SONDERZEICHEN_PX, SONDERZEICHEN_KOPF_ZEILEN, SONDERZEICHEN_SONDER_ZEILEN, SONDERZEICHEN_ZELLEN_REIHEN
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_FELD_ZEICHENCODE, BREITE_ZEILENHINWEIS, GROESSE_FENSTER_SONDERZEICHEN, HOEHE_ZEILE_SONDER, HOEHE_ZELLE_SONDER, ZUGABE_LISTE_KOPF, ZUGABE_LISTE_SONDER, ZUGABE_RAHMEN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
@@ -122,7 +126,7 @@ class Zeichenraster(QWidget):
     def setze(self, zeichen: list[int], schrift: QFont | None = None) -> None:
         self._zeichen = list(zeichen)
         if schrift is not None:
-            self._schrift = QFont(schrift); self._schrift.setPixelSize(17)
+            self._schrift = QFont(schrift); self._schrift.setPixelSize(SCHRIFT_SONDERZEICHEN_PX)
         self._aktuell = -1
         self.updateGeometry(); self.update()
 
@@ -222,7 +226,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.reiter.addTab(self._symbole(), "Symbole")
         self.reiter.addTab(self._sonderzeichen(), "Sonderzeichen")
         self.reiter.addTab(self._benutzer(), "Benutzerdefinierte Symbole")
-        self.bei_benutzer = QPushButton("Einfügen bei benutzerdefinierten Symbolen")
+        self.bei_benutzer = knopf("standard", "Einfügen bei benutzerdefinierten Symbolen")
         self.bei_benutzer.clicked.connect(self._zu_benutzer)
         self.ok = fussleiste(self, v, self.bei_benutzer, bei_ok=self._einfuegen, ok_text="Einfügen", abbrechen_text="Abbrechen")
         from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import Knopfzeile
@@ -242,7 +246,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         g.zeile("&Schriftart:", self.schrift)
         self.raster = Zeichenraster()
         self.rollen = QScrollArea(); self.rollen.setWidgetResizable(True); self.rollen.setWidget(self.raster)
-        self.rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.rollen.setFixedHeight(ZELLE * 5 + ZUGABE_RAHMEN)
+        self.rollen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.rollen.setFixedHeight(ZELLE * SONDERZEICHEN_ZELLEN_REIHEN + ZUGABE_RAHMEN)
         self.rollen.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed); self.rollen.setMinimumWidth(0)
         self.raster.gewaehlt.connect(self._gewaehlt); self.raster.gewaehlt_doppelt.connect(lambda cp: (self._gewaehlt(cp), self._einfuegen()))
         g.breit(self.rollen)
@@ -251,7 +255,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.zuletzt.setze([ord(z) for z in self.daten.zuletzt() if len(z) == 1], QApplication.font())
         self.zuletzt.gewaehlt.connect(self._gewaehlt); self.zuletzt.gewaehlt_doppelt.connect(lambda cp: (self._gewaehlt(cp), self._einfuegen()))
         g.breit(self.zuletzt)
-        self.zeichencode = QLineEdit(); self.zeichencode.setMaximumWidth(BREITE_FELD_ZEICHENCODE)
+        self.zeichencode = zeilenfeld("frei"); self.zeichencode.setMaximumWidth(BREITE_FELD_ZEICHENCODE)
         self.zeichencode.textEdited.connect(self._code_getippt)
         self.von = Auswahlfeld()
         for name, basis in VON:
@@ -264,12 +268,12 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         name = self.schrift.currentText()
         if name not in self._cache:
             f = QFont(QApplication.font()) if name == NORMAL else QFont(name)
-            f.setPixelSize(17)
+            f.setPixelSize(SCHRIFT_SONDERZEICHEN_PX)
             fm = QFontMetrics(f)
             self._cache[name] = [cp for cp in range(32, 0x10000) if not 0x7F <= cp <= 0x9F and not 0xD800 <= cp <= 0xDFFF and fm.inFontUcs4(cp)]
         f = QFont(QApplication.font()) if name == NORMAL else QFont(name)
         for r in (self.raster, self.zuletzt):
-            r._schrift = QFont(f); r._schrift.setPixelSize(17)
+            r._schrift = QFont(f); r._schrift.setPixelSize(SCHRIFT_SONDERZEICHEN_PX)
         self.raster.setze(self._cache[name], f)
         if self._code is None and self.raster.zeichen():
             self._code = self.raster.zeichen()[0]
@@ -309,7 +313,7 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         s = QWidget(); g = FormularGitter(s)
         self.sonder = QTreeWidget(); self.sonder.setColumnCount(2); self.sonder.setHeaderHidden(True); self.sonder.setRootIsDecorated(False)
         self.sonder.setUniformRowHeights(True); self.sonder.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.sonder.setFixedHeight(12 * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_SONDER); self.sonder.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.sonder.setFixedHeight(SONDERZEICHEN_SONDER_ZEILEN * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_SONDER); self.sonder.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         self.sonder.header().setSectionResizeMode(0, QHeaderView.Fixed); self.sonder.setColumnWidth(0, 56)
         self.sonder.header().setStretchLastSection(True)
         for anzeige, name, zeichen in SONDERZEICHEN:
@@ -329,17 +333,17 @@ class SonderzeichenDialog(PanelFaehig, QDialog):
         self.liste = QTreeWidget(); self.liste.setColumnCount(2); self.liste.setRootIsDecorated(False); self.liste.setUniformRowHeights(True)
         self.liste.setHeaderLabels(["Benutzerdefinierte Symbole:", "Tastenkombinationen:"]); self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.liste.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.liste.setFixedHeight(8 * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_KOPF); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.liste.setFixedHeight(SONDERZEICHEN_KOPF_ZEILEN * HOEHE_ZEILE_SONDER + ZUGABE_LISTE_KOPF); self.liste.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         kopf = self.liste.header(); kopf.setStretchLastSection(True); kopf.setSectionResizeMode(0, QHeaderView.Fixed)
         kopf.setTextElideMode(Qt.ElideRight)
         self.liste.itemChanged.connect(self._haken); self.liste.currentItemChanged.connect(lambda *_: self._liste_knoepfe())
         g.breit(self.liste)
         g.breit(abschnittstitel("Tastenkombinationen"))
-        self.taste = QLineEdit("Keine"); self.taste.setReadOnly(True)
-        self.taste_setzen = QPushButton("Tastenkombinationen &festlegen"); self.taste_setzen.clicked.connect(self._taste_festlegen)
+        self.taste = zeilenfeld("frei", "Keine", nur_lesen=True)
+        self.taste_setzen = knopf("standard", "Tastenkombinationen &festlegen", aktion=self._taste_festlegen)
         g.breit(self.taste); g.breit(self.taste_setzen)
-        self.runter, self.hoch = QPushButton("Nach &unten"), QPushButton("Nach o&ben")
-        self.entfernen, self.zurueck = QPushButton("&Entfernen"), QPushButton("Symbolleiste &zurücksetzen")
+        self.runter, self.hoch = knopf("standard", "Nach &unten"), knopf("standard", "Nach o&ben")
+        self.entfernen, self.zurueck = knopf("standard", "&Entfernen"), knopf("standard", "Symbolleiste &zurücksetzen")
         self.runter.clicked.connect(lambda: self._verschieben(1)); self.hoch.clicked.connect(lambda: self._verschieben(-1))
         self.entfernen.clicked.connect(self._entfernen); self.zurueck.clicked.connect(self._zuruecksetzen)
         for paar in ((self.runter, self.hoch), (self.entfernen, self.zurueck)):

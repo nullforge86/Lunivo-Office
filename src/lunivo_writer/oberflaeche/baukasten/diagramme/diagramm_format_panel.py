@@ -17,6 +17,9 @@ Diagramms, z. B. ``legende_pos``), ``groesse`` ({"breite_mm", "hoehe_mm"}) und `
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Signal
@@ -87,10 +90,10 @@ class DiagrammFormatPanel(DiagrammFormatWerteMixin, KopfMenueMixin, NurDreiEffek
     # ---- Erweiterungen der Seite „Füllung und Linie“ ----------------------------------------------------------------------------
     def _zusatz_radios(self, abschnitt: str) -> list:
         if abschnitt == "fuell":
-            self.r_auto = QRadioButton("Automatische Füllung")
+            self.r_auto = option("standard", "Automatische Füllung")
             r = [self.r_auto]
         else:
-            self.k_verlauf, self.k_auto = QRadioButton("Farbverlaufslinie"), QRadioButton("Automatische Linie")
+            self.k_verlauf, self.k_auto = option("standard", "Farbverlaufslinie"), option("standard", "Automatische Linie")
             r = [self.k_verlauf, self.k_auto]
         for x in r:
             x.toggled.connect(self._neu)
@@ -196,7 +199,7 @@ class DiagrammFormatPanel(DiagrammFormatWerteMixin, KopfMenueMixin, NurDreiEffek
         self.o_umkehren = UmbruchSchalter("Werte in umgekehrter Reihenfolge")
         self.o_beschr = _combo((("neben", "Neben der Achse"), ("keine", "Keine")))
         self.o_neben = _AutoWert(0.5)
-        self.o_format = QLineEdit(); self.o_format.setPlaceholderText("Automatisch, z. B. %.1f oder %d"); self.o_format.setToolTip("Muster der Zahlen an der Achse (printf: %.2f, %d, %.0f %%)")
+        self.o_format = zeilenfeld("frei", platzhalter="Automatisch, z. B. %.1f oder %d"); self.o_format.setToolTip("Muster der Zahlen an der Achse (printf: %.2f, %d, %.0f %%)")
         self.a_achse.zeile("Minimum:", self.o_min); self.a_achse.zeile("Maximum:", self.o_max); self.a_achse.zeile("Hauptintervall:", self.o_intervall)
         self.a_achse.zeile("Nebenintervall:", self.o_neben); self.a_achse.zeile("Zahlenformat (Muster):", self.o_format)
         self._wert_zeilen = (self.o_min, self.o_max, self.o_intervall, self.o_neben, self.o_format)

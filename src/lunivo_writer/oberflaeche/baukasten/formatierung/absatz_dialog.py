@@ -37,6 +37,9 @@ _ZEILEN = (("faktor", 1.0, "Einfach"), ("faktor", 1.5, "1,5 Zeilen"), ("faktor",
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import AngepassteReiter, FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import ABSATZ_VORSCHAU_GRAU
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
 
 
 def aus_absatz(af: dict, dokument) -> dict:
@@ -88,7 +91,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         self.ebene = Auswahlfeld(); self.ebene.addItem("Textkörper", 0)
         for i in range(1, 10):
             self.ebene.addItem(f"Ebene {i}", i)
-        self.r_rtl, self.r_ltr = QRadioButton("Rechts nach links"), QRadioButton("Links nach rechts")
+        self.r_rtl, self.r_ltr = option("standard", "Rechts nach links"), option("standard", "Links nach rechts")
         self.richtung = QButtonGroup(self); self.richtung.addButton(self.r_rtl); self.richtung.addButton(self.r_ltr)
         rz = FlussLayout(10); rz.addWidget(self.r_rtl); rz.addWidget(self.r_ltr)
         g.reihe(("Ausrichtung:", self.ausr), ("Gliederungsebene:", self.ebene))
@@ -133,7 +136,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         for w_ in (self.cb["asiat"], self.cb["kompr"], self.cb["ade"], self.cb["adn"], self.rest_einzug, self.raster):
             el.breit(w_)
         erweitert.setVisible(False)
-        self.erweitert_knopf = QToolButton(); self.erweitert_knopf.setText("Asiatische Typografie und Raster"); self.erweitert_knopf.setArrowType(Qt.RightArrow)
+        self.erweitert_knopf = werkzeugknopf("standard", "Asiatische Typografie und Raster", flach=False); self.erweitert_knopf.setArrowType(Qt.RightArrow)
         self.erweitert_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); self.erweitert_knopf.setAutoRaise(True); self.erweitert_knopf.setCheckable(True)
         self.erweitert_knopf.toggled.connect(lambda an: (erweitert.setVisible(an), self.erweitert_knopf.setArrowType(Qt.DownArrow if an else Qt.RightArrow)))
         ul.breit(self.erweitert_knopf); ul.breit(erweitert)
@@ -141,7 +144,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
         # ---- Vorschau und Knöpfe
         v.addWidget(QLabel("Vorschau"))
         self.vorschau = VorschauFlaeche(self._male, 120); v.addWidget(self.vorschau)
-        self.tabs_knopf = QPushButton("Tabstopps …"); self.tabs_knopf.clicked.connect(self._tabstopps)
+        self.tabs_knopf = knopf("standard", "Tabstopps …", aktion=self._tabstopps)
         fussleiste(self, v, self.tabs_knopf)
         self.setze(w)
         for sig in (self.ausr.currentIndexChanged, self.r_rtl.toggled, self.links.valueChanged, self.rechts.valueChanged,
@@ -212,7 +215,7 @@ class AbsatzDialog(PanelFaehig, QDialog):
     def _male(self, p, rect) -> None:
         """Vorhergehender Absatz (grau), der eigene mit Einzügen und Abständen, folgender Absatz (grau)."""
         w = self.werte()
-        grau = {"schrift": "Liberation Sans", "groesse_pt": 7.5, "farbe": "#808080"}
+        grau = {"schrift": "Liberation Sans", "groesse_pt": 7.5, "farbe": ABSATZ_VORSCHAU_GRAU}
         f = {"schrift": "Liberation Sans", "groesse_pt": 9.0, "farbe": Farbe.SYMBOL}
         bf = {"einzug_links": w["einzug"] * _MM, "einzug_rechts": w["rechts"] * _MM, "einzug_erste": w["erste"] * _MM,
               "abstand_vor": w["vor"] * 0.8, "abstand_nach": w["nach"] * 0.8,

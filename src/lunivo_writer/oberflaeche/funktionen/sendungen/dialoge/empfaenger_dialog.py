@@ -6,10 +6,11 @@ Das Fenster ändert das Dokument nicht; der Aufrufer setzt das Ergebnis um."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QAbstractItemView, QDialog, QLabel, QPushButton, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QAbstractItemView, QDialog, QLabel, QTableWidget, QTableWidgetItem
 
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
-from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_SERIENBRIEF, HOEHE_KNOPF_GROSS
+from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_SERIENBRIEF
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 
@@ -39,9 +40,8 @@ class EmpfaengerDialog(PanelFaehig, QDialog):
                 self.tabelle.setItem(z, s, it)
         self.tabelle.resizeColumnsToContents()
         v.addWidget(self.tabelle, 1)
-        alle, keine = QPushButton("&Alle"), QPushButton("&Keine")
-        for k, an in ((alle, True), (keine, False)):
-            k.setMinimumHeight(HOEHE_KNOPF_GROSS); k.clicked.connect(lambda _=False, a=an: self._alle(a))
+        alle = knopf("gross", "&Alle", aktion=lambda: self._alle(True))
+        keine = knopf("gross", "&Keine", aktion=lambda: self._alle(False))
         fussleiste(self, v, alle, keine)
 
     def _alle(self, an: bool) -> None:

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import trennlinie
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterZeile
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe, spalte
 from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
@@ -78,11 +79,7 @@ class Symbolleisten(QWidget):
         self.kontext_index: dict = {}
         self.fehlend: list[str] = []
         v = spalte("leiste", self)
-        self.menue_knopf = QToolButton()
-        self.menue_knopf.setText("Menü")
-        self.menue_knopf.setIcon(symbole.icon("menu", ICON_NORMAL, kopf_symbolfarbe())); self.menue_knopf.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
-        self.menue_knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.menue_knopf.setAutoRaise(True)
+        self.menue_knopf = werkzeugknopf("band_menue", "Menü", symbol="menu", symbolfarbe=kopf_symbolfarbe(), symbol_einpassen=True)
         z1 = self._zeile(v)
         z1.addWidget(self.menue_knopf)
         self._trenner(z1)
@@ -135,8 +132,7 @@ class Symbolleisten(QWidget):
             h.addWidget(self._knopf(sym, tip, akt))
 
     def _knopf(self, sym: str, tip: str, akt: str, haken: bool = False) -> QToolButton:
-        k = QToolButton()
-        k.setAutoRaise(True)
+        k = werkzeugknopf("standard")
         a = QAction(k)
         if symbole.hat(sym):
             a.setIcon(symbole.icon(sym, ICON_GROSS))

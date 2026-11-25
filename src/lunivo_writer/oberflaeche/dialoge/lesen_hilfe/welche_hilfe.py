@@ -4,6 +4,8 @@ Die Schalter der ersten Stufe sind dieselben wie in der Seitenleiste und in den 
 Tastenkürzel rufen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -124,7 +126,7 @@ class HilfeWannDialog(PanelFaehig, QDialog):
         r = _text(rechts); hinweis_stil(r); mitte.addWidget(r)
         zh.addWidget(mitte_w, 1)
         if aktion and aktion[0] == "schalter":
-            b = QPushButton(); b.setCheckable(True); b.setFixedSize(*GROESSE_SCHALTER)
+            b = knopf("standard", umschaltbar=True); b.setFixedSize(*GROESSE_SCHALTER)
             b.setChecked(self.fenster.assistant.an(aktion[1]))
             eigenschaft(b, rolle="pille")
             b.setText("an" if b.isChecked() else "aus")
@@ -132,7 +134,7 @@ class HilfeWannDialog(PanelFaehig, QDialog):
             self.schalter[aktion[1]] = b
             zh.addWidget(b, 0, Qt.AlignTop)
         elif aktion:
-            b = QPushButton("jetzt"); b.setFixedSize(*GROESSE_SCHALTER)
+            b = knopf("standard", "jetzt"); b.setFixedSize(*GROESSE_SCHALTER)
             b.setProperty("akzentRand", True); eigenschaft(b, rolle="pille_akzent")
             b.clicked.connect(lambda _=False, a=aktion[1]: (self.accept(), self.fenster.befehle.tun(a)))
             zh.addWidget(b, 0, Qt.AlignTop)

@@ -7,11 +7,13 @@ Beschriftung verwenden“, Neues Etikett / Bezeichnung löschen / Nummerierung.
 eigener Bezeichnungen, die der Aufrufer sich merkt."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialog, QLineEdit, QPushButton
+from PySide6.QtWidgets import QDialog
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import BESCHRIFTUNGS_BEZEICHNUNGEN
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
-from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_MIN_ZEICHEN, HOEHE_KNOPF, HOEHE_KNOPF_GROSS
+from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_MIN_ZEICHEN
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.dokument.eingabe_fenster import EingabeFenster
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter
@@ -31,7 +33,7 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         self._vorne = ""
         v = _spalte("standard", self)
         g = FormularGitter()                                                   # passt sich der Breite an (Seitenleiste), nichts abgeschnitten
-        self.text = QLineEdit(); self.text.setMinimumHeight(HOEHE_KNOPF); self.text.setAccessibleName("Beschriftung")
+        self.text = zeilenfeld("standard", name="Beschriftung")
         g.breit(_titel("&Beschriftung:", self.text)); g.breit(self.text)
         self.label = Auswahlfeld(); self.label.setAccessibleName("Bezeichnung")
         self.label.addItems(list(BESCHRIFTUNGS_BEZEICHNUNGEN) + [x for x in self.eigene if x not in BESCHRIFTUNGS_BEZEICHNUNGEN])
@@ -43,13 +45,14 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         g.zeile(_titel("&Position:", self.pos), self.pos)
         self.ohne = UmbruchSchalter("Be&zeichnung nicht in der Beschriftung verwenden"); g.breit(self.ohne)
         z = FlussLayout(8)
-        self.neu, self.loeschen, self.nummerierung = QPushButton("Neues &Etikett…"), QPushButton("Bezeichnung &löschen"), QPushButton("N&ummerierung…")
+        self.neu = knopf("gross", "Neues &Etikett…", aktion=self._neu)
+        self.loeschen = knopf("gross", "Bezeichnung &löschen", aktion=self._loeschen)
+        self.nummerierung = knopf("gross", "N&ummerierung…", aktion=self._nummerierung)
         for k in (self.neu, self.loeschen, self.nummerierung):
-            k.setMinimumHeight(HOEHE_KNOPF_GROSS); z.addWidget(k)
+            z.addWidget(k)
         g.breit(z)
         v.addLayout(g); v.addStretch(1)
         fussleiste(self, v)
-        self.neu.clicked.connect(self._neu); self.loeschen.clicked.connect(self._loeschen); self.nummerierung.clicked.connect(self._nummerierung)
         self.label.currentTextChanged.connect(lambda _t: self._vorspann())
         self.ohne.toggled.connect(lambda _a: self._vorspann())
         self._vorspann()

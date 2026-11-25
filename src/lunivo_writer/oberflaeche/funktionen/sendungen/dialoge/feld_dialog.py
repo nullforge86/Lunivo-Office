@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QListWidget
+from PySide6.QtWidgets import QDialog, QLabel, QListWidget
 
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
-from lunivo_writer.oberflaeche.baukasten.basis.mass import HOEHE_KNOPF, HOEHE_LISTE_HOCH
+from lunivo_writer.oberflaeche.baukasten.basis.mass import HOEHE_LISTE_HOCH
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
@@ -27,8 +28,7 @@ class FeldDialog(PanelFaehig, QDialog):
         self.liste.setAccessibleName("Felder")
         titel = QLabel("&Datenbankfelder:"); titel.setBuddy(self.liste)
         v.addWidget(titel); v.addWidget(self.liste, 1)
-        self.name = QLineEdit(); self.name.setMinimumHeight(HOEHE_KNOPF); self.name.setAccessibleName("Feldname")
-        self.name.setPlaceholderText("Name eines Feldes")
+        self.name = zeilenfeld("standard", platzhalter="Name eines Feldes", name="Feldname")
         t2 = QLabel("&Feldname:"); t2.setBuddy(self.name)
         z = FormularGitter(); z.zeile(t2, self.name); v.addLayout(z)
         self.zeile = knopfzeile(self, ok_text="Einfügen", bei_ok=self._melden)

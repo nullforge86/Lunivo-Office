@@ -9,6 +9,8 @@ Leertaste oder Eingabe wählen. Jede Kachel trägt ihren Text als Namen für Bil
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from PySide6.QtCore import QEvent, QSize, Qt, Signal
@@ -32,7 +34,7 @@ class KachelFeld(QWidget):
         eigenschaft(self, rolle="kachelfeld")
 
     def hinzu(self, schluessel: str, text: str, bild=None) -> QToolButton:
-        b = QToolButton(); b.setCheckable(True); b.setAutoRaise(True); b.setFocusPolicy(Qt.ClickFocus)
+        b = werkzeugknopf("standard", umschaltbar=True); b.setFocusPolicy(Qt.ClickFocus)
         b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)          # die Kachel füllt ihre Rasterzelle: alle Kacheln einer Spalte gleich breit, Bild und Text mittig
         b.setAccessibleName(text); b.installEventFilter(self)
         b.setIcon(_symbol(bild, self._groesse) if bild is not None else QIcon()); b.setIconSize(self._groesse)

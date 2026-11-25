@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
 )
 
+from lunivo_writer.oberflaeche.baukasten.basis.mass import QWIDGETSIZE_MAX
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_BREITE, ABSTAND_GROSS, ABSTAND_KLEIN, ABSTAND_MITTEL, DROPDOWN_HOEHE, DROPDOWN_MAX_ZEILEN, DROPDOWN_MIN_ZEICHEN, DROPDOWN_SCHRIFT_POPUP_BREITE, DROPDOWN_ZEILE_PAD_V
 from lunivo_writer.oberflaeche.baukasten.dropdown.popup_lage import popup_bereich, popup_klemmen
 
@@ -187,9 +188,9 @@ class Auswahlfeld(_Feldlaenge, QComboBox):
         pop = view.window() if view is not None else None
         if pop is not None:
             pop.setMinimumWidth(0)
-            pop.setMaximumWidth(16777215)
+            pop.setMaximumWidth(QWIDGETSIZE_MAX)
             view.setMinimumWidth(0)
-            view.setMaximumWidth(16777215)
+            view.setMaximumWidth(QWIDGETSIZE_MAX)
 
         super().showPopup()
         popup_begrenzen(self, self._popup_min)
@@ -269,9 +270,9 @@ class Schriftauswahl(_Feldlaenge, QFontComboBox):
         pop = view.window() if view is not None else None
         if pop is not None:
             pop.setMinimumWidth(0)
-            pop.setMaximumWidth(16777215)
+            pop.setMaximumWidth(QWIDGETSIZE_MAX)
             view.setMinimumWidth(0)
-            view.setMaximumWidth(16777215)
+            view.setMaximumWidth(QWIDGETSIZE_MAX)
 
         super().showPopup()
 

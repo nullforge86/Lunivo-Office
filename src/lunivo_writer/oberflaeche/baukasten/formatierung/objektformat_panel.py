@@ -15,6 +15,9 @@ nur Füllung und Linie gehören dem Objekt, und es kommen „Weiche Kanten“ un
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QSize, Qt, Signal
@@ -70,13 +73,13 @@ class _DreiDUntereinander:
         # 3D-Format neu ordnen: die Felder untereinander im FormularGitter (die Zweierreihen des Text-Panels sind für 300 px zu breit)
         alt = self.a_3d
         self.a_3d = Abschnitt("3D-Format")
-        zr3 = QPushButton("Zurücksetzen"); zr3.clicked.connect(self._d3_zuruecksetzen)
+        zr3 = knopf("standard", "Zurücksetzen", aktion=self._d3_zuruecksetzen)
         self._ab_stumm = True
         self.ab_art, self.ab_knopf, self.ab_breite, self.ab_hoehe = {}, {}, {}, {}
         if self.MIT_ABSCHLUSS:
             for k, titel in (("oben", "Oberer Abschluss"), ("unten", "Unterer Abschluss")):
                 self.ab_art[k] = "keine"
-                self.ab_knopf[k] = QPushButton("Keine"); self.ab_knopf[k].setMinimumWidth(0)
+                self.ab_knopf[k] = knopf("standard", "Keine"); self.ab_knopf[k].setMinimumWidth(0)
                 self.ab_breite[k], self.ab_hoehe[k] = SchiebeFeld(0, 20, " pt", 0.5, 1, 4.0), SchiebeFeld(0, 20, " pt", 0.5, 1, 6.0)
                 self.a_3d.zeile(titel + ":", self.ab_knopf[k]); self.a_3d.zeile("Breite:", self.ab_breite[k]); self.a_3d.zeile("Höhe:", self.ab_hoehe[k])
                 self.ab_knopf[k].clicked.connect(lambda _=False, k=k: self._abschluss_menue(k))
@@ -185,9 +188,9 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
     def _seite_fuellung(self, w: dict) -> QWidget:
         seite = QWidget(); v = _spalte("abschnitt", seite)
         self.a_fuell = Abschnitt("Füllung")
-        self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
-        self.r_textur, self.r_muster = QRadioButton("Strukturfüllung"), QRadioButton("Musterfüllung")
-        self.r_bild = QRadioButton("Bildfüllung")
+        self.r_keine, self.r_farbe, self.r_verlauf = option("standard", "Keine Füllung"), option("standard", "Einfarbige Füllung"), option("standard", "Farbverlauf")
+        self.r_textur, self.r_muster = option("standard", "Strukturfüllung"), option("standard", "Musterfüllung")
+        self.r_bild = option("standard", "Bildfüllung")
         self.a_fuell.auswahl(self.r_keine, self.r_farbe, self.r_verlauf, self.r_textur, self.r_muster, self.r_bild, *self._zusatz_radios("fuell"))
         self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild = (_Felder() for _ in range(5))     # je Füllungsart nur ihre Felder
         self.farbe = FarbFeld(Farbe.BLAU, "Füllfarbe", keine_text="Automatisch")
@@ -204,7 +207,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
                 self.muster.addItem(M.name_von(schl), schl)
         self.m_farbe = FarbFeld(Farbe.TINTE, "Musterfarbe")
         self.g_muster.zeile("Muster:", self.muster); self.g_muster.zeile("Musterfarbe:", self.m_farbe)
-        self.bild_knopf = QPushButton("Bild wählen …"); self.bild_knopf.clicked.connect(self.bild_gewuenscht)
+        self.bild_knopf = knopf("standard", "Bild wählen …", aktion=self.bild_gewuenscht)
         self.g_bild.zeile("Bild:", self.bild_knopf)
         self._zusatz_felder("fuell", self.a_fuell)
         for g in (self.g_farbe, self.g_verlauf, self.g_textur, self.g_muster, self.g_bild):
@@ -212,7 +215,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         v.addWidget(self.a_fuell)
         # Linie
         self.a_kontur = Abschnitt("Linie")
-        self.k_keine, self.k_linie = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie")
+        self.k_keine, self.k_linie = option("standard", "Keine Linie"), option("standard", "Durchgezogene Linie")
         self.a_kontur.auswahl(self.k_keine, self.k_linie, *self._zusatz_radios("linie"))
         self.g_lin_wahl, self.g_lin_verlauf, self.g_lin_form = _Felder(), _Felder(), _Felder()        # Art · Stärke · Farbe in einer Zeile · Farbverlauf · weitere Form
         self.k_wahl = LinienWahl(Linie(Farbe.SCHWARZ, 1.0, "einfach"), arten=STRICHE, frei=True)
@@ -332,7 +335,7 @@ class ObjektFormatPanel(_DreiDUntereinander, TexteffektPanel):
         self.dr_boden = self._schritt_feld(0, 100, " pt", 1, 1)
         self.dr_text = UmbruchSchalter("Text nicht drehen")
         self.a_dreh.breit(self.dr_text); self.a_dreh.zeile("Abstand vom Boden", self.dr_boden)
-        zr = QPushButton("Zurücksetzen"); zr.clicked.connect(self._drehung_zuruecksetzen); self.a_dreh.breit(zr)
+        zr = knopf("standard", "Zurücksetzen", aktion=self._drehung_zuruecksetzen); self.a_dreh.breit(zr)
         self.dr_pers.setValue(45)
         seite.layout().insertWidget(seite.layout().indexOf(self.a_3d) + 1, self.a_dreh)
         for f in (self.dr_x, self.dr_y, self.dr_z, self.dr_pers, self.dr_boden):

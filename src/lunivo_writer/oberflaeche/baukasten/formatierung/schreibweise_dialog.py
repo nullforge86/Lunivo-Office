@@ -7,6 +7,8 @@ Das Fenster ändert keinen Text; der Aufrufer wendet die Art an (``Befehle.schre
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QButtonGroup, QDialog, QRadioButton
@@ -26,7 +28,7 @@ class SchreibweiseDialog(PanelFaehig, QDialog):
         v.addWidget(abschnittstitel("Groß-/Kleinschreibung"))
         self._gruppe = QButtonGroup(self)
         for i, (k, text) in enumerate(SCHREIBWEISEN):
-            r = QRadioButton(text); r.setChecked(k == art); self._gruppe.addButton(r, i); v.addWidget(r)
+            r = option("standard", text, an=k == art, gruppe=self._gruppe, nummer=i); v.addWidget(r)
         v.addStretch(1)
         fussleiste(self, v)
 

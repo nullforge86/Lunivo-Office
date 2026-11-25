@@ -4,6 +4,9 @@ Der Anbieter wird hier festgelegt — in „KI-Konfiguration“ (Reiter Schreibh
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
@@ -53,7 +56,7 @@ class AnbieterDialog(QDialog):
         t = self._titel = text_label(self.windowTitle(), fett=True, pt=13, umbruch=False)
         v.addWidget(t)
         f = FormularGitter()
-        self.name = QLineEdit(bestehend["name"] if bestehend else "")
+        self.name = zeilenfeld("frei", bestehend["name"] if bestehend else "")
         self.name.setPlaceholderText("Modellname")
         f.zeile("Modellname *", self.name)
         h = QLabel("Oben den Anbieter wählen — die URL füllt sich von selbst und lässt sich danach noch ändern. "
@@ -64,9 +67,9 @@ class AnbieterDialog(QDialog):
         self.vorlage = Auswahlfeld()
         for key, name, url in K.ANBIETER_VORLAGEN:
             self.vorlage.addItem(name, url)
-        self.url = QLineEdit(bestehend["url"] if bestehend else "")
+        self.url = zeilenfeld("frei", bestehend["url"] if bestehend else "")
         self.url.setPlaceholderText("https://…/v1")
-        self.schluessel = QLineEdit(bestehend["schluessel"] if bestehend else "")
+        self.schluessel = zeilenfeld("frei", bestehend["schluessel"] if bestehend else "")
         self.schluessel.setEchoMode(QLineEdit.Password)
         self.schluessel.setPlaceholderText("Nicht erforderlich")
         f.zeile("Anbieter *", self.vorlage)
@@ -80,7 +83,7 @@ class AnbieterDialog(QDialog):
         self.modell.zeichen(DROPDOWN_ZEICHEN_LANG)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         hinweis_stil(self.stand)
-        holen = QPushButton("Liste der Modelle aktualisieren")
+        holen = knopf("standard", "Liste der Modelle aktualisieren")
         holen.setFlat(True)
         holen.setCursor(Qt.PointingHandCursor)
         holen.clicked.connect(lambda: self._holen(False))
@@ -94,13 +97,13 @@ class AnbieterDialog(QDialog):
         v.addLayout(f)
         self.tags = {}
         gesetzt = set(bestehend["verwendungFuer"]) if bestehend else {"text"}
-        alle = QPushButton("Alle")
+        alle = knopf("standard", "Alle")
         alle.setCheckable(True)
         als_karte(alle, "chip")
         alle.toggled.connect(lambda an: [b.setChecked(an) for b in self.tags.values()])
         self._chips = [alle]
         for key, name in K.ANBIETER_TAGS:
-            b = QPushButton(name)
+            b = knopf("standard", name)
             b.setCheckable(True)
             b.setChecked(key in gesetzt)
             als_karte(b, "chip")

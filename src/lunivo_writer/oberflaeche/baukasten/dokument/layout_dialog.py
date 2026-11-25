@@ -9,6 +9,9 @@ Einheit der Oberfläche über ``EinheitFeld``.
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import copy
@@ -75,20 +78,20 @@ class LayoutDialog(PanelFaehig, QDialog):
         ausr_liste, bezug = (AUSR_H, BEZUG_H) if waagerecht else (AUSR_V, BEZUG_V)
         f: dict = {}
         r = 0
-        f["r_ausr"] = QRadioButton("Ausrichtung")
+        f["r_ausr"] = option("standard", "Ausrichtung")
         f["ausr"] = _combo(ausr_liste, w["ausr"])
         f["bezug_ausr"] = _combo(bezug, w["bezug_ausr"])
         _zeile(g, r, f["r_ausr"], f["ausr"], QLabel("relativ zu"), f["bezug_ausr"]); r += 1
         if waagerecht:
-            f["r_buch"] = QRadioButton("Buchlayout")
+            f["r_buch"] = option("standard", "Buchlayout")
             f["buch"] = _combo(BUCH, w["buch"])
             f["bezug_buch"] = _combo([("rand", "Seitenrand"), ("seite", "Seite")], w["bezug_buch"])
             _zeile(g, r, f["r_buch"], f["buch"], QLabel("von"), f["bezug_buch"]); r += 1
-        f["r_abs"] = QRadioButton("Absolute Position")
+        f["r_abs"] = option("standard", "Absolute Position")
         f["mm"] = EinheitFeld(w["mm"], -2000.0, 2000.0, ("mm", "cm", "in", "pt"))
         f["bezug_abs"] = _combo(bezug, w["bezug_abs"])
         _zeile(g, r, f["r_abs"], f["mm"], QLabel("Rechts von" if waagerecht else "unterhalb"), f["bezug_abs"]); r += 1
-        f["r_rel"] = QRadioButton("Relative Position")
+        f["r_rel"] = option("standard", "Relative Position")
         f["proz"] = QDoubleSpinBox(); f["proz"].setRange(-100, 200); f["proz"].setSuffix(" %"); f["proz"].setValue(w["proz"])
         f["bezug_rel"] = _combo([b for b in bezug if b[0] != "absatz"], w["bezug_rel"])
         _zeile(g, r, f["r_rel"], f["proz"], QLabel("relativ zu" if waagerecht else "gemessen von"), f["bezug_rel"])
@@ -139,7 +142,7 @@ class LayoutDialog(PanelFaehig, QDialog):
         self.zeilen = {}
         gr = QButtonGroup(self)
         for schl, text in ZEILEN:
-            r = QRadioButton(text); r.setChecked(w["zeilen"] == schl); gr.addButton(r); zh.addWidget(r); self.zeilen[schl] = r
+            r = option("standard", text, an=w["zeilen"] == schl, gruppe=gr); zh.addWidget(r); self.zeilen[schl] = r
         v.addWidget(zb); self._zeilen_box = zb
         ab = gruppe("Abstand zum Text"); ag = FormularGitter(ab); ag.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.abstand = {}
@@ -153,8 +156,8 @@ class LayoutDialog(PanelFaehig, QDialog):
     # ---- Reiter Größe ------------------------------------------------------------------------------------------------------
     def _mass(self, titel: str, w: dict) -> dict:
         box = gruppe(titel); g = FormularGitter(box); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
-        f = {"r_abs": QRadioButton("Absolut"), "mm": EinheitFeld(w["mm"], 1.0, 3000.0, ("mm", "cm", "in", "pt")),
-             "r_rel": QRadioButton("Relativ"), "proz": QDoubleSpinBox(), "bezug": _combo([("seite", "Seite"), ("rand", "Seitenrand")], w["bezug"])}
+        f = {"r_abs": option("standard", "Absolut"), "mm": EinheitFeld(w["mm"], 1.0, 3000.0, ("mm", "cm", "in", "pt")),
+             "r_rel": option("standard", "Relativ"), "proz": QDoubleSpinBox(), "bezug": _combo([("seite", "Seite"), ("rand", "Seitenrand")], w["bezug"])}
         f["proz"].setRange(1, 1000); f["proz"].setSuffix(" %"); f["proz"].setValue(w["proz"] or 100)
         gr = QButtonGroup(self); gr.addButton(f["r_abs"]); gr.addButton(f["r_rel"])
         (f["r_rel"] if w["modus"] == "rel" else f["r_abs"]).setChecked(True)
@@ -186,7 +189,7 @@ class LayoutDialog(PanelFaehig, QDialog):
         self._orig_b, self._orig_h = w["original"]
         self._start_b, self._start_h = self.breite["mm"].value(), self.hoehe["mm"].value()      # Größe beim Öffnen: Bezug, wenn „Relativ zur Originalbildgröße“ aus ist
         self.orig_text = QLabel(); og.breit(self.orig_text)
-        zur = QPushButton("Zurücksetzen"); zur.clicked.connect(self._zuruecksetzen); og.breit(zur)
+        zur = knopf("standard", "Zurücksetzen", aktion=self._zuruecksetzen); og.breit(zur)
         v.addWidget(o); v.addStretch(1)
         self.reiter.addTab(seite, "Größe")
         self._skal_nachziehen(); self._orig_anzeigen()

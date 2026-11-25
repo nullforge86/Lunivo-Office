@@ -1,10 +1,12 @@
 """Dialog „Textmarke“: Namen eintragen, hinzufügen, löschen, hingehen. Nur Darstellung; alles Fachliche fragt der Dialog beim Farmwork."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialog, QLineEdit, QListWidget, QMessageBox, QPushButton
+from PySide6.QtWidgets import QDialog, QListWidget, QMessageBox
 
 from lunivo_writer.farmwork.funktionen.verweise.befehle import VerweiseBefehle
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
@@ -16,13 +18,13 @@ class TextmarkeDialog(PanelFaehig, QDialog):
         self.verweise = verweise
         self.setWindowTitle("Textmarke")
         v = _spalte("standard", self)
-        self.name = QLineEdit(); self.name.setPlaceholderText("Name (Buchstaben, Ziffern, _ ; beginnt mit Buchstaben)")
+        self.name = zeilenfeld("frei", platzhalter="Name (Buchstaben, Ziffern, _ ; beginnt mit Buchstaben)")
         v.addWidget(self.name)
         self.liste = QListWidget(); self.liste.itemDoubleClicked.connect(lambda _: self._gehe())
         v.addWidget(self.liste)
         z = FlussLayout()
         for text, fn in (("Hinzufügen", self._add), ("Löschen", self._del), ("Gehe zu", self._gehe)):
-            b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
+            z.addWidget(knopf("standard", text, aktion=fn))
         v.addLayout(z)
         bb = knopfzeile(self, schliessen=True); v.addWidget(bb)
         self._fuellen()

@@ -12,6 +12,7 @@ from PySide6.QtGui import QColor, QPen, QTransform
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.objekte.formen import freiform as FF
+from lunivo_writer.oberflaeche.baukasten.basis.mass import STIFT_BILDCHEN
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
 KANTE = 6.0                                                   # so nah trifft sie eine Kante
@@ -113,9 +114,9 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
             continue
         c = abb.zu_schirm(e[1], e[2])
         if rl[i] == "steuer":
-            p.setPen(QPen(QColor(Farbe.AUSWAHL), 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(c, 3.5, 3.5)
+            p.setPen(QPen(QColor(Farbe.AUSWAHL), STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.WEISS)); p.drawEllipse(c, 3.5, 3.5)
         else:
-            p.setPen(QPen(QColor(Farbe.SCHWARZ), 1.2)); p.setBrush(QColor(Farbe.AUSWAHL) if i == sel else QColor(Farbe.WEISS))
+            p.setPen(QPen(QColor(Farbe.SCHWARZ), STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.AUSWAHL) if i == sel else QColor(Farbe.WEISS))
             p.drawRect(QRectF(c.x() - 4, c.y() - 4, 8, 8))
     p.restore()
 

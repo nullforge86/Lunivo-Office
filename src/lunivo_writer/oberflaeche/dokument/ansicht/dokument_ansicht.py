@@ -24,6 +24,7 @@ from lunivo_writer.core.rendering.seite.seitenueberlagerung import Ueberlagerung
 from lunivo_writer.core.rendering.ausgabe.backend import rgba
 from lunivo_writer.core.textsatz.engine import TextLayoutEngine
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import AUTOR_FARBEN, WELLEN_FARBE, WELLEN_STANDARD
 
 from .eingabe import EingabeTeil
 from .objekt_bedienung import ObjektBedienung
@@ -37,9 +38,6 @@ STANDARD_BLATT_MM = (210.0, 297.0)
 RAND_OBEN = 28.0                       # Abstand zwischen Reiterleiste und erstem Blatt (Bildpunkte bei 100 % Zoom)
 RAND_UNTEN = 28.0
 SEITEN_LUECKE = 16.0                    # Abstand der beiden Blätter in der Zwei-Seiten-Ansicht
-WELLEN_FARBE = {"fehler": "#e03131", "tipp": "#1971c2", "hinweis": "#f08c00"}
-AUTOR_FARBEN = ("#c92a2a", "#1971c2", "#2f9e44", "#e8590c", "#7048a8", "#0b7285", "#a61e4d", "#5c940d")
-WELLEN_STANDARD = "#e03131"
 
 
 class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBedienung, QWidget):

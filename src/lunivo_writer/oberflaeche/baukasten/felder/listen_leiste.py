@@ -8,6 +8,8 @@
 Liste und Leiste sind eine Fläche: EIN Rahmen (``karte="listenleiste"``), unter der Liste eine Trennlinie, darin die Knöpfe. Stil nur im Thema (``karte.py``)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt, Signal
@@ -48,7 +50,7 @@ class ListenLeiste(QFrame):
 
     @staticmethod
     def _knopf(symbol: str, tip: str) -> QToolButton:
-        b = QToolButton(); b.setIcon(symbole.icon(symbol, ICON_NORMAL)); b.setToolTip(tip); b.setAccessibleName(tip)
+        b = werkzeugknopf("standard", symbol=symbol, tooltip=tip, name=tip, flach=False)
         b.setMinimumSize(BREITE_KNOPF_KLEIN, HOEHE_KNOPF_GROSS); b.setFocusPolicy(Qt.TabFocus)
         return b
 

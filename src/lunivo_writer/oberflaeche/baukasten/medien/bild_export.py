@@ -22,12 +22,13 @@ from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPal
 from PySide6.QtWidgets import QAbstractButton, QButtonGroup, QComboBox, QLabel, QLineEdit, QLayout, QPushButton, QWidget
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG, STIFT_BETONT, STIFT_SYMBOL
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_EXPORT_ABSCHNITT, ABSTAND_MITTEL, GROESSE_EXPORTKARTE, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_EXPORT_BILD, RAND_OBEN_SEITE, RAND_ZEILE_LOCKER
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
-# Sinnbild „dunkles Blatt“ im Exportdialog: bewusst feste Farben, unabhängig vom Thema.
-BILDCHEN_BLATT_DUNKEL = "#3a3f45"
-BILDCHEN_AKZENT_DUNKEL = "#6b5442"
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.basis.farben import BILDCHEN_AKZENT_DUNKEL, BILDCHEN_BLATT_DUNKEL   # Sinnbild „dunkles Blatt“: bewusst fest, unabhängig vom Thema
 from lunivo_writer.dienste.ausgabe.bild_export import FORMATE, QUALITAET, BildWahl
 
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FELDHOEHE, FlussLayout, FormularGitter, abschnittstitel
@@ -58,7 +59,7 @@ class _Karte(QAbstractButton):
         rahmen = akzent if self.isChecked() else pal.color(QPalette.Mid).lighter(125)
         r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
         p.fillRect(r, grund)
-        p.setPen(QPen(rahmen, 2 if self.isChecked() else 1))
+        p.setPen(QPen(rahmen, STIFT_BETONT if self.isChecked() else 1))
         p.drawRect(r)
         p.save(); p.translate((self.width() - 130) / 2, 0); p.scale(0.5, 0.5)       # das Bildchen ist für 260 × 200 gezeichnet
         self._bildchen(p, dunkel)
@@ -70,7 +71,7 @@ class _Karte(QAbstractButton):
             ecke.moveTo(r.right(), r.bottom() - 36); ecke.lineTo(r.right(), r.bottom()); ecke.lineTo(r.right() - 36, r.bottom())
             ecke.closeSubpath()
             p.fillPath(ecke, akzent)
-            p.setPen(QPen(QColor(Farbe.WEISS), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            p.setPen(QPen(QColor(Farbe.WEISS), STIFT_BETONT, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             p.drawPolyline([QPointF(r.right() - 17, r.bottom() - 9), QPointF(r.right() - 12, r.bottom() - 5),
                             QPointF(r.right() - 5, r.bottom() - 13)])
 
@@ -82,9 +83,9 @@ class _Karte(QAbstractButton):
 
         def seite(x: float, y: float, b: float, h: float, zeilen: int) -> None:
             p.setBrush(blatt)
-            p.drawRoundedRect(QRectF(x, y, b, h), 3, 3)
+            p.drawRoundedRect(QRectF(x, y, b, h), RADIUS_ZEICHNUNG, RADIUS_ZEICHNUNG)
             p.fillRect(QRectF(x + 7, y + 8, b * 0.18, b * 0.16), block)
-            p.save(); p.setPen(QPen(linie, 1.4))
+            p.save(); p.setPen(QPen(linie, STIFT_SYMBOL))
             p.drawLine(QPointF(x + 7 + b * 0.26, y + 12), QPointF(x + b - 8, y + 12))
             for k in range(zeilen):
                 yy = y + 22 + k * ((h - 30) / max(1, zeilen))
@@ -97,9 +98,9 @@ class _Karte(QAbstractButton):
         else:
             x, y, b, h = 88, 24, 82, 128
             p.setBrush(blatt)
-            p.drawRoundedRect(QRectF(x, y, b, h), 3, 3)
+            p.drawRoundedRect(QRectF(x, y, b, h), RADIUS_ZEICHNUNG, RADIUS_ZEICHNUNG)
             p.fillRect(QRectF(x + 10, y + 10, 20, 18), block)
-            p.save(); p.setPen(QPen(linie, 1.4))
+            p.save(); p.setPen(QPen(linie, STIFT_SYMBOL))
             for yy in (14, 22):
                 p.drawLine(QPointF(x + 36, y + yy), QPointF(x + b - 10, y + yy))
             for yy in (38, 46, 62, 70, 78, 96, 104, 112):
@@ -132,7 +133,7 @@ class BildExportAnsicht(QWidget):
         v.addWidget(_abschnitt(_t("bild.1_bildlayout"), _t("bild.waehle_eine_bilddatei_pro_seite_oder_ein"), karten))
 
         g = FormularGitter()
-        self.wasser = QLineEdit(); self.wasser.setPlaceholderText(_t("bild.zum_beispiel_vertraulich"))
+        self.wasser = zeilenfeld("frei", platzhalter=_t("bild.zum_beispiel_vertraulich"))
         self.qualitaet = Auswahlfeld()
         for name, wert in QUALITAET:
             self.qualitaet.addItem(_t("bild.0_1_dpi").format(name, wert), wert)
@@ -143,12 +144,12 @@ class BildExportAnsicht(QWidget):
         for name in FORMATE:
             self.format.addItem(name)
         self.format.setCurrentText("PNG")
-        self.ordner = QLineEdit(startordner or _bilder_ordner())
+        self.ordner = zeilenfeld("frei", startordner or _bilder_ordner())
         from lunivo_writer.oberflaeche.bauteile import symbole
         waehlen = self.ordner.addAction(symbole.icon("ellipsis", ICON_GROSS), QLineEdit.TrailingPosition)
         waehlen.setToolTip(_t("bild.ordner_waehlen"))
         waehlen.triggered.connect(self._ordner_waehlen)
-        self.k_export = QPushButton(_t("bild.exportieren")); self.k_export.setObjectName("optFertig"); self.k_export.setDefault(True)
+        self.k_export = knopf("standard", _t("bild.exportieren"), objektname="optFertig", standard=True)
         self.k_export.setCursor(Qt.PointingHandCursor)
         self.k_export.clicked.connect(self._exportieren)
         self.wasser.setToolTip(_t("bild.optionaler_blasser_schriftzug_auf_jeder"))
@@ -171,8 +172,8 @@ class BildExportAnsicht(QWidget):
         self.meldung = QLabel(); self.meldung.setWordWrap(True); self.meldung.setObjectName("bsHinweis"); self.meldung.hide()
         v.addWidget(self.meldung)
         aktionen = FlussLayout(8)
-        self._datei_oeffnen = QPushButton(_t("bild.bild_oeffnen")); self._datei_oeffnen.setEnabled(False)
-        self._ordner_oeffnen = QPushButton(_t("bild.ordner_oeffnen")); self._ordner_oeffnen.setEnabled(False)
+        self._datei_oeffnen = knopf("standard", _t("bild.bild_oeffnen"), aktiv=False)
+        self._ordner_oeffnen = knopf("standard", _t("bild.ordner_oeffnen"), aktiv=False)
         self._datei_oeffnen.hide(); self._ordner_oeffnen.hide()
         self._datei_oeffnen.clicked.connect(self._erstes_bild_oeffnen)
         self._ordner_oeffnen.clicked.connect(self._zielordner_oeffnen)
@@ -180,7 +181,7 @@ class BildExportAnsicht(QWidget):
         v.addLayout(aktionen)
         v.addStretch(1)
         fuss = FlussLayout(_A_MITTEL); raender(fuss, "oben")
-        self.zurueck_knopf = _rolle(QPushButton(_t("bild.zurueck_zum_dokument")), "aktion"); self.zurueck_knopf.clicked.connect(self._zurueck)
+        self.zurueck_knopf = knopf("standard", _t("bild.zurueck_zum_dokument"), rolle="aktion", aktion=self._zurueck)
         fuss.addWidget(self.zurueck_knopf); fuss.addWidget(self.k_export)
         v.addLayout(fuss)
 

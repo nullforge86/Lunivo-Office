@@ -5,6 +5,8 @@ Lesen · Anzeige · Schreiben · Speichern · Drucken und PDF · Name und KI. Je
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import grundschrift
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -57,7 +59,7 @@ class OptionenAnsicht(LesenSeiten, AnsichtSeiten, DateiSeiten, BefehleSeiten, Lu
         grundschrift(self)
         links = QWidget(); links.setObjectName("optLinks"); links.setAttribute(Qt.WA_StyledBackground, True)
         lv = _spalte("panel", links)
-        self.suche = QLineEdit()
+        self.suche = zeilenfeld("frei")
         self.suche.setPlaceholderText(_t("optionen.rahmen.einstellung_suchen")); self.suche.setToolTip(_t("optionen.rahmen.suchen_strg_f"))
         self.suche.setClearButtonEnabled(True)
         self.suche.setMinimumHeight(HOEHE_FELD)

@@ -5,6 +5,8 @@ Texte stehen in der Beschreibung nur als Stichwörter (``texte.json``). Die Besc
 Knopf tut, entscheidet der Aufrufer über ``ausloeser(knopf)``; ob er bedienbar ist, über ``aktiv(knopf)``. Maße kommen aus ``mass``."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -38,7 +40,7 @@ def gruppenkopf(v: RasterSpalte, name: str, hinweis: str = "") -> None:
 
 
 def befehlsknopf(v: RasterSpalte, spec: dict, ausloeser: Callable[[dict], None], aktiv: Callable[[dict], bool] = lambda _k: True) -> QPushButton:
-    k = QPushButton(_t(spec["text"])); k.setObjectName("bsKnopf"); k.setCursor(Qt.PointingHandCursor)
+    k = knopf_baustein("standard", _t(spec["text"]), objektname="bsKnopf", hand=True)
     sym = datei_symbol(spec["datei"]) if spec.get("datei") else None
     if sym is not None and not sym.isNull():                       # eigenes, vollständiges Dateiformatblatt
         k.setIcon(sym); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))

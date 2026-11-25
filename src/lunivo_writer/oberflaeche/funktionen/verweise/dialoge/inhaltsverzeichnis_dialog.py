@@ -7,12 +7,14 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFontMetricsF, QPainter
-from PySide6.QtWidgets import QCheckBox, QDialog, QLabel, QPushButton, QSpinBox, QWidget
+from PySide6.QtWidgets import QDialog, QLabel, QSpinBox, QWidget
 
 from lunivo_writer.farmwork.funktionen.verweise.konstanten import FUELLZEICHEN, INHALTSVERZEICHNIS_FUELL, INHALTSVERZEICHNIS_VORGABE
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import VorschauFlaeche, fussleiste
 from lunivo_writer.oberflaeche.baukasten.basis.mass import (ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN,
                                                                       SCHRIFT_VORSCHAU_VERZEICHNIS)
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, gruppe
@@ -40,10 +42,10 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         self.fuell.setCurrentIndex(max(0, self.fuell.findData(o["fuell"])))
         self.ebenen = QSpinBox(); self.ebenen.setRange(1, 9); self.ebenen.setValue(int(o["ebenen"])); self.ebenen.setMinimumHeight(HOEHE_KNOPF)
         self.ebenen.setAccessibleName("Ebenen anzeigen")
-        self.seitenzahlen = QCheckBox("Seitenza&hlen anzeigen"); self.seitenzahlen.setChecked(bool(o["seitenzahlen"]))
-        self.rechts = QCheckBox("Seitenzahlen &rechtsbündig"); self.rechts.setChecked(bool(o["rechts"]))
-        self.links = QCheckBox("&Hyperlinks verwenden"); self.links.setChecked(bool(o["links"]))
-        optionen = QPushButton("&Optionen…"); optionen.setMinimumHeight(HOEHE_KNOPF_GROSS); optionen.setEnabled(False)   # Vorlagen den Ebenen zuordnen: fehlt noch
+        self.seitenzahlen = haken("standard", "Seitenza&hlen anzeigen", an=bool(o["seitenzahlen"]))
+        self.rechts = haken("standard", "Seitenzahlen &rechtsbündig", an=bool(o["rechts"]))
+        self.links = haken("standard", "&Hyperlinks verwenden", an=bool(o["links"]))
+        optionen = knopf("gross", "&Optionen…", aktiv=False)   # Vorlagen den Ebenen zuordnen: fehlt noch
         fw = QWidget(); fg = FormularGitter(fw); fg.setContentsMargins(*RAND_KEIN)
         fg.reihe((_titel("Füllzei&chen:", self.fuell), self.fuell))
         fg.reihe((_titel("&Ebenen anzeigen:", self.ebenen), self.ebenen))

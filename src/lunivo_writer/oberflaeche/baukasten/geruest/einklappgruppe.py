@@ -3,6 +3,8 @@
 Bedienbar mit Tab, Leertaste und Eingabetaste; ein Bildschirmleser meldet Namen und Zustand (ein-/ausgeklappt)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -18,9 +20,7 @@ class EinklappGruppe(QWidget):
         super().__init__(parent)
         self.titel = titel
         v = _spalte("zeile", self)
-        self.knopf = QToolButton()
-        self.knopf.setCheckable(True)
-        self.knopf.setAutoRaise(True)
+        self.knopf = werkzeugknopf("standard", umschaltbar=True)
         self.knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.knopf.setText(titel)
         self.knopf.setMinimumHeight(HOEHE_FELD)

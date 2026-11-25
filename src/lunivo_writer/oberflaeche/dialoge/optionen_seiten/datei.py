@@ -1,6 +1,9 @@
 """Optionen: Schreiben, Speichern, Drucken und PDF."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
@@ -114,9 +117,9 @@ class DateiSeiten:
                  self._sicherungskopien_oeffnen)
         f = p.unter(e, _t("optionen.datei.gedaechtnis_und_woerterbuch_sichern"))
         p.aktion(_t("optionen.datei.sichern_und_zurueckholen"), _t("optionen.datei.sichern"), self._daten_sichern)
-        zb = QPushButton(_t("optionen.datei.einspielen")); zb.clicked.connect(self._daten_zurueckholen)
+        zb = knopf("standard", _t("optionen.datei.einspielen"), aktion=self._daten_zurueckholen)
         f.addRow(zb)
-        ort = QLineEdit(p.s.datei()); ort.setReadOnly(True); ort.setAccessibleName(_t("optionen.datei.ort_der_einstellungsdatei"))
+        ort = zeilenfeld("frei", p.s.datei(), nur_lesen=True, name=_t("optionen.datei.ort_der_einstellungsdatei"))
         f.addRow(_t("optionen.datei.einstellungsdatei"), ort)
         f = p.unter(e, _t("optionen.datei.dokument_schuetzen_und_aenderungen"))
         p.aktion(_t("optionen.datei.kennwort_bearbeitung_sperren_datenschutz"), _t("optionen.datei.kennwort_und_datenschutz"), lambda: self._anpassen("sicherheit"))

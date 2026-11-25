@@ -6,6 +6,8 @@ Alles Fachliche liefert der Dienst (``antwort_lage``, ``antwort_einfuegen``, ``a
 ``chatGeaendert``/``kontextGeaendert`` neu und hält keine Widgets der Chat-Blase."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
@@ -44,8 +46,8 @@ class AenderungsFenster(PanelFaehig, QDialog):
         self.nachher_bereich, self.nachher = self._bereich(v, TITEL_NACHHER, kopieren=True)
         self.hinweis = hinweis_label("", klein=True); self.hinweis.hide()
         v.addWidget(self.hinweis)
-        self.einfuegen = QPushButton(TEXT_EINFUEGEN)
-        self.rezension = QPushButton(TEXT_REZENSION)
+        self.einfuegen = knopf_baustein("standard", TEXT_EINFUEGEN)
+        self.rezension = knopf_baustein("standard", TEXT_REZENSION)
         self.knoepfe = knopfzeile(self, self.einfuegen, self.rezension, ok_text=TEXT_ERSETZEN, abbrechen_text=TEXT_SCHLIESSEN, bei_ok=self._ersetzen)
         self.ersetzen = self.knoepfe.ok
         self.ersetzen.setObjectName(HAUPTKNOPF)                # gefüllter Hauptknopf in Akzentfarbe (Regel im Thema)

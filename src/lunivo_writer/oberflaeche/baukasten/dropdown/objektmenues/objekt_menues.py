@@ -22,6 +22,7 @@ from lunivo_writer.oberflaeche.bauteile import symbole
 
 from lunivo_writer.editor.objekte.formen.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG_GROSS
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_INNEN_OBJEKT, GROESSE_SPALTENRASTER_KACHEL, GROESSE_STRICHART_MENUEBILD, GROESSE_STRICHART_MENUESYMBOL, GROESSE_TEXTUR_MUSTER_KACHEL, GROESSE_VERLAUF_KACHEL, ICON_NORMAL
 
 
@@ -139,7 +140,7 @@ def formstil_zeichner(schluessel: str):
         else:
             p.setBrush(QColor(Farbe.PAPIER))
         p.setPen(QPen(QColor(w["linie"]), min(2.5, max(1.0, w["strich"] * 0.6))))
-        p.drawRoundedRect(kachel, 5, 5)
+        p.drawRoundedRect(kachel, RADIUS_ZEICHNUNG_GROSS, RADIUS_ZEICHNUNG_GROSS)
         hell = not w["fuell"] or QColor(w["fuell"]).lightness() > 150
         p.setPen(QColor(Farbe.TINTE_DUNKEL) if hell else QColor(Farbe.PAPIER)); p.drawText(kachel, Qt.AlignCenter, "Abc")
         p.restore()

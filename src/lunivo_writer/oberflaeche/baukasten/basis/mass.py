@@ -633,3 +633,59 @@ ICON_ZAHLFELD = 16                # Symbol vor dem Zahlfeld
 
 # Vorschau im Fenster „Inhaltsverzeichnis“
 SCHRIFT_VORSCHAU_VERZEICHNIS = 13   # Pixelgröße der gemalten Beispielzeilen
+
+# Zeichenstile: Stiftbreiten und Eckenradien für Vorschauen, Bildchen und Griffe (Werte exakt wie bisher an den Stellen; fast gleiche Werte stehen
+# bewusst getrennt – Kandidaten zum Vereinheitlichen: 1,2 / 1,3 / 1,4 / 1,5 sowie 2 / 3 / 4 / 5)
+QWIDGETSIZE_MAX = 16777215          # größte Breite/Höhe, die Qt kennt (hebt eine gesetzte Obergrenze auf)
+STIFT_BILDCHEN = 1.2                # Rand und Linien in Bildchen, Vorschauen und Griffen
+STIFT_BILDCHEN_LINIE = 1.3          # Linien der Textumbruch- und Objektbildchen
+STIFT_SYMBOL = 1.4                  # Linien der Sinnbilder im Exportdialog und im Kopf-Dropdown
+STIFT_AUSWAHL = 1.5                 # Auswahlumriss und gestrichelte Tabellenränder
+STIFT_BETONT = 2                    # betonte Linie (Auswahlpunkte, Rahmen im Bildschirmfoto)
+STIFT_KREIS = 2.5                   # Ring um den gewählten Farbpunkt
+STIFT_STARK = 3                     # kräftige Linie der Listenvorschau
+RADIUS_ZEICHNUNG_FEIN = 1.5         # Titelbalken im Diagrammbildchen
+RADIUS_ZEICHNUNG_KLEIN = 2          # kleine Felder in Bildchen
+RADIUS_ZEICHNUNG = 3                # Kacheln und Knöpfe in Bildchen
+RADIUS_ZEICHNUNG_MITTEL = 4         # Galerie-Auswahl
+RADIUS_ZEICHNUNG_GROSS = 5          # Objekt-Kachel, Farbwähler-Rahmen, Objekt-Schaltfläche
+RADIUS_ZEICHNUNG_KACHEL = 6         # Beschriftungsband der Vorlagenkachel
+# Schriftgrößen der gemalten Vorschauen (Pixel) und Textproben (Punkte)
+SCHRIFT_GALERIE_BESCHRIFTUNG_PT = 8.5
+SCHRIFT_GALERIE_ABZUG_PT = 0.5
+SCHRIFT_RASTER_ZAHL_PX = 13
+SCHRIFT_RUBY_VORSCHAU_PX = 22
+SCHRIFT_TEXTEFFEKT_VORSCHAU_PX = 36
+SCHRIFT_WASSERZEICHEN_VORSCHAU_PX = 40
+SCHRIFT_TEXTVERFORMUNG_PFAD_PT = 40   # Punktgröße des Pfades „abcde“, der in der Textverformungs-Kachel verformt wird
+SCHRIFT_LISTE_KLEIN_PX = 10
+SCHRIFT_LISTE_BEISPIEL_PX = 16
+SCHRIFT_LISTE_ZAHL_PX = 13
+SCHRIFT_LISTE_TITEL_PT = 18
+SCHRIFT_BANDSTIL_PT = 8
+SCHRIFT_ANSICHT_PROBE_PT = 12
+SCHRIFT_PAPIERTON_NAME_PT = 13
+SCHRIFT_SONDERZEICHEN_PX = 17
+SCHRIFT_HILFE_SERIF_PT = 12.5
+SCHRIFT_HILFE_ABSCHNITT_PT = 8
+SCHRIFT_HILFE_TITEL_PLUS_PT = 3
+SCHRIFT_LINEAL_PX = 11
+SCHRIFT_UEBERSCHRIFT_PLUS_PT = 2    # Überschrift in Dialogen: so viel größer als der Text
+SCHRIFT_GRUPPENKOPF_FAKTOR = 0.85   # Gruppenköpfe in Listen: Anteil der Textgröße
+SCHRIFT_DIAGRAMMNAME_FAKTOR = 1.35  # Name der Diagrammart: Vielfaches der Textgröße
+SCHRIFT_EINFUEGEN_VORSCHAU_PT = 12  # Textprobe im Einfügen-Fenster
+# Zugaben und Teiler von Größen, die aus Inhalt berechnet werden
+GALERIE_KACHEL_LUECKE, GALERIE_RAND_BREIT, GALERIE_RAND_UNTEN = 2, 18, 4
+RASTER_ROLLE_ZUGABE = 2
+DROPDOWN_KACHEL_ABZUG_FLACH, DROPDOWN_KACHEL_ABZUG_ZEILE = 4, 6
+FARBWAEHLER_ZUGABE_HOCH, FARBWAEHLER_ZUGABE_LINKS, FARBWAEHLER_ZUGABE_RECHTS = 14, 6, 8
+VORLAGENKACHEL_ZUGABE_BREIT, VORLAGENKACHEL_ZUGABE_HOCH = 12, 44
+LISTE_KACHEL_ZUGABE, LISTE_KACHELN_REIHEN = 8, 2
+BANDGRUPPE_KNOPF_ZUGABE = 8
+BANDGRUPPE_ABSTAND = 3
+BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL, BANDGRUPPE_RAND_OBEN = 1, 3, 2
+BANDSTIL_SPALTENBREITE, BANDSTIL_ZUGABE_BREIT, BANDSTIL_ZUGABE_HOCH = 85, 4, 2
+KACHEL_SEITENVERHAELTNIS = (3, 4)    # Höhe zu Breite der Kacheln im Einfügen-Fenster
+EINFUEGEN_TYP_ZEILEN, EINFUEGEN_LISTE_ZEILEN = 5, 9
+SONDERZEICHEN_ZELLEN_REIHEN, SONDERZEICHEN_SONDER_ZEILEN, SONDERZEICHEN_KOPF_ZEILEN = 5, 12, 8
+SUCHEN_KNOPF_ZUGABE, SUCHEN_ELEMENTE_ZUGABE = 2, 8

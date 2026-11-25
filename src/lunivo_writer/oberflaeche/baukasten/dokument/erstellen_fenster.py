@@ -8,6 +8,8 @@
 Die Felder landen in ``self.gitter`` (FormularGitter); Unterklassen hängen eigene Zeilen dazwischen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QMessageBox, QPlainTextEdit, QWidget
@@ -34,7 +36,7 @@ class ErstellenFenster(PanelFaehig, QDialog):
         self.chips = VorlagenChips(vorlagen_namen)
         self.chips.gewaehlt.connect(self.vorlage_gewaehlt)
         self.gitter.breit(self.chips)
-        self.name = QLineEdit(); self.name.setMaxLength(NAME_MAX_ZEICHEN)
+        self.name = zeilenfeld("frei"); self.name.setMaxLength(NAME_MAX_ZEICHEN)
         self.prompt = QPlainTextEdit(); self.prompt.setMinimumHeight(HOEHE_TEXT_NORMAL)
 
     def name_zeile(self, beschriftung: str, platzhalter: str, symbol=None) -> None:

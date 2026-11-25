@@ -8,6 +8,8 @@ falls vorhanden). Bedienung ohne Maus: der Fokus steht gleich im Fenster, Esc br
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -75,7 +77,7 @@ FLACHE_REITER = (                                                             # 
 
 def zusatz_knopf(symbol: str, tipp: str, aktion: Callable | None, name: str = "") -> QToolButton:
     """Ein Knopf der Titelzeile (Zurück, Schließen, Anheften): flach, mit Symbol aus ``icons``."""
-    k = QToolButton(); k.setIcon(symbole.icon(symbol, ICON_NORMAL)); k.setToolTip(tipp); k.setAccessibleName(name or tipp)
+    k = werkzeugknopf("standard", symbol=symbol, tooltip=tipp, name=name or tipp)
     k.setAutoRaise(True); k.setFixedSize(*GROESSE_PANELKNOPF)
     if aktion is not None:
         k.clicked.connect(aktion)

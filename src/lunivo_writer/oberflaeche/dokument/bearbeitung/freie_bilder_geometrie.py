@@ -10,8 +10,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QTransform
 
-# Sinnbilder des Formleisten-Schwebeknopfs und der Anpassungsraute: bewusst fest (Gruppe C)
-SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR = "#f2c200", "#ffe45c", "#1c3faa"
+from lunivo_writer.oberflaeche.baukasten.basis.farben import SINNBILD_GELB, SINNBILD_GELB_HELL, SINNBILD_KONTUR  # noqa: F401  (Sinnbilder des Schwebeknopfs, bewusst fest)
 GRIFF = 9.0                                                  # Seitenlänge eines Griffs in Bildschirmpunkten
 GRIFFE = {"nw": (0, 0), "n": (0.5, 0), "ne": (1, 0), "e": (1, 0.5), "se": (1, 1), "s": (0.5, 1), "sw": (0, 1), "w": (0, 0.5)}
 ROT_ABSTAND = 24.0                                           # Drehgriff: so weit über der Oberkante des Rahmens

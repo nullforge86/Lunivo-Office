@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, QWidget
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.felder.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
 
@@ -44,12 +45,11 @@ class _BandSeite(QScrollArea):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.pfeile: dict[str, QToolButton] = {}
         for seite, zeichen in (("links", "‹"), ("rechts", "›")):
-            b = QToolButton(self)
-            b.setText(zeichen); b.setAutoRepeat(True); b.setAutoRepeatDelay(350); b.setAutoRepeatInterval(120)
+            b = werkzeugknopf("standard", zeichen, tooltip="Weiter nach " + seite, name="Band nach " + seite + " blättern", flach=False, eltern=self,
+                              aktion=lambda s=seite: self.blaettern(-1 if s == "links" else 1))
+            b.setAutoRepeat(True); b.setAutoRepeatDelay(350); b.setAutoRepeatInterval(120)
             b.setCursor(Qt.ArrowCursor); b.setFocusPolicy(Qt.StrongFocus)
-            b.setToolTip("Weiter nach " + seite); b.setAccessibleName("Band nach " + seite + " blättern")
             eigenschaft(b, rolle="bandpfeil")
-            b.clicked.connect(lambda _c=False, s=seite: self.blaettern(-1 if s == "links" else 1))
             b.hide()
             self.pfeile[seite] = b
         leiste = self.horizontalScrollBar()

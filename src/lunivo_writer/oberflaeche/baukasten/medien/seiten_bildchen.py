@@ -15,9 +15,13 @@ from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPainter, QPen
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
-_LINIE = QColor("#5c636a")
-_RAND = QColor("#495057")
-_STRICH_HELL, _FLAECHE_HELL = "#ced4da", "#f1f3f5"   # helle Linie und Fläche der Papier-Sinnbilder: bewusst fest (Gruppe C)
+from lunivo_writer.oberflaeche.baukasten.basis import farben as _f  # noqa: E402
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (RADIUS_ZEICHNUNG_KLEIN, RADIUS_ZEICHNUNG_MITTEL, SCHRIFT_WASSERZEICHEN_VORSCHAU_PX,  # noqa: E402
+                                                            STIFT_BILDCHEN, STIFT_BILDCHEN_LINIE)
+
+_LINIE = QColor(_f.BILDCHEN_LINIE)
+_RAND = QColor(_f.BILDCHEN_RAND)
+_STRICH_HELL, _FLAECHE_HELL = _f.BILDCHEN_STRICH_HELL, _f.BILDCHEN_FLAECHE_HELL   # helle Linie und Fläche der Papier-Sinnbilder: bewusst fest
 
 
 def _blatt(p: QPainter, r: QRectF, verhaeltnis: float = 1.36) -> QRectF:
@@ -25,12 +29,12 @@ def _blatt(p: QPainter, r: QRectF, verhaeltnis: float = 1.36) -> QRectF:
     h = r.height() - 2
     b = min(r.width() - 2, h / verhaeltnis)
     blatt = QRectF(r.center().x() - b / 2, r.top() + 1, b, h)
-    p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawRect(blatt)
+    p.setPen(QPen(_RAND, STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.WEISS)); p.drawRect(blatt)
     return blatt
 
 
 def _zeilen(p: QPainter, r: QRectF, n: int) -> None:
-    p.setPen(QPen(_LINIE, 1.3))
+    p.setPen(QPen(_LINIE, STIFT_BILDCHEN_LINIE))
     for i in range(n):
         y = r.top() + (i + 0.5) * r.height() / n
         p.drawLine(QPointF(r.left(), y), QPointF(r.right(), y))
@@ -76,14 +80,14 @@ def wasserzeichen_vorschau(w: dict) -> Zeichner:
     return f
 
 
-def wasserzeichen_zeichner(text: str, winkel: float = -45, farbe: str = "#b4b9be") -> Zeichner:
+def wasserzeichen_zeichner(text: str, winkel: float = -45, farbe: str = _f.WASSERZEICHEN_VORSCHAU) -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         b = _blatt(p, r)
-        schrift = QFont(p.font()); schrift.setPixelSize(40)
+        schrift = QFont(p.font()); schrift.setPixelSize(SCHRIFT_WASSERZEICHEN_VORSCHAU_PX)
         breite = QFontMetricsF(schrift).horizontalAdvance(text) or 1
         laenge = (b.width() ** 2 + b.height() ** 2) ** 0.5 * 0.78 if winkel else b.width() * 0.86
-        schrift.setPixelSize(max(6, int(40 * laenge / breite)))
+        schrift.setPixelSize(max(6, int(SCHRIFT_WASSERZEICHEN_VORSCHAU_PX * laenge / breite)))
         if len(text) <= 4 and not winkel:
             schrift.setPixelSize(min(schrift.pixelSize(), int(b.height() * 0.3)))
         p.setFont(schrift); p.setPen(QColor(farbe))
@@ -98,7 +102,7 @@ def plus_zeichner(beschriftung: str = "") -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         q = QRectF(r.center().x() - r.height() * 0.35, r.top() + r.height() * 0.08, r.height() * 0.7, r.height() * 0.6)
-        p.setPen(QPen(QColor(_STRICH_HELL), 1, Qt.DashLine)); p.setBrush(QColor(_FLAECHE_HELL)); p.drawRoundedRect(q, 4, 4)
+        p.setPen(QPen(QColor(_STRICH_HELL), 1, Qt.DashLine)); p.setBrush(QColor(_FLAECHE_HELL)); p.drawRoundedRect(q, RADIUS_ZEICHNUNG_MITTEL, RADIUS_ZEICHNUNG_MITTEL)
         p.setPen(QPen(QColor(Farbe.GRAU_HELL), q.width() * 0.16, Qt.SolidLine, Qt.FlatCap))
         m = q.center(); a = q.width() * 0.3
         p.drawLine(QPointF(m.x() - a, m.y()), QPointF(m.x() + a, m.y())); p.drawLine(QPointF(m.x(), m.y() - a), QPointF(m.x(), m.y() + a))
@@ -153,7 +157,7 @@ def format_zeichner(quer: bool) -> Zeichner:
         h = r.height() - 2
         b = QRectF(0, 0, h * 1.36, h * 0.82) if quer else QRectF(0, 0, h / 1.36, h)
         b.moveCenter(r.center())
-        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawRoundedRect(b, 2, 2)
+        p.setPen(QPen(_RAND, STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.WEISS)); p.drawRoundedRect(b, RADIUS_ZEICHNUNG_KLEIN, RADIUS_ZEICHNUNG_KLEIN)
         p.setPen(QPen(_LINIE, 1, Qt.DashLine))
         if quer:
             p.drawLine(QPointF(b.left() + 4, b.center().y()), QPointF(b.right() - 4, b.center().y()))
@@ -171,7 +175,7 @@ def papier_zeichner() -> Zeichner:
         h = r.height() - 4; w = h / 1.36
         x, y = r.center().x() - w / 2, r.top() + 2
         e = w * 0.3
-        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS))
+        p.setPen(QPen(_RAND, STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.WEISS))
         p.drawPolygon(QPolygonF([QPointF(x, y), QPointF(x + w - e, y), QPointF(x + w, y + e), QPointF(x + w, y + h), QPointF(x, y + h)]))
         p.drawPolyline(QPolygonF([QPointF(x + w - e, y), QPointF(x + w - e, y + e), QPointF(x + w, y + e)]))
         p.restore()
@@ -183,7 +187,7 @@ def textrichtung_zeichner(art: str) -> Zeichner:
     def f(p: QPainter, r: QRectF) -> None:
         p.save(); p.setRenderHint(QPainter.Antialiasing)
         k = QRectF(0, 0, r.height() - 2, r.height() - 2); k.moveCenter(r.center())
-        p.setPen(QPen(_RAND, 1.2)); p.setBrush(QColor(Farbe.WEISS)); p.drawRect(k)
+        p.setPen(QPen(_RAND, STIFT_BILDCHEN)); p.setBrush(QColor(Farbe.WEISS)); p.drawRect(k)
         schrift = p.font(); schrift.setPixelSize(max(7, int(k.height() * 0.3))); p.setFont(schrift)
         p.setPen(QColor(Farbe.TINTE_DUNKEL))
         if art == "waagerecht":

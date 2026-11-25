@@ -23,7 +23,8 @@ from lunivo_writer.oberflaeche.baukasten.felder.schiebe_feld import SchrittFeld
 from lunivo_writer.oberflaeche.baukasten.formatierung.text_fuellarten_mixin import TextFuellartenMixin
 from lunivo_writer.oberflaeche.baukasten.formatierung.texteffekt_dialog import Abschnitt
 from lunivo_writer.oberflaeche.bauteile import symbole
-from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_SPALTE, GROESSE_TEXTVERFORMUNG_KACHEL, ICON_MITTEL, RAND_FORMATSEITE
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_SPALTE, GROESSE_TEXTVERFORMUNG_KACHEL, ICON_MITTEL, RAND_FORMATSEITE, FAMILIE_TEXTVERFORMUNG_KACHEL, SCHRIFT_TEXTVERFORMUNG_PFAD_PT
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Schriftauswahl
 from lunivo_writer.oberflaeche.baukasten.diagramme.diagramm_format_bausteine import RICHTUNGEN, _combo, _still
 
@@ -82,7 +83,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         for t, f in (("X-Drehung", self.dr_x), ("Y-Drehung", self.dr_y), ("Z-Drehung", self.dr_z), ("Perspektive", self.dr_pers)):
             self.a_dreh.zeile(t, f)
             f.valueChanged.connect(lambda *_: self._neu())
-        zr = QPushButton("Zurücksetzen"); zr.clicked.connect(self._dreh_zuruecksetzen); self.a_dreh.breit(zr)
+        zr = knopf("standard", "Zurücksetzen", aktion=self._dreh_zuruecksetzen); self.a_dreh.breit(zr)
         self.a_warp = Abschnitt("Transformieren")
         self._warp_art = "keine"
         self.warp_knopf = KopfDropdown(self._warp_menue)
@@ -103,7 +104,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
     def _warp_bild(art: str, groesse: QSize) -> QPixmap:
         """„abcde“ so verformt, wie der Text gezeichnet wird (derselbe ``pfad_verformen``)."""
         pm = QPixmap(groesse); pm.fill(Qt.transparent)
-        pfad = QPainterPath(); pfad.addText(0, 0, QFont("sans-serif", 40), "abcde")
+        pfad = QPainterPath(); pfad.addText(0, 0, QFont(FAMILIE_TEXTVERFORMUNG_KACHEL, SCHRIFT_TEXTVERFORMUNG_PFAD_PT), "abcde")
         ops = pfad_verformen(list(pfad_zu_vektor(pfad).ops), {"warp": {"art": art}})            # Kern verformt Pfadanweisungen, nicht QPainterPath
         pfad = vektor_zu_pfad(VectorPath(tuple(ops)))
         r = pfad.boundingRect()

@@ -8,6 +8,9 @@ Die Füllzeichen zeichnet Lunivo selbst (``editor/text/tabfuell.py``).
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt
@@ -84,7 +87,7 @@ class TabstoppDialog(PanelFaehig, QDialog):
         bh = FlussLayout(14); bh.setContentsMargins(*RAND_KEIN)
         self.art = QButtonGroup(self)
         for i, k in enumerate(("dezimal", "links", "mitte", "rechts")):
-            r = QRadioButton(dict(ARTEN)[k]); self.art.addButton(r, [a for a, _n in ARTEN].index(k)); bh.addWidget(r)
+            r = option("standard", dict(ARTEN)[k], gruppe=self.art, nummer=[a for a, _n in ARTEN].index(k)); bh.addWidget(r)
         self.art.button(0).setChecked(True)
         kopf.breit(bh)
         kopf.breit(abschnittstitel("Füllzeichen"))
@@ -93,14 +96,14 @@ class TabstoppDialog(PanelFaehig, QDialog):
         self.fuell = QButtonGroup(self)
         self._fuell_schluessel = list(FUELL)
         for i, k in enumerate(self._fuell_schluessel):
-            r = QRadioButton(FUELL[k][0]); self.fuell.addButton(r, i); fg.addWidget(r)
+            r = option("standard", FUELL[k][0], gruppe=self.fuell, nummer=i); fg.addWidget(r)
         self.fuell.button(0).setChecked(True)
         kopf.breit(fg)
         v.addLayout(kopf)
         v.addStretch(1)
-        self.b_fest, self.b_loesch = QPushButton("Festlegen"), QPushButton("Löschen")
+        self.b_fest, self.b_loesch = knopf("standard", "Festlegen"), knopf("standard", "Löschen")
         self.b_fest.clicked.connect(self.festlegen); self.b_loesch.clicked.connect(self.loeschen)
-        b_alle = QPushButton("Alle löschen"); b_alle.clicked.connect(self.alle)
+        b_alle = knopf("standard", "Alle löschen", aktion=self.alle)
         fussleiste(self, v, self.b_fest, self.b_loesch, b_alle)
         self.liste.currentRowChanged.connect(self._zeile)
         self.pos.valueChanged.connect(self._knoepfe)

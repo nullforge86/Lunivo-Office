@@ -6,6 +6,9 @@ gesperrt. ``mit_titel=False`` lässt das Titelfeld weg (Bilder haben nur eine Be
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QCheckBox, QLineEdit, QPlainTextEdit
 
@@ -19,14 +22,14 @@ class AlternativtextAbschnitt(Abschnitt):
 
     def __init__(self, parent=None, mit_titel: bool = True, mit_dekorativ: bool = False):
         super().__init__("Alternativtext")
-        self.titel_feld = QLineEdit()
+        self.titel_feld = zeilenfeld("frei")
         self.text_feld = QPlainTextEdit(); self.text_feld.setMinimumHeight(HOEHE_BEREICH_MITTEL)
         self.titel_feld.setPlaceholderText("Titel eingeben"); self.text_feld.setPlaceholderText("Beschreibung eingeben")
         if mit_titel:
             self.gitter.reihe(("Titel", self.titel_feld))
         self.gitter.reihe(("Beschreibung", self.text_feld))       # Eingabe braucht Platz: Beschriftung darüber, Feld über die ganze Breite
         self._stumm = False
-        self.dekorativ = QCheckBox("Als dekorativ markieren") if mit_dekorativ else None
+        self.dekorativ = haken("standard", "Als dekorativ markieren") if mit_dekorativ else None
         if self.dekorativ is not None:
             self.gitter.breit(self.dekorativ)
             self.dekorativ.toggled.connect(self._dekorativ)

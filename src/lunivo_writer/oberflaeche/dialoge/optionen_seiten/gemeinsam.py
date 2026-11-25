@@ -1,6 +1,10 @@
 """Gemeinsame Werte der Bausteine."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken as haken_baustein
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
@@ -73,7 +77,7 @@ class _Seite(QWidget):
         return f
 
     def haken(self, f, key, text, std, wirkt=None):
-        c = QCheckBox(text)
+        c = haken_baustein("standard", text)
         c.setProperty("optName", text)
         c.setMinimumHeight(MIN_HOEHE)
         c.setChecked(self.s.get_bool(key, std))
@@ -133,7 +137,7 @@ class _Seite(QWidget):
 
     def schalter(self, f, text: str, ist, umschalten):
         """Haken, der den Zustand eines anderen Teils des Programms zeigt und schaltet (Navigationsbereich, Gitternetzlinien …)."""
-        c = QCheckBox(text)
+        c = haken_baustein("standard", text)
         c.setProperty("optName", text)
         c.setMinimumHeight(MIN_HOEHE)
         c.setChecked(bool(ist()))
@@ -142,7 +146,7 @@ class _Seite(QWidget):
         return c
 
     def eingabe(self, key: str, platzhalter: str) -> QLineEdit:
-        e = QLineEdit(str(self.s.get(key, "")))
+        e = zeilenfeld("frei", str(self.s.get(key, "")))
         e.setPlaceholderText(platzhalter)
         e.setProperty("optName", platzhalter)
         e.setAccessibleName(platzhalter)
@@ -163,7 +167,7 @@ class _Seite(QWidget):
         h = _reihe("standard")
         e = self.eingabe(key, platzhalter)
         e.setProperty("optName", text)
-        k = QPushButton(_t("optionen.gemeinsam.waehlen"))
+        k = knopf_baustein("standard", _t("optionen.gemeinsam.waehlen"))
 
         def waehle():
             from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
@@ -226,9 +230,8 @@ class _Seite(QWidget):
 
     def haken_aus(self, f, text: str, grund: str, an: bool = True):
         """Ein Haken, den es in der ersten Fassung gab und der hier noch nichts bewirkt: grau, mit Grund."""
-        c = QCheckBox(text)
+        c = haken_baustein("standard", text, an=an, aktiv=False, tooltip=grund, name=text)
         c.setProperty("optName", text)
-        c.setChecked(an); c.setEnabled(False); c.setToolTip(grund)
         f.addRow(c)
         return c
 
@@ -296,7 +299,7 @@ class _Karte(FormularGitter):
         zeile = QWidget(); zeile.setObjectName("optPaar")
         v = _spalte("abschnitt", zeile)
         v.addWidget(QLabel(text))
-        k = QPushButton(knopf)
+        k = knopf_baustein("standard", knopf)
         k.clicked.connect(lambda _=False: aktion())
         h = _reihe("standard"); h.addWidget(k); h.addStretch(1)
         v.addLayout(h)

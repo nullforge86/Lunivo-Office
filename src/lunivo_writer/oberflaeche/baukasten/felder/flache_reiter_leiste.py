@@ -15,6 +15,8 @@ Die Beschriftung bricht bei Platzmangel um und wird nie mit „…“ gekürzt; 
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette, QPolygonF
 from PySide6.QtWidgets import QTabBar, QTabWidget, QToolButton
@@ -49,7 +51,7 @@ class ReiterUeberlauf:
     Die flachen Leisten der Fenster nutzen stattdessen ``ReiterDropdown``."""
 
     def _mehr_einrichten(self) -> None:
-        self._mehr = QToolButton(self)
+        self._mehr = werkzeugknopf("standard", flach=False, eltern=self)
         self._mehr.setText(MEHR_TEXT); self._mehr.setAutoRaise(True); self._mehr.setCursor(Qt.PointingHandCursor)
         self._mehr.setToolTip(MEHR_TIPP); self._mehr.setAccessibleName(MEHR_TIPP)
         self._mehr.clicked.connect(self._mehr_menue); self._mehr.hide()

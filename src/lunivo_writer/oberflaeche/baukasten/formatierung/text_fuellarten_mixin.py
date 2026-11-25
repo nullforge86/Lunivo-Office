@@ -11,6 +11,9 @@ Mixin für ``DiagrammTextPanel`` (vor ``TextKopfMenueMixin``); die Basis ``texte
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from PySide6.QtGui import QImage
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
@@ -31,7 +34,7 @@ class TextFuellartenMixin:
     def _text_fuellarten_bauen(self) -> None:
         a = self.a_fuell
         self._p_art, self._p_bild = "textur", ""
-        self.r_bild, self.r_muster = QRadioButton("Bild- oder Texturfüllung"), QRadioButton("Musterfüllung")
+        self.r_bild, self.r_muster = option("standard", "Bild- oder Texturfüllung"), option("standard", "Musterfüllung")
         g = a.gitter
         for w in (self.f_einfarbig, self.f_verlauf):                  # die Felder der alten Arten kommen hinter die neuen Radios
             for i in range(g.count()):
@@ -43,7 +46,7 @@ class TextFuellartenMixin:
         self.p_textur = Auswahlfeld()
         for schl, name in TEXTUREN:
             self.p_textur.addItem(name, schl)
-        self.p_bildknopf = QPushButton("Bilddatei wählen …")
+        self.p_bildknopf = knopf("standard", "Bilddatei wählen …")
         self.f_bild = QWidget(); fb = FormularGitter(self.f_bild)
         fb.zeile("Textur:", self.p_textur); fb.breit(self.p_bildknopf)
         self.p_muster = Auswahlfeld()

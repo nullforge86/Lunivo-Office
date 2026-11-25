@@ -17,8 +17,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
-PAPIERTOENE = {"Weiß": Farbe.WEISS, "Creme": "#fbf4e2", "Gelblich": "#fff7cc", "Hellblau": "#e6f0fa",
-               "Hellgrün": "#e8f5e9", "Hellgrau": "#eceff1"}
+from lunivo_writer.oberflaeche.baukasten.basis.farben import PAPIERTOENE  # noqa: F401
 VORGABEN = {"papier": "Weiß", "buchstaben": 0.0, "wort": 0.0, "zeilenluft": 1.0, "zeilenfokus": False, "groesser": "keine", "zurueck": "keine"}
 
 

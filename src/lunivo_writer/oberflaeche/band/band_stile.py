@@ -26,6 +26,9 @@ from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
 from lunivo_writer.oberflaeche.band.plan import plan
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import BANDSTIL_SPALTENBREITE, BANDSTIL_ZUGABE_BREIT, BANDSTIL_ZUGABE_HOCH, SCHRIFT_BANDSTIL_PT
+from lunivo_writer.oberflaeche.baukasten.basis.schriftarten import SANS
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Schriftauswahl
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownKnopf
@@ -41,7 +44,7 @@ def _kacheln(m, aktuell: str | None, mehr: bool) -> None:
         if not mehr and name in selten and name != aktuell:
             continue
         d = stile.definition(name)
-        f = QFont("Liberation Sans")
+        f = QFont(SANS)
         f.setPointSizeF(min(15.0, max(9.0, float(d["groesse"] or 10) * 0.8)))
         f.setBold(name.startswith("Überschrift") or name == "Titel" or bool(d["fett"]))
         f.setItalic(name in ("Untertitel", "Zitat") or bool(d["kursiv"]))
@@ -66,12 +69,12 @@ class BandStileBaustein:
         sa.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         sa.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         host.adjustSize()
-        sa.setFixedWidth(spalten * 85 + 4)
-        sa.setFixedHeight(host.sizeHint().height() + 2)
+        sa.setFixedWidth(spalten * BANDSTIL_SPALTENBREITE + BANDSTIL_ZUGABE_BREIT)
+        sa.setFixedHeight(host.sizeHint().height() + BANDSTIL_ZUGABE_HOCH)
         eigenschaft(sa, rolle="transparent")
-        pfeil = QToolButton(); pfeil.setIcon(symbole.icon("klappe", ICON_KLEIN)); pfeil.setIconSize(QSize(ICON_KLEIN, ICON_KLEIN)); pfeil.setAutoRaise(True); pfeil.setFixedWidth(BREITE_AUFKLAPPPFEIL)
-        pfeil.setToolTip("Alle Formatvorlagen")
-        pfeil.clicked.connect(lambda: self._stile_popup(pfeil))
+        pfeil = werkzeugknopf("standard", symbol="klappe", symbolgroesse="klein", symbol_einpassen=True, tooltip="Alle Formatvorlagen",
+                              aktion=lambda: self._stile_popup(pfeil))
+        pfeil.setFixedWidth(BREITE_AUFKLAPPPFEIL)
         sa.viewport().installEventFilter(self)
         self._stile_scroll = sa
         aussen = QWidget()
@@ -121,13 +124,10 @@ class BandStileBaustein:
             g.removeWidget(k); k.hide(); k.setParent(None); k.deleteLater()
         self._stil_knoepfe = []
         for i, name in enumerate(STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]):
-            k = QToolButton()
-            k.setAutoRaise(True)
-            k.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             d = stile.definition(name)
-            k.setText(f"Aa\n{name}")
+            k = werkzeugknopf("band_stil", f"Aa\n{name}")
             f = k.font()
-            f.setPointSizeF(8)
+            f.setPointSizeF(SCHRIFT_BANDSTIL_PT)
             if name.startswith("Überschrift") or name == "Titel" or (stile.ist_eigen(name) and d["fett"]):
                 f.setBold(True)
             if name in ("Untertitel", "Zitat") or (stile.ist_eigen(name) and d["kursiv"]):
@@ -136,6 +136,7 @@ class BandStileBaustein:
             k.setFixedWidth(BREITE_VORLAGEN_AKTUALISIEREN)
             k.setToolTip(name + (" (eigene Vorlage)" if stile.ist_eigen(name) else ""))
             k.clicked.connect(lambda _=False, n=name: self.b.stilAnwenden(n))
+            k.setAccessibleName(f"Aa\n{name}")
             fl = Ueberfahren(self.b.w.vorschau, lambda e, n=name: self.b.stilVorschau(n, e))
             k.installEventFilter(fl)
             k._ueberfahren = fl                                  # am Knopf festhalten, sonst räumt Python den Filter ab

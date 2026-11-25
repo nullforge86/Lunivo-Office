@@ -5,11 +5,13 @@ Textmarke), Seitenzahlenformat fett/kursiv; „Markieren“, „Alles markieren�
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QButtonGroup, QDialog, QLineEdit, QPushButton, QRadioButton
+from PySide6.QtWidgets import QButtonGroup, QDialog
 
 from lunivo_writer.farmwork.funktionen.verweise.typen import IndexEintrag
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import knopfzeile
-from lunivo_writer.oberflaeche.baukasten.basis.mass import HOEHE_KNOPF
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
@@ -29,8 +31,7 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         v = _spalte("standard", self)
 
         def feld(name, text=""):
-            e = QLineEdit(text); e.setMinimumHeight(HOEHE_KNOPF); e.setAccessibleName(name)
-            return e
+            return zeilenfeld("standard", text, name=name)
         g = FormularGitter()                                                   # breit: zwei Paare nebeneinander wie die Vorlage; schmal: untereinander
         g.breit(abschnittstitel("Index"))
         self.haupt, self.lesung = feld("Haupteintrag", vorschlag), feld("Sortieren als (Haupteintrag)")
@@ -41,11 +42,9 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         g.reihe((_titel("Untereintrag (&S):", self.unter), self.unter), (_titel("Sortieren als (&g):", self.lesung_unter), self.lesung_unter))
         g.breit(abschnittstitel("Optionen"))
         self.art = QButtonGroup(self)
-        self.r_siehe, self.r_seite, self.r_bereich = (QRadioButton("Querverweis (&r):"), QRadioButton("Aktuelle Seite (&p)"),
-                                                      QRadioButton("Seitenbereich (&n)"))
-        for i, r in enumerate((self.r_siehe, self.r_seite, self.r_bereich)):
-            self.art.addButton(r, i)
-        self.r_seite.setChecked(True)
+        self.r_siehe = option("standard", "Querverweis (&r):", gruppe=self.art, nummer=0)
+        self.r_seite = option("standard", "Aktuelle Seite (&p)", an=True, gruppe=self.art, nummer=1)
+        self.r_bereich = option("standard", "Seitenbereich (&n)", gruppe=self.art, nummer=2)
         self.siehe = feld("Querverweis"); self.siehe.setPlaceholderText("Siehe"); self.siehe.setMinimumWidth(0)
         self.marke = Auswahlfeld(); self.marke.addItems(marken or []); self.marke.setAccessibleName("Textmarke")
         self.marke_titel = _titel("Textmarke:", self.marke)
@@ -55,10 +54,9 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         g.breit(self.fett); g.breit(self.kursiv)
         v.addLayout(g); v.addStretch(1)
 
-        self.knopf_markieren, self.knopf_alle = QPushButton("Markieren (&M)"), QPushButton("Alles markieren (&a)")
-        self.knopf_alle.setEnabled(auswahl and bool(vorschlag))       # nur mit markiertem Text: jede Stelle mit demselben Text
-        self.knopf_markieren.clicked.connect(lambda: self._melden(False))
-        self.knopf_alle.clicked.connect(lambda: self._melden(True))
+        self.knopf_markieren = knopf("standard", "Markieren (&M)", aktion=lambda: self._melden(False))
+        self.knopf_alle = knopf("standard", "Alles markieren (&a)", aktion=lambda: self._melden(True),
+                                aktiv=auswahl and bool(vorschlag))       # nur mit markiertem Text: jede Stelle mit demselben Text
         zeile = knopfzeile(self, self.knopf_markieren, self.knopf_alle, schliessen=True)
         v.addWidget(zeile)
         self.knopf_markieren.setDefault(True); zeile.ok.setDefault(False)

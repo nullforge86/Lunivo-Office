@@ -18,6 +18,10 @@ from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_RUBY_VORSCHAU_PX, SCHRIFT_VORSCHAU, STIFT_BILDCHEN_LINIE
+from lunivo_writer.oberflaeche.baukasten.basis.schriftarten import SERIF
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_NORMAL, GROESSE_UMSCHLOSSEN_VORLAGENBILD, HOEHE_BEREICH_MITTEL, HOEHE_KNOPF, HOEHE_VORSCHAU_KLEIN, ICON_FORMENLISTE, RAND_PANEL_KLEIN
 
 VORSCHLAEGE = ("√", "A", "a", "!", "?", "1", "2", "3", "★", "●", "✓", "※")
@@ -27,7 +31,7 @@ def form_bild(form: str, px: int = 18, gross: bool = False, text: str = "") -> Q
     """Die Form als kleines Bild (für die Liste) oder, mit ``text``, als Beispiel für die Vorlage."""
     pm = QPixmap(px, px); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QColor(Farbe.TINTE), 1.3)); r = QRectF(px * 0.12, px * 0.12, px * 0.76, px * 0.76)
+    p.setPen(QPen(QColor(Farbe.TINTE), STIFT_BILDCHEN_LINIE)); r = QRectF(px * 0.12, px * 0.12, px * 0.76, px * 0.76)
     if text:
         f = QFont(); f.setPixelSize(int(px * (0.42 if gross else 0.5))); p.setFont(f)
     if form == "kreis":
@@ -48,7 +52,7 @@ def form_bild(form: str, px: int = 18, gross: bool = False, text: str = "") -> Q
 def _vorlagenbild(vorlage: str) -> QIcon:
     pm = QPixmap(56, 40); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setPen(QColor(Farbe.TINTE_DUNKEL))
-    f = QFont("Liberation Serif"); f.setPixelSize(22 if vorlage == "ohne" else 15); p.setFont(f)
+    f = QFont(SERIF); f.setPixelSize(SCHRIFT_RUBY_VORSCHAU_PX if vorlage == "ohne" else SCHRIFT_VORSCHAU); p.setFont(f)
     if vorlage == "ohne":
         p.drawText(pm.rect(), Qt.AlignCenter, "I")
     else:
@@ -67,13 +71,13 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
         zeile = FlussLayout(8)
         self._vorlage = QButtonGroup(self)
         for i, (k, t) in enumerate(VORLAGEN):
-            b = QToolButton(); b.setCheckable(True); b.setChecked(k == vorlage); b.setText(t); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(*GROESSE_UMSCHLOSSEN_VORLAGENBILD))
+            b = werkzeugknopf("standard", t, umschaltbar=True, an=k == vorlage, flach=False); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(*GROESSE_UMSCHLOSSEN_VORLAGENBILD))
             b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(False)
             self._vorlage.addButton(b, i); zeile.addWidget(b)
         v.addLayout(zeile)
         v.addWidget(abschnittstitel("Umschließen"))
         v.addWidget(QLabel("Text:"))
-        self.text = QLineEdit(text); self.text.setMinimumHeight(HOEHE_KNOPF); v.addWidget(self.text)
+        self.text = zeilenfeld("standard", text); v.addWidget(self.text)
         self.vorschlaege = QListWidget(); self.vorschlaege.setMaximumHeight(HOEHE_VORSCHAU_KLEIN)
         self.vorschlaege.addItems(VORSCHLAEGE)
         self.vorschlaege.itemClicked.connect(lambda i: self.text.setText(i.text()))

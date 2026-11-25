@@ -42,6 +42,23 @@ Schattierung, Seitenfarbe, Rahmen, Füllung —, entscheidet der Aufrufer.
 
 Eine Änderung gehört in die tiefste Stufe, die sie betrifft: Lage → Stufe 1, Maße → Stufe 2, Farbe → Stufe 3; Bausteine ändern daran nichts.
 
+## Bedienelemente aus Bausteinen (`oberflaeche/baukasten/bausteine/`, Stand 2026-11-25)
+
+**Nie direkt bauen:** Außerhalb von `bausteine/` (und `basis/`) wird kein `QPushButton`, `QToolButton`, `QCheckBox`, `QRadioButton`, `QLineEdit` und kein `QFrame` als Rahmen erzeugt. Eine
+Funktionsdatei nennt nur den Baustein und den Namen der Form. Jeder Baustein besteht aus getrennten Dateien: `form.py` (Größe/Aussehen je benannter Form, Werte aus `basis/mass`),
+`inhalt.py` (Text, Symbol, Tooltip, Name), `verhalten.py` (Signale, Zustand, Gruppe, Kürzel), `<baustein>.py` (setzt die Teile zusammen), `__init__.py`.
+
+| Baustein | Aufruf | Formen |
+|---|---|---|
+| `knopf/` | `knopf(form, text, symbol=, aktion=, aktiv=, kuerzel=, standard=)`, `werkzeugknopf(…)` | standard, klein, gross, hoch, symbol |
+| `haken/` | `haken(form, text, an=, aktion=)` (Kontrollkästchen) | standard, zeile |
+| `option/` | `option(form, text, an=, aktion=, gruppe=, nummer=)` (Optionsfeld; die Gruppe sorgt dafür, dass nur eine Option gewählt ist) | standard, zeile |
+| `feld/` | `zeilenfeld(form, text, platzhalter=, name=, nur_lesen=, bei_aenderung=)` | standard, frei |
+| `rahmen/` | `rahmen(form, karte=, name=, eigenschaften=)` | flach, panel, linie_waagerecht, linie_senkrecht |
+
+Eine neue Form entsteht in `form.py` des Bausteins mit einem Maß aus `basis/mass.py`, nie in der Funktionsdatei. Fachliche Farben haben sprechende Namen in `basis/farben.py`.
+Wächter: `tests/architektur/test_oberflaeche_nur_bausteine.py` (Übergangsliste `NOCH_NICHT_UMGESTELLT_BAUSTEINE` darf nur kleiner werden).
+
 ## Regeln
 
 1. **Ein Popup liefert einen Wert** — `QColor` oder `None` („Keine Farbe“). Es kennt den Aufrufer nicht.

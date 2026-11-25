@@ -3,6 +3,8 @@
 Genutzt von ``diagramm_format_panel.py`` (Diagramm-Teile), ``diagramm_format_werte.py`` (Werte lesen/setzen) und ``diagramm_text_panel.py`` (Textoptionen)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPointF, Qt, Signal
@@ -72,7 +74,7 @@ class _AutoWert(QWidget):
     def __init__(self, vorgabe: float = 0.0):
         super().__init__()
         h = _reihe("standard", self)
-        self.auto = QCheckBox("Auto"); self.auto.setChecked(True)
+        self.auto = haken("standard", "Auto", an=True)
         self.feld = QDoubleSpinBox(); self.feld.setRange(-1e9, 1e9); self.feld.setDecimals(2); self.feld.setValue(vorgabe); self.feld.setEnabled(False)
         self.feld.setMinimumWidth(0)
         h.addWidget(self.auto); h.addWidget(self.feld, 1)

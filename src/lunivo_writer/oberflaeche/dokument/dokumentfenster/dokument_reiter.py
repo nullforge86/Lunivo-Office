@@ -5,6 +5,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, 
 
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QStackedWidget, QTabBar, QToolButton, QWidget
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.felder.flache_reiter_leiste import UeberlaufLeiste
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.thema.thema import kopf_symbolfarbe
@@ -32,11 +33,7 @@ class DocTabs(QObject):
         self.leiste.setObjectName("dokLeiste")
         h = _reihe("leiste", self.leiste)
         h.addWidget(self.bar)
-        plus = QToolButton()
-        plus.setIcon(symbole.icon("plus", ICON_NORMAL, kopf_symbolfarbe()))
-        plus.setAutoRaise(True)
-        plus.setToolTip("Neues Dokument (Strg+N)")
-        plus.clicked.connect(self.newRequested)
+        plus = werkzeugknopf("standard", symbol="plus", symbolfarbe=kopf_symbolfarbe(), tooltip="Neues Dokument (Strg+N)", aktion=self.newRequested.emit)
         h.addWidget(plus)
         h.addStretch(1)
         self.bar.platz = lambda: self.leiste.width() - h.contentsMargins().left() - h.contentsMargins().right() - plus.sizeHint().width() - 2 * h.spacing()

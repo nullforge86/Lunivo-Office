@@ -23,6 +23,11 @@ from lunivo_writer.dienste.dokumentpflege import bausteine
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.farben import VORGABE_LINIE, VORGABE_SCHRIFT
+from lunivo_writer.oberflaeche.baukasten.basis.mass import KACHEL_SEITENVERHAELTNIS, SCHRIFT_EINFUEGEN_VORSCHAU_PT, SCHRIFT_GRUPPENKOPF_FAKTOR
+from lunivo_writer.oberflaeche.baukasten.basis.schriftarten import SANS, SERIF
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_KACHEL_VORSCHAU, GROESSE_FENSTER_AUSWAHL, GROESSE_FENSTER_EINFUEGEN_GROSS, GROESSE_FENSTER_TABELLE, GROESSE_MINIATUR_LAYOUT, GROESSE_RASTER_SYMBOLE, HOEHE_BEREICH_MITTEL, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_LISTE_HOCH, HOEHE_LISTE_MITTEL, HOEHE_VORSCHAU_KLEIN, ICON_VORSCHAU, RAND_KEIN, RAND_ZEILE, SCHRIFT_HINWEIS, ZUGABE_KACHEL
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 def _ok(dlg):
@@ -83,7 +88,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.breite = QSpinBox(); self.breite.setRange(20, 1200); self.breite.setValue(240)
         self.hoehe = QSpinBox(); self.hoehe.setRange(10, 1200); self.hoehe.setValue(140)
         self.strich = QDoubleSpinBox(); self.strich.setRange(0.5, 12); self.strich.setValue(2.0)
-        self.text = QLineEdit()
+        self.text = zeilenfeld("frei")
         for lab, w in (("Form", self.art), ("Füllfarbe", self.fuell), ("Linienfarbe", self.linie), ("Breite (px)", self.breite),
                        ("Höhe (px)", self.hoehe), ("Linienstärke", self.strich), ("Text in der Form", self.text)):
             f.zeile(lab, w)
@@ -127,7 +132,7 @@ class _LayoutGalerie(QWidget):
         for n in self._namen:
             self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
             self.feld.knoepfe[n].setAccessibleName(n)
-            self.feld.knoepfe[n].setFixedSize(self.KACHEL + ZUGABE_KACHEL, self.KACHEL * 3 // 4 + ZUGABE_KACHEL)
+            self.feld.knoepfe[n].setFixedSize(self.KACHEL + ZUGABE_KACHEL, self.KACHEL * KACHEL_SEITENVERHAELTNIS[0] // KACHEL_SEITENVERHAELTNIS[1] + ZUGABE_KACHEL)
             self.feld.knoepfe[n].setProperty("kachel", True)      # die gewählte Kachel ist hinterlegt (Theme)
         self.feld.gewaehlt.connect(self._klick)
         self.feld.setze(self._aktuell)
@@ -244,12 +249,12 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         farbe = Farbe.AKZENT if farbe is None else farbe
         self.setWindowTitle("WordArt")
         v = _spalte("standard", self); f = FormularGitter(); v.addLayout(f)
-        self.text = QLineEdit(text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
+        self.text = zeilenfeld("frei", text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(eigener Stil)")
         self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
         self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
-        self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
+        self.schrift = zeilenfeld("frei", SANS); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
         for lab, w in (("Text", self.text), ("Formatvorlage", self.vorlage), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
             f.zeile(lab, w)
@@ -283,7 +288,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Daten bearbeiten")
         v = _spalte("standard", self)
         kopf = QWidget(); g = FormularGitter(kopf)
-        self.titel = QLineEdit(titel); g.zeile("&Titel:", self.titel)
+        self.titel = zeilenfeld("frei", titel); g.zeile("&Titel:", self.titel)
         v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
@@ -298,7 +303,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
                          ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
                          ("Reihe hinzufügen", self._reihe_dazu),
                          ("Reihe entfernen", lambda: self.tab.setColumnCount(max(2, self.tab.columnCount() - 1)))):
-            b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
+            z.addWidget(knopf("standard", text, aktion=fn))
         v.addLayout(z)
         fussleiste(self, v)
         self.resize(*GROESSE_FENSTER_TABELLE)
@@ -331,7 +336,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         self.resize(*GROESSE_FENSTER_AUSWAHL)
         from lunivo_writer.oberflaeche.bauteile import symbole
         v = _spalte("standard", self)
-        self.suche = QLineEdit(); self.suche.setPlaceholderText("Suchen (englische Symbolnamen, z. B. heart, home, star)")
+        self.suche = zeilenfeld("frei", platzhalter="Suchen (englische Symbolnamen, z. B. heart, home, star)")
         v.addWidget(self.suche)
         self.liste = QListWidget(); self.liste.setViewMode(QListWidget.IconMode); self.liste.setIconSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(ICON_VORSCHAU, ICON_VORSCHAU))
         self.liste.setResizeMode(QListWidget.Adjust); self.liste.setGridSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(*GROESSE_RASTER_SYMBOLE))
@@ -371,7 +376,7 @@ class FormelDialog(PanelFaehig, QDialog):
         v = _spalte("standard", self)
         hilfe = QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times")
         hilfe.setWordWrap(True); v.addWidget(hilfe)
-        self.eingabe = QLineEdit("E = m c^2"); v.addWidget(self.eingabe)
+        self.eingabe = zeilenfeld("frei", "E = m c^2"); v.addWidget(self.eingabe)
         self.vorschau = _Vorschau()                                            # verkleinert lange Formeln auf die Breite
         v.addWidget(self.vorschau); v.addWidget(_ok(self))
         self.eingabe.textChanged.connect(self._zeige); self._zeige()
@@ -390,8 +395,8 @@ class DeckblattDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Deckblatt")
         v = _spalte("standard", self); f = FormularGitter(); v.addLayout(f)
         self.vorlage = Auswahlfeld(); self.vorlage.addItems(E.DECKBLATT_VORLAGEN)
-        self.titel = QLineEdit("Titel des Dokuments"); self.unter = QLineEdit(); self.autor = QLineEdit(autor)
-        self.datum = QLineEdit(E.datum_text("d. MMMM yyyy"))
+        self.titel = zeilenfeld("frei", "Titel des Dokuments"); self.unter = zeilenfeld("frei"); self.autor = zeilenfeld("frei", autor)
+        self.datum = zeilenfeld("frei", E.datum_text("d. MMMM yyyy"))
         for lab, w in (("Vorlage", self.vorlage), ("Titel", self.titel), ("Untertitel", self.unter), ("Autor", self.autor), ("Datum", self.datum)):
             f.zeile(lab + ":", w)
         v.addWidget(_ok(self))
@@ -412,7 +417,7 @@ class DatumDialog(PanelFaehig, QDialog):
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))
-        self.auto = QCheckBox("&Automatisch aktualisieren")
+        self.auto = haken("standard", "&Automatisch aktualisieren")
         self.auto.setToolTip("Das Datum wird als Feld gespeichert; Textprogramme rechnen es beim Öffnen neu (in DOCX).")
         t1 = QLabel("&Verfügbare Formate:"); t1.setBuddy(self.liste)
         t2 = QLabel("&Sprache:"); t2.setBuddy(self.sprache)
@@ -457,7 +462,7 @@ class BausteinDialog(PanelFaehig, QDialog):
         from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
         from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, abschnittstitel
         felder = FormularGitter(); v.addLayout(felder)
-        self.name = QLineEdit(); self.kuerzel = QLineEdit()
+        self.name = zeilenfeld("frei"); self.kuerzel = zeilenfeld("frei")
         felder.zeile("Name:", self.name)
         felder.zeile("Kürzel:", self.kuerzel)
         v.addWidget(abschnittstitel("Bausteine"))
@@ -468,15 +473,15 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.liste.setMinimumHeight(HOEHE_LISTE_HOCH)
         v.addWidget(self.liste, 3)
         v.addWidget(abschnittstitel("Vorschau"))
-        self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
+        self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont(SERIF, SCHRIFT_EINFUEGEN_VORSCHAU_PT))
         self.vorschau.document().setDocumentMargin(12); self.vorschau.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.vorschau.setMinimumHeight(HOEHE_BEREICH_MITTEL)
         v.addWidget(self.vorschau, 4)
         h = QLabel("Eigene kommen aus dem Markierten, die übrigen sind mitgeliefert. «So gesetzte Stellen» sind Lücken: Tab springt von einer zur nächsten, Tippen ersetzt sie.")
         h.setWordWrap(True); hinweis_stil(h, klein=True); h.setContentsMargins(*RAND_ZEILE)
         v.addWidget(h)
-        self.aus_markierung = QPushButton("Aus Markierung …"); self.aus_markierung.clicked.connect(self._neu)
-        self.loeschen = QPushButton("Löschen"); self.loeschen.clicked.connect(self._weg)
+        self.aus_markierung = knopf("standard", "Aus Markierung …", aktion=self._neu)
+        self.loeschen = knopf("standard", "Löschen", aktion=self._weg)
         self.einfuegen_knopf = fussleiste(self, v, self.aus_markierung, self.loeschen, nur_ok=True, ok_text="Einfügen", bei_ok=self._einfuegen)
         self._fuellen()
 
@@ -487,7 +492,7 @@ class BausteinDialog(PanelFaehig, QDialog):
             if not eintraege:
                 continue
             kopf = QListWidgetItem(titel.upper()); kopf.setFlags(Qt.NoItemFlags)
-            f = kopf.font(); f.setPointSizeF(f.pointSizeF() * 0.85); kopf.setFont(f); self.liste.addItem(kopf)
+            f = kopf.font(); f.setPointSizeF(f.pointSizeF() * SCHRIFT_GRUPPENKOPF_FAKTOR); kopf.setFont(f); self.liste.addItem(kopf)
             for b in eintraege:
                 it = QListWidgetItem(b["name"]); it.setData(Qt.UserRole, b); self.liste.addItem(it)
                 if wahl and b["name"] == wahl:
@@ -547,7 +552,7 @@ class FormDialog(PanelFaehig, QDialog, VorschauMixin):
         self.breite = QSpinBox(); self.breite.setRange(20, 1200); self.breite.setValue(240)
         self.hoehe = QSpinBox(); self.hoehe.setRange(10, 1200); self.hoehe.setValue(140)
         self.strich = QDoubleSpinBox(); self.strich.setRange(0.5, 12); self.strich.setValue(2.0)
-        self.text = QLineEdit()
+        self.text = zeilenfeld("frei")
         for lab, w in (("Form", self.art), ("Füllfarbe", self.fuell), ("Linienfarbe", self.linie), ("Breite (px)", self.breite),
                        ("Höhe (px)", self.hoehe), ("Linienstärke", self.strich), ("Text in der Form", self.text)):
             f.zeile(lab, w)
@@ -591,7 +596,7 @@ class _LayoutGalerie(QWidget):
         for n in self._namen:
             self.feld.hinzu(n, n, lambda p, r, n=n: self._zeichner(p, r, n))
             self.feld.knoepfe[n].setAccessibleName(n)
-            self.feld.knoepfe[n].setFixedSize(self.KACHEL + ZUGABE_KACHEL, self.KACHEL * 3 // 4 + ZUGABE_KACHEL)
+            self.feld.knoepfe[n].setFixedSize(self.KACHEL + ZUGABE_KACHEL, self.KACHEL * KACHEL_SEITENVERHAELTNIS[0] // KACHEL_SEITENVERHAELTNIS[1] + ZUGABE_KACHEL)
             self.feld.knoepfe[n].setProperty("kachel", True)      # die gewählte Kachel ist hinterlegt (Theme)
         self.feld.gewaehlt.connect(self._klick)
         self.feld.setze(self._aktuell)
@@ -708,12 +713,12 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         farbe = Farbe.AKZENT if farbe is None else farbe
         self.setWindowTitle("WordArt")
         v = _spalte("standard", self); f = FormularGitter(); v.addLayout(f)
-        self.text = QLineEdit(text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
+        self.text = zeilenfeld("frei", text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(eigener Stil)")
         self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
         self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
-        self.schrift = QLineEdit("Liberation Sans"); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
+        self.schrift = zeilenfeld("frei", SANS); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
         for lab, w in (("Text", self.text), ("Formatvorlage", self.vorlage), ("Stil", self.stil), ("Schriftart", self.schrift), ("Größe (pt)", self.pt), ("Farbe", self.farbe)):
             f.zeile(lab, w)
@@ -747,7 +752,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Daten bearbeiten")
         v = _spalte("standard", self)
         kopf = QWidget(); g = FormularGitter(kopf)
-        self.titel = QLineEdit(titel); g.zeile("&Titel:", self.titel)
+        self.titel = zeilenfeld("frei", titel); g.zeile("&Titel:", self.titel)
         v.addWidget(kopf)
         self.tab = QTableWidget(len(kategorien), len(reihen) + 1)
         self.tab.setHorizontalHeaderLabels(["Rubrik"] + list(reihen))
@@ -762,7 +767,7 @@ class DiagrammDatenDialog(PanelFaehig, QDialog):
                          ("Zeile entfernen", lambda: self.tab.setRowCount(max(1, self.tab.rowCount() - 1))),
                          ("Reihe hinzufügen", self._reihe_dazu),
                          ("Reihe entfernen", lambda: self.tab.setColumnCount(max(2, self.tab.columnCount() - 1)))):
-            b = QPushButton(text); b.clicked.connect(fn); z.addWidget(b)
+            z.addWidget(knopf("standard", text, aktion=fn))
         v.addLayout(z)
         fussleiste(self, v)
         self.resize(*GROESSE_FENSTER_TABELLE)
@@ -795,7 +800,7 @@ class PiktogrammDialog(PanelFaehig, QDialog):
         self.resize(*GROESSE_FENSTER_AUSWAHL)
         from lunivo_writer.oberflaeche.bauteile import symbole
         v = _spalte("standard", self)
-        self.suche = QLineEdit(); self.suche.setPlaceholderText("Suchen (englische Symbolnamen, z. B. heart, home, star)")
+        self.suche = zeilenfeld("frei", platzhalter="Suchen (englische Symbolnamen, z. B. heart, home, star)")
         v.addWidget(self.suche)
         self.liste = QListWidget(); self.liste.setViewMode(QListWidget.IconMode); self.liste.setIconSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(ICON_VORSCHAU, ICON_VORSCHAU))
         self.liste.setResizeMode(QListWidget.Adjust); self.liste.setGridSize(__import__("PySide6.QtCore", fromlist=["QSize"]).QSize(*GROESSE_RASTER_SYMBOLE))
@@ -835,7 +840,7 @@ class FormelDialog(PanelFaehig, QDialog):
         v = _spalte("standard", self)
         hilfe = QLabel("Schreibweise: hoch  a^2 oder a^{n+1}  · tief  x_1  · Wurzel  sqrt(x)  · Bruch  frac(a,b)  · Griechisch  \\alpha \\pi \\Sigma  ·  \\infty \\leq \\geq \\neq \\pm \\times")
         hilfe.setWordWrap(True); v.addWidget(hilfe)
-        self.eingabe = QLineEdit("E = m c^2"); v.addWidget(self.eingabe)
+        self.eingabe = zeilenfeld("frei", "E = m c^2"); v.addWidget(self.eingabe)
         self.vorschau = _Vorschau()                                            # verkleinert lange Formeln auf die Breite
         v.addWidget(self.vorschau); v.addWidget(_ok(self))
         self.eingabe.textChanged.connect(self._zeige); self._zeige()
@@ -854,8 +859,8 @@ class DeckblattDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Deckblatt")
         v = _spalte("standard", self); f = FormularGitter(); v.addLayout(f)
         self.vorlage = Auswahlfeld(); self.vorlage.addItems(E.DECKBLATT_VORLAGEN)
-        self.titel = QLineEdit("Titel des Dokuments"); self.unter = QLineEdit(); self.autor = QLineEdit(autor)
-        self.datum = QLineEdit(E.datum_text("d. MMMM yyyy"))
+        self.titel = zeilenfeld("frei", "Titel des Dokuments"); self.unter = zeilenfeld("frei"); self.autor = zeilenfeld("frei", autor)
+        self.datum = zeilenfeld("frei", E.datum_text("d. MMMM yyyy"))
         for lab, w in (("Vorlage", self.vorlage), ("Titel", self.titel), ("Untertitel", self.unter), ("Autor", self.autor), ("Datum", self.datum)):
             f.zeile(lab + ":", w)
         v.addWidget(_ok(self))
@@ -876,7 +881,7 @@ class DatumDialog(PanelFaehig, QDialog):
         for k, (t, _f) in E.DATUM_SPRACHEN.items():
             self.sprache.addItem(t, k)
         self.sprache.setCurrentIndex(max(0, self.sprache.findData(sprache)))
-        self.auto = QCheckBox("&Automatisch aktualisieren")
+        self.auto = haken("standard", "&Automatisch aktualisieren")
         self.auto.setToolTip("Das Datum wird als Feld gespeichert; Textprogramme rechnen es beim Öffnen neu (in DOCX).")
         t1 = QLabel("&Verfügbare Formate:"); t1.setBuddy(self.liste)
         t2 = QLabel("&Sprache:"); t2.setBuddy(self.sprache)
@@ -921,7 +926,7 @@ class BausteinDialog(PanelFaehig, QDialog):
         from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
         from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, abschnittstitel
         felder = FormularGitter(); v.addLayout(felder)
-        self.name = QLineEdit(); self.kuerzel = QLineEdit()
+        self.name = zeilenfeld("frei"); self.kuerzel = zeilenfeld("frei")
         felder.zeile("Name:", self.name)
         felder.zeile("Kürzel:", self.kuerzel)
         v.addWidget(abschnittstitel("Bausteine"))
@@ -932,15 +937,15 @@ class BausteinDialog(PanelFaehig, QDialog):
         self.liste.setMinimumHeight(HOEHE_LISTE_HOCH)
         v.addWidget(self.liste, 3)
         v.addWidget(abschnittstitel("Vorschau"))
-        self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont("Liberation Serif", 12))
+        self.vorschau = QTextBrowser(); self.vorschau.setFont(QFont(SERIF, SCHRIFT_EINFUEGEN_VORSCHAU_PT))
         self.vorschau.document().setDocumentMargin(12); self.vorschau.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.vorschau.setMinimumHeight(HOEHE_BEREICH_MITTEL)
         v.addWidget(self.vorschau, 4)
         h = QLabel("Eigene kommen aus dem Markierten, die übrigen sind mitgeliefert. «So gesetzte Stellen» sind Lücken: Tab springt von einer zur nächsten, Tippen ersetzt sie.")
         h.setWordWrap(True); hinweis_stil(h, klein=True); h.setContentsMargins(*RAND_ZEILE)
         v.addWidget(h)
-        self.aus_markierung = QPushButton("Aus Markierung …"); self.aus_markierung.clicked.connect(self._neu)
-        self.loeschen = QPushButton("Löschen"); self.loeschen.clicked.connect(self._weg)
+        self.aus_markierung = knopf("standard", "Aus Markierung …", aktion=self._neu)
+        self.loeschen = knopf("standard", "Löschen", aktion=self._weg)
         self.einfuegen_knopf = fussleiste(self, v, self.aus_markierung, self.loeschen, nur_ok=True, ok_text="Einfügen", bei_ok=self._einfuegen)
         self._fuellen()
 
@@ -951,7 +956,7 @@ class BausteinDialog(PanelFaehig, QDialog):
             if not eintraege:
                 continue
             kopf = QListWidgetItem(titel.upper()); kopf.setFlags(Qt.NoItemFlags)
-            f = kopf.font(); f.setPointSizeF(f.pointSizeF() * 0.85); kopf.setFont(f); self.liste.addItem(kopf)
+            f = kopf.font(); f.setPointSizeF(f.pointSizeF() * SCHRIFT_GRUPPENKOPF_FAKTOR); kopf.setFont(f); self.liste.addItem(kopf)
             for b in eintraege:
                 it = QListWidgetItem(b["name"]); it.setData(Qt.UserRole, b); self.liste.addItem(it)
                 if wahl and b["name"] == wahl:

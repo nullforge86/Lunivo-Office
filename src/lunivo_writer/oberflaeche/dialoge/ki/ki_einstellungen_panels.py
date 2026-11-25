@@ -3,6 +3,10 @@
 Die Seiten setzt ``KIEinstellungenDialog`` (ki_dialoge.py) zusammen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
@@ -59,7 +63,7 @@ class OfflineSprachen(QWidget):
         v = _spalte("standard", self)
         self.installiert = QLabel(); self.installiert.setWordWrap(True)
         v.addWidget(self.installiert)
-        self.laden = QPushButton("Weitere Sprachen laden …"); self.laden.setMinimumHeight(HOEHE_KNOPF_GROSS)
+        self.laden = knopf("gross", "Weitere Sprachen laden …")
         self.laden.clicked.connect(self._verfuegbare_holen)
         fl = FlussLayout(6); fl.addWidget(self.laden); v.addLayout(fl)
         self.stand = QLabel(); self.stand.setWordWrap(True); hinweis_stil(self.stand); v.addWidget(self.stand)
@@ -113,7 +117,7 @@ class OfflineSprachen(QWidget):
         self.stand.setText("Wählen Sie eine Sprache zum Herunterladen." if liste else "Es gibt keine weiteren Sprachpakete.")
         for r in liste:
             mb = r.get("groesse_mb")
-            b = QPushButton(f"{r['name']}" + (f" · {mb} MB" if mb else "") + "  –  Herunterladen")
+            b = knopf("standard", f"{r['name']}" + (f" · {mb} MB" if mb else "") + "  –  Herunterladen")
             b.setMinimumHeight(HOEHE_KNOPF_GROSS); b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             b.clicked.connect(lambda _=False, r=r: self._herunterladen(r["von"], r["nach"], r["name"], r.get("groesse_mb")))
             self._av.addWidget(b)
@@ -168,8 +172,8 @@ class McpDialog(QDialog):
         self.setWindowTitle("KI-Werkzeug bearbeiten" if e else "KI-Werkzeug hinzufügen"); self.resize(*GROESSE_FENSTER_MCP)
         v = _spalte("standard", self)
         f = FormularGitter()
-        self.name = QLineEdit(e["name"] if e else ""); self.name.setPlaceholderText("Name")
-        self.befehl = QLineEdit(e["befehl"] if e else "")
+        self.name = zeilenfeld("frei", e["name"] if e else "", platzhalter="Name")
+        self.befehl = zeilenfeld("frei", e["befehl"] if e else "")
         self.befehl.setPlaceholderText("Startbefehl, z. B. npx -y @modelcontextprotocol/server-filesystem ~/Dokumente")
         f.zeile("Name *", self.name); f.zeile("Befehl *", self.befehl)
         info = QLabel("Der Server läuft auf diesem Rechner und startet nur während einer Chat-Frage. Jeder Werkzeugaufruf der KI wird vorher erfragt.")
@@ -177,7 +181,7 @@ class McpDialog(QDialog):
         self.an = UmbruchSchalter("Im KI-Chat verwenden"); self.an.setChecked(e["an"] if e else True)
         f.breit(self.an)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
-        t = QPushButton("Testen"); t.clicked.connect(self._testen)
+        t = knopf("standard", "Testen", aktion=self._testen)
         tz = FlussLayout(6); tz.addWidget(t); f.breit(tz)
         f.breit(self.stand)
         v.addLayout(f); v.addStretch(1)
@@ -260,8 +264,8 @@ class EinwilligungenPanel(QWidget):
         self.liste = QListWidget(); self.liste.setAccessibleName("Erteilte Einwilligungen"); v.addWidget(self.liste, 1)
         self.liste.setWordWrap(True); self.liste.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)          # lange Einträge brechen um statt zu rollen
         z = FlussLayout(6)
-        self.widerruf = QPushButton("Widerrufen"); self.widerruf.setToolTip("Nimmt die ausgewählte Erlaubnis zurück")
-        self.alle = QPushButton("Alle widerrufen")
+        self.widerruf = knopf("standard", "Widerrufen", name="Widerrufen", tooltip="Nimmt die ausgewählte Erlaubnis zurück")
+        self.alle = knopf("standard", "Alle widerrufen")
         for b in (self.widerruf, self.alle):
             b.setMinimumHeight(HOEHE_KNOPF_GROSS); z.addWidget(b)
         v.addLayout(z)
@@ -305,7 +309,7 @@ class WebsuchePanel(QWidget):
         self.k = konfig
         o = konfig.websuche_optionen()
         v = _spalte("oben", self)
-        self.an = QCheckBox("Websuche im KI-Chat verwenden"); self.an.setChecked(bool(o["an"]))
+        self.an = haken("standard", "Websuche im KI-Chat verwenden", an=bool(o["an"]))
         v.addWidget(self.an)
         h = QLabel("Ist die Websuche an, geht Ihre Frage an den Suchanbieter (bei einer SearXNG-Instanz auf diesem Rechner bleibt sie hier). "
                    "Die Treffer werden der KI als Quellen mitgegeben.")
@@ -316,13 +320,13 @@ class WebsuchePanel(QWidget):
         for schl, name in W.ANBIETER:
             self.anbieter.addItem(name, schl)
         self.anbieter.setCurrentIndex(max(0, self.anbieter.findData(o["anbieter"])))
-        self.url = QLineEdit(o["url"]); self.url.setPlaceholderText("https://searx.example.org")
-        self.schluessel = QLineEdit(o["schluessel"]); self.schluessel.setEchoMode(QLineEdit.Password)
+        self.url = zeilenfeld("frei", o["url"], platzhalter="https://searx.example.org")
+        self.schluessel = zeilenfeld("frei", o["schluessel"], passwort=True)
         self.anzahl = QSpinBox(); self.anzahl.setRange(1, 10); self.anzahl.setValue(int(o["anzahl"]))
         f.zeile("Anbieter", self.anbieter); f.zeile("Adresse (SearXNG)", self.url); f.zeile("API-Schlüssel (Brave)", self.schluessel)
         f.zeile("Treffer", self.anzahl)
         v.addLayout(f)
-        t = QPushButton("Testen"); t.clicked.connect(self._testen)
+        t = knopf("standard", "Testen", aktion=self._testen)
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         v.addWidget(t, 0, Qt.AlignLeft); v.addWidget(self.stand); v.addStretch(1)
 
@@ -356,7 +360,7 @@ class DokumentePanel(QWidget):
         self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
         o = konfig.dokumentsuche_optionen()
         v = _spalte("oben", self)
-        self.an = QCheckBox("Eigene Dokumente im KI-Chat durchsuchen"); self.an.setChecked(bool(o["an"]))
+        self.an = haken("standard", "Eigene Dokumente im KI-Chat durchsuchen", an=bool(o["an"]))
         v.addWidget(self.an)
         h = QLabel("Lunivo liest nur die Ordner, die Sie hier freigeben (DOCX, ODT, RTF, TXT und PDF mit Text), und legt einen Suchindex auf diesem "
                    "Rechner an. Zur Frage im Chat werden die passenden Abschnitte der KI als Quelle mitgegeben; unter der Antwort stehen die Fundstellen.")
@@ -375,8 +379,8 @@ class DokumentePanel(QWidget):
         self.anzahl = QSpinBox(); self.anzahl.setRange(1, 10); self.anzahl.setValue(int(o["anzahl"]))
         f.zeile("Abschnitte je Frage", self.anzahl)
         v.addLayout(f)
-        self.los = QPushButton("Jetzt indexieren"); self.los.clicked.connect(self._indexieren)
-        self.werkzeug = QPushButton("Als KI-Werkzeug eintragen"); self.werkzeug.clicked.connect(self._werkzeug_eintragen)
+        self.los = knopf("standard", "Jetzt indexieren", aktion=self._indexieren)
+        self.werkzeug = knopf("standard", "Als KI-Werkzeug eintragen", aktion=self._werkzeug_eintragen)
         self.werkzeug.setToolTip("Macht die Suche als MCP-Server für den KI-Chat verfügbar (Ollama und eigene Anbieter). Jeder Aufruf wird einzeln abgefragt.")
         self.stand = QLabel(""); self.stand.setWordWrap(True)
         fl = FlussLayout(); fl.addWidget(self.los); fl.addWidget(self.werkzeug); v.addLayout(fl)

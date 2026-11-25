@@ -8,6 +8,8 @@ Die Daten kommen aus ``editor/objekte/bildzuschnitt.py`` (Formen, Seitenverhält
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
@@ -21,6 +23,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import abschnitt
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitter
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_KACHEL_ABZUG_FLACH, RADIUS_ZEICHNUNG_FEIN, STIFT_BILDCHEN_LINIE
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_FORMEN_SPALTEN, DROPDOWN_KACHEL, DROPDOWN_KACHEL_ABSTAND, DROPDOWN_ROLLRAND, HOEHE_FORMENMENUE, ABSTAND_ENG, ABSTAND_KLEIN, GROESSE_DIAGRAMMSTIL_KACHEL, GROESSE_FORMBILD_KACHEL, ICON_GROSS, ICON_KNOPF_GROSS, RAND_KEIN, RAND_MENUE_KOPF, RAND_ZUSCHNEIDEN_KACHELN, RAND_ZUSCHNEIDEN_LISTE
 
 STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_KACHEL)       # Vorschau eines Diagrammstils
@@ -32,7 +35,7 @@ def _form_bild(name: str) -> QIcon:
     from lunivo_writer.editor.objekte.formen import formen_katalog as K
     pm = QPixmap(QSize(*GROESSE_FORMBILD_KACHEL)); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    p.setPen(QPen(QColor(Farbe.AKZENT), 1.3)); p.setBrush(Qt.NoBrush)
+    p.setPen(QPen(QColor(Farbe.AKZENT), STIFT_BILDCHEN_LINIE)); p.setBrush(Qt.NoBrush)
     p.drawPath(K.pfad(name, QRectF(4, 4, 20, 20)))
     p.end()
     return QIcon(pm)
@@ -53,8 +56,8 @@ def zuschneiden_menue(b) -> QMenu:
     stapel = QStackedWidget()
     reiter = []
     for i, text in enumerate(("Nach Form zuschneiden", "Nach Skala zuschneiden")):
-        t = QToolButton(); t.setText(text); t.setCheckable(True); t.setAutoExclusive(True); t.setChecked(i == 0)
-        t.setMinimumHeight(DROPDOWN_KACHEL - 4); t.setAutoRaise(True)
+        t = werkzeugknopf("standard", text, umschaltbar=True, an=i == 0, flach=False); t.setAutoExclusive(True)
+        t.setMinimumHeight(DROPDOWN_KACHEL - DROPDOWN_KACHEL_ABZUG_FLACH); t.setAutoRaise(True)
         reiter_knopf_stil(t)
         t.clicked.connect(lambda _=False, i=i: stapel.setCurrentIndex(i))
         kopf.addWidget(t); reiter.append(t)
@@ -72,7 +75,7 @@ def zuschneiden_menue(b) -> QMenu:
         iv.addWidget(_abschnittsleiste(kat))
         kachelreihe = []
         for n, name in enumerate(namen):
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(_form_bild(name)); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
+            k = werkzeugknopf("standard"); k.setIcon(_form_bild(name)); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             k.setFixedSize(DROPDOWN_KACHEL, DROPDOWN_KACHEL); k.setToolTip(name); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, name=name: waehlen(b.bildZuschneidenForm, name))
             kachelreihe.append(k)
@@ -88,7 +91,7 @@ def zuschneiden_menue(b) -> QMenu:
     liste = QWidget()
     lv = _spalte("panel", liste)
     for text, bb, hh in BZ.VERHAELTNISSE:
-        k = QPushButton(text.replace(":", " : ")); k.setFlat(True); k.setMinimumHeight(DROPDOWN_KACHEL)
+        k = knopf("standard", text.replace(":", " : "), ohne_rand=True); k.setMinimumHeight(DROPDOWN_KACHEL)
         dropdown_zeile(k)
         k.setToolTip("Seitenverhältnis " + text); k.setAccessibleName("Seitenverhältnis " + text)
         k.clicked.connect(lambda _=False, t=text: waehlen(b.bildZuschneidenSkala, t))
@@ -102,7 +105,7 @@ def zuschneiden_menue(b) -> QMenu:
 
     linie = trennlinie()
     v.addWidget(linie)
-    z = QPushButton(symbole.icon("rotate-ccw", ICON_GROSS), "  Form und Größe zurücksetzen"); z.setFlat(True); z.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
+    z = knopf("standard", "  Form und Größe zurücksetzen", ohne_rand=True); z.setIcon(symbole.icon("rotate-ccw", ICON_GROSS)); z.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
     z.setMinimumHeight(DROPDOWN_KACHEL); dropdown_zeile(z)
     z.clicked.connect(lambda: waehlen(b.bildZuschneidenZuruecksetzen))
     v.addWidget(z)
@@ -124,7 +127,7 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
     s = QColor(schrift)
     leise = QColor(s); leise.setAlpha(70)
     p.setPen(Qt.NoPen); p.setBrush(s)
-    p.drawRoundedRect(QRectF(w * 0.30, 5, w * 0.40, 3), 1.5, 1.5)                    # Diagrammtitel
+    p.drawRoundedRect(QRectF(w * 0.30, 5, w * 0.40, 3), RADIUS_ZEICHNUNG_FEIN, RADIUS_ZEICHNUNG_FEIN)                    # Diagrammtitel
     ox, oy, bw, bh = 8.0, 14.0, w - 16.0, h - 14.0 - 14.0
     if raster:
         p.setPen(QPen(leise, 1))

@@ -12,6 +12,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.raster import Anordnung, PlanRast
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FormularGitter, felder_angleichen
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ICON_NORMAL, RAND_KEIN
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 
 
 
@@ -95,8 +96,7 @@ class Knopfzeile(QWidget):
             self.zusatz_knopf(k)
         if schliessen:
             ok_text, nur_ok, bei_ok = "Schließen", True, dialog.reject
-        self.abbrechen, self.ok = QPushButton(abbrechen_text), QPushButton(ok_text)
-        self.ok.setDefault(True)
+        self.abbrechen, self.ok = knopf("standard", abbrechen_text), knopf("standard", ok_text, standard=True)
         self.abbrechen.setIcon(_symbol("kreuz")); self.ok.setIcon(_symbol("haken"))
         for k in (self.abbrechen, self.ok):                                  # wie in der Vorlage: breite Knöpfe mit Symbol
             k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL))
@@ -112,7 +112,7 @@ class Knopfzeile(QWidget):
 
     def zusatz(self, text: str, aktion: Callable | None = None, *, schliesst: bool = True) -> QPushButton:
         """Knopf neben OK/Abbrechen (z. B. „Entfernen“); ``schliesst`` beendet das Fenster mit OK."""
-        k = QPushButton(text)
+        k = knopf("standard", text)
         def klick():
             if aktion:
                 aktion()

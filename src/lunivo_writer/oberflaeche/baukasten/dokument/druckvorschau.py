@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK as _A_BLOCK, ABSTAND_GROSS as _A_GROSS, ABSTAND_MITTEL as _A_MITTEL
@@ -37,11 +39,11 @@ class DruckVorschau(QDialog):
         self._gesamt = max(1, quelle.anzahl())
         v = _spalte("kein", self)
         leiste = _reihe("karte")
-        druck = QPushButton(_t("druckvorschau.drucken")); druck.setObjectName("optFertig")
+        druck = knopf_baustein("standard", _t("druckvorschau.drucken"), objektname="optFertig")
         druck.clicked.connect(lambda: (self.accept(), self.drucken.emit()))
         leiste.addWidget(druck); leiste.addSpacing(_A_BLOCK)
         def knopf(sym, tip, f):
-            k = QPushButton(); k.setIcon(symbole.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.setFlat(True); _rolle(k, "symbol"); k.clicked.connect(f)
+            k = knopf_baustein("standard", symbol=sym, symbolgroesse="gross", tooltip=tip, ohne_rand=True, rolle="symbol", aktion=f)
             leiste.addWidget(k); return k
         knopf("chevron-first", _t("druckvorschau.erste_seite"), lambda: self._gehe(1))
         knopf("chevron-left", _t("druckvorschau.vorige_seite"), lambda: self._gehe(self._n - self._schritt()))
@@ -59,9 +61,9 @@ class DruckVorschau(QDialog):
         self.prozent = QLabel("100 %"); self.prozent.setMinimumWidth(BREITE_SCHIENE); self.prozent.setAlignment(Qt.AlignCenter)
         leiste.addWidget(self.prozent)
         leiste.addWidget(self._zoomknopf("+", _t("druckvorschau.vergroessern"), 1.25))
-        ein = QPushButton(_t("druckvorschau.einpassen")); ein.clicked.connect(self.einpassen); leiste.addWidget(ein)
+        ein = knopf_baustein("standard", _t("druckvorschau.einpassen"), aktion=self.einpassen); leiste.addWidget(ein)
         leiste.addStretch(1)
-        zu = QPushButton(_t("druckvorschau.vorschau_schliessen")); zu.clicked.connect(self.reject); leiste.addWidget(zu)
+        zu = knopf_baustein("standard", _t("druckvorschau.vorschau_schliessen"), aktion=self.reject); leiste.addWidget(zu)
         v.addLayout(leiste)
         linie = trennlinie(tief=True); v.addWidget(linie)
         self.flaeche = QScrollArea(); self.flaeche.setWidgetResizable(True); self.flaeche.setFrameShape(QFrame.NoFrame)
@@ -70,7 +72,7 @@ class DruckVorschau(QDialog):
         self.resize(*GROESSE_FENSTER_DRUCKVORSCHAU)
 
     def _zoomknopf(self, text, tip, faktor):
-        k = QPushButton(text); k.setFlat(True); _rolle(k, "symbol"); k.setToolTip(tip)
+        k = knopf_baustein("standard", text, ohne_rand=True, rolle="symbol", tooltip=tip, name=text)
         k.clicked.connect(lambda: self._zoom_setzen(self._zoom * faktor))
         return k
 

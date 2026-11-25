@@ -74,7 +74,7 @@ def pfad_bild(pfad: str, px: int = 48, farbe: str | None = None) -> QImage:
 
 
 # Farbstriche unter Symbolen: Name → Farbe (Schriftfarbe rot, Hervorheben gelb, Tönung blau, Rahmen/Schatten bleiben neutral)
-AKZENT = {"schriftfarbe": "#e03131", "marker": "#fcc419", "absatztoenung": "#74c0fc", "toenung": "#74c0fc"}
+from lunivo_writer.oberflaeche.baukasten.basis.farben import SYMBOL_AKZENT as AKZENT, SYMBOL_STRICH_DUNKEL, SYMBOL_STRICH_HELL  # noqa: E402
 
 def hat(name: str) -> bool:
     return name in pfade() or name in katalog()
@@ -214,7 +214,7 @@ def icon(name: str, px: int = 20, farbe: str | None = None) -> QIcon:
     off = pal.color(QPalette.Disabled, QPalette.ButtonText).name()
     from lunivo_writer.oberflaeche.baukasten.thema import thema as _thema
     if not farbe and not _thema._MINT:                   # Symbole ohne Hybrid-Entsprechung: Strichsymbol in der Konturfarbe der Hybrid-Familie
-        normal = "#F3F6FF" if QApplication.palette().color(QPalette.Window).lightness() < 128 else "#243062"
+        normal = SYMBOL_STRICH_HELL if QApplication.palette().color(QPalette.Window).lightness() < 128 else SYMBOL_STRICH_DUNKEL
     if farbe:                                            # feste Farbe, z. B. dunkle Symbole auf dem grünen Kopf im Thema Mint
         normal, off = farbe, Farbe.SYMBOL_AUS_AKZENT   # ausgegraut: gedämpftes Grün, bleibt auf dem Hellgrün sichtbar
     ic = QIcon()

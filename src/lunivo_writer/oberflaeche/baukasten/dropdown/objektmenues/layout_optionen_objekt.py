@@ -7,6 +7,8 @@ Baut auf ``LayoutOptionen`` (layout_optionen.py, unverändert) auf; Signale und 
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QSize, Qt
@@ -38,8 +40,7 @@ class LayoutOptionenObjekt(LayoutOptionen):
         v = self.layout()
         kopf = v.itemAt(0).widget()
         v.removeWidget(kopf)
-        x = QToolButton(); x.setText("✕"); x.setAutoRaise(True); x.setCursor(Qt.PointingHandCursor); x.setToolTip("Schließen")
-        x.setAccessibleName("Schließen"); x.setFixedSize(*GROESSE_SCHLIESSEN_KNOPF); x.clicked.connect(self.close)
+        x = werkzeugknopf("fest", "✕", groesse=GROESSE_SCHLIESSEN_KNOPF, hand=True, tooltip="Schließen", name="Schließen", aktion=self.close)
         reihe = _reihe("standard")
         reihe.addWidget(kopf, 1); reihe.addWidget(x)
         v.insertLayout(0, reihe)

@@ -9,6 +9,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen
 
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import md_escape, md_label, text_label
 from lunivo_writer.oberflaeche.bauteile import symbole
@@ -67,37 +69,29 @@ class FundKarte(QFrame):
         g = hinweis_label(fund.grund, klein=True, zusatz="border: none; background: transparent;")
         v.addWidget(g)
         z = FlussLayout(6)
-        zeigen = QPushButton("Zeigen")
-        zeigen.clicked.connect(self._zeigen)
-        z.addWidget(zeigen)
+        z.addWidget(knopf("standard", "Zeigen", aktion=self._zeigen))
         if fund.art != "hinweis" and fund.neu:
-            b = QPushButton("Ändern")
-            b.clicked.connect(lambda: self.a.aendern(self.fund))
-            z.addWidget(b)
+            z.addWidget(knopf("standard", "Ändern", aktion=lambda: self.a.aendern(self.fund)))
         from lunivo_writer.dienste.dokumentpflege import vorlesen
         if vorlesen.verfuegbar():                                        # gleich neben den anderen Knöpfen: immer sichtbar
-            ohr = QPushButton()
-            ohr.setIcon(symbole.icon("vorlesen", ICON_GROSS)); ohr.setCursor(Qt.PointingHandCursor)
-            ohr.setToolTip("Das Wort anhören"); ohr.setAccessibleName("Das Wort anhören")
-            ohr.clicked.connect(self._hoeren)
-            z.addWidget(ohr)
+            z.addWidget(knopf("standard", symbol="vorlesen", symbolgroesse="gross", hand=True, tooltip="Das Wort anhören", name="Das Wort anhören",
+                              aktion=self._hoeren))
         if fund.art == "hinweis" and fund.stelle and dienst is not None and fund.quelle != "ki":           # ein Hinweis auf einen Satz: die KI macht einen Vorschlag
-            self.vorschlag_knopf = QPushButton("Vorschlag")
-            self.vorschlag_knopf.setToolTip("Die KI schreibt den Satz kürzer — Sie nehmen es an oder verwerfen es")
-            self.vorschlag_knopf.clicked.connect(self._vorschlag_holen)
+            self.vorschlag_knopf = knopf("standard", "Vorschlag", name="Vorschlag", aktion=self._vorschlag_holen,
+                                         tooltip="Die KI schreibt den Satz kürzer — Sie nehmen es an oder verwerfen es")
             z.addWidget(self.vorschlag_knopf)
         self._aktionen = z
         for k in self.findChildren(QPushButton):
             pass
         v.addLayout(z)
         # Der Vorschlag der KI, erst sichtbar, wenn er da ist
-        self.vorschlag_feld = QFrame(); eigenschaft(self.vorschlag_feld, rolle="transparent")
+        self.vorschlag_feld = rahmen("flach"); eigenschaft(self.vorschlag_feld, rolle="transparent")
         vv = _spalte("standard", self.vorschlag_feld)
         self.vorschlag_text = QLabel(); self.vorschlag_text.setWordWrap(True); eigenschaft(self.vorschlag_text, rolle="listentext_fett")
         vv.addWidget(self.vorschlag_text)
         vz = FlussLayout(6)
-        self.annehmen = QPushButton("Annehmen"); self.annehmen.clicked.connect(self._annehmen)
-        self.verwerfen = QPushButton("Verwerfen"); self.verwerfen.clicked.connect(self._verwerfen)
+        self.annehmen = knopf("standard", "Annehmen", aktion=self._annehmen)
+        self.verwerfen = knopf("standard", "Verwerfen", aktion=self._verwerfen)
         for k in (self.annehmen, self.verwerfen):
             vz.addWidget(k)
         vv.addLayout(vz)
@@ -163,8 +157,8 @@ class VorschlagKarte(QFrame):
         t = md_label(f"~~{md_escape(v['alt'])}~~\n\n**{md_escape(v['neu'])}**")
         lay.addWidget(g); lay.addWidget(t)
         z = FlussLayout(6)
-        b1 = QPushButton("Annehmen"); b1.clicked.connect(self._einsetzen)
-        b2 = QPushButton("Verwerfen"); b2.clicked.connect(self._lassen)
+        b1 = knopf("standard", "Annehmen", aktion=self._einsetzen)
+        b2 = knopf("standard", "Verwerfen", aktion=self._lassen)
         for k in (b1, b2):
             z.addWidget(k)
         lay.addLayout(z)
@@ -205,7 +199,7 @@ class HinweisKarte(QFrame):
         lay.addWidget(t); lay.addWidget(body)
         z = FlussLayout(6)
         for name, fn in (("Kopieren", self._kopieren), ("Am Ende einfügen", self._ende), ("Schließen", self._weg)):
-            b = QPushButton(name); b.clicked.connect(fn); z.addWidget(b)
+            z.addWidget(knopf("standard", name, aktion=fn))
         lay.addLayout(z)
 
     def _kopieren(self):

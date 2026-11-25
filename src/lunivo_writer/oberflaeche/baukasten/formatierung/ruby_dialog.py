@@ -9,6 +9,8 @@ Das Fenster ändert keinen Text; der Aufrufer setzt ``P_RUBY`` (``Befehle.phonet
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem
@@ -19,6 +21,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayo
 from lunivo_writer.oberflaeche.baukasten.felder.mass_feld import spin
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_RUBY_VORSCHAU_PX
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_PHONETISCH, HOEHE_EINGABE_TEXT, RAND_KEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld, Schriftauswahl
 
@@ -40,8 +43,8 @@ class RubyDialog(PanelFaehig, QDialog):
             self._zeile_anhaengen(basis, ruby)
         v.addWidget(self.tabelle)
         tasten = FlussLayout(6); tasten.setContentsMargins(*RAND_KEIN)
-        self.gruppieren, self.mono = QPushButton("Gruppieren"), QPushButton("Mono")
-        self.alle_weg, self.standard, self.ton = QPushButton("Alle entfernen"), QPushButton("Standardanzeige"), QPushButton("Ton")
+        self.gruppieren, self.mono = knopf("standard", "Gruppieren"), knopf("standard", "Mono")
+        self.alle_weg, self.standard, self.ton = knopf("standard", "Alle entfernen"), knopf("standard", "Standardanzeige"), knopf("standard", "Ton")
         self.ton.setEnabled(False); self.ton.setToolTip("Nur für asiatische Schriften")
         for b in (self.gruppieren, self.mono, self.alle_weg, self.standard, self.ton):
             tasten.addWidget(b)
@@ -59,7 +62,7 @@ class RubyDialog(PanelFaehig, QDialog):
         g.reihe(("Schriftart:", self.schrift), ("Größe:", self.groesse))
         v.addLayout(g)
         self.vorschau = VorschauFlaeche(self._malen, 54); v.addWidget(self.vorschau)
-        self.alles = QPushButton("Alles ändern …")
+        self.alles = knopf("standard", "Alles ändern …")
         fussleiste(self, v, self.alles)
         self.gruppieren.clicked.connect(self._gruppieren); self.mono.clicked.connect(self._mono)
         self.alle_weg.clicked.connect(self._alle_weg); self.standard.clicked.connect(self._standard)
@@ -141,7 +144,7 @@ class RubyDialog(PanelFaehig, QDialog):
         self.vorschau.update()
 
     def _malen(self, p, rect) -> None:
-        f = QFont(self.schrift.currentFont()); f.setPixelSize(22); p.setFont(f)
+        f = QFont(self.schrift.currentFont()); f.setPixelSize(SCHRIFT_RUBY_VORSCHAU_PX); p.setFont(f)
         x = rect.left() + 10
         for r in range(self.tabelle.rowCount()):
             basis, ruby, w = self.tabelle.item(r, 0).text(), self.tabelle.item(r, 1).text(), self._wie[r]

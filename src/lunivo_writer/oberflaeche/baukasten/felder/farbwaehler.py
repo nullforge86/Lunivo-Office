@@ -8,6 +8,8 @@ Der Aufrufer bekommt über ``weitere_farben()`` (farbpalette.py) eine ``QColor``
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import math
@@ -17,6 +19,8 @@ from PySide6.QtGui import (
     QBrush, QColor, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
 )
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QSlider, QSpinBox, QWidget
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (FARBWAEHLER_ZUGABE_HOCH, FARBWAEHLER_ZUGABE_LINKS, FARBWAEHLER_ZUGABE_RECHTS, RADIUS_ZEICHNUNG,
+                                                            RADIUS_ZEICHNUNG_GROSS, STIFT_BETONT, STIFT_KREIS)
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FARBFLAECHE, GROESSE_FARBPROBE, GROESSE_FARBREGLER, GROESSE_FARBRING, RAND_FARBWAEHLER_SEITE, RAND_FARBWAEHLER_TRANSPARENZ
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -85,7 +89,7 @@ class _Kacheln(QWidget):
         self.ZELLE = zelle
         self.LUECKE = 1 if zelle < 18 else 2
         schritt = self.ZELLE + self.LUECKE
-        self.setFixedSize(self.SPALTEN * schritt + self.LUECKE, (self.ZEILEN + 2) * schritt + 14)
+        self.setFixedSize(self.SPALTEN * schritt + self.LUECKE, (self.ZEILEN + 2) * schritt + FARBWAEHLER_ZUGABE_HOCH)
         self.kacheln: list[tuple[QRectF, QColor]] = []
         for z in range(self.ZEILEN):
             for s in range(self.SPALTEN):
@@ -113,10 +117,10 @@ class _Kacheln(QWidget):
         jetzt = self.m.farbe().name()
         for r, f in self.kacheln:
             p.setPen(Qt.NoPen); p.setBrush(f)
-            p.drawRoundedRect(r, 3, 3)
+            p.drawRoundedRect(r, RADIUS_ZEICHNUNG, RADIUS_ZEICHNUNG)
             if f.name() == jetzt:
-                p.setBrush(Qt.NoBrush); p.setPen(QPen(self.palette().highlight().color(), 2))
-                p.drawRoundedRect(r.adjusted(-1.5, -1.5, 1.5, 1.5), 5, 5)
+                p.setBrush(Qt.NoBrush); p.setPen(QPen(self.palette().highlight().color(), STIFT_BETONT))
+                p.drawRoundedRect(r.adjusted(-1.5, -1.5, 1.5, 1.5), RADIUS_ZEICHNUNG_GROSS, RADIUS_ZEICHNUNG_GROSS)
         p.end()
 
     def mousePressEvent(self, e):
@@ -156,7 +160,7 @@ class _Flaeche(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         p.drawImage(0, 0, self.bild)
         x, y = self.m.h * self.width(), (1 - self.m.s) * (self.height() - 1)
-        p.setPen(QPen(QColor(Farbe.PAPIER), 2)); p.setBrush(Qt.NoBrush); p.drawEllipse(QPointF(x, y), 6, 6)
+        p.setPen(QPen(QColor(Farbe.PAPIER), STIFT_BETONT)); p.setBrush(Qt.NoBrush); p.drawEllipse(QPointF(x, y), 6, 6)
         p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(QPointF(x, y), 7.5, 7.5)
         p.end()
 
@@ -229,7 +233,7 @@ class _Ring(QWidget):
         t = self.m.h * 2 * math.pi                               # Marke auf dem Ring
         mr = (self.AUSSEN + self.INNEN) / 2
         mp = QPointF(self.mitte.x() + mr * math.sin(t), self.mitte.y() - mr * math.cos(t))
-        p.setBrush(Qt.NoBrush); p.setPen(QPen(QColor(Farbe.PAPIER), 2.5)); p.drawEllipse(mp, 7, 7)
+        p.setBrush(Qt.NoBrush); p.setPen(QPen(QColor(Farbe.PAPIER), STIFT_KREIS)); p.drawEllipse(mp, 7, 7)
         p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(mp, 8.5, 8.5)
         # Dreieck: Punkt für Punkt gemischt (a Farbe, b Weiß, c Schwarz)
         fa, fw, fk = self._ecken()
@@ -248,7 +252,7 @@ class _Ring(QWidget):
         p.setBrush(Qt.NoBrush); p.setPen(QPen(self.palette().mid().color(), 1)); p.drawPath(spitze)
         a, b = self.m.s * self.m.v, self.m.v * (1 - self.m.s)                     # Marke im Dreieck
         pos = QPointF(a * fa.x() + b * fw.x() + (1 - a - b) * fk.x(), a * fa.y() + b * fw.y() + (1 - a - b) * fk.y())
-        p.setPen(QPen(QColor(Farbe.PAPIER), 2)); p.drawEllipse(pos, 5, 5)
+        p.setPen(QPen(QColor(Farbe.PAPIER), STIFT_BETONT)); p.drawEllipse(pos, 5, 5)
         p.setPen(QPen(QColor(Farbe.SCHWARZ), 1)); p.drawEllipse(pos, 6.5, 6.5)
         p.end()
 
@@ -292,7 +296,7 @@ class _Regler(QWidget):
         self.modell_wahl = Auswahlfeld(); self.modell_wahl.addItems(MODELLE)
         self.namen = [QLabel() for _ in range(3)]
         self.felder = [QSpinBox() for _ in range(3)]
-        self.hex = QLineEdit(); self.hex.setMaxLength(7); self.hex.setPlaceholderText("#rrggbb")
+        self.hex = zeilenfeld("frei", platzhalter="#rrggbb"); self.hex.setMaxLength(7)
         # Rasteransicht des Baukastens: je nach Breite zwei Paare nebeneinander oder eines je Zeile, nichts ragt heraus
         g = FormularGitter(self)
         g.reihe(("Farbmodell", self.modell_wahl), ("Hex", self.hex))
@@ -386,8 +390,8 @@ class _FlaechePaar(QWidget):
     def ordne(self) -> None:
         f, l = self.f, self.l
         h = max(f.height(), l.height())
-        f.move(0, 0); l.move(f.width() + 6, 0)
-        self.setFixedSize(f.width() + 6 + l.width(), h)
+        f.move(0, 0); l.move(f.width() + FARBWAEHLER_ZUGABE_LINKS, 0)
+        self.setFixedSize(f.width() + FARBWAEHLER_ZUGABE_LINKS + l.width(), h)
 
 
 class _ProbeBlock(QWidget):
@@ -399,9 +403,9 @@ class _ProbeBlock(QWidget):
         neu, alt = QLabel("Neu", self), QLabel("Aktuell", self)
         b = max(neu.sizeHint().width(), alt.sizeHint().width())
         probe.move(0, 0)
-        neu.move(probe.width() + 8, 0)
-        alt.move(probe.width() + 8, probe.height() - alt.sizeHint().height())
-        self.setFixedSize(probe.width() + 8 + b, probe.height())
+        neu.move(probe.width() + FARBWAEHLER_ZUGABE_RECHTS, 0)
+        alt.move(probe.width() + FARBWAEHLER_ZUGABE_RECHTS, probe.height() - alt.sizeHint().height())
+        self.setFixedSize(probe.width() + FARBWAEHLER_ZUGABE_RECHTS + b, probe.height())
 
 
 class FarbenDialog(PanelFaehig, QDialog):

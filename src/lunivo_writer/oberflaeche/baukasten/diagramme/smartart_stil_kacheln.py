@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QPixmap
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
-from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP
+from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_SMARTART_STIL_BAND, GROESSE_SMARTART_STIL_POPUP, STIFT_BETONT
 
 BAND_KACHEL = QSize(*GROESSE_SMARTART_STIL_BAND)
 POPUP_KACHEL = QSize(*GROESSE_SMARTART_STIL_POPUP)
@@ -36,7 +36,7 @@ def stil_bild_org(nr: int, groesse: QSize = BAND_KACHEL, blau: str | None = None
         if nr == 2:                                                               # Hell: blasse Fläche
             p.setBrush(c.lighter(160)); p.setPen(QPen(c.lighter(130), 1))
         elif nr == 3:                                                             # Kräftig: dunkler Rand
-            p.setBrush(c); p.setPen(QPen(c.darker(150), 2))
+            p.setBrush(c); p.setPen(QPen(c.darker(150), STIFT_BETONT))
         elif nr == 4:                                                             # 3D: Verlauf
             g = QLinearGradient(r.topLeft(), r.bottomLeft()); g.setColorAt(0, c.lighter(135)); g.setColorAt(1, c.darker(125))
             p.setBrush(g); p.setPen(QPen(c.darker(150), 1))

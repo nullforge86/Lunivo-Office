@@ -26,11 +26,15 @@ from lunivo_writer.core.bearbeitung import suche as S
 from lunivo_writer.oberflaeche.baukasten.geruest.einklappgruppe import EinklappGruppe
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SUCHEN_ELEMENTE_ZUGABE, SUCHEN_KNOPF_ZUGABE
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, HOEHE_SUCHOPTION, ICON_GROSS, RAND_KEIN, RAND_OBEN_KLEIN, RAND_OBEN_SEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownTaste
 
-HERVORHEBUNG_GELB = "#ffec99"      # Textmarker beim Hervorheben: bewusst fest (Gruppe C)
+from lunivo_writer.oberflaeche.baukasten.basis.farben import HERVORHEBUNG_GELB   # Textmarker beim Hervorheben: bewusst fest
 
 RICHTUNGEN = (("abwaerts", "Abwärts"), ("aufwaerts", "Aufwärts"), ("alles", "Alles"))
 ZEICHEN_NAMEN = {"schrift": "Schriftart", "groesse": "Größe", "fett": "Fett", "kursiv": "Kursiv", "farbe": "Schriftfarbe", "unter": "Unterstreichung",
@@ -133,9 +137,8 @@ class SuchenFeld(QWidget):
 
     def _sprung(self, symbol: str, tipp: str) -> QToolButton:
         """Pfeilknopf neben dem Suchfeld (vorheriger/nächster Treffer) — quadratisch, so hoch wie das Feld."""
-        k = QToolButton(); k.setIcon(symbole.icon(symbol, ICON_GROSS)); k.setFixedSize(KNOPF_H + 2, KNOPF_H + 2)
-        k.setToolTip(tipp); k.setAccessibleName(tipp)
-        return k
+        return werkzeugknopf("fest", symbol=symbol, symbolgroesse="gross", tooltip=tipp, name=tipp, flach=False,
+                             groesse=(KNOPF_H + SUCHEN_KNOPF_ZUGABE, KNOPF_H + SUCHEN_KNOPF_ZUGABE))
 
     @staticmethod
     def _titel(text: str, feld: QWidget) -> QLabel:
@@ -184,9 +187,9 @@ class SuchenFeld(QWidget):
             self.richtung.addItem(t, k)
         rl = QLabel("Such&richtung:"); rl.setBuddy(self.richtung)
         rz.addWidget(rl); rz.addWidget(self.richtung, 1); ov.addLayout(rz)
-        self.gross = QCheckBox("Groß-/Kleinschreibung beachten"); self.ganz = QCheckBox("Nur ganzes Wort suchen")
-        self.platzhalter = QCheckBox("Platzhalter verwenden"); self.praefix = QCheckBox("Präfix beachten"); self.suffix = QCheckBox("Suffix beachten")
-        self.satzzeichen = QCheckBox("Interpunktionszeichen ignorieren"); self.leerzeichen = QCheckBox("Leerzeichen ignorieren")
+        self.gross = haken("standard", "Groß-/Kleinschreibung beachten"); self.ganz = haken("standard", "Nur ganzes Wort suchen")
+        self.platzhalter = haken("standard", "Platzhalter verwenden"); self.praefix = haken("standard", "Präfix beachten"); self.suffix = haken("standard", "Suffix beachten")
+        self.satzzeichen = haken("standard", "Interpunktionszeichen ignorieren"); self.leerzeichen = haken("standard", "Leerzeichen ignorieren")
         for c in (self.gross, self.ganz, self.platzhalter, self.praefix, self.suffix, self.satzzeichen, self.leerzeichen):
             c.setMinimumHeight(HOEHE_SUCHOPTION); ov.addWidget(c); c.toggled.connect(lambda _a: (self._optionen_neu(), self.zaehlen()))
         v.addWidget(self.optionen_gruppe)
@@ -252,9 +255,9 @@ class SuchenFeld(QWidget):
         self.elemente = QListWidget(); self.elemente.addItems(list(G.ELEMENTE)); self.elemente.setCurrentRow(0)
         self.elemente.setAccessibleName("Gehe zu Element")
         v.addWidget(self._titel("Gehe zu &Element", self.elemente))
-        self.elemente.setMinimumHeight(self.elemente.sizeHintForRow(0) * len(G.ELEMENTE) + 8)          # alle Elemente ohne Rollen
+        self.elemente.setMinimumHeight(self.elemente.sizeHintForRow(0) * len(G.ELEMENTE) + SUCHEN_ELEMENTE_ZUGABE)          # alle Elemente ohne Rollen
         v.addWidget(self.elemente)
-        self.eingabe = QLineEdit(); self.eingabe.setMinimumHeight(KNOPF_H)
+        self.eingabe = zeilenfeld("frei"); self.eingabe.setMinimumHeight(KNOPF_H)
         self.eingabe_titel = QLabel(G.EINGABE["Seite"]); self.eingabe_titel.setBuddy(self.eingabe)
         v.addWidget(self.eingabe_titel); v.addWidget(self.eingabe)
         hilfe = QLabel("Geben Sie + und – ein, um sich relativ zur derzeitigen Position zu bewegen.\nBeispiel: Mit +4 springen Sie um vier "

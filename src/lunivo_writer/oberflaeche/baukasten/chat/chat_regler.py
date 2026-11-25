@@ -3,6 +3,9 @@
 Liest und schreibt nur die KI-Konfiguration (``chat_optionen``/``chat_setzen``); der Chat liest ``direkt`` beim Antwortende aus derselben Konfiguration."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt
@@ -20,7 +23,7 @@ class ChatReglerBlock(QWidget):
         self.k = konfig
         o = konfig.chat_optionen()
         v = _spalte("eng", self)
-        self.mehr = QPushButton(); self.mehr.setFlat(True); self.mehr.setCursor(Qt.PointingHandCursor)
+        self.mehr = knopf("standard", ohne_rand=True, hand=True)
         v.addWidget(self.mehr, 0, Qt.AlignLeft)
         self.inhalt = QWidget()
         ew = _spalte("eng", self.inhalt)
@@ -60,7 +63,7 @@ class ChatReglerBlock(QWidget):
         self.streaming.toggled.connect(lambda an: k.chat_setzen(streaming=an))
         ew.addWidget(self.streaming)
         ew.addWidget(text_label("Stoppfolgen", fett=True))
-        self.stopp = QLineEdit(str(o["stopp"])); self.stopp.setPlaceholderText("durch Komma getrennt")
+        self.stopp = zeilenfeld("frei", str(o["stopp"]), platzhalter="durch Komma getrennt")
         self.stopp.textChanged.connect(lambda t: k.chat_setzen(stopp=t))
         ew.addWidget(self.stopp)
         self.direkt = UmbruchSchalter("Antwort direkt ins Dokument einfügen"); self.direkt.setChecked(bool(o["direkt"]))

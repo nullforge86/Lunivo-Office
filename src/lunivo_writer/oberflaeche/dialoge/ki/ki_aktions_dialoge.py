@@ -1,6 +1,9 @@
 """KI-Aktionsfenster: Schnelle KI-Aktion, Neuer Assistent, Alle Ergebnisse (Erstellen-Fenster nach dem Baukasten)."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 
@@ -55,8 +58,8 @@ class SchnelleAktionDialog(ErstellenFenster):
             self.ergebnis.addItem(text, schl)
         g.zeile("Ergebnis anwenden als", self.ergebnis)
         g.breit(abschnittstitel("Zugriff von"))
-        self.r_kontext = QRadioButton("Verfügbar über das Kontextmenü"); self.r_kontext.setChecked(True)
-        self.r_schnell = QRadioButton("Schnellzugriff über die Symbolleiste")
+        self.r_kontext = option("standard", "Verfügbar über das Kontextmenü", an=True)
+        self.r_schnell = option("standard", "Schnellzugriff über die Symbolleiste")
         zugriff = FlussLayout(); zugriff.addWidget(self.r_kontext); zugriff.addWidget(self.r_schnell)
         g.breit(zugriff)
         self.abschliessen()
@@ -161,8 +164,8 @@ class ErgebnisseDialog(PanelFaehig, QDialog):
         if not self.liste_daten:
             v.addWidget(QLabel("In dieser Sitzung hat die KI noch nichts geliefert."))
         bb = knopfzeile(self, schliessen=True)
-        self.kopieren = bb.zusatz_knopf(QPushButton("Kopieren"))
-        self.einfuegen = bb.zusatz_knopf(QPushButton("Einfügen"))
+        self.kopieren = bb.zusatz_knopf(knopf("standard", "Kopieren"))
+        self.einfuegen = bb.zusatz_knopf(knopf("standard", "Einfügen"))
         self.kopieren.clicked.connect(lambda: QApplication.clipboard().setText(self.text.toPlainText()))
         self.einfuegen.clicked.connect(self._einfuegen)
         v.addWidget(bb)

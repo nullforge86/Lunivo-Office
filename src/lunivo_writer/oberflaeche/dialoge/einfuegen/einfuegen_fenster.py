@@ -20,6 +20,10 @@ from lunivo_writer.editor.tabelle import tabelle_text as TT
 from lunivo_writer.editor.text import zahlformat as Z
 from lunivo_writer.oberflaeche.baukasten.basis.dialog_rahmen import fussleiste
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, UmbruchSchalter, abschnittstitel
+from lunivo_writer.oberflaeche.baukasten.basis.mass import EINFUEGEN_LISTE_ZEILEN, EINFUEGEN_TYP_ZEILEN
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
 from lunivo_writer.oberflaeche.baukasten.basis.mass import BREITE_SCHIENE, BREITE_SEITENLEISTE, GROESSE_KNOPF_QUADRAT, GROESSE_RASTER_DATEIEN, HOEHE_EINGABE_TEXT, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, HOEHE_KNOPF_HOCH, HOEHE_LISTE_MITTEL, ICON_GROSS, ICON_LISTE, RAND_KEIN, ZUGABE_LISTE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -36,13 +40,13 @@ class ZahlDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("Zahl")
         v = _spalte("standard", self)
-        self.zahl = QLineEdit(); self.zahl.setMinimumHeight(HOEHE_KNOPF); self.zahl.setAccessibleName("Zahl")
+        self.zahl = zeilenfeld("standard", name="Zahl")
         v.addWidget(_titel("&Zahl", self.zahl)); v.addWidget(self.zahl)
         self.typ = QListWidget(); self.typ.setAccessibleName("Zahlentyp")
         for k, t in Z.TYPEN:
             it = QListWidgetItem(t); it.setData(Qt.UserRole, k); self.typ.addItem(it)
         self.typ.setCurrentRow(0)
-        self.typ.setMinimumHeight(self.typ.sizeHintForRow(0) * 5 + ZUGABE_LISTE)
+        self.typ.setMinimumHeight(self.typ.sizeHintForRow(0) * EINFUEGEN_TYP_ZEILEN + ZUGABE_LISTE)
         v.addWidget(_titel("Zahlen&typ", self.typ)); v.addWidget(self.typ)
         self.hinweis = QLabel(""); hinweis_stil(self.hinweis); self.hinweis.setWordWrap(True)
         v.addWidget(self.hinweis)
@@ -83,7 +87,7 @@ class FelderDialog(PanelFaehig, QDialog):
         self.liste = QListWidget(); self.liste.setAccessibleName("Feldnamen"); self.liste.addItems(list(F.FELDER))
         g.zeile(_titel("Feldna&men:", self.liste), self.liste)
         g.breit(abschnittstitel("Feldeigenschaften"))
-        self.anweisung = QLineEdit()
+        self.anweisung = zeilenfeld("frei")
         self.anweisung.setAccessibleName("Feldfunktionen")
         g.zeile(_titel("&Feldfunktionen:", self.anweisung), self.anweisung)
         g.breit(QLabel("Assistent:"))
@@ -104,7 +108,7 @@ class FelderDialog(PanelFaehig, QDialog):
 
     def kompakt_machen(self) -> None:
         """In der Seitenleiste: die Feldnamen als Liste von begrenzter Höhe."""
-        self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * 9 + ZUGABE_LISTE)
+        self.liste.setFixedHeight(self.liste.sizeHintForRow(0) * EINFUEGEN_LISTE_ZEILEN + ZUGABE_LISTE)
 
     # ---- Assistent je Feld ----------------------------------------------------------------------------------------------
     def _zeile(self, schl: str, text: str, w: QWidget, aktiv: bool = True) -> QWidget:
@@ -139,7 +143,7 @@ class FelderDialog(PanelFaehig, QDialog):
             box.activated.connect(lambda _i, box=box: self._formel_einsetzen(box))
 
     def _assistent_adresse(self, name: str) -> None:
-        self._zeile("text", "&Adresse:", QLineEdit())
+        self._zeile("text", "&Adresse:", zeilenfeld("frei"))
 
     def _assistent_zahlenformat(self, name: str) -> None:
         self._zeile("art", "&Zahlenformat:", self._box([t for _k, t in F.SCHREIBWEISEN], daten=[k_ for k_, _t in F.SCHREIBWEISEN]))
@@ -153,7 +157,7 @@ class FelderDialog(PanelFaehig, QDialog):
         self._assistent_zahlenformat(name)
 
     def _assistent_tc(self, name: str) -> None:
-        self._zeile("text", "&Eintragstext:", QLineEdit())
+        self._zeile("text", "&Eintragstext:", zeilenfeld("frei"))
         e = QSpinBox(); e.setRange(1, 9); self._zeile("ebene", "E&bene:", e)
 
     def _assistent_datum(self, name: str) -> None:
@@ -166,7 +170,7 @@ class FelderDialog(PanelFaehig, QDialog):
         self._zeile("von", "Ebenen &von:", von); self._zeile("bis", "Ebenen &bis:", bis)
 
     def _assistent_variable(self, name: str) -> None:
-        self._zeile("text", "&Name:", QLineEdit())
+        self._zeile("text", "&Name:", zeilenfeld("frei"))
 
     def _assistent_serienfeld(self, name: str) -> None:
         self._zeile("text", "&Feldname:", self._box(list(self.kontext.get("serienfelder", [])), bearbeitbar=True))
@@ -271,7 +275,7 @@ class AutoTextDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         self.setWindowTitle("AutoText erstellen")
         v = _spalte("standard", self)
-        self.feld = QLineEdit(" ".join(markierung.split()[:4])[:40]); self.feld.setMinimumHeight(HOEHE_KNOPF_GROSS)
+        self.feld = zeilenfeld("gross", " ".join(markierung.split()[:4])[:40])
         t = _titel("Bitte geben Sie einen &Namen für den AutoText-Eintrag an:", self.feld); t.setWordWrap(True)
         v.addWidget(t); v.addWidget(self.feld); v.addStretch(1)
         self.ok = fussleiste(self, v)
@@ -304,9 +308,9 @@ class TrennerDialog(PanelFaehig, QDialog):
         self._gruppe = QButtonGroup(self)
         g = FlussLayout(14) if zu_tabelle else _spalte("standard")                   # Text → Tabelle: Reihe, die umbricht; Tabelle → Text: untereinander
         for i, (_z, text) in enumerate(self._liste):
-            r = QRadioButton(text); self._gruppe.addButton(r, i); g.addWidget(r)
-        andere = QRadioButton("A&ndere:"); self._gruppe.addButton(andere, len(self._liste))
-        self.andere = QLineEdit("-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(BREITE_SCHIENE); self.andere.setMinimumHeight(HOEHE_KNOPF)
+            r = option("standard", text, gruppe=self._gruppe, nummer=i); g.addWidget(r)
+        andere = option("standard", "A&ndere:", gruppe=self._gruppe, nummer=len(self._liste))
+        self.andere = zeilenfeld("standard", "-"); self.andere.setMaxLength(1); self.andere.setMaximumWidth(BREITE_SCHIENE)
         self.andere.setAlignment(Qt.AlignCenter); self.andere.setAccessibleName("Anderes Trennzeichen")
         z = FlussLayout(6); z.addWidget(andere); z.addWidget(self.andere)
         fg.breit(g); fg.breit(z)
@@ -379,7 +383,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
             g.zeile(t, feld)
             self._kapitel_teile += [t, feld]
         g.breit(abschnittstitel("Seitennummerierung"))
-        self.fortsetzen = QRadioButton("Fortsetzen vom vorherigen Abschnitt (&o)"); self.beginnen = QRadioButton("&Beginnen mit:")
+        self.fortsetzen = option("standard", "Fortsetzen vom vorherigen Abschnitt (&o)"); self.beginnen = option("standard", "&Beginnen mit:")
         self.start = QSpinBox(); self.start.setRange(1, 9999); self.start.setMinimumHeight(HOEHE_KNOPF)
         self.start.setAccessibleName("Beginnen mit")
         g.breit(self.fortsetzen)
@@ -388,7 +392,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
         self.bereich = QButtonGroup(self)
         u = FlussLayout(10)
         for i, (_k, t) in enumerate(self.BEREICHE):
-            r = QRadioButton(t); self.bereich.addButton(r, i); u.addWidget(r)
+            r = option("standard", t, gruppe=self.bereich, nummer=i); u.addWidget(r)
         g.breit(u)
         v.addLayout(g)
         v.addStretch(1)
@@ -451,12 +455,12 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         fl = FlussLayout(6)                                                    # die drei Ziele, bei Platzmangel untereinander
         for i, (sym, name) in enumerate((("kette", "&Datei oder Webseite"), ("textmarke", "Aktuelles D&okument"),
                                          ("briefumschlag", "E-Mail-Adre&sse"))):
-            b = QToolButton(); b.setText(name); b.setIcon(symbole.icon(sym, ICON_LISTE)); b.setIconSize(QSize(ICON_LISTE, ICON_LISTE)); b.setCheckable(True)
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); b.setAutoRaise(True); b.setMinimumHeight(HOEHE_KNOPF_HOCH)
+            b = werkzeugknopf("band_menue", name, symbol=sym, symbolgroesse=ICON_LISTE, symbol_einpassen=True, umschaltbar=True)
+            b.setMinimumHeight(HOEHE_KNOPF_HOCH)
             self.arten.addButton(b, i); fl.addWidget(b)
         z.breit(fl)
-        self.text = QLineEdit(text); self.text.setMinimumHeight(HOEHE_KNOPF)
-        quick = QPushButton("&QuickInfo …"); quick.setMinimumHeight(HOEHE_KNOPF); quick.clicked.connect(self._quickinfo)
+        self.text = zeilenfeld("standard", text)
+        quick = knopf("klein", "&QuickInfo …", aktion=self._quickinfo)
         z.zeile(_titel("Anzuzeigender &Text:", self.text), self.text); z.breit(quick)
         rechts.addLayout(z)
         self.seiten = QStackedWidget(); rechts.addWidget(self.seiten, 1)
@@ -468,8 +472,8 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         for p in dict.fromkeys([start, QDir.homePath()] + [os.path.join(QDir.homePath(), n) for n in ("Schreibtisch", "Desktop", "Dokumente")]):
             if os.path.isdir(p):
                 self.ordner.addItem(symbole.icon("oeffnen", ICON_GROSS), p)
-        hoch = QToolButton(); hoch.setIcon(symbole.icon("trefferHoch", ICON_GROSS)); hoch.setToolTip("Übergeordneter Ordner"); hoch.setFixedSize(*GROESSE_KNOPF_QUADRAT)
-        hoch.setAccessibleName("Übergeordneter Ordner")
+        hoch = werkzeugknopf("fest", symbol="trefferHoch", symbolgroesse="gross", tooltip="Übergeordneter Ordner", name="Übergeordneter Ordner",
+                             groesse=GROESSE_KNOPF_QUADRAT, flach=False)
         oz.addWidget(self.ordner, 1); oz.addWidget(hoch); v1.addLayout(oz)
         self.modell = QFileSystemModel(self); self.modell.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
         self.dateien = QListView(); self.dateien.setModel(self.modell); self.dateien.setViewMode(QListView.ListMode)
@@ -478,8 +482,8 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self.dateien.setAccessibleName("Dateien")
         v1.addWidget(self.dateien, 1)
         az = FormularGitter()
-        self.adresse = QLineEdit(); self.adresse.setMinimumHeight(HOEHE_KNOPF); self.adresse.setPlaceholderText("https://… oder Pfad einer Datei")
-        marken = QPushButton("&Lesezeichen …"); marken.setMinimumHeight(HOEHE_KNOPF); marken.setEnabled(False)
+        self.adresse = zeilenfeld("standard", platzhalter="https://… oder Pfad einer Datei")
+        marken = knopf("klein", "&Lesezeichen …", aktiv=False)
         marken.setToolTip("Sprungziele in fremden Dateien kann Lunivo noch nicht auslesen.")
         az.zeile(_titel("Adr&esse:", self.adresse), self.adresse); az.breit(marken)
         v1.addLayout(az)
@@ -502,7 +506,7 @@ class HyperlinkDialog(PanelFaehig, QDialog):
         self.seiten.addWidget(s2)
         # Seite 3: E-Mail-Adresse
         s3 = QWidget(); v3 = _spalte("standard", s3); g3 = FormularGitter(); v3.addLayout(g3, 1)
-        self.mail = QLineEdit(); self.mail.setMinimumHeight(HOEHE_KNOPF); self.betreff = QLineEdit(); self.betreff.setMinimumHeight(HOEHE_KNOPF)
+        self.mail = zeilenfeld("standard"); self.betreff = zeilenfeld("standard")
         self.zuletzt = QListWidget(); self.zuletzt.addItems(adressen or []); self.zuletzt.setAccessibleName("Zuletzt verwendete E-Mail-Adressen")
         g3.zeile(_titel("E-&Mail-Adresse:", self.mail), self.mail)
         g3.zeile(_titel("&Betreff:", self.betreff), self.betreff)
@@ -604,15 +608,15 @@ class ObjektDialog(PanelFaehig, QDialog):
         self._ordner = ordner
         v = _spalte("standard", self)
         g = FormularGitter()                                                   # in der Seitenleiste untereinander: Art, Objekttyp, Datei, Symbol
-        self.neu = QRadioButton("&Neu"); self.aus_datei = QRadioButton("&Aus Datei erstellen")
+        self.neu = option("standard", "&Neu"); self.aus_datei = option("standard", "&Aus Datei erstellen")
         self.neu.setEnabled(False); self.neu.setToolTip("Eingebettete Objekte anderer Programme kann Lunivo nicht anlegen.")
         self.aus_datei.setChecked(True)
         links = FlussLayout(14); links.addWidget(self.neu); links.addWidget(self.aus_datei)
         g.breit(links)
         self.typen = QListWidget(); self.typen.addItems(list(self.TYPEN)); self.typen.setEnabled(False); self.typen.setMaximumHeight(HOEHE_EINGABE_TEXT)
         g.breit(_titel("Objekt&typ:", self.typen)); g.breit(self.typen)
-        self.datei = QLineEdit(); self.datei.setMinimumHeight(HOEHE_KNOPF); self.datei.setAccessibleName("Datei")
-        such = QPushButton("&Durchsuchen …"); such.setMinimumHeight(HOEHE_KNOPF); such.clicked.connect(self._suchen)
+        self.datei = zeilenfeld("standard", name="Datei")
+        such = knopf("klein", "&Durchsuchen …", aktion=self._suchen)
         g.zeile(_titel("&Datei:", self.datei), self.datei); g.breit(such)
         self.symbol = UmbruchSchalter("Als Sym&bol anzeigen"); self.symbol.setChecked(als_symbol)
         g.breit(self.symbol)

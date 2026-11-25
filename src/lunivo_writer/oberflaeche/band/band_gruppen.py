@@ -27,6 +27,11 @@ from lunivo_writer.oberflaeche.band.plan import plan
 from lunivo_writer.oberflaeche.band.band_bausteine import _SperrKasten
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.rahmen.rahmen import rahmen as rahmen_baustein
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (BANDGRUPPE_ABSTAND, BANDGRUPPE_KNOPF_ZUGABE, BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL,
+                                                            BANDGRUPPE_RAND_OBEN)
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Schriftauswahl
 from lunivo_writer.oberflaeche.baukasten.dropdown.dropdown_knopf import DropdownKnopf
@@ -52,7 +57,8 @@ class BandGruppenBaustein:
     def _gruppe(self, g: dict) -> QWidget:
         rahmen = QWidget()
         v = RasterSpalte(rahmen)
-        v.setContentsMargins(1 if self.kompakt else 3, 2, 1 if self.kompakt else 3, 0)
+        seite = BANDGRUPPE_RAND_KOMPAKT if self.kompakt else BANDGRUPPE_RAND_NORMAL
+        v.setContentsMargins(seite, BANDGRUPPE_RAND_OBEN, seite, 0)
         v.setSpacing(0)
         if self.kompakt:
             rahmen.setToolTip(g["name"])                 # die Unterschrift entfällt; der Name steht im Hinweis
@@ -79,15 +85,9 @@ class BandGruppenBaustein:
         fuss.addStretch(1)
         fuss.addWidget(t)
         if g.get("pfeil"):
-            p = QToolButton()
-            p.setIcon(symbole.icon("arrow-down-right", GROESSE_GRUPPEN_STARTER[0]))       # Lucide-Symbol statt Schriftzeichen „↘“
-            p.setIconSize(QSize(*GROESSE_GRUPPEN_STARTER))
-            p.setAccessibleName(g["name"] + " — Einstellungen")
-            p.setAutoRaise(True)
-            p.setFixedSize(*GROESSE_GRUPPEN_STARTER)
-            p.setToolTip(g["name"] + " — Einstellungen")
-            p.clicked.connect(lambda _=False, a=g["pfeil"]: self.b.tun(a))
-            p.setEnabled(self.b.hat(g["pfeil"]))
+            p = werkzeugknopf("fest", symbolbild=symbole.icon("arrow-down-right", GROESSE_GRUPPEN_STARTER[0]),    # Lucide-Symbol statt Schriftzeichen „↘“
+                              bildgroesse=QSize(*GROESSE_GRUPPEN_STARTER), groesse=GROESSE_GRUPPEN_STARTER, name=g["name"] + " — Einstellungen",
+                              tooltip=g["name"] + " — Einstellungen", aktion=lambda a=g["pfeil"]: self.b.tun(a), aktiv=self.b.hat(g["pfeil"]))
             if not self.b.hat(g["pfeil"]):
                 self.fehlend.append(g["pfeil"])
             fuss.addWidget(p)
@@ -178,7 +178,7 @@ class BandGruppenBaustein:
             if i == 0:
                 h.addWidget(font)
                 h.addWidget(groesse)
-                h.addSpacing(3)
+                h.addSpacing(BANDGRUPPE_ABSTAND)
             for e in zeile:
                 h.addWidget(self._knopf(e, False))
             h.addStretch(1)
@@ -220,7 +220,7 @@ class BandGruppenBaustein:
             if i == 0:
                 h.addWidget(font)
                 h.addWidget(groesse)
-                h.addSpacing(3)
+                h.addSpacing(BANDGRUPPE_ABSTAND)
             for e in zeile:
                 h.addWidget(self._knopf(e, False))
             h.addStretch(1)
@@ -237,8 +237,7 @@ class BandGruppenBaustein:
             return
         spec = spec()
         spec = dict(spec, kacheln=spec["kacheln"][:int(g.get("kacheln") or len(spec["kacheln"]))])   # ``"kacheln": N``: nur N Kacheln im Band, alle Einträge bleiben im Pfeil-Menü
-        rahmen = QFrame()
-        rahmen.setFrameShape(QFrame.StyledPanel)
+        rahmen = rahmen_baustein("panel")
         h = RasterZeile(rahmen)
         h.setContentsMargins(*RAND_BANDGALERIE)
         h.setSpacing(ABSTAND_ENG)
@@ -248,13 +247,10 @@ class BandGruppenBaustein:
         if raster is not None:
             h.addLayout(raster)
         for nr, (tipp, pm, tun) in enumerate(spec["kacheln"]):
-            k = QToolButton()
-            k.setAutoRaise(True)
-            k.setIcon(QIcon(pm))
-            k.setIconSize(pm.size())
-            k.setFixedSize(pm.width() + 8, pm.height() + 8)
-            k.setToolTip(tipp); k.setCursor(Qt.PointingHandCursor)                  # klickbare Kachel: Hand
-            k.clicked.connect(lambda _=False, f=tun: (f(), self.aktualisieren()))
+            k = werkzeugknopf("fest", symbolbild=QIcon(pm), bildgroesse=pm.size(),
+                              groesse=(pm.width() + BANDGRUPPE_KNOPF_ZUGABE, pm.height() + BANDGRUPPE_KNOPF_ZUGABE),
+                              tooltip=tipp, hand=True,                                  # klickbare Kachel: Hand
+                              aktion=lambda f=tun: (f(), self.aktualisieren()))
             if raster is not None:
                 raster.addWidget(k, nr // spalten, nr % spalten)
             else:
@@ -329,7 +325,7 @@ class BandGruppenBaustein:
             for zeile, e in enumerate(kl[1:2], 1):
                 gitter.addWidget(self._knopf(e, False), zeile, 2)
         elif verh:
-            sperre = QCheckBox("Seitenverhältnis sperren"); sperre.setChecked(True)
+            sperre = haken("standard", "Seitenverhältnis sperren", an=True)
             gitter.addWidget(sperre, 2, 0, 1, 2)
             self.felder[vor + "sperre"] = sperre
         verhaeltnis = [1.0]

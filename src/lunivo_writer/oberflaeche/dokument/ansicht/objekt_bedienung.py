@@ -42,7 +42,8 @@ KNOEPFE = {
                  ("sa_stil", "paintbrush", "Stile"), ("sa_bullet", "list", "Aufzählung"), ("zahnrad", "settings", "Formatieren")),
 }
 STANDARD_KNOEPFE = (_LAYOUT,)
-KNOPF_SYMBOLFARBE = "#283c5a"          # Symbole auf dem hellen Knopfgrund (in jedem Thema gleich)
+from lunivo_writer.oberflaeche.baukasten.basis.farben import KNOPF_SYMBOLFARBE, OBJEKT_KNOPF_FLAECHE, OBJEKT_KNOPF_RAND
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG_GROSS # Symbole auf dem hellen Knopfgrund (in jedem Thema gleich)
 
 
 class ObjektBedienung:
@@ -179,9 +180,9 @@ class ObjektBedienung:
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
         for _n, symbol, _h, rc in self.knopf_liste(sel):
-            p.setPen(QPen(QColor(150, 160, 175), 1))
-            p.setBrush(QColor(255, 255, 255, 240))
-            p.drawRoundedRect(rc, 5, 5)
+            p.setPen(QPen(QColor(*OBJEKT_KNOPF_RAND), 1))
+            p.setBrush(QColor(*OBJEKT_KNOPF_FLAECHE))
+            p.drawRoundedRect(rc, RADIUS_ZEICHNUNG_GROSS, RADIUS_ZEICHNUNG_GROSS)
             symbole.in_rechteck(p, symbol, rc, KNOPF_SYMBOLFARBE)
         p.restore()
 

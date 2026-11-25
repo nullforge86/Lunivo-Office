@@ -4,6 +4,8 @@ Ein Klick auf einen Chip meldet die Anweisung (``gewaehlt``) — der Chat füllt
 ``ki.chat_vorschlaege`` und ``dienst.kontext()``; ``neu_aufbauen`` wird bei ``kontextGeaendert``/``geaendert`` gerufen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt, Signal
@@ -56,7 +58,7 @@ class ChatLeerzustand(QWidget):
                 w.hide(); w.setParent(None); w.deleteLater()
         auswahl, leer = self.d.kontext()[:2]
         for e in chat_vorschlaege(auswahl, leer, self.d.konfig):
-            b = QPushButton(e["titel"]); als_karte(b, "chip"); b.setFixedHeight(CHAT_CHIP_HOEHE); b.setToolTip(e["anweisung"][:200])
+            b = knopf("standard", e["titel"]); als_karte(b, "chip"); b.setFixedHeight(CHAT_CHIP_HOEHE); b.setToolTip(e["anweisung"][:200])
             b.setCursor(Qt.PointingHandCursor)
             if e.get("hinweis"):                                # klickbar bleibt jeder Chip (füllt das Eingabefeld); der Hinweis sagt nur, worauf er wirkt
                 b.setToolTip(e["hinweis"] + "\n\n" + e["anweisung"][:200])

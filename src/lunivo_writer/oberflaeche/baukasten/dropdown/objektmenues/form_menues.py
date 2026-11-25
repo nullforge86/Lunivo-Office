@@ -9,6 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt
 
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import STIFT_AUSWAHL
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_INNEN_FORM, GROESSE_FORMLINIE_KACHEL, GROESSE_FORMSTIL_KACHEL
 
 # Welche sechs Stile die Kacheln im Band zeigen (Reihenfolge wie in der Vorlage: Umriss grün, schwarz, blau, orange, grau, gelb): (Zeile, Spalte) des Rasters
@@ -52,7 +53,7 @@ def linien_galerie(b) -> dict:
 
     def zeichner(name):
         def zeichne(p, r):
-            p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), 1.5)); p.setBrush(Qt.NoBrush)
+            p.setPen(QPen(QApplication.palette().color(QPalette.WindowText), STIFT_AUSWAHL)); p.setBrush(Qt.NoBrush)
             p.drawPath(K.pfad(name, R(r).adjusted(DROPDOWN_INNEN_FORM, DROPDOWN_INNEN_FORM, -DROPDOWN_INNEN_FORM, -DROPDOWN_INNEN_FORM)))
         return zeichne
     kacheln = [(n, _symbol(zeichner(n), QSize(*GROESSE_FORMLINIE_KACHEL)).pixmap(QSize(*GROESSE_FORMLINIE_KACHEL)), lambda n=n: b.formEinfuegen(None, n)) for n in namen]

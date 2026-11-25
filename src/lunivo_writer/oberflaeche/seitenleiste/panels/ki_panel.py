@@ -4,7 +4,9 @@ from __future__ import annotations
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QPushButton, QWidget
+from PySide6.QtWidgets import QWidget
+
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 
 from lunivo_writer.ki.chat.chat_antwort import kern_von
 from lunivo_writer.editor.text import ki_markdown
@@ -41,7 +43,7 @@ class ChatPanel(QWidget):
         self.hinweis = QWidget()
         hv = _spalte("standard", self.hinweis)
         hv.addWidget(hinweis_label("KI-Modell verbinden, um den KI-Chat zu aktivieren"))
-        hb = QPushButton("KI-Einstellungen …"); hb.clicked.connect(self._einstellungen)
+        hb = knopf("standard", "KI-Einstellungen …", aktion=self._einstellungen)
         hv.addWidget(hb, 0, Qt.AlignLeft)
         v.addWidget(self.hinweis)
         # Leerzustand (Chips) oder Nachrichten

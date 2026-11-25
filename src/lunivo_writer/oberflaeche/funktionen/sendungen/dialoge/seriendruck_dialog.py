@@ -1,10 +1,11 @@
 """Dialog „Seriendruck“: Empfängerliste eingeben oder aus einer Datei laden."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialog, QPlainTextEdit, QPushButton
+from PySide6.QtWidgets import QDialog, QPlainTextEdit
 
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_FENSTER_SENDUNG
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
 from lunivo_writer.oberflaeche.baukasten.dokument.speichern_fenster import Dateifenster
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
@@ -25,7 +26,7 @@ class SeriendruckDialog(PanelFaehig, QDialog):
         self.daten = QPlainTextEdit(gespeichert or (";".join(felder) + "\n" if felder else "Name;Ort\nFrau Meier;Kiel\nHerr Schmidt;Bonn"))
         v.addWidget(self.daten)
         z = FlussLayout()
-        b = QPushButton("Aus Datei laden (CSV/TXT) …"); b.clicked.connect(self._laden); z.addWidget(b)
+        z.addWidget(knopf("standard", "Aus Datei laden (CSV/TXT) …", aktion=self._laden))
         v.addLayout(z)
         v.addWidget(ok_zeile(self, "Briefe erzeugen"))
 

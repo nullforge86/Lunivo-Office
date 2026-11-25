@@ -34,7 +34,7 @@ from lunivo_writer.editor.text import stile
 
 STYLES = dict.fromkeys(stile.NAMEN)         # Namen der eingebauten Formatvorlagen (selbst angelegte: ``stile.namen()``)
 EINFUEGE_MODI = ["Quellformatierung beibehalten", "Zielformatierung verwenden", "Nur Text"]
-FESTE_FARBEN = {"Rot": Farbe.ROT, "Blau": "#1971c2", "Grün": Farbe.GRUEN, "Schwarz": "#222222", "Violett": "#7048a8"}      # Farben nachverfolgter Änderungen
+from lunivo_writer.oberflaeche.baukasten.basis.farben import FESTE_FARBEN, TABELLENRAND_SCHWARZ  # noqa: E402,F401   (Farben nachverfolgter Änderungen)
 INS_STILE = ["Unterstrichen", "Doppelt unterstrichen", "Fett", "Kursiv", "Keine"]
 DEL_STILE = ["Durchgestrichen", "Fett", "Kursiv", "Keine"]
 nicht_angebunden: set = set()                       # Namen der Befehle, die der Editor noch nicht kennt (für die Aufgabenliste)
@@ -590,7 +590,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     # ---- Einfügen ---------------------------------------------------------------------------------------------------------------------------------
     def insert_table(self, zeilen: int, spalten: int) -> None:
-        self.ansicht._aendern(lambda s: s.tabelle_einfuegen(zeilen, spalten, format={"rahmen_breite": 1.0, "rahmen_farbe": "#000000"}))      # wie in Word: Tabellenraster
+        self.ansicht._aendern(lambda s: s.tabelle_einfuegen(zeilen, spalten, format={"rahmen_breite": 1.0, "rahmen_farbe": TABELLENRAND_SCHWARZ}))      # wie in Word: Tabellenraster
 
     def insert_page_break(self) -> None:
         def f(s):

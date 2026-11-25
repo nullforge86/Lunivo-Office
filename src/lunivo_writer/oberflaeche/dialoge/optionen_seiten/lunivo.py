@@ -1,6 +1,9 @@
 """Optionen: KI, Gedächtnis, Erweitert."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
 
@@ -57,20 +60,20 @@ class LunivoSeiten:
             combos[aufgabe] = c
             c.currentIndexChanged.connect(lambda _i, a=aufgabe, c=c: (k.aufgabe_setzen(a, c.currentData() or ""), geaendert.emit()))
             f.addRow(name, c)
-        mb = QPushButton(_t("optionen.lunivo.ki_modelle_bearbeiten")); mb.setFlat(True); mb.setCursor(Qt.PointingHandCursor)
+        mb = knopf("standard", _t("optionen.lunivo.ki_modelle_bearbeiten"), ohne_rand=True, hand=True)
         mb.setProperty("akzentSchrift", True); _rolle(mb, "link_links")
         f.addRow(mb)
 
-        schluessel = QLineEdit(k["apiKey"]); schluessel.setEchoMode(QLineEdit.Password); schluessel.setPlaceholderText("sk-ant-…")
+        schluessel = zeilenfeld("frei", k["apiKey"], platzhalter="sk-ant-…", passwort=True)
         schluessel.setProperty("optName", _t("optionen.lunivo.api_schluessel"))
         f.addRow(_t("optionen.lunivo.api_schluessel"), schluessel)
         hinweis = QLabel(); _rolle(hinweis, "hinweis"); hinweis.setWordWrap(True)
         f.addRow(hinweis)
         zeile = QWidget(); h = _reihe("standard", zeile)
-        zeigen = QPushButton(_t("optionen.lunivo.anzeigen")); zeigen.setCheckable(True)
-        kopie = QPushButton(_t("optionen.lunivo.kopieren"))
-        loeschen = QPushButton(_t("optionen.lunivo.schluessel_loeschen"))
-        erstellen = QPushButton(_t("optionen.lunivo.schluessel_erstellen")); erstellen.setFlat(True); erstellen.setCursor(Qt.PointingHandCursor)
+        zeigen = knopf("standard", _t("optionen.lunivo.anzeigen"), umschaltbar=True)
+        kopie = knopf("standard", _t("optionen.lunivo.kopieren"))
+        loeschen = knopf("standard", _t("optionen.lunivo.schluessel_loeschen"))
+        erstellen = knopf("standard", _t("optionen.lunivo.schluessel_erstellen"), ohne_rand=True, hand=True)
         erstellen.setProperty("akzentSchrift", True); _rolle(erstellen, "link")
         for b in (zeigen, kopie, loeschen, erstellen):
             h.addWidget(b)
@@ -114,7 +117,7 @@ class LunivoSeiten:
         anb.setProperty("optName", _t("optionen.lunivo.eigene_anbieter"))
         f.addRow(QLabel(_t("optionen.lunivo.eigene_anbieter")))
         f.addRow(anb)
-        neuer = QPushButton(_t("optionen.lunivo.anbieter_hinzufuegen"))
+        neuer = knopf("standard", _t("optionen.lunivo.anbieter_hinzufuegen"))
         f.addRow(neuer)
 
         def anbieter_fuellen():
@@ -128,7 +131,7 @@ class LunivoSeiten:
                 z = QWidget(); zh = _reihe("standard", z)
                 teile = [a["modell"], _t("optionen.lunivo.lokaler_anbieter") if K.ist_lokale_url(a["url"]) else _t("optionen.lunivo.ueber_das_internet")]
                 zh.addWidget(QLabel(f"{a['name']}  ·  {' · '.join(t for t in teile if t)}"), 1)
-                eb = QPushButton(_t("optionen.lunivo.entfernen"))
+                eb = knopf("standard", _t("optionen.lunivo.entfernen"))
                 eb.clicked.connect(lambda _=False, i=a["id"]: (k.anbieter_entfernen(i), alles_neu(), geaendert.emit()))
                 zh.addWidget(eb)
                 av.addWidget(z)
@@ -164,7 +167,7 @@ class LunivoSeiten:
         verbrauch = QWidget(); vh = _reihe("zeile", verbrauch)
         vh.addWidget(QLabel(_t("optionen.lunivo.verbrauch")))
         vh.addWidget(QLabel(_t("optionen.lunivo.noch_nichts_verbraucht") if not k["kosten"] else _t("optionen.lunivo.bisherige_kosten_0").format(K.als_geld(k['kosten']))))
-        auf = QPushButton(_t("optionen.lunivo.guthaben_aufladen")); auf.setFlat(True); auf.setCursor(Qt.PointingHandCursor)
+        auf = knopf("standard", _t("optionen.lunivo.guthaben_aufladen"), ohne_rand=True, hand=True)
         auf.setProperty("akzentSchrift", True); _rolle(auf, "link")
         auf.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://console.anthropic.com/settings/billing")))
         vh.addWidget(auf); vh.addStretch(1)
@@ -184,7 +187,7 @@ class LunivoSeiten:
         f = p.gruppe(_t("optionen.lunivo.gelernte_schreibweisen"))
         zeile = QWidget(); h = _reihe("zeile", zeile)
         lab = QLabel(); _rolle(lab, "text")
-        vergessen = QPushButton("vergessen")
+        vergessen = knopf("standard", "vergessen")
         h.addWidget(lab, 1); h.addWidget(vergessen)
         f.addRow(zeile)
         zeile.setProperty("optName", _t("optionen.lunivo.gelernte_schreibweisen"))
@@ -200,7 +203,7 @@ class LunivoSeiten:
                 liste.addItem(_t("optionen.lunivo.0_in_ruhe_lassen").format(w_))
             vergessen.setEnabled(bool(d["woerter"] or d["inRuhe"] or d["gezeigt"] or d["ki"]))
         f.addRow(liste)
-        eb = QPushButton(_t("optionen.lunivo.markierten_eintrag_entfernen"))
+        eb = knopf("standard", _t("optionen.lunivo.markierten_eintrag_entfernen"))
 
         def eintrag_weg():
             it = liste.currentItem()
@@ -243,7 +246,7 @@ class LunivoSeiten:
                 return
             g.speichern(); fuellen(); self.w.assistant.pruefen(voll=True)
         z2 = QWidget(); h2 = _reihe("zeile", z2)
-        b1 = QPushButton(_t("optionen.lunivo.sichern")); b2 = QPushButton(_t("optionen.lunivo.einspielen"))
+        b1 = knopf("standard", _t("optionen.lunivo.sichern")); b2 = knopf("standard", _t("optionen.lunivo.einspielen"))
         b1.clicked.connect(sichern); b2.clicked.connect(einspielen)
         h2.addWidget(b1); h2.addWidget(b2); h2.addWidget(eb); h2.addStretch(1)
         f.addRow(z2)

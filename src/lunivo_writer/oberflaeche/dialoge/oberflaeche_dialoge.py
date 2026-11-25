@@ -1,6 +1,10 @@
 """Oberfläche anpassen: Register (Reiter) auswählen und ordnen, Schnellzugriff, Symbole austauschen, Oberfläche wählen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -17,6 +21,7 @@ from PySide6.QtWidgets import (
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.band.plan import plan
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_UEBERSCHRIFT_PLUS_PT
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_KNOPF_KACHEL, GROESSE_SYMBOL_JETZT, GROESSE_VORSCHAU_QUADRAT, HOEHE_BEREICH_MITTEL, HOEHE_LISTE_KNOEPFE, HOEHE_LISTE_MITTEL, HOEHE_LISTE_REITER, ICON_GROSS, ICON_KACHEL, ICON_KNOPF_GROSS, RADIUS_MITTEL, RAND_BOX, RAND_GITTER
 
 IMMER = ("Datei",)          # dieser Reiter lässt sich nicht ausblenden
@@ -69,7 +74,7 @@ class RegisterAnpassenDialog(PanelFaehig, QDialog):
             self.liste.addItem(it)
         z = FlussLayout(6)
         for text, d in (("▲ Nach oben", -1), ("▼ Nach unten", 1)):
-            b = QPushButton(text); b.clicked.connect(lambda _=False, d=d: self._schieben(d)); z.addWidget(b)
+            z.addWidget(knopf("standard", text, aktion=lambda d=d: self._schieben(d)))
         g.breit(z)
         v.addWidget(inhalt)
         fussleiste(self, v, bei_ok=self._speichern)
@@ -125,7 +130,7 @@ class EigeneZeichnungDialog(PanelFaehig, QDialog):
         self.wert: str | None = None
         v = _spalte("standard", self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
-        t = QLabel("Eigene Zeichnung"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 2); t.setFont(f)
+        t = QLabel("Eigene Zeichnung"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + SCHRIFT_UEBERSCHRIFT_PLUS_PT); t.setFont(f)
         g.breit(t)
         g.breit(_satz("Eine SVG-Datei hier hineinkopieren — oder nur die Pfaddaten. Sie wird auf 24 × 24 gebracht und mittig eingepasst."))
         self.feld = QPlainTextEdit(); self.feld.setPlaceholderText('<svg viewBox="0 0 24 24">…</svg>')
@@ -176,7 +181,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         self.welches = name if name in namen else next(iter(namen))
         v = _spalte("standard", self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
-        t = QLabel("Symbol austauschen"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + 2); t.setFont(f)
+        t = QLabel("Symbol austauschen"); f = t.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() + SCHRIFT_UEBERSCHRIFT_PLUS_PT); t.setFont(f)
         g.breit(t)
         g.breit(_satz("Getauscht wird die Zeichnung, nicht der Knopf — sie ändert sich überall, wo sie benutzt wird. Oben steht, wo das ist.", True))
         kopf = QFrame(); kopf.setObjectName("tauschKopf")
@@ -186,7 +191,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         self.wo = QLabel(); self.wo.setWordWrap(True)
         kh.breit(self.jetzt); kh.breit(self.wo)
         g.breit(kopf)
-        self.suche = QLineEdit(); self.suche.setClearButtonEnabled(True); self.suche.setAccessibleName("Zeichnung suchen")
+        self.suche = zeilenfeld("frei", name="Zeichnung suchen"); self.suche.setClearButtonEnabled(True)
         self.suche.setPlaceholderText("Zeichnung suchen … (englisch: table, clock, save)")
         g.breit(self.suche)
         sc = QScrollArea(); sc.setWidgetResizable(True); sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -197,7 +202,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
         g.breit(sc)
         self.treffer = QLabel(); self.treffer.setWordWrap(True); hinweis_stil(self.treffer); g.breit(self.treffer)
         fuss = FlussLayout(6)
-        self.b_eigene = QPushButton("Eigene Zeichnung …"); self.b_dieses = QPushButton("Dieses zurücksetzen"); self.b_alle = QPushButton("Alle zurücksetzen")
+        self.b_eigene = knopf("standard", "Eigene Zeichnung …"); self.b_dieses = knopf("standard", "Dieses zurücksetzen"); self.b_alle = knopf("standard", "Alle zurücksetzen")
         for b in (self.b_eigene, self.b_dieses, self.b_alle):
             fuss.addWidget(b)
         g.breit(fuss)
@@ -246,7 +251,7 @@ class SymbolTauschenDialog(PanelFaehig, QDialog):
             gefunden += 1
             if gezeigt >= self.GRENZE:
                 continue
-            k = QToolButton(); k.setFixedSize(*GROESSE_KNOPF_KACHEL); k.setToolTip(n); k.setAutoRaise(True)
+            k = werkzeugknopf("fest", groesse=GROESSE_KNOPF_KACHEL, tooltip=n)
             k.setIcon(QIcon(QPixmap.fromImage(symbole.pfad_bild(pfad, 56, farbe)))); k.setIconSize(QSize(ICON_KNOPF_GROSS, ICON_KNOPF_GROSS))
             k.clicked.connect(lambda _=False, n=n: self._waehle(n))
             self.gitter.addWidget(k)
@@ -299,8 +304,8 @@ class OberflaecheDialog(PanelFaehig, QDialog):
         v = _spalte("standard", self)
         inhalt = QWidget(); g = FormularGitter(inhalt)
         g.breit(_satz("Wie sollen die Befehle angeordnet sein?"))
-        self.reg = QRadioButton("Register (Menüband mit Reitern)")
-        self.sym = QRadioButton("Symbolleisten (zwei Zeilen mit Knöpfen)")
+        self.reg = option("standard", "Register (Menüband mit Reitern)")
+        self.sym = option("standard", "Symbolleisten (zwei Zeilen mit Knöpfen)")
         (self.sym if settings.get("ui/oberflaeche", "register") == "symbolleisten" else self.reg).setChecked(True)
         wahl = FlussLayout(6); wahl.addWidget(self.reg); wahl.addWidget(self.sym)
         g.breit(wahl)

@@ -9,6 +9,8 @@ from PySide6.QtGui import QColor, QFont, QPen, QTextCursor
 
 from lunivo_writer.editor.objekte.frei.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen, ziel
 from lunivo_writer.oberflaeche.bauteile.textfeld_fragmente import absatz_fragmente
+from lunivo_writer.oberflaeche.baukasten.basis.darstellung import objekttext_eingabe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import DURCHSICHTIG, TEXTOBJEKT_FUELLUNG, WORDART_FUELLUNG
 
 
 def _fmt_unter(cf, k, v) -> None:
@@ -40,8 +42,8 @@ _FORMAT_SETZER = {
     "durch": lambda cf, k, v: cf.setFontStrikeOut(bool(v)),
     "hoch": _fmt_hoch_tief,
     "tief": _fmt_hoch_tief,
-    "hervor": lambda cf, k, v: cf.setBackground(QColor(v) if v else QColor(0, 0, 0, 0)),
-    "fuell": lambda cf, k, v: cf.setForeground(QColor(v) if v else QColor(0, 0, 0, 0)),
+    "hervor": lambda cf, k, v: cf.setBackground(QColor(v) if v else QColor(*DURCHSICHTIG)),
+    "fuell": lambda cf, k, v: cf.setForeground(QColor(v) if v else QColor(*DURCHSICHTIG)),
     "kontur": lambda cf, k, v: cf.setTextOutline(QPen(QColor(v), 1.0) if v else QPen(Qt.NoPen)),
     "schrift": _fmt_schrift,
     "pt": _fmt_pt,
@@ -158,12 +160,12 @@ def _edit_stil(ed) -> None:
     f = QFont(d.get("schrift", "Liberation Sans")); f.setPixelSize(max(6, round(float(d.get("pt", 36 if art == "wordart" else 11)) * 96 / 72 * z_)))
     f.setBold(bool(d.get("fett", art == "wordart"))); f.setItalic(bool(d.get("kursiv"))); f.setUnderline(bool(d.get("unter"))); f.setStrikeOut(bool(d.get("durch")))
     w.setFont(f); w.document().setDefaultFont(f)
-    farbe = d.get("fuell") or d.get("farbe") or ("#2f78bd" if art == "wordart" else "#1f1f1f")
+    farbe = d.get("fuell") or d.get("farbe") or (WORDART_FUELLUNG if art == "wordart" else TEXTOBJEKT_FUELLUNG)
     grund = "transparent"
     fu = a.get("fuell")
     if art == "textfeld" and fu and fu.get("art") == "farbe":
         grund = fu["farbe"]
-    w.setStyleSheet(f"QTextEdit {{ background: {grund}; color: {farbe}; border: none; selection-background-color: #8a9ab0; }}")
+    objekttext_eingabe(w, grund, farbe)
 
 
 def edit_platzieren(ed) -> None:

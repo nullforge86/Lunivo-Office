@@ -1,6 +1,10 @@
 """Optionen: Ansicht und Darstellung."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -16,6 +20,7 @@ from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import UmbruchSc
 from lunivo_writer.oberflaeche.baukasten.basis.beschriftung import text_label
 from lunivo_writer.oberflaeche.dialoge.optionen_seiten.gemeinsam import _Seite
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_ANSICHT_PROBE_PT
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_MITTEL, HOEHE_FELD, HOEHE_WAHLKARTE, ICON_NORMAL, RAND_ABSCHNITT, RAND_ZEILE_LOCKER, SCHRIFT_HINWEIS
 
 
@@ -61,7 +66,7 @@ class AnsichtSeiten:
         p.haken(f, "ui/objektanker", _t("optionen.ansicht.objektanker"), True)
         p.haken(f, "ui/versteckt_zeigen", _t("optionen.ansicht.ausgeblendeter_text"), False, lambda _: self.w.versteckt_anwenden())
         f = p.unter(e, _t("optionen.ansicht.formatierungszeichen_einzeln"))
-        absatz, leer = QCheckBox(_t("optionen.ansicht.absatzmarken")), QCheckBox(_t("optionen.ansicht.leerzeichen_und_tabstoppzeichen"))
+        absatz, leer = haken("standard", _t("optionen.ansicht.absatzmarken")), haken("standard", _t("optionen.ansicht.leerzeichen_und_tabstoppzeichen"))
         for c in (absatz, leer):
             c.setProperty("optName", c.text()); c.setMinimumHeight(HOEHE_FELD)
 
@@ -93,8 +98,7 @@ class AnsichtSeiten:
         gruppe = QButtonGroup(zeile)
         knoepfe: dict[str, QPushButton] = {}
         for schl, name in self.THEMEN:
-            b = QPushButton(name)
-            b.setObjectName("optWahl"); b.setCheckable(True)
+            b = knopf("standard", name, objektname="optWahl", umschaltbar=True)
             b.setAccessibleName(name); b.setAccessibleDescription(_t("optionen.ansicht.aussehen_des_programms"))
             b.setProperty("optName", _t("optionen.ansicht.hell_dunkel_aussehen"))
             gruppe.addButton(b); h.addWidget(b, 1)
@@ -123,7 +127,7 @@ class AnsichtSeiten:
                  "register": _t("optionen.ansicht.menueleiste_oben_darunter_reiter_start_e")}
         aktuell = p.s.get("ui/oberflaeche", "register")
         for schl, name in (("symbolleisten", _t("optionen.ansicht.symbolleisten")), ("register", _t("optionen.ansicht.in_registern"))):
-            r = QRadioButton(name); r.setChecked(schl == aktuell); r.setProperty("optName", _t("optionen.ansicht.benutzeroberflaeche")); r.setMinimumHeight(HOEHE_FELD)
+            r = option("standard", name, an=schl == aktuell); r.setProperty("optName", _t("optionen.ansicht.benutzeroberflaeche")); r.setMinimumHeight(HOEHE_FELD)
             gr.addButton(r); ov.addWidget(r)
             r.toggled.connect(lambda an, k=schl: an and (beschreibung.setText(texte[k]),
                                                          self.w.oberflaeche_aendern(k, self.w.menubar_wanted if k == "register" else True)))
@@ -138,7 +142,7 @@ class AnsichtSeiten:
         kopf = QWidget(); v = _spalte("abschnitt", kopf)
         v.addWidget(QLabel(_t("optionen.ansicht.schrift_im_text")))
         knoepfe = _reihe("standard")
-        klein, gross = QPushButton(_t("optionen.ansicht.a_kleiner")), QPushButton(_t("optionen.ansicht.a_groesser"))
+        klein, gross = knopf("standard", _t("optionen.ansicht.a_kleiner")), knopf("standard", _t("optionen.ansicht.a_groesser"))
         for k in (klein, gross):
             k.setMinimumHeight(HOEHE_FELD); knoepfe.addWidget(k)
         knoepfe.addStretch(1)
@@ -154,7 +158,7 @@ class AnsichtSeiten:
         def zoom_zeigen():
             e = self.w.current_editor()
             z = e.zoom if e is not None else 1.0
-            fnt = probe.font(); fnt.setPointSizeF(12 * z); probe.setFont(fnt)
+            fnt = probe.font(); fnt.setPointSizeF(SCHRIFT_ANSICHT_PROBE_PT * z); probe.setFont(fnt)
             stand.setText(_t("optionen.ansicht.schriftgroesse_0").format(round(z * 100)))
 
         def um(faktor):

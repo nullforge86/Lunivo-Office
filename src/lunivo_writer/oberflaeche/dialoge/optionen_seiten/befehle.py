@@ -1,6 +1,10 @@
 """Optionen: Menüband, Schnellzugriff, Sicherheit."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken as haken_baustein
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import eigenschaft, rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import anwenden, raender, reihe as _reihe, spalte as _spalte
@@ -30,19 +34,19 @@ class BefehleSeiten:
         g.addWidget(QLabel(links_kopf), 0, 0)
         kopf = _reihe("standard")
         auswahl = Auswahlfeld(); auswahl.addItem(kategorie)
-        suche = QLineEdit(); suche.setPlaceholderText(_t("optionen.befehle.befehl_suchen")); suche.setClearButtonEnabled(True)
+        suche = zeilenfeld("frei", platzhalter=_t("optionen.befehle.befehl_suchen")); suche.setClearButtonEnabled(True)
         kopf.addWidget(auswahl, 1); kopf.addWidget(suche, 1)
         g.addLayout(kopf, 1, 0)
         links = QListWidget(); links.setMinimumHeight(HOEHE_LISTE_BEFEHLE); links.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         g.addWidget(links, 2, 0)
         mitte = _spalte("standard"); mitte.addStretch(1)
-        b_hinzu = QPushButton(hinzu); b_weg = QPushButton(weg)
+        b_hinzu = knopf("standard", hinzu); b_weg = knopf("standard", weg)
         mitte.addWidget(b_hinzu); mitte.addWidget(b_weg); mitte.addStretch(1)
         g.addLayout(mitte, 2, 1)
         g.addWidget(QLabel(rechts_kopf), 0, 2)
         rechts = QListWidget(); rechts.setMinimumHeight(HOEHE_LISTE_BEFEHLE); rechts.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         pf = _spalte("standard")
-        auf = QPushButton("▲"); ab = QPushButton("▼")
+        auf = knopf("standard", "▲"); ab = knopf("standard", "▼")
         for b in (auf, ab):
             _rolle(b, "symbol")
         pf.addStretch(1); pf.addWidget(auf); pf.addWidget(ab); pf.addStretch(1)
@@ -101,7 +105,7 @@ class BefehleSeiten:
                                              for i in range(links.count())])
         from PySide6.QtWidgets import QMenu
         unten.addWidget(QLabel(_t("optionen.befehle.tastenkombinationen")))
-        tk = QPushButton(_t("optionen.befehle.anzeigen"))
+        tk = knopf("standard", _t("optionen.befehle.anzeigen"))
         tk.clicked.connect(lambda: __import__("lunivo_writer.oberflaeche.dialoge.lesen_hilfe.hilfe_dialoge", fromlist=["x"]).tastenkuerzel(self.w).exec())
         unten.addWidget(tk); unten.addStretch(1)
         unten.addWidget(QLabel(_t("optionen.befehle.anpassungen")))
@@ -115,7 +119,7 @@ class BefehleSeiten:
         f = p.gruppe(_t("optionen.befehle.aussehen"))
         for text, fn in ((_t("optionen.befehle.benutzeroberflaeche_waehlen"), self.w.befehle.benutzeroberflaeche),
                          (_t("optionen.befehle.symbole_austauschen"), self.w.befehle.symbolTauschen)):
-            b = QPushButton(text); b.clicked.connect(lambda _=False, fn=fn: fn()); f.addRow(b)
+            b = knopf("standard", text, aktion=fn); f.addRow(b)
         p.abschluss()
         return p
 
@@ -165,7 +169,7 @@ class BefehleSeiten:
         suche.textChanged.connect(lambda t: [links.item(i).setHidden(t.lower() not in links.item(i).text().lower())
                                              for i in range(links.count())])
         unten.addStretch(1)
-        zr = QPushButton(_t("optionen.befehle.zuruecksetzen_2"))
+        zr = knopf("standard", _t("optionen.befehle.zuruecksetzen_2"))
         zr.clicked.connect(lambda: (self.w.settings.remove("ui/schnellzugriff"), fuellen(vorgabe), self._band_merken()))
         unten.addWidget(zr)
         p.abschluss()
@@ -178,14 +182,14 @@ class BefehleSeiten:
         f = p.gruppe(_t("optionen.befehle.kennwortschutz"))
         w = QWidget(); g = FormularGitter(w); raender(g, "zeile")
         g.beschriftung_voll = True; g.beschriftungsabstand = ABSTAND_GROSS; g.einspaltig = True
-        k1 = QLineEdit(); k1.setEchoMode(QLineEdit.Password); k1.setPlaceholderText(_t("optionen.befehle.kennwort"))
-        k2 = QLineEdit(); k2.setEchoMode(QLineEdit.Password); k2.setPlaceholderText(_t("optionen.befehle.kennwort_erneut_eingeben"))
+        k1 = zeilenfeld("frei", platzhalter=_t("optionen.befehle.kennwort"), passwort=True)
+        k2 = zeilenfeld("frei", platzhalter=_t("optionen.befehle.kennwort_erneut_eingeben"), passwort=True)
         zk = _reihe("inhalt"); zk.addWidget(k1, 1); zk.addWidget(k2, 1)
         g.zeile(_t("optionen.befehle.dokumentkennwort"), zk)
         f.addRow(w)
         w.setProperty("optName", _t("optionen.befehle.dokumentkennwort"))
         stand = QLabel(); stand.setWordWrap(True)
-        setzen = QPushButton(_t("optionen.befehle.kennwort_setzen")); weg = QPushButton(_t("optionen.befehle.kennwort_entfernen"))
+        setzen = knopf("standard", _t("optionen.befehle.kennwort_setzen")); weg = knopf("standard", _t("optionen.befehle.kennwort_entfernen"))
         zeile = QWidget(); h = _reihe("standard", zeile)
         h.addWidget(setzen); h.addWidget(weg); h.addStretch(1)
         f.addRow(zeile)
@@ -218,7 +222,7 @@ class BefehleSeiten:
         warn = md_label(_t("optionen.befehle.ein_vergessenes_kennwort_kann_niemand_wi"))
         warn.setWordWrap(True); _rolle(warn, "text")
         f.addRow(warn)
-        sperre = QCheckBox(_t("optionen.befehle.bearbeitung_sperren"))
+        sperre = haken_baustein("standard", _t("optionen.befehle.bearbeitung_sperren"))
         sperre.setChecked(bool(t and getattr(t, "gesperrt", False))); sperre.setEnabled(t is not None)
         sperre.toggled.connect(lambda on: t and on != bool(getattr(t, "gesperrt", False)) and self.w.toggle_sperre())
         f.addRow(sperre)

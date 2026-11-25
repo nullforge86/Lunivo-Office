@@ -20,7 +20,7 @@ from lunivo_writer.core.layout import formatwerte as F
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
 TAB_NAME = {0: "links", 1: "rechts", 2: "mitte", 3: "dezimal"}
-GITTER_FARBE = "#c8c8c8"
+from lunivo_writer.oberflaeche.baukasten.basis.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
 
 
 # ---- Listen: Beschreibung der Oberfläche ↔ Ebenen des Modells -------------------------------------------------------------------------------------
@@ -448,7 +448,7 @@ class KernBefehle:
         if t is None:
             return False
         an = float(t.tabelle.format.get("rahmen_breite") or 0) > 0
-        return self.tabellenformat({"rahmen_breite": None if an else 1.0, "rahmen_farbe": None if an else "#333333", "rahmen_art": None if an else "einfach"})
+        return self.tabellenformat({"rahmen_breite": None if an else 1.0, "rahmen_farbe": None if an else TABELLENRAND_STANDARD, "rahmen_art": None if an else "einfach"})
 
     def tabelle_rahmen_an(self) -> bool:
         t = self.tabelle_an_marke()
@@ -466,7 +466,7 @@ class KernBefehle:
         f = t.tabelle.format if t is not None else {}
         if float(f.get("rahmen_breite") or 0) <= 0:
             return None
-        return Linie(f.get("rahmen_farbe") or "#333333", round(f["rahmen_breite"] * 0.75, 2), f.get("rahmen_art") or "einfach", "tblr")
+        return Linie(f.get("rahmen_farbe") or TABELLENRAND_STANDARD, round(f["rahmen_breite"] * 0.75, 2), f.get("rahmen_art") or "einfach", "tblr")
 
     def zell_fuellung(self):
         r = self._zellen_der_auswahl()
@@ -493,7 +493,7 @@ class KernBefehle:
                 tab = s._tabelle(tid)
                 s.tabellenformat_anwenden(tid, {"vorlage": name, "optionen": (1 if kopf else 0) | (2 if streifen else 0) | (4 if spalte else 0) or None,
                                                 "kopfzeilen": 1 if kopf else None, "rahmen_breite": 1.0 if rahmen else None,
-                                                "rahmen_farbe": "#333333" if rahmen else None, "rahmen_art": "einfach" if rahmen else None})
+                                                "rahmen_farbe": TABELLENRAND_STANDARD if rahmen else None, "rahmen_art": "einfach" if rahmen else None})
                 for z in range(tab.zeilen):
                     for sp in range(tab.spalten):
                         zelle = tab.zellen[z][sp]

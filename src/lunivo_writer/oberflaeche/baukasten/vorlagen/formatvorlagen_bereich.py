@@ -9,6 +9,9 @@ Ein Klick auf eine Vorlage wirkt sofort; der Bereich selbst formatiert nichts, e
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from typing import Callable
@@ -77,7 +80,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         self.aktuell = Auswahlfeld()
         v.addWidget(self.aktuell)
         z = FlussLayout(6)
-        self.neu_knopf = QPushButton("Neue Formatvorlage …"); self.loeschen = QPushButton("Formatierung löschen")
+        self.neu_knopf = knopf("standard", "Neue Formatvorlage …"); self.loeschen = knopf("standard", "Formatierung löschen")
         for k in (self.neu_knopf, self.loeschen):
             z.addWidget(k)
         v.addLayout(z)
@@ -90,7 +93,7 @@ class FormatvorlagenBereich(PanelFaehig, QDialog):
         for k, t in ANZEIGEN:
             self.anzeigen.addItem(t, k)
         az.zeile("Anzeigen:", self.anzeigen); v.addLayout(az)
-        self.vorschau = QCheckBox("Vorschau anzeigen"); self.vorschau.setChecked(True); v.addWidget(self.vorschau)
+        self.vorschau = haken("standard", "Vorschau anzeigen", an=True); v.addWidget(self.vorschau)
         v.addWidget(knopfzeile(self, schliessen=True))
         self.liste.itemClicked.connect(lambda it: self.waehle(it.data(Qt.UserRole)))
         self.aktuell.activated.connect(lambda _i: self.waehle(self.aktuell.currentText()))

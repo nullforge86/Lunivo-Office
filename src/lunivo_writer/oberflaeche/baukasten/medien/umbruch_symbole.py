@@ -11,6 +11,8 @@ from PySide6.QtGui import QColor, QPainter, QPen
 
 # Schlüssel → Beschriftung, in der Reihenfolge des Reiters „Textumbruch“
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG_KLEIN
+from lunivo_writer.oberflaeche.baukasten.basis.farben import UMBRUCH_FLAECHE, UMBRUCH_LINIE, UMBRUCH_LINIE_HINTER
 ARTEN = [("quadrat", "Quadrat"), ("passend", "Passend"), ("transparent", "Transparent"), ("obenunten", "Oben und Unten"),
          ("hinter", "Hinter den Text"), ("vor", "Vor dem Text"), ("textfluss", "Im Textfluss")]
 BILD = QColor(Farbe.BLAU)
@@ -20,7 +22,7 @@ ZEILEN = 7
 def umbruch_zeichner(art: str) -> Callable[[QPainter, QRectF], None]:
     def zeichne(p: QPainter, r: QRectF) -> None:
         p.save()
-        pal = QColor(110, 118, 130)
+        pal = QColor(*UMBRUCH_LINIE)
         z_h = r.height() / (ZEILEN * 2 - 1)                          # Zeilenhöhe = Lücke
         bild = QRectF(r.left() + r.width() * 0.3, r.top() + r.height() * 0.28, r.width() * 0.32, r.height() * 0.42)
 
@@ -30,7 +32,7 @@ def umbruch_zeichner(art: str) -> Callable[[QPainter, QRectF], None]:
             p.drawLine(int(r.left() + r.width() * (0.08 + 0.84 * von)), int(y), int(r.left() + r.width() * (0.08 + 0.84 * bis)), int(y))
 
         def feld(farbe: QColor = BILD) -> None:
-            p.setPen(Qt.NoPen); p.setBrush(farbe); p.drawRoundedRect(bild, 2, 2)
+            p.setPen(Qt.NoPen); p.setBrush(farbe); p.drawRoundedRect(bild, RADIUS_ZEICHNUNG_KLEIN, RADIUS_ZEICHNUNG_KLEIN)
 
         for i in range(ZEILEN):
             y0, y1 = r.top() + z_h * 2 * i, r.top() + z_h * (2 * i + 1)
@@ -41,9 +43,9 @@ def umbruch_zeichner(art: str) -> Callable[[QPainter, QRectF], None]:
             elif art == "obenunten" and neben:
                 continue
             else:
-                zeile(i, 0.0, 1.0, pal if art != "hinter" else QColor(90, 96, 108))
+                zeile(i, 0.0, 1.0, pal if art != "hinter" else QColor(*UMBRUCH_LINIE_HINTER))
         if art == "hinter":
-            feld(QColor(76, 110, 245, 140))
+            feld(QColor(*UMBRUCH_FLAECHE))
         elif art == "textfluss":
             feld()
         else:

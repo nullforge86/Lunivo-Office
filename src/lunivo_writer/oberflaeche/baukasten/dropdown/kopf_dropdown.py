@@ -19,6 +19,7 @@ from PySide6.QtWidgets import QMenu, QPushButton, QSizePolicy, QStyle, QStyleOpt
 
 from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import VoreinstellungMenue
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import STIFT_BILDCHEN, STIFT_SYMBOL
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_HOEHE, DROPDOWN_INNEN_KOPF, DROPDOWN_LINIE_HALB, BREITE_KOPFDROPDOWN, GROESSE_KOPFDROPDOWN_SYMBOL, GROESSE_KOPFDROPDOWN_WUNSCH
 
 
@@ -27,8 +28,8 @@ def keine_symbol(groesse: int = 16) -> QIcon:
     pm = QPixmap(groesse, groesse); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     r = QRectF(1.5, 1.5, groesse - 3, groesse - 3)
-    p.setPen(QPen(QColor(Farbe.GRAU), 1.2)); p.drawRect(r)
-    p.setPen(QPen(QColor(Farbe.ROT), 1.4)); p.drawLine(r.bottomLeft(), r.topRight())
+    p.setPen(QPen(QColor(Farbe.GRAU), STIFT_BILDCHEN)); p.drawRect(r)
+    p.setPen(QPen(QColor(Farbe.ROT), STIFT_SYMBOL)); p.drawLine(r.bottomLeft(), r.topRight())
     p.end()
     return QIcon(pm)
 

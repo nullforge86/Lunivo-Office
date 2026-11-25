@@ -33,7 +33,10 @@ from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_PAAR, BREITE_GALERIE_HINWEIS_MIN, BREITE_VORLAGENSUCHE, GROESSE_VORLAGE_KACHEL, HOEHE_FELD, HOEHE_KNOPF, ICON_GROSS, ICON_NORMAL, ICON_VORLAGE_PLATZHALTER, RAND_VORLAGENGALERIE, RAND_VORLAGEN_FUSS
 
-_FLAECHE_HELL = "#f1f3f5"   # Vordergrund der Stapel-Kachel: bewusst fest (Gruppe C)
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG_KACHEL, VORLAGENKACHEL_ZUGABE_BREIT, VORLAGENKACHEL_ZUGABE_HOCH
+from lunivo_writer.oberflaeche.baukasten.basis.farben import BILDCHEN_FLAECHE_HELL as _FLAECHE_HELL, SCHATTEN_KACHEL # Vordergrund der Stapel-Kachel: bewusst fest
 KACHEL = QSize(*GROESSE_VORLAGE_KACHEL)
 _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Änderungszeit) → Bild, solange das Programm läuft
 
@@ -68,7 +71,7 @@ class _Kachel(QToolButton):
         self.gruppe = "geruest"
         self.setText(name); self.setToolTip(name)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); self.setAutoRaise(True); self.setCursor(Qt.PointingHandCursor)
-        self.setIconSize(KACHEL); self.setFixedSize(KACHEL.width() + 12, KACHEL.height() + 44)
+        self.setIconSize(KACHEL); self.setFixedSize(KACHEL.width() + VORLAGENKACHEL_ZUGABE_BREIT, KACHEL.height() + VORLAGENKACHEL_ZUGABE_HOCH)
         self.setIcon(QIcon(self._platzhalter(art == "leer")))
 
     def _platzhalter(self, symbol: bool = False) -> QPixmap:
@@ -92,7 +95,7 @@ class _Kachel(QToolButton):
         for dx, dy in ((16, 0), (8, 8)):                             # zwei Blätter dahinter, nur an der Kante zu sehen
             p.setPen(QColor(Farbe.GRAU_HELL)); p.setBrush(QColor(_FLAECHE_HELL)); p.drawRect(dx, dy, vorn.width() - 1, vorn.height() - 1)
         p.drawPixmap(0, 16, vorn)
-        p.setBrush(QColor(0, 0, 0, 190)); p.setPen(Qt.NoPen); p.drawRoundedRect(6, KACHEL.height() - 34, 58, 26, 6, 6)
+        p.setBrush(QColor(*SCHATTEN_KACHEL)); p.setPen(Qt.NoPen); p.drawRoundedRect(6, KACHEL.height() - 34, 58, 26, RADIUS_ZEICHNUNG_KACHEL, RADIUS_ZEICHNUNG_KACHEL)
         p.setPen(QColor(Farbe.PAPIER)); p.drawText(6, KACHEL.height() - 34, 58, 26, Qt.AlignCenter, f"▣ {self.anzahl}")
         p.end()
         return out
@@ -109,15 +112,15 @@ class VorlagenGalerie(QWidget):
         self._offen: list[_Kachel] = []
         v = _spalte("fenster", self)
         kopf = _reihe("inhalt")
-        self.zurueck = QPushButton(_t("vorlagen.neu")); self.zurueck.setIcon(symbole.icon("arrow-left", ICON_NORMAL)); self.zurueck.setFlat(True); self.zurueck.setCursor(Qt.PointingHandCursor)
+        self.zurueck = knopf("standard", _t("vorlagen.neu"), symbol="arrow-left", ohne_rand=True, hand=True)
         self.zurueck.clicked.connect(lambda: self.rubrik_oeffnen(None)); kopf.addWidget(self.zurueck)
         self.titel = _rolle(QLabel(_t("vorlagen.neu")), "seitentitel")
         kopf.addWidget(self.titel); kopf.addStretch(1)
-        self.leer_knopf = QPushButton(_t("vorlagen.neues_leeres_dokument"))
+        self.leer_knopf = knopf("standard", _t("vorlagen.neues_leeres_dokument"))
         self.leer_knopf.setIcon(symbole.icon("file-plus", ICON_GROSS)); self.leer_knopf.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         self.leer_knopf.setObjectName("optFertig"); self.leer_knopf.setCursor(Qt.PointingHandCursor)
         self.leer_knopf.clicked.connect(lambda: self.gewaehlt.emit("leer", None))
-        self.neue_rubrik = QPushButton(_t("vorlagen.neue_rubrik"))
+        self.neue_rubrik = knopf("standard", _t("vorlagen.neue_rubrik"))
         self.neue_rubrik.clicked.connect(self._rubrik_anlegen)
         kopf.addWidget(self.neue_rubrik)
         v.addLayout(kopf)
@@ -132,7 +135,7 @@ class VorlagenGalerie(QWidget):
         self.reiter_w.currentChanged.connect(lambda i: self._reiter_setzen(self._schluessel[i]))
         v.addWidget(self.reiter_w, 0, Qt.AlignLeft)
         linie = trennlinie(tief=True); v.addWidget(linie)
-        self.suche = QLineEdit(); self.suche.setPlaceholderText(_t("vorlagen.vorlage_suchen")); self.suche.setClearButtonEnabled(True)
+        self.suche = zeilenfeld("frei", platzhalter=_t("vorlagen.vorlage_suchen")); self.suche.setClearButtonEnabled(True)
         self.suche.setFixedWidth(BREITE_VORLAGENSUCHE); self.suche.setMinimumHeight(HOEHE_KNOPF); self.suche.textChanged.connect(self._anordnen)
         v.addWidget(self.suche)
         self.flaeche = QScrollArea(); self.flaeche.setWidgetResizable(True); self.flaeche.setFrameShape(QFrame.NoFrame)
@@ -143,10 +146,10 @@ class VorlagenGalerie(QWidget):
         fuss = _reihe("fuss")
         hin = QLabel(_t("vorlagen.geoeffnet_wird_immer_eine_abschrift_die"))
         hinweis_stil(hin); hin.setWordWrap(True); hin.setMinimumWidth(BREITE_GALERIE_HINWEIS_MIN); fuss.addWidget(hin, 1)   # darf umbrechen, sonst wird das Fenster breiter als der Schirm
-        self.speichern = QPushButton(_t("vorlagen.dieses_dokument_als_vorlage_behalten")); self.speichern.setEnabled(kann_speichern)
+        self.speichern = knopf("standard", _t("vorlagen.dieses_dokument_als_vorlage_behalten"), aktiv=kann_speichern)
         self.speichern.clicked.connect(lambda: self.als_vorlage.emit(self._ziel()))
-        waehlen = QPushButton(_t("vorlagen.vorlagenordner_waehlen")); waehlen.clicked.connect(self._ordner_waehlen)
-        oeffnen = QPushButton(_t("vorlagen.vorlagenordner_oeffnen")); oeffnen.clicked.connect(self._ordner_oeffnen)
+        waehlen = knopf("standard", _t("vorlagen.vorlagenordner_waehlen"), aktion=self._ordner_waehlen)
+        oeffnen = knopf("standard", _t("vorlagen.vorlagenordner_oeffnen"), aktion=self._ordner_oeffnen)
         for k in (self.speichern, waehlen, oeffnen):
             k.setMinimumHeight(HOEHE_FELD); fuss.addWidget(k)
         self.vorlagen_aktionen = (self.speichern, waehlen, oeffnen)

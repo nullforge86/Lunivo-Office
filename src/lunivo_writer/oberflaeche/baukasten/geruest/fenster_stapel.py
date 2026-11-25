@@ -9,6 +9,8 @@ kehrt ohne ``fertig`` zurück. Ohne ``FensterStapel`` öffnet sich ``dialog`` wi
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from typing import Callable
@@ -29,7 +31,7 @@ class FensterStapel(QDialog):
         self.setWindowTitle(wurzel.windowTitle())
         v = _spalte("kein", self)
         self.kopf = QWidget(); kh = _reihe("leiste", self.kopf)
-        self.zurueck = QToolButton(); self.zurueck.setText("Zurück"); self.zurueck.setIcon(symbole.icon("arrow-left", ICON_NORMAL)); self.zurueck.setAutoRaise(True)
+        self.zurueck = werkzeugknopf("standard", "Zurück", symbol="arrow-left")
         self.zurueck.clicked.connect(self._zurueck)
         self.pfad = QLabel(); hinweis_stil(self.pfad)
         kh.addWidget(self.zurueck); kh.addWidget(self.pfad, 1)

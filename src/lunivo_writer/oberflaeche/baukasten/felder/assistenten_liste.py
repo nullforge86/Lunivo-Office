@@ -5,6 +5,9 @@
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt
@@ -35,8 +38,8 @@ class AssistentenListe(QWidget):
         self._zeilen = _spalte("standard")
         v.addLayout(self._zeilen)
         knoepfe = FlussLayout()
-        self.neu_assistent = QPushButton("Neuen Assistenten erstellen …")
-        self.neu_aktion = QPushButton("Schnelle KI-Aktion erstellen …")
+        self.neu_assistent = knopf("standard", "Neuen Assistenten erstellen …")
+        self.neu_aktion = knopf("standard", "Schnelle KI-Aktion erstellen …")
         self.neu_assistent.clicked.connect(lambda: fenster.befehle.tun("w.kiAssistentErstellen"))
         self.neu_aktion.clicked.connect(lambda: fenster.befehle.tun("w.schnelleAktionErstellen"))
         knoepfe.addWidget(self.neu_assistent); knoepfe.addWidget(self.neu_aktion)
@@ -63,12 +66,12 @@ class AssistentenListe(QWidget):
             z = QWidget(); h = _reihe("zeile", z)
             art = a.get("art", "aktion")
             if art == "fortlaufend":
-                an = QCheckBox(); an.setChecked(bool(a.get("an"))); an.setToolTip("Assistent einschalten")
+                an = haken("standard", an=bool(a.get("an")), tooltip="Assistent einschalten")
                 an.clicked.connect(lambda c, i=a["id"]: (ki.assistent_an_setzen(i, c), self.neu_lesen()))
                 h.addWidget(an)
             name = QLabel(f"{a['name']}  ·  {ART_TEXTE.get(art, art)}"); name.setWordWrap(True)
             h.addWidget(name, 1)
-            e = QPushButton("Entfernen")
+            e = knopf("standard", "Entfernen")
             e.clicked.connect(lambda _=False, i=a["id"]: (ki.konfig.assistent_entfernen(i), ki.geaendert.emit()))
             h.addWidget(e, 0, Qt.AlignTop)
             self._zeilen.addWidget(z)

@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import Qt, Signal
@@ -16,7 +18,7 @@ from lunivo_writer.oberflaeche.baukasten.basis.karte import als_karte
 
 
 def _link(text: str = "") -> QPushButton:
-    b = QPushButton(text); b.setFlat(True); b.setCursor(Qt.PointingHandCursor); b.setProperty("dropdownLink", True)
+    b = knopf("standard", text, ohne_rand=True, hand=True); b.setProperty("dropdownLink", True)
     return b
 
 
@@ -33,7 +35,7 @@ class VorlagenChips(QWidget):
         v.addLayout(self.fluss)
         self.chips = []
         for i, n in enumerate(namen):
-            b = QPushButton(n); als_karte(b, "chip"); b.clicked.connect(lambda _=False, i=i: self.gewaehlt.emit(i))
+            b = knopf("standard", n); als_karte(b, "chip"); b.clicked.connect(lambda _=False, i=i: self.gewaehlt.emit(i))
             self.chips.append(b)
         self.mehr = _link(); self.mehr.clicked.connect(self.umschalten)
         v.addWidget(self.mehr, 0, Qt.AlignLeft)

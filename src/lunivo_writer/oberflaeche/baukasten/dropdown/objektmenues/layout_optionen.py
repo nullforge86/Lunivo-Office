@@ -8,6 +8,9 @@ Das Popup ändert nichts selbst; es meldet nur, was gewählt wurde.
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
@@ -42,12 +45,12 @@ class LayoutOptionen(PopupVerhalten, QFrame):
         v.addWidget(self.umbruch)
         for f in (self.zeile, self.umbruch):
             f.gewaehlt.connect(self._klick)
-        self.r_mit = QRadioButton("Mit Text verschieben"); self.r_fest = QRadioButton("Fester Text")
+        self.r_mit = option("standard", "Mit Text verschieben"); self.r_fest = option("standard", "Fester Text")
         g = QButtonGroup(self); g.addButton(self.r_mit); g.addButton(self.r_fest)
         (self.r_mit if mit_text else self.r_fest).setChecked(True)
         self.r_mit.toggled.connect(self.verschieben)
         v.addWidget(self.r_mit); v.addWidget(self.r_fest)
-        m = QPushButton("Mehr anzeigen"); m.setFlat(True); m.setCursor(Qt.PointingHandCursor)
+        m = knopf("standard", "Mehr anzeigen", ohne_rand=True, hand=True)
         m.setProperty("dropdownLink", True)
         m.clicked.connect(lambda: (self.close(), self.mehr.emit())); v.addWidget(m)
         self.setze(art)

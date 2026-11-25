@@ -9,6 +9,9 @@ Der Baustein liefert nur den Pfad und die Endung (``speicherort_waehlen``); was 
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein, werkzeugknopf
+
 from lunivo_writer.oberflaeche.baukasten.basis.daten import text as _t
 
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import grundschrift, rolle as _rolle
@@ -203,8 +206,8 @@ class SpeichernFenster(QDialog):
         for endung, filtertext in self.typen:
             self.typ.addItem(filtertext, None if oeffnen else endung)
         self.typ.setCurrentIndex(max(0, next((i for i, (e, _f) in enumerate(self.typen) if e == vorwahl), 0)))
-        self.k_speichern = QPushButton("&Speichern"); self.k_speichern.setObjectName("sfSpeichern"); self.k_speichern.setDefault(True)
-        self.k_abbrechen = _rolle(QPushButton(_t("speichern.abbrechen")), "aktion")
+        self.k_speichern = knopf_baustein("standard", "&Speichern", objektname="sfSpeichern", standard=True)
+        self.k_abbrechen = knopf_baustein("standard", _t("speichern.abbrechen"), rolle="aktion")
         for k in (self.k_speichern, self.k_abbrechen):
             k.setMinimumWidth(BREITE_SPEICHERN_KNOPF)
         for feld in (self.name, self.typ, self.k_speichern, self.k_abbrechen):
@@ -240,7 +243,7 @@ class SpeichernFenster(QDialog):
         self.orte.addItem(it)
 
     def _knopf(self, ic: QIcon, tipp: str, aktion, pruefbar: bool = False) -> QToolButton:
-        k = QToolButton(); k.setIcon(ic); k.setToolTip(tipp); k.setAutoRaise(True); k.setIconSize(QSize(ICON_SPEICHERN_WERKZEUG, ICON_SPEICHERN_WERKZEUG))
+        k = werkzeugknopf("standard"); k.setIcon(ic); k.setToolTip(tipp); k.setIconSize(QSize(ICON_SPEICHERN_WERKZEUG, ICON_SPEICHERN_WERKZEUG))
         k.setFixedSize(*GROESSE_SPEICHERN_WERKZEUGKNOPF); k.setCheckable(pruefbar)
         if ic.isNull():
             k.setText(tipp[:1])
@@ -297,7 +300,7 @@ class SpeichernFenster(QDialog):
         for i, t in enumerate(teile):
             stufen.append((t, os.sep + os.sep.join(teile[: i + 1])))
         for i, (text, ziel) in enumerate(stufen):
-            k = QToolButton(); k.setText(text); k.setAutoRaise(True); k.setToolTip(ziel)
+            k = werkzeugknopf("standard", text, tooltip=ziel)
             k.clicked.connect(lambda _=False, z=ziel: self.gehe_zu(z))
             self.pfad_layout.addWidget(k)
             if 0 < i < len(stufen) - 1 or (i == 0 and len(stufen) > 1):
@@ -512,12 +515,12 @@ def _ordner_name_fragen(parent) -> str:
     d.setWindowTitle(_t("speichern.neuer_ordner"))
     d.setMinimumWidth(BREITE_ORDNERNAME_DIALOG)
     v = _spalte("fenster", d)
-    feld = QLineEdit(_t("speichern.neuer_ordner")); feld.setMinimumHeight(HOEHE_KNOPF_GROSS); feld.selectAll()
+    feld = zeilenfeld("gross", _t("speichern.neuer_ordner")); feld.selectAll()
     l = QLabel(_t("speichern.name_des_ordners")); l.setBuddy(feld)
     v.addWidget(l); v.addWidget(feld); v.addSpacing(_A_GROSS)
     knoepfe = _reihe("standard"); knoepfe.addStretch(1)
-    ok = QPushButton("&Anlegen"); ok.setObjectName("sfSpeichern"); ok.setDefault(True)
-    ab = _rolle(QPushButton(_t("speichern.abbrechen")), "aktion")
+    ok = knopf_baustein("standard", "&Anlegen", objektname="sfSpeichern", standard=True)
+    ab = knopf_baustein("standard", _t("speichern.abbrechen"), rolle="aktion")
     for k in (ok, ab):
         k.setMinimumSize(*GROESSE_ORDNERNAME_KNOPF); knoepfe.addWidget(k)
     v.addLayout(knoepfe)

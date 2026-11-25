@@ -31,6 +31,11 @@ from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_MITTEL, BREITE_AB_ZWEISPALTER, BREITE_KNOPF_KLEIN, GROESSE_FENSTER_DRUCKEN, HOEHE_KNOPF_GROSS, ICON_GROSS, RAND_DRUCK_FUSS, RAND_DRUCK_SEITE, RAND_DRUCK_SPALTEN, RAND_FENSTER_DRUCKEN, RAND_FUSS_BACKSTAGE, RAND_KEIN, RAND_OBEN_SEITE
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
+from lunivo_writer.oberflaeche.baukasten.basis.farben import SCHATTEN_BLATT
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken as haken_baustein
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
 
 KEIN_DRUCKER = _t("druck.kein_drucker_eingerichtet")
 KEIN_DRUCKER_HINWEIS = _t("druck.kein_drucker_eingerichtet_es_wird_das_fe")
@@ -103,18 +108,18 @@ class DruckAnsicht(QWidget):
         self.flaeche = VorschauFlaeche(self._zeichnen, 300, flaeche=False)
         unter.addWidget(self.flaeche, 1)
         nav_zeile = FlussLayout()
-        self.zeigen = QCheckBox(_t("druck.vorschau")); self.zeigen.setChecked(bool(s.get("vorschau", True)))
+        self.zeigen = haken_baustein("standard", _t("druck.vorschau"), an=bool(s.get("vorschau", True)))
         nav_zeile.addWidget(self.zeigen)
         self.nav = []
         for sym, tip, f in (("chevron-first", _t("druck.erstes_blatt"), lambda: self._gehe(0)),
                             ("chevron-left", _t("druck.voriges_blatt"), lambda: self._gehe(self._blatt - 1))):
-            k = QPushButton(); k.setIcon(symbole.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); nav_zeile.addWidget(k)
+            k = knopf("standard", symbol=sym, symbolgroesse="gross", tooltip=tip, aktion=f); self.nav.append(k); nav_zeile.addWidget(k)
         self.nr = QSpinBox(); self.nr.setMinimum(1); self.nr.valueChanged.connect(lambda n: self._gehe(n - 1))
         self.von = QLabel("/ 1")
         nav_zeile.addWidget(self.nr); nav_zeile.addWidget(self.von)
         for sym, tip, f in (("chevron-right", _t("druck.naechstes_blatt"), lambda: self._gehe(self._blatt + 1)),
                             ("chevron-last", _t("druck.letztes_blatt"), lambda: self._gehe(10 ** 6))):
-            k = QPushButton(); k.setIcon(symbole.icon(sym, ICON_GROSS)); k.setToolTip(tip); k.clicked.connect(f); self.nav.append(k); nav_zeile.addWidget(k)
+            k = knopf("standard", symbol=sym, symbolgroesse="gross", tooltip=tip, aktion=f); self.nav.append(k); nav_zeile.addWidget(k)
         for k in self.nav:
             k.setFlat(True); _rolle(k, "symbol")
         unter.addLayout(nav_zeile)
@@ -154,22 +159,22 @@ class DruckAnsicht(QWidget):
         else:
             self.name.addItem(KEIN_DRUCKER, "")
         g.zeile(_t("druck.name"), self.name)
-        self.eig = QPushButton(_t("druck.eigenschaften")); self.eig.setEnabled(bool(self._drucker))
+        self.eig = knopf("standard", _t("druck.eigenschaften"), aktiv=bool(self._drucker))
         g.breit(self.eig)
         self.status = QLabel(); self.status.setWordWrap(True)
         g.zeile(_t("druck.status"), self.status)
 
         f.addWidget(_kopf(_t("druck.bereich_und_kopien")))
         g = FormularGitter(); f.addLayout(g)
-        self.alle = QRadioButton(_t("druck.alle_seiten")); self.auswahl = QRadioButton(_t("druck.auswahl")); self.seiten = QRadioButton(_t("druck.seiten"))
+        self.alle = option("standard", _t("druck.alle_seiten")); self.auswahl = option("standard", _t("druck.auswahl")); self.seiten = option("standard", _t("druck.seiten"))
         self.auswahl.setEnabled(auswahl)
         gruppe = QButtonGroup(self); [gruppe.addButton(b) for b in (self.alle, self.auswahl, self.seiten)]
-        self.text = QLineEdit(s.get("seiten_text", "")); self.text.setPlaceholderText("1-3, 5")
+        self.text = zeilenfeld("frei", s.get("seiten_text", ""), platzhalter="1-3, 5")
         (self.seiten if s.get("bereich") == "seiten" else self.alle).setChecked(True)
         g.breit(self.alle); g.breit(self.auswahl); g.zeile(self.seiten, self.text)
         self.kopien = QSpinBox(); self.kopien.setRange(1, 999); self.kopien.setValue(int(s.get("kopien", 1)))
         g.zeile(_t("druck.anzahl_der_kopien"), self.kopien)
-        self.sortieren = QCheckBox(_t("druck.sortieren")); self.sortieren.setChecked(bool(s.get("sortieren", True))); g.breit(self.sortieren)
+        self.sortieren = haken_baustein("standard", _t("druck.sortieren"), an=bool(s.get("sortieren", True))); g.breit(self.sortieren)
         self.blattseiten = _combo(BLATTSEITEN, s.get("blattseiten", "alle")); g.zeile(_t("druck.blattseiten"), self.blattseiten)
 
         f.addWidget(_kopf(_t("druck.seitenlayout")))
@@ -198,7 +203,7 @@ class DruckAnsicht(QWidget):
         f.addWidget(_kopf(_t("druck.inhalt")))
 
         def haken(text, schl, vorgabe):
-            c = QCheckBox(text); c.setChecked(bool(s.get(schl, vorgabe))); f.addWidget(c); return c
+            c = haken_baustein("standard", text, an=bool(s.get(schl, vorgabe))); f.addWidget(c); return c
         self.hintergrund = haken(_t("druck.seitenhintergrund"), "hintergrund", True)
         self.zeichnungen = haken(_t("druck.bilder_und_andere_grafikobjekte"), "zeichnungen", True)
         self.platzhalter = haken(_t("druck.textplatzhalter"), "platzhalter", False)
@@ -344,7 +349,7 @@ class DruckAnsicht(QWidget):
         p.drawText(QRectF(blatt.left(), 0, blatt.width(), rand_oben - 4), Qt.AlignCenter, _t("druck.0_g_mm_1").format(b, self.papier.currentData()))
         p.save(); p.translate(rand_links - 8, blatt.center().y()); p.rotate(-90)
         p.drawText(QRectF(-60, -10, 120, 20), Qt.AlignCenter, f"{h:g} mm"); p.restore()
-        p.fillRect(blatt.translated(2, 3), QColor(0, 0, 0, 60))
+        p.fillRect(blatt.translated(2, 3), QColor(*SCHATTEN_BLATT))
         p.fillRect(blatt, QColor(Farbe.PAPIER))
         bilder = getattr(self, "_bilder", [])
         if bilder and self.zeigen.isChecked():
@@ -361,7 +366,7 @@ class DruckDialog(PanelFaehig, QDialog):
         v = _spalte("aussen", self)
         self.ansicht = DruckAnsicht(seiten, papier_mm, quer, start, auswahl=auswahl, vorschau=vorschau)
         v.addWidget(self.ansicht, 1)
-        h = QPushButton(_t("druck.hilfe"))
+        h = knopf("standard", _t("druck.hilfe"))
         if hilfe:
             h.clicked.connect(hilfe)
         fuss = _spalte("fuss")

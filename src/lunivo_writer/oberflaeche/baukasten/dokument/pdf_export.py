@@ -1,6 +1,11 @@
 """Eingebettete, schrittweise PDF-Exportansicht für Lunivos Datei-Menü."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.basis.darstellung import rolle as _rolle
 
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK as _A_BLOCK, ABSTAND_GROSS as _A_GROSS, ABSTAND_MITTEL as _A_MITTEL
@@ -41,7 +46,7 @@ def _abschnitt(titel: str, hilfe: str, layout=None) -> QWidget:
 
 def _einklappen(titel: str, beschreibung: str, inhalt: QWidget, offen: bool = False) -> tuple[QWidget, QToolButton]:
     w = QWidget(); v = _spalte("zeile", w)
-    knopf = QToolButton(); knopf.setText(titel); knopf.setCheckable(True); knopf.setChecked(offen)
+    knopf = werkzeugknopf("standard", titel, umschaltbar=True, an=offen, flach=False)
     knopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); knopf.setArrowType(Qt.DownArrow if offen else Qt.RightArrow)
     knopf.setAutoRaise(True); knopf.setMinimumHeight(FELD_H)
     knopf.setAccessibleName(titel); knopf.setAccessibleDescription(beschreibung)
@@ -53,7 +58,7 @@ def _einklappen(titel: str, beschreibung: str, inhalt: QWidget, offen: bool = Fa
 
 
 def _kennwort() -> QLineEdit:
-    f = QLineEdit(); f.setEchoMode(QLineEdit.Password); f.setMinimumHeight(FELD_H)
+    f = zeilenfeld("frei", passwort=True); f.setMinimumHeight(FELD_H)
     return f
 
 
@@ -76,22 +81,22 @@ class PdfExportAnsicht(QWidget):
         intro = QLabel(_t("pdf.waehle_speicherort_und_seiten_weitere_ei"))
         intro.setWordWrap(True); intro.setObjectName("bsHinweis"); root.addWidget(intro)
 
-        self.pfad = QLineEdit(start.pfad); self.pfad.setMinimumHeight(FELD_H)
+        self.pfad = zeilenfeld("frei", start.pfad); self.pfad.setMinimumHeight(FELD_H)
         self.pfad.setAccessibleName(_t("pdf.pdf_dateiname_und_speicherort"))
         self.pfad.setToolTip(_t("pdf.dateiname_und_speicherort_der_pdf_datei"))
-        durch = QPushButton(_t("pdf.durchsuchen")); durch.clicked.connect(self._durchsuchen)
+        durch = knopf_baustein("standard", _t("pdf.durchsuchen"), aktion=self._durchsuchen)
         durch.setAccessibleDescription(_t("pdf.speicherort_fuer_die_pdf_datei_auswaehle"))
         datei_zeile = _reihe("standard"); datei_zeile.addWidget(self.pfad, 1); datei_zeile.addWidget(durch)
         root.addWidget(_abschnitt(_t("pdf.1_pdf_speichern"), _t("pdf.dateiname_und_speicherort"), datei_zeile))
 
         bereich_layout = _spalte("eng")
-        self.b_alles = QRadioButton(_t("pdf.ganzes_dokument"))
-        self.b_aktuell = QRadioButton(_t("pdf.aktuelle_seite_0").format(aktuelle))
-        self.b_markierung = QRadioButton(_t("pdf.nur_die_markierung"))
+        self.b_alles = option("standard", _t("pdf.ganzes_dokument"))
+        self.b_aktuell = option("standard", _t("pdf.aktuelle_seite_0").format(aktuelle))
+        self.b_markierung = option("standard", _t("pdf.nur_die_markierung"))
         self.b_markierung.setEnabled(markierung)
         if not markierung:
             self.b_markierung.setToolTip(_t("pdf.diese_auswahl_ist_verfuegbar_sobald_text"))
-        self.b_seiten = QRadioButton(_t("pdf.seitenbereich"))
+        self.b_seiten = option("standard", _t("pdf.seitenbereich"))
         self._bereiche = {"alles": self.b_alles, "aktuell": self.b_aktuell, "markierung": self.b_markierung, "seiten": self.b_seiten}
         gruppe = QButtonGroup(self)
         for b in self._bereiche.values():
@@ -120,7 +125,7 @@ class PdfExportAnsicht(QWidget):
             ("kommentare", _t("pdf.kommentare_uebernehmen"), _t("pdf.kommentare_erscheinen_im_pdf_als_notizen")),
             ("ueberschriften", _t("pdf.ueberschriften_als_pdf_lesezeichen"), _t("pdf.erstellt_eine_klickbare_navigation_aus_d")),
         ):
-            box = QCheckBox(text); box.setChecked(getattr(start, key)); box.setToolTip(tip)
+            box = haken("standard", text, an=getattr(start, key), tooltip=tip, name=text)
             self.optionen[key] = box; inhalte.addWidget(box)
         root.addWidget(_abschnitt(_t("pdf.3_inhalte_uebernehmen"), _t("pdf.waehle_was_im_pdf_erhalten_bleiben_soll"), inhalte))
 
@@ -132,7 +137,7 @@ class PdfExportAnsicht(QWidget):
             ("andere", _t("pdf.weitere_vorlagen_als_lesezeichen"), _t("pdf.zum_beispiel_titel_untertitel_oder_zitat")),
             ("eigene", _t("pdf.eigene_vorlagen_als_lesezeichen"), _t("pdf.benutzerdefinierte_formatvorlagen_in_der")),
         ):
-            box = QCheckBox(text); box.setChecked(getattr(start, key)); box.setToolTip(tip)
+            box = haken("standard", text, an=getattr(start, key), tooltip=tip, name=text)
             self.optionen[key] = box; av.addWidget(box)
         weitere_box, self.weitere_knopf = _einklappen(_t("pdf.weitere_exportoptionen"), _t("pdf.zusaetzliche_angaben_und_navigationsopti"), weitere)
         root.addWidget(weitere_box)
@@ -146,11 +151,11 @@ class PdfExportAnsicht(QWidget):
         root.addStretch(1)
 
         fuss = FlussLayout(_A_MITTEL); raender(fuss, "oben")
-        self.schliessen = QCheckBox(_t("pdf.danach_zum_dokument_zurueck"))
+        self.schliessen = haken("standard", _t("pdf.danach_zum_dokument_zurueck"))
         self.schliessen.setChecked(start.schliessen)
         self.schliessen.setToolTip(_t("pdf.kehrt_nach_erfolgreichem_export_zur_doku"))
-        abbrechen = _rolle(QPushButton(_t("pdf.zurueck_zum_dokument")), "aktion"); abbrechen.clicked.connect(self._zurueck)
-        self.ok = QPushButton(_t("pdf.pdf_exportieren")); self.ok.setObjectName("optFertig"); self.ok.setDefault(True)
+        abbrechen = knopf_baustein("standard", _t("pdf.zurueck_zum_dokument"), rolle="aktion", aktion=self._zurueck)
+        self.ok = knopf_baustein("standard", _t("pdf.pdf_exportieren"), objektname="optFertig", standard=True)
         self.ok.setCursor(Qt.PointingHandCursor); self.ok.clicked.connect(self._ok)
         fuss.addWidget(self.schliessen); fuss.addWidget(abbrechen); fuss.addWidget(self.ok)
         root.addLayout(fuss)
@@ -158,7 +163,7 @@ class PdfExportAnsicht(QWidget):
     def _schutz(self, s: PdfWahl) -> QWidget:
         bereich = QWidget()
         v = _spalte("abschnitt", bereich)
-        self.verschluesseln = QCheckBox(_t("pdf.pdf_mit_kennwort_schuetzen"))
+        self.verschluesseln = haken("standard", _t("pdf.pdf_mit_kennwort_schuetzen"))
         self.verschluesseln.setChecked(s.verschluesseln)
         self.verschluesseln.setToolTip(_t("pdf.schuetzt_den_zugriff_und_oder_legt_fest"))
         v.addWidget(self.verschluesseln)
@@ -173,7 +178,7 @@ class PdfExportAnsicht(QWidget):
 
         self.rechte: dict[str, QCheckBox] = {}
         for key, label in RECHTE:
-            box = QCheckBox(label); box.setChecked(getattr(s, key)); self.rechte[key] = box
+            box = haken("standard", label, an=getattr(s, key)); self.rechte[key] = box
             g.breit(box)
         self.druck = Auswahlfeld()
         for text, value in DRUCK:

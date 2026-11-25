@@ -6,6 +6,8 @@ der Maus liegt (``ueberfahren`` / ``verlassen``, für die Live-Vorschau).
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from typing import Callable
@@ -17,6 +19,8 @@ from lunivo_writer.oberflaeche.baukasten.dropdown.zeile import dropdown_zeile
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil, trennlinie
 from lunivo_writer.oberflaeche.bauteile import symbole
 from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import kachel_gitter
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (GALERIE_KACHEL_LUECKE, GALERIE_RAND_BREIT, GALERIE_RAND_UNTEN, RADIUS_ZEICHNUNG_MITTEL,
+                                                            SCHRIFT_GALERIE_ABZUG_PT, SCHRIFT_GALERIE_BESCHRIFTUNG_PT)
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_INNEN_GALERIE, SCHRIFT_GRUPPENTITEL_PX, ABSTAND_ENG, ABSTAND_NORMAL, GROESSE_GALERIE_KACHEL, ICON_GROSS, PADDING_GALERIE_TITEL, RAND_KEIN, RAND_PANEL_KLEIN
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 
@@ -33,7 +37,7 @@ class _Kachel(QWidget):
         self.setFixedSize(groesse)
         f = QFont(schrift)                                         # die Probe wird so klein, dass sie in die Kachel passt
         while f.pointSizeF() > 8 and QFontMetrics(f).horizontalAdvance(probe) > groesse.width() - 14:
-            f.setPointSizeF(f.pointSizeF() - 0.5)
+            f.setPointSizeF(f.pointSizeF() - SCHRIFT_GALERIE_ABZUG_PT)
         self.schrift = f
         self.setToolTip(tipp or name)
         self.setCursor(Qt.PointingHandCursor)
@@ -59,12 +63,12 @@ class _Kachel(QWidget):
         if self._ueber or self.aktuell:
             hell = QColor(self.palette().highlight().color()); hell.setAlpha(55 if self._ueber else 30)
             p.setPen(QPen(self.palette().highlight().color(), 1.4 if self.aktuell else 1)); p.setBrush(hell)
-            p.drawRoundedRect(r, 4, 4)
+            p.drawRoundedRect(r, RADIUS_ZEICHNUNG_MITTEL, RADIUS_ZEICHNUNG_MITTEL)
         text = QColor(self.farbe) if self.farbe else self.palette().color(self.foregroundRole())
         p.setPen(text); p.setFont(self.schrift)
         proberect = QRectF(4, 4, self.width() - 8, self.height() - 24)
         p.drawText(proberect, Qt.AlignHCenter | Qt.AlignVCenter | Qt.TextSingleLine, QFontMetrics(self.schrift).elidedText(self.probe, Qt.ElideRight, int(proberect.width())))
-        f = QFont(self.font()); f.setPointSizeF(8.5); p.setFont(f)
+        f = QFont(self.font()); f.setPointSizeF(SCHRIFT_GALERIE_BESCHRIFTUNG_PT); p.setFont(f)
         p.setPen(self.palette().color(self.foregroundRole()))
         p.drawText(QRectF(2, self.height() - 20, self.width() - 4, 18), Qt.AlignCenter,
                    QFontMetrics(f).elidedText(self.name, Qt.ElideRight, self.width() - 8))
@@ -94,8 +98,8 @@ class GalerieAuswahl(MenueListe):
         self._rolle = QScrollArea(); self._rolle.setWidget(halter); self._rolle.setWidgetResizable(True)
         self._rolle.setFrameShape(QFrame.NoFrame)
         self._rolle.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._rolle.setFixedWidth(spalten * (kachel.width() + 2) + 18)
-        self._rolle.setFixedHeight(zeilen_sichtbar * (kachel.height() + 2))
+        self._rolle.setFixedWidth(spalten * (kachel.width() + GALERIE_KACHEL_LUECKE) + GALERIE_RAND_BREIT)
+        self._rolle.setFixedHeight(zeilen_sichtbar * (kachel.height() + GALERIE_KACHEL_LUECKE))
         self._v.addWidget(self._rolle)
         self._trenner = None
         self.widget(wid)
@@ -108,7 +112,7 @@ class GalerieAuswahl(MenueListe):
         self._gitter.addWidget(k, self._n // self._spalten, self._n % self._spalten)
         self._n += 1
         zeilen = min(self._zeilen, -(-self._n // self._spalten))
-        self._rolle.setFixedHeight(zeilen * (self._kachel.height() + 2) + 4)
+        self._rolle.setFixedHeight(zeilen * (self._kachel.height() + GALERIE_KACHEL_LUECKE) + GALERIE_RAND_UNTEN)
         self.kacheln[schluessel] = k
 
     def aktion(self, text: str, fn: Callable, symbol: QIcon | None = None, *, haken: bool | None = None, aktiv: bool = True) -> QPushButton:
@@ -117,7 +121,7 @@ class GalerieAuswahl(MenueListe):
         if self._trenner is None:
             self._trenner = trennlinie(tief=True)
             self._v.addWidget(self._trenner)
-        b = QPushButton(text); b.setFlat(True); b.setEnabled(aktiv)
+        b = knopf_baustein("standard", text, ohne_rand=True, aktiv=aktiv)
         dropdown_zeile(b)
         b.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         if haken is not None:

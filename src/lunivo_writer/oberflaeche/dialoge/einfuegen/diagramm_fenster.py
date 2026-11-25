@@ -23,6 +23,9 @@ from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.editor.diagramme import diagramm as D
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter, abschnittstitel
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
+from lunivo_writer.oberflaeche.baukasten.basis.mass import QWIDGETSIZE_MAX, SCHRIFT_DIAGRAMMNAME_FAKTOR
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_ENG, ABSTAND_KEIN, BREITE_LISTE_ARTEN, BREITE_VORSCHAU_DIAGRAMM, BREITE_VORSCHAU_DIAGRAMM_SCHMAL, GROESSE_BILD_DIAGRAMM, GROESSE_BILD_DIAGRAMM_SCHMAL, HOEHE_FELD, HOEHE_VORSCHAU_DIAGRAMM, ICON_MITTEL, RAND_BOX_KOMPAKT, RAND_KARTE_ZEILE, RAND_KEIN, RAND_OBEN_SEITE, ZUGABE_KNOPF, ZUGABE_LISTE_ARTEN, ZUGABE_RAHMEN
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_ZEICHEN_MITTEL
@@ -61,7 +64,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         self.unter_zeile = FlussLayout(6)                                   # Untertypen: brechen um, wenn der Platz nicht reicht
         rechts.addLayout(self.unter_zeile)
         rechts.addWidget(abschnittstitel("Vorschau"))
-        self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * 1.35); self.name.setFont(f)
+        self.name = QLabel(); f = self.name.font(); f.setBold(True); f.setPointSizeF(f.pointSizeF() * SCHRIFT_DIAGRAMMNAME_FAKTOR); self.name.setFont(f)
         self.name.setWordWrap(True)
         rechts.addWidget(self.name)
         self.vorschau = QLabel(); self.vorschau.setAlignment(Qt.AlignCenter); self.vorschau.setMinimumHeight(HOEHE_VORSCHAU_DIAGRAMM)
@@ -72,13 +75,13 @@ class DiagrammDialog(PanelFaehig, QDialog):
         h.addWidget(self.seite, 1)
         self.vorlagen_seite = QWidget(); vs = _spalte("karte", self.vorlagen_seite)
         vs.addStretch(1)
-        self.vorlagen_verwalten = QPushButton("Vorlagen &verwalten …")
+        self.vorlagen_verwalten = knopf("standard", "Vorlagen &verwalten …")
         self.vorlagen_verwalten.clicked.connect(self._vorlagen_hinweis)
         vs.addWidget(self.vorlagen_verwalten, 0, Qt.AlignLeft)
         h.addWidget(self.vorlagen_seite, 1); self.vorlagen_seite.hide()
         v.addWidget(rahmen, 1)
         self._teile = h
-        daten = QPushButton("&Daten bearbeiten …"); daten.clicked.connect(self._daten)
+        daten = knopf("standard", "&Daten bearbeiten …", aktion=self._daten)
         self._daten_knopf = daten
         self._ok = fussleiste(self, v, daten)
         self._knoepfe = QButtonGroup(self); self._knoepfe.setExclusive(True)
@@ -128,7 +131,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             for schl, text in D.KOMBI_TYPEN:
                 box.addItem(text, schl)
             box.setCurrentIndex(max(0, box.findData(typ)))
-            kasten = QCheckBox(); kasten.setChecked(sek); kasten.setAccessibleName(f"Sekundärachse {name}")
+            kasten = haken("standard", an=sek, name=f"Sekundärachse {name}")
             box.currentIndexChanged.connect(self._kombi_geaendert); kasten.toggled.connect(self._kombi_geaendert)
             lab = QLabel(name)
             self._kombi_gitter.reihe(("Datenreihenname", lab), ("Diagrammtyp", box), ("Sekundärachse", kasten), gewichte=(3, 4, 2))
@@ -152,7 +155,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         a = self.arten
         a.setFlow(QListView.TopToBottom); a.setWrapping(False); a.setResizeMode(QListView.Adjust); a.setSpacing(ABSTAND_KEIN)
         a.setUniformItemSizes(True); a.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff); a.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        a.setMinimumWidth(0); a.setMaximumWidth(16777215); a.setFixedHeight(HOEHE_FELD * a.count() + ZUGABE_LISTE_ARTEN)
+        a.setMinimumWidth(0); a.setMaximumWidth(QWIDGETSIZE_MAX); a.setFixedHeight(HOEHE_FELD * a.count() + ZUGABE_LISTE_ARTEN)
         for i in range(a.count()):
             a.item(i).setSizeHint(QSize(0, HOEHE_FELD))
         self.vorschau.setMinimumSize(0, 0)
@@ -182,7 +185,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         g = self._bild_groesse
         for i, (schl, name) in enumerate(unter):
             img = D.bild(schl, "", self.kategorien, self.reihen, g.width() * 2, g.height() * 2, kachel=True)
-            b = QToolButton(); b.setCheckable(True); b.setToolTip(name); b.setAccessibleName(name); b.setProperty("untertyp", schl)
+            b = werkzeugknopf("standard", umschaltbar=True, flach=False); b.setToolTip(name); b.setAccessibleName(name); b.setProperty("untertyp", schl)
             b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(g); b.setFixedSize(g.width() + ZUGABE_KNOPF, g.height() + ZUGABE_KNOPF)
             b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
             self._knoepfe.addButton(b); self.unter_zeile.addWidget(b)

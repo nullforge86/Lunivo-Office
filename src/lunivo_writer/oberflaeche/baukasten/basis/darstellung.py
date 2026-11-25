@@ -7,6 +7,10 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QWidget
 
+from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import AUSWAHL_OBJEKTTEXT
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_FELD, RADIUS_STUFE
+
 
 
 def eigenschaft(widget: QWidget, **werte) -> QWidget:
@@ -44,3 +48,27 @@ def schriftfarbe(widget: QWidget, farbe: str) -> QWidget:
     """Schriftfarbe, die erst zur Laufzeit feststeht (Name aus Daten, z. B. der Titel einer Panel-Beschreibung) — zweite zugelassene Ausnahme neben ``farbflaeche``."""
     widget.setStyleSheet(f"color: {farbe};")
     return widget
+
+
+def farbknopf(knopf: QWidget, farbe: str) -> QWidget:
+    """Knopf, der eine vom Menschen gewählte Farbe zeigt (Farbfeld der Eigenen Farben) — Rand und Rundung aus ``mass``."""
+    knopf.setStyleSheet(f"QPushButton {{ background: {farbe}; border: 1px solid palette(mid); border-radius: {RADIUS_FELD}px; }}")
+    return knopf
+
+
+def stufe_mit_farbe(label: QWidget, farbe: str) -> QWidget:
+    """Runde Stufe (Initialen eines Autors) auf einer Farbe aus Daten, weiße fette Schrift."""
+    label.setStyleSheet(f"background: {farbe}; color: {Farbe.WEISS}; font-weight: bold; border-radius: {RADIUS_STUFE}px;")
+    return label
+
+
+def knoten_eingabe(feld: QWidget) -> QWidget:
+    """Eingabefeld über einem SmartArt-Knoten: Papiergrund, Symbolschrift, Rand in der Auswahlfarbe."""
+    feld.setStyleSheet(f"QLineEdit {{ background: {Farbe.PAPIER}; color: {Farbe.SYMBOL}; border: 1px solid palette(highlight); }}")
+    return feld
+
+
+def objekttext_eingabe(feld: QWidget, grund: str, farbe: str) -> QWidget:
+    """Schreibfeld direkt im Objekt (WordArt, Textfeld): Grund und Schrift aus dem Objekt, ohne Rand, Auswahl in der Objekttext-Farbe."""
+    feld.setStyleSheet(f"QTextEdit {{ background: {grund}; color: {farbe}; border: none; selection-background-color: {AUSWAHL_OBJEKTTEXT}; }}")
+    return feld

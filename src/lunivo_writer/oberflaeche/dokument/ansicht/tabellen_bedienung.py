@@ -13,10 +13,13 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
+from lunivo_writer.oberflaeche.baukasten.basis.farben import GRIFF_FLAECHE, KNOPF_SYMBOLFARBE, TABELLE_AKZENT, TABELLE_AKZENT_FLAECHE, TABELLE_GRIFF_RAND
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG, STIFT_AUSWAHL, STIFT_BILDCHEN
+
 GRIFF = 14.0                    # Seitenlänge der Griffe (Bildpunkte der Ansicht)
 RAND_TREFFER = 4.0              # Abstand zu einem Zellenrand, bis zu dem er getroffen wird
 ZELLE_B, ZELLE_H = 56.0, 20.0   # Zellengröße beim Zeichnen mit dem Stift (Bildpunkte bei 100 %)
-BLAU = QColor(47, 111, 181)
+BLAU = QColor(*TABELLE_AKZENT)
 
 
 class TabellenBedienung:
@@ -96,23 +99,23 @@ class TabellenBedienung:
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
         for name, rc in self.tabellen_griffe().items():
-            p.setPen(QPen(QColor(120, 130, 150), 1))
-            p.setBrush(QColor(255, 255, 255, 235))
+            p.setPen(QPen(QColor(*TABELLE_GRIFF_RAND), 1))
+            p.setBrush(QColor(*GRIFF_FLAECHE))
             if name == "aufziehen":
                 p.drawRect(rc)
                 continue
-            p.drawRoundedRect(rc, 3, 3)
-            symbole.in_rechteck(p, "move" if name == "move" else "plus", rc, "#283c5a", rand=2)      # Lucide statt Schriftzeichen ✥/+
+            p.drawRoundedRect(rc, RADIUS_ZEICHNUNG, RADIUS_ZEICHNUNG)
+            symbole.in_rechteck(p, "move" if name == "move" else "plus", rc, KNOPF_SYMBOLFARBE, rand=2)      # Lucide statt Schriftzeichen ✥/+
         z = self._tab_zug
         if z is not None and z.get("vorschau") is not None:
-            p.setPen(QPen(BLAU, 1.2, Qt.DashLine))
-            p.setBrush(QColor(47, 111, 181, 30))
+            p.setPen(QPen(BLAU, STIFT_BILDCHEN, Qt.DashLine))
+            p.setBrush(QColor(*TABELLE_AKZENT_FLAECHE))
             p.drawRect(z["vorschau"])
             if z["art"] == "stift":
                 p.setPen(BLAU)
                 p.drawText(z["vorschau"].adjusted(4, 2, 0, 0), Qt.AlignTop | Qt.AlignLeft, f"{z['zeilen']} × {z['spalten']}")
         elif z is not None and z["art"] in ("spalte", "zeile"):
-            p.setPen(QPen(BLAU, 1.5, Qt.DashLine))
+            p.setPen(QPen(BLAU, STIFT_AUSWAHL, Qt.DashLine))
             if z["art"] == "spalte":
                 p.drawLine(QPointF(z["start"].x() + z["delta"] * self.zoom, 0), QPointF(z["start"].x() + z["delta"] * self.zoom, self.height()))
             else:

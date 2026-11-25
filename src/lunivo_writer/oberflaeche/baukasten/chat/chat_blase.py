@@ -4,6 +4,8 @@ Aussehen kommt aus dem Thema (Karten-Arten ``nutzer``, ``ki``, ``fehler`` in ``k
 den Editor: Ergebnisse melden sie über Signale (``vergleichOeffnen``, ``einstellungen``, ``inEingabe``). ``SymbolKnopf`` ist der Symbolknopf aller Chat-Bausteine."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf as knopf_baustein
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 import os
@@ -143,7 +145,7 @@ class KiBlase(QWidget):
             kv0 = _spalte("panel", kasten)
             kv0.addWidget(abschnittstitel(titel))
             self.auszug = self._auszug(text); kv0.addWidget(self.auszug)
-            self.oeffnen = QPushButton(TEXT_VERGLEICH); self.oeffnen.setMinimumHeight(HOEHE_KNOPF_GROSS)
+            self.oeffnen = knopf_baustein("gross", TEXT_VERGLEICH)
             self.oeffnen.clicked.connect(self.vergleich_oeffnen)
             kv0.addWidget(self.oeffnen)
             v.addWidget(kasten)
@@ -208,7 +210,7 @@ class FehlerKarte(QWidget):
             rv.addWidget(hinweis_label("Beim Wiederholen wird die Zustimmung erneut abgefragt.", klein=True))
         z = FlussLayout(ABSTAND_NORMAL)
         if art == "konfiguration":
-            b = QPushButton("KI-Einstellungen …"); b.clicked.connect(self.einstellungen.emit); z.addWidget(b)
-        w = QPushButton("Wiederholen"); w.clicked.connect(lambda: dienst.chat_wiederholen()); z.addWidget(w)
+            z.addWidget(knopf_baustein("standard", "KI-Einstellungen …", aktion=self.einstellungen.emit))
+        w = knopf_baustein("standard", "Wiederholen", aktion=lambda: dienst.chat_wiederholen()); z.addWidget(w)
         rv.addLayout(z)
         v.addWidget(rahmen)

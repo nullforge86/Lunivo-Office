@@ -17,7 +17,9 @@ from PySide6.QtWidgets import QApplication
 from lunivo_writer.farmwork.datentypen.farben import Farbe
 
 Zeichner = Callable[[QPainter, QRectF], None]
-_RAND = QColor("#adb5bd")
+from lunivo_writer.oberflaeche.baukasten.basis.farben import DESIGN_BILDCHEN_RAND  # noqa: E402
+
+_RAND = QColor(DESIGN_BILDCHEN_RAND)
 
 
 def _text(p: QPainter, r: QRectF, text: str, familie: str | None, px: int, ausr=Qt.AlignLeft | Qt.AlignVCenter, fett: bool = False,

@@ -21,6 +21,7 @@ from lunivo_writer.farmwork.datentypen.farben import Farbe
 from lunivo_writer.oberflaeche.baukasten.dropdown.menue_liste import MenueListe
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from lunivo_writer.oberflaeche.bauteile import symbole
+from lunivo_writer.oberflaeche.baukasten.basis.mass import RADIUS_ZEICHNUNG_KLEIN, STIFT_BETONT
 from lunivo_writer.oberflaeche.baukasten.basis.mass import GROESSE_SMARTART_LAYOUT_MINIATUR, GROESSE_SMARTART_MINIATUR, GROESSE_SMARTART_STIL_GALERIE, GROESSE_SMARTART_STIL_MENUE, ICON_NORMAL
 
 STIL_KACHEL = QSize(*GROESSE_SMARTART_STIL_MENUE)
@@ -111,7 +112,7 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str | None = None) ->
         if nr == 2:                                          # Hell: blasse Fläche
             p.setBrush(c.lighter(160)); p.setPen(QPen(c.lighter(130), 1))
         elif nr == 3:                                        # Kräftig: dunkler Rand
-            p.setBrush(c); p.setPen(QPen(c.darker(150), 2))
+            p.setBrush(c); p.setPen(QPen(c.darker(150), STIFT_BETONT))
         elif nr == 4:                                        # 3D: Verlauf
             g = QLinearGradient(r.topLeft(), r.bottomLeft()); g.setColorAt(0, c.lighter(135)); g.setColorAt(1, c.darker(125))
             p.setBrush(g); p.setPen(QPen(c.darker(150), 1))
@@ -119,7 +120,7 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str | None = None) ->
             p.setBrush(c); p.setPen(QPen(c.darker(125), 1))
         else:                                                # Flach
             p.setBrush(c); p.setPen(Qt.NoPen)
-        p.drawRoundedRect(r, 2, 2) if nr in (1, 4) else p.drawRect(r)
+        p.drawRoundedRect(r, RADIUS_ZEICHNUNG_KLEIN, RADIUS_ZEICHNUNG_KLEIN) if nr in (1, 4) else p.drawRect(r)
     p.end()
     return pm
 
@@ -284,7 +285,7 @@ def _m_trichter(p, W, H, c):
 
 def _m_zeitachse(p, W, H, c):
     fl, ra, st = c
-    p.setPen(QPen(ra, 2)); p.drawLine(QPointF(W * 0.06, H * 0.5), QPointF(W * 0.94, H * 0.5))
+    p.setPen(QPen(ra, STIFT_BETONT)); p.drawLine(QPointF(W * 0.06, H * 0.5), QPointF(W * 0.94, H * 0.5))
     for i in range(4):
         x = W * (0.15 + i * 0.23)
         p.setBrush(fl); p.setPen(QPen(ra, 1)); p.drawEllipse(QPointF(x, H * 0.5), 3.5, 3.5)

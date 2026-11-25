@@ -25,6 +25,11 @@ from lunivo_writer.oberflaeche.baukasten.dropdown.voreinstellung_menue import Vo
 from lunivo_writer.oberflaeche.baukasten.geruest.zusatz_panel import PanelFaehig
 from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FELDHOEHE, AngepassteReiter, FormularGitter, abschnittstitel
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.farben import DURCHSICHTIG
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_TEXTEFFEKT_VORSCHAU_PX
+from lunivo_writer.oberflaeche.baukasten.basis.schriftarten import SANS
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_GROSS, ABSTAND_NORMAL, ABSTAND_SPALTE, GROESSE_FENSTER_TEXTEFFEKT, GROESSE_TEXTEFFEKT_LINIENART_BILD, HOEHE_FELD, ICON_NORMAL, RAND_FORMATSEITE, RAND_KEIN, RAND_TEXTEFFEKT_GITTER
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 FELDBREITE = 128                                                  # Breite der Feldspalte und der Menüs in den Abschnittsköpfen (Vorlage: alles rechtsbündig in einer Spalte)
@@ -168,7 +173,7 @@ class TexteffektPanel(QWidget):
         self.fuell_farbe_kopf = FarbFeld(w["farbe"], "Füllfarbe", keine_text="Keine Füllung", verlauf=True)
         self.fuell_farbe_kopf.setMinimumWidth(0)
         self.a_fuell = Abschnitt("Textfüllung", self.fuell_farbe_kopf)
-        self.r_keine, self.r_farbe, self.r_verlauf = QRadioButton("Keine Füllung"), QRadioButton("Einfarbige Füllung"), QRadioButton("Farbverlauf")
+        self.r_keine, self.r_farbe, self.r_verlauf = option("standard", "Keine Füllung"), option("standard", "Einfarbige Füllung"), option("standard", "Farbverlauf")
         self.a_fuell.auswahl(self.r_keine, self.r_farbe, self.r_verlauf)
         self.farbe = FarbFeld(w["farbe"], "Füllfarbe", keine_text="Automatisch")
         self.trans = SchiebeFeld(0, 100, " %")
@@ -181,9 +186,9 @@ class TexteffektPanel(QWidget):
         self.a_fuell.breit(self.f_einfarbig); self.a_fuell.breit(self.f_verlauf)
         v.addWidget(self.a_fuell)
         # Kontur
-        self.linie_knopf = QPushButton("Keine"); self.linie_knopf.setMinimumWidth(0)
+        self.linie_knopf = knopf("standard", "Keine"); self.linie_knopf.setMinimumWidth(0)
         self.a_kontur = Abschnitt("Textkontur", self.linie_knopf)
-        self.k_keine, self.k_linie, self.k_verlauf = QRadioButton("Keine Linie"), QRadioButton("Durchgezogene Linie"), QRadioButton("Farbverlaufslinie")
+        self.k_keine, self.k_linie, self.k_verlauf = option("standard", "Keine Linie"), option("standard", "Durchgezogene Linie"), option("standard", "Farbverlaufslinie")
         self.a_kontur.auswahl(self.k_keine, self.k_linie, self.k_verlauf)
         self.k_farbe = FarbFeld(w["kontur_farbe"], "Konturfarbe")
         self.k_breite = SchiebeFeld(0.1, 20, " pt", 0.25, 2)
@@ -252,7 +257,7 @@ class TexteffektPanel(QWidget):
 
     # ---- Seite 2: Effekte
     def _voreinstellungs_knopf(self, text: str = "Keine") -> QPushButton:
-        k = QPushButton(text); k.setMinimumWidth(0)
+        k = knopf("standard", text); k.setMinimumWidth(0)
         return k
 
     def _seite_effekte(self, w: dict) -> QWidget:
@@ -295,7 +300,7 @@ class TexteffektPanel(QWidget):
         self.a_3d.breit(self.d_licht_titel)
         self.d_winkel_titel = QLabel("Winkel")
         self.a_3d.breit(self._zweier(self.d_licht, self.d_winkel_titel, self.d_winkel))
-        zr3 = QPushButton("Zurücksetzen"); zr3.clicked.connect(self._d3_zuruecksetzen); self.a_3d.breit(self._zweier(zr3))
+        zr3 = knopf("standard", "Zurücksetzen", aktion=self._d3_zuruecksetzen); self.a_3d.breit(self._zweier(zr3))
         v.addWidget(self.a_3d)
         v.addStretch(1)
         self._material, self._licht = "matt", "neutral"
@@ -511,8 +516,8 @@ class TexteffektPanel(QWidget):
 
     def _male(self, p: QPainter, rect) -> None:
         w = self.werte()
-        f = QFont("Liberation Sans"); f.setPixelSize(36); f.setBold(True)
-        face = QColor(0, 0, 0, 0) if w["fuell"] == "keine" else QColor(w["farbe"] or Farbe.TINTE_DUNKEL)
+        f = QFont(SANS); f.setPixelSize(SCHRIFT_TEXTEFFEKT_VORSCHAU_PX); f.setBold(True)
+        face = QColor(*DURCHSICHTIG) if w["fuell"] == "keine" else QColor(w["farbe"] or Farbe.TINTE_DUNKEL)
         if w["fuell"] == "farbe" and w["transparenz"]:
             face.setAlphaF(1 - w["transparenz"] / 100)
         if w["fuell"] == "verlauf":

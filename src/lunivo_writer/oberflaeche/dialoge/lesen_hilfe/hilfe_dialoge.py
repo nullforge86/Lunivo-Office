@@ -1,6 +1,8 @@
 """Hilfe: Handbuch, Tastenkürzel, Erweiterungen."""
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterSpalte
 from lunivo_writer.core.schrift import standard_datenbank
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_KLEIN as _A_KLEIN
@@ -31,6 +33,8 @@ from lunivo_writer.oberflaeche.baukasten.tastenkuerzel import kuerzel
 
 
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_SERIF_PT, SCHRIFT_HILFE_TITEL_PLUS_PT
+from lunivo_writer.oberflaeche.baukasten.basis.schriftarten import GENERISCH_MONOSPACE, GENERISCH_SERIF
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
 
 
@@ -69,7 +73,7 @@ def _hb_bloecke(d, grund2) -> None:
         if ebene:
             bf.setTopMargin({1: 6, 2: 34, 3: 20}.get(ebene, 14)); bf.setBottomMargin({1: 4, 2: 10, 3: 6}.get(ebene, 6))
             cf.setFontPointSize({1: 30, 2: 21, 3: 15}.get(ebene, 13)); cf.setFontWeight(QFont.Bold)
-            cf.setFontFamilies([_t("hilfe.georgia"), _t("hilfe.liberation_serif"), "serif"])
+            cf.setFontFamilies([_t("hilfe.georgia"), _t("hilfe.liberation_serif"), GENERISCH_SERIF])
         else:
             bf.setLineHeight(128.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
             if blk.blockFormat().intProperty(0x1080) == 0 and not blk.textList():
@@ -91,7 +95,7 @@ def _hb_tastenchips(d, grund2) -> None:
         for f in absatz_fragmente(blk):
             if f.charFormat().fontFixedPitch():
                 cur = QTextCursor(d); cur.setPosition(f.position()); cur.setPosition(f.position() + f.length(), QTextCursor.KeepAnchor)
-                cf = QTextCharFormat(); cf.setBackground(QBrush(grund2)); cf.setFontFamilies([_t("hilfe.dejavu_sans_mono"), _t("hilfe.liberation_mono"), "monospace"]); cf.setFontPointSize(10.5)
+                cf = QTextCharFormat(); cf.setBackground(QBrush(grund2)); cf.setFontFamilies([_t("hilfe.dejavu_sans_mono"), _t("hilfe.liberation_mono"), GENERISCH_MONOSPACE]); cf.setFontPointSize(10.5)
                 cur.mergeCharFormat(cf)
         blk = blk.next()
 
@@ -125,7 +129,7 @@ def _handbuch_gestalten(b: QTextBrowser) -> None:
     pal = b.palette()
     linie = pal.color(QPalette.Mid); linie.setAlpha(90)
     grund2 = QColor(pal.color(QPalette.Text)); grund2.setAlpha(18)
-    serif = QFont(_t("hilfe.georgia")); serif.setStyleHint(QFont.Serif); serif.setPointSizeF(12.5)
+    serif = QFont(_t("hilfe.georgia")); serif.setStyleHint(QFont.Serif); serif.setPointSizeF(SCHRIFT_HILFE_SERIF_PT)
     d.setDefaultFont(serif)
     _hb_bloecke(d, grund2)
     _hb_tastenchips(d, grund2)
@@ -157,7 +161,7 @@ def handbuch_inhalt() -> QWidget:
             themen.ausklappen(True)
         nav.setMaximumHeight(16777215 if breit else HOEHE_NAVIGATION_HILFE)
     spalten.angeordnet.connect(angeordnet)
-    such = QLineEdit(); such.setPlaceholderText(_t("hilfe.im_handbuch_suchen")); such.setClearButtonEnabled(True)
+    such = zeilenfeld("frei", platzhalter=_t("hilfe.im_handbuch_suchen")); such.setClearButtonEnabled(True)
     raender(such, "kein")
     sz = _reihe("rand_seitlich"); sz.addWidget(such, 1)
     rv.addLayout(sz)
@@ -183,7 +187,7 @@ def handbuch_inhalt() -> QWidget:
     nav.addItem(ueber_kopf)
     for gruppe, titel in GRUPPEN:
         kopf = QListWidgetItem(gruppe.upper()); kopf.setFlags(Qt.NoItemFlags)
-        f = kopf.font(); f.setPointSizeF(8); f.setBold(True); kopf.setFont(f); kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ABSCHNITT))
+        f = kopf.font(); f.setPointSizeF(SCHRIFT_HILFE_ABSCHNITT_PT); f.setBold(True); kopf.setFont(f); kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ABSCHNITT))
         nav.addItem(kopf)
         for t in titel:
             if t in stellen:
@@ -219,7 +223,7 @@ def _fuss(d: QDialog, v: RasterSpalte) -> None:
 
 
 def _titel(text: str) -> QLabel:
-    t = QLabel(text); f = t.font(); f.setPointSize(f.pointSize() + 3); f.setBold(True); t.setFont(f)
+    t = QLabel(text); f = t.font(); f.setPointSize(f.pointSize() + SCHRIFT_HILFE_TITEL_PLUS_PT); f.setBold(True); t.setFont(f)
     return t
 
 

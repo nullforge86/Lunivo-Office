@@ -9,6 +9,11 @@ Die Seiten werden bei jedem Öffnen neu gelesen. Gerechnet wird hier nichts; ``b
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+from lunivo_writer.oberflaeche.baukasten.bausteine.haken.haken import haken
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import knopf, werkzeugknopf
+from lunivo_writer.oberflaeche.baukasten.bausteine.option.option import option
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
@@ -21,6 +26,7 @@ from lunivo_writer.oberflaeche.baukasten.geruest.rollen import spalte as _spalte
 
 from lunivo_writer.oberflaeche.baukasten.basis.texte import hinweis_stil, trennlinie
 from lunivo_writer.farmwork.datentypen.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis.mass import DROPDOWN_KACHEL_ABZUG_FLACH, DROPDOWN_KACHEL_ABZUG_ZEILE, STIFT_BILDCHEN
 from lunivo_writer.oberflaeche.baukasten.basis.mass import ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, ABSTAND_NORMAL, BREITE_BEREICHSLISTE_POPUP, GROESSE_DIAGRAMMSTIL_POPUP, GROESSE_SCHNELLLAYOUT_BILD, GROESSE_SCHNELLLAYOUT_KNOPF, GROESSE_STILKACHEL_RAND, HOEHE_POPUP_SEITE, ICON_NORMAL, RAND_BOX, RAND_BOX_KOMPAKT, RAND_KEIN, RAND_POPUP_FILTERGRUPPE, RAND_POPUP_FUSS, RAND_POPUP_KOPF, RAND_POPUP_SEITE, RAND_POPUP_UNTERTEXT
 from lunivo_writer.oberflaeche.baukasten.dropdown.auswahlfeld import Auswahlfeld
 
@@ -41,7 +47,7 @@ def _dg(b) -> dict:
 
 
 def _kopfknopf(text: str, i: int, gruppe: QButtonGroup) -> QToolButton:
-    t = QToolButton(); t.setText(text); t.setCheckable(True); t.setAutoRaise(True); t.setMinimumHeight(KACHEL)
+    t = werkzeugknopf("standard", text, umschaltbar=True); t.setMinimumHeight(KACHEL)
     reiter_knopf_stil(t)
     gruppe.addButton(t, i)
     return t
@@ -106,7 +112,7 @@ def _bild_saeulen(p, fl, kw, el, tab, n, farben) -> None:
 
 
 def _bild_tabelle(p, tab, n, mittel) -> None:
-    p.setPen(QPen(mittel, 1.2)); p.setBrush(Qt.NoBrush); p.drawRect(tab)
+    p.setPen(QPen(mittel, STIFT_BILDCHEN)); p.setBrush(Qt.NoBrush); p.drawRect(tab)
     p.drawLine(QPointF(tab.left(), tab.center().y()), QPointF(tab.right(), tab.center().y()))
     for k in range(1, n):
         xx = tab.left() + k * tab.width() / n
@@ -134,13 +140,13 @@ def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) ->
         th = 14.0
         tab = QRectF(fl.left(), fl.bottom() - th, fl.width(), th); fl.setBottom(fl.bottom() - th - 1)
     _bild_achsenmarken_gitter(p, fl, el, hell)
-    p.setPen(QPen(dunkel if not el.get("achsen") else mittel, 1.2)); p.drawLine(fl.bottomLeft(), fl.bottomRight())
+    p.setPen(QPen(dunkel if not el.get("achsen") else mittel, STIFT_BILDCHEN)); p.drawLine(fl.bottomLeft(), fl.bottomRight())
     if el.get("achsen"):
         p.drawLine(fl.topLeft(), fl.bottomLeft())
     n = 4
     _bild_saeulen(p, fl, kw, el, tab, n, (hell, mittel, dunkel, balken))
     if el.get("trendlinie"):
-        pen = QPen(dunkel, 1.2, Qt.DashLine); p.setPen(pen)
+        pen = QPen(dunkel, STIFT_BILDCHEN, Qt.DashLine); p.setPen(pen)
         p.drawLine(QPointF(fl.left() + 3, fl.bottom() - fl.height() * 0.30), QPointF(fl.right() - 3, fl.bottom() - fl.height() * 0.78))
     if tab is not None:
         _bild_tabelle(p, tab, n, mittel)
@@ -150,7 +156,7 @@ def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) ->
 
 
 def _farbzeile(farben: list[str], gewaehlt: bool, klick) -> QWidget:
-    z = QToolButton(); z.setAutoRaise(True); z.setCheckable(True); z.setChecked(gewaehlt); z.setMinimumHeight(KACHEL - 4)
+    z = werkzeugknopf("standard", umschaltbar=True, an=gewaehlt); z.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_FLACH)
     z.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     pm = QPixmap(6 * 46 + 8, 36); pm.fill(Qt.transparent)
     p = QPainter(pm)
@@ -222,7 +228,7 @@ class DiagrammPopup(MenueListe):
     def _seite_elemente(self) -> QWidget:
         w = QWidget(); v = _spalte("panel", w)
         for name, text, an in self.b.diagrammElementListe():
-            c = QCheckBox(text); c.setChecked(bool(an)); c.setMinimumHeight(KACHEL - 6); c.setAccessibleName(text)
+            c = haken("standard", text, an=bool(an)); c.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_ZEILE)
             c.clicked.connect(lambda _=False, n=name: (self.b.diagrammElement(None, n), self._fuellen(0)))
             v.addWidget(c)
         return w
@@ -232,7 +238,7 @@ class DiagrammPopup(MenueListe):
         w = QWidget(); kacheln = []
         for platz, i in enumerate(SCHNELLLAYOUT_ANZEIGE):                # Reihenfolge wie im Foto der Vorlage; i ist die gespeicherte Layoutnummer
             name = SCHNELLLAYOUTS[i][0]
-            k = QToolButton(); k.setAutoRaise(True); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(*GROESSE_SCHNELLLAYOUT_BILD)); k.setToolTip(name)
+            k = werkzeugknopf("standard"); k.setIcon(QIcon(layout_bild(i))); k.setIconSize(QSize(*GROESSE_SCHNELLLAYOUT_BILD)); k.setToolTip(name)
             k.setFixedSize(*GROESSE_SCHNELLLAYOUT_KNOPF); k.setAccessibleName(name)
             k.clicked.connect(lambda _=False, i=i: (self.close(), self.b.diagrammSchnelllayout(None, i)))
             kacheln.append(k)
@@ -249,7 +255,7 @@ class DiagrammPopup(MenueListe):
         v.addWidget(_ueberschrift("Systemstil"))
         kacheln = []
         for i, s in enumerate(D.stile_liste()):
-            k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setChecked(i == aktuell)
+            k = werkzeugknopf("standard", umschaltbar=True, an=i == aktuell)
             k.setIcon(QIcon(stil_bild(s["nr"], STIL_KACHEL))); k.setIconSize(STIL_KACHEL); k.setToolTip(s["name"]); k.setAccessibleName(s["name"])
             k.setFixedSize(STIL_KACHEL + QSize(*GROESSE_STILKACHEL_RAND))
             k.setProperty("dropdownKachel", "stil")
@@ -284,16 +290,16 @@ class DiagrammPopup(MenueListe):
         inhalt = QWidget(); iv = _spalte("kein", inhalt)
         for schl, titel in (("reihen", "Reihe"), ("rubriken", "Rubrik")):
             eintraege = daten.get(schl, [])
-            kopf = QToolButton(); kopf.setText(titel); kopf.setCheckable(True); kopf.setChecked(True); kopf.setAutoRaise(True)
-            kopf.setArrowType(Qt.DownArrow); kopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); kopf.setMinimumHeight(KACHEL - 6)
+            kopf = werkzeugknopf("standard", titel, umschaltbar=True, an=True)
+            kopf.setArrowType(Qt.DownArrow); kopf.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); kopf.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_ZEILE)
             kopf.setProperty("akzentSchrift", True); kopf.setProperty("dropdownKopf", True)
             gruppe = QWidget(); gv = _spalte("einzug", gruppe)
             kopf.toggled.connect(lambda an, k=kopf, g=gruppe: (g.setVisible(an), k.setArrowType(Qt.DownArrow if an else Qt.RightArrow), self._hoehe()))
-            alle = QCheckBox("(Alle auswählen)"); alle.setMinimumHeight(KACHEL - 6); alle.setTristate(False)
+            alle = haken("standard", "(Alle auswählen)"); alle.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_ZEILE); alle.setTristate(False)
             gv.addWidget(alle)
             boxen = []
             for name, an in eintraege:
-                c = QCheckBox(name); c.setChecked(bool(an)); c.setMinimumHeight(KACHEL - 6)
+                c = haken("standard", name, an=bool(an)); c.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_ZEILE)
                 gv.addWidget(c); boxen.append((name, c))
             alle.setChecked(all(c.isChecked() for _n, c in boxen) and bool(boxen))
             alle.clicked.connect(lambda an, bx=boxen: [c.setChecked(an) for _n, c in bx])
@@ -307,9 +313,9 @@ class DiagrammPopup(MenueListe):
         v.addWidget(r)
         v.addWidget(_linie())
         fuss = _reihe("popup")
-        ok = QPushButton(symbole.icon("refresh-cw", ICON_NORMAL), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Filter übernehmen")
+        ok = knopf("standard", " Übernehmen", name="Filter übernehmen"); ok.setIcon(symbole.icon("refresh-cw", ICON_NORMAL)); ok.setFixedHeight(FELDHOEHE)
         ok.clicked.connect(self._uebernehmen)
-        mehr = QPushButton("Daten auswählen …"); mehr.setFlat(True); mehr.setFixedHeight(FELDHOEHE)
+        mehr = knopf("standard", "Daten auswählen …", ohne_rand=True); mehr.setFixedHeight(FELDHOEHE)
         mehr.setProperty("akzentSchrift", True); mehr.setProperty("dropdownLink", True)
         mehr.clicked.connect(lambda: (self.close(), self.b.diagrammDatenBearbeiten()))
         fuss.addWidget(ok); fuss.addStretch(1); fuss.addWidget(mehr)
@@ -327,7 +333,7 @@ class DiagrammPopup(MenueListe):
             iv.addWidget(_ueberschrift(titel))
             gr = QButtonGroup(inhalt)
             for wert, text in ((qwert, qtext), ("keine", "(Keine)")):
-                rb = QRadioButton(text); rb.setMinimumHeight(KACHEL - 6); rb.setAccessibleName(f"{titel}: {text}")
+                rb = option("standard", text); rb.setMinimumHeight(KACHEL - DROPDOWN_KACHEL_ABZUG_ZEILE); rb.setAccessibleName(f"{titel}: {text}")
                 rb.setChecked(quelle == wert); gr.addButton(rb)
                 rb.clicked.connect(lambda _=False, wv=wert: (self.close(), self.b.diagrammNamenQuelle(None, wv)))
                 iv.addWidget(rb)
@@ -336,7 +342,7 @@ class DiagrammPopup(MenueListe):
                     sub.setContentsMargins(*RAND_POPUP_UNTERTEXT); hinweis_stil(sub); iv.addWidget(sub)
             felder = []
             for name, _an in daten.get(schl, []):
-                e = QLineEdit(name); e.setFixedHeight(FELDHOEHE); e.setAccessibleName(f"{titel} {name}")
+                e = zeilenfeld("frei", name, name=f"{titel} {name}"); e.setFixedHeight(FELDHOEHE)
                 iv.addWidget(e); felder.append((name, e))
             self._felder[schl] = felder
         iv.addStretch(1)
@@ -344,7 +350,7 @@ class DiagrammPopup(MenueListe):
         r.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); r.setFixedHeight(min(300, max(120, inhalt.sizeHint().height() + 4)))
         v.addWidget(r); v.addWidget(_linie())
         fuss = _reihe("popup")
-        ok = QPushButton(symbole.icon("refresh-cw", ICON_NORMAL), " Übernehmen"); ok.setFixedHeight(FELDHOEHE); ok.setAccessibleName("Namen übernehmen")
+        ok = knopf("standard", " Übernehmen", name="Namen übernehmen"); ok.setIcon(symbole.icon("refresh-cw", ICON_NORMAL)); ok.setFixedHeight(FELDHOEHE)
         ok.clicked.connect(self._namen_uebernehmen)
         fuss.addWidget(ok); fuss.addStretch(1)
         v.addLayout(fuss)
@@ -399,7 +405,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     v.addLayout(zeile)
     for text, sym, f in (("Formatieren", "pinsel", lambda: getattr(b.w, "diagrammformat_seitenleiste", lambda: None)()),
                          ("Formatvorlage zurücksetzen", "undo-2", lambda: b.diagrammZuruecksetzen())):
-        k = QToolButton(); k.setAutoRaise(True); k.setIcon(symbole.icon(sym, ICON_NORMAL)); k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
+        k = werkzeugknopf("standard"); k.setIcon(symbole.icon(sym, ICON_NORMAL)); k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
         k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(FELDHOEHE)
         k.clicked.connect(lambda _=False, f=f: f())
         zeile.addWidget(k)

@@ -9,6 +9,8 @@ Das Fenster ändert nichts selbst; der Aufrufer wertet das Ergebnis aus. Als ``P
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.feld.feld import zeilenfeld
+
 from lunivo_writer.oberflaeche.baukasten.geruest.rollen import reihe as _reihe, spalte as _spalte
 
 from PySide6.QtCore import QDate, Qt
@@ -59,7 +61,7 @@ class EingabeFenster(PanelFaehig, QDialog):
             g.breit(self.feld)
             self.liste = None
         else:
-            self.feld = QLineEdit(text)
+            self.feld = zeilenfeld("frei", text)
             if kennwort:
                 self.feld.setEchoMode(QLineEdit.Password)
             self.feld.setMinimumHeight(HOEHE_EINGABEFELD); self.feld.setAccessibleName(titel); self.feld.selectAll()

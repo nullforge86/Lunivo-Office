@@ -5,6 +5,8 @@ niemand baut sie nach. Die Bausteine kennen den Editor nicht: ``TextFormatLeiste
 """
 from __future__ import annotations
 
+from lunivo_writer.oberflaeche.baukasten.bausteine.knopf.knopf import werkzeugknopf
+
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter
 from PySide6.QtWidgets import QButtonGroup, QComboBox, QFontComboBox, QFrame, QToolButton, QWidget
@@ -37,8 +39,7 @@ def groesse_feld(combo: QComboBox | None = None, variante: str = "band") -> QCom
 
 def text_knopf(symbol: str, tipp: str) -> QToolButton:
     """F, K oder U als Knopf zum Ein-/Ausschalten, in dem Schnitt, den er bedeutet (wie im Band)."""
-    k = QToolButton()
-    k.setAutoRaise(True); k.setCheckable(True); k.setText(symbol); k.setToolTip(tipp); k.setMinimumWidth(BREITE_KNOPF_KLEIN)
+    k = werkzeugknopf("standard", umschaltbar=True); k.setText(symbol); k.setToolTip(tipp); k.setMinimumWidth(BREITE_KNOPF_KLEIN)
     f = k.font()
     f.setBold(symbol == "F"); f.setItalic(symbol == "K"); f.setUnderline(symbol == "U")
     k.setFont(f)
@@ -49,7 +50,7 @@ def ausrichtung_knoepfe() -> dict[str, QToolButton]:
     """Linksbündig, Zentriert, Rechtsbündig, Blocksatz — gleiche Symbole und Namen wie im Band; immer höchstens einer gewählt."""
     gruppe = {}
     for schl, name in AUSRICHTUNG:
-        k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name)
+        k = werkzeugknopf("standard", umschaltbar=True); k.setToolTip(name)
         k.setIcon(symbole.icon(schl, ICON_GROSS)); k.setIconSize(QSize(ICON_GROSS, ICON_GROSS))
         gruppe[schl] = k
     return gruppe
@@ -99,7 +100,7 @@ class TextFormatLeiste(QWidget):
         self.knoepfe_absatz: list[QToolButton] = []
         if absatz:
             for f, name in ZEILENABSTAND:
-                k = QToolButton(); k.setAutoRaise(True); k.setCheckable(True); k.setToolTip(name); k.setIcon(_zeilen_symbol(f)); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
+                k = werkzeugknopf("standard", umschaltbar=True); k.setToolTip(name); k.setIcon(_zeilen_symbol(f)); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
                 k.clicked.connect(lambda an, f=f: self._zeilenabstand(f, an))
                 self.zeilen_knoepfe[f] = k; z2.addWidget(k)
             for name, mehr, fn in (("Absatzabstand vergrößern", True, lambda: self._abstand(+self.SCHRITT_ABSTAND)),
@@ -122,7 +123,7 @@ class TextFormatLeiste(QWidget):
 
     @staticmethod
     def _aktion(name: str, symbol: QIcon, fn) -> QToolButton:
-        k = QToolButton(); k.setAutoRaise(True); k.setToolTip(name); k.setIcon(symbol); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
+        k = werkzeugknopf("standard"); k.setToolTip(name); k.setIcon(symbol); k.setIconSize(QSize(ICON_TEXTFORMATLEISTE, ICON_TEXTFORMATLEISTE))
         k.clicked.connect(lambda _c=False: fn())
         return k
 
