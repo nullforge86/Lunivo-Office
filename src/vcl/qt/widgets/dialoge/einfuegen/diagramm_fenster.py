@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from core.diagramme import diagramm as D
+from vcl.qt.rendering.diagramme import diagramm as D
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig

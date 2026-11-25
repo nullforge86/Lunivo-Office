@@ -7,7 +7,7 @@ from datetime import datetime
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox
 
-from core.objekte.bilder.modell.bilddaten import BildFehler
+from vcl.qt.rendering.formen.bilddaten import BildFehler
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster

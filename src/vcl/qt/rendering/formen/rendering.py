@@ -39,10 +39,10 @@ def _pinsel(style: Style, rect: Rect | None = None):
     """Füllung des Stils: Verlauf, Muster, Textur oder Bild, wenn angegeben, sonst die Farbe."""
     v = style.fill
     if isinstance(v, PatternFill):
-        from core.formatierung.fuellung import muster as M
+        from vcl.qt.rendering.formen import muster as M
         return M.pinsel(v.key, v.color, v.ground)
     if isinstance(v, TextureFill):
-        from core.formatierung.fuellung.textur import textur
+        from vcl.qt.rendering.formen.textur import textur
         return QBrush(textur(v.key, 64))
     if isinstance(v, ImageFill):
         img = _bild(v.data)
@@ -219,7 +219,7 @@ class QtRenderBackend(RenderBackend):
         fmt = format_erkennen(data[:2048]) if data else None
         if fmt == "svg" and source_rect is None:
             from PySide6.QtSvg import QSvgRenderer
-            from core.objekte.bilder.modell import bilddaten as BD
+            from vcl.qt.rendering.formen import bilddaten as BD
             rd = QSvgRenderer(QByteArray(BD.svg_bereinigen(data)))
             if rd.isValid():
                 rd.render(self.p, _qrect(rect))
@@ -246,7 +246,7 @@ class QtRenderBackend(RenderBackend):
                     self.p.drawImage(_qrect(rect), img, quelle)
 
     def draw_shadow(self, ops: list, color: tuple, blur: float, dx: float, dy: float) -> None:
-        from core.objekte.bilder.modell import bildeffekte as E
+        from vcl.qt.rendering.formen import bildeffekte as E
         pf = self._vereinigt(self._pfade(ops), False)
         grenzen = pf.boundingRect()
         rand = int(blur * 2) + 2

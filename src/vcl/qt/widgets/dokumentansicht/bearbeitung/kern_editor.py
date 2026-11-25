@@ -796,7 +796,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     @staticmethod
     def _png(img) -> bytes:
         """Die Bytes des Bildes fürs Dokument: ein Rasterbild aus einer Datei (JPEG, GIF …) bleibt im Original, sonst PNG."""
-        from core.objekte.bilder.modell import bilddaten as BD
+        from vcl.qt.rendering.formen import bilddaten as BD
         q = BD.quelle_zu(img)
         if q is not None and q.format in ("jpeg", "gif", "bmp", "tiff", "webp"):
             return q.daten
@@ -904,7 +904,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         if not k or not k.get("an"):
             self.ansicht.set_ansicht(silben=None)
             return
-        from core.formatierung.schrift import silbenfarben as SF
+        from vcl.qt.schrift import silbenfarben as SF
         from core.layout.drucklayout.ausgabe.backend import rgba
         farben = [rgba(f) for f in SF.farben(k)]
         self.ansicht.set_ansicht(silben={"funktion": lambda w: SF.silben(w, k.get("sprache", "de_DE")), "farben": farben, "darstellung": k["darstellung"],

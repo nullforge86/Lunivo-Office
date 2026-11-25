@@ -129,8 +129,8 @@ def main():
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
     from PySide6.QtGui import QTextCursor
-    from core.objekte.basis import frei_objekt as FO
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.formen import frei_objekt as FO
+    from vcl.qt.rendering.smartart import smartart as SA
     from core.tabellen.formatierung import tabellenstil as TS
     from PySide6.QtGui import QTextTableFormat
 

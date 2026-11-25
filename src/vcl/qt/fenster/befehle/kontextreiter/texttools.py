@@ -27,20 +27,20 @@ class TextToolsBefehle:
     # ==== Erkennung ===================================================================================================================
     def tt_art(self) -> str | None:
         """Welches freie Textobjekt ist markiert? ``wordart`` | ``textfeld`` | None."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         art = FO.art_gewaehlt(self.ed) if self.ed else None
         return art if art in FO.TEXT_ARTEN else None
 
 
     def _wa(self) -> dict:
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         z = FO.ziel(self.ed) if self.ed else None
         return z[1] if z and z[0] in FO.TEXT_ARTEN else {}
 
 
     def _wa_set(self, **kw) -> bool:
         """Angaben des markierten WordArt/Textfelds ändern; ohne Auswahl ein Hinweis in der Statuszeile."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         art = self.tt_art()
         if not (art and FO.aendern(self.ed, art, **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein WordArt oder Textfeld markieren.")
@@ -123,7 +123,7 @@ class TextToolsBefehle:
 
     def menue_ttUnter(self):
         """Wie bei Start: die Linienarten als Bild, „Mehr Unterstreichungen …“ und die Unterstreichungsfarbe; wirkt auf das Objekt."""
-        from core.objekte.wordart.textfx import unter_zeichnen
+        from vcl.qt.rendering.wordart.textfx import unter_zeichnen
         from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -308,14 +308,14 @@ class TextToolsBefehle:
 
 
     def galerie_ttWordartStile(self):
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         kacheln = [(E.WORDART_VORLAGEN[i][0], self._wa_kachel(i), lambda i=i: self.ttStil(i)) for i in WA_STILKACHELN]
         return {"kacheln": kacheln, "menue": self.menue_ttStile(), "name": "WordArt-Stile"}
 
 
     @staticmethod
     def _wa_kachel(i: int) -> QPixmap:
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))              # heller Kachelgrund: auch das schwarze „A“ ist im dunklen Thema zu sehen
         img = E.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
@@ -326,7 +326,7 @@ class TextToolsBefehle:
 
     def menue_ttStile(self):
         """Alle 15 Stile als „A“ auf hellem Grund (wie das Menü neben Einfügen ▸ WordArt), wirkt auf das markierte WordArt."""
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
         for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
@@ -371,7 +371,7 @@ class TextToolsBefehle:
 
     def _effekt_menue(self, setzen, _schl):
         """Schatten, Spiegelung und Leuchteffekt mit Bildchen (wie bei Start ▸ Texteffekte); ``setzen(**teil)`` schreibt den Teil."""
-        from core.objekte.wordart import textfx
+        from vcl.qt.rendering.wordart import textfx
         from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -433,7 +433,7 @@ class TextToolsBefehle:
 
     def menue_ttFormEffekte(self):
         """Schatten, Spiegelung und Leuchteffekt der Form (wie die Voreinstellungen der Seitenleiste), darunter „Weitere Effekte …“."""
-        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.rendering.formen import bildlayout as BL
 
         def setze(**teile):
             z = BL.ziel(self.ed) if self.ed else None
@@ -457,7 +457,7 @@ class TextToolsBefehle:
     def ttFormatUebertragen(self, k=None):
         """Format des markierten WordArt/Textfelds (Schrift, Auszeichnungen, Farben, Effekte, Form) aufnehmen; beim nächsten markierten Objekt
         denselben Knopf noch einmal drücken, dann wird es übertragen."""
-        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.rendering.formen import bildlayout as BL
         d = self._wa()
         schluessel = ("schrift", "pt", "fett", "kursiv", "unter", "durch", "hoch", "tief", "hervor", "fuell", "farbe", "kontur", "kontur_breite",
                       "effekt", "vorlage", "ausr", "liste", "einzug", "richtung", "zeilenabstand")
@@ -482,7 +482,7 @@ class TextToolsBefehle:
     # ---- Verknüpfung erstellen: Textfelder verketten (Text läuft von A nach B), wie in der Vorlage ---------------------------------------------
     def _tt_felder(self):
         """Die Textfelder, mit denen das markierte verknüpft werden kann (Schlüssel, Anzeigename): nicht es selbst, keins mit Vorgänger."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         e = self.ed
         jetzt = getattr(e, "_frei_sel", None)
         out = []
@@ -496,7 +496,7 @@ class TextToolsBefehle:
 
     def menue_ttVerknuepfung(self):
         """Das markierte Textfeld mit einem anderen verknüpfen (der Text läuft weiter) oder die Verknüpfung lösen."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
 
@@ -518,7 +518,7 @@ class TextToolsBefehle:
 
     def ttVerknuepfen(self, k=None, ziel=None):
         """Das markierte Textfeld mit ``ziel`` verknüpfen: was nicht mehr hineinpasst, läuft dort weiter."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         if self.tt_art() != "textfeld" or ziel is None or not FO.verknuepfen(self.ed, self.ed._frei_sel, ziel):
             self.w.lbl_msg.setText("Verknüpfen geht nur von einem markierten Textfeld zu einem freien Textfeld ohne Vorgänger.")
             return
@@ -526,7 +526,7 @@ class TextToolsBefehle:
 
 
     def ttVerknuepfungLoesen(self, k=None):
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         if self.tt_art() != "textfeld" or not FO.loesen(self.ed, self.ed._frei_sel):
             self.w.lbl_msg.setText("Bitte zuerst ein verknüpftes Textfeld markieren.")
             return
@@ -557,7 +557,7 @@ class TextToolsBefehle:
     # ==== Navigation zwischen Textobjekten (WordArt und Textfelder) ======================================================================
     def _tt_gehe(self, richtung: int) -> None:
         """Das vorige/nächste WordArt oder Textfeld des Dokuments markieren (am Ende springt es an den Anfang)."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         e = self.ed
         if not e:
             return

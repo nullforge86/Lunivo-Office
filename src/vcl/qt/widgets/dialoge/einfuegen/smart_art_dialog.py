@@ -34,7 +34,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)
@@ -117,7 +117,7 @@ class SmartArtDialog(PanelFaehig, QDialog, VorschauMixin):
 
     def __init__(self, parent, daten: dict | None = None):
         super().__init__(parent)
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.smartart import smartart as SA
         self.SA = SA
         self.setWindowTitle("SmartArt-Grafik auswählen")
         v = _spalte("standard", self)

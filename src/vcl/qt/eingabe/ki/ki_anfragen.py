@@ -294,7 +294,7 @@ class KIAnfragenMixin:
         if img.isNull():
             self.status.emit("Der Anbieter hat etwas geschickt, das kein Bild ist.")
             return
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         ed = eing["ed"]
         if eing["ersetzen"] and ed.textCursor().hasSelection():
             ed.textCursor().removeSelectedText()

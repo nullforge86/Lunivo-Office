@@ -92,7 +92,7 @@ class SchriftartDialog(PanelFaehig, QDialog):
         g.breit(self.asiat_knopf); g.breit(asiat)
         self.farbe = FarbFeld(w["farbe"], "Schriftfarbe", keine_text="Automatisch")
         self.unter = Auswahlfeld(); self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD))
-        from core.objekte.wordart.textfx import unter_symbol
+        from vcl.qt.rendering.wordart.textfx import unter_symbol
         self.unter.setIconSize(QSize(*GROESSE_UNTERSTREICHUNG_BILD_HOCH))
         for k, name in UNTERSTREICHUNG:
             self.unter.addItem(unter_symbol(k, (70, 16), Farbe.GITTER) if k and k != "woerter" else QIcon(), name if k in ("", "woerter") else "", k)

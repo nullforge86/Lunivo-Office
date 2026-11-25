@@ -19,7 +19,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QComboBox, QDialog, QFrame, QLabel, QLineEdit, QPushButton, QRadioButton, QWidget
 
-from core.formatierung.schrift.schreibweise import SPRACHEN, feldzahl
+from vcl.qt.schrift.schreibweise import SPRACHEN, feldzahl
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout

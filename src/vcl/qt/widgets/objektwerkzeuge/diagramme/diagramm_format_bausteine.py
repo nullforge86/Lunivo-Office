@@ -10,7 +10,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QPointF, Qt, Signal
 from PySide6.QtGui import QPainterPath
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QWidget
-from core.diagramme.formatierung import diagramm_format as F
+from vcl.qt.rendering.diagramme import diagramm_format as F
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.strich_auswahl import StrichAuswahl
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, RAND_KEIN
@@ -55,7 +55,7 @@ def _strich_zeichner(art: str):
 def _kombi_zeichner(form: str):
     """Zeichner für ``StrichAuswahl``: eine Linie des kombinierten Typs ``form`` (Flächen aus ``textfx._kontur_pfade``)."""
     def z(p, r, farbe):
-        from core.objekte.wordart import textfx as X
+        from vcl.qt.rendering.wordart import textfx as X
         pf = QPainterPath(); pf.moveTo(r.left(), r.center().y()); pf.lineTo(r.right(), r.center().y())
         p.setPen(Qt.NoPen); p.setBrush(farbe)
         for fl in X._kontur_pfade(pf, 3.0, form):

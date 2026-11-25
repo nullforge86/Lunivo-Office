@@ -28,7 +28,7 @@ STIL_KACHEL = QSize(*GROESSE_SMARTART_STIL_MENUE)
 
 
 def _sa(b) -> dict:
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.smartart import smartart as SA
     return (SA.daten_der_auswahl(b.ed) if getattr(b, "ed", None) else None) or {}
 
 
@@ -73,7 +73,7 @@ def level_menue(b) -> MenueListe:
 
 def hierarchie_menue(b, mit_rechts_links: bool = False) -> MenueListe:
     """Die Layoutvarianten des Organigramms; ``mit_rechts_links``: oben noch „Layout von rechts nach links“ (Schnellleiste am Knoten)."""
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.smartart import smartart as SA
     sym = {"standard": "network", "beide": "workflow", "haengend_links": "list-tree", "haengend_rechts": "list-tree"}
 
     def bau(m: MenueListe) -> None:
@@ -89,7 +89,7 @@ def hierarchie_menue(b, mit_rechts_links: bool = False) -> MenueListe:
 
 def layout_menue(b) -> MenueListe:
     """„Layout ändern“: die 15 Layouts des Katalogs mit ihren Anzeigenamen; das gewählte trägt einen Haken."""
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.smartart import smartart as SA
 
     def bau(m: MenueListe) -> None:
         aktuell, geht = _sa(b).get("layout"), bool(b.kann_smartartStil())
@@ -126,7 +126,7 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL, blau: str | None = None) ->
 
 
 def stile_menue(b) -> RasterAuswahl:
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.smartart import smartart as SA
     m = RasterAuswahl(b.w, spalten=len(SA.STILE), groesse=STIL_KACHEL)
     aktuell = _sa(b).get("stil", 1)
     for i, name in enumerate(SA.STILE):
@@ -136,7 +136,7 @@ def stile_menue(b) -> RasterAuswahl:
 
 
 def stile_galerie(b) -> dict:
-    from core.objekte.smartart import smartart as SA
+    from vcl.qt.rendering.smartart import smartart as SA
     return {"kacheln": [(name, stil_bild(i, QSize(*GROESSE_SMARTART_STIL_GALERIE)), lambda i=i: b.smartartStil(None, i)) for i, name in enumerate(SA.STILE)],
             "menue": stile_menue(b), "name": "Formenstile"}
 

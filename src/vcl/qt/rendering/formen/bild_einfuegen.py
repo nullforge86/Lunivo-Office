@@ -1,4 +1,4 @@
-"""Bild einfuegen: aus ``core.bearbeitung.einfuegen`` herausgelöst."""
+"""Bild einfuegen: aus ``vcl.qt.rendering.formen.einfuegen`` herausgelöst."""
 from __future__ import annotations
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
@@ -113,6 +113,6 @@ def drehen(img: QImage, art: str) -> QImage:
     if art == "links":
         return img.transformed(QTransform().rotate(-90))
     if art in ("horizontal", "vertikal"):
-        from core.objekte.bilder.modell.bildeffekte import gespiegelt
+        from vcl.qt.rendering.formen.bildeffekte import gespiegelt
         return gespiegelt(img, waagrecht=art == "horizontal", senkrecht=art == "vertikal")
     return img

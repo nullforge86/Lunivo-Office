@@ -42,7 +42,7 @@ BREITE = 340
 
 
 def _dg(b) -> dict:
-    from core.objekte.basis import frei_objekt as FO
+    from vcl.qt.rendering.formen import frei_objekt as FO
     return (FO.daten_lesen(b.ed, "diagramm") if getattr(b, "ed", None) else None) or {}
 
 
@@ -247,7 +247,7 @@ class DiagrammPopup(MenueListe):
 
     # ---- Formatvorlagen und Farben -----------------------------------------------------------------------------------------------------
     def _seite_vorlagen(self) -> QWidget:
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.menues.dropdown.objektmenues.bild_diagramm_menues import stil_bild
         STIL_KACHEL = QSize(*GROESSE_DIAGRAMMSTIL_POPUP)                                  # wie in der Vorlage: zwei große Kacheln je Zeile
         aktuell = int(_dg(self.b).get("stil", 0) or 0)
@@ -267,7 +267,7 @@ class DiagrammPopup(MenueListe):
         return r
 
     def _seite_farben(self) -> QWidget:
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         akt = [str(f).lower() for f in (_dg(self.b).get("farben") or [])]
         inhalt = QWidget(); v = _spalte("popup", inhalt)
         nr = 0

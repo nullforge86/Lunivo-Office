@@ -13,7 +13,7 @@ from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 
 class FormToolsBefehle:
     def _form(self) -> dict | None:
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         return FO.daten_lesen(self.ed, "form") if self.ed else None
 
     def _form_hinweis(self) -> bool:
@@ -23,13 +23,13 @@ class FormToolsBefehle:
     # ---- Formstile --------------------------------------------------------------------------------------------------------------
     def formstileRaster(self, k=None) -> list[list[dict]]:
         """Daten der Galerie „Formstile“: 6 Zeilen × 7 Spalten (``editor/objekte/formen_stile.formstile_raster``)."""
-        from core.objekte.formen import formen_stile as S
+        from vcl.qt.rendering.formen import formen_stile as S
         return S.formstile_raster()
 
     def formStilRaster(self, k=None, zeile=0, spalte=0):
         """Stil (Zeile, Spalte) des Rasters auf die gewählte Form: Füllung, Verlaufsart, Linie, Strichbreite und Effekt."""
-        from core.objekte.formen import formen_stile as S
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import formen_stile as S
+        from vcl.qt.rendering.formen import frei_objekt as FO
         if self._form() is None:
             return self._form_hinweis()
         w = S.formstil(int(zeile), int(spalte))
@@ -47,19 +47,19 @@ class FormToolsBefehle:
     # ---- Anpassungsgriff und Formwechsel -------------------------------------------------------------------------------------------
     def formAnpassen(self, k=None, wert=0.0, index=0):
         """Parameter ``index`` des Anpassungsgriffs der gewählten Form auf ``wert`` setzen (``formen.anpass_setzen``)."""
-        from core.objekte.formen import formen as F
+        from vcl.qt.rendering.formen import formen as F
         if self._form() is None:
             return self._form_hinweis()
         return F.anpass_setzen(self.ed, float(wert), int(index))
 
     def kann_formAnpassen(self) -> bool:
-        from core.objekte.formen import formen as F
+        from vcl.qt.rendering.formen import formen as F
         d = self._form()
         return bool(d) and bool(F.anpass_griffe(d.get("form", "Rechteck"), QRectF(0, 0, 1, 1)))
 
     def formAendern(self, k=None, name=None):
         """„Form bearbeiten ▸ Form ändern“: die gewählte Form durch ``name`` (Katalogname) ersetzen; Größe, Füllung und Kontur bleiben."""
-        from core.objekte.formen import formen as F
+        from vcl.qt.rendering.formen import formen as F
         if self._form() is None:
             return self._form_hinweis()
         from vcl.qt.widgets.dokumentansicht.bearbeitung import freiform_bedienung as FP
@@ -92,7 +92,7 @@ class FormToolsBefehle:
             self._form_aendern(**{feld: c.name()})
 
     def _form_aendern(self, **kw):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         if not (self.ed and formen.aendern(self.ed, **kw)):
             self.w.lbl_msg.setText("Bitte zuerst eine Form auswählen (Schreibmarke vor der Form oder Form markieren).")
 
@@ -111,7 +111,7 @@ class FormToolsBefehle:
         return m
 
     def menue_formVorlagen(self):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for n, fu, li, _st in formen.VORLAGEN:
@@ -119,12 +119,12 @@ class FormToolsBefehle:
         return m
 
     def _form_vorlage(self, name):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         if not (self.ed and formen.vorlage(self.ed, name)):
             self.w.lbl_msg.setText("Bitte zuerst eine Form auswählen.")
 
     def formText(self, k=None):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         frei = formen.frei_daten(self.ed) if self.ed else None            # als freies Objekt gewählte Form
         if frei is not None:
             akt = frei.get("text", "")
@@ -138,13 +138,13 @@ class FormToolsBefehle:
             self._form_aendern(text=t)
 
     def gruppieren(self, k=None):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         if self.ed:
             r = formen.gruppieren(self.ed)
             self.w.lbl_msg.setText(r or "Formen gruppiert.")
 
     def gruppeAufheben(self, k=None):
-        from core.objekte.formen import formen
+        from vcl.qt.rendering.formen import formen
         if self.ed:
             r = formen.gruppe_aufheben(self.ed)
             self.w.lbl_msg.setText(r or "Gruppierung aufgehoben.")

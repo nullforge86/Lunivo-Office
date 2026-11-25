@@ -16,7 +16,7 @@ from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 class FreieBilderKnotenMixin:
     def _frei_sa_geo(self, a: dict) -> dict:
         """Rechtecke der SmartArt-Knoten (logisch), zwischengemerkt, bis sich Knoten oder Größe ändern."""
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.smartart import smartart as SA
         d, b, h = a.get("daten") or {}, float(a["b"]), float(a["h"])
         schl = (json.dumps({k: v for k, v in d.items() if k != "auswahl"}, sort_keys=True, default=str), round(b), round(h))
         c = self.__dict__.get("_sa_geo")
@@ -40,12 +40,12 @@ class FreieBilderKnotenMixin:
         """Ein Klick in das markierte Diagramm wählt den Teil darunter, in das markierte SmartArt den Knoten darunter."""
         fenster = self.window()
         if a.get("art") == "diagramm":
-            from core.diagramme.daten import diagramm_teile as T
+            from vcl.qt.rendering.diagramme import diagramm_teile as T
             teil = T.teil_bei(self, pos)
             if teil != (a.get("daten") or {}).get("teil"):
                 T.teil_waehlen(self, teil)
         else:
-            from core.objekte.smartart import smartart as SA
+            from vcl.qt.rendering.smartart import smartart as SA
             k = SA.knoten_bei(self, pos)
             if k != (a.get("daten") or {}).get("auswahl"):
                 SA.knoten_waehlen(self, k)
@@ -66,10 +66,10 @@ class FreieBilderKnotenMixin:
         if a is None:
             return
         if a.get("art") == "diagramm" and d.get("teil"):
-            from core.diagramme.daten import diagramm_teile as T
+            from vcl.qt.rendering.diagramme import diagramm_teile as T
             T.teil_waehlen(self, None)
         elif a.get("art") == "smartart" and d.get("auswahl"):
-            from core.objekte.smartart import smartart as SA
+            from vcl.qt.rendering.smartart import smartart as SA
             SA.knoten_waehlen(self, None)
 
     def _frei_teil_tipp(self, e, pos: QPointF, griff) -> None:
@@ -77,8 +77,8 @@ class FreieBilderKnotenMixin:
         a = self._frei_angabe()
         if a is None or a.get("art") != "diagramm" or griff or e.buttons():
             return
-        from core.diagramme import diagramm as D
-        from core.diagramme.daten import diagramm_teile as T
+        from vcl.qt.rendering.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm_teile as T
         teil = T.teil_bei(self, pos)
         if teil is None or teil == self.__dict__.get("_dg_hover"):
             self.__dict__["_dg_hover"] = teil
@@ -90,7 +90,7 @@ class FreieBilderKnotenMixin:
     # ---- Text im SmartArt-Knoten schreiben -------------------------------------------------------------------------------------------
     def _frei_knoten_feld(self, kn: QRectF, ident, text: str | None):
         """Das Eingabefeld über dem Knoten ``ident``: Knotentext, dahinter (oder statt seiner, mit „Tippen ersetzt die Auswahl“) die getippten Zeichen."""
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.smartart import smartart as SA
         w = zeilenfeld("frei", eltern=self.viewport())
         bisher = SA.knoten_text(self, ident) or ""
         ersetzt = bool(self.opt("bearbeiten/tippen_ersetzt", False)) if callable(getattr(self, "opt", None)) else False
@@ -127,7 +127,7 @@ class FreieBilderKnotenMixin:
         text = w.text()
         w.blockSignals(True); w.hide(); w.deleteLater()
         if not verwerfen:
-            from core.objekte.smartart import smartart as SA
+            from vcl.qt.rendering.smartart import smartart as SA
             if text != (SA.knoten_text(self, ident) or ""):
                 SA.knoten_text_setzen(self, ident, text)
         self.viewport().update(); self.setFocus()

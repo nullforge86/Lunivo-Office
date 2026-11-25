@@ -1,4 +1,4 @@
-"""Tabelle einfuegen: aus ``core.bearbeitung.einfuegen`` herausgelöst."""
+"""Tabelle einfuegen: aus ``vcl.qt.rendering.formen.einfuegen`` herausgelöst."""
 from __future__ import annotations
 
 

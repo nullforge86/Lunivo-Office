@@ -1,4 +1,4 @@
-"""Wordart einfuegen: aus ``core.bearbeitung.einfuegen`` herausgelöst."""
+"""Wordart einfuegen: aus ``vcl.qt.rendering.formen.einfuegen`` herausgelöst."""
 from __future__ import annotations
 from PySide6.QtGui import QImage
 from core.formatierung.farben.farben import Farbe

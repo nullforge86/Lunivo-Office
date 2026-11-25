@@ -8,7 +8,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QPlainTextEdit
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from core.dokument import formular as FO
+from vcl.qt.rendering.textfelder import formular as FO
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_TEXT_NORMAL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

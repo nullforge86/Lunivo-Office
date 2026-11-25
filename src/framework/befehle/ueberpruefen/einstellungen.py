@@ -1,7 +1,7 @@
 """Einstellungen der Funktion „Überprüfen“: Darstellung des Markups in Sprechblasen."""
 from __future__ import annotations
 
-from core.objekte.formen import sprechblasen
+from core.objekte.formen import sprechblasen_modell as sprechblasen
 from framework.schnittstellen.einstellungen import Einstellungen
 
 BALLONS = "sprechblasen/verwenden"

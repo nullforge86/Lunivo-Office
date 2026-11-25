@@ -13,7 +13,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 
 from PySide6.QtWidgets import QButtonGroup, QDialog, QRadioButton
 
-from core.formatierung.schrift.schreibweise import SCHREIBWEISEN
+from vcl.qt.schrift.schreibweise import SCHREIBWEISEN
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig

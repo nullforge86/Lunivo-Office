@@ -27,8 +27,8 @@ from vcl.qt.fenster.befehle.hauptreiter.text import TextBefehle
 from vcl.qt.fenster.befehle.kontextreiter.bildtools import BildToolsBefehle
 from vcl.qt.fenster.befehle.kontextreiter.diagrammtools import DiagrammToolsBefehle
 from vcl.qt.fenster.befehle.kontextreiter.formtools import FormToolsBefehle
-from framework.befehle.kontextreiter.smartart_knoten_zustand import SmartArtKnotenZustand
-from framework.befehle.kontextreiter.smartarttools import SmartArtToolsBefehle
+from vcl.qt.fenster.befehle.kontextreiter.smartart_knoten_zustand import SmartArtKnotenZustand
+from vcl.qt.fenster.befehle.kontextreiter.smartarttools import SmartArtToolsBefehle
 from vcl.qt.fenster.befehle.kontextreiter.texttools import TextToolsBefehle
 
 from vcl.qt.widgets.ribbon.verweise.band.band_befehle import VerweiseBandBefehle

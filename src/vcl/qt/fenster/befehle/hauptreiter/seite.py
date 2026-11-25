@@ -285,7 +285,7 @@ class SeiteBefehle:
         m.eintrag("Raster …", aktiv=False)
 
         def auffrischen():
-            from core.objekte.bilder.positionierung import bildlayout as BL
+            from vcl.qt.rendering.formen import bildlayout as BL
             z = BL.ziel(self.ed) if self.ed else None
             for a in objekt:
                 a.setEnabled(z is not None and z[0] == "frei")
@@ -537,7 +537,7 @@ class SeiteBefehle:
 
     def effektSetzen(self, k=None, name="Schlicht"):
         """Effekt an die markierte Form bzw. das markierte freie Bild; ist nichts markiert, an alle im Dokument."""
-        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.rendering.formen import bildlayout as BL
         from core.formatvorlagen.zeichen import designs as D
         if not self.ed or name not in D.EFFEKTE:
             return
@@ -628,7 +628,7 @@ class SeiteBefehle:
                 self.w.statusBar().showMessage("Die Schrift gilt jetzt als Standard für neue Dokumente.", 5000)
             self.ed._zf(zu_zeichen(neu))
             if "effekt" in neu:
-                from core.formatierung.effekte import texteffekt
+                from vcl.qt.rendering.wordart import texteffekt
                 self.ed._zf(texteffekt.zu_zeichen(neu["effekt"]))
             if neu["versteckt"] != w["versteckt"]:
                 self.ed.set_versteckt(neu["versteckt"])

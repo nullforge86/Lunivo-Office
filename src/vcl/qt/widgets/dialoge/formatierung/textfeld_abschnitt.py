@@ -9,7 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import QLocale, Signal
 from PySide6.QtWidgets import QComboBox, QLabel
 
-from core.diagramme.formatierung import diagramm_format as F
+from vcl.qt.rendering.diagramme import diagramm_format as F
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchrittFeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt

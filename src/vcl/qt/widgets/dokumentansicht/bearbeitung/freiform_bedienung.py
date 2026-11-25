@@ -11,7 +11,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPen, QTransform
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from core.objekte.formen import freiform as FF
+from vcl.qt.rendering.formen import freiform as FF
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
@@ -26,7 +26,7 @@ def aktiv(ed) -> bool:
 
 def starten(ed) -> bool:
     """Die gewählte Form in eine Freiform umwandeln (falls nötig; ein Schritt für Rückgängig) und den Modus einschalten."""
-    from core.objekte.basis import frei_objekt as FO
+    from vcl.qt.rendering.formen import frei_objekt as FO
     z = FO.ziel(ed)
     if z is None or z[0] != "form":
         return False
@@ -123,7 +123,7 @@ def zeichnen(ed, p, r: QRectF, a: dict) -> None:
 
 # ---- Maus und Tasten -------------------------------------------------------------------------------------------------------------
 def _speichern(ed, punkte: list) -> None:
-    from core.objekte.basis import frei_objekt as FO
+    from vcl.qt.rendering.formen import frei_objekt as FO
     ed._frei_vorlaeufig.clear()
     ed.__dict__["_fp_arbeit"] = None
     FO.aendern(ed, "form", punkte=punkte)
@@ -132,7 +132,7 @@ def _speichern(ed, punkte: list) -> None:
 
 def _vorschau(ed, key, a, punkte) -> None:
     """Das Bild der Form mit den vorläufigen Punkten neu zeichnen — ohne Dokumentschritt."""
-    from core.objekte.basis import frei_objekt as FO
+    from vcl.qt.rendering.formen import frei_objekt as FO
     d = {**FO.FORM_STANDARD, **(a.get("daten") or {}), "form": FF.NAME, "punkte": punkte}
     n = ed.__dict__.get("_fp_vz", 0) + 1
     ed.__dict__["_fp_vz"] = n

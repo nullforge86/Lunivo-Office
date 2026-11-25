@@ -49,7 +49,7 @@ LAGEN = ("text", "formatiert", "tabelle", "bild")
 class Pruefer:
     def __init__(self, tmp: str):
         from vcl.qt.widgets.menues.befehlsliste import Befehle
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         from lunivo_writer.dienste.einstellungen_dienst import Settings
         from vcl.qt.fenster.fenster.programmfenster import MainWindow
         self.E, self.Befehle = E, Befehle

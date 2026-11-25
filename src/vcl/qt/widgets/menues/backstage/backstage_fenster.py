@@ -9,7 +9,7 @@ class BackstageFensterBaustein:
 
     def texteffekte_seitenleiste(self):
         """Den Bereich „Texteffekte formatieren“ in der Seitenleiste öffnen; Änderungen gelten sofort für die Markierung."""
-        from core.formatierung.effekte import texteffekt
+        from vcl.qt.rendering.wordart import texteffekt
         if self.current_editor() is None:
             return
         self._seitenleiste_oeffnen()
@@ -23,7 +23,7 @@ class BackstageFensterBaustein:
 
     def _effekt_sync(self):
         """Folgt die Markierung einer anderen Formatierung, zeigt der offene Bereich „Texteffekte“ deren Werte."""
-        from core.formatierung.effekte import texteffekt
+        from vcl.qt.rendering.wordart import texteffekt
         self._format_folgen("texteffekte", lambda e: texteffekt.aus_zeichen(self.befehle._zeichen_dict()))
 
 

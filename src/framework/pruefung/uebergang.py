@@ -5,17 +5,20 @@ sobald das Modul keinen Verstoß mehr hat. Ist sie leer, ist der Importwächter 
 from __future__ import annotations
 
 _NAMEN = """
-core.diagramme.diagramm core.diagramme.formatierung.diagramm_format core.diagramme.formatierung.diagramm_stile core.diagramme.daten.diagramm_teile
-core.bearbeitung.einfuegen core.dokument.felder core.dokument.formular core.objekte.bilder.modell.bilddaten
+vcl.qt.rendering.diagramme.diagramm vcl.qt.rendering.diagramme.diagramm_format vcl.qt.rendering.diagramme.diagramm_stile vcl.qt.rendering.diagramme.diagramm_teile
+vcl.qt.rendering.formen.einfuegen vcl.qt.rendering.textfelder.felder vcl.qt.rendering.textfelder.formular vcl.qt.rendering.formen.bilddaten
 vcl.qt.rendering.formen.bild_einfuegen vcl.qt.rendering.textfelder.formel_einfuegen vcl.qt.rendering.formen.form_einfuegen vcl.qt.rendering.wordart.wordart_einfuegen
-core.objekte.bilder.modell.bildeffekte core.objekte.bilder.positionierung.bildlayout core.objekte.bilder.skalierung.bildwerkzeuge core.objekte.bilder.zuschneiden.bildzuschnitt
-core.objekte.bilder.positionierung.freie_bilder core.objekte.formen.formen core.objekte.formen.formen_anpassen
-core.objekte.formen.formen_katalog core.objekte.formen.formen_stile core.objekte.formen.freiform core.objekte.formen.linie
-core.objekte.formen.sprechblasen core.objekte.basis.frei_objekt core.objekte.textfelder.modell.frei_objekt_text
-core.objekte.smartart.smartart core.objekte.smartart.smartart_zeichnen core.dokument.abschnitte.deckblatt vcl.qt.rendering.formen.seitenrahmen
-core.dokument.wasserzeichen.wasserzeichen core.formatierung.fuellung.muster core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben core.formatierung.effekte.texteffekt
-core.objekte.wordart.textfx core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.formatierung.fuellung.textur core.barrierefreiheit.barrierefreiheit
+vcl.qt.rendering.formen.bildeffekte vcl.qt.rendering.formen.bildlayout vcl.qt.rendering.formen.bildwerkzeuge vcl.qt.rendering.formen.bildzuschnitt
+vcl.qt.rendering.formen.freie_bilder vcl.qt.rendering.formen.formen vcl.qt.rendering.formen.formen_anpassen
+vcl.qt.rendering.formen.formen_katalog vcl.qt.rendering.formen.formen_stile vcl.qt.rendering.formen.freiform vcl.qt.rendering.formen.linie
+vcl.qt.rendering.formen.sprechblasen vcl.qt.rendering.formen.frei_objekt vcl.qt.rendering.textfelder.frei_objekt_text
+vcl.qt.rendering.smartart.smartart vcl.qt.rendering.smartart.smartart_zeichnen vcl.qt.rendering.textfelder.deckblatt vcl.qt.rendering.formen.seitenrahmen
+vcl.qt.rendering.textfelder.wasserzeichen vcl.qt.rendering.formen.muster vcl.qt.schrift.schreibweise vcl.qt.schrift.silbenfarben vcl.qt.rendering.wordart.texteffekt
+vcl.qt.rendering.wordart.textfx vcl.qt.rendering.wordart.textfx_vorgaben vcl.qt.rendering.wordart.textfx_zeichen vcl.qt.rendering.formen.textur vcl.qt.eingabe.barrierefreiheit
 vcl.qt.eingabe.korrektur_dienst core.formatierung.schrift.datenbank
+core.formatierung.schrift.silbenfarben_modell core.objekte.formen.sprechblasen_modell
+core.dokument.abschnitte.deckblatt_vorlagen core.objekte.formen.formen_daten core.objekte.smartart.smartart_daten
+vcl.qt.fenster.befehle.kontextreiter.smartart_knoten_zustand vcl.qt.fenster.befehle.kontextreiter.smartarttools
 vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte vcl.qt.fenster.befehle.hauptreiter.ki
 vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite vcl.qt.fenster.befehle.hauptreiter.serien
 vcl.qt.fenster.befehle.hauptreiter.text_absatz vcl.qt.fenster.befehle.hauptreiter.text_vorlagen vcl.qt.fenster.befehle.hauptreiter.text_zeichen
@@ -88,23 +91,23 @@ NOCH_NICHT_UMGESTELLT: frozenset[str] = frozenset(_NAMEN)
 # Übergangsmodule im Kern: ehemals ``editor`` und ``korrektur``, jetzt in den Fachordnern von ``core/``. Sie dürfen weiter ``system`` und sich gegenseitig importieren
 # (Schicht ``uebergang`` in ``architektur.py``). Auch diese Liste darf nur kleiner werden; ein Modul verlässt sie, sobald es nur noch ``core`` importiert.
 ALT_MODULE_KERN: frozenset[str] = frozenset("""
-core.aenderungsverfolgung.vergleich.vergleich core.aenderungsverfolgung.vergleich.vergleich_datum_kern core.barrierefreiheit.barrierefreiheit
-core.bearbeitung.einfuegen core.diagramme.daten.diagramm_teile core.diagramme.daten.diagramm_zusatz core.diagramme.diagramm
-core.diagramme.formatierung.diagramm_format core.diagramme.formatierung.diagramm_stile core.diagramme.typen.diagramm_typen
-core.dokument.abschnitte.deckblatt core.dokument.felder core.dokument.felder_ergebnis_kern core.dokument.felder_text_kern core.dokument.formular
-core.dokument.gehe_zu core.dokument.je_stand core.dokument.vorlagen core.dokument.wasserzeichen.wasserzeichen core.dokument.zusatz
-core.formatierung.absatz.absatzopt core.formatierung.effekte.texteffekt core.formatierung.fuellung.muster core.formatierung.fuellung.textur
-vcl.qt.rendering.formen.seitenrahmen core.formatierung.schrift.schreibweise core.formatierung.schrift.silbenfarben
+core.aenderungsverfolgung.vergleich.vergleich core.aenderungsverfolgung.vergleich.vergleich_datum_kern vcl.qt.eingabe.barrierefreiheit
+vcl.qt.rendering.formen.einfuegen vcl.qt.rendering.diagramme.diagramm_teile core.diagramme.daten.diagramm_zusatz vcl.qt.rendering.diagramme.diagramm
+vcl.qt.rendering.diagramme.diagramm_format vcl.qt.rendering.diagramme.diagramm_stile core.diagramme.typen.diagramm_typen
+vcl.qt.rendering.textfelder.deckblatt vcl.qt.rendering.textfelder.felder core.dokument.felder_ergebnis_kern core.dokument.felder_text_kern vcl.qt.rendering.textfelder.formular
+core.dokument.gehe_zu core.dokument.je_stand core.dokument.vorlagen vcl.qt.rendering.textfelder.wasserzeichen core.dokument.zusatz
+core.formatierung.absatz.absatzopt vcl.qt.rendering.wordart.texteffekt vcl.qt.rendering.formen.muster vcl.qt.rendering.formen.textur
+vcl.qt.rendering.formen.seitenrahmen vcl.qt.schrift.schreibweise vcl.qt.schrift.silbenfarben
 core.formatierung.schrift.zeichenzusatz core.formatvorlagen.zeichen.designs core.formatvorlagen.zeichen.stile core.korrektur.fund
 core.korrektur.inkrement vcl.qt.eingabe.korrektur_dienst core.korrektur.rechtschreibung.autokorrektur core.korrektur.rechtschreibung.pruefung
 core.korrektur.silbentrennung.silben_de core.korrektur.sprache.klang core.korrektur.sprache.phonetik core.korrektur.woerterbuecher.haeufig
-core.korrektur.woerterbuecher.vorhersage core.layout.seitenumbruch.seitenplan core.layout.seitenumbruch.seitenplatz core.objekte.basis.frei_objekt
-core.objekte.bilder.modell.bilddaten core.objekte.bilder.modell.bildeffekte core.objekte.bilder.positionierung.bildlayout
-core.objekte.bilder.positionierung.freie_bilder core.objekte.bilder.skalierung.bildwerkzeuge core.objekte.bilder.zuschneiden.bildzuschnitt
-core.objekte.formen.formen core.objekte.formen.formen_anpassen core.objekte.formen.formen_katalog core.objekte.formen.formen_stile
-core.objekte.formen.freiform core.objekte.formen.linie core.objekte.formen.sprechblasen core.objekte.smartart.smartart
-core.objekte.smartart.smartart_zeichnen core.objekte.textfelder.modell.frei_objekt_text core.objekte.wordart.textfx
-core.objekte.wordart.textfx_vorgaben core.objekte.wordart.textfx_zeichen core.tabellen.formatierung.tabellenstil core.tabellen.modell.tabelle_text
+core.korrektur.woerterbuecher.vorhersage core.layout.seitenumbruch.seitenplan core.layout.seitenumbruch.seitenplatz vcl.qt.rendering.formen.frei_objekt
+vcl.qt.rendering.formen.bilddaten vcl.qt.rendering.formen.bildeffekte vcl.qt.rendering.formen.bildlayout
+vcl.qt.rendering.formen.freie_bilder vcl.qt.rendering.formen.bildwerkzeuge vcl.qt.rendering.formen.bildzuschnitt
+vcl.qt.rendering.formen.formen vcl.qt.rendering.formen.formen_anpassen vcl.qt.rendering.formen.formen_katalog vcl.qt.rendering.formen.formen_stile
+vcl.qt.rendering.formen.freiform vcl.qt.rendering.formen.linie vcl.qt.rendering.formen.sprechblasen vcl.qt.rendering.smartart.smartart
+vcl.qt.rendering.smartart.smartart_zeichnen vcl.qt.rendering.textfelder.frei_objekt_text vcl.qt.rendering.wordart.textfx
+vcl.qt.rendering.wordart.textfx_vorgaben vcl.qt.rendering.wordart.textfx_zeichen core.tabellen.formatierung.tabellenstil core.tabellen.modell.tabelle_text
 core.tabellen.modell.tabelleneigenschaften core.tabellen.modell.tabellenzustand core.text.ki_markdown core.text.statistik core.text.wortextras
 core.text.zahlformat
 vcl.qt.rendering.formen.bild_einfuegen vcl.qt.rendering.textfelder.formel_einfuegen vcl.qt.rendering.formen.form_einfuegen vcl.qt.rendering.wordart.wordart_einfuegen

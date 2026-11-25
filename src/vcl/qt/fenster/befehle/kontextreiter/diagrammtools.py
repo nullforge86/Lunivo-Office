@@ -67,12 +67,12 @@ class DiagrammToolsBefehle:
     # ==== Hilfen =====================================================================================================================
     def _dg(self) -> dict | None:
         """Die Daten des gewählten Diagramms (Kopie) oder None."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         return FO.daten_lesen(self.ed, "diagramm") if self.ed else None
 
     def _dg_set(self, **kw) -> bool:
         """Daten des gewählten Diagramms ändern (None entfernt die Angabe) und neu zeichnen; ohne Diagramm ein Hinweis in der Statuszeile."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         if not (self.ed and self._dg() is not None and FO.aendern(self.ed, "diagramm", **kw)):
             self.w.lbl_msg.setText("Bitte zuerst ein Diagramm auswählen.")
             return False
@@ -86,7 +86,7 @@ class DiagrammToolsBefehle:
         if d is None:
             self._dg_set()
             return
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.dialoge.einfuegen.diagramm_daten_dialog import DiagrammDatenDialog
         dlg = DiagrammDatenDialog(self.w, d.get("titel", ""), list(d.get("kategorien") or D.BEISPIEL_KATEGORIEN),
                                   dict(d.get("reihen") or D.BEISPIEL_REIHEN))
@@ -102,7 +102,7 @@ class DiagrammToolsBefehle:
         if d is None:
             self._dg_set()
             return
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         if untertyp:
             if untertyp not in D.NAMEN:
                 return False
@@ -121,7 +121,7 @@ class DiagrammToolsBefehle:
     def menue_diagrammTyp(self, symbol: str):
         """Klappe eines Typ-Knopfes: die Untertypen der Gruppe (``diagramm.TYPEN``) mit Haken beim aktuellen (beim Öffnen aufgefrischt);
         Klick ändert die Diagrammart direkt."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for _g, sym, unter in D.TYPEN:
@@ -152,7 +152,7 @@ class DiagrammToolsBefehle:
 
     def menue_diagrammFarben(self):
         """Die Farbreihen der Diagrammvorlagen (``diagramm.VORLAGEN``), je mit der ersten Farbe als Muster."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
         for schl, (_typ, farben) in D.VORLAGEN.items():
@@ -162,7 +162,7 @@ class DiagrammToolsBefehle:
     def diagrammFarben(self, k=None, nr=None):
         """Farbzeile Nummer ``nr`` aus ``diagramm.farbschemen_flach()`` (Gruppen „Farbig“ dann „Monochrom“) anwenden — für Kacheln der Schnellleiste."""
         nr = _nummer(k, nr)
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         reihen = D.farbschemen_flach()
         self._dg_set(farben=list(reihen[max(0, min(int(nr), len(reihen) - 1))][1]))
 
@@ -228,7 +228,7 @@ class DiagrammToolsBefehle:
     def diagrammStil(self, k=None, nr=None):
         """Diagrammstil ``nr`` (Nummer in ``diagramm.STILE``, Liste: ``diagramm.stile_liste()``)."""
         nr = _nummer(k, nr)
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         self._dg_set(stil=max(0, min(int(nr), len(D.STILE) - 1)))
 
     def diagrammZuruecksetzen(self, k=None):
@@ -238,27 +238,27 @@ class DiagrammToolsBefehle:
     # ==== Diagrammteile, Filter, Formate, Alternativtext =============================================================================
     def diagrammTeile(self, k=None) -> list[tuple[str, str]]:
         """Die wählbaren Teile des gewählten Diagramms [(Schlüssel, Anzeigename)] für das Feld „Diagrammbereich“ (leer ohne Diagramm)."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         d = self._dg()
         return D.teile(d) if d is not None else []
 
     def diagrammTeilWaehlen(self, k=None, schluessel=None):
         """Einen Diagrammteil wählen (``diagrammTeilWaehlen:["reihe_0"]``; ohne Schlüssel: Auswahl aufheben). Zeichnet nicht neu."""
-        from core.diagramme.daten import diagramm_teile as T
+        from vcl.qt.rendering.diagramme import diagramm_teile as T
         if self._dg() is None:
             return self._dg_set()
         return T.teil_waehlen(self.ed, schluessel)
 
     def feld_diagrammTeil(self) -> str:
         """Anzeigename des gewählten Teils fürs Feld „Diagrammbereich“ (ohne Auswahl: „Diagrammbereich“)."""
-        from core.diagramme.daten import diagramm_teile as T
+        from vcl.qt.rendering.diagramme import diagramm_teile as T
         return (T.teil_name(self.ed) if self.ed else "") or "Diagrammbereich"
 
     def diagrammTeilFormat(self, k=None, angaben=None, **kw):
         """Format des gewählten Teils ändern: ``fuell`` (Farbe oder Wörterbuch), ``linie``, ``schatten``, ``reflektion``, ``leuchten``, ``weich``, ``d3``, ``drehung``,
         ``text``, ``achse``, ``reihe`` (Aufbau in ``editor/diagramme/diagramm_format.py``); ``teil`` wählt einen anderen Teil. Als Bandbefehl: ``diagrammTeilFormat:[{"fuell": "#ff0000"}]``. Lesen:
         ``editor.diagramme.diagramm_teile.diagramm_teil_format_lesen(ed)``."""
-        from core.diagramme.daten import diagramm_teile as T
+        from vcl.qt.rendering.diagramme import diagramm_teile as T
         if self._dg() is None:
             return self._dg_set()
         ok = T.diagramm_teil_format_setzen(self.ed, **{**(angaben or {}), **kw})
@@ -268,7 +268,7 @@ class DiagrammToolsBefehle:
 
     def diagrammFilterDaten(self, k=None) -> dict:
         """Für das Popup „Diagrammfilter“: {"reihen": [(Name, Haken)], "rubriken": [(Name, Haken)]} — Haken = sichtbar."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         d = self._dg()
         if d is None:
             return {"reihen": [], "rubriken": []}
@@ -288,7 +288,7 @@ class DiagrammToolsBefehle:
     def diagrammNamenQuelle(self, k=None, quelle=None):
         """Namensquelle wählen: ``"zeile1"`` (Standard: Reihennamen und Rubriken wie eingegeben), ``"spalte_a"`` (Reihen und Rubriken tauschen die
         Namensrolle: Reihen heißen wie die Rubriken) oder ``"keine"`` (Reihen „Reihe 1 …“, Rubriken „1 …“). Die Daten bleiben unverändert."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         if quelle not in D.NAMEN_QUELLEN:
             return False
         return self._dg_set(namen_quelle=None if quelle == "zeile1" else quelle)
@@ -296,7 +296,7 @@ class DiagrammToolsBefehle:
     def diagrammNamenSetzen(self, k=None, namen=None):
         """Reihen/Rubriken umbenennen: {"reihen": [(alt, neu)], "rubriken": [(alt, neu)]}. Leere oder doppelte neue Namen bleiben beim alten Namen;
         Filter („ausgeblendet“) wandert mit."""
-        from core.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm as D
         d = self._dg()
         if d is None:
             return self._dg_set()

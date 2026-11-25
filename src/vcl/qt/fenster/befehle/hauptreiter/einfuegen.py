@@ -89,7 +89,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         import os
         e = self.ed
         if art == "bild":
-            from core.objekte.bilder.modell.bilddaten import BildFehler
+            from vcl.qt.rendering.formen.bilddaten import BildFehler
             try:
                 if e.insert_image(pfad):
                     return
@@ -97,7 +97,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
                 self.w.lbl_msg.setText(str(fehler))
                 return
         if art == "text":
-            from core.bearbeitung import einfuegen as E
+            from vcl.qt.rendering.formen import einfuegen as E
             from core.dokument.bericht import DocumentIOError
             try:
                 self.w._show_report(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
@@ -105,7 +105,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             except DocumentIOError:
                 pass                                            # nicht lesbar: dann als Symbol
         from PySide6.QtCore import QUrl
-        from core.bearbeitung import einfuegen as E
+        from vcl.qt.rendering.formen import einfuegen as E
         from vcl.qt.widgets.bausteine.symbole.medien.datei_symbole import datei_symbol
         symbol = datei_symbol(os.path.basename(pfad)).pixmap(48, 48).toImage()
         self._bild_einfuegen(E.datei_symbol_bild(os.path.basename(pfad), symbol), f"Datei: {os.path.basename(pfad)}")
@@ -383,14 +383,14 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def textfeldVertikal(self, k=None):
         """Textfeld mit senkrecht laufendem Text: dasselbe freie Objekt wie das waagerechte (Rahmen, Griffe, Schnellleiste), Richtung vertikal."""
         if self.ed:
-            from core.objekte.basis import frei_objekt as FO
+            from vcl.qt.rendering.formen import frei_objekt as FO
             FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "richtung": "senkrecht_rl"}, 70, 180)
 
 
     def textfeldMehrzeilig(self, k=None):
         if self.ed:
-            from core.bearbeitung import einfuegen as E
-            from core.objekte.basis import frei_objekt as FO
+            from vcl.qt.rendering.formen import einfuegen as E
+            from vcl.qt.rendering.formen import frei_objekt as FO
             FO.einfuegen(self.ed, "textfeld", {**FO.TEXTFELD_STANDARD, "text": "Text hier eingeben\n\n"}, 400, 110)
 
 
@@ -431,7 +431,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def _autotext_seite(self, teile) -> None:
         if not self.ed:
             return
-        from core.dokument import felder as F
+        from vcl.qt.rendering.textfelder import felder as F
         kontext = F.kontext_sammeln(self.ed)
         c = self.ed.textCursor(); c.beginEditBlock()
         for t in teile:
@@ -466,7 +466,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not self.ed:
             return
         import re
-        from core.dokument import felder as F
+        from vcl.qt.rendering.textfelder import felder as F
         from vcl.qt.widgets.dialoge.einfuegen.felder_dialog import FelderDialog
         t = self.w.current_tab()
         kontext = F.kontext_sammeln(self.ed, self.w.settings.get("benutzer/name", ""), getattr(t, "path", "") or "")

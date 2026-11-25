@@ -94,7 +94,7 @@ class ReiterZustandMixin:
         e.zusatzGeaendert.connect(self.navigation.spaeter)
         e.noteAngeklickt.connect(lambda art, nid: self.noten_feld.oeffnen(art, nid))
         e.set_marken(self.settings.get_bool("ui/marken", False))
-        from core.objekte.formen import sprechblasen as SB
+        from vcl.qt.rendering.formen import sprechblasen as SB
         e.blasen_setzen(SB.konfig_lesen(self.settings), self.settings.get("kommentare/schrift", "mittel"))
         self.formatzeichen_anwenden(e)
         self.lineale_anwenden(tab)

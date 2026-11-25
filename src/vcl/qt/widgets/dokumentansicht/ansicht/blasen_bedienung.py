@@ -10,7 +10,7 @@ from PySide6.QtCore import QRectF, Qt
 from core.suche.textsuche.suche import offset_zu_position
 from core.geometrie import mm_to_px
 from core.layout.drucklayout import schreibmarke as SM
-from core.objekte.formen import sprechblasen as SB
+from vcl.qt.rendering.formen import sprechblasen as SB
 
 
 class BlasenBedienung:

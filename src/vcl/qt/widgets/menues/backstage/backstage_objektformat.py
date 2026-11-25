@@ -15,9 +15,9 @@ class BackstageObjektformatBaustein:
         """Den Bereich „Formatierung“ für das markierte Bild in der Seitenleiste öffnen (Füllung und Linie, Effekte); Änderungen gelten sofort."""
         from PySide6.QtGui import QImage
         from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-        from core.objekte.bilder.modell.bilddaten import bild_aus_datei
+        from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.rendering.formen import bildlayout as BL
         e = self.current_editor()
         z = BL.ziel(e) if e is not None else None
         w = BL.format_lesen(e, z) if z is not None else None
@@ -43,7 +43,7 @@ class BackstageObjektformatBaustein:
 
     def formatierung_seitenleiste(self, reiter: int = 0) -> None:
         """Zahnrad am Diagramm und „Formatieren“ im Rechtsklick-Menü: die Seitenleiste „Formatierung“ passend zum gewählten Objekt."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         art = FO.art_gewaehlt(self.current_editor()) if self.current_editor() is not None else None
         if art == "diagramm":
             self.diagrammformat_seitenleiste()
@@ -54,16 +54,16 @@ class BackstageObjektformatBaustein:
 
 
     def _smartart_werte(self, e) -> dict | None:
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.smartart import smartart as SA
         return SA.format_lesen(e)
 
     def smartartformat_seitenleiste(self) -> None:
         """Seitenleiste „Formatierung“ für SmartArt (Rechtsklick): die Seitenleiste „Formatierung“ für den gewählten Knoten (ohne Auswahl: alle Knoten); Änderungen gelten sofort."""
         from PySide6.QtGui import QImage
         from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-        from core.objekte.bilder.modell.bilddaten import bild_aus_datei
-        from core.diagramme.formatierung import diagramm_format as F
-        from core.objekte.smartart import smartart as SA
+        from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
+        from vcl.qt.rendering.diagramme import diagramm_format as F
+        from vcl.qt.rendering.smartart import smartart as SA
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         w = self._smartart_werte(self.current_editor())
         if w is None:
@@ -91,9 +91,9 @@ class BackstageObjektformatBaustein:
 
     def _diagramm_werte(self, e) -> dict | None:
         """Die Werte für die Seitenleiste „Formatierung“ des gewählten Diagrammteils (None ohne markiertes Diagramm)."""
-        from core.diagramme import diagramm as D
-        from core.diagramme.daten import diagramm_teile as T
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.diagramme import diagramm as D
+        from vcl.qt.rendering.diagramme import diagramm_teile as T
+        from vcl.qt.rendering.formen import frei_objekt as FO
         from core.dokument.abschnitte.seite import px_to_mm
         z = FO.ziel(e) if e is not None else None
         d = FO.daten_lesen(e, "diagramm") if e is not None else None
@@ -114,8 +114,8 @@ class BackstageObjektformatBaustein:
         """„Formatieren“ in den Diagrammtools: die Seitenleiste „Formatierung“ für den gewählten Diagrammteil öffnen; Änderungen gelten sofort."""
         from PySide6.QtGui import QImage
         from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-        from core.objekte.bilder.modell.bilddaten import bild_aus_datei
-        from core.diagramme.formatierung import diagramm_format as F
+        from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
+        from vcl.qt.rendering.diagramme import diagramm_format as F
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
         w = self._diagramm_werte(self.current_editor())
         if w is None:
@@ -124,8 +124,8 @@ class BackstageObjektformatBaustein:
         self._seitenleiste_oeffnen()
 
         def anwenden(angaben: dict):
-            from core.objekte.bilder.positionierung import bildlayout as BL
-            from core.objekte.basis import frei_objekt as FO
+            from vcl.qt.rendering.formen import bildlayout as BL
+            from vcl.qt.rendering.formen import frei_objekt as FO
             from core.dokument.abschnitte.seite import mm_to_px
             angaben = dict(angaben)
             ed = self.current_editor()
@@ -143,7 +143,7 @@ class BackstageObjektformatBaustein:
             self.befehle.diagrammAltText(None, titel, beschreibung)
 
         def dekor(an: bool):
-            from core.objekte.bilder.positionierung import bildlayout as BL
+            from vcl.qt.rendering.formen import bildlayout as BL
             ed = self.current_editor()
             if ed is not None and BL.ziel(ed) is not None:
                 BL.frei_aendern(ed, BL.ziel(ed), dekor=bool(an))
@@ -175,7 +175,7 @@ class BackstageObjektformatBaustein:
 
     def _objekt_text_verbinden(self) -> None:
         """Die Textoptionen der Seitenleiste wirken auf den Text im gewählten WordArt oder Textfeld (``editor/objekte/frei_objekt.py``)."""
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import frei_objekt as FO
         panel = self.sidebar.objekt_panel
         if panel is None:
             return
@@ -194,7 +194,7 @@ class BackstageObjektformatBaustein:
         f = self.band.felder
         if e is None or getattr(e, "_frei_sel", None) is None:
             return
-        from core.objekte.bilder.positionierung import bildlayout as BL
+        from vcl.qt.rendering.formen import bildlayout as BL
         m = None
         for vor in ("bild_", "bt_", "sa_"):
             if vor + "breite" not in f:
@@ -236,8 +236,8 @@ class BackstageObjektformatBaustein:
         offen = [k for k in self.OBJEKT_FORMATE if sb.format_sichtbar(k)]
         if e is None or not offen:
             return
-        from core.objekte.bilder.positionierung import bildlayout as BL
-        from core.objekte.basis import frei_objekt as FO
+        from vcl.qt.rendering.formen import bildlayout as BL
+        from vcl.qt.rendering.formen import frei_objekt as FO
         if getattr(e, "_frei_sel", None) is None:
             return
         art = FO.art_gewaehlt(e)

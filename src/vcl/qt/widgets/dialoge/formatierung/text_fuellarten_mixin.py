@@ -18,11 +18,11 @@ from PySide6.QtGui import QImage
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 from PySide6.QtWidgets import QComboBox, QPushButton, QRadioButton, QWidget
 
-from core.objekte.bilder.modell.bilddaten import bild_aus_datei
+from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-from core.diagramme.formatierung import diagramm_format as DF
-from core.formatierung.fuellung import muster as M
+from vcl.qt.rendering.diagramme import diagramm_format as DF
+from vcl.qt.rendering.formen import muster as M
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import TEXTUREN

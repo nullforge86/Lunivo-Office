@@ -43,7 +43,7 @@ def adj_lagen(r: QRectF, a: dict | None, vorlaeufig: tuple[int, float] | None = 
     ``vorlaeufig``: (Nummer, Wert) des Griffs, der gerade gezogen wird."""
     if a is None or a.get("art") != "form":
         return {}
-    from core.objekte.formen import formen as F
+    from vcl.qt.rendering.formen import formen as F
     d = a.get("daten") or {}
     form = d.get("form", "Rechteck")
     adj = d.get("adj")

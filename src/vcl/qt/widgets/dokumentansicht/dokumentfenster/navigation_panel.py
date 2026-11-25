@@ -262,7 +262,7 @@ class NavigationPanel(QWidget):
                       "oben": (lambda e: e[0]["von"], False), "unten": (lambda e: e[0]["von"], True)}[self.sortierung]
         eintraege.sort(key=schluessel[0], reverse=schluessel[1])
         for i, (b, k) in enumerate(eintraege):
-            from core.objekte.formen.sprechblasen import karten_pt
+            from core.objekte.formen.sprechblasen_modell import karten_pt
             karte = KommentarKarte(b, k, ed, self.aktualisieren, karten_pt(self._einstellung("kommentare/schrift", "mittel")),
                                    bearbeiten=int(b["wert"]) == self._bearbeite, speichern=self._bearbeiten_speichern,
                                    abbrechen=self._bearbeiten_abbrechen, bearbeite_los=self.kommentar_bearbeiten)

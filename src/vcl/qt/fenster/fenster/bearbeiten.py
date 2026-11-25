@@ -101,7 +101,7 @@ class BearbeitenBaustein:
 
     def markup_neu(self) -> None:
         """Markup- und Sprechblasen-Einstellungen haben sich geändert: Seitenrand für Blasen und Auszeichnung neu aufbauen."""
-        from core.objekte.formen import sprechblasen as SB
+        from vcl.qt.rendering.formen import sprechblasen as SB
         for t in self._doc_tabs():
             t.editor.blasen_setzen(SB.konfig_lesen(self.settings), self.settings.get("kommentare/schrift", "mittel"))
             t.editor.viewport().update()
@@ -114,7 +114,7 @@ class BearbeitenBaustein:
 
 
     def silbenfarben_anwenden(self, e=None):
-        from core.formatierung.schrift import silbenfarben as S
+        from vcl.qt.schrift import silbenfarben as S
         k = S.konfig_lesen(self.settings)
         for ed in ([e] if e is not None else [t.editor for t in self._doc_tabs()]):
             ed.set_silbenfarben(k)

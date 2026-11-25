@@ -2,7 +2,7 @@
 from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QDialog, QSpinBox
-from core.bearbeitung import einfuegen as E
+from vcl.qt.rendering.formen import einfuegen as E
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SANS

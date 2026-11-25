@@ -87,7 +87,7 @@ class Ausgabe:
     def __init__(self, dokument: Dokument, engine=None, nur_formular: bool = False, optionen: dict | None = None):
         if nur_formular:                                   # „Nur Formulardaten drucken“: in einer Kopie bleibt nur der Inhalt der Felder sichtbar
             import copy
-            from core.dokument import formular
+            from vcl.qt.rendering.textfelder import formular
             dokument = copy.deepcopy(dokument)
             formular.nur_formulardaten(dokument)
         self.dokument = dokument
@@ -117,7 +117,7 @@ class Ausgabe:
         """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
         from core.bearbeitung import Bearbeitungssitzung
         from core.suche.textsuche.suche import offset_zu_position
-        from core.objekte.formen import sprechblasen as SB
+        from vcl.qt.rendering.formen import sprechblasen as SB
         k = self._blasen["konfig"]
         if not SB.aktiv(k):
             return {}
@@ -152,7 +152,7 @@ class Ausgabe:
         if not self._blasen_je_seite.get(n - 1):
             self._seite_malen(p, n)
             return
-        from core.objekte.formen import sprechblasen as SB
+        from vcl.qt.rendering.formen import sprechblasen as SB
         k = self._blasen["konfig"]
         b, h = self.groesse_px(n)
         luecke, breite = mm_to_px(SB.LUECKE_MM), mm_to_px(SB.breite_mm(k))

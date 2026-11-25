@@ -4,7 +4,7 @@ from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
 from core.layout.drucklayout.formatwerte import schrift as schrift_von
-from core.objekte.formen.linie import Linie  # noqa: F401
+from vcl.qt.rendering.formen.linie import Linie  # noqa: F401
 from vcl.qt.widgets.bausteine import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
 from core.formatierung.farben.farben import Farbe  # noqa: F401
 from vcl.qt.widgets.bausteine.farben import farben as BF  # noqa: F401
@@ -63,7 +63,7 @@ class TextZeichenBefehle:
     def menue_unterstrichKlappe(self):
         """Wie in der Vorlage: die Linienarten als Bild, „Mehr Unterstreichungen …“ (Fenster Schriftart) und „Unterstreichungsfarbe“ mit der
         gemeinsamen Farbpalette."""
-        from core.objekte.wordart.textfx import unter_zeichnen
+        from vcl.qt.rendering.wordart.textfx import unter_zeichnen
         from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -173,7 +173,7 @@ class TextZeichenBefehle:
         """Einen Teil der Texteffekte der Markierung ersetzen (Wert ``None`` nimmt ihn weg); die übrigen Effekte bleiben."""
         if not self.ed:
             return
-        from core.formatierung.effekte import texteffekt
+        from vcl.qt.rendering.wordart import texteffekt
         w = texteffekt.aus_zeichen(self._zeichen_dict())
         for k, v in teile.items():
             if v is None:
@@ -185,8 +185,8 @@ class TextZeichenBefehle:
     def menue_texteffekteKlappe(self):
         """Menü am Knopf „Texteffekte“ wie in der Vorlage: WordArt, Schatten, Spiegelung, Leuchteffekt (je mit Bildchen zum Anklicken), 3D-Drehung und
         Transformieren (nur für Formen und Textfelder, hier ausgegraut), „Weitere Texteffekte …“ öffnet die Seitenleiste."""
-        from core.formatierung.effekte import texteffekt
-        from core.objekte.wordart import textfx
+        from vcl.qt.rendering.wordart import texteffekt
+        from vcl.qt.rendering.wordart import textfx
         from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
@@ -221,7 +221,7 @@ class TextZeichenBefehle:
         """Dasselbe als eigenes Fenster (mit „OK“), wie es das Schriftart-Fenster und die Formatvorlage benutzen."""
         if not self.ed:
             return
-        from core.formatierung.effekte import texteffekt
+        from vcl.qt.rendering.wordart import texteffekt
         from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import TexteffektDialog
         d = TexteffektDialog(self.w, texteffekt.aus_zeichen(self._zeichen_dict()))
         if d.exec():

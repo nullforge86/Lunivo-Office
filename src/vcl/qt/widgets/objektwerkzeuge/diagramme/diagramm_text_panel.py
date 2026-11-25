@@ -7,9 +7,9 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont, QIcon, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QWidget
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte_rolle
-from core.diagramme.formatierung import diagramm_format as F
-from core.formatierung.effekte import texteffekt as T
-from core.objekte.wordart.textfx import WARP_FORMEN
+from vcl.qt.rendering.diagramme import diagramm_format as F
+from vcl.qt.rendering.wordart import texteffekt as T
+from core.objekte.wordart.textfx_daten import WARP_FORMEN
 from core.layout.drucklayout.ausgabe.text.texteffekte import pfad_verformen
 from core.objekte.anordnung.objekte_hilfen import VectorPath
 from vcl.qt.rendering.formen.pfad import pfad_zu_vektor, vektor_zu_pfad

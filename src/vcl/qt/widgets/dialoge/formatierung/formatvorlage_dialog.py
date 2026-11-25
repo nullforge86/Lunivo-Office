@@ -208,7 +208,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _rahmen(self) -> None:
         """Format ▸ Rahmen …: das Fenster „Rahmen und Schattierung“ ohne den Reiter Seitenrand (der gehört nicht zu einer Vorlage)."""
-        from core.objekte.formen.linie import Linie
+        from vcl.qt.rendering.formen.linie import Linie
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.formatierung.rahmen_schattierung_dialog import RahmenSchattierungDialog
         r = self._rs
@@ -238,7 +238,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _effekte(self) -> None:
         """Format ▸ Texteffekte …: Füllung (Farbe der Vorlage, Transparenz) und Kontur."""
-        from core.formatierung.effekte import texteffekt
+        from vcl.qt.rendering.wordart import texteffekt
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog import TexteffektDialog
         w = texteffekt.aus_text(self._rs["effekt"], self._farbe) or {**texteffekt.EFFEKT, "farbe": self._farbe}

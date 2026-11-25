@@ -13,14 +13,15 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QMenu
 
-from core.formatierung.fuellung import muster as M
-from core.objekte.formen.linie import LINIENBREITEN, Linie
+from vcl.qt.rendering.formen import muster as M
+from core.objekte.formen.linie_daten import LINIENBREITEN
+from vcl.qt.rendering.formen.linie import Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
 from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile, linien_symbol
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from core.objekte.formen.linie import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
+from core.objekte.formen.linie_daten import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG_GROSS
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_INNEN_OBJEKT, GROESSE_SPALTENRASTER_KACHEL, GROESSE_STRICHART_MENUEBILD, GROESSE_STRICHART_MENUESYMBOL, GROESSE_TEXTUR_MUSTER_KACHEL, GROESSE_VERLAUF_KACHEL, ICON_NORMAL
@@ -30,7 +31,7 @@ def _linien_symbol(art: str, breite: float, groesse: QSize = QSize(*GROESSE_STRI
     return linien_symbol(art, groesse, Farbe.TINTE, breite)                # der vorhandene Baustein
 
 
-from core.formatierung.fuellung.textur import textur as _textur  # noqa: E402
+from vcl.qt.rendering.formen.textur import textur as _textur  # noqa: E402
 
 
 TEXTUREN = [("papier", "Papier"), ("granit", "Granit"), ("holz", "Holz"), ("stoff", "Stoff"), ("marmor", "Marmor"), ("sand", "Sand")]
@@ -113,7 +114,7 @@ class KonturMenue(FarbPalette):
 def formstil_werte(schluessel: str) -> dict:
     """Füllung und Kontur des Stils ``z{Zeile}{Spalte}`` für Bilder und Textfelder: {"fuell": …, "rand": …} (``None`` = keine). Die Werte kommen aus
     ``formen_stile.formstil`` (dasselbe Raster wie ``formStilRaster`` bei Formen); Effekte (3D) und Glanz gelten nur bei Formen."""
-    from core.objekte.formen import formen_stile as S
+    from vcl.qt.rendering.formen import formen_stile as S
     w = S.formstil(int(schluessel[1]), int(schluessel[2]))
     fuell = None
     if w["fuell"]:
@@ -123,7 +124,7 @@ def formstil_werte(schluessel: str) -> dict:
 
 def formstil_zeichner(schluessel: str):
     """Zeichnet die Kachel „Abc“ des Stils: Füllung (auch Verlauf), Rand und Schrift in passender Farbe."""
-    from core.objekte.formen import formen_stile as S
+    from vcl.qt.rendering.formen import formen_stile as S
 
     def zeichne(p: QPainter, r: QRectF) -> None:
         w = S.formstil(int(schluessel[1]), int(schluessel[2]))
@@ -149,7 +150,7 @@ def formstil_zeichner(schluessel: str):
 
 def formstile(parent=None) -> RasterAuswahl:
     """Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“."""
-    from core.objekte.formen import formen_stile as S
+    from vcl.qt.rendering.formen import formen_stile as S
     m = RasterAuswahl(parent, spalten=len(S.SPALTEN), groesse=QSize(*GROESSE_SPALTENRASTER_KACHEL))
     for z in range(len(S.ZEILEN)):
         for s in range(len(S.SPALTEN)):

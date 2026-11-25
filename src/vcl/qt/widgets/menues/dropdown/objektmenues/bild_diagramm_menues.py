@@ -32,7 +32,7 @@ BAND_STILE = 4                    # so viele Stilkacheln stehen im Band; der Pfe
 
 # ---- Zuschneiden --------------------------------------------------------------------------------------------------------------
 def _form_bild(name: str) -> QIcon:
-    from core.objekte.formen import formen_katalog as K
+    from vcl.qt.rendering.formen import formen_katalog as K
     pm = QPixmap(QSize(*GROESSE_FORMBILD_KACHEL)); pm.fill(Qt.transparent)
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(Farbe.AKZENT), STIFT_BILDCHEN_LINIE)); p.setBrush(Qt.NoBrush)
@@ -47,7 +47,7 @@ def _abschnittsleiste(text: str) -> QLabel:
 
 def zuschneiden_menue(b) -> QMenu:
     """Die Klappe „Zuschneiden“ nach der Vorlage; ``b`` ist der Befehlsbaustein (``bildZuschneidenForm/Skala/Zuruecksetzen``)."""
-    from core.objekte.bilder.zuschneiden import bildzuschnitt as BZ
+    from vcl.qt.rendering.formen import bildzuschnitt as BZ
     from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
     m = MenueListe(b.w)
     wid = QWidget()
@@ -119,7 +119,7 @@ _BALKEN = ((0.62, 0.38, 0.28), (0.34, 0.78, 0.30), (0.52, 0.26, 0.46), (0.86, 0.
 
 def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
     """Vorschau des Diagrammstils ``nr`` (``diagramm.STILE``): Grund, Raster und Schrift wie im fertigen Diagramm, mit drei Säulenreihen."""
-    from core.diagramme import diagramm as D
+    from vcl.qt.rendering.diagramme import diagramm as D
     _n, grund, schrift, raster = D.STILE[nr]
     pm = QPixmap(groesse); pm.fill(QColor(grund))
     w, h = groesse.width(), groesse.height()
@@ -153,13 +153,13 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
 
 
 def _stilname(nr: int) -> str:
-    from core.diagramme import diagramm as D
+    from vcl.qt.rendering.diagramme import diagramm as D
     return D.STILE[nr][0]
 
 
 def diagramm_stile_menue(b) -> RasterAuswahl:
     """Alle Diagrammstile als Kacheln (Name im Tipp); die Wahl ist ``diagrammStil``."""
-    from core.diagramme import diagramm as D
+    from vcl.qt.rendering.diagramme import diagramm as D
     m = RasterAuswahl(b.w, titel="Diagrammstile", spalten=2, groesse=STIL_KACHEL)
     for i in range(len(D.STILE)):
         m.kachel(str(i), _stilname(i), stil_bild(i)).setCheckable(False)
@@ -169,7 +169,7 @@ def diagramm_stile_menue(b) -> RasterAuswahl:
 
 def diagramm_stile_galerie(b) -> dict:
     """Die Galerie im Band: eine Kachel je Stil und das Menü mit allen (Aufbau wie ``galerie_ttFormstile``)."""
-    from core.diagramme import diagramm as D
+    from vcl.qt.rendering.diagramme import diagramm as D
     kacheln = [(_stilname(i), stil_bild(i), lambda i=i: b.diagrammStil(None, i)) for i in range(BAND_STILE)]      # wie in der Vorlage vier im Band, alle im Popup
     from vcl.qt.widgets.menues.dropdown.objektmenues.diagramm_popups import stile_popup
     return {"kacheln": kacheln, "menue": stile_popup(b), "name": "Diagrammstile"}                  # der Pfeil öffnet dasselbe Popup wie die Schnellleiste

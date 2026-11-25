@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QListWidget, QSpinBox, QWidget
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from core.dokument import felder as F
+from vcl.qt.rendering.textfelder import felder as F
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.abstaende.mass import EINFUEGEN_LISTE_ZEILEN

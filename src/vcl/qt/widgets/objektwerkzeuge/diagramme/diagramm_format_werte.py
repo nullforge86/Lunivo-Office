@@ -4,7 +4,7 @@ Mixin zu ``diagramm_format_panel.DiagrammFormatPanel`` und steht dort vor den Pa
 from __future__ import annotations
 
 from framework.schnittstellen.datentypen.farben import Farbe
-from core.diagramme.formatierung import diagramm_format as F
+from vcl.qt.rendering.diagramme import diagramm_format as F
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine import _OHNE, _optionen_name, _text_teil, _still
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor, QFont  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
-from core.objekte.formen.linie import Linie  # noqa: F401
+from vcl.qt.rendering.formen.linie import Linie  # noqa: F401
 from vcl.qt.widgets.bausteine import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
 from core.formatierung.farben.farben import Farbe  # noqa: F401
 from vcl.qt.widgets.bausteine.farben import farben as BF  # noqa: F401
@@ -136,7 +136,7 @@ class TextAbsatzBefehle:
         e = self.ed
         if not e:
             return
-        from core.formatierung.schrift import schreibweise as S
+        from vcl.qt.schrift import schreibweise as S
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         from vcl.qt.widgets.dialoge.dokument.sortieren_dialog import SortierenDialog
         s = e.sitzung

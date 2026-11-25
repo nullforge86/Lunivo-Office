@@ -34,7 +34,7 @@ BUCH = [("innen", "Innen"), ("aussen", "Außen")]
 ZEILEN = [("beide", "Beide Seiten"), ("links", "Nur links"), ("rechts", "Nur rechts"), ("groesste", "Nur größte Seite")]
 UMFLIESSEND = ("quadrat", "passend", "transparent")                 # nur hier gelten „Zeilenumbruch“ und „Abstand zum Text“
 
-from core.objekte.bilder.positionierung.bildlayout import STANDARD  # noqa: E402
+from vcl.qt.rendering.formen.bildlayout import STANDARD  # noqa: E402
 
 
 def _combo(eintraege, aktuell) -> QComboBox:

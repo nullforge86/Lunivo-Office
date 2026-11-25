@@ -6,8 +6,8 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-from core.formatierung.fuellung import muster as M
-from core.formatierung.effekte import texteffekt as T
+from vcl.qt.rendering.formen import muster as M
+from vcl.qt.rendering.wordart import texteffekt as T
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import UmbruchSchalter
@@ -16,7 +16,7 @@ from vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues import TEXTUREN
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchiebeFeld
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_dialog_hilfen import Abschnitt
 from vcl.qt.widgets.dialoge.formatierung.texteffekt_panel import TexteffektPanel
-from core.objekte.formen.linie import OBJEKT_STRICHE
+from core.objekte.formen.linie_daten import OBJEKT_STRICHE
 from framework.schnittstellen.datentypen.farben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ICON_NORMAL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld

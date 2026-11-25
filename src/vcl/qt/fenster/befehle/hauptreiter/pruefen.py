@@ -245,7 +245,7 @@ class PruefenBefehle:
     def _form_dialog(self, art: str):
         if not self.ed:
             return
-        from core.dokument import formular as FO
+        from vcl.qt.rendering.textfelder import formular as FO
         from vcl.qt.widgets.dialoge.einfuegen.formular_dialog import FormFeldDialog
         d = FormFeldDialog(self.w, art)
         if d.exec():
@@ -282,7 +282,7 @@ class PruefenBefehle:
 
     def formLeeren(self, k=None):
         if self.ed:
-            from core.dokument import formular as FO
+            from vcl.qt.rendering.textfelder import formular as FO
             n = FO.alle_zuruecksetzen(self.ed)
             self.w.statusBar().showMessage(f"{n} Formularfeld{'er' if n != 1 else ''} zurückgesetzt.", 4000)
 
@@ -328,7 +328,7 @@ class PruefenBefehle:
     def barrierefrei(self, k=None):
         if not self.ed:
             return
-        from core.barrierefreiheit.barrierefreiheit import pruefe
+        from vcl.qt.eingabe.barrierefreiheit import pruefe
         funde = pruefe(self.ed)
         text = ("\n\n".join(f"{i}. {f}" for i, f in enumerate(funde, 1)) if funde else
                 "Nichts gefunden. Bilder beschrieben, Überschriften der Reihe nach, Tabellen mit Kopfzeile, Schrift kräftig genug.")

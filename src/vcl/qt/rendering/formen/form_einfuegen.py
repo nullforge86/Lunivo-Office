@@ -1,10 +1,10 @@
-"""Form einfuegen: aus ``core.bearbeitung.einfuegen`` herausgelöst."""
+"""Form einfuegen: aus ``vcl.qt.rendering.formen.einfuegen`` herausgelöst."""
 from __future__ import annotations
 import math
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QImage
 from core.formatierung.farben.farben import Farbe
-from core.objekte.formen import formen_katalog as K
+from vcl.qt.rendering.formen import formen_katalog as K
 
 
 # ---- Formen ---------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ def _polygon(punkte: list) -> list:
 def _form_pfad(art: str, r, adj, punkte):
     """(Umriss als Pfad, offen?) für Freiformen, Anpassungsformen und Katalogformen; ``None`` für die eingebauten Grundformen."""
     if punkte:
-        from core.objekte.formen import freiform as FF
+        from vcl.qt.rendering.formen import freiform as FF
         return FF.pfad(punkte, r), not FF.geschlossen(punkte)
     if adj and K.anpassbar(art):
         return K.pfad(art, r, adj), False

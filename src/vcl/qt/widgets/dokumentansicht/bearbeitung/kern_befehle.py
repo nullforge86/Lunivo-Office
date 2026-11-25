@@ -218,7 +218,7 @@ class KernBefehle:
         self._af({"richtung": "ltr" if F.richtung(a) == "rtl" else "rtl", "ausrichtung": None if a.get("ausrichtung") in (None, "links", "rechts") else a["ausrichtung"]})
 
     def absatzrahmen(self):
-        from core.objekte.formen.linie import Linie
+        from vcl.qt.rendering.formen.linie import Linie
         return Linie.aus_text(F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("rahmen"))
 
     def set_absatzrahmen(self, text) -> None:
@@ -461,7 +461,7 @@ class KernBefehle:
         return self.tabellenformat({"rahmen_breite": max(1.0, linie.breite_pt / 0.75), "rahmen_farbe": linie.farbe, "rahmen_art": linie.art})
 
     def tabelle_rahmen_lesen(self):
-        from core.objekte.formen.linie import Linie
+        from vcl.qt.rendering.formen.linie import Linie
         t = self.tabelle_an_marke()
         f = t.tabelle.format if t is not None else {}
         if float(f.get("rahmen_breite") or 0) <= 0:
@@ -772,7 +772,7 @@ class KernBefehle:
 
     def _formular_klick(self, pos: int) -> bool:
         """Klick auf ein Formularfeld (Kontrollkästchen, Auswahl, Datum, Text, Schaltfläche)."""
-        from core.dokument import formular
+        from vcl.qt.rendering.textfelder import formular
         return formular.klick(self, pos, self.fenster)
 
 

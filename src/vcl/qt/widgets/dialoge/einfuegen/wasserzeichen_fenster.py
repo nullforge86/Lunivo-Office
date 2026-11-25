@@ -17,8 +17,8 @@ from PySide6.QtGui import QColor, QFont, QImage, QPen
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFontComboBox, QLabel, QPushButton, QSlider, QSpinBox
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
 
-from core.objekte.bilder.modell.bilddaten import bild_aus_datei
-from core.dokument.wasserzeichen import wasserzeichen as WZ
+from vcl.qt.rendering.formen.bilddaten import bild_aus_datei
+from vcl.qt.rendering.textfelder import wasserzeichen as WZ
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from core.dokument.abschnitte.seite import PageSettings, mm_to_px
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste

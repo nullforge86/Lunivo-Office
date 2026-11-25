@@ -13,6 +13,31 @@ class Farbe:
     HOLZ = "#d9b98a"                # Holzton der Bildvorlagen (Rahmen „Holz“)
     FORM_LINIE = "#1f3864"          # Standardlinie eingefügter Formen
     REGENBOGEN = ("#e03131", "#f08c00", "#ffd43b", "#2f9e44", "#1971c2", "#7048a8")   # Farbfolge der WordArt-Vorlage „Regenbogen“
+    # Diagramme
+    DIAGRAMM_LINIE = "#3c4043"          # Standardfarbe von Linien und Text im Diagramm
+    DIAGRAMM_BLAU_DUNKEL = "#1864ab"    # dunkler Ton der Standardfüllung (Verlauf, Verlauf-Endfarbe)
+    DIAGRAMM_ROT = "#c0392b"            # Anfangsfarbe der Verlaufsvorgabe
+    LEUCHTEN_GELB = "#ffc000"           # Standardfarbe des Leuchtens
+    DIAGRAMM_FARBIG = (("Farbig 1", ("#4a8fd8", "#ef8a3c", "#9aa0a6", "#f2b705", "#2f6fb5", "#5aa454")),
+                       ("Farbig 2", ("#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#e67e22")),
+                       ("Farbig 3", ("#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#8ab17d")),
+                       ("Farbig 4", ("#6a4c93", "#1982c4", "#8ac926", "#ffca3a", "#ff595e", "#52a9a1")))   # Farbschemen der Diagrammstile
+    DIAGRAMM_MONOCHROM = ("#4a8fd8", "#ef8a3c", "#868e96", "#f2b705", "#2f6fb5", "#5aa454", "#c0392b", "#7e57c2")   # Grundfarben der einfarbigen Schemen
+    # Zeichnen, Objekte, WordArt
+    DURCHSICHTIG_HEX = "#00000000"      # keine Farbe, als Farbtext
+    GRAU_MITTEL = "#808080"             # mittleres Grau (Platzhalter, Tiefe von WordArt)
+    GRAU_DUNKEL = "#404040"             # Kontur der WordArt-Tiefe
+    SCHATTEN_GRAU = "#8a8a8a"           # Standardfarbe eines Schattens
+    TEXT_STANDARD = "#1f1f1f"           # Standardfarbe eines Textfeldes
+    WORDART_BLAU = "#2f78bd"            # Standardfarbe der WordArt
+    WORDART_TINTE = "#111417"           # Gesicht des WordArt-Kachelbildes ohne eigene Farbe
+    SYMBOL_HELL = "#e6e9ec"             # helles Unterstreichungssymbol
+    BILDEFFEKT_GRUND = "#9aa3ad"        # Grundton des Rauschbildes
+    VORGABE_GRUND = "#dbe4ff"           # „A“ im Kachelbild der Texteffekte
+    VORGABE_RAND = "#8fa8e8"            # Rand des „A“ im Kachelbild
+    VORGABE_VERLAUF = ("#f3f6ff", "#dfe7ff", "#c9d6fb")   # Verlauf der Formkachel (oben, Mitte, unten)
+    VORGABE_FORMRAND = "#a9bcef"        # Rand der Formkachel
+    TEXTUR = {"papier": "#f1ead8", "granit": "#9a9a9a", "holz": "#c8955a", "stoff": "#8aa4c8", "marmor": "#e6e6ea", "sand": "#e3cf9f"}   # Grundtöne der Texturen
     TINTE = "#343a40"               # dunkle Schrift und Striche auf hellem Grund
     FORMFARBEN = ("#4a8fd8", "#6bbf59", "#f4a259", "#e5645f", "#ffd43b", "#ced4da", "#495057", "#ffffff", "#000000")   # Farbfelder für Formen (Füllung, Linie)
     TINTE_DUNKEL = "#212529"

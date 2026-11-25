@@ -246,7 +246,7 @@ class BefehleSeiten:
         m.setChecked(bool(e.markup) if e else True); m.setEnabled(e is not None)
         m.toggled.connect(lambda on: self.w.current_editor() and self.w.current_editor().set_markup(on))
         f.addRow(m)
-        from core.objekte.formen import sprechblasen as SB
+        from vcl.qt.rendering.formen import sprechblasen as SB
         from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import DEL_STILE, FESTE_FARBEN, INS_STILE
         neu = lambda _=None: self.w.markup_neu()                                               # noqa: E731
         f = p.gruppe(_t("optionen.befehle.markup"))
