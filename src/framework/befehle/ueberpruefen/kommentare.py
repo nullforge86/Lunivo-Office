@@ -1,15 +1,16 @@
-"""Befehle der Kommentare: durchgehen, am Zeiger löschen, alle löschen. Der Editor kommt über den ``EditorPort`` herein; Meldungen gehen als Ereignis."""
+"""Befehle der Kommentare: durchgehen, am Zeiger löschen, alle löschen – für das Dokument mit der Kennung, über den Änderungsrahmen.
+Meldungen gehen als Ereignis an den Melder der Oberfläche."""
 from __future__ import annotations
 
-from framework.schnittstellen.datentypen.ereignisdaten import Art, Ereignis
+from framework.befehle import ausfuehren, im_kontext_bewegen, im_kontext_lesen, lesen
 from framework.befehle.ueberpruefen.schutz import SCHUTZ_HINWEIS, ist_geschuetzt
-from framework.schnittstellen.dokument import EditorPort
-from framework.ereignisse.ereignissteuerung import Melder
+from framework.ereignisse import Melder
+from framework.schnittstellen.datentypen import Art, Ereignis
 
 
 class KommentareBefehle:
-    def __init__(self, editor: EditorPort, melder: Melder):
-        self._editor = editor
+    def __init__(self, kennung: int, melder: Melder):
+        self._kennung = kennung
         self._melder = melder
 
     def _melden(self, text: str, dauer_ms: int = 4000) -> None:
@@ -23,17 +24,17 @@ class KommentareBefehle:
         return True
 
     def springen(self, delta: int) -> None:
-        self._editor.kommentar_springen(delta)
+        im_kontext_bewegen(self._kennung, lambda k: int(k.springe(k.kommentar_bereiche(), delta) is not None))
 
     def am_zeiger_loeschen(self) -> None:
-        kid = self._editor.kommentar_am_cursor()
+        kid = im_kontext_lesen(self._kennung, lambda k: k.kommentar_am_zeiger())
         if kid is not None:
-            self._editor.kommentar_loeschen(kid)
+            ausfuehren(self._kennung, lambda s: s.kommentar_loeschen(kid))
         else:
             self._melden("Der Zeiger steht in keinem Kommentar.")
 
     def vorhanden(self) -> bool:
-        return bool(self._editor.kommentare)
+        return bool(lesen(self._kennung, lambda s: len(s.dokument.kommentare)))
 
     def alle_loeschen(self) -> None:
-        self._editor.kommentare_alle_loeschen()
+        ausfuehren(self._kennung, lambda s: s.kommentar_loeschen(None))

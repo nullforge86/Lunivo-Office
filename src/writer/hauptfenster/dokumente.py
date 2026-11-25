@@ -1,12 +1,12 @@
 """Steuerung der offenen Dokumente des Hauptfensters: ordnet die Bedienaktionen den Sitzungsbefehlen des Frameworks zu."""
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 from framework.befehle import AUSWAHL, GEAENDERT
 from framework.ereignisse import melder
 from framework.schnittstellen.datentypen import Art, Ereignis, Geoeffnet
-from framework.sitzungen import sitzung
+from framework.sitzungen import ANZEIGE, sitzung
 
 
 def neu(grundschrift: tuple[str, float] | None = None) -> int:
@@ -36,6 +36,27 @@ def nur_lesen_setzen(kennung: int, an: bool) -> None:
 def layout_option_setzen(kennung: int, name: str, wert: float | bool | None) -> None:
     """Layout-Option der Ansicht (Lesehilfe, Web-Layout), damit Seitenzahlen im Framework wie auf dem Bildschirm zählen."""
     sitzung.layout_option_setzen(kennung, name, None if wert is None else (bool(wert) if isinstance(wert, bool) else float(wert)))
+
+
+def markup_setzen(kennung: int, an: bool) -> None:
+    """Markup (Kommentare und Änderungen) zeigen oder ausblenden; die Ansicht folgt auf ``bei_anzeige``."""
+    sitzung.markup_setzen(kennung, an)
+
+
+def markup_an(kennung: int) -> bool:
+    return sitzung.markup_an(kennung)
+
+
+def markup_filter(kennung: int) -> Mapping[str, bool | str | frozenset[str] | None]:
+    return sitzung.markup_filter(kennung)
+
+
+def bei_anzeige(empfaenger: Callable[[int], None]) -> Callable[[], None]:
+    """Meldet ``empfaenger(kennung)`` an, sobald sich die Anzeige eines Dokuments geändert hat (Markup, Verfolgen); gibt die Abmeldung zurück."""
+    def weiter(e: Ereignis) -> None:
+        if e.text == ANZEIGE:
+            empfaenger(int(e.daten.get("kennung", 0)))
+    return melder.abonnieren(Art.GEAENDERT, weiter)
 
 
 def bei_aenderung(empfaenger: Callable[[int], None]) -> Callable[[], None]:

@@ -1,58 +1,65 @@
 """Befehle des Markups: Filter (Kommentare, Einfügungen, Bearbeiter, Zeiten), Zustände der Klappen und das Entscheiden über angezeigte Änderungen.
 
-Der Editor kommt über den ``EditorPort`` herein; die Fassungen (Bearbeiter, Zeiten) liefert ``editor/dokument/fassungen.py``."""
+Für das Dokument mit der Kennung; der Filter ist Zustand der Anzeige im Framework, die Fassungen (Bearbeiter, Zeiten) kommen aus dem Kern."""
 from __future__ import annotations
 
 from core.aenderungsverfolgung.vergleich import fassungen
-from framework.schnittstellen.datentypen.ereignisdaten import Art, Ereignis
+from core.aenderungsverfolgung.vergleich import ist_gefiltert, ist_sichtbar
+from framework.befehle import im_kontext_lesen, lesen
 from framework.befehle.ueberpruefen import einstellungen as ueberpruefen_einstellungen
+from framework.befehle.ueberpruefen.aenderungen import AenderungenBefehle
 from framework.befehle.ueberpruefen.schutz import SCHUTZ_HINWEIS, ist_geschuetzt
 from framework.befehle.ueberpruefen.typen import EntscheidenZustand, MarkupFilter
-from framework.schnittstellen.dokument import EditorPort
+from framework.ereignisse import Melder
+from framework.schnittstellen.datentypen import Art, Ereignis
 from framework.schnittstellen.einstellungen import Einstellungen
-from framework.ereignisse.ereignissteuerung import Melder
+from framework.sitzungen import sitzung as _steuerung
 
 
 class MarkupBefehle:
-    def __init__(self, editor: EditorPort, einstellungen: Einstellungen, melder: Melder):
-        self._e = editor
+    def __init__(self, kennung: int, einstellungen: Einstellungen, melder: Melder):
+        self._kennung = kennung
         self._einstellungen = einstellungen
         self._melder = melder
 
     def _melden(self, text: str, dauer_ms: int = 4000) -> None:
         self._melder.melden(Ereignis(Art.MELDUNG, text, {"dauer_ms": dauer_ms}))
 
+    def _aenderungen(self) -> list:
+        return im_kontext_lesen(self._kennung, lambda k: k.aenderungen()) or []
+
     # ---- Zustand ------------------------------------------------------------------------------------------------------------------
     def hat_kommentare(self) -> bool:
-        return bool(self._e.kommentar_bereiche())
+        return bool(im_kontext_lesen(self._kennung, lambda k: len(k.kommentar_bereiche())))
 
     def hat_aenderungen(self) -> bool:
-        return bool(self._e.aenderungen())
+        return bool(self._aenderungen())
 
     def kommentar_am_zeiger(self) -> bool:
-        return self._e.kommentar_am_cursor() is not None
+        return im_kontext_lesen(self._kennung, lambda k: k.kommentar_am_zeiger()) is not None
 
     def markup_an(self) -> bool:
-        return bool(self._e.markup)
+        return _steuerung.markup_an(self._kennung)
 
     # ---- Filter -------------------------------------------------------------------------------------------------------------------
     def filter(self) -> MarkupFilter:
-        f = self._e.markup_filter
+        f = _steuerung.markup_filter(self._kennung)
         b = f["bearbeiter"]
         return MarkupFilter(bool(f["kommentare"]), bool(f["einfuegungen"]), None if b is None else frozenset(b), f["zeit"])
 
     def filter_setzen(self, **werte) -> None:
-        self._e.markup_filter_setzen(**werte)
+        _steuerung.markup_filter_setzen(self._kennung, **werte)
 
     def bearbeiter_namen(self) -> tuple[str, ...]:
-        return tuple(fassungen.bearbeiter(self._e.sitzung.dokument))
+        return tuple(lesen(self._kennung, lambda s: fassungen.bearbeiter(s.dokument)) or ())
 
     def zeiten(self) -> tuple[str, ...]:
-        return tuple(fassungen.zeiten(self._e.sitzung.dokument))
+        return tuple(lesen(self._kennung, lambda s: fassungen.zeiten(s.dokument)) or ())
 
     def bearbeiter_umschalten(self, name: str) -> None:
-        alle = fassungen.bearbeiter(self._e.sitzung.dokument)
-        jetzt = set(alle if self._e.markup_filter["bearbeiter"] is None else self._e.markup_filter["bearbeiter"])
+        alle = self.bearbeiter_namen()
+        gewaehlt = _steuerung.markup_filter(self._kennung)["bearbeiter"]
+        jetzt = set(alle if gewaehlt is None else gewaehlt)
         jetzt ^= {name}
         self.filter_setzen(bearbeiter=None if jetzt >= set(alle) else jetzt)
 
@@ -64,15 +71,22 @@ class MarkupBefehle:
 
     # ---- Annehmen und Ablehnen --------------------------------------------------------------------------------------------------
     def entscheiden_zustand(self, schutz: str | None) -> EntscheidenZustand:
-        frei = self.hat_aenderungen() and schutz is None
-        f = self._e.markup_filter
-        gefiltert = bool(f) and (f["bearbeiter"] is not None or f["zeit"] is not None or not f["einfuegungen"])
-        gezeigt = frei and gefiltert and any(self._e.aenderung_sichtbar(b) for b in self._e.aenderungen())
-        return EntscheidenZustand(frei and self._e.aenderung_am_cursor() is not None, bool(gezeigt), frei)
+        alle = self._aenderungen()
+        frei = bool(alle) and schutz is None
+        f = _steuerung.markup_filter(self._kennung)
+        gezeigt = frei and ist_gefiltert(f) and any(ist_sichtbar(b, f) for b in alle)
+        am_zeiger = im_kontext_lesen(self._kennung, lambda k: k.aenderung_am_zeiger()) is not None
+        return EntscheidenZustand(frei and am_zeiger, bool(gezeigt), frei)
 
     def angezeigte_entscheiden(self, annehmen: bool, schutz: str | None) -> None:
         if ist_geschuetzt(schutz, "aenderungen", "lesen", "kommentare"):
             self._melden(SCHUTZ_HINWEIS)
             return
-        n = self._e.angezeigte_aenderungen(annehmen)
+        f = _steuerung.markup_filter(self._kennung)
+        einzeln = AenderungenBefehle(self._kennung, self._melder)
+        n = 0
+        for b in reversed(self._aenderungen()):                     # von hinten, damit die Stellen davor gültig bleiben
+            if ist_sichtbar(b, f):
+                einzeln.entscheiden(b["von"], b["bis"], annehmen)
+                n += 1
         self._melden(f"{n} angezeigte Änderungen {'angenommen' if annehmen else 'abgelehnt'}.")

@@ -112,6 +112,32 @@ class Kontext:
         return [{"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": self._format_bei(b.anker).get("kommentar")}
                 for b in self.sitzung.bereiche(lambda f: "kommentar" in f, lambda f: f.get("kommentar"))]
 
+    def kommentar_am_zeiger(self) -> int | None:
+        """Id des Kommentars, in dem die Schreibmarke steht (sonst ``None``)."""
+        p = self.position()
+        return next((int(b["wert"]) for b in self.kommentar_bereiche() if b["von"] <= p <= b["bis"]), None)
+
+    def aenderungen(self) -> list:
+        """Die nachverfolgten Änderungen: [{"von", "bis", "wert" ("ins"/"del"), "autor", "datum"}] in Dokumentreihenfolge."""
+        d = self.sitzung.dokument
+        aus = []
+        for b in self.sitzung.bereiche(lambda f: "aenderung" in f, lambda f: (f["aenderung"], f.get("autor", ""), f.get("datum", ""))):
+            f = self._format_bei(b.anker)
+            aus.append({"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": f["aenderung"],
+                        "autor": f.get("autor", ""), "datum": f.get("datum", "")})
+        return aus
+
+    def aenderung_am_zeiger(self) -> dict | None:
+        """Die Änderung, in der die Schreibmarke steht oder die die Auswahl berührt (sonst ``None``)."""
+        p, q = self.auswahl_stellen()
+        return next((b for b in self.aenderungen() if b["von"] <= p < b["bis"] or (q > b["von"] and p < b["bis"])), None)
+
+    def bereich(self, von: int, bis: int):
+        """Die ``Auswahl`` zwischen zwei Stellen des Rohtextes."""
+        from core.dokument import Auswahl
+        d = self.sitzung.dokument
+        return Auswahl(offset_zu_position(d, von), offset_zu_position(d, bis))
+
     def noten_stellen(self) -> list:
         d = self.sitzung.dokument
         aus = []

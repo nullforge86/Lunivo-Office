@@ -175,7 +175,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.kontext_hook = None
         abmelden = _dokumente.bei_aenderung(self._im_framework_geaendert)    # Rückweg: das Framework meldet, die Ansicht zeichnet neu
         abmelden_auswahl = _dokumente.bei_auswahl(self._im_framework_bewegt)
-        self.destroyed.connect(lambda *_: (abmelden(), abmelden_auswahl()))
+        abmelden_anzeige = _dokumente.bei_anzeige(self._im_framework_anzeige)
+        self.destroyed.connect(lambda *_: (abmelden(), abmelden_auswahl(), abmelden_anzeige()))
 
     def _im_framework_bewegt(self, kennung: int) -> None:
         if kennung == self.kennung:
@@ -184,6 +185,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def _im_framework_geaendert(self, kennung: int) -> None:
         if kennung == self.kennung:
             self.ansicht.nach_aenderung()
+            self.zusatzGeaendert.emit()                  # Kommentare, Noten, Änderungen: die Seitenleisten lesen neu
 
     # ---- Signale der Ansicht ----------------------------------------------------------------------------------------------------
     def _geaendert(self) -> None:
@@ -584,23 +586,22 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.select_range(ziel["von"], ziel["bis"])
         return ziel
 
-    markup_filter = None
-
     def _markup_vorgabe(self) -> dict:
-        if self.markup_filter is None:
-            self.markup_filter = {"kommentare": True, "einfuegungen": True, "formatierung": True, "bearbeiter": None, "zeit": None}
-        return self.markup_filter
+        """Der Markup-Filter des Dokuments (Zustand im Framework)."""
+        return dict(_dokumente.markup_filter(self.kennung))
 
     @property
     def markup(self) -> bool:
-        return self.ansicht.markup
+        return _dokumente.markup_an(self.kennung)
 
     def set_markup(self, an: bool) -> None:
-        self.ansicht.set_markup(an)
+        """Markup zeigen oder ausblenden: das Framework hält den Zustand, die Ansicht folgt auf dessen Meldung."""
+        _dokumente.markup_setzen(self.kennung, bool(an))
 
-    def markup_filter_setzen(self, **werte) -> None:
-        self._markup_vorgabe().update(werte)
-        self.ansicht.update()
+    def _im_framework_anzeige(self, kennung: int) -> None:
+        if kennung == self.kennung:
+            self.ansicht.set_markup(_dokumente.markup_an(self.kennung))
+            self.zusatzGeaendert.emit()
 
     @property
     def verfolgen(self) -> bool:

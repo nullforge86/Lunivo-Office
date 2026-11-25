@@ -2,14 +2,8 @@
 Statusleiste und kennt den Dokumentschutz des Dokumentfensters. ``self.w`` ist das Hauptfenster, ``self.ed`` der Editor."""
 from __future__ import annotations
 
-from framework.schnittstellen.datentypen.ereignisdaten import Art, Ereignis
-from framework.befehle.ueberpruefen.aenderungen import AenderungenBefehle
-from framework.befehle.ueberpruefen.anzeige import AnzeigeBefehle
-from framework.befehle.ueberpruefen.kommentare import KommentareBefehle
-from framework.befehle.ueberpruefen.markup import MarkupBefehle
-from framework.befehle.ueberpruefen.noten import NotenBefehle
-from framework.befehle.ueberpruefen.schutz import SCHUTZ_HINWEIS, ist_geschuetzt
-from framework.ereignisse.ereignissteuerung import Melder
+from writer.ueberpruefung.befehle import (SCHUTZ_HINWEIS, aenderungen_befehle, anzeige_befehle, ist_geschuetzt, kommentare_befehle, markup_befehle,
+                                         meldungen_an, noten_befehle)
 from vcl.qt.widgets.ribbon.ueberpruefen.band.vorschau_adapter import VorschauAdapter
 
 
@@ -20,29 +14,28 @@ class UeberpruefenAnschluss:
         from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         return symbole.icon(name, 18)
 
-    def _markup(self) -> MarkupBefehle | None:
-        return MarkupBefehle(self.ed, self.w.settings, self._ue_melder()) if self.ed is not None else None
+    def _markup(self):
+        return markup_befehle(self.ed.kennung, self.w.settings, self._ue_melder()) if self.ed is not None else None
 
-    def _anzeige(self) -> AnzeigeBefehle:
-        return AnzeigeBefehle(self.ed, VorschauAdapter(self.w.current_tab()))
+    def _anzeige(self):
+        return anzeige_befehle(self.ed.kennung if self.ed is not None else None, VorschauAdapter(self.w.current_tab()))
 
-    def _ue_melder(self) -> Melder:
+    def _ue_melder(self):
         if getattr(self, "_ue_melder_objekt", None) is None:
-            self._ue_melder_objekt = Melder()
-            self._ue_melder_objekt.abonnieren(Art.MELDUNG, self._ue_meldung)
+            self._ue_melder_objekt = meldungen_an(self._ue_meldung)
         return self._ue_melder_objekt
 
-    def _ue_meldung(self, e: Ereignis) -> None:
-        self.w.statusBar().showMessage(e.text, e.daten.get("dauer_ms", 4000))
+    def _ue_meldung(self, text: str, dauer_ms: int) -> None:
+        self.w.statusBar().showMessage(text, dauer_ms)
 
-    def _kommentare(self) -> KommentareBefehle | None:
-        return KommentareBefehle(self.ed, self._ue_melder()) if self.ed is not None else None
+    def _kommentare(self):
+        return kommentare_befehle(self.ed.kennung, self._ue_melder()) if self.ed is not None else None
 
-    def _aenderungen(self) -> AenderungenBefehle | None:
-        return AenderungenBefehle(self.ed, self._ue_melder()) if self.ed is not None else None
+    def _aenderungen(self):
+        return aenderungen_befehle(self.ed.kennung, self._ue_melder()) if self.ed is not None else None
 
-    def _noten(self) -> NotenBefehle | None:
-        return NotenBefehle(self.ed) if self.ed is not None else None
+    def _noten(self):
+        return noten_befehle(self.ed.kennung) if self.ed is not None else None
 
     def _schutz_wert(self) -> str | None:
         """Der Dokumentschutz des aktuellen Dokumentfensters (``None``, ``lesen``, ``aenderungen``, ``kommentare``)."""
