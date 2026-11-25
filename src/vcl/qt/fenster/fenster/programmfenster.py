@@ -9,7 +9,7 @@ from PySide6.QtCore import QByteArray, QTimer, Signal
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
-from framework.schnittstellen.version import __version__
+from writer.anbindung.version import version as _programmversion
 from writer import vorlagenkatalog as stile
 from framework.schnittstellen.einstellungen import Einstellungen
 from vcl.qt.eingabe.ki_dienst import KIDienst
@@ -330,4 +330,4 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
 
     def about(self):
         from vcl.qt.widgets.dialoge.lesen_hilfe import hilfe_dialoge
-        hilfe_dialoge.ueber(self, __version__).exec()
+        hilfe_dialoge.ueber(self, _programmversion()).exec()

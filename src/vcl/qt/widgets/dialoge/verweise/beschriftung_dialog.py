@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog
 
-from framework.befehle.verweise.konstanten import BESCHRIFTUNGS_BEZEICHNUNGEN
+from writer.anbindung.verweise_konstanten import beschriftungs_bezeichnungen
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_MIN_ZEICHEN
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
@@ -37,7 +37,7 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         self.text = zeilenfeld("standard", name="Beschriftung")
         g.breit(_titel("&Beschriftung:", self.text)); g.breit(self.text)
         self.label = Auswahlfeld(); self.label.setAccessibleName("Bezeichnung")
-        self.label.addItems(list(BESCHRIFTUNGS_BEZEICHNUNGEN) + [x for x in self.eigene if x not in BESCHRIFTUNGS_BEZEICHNUNGEN])
+        self.label.addItems(list(beschriftungs_bezeichnungen()) + [x for x in self.eigene if x not in beschriftungs_bezeichnungen()])
         self.label.setCurrentText(label)
         self.pos = Auswahlfeld(); self.pos.addItems(["Unter dem ausgewählten Element", "Über dem ausgewählten Element"])
         self.pos.setEnabled(objekt); self.pos.setAccessibleName("Position")
@@ -64,7 +64,7 @@ class BeschriftungDialog(PanelFaehig, QDialog):
         nr = self._naechste(self.label.currentText(), self.zahl)
         self._vorne = nr if self.ohne.isChecked() else f"{self.label.currentText()} {nr}"
         self.text.setText(self._vorne + rest)
-        self.loeschen.setEnabled(self.label.currentText() not in BESCHRIFTUNGS_BEZEICHNUNGEN)
+        self.loeschen.setEnabled(self.label.currentText() not in beschriftungs_bezeichnungen())
 
     def _neu(self) -> None:
         t, ok = EingabeFenster.getText(self, "Neue Bezeichnung", "&Bezeichnung:")

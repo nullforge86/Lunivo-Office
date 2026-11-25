@@ -300,7 +300,8 @@ def erweiterungen(parent) -> QDialog:
 def ueber_inhalt(version: str | None = None) -> QWidget:
     """Inhalt „Über Lunivo Writer“."""
     if version is None:
-        from framework.schnittstellen.version import __version__ as version
+        from writer.anbindung.version import version as _programmversion
+        version = _programmversion()
     d = QWidget(); v = _spalte("inhalt", d)
     for text in (_t("hilfe.lunivo_writer_0_ein_raum_fuer_worte").format(version),
                  _t("hilfe.die_pruefung_und_der_wortschatz_stammen"),

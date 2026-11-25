@@ -1,7 +1,7 @@
 """Klappen (Pfeilmenüs) der Knöpfe im Reiter „Kopf- und Fußzeile“: baut die Menüs aus den Datenbeschreibungen des Frameworks."""
 from __future__ import annotations
 
-from framework.befehle.kopffuss import menues
+from writer.anbindung import kopffuss_menues as menues
 from framework.befehle.kopffuss.typen import MenueEintrag
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 

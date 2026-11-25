@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 
 from framework.serienbriefe.erstellung import serienbrief
-from framework.serienbriefe.datenquellen import serienquelle
+from writer.anbindung import serienquelle as serienquelle
 from writer import serienbriefwerkzeuge as sendungen
 
 

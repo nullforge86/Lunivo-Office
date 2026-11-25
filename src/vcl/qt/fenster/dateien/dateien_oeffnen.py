@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QMessageBox
 from writer import vorlagenkatalog as stile
 from core.dokument.abschnitte.seite import PageSettings
 from core.dokument.bericht import DocumentIOError, IOReport, PasswortNoetig
-from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
+from writer.anbindung import dateiformate as formats
 from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
 from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
@@ -37,7 +37,7 @@ class DateienOeffnenBaustein:
     def open_dialog(self):
         start = self.settings.get("last_dir", os.path.expanduser("~"))
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
-        paths = datei_waehlen(self, "Öffnen", start, formats.OPEN_FILTER, mehrere=True)
+        paths = datei_waehlen(self, "Öffnen", start, formats.open_filter(), mehrere=True)
         for p in paths:
             self.open_path(p)
 

@@ -9,9 +9,9 @@ from __future__ import annotations
 import os
 import time
 
-from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung import klassifikation as K
-from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung import lunivo_zugang as LZ
-from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung.vergleiche import FORMATSCHLUESSEL, NICHT_GEPRUEFT_FORMAT, NICHT_GEPRUEFT_STRUKTUR, STRUKTURSCHLUESSEL, norm, vergleiche_texte, vergleiche_werte
+from . import klassifikation as K
+from . import lunivo_zugang as LZ
+from .vergleiche import (FORMATSCHLUESSEL, NICHT_GEPRUEFT_FORMAT, NICHT_GEPRUEFT_STRUKTUR, STRUKTURSCHLUESSEL, norm, vergleiche_texte, vergleiche_werte)
 
 MARKE = "LunivoPruefmarke"
 ROUNDTRIP_ZIEL = {".docx": ".docx", ".dotx": ".docx", ".docm": ".docx", ".odt": ".odt", ".fodt": ".odt", ".rtf": ".rtf", ".txt": ".txt", ".text": ".txt", "": ".txt"}
@@ -54,7 +54,7 @@ class Kontext:
 
     def quelle(self):
         if self._quelle is False:
-            from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung.quellzaehlung import zaehle
+            from .quellzaehlung import zaehle
             try:
                 self._quelle = zaehle(self.pfad, self.endung)
             except Exception as e:                                                           # noqa: BLE001
@@ -66,7 +66,7 @@ class Kontext:
 
 
 def import_fehler(e: BaseException) -> dict:
-    from core.dokument.bericht import DocumentIOError, PasswortNoetig
+    from lunivo_writer.modelle.bericht import DocumentIOError, PasswortNoetig
     text = " ".join(str(e).split())[:300]
     if isinstance(e, PasswortNoetig):
         return K.nicht_pruefbar("Import", "Das Dokument ist durch ein Kennwort geschützt; ohne Kennwort ist es nicht prüfbar")
@@ -248,7 +248,7 @@ def _element_an(ctx: Kontext, erg, seite: int, bereich: dict, faktor: float) -> 
 
 def pruefe_layout(ctx: Kontext) -> dict:
     from PySide6.QtGui import QImage
-    from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung import bildvergleich, referenzbilder
+    from . import bildvergleich, referenzbilder
     g, fehler = ctx.modell()
     if fehler:
         return abschluss("layout", [fehler])
@@ -355,7 +355,7 @@ def _gleich_nach_speichern(m1: dict, m2: dict, fehlerart: str, soll_name: str, i
 
 def pruefe_export(ctx: Kontext) -> dict:
     from kompatibilitaetspruefer.verwaltung.dateisuche import lesbare_endungen, speicherbare_endungen
-    from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung.referenzbilder import ReferenzFehler, pdf_info
+    from .referenzbilder import ReferenzFehler, pdf_info
     g, fehler = ctx.modell()
     if fehler:
         return abschluss("export", [fehler])
@@ -468,7 +468,7 @@ def pruefe_roundtrip(ctx: Kontext) -> dict:
 
 def _roundtrip_bearbeitung(ctx: Kontext, ziel_endung: str) -> list[dict]:
     """Gezielte Bearbeitung: Marke am Dokumentanfang einfügen (über die Bearbeitungssitzung), speichern, neu öffnen, Text vergleichen."""
-    from core.bearbeitung import Bearbeitungssitzung
+    from lunivo_writer.core.editing import Bearbeitungssitzung
     punkt = "Roundtrip mit Bearbeitung"
     try:
         g = LZ.lade(ctx.pfad, ctx.job.get("kennwort"))
@@ -496,7 +496,7 @@ def _roundtrip_bearbeitung(ctx: Kontext, ziel_endung: str) -> list[dict]:
 
 # ---- Darstellung (ohne Beurteilung, für den Vergleichsbereich) ---------------------------------------------------------
 def erzeuge_darstellung(ctx: Kontext) -> dict:
-    from lunivo_writer.werkzeuge.kompatibilitaetspruefer.pruefung import referenzbilder
+    from . import referenzbilder
     g, fehler = ctx.modell()
     if fehler:
         return abschluss("darstellung", [fehler])

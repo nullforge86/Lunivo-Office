@@ -378,11 +378,11 @@ class EinfuegenObjektBefehle:
     def textAusDatei(self, k=None):
         if not self.ed:
             return
-        from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
+        from writer.anbindung import dateiformate as formats
         from core.dokument.bericht import DocumentIOError
         from vcl.qt.rendering import formen as E
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
-        wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.OPEN_FILTER)
+        wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.open_filter())
         if not wahl:
             return
         pfad = wahl[0]

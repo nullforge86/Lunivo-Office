@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog
 
-from framework.befehle.verweise.konstanten import QUELLENTYPEN
+from writer.anbindung.verweise_konstanten import quellentypen
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -20,7 +20,7 @@ class QuelleDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Quelle")
         q = q or {}
         f = FormularGitter(self)
-        self.typ = Auswahlfeld(); self.typ.addItems(list(QUELLENTYPEN)); self.typ.setCurrentText(q.get("typ", "Buch"))
+        self.typ = Auswahlfeld(); self.typ.addItems(list(quellentypen())); self.typ.setCurrentText(q.get("typ", "Buch"))
         f.zeile("Typ", self.typ)
         self.eingaben = {}
         for k, t in self.FELDER:

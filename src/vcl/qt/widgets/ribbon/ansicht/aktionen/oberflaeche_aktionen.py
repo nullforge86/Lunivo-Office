@@ -6,8 +6,8 @@ from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QMessageBox
 
-from framework.befehle.ansicht import einstellungen as ansicht_einstellungen
-from framework.befehle.ansicht.vorlagen import vorlagen_ordner
+from writer.anbindung import ansicht_einstellungen as ansicht_einstellungen
+from writer.anbindung.vorlagenordner import vorlagen_ordner
 
 
 class OberflaecheAktionen:

@@ -35,7 +35,7 @@ def _norm(s: str) -> str:
 
 
 def _zip_xml(pfad: str, name: str):
-    from framework.dokumentverwaltung.dateizugriff.import_grenzen import pruefe_paket, sicheres_xml
+    from lunivo_writer.dienste.import_grenzen import pruefe_paket, sicheres_xml
     pruefe_paket(pfad, "DOCX")
     with zipfile.ZipFile(pfad) as z:
         try:
@@ -147,7 +147,7 @@ def _docx_lauf(r) -> str:
 # ---- ODT / FODT -----------------------------------------------------------------------------------------------------
 def _odt(pfad: str, flach: bool) -> dict | None:
     if flach:
-        from framework.dokumentverwaltung.dateizugriff.import_grenzen import pruefe_dateigroesse, sicheres_xml
+        from lunivo_writer.dienste.import_grenzen import pruefe_dateigroesse, sicheres_xml
         pruefe_dateigroesse(pfad, "FODT")
         with open(pfad, "rb") as f:
             wurzel = sicheres_xml(f.read())
@@ -219,7 +219,7 @@ class _Tail:
 
 # ---- TXT -----------------------------------------------------------------------------------------------------------
 def _txt(pfad: str) -> dict | None:
-    from framework.dokumentverwaltung.dateizugriff.import_grenzen import pruefe_dateigroesse
+    from lunivo_writer.dienste.import_grenzen import pruefe_dateigroesse
     pruefe_dateigroesse(pfad, "TXT")
     with open(pfad, "rb") as f:
         roh = f.read()

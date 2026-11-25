@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from PySide6.QtWidgets import QMessageBox
-from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
+from writer.anbindung import dateiformate as formats
 from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
 from core.dokument.bericht import DocumentIOError
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
@@ -47,7 +47,7 @@ class DateienSpeichernBaustein:
         default = only or self.settings.get("speichern/standard", ".docx")
         if default not in self.SPEICHER_FORMATE:
             default = ".docx"
-        filter_von = lambda e: formats.PDF_FILTER if e == ".pdf" else formats.SAVE_FILTERS[e]
+        filter_von = lambda e: formats.pdf_filter() if e == ".pdf" else formats.save_filters()[e]
         # Lunivos eigenes Fenster statt des Systemdialogs: Der Dateiauswahldialog des Desktops (Portal/Dateimanager)
         # blendet die Dateityp-Auswahl je nach System aus — hier stehen Dateiname und Dateityp immer sichtbar da.
         wahl = speicherort_waehlen(self, title, os.path.join(folder, base + default),

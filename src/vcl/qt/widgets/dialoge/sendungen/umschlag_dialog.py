@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QPlainTextEdit
 
-from framework.serienbriefe.formate import umschlag_formate
+from writer.anbindung.sendungsformate import umschlag_formate
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_TEXT_KURZ, HOEHE_TEXT_MITTEL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter

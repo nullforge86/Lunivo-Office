@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import QWidget
 
-from framework.befehle.ueberpruefen.anzeige import ANZEIGEN
+from writer.anbindung.ueberpruefen_anzeige import anzeigen as anzeige_namen
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_BREITE_MIN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
@@ -17,7 +17,7 @@ class UeberpruefenFelder:
         """Die Auswahl über „Markup anzeigen“ wie in der Vorlage: die Fassung, darunter das Markup-Menü."""
         halter = QWidget()
         v = spalte("bandhalter", halter)
-        cb = Auswahlfeld(popup_min=DROPDOWN_BREITE_MIN); cb.addItems(list(ANZEIGEN)); cb.rolle("anzeige", "band", mindest=True)   # schmal im Band, die Liste zeigt die Namen
+        cb = Auswahlfeld(popup_min=DROPDOWN_BREITE_MIN); cb.addItems(list(anzeige_namen())); cb.rolle("anzeige", "band", mindest=True)   # schmal im Band, die Liste zeigt die Namen
         cb.setAccessibleName("Anzeige zur Überprüfung"); cb.setToolTip("Anzeige zur Überprüfung")
         modell = cb.model()
         if isinstance(modell, QStandardItemModel):

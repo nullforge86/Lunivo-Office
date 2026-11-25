@@ -7,7 +7,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem
 
-from framework.befehle.verweise.konstanten import VERWEISTYPEN, verweisen_auf
+from writer.anbindung.verweise_konstanten import verweistypen, verweisen_auf
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_MIN_ZEICHEN, HOEHE_LISTE_ZIEL
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -29,7 +29,7 @@ class QuerverweisDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Querverweis")
         v = _spalte("standard", self)
         g = FormularGitter()                                                   # breit: nebeneinander wie die Vorlage, Seitenleiste: untereinander
-        self.art = Auswahlfeld(); self.art.addItems(list(VERWEISTYPEN)); self.art.setAccessibleName("Verweistyp")
+        self.art = Auswahlfeld(); self.art.addItems(list(verweistypen())); self.art.setAccessibleName("Verweistyp")
         self.auf = Auswahlfeld(); self.auf.setAccessibleName("Verweisen auf")
         self.auf.zeichen(DROPDOWN_MIN_ZEICHEN)
         g.reihe((_titel("&Verweistyp:", self.art), self.art), (_titel("Verweisen &auf:", self.auf), self.auf))

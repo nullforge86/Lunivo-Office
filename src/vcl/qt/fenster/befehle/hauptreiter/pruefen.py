@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from PySide6.QtWidgets import QMessageBox
 from framework.serienbriefe.erstellung import serienbrief
-from framework.serienbriefe.datenquellen import serienquelle
+from writer.anbindung import serienquelle as serienquelle
 from writer.ueberpruefung.korrektur.einstellungen import pruefsprache, pruefsprache_setzen
 from writer import serienbriefwerkzeuge as sendungen
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster

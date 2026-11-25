@@ -21,6 +21,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "Sprechblase": ("sprechblasen", "Sprechblase"),
     "VorschauPort": ("vorschau", "VorschauPort"),
     "mm_zu_px": ("einheiten", "mm_zu_px"),
+    "programmversion": ("version", "programmversion"),
     "px_je_mm": ("einheiten", "px_je_mm"),
     "px_zu_mm": ("einheiten", "px_zu_mm"),
 }
@@ -46,6 +47,8 @@ def __getattr__(name: str):
         from . import smartart as _datei
     elif datei == "sprechblasen":
         from . import sprechblasen as _datei
+    elif datei == "version":
+        from . import version as _datei
     elif datei == "vorschau":
         from . import vorschau as _datei
     else:

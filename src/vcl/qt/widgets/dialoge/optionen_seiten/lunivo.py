@@ -259,7 +259,7 @@ class LunivoSeiten:
 
     def _erweitert(self, titel):
         from framework.dokumentverwaltung.integrationen import languagetool
-        from framework.befehle.datei.orte import data_dir
+        from writer.anbindung.orte import data_dir
         p = _Seite(self.w, titel)
 
         def groesse(pfad) -> str:

@@ -7,7 +7,7 @@ from datetime import datetime
 from PySide6.QtWidgets import QMessageBox
 
 from core.dokument.bericht import DocumentIOError
-from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
+from writer.anbindung import dateiformate as formats
 from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import speicherort_waehlen
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
@@ -58,7 +58,7 @@ class DateienVorlagenBaustein:
         ordner = ordner or vorlagen.vorlagenordner(self.settings)
         os.makedirs(ordner, exist_ok=True)
         wahl = speicherort_waehlen(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),
-                                   [(".docx", formats.SAVE_FILTERS[".docx"])], ".docx")
+                                   [(".docx", formats.save_filters()[".docx"])], ".docx")
         if wahl:
             self._write(t, wahl[0], mark_saved=False)
 

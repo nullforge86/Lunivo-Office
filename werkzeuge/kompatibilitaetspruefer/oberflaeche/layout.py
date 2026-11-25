@@ -1,6 +1,6 @@
 """Das einheitliche Layout des Dashboards (Dokumente · Prüfung · Ergebnisse · Fehlerbericht) — die Schicht des Prüfers in der Modulhierarchie von Lunivo:
 
-    ``vcl.qt.widgets.bausteine.farben.Farbe``  und  ``oberflaeche.baukasten.basis.mass``   (Farben, Maße, Abstände, Ränder, Radien, Schriftstufen der Anwendung)
+    ``lunivo_writer.kern.farben.Farbe``  und  ``oberflaeche.baukasten.basis.mass``   (Farben, Maße, Abstände, Ränder, Radien, Schriftstufen der Anwendung)
         └─ diese Datei: bezieht ALLE Werte von dort und benennt sie für die Rollen des Prüfers (Karte, Navigation, Hilfsband …); sie führt keine eigenen Zahlen
             └─ Seiten, Panels, Dialoge: schreiben keine Zahl, keine Farbe und kein Stylesheet selbst, sondern importieren aus dieser Datei.
 
@@ -9,15 +9,15 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel, QWidget
 
-from vcl.qt.widgets.bausteine.abstaende.raster_hilfen import RasterLayout
-from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
-from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
-from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRaster
+from lunivo_writer.oberflaeche.baukasten.basis.raster import RasterLayout, RasterSpalte, RasterZeile          # noqa: F401  (Layouts der Panels: das Raster der Anwendung)
+from lunivo_writer.oberflaeche.baukasten.felder.formular_gitter import FlussLayout, FormularGitter          # noqa: F401  (FlussLayout: umbrechende Zeilen der Panels)
+from lunivo_writer.oberflaeche.baukasten.felder.karten_raster import KartenRaster
 
-from framework.schnittstellen.datentypen.farben import Farbe
-from vcl.qt.widgets.bausteine.abstaende import mass as M
-from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, RAND_KEIN
+from lunivo_writer.kern.farben import Farbe
+from lunivo_writer.oberflaeche.baukasten.basis import mass as M
+from lunivo_writer.oberflaeche.baukasten.basis.mass import (          # noqa: F401  (hier gesammelt weitergereicht: Panels importieren nur aus dieser Datei)
+    ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_GROSS, ABSTAND_KEIN, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, ABSTAND_SPALTE, RAND_KEIN,
+)
 
 # ---- Ränder (links, oben, rechts, unten) ---------------------------------------------------------------------------------------------------------------
 RAND_SEITE = M.RAND_SEITE_TITEL                                        # Seite mit Titel
@@ -202,5 +202,5 @@ class Formular(FormularGitter):
     def __init__(self, eltern: QWidget | None = None):
         super().__init__(eltern)
         if eltern is not None:
-            from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import raender
+            from lunivo_writer.oberflaeche.baukasten.geruest.rollen import raender
             raender(self, "gruppe")

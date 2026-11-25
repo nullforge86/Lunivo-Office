@@ -5,7 +5,7 @@ from core.layout.drucklayout.formatwerte import richtung as richtung_von
 from PySide6.QtCore import Qt
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu
-from framework.befehle.ansicht import einstellungen as ansicht_einstellungen
+from writer.anbindung import ansicht_einstellungen as ansicht_einstellungen
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 

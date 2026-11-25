@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QMessageBox
 
-from framework.befehle.verweise.konstanten import ZITIERWEISEN_NAMEN
+from writer.anbindung.verweise_konstanten import zitierweisen_namen
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dialoge.verweise.beschriftung_dialog import BeschriftungDialog
 from vcl.qt.widgets.dialoge.verweise.indexeintrag_dialog import IndexeintragDialog
@@ -130,7 +130,7 @@ class VerweiseAktionen:
         fw = self._vw()
         if fw is None:
             return
-        weisen = list(ZITIERWEISEN_NAMEN)
+        weisen = list(zitierweisen_namen())
         n, ok = EingabeFenster.getItem(self.w, "Zitierweise", "Zitierweise:", weisen, weisen.index(fw.zitierweise()) if fw.zitierweise() in weisen else 0, False)
         if ok:
             fw.zitierweise_setzen(n)

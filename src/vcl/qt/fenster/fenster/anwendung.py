@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QApplication
 
 from system.plattform import protokoll
 from framework.schnittstellen.einstellungen import ORGANISATION as APP_ORG, PROGRAMM as APP_NAME, Einstellungen
-from framework.befehle.ansicht import einstellungen as ansicht_einstellungen
-from framework.befehle.datei import einstellungen as datei_einstellungen
+from writer.anbindung import ansicht_einstellungen as ansicht_einstellungen
+from writer.anbindung import datei_einstellungen as datei_einstellungen
 from vcl.qt.fenster.fenster.programmfenster import MainWindow
 from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme
 

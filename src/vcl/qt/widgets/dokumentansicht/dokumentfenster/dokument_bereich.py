@@ -9,7 +9,7 @@ import os
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QScrollArea
 
-from framework.dokumentverwaltung.dokumentpflege import wiederherstellung
+from writer.anbindung import wiederherstellung as wiederherstellung
 from core.dokument.abschnitte.seite import PageSettings
 from writer.werte import mm_zu_px as mm_to_px
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor

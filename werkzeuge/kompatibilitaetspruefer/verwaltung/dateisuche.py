@@ -8,17 +8,17 @@ BILDENDUNGEN = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
 
 def lesbare_endungen() -> set[str]:
     """Alle Endungen, die Lunivo laut ``dienste.formate`` öffnen kann."""
-    from framework.dokumentverwaltung.dateizugriff import formate
+    from lunivo_writer.dienste import formate
     return set(formate.lesbar())
 
 
 def speicherbare_endungen() -> list[str]:
-    from framework.dokumentverwaltung.dateizugriff import formate
+    from lunivo_writer.dienste import formate
     return formate.speicherbar()
 
 
 def format_info(endung: str):
-    from framework.dokumentverwaltung.dateizugriff import formate
+    from lunivo_writer.dienste import formate
     return formate.finde(endung)
 
 

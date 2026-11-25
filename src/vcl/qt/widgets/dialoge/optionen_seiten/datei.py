@@ -130,7 +130,7 @@ class DateiSeiten:
 
     def _zwischenstaende_loeschen(self):
         import shutil
-        from framework.dokumentverwaltung.dokumentpflege import wiederherstellung
+        from writer.anbindung import wiederherstellung as wiederherstellung
         ordner = wiederherstellung.recovery_dir()
         if QMessageBox.question(self, _t("optionen.datei.zwischenstaende_loeschen"), _t("optionen.datei.alle_gesicherten_zwischenstaende_in_0_wi").format(ordner)) != QMessageBox.Yes:
             return
@@ -157,7 +157,7 @@ class DateiSeiten:
     def _daten_sichern(self):
         import zipfile
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-        from framework.befehle.datei.orte import data_dir
+        from writer.anbindung.orte import data_dir
         pfad, _ = Dateifenster.getSaveFileName(self, _t("optionen.datei.sichern_2"), "lunivo-sicherung.zip", _t("optionen.datei.zip_zip"))
         if not pfad:
             return
@@ -172,7 +172,7 @@ class DateiSeiten:
     def _daten_zurueckholen(self):
         import zipfile
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-        from framework.befehle.datei.orte import data_dir
+        from writer.anbindung.orte import data_dir
         pfad, _ = Dateifenster.getOpenFileName(self, _t("optionen.datei.zurueckholen"), "", _t("optionen.datei.zip_zip"))
         if not pfad:
             return

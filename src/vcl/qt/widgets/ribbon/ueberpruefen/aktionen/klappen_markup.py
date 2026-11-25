@@ -2,8 +2,8 @@
 Zustände und Filter kommen vom Farmwork."""
 from __future__ import annotations
 
-from framework.befehle.ueberpruefen import einstellungen as ueberpruefen_einstellungen
-from framework.befehle.ueberpruefen.einstellungen import BALLON_WERTE
+from writer.anbindung import ueberpruefen_einstellungen as ueberpruefen_einstellungen
+from writer.anbindung.ueberpruefen_einstellungen import ballon_werte
 from framework.befehle.ueberpruefen.typen import EntscheidenZustand, MarkupFilter
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
@@ -59,7 +59,7 @@ class MarkupKlappen:
             self._bearbeiter_fuellen(bearb)
             ballons.clear()
             jetzt = ueberpruefen_einstellungen.ballons(self.w.settings)
-            for text, wert in BALLON_WERTE:
+            for text, wert in ballon_werte():
                 ballons.eintrag(text, lambda w=wert: setze_ballons(w), haken=jetzt == wert)
         m.aboutToShow.connect(auffrischen)
         return m

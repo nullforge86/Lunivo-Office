@@ -9,7 +9,7 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFontMetricsF, QPainter
 from PySide6.QtWidgets import QDialog, QLabel, QSpinBox, QWidget
 
-from framework.befehle.verweise.konstanten import FUELLZEICHEN, INHALTSVERZEICHNIS_FUELL, INHALTSVERZEICHNIS_VORGABE
+from writer.anbindung.verweise_konstanten import fuellzeichen, inhaltsverzeichnis_fuell, inhaltsverzeichnis_vorgabe
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, DROPDOWN_ZEICHEN_KURZ, HOEHE_KNOPF, HOEHE_KNOPF_GROSS, RAND_KEIN, SCHRIFT_VORSCHAU_VERZEICHNIS
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
@@ -29,13 +29,13 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, opt: dict | None = None):
         super().__init__(parent)
-        o = {**INHALTSVERZEICHNIS_VORGABE, **(opt or {})}
+        o = {**inhaltsverzeichnis_vorgabe(), **(opt or {})}
         self.setWindowTitle("Inhaltsverzeichnis")
         v = _spalte("standard", self)
         box = gruppe("Inhaltsverzeichnis"); h = _reihe("standard", box); h.setSpacing(ABSTAND_BLOCK)
         links = _spalte("standard")
         self.fuell = Auswahlfeld(); self.fuell.setAccessibleName("Füllzeichen")
-        for schl in INHALTSVERZEICHNIS_FUELL:
+        for schl in inhaltsverzeichnis_fuell():
             self.fuell.addItem(_FUELL_ANZEIGE[schl], schl)
         self.fuell.zeichen(DROPDOWN_ZEICHEN_KURZ)
         self.fuell.setCurrentIndex(max(0, self.fuell.findData(o["fuell"])))
@@ -86,7 +86,7 @@ class InhaltsverzeichnisDialog(PanelFaehig, QDialog):
         f = p.font(); f.setPixelSize(SCHRIFT_VORSCHAU_VERZEICHNIS); p.setFont(f)
         fm = QFontMetricsF(f)
         p.setPen(QColor(Farbe.TINTE_DUNKEL))
-        zeichen = FUELLZEICHEN.get(o["fuell"], ("", "", ""))[1] if o["rechts"] else ""
+        zeichen = fuellzeichen().get(o["fuell"], ("", "", ""))[1] if o["rechts"] else ""
         y = r.top() + 2
         for i in range(min(o["ebenen"], 7)):
             x = r.left() + 10 * i

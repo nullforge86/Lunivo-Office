@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QWidget
 
-from framework.befehle.verweise.konstanten import NUMMERIERUNGSFORMATE
+from writer.anbindung.verweise_konstanten import nummerierungsformate
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -21,7 +21,7 @@ class NummerierungDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Beschriftungsnummerierung")
         v = _spalte("standard", self)
         self.format = Auswahlfeld(); self.format.setAccessibleName("Format")
-        for k, t in NUMMERIERUNGSFORMATE:
+        for k, t in nummerierungsformate():
             self.format.addItem(t, k)
         self.format.setCurrentIndex(max(0, self.format.findData(zahl)))
         fw = QWidget(); fg = FormularGitter(fw)
