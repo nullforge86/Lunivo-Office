@@ -21,7 +21,7 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
     def __init__(self, parent, breite_prozent: int = 100, ausrichtung: int = 0, rand: float = 1.0, abstand: float = 4.0,
                  kopfzeile: bool = False, *, werte: dict | None = None):
         super().__init__(parent)
-        from core.tabellen.modell.tabelleneigenschaften import VORGABE
+        from writer.anbindung.tabelleneigenschaften import vorgabe
         from vcl.qt.widgets.bausteine.interaktion.felder.angepasste_reiter import AngepassteReiter
         from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
         from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import EinheitFeld
@@ -60,7 +60,7 @@ class TabellenEigenschaftenDialog(PanelFaehig, QDialog):
         self.reiter.addTab(z, "Spalte und Zelle")
         fussleiste(self, v)
         # ---- Startwerte
-        w = {**VORGABE, "breite": float(breite_prozent), "ausr": self._AUSR[max(0, min(2, ausrichtung))],
+        w = {**vorgabe(), "breite": float(breite_prozent), "ausr": self._AUSR[max(0, min(2, ausrichtung))],
              "rahmen": rand * self._PT_MM, "innen": abstand * self._PX_MM, **(werte or {})}
         self.setze(w)
         self.art.currentIndexChanged.connect(self._sichtbar); self._sichtbar()

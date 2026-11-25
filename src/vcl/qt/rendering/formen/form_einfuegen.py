@@ -72,7 +72,8 @@ def _fuellstil(fuell: str, art: str, x: float, y: float, w: float, h: float):
     """Füllung einer Form als ``Style``: einfarbig, ``verlauf`` (hell nach Farbe), ``abgestuft`` (drei Stufen), ``glanz`` (obere Hälfte heller)."""
     from core.geometrie import Point
     from core.layout.drucklayout.ausgabe.backend import LinearGradient, Style, rgba
-    from core.layout.drucklayout.ausgabe.objekte.objekte import dunkler, heller
+    from writer.anbindung.objekte import dunkler
+    from writer.anbindung.objekte import heller
     c = rgba(fuell)
     if art not in ("verlauf", "abgestuft", "glanz"):
         return Style(color=c, width=0, filled=True)

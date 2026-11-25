@@ -215,7 +215,7 @@ class QtRenderBackend(RenderBackend):
         self.p.restore()
 
     def draw_image(self, data: bytes, rect: Rect, smooth: bool = False, wash: float = 0.0, source_rect: Rect | None = None) -> None:
-        from core.objekte.bilder.modell.bildformat import format_erkennen
+        from writer.anbindung.bildformat import format_erkennen
         fmt = format_erkennen(data[:2048]) if data else None
         if fmt == "svg" and source_rect is None:
             from PySide6.QtSvg import QSvgRenderer

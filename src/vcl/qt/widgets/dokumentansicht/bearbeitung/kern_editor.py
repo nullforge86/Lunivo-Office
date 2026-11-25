@@ -2,13 +2,14 @@ from __future__ import annotations
 import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
-from core.dokument.dokument import Auswahl, Position
+from core.dokument.dokument import Position
 from framework.sitzungen.altlast import zugang_fuer_editor
 from writer import hauptfenster as _dokumente
 from writer.funktionen import bearbeiten as _bearbeiten
 from core.suche.textsuche.suche import offset_zu_position
 from writer.werte import mm_zu_px as mm_to_px
 from core.layout.drucklayout import formatwerte as F
+from writer.anbindung import formatwerte as _formatwerte
 from vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht import DokumentAnsicht
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoten import FreieBilderKnotenMixin
@@ -87,7 +88,7 @@ class KernDokument(QObject):
     def standardschrift(self) -> tuple[str, float]:
         """Familie und Größe (Punkt) der Grundschrift des Dokuments, so wie der Kern sie führt."""
         sf = self._editor.sitzung.dokument.standardformat
-        return str(sf.get("schrift") or F.STANDARD_FAMILIE), float(sf.get("groesse_pt") or STANDARD_PT)
+        return str(sf.get("schrift") or _formatwerte.standard_familie()), float(sf.get("groesse_pt") or STANDARD_PT)
 
     def toPlainText(self) -> str:
         return self._editor.sitzung.dokument.text()

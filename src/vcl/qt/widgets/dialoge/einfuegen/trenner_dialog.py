@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QSpinBox
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from core.tabellen.modell import tabelle_text as TT
+from writer.anbindung import tabelle_text as TT
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter
@@ -32,7 +32,7 @@ class TrennerDialog(PanelFaehig, QDialog):
         t = QLabel("Text trennen bei"); f = t.font(); f.setBold(True); t.setFont(f)
         fg.breit(t)
         # Tabelle → Text wie in der Vorlage: Absätze, Tabstopps, Kommata, Andere (untereinander)
-        self._liste = TT.TRENNER if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
+        self._liste = TT.trenner() if zu_tabelle else [("\n", "&Absätze"), ("\t", "&Tabstopps"), (",", "&Kommata")]
         self._gruppe = QButtonGroup(self)
         g = FlussLayout(14) if zu_tabelle else _spalte("standard")                   # Text → Tabelle: Reihe, die umbricht; Tabelle → Text: untereinander
         for i, (_z, text) in enumerate(self._liste):

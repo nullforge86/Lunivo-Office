@@ -152,11 +152,11 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         """Seitenzahl wie in der Vorlage: zehn Vorgaben (Kopf-/Fußzeile links, Mitte, rechts, außen, innen), darunter Einfügen … und Entfernen.
         „außen“ und „innen“ wechseln die Seite zwischen geraden und ungeraden Seiten."""
         from PySide6.QtCore import QSize
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
+        from writer.anbindung import seitenzahl as _seitenzahl
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         from vcl.qt.widgets.bausteine.symbole.medien.seiten_bildchen import seitenzahl_zeichner
         m = RasterAuswahl(self.w, titel="Vorgaben", spalten=5, groesse=QSize(92, 96), beschriftet=True)
-        for schl, text, ort, ausr in SZ.VORGABEN:
+        for schl, text, ort, ausr in _seitenzahl.vorgaben():
             m.kachel(schl, text, seitenzahl_zeichner(ort, ausr)).setCheckable(False)
         m.gewaehlt.connect(lambda schl: self._seitenzahl_vorgabe(schl))
         m.fuss("Seitenzahl einfügen …", self.seitenzahlEinfuegen)
@@ -166,7 +166,8 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
     def _seitenzahl_vorgabe(self, schl: str) -> None:
         from core.dokument.kopf_fusszeilen import seitenzahl as SZ
-        _s, _t, ort, ausr = next(v for v in SZ.VORGABEN if v[0] == schl)
+        from writer.anbindung import seitenzahl as _seitenzahl
+        _s, _t, ort, ausr = next(v for v in _seitenzahl.vorgaben() if v[0] == schl)
         if self.ed:
             self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr))
 
@@ -480,10 +481,10 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         anweisung, text = d.feld()
         if anweisung.upper().startswith("TOC"):
-            from core.verzeichnisse.inhaltsverzeichnis import verzeichnis as V
+            from writer.anbindung import verzeichnis as _verzeichnis
             m = re.search(r'\\o\s*"(\d)-(\d)"', anweisung)
             from writer import referenzwerkzeuge as RW
-            RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", dict(V.TOC_VORGABE, ebenen=int(m.group(2)) if m else 3))
+            RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", dict(_verzeichnis.toc_vorgabe(), ebenen=int(m.group(2)) if m else 3))
             return
         F.feld_einfuegen(self.ed, anweisung, text, versteckt=anweisung.upper().startswith("TC"))
 
@@ -583,8 +584,9 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not self.ed:
             return
         from core.verzeichnisse.inhaltsverzeichnis import verzeichnis as V
+        from writer.anbindung import verzeichnis as _verzeichnis
         from vcl.qt.widgets.dialoge.verweise.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
-        d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or V.TOC_VORGABE)
+        d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or _verzeichnis.toc_vorgabe())
         from writer import referenzwerkzeuge as RW
         if d.exec() and not RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", d.ergebnis()):
             self.w.statusBar().showMessage("Im Dokument gibt es keine Überschriften. Legen Sie sie mit Verweise ▸ Inhaltsverzeichnis "

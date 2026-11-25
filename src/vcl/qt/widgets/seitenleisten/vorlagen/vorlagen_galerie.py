@@ -28,6 +28,7 @@ from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_git
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 
 from core.dokument import vorlagen
+from writer.anbindung import vorlagen as _vorlagen
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -165,10 +166,10 @@ class VorlagenGalerie(QWidget):
     def _daten_lesen(self) -> None:
         self.ordner = vorlagen.vorlagenordner(self.settings)
         self.rubriken: dict[str, dict] = {}
-        for m in vorlagen.muster():
+        for m in _vorlagen.muster():
             r = self.rubriken.setdefault(m.get("rubrik") or m["name"], {"geruest": [], "dateien": [], "pfad": None})
             r["geruest"].append(m)
-        unter, self.lose = vorlagen.rubriken(self.ordner)
+        unter, self.lose = _vorlagen.rubriken(self.ordner)
         for name, dateien in unter.items():
             gleich = next((n for n in self.rubriken if n.lower() == name.lower()), name)
             r = self.rubriken.setdefault(gleich, {"geruest": [], "dateien": [], "pfad": None})

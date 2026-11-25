@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QToolButton, QWidget
-from core.objekte.formen.linie_daten import LINIENBREITEN
+from writer.anbindung.linie_daten import linienbreiten
 from vcl.qt.rendering.formen import STILE, Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.bausteine.rahmen.linien import RahmenSeiten, rahmen_symbol
@@ -136,7 +136,7 @@ class _RahmenSeite(QWidget):
         seitenrand = self.seitenrand
         self.farbe = FarbFeld("" if basis.farbe in ("", Farbe.SCHWARZ) else basis.farbe, "Rahmenfarbe", keine_text="Automatisch")
         self.breite = Auswahlfeld(); self.breite.setIconSize(QSize(*GROESSE_LINIENBREITE_BILD))
-        for b in LINIENBREITEN:
+        for b in linienbreiten():
             self.breite.addItem(_breite_symbol(b, QSize(*GROESSE_LINIENBREITE_BILD)), f"{b:g}".replace(".", ",") + " Pt", b)
         self.breite.zeichen(DROPDOWN_ZEICHEN_ZAHL)
         g.reihe(("Farbe:", self.farbe), ("Breite:", self.breite))

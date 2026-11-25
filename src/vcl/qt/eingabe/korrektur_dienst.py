@@ -15,8 +15,12 @@ import re
 from core.korrektur.korrektur import ProofingIssue
 from framework.dokumentverwaltung.dokumentpflege.gelernt import Gelernt
 from core.korrektur.rechtschreibung import autokorrektur, pruefung
+from writer.anbindung import autokorrektur as _autokorrektur
+from writer.anbindung import pruefung as _pruefung
 from core.korrektur import fund as fundlib, inkrement
+from writer.anbindung import inkrement as _inkrement
 from core.korrektur.woerterbuecher import vorhersage
+from writer.anbindung import vorhersage as _vorhersage
 
 _log = logging.getLogger("lunivo.proofing")
 ART_REIHENFOLGE = {"fehler": 0, "tipp": 1, "hinweis": 2}
@@ -79,7 +83,7 @@ class WritingAssistant(QObject):
         self._timer.timeout.connect(lambda: self.pruefen())
         self.thema = settings.thema()
         if self.thema != "egal":                       # Wörterbuch (~0,4 s) erst nach dem ersten Zeichnen des Fensters laden
-            QTimer.singleShot(0, lambda t=self.thema: vorhersage.thema_aufnehmen(vorhersage.thema_woerter(t)))
+            QTimer.singleShot(0, lambda t=self.thema: vorhersage.thema_aufnehmen(_vorhersage.thema_woerter(t)))
 
     # ---- Schalter ---------------------------------------------------------
     def an(self, name: str) -> bool:
@@ -106,11 +110,11 @@ class WritingAssistant(QObject):
         self.thema = name
         self.settings.thema_setzen(name)
         if name != "egal":
-            vorhersage.thema_aufnehmen(vorhersage.thema_woerter(name))
+            vorhersage.thema_aufnehmen(_vorhersage.thema_woerter(name))
         self.themaGeaendert.emit(name)
 
     def ak_an(self, name: str) -> bool:
-        return self.settings.schalter(name, autokorrektur.SCHALTER[name][0])
+        return self.settings.schalter(name, _autokorrektur.schalter()[name][0])
 
     # ---- Anbindung an den Editor ---------------------------------------------
     def attach(self, editor) -> None:
@@ -151,7 +155,7 @@ class WritingAssistant(QObject):
         if not self._voll:
             return
         self._roh = inkrement.verschieben(self._roh, pos, entfernt, hinzu)
-        self._schmutz = inkrement.schmutz_abbilden(self._schmutz, pos, entfernt, hinzu)
+        self._schmutz = _inkrement.schmutz_abbilden(self._schmutz, pos, entfernt, hinzu)
 
     def dokument_geaendert(self) -> None:
         if self.editor is not None:
@@ -178,8 +182,8 @@ class WritingAssistant(QObject):
         if voll:
             self._voll, self._schmutz = False, None
         elif self._voll and self._schmutz is not None:
-            von, bis = inkrement.pruefbereich(text, *self._schmutz)
-            if inkrement.lohnt(len(text), von, bis):
+            von, bis = _inkrement.pruefbereich(text, *self._schmutz)
+            if _inkrement.lohnt(len(text), von, bis):
                 self._region = (von, bis)
             else:
                 self._voll = False
@@ -195,7 +199,7 @@ class WritingAssistant(QObject):
     def pruef_schalter(self) -> dict:
         """Die Schalter für `pruefung.finde_probleme`: Optionen der Rechtschreibung und je Prüfer „schreibhilfe/pruefer_<name>“."""
         schalter = {k: self.settings.get_bool(k, True) for k in ("rsGrossIgnorieren", "rsZahlenIgnorieren", "rsPfadeIgnorieren", "rsGrammatik")}
-        for n in pruefung.PRUEFER_NAMEN:
+        for n in _pruefung.pruefer_namen():
             schalter["pruefer_" + n] = self.settings.pruefer_aktiv(n)
         return schalter
 
@@ -509,7 +513,7 @@ class WritingAssistant(QObject):
     def vorschlaege(self, anfang: str) -> list[str]:
         if not self.an("vorhersage"):
             return []
-        return vorhersage.faengt_an_mit(anfang, 8, self.gelernt.daten, vorhersage.thema_woerter(self.thema))
+        return _vorhersage.faengt_an_mit(anfang, 8, self.gelernt.daten, _vorhersage.thema_woerter(self.thema))
 
     def autokorr(self, text_vor_cursor: str) -> str:
         if not self.an("autokorr"):

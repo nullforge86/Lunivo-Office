@@ -1,7 +1,7 @@
 """Befehle: Seite, Abschnitte, Spalten."""
 from __future__ import annotations
 
-from core.layout.drucklayout.formatwerte import richtung as richtung_von
+from writer.anbindung.formatwerte import richtung as richtung_von
 from PySide6.QtCore import Qt
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu

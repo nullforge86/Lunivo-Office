@@ -15,14 +15,14 @@ from PySide6.QtWidgets import QMenu
 
 from vcl.qt.rendering import formen as M
 from writer.funktionen.objekte import muster as MW
-from core.objekte.formen.linie_daten import LINIENBREITEN
+from writer.anbindung.linie_daten import linienbreiten
 from vcl.qt.rendering.formen import Linie
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_palette import FarbPalette
 from vcl.qt.widgets.bausteine.rahmen.linien import linien_menue_zeile, linien_symbol
 from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-from core.objekte.formen.linie_daten import OBJEKT_STRICHE as STRICHARTEN                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
+from writer.anbindung.linie_daten import objekt_striche                        # die eine Liste der Strichlinien (editor/objekte/linie.py)
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG_GROSS
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_INNEN_OBJEKT, GROESSE_SPALTENRASTER_KACHEL, GROESSE_STRICHART_MENUEBILD, GROESSE_STRICHART_MENUESYMBOL, GROESSE_TEXTUR_MUSTER_KACHEL, GROESSE_VERLAUF_KACHEL, ICON_NORMAL
@@ -33,6 +33,7 @@ def _linien_symbol(art: str, breite: float, groesse: QSize = QSize(*GROESSE_STRI
 
 
 from vcl.qt.rendering.formen import textur_textur as _textur  # noqa: E402
+from writer.anbindung import formen_stile_daten as _formen_stile_daten
 
 
 TEXTUREN = [("papier", "Papier"), ("granit", "Granit"), ("holz", "Holz"), ("stoff", "Stoff"), ("marmor", "Marmor"), ("sand", "Sand")]
@@ -100,12 +101,12 @@ class KonturMenue(FarbPalette):
         self.verlauf_gewaehlt.connect(self.gewaehlt)               # in der Kontur ist der „Farbverlauf“ eine Reihe Farben
         self.addSeparator()
         art = self.untermenue("Linienart(W)"); art.setIcon(symbole.icon("linie", ICON_NORMAL))
-        for b in LINIENBREITEN:                                    # „0,25 pt.“ und die Linie in dieser Stärke, wie in der Vorlage
+        for b in linienbreiten():                                    # „0,25 pt.“ und die Linie in dieser Stärke, wie in der Vorlage
             linien_menue_zeile(art, f"{b:g}".replace(".", ",") + " pt.", "einfach", b, lambda b=b: self.breite_gewaehlt.emit(b))
         art.addSeparator()
         art.eintrag("Weitere Linien(M)…", self.weitere_linien.emit)
         strich = self.untermenue("Strichart"); strich.setIcon(_linien_symbol("gestrichelt", 1.5, QSize(*GROESSE_STRICHART_MENUESYMBOL)))
-        for schl, _name in STRICHARTEN:                            # nur die Linie in ihrer Art, ohne Text — alle Strichlinien des Bausteins ``Linie``
+        for schl, _name in objekt_striche():                            # nur die Linie in ihrer Art, ohne Text — alle Strichlinien des Bausteins ``Linie``
             linien_menue_zeile(strich, "", schl, 1.5, lambda s=schl: self.strich_gewaehlt.emit(s))
         pfeil = self.untermenue("Pfeilart"); pfeil.setIcon(symbole.icon("linie", ICON_NORMAL)); pfeil.setEnabled(False)                # wie in der Vorlage: nur für Linien und Pfeile, nicht für Bilder
 
@@ -151,8 +152,8 @@ def formstil_zeichner(schluessel: str):
 def formstile(parent=None) -> RasterAuswahl:
     """Das Popup „Formstile“: sechs Zeilen zu sieben Stilen; ``gewaehlt`` meldet ``z{Zeile}{Spalte}`` (Namen im Tipp). Darunter steht „Weitere Effekte …“."""
     from vcl.qt.rendering.formen import formen_stile as S
-    m = RasterAuswahl(parent, spalten=len(S.SPALTEN), groesse=QSize(*GROESSE_SPALTENRASTER_KACHEL))
-    for z in range(len(S.ZEILEN)):
-        for s in range(len(S.SPALTEN)):
-            m.kachel(f"z{z}{s}", f"{S.ZEILEN[z]} – {S.SPALTEN[s][0]}", formstil_zeichner(f"z{z}{s}"))
+    m = RasterAuswahl(parent, spalten=len(_formen_stile_daten.spalten()), groesse=QSize(*GROESSE_SPALTENRASTER_KACHEL))
+    for z in range(len(_formen_stile_daten.zeilen())):
+        for s in range(len(_formen_stile_daten.spalten())):
+            m.kachel(f"z{z}{s}", f"{_formen_stile_daten.zeilen()[z]} – {_formen_stile_daten.spalten()[s][0]}", formstil_zeichner(f"z{z}{s}"))
     return m

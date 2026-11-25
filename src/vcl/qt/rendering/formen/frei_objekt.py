@@ -3,20 +3,28 @@ from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import freie_bilder as FB
-from core.objekte.textfelder.modell.frei_objekt_text_daten import ARTEN, TEXT_ARTEN, STANDARD_MASS, FORM_STANDARD, TEXTFELD_FUELL, TEXTFELD_RAND, _SS, laeufe_ab, laeufe_zusammen
+from core.objekte.textfelder.modell.frei_objekt_text_daten import _SS
+from writer.anbindung.frei_objekt_text_daten import arten
+from writer.anbindung.frei_objekt_text_daten import text_arten
+from writer.anbindung.frei_objekt_text_daten import standard_mass
+from writer.anbindung.frei_objekt_text_daten import form_standard
+from writer.anbindung.frei_objekt_text_daten import textfeld_fuell
+from writer.anbindung.frei_objekt_text_daten import textfeld_rand
+from writer.anbindung.frei_objekt_text_daten import laeufe_ab
+from writer.anbindung.frei_objekt_text_daten import laeufe_zusammen
 from vcl.qt.rendering.textfelder import wordart_zeichnen, textfeld_zeichnen
 from vcl.qt.rendering.textfelder.frei_objekt_text import laeufe_text, _text_passt
-from core.layout.drucklayout.ausgabe.text.wordartobjekt import ZEICHEN_SCHLUESSEL
+from writer.anbindung.wordartobjekt import zeichen_schluessel
 from core.objekte.formen.frei_objekt_daten import _form_daten_setzen, _kette_glieder, _textfelder, _verknuepfbar
 
 
 def _pfad_festhalten(d: dict, k: dict) -> None:
     """Eine Katalogform behält ihren Umriss als Vektorpfad (0…1) in den Parametern des Modells; der Kern zeichnet sie damit selbst (scharf in jeder Größe, im Editor und im PDF
     gleich), das Qt-Bild bleibt die Vorschau beim Bearbeiten. Grundformen und Freiformen kennt der Kern ohne Pfad."""
-    from core.geometrie.grundformen import FORMEN
+    from writer.anbindung.grundformen import formen
     from vcl.qt.rendering.formen import formen_katalog as K
     name = str(k["form"])
-    if name.casefold() in {"rechteck", "abgerundet", "ellipse", "kreis", "linie", "pfeil", "freiform"} | set(FORMEN) or k.get("punkte") or not K.hat(name):
+    if name.casefold() in {"rechteck", "abgerundet", "ellipse", "kreis", "linie", "pfeil", "freiform"} | set(formen()) or k.get("punkte") or not K.hat(name):
         d.pop("pfad_norm", None)
         d.pop("offen", None)
         return
@@ -38,8 +46,8 @@ def _pfad_festhalten(d: dict, k: dict) -> None:
 def _form_zeichnen(d: dict, b: float, h: float) -> QImage:
     """Eine Form (``editor/objekte/formen.py``/``einfuegen.py``) in b × h Bildpunkten, in doppelter Auflösung."""
     from vcl.qt.rendering.formen import form_einfuegen as FE
-    k = {**FORM_STANDARD, **d}
-    b, h = (b, h) if b and h else STANDARD_MASS["form"]
+    k = {**form_standard(), **d}
+    b, h = (b, h) if b and h else standard_mass()["form"]
     _pfad_festhalten(d, k)
     return FE.form_bild(k["form"], max(2, round(b)), max(2, round(h)), k["fuell"] or "", k["linie"] or Farbe.DURCHSICHTIG_HEX,
                        float(k["strich"]), k["text"], skala=_SS, adj=k.get("adj"), fuell_art=k.get("fuell_art") or "",
@@ -49,7 +57,7 @@ def _form_zeichnen(d: dict, b: float, h: float) -> QImage:
 def _diagramm_zeichnen(d: dict, b: float, h: float) -> QImage:
     """Ein Diagramm (``editor/diagramme/diagramm.py``) aus den gespeicherten Daten, in b × h Bildpunkten, in doppelter Auflösung."""
     from vcl.qt.rendering import diagramme as D
-    b, h = (b, h) if b and h else STANDARD_MASS["diagramm"]
+    b, h = (b, h) if b and h else standard_mass()["diagramm"]
     return D.bild_aus_daten(d, b, h, _SS)
 
 
@@ -66,7 +74,7 @@ def _piktogramm_zeichnen(d: dict, _b: float, _h: float) -> QImage:
 def _zeichenbereich_zeichnen(d: dict, b: float, h: float) -> QImage:
     """Zeichenbereich (``editor/objekte/formen.py``): gestrichelter Rand und die ``kinder`` (Formen mit Lage x/y), in doppelter Auflösung."""
     from vcl.qt.rendering.formen import formen as F
-    b, h = (b, h) if b and h else STANDARD_MASS["zeichenbereich"]
+    b, h = (b, h) if b and h else standard_mass()["zeichenbereich"]
     return F.zeichenbereich_bild(dict(d, breite=round(b), hoehe=round(h)), _SS)
 
 
@@ -87,14 +95,14 @@ def _anzeige_mass(art: str, img: QImage, b: float, h: float) -> tuple[float, flo
         return img.width() / _SS, img.height() / _SS
     if art in ("smartart", "piktogramm"):
         return (b, h) if b and h else (float(img.width()), float(img.height()))
-    return (b, h) if b and h else STANDARD_MASS.get(art, (b, h))
+    return (b, h) if b and h else standard_mass().get(art, (b, h))
 
 
 # ---- Einfügen ---------------------------------------------------------------------------------------------------------------
 def einfuegen(ed, art: str, daten: dict, b: float = 0, h: float = 0) -> int | None:
     """Fügt das Objekt als freies Objekt am Absatz der Schreibmarke ein und wählt es aus. → Id des Objekts."""
-    if art in STANDARD_MASS and not (b and h):
-        b, h = STANDARD_MASS[art]
+    if art in standard_mass() and not (b and h):
+        b, h = standard_mass()[art]
     img = zeichnen(art, daten, b, h)
     bb, hh = _anzeige_mass(art, img, b, h)
     return bild_einfuegen(ed, img, bb, hh, art, daten)
@@ -105,8 +113,8 @@ def bild_einfuegen(ed, img: QImage, bb: float, hh: float, art: str | None = None
     ``art``/``daten`` nur bei Objekten mit Parametern (siehe ``ZEICHNER``); ein gewöhnliches Bild (Datei, Bildschirmfoto) hat keine. → Id des Objekts."""
     d = {"daten": dict(daten)} if daten else {}
     if art == "textfeld":
-        d.setdefault("fuell", dict(TEXTFELD_FUELL))
-        d.setdefault("rand", dict(TEXTFELD_RAND))
+        d.setdefault("fuell", dict(textfeld_fuell()))
+        d.setdefault("rand", dict(textfeld_rand()))
     return ed.objekt_frei_einfuegen(art or "bild", d, bb, hh, img, alt)
 
 
@@ -114,7 +122,7 @@ def bild_einfuegen(ed, img: QImage, bb: float, hh: float, art: str | None = None
 def ziel(ed):
     """(Art, Daten, Id, Angabe, Bild) des gewählten Objekts (WordArt, Textfeld, Form, Diagramm, SmartArt) oder None."""
     o = ed.objekt_gewaehlt() if hasattr(ed, "objekt_gewaehlt") else None
-    if o is None or o.art not in ARTEN:
+    if o is None or o.art not in arten():
         return None
     angabe = {**{k: v for k, v in o.daten.items() if k != "daten"}, "art": o.art, "b": o.breite, "h": o.hoehe, "daten": dict(o.daten.get("daten") or {}),
               "n": o.ressource}
@@ -145,7 +153,7 @@ def _daten_vorbereiten(d: dict, kw: dict) -> None:
     if "text" in kw and "laeufe" not in kw:                          # neuer Text ohne Formate (Dialog, Vorlage): die Läufe gelten nicht mehr
         d.pop("laeufe", None)
     for k in kw:                                                     # ein Zeichenformat für das ganze Objekt löscht gleiche Angaben der Läufe
-        if k in ZEICHEN_SCHLUESSEL and d.get("laeufe"):
+        if k in zeichen_schluessel() and d.get("laeufe"):
             d["laeufe"] = laeufe_zusammen([{x: y for x, y in r.items() if x != k} for r in d["laeufe"]])
             if all(len(r) == 1 for r in d["laeufe"]):
                 d.pop("laeufe")
@@ -156,14 +164,14 @@ def _kasten_setzen(neu: dict, a: dict, k: str, v) -> None:
     if k == "form_fuell":
         neu["fuell"] = {"art": "farbe", "farbe": v} if v else None
     elif k == "form_strich":
-        neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "b": float(v) * 96 / 72}
+        neu["rand"] = {**(a.get("rand") or textfeld_rand()), "b": float(v) * 96 / 72}
     elif k == "form_effekt":
         if v:
             neu["fx"] = v
         else:
             neu.pop("fx", None)
     else:                                                            # form_linie
-        neu["rand"] = {**(a.get("rand") or TEXTFELD_RAND), "farbe": v} if v else None
+        neu["rand"] = {**(a.get("rand") or textfeld_rand()), "farbe": v} if v else None
 
 
 def _eintrag_setzen(art: str, k: str, v, d: dict, neu: dict, a: dict) -> None:
@@ -256,7 +264,7 @@ def text_bereich(a: dict, bild: QImage) -> QRectF | None:
 def text_werte_lesen(ed) -> dict | None:
     """Die Textoptionen (Format von ``texteffekt.py``) des gewählten Objekts."""
     z = ziel(ed)
-    if z is None or z[0] not in TEXT_ARTEN:
+    if z is None or z[0] not in text_arten():
         return None
     d = z[1]
     w = {"fuell": "farbe", "farbe": d.get("fuell") or d.get("farbe") or "", "transparenz": 0, "kontur": bool(d.get("kontur")),
@@ -269,7 +277,7 @@ def text_werte_lesen(ed) -> dict | None:
 def text_werte_anwenden(ed, werte: dict) -> bool:
     """Die Textoptionen der Seitenleiste wirken auf den Text im gewählten Objekt: Füllung (Farbe, Transparenz), Kontur (Farbe, Breite)."""
     art = art_gewaehlt(ed)
-    if art not in TEXT_ARTEN:
+    if art not in text_arten():
         return False
     kw: dict = {}
     if werte.get("fuell") == "keine":

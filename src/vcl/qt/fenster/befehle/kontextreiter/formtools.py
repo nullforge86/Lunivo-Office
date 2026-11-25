@@ -9,6 +9,7 @@ from vcl.qt.fenster.befehle.hilfen import _farbfeld
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine import FarbPalette, weitere_farben
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
+from writer.anbindung import formen_daten as _formen_daten
 
 
 class FormToolsBefehle:
@@ -114,7 +115,7 @@ class FormToolsBefehle:
         from vcl.qt.rendering.formen import formen
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for n, fu, li, _st in formen.VORLAGEN:
+        for n, fu, li, _st in _formen_daten.vorlagen():
             m.eintrag(n, lambda n=n: self._form_vorlage(n), symbol=_farbfeld(fu or Farbe.WEISS))
         return m
 

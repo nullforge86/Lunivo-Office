@@ -24,8 +24,11 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
-from core.objekte.bilder.modell.bildformat import FORMATE, BildFehler, format_erkennen  # noqa: F401  (Qt-freie Erkennung im Kern)
-from core.objekte.bilder.modell.bildformat import MAX_ENTPACKT_BYTES, entpacken as _entpacken
+from core.objekte.bilder.modell.bildformat import BildFehler
+from writer.anbindung.bildformat import formate
+from writer.anbindung.bildformat import format_erkennen  # noqa: F401  (Qt-freie Erkennung im Kern)
+from writer.anbindung.bildformat import max_entpackt_bytes
+from writer.anbindung.bildformat import entpacken as _entpacken
 
 MAX_DATEI_BYTES = 50 * 1024 * 1024                  # größere Bilddateien werden beim Einfügen abgelehnt
 NS_SVG = "http://schemas.microsoft.com/office/drawing/2016/SVG/main"      # Word-Erweiterung für SVG in DOCX (a:blip/a:extLst/asvg:svgBlip)
@@ -43,16 +46,16 @@ class BildQuelle:
 
     @property
     def endung(self) -> str:
-        return FORMATE[self.format][0]
+        return formate()[self.format][0]
 
     @property
     def medientyp(self) -> str:
-        return FORMATE[self.format][1]
+        return formate()[self.format][1]
 
 
 def entpacken(blob: bytes) -> bytes:
     """gzip-gepackte Bilddaten (SVGZ, EMZ, WMZ) entpacken, höchstens ``MAX_ENTPACKT_BYTES``."""
-    return _entpacken(blob, MAX_ENTPACKT_BYTES)
+    return _entpacken(blob, max_entpackt_bytes())
 
 
 # ---- Ablage -----------------------------------------------------------------------------------------------------------------

@@ -13,6 +13,7 @@ from PySide6.QtGui import QColor, QPen, QTransform
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering import formen as FF
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_BILDCHEN
+from writer.anbindung import frei_objekt_text_daten as _frei_objekt_text_daten
 
 TREFFER = 8.0                                                 # so nah (Bildschirmpunkte) trifft die Maus einen Punkt
 KANTE = 6.0                                                   # so nah trifft sie eine Kante
@@ -133,7 +134,7 @@ def _speichern(ed, punkte: list) -> None:
 def _vorschau(ed, key, a, punkte) -> None:
     """Das Bild der Form mit den vorläufigen Punkten neu zeichnen — ohne Dokumentschritt."""
     from vcl.qt.rendering.formen import frei_objekt as FO
-    d = {**FO.FORM_STANDARD, **(a.get("daten") or {}), "form": FF.NAME, "punkte": punkte}
+    d = {**_frei_objekt_text_daten.form_standard(), **(a.get("daten") or {}), "form": FF.NAME, "punkte": punkte}
     n = ed.__dict__.get("_fp_vz", 0) + 1
     ed.__dict__["_fp_vz"] = n
     ed._frei_vorlaeufig[key] = {**a, "_vorschau": FO.zeichnen("form", d, a["b"], a["h"]), "_vz": n}

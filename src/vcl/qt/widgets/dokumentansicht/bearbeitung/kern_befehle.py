@@ -12,11 +12,15 @@ import re
 from PySide6.QtCore import Qt
 
 from core.suche.textsuche.suche import offset_zu_position
-from core.dokument.dokument import AUFZAEHLUNGEN, LISTEN_EBENEN, Auswahl, ListenEbene, Position
-from core.listen.listen import PLATZHALTER, ZEICHEN_DER_AUFZAEHLUNG
+from core.dokument.dokument import Auswahl, ListenEbene, Position
+from writer.anbindung.dokument import aufzaehlungen
+from writer.anbindung.dokument import listen_ebenen
+from writer.anbindung.listen_listen import platzhalter
+from writer.anbindung.listen_listen import zeichen_der_aufzaehlung
 from writer.werte import mm_zu_px as mm_to_px, px_zu_mm as px_to_mm
 from writer.funktionen import bearbeiten as _bearbeiten
 from core.layout.drucklayout import formatwerte as F
+from writer.anbindung import formatwerte as _formatwerte
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
@@ -28,18 +32,18 @@ def spec_zu_ebenen(spec: dict) -> list:
     """Die 9 Ebenen einer Liste des Modells für die Beschreibung, die die Listenfenster liefern (einfache Liste oder Gliederung)."""
     if "ebenen" in spec:
         aus = []
-        for x in spec["ebenen"][:LISTEN_EBENEN]:
+        for x in spec["ebenen"][:listen_ebenen()]:
             zusatz = {k: x[k] for k in ("tab", "ausr_art", "danach", "neu", "norm", "vorlage") if x.get(k)}
             if x.get("zeichen"):
                 zusatz["zeichenformat"] = dict(x["zeichen"])
             fmt, stil = x.get("format", ""), x.get("stil", "dezimal")
             if stil in PUNKTE:
                 aus.append(ListenEbene(stil=stil, ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
-            elif not any(ch in fmt for ch in PLATZHALTER):
+            elif not any(ch in fmt for ch in platzhalter()):
                 aus.append(ListenEbene(stil="zeichen", zeichen=fmt or "•", ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
             else:
                 aus.append(ListenEbene(stil=stil, format=fmt, start=int(x.get("start", 1)), ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
-        while len(aus) < LISTEN_EBENEN:
+        while len(aus) < listen_ebenen():
             i = len(aus)
             aus.append(dataclasses.replace(aus[-1], ausr=aus[-1].ausr + 6.3, einzug=aus[-1].einzug + 6.3) if aus else ListenEbene(ausr=6.3 * i, einzug=6.3 * (i + 1)))
         return aus
@@ -47,7 +51,7 @@ def spec_zu_ebenen(spec: dict) -> list:
     stil = spec["stil"]
     zusatz_pos = {k: pos[k] for k in ("tab", "ausr_art", "danach") if pos.get(k)}
     ebenen = []
-    for i in range(LISTEN_EBENEN):
+    for i in range(listen_ebenen()):
         ausr, einzug = pos.get("ausr", 0.0) + 6.3 * i, pos.get("einzug", 6.3) + 6.3 * i
         zusatz = dict(zusatz_pos)
         if spec.get("zeichen"):
@@ -57,35 +61,35 @@ def spec_zu_ebenen(spec: dict) -> list:
             ebenen.append(ListenEbene(stil=([stil] + rest)[i % 3], ausr=ausr, einzug=einzug, zusatz=zusatz))
         else:
             art = stil if i == 0 else ZAHLEN_TIEFER[i % 3]
-            ebenen.append(ListenEbene(stil=art, format=spec.get("praefix", "") + PLATZHALTER[i] + spec.get("suffix", "."), start=int(spec.get("start", 1)) if i == 0 else 1,
+            ebenen.append(ListenEbene(stil=art, format=spec.get("praefix", "") + platzhalter()[i] + spec.get("suffix", "."), start=int(spec.get("start", 1)) if i == 0 else 1,
                                       ausr=ausr, einzug=einzug, zusatz=zusatz))
     return ebenen
 
 
 def ebenen_zu_spec(ebenen: list) -> dict:
     """Das Gegenstück: die Beschreibung der Liste für die Listenfenster (einfach, wenn sie genau so entstanden sein kann, sonst Gliederung)."""
-    from core.listen.aufzaehlungen import listen as L
+    from writer.anbindung import listen as L
     from core.listen.mehrstufig import mehrstufig as M
     if ebenen and all(e.stil in PUNKTE for e in ebenen) and spec_zu_ebenen(L.liste(ebenen[0].stil)) == ebenen:
         return L.liste(ebenen[0].stil)
     e0 = ebenen[0]
-    if e0.stil in ("dezimal", "klein", "gross", "roem_klein", "roem_gross") and e0.format.count(PLATZHALTER[0]) == 1 and not e0.zusatz:
-        vor, _s, nach = e0.format.partition(PLATZHALTER[0])
+    if e0.stil in ("dezimal", "klein", "gross", "roem_klein", "roem_gross") and e0.format.count(platzhalter()[0]) == 1 and not e0.zusatz:
+        vor, _s, nach = e0.format.partition(platzhalter()[0])
         einfach = L.liste(e0.stil, vor, nach, e0.start)
         if spec_zu_ebenen(einfach) == ebenen:
             return einfach
     aus = []
     for e in ebenen:
         mehr = {k: e.zusatz[k] for k in ("tab", "ausr_art", "danach", "neu", "norm", "vorlage") if e.zusatz.get(k)}
-        if e.stil in AUFZAEHLUNGEN:
-            zeichen = e.zeichen or ZEICHEN_DER_AUFZAEHLUNG.get(e.stil, "•")
+        if e.stil in aufzaehlungen():
+            zeichen = e.zeichen or zeichen_der_aufzaehlung().get(e.stil, "•")
             aus.append(M.ebene("dezimal", zeichen, 1, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
         else:
-            aus.append(M.ebene(e.stil, e.format or PLATZHALTER[len(aus)] + ".", e.start, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
+            aus.append(M.ebene(e.stil, e.format or platzhalter()[len(aus)] + ".", e.start, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
     return {"ebenen": aus}
 
 
-from core.text.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
+from writer.anbindung.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
 
 
 class KernBefehle:
@@ -126,8 +130,9 @@ class KernBefehle:
     def absatz_option(self, name: str):
         """Eine Absatzoption (``editor/seite/absatzopt.py``) des Absatzes an der Schreibmarke."""
         from core.formatierung.absatz import absatzopt
+        from writer.anbindung import absatzoptionen as _absatzoptionen
         roh = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("optionen")
-        return absatzopt.aus_text(roh if isinstance(roh, str) else "").get(name, absatzopt.VORGABE.get(name))
+        return absatzopt.aus_text(roh if isinstance(roh, str) else "").get(name, _absatzoptionen.vorgabe().get(name))
 
     def absatz_option_setzen(self, name: str, wert) -> None:
         from core.formatierung.absatz import absatzopt
@@ -155,7 +160,7 @@ class KernBefehle:
 
     def toggle_rtl(self) -> None:
         a = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke())
-        self._af({"richtung": "ltr" if F.richtung(a) == "rtl" else "rtl", "ausrichtung": None if a.get("ausrichtung") in (None, "links", "rechts") else a["ausrichtung"]})
+        self._af({"richtung": "ltr" if _formatwerte.richtung(a) == "rtl" else "rtl", "ausrichtung": None if a.get("ausrichtung") in (None, "links", "rechts") else a["ausrichtung"]})
 
     def absatzrahmen(self):
         from vcl.qt.rendering.formen import Linie
@@ -209,8 +214,8 @@ class KernBefehle:
         werte = dict(_bearbeiten.formatvorlage_aus_auswahl(self.kennung))
         spec = self.liste_spec()
         if spec:
-            from core.listen.mehrstufig import mehrstufig as M
-            werte["liste"] = M.liste_als_text(spec)
+            from writer.anbindung import mehrstufig as _mehrstufig
+            werte["liste"] = _mehrstufig.liste_als_text(spec)
         return {k: v for k, v in werte.items() if v not in (None, "", 0, 0.0, False)}
 
     def stil_neu_anwenden(self, name: str) -> None:
@@ -402,10 +407,11 @@ class KernBefehle:
     def tabelle_vorlage_anwenden(self, name: str, kopf: bool, streifen: bool, spalte: bool) -> bool:
         """Wendet eine Tabellenvorlage (Füllungen, Fettdruck, Rahmen) auf die Zellen an; die Optionen bleiben an der Tabelle gespeichert."""
         from core.tabellen.formatierung import tabellenstil as TS
+        from writer.anbindung import tabellenstil as _tabellenstil
         t = self.tabelle_an_marke()
-        if t is None or name not in TS.VORLAGEN:
+        if t is None or name not in _tabellenstil.vorlagen():
             return False
-        kopf_fill, kopf_schrift, streifen_fill, rahmen = TS.VORLAGEN[name]
+        kopf_fill, kopf_schrift, streifen_fill, rahmen = _tabellenstil.vorlagen()[name]
         tid = t.id
 
         def f(s):

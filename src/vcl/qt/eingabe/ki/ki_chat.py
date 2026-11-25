@@ -4,8 +4,8 @@ from __future__ import annotations
 import threading
 from PySide6.QtWidgets import QMessageBox
 from writer.funktionen import ki as KD
-from core.text import ki_markdown
-from core.dokument.zusatz import KI_AUTOR
+from writer.anbindung import ki_markdown as ki_markdown
+from writer.anbindung.zusatz import ki_autor
 from vcl.qt.eingabe.ki.arbeitslauf import _Lauf
 
 
@@ -250,7 +250,7 @@ class KIChatMixin:
                     if geklappt:
                         for a, b, t in schritte:                       # von hinten nach vorn: die Stellen davor verschieben sich nicht
                             if rezension:
-                                ed.ersetze_verfolgt(von + a, von + b, t, KI_AUTOR)
+                                ed.ersetze_verfolgt(von + a, von + b, t, ki_autor())
                             else:
                                 ed.replace_range(von + a, von + b, t)
         except RuntimeError:                       # Tab/Editor wurde geschlossen

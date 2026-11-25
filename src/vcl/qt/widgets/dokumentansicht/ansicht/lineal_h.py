@@ -19,7 +19,7 @@ class LinealH(_Lineal):
     einzugGeaendert = Signal(float, float, float)  # links, rechts, erste Zeile (mm)
 
     def _einzuege(self):
-        from core.layout.drucklayout.formatwerte import einzuege
+        from writer.anbindung.formatwerte import einzuege
         links, rechts, erste = einzuege(self.e.absatzformat())
         return px_to_mm(links), px_to_mm(rechts), px_to_mm(erste)
 

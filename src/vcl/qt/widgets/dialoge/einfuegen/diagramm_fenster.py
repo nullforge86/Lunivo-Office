@@ -31,6 +31,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknop
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_KEIN, BREITE_LISTE_ARTEN, BREITE_VORSCHAU_DIAGRAMM, BREITE_VORSCHAU_DIAGRAMM_SCHMAL, GROESSE_BILD_DIAGRAMM, GROESSE_BILD_DIAGRAMM_SCHMAL, HOEHE_FELD, HOEHE_VORSCHAU_DIAGRAMM, ICON_MITTEL, RAND_BOX_KOMPAKT, RAND_KARTE_ZEILE, RAND_KEIN, RAND_OBEN_SEITE, ZUGABE_KNOPF, ZUGABE_LISTE_ARTEN, ZUGABE_RAHMEN
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_ZEICHEN_MITTEL
+from writer.anbindung import diagrammtypen as _diagrammtypen
 
 def art_symbol(sym: str, px: int = 22) -> QIcon:
     """Diagrammart-Symbol aus dem zentralen Lucide-Katalog."""
@@ -49,17 +50,17 @@ class DiagrammDialog(PanelFaehig, QDialog):
         super().__init__(parent)
         from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
         self.setWindowTitle("Diagramm einfügen")
-        self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(D.BEISPIEL_KATEGORIEN), dict(D.BEISPIEL_REIHEN)
+        self.titel_text, self.kategorien, self.reihen = "Diagrammtitel", list(_diagrammtypen.beispiel_kategorien()), dict(_diagrammtypen.beispiel_reihen())
         self.kombi: list[tuple[str, bool]] = []
         v = _spalte("standard", self)
         rahmen = rahmen_baustein("panel"); h = _reihe("kein", rahmen)
         self._kompakt = False
         self.arten = QListWidget(); self.arten.setIconSize(QSize(ICON_MITTEL, ICON_MITTEL)); self.arten.setFixedWidth(BREITE_LISTE_ARTEN)
         self.arten.setAccessibleName("Diagrammart"); self.arten.setSpacing(ABSTAND_ENG)
-        for gruppe, sym, _unter in D.TYPEN:
+        for gruppe, sym, _unter in _diagrammtypen.typen():
             self.arten.addItem(QListWidgetItem(art_symbol(sym), gruppe if gruppe != "Kombination" else "Kombination …"))
         self.arten.addItem(QListWidgetItem(art_symbol("vorlagen"), "Vorlagen"))     # letzter Punkt: eigene Vorlagen, keine Untertypen
-        self._vorlagen_zeile = len(D.TYPEN)
+        self._vorlagen_zeile = len(_diagrammtypen.typen())
         self._daten_geaendert = False                                       # True, sobald der Nutzer über „Daten bearbeiten …“ eigene Daten setzt
         h.addWidget(self.arten)
         self.seite = QWidget(); rechts = _spalte("karte", self.seite)
@@ -96,8 +97,8 @@ class DiagrammDialog(PanelFaehig, QDialog):
             self.reihen = {k: list(v) for k, v in (vorhanden.get("reihen") or self.reihen).items()}
             self.kombi = [(k[0], bool(k[1])) for k in vorhanden.get("kombi") or []]
             self._daten_geaendert = True
-            u = D.ALT.get(vorhanden.get("art"), vorhanden.get("art"))
-            for i, (_g, _s, unter) in enumerate(D.TYPEN):
+            u = _diagrammtypen.alt().get(vorhanden.get("art"), vorhanden.get("art"))
+            for i, (_g, _s, unter) in enumerate(_diagrammtypen.typen()):
                 if any(schl == u for schl, _n in unter):
                     self.untertyp, zeile = u, i
         self.arten.currentRowChanged.connect(self._gruppe)
@@ -130,7 +131,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             typ, sek = self.kombi[i] if i < len(self.kombi) else ("saeule", False)
             box = Auswahlfeld(); box.setAccessibleName(f"Diagrammtyp {name}")
             box.zeichen(DROPDOWN_ZEICHEN_MITTEL)
-            for schl, text in D.KOMBI_TYPEN:
+            for schl, text in _diagrammtypen.kombi_typen():
                 box.addItem(text, schl)
             box.setCurrentIndex(max(0, box.findData(typ)))
             kasten = haken("standard", an=sek, name=f"Sekundärachse {name}")
@@ -145,7 +146,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             self.untertyp = "kombi_eigen"
             for b in self._knoepfe.buttons():
                 b.setChecked(b.property("untertyp") == "kombi_eigen")
-            self.name.setText(D.NAMEN["kombi_eigen"])
+            self.name.setText(_diagrammtypen.namen()["kombi_eigen"])
         self.aktualisieren()
 
     # ---- Seitenleiste ---------------------------------------------------------------------------------------------------
@@ -181,7 +182,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             w = self.unter_zeile.takeAt(0).widget()
             if w is not None:
                 self._knoepfe.removeButton(w); w.hide(); w.deleteLater()
-        unter = D.TYPEN[zeile][2] if 0 <= zeile < len(D.TYPEN) else []
+        unter = _diagrammtypen.typen()[zeile][2] if 0 <= zeile < len(_diagrammtypen.typen()) else []
         if unter and not self._daten_geaendert:                              # Beispieldaten passend zur Art, solange nichts selbst eingegeben wurde
             self._beispiel_laden(self.untertyp if any(s == self.untertyp for s, _n in unter) else unter[0][0])
         g = self._bild_groesse
@@ -191,7 +192,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
             b.setIcon(QIcon(QPixmap.fromImage(img))); b.setIconSize(g); b.setFixedSize(g.width() + ZUGABE_KNOPF, g.height() + ZUGABE_KNOPF)
             b.clicked.connect(lambda _c=False, s=schl: self._waehle(s))
             self._knoepfe.addButton(b); self.unter_zeile.addWidget(b)
-        ist_kombi = D.TYPEN[zeile][0] == "Kombination" if 0 <= zeile < len(D.TYPEN) else False
+        ist_kombi = _diagrammtypen.typen()[zeile][0] == "Kombination" if 0 <= zeile < len(_diagrammtypen.typen()) else False
         self.kombi_teil.setVisible(ist_kombi)
         if unter:
             vorher = self.untertyp if any(s == self.untertyp for s, _n in unter) else unter[0][0]
@@ -211,7 +212,7 @@ class DiagrammDialog(PanelFaehig, QDialog):
         if not self._daten_geaendert and untertyp != self.untertyp:
             self._beispiel_laden(untertyp)
         self.untertyp = untertyp
-        self.name.setText(D.NAMEN.get(untertyp, ""))
+        self.name.setText(_diagrammtypen.namen().get(untertyp, ""))
         if untertyp == "kombination" or untertyp.startswith("kombi_"):
             if untertyp != "kombi_eigen" or not self.kombi:
                 self.kombi = D.kombi_vorgabe("kombination" if untertyp == "kombi_eigen" else untertyp, len(self.reihen))
@@ -244,8 +245,8 @@ class DiagrammDialog(PanelFaehig, QDialog):
         d = {"art": self.untertyp, "titel": self.titel_text, "kategorien": self.kategorien, "reihen": self.reihen}
         if self._ist_kombi():
             d["kombi"] = [list(k) for k in self.kombi]
-        if self.untertyp in D.VORLAGEN:                                      # nur noch ältere Dokumente
-            d["farben"] = list(D.VORLAGEN[self.untertyp][1])
+        if self.untertyp in _diagrammtypen.vorlagen():                                      # nur noch ältere Dokumente
+            d["farben"] = list(_diagrammtypen.vorlagen()[self.untertyp][1])
         return d
 
     def aktualisieren(self, *_):

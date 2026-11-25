@@ -67,10 +67,10 @@ class TabellenFormatBefehle:
 
     # Tabellenformatvorlagen und Formatoptionen
     def menue_tabelleVorlagen(self):
-        from core.tabellen.formatierung import tabellenstil as TS
+        from writer.anbindung import tabellenstil as TS
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for n, (kopf, _s, streifen, _r) in TS.VORLAGEN.items():
+        for n, (kopf, _s, streifen, _r) in TS.vorlagen().items():
             m.eintrag(n, lambda n=n: self._tabelle_vorlage(n), symbol=_farbfeld(kopf or streifen or Farbe.WEISS))
         return m
 

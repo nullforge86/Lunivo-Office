@@ -14,11 +14,19 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QImage
 
-from core.diagramme.daten import diagramm_zusatz as Z
+from writer.anbindung import diagramm_zusatz as Z
 # Katalog und Gestaltung stehen in eigenen Modulen; die Namen bleiben hier erreichbar (``diagramm.TYPEN``, ``diagramm.STILE`` …)
-from core.diagramme.typen.diagramm_typen import ALT, BEISPIEL_KATEGORIEN, BEISPIEL_REIHEN, FARBEN, KOMBI_TYPEN, NAMEN, TYPEN, VORLAGEN, _art, beispiel, hat_linien, ist_kreis, kombi_vorgabe
+from core.diagramme.typen.diagramm_typen import _art, beispiel, hat_linien, ist_kreis, kombi_vorgabe
+from writer.anbindung.diagrammtypen import beispiel_kategorien
+from writer.anbindung.diagrammtypen import beispiel_reihen
+from writer.anbindung.diagrammtypen import kombi_typen
+from writer.anbindung.diagrammtypen import namen as _namen
+from writer.anbindung.diagrammtypen import typen
+from writer.anbindung.diagrammtypen import vorlagen
 from vcl.qt.rendering.diagramme.diagramm_stile import FARBSCHEMEN, farbschemen_flach, farbschemen_gruppen
-from core.diagramme.formatierung.diagramm_stile_modell import STIL_EXTRA, STILE, stile_liste
+from writer.anbindung.diagramm_stile_modell import stil_extra
+from writer.anbindung.diagramm_stile_modell import stile
+from writer.anbindung.diagramm_stile_modell import stile_liste
 
 
 def _filtern(kategorien: list[str], reihen: dict, ausgeblendet: dict | None) -> tuple[list[int], list[int], list[str], dict]:
@@ -115,8 +123,8 @@ def teile(daten: dict) -> list[tuple[str, str]]:
     ausgeblendete Reihen), fehlen."""
     u = _art(daten)
     el = Z.elemente_wirksam(daten)
-    kat = list(daten.get("kategorien") or BEISPIEL_KATEGORIEN)
-    reihen = dict(daten.get("reihen") or BEISPIEL_REIHEN)
+    kat = list(daten.get("kategorien") or beispiel_kategorien())
+    reihen = dict(daten.get("reihen") or beispiel_reihen())
     nummern, _keep, kat_f, _rf = _filtern(kat, reihen, daten.get("ausgeblendet"))
     namen_alle = list(reihen)
     out = [("diagrammbereich", "Diagrammbereich"), ("zeichnungsbereich", "Zeichnungsbereich")]

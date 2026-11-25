@@ -2,7 +2,7 @@
 from __future__ import annotations
 from PySide6.QtGui import QImage
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.bearbeitung.einfuegen_hilfen import WORDART_VORLAGEN
+from writer.anbindung.einfuegen_hilfen import wordart_vorlagen
 
 
 def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", pt: int = 48) -> QImage:
@@ -12,7 +12,7 @@ def wordart_vorlage_bild(text: str, nr: int, schrift: str = "Liberation Sans", p
     from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
     engine = standard_engine()
     b, h = wordart.masse(engine, text, schrift, pt)
-    return kern_bild(b, h, lambda z: wordart.zeichne(z, engine, text, WORDART_VORLAGEN[nr], schrift, pt))
+    return kern_bild(b, h, lambda z: wordart.zeichne(z, engine, text, wordart_vorlagen()[nr], schrift, pt))
 
 
 def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sans", pt: int = 48, farbe: str = Farbe.AKZENT,
@@ -24,7 +24,8 @@ def wordart_bild(text: str, stil: str = "Verlauf", schrift: str = "Liberation Sa
     from vcl.qt.rendering.formen import kern_bild
     from core.geometrie import Point
     from core.layout.drucklayout.ausgabe.backend import LinearGradient, Style, rgba
-    from core.layout.drucklayout.ausgabe.objekte.objekte import dunkler, heller
+    from writer.anbindung.objekte import dunkler
+    from writer.anbindung.objekte import heller
     from core.textsatz import FontSpec
     from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
     engine = standard_engine()

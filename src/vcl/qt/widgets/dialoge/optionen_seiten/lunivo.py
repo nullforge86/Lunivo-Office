@@ -20,7 +20,7 @@ from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from writer.funktionen import ki as KD
 from framework.dokumentverwaltung.dokumentpflege import vorlesen
 from system.plattform import pfade
-from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
+from writer.anbindung.vorhersage import empfaenger
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, ABSTAND_NORMAL, BREITE_KNOPF_KLEIN, HOEHE_VORSCHAU_KLEIN, PADDING_PLAKETTE, PADDING_STARTKNOPF_LINK, RADIUS_KLEIN, RAND_KARTE_ZEILE, RAND_KEIN, RAND_ZEILE, RAND_ZEILE_ENG, SCHRIFT_HINWEIS, SCHRIFT_LISTE, SCHRIFT_KLEIN
@@ -159,7 +159,7 @@ class LunivoSeiten:
         ass = AssistentenListe(self.w); ass.setProperty("optName", _t("optionen.lunivo.assistenten"))
         f.addRow(ass)
 
-        wen = Auswahlfeld(); wen.addItems(EMPFAENGER)
+        wen = Auswahlfeld(); wen.addItems(empfaenger())
         wen.setCurrentText(self.w.assistant.thema)
         wen.currentTextChanged.connect(self.w.assistant.setze_thema)
         self.w.assistant.themaGeaendert.connect(lambda t: wen.currentText() != t and (wen.blockSignals(True), wen.setCurrentText(t), wen.blockSignals(False)))

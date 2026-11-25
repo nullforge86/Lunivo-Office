@@ -10,4 +10,20 @@ from core.formatierung.schrift.datenbank import SchriftDatenbank, Schnitt, stand
 from core.formatierung.schrift.engine import HarfBuzzEngine
 from core.formatierung.schrift.schrift import PX_JE_PT, Schrift
 
-__all__ = ["HarfBuzzEngine", "PX_JE_PT", "Schnitt", "Schrift", "SchriftDatenbank", "standard_datenbank"]
+__all__ = ["HarfBuzzEngine", "PX_JE_PT", "Schnitt", "Schrift", "SchriftDatenbank", "standard_datenbank",
+           "ZUSATZ_AUSRICHTUNGEN", "ZUSATZ_FORMEN", "ZUSATZ_VORLAGEN", "ruby_text", "umschlossen_text"]
+
+# Erst beim ersten Zugriff geladen: Zeichenzusätze (Ruby, umschlossene Zeichen).
+_SPAET: dict[str, tuple[str, str]] = {"ZUSATZ_AUSRICHTUNGEN": ("zeichenzusatz", "AUSRICHTUNGEN"), "ZUSATZ_FORMEN": ("zeichenzusatz", "FORMEN"),
+                                      "ZUSATZ_VORLAGEN": ("zeichenzusatz", "VORLAGEN"), "ruby_text": ("zeichenzusatz", "ruby_text"),
+                                      "umschlossen_text": ("zeichenzusatz", "umschlossen_text")}
+
+def __getattr__(name: str):
+    datei, original = _SPAET.get(name, (None, None))
+    if datei == "zeichenzusatz":
+        from . import zeichenzusatz as _datei
+    else:
+        raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
+    wert = getattr(_datei, original)
+    globals()[name] = wert
+    return wert

@@ -16,7 +16,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QWidget
 
 from writer.funktionen import ki as KD
-from core.text import ki_markdown
+from writer.anbindung import ki_markdown as ki_markdown
 from vcl.qt.widgets.bausteine.schrift.beschriftung import md_label, text_label
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe

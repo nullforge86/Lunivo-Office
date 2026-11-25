@@ -9,7 +9,9 @@ from __future__ import annotations
 from PySide6.QtWidgets import QMenu
 
 from vcl.qt.fenster.befehle.hilfen import _farbfeld
-from core.diagramme.daten import diagramm_zusatz as Z
+from writer.anbindung import diagramm_zusatz as Z
+from writer.anbindung import diagramm_stile_modell as _diagramm_stile_modell
+from writer.anbindung import diagrammtypen as _diagrammtypen
 
 # Schnelllayouts: (Name, Angaben) — jedes setzt Titel, Legende und Beschriftungen zugleich
 # Layouts 1 bis 6 (Nummer 0 bis 5) sind in gespeicherten Dokumenten bekannt und behalten ihre Bedeutung; neue werden nur hinten angelegt.
@@ -88,8 +90,8 @@ class DiagrammToolsBefehle:
             return
         from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.dialoge.einfuegen.diagramm_daten_dialog import DiagrammDatenDialog
-        dlg = DiagrammDatenDialog(self.w, d.get("titel", ""), list(d.get("kategorien") or D.BEISPIEL_KATEGORIEN),
-                                  dict(d.get("reihen") or D.BEISPIEL_REIHEN))
+        dlg = DiagrammDatenDialog(self.w, d.get("titel", ""), list(d.get("kategorien") or _diagrammtypen.beispiel_kategorien()),
+                                  dict(d.get("reihen") or _diagrammtypen.beispiel_reihen()))
         if dlg.exec():
             titel, kategorien, reihen = dlg.daten()
             kombi = [list(x) for x in (d.get("kombi") or [])][:len(reihen)]
@@ -104,7 +106,7 @@ class DiagrammToolsBefehle:
             return
         from vcl.qt.rendering.diagramme import diagramm as D
         if untertyp:
-            if untertyp not in D.NAMEN:
+            if untertyp not in _diagrammtypen.namen():
                 return False
             return self._dg_set(untertyp=untertyp, **({} if untertyp == "kombi_eigen" else {"kombi": None}))
         from vcl.qt.widgets.dialoge.einfuegen.diagramm_fenster import DiagrammDialog
@@ -124,7 +126,7 @@ class DiagrammToolsBefehle:
         from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for _g, sym, unter in D.TYPEN:
+        for _g, sym, unter in _diagrammtypen.typen():
             if sym == symbol:
                 for u, name in unter:
                     m.eintrag(name, lambda u=u: self.diagrammTypAendern(None, u), haken=False, daten=u)
@@ -155,8 +157,8 @@ class DiagrammToolsBefehle:
         from vcl.qt.rendering.diagramme import diagramm as D
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()
-        for schl, (_typ, farben) in D.VORLAGEN.items():
-            m.eintrag(D.NAMEN.get(schl, schl), lambda f=list(farben): self._dg_set(farben=f), symbol=_farbfeld(farben[0]))
+        for schl, (_typ, farben) in _diagrammtypen.vorlagen().items():
+            m.eintrag(_diagrammtypen.namen().get(schl, schl), lambda f=list(farben): self._dg_set(farben=f), symbol=_farbfeld(farben[0]))
         return m
 
     def diagrammFarben(self, k=None, nr=None):
@@ -179,7 +181,7 @@ class DiagrammToolsBefehle:
             lage.eintrag(name, lambda s=schl: self._dg_set(legende=True, legende_pos=s), haken=d.get("legende_pos", "unten") == schl)
         m.eintrag("Datenbeschriftungen", self.diagrammBeschriftungen, haken=bool(d.get("labels", False)))
         for name in ("achsen", "achsentitel", "gitter", "datentabelle", "fehlerindikatoren", "trendlinie"):
-            m.eintrag(Z.ELEMENT_NAMEN[name], lambda n=name: self.diagrammElement(None, n), haken=bool(Z.elemente_wirksam(d)[name]))
+            m.eintrag(Z.element_namen()[name], lambda n=name: self.diagrammElement(None, n), haken=bool(Z.elemente_wirksam(d)[name]))
         return m
 
     # ---- Diagrammelemente (Liste mit Haken) ------------------------------------------------------------------------------------------
@@ -190,11 +192,11 @@ class DiagrammToolsBefehle:
         d = self._dg()
         if d is None:
             return self._dg_set()
-        if name not in Z.ELEMENTE:
+        if name not in Z.elemente():
             return False
         ist = Z.elemente_wirksam(d)[name]
         if name == "legende":
-            if wert in Z.LEGENDEN_LAGEN:
+            if wert in Z.legenden_lagen():
                 return self._dg_set(legende=True, legende_pos=wert)
             neu = (ist == "aus") if wert is None else bool(wert) and wert != "aus"
             return self._dg_set(legende=neu)
@@ -211,7 +213,7 @@ class DiagrammToolsBefehle:
 
     def diagrammElementListe(self, k=None) -> list[tuple[str, str, bool]]:
         """Für die Liste „Diagrammelemente“: [(Name, Anzeigename, Haken)] in der Reihenfolge der Vorlage."""
-        return [(n, Z.ELEMENT_NAMEN[n], self._element_an(n)) for n in Z.ELEMENTE]
+        return [(n, Z.element_namen()[n], self._element_an(n)) for n in Z.elemente()]
 
     def diagrammTitel(self, k=None): self._dg_set(titel_an=not (self._dg() or {}).get("titel_an", True))
 
@@ -229,7 +231,7 @@ class DiagrammToolsBefehle:
         """Diagrammstil ``nr`` (Nummer in ``diagramm.STILE``, Liste: ``diagramm.stile_liste()``)."""
         nr = _nummer(k, nr)
         from vcl.qt.rendering.diagramme import diagramm as D
-        self._dg_set(stil=max(0, min(int(nr), len(D.STILE) - 1)))
+        self._dg_set(stil=max(0, min(int(nr), len(_diagramm_stile_modell.stile()) - 1)))
 
     def diagrammZuruecksetzen(self, k=None):
         """Farben, Titel/Legende/Beschriftungen, Elemente, Filter, Teilformate und Stil auf den Standard zurück; Daten, Diagrammart und Alternativtext bleiben."""
@@ -273,8 +275,8 @@ class DiagrammToolsBefehle:
         if d is None:
             return {"reihen": [], "rubriken": []}
         aus = d.get("ausgeblendet") or {}
-        return {"reihen": [(n, n not in (aus.get("reihen") or [])) for n in (d.get("reihen") or D.BEISPIEL_REIHEN)],
-                "rubriken": [(n, n not in (aus.get("rubriken") or [])) for n in (d.get("kategorien") or D.BEISPIEL_KATEGORIEN)]}
+        return {"reihen": [(n, n not in (aus.get("reihen") or [])) for n in (d.get("reihen") or _diagrammtypen.beispiel_reihen())],
+                "rubriken": [(n, n not in (aus.get("rubriken") or [])) for n in (d.get("kategorien") or _diagrammtypen.beispiel_kategorien())]}
 
     def diagrammFilterSetzen(self, k=None, ausgeblendet=None):
         """„Übernehmen“: {"reihen": [Namen], "rubriken": [Namen]} = die ausgeblendeten Einträge (leer/None = alles zeigen)."""
@@ -301,8 +303,8 @@ class DiagrammToolsBefehle:
         if d is None:
             return self._dg_set()
         namen = namen or {}
-        reihen = dict(d.get("reihen") or D.BEISPIEL_REIHEN)
-        kats = list(d.get("kategorien") or D.BEISPIEL_KATEGORIEN)
+        reihen = dict(d.get("reihen") or _diagrammtypen.beispiel_reihen())
+        kats = list(d.get("kategorien") or _diagrammtypen.beispiel_kategorien())
         rn, kn = _umbenennen(list(reihen), namen.get("reihen") or []), _umbenennen(kats, namen.get("rubriken") or [])
         aus_neu = _filter_umbenennen(d.get("ausgeblendet") or {}, rn, kn)
         return self._dg_set(reihen={rn[a]: v for a, v in reihen.items()}, kategorien=[kn[a] for a in kats], ausgeblendet=aus_neu or None)
@@ -330,7 +332,7 @@ def _filter_umbenennen(aus: dict, rn: dict[str, str], kn: dict[str, str]) -> dic
 
 def _element_befehle() -> None:
     """Je Element ``an_diagrammElement_<name>`` (Haken) und ``diagrammElement_<name>`` (Umschalten) — für Knöpfe, die keine Angabe mitgeben."""
-    for name in Z.ELEMENTE:
+    for name in Z.elemente():
         setattr(DiagrammToolsBefehle, "an_diagrammElement_" + name, lambda self, n=name: self._element_an(n))
         setattr(DiagrammToolsBefehle, "diagrammElement_" + name, lambda self, k=None, n=name: self.diagrammElement(k, n))
 

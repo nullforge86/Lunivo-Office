@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QWidget
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
 from writer.funktionen.ki import kern_von
-from core.text import ki_markdown
+from writer.anbindung import ki_markdown as ki_markdown
 from vcl.qt.widgets.seitenleisten.chat.chat_blase import TITEL_DOKUMENT, TITEL_KI, FehlerKarte, KiBlase, NutzerBlase
 from vcl.qt.widgets.seitenleisten.chat.chat_eingabe import ChatEingabe, ChatEingabeKasten      # ChatEingabe bleibt hier importierbar
 from vcl.qt.widgets.seitenleisten.chat.chat_leerzustand import ChatLeerzustand

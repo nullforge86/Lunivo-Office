@@ -27,7 +27,7 @@ class KommentarKarte(QFrame):
 
     def __init__(self, b: dict, k: dict, ed, aktualisieren, pt: float = 11.5, bearbeiten: bool = False, speichern=None, abbrechen=None, bearbeite_los=None):
         super().__init__()
-        from core.dokument.zusatz import kommentar_farbe
+        from writer.anbindung.zusatz import kommentar_farbe
         self.setObjectName("kommentarKarte")
         geloest = bool(k.get("geloest"))
         farbe = kommentar_farbe(geloest)                                  # orange Kreis wie in der alten Fassung, gelöste grau

@@ -4,9 +4,11 @@ from vcl.qt.rendering.formen import gespiegelt
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, SCHATTENANSATZ
 from core.layout.drucklayout.ausgabe.text.wordartobjekt import listenmarken
-from core.layout.drucklayout.ausgabe.text.wordartobjekt import anzeige_laeufe, laeufe_text
-from core.layout.drucklayout.ausgabe.text.wordartobjekt import zeilen_laeufe as _zeilen_laeufe  # noqa: E402,F401
+from writer.anbindung.wordartobjekt import anzeige_laeufe
+from writer.anbindung.wordartobjekt import laeufe_text
+from writer.anbindung.wordartobjekt import zeilen_laeufe as _zeilen_laeufe  # noqa: E402,F401
 from core.objekte.textfelder.modell.frei_objekt_text_daten import _SS, _gedreht, _innen, _zeichen_dict
+from writer.anbindung import einfuegen_hilfen as _einfuegen_hilfen
 
 
 def richtung_anwenden(img: QImage, richtung: str | None, zeilenbaender: list | None = None) -> QImage:
@@ -69,7 +71,7 @@ def wordart_zeichnen(d: dict) -> QImage:
     if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
         from vcl.qt.rendering import wordart as WE
         return WE.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", Farbe.WORDART_BLAU))
-    erg = wordart_rgba(d, standard_engine(), E.WORDART_VORLAGEN, _SS)
+    erg = wordart_rgba(d, standard_engine(), _einfuegen_hilfen.wordart_vorlagen(), _SS)
     img = QImage(bytes(erg["rgba"]), erg["w"], erg["h"], erg["w"] * 4, QImage.Format_RGBA8888).copy()
     ys, asz, hoehen, faktor = erg["ys"], erg["asz"], erg["hoehen"], erg["faktor"]
     return richtung_anwenden(img, d.get("richtung"), [(int((ys[i] - asz[i]) * _SS), int(hoehen[i] * faktor * _SS)) for i in range(erg["zeilen"])])
@@ -87,7 +89,7 @@ class _Satz:
         vorlage = None
         if d.get("vorlage") is not None:
             from vcl.qt.rendering.formen import einfuegen as E
-            vorlage = E.WORDART_VORLAGEN[int(d["vorlage"])]
+            vorlage = _einfuegen_hilfen.wordart_vorlagen()[int(d["vorlage"])]
         self.farbe = d.get("fuell") if d.get("fuell") else (vorlage[1] if vorlage and "fuell" not in d else d.get("farbe", Farbe.TEXT_STANDARD))
         li, ob, re_, un = _innen(d)
         self.innen_oben = ob

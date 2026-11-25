@@ -8,6 +8,8 @@ from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_OBJEKTKACHEL_INNEN, RADIUS_ZEICHNUNG_MITTEL, STIFT_BILDCHEN_LINIE
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
+from writer.anbindung import einfuegen_hilfen as _einfuegen_hilfen
+from writer.anbindung import frei_objekt_text_daten as _frei_objekt_text_daten
 
 
 class EinfuegenObjektBefehle:
@@ -56,7 +58,7 @@ class EinfuegenObjektBefehle:
         from vcl.qt.rendering import formen as K
         from vcl.qt.rendering.formen import frei_objekt as FO
         if self.ed and name and K.formen_katalog_hat(name) and not F.in_zeichenbereich(self.ed, name):
-            return FO.einfuegen(self.ed, "form", {**FO.FORM_STANDARD, "form": name}, *((240, 60) if K.ist_linie(name) else (160, 120)))
+            return FO.einfuegen(self.ed, "form", {**_frei_objekt_text_daten.form_standard(), "form": name}, *((240, 60) if K.ist_linie(name) else (160, 120)))
 
 
     def zeichenbereich(self, k=None):
@@ -175,7 +177,7 @@ class EinfuegenObjektBefehle:
         from vcl.qt.rendering import wordart as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=9, groesse=QSize(40, 40))
-        for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
+        for i, (name, *_r) in enumerate(_einfuegen_hilfen.wordart_vorlagen()):
             img = WE.wordart_bild("A", vorlage=i, pt=80)
             pm = QPixmap(QSize(40, 40)); pm.fill(Qt.transparent)
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing); p.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -287,7 +289,7 @@ class EinfuegenObjektBefehle:
             d = DiagrammDialog(self.w)
             if d.exec():
                 from vcl.qt.rendering.formen import frei_objekt as FO
-                FO.einfuegen(self.ed, "diagramm", d.daten(), *FO.STANDARD_MASS["diagramm"])
+                FO.einfuegen(self.ed, "diagramm", d.daten(), *_frei_objekt_text_daten.standard_mass()["diagramm"])
 
 
     def piktogramm(self, k=None):

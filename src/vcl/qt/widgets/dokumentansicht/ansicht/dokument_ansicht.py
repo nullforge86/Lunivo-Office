@@ -19,7 +19,7 @@ from core.geometrie import Point
 from writer.werte import mm_zu_px as mm_to_px
 from core.layout import LayoutEngine, LayoutErgebnis
 from core.layout.drucklayout import formatwerte as F, schreibmarke as SM
-from core.layout.drucklayout.seitenlayout import BLATT_ABSTAND_PX
+from writer.anbindung.geometrie import blatt_abstand_px
 from core.layout.drucklayout.ausgabe import DokumentRenderer
 from core.layout.drucklayout.ausgabe.seite.seitenueberlagerung import Ueberlagerung, rendere_cursor, rendere_ueberlagerung
 from core.layout.drucklayout.ausgabe.backend import rgba
@@ -242,7 +242,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
             reihe = masse[z:z + 2]
             for k, (b, h) in enumerate(reihe):
                 aus.append((sum(m[0] for m in reihe[:k]) + SEITEN_LUECKE * k, y, b, h))
-            y += max(m[1] for m in reihe) + BLATT_ABSTAND_PX
+            y += max(m[1] for m in reihe) + blatt_abstand_px()
         return aus
 
     def _groesse_setzen(self) -> None:

@@ -120,7 +120,7 @@ _BALKEN = ((0.62, 0.38, 0.28), (0.34, 0.78, 0.30), (0.52, 0.26, 0.46), (0.86, 0.
 def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
     """Vorschau des Diagrammstils ``nr`` (``diagramm.STILE``): Grund, Raster und Schrift wie im fertigen Diagramm, mit drei Säulenreihen."""
     from vcl.qt.rendering.diagramme import diagramm as D
-    _n, grund, schrift, raster = D.STILE[nr]
+    _n, grund, schrift, raster = _diagramm_stile_modell.stile()[nr]
     pm = QPixmap(groesse); pm.fill(QColor(grund))
     w, h = groesse.width(), groesse.height()
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
@@ -139,11 +139,11 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
     gruppe = bw / len(_BALKEN)
     for gi, werte in enumerate(_BALKEN):
         for si, wert in enumerate(werte):
-            p.setBrush(QColor(D.FARBEN[si]))
+            p.setBrush(QColor(_diagrammtypen.farben()[si]))
             sx = ox + gi * gruppe + gruppe * 0.12 + si * gruppe * 0.25
             p.drawRect(QRectF(sx, oy + bh * (1 - wert), gruppe * 0.22, bh * wert))
     for si in range(3):                                                                  # Legende
-        p.setBrush(QColor(D.FARBEN[si]))
+        p.setBrush(QColor(_diagrammtypen.farben()[si]))
         x = w * 0.5 - 24 + si * 18
         p.drawRect(QRectF(x, h - 8, 4, 4)); p.setBrush(leise); p.drawRect(QRectF(x + 6, h - 7.5, 8, 3))
     p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1)); p.setBrush(Qt.NoBrush)
@@ -154,14 +154,14 @@ def stil_bild(nr: int, groesse: QSize = STIL_KACHEL) -> QPixmap:
 
 def _stilname(nr: int) -> str:
     from vcl.qt.rendering.diagramme import diagramm as D
-    return D.STILE[nr][0]
+    return _diagramm_stile_modell.stile()[nr][0]
 
 
 def diagramm_stile_menue(b) -> RasterAuswahl:
     """Alle Diagrammstile als Kacheln (Name im Tipp); die Wahl ist ``diagrammStil``."""
     from vcl.qt.rendering.diagramme import diagramm as D
     m = RasterAuswahl(b.w, titel="Diagrammstile", spalten=2, groesse=STIL_KACHEL)
-    for i in range(len(D.STILE)):
+    for i in range(len(_diagramm_stile_modell.stile())):
         m.kachel(str(i), _stilname(i), stil_bild(i)).setCheckable(False)
     m.gewaehlt.connect(lambda k: b.diagrammStil(None, int(k)))
     return m
@@ -182,6 +182,8 @@ from vcl.qt.widgets.menues.dropdown.objektmenues import smartart_menues as _sm  
 
 KLAPPEN = {"bildZuschneiden": zuschneiden_menue, **_dp.KLAPPEN, **_sm.KLAPPEN, **_fm.KLAPPEN}
 from vcl.qt.widgets.objektwerkzeuge.diagramme.smartart_stil_kacheln import stile_galerie_org as _sa_stile  # noqa: E402
+from writer.anbindung import diagramm_stile_modell as _diagramm_stile_modell
+from writer.anbindung import diagrammtypen as _diagrammtypen
 
 GALERIEN = {"diagrammStile": diagramm_stile_galerie, **_sm.GALERIEN, **_fm.GALERIEN, "smartartStile": _sa_stile}   # SmartArt-Stile mit Organigramm-Motiv wie in der Vorlage
 FELDER = {**_dp.FELDER}                                                              # Eingabefelder des Bandes, die die Oberfläche selbst baut

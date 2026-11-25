@@ -6,8 +6,8 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from framework.schnittstellen.einstellungen import Einstellungen
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QDialog, QListView, QListWidget, QListWidgetItem, QWidget
-from core.listen.aufzaehlungen import listen as L
-from core.listen.mehrstufig import mehrstufig as M
+from writer.anbindung import listen as L
+from writer.anbindung import mehrstufig as M
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.symbole.medien.listen_symbole import liste_zeichner
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -30,7 +30,7 @@ _SCHLUESSEL = "listen/benutzer"
 def benutzerlisten() -> list[dict]:
     try:
         d = json.loads(str(Einstellungen().get(_SCHLUESSEL, "[]") or "[]"))
-        return [L.liste(x["stil"], x["praefix"], x["suffix"], x["start"]) for x in d if x.get("stil") in L.STILE]
+        return [L.liste(x["stil"], x["praefix"], x["suffix"], x["start"]) for x in d if x.get("stil") in L.stile()]
     except (ValueError, KeyError, TypeError):
         return []
 
@@ -73,9 +73,9 @@ class ListenDialog(PanelFaehig, QDialog):
         self._benutzer = benutzerlisten()
         v = _spalte("standard", self)
         self.reiter = AngepassteReiter(); v.addWidget(self.reiter, 1)
-        self.r_punkte = _raster([None, L.liste("disc"), L.liste("square")] + [M.aufzaehlung(g) for g in M.GLYPHEN], bild=_gl_bild)
-        self.r_zahlen = _raster([None] + [L.liste(*n) for n in L.NUMMERIERUNGEN])
-        self.r_gl = _raster([None] + [g for _n, g in M.VORLAGEN], bild=_gl_bild)
+        self.r_punkte = _raster([None, L.liste("disc"), L.liste("square")] + [M.aufzaehlung(g) for g in M.glyphen()], bild=_gl_bild)
+        self.r_zahlen = _raster([None] + [L.liste(*n) for n in L.nummerierungen()])
+        self.r_gl = _raster([None] + [g for _n, g in M.vorlagen()], bild=_gl_bild)
         self.reiter.addTab(self.r_punkte, "Aufzählungszeichen"); self.reiter.addTab(self.r_zahlen, "Nummerierung")
         self.reiter.addTab(self.r_gl, "Gliederung nummeriert")
         # ---- Benutzerdefinierte Liste
@@ -121,7 +121,7 @@ class ListenDialog(PanelFaehig, QDialog):
         """Das Raster, in dem ein bisheriges Format steht: Gliederung, Aufzählung oder Nummerierung."""
         if "ebenen" in aktuell:
             return self.r_punkte if M.ist_aufzaehlung(aktuell) else self.r_gl
-        return self.r_punkte if L.STILE[aktuell["stil"]][1] else self.r_zahlen
+        return self.r_punkte if L.stile()[aktuell["stil"]][1] else self.r_zahlen
 
     # ---- Benutzerdefiniert
     def _fuelle_benutzer(self) -> None:
@@ -167,7 +167,7 @@ class ListenDialog(PanelFaehig, QDialog):
     def _anpassen(self) -> None:
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         s = self._auswahl()
-        if s is not None and "ebenen" not in s and L.STILE[s["stil"]][1]:      # Punkt, Kreis, Quadrat: als eigenes Zeichen anpassen
+        if s is not None and "ebenen" not in s and L.stile()[s["stil"]][1]:      # Punkt, Kreis, Quadrat: als eigenes Zeichen anpassen
             s = M.aufzaehlung({"disc": "●", "circle": "○", "square": "■"}[s["stil"]])
         if s is not None and "ebenen" in s:
             bullets = M.ist_aufzaehlung(s)

@@ -1,13 +1,14 @@
 from __future__ import annotations
 from PySide6.QtGui import QColor
-from core.objekte.formen.formen_stile_daten import SPALTEN, ZEILEN
+from writer.anbindung.formen_stile_daten import spalten
+from writer.anbindung.formen_stile_daten import zeilen
 
 
 def formstil(zeile: int, spalte: int) -> dict:
     """Die Werte des Stils: {"fuell": Farbe oder "" (keine), "fuell_art": "" | verlauf | abgestuft | glanz, "linie": Farbe, "strich": pt,
     "effekt": Wörterbuch für ``fx`` oder None}."""
-    zeile = max(0, min(zeile, len(ZEILEN) - 1)); spalte = max(0, min(spalte, len(SPALTEN) - 1))
-    farbe = SPALTEN[spalte][1]
+    zeile = max(0, min(zeile, len(zeilen()) - 1)); spalte = max(0, min(spalte, len(spalten()) - 1))
+    farbe = spalten()[spalte][1]
     dunkel = QColor(farbe).darker(150).name()
     if zeile == 0:
         return {"fuell": "", "fuell_art": "", "linie": farbe, "strich": 2.5, "effekt": None}
@@ -27,5 +28,5 @@ def formstil(zeile: int, spalte: int) -> dict:
 
 def formstile_raster() -> list[list[dict]]:
     """Das Raster für die Galerie: [Zeile][Spalte] = {"zeile", "spalte", "name" (z. B. „Voll – Blau“), **Werte von ``formstil``}."""
-    return [[{"zeile": z, "spalte": s, "name": f"{ZEILEN[z]} – {SPALTEN[s][0]}", **formstil(z, s)} for s in range(len(SPALTEN))]
-            for z in range(len(ZEILEN))]
+    return [[{"zeile": z, "spalte": s, "name": f"{zeilen()[z]} – {spalten()[s][0]}", **formstil(z, s)} for s in range(len(spalten()))]
+            for z in range(len(zeilen()))]

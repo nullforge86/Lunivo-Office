@@ -313,7 +313,7 @@ class TextZeichenBefehle:
         """Das Fenster „Eingeschlossene Zeichen“: der gewählte Text bekommt Kreis, Quadrat, Dreieck oder Raute."""
         if not self.ed:
             return
-        from core.formatierung.schrift import zeichenzusatz as Z
+        from writer.anbindung import zeichenzusatz as Z
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         from vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog import UmschlosseneZeichenDialog
         c = self.ed.textCursor()
@@ -330,7 +330,7 @@ class TextZeichenBefehle:
         """Das Fenster „Phonetisches Leitzeichen“: Leittext über dem gewählten Text."""
         if not self.ed:
             return
-        from core.formatierung.schrift import zeichenzusatz as Z
+        from writer.anbindung import zeichenzusatz as Z
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         from vcl.qt.widgets.dialoge.formatierung.ruby_dialog import RubyDialog
         c = self.ed.textCursor()

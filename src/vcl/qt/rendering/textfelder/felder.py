@@ -59,12 +59,12 @@ def _schalter(anweisung: str, zeichen: str) -> str | None:
 
 
 def _ohne_schalter(anweisung: str) -> str:
-    from core.dokument.felder_text_kern import _ohne_schalter as kernfunktion
+    from writer.anbindung.felder_text_kern import ohne_schalter as kernfunktion
     return kernfunktion(anweisung)
 
 
 def schreibweise(n: int, art: str | None) -> str:
-    from core.text.zahlformat import zahl_text
+    from writer.anbindung.zahlformat import zahl_text
     return zahl_text(n, {"ROMAN": "roemisch", "roman": "roemisch_klein", "ALPHABETIC": "gross", "alphabetic": "klein"}.get(art or "", "arabisch"))
 
 

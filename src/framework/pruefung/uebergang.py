@@ -21,52 +21,52 @@ vcl.qt.eingabe.korrektur_dienst
 vcl.qt.fenster.befehle.hauptreiter.einfuegen vcl.qt.fenster.befehle.hauptreiter.einfuegen_objekte 
 vcl.qt.fenster.befehle.hauptreiter.pruefen vcl.qt.fenster.befehle.hauptreiter.seite 
 vcl.qt.fenster.befehle.hauptreiter.text_zeichen
-vcl.qt.fenster.befehle.kontextreiter.diagrammtools
 
-vcl.qt.fenster.befehle.kontextreiter.tabellen_format vcl.qt.fenster.befehle.kontextreiter.texttools 
+
+
 vcl.qt.drucken.drucken 
-vcl.qt.eingabe.ki.ki_chat 
+
 vcl.qt.eingabe.ki_dienst vcl.qt.widgets.menues.backstage.backstage_dokument
 
 vcl.qt.fenster.dateien.dateien_export vcl.qt.fenster.dateien.dateien_oeffnen vcl.qt.fenster.dateien.dateien_speichern
 vcl.qt.fenster.dateien.dateien_vorlagen vcl.qt.fenster.fenster.anwendung vcl.qt.fenster.fenster.dokument_sync
 vcl.qt.rendering.formen.anzeige vcl.qt.rendering.formen.geometrie
-vcl.qt.rendering.formen.pfad vcl.qt.rendering.formen.rendering vcl.qt.widgets.bausteine.rahmen.linien vcl.qt.widgets.bausteine.symbole.bauteile.mini_leiste
-vcl.qt.widgets.bausteine.symbole.bauteile.symbole vcl.qt.widgets.seitenleisten.chat.chat_blase 
+vcl.qt.rendering.formen.pfad vcl.qt.rendering.formen.rendering vcl.qt.widgets.bausteine.symbole.bauteile.mini_leiste
+vcl.qt.widgets.bausteine.symbole.bauteile.symbole 
 
 
 vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_text_panel
-vcl.qt.widgets.dialoge.dokument.aenderungs_vorschau 
-vcl.qt.widgets.dialoge.dokument.liste_dialog vcl.qt.widgets.dialoge.dokument.pdf_export
-vcl.qt.widgets.dialoge.dokument.tabstopp_dialog
-vcl.qt.widgets.menues.dropdown.objektmenues.diagramm_popups
 
-vcl.qt.widgets.menues.dropdown.objektmenues.objekt_menues
+vcl.qt.widgets.dialoge.dokument.pdf_export
+vcl.qt.widgets.dialoge.dokument.tabstopp_dialog
+
+
+
 
 vcl.qt.widgets.bausteine.interaktion.felder.auswahl_bereich vcl.qt.widgets.dialoge.formatierung.absatz_dialog
-vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog vcl.qt.widgets.dialoge.formatierung.ruby_dialog
+vcl.qt.widgets.dialoge.formatierung.formatvorlage_dialog 
 
 vcl.qt.widgets.dialoge.formatierung.text_format 
 vcl.qt.widgets.dialoge.dokument.gliederung_anpassen_dialog vcl.qt.widgets.dialoge.dokument.liste_dialog_hilfen
-vcl.qt.widgets.dialoge.dokument.listen_dialog vcl.qt.widgets.dialoge.dokument.nummerierung_anpassen_dialog
 
-vcl.qt.widgets.dialoge.einfuegen.seitenzahl_dialog 
-vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_dialog vcl.qt.widgets.dialoge.einfuegen.trenner_dialog 
-vcl.qt.widgets.dialoge.formatierung.objekt_format_panel 
 
-vcl.qt.widgets.dialoge.formatierung.rahmen_seite
+
+vcl.qt.widgets.dialoge.einfuegen.sonderzeichen_dialog 
 
 
 
 
-vcl.qt.widgets.dialoge.tabellen_eigenschaften_dialog
-vcl.qt.widgets.dokumentansicht.ansicht.lineal_h 
-vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_hilfen vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel
-vcl.qt.widgets.dialoge.formatierung.umschlossen_dialog vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
+
+
+
+
+
+vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel
+vcl.qt.widgets.bausteine.symbole.medien.datei_symbole
 vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
 vcl.qt.widgets.seitenleisten.vorlagen.vorlagen_galerie vcl.qt.widgets.dialoge.dokument_dialoge
 
-vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster 
+
 vcl.qt.widgets.dialoge.einfuegen.wasserzeichen_fenster 
 vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge
 vcl.qt.widgets.dialoge.optionen_seiten.datei vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
@@ -78,9 +78,9 @@ vcl.qt.widgets.dokumentansicht.ansicht.objekt_bedienung vcl.qt.widgets.dokumenta
 vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor
 vcl.qt.widgets.dokumentansicht.bearbeitung.kern_objekte 
 vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich
-vcl.qt.widgets.dokumentansicht.dokumentfenster.suchen_feld vcl.qt.widgets.dokumentansicht.kopffuss.noten_feld vcl.qt.widgets.ribbon.band_gruppen
-vcl.qt.widgets.ribbon.band_leiste vcl.qt.widgets.ribbon.band_stile vcl.qt.widgets.seitenleisten.ki_panel
-vcl.qt.widgets.seitenleisten.schreib_panel vcl.qt.widgets.seitenleisten.seitenleiste vcl.rendering.seitenlayout.pdf_ausgabe
+vcl.qt.widgets.dokumentansicht.dokumentfenster.suchen_feld vcl.qt.widgets.ribbon.band_gruppen
+vcl.qt.widgets.ribbon.band_leiste vcl.qt.widgets.ribbon.band_stile 
+vcl.qt.widgets.seitenleisten.schreib_panel vcl.rendering.seitenlayout.pdf_ausgabe
 vcl.qt.widgets.bausteine.skalierung.daten vcl.qt.widgets.bausteine.symbole.bauteile.symbole_hybrid
 """.split()
 

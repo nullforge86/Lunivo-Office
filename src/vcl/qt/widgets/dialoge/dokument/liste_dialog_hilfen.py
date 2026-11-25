@@ -3,8 +3,9 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QSpinBox, QWidget
-from core.listen.aufzaehlungen import listen as L
+from writer.anbindung import listen as L
 from core.listen.mehrstufig import mehrstufig as M
+from writer.anbindung import mehrstufig as _mehrstufig
 from vcl.qt.widgets.bausteine.symbole.medien.listen_symbole import liste_zeichner
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_LISTENSTIL_KACHEL, RAND_KEIN
@@ -52,7 +53,7 @@ class _Zahlenformat(QWidget):
         self.schrift = knopf("standard", "Schriftart …", aktion=self._schriftart)
         self.zeichen: dict = {}
         self.art = Auswahlfeld()
-        for k, st in L.STILE.items():
+        for k, st in L.stile().items():
             if not st[1]:
                 self.art.addItem(st[0], k)
         self.art.zeichen(DROPDOWN_ZEICHEN_KURZ)
@@ -95,7 +96,7 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
         return _bild(defn, groesse)
     pm = QPixmap(groesse); pm.fill(QColor(Farbe.PAPIER))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
-    if M.ist_aufzaehlung(defn):                              # Aufzählung mit eigenem Zeichen: drei Zeilen mit dem Zeichen davor
+    if _mehrstufig.ist_aufzaehlung(defn):                              # Aufzählung mit eigenem Zeichen: drei Zeilen mit dem Zeichen davor
         f = p.font(); f.setPixelSize(SCHRIFT_LISTE_BEISPIEL_PX); p.setFont(f)
         for i in range(3):
             y = groesse.height() / 2 - 24 + i * 24
@@ -103,11 +104,11 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
             p.setPen(QColor(Farbe.GRAU_HELL)); p.drawLine(int(groesse.width() * 0.3 + 30), int(y), int(groesse.width() * 0.3 + 90), int(y))
         _rahmen(p, groesse); p.end()
         return QIcon(pm)
-    zaehler = [0] * M.EBENEN
+    zaehler = [0] * _mehrstufig.ebenen()
     f = p.font(); f.setPixelSize(SCHRIFT_LISTE_KLEIN_PX); p.setFont(f)
     for i, n in enumerate((1, 2, 2, 3)):
         M.zaehlen(zaehler, defn, n)
-        t = M.nummer_der_ebene(defn, zaehler, n)
+        t = _mehrstufig.nummer_der_ebene(defn, zaehler, n)
         y = 22 + i * 24
         x = 14 + (n - 1) * 10
         p.setPen(QColor(Farbe.TINTE)); p.drawText(QRectF(x, y - 7, 40, 14), Qt.AlignVCenter | Qt.AlignLeft, t)

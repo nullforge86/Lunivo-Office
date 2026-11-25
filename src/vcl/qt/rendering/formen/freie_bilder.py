@@ -8,7 +8,9 @@ from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild
 from core.layout.drucklayout.objekte import objekt_rechteck
 from vcl.qt.rendering.formen import bilddaten as BD
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.objekte.formen.freie_bilder_daten import MAX_BILDPUNKTE, SCHEMA, _PNG_ABLAGE, _text_gerade
+from core.objekte.formen.freie_bilder_daten import _PNG_ABLAGE, _text_gerade
+from writer.anbindung.freie_bilder_daten import max_bildpunkte
+from writer.anbindung.freie_bilder_daten import schema
 
 
 def _zu_gross(blob: bytes) -> bool:
@@ -21,7 +23,7 @@ def _zu_gross(blob: bytes) -> bool:
     leser = QImageReader(puffer)
     groesse = leser.size()
     del leser                                                      # der Leser muss vor Puffer und Bytes enden (sonst Absturz bei TIFF)
-    return groesse.isValid() and groesse.width() * groesse.height() > MAX_BILDPUNKTE
+    return groesse.isValid() and groesse.width() * groesse.height() > max_bildpunkte()
 
 
 def bild_aus_daten(blob: bytes) -> QImage:
@@ -67,7 +69,7 @@ def farbe_aus_element(el, ns) -> "QColor":
     elif tag == "prstClr":
         c = QColor({"black": Farbe.SCHWARZ, "white": Farbe.WEISS}.get(wert, Farbe.GRAU_MITTEL))
     else:
-        c = QColor(SCHEMA.get(wert, Farbe.GRAU_MITTEL))
+        c = QColor(schema().get(wert, Farbe.GRAU_MITTEL))
     for m in el:
         name = m.tag.rsplit("}", 1)[-1]
         try:

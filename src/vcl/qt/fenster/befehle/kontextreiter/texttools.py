@@ -13,6 +13,8 @@ from vcl.qt.fenster.befehle.hauptreiter.text import ZEILENABSTAENDE
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben import farben as BF
 from vcl.qt.widgets.bausteine import FarbPalette
+from writer.anbindung import einfuegen_hilfen as _einfuegen_hilfen
+from writer.anbindung import frei_objekt_text_daten as _frei_objekt_text_daten
 
 STRICHE = (0.5, 1.0, 2.0, 3.0, 5.0, 8.0)
 WA_STILKACHELN = (0, 1, 2)                    # die drei Kacheln im Band: Schwarz, Blau, Orange (wie in der Vorlage)
@@ -29,13 +31,13 @@ class TextToolsBefehle:
         """Welches freie Textobjekt ist markiert? ``wordart`` | ``textfeld`` | None."""
         from vcl.qt.rendering.formen import frei_objekt as FO
         art = FO.art_gewaehlt(self.ed) if self.ed else None
-        return art if art in FO.TEXT_ARTEN else None
+        return art if art in _frei_objekt_text_daten.text_arten() else None
 
 
     def _wa(self) -> dict:
         from vcl.qt.rendering.formen import frei_objekt as FO
         z = FO.ziel(self.ed) if self.ed else None
-        return z[1] if z and z[0] in FO.TEXT_ARTEN else {}
+        return z[1] if z and z[0] in _frei_objekt_text_daten.text_arten() else {}
 
 
     def _wa_set(self, **kw) -> bool:
@@ -196,24 +198,24 @@ class TextToolsBefehle:
 
 
     def _tt_liste_ist(self, aufzaehlung: bool) -> bool:
-        from core.listen.aufzaehlungen import listen as L
-        from core.listen.mehrstufig import mehrstufig as M
+        from writer.anbindung import listen as L
+        from writer.anbindung import mehrstufig as M
         spec = self._wa().get("liste")
         if not isinstance(spec, dict):
             return False
         if "ebenen" in spec:
             return M.ist_aufzaehlung(spec) == aufzaehlung
-        return L.STILE.get(spec.get("stil"), ("", None))[1] == aufzaehlung
+        return L.stile().get(spec.get("stil"), ("", None))[1] == aufzaehlung
 
 
     def ttPunkte(self, k=None):
-        from core.listen.aufzaehlungen import listen as L
+        from writer.anbindung import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(True) else L.liste("disc"))
 
     def an_ttPunkte(self): return self._tt_liste_ist(True)
 
     def ttZahlen(self, k=None):
-        from core.listen.aufzaehlungen import listen as L
+        from writer.anbindung import listen as L
         self._tt_liste_setzen(None if self._tt_liste_ist(False) else L.liste("dezimal", "", "."))
 
     def an_ttZahlen(self): return self._tt_liste_ist(False)
@@ -309,7 +311,7 @@ class TextToolsBefehle:
 
     def galerie_ttWordartStile(self):
         from vcl.qt.rendering.formen import einfuegen as E
-        kacheln = [(E.WORDART_VORLAGEN[i][0], self._wa_kachel(i), lambda i=i: self.ttStil(i)) for i in WA_STILKACHELN]
+        kacheln = [(_einfuegen_hilfen.wordart_vorlagen()[i][0], self._wa_kachel(i), lambda i=i: self.ttStil(i)) for i in WA_STILKACHELN]
         return {"kacheln": kacheln, "menue": self.menue_ttStile(), "name": "WordArt-Stile"}
 
 
@@ -330,7 +332,7 @@ class TextToolsBefehle:
         from vcl.qt.rendering import wordart as WE
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         m = RasterAuswahl(self.w, titel="Formatvorlage", spalten=5, groesse=QSize(40, 40))
-        for i, (name, *_r) in enumerate(E.WORDART_VORLAGEN):
+        for i, (name, *_r) in enumerate(_einfuegen_hilfen.wordart_vorlagen()):
             pm = QPixmap(QSize(40, 40)); pm.fill(QColor(BF.KACHEL_GRUND))
             p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
             img = WE.wordart_bild("A", vorlage=i, pt=80).scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -563,7 +565,7 @@ class TextToolsBefehle:
         e = self.ed
         if not e:
             return
-        schluessel = [key for key, a, *_r in e._frei_liste() if a.get("art") in FO.TEXT_ARTEN]
+        schluessel = [key for key, a, *_r in e._frei_liste() if a.get("art") in _frei_objekt_text_daten.text_arten()]
         if not schluessel:
             self.w.lbl_msg.setText("Im Dokument gibt es kein WordArt und kein Textfeld.")
             return

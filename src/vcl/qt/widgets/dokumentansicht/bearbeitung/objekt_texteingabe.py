@@ -8,7 +8,9 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPen, QTextCursor
 
 from vcl.qt.rendering.formen import frei_objekt_ziel as ziel
-from vcl.qt.rendering.formen.frei_objekt import TEXT_ARTEN, ZEICHEN_SCHLUESSEL, _aendern_innen, laeufe_zusammen
+from vcl.qt.rendering.formen.frei_objekt import _aendern_innen, laeufe_zusammen
+from writer.anbindung.frei_objekt_text_daten import text_arten
+from writer.anbindung.wordartobjekt import zeichen_schluessel
 from vcl.qt.widgets.bausteine.symbole.bauteile.textfeld_fragmente import absatz_fragmente
 from vcl.qt.widgets.bausteine.farben.darstellung import objekttext_eingabe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, TEXTOBJEKT_FUELLUNG, WORDART_FUELLUNG
@@ -109,7 +111,7 @@ def _lauf_aus_format(cf, basis: dict) -> dict:
 
 
 def _basis(d: dict, art: str) -> dict:
-    return {k: d.get(k, True if (k == "fett" and art == "wordart") else None) for k in ZEICHEN_SCHLUESSEL}
+    return {k: d.get(k, True if (k == "fett" and art == "wordart") else None) for k in zeichen_schluessel()}
 
 
 def _widget_laeufe(w, d: dict, art: str) -> list[dict] | None:
@@ -144,7 +146,7 @@ def _edit_laden(ed) -> None:
     c = w.textCursor()
     from PySide6.QtGui import QTextCharFormat
     for r in (d.get("laeufe") or [{"t": d.get("text", "")}]):
-        c.insertText(r["t"], _format_aus_kw({k: v for k, v in r.items() if k in ZEICHEN_SCHLUESSEL}))
+        c.insertText(r["t"], _format_aus_kw({k: v for k, v in r.items() if k in zeichen_schluessel()}))
     w.blockSignals(False)
     c = w.textCursor(); n = len(w.toPlainText())
     c.setPosition(min(anker, n)); c.setPosition(min(pos, n), QTextCursor.KeepAnchor); w.setTextCursor(c)
@@ -190,7 +192,7 @@ def bearbeiten_starten(ed) -> bool:
     ohne Markierung auf das ganze Objekt (``aendern``)."""
     from PySide6.QtWidgets import QTextEdit
     z = ziel(ed)
-    if z is None or z[0] not in TEXT_ARTEN:
+    if z is None or z[0] not in text_arten():
         return False
     bearbeiten_beenden(ed)
     art, d, key, _a, _b = z

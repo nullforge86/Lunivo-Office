@@ -5,7 +5,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPen
 from PySide6.QtWidgets import QDialog, QLabel
-from core.listen.aufzaehlungen import listen as L
+from writer.anbindung import listen as L
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_LISTENVORSCHAU, GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN
@@ -24,7 +24,7 @@ class NummerierungAnpassenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, spec: dict | None = None):
         super().__init__(parent)
         self.setWindowTitle("Nummerierung anpassen"); self.resize(*GROESSE_FENSTER_NUMMERIERUNG_ANPASSEN)
-        s = L.liste("dezimal") if not spec or L.STILE[spec["stil"]][1] else spec
+        s = L.liste("dezimal") if not spec or L.stile()[spec["stil"]][1] else spec
         v = _spalte("standard", self)
         self.zf = _Zahlenformat(f"{PLATZHALTER} steht für die Nummer; davor und danach darf Text stehen")
         self.format, self.art, self.start, self.schrift = self.zf.format, self.zf.art, self.zf.start, self.zf.schrift

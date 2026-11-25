@@ -5,7 +5,11 @@ from vcl.qt.rendering.formen import bild_einfuegen as BE
 from vcl.qt.rendering.formen import einfuegen as E
 from vcl.qt.rendering.formen import form_einfuegen as FE
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.objekte.formen.formen_daten import GRUPPEN_ABSTAND, STANDARD, VORLAGEN, _FO_SCHLUESSEL, form_daten
+from core.objekte.formen.formen_daten import _FO_SCHLUESSEL
+from writer.anbindung.formen_daten import gruppen_abstand
+from writer.anbindung.formen_daten import standard
+from writer.anbindung.formen_daten import vorlagen
+from writer.anbindung.formen_daten import form_daten
 
 
 def _zeichnen(d: dict) -> QImage:
@@ -15,14 +19,14 @@ def _zeichnen(d: dict) -> QImage:
 
 def _gruppe_zeichnen(kinder: list[dict]) -> QImage:
     bilder = [_zeichnen(k) for k in kinder]
-    b = sum(i.width() for i in bilder) + GRUPPEN_ABSTAND * (len(bilder) - 1)
+    b = sum(i.width() for i in bilder) + gruppen_abstand() * (len(bilder) - 1)
     h = max(i.height() for i in bilder)
     img = E._leer(b, h)
     p = QPainter(img)
     x = 0
     for i in bilder:
         p.drawImage(x, (h - i.height()) // 2, i)
-        x += i.width() + GRUPPEN_ABSTAND
+        x += i.width() + gruppen_abstand()
     p.end()
     return img
 
@@ -45,7 +49,7 @@ def aendern(ed, **felder) -> bool:
 
 
 def vorlage(ed, name: str) -> bool:
-    for n, fu, li, st in VORLAGEN:
+    for n, fu, li, st in vorlagen():
         if n == name:
             return aendern(ed, fuell=fu, linie=li, strich=st)
     return False
@@ -95,7 +99,7 @@ def zeichenbereich_bild(d: dict, skala: float = 1.0) -> QImage:
     p.scale(skala, skala)
     p.setPen(QPen(QColor(Farbe.GRAU_HELL), 1, Qt.DashLine)); p.drawRect(QRectF(0.5, 0.5, b - 1, h - 1))
     for k in d.get("kinder", []):
-        f = {**STANDARD, **k}
+        f = {**standard(), **k}
         bild = FE.form_bild(f["form"], int(f["breite"]), int(f["hoehe"]), f["fuell"], f["linie"], float(f["strich"]), f["text"], skala=skala)
         p.drawImage(QRectF(float(f["x"]), float(f["y"]), float(f["breite"]), float(f["hoehe"])), bild)
     p.end()

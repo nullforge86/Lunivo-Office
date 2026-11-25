@@ -8,6 +8,7 @@ from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.widgets.bausteine.rahmen.linien import Linie
 from vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_bausteine import _OHNE, _optionen_name, _text_teil, _still
+from writer.anbindung import diagramm_format_daten as _diagramm_format_daten
 
 
 class DiagrammFormatWerteMixin:
@@ -21,7 +22,7 @@ class DiagrammFormatWerteMixin:
             out["fuell"] = fu
         out["linie"] = self._linie_wert()
         fx = self._werte_effekte()
-        for k in F.FX_SCHLUESSEL:
+        for k in _diagramm_format_daten.fx_schluessel():
             out[k] = fx.get(k)
         return out
 

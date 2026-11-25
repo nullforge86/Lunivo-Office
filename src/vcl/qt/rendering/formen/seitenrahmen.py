@@ -12,7 +12,8 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF
 
 from core.geometrie import Rect
-from core.layout.drucklayout.ausgabe.seite.seitenrahmen import abstaende_pt, rechteck as _rechteck, zeichnen as _zeichnen  # noqa: F401  (Rechnung und Zeichnen: Kern; ``abstaende_pt`` für das Rahmenfenster)
+from core.layout.drucklayout.ausgabe.seite.seitenrahmen import rechteck as _rechteck, zeichnen as _zeichnen
+from writer.anbindung.seitenrahmen import abstaende_pt  # noqa: F401  (Rechnung und Zeichnen: Kern; ``abstaende_pt`` für das Rahmenfenster)
 
 KUNST = (("", "(keine)"), ("stars", "Sterne"), ("hearts", "Herzen"), ("triangles", "Dreiecke"), ("gems", "Edelsteine"), ("zigZag", "Zickzack"))
 

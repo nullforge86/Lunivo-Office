@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from writer.funktionen import bearbeiten as G
 from core.suche.textsuche import suche as S
+from writer.anbindung import suche as _suche
 from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
@@ -519,7 +520,7 @@ class SuchenFeld(QWidget):
 
     def _spezial_menue_fuellen(self) -> None:
         m = self.spezial_menue; m.clear()
-        liste = S.SPEZIAL_ERSETZEN if self._fokus == "ersetzen" else S.SPEZIAL
+        liste = _suche.spezial_ersetzen() if self._fokus == "ersetzen" else _suche.spezial()
         for name, code in liste:
             m.eintrag(name, lambda c=code: self._spezial(c))
 

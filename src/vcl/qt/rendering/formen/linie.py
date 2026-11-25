@@ -2,10 +2,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
-from core.layout.drucklayout.ausgabe.objekte.linien import STILE as KERN_STILE, zeichne_linie, zeichne_rahmen
+from core.layout.drucklayout.ausgabe.objekte.linien import zeichne_linie, zeichne_rahmen
+from writer.anbindung.linien import stile
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STIFT_LINIE_MIN
-from core.objekte.formen.linie_daten import ALLE_SEITEN
+from writer.anbindung.linie_daten import alle_seiten
 
 
 _STRICH = {None: Qt.SolidLine, "dot": Qt.DotLine, "dash": Qt.DashLine, "dashdot": Qt.DashDotLine, "dashdotdot": Qt.DashDotDotLine}
@@ -14,7 +15,7 @@ _STRICH = {None: Qt.SolidLine, "dot": Qt.DotLine, "dash": Qt.DashLine, "dashdot"
 def _bauen() -> dict:
     """Die Linienarten der Auswahl „Formatvorlage“: Schlüssel → (Name, Strichart, DOCX-Wert, Bahnen, wellig). Die Tabelle steht Qt-frei in ``core/rendering/linien.py``;
     hier wird nur die Strichart zu Qt-Werten."""
-    return {k: (n, s if isinstance(s, tuple) else _STRICH[s], d, bahnen, wellig) for k, (n, s, d, bahnen, wellig) in KERN_STILE.items()}
+    return {k: (n, s if isinstance(s, tuple) else _STRICH[s], d, bahnen, wellig) for k, (n, s, d, bahnen, wellig) in stile().items()}
 
 
 STILE = _bauen()
@@ -40,14 +41,14 @@ class Linie:
     farbe: str = Farbe.SCHWARZ
     breite_pt: float = 1.0
     art: str = "einfach"
-    seiten: str = ALLE_SEITEN
+    seiten: str = alle_seiten()
     abstand: str = ""                    # Abstand zum Text in pt: "oben,unten,links,rechts" (leer = Vorgabe), nur beim Absatzrahmen
 
     def text(self) -> str:
         basis = f"{self.farbe}|{self.breite_pt:g}|{self.art}"
         if self.abstand:
             return f"{basis}|{self.seiten}|{self.abstand}"
-        return basis if self.seiten == ALLE_SEITEN else f"{basis}|{self.seiten}"
+        return basis if self.seiten == alle_seiten() else f"{basis}|{self.seiten}"
 
     def polster(self) -> tuple[float, float, float, float] | None:
         """(oben, unten, links, rechts) in pt, wenn ein eigener Abstand gesetzt ist."""
@@ -64,7 +65,7 @@ class Linie:
         t = text.split("|")
         try:
             return cls(t[0] or Farbe.SCHWARZ, float(t[1]) if len(t) > 1 and t[1] else 1.0, t[2] if len(t) > 2 and t[2] else "einfach",
-                       t[3] if len(t) > 3 else ALLE_SEITEN, t[4] if len(t) > 4 else "")
+                       t[3] if len(t) > 3 else alle_seiten(), t[4] if len(t) > 4 else "")
         except ValueError:
             return None
 

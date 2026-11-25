@@ -226,7 +226,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _liste(self) -> None:
         """Format ▸ Nummerierung …: dasselbe Fenster wie im Band; die Vorlage merkt sich die gewählte Liste."""
-        from core.listen.mehrstufig import mehrstufig
+        from writer.anbindung import mehrstufig as mehrstufig
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
         from vcl.qt.widgets.dialoge.dokument.listen_dialog import ListenDialog
         d = ListenDialog(self, mehrstufig.liste_aus_text(self._rs["liste"]))

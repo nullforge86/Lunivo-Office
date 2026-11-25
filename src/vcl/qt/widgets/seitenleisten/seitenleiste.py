@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 
 from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import VORLESEN
 from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen, rollflaeche
-from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
+from writer.anbindung.vorhersage import empfaenger as _empfaenger
 from vcl.qt.widgets.seitenleisten.schreib_panel import FundKarte, HinweisKarte
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
@@ -98,7 +98,7 @@ class SchreibhilfePanel(QWidget):
         kontext = QWidget(); kontext_gitter = FormularGitter(kontext); kontext_gitter.setContentsMargins(*RAND_KEIN)
         fw = kleintext_label("Für wen")
         self.thema = Auswahlfeld()
-        for name in EMPFAENGER:
+        for name in _empfaenger():
             self.thema.addItem(name)
         self.thema.setCurrentText(self.a.thema)
         self.thema.an_inhalt()

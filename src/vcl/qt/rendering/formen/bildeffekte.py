@@ -5,7 +5,10 @@ from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter, QPainterPat
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STAERKE_BILDEFFEKT_DUNKEL, STAERKE_BILDEFFEKT_HELL, STAERKE_BILDEFFEKT_RAND
 from vcl.qt.widgets.bausteine.farben.farben import ALPHA_VOLL, DURCHSICHTIG, GRAU_RGB, SCHWARZ_RGB, WEISS_RGB
-from core.objekte.formen.bildeffekte_daten import PX_PT, _dreht, _merken, hat_abschluss, tiefe_richtung
+from core.objekte.formen.bildeffekte_daten import _dreht, _merken
+from writer.anbindung.bildeffekte_daten import px_pt
+from writer.anbindung.bildeffekte_daten import hat_abschluss
+from writer.anbindung.bildeffekte_daten import tiefe_richtung
 
 
 def gespiegelt(img: QImage, waagrecht: bool = False, senkrecht: bool = False) -> QImage:
@@ -48,7 +51,7 @@ def _weich(img: QImage, radius: float) -> QImage:
 def weiche_kanten(bild: QImage, r: QRectF, ellipse: bool, radius_pt: float) -> QImage:
     """Das Bild mit weich auslaufendem Rand (Alpha nimmt zum Rand hin ab), in der Größe ``r``."""
     w, h = max(1, int(r.width())), max(1, int(r.height()))
-    rad = radius_pt * PX_PT
+    rad = radius_pt * px_pt()
 
     def bauen():
         m = _maske(bild, (w, h), ellipse)
@@ -85,14 +88,14 @@ def unter_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, fx: dict
     """Leuchten, Schatten und Reflektion hinter dem Bild (in der Reihenfolge der Schichten: Leuchten zuerst)."""
     w, h = max(1, int(r.width())), max(1, int(r.height()))
     dreh = fx.get("drehung") or {}
-    boden = max(0.0, float(dreh.get("boden", 0.0))) * PX_PT          # Abstand vom Boden: Schatten und Spiegelung bleiben unten, das Objekt „schwebt“
+    boden = max(0.0, float(dreh.get("boden", 0.0))) * px_pt()          # Abstand vom Boden: Schatten und Spiegelung bleiben unten, das Objekt „schwebt“
     if _dreht(dreh):                                             # Schatten, Leuchten und Tiefe gehören zur gedrehten Form (auch bei „Text nicht drehen“)
         bild, ellipse = drehung_3d(bild, r, ellipse, {**dreh, "text_gerade": False}), False
     p.save(); p.setRenderHint(QPainter.SmoothPixmapTransform)
     leu = fx.get("leuchten")
     if leu:
         c = QColor(leu.get("farbe", Farbe.BLAU)); c.setAlphaF(max(0.0, min(1.0, 1 - leu.get("transparenz", 60) / 100)))
-        rad = float(leu.get("groesse", 8.0)) * PX_PT
+        rad = float(leu.get("groesse", 8.0)) * px_pt()
         faktor = 1.0 + 2 * rad / max(w, h)
 
         def bauen_l():
@@ -103,14 +106,14 @@ def unter_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, fx: dict
     sch = fx.get("schatten")
     if sch:
         c = QColor(sch.get("farbe", Farbe.SCHWARZ)); c.setAlphaF(max(0.0, min(1.0, 1 - sch.get("transparenz", 60) / 100)))
-        weich = float(sch.get("weich", 4.0)) * PX_PT
+        weich = float(sch.get("weich", 4.0)) * px_pt()
         faktor = max(0.2, sch.get("groesse", 100) / 100.0)
 
         def bauen_s():
             return _schatten_bild(bild, w, h, ellipse, c, weich, faktor)
         img, pad = _merken(("schatten", id(bild), w, h, ellipse, c.name(QColor.HexArgb), round(weich, 1), round(faktor, 2)), bauen_s)
         a = math.radians(float(sch.get("winkel", 45)))
-        d = float(sch.get("abstand", 4.0)) * PX_PT
+        d = float(sch.get("abstand", 4.0)) * px_pt()
         from PySide6.QtCore import QPointF
         p.drawImage(QPointF(r.left() - pad + math.cos(a) * d, r.top() - pad + math.sin(a) * d + boden), img)
     if (fx.get("d3") or {}).get("tiefe", 0) > 0 or (fx.get("d3") or {}).get("kontur", 0) > 0:
@@ -118,7 +121,7 @@ def unter_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, fx: dict
     refl = fx.get("reflektion")
     if refl:
         hoehe = max(1, int(h * refl.get("groesse", 50) / 100.0))
-        abst = float(refl.get("abstand", 0.0)) * PX_PT
+        abst = float(refl.get("abstand", 0.0)) * px_pt()
         alpha0 = max(0.0, min(1.0, 1 - refl.get("transparenz", 50) / 100))
 
         def bauen_r():
@@ -155,11 +158,11 @@ def extrusion_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, d3: 
     (``kontur`` pt) am vorderen und hinteren Ende. Das Bild selbst wird danach vorn darübergemalt."""
     from PySide6.QtCore import QPointF
     w, h = max(1, int(r.width())), max(1, int(r.height()))
-    tiefe = max(0.0, float(d3.get("tiefe", 0))) * PX_PT
+    tiefe = max(0.0, float(d3.get("tiefe", 0))) * px_pt()
     unten = d3.get("unten") if (d3.get("unten") or {}).get("art", "keine") != "keine" else None
     if unten and tiefe > 0:
-        tiefe += max(0.0, float(unten.get("hoehe", 0.0))) * PX_PT * 0.5          # unterer Abschluss: die Rückseite wird um seine Höhe tiefer
-    kontur = max(0.0, float(d3.get("kontur", 0))) * PX_PT
+        tiefe += max(0.0, float(unten.get("hoehe", 0.0))) * px_pt() * 0.5          # unterer Abschluss: die Rückseite wird um seine Höhe tiefer
+    kontur = max(0.0, float(d3.get("kontur", 0))) * px_pt()
     dx, dy = tiefe_richtung(dreh)
     basis = QColor(d3.get("tiefe_farbe", Farbe.GRAU))
     mat, licht = d3.get("material", "matt"), d3.get("beleuchtung", "neutral")
@@ -178,7 +181,7 @@ def extrusion_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, d3: 
             a = k * math.pi / 4
             p.drawImage(QPointF(r.left() + ox + math.cos(a) * kontur, r.top() + oy + math.sin(a) * kontur), img)
     if unten and tiefe > 0:                                      # unterer Abschluss: ein dunkler Rand um das hintere Ende
-        img = getoent(_stufenfarbe(basis, mat, licht, 1.0).darker(150)); rad = max(1.0, float(unten.get("breite", 4.0)) * PX_PT)
+        img = getoent(_stufenfarbe(basis, mat, licht, 1.0).darker(150)); rad = max(1.0, float(unten.get("breite", 4.0)) * px_pt())
         for k in range(8):
             a = k * math.pi / 4
             p.drawImage(QPointF(r.left() + dx * tiefe + math.cos(a) * rad, r.top() + dy * tiefe + math.sin(a) * rad), img)
@@ -294,7 +297,7 @@ def abschluss_oben(bild: QImage, r: QRectF, ellipse: bool, ab: dict) -> QImage:
     Arten (``ABSCHLUSS``): rund, winkel, weich, kreuz (äußere Hälfte so, innere umgekehrt), rahmen (gleichmäßig dunkel). Ergebnis: Bild in der Form."""
     art = ab.get("art", "keine")
     w, h = max(1, int(r.width())), max(1, int(r.height()))
-    rad = max(1.0, min(float(ab.get("breite", 4.0)) * PX_PT, min(w, h) / 2 - 1))
+    rad = max(1.0, min(float(ab.get("breite", 4.0)) * px_pt(), min(w, h) / 2 - 1))
     st = max(0.1, min(0.9, 0.15 + float(ab.get("hoehe", 6.0)) / 20.0 * 0.55))
 
     def bauen():

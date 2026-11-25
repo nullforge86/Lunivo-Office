@@ -11,6 +11,7 @@ from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.dialoge.einfuegen.einfuegen_dialoge_hilfen import VorschauMixin, _Farbknopf, _ok
+from writer.anbindung import einfuegen_hilfen as _einfuegen_hilfen
 
 
 class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
@@ -23,7 +24,7 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.text = zeilenfeld("frei", text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(eigener Stil)")
-        self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
+        self.vorlage.addItems([n for n, *_r in _einfuegen_hilfen.wordart_vorlagen()])
         self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
         self.schrift = zeilenfeld("frei", SANS); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)
@@ -58,7 +59,7 @@ class WordArtDialog(PanelFaehig, QDialog, VorschauMixin):
         self.text = zeilenfeld("frei", text or "Ihr Text"); self.stil = Auswahlfeld(); self.stil.addItems(E.WORDART_STILE)
         self.stil.setCurrentText(stil)
         self.vorlage = Auswahlfeld(); self.vorlage.addItem("(eigener Stil)")
-        self.vorlage.addItems([n for n, *_r in E.WORDART_VORLAGEN])
+        self.vorlage.addItems([n for n, *_r in _einfuegen_hilfen.wordart_vorlagen()])
         self.vorlage.setCurrentIndex(0 if vorlage is None else vorlage + 1)
         self.schrift = zeilenfeld("frei", SANS); self.pt = QSpinBox(); self.pt.setRange(12, 200); self.pt.setValue(48)
         self.farbe = _Farbknopf(farbe)

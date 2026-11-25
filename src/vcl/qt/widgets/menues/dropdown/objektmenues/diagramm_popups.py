@@ -123,9 +123,9 @@ def layout_bild(nr: int, groesse: QSize = QSize(*GROESSE_SCHNELLLAYOUT_BILD)) ->
     """Strichbild eines Schnelllayouts aus dessen Einstellungen (``SCHNELLLAYOUTS[nr]``): Titelbalken, Legende (Lage), Datenbeschriftungen,
     Achsen, Achsentitel, Gitternetz, Datentabelle, Trendlinie — grau gezeichnet wie die Kacheln der Vorlage."""
     from vcl.qt.fenster.befehle.kontextreiter.diagrammtools import SCHNELLLAYOUTS
-    from core.diagramme.daten import diagramm_zusatz as Z
+    from writer.anbindung import diagramm_zusatz as Z
     kw = SCHNELLLAYOUTS[nr][1]
-    el = {**Z.STANDARD_ELEMENTE, **(kw.get("elemente") or {})}
+    el = {**Z.standard_elemente(), **(kw.get("elemente") or {})}
     pm = QPixmap(groesse); pm.fill(QColor(Farbe.WEISS))
     p = QPainter(pm); p.setRenderHint(QPainter.Antialiasing)
     w, h = float(groesse.width()), float(groesse.height())

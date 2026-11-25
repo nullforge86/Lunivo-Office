@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QAbstractItemView, QComboBox, QDialog, QFontComboBox, QPushButton, QTableWidget, QTableWidgetItem
 
-from core.formatierung.schrift.zeichenzusatz import AUSRICHTUNGEN
+from writer.anbindung.zeichenzusatz import ausrichtungen
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
@@ -53,7 +53,7 @@ class RubyDialog(PanelFaehig, QDialog):
         v.addLayout(tasten)
         g = FormularGitter(); g.setContentsMargins(*RAND_KEIN)
         self.ausrichtung = Auswahlfeld()
-        for k, t in AUSRICHTUNGEN:
+        for k, t in ausrichtungen():
             self.ausrichtung.addItem(t, k)
         self.abstand = spin(0.0, -20.0, 40.0, " pt", 0.5, 1)
         self.schrift = Schriftauswahl(); self.schrift.setEditable(False)

@@ -21,11 +21,12 @@ class PruefenBefehle:
         if not self.ed:
             return
         from core.text import statistik as S
+        from writer.anbindung import statistik as _statistik
         from vcl.qt.widgets.dialoge.ueberpruefen.woerter_dialog import WoerterDialog
         texte = S.texte_des_dokuments(self.ed.sitzung.dokument)
         noten = [t for art in ("f", "e") for t in self.ed.noten.get(art, {}).values()]
         seiten = self.ed.page_count
-        WoerterDialog(self.w, S.zaehlen(texte, seiten), S.zaehlen(texte + noten, seiten)).exec()
+        WoerterDialog(self.w, _statistik.zaehlen(texte, seiten), _statistik.zaehlen(texte + noten, seiten)).exec()
 
 
     def _jetzt_pruefen(self) -> None:

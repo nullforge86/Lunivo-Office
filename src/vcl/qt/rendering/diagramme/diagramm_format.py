@@ -10,7 +10,12 @@ from vcl.qt.rendering import formen as E
 from vcl.qt.rendering.formen import freie_bilder as FB
 from vcl.qt.rendering.wordart import textfx as X
 from vcl.qt.rendering import wordart as T
-from core.diagramme.formatierung.diagramm_format_daten import FX_NUR_HINTER, FX_SCHLUESSEL, PX_PT, _BILDER, effekt_von, feld_von, fuell_dict, linie_keine
+from core.diagramme.formatierung.diagramm_format_daten import _BILDER, fuell_dict, linie_keine
+from writer.anbindung.diagramm_format_daten import fx_nur_hinter
+from writer.anbindung.diagramm_format_daten import fx_schluessel
+from writer.anbindung.diagramm_format_daten import px_pt
+from writer.anbindung.diagramm_format_daten import effekt_von
+from writer.anbindung.diagramm_format_daten import feld_von
 
 
 def bild_kodieren(img: QImage, laengste_seite: int = 256) -> str:
@@ -97,7 +102,7 @@ _VERKNUEPFUNG = {"rund": Qt.RoundJoin, "schraeg": Qt.BevelJoin, "spitz": Qt.Mite
 def stift(linie: dict | None, standard_farbe: str = Farbe.DIAGRAMM_LINIE, r: QRectF | None = None) -> QPen:
     """Der Stift einer ``linie`` (Breite in pt): Strichart über ``freie_bilder._stift``, dazu Transparenz, Abschluss, Verknüpfung und Farbverlauf."""
     linie = linie or {}
-    pen = FB._stift({"b": float(linie.get("breite", 1.0)) * PX_PT, "farbe": linie.get("farbe", standard_farbe), "art": linie.get("art", "einfach")})
+    pen = FB._stift({"b": float(linie.get("breite", 1.0)) * px_pt(), "farbe": linie.get("farbe", standard_farbe), "art": linie.get("art", "einfach")})
     c = QColor(linie.get("farbe", standard_farbe))
     c.setAlphaF(max(0.0, min(1.0, 1.0 - float(linie.get("transparenz", 0) or 0) / 100.0)))
     pen.setColor(c)
@@ -154,7 +159,7 @@ def fx_normal(fmt: dict | None) -> dict:
     fmt = fmt or {}
     fx = {}
     vorgabe = zu_dict(BEW.vorgabe())
-    for k in FX_SCHLUESSEL:
+    for k in fx_schluessel():
         v = fmt.get(k)
         if not v:
             continue
@@ -173,7 +178,7 @@ def teil_zeichnen(p: QPainter, r: QRectF, fmt: dict | None, grund: QColor, nur_h
     fmt = fmt or {}
     fx = fx_normal(fmt)
     if nur_hinter:
-        fx = {k: v for k, v in fx.items() if k in FX_NUR_HINTER}
+        fx = {k: v for k, v in fx.items() if k in fx_nur_hinter()}
     fuell = fmt.get("fuell")
     if not fx:
         flaeche_zeichnen(p, r, fuell)
@@ -220,7 +225,7 @@ def pfeil_zeichnen(p: QPainter, spitze: QPointF, von: QPointF, art: str, breite_
     dx, dy = spitze.x() - von.x(), spitze.y() - von.y()
     n = math.hypot(dx, dy) or 1.0
     dx, dy = dx / n, dy / n
-    s = max(5.0, breite_pt * PX_PT * (2.0 + 1.2 * groesse))
+    s = max(5.0, breite_pt * px_pt() * (2.0 + 1.2 * groesse))
     px, py = -dy, dx
     p.save(); p.setRenderHint(QPainter.Antialiasing)
     if art in ("pfeil", "offen"):
@@ -229,7 +234,7 @@ def pfeil_zeichnen(p: QPainter, spitze: QPointF, von: QPointF, art: str, breite_
         if art == "pfeil":
             p.setPen(Qt.NoPen); p.setBrush(farbe); p.drawPolygon(QPolygonF([spitze, a, b]))
         else:
-            pen = QPen(farbe, max(STIFT_BILDCHEN, breite_pt * PX_PT)); pen.setCapStyle(Qt.RoundCap); p.setPen(pen)
+            pen = QPen(farbe, max(STIFT_BILDCHEN, breite_pt * px_pt())); pen.setCapStyle(Qt.RoundCap); p.setPen(pen)
             p.drawLine(spitze, a); p.drawLine(spitze, b)
     elif art == "oval":
         p.setPen(Qt.NoPen); p.setBrush(farbe); p.drawEllipse(spitze, s / 2, s / 2)

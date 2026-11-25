@@ -7,6 +7,7 @@ from PySide6.QtGui import QColor, QPen
 from PySide6.QtWidgets import QDialog, QLabel, QListView, QListWidget, QWidget
 import copy
 from core.listen.mehrstufig import mehrstufig as M
+from writer.anbindung import mehrstufig as _mehrstufig
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_ENG, GROESSE_EBENENZEILE, GROESSE_FENSTER_GLIEDERUNG_ANPASSEN, HOEHE_KNOPF_HOCH, RAND_DIALOG_GRUPPE, RAND_KEIN
@@ -25,14 +26,14 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
     def __init__(self, parent=None, defn: dict | None = None, *, titel: str = "Gliederung anpassen"):
         super().__init__(parent)
         self.setWindowTitle(titel); self.resize(*GROESSE_FENSTER_GLIEDERUNG_ANPASSEN)
-        self._e = copy.deepcopy((defn or M.VORLAGEN[0][1])["ebenen"])
+        self._e = copy.deepcopy((defn or _mehrstufig.vorlagen()[0][1])["ebenen"])
         self._ebene = 0
         v = _spalte("standard", self)
         grp = gruppe("Zahlenformat"); g = FormularGitter(grp); g.setContentsMargins(*RAND_DIALOG_GRUPPE)
         self.ebenen = QListWidget()                                          # die neun Ebenen in einer Reihe: spart Höhe und Breite
         self.ebenen.setFlow(QListView.LeftToRight); self.ebenen.setWrapping(False); self.ebenen.setSpacing(ABSTAND_ENG)
         self.ebenen.setFixedHeight(HOEHE_KNOPF_HOCH); self.ebenen.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); self.ebenen.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.ebenen.addItems([str(i + 1) for i in range(M.EBENEN)])
+        self.ebenen.addItems([str(i + 1) for i in range(_mehrstufig.ebenen())])
         for i in range(self.ebenen.count()):
             self.ebenen.item(i).setSizeHint(QSize(*GROESSE_EBENENZEILE)); self.ebenen.item(i).setTextAlignment(Qt.AlignCenter)
         g.reihe(("Ebene:", self.ebenen))
@@ -125,7 +126,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         k = self.vorher.currentData()
         if k is None:
             return
-        zeichen = M.PLATZHALTER[k]
+        zeichen = _mehrstufig.platzhalter()[k]
         if zeichen not in self.format.text():
             self.format.setText(zeichen + "." + self.format.text()); self._lesen()
 
@@ -136,19 +137,19 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         self.vorschau.update()
 
     def defn(self) -> dict:
-        return {"ebenen": [M.ebene_aus(e) for e in self._e]}
+        return {"ebenen": [_mehrstufig.ebene_aus(e) for e in self._e]}
 
     def _male(self, p, rect) -> None:
         """Die neun Ebenen mit ihren Nummern; die gewählte Ebene hat schwarze Linien, die anderen graue (wie in der Vorlage)."""
         d = self.defn()
-        zaehler = [0] * M.EBENEN
+        zaehler = [0] * _mehrstufig.ebenen()
         r = QRectF(rect).adjusted(10, 8, -10, -8)
-        h = r.height() / (M.EBENEN + 1)
+        h = r.height() / (_mehrstufig.ebenen() + 1)
         f = p.font(); f.setPixelSize(max(8, int(h * 0.62))); p.setFont(f)
         y = r.top()
-        for n in range(1, M.EBENEN + 1):
+        for n in range(1, _mehrstufig.ebenen() + 1):
             M.zaehlen(zaehler, d, n)
-            t = M.nummer_der_ebene(d, zaehler, n)
+            t = _mehrstufig.nummer_der_ebene(d, zaehler, n)
             e = d["ebenen"][n - 1]
             x = r.left() + e["ausr"] * 1.1
             aktuell = n - 1 == self._ebene

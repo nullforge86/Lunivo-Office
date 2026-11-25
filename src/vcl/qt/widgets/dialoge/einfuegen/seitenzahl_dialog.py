@@ -24,14 +24,14 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
 
     def __init__(self, parent=None, page=None):
         super().__init__(parent)
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
+        from writer.anbindung import seitenzahl as SZ
         self.setWindowTitle("Seitenzahl einfügen")
         v = _spalte("standard", self)
         g = FormularGitter()                                                # passt sich der Breite an (Seitenleiste), nichts wird abgeschnitten
         self.muster = Auswahlfeld(); self.position = Auswahlfeld()
-        for muster, fmt, t in SZ.MUSTER:
+        for muster, fmt, t in SZ.muster():
             self.muster.addItem(t, (muster, fmt))
-        for ort, ausr, t in SZ.POSITIONEN:
+        for ort, ausr, t in SZ.positionen():
             self.position.addItem(t, (ort, ausr))
         self.position.setCurrentIndex(6)                                    # „Unten zentriert“
         for text, feld in (("&Format:", self.muster), ("Position (&s):", self.position)):
@@ -41,7 +41,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
         self.ebene = Auswahlfeld(); self.trenner = Auswahlfeld()
         for n in range(1, 10):
             self.ebene.addItem(f"Überschrift {n}", n)
-        for z, t, _docx in SZ.TRENNER:
+        for z, t, _docx in SZ.trenner():
             self.trenner.addItem(t, z)
         self.beispiel = QLabel()
         self._kapitel_teile = []
@@ -69,7 +69,7 @@ class SeitenzahlDialog(PanelFaehig, QDialog):
         self.bereich.button(0).setChecked(True)
         fussleiste(self, v)
         if page is not None:                                                  # Vorbelegung aus der Einrichtung
-            for i, (_m, fmt, _t) in enumerate(SZ.MUSTER):
+            for i, (_m, fmt, _t) in enumerate(SZ.muster()):
                 if fmt == page.seiten_format:
                     self.muster.setCurrentIndex(i); break
             self.kapitel.setChecked(bool(page.kapitel_ebene))

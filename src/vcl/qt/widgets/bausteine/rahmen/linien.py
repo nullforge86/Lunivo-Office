@@ -7,7 +7,7 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QComboBox, QWidget
 
-from core.objekte.formen.linie_daten import LINIENBREITEN
+from writer.anbindung.linie_daten import linienbreiten
 from vcl.qt.rendering.formen import LINIENARTEN, Linie  # noqa: F401
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
@@ -81,7 +81,7 @@ class LinienWahl(QWidget):
 
     geaendert = Signal(object)
 
-    def __init__(self, linie: Linie | None = None, *, arten=tuple(LINIENARTEN), breiten=LINIENBREITEN, frei: bool = False, parent=None):
+    def __init__(self, linie: Linie | None = None, *, arten=tuple(LINIENARTEN), breiten=linienbreiten(), frei: bool = False, parent=None):
         """``frei``: eine Stärke, die nicht in der Liste steht, kommt als eigener Eintrag dazu (statt auf die nächste zu runden)."""
         super().__init__(parent)
         self._frei = frei

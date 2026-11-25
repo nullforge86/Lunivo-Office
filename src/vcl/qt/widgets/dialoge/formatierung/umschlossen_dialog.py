@@ -13,7 +13,8 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import QButtonGroup, QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QToolButton
 
-from core.formatierung.schrift.zeichenzusatz import FORMEN, VORLAGEN
+from writer.anbindung.zeichenzusatz import formen
+from writer.anbindung.zeichenzusatz import vorlagen
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import abschnittstitel
@@ -71,7 +72,7 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
         v.addWidget(abschnittstitel("Formatvorlage"))
         zeile = FlussLayout(8)
         self._vorlage = QButtonGroup(self)
-        for i, (k, t) in enumerate(VORLAGEN):
+        for i, (k, t) in enumerate(vorlagen()):
             b = werkzeugknopf("standard", t, umschaltbar=True, an=k == vorlage, flach=False); b.setIcon(_vorlagenbild(k)); b.setIconSize(QSize(*GROESSE_UMSCHLOSSEN_VORLAGENBILD))
             b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon); b.setAutoRaise(False)
             self._vorlage.addButton(b, i); zeile.addWidget(b)
@@ -85,7 +86,7 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
         v.addWidget(self.vorschlaege)
         v.addWidget(QLabel("Umschließen mit:"))
         self.formen = QListWidget(); self.formen.setIconSize(QSize(ICON_FORMENLISTE, ICON_FORMENLISTE)); self.formen.setMaximumHeight(HOEHE_BEREICH_MITTEL)
-        for k, t in FORMEN:
+        for k, t in formen():
             it = QListWidgetItem(QIcon(form_bild(k, 20)), ""); it.setData(Qt.UserRole, k); it.setToolTip(t); self.formen.addItem(it)
             if k == form:
                 self.formen.setCurrentItem(it)
@@ -94,4 +95,4 @@ class UmschlosseneZeichenDialog(PanelFaehig, QDialog):
 
     def werte(self) -> dict:
         it = self.formen.currentItem()
-        return {"text": self.text.text(), "form": it.data(Qt.UserRole) if it else "kreis", "vorlage": VORLAGEN[max(0, self._vorlage.checkedId())][0]}
+        return {"text": self.text.text(), "form": it.data(Qt.UserRole) if it else "kreis", "vorlage": vorlagen()[max(0, self._vorlage.checkedId())][0]}

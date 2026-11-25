@@ -3,7 +3,8 @@ from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QDialog, QPlainTextEdit, QSpinBox, QWidget
-from core.dokument.abschnitte.seite import PAPER_MM, HeaderFooter, PageSettings
+from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
+from writer.anbindung.seite import paper_mm
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin as _spin
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
@@ -17,7 +18,7 @@ class PageSetupDialog(PanelFaehig, QDialog):
         self.setWindowTitle("Seite einrichten")
         self.page = page.copy()
         inhalt = QWidget(); form = FormularGitter(inhalt)
-        self.paper = Auswahlfeld(); self.paper.addItems(list(PAPER_MM) + ["Benutzerdefiniert"])
+        self.paper = Auswahlfeld(); self.paper.addItems(list(paper_mm()) + ["Benutzerdefiniert"])
         self.paper.setCurrentText(page.paper_name())
         self.orient = Auswahlfeld(); self.orient.addItems(["Hochformat", "Querformat"])
         self.orient.setCurrentIndex(1 if page.landscape else 0)
@@ -38,8 +39,8 @@ class PageSetupDialog(PanelFaehig, QDialog):
 
     def result_page(self) -> PageSettings:
         p = self.page
-        if self.paper.currentText() in PAPER_MM:
-            p.width_mm, p.height_mm = sorted(PAPER_MM[self.paper.currentText()])
+        if self.paper.currentText() in paper_mm():
+            p.width_mm, p.height_mm = sorted(paper_mm()[self.paper.currentText()])
         else:
             p.width_mm, p.height_mm = sorted((p.width_mm, p.height_mm))
         p.set_orientation(self.orient.currentIndex() == 1)

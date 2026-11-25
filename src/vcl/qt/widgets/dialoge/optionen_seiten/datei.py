@@ -11,7 +11,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
 
 import os
 from PySide6.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPushButton, QSpinBox
-from core.korrektur.rechtschreibung import autokorrektur
+from writer.anbindung import autokorrektur as autokorrektur
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import _Seite
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_FELD
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -47,11 +47,11 @@ class DateiSeiten:
         e = p.mehr()
         f = p.unter(e, _t("optionen.datei.autokorrektur_gross_und_kleinschreibung"))
         for name in ("akSatzGross", "akWochentage", "akFeststelltaste", "akOrdnungszahlen"):
-            std, text = autokorrektur.SCHALTER[name]
+            std, text = autokorrektur.schalter()[name]
             p.haken(f, "schreibhilfe/" + name, text, std)
         f = p.unter(e, _t("optionen.datei.autokorrektur_zeichen"))
         for name in ("akAnfuehrung", "akGedankenstrich", "akAuslassung"):
-            std, text = autokorrektur.SCHALTER[name]
+            std, text = autokorrektur.schalter()[name]
             p.haken(f, "schreibhilfe/" + name, text, std)
         p.haken(f, "schreibhilfe/akPfade", _t("optionen.datei.internet_und_netzwerkpfade_durch_hyperli"), True)
         f = p.unter(e, _t("optionen.datei.autokorrektur_einzuege_und_leerzeichen"))

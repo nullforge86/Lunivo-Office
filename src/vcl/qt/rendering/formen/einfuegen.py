@@ -6,7 +6,7 @@ from core.dokument.dokument import Auswahl, Position
 from core.layout.drucklayout import formatwerte as F
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import formen_katalog as K
-from core.bearbeitung.einfuegen_hilfen import WORDART_VORLAGEN
+from writer.anbindung.einfuegen_hilfen import wordart_vorlagen
 
 
 FORMEN = ["Rechteck", "Abgerundetes Rechteck", "Ellipse", "Dreieck", "Raute", "Pfeil nach rechts", "Stern", "Sprechblase", "Linie"]
@@ -25,7 +25,7 @@ def _leer(w: int, h: int) -> QImage:
 WORDART_STILE = ["Verlauf", "Schatten", "Umriss", "Regenbogen", "Welle"]
 
 
-WORDART_VORGABEN = [(n, "Vorlage", Farbe.AKZENT) for n, *_r in WORDART_VORLAGEN]    # bleibt für ältere Aufrufer (Name, Stil, Farbe)
+WORDART_VORGABEN = [(n, "Vorlage", Farbe.AKZENT) for n, *_r in wordart_vorlagen()]    # bleibt für ältere Aufrufer (Name, Stil, Farbe)
 
 
 WORDART_STANDARDTEXT = "Hier Text einfügen"

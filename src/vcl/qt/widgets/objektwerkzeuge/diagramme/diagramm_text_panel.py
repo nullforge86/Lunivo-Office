@@ -10,8 +10,8 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte_
 from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.rendering import wordart as T
-from core.objekte.wordart.textfx_daten import WARP_FORMEN
-from core.layout.drucklayout.ausgabe.text.texteffekte import pfad_verformen
+from writer.anbindung.textfx_daten import warp_formen
+from writer.anbindung.texteffekte import pfad_verformen
 from core.objekte.anordnung.objekte_hilfen import VectorPath
 from vcl.qt.rendering.formen import pfad_zu_vektor, vektor_zu_pfad
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
@@ -121,13 +121,13 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         m = VoreinstellungMenue(parent, keine=None, kachel=QSize(*GROESSE_TEXTVERFORMUNG_KACHEL))
         m.aktuell = "" if self._warp_art == "keine" else self._warp_art
         keine_zeile(m, "Keine Transformation")
-        m.abschnitt("Verbiegen", [(k, QIcon(self._warp_bild(k, QSize(*GROESSE_TEXTVERFORMUNG_KACHEL))), n) for k, n in WARP_FORMEN if k != "keine"], 4)
+        m.abschnitt("Verbiegen", [(k, QIcon(self._warp_bild(k, QSize(*GROESSE_TEXTVERFORMUNG_KACHEL))), n) for k, n in warp_formen() if k != "keine"], 4)
         return m
 
     def _warp_setzen(self, art: str, melden: bool = True) -> None:
-        self._warp_art = art if art in dict(WARP_FORMEN) else "keine"
+        self._warp_art = art if art in dict(warp_formen()) else "keine"
         self.warp_knopf.setSymbol(QIcon(self._warp_bild(self._warp_art, KopfDropdown.SYMBOL)))
-        self._warp_zeige.setText(dict(WARP_FORMEN)[self._warp_art])
+        self._warp_zeige.setText(dict(warp_formen())[self._warp_art])
         if melden:
             self._neu()
 

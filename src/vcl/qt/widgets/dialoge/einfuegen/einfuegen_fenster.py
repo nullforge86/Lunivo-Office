@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
-from core.text import zahlformat as Z
+from writer.anbindung import zahlformat as Z
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.abstaende.mass import EINFUEGEN_TYP_ZEILEN
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
@@ -22,7 +22,7 @@ class ZahlDialog(PanelFaehig, QDialog):
         self.zahl = zeilenfeld("standard", name="Zahl")
         v.addWidget(_titel("&Zahl", self.zahl)); v.addWidget(self.zahl)
         self.typ = QListWidget(); self.typ.setAccessibleName("Zahlentyp")
-        for k, t in Z.TYPEN:
+        for k, t in Z.typen():
             it = QListWidgetItem(t); it.setData(Qt.UserRole, k); self.typ.addItem(it)
         self.typ.setCurrentRow(0)
         self.typ.setMinimumHeight(self.typ.sizeHintForRow(0) * EINFUEGEN_TYP_ZEILEN + ZUGABE_LISTE)
