@@ -4,24 +4,56 @@ Die Oberfläche holt hier die Dienstobjekte (Konfiguration, KI, Chatverlauf, Dro
 Marken und Meldungstexte. Die Fachlogik bleibt im Framework (``framework.ki``)."""
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from framework.ki import anbieter as _anbieter, chat as _chat, dienst as _dienst
+from writer.funktionen.ki.werte import unveraenderlich
 
-# ---- Marken der Modelle, Textaktionen, Meldungen -----------------------------------------------------------------------------------
-OLLAMA_MARKE: str = _dienst.OLLAMA_MARKE
-EIGEN_MARKE: str = _dienst.EIGEN_MARKE
-AUTO_MARKE: str = _dienst.AUTO_MARKE
-TEXT_AKTIONEN: tuple = tuple(_dienst.TEXT_AKTIONEN)
-MINDESTABSTAND: float = float(_dienst.MINDESTABSTAND)
-DENKSTUFEN: dict = _anbieter.DENKSTUFEN
-WERKZEUG_MODI: tuple = tuple(_anbieter.WERKZEUG_MODI)
+# ---- Marken der Modelle, Textaktionen, Meldungen (als unveränderliche Werte, nie die Objekte des Frameworks) ------------------------
 
-MELDUNG_EDITOR: str = _chat.MELDUNG_EDITOR
-MELDUNG_GEAENDERT: str = _chat.MELDUNG_GEAENDERT
-MELDUNG_KEINE_REZENSION: str = _chat.MELDUNG_KEINE_REZENSION
-MELDUNG_KEIN_BEZUG: str = _chat.MELDUNG_KEIN_BEZUG
-MELDUNG_OHNE_MARKIERUNG: str = _chat.MELDUNG_OHNE_MARKIERUNG
-MELDUNG_OHNE_VERFOLGUNG: str = _chat.MELDUNG_OHNE_VERFOLGUNG
-MELDUNG_REZENSION: str = _chat.MELDUNG_REZENSION
+
+def ollama_marke() -> str:
+    """Vorsilbe der Modelle, die Ollama auf diesem Rechner ausführt."""
+    return str(_dienst.OLLAMA_MARKE)
+
+
+def eigen_marke() -> str:
+    """Vorsilbe der Modelle eigener Anbieter."""
+    return str(_dienst.EIGEN_MARKE)
+
+
+def auto_marke() -> str:
+    """Vorsilbe der automatischen Modellwahl."""
+    return str(_dienst.AUTO_MARKE)
+
+
+def text_aktionen() -> tuple[tuple[str, str], ...]:
+    """(Schlüssel, Name) der Textaktionen."""
+    return unveraenderlich(_dienst.TEXT_AKTIONEN)
+
+
+def mindestabstand() -> float:
+    """Sekunden zwischen zwei Anfragen fortlaufender Assistenten."""
+    return float(_dienst.MINDESTABSTAND)
+
+
+def denkstufen() -> Mapping[str, Mapping[str, str]]:
+    return unveraenderlich(_anbieter.DENKSTUFEN)
+
+
+def werkzeug_modi() -> tuple[str, ...]:
+    return unveraenderlich(_anbieter.WERKZEUG_MODI)
+
+
+_MELDUNGEN = {"editor": "MELDUNG_EDITOR", "geaendert": "MELDUNG_GEAENDERT", "keine_rezension": "MELDUNG_KEINE_REZENSION",
+              "kein_bezug": "MELDUNG_KEIN_BEZUG", "ohne_markierung": "MELDUNG_OHNE_MARKIERUNG", "ohne_verfolgung": "MELDUNG_OHNE_VERFOLGUNG",
+              "rezension": "MELDUNG_REZENSION"}
+
+
+def chat_meldung(art: str) -> str:
+    """Meldungstext zum Übernehmen einer Chat-Antwort: ``editor``, ``geaendert``, ``keine_rezension``, ``kein_bezug``, ``ohne_markierung``,
+    ``ohne_verfolgung`` oder ``rezension``."""
+    return str(getattr(_chat, _MELDUNGEN[art]))
 
 
 # ---- Dienstobjekte -------------------------------------------------------------------------------------------------------------------
@@ -56,16 +88,16 @@ def ersetze_ergebnis(alt: str, neu: str):
 
 
 # ---- Chat-Bezug: Antwort und Stelle im Text ----------------------------------------------------------------------------------------------
-def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, dokument, editor_obj=None, dokument_obj=None, ganz: str = "") -> dict:
-    return _chat.bezug_bauen(von, bis, markiert, revision, alt, dokument, editor_obj, dokument_obj, ganz)
+def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, kennung: int, ganz: str = "") -> dict:
+    return _chat.bezug_bauen(von, bis, markiert, revision, alt, kennung, ganz)
 
 
 def bezug_angewendet() -> dict:
     return _chat.bezug_angewendet()
 
 
-def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, editor_jetzt, dokument_jetzt=None, editor_obj_jetzt=None) -> tuple[bool, str]:
-    return _chat.bezug_pruefen(bezug, revision_jetzt, editor_jetzt, dokument_jetzt, editor_obj_jetzt)
+def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, kennung_jetzt: int | None) -> tuple[bool, str]:
+    return _chat.bezug_pruefen(bezug, revision_jetzt, kennung_jetzt)
 
 
 def ersetz_schritte(alt: str, neu: str) -> list[tuple[int, int, str]] | None:

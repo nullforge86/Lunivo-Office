@@ -15,7 +15,7 @@ from PySide6.QtCore import QEvent, QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QWidget
 
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from core.text import ki_markdown
 from vcl.qt.widgets.bausteine.schrift.beschriftung import md_label, text_label
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
@@ -163,7 +163,7 @@ class KiBlase(QWidget):
         self.ersetzen = SymbolKnopf("replace", TIPP_ERSETZEN, self.vergleich_oeffnen)
         z.addWidget(self.ersetzen)
         if cent is not None:
-            z.addWidget(hinweis_label(K.als_geld(cent), umbruch=False, klein=True))
+            z.addWidget(hinweis_label(KD.als_geld(cent), umbruch=False, klein=True))
         v.addLayout(z)
         self.hinweis = hinweis_label("", klein=True); self.hinweis.hide()
         v.addWidget(self.hinweis)

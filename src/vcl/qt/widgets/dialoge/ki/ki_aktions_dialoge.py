@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QPushButton
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
@@ -95,16 +95,16 @@ class KIAssistentDialog(ErstellenFenster):
     ``werte()`` liefert ``(name, prompt, modus, mehr)``; der Befehl ``w_kiAssistentErstellen`` speichert mit ``art="fortlaufend"``."""
 
     def __init__(self, fenster):
-        from framework.ki.dienst.assistent_lauf import VERZOEGERUNG_MAX, VERZOEGERUNG_MIN, VERZOEGERUNG_VORGABE
+        from writer.funktionen.ki import verzoegerung_max, verzoegerung_min, verzoegerung_vorgabe
         from vcl.qt.widgets.menues.dropdown.auswahl.symbol_auswahl import SymbolWahl
         from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin
         t = TEXTE_ASSISTENT
-        super().__init__(fenster, t["titel"], t["hinweis"], [e[0] for e in K.VORLAGEN_ASSISTENT], meldung=t["meldung"])
+        super().__init__(fenster, t["titel"], t["hinweis"], [e[0] for e in KD.vorlagen_assistent()], meldung=t["meldung"])
         g = self.gitter
         self.symbol = SymbolWahl()
         self.name_zeile("Name *", t["name"], symbol=self.symbol)
         self.aktion = Auswahlfeld(); self.aktion.zeichen(DROPDOWN_ZEICHEN_LANG)
-        for schl in K.FORTLAUFEND_MODI:
+        for schl in KD.fortlaufend_modi():
             self.aktion.addItem(AKTION_TEXTE[schl], schl)
         g.zeile("Aktion", self.aktion)
         self.prompt_zeile("Prompt *", t["prompt"])
@@ -116,14 +116,14 @@ class KIAssistentDialog(ErstellenFenster):
         self.modell = Auswahlfeld(); modell_felder_fuellen(self.modell, fenster.ki.konfig, "assistent", "")
         eg.zeile("Modell", self.modell)
         self.ausloeser = Auswahlfeld(); self.ausloeser.zeichen(DROPDOWN_ZEICHEN_LANG)
-        for schl in K.ASSISTENT_AUSLOESER:
+        for schl in KD.assistent_ausloeser():
             self.ausloeser.addItem(AUSLOESER_TEXTE[schl], schl)
-        self.ausloeser.setCurrentIndex(max(0, self.ausloeser.findData(K.ASSISTENT_AUSLOESER[1])))
+        self.ausloeser.setCurrentIndex(max(0, self.ausloeser.findData(KD.assistent_ausloeser()[1])))
         eg.zeile("Auslöser", self.ausloeser)
-        self.verzoegerung = spin(VERZOEGERUNG_VORGABE, VERZOEGERUNG_MIN, VERZOEGERUNG_MAX, " s", 1, 0)
+        self.verzoegerung = spin(verzoegerung_vorgabe(), verzoegerung_min(), verzoegerung_max(), " s", 1, 0)
         eg.zeile("Verzögerung", self.verzoegerung)
         self.umfang = Auswahlfeld()
-        for schl in K.ASSISTENT_UMFAENGE:
+        for schl in KD.assistent_umfaenge():
             self.umfang.addItem(UMFANG_TEXTE[schl], schl)
         eg.zeile("Umfang", self.umfang)
         self.an = UmbruchSchalter("Sofort einschalten"); self.an.setChecked(True)
@@ -134,7 +134,7 @@ class KIAssistentDialog(ErstellenFenster):
         self.abschliessen()
 
     def vorlage_gewaehlt(self, i: int) -> None:
-        name, prompt, modus, kommentar = K.VORLAGEN_ASSISTENT[i]
+        name, prompt, modus, kommentar = KD.vorlagen_assistent()[i]
         self.name.setText(name); self.prompt.setPlainText(prompt); self.aktion.setCurrentIndex(max(0, self.aktion.findData(modus)))
         self.kommentar.setChecked(bool(kommentar))
 

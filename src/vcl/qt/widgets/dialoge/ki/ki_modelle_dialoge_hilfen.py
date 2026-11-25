@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QComboBox, QDialog, QLabel, QLineEdit, QMessageBox
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
@@ -25,7 +25,7 @@ class _Antwort(QObject):
 class AnbieterDialog(QDialog):
     """Neuer oder zu bearbeitender Anbieter: Name, Vorlage, URL, Schlüssel, Modell (Liste vom Anbieter), Fähigkeiten."""
 
-    def __init__(self, fenster, konfig: K.KIKonfig, bestehend: dict | None = None):
+    def __init__(self, fenster, konfig, bestehend: dict | None = None):
         super().__init__(fenster)
         self.k, self.alt = konfig, bestehend
         self.setWindowTitle("Modell bearbeiten" if bestehend else "Eigenen Anbieter hinzufügen"); self.resize(*GROESSE_FENSTER_ANBIETER)
@@ -42,7 +42,7 @@ class AnbieterDialog(QDialog):
         hinweis_stil(h)
         f.breit(h)
         self.vorlage = Auswahlfeld()
-        for key, name, url in K.ANBIETER_VORLAGEN:
+        for key, name, url in KD.anbieter_vorlagen():
             self.vorlage.addItem(name, url)
         self.url = zeilenfeld("frei", bestehend["url"] if bestehend else "")
         self.url.setPlaceholderText("https://…/v1")
@@ -79,7 +79,7 @@ class AnbieterDialog(QDialog):
         als_karte(alle, "chip")
         alle.toggled.connect(lambda an: [b.setChecked(an) for b in self.tags.values()])
         self._chips = [alle]
-        for key, name in K.ANBIETER_TAGS:
+        for key, name in KD.anbieter_tags():
             b = knopf("standard", name)
             b.setCheckable(True)
             b.setChecked(key in gesetzt)
@@ -117,7 +117,7 @@ class AnbieterDialog(QDialog):
             self.url.clear()
         else:
             self.url.setText(url)
-            if not self.name.text().strip() or self.name.text() in [n for _, n, _ in K.ANBIETER_VORLAGEN]:
+            if not self.name.text().strip() or self.name.text() in [n for _, n, _ in KD.anbieter_vorlagen()]:
                 self.name.setText(self.vorlage.currentText())
             self._holen(True)
 
@@ -138,7 +138,7 @@ class AnbieterDialog(QDialog):
         class _L(QRunnable):
             def run(s_):
                 try:
-                    r = {"namen": K.anbieter_modelle(url, schl)}
+                    r = {"namen": KD.anbieter_modelle(url, schl)}
                 except Exception as e:                  # Netz, Schlüssel, falsche Adresse — alles landet als Hinweis
                     r = {"fehler": str(e)}
                 r["kennung"] = kennung

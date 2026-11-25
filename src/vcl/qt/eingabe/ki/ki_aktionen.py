@@ -36,7 +36,7 @@ class KIAktionenMixin:
         return f" ({r['methode']})" if r.get("methode") else ""
 
     def text_aktion(self, aktion: str) -> None:
-        namen = dict(KD.TEXT_AKTIONEN)
+        namen = dict(KD.text_aktionen())
         n = namen.get(aktion, aktion)
         self.starte(f"„{n}“ …", lambda t: self.ki.text_aktion(t, aktion),
                     lambda r, e: self._einsetzen(r, e, n + ".", "Markierung: " + n + "."))

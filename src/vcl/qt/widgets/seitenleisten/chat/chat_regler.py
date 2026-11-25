@@ -44,10 +44,10 @@ class ChatReglerBlock(QWidget):
                              int(round(float(o["temperatur"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(temperatur=w / 10))
         self.s_top = regler("Top P", "Wie viele der wahrscheinlichsten Wörter zur Wahl stehen. Gilt für Ollama und eigene Anbieter.", 10,
                             int(round(float(o["topP"]) * 10)), lambda w: f"{w / 10:g}", lambda w: k.chat_setzen(topP=w / 10))
-        from framework.ki.dienst import ki as _ki
-        stufen = _ki.NUM_CTX_STUFEN
+        from writer.funktionen import ki as _ki
+        stufen = _ki.num_ctx_stufen()
         self.s_alive = regler("Modell im Speicher halten", "Minuten, die Ollama das Modell nach der letzten Antwort geladen lässt. "
-                              "Länger = schneller, belegt aber Arbeitsspeicher. 0 = sofort entladen.", _ki.KEEP_ALIVE_MAX,
+                              "Länger = schneller, belegt aber Arbeitsspeicher. 0 = sofort entladen.", _ki.keep_alive_max(),
                               _ki.keep_alive_begrenzen(o["keepAlive"]), lambda w: f"{w} min" if w else "sofort entladen",
                               lambda w: k.chat_setzen(keepAlive=w))
         self.s_ctx = regler("Kontextgröße (Ollama)", "Wie viel Gespräch und Dokument das Modell auf einmal sieht. Größer = mehr Speicher, "

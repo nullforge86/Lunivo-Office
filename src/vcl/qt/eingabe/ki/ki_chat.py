@@ -37,7 +37,7 @@ class KIChatMixin:
         return KD.denkstufe(self.konfig.chat_optionen().get("denktiefe"))
 
     def denktiefe_setzen(self, stufe: str) -> bool:
-        if stufe not in KD.DENKSTUFEN:
+        if stufe not in KD.denkstufen():
             return False
         self.konfig.chat_setzen(denktiefe=stufe)            # dauerhaft
         self.geaendert.emit()
@@ -49,7 +49,7 @@ class KIChatMixin:
     def werkzeugmodus_setzen(self, modus: str) -> bool:
         """„fragen“ oder „automatisch“. „automatisch“ gilt nur für diese Sitzung (``KIKonfig.speichern`` schreibt es nie) und nur für Lesen und
         Schreiben; Löschen, Netzwerk, Unbekanntes, der Programmstart und die Datenschutz-Einwilligung fragen weiter."""
-        if modus not in KD.WERKZEUG_MODI:
+        if modus not in KD.werkzeug_modi():
             return False
         self.konfig.d["chat"] = {**(self.konfig.d.get("chat") or {}), "werkzeuge": modus}      # nur im Speicher
         self.geaendert.emit()
@@ -64,15 +64,15 @@ class KIChatMixin:
     def werkzeuge_vorhanden(self) -> bool:
         """MCP-Server an UND ein Modell, das Werkzeuge im Chat nutzt (Ollama oder eigener Anbieter, nicht Claude)."""
         an = any(m.get("an") and m.get("befehl") for m in self.konfig["mcp"])
-        return an and self.ki.modell("chatbot").startswith((KD.OLLAMA_MARKE, KD.EIGEN_MARKE))
+        return an and self.ki.modell("chatbot").startswith((KD.ollama_marke(), KD.eigen_marke()))
 
     def bild_hinweis(self) -> str:
         m = self.ki.modell("chatbot")
         if self.kann_bild():
             return "Bild anhängen (PNG, JPEG oder WebP, bis 5 MB)."
-        if m.startswith(KD.OLLAMA_MARKE):
+        if m.startswith(KD.ollama_marke()):
             return "Dieses Modell kann keine Bilder, oder Ollama hat es noch nicht gemeldet. Ein Modell mit Bildverständnis wählen."
-        if m.startswith(KD.EIGEN_MARKE):
+        if m.startswith(KD.eigen_marke()):
             return "Dieser Anbieter ist nicht als „Visuelle Analyse“ eingetragen. In den KI-Einstellungen das Etikett setzen."
         return "Das gewählte Modell kann keine Bilder."
 
@@ -112,9 +112,8 @@ class KIChatMixin:
         """Bezug einer Aktion aus ihrer Eingabe (Editor, Text, Basis, Revision zum Start); ganzes Dokument: Einfügen am Ende, kein Ersetzen."""
         try:
             return KD.bezug_bauen(eing["basis"], eing["basis"] + len(eing["text"]), eing["markiert"],
-                                  eing["rev"], eing["text"], id(eing["ed"]),
-                                  editor_obj=eing["ed"], dokument_obj=eing.get("dokument"))
-        except (KeyError, TypeError):
+                                  eing["rev"], eing["text"], eing["ed"].kennung)
+        except (KeyError, TypeError, AttributeError):
             return None
 
     def aktion_in_chat(self, name: str, text: str, cent, bezug=None) -> None:
@@ -141,8 +140,8 @@ class KIChatMixin:
             alt = c.selectedText().replace("\u2029", "\n") if c.hasSelection() else ""
             von, bis = (min(c.anchor(), c.position()), max(c.anchor(), c.position())) if c.hasSelection() else (c.position(),) * 2
             doc = ed.document()
-            return KD.bezug_bauen(von, bis, c.hasSelection(), doc.revision(), alt, id(ed),
-                                  editor_obj=ed, dokument_obj=doc, ganz="" if c.hasSelection() else doc.toPlainText())
+            return KD.bezug_bauen(von, bis, c.hasSelection(), doc.revision(), alt, ed.kennung,
+                                  ganz="" if c.hasSelection() else doc.toPlainText())
         except RuntimeError:
             return None
 
@@ -155,8 +154,7 @@ class KIChatMixin:
             rev = doc.revision() if doc is not None else None
         except RuntimeError:
             ed, doc, rev = None, None, None
-        ok, grund = KD.bezug_pruefen(bezug, rev, id(ed) if ed is not None else None,
-                                     dokument_jetzt=doc, editor_obj_jetzt=ed)
+        ok, grund = KD.bezug_pruefen(bezug, rev, ed.kennung if ed is not None else None)
         return bezug, (ed if ok else None), grund
 
     def bezug_gueltig(self, index: int, ersetzen: bool = False) -> tuple[bool, str]:
@@ -168,7 +166,7 @@ class KIChatMixin:
             n = self.chat_modell.nachrichten[index]
             ganz = KD.vorher_der_nachricht(n, bezug)
             if not ganz or KD.ersetz_schritte(ganz, KD.kern_von(n)) is None:
-                return False, KD.MELDUNG_OHNE_MARKIERUNG
+                return False, KD.chat_meldung("ohne_markierung")
         return True, ""
 
     def rezension_gueltig(self, index: int) -> tuple[bool, str]:
@@ -180,9 +178,9 @@ class KIChatMixin:
         bezug, ed, _ = self._bezug_lage(index)
         alt = KD.vorher_der_nachricht(self.chat_modell.nachrichten[index], bezug)
         if not alt or KD.ersetz_schritte(alt, KD.kern_von(self.chat_modell.nachrichten[index])) is None:
-            return False, KD.MELDUNG_KEINE_REZENSION
+            return False, KD.chat_meldung("keine_rezension")
         if not hasattr(ed, "ersetze_verfolgt"):
-            return False, KD.MELDUNG_OHNE_VERFOLGUNG
+            return False, KD.chat_meldung("ohne_verfolgung")
         return True, ""
 
     def antwort_vorschau(self, index: int, ersetzen: bool) -> list[tuple[str, str]]:
@@ -211,7 +209,7 @@ class KIChatMixin:
         m = self.chat_modell.nachrichten
         if not 0 <= index < len(m) or m[index]["rolle"] != "ki" or m[index].get("fehler"):
             return {"gueltig": False, "nr": None, "vorher": "", "nachher": "", "stuecke": None,
-                    "einfuegen": (False, KD.MELDUNG_KEIN_BEZUG), "ersetzen": (False, KD.MELDUNG_KEIN_BEZUG), "rezension": (False, KD.MELDUNG_KEIN_BEZUG)}
+                    "einfuegen": (False, KD.chat_meldung("kein_bezug")), "ersetzen": (False, KD.chat_meldung("kein_bezug")), "rezension": (False, KD.chat_meldung("kein_bezug"))}
         n = m[index]
         return {"gueltig": True, "nr": n.get("nr"), "vorher": KD.vorher_der_nachricht(n, self.chat_modell.bezug_von(index)),
                 "nachher": KD.kern_von(n), "stuecke": self.antwort_diff(index),
@@ -256,12 +254,12 @@ class KIChatMixin:
                             else:
                                 ed.replace_range(von + a, von + b, t)
         except RuntimeError:                       # Tab/Editor wurde geschlossen
-            return False, KD.MELDUNG_EDITOR
+            return False, KD.chat_meldung("editor")
         if not geklappt:
-            return False, KD.MELDUNG_GEAENDERT
+            return False, KD.chat_meldung("geaendert")
         self.assistant.pruefen()
         if rezension:
-            return True, KD.MELDUNG_REZENSION
+            return True, KD.chat_meldung("rezension")
         return True, ("Ersetzt." if ersetzen else "Eingefügt.") + " Strg+Z macht es rückgängig."
 
     def _chat_bereit(self) -> bool:

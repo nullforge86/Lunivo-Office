@@ -8,17 +8,17 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QWidget
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 
 
 class WebsuchePanel(QWidget):
     """Websuche für den KI-Chat: Anbieter, Adresse oder Schlüssel, Zahl der Treffer. Ein: die Frage geht an den Suchanbieter."""
 
-    def __init__(self, konfig: K.KIKonfig):
+    def __init__(self, konfig):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
-        from framework.ki.suche import websuche as W
+        from writer.funktionen import ki as W
         self.k = konfig
         o = konfig.websuche_optionen()
         v = _spalte("oben", self)
@@ -30,7 +30,7 @@ class WebsuchePanel(QWidget):
         v.addWidget(h)
         f = FormularGitter()
         self.anbieter = Auswahlfeld()
-        for schl, name in W.ANBIETER:
+        for schl, name in W.websuche_anbieter():
             self.anbieter.addItem(name, schl)
         self.anbieter.setCurrentIndex(max(0, self.anbieter.findData(o["anbieter"])))
         self.url = zeilenfeld("frei", o["url"], platzhalter="https://searx.example.org")
@@ -48,9 +48,9 @@ class WebsuchePanel(QWidget):
                 "schluessel": self.schluessel.text().strip(), "anzahl": self.anzahl.value()}
 
     def _testen(self) -> None:
-        from framework.ki.suche import websuche as W
+        from writer.funktionen import ki as W
         try:
-            t = W.suche(self.werte(), "Lunivo Writer")
+            t = W.websuche(self.werte(), "Lunivo Writer")
             self.stand.setText(f"Verbunden — {len(t)} Treffer.")
         except (OSError, ValueError) as e:
             self.stand.setText(f"Nicht erreichbar: {getattr(e, 'reason', e)}")

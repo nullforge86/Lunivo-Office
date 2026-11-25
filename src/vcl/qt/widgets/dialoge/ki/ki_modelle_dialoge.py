@@ -2,7 +2,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QDialog
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.dialoge.ki.modell_liste import ModellListe
 from vcl.qt.widgets.dialoge.ki.modell_zuweisung import ModellZuweisung
@@ -11,7 +11,7 @@ from vcl.qt.widgets.dialoge.ki.modell_zuweisung import ModellZuweisung
 class ModellListeDialog(QDialog):
     """„Liste der KI-Modelle“ als eigenes Fenster (Optionen)."""
 
-    def __init__(self, fenster, konfig: K.KIKonfig):
+    def __init__(self, fenster, konfig):
         super().__init__(fenster)
         self.setWindowTitle("Liste der KI-Modelle")
         v = _spalte("standard", self)

@@ -2,7 +2,7 @@
 from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QListWidgetItem, QMessageBox, QWidget
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.felder.listen_leiste import ListenLeiste
@@ -11,14 +11,14 @@ from vcl.qt.widgets.dialoge.ki.ki_modelle_dialoge_hilfen import AnbieterDialog
 
 
 def _tags_text(a: dict) -> str:
-    n = dict(K.ANBIETER_TAGS)
+    n = dict(KD.anbieter_tags())
     return ", ".join(n[t] for t in a.get("verwendungFuer", []) if t in n)
 
 
 class ModellListe(QWidget):
     """Die Liste der verbundenen KI-Modelle: hinzufügen, bearbeiten, entfernen (im Fenster „KI-Einstellungen“ und als eigenes Fenster)."""
 
-    def __init__(self, fenster, konfig: K.KIKonfig):
+    def __init__(self, fenster, konfig):
         super().__init__()
         self.fenster, self.k = fenster, konfig
         self.setMinimumHeight(HOEHE_LISTE_ANBIETER)
@@ -35,7 +35,7 @@ class ModellListe(QWidget):
     def _fuellen(self) -> None:
         self.liste.clear()
         for a in self.k["anbieter"]:
-            teile = [a["modell"], _tags_text(a), "Lokaler Anbieter" if K.ist_lokale_url(a["url"]) else "Über das Internet"]
+            teile = [a["modell"], _tags_text(a), "Lokaler Anbieter" if KD.ist_lokale_url(a["url"]) else "Über das Internet"]
             it = QListWidgetItem(f"{a['name']}\n{' · '.join(t for t in teile if t)}")
             it.setData(Qt.UserRole, a["id"])
             self.liste.addItem(it)

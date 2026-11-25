@@ -34,12 +34,12 @@ class McpDialog(QDialog):
         v.addWidget(knopfzeile(self, bei_ok=self._ok, ok_text="Speichern"))
 
     def _testen(self) -> None:
-        from framework.ki.anbieter import mcp as M
-        try:
-            w = M.pruefen(self.befehl.text())
-            self.stand.setText(f"Verbunden — {len(w)} Werkzeug(e): " + ", ".join(t["name"] for t in w[:12]))
-        except M.McpFehler as e:
-            self.stand.setText(f"Nicht erreichbar: {e}")
+        from writer.funktionen import ki as M
+        w, fehler = M.mcp_pruefen(self.befehl.text())
+        if fehler:
+            self.stand.setText(f"Nicht erreichbar: {fehler}")
+        else:
+            self.stand.setText(f"Verbunden — {len(w)} Werkzeug(e): " + ", ".join(w[:12]))
 
     def _ok(self) -> None:
         if not self.name.text().strip() or not self.befehl.text().strip():

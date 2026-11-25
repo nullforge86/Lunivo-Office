@@ -3,7 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QListWidgetItem, QMessageBox, QWidget
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.felder.listen_leiste import ListenLeiste
@@ -14,7 +14,7 @@ from vcl.qt.widgets.dialoge.ki.mcp_dialog import McpDialog
 class McpListe(QWidget):
     """Die eingetragenen MCP-Server: hinzufügen, bearbeiten, entfernen."""
 
-    def __init__(self, fenster, konfig: K.KIKonfig):
+    def __init__(self, fenster, konfig):
         super().__init__()
         self.fenster, self.k = fenster, konfig
         v = _spalte("oben", self)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QSizePolicy, QLabel, QWidget
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.interaktion.felder.auswahl_liste import AuswahlListe
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
@@ -24,7 +24,7 @@ class SprachePanel(QWidget):
         self.pruefung = AuswahlListe(list(b.SPRACHEN))
         self.pruefung.setCurrentIndex(max(0, self.pruefung.findData(b.pruefsprache_aktuell())))
         self.pruefung.setEnabled(fenster.current_tab() is not None)
-        self.sprache = AuswahlListe([(n, n) for n in K.SPRACHEN])
+        self.sprache = AuswahlListe([(n, n) for n in KD.sprachen()])
         self.sprache.setCurrentText(fenster.ki.konfig["sprache"])
         for titel, unter, liste in (("Sprache für die Überprüfung", "Sprache des Dokuments — wird in der Datei vermerkt.", self.pruefung),
                                     ("Übersetzen nach", "Sprache für die KI-Übersetzung wählen.", self.sprache)):

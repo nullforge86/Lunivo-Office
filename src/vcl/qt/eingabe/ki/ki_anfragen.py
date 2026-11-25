@@ -95,7 +95,7 @@ class KIAnfragenMixin:
         leer = ed is None or not ed.document().toPlainText().strip()
         verbunden = self.verfuegbar() and self.ki.verfuegbar_fuer("chatbot")
         mid = self.ki.modell("chatbot") if verbunden else ""
-        name = next((m["name"] for m in self.konfig.alle_modelle() if m["id"] == mid), mid[len(KD.OLLAMA_MARKE):] if mid.startswith(KD.OLLAMA_MARKE) else mid)
+        name = next((m["name"] for m in self.konfig.alle_modelle() if m["id"] == mid), mid[len(KD.ollama_marke()):] if mid.startswith(KD.ollama_marke()) else mid)
         return auswahl, leer, verbunden, name
 
     def verfuegbar(self) -> bool:
@@ -104,7 +104,7 @@ class KIAnfragenMixin:
 
     def zettel(self, text: str) -> None:
         from writer.funktionen.ki import zettel as Z
-        self.konfig.d["zettel"] = (text or "")[:Z.ZETTEL_GRENZE]
+        self.konfig.d["zettel"] = (text or "")[:Z.zettel_grenze()]
 
     def _einwilligung(self, modell: str | None = None, umfang: str = "auszug", zeichen: int = 0) -> bool:
         """Fragt vor dem ersten Senden an einen Dienst im Internet. Gespeichert wird je Anbieter und Umfang („auszug“ oder „dokument“), mit Datum;
@@ -153,7 +153,7 @@ class KIAnfragenMixin:
             return
         modell = modell or (self.ki.modell(aufgabe) if aufgabe else None)
         abgelehnt = not self._einwilligung(modell, "auszug" if eing.get("markiert") else "dokument", len(eing["text"]))
-        if abgelehnt and not (modell or "").startswith(KD.AUTO_MARKE):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
+        if abgelehnt and not (modell or "").startswith(KD.auto_marke()):      # Automatisch: bei Ablehnung geht es lokal weiter (Ki.uebersetzen prüft die Zustimmung selbst)
             self.status.emit("Abgebrochen — es wurde nichts gesendet.")
             return
         self._arbeit_laeuft = True
@@ -256,7 +256,7 @@ class KIAnfragenMixin:
         if not text:
             self._hinweis_fenster("Text in Bild", "Markieren Sie zuerst den Text, der das Bild beschreibt.")
             return
-        if not self.konfig["aufgaben"].get("bildgenerierung", "").startswith(KD.EIGEN_MARKE):
+        if not self.konfig["aufgaben"].get("bildgenerierung", "").startswith(KD.eigen_marke()):
             self.status.emit("Dafür fehlt ein Modell mit „Bilder“ — in der KI-Konfiguration eintragen.")
             self.w.befehle.w_kiKonfiguration()
             return

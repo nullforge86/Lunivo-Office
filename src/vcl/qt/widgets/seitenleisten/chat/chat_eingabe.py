@@ -25,7 +25,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN, CHAT_EINGABE_
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-WERKZEUG_NAMEN = {"fragen": "Vor Ausführung fragen", "automatisch": "Automatisch genehmigen"}      # Reihenfolge wie ``KD.WERKZEUG_MODI``
+WERKZEUG_NAMEN = {"fragen": "Vor Ausführung fragen", "automatisch": "Automatisch genehmigen"}      # Reihenfolge wie ``KD.werkzeug_modi()``
 PLATZHALTER = "Frag mich etwas …"
 FUSSZEILE = "KI-Chat kann Fehler machen. Überprüfen Sie wichtige Informationen."
 
@@ -220,8 +220,8 @@ class ChatEingabeKasten(QWidget):
         """Zeilen unter der Modellliste: Denktiefe und Berechtigungen, je mit dem aktuellen Wert rechts und einem Untermenü. Grau mit Hinweis, wenn nicht möglich."""
         d = self.d
         stufe = d.denktiefe()
-        sub = menue.untermenue("Denktiefe", symbole.icon("brain", ICON_NORMAL), d.kann_denken(), wert=KD.DENKSTUFEN[stufe]["name"], tip=d.denken_hinweis())
-        for k, v in KD.DENKSTUFEN.items():
+        sub = menue.untermenue("Denktiefe", symbole.icon("brain", ICON_NORMAL), d.kann_denken(), wert=KD.denkstufen()[stufe]["name"], tip=d.denken_hinweis())
+        for k, v in KD.denkstufen().items():
             sub.eintrag(v["name"], lambda k=k: d.denktiefe_setzen(k), haken=k == stufe)
         modus = d.werkzeugmodus()
         sub = menue.untermenue("Berechtigungen", symbole.icon("shield-check", ICON_NORMAL), d.werkzeuge_vorhanden(),

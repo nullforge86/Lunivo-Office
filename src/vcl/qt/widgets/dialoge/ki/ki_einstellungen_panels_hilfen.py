@@ -54,8 +54,8 @@ class OfflineSprachen(QWidget):
         self.aktualisieren()
 
     def aktualisieren(self) -> None:
-        from framework.ki.anbieter import argos
-        r = argos.installierte_richtungen()                       # lokal, kein Netz
+        from writer.funktionen import ki as argos
+        r = argos.argos_installierte_richtungen()                       # lokal, kein Netz
         self.installiert.setText("Installiert: " + ", ".join(x["name"] for x in r) if r else
                                  "Keine Sprachpakete gefunden. Deutsch ↔ Englisch gehört zum Programm; weitere Sprachen laden Sie bei Bedarf.")
 
@@ -65,19 +65,19 @@ class OfflineSprachen(QWidget):
             b.setEnabled(not an)
 
     def _verfuegbare_holen(self) -> None:
-        from framework.ki.anbieter import argos
+        from writer.funktionen import ki as argos
         self._modus = "liste"; self._sperren(True)
         self.stand.setText("Verfügbare Sprachen werden aus dem Internet abgefragt …")
-        self._pool.start(_NetzLauf(self._sender, argos.verfuegbare_richtungen))
+        self._pool.start(_NetzLauf(self._sender, argos.argos_verfuegbare_richtungen))
 
     def _herunterladen(self, von: str, nach: str, name: str, mb) -> None:
         gr = f" (ca. {mb} MB)" if mb else ""
         if QMessageBox.question(self, "Sprachpaket laden", f"„{name}“{gr} jetzt aus dem Internet herunterladen und installieren?") != QMessageBox.Yes:
             return
-        from framework.ki.anbieter import argos
+        from writer.funktionen import ki as argos
         self._modus = "paket"; self._ziel = (von, nach); self._sperren(True)
         self.stand.setText(f"„{name}“ wird geladen und installiert … Das kann etwas dauern.")
-        self._pool.start(_NetzLauf(self._sender, argos.richtung_installieren, von, nach))
+        self._pool.start(_NetzLauf(self._sender, argos.argos_richtung_installieren, von, nach))
 
     def _ergebnis(self, erg: dict) -> None:
         self._sperren(False)

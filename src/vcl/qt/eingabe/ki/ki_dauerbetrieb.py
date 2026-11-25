@@ -160,7 +160,7 @@ class KIDauerbetriebMixin:
         if getattr(self, "_dauer_nachholen", False) and not self._arbeit_laeuft:
             self._dauer_nachholen = False
             if self.dauerbetrieb():
-                self._dauer_timer.start(int(KD.MINDESTABSTAND * 1000))
+                self._dauer_timer.start(int(KD.mindestabstand() * 1000))
 
     def _dauer_los(self) -> None:
         """Nach der Ruhezeit: den ersten fälligen Assistenten starten (die übrigen kommen nach seinem Ergebnis dran)."""
@@ -217,7 +217,7 @@ class KIDauerbetriebMixin:
         finally:
             self._dauer_eigen = False
         if self._dauer_timer.isActive() is False and self.dauerbetrieb():
-            self._dauer_timer.start(int(KD.MINDESTABSTAND * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
+            self._dauer_timer.start(int(KD.mindestabstand() * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
 
     def _dauer_kommentar(self, ed, eing, text: str, autor: str) -> None:
         alt = ed.sitzung.auswahl

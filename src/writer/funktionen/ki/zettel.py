@@ -3,4 +3,7 @@ from __future__ import annotations
 
 from framework.befehle.ki import zettel as befehle
 
-ZETTEL_GRENZE: int = befehle.ZETTEL_GRENZE
+
+def zettel_grenze() -> int:
+    """Wie viele Zeichen der Zettel für die KI höchstens hat."""
+    return int(befehle.ZETTEL_GRENZE)

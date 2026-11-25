@@ -17,14 +17,12 @@ MELDUNG_REZENSION = "Als Änderungen eingetragen. Im Reiter „Überprüfen“ e
 MELDUNG_OHNE_MARKIERUNG = "Die Frage wurde ohne Markierung gestellt und die Antwort ist keine Überarbeitung des Dokuments. Zum Ersetzen die Stelle markieren und neu fragen."
 
 
-def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, dokument,
-                 editor_obj=None, dokument_obj=None, ganz: str = "") -> dict:
-    """``ganz``: ohne Markierung der Dokumenttext zum Sendezeitpunkt (nur für den Vorher/Nachher-Vergleich, nie gesendet oder gespeichert).
-    Bezug mit Editor-Kennung und optionalen Objektidentitäten zur sicheren Dokumentzuordnung."""
+def bezug_bauen(von: int, bis: int, markiert: bool, revision: int, alt: str, kennung: int, ganz: str = "") -> dict:
+    """Die Stelle im Text zum Sendezeitpunkt. ``kennung``: das Dokument (Kennung des Frameworks) – keine Objekte der Oberfläche.
+    ``ganz``: ohne Markierung der Dokumenttext zum Sendezeitpunkt (nur für den Vorher/Nachher-Vergleich, nie gesendet oder gespeichert)."""
     von, bis = min(von, bis), max(von, bis)
     return {"von": von, "bis": bis, "markiert": bool(markiert), "revision": revision,
-            "alt": alt if markiert else "", "ganz": "" if markiert else ganz, "dokument": dokument,
-            "editor_obj": editor_obj, "dokument_obj": dokument_obj}
+            "alt": alt if markiert else "", "ganz": "" if markiert else ganz, "dokument": int(kennung)}
 
 
 def bezug_angewendet() -> dict:
@@ -32,18 +30,13 @@ def bezug_angewendet() -> dict:
     return {"angewendet": True}
 
 
-def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, editor_jetzt,
-                   dokument_jetzt=None, editor_obj_jetzt=None) -> tuple[bool, str]:
-    """(ok, Grund). Gleiche Revision, Editor-Kennung und – sofern erfasst – dieselben Objektidentitäten."""
+def bezug_pruefen(bezug: dict | None, revision_jetzt: int | None, kennung_jetzt: int | None) -> tuple[bool, str]:
+    """(ok, Grund). Dasselbe Dokument (Kennung) und dieselbe Revision wie beim Senden."""
     if not bezug:
         return False, MELDUNG_KEIN_BEZUG
     if bezug.get("angewendet"):
         return False, MELDUNG_ANGEWENDET
-    if editor_jetzt is None or revision_jetzt is None or bezug["dokument"] != editor_jetzt:
-        return False, MELDUNG_EDITOR
-    if bezug.get("editor_obj") is not None and bezug["editor_obj"] is not editor_obj_jetzt:
-        return False, MELDUNG_EDITOR
-    if bezug.get("dokument_obj") is not None and bezug["dokument_obj"] is not dokument_jetzt:
+    if kennung_jetzt is None or revision_jetzt is None or bezug["dokument"] != kennung_jetzt:
         return False, MELDUNG_EDITOR
     if bezug["revision"] != revision_jetzt:
         return False, MELDUNG_GEAENDERT

@@ -11,7 +11,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QWidget
 
-from framework.ki.chat.chat_vorschlaege import chat_vorschlaege
+from writer.funktionen.ki import chat_vorschlaege
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import KartenRaster
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_NORMAL, BREITE_RASTERZELLE_CHIP, CHAT_CHIP_HOEHE, CHAT_LEER_ICON, RAND_KEIN

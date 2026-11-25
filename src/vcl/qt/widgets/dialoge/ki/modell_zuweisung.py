@@ -3,21 +3,21 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QComboBox, QLabel, QWidget
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 
 def modell_passt(m: dict, aufgabe: str) -> bool:
     """Lokale Übersetzung („argos:“) und „Automatisch“ („auto:“) gelten nur für ihre Aufgabe (``verwendungFuer``); Bildgenerierung hat ihre eigene Regel."""
-    if m["id"].startswith((K.ARGOS_MARKE, K.AUTO_MARKE)) and aufgabe not in m["verwendungFuer"]:
+    if m["id"].startswith((KD.argos_marke(), KD.auto_marke())) and aufgabe not in m["verwendungFuer"]:
         return False
     if aufgabe == "bildgenerierung":               # nur Anbieter mit „Bilder“ — Claude und Text-Modelle kennen das nicht
-        return "bilder" in m["verwendungFuer"] and m["id"].startswith(K.EIGEN_MARKE)
+        return "bilder" in m["verwendungFuer"] and m["id"].startswith(KD.eigen_marke())
     return True
 
 
-def modell_felder_fuellen(combo: QComboBox, konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None, standard: str = "Standard (KI-Modell der Optionen)") -> None:
+def modell_felder_fuellen(combo: QComboBox, konfig, aufgabe: str, gewaehlt: str | None = None, standard: str = "Standard (KI-Modell der Optionen)") -> None:
     """Die eine Stelle, die ein Modell-Auswahlfeld füllt (Modellzuweisung, Optionen, Chat): Eintrag „Standard“, dann alle passenden Modelle; Signale ruhen dabei."""
     combo.blockSignals(True)
     combo.clear()
@@ -30,7 +30,7 @@ def modell_felder_fuellen(combo: QComboBox, konfig: K.KIKonfig, aufgabe: str, ge
     combo.blockSignals(False)
 
 
-def modell_combo(konfig: K.KIKonfig, aufgabe: str, gewaehlt: str | None = None) -> QComboBox:
+def modell_combo(konfig, aufgabe: str, gewaehlt: str | None = None) -> QComboBox:
     """Die Auswahl „welches Modell für diese Aufgabe?“ — dieselbe in der Modellzuweisung und in den erweiterten Einstellungen des Chats."""
     c = Auswahlfeld()                                                            # lange Modellnamen machen das Feld nicht breiter als die Seitenleiste
     modell_felder_fuellen(c, konfig, aufgabe, gewaehlt)
@@ -58,7 +58,7 @@ class ModellZuweisung(QWidget):
             self._v.removeWidget(self.halter); self.halter.setParent(None); self.halter.deleteLater()
         self.felder.clear()
         self.halter = QWidget(); g = FormularGitter(self.halter)               # Beschriftung links, bei 300 px über dem Feld
-        for aufgabe, name in K.AUFGABEN:
+        for aufgabe, name in KD.aufgaben():
             c = modell_combo(self.k, aufgabe, alt.get(aufgabe, self.k["aufgaben"].get(aufgabe, "")))
             self.felder[aufgabe] = c
             g.zeile(name, c)

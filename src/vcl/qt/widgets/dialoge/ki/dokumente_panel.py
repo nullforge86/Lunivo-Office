@@ -7,7 +7,7 @@ import os
 from PySide6.QtCore import QThreadPool, Signal
 from PySide6.QtWidgets import QLabel, QWidget
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.interaktion.felder.listen_leiste import ListenLeiste
@@ -21,12 +21,11 @@ class DokumentePanel(QWidget):
     """Lokale Dokumentensuche für den KI-Chat: freigegebene Ordner, Zahl der Abschnitte, Index aufbauen. Der Text bleibt auf dem Rechner, solange das
     Chat-Modell lokal ist; bei einem Online-Modell fragt der Chat vorher nach der Zustimmung für Auszüge."""
 
-    def __init__(self, konfig: K.KIKonfig):
+    def __init__(self, konfig):
         super().__init__()
         from PySide6.QtWidgets import QCheckBox, QSpinBox
-        from framework.ki.suche import dokumentensuche as DS
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-        self.k, self._DS, self._Dateifenster = konfig, DS, Dateifenster
+        self.k, self._Dateifenster = konfig, Dateifenster
         o = konfig.dokumentsuche_optionen()
         v = _spalte("oben", self)
         self.an = haken("standard", "Eigene Dokumente im KI-Chat durchsuchen", an=bool(o["an"]))
@@ -62,7 +61,7 @@ class DokumentePanel(QWidget):
         return [self.liste.item(i).text() for i in range(self.liste.count())]
 
     def _stand_zeigen(self) -> None:
-        d, a = self._DS.Index(self.k.dokumentindex_pfad()).anzahl()
+        d, a = KD.dokumentindex_anzahl(self.k.dokumentindex_pfad())
         self.stand.setText(f"Im Index: {d} Dateien, {a} Abschnitte." if d else "Der Index ist noch leer.")
 
     def _neu(self) -> None:
@@ -81,7 +80,7 @@ class DokumentePanel(QWidget):
         ordner = self.ordner()
         self.los.setEnabled(False); self.stand.setText("Die Dokumente werden gelesen … Das kann etwas dauern.")
         pfad = self.k.dokumentindex_pfad()
-        self._pool.start(_NetzLauf(self._sender, lambda: {"bericht": self._DS.Index(pfad).aktualisieren(ordner)}))
+        self._pool.start(_NetzLauf(self._sender, lambda: {"bericht": KD.dokumentindex_aktualisieren(pfad, ordner)}))
 
     def _fertig(self, b: dict) -> None:
         self.los.setEnabled(True)

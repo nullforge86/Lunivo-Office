@@ -17,7 +17,7 @@ import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QWidget
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from framework.dokumentverwaltung.dokumentpflege import vorlesen
 from system.plattform import pfade
 from core.korrektur.woerterbuecher.vorhersage import EMPFAENGER
@@ -49,14 +49,14 @@ class LunivoSeiten:
             for m in k.alle_modelle():
                 if m["id"] == mid:
                     return m["name"]
-            return mid[len(K.OLLAMA_MARKE):] if mid.startswith(K.OLLAMA_MARKE) else mid
+            return mid[len(KD.ollama_marke()):] if mid.startswith(KD.ollama_marke()) else mid
 
         from vcl.qt.widgets.dialoge.ki.ki_dialoge import modell_felder_fuellen
 
         def aufgaben_fuellen():
             for aufgabe, c in combos.items():
                 modell_felder_fuellen(c, k, aufgabe, standard=_t("optionen.lunivo.standard_0").format(standard_name()))
-        for aufgabe, name in K.AUFGABEN:
+        for aufgabe, name in KD.aufgaben():
             c = Auswahlfeld()
             combos[aufgabe] = c
             c.currentIndexChanged.connect(lambda _i, a=aufgabe, c=c: (k.aufgabe_setzen(a, c.currentData() or ""), geaendert.emit()))
@@ -104,12 +104,12 @@ class LunivoSeiten:
         def modell_fuellen():
             modell.blockSignals(True); modell.clear()
             modell.addItem("(keines)", "")
-            for mid, name in K.MODELLE_FEST:
+            for mid, name in KD.modelle_fest():
                 modell.addItem(name, mid)
             for m in self.w.ki.ki.ollama_modelle():
-                modell.addItem(_t("optionen.lunivo.auf_diesem_rechner_0").format(m), K.OLLAMA_MARKE + m)
+                modell.addItem(_t("optionen.lunivo.auf_diesem_rechner_0").format(m), KD.ollama_marke() + m)
             for a in k["anbieter"]:
-                modell.addItem(f"{a['name']} ({a['modell']})", K.EIGEN_MARKE + a["id"])
+                modell.addItem(f"{a['name']} ({a['modell']})", KD.eigen_marke() + a["id"])
             modell.setCurrentIndex(max(0, modell.findData(k["modell"])))
             modell.blockSignals(False)
         modell.currentIndexChanged.connect(lambda _i: (k.setze("modell", modell.currentData()), aufgaben_fuellen(), geaendert.emit()))
@@ -130,7 +130,7 @@ class LunivoSeiten:
                 av.addWidget(QLabel(_t("optionen.lunivo.noch_keiner_angelegt_ollama_openai_openr")))
             for a in k["anbieter"]:
                 z = QWidget(); zh = _reihe("standard", z)
-                teile = [a["modell"], _t("optionen.lunivo.lokaler_anbieter") if K.ist_lokale_url(a["url"]) else _t("optionen.lunivo.ueber_das_internet")]
+                teile = [a["modell"], _t("optionen.lunivo.lokaler_anbieter") if KD.ist_lokale_url(a["url"]) else _t("optionen.lunivo.ueber_das_internet")]
                 zh.addWidget(QLabel(f"{a['name']}  ·  {' · '.join(t for t in teile if t)}"), 1)
                 eb = knopf("standard", _t("optionen.lunivo.entfernen"))
                 eb.clicked.connect(lambda _=False, i=a["id"]: (k.anbieter_entfernen(i), alles_neu(), geaendert.emit()))
@@ -167,7 +167,7 @@ class LunivoSeiten:
 
         verbrauch = QWidget(); vh = _reihe("zeile", verbrauch)
         vh.addWidget(QLabel(_t("optionen.lunivo.verbrauch")))
-        vh.addWidget(QLabel(_t("optionen.lunivo.noch_nichts_verbraucht") if not k["kosten"] else _t("optionen.lunivo.bisherige_kosten_0").format(K.als_geld(k['kosten']))))
+        vh.addWidget(QLabel(_t("optionen.lunivo.noch_nichts_verbraucht") if not k["kosten"] else _t("optionen.lunivo.bisherige_kosten_0").format(KD.als_geld(k['kosten']))))
         auf = knopf("standard", _t("optionen.lunivo.guthaben_aufladen"), ohne_rand=True, hand=True)
         auf.setProperty("akzentSchrift", True); _rolle(auf, "link")
         auf.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://console.anthropic.com/settings/billing")))

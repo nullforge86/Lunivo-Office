@@ -4,7 +4,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QMessageBox, QWidget
-from framework.ki.dienst import ki as K
+from writer.funktionen import ki as KD
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
 from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_KNOPF_GROSS
 
@@ -12,7 +12,7 @@ from vcl.qt.widgets.bausteine.abstaende.mass import HOEHE_KNOPF_GROSS
 class EinwilligungenPanel(QWidget):
     """Wer darf welchen Text bekommen: die gespeicherten Einwilligungen, einzeln oder alle widerrufbar. Ohne Einwilligung wird nichts gesendet."""
 
-    def __init__(self, konfig: K.KIKonfig):
+    def __init__(self, konfig):
         super().__init__()
         self.k = konfig
         v = _spalte("oben", self)
@@ -35,7 +35,7 @@ class EinwilligungenPanel(QWidget):
         self.liste.clear()
         for e in self.k.einwilligungen():
             seit = f" — seit {e['seit']}" if e["seit"] else ""
-            it = QListWidgetItem(f"{e['anbieter']}: darf {K.UMFAENGE[e['umfang']]} bekommen{seit}")
+            it = QListWidgetItem(f"{e['anbieter']}: darf {KD.umfaenge()[e['umfang']]} bekommen{seit}")
             it.setData(Qt.UserRole, (e["anbieter"], e["umfang"])); self.liste.addItem(it)
         if not self.liste.count():
             it = QListWidgetItem("Keine Einwilligung gespeichert — es wird nichts ohne Rückfrage gesendet."); it.setFlags(Qt.NoItemFlags); self.liste.addItem(it)
