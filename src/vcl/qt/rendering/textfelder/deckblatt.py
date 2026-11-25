@@ -6,7 +6,8 @@ from core.dokument.dokument import Auswahl, Position
 from core.geometrie import Rect
 from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
 from core.dokument.abschnitte.seite import mm_to_px
-from core.dokument.abschnitte.deckblatt_vorlagen import _grafik, _schrift, entfernen, gestaltung, zeichnen_mit
+from core.dokument.abschnitte.deckblatt_vorlagen import _grafik, _schrift, gestaltung, zeichnen_mit
+from writer.funktionen.objekte import deckblatt_entfernen
 
 
 def zeichnen(p, name: str, r, mit_text: bool = True) -> None:
@@ -22,7 +23,7 @@ def grafik_bild(name: str, breite_px: int, hoehe_px: int) -> QImage:
 
 def einfuegen(ed, name: str, quer: bool = False) -> None:
     """Deckblatt ``name`` als ersten Abschnitt an den Anfang setzen (ersetzt ein vorhandenes)."""
-    entfernen(ed)
+    deckblatt_entfernen(ed.kennung)            # ein vorhandenes Deckblatt nimmt das Framework heraus
     g = gestaltung(name)
     alt = copy.deepcopy(ed.page)
     rest = copy.deepcopy(alt)                           # das Dokument nach dem Deckblatt: alles wie bisher, Wasserzeichen nur dort
@@ -39,7 +40,6 @@ def einfuegen(ed, name: str, quer: bool = False) -> None:
 
     def f(s):
         with s.gruppe("Deckblatt"):
-            erster = next(s.dokument.absaetze())
             s.text_einfuegen("\n".join(x.text for x in g.felder) + "\n", s.dokument.anfang(), format={})
             absaetze = list(s.dokument.absaetze())
             y = mm_to_px(deck.margin_top_mm)
@@ -60,7 +60,8 @@ def einfuegen(ed, name: str, quer: bool = False) -> None:
                     s.zeichenformat_anwenden(zf, Auswahl(Position(a.id, 0), Position(a.id, a.laenge)))
                 m = standard_engine().font_metrics(spec)
                 y = max(y, ziel) + (m.ascent + m.descent) * 1.15
-            s.abschnitt_einfuegen(Position(erster.id, 0), "naechste", rest)       # das Dokument beginnt hinter dem Deckblatt auf einem neuen Blatt
+            erster_rest = absaetze[len(g.felder)]                                 # der bisherige Anfang (die Id des ersten Absatzes bleibt beim Deckblatt)
+            s.abschnitt_einfuegen(Position(erster_rest.id, 0), "naechste", rest)  # das Dokument beginnt hinter dem Deckblatt auf einem neuen Blatt
             s.seite_ersetzen(0, deck)
             s.setze_auswahl(Position(absaetze[0].id, 0))
     ed.ansicht._aendern(f)

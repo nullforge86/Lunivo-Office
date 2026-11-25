@@ -725,7 +725,6 @@
   "src/vcl/qt/widgets/seitenleisten/vorlagen/vorlagen_galerie.py": 1
  },
  "kern_ruft_oberflaeche": {
-  "src/core/dokument/abschnitte/deckblatt_vorlagen.py": 1,
   "src/core/objekte/formen/frei_objekt_daten.py": 3,
   "src/core/tabellen/modell/tabellenzustand.py": 2
  },

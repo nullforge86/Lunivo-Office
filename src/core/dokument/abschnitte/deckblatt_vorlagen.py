@@ -321,12 +321,12 @@ def hat_deckblatt(dok) -> bool:
     return bool(dok.abschnitte and next(dok.absaetze(), None) is not None and next(dok.absaetze()).format.get("deckblatt"))
 
 
-def entfernen(ed) -> bool:
-    """Das Deckblatt (erster Abschnitt) herausnehmen; das Dokument bekommt die Einrichtung des zweiten Abschnitts."""
-    s = ed.sitzung
+def entfernen(s) -> int:
+    """Das Deckblatt (erster Abschnitt) der Bearbeitungssitzung ``s`` herausnehmen; das Dokument bekommt die Einrichtung des zweiten Abschnitts.
+    → 1, wenn eines entfernt wurde, sonst 0."""
     dok = s.dokument
     if not hat_deckblatt(dok) or len(dok.abschnitte) < 2:
-        return False
+        return 0
     rest = dok.abschnitte[1].seite.copy()
     if (rest.watermark or {}).get("deckblatt_leer"):
         rest.watermark = None
@@ -335,10 +335,12 @@ def entfernen(ed) -> bool:
     deck = [a.id for a in dok.abschnitte[0].bloecke if hasattr(a, "inhalte")]
     erster_rest = next(b for b in dok.abschnitte[1].bloecke if hasattr(b, "inhalte"))
 
-    def f(sitz):
-        with sitz.gruppe("Deckblatt entfernen"):
-            sitz.abschnitt_entfernen(1, "nachher")
-            sitz.loeschen(Auswahl(Position(deck[0], 0), Position(erster_rest.id, 0)))
-            sitz.absatzformat_anwenden({"deckblatt_umbruch": None, "seitenumbruch_vor": None}, absatz_ids=[erster_rest.id])
-            sitz.seite_ersetzen(0, rest)
-    return ed.ansicht._aendern(f)
+    format_rest = {k: v for k, v in erster_rest.format.items() if k not in ("deckblatt_umbruch", "seitenumbruch_vor")}
+    marke_rest = dict(erster_rest.zeichenformat)
+    with s.gruppe("Deckblatt entfernen"):
+        s.abschnitt_entfernen(1, "nachher")
+        s.loeschen(Auswahl(Position(deck[0], 0), Position(erster_rest.id, 0)))       # der Rest wächst an den ersten Absatz (dessen Id bleibt)
+        s.absatzformat_anwenden(format_rest, absatz_ids=[deck[0]], ersetzen=True)     # er bekommt das Format des bisherigen ersten Absatzes
+        s.absatz_zeichenformat_anwenden(marke_rest, absatz_ids=[deck[0]], ersetzen=True)
+        s.seite_ersetzen(0, rest)
+    return 1
