@@ -14,10 +14,17 @@ sys.path.insert(0, os.path.join(WURZEL, "src"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 ZIEL = os.path.join(WURZEL, "ressourcen", "bilder")
 
-from PySide6.QtCore import QEventLoop, QSettings, QTimer  # noqa: E402
+# Eigene, leere Einstellungs- und Datenordner: Die Aufnahmen zeigen den Auslieferungszustand und berühren die echten Benutzerdaten nicht.
+# Das Programm liest seine Orte aus den XDG-Variablen; sie müssen vor dem ersten Import gesetzt sein.
+_ORT = tempfile.mkdtemp(prefix="lunivo-bilder-")
+for _variable, _ordner in (("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "daten"), ("XDG_CACHE_HOME", "cache"), ("XDG_STATE_HOME", "state")):
+    os.environ[_variable] = os.path.join(_ORT, _ordner)
+    os.makedirs(os.environ[_variable], exist_ok=True)
+
+import framework  # noqa: F401,E402  (meldet dem Kern seine Orte an)
+from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from lunivo_writer.dienste.einstellungen_dienst import Settings  # noqa: E402
 from vcl.qt.widgets.dialoge.optionen import OptionenDialog  # noqa: E402
 from vcl.qt.fenster.fenster.programmfenster import MainWindow  # noqa: E402
 from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme  # noqa: E402
@@ -58,17 +65,21 @@ def warte(ms):
 
 
 def fenster(app, theme, text=BRIEF, groesse=(1500, 900)):
-    ini = os.path.join(tempfile.mkdtemp(), "s.ini")
     apply_theme(app, theme)                   # zuerst das Thema, dann das Fenster: Die Symbole übernehmen die Farben beim Bauen
     symbole.leeren()
-    w = MainWindow(Settings(QSettings(ini, QSettings.IniFormat)))
+    w = MainWindow()
     w.resize(*groesse)
     w.show()
     w.new_document()
     ed = w.current_editor()
-    ed.textCursor().insertText(text)          # Einfügen statt setPlainText: die Seitenränder bleiben erhalten
+    ed.insertPlainText(text)                  # über den Bearbeitungsweg des Programms: die Seitenränder bleiben erhalten
     app.processEvents()
     return w
+
+
+def marke(ed, stelle):
+    """Die Schreibmarke an die Zeichenstelle ``stelle`` setzen (ohne Auswahl)."""
+    ed.select_range(stelle, stelle)
 
 
 def schliessen(w):
@@ -128,15 +139,15 @@ def main():
 
 def zusatzbilder(app):
     """Abschnitte, SmartArt, Form- und Tabellenwerkzeuge, Überprüfen (Vergleichen)."""
-    from PySide6.QtGui import QTextCursor
-    from vcl.qt.rendering.formen import frei_objekt as FO
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+    from vcl.qt.rendering.formen import frei_objekt_aendern
     from vcl.qt.rendering.smartart import smartart as SA
-    from core.tabellen.formatierung import tabellenstil as TS
-    from PySide6.QtGui import QTextTableFormat
 
     w = fenster(app, "light")
+    w.sidebar.setVisible(False)                                                   # Platz für das Querformat des zweiten Abschnitts
     ed = w.current_editor()
-    c = QTextCursor(ed.document()); c.setPosition(ed.document().toPlainText().index("Sehr geehrte")); ed.setTextCursor(c)
+    marke(ed, ed.toPlainText().index("Sehr geehrte"))
     w.befehle.tun('abschnittsumbruch:["NextPage"]')
     ps = ed.abschnitt_seite(); ps.set_orientation(True); ed.page_settings_changed(ps)
     reiter(w, "Abschnitt")
@@ -155,8 +166,8 @@ def zusatzbilder(app):
 
     w = fenster(app, "light", "Formen im Text:\n")
     ed = w.current_editor()
-    FO.einfuegen(ed, "form", {**FO.FORM_STANDARD, "form": "Raute"}, 160, 120)      # freies Objekt, gleich gewählt
-    FO.aendern(ed, "form", form_fuell="#f4a259", form_linie="#9c4f0a")
+    w.befehle.tun('formEinfuegen:["Raute"]')                                      # freies Objekt, gleich gewählt
+    frei_objekt_aendern(ed, "form", form_fuell="#f4a259", form_linie="#9c4f0a")
     w._sync_format()
     reiter(w, "Zeichentools")
     warte(400)
@@ -165,14 +176,13 @@ def zusatzbilder(app):
 
     w = fenster(app, "light", "Quartalszahlen:\n")
     ed = w.current_editor()
-    c = ed.textCursor(); c.movePosition(QTextCursor.End)
-    ed.setTextCursor(c)
-    t = c.insertTable(4, 3, QTextTableFormat())
-    for r, zeile in enumerate((("Quartal", "Umsatz", "Kosten"), ("Q1", "120", "80"), ("Q2", "150", "90"), ("Q3", "170", "110"))):
-        for k, x in enumerate(zeile):
-            t.cellAt(r, k).firstCursorPosition().insertText(x)
-    TS.anwenden(t, "Blau")
-    ed.setTextCursor(t.cellAt(1, 1).firstCursorPosition())
+    ed.insert_table(4, 3)                                                         # die Schreibmarke steht danach in der ersten Zelle
+    zellen = [x for zeile in (("Quartal", "Umsatz", "Kosten"), ("Q1", "120", "80"), ("Q2", "150", "90"), ("Q3", "170", "110")) for x in zeile]
+    for nr, x in enumerate(zellen):
+        if nr:                                                                    # mit der Tabulatortaste in die nächste Zelle, wie am Bildschirm
+            app.sendEvent(ed.ansicht, QKeyEvent(QEvent.KeyPress, Qt.Key_Tab, Qt.NoModifier))
+        ed.insertPlainText(x)
+    ed.tabelle_vorlage_anwenden("Blau", True, True, False)
     w._sync_format()
     reiter(w, "Tabellentools")
     warte(400)
@@ -189,23 +199,22 @@ def zusatzbilder(app):
 def rechtsklick(app):
     """Rechtsklick auf „garnicht“: Menü samt schwebender Formatleiste, in das Fenster hineingemalt."""
     from PySide6.QtCore import QPoint, Qt
-    from PySide6.QtGui import QContextMenuEvent, QPainter, QTextCursor
+    from PySide6.QtGui import QContextMenuEvent, QPainter
     from PySide6.QtWidgets import QMenu
 
     w = fenster(app, "light", "Das Ergebnis ist garnicht schlimm, wenn man es kurz prüft.\n", groesse=(1100, 1050))
     w.sidebar.setVisible(False)
     ed = w.current_editor()
-    c = QTextCursor(ed.document())
-    c.setPosition(ed.document().toPlainText().index("garnicht") + 8)
-    ed.setTextCursor(c)
+    marke(ed, ed.toPlainText().index("garnicht") + 8)
+    warte(1500)                                   # erst die Prüfung beim Schreiben auslaufen lassen: solange sie läuft, wird „Prüfen“ nur vorgemerkt
     w.assistant.pruefen(zaehlen=True)
-    warte(1500)                                   # die Prüfung läuft im Hintergrund; erst danach kennt das Menü den Fund
-    pos = ed.cursorRect(c).center()
+    warte(2500)                                   # die Prüfung läuft im Hintergrund; erst danach kennt das Menü den Fund
+    pos = ed.cursorRect().center()
 
     def aufnehmen():
         bild = w.grab()
         maler = QPainter(bild)
-        for top in app.topLevelWidgets():
+        for top in sorted(app.topLevelWidgets(), key=lambda t: isinstance(t, QMenu)):      # das Menü zuletzt: es liegt über der Formatleiste
             if top is not w and top.isVisible() and top.windowFlags() & (Qt.Popup | Qt.ToolTip | Qt.Tool | Qt.FramelessWindowHint):
                 maler.drawPixmap(w.mapFromGlobal(top.pos()), top.grab())
         maler.end()
@@ -217,7 +226,7 @@ def rechtsklick(app):
                 m.close()
 
     QTimer.singleShot(800, aufnehmen)
-    ed.contextMenuEvent(QContextMenuEvent(QContextMenuEvent.Mouse, pos, ed.mapToGlobal(pos)))
+    ed.ansicht.contextMenuEvent(QContextMenuEvent(QContextMenuEvent.Mouse, pos, ed.ansicht.mapToGlobal(pos)))
     schliessen(w)
 
 
