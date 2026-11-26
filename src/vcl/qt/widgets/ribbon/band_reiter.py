@@ -26,7 +26,11 @@ class BandReiterBaustein:
             return
         scroll, r = eintrag
         seite = QWidget()
-        h = _reihe("leiste", seite)
+        mitte = _spalte("kein", seite)                     # der Inhalt jedes Reiters steht senkrecht in der Mitte: ein- und zweizeilige Reiter auf derselben Achse
+        h = _reihe("leiste")
+        mitte.addStretch(1)
+        mitte.addLayout(h)
+        mitte.addStretch(1)
         if r.get("arbeitsleiste"):                         # Start: eine kompakte Zeile, der Rest steht unter „Mehr“
             self._start_bauen(h, r)
         elif hat_uebersicht(r):                            # erst die Gruppen-Icons, nach dem Klick die Befehle der Gruppe

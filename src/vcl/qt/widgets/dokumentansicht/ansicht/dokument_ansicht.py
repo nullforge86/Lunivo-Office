@@ -17,6 +17,8 @@ from writer.werte import mm_zu_px as mm_to_px
 from writer.anbindung.geometrie import blatt_abstand_px
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import AUTOR_FARBEN, WELLEN_FARBE, WELLEN_STANDARD
+from vcl.qt.widgets.bausteine.abstaende import BLATTSCHATTEN_VERSATZ, BLATTSCHATTEN_WEITE
+from vcl.qt.widgets.bausteine.rahmen import blattschatten
 
 from vcl.qt.widgets.dokumentansicht.ansicht.eingabe import EingabeTeil
 from vcl.qt.widgets.dokumentansicht.ansicht.objekt_bedienung import ObjektBedienung
@@ -327,8 +329,12 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         marke = self._ueberlagerung()
         auswahl_leer = ST.auswahl(self.kennung).leer
         sicht = QRectF(ev.rect())
+        dunkel = self.palette().color(QPalette.Dark).lightness() < self.palette().color(QPalette.WindowText).lightness()     # Arbeitsfläche dunkler als die Schrift: dunkles Thema
         for i in range(len(erg.seiten)):
             blatt = self.blatt(i)
+            if not blatt.adjusted(-BLATTSCHATTEN_WEITE, -BLATTSCHATTEN_WEITE, BLATTSCHATTEN_WEITE, BLATTSCHATTEN_WEITE + BLATTSCHATTEN_VERSATZ).intersects(sicht):
+                continue
+            blattschatten(p, blatt, dunkel)                                                 # weicher Schatten: das Blatt liegt auf der Arbeitsfläche
             if not blatt.intersects(sicht):
                 continue
             bild = self._seitenbild(erg, i)

@@ -76,6 +76,7 @@ class ReiterZustandMixin:
         from vcl.qt.widgets.bausteine.symbole.bauteile.schweb_knopf import SchwebKnopf
         tab._chat_knopf = SchwebKnopf(tab, "chat", "KI-Chat", lambda: self.chat_oeffnen(""))
         self.sidebar.bereich_geaendert.connect(lambda *_: self._chat_knopf_pruefen())
+        self._chat_knopf_pruefen(tab)                             # gleich beim Anlegen: nicht zeigen, wenn die Leiste rechts den Chat schon anbietet
         e.formatChanged.connect(self._effekt_sync)
         e.pageInfoChanged.connect(lambda *_: self._sync_status())
         e.document().modificationChanged.connect(lambda _m: self._update_tab_titles())

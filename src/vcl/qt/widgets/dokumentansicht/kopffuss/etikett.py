@@ -1,13 +1,12 @@
-"""Das Etikett „Kopfzeile“ / „Fußzeile“ am Rand des Bereichs: heller Grund, gestrichelter Rahmen, grauer Text. Der Text kommt vom Bearbeiter."""
+"""Das Etikett „Kopfzeile“ / „Fußzeile“ am Rand des Bereichs: eine dezente Pille in der Akzentfarbe des Blatts. Der Text kommt vom Bearbeiter."""
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QWidget
 
-from vcl.qt.widgets.bausteine.abstaende import KOPFFUSS_ETIKETT_RAND
-from vcl.qt.widgets.bausteine.farben import KOPFFUSS_ETIKETT_GRUND, KOPFFUSS_ETIKETT_TEXT
-from vcl.qt.widgets.dokumentansicht.kopffuss.strich import strichstift
+from vcl.qt.widgets.bausteine.abstaende import KOPFFUSS_ETIKETT_RAND as KOPFFUSS_ETIKETT_INNENRAND
+from vcl.qt.widgets.bausteine.farben import KOPFFUSS_ETIKETT_GRUND, KOPFFUSS_ETIKETT_RAND, KOPFFUSS_ETIKETT_TEXT
 
 
 class KopfFussEtikett(QWidget):
@@ -27,15 +26,16 @@ class KopfFussEtikett(QWidget):
         self.update()
 
     def sizeHint(self) -> QSize:
-        waagerecht, senkrecht = KOPFFUSS_ETIKETT_RAND
+        waagerecht, senkrecht = KOPFFUSS_ETIKETT_INNENRAND
         m = self.fontMetrics()
         return QSize(m.horizontalAdvance(self._text) + waagerecht + waagerecht, m.height() + senkrecht + senkrecht)
 
     def paintEvent(self, _ev) -> None:
         p = QPainter(self)
-        flaeche = self.rect().adjusted(0, 0, -1, -1)
-        p.fillRect(flaeche, QColor(KOPFFUSS_ETIKETT_GRUND))
-        p.setPen(strichstift())
-        p.drawRect(flaeche)
+        p.setRenderHint(QPainter.Antialiasing)
+        flaeche = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
+        p.setPen(QColor(KOPFFUSS_ETIKETT_RAND))                  # eine dezente Pille wie die Knöpfe daneben, kein gestrichelter Kasten
+        p.setBrush(QColor(KOPFFUSS_ETIKETT_GRUND))
+        p.drawRoundedRect(flaeche, flaeche.height() / 2, flaeche.height() / 2)
         p.setPen(QColor(KOPFFUSS_ETIKETT_TEXT))
         p.drawText(self.rect(), Qt.AlignCenter, self._text)

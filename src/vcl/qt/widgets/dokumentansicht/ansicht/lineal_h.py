@@ -49,14 +49,10 @@ class LinealH(_Lineal):
         c = self.farben()
         m = self._marken()
         pg = m["pg"]
-        p.fillRect(self.rect(), c["aussen"])
-        p.fillRect(QRectF(m["blatt_links"], 0, m["blatt_rechts"] - m["blatt_links"], HOEHE), c["grund"])
-        p.fillRect(QRectF(m["links"], 0, m["rechts"] - m["links"], HOEHE), c["text"])
-        rand = QColor(c["schrift"]); rand.setAlpha(60)
-        p.setPen(QPen(rand, 1)); p.drawLine(0, HOEHE - 1, self.width(), HOEHE - 1)
+        self.koerper_zeichnen(p, QRectF(m["blatt_links"], 0, m["blatt_rechts"] - m["blatt_links"], HOEHE),          # nur über die Breite des Blatts
+                              QRectF(m["links"], 0, m["rechts"] - m["links"], HOEHE), c)
         self._schrift(p)
-        zahl, ticks = QColor(c["schrift"]), QColor(c["schrift"])
-        zahl.setAlpha(225); ticks.setAlpha(170)
+        zahl, ticks = self.stifte(c)
         z = self.e.zoom
         feiner = px_je_mm() * z >= 2.4                                       # jeder Millimeter nur, wenn er sich noch trennen lässt
         k0, k1 = -int(pg.margin_left_mm), int(pg.width_mm - pg.margin_left_mm)

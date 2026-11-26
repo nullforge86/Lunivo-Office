@@ -10,14 +10,14 @@ from PySide6.QtWidgets import QCheckBox, QScrollArea, QSizePolicy, QToolButton, 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.interaktion.felder.ueberlauf_leiste import UeberlaufLeiste
-from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
+from vcl.qt.widgets.bausteine.abstaende.mass import BANDTRENNER_ANTEIL, BANDTRENNER_MISCHUNG, BREITE_GRUPPENTRENNER, PADDING_BANDKNOPF, SCHRIFT_BANDKNOPF
+from vcl.qt.widgets.bausteine.farben.thema import kopf_grund
 
 
 class _GruppenTrenner(QWidget):
-    """Dezenter Gruppentrenner im Band: genau ein physischer Bildpunkt breit, oben und unten eingerückt, Farbe aus der aktuellen Palette
-    (Bandhintergrund leicht zur Mittelfarbe gemischt); folgt dem Themenwechsel von selbst, weil bei jedem Zeichnen neu gemischt wird."""
-    EINRUECKEN = 6
-    MISCHUNG = 0.30
+    """Abstand zwischen zwei Bandgruppen mit einem kurzen, blassen Strich in der Mitte: genau ein physischer Bildpunkt breit, nur ein Teil der Höhe
+    (``BANDTRENNER_ANTEIL``), Farbe aus der aktuellen Palette (Bandhintergrund leicht zur Mittelfarbe gemischt); folgt dem Themenwechsel von selbst,
+    weil bei jedem Zeichnen neu gemischt wird. Getrennt wird durch die Breite (``BREITE_GRUPPENTRENNER``), nicht durch eine harte Linie."""
 
     def __init__(self):
         super().__init__()
@@ -26,12 +26,13 @@ class _GruppenTrenner(QWidget):
 
     def paintEvent(self, _ev):
         pal = self.palette()
-        a, b, m = pal.color(self.backgroundRole()), pal.color(pal.ColorRole.Mid), self.MISCHUNG
+        a, b, m = pal.color(pal.ColorRole.Button), pal.color(pal.ColorRole.Mid), BANDTRENNER_MISCHUNG
         farbe = QColor(*(round(x * (1 - m) + y * m) for x, y in ((a.red(), b.red()), (a.green(), b.green()), (a.blue(), b.blue()))))
         d = self.devicePixelRatioF() or 1.0
         p = QPainter(self)
         x = round(self.width() / 2 * d) / d                               # auf einen physischen Punkt gerastert
-        p.fillRect(QRectF(x, self.EINRUECKEN, 1.0 / d, max(0, self.height() - 2 * self.EINRUECKEN)), farbe)
+        laenge = self.height() * BANDTRENNER_ANTEIL
+        p.fillRect(QRectF(x, (self.height() - laenge) / 2, 1.0 / d, laenge), farbe)
 
 
 class _BandSeite(QScrollArea):
@@ -243,6 +244,7 @@ class _ReiterLeiste(UeberlaufLeiste):
     doppelt = Signal()
     LUECKE = 10          # Abstand links und rechts um einen Kontext-Reiter
     LUECKE_KOMPAKT = 5
+    DECKKRAFT_RUHEND = 70    # Füllung des nicht gewählten Kontext-Reiters (0–255)
 
     def mouseDoubleClickEvent(self, ev):
         self.doppelt.emit()
@@ -271,19 +273,18 @@ class _ReiterLeiste(UeberlaufLeiste):
             if not self.gezeigt(i) or not self.ist_kontext(i):
                 continue
             tr = self.tabRect(i)
-            p.fillRect(tr.adjusted(0, tr.height() - 4, 0, 0), self.parentWidget().palette().window())   # Stylesheet-Unterstrich weg
-            r = tr.adjusted(self._luecke(), 3, -self._luecke(), -3)
+            p.fillRect(tr, QColor(kopf_grund()))                        # die Pille des Stylesheets weg: der Kontext-Reiter zeichnet seine eigene, gleich hoch
+            r = tr.adjusted(self._luecke(), 0, -self._luecke(), 0)
             if erster:                       # Trenner zwischen normalen und Kontext-Reitern
                 x = self.tabRect(i).left() + 2
                 p.setPen(self.palette().mid().color())
-                p.drawLine(x, r.top() + 2, x, r.bottom() - 2)
+                p.drawLine(x, r.top() + r.height() // 4, x, r.bottom() - r.height() // 4)
                 erster = False
             aktiv = i == self.currentIndex()
-            if aktiv:
-                p.setPen(Qt.NoPen); p.setBrush(akzent)
-            else:
-                fl = QColor(akzent); fl.setAlpha(40)
-                p.setPen(akzent); p.setBrush(fl)
+            fl = QColor(akzent)
+            if not aktiv:
+                fl.setAlpha(self.DECKKRAFT_RUHEND)                      # immer eine gefüllte Pille ohne Rahmen: gewählt kräftig, sonst blass
+            p.setPen(Qt.NoPen); p.setBrush(fl)
             p.drawRoundedRect(r, r.height() / 2, r.height() / 2)
             f = QFont(self.font()); f.setBold(aktiv); p.setFont(f)
             p.setPen(QColor(Farbe.KONTEXT_SCHRIFT) if aktiv else (QColor(Farbe.KONTEXT_TEXT) if dunkel else akzent))

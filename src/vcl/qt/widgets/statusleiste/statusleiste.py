@@ -30,6 +30,11 @@ class StatusBar(QStatusBar):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSizeGripEnabled(True)
+        self.lbl_words = QLabel("0 Wörter, 0 Zeichen")
+        self.lbl_page = QLabel("Seite 1 von 1")
+        for w in (self.lbl_words, self.lbl_page):                 # links: was zum Dokument gehört; rechts: Design, Ansicht und Zoom
+            w.setContentsMargins(*RAND_STATUSLEISTE)
+            self.addWidget(w)
         self.lbl_msg = QLabel("")
         self.addWidget(self.lbl_msg, 1)
         self.lesen_ende = knopf("leseende", "Lesemodus beenden", tooltip="Zurück zum Bearbeiten (Strg+Umschalt+L)", name="Lesemodus beenden", hand=True,
@@ -37,11 +42,6 @@ class StatusBar(QStatusBar):
         self.lesen_ende.hide()
         eigenschaft(self.lesen_ende, rolle="lese_ende_status")
         self.addPermanentWidget(self.lesen_ende)
-        self.lbl_words = QLabel("0 Wörter, 0 Zeichen")
-        self.lbl_page = QLabel("Seite 1 von 1")
-        for w in (self.lbl_words, self.lbl_page):
-            w.setContentsMargins(*RAND_STATUSLEISTE)
-            self.addPermanentWidget(w)
         self.thema = werkzeugknopf("thema", "Hell / Dunkel", tooltip="Zwischen hell und dunkel wechseln (Strg+Umschalt+D)",
                                    name="Zwischen hell und dunkel wechseln", aktion=self.thema_wechseln.emit)
         self.addPermanentWidget(self.thema)

@@ -31,7 +31,7 @@ from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 from vcl.qt.widgets.bausteine.abstaende.mass import BANDGRUPPE_ABSTAND, BANDGRUPPE_KNOPF_ZUGABE, BANDGRUPPE_RAND_KOMPAKT, BANDGRUPPE_RAND_NORMAL, BANDGRUPPE_RAND_OBEN
-from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
+from vcl.qt.widgets.bausteine.abstaende.mass import DROPDOWN_GROSS_HOEHE, DROPDOWN_HOEHE, ABSTAND_DICHT, ABSTAND_ENG, ABSTAND_KLEIN, BREITE_AUFKLAPPPFEIL, BREITE_BAND_GRUPPENKNOPF, BREITE_GRUPPENTRENNER, BREITE_MASSFELD_BAND, BREITE_RANDFELD_BAND, BREITE_VORLAGEN_AKTUALISIEREN, GROESSE_BANDKNOPF_ICON_KLEIN, GROESSE_GRUPPEN_STARTER, HOEHE_BAND_GRUPPENKNOPF, HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, ICON_GROSS, ICON_KLEIN, ICON_NORMAL, PADDING_BANDKNOPF, RAND_BANDGALERIE, RAND_BANDREITER, RAND_KEIN, RAND_POPUP_KOPF, SCHRIFT_BANDGRUPPE_TITEL, SCHRIFT_BANDKNOPF
 from vcl.qt.widgets.menues.dropdown.schriftauswahl import Schriftauswahl
 from vcl.qt.widgets.menues.dropdown.dropdown_knopf import DropdownKnopf
 
@@ -99,30 +99,31 @@ class BandGruppenBaustein:
         lauf: list[dict] = []
         felder: list = []                                     # aufeinanderfolgende Eingabefelder stehen übereinander (wie die Kleinknöpfe)
 
+        def rasterspalte(teile: list) -> None:
+            """Eine Spalte im Raster des Bandes: so hoch wie ein großer Knopf, das erste Teil oben bündig, das letzte unten bündig."""
+            host = QWidget()
+            v = RasterSpalte(host)
+            v.setContentsMargins(*RAND_KEIN)
+            v.setSpacing(ABSTAND_DICHT)
+            for n, w in enumerate(teile):
+                if n:
+                    v.addStretch(1)
+                v.addWidget(w)
+            if len(teile) == 1:
+                v.addStretch(1)
+            host.setMinimumHeight(DROPDOWN_GROSS_HOEHE[self.kompakt])
+            inhalt.addWidget(host, 0, Qt.AlignTop)
+
         def feldspalte():
             if felder:
-                host = QWidget()
-                v = RasterSpalte(host)
-                v.setContentsMargins(*RAND_KEIN)
-                v.setSpacing(ABSTAND_DICHT)
-                for w in felder:
-                    v.addWidget(w)
-                v.addStretch(1)
-                inhalt.addWidget(host, 0, Qt.AlignTop)
+                rasterspalte(list(felder))
                 felder.clear()
 
         def spalte(felder_behalten=False):
             if not felder_behalten:
                 feldspalte()
             for i in range(0, len(lauf), 2):                    # je Spalte zwei Zeilen
-                host = QWidget()
-                v = RasterSpalte(host)
-                v.setContentsMargins(*RAND_KEIN)
-                v.setSpacing(ABSTAND_DICHT)
-                for e in lauf[i:i + 2]:
-                    v.addWidget(self._knopf(e, False))
-                v.addStretch(1)
-                inhalt.addWidget(host, 0, Qt.AlignTop)
+                rasterspalte([self._knopf(e, False) for e in lauf[i:i + 2]])
             lauf.clear()
         for e in g["knoepfe"]:
             if e.get("feld"):                                     # ein Eingabefeld, das der Befehls-Baustein liefert (band_feld)
@@ -402,13 +403,15 @@ class BandGruppenBaustein:
 
     def _gitter_fuellen(self, gitter, explizit: bool, zeilen: list, kleine: list) -> None:
         """Die kleinen Knöpfe ins Gitter: explizit zeilenweise, sonst spaltenweise in zwei Zeilen."""
+        zwei = len([z for z in zeilen if z]) == 2 if explizit else len(kleine) > 1       # genau zwei Zeilen: obere oben bündig, untere unten bündig
+        lage = (Qt.AlignTop, Qt.AlignBottom) if zwei else (Qt.AlignmentFlag(0), Qt.AlignmentFlag(0))
         if explizit:
             for r, zeile in enumerate(zeilen):
                 for c, e in enumerate(zeile):
-                    gitter.addWidget(self._knopf(e, False), r, c)
+                    gitter.addWidget(self._knopf(e, False), r, c, lage[min(r, 1)])
         else:
             for i, e in enumerate(kleine):
-                gitter.addWidget(self._knopf(e, False), i % 2, i // 2)
+                gitter.addWidget(self._knopf(e, False), i % 2, i // 2, lage[i % 2])
 
     def _knoepfe_gitter(self, eintraege: list, inhalt: RasterZeile) -> None:
         """Große Knöpfe nebeneinander, kleine im Gitter (zwei Zeilen oder explizite Zeilen)."""
@@ -422,4 +425,5 @@ class BandGruppenBaustein:
         if kleine:
             host = QWidget()
             host.setLayout(gitter)
+            host.setMinimumHeight(DROPDOWN_GROSS_HOEHE[self.kompakt])          # dasselbe Raster wie die großen Knöpfe: oben und unten bündig
             inhalt.addWidget(host, 0, Qt.AlignTop)

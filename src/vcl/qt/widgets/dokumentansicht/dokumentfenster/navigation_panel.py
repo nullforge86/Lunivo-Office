@@ -49,7 +49,7 @@ class NavigationPanel(QWidget):
         self._bearbeite = None                                               # Kennung des Kommentars, der gerade bearbeitet wird
         self.liste: dict[str, QListWidget] = {}
         self.setAttribute(Qt.WA_StyledBackground, True)                      # Thema Mint: Seitenfläche hebt sich von der Arbeitsfläche ab
-        v = _spalte("standard", self); karte_einrichten(self, v, breite=BREITE_SEITENLEISTE_PANEL)      # gemeinsames Aussehen mit dem Schreibhilfe-Panel (thema.py)
+        v = _spalte("standard", self); karte_einrichten(self, v, breite=BREITE_SEITENLEISTE_PANEL, seite="links")      # gemeinsames Aussehen mit dem Schreibhilfe-Panel (thema.py)
         self.stapel = QStackedWidget(); v.addWidget(self.stapel)
         self._seiten: dict[str, PanelRahmen] = {}
         for key in SEITEN:

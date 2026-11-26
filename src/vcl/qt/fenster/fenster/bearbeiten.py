@@ -336,13 +336,16 @@ class BearbeitenBaustein:
         self.ki_schnell_zeigen()
 
 
-    def _chat_knopf_pruefen(self) -> None:
-        """Der schwebende KI-Chat-Knopf ist weg, solange der Chat in der Seitenleiste offen ist."""
+    def _chat_knopf_pruefen(self, neu=None) -> None:
+        """Der schwebende KI-Chat-Knopf ist weg, solange der Chat in der Seitenleiste offen ist – und solange derselbe Chat über das Chat-Symbol der
+        Leiste rechts erreichbar ist (sonst stünde er doppelt da). Ohne diese Leiste bleibt er der Weg zum Chat."""
         offen = self.sidebar.isVisible() and self.sidebar.stapel.currentIndex() == 1
-        for t in self._doc_tabs():
+        in_leiste = getattr(self, "_rechts", {}).get("Chat")
+        erreichbar = in_leiste is not None and not in_leiste.isHidden() and not in_leiste.parentWidget().isHidden()
+        for t in (*self._doc_tabs(), *([neu] if neu is not None else ())):     # ``neu``: ein Reiter, der gerade erst angelegt wird
             k = getattr(t, "_chat_knopf", None)
             if k is not None:
-                k.setVisible(not offen)
+                k.setVisible(not offen and not erreichbar)
 
 
     def ki_schnell_zeigen(self) -> None:

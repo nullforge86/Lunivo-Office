@@ -6,6 +6,7 @@ from PySide6.QtGui import QColor, QPainterPath, QPalette, QRegion
 from PySide6.QtWidgets import QApplication, QStyleFactory
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_UNTER_REITER, BREITE_BANDREITER_KNOPF, BREITE_FELDKNOPF_MIN, BREITE_KNOPF_KLEIN, HOEHE_BANDREITER_KNOPF, HOEHE_KNOPF_GROSS, HOEHE_LISTENZEILEN_KNOPF, HOEHE_TRENNLINIE_MAX, MARGIN_BANDREITER, MARGIN_MENUETRENNER, MARGIN_OBEN_GRUPPE, MARGIN_RECHTS_REITER, MARGIN_REITER_KOMPAKT, MARGIN_SCROLLBALKEN_GRIFF, PADDING_BANDREITER, PADDING_BANDREITER_KOMPAKT, PADDING_BAUMEINTRAG_GLOBAL, PADDING_DOKUMENTREITER, PADDING_EINGABEFELD_GLOBAL, PADDING_FELDKNOPF, PADDING_GRUPPENTITEL_GLOBAL, PADDING_GRUPPE_OBEN, PADDING_KNOPF_GLOBAL, DROPDOWN_ZEILE_PADDING, PADDING_KOPFFUSS_ABSATZKNOPF, PADDING_KOPFFUSS_WERKZEUG, PADDING_LAYOUTOPTIONEN_TITEL, PADDING_LINKS_MENUESYMBOL, PADDING_MINILEISTE_KNOPF, PADDING_POPUP_LINKKNOPF, PADDING_VORGABEMENUE_KOPF, PADDING_LISTENZEILE_GLOBAL, PADDING_MENUE_KOMPAKT, PADDING_MENUEEINTRAG_KOMPAKT, SCHRIFT_HINWEIS, PADDING_MENUEEINTRAG_GLOBAL, PADDING_MENUE_GLOBAL, PADDING_OPTIONSKNOPF_GLOBAL, PADDING_RECHTS_MENUEKNOPF, PADDING_REITER_GLOBAL, PADDING_WERKZEUGKNOPF_GLOBAL, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_KLEIN, RADIUS_LEISTENKNOPF, RADIUS_MARKE, RADIUS_MITTEL, RADIUS_REGLER_GRIFF, RADIUS_REGLER_RINNE
+from vcl.qt.widgets.bausteine.abstaende.mass import MARGIN_BANDKARTE, RADIUS_BANDKARTE, RADIUS_BANDREITER, RADIUS_SEITENKARTE, RADIUS_WERKZEUGKNOPF, RAND_SEITENKARTE
 
 
 _FUSION = False
@@ -42,10 +43,30 @@ def karten_rand() -> int:
     return MINT_FARBEN["luft"] if _MINT else 0
 
 
-def karte_einrichten(widget, layout, breite: int | None = None) -> None:
-    """Seitenleisten-Karte (Mint): gemeinsame Eigenschaft für das Stylesheet und der Innenrand = Breite des Kartenrands, sonst überdeckt der Rand die
-    untersten Knöpfe und Felder. Ein Ort für alle Seitenleisten-Panels (links und rechts); in Hell/Dunkel bleibt der Rand 0."""
+def karten_luft(seite: str = "") -> int:
+    """So viel breiter als sein Inhalt ist ein Seitenleisten-Panel im aktuellen Thema: Mint der Kartenrand auf beiden Seiten, in Hell/Dunkel die Luft
+    zum Blatt hin, wenn das Panel an eine Symbolleiste anschließt (``seite``). Der Inhalt bleibt damit in jedem Thema gleich breit."""
+    if _MINT:
+        return 2 * MINT_FARBEN["luft"]
+    return RAND_SEITENKARTE if seite else 0
+
+
+def kopf_grund() -> str:
+    """Die Farbe der Kopfzeile des Bandes im aktuellen Thema (Mint: der grüne Kopf, sonst die Fensterfläche) – für Teile, die sich selbst darauf zeichnen."""
+    if _MINT:
+        return MINT_FARBEN["kopf"]
+    app = QApplication.instance()
+    return (WEICHE_FARBEN if WEICH else FARBEN)[_ist_dunkel(app)]["bg"]
+
+
+def karte_einrichten(widget, layout, breite: int | None = None, seite: str = "") -> None:
+    """Seitenleisten-Karte: gemeinsame Eigenschaft für das Stylesheet und der Innenrand = Breite des Kartenrands, sonst überdeckt der Rand die
+    untersten Knöpfe und Felder. Ein Ort für alle Seitenleisten-Panels (links und rechts). ``seite`` (``"links"``/``"rechts"``): das Panel schließt
+    auf dieser Seite des Fensters an seine Symbolleiste an – in Hell/Dunkel bilden beide eine Karte mit Luft oben, unten und zum Blatt hin;
+    beide Seiten des Fensters sehen damit gleich aus."""
     widget.setProperty("seitenKarte", True)
+    if seite:
+        widget.setProperty("kartenSeite", seite)
     if breite is not None:
         widget.setProperty("kartenBreite", breite)               # feste Breite des Inhalts: der Kartenrand kommt dazu, der Inhalt bleibt gleich breit
     _karten_rand_setzen(widget)
@@ -55,19 +76,25 @@ def _karten_rand_setzen(widget) -> None:
     lay = widget.layout()
     if lay is not None:
         r = karten_rand()
-        lay.setContentsMargins(r, r, r, r)
+        seite = None if _MINT else widget.property("kartenSeite")
+        if seite == "rechts":
+            lay.setContentsMargins(RAND_SEITENKARTE, RAND_SEITENKARTE, 0, RAND_SEITENKARTE)       # rechts schließt die Symbolleiste an
+        elif seite == "links":
+            lay.setContentsMargins(0, RAND_SEITENKARTE, RAND_SEITENKARTE, RAND_SEITENKARTE)       # links schließt die Symbolleiste an
+        else:
+            lay.setContentsMargins(r, r, r, r)
     basis = widget.property("kartenBreite")
     if basis:
-        widget.setFixedWidth(int(basis) + 2 * karten_rand())
+        widget.setFixedWidth(int(basis) + karten_luft(widget.property("kartenSeite") or ""))
 
 
 def mint_abstaende(fenster) -> None:
     """Thema-Hook für das Hauptfenster: im Thema Mint Außenränder um Arbeitsbereich und Band, Band als Karte, Dokumentfläche mit runden Ecken;
-    in Hell/Dunkel alles wie zuvor (Ränder 0, Maske weg)."""
+    in Hell/Dunkel rechts die Luft neben der Karte aus Seitenleiste und Symbolleiste, sonst Ränder 0 und keine Maske."""
     a, luft = (MINT_FARBEN["aussen"], MINT_FARBEN["luft"]) if _MINT else (0, 0)
     arbeit, band, docs = getattr(fenster, "arbeit", None), getattr(fenster, "band", None), getattr(fenster, "docs", None)
     if arbeit is not None and arbeit.layout() is not None:
-        arbeit.layout().setContentsMargins(a, 0, a, 0)
+        arbeit.layout().setContentsMargins(*((a, 0, a, 0) if _MINT else (RAND_SEITENKARTE, 0, RAND_SEITENKARTE, 0)))     # links und rechts gleich viel Luft
     stapel = getattr(band, "stapel", None)
     if stapel is not None and hasattr(band, "BAND_HOEHE"):
         stapel.setFixedHeight(band.BAND_HOEHE[band.kompakt] + 2 * luft)
@@ -117,16 +144,18 @@ def _ist_dunkel(app: QApplication) -> bool:
 
 
 FARBEN = {
-    False: dict(bg="#f3f4f6", flaeche="#ffffff", karte="#ffffff", tafel="#f3f4f6", feld="#ffffff", dokleiste="#f3f4f6", rand="#d9dde3",
+    False: dict(bg="#f3f4f6", flaeche="#ffffff", karte="#ffffff", tafel="#ffffff", feld="#ffffff", dokleiste="#f3f4f6", rand="#d9dde3",       # tafel wie flaeche: die Seitenleisten sind Karten wie das Band
                 text="#1f2328", text2="#59616b", hover="#e6eaf0", akzent="#2f6fb5", weich="#d8e6f7", grau="#7a828c", griff="#c3c9d1",
                 griff_h="#a9b1bb"),
-    # Dunkel wie in der ersten Fassung (aus deinem Bildschirmfoto gemessen): Leisten und Band #2A2E32, Seitenleisten #26292D,
-    # Knöpfe und Menüs #2F3338, Eingabefelder und Dokument-Reiterzeile wie die Fläche um das Blatt #1F2225, Ränder #3A3F45,
-    # Schrift #E6E9EC, Nebenschrift #A7AFB7, Deaktiviertes #7C858E
-    True: dict(bg="#2a2e32", flaeche="#2a2e32", karte="#2f3338", tafel="#26292d", feld="#1f2225", dokleiste="#1f2225", rand="#3a3f45",
-               text="#e6e9ec", text2="#a7afb7", hover="#363b41", akzent="#4a8fd8", weich="#2f4966", grau="#7c858e", griff="#454b52",
+    # Dunkel in drei Ebenen: Fensterrahmen und Leisten #1B1C1F, die Arbeitsfläche hinter dem Blatt etwas heller #2B2D31 (Palette „Dark“, siehe
+    # ``_setze``), das Blatt weiß. Karten (Band, Seitenleiste) #26282C mit Rand #33363B, Knöpfe und Menüs #2C2F34, Eingabefelder #1F2124,
+    # Überfahren #34373D, gewählt #2F4A7A; Schrift #E6E9EC, Nebenschrift #A7AFB7, Deaktiviertes #7C858E
+    True: dict(bg="#1b1c1f", flaeche="#26282c", karte="#2c2f34", tafel="#26282c", feld="#1f2124", dokleiste="#1b1c1f", rand="#33363b",
+               text="#e6e9ec", text2="#a7afb7", hover="#34373d", akzent="#4a8fd8", weich="#2f4a7a", grau="#7c858e", griff="#454b52",
                griff_h="#5a6169"),
 }
+
+ARBEITSFLAECHE_DUNKEL = "#2b2d31"                                  # dunkles Thema: die Fläche hinter dem Blatt (hell: siehe ``_hell_feinschliff``)
 
 # „Weicher Kontrast“ (Optionen ▸ Ansicht): dunkel ein Anthrazit statt fast Schwarz, hell ein warmes Creme statt Weiß-auf-Grau
 WEICH = False
@@ -145,12 +174,12 @@ MINT_FARBEN = dict(bg="#0c0d0d", flaeche="#161817", karte="#1f2221", tafel="#1a1
                    griff_h="#4f5652", auf_akzent=AUF_AKZENT, kopf_hover="#75a83f", radius=12, radius_klein=8, luft=6, aussen=10)
 
 QSS = """
-QToolButton { border: none; border-radius: """ f"{RADIUS_EINTRAG}" """px; padding: """ f"{PADDING_WERKZEUGKNOPF_GLOBAL}" """; background: transparent; }
+QToolButton { border: none; border-radius: """ f"{RADIUS_WERKZEUGKNOPF}" """px; padding: """ f"{PADDING_WERKZEUGKNOPF_GLOBAL}" """; background: transparent; }
 QToolButton:hover { background: %(hover)s; }
 QToolButton:pressed, QToolButton:checked { background: %(weich)s; }
 QToolButton:disabled { color: %(grau)s; }
 QToolButton[popupMode="1"] { padding-right: """ f"{PADDING_RECHTS_MENUEKNOPF}" """; }
-QToolButton::menu-button { border: none; width: 12px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+QToolButton::menu-button { border: none; width: 12px; border-top-right-radius: """ f"{RADIUS_WERKZEUGKNOPF}" """px; border-bottom-right-radius: """ f"{RADIUS_WERKZEUGKNOPF}" """px; }
 QToolButton::menu-arrow { image: url(%(pfeil_unten)s); width: 9px; height: 9px; }
 QToolButton::menu-indicator { image: none; width: 0px; }
 QToolButton::menu-button:hover { background: %(hover)s; }
@@ -237,14 +266,14 @@ QTabBar::tab:selected { background: %(karte)s; color: %(text)s; font-weight: 600
 QTabBar::tab:hover:!selected { background: %(hover)s; }
 QTabWidget::pane { border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_FELD}" """px; top: -1px; padding-top: """ f"{ABSTAND_UNTER_REITER}" """px; }
 QTabBar#bandReiter { background: transparent; }
-QTabBar#bandReiter::tab { background: transparent; border: none; border-bottom: 3px solid transparent;
-    padding: """ f"{PADDING_BANDREITER}" """; margin: """ f"{MARGIN_BANDREITER}" """; }
+QTabBar#bandReiter::tab { background: transparent; border: none; border-radius: """ f"{RADIUS_BANDREITER}" """px;
+    padding: """ f"{PADDING_BANDREITER}" """; margin: """ f"{MARGIN_BANDREITER}" """; }          /* jeder Reiter eine Pille, gleich hoch – auch der Kontext-Reiter */
 QTabBar#bandReiter::tab { color: %(text2)s; }
 QTabBar#bandReiter[kompakt="true"]::tab { padding: """ f"{PADDING_BANDREITER_KOMPAKT}" """; margin: """ f"{MARGIN_REITER_KOMPAKT}" """; }
 QTabBar#bandReiter QToolButton { min-width: """ f"{BREITE_BANDREITER_KNOPF}" """px; min-height: """ f"{HOEHE_BANDREITER_KNOPF}" """px; }
-QTabBar#bandReiter::tab:hover { background: %(hover)s; border-top-left-radius: 6px; border-top-right-radius: 6px; }
-QTabBar#bandReiter::tab:selected { color: %(akzent)s; font-weight: 600; border-bottom: 3px solid %(akzent)s; }
-QTabBar#bandReiter:focus::tab:selected { background: %(hover)s; border-top-left-radius: 6px; border-top-right-radius: 6px; }
+QTabBar#bandReiter::tab:hover { background: %(hover)s; }
+QTabBar#bandReiter::tab:selected { color: %(text)s; font-weight: 600; background: %(weich)s; }
+QTabBar#bandReiter:focus::tab:selected { color: %(akzent)s; }
 QTabBar#dokReiter::tab { background: transparent; border: none; padding: """ f"{PADDING_DOKUMENTREITER}" """; margin: """ f"{MARGIN_REITER_KOMPAKT}" """;
     border-top-left-radius: 8px; border-top-right-radius: 8px; }
 QTabBar#dokReiter::tab:hover { background: %(hover)s; }
@@ -252,7 +281,17 @@ QTabBar#dokReiter::close-button { image: url(%(x_bild)s); subcontrol-position: r
 QTabBar#dokReiter::close-button:hover { background: %(hover)s; }
 QTabBar#dokReiter::tab:selected { background: %(flaeche)s; font-weight: 600; }
 QWidget#bandKopf { background: %(bg)s; }
-QStackedWidget#bandStapel, QScrollArea#bandSeite, QScrollArea#bandSeite > QWidget > QWidget { background: %(flaeche)s; }
+QStackedWidget#bandStapel { background: %(flaeche)s; border: 1px solid %(rand)s; border-radius: """ f"{RADIUS_BANDKARTE}" """px; margin: """ f"{MARGIN_BANDKARTE}" """; }          /* das Band als Karte: Rand, Rundung und Luft liegen in der festen Höhe */
+QScrollArea#bandSeite, QScrollArea#bandSeite > QWidget > QWidget { background: transparent; }
+QFrame#bandLinie { border: none; background: %(bg)s; }                                 /* keine harte Linie unter dem Band: die Karte grenzt es ab */
+QFrame#leisteRechts { background: %(tafel)s; border: 0 solid %(bg)s; border-top-width: """ f"{RAND_SEITENKARTE}" """px; border-bottom-width: """ f"{RAND_SEITENKARTE}" """px;
+    border-top-right-radius: """ f"{RADIUS_SEITENKARTE}" """px; border-bottom-right-radius: """ f"{RADIUS_SEITENKARTE}" """px; background-clip: padding; }          /* Symbolleiste rechts: dieselbe Fläche wie die Seitenleiste, zusammen eine Karte */
+*[kartenSeite="rechts"] { border: 0 solid %(bg)s; border-top-width: """ f"{RAND_SEITENKARTE}" """px; border-bottom-width: """ f"{RAND_SEITENKARTE}" """px; border-left-width: """ f"{RAND_SEITENKARTE}" """px;
+    border-top-left-radius: """ f"{RADIUS_SEITENKARTE}" """px; border-bottom-left-radius: """ f"{RADIUS_SEITENKARTE}" """px; background-clip: padding; }
+QFrame#leisteLinks { background: %(tafel)s; border: 0 solid %(bg)s; border-top-width: """ f"{RAND_SEITENKARTE}" """px; border-bottom-width: """ f"{RAND_SEITENKARTE}" """px;
+    border-top-left-radius: """ f"{RADIUS_SEITENKARTE}" """px; border-bottom-left-radius: """ f"{RADIUS_SEITENKARTE}" """px; background-clip: padding; }          /* links gespiegelt: Symbolleiste und Feld eine Karte */
+*[kartenSeite="links"] { border: 0 solid %(bg)s; border-top-width: """ f"{RAND_SEITENKARTE}" """px; border-bottom-width: """ f"{RAND_SEITENKARTE}" """px; border-right-width: """ f"{RAND_SEITENKARTE}" """px;
+    border-top-right-radius: """ f"{RADIUS_SEITENKARTE}" """px; border-bottom-right-radius: """ f"{RADIUS_SEITENKARTE}" """px; background-clip: padding; }
 QWidget#dokLeiste { background: %(dokleiste)s; }
 FlacheReiterLeiste QToolButton { border: none; background: transparent; padding: 0; }          /* die dezenten Rollpfeile der flachen Reiterleiste */
 QToolButton#menueKnopf:checked { color: %(akzent)s; }
@@ -353,15 +392,16 @@ def _setze(app: QApplication, mode: str) -> None:
         app.setPalette(_mint_palette())
     elif mode == "dark":
         p = QPalette()
-        bg, base, txt = QColor(42, 46, 50), QColor(31, 34, 37), QColor(230, 233, 236)      # Leiste, Fläche um das Blatt, Schrift
+        f = FARBEN[True]
+        bg, base, txt = QColor(f["bg"]), QColor(f["feld"]), QColor(f["text"])      # Fensterrahmen und Leisten, Eingabefelder, Schrift
         p.setColor(QPalette.Window, bg); p.setColor(QPalette.WindowText, txt)
-        p.setColor(QPalette.Base, base); p.setColor(QPalette.AlternateBase, QColor(47, 51, 56))
-        p.setColor(QPalette.Text, txt); p.setColor(QPalette.Button, QColor(47, 51, 56))
+        p.setColor(QPalette.Base, base); p.setColor(QPalette.AlternateBase, QColor(f["karte"]))
+        p.setColor(QPalette.Text, txt); p.setColor(QPalette.Button, QColor(f["karte"]))
         p.setColor(QPalette.ButtonText, txt); p.setColor(QPalette.ToolTipBase, base)
         p.setColor(QPalette.ToolTipText, txt); p.setColor(QPalette.Highlight, QColor(74, 143, 216))
         p.setColor(QPalette.HighlightedText, Qt_white()); p.setColor(QPalette.Mid, QColor(124, 133, 142))
-        p.setColor(QPalette.Dark, QColor(31, 34, 37))
-        p.setColor(QPalette.Light, QColor(70, 74, 80)); p.setColor(QPalette.Midlight, QColor(58, 63, 69))
+        p.setColor(QPalette.Dark, QColor(ARBEITSFLAECHE_DUNKEL))                             # die Arbeitsfläche hinter dem Blatt: heller als der Fensterrahmen
+        p.setColor(QPalette.Light, QColor(70, 74, 80)); p.setColor(QPalette.Midlight, QColor(f["rand"]))
         p.setColor(QPalette.Link, QColor(110, 168, 230)); p.setColor(QPalette.LinkVisited, QColor(170, 140, 220))
         p.setColor(QPalette.BrightText, QColor(255, 255, 255))
         p.setColor(QPalette.PlaceholderText, QColor(150, 156, 162))

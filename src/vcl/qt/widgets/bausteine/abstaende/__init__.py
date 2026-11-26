@@ -4,6 +4,10 @@ Tür des Pakets: Aufrufer außerhalb importieren die hier genannten Maße von hi
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "BLATTSCHATTEN_VERSATZ": ("mass", "BLATTSCHATTEN_VERSATZ"),
+    "BLATTSCHATTEN_WEITE": ("mass", "BLATTSCHATTEN_WEITE"),
+    "LEERZUSTAND_ICON": ("mass", "LEERZUSTAND_ICON"),
+    "LINEAL_ABSTAND": ("mass", "LINEAL_ABSTAND"),
     "KOPFFUSS_BILD_HOEHE_MM": ("mass", "KOPFFUSS_BILD_HOEHE_MM"),
     "KOPFFUSS_ETIKETT_ABSTAND": ("mass", "KOPFFUSS_ETIKETT_ABSTAND"),
     "KOPFFUSS_ETIKETT_RAND": ("mass", "KOPFFUSS_ETIKETT_RAND"),

@@ -94,6 +94,7 @@ class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandUebersich
         self.stapel.setFixedHeight(self.BAND_HOEHE[kompakt])
         lay.addWidget(self.stapel)
         linie = self.linie = trennlinie(tief=True)
+        linie.setObjectName("bandLinie")                          # das Thema nimmt ihr die harte Kante: die Bandkarte grenzt das Band ab
         lay.addWidget(linie)
         self._schnellzugriff()
         self.kontext_index: dict[str, int] = {}

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtWidgets import QScrollArea
 
 from writer.anbindung import wiederherstellung as wiederherstellung
@@ -22,6 +22,7 @@ class DocumentTab(QScrollArea):
         self.setWidgetResizable(True)
         self.setFrameShape(QScrollArea.NoFrame)
         self.setBackgroundRole(self.backgroundRole().Dark)
+        self.setAutoFillBackground(True)                    # auch der Rand neben den Linealen ist Arbeitsfläche, kein Balken in der Farbe des Fensters
         self.kennung = kennung
         self.editor = KernEditor(kennung)
         from vcl.qt.widgets.dokumentansicht.ansicht.lineal_h import LinealH
@@ -35,6 +36,9 @@ class DocumentTab(QScrollArea):
         self.lineal_h.einzugGeaendert.connect(lambda l, r, f: self.editor.set_indents(l, r, f))
         for leiste in (self.horizontalScrollBar(), self.verticalScrollBar()):
             leiste.valueChanged.connect(self._lineale_neu_zeichnen)
+            leiste.rangeChanged.connect(self._lineale_neu_zeichnen)            # Zoom oder Seitenformat: das Blatt steht woanders
+        self.editor.zoomChanged.connect(lambda *_: QTimer.singleShot(0, self._lineale_neu_zeichnen))
+        self.editor.pageApplied.connect(lambda *_: QTimer.singleShot(0, self._lineale_neu_zeichnen))
         self.setWidget(self.editor.ansicht)
         self.layout_art = "blatt"
         self.path = path
@@ -75,14 +79,28 @@ class DocumentTab(QScrollArea):
         self.lineal_h.setVisible(h); self.lineal_v.setVisible(v)
         vp = self.viewport().geometry()
         self.lineal_h.setGeometry(vp.left(), 0, vp.width(), HOEHE)
-        self.lineal_v.setGeometry(0, vp.top(), HOEHE, vp.height())
+        self.lineal_v.setGeometry(self._lineal_v_links(v), vp.top(), HOEHE, vp.height())
+        self.lineal_v.raise_()                                             # es liegt neben dem Blatt über der Arbeitsfläche
         self.lineal_h.update(); self.lineal_v.update()
 
+    def _lineal_v_links(self, sichtbar: bool) -> int:
+        """Das senkrechte Lineal steht direkt links am Blatt; ist dort kein Platz (Blatt am Fensterrand), am linken Rand wie bisher."""
+        from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE
+        from vcl.qt.widgets.bausteine.abstaende import LINEAL_ABSTAND
+        if not sichtbar:
+            return 0
+        ansicht = self.editor.ansicht
+        if not ansicht.ergebnis().seiten:                                  # die Lage des Blatts gibt es erst mit dem Layout
+            return 0
+        blatt_links = self.viewport().x() + ansicht.mapTo(self.viewport(), QPoint(0, 0)).x() + ansicht.blatt(0).left()
+        return max(0, round(blatt_links) - HOEHE - LINEAL_ABSTAND)
+
     def _lineale_neu_zeichnen(self, *_) -> None:
+        if self.lineal_v.isVisible():
+            self.lineal_v.move(self._lineal_v_links(True), self.lineal_v.y())      # das Blatt hat sich bewegt (Rollen, Zoom, Fensterbreite): das Lineal bleibt an ihm
+            self.lineal_v.update()
         if self.lineal_h.isVisible():
             self.lineal_h.update()
-        if self.lineal_v.isVisible():
-            self.lineal_v.update()
 
     def zoom_breite(self) -> None:
         """Seitenbreite: die Seite füllt die Breite des Fensters."""

@@ -16,10 +16,11 @@ from writer.ueberpruefung.korrektur.band.schreibhilfe_katalog import VORLESEN
 from vcl.qt.widgets.bausteine.zustaende.geruest.panel_rahmen import PanelRahmen, rollflaeche
 from writer.anbindung.vorhersage import empfaenger as _empfaenger
 from vcl.qt.widgets.seitenleisten.schreib_panel import FundKarte, HinweisKarte
+from vcl.qt.widgets.seitenleisten.schreib_leerzustand import SchreibLeerzustand
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten, karten_rand
+from vcl.qt.widgets.bausteine.farben.thema.thema import karte_einrichten, karten_luft
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label, kleintext_label, trennlinie
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_AKTIONSKNOPF_MIN, BREITE_SEITENLEISTE_PANEL, ABSTAND_KLEIN, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_SCHREIBHILFE_MAX, BREITE_SCHREIBHILFE_MIN, HOEHE_KNOPF_GROSS, HOEHE_LISTE_HOCH, ICON_NORMAL, PADDING_HINWEIS, PADDING_SEITENLEISTE_REITER, PADDING_SEITENLEISTE_WARNUNG, RAND_KEIN, RAND_SCHREIBHILFE_BANNER, RAND_SEITENLEISTE_TABS
 from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
@@ -31,6 +32,11 @@ def werk_reiter_stil() -> str:
     return (('QPushButton { border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: ' f"{PADDING_SEITENLEISTE_REITER}" '; font-weight: bold; color: palette(mid); background: transparent; }QPushButton:checked { color: palette(window-text); border-bottom: 3px solid palette(highlight); }QPushButton:hover { color: palette(window-text); }QPushButton:focus { border-bottom: 3px solid palette(highlight); }'))
 LEER = ("Nichts gefunden. Das heißt nicht, dass alles richtig ist — die Schreibhilfe sucht nur die Fehler, "
         "die ein Rechtschreibprüfer nicht finden kann.")
+NICHTS_GEFUNDEN = "Nichts gefunden."
+NICHTS_GEFUNDEN_HINWEIS = LEER.partition(". ")[2]        # dieselbe Aussage wie ``LEER``: Meldung und Hinweis getrennt gesetzt
+NOCH_NICHT = "Noch nicht geprüft."
+NOCH_NICHT_HINWEIS = "„Prüfen“ sucht die Fehler, die ein Rechtschreibprüfer nicht finden kann."
+LEERZUSTAND_DEHNUNG = 100                                # der Leerzustand nimmt die freie Höhe des Ergebnisbereichs: sein Inhalt steht in der Mitte
 class SchreibhilfePanel(QWidget):
     _ollama_gefunden = Signal(list)
     bereich_geaendert = Signal(int)
@@ -39,7 +45,7 @@ class SchreibhilfePanel(QWidget):
 
     def sizeHint(self):
         from PySide6.QtCore import QSize
-        return QSize(self.BREITE + 2 * karten_rand(), super().sizeHint().height())
+        return QSize(self.BREITE + karten_luft("rechts"), super().sizeHint().height())
 
     def __init__(self, assistent, parent=None):
         super().__init__(parent)
@@ -48,7 +54,7 @@ class SchreibhilfePanel(QWidget):
         self.setMinimumWidth(BREITE_SCHREIBHILFE_MIN)
         self.setMaximumWidth(BREITE_SCHREIBHILFE_MAX)
         aussen = _spalte("standard", self)
-        karte_einrichten(self, aussen)                      # gemeinsames Aussehen mit den Feldern links (thema.py)
+        karte_einrichten(self, aussen, seite="rechts")      # gemeinsames Aussehen mit den Feldern links (thema.py); mit der Symbolleiste rechts eine Karte
         aussen.setSpacing(0)
         self.stapel = QStackedWidget()
         aussen.addWidget(self.stapel, 1)
@@ -81,17 +87,13 @@ class SchreibhilfePanel(QWidget):
         self.liste = _spalte("standard")
         host = QWidget()
         host.setLayout(self.liste)
-        self.meldung = hinweis_label("Noch nicht geprüft.", zusatz="padding: " f"{PADDING_HINWEIS}" ";")
-        self.liste.addWidget(self.meldung)
+        self._leerzustand(NOCH_NICHT, NOCH_NICHT_HINWEIS)
         self.liste.addStretch(1)
         sc = rollflaeche(host)                                                       # nie seitlich rollen müssen: alles auf der Karte bleibt erreichbar
         sc.setMinimumHeight(HOEHE_LISTE_HOCH)                                        # der Hauptinhalt: die Funde bekommen immer Platz, auch auf kleinen Bildschirmen
-        v.addWidget(sc, 1)
         self.alle = knopf("standard", "Alle sicheren Fehler ändern", aktion=self._alle)
         self.alle.hide()
-        v.addWidget(self.alle)
-        # Für wen?
-        v.addWidget(trennlinie(tief=True))
+        # Oben die Bedienung („Für wen“, „Worum geht's?“, Prüfen · KI-Korrektur · Vorschläge), darunter der Ergebnisbereich; getrennt durch Abstand, nicht durch Linien
         # Eine Zeile statt zwei Reihen Chips: „Für wen?“ als Auswahl, daneben „Worum geht's?“ — der Platz gehört den Funden
         from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
         from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
@@ -123,6 +125,8 @@ class SchreibhilfePanel(QWidget):
             b_.setMinimumWidth(b_.sizeHint().width())                    # Beschriftung nie abschneiden: Zelle mindestens so breit wie der Text samt Rand
             zk.addWidget(b_)
         v.addLayout(zk)
+        v.addWidget(sc, 1)
+        v.addWidget(self.alle)
         self.ki_info = hinweis_label("")                                 # steht auf dem Reiter KI, solange kein Modell verbunden ist
         self._ki_fn = None
         self.ki_aktion = knopf("standard", aktion=lambda: self._ki_fn() if self._ki_fn else None)
@@ -252,6 +256,12 @@ class SchreibhilfePanel(QWidget):
             w_ = it.widget()
             if w_ is not None:
                 w_.hide(); w_.setParent(None); w_.deleteLater()
+
+    def _leerzustand(self, titel: str, hinweis: str) -> None:
+        """Der Leerzustand des Ergebnisbereichs: Symbol, Meldung und kurzer Hinweis, mittig (``self.meldung`` ist die Beschriftung mit der Meldung)."""
+        leer = SchreibLeerzustand(titel, hinweis)
+        self.meldung = leer.titel
+        self.liste.insertWidget(0, leer, LEERZUSTAND_DEHNUNG)
 
     def _leer(self, text: str) -> None:
         m = hinweis_label(text, zusatz="padding: " f"{PADDING_HINWEIS}" ";")
@@ -495,8 +505,8 @@ class SchreibhilfePanel(QWidget):
                 w_.setParent(None)
                 w_.deleteLater()
         if not funde:
-            self.meldung = hinweis_label(LEER if self.a._geprueft_rev >= 0 else "Noch nicht geprüft.", zusatz="padding: " f"{PADDING_HINWEIS}" ";")
-            self.liste.insertWidget(0, self.meldung)
+            geprueft = self.a._geprueft_rev >= 0
+            self._leerzustand(NICHTS_GEFUNDEN if geprueft else NOCH_NICHT, NICHTS_GEFUNDEN_HINWEIS if geprueft else NOCH_NICHT_HINWEIS)
         for i, f in enumerate(funde):
             self.liste.insertWidget(i, FundKarte(f, self.a, dienst=getattr(self, "ki", None)))
         self.alle.setVisible(any(f.art == "fehler" and f.neu for f in funde))

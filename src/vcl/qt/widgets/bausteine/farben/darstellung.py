@@ -42,10 +42,10 @@ def papierfeld(feld: QWidget) -> QWidget:
 
 def papierleiste(leiste: QWidget) -> QWidget:
     """Leiste mit Knöpfen, die auf dem weißen Blatt liegt (Seitenzahl-Knöpfe der Kopf- und Fußzeile): helle Knöpfe mit dunkler Schrift, unabhängig vom Thema."""
-    from vcl.qt.widgets.bausteine.farben.farben import KOPFFUSS_KNOPF_GRUND, KOPFFUSS_KNOPF_GRUND_UEBER, KOPFFUSS_KNOPF_RAND, KOPFFUSS_KNOPF_TEXT
-    from vcl.qt.widgets.bausteine.abstaende.mass import PADDING_KOPFFUSS_ABSATZKNOPF, RADIUS_KLEIN
-    leiste.setStyleSheet(f"QToolButton {{ background: {KOPFFUSS_KNOPF_GRUND}; color: {KOPFFUSS_KNOPF_TEXT}; border: 1px solid {KOPFFUSS_KNOPF_RAND};"
-                         f" border-radius: {RADIUS_KLEIN}px; padding: {PADDING_KOPFFUSS_ABSATZKNOPF}; }}"
+    from vcl.qt.widgets.bausteine.farben.farben import KOPFFUSS_KNOPF_GRUND, KOPFFUSS_KNOPF_GRUND_UEBER, KOPFFUSS_PILLE_RAND, KOPFFUSS_PILLE_TEXT
+    from vcl.qt.widgets.bausteine.abstaende.mass import PADDING_BLATTPILLE, RADIUS_BLATTPILLE
+    leiste.setStyleSheet(f"QToolButton {{ background: {KOPFFUSS_KNOPF_GRUND}; color: {KOPFFUSS_PILLE_TEXT}; border: 1px solid {KOPFFUSS_PILLE_RAND};"
+                         f" border-radius: {RADIUS_BLATTPILLE}px; padding: {PADDING_BLATTPILLE}; }}"
                          f" QToolButton:hover {{ background: {KOPFFUSS_KNOPF_GRUND_UEBER}; }} QToolButton::menu-indicator {{ image: none; width: 0px; }}")
     return leiste
 

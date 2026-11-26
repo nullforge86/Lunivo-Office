@@ -33,14 +33,9 @@ class LinealV(_Lineal):
         unten = o + self.px(pg.height_mm - pg.margin_bottom_mm)
         if self._zieh == "unten" and self._wert is not None:
             unten = o + self.px(pg.height_mm - self._wert)
-        p.fillRect(self.rect(), c["aussen"])
-        p.fillRect(QRectF(0, o, HOEHE, self.px(pg.height_mm)), c["grund"])
-        p.fillRect(QRectF(0, t, HOEHE, unten - t), c["text"])
-        rand = QColor(c["schrift"]); rand.setAlpha(60)
-        p.setPen(QPen(rand, 1)); p.drawLine(HOEHE - 1, 0, HOEHE - 1, self.height())
+        self.koerper_zeichnen(p, QRectF(0, o, HOEHE, self.px(pg.height_mm)), QRectF(0, t, HOEHE, unten - t), c)      # nur über die Höhe des Blatts
         self._schrift(p)
-        zahl, ticks = QColor(c["schrift"]), QColor(c["schrift"])
-        zahl.setAlpha(225); ticks.setAlpha(170)
+        zahl, ticks = self.stifte(c)
         feiner = px_je_mm() * self.e.zoom >= 2.4
         k0, k1 = -int(pg.margin_top_mm), int(pg.height_mm - pg.margin_top_mm)
         for k in range(k0, k1 + 1):                                        # k = Millimeter von der oberen Textkante
