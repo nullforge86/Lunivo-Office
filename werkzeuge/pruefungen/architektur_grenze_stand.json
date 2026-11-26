@@ -532,7 +532,7 @@
   "src/vcl/qt/widgets/ribbon/kopffuss/aktionen/aktionen.py": 1,
   "src/vcl/qt/widgets/ribbon/kopffuss/aktionen/klappen.py": 1,
   "src/vcl/qt/widgets/ribbon/kopffuss/band/band_befehle.py": 6,
-  "src/vcl/qt/widgets/ribbon/kopffuss/felder/abstandsfeld.py": 5,
+  "src/vcl/qt/widgets/ribbon/kopffuss/felder/abstandsfeld.py": 4,
   "src/vcl/qt/widgets/ribbon/menueleiste.py": 1,
   "src/vcl/qt/widgets/ribbon/ueberpruefen/aktionen/klappen_markup.py": 1,
   "src/vcl/qt/widgets/ribbon/ueberpruefen/aktionen/klappen_pruefen.py": 1,

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QLabel, QToolButton, QWidget
 
 from vcl.qt.widgets.bausteine.farben.darstellung import zahlfeld_ohne_pfeilknoepfe
 from vcl.qt.widgets.bausteine.abstaende.mass import BREITE_ZAHLFELD_BAND, GROESSE_ZAHLFELD_KNOPF, HOEHE_ZAHLFELD_BAND, ICON_ZAHLFELD
-from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
+from vcl.qt.widgets.bausteine.zustaende.geruest import reihe
 from vcl.qt.widgets.bausteine.interaktion.felder.schiebe_feld import SchrittFeld
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
@@ -25,9 +25,7 @@ class _Zeile(QWidget):
 def abstandsfeld(name: str, symbol: str, lesen: Callable[[], float | None], schreiben: Callable[[float], None]) -> QWidget:
     """``lesen`` liefert den Wert in mm (``None``: kein Dokument), ``schreiben`` übergibt eine Änderung an das Framework."""
     host = _Zeile()
-    h = FlussLayout(6)
-    host.setLayout(h)
-    h.setContentsMargins(0, 0, 0, 0)
+    h = reihe("eng", host)                                   # Symbol, Beschriftung und Feld bleiben in einer Zeile (kein Umbruch im schmalen Band)
     bild = QLabel()
     bild.setPixmap(symbole.icon(symbol, ICON_ZAHLFELD).pixmap(QSize(ICON_ZAHLFELD, ICON_ZAHLFELD)))
     h.addWidget(bild)
