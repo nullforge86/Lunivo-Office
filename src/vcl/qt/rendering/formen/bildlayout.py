@@ -11,6 +11,7 @@ diese Datei ist die einzige Stelle, die Werte und Bild kennt. Gelesen und geschr
 liefert ``ed.objekt_ziel()``: ``("frei", ("o", Id), Angabe, Bild)`` oder ``("text", InlineObjekt)``.
 """
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtGui import QImage
 
@@ -185,7 +186,7 @@ def format_lesen(ed, z) -> dict | None:
 def fx_alle(ed, fx: dict) -> int:
     """Seitenlayout ▸ Effekte: dieselben Effekte an alle frei liegenden Bilder und Formen des Dokuments (``{}`` nimmt sie weg). → Anzahl."""
     n = 0
-    with ed.sitzung.gruppe("Effekte"):
+    with _bearbeiten.schritt(ed.kennung, "Effekte"):
         for key, a, bild, _r, _hinten, _blatt in list(ed._frei_liste()):
             n += format_setzen(ed, ("frei", key, a, bild), fx=dict(fx))
     return n

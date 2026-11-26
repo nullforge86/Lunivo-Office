@@ -1,5 +1,6 @@
 """KIAnfragen: fachlich abgegrenzte KI-Dienstlogik."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtWidgets import QMessageBox
 from writer.funktionen import ki as KD
@@ -305,7 +306,7 @@ class KIAnfragenMixin:
             return
         ed = eing["ed"]
         ops, ganz, n = KD.ersetze_ergebnis(eing["text"], r["text"])
-        with ed.sitzung.gruppe("KI"):
+        with _bearbeiten.schritt(ed.kennung, "KI"):
             for von, bis, t in ops:
                 ed.replace_range(eing["basis"] + von, eing["basis"] + bis, t)
         self.assistant.pruefen()

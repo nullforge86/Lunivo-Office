@@ -113,7 +113,7 @@ class DateienSpeichernBaustein:
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
         try:
-            hinweise = _dienste.dokument_speichern(self.dokumente, tab.editor.kennung, path, tab.page, tab.meta, erwartet=(gesehen,))
+            hinweise = _dienste.dokument_speichern(self.dokumente, tab.editor.kennung, path, tab.editor.abschnitt_nr(), tab.meta, erwartet=(gesehen,))
         except Dateifehler as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", f"Das Dokument wurde nicht gespeichert.\n\nGrund: {e}\n\nWählen Sie „Speichern unter“ und einen anderen Ordner, oder prüfen Sie den Schreibschutz."); return False
         if mark_saved:

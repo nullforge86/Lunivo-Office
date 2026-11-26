@@ -1,5 +1,6 @@
 """Synchronisierung zwischen aktivem Dokument, Ribbon und Statusleiste."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtGui import QFont
 
@@ -47,7 +48,7 @@ class DokumentSyncMixin:
             _feld_setzen(groesse_feld, "setEditText", f"{size:g}")
         self._sync_seitenmasse(f)
         if "tt_font" in f and text_art:                              # Schrift und Größe des markierten WordArt/Textfelds
-            d = e.sitzung.dokument.objekte[e.ansicht.gewaehltes_objekt].daten
+            d = _bearbeiten.dok_objekt(e.kennung, e.ansicht.gewaehltes_objekt).daten
             _feld_setzen(f["tt_font"], "setCurrentFont", QFont(d.get("schrift", "Liberation Sans")))
             if not f["tt_groesse"].hasFocus():
                 _feld_setzen(f["tt_groesse"], "setEditText", f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}")

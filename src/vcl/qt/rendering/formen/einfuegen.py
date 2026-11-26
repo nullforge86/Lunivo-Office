@@ -117,9 +117,8 @@ def datum_text(fmt: str, sprache: str = "de_DE") -> str:
 # ---- Initiale -------------------------------------------------------------------------------------------------------------------------------
 def initiale(ed, zeilen: int = 3) -> bool:
     """Erster Buchstabe des Absatzes groß und fett (im Absatz, in der Zeile)."""
-    s = ed.sitzung
-    a = s._absatz(s.auswahl.kopf.absatz_id)
-    if not a.text.strip():
+    a = _bearbeiten.dok_absatz_an_marke(ed.kennung)
+    if not a.text().strip():
         return False
     pt = _bearbeiten.absatz_schriftgroesse(ed.kennung) * zeilen * 1.4
     return ed.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(ed.kennung, {"groesse_pt": pt, "fett": True}, ((a.id, 0), (a.id, 1))))

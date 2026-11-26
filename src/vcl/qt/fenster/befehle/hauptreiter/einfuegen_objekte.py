@@ -414,7 +414,7 @@ class EinfuegenObjektBefehle:
         from writer.funktionen.objekte import schnelltabelle as ST
         m = MenueListe()
         for n in ST.schnelltabellen_namen():
-            m.eintrag(n, lambda n=n: ST.einfuegen(self.ed, n))
+            m.eintrag(n, lambda n=n: self.ed.ansicht._befehl(lambda: ST.einfuegen(self.ed.kennung, n)))
         self._popup(m)
 
 
@@ -459,13 +459,13 @@ class EinfuegenObjektBefehle:
         import re
         from writer.werte import Bereich, Stelle
         from writer.anbindung import bausteine
-        s = self.ed.sitzung
-        if s.auswahl.leer:
-            a = s._absatz(s.auswahl.kopf.absatz_id)
-            m_ = re.search(r"(\w+)$", a.text()[:s.auswahl.kopf.versatz])
+        wahl = _bearbeiten.auswahl(self.ed.kennung)
+        if wahl.leer:
+            a = _bearbeiten.dok_absatz_an_marke(self.ed.kennung)
+            m_ = re.search(r"(\w+)$", a.text()[:wahl.kopf.versatz])
             b = bausteine.finde_kuerzel(m_.group(1)) if m_ else None
             if b is not None:
-                start = s.auswahl.kopf.versatz - len(m_.group(1))
+                start = wahl.kopf.versatz - len(m_.group(1))
                 self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_loeschen_von(self.ed.kennung, (a.id, start)))
                 self.ed.ansicht._befehl(lambda: bausteine.einfuegen(self.ed.kennung, b))
                 return

@@ -394,8 +394,8 @@ class SeiteBefehle:
 
     def _abstand_setzen(self, vor, nach):
         e = self.ed
-        if e.sitzung.auswahl.leer:                                   # ohne Markierung: ganzes Dokument
-            ids = [a.id for a in e.sitzung.dokument.absaetze()]
+        if _bearbeiten.auswahl(e.kennung).leer:                                   # ohne Markierung: ganzes Dokument
+            ids = [aid for aid, _laenge in _bearbeiten.dok_absatzlaengen(e.kennung)]
             e.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(e.kennung, {"abstand_vor": vor / 0.75 or None, "abstand_nach": nach / 0.75 or None}, absatz_ids=ids))
         else:
             e.set_paragraph_spacing(vor, nach)

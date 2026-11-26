@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from framework.befehle.ansicht import sprechblasen as befehle
-from framework.schnittstellen.aenderungs_port import AenderungsPort
 from framework.schnittstellen.einstellungen import Einstellungen
 from framework.schnittstellen.sprechblasen import BlasenEinstellung, BlasenKatalog, BlasenSchrift, Sprechblase
 
@@ -35,8 +34,8 @@ def blasen_schrift(px: float) -> BlasenSchrift:
     return befehle.blasen_schrift(px)
 
 
-def sammeln(editor: AenderungsPort, verwenden: str = "Nur für Kommentare") -> tuple[Sprechblase, ...]:
-    return befehle.sammeln(editor, verwenden)
+def sammeln(kennung: int, verwenden: str = "Nur für Kommentare") -> tuple[Sprechblase, ...]:
+    return befehle.sammeln(kennung, verwenden)
 
 
 def messen(blase: Sprechblase, breite: float, schrift: BlasenSchrift) -> float:

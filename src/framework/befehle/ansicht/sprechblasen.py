@@ -7,7 +7,7 @@ from dataclasses import asdict
 
 from core.objekte.formen import sprechblasen_modell as modell
 from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-from framework.schnittstellen.aenderungs_port import AenderungsPort
+from framework.sitzungen import sitzung as _steuerung
 from framework.schnittstellen.einstellungen import Einstellungen
 from framework.schnittstellen.sprechblasen import BlasenEinstellung, BlasenKatalog, BlasenSchrift, Sprechblase
 
@@ -53,9 +53,22 @@ def blasen_schrift(px: float) -> BlasenSchrift:
     return BlasenSchrift(f.family, f.size_pt, f.weight, f.italic)
 
 
-def sammeln(editor: AenderungsPort, verwenden: str = "Nur für Kommentare") -> tuple[Sprechblase, ...]:
-    """Alle Blasen des Dokuments in Textreihenfolge als unveränderliche Beschreibungen; gelesen über den Anschluss des Editors."""
-    gefunden = editor.lesen(lambda sitzung: modell.sammeln_modell(sitzung, verwenden))
+def _sitzung(kennung: int):
+    return _steuerung._sitzungen[kennung].sitzung
+
+
+def sammeln(kennung: int, verwenden: str = "Nur für Kommentare") -> tuple[Sprechblase, ...]:
+    """Alle Blasen des Dokuments in Textreihenfolge als unveränderliche Beschreibungen."""
+    return _beschreibungen(modell.sammeln_modell(_sitzung(kennung), verwenden))
+
+
+def _blasen(dokument, verwenden: str) -> tuple[Sprechblase, ...]:
+    """Wie ``sammeln`` für ein Dokument ohne Kennung (Druckausgabe): gelesen auf einer eigenen Sitzung über dasselbe Dokument."""
+    from core.bearbeitung import Bearbeitungssitzung
+    return _beschreibungen(modell.sammeln_modell(Bearbeitungssitzung(dokument), verwenden))
+
+
+def _beschreibungen(gefunden) -> tuple[Sprechblase, ...]:
     return tuple(Sprechblase(b.von, b.bis, b.autor, b.datum, b.art, b.text, b.farbe, b.kid) for b in gefunden)
 
 

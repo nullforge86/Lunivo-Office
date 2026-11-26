@@ -15,6 +15,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "KASTEN_LEER": ("formular_daten", "KASTEN_LEER"),
     "KASTEN_VOLL": ("formular_daten", "KASTEN_VOLL"),
     "PLATZHALTER_FARBE": ("formular_daten", "PLATZHALTER_FARBE"),
+    "nur_formulardaten": ("formular_daten", "nur_formulardaten"),
     "RICHTUNGEN": ("frei_objekt_text_daten", "RICHTUNGEN"),
     "SS": ("frei_objekt_text_daten", "SS"),
     "STANDARD_FARBE": ("wasserzeichen_daten", "STANDARD_FARBE"),

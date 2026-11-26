@@ -42,7 +42,7 @@ class BlasenBedienung:
         luecke = mm_to_px(SW.katalog().luecke_mm) * self.zoom
         font = self._blasen_schrift()
         je_seite: dict[int, list] = {}
-        for bl in SW.sammeln(self, self.blasen_konfig.verwenden):
+        for bl in SW.sammeln(self.kennung, self.blasen_konfig.verwenden):
             pos = ST.stelle_von(k, bl.von)
             stelle = erg.cursor(pos.absatz_id, pos.versatz)
             if stelle is None:

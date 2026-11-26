@@ -1,7 +1,7 @@
 """Eingabe der Dokument-Ansicht: Tastatur, Maus, Eingabemethoden und Zwischenablage. Jede Änderung geht über die Bearbeitungssitzung;
 die Ansicht verändert das Dokumentmodell nie selbst.
 
-Die Mischklasse ``EingabeTeil`` setzt voraus, dass die Ansicht ``kennung``, ``sitzung``, ``ergebnis()``, ``stelle(punkt)``, ``blatt(i)``, ``cursor_flaeche()``,
+Die Mischklasse ``EingabeTeil`` setzt voraus, dass die Ansicht ``kennung``, ``ergebnis()``, ``stelle(punkt)``, ``blatt(i)``, ``cursor_flaeche()``,
 ``nach_aenderung()`` und ``nach_bewegung()`` bereitstellt (siehe ``dokument_ansicht.py``).
 """
 from __future__ import annotations
@@ -30,20 +30,12 @@ PFEILE = {Qt.Key_Left: (-1, 0), Qt.Key_Right: (1, 0), Qt.Key_Up: (0, -1), Qt.Key
 
 class EingabeTeil:
     # ---- Bearbeiten ------------------------------------------------------------------------------------------------------------
-    def aendern(self, fn) -> bool:
-        """Anschluss für das Framework (``AenderungsPort``): ``fn(sitzung)`` als eine Änderung ausführen; ``fn`` gibt ``False`` zurück, wenn der Kern ablehnt."""
-        return self._befehl(lambda: fn(self.sitzung) is not False)
-
-    def lesen(self, abfrage):
-        """Anschluss für das Framework (``AenderungsPort``): ``abfrage(sitzung)``, ohne das Dokument zu ändern."""
-        return abfrage(self.sitzung)
-
     def _befehl(self, befehl) -> bool:
         """Einen Befehl des Frameworks als eine Änderung ausführen: ``befehl()`` → ``False``, wenn der Kern ablehnt (das Dokument bleibt unverändert)."""
         if self.nur_lesen:
             return False
         if self.vor_aenderung is not None:
-            self.vor_aenderung(self.sitzung)
+            self.vor_aenderung()
         if not befehl():
             return False
         self._x = None
@@ -69,12 +61,12 @@ class EingabeTeil:
         return self._befehl(lambda: _bearbeiten.aenderung_zeichen_loeschen(self.kennung, vorwaerts=not rueckwaerts))
 
     def rueckgaengig(self) -> None:
-        if not self.nur_lesen and self.sitzung.rueckgaengig():
+        if not self.nur_lesen and _bearbeiten.rueckgaengig(self.kennung):
             self._x = None
             self.nach_aenderung()
 
     def wiederholen(self) -> None:
-        if not self.nur_lesen and self.sitzung.wiederholen():
+        if not self.nur_lesen and _bearbeiten.wiederholen(self.kennung):
             self._x = None
             self.nach_aenderung()
 

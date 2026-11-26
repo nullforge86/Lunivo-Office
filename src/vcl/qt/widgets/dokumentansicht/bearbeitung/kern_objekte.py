@@ -41,7 +41,7 @@ class KernObjekte:
     @property
     def _frei_sel(self):
         oid = self.ansicht.gewaehltes_objekt
-        return ("o", oid) if oid is not None and oid in self.sitzung.dokument.objekte else None
+        return ("o", oid) if oid is not None and _bearbeiten.dok_objekt(self.kennung, oid) is not None else None
 
     @_frei_sel.setter
     def _frei_sel(self, wert) -> None:
@@ -54,7 +54,7 @@ class KernObjekte:
     def inline_gewaehlt(self):
         """Das Objekt im Text, das die Auswahl genau umfasst (ein Zeichen), sonst ``None``."""
         i = OW.inline_gewaehlt(self.kennung)
-        return self.sitzung._inline(i)[2] if i is not None else None
+        return _bearbeiten.dok_inline(self.kennung, i) if i is not None else None
 
     def objekt_ziel(self):
         """Das Ziel der Bildbefehle: gewähltes freies Objekt oder gewähltes Objekt im Text; sonst ``None``."""
@@ -80,7 +80,7 @@ class KernObjekte:
         """[(Schlüssel, Angabe, Bild, Rechteck in Koordinaten der Ansicht, hinten, Seite)] der frei positionierten Objekte in Dokumentreihenfolge."""
         aus = []
         erg = self.ansicht.ergebnis()
-        for oid, o in self.sitzung.dokument.objekte.items():
+        for oid, o in ((o.id, o) for o in _bearbeiten.dok_objekte(self.kennung)):
             seite, r = erg.objekte.get(oid, (0, None))
             blatt, z = self.ansicht.blatt(seite), self.ansicht.zoom
             rect = QRectF(blatt.left() + r.x * z, blatt.top() + r.y * z, r.width * z, r.height * z) if r is not None else QRectF()
@@ -149,11 +149,11 @@ class KernObjekte:
     def inline_objekte_der_auswahl(self) -> list | None:
         """Die Objekte im Text, wenn die Auswahl nur aus Objekten (und Leerraum) besteht; sonst ``None``."""
         ids = OW.inline_der_auswahl(self.kennung)
-        return None if ids is None else [self.sitzung._inline(i)[2] for i in ids]
+        return None if ids is None else [_bearbeiten.dok_inline(self.kennung, i) for i in ids]
 
     def bild_ressource(self, name: str):
         """Das Bild einer Ressource (auch eines, das noch nicht gespeichert ist) oder ``None``."""
-        roh = getattr(self, "_wartende_bilder", {}).get(name) or self.sitzung.dokument.ressourcen.get(name)
+        roh = getattr(self, "_wartende_bilder", {}).get(name) or _bearbeiten.dok_ressource(self.kennung, name)
         if not roh:
             return None
         img = QImage()
@@ -173,14 +173,14 @@ class KernObjekte:
 
     def objekt_inline_rechteck(self, objekt_id: int):
         """(Seite, Rechteck) eines Objekts im Text in Seitenkoordinaten oder ``None``."""
-        pos = self.sitzung.objekt_position(objekt_id)
+        pos = _bearbeiten.dok_objekt_position(self.kennung, objekt_id)
         if pos is None:
             return None
         erg = self.ansicht.ergebnis()
         von, bis = erg.cursor(pos.absatz_id, pos.versatz), erg.cursor(pos.absatz_id, pos.versatz + 1)
         if von is None or bis is None:
             return None
-        o = self.sitzung._inline(objekt_id)[2]
+        o = _bearbeiten.dok_inline(self.kennung, objekt_id)
         return von[0], Rechteck(von[1].x, von[1].y, max(bis[1].x - von[1].x, 1.0), o.hoehe)
 
     def inline_bei(self, ziel: Stelle, punkt) -> int | None:
@@ -192,7 +192,7 @@ class KernObjekte:
         return None
 
     def inline_waehlen(self, objekt_id: int) -> None:
-        pos = self.sitzung.objekt_position(objekt_id)
+        pos = _bearbeiten.dok_objekt_position(self.kennung, objekt_id)
         if pos is not None:
             ST.auswahl_setzen(self.kennung, pos, Stelle(pos.absatz_id, pos.versatz + 1))
             self.ansicht.gewaehltes_objekt = None
@@ -302,7 +302,7 @@ class KernObjekte:
                 FB.zeichnen(self, p, t[2], t[1])
 
     def objekt_gedreht(self, objekt_id: int, winkel: float) -> None:
-        o = self.sitzung.dokument.objekte.get(objekt_id)
+        o = _bearbeiten.dok_objekt(self.kennung, objekt_id)
         if o is not None:
             self.objekt_setzen(objekt_id, daten={**o.daten, "dreh": float(winkel) % 360.0})
 
@@ -311,14 +311,14 @@ class KernObjekte:
 
     def objekt_art_von(self, art: str, objekt_id: int):
         if art == "frei":
-            o = self.sitzung.dokument.objekte.get(objekt_id)
+            o = _bearbeiten.dok_objekt(self.kennung, objekt_id)
             return o.art if o is not None else None
-        f = self.sitzung._inline(objekt_id)
-        return f[2].art if f else None
+        f = _bearbeiten.dok_inline(self.kennung, objekt_id)
+        return f.art if f else None
 
     def objekt_doppelklick(self, objekt_id: int) -> None:
         """Doppelklick auf ein freies Objekt: Text in Form, Textfeld und WordArt bearbeiten, sonst das Layoutfenster."""
-        o = self.sitzung.dokument.objekte.get(objekt_id)
+        o = _bearbeiten.dok_objekt(self.kennung, objekt_id)
         if o is None:
             return
         if o.art == "smartart":
@@ -334,12 +334,12 @@ class KernObjekte:
     def zuschnitt_lesen(self, objekt_id: int) -> tuple:
         """Der Zuschnitt (links, oben, rechts, unten) als Anteile des freien Objekts."""
         from vcl.qt.rendering import formen as BZ
-        o = self.sitzung.dokument.objekte.get(objekt_id)
+        o = _bearbeiten.dok_objekt(self.kennung, objekt_id)
         return BZ.bildzuschnitt_lesen(OW.objekt_angabe(self.kennung, objekt_id)) if o is not None else (0.0, 0.0, 0.0, 0.0)
 
     def objekt_zuschneiden(self, objekt_id: int, seite: int, rect, zu: tuple) -> None:
         """Zuschneiden-Modus: die Kanten sind gezogen; das Objekt bekommt den neuen sichtbaren Ausschnitt und seine Lage (ein Schritt)."""
         from vcl.qt.rendering import formen as BZ
-        with self.sitzung.gruppe("Zuschneiden"):
+        with _bearbeiten.schritt(self.kennung, "Zuschneiden"):
             self.objekt_verschieben(objekt_id, seite, rect)
             BZ.bildzuschnitt_setzen(self, self.objekt_ziel(), zu=tuple(zu), b=float(rect.width), h=float(rect.height))

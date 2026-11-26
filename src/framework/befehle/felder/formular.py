@@ -1,11 +1,11 @@
 """Formularfelder (Text, Auswahl, Datum, Kontrollkästchen, Schaltfläche): Beschreibung der Felder und ihre Änderungen am Dokument.
 
-Die Fachlogik liegt im Kern. Gelesen und geändert wird über den Anschluss des Editors (``AenderungsPort``); die Oberfläche kennt weder Felddefinitionen
+Die Fachlogik liegt im Kern. Gelesen und geändert wird im Dokument der Kennung; die Oberfläche kennt weder Felddefinitionen
 noch Dokumentmodell."""
 from __future__ import annotations
 
 from core.objekte.textfelder.modell import formular_daten as modell
-from framework.schnittstellen.aenderungs_port import AenderungsPort
+from framework.sitzungen import sitzung as _steuerung
 from framework.schnittstellen.datentypen.formulardaten import FeldTreffer, Feldbeschreibung
 
 AKTIONEN: tuple[str, ...] = tuple(modell.AKTIONEN)
@@ -39,6 +39,10 @@ def meta(art: str, name: str = "", platzhalter: str = "", beschriftung: str = ""
                             aktion=aktion)
 
 
+def _sitzung(kennung: int):
+    return _steuerung._sitzungen[kennung].sitzung
+
+
 def _geschuetzt(aenderung):
     """Die Änderung für den Anschluss des Editors: ``True``, wenn sie ausgeführt ist; ``False``, wenn der Kern sie ablehnt."""
     from core.bearbeitung import BearbeitungsFehler
@@ -52,47 +56,47 @@ def _geschuetzt(aenderung):
     return tat
 
 
-def einfuegen(editor: AenderungsPort, m: Feldbeschreibung, wert: str | None = None) -> bool:
+def einfuegen(kennung: int, m: Feldbeschreibung, wert: str | None = None) -> bool:
     """Das Feld an der Schreibmarke (oder anstelle der Markierung) einfügen."""
     daten = _zum_kern(m)
-    return editor.aendern(_geschuetzt(lambda sitzung: modell.einfuegen(sitzung, daten, wert)))
+    return _geschuetzt(lambda sitzung: modell.einfuegen(sitzung, daten, wert))(_sitzung(kennung))
 
 
-def feld_an(editor: AenderungsPort, pos: int) -> FeldTreffer | None:
+def feld_an(kennung: int, pos: int) -> FeldTreffer | None:
     """Das Feld (Stellen im Rohtext und Beschreibung) an der Stelle ``pos`` oder ``None``."""
-    treffer = editor.lesen(lambda sitzung: modell.feld_an(sitzung.dokument, pos))
+    treffer = modell.feld_an(_sitzung(kennung).dokument, pos)
     return None if treffer is None else FeldTreffer(treffer[0], treffer[1], _aus_kern(treffer[2]))
 
 
-def ist_leer(editor: AenderungsPort, pos: int) -> bool:
+def ist_leer(kennung: int, pos: int) -> bool:
     """Ob das Feld an ``pos`` nur seinen Platzhalter zeigt."""
-    return bool(editor.lesen(lambda sitzung: modell.ist_leer(sitzung, pos)))
+    return bool(modell.ist_leer(_sitzung(kennung), pos))
 
 
-def wert_von(editor: AenderungsPort, v: int, e: int) -> str:
+def wert_von(kennung: int, v: int, e: int) -> str:
     """Der Text des Feldes zwischen den Stellen ``v`` und ``e``."""
-    return editor.lesen(lambda sitzung: modell.wert_von(sitzung, v, e))
+    return modell.wert_von(_sitzung(kennung), v, e)
 
 
-def ersetzen(editor: AenderungsPort, v: int, e: int, m: Feldbeschreibung, text: str, leer: bool = False) -> bool:
+def ersetzen(kennung: int, v: int, e: int, m: Feldbeschreibung, text: str, leer: bool = False) -> bool:
     """Den Text des Feldes ersetzen (``leer``: er zeigt dann nur den Platzhalter)."""
     daten = _zum_kern(m)
-    return editor.aendern(_geschuetzt(lambda sitzung: modell.ersetzen(sitzung, v, e, daten, text, leer)))
+    return _geschuetzt(lambda sitzung: modell.ersetzen(sitzung, v, e, daten, text, leer))(_sitzung(kennung))
 
 
-def kasten_umschalten(editor: AenderungsPort, v: int, e: int, m: Feldbeschreibung) -> bool:
+def kasten_umschalten(kennung: int, v: int, e: int, m: Feldbeschreibung) -> bool:
     """Das Kontrollkästchen zwischen leer und angekreuzt wechseln."""
     daten = _zum_kern(m)
-    return editor.aendern(_geschuetzt(lambda sitzung: modell.kasten_umschalten(sitzung, v, e, daten)))
+    return _geschuetzt(lambda sitzung: modell.kasten_umschalten(sitzung, v, e, daten))(_sitzung(kennung))
 
 
-def alle_zuruecksetzen(editor: AenderungsPort) -> int:
+def alle_zuruecksetzen(kennung: int) -> int:
     """Alle Felder auf ihren Anfangswert zurücksetzen. → Zahl der zurückgesetzten Felder."""
     zaehler = [0]
-    editor.aendern(_geschuetzt(lambda sitzung: zaehler.__setitem__(0, modell.alle_zuruecksetzen(sitzung))))
+    _geschuetzt(lambda sitzung: zaehler.__setitem__(0, modell.alle_zuruecksetzen(sitzung)))(_sitzung(kennung))
     return zaehler[0]
 
 
-def nur_formulardaten(editor: AenderungsPort) -> int:
+def nur_formulardaten(kennung: int) -> int:
     """„Nur Formulardaten drucken“ in der KOPIE eines Dokuments: Text außerhalb der Felder wird unsichtbar, Bilder entfallen. → Zahl der Felder."""
-    return editor.lesen(lambda sitzung: modell.nur_formulardaten(sitzung.dokument))
+    return modell.nur_formulardaten(_sitzung(kennung).dokument)

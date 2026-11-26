@@ -144,6 +144,59 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "aenderung_leere_seite": ("aenderungen", "leere_seite"),
     "aenderung_titelblatt_einfuegen": ("aenderungen", "titelblatt_einfuegen"),
     "aenderung_deckblatt_einfuegen": ("aenderungen", "deckblatt_einfuegen"),
+    "verlauf_schritt_beginnen": ("verlauf", "schritt_beginnen"),
+    "verlauf_schritt_beenden": ("verlauf", "schritt_beenden"),
+    "verlauf_schritt_abbrechen": ("verlauf", "schritt_abbrechen"),
+    "verlauf_rueckgaengig": ("verlauf", "rueckgaengig"),
+    "verlauf_wiederholen": ("verlauf", "wiederholen"),
+    "verlauf_vorschau_beginnen": ("verlauf", "vorschau_beginnen"),
+    "verlauf_vorschau_schritte": ("verlauf", "vorschau_schritte"),
+    "verlauf_vorschau_beenden": ("verlauf", "vorschau_beenden"),
+    "verlauf_nachverfolgen": ("verlauf", "nachverfolgen"),
+    "verlauf_nachverfolgen_setzen": ("verlauf", "nachverfolgen_setzen"),
+    "verlauf_geaendert": ("verlauf", "geaendert"),
+    "verlauf_als_gespeichert_merken": ("verlauf", "als_gespeichert_merken"),
+    "verlauf_auswahl_text": ("verlauf", "auswahl_text"),
+    "verlauf_textmarke_anspringen": ("verlauf", "textmarke_anspringen"),
+    "Absatzabbild": ("abbilder", "Absatzabbild"),
+    "Zellabbild": ("abbilder", "Zellabbild"),
+    "Tabellenabbild": ("abbilder", "Tabellenabbild"),
+    "Objektabbild": ("abbilder", "Objektabbild"),
+    "Ebenenabbild": ("abbilder", "Ebenenabbild"),
+    "Listenabbild": ("abbilder", "Listenabbild"),
+    "abbild_absatz": ("abbilder", "absatz"),
+    "abbild_absatz_an_marke": ("abbilder", "absatz_an_marke"),
+    "abbild_absatzlaengen": ("abbilder", "absatzlaengen"),
+    "abbild_letzter_absatz": ("abbilder", "letzter_absatz"),
+    "abbild_verwendete_vorlagen": ("abbilder", "verwendete_vorlagen"),
+    "abbild_sortierbare_absaetze": ("abbilder", "sortierbare_absaetze"),
+    "abbild_dokumenttext": ("abbilder", "dokumenttext"),
+    "abbild_standardformat": ("abbilder", "standardformat"),
+    "abbild_vorlage_vorhanden": ("abbilder", "vorlage_vorhanden"),
+    "abbild_bereiche_mit": ("abbilder", "bereiche_mit"),
+    "abbild_aenderungsbereiche": ("abbilder", "aenderungsbereiche"),
+    "abbild_notenbereiche": ("abbilder", "notenbereiche"),
+    "abbild_tabelle": ("abbilder", "tabelle"),
+    "abbild_tabelle_von": ("abbilder", "tabelle_von"),
+    "abbild_zellen_im_bereich": ("abbilder", "zellen_im_bereich"),
+    "abbild_objekt": ("abbilder", "objekt"),
+    "abbild_objekte": ("abbilder", "objekte"),
+    "abbild_inline": ("abbilder", "inline"),
+    "abbild_objekt_position": ("abbilder", "objekt_position"),
+    "abbild_ressource": ("abbilder", "ressource"),
+    "abbild_liste": ("abbilder", "liste"),
+    "abbild_noten": ("abbilder", "noten"),
+    "abbild_kommentare": ("abbilder", "kommentare"),
+    "abbild_quellen": ("abbilder", "quellen"),
+    "abbild_eigenschaft": ("abbilder", "eigenschaft"),
+    "abbild_abschnitt_index": ("abbilder", "abschnitt_index"),
+    "abbild_abschnitte_anzahl": ("abbilder", "abschnitte_anzahl"),
+    "abbild_abschnitt_beginn": ("abbilder", "abschnitt_beginn"),
+    "abbild_abschnitt_erster_absatz": ("abbilder", "abschnitt_erster_absatz"),
+    "abbild_seite_felder": ("abbilder", "seite_felder"),
+    "abbild_metadaten": ("abbilder", "metadaten"),
+    "verlauf_stempeln": ("verlauf", "stempeln"),
+    "verlauf_beobachten": ("verlauf", "beobachten"),
     "Suchangabe": ("suche", "Suchangabe"),
     "suche_absaetze": ("suche", "absaetze"),
     "suche_alle_ersetzen": ("suche", "alle_ersetzen"),
@@ -189,7 +242,9 @@ __all__ = sorted(_NAMEN)
 
 def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
-    if datei == "abfragen":
+    if datei == "abbilder":
+        from . import abbilder as _datei
+    elif datei == "abfragen":
         from . import abfragen as _datei
     elif datei == "aenderungen":
         from . import aenderungen as _datei
@@ -211,6 +266,8 @@ def __getattr__(name: str):
         from . import stellen as _datei
     elif datei == "suche":
         from . import suche as _datei
+    elif datei == "verlauf":
+        from . import verlauf as _datei
     elif datei == "vorlagenkatalog":
         from . import vorlagenkatalog as _datei
     elif datei == "wortextras":

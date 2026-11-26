@@ -14,24 +14,6 @@ from framework.zeichnen import Rasterbild
 STANDARD_BLATT_MM = (210.0, 297.0)
 
 
-class _Anschluss:
-    """Der Änderungs-Port (``lesen``/``aendern``) für ein Dokument ohne Editor: jede Anfrage läuft auf einer eigenen Sitzung über dasselbe Dokument."""
-
-    def __init__(self, dokument):
-        self._dokument = dokument
-
-    def _sitzung(self):
-        from core.bearbeitung import Bearbeitungssitzung
-        return Bearbeitungssitzung(self._dokument)
-
-    def lesen(self, abfrage):
-        return abfrage(self._sitzung())
-
-    def aendern(self, aenderung) -> bool:
-        aenderung(self._sitzung())
-        return True
-
-
 class _Ausgabe:
     def __init__(self, dokument, versteckt: bool, blasen: BlasenEinstellung | None):
         from core.layout import LayoutEngine
@@ -48,11 +30,11 @@ class _Ausgabe:
     def _blasen_sammeln(self, k: BlasenEinstellung) -> dict:
         """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
         from core.suche.textsuche import offset_zu_position
-        from framework.befehle.ansicht.sprechblasen import aktiv, sammeln
+        from framework.befehle.ansicht.sprechblasen import _blasen, aktiv
         if not aktiv(k):
             return {}
         je_seite: dict = {}
-        for bl in sammeln(_Anschluss(self.dokument), k.verwenden):    # nur lesen: dasselbe Dokument, keine Kopie
+        for bl in _blasen(self.dokument, k.verwenden):    # nur lesen: dasselbe Dokument, keine Kopie
             pos = offset_zu_position(self.dokument, bl.von)
             stelle = self.erg.cursor(pos.absatz_id, pos.versatz)
             if stelle is not None:
@@ -76,9 +58,9 @@ def ausgabe_oeffnen(kennung: int, nur_formular: bool = False, versteckt: bool = 
     ``versteckt``: ausgeblendeten Text mitsetzen; ``blasen``: Kommentare und Änderungen als Sprechblasen neben der Seite."""
     dokument = _steuerung._sitzungen[kennung].sitzung.dokument
     if nur_formular:
-        from framework.befehle.felder import nur_formulardaten
+        from core.objekte.textfelder.modell import nur_formulardaten
         dokument = copy.deepcopy(dokument)
-        nur_formulardaten(_Anschluss(dokument))
+        nur_formulardaten(dokument)
     return _anlegen(dokument, versteckt, blasen)
 
 

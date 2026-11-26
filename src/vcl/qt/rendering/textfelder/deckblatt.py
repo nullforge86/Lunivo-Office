@@ -40,7 +40,7 @@ def einfuegen(ed, name: str, quer: bool = False) -> None:
 
     felder = deckblatt_felder(name, bw, bh, quer, mm_to_px(deck.margin_top_mm), links_px, rechts_px)        # Lage und Schrift je Feld rechnet der Kern
 
-    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_deckblatt_einfuegen(ed.kennung, felder, dataclasses.asdict(deck), dataclasses.asdict(rest)))
+    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_deckblatt_einfuegen(ed.kennung, felder, deck.als_felder(), rest.als_felder()))
 
 
 def _bild_text(img: QImage) -> str:

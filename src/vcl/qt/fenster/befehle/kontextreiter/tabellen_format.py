@@ -3,6 +3,7 @@
 Ein Baustein von ``KontextBefehle`` (``kern/befehle/kontextreiter/kontext.py``); nutzt ``_tab`` aus ``TabellenBefehle`` (``tabellen.py``).
 Alle Befehle wirken über den ``KernEditor`` auf das Dokumentmodell (Tabellen- und Zellformate)."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -32,7 +33,7 @@ class TabellenFormatBefehle:
 
     def _tabelle_rahmen_schattierung_anwenden(self, e, linie, fuell) -> None:
         """Rahmen der Tabelle (Linie oder None = ohne) und Füllfarbe der markierten Zellen bzw. der Zelle der Schreibmarke."""
-        with e.sitzung.gruppe("Rahmen und Schattierung"):
+        with _bearbeiten.schritt(e.kennung, "Rahmen und Schattierung"):
             e.tabelle_rahmen_linie(linie)
             e.zellformat({"hintergrund": fuell or None})
 
@@ -161,7 +162,7 @@ class TabellenFormatBefehle:
         e, c, t = self._tab()
         if not t:
             return
-        with e.sitzung.gruppe("Tabellenmaße"):
+        with _bearbeiten.schritt(e.kennung, "Tabellenmaße"):
             if breite_mm is not None and breite_mm > 0:
                 e.spalte_breite_setzen(float(breite_mm))
             if hoehe_mm is not None and hoehe_mm > 0:

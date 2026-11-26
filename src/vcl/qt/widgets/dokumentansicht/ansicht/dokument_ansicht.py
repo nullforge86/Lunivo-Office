@@ -49,11 +49,10 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
 
     ZOOM_MIN, ZOOM_MAX = 0.1, 5.0
 
-    def __init__(self, kennung: int, sitzung=None, parent=None):
-        """``kennung``: das Dokument im Framework. ``sitzung``: der Änderungsanschluss des Editors (``aendern``, ``lesen``); eine reine Vorschau hat keinen."""
+    def __init__(self, kennung: int, beobachten: bool = False, parent=None):
+        """``kennung``: das Dokument im Framework. ``beobachten``: die Ansicht folgt den Änderungen des Dokuments (Editor); eine reine Vorschau tut das nicht."""
         super().__init__(parent)
         self.kennung = kennung
-        self.sitzung = sitzung
         self._erg = None                       # ``Layoutsicht`` zum jetzigen Stand; ``None``: beim nächsten Zugriff neu
         self._ueberlagerungscache: dict = {}
         self._ueberlagerungscache_erg = None
@@ -85,8 +84,9 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         self.setCursor(Qt.IBeamCursor)
         self.setAttribute(Qt.WA_InputMethodEnabled, True)
         self.setAutoFillBackground(False)
-        if sitzung is not None:
-            sitzung.beobachte(self._modell_geaendert)
+        if beobachten:
+            abmelden = ST.dokument_beobachten(kennung, lambda: self._modell_geaendert(None))
+            self.destroyed.connect(lambda *_: abmelden())
         self._blink = QTimer(self)
         self._blink.timeout.connect(self._blinken)
         zeit = QApplication.cursorFlashTime()

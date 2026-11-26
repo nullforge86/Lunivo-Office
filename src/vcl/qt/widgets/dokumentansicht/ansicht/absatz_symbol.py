@@ -8,6 +8,7 @@ Der Knopf ist ein Kind des Sichtbereichs. In Tabellen bleibt er weg (dort sitzen
 im Nur-Lesen-Modus und bei ausgeschaltetem Schalter.
 """
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtCore import QObject, QTimer, Qt
 from PySide6.QtGui import QIcon
@@ -49,7 +50,7 @@ class AbsatzSymbol(QObject):
 
     def sichtbar_soll(self) -> bool:
         ed = self.ed
-        a = ed.sitzung.auswahl
+        a = _bearbeiten.auswahl(ed.kennung)
         if ed.isReadOnly() or not ed.opt(OPTION, True) or ed.textCursor().currentTable() is not None:
             return False
         return a.leer or a.anker.absatz_id == a.kopf.absatz_id
@@ -60,7 +61,7 @@ class AbsatzSymbol(QObject):
         if not self.sichtbar_soll():
             self.knopf.hide(); return
         ansicht = self.ed.ansicht
-        stelle = ansicht.ergebnis().cursor(self.ed.sitzung.auswahl.kopf.absatz_id, 0)
+        stelle = ansicht.ergebnis().cursor(_bearbeiten.auswahl(self.ed.kennung).kopf.absatz_id, 0)
         if stelle is None:
             self.knopf.hide(); return
         blatt = ansicht.blatt(stelle[0])

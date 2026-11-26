@@ -43,11 +43,11 @@ def entscheiden_zustand_leer() -> EntscheidenZustand:
     return EntscheidenZustand()
 
 
-def dokument_speichern(verwaltung: DocumentManager, kennung: int, pfad: str, seite, meta: dict, erwartet=None) -> tuple[str, ...]:
+def dokument_speichern(verwaltung: DocumentManager, kennung: int, pfad: str, abschnitt: int, meta: dict, erwartet=None) -> tuple[str, ...]:
     """Schreibt das Dokument ``kennung`` nach ``pfad``; → Hinweise über nicht Übernommenes. Meldet ``Dateifehler`` (``writer.werte``), wenn das nicht geht."""
     from framework.schnittstellen import Dateifehler as _Dateifehler
     from writer.werte import Dateifehler
     try:
-        return verwaltung.speichern_dokument(kennung, pfad, seite, meta, erwartet)
+        return verwaltung.speichern_dokument(kennung, pfad, abschnitt, meta, erwartet)
     except _Dateifehler as e:
         raise Dateifehler(str(e)) from None

@@ -1,5 +1,6 @@
 """Formel einfuegen: aus ``vcl.qt.rendering.formen.einfuegen`` herausgelöst."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 from PySide6.QtGui import QImage
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
@@ -49,11 +50,11 @@ def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
 
 def formel_einfuegen(ed, text: str) -> None:
     """Fügt die Formel als Text mit hoch- und tiefgestellten Teilen an der Schreibmarke ein."""
-    with ed.sitzung.gruppe("Formel"):
+    with _bearbeiten.schritt(ed.kennung, "Formel"):
         for stueck, art in formel_teile(text):
             fmt = {"schrift": "DejaVu Serif", "kursiv": True}
             if art in ("hoch", "tief"):
                 fmt["hoch_tief"] = art
-            ed.sitzung.text_einfuegen(stueck, format=fmt)
-        ed.sitzung.text_einfuegen(" ", format={})
+            _bearbeiten.aenderung_text_einfuegen(ed.kennung, stueck, fmt)
+        _bearbeiten.aenderung_text_einfuegen(ed.kennung, " ", {})
     ed.ansicht.nach_aenderung()

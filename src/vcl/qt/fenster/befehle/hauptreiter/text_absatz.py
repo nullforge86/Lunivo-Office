@@ -140,22 +140,12 @@ class TextAbsatzBefehle:
         from vcl.qt.schrift import schreibweise as S
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
         from vcl.qt.widgets.dialoge.dokument.sortieren_dialog import SortierenDialog
-        s = e.sitzung
-        if s.auswahl.leer:                                      # ohne Markierung: alle Absätze des ersten Textflusses
-            ids = [b.id for b in s.dokument.abschnitte[0].bloecke if hasattr(b, "inhalte")]
-            if len(ids) != len(s.dokument.abschnitte[0].bloecke):
-                ids = []
-        else:
-            von, bis = s._bereich()
-            _b, liste, i0, _a = s.dokument.finde(von.absatz_id)
-            ende = s.dokument.finde(bis.absatz_id)
-            ids = [b.id for b in liste[i0:ende[2] + 1] if hasattr(b, "inhalte")] if ende is not None and ende[1] is liste else []
-            if len(ids) != (ende[2] - i0 + 1 if ende is not None else 0):
-                ids = []
+        paare = _bearbeiten.dok_sortierbare_absaetze(e.kennung)    # die Absätze der Auswahl, ohne Auswahl alle des ersten Textflusses
+        ids = [i for i, _text in paare]
         if len(ids) < 2:
             self.w.statusBar().showMessage("Zum Sortieren braucht es mindestens zwei Absätze außerhalb von Tabellen.", 5000)
             return
-        texte = [s._absatz(i).text() for i in ids]
+        texte = [text for _i, text in paare]
         d = SortierenDialog(self.w, texte)
         if not ausfuehren(d):
             return

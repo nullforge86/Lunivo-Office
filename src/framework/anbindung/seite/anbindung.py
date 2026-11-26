@@ -30,3 +30,16 @@ def standardmasse() -> Seitenmasse:
     """Blattgröße und Ränder der Seiteneinrichtung eines neuen Dokuments."""
     s = _k.PageSettings()
     return Seitenmasse(s.width_mm, s.height_mm, s.margin_top_mm, s.margin_bottom_mm, s.margin_left_mm, s.margin_right_mm)
+
+
+def papier_name(width_mm: float, height_mm: float) -> str:
+    """Der Name des Papierformats mit diesen Maßen (hoch oder quer) oder „Benutzerdefiniert“."""
+    return _k.PageSettings(width_mm=width_mm, height_mm=height_mm).paper_name()
+
+
+def inhalt_px(width_mm: float, height_mm: float, margin_top_mm: float, margin_bottom_mm: float, margin_left_mm: float,
+              margin_right_mm: float) -> tuple[float, float]:
+    """(Breite, Höhe) der Textfläche einer Seite in Bildpunkten; die Höhe im Raster des Seitenumbruchs."""
+    s = _k.PageSettings(width_mm=width_mm, height_mm=height_mm, margin_top_mm=margin_top_mm, margin_bottom_mm=margin_bottom_mm,
+                        margin_left_mm=margin_left_mm, margin_right_mm=margin_right_mm)
+    return s.content_width_px, s.content_height_px

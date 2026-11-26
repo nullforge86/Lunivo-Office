@@ -1,5 +1,6 @@
 """KIChat: fachlich abgegrenzte KI-Dienstlogik."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 import threading
 from PySide6.QtWidgets import QMessageBox
@@ -241,7 +242,7 @@ class KIChatMixin:
         else:                                          # ganzes Dokument (von ``bezug_gueltig`` nur für Überarbeitungen freigegeben)
             von, bis, alt = 0, len(ed.rohtext()), bezug.get("ganz") or ""
         try:
-            with ed.sitzung.gruppe("KI-Antwort"):
+            with _bearbeiten.schritt(ed.kennung, "KI-Antwort"):
                 schritte = KD.ersetz_schritte(alt, neu) if ersetzen else None
                 if schritte is None:               # Einfügen oder ganz anderer Text: die Stelle als Ganzes
                     geklappt = ed.replace_range(von, bis, neu, erwartet=alt, markdown=ki_markdown.hat_struktur(neu))

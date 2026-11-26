@@ -26,7 +26,7 @@ from writer.anbindung.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Q
 
 
 class KernBefehle:
-    """Gemischt in ``KernEditor``: nutzt ``self.sitzung`` und ``self.ansicht`` des Editors."""
+    """Gemischt in ``KernEditor``: nutzt ``self.kennung`` und ``self.ansicht`` des Editors."""
 
     # ---- Zeichen ----------------------------------------------------------------------------------------------------------------------
     def set_outline(self, an: bool) -> None:
@@ -131,7 +131,7 @@ class KernBefehle:
         _bearbeiten.formatvorlage_abgleichen(self.kennung, name)
 
     def stil_entfernen(self, name: str) -> None:
-        if name in self.sitzung.dokument.vorlagen:
+        if _bearbeiten.dok_vorlage_vorhanden(self.kennung, name):
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_vorlage_loeschen(self.kennung, name))
 
     def stil_tasten(self) -> None:
@@ -171,16 +171,14 @@ class KernBefehle:
         return self.ansicht._befehl(lambda: _bearbeiten.aenderung_abschnitt_entfernen(self.kennung, n, "vorher"))
 
     def abschnitt_gehe(self, n: int) -> None:
-        d = self.sitzung.dokument
-        if 0 <= n < len(d.abschnitte):
-            erster = next((b for b in d.abschnitte[n].bloecke if hasattr(b, "inhalte")), None)
-            if erster is not None:
-                _bearbeiten.auswahl_setzen(self.kennung, Stelle(erster.id, 0), Stelle(erster.id, 0))
-                self.ansicht.nach_bewegung()
+        erster = _bearbeiten.dok_abschnitt_erster_absatz(self.kennung, n)
+        if erster is not None:
+            _bearbeiten.auswahl_setzen(self.kennung, Stelle(erster, 0), Stelle(erster, 0))
+            self.ansicht.nach_bewegung()
 
     def seite_letzter_block(self):
         """Der letzte Absatz des Haupttextes (für Seiten, die am Ende des Dokuments eingefügt werden)."""
-        return list(self.sitzung.dokument.absaetze())[-1]
+        return _bearbeiten.dok_absatz(self.kennung, _bearbeiten.dok_letzter_absatz(self.kennung))
 
     # ---- Verknüpfung ---------------------------------------------------------------------------------------------------------------------
     def insert_link(self, href: str, text: str | None = None, tipp: str = "") -> None:
@@ -226,12 +224,12 @@ class KernBefehle:
         r = self.zellen_im_bereich()
         if r is None:
             return None
-        tabelle = self.sitzung._tabelle(r[0])
+        tabelle = _bearbeiten.dok_tabelle(self.kennung, r[0])
         return tabelle, [(z, s) for z, s in r[1] if tabelle.zellen[z][s].verdeckt_von is None]
 
     @staticmethod
     def _absaetze_der_zelle(zelle) -> list:
-        return [b.id for b in zelle.bloecke if hasattr(b, "inhalte")]
+        return list(zelle.absatz_ids)
 
     def tabelle_rahmen_umschalten(self) -> bool:
         t = self.tabelle_an_marke()
@@ -416,9 +414,7 @@ class KernBefehle:
     def verknuepfung_folgen(self, ziel: str) -> None:
         """Strg+Klick auf eine Verknüpfung: ``#Name`` springt zur Textmarke, sonst öffnet das System die Adresse."""
         if ziel.startswith("#"):
-            marken = self.sitzung.textmarken()
-            if ziel[1:] in marken:
-                self.sitzung.setze_auswahl(marken[ziel[1:]].anker, marken[ziel[1:]].kopf)
+            if _bearbeiten.textmarke_anspringen(self.kennung, ziel[1:]):
                 self.ansicht.nach_bewegung()
             return
         from PySide6.QtCore import QUrl
@@ -437,12 +433,12 @@ class KernBefehle:
 
     def tabelle_ganz_waehlen(self, tid: int) -> None:
         """Wählt die ganze Tabelle (von der ersten bis zur letzten Zelle) und zeigt die Minileiste."""
-        t = self.sitzung._tabelle(tid)
-        von = self.sitzung.zelle_anfang(tid, 0, 0)
+        t = _bearbeiten.dok_tabelle(self.kennung, tid)
+        von = _bearbeiten.zelle_anfang(self.kennung, tid, 0, 0)
         letzte = t.zellen[-1][-1]
         letzte = t.zellen[t.anker(t.zeilen - 1, t.spalten - 1)[0]][t.anker(t.zeilen - 1, t.spalten - 1)[1]]
-        ids = [b.id for b in letzte.bloecke if hasattr(b, "inhalte")]
-        bis = Stelle(ids[-1], self.sitzung._absatz(ids[-1]).laenge) if ids else von
+        ids = list(letzte.absatz_ids)
+        bis = Stelle(ids[-1], _bearbeiten.absatz_laenge(self.kennung, ids[-1])) if ids else von
         _bearbeiten.auswahl_setzen(self.kennung, von, bis)
         self.ansicht.nach_bewegung()
         if callable(self.mini_hook):
@@ -451,7 +447,7 @@ class KernBefehle:
             self.mini_hook(self, QCursor.pos())
 
     def tabelle_maus_aendern(self, art: str, tid: int, wert) -> None:
-        t = self.sitzung._tabelle(tid)
+        t = _bearbeiten.dok_tabelle(self.kennung, tid)
         if art == "spalte_plus":
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_spalten_einfuegen(self.kennung, tid, t.spalten))
         elif art == "zeile_plus":
@@ -486,7 +482,7 @@ class KernBefehle:
 
     def tabelle_zellen_vereinen(self, tid: int, a: tuple, b: tuple) -> None:
         """Radiergummi: die Zellen ``a`` und ``b`` (Anker) werden zu einer Zelle verbunden, wenn sie ein Rechteck bilden."""
-        t = self.sitzung._tabelle(tid)
+        t = _bearbeiten.dok_tabelle(self.kennung, tid)
         za, zb = t.zellen[a[0]][a[1]], t.zellen[b[0]][b[1]]
         z1, s1 = min(a[0], b[0]), min(a[1], b[1])
         z2 = max(a[0] + za.zeilenspanne, b[0] + zb.zeilenspanne)
@@ -501,11 +497,11 @@ class KernBefehle:
     @property
     def quellen(self) -> list:
         """Die Literaturquellen des Dokuments (Kopie; ändern über ``quelle_hinzufuegen`` und ``quelle_entfernen``)."""
-        return [dict(q) for q in self.sitzung.dokument.quellen]
+        return [dict(q) for q in _bearbeiten.dok_quellen(self.kennung)]
 
     @property
     def zitierweise(self) -> str:
-        return str(self.sitzung.dokument.eigenschaften.get("zitierweise") or "APA")
+        return str(_bearbeiten.dok_eigenschaft(self.kennung, "zitierweise") or "APA")
 
     @zitierweise.setter
     def zitierweise(self, name: str) -> None:
@@ -537,17 +533,17 @@ class KernBefehle:
     def abschnitt_seite(self, nr: int | None = None):
         """Die Seiteneinrichtung des Abschnitts ``nr`` (ohne Angabe: an der Schreibmarke) als Kopie zum Ändern."""
         n = self.abschnitt_nr() if nr is None else nr
-        return self.sitzung.dokument.abschnitte[n].seite.copy()
+        return _bearbeiten.seite_des_abschnitts(self.kennung, n)
 
     def abschnitt_seite_setzen(self, nr: int, seite) -> None:
         self._seite_ersetzen(nr, seite)
         self.pageApplied.emit()
 
     def abschnitte_anzahl(self) -> int:
-        return len(self.sitzung.dokument.abschnitte)
+        return _bearbeiten.dok_abschnitte_anzahl(self.kennung)
 
     def abschnitt_beginn(self, nr: int) -> str:
-        return self.sitzung.dokument.abschnitte[nr].beginn
+        return _bearbeiten.dok_abschnitt_beginn(self.kennung, nr)
 
     def abschnitt_beginn_setzen(self, nr: int, art: str) -> None:
         self.ansicht._befehl(lambda: _bearbeiten.aenderung_abschnitt_beginn_setzen(self.kennung, nr, art))
@@ -569,12 +565,13 @@ class KernBefehle:
     def seite_letzter_block(self):
         """Der letzte Absatz des Haupttextes, der auf der Seite der Schreibmarke beginnt."""
         erg = self.ansicht.ergebnis()
-        seite = erg.seite_von(self.sitzung.auswahl.kopf.absatz_id)
+        seite = erg.seite_von(_bearbeiten.auswahl(self.kennung).kopf.absatz_id)
         aus = None
+        im_text = {aid for aid, _laenge in _bearbeiten.dok_absatzlaengen(self.kennung)}
         for aid in erg.reihenfolge:
-            if erg.seite_von(aid) == seite and aid in {a.id for a in self.sitzung.dokument.absaetze()}:
+            if erg.seite_von(aid) == seite and aid in im_text:
                 aus = aid
-        return self.sitzung._absatz(aus if aus is not None else self.sitzung.auswahl.kopf.absatz_id)
+        return _bearbeiten.dok_absatz(self.kennung, aus if aus is not None else _bearbeiten.auswahl(self.kennung).kopf.absatz_id)
 
     def leere_seite(self, quer: bool | None = None) -> None:
         """Ein neues, leeres Blatt hinter der Seite der Schreibmarke; der Text wird nicht geteilt. Hat das Blatt eine andere Ausrichtung als der
@@ -587,8 +584,8 @@ class KernBefehle:
         if eigene:
             blatt = einrichtung.copy()
             blatt.set_orientation(bool(quer))
-        self.ansicht._befehl(lambda: _bearbeiten.aenderung_leere_seite(self.kennung, letzter, None if blatt is None else dataclasses.asdict(blatt),
-                                                                       dataclasses.asdict(einrichtung)))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_leere_seite(self.kennung, letzter, None if blatt is None else blatt.als_felder(),
+                                                                       einrichtung.als_felder()))
 
 
     def note_text_setzen(self, art: str, note_id: int, text: str) -> None:

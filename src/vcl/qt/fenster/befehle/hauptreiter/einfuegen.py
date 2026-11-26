@@ -560,10 +560,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         if not self.ed:
             return
         from vcl.qt.widgets.dialoge.einfuegen.trenner_dialog import TrennerDialog
-        s = self.ed.sitzung
-        texte = s.text().split("\n") if s.auswahl.leer is False else []
-        if s.auswahl.leer is False:
-            texte = s.text(s.auswahl).split("\n")
+        texte = _bearbeiten.auswahl_text(self.ed.kennung).split("\n") if not _bearbeiten.auswahl(self.ed.kennung).leer else []
         if not texte:
             self.w.statusBar().showMessage("Bitte zuerst den Text markieren, der eine Tabelle werden soll.", 5000)
             return

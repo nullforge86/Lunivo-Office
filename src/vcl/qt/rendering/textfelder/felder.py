@@ -276,7 +276,7 @@ def tabellen_bereiche(ed) -> dict[str, list[float]]:
 
     def wert(r, s):
         zelle = t.zelle(r, s)
-        return _zahl("\n".join(b.text() for b in zelle.bloecke if hasattr(b, "inhalte")))
+        return _zahl(zelle.text)
 
     def reihe(zellen):
         return [v for v in (wert(r, s) for r, s in zellen) if v is not None]

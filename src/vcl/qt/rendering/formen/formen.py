@@ -1,4 +1,5 @@
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage, QPainter
 from vcl.qt.rendering.formen import bild_einfuegen as BE
@@ -70,8 +71,8 @@ def gruppieren(ed) -> str:
         return "Eine Gruppe braucht mindestens zwei Formen."
     img = _gruppe_zeichnen(kinder)
     alt = "Gruppe aus " + ", ".join(k["form"] for k in kinder)
-    with ed.sitzung.gruppe("Gruppieren"):
-        ed.sitzung.loeschen()
+    with _bearbeiten.schritt(ed.kennung, "Gruppieren"):
+        _bearbeiten.aenderung_loeschen(ed.kennung)
         BE.qimage_einfuegen(ed, img, alt, "gruppe", {"kinder": kinder})
     return ""
 
@@ -83,8 +84,8 @@ def gruppe_aufheben(ed) -> str:
     if g.art != "gruppe":
         return "Das ausgewählte Objekt ist keine Gruppe."
     kinder = (g.daten.get("daten") or {}).get("kinder", [])
-    with ed.sitzung.gruppe("Gruppierung aufheben"):
-        ed.sitzung.loeschen()
+    with _bearbeiten.schritt(ed.kennung, "Gruppierung aufheben"):
+        _bearbeiten.aenderung_loeschen(ed.kennung)
         for k in kinder:
             BE.qimage_einfuegen(ed, _zeichnen(k), "Form: " + k["form"], "form", k)
     return ""

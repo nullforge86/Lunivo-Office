@@ -120,4 +120,4 @@ framework.serienbriefe.erstellung.umschlag framework.serienbriefe.platzhalter.ko
 # Schnittstellen, die noch ``object`` oder fehlende Typangaben enthalten (die Editor-Fassade gibt dort noch Objekte des Kerns weiter). Auch diese Liste darf nur
 # kleiner werden; sie ist leer, wenn das Farmwork die Dokumente selbst hält und nur eigene ``frozen``-Datentypen herausgibt.
 NOCH_NICHT_UMGESTELLT_TYPEN: frozenset[str] = frozenset("framework.schnittstellen." + n for n in (
-    "dokument", "seiten_port", "aenderungs_port"))
+    "dokument", "seiten_port"))

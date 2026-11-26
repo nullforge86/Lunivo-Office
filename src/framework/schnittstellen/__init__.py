@@ -5,7 +5,6 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
-    "AenderungsPort": ("aenderungs_port", "AenderungsPort"),
     "Bildfehler": ("fehler", "Bildfehler"),
     "BlasenEinstellung": ("sprechblasen", "BlasenEinstellung"),
     "BlasenKatalog": ("sprechblasen", "BlasenKatalog"),
@@ -36,9 +35,7 @@ __all__ = sorted(_NAMEN)
 
 def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
-    if datei == "aenderungs_port":
-        from . import aenderungs_port as _datei
-    elif datei == "dokument":
+    if datei == "dokument":
         from . import dokument as _datei
     elif datei == "einheiten":
         from . import einheiten as _datei

@@ -2,6 +2,7 @@
 übernommen wird. Technik: Die Vorschau wird wirklich angewendet (ein Rückgängig-Schritt) und beim Verlassen wieder zurückgenommen;
 Wiederholen-Schritte und der „geändert“-Zustand werden danach wiederhergestellt. Abschaltbar: Optionen ▸ Ansicht ▸ Live-Vorschau."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtCore import QEvent, QObject
 
@@ -30,28 +31,24 @@ class LiveVorschau:
         ed = self.w.current_editor()
         if ed is None or ed.isReadOnly():
             return
-        s = ed.sitzung
-        self._vorher = s.verlauf_laenge
-        self._ed, self._modified, self._format = ed, ed.document().isModified(), s.tippformat
+        _bearbeiten.vorschau_beginnen(ed.kennung)
+        self._ed, self._modified = ed, ed.document().isModified()
         try:
             anwenden(ed)
         except Exception:                                    # noqa: BLE001 — eine Vorschau darf nie etwas kaputt machen
-            self._schritte = max(0, s.verlauf_laenge - self._vorher)
+            self._schritte = _bearbeiten.vorschau_schritte(ed.kennung)
             self.ende()
             return
-        self._schritte = max(0, s.verlauf_laenge - self._vorher)
+        self._schritte = _bearbeiten.vorschau_schritte(ed.kennung)
 
     def ende(self) -> None:
         ed, self._ed = self._ed, None
         if ed is None:
             return
         try:
-            s = ed.sitzung
+            _bearbeiten.vorschau_beenden(ed.kennung, self._schritte)     # mit Schritten der Stand davor, sonst nur das Format am Zeiger
             if self._schritte:
-                s.verlauf_zurueck_auf(self._vorher)             # der Stand vor der Vorschau; Wiederholen-Schritte der Vorschau fallen weg
                 ed.ansicht.nach_aenderung()
-            else:
-                s.tippformat = self._format                     # ohne Markierung ändert die Vorschau nur das Format am Zeiger
             ed.document().setModified(self._modified)
         except RuntimeError:                                         # Editor schon geschlossen
             pass

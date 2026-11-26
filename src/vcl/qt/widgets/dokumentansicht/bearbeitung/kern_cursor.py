@@ -25,7 +25,7 @@ class KernCursor:
 
     def __init__(self, editor: "KernEditor"):
         self._e = editor
-        a = editor.sitzung.auswahl
+        a = _bearbeiten.auswahl(editor.kennung)
         self._anker, self._kopf = editor.position_im_text(a.anker), editor.position_im_text(a.kopf)
 
     # ---- Stellen ---------------------------------------------------------------------------------------------------------------------
@@ -77,10 +77,10 @@ class KernCursor:
     def _absatz_grenzen(self, pos: int) -> tuple:
         """(Anfang, Ende) des Absatzes, in dem die Stelle liegt (Stellen im Rohtext)."""
         n = 0
-        for a in self._e.sitzung.dokument.absaetze():
-            if pos <= n + a.laenge:
-                return n, n + a.laenge
-            n += a.laenge + 1
+        for _aid, laenge in _bearbeiten.dok_absatzlaengen(self._e.kennung):
+            if pos <= n + laenge:
+                return n, n + laenge
+            n += laenge + 1
         return n, n
 
     def movePosition(self, op: int, mode: int = 0, n: int = 1) -> bool:
@@ -140,12 +140,12 @@ class KernCursor:
         """Fügt Text an dieser Stelle ein (eine Auswahl wird ersetzt); ein übergebenes Qt-Format bedeutet: ohne Zeichenformat des Umfelds."""
         self._uebernehmen()
         self._e.ansicht._befehl(lambda: _bearbeiten.aenderung_text_einfuegen(self._e.kennung, text, format={} if _format is not None else None))
-        self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
+        self._anker = self._kopf = self._e.position_im_text(_bearbeiten.auswahl(self._e.kennung).kopf)
 
     def removeSelectedText(self) -> None:
         self._uebernehmen()
         self._e.ansicht._befehl(lambda: _bearbeiten.aenderung_loeschen(self._e.kennung))
-        self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
+        self._anker = self._kopf = self._e.position_im_text(_bearbeiten.auswahl(self._e.kennung).kopf)
 
     def beginEditBlock(self) -> None:
         pass

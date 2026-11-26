@@ -3,36 +3,42 @@ from writer.funktionen.objekte import formular as FW
 from writer.funktionen.objekte.formular import formular_datumsformat, Feldbeschreibung, meta  # noqa: F401  (Namen der Oberfläche)
 
 
-# ---- Änderungen am Dokument: Befehle des Frameworks über den Änderungs-Port des Editors ------------------------------------------------------
+# ---- Änderungen am Dokument: Befehle des Frameworks anhand der Kennung des Dokuments ------------------------------------------------------
 def einfuegen(ed, m: Feldbeschreibung, wert: str | None = None) -> None:
     """Feld an der Schreibmarke (oder anstelle der Markierung) einfügen."""
-    FW.einfuegen(ed, m, wert)
+    ed.ansicht._befehl(lambda: FW.einfuegen(ed.kennung, m, wert))
 
 
 def alle_zuruecksetzen(ed) -> int:
     """Alle Felder auf ihren Anfangswert (Platzhalter, leeres Kästchen) zurücksetzen. → Zahl der zurückgesetzten Felder."""
-    return FW.alle_zuruecksetzen(ed)
+    zahl = [0]
+
+    def f() -> bool:
+        zahl[0] = FW.alle_zuruecksetzen(ed.kennung)
+        return True
+    ed.ansicht._befehl(f)
+    return zahl[0]
 
 
-def nur_formulardaten(anschluss) -> int:
+def nur_formulardaten(kennung: int) -> int:
     """„Nur Formulardaten drucken“ in der KOPIE hinter ``anschluss`` (Änderungs-Port). → Zahl der Felder."""
-    return FW.nur_formulardaten(anschluss)
+    return FW.nur_formulardaten(kennung)
 
 
 def wert_von(ed, v: int, e: int) -> str:
-    return FW.wert_von(ed, v, e)
+    return FW.wert_von(ed.kennung, v, e)
 
 
 def _ersetzen(ed, v: int, e: int, m: Feldbeschreibung, text: str, leer: bool = False) -> None:
-    FW.ersetzen(ed, v, e, m, text, leer)
+    ed.ansicht._befehl(lambda: FW.ersetzen(ed.kennung, v, e, m, text, leer))
 
 
 def _ist_leer(ed, pos: int) -> bool:
-    return FW.ist_leer(ed, pos)
+    return FW.ist_leer(ed.kennung, pos)
 
 
 def _klick_kasten(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:
-    FW.kasten_umschalten(ed, v, e, m)
+    ed.ansicht._befehl(lambda: FW.kasten_umschalten(ed.kennung, v, e, m))
 
 
 def _klick_knopf(ed, v: int, e: int, m: Feldbeschreibung, fenster) -> None:
@@ -109,7 +115,7 @@ _KLICK = {"kasten": _klick_kasten, "auswahl": _klick_auswahl, "datum": _klick_da
 def klick(ed, pos: int, fenster=None) -> bool:
     """Klick in ein Feld: Kontrollkästchen wechselt, Auswahl zeigt die Liste, Text und Datum fragen nach dem Wert, die Schaltfläche löst
     ihre Aktion aus. → True, wenn der Klick ein Feld getroffen hat."""
-    treffer = FW.feld_an(ed, pos)
+    treffer = FW.feld_an(ed.kennung, pos)
     if treffer is None:
         return False
     m = treffer.feld

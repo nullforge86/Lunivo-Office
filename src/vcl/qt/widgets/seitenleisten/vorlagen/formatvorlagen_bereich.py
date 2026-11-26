@@ -8,6 +8,7 @@ oben die Vorlage des Absatzes an der Schreibmarke, „Neue Formatvorlage …“ 
 Ein Klick auf eine Vorlage wirkt sofort; der Bereich selbst formatiert nichts, er ruft ``anwenden``.
 """
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
@@ -37,7 +38,7 @@ def vorlagen_namen(art: str = "gueltig", ed=None) -> list[str]:
     alle = STILE_KATALOG + [n for n in stile.namen() if n not in STILE_KATALOG]
     if art != "verwendet" or ed is None:
         return alle
-    da = {a.format.get("vorlage") or "Standard" for a in ed.sitzung.dokument.absaetze()}
+    da = set(_bearbeiten.dok_verwendete_vorlagen(ed.kennung))
     return [n for n in alle if n in da or (n == "Standard" and "Fließtext" in da)]
 
 

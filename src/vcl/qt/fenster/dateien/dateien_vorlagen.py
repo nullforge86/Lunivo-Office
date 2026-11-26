@@ -65,7 +65,8 @@ class DateienVorlagenBaustein:
 
     # ==== Wiederherstellung ================================================================
     def autosave_now(self):
-        self.dokumente.sichern(self._doc_tabs())
+        self.dokumente.sichern([(t.editor.kennung, t.editor.abschnitt_nr(), t.meta, t.token, t.path or "", t.title)
+                                for t in self._doc_tabs() if t.is_modified()])
 
 
     def offer_recovery(self):

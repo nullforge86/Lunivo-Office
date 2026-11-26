@@ -4,7 +4,7 @@ Das Hauptfenster ruft diese Klasse auf und kümmert sich selbst nur um Dialoge (
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 import os
 
@@ -44,14 +44,16 @@ class DocumentManager:
         stand = erwartet[0] if erwartet is not None else sicher_schreiben.UNGEPRUEFT
         return modell_speichern.speichere_modell(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=stand)
 
-    def speichern_dokument(self, kennung: int, path: str, seite, meta: Mapping, erwartet=None) -> tuple[str, ...]:
-        """Schreibt das Dokument ``kennung`` nach ``path``; → Hinweise über nicht Übernommenes. ``erwartet``: der zuletzt gesehene ``stand`` der
+    def speichern_dokument(self, kennung: int, path: str, abschnitt: int, meta: Mapping, erwartet=None) -> tuple[str, ...]:
+        """Schreibt das Dokument ``kennung`` nach ``path`` (mit der Seiteneinrichtung des Abschnitts ``abschnitt``); → Hinweise über nicht Übernommenes. ``erwartet``: der zuletzt gesehene ``stand`` der
         Zieldatei. Lässt sich die Datei nicht schreiben (auch: sie wurde inzwischen von anderer Seite geändert), meldet das ``Dateifehler``."""
         from core.dokument import DocumentIOError
         from framework.schnittstellen import Dateifehler
         from framework.sitzungen.dokumentsteuerung import sitzung as _steuerung
         try:
-            bericht = self.speichern(path, _steuerung._sitzungen[kennung].sitzung.dokument, seite, dict(meta), erwartet)
+            dokument = _steuerung._sitzungen[kennung].sitzung.dokument
+            seite = dokument.abschnitte[min(abschnitt, len(dokument.abschnitte) - 1)].seite
+            bericht = self.speichern(path, dokument, seite, dict(meta), erwartet)
         except DocumentIOError as e:
             raise Dateifehler(str(e)) from None
         return tuple(bericht.warnings)
@@ -68,23 +70,21 @@ class DocumentManager:
         self.settings.remove_recent(path)
 
     # ---- Sicherung und Wiederherstellung ---------------------------------------------------------------
-    def sichern(self, tabs) -> None:
-        """Automatische Sicherung aller geänderten Dokumente. Fehler stören die Arbeit nie."""
+    def sichern(self, eintraege: Sequence[tuple[int, int, Mapping, str, str, str]]) -> None:
+        """Automatische Sicherung der geänderten Dokumente: je Dokument (Kennung, Abschnitt der Schreibmarke, Metadaten, Sicherungsmarke,
+        Pfad, Titel). Fehler stören die Arbeit nie."""
         if not datei_einstellungen.sicherung_aktiv(self.settings):
             return
-        for t in tabs:
-            if not t.is_modified():
-                continue
-            docx_path, _ = wiederherstellung.paths(t.token)
+        from framework.sitzungen.dokumentsteuerung import sitzung as _steuerung
+        for kennung, abschnitt, meta, token, pfad, titel in eintraege:
+            docx_path, _ = wiederherstellung.paths(token)
             try:
-                modell = t.modell_fuer_speichern() if hasattr(t, "modell_fuer_speichern") else None
-                if modell is None:
-                    continue
+                modell = _steuerung._sitzungen[kennung].sitzung.dokument
                 from framework.dokumentverwaltung.dateizugriff.modell_speichern import speichere_modell
-                speichere_modell(docx_path, modell, t.page, t.meta, sicherung=False)
-                wiederherstellung.write_meta(t.token, t.path or "", t.title)
+                speichere_modell(docx_path, modell, modell.abschnitte[min(abschnitt, len(modell.abschnitte) - 1)].seite, dict(meta), sicherung=False)
+                wiederherstellung.write_meta(token, pfad or "", titel)
                 if datei_einstellungen.staende_sichern(self.settings):
-                    wiederherstellung.zwischenstand(t.token, t.title, datei_einstellungen.aufbewahrung_tage(self.settings))
+                    wiederherstellung.zwischenstand(token, titel, datei_einstellungen.aufbewahrung_tage(self.settings))
             except Exception:
                 pass
 

@@ -3,7 +3,6 @@ import dataclasses
 import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
-from framework.sitzungen.altlast import zugang_fuer_editor
 from writer import hauptfenster as _dokumente
 from writer.funktionen import bearbeiten as _bearbeiten
 from writer.werte import Bereich, Punkt
@@ -62,15 +61,15 @@ class KernDokument(QObject):
         self._editor = editor
         self._erzwungen = False
         self._zuletzt = False
-        self._laenge = len(editor.sitzung.dokument.text())
+        self._laenge = len(_bearbeiten.dok_dokumenttext(editor.kennung))
 
     def isModified(self) -> bool:
-        return self._erzwungen or self._editor.sitzung.geaendert
+        return self._erzwungen or _bearbeiten.dokument_geaendert(self._editor.kennung)
 
     def setModified(self, an: bool) -> None:
         self._erzwungen = bool(an)
         if not an:
-            self._editor.sitzung.als_gespeichert_merken()
+            _bearbeiten.als_gespeichert_merken(self._editor.kennung)
         self.melde_status()
 
     def melde_status(self) -> None:
@@ -86,11 +85,11 @@ class KernDokument(QObject):
 
     def standardschrift(self) -> tuple[str, float]:
         """Familie und Größe (Punkt) der Grundschrift des Dokuments, so wie der Kern sie führt."""
-        sf = self._editor.sitzung.dokument.standardformat
+        sf = _bearbeiten.dok_standardformat(self._editor.kennung)
         return str(sf.get("schrift") or _formatwerte.standard_familie()), float(sf.get("groesse_pt") or STANDARD_PT)
 
     def toPlainText(self) -> str:
-        return self._editor.sitzung.dokument.text()
+        return _bearbeiten.dok_dokumenttext(self._editor.kennung)
 
     def resource(self, _art, url):
         """Das Bild einer Ressource (für die Bildfunktionen); ``None`` ohne eine solche."""
@@ -100,7 +99,7 @@ class KernDokument(QObject):
         self._editor.bild_ressource_neu(bild, url.toString() if hasattr(url, "toString") else str(url))
 
     def blockCount(self) -> int:
-        return sum(1 for _ in self._editor.sitzung.dokument.absaetze())
+        return len(_bearbeiten.dok_absatzlaengen(self._editor.kennung))
 
     def characterCount(self) -> int:
         return len(self.toPlainText()) + 1
@@ -148,10 +147,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def __init__(self, kennung: int, parent=None):
         super().__init__(parent)
         self.kennung = kennung
-        zugang = zugang_fuer_editor(kennung)
-        self.sitzung = zugang.sitzung
-        self.meta = zugang.meta
-        self.ansicht = DokumentAnsicht(self.kennung, self.sitzung)
+        self.meta = _bearbeiten.dokument_metadaten(kennung)
+        self.ansicht = DokumentAnsicht(self.kennung, True)
         self._dok = KernDokument(self)
         self.revision = 0
         self.ansicht.zoomChanged.connect(self.zoomChanged)
@@ -192,7 +189,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def _geaendert(self) -> None:
         self.revision += 1
         self._dok.melde_status()
-        neu = len(self.sitzung.dokument.text())
+        neu = len(_bearbeiten.dok_dokumenttext(self.kennung))
         self._dok.contentsChange.emit(0, self._dok._laenge, neu)
         self._dok._laenge = neu
         self._dok.contentsChanged.emit()
@@ -267,7 +264,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def current_page(self) -> int:
         erg = self.ansicht.ergebnis()
-        s = erg.seite_von(self.sitzung.auswahl.kopf.absatz_id)
+        s = erg.seite_von(_bearbeiten.auswahl(self.kennung).kopf.absatz_id)
         return (s if s is not None else 0) + 1
 
     @property
@@ -275,11 +272,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return self.ansicht.seitenzahl()
 
     def word_count(self) -> int:
-        return len(self.sitzung.dokument.text().split())
+        return len(_bearbeiten.dok_dokumenttext(self.kennung).split())
 
     def tabelle_an_marke(self):
         """``KernTabelle`` der Tabelle, in der die Schreibmarke steht (sonst ``None``)."""
-        stelle = self.sitzung.tabelle_von(self.sitzung.auswahl.kopf.absatz_id)
+        stelle = _bearbeiten.dok_tabelle_von(self.kennung, _bearbeiten.auswahl(self.kennung).kopf.absatz_id)
         return KernTabelle(*stelle) if stelle is not None else None
 
     def tabelle_sortieren(self, tabellen_id: int, spalte: int, aufsteigend: bool = True) -> None:
@@ -288,7 +285,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def liste_an_marke(self):
         a = self._absatz_an_marke()
-        d = self.sitzung.dokument.listen.get(a.liste_id) if a.liste_id is not None else None
+        d = _bearbeiten.dok_liste(self.kennung, a.liste_id)
         return KernListe(d, a.ebene) if d is not None and d.ebenen else None
 
     def _recount(self) -> None:
@@ -300,24 +297,23 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def position_im_text(self, pos) -> int:
         """Die Zeichenstelle im Gesamttext (Absätze durch je ein Zeichen getrennt)."""
         n = 0
-        for a in self.sitzung.dokument.absaetze():
-            if a.id == pos.absatz_id:
+        for aid, laenge in _bearbeiten.dok_absatzlaengen(self.kennung):
+            if aid == pos.absatz_id:
                 return n + pos.versatz
-            n += a.laenge + 1
+            n += laenge + 1
         return n
 
     @property
     def noten(self) -> dict:
-        return {art: {n.id: n.text for n in noten.values()} for art, noten in self.sitzung.dokument.noten.items()}
+        return _bearbeiten.dok_noten(self.kennung)
 
     @property
     def kommentare(self) -> dict:
-        return {k.id: {"autor": k.autor, "initialen": k.initialen, "datum": k.datum, "text": k.text, "geloest": k.geloest}
-                for k in self.sitzung.dokument.kommentare.values()}
+        return _bearbeiten.dok_kommentare(self.kennung)
 
     # ---- Format an der Schreibmarke ------------------------------------------------------------------------------------------------------
     def _absatz_an_marke(self):
-        return self.sitzung._absatz(self.sitzung.auswahl.kopf.absatz_id)
+        return _bearbeiten.dok_absatz_an_marke(self.kennung)
 
     def _zeichen(self) -> dict:
         """Das wirksame Zeichenformat an der Schreibmarke (am Anfang einer Auswahl: das erste Zeichen)."""
@@ -382,10 +378,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def change_case(self, art) -> None:
         """Groß-/Kleinschreibung des markierten Textes ändern (``art``: „gross“, „klein“, „wortanfang“, „satzanfang“)."""
-        s = self.sitzung
-        if s.auswahl.leer:
+        anker, kopf = _bearbeiten.auswahl(self.kennung)
+        if anker == kopf:
             return
-        text = s.text(s.auswahl)
+        text = _bearbeiten.auswahl_text(self.kennung)
         neu = {"gross": text.upper(), "klein": text.lower(), "wortanfang": text.title(), "satzanfang": text[:1].upper() + text[1:].lower()}.get(art)
         if neu is not None and neu != text:
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_ersetzen(self.kennung, neu))
@@ -429,7 +425,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def toggle_list(self, art: str, stil=None) -> None:
         a = self._absatz_an_marke()
         gewuenscht = LISTEN_ART.get(art, "disc")
-        liste = self.sitzung.dokument.listen.get(a.liste_id) if a.liste_id is not None else None
+        liste = _bearbeiten.dok_liste(self.kennung, a.liste_id)
         if liste is not None and liste.ebenen and liste.ebenen[0].stil == gewuenscht:
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_liste_entfernen(self.kennung))
             return
@@ -472,23 +468,28 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.ansicht.alles_auswaehlen()
 
     def toPlainText(self) -> str:
-        return self.sitzung.dokument.text()
+        return _bearbeiten.dok_dokumenttext(self.kennung)
 
     # ---- Seiteneinrichtung ------------------------------------------------------------------------------------------------------------------------
     def abschnitt_nr(self) -> int:
-        return self.sitzung.abschnitt_index(self.sitzung.auswahl.kopf.absatz_id)
+        return _bearbeiten.dok_abschnitt_index(self.kennung, _bearbeiten.auswahl(self.kennung).kopf.absatz_id)
 
     def abschnitt_seite(self):
         """Die Seiteneinrichtung des Abschnitts an der Schreibmarke (eine Kopie zum Ändern)."""
-        return self.sitzung.dokument.abschnitte[self.abschnitt_nr()].seite.copy()
+        return _bearbeiten.seite_des_abschnitts(self.kennung, self.abschnitt_nr())
 
     @property
     def page(self):
-        return self.sitzung.dokument.abschnitte[min(self.abschnitt_nr(), len(self.sitzung.dokument.abschnitte) - 1)].seite
+        """Die Seiteneinrichtung des Abschnitts an der Schreibmarke zum Lesen (zum Ändern: ``abschnitt_seite``); je Stand des Dokuments einmal geholt."""
+        schluessel = (getattr(self, "revision", 0), self.abschnitt_nr())
+        gemerkt = getattr(self, "_seite_gemerkt", None)
+        if gemerkt is None or gemerkt[0] != schluessel:
+            gemerkt = self._seite_gemerkt = (schluessel, _bearbeiten.seite_des_abschnitts(self.kennung, schluessel[1]))
+        return gemerkt[1]
 
     def _seite_ersetzen(self, index: int, seite) -> bool:
         """Die Seiteneinrichtung des Abschnitts ersetzen: ihre Felder gehen als Wörterbuch an das Framework."""
-        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_seite_ersetzen(self.kennung, index, dataclasses.asdict(seite)))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_seite_ersetzen(self.kennung, index, seite.als_felder()))
 
     def page_settings_changed(self, seite) -> None:
         index = self.abschnitt_nr()
@@ -554,11 +555,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return zaehler[0]
 
     # ---- Kommentare, Noten und nachverfolgte Änderungen --------------------------------------------------------------------------------------------
-    def _bereiche_offsets(self, trifft, wert) -> list:
-        """Die Bereiche, deren Format ``trifft``: Liste von {"von", "bis", "wert"} mit Stellen im Rohtext (Absätze durch ein Zeichen getrennt)."""
+    def _bereiche_offsets(self, bereiche, wert) -> list:
+        """Die ``bereiche`` als Liste von {"von", "bis", "wert"} mit Stellen im Rohtext (Absätze durch ein Zeichen getrennt)."""
         k = self.kennung
         return [{"von": _bearbeiten.stelle_im_text(k, b.anker), "bis": _bearbeiten.stelle_im_text(k, b.kopf), "wert": w, "auswahl": b}
-                for b in self.sitzung.bereiche(trifft, wert) for w in [wert(self._format_bei(b.anker))]]
+                for b in bereiche for w in [wert(self._format_bei(b.anker))]]
 
     def _format_bei(self, pos) -> dict:
         return _bearbeiten.lauf_format_bei(self.kennung, pos)
@@ -594,10 +595,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     @property
     def verfolgen(self) -> bool:
-        return self.sitzung.nachverfolgen
+        return _bearbeiten.nachverfolgen(self.kennung)
 
     def set_verfolgen(self, an: bool) -> None:
-        self.sitzung.nachverfolgen = bool(an)
+        _bearbeiten.nachverfolgen_setzen(self.kennung, bool(an))
         self.zusatzGeaendert.emit()
 
     def bearbeiter_melden(self) -> None:
@@ -605,16 +606,15 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         angaben = self.autor() if callable(getattr(self, "autor", None)) else ("", "")
         _dokumente.bearbeiter_setzen(self.kennung, angaben[0] if angaben else "")
 
-    def vor_aenderung(self, s) -> None:
+    def vor_aenderung(self) -> None:
         """Vor jeder Änderung: Bearbeiter und Zeit für nachverfolgte Änderungen und Kommentare setzen."""
-        import datetime
         angaben = self.autor() if callable(getattr(self, "autor", None)) else ("", "")
-        s.autor = angaben[0] if angaben else ""
-        s.datum = datetime.datetime.now().replace(microsecond=0).isoformat()
-        _dokumente.bearbeiter_setzen(self.kennung, s.autor)
+        autor = angaben[0] if angaben else ""
+        _bearbeiten.bearbeiter_stempeln(self.kennung, autor)
+        _dokumente.bearbeiter_setzen(self.kennung, autor)
 
     def kommentar_bereiche(self) -> list:
-        return self._bereiche_offsets(lambda f: "kommentar" in f, lambda f: f.get("kommentar"))
+        return self._bereiche_offsets(_bearbeiten.dok_bereiche_mit(self.kennung, "kommentar"), lambda f: f.get("kommentar"))
 
     def kommentar_neu(self, text: str):
         """Kommentiert die Auswahl (ohne Auswahl das Wort an der Schreibmarke); gibt die Kommentar-Id zurück, ``None`` wenn es nicht geht."""
@@ -659,7 +659,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def aenderungen(self) -> list:
         """Die nachverfolgten Änderungen: {"von", "bis", "wert" ("ins"/"del"), "autor", "datum"}."""
         aus = []
-        for b in self._bereiche_offsets(lambda f: "aenderung" in f, lambda f: (f["aenderung"], f.get("autor", ""), f.get("datum", ""))):
+        for b in self._bereiche_offsets(_bearbeiten.dok_aenderungsbereiche(self.kennung), lambda f: (f["aenderung"], f.get("autor", ""), f.get("datum", ""))):
             art, autor, datum = b["wert"]
             aus.append({"von": b["von"], "bis": b["bis"], "wert": art, "autor": autor, "datum": datum})
         return aus
@@ -702,7 +702,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def noten_stellen(self) -> list:
         k = self.kennung
         aus = []
-        for b in self.sitzung.bereiche(lambda f: "note" in f):
+        for b in _bearbeiten.dok_notenbereiche(self.kennung):
             art, _, nid = self._format_bei(b.anker)["note"].partition(":")
             aus.append({"von": _bearbeiten.stelle_im_text(k, b.anker), "bis": _bearbeiten.stelle_im_text(k, b.kopf), "art": art, "id": int(nid)})
         return aus
@@ -721,15 +721,6 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def note_springen(self, delta: int, art: str | None = None):
         return self._springe([n for n in self.noten_stellen() if art is None or n["art"] == art], delta)
-
-    # ---- Anschluss ans Farmwork (``farmwork/editor/aenderungs_port.py``) ----------------------------------------------------------------------------
-    def aendern(self, aenderung) -> bool:
-        """Führt ``aenderung(sitzung)`` als eine Änderung aus (Rückgängig-Schritt, Neuzeichnen)."""
-        return self.ansicht.aendern(aenderung)
-
-    def lesen(self, abfrage):
-        """``abfrage(sitzung)``, ohne das Dokument zu ändern."""
-        return abfrage(self.sitzung)
 
     # ---- Kopf- und Fußzeilen ----------------------------------------------------------------------------------------------------------------------------
     def kopffuss(self) -> "KopfFussBearbeiter":
@@ -759,20 +750,21 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def zellen_im_bereich(self):
         """(Tabelle, [(Zeile, Spalte)]) der Zellen, die die Auswahl überstreicht; ohne Auswahl die Zelle der Schreibmarke."""
-        r = self.sitzung.zellen_im_bereich()
+        r = _bearbeiten.dok_zellen_im_bereich(self.kennung)
         if r is not None:
-            return r
+            return r[0], list(r[1])
         t = self.tabelle_an_marke()
         return (t.id, [(t.zeile, t.spalte)]) if t is not None else None
 
     def zellen_verbinden(self) -> bool:
         """Verbindet die überstrichenen Zellen zu einer; ``False``, wenn nichts zu verbinden ist."""
-        r = self.sitzung.zellen_im_bereich()
+        r = _bearbeiten.dok_zellen_im_bereich(self.kennung)
         if r is None or len(r[1]) < 2:
             return False
         tid, zellen = r
-        z1, z2 = min(z for z, _ in zellen), max(z + self.sitzung._tabelle(tid).zellen[z][s].zeilenspanne - 1 for z, s in zellen)
-        s1, s2 = min(s for _, s in zellen), max(s + self.sitzung._tabelle(tid).zellen[z][s].spaltenspanne - 1 for z, s in zellen)
+        tabelle = _bearbeiten.dok_tabelle(self.kennung, tid)
+        z1, z2 = min(z for z, _ in zellen), max(z + tabelle.zellen[z][s].zeilenspanne - 1 for z, s in zellen)
+        s1, s2 = min(s for _, s in zellen), max(s + tabelle.zellen[z][s].spaltenspanne - 1 for z, s in zellen)
         return self.ansicht._befehl(lambda: _bearbeiten.aenderung_zellen_verbinden(self.kennung, tid, z1, s1, z2 - z1 + 1, s2 - s1 + 1))
 
     def zelle_teilen(self, spalten: int, zeilen: int) -> bool:
@@ -849,12 +841,12 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def objekt_gewaehlt(self):
         """Das gewählte frei positionierte Objekt (``FreiesObjekt``) oder ``None``."""
-        return self.sitzung.dokument.objekte.get(self.ansicht.gewaehltes_objekt)
+        return _bearbeiten.dok_objekt(self.kennung, self.ansicht.gewaehltes_objekt)
 
     def objekt_bild(self, objekt):
         """Das Darstellungsbild eines Objekts (Ressource) als ``QImage``; ``None`` ohne Bilddaten."""
         from PySide6.QtGui import QImage
-        roh = self.sitzung.dokument.ressourcen.get(objekt.ressource)
+        roh = _bearbeiten.dok_ressource(self.kennung, objekt.ressource)
         img = QImage()
         return img if roh and img.loadFromData(roh) else None
 
@@ -938,7 +930,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         """Setzt ein frei positioniertes Objekt an das Rechteck ``rect`` (Seitenkoordinaten der Seite ``seite``): Es hängt danach am Absatz, der dort
         steht, und ist auf dem Blatt festgelegt; Größe folgt dem Rechteck."""
         erg = self.ansicht.ergebnis()
-        o = self.sitzung.dokument.objekte[objekt_id]
+        o = _bearbeiten.dok_objekt(self.kennung, objekt_id)
         anker = o.anker
         treffer = erg.treffer(seite, Punkt(rect.x + 1, rect.y + 1))
         if treffer is not None and erg.seite_von(treffer[0]) == seite:

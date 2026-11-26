@@ -1,5 +1,6 @@
 """KIDauerbetrieb: fachlich abgegrenzte KI-Dienstlogik."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 import threading
 from PySide6.QtWidgets import QMessageBox
@@ -220,12 +221,12 @@ class KIDauerbetriebMixin:
             self._dauer_timer.start(int(KD.mindestabstand() * 1000))      # weitere Assistenten derselben Änderung kommen nach dem Mindestabstand
 
     def _dauer_kommentar(self, ed, eing, text: str, autor: str) -> None:
-        alt = ed.sitzung.auswahl
+        alt = _bearbeiten.auswahl(ed.kennung)
         ed.select_range(eing["basis"], min(eing["basis"] + len(eing["text"]), len(ed.rohtext())))
         try:
             ed.kommentar_neu(text, autor)
         finally:
-            ed.sitzung.setze_auswahl(alt.anker, alt.kopf)
+            _bearbeiten.auswahl_setzen(ed.kennung, alt[0], alt[1])
 
     def _dauer_ersetzen(self, a: dict, eing, text: str, begruendung: str, r) -> None:
         """Ersetzen nur nach Bestätigung; ein Undo-Schritt (``_einsetzen``)."""
