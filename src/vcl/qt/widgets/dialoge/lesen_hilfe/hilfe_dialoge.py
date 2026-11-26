@@ -24,7 +24,8 @@ from PySide6.QtWidgets import QDialog, QFrame, QLabel, QLineEdit, QPushButton, Q
 
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
-from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
+from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel, gruppe
+from vcl.qt.widgets.bausteine.zustaende.geruest import Kachelraster
 from vcl.qt.widgets.bausteine.zustaende.geruest.spalten import ZweiSpalter
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
@@ -34,9 +35,16 @@ from vcl.qt.widgets.bausteine.tastaturnavigation import kuerzel
 
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_SERIF_PT, SCHRIFT_HILFE_TITEL_PLUS_PT
-from vcl.qt.widgets.bausteine.schrift.schriftarten import GENERISCH_MONOSPACE, GENERISCH_SERIF
-from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
+from vcl.qt.widgets.bausteine.abstaende.mass import (
+    ABSTAND_HANDBUCH_ABSATZ, ABSTAND_HANDBUCH_TABELLE, ABSTAND_HANDBUCH_UEBER_UEBERSCHRIFT, ABSTAND_HANDBUCH_UEBER_UEBERSCHRIFT_SONST,
+    ABSTAND_HANDBUCH_UNTER_UEBERSCHRIFT, ABSTAND_HANDBUCH_UNTER_UEBERSCHRIFT_SONST, BREITE_HANDBUCH_SCHMAL, BREITE_HANDBUCH_SPALTE,
+    BREITE_HANDBUCH_TABELLE_PROZENT, BREITE_HANDBUCH_TABELLENSPALTEN_PROZENT, DECKKRAFT_HANDBUCH_KASTEN, DECKKRAFT_HANDBUCH_LINIE,
+    POLSTER_HANDBUCH_TABELLENZELLE, RAND_HANDBUCH_MERKKASTEN, RAND_HANDBUCH_TEXT, RAND_HANDBUCH_TEXT_SCHMAL, SCHRIFT_HANDBUCH_TASTE_PT,
+    SCHRIFT_HANDBUCH_TEXT_PT, SCHRIFT_HANDBUCH_UEBERSCHRIFT_PT, SCHRIFT_HILFE_ABSCHNITT_PT, SCHRIFT_HILFE_TITEL_PLUS_PT, VERSATZ_HANDBUCH_SPRUNG,
+    ZEILENHOEHE_HANDBUCH_PROZENT,
+)
+from vcl.qt.widgets.bausteine.schrift.schriftarten import GENERISCH_MONOSPACE
+from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_BLOCK, ABSTAND_ENG, ABSTAND_MITTEL, ABSTAND_NORMAL, BREITE_NAVIGATION_HILFE, GROESSE_FENSTER_HANDBUCH, GROESSE_PLAKETTE, HOEHE_FELD, HOEHE_LESEFELD, HOEHE_NAVIGATION_HILFE, HOEHE_ZEILE_ABSCHNITT, HOEHE_ZEILE_ERWEITERUNG_KOPF, PADDING_HANDBUCH_EINTRAG, PADDING_HANDBUCH_NAVIGATION, RADIUS_EINTRAG, RADIUS_FELD, RADIUS_MITTEL, RAND_ERWEITERUNG_KARTE, RAND_HILFE_DIALOG, RAND_HILFE_FUSS, RAND_HILFE_SEITE, RAND_KEIN
 
 
 
@@ -53,34 +61,43 @@ class HilfeFenster(PanelFaehig, QDialog):
 
 
 class _Lesefeld(QTextBrowser):
-    """Der Text des Handbuchs in einer ruhigen Spalte: nicht breiter als ~780 px, die Spalte steht in der Mitte (schmal: kleiner Rand)."""
-    BREITE = 780
+    """Der Text des Handbuchs in einer ruhigen Spalte: sie beginnt links am Seitenrand wie jede Dashboard-Seite und wird nicht breiter als
+    ``BREITE_HANDBUCH_SPALTE`` (schmal: kleiner Rand). Alle Maße stehen in ``mass``."""
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        rand = max(28 if self.width() > 520 else 12, (self.width() - self.BREITE) // 2)
-        self.setViewportMargins(0, 0, 0, 0)
-        self.document().setDocumentMargin(rand)
+        self.setViewportMargins(*RAND_KEIN)
+        self.raender_setzen()
+
+    def raender_setzen(self) -> None:
+        """Der Rand ist rundum gleich; nur rechts wächst er mit der Breite, damit die Zeilen lesbar kurz bleiben. Nach jedem neuen Text erneut nötig."""
+        rand = RAND_HANDBUCH_TEXT if self.width() > BREITE_HANDBUCH_SCHMAL else RAND_HANDBUCH_TEXT_SCHMAL
+        wurzel = self.document().rootFrame()
+        ff = wurzel.frameFormat()
+        ff.setMargin(rand); ff.setRightMargin(max(rand, self.width() - BREITE_HANDBUCH_SPALTE - rand))
+        wurzel.setFrameFormat(ff)
 
 
 def _hb_bloecke(d, grund2) -> None:
     """Absätze und Überschriften: Abstände, Zeilenhöhe, Merkkästen."""
-    from PySide6.QtGui import QBrush, QFont, QTextBlockFormat, QTextCharFormat, QTextCursor
+    from PySide6.QtGui import QBrush, QFont, QTextBlockFormat, QTextCharFormat, QTextCursor, QTextFormat
+    zitat = QTextFormat.BlockQuoteLevel.value                            # Merkkasten: im Markdown ein Zitatblock
     blk = d.begin()
     while blk.isValid():
         cf = QTextCharFormat()
         ebene = blk.blockFormat().headingLevel()
         bf = blk.blockFormat()
-        if ebene:
-            bf.setTopMargin({1: 6, 2: 34, 3: 20}.get(ebene, 14)); bf.setBottomMargin({1: 4, 2: 10, 3: 6}.get(ebene, 6))
-            cf.setFontPointSize({1: 30, 2: 21, 3: 15}.get(ebene, 13)); cf.setFontWeight(QFont.Bold)
-            cf.setFontFamilies([_t("hilfe.georgia"), _t("hilfe.liberation_serif"), GENERISCH_SERIF])
+        if ebene:                                                        # Überschriften in der Schrift der Oberfläche, Größen wie auf den Dashboard-Seiten
+            bf.setTopMargin(ABSTAND_HANDBUCH_UEBER_UEBERSCHRIFT.get(ebene, ABSTAND_HANDBUCH_UEBER_UEBERSCHRIFT_SONST))
+            bf.setBottomMargin(ABSTAND_HANDBUCH_UNTER_UEBERSCHRIFT.get(ebene, ABSTAND_HANDBUCH_UNTER_UEBERSCHRIFT_SONST))
+            cf.setFontPointSize(SCHRIFT_HANDBUCH_UEBERSCHRIFT_PT.get(ebene, SCHRIFT_HANDBUCH_TEXT_PT)); cf.setFontWeight(QFont.DemiBold)
         else:
-            bf.setLineHeight(128.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
-            if blk.blockFormat().intProperty(0x1080) == 0 and not blk.textList():
-                bf.setBottomMargin(10)
-        if blk.blockFormat().intProperty(0x1080):
-            bf.setBackground(QBrush(grund2)); bf.setLeftMargin(10); bf.setRightMargin(6); bf.setTopMargin(4); bf.setBottomMargin(4)
+            bf.setLineHeight(ZEILENHOEHE_HANDBUCH_PROZENT, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+            if blk.blockFormat().intProperty(zitat) == 0 and not blk.textList():
+                bf.setBottomMargin(ABSTAND_HANDBUCH_ABSATZ)
+        if blk.blockFormat().intProperty(zitat):
+            links, oben, rechts, unten = RAND_HANDBUCH_MERKKASTEN
+            bf.setBackground(QBrush(grund2)); bf.setLeftMargin(links); bf.setRightMargin(rechts); bf.setTopMargin(oben); bf.setBottomMargin(unten)
             bf.setIndent(0)
         QTextCursor(blk).setBlockFormat(bf)
         if ebene:
@@ -96,7 +113,7 @@ def _hb_tastenchips(d, grund2) -> None:
         for f in absatz_fragmente(blk):
             if f.charFormat().fontFixedPitch():
                 cur = QTextCursor(d); cur.setPosition(f.position()); cur.setPosition(f.position() + f.length(), QTextCursor.KeepAnchor)
-                cf = QTextCharFormat(); cf.setBackground(QBrush(grund2)); cf.setFontFamilies([_t("hilfe.dejavu_sans_mono"), _t("hilfe.liberation_mono"), GENERISCH_MONOSPACE]); cf.setFontPointSize(10.5)
+                cf = QTextCharFormat(); cf.setBackground(QBrush(grund2)); cf.setFontFamilies([_t("hilfe.dejavu_sans_mono"), _t("hilfe.liberation_mono"), GENERISCH_MONOSPACE]); cf.setFontPointSize(SCHRIFT_HANDBUCH_TASTE_PT)
                 cur.mergeCharFormat(cf)
         blk = blk.next()
 
@@ -109,11 +126,12 @@ def _hb_tabellen(d, linie) -> None:
         if all(not t.cellAt(0, k).firstCursorPosition().block().text().strip() for k in range(t.columns())):
             t.removeRows(0, 1)
         tf = t.format()
-        tf.setBorder(0); tf.setCellPadding(9); tf.setCellSpacing(0); tf.setBorderCollapse(True)
-        tf.setTopMargin(6); tf.setBottomMargin(14)
-        tf.setWidth(QTextLength(QTextLength.PercentageLength, 100))
-        if t.columns() == 2:
-            tf.setColumnWidthConstraints([QTextLength(QTextLength.PercentageLength, 34), QTextLength(QTextLength.PercentageLength, 66)])
+        tf.setBorder(0); tf.setCellPadding(POLSTER_HANDBUCH_TABELLENZELLE); tf.setCellSpacing(0); tf.setBorderCollapse(True)
+        oben, unten = ABSTAND_HANDBUCH_TABELLE
+        tf.setTopMargin(oben); tf.setBottomMargin(unten)
+        tf.setWidth(QTextLength(QTextLength.PercentageLength, BREITE_HANDBUCH_TABELLE_PROZENT))
+        if t.columns() == len(BREITE_HANDBUCH_TABELLENSPALTEN_PROZENT):
+            tf.setColumnWidthConstraints([QTextLength(QTextLength.PercentageLength, anteil) for anteil in BREITE_HANDBUCH_TABELLENSPALTEN_PROZENT])
         t.setFormat(tf)
         for r in range(t.rows()):
             for k in range(t.columns()):
@@ -124,86 +142,159 @@ def _hb_tabellen(d, linie) -> None:
 
 
 def _handbuch_gestalten(b: QTextBrowser) -> None:
-    """Gibt dem Markdown-Text die Gestalt der Vorlage: Antiqua mit Luft, Überschriften, Tabellen ohne Gitter, Merkkästen, Tastenchips."""
+    """Gibt dem Markdown-Text seine Gestalt: die Schrift der Oberfläche in der Größe der Dashboard-Seiten, Überschriften, Tabellen ohne Gitter,
+    Merkkästen, Tastenchips. Größen und Abstände kommen aus ``mass``."""
     from PySide6.QtGui import QColor, QFont, QPalette
     d = b.document()
     pal = b.palette()
-    linie = pal.color(QPalette.Mid); linie.setAlpha(90)
-    grund2 = QColor(pal.color(QPalette.Text)); grund2.setAlpha(18)
-    serif = QFont(_t("hilfe.georgia")); serif.setStyleHint(QFont.Serif); serif.setPointSizeF(SCHRIFT_HILFE_SERIF_PT)
-    d.setDefaultFont(serif)
+    linie = pal.color(QPalette.Mid); linie.setAlpha(DECKKRAFT_HANDBUCH_LINIE)
+    grund2 = QColor(pal.color(QPalette.Text)); grund2.setAlpha(DECKKRAFT_HANDBUCH_KASTEN)
+    schrift = QFont(b.font()); schrift.setPointSizeF(SCHRIFT_HANDBUCH_TEXT_PT)       # dieselbe Schriftart wie der Rest der Oberfläche
+    d.setDefaultFont(schrift)
     _hb_bloecke(d, grund2)
     _hb_tastenchips(d, grund2)
     _hb_tabellen(d, linie)
 
 
-def handbuch_inhalt() -> QWidget:
-    """Der Inhalt des Handbuchs (ohne Fenster): Gliederung, Suche und Text. Er liegt als Markdown in ressourcen/handbuch.md. Das Dashboard zeigt ihn als Seite,
-    ``handbuch(parent)`` als Fenster."""
+_KAPITEL, _ABSCHNITT = "## ", "### "                                     # Überschriften im Markdown des Handbuchs: Kapitel und Abschnitt
+
+
+def _hb_seiten(text: str) -> list[str]:
+    """Teilt das Handbuch an den Kapiteln in Seiten (Markdown je Seite). Die erste Seite ist der Vorspann vor dem ersten Kapitel."""
+    seiten: list[list[str]] = [[]]
+    for z in text.split("\n"):
+        if z.startswith(_KAPITEL):
+            seiten.append([])
+        seiten[-1].append(z)
+    return ["\n".join(s) for s in seiten]
+
+
+def handbuch_ansicht() -> QWidget:
+    """Das Handbuch als Ansicht über die ganze Breite, aufgebaut wie die Optionen: links Suche und Gliederung, rechts der Text."""
+    return handbuch_inhalt(als_ansicht=True)
+
+
+def handbuch_inhalt(als_ansicht: bool = False) -> QWidget:
+    """Der Inhalt des Handbuchs (ohne Fenster): Gliederung, Suche und Text. Er liegt als Markdown in ressourcen/handbuch.md. Das Dashboard zeigt ihn als
+    Ansicht (``als_ansicht``: Suche und Gliederung in der linken Fläche wie bei den Optionen), ``handbuch(parent)`` als Fenster."""
     from PySide6.QtCore import QSize
+    from PySide6.QtGui import QTextCursor
     from PySide6.QtWidgets import QListWidget, QListWidgetItem
     d = QWidget()
-    v = _spalte("standard", d)
-    # Schmal: oben die Gliederung (einklappbar), darunter Suche und Text. Breit (ZweiSpalter): Gliederung links, Suche und Text rechts
-    themen = EinklappGruppe(_t("hilfe.themen"))
-    raender(themen, "rand_seitlich")
-    nav = QListWidget(); nav.setMaximumHeight(HOEHE_NAVIGATION_HILFE); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.StrongFocus); nav.setAccessibleName(_t("hilfe.handbuch_abschnitte"))
-    nav.setObjectName("hilfeNav")
-    themen.innen.addWidget(nav)
-    themen.ausklappen(True)
+    v = _spalte("kein" if als_ansicht else "standard", d)
+    nav = QListWidget(); nav.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded); nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff); nav.setFrameShape(QFrame.NoFrame); nav.setFocusPolicy(Qt.StrongFocus); nav.setAccessibleName(_t("hilfe.handbuch_abschnitte"))
+    such = zeilenfeld("frei", platzhalter=_t("hilfe.im_handbuch_suchen")); such.setClearButtonEnabled(True)
     rechts = QWidget(); rv = _spalte("standard", rechts)
-    spalten = ZweiSpalter(themen, rechts, links_breite=BREITE_NAVIGATION_HILFE, oben="links", abstand=ABSTAND_NORMAL)
+    if als_ansicht:
+        # Wie die Optionen: die linke Fläche trägt Suche und Gliederung, rechts steht nur der Text
+        nav.setObjectName("optNavigation")                              # dieselbe Navigation wie in den Optionen: eine Regel für beide
+        such.setMinimumHeight(HOEHE_FELD)
+        links = QWidget(); links.setObjectName("optLinks"); links.setAttribute(Qt.WA_StyledBackground, True)
+        lv = _spalte("panel", links)
+        lv.addWidget(such); lv.addWidget(nav, 1)
+        spalten = ZweiSpalter(links, rechts, links_breite=BREITE_NAVIGATION_HILFE, oben="links")
+    else:
+        # Schmal: oben die Gliederung (einklappbar), darunter Suche und Text. Breit (ZweiSpalter): Gliederung links, Suche und Text rechts
+        themen = EinklappGruppe(_t("hilfe.themen"))
+        raender(themen, "rand_seitlich")
+        unbegrenzt = nav.maximumHeight()                                 # die Höchsthöhe, die Qt einem Widget ohne Vorgabe gibt
+        nav.setMaximumHeight(HOEHE_NAVIGATION_HILFE)
+        nav.setObjectName("hilfeNav")
+        themen.innen.addWidget(nav)
+        themen.ausklappen(True)
+        spalten = ZweiSpalter(themen, rechts, links_breite=BREITE_NAVIGATION_HILFE, oben="links", abstand=ABSTAND_NORMAL)
+
+        def angeordnet(breit: bool) -> None:                                 # breit steht die Liste immer offen und so hoch wie das Fenster
+            themen.knopf.setVisible(not breit)
+            if breit:
+                themen.ausklappen(True)
+            nav.setMaximumHeight(unbegrenzt if breit else HOEHE_NAVIGATION_HILFE)
+        spalten.angeordnet.connect(angeordnet)
+        raender(such, "kein")
+        sz = _reihe("rand_seitlich"); sz.addWidget(such, 1)
+        rv.addLayout(sz)
     d.spalten = spalten
     v.addWidget(spalten, 1)
-
-    def angeordnet(breit: bool) -> None:                                 # breit steht die Liste immer offen und so hoch wie das Fenster
-        themen.knopf.setVisible(not breit)
-        if breit:
-            themen.ausklappen(True)
-        nav.setMaximumHeight(16777215 if breit else HOEHE_NAVIGATION_HILFE)
-    spalten.angeordnet.connect(angeordnet)
-    such = zeilenfeld("frei", platzhalter=_t("hilfe.im_handbuch_suchen")); such.setClearButtonEnabled(True)
-    raender(such, "kein")
-    sz = _reihe("rand_seitlich"); sz.addWidget(such, 1)
-    rv.addLayout(sz)
     b = _Lesefeld(); b.setOpenExternalLinks(True); b.setFrameShape(QFrame.NoFrame); b.setMinimumHeight(HOEHE_LESEFELD)
     try:
         with open(os.path.join(pfade.RESSOURCEN, "handbuch.md"), encoding="utf-8") as fh:
-            b.setMarkdown(fh.read())
+            text = fh.read()
     except OSError:
-        b.setMarkdown(_t("hilfe.das_handbuch_konnte_nicht_gelesen_werden"))
-    _handbuch_gestalten(b)
+        text = _t("hilfe.das_handbuch_konnte_nicht_gelesen_werden")
+    # Als Ansicht hat das Handbuch je Kapitel eine eigene Seite (wie die Optionen); als Fenster bleibt es ein durchlaufender Text
+    seiten = _hb_seiten(text) if als_ansicht else [text]
+    offen: list[int] = []
+
+    def seite_zeigen(i: int) -> None:
+        if offen != [i]:
+            offen[:] = [i]
+            b.setMarkdown(seiten[i]); _handbuch_gestalten(b); b.raender_setzen()
+    seite_zeigen(0)
     rv.addWidget(b, 1)
 
-    stellen = {}
-    blk = b.document().begin()
-    while blk.isValid():
-        if blk.blockFormat().headingLevel() in (2, 3):
-            stellen.setdefault(blk.text().strip(), blk)
-            if blk.text().strip() == _t("hilfe.woher_dieses_programm_kommt"):          # die Gliederung nennt es kürzer
-                stellen.setdefault(_t("hilfe.woher_es_kommt"), blk)
-        blk = blk.next()
+    stellen: dict[str, tuple[int, str]] = {}                             # Überschrift → (Seite, Text der Überschrift)
+    for i, seite in enumerate(seiten):
+        for z in seite.split("\n"):
+            if z.startswith((_KAPITEL, _ABSCHNITT)):
+                kopf = z.lstrip("#").strip()
+                stellen.setdefault(kopf, (i, kopf))
+                if kopf == _t("hilfe.woher_dieses_programm_kommt"):          # die Gliederung nennt es kürzer
+                    stellen.setdefault(_t("hilfe.woher_es_kommt"), (i, kopf))
+    for _gruppe, titel in GRUPPEN:                                       # die Gliederung nennt manche Überschrift kürzer („Die rechte Maustaste“)
+        for t in titel:
+            if t not in stellen:
+                lang = next((k for k in stellen if k.startswith(t)), None)
+                if lang is not None:
+                    stellen[t] = stellen[lang]
+    eintraege: dict[int, QListWidgetItem] = {}                           # Seite → ihr Eintrag in der Gliederung
     ueber_kopf = QListWidgetItem(_t("hilfe.lunivo_writer_ein_raum_fuer_worte_das_ha")); ueber_kopf.setData(Qt.UserRole, "")
-    f = ueber_kopf.font(); f.setBold(True); ueber_kopf.setFont(f); ueber_kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ERWEITERUNG_KOPF))
-    nav.addItem(ueber_kopf)
+    f = ueber_kopf.font(); f.setBold(True); ueber_kopf.setFont(f)
+    if not als_ansicht:                                                  # in der Ansicht steht der Name schon im Kopf („← Handbuch“): dort kein eigener Eintrag
+        ueber_kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ERWEITERUNG_KOPF))
+        nav.addItem(ueber_kopf)
     for gruppe, titel in GRUPPEN:
         kopf = QListWidgetItem(gruppe.upper()); kopf.setFlags(Qt.NoItemFlags)
-        f = kopf.font(); f.setPointSizeF(SCHRIFT_HILFE_ABSCHNITT_PT); f.setBold(True); kopf.setFont(f); kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ABSCHNITT))
+        f = kopf.font(); f.setBold(True)
+        if not als_ansicht:                                              # in der Ansicht führt die Überschrift: volle Schriftgröße, fett, in Textfarbe
+            f.setPointSizeF(SCHRIFT_HILFE_ABSCHNITT_PT); kopf.setSizeHint(QSize(0, HOEHE_ZEILE_ABSCHNITT))
+        kopf.setFont(f)
         nav.addItem(kopf)
         for t in titel:
             if t in stellen:
                 it = QListWidgetItem(t); it.setData(Qt.UserRole, t); nav.addItem(it)
+                eintraege.setdefault(stellen[t][0], it)
+    if not als_ansicht:
+        eintraege[0] = ueber_kopf
 
     def springe(it):
         t = it.data(Qt.UserRole)
         if t == "":
+            seite_zeigen(0)
             b.verticalScrollBar().setValue(0)
         elif t in stellen:
-            lay = b.document().documentLayout()
-            b.verticalScrollBar().setValue(int(lay.blockBoundingRect(stellen[t]).top()) - 8)
+            i, kopf = stellen[t]
+            seite_zeigen(i)
+            blk = b.document().begin()
+            while blk.isValid() and not (blk.blockFormat().headingLevel() and blk.text().strip() == kopf):
+                blk = blk.next()
+            if blk.isValid():
+                lay = b.document().documentLayout()
+                b.verticalScrollBar().setValue(int(lay.blockBoundingRect(blk).top()) - VERSATZ_HANDBUCH_SPRUNG)
     nav.itemClicked.connect(springe)
     nav.currentItemChanged.connect(lambda cur, _vor: springe(cur) if cur is not None else None)       # Pfeiltasten springen mit
-    such.returnPressed.connect(lambda: b.find(such.text()) or (b.moveCursor(b.textCursor().Start), b.find(such.text())))
+
+    def suchen() -> None:
+        """Sucht auf der offenen Seite weiter; ist dort nichts mehr, auf den folgenden Seiten (am Ende wieder von vorn)."""
+        if b.find(such.text()):
+            return
+        for schritt in range(len(seiten)):
+            i = (offen[0] + schritt + 1) % len(seiten)
+            seite_zeigen(i)
+            b.moveCursor(QTextCursor.Start)
+            if b.find(such.text()):
+                nav.blockSignals(True); nav.setCurrentItem(eintraege.get(i)); nav.blockSignals(False)      # der Vorspann hat in der Ansicht keinen Eintrag: dann ist nichts markiert
+                return
+    such.returnPressed.connect(suchen)
     return d
 
 
@@ -236,17 +327,38 @@ def _dialog(parent, titel: str, breite: int) -> tuple[QDialog, RasterSpalte]:
     return d, v
 
 
+class _GemeinsameSpalte(QWidget):
+    """Seite aus mehreren Karten: alle Beschriftungen sind so breit wie die längste — die Felder beginnen über die Karten hinweg an derselben Kante.
+    Gemessen wird beim Zeigen, weil erst dann die Schrift der Seite gilt."""
+
+    def __init__(self):
+        super().__init__()
+        self.beschriftungen: list[QLabel] = []
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        for l in self.beschriftungen:
+            l.setMinimumWidth(0)
+        breite = max((l.sizeHint().width() for l in self.beschriftungen), default=0)
+        for l in self.beschriftungen:
+            l.setMinimumWidth(breite)
+
+
 def tastenkuerzel_inhalt() -> QWidget:
-    """Inhalt „Tastenkombinationen“: je Gruppe eine Überschrift, darunter zwei Kürzel mit Wirkung nebeneinander."""
-    d = QWidget(); v = _spalte("inhalt", d)
-    for gruppe, zeilen in kuerzel.HILFE:
-        v.addWidget(abschnittstitel(gruppe))
-        w = QWidget(); g = FormularGitter(w)
+    """Inhalt „Tastenkombinationen“, aufgebaut wie eine Optionenseite: je Gruppe eine Karte im Kachelraster, darin die Wirkungen mit ihrem Kürzel
+    (zwei Paare nebeneinander, wenn der Platz reicht). Wirkung und Kürzel beginnen in allen Karten an derselben Kante."""
+    d = _GemeinsameSpalte(); v = _spalte("inhalt", d)
+    raster = Kachelraster()
+    for name, zeilen in kuerzel.HILFE:
+        karte = gruppe(name.upper(), karte=True)
+        g = FormularGitter(karte); raender(g, "gruppe")
         for taste, text in zeilen:
             wirkung = QLabel(text); wirkung.setWordWrap(True)
             t = QLabel(taste); f = t.font(); f.setBold(True); t.setFont(f); t.setWordWrap(True)
             g.zeile(wirkung, t)
-        v.addWidget(w)
+            d.beschriftungen.append(wirkung)
+        raster.hinzu(karte)
+    v.addWidget(raster)
     v.addStretch(1)
     return d
 

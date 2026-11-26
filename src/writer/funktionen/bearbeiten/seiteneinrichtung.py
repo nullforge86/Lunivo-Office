@@ -14,6 +14,28 @@ def seitenzahl_einfuegen(kennung: int, abschnitt: int) -> bool:
     return _befehle.seitenzahl_einfuegen(kennung, abschnitt)
 
 
+def kopffuss_blatt(kennung: int, abschnitt: int, blatt: int) -> tuple[str, str, str, str, str]:
+    """Für das Bearbeiten auf der Seite: (Feldname der Kopfzeile, Feldname der Fußzeile, angezeigte Seitenzahl, Ausrichtung Kopf, Ausrichtung Fuß)
+    des Blattes ``blatt`` (ab 0) mit der Einrichtung des Abschnitts."""
+    z = _befehle.blatt_zeilen(kennung, abschnitt, blatt)
+    return z.kopf, z.fuss, z.nummer, z.kopf_ausrichtung, z.fuss_ausrichtung
+
+
+def kopffuss_seitenzahl_loeschen(kennung: int, abschnitt: int, art: str, blatt: int) -> bool | None:
+    """Seitenzahl entfernen (``dokument``, ``abschnitt``, ``aktuelle``, ``auf``, ``von``): ``True`` geändert, ``False`` es gab keine, ``None`` nicht darstellbar."""
+    return _befehle.seitenzahl_loeschen(kennung, abschnitt, art, blatt)
+
+
+def kopffuss_bild_einfuegen(kennung: int, abschnitt: int, zone: str, breite: float, hoehe: float, bilddaten: bytes) -> int | None:
+    """Ein Bild frei platziert in die Kopf- (``kopf``) oder Fußzeile (``fuss``) des Abschnitts legen; es steht auf jedem Blatt des Abschnitts. → Id des Objekts."""
+    return _befehle.bild_einfuegen(kennung, abschnitt, zone, breite, hoehe, bilddaten)
+
+
+def kopffuss_bilder(kennung: int, abschnitt: int, zone: str) -> tuple[int, ...]:
+    """Die Ids der Bilder in der Kopf- bzw. Fußzeile des Abschnitts."""
+    return tuple(_befehle.bilder_der_zeile(kennung, abschnitt, zone))
+
+
 KOPF_FUSS = ("header", "footer", "first_header", "first_footer", "even_header", "even_footer")
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from core.dokument.dokument import OBJEKT_ARTEN, UMBRUCH_ARTEN, Absatz, FreiesObjekt, InlineObjekt, Position, Rahmen, normalisiere
+from core.dokument.dokument import OBJEKT_ARTEN, UMBRUCH_ARTEN, WIEDERHOLUNGEN, Absatz, FreiesObjekt, InlineObjekt, Position, Rahmen, normalisiere
 from core.dokument.formate import pruefe, verschmelze
 from core.bearbeitung.texteingabe import alle_absaetze
 from core.bearbeitung.verlauf import BearbeitungsFehler, schritt
@@ -115,6 +115,8 @@ class ObjektTeil:
             self._pruefe_objekt(neu.art, neu.breite, neu.hoehe, neu.ressource)
             if neu.umbruch not in UMBRUCH_ARTEN:
                 raise BearbeitungsFehler(f"Unbekannter Textumbruch: {neu.umbruch}")
+            if neu.wiederholen not in WIEDERHOLUNGEN:
+                raise BearbeitungsFehler(f"Unbekannte Wiederholung: {neu.wiederholen}")
             self._absatz(neu.anker)
             self._dict(self.dokument.objekte, objekt_id, neu)
             self._beruehrt(alt.anker, neu.anker)
@@ -165,6 +167,8 @@ class ObjektTeil:
         self._pruefe_objekt(o.art, o.breite, o.hoehe, o.ressource)
         if o.umbruch not in UMBRUCH_ARTEN:
             raise BearbeitungsFehler(f"Unbekannter Textumbruch: {o.umbruch}")
+        if o.wiederholen not in WIEDERHOLUNGEN:
+            raise BearbeitungsFehler(f"Unbekannte Wiederholung: {o.wiederholen}")
         if "ebene" not in felder:
             o.ebene = max((x.ebene for x in self.dokument.objekte.values()), default=0) + 1
         self._dict(self.dokument.objekte, oid, o)

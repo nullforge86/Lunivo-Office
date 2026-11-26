@@ -47,7 +47,6 @@ DARSTELLUNG_NOCH_NICHT_UMGESTELLT: dict[str, int] = {
     "vcl/qt/widgets/dialoge/dokument/gliederung_anpassen_dialog.py": 2,
     "vcl/qt/widgets/dialoge/formatierung/rahmen_seite.py": 2, "vcl/qt/widgets/dialoge/formatierung/ruby_dialog.py": 1,
     "vcl/qt/widgets/dialoge/formatierung/texteffekt_dialog.py": 1, "vcl/qt/widgets/dialoge/formatierung/umschlossen_dialog.py": 1,
-    "vcl/qt/widgets/dialoge/lesen_hilfe/hilfe_dialoge.py": 1,
     "vcl/qt/widgets/dokumentansicht/bearbeitung/freie_bilder_knoten.py": 1, "vcl/qt/widgets/dokumentansicht/bearbeitung/objekt_texteingabe.py": 1,
     "vcl/qt/widgets/dokumentansicht/dokumentfenster/navigation_hilfen.py": 1,
     "vcl/qt/widgets/menues/backstage/backstage_seitenleisten.py": 1,

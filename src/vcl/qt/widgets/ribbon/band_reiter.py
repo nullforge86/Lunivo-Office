@@ -7,6 +7,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QFrame, QWidget
 
 from writer.werkzeugleisten.plan import plan
+from writer.werkzeugleisten.gruppen import hat_uebersicht
 from vcl.qt.widgets.bausteine.abstaende.mass import RAND_BANDREITER
 from vcl.qt.widgets.ribbon.band_bausteine import STANDARD_VERSTECKT, _BandSeite, _GruppenTrenner
 
@@ -16,6 +17,7 @@ class BandReiterBaustein:
 
     def _reiter_gewaehlt(self, i: int) -> None:
         self._seite_bauen(i)
+        self.gruppe_zeigen(i, None)                        # ein Reiter beginnt immer mit seiner Gruppenübersicht
         self.stapel.setCurrentIndex(i)
 
     def _seite_bauen(self, i: int) -> None:
@@ -25,11 +27,17 @@ class BandReiterBaustein:
         scroll, r = eintrag
         seite = QWidget()
         h = _reihe("leiste", seite)
-        for n, g in enumerate(r["gruppen"]):
-            if n:
-                h.addWidget(_GruppenTrenner())
-            h.addWidget(self._gruppe(g))
-        h.addStretch(1)
+        if r.get("arbeitsleiste"):                         # Start: eine kompakte Zeile, der Rest steht unter „Mehr“
+            self._start_bauen(h, r)
+        elif hat_uebersicht(r):                            # erst die Gruppen-Icons, nach dem Klick die Befehle der Gruppe
+            self._uebersicht_bauen(i, scroll, h, r)
+            h.addStretch(1)
+        else:
+            for n, g in enumerate(r["gruppen"]):
+                if n:
+                    h.addWidget(_GruppenTrenner())
+                h.addWidget(self._gruppe(g))
+            h.addStretch(1)
         scroll.setWidget(seite)
         self.aktualisieren(self._hat_dok)                  # Zustand (aktiv/Haken) auch für die neuen Knöpfe
         self.seiteGebaut.emit()                            # aufrufendes Fenster gleicht neu verfügbare Felder ab

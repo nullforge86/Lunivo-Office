@@ -154,6 +154,8 @@ class AbsatzLayout:
     def objekte_platzieren(self, a: Absatz) -> None:
         """Frei positionierte Objekte dieses Absatzes auf die Seite legen; Objekte mit Umfluss engen den folgenden Text ein."""
         for o in sorted(self.frei_an.get(a.id, ()), key=lambda x: x.ebene) if self.frei_an else ():
+            if o.wiederholen:                                              # Objekt der Kopf- oder Fußzeile: steht auf jedem Blatt des Abschnitts (``kopf_fusslayout``)
+                continue
             p = self.einr
             if self.seite.index < 0:                                       # in Zelle oder Rahmen: Lage relativ zum Ankerabsatz und zur Spalte
                 o = dataclasses.replace(o, bezug_h="spalte", bezug_v="absatz")

@@ -97,7 +97,10 @@ class BackstageDokumentBaustein:
         t = self.current_tab()
         if not t:
             return
-        page = t.editor.abschnitt_seite()
+        if not t.editor.web:                                  # Bearbeiten direkt auf der Seite, dazu der Kontext-Reiter
+            self.kopffuss_starten(t.editor, header)
+            return
+        page = t.editor.abschnitt_seite()                     # Webansicht (ohne Blätter): das Fenster „Kopf- und Fußzeile“
         erste = False
         if page.diff_first:
             w, ok = EingabeFenster.getItem(self, "Kopf- und Fußzeile", "Welche Seiten?", ["Erste Seite", "Übrige Seiten"], 0, False)
@@ -114,9 +117,13 @@ class BackstageDokumentBaustein:
             t.editor.kopffuss_zeile_setzen(zeile, *d.value())
 
 
-    def kopffuss_starten(self, editor, header: bool = True):
-        """Kopf- oder Fußzeile des Abschnitts an der Schreibmarke im Fenster „Kopf- und Fußzeile“ bearbeiten."""
-        self.edit_header_footer(header)
+    def kopffuss_starten(self, editor, header: bool = True, blatt: int | None = None):
+        """Kopf- oder Fußzeile auf der Seite bearbeiten: Textfeld über dem Rand, Kontext-Reiter „Kopf- und Fußzeile“ eingeblendet und aktiv.
+        ``blatt``: das Blatt, auf dem bearbeitet wird (Vorgabe: das Blatt der Schreibmarke)."""
+        b = editor.kopffuss()
+        b.beendet.connect(self._kopffuss_aus, Qt.UniqueConnection)
+        if b.starte("kopf" if header else "fuss", blatt):
+            self.band.kontext("kopffuss", True, True)
 
 
     def _kopffuss_aus(self):

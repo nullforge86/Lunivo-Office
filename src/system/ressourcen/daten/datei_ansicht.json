@@ -234,6 +234,7 @@
       ]
     }
   },
+  "hauptseite": "zuletzt",
   "zusatzseiten": [
     "info"
   ],
@@ -241,8 +242,9 @@
     "hilfe_handbuch": {
       "titel": "datei.hilfe_handbuch.titel",
       "modul": "vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge",
-      "bauer": "handbuch_inhalt",
+      "bauer": "handbuch_ansicht",
       "scrollen": false,
+      "vollbreit": true,
       "gehoert_zu": "hilfe"
     },
     "hilfe_tastenkuerzel": {

@@ -7,6 +7,10 @@ from __future__ import annotations
 _NAMEN: dict[str, tuple[str, str]] = {
     "ALLE_FELDER": ("menues", "ALLE_FELDER"),
     "AUSRICHTUNGEN": ("menues", "AUSRICHTUNGEN"),
+    "BlattZeilen": ("typen", "BlattZeilen"),
+    "bild_einfuegen": ("bilder", "bild_einfuegen"),
+    "bilder_der_zeile": ("bilder", "bilder_der_zeile"),
+    "blatt_zeilen": ("zeilen", "blatt_zeilen"),
     "KEINE_NAECHSTE": ("befehle", "KEINE_NAECHSTE"),
     "KEINE_VORIGE": ("befehle", "KEINE_VORIGE"),
     "KEIN_VORGAENGER": ("befehle", "KEIN_VORGAENGER"),
@@ -19,6 +23,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "linie": ("menues", "linie"),
     "zeile_setzen": ("zeilen", "zeile_setzen"),
     "seitenzahl_einfuegen": ("zeilen", "seitenzahl_einfuegen"),
+    "seitenzahl_loeschen": ("zeilen", "seitenzahl_loeschen"),
     "zone": ("menues", "zone"),
 }
 
@@ -29,6 +34,8 @@ def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
     if datei == "befehle":
         from . import befehle as _datei
+    elif datei == "bilder":
+        from . import bilder as _datei
     elif datei == "menues":
         from . import menues as _datei
     elif datei == "typen":

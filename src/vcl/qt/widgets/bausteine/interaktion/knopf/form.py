@@ -21,6 +21,8 @@ FORMEN: dict[str, tuple[int | None, int | None]] = {
     "band_menue_kopf": (None, None),                    # „Menü“ im Kopf: Symbol rechts vom Text
     "band_stil": (None, None),                          # Formatvorlage im Band: Text unter dem Symbol
     "fest": (None, None),                               # feste Größe, die der Aufrufer aus dem Inhalt ableitet (``groesse=``)
+    "band_gruppe": (m.HOEHE_BAND_GRUPPENKNOPF_KOMPAKT, None),   # Gruppen-Icon in der Gruppenübersicht eines Reiters: Text unter dem Symbol
+    "band_zurueck": (m.HOEHE_KNOPF, None),              # „Zurück“ zur Gruppenübersicht: Text neben dem Symbol
 }
 
 # Form → (Stil des Werkzeugknopfes, Symbol rechts vom Text); nur Werkzeugknöpfe
@@ -28,10 +30,12 @@ WERKZEUG_STILE: dict[str, tuple[Qt.ToolButtonStyle, bool]] = {
     "band_menue": (Qt.ToolButtonTextBesideIcon, False),
     "band_menue_kopf": (Qt.ToolButtonTextBesideIcon, True),
     "band_stil": (Qt.ToolButtonTextUnderIcon, False),
+    "band_gruppe": (Qt.ToolButtonTextUnderIcon, False),
+    "band_zurueck": (Qt.ToolButtonTextBesideIcon, False),
 }
 
 # Form → Mindestbreite (nur Formen, die eine brauchen)
-MIN_BREITEN: dict[str, int] = {"zoomanzeige": m.BREITE_ZOOMANZEIGE}
+MIN_BREITEN: dict[str, int] = {"zoomanzeige": m.BREITE_ZOOMANZEIGE, "band_gruppe": m.BREITE_BAND_GRUPPENKNOPF}
 
 
 def formen(knopf: QAbstractButton, form: str, groesse: tuple[int, int] | None = None, ohne_rand: bool = False) -> QAbstractButton:

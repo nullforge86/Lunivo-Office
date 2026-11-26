@@ -25,6 +25,7 @@ from core.dokument.abschnitte.seite import PageSettings
 OBJEKT_ZEICHEN = "￼"           # steht in ``Absatz.text()`` für ein Objekt im Text
 OBJEKT_ARTEN = ("bild", "form", "textfeld", "wordart", "diagramm", "smartart", "formel", "piktogramm", "zeichenbereich", "gruppe", "roh")
 UMBRUCH_ARTEN = ("quadrat", "eng", "durch", "oben_unten", "hinter", "vor")      # Textumbruch frei positionierter Objekte
+WIEDERHOLUNGEN = ("", "kopf", "fuss")                                           # freies Objekt: nur an seinem Anker, oder in Kopf- bzw. Fußzeile auf jedem Blatt des Abschnitts
 ABSCHNITT_BEGINN = ("naechste", "fortlaufend", "gerade", "ungerade")
 ZAHLENARTEN = ("dezimal", "klein", "gross", "roem_klein", "roem_gross")
 AUFZAEHLUNGEN = ("disc", "circle", "square", "zeichen")
@@ -201,6 +202,7 @@ class FreiesObjekt:
     ressource: str = ""
     daten: dict = field(default_factory=dict)
     alt_text: str = ""
+    wiederholen: str = ""                # "" | kopf | fuss: gehört zur Kopf- bzw. Fußzeile des Abschnitts seines Ankers und steht auf jedem seiner Blätter
 
 
 @dataclass

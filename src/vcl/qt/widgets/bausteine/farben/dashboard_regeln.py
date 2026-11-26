@@ -66,10 +66,10 @@ QPushButton#optFertig { font-weight: 600; }
 
 /* ---- Optionen ---- */
 QWidget#optLinks { background: %(bg)s; border-right: 1px solid %(rand)s; }
-QTreeWidget#optNavigation { background: transparent; border: none; outline: none; }
-QTreeWidget#optNavigation::item { padding: %(pad_navi)s; margin: %(margin_navi)s; border-radius: %(r_feld)spx; color: %(text)s; }
-QTreeWidget#optNavigation::item:selected { background: %(akzent)s; color: %(auf_akzent)s; font-weight: 600; }
-QTreeWidget#optNavigation::item:hover:!selected { background: %(hover)s; }
+QAbstractItemView#optNavigation { background: transparent; border: none; outline: none; }
+QAbstractItemView#optNavigation::item { padding: %(pad_navi)s; margin: %(margin_navi)s; border-radius: %(r_feld)spx; color: %(text)s; }
+QAbstractItemView#optNavigation::item:selected { background: %(akzent)s; color: %(auf_akzent)s; font-weight: 600; }
+QAbstractItemView#optNavigation::item:hover:enabled:!selected { background: %(hover)s; }
 QScrollArea#optSeite, QScrollArea#optSeite > QWidget > QWidget { background: transparent; border: none; }
 QWidget#optPaar { border-bottom: 1px solid %(rand)s; }
 QLabel#optErklaerung { color: %(text)s; font-style: italic; padding: %(pad_erklaerung)s; border-top: 1px solid %(rand)s; }

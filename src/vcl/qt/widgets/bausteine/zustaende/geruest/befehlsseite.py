@@ -21,12 +21,27 @@ from vcl.qt.widgets.bausteine.symbole.medien.datei_symbole import datei_symbol
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 
-def seitenrahmen(titel: str = "") -> tuple[QScrollArea, RasterSpalte]:
-    """Leere, scrollbare Seite mit Titelzeile — der Boden für jede Seite der Datei-Ansicht."""
+def zurueck_knopf(titel: str, zurueck: Callable[[], None]) -> QPushButton:
+    """Der Rückweg einer Unterseite oder Ansicht: Pfeil nach links mit dem Namen der Seite — EIN Knopf für Optionen, Handbuch und jede Unterseite."""
+    return knopf_baustein("standard", titel, symbol="arrow-left", objektname="optZurueck", ohne_rand=True, hand=True,
+                          tooltip=_t("datei.inhaltsseite.zurueck.tipp"), name=titel, aktion=zurueck)
+
+
+def seitentitel(v: RasterSpalte, titel: str, zurueck: Callable[[], None] | None = None) -> None:
+    """Die Titelzeile einer Seite. Mit ``zurueck`` ist sie der Rückweg-Knopf (Unterseite), sonst die schlichte Überschrift (Seite aus dem Menü)."""
+    if zurueck is None:
+        t = QLabel(titel); t.setObjectName("bsTitel"); v.addWidget(t)
+    else:
+        zeile = _reihe("standard"); zeile.addWidget(zurueck_knopf(titel, zurueck)); zeile.addStretch(1)
+        v.addLayout(zeile)
+
+
+def seitenrahmen(titel: str = "", zurueck: Callable[[], None] | None = None) -> tuple[QScrollArea, RasterSpalte]:
+    """Leere, scrollbare Seite mit Titelzeile — der Boden für jede Seite der Datei-Ansicht. ``zurueck``: siehe ``seitentitel``."""
     sa = QScrollArea(); sa.setObjectName("bsSeite"); sa.setWidgetResizable(True); sa.setFrameShape(QFrame.NoFrame)
     inh = QWidget(); v = _spalte("seite", inh)
     if titel:
-        t = QLabel(titel); t.setObjectName("bsTitel"); v.addWidget(t); v.addSpacing(ABSTAND_SPALTE)
+        seitentitel(v, titel, zurueck); v.addSpacing(ABSTAND_SPALTE)
     sa.setWidget(inh)
     return sa, v
 
@@ -52,8 +67,9 @@ def befehlsknopf(v: RasterSpalte, spec: dict, ausloeser: Callable[[dict], None],
     return k
 
 
-def befehlsseite(beschreibung: dict, ausloeser: Callable[[dict], None], aktiv: Callable[[dict], bool] = lambda _k: True) -> QScrollArea:
-    sa, v = seitenrahmen(_t(beschreibung["titel"]) if beschreibung.get("titel") else "")
+def befehlsseite(beschreibung: dict, ausloeser: Callable[[dict], None], aktiv: Callable[[dict], bool] = lambda _k: True,
+                 zurueck: Callable[[], None] | None = None) -> QScrollArea:
+    sa, v = seitenrahmen(_t(beschreibung["titel"]) if beschreibung.get("titel") else "", zurueck)
     for gruppe in beschreibung.get("gruppen", []):
         if gruppe.get("name") or gruppe.get("hinweis"):
             gruppenkopf(v, _t(gruppe["name"]) if gruppe.get("name") else "", _t(gruppe["hinweis"]) if gruppe.get("hinweis") else "")
@@ -63,13 +79,14 @@ def befehlsseite(beschreibung: dict, ausloeser: Callable[[dict], None], aktiv: C
     return sa
 
 
-def inhaltsseite(titel: str, inhalt: QWidget, scrollen: bool = True) -> QWidget:
-    """Seite mit Titel, deren Inhalt ein fertiges Widget aus einem Fachmodul ist (z. B. das Handbuch). ``scrollen=False``: der Inhalt scrollt selbst."""
+def inhaltsseite(titel: str, inhalt: QWidget, scrollen: bool = True, zurueck: Callable[[], None] | None = None) -> QWidget:
+    """Seite mit Titel, deren Inhalt ein fertiges Widget aus einem Fachmodul ist (z. B. die Tastenkürzel). ``scrollen=False``: der Inhalt scrollt selbst.
+    ``zurueck``: siehe ``seitentitel``."""
     if scrollen:
-        sa, v = seitenrahmen(titel)
+        sa, v = seitenrahmen(titel, zurueck)
         v.addWidget(inhalt, 1)
         return sa
     w = QWidget(); w.setObjectName("bsInhalt")
     v = _spalte("seite", w)
-    t = QLabel(titel); t.setObjectName("bsTitel"); v.addWidget(t); v.addWidget(inhalt, 1)
+    seitentitel(v, titel, zurueck); v.addWidget(inhalt, 1)
     return w

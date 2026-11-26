@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from writer.werkzeugleisten.reiter.baustein import k as _k
+from writer.werkzeugleisten.reiter.start_leiste import arbeitsleiste
 
 
 def bauen(start: dict) -> dict:
@@ -21,5 +22,6 @@ def bauen(start: dict) -> dict:
         _k("objekte", "Auswählen", text=True, klappe="auswaehlenKlappe"),
         _k("wortextras", "Wort-Extras", text=True, klappe="wortExtrasKlappe"),
         _k("zahnrad", "Einstellungen", text=True, klappe="einstellungenKlappe")]}
-    return dict(start, gruppen=[ablage, schrift, absatz, dict(alt["Stile"], spalten=2), bearbeiten])
+    gruppen = [ablage, schrift, absatz, dict(alt["Stile"], spalten=2), bearbeiten]
+    return dict(start, gruppen=gruppen, arbeitsleiste=arbeitsleiste(gruppen))     # das Band zeigt die Arbeitsleiste; die Gruppen bleiben die Vorlage für Menüs und Symbolleisten
 

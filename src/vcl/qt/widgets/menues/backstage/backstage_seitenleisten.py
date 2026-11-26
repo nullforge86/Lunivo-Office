@@ -82,8 +82,11 @@ class BackstageSeitenleistenBaustein:
             b.setChecked(sicht and self.navigation.aktuelle_seite == key)
 
 
+    UNTERFUNKTION = "Fenster"                                                    # der Knopf der offenen Unterfunktion (Zusatzfenster, Bereich „Formatierung“)
+
     def _leiste_rechts(self):
-        """Schmale Leiste rechts: Die vier Reiter der Schreibhilfe (Prüfen, Lesen, Schreiben, KI) und der KI-Chat schalten die Seitenleiste um."""
+        """Schmale Leiste rechts: Die vier Reiter der Schreibhilfe (Prüfen, Lesen, Schreiben, KI) und der KI-Chat schalten die Seitenleiste um.
+        Darunter steht, solange eine Unterfunktion (zum Beispiel „Rahmen und Schattierung“) offen ist, ihr eigener Knopf."""
         leiste = rahmen("flach", name="leisteRechts")
         leiste.setFixedWidth(BREITE_SCHIENE)
         v = _spalte("panel", leiste)
@@ -92,10 +95,10 @@ class BackstageSeitenleistenBaustein:
         px_rechts = {"haken": ICON_KNOPF_GROSS, "assistent": ICON_ASSISTENT, "chat": ICON_LISTE, "brille": ICON_MITTEL, "stift": ICON_MITTEL}
         for name, sym, tip in (("Prüfen", "haken", "Prüfen — die Funde der Schreibhilfe"), ("Lesen", "brille", "Lesen — Lesehilfe, Vorlesen"),
                                ("Schreiben", "stift", "Schreiben — Schalter, Textbausteine, Sprache"), ("KI", "assistent", "KI — Korrektur, Übersetzen, Aktionen"),
-                               ("Chat", "chat", "KI-Chat")):
+                               ("Chat", "chat", "KI-Chat"), (self.UNTERFUNKTION, "sliders-horizontal", "Unterfunktion")):
             b = werkzeugknopf("fest", symbol=sym, symbolgroesse=px_rechts.get(sym, ICON_MITTEL), symbol_merken=True, symbol_einpassen=True, tooltip=tip, name=name,
                               umschaltbar=True, groesse=GROESSE_KNOPF_SCHIENE, flach=False, aktion=lambda n=name: self._rechts_klick(n))
-            if name == "Chat":
+            if name in ("Chat", self.UNTERFUNKTION):
                 v.addSpacing(_A_MITTEL)
             v.addWidget(b)
             self._rechts[name] = b
@@ -107,6 +110,15 @@ class BackstageSeitenleistenBaustein:
 
     def _rechts_klick(self, name: str):
         """Ein Knopf der Leiste: öffnet die Seitenleiste auf dem Reiter; ein zweiter Klick auf denselben Reiter schließt sie wieder."""
+        if name == self.UNTERFUNKTION:                                           # der Knopf bleibt, solange die Unterfunktion offen ist: ein Klick kehrt zu ihr zurück; steht sie schon vorn, schließt er sie
+            if self.sidebar.unterfunktion_sichtbar():
+                self.sidebar.unterfunktion_schliessen()
+            else:
+                if self.sidebar.isHidden():
+                    self.toggle_sidebar()
+                self.sidebar.unterfunktion_zeigen()
+            self._rechts_sync()
+            return
         ist_chat = name == "Chat"
         schon_da = (not self.sidebar.isHidden() and ((ist_chat and self.sidebar.stapel.currentIndex() == 1)
                     or (not ist_chat and self.sidebar.stapel.currentIndex() == 0 and self.sidebar.aktueller_reiter == name)))
@@ -122,6 +134,12 @@ class BackstageSeitenleistenBaustein:
     def _rechts_sync(self):
         sicht = not self.sidebar.isHidden()
         i = self.sidebar.stapel.currentIndex()
+        unter = self.sidebar.unterfunktion_titel()
         for name, b in self._rechts.items():
+            if name == self.UNTERFUNKTION:
+                b.setVisible(bool(unter)); b.setChecked(self.sidebar.unterfunktion_sichtbar())
+                if unter:
+                    b.setToolTip(unter)
+                continue
             an = sicht and ((name == "Chat" and i == 1) or (name != "Chat" and i == 0 and self.sidebar.aktueller_reiter == name))
             b.setChecked(an)

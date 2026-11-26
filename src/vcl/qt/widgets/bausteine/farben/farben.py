@@ -113,3 +113,20 @@ def zuletzt_merken(farbe: str) -> None:
         _einstellungen().set(ZULETZT_SCHLUESSEL, liste[:ZULETZT_MAX])
     except Exception:
         pass
+
+# Kopf- und Fußzeile direkt auf dem Blatt bearbeiten: die Felder liegen auf dem weißen Papier und folgen deshalb nicht dem Thema.
+KOPFFUSS_PAPIER = "#ffffff"            # Grund des Textfeldes
+KOPFFUSS_TEXT = "#000000"              # Text im Feld
+KOPFFUSS_AUSWAHL = "#3e78d0"           # markierter Text: Grund
+KOPFFUSS_AUSWAHL_TEXT = "#ffffff"      # markierter Text: Schrift
+KOPFFUSS_RAHMEN = "#9a9a9a"            # gestrichelter Rahmen und Linie
+KOPFFUSS_FELDGRUND = "#d9d9d9"         # Grund eines Feldes (Seitenzahl) im Text
+KOPFFUSS_ETIKETT_GRUND = "#f5f5f5"     # Etikett „Kopfzeile“ / „Fußzeile“
+KOPFFUSS_ETIKETT_TEXT = "#777777"
+KOPFFUSS_KNOPF_GRUND = "#f5f5f5"       # Knöpfe der Leiste neben dem Etikett (Seitenzahl einfügen …)
+KOPFFUSS_KNOPF_GRUND_UEBER = "#e6e6e6"
+KOPFFUSS_KNOPF_TEXT = "#333333"
+KOPFFUSS_KNOPF_RAND = "#c8c8c8"
+KOPFFUSS_KACHEL_GRUND = "#f7f7f7"      # Positionskachel im Feld „Seitenzahl einfügen“
+KOPFFUSS_KACHEL_GEWAEHLT = "#cfe0fb"   # gewählte Positionskachel
+KOPFFUSS_OPTION_RAND = "#8a8a8a"       # Rand eines Optionsfeldes im Feld „Seitenzahl einfügen“

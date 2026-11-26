@@ -62,6 +62,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         self._zieht = False
         self._doppelklick = 0.0
         self.nur_lesen = False
+        self.marke_folgen = True                # die Ansicht rollt zur Schreibmarke; aus, solange Kopf- oder Fußzeile auf dem Blatt bearbeitet wird
         self._objekt_init()
         self.formular_hook = None                    # Rückruf(Stelle im Rohtext) → True, wenn ein Formularfeld den Klick bekommen hat
         self.nur_lesen_formular = False
@@ -265,6 +266,8 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         return QRectF(blatt.left() + r.x * self.zoom, blatt.top() + r.y * self.zoom, max(1.0, r.width * self.zoom), r.height * self.zoom)
 
     def _sichtbar_machen(self) -> None:
+        if not self.marke_folgen:
+            return
         r = self.cursor_flaeche() if self._erg is not None else None
         w = self.parentWidget()
         while r is not None and w is not None:

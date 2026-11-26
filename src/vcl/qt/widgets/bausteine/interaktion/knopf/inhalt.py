@@ -6,10 +6,11 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QAbstractButton
 
 from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft
-from vcl.qt.widgets.bausteine.abstaende.mass import ICON_GROSS, ICON_KLEIN, ICON_MITTEL, ICON_NORMAL
+from vcl.qt.widgets.bausteine.abstaende.mass import ICON_GROSS, ICON_KLEIN, ICON_KNOPF_GROSS, ICON_MITTEL, ICON_NORMAL
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
-SYMBOLGROESSEN = {"klein": ICON_KLEIN, "normal": ICON_NORMAL, "mittel": ICON_MITTEL, "gross": ICON_GROSS}      # Name → Kantenlänge des Symbols
+SYMBOLGROESSEN = {"klein": ICON_KLEIN, "normal": ICON_NORMAL, "mittel": ICON_MITTEL, "gross": ICON_GROSS,      # Name → Kantenlänge des Symbols
+                  "knopf_gross": ICON_KNOPF_GROSS}                                                              # Gruppen-Icon im Band
 
 
 def beschriften(knopf: QAbstractButton, text: str = "", symbol: str | None = None, tooltip: str = "", name: str = "",

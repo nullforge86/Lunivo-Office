@@ -42,10 +42,12 @@ from vcl.qt.widgets.ribbon.band_zustand import BandZustandBaustein
 from vcl.qt.widgets.ribbon.band_schnellzugriff import BandSchnellzugriffBaustein
 from vcl.qt.widgets.ribbon.band_knoepfe import BandKnopfBaustein
 from vcl.qt.widgets.ribbon.band_gruppen import BandGruppenBaustein
+from vcl.qt.widgets.ribbon.band_uebersicht import BandUebersichtBaustein
+from vcl.qt.widgets.ribbon.band_start import BandStartBaustein
 from vcl.qt.widgets.ribbon.band_bausteine import KURZ, STANDARD_VERSTECKT, _BandSeite, _FelderDict, _GruppenTrenner, _ReiterLeiste, _SperrKasten, _kurz, _mit_kuerzel, _zweizeilig
 
 
-class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBaustein, BandZustandBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
+class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandUebersichtBaustein, BandStartBaustein, BandRaenderBaustein, BandZustandBaustein, BandStileBaustein, BandKnopfBaustein, BandGruppenBaustein, QWidget):
     """Kopfzeile (☰, Schnellzugriff, Reiter) und darunter das Band des gewählten Reiters."""
 
     seiteGebaut = Signal()
@@ -69,6 +71,7 @@ class RegisterBand(BandSchnellzugriffBaustein, BandReiterBaustein, BandRaenderBa
         self.fehlend: list[str] = []
         self._offen: dict[int, tuple] = {}                    # Stapelindex → (Seite, Reiter): noch nicht gebaute Reiter
         self._hat_dok = None
+        self._ansichten: dict = {}                            # Stapelindex → Gruppenübersicht und Gruppendetail des Reiters
         lay = _spalte("kein", self)
         self.kopf = _reihe("popup")
         self.menue_knopf = werkzeugknopf("band_menue_kopf", "Menü", symbol="menu", symbolfarbe=kopf_symbolfarbe(), symbol_einpassen=True)

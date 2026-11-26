@@ -376,6 +376,12 @@ class BandGruppenBaustein:
         """Formatvorlage, Schriftart und Größe als Spalte vor den Knöpfen."""
         spalte = RasterSpalte()
         spalte.setSpacing(ABSTAND_ENG)
+        for w in self._formatfelder():
+            spalte.addWidget(w)
+        inhalt.addLayout(spalte)
+
+    def _formatfelder(self) -> tuple:
+        """Die Felder Formatvorlage, Schriftart und Schriftgröße mit Live-Vorschau; sie stehen danach in ``felder`` (``stil``, ``font``, ``groesse``)."""
         from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import VorschauCombo, VorschauFontCombo
         vs = self.b.w.vorschau
 
@@ -391,10 +397,8 @@ class BandGruppenBaustein:
         font = schrift_feld(VorschauFontCombo(lambda n: vs.zeigen(lambda e: e.set_font_family(n)), vs.ende))
         groesse = groesse_feld(VorschauCombo(lambda t: (pt := _zu_pt(t)) is not None and vs.zeigen(lambda e: e.set_font_size(pt)), vs.ende))
         font.setAccessibleName("Schriftart"); groesse.setAccessibleName("Schriftgröße")
-        for w in (stil, font, groesse):
-            spalte.addWidget(w)
-        inhalt.addLayout(spalte)
         self.felder.update(stil=stil, font=font, groesse=groesse)
+        return stil, font, groesse
 
     def _gitter_fuellen(self, gitter, explizit: bool, zeilen: list, kleine: list) -> None:
         """Die kleinen Knöpfe ins Gitter: explizit zeilenweise, sonst spaltenweise in zwei Zeilen."""

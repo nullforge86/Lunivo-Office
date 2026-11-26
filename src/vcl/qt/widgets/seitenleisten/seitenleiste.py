@@ -315,7 +315,7 @@ class SchreibhilfePanel(QWidget):
         tf = titel.font(); tf.setBold(True); tf.setPointSizeF(tf.pointSizeF() + 1); titel.setFont(tf)       # Titel wie in der Titelzeile der anderen Seitenleistenfenster
         titel.menue_setzen(self._bereiche_menue(titel, menue_text), geteilt=False)
         anheften = zusatz_knopf("pin", "Anheften: der Bereich folgt der Markierung und bleibt offen", None, "Anheften"); anheften.setCheckable(True)
-        zu = zusatz_knopf("x", "Schließen", lambda: self.zeige_bereich(0))
+        zu = zusatz_knopf("x", "Schließen", self._format_schliessen)
         stretch = QWidget(); stretch.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         v.addWidget(panel_kopf(titel, stretch, anheften, zu, dehnen=stretch))
         rumpf = QWidget(); rv = _spalte("panel_inhalt", rumpf); v.addWidget(rumpf, 1)      # Innenrand wie in allen Seitenleistenfenstern
@@ -336,6 +336,7 @@ class SchreibhilfePanel(QWidget):
         if schluessel not in zustand:
             panel_klasse = getattr(importlib.import_module(modul), klasse)
             host, panel, anheften = self._formatierung_host(panel_klasse, menue_text, werte)
+            host.setAccessibleName(menue_text)
             zustand[schluessel] = (panel, anheften, self.stapel.addWidget(host))
         else:
             panel = zustand[schluessel][0]
@@ -349,6 +350,7 @@ class SchreibhilfePanel(QWidget):
         for name, empfaenger in verbindungen.items():
             if empfaenger is not None:
                 getattr(panel, name).connect(empfaenger)
+        self._format_offen = self.stapel.widget(zustand[schluessel][2])     # gilt als offen, bis man ihn schließt (auch über einen Abstecher in einen anderen Bereich hinweg)
         self.zeige_bereich(zustand[schluessel][2])
 
     def format_sichtbar(self, schluessel: str) -> bool:
@@ -418,6 +420,7 @@ class SchreibhilfePanel(QWidget):
         def zeigen() -> None:
             if self.isHidden():
                 self.show()
+            seite.setAccessibleName(d.windowTitle())                # der Titel steht sofort fest: die Randleiste zeigt ihn am Knopf der Unterfunktion
             self.stapel.setCurrentIndex(i)
             self.bereich_geaendert.emit(i)
 
@@ -432,6 +435,40 @@ class SchreibhilfePanel(QWidget):
             if t is not None:
                 t.editor.setFocus()                                 # Fenster zu: weiterschreiben, wo man war
         return ausfuehren_in(seite, d, zeigen, zurueck)
+
+    def _unterfunktion_seite(self):
+        """Die Seite der offenen Unterfunktion: das Zusatzfenster, sonst der zuletzt geöffnete Bereich „Formatierung“ — oder None."""
+        zusatz = getattr(self, "_zusatz", None)
+        return zusatz if zusatz is not None else getattr(self, "_format_offen", None)
+
+    def unterfunktion_titel(self) -> str:
+        """Der Titel der offenen Unterfunktion (Zusatzfenster wie „Rahmen und Schattierung“ oder ein Bereich „Formatierung“) — leer, wenn keine offen ist.
+        Sie bleibt offen, auch wenn man zwischendurch in einen anderen Bereich der Seitenleiste wechselt."""
+        seite = self._unterfunktion_seite()
+        return "" if seite is None else (seite.accessibleName() or "Formatierung")
+
+    def unterfunktion_sichtbar(self) -> bool:
+        """Steht die offene Unterfunktion gerade vorn?"""
+        seite = self._unterfunktion_seite()
+        return seite is not None and not self.isHidden() and self.stapel.currentWidget() is seite
+
+    def unterfunktion_zeigen(self) -> None:
+        """Zur offenen Unterfunktion zurückkehren (nach einem Abstecher in einen anderen Bereich)."""
+        seite = self._unterfunktion_seite()
+        if seite is not None:
+            self.zeige_bereich(self.stapel.indexOf(seite))
+
+    def unterfunktion_schliessen(self) -> None:
+        """Die offene Unterfunktion schließen, wie ihr Knopf „Schließen“ in der Titelzeile."""
+        if getattr(self, "_zusatz", None) is not None:
+            self._zusatz.oberste_schliessen()
+        elif getattr(self, "_format_offen", None) is not None:
+            self._format_schliessen()
+
+    def _format_schliessen(self) -> None:
+        """Den Bereich „Formatierung“ schließen: zurück zur Schreibhilfe, der Knopf der Unterfunktion verschwindet."""
+        self._format_offen = None
+        self.zeige_bereich(0)
 
     def zeige_bereich(self, i: int) -> None:
         """0 = Schreibhilfe, 1 = KI-Chat."""

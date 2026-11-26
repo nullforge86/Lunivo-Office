@@ -175,6 +175,10 @@ class ZusatzPanel(QWidget):
         if self._seiten:
             self._seiten[-1][0].reject()
 
+    def oberste_schliessen(self) -> None:
+        """Die oberste Seite schließen, wie der Knopf „Schließen“ der Titelzeile (für den Knopf der Unterfunktion in der Randleiste)."""
+        self._schliessen()
+
     def _kopf_neu(self) -> None:
         self.zurueck.setVisible(len(self._seiten) > 1)
         self.titel.setText(self._seiten[-1][0].windowTitle() if self._seiten else "")

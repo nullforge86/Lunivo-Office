@@ -6,7 +6,8 @@ gesetzte ``Absatzsatz`` (sein Text enthält die ersetzten Platzhalter).
 """
 from __future__ import annotations
 
-from core.dokument.dokument import Dokument
+from core.dokument.dokument import Dokument, absaetze_in
+from core.layout.drucklayout.objektlayout import objekt_rechteck
 from core.formatvorlagen.formatvorlagen import ueberschriftsebene
 from core.listen.listen import nummer_text
 from core.geometrie import Rect, mm_to_px
@@ -45,8 +46,32 @@ def _kapitelnummern(dok: Dokument, erg: Ergebnis, ebene: int) -> dict:
     return je_seite
 
 
+def kopf_fuss_objekte_setzen(dok: Dokument, erg: Ergebnis) -> None:
+    """Frei positionierte Objekte der Kopf- und Fußzeile (``FreiesObjekt.wiederholen``) auf jedes Blatt des Abschnitts ihres Ankers legen.
+    Auf dem ersten Blatt des Abschnitts liegt das Objekt selbst (Auswahl, Verschieben), auf den übrigen eine Kopie, die nur gezeichnet wird."""
+    objekte = [o for o in dok.objekte.values() if o.wiederholen]
+    if not objekte:
+        return
+    abschnitt_von = {a.id: nr for nr, abschnitt in enumerate(dok.abschnitte) for a in absaetze_in(abschnitt.bloecke)}
+    erste: set = set()
+    for seite in erg.seiten:
+        p = seite.einrichtung
+        if p is None:
+            continue
+        ml, mt = mm_to_px(p.margin_left_mm), mm_to_px(p.margin_top_mm)
+        for o in sorted(objekte, key=lambda x: x.ebene):
+            if abschnitt_von.get(o.anker) != seite.abschnitt:
+                continue
+            r = objekt_rechteck(o, mm_to_px(p.width_mm), mm_to_px(p.height_mm), ml, mt, p.content_width_px, p.content_height_px, seite=seite.nummer)
+            seite.plaetze.append(Platz("objekt", r, o.id, daten=o.umbruch, kopie=o.id in erste))
+            if o.id not in erste:
+                erste.add(o.id)
+                erg.objekte[o.id] = (seite.index, r)
+
+
 def kopf_fuss_setzen(engine: TextLayoutEngine, dok: Dokument, erg: Ergebnis) -> None:
     """Setzt Kopf- und Fußzeile jeder Seite und trägt sie als Plätze ein."""
+    kopf_fuss_objekte_setzen(dok, erg)
     gesamt = len(erg.seiten)
     erste_im_abschnitt: dict = {}
     for s in erg.seiten:

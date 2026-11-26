@@ -16,6 +16,7 @@ from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_befehle import KernBefehle
 from writer import vorlagenkatalog as stile
 from vcl.qt.widgets.bausteine.farben.farben import TABELLENRAND_SCHWARZ
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_cursor import KernCursor
+from vcl.qt.widgets.dokumentansicht.kopffuss import KopfFussBearbeiter
 
 
 log = logging.getLogger(__name__)
@@ -168,6 +169,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.ansicht.kontextGewuenscht.connect(self.kontextmenue_zeigen)
         self.ansicht.auswahlBeendet.connect(self.mini_zeigen)
         self.fenster = None                  # das Hauptfenster; setzt der Dokument-Tab beim Anschließen
+        self._kopffuss = None                # Bearbeiter für Kopf- und Fußzeile auf der Seite (``kopffuss()``)
         self.mini_hook = None
         self.kontext_hook = None
         abmelden = _dokumente.bei_aenderung(self._im_framework_geaendert)    # Rückweg: das Framework meldet, die Ansicht zeichnet neu
@@ -292,7 +294,9 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self._seite_melden()
 
     def _kf(self):
-        return None
+        """Der Kopf-/Fußzeilen-Bearbeiter, solange die Schreibmarke dort steht (dann wirken die Start-Werkzeuge auf die Zeile), sonst ``None``."""
+        kf = self._kopffuss
+        return kf if kf is not None and kf.aktiv and kf.im_feld else None
 
     def position_im_text(self, pos) -> int:
         """Die Zeichenstelle im Gesamttext (Absätze durch je ein Zeichen getrennt)."""
@@ -316,7 +320,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return _bearbeiten.dok_absatz_an_marke(self.kennung)
 
     def _zeichen(self) -> dict:
-        """Das wirksame Zeichenformat an der Schreibmarke (am Anfang einer Auswahl: das erste Zeichen)."""
+        """Das wirksame Zeichenformat an der Schreibmarke (am Anfang einer Auswahl: das erste Zeichen); im Kopf-/Fußfeld das Format der Zeile."""
+        kf = self._kf()
+        if kf is not None:
+            return kf.format_lesen()
         return _bearbeiten.wirksames_zeichenformat(self.kennung)
 
     def zeichenformat(self) -> dict:
@@ -332,6 +339,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     # ---- Zeichenformat ----------------------------------------------------------------------------------------------------------------------
     def _zf(self, aenderung: dict) -> None:
+        kf = self._kf()
+        if kf is not None:                                      # die Schreibmarke steht im Kopf-/Fußfeld: das Format gilt der Zeile
+            kf.format_anwenden(aenderung)
+            return
         self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(self.kennung, aenderung))
 
     def toggle_bold(self, an: bool) -> None:
@@ -374,6 +385,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self._zf({"zeichenabstand": float(px) if px else None, "zeichenabstand_art": 1 if px else None})
 
     def clear_formatting(self) -> None:
+        kf = self._kf()
+        if kf is not None:
+            kf.format_loeschen()
+            return
         self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(self.kennung, {}, ersetzen=True))
 
     def change_case(self, art) -> None:
@@ -393,6 +408,10 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def set_alignment(self, al) -> None:
         wert = al if isinstance(al, str) else ("block" if al & Qt.AlignJustify else "mitte" if al & Qt.AlignHCenter else "rechts" if al & Qt.AlignRight else "links")
         wert = {"left": "links", "center": "mitte", "right": "rechts", "justify": "block"}.get(wert, wert)
+        kf = self._kf()
+        if kf is not None:                                      # im Kopf-/Fußfeld: die Zeile ausrichten (Blocksatz gibt es dort nicht)
+            kf.ausrichtung_setzen({"mitte": "center", "rechts": "right"}.get(wert, "left"))
+            return
         self._af({"ausrichtung": wert})
 
     def change_indent(self, delta_mm: float) -> None:
@@ -723,8 +742,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return self._springe([n for n in self.noten_stellen() if art is None or n["art"] == art], delta)
 
     # ---- Kopf- und Fußzeilen ----------------------------------------------------------------------------------------------------------------------------
-    def kopffuss(self) -> "KopfFussBearbeiter":
-        return KopfFussBearbeiter(self)
+    def kopffuss(self) -> KopfFussBearbeiter:
+        """Der Bearbeiter für Kopf- und Fußzeile direkt auf der Seite (wird beim ersten Aufruf angelegt)."""
+        if self._kopffuss is None:
+            self._kopffuss = KopfFussBearbeiter(self)
+        return self._kopffuss
 
     def felder_aktualisieren(self) -> None:
         """Rechnet die Felder neu, deren Ergebnis das Dokument selbst bestimmt (Nummern der Beschriftungen)."""
@@ -823,8 +845,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return ergebnis[0]
 
     def insert_image(self, pfad: str) -> bool:
-        """Fügt ein Bild aus einer Datei wie ein Zeichen in den Text ein, auf die Inhaltsbreite begrenzt."""
+        """Fügt ein Bild aus einer Datei wie ein Zeichen in den Text ein, auf die Inhaltsbreite begrenzt. Solange Kopf- oder Fußzeile bearbeitet wird,
+        kommt das Bild frei platziert dorthin und steht auf jedem Blatt des Abschnitts."""
         from PySide6.QtGui import QImage
+        if self._kopffuss is not None and self._kopffuss.aktiv:
+            return self._kopffuss.bild_einfuegen(pfad)
         try:
             with open(pfad, "rb") as f:
                 roh = f.read()
@@ -952,29 +977,3 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.ansicht.gewaehltes_objekt = None
         self.freiAuswahlGeaendert.emit()
         return ok
-
-
-class KopfFussBearbeiter(QObject):
-    """Bearbeiter für Kopf- und Fußzeilen: bearbeitet wird im Fenster „Kopf- und Fußzeile“ (``edit_header_footer``), nicht direkt auf der Seite."""
-    beendet = Signal()
-    aktiv = False
-    zone = None
-
-    def __init__(self, editor: KernEditor):
-        super().__init__(editor)
-        self._editor = editor
-
-    def starte(self, zone: str) -> bool:
-        fenster = self._editor.ansicht.window()
-        if hasattr(fenster, "edit_header_footer"):
-            fenster.edit_header_footer(zone == "kopf")
-        return False                                 # kein Kontext-Reiter: es gibt keine Bearbeitung auf der Seite
-
-    def beende(self) -> None:
-        self.beendet.emit()
-
-    def wechseln(self) -> None:
-        pass
-
-    def abschnitt_springen(self, delta: int) -> None:
-        pass

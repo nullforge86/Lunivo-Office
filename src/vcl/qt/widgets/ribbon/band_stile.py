@@ -117,7 +117,9 @@ class BandStileBaustein:
         """Die Galerie neu füllen — die eingebauten Vorlagen und die selbst angelegten (editor/text/stile.py)."""
         from writer import vorlagenkatalog as stile
         from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import Ueberfahren
-        g = self._stile_gitter
+        g = getattr(self, "_stile_gitter", None)
+        if g is None:                                          # keine Galerie im Band (Start zeigt die Arbeitsleiste); die Auswahl füllt sich beim Öffnen selbst
+            return
         alt = {id(k) for k in self._stil_knoepfe}
         self.knoepfe = [e for e in self.knoepfe if id(e[0]) not in alt]
         for k in self._stil_knoepfe:

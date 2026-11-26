@@ -27,7 +27,7 @@ from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf, werkzeugknopf
-from vcl.qt.widgets.bausteine.zustaende.geruest.befehlsseite import befehlsseite, gruppenkopf, inhaltsseite, seitenrahmen
+from vcl.qt.widgets.bausteine.zustaende.geruest.befehlsseite import befehlsseite, gruppenkopf, inhaltsseite, seitenrahmen, zurueck_knopf
 from vcl.qt.widgets.bausteine.symbole.medien.datei_symbole import datei_symbol
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
@@ -42,6 +42,7 @@ EINTRAEGE = [(e["schluessel"], _t(e["text"]) if "text" in e else "", e.get("symb
 MIT_DOKUMENT = tuple(e["schluessel"] for e in _DATEN.get("menue", []) if e.get("mit_dokument"))
 MIT_PFEIL = tuple(e["schluessel"] for e in _DATEN.get("menue", []) if e.get("pfeil"))
 SYMBOLE = _DATEN.get("symbole", {})
+HAUPTSEITE = _DATEN["hauptseite"]                                    # die Hauptansicht des Dashboards: dorthin führt der Pfeil einer Ansicht über die ganze Breite
 
 
 def symbol(name: str, px: int = ICON_LISTE):
@@ -119,6 +120,7 @@ class Backstage(QWidget):
         self.liste.itemClicked.connect(self._gewaehlt)
         self.liste.itemActivated.connect(self._aktiviert)
         self.seiten: dict[str, QWidget] = {}
+        self._herkunft: dict[str, str] = {}                          # Unterseite → die Seite, von der man zu ihr kam (Ziel ihres Pfeils)
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self.schliessen.emit)
         self._frischen_sich_selbst = True
 
@@ -132,6 +134,7 @@ class Backstage(QWidget):
             self.stapel.removeWidget(w)
             w.deleteLater()
         self.seiten.clear()
+        self._herkunft.clear()
         haben_dok = self.w.current_tab() is not None
         for schl in MIT_DOKUMENT:
             self.zeilen[schl].setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable if haben_dok else Qt.NoItemFlags)
@@ -177,15 +180,7 @@ class Backstage(QWidget):
         self._links.hide()                                           # die Optionen füllen die ganze Breite; das Menü ist für die Dauer weg
         if ph._ansicht is None:
             v = ph.layout()                                                     # keine Lücke zwischen Optionen und Fußleiste: die linke Fläche bleibt ganz
-            kopf = QWidget(); kopf.setObjectName("optKopf")
-            kh = _reihe("kein", kopf)
-            kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)         # die linke Fläche beginnt schon in der Kopfzeile
-            kopf_links.setAttribute(Qt.WA_StyledBackground, True)
-            kl = _reihe("kopf", kopf_links)
-            zurueck = knopf("standard", _t("datei.optionen.zurueck"), symbol="arrow-left", objektname="optZurueck", ohne_rand=True, hand=True,
-                            tooltip=_t("datei.optionen.zurueck.tipp"), name=_t("datei.optionen.zurueck"), aktion=self.schliessen.emit)
-            kl.addWidget(zurueck); kl.addStretch(1)
-            kh.addWidget(kopf_links); kh.addStretch(1)
+            kopf, zurueck = self._kopf_zurueck(_t("datei.optionen.zurueck"), lambda: self._zeigen(HAUPTSEITE))   # der Pfeil führt ins Dashboard zurück (wie beim Handbuch); „Fertig“ schließt
             ph._ansicht = OptionenAnsicht(self.w, getattr(self, "_optionen_unter", None))
             fuss = QWidget(); fh = _reihe("kein", fuss)
             unten_links = QWidget(); unten_links.setObjectName("optLinks"); unten_links.setFixedWidth(BREITE_NAVIGATION_OPTIONEN)     # die linke Fläche läuft bis ganz unten durch
@@ -199,13 +194,43 @@ class Backstage(QWidget):
         elif getattr(self, "_optionen_unter", None):
             ph._ansicht.gehe_zu(self._optionen_unter)
 
+    @staticmethod
+    def _kopf_zurueck(text: str, aktion, breite: int = BREITE_NAVIGATION_OPTIONEN) -> tuple[QWidget, QPushButton]:
+        """Kopfzeile einer Ansicht über die ganze Breite (Optionen, Handbuch): links der Pfeil-Knopf mit dem Namen der Ansicht als Rückweg."""
+        kopf = QWidget(); kopf.setObjectName("optKopf")
+        kh = _reihe("kein", kopf)
+        kopf_links = QWidget(); kopf_links.setObjectName("optLinks"); kopf_links.setFixedWidth(breite)         # die linke Fläche beginnt schon in der Kopfzeile
+        kopf_links.setAttribute(Qt.WA_StyledBackground, True)
+        kl = _reihe("kopf", kopf_links)
+        zurueck = zurueck_knopf(text, aktion)                         # derselbe Knopf wie auf jeder Unterseite
+        kl.addWidget(zurueck); kl.addStretch(1)
+        kh.addWidget(kopf_links); kh.addStretch(1)
+        return kopf, zurueck
+
+    @staticmethod
+    def _ist_unterseite(schl: str) -> bool:
+        """Eine Seite, die nicht direkt im Menü steht, sondern von einer anderen Seite aus geöffnet wird."""
+        return schl not in {e[4] for e in EINTRAEGE if e[3] == "seite"}
+
+    def _eltern(self, schl: str) -> str:
+        """Wohin der Pfeil einer Unterseite führt: zu der Seite, von der man kam; sonst zu der, zu der sie gehört; sonst in die Hauptansicht."""
+        return self._herkunft.get(schl) or _DATEN.get("inhaltsseiten", {}).get(schl, {}).get("gehoert_zu") or HAUPTSEITE
+
+    def _rueckweg(self, schl: str):
+        """Die Aktion des Pfeils im Titel einer Unterseite; Seiten aus dem Menü haben keinen (``None``)."""
+        return (lambda: self._zeigen(self._eltern(schl))) if self._ist_unterseite(schl) else None
+
     def _zeigen(self, schl: str):
+        vorher = next((k for k, w in self.seiten.items() if w is self.stapel.currentWidget()), None)
+        if self._ist_unterseite(schl) and vorher is not None and vorher != schl:
+            self._herkunft[schl] = vorher
+        self._links.setVisible(not _DATEN.get("inhaltsseiten", {}).get(schl, {}).get("vollbreit", False))   # eine Ansicht über die ganze Breite bringt ihre eigene Navigation mit
         self._seite_sicher(schl)
         zeigen = getattr(self, f"_{schl}_zeigen", None)                 # Seiten, die erst beim Zeigen fertig gebaut werden
         if zeigen is not None:
             zeigen()
         self.stapel.setCurrentWidget(self.seiten[schl])
-        menue = _DATEN.get("inhaltsseiten", {}).get(schl, {}).get("gehoert_zu", schl)              # eine Unterseite hebt den Menüpunkt hervor, zu dem sie gehört
+        menue = self._eltern(schl) if self._ist_unterseite(schl) else schl                       # eine Unterseite hebt den Menüpunkt hervor, von dem man kam
         zeile = next((self.zeilen[e[0]] for e in EINTRAEGE if e[3] == "seite" and e[4] == menue), None)
         if zeile is None:
             self.liste.clearSelection()
@@ -235,8 +260,8 @@ class Backstage(QWidget):
             self.w.statusBar().showMessage(_t("datei.speicherort.fehlt"), 5000)
 
     # ---- Bausteine -------------------------------------------------------------------------------------------
-    def _seite(self, titel: str) -> tuple[QScrollArea, RasterSpalte]:
-        return seitenrahmen(titel)
+    def _seite(self, titel: str, zurueck=None) -> tuple[QScrollArea, RasterSpalte]:
+        return seitenrahmen(titel, zurueck)
 
     @staticmethod
     def _gruppe(v: RasterSpalte, text: str, hinweis: str = ""):
@@ -247,7 +272,14 @@ class Backstage(QWidget):
         import importlib
         spec = _DATEN["inhaltsseiten"][schluessel]
         inhalt = getattr(importlib.import_module(spec["modul"]), spec["bauer"])()
-        return inhaltsseite(_t(spec["titel"]), inhalt, spec.get("scrollen", True))
+        if spec.get("vollbreit"):                                    # wie die Optionen: ohne Menü, oben der Pfeil zurück zur Seite, von der man kam
+            w = QWidget(); w.setObjectName("bsInhalt")
+            v = _spalte("kein", w)
+            kopf, _zurueck = self._kopf_zurueck(_t(spec["titel"]), self._rueckweg(schluessel),
+                                                getattr(getattr(inhalt, "spalten", None), "links_breite", None) or BREITE_NAVIGATION_OPTIONEN)   # der Kopf ist so breit wie die Navigation der Ansicht
+            v.addWidget(kopf); v.addWidget(inhalt, 1)
+            return w
+        return inhaltsseite(_t(spec["titel"]), inhalt, spec.get("scrollen", True), self._rueckweg(schluessel))
 
     def _aus_beschreibung(self, schluessel: str) -> QWidget:
         """Seiten, die nur aus Titel, Gruppen und Befehlsknöpfen bestehen (Hilfe, Speichern unter, Öffnen mit): Inhalt aus der Datendatei."""
@@ -258,7 +290,8 @@ class Backstage(QWidget):
                 getattr(self, "_" + k["aktion"])()
             else:
                 self.schliessen.emit(); self.w.befehle.tun(k["befehl"])
-        return befehlsseite(_DATEN["seiten"][schluessel], ausloeser, lambda k: "befehl" not in k or self.w.befehle.hat(k["befehl"]))
+        return befehlsseite(_DATEN["seiten"][schluessel], ausloeser, lambda k: "befehl" not in k or self.w.befehle.hat(k["befehl"]),
+                            self._rueckweg(schluessel))
 
     # ---- Seiten ------------------------------------------------------------------------------------------------
     def _zuletzt(self):
@@ -453,7 +486,7 @@ class Backstage(QWidget):
         return sa
 
     def _info(self):
-        sa, v = self._seite(_t("datei.info.titel"))
+        sa, v = self._seite(_t("datei.info.titel"), self._rueckweg("info"))
         t = self.w.current_tab()
         if t is None:
             h = QLabel(_t("datei.kein_dokument"))

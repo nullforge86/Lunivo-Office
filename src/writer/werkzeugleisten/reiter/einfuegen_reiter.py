@@ -31,18 +31,18 @@ def bauen(register: dict) -> dict:
         {"name": "Illustrationen", "reihenfolge": True, "knoepfe": [
             nimm("Bild", gross=True, klappe="bildKlappe"), nimm("Formen", gross=True, tun=None, klappe="formenKlappe"),
             nimm("Diagramm", text=True, klappe="diagrammKlappe"), nimm("SmartArt", text=True)]},
-        {"name": "Kopf- und Fußzeile", "reihenfolge": True, "knoepfe": [
+        {"name": "Kopf- und Fußzeile", "kachel": "Kopf-/Fußzeile", "reihenfolge": True, "knoepfe": [
             nimm("Kopf- und Fußzeile", gross=True), nimm("Seitenzahl", gross=False, text=True, tun=None),
             _k("wasserzeichen", "Wasserzeichen", text=True, klappe="wasserzeichenKlappe")]},
-        {"name": "Text", "reihenfolge": True, "knoepfe": [
+        {"name": "Text", "kachel": "Textobjekte", "reihenfolge": True, "knoepfe": [
             nimm("Textfeld", gross=True, klappe="textfeldKlappe"), nimm("WordArt", gross=True, tun=None, klappe="wordartKlappe"),
             nimm("Datum und Uhrzeit", gross=False, text=True),
             _k("objekte", "Objekt", None, text=True, menue=[{"name": "Objekt einfügen", "tun": "objekt"}, {"name": "Objekt aus Datei", "tun": "dateiObjekt"}]),
             nimm("Initiale", text=False), _k("baustein", "Schnellbausteine", text=False, klappe="schnellbausteineKlappe")]},
-        {"name": "Symbole", "reihenfolge": True, "knoepfe": [
+        {"name": "Symbole", "kachel": "Symbole & Formeln", "reihenfolge": True, "knoepfe": [
             nimm("Sonderzeichen", name="Symbol", gross=True, tun=None, klappe="symbolKlappe"), nimm("Formel", name="Gleichung", gross=False, text=True, klappe="gleichungKlappe"),
             _k("zahl", "Zahl", "zahl", text=True)]},
-        {"name": "Links", "reihenfolge": True, "knoepfe": [
+        {"name": "Links", "kachel": "Verknüpfungen", "reihenfolge": True, "knoepfe": [
             nimm("Hyperlink", gross=False, text=True), nimm("Lesezeichen / Textmarke", name="Lesezeichen", gross=False, text=True)]},
         {"name": "Formulare", "reihenfolge": True, "knoepfe": [formulare]},
     ]
