@@ -64,10 +64,10 @@ def _beschriftungstext(a) -> str:
 def _ziele_beschriftungen(k) -> list[dict]:
     d = k.sitzung.dokument
     z = []
-    for k in beschriftungen_liste(k):
-        a = k.sitzung._absatz(k["block"])
-        z.append({"art": k["label"], "text": k["text"], "pos": k["pos"], "block": a.id, "von": k["pos"], "bis": k["pos"] + a.laenge,
-                  "nummer": _bezeichnung_nummer(a) or k["text"], "inhalt": _beschriftungstext(a)})
+    for b in beschriftungen_liste(k):
+        a = k.sitzung._absatz(b["block"])
+        z.append({"art": b["label"], "text": b["text"], "pos": b["pos"], "block": a.id, "von": b["pos"], "bis": b["pos"] + a.laenge,
+                  "nummer": _bezeichnung_nummer(a) or b["text"], "inhalt": _beschriftungstext(a)})
     return z
 
 

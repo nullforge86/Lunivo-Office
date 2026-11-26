@@ -1,7 +1,7 @@
 """Prüft nach dem Verschieben von Modulen, ob alle Importpfade noch stimmen. Schreibt Markdown (kein HTML).
 
-1. Jedes Modul von ``lunivo_writer`` lässt sich importieren (``__main__`` ausgenommen).
-2. Jeder Pfad ``lunivo_writer.a.b`` im Quelltext, in Tests, Werkzeugen und Doku zeigt auf ein vorhandenes Modul oder Paket
+1. Jedes Modul der Schichten ``core``, ``framework``, ``vcl``, ``writer``, ``filter`` und ``system`` lässt sich importieren (``__main__`` ausgenommen).
+2. Jeder Pfad ``<schicht>.a.b`` im Quelltext, in Tests, Werkzeugen und Doku zeigt auf ein vorhandenes Modul oder Paket
    (oder auf einen Namen darin).
 3. Keine Weiterleitungs-Module (``sys.modules[__name__] = …``): alte Pfade werden nicht weiter geführt.
 
@@ -16,21 +16,23 @@ import sys
 from pathlib import Path
 
 WURZEL = Path(__file__).resolve().parents[2]
-PAKET = "lunivo_writer"
-PFAD = re.compile(rf"\b{PAKET}(?:\.\w+)+")
+PAKETE = ("core", "framework", "vcl", "writer", "filter", "system")
+PFAD = re.compile(rf"(?<![\w./-])(?:{'|'.join(PAKETE)})(?:\.[a-z_][a-z0-9_]*)+(?![\w(])")
 TEXTE = {".py", ".md"}
 
 
 def module_importieren() -> list[str]:
     fehler = []
-    paket = importlib.import_module(PAKET)
-    for m in pkgutil.walk_packages(paket.__path__, f"{PAKET}."):
-        if m.name.endswith("__main__"):
-            continue
-        try:
-            importlib.import_module(m.name)
-        except Exception as e:  # noqa: BLE001 - jede Art Fehler ist hier ein Befund
-            fehler.append(f"Import {m.name}: {type(e).__name__}: {e}")
+    importlib.import_module("framework")                      # meldet dem Kern seine Orte an (sonst lassen sich Teile der Korrektur nicht laden)
+    for name in PAKETE:
+        paket = importlib.import_module(name)
+        for m in pkgutil.walk_packages(paket.__path__, f"{name}."):
+            if m.name.endswith("__main__"):
+                continue
+            try:
+                importlib.import_module(m.name)
+            except Exception as e:  # noqa: BLE001 - jede Art Fehler ist hier ein Befund
+                fehler.append(f"Import {m.name}: {type(e).__name__}: {e}")
     return fehler
 
 
@@ -67,7 +69,8 @@ def pfade_pruefen() -> list[str]:
 
 
 def weiterleitungen() -> list[str]:
-    return [str(p.relative_to(WURZEL)) for p in (WURZEL / "src" / PAKET).rglob("*.py") if "sys.modules[__name__]" in p.read_text(encoding="utf-8")]
+    return [str(p.relative_to(WURZEL)) for name in PAKETE for p in (WURZEL / "src" / name).rglob("*.py")
+            if "sys.modules[__name__]" in p.read_text(encoding="utf-8")]
 
 
 def pruefen() -> dict[str, list[str]]:
