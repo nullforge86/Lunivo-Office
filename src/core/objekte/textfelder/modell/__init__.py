@@ -16,6 +16,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "KASTEN_VOLL": ("formular_daten", "KASTEN_VOLL"),
     "PLATZHALTER_FARBE": ("formular_daten", "PLATZHALTER_FARBE"),
     "RICHTUNGEN": ("frei_objekt_text_daten", "RICHTUNGEN"),
+    "SS": ("frei_objekt_text_daten", "SS"),
     "STANDARD_FARBE": ("wasserzeichen_daten", "STANDARD_FARBE"),
     "STANDARD_MASS": ("frei_objekt_text_daten", "STANDARD_MASS"),
     "TEXTFELD_FUELL": ("frei_objekt_text_daten", "TEXTFELD_FUELL"),
@@ -36,6 +37,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "feld_an": ("formular_daten", "feld_an"),
     "formular_daten_ARTEN": ("formular_daten", "ARTEN"),
     "frei_objekt_text_daten_ARTEN": ("frei_objekt_text_daten", "ARTEN"),
+    "gedreht": ("frei_objekt_text_daten", "gedreht"),
+    "innen": ("frei_objekt_text_daten", "innen"),
     "ist_leer": ("formular_daten", "ist_leer"),
     "kasten_umschalten": ("formular_daten", "kasten_umschalten"),
     "laeufe_ab": ("frei_objekt_text_daten", "laeufe_ab"),
@@ -45,6 +48,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "meta_text": ("formular_daten", "meta_text"),
     "nur_formulardaten": ("formular_daten", "nur_formulardaten"),
     "wert_von": ("formular_daten", "wert_von"),
+    "zeichen_dict": ("frei_objekt_text_daten", "zeichen_dict"),
 }
 
 __all__ = sorted(_NAMEN)

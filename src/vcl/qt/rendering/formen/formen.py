@@ -5,7 +5,7 @@ from vcl.qt.rendering.formen import bild_einfuegen as BE
 from vcl.qt.rendering.formen import einfuegen as E
 from vcl.qt.rendering.formen import form_einfuegen as FE
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.objekte.formen.formen_daten import _FO_SCHLUESSEL
+from writer.anbindung.formen_daten import fo_schluessel
 from writer.anbindung.formen_daten import gruppen_abstand
 from writer.anbindung.formen_daten import standard
 from writer.anbindung.formen_daten import vorlagen
@@ -36,7 +36,8 @@ def aendern(ed, **felder) -> bool:
     gewählte Form (``editor/objekte/frei_objekt.py``) geht vor; sonst gilt das Bild im Text (ältere Dokumente)."""
     from vcl.qt.rendering.formen import frei_objekt as FO
     if FO.art_gewaehlt(ed) == "form":
-        kw = {_FO_SCHLUESSEL[k]: v for k, v in felder.items() if v is not None and k in _FO_SCHLUESSEL}
+        schluessel = fo_schluessel()
+        kw = {schluessel[k]: v for k, v in felder.items() if v is not None and k in schluessel}
         return FO.aendern(ed, "form", **kw) if kw else True
     i = ed.inline_gewaehlt()
     if i is None or i.art != "form":

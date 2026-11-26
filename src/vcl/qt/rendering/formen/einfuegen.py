@@ -2,8 +2,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.dokument.dokument import Auswahl, Position
-from core.layout.drucklayout import formatwerte as F
+from writer.funktionen import bearbeiten as _bearbeiten
+from writer.werte import Bereich, Stelle
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import formen_katalog as K
 from writer.anbindung.einfuegen_hilfen import wordart_vorlagen
@@ -74,59 +74,23 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
                     zf["farbe"] = Farbe.WEISS
                 s.absatzformat_anwenden(af, absatz_ids=[a.id])
                 if a.laenge:
-                    s.zeichenformat_anwenden(zf, Auswahl(Position(a.id, 0), Position(a.id, a.laenge)))
+                    s.zeichenformat_anwenden(zf, Bereich(Stelle(a.id, 0), Stelle(a.id, a.laenge)))
                 s.absatz_zeichenformat_anwenden(zf, absatz_ids=[a.id])
             s.absatzformat_anwenden({"seitenumbruch_nach": True}, absatz_ids=[absaetze[len(teile)].id])
-            s.setze_auswahl(Position(absaetze[len(teile)].id, 0))
+            s.setze_auswahl(Stelle(absaetze[len(teile)].id, 0))
     ed.ansicht._aendern(f)
 
 
 # ---- Text aus Datei ---------------------------------------------------------------------------------------------------------------
-def _fremde_bloecke(s, fremd) -> list:
-    """Die Blöcke des Haupttextes eines geladenen Dokuments für die Sitzung ``s``: Listen werden angelegt, Bilddaten unter neuen Namen abgelegt."""
-    import copy
-    from core.dokument.dokument import Absatz, InlineObjekt, Rahmen, Tabelle
-    bloecke = copy.deepcopy([b for a in fremd.abschnitte for b in a.bloecke])
-    listen: dict = {}
-    namen: dict = {}
-
-    def absatz(a):
-        if a.liste_id is not None:
-            if a.liste_id not in listen:
-                d = fremd.listen.get(a.liste_id)
-                listen[a.liste_id] = s.liste_anlegen(copy.deepcopy(d.ebenen)) if d is not None and d.ebenen else None
-            a.liste_id = listen[a.liste_id]
-        for x in a.inhalte:
-            if isinstance(x, InlineObjekt) and x.ressource and x.ressource in fremd.ressourcen:
-                if x.ressource not in namen:
-                    namen[x.ressource] = f"import-{len(s.dokument.ressourcen) + len(namen) + 1}-{x.ressource}"
-                    s.ressource_setzen(namen[x.ressource], fremd.ressourcen[x.ressource])
-                x.ressource = namen[x.ressource]
-
-    def lauf(liste):
-        for b in liste:
-            if isinstance(b, Absatz):
-                absatz(b)
-            elif isinstance(b, Tabelle):
-                for zeile in b.zellen:
-                    for z in zeile:
-                        lauf(z.bloecke)
-            elif isinstance(b, Rahmen):
-                lauf(b.bloecke)
-    lauf(bloecke)
-    return bloecke
-
-
-def text_aus_datei(ed, pfad: str):
-    """Fügt den Inhalt einer Datei (DOCX, ODT, RTF, TXT …) an der Schreibmarke ein; → Bericht über Nicht-Übernommenes."""
-    from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
-    geladen = lade_modell(pfad)
-
-    def f(s):
-        with s.gruppe("Text aus Datei"):
-            s.ausschnitt_einfuegen(_fremde_bloecke(s, geladen.document))
-    ed.ansicht._aendern(f)
-    return geladen.report
+def text_aus_datei(ed, pfad: str) -> tuple[str, ...]:
+    """Fügt den Inhalt einer Datei (DOCX, ODT, RTF, TXT …) an der Schreibmarke ein; → Hinweise über Nicht-Übernommenes. Eine Datei, die sich nicht
+    lesen lässt, meldet ``Dateifehler`` (``writer.werte``)."""
+    nummer, hinweise = _bearbeiten.fremdtext_laden(pfad)
+    try:
+        ed.ansicht._befehl(lambda: _bearbeiten.fremdtext_einfuegen(ed.kennung, nummer))
+    finally:
+        _bearbeiten.fremdtext_verwerfen(nummer)
+    return hinweise
 
 
 # ---- Datum und Uhrzeit ----------------------------------------------------------------------------------------------------------------
@@ -167,8 +131,8 @@ def initiale(ed, zeilen: int = 3) -> bool:
     a = s._absatz(s.auswahl.kopf.absatz_id)
     if not a.text.strip():
         return False
-    pt = float(F.zeichenformat(s.dokument, a, {}).get("groesse_pt") or 11.0) * zeilen * 1.4
-    return ed.ansicht._aendern(lambda sitz: sitz.zeichenformat_anwenden({"groesse_pt": pt, "fett": True}, Auswahl(Position(a.id, 0), Position(a.id, 1))))
+    pt = _bearbeiten.absatz_schriftgroesse(ed.kennung) * zeilen * 1.4
+    return ed.ansicht._aendern(lambda sitz: sitz.zeichenformat_anwenden({"groesse_pt": pt, "fett": True}, Bereich(Stelle(a.id, 0), Stelle(a.id, 1))))
 
 
 def textfeld(ed, text: str = "Text hier eingeben", breite: int = 50) -> None:

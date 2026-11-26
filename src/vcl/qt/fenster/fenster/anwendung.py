@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from system.plattform import protokoll
-from framework.schnittstellen.einstellungen import ORGANISATION as APP_ORG, PROGRAMM as APP_NAME, Einstellungen
+from writer import hauptfenster as _dienste
 from writer.anbindung import ansicht_einstellungen as ansicht_einstellungen
 from writer.anbindung import datei_einstellungen as datei_einstellungen
 from vcl.qt.fenster.fenster.programmfenster import MainWindow
@@ -30,8 +30,8 @@ class LunivoApplication:
     def __init__(self, argv: list[str]):
         self.argv = argv
         self.app = QApplication(argv)
-        self.app.setApplicationName(APP_NAME)
-        self.app.setOrganizationName(APP_ORG)
+        self.app.setApplicationName(_dienste.programmname())
+        self.app.setOrganizationName(_dienste.organisation())
         self.app.setDesktopFileName("lunivo-writer")
         protokoll.einrichten()
         self.app.setWindowIcon(programm_symbol())                       # Fenster, Leiste und Alt+Tab zeigen Lunivos Symbol
@@ -40,7 +40,7 @@ class LunivoApplication:
             t = QTranslator()
             if t.load(name, QLibraryInfo.path(QLibraryInfo.TranslationsPath)):
                 self.app.installTranslator(t); self._uebersetzer.append(t)
-        self.settings = Einstellungen()
+        self.settings = _dienste.einstellungen()
         from vcl.qt.fenster.fenster.einstellungen_uebernahme import einmalig_uebernehmen
         einmalig_uebernehmen(self.settings)                               # einmalig: frühere QSettings-Werte ins JSON übernehmen
         from vcl.qt.widgets.bausteine.farben.thema import thema

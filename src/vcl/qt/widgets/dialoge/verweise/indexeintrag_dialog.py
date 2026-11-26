@@ -7,7 +7,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QButtonGroup, QDialog
 
-from framework.befehle.verweise.typen import IndexEintrag
+from writer.hauptfenster import index_eintrag
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
@@ -64,8 +64,8 @@ class IndexeintragDialog(PanelFaehig, QDialog):
         self.haupt.textChanged.connect(lambda _t: self._auffrischen())
         self._auffrischen()
 
-    def eintrag(self) -> IndexEintrag:
-        return IndexEintrag(self.haupt.text().strip(), self.unter.text().strip(), self.lesung.text().strip(), self.lesung_unter.text().strip(),
+    def eintrag(self):
+        return index_eintrag(self.haupt.text().strip(), self.unter.text().strip(), self.lesung.text().strip(), self.lesung_unter.text().strip(),
                             siehe=self.siehe.text().strip() if self.r_siehe.isChecked() else "",
                             marke=self.marke.currentText() if self.r_bereich.isChecked() else "",
                             fett=self.fett.isChecked(), kursiv=self.kursiv.isChecked())

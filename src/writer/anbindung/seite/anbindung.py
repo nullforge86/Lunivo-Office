@@ -10,3 +10,8 @@ from writer.werte import eigene_kopie
 @cache
 def paper_mm():
     return eigene_kopie(_fw.paper_mm())
+
+
+def standardmasse() -> _fw.Seitenmasse:
+    """Blattgröße und Ränder (mm) der Seiteneinrichtung eines neuen Dokuments."""
+    return _fw.standardmasse()

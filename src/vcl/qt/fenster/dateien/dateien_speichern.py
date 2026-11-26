@@ -4,8 +4,9 @@ from __future__ import annotations
 import os
 from PySide6.QtWidgets import QMessageBox
 from writer.anbindung import dateiformate as formats
-from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
-from core.dokument.bericht import DocumentIOError
+from writer.anbindung import dateizugriff as sicher_schreiben
+from writer import hauptfenster as _dienste
+from writer.werte import Dateifehler
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import speicherort_waehlen
 
@@ -112,17 +113,15 @@ class DateienSpeichernBaustein:
         if formats.ext(path) == ".pdf":
             return self._pdf_schreiben(tab, path)
         try:
-            modell = tab.modell_fuer_speichern()
-            dokument = modell if modell is not None else tab.editor.document()
-            rep = self.dokumente.speichern(path, dokument, tab.page, tab.meta, erwartet=(gesehen,))
-        except DocumentIOError as e:
+            hinweise = _dienste.dokument_speichern(self.dokumente, tab.editor.kennung, path, tab.page, tab.meta, erwartet=(gesehen,))
+        except Dateifehler as e:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", f"Das Dokument wurde nicht gespeichert.\n\nGrund: {e}\n\nWählen Sie „Speichern unter“ und einen anderen Ordner, oder prüfen Sie den Schreibschutz."); return False
         if mark_saved:
             tab.editor.document().setModified(False)
             self.dokumente.verwerfen(tab.token)
             tab.datei_stand = sicher_schreiben.stand(path)
         self.statusBar().showMessage(f"Gespeichert: {path}", 4000)
-        self._show_report(rep, "Hinweise zum Speichern", "beim Speichern")
+        self._zeige_hinweise(hinweise, "Hinweise zum Speichern", "beim Speichern")
         return True
 
 

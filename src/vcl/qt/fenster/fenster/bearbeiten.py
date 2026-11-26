@@ -208,20 +208,20 @@ class BearbeitenBaustein:
 
 
     def vorlesen(self, ab_hier: bool):
-        from framework.dokumentverwaltung.dokumentpflege import vorlesen as v
+        from writer.anbindung import vorlesen as v
         e = self.current_editor()
         if e is None:
             return
         c = e.textCursor()
         if c.hasSelection():
-            text = v.vorlesetext(e.sitzung.dokument, c.selectionStart(), c.selectionEnd())
+            text = v.vorlesetext(e.kennung, c.selectionStart(), c.selectionEnd())
         elif ab_hier:
-            text = v.vorlesetext(e.sitzung.dokument, c.position())
+            text = v.vorlesetext(e.kennung, c.position())
         else:
-            text = v.vorlesetext(e.sitzung.dokument)            # Bilder mit Beschreibung ansagen, dekorative überspringen
+            text = v.vorlesetext(e.kennung)            # Bilder mit Beschreibung ansagen, dekorative überspringen
         try:
-            ok = v.lies_vor(text, self.settings.get(v.EINSTELLUNG_STIMME, ""), self.settings.get_int(v.EINSTELLUNG_TEMPO, 0))
-        except v.VorlesenFehler as ex:
+            ok = v.lies_vor(text, self.settings.get(v.einstellung_stimme(), ""), self.settings.get_int(v.einstellung_tempo(), 0))
+        except v.Vorlesefehler as ex:
             QMessageBox.information(self, "Vorlesen", str(ex))
             return
         if ok:
@@ -231,17 +231,17 @@ class BearbeitenBaustein:
 
 
     def stimme_waehlen(self):
-        from framework.dokumentverwaltung.dokumentpflege import vorlesen as v
+        from writer.anbindung import vorlesen as v
         liste = v.stimmen()
         if not liste:
             QMessageBox.information(self, "Stimme", "Es ist keine Stimme eingerichtet. Siehe dokumentation/benutzerhandbuch/installation.md.")
             return
         from vcl.qt.widgets.dialoge.dokument.stimme_dialog import StimmeDialog
-        d = StimmeDialog(self, liste, self.settings.get(v.EINSTELLUNG_STIMME, ""), self.settings.get_int(v.EINSTELLUNG_TEMPO, 0),
-                         (v.TEMPO_MIN, v.TEMPO_MAX, v.TEMPO_SCHRITT))
+        d = StimmeDialog(self, liste, self.settings.get(v.einstellung_stimme(), ""), self.settings.get_int(v.einstellung_tempo(), 0),
+                         v.tempo_grenzen())
         if d.exec():
-            self.settings.set(v.EINSTELLUNG_STIMME, d.stimme())
-            self.settings.set(v.EINSTELLUNG_TEMPO, d.tempo())
+            self.settings.set(v.einstellung_stimme(), d.stimme())
+            self.settings.set(v.einstellung_tempo(), d.tempo())
 
 
     def _nav_aktion(self, name: str, b: dict):

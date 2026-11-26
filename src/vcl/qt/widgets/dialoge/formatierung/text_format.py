@@ -233,7 +233,7 @@ def zu_zeichen(w: dict) -> dict:
 
 def aus_zeichen(z: dict, standard_schrift: str = "", standard_groesse: float = 0.0) -> dict:
     """Die Werte eines Zeichenformats des Dokumentenmodells (zum Vorbelegen eines Zeichenfensters)."""
-    from core.layout.drucklayout import formatwerte as F
+    from writer.anbindung import formatwerte as F
     w = dict(ZEICHEN)
     fam = z.get("schrift")
     fam = fam[0] if isinstance(fam, (list, tuple)) and fam else fam
@@ -268,23 +268,12 @@ def aus_zeichen(z: dict, standard_schrift: str = "", standard_groesse: float = 0
 
 def zeichne_absaetze(p: QPainter, rect, absaetze: list[tuple[dict, dict, str]], mittig: bool = False) -> None:
     """Absätze (Absatzformat, Zeichenformat — beides Wörterbücher des Dokumentenmodells —, Text) in ein Rechteck zeichnen: die Vorschau der
-    Formatierungsfenster. Gesetzt und gezeichnet wird vom Kern (``LayoutEngine``, ``DokumentRenderer``), nicht von Qt."""
-    from vcl.qt.rendering.formen import QtRenderBackend
-    from core.dokument import neues_dokument
-    from core.dokument.dokument import Absatz, Lauf
-    from core.layout import LayoutEngine
-    from core.layout.drucklayout.ausgabe import DokumentRenderer
-    from core.dokument.abschnitte.seite import PageSettings
-    px_mm = 25.4 / 96.0
-    seite = PageSettings(width_mm=max(1.0, rect.width() * px_mm), height_mm=max(1.0, rect.height() * px_mm), margin_top_mm=0.0, margin_bottom_mm=0.0,
-                         margin_left_mm=0.0, margin_right_mm=0.0)
-    dok = neues_dokument(seite)
-    dok.abschnitte[0].bloecke = [Absatz(dok.neue_id(), [Lauf(text, dict(zf))] if text else [], dict(af)) for af, zf, text in absaetze]
-    layout = LayoutEngine()
-    erg = layout.berechnen(dok)
-    hoehe = max([pl.rect.bottom for pl in erg.seiten[0].plaetze] + [0.0])
+    Formatierungsfenster. Gesetzt und gezeichnet wird vom Kern (über ``writer.anbindung.zeichnen``), nicht von Qt."""
+    from PySide6.QtCore import QRectF
+    from vcl.qt.rendering.formen import raster_malen
+    from writer.anbindung import zeichnen as ZW
+    feld = (float(rect.left()), float(rect.top()), float(rect.width()), float(rect.height()))
     p.save()
     p.setClipRect(rect)
-    p.translate(rect.left(), rect.top() + (max(0.0, (rect.height() - hoehe) / 2) if mittig else 0))
-    DokumentRenderer(layout.engine).zeichne_seite(QtRenderBackend(p), dok, erg, 0, None)
+    raster_malen(p, QRectF(rect), lambda f: ZW.absaetze(f, feld, absaetze, mittig), rand=0.0)
     p.restore()

@@ -28,12 +28,11 @@ TAB_ART_NAMEN = {0: "links", 1: "rechts", 2: "mitte", 3: "dezimal"}
 
 def aus_absatz(af: dict, dokument) -> list[tuple[float, str, str]]:
     """Die Tabstopps eines wirksamen Absatzformats (Wörterbuch des Dokumentenmodells) als Liste aus Millimetern, Ausrichtung und Füllzeichen."""
-    from core.layout.drucklayout import formatwerte as F
     from writer.anbindung import formatwerte as _formatwerte
     from writer.werte import px_zu_mm as px_to_mm
     fuell = _formatwerte.tabfuellung(af)
     return [(round(px_to_mm(pos), 1), TAB_ART_NAMEN.get(art, "links"), next((f for p, f in fuell.items() if abs(p - pos) < 0.05), ""))
-            for pos, art, _z in F.tabstopps(af, dokument)[0]]
+            for pos, art, _z in _formatwerte.tabstopps(af)]
 
 
 def _text(mm: float, art: str, fuell: str = "") -> str:

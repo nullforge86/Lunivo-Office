@@ -98,11 +98,11 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
                 return
         if art == "text":
             from vcl.qt.rendering import formen as E
-            from core.dokument.bericht import DocumentIOError
+            from writer.werte import Dateifehler
             try:
-                self.w._show_report(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
+                self.w._zeige_hinweise(E.text_aus_datei(e, pfad), "Hinweise zum eingefügten Objekt", "beim Einfügen")
                 return
-            except DocumentIOError:
+            except Dateifehler:
                 pass                                            # nicht lesbar: dann als Symbol
         from PySide6.QtCore import QUrl
         from vcl.qt.rendering import formen as BE
@@ -165,11 +165,12 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
 
 
     def _seitenzahl_vorgabe(self, schl: str) -> None:
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
         from writer.anbindung import seitenzahl as _seitenzahl
+        from writer.funktionen import bearbeiten as _bearbeiten
         _s, _t, ort, ausr = next(v for v in _seitenzahl.vorgaben() if v[0] == schl)
         if self.ed:
-            self.ed.page_settings_changed(SZ.seitenzahl_setzen(self.ed.abschnitt_seite(), ort, ausr))
+            self.ed.ansicht._befehl(lambda: _bearbeiten.seitenzahl_vorgabe_setzen(self.ed.kennung, ort, ausr))
+            self.ed.pageApplied.emit()
 
 
     def seitenzahlEinfuegen(self, k=None):
@@ -186,10 +187,15 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def seitenzahlenEntfernen(self, k=None):
         if not self.ed:
             return
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
-        page = self.ed.abschnitt_seite()
-        if SZ.seitenzahlen_entfernen(page):
-            self.ed.page_settings_changed(page)
+        from writer.funktionen import bearbeiten as _bearbeiten
+        entfernt = [None]
+
+        def entfernen() -> bool:
+            entfernt[0] = _bearbeiten.seitenzahlen_entfernen(self.ed.kennung)
+            return bool(entfernt[0])
+        self.ed.ansicht._befehl(entfernen)
+        if entfernt[0] is not None or self.ed.isReadOnly():
+            self.ed.pageApplied.emit()
         else:
             self.w.statusBar().showMessage("In Kopf- und Fußzeile steht keine Seitenzahl.", 4000)
 
@@ -417,7 +423,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
     def _bausteine_fuellen(self, m) -> None:
         """AutoText-Liste wie in der Vorlage: die vier Seitenzahl-Texte, dann die eigenen und mitgelieferten Bausteine, zuletzt
         „AutoText hinzufügen …“ (nur mit Markierung)."""
-        from framework.dokumentverwaltung.dokumentpflege import bausteine
+        from writer.anbindung import bausteine
         for name, teile in self.AUTOTEXTE_SEITE:
             m.eintrag(name, lambda teile=teile: self._autotext_seite(teile))
         for titel, liste in (("Eigene", bausteine.laden()), ("Standard", bausteine.standard())):
@@ -426,7 +432,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             m.addSection(titel)
             for b in liste:
                 m.eintrag(b["name"] + (f"   [{b['kuerzel']}]" if b.get("kuerzel") else ""),
-                            lambda b=b: self.ed and bausteine.einfuegen(self.ed, b))
+                            lambda b=b: self.ed and self.ed.ansicht._befehl(lambda: bausteine.einfuegen(self.ed.kennung, b)))
         m.addSeparator()
         m.eintrag("AutoText hinzufügen …", self.autotextHinzufuegen, symbol=self._sym("baustein"),
                   aktiv=bool(self.ed and self.ed.textCursor().hasSelection()))
@@ -452,12 +458,12 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         """Die Markierung als AutoText (Textbaustein) speichern; der Name kommt aus dem Fenster „AutoText erstellen“."""
         if not self.ed or not self.ed.textCursor().hasSelection():
             return
-        from framework.dokumentverwaltung.dokumentpflege import bausteine
+        from writer.anbindung import bausteine
         from vcl.qt.widgets.dialoge.einfuegen.einfuegen_fenster import AutoTextDialog
         c = self.ed.textCursor()
         d = AutoTextDialog(self.w, c.selectedText().replace("\u2029", " "))
         if d.exec() and d.name():
-            bausteine.hinzufuegen(d.name(), self.ed.sitzung.ausschnitt())
+            bausteine.hinzufuegen(self.ed.kennung, d.name())
             self.w.statusBar().showMessage(f"AutoText „{d.name()}“ gespeichert.", 4000)
 
 
@@ -583,10 +589,10 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
         vorhandene mit den neuen Einstellungen neu."""
         if not self.ed:
             return
-        from core.verzeichnisse.inhaltsverzeichnis import verzeichnis as V
         from writer.anbindung import verzeichnis as _verzeichnis
+        from writer.funktionen import bearbeiten as _bearbeiten
         from vcl.qt.widgets.dialoge.verweise.inhaltsverzeichnis_dialog import InhaltsverzeichnisDialog
-        d = InhaltsverzeichnisDialog(self.w, V.toc_optionen(self.ed.sitzung.dokument) or _verzeichnis.toc_vorgabe())
+        d = InhaltsverzeichnisDialog(self.w, _bearbeiten.toc_optionen(self.ed.kennung) or _verzeichnis.toc_vorgabe())
         from writer import referenzwerkzeuge as RW
         if d.exec() and not RW.verweise_befehle(self.ed.kennung).verzeichnis_einfuegen("toc", d.ergebnis()):
             self.w.statusBar().showMessage("Im Dokument gibt es keine Überschriften. Legen Sie sie mit Verweise ▸ Inhaltsverzeichnis "

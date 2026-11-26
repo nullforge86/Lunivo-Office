@@ -30,3 +30,12 @@ def effekt_von(t: Mapping | None) -> Mapping:
 def feld_von(t: Mapping | None, teil: str | None = None) -> Mapping:
     """Das Textfeld eines Teils mit Vorgaben; ``teil="titel"`` belegt die Ränder vor (``RAENDER_TITEL``), alle anderen Teile bleiben bei 0."""
     return eigene_kopie(_fw.feld_von(t, teil))
+
+
+def fuell_dict(f):
+    """Die Füllung als Wörterbuch (dasselbe Wörterbuch, wenn schon eines übergeben ist); None bei Automatisch und bei „Keine Füllung“."""
+    return _fw.fuell_dict(f)
+
+
+def linie_keine(linie) -> bool:
+    return _fw.linie_keine(linie)

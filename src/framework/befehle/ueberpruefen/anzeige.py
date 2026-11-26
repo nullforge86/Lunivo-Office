@@ -28,7 +28,7 @@ class AnzeigeBefehle:
         if index == ORIGINAL:
             original = lesen(self._kennung, lambda s: fassungen.original(s.dokument))
             if original is not None:
-                self._vorschau.zeigen(original, "original")
+                self._vorschau.zeigen(_steuerung._neben(original), "original")
             return
         if self._vorschau.aktiv("original"):
             self._vorschau.beenden()

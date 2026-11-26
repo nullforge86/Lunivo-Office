@@ -5,7 +5,17 @@ from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter, QPainterPat
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import STAERKE_BILDEFFEKT_DUNKEL, STAERKE_BILDEFFEKT_HELL, STAERKE_BILDEFFEKT_RAND
 from vcl.qt.widgets.bausteine.farben.farben import ALPHA_VOLL, DURCHSICHTIG, GRAU_RGB, SCHWARZ_RGB, WEISS_RGB
-from core.objekte.formen.bildeffekte_daten import _dreht, _merken
+from writer.anbindung.bildeffekte_daten import dreht as _dreht
+
+_MERK: dict = {}                                                    # Schlüssel → fertiges Effektbild (kleiner Zwischenspeicher der Oberfläche)
+
+
+def _merken(schluessel, bauen):
+    if schluessel not in _MERK:
+        if len(_MERK) > 48:
+            _MERK.pop(next(iter(_MERK)))
+        _MERK[schluessel] = bauen()
+    return _MERK[schluessel]
 from writer.anbindung.bildeffekte_daten import px_pt
 from writer.anbindung.bildeffekte_daten import hat_abschluss
 from writer.anbindung.bildeffekte_daten import tiefe_richtung

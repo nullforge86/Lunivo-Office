@@ -11,7 +11,6 @@ from vcl.qt.rendering.formen.bilddaten import BildFehler
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
-from core.dokument.abschnitte.seite import HeaderFooter
 from vcl.qt.widgets.dialoge.dokument_dialoge import HeaderFooterDialog
 from vcl.qt.widgets.dialoge.table_dialog import TableDialog
 
@@ -111,16 +110,8 @@ class BackstageDokumentBaustein:
             hf = page.header if header else page.footer
         d = HeaderFooterDialog(("Kopfzeile" if header else "Fußzeile") + (" (erste Seite)" if erste else ""), hf, self)
         if d.exec():
-            if erste:
-                if header:
-                    page.first_header = d.value()
-                else:
-                    page.first_footer = d.value()
-            elif header:
-                page.header = d.value()
-            else:
-                page.footer = d.value()
-            t.editor.page_settings_changed(page)
+            zeile = ("first_header" if header else "first_footer") if erste else ("header" if header else "footer")
+            t.editor.kopffuss_zeile_setzen(zeile, *d.value())
 
 
     def kopffuss_starten(self, editor, header: bool = True):
@@ -136,11 +127,6 @@ class BackstageDokumentBaustein:
         t = self.current_tab()
         if not t:
             return
-        page = t.editor.abschnitt_seite()
-        if page.footer.is_empty():
-            page.footer = HeaderFooter("{PAGE}", "center")
-        elif "{PAGE}" not in page.footer.text:
-            page.footer.text += " {PAGE}"
-        t.editor.page_settings_changed(page)
+        t.editor.seitenzahl_einfuegen()
 
 

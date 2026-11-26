@@ -38,7 +38,6 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "ORIGINAL_DOCX_METAFILE": ("bilddaten", "ORIGINAL_DOCX_METAFILE"),
     "ORIGINAL_ODT": ("bilddaten", "ORIGINAL_ODT"),
     "Pfad": ("formen_katalog", "Pfad"),
-    "QtRenderBackend": ("rendering", "QtRenderBackend"),
     "SCHRITT": ("bildwerkzeuge", "SCHRITT"),
     "STANDARD": ("bildlayout", "STANDARD"),
     "STILE": ("linie", "STILE"),
@@ -156,8 +155,6 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "ist_linie": ("formen_katalog", "ist_linie"),
     "ist_svg": ("bilddaten", "ist_svg"),
     "kachel": ("muster", "kachel"),
-    "kern_bild": ("anzeige", "kern_bild"),
-    "kern_malen": ("anzeige", "kern_malen"),
     "kette_aktualisieren": ("frei_objekt", "kette_aktualisieren"),
     "knoten": ("freiform", "knoten"),
     "komprimieren": ("bildwerkzeuge", "komprimieren"),
@@ -273,8 +270,6 @@ def __getattr__(name: str):
         from . import muster as _datei
     elif datei == "pfad":
         from . import pfad as _datei
-    elif datei == "rendering":
-        from . import rendering as _datei
     elif datei == "seitenrahmen":
         from . import seitenrahmen as _datei
     elif datei == "sprechblasen":

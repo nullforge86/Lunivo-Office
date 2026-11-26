@@ -6,6 +6,7 @@ from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
     "vorlagen": ("anbindung", "vorlagen"),
+    "zeilengrund": ("anbindung", "zeilengrund"),
 }
 
 __all__ = sorted(_NAMEN)

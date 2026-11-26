@@ -4,6 +4,8 @@ Das Hauptfenster ruft diese Klasse auf und kümmert sich selbst nur um Dialoge (
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import os
 
 from framework.dokumentverwaltung.dateizugriff import dateiformate as formats
@@ -41,6 +43,18 @@ class DocumentManager:
         from framework.dokumentverwaltung.dateizugriff import modell_speichern, sicher_schreiben
         stand = erwartet[0] if erwartet is not None else sicher_schreiben.UNGEPRUEFT
         return modell_speichern.speichere_modell(path, dokument, seite, self.meta_fuer_speichern(meta), erwartet=stand)
+
+    def speichern_dokument(self, kennung: int, path: str, seite, meta: Mapping, erwartet=None) -> tuple[str, ...]:
+        """Schreibt das Dokument ``kennung`` nach ``path``; → Hinweise über nicht Übernommenes. ``erwartet``: der zuletzt gesehene ``stand`` der
+        Zieldatei. Lässt sich die Datei nicht schreiben (auch: sie wurde inzwischen von anderer Seite geändert), meldet das ``Dateifehler``."""
+        from core.dokument import DocumentIOError
+        from framework.schnittstellen import Dateifehler
+        from framework.sitzungen.dokumentsteuerung import sitzung as _steuerung
+        try:
+            bericht = self.speichern(path, _steuerung._sitzungen[kennung].sitzung.dokument, seite, dict(meta), erwartet)
+        except DocumentIOError as e:
+            raise Dateifehler(str(e)) from None
+        return tuple(bericht.warnings)
 
     # ---- Zuletzt benutzt -------------------------------------------------------------------------------
     def zuletzt(self) -> list[str]:

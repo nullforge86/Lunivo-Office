@@ -11,3 +11,13 @@ from framework.anbindung import fest
 @cache
 def vorgabe() -> Mapping[str, bool | str]:
     return fest(_k.VORGABE)
+
+
+def aus_text(text: str) -> Mapping[str, bool | str]:
+    """Die Absatzoptionen aus ihrer Textform (leerer Text: keine)."""
+    return fest(_k.aus_text(text))
+
+
+def als_text(optionen: Mapping[str, bool | str]) -> str:
+    """Die Absatzoptionen als Text für das Absatzformat (leer, wenn alle der Vorgabe entsprechen)."""
+    return _k.als_text(dict(optionen))

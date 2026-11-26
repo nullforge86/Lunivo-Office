@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from PySide6.QtWidgets import QMessageBox
-from framework.serienbriefe.erstellung import serienbrief
+from writer.funktionen import bearbeiten as _bearbeiten
 from writer.anbindung import serienquelle as serienquelle
 from writer.ueberpruefung.korrektur.einstellungen import pruefsprache, pruefsprache_setzen
 from writer import serienbriefwerkzeuge as sendungen
@@ -20,10 +20,9 @@ class PruefenBefehle:
         """Wörter zählen wie in der Vorlage: Statistiken des Dokuments, auf Wunsch samt Fuß- und Endnoten."""
         if not self.ed:
             return
-        from core.text import statistik as S
         from writer.anbindung import statistik as _statistik
         from vcl.qt.widgets.dialoge.ueberpruefen.woerter_dialog import WoerterDialog
-        texte = S.texte_des_dokuments(self.ed.sitzung.dokument)
+        texte = _bearbeiten.texte_des_dokuments(self.ed.kennung)
         noten = [t for art in ("f", "e") for t in self.ed.noten.get(art, {}).values()]
         seiten = self.ed.page_count
         WoerterDialog(self.w, _statistik.zaehlen(texte, seiten), _statistik.zaehlen(texte + noten, seiten)).exec()
@@ -111,18 +110,21 @@ class PruefenBefehle:
     # ---- Sendungen --------------------------------------------------------------------------------------------
     # ---- Vergleichen und Zusammenführen ---------------------------------------------------------------------------------------
     def _fassung_laden(self, pfad: str):
-        from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
+        """Die Datei als Fassung beim Framework laden; → ihre Nummer (``None``, wenn sie sich nicht lesen lässt)."""
         try:
-            return lade_modell(pfad).document
+            return _bearbeiten.fassung_laden(pfad)
         except Exception as e:                                  # unlesbare Datei: melden, nicht abbrechen
             QMessageBox.warning(self.w, "Datei lesen", f"„{os.path.basename(pfad)}“ lässt sich nicht lesen:\n{e}")
             return None
 
 
     def _ergebnis_blatt(self, titel: str, ziel, page=None):
-        """Öffnet das Ergebnis (ein ``Dokument``) in einem neuen Blatt."""
+        """Öffnet das Ergebnis (``ziel``: Nummer eines Dokuments, das das Framework bereithält) in einem neuen Blatt."""
         t = self._neues_blatt(titel)
-        t.editor.ansicht._aendern(lambda s: s.dokument_ersetzen(ziel))
+        try:
+            t.editor.ansicht._befehl(lambda: _bearbeiten.ergebnis_einsetzen(t.editor.kennung, ziel))
+        finally:
+            _bearbeiten.ergebnis_verwerfen(ziel)
         t.editor.document().setModified(True)
         return t
 
@@ -131,7 +133,6 @@ class PruefenBefehle:
         t = self.w.current_tab()
         if not t:
             return
-        from core.aenderungsverfolgung.vergleich import vergleich as V
         pfad, _ = Dateifenster.getOpenFileName(self.w, "Mit welchem Dokument vergleichen?", self.w.settings.get("last_dir", os.path.expanduser("~")),
                                               "Dokumente (*.docx *.odt *.txt *.md);;Alle Dateien (*)")
         if not pfad:
@@ -140,7 +141,7 @@ class PruefenBefehle:
         if andere is None:
             return
         autor = os.path.splitext(os.path.basename(pfad))[0]
-        ziel, st = V.vergleichen(t.editor.sitzung.dokument, andere, autor)
+        ziel, st = _bearbeiten.dokumente_vergleichen(t.editor.kennung, andere, autor)
         self._ergebnis_blatt(f"Vergleich — {t.title} ↔ {autor}", ziel, t.page)
         self.w.statusBar().showMessage(
             (f"Vergleich fertig: {st['eingefuegt']} Zeichen eingefügt, {st['geloescht']} gelöscht (Überprüfen ▸ Änderungen: annehmen oder ablehnen)."
@@ -151,7 +152,6 @@ class PruefenBefehle:
         t = self.w.current_tab()
         if not t:
             return
-        from core.aenderungsverfolgung.vergleich import vergleich as V
         pfade, _ = Dateifenster.getOpenFileNames(self.w, "Überarbeitete Fassungen auswählen (jede Datei ist ein Autor)",
                                                 self.w.settings.get("last_dir", os.path.expanduser("~")),
                                                 "Dokumente (*.docx *.odt *.txt *.md);;Alle Dateien (*)")
@@ -162,7 +162,7 @@ class PruefenBefehle:
                 fassungen.append((os.path.splitext(os.path.basename(p))[0], d))
         if not fassungen:
             return
-        ziel, st, konflikte = V.zusammenfuehren(t.editor.sitzung.dokument, fassungen)
+        ziel, st, konflikte = _bearbeiten.dokumente_zusammenfuehren(t.editor.kennung, fassungen)
         self._ergebnis_blatt(f"Zusammenführung — {t.title}", ziel, t.page)
         msg = f"{len(fassungen)} Fassungen zusammengeführt: {st['eingefuegt']} Zeichen eingefügt, {st['geloescht']} gelöscht."
         if konflikte:
@@ -237,7 +237,7 @@ class PruefenBefehle:
             return
         self.w.settings.set("serien/liste", d.daten.toPlainText())
         titel = self.w.current_tab().title
-        ziel, n = serienbrief.serienbrief_erzeugen(self.ed.sitzung.dokument, tab[1])
+        ziel, n = _bearbeiten.serienbrief_erzeugen(self.ed.kennung, tab[1])
         t = self._ergebnis_blatt(titel + " — Seriendruck", ziel)
         self.w.statusBar().showMessage(f"{n} Briefe erzeugt (neues Dokument; die Vorlage bleibt unverändert).", 6000)
 

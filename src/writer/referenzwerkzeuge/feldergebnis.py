@@ -1,4 +1,4 @@
-"""Qt-freie Auswertung von Feldanweisungen.
+"""Qt-freie Auswertung von Feldanweisungen: verteilt eine Feldanweisung auf die Feldhelfer der Oberfläche.
 Die benötigten Feldhelfer werden vom Adapter übergeben.
 """
 

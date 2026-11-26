@@ -337,21 +337,17 @@ class NavigationPanel(QWidget):
             self.leer.show()
             return
         eltern = {0: self.baum.invisibleRootItem()}
-        from core.formatvorlagen.formatvorlagen import ueberschriftsebene
-        dok, stelle = ed.sitzung.dokument, 0
+        from writer.funktionen import bearbeiten as _bearbeiten
         n = 0
-        for a in dok.absaetze():
-            lvl = ueberschriftsebene(dok, a)
-            pos, stelle = stelle, stelle + a.laenge + 1
-            if lvl and a.text().strip():
-                it = QTreeWidgetItem([a.text().strip()])
-                it.setData(0, Qt.UserRole, pos)
-                p = eltern.get(lvl - 1) or eltern[max(k for k in eltern if k < lvl)]
-                p.addChild(it)
-                eltern[lvl] = it
-                for k in [k for k in eltern if k > lvl]:
-                    del eltern[k]
-                n += 1
+        for pos, lvl, titel in _bearbeiten.ueberschriften(ed.kennung):
+            it = QTreeWidgetItem([titel])
+            it.setData(0, Qt.UserRole, pos)
+            p = eltern.get(lvl - 1) or eltern[max(k for k in eltern if k < lvl)]
+            p.addChild(it)
+            eltern[lvl] = it
+            for k in [k for k in eltern if k > lvl]:
+                del eltern[k]
+            n += 1
         self.baum.expandAll()
         self.leer.setVisible(n == 0)
 

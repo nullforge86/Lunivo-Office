@@ -99,6 +99,3 @@ def aus_text(text: str | None, farbe: str = "") -> dict | None:
     except ValueError:
         return None
 
-
-# DOCX-Erweiterung w14: Qt-frei in ``dienste/docx_effekte``; hier weiter erreichbar
-from filter.docx.docx_effekte import aus_rpr, in_rpr  # noqa: E402,F401

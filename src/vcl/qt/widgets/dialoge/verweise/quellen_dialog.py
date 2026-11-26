@@ -4,7 +4,6 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem
 
-from framework.befehle.verweise.befehle import VerweiseBefehle
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.abstaende.mass import GROESSE_FENSTER_VERWEIS
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
@@ -15,7 +14,7 @@ from vcl.qt.widgets.dialoge.verweise.quelle_dialog import QuelleDialog
 
 
 class QuellenDialog(PanelFaehig, QDialog):
-    def __init__(self, parent, verweise: VerweiseBefehle):
+    def __init__(self, parent, verweise):
         super().__init__(parent)
         self.verweise = verweise
         self.setWindowTitle("Quellen verwalten")

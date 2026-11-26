@@ -86,6 +86,15 @@ def _alte_bloecke(absaetze: list) -> list:
     return aus
 
 
+def bloecke_von(baustein):
+    """Die Blöcke des Bausteins mit seiner Formatierung; ``None`` für einen Eintrag ohne Blockdaten (einfacher Text)."""
+    if baustein.get("bloecke"):
+        return bloecke_aus_daten(baustein["bloecke"])
+    if baustein.get("absaetze"):
+        return _alte_bloecke(baustein["absaetze"])
+    return None
+
+
 def einfuegen(editor, baustein: dict) -> None:
     """Fügt den Baustein mit seiner Formatierung an der Schreibmarke ein; ein Eintrag ohne Blockdaten kommt als einfacher Text."""
     if baustein.get("bloecke"):

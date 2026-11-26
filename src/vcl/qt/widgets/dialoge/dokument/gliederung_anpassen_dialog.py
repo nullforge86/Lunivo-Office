@@ -6,7 +6,6 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPen
 from PySide6.QtWidgets import QDialog, QLabel, QListView, QListWidget, QWidget
 import copy
-from core.listen.mehrstufig import mehrstufig as M
 from writer.anbindung import mehrstufig as _mehrstufig
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -148,7 +147,7 @@ class GliederungAnpassenDialog(PanelFaehig, QDialog):
         f = p.font(); f.setPixelSize(max(8, int(h * 0.62))); p.setFont(f)
         y = r.top()
         for n in range(1, _mehrstufig.ebenen() + 1):
-            M.zaehlen(zaehler, d, n)
+            _mehrstufig.zaehlen(zaehler, d, n)
             t = _mehrstufig.nummer_der_ebene(d, zaehler, n)
             e = d["ebenen"][n - 1]
             x = r.left() + e["ausr"] * 1.1

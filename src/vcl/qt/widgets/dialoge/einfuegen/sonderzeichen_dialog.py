@@ -2,7 +2,7 @@
 from __future__ import annotations
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
-from core.formatierung.schrift import standard_datenbank
+from writer.anbindung import schriften as standard_datenbank
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from typing import Callable
 from PySide6.QtCore import QSize, Qt

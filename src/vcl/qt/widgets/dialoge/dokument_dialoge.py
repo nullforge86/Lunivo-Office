@@ -3,7 +3,6 @@ from vcl.qt.widgets.bausteine.interaktion.haken.haken import haken
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 from PySide6.QtWidgets import QDialog, QPlainTextEdit, QSpinBox, QWidget
-from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 from writer.anbindung.seite import paper_mm
 from vcl.qt.widgets.bausteine.interaktion.felder.mass_feld import spin as _spin
 from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
@@ -13,7 +12,7 @@ from vcl.qt.widgets.menues.dropdown.auswahlfeld import Auswahlfeld
 
 
 class PageSetupDialog(PanelFaehig, QDialog):
-    def __init__(self, page: PageSettings, parent=None):
+    def __init__(self, page, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Seite einrichten")
         self.page = page.copy()
@@ -37,7 +36,7 @@ class PageSetupDialog(PanelFaehig, QDialog):
         bb = knopfzeile(self)
         lay = _spalte("standard", self); lay.addWidget(inhalt); lay.addWidget(bb)
 
-    def result_page(self) -> PageSettings:
+    def result_page(self):
         p = self.page
         if self.paper.currentText() in paper_mm():
             p.width_mm, p.height_mm = sorted(paper_mm()[self.paper.currentText()])
@@ -60,7 +59,7 @@ class PageSetupDialog(PanelFaehig, QDialog):
 
 
 class HeaderFooterDialog(PanelFaehig, QDialog):
-    def __init__(self, title: str, hf: HeaderFooter, parent=None):
+    def __init__(self, title: str, hf, parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.text = QPlainTextEdit(hf.text)
@@ -77,9 +76,10 @@ class HeaderFooterDialog(PanelFaehig, QDialog):
         bb = knopfzeile(self)
         lay.addWidget(bb)
 
-    def value(self) -> HeaderFooter:
-        return HeaderFooter(self.text.toPlainText().strip("\n"),
-                            ["left", "center", "right", "aussen", "innen"][self.align.currentIndex()])
+    def value(self) -> tuple[str, str]:
+        """(Text, Ausrichtung) der Zeile."""
+        return (self.text.toPlainText().strip("\n"),
+                ["left", "center", "right", "aussen", "innen"][self.align.currentIndex()])
 
 
 class BildZuschneidenDialog(PanelFaehig, QDialog):

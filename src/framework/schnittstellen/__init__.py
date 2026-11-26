@@ -6,13 +6,18 @@ from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
     "AenderungsPort": ("aenderungs_port", "AenderungsPort"),
+    "Bildfehler": ("fehler", "Bildfehler"),
     "BlasenEinstellung": ("sprechblasen", "BlasenEinstellung"),
     "BlasenKatalog": ("sprechblasen", "BlasenKatalog"),
     "BlasenSchrift": ("sprechblasen", "BlasenSchrift"),
+    "Dateifehler": ("fehler", "Dateifehler"),
     "ERSTSTART_MARKE": ("einstellungen", "ERSTSTART_MARKE"),
     "EditorPort": ("dokument", "EditorPort"),
     "Einstellungen": ("einstellungen", "Einstellungen"),
+    "KennwortNoetig": ("fehler", "KennwortNoetig"),
     "MAX_ZULETZT": ("einstellungen", "MAX_ZULETZT"),
+    "ORGANISATION": ("einstellungen", "ORGANISATION"),
+    "PROGRAMM": ("einstellungen", "PROGRAMM"),
     "SeitenPort": ("seiten_port", "SeitenPort"),
     "SilbenEinstellung": ("silbenfarben", "SilbenEinstellung"),
     "SilbenKatalog": ("silbenfarben", "SilbenKatalog"),
@@ -37,6 +42,8 @@ def __getattr__(name: str):
         from . import dokument as _datei
     elif datei == "einheiten":
         from . import einheiten as _datei
+    elif datei == "fehler":
+        from . import fehler as _datei
     elif datei == "einstellungen":
         from . import einstellungen as _datei
     elif datei == "seiten_port":

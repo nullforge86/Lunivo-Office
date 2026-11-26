@@ -15,6 +15,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "nummer_der_ebene": ("anbindung", "nummer_der_ebene"),
     "platzhalter": ("anbindung", "platzhalter"),
     "vorlagen": ("anbindung", "vorlagen"),
+    "zaehlen": ("anbindung", "zaehlen"),
 }
 
 __all__ = sorted(_NAMEN)

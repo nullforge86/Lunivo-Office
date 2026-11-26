@@ -58,11 +58,12 @@ def kann(ed, was: str, richtung: str = "") -> bool:
 def zeichnen_mit_knoten(daten: dict) -> tuple[QImage, dict[str, QRectF]]:
     """Das SmartArt als Bild und dazu die Rechtecke aller Knoten (id → QRectF in Bildpunkten dieses Bildes)."""
     from vcl.qt.rendering.smartart import smartart_zeichnen as zeichner
+    from writer.anbindung import zeichnen as ZW
 
     kn = knoten_von(daten)
     pts = [(k["ebene"], _knotentext(k)) for k in kn] or [(0, "…")]
-    zeichner._ZU.update(schrift=None, stil=int(daten.get("stil", 1)), rtl=bool(daten.get("rtl")), b=520, reg={}, ids=[k["id"] for k in kn], knoten=kn,
-               hier=daten.get("hierarchie", "standard"), fmt=[k.get("format") for k in kn], fmt_alle=daten.get("format") or {})
+    ZW.smartart_beginnen(kn, [k.get("format") for k in kn], daten.get("format") or {})
+    zeichner._ZU.update(stil=int(daten.get("stil", 1)), rtl=bool(daten.get("rtl")), b=520, reg={}, ids=[k["id"] for k in kn], hier=daten.get("hierarchie", "standard"))
     img = zeichner._ZEICHNER.get(daten.get("layout", "Liste"), zeichner._pyramide)(daten, pts, 520)
     reg, letzt = dict(zeichner._ZU["reg"]), QRectF(0, 0, img.width(), img.height())
     for ident in zeichner._ZU["ids"]:                                                 # jeder Knoten hat ein Rechteck: sonst das des Knotens davor

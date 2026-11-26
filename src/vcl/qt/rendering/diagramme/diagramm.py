@@ -16,7 +16,11 @@ from PySide6.QtGui import QImage
 
 from writer.anbindung import diagramm_zusatz as Z
 # Katalog und Gestaltung stehen in eigenen Modulen; die Namen bleiben hier erreichbar (``diagramm.TYPEN``, ``diagramm.STILE`` …)
-from core.diagramme.typen.diagramm_typen import _art, beispiel, hat_linien, ist_kreis, kombi_vorgabe
+from writer.anbindung.diagrammtypen import art as _art
+from writer.anbindung.diagrammtypen import beispiel
+from writer.anbindung.diagrammtypen import hat_linien
+from writer.anbindung.diagrammtypen import ist_kreis
+from writer.anbindung.diagrammtypen import kombi_vorgabe
 from writer.anbindung.diagrammtypen import beispiel_kategorien
 from writer.anbindung.diagrammtypen import beispiel_reihen
 from writer.anbindung.diagrammtypen import kombi_typen
@@ -56,15 +60,19 @@ def bild(untertyp: str, titel: str, kategorien: list[str], reihen: dict[str, lis
 
 
 def _kern_bild(d: dict, b: float, h: float, skala: float, geo: dict | None) -> QImage:
-    from vcl.qt.rendering.formen import kern_bild
-    from core.geometrie import Rect
-    from core.layout.drucklayout.ausgabe.diagramm.diagrammzeichner import zeichne_diagramm
+    from vcl.qt.rendering.formen import raster_bild
+    from writer.anbindung import zeichnen as ZW
     b, h = max(1, round(b)), max(1, round(h))
-    kern_geo: dict | None = {} if geo is not None else None
-    bild = kern_bild(b, h, lambda ziel: zeichne_diagramm(ziel, Rect(0, 0, b, h), d, kern_geo), (255, 255, 255, 255), skala)
+    kern_geo: dict = {}
+
+    def erzeuge(flaeche: tuple) -> tuple:
+        rasterbild, teile_geo = ZW.diagramm(flaeche, (0, 0, b, h), d, geo is not None)
+        kern_geo.update(teile_geo)
+        return rasterbild
+    bild = raster_bild(b, h, erzeuge, (255, 255, 255, 255), skala)
     if geo is not None:
-        for k, r in (kern_geo or {}).items():
-            geo[k] = [QRectF(x.x, x.y, x.width, x.height) for x in r] if isinstance(r, list) else QRectF(r.x, r.y, r.width, r.height)
+        for k, r in kern_geo.items():
+            geo[k] = [QRectF(*x) for x in r] if isinstance(r, list) else QRectF(*r)
     return bild
 
 

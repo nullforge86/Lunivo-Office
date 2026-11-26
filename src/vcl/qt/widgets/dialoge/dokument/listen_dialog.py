@@ -3,7 +3,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import spalte as _spalte
 import json
 from PySide6.QtCore import QRectF, QSize, Qt
-from framework.schnittstellen.einstellungen import Einstellungen
+from writer.hauptfenster import einstellungen as _einstellungen
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QDialog, QListView, QListWidget, QListWidgetItem, QWidget
 from writer.anbindung import listen as L
@@ -29,14 +29,14 @@ _SCHLUESSEL = "listen/benutzer"
 
 def benutzerlisten() -> list[dict]:
     try:
-        d = json.loads(str(Einstellungen().get(_SCHLUESSEL, "[]") or "[]"))
+        d = json.loads(str(_einstellungen().get(_SCHLUESSEL, "[]") or "[]"))
         return [L.liste(x["stil"], x["praefix"], x["suffix"], x["start"]) for x in d if x.get("stil") in L.stile()]
     except (ValueError, KeyError, TypeError):
         return []
 
 
 def _merke(listen: list[dict]) -> None:
-    Einstellungen().set(_SCHLUESSEL, json.dumps(listen, ensure_ascii=False))
+    _einstellungen().set(_SCHLUESSEL, json.dumps(listen, ensure_ascii=False))
 
 
 def _raster(eintraege: list[dict | None], bild=None) -> QListWidget:

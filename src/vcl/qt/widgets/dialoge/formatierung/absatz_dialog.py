@@ -48,7 +48,6 @@ def aus_absatz(af: dict, dokument) -> dict:
     """Die Werte eines wirksamen Absatzformats (Wörterbuch des Dokumentenmodells, siehe ``formatwerte.absatzformat``) für das Fenster (Gegenstück zu
     ``werte()``): Einzüge in mm, Abstände in pt, Zeilenabstand."""
     from writer.anbindung import formatwerte as _formatwerte
-    from core.formatierung.absatz import absatzopt
     from writer.anbindung import absatzoptionen as _absatzoptionen
     from writer.werte import px_zu_mm as px_to_mm
     from vcl.qt.widgets.dialoge.dokument.tabstopp_dialog import aus_absatz as tabs_aus_absatz
@@ -60,15 +59,14 @@ def aus_absatz(af: dict, dokument) -> dict:
             "einzug": px_to_mm(links), "rechts": px_to_mm(rechts), "erste": px_to_mm(erste), "vor": vor * 0.75, "nach": nach * 0.75,
             "zeilen": wert / 100 if art == "proportional" and wert else 1.0, "zeilen_art": {"fixed": "genau", "min": "mindestens"}.get(art, "faktor"),
             "zeilen_pt": round(wert * 0.75, 1) if art in ("fixed", "min") else 12.0, "ebene": int(af.get("gliederungsebene") or 0),
-            "opt": {**_absatzoptionen.vorgabe(), **(absatzopt.aus_text(roh) if isinstance(roh, str) else {})}, "umbruch": bool(af.get("seitenumbruch_vor")),
+            "opt": {**_absatzoptionen.vorgabe(), **(_absatzoptionen.aus_text(roh) if isinstance(roh, str) else {})}, "umbruch": bool(af.get("seitenumbruch_vor")),
             "tabs": tabs_aus_absatz(af, dokument)}
 
 
 def werte_von(editor, absatz) -> dict:
     """Die Fensterwerte des Absatzes ``absatz`` im Dokument des Editors."""
-    from core.layout.drucklayout import formatwerte as F
-    d = editor.sitzung.dokument
-    return aus_absatz(F.absatzformat(d, absatz), d)
+    from writer.funktionen import bearbeiten as _bearbeiten
+    return aus_absatz(_bearbeiten.absatzformat_von(editor.kennung, absatz.id), None)
 
 
 def werte_an_marke(editor) -> dict:

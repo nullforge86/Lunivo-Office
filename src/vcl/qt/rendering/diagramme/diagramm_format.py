@@ -10,7 +10,10 @@ from vcl.qt.rendering import formen as E
 from vcl.qt.rendering.formen import freie_bilder as FB
 from vcl.qt.rendering.wordart import textfx as X
 from vcl.qt.rendering import wordart as T
-from core.diagramme.formatierung.diagramm_format_daten import _BILDER, fuell_dict, linie_keine
+from writer.anbindung.diagramm_format_daten import fuell_dict
+from writer.anbindung.diagramm_format_daten import linie_keine
+
+_BILDER: dict = {}                                                  # Text einer Bildfüllung → fertiges Bild (kleiner Zwischenspeicher der Oberfläche)
 from writer.anbindung.diagramm_format_daten import fx_nur_hinter
 from writer.anbindung.diagramm_format_daten import fx_schluessel
 from writer.anbindung.diagramm_format_daten import px_pt

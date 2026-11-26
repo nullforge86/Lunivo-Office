@@ -1,42 +1,42 @@
-"""Qt-Geometrie ↔ ``core.geometry`` (alle Maße in Bildpunkten, y nach unten — wie bei Qt, also ohne Umrechnung der Einheit)."""
+"""Qt-Geometrie ↔ Geometrie der Oberfläche ohne Qt (``writer.werte``; alle Maße in Bildpunkten, y nach unten — wie bei Qt, also ohne Umrechnung der Einheit)."""
 from __future__ import annotations
 
 from PySide6.QtCore import QMarginsF, QPointF, QRectF, QSizeF
 
-from core.geometrie import Margins, Point, Rect, Size
+from writer.werte import Groesse, Punkt, Raender, Rechteck
 
 
-def point_from_qt(p) -> Point:
-    """``QPointF`` oder ``QPoint`` → ``Point``."""
-    return Point(float(p.x()), float(p.y()))
+def point_from_qt(p) -> Punkt:
+    """``QPointF`` oder ``QPoint`` → ``Punkt``."""
+    return Punkt(float(p.x()), float(p.y()))
 
 
-def point_to_qt(p: Point) -> QPointF:
+def point_to_qt(p: Punkt) -> QPointF:
     return QPointF(p.x, p.y)
 
 
-def size_from_qt(s) -> Size:
-    """``QSizeF`` oder ``QSize`` → ``Size``."""
-    return Size(float(s.width()), float(s.height()))
+def size_from_qt(s) -> Groesse:
+    """``QSizeF`` oder ``QSize`` → ``Groesse``."""
+    return Groesse(float(s.width()), float(s.height()))
 
 
-def size_to_qt(s: Size) -> QSizeF:
+def size_to_qt(s: Groesse) -> QSizeF:
     return QSizeF(s.width, s.height)
 
 
-def rect_from_qt(r) -> Rect:
-    """``QRectF`` oder ``QRect`` → ``Rect``."""
-    return Rect(float(r.x()), float(r.y()), float(r.width()), float(r.height()))
+def rect_from_qt(r) -> Rechteck:
+    """``QRectF`` oder ``QRect`` → ``Rechteck``."""
+    return Rechteck(float(r.x()), float(r.y()), float(r.width()), float(r.height()))
 
 
-def rect_to_qt(r: Rect) -> QRectF:
+def rect_to_qt(r: Rechteck) -> QRectF:
     return QRectF(r.x, r.y, r.width, r.height)
 
 
-def margins_from_qt(m) -> Margins:
-    """``QMarginsF`` oder ``QMargins`` → ``Margins``."""
-    return Margins(float(m.left()), float(m.top()), float(m.right()), float(m.bottom()))
+def margins_from_qt(m) -> Raender:
+    """``QMarginsF`` oder ``QMargins`` → ``Raender``."""
+    return Raender(float(m.left()), float(m.top()), float(m.right()), float(m.bottom()))
 
 
-def margins_to_qt(m: Margins) -> QMarginsF:
+def margins_to_qt(m: Raender) -> QMarginsF:
     return QMarginsF(m.left, m.top, m.right, m.bottom)

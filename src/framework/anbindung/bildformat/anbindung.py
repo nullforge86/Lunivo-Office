@@ -20,9 +20,19 @@ def max_entpackt_bytes() -> int:
 
 def entpacken(blob: bytes, grenze: int = 52428800) -> bytes:
     """gzip-gepackte Bilddaten (SVGZ, EMZ, WMZ) entpacken, höchstens ``grenze`` Bytes; andere Daten bleiben unverändert."""
-    return fest(_k.entpacken(blob, grenze))
+    from framework.schnittstellen import Bildfehler
+    try:
+        return fest(_k.entpacken(blob, grenze))
+    except _k.BildFehler as e:
+        raise Bildfehler(str(e)) from None
 
 
 def format_erkennen(blob: bytes) -> str | None:
     """Das Bildformat am Dateikopf (nicht an der Endung); None, wenn es keines der bekannten ist."""
     return fest(_k.format_erkennen(blob))
+
+
+def svg_masse(daten: bytes) -> tuple[float, float] | None:
+    """Breite und Höhe eines SVG-Bildes (liest der Kern aus den Daten)."""
+    from core.layout.drucklayout.ausgabe.bild import svg_masse as masse
+    return masse(daten)

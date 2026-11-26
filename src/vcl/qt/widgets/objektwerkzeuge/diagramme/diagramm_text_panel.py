@@ -12,7 +12,7 @@ from writer.funktionen.objekte import diagrammformat as FW
 from vcl.qt.rendering import wordart as T
 from writer.anbindung.textfx_daten import warp_formen
 from writer.anbindung.texteffekte import pfad_verformen
-from core.objekte.anordnung.objekte_hilfen import VectorPath
+from writer.werte import Vektorpfad
 from vcl.qt.rendering.formen import pfad_zu_vektor, vektor_zu_pfad
 from vcl.qt.widgets.menues.dropdown.voreinstellung_menue import VoreinstellungMenue
 from vcl.qt.widgets.menues.dropdown.kopf_dropdown import KopfDropdown, keine_zeile
@@ -107,7 +107,7 @@ class DiagrammTextPanel(TextFuellartenMixin, TextKopfMenueMixin, _TextPanel):
         pm = QPixmap(groesse); pm.fill(Qt.transparent)
         pfad = QPainterPath(); pfad.addText(0, 0, QFont(FAMILIE_TEXTVERFORMUNG_KACHEL, SCHRIFT_TEXTVERFORMUNG_PFAD_PT), "abcde")
         ops = pfad_verformen(list(pfad_zu_vektor(pfad).ops), {"warp": {"art": art}})            # Kern verformt Pfadanweisungen, nicht QPainterPath
-        pfad = vektor_zu_pfad(VectorPath(tuple(ops)))
+        pfad = vektor_zu_pfad(Vektorpfad(tuple(ops)))
         r = pfad.boundingRect()
         if r.isEmpty():
             return pm

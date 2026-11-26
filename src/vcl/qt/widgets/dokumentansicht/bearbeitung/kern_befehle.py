@@ -11,82 +11,15 @@ import re
 
 from PySide6.QtCore import Qt
 
-from core.suche.textsuche.suche import offset_zu_position
-from core.dokument.dokument import Auswahl, ListenEbene, Position
-from writer.anbindung.dokument import aufzaehlungen
-from writer.anbindung.dokument import listen_ebenen
-from writer.anbindung.listen_listen import platzhalter
-from writer.anbindung.listen_listen import zeichen_der_aufzaehlung
+from writer.werte import Bereich, Stelle
 from writer.werte import mm_zu_px as mm_to_px, px_zu_mm as px_to_mm
 from writer.funktionen import bearbeiten as _bearbeiten
-from core.layout.drucklayout import formatwerte as F
+from writer.anbindung import absatzoptionen as _absatzoptionen
 from writer.anbindung import formatwerte as _formatwerte
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
 from vcl.qt.widgets.bausteine.farben.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
-
-
-# ---- Listen: Beschreibung der Oberfläche ↔ Ebenen des Modells -------------------------------------------------------------------------------------
-def spec_zu_ebenen(spec: dict) -> list:
-    """Die 9 Ebenen einer Liste des Modells für die Beschreibung, die die Listenfenster liefern (einfache Liste oder Gliederung)."""
-    if "ebenen" in spec:
-        aus = []
-        for x in spec["ebenen"][:listen_ebenen()]:
-            zusatz = {k: x[k] for k in ("tab", "ausr_art", "danach", "neu", "norm", "vorlage") if x.get(k)}
-            if x.get("zeichen"):
-                zusatz["zeichenformat"] = dict(x["zeichen"])
-            fmt, stil = x.get("format", ""), x.get("stil", "dezimal")
-            if stil in PUNKTE:
-                aus.append(ListenEbene(stil=stil, ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
-            elif not any(ch in fmt for ch in platzhalter()):
-                aus.append(ListenEbene(stil="zeichen", zeichen=fmt or "•", ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
-            else:
-                aus.append(ListenEbene(stil=stil, format=fmt, start=int(x.get("start", 1)), ausr=x["ausr"], einzug=x["einzug"], zusatz=zusatz))
-        while len(aus) < listen_ebenen():
-            i = len(aus)
-            aus.append(dataclasses.replace(aus[-1], ausr=aus[-1].ausr + 6.3, einzug=aus[-1].einzug + 6.3) if aus else ListenEbene(ausr=6.3 * i, einzug=6.3 * (i + 1)))
-        return aus
-    pos = spec.get("pos") or {}
-    stil = spec["stil"]
-    zusatz_pos = {k: pos[k] for k in ("tab", "ausr_art", "danach") if pos.get(k)}
-    ebenen = []
-    for i in range(listen_ebenen()):
-        ausr, einzug = pos.get("ausr", 0.0) + 6.3 * i, pos.get("einzug", 6.3) + 6.3 * i
-        zusatz = dict(zusatz_pos)
-        if spec.get("zeichen"):
-            zusatz["zeichenformat"] = dict(spec["zeichen"])
-        if stil in PUNKTE:
-            rest = [s for s in PUNKTE if s != stil]
-            ebenen.append(ListenEbene(stil=([stil] + rest)[i % 3], ausr=ausr, einzug=einzug, zusatz=zusatz))
-        else:
-            art = stil if i == 0 else ZAHLEN_TIEFER[i % 3]
-            ebenen.append(ListenEbene(stil=art, format=spec.get("praefix", "") + platzhalter()[i] + spec.get("suffix", "."), start=int(spec.get("start", 1)) if i == 0 else 1,
-                                      ausr=ausr, einzug=einzug, zusatz=zusatz))
-    return ebenen
-
-
-def ebenen_zu_spec(ebenen: list) -> dict:
-    """Das Gegenstück: die Beschreibung der Liste für die Listenfenster (einfach, wenn sie genau so entstanden sein kann, sonst Gliederung)."""
-    from writer.anbindung import listen as L
-    from core.listen.mehrstufig import mehrstufig as M
-    if ebenen and all(e.stil in PUNKTE for e in ebenen) and spec_zu_ebenen(L.liste(ebenen[0].stil)) == ebenen:
-        return L.liste(ebenen[0].stil)
-    e0 = ebenen[0]
-    if e0.stil in ("dezimal", "klein", "gross", "roem_klein", "roem_gross") and e0.format.count(platzhalter()[0]) == 1 and not e0.zusatz:
-        vor, _s, nach = e0.format.partition(platzhalter()[0])
-        einfach = L.liste(e0.stil, vor, nach, e0.start)
-        if spec_zu_ebenen(einfach) == ebenen:
-            return einfach
-    aus = []
-    for e in ebenen:
-        mehr = {k: e.zusatz[k] for k in ("tab", "ausr_art", "danach", "neu", "norm", "vorlage") if e.zusatz.get(k)}
-        if e.stil in aufzaehlungen():
-            zeichen = e.zeichen or zeichen_der_aufzaehlung().get(e.stil, "•")
-            aus.append(M.ebene("dezimal", zeichen, 1, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
-        else:
-            aus.append(M.ebene(e.stil, e.format or platzhalter()[len(aus)] + ".", e.start, e.ausr, e.einzug, e.zusatz.get("zeichenformat"), **mehr))
-    return {"ebenen": aus}
 
 
 from writer.anbindung.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
@@ -129,21 +62,17 @@ class KernBefehle:
 
     def absatz_option(self, name: str):
         """Eine Absatzoption (``editor/seite/absatzopt.py``) des Absatzes an der Schreibmarke."""
-        from core.formatierung.absatz import absatzopt
-        from writer.anbindung import absatzoptionen as _absatzoptionen
-        roh = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("optionen")
-        return absatzopt.aus_text(roh if isinstance(roh, str) else "").get(name, _absatzoptionen.vorgabe().get(name))
+        roh = _bearbeiten.wirksames_absatzformat(self.kennung).get("optionen")
+        return _absatzoptionen.aus_text(roh if isinstance(roh, str) else "").get(name, _absatzoptionen.vorgabe().get(name))
 
     def absatz_option_setzen(self, name: str, wert) -> None:
-        from core.formatierung.absatz import absatzopt
-        roh = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("optionen")
-        w = absatzopt.aus_text(roh if isinstance(roh, str) else "")
+        roh = _bearbeiten.wirksames_absatzformat(self.kennung).get("optionen")
+        w = _absatzoptionen.aus_text(roh if isinstance(roh, str) else "")
         w[name] = wert
-        self._af({"optionen": absatzopt.als_text(w) or None})
+        self._af({"optionen": _absatzoptionen.als_text(w) or None})
 
     def set_absatzopt(self, opt) -> None:
-        from core.formatierung.absatz import absatzopt
-        text = opt if isinstance(opt, str) else absatzopt.als_text(opt)
+        text = opt if isinstance(opt, str) else _absatzoptionen.als_text(opt or {})
         self._af({"optionen": text or None})
 
     def set_tabstopps(self, stopps) -> None:
@@ -153,24 +82,24 @@ class KernBefehle:
         self._af({"tabstopps": liste or None, "tabfuell": fuell or None})
 
     def standard_tab_mm(self) -> float:
-        return round(px_to_mm(F._zahl(self.sitzung.dokument.eigenschaften.get("tab_abstand"), 48.0)), 2)
+        return round(px_to_mm(_bearbeiten.tab_abstand(self.kennung)), 2)
 
     def set_standard_tab_mm(self, mm: float) -> None:
         self.ansicht._aendern(lambda s: s.eigenschaft_setzen("tab_abstand", mm_to_px(mm)))
 
     def toggle_rtl(self) -> None:
-        a = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke())
+        a = _bearbeiten.wirksames_absatzformat(self.kennung)
         self._af({"richtung": "ltr" if _formatwerte.richtung(a) == "rtl" else "rtl", "ausrichtung": None if a.get("ausrichtung") in (None, "links", "rechts") else a["ausrichtung"]})
 
     def absatzrahmen(self):
         from vcl.qt.rendering.formen import Linie
-        return Linie.aus_text(F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get("rahmen"))
+        return Linie.aus_text(_bearbeiten.wirksames_absatzformat(self.kennung).get("rahmen"))
 
     def set_absatzrahmen(self, text) -> None:
         self._af({"rahmen": text or None})
 
     def absatzschatten(self) -> tuple:
-        a = F.absatzformat(self.sitzung.dokument, self._absatz_an_marke())
+        a = _bearbeiten.wirksames_absatzformat(self.kennung)
         return a.get("hintergrund"), a.get("muster")
 
     def set_absatzschatten(self, fuell=None, muster=None, musterfarbe=None) -> None:
@@ -181,28 +110,14 @@ class KernBefehle:
     # ---- Listen -----------------------------------------------------------------------------------------------------------------------------
     def liste_spec(self):
         """Beschreibung der Liste am Absatz der Schreibmarke (für die Listenfenster), ``None`` ohne Liste."""
-        d = self.sitzung.dokument
-        a = self._absatz_an_marke()
-        definition = d.listen.get(a.liste_id) if a.liste_id is not None else None
-        return ebenen_zu_spec(definition.ebenen) if definition is not None and definition.ebenen else None
+        return _bearbeiten.liste_spec(self.kennung)
 
     def set_liste(self, spec) -> None:
         """Wendet die Liste auf die Absätze der Auswahl an (``None``: Liste entfernen). Folgt sie unmittelbar auf eine gleiche Liste, zählt sie weiter."""
         if not spec:
             self.ansicht._aendern(lambda s: s.liste_entfernen())
             return
-        ebenen = spec_zu_ebenen(spec)
-
-        def f(s):
-            with s.gruppe("Liste"):
-                absaetze = list(s.dokument.absaetze())
-                start, _ende = s._bereich()
-                i = next((k for k, a in enumerate(absaetze) if a.id == start.absatz_id), 0)
-                davor = absaetze[i - 1] if i > 0 else None
-                alt = s.dokument.listen.get(davor.liste_id) if davor is not None and davor.liste_id is not None else None
-                lid = alt.id if alt is not None and alt.ebenen == ebenen else s.liste_anlegen(ebenen)
-                s.liste_anwenden(lid)
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.liste_setzen(self.kennung, spec))
 
     def liste_neu_beginnen(self, start: int = 1) -> None:
         a = self._absatz_an_marke()
@@ -278,7 +193,7 @@ class KernBefehle:
         if 0 <= n < len(d.abschnitte):
             erster = next((b for b in d.abschnitte[n].bloecke if hasattr(b, "inhalte")), None)
             if erster is not None:
-                self.sitzung.setze_auswahl(Position(erster.id, 0))
+                _bearbeiten.auswahl_setzen(self.kennung, Stelle(erster.id, 0), Stelle(erster.id, 0))
                 self.ansicht.nach_bewegung()
 
     def seite_letzter_block(self):
@@ -305,14 +220,12 @@ class KernBefehle:
     # ---- Ersetzen im Rohtext ---------------------------------------------------------------------------------------------------------------
     def rohtext(self) -> str:
         """Der Text des Dokuments mit U+2029 zwischen den Absätzen (Stellen wie bei ``textCursor().position()``)."""
-        from core.suche.textsuche.suche import roh_text
-        return roh_text(self.sitzung.dokument)
+        return _bearbeiten.rohtext(self.kennung)
 
     def replace_range(self, von: int, bis: int, neu: str, erwartet: str | None = None, markdown: bool = False) -> bool:
         """Ersetzt [von, bis) des Rohtextes durch ``neu``; mit ``erwartet`` nur, wenn dort noch dieser Text steht. ``markdown``: Auszeichnungen
         (Überschriften, Listen, Fett) werden als Formate umgesetzt."""
-        from core.suche.textsuche.suche import roh_text
-        roh = roh_text(self.sitzung.dokument)
+        roh = _bearbeiten.rohtext(self.kennung)
         if erwartet is not None and roh[von:bis] != erwartet:
             return False
         if markdown:
@@ -321,9 +234,8 @@ class KernBefehle:
         return True
 
     def _markdown_ersetzen(self, von: int, bis: int, neu: str) -> bool:
-        from core.suche.textsuche.suche import offset_zu_position
         bloecke = markdown_bloecke(neu)
-        anfang = offset_zu_position(self.sitzung.dokument, von)
+        anfang = _bearbeiten.stelle_von(self.kennung, von)
         for b in bloecke:
             if b["vorlage"]:
                 self._vorlage_abgleichen(b["vorlage"])
@@ -341,7 +253,7 @@ class KernBefehle:
                     if b["liste"] and basis == 0:
                         s.liste_anwenden(s.liste_anlegen(b["liste"]), absatz_ids=[a.id])
                     for st, en, fmt in b["laeufe"]:
-                        s.zeichenformat_anwenden(fmt, Auswahl(Position(a.id, basis + st), Position(a.id, basis + en)))
+                        s.zeichenformat_anwenden(fmt, Bereich(Stelle(a.id, basis + st), Stelle(a.id, basis + en)))
         return self.ansicht._aendern(f)
 
     def ersetze_verfolgt(self, von: int, bis: int, neu: str, autor: str = "") -> bool:
@@ -406,7 +318,6 @@ class KernBefehle:
 
     def tabelle_vorlage_anwenden(self, name: str, kopf: bool, streifen: bool, spalte: bool) -> bool:
         """Wendet eine Tabellenvorlage (Füllungen, Fettdruck, Rahmen) auf die Zellen an; die Optionen bleiben an der Tabelle gespeichert."""
-        from core.tabellen.formatierung import tabellenstil as TS
         from writer.anbindung import tabellenstil as _tabellenstil
         t = self.tabelle_an_marke()
         if t is None or name not in _tabellenstil.vorlagen():
@@ -425,7 +336,7 @@ class KernBefehle:
                         zelle = tab.zellen[z][sp]
                         if zelle.verdeckt_von is not None:
                             continue
-                        grund = TS._zeilengrund(z, kopf, kopf_fill, streifen_fill if streifen else "") or None
+                        grund = _tabellenstil.zeilengrund(z, kopf, kopf_fill, streifen_fill if streifen else "") or None
                         s.zellformat_anwenden(tid, {"hintergrund": grund}, [(z, sp)])
                         ist_kopf = kopf and z == 0
                         fett = ist_kopf or (spalte and sp == 0)
@@ -433,7 +344,7 @@ class KernBefehle:
                         if ids and (fett or sp == 0 or z == 0):
                             farbe = kopf_schrift if ist_kopf and kopf_fill else None
                             ende = s._absatz(ids[-1]).laenge
-                            s.zeichenformat_anwenden({"fett": True if fett else None, "farbe": farbe}, Auswahl(Position(ids[0], 0), Position(ids[-1], ende)))
+                            s.zeichenformat_anwenden({"fett": True if fett else None, "farbe": farbe}, Bereich(Stelle(ids[0], 0), Stelle(ids[-1], ende)))
         return self.ansicht._aendern(f)
 
     def tabelle_option_umschalten(self, schluessel: str) -> None:
@@ -606,8 +517,8 @@ class KernBefehle:
         letzte = t.zellen[-1][-1]
         letzte = t.zellen[t.anker(t.zeilen - 1, t.spalten - 1)[0]][t.anker(t.zeilen - 1, t.spalten - 1)[1]]
         ids = [b.id for b in letzte.bloecke if hasattr(b, "inhalte")]
-        bis = Position(ids[-1], self.sitzung._absatz(ids[-1]).laenge) if ids else von
-        self.sitzung.setze_auswahl(von, bis)
+        bis = Stelle(ids[-1], self.sitzung._absatz(ids[-1]).laenge) if ids else von
+        _bearbeiten.auswahl_setzen(self.kennung, von, bis)
         self.ansicht.nach_bewegung()
         if callable(self.mini_hook):
             self.mini_per_griff = True
@@ -688,10 +599,9 @@ class KernBefehle:
     def seiten_von(self, offsets: list) -> list:
         """Die angezeigten Seitenzahlen der Stellen im Rohtext (``"?"``, wenn eine Stelle nirgends steht)."""
         erg = self.ansicht.ergebnis()
-        d = self.sitzung.dokument
         aus = []
         for o in offsets:
-            seite = erg.seite_von(offset_zu_position(d, o).absatz_id)
+            seite = erg.seite_von(_bearbeiten.stelle_von(self.kennung, o).absatz_id)
             aus.append(str(erg.seiten[seite].nummer or seite + 1) if seite is not None else "?")
         return aus
 
@@ -723,24 +633,15 @@ class KernBefehle:
 
     def seitenzahl_anwenden(self, w: dict) -> None:
         """Seitenzahl nach den Werten des Fensters: für das ganze Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
-
-        def f(s):
-            with s.gruppe("Seitenzahl"):
-                if w["bereich"] == "dokument":
-                    ziele = list(range(len(s.dokument.abschnitte)))
-                elif w["bereich"] == "seite":
-                    erg = self.ansicht.ergebnis()
-                    seite = max(0, self.current_page() - 1)
-                    erster = next((p.block_id for p in erg.seiten[seite].plaetze if p.art == "zeile"), s.auswahl.kopf.absatz_id)
-                    ziele = [s.abschnitt_einfuegen(Position(erster, 0), "naechste")]
-                else:
-                    ziele = [self.abschnitt_nr()]
-                for i, nr in enumerate(ziele):
-                    ps = SZ.seitenzahl_setzen(s.dokument.abschnitte[nr].seite.copy(), w["ort"], w["ausrichtung"], w["muster"], w["format"],
-                                              w["start"] if i == 0 else 0, w["kapitel"])
-                    s.seite_ersetzen(nr, ps)
-        self.ansicht._aendern(f)
+        erster, abschnitt = None, 0
+        if w["bereich"] == "seite":
+            erg = self.ansicht.ergebnis()
+            seite = max(0, self.current_page() - 1)
+            erster = next((p.block_id for p in erg.seiten[seite].plaetze if p.art == "zeile"), None)
+        elif w["bereich"] != "dokument":
+            abschnitt = self.abschnitt_nr()
+        self.ansicht._befehl(lambda: _bearbeiten.seitenzahl_setzen(self.kennung, w["bereich"], erster, abschnitt, w["ort"], w["ausrichtung"], w["muster"], w["format"],
+                                                                 w["start"], w["kapitel"], True))
         self.pageApplied.emit()
 
 
@@ -765,15 +666,15 @@ class KernBefehle:
                 letzter = self.seite_letzter_block()
                 absaetze = list(s.dokument.absaetze())
                 nach = next((absaetze[i + 1] for i, a in enumerate(absaetze) if a.id == letzter.id and i + 1 < len(absaetze)), None)
-                neu = s.absatz_teilen(Position(letzter.id, letzter.laenge))
+                neu = s.absatz_teilen(Stelle(letzter.id, letzter.laenge))
                 s.absatzformat_anwenden({"seitenumbruch_vor": True, "seitenumbruch_nach": True}, absatz_ids=[neu.absatz_id])
                 if eigene:
                     blatt = einrichtung.copy()
                     blatt.set_orientation(bool(quer))
-                    s.abschnitt_einfuegen(Position(neu.absatz_id, 0), "naechste", blatt)
+                    s.abschnitt_einfuegen(Stelle(neu.absatz_id, 0), "naechste", blatt)
                     if nach is not None:
-                        s.abschnitt_einfuegen(Position(nach.id, 0), "naechste", einrichtung)
-                s.setze_auswahl(Position(neu.absatz_id, 0))
+                        s.abschnitt_einfuegen(Stelle(nach.id, 0), "naechste", einrichtung)
+                s.setze_auswahl(Stelle(neu.absatz_id, 0))
         self.ansicht._aendern(f)
 
 
@@ -805,29 +706,19 @@ class KernBefehle:
 
     def seitenzahl_zone(self, bereich: str, zone: str, ausr: str, muster: str, zahl: str) -> None:
         """Seitenzahl in Kopf- oder Fußzeile (``zone``) für das Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
-        from core.dokument.kopf_fusszeilen import seitenzahl as SZ
-
-        def f(s):
-            with s.gruppe("Seitenzahl"):
-                if bereich == "dokument":
-                    ziele = list(range(len(s.dokument.abschnitte)))
-                elif bereich == "seite":
-                    erg = self.ansicht.ergebnis()
-                    erster = next((p.block_id for p in erg.seiten[max(0, self.current_page() - 1)].plaetze if p.art == "zeile"), s.auswahl.kopf.absatz_id)
-                    ziele = [s.abschnitt_einfuegen(Position(erster, 0), "naechste")]
-                else:
-                    ziele = [self.abschnitt_nr()]
-                for nr in ziele:
-                    s.seite_ersetzen(nr, SZ.seitenzahl_setzen(s.dokument.abschnitte[nr].seite.copy(), zone, ausr, muster, zahl))
-        self.ansicht._aendern(f)
+        erster, abschnitt = None, 0
+        if bereich == "seite":
+            erg = self.ansicht.ergebnis()
+            erster = next((p.block_id for p in erg.seiten[max(0, self.current_page() - 1)].plaetze if p.art == "zeile"), None)
+        elif bereich != "dokument":
+            abschnitt = self.abschnitt_nr()
+        self.ansicht._befehl(lambda: _bearbeiten.seitenzahl_setzen(self.kennung, bereich, erster, abschnitt, zone, ausr, muster, zahl))
         self.pageApplied.emit()
 
 
     def gliederung_ebene(self, delta: int) -> None:
         """Gliederungsansicht: Überschrift des Absatzes um ``delta`` Ebenen herauf- (−1) oder herabstufen (+1); Ebene 0 ist Fließtext."""
-        from core.formatvorlagen.formatvorlagen import ueberschriftsebene
-        a = self._absatz_an_marke()
-        neu = max(0, min(9, ueberschriftsebene(self.sitzung.dokument, a) + delta))
+        neu = max(0, min(9, _bearbeiten.ueberschriftsebene_an_marke(self.kennung) + delta))
         self.apply_style("Standard" if neu == 0 else f"Überschrift {neu}")
 
 
@@ -867,58 +758,23 @@ class KernBefehle:
     # ---- Auswählen ---------------------------------------------------------------------------------------------------------------------
     def tabelle_ohne_rahmen_waehlen(self) -> bool:
         """Markiert die nächste Tabelle ohne Rahmen hinter der Schreibmarke (am Ende geht es vorn weiter). → ``False``, wenn es keine gibt."""
-        from core.dokument import gehe_zu as G
-        dok = self.sitzung.dokument
-        stellen = G._stellen(dok)
-        alle = sorted((p, t) for a in dok.abschnitte for t, p in G._tabellen(a.bloecke, stellen) if float(t.format.get("rahmen_breite") or 0) <= 0)
+        alle = _bearbeiten.tabellen_ohne_rahmen(self.kennung)
         if not alle:
             return False
         hier = self.textCursor().selectionEnd()
-        p, t = next(((p, t) for p, t in alle if p >= hier), alle[0])
+        p, tid = next(((p, tid) for p, tid in alle if p >= hier), alle[0])
         self.select_range(p, p)
-        self.tabelle_ganz_waehlen(t.id)
+        self.tabelle_ganz_waehlen(tid)
         self.ensureCursorVisible()
         return True
 
     def aehnlich_formatiert(self) -> list:
         """Alle Strecken (Stellen im Rohtext) mit derselben Zeichenformatierung wie das Zeichen an der Schreibmarke."""
-        merkmale = ("schrift", "groesse_pt", "fett", "kursiv", "unterstrichen", "durchgestrichen", "farbe", "marker", "hoch_tief", "kapitaelchen", "grossbuchstaben")
-        dok = self.sitzung.dokument
-        soll = tuple(self._zeichen().get(k) for k in merkmale)
-        aus, n = [], 0
-        for a in dok.absaetze():
-            versatz = 0
-            for x in a.inhalte:
-                laenge = len(x.text) if hasattr(x, "text") else 1
-                if hasattr(x, "text") and x.text.strip():
-                    fmt = F.zeichenformat(dok, a, x.format)
-                    if tuple(fmt.get(k) for k in merkmale) == soll:
-                        v, e = n + versatz, n + versatz + laenge
-                        if aus and aus[-1][1] == v:
-                            aus[-1] = (aus[-1][0], e)
-                        else:
-                            aus.append((v, e))
-                versatz += laenge
-            n += a.laenge + 1
-        return aus
+        return _bearbeiten.aehnlich_formatiert(self.kennung)
 
     def naechstes_objekt_waehlen(self) -> bool:
         """Springt zum nächsten Objekt (im Text oder frei positioniert) hinter der Schreibmarke und wählt es (am Ende geht es vorn weiter)."""
-        from core.dokument.dokument import InlineObjekt
-        from core.dokument import gehe_zu as G
-        dok = self.sitzung.dokument
-        stellen = G._stellen(dok)
-        liste = []
-        for a in dok.absaetze():
-            versatz = 0
-            for x in a.inhalte:
-                if isinstance(x, InlineObjekt):
-                    liste.append((stellen[a.id] + versatz, "text", x.id))
-                    versatz += 1
-                else:
-                    versatz += len(x.text)
-        liste += [(stellen.get(o.anker, 0), "frei", o.id) for o in dok.objekte.values()]
-        liste.sort()
+        liste = _bearbeiten.objekte_nach_stelle(self.kennung)
         if not liste:
             return False
         hier = self.textCursor().selectionEnd()

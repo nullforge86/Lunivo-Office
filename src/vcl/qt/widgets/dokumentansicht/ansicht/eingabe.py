@@ -1,26 +1,21 @@
 """Eingabe der Dokument-Ansicht: Tastatur, Maus, Eingabemethoden und Zwischenablage. Jede Änderung geht über die Bearbeitungssitzung;
 die Ansicht verändert das Dokumentmodell nie selbst.
 
-Die Mischklasse ``EingabeTeil`` setzt voraus, dass die Ansicht ``sitzung``, ``ergebnis()``, ``stelle(punkt)``, ``blatt(i)``, ``cursor_flaeche()``,
+Die Mischklasse ``EingabeTeil`` setzt voraus, dass die Ansicht ``kennung``, ``sitzung``, ``ergebnis()``, ``stelle(punkt)``, ``blatt(i)``, ``cursor_flaeche()``,
 ``nach_aenderung()`` und ``nach_bewegung()`` bereitstellt (siehe ``dokument_ansicht.py``).
 """
 from __future__ import annotations
 
-import base64
-import json
 import time
 
 from PySide6.QtCore import QMimeData, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QApplication
 
-from core.dokument import Position
-from core.geometrie import Rect
-from core.dokument.dokument import Auswahl, InlineObjekt, absaetze_in
-from core.dokument.serialisierung import bloecke_aus_daten, bloecke_zu_daten
 from core.bearbeitung import BearbeitungsFehler
-from core.suche.textsuche.suche import position_zu_offset
-from core.layout.drucklayout import schreibmarke as SM
+from writer.funktionen import ansicht as AN
+from writer.funktionen import bearbeiten as ST
+from writer.werte import Bereich, Rechteck, Stelle
 
 MIME_AUSSCHNITT = "application/x-lunivo-ausschnitt"
 ZEILENWECHSEL = " "                       # Umschalt+Eingabe: neue Zeile im selben Absatz
@@ -57,20 +52,34 @@ class EingabeTeil:
         self.nach_aenderung()
         return True
 
+    def _befehl(self, befehl) -> bool:
+        """Einen Befehl des Frameworks als eine Änderung ausführen: ``befehl()`` → ``False``, wenn der Kern ablehnt (das Dokument bleibt unverändert)."""
+        if self.nur_lesen:
+            return False
+        if self.vor_aenderung is not None:
+            self.vor_aenderung(self.sitzung)
+        if not befehl():
+            return False
+        self._x = None
+        self.nach_aenderung()
+        return True
+
     def einfuegen(self, text: str) -> bool:
         return bool(text) and self._aendern(lambda s: s.text_einfuegen(text))
 
     def entfernen(self, rueckwaerts: bool, wort: bool = False) -> bool:
         """Die Auswahl löschen, sonst das Zeichen (oder Wort) vor bzw. hinter der Schreibmarke."""
-        s = self.sitzung
-        if not s.auswahl.leer:
+        kopf = ST.auswahl(self.kennung)
+        if not kopf.leer:
             return self._aendern(lambda s: s.loeschen())
+        kopf = kopf.kopf
         if wort:
             art = "wort_links" if rueckwaerts else "wort_rechts"
-            ziel, _x = SM.bewegen(self.ergebnis(), s.auswahl.kopf, art)
-            if ziel == s.auswahl.kopf:
+            self.ergebnis()
+            ziel, _x = AN.bewegen(self.kennung, kopf, art)
+            if ziel == kopf:
                 return False
-            return self._aendern(lambda s: s.loeschen(Auswahl(s.auswahl.kopf, ziel)))
+            return self._aendern(lambda s: s.loeschen(Bereich(s.auswahl.kopf, ziel)))
         return self._aendern(lambda s: s.zeichen_loeschen(vorwaerts=not rueckwaerts))
 
     def rueckgaengig(self) -> None:
@@ -85,27 +94,23 @@ class EingabeTeil:
 
     def zeichenformat_umschalten(self, name: str) -> None:
         """Ein Ja/Nein-Zeichenmerkmal (fett, kursiv, unterstrichen …) an der Auswahl umschalten; bei gemischter Auswahl gilt das Format am Anfang."""
-        s = self.sitzung
-        start, _ende = s._bereich()
-        an = bool(s.zeichenformat_bei(start).get(name)) if s.auswahl.leer else bool(s.zeichenformat_bei(Position(start.absatz_id, min(start.versatz + 1, s._absatz(start.absatz_id).laenge))).get(name))
+        k = self.kennung
+        start, _ende = ST.auswahl_bereich(k)
+        an = bool(ST.zeichenformat_bei(k, start).get(name)) if ST.auswahl(k).leer else bool(ST.zeichenformat_bei(k, Stelle(start.absatz_id, min(start.versatz + 1, ST.absatz_laenge(k, start.absatz_id)))).get(name))
         self._aendern(lambda s: s.zeichenformat_anwenden({name: not an}))
 
     # ---- Zwischenablage ----------------------------------------------------------------------------------------------------------
     def kopieren(self) -> None:
-        s = self.sitzung
-        if s.auswahl.leer:
+        ausschnitt = ST.ausschnitt_kopieren(self.kennung)
+        if ausschnitt is None:
             return
         daten = QMimeData()
-        daten.setText(s.text(s.auswahl))
-        bloecke = s.ausschnitt(s.auswahl)
-        ressourcen = {x.ressource: base64.b64encode(s.dokument.ressourcen[x.ressource]).decode("ascii")
-                      for a in absaetze_in(bloecke) for x in a.inhalte
-                      if isinstance(x, InlineObjekt) and x.ressource in s.dokument.ressourcen}
-        daten.setData(MIME_AUSSCHNITT, json.dumps({"bloecke": bloecke_zu_daten(bloecke), "ressourcen": ressourcen}).encode("utf-8"))
+        daten.setText(ausschnitt[0])
+        daten.setData(MIME_AUSSCHNITT, ausschnitt[1].encode("utf-8"))
         QGuiApplication.clipboard().setMimeData(daten)
 
     def ausschneiden(self) -> None:
-        if not self.sitzung.auswahl.leer and not self.nur_lesen:
+        if not ST.auswahl(self.kennung).leer and not self.nur_lesen:
             self.kopieren()
             self._aendern(lambda s: s.loeschen())
 
@@ -115,63 +120,53 @@ class EingabeTeil:
         daten = QGuiApplication.clipboard().mimeData()
         if daten is not None and daten.hasFormat(MIME_AUSSCHNITT):
             try:
-                inhalt = json.loads(bytes(daten.data(MIME_AUSSCHNITT)).decode("utf-8"))
-                bloecke = bloecke_aus_daten(inhalt["bloecke"])
-                ressourcen = {k: base64.b64decode(v) for k, v in inhalt.get("ressourcen", {}).items()}
-            except (ValueError, KeyError, TypeError):
-                bloecke, ressourcen = [], {}
-            if bloecke:
-                def ein(s):
-                    with s.gruppe("Einfügen"):
-                        for name, roh in ressourcen.items():
-                            if s.dokument.ressourcen.get(name) != roh:
-                                s.ressource_setzen(name, roh)
-                        s.ausschnitt_einfuegen(bloecke)
-                self._aendern(ein)
+                inhalt = bytes(daten.data(MIME_AUSSCHNITT)).decode("utf-8")
+            except ValueError:
+                inhalt = ""
+            if inhalt and ST.ausschnitt_gueltig(inhalt):
+                self._befehl(lambda: ST.ausschnitt_einsetzen(self.kennung, inhalt))
                 return
         if daten is not None:
             self.einfuegen(daten.text().replace("\r\n", "\n").replace("\r", "\n"))
 
     def alles_auswaehlen(self) -> None:
-        d = self.sitzung.dokument
-        self.sitzung.setze_auswahl(d.anfang(), d.ende())
+        ST.alles_auswaehlen(self.kennung)
         self.nach_bewegung()
 
     # ---- Schreibmarke und Auswahl ----------------------------------------------------------------------------------------------
-    def _gehen(self, ziel: Position, auswaehlen: bool) -> None:
-        s = self.sitzung
-        s.setze_auswahl(s.auswahl.anker if auswaehlen else ziel, ziel)
+    def _gehen(self, ziel: Stelle, auswaehlen: bool) -> None:
+        ST.gehen(self.kennung, ziel, auswaehlen)
         self.nach_bewegung()
 
     def bewegen(self, art: str, auswaehlen: bool = False) -> None:
         """Die Schreibmarke bewegen (``schreibmarke.BEWEGUNGEN``); mit ``auswaehlen`` bleibt der Anker stehen."""
-        s = self.sitzung
-        if not s.auswahl.leer and not auswaehlen and art in ("links", "rechts"):         # ohne Umschalt fällt die Auswahl auf ihren Rand zusammen
-            start, ende = s._bereich()
+        a = ST.auswahl(self.kennung)
+        if not a.leer and not auswaehlen and art in ("links", "rechts"):         # ohne Umschalt fällt die Auswahl auf ihren Rand zusammen
+            start, ende = ST.auswahl_bereich(self.kennung)
             self._x = None
             self._gehen(start if art == "links" else ende, False)
             return
-        ziel, self._x = SM.bewegen(self.ergebnis(), s.auswahl.kopf, art, self._x)
+        self.ergebnis()
+        ziel, self._x = AN.bewegen(self.kennung, a.kopf, art, self._x)
         self._gehen(ziel, auswaehlen)
 
     def tabelle_weiter(self, rueckwaerts: bool) -> bool:
         """Tabulator in einer Tabelle: zur nächsten (vorigen) Zelle; hinter der letzten entsteht eine neue Zeile. ``False`` außerhalb von Tabellen."""
-        s = self.sitzung
-        stelle = s.tabelle_von(s.auswahl.kopf.absatz_id)
+        k = self.kennung
+        stelle = ST.tabellenzellen(k, ST.auswahl(k).kopf.absatz_id)
         if stelle is None:
             return False
-        t, z, sp = stelle
-        zellen = [(zz, ss) for zz in range(t.zeilen) for ss in range(t.spalten) if t.zellen[zz][ss].verdeckt_von is None]
-        i = zellen.index(t.anker(z, sp)) + (-1 if rueckwaerts else 1)
+        tid, zeilen, zellen, anker = stelle
+        i = zellen.index(anker) + (-1 if rueckwaerts else 1)
         if i < 0:
             return True
         if i >= len(zellen):
             if self.nur_lesen:
                 return True
-            self._aendern(lambda s: s.zeilen_einfuegen(t.id, t.zeilen))
-            zellen = [(zz, ss) for zz in range(t.zeilen) for ss in range(t.spalten) if t.zellen[zz][ss].verdeckt_von is None]
+            self._aendern(lambda s: s.zeilen_einfuegen(tid, zeilen))
+            zellen = ST.sichtbare_zellen(k, tid)
             i = min(i, len(zellen) - 1)
-        ziel = s.zelle_anfang(t.id, *zellen[i])
+        ziel = ST.zelle_anfang(k, tid, *zellen[i])
         self._gehen(ziel, False)
         return True
 
@@ -191,7 +186,7 @@ class EingabeTeil:
             schritt = 10.0 if umschalt else 1.0
             seite, r = self.sitzung_objekt_rechteck(self.gewaehltes_objekt)
             dx, dy = PFEILE[taste]
-            self.objekt_geaendert(self.gewaehltes_objekt, seite, Rect(r.x + dx * schritt, r.y + dy * schritt, r.width, r.height))
+            self.objekt_geaendert(self.gewaehltes_objekt, seite, Rechteck(r.x + dx * schritt, r.y + dy * schritt, r.width, r.height))
             self.nach_aenderung()
         elif taste in BEWEGUNG:
             self.bewegen(BEWEGUNG[taste][1 if strg else 0], umschalt)
@@ -262,24 +257,24 @@ class EingabeTeil:
         if ziel is not None:
             self._x = None
             if time.monotonic() - self._doppelklick < QApplication.doubleClickInterval() / 1000.0:      # Dreifachklick: der ganze Absatz
-                a = self.sitzung._absatz(ziel.absatz_id)
-                self.sitzung.setze_auswahl(Position(a.id, 0), Position(a.id, a.laenge))
+                ST.auswahl_setzen(self.kennung, Stelle(ziel.absatz_id, 0), Stelle(ziel.absatz_id, ST.absatz_laenge(self.kennung, ziel.absatz_id)))
                 self._doppelklick = 0.0
                 self.nach_bewegung()
                 return
             self._zieht = True
             self._gehen(ziel, bool(ev.modifiers() & Qt.ShiftModifier))
 
-    def _klick_ziel(self, ziel: Position, ev) -> bool:
+    def _klick_ziel(self, ziel: Stelle, ev) -> bool:
         """Klick auf das Zeichen einer Note (öffnet sie), auf ein Formularfeld oder Strg+Klick auf eine Verknüpfung (folgt ihr); ``True``, wenn der Klick
         damit erledigt ist."""
-        if self.formular_hook is not None and not self.nur_lesen_formular and self.formular_hook(position_zu_offset(self.sitzung.dokument, ziel)):
+        k = self.kennung
+        if self.formular_hook is not None and not self.nur_lesen_formular and self.formular_hook(ST.stelle_im_text(k, ziel)):
             return True
-        a = self.sitzung._absatz(ziel.absatz_id)
+        laenge = ST.absatz_laenge(k, ziel.absatz_id)
         for versatz in (ziel.versatz, ziel.versatz - 1):
-            if not 0 <= versatz < a.laenge:
+            if not 0 <= versatz < laenge:
                 continue
-            fmt = self.sitzung.zeichenformat_bei(Position(a.id, versatz + 1))
+            fmt = ST.zeichenformat_bei(k, Stelle(ziel.absatz_id, versatz + 1))
             note = fmt.get("note")
             art, _s, nr = str(note or "").partition(":")
             if nr.isdigit():
@@ -292,8 +287,7 @@ class EingabeTeil:
 
     def contextMenuEvent(self, ev) -> None:
         """Rechtsklick: Auswahl an die Stelle setzen (außerhalb der Auswahl) bzw. das Objekt wählen, dann das Menü anfordern."""
-        from core.suche.textsuche.suche import position_zu_offset
-        d = self.sitzung.dokument
+        k = self.kennung
         objekt = self.objekt_bei(ev.pos())
         if objekt is not None:
             if objekt != self.gewaehltes_objekt:
@@ -303,8 +297,8 @@ class EingabeTeil:
         else:
             ziel = self.stelle(ev.pos())
             if ziel is not None:
-                von, bis = self.sitzung._bereich()
-                if not (position_zu_offset(d, von) <= position_zu_offset(d, ziel) <= position_zu_offset(d, bis)) or self.sitzung.auswahl.leer:
+                von, bis = ST.auswahl_bereich(k)
+                if not (ST.stelle_im_text(k, von) <= ST.stelle_im_text(k, ziel) <= ST.stelle_im_text(k, bis)) or ST.auswahl(k).leer:
                     self.gewaehltes_objekt = None
                     self._gehen(ziel, False)
         self.kontextGewuenscht.emit(ev.globalPos())
@@ -316,7 +310,7 @@ class EingabeTeil:
             return
         if self._zieht:
             ziel = self.stelle(ev.position())
-            if ziel is not None and ziel != self.sitzung.auswahl.kopf:
+            if ziel is not None and ziel != ST.auswahl(self.kennung).kopf:
                 self._gehen(ziel, True)
 
     def mouseReleaseEvent(self, ev) -> None:
@@ -325,7 +319,7 @@ class EingabeTeil:
         if self.tabellen_maus_loslassen(ev) or self.objekt_maus_loslassen(ev):
             return
         wurde_gezogen, self._zieht = self._zieht, False
-        if wurde_gezogen and not self.sitzung.auswahl.leer and ev.button() == Qt.LeftButton:
+        if wurde_gezogen and not ST.auswahl(self.kennung).leer and ev.button() == Qt.LeftButton:
             self.auswahlBeendet.emit(ev.globalPosition().toPoint())
         super().mouseReleaseEvent(ev)
 
@@ -341,8 +335,9 @@ class EingabeTeil:
             return
         ziel = self.stelle(ev.position())
         if ziel is not None:
-            von, bis = SM.wort_bei(self.ergebnis(), ziel)
-            self.sitzung.setze_auswahl(von, bis)
+            self.ergebnis()
+            von, bis = AN.wort_bei(self.kennung, ziel)
+            ST.auswahl_setzen(self.kennung, von, bis)
             self._doppelklick = time.monotonic()
             self.nach_bewegung()
 

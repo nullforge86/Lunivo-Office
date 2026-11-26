@@ -2,13 +2,11 @@ from __future__ import annotations
 import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
-from core.dokument.dokument import Position
 from framework.sitzungen.altlast import zugang_fuer_editor
 from writer import hauptfenster as _dokumente
 from writer.funktionen import bearbeiten as _bearbeiten
-from core.suche.textsuche.suche import offset_zu_position
+from writer.werte import Bereich, Punkt
 from writer.werte import mm_zu_px as mm_to_px
-from core.layout.drucklayout import formatwerte as F
 from writer.anbindung import formatwerte as _formatwerte
 from vcl.qt.widgets.dokumentansicht.ansicht.dokument_ansicht import DokumentAnsicht
 from vcl.qt.widgets.dokumentansicht.bearbeitung.freie_bilder_knoepfe import FreieBilderKnoepfeMixin
@@ -152,7 +150,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         zugang = zugang_fuer_editor(kennung)
         self.sitzung = zugang.sitzung
         self.meta = zugang.meta
-        self.ansicht = DokumentAnsicht(self.sitzung)
+        self.ansicht = DokumentAnsicht(self.kennung, self.sitzung)
         self._dok = KernDokument(self)
         self.revision = 0
         self.ansicht.zoomChanged.connect(self.zoomChanged)
@@ -219,8 +217,8 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def setTextCursor(self, c: KernCursor) -> None:
         """Setzt Anker und Kopf der Auswahl auf die Stellen des Zeigers."""
-        d = self.sitzung.dokument
-        self.sitzung.setze_auswahl(offset_zu_position(d, c.anchor()), offset_zu_position(d, c.position()))
+        k = self.kennung
+        _bearbeiten.auswahl_setzen(k, _bearbeiten.stelle_von(k, c.anchor()), _bearbeiten.stelle_von(k, c.position()))
         self.ansicht.nach_bewegung()
 
     def widget(self):
@@ -298,7 +296,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def _kf(self):
         return None
 
-    def position_im_text(self, pos: Position) -> int:
+    def position_im_text(self, pos) -> int:
         """Die Zeichenstelle im Gesamttext (Absätze durch je ein Zeichen getrennt)."""
         n = 0
         for a in self.sitzung.dokument.absaetze():
@@ -322,11 +320,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def _zeichen(self) -> dict:
         """Das wirksame Zeichenformat an der Schreibmarke (am Anfang einer Auswahl: das erste Zeichen)."""
-        s = self.sitzung
-        start, _ende = s._bereich()
-        a = s._absatz(start.absatz_id)
-        fmt = s.zeichenformat_bei(start if s.auswahl.leer else Position(start.absatz_id, min(start.versatz + 1, a.laenge)))
-        return F.zeichenformat(s.dokument, a, fmt)
+        return _bearbeiten.wirksames_zeichenformat(self.kennung)
 
     def zeichenformat(self) -> dict:
         """Das wirksame Zeichenformat an der Schreibmarke (Modellnamen, Wörterbuch)."""
@@ -334,7 +328,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def absatzformat(self) -> dict:
         """Das wirksame Absatzformat des Absatzes an der Schreibmarke (Modellnamen, Wörterbuch)."""
-        return F.absatzformat(self.sitzung.dokument, self._absatz_an_marke())
+        return _bearbeiten.wirksames_absatzformat(self.kennung)
 
     def current_style(self) -> str:
         return self._absatz_an_marke().format.get("vorlage") or "Standard"
@@ -409,7 +403,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self._af({"einzug_links": max(0.0, aktuell + mm_to_px(delta_mm)) or None})
 
     def _absatz_formatwert(self, name: str) -> float:
-        return F._zahl(F.absatzformat(self.sitzung.dokument, self._absatz_an_marke()).get(name))
+        return _bearbeiten.absatz_formatwert(self.kennung, name)
 
     def set_line_spacing(self, faktor: float) -> None:
         self._af({"zeilenabstand_art": "vielfach", "zeilenabstand": faktor * 100.0})
@@ -507,6 +501,18 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.ansicht._aendern(lambda s: s.seite_ersetzen(index, seite))
         self.pageApplied.emit()
 
+    def kopffuss_zeile_setzen(self, zeile: str, text: str, ausrichtung: str) -> None:
+        """Kopf- oder Fußzeile (``header``, ``footer``, ``first_header``, ``first_footer``) des Abschnitts an der Schreibmarke durch Text ersetzen."""
+        index = self.abschnitt_nr()
+        self.ansicht._befehl(lambda: _bearbeiten.kopffuss_zeile_setzen(self.kennung, index, zeile, text, ausrichtung))
+        self.pageApplied.emit()
+
+    def seitenzahl_einfuegen(self) -> None:
+        """Die Seitenzahl in die Fußzeile des Abschnitts an der Schreibmarke setzen."""
+        index = self.abschnitt_nr()
+        self.ansicht._befehl(lambda: _bearbeiten.seitenzahl_einfuegen(self.kennung, index))
+        self.pageApplied.emit()
+
     def apply_page(self, seite) -> None:
         self.ansicht._aendern(lambda s: s.seite_ersetzen(0, seite))
         self.pageApplied.emit()
@@ -517,19 +523,14 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Vorlagen ---------------------------------------------------------------------------------------------------------------------------------
     def geruest_aufbauen(self, zeilen: list, benutzer: dict, heute: str) -> None:
         """Schreibt das Gerüst einer Dokumentvorlage in das (leere) Dokument: Absätze, Auszeichnungen und die Lücken « … » zum Ausfüllen."""
-        from core.dokument.vorlagen import geruest_schreiben
-
-        def schreiben(s):
-            geruest_schreiben(s, zeilen, benutzer, heute)
-        self.ansicht._aendern(schreiben)
+        self.ansicht._befehl(lambda: _bearbeiten.geruest_schreiben(self.kennung, zeilen, benutzer, heute))
         self._dok.setModified(True)
 
     # ---- Suchen und Ersetzen ---------------------------------------------------------------------------------------------------------------------
     def select_range(self, von: int, bis: int) -> None:
         """Wählt die Stellen [von, bis) des Rohtextes (Absätze durch ein Zeichen getrennt) aus."""
-        from core.suche.textsuche.suche import offset_zu_position
-        d = self.sitzung.dokument
-        self.sitzung.setze_auswahl(offset_zu_position(d, von), offset_zu_position(d, bis))
+        k = self.kennung
+        _bearbeiten.auswahl_setzen(k, _bearbeiten.stelle_von(k, von), _bearbeiten.stelle_von(k, bis))
         self.ansicht.nach_bewegung()
 
     def ensureCursorVisible(self) -> None:
@@ -556,25 +557,22 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
                           vorlage: str | None = None, zwischenablage: str = "") -> int:
         zaehler = [0]
 
-        def f(s):
-            with s.gruppe("Alle ersetzen"):
-                zaehler[0] = s.alle_ersetzen_auftrag(auftrag, ersatz, von, bis, zeichen, absatz, zwischenablage)
-        self.ansicht._aendern(f)
+        def f() -> bool:
+            n = _bearbeiten.suche_alle_ersetzen(self.kennung, auftrag, ersatz, von, bis, zeichen, absatz, zwischenablage)
+            zaehler[0] = max(n, 0)
+            return n >= 0
+        self.ansicht._befehl(f)
         return zaehler[0]
 
     # ---- Kommentare, Noten und nachverfolgte Änderungen --------------------------------------------------------------------------------------------
     def _bereiche_offsets(self, trifft, wert) -> list:
         """Die Bereiche, deren Format ``trifft``: Liste von {"von", "bis", "wert"} mit Stellen im Rohtext (Absätze durch ein Zeichen getrennt)."""
-        from core.suche.textsuche.suche import position_zu_offset
-        d = self.sitzung.dokument
-        return [{"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "wert": w, "auswahl": b}
+        k = self.kennung
+        return [{"von": _bearbeiten.stelle_im_text(k, b.anker), "bis": _bearbeiten.stelle_im_text(k, b.kopf), "wert": w, "auswahl": b}
                 for b in self.sitzung.bereiche(trifft, wert) for w in [wert(self._format_bei(b.anker))]]
 
     def _format_bei(self, pos) -> dict:
-        a = self.sitzung._absatz(pos.absatz_id)
-        from core.dokument.dokument import teile
-        rest = teile(a.inhalte, pos.versatz)[1]
-        return rest[0].format if rest else {}
+        return _bearbeiten.lauf_format_bei(self.kennung, pos)
 
     def _springe(self, bereiche: list, delta: int):
         """Wählt den nächsten (``delta`` 1) oder vorigen (-1) Bereich hinter bzw. vor der Schreibmarke (mit Umlauf); ``None``, wenn es keinen gibt."""
@@ -679,10 +677,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return self._springe(self.aenderungen(), delta)
 
     def aenderung_annehmen(self, b: dict, annehmen: bool = True) -> None:
-        from core.dokument.dokument import Auswahl
-        from core.suche.textsuche.suche import offset_zu_position
-        d = self.sitzung.dokument
-        bereich = Auswahl(offset_zu_position(d, b["von"]), offset_zu_position(d, b["bis"]))
+        bereich = Bereich(_bearbeiten.stelle_von(self.kennung, b["von"]), _bearbeiten.stelle_von(self.kennung, b["bis"]))
         self.ansicht._aendern(lambda s: (s.aenderungen_annehmen if annehmen else s.aenderungen_ablehnen)(bereich))
         self.zusatzGeaendert.emit()
 
@@ -710,12 +705,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         return n
 
     def noten_stellen(self) -> list:
-        from core.suche.textsuche.suche import position_zu_offset
-        d = self.sitzung.dokument
+        k = self.kennung
         aus = []
         for b in self.sitzung.bereiche(lambda f: "note" in f):
             art, _, nid = self._format_bei(b.anker)["note"].partition(":")
-            aus.append({"von": position_zu_offset(d, b.anker), "bis": position_zu_offset(d, b.kopf), "art": art, "id": int(nid)})
+            aus.append({"von": _bearbeiten.stelle_im_text(k, b.anker), "bis": _bearbeiten.stelle_im_text(k, b.kopf), "art": art, "id": int(nid)})
         return aus
 
     def note_neu(self, art: str, text: str) -> int:
@@ -787,25 +781,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         t = self.tabelle_an_marke()
         if t is None or t.zeile < 1:
             return False
-        import copy
-        from core.dokument.dokument import Absatz, Tabelle
-
-        def teilen(s):
-            with s.gruppe("Tabelle teilen"):
-                tab = t.tabelle
-                _bes, bloecke, i, _t = s.dokument.finde(tab.id)
-                unten = copy.deepcopy(tab.zellen[t.zeile:])
-                breiten, hoehen = list(tab.spaltenbreiten), tab.zeilenhoehen[t.zeile:]
-                neu = Tabelle(s._id(), unten, breiten, list(hoehen), dict(tab.format))
-                s._neue_ids([neu])
-                for zeile in neu.zellen:                       # verdeckte Zellen verweisen auf Zeilen relativ zur neuen Tabelle
-                    for zelle in zeile:
-                        if zelle.verdeckt_von is not None:
-                            zelle.verdeckt_von = (zelle.verdeckt_von[0] - t.zeile, zelle.verdeckt_von[1])
-                s.zeilen_loeschen(tab.id, t.zeile, tab.zeilen - t.zeile)
-                s._liste(bloecke, i + 1, 0, [Absatz(s._id()), neu])
-                s._beruehrt(neu.id)
-        return self.ansicht._aendern(teilen)
+        return self.ansicht._befehl(lambda: _bearbeiten.tabelle_teilen(self.kennung, t.tabelle.id, t.zeile))
 
     def zellformat(self, aenderung: dict) -> bool:
         """Wendet ein Zellformat auf die überstrichenen Zellen (sonst die der Schreibmarke) an."""
@@ -942,13 +918,9 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def set_silbenfarben(self, k) -> None:
         """Lesehilfe „Silbenfarben“ (``k``: ``SilbenEinstellung`` vom Framework): reine Anzeige, das Dokument bleibt unverändert."""
         if not k or not k.an:
-            self.ansicht.set_ansicht(silben=None)
+            self.ansicht.set_silben(None)
             return
-        from writer.formatierungswerkzeuge.schrift import silbenfarben as W
-        from core.layout.drucklayout.ausgabe.backend import rgba
-        farben = [rgba(f) for f in W.farben(k)]
-        self.ansicht.set_ansicht(silben={"funktion": lambda w: W.silben(w, k.sprache), "farben": farben, "darstellung": k.darstellung,
-                                         "einsilbig": k.einsilbig, "neu_pro_wort": k.neu_pro_wort, "mindestens": k.mindestens})
+        self.ansicht.set_silben(k)
 
     def set_lesefokus(self, groesser: float = 1.0, zurueck: float = 1.0) -> None:
         """Lesehilfe: Alles außer dem Absatz der Schreibmarke tritt zurück (``zurueck`` kleiner als 1 = blasser)."""
@@ -960,7 +932,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         erg = self.ansicht.ergebnis()
         o = self.sitzung.dokument.objekte[objekt_id]
         anker = o.anker
-        treffer = erg.treffer(seite, __import__("core.geometrie", fromlist=["Point"]).Point(rect.x + 1, rect.y + 1))
+        treffer = erg.treffer(seite, Punkt(rect.x + 1, rect.y + 1))
         if treffer is not None and erg.seite_von(treffer[0]) == seite:
             anker = treffer[0]
         self.objekt_setzen(objekt_id, anker=anker, bezug_h="seite", x=float(rect.x), ausr_h="", bezug_v="seite", y=float(rect.y), ausr_v="",

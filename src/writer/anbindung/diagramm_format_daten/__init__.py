@@ -7,8 +7,10 @@ from __future__ import annotations
 _NAMEN: dict[str, tuple[str, str]] = {
     "effekt_von": ("anbindung", "effekt_von"),
     "feld_von": ("anbindung", "feld_von"),
+    "fuell_dict": ("anbindung", "fuell_dict"),
     "fx_nur_hinter": ("anbindung", "fx_nur_hinter"),
     "fx_schluessel": ("anbindung", "fx_schluessel"),
+    "linie_keine": ("anbindung", "linie_keine"),
     "px_pt": ("anbindung", "px_pt"),
 }
 

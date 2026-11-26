@@ -4,7 +4,6 @@ from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QSpinBox, QWidget
 from writer.anbindung import listen as L
-from core.listen.mehrstufig import mehrstufig as M
 from writer.anbindung import mehrstufig as _mehrstufig
 from vcl.qt.widgets.bausteine.symbole.medien.listen_symbole import liste_zeichner
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -107,7 +106,7 @@ def _gl_bild(defn: dict | None, groesse: QSize = _KACHEL) -> QIcon:
     zaehler = [0] * _mehrstufig.ebenen()
     f = p.font(); f.setPixelSize(SCHRIFT_LISTE_KLEIN_PX); p.setFont(f)
     for i, n in enumerate((1, 2, 2, 3)):
-        M.zaehlen(zaehler, defn, n)
+        _mehrstufig.zaehlen(zaehler, defn, n)
         t = _mehrstufig.nummer_der_ebene(defn, zaehler, n)
         y = 22 + i * 24
         x = 14 + (n - 1) * 10

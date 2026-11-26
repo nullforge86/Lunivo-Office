@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QImage, QPixmap
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
-from core.objekte.formen.muster_daten import _an
+from writer.anbindung.formen_daten import muster_an as _an
 
 
 def kachel(schluessel: str, muster: str = Farbe.SCHWARZ, fuell: str | None = None) -> QPixmap:

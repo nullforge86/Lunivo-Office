@@ -6,7 +6,7 @@ from PySide6.QtGui import QColor, QFont, QPixmap
 from PySide6.QtWidgets import QDialog, QLabel, QListWidget, QListWidgetItem, QMessageBox
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, abschnittstitel
-from framework.dokumentverwaltung.dokumentpflege import bausteine
+from writer.anbindung import bausteine
 from vcl.qt.widgets.bausteine.abstaende.mass import SCHRIFT_EINFUEGEN_VORSCHAU_PT, SCHRIFT_GRUPPENKOPF_FAKTOR
 from vcl.qt.widgets.bausteine.schrift.schriftarten import SERIF
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
@@ -208,7 +208,7 @@ class BausteinDialog(PanelFaehig, QDialog):
         if any(b["name"] == n for b in bausteine.standard()):
             QMessageBox.information(self, "Textbaustein", "Dieser Name gehört zu einem mitgelieferten Baustein. Bitte einen anderen wählen.")
             return
-        bausteine.hinzufuegen(n, self.ed.sitzung.ausschnitt(), self.kuerzel.text())
+        bausteine.hinzufuegen(self.ed.kennung, n, self.kuerzel.text())
         self._fuellen(n)
 
     def _weg(self) -> None:
@@ -219,4 +219,4 @@ class BausteinDialog(PanelFaehig, QDialog):
     def _einfuegen(self) -> None:
         b = self._aktuell()
         if b:
-            bausteine.einfuegen(self.ed, b); self.accept()
+            self.ed.ansicht._befehl(lambda: bausteine.einfuegen(self.ed.kennung, b)); self.accept()

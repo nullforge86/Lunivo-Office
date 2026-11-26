@@ -20,7 +20,7 @@ def form_daten(o: dict, breite: float, hoehe: float) -> dict:
     return d
 
 
-_FO_SCHLUESSEL = {"fuell": "form_fuell", "linie": "form_linie", "strich": "form_strich", "text": "text", "form": "form",
+FO_SCHLUESSEL = {"fuell": "form_fuell", "linie": "form_linie", "strich": "form_strich", "text": "text", "form": "form",
                   "breite": "breite", "hoehe": "hoehe"}
 
 

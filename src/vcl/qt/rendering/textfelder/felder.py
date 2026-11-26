@@ -114,7 +114,7 @@ _FELD_ERGEBNIS = {
 
 def ergebnis(anweisung: str, kontext: dict) -> str:
     """Feldanweisung über den Qt-freien Kern auswerten."""
-    from core.dokument.felder_ergebnis_kern import feld_ergebnis
+    from writer.referenzwerkzeuge import feld_ergebnis
     return feld_ergebnis(anweisung, kontext, _FELD_ERGEBNIS=_FELD_ERGEBNIS, _ohne_schalter=_ohne_schalter, _schalter=_schalter, formel=formel, zahl_formatieren=zahl_formatieren)
 
 
@@ -284,14 +284,12 @@ def tabellen_bereiche(ed) -> dict[str, list[float]]:
 
 
 def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
-    from core.formatvorlagen.formatvorlagen import ueberschriftsebene
-    from core.suche.textsuche.suche import roh_text
     from writer import referenzwerkzeuge as RW
-    dok = ed.sitzung.dokument
+    from writer.funktionen import bearbeiten as _bearbeiten
     pos = ed.textCursor().position()
     vw = RW.verweise_befehle(ed.kennung)
     marken = vw.textmarken_liste(versteckte=False)
-    text = roh_text(dok)
+    text = _bearbeiten.rohtext(ed.kennung)
     try:
         seiten_marken = dict(zip([m["name"] for m in marken], ed.seiten_von([m["von"] for m in marken]))) if marken else {}
         seite = int(ed.seiten_von([pos])[0])
@@ -303,16 +301,9 @@ def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
         if k["pos"] < pos:
             seq[k["label"]] = seq.get(k["label"], 0) + 1
     stilref: dict[str, str] = {}
-    n, davor = 0, []
-    for a in dok.absaetze():
-        if n > pos:
-            break
-        davor.append(a)
-        n += a.laenge + 1
-    for a in reversed(davor):
-        lv = ueberschriftsebene(dok, a)
-        if lv and a.text().strip():
-            stilref.setdefault(f"Überschrift {lv}", a.text().strip())
+    for stelle, lv, titel in reversed(_bearbeiten.ueberschriften(ed.kennung)):          # die letzte Überschrift jeder Ebene vor der Schreibmarke
+        if stelle <= pos:
+            stilref.setdefault(f"Überschrift {lv}", titel)
     return {"seite": seite, "seiten": max(1, len(ed.ansicht.ergebnis().seiten)), "textmarken": [m["name"] for m in marken],
             "textmarken_seiten": seiten_marken, "textmarken_werte": werte, "seq": seq, "bereiche": tabellen_bereiche(ed),
             "stilref": stilref, "autor": autor, "pfad": pfad, "in_tabelle": ed.tabelle_an_marke() is not None}

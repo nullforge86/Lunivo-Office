@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt
 
-from core.suche.textsuche.suche import offset_zu_position
+from writer.funktionen import ansicht as AN
+from writer.funktionen import bearbeiten as ST
 from writer.werte import mm_zu_px as mm_to_px
-from core.layout.drucklayout import schreibmarke as SM
 from vcl.qt.rendering import formen as SB
 from writer.funktionen.ansicht import sprechblasen as SW
 
@@ -36,19 +36,19 @@ class BlasenBedienung:
         if not self.blasen_aktiv():
             return []
         erg = self.ergebnis()
-        d = self.sitzung.dokument
+        k = self.kennung
         rechts = self.blasen_konfig.rand == "Rechts"
         breite = self.blasen_breite() * self.zoom
         luecke = mm_to_px(SW.katalog().luecke_mm) * self.zoom
         font = self._blasen_schrift()
         je_seite: dict[int, list] = {}
         for bl in SW.sammeln(self, self.blasen_konfig.verwenden):
-            pos = offset_zu_position(d, bl.von)
+            pos = ST.stelle_von(k, bl.von)
             stelle = erg.cursor(pos.absatz_id, pos.versatz)
             if stelle is None:
                 continue
             seite, p = stelle
-            ende = SM.cursor_rechteck(erg, offset_zu_position(d, bl.bis))
+            ende = AN.cursor_rechteck(k, ST.stelle_von(k, bl.bis))
             if ende is not None and ende[0] == seite:                                  # Ende der Stelle auf demselben Blatt: Linie beginnt dort (bei Blasen links am Anfang), sonst am Anfang
                 x_text, y_mitte = (ende[1].x + ende[1].width if rechts else p.x), ende[1].y + ende[1].height / 2
             else:
@@ -93,8 +93,7 @@ class BlasenBedienung:
         if bl.kid is not None and SB.menue_rect(r).contains(ev.position()) and self.blasen_hook is not None:
             self.blasen_hook("menue", bl.kid, ev.globalPosition().toPoint())
         else:
-            v, b = offset_zu_position(self.sitzung.dokument, bl.von), offset_zu_position(self.sitzung.dokument, bl.bis)
-            self.sitzung.setze_auswahl(v, b)
+            ST.auswahl_setzen(self.kennung, ST.stelle_von(self.kennung, bl.von), ST.stelle_von(self.kennung, bl.bis))
             self.nach_bewegung()
         return True
 

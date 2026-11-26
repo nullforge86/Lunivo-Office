@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QListWidget, QMessageBox
 
-from framework.befehle.verweise.befehle import VerweiseBefehle
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import knopfzeile
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
@@ -13,7 +12,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.zusatz_panel import PanelFaehig
 
 
 class TextmarkeDialog(PanelFaehig, QDialog):
-    def __init__(self, parent, verweise: VerweiseBefehle):
+    def __init__(self, parent, verweise):
         super().__init__(parent)
         self.verweise = verweise
         self.setWindowTitle("Textmarke")

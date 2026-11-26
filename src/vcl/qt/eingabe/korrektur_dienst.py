@@ -12,14 +12,10 @@ import logging
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Signal
 
 import re
-from core.korrektur.korrektur import ProofingIssue
-from framework.dokumentverwaltung.dokumentpflege.gelernt import Gelernt
-from core.korrektur.rechtschreibung import autokorrektur, pruefung
 from writer.anbindung import autokorrektur as _autokorrektur
+from writer.anbindung import fund as fundlib
 from writer.anbindung import pruefung as _pruefung
-from core.korrektur import fund as fundlib, inkrement
 from writer.anbindung import inkrement as _inkrement
-from core.korrektur.woerterbuecher import vorhersage
 from writer.anbindung import vorhersage as _vorhersage
 
 _log = logging.getLogger("lunivo.proofing")
@@ -38,7 +34,7 @@ class _Lauf(QRunnable):
 
     def run(self):
         try:
-            funde = pruefung.finde_probleme(self.text, self.gelernt, self.schalter)
+            funde = fundlib.finde_probleme(self.text, self.gelernt, self.schalter)
         except Exception:        # Eine Prüfung, die abstürzt, darf das Schreiben nie stören
             _log.exception("Prüfung abgestürzt")
             funde = []
@@ -54,15 +50,15 @@ class WritingAssistant(QObject):
     schalterGeaendert = Signal(str, bool)  # „wellen“, „vorhersage“, „autokorr“ — aus der Seitenleiste oder den Optionen
     themaGeaendert = Signal(str)
 
-    def __init__(self, settings, gelernt: Gelernt | None = None, parent=None):
+    def __init__(self, settings, gelernt=None, parent=None):
         super().__init__(parent)
         self.settings = settings
-        self.gelernt = gelernt or Gelernt()
+        self.gelernt = gelernt or fundlib.gelernt()
         self.editor = None
-        self.funde: list[ProofingIssue] = []
+        self.funde: list = []
         self._funde_doc = None
         self._funde_rev = -1
-        self._roh: list[ProofingIssue] = []
+        self._roh: list = []
         self._geprueft: dict[str, list[tuple[int, int]]] = {}   # Quelle → Bereiche, die sie vollständig geprüft hat
         self._pruef_laenge: int | None = None            # Länge des Textes, der gerade geprüft wird (für die Bereichsprüfung der Funde)
         self._weg: set[tuple] = set()
@@ -83,7 +79,7 @@ class WritingAssistant(QObject):
         self._timer.timeout.connect(lambda: self.pruefen())
         self.thema = settings.thema()
         if self.thema != "egal":                       # Wörterbuch (~0,4 s) erst nach dem ersten Zeichnen des Fensters laden
-            QTimer.singleShot(0, lambda t=self.thema: vorhersage.thema_aufnehmen(_vorhersage.thema_woerter(t)))
+            QTimer.singleShot(0, lambda t=self.thema: fundlib.thema_aufnehmen(_vorhersage.thema_woerter(t)))
 
     # ---- Schalter ---------------------------------------------------------
     def an(self, name: str) -> bool:
@@ -110,7 +106,7 @@ class WritingAssistant(QObject):
         self.thema = name
         self.settings.thema_setzen(name)
         if name != "egal":
-            vorhersage.thema_aufnehmen(_vorhersage.thema_woerter(name))
+            fundlib.thema_aufnehmen(_vorhersage.thema_woerter(name))
         self.themaGeaendert.emit(name)
 
     def ak_an(self, name: str) -> bool:
@@ -154,7 +150,7 @@ class WritingAssistant(QObject):
             self._funde_rev = -1
         if not self._voll:
             return
-        self._roh = inkrement.verschieben(self._roh, pos, entfernt, hinzu)
+        self._roh = fundlib.verschieben(self._roh, pos, entfernt, hinzu)
         self._schmutz = _inkrement.schmutz_abbilden(self._schmutz, pos, entfernt, hinzu)
 
     def dokument_geaendert(self) -> None:
@@ -215,7 +211,7 @@ class WritingAssistant(QObject):
             self._roh = self._abstimmen(fundlib.loesen(roh + fremd) if fremd else roh)
             return
         von, bis = self._region
-        eigene = inkrement.einsetzen([f for f in self._roh if f.quelle == "eigen"], von, bis, roh)
+        eigene = fundlib.einsetzen([f for f in self._roh if f.quelle == "eigen"], von, bis, roh)
         fremd = [f for f in fremd if f.bis <= von or f.von >= bis]
         self._roh = self._abstimmen(fundlib.loesen(eigene + fremd) if fremd else eigene)   # ohne fremde Funde nichts auflösen: Satz-Hinweise überlappen Wort-Funde gewollt
 
@@ -253,7 +249,7 @@ class WritingAssistant(QObject):
             zw = self._text_zw = (doc, rev, doc.toPlainText())
         return zw[2]
 
-    def _key(self, f: ProofingIssue) -> tuple:
+    def _key(self, f) -> tuple:
         t = self._text()
         return (f.alt, f.neu, f.grund, t[max(0, f.von - 12):f.von])
 
@@ -264,7 +260,7 @@ class WritingAssistant(QObject):
         if meldung:
             self.status.emit(meldung)
 
-    def anzeigen(self, funde: list[ProofingIssue]) -> None:
+    def anzeigen(self, funde: list) -> None:
         self.funde = funde
         try:
             self._funde_doc = self.editor.document() if self.editor is not None else None
@@ -275,7 +271,7 @@ class WritingAssistant(QObject):
             self.editor.set_wellen(funde if self.an("wellen") else [])
         self.fundeGeaendert.emit(funde)
 
-    def fund_aktuell(self, fund: ProofingIssue | None = None) -> bool:
+    def fund_aktuell(self, fund=None) -> bool:
         """Nur Karten/Funde der aktuellen Dokumentrevision dürfen Aktionen auslösen."""
         ed = self.editor
         try:
@@ -287,24 +283,23 @@ class WritingAssistant(QObject):
             return False
 
     # ---- Rechtsklick-Menü ------------------------------------------------------------------
-    def funde_an(self, pos: int) -> list[ProofingIssue]:
+    def funde_an(self, pos: int) -> list:
         return [f for f in self.funde if f.von <= pos <= f.bis and f.von < f.bis]
 
     def _menue_vorschlaege(self, gefunden: list, wort) -> list:
         """(Text, Fund)-Paare: erst die Funde an der Stelle, dann Wörterbuch-/Klangvorschläge für ein unbekanntes Wort."""
         # auch bei Hinweisen („Textiler → Textil er“): was die Seitenleiste mit „Ändern“ anbietet
-        vorschlaege: list[tuple[str, ProofingIssue | None]] = [(f.neu, f) for f in gefunden if f.neu]
+        vorschlaege: list = [(f.neu, f) for f in gefunden if f.neu]
         if not (wort and self.settings.vorschlaege_anzeigen()):
             return vorschlaege
-        from core.korrektur.rechtschreibung import pruefung
         from writer.funktionen.korrektur import vorschlaege as V
         schon = {t for t, _f in vorschlaege}
         eigenes = (self.gelernt.daten.get("woerter") or {}).get(str(wort[0]).lower()) or ""
         for k in V.vorschlaege_fuer(wort[0], 6, eigenes):
-            text = pruefung.uebernimm_schreibweise(wort[0], k)
+            text = fundlib.uebernimm_schreibweise(wort[0], k)
             if text not in schon:
-                vorschlaege.append((text, ProofingIssue(von=wort[1], bis=wort[2], alt=wort[0], neu=k,
-                                                        wort_ebene=True, art="tipp", grund="Vorschlag")))
+                vorschlaege.append((text, fundlib.fund(von=wort[1], bis=wort[2], alt=wort[0], neu=k,
+                                                       wort_ebene=True, art="tipp", grund="Vorschlag")))
         return vorschlaege
 
     def _menue_aktionen(self, menu, gefunden: list, vorschlaege: list, wort) -> list:
@@ -350,12 +345,11 @@ class WritingAssistant(QObject):
 
     def _wort_an(self, pos: int):
         """(Wort, von, bis), wenn an der Stelle ein Wort steht, das das Wörterbuch nicht kennt."""
-        from core.korrektur.rechtschreibung import pruefung
         text = self._text()
-        for m in pruefung.WORT_MUSTER.finditer(text):
+        for m in re.finditer(fundlib.wort_muster(), text):
             if m.start() <= pos <= m.end():
                 w = m.group(0)
-                if len(w) > 1 and w.lower() not in pruefung.lade_woerter() and not self.gelernt.daten["inRuhe"].get(w.lower()):
+                if len(w) > 1 and not fundlib.wort_bekannt(w.lower()) and not self.gelernt.daten["inRuhe"].get(w.lower()):
                     return w, m.start(), m.end()
         return None
 
@@ -376,7 +370,7 @@ class WritingAssistant(QObject):
 
     # ---- Gründlich prüfen (eigene Regeln + LanguageTool, wenn eingerichtet) -------------------
     def gruendlich(self) -> None:
-        from framework.dokumentverwaltung.integrationen import languagetool
+        from writer.anbindung import languagetool
         self.pruefen(voll=True)
         if not languagetool.verfuegbar():
             self.status.emit("Gründlich: LanguageTool ist nicht eingerichtet — es gelten die eigenen Regeln. "
@@ -395,7 +389,7 @@ class WritingAssistant(QObject):
             def run(self):
                 try:
                     funde = languagetool.pruefe(text)
-                except languagetool.LanguageToolFehler as e:
+                except languagetool.Sprachpruefungsfehler as e:
                     try:
                         self.sig.fertig.emit(-1, [str(e)], self.doc)
                     except RuntimeError:
@@ -472,7 +466,7 @@ class WritingAssistant(QObject):
         return n
 
     # ---- Annehmen / weglassen ----------------------------------------------------------
-    def aendern(self, fund: ProofingIssue) -> bool:
+    def aendern(self, fund) -> bool:
         # Wort-Vorschläge aus dem Rechtsklick-Menü entstehen live am Text und stehen nicht in ``funde``; ``replace_range(erwartet=…)`` schützt sie.
         ed = self.editor
         if ed is None or not (fund.wort_ebene or self.fund_aktuell(fund)) or not fund.neu and fund.art == "hinweis":
@@ -518,4 +512,4 @@ class WritingAssistant(QObject):
     def autokorr(self, text_vor_cursor: str) -> str:
         if not self.an("autokorr"):
             return text_vor_cursor
-        return autokorrektur.korrigiere(text_vor_cursor, self.ak_an)
+        return fundlib.autokorrigiere(text_vor_cursor, {name: self.ak_an(name) for name in _autokorrektur.schalter()})

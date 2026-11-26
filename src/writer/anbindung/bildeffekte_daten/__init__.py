@@ -5,6 +5,7 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "dreht": ("anbindung", "dreht"),
     "hat_abschluss": ("anbindung", "hat_abschluss"),
     "px_pt": ("anbindung", "px_pt"),
     "tiefe_richtung": ("anbindung", "tiefe_richtung"),

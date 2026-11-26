@@ -8,8 +8,8 @@ class VorschauAdapter:
     def __init__(self, tab):
         self._tab = tab
 
-    def zeigen(self, dokument: object, art: str) -> None:
-        vorschau_ansicht.zeigen(self._tab, dokument, art)
+    def zeigen(self, kennung: int, art: str) -> None:
+        vorschau_ansicht.zeigen(self._tab, kennung, art)
 
     def aktiv(self, art: str) -> bool:
         return self._tab is not None and bool(vorschau_ansicht.aktiv(self._tab, art))

@@ -14,7 +14,15 @@ def neu(grundschrift: tuple[str, float] | None = None) -> int:
 
 
 def oeffnen_datei(pfad: str, kennwort: str | None = None) -> Geoeffnet:
-    return sitzung.oeffnen_datei(pfad, kennwort)
+    """Öffnet die Datei als neues Dokument. Meldet ``KennwortNoetig`` bzw. ``Dateifehler`` (``writer.werte``), wenn das nicht geht."""
+    from framework.schnittstellen import Dateifehler as _Dateifehler, KennwortNoetig as _KennwortNoetig
+    from writer.werte import Dateifehler, KennwortNoetig
+    try:
+        return sitzung.oeffnen_datei(pfad, kennwort)
+    except _KennwortNoetig as e:
+        raise KennwortNoetig(e.falsch) from None
+    except _Dateifehler as e:
+        raise Dateifehler(str(e)) from None
 
 
 def schliessen(kennung: int) -> None:

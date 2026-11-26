@@ -31,6 +31,8 @@ class _Datensatz:
     layout_optionen: dict = field(default_factory=dict)
     markup: bool = True                  # Kommentare und Änderungen zeigen (Überprüfen ▸ Markup)
     markup_filter: dict = field(default_factory=lambda: dict(_MARKUP_STANDARD))   # Ansichtsoptionen des Layouts (Lesehilfe, Web-Layout): Seitenzahlen wie in der Ansicht
+    neben: bool = False                  # Nebendokument (Vorschau, Druckkopie): hat eine Kennung, ist aber kein offenes Dokument des Fensters
+    ansichtslayout: object | None = None  # das gesetzte Dokument der Ansicht (``framework.befehle.ansicht.layout``); entsteht beim ersten Zugriff
 
 
 class Sitzung:
@@ -47,7 +49,14 @@ class Sitzung:
         return self._anlegen(dokument, meta, None)
 
     def oeffnen_datei(self, pfad: str, kennwort: str | None = None) -> Geoeffnet:
-        geladen = lade_modell(pfad, kennwort)                   # wirft DocumentIOError / PasswortNoetig an den Aufrufer
+        from core.dokument import DocumentIOError, PasswortNoetig
+        from framework.schnittstellen import Dateifehler, KennwortNoetig
+        try:
+            geladen = lade_modell(pfad, kennwort)
+        except PasswortNoetig as e:                             # Fehler des Kerns bleiben im Framework: hinaus gehen eigene Fehlertypen
+            raise KennwortNoetig(e.falsch) from None
+        except DocumentIOError as e:
+            raise Dateifehler(str(e)) from None
         hinweise = tuple(getattr(geladen.report, "warnings", ()) or ())
         return Geoeffnet(self._anlegen(geladen.document, dict(geladen.meta), geladen.page), hinweise)
 
@@ -61,10 +70,24 @@ class Sitzung:
         melder.melden(Ereignis(Art.GEAENDERT, "dokument_geoeffnet", {"nummer": nummer}))
         return nummer
 
+    def _neben(self, dokument) -> int:
+        """Ein Nebendokument anlegen (abgeleitete Fassung für Vorschau oder Ausgabe): bekommt eine Kennung, wird aber weder aktiv noch als offenes
+        Dokument geführt und meldet nichts."""
+        nummer = self._naechste
+        self._naechste += 1
+        self._sitzungen[nummer] = _Datensatz(Bearbeitungssitzung(dokument), {}, None, neben=True)
+        return nummer
+
+    def neben_schliessen(self, nummer: int) -> None:
+        """Ein Nebendokument wieder freigeben (ein offenes Dokument bleibt unberührt)."""
+        satz = self._sitzungen.get(nummer)
+        if satz is not None and satz.neben:
+            self._sitzungen.pop(nummer, None)
+
     def schliessen(self, nummer: int) -> None:
         self._sitzungen.pop(nummer, None)
         if self._aktiv == nummer:
-            self._aktiv = next(reversed(self._sitzungen), None)
+            self._aktiv = next((n for n in reversed(self._sitzungen) if not self._sitzungen[n].neben), None)
         melder.melden(Ereignis(Art.GEAENDERT, "dokument_geschlossen", {"nummer": nummer}))
 
     def aktivieren(self, nummer: int) -> None:
@@ -131,7 +154,7 @@ class Sitzung:
 
     @property
     def offene(self) -> tuple[int, ...]:
-        return tuple(self._sitzungen)
+        return tuple(n for n, satz in self._sitzungen.items() if not satz.neben)
 
 
 sitzung = Sitzung()

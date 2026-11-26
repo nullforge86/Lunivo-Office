@@ -13,6 +13,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
+from writer.funktionen import bearbeiten as ST
 from vcl.qt.widgets.bausteine.farben.farben import GRIFF_FLAECHE, KNOPF_SYMBOLFARBE, TABELLE_AKZENT, TABELLE_AKZENT_FLAECHE, TABELLE_GRIFF_RAND
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG, STIFT_AUSWAHL, STIFT_BILDCHEN
 
@@ -79,17 +80,17 @@ class TabellenBedienung:
         tid = None if self.nur_lesen else self.tabelle_aktiv()
         if tid is None:
             return None
-        t = self.sitzung._tabelle(tid)
+        zeilen, spalten, spannen = ST.tabellenmasse(self.kennung, tid)
         for seite, p in self._zellplaetze(tid):
             if p.zeile < 0 or p.spalte < 0:
                 continue
-            z = t.zellen[p.zeile][p.spalte]
+            zeilenspanne, spaltenspanne = spannen[(p.zeile, p.spalte)]
             a, b = self._v(seite, p.rect.right, p.rect.y), self._v(seite, p.rect.right, p.rect.bottom)
-            if abs(pos.x() - a.x()) <= RAND_TREFFER and a.y() <= pos.y() <= b.y() and p.spalte + z.spaltenspanne < t.spalten:
-                return "spalte", tid, p.spalte + z.spaltenspanne - 1
+            if abs(pos.x() - a.x()) <= RAND_TREFFER and a.y() <= pos.y() <= b.y() and p.spalte + spaltenspanne < spalten:
+                return "spalte", tid, p.spalte + spaltenspanne - 1
             a, b = self._v(seite, p.rect.x, p.rect.bottom), self._v(seite, p.rect.right, p.rect.bottom)
-            if abs(pos.y() - a.y()) <= RAND_TREFFER and a.x() <= pos.x() <= b.x() and p.zeile + z.zeilenspanne < t.zeilen:
-                return "zeile", tid, p.zeile + z.zeilenspanne - 1
+            if abs(pos.y() - a.y()) <= RAND_TREFFER and a.x() <= pos.x() <= b.x() and p.zeile + zeilenspanne < zeilen:
+                return "zeile", tid, p.zeile + zeilenspanne - 1
         return None
 
     # ---- Zeichnen --------------------------------------------------------------------------------------------------------------------
@@ -216,17 +217,21 @@ class TabellenBedienung:
         """Eine Zellenlinie unter dem Punkt löschen: die beiden Zellen daneben werden zu einer."""
         if self.tabelle_linie_loeschen is None:
             return
+        masse: dict = {}                                                       # Tabellen-Id → (Zeilen, Spalten, Spannen), je Tabelle einmal geholt
         for s in self.ergebnis().seiten:
             for p in s.plaetze:
                 if p.art != "zelle" or p.kopie or p.zeile < 0 or p.spalte < 0:
                     continue
-                t = self.sitzung._tabelle(p.block_id)
-                z = t.zellen[p.zeile][p.spalte]
+                tid = p.block_id
+                if tid not in masse:
+                    masse[tid] = ST.tabellenmasse(self.kennung, tid)
+                zeilen, spalten, spannen = masse[tid]
+                zeilenspanne, spaltenspanne = spannen[(p.zeile, p.spalte)]
                 a, b = self._v(s.index, p.rect.right, p.rect.y), self._v(s.index, p.rect.right, p.rect.bottom)
-                if abs(pos.x() - a.x()) <= RAND_TREFFER and a.y() <= pos.y() <= b.y() and p.spalte + z.spaltenspanne < t.spalten:
-                    self.tabelle_linie_loeschen(t.id, (p.zeile, p.spalte), (p.zeile, p.spalte + z.spaltenspanne))
+                if abs(pos.x() - a.x()) <= RAND_TREFFER and a.y() <= pos.y() <= b.y() and p.spalte + spaltenspanne < spalten:
+                    self.tabelle_linie_loeschen(tid, (p.zeile, p.spalte), (p.zeile, p.spalte + spaltenspanne))
                     return
                 a, b = self._v(s.index, p.rect.x, p.rect.bottom), self._v(s.index, p.rect.right, p.rect.bottom)
-                if abs(pos.y() - a.y()) <= RAND_TREFFER and a.x() <= pos.x() <= b.x() and p.zeile + z.zeilenspanne < t.zeilen:
-                    self.tabelle_linie_loeschen(t.id, (p.zeile, p.spalte), (p.zeile + z.zeilenspanne, p.spalte))
+                if abs(pos.y() - a.y()) <= RAND_TREFFER and a.x() <= pos.x() <= b.x() and p.zeile + zeilenspanne < zeilen:
+                    self.tabelle_linie_loeschen(tid, (p.zeile, p.spalte), (p.zeile + zeilenspanne, p.spalte))
                     return

@@ -5,6 +5,7 @@ from collections.abc import Mapping, Sequence
 
 import framework.zeichnen as _fw
 from framework.schnittstellen import BlasenSchrift
+from writer.werte import eigene_kopie
 
 
 def blase(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], autor: str, datum: str, farbe: tuple[int, int, int, int], text: str, r: tuple[float, float, float, float], schrift: BlasenSchrift, farben: tuple[tuple[int, int, int, int], tuple[int, int, int, int], tuple[int, int, int, int]]) -> tuple[int, int, bytes]:
@@ -85,3 +86,132 @@ def wordart_masse(text: str, schrift: str, pt: int) -> tuple[float, float]:
 def wordart(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], text: str, nr: int, schrift: str, pt: int) -> tuple[int, int, bytes]:
     """WordArt nach einem der Stile der Galerie."""
     return _fw.wordart(flaeche, text, nr, schrift, pt)
+
+
+def diagramm(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], r: tuple[float, float, float, float], d: Mapping, mit_geo: bool=False) -> tuple[tuple[int, int, bytes], dict]:
+    """Das Diagramm ``d`` in ``r``; → (Bild, Rechtecke der Teile als ``(x, y, Breite, Höhe)``, bei mehreren Balken als Liste)."""
+    bild, geo = _fw.diagramm(flaeche, r, d, mit_geo)
+    return bild, eigene_kopie(geo)
+
+
+def seitenrahmen_rechteck(b: Mapping, raender_mm: tuple[float, float, float, float], seite: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    """Das Rechteck des Seitenrahmens ``b`` auf einer Seite mit dem Rechteck ``seite``; ``raender_mm``: Seitenränder (links, oben, rechts, unten)."""
+    return _fw.seitenrahmen_rechteck(b, raender_mm, seite)
+
+
+def seitenrahmen(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], b: Mapping, raender_mm: tuple[float, float, float, float], seite: tuple[float, float, float, float]) -> tuple[int, int, bytes]:
+    """Den Seitenrahmen ``b`` auf eine Seite zeichnen (Linie in ihrer Art oder Kunstrahmen)."""
+    return _fw.seitenrahmen(flaeche, b, raender_mm, seite)
+
+
+def bild(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], r: tuple[float, float, float, float], daten: bytes, ellipse: bool, rand: Mapping | None, dreh: float, fuell: Mapping | None, fuellbild: bytes | None, fx: Mapping | None) -> tuple[int, int, bytes]:
+    """Ein Bild in ``r`` mit Füllung, Kontur, Drehung und Effekten."""
+    return _fw.bild(flaeche, r, daten, ellipse, rand, dreh, fuell, fuellbild, fx)
+
+
+def text_mit_effekt(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], text: str, mitte: tuple[float, float], schrift: tuple[str, float, int, bool], farbe: tuple[int, int, int, int], fx: Mapping, kontur: tuple[tuple[int, int, int, int], float] | None=None) -> tuple[int, int, bytes]:
+    """Text mit Effekt, um ``mitte`` zentriert; ``schrift``: (Familie, Größe in pt, Gewicht, kursiv); ``kontur``: (Farbe, Breite in Bildpunkten)."""
+    return _fw.text_mit_effekt(flaeche, text, mitte, schrift, farbe, fx, kontur)
+
+
+def form(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], ops: Sequence[tuple], offen: bool, ist_linie: bool, vertikal: bool, kasten: tuple[float, float, float, float], fuell: str, fuell_art: str, linie: str, strich: float, text: str) -> tuple[int, int, bytes]:
+    """Eine Form aus ihrem Umriss ``ops`` im Rechteck ``kasten``: Füllung, Kontur und Text; ``vertikal``: Textfeld mit senkrecht laufendem Text."""
+    return _fw.form(flaeche, ops, offen, ist_linie, vertikal, kasten, fuell, fuell_art, linie, strich, text)
+
+
+def formel(teile: Sequence[tuple[str, str]], pt: int, farbe: str) -> tuple[int, int, bytes]:
+    """Die Formel aus ihren Stücken ``(Text, "normal" | "hoch" | "tief")`` als Bild."""
+    return _fw.formel(teile, pt, farbe)
+
+
+def wordart_stil(text: str, stil: str, schrift: str, pt: int, farbe: str, regenbogen: Sequence[str]) -> tuple[int, int, bytes]:
+    """WordArt in einem der älteren Stile (Verlauf, Schatten, Umriss, Regenbogen, Welle); ``regenbogen``: die Farben des Regenbogenverlaufs."""
+    return _fw.wordart_stil(text, stil, schrift, pt, farbe, regenbogen)
+
+
+def datei_symbol(name: str, symbol: tuple[int, int, bytes], breite: int, farbe: str) -> tuple[int, int, bytes]:
+    """Dateisymbol (``symbol``: Breite, Höhe, Bildpunkte als RGBA) mit dem Namen darunter."""
+    return _fw.datei_symbol(name, symbol, breite, farbe)
+
+
+def smartart_beginnen(knoten: Sequence[Mapping], formate: Sequence[Mapping | None], format_alle: Mapping) -> None:
+    """Ein neues SmartArt wird gezeichnet: Knoten, das Format je Knoten und das Format aller Knoten."""
+    _fw.smartart_beginnen(knoten, formate, format_alle)
+
+
+def smartart_schrift(pt: float) -> None:
+    """Die Schrift des nächsten Textes: die Grundschrift des Dokuments in der Größe ``pt``."""
+    _fw.smartart_schrift(pt)
+
+
+def smartart_schrift_uebernehmen(t: Mapping | None) -> None:
+    """Die Schrift bekommt die Angaben des Textformats ``t`` (Name, Größe, fett, kursiv) über der aktuellen Schrift."""
+    _fw.smartart_schrift_uebernehmen(t)
+
+
+def smartart_format_von(nr: int | None) -> dict | None:
+    """Das Format des Knotens Nummer ``nr``: das des Knotens über dem von allen Knoten."""
+    return eigene_kopie(_fw.smartart_format_von(nr))
+
+
+def smartart_gruppen(pts: Sequence[tuple[int, str]]) -> list[tuple[int, str, list[tuple[int, str]]]]:
+    """Oberste Ebene als Überschrift, alles Eingerückte darunter als Unterpunkte: [(Nr. der Überschrift, Text, [(Nr., Unterpunkt)])]."""
+    return eigene_kopie(_fw.smartart_gruppen(pts))
+
+
+def smartart_baum(pts: Sequence[tuple[int, str]]) -> list[dict]:
+    """Die Wurzeln des Knotenbaums; jeder Knoten {i (Nr.), t (Text), e (Ebene), k (Kinder), a (Assistent)}."""
+    return eigene_kopie(_fw.smartart_baum(pts))
+
+
+def smartart_text(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], text: str, r: tuple[float, float, float, float], farbe: tuple[int, int, int, int], ausrichtung: str, umbruch: bool) -> tuple[int, int, bytes]:
+    """Den Text eines Kastens in der aktuellen Schrift setzen und zeichnen (senkrecht mittig)."""
+    return _fw.smartart_text(flaeche, text, r, farbe, ausrichtung, umbruch)
+
+
+def textfeld_setzen(d: Mapping, laeufe: Sequence[Mapping], b: float, h: float, standard_farbe: str, farbe_ueber: str | None=None) -> int:
+    """Den Text eines Textfelds in ein Feld ``b`` × ``h`` setzen; → Nummer des Satzes (mit ``textfeld_freigeben`` beenden)."""
+    return _fw.textfeld_setzen(d, laeufe, b, h, standard_farbe, farbe_ueber)
+
+
+def textfeld_freigeben(nummer: int) -> None:
+    _fw.textfeld_freigeben(nummer)
+
+
+def textfeld_zeilen(nummer: int) -> tuple[tuple[float, float, float, float], ...]:
+    """Die Rechtecke ``(x, y, Breite, Höhe)`` der Textzeilen, die auf dem Feld stehen."""
+    return _fw.textfeld_zeilen(nummer)
+
+
+def textfeld_hoehe(nummer: int) -> float:
+    """Obere Kante des Innenraums bis zur Unterkante der letzten Zeile auf dem Feld."""
+    return _fw.textfeld_hoehe(nummer)
+
+
+def textfeld_farbe(nummer: int) -> str:
+    return _fw.textfeld_farbe(nummer)
+
+
+def textfeld_blatt(nummer: int) -> tuple[float, float]:
+    """Breite und Höhe des gesetzten Feldes in Bildpunkten (96 dpi)."""
+    return _fw.textfeld_blatt(nummer)
+
+
+def textfeld_bild(nummer: int, faktor: float) -> tuple[int, int, bytes]:
+    """Der gesetzte Text des Feldes (durchsichtiger Grund) in der Auflösung ``faktor``."""
+    return _fw.textfeld_bild(nummer, faktor)
+
+
+def textfeld_passt(d: Mapping, laeufe: Sequence[Mapping], b: float, h: float, standard_farbe: str) -> int:
+    """Wie viele Zeichen der Läufe im Feld ``b`` × ``h`` stehen — für verknüpfte Textfelder."""
+    return _fw.textfeld_passt(d, laeufe, b, h, standard_farbe)
+
+
+def wordart_objekt(d: Mapping) -> tuple[tuple[int, int, bytes], tuple[tuple[int, int], ...]]:
+    """Das WordArt-Objekt ``d`` als Bild in doppelter Auflösung; dazu (oben, Höhe) jeder Zeile in Bildpunkten des Bildes."""
+    return _fw.wordart_objekt(d)
+
+
+def absaetze(flaeche: tuple[float, float, float, float, float, tuple[int, int, int, int]], r: tuple[float, float, float, float], texte: Sequence[tuple[Mapping, Mapping, str]], mittig: bool=False) -> tuple[int, int, bytes]:
+    """Absätze (Absatzformat, Zeichenformat, Text) in das Rechteck ``r`` setzen und zeichnen: die Vorschau der Formatierungsfenster."""
+    return _fw.absaetze(flaeche, r, texte, mittig)

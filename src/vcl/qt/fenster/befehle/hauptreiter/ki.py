@@ -94,7 +94,7 @@ class KIBefehle:
 
 
     def vorlesenStopp(self, k=None):
-        from framework.dokumentverwaltung.dokumentpflege import vorlesen as v
+        from writer.anbindung import vorlesen as v
         v.beenden()
         self.w.lbl_msg.setText("Vorlesen angehalten.")
 

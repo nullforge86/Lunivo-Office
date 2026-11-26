@@ -6,7 +6,7 @@ from datetime import datetime
 
 from PySide6.QtWidgets import QMessageBox
 
-from core.dokument.bericht import DocumentIOError
+from writer.werte import Dateifehler
 from writer.anbindung import dateiformate as formats
 from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import speicherort_waehlen
@@ -41,7 +41,7 @@ class DateienVorlagenBaustein:
         else:
             try:
                 geoeffnet = dokumente.oeffnen_datei(wert)
-            except DocumentIOError as e:
+            except Dateifehler as e:
                 QMessageBox.warning(self, "Vorlage", str(e)); return
             tab = DocumentTab(geoeffnet.kennung, None, title=os.path.splitext(os.path.basename(wert))[0])
             self._add_tab(tab)
@@ -54,8 +54,8 @@ class DateienVorlagenBaustein:
         t = self.current_tab()
         if not t:
             return
-        from core.dokument import vorlagen
-        ordner = ordner or vorlagen.vorlagenordner(self.settings)
+        from writer.anbindung.vorlagenordner import vorlagen_ordner_pfad
+        ordner = ordner or vorlagen_ordner_pfad(self.settings)
         os.makedirs(ordner, exist_ok=True)
         wahl = speicherort_waehlen(self, "Als Vorlage speichern", os.path.join(ordner, os.path.splitext(t.title)[0] + ".docx"),
                                    [(".docx", formats.save_filters()[".docx"])], ".docx")
@@ -82,7 +82,7 @@ class DateienVorlagenBaustein:
             for e in entries:
                 try:
                     geoeffnet = dokumente.oeffnen_datei(e.docx_path)
-                except DocumentIOError:
+                except Dateifehler:
                     continue
                 tab = DocumentTab(geoeffnet.kennung, None, title=f"Wiederhergestellt – {e.title}")
                 tab.token = e.token

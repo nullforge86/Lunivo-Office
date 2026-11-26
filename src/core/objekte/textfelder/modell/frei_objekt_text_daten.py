@@ -26,14 +26,14 @@ TEXTFELD_RAND = {"b": 1.5, "farbe": "#1f3864", "art": "einfach"}
 WORDART_STANDARD = {"text": "Hier Text einfügen", "vorlage": 0, "pt": 36, "schrift": "Liberation Sans"}
 
 
-_SS = 2                                                              # Zeichnen in doppelter Auflösung (scharf auch bei Zoom)
+SS = 2                                                              # Zeichnen in doppelter Auflösung (scharf auch bei Zoom)
 
 
 # ---- Gemeinsame Hilfen: Listenmarken, Textrichtung, Effekte ---------------------------------------------------------------
 RICHTUNGEN = ("waagerecht", "senkrecht_rl", "senkrecht_lr", "dreh90", "dreh270", "asiatisch270")
 
 
-def _gedreht(richtung: str | None) -> bool:
+def gedreht(richtung: str | None) -> bool:
     return richtung not in (None, "", "waagerecht")
 
 
@@ -62,7 +62,7 @@ def laeufe_zusammen(laeufe: list[dict]) -> list[dict]:
 
 
 # ---- Textfeld zeichnen --------------------------------------------------------------------------------------------------
-def _zeichen_dict(d: dict, lauf: dict, vorlage, farbe_ueber: str | None, standard_farbe: str) -> dict:
+def zeichen_dict(d: dict, lauf: dict, vorlage, farbe_ueber: str | None, standard_farbe: str) -> dict:
     """Das Zeichenformat eines Laufs im Dokumentenmodell: seine eigenen Angaben, sonst die des Objekts."""
     e = {k: lauf.get(k, d.get(k)) for k in ZEICHEN_SCHLUESSEL}
     z: dict = {"schrift": e["schrift"] or d.get("schrift", "Liberation Sans"), "groesse_pt": float(e["pt"] or d.get("pt", 11))}
@@ -99,7 +99,7 @@ def _zeichen_dict(d: dict, lauf: dict, vorlage, farbe_ueber: str | None, standar
 TEXTRAND = 8.0                                                 # Standard-Innenabstand des Textes im Feld (Bildpunkte); ``d["innen"]`` = [links, oben, rechts, unten] überschreibt ihn
 
 
-def _innen(d: dict) -> tuple[float, float, float, float]:
+def innen(d: dict) -> tuple[float, float, float, float]:
     """Innenabstand links, oben, rechts, unten — aus ``d["innen"]`` (zum Beispiel aus bodyPr lIns/tIns/rIns/bIns einer DOCX), sonst ``TEXTRAND``."""
     w = d.get("innen")
     if isinstance(w, (list, tuple)) and len(w) == 4:

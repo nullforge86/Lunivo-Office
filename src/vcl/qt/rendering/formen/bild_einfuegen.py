@@ -21,32 +21,10 @@ def piktogramm_bild(name: str, px: int = 96, farbe: str = Farbe.PIKTOGRAMM) -> Q
 # ---- Objekt als Symbol ----------------------------------------------------------------------------------------------------------
 def datei_symbol_bild(name: str, symbol: QImage, breite: int = 120) -> QImage:
     """Dateisymbol mit Namen darunter (Einfügen ▸ Objekt ▸ Als Symbol anzeigen); Name und Zusammensetzung zeichnet der Kern."""
-    from vcl.qt.rendering.formen.anzeige import kern_bild
-    from core.geometrie import Point, Rect
-    from core.layout.drucklayout.ausgabe.backend import Style, rgba
-    from core.layout.drucklayout.ausgabe.bild.bildeffekte import png_bytes
-    from core.textsatz import FontSpec
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    engine = standard_engine()
-    f = FontSpec("Liberation Sans", 9.0)
-    zeile = name
-    if engine.measure_text(zeile, f) > breite - 8:                           # in der Mitte kürzen, bis der Name passt
-        rest, links, rechts = name, 0, 0
-        while len(rest) > 2 and engine.measure_text(name[:links + 1] + "…" + name[len(name) - rechts:], f) <= breite - 8:
-            if links <= rechts:
-                links += 1
-            else:
-                rechts += 1
-        zeile = name[:links] + "…" + (name[len(name) - rechts:] if rechts else "")
-    m = engine.font_metrics(f)
+    from writer.anbindung import zeichnen as ZW
     sym = symbol.convertToFormat(QImage.Format_RGBA8888)
-    png = png_bytes(sym.width(), sym.height(), bytes(sym.constBits()))
-    b, h = breite, symbol.height() + 12 + int(m.line_spacing)
-
-    def zeichnen(z) -> None:
-        z.draw_image(png, Rect((breite - symbol.width()) // 2, 4, symbol.width(), symbol.height()), smooth=True)
-        z.draw_text(zeile, Point((breite - engine.measure_text(zeile, f)) / 2, symbol.height() + 8 + m.ascent), f, Style(color=rgba(Farbe.TINTE_DUNKEL)))
-    return kern_bild(b, h, zeichnen)
+    b, h, roh = ZW.datei_symbol(name, (sym.width(), sym.height(), bytes(sym.constBits())), breite, Farbe.TINTE_DUNKEL)
+    return QImage(roh, b, h, b * 4, QImage.Format_RGBA8888).copy()
 
 
 # ---- Bild bearbeiten (Farbe, Zuschneiden, Drehen) -----------------------------------------------------------------------

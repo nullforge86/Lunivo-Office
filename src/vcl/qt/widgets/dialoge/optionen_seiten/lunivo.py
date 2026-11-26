@@ -5,7 +5,7 @@ from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from core.formatierung.schrift import standard_datenbank
+from writer.anbindung import schriften as standard_datenbank
 from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, rolle as _rolle
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -18,7 +18,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QWidget
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from writer.funktionen import ki as KD
-from framework.dokumentverwaltung.dokumentpflege import vorlesen
+from writer.anbindung import vorlesen
 from system.plattform import pfade
 from writer.anbindung.vorhersage import empfaenger
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
@@ -258,7 +258,7 @@ class LunivoSeiten:
 
 
     def _erweitert(self, titel):
-        from framework.dokumentverwaltung.integrationen import languagetool
+        from writer.anbindung import languagetool
         from writer.anbindung.orte import data_dir
         p = _Seite(self.w, titel)
 

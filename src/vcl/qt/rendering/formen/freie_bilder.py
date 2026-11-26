@@ -1,14 +1,10 @@
 from __future__ import annotations
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage, QPainter
-from vcl.qt.rendering.formen.geometrie import rect_from_qt, rect_to_qt
-from core.objekte.anordnung.objekte_hilfen import Anchor, FillStyle, StrokeStyle, Transform
-from core.objekte.anordnung.image_object import ImageObject
-from core.layout.drucklayout.ausgabe.objekte.objekte import zeichne_bild
-from core.layout.drucklayout.objekte import objekt_rechteck
 from vcl.qt.rendering.formen import bilddaten as BD
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from core.objekte.formen.freie_bilder_daten import _PNG_ABLAGE, _text_gerade
+from writer.anbindung.freie_bilder_daten import rechteck as _objekt_rechteck
+from writer.anbindung.freie_bilder_daten import text_gerade
 from writer.anbindung.freie_bilder_daten import max_bildpunkte
 from writer.anbindung.freie_bilder_daten import schema
 
@@ -117,8 +113,8 @@ def rechteck(a: dict, blatt_b: float, blatt_h: float, ml: float, mt: float, inha
              spalte_x: float | None = None, seite: int = 1) -> QRectF:
     """Das Rechteck des Bildes auf dem Blatt. ``absatz_y``: oberer Rand des Absatzes (Blattkoordinate), ``spalte_x``: linker Rand der Spalte.
     Gerechnet wird im Layoutkern (``core/layout/objekte.py``)."""
-    anker = Anchor(str(a.get("bh", "spalte")), float(a.get("xh", 0)), a.get("ah") or "", str(a.get("bv", "absatz")), float(a.get("yv", 0)), a.get("av") or "")
-    return rect_to_qt(objekt_rechteck(anker, float(a.get("b", 0)), float(a.get("h", 0)), blatt_b, blatt_h, ml, mt, inhalt_b, inhalt_h, absatz_y, spalte_x, seite))
+    anker = (str(a.get("bh", "spalte")), float(a.get("xh", 0)), a.get("ah") or "", str(a.get("bv", "absatz")), float(a.get("yv", 0)), a.get("av") or "")
+    return QRectF(*_objekt_rechteck(anker, float(a.get("b", 0)), float(a.get("h", 0)), blatt_b, blatt_h, ml, mt, inhalt_b, inhalt_h, absatz_y, spalte_x, seite))
 
 
 def fuell_pinsel(fuell: dict | None, r: QRectF, fuellbild: QImage | None = None):
@@ -161,6 +157,9 @@ def _stift(rand: dict):
     return pen
 
 
+_PNG_ABLAGE: dict = {}                                        # Bild (``cacheKey``) → PNG-Daten für das Backend
+
+
 def _png_daten(bild: QImage) -> bytes:
     """Die Bildpunkte als PNG für das Backend (kleine Ablage nach ``cacheKey``, damit nicht bei jedem Zeichnen neu kodiert wird)."""
     schluessel = bild.cacheKey()
@@ -177,10 +176,12 @@ def _ueber_backend(p: QPainter, bild: QImage, r: QRectF, ellipse: bool, rand: di
     """Bild mit Füllung, Kontur, Drehung und Effekten über ``core.layout.drucklayout.ausgabe`` zeichnen. Vektorbilder (SVG, EMF/WMF) gehen mit ihren Originalbytes an das Backend."""
     q = BD.quelle_zu(bild)
     daten = q.daten if q is not None and q.format in ("svg", "emf", "wmf") and not q.nur_raster else _png_daten(bild)
-    obj = ImageObject(r.width(), r.height(), None, ellipse=ellipse, transform=Transform(dreh), fill=FillStyle.aus_dict(fuell), stroke=StrokeStyle.aus_dict(rand), effects=fx or None)
-    from vcl.qt.rendering.formen.anzeige import kern_malen
-    rand = 0.75 * max(r.width(), r.height()) + 8 if (fx or dreh) else 8.0                                 # Platz für Drehung und Effekte (Schatten, Leuchten, Spiegelung)
-    kern_malen(p, r, lambda z: zeichne_bild(z, obj, rect_from_qt(r), daten, _png_daten(fuellbild) if fuellbild is not None and not fuellbild.isNull() else None), rand=rand)
+    from vcl.qt.rendering.formen.anzeige import raster_malen
+    from writer.anbindung import zeichnen as ZW
+    platz = 0.75 * max(r.width(), r.height()) + 8 if (fx or dreh) else 8.0                                # Platz für Drehung und Effekte (Schatten, Leuchten, Spiegelung)
+    kasten = (float(r.x()), float(r.y()), float(r.width()), float(r.height()))
+    raster_malen(p, r, lambda f: ZW.bild(f, kasten, daten, ellipse, rand, dreh, fuell, _png_daten(fuellbild) if fuellbild is not None and not fuellbild.isNull() else None, fx),
+                 rand=platz)
 
 
 def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, rand: dict | None = None, dreh: float = 0.0,
@@ -189,7 +190,7 @@ def bild_zeichnen(p: QPainter, bild: QImage, r: QRectF, ellipse: bool = False, r
     ``dreh``: Grad um die Mitte; ``fuell``: Füllung hinter dem Bild (siehe ``fuell_pinsel``)."""
     if bild is None or bild.isNull() or r.width() <= 0 or r.height() <= 0:
         return
-    if _text_gerade(dreh, fx):
+    if text_gerade(dreh, fx):
         leer = QImage(1, 1, QImage.Format_ARGB32); leer.fill(0)
         bild_zeichnen(p, leer, r, ellipse, rand, dreh, fuell, fuellbild, None)
         bild_zeichnen(p, bild, r, ellipse, None, 0.0, None, None, {k: v for k, v in fx.items() if k not in ("drehung", "d3")} or None)

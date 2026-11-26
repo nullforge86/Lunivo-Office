@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from framework.anbindung import Daten, fest
 from framework.schnittstellen import BlasenSchrift
 from framework.zeichnen.raster import Flaeche, Rasterbild, Rechteck, _malen, _rect
 
@@ -104,6 +105,58 @@ def svg(flaeche: Flaeche, daten: bytes, r: Rechteck) -> tuple[Rasterbild, bool]:
         gelungen[0] = svg_zeichnen(daten, z, _rect(r))
     bild = _malen(flaeche, los)
     return bild, gelungen[0]
+
+
+def diagramm(flaeche: Flaeche, r: Rechteck, d: Mapping[str, Daten], mit_geo: bool = False) -> tuple[Rasterbild, Mapping[str, Daten]]:
+    """Das Diagramm ``d`` in ``r``; → (Bild, Rechtecke der Teile als ``(x, y, Breite, Höhe)``, bei mehreren Balken als Liste; leer ohne ``mit_geo``)."""
+    from core.layout.drucklayout.ausgabe.diagramm import zeichne_diagramm
+    geo = {} if mit_geo else None
+    bild = _malen(flaeche, lambda z: zeichne_diagramm(z, _rect(r), d, geo))
+    return bild, fest({k: [(x.x, x.y, x.width, x.height) for x in v] if isinstance(v, list) else (v.x, v.y, v.width, v.height) for k, v in (geo or {}).items()})
+
+
+def _seite_mit_raendern(raender_mm: tuple[float, float, float, float]):
+    from types import SimpleNamespace
+    links, oben, rechts, unten = raender_mm
+    return SimpleNamespace(margin_left_mm=links, margin_top_mm=oben, margin_right_mm=rechts, margin_bottom_mm=unten)
+
+
+def seitenrahmen_rechteck(b: Mapping[str, Daten], raender_mm: tuple[float, float, float, float], seite: Rechteck) -> Rechteck:
+    """Das Rechteck des Seitenrahmens ``b`` auf einer Seite mit dem Rechteck ``seite``; ``raender_mm``: Seitenränder (links, oben, rechts, unten)."""
+    from core.layout.drucklayout.ausgabe.seite import rechteck
+    e = rechteck(b, _seite_mit_raendern(raender_mm), _rect(seite))
+    return Rechteck(e.x, e.y, e.width, e.height)
+
+
+def seitenrahmen(flaeche: Flaeche, b: Mapping[str, Daten], raender_mm: tuple[float, float, float, float], seite: Rechteck) -> Rasterbild:
+    """Den Seitenrahmen ``b`` auf eine Seite zeichnen (Linie in ihrer Art oder Kunstrahmen)."""
+    from core.layout.drucklayout.ausgabe.seite import zeichnen
+    page = _seite_mit_raendern(raender_mm)
+    return _malen(flaeche, lambda z: zeichnen(z, b, page, _rect(seite)))
+
+
+def bild(flaeche: Flaeche, r: Rechteck, daten: bytes, ellipse: bool, rand: Mapping[str, Daten] | None, dreh: float, fuell: Mapping[str, Daten] | None,
+         fuellbild: bytes | None, fx: Mapping[str, Daten] | None) -> Rasterbild:
+    """Ein Bild in ``r`` mit Füllung, Kontur, Drehung und Effekten."""
+    from core.layout.drucklayout.ausgabe.objekte import zeichne_bild
+    from core.objekte.anordnung import FillStyle, ImageObject, StrokeStyle, Transform
+    obj = ImageObject(r[2], r[3], None, ellipse=ellipse, transform=Transform(dreh), fill=FillStyle.aus_dict(fuell), stroke=StrokeStyle.aus_dict(rand), effects=fx or None)
+    return _malen(flaeche, lambda z: zeichne_bild(z, obj, _rect(r), daten, fuellbild))
+
+
+def text_mit_effekt(flaeche: Flaeche, text: str, mitte: tuple[float, float], schrift: tuple[str, float, int, bool], farbe: Farbe, fx: Mapping[str, Daten],
+                    kontur: tuple[Farbe, float] | None = None) -> Rasterbild:
+    """Text mit Effekt, um ``mitte`` zentriert; ``schrift``: (Familie, Größe in pt, Gewicht, kursiv); ``kontur``: (Farbe, Breite in Bildpunkten)."""
+    from core.geometrie import Point
+    from core.layout.drucklayout.ausgabe.text import zeichne_text_mit_effekt
+    from core.textsatz import FontSpec
+    from framework.dokumentverwaltung.ausgabe import standard_engine
+    engine = standard_engine()
+    fs = FontSpec(schrift[0], schrift[1], schrift[2], schrift[3])
+    m = engine.font_metrics(fs)
+    x = mitte[0] - engine.measure_text(text, fs) / 2
+    y = mitte[1] + (m.ascent - m.descent) / 2
+    return _malen(flaeche, lambda z: zeichne_text_mit_effekt(z, engine, text, Point(x, y), fs, farbe, fx, kontur))
 
 
 def wordart_masse(text: str, schrift: str, pt: int) -> tuple[float, float]:

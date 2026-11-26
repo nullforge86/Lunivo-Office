@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QWidget
 
-from framework.befehle.kopffuss.typen import KopfFussOptionen
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import fussleiste
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FormularGitter, UmbruchSchalter, abschnittstitel
 from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import ausfuehren
@@ -15,7 +14,7 @@ class _Fenster(PanelFaehig, QDialog):
     pass
 
 
-def optionen_fragen(eltern, optionen: KopfFussOptionen) -> tuple[bool, bool] | None:
+def optionen_fragen(eltern, optionen) -> tuple[bool, bool] | None:
     """Zeigt das Fenster; gibt (erste Seite anders, gerade/ungerade) zurück oder ``None``, wenn es abgebrochen wurde."""
     d = _Fenster(eltern)
     d.setWindowTitle("Optionen für Kopf- und Fußzeile")

@@ -13,12 +13,14 @@ import dataclasses
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PySide6.QtGui import QImage
 
-from core.dokument import Auswahl, InlineObjekt, Position, angabe_von, felder_aus_angabe
+from writer.funktionen import bearbeiten as ST
+from writer.funktionen import objekte as OW
+from writer.werte import Rechteck, Stelle
 
 class _BildFormat:
     """Maße eines Bildes im Text (die Fenster fragen ``width()``, ``height()`` und ``name()``)."""
 
-    def __init__(self, o: InlineObjekt):
+    def __init__(self, o):
         self._o = o
 
     def width(self) -> float:
@@ -50,27 +52,14 @@ class KernObjekte:
 
     def inline_gewaehlt(self):
         """Das Objekt im Text, das die Auswahl genau umfasst (ein Zeichen), sonst ``None``."""
-        s = self.sitzung
-        if s.auswahl.leer:
-            return None
-        von, bis = s._bereich()
-        if von.absatz_id != bis.absatz_id or bis.versatz - von.versatz != 1:
-            return None
-        versatz = 0
-        for x in s._absatz(von.absatz_id).inhalte:
-            if isinstance(x, InlineObjekt):
-                if versatz == von.versatz:
-                    return x
-                versatz += 1
-            else:
-                versatz += len(x.text)
-        return None
+        i = OW.inline_gewaehlt(self.kennung)
+        return self.sitzung._inline(i)[2] if i is not None else None
 
     def objekt_ziel(self):
         """Das Ziel der Bildbefehle: gewähltes freies Objekt oder gewähltes Objekt im Text; sonst ``None``."""
         o = self.objekt_gewaehlt()
         if o is not None:
-            return ("frei", ("o", o.id), angabe_von(o), self.objekt_bild(o) or QImage())
+            return ("frei", ("o", o.id), OW.objekt_angabe(self.kennung, o.id), self.objekt_bild(o) or QImage())
         i = self.inline_gewaehlt()
         return ("text", i) if i is not None else None
 
@@ -94,20 +83,14 @@ class KernObjekte:
             seite, r = erg.objekte.get(oid, (0, None))
             blatt, z = self.ansicht.blatt(seite), self.ansicht.zoom
             rect = QRectF(blatt.left() + r.x * z, blatt.top() + r.y * z, r.width * z, r.height * z) if r is not None else QRectF()
-            aus.append((("o", oid), angabe_von(o), self.objekt_bild(o) or QImage(), rect, o.umbruch == "hinter", seite))
+            aus.append((("o", oid), OW.objekt_angabe(self.kennung, oid), self.objekt_bild(o) or QImage(), rect, o.umbruch == "hinter", seite))
         return aus
 
     # ---- Ändern ----------------------------------------------------------------------------------------------------------------------------
     def angabe_speichern(self, objekt_id: int, angabe: dict) -> bool:
         """Schreibt die Angabe eines freien Objekts zurück (mit den Bildern, die ``addResource`` des Dokuments gesammelt hat) in einem Schritt."""
         wartend, self._wartende_bilder = dict(getattr(self, "_wartende_bilder", {})), {}
-
-        def f(s):
-            with s.gruppe("Objekt ändern"):
-                for name, daten in wartend.items():
-                    s.ressource_setzen(name, daten)
-                s.objekt_aendern(objekt_id, **felder_aus_angabe(angabe))
-        ok = self.ansicht._aendern(f)
+        ok = self.ansicht._befehl(lambda: OW.objekt_angabe_speichern(self.kennung, objekt_id, angabe, wartend))
         self.ansicht.update()
         return ok
 
@@ -169,22 +152,8 @@ class KernObjekte:
 
     def inline_objekte_der_auswahl(self) -> list | None:
         """Die Objekte im Text, wenn die Auswahl nur aus Objekten (und Leerraum) besteht; sonst ``None``."""
-        s = self.sitzung
-        if s.auswahl.leer:
-            return None
-        von, bis = s._bereich()
-        if von.absatz_id != bis.absatz_id:
-            return None
-        aus, versatz = [], 0
-        for x in s._absatz(von.absatz_id).inhalte:
-            n = 1 if isinstance(x, InlineObjekt) else len(x.text)
-            if versatz + n > von.versatz and versatz < bis.versatz:
-                if isinstance(x, InlineObjekt):
-                    aus.append(x)
-                elif x.text.strip():
-                    return None
-            versatz += n
-        return aus
+        ids = OW.inline_der_auswahl(self.kennung)
+        return None if ids is None else [self.sitzung._inline(i)[2] for i in ids]
 
     def bild_ressource(self, name: str):
         """Das Bild einer Ressource (auch eines, das noch nicht gespeichert ist) oder ``None``."""
@@ -216,28 +185,20 @@ class KernObjekte:
         if von is None or bis is None:
             return None
         o = self.sitzung._inline(objekt_id)[2]
-        from core.geometrie import Rect
-        return von[0], Rect(von[1].x, von[1].y, max(bis[1].x - von[1].x, 1.0), o.hoehe)
+        return von[0], Rechteck(von[1].x, von[1].y, max(bis[1].x - von[1].x, 1.0), o.hoehe)
 
-    def inline_bei(self, ziel: Position, punkt) -> int | None:
+    def inline_bei(self, ziel: Stelle, punkt) -> int | None:
         """Id des Objekts im Text, das an der Stelle ``ziel`` getroffen ist (Klick auf das Zeichen), sonst ``None``."""
-        a = self.sitzung._absatz(ziel.absatz_id)
-        versatz = 0
-        for x in a.inhalte:
-            if isinstance(x, InlineObjekt):
-                if versatz in (ziel.versatz, ziel.versatz - 1):
-                    r = self.objekt_inline_rechteck(x.id)
-                    if r is not None and r[1].x - 2 <= punkt[0] <= r[1].right + 2:
-                        return x.id
-                versatz += 1
-            else:
-                versatz += len(x.text)
+        for oid in OW.inline_an(self.kennung, ziel.absatz_id, (ziel.versatz, ziel.versatz - 1)):
+            r = self.objekt_inline_rechteck(oid)
+            if r is not None and r[1].x - 2 <= punkt[0] <= r[1].right + 2:
+                return oid
         return None
 
     def inline_waehlen(self, objekt_id: int) -> None:
         pos = self.sitzung.objekt_position(objekt_id)
         if pos is not None:
-            self.sitzung.setze_auswahl(pos, Position(pos.absatz_id, pos.versatz + 1))
+            ST.auswahl_setzen(self.kennung, pos, Stelle(pos.absatz_id, pos.versatz + 1))
             self.ansicht.gewaehltes_objekt = None
             self.ansicht.nach_bewegung()
 
@@ -315,7 +276,7 @@ class KernObjekte:
     def _frei_angabe(self):
         """Die Angabe des gewählten freien Objekts oder ``None``."""
         o = self.objekt_gewaehlt()
-        return angabe_von(o) if o is not None else None
+        return OW.objekt_angabe(self.kennung, o.id) if o is not None else None
 
     @staticmethod
     def _frei_abbilden(r, a: dict, rr):
@@ -381,7 +342,7 @@ class KernObjekte:
         """Der Zuschnitt (links, oben, rechts, unten) als Anteile des freien Objekts."""
         from vcl.qt.rendering import formen as BZ
         o = self.sitzung.dokument.objekte.get(objekt_id)
-        return BZ.bildzuschnitt_lesen(angabe_von(o)) if o is not None else (0.0, 0.0, 0.0, 0.0)
+        return BZ.bildzuschnitt_lesen(OW.objekt_angabe(self.kennung, objekt_id)) if o is not None else (0.0, 0.0, 0.0, 0.0)
 
     def objekt_zuschneiden(self, objekt_id: int, seite: int, rect, zu: tuple) -> None:
         """Zuschneiden-Modus: die Kanten sind gezogen; das Objekt bekommt den neuen sichtbaren Ausschnitt und seine Lage (ein Schritt)."""

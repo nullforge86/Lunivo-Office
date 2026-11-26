@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 )
 
 from writer.funktionen import bearbeiten as G
-from core.suche.textsuche import suche as S
 from writer.anbindung import suche as _suche
 from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
@@ -337,41 +336,51 @@ class SuchenFeld(QWidget):
             label.setText("Format: " + t if t else ""); label.setVisible(bool(t) and (feld == "suchen" or self.reiter.currentIndex() == 1))
 
     # ---- Auftrag --------------------------------------------------------------------------------------------------------------------
-    def auftrag(self) -> S.Suchauftrag:
+    def auftrag(self):
         pl = self.platzhalter.isChecked()
         ein = lambda c: c.isChecked() and c.isEnabled()      # noqa: E731
-        a = S.Suchauftrag(self.suchfeld.text(), gross=self.gross.isChecked() or pl, ganz=ein(self.ganz), platzhalter=pl, praefix=ein(self.praefix),
-                          suffix=ein(self.suffix), ohne_satzzeichen=ein(self.satzzeichen), ohne_leerzeichen=ein(self.leerzeichen))
-        self._bedingungen(a, self.formate["suchen"])
-        return a
+        zeichen, absaetze = self._bedingungen(self.formate["suchen"])
+        return G.suchangabe(self.suchfeld.text(), gross=self.gross.isChecked() or pl, ganz=ein(self.ganz), platzhalter=pl, praefix=ein(self.praefix),
+                            suffix=ein(self.suffix), ohne_satzzeichen=ein(self.satzzeichen), ohne_leerzeichen=ein(self.leerzeichen),
+                            zeichen=zeichen, absaetze=absaetze)
 
-    def _bedingungen(self, a: S.Suchauftrag, f: dict) -> None:
+    def _bedingungen(self, f: dict) -> tuple:
+        """Die Bedingungen an die Formatierung als (Schlüssel der passenden Zeichenformate, Ids der passenden Absätze); ``None``: keine Bedingung."""
         ed = self.get_editor()
-        self._zeichen_bedingungen(a, f, ed)
-        self._absatz_bedingungen(a, f, ed)
+        zp, ap = self._zeichen_bedingungen(f, ed), self._absatz_bedingungen(f, ed)
+        zeichen = absaetze = None
+        if zp:
+            zeichen = frozenset(k for k, fmt in G.suche_zeichenformate(ed.kennung) if all(p(fmt) for p in zp)) if ed is not None else frozenset()
+        if ap:
+            absaetze = frozenset(b.id for b in G.suche_absaetze(ed.kennung) if all(p(b) for p in ap)) if ed is not None else frozenset()
+        return zeichen, absaetze
 
-    def _zeichen_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
+    def _zeichen_bedingungen(self, f: dict, ed) -> list:
+        aus = []
         if f.get("zeichen"):
             from vcl.qt.widgets.dialoge.formatierung.text_format import aus_zeichen
             soll = dict(f["zeichen"])
             fam, gr = ed.document().standardschrift() if ed is not None else ("", 0.0)
-            a.zeichen.append(lambda fmt: (lambda w: all(_gleich(w.get(k), v) for k, v in soll.items()))(aus_zeichen(fmt, fam, gr)))
+            aus.append(lambda fmt: (lambda w: all(_gleich(w.get(k), v) for k, v in soll.items()))(aus_zeichen(fmt, fam, gr)))
         if f.get("hervor") is not None:
             an = f["hervor"]
-            a.zeichen.append(lambda fmt: bool(fmt.get("marker")) == an)
+            aus.append(lambda fmt: bool(fmt.get("marker")) == an)
+        return aus
 
-    def _absatz_bedingungen(self, a: S.Suchauftrag, f: dict, ed) -> None:
+    def _absatz_bedingungen(self, f: dict, ed) -> list:
+        aus = []
         if f.get("absatz"):
             from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import werte_von
             soll_a = dict(f["absatz"])
-            a.absatz.append(lambda b: (lambda w: all(_gleich(w.get(k), v) for k, v in soll_a.items()))(werte_von(ed, b)))
+            aus.append(lambda b: (lambda w: all(_gleich(w.get(k), v) for k, v in soll_a.items()))(werte_von(ed, b)))
         if f.get("tabs"):
             from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import werte_von
             soll_t = list(f["tabs"])
-            a.absatz.append(lambda b: all(any(abs(m - t[0]) < 0.6 for t in werte_von(ed, b)["tabs"]) for m in soll_t))
+            aus.append(lambda b: all(any(abs(m - t[0]) < 0.6 for t in werte_von(ed, b)["tabs"]) for m in soll_t))
         if f.get("stil") and ed is not None:
             name = f["stil"]
-            a.absatz.append(lambda b: (b.format.get("vorlage") or "Standard") == name)
+            aus.append(lambda b: b.vorlage == name)
+        return aus
 
     def _ersatz_formate(self):
         """Zeichenformat und Absatzformat (Wörterbücher des Dokumentenmodells) für „Ersetzen durch“ (aus „Format“ am Ersetzen-Feld)."""
@@ -403,12 +412,12 @@ class SuchenFeld(QWidget):
             if ed is not None:
                 ed.set_suchtreffer([])
             return []
-        if not S.gueltig(a):
+        if not G.suche_gueltig(a):
             self.treffer.setText("Der Suchtext enthält ungültige Platzhalter.")
             ed.set_suchtreffer([])
             return []
         von, bis = self._bereich()
-        alle = S.treffer(ed.sitzung.dokument, a, von, bis)
+        alle = G.suche_treffer(ed.kennung, a, von, bis)
         ed.set_suchtreffer(alle if self.hervorheben else [])
         if not alle:
             self.treffer.setText("Keine Suchergebnisse")
@@ -423,7 +432,7 @@ class SuchenFeld(QWidget):
         „Alles“ läuft herum."""
         ed = self.get_editor()
         a = self.auftrag()
-        if ed is None or a.leer or not S.gueltig(a):
+        if ed is None or a.leer or not G.suche_gueltig(a):
             return False
         self._merken(self.such_combo)
         richtung = self.richtung.currentData()
@@ -431,10 +440,10 @@ class SuchenFeld(QWidget):
         c = ed.textCursor()
         ab = c.selectionStart() if rueck else (c.selectionEnd() if c.hasSelection() else c.position())
         von, bis = self._bereich()
-        t = S.naechster(ed.sitzung.dokument, a, ab, rueck, von, bis, umlauf=richtung == "alles" or self.bereich is not None)
+        t = G.suche_naechster(ed.kennung, a, ab, rueck, von, bis, umlauf=richtung == "alles" or self.bereich is not None)
         if t is None:
             self.treffer.setText("Das Ende des Dokuments ist erreicht." if not rueck else "Der Anfang des Dokuments ist erreicht.")
-            if not S.treffer(ed.sitzung.dokument, a, von, bis):
+            if not G.suche_treffer(ed.kennung, a, von, bis):
                 self.treffer.setText("Keine Suchergebnisse")
             return False
         self._waehle(ed, t)
@@ -461,17 +470,17 @@ class SuchenFeld(QWidget):
         c = ed.textCursor()
         sel = (c.selectionStart(), c.selectionEnd())
         von, bis = self._bereich()
-        if c.hasSelection() and sel in S.treffer(ed.sitzung.dokument, a, von, bis):
+        if c.hasSelection() and sel in G.suche_treffer(ed.kennung, a, von, bis):
             cf, absatz, stil = self._ersatz_formate()
-            roh = S.roh_text(ed.sitzung.dokument)[sel[0]:sel[1]]
-            neu = S.ersatz_text(a, self.ersatzfeld.text(), roh, QApplication.clipboard().text())
+            roh = G.rohtext(ed.kennung)[sel[0]:sel[1]]
+            neu = G.suche_ersatz_text(a,self.ersatzfeld.text(), roh, QApplication.clipboard().text())
             ed.ersetze_roh(sel[0], sel[1], neu, cf, absatz, stil)
         self.weitersuchen(False)
 
     def ersetzen_alle(self) -> int:
         ed = self.get_editor()
         a = self.auftrag()
-        if ed is None or a.leer or not S.gueltig(a):
+        if ed is None or a.leer or not G.suche_gueltig(a):
             return 0
         self._merken(self.ersatz_combo)
         cf, absatz, stil = self._ersatz_formate()

@@ -10,3 +10,13 @@ from writer.werte import eigene_kopie
 @cache
 def vorgabe():
     return eigene_kopie(_fw.vorgabe())
+
+
+def aus_text(text: str) -> dict:
+    """Die Absatzoptionen aus ihrer Textform (eigene Kopie)."""
+    return eigene_kopie(_fw.aus_text(text))
+
+
+def als_text(optionen: dict) -> str:
+    """Die Absatzoptionen als Text für das Absatzformat."""
+    return _fw.als_text(optionen)

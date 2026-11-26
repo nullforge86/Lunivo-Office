@@ -19,7 +19,6 @@ import re
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.karte import als_karte
-from core.korrektur.korrektur import ProofingIssue
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_label
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, ICON_GROSS, PADDING_MARKE, RADIUS_MARKE, RAND_FUNDKARTE, RAND_KEIN, RAND_VORSCHLAGKARTE, SCHRIFT_KLEIN, SCHRIFT_LISTE
 _LAUF = re.compile(r"(.)\1{5,}")
@@ -51,7 +50,7 @@ def marke(art: str, quelle: str = "") -> QLabel:
 
 
 class FundKarte(QFrame):
-    def __init__(self, fund: ProofingIssue, assistent, parent=None, dienst=None):
+    def __init__(self, fund, assistent, parent=None, dienst=None):
         super().__init__(parent)
         self.fund, self.a, self.d = fund, assistent, dienst
         self.setObjectName("FundKarte")
@@ -72,7 +71,7 @@ class FundKarte(QFrame):
         z.addWidget(knopf("standard", "Zeigen", aktion=self._zeigen))
         if fund.art != "hinweis" and fund.neu:
             z.addWidget(knopf("standard", "Ändern", aktion=lambda: self.a.aendern(self.fund)))
-        from framework.dokumentverwaltung.dokumentpflege import vorlesen
+        from writer.anbindung import vorlesen
         if vorlesen.verfuegbar():                                        # gleich neben den anderen Knöpfen: immer sichtbar
             z.addWidget(knopf("standard", symbol="vorlesen", symbolgroesse="gross", hand=True, tooltip="Das Wort anhören", name="Das Wort anhören",
                               aktion=self._hoeren))
@@ -136,7 +135,7 @@ class FundKarte(QFrame):
             ed.setFocus()
 
     def _hoeren(self):
-        from framework.dokumentverwaltung.dokumentpflege import vorlesen
+        from writer.anbindung import vorlesen
         f = self.fund
         vorlesen.lies_vor(f.zeige_neu if f.art != "hinweis" and f.neu else f.zeige_alt)
 

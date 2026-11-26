@@ -20,17 +20,6 @@ VORGABE = {"schatten": {"farbe": Farbe.SCHWARZ, "transparenz": 60, "groesse": 10
 ABSCHLUSS = (("rund", "Rund"), ("winkel", "Winkel"), ("weich", "Weich"), ("kreuz", "Kreuz"), ("rahmen", "Rahmen"))      # die Abschlussarten des 3D-Formats
 
 
-_MERK: dict = {}
-
-
-def _merken(schluessel, bauen):
-    if schluessel not in _MERK:
-        if len(_MERK) > 48:
-            _MERK.pop(next(iter(_MERK)))
-        _MERK[schluessel] = bauen()
-    return _MERK[schluessel]
-
-
 def tiefe_richtung(dreh: dict | None) -> tuple[float, float]:
     """Einheitsvektor, in dem die Tiefe nach hinten läuft: schräg nach rechts unten, bei gedrehtem Objekt (3D-Drehung X/Y) entsprechend verschoben."""
     dx, dy = 0.7, 0.7
@@ -42,13 +31,13 @@ def tiefe_richtung(dreh: dict | None) -> tuple[float, float]:
 
 
 # ---- 3D-Drehung: das Bild im Raum gedreht (Perspektive) ------------------------------------------------------------------------
-def _dreht(dreh: dict | None) -> bool:
+def dreht(dreh: dict | None) -> bool:
     return bool(dreh) and any(abs(float(dreh.get(k, 0.0))) > 0.01 for k in ("x", "y", "z"))
 
 
 def hat_drehung(fx: dict | None) -> bool:
     """True, wenn ``fx["drehung"]`` das Bild dreht (``drehung_3d``)."""
-    return _dreht((fx or {}).get("drehung"))
+    return dreht((fx or {}).get("drehung"))
 
 
 def hat_nachbearbeitung(fx: dict | None) -> bool:

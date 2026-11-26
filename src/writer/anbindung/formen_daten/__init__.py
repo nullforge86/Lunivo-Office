@@ -5,9 +5,14 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "fo_schluessel": ("anbindung", "fo_schluessel"),
     "form_daten": ("anbindung", "form_daten"),
+    "form_daten_setzen": ("anbindung", "form_daten_setzen"),
     "gruppen_abstand": ("anbindung", "gruppen_abstand"),
+    "kette_glieder": ("anbindung", "kette_glieder"),
+    "muster_an": ("anbindung", "muster_an"),
     "standard": ("anbindung", "standard"),
+    "verknuepfbar": ("anbindung", "verknuepfbar"),
     "vorlagen": ("anbindung", "vorlagen"),
 }
 

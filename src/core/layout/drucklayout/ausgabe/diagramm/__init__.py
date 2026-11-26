@@ -19,6 +19,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "TYPEN": ("diagrammtypen", "TYPEN"),
     "VORGABEN": ("diagrammformat", "VORGABEN"),
     "VORLAGEN": ("diagrammtypen", "VORLAGEN"),
+    "art": ("diagrammtypen", "art"),
     "beispiel": ("diagrammtypen", "beispiel"),
     "effekt": ("diagrammformat", "effekt"),
     "effekte_hinter": ("diagrammformat", "effekte_hinter"),

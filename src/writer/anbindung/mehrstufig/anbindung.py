@@ -56,3 +56,8 @@ def liste_aus_text(text: str | None) -> Mapping | None:
 def nummer_der_ebene(defn: Mapping, zaehler: Sequence[int], ebene_nr: int) -> str:
     """Die Nummer als Text für einen Absatz der Ebene ``ebene_nr`` (1…9) bei diesen Zählerständen."""
     return eigene_kopie(_fw.nummer_der_ebene(defn, zaehler, ebene_nr))
+
+
+def zaehlen(zaehler: list[int], defn: dict, ebene_nr: int) -> None:
+    """Zählerstand nach einem Absatz der Ebene ``ebene_nr``: diese Ebene weiter, tiefere neu (``zaehler`` wird fortgeschrieben)."""
+    zaehler[:] = _fw.zaehlen(zaehler, defn, ebene_nr)

@@ -43,10 +43,10 @@ WARP_FORMEN = (("keine", "Keine Transformation"), ("bogen", "Bogen nach oben"), 
 
 
 # Bahnen der Mehrfachlinien: (Abstand von der Mitte, Dicke) in Linienbreiten (negativ = links der Laufrichtung)
-_BAHNEN = {"dick_duenn": ((-0.9, 1.2), (0.9, 0.6)), "duenn_dick": ((-0.9, 0.6), (0.9, 1.2)), "dreifach": ((-1.4, 0.6), (0.0, 0.6), (1.4, 0.6))}
+BAHNEN = {"dick_duenn": ((-0.9, 1.2), (0.9, 0.6)), "duenn_dick": ((-0.9, 0.6), (0.9, 1.2)), "dreifach": ((-1.4, 0.6), (0.0, 0.6), (1.4, 0.6))}
 
 
-def _tiefe_faktor(mat: str, licht: str, t: float) -> float:
+def tiefe_faktor(mat: str, licht: str, t: float) -> float:
     """Helligkeitsfaktor einer Tiefenschicht ``t`` (0..1) nach Material und Beleuchtung."""
     f = {"plastik": 1.25 - 0.5 * t, "metall": 1.0 + 0.45 * math.sin(t * math.pi * 2), "dunkel": 0.6 + 0.4 * (1 - t), "weich": 1.15 - 0.25 * t,
          "hell": 1.3}.get(mat, 1.0)

@@ -3,12 +3,15 @@ from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter
 from vcl.qt.rendering.formen import gespiegelt
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG, SCHATTENANSATZ
-from core.layout.drucklayout.ausgabe.text.wordartobjekt import listenmarken
 from writer.anbindung.wordartobjekt import anzeige_laeufe
 from writer.anbindung.wordartobjekt import laeufe_text
 from writer.anbindung.wordartobjekt import zeilen_laeufe as _zeilen_laeufe  # noqa: E402,F401
-from core.objekte.textfelder.modell.frei_objekt_text_daten import _SS, _gedreht, _innen, _zeichen_dict
-from writer.anbindung import einfuegen_hilfen as _einfuegen_hilfen
+from writer.anbindung import zeichnen as ZW
+from writer.anbindung.frei_objekt_text_daten import gedreht as _gedreht
+from writer.anbindung.frei_objekt_text_daten import ss
+from writer.werte import Rechteck
+
+_SS = ss()                                                           # Zeichnen in doppelter Auflösung (scharf auch bei Zoom)
 
 
 def richtung_anwenden(img: QImage, richtung: str | None, zeilenbaender: list | None = None) -> QImage:
@@ -62,89 +65,43 @@ def effekte_auf_text(img: QImage, ef: dict, text_hoehe: float, farbe: str) -> QI
 # ---- WordArt zeichnen ---------------------------------------------------------------------------------------------------
 def wordart_zeichnen(d: dict) -> QImage:
     """Das WordArt-Objekt als Bild in doppelter Auflösung; Satz und Zeichnung kommen vom Kern (``core/rendering/wordartobjekt.py``), hier wird nur die Textrichtung am Bild angewendet."""
-    from core.layout.drucklayout.ausgabe.text.wordartobjekt import wordart_rgba
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    from vcl.qt.rendering.formen import einfuegen as E
     laeufe = anzeige_laeufe(d)
     text = laeufe_text(laeufe) or " "
     pt = float(d.get("pt", 36))
     if d.get("vorlage") is None:                                       # alter Weg: Stil und Farbe
         from vcl.qt.rendering import wordart as WE
         return WE.wordart_bild(text, d.get("stil", "Verlauf"), d.get("schrift", "Liberation Sans"), int(pt), d.get("farbe", Farbe.WORDART_BLAU))
-    erg = wordart_rgba(d, standard_engine(), _einfuegen_hilfen.wordart_vorlagen(), _SS)
-    img = QImage(bytes(erg["rgba"]), erg["w"], erg["h"], erg["w"] * 4, QImage.Format_RGBA8888).copy()
-    ys, asz, hoehen, faktor = erg["ys"], erg["asz"], erg["hoehen"], erg["faktor"]
-    return richtung_anwenden(img, d.get("richtung"), [(int((ys[i] - asz[i]) * _SS), int(hoehen[i] * faktor * _SS)) for i in range(erg["zeilen"])])
+    (breite, hoehe, roh), baender = ZW.wordart_objekt(d)
+    img = QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888).copy()
+    return richtung_anwenden(img, d.get("richtung"), list(baender))
 
 
 class _Satz:
-    """Das gesetzte Textfeld: ein Dokument in der Größe des Feldes (Innenabstand = Seitenrand), gesetzt von der Layout-Engine des Kerns. Was nicht mehr
-    passt, steht auf Seite 2 — daran erkennen verknüpfte Felder, wie viel Text in ein Feld passt."""
+    """Das gesetzte Textfeld: Der Kern setzt den Text in einem eigenen kleinen Dokument in der Größe des Feldes (Innenabstand = Seitenrand); das Framework
+    hält den Satz unter einer Nummer, bis dieses Objekt endet. Hier stehen nur Maße und das fertige Bild."""
 
     def __init__(self, d: dict, laeufe: list[dict], b: float, h: float, farbe_ueber: str | None = None):
-        from core.dokument import neues_dokument
-        from core.dokument.dokument import Absatz, Lauf
-        from core.layout import LayoutEngine
-        from core.dokument.abschnitte.seite import PageSettings
-        vorlage = None
-        if d.get("vorlage") is not None:
-            from vcl.qt.rendering.formen import einfuegen as E
-            vorlage = _einfuegen_hilfen.wordart_vorlagen()[int(d["vorlage"])]
-        self.farbe = d.get("fuell") if d.get("fuell") else (vorlage[1] if vorlage and "fuell" not in d else d.get("farbe", Farbe.TEXT_STANDARD))
-        li, ob, re_, un = _innen(d)
-        self.innen_oben = ob
-        breit = max(10.0, b - li - re_)
-        mm = 25.4 / 96.0                                               # Bildpunkte → Millimeter
-        seite = PageSettings(width_mm=(li + breit + min(4.0, breit * 0.01) + re_) * mm, height_mm=max(1.0, h) * mm, margin_left_mm=li * mm,
-                             margin_right_mm=re_ * mm, margin_top_mm=ob * mm, margin_bottom_mm=un * mm)    # kleine Toleranz: Schriftmaße weichen um Bruchteile ab
-        self.dok = neues_dokument(seite)
-        af: dict = {"ausrichtung": "block" if d.get("ausr") in ("block", "verteilt") else d.get("ausr") if d.get("ausr") in ("mitte", "rechts") else "links"}
-        if d.get("einzug"):
-            af["einzug_links"] = 24.0 * int(d["einzug"])
-        if d.get("zeilenabstand"):
-            af.update({"zeilenabstand_art": "vielfach", "zeilenabstand": float(d["zeilenabstand"]) * 100})
-        zeilen = _zeilen_laeufe(laeufe) or [[]]
-        self.marken = listenmarken(d.get("liste"), len(zeilen))
-        self.absatz_ids: list[int] = []
-        self.laengen: list[int] = []
-        bloecke = []
-        for m_, zl in zip(self.marken, zeilen):
-            inhalte = []
-            if m_:
-                inhalte.append(Lauf(m_, _zeichen_dict(d, {}, vorlage, farbe_ueber, self.farbe)))
-            inhalte += [Lauf(r["t"], _zeichen_dict(d, r, vorlage, farbe_ueber, self.farbe)) for r in zl]
-            a = Absatz(self.dok.neue_id(), inhalte, dict(af))
-            bloecke.append(a)
-            self.absatz_ids.append(a.id)
-            self.laengen.append(sum(len(r["t"]) for r in zl))
-        self.dok.abschnitte[0].bloecke = bloecke
-        self.layout = LayoutEngine()
-        self.erg = self.layout.berechnen(self.dok)
+        import weakref
+        self._nummer = ZW.textfeld_setzen(d, laeufe, b, h, Farbe.TEXT_STANDARD, farbe_ueber)
+        self._freigabe = weakref.finalize(self, ZW.textfeld_freigeben, self._nummer)
+        self.farbe = ZW.textfeld_farbe(self._nummer)
 
     def zeilen_seite1(self) -> list:
-        return [p.rect for p in self.erg.seiten[0].plaetze if p.art == "zeile" and not p.kopie]
+        return [Rechteck(*r) for r in ZW.textfeld_zeilen(self._nummer)]
 
     def text_hoehe(self) -> float:
         """Obere Kante des Innenraums bis zur Unterkante der letzten Zeile auf dem Feld."""
-        return max([r.bottom for r in self.zeilen_seite1()] + [self.innen_oben])
+        return ZW.textfeld_hoehe(self._nummer)
 
     def malen(self, p: QPainter) -> None:
         from vcl.qt.rendering.formen import seite_malen
-        seite_malen(p, self.layout.engine, self.dok, self.erg, 0, None)
+        breite, hoehe = ZW.textfeld_blatt(self._nummer)
+        seite_malen(p, breite, hoehe, lambda faktor: ZW.textfeld_bild(self._nummer, faktor))
 
 
 def _text_passt(d: dict, laeufe: list[dict], b: float, h: float) -> int:
     """Wie viele Zeichen der Läufe im Feld ``b`` x ``h`` stehen (Anfang der ersten Zeile, die nicht mehr passt) — für verknüpfte Textfelder."""
-    satz = _Satz(d, laeufe, b, h)
-    vorher = 0                                                         # Zeichen der Absätze davor samt Zeilenwechsel
-    for i, aid in enumerate(satz.absatz_ids):
-        ort = satz.erg.absaetze.get(aid)
-        if ort is not None:
-            for seite, zi, _r in ort.zeilen:
-                if seite > 0:
-                    return max(0, vorher + max(0, ort.satz.zeilen[zi].box.start - len(satz.marken[i] or "")))
-        vorher += satz.laengen[i] + 1
-    return len(laeufe_text(laeufe))
+    return ZW.textfeld_passt(d, laeufe, b, h, Farbe.TEXT_STANDARD)
 
 
 def _text_malen(img: QImage, d: dict, satz: _Satz, b: float, h: float) -> None:

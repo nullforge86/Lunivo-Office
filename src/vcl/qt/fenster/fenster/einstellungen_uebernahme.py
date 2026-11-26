@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QByteArray, QSettings
 
-from framework.schnittstellen.einstellungen import ORGANISATION, PROGRAMM, Einstellungen
+from writer import hauptfenster as _dienste
 
 
 def _umwandeln(wert):
@@ -19,11 +19,11 @@ def _umwandeln(wert):
     return str(wert)
 
 
-def einmalig_uebernehmen(einstellungen: Einstellungen) -> int:
+def einmalig_uebernehmen(einstellungen) -> int:
     """Übernimmt alle QSettings-Werte beim ersten Start; gibt die Zahl der übernommenen Werte zurück (0, wenn schon geschehen)."""
     if einstellungen.qsettings_uebernommen():
         return 0
-    q = QSettings(ORGANISATION, PROGRAMM)
+    q = QSettings(_dienste.organisation(), _dienste.programmname())
     werte = {schluessel: _umwandeln(q.value(schluessel)) for schluessel in q.allKeys()}
     einstellungen.uebernehmen(werte)
     return len(werte)

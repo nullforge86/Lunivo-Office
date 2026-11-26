@@ -46,3 +46,14 @@ def laeufe_ab(laeufe: Sequence[Mapping], von: int, bis: int | None = None) -> Se
 def laeufe_zusammen(laeufe: Sequence[Mapping]) -> Sequence[Mapping]:
     """Benachbarte Läufe mit gleichem Format zu einem verbinden (leere fallen weg)."""
     return fest(_k.laeufe_zusammen(laeufe))
+
+
+@cache
+def ss() -> int:
+    """Faktor, in dem Objekte gezeichnet werden (doppelte Auflösung: scharf auch bei Zoom)."""
+    return fest(_k.SS)
+
+
+def gedreht(richtung: str | None) -> bool:
+    """Läuft der Text nicht waagerecht?"""
+    return _k.gedreht(richtung)

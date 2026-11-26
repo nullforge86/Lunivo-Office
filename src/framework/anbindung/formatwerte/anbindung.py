@@ -34,3 +34,15 @@ def tabfuellung(a: Mapping) -> Mapping[float, str]:
 
 def zeilenabstand(a: Mapping) -> tuple[str, float]:
     return fest(_k.zeilenabstand(a))
+
+
+def schrift(z: Mapping) -> tuple[str, float, int, bool]:
+    """Die Schrift eines Textstücks aus dem wirksamen Zeichenformat: (Familie, Größe in pt, Gewicht, kursiv)."""
+    f = _k.schrift(z)
+    return f.family, f.size_pt, f.weight, f.italic
+
+
+def tabstopps(a: Mapping) -> tuple[tuple[float, int, str], ...]:
+    """((Position, Art, Trennzeichen), …) der Tabstopps des Absatzformats, aufsteigend."""
+    from types import SimpleNamespace
+    return fest(_k.tabstopps(a, SimpleNamespace(eigenschaften={}))[0])

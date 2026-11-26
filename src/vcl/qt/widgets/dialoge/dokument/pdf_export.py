@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QToolButton, QWidget,
 )
 
-from filter.pdf.pdf_export import DRUCK, PdfWahl, kennwort_fehler
+from writer.anbindung import dateizugriff as _dateizugriff
 
 from vcl.qt.widgets.bausteine.interaktion.felder.formular_gitter import FELDHOEHE as FELD_H, FormularGitter, abschnittstitel
 from vcl.qt.widgets.bausteine.interaktion.felder.fluss_layout import FlussLayout
@@ -66,13 +66,13 @@ def _kennwort() -> QLineEdit:
 class PdfExportAnsicht(QWidget):
     """PDF-Export als dauerhaft sichtbare zweite Menüspalte, keine separates Dialogfenster."""
 
-    def __init__(self, parent, start: PdfWahl, seiten: int, aktuelle: int, markierung: bool,
-                 exportieren: Callable[[PdfWahl], bool], zurueck: Callable[[], None]):
+    def __init__(self, parent, start, seiten: int, aktuelle: int, markierung: bool,
+                 exportieren: Callable[..., bool], zurueck: Callable[[], None]):
         super().__init__(parent)
         self._exportieren = exportieren
         self._zurueck = zurueck
         self._ersetzen_ok = ""
-        self._wahl: PdfWahl | None = None
+        self._wahl = None
         self.optionen: dict[str, QCheckBox] = {}
         self.rechte: dict[str, QCheckBox] = {}
 
@@ -161,7 +161,7 @@ class PdfExportAnsicht(QWidget):
         fuss.addWidget(self.schliessen); fuss.addWidget(abbrechen); fuss.addWidget(self.ok)
         root.addLayout(fuss)
 
-    def _schutz(self, s: PdfWahl) -> QWidget:
+    def _schutz(self, s) -> QWidget:
         bereich = QWidget()
         v = _spalte("abschnitt", bereich)
         self.verschluesseln = haken("standard", _t("pdf.pdf_mit_kennwort_schuetzen"))
@@ -182,7 +182,7 @@ class PdfExportAnsicht(QWidget):
             box = haken("standard", label, an=getattr(s, key)); self.rechte[key] = box
             g.breit(box)
         self.druck = Auswahlfeld()
-        for text, value in DRUCK:
+        for text, value in _dateizugriff.pdf_druckrechte():
             label = {_t("pdf.freier_druck"): _t("pdf.drucken"), _t("pdf.nur_niedrige_aufloesung"): _t("pdf.drucken_in_niedriger_aufloesung"),
                      _t("pdf.kein_druck"): _t("pdf.drucken_nicht_erlauben")}.get(text, text)
             self.druck.addItem(label, value)
@@ -210,14 +210,12 @@ class PdfExportAnsicht(QWidget):
         if neu:
             self.pfad.setText(neu); self._ersetzen_ok = neu
 
-    def ergebnis(self) -> PdfWahl:
+    def ergebnis(self):
         bereich = next(key for key, button in self._bereiche.items() if button.isChecked())
-        w = PdfWahl(pfad=os.path.expanduser(self.pfad.text().strip()), bereich=bereich, von=self.von.value(), bis=self.bis.value(),
+        w = _dateizugriff.pdf_wahl(pfad=os.path.expanduser(self.pfad.text().strip()), bereich=bereich, von=self.von.value(), bis=self.bis.value(),
                     verschluesseln=self.verschluesseln.isChecked(), kennwort_rechte=self.rechte_kw.text(),
                     kennwort_oeffnen=self.oeffnen_kw.text(), druck=self.druck.currentData(), schliessen=self.schliessen.isChecked())
-        for key, box in {**self.optionen, **self.rechte}.items():
-            setattr(w, key, box.isChecked())
-        return w
+        return _dateizugriff.pdf_wahl_mit(w, **{key: box.isChecked() for key, box in {**self.optionen, **self.rechte}.items()})
 
     def _ok(self) -> None:
         w = self.ergebnis()
@@ -229,7 +227,7 @@ class PdfExportAnsicht(QWidget):
         if fehler:
             self.pfad.setFocus()
         elif w.verschluesseln:
-            fehler = kennwort_fehler(w, self.rechte_kw2.text(), self.oeffnen_kw2.text())
+            fehler = _dateizugriff.pdf_kennwort_fehler(w, self.rechte_kw2.text(), self.oeffnen_kw2.text())
             if fehler:
                 self.schutz_knopf.setChecked(True)
                 if fehler.startswith(_t("pdf.das_kennwort_fuer_die_berechtigungen")):
@@ -254,5 +252,5 @@ class PdfExportAnsicht(QWidget):
             self.meldung.setText(_t("pdf.pdf_gespeichert_0").format(w.pfad))
             self.meldung.show()
 
-    def wahl(self) -> PdfWahl | None:
+    def wahl(self):
         return self._wahl

@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from writer.anbindung import kopffuss_menues as menues
-from framework.befehle.kopffuss.typen import MenueEintrag
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
 
 class KopfFussKlappen:
-    def _kf_menue(self, eintraege: tuple[MenueEintrag, ...]) -> MenueListe:
+    def _kf_menue(self, eintraege: tuple) -> MenueListe:
         m = MenueListe()
         for e in eintraege:
             if e.ist_trenner:

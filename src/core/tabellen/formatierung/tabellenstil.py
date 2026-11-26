@@ -18,7 +18,7 @@ VORLAGEN = {
 }
 
 
-def _zeilengrund(r: int, kopf: bool, kopf_fill: str, streifen_fill: str) -> str:
+def zeilengrund(r: int, kopf: bool, kopf_fill: str, streifen_fill: str) -> str:
     """Hintergrundfarbe der Zeile ``r``: Kopfzeile, jede zweite Zeile darunter als Streifen, sonst keine (leer)."""
     if kopf and r == 0 and kopf_fill:
         return kopf_fill

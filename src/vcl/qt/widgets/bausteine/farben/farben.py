@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from framework.schnittstellen.einstellungen import Einstellungen
+from writer.hauptfenster import einstellungen as _einstellungen
 from PySide6.QtGui import QColor
 
 # Eigene Grundfarben (Weiß, Schwarz, zwei Grautöne, dann die Farben der Oberfläche) — jede Spalte bekommt fünf Abstufungen.
@@ -97,7 +97,7 @@ def thema_raster() -> list[list[str]]:
 
 def zuletzt_laden() -> list[str]:
     try:
-        wert = Einstellungen().get(ZULETZT_SCHLUESSEL, [])
+        wert = _einstellungen().get(ZULETZT_SCHLUESSEL, [])
     except Exception:
         return []
     if isinstance(wert, str):
@@ -109,6 +109,6 @@ def zuletzt_merken(farbe: str) -> None:
     f = QColor(farbe).name()
     liste = [f] + [x for x in zuletzt_laden() if x != f]
     try:
-        Einstellungen().set(ZULETZT_SCHLUESSEL, liste[:ZULETZT_MAX])
+        _einstellungen().set(ZULETZT_SCHLUESSEL, liste[:ZULETZT_MAX])
     except Exception:
         pass

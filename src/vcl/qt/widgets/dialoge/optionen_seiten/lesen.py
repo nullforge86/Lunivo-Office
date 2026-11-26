@@ -6,7 +6,7 @@ from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 from vcl.qt.widgets.bausteine.interaktion.option.option import option
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
-from core.formatierung.schrift import standard_datenbank
+from writer.anbindung import schriften as standard_datenbank
 from vcl.qt.widgets.bausteine.farben.darstellung import eigenschaft, farbflaeche, rolle as _rolle
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, spalte as _spalte
@@ -19,7 +19,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QButtonGroup, QCheckBox, QComboBox, QFrame, QLabel, QRadioButton, QPushButton, QWidget
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from writer.werkzeugleisten.ansicht.aktionen import lesestufen as LS
-from framework.dokumentverwaltung.dokumentpflege import vorlesen
+from writer.anbindung import vorlesen
 from vcl.qt.widgets.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite

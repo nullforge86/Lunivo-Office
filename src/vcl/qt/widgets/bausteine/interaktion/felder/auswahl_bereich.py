@@ -17,30 +17,18 @@ from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_NORMAL, HOEHE_LISTE_
 
 def objekte(ed) -> list[tuple]:
     """[(Beschriftung, Ziel)] aller Objekte in Dokumentreihenfolge; Ziel ``("text", von, bis)``, ``("frei", Id)`` oder ``("tabelle", von, bis)``."""
-    from core.dokument.dokument import InlineObjekt
-    from core.dokument import gehe_zu as G
+    from writer.funktionen import bearbeiten as _bearbeiten
     namen = {"form": "Form", "zeichenbereich": "Zeichenbereich", "wordart": "WordArt", "diagramm": "Diagramm", "smartart": "SmartArt", "formel": "Formel",
              "piktogramm": "Piktogramm", "textfeld": "Textfeld", "gruppe": "Gruppe", "bild": "Bild"}
-    dok = ed.sitzung.dokument
-    stellen = G._stellen(dok)
-    gefunden, zaehler = [], {}
+    zaehler: dict = {}
 
     def benennen(art: str) -> str:
         n = namen.get(art, "Objekt")
         zaehler[n] = zaehler.get(n, 0) + 1
         return f"{n} {zaehler[n]}"
-    for a in dok.absaetze():
-        versatz = 0
-        for x in a.inhalte:
-            if isinstance(x, InlineObjekt):
-                gefunden.append((stellen[a.id] + versatz, ("text", stellen[a.id] + versatz, stellen[a.id] + versatz + 1), x.art))
-                versatz += 1
-            else:
-                versatz += len(x.text)
-    gefunden += [(stellen.get(o.anker, 0), ("frei", o.id), o.art) for o in dok.objekte.values()]
+    gefunden = [(p, ("text", p, p + 1) if wo == "text" else ("frei", oid), art) for p, wo, oid, art in _bearbeiten.objektliste(ed.kennung)]
     out = [(benennen(art), ziel, p) for p, ziel, art in sorted(gefunden, key=lambda x: x[0])]
-    tabellen = sorted((p, t) for a in dok.abschnitte for t, p in G._tabellen(a.bloecke, stellen))
-    out += [(f"Tabelle {i}", ("tabelle", p, p), p) for i, (p, _t) in enumerate(tabellen, start=1)]
+    out += [(f"Tabelle {i}", ("tabelle", p, p), p) for i, p in enumerate(_bearbeiten.tabellenstellen(ed.kennung), start=1)]
     return [(n, z) for n, z, _p in sorted(out, key=lambda x: x[2])]
 
 

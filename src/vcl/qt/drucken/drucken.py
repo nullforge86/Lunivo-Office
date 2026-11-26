@@ -6,16 +6,14 @@ Druckfensters. Die Vorschau rastert dieselben Seiten.
 from __future__ import annotations
 
 import math
+import weakref
 
 from PySide6.QtCore import QMarginsF, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPageLayout, QPageSize, QPainter
 
-from core.dokument import Dokument
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
+from writer.funktionen import ansicht as AN
 from writer.werte import mm_zu_px as mm_to_px
-from core.layout import LayoutEngine
-from core.layout.drucklayout import formatwerte as F
-from core.layout.drucklayout.ausgabe import DokumentRenderer
 
 PAPIER = {"A3": (297, 420), "A4": (210, 297), "A5": (148, 210), "B5": (176, 250), "Letter": (216, 279), "Legal": (216, 356)}
 PRO_BLATT = {1: (1, 1), 2: (2, 1), 4: (2, 2), 6: (3, 2), 9: (3, 3), 16: (4, 4)}
@@ -81,85 +79,51 @@ def blatt_zeichnen(p: QPainter, rect: QRectF, bilder: list, pro_blatt: int, rand
         p.drawImage(QRectF(feld.left() + (feld.width() - w) / 2, feld.top() + (feld.height() - h) / 2, w, h), img)
 
 
-class _DokumentAnschluss:
-    """Der Änderungs-Port (``lesen``/``aendern``) für ein Dokument ohne Editor: jede Anfrage läuft auf einer eigenen Sitzung über dasselbe Dokument."""
-
-    def __init__(self, dokument: Dokument):
-        self._dokument = dokument
-
-    def _sitzung(self):
-        from core.bearbeitung import Bearbeitungssitzung
-        return Bearbeitungssitzung(self._dokument)
-
-    def lesen(self, abfrage):
-        return abfrage(self._sitzung())
-
-    def aendern(self, aenderung) -> bool:
-        aenderung(self._sitzung())
-        return True
-
-
 class Ausgabe:
-    """Das Dokument einmal gesetzt; jede Seite lässt sich in beliebiger Größe rastern oder auf einen Zeichner malen (Vorschau, Druck)."""
+    """Das Dokument einmal gesetzt (im Framework, anhand seiner Kennung); jede Seite lässt sich in beliebiger Größe rastern oder auf einen Zeichner malen
+    (Vorschau, Druck)."""
 
-    def __init__(self, dokument: Dokument, engine=None, nur_formular: bool = False, optionen: dict | None = None):
-        if nur_formular:                                   # „Nur Formulardaten drucken“: in einer Kopie bleibt nur der Inhalt der Felder sichtbar
-            import copy
-            from vcl.qt.rendering import textfelder as formular
-            dokument = copy.deepcopy(dokument)
-            formular.nur_formulardaten(_DokumentAnschluss(dokument))
-        self.dokument = dokument
+    def __init__(self, kennung: int | None, nur_formular: bool = False, optionen: dict | None = None, nummer: int | None = None):
+        """``kennung``: das Dokument im Framework. ``nummer``: eine schon geöffnete Ausgabe des Frameworks (dann zählt ``kennung`` nicht).
+        ``nur_formular``: „Nur Formulardaten drucken“ – in einer Kopie bleibt nur der Inhalt der Felder sichtbar."""
         opt = optionen or {}
-        self._layout_opt = {"versteckt": True} if opt.get("versteckt") else None
-        self._layout = LayoutEngine(engine, self._layout_opt)
-        self._erg = self._layout.berechnen(dokument)
         self._blasen = opt.get("blasen")                    # ``{"konfig": sprechblasen.konfig_lesen, "schrift": "mittel"}`` oder None
-        self._blasen_je_seite = self._blasen_sammeln() if self._blasen else {}
-        self._renderer = DokumentRenderer(self._layout.engine)
-        self._grund = F.schrift(dict(dokument.standardformat))
+        if nummer is None:
+            nummer = AN.ausgabe_oeffnen(kennung, nur_formular, bool(opt.get("versteckt")), self._blasen["konfig"] if self._blasen else None)
+        self._nummer = nummer
+        self._freigabe = weakref.finalize(self, AN.ausgabe_schliessen, nummer)
+        self._anzahl = AN.ausgabe_anzahl(nummer)
+        self._blasen_je_seite = {}
+        if self._blasen:
+            for i in range(self._anzahl):
+                liste = AN.ausgabe_blasen(nummer, i)
+                if liste:
+                    self._blasen_je_seite[i] = liste
 
     def anzahl(self) -> int:
-        return len(self._erg.seiten)
+        return self._anzahl
 
     def seite_mm(self, n: int) -> tuple:
         """Breite und Höhe der Seite ``n`` (ab 1) in Millimetern."""
-        e = self._erg.seiten[n - 1].einrichtung
-        return (e.width_mm, e.height_mm) if e is not None else (210.0, 297.0)
+        return AN.ausgabe_seite_mm(self._nummer, n - 1)
 
     def groesse_px(self, n: int, zoom: float = 1.0) -> tuple:
         """Größe der Seite n bei 96 dpi mal Zoom."""
         b, h = self.seite_mm(n)
         return max(1, round(mm_to_px(b) * zoom)), max(1, round(mm_to_px(h) * zoom))
 
-    def _blasen_sammeln(self) -> dict:
-        """Seite (0-basiert) → [(Blase, y der Textstelle auf dem Blatt)] der Kommentare und Änderungen, die als Sprechblasen neben der Seite stehen."""
-        from core.suche.textsuche.suche import offset_zu_position
-        from writer.funktionen.ansicht import sprechblasen as SW
-        k = self._blasen["konfig"]
-        if not SW.aktiv(k):
-            return {}
-        je_seite: dict = {}
-        for bl in SW.sammeln(_DokumentAnschluss(self.dokument), k.verwenden):    # nur lesen: dasselbe Dokument, keine Kopie
-            pos = offset_zu_position(self.dokument, bl.von)
-            stelle = self._erg.cursor(pos.absatz_id, pos.versatz)
-            if stelle is not None:
-                je_seite.setdefault(stelle[0], []).append((bl, stelle[1].y))
-        return je_seite
+    def als_pdf(self, ziel: str, seiten: list) -> int:
+        """Die Seiten ``seiten`` (ab 1) als Vektor-PDF des Kerns nach ``ziel``; → Zahl der geschriebenen Seiten."""
+        return AN.ausgabe_als_pdf(self._nummer, ziel, seiten)
 
     def _seite_malen(self, p: QPainter, n: int, wasserzeichen: str = "") -> None:
-        """Die Seite ``n`` ist vom Kern gerendert (``RasterZiel``, ohne Qt) und wird hier nur auf den Zeichner gelegt; Auflösung nach dem Maßstab des Zeichners (höchstens 300 dpi)."""
-        from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
+        """Die Seite ``n`` ist vom Kern gerendert (ohne Qt) und wird hier nur auf den Zeichner gelegt; Auflösung nach dem Maßstab des Zeichners (höchstens 300 dpi).
+        ``wasserzeichen`` (Bildexport): schräg und blass über die Seite, vom Kern mitgezeichnet."""
         t = p.worldTransform()
         faktor = max(0.1, min(300.0 / 96.0, math.hypot(t.m11(), t.m12())))
-        einr = self._erg.seiten[n - 1].einrichtung
-        b, h = (mm_to_px(einr.width_mm), mm_to_px(einr.height_mm)) if einr is not None else (mm_to_px(210), mm_to_px(297))
-        ziel = RasterZiel(self._layout.engine, b, h, faktor)
-        self._renderer.zeichne_seite(ziel, self.dokument, self._erg, n - 1, self._grund)
-        if wasserzeichen.strip():                                                    # Wasserzeichen des Bildexports: schräg und blass über die Seite, vom Kern gezeichnet
-            from core.geometrie import Rect
-            from core.layout.drucklayout.ausgabe.seite import wasserzeichen as WZ
-            WZ.zeichne(ziel, self._layout.engine, {"text": wasserzeichen.strip(), "farbe": Farbe.GRAU, "transparenz": 73, "winkel": -35}, Rect(0, 0, b, h))
-        breite, hoehe, roh = ziel.als_rgba()
+        b_mm, h_mm = self.seite_mm(n)
+        b, h = mm_to_px(b_mm), mm_to_px(h_mm)
+        breite, hoehe, roh = AN.ausgabe_seitenbild(self._nummer, n - 1, faktor, wasserzeichen.strip(), Farbe.GRAU)
         p.drawImage(QRectF(0, 0, b, h), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))
 
     def malen(self, p: QPainter, n: int) -> None:
@@ -211,17 +175,17 @@ class Ausgabe:
 class Zwischenseiten(Ausgabe):
     """Die Seiten der Druckvorschau."""
 
-    def __init__(self, dokument: Dokument, opt: dict | None = None):
-        super().__init__(dokument, optionen=opt)
+    def __init__(self, kennung: int, opt: dict | None = None):
+        super().__init__(kennung, optionen=opt)
 
 
-def seitenzahl(dokument: Dokument) -> int:
-    return Ausgabe(dokument).anzahl()
+def seitenzahl(kennung: int) -> int:
+    return Ausgabe(kennung).anzahl()
 
 
-def vorschau_bild(dokument: Dokument, nummern: list, breite_px: int = 640, optionen: dict | None = None) -> list:
+def vorschau_bild(kennung: int, nummern: list, breite_px: int = 640, optionen: dict | None = None) -> list:
     """Die Seiten ``nummern`` (ab 1) auf die gewünschte Breite gerastert — für die Vorschau im Druckfenster."""
-    a = Ausgabe(dokument, optionen=optionen)
+    a = Ausgabe(kennung, optionen=optionen)
     aus = []
     for n in nummern:
         if 1 <= n <= a.anzahl():
@@ -236,7 +200,6 @@ def _vektor_drucken(printer, a, seiten: list, ein: dict) -> bool:
     import shutil
     import subprocess
     import tempfile
-    from filter.pdf.pdf_ausgabe import dokument_als_pdf
     datei = printer.outputFileName()
     if datei and not datei.lower().endswith(".pdf"):
         return False
@@ -247,7 +210,7 @@ def _vektor_drucken(printer, a, seiten: list, ein: dict) -> bool:
         fd, ziel = tempfile.mkstemp(suffix=".pdf")
         os.close(fd)
     try:
-        if dokument_als_pdf(a.dokument, ziel, seiten=seiten, layout_optionen=a._layout_opt) != len(seiten):
+        if a.als_pdf(ziel, seiten) != len(seiten):
             return False
         if datei:
             return True
@@ -263,10 +226,10 @@ def _vektor_drucken(printer, a, seiten: list, ein: dict) -> bool:
             os.unlink(ziel)
 
 
-def drucken(printer, dokument: Dokument, ein: dict) -> int:
-    """Druckt nach der Wahl ``ein`` (Ergebnis des Druckfensters). → Zahl der gedruckten Blätter."""
+def drucken(printer, kennung: int, ein: dict) -> int:
+    """Druckt das Dokument ``kennung`` nach der Wahl ``ein`` (Ergebnis des Druckfensters). → Zahl der gedruckten Blätter."""
     from PySide6.QtPrintSupport import QPrinter
-    a = Ausgabe(dokument, nur_formular=bool(ein.get("nur_formular")), optionen=ein.get("optionen"))
+    a = Ausgabe(kennung, nur_formular=bool(ein.get("nur_formular")), optionen=ein.get("optionen"))
     seiten = seiten_nach_wahl(ein, a.anzahl())
     if not seiten:
         return 0

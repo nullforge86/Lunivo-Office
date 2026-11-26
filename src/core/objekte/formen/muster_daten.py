@@ -29,7 +29,7 @@ def schluessel_von_ooxml(wert: str | None) -> str | None:
     return _VON_OOXML.get(wert or "")
 
 
-def _an(schluessel: str, x: int, y: int) -> bool:
+def an(schluessel: str, x: int, y: int) -> bool:
     """Ist das Bildelement (x, y) der 8 × 8-Kachel in der Musterfarbe?"""
     if schluessel == "rein":
         return True

@@ -4,7 +4,7 @@ from __future__ import annotations
 from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.interaktion.knopf.knopf import knopf
 
-from core.formatierung.schrift import standard_datenbank
+from writer.anbindung import schriften as standard_datenbank
 from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 
 from vcl.qt.widgets.bausteine.zustaende.geruest.module import anmelden
@@ -148,7 +148,7 @@ class DateiSeiten:
     def _sicherungskopien_oeffnen(self):
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
+        from writer.anbindung import dateizugriff as sicher_schreiben
         ordner = sicher_schreiben.sicherungs_ordner()
         os.makedirs(ordner, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(ordner))

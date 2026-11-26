@@ -5,7 +5,7 @@ from vcl.qt.widgets.bausteine.interaktion.feld.feld import zeilenfeld
 from vcl.qt.widgets.bausteine.rahmen.rahmen.rahmen import rahmen as rahmen_baustein
 
 from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte
-from core.formatierung.schrift import standard_datenbank
+from writer.anbindung import schriften as standard_datenbank
 from vcl.qt.widgets.bausteine.abstaende.mass import ABSTAND_KLEIN as _A_KLEIN
 
 from vcl.qt.widgets.bausteine.farben.darstellung import rolle as _rolle
@@ -259,8 +259,8 @@ def tastenkuerzel(parent) -> QDialog:
 
 
 def _erweiterungen_liste() -> list[tuple[bool, str, str, str]]:
-    from framework.dokumentverwaltung.dokumentpflege import vorlesen
-    from framework.dokumentverwaltung.integrationen import languagetool
+    from writer.anbindung import vorlesen
+    from writer.anbindung import languagetool
     schriften = [f for f in ("OpenDyslexic", "Lexend", _t("hilfe.atkinson_hyperlegible")) if standard_datenbank.hat_familie(f)]
     return [(bool(languagetool.verfuegbar()), "LanguageTool", _t("hilfe.gruendlich_pruefen_grammatik_ueber_die_e"), _t("hilfe.ca_386_mb")),
             (bool(vorlesen.piper_da()), _t("hilfe.stimmen_zum_vorlesen"), _t("hilfe.aufgenommene_stimmen_statt_der_blecherne"), _t("hilfe.ca_439_mb")),

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from writer.anbindung import ueberpruefen_einstellungen as ueberpruefen_einstellungen
 from writer.anbindung.ueberpruefen_einstellungen import ballon_werte
-from framework.befehle.ueberpruefen.typen import EntscheidenZustand, MarkupFilter
+from writer.hauptfenster import entscheiden_zustand_leer
 from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
 
 
@@ -53,7 +53,7 @@ class MarkupKlappen:
             for a in (kom, ein):
                 a.setEnabled(da)
             if da:
-                f: MarkupFilter = fw.filter()
+                f = fw.filter()
                 kom.setChecked(f.kommentare); ein.setChecked(f.einfuegungen)
             form.setChecked(True)
             self._bearbeiter_fuellen(bearb)
@@ -92,7 +92,7 @@ class MarkupKlappen:
 
         def auffrischen():
             fw = self._markup()
-            z = fw.entscheiden_zustand(self._schutz_wert()) if fw is not None else EntscheidenZustand()
+            z = fw.entscheiden_zustand(self._schutz_wert()) if fw is not None else entscheiden_zustand_leer()
             eins.setEnabled(z.eine)
             gezeigt.setEnabled(z.angezeigte)
             alle.setEnabled(z.alle)

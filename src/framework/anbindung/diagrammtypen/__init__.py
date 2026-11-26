@@ -6,10 +6,15 @@ from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
     "alt": ("anbindung", "alt"),
+    "art": ("anbindung", "art"),
+    "beispiel": ("anbindung", "beispiel"),
     "beispiel_kategorien": ("anbindung", "beispiel_kategorien"),
     "beispiel_reihen": ("anbindung", "beispiel_reihen"),
     "farben": ("anbindung", "farben"),
+    "hat_linien": ("anbindung", "hat_linien"),
+    "ist_kreis": ("anbindung", "ist_kreis"),
     "kombi_typen": ("anbindung", "kombi_typen"),
+    "kombi_vorgabe": ("anbindung", "kombi_vorgabe"),
     "namen": ("anbindung", "namen"),
     "typen": ("anbindung", "typen"),
     "vorlagen": ("anbindung", "vorlagen"),

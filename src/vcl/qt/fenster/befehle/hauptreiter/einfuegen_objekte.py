@@ -225,6 +225,7 @@ class EinfuegenObjektBefehle:
         from vcl.qt.rendering.textfelder import deckblatt as DB
         from vcl.qt.widgets.menues.dropdown.auswahl.raster_auswahl import RasterAuswahl
         from writer.funktionen.objekte import deckblatt as DBW
+        from writer.funktionen.objekte import deckblatt_gruppe
         HOCH, QUER = QSize(130, 184), QSize(184, 130)
         m = RasterAuswahl(self.w, spalten=4, groesse=HOCH, hoehe_max=640)
 
@@ -238,7 +239,7 @@ class EinfuegenObjektBefehle:
             m.leeren(QUER if quer else HOCH)
             m.quer = quer
             for name in DBW.deckblatt_namen():
-                m.kachel(name, f"{name} ({DB.gestaltung(name).gruppe})", zeichner(name)).setCheckable(False)
+                m.kachel(name, f"{name} ({deckblatt_gruppe(name)})", zeichner(name)).setCheckable(False)
             if m.isVisible():
                 m.neu_messen()
 
@@ -381,7 +382,7 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         from writer.anbindung import dateiformate as formats
-        from core.dokument.bericht import DocumentIOError
+        from writer.werte import Dateifehler
         from vcl.qt.rendering import formen as E
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import datei_waehlen
         wahl = datei_waehlen(self.w, "Text aus Datei einfügen", self.w.settings.get("last_dir", "") or "", formats.open_filter())
@@ -389,11 +390,11 @@ class EinfuegenObjektBefehle:
             return
         pfad = wahl[0]
         try:
-            rep = E.text_aus_datei(self.ed, pfad)
-        except DocumentIOError as e:
+            hinweise = E.text_aus_datei(self.ed, pfad)
+        except Dateifehler as e:
             QMessageBox.warning(self.w, "Einfügen nicht möglich", str(e))
             return
-        self.w._show_report(rep, "Hinweise zur eingefügten Datei", "beim Einfügen")
+        self.w._zeige_hinweise(hinweise, "Hinweise zur eingefügten Datei", "beim Einfügen")
 
 
     def formel(self, k=None):
@@ -455,8 +456,8 @@ class EinfuegenObjektBefehle:
         if not self.ed:
             return
         import re
-        from core.dokument.dokument import Auswahl, Position
-        from framework.dokumentverwaltung.dokumentpflege import bausteine
+        from writer.werte import Bereich, Stelle
+        from writer.anbindung import bausteine
         s = self.ed.sitzung
         if s.auswahl.leer:
             a = s._absatz(s.auswahl.kopf.absatz_id)
@@ -464,8 +465,8 @@ class EinfuegenObjektBefehle:
             b = bausteine.finde_kuerzel(m_.group(1)) if m_ else None
             if b is not None:
                 start = s.auswahl.kopf.versatz - len(m_.group(1))
-                self.ed.ansicht._aendern(lambda sitz: sitz.loeschen(Auswahl(Position(a.id, start), s.auswahl.kopf)))
-                bausteine.einfuegen(self.ed, b)
+                self.ed.ansicht._aendern(lambda sitz: sitz.loeschen(Bereich(Stelle(a.id, start), s.auswahl.kopf)))
+                self.ed.ansicht._befehl(lambda: bausteine.einfuegen(self.ed.kennung, b))
                 return
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()

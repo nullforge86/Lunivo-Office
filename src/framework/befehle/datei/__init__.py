@@ -23,6 +23,12 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "kompatibilitaet": ("einstellungen", "kompatibilitaet"),
     "letzten_ordner_merken": ("einstellungen", "letzten_ordner_merken"),
     "letztes_dokument_oeffnen": ("einstellungen", "letztes_dokument_oeffnen"),
+    "pdf_druckrechte": ("pdf", "pdf_druckrechte"),
+    "pdf_kennwort_fehler": ("pdf", "pdf_kennwort_fehler"),
+    "pdf_schreiben": ("pdf", "pdf_schreiben"),
+    "Pdfangabe": ("pdf", "Pdfangabe"),
+    "pdf_wahl": ("pdf", "pdf_wahl"),
+    "pdf_wahl_mit": ("pdf", "pdf_wahl_mit"),
     "schriften_dir": ("orte", "schriften_dir"),
     "sicherung_aktiv": ("einstellungen", "sicherung_aktiv"),
     "staende_sichern": ("einstellungen", "staende_sichern"),
@@ -36,6 +42,8 @@ def __getattr__(name: str):
     datei, original = _NAMEN.get(name, (None, None))
     if datei == "einstellungen":
         from . import einstellungen as _datei
+    elif datei == "pdf":
+        from . import pdf as _datei
     elif datei == "orte":
         from . import orte as _datei
     else:

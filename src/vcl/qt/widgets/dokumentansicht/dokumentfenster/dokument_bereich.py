@@ -10,7 +10,6 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QScrollArea
 
 from writer.anbindung import wiederherstellung as wiederherstellung
-from core.dokument.abschnitte.seite import PageSettings
 from writer.werte import mm_zu_px as mm_to_px
 from vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor import KernEditor
 
@@ -97,7 +96,7 @@ class DocumentTab(QScrollArea):
         self.editor.set_zoom(min(b, h))
 
     @property
-    def page(self) -> PageSettings:
+    def page(self):
         return self.editor.page
 
     def modell_fuer_speichern(self):

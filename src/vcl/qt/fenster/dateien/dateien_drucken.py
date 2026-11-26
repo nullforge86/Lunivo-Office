@@ -33,7 +33,7 @@ class DateienDruckenBaustein:
         from vcl.qt.drucken.drucken import vorschau_bild
 
         def bilder(nummern, ein):
-            return vorschau_bild(t.modell_fuer_speichern(), nummern, optionen=self.druckoptionen())
+            return vorschau_bild(t.editor.kennung, nummern, optionen=self.druckoptionen())
         return bilder
 
 
@@ -43,7 +43,7 @@ class DateienDruckenBaustein:
         if self.settings.get("drucken/vorgabe", "Alle Seiten") == "Aktuelle Seite":
             start.update(bereich="seiten", seiten_text=str(t.editor.current_page()))
         ps = t.page
-        return dict(seiten=seitenzahl(t.modell_fuer_speichern()), papier_mm=(ps.width_mm, ps.height_mm), quer=bool(ps.landscape),
+        return dict(seiten=seitenzahl(t.editor.kennung), papier_mm=(ps.width_mm, ps.height_mm), quer=bool(ps.landscape),
                     start=start, auswahl=t.editor.textCursor().hasSelection(), vorschau=self.druck_vorschau(t))
 
 
@@ -92,7 +92,7 @@ class DateienDruckenBaustein:
                 return
         self._vor_dem_drucken(t)
         opt = self.druckoptionen()
-        n = drucken(pr, t.modell_fuer_speichern(), dict(e, umgekehrt=opt["umgekehrt"], optionen=opt))
+        n = drucken(pr, t.editor.kennung, dict(e, umgekehrt=opt["umgekehrt"], optionen=opt))
         self.statusBar().showMessage(f"An den Drucker gesendet ({n} Blatt)." if n else "Keine Seiten zum Drucken.", 4000)
 
 
@@ -111,7 +111,7 @@ class DateienDruckenBaustein:
             return
         from vcl.qt.drucken.drucken import Zwischenseiten
         from vcl.qt.widgets.dialoge.dokument.druckvorschau import DruckVorschau
-        dlg = DruckVorschau(self, Zwischenseiten(t.modell_fuer_speichern(), self.druckoptionen()))
+        dlg = DruckVorschau(self, Zwischenseiten(t.editor.kennung, self.druckoptionen()))
         dlg.drucken.connect(lambda: QTimer.singleShot(0, self.print_dialog))
         dlg.showMaximized()
         dlg.exec()

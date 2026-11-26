@@ -17,6 +17,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "einstellungen": ("menues", "einstellungen"),
     "gruppe": ("menues", "gruppe"),
     "linie": ("menues", "linie"),
+    "zeile_setzen": ("zeilen", "zeile_setzen"),
+    "seitenzahl_einfuegen": ("zeilen", "seitenzahl_einfuegen"),
     "zone": ("menues", "zone"),
 }
 
@@ -31,6 +33,8 @@ def __getattr__(name: str):
         from . import menues as _datei
     elif datei == "typen":
         from . import typen as _datei
+    elif datei == "zeilen":
+        from . import zeilen as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
     wert = getattr(_datei, original)

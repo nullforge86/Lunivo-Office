@@ -8,7 +8,15 @@ from vcl.qt.widgets.bausteine.abstaende.mass import (ABSTAND_STAPEL, HOEHE_STAPE
 from vcl.qt.widgets.bausteine.farben.farben import WEISS_GLANZ
 from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import smartart as SM
-from core.objekte.smartart.smartart_zeichnen_daten import _ZU, _alle, _baum, _format_von, _grundschrift, _gruppen, schrift_uebernehmen
+from writer.anbindung import zeichnen as ZW
+
+_ZU: dict = {"stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "hier": "standard"}      # Zeichenlauf der Oberfläche; Knoten, Formate und Schrift hält der Kern
+
+
+def _alle(n: dict):
+    yield n
+    for k in n["k"]:
+        yield from _alle(k)
 
 
 def _spiegel(r: QRectF) -> QRectF:
@@ -56,17 +64,14 @@ def _fuellen(p: QPainter, c: QColor, r: QRectF) -> None:
 def _text_zeichnen(p: QPainter, r: QRectF, flags, t: str) -> None:
     """Text immer ungespiegelt (auch bei „von rechts nach links“, wo die Formen gespiegelt werden). Gesetzt und gezeichnet wird vom Kern; hier
     liegt nur das fertige Bild auf dem Zeichner."""
-    from vcl.qt.rendering.formen import kern_malen
-    from core.geometrie import Rect
-    from core.layout.drucklayout.ausgabe.backend import Style
+    from vcl.qt.rendering.formen import raster_malen
     c = p.pen().color()
-    spec = _ZU["schrift"] or _grundschrift(11.0)
-    stil = Style(color=(c.red(), c.green(), c.blue(), c.alpha()))
+    farbe = (c.red(), c.green(), c.blue(), c.alpha())
     ausr = "left" if flags & Qt.AlignLeft else "right" if flags & Qt.AlignRight else "center"
     umbruch = bool(flags & Qt.TextWordWrap)
 
     def malen(rr: QRectF) -> None:
-        kern_malen(p, rr, lambda ziel: ziel.draw_text_box(t, Rect(rr.x(), rr.y(), rr.width(), rr.height()), spec, stil, ausr, umbruch, "center"), 2.0, 1.0)
+        raster_malen(p, rr, lambda f: ZW.smartart_text(f, t, (rr.x(), rr.y(), rr.width(), rr.height()), farbe, ausr, umbruch), 2.0, 1.0)
     if _ZU["rtl"]:
         p.save(); p.resetTransform(); malen(_spiegel(r)); p.restore()
     else:
@@ -74,11 +79,11 @@ def _text_zeichnen(p: QPainter, r: QRectF, flags, t: str) -> None:
 
 
 def _schrift(p: QPainter, text: str, groesse: float) -> None:
-    _ZU["schrift"] = _grundschrift(groesse if "\n" not in text else min(groesse, 9.0))
+    ZW.smartart_schrift(groesse if "\n" not in text else min(groesse, 9.0))
 
 
 def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=None) -> None:
-    fm = _format_von(nr)
+    fm = ZW.smartart_format_von(nr)
     _fuellen(p, c, r)
     if fm:                                                                   # eigenes Format (Füllung, Linie, Effekte, Text) über dem Formenstil
         _kasten_format(p, r, c, fm)
@@ -90,7 +95,7 @@ def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=No
     _schrift(p, text, 11)
     t = (fm or {}).get("text")
     if t:
-        schrift_uebernehmen(t)
+        ZW.smartart_schrift_uebernehmen(t)
         if t.get("farbe") or t.get("effekt"):
             p.setPen(F.textfarbe(t, p.pen().color().name()))
     _text_zeichnen(p, r.adjusted(6, 3, -6, -3), Qt.AlignCenter | Qt.TextWordWrap, text)
@@ -143,7 +148,7 @@ def _bunt(daten: dict, i: int) -> QColor:
 
 
 def _spalten(daten: dict, pts, b: int) -> QImage:
-    g = _gruppen(pts)
+    g = ZW.smartart_gruppen(pts)
     n = len(g)
     bw = (b - 16 - (n - 1) * 10) / n
     zeilen = max(len(k) for _i, _t, k in g)
@@ -162,7 +167,7 @@ def _spalten(daten: dict, pts, b: int) -> QImage:
 
 
 def _gruppenliste(daten: dict, pts, b: int) -> QImage:
-    g = _gruppen(pts)
+    g = ZW.smartart_gruppen(pts)
     img, p = _bild(b, 16 + len(g) * 62)
     for i, (ni, t, kinder) in enumerate(g):
         y = 8 + i * 62
@@ -398,7 +403,7 @@ def _haengend_baum(daten: dict, wurzeln, b: int, variante: str) -> QImage:
 
 
 def _organigramm(daten: dict, pts, b: int) -> QImage:
-    wurzeln = _baum(pts)
+    wurzeln = ZW.smartart_baum(pts)
     v = _ZU["hier"]
     return _haengend_baum(daten, wurzeln, b, v) if v in ("beide", "haengend_links", "haengend_rechts") else _standard_baum(daten, wurzeln, b)
 
@@ -468,7 +473,7 @@ def _eintraege(pts) -> list[tuple[int, str, list[str], list[int]]]:
     """Oberste Ebene als Eintrag: [(Nr., Überschrift, Textzeilen (Aufzählungspunkte und Unterpunkte), [Nr. der Unterpunkte])]."""
     out = []
     punkt = SM.katalog().aufzaehlungspunkt
-    for ni, t, kinder in _gruppen(pts):
+    for ni, t, kinder in ZW.smartart_gruppen(pts):
         kopf, *rest = t.split("\n")
         zeilen = [z.removeprefix(punkt).strip() for z in rest]
         for _nj, k in kinder:
@@ -552,7 +557,7 @@ def _beschreibungsliste(daten: dict, pts, b: int) -> QImage:
 
 
 def _spaltenrahmen(daten: dict, pts, b: int) -> QImage:
-    g = _gruppen(pts)
+    g = ZW.smartart_gruppen(pts)
     spalten = g[0][2] if g else []
     fuss = g[-1] if len(g) > 1 else None
     n = max(1, len(spalten))

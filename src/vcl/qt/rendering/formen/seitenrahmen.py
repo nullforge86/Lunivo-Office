@@ -11,20 +11,23 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF
 
-from core.geometrie import Rect
-from core.layout.drucklayout.ausgabe.seite.seitenrahmen import rechteck as _rechteck, zeichnen as _zeichnen
+from writer.anbindung import zeichnen as ZW
 from writer.anbindung.seitenrahmen import abstaende_pt  # noqa: F401  (Rechnung und Zeichnen: Kern; ``abstaende_pt`` für das Rahmenfenster)
 
 KUNST = (("", "(keine)"), ("stars", "Sterne"), ("hearts", "Herzen"), ("triangles", "Dreiecke"), ("gems", "Edelsteine"), ("zigZag", "Zickzack"))
 
 
+def _raender_mm(page) -> tuple[float, float, float, float]:
+    return page.margin_left_mm, page.margin_top_mm, page.margin_right_mm, page.margin_bottom_mm
+
+
 def rechteck(b: dict, page, seite: QRectF) -> QRectF:
-    """Das Rechteck des Rahmens in Bildpunkten, auf einer Seite mit dem Rechteck ``seite`` (Qt-Hülle um ``core.layout.drucklayout.ausgabe.seitenrahmen.rechteck``)."""
-    r = _rechteck(b, page, Rect(seite.x(), seite.y(), seite.width(), seite.height()))
-    return QRectF(r.x, r.y, r.width, r.height)
+    """Das Rechteck des Rahmens in Bildpunkten, auf einer Seite mit dem Rechteck ``seite`` (gerechnet im Kern)."""
+    return QRectF(*ZW.seitenrahmen_rechteck(b, _raender_mm(page), (seite.x(), seite.y(), seite.width(), seite.height())))
 
 
 def zeichnen(p, b: dict, page, seite: QRectF) -> None:
     """Den Seitenrahmen auf eine Seite zeichnen (Linie in ihrer Art oder Kunstrahmen), über das Rendering-Backend."""
-    from vcl.qt.rendering.formen.anzeige import kern_malen
-    kern_malen(p, seite, lambda z: _zeichnen(z, b, page, Rect(seite.x(), seite.y(), seite.width(), seite.height())), rand=16.0)
+    from vcl.qt.rendering.formen.anzeige import raster_malen
+    raender, r = _raender_mm(page), (seite.x(), seite.y(), seite.width(), seite.height())
+    raster_malen(p, seite, lambda f: ZW.seitenrahmen(f, b, raender, r), rand=16.0)

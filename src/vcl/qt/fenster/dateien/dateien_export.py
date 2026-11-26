@@ -5,7 +5,7 @@ import os
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QMessageBox, QWidget
-from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
+from writer.anbindung import dateizugriff as _dateizugriff
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
 
 
@@ -22,14 +22,11 @@ class DateienExportBaustein:
 
     def pdf_wahl_start(self, t: DocumentTab):
         """Die Vorgaben für das PDF-Fenster und den PDF-Weg über „Speichern unter“ (Kennwörter werden nie gemerkt)."""
-        from filter.pdf.pdf_export import PdfWahl
         ordner = os.path.dirname(t.path) if t.path else (self.settings.get("pdf/ordner", "") or self.settings.get("speichern/ordner", "")
                                                           or self.settings.get("last_dir", os.path.expanduser("~")))
-        w = PdfWahl(pfad=os.path.join(ordner, (os.path.splitext(t.title)[0] or "Unbenannt") + ".pdf"),
-                    druck=self.settings.get("pdf/recht_druck", "frei") or "frei")
-        for feld, (schl, vorgabe) in self.PDF_SCHLUESSEL.items():
-            setattr(w, feld, self.settings.get_bool(schl, vorgabe))
-        return w
+        return _dateizugriff.pdf_wahl(pfad=os.path.join(ordner, (os.path.splitext(t.title)[0] or "Unbenannt") + ".pdf"),
+                                      druck=self.settings.get("pdf/recht_druck", "frei") or "frei",
+                                      **{feld: self.settings.get_bool(schl, vorgabe) for feld, (schl, vorgabe) in self.PDF_SCHLUESSEL.items()})
 
     def export_pdf_dialog(self):
         """Öffnet den PDF-Export als Seite in der zweiten Spalte des Datei-Menüs."""
@@ -67,7 +64,7 @@ class DateienExportBaustein:
             return QWidget()
 
         def exportieren(wahl):
-            bilder = bilder_schreiben(t.modell_fuer_speichern(), t.title, wahl)
+            bilder = bilder_schreiben(t.editor.kennung, t.title, wahl)
             self.settings.set("export/bild_ordner", wahl.ordner)
             if bilder:
                 self.statusBar().showMessage(f"{len(bilder)} Bild{'er' if len(bilder) != 1 else ''} exportiert.", 5000)
@@ -78,25 +75,12 @@ class DateienExportBaustein:
 
     def _pdf_schreiben(self, t: DocumentTab, path: str, wahl=None) -> bool:
         """Schreibt die PDF. Ohne ``wahl`` (Weg über „Speichern unter“) gelten die gemerkten Exportoptionen, ganzes Dokument, ohne Kennwort."""
-        from filter.pdf import pdf_export as PE
         if wahl is None:
-            wahl = self.pdf_wahl_start(t)
-            wahl.pfad = path
+            wahl = _dateizugriff.pdf_wahl_mit(self.pdf_wahl_start(t), pfad=path)
         try:
             autor = self.dokumente.meta_fuer_speichern(t.meta).get("author", "") if wahl.eigenschaften else ""
             titel = os.path.splitext(t.title)[0] if wahl.eigenschaften else ""
-            erste, letzte = PE.seiten(wahl, t.editor.current_page())
-            dokument = t.modell_fuer_speichern()
-            if wahl.bereich == "markierung":
-                dokument = PE.nur_markierung(dokument, t.editor.sitzung.auswahl)
-
-            def erzeugen(tmp):
-                from filter.pdf.pdf_ausgabe import dokument_als_pdf
-                struktur = {"lesezeichen": PE.lesezeichen(wahl), "kommentare": wahl.kommentare, "hyperlinks": wahl.hyperlinks, "notenlinks": wahl.notenlinks}
-                n = dokument_als_pdf(dokument, tmp, titel, autor=autor, erste=erste, letzte=letzte, struktur=struktur)
-                PE.verschluesseln(tmp, wahl)
-                return n
-            n = sicher_schreiben.schreiben(path, erzeugen, endung=".pdf")
+            n = _dateizugriff.pdf_schreiben(t.editor.kennung, path, wahl, titel, autor, t.editor.current_page())
         except Exception as e:  # PDF-Ausgabe darf das Programm nicht beenden
             QMessageBox.critical(self, "PDF-Export fehlgeschlagen", f"Die PDF-Datei wurde nicht erstellt.\n\nGrund: {e}\n\nWählen Sie einen anderen Ordner oder Dateinamen.")
             return False

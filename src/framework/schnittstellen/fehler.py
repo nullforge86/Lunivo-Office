@@ -1,0 +1,18 @@
+"""Fehler, die das Framework an seinen Schnittstellen meldet: Fehler des Kerns werden hier gefangen und als eigene Typen weitergegeben."""
+from __future__ import annotations
+
+
+class Dateifehler(Exception):
+    """Datei nicht lesbar oder nicht schreibbar — der Text ist für Anwender gedacht."""
+
+
+class Bildfehler(ValueError):
+    """Bilddatei nicht verwendbar; die Meldung ist für den Benutzer."""
+
+
+class KennwortNoetig(Dateifehler):
+    """Das Dokument ist verschlüsselt; ohne (richtiges) Kennwort lässt es sich nicht öffnen. ``falsch``: ein Kennwort war angegeben, stimmt aber nicht."""
+
+    def __init__(self, falsch: bool = False):
+        super().__init__("Das Kennwort ist falsch." if falsch else "Das Dokument ist durch ein Kennwort geschützt.")
+        self.falsch = falsch

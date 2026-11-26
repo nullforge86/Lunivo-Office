@@ -6,7 +6,7 @@ from core.dokument import angabe_von
 NEU_ZEICHNEN = ("textfeld", "form", "diagramm", "zeichenbereich")                      # Arten, die nach einer Größenänderung in der neuen Größe frisch gezeichnet werden
 
 
-def _form_daten_setzen(d: dict, k: str, v) -> None:
+def form_daten_setzen(d: dict, k: str, v) -> None:
     """Bei einer Form: Farben der Form selbst, kein Kasten ums Bild."""
     if k == "form_fuell":
         d["fuell"] = v or ""
@@ -22,7 +22,7 @@ def nach_groesse(neu: dict) -> dict:
 
 
 # ---- Verknüpfte Textfelder -----------------------------------------------------------------------------------------------------
-def _textfelder(dok) -> list[tuple[tuple, dict]]:
+def textfelder(dok) -> list[tuple[tuple, dict]]:
     """Alle freien Textfelder des Dokuments ``dok``: (Schlüssel, Angabe) in Dokumentreihenfolge — frisch aus dem Modell gelesen."""
     return [(("o", oid), angabe_von(o)) for oid, o in dok.objekte.items() if o.art == "textfeld"]
 
@@ -38,7 +38,7 @@ def _kette_ohne(felder: dict, da: dict, verboten: str) -> bool:
     return True
 
 
-def _verknuepfbar(felder: dict, von_key: tuple, nach_key: tuple):
+def verknuepfbar(felder: dict, von_key: tuple, nach_key: tuple):
     """(Daten von ``von``, Daten von ``nach``) als Kopien mit Kennung, wenn die Verknüpfung erlaubt ist; sonst None."""
     import uuid
     if von_key == nach_key or von_key not in felder or nach_key not in felder:
@@ -53,16 +53,16 @@ def _verknuepfbar(felder: dict, von_key: tuple, nach_key: tuple):
 
 
 def ist_verknuepft(dok, key: tuple) -> bool:
-    d = dict(_textfelder(dok)).get(key, {}).get("daten", {})
+    d = dict(textfelder(dok)).get(key, {}).get("daten", {})
     return bool(d.get("weiter") or d.get("von"))
 
 
 def hat_nachfolger(dok, key: tuple) -> bool:
     """Fließt der Text des Textfelds ``key`` in ein nächstes Feld weiter?"""
-    return bool(dict(_textfelder(dok)).get(key, {}).get("daten", {}).get("weiter"))
+    return bool(dict(textfelder(dok)).get(key, {}).get("daten", {}).get("weiter"))
 
 
-def _kette_glieder(k, a, nach_id: dict) -> list:
+def kette_glieder(k, a, nach_id: dict) -> list:
     """Alle Felder einer Kette ab ``(k, a)`` in Reihenfolge."""
     kette = [(k, a)]
     nxt = a.get("daten", {})

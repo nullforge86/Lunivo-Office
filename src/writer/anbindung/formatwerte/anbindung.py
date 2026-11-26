@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from functools import cache
+from typing import NamedTuple
 
 import framework.anbindung.formatwerte as _fw
 from writer.werte import eigene_kopie
@@ -34,3 +35,21 @@ def tabfuellung(a: Mapping) -> Mapping[float, str]:
 
 def zeilenabstand(a: Mapping) -> tuple[str, float]:
     return eigene_kopie(_fw.zeilenabstand(a))
+
+
+class Schriftangabe(NamedTuple):
+    """Eine Schrift: Familie, Größe in Punkt, Gewicht (400 normal, 700 fett) und Kursiv."""
+    family: str
+    size_pt: float
+    weight: int = 400
+    italic: bool = False
+
+
+def schrift(z: Mapping) -> Schriftangabe:
+    """Die Schrift eines Textstücks aus dem wirksamen Zeichenformat."""
+    return Schriftangabe(*_fw.schrift(z))
+
+
+def tabstopps(a: Mapping) -> tuple[tuple[float, int, str], ...]:
+    """((Position, Art, Trennzeichen), …) der Tabstopps des Absatzformats, aufsteigend."""
+    return eigene_kopie(_fw.tabstopps(a))

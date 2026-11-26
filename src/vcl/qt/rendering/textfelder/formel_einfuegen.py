@@ -42,26 +42,9 @@ def formel_teile(text: str) -> list[tuple[str, str]]:
 
 def formel_bild(text: str, pt: int = 16, farbe: str = Farbe.SCHWARZ) -> QImage:
     """Die Formel als Bild (Vorschau im Fenster „Formel“ und in der Gleichungsgalerie): kursive Stücke, Hoch- und Tiefgestelltes verkleinert und versetzt; gezeichnet vom Kern."""
-    from vcl.qt.rendering.formen import kern_bild
-    from core.geometrie import Point
-    from core.layout.drucklayout.ausgabe.backend import Style, rgba
-    from core.textsatz import FontSpec
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    engine = standard_engine()
-    basis, klein = FontSpec("DejaVu Serif", float(pt), 400, True), FontSpec("DejaVu Serif", pt * 2 / 3, 400, True)
-    stuecke, x = [], 0.0
-    for t, a in formel_teile(text):
-        f = klein if a in ("hoch", "tief") else basis
-        stuecke.append((t, a, f, x))
-        x += engine.measure_text(t, f)
-    m = engine.font_metrics(basis)
-    grund = 2 + pt * 0.45 + m.ascent
-    b, h = int(x) + 8, int(grund + m.descent + pt * 0.3) + 4
-
-    def zeichnen(z) -> None:
-        for t, a, f, x0 in stuecke:
-            z.draw_text(t, Point(4 + x0, grund - pt * 0.4 if a == "hoch" else grund + pt * 0.2 if a == "tief" else grund), f, Style(color=rgba(farbe)))
-    return kern_bild(b, h, zeichnen)
+    from writer.anbindung import zeichnen as ZW
+    breite, hoehe, roh = ZW.formel(tuple(formel_teile(text)), pt, farbe)
+    return QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888).copy()
 
 
 def formel_einfuegen(ed, text: str) -> None:

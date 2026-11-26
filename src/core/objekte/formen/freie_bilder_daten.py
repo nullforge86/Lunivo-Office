@@ -23,12 +23,9 @@ SCHEMA = {"tx1": Farbe.SCHWARZ, "dk1": Farbe.SCHWARZ, "bg1": Farbe.WEISS, "lt1":
           "accent6": "#f79646"}
 
 
-def _text_gerade(dreh: float, fx: dict | None) -> bool:
+def text_gerade(dreh: float, fx: dict | None) -> bool:
     """„Text nicht drehen“: Form und Füllung gedreht, der Text bleibt aufrecht."""
     return bool(dreh and ((fx or {}).get("drehung") or {}).get("text_gerade"))
-
-
-_PNG_ABLAGE: dict = {}
 
 
 def ohne_hilfsangaben(a: dict) -> dict:

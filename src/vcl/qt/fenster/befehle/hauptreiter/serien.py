@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 
-from framework.serienbriefe.erstellung import serienbrief
+from writer.funktionen import bearbeiten as _bearbeiten
 from writer.anbindung import serienquelle as serienquelle
 from writer import serienbriefwerkzeuge as sendungen
 
@@ -153,7 +153,7 @@ class SerienBefehle:
 
     # ---- Vorschau ------------------------------------------------------------------------------------------------
     def _briefe(self) -> list[list[dict]]:
-        return serienbrief.gruppen(self.ed.sitzung.dokument, self._gewaehlte()) if self.ed else []
+        return _bearbeiten.serienbrief_gruppen(self.ed.kennung, self._gewaehlte()) if self.ed else []
 
     def _vorschau_auffrischen(self) -> None:
         from vcl.qt.widgets.dokumentansicht.ansicht import vorschau_ansicht
@@ -165,7 +165,8 @@ class SerienBefehle:
                 vorschau_ansicht.beenden(t)
             else:
                 s["nr"] = max(0, min(s["nr"], len(briefe) - 1))
-                vorschau_ansicht.zeigen(t, serienbrief.brief_fuer(t.editor.sitzung.dokument, briefe[s["nr"]]))
+                from writer.funktionen import ansicht as AN
+                vorschau_ansicht.zeigen(t, AN.vorschau_brief(t.editor.kennung, briefe[s["nr"]]))
         self._datensatz_anzeigen()
 
     def serienVorschau(self, k=None):
@@ -181,8 +182,8 @@ class SerienBefehle:
         if not self._briefe():
             self.w.statusBar().showMessage("Keine Empfänger: Datenquelle öffnen und Empfänger anhaken.", 5000)
             return
-        import copy
-        vorschau_ansicht.zeigen(t, copy.deepcopy(t.editor.sitzung.dokument))
+        from writer.funktionen import ansicht as AN
+        vorschau_ansicht.zeigen(t, AN.vorschau_kopie(t.editor.kennung))
         self._vorschau_auffrischen()
 
     def _gehe_satz(self, wohin) -> None:
@@ -232,14 +233,13 @@ class SerienBefehle:
             return None
         saetze = self._gewaehlte()
         titel = self.w.current_tab().title
-        ziel, n = serienbrief.serienbrief_erzeugen(e.sitzung.dokument, saetze)
+        ziel, n = _bearbeiten.serienbrief_erzeugen(e.kennung, saetze)
         t = self._ergebnis_blatt(titel + " — Seriendruck", ziel)
         self.w.statusBar().showMessage(f"{n} Briefe in einem neuen Dokument (die Vorlage bleibt unverändert).", 6000)
         return t
 
     def serienEinzeln(self, k=None):
         """In anderem neuen Dokument zusammenführen: jeder Brief als eigene DOCX-Datei in einem Ordner."""
-        from framework.dokumentverwaltung.dateizugriff.modell_speichern import speichere_modell
         from vcl.qt.widgets.dialoge.dokument.speichern_fenster import ordner_waehlen
         e = self.ed
         if not e or not self._hat_quelle():
@@ -247,12 +247,9 @@ class SerienBefehle:
         ordner = ordner_waehlen(self.w, "Ordner für die einzelnen Briefe", os.path.dirname(self._serie()["pfad"]) or os.path.expanduser("~"))
         if not ordner:
             return
-        briefe = serienbrief.gruppen(e.sitzung.dokument, self._gewaehlte())
         name = os.path.splitext(self.w.current_tab().title)[0] or "Brief"
-        for i, gruppe in enumerate(briefe, 1):
-            d = serienbrief.brief_fuer(e.sitzung.dokument, gruppe)
-            speichere_modell(os.path.join(ordner, f"{name} {i:03d}.docx"), d, e.page, dict(self.w.current_tab().meta), sicherung=False)
-        self.w.statusBar().showMessage(f"{len(briefe)} Briefe gespeichert in „{ordner}“.", 6000)
+        anzahl = _bearbeiten.serienbriefe_speichern(e.kennung, ordner, name, self._gewaehlte(), dict(self.w.current_tab().meta))
+        self.w.statusBar().showMessage(f"{anzahl} Briefe gespeichert in „{ordner}“.", 6000)
 
     def serienDrucker(self, k=None):
         """An Drucker zusammenführen: die Briefe in ein neues Dokument und gleich das Druckfenster."""

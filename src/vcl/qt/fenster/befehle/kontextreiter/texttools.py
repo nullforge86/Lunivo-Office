@@ -486,11 +486,11 @@ class TextToolsBefehle:
     # ---- Verknüpfung erstellen: Textfelder verketten (Text läuft von A nach B), wie in der Vorlage ---------------------------------------------
     def _tt_felder(self):
         """Die Textfelder, mit denen das markierte verknüpft werden kann (Schlüssel, Anzeigename): nicht es selbst, keins mit Vorgänger."""
-        from vcl.qt.rendering.formen import frei_objekt as FO
+        from writer.funktionen.objekte import objekt_textfelder
         e = self.ed
         jetzt = getattr(e, "_frei_sel", None)
         out = []
-        for key, a in FO._textfelder(e):
+        for key, a in objekt_textfelder(e.kennung):
             d = a.get("daten") or {}
             if key != jetzt and not d.get("von"):
                 t = str(d.get("gezeigt", d.get("text", ""))).strip().replace("\n", " ")

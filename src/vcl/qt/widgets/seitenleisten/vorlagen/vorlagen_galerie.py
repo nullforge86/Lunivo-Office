@@ -27,8 +27,9 @@ from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.bausteine.interaktion.felder.karten_raster import kachel_gitter, kacheln_legen
 from vcl.qt.widgets.dialoge.dokument.speichern_fenster import Dateifenster
 
-from core.dokument import vorlagen
 from writer.anbindung import vorlagen as _vorlagen
+from writer.anbindung.vorlagenordner import vorlagen_ordner_pfad
+from writer.funktionen import ansicht as AN
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
@@ -42,25 +43,20 @@ KACHEL = QSize(*GROESSE_VORLAGE_KACHEL)
 _VORSCHAU: dict[tuple, QPixmap] = {}                     # (Art, Schlüssel, Änderungszeit) → Bild, solange das Programm läuft
 
 
-def _blatt_bild(dokument) -> QPixmap:
-    """Erste Seite eines ``Dokument``s, auf Kachelbreite verkleinert (Layout und Rendering im Kern; Qt rastert nur)."""
+def _blatt_bild(ausgabe: int) -> QPixmap:
+    """Erste Seite der Ausgabe ``ausgabe`` des Frameworks, auf Kachelbreite verkleinert (Layout und Rendering im Kern; Qt rastert nur)."""
     from vcl.qt.drucken.drucken import Ausgabe
-    img = Ausgabe(dokument).bild(1, 0.8)
+    img = Ausgabe(None, nummer=ausgabe).bild(1, 0.8)
     return QPixmap.fromImage(img.scaled(KACHEL, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 
 def _geruest_bild(muster: dict, benutzer: dict) -> QPixmap:
     from PySide6.QtCore import QDate, QLocale
-    from core.dokument import neues_dokument
-    from core.bearbeitung import Bearbeitungssitzung
-    sitzung = Bearbeitungssitzung(neues_dokument())
-    vorlagen.geruest_schreiben(sitzung, muster["zeilen"], benutzer, QLocale("de_DE").toString(QDate.currentDate(), _t("vorlagen.d_mmmm_yyyy")))
-    return _blatt_bild(sitzung.dokument)
+    return _blatt_bild(AN.ausgabe_aus_geruest(muster["zeilen"], benutzer, QLocale("de_DE").toString(QDate.currentDate(), _t("vorlagen.d_mmmm_yyyy"))))
 
 
 def _datei_bild(pfad: str) -> QPixmap:
-    from framework.dokumentverwaltung.dateizugriff.modell_laden import lade_modell
-    return _blatt_bild(lade_modell(pfad).document)                                  # Kern: Laden, Layout, Rendering; Qt zeigt nur das Bild
+    return _blatt_bild(AN.ausgabe_aus_datei(pfad))                                  # Kern: Laden, Layout, Rendering; Qt zeigt nur das Bild
 
 
 class _Kachel(QToolButton):
@@ -164,7 +160,7 @@ class VorlagenGalerie(QWidget):
 
     # ---- Daten: Rubriken aus Gerüsten und Unterordnern ---------------------------------------------------------------------
     def _daten_lesen(self) -> None:
-        self.ordner = vorlagen.vorlagenordner(self.settings)
+        self.ordner = vorlagen_ordner_pfad(self.settings)
         self.rubriken: dict[str, dict] = {}
         for m in _vorlagen.muster():
             r = self.rubriken.setdefault(m.get("rubrik") or m["name"], {"geruest": [], "dateien": [], "pfad": None})
@@ -310,12 +306,12 @@ class VorlagenGalerie(QWidget):
         self.neu_lesen(); self.rubrik_oeffnen(next((n for n in self.rubriken if n.lower() == name.lower()), name))
 
     def _ordner_waehlen(self) -> None:
-        p = Dateifenster.getExistingDirectory(self, _t("vorlagen.vorlagenordner"), vorlagen.vorlagenordner(self.settings))
+        p = Dateifenster.getExistingDirectory(self, _t("vorlagen.vorlagenordner"), vorlagen_ordner_pfad(self.settings))
         if p:
             self.settings.set("vorlagen/ordner", p); self.neu_lesen()
 
     def _ordner_oeffnen(self) -> None:
-        o = self._ziel() or vorlagen.vorlagenordner(self.settings)
+        o = self._ziel() or vorlagen_ordner_pfad(self.settings)
         os.makedirs(o, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(o))
 

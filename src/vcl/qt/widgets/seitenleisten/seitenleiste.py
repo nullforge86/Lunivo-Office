@@ -297,7 +297,7 @@ class SchreibhilfePanel(QWidget):
         import os
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
-        from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
+        from writer.anbindung import dateizugriff as sicher_schreiben
         ordner = sicher_schreiben.sicherungs_ordner()
         os.makedirs(ordner, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(ordner))

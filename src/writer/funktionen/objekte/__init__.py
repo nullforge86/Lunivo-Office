@@ -12,6 +12,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "bildeffekte_abschluesse": ("bildeffekte", "bildeffekte_abschluesse"),
     "da": ("wasserzeichen", "da"),
     "deckblatt_entfernen": ("deckblatt", "deckblatt_entfernen"),
+    "deckblatt_felder": ("deckblatt", "deckblatt_felder"),
+    "deckblatt_gruppe": ("deckblatt", "deckblatt_gruppe"),
     "deckblatt_namen": ("deckblatt", "deckblatt_namen"),
     "diagramm_pfeil_groessen": ("diagrammformat", "diagramm_pfeil_groessen"),
     "diagramm_pfeile": ("diagrammformat", "diagramm_pfeile"),
@@ -31,6 +33,9 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "formular_datumsformat": ("formular", "formular_datumsformat"),
     "formular_einfuegen": ("formular", "einfuegen"),
     "hat_effekt": ("wordart", "hat_effekt"),
+    "inline_an": ("objektangaben", "inline_an"),
+    "inline_der_auswahl": ("objektangaben", "inline_der_auswahl"),
+    "inline_gewaehlt": ("objektangaben", "inline_gewaehlt"),
     "ist_leer": ("formular", "ist_leer"),
     "ist_metafile_emf": ("vektorbilder", "ist_metafile_emf"),
     "ist_metafile_wmf": ("vektorbilder", "ist_metafile_wmf"),
@@ -52,6 +57,9 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "muster_vorlagen": ("muster", "muster_vorlagen"),
     "name_von": ("muster", "name_von"),
     "nur_formulardaten": ("formular", "nur_formulardaten"),
+    "objekt_angabe": ("objektangaben", "objekt_angabe"),
+    "objekt_angabe_speichern": ("objektangaben", "objekt_angabe_speichern"),
+    "objekt_textfelder": ("objektangaben", "objekt_textfelder"),
     "ohne_hilfsangaben": ("freie_objekte", "ohne_hilfsangaben"),
     "reflektion_vorgaben": ("wordart", "reflektion_vorgaben"),
     "schatten_vorgaben": ("wordart", "schatten_vorgaben"),
@@ -100,6 +108,8 @@ def __getattr__(name: str):
         from . import freie_objekte as _datei
     elif datei == "muster":
         from . import muster as _datei
+    elif datei == "objektangaben":
+        from . import objektangaben as _datei
     elif datei == "schnelltabelle":
         from . import schnelltabelle as _datei
     elif datei == "smartart":

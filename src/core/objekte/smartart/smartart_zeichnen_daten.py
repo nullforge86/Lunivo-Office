@@ -3,10 +3,25 @@ from __future__ import annotations
 
 from core.diagramme.formatierung import schrift_aus
 
-_ZU: dict = {"schrift": None, "stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "knoten": [], "hier": "standard", "fmt": [], "fmt_alle": {}}
+_ZU: dict = {"schrift": None, "knoten": [], "fmt": [], "fmt_alle": {}}
 
 
-def _format_von(nr) -> dict | None:
+def beginnen(knoten: list, fmt: list, fmt_alle: dict) -> None:
+    """Ein neues SmartArt wird gezeichnet: Knoten, ihre Formate und das Format aller Knoten merken, die Schrift zurücksetzen."""
+    _ZU.update(schrift=None, knoten=knoten, fmt=fmt, fmt_alle=fmt_alle)
+
+
+def grundschrift_setzen(pt: float) -> None:
+    """Die Schrift des nächsten Textes: die Grundschrift in der Größe ``pt``."""
+    _ZU["schrift"] = _grundschrift(pt)
+
+
+def schrift():
+    """Die aktuelle Schrift (ohne Angabe die Grundschrift in 11 pt)."""
+    return _ZU["schrift"] or _grundschrift(11.0)
+
+
+def format_von(nr) -> dict | None:
     """Das Format des Knotens Nummer ``nr`` (Format wie ``teil_format`` des Diagramms): das des Knotens über dem von allen Knoten (``daten["format"]``)."""
     alle = _ZU.get("fmt_alle") or {}
     eigen = _ZU["fmt"][nr] if nr is not None and 0 <= nr < len(_ZU["fmt"]) else None
@@ -31,7 +46,7 @@ def _grundschrift(pt: float):
     return FontSpec(STANDARD_FAMILIE, pt, 400, False)
 
 
-def _gruppen(pts: list[tuple[int, str]]) -> list[tuple[int, str, list[tuple[int, str]]]]:
+def gruppen(pts: list[tuple[int, str]]) -> list[tuple[int, str, list[tuple[int, str]]]]:
     """Oberste Ebene als Überschrift, alles Eingerückte darunter als Unterpunkte: [(Nr. der Überschrift, Text, [(Nr., Unterpunkt)])]."""
     out: list[tuple[int, str, list[tuple[int, str]]]] = []
     for i, (e, t) in enumerate(pts):
@@ -43,7 +58,7 @@ def _gruppen(pts: list[tuple[int, str]]) -> list[tuple[int, str, list[tuple[int,
 
 
 # ---- Organigramm / Hierarchie ---------------------------------------------------------------------------------------------------------
-def _baum(pts) -> list[dict]:
+def baum(pts) -> list[dict]:
     """Die Wurzeln des Knotenbaums; jeder Knoten {i (Nr.), t (Text), e (Ebene), k (Kinder), a (Assistent)}."""
     kn = _ZU["knoten"]
     wurzeln: list[dict] = []
@@ -55,9 +70,3 @@ def _baum(pts) -> list[dict]:
         (stapel[-1]["k"] if stapel else wurzeln).append(n)
         stapel.append(n)
     return wurzeln
-
-
-def _alle(n: dict):
-    yield n
-    for k in n["k"]:
-        yield from _alle(k)

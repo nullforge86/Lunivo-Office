@@ -11,11 +11,9 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
 from writer.anbindung.version import version as _programmversion
 from writer import vorlagenkatalog as stile
-from framework.schnittstellen.einstellungen import Einstellungen
+from writer import hauptfenster as _dienste
 from vcl.qt.eingabe.ki_dienst import KIDienst
-from framework.befehle.korrektur.anbieter import KorrekturEinstellungenAnbieter
 from vcl.qt.eingabe.korrektur_dienst import WritingAssistant
-from framework.sitzungen.dokumentverwaltung import DocumentManager
 from vcl.qt.widgets.statusleiste.statusleiste import StatusBar
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_reiter import DocTabs
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.navigation_panel import NavigationPanel
@@ -45,9 +43,9 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
     lesehilfe_geaendert = Signal()                  # Lesestufe, Papier, Abstände, Zeilenfokus, Silben farbig: Seitenleiste und Optionen ziehen nach
 
 
-    def __init__(self, settings: Einstellungen | None = None):
+    def __init__(self, settings=None):
         super().__init__()
-        self.settings = settings or Einstellungen()
+        self.settings = settings or _dienste.einstellungen()
         self.setWindowTitle("Lunivo Writer")
         scr = QApplication.primaryScreen().availableGeometry() if QApplication.primaryScreen() else None
         self.resize(min(1380, scr.width()) if scr else 1380, min(860, scr.height()) if scr else 860)
@@ -64,7 +62,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         self.leer.setAutoFillBackground(True)
         self.docs.stack.insertWidget(0, self.leer)
         self.docs.stack.setCurrentWidget(self.leer)
-        self.assistant = WritingAssistant(KorrekturEinstellungenAnbieter(self.settings), parent=self)       # das Farmwork meldet seinen Anbieter beim Dienst an
+        self.assistant = WritingAssistant(_dienste.korrektur_anbieter(self.settings), parent=self)       # das Farmwork meldet seinen Anbieter beim Dienst an
         self.assistant.status.connect(lambda t: self.lbl_msg.setText(t))
         self.ki = KIDienst(self.assistant, self)
         self.ki.status.connect(lambda t: self.lbl_msg.setText(t))
@@ -73,7 +71,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         _dlg.set_einheit(self.settings.get("ui/masseinheit", "Millimeter"))
         from vcl.qt.widgets.bausteine.symbole.bauteile.live_vorschau import LiveVorschau
         self.vorschau = LiveVorschau(self)
-        self.dokumente = DocumentManager(self.settings)
+        self.dokumente = _dienste.dokumentverwaltung(self.settings)
         self.befehle = Befehle(self)
         self._build_actions()
         self._zusatz_kuerzel()

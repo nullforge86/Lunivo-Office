@@ -51,6 +51,12 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "leuchten_vorgaben": ("wordart", "leuchten_vorgaben"),
     "level": ("smartart", "level"),
     "name_von": ("muster", "name_von"),
+    "objektangaben_angabe": ("objektangaben", "angabe"),
+    "objektangaben_angabe_speichern": ("objektangaben", "angabe_speichern"),
+    "objektangaben_inline_an": ("objektangaben", "inline_an"),
+    "objektangaben_inline_der_auswahl": ("objektangaben", "inline_der_auswahl"),
+    "objektangaben_inline_gewaehlt": ("objektangaben", "inline_gewaehlt"),
+    "objektangaben_textfelder": ("objektangaben", "textfelder"),
     "ohne_hilfsangaben": ("freie_objekte", "ohne_hilfsangaben"),
     "reflektion_vorgaben": ("wordart", "reflektion_vorgaben"),
     "schatten_vorgaben": ("wordart", "schatten_vorgaben"),
@@ -80,6 +86,8 @@ def __getattr__(name: str):
         from . import freie_objekte as _datei
     elif datei == "muster":
         from . import muster as _datei
+    elif datei == "objektangaben":
+        from . import objektangaben as _datei
     elif datei == "schnelltabelle":
         from . import schnelltabelle as _datei
     elif datei == "smartart":

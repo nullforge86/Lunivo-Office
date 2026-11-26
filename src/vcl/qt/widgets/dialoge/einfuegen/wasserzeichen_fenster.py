@@ -20,7 +20,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
 from vcl.qt.rendering.formen import bild_aus_datei
 from vcl.qt.rendering.textfelder import wasserzeichen as WZ
 from vcl.qt.widgets.bausteine.symbole.medien.bildformate import BILD_FILTER
-from core.dokument.abschnitte.seite import PageSettings
+from writer.anbindung.seite import standardmasse
 from writer.werte import mm_zu_px as mm_to_px
 from vcl.qt.widgets.bausteine.rahmen.dialog_rahmen import VorschauFlaeche, fussleiste
 from vcl.qt.widgets.menues.dropdown.auswahl.farb_feld import FarbFeld
@@ -61,10 +61,10 @@ def _lage_vorbelegen(fmt, hz, hm, vt, vm, a: dict, winkel_vorgabe: int) -> None:
 class WasserzeichenDialog(PanelFaehig, QDialog):
     BEREICHE = (("dokument", "Gesamtes Dokument"), ("abschnitt", "Aktueller Abschnitt"))
 
-    def __init__(self, parent=None, aktuell: dict | None = None, page: PageSettings | None = None, ordner: str = ""):
+    def __init__(self, parent=None, aktuell: dict | None = None, page=None, ordner: str = ""):
         super().__init__(parent)
         a = dict(aktuell or {})
-        self._page = page or PageSettings()
+        self._page = page or standardmasse()
         self._ordner = ordner
         self._bild_text = a.get("bild") or ""
         self.entfernt = False

@@ -8,8 +8,10 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "abstaende": ("anbindung", "abstaende"),
     "einzuege": ("anbindung", "einzuege"),
     "richtung": ("anbindung", "richtung"),
+    "schrift": ("anbindung", "schrift"),
     "standard_familie": ("anbindung", "standard_familie"),
     "tabfuellung": ("anbindung", "tabfuellung"),
+    "tabstopps": ("anbindung", "tabstopps"),
     "zeilenabstand": ("anbindung", "zeilenabstand"),
 }
 

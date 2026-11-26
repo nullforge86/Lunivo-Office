@@ -412,10 +412,10 @@ class SeiteBefehle:
     def silbentrennung(self, k=None):
         if not self.ed:
             return
-        from core.korrektur.silbentrennung.trennung import trenner_fuer
+        from writer.funktionen import bearbeiten as _bearbeiten
         pg = self.ed.abschnitt_seite()
         sprache = self.w.settings.get("silben/sprache", "de_DE")
-        if trenner_fuer(sprache) is None:
+        if not _bearbeiten.silbentrennung_verfuegbar(sprache):
             self.w.statusBar().showMessage("Silbentrennung braucht das Paket „pyphen“ (pip install pyphen).", 6000)
             return
         pg.silbentrennung = not pg.silbentrennung

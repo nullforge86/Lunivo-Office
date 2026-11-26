@@ -46,16 +46,16 @@ def _speichern(img: QImage, pfad: str, fmt: str) -> None:
         raise OSError(f"„{os.path.basename(pfad)}“ konnte nicht geschrieben werden.")
 
 
-def bilder_schreiben(dokument, name: str, wahl: BildWahl) -> list[str]:
+def bilder_schreiben(kennung: int, name: str, wahl: BildWahl) -> list[str]:
     """Schreibt die Bilder nach ``wahl.ordner``. → die geschriebenen Dateien.
 
-    ``dokument`` ist das maßgebliche ``Dokument``; gesetzt und gezeichnet wird es von derselben Layout-Engine und demselben Renderer wie die
-    Zeichenfläche, der Druck und das PDF (``dienste.drucken.Ausgabe``)."""
+    ``kennung`` benennt das Dokument im Framework; gesetzt und gezeichnet wird es von derselben Layout-Engine und demselben Renderer wie die
+    Zeichenfläche, der Druck und das PDF (``drucken.Ausgabe``)."""
     from vcl.qt.drucken.drucken import Ausgabe
     endung = FORMATE[wahl.format][0]
     stamm = os.path.join(wahl.ordner, os.path.splitext(os.path.basename(name))[0] or "Dokument")
     faktor = wahl.dpi / 96
-    ausgabe = Ausgabe(dokument)
+    ausgabe = Ausgabe(kennung)
     if ausgabe.anzahl() == 0:
         return []
     if not wahl.lang:

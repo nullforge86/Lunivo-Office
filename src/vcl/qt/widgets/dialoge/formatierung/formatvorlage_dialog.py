@@ -188,7 +188,7 @@ class FormatvorlageDialog(PanelFaehig, QDialog):
 
     def _absatz(self) -> None:
         """Format ▸ Absatz …: dasselbe Fenster wie im Band, mit beiden Reitern; die Vorlage merkt sich alle Felder (auch Tabstopps und Umbruchregeln)."""
-        from core.formatierung.absatz import absatzopt
+        from writer.anbindung import absatzoptionen as absatzopt
         from writer.funktionen.bearbeiten import tabs_als_text as als_text, tabs_aus_text as aus_text
         from vcl.qt.widgets.dialoge.formatierung.absatz_dialog import AbsatzDialog
         from vcl.qt.widgets.bausteine.zustaende.geruest.fenster_stapel import zeige_unter

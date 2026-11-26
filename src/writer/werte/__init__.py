@@ -5,6 +5,16 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "Bereich": ("stellen", "Bereich"),
+    "Bildfehler": ("fehler", "Bildfehler"),
+    "Dateifehler": ("fehler", "Dateifehler"),
+    "Groesse": ("geometrie", "Groesse"),
+    "KennwortNoetig": ("fehler", "KennwortNoetig"),
+    "Punkt": ("geometrie", "Punkt"),
+    "Raender": ("geometrie", "Raender"),
+    "Rechteck": ("geometrie", "Rechteck"),
+    "Stelle": ("stellen", "Stelle"),
+    "Vektorpfad": ("geometrie", "Vektorpfad"),
     "eigene_kopie": ("werte", "eigene_kopie"),
     "grundfarben": ("farben", "grundfarben"),
     "mm_zu_px": ("einheiten", "mm_zu_px"),
@@ -22,6 +32,12 @@ def __getattr__(name: str):
         from . import einheiten as _datei
     elif datei == "farben":
         from . import farben as _datei
+    elif datei == "fehler":
+        from . import fehler as _datei
+    elif datei == "geometrie":
+        from . import geometrie as _datei
+    elif datei == "stellen":
+        from . import stellen as _datei
     elif datei == "werte":
         from . import werte as _datei
     else:

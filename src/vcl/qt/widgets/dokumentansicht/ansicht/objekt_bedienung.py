@@ -11,19 +11,18 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen
 
-from core.geometrie import Point, Rect
-from core.layout.drucklayout.ausgabe.backend import Style
+from writer.werte import Rechteck
 
 GRIFF_TREFFER = 7.0                    # Trefferfläche eines Griffs (Bildpunkte der Ansicht)
 GRIFF_GROESSE = 7.0
 ROT_ABSTAND = 24.0                     # Drehgriff: so weit über der Oberkante (Bildpunkte der Ansicht)
 MIN_OBJEKT = 8.0
 KNOPF = 24.0                           # Seitenlänge einer Schaltfläche
-OBJEKT_RAHMEN = Style(color=(47, 111, 181, 255), width=1.5)
-WEISS = Style(color=(255, 255, 255, 255), width=0, filled=True)
+OBJEKT_RAHMEN = ((47, 111, 181, 255), 1.5)      # Farbe und Strichstärke des Auswahlrahmens und der Griffe
+WEISS = (255, 255, 255, 255)                    # Fläche der Griffe
 CURSOR = {"nw": Qt.SizeFDiagCursor, "se": Qt.SizeFDiagCursor, "ne": Qt.SizeBDiagCursor, "sw": Qt.SizeBDiagCursor,
           "n": Qt.SizeVerCursor, "s": Qt.SizeVerCursor, "w": Qt.SizeHorCursor, "e": Qt.SizeHorCursor, "rot": Qt.PointingHandCursor}
 ECKEN = ("nw", "ne", "se", "sw")
@@ -86,7 +85,7 @@ class ObjektBedienung:
                 return "inline", i, res[0], res[1]
         return None
 
-    def _rahmen(self, sel) -> Rect:
+    def _rahmen(self, sel) -> Rechteck:
         zug = self._objekt_zug
         return zug["rect"] if zug is not None and zug.get("id") == sel[1] else sel[3]
 
@@ -149,27 +148,48 @@ class ObjektBedienung:
         return None
 
     # ---- Zeichnen --------------------------------------------------------------------------------------------------------------------
-    def objekt_zeichnen(self, b, seite: int) -> None:
-        """Auswahlrahmen, Griffe und Drehgriff auf der Seite ``seite`` (Seitenkoordinaten, ``b`` ist auf das Blatt skaliert)."""
+    @staticmethod
+    def _rahmen_malen(p: QPainter, r) -> None:
+        """Ein Rechteck als Linie in der Farbe des Auswahlrahmens."""
+        p.save()
+        p.setPen(QPen(QColor(*OBJEKT_RAHMEN[0]), OBJEKT_RAHMEN[1]))
+        p.setBrush(Qt.NoBrush)
+        p.drawRect(QRectF(r.x, r.y, r.width, r.height))
+        p.restore()
+
+    @staticmethod
+    def _flaeche_malen(p: QPainter, r) -> None:
+        """Ein Rechteck als weiße Fläche ohne Linie."""
+        p.save()
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*WEISS)))
+        p.fillRect(QRectF(r.x, r.y, r.width, r.height), QBrush(QColor(*WEISS)))
+        p.restore()
+
+    def objekt_zeichnen(self, p: QPainter, seite: int) -> None:
+        """Auswahlrahmen, Griffe und Drehgriff auf der Seite ``seite`` (Seitenkoordinaten, ``p`` ist auf das Blatt skaliert)."""
         sel = self._auswahl_objekt()
         if sel is None or sel[2] != seite:
             return
         r = self._rahmen(sel)
-        b.draw_rect(r, OBJEKT_RAHMEN)
+        self._rahmen_malen(p, r)
         g = GRIFF_GROESSE / self.zoom
         punkte = self._griffe(r)
         if sel[0] == "inline":
-            punkte = {n: p for n, p in punkte.items() if n in ECKEN}
+            punkte = {n: pt for n, pt in punkte.items() if n in ECKEN}
         if sel[0] == "frei":
             mx = r.x + r.width / 2
-            b.draw_line(Point(mx, r.y), Point(mx, r.y - ROT_ABSTAND / self.zoom), OBJEKT_RAHMEN)
-            kreis = Rect(mx - g / 2 - 1 / self.zoom, r.y - ROT_ABSTAND / self.zoom - g / 2, g + 2 / self.zoom, g + 2 / self.zoom)
-            b.draw_rect(kreis, WEISS)
-            b.draw_rect(kreis, OBJEKT_RAHMEN)
+            p.save()
+            p.setPen(QPen(QColor(*OBJEKT_RAHMEN[0]), OBJEKT_RAHMEN[1]))
+            p.drawLine(QPointF(mx, r.y), QPointF(mx, r.y - ROT_ABSTAND / self.zoom))
+            p.restore()
+            kreis = Rechteck(mx - g / 2 - 1 / self.zoom, r.y - ROT_ABSTAND / self.zoom - g / 2, g + 2 / self.zoom, g + 2 / self.zoom)
+            self._flaeche_malen(p, kreis)
+            self._rahmen_malen(p, kreis)
         for gx, gy in punkte.values():
-            quadrat = Rect(gx - g / 2, gy - g / 2, g, g)
-            b.draw_rect(quadrat, WEISS)
-            b.draw_rect(quadrat, OBJEKT_RAHMEN)
+            quadrat = Rechteck(gx - g / 2, gy - g / 2, g, g)
+            self._flaeche_malen(p, quadrat)
+            self._rahmen_malen(p, quadrat)
 
     def knoepfe_zeichnen(self, p: QPainter) -> None:
         """Die Schaltflächen neben dem gewählten Objekt (in den Koordinaten der Ansicht)."""
@@ -293,7 +313,7 @@ class ObjektBedienung:
                     y1 = y2 - hoehe
                 else:
                     y2 = y1 + hoehe
-        zug["rect"] = Rect(x1, y1, x2 - x1, y2 - y1)
+        zug["rect"] = Rechteck(x1, y1, x2 - x1, y2 - y1)
         self.update()
         return True
 

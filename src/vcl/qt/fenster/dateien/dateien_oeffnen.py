@@ -7,10 +7,9 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QMessageBox
 
 from writer import vorlagenkatalog as stile
-from core.dokument.abschnitte.seite import PageSettings
-from core.dokument.bericht import DocumentIOError, IOReport, PasswortNoetig
+from writer.werte import Dateifehler, KennwortNoetig
 from writer.anbindung import dateiformate as formats
-from framework.dokumentverwaltung.dateizugriff import sicher_schreiben
+from writer.anbindung import dateizugriff as sicher_schreiben
 from writer.hauptfenster import dokumente
 from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.dokumentansicht.dokumentfenster.dokument_bereich import DocumentTab
@@ -52,14 +51,14 @@ class DateienOeffnenBaustein:
             try:
                 geoeffnet = dokumente.oeffnen_datei(path, kennwort)
                 break
-            except PasswortNoetig as e:
+            except KennwortNoetig as e:
                 kennwort, ok = EingabeFenster.getText(
                     self, "Kennwort", ("Falsches Kennwort. " if e.falsch else "") +
                     f"„{os.path.basename(path)}“ ist geschützt.\nKennwort:", kennwort=True)
                 if not ok:
                     return False
                 continue
-            except DocumentIOError as e:
+            except Dateifehler as e:
                 geoeffnet, fehler = None, e
                 break
         if geoeffnet is None:
@@ -77,7 +76,7 @@ class DateienOeffnenBaustein:
         return True
 
 
-    def _show_report(self, rep: IOReport, title: str, when: str):
+    def _show_report(self, rep, title: str, when: str):
         if rep:
             self._zeige_hinweise(tuple(rep.warnings), title, when)
 

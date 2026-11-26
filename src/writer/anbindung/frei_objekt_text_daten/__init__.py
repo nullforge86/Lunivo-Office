@@ -7,8 +7,10 @@ from __future__ import annotations
 _NAMEN: dict[str, tuple[str, str]] = {
     "arten": ("anbindung", "arten"),
     "form_standard": ("anbindung", "form_standard"),
+    "gedreht": ("anbindung", "gedreht"),
     "laeufe_ab": ("anbindung", "laeufe_ab"),
     "laeufe_zusammen": ("anbindung", "laeufe_zusammen"),
+    "ss": ("anbindung", "ss"),
     "standard_mass": ("anbindung", "standard_mass"),
     "text_arten": ("anbindung", "text_arten"),
     "textfeld_fuell": ("anbindung", "textfeld_fuell"),

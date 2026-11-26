@@ -4,7 +4,8 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QTransform
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import DURCHSICHTIG
-from core.objekte.wordart.textfx_daten import _BAHNEN, _tiefe_faktor
+from writer.anbindung.textfx_daten import bahnen
+from writer.anbindung.textfx_daten import tiefe_faktor
 from vcl.qt.rendering.wordart.effekt_umwandlung import zu_daten, zu_dict
 from writer.funktionen.objekte import wordart as _wa
 from writer.funktionen.objekte.wordart import wordart_px
@@ -162,8 +163,8 @@ def _kontur_pfade(pfad: QPainterPath, breite: float, form: str, art: str = "einf
         if punkte:
             return [strich(breite, True, _versetzt(pfad, o * breite)) for o in (-1.0, 1.0)]
         return [strich(3 * breite).subtracted(strich(breite))]
-    if form in _BAHNEN:
-        return [strich(d * breite, punkte, _versetzt(pfad, o * breite)) for o, d in _BAHNEN[form]]
+    if form in bahnen():
+        return [strich(d * breite, punkte, _versetzt(pfad, o * breite)) for o, d in bahnen()[form]]
     return [strich(breite)]
 
 
@@ -206,7 +207,7 @@ def _fx_3d(p: QPainter, pfad: QPainterPath, aussen: QPainterPath, d3: dict) -> N
     p.save(); p.setClipPath(aussen); p.setPen(Qt.NoPen)
     for k in range(n, 0, -1):
         t = k / n
-        c = _tiefe_farbe(basis, _tiefe_faktor(mat, licht, t), licht)
+        c = _tiefe_farbe(basis, tiefe_faktor(mat, licht, t), licht)
         p.fillPath(QTransform().translate(richt.x() * tiefe * t, richt.y() * tiefe * t).map(pfad), c)
     if d3.get("kontur", 0) > 0:
         pen = QPen(QColor(d3.get("kontur_farbe", Farbe.GRAU_DUNKEL)), d3["kontur"] * wordart_px())
@@ -312,23 +313,13 @@ def _fx_ueber(p: QPainter, pfad: QPainterPath, fx: dict, rect: QRectF, kontur: t
 
 def vorschau_zeichnen(p: QPainter, rect: QRectF, text: str, font, fx: dict, farbe: QColor, kontur: tuple[QColor, float, str] | None = None) -> None:
     """Text mit Effekt zentriert in ein Rechteck zeichnen (Kacheln und Vorschau der Fenster); der Text selbst wird hier mitgezeichnet."""
-    from vcl.qt.rendering.formen import kern_malen
-    from core.geometrie import Point
-    from core.layout.drucklayout.ausgabe.text.texteffekte import zeichne_text_mit_effekt
-    from core.textsatz import FontSpec
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    engine = standard_engine()
+    from vcl.qt.rendering.formen import raster_malen
+    from writer.anbindung import zeichnen as ZW
     pt = (font.pixelSize() * 72.0 / 96.0) if font.pixelSize() > 0 else font.pointSizeF()      # die Schrift wird als Beschreibung gelesen, gemessen und gezeichnet wird vom Kern
-    fs = FontSpec(font.family(), pt, 700 if font.bold() else 400, font.italic())
-    m = engine.font_metrics(fs)
-    x = rect.center().x() - engine.measure_text(text, fs) / 2
-    y = rect.center().y() + (m.ascent - m.descent) / 2
-    face = (farbe.red(), farbe.green(), farbe.blue(), farbe.alpha()) if farbe.alpha() else (0, 0, 0, 255)
+    schrift = (font.family(), pt, 700 if font.bold() else 400, font.italic())
+    mitte = (rect.center().x(), rect.center().y())
     k = None
     if kontur is not None:
         c, breite = kontur[0], float(kontur[1])
         k = ((c.red(), c.green(), c.blue(), c.alpha()), breite)
-
-    def zeichnen(z) -> None:
-        zeichne_text_mit_effekt(z, engine, text, Point(x, y), fs, (farbe.red(), farbe.green(), farbe.blue(), farbe.alpha()), fx, k)
-    kern_malen(p, rect, zeichnen, rand=24.0)
+    raster_malen(p, rect, lambda f: ZW.text_mit_effekt(f, text, mitte, schrift, (farbe.red(), farbe.green(), farbe.blue(), farbe.alpha()), fx, k), rand=24.0)

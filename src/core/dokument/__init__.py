@@ -24,7 +24,8 @@ _SPAET: dict[str, tuple[str, str]] = {"GEHE_ZU_EINGABE": ("gehe_zu", "EINGABE"),
                                       "angabe_von": ("objekt_angabe", "angabe_von"), "felder_aus_angabe": ("objekt_angabe", "felder_aus_angabe"),
                                       "KI_AUTOR": ("zusatz", "KI_AUTOR"), "kommentar_farbe": ("zusatz", "kommentar_farbe"), "roemisch": ("zusatz", "roemisch"),
                                       "vorlagen_muster": ("vorlagen", "muster"), "vorlagen_rubriken": ("vorlagen", "rubriken"),
-                                      "ohne_schalter": ("felder_text_kern", "_ohne_schalter")}
+                                      "ohne_schalter": ("felder_text_kern", "_ohne_schalter"),
+                                      "DocumentIOError": ("bericht", "DocumentIOError"), "PasswortNoetig": ("bericht", "PasswortNoetig"), "geruest_schreiben": ("vorlagen", "geruest_schreiben"), "gehe_zu_stellen": ("gehe_zu", "_stellen"), "gehe_zu_tabellen": ("gehe_zu", "_tabellen"), "bloecke_aus_daten": ("serialisierung", "bloecke_aus_daten"), "bloecke_zu_daten": ("serialisierung", "bloecke_zu_daten")}
 
 
 def __getattr__(name: str):
@@ -39,6 +40,10 @@ def __getattr__(name: str):
         from . import vorlagen as _datei
     elif datei == "felder_text_kern":
         from . import felder_text_kern as _datei
+    elif datei == "bericht":
+        from . import bericht as _datei
+    elif datei == "serialisierung":
+        from . import serialisierung as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
     wert = getattr(_datei, original)

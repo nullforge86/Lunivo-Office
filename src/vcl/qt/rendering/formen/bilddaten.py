@@ -24,7 +24,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF, QSizeF, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
-from core.objekte.bilder.modell.bildformat import BildFehler
+from writer.werte import Bildfehler as BildFehler
 from writer.anbindung.bildformat import formate
 from writer.anbindung.bildformat import format_erkennen  # noqa: F401  (Qt-freie Erkennung im Kern)
 from writer.anbindung.bildformat import max_entpackt_bytes
@@ -210,7 +210,7 @@ def anzeigegroesse(img: QImage) -> tuple[float, float]:
     """Startgröße auf dem Blatt in px: bei SVG das Maß aus ``width``/``height`` bzw. ``viewBox``, sonst die Bildgröße."""
     q = quelle_zu(img)
     if q is not None and q.format == "svg":
-        from core.layout.drucklayout.ausgabe.bild.svg import svg_masse
+        from writer.anbindung.bildformat import svg_masse
         m = svg_masse(q.daten)                                  # die Größe liest der Kern
         if m is not None:
             return m

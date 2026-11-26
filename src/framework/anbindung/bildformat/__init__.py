@@ -9,6 +9,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "format_erkennen": ("anbindung", "format_erkennen"),
     "formate": ("anbindung", "formate"),
     "max_entpackt_bytes": ("anbindung", "max_entpackt_bytes"),
+    "svg_masse": ("anbindung", "svg_masse"),
 }
 
 __all__ = sorted(_NAMEN)

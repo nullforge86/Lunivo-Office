@@ -1,4 +1,4 @@
-"""Anzeige fertig gerenderter Dokumentseiten: Der Kern rendert (``core.layout.drucklayout.ausgabe.rasterziel``, ohne Qt), die Oberfläche legt das Bild nur auf ihren Zeichner."""
+"""Anzeige fertig gerenderter Bilder des Kerns: Der Kern rendert (ohne Qt, erreichbar über ``writer.anbindung.zeichnen``), die Oberfläche legt das Rasterbild nur auf ihren Zeichner."""
 from __future__ import annotations
 
 import math
@@ -6,9 +6,6 @@ import math
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtGui import QImage, QPainter
 
-from writer.werte import mm_zu_px as mm_to_px
-from core.layout.drucklayout.ausgabe import DokumentRenderer
-from core.layout.drucklayout.ausgabe.rasterziel import RasterZiel
 
 
 def _ausgerichtet(p: QPainter, x: float, y: float, b: float, h: float, hoechst: float) -> tuple:
@@ -26,45 +23,19 @@ def _ausgerichtet(p: QPainter, x: float, y: float, b: float, h: float, hoechst: 
     return faktor, o.x(), o.y(), math.ceil(b * faktor) / faktor, math.ceil(h * faktor) / faktor
 
 
-def seite_malen(p: QPainter, engine, dok, erg, index: int = 0, grund=None, hoechst: float = 4.0) -> None:
-    """Die Seite ``index`` mit dem Ursprung links oben auf ``p`` legen (Maße in Bildpunkten bei 96 dpi); die Auflösung folgt dem Maßstab des Zeichners."""
-    einr = erg.seiten[index].einrichtung
-    b, h = (mm_to_px(einr.width_mm), mm_to_px(einr.height_mm)) if einr is not None else (mm_to_px(210), mm_to_px(297))
-    faktor, x, y, bb, hh = _ausgerichtet(p, 0.0, 0.0, b, h, hoechst)
-    ziel = RasterZiel(engine, b, h, faktor, (255, 255, 255, 0))
-    DokumentRenderer(engine).zeichne_seite(ziel, dok, erg, index, grund)
-    breite, hoehe, roh = ziel.als_rgba()
+def seite_malen(p: QPainter, breite_px: float, hoehe_px: float, erzeuge, hoechst: float = 4.0) -> None:
+    """Ein vom Kern gesetztes Blatt der Größe ``breite_px`` × ``hoehe_px`` (Bildpunkte bei 96 dpi) mit dem Ursprung links oben auf ``p`` legen; die Auflösung
+    folgt dem Maßstab des Zeichners. ``erzeuge(faktor)`` → ``(breite, hoehe, rgba)`` liefert das Rasterbild in dieser Auflösung (über ``writer.anbindung.zeichnen``)."""
+    faktor, x, y, bb, hh = _ausgerichtet(p, 0.0, 0.0, breite_px, hoehe_px, hoechst)
+    breite, hoehe, roh = erzeuge(faktor)
     p.drawImage(QRectF(x, y, breite / faktor, hoehe / faktor), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))
-
-
-def _engine():
-    from framework.dokumentverwaltung.ausgabe.textsatz import standard_engine
-    return standard_engine()
-
-
-def kern_malen(p: QPainter, bereich: QRectF, zeichne, rand: float = 8.0, hoechst: float = 4.0, ueber: float = 1.0) -> None:
-    """Was ``zeichne(ziel)`` auf eine Zeichenfläche des Kerns zeichnet, als fertiges Rasterbild auf ``p`` legen. Koordinaten wie auf dem Zeichner: ``bereich`` ist die
-    Fläche (in Koordinaten des Zeichners), die das Bild belegt, ``rand`` Platz ringsum (Schatten, Konturen, Drehung); die Auflösung folgt dem Maßstab des Zeichners.
-    ``ueber`` > 1: der Kern rechnet so viel feiner (Überabtastung) und Qt verkleinert glatt auf das Pixelraster — scharfe, glatte Kanten bei kleinen Rundungen und Schrift."""
-    b, h = max(1.0, bereich.width() + 2 * rand), max(1.0, bereich.height() + 2 * rand)
-    basis, x, y, bb, hh = _ausgerichtet(p, bereich.x() - rand, bereich.y() - rand, b, h, hoechst)
-    faktor = basis * ueber
-    from core.geometrie import Point
-    ziel = RasterZiel(_engine(), bb, hh, faktor, (255, 255, 255, 0))
-    ziel.push_state(translate=Point(-x, -y))                                       # die Fläche beginnt am ausgerichteten Ursprung; der Inhalt behält seine Koordinaten
-    zeichne(ziel)
-    breite, hoehe, roh = ziel.als_rgba()
-    if ueber != 1.0:
-        p.save()
-        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-    p.drawImage(QRectF(x, y, breite / faktor, hoehe / faktor), QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888))
-    if ueber != 1.0:
-        p.restore()
 
 
 def raster_malen(p: QPainter, bereich: QRectF, erzeuge, rand: float = 8.0, hoechst: float = 4.0, ueber: float = 1.0) -> None:
-    """Wie ``kern_malen``, aber der Kern zeichnet über ``writer.anbindung.zeichnen``: ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``; ``flaeche`` ist
-    ``(Breite, Höhe, Faktor, x, y, Papierfarbe)`` in Koordinaten des Zeichners. Qt legt das fertige Bild passgenau auf."""
+    """Was der Kern über ``writer.anbindung.zeichnen`` zeichnet, als fertiges Rasterbild auf ``p`` legen: ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``; ``flaeche``
+    ist ``(Breite, Höhe, Faktor, x, y, Papierfarbe)`` in Koordinaten des Zeichners. ``bereich`` ist die Fläche (in Koordinaten des Zeichners), die das Bild belegt,
+    ``rand`` Platz ringsum (Schatten, Konturen, Drehung); die Auflösung folgt dem Maßstab des Zeichners. ``ueber`` > 1: der Kern rechnet so viel feiner
+    (Überabtastung) und Qt verkleinert glatt auf das Pixelraster — scharfe, glatte Kanten bei kleinen Rundungen und Schrift."""
     b, h = max(1.0, bereich.width() + 2 * rand), max(1.0, bereich.height() + 2 * rand)
     basis, x, y, bb, hh = _ausgerichtet(p, bereich.x() - rand, bereich.y() - rand, b, h, hoechst)
     faktor = basis * ueber
@@ -78,14 +49,7 @@ def raster_malen(p: QPainter, bereich: QRectF, erzeuge, rand: float = 8.0, hoech
 
 
 def raster_bild(breite_px: float, hoehe_px: float, erzeuge, grund: tuple = (255, 255, 255, 0), faktor: float = 1.0) -> QImage:
-    """Wie ``kern_bild``, gezeichnet über ``writer.anbindung.zeichnen``: ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``."""
+    """Das Bild, das der Kern über ``writer.anbindung.zeichnen`` zeichnet (Fläche der Größe ``breite_px`` × ``hoehe_px``, Ursprung links oben), als ``QImage``:
+    ``erzeuge(flaeche)`` → ``(breite, hoehe, rgba)``; ``grund``: Papierfarbe (Standard durchsichtig)."""
     breite, hoehe, roh = erzeuge((breite_px, hoehe_px, faktor, 0.0, 0.0, tuple(grund)))
-    return QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888).copy()
-
-
-def kern_bild(breite_px: float, hoehe_px: float, zeichne, grund: tuple = (255, 255, 255, 0), faktor: float = 1.0) -> QImage:
-    """Das Bild von ``zeichne(ziel)`` (Kern-Zeichenfläche der Größe ``breite_px`` × ``hoehe_px``, Ursprung links oben) als ``QImage``; ``grund``: Papierfarbe (Standard durchsichtig)."""
-    ziel = RasterZiel(_engine(), breite_px, hoehe_px, faktor, grund)
-    zeichne(ziel)
-    breite, hoehe, roh = ziel.als_rgba()
     return QImage(roh, breite, hoehe, breite * 4, QImage.Format_RGBA8888).copy()

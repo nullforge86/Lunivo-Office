@@ -89,6 +89,6 @@ def kombi_vorgabe(untertyp: str, anzahl: int) -> list[tuple[str, bool]]:
     return [("saeule", False)] * max(1, anzahl - 1) + [letzte] * (anzahl > 1)
 
 
-def _art(daten: dict) -> str:
+def art(daten: dict) -> str:
     u = daten.get("art", "saeule_gruppiert")
     return ALT.get(VORLAGEN[u][0] if u in VORLAGEN else u, VORLAGEN[u][0] if u in VORLAGEN else u)

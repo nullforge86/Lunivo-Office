@@ -20,3 +20,8 @@ def hat_abschluss(fx: Mapping | None) -> bool:
 def tiefe_richtung(dreh: Mapping | None) -> tuple[float, float]:
     """Einheitsvektor, in dem die Tiefe nach hinten läuft: schräg nach rechts unten, bei gedrehtem Objekt (3D-Drehung X/Y) entsprechend verschoben."""
     return fest(_k.tiefe_richtung(dreh))
+
+
+def dreht(dreh: Mapping | None) -> bool:
+    """Dreht die 3D-Drehung das Bild tatsächlich (ein Winkel ungleich 0)?"""
+    return _k.dreht(dreh)

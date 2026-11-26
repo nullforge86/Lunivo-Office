@@ -3,7 +3,9 @@ from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QImage
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.rendering.formen import freie_bilder as FB
-from core.objekte.textfelder.modell.frei_objekt_text_daten import _SS
+from writer.anbindung.frei_objekt_text_daten import ss
+
+_SS = ss()                                                           # Zeichnen in doppelter Auflösung (scharf auch bei Zoom)
 from writer.anbindung.frei_objekt_text_daten import arten
 from writer.anbindung.frei_objekt_text_daten import text_arten
 from writer.anbindung.frei_objekt_text_daten import standard_mass
@@ -15,7 +17,10 @@ from writer.anbindung.frei_objekt_text_daten import laeufe_zusammen
 from vcl.qt.rendering.textfelder import wordart_zeichnen, textfeld_zeichnen
 from vcl.qt.rendering.textfelder.frei_objekt_text import laeufe_text, _text_passt
 from writer.anbindung.wordartobjekt import zeichen_schluessel
-from core.objekte.formen.frei_objekt_daten import _form_daten_setzen, _kette_glieder, _textfelder, _verknuepfbar
+from writer.anbindung.formen_daten import form_daten_setzen as _form_daten_setzen
+from writer.anbindung.formen_daten import kette_glieder as _kette_glieder
+from writer.anbindung.formen_daten import verknuepfbar as _verknuepfbar
+from writer.funktionen.objekte import objekt_textfelder
 
 
 def _pfad_festhalten(d: dict, k: dict) -> None:
@@ -321,7 +326,7 @@ def verknuepfen(ed, von_key: tuple, nach_key: tuple) -> bool:
     """Textfeld ``von`` mit Textfeld ``nach`` verknüpfen: was in ``von`` nicht mehr passt, läuft in ``nach`` weiter (wie „Verknüpfung erstellen“).
     Der Text von ``nach`` wird an den von ``von`` gehängt. Nicht möglich: gleiche Felder, ``von`` hat schon einen Nachfolger, ``nach`` einen
     Vorgänger, Kreisverknüpfung. → True bei Erfolg."""
-    felder = dict(_textfelder(ed.sitzung.dokument))
+    felder = dict(objekt_textfelder(ed.kennung))
     paar = _verknuepfbar(felder, von_key, nach_key)
     if paar is None:
         return False
@@ -336,7 +341,7 @@ def verknuepfen(ed, von_key: tuple, nach_key: tuple) -> bool:
 def loesen(ed, key: tuple) -> bool:
     """Die Verknüpfung des Textfelds zu seinem Nachfolger lösen (steht ``key`` am Ende einer Kette, die zu seinem Vorgänger): der Nachfolger
     behält den Text, der in ihm stand; das Feld davor zeigt weiter seinen Text, der Rest wird abgeschnitten. → True, wenn etwas gelöst wurde."""
-    felder = dict(_textfelder(ed.sitzung.dokument))
+    felder = dict(objekt_textfelder(ed.kennung))
     if key not in felder:
         return False
     d = felder[key].get("daten", {})
@@ -365,7 +370,7 @@ def loesen(ed, key: tuple) -> bool:
 
 def _kette_verteilen(ed, kette: list, voll: list, hat_laeufe: bool, gesehen: set) -> None:
     """Den vollen Text auf die Felder der Kette verteilen; nur Felder mit geändertem Anteil neu setzen."""
-    frisch = {kk: aa for kk, aa in _textfelder(ed.sitzung.dokument)}               # aktuelle Angaben (Schlüssel bleiben)
+    frisch = {kk: aa for kk, aa in objekt_textfelder(ed.kennung)}               # aktuelle Angaben (Schlüssel bleiben)
     off = 0
     for kk, aa in kette:
         aa = frisch.get(kk, aa); dd = dict(aa.get("daten", {}))
@@ -389,7 +394,7 @@ def _kette_verteilen(ed, kette: list, voll: list, hat_laeufe: bool, gesehen: set
 def kette_aktualisieren(ed) -> None:
     """Jede Kette neu verteilen: der Text des ersten Feldes (mit seinen Zeichenformaten) füllt ein Feld nach dem anderen; geändert werden nur
     Felder, deren Anteil sich ändert."""
-    felder = _textfelder(ed.sitzung.dokument)
+    felder = objekt_textfelder(ed.kennung)
     nach_id = {a.get("daten", {}).get("id"): (k, a) for k, a in felder if a.get("daten", {}).get("id")}
     gesehen: set = set()
     for k, a in felder:
