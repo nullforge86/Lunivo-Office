@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QScrollArea
 
 from writer.anbindung import wiederherstellung as wiederherstellung
@@ -88,6 +88,17 @@ class DocumentTab(QScrollArea):
         """Seitenbreite: die Seite füllt die Breite des Fensters."""
         frei = self.viewport().width() - 24
         self.editor.set_zoom(frei / mm_to_px(self.page.width_mm))
+
+    def zoom_text(self) -> None:
+        """Textbreite: der Satzspiegel (Seite ohne linken und rechten Rand) füllt die Breite des Fensters."""
+        frei = self.viewport().width() - 24
+        text_mm = self.page.width_mm - self.page.margin_left_mm - self.page.margin_right_mm
+        if text_mm <= 0:
+            return
+        self.editor.set_zoom(frei / mm_to_px(text_mm))
+        rand = (self.viewport().width() - frei) / 2
+        links = mm_to_px(self.page.margin_left_mm) * self.editor.zoom - rand
+        QTimer.singleShot(0, lambda: self.horizontalScrollBar().setValue(round(links)))      # erst nach dem Neuaufbau kennt der Rollbalken die neue Breite
 
     def zoom_seite(self) -> None:
         """Eine Seite: die ganze Seite ist sichtbar."""

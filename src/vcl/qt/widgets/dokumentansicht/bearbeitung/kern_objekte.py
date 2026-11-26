@@ -249,6 +249,10 @@ class KernObjekte:
         a.objektKnopf.connect(self._frei_knopf)
         a.freiform_hook = self.freiform_ereignis
         a.objekt_teil_klick = self.teil_klick
+        a.objekt_teil_rahmen = self.frei_teil_rahmen
+        a.objekt_teil_tipp = self.frei_teil_tipp
+        a.objekt_teil_taste = self.frei_knoten_taste
+        a.objekt_wahl_endet = self._frei_teilwahl_aufheben
         a.freiform_taste = self.freiform_taste
         a.nach_zeichnen = self.freiform_zeichnen
 
@@ -322,7 +326,7 @@ class KernObjekte:
         if o is None:
             return
         if o.art == "smartart":
-            if not self.frei_knoten_edit_starten():
+            if not self.frei_knoten_bild_waehlen() and not self.frei_knoten_edit_starten():
                 self.bild_layout_dialog()
             return
         if o.art in ("form", "textfeld", "wordart"):

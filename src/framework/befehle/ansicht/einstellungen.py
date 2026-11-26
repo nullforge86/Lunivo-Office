@@ -9,8 +9,18 @@ VERSTECKT_ZEIGEN = "ui/versteckt_zeigen"
 OBERFLAECHE = "ui/oberflaeche"
 THEMA = "theme"
 WEICH = "ui/weich"
+AUGENSCHUTZ = "ansicht/augenschutz"
 
-VORGABEN = {LINEAL: False, LINEAL_HOCH: False, VERSTECKT_ZEIGEN: False, OBERFLAECHE: "register", THEMA: "system", WEICH: False}
+VORGABEN = {LINEAL: False, LINEAL_HOCH: False, VERSTECKT_ZEIGEN: False, OBERFLAECHE: "register", THEMA: "system", WEICH: False, AUGENSCHUTZ: False}
+
+
+def augenschutz_an(e: Einstellungen) -> bool:
+    """Augenschutzmodus: das Blatt wird in sanftem Grün angezeigt (reine Anzeige, das Dokument bleibt unverändert)."""
+    return e.get_bool(AUGENSCHUTZ, VORGABEN[AUGENSCHUTZ])
+
+
+def augenschutz_umschalten(e: Einstellungen) -> None:
+    e.set(AUGENSCHUTZ, not augenschutz_an(e))
 
 
 def lineal_zeigen(e: Einstellungen) -> bool:

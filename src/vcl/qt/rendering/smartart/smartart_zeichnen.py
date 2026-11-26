@@ -10,7 +10,7 @@ from vcl.qt.rendering.diagramme import diagramm_format as F
 from writer.funktionen.objekte import smartart as SM
 from writer.anbindung import zeichnen as ZW
 
-_ZU: dict = {"stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "hier": "standard"}      # Zeichenlauf der Oberfläche; Knoten, Formate und Schrift hält der Kern
+_ZU: dict = {"stil": 1, "rtl": False, "b": 520, "reg": {}, "ids": [], "hier": "standard", "bilder": [], "bildreg": {}, "punktreg": {}}      # Zeichenlauf der Oberfläche; Knoten, Formate und Schrift hält der Kern
 
 
 def _alle(n: dict):
@@ -100,6 +100,8 @@ def _kasten(p: QPainter, r: QRectF, text: str, c: QColor, rund: float = 8, nr=No
             p.setPen(F.textfarbe(t, p.pen().color().name()))
     _text_zeichnen(p, r.adjusted(6, 3, -6, -3), Qt.AlignCenter | Qt.TextWordWrap, text)
     _merke(nr, r)
+    if "\n" in text:                                                         # Kasten mit Aufzählungspunkten: Überschrift und Punkte gemeinsam schreibbar
+        _merke_punktfeld(nr, r, True)
 
 
 def _kasten_format(p: QPainter, r: QRectF, c: QColor, fm: dict) -> None:
@@ -518,7 +520,7 @@ def _punktliste(daten: dict, pts, b: int) -> QImage:
         c = _bunt(daten, ni)
         _kasten(p, QRectF(8, y, b - 16, 44), kopf, c, 4, nr=ni)
         feld = QRectF(16, y + 48, b - 32, h - 48)
-        _zeilen(p, feld, zeilen, QColor("white")); _merke_mehrere(kinder, feld)
+        _zeilen(p, feld, zeilen, QColor("white")); _merke_mehrere(kinder, feld); _merke_punktfeld(ni, feld, False)
         y += h + 12
     p.end()
     return img
@@ -535,7 +537,7 @@ def _balkenliste(daten: dict, pts, b: int) -> QImage:
         _fuellen(p, c.lighter(185), rahmen); p.drawRect(rahmen)
         _kasten(p, QRectF(8, y, b * 0.5, zh - 6), kopf, c, 3, nr=ni)
         feld = QRectF(b * 0.5 + 10, y + 8, b * 0.5 - 20, zh - 18)
-        _zeilen(p, feld, zeilen, c.lighter(185)); _merke_mehrere(kinder, feld)
+        _zeilen(p, feld, zeilen, c.lighter(185)); _merke_mehrere(kinder, feld); _merke_punktfeld(ni, feld, False)
     p.end()
     return img
 
@@ -551,7 +553,7 @@ def _beschreibungsliste(daten: dict, pts, b: int) -> QImage:
         _fuellen(p, c.lighter(185), rahmen); p.drawRect(rahmen)
         _kasten(p, QRectF(8, y, b * 0.3, zh - 8), kopf, c, 3, nr=ni)
         feld = QRectF(b * 0.36 + 10, y + 4, b * 0.64 - 28, zh - 16)
-        _zeilen(p, feld, zeilen, c.lighter(185)); _merke_mehrere(kinder, feld)
+        _zeilen(p, feld, zeilen, c.lighter(185)); _merke_mehrere(kinder, feld); _merke_punktfeld(ni, feld, False)
     p.end()
     return img
 
@@ -579,6 +581,37 @@ def _spaltenrahmen(daten: dict, pts, b: int) -> QImage:
     return img
 
 
+def _merke_punktfeld(i, r: QRectF, mit_kopf: bool) -> None:
+    """Rechteck des Felds mit den Aufzählungspunkten des Knotens Nummer ``i`` merken (zum Anklicken und Schreiben). ``mit_kopf``: die Überschrift
+    des Knotens steht mit im Feld."""
+    if i is not None and 0 <= i < len(_ZU["ids"]):
+        _ZU["punktreg"][_ZU["ids"][i]] = (_spiegel(r), bool(mit_kopf))
+
+
+def _merke_bildfeld(i, r: QRectF) -> None:
+    """Rechteck des Bildfelds des Knotens Nummer ``i`` für ``bild_rechtecke`` merken (zum Anklicken)."""
+    if i is not None and 0 <= i < len(_ZU["ids"]):
+        _ZU["bildreg"][_ZU["ids"][i]] = _spiegel(r)
+
+
+def _knotenbild_zeichnen(p: QPainter, i, r: QRectF) -> bool:
+    """Das Bild des Knotens Nummer ``i`` füllt sein Bildfeld ``r`` (mittig beschnitten, nie gespiegelt); ``False``, wenn der Knoten keines hat."""
+    bilder = _ZU.get("bilder") or []
+    img = F.bild_dekodieren(bilder[i]) if i is not None and 0 <= i < len(bilder) and bilder[i] else QImage()
+    if img.isNull():
+        return False
+    seite = min(img.width(), img.height() * r.width() / max(1.0, r.height()))            # Ausschnitt im Seitenverhältnis des Feldes
+    hoch = seite * r.height() / max(1.0, r.width())
+    quelle = QRectF((img.width() - seite) / 2, (img.height() - hoch) / 2, seite, hoch)
+    p.save()
+    if _ZU["rtl"]:
+        p.resetTransform()
+    p.setRenderHint(QPainter.SmoothPixmapTransform)
+    p.drawImage(_spiegel(r), img, quelle)
+    p.restore()
+    return True
+
+
 def _bildliste(daten: dict, pts, b: int) -> QImage:
     es = _eintraege(pts)
     zh = 80
@@ -588,14 +621,16 @@ def _bildliste(daten: dict, pts, b: int) -> QImage:
         c = _bunt(daten, i)
         r = QRectF(8, y, b - 16, zh - 8)
         _fuellen(p, c, r); p.drawRect(r)
-        bild = QRectF(16, y + 8, zh - 24, zh - 24)                           # Platzhalter für das Bild: Rahmen mit Sonne und Hügel
+        bild = QRectF(16, y + 8, zh - 24, zh - 24)                           # Bildfeld: das Bild des Knotens, sonst der Platzhalter (Rahmen mit Sonne und Hügel)
         p.setPen(QPen(c.darker(150), 1)); p.setBrush(QColor("white")); p.drawRect(bild)
-        p.setPen(Qt.NoPen); p.setBrush(c.lighter(150))
-        p.drawEllipse(QPointF(bild.left() + bild.width() * 0.7, bild.top() + bild.height() * 0.3), bild.width() * 0.1, bild.width() * 0.1)
-        p.drawPolygon(QPolygonF([QPointF(bild.left() + 3, bild.bottom() - 3), QPointF(bild.left() + bild.width() * 0.4, bild.top() + bild.height() * 0.45),
-                                 QPointF(bild.right() - 3, bild.bottom() - 3)]))
+        _merke_bildfeld(ni, bild)
+        if not _knotenbild_zeichnen(p, ni, bild):
+            p.setPen(Qt.NoPen); p.setBrush(c.lighter(150))
+            p.drawEllipse(QPointF(bild.left() + bild.width() * 0.7, bild.top() + bild.height() * 0.3), bild.width() * 0.1, bild.width() * 0.1)
+            p.drawPolygon(QPolygonF([QPointF(bild.left() + 3, bild.bottom() - 3), QPointF(bild.left() + bild.width() * 0.4, bild.top() + bild.height() * 0.45),
+                                     QPointF(bild.right() - 3, bild.bottom() - 3)]))
         feld = QRectF(bild.right() + 12, y + 4, r.right() - bild.right() - 20, zh - 16)
-        _zeilen(p, feld, zeilen, c, kopf); _merke(ni, r); _merke_mehrere(kinder, r)
+        _zeilen(p, feld, zeilen, c, kopf); _merke(ni, r); _merke_mehrere(kinder, r); _merke_punktfeld(ni, feld, True)
     p.end()
     return img
 
@@ -613,7 +648,7 @@ def _perspektive(daten: dict, pts, b: int) -> QImage:
         _fuellen(p, c, QRectF(x, 8, w, h - 16)); p.drawPolygon(poly)
         feld = QRectF(x + 6, 52, w - 12, h - 104)
         _zeilen(p, feld, zeilen, c, kopf)
-        _merke(ni, QRectF(x, 8, w, h - 16)); _merke_mehrere(kinder, QRectF(x, 8, w, h - 16))
+        _merke(ni, QRectF(x, 8, w, h - 16)); _merke_mehrere(kinder, QRectF(x, 8, w, h - 16)); _merke_punktfeld(ni, feld, True)
     p.end()
     return img
 

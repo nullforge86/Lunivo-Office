@@ -28,6 +28,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "stift": ("diagramm_format", "stift"),
     "teil_bei": ("diagramm_teile", "teil_bei"),
     "teil_geo": ("diagramm", "teil_geo"),
+    "teil_geo_gemerkt": ("diagramm_teile", "geo_gemerkt"),
     "teil_gewaehlt": ("diagramm_teile", "teil_gewaehlt"),
     "teil_name": ("diagramm_teile", "teil_name"),
     "teil_rechtecke": ("diagramm", "teil_rechtecke"),

@@ -114,6 +114,11 @@ def objektmenue_bauen(editor, fenster) -> MenueListe:
     punkt("Kopieren", "kopieren", "Ctrl+C", "kopie", editor.inline_gewaehlt() is not None)
     punkt("Einfügen", "einfuegen", "Ctrl+V", "kleben", editor.canPaste() and not lesen)
     m.trenner()
+    formatieren = "Objekt formatieren …"
+    if art == "smartart":                                       # Arbeitsmodus des Objekts: die Befehle seines Kontextreiters zuerst
+        formatieren = _smartartmenue(m, punkt, b, editor, lesen)
+    elif art == "diagramm":
+        formatieren = _diagrammmenue(m, punkt, editor, lesen)
     punkt("Layoutoptionen …", None, "", "-", not lesen, aktion=editor.bild_layout_dialog)
     ebene = m.untermenue("Anordnen", None, not lesen)
     ebene.eintrag("In den Vordergrund", lambda: editor.objekt_ebene("vorn"))
@@ -131,7 +136,39 @@ def objektmenue_bauen(editor, fenster) -> MenueListe:
         punkt("Bild ändern …", "bildAendern", "", "", not lesen)
     punkt("Größe und Position …", None, "", "-", not lesen, aktion=editor.bild_layout_dialog)
     punkt("Alternativtext …", "bildAltText", "", "", not lesen)
-    punkt("Objekt formatieren …", None, "", "-", True, aktion=editor._frei_formatierung)
+    punkt(formatieren, None, "", "-", True, aktion=editor._frei_formatierung)
     m.trenner()
     punkt("Löschen", None, "Del", "", not lesen, aktion=editor.objekt_loeschen)
     return m
+
+
+def _smartartmenue(m: MenueListe, punkt, b, editor, lesen: bool) -> str:
+    """Arbeitsmodus SmartArt: Text und Bildfeld des gewählten Knotens, Formen, Ebenen, Aufzählung und Layout — die Befehle und Klappen des Bandes
+    (``smartarttools.py``, ``smartart_menues.py``). → Text der Zeile „Formatieren“."""
+    from vcl.qt.rendering import smartart as SA
+    from vcl.qt.widgets.menues.dropdown import objektmenues as OM
+    knoten = SA.knoten_gewaehlt(editor) is not None
+    punkt("Text bearbeiten", None, "", "-", knoten and not lesen, aktion=editor.frei_knoten_edit_starten)
+    if editor.frei_bildfeld_gewaehlt():
+        punkt("Bild einfügen …", None, "", "-", not lesen, aktion=editor.frei_knoten_bild_waehlen)
+        punkt("Bild entfernen", None, "", "-", not lesen and editor.frei_knoten_hat_bild(), aktion=editor.frei_knoten_bild_entfernen)
+    m.trenner()
+    m.untermenue_einhaengen(OM.smartart_form_menue(b), "Form einfügen").setEnabled(not lesen)
+    m.untermenue_einhaengen(OM.smartart_level_menue(b), "Ebene und Reihenfolge").setEnabled(not lesen)
+    punkt("Aufzählungszeichen einfügen", "smartartAufzaehlung", "", "", not lesen and bool(b.kann_smartartAufzaehlung()))
+    m.untermenue_einhaengen(OM.smartart_layout_menue(b), "Layout ändern").setEnabled(not lesen)
+    m.untermenue_einhaengen(OM.smartart_hierarchie_menue(b, True), "Hierarchie und Richtung").setEnabled(not lesen)
+    m.trenner()
+    return "Form formatieren …" if knoten else "SmartArt formatieren …"
+
+
+def _diagrammmenue(m: MenueListe, punkt, editor, lesen: bool) -> str:
+    """Arbeitsmodus Diagramm: Zurücksetzen, Diagrammtyp und Daten — die Befehle des Bandes (``diagrammtools.py``). → Text der Zeile „Formatieren“
+    mit dem Namen des gewählten Teils."""
+    from vcl.qt.rendering import diagramme as T
+    punkt("Formatvorlage zurücksetzen", "diagrammZuruecksetzen", "", "", not lesen)
+    m.trenner()
+    punkt("Diagrammtyp ändern …", "diagrammTypAendern", "", "", not lesen)
+    punkt("Daten bearbeiten …", "diagrammDatenBearbeiten", "", "", not lesen)
+    m.trenner()
+    return (T.teil_name(editor) or "Diagrammbereich") + " formatieren …"

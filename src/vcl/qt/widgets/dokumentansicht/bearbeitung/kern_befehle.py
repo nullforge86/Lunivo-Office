@@ -404,7 +404,7 @@ class KernBefehle:
             m = menue_bauen(self, self.fenster)
             if callable(self.kontext_hook):
                 self.kontext_hook(m, self.textCursor().position())
-        if callable(self.mini_hook) and not self.isReadOnly():
+        if callable(self.mini_hook) and not self.isReadOnly() and self.objekt_art() not in ("diagramm", "smartart"):     # dort gilt das Objektmenü, nicht die Textleiste
             self.mini_hook(self, pos, True, m.sizeHint())
         m.exec(pos)
         m.deleteLater()

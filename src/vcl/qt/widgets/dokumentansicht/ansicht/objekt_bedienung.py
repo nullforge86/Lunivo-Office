@@ -62,6 +62,10 @@ class ObjektBedienung:
         self.freiform_taste = None
         self.nach_zeichnen = None                  # Rückruf(Maler): zusätzliche Zeichnung über dem Blatt (Punkte der Freiform)
         self.objekt_teil_klick = None              # Rückruf(Punkt): Klick in das gewählte Diagramm oder SmartArt
+        self.objekt_teil_rahmen = None             # Rückruf(Rechteck des Objekts in der Ansicht) → (Drehwinkel, Mitte, [(Rechteck, Griffpunkte)]) des gewählten Diagrammteils bzw. SmartArt-Knotens
+        self.objekt_teil_tipp = None               # Rückruf(Ereignis): Maus über dem gewählten Objekt (Tooltip des Diagrammteils)
+        self.objekt_teil_taste = None              # Rückruf(Ereignis) → True: die Taste schreibt im gewählten SmartArt-Knoten
+        self.objekt_wahl_endet = None              # Rückruf(): das gewählte Objekt wird gleich abgewählt (Teil bzw. Knoten abwählen)
         self.zuschnitt_aktiv = lambda: False       # Zuschneiden-Modus an?
         self.zuschnitt_geaendert = None            # Rückruf(Id, Seite, Rechteck, Anteile) nach dem Ziehen eines Zuschneidegriffs
         self.zuschnitt_lesen = lambda i: (0.0, 0.0, 0.0, 0.0)
@@ -191,6 +195,36 @@ class ObjektBedienung:
             self._flaeche_malen(p, quadrat)
             self._rahmen_malen(p, quadrat)
 
+    def teil_rahmen_zeichnen(self, p: QPainter) -> None:
+        """Rahmen und Griffe um den gewählten Diagrammteil bzw. SmartArt-Knoten (in den Koordinaten der Ansicht, mit der Drehung des Objekts)."""
+        sel = self._auswahl_objekt()
+        if sel is None or sel[0] != "frei" or self.objekt_teil_rahmen is None or self._objekt_zug is not None:
+            return
+        r = sel[3]
+        links, oben = self._ansicht_punkt(sel[2], r.x, r.y)
+        winkel, mitte, teile = self.objekt_teil_rahmen(QRectF(links, oben, r.width * self.zoom, r.height * self.zoom))
+        if not teile:
+            return
+        p.save()
+        p.setRenderHint(QPainter.Antialiasing)
+        if winkel:
+            p.translate(mitte)
+            p.rotate(winkel)
+            p.translate(-mitte)
+        g = GRIFF_GROESSE / 2                                               # kleiner als die Griffe des Objekts: kleine Teile (Titel) bleiben lesbar
+        for r, punkte in teile:
+            self._rahmen_malen(p, Rechteck(r.x(), r.y(), r.width(), r.height()))
+            for c in punkte:
+                quadrat = Rechteck(c.x() - g / 2, c.y() - g / 2, g, g)
+                self._flaeche_malen(p, quadrat)
+                self._rahmen_malen(p, quadrat)
+        p.restore()
+
+    def objekt_abwahl_melden(self) -> None:
+        """Vor dem Abwählen des gewählten freien Objekts: der Editor wählt dessen Diagrammteil bzw. SmartArt-Knoten ab."""
+        if self.gewaehltes_objekt is not None and self.objekt_wahl_endet is not None and not self.nur_lesen:
+            self.objekt_wahl_endet()
+
     def knoepfe_zeichnen(self, p: QPainter) -> None:
         """Die Schaltflächen neben dem gewählten Objekt (in den Koordinaten der Ansicht)."""
         sel = self._auswahl_objekt()
@@ -228,6 +262,7 @@ class ObjektBedienung:
             if objekt == self.gewaehltes_objekt and self.objekt_teil_klick is not None:
                 self.objekt_teil_klick(pos)
             if objekt != self.gewaehltes_objekt:
+                self.objekt_abwahl_melden()
                 self.gewaehltes_objekt = objekt
                 self.freiAuswahlGeaendert.emit()
             seite, r = self.sitzung_objekt_rechteck(objekt)
@@ -240,6 +275,7 @@ class ObjektBedienung:
             i = self.inline_bei(ziel, self._seiten_punkt(pos))
             if i is not None:
                 if self.gewaehltes_objekt is not None:
+                    self.objekt_abwahl_melden()
                     self.gewaehltes_objekt = None
                     self.freiAuswahlGeaendert.emit()
                 self.inline_waehlen(i)
@@ -265,6 +301,8 @@ class ObjektBedienung:
                     self.setCursor(Qt.PointingHandCursor)
                     return True
                 if sel[0] == "frei" and self.objekt_bei(pos) == sel[1]:
+                    if self.objekt_teil_tipp is not None:
+                        self.objekt_teil_tipp(ev)
                     self.setCursor(Qt.SizeAllCursor)
                     return True
             self.setCursor(Qt.IBeamCursor)

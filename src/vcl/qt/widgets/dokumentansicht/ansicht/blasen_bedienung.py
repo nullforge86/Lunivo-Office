@@ -27,6 +27,10 @@ class BlasenBedienung:
     def blasen_aktiv(self) -> bool:
         return bool(self.blasen_konfig) and SW.aktiv(self.blasen_konfig)
 
+    def blasen_vorhanden(self) -> bool:
+        """Sind Sprechblasen eingeschaltet und gibt es im Dokument mindestens eine? Nur dann braucht die Ansicht Platz neben dem Blatt."""
+        return self.blasen_aktiv() and bool(SW.sammeln(self.kennung, self.blasen_konfig.verwenden))
+
     def _blasen_schrift(self):
         return SW.blasen_schrift(max(7, int(SW.blasen_px(self.blasen_schrift) * self.zoom)))
 

@@ -12,6 +12,7 @@ class LayoutAktionen:
                 self.gliederung()
             t.set_layout(art)
             self.w.band.aktualisieren(True)
+            self.w.ansicht_anzeigen()
 
     def w_layoutJetzt(self, k=None):
         t = self.w.current_tab()
@@ -24,10 +25,19 @@ class LayoutAktionen:
         if t.layout_art != "blatt":
             t.set_layout("blatt")
         self._ansicht().gliederung_umschalten()
+        self.w.ansicht_anzeigen()
 
     def an_gliederung(self):
         fw = self._ansicht()
         return bool(fw is not None and fw.gliederung_an())
+
+    def augenschutz(self, k=None):
+        """Augenschutzmodus umschalten: das Blatt aller offenen Dokumente in sanftem Grün (nur Anzeige)."""
+        ansicht_einstellungen.augenschutz_umschalten(self.w.settings)
+        self.w.lesehilfe_anwenden()
+        self.w.ansicht_anzeigen()
+
+    def an_augenschutz(self): return ansicht_einstellungen.augenschutz_an(self.w.settings)
 
     def linealZeigen(self, k=None):
         ansicht_einstellungen.lineal_umschalten(self.w.settings)

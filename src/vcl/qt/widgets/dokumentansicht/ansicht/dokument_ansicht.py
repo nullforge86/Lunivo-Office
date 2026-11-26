@@ -220,7 +220,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
         if self._erg is None or not self._erg.seiten:
             return
         a = self._anordnung()
-        breite = max(x + b for x, _y, b, _h in a) + (self.blasen_breite() + mm_to_px(3.0) if self.blasen_aktiv() else 0.0)
+        breite = max(x + b for x, _y, b, _h in a) + (self.blasen_breite() + mm_to_px(3.0) if self.blasen_vorhanden() else 0.0)
         hoehe = max(y + h for _x, y, _b, h in a)
         self.setMinimumSize(round(breite * self.zoom), round((hoehe + RAND_UNTEN) * self.zoom))
         self.updateGeometry()
@@ -346,6 +346,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
                 cur = QImage(roh, b, h, b * 4, QImage.Format_RGBA8888).copy()
                 cur.setDevicePixelRatio(dpr)
                 p.drawImage(QPointF(ort.x() + x / dpr, ort.y() + y / dpr), cur)
+        self.teil_rahmen_zeichnen(p)                                       # gewählter Diagrammteil bzw. SmartArt-Knoten
         self.knoepfe_zeichnen(p)
         self.tabellen_zeichnen(p)
         self.blasen_zeichnen(p)

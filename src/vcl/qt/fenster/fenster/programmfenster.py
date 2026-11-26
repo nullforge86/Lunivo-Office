@@ -282,9 +282,15 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
         sb.lesemodus_beenden.connect(self.toggle_lesemodus)
         sb.zoom_kleiner.connect(lambda: self.befehle.kleiner())
         sb.zoom_groesser.connect(lambda: self.befehle.groesser())
-        sb.zoom_stufe.connect(lambda: self.befehle.zoomStufe())
         sb.zoom_geaendert.connect(self._regler_bewegt)
+        sb.zoom_breite.connect(lambda: self.befehle.zoomBreite())
+        sb.zoom_text.connect(lambda: self.befehle.zoomText())
+        sb.zoom_seite.connect(lambda: self.befehle.zoomSeite())
+        sb.augenschutz_umschalten.connect(lambda: self.befehle.augenschutz())
+        sb.ansicht_gewaehlt.connect(self._ansicht_gewaehlt)
+        sb.vollbild_umschalten.connect(lambda: self.befehle.vollbild())
         self.thema_anzeigen()
+        self.ansicht_anzeigen()
 
 
     # ---- Backstage (Reiter „Datei“) ------------------------------------------------------------------------------
@@ -324,6 +330,7 @@ class MainWindow(ReiterZustandMixin, FensterVerwaltungMixin, DokumentSyncMixin, 
 
     def toggle_fullscreen(self, on: bool):
         self.showFullScreen() if on else self.showNormal()
+        self.ansicht_anzeigen()
 
 
     def about(self):

@@ -8,7 +8,7 @@ from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from vcl.qt.widgets.bausteine import weitere_farben
 from vcl.qt.widgets.dialoge.dokument_dialoge import PageSetupDialog
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
-from vcl.qt.widgets.bausteine.farben.farben import VORGABE_MARKER
+from vcl.qt.widgets.bausteine.farben.farben import AUGENSCHUTZ_PAPIER, VORGABE_MARKER
 from vcl.qt.fenster.fenster.gemeinsam import _QuickInfo
 
 
@@ -78,7 +78,8 @@ class BearbeitenBaustein:
     def _lesehilfe_auf(self, e):
         from vcl.qt.widgets.dialoge.lesen_hilfe.lesehilfe_dialog import PAPIERTOENE
         s = self.settings
-        e.set_lesehilfe(PAPIERTOENE.get(s.get("lesehilfe/papier", "Weiß"), Farbe.WEISS),
+        papier = AUGENSCHUTZ_PAPIER if self.befehle.an_augenschutz() else PAPIERTOENE.get(s.get("lesehilfe/papier", "Weiß"), Farbe.WEISS)
+        e.set_lesehilfe(papier,
                         float(s.get("lesehilfe/buchstaben", 0)), float(s.get("lesehilfe/wort", 0)))
         e.set_zeilenluft(float(s.get("lesehilfe/zeilenluft", 1.0)))
         e.set_zeilenfokus(s.get_bool("lesehilfe/zeilenfokus", False))
@@ -295,6 +296,7 @@ class BearbeitenBaustein:
             from vcl.qt.widgets.bausteine.symbole.bauteile.lese_ende_knopf import LeseEndeKnopf
             self._lese_ende = LeseEndeKnopf(self, self.toggle_lesemodus)
         self._lese_ende.zeigen(self.lesemodus)
+        self.ansicht_anzeigen()
 
 
     def set_theme(self, wahl: str):

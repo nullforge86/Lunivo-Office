@@ -25,6 +25,11 @@ class ZoomAktionen:
         if t:
             t.zoom_breite()
 
+    def zoomText(self, k=None):
+        t = self.w.current_tab()
+        if t:
+            t.zoom_text()
+
     def zoomSeite(self, k=None):
         t = self.w.current_tab()
         if t:

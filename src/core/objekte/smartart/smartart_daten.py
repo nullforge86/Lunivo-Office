@@ -143,7 +143,8 @@ def knoten_von(daten: dict) -> list[dict]:
     if isinstance(kn, list) and kn:
         out = [{"id": str(k.get("id") or f"k{i + 1}"), "text": str(k.get("text", "")), "ebene": int(k.get("ebene", 0)),
                 "bullets": [str(b) for b in k.get("bullets") or []], **({"assistent": True} if k.get("assistent") else {}),
-                **({"format": copy.deepcopy(k["format"])} if k.get("format") else {})} for i, k in enumerate(kn)]
+                **({"format": copy.deepcopy(k["format"])} if k.get("format") else {}),
+                **({"bild": str(k["bild"])} if k.get("bild") else {})} for i, k in enumerate(kn)]      # Bild im Bildfeld des Knotens (kodierter Text)
         return _glatt(out)
     return knoten_aus_text(daten.get("text", ""))
 

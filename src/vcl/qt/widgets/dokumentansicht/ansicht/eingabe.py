@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 
-from PySide6.QtCore import QMimeData, Qt
+from PySide6.QtCore import QMimeData, QPointF, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QApplication
 
@@ -156,6 +156,8 @@ class EingabeTeil:
             return
         if self.freiform_taste is not None and self.freiform_taste(ev):
             return
+        if self.gewaehltes_objekt is not None and self.objekt_teil_taste is not None and not self.nur_lesen and self.objekt_teil_taste(ev):
+            return
         if taste == Qt.Key_Escape and self.tabellen_modus:
             self.tabellen_modus_setzen(None)
             return
@@ -194,6 +196,7 @@ class EingabeTeil:
             if not self.tabelle_weiter(taste == Qt.Key_Backtab or umschalt):
                 self.einfuegen("\t")
         elif taste == Qt.Key_Escape and self.gewaehltes_objekt is not None:
+            self.objekt_abwahl_melden()
             self.gewaehltes_objekt = None
             self.update()
         elif ev.text() and ev.text().isprintable() and not (strg and not mod & Qt.AltModifier):       # Strg+Alt (AltGr) liefert Zeichen, Strg allein Befehle
@@ -226,6 +229,7 @@ class EingabeTeil:
         if self.blasen_maus_druecken(ev) or self.tabellen_maus_druecken(ev) or self.objekt_maus_druecken(ev):
             return
         if self.gewaehltes_objekt is not None:
+            self.objekt_abwahl_melden()
             self.gewaehltes_objekt = None
             self.freiAuswahlGeaendert.emit()
             self.update()
@@ -269,9 +273,12 @@ class EingabeTeil:
         objekt = self.objekt_bei(ev.pos())
         if objekt is not None:
             if objekt != self.gewaehltes_objekt:
+                self.objekt_abwahl_melden()
                 self.gewaehltes_objekt = objekt
                 self.freiAuswahlGeaendert.emit()
                 self.update()
+            elif self.objekt_teil_klick is not None and not self.nur_lesen:      # Rechtsklick in das gewählte Diagramm/SmartArt wählt den Teil darunter
+                self.objekt_teil_klick(QPointF(ev.pos()))
         else:
             ziel = self.stelle(ev.pos())
             if ziel is not None:

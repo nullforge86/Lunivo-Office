@@ -63,7 +63,8 @@ def zeichnen_mit_knoten(daten: dict) -> tuple[QImage, dict[str, QRectF]]:
     kn = knoten_von(daten)
     pts = [(k["ebene"], _knotentext(k)) for k in kn] or [(0, "…")]
     ZW.smartart_beginnen(kn, [k.get("format") for k in kn], daten.get("format") or {})
-    zeichner._ZU.update(stil=int(daten.get("stil", 1)), rtl=bool(daten.get("rtl")), b=520, reg={}, ids=[k["id"] for k in kn], hier=daten.get("hierarchie", "standard"))
+    zeichner._ZU.update(stil=int(daten.get("stil", 1)), rtl=bool(daten.get("rtl")), b=520, reg={}, ids=[k["id"] for k in kn], hier=daten.get("hierarchie", "standard"),
+                        bilder=[k.get("bild") for k in kn], bildreg={}, punktreg={})
     img = zeichner._ZEICHNER.get(daten.get("layout", "Liste"), zeichner._pyramide)(daten, pts, 520)
     reg, letzt = dict(zeichner._ZU["reg"]), QRectF(0, 0, img.width(), img.height())
     for ident in zeichner._ZU["ids"]:                                                 # jeder Knoten hat ein Rechteck: sonst das des Knotens davor
@@ -83,6 +84,28 @@ def knoten_rechtecke(daten: dict, b: float = 0, h: float = 0) -> dict[str, QRect
         return reg
     sx, sy = b / img.width(), h / img.height()
     return {k: QRectF(r.x() * sx, r.y() * sy, r.width() * sx, r.height() * sy) for k, r in reg.items()}
+
+
+def bild_rechtecke(daten: dict, b: float = 0, h: float = 0) -> dict[str, QRectF]:
+    """id → QRectF des Bildfelds der Knoten (nur Layouts mit Bildfeld, sonst leer), umgerechnet wie ``knoten_rechtecke``."""
+    from vcl.qt.rendering.smartart import smartart_zeichnen as zeichner
+    img, _reg = zeichnen_mit_knoten(daten)
+    felder = dict(zeichner._ZU["bildreg"])
+    if not (b and h):
+        return felder
+    sx, sy = b / img.width(), h / img.height()
+    return {k: QRectF(r.x() * sx, r.y() * sy, r.width() * sx, r.height() * sy) for k, r in felder.items()}
+
+
+def punkt_rechtecke(daten: dict, b: float = 0, h: float = 0) -> dict[str, tuple[QRectF, bool]]:
+    """id → (QRectF des Felds mit den Aufzählungspunkten des Knotens, Überschrift steht mit im Feld), umgerechnet wie ``knoten_rechtecke``."""
+    from vcl.qt.rendering.smartart import smartart_zeichnen as zeichner
+    img, _reg = zeichnen_mit_knoten(daten)
+    felder = dict(zeichner._ZU["punktreg"])
+    if not (b and h):
+        return felder
+    sx, sy = b / img.width(), h / img.height()
+    return {k: (QRectF(r.x() * sx, r.y() * sy, r.width() * sx, r.height() * sy), kopf) for k, (r, kopf) in felder.items()}
 
 
 def _inline_aendern(ed, neu: dict) -> bool:
@@ -135,14 +158,90 @@ def knoten_bei(ed, pos) -> str | None:
     z = FO.frei_objekt_ziel(ed)
     if z is None or z[0] != "smartart":
         return None
-    _art, d, key, a, _bild_ = z
-    r = next((x[3] for x in ed._frei_liste() if x[0] == key), None)
+    _art, d, _oid, a, _bild_ = z
+    r = next((x[3] for x in ed._frei_liste() if x[0] == ed._frei_sel), None)      # Schlüssel der Liste: wie die Auswahl des Editors
     if r is None or r.width() <= 0 or r.height() <= 0:
         return None
     lp = _im_objekt(pos, r, a)
     rechtecke = _knoten_rechtecke_gemerkt(ed, d, float(a["b"]), float(a["h"]))
     treffer = sorted((rr.width() * rr.height(), k) for k, rr in rechtecke.items() if rr.contains(lp))     # der kleinste Knoten unter dem Punkt
     return treffer[0][1] if treffer else None
+
+
+def bildfeld_bei(ed, pos) -> str | None:
+    """Die Id des Knotens, dessen Bildfeld unter ``pos`` liegt (Koordinaten wie ``knoten_bei``), im gewählten SmartArt; sonst None."""
+    from vcl.qt.rendering import formen as FO
+    z = FO.frei_objekt_ziel(ed)
+    if z is None or z[0] != "smartart":
+        return None
+    _art, d, _oid, a, _bild_ = z
+    r = next((x[3] for x in ed._frei_liste() if x[0] == ed._frei_sel), None)
+    if r is None or r.width() <= 0 or r.height() <= 0:
+        return None
+    lp = _im_objekt(pos, r, a)
+    return next((k for k, rr in bild_rechtecke(d, float(a["b"]), float(a["h"])).items() if rr.contains(lp)), None)
+
+
+def punktfeld_bei(ed, pos) -> str | None:
+    """Die Id des Knotens, dessen Feld mit den Aufzählungspunkten unter ``pos`` liegt (Koordinaten wie ``knoten_bei``); sonst None."""
+    from vcl.qt.rendering import formen as FO
+    z = FO.frei_objekt_ziel(ed)
+    if z is None or z[0] != "smartart":
+        return None
+    _art, d, _oid, a, _bild_ = z
+    r = next((x[3] for x in ed._frei_liste() if x[0] == ed._frei_sel), None)
+    if r is None or r.width() <= 0 or r.height() <= 0:
+        return None
+    lp = _im_objekt(pos, r, a)
+    return next((k for k, (rr, _kopf) in punkt_rechtecke(d, float(a["b"]), float(a["h"])).items() if rr.contains(lp)), None)
+
+
+def knoten_zeilen(ed, ident, mit_kopf: bool) -> list[str]:
+    """Die Zeilen des Knotens zum Schreiben im Feld: (mit ``mit_kopf`` zuerst die Überschrift, dann) je Aufzählungspunkt eine Zeile."""
+    d = daten_der_auswahl(ed)
+    kn = knoten_von(d) if d else []
+    i = _index(kn, ident)
+    if i is None:
+        return []
+    return ([kn[i]["text"]] if mit_kopf else []) + list(kn[i]["bullets"])
+
+
+def knoten_zeilen_setzen(ed, ident, zeilen: list[str], mit_kopf: bool) -> bool:
+    """Die im Feld geschriebenen Zeilen in den Knoten übernehmen (Gegenstück zu ``knoten_zeilen``; leere Zeilen fallen weg) und neu zeichnen."""
+    d = daten_der_auswahl(ed)
+    kn = knoten_von(d) if d else []
+    i = _index(kn, ident)
+    if i is None:
+        return False
+    zeilen = [z.strip() for z in zeilen]
+    if mit_kopf:
+        kn[i]["text"] = zeilen[0] if zeilen else ""
+        zeilen = zeilen[1:]
+    kn[i]["bullets"] = [z for z in zeilen if z]
+    return _knoten_schreiben(ed, kn, ident)
+
+
+def knoten_bild(ed, ident) -> str:
+    """Das Bild des Knotens (kodierter Text) oder leer."""
+    d = daten_der_auswahl(ed)
+    kn = knoten_von(d) if d else []
+    i = _index(kn, ident)
+    return kn[i].get("bild", "") if i is not None else ""
+
+
+def knoten_bild_setzen(ed, ident, img: QImage | None) -> bool:
+    """Das Bild im Bildfeld eines Knotens setzen (``None`` oder leeres Bild: entfernen) und neu zeichnen."""
+    from vcl.qt.rendering import diagramme as DF
+    d = daten_der_auswahl(ed)
+    kn = knoten_von(d) if d else []
+    i = _index(kn, ident)
+    if i is None:
+        return False
+    text = DF.bild_kodieren(img) if img is not None and not img.isNull() else ""
+    kn[i].pop("bild", None)
+    if text:
+        kn[i]["bild"] = text
+    return _knoten_schreiben(ed, kn, ident)
 
 
 def knoten_text_setzen(ed, ident, text: str) -> bool:

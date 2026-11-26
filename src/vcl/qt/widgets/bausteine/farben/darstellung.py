@@ -68,6 +68,12 @@ def knoten_eingabe(feld: QWidget) -> QWidget:
     return feld
 
 
+def knoten_zeilen_eingabe(feld: QWidget) -> QWidget:
+    """Mehrzeiliges Eingabefeld über den Aufzählungspunkten eines SmartArt-Knotens: wie ``knoten_eingabe``."""
+    feld.setStyleSheet(f"QPlainTextEdit {{ background: {Farbe.PAPIER}; color: {Farbe.SYMBOL}; border: 1px solid palette(highlight); }}")
+    return feld
+
+
 def objekttext_eingabe(feld: QWidget, grund: str, farbe: str) -> QWidget:
     """Schreibfeld direkt im Objekt (WordArt, Textfeld): Grund und Schrift aus dem Objekt, ohne Rand, Auswahl in der Objekttext-Farbe."""
     feld.setStyleSheet(f"QTextEdit {{ background: {grund}; color: {farbe}; border: none; selection-background-color: {AUSWAHL_OBJEKTTEXT}; }}")

@@ -5,7 +5,13 @@ Die Dateien werden erst beim ersten Zugriff auf einen ihrer Namen geladen. Gibt 
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "ANSICHTSARTEN": ("statusleiste", "ANSICHTSARTEN"),
+    "Ansichtsart": ("statusleiste", "Ansichtsart"),
     "Layoutsicht": ("layout", "Layoutsicht"),
+    "ZOOMWAHLEN": ("statusleiste", "ZOOMWAHLEN"),
+    "ZOOM_PROZENT_MAX": ("statusleiste", "ZOOM_PROZENT_MAX"),
+    "ZOOM_PROZENT_MIN": ("statusleiste", "ZOOM_PROZENT_MIN"),
+    "Zoomwahl": ("statusleiste", "Zoomwahl"),
     "ausgabe_als_pdf": ("ausgabe", "ausgabe_als_pdf"),
     "ausgabe_anzahl": ("ausgabe", "ausgabe_anzahl"),
     "ausgabe_aus_datei": ("ausgabe", "ausgabe_aus_datei"),
@@ -45,6 +51,8 @@ def __getattr__(name: str):
         from . import vorschau as _datei
     elif datei == "seitenbilder":
         from . import seitenbilder as _datei
+    elif datei == "statusleiste":
+        from . import statusleiste as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
     wert = getattr(_datei, original)

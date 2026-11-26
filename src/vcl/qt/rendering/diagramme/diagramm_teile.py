@@ -46,7 +46,7 @@ def teil_waehlen(ed, schluessel: str | None) -> bool:
     return FO.daten_still(ed, "diagramm", teil=schluessel or None)
 
 
-def _geo(ed, d: dict, b: float, h: float) -> dict:
+def geo_gemerkt(ed, d: dict, b: float, h: float) -> dict:
     """Geometrie der Teile, zwischengemerkt, bis sich Daten oder Größe ändern."""
     schl = (json.dumps({k: v for k, v in d.items() if k != "teil"}, sort_keys=True, default=str), round(b), round(h))
     c = getattr(ed, "_dg_teile_cache", None)
@@ -62,15 +62,15 @@ def teil_bei(ed, pos) -> str | None:
     z = FO.frei_objekt_ziel(ed)
     if z is None or z[0] != "diagramm":
         return None
-    _art, d, key, a, _bild = z
-    r = next((x[3] for x in ed._frei_liste() if x[0] == key), None)
+    _art, d, _oid, a, _bild = z
+    r = next((x[3] for x in ed._frei_liste() if x[0] == ed._frei_sel), None)      # Schlüssel der Liste: wie die Auswahl des Editors
     if r is None or r.width() <= 0 or r.height() <= 0:
         return None
     b, h = float(a["b"]), float(a["h"])
     lp = _diagramm_punkt(pos, r, float(a.get("dreh", 0.0) or 0.0), b, h)
     if not QRectF(0, 0, b, h).contains(lp):
         return None
-    geo = _geo(ed, d, b, h)
+    geo = geo_gemerkt(ed, d, b, h)
     treffer = _treffer(geo, {k for k, _n in D.teile(d)}, lp)
     return min(treffer)[1] if treffer else "diagrammbereich"
 

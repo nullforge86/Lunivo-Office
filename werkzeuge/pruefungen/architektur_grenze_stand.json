@@ -515,7 +515,7 @@
   "src/vcl/qt/widgets/ribbon/ansicht/aktionen/hilfe_aktionen.py": 3,
   "src/vcl/qt/widgets/ribbon/ansicht/aktionen/oberflaeche_aktionen.py": 3,
   "src/vcl/qt/widgets/ribbon/ansicht/aktionen/zoom_aktionen.py": 1,
-  "src/vcl/qt/widgets/ribbon/ansicht/band/band_befehle.py": 7,
+  "src/vcl/qt/widgets/ribbon/ansicht/band/band_befehle.py": 4,
   "src/vcl/qt/widgets/ribbon/band_bausteine.py": 6,
   "src/vcl/qt/widgets/ribbon/band_gruppen.py": 22,
   "src/vcl/qt/widgets/ribbon/band_knoepfe.py": 5,

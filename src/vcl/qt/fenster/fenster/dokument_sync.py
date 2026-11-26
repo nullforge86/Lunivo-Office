@@ -23,10 +23,20 @@ class DokumentSyncMixin:
         f = f if f is not None else (e.zoom if e else 1.0)
         self.statusleiste.zoom_zeigen(f)
 
+    def _ansicht_gewaehlt(self, art: str):
+        """Ansichtswahl der Statusleiste: Befehl ausführen und anzeigen, was danach gilt (auch wenn sich nichts ändern ließ)."""
+        self.befehle.ansichtWaehlen(art=art)
+        self.ansicht_anzeigen()
+
+    def ansicht_anzeigen(self):
+        """Dokumentansicht, Vollbild und Augenschutz an den Knöpfen der Statusleiste zeigen."""
+        self.statusleiste.ansicht_zeigen(self.befehle.ansichtJetzt(), self.isFullScreen(), self.befehle.an_augenschutz())
+
     def _sync_later(self):
         self._sync_timer.start()
 
     def _sync_format(self):
+        self.ansicht_anzeigen()
         e = self.current_editor()
         self.band.aktualisieren(e is not None)
         self.band.kontext("tabelle", bool(e) and not e.isReadOnly() and e.textCursor().currentTable() is not None)
