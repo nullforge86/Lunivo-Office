@@ -195,6 +195,8 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "abbild_abschnitt_erster_absatz": ("abbilder", "abschnitt_erster_absatz"),
     "abbild_seite_felder": ("abbilder", "seite_felder"),
     "abbild_metadaten": ("abbilder", "metadaten"),
+    "abbild_metadatum_setzen": ("abbilder", "metadatum_setzen"),
+    "abbild_metadatum_entfernen": ("abbilder", "metadatum_entfernen"),
     "verlauf_stempeln": ("verlauf", "stempeln"),
     "verlauf_beobachten": ("verlauf", "beobachten"),
     "Suchangabe": ("suche", "Suchangabe"),

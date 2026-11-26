@@ -93,15 +93,3 @@ def bloecke_von(baustein):
     if baustein.get("absaetze"):
         return _alte_bloecke(baustein["absaetze"])
     return None
-
-
-def einfuegen(editor, baustein: dict) -> None:
-    """Fügt den Baustein mit seiner Formatierung an der Schreibmarke ein; ein Eintrag ohne Blockdaten kommt als einfacher Text."""
-    if baustein.get("bloecke"):
-        bloecke = bloecke_aus_daten(baustein["bloecke"])
-    elif baustein.get("absaetze"):
-        bloecke = _alte_bloecke(baustein["absaetze"])
-    else:
-        editor.ansicht._aendern(lambda s: s.text_einfuegen(baustein.get("text", "")))
-        return
-    editor.ansicht._aendern(lambda s: s.ausschnitt_einfuegen(bloecke))

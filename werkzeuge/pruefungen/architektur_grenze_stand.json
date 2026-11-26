@@ -619,9 +619,6 @@
  "richtung:vcl_basis->filter": {
   "src/vcl/rendering/seitenlayout/pdf_ausgabe.py": 1
  },
- "schnittstelle_auftrag": {
-  "src/framework/ereignisse/ereignissteuerung.py": 1
- },
  "schnittstelle_veraenderbar": {
   "src/framework/befehle/datei/einstellungen.py": 1,
   "src/framework/befehle/verweise/befehle.py": 7,
@@ -631,7 +628,7 @@
   "src/framework/dokumentverwaltung/dateizugriff/formate.py": 2,
   "src/framework/dokumentverwaltung/dateizugriff/modell_speichern.py": 3,
   "src/framework/dokumentverwaltung/dateizugriff/sicher_schreiben.py": 1,
-  "src/framework/dokumentverwaltung/dokumentpflege/bausteine.py": 7,
+  "src/framework/dokumentverwaltung/dokumentpflege/bausteine.py": 6,
   "src/framework/dokumentverwaltung/dokumentpflege/gelernt.py": 2,
   "src/framework/dokumentverwaltung/dokumentpflege/vorlesen.py": 2,
   "src/framework/dokumentverwaltung/dokumentpflege/wiederherstellung.py": 2,

@@ -309,3 +309,13 @@ def seite_felder(kennung: int, index: int) -> Mapping[str, Daten]:
 def metadaten(kennung: int) -> Mapping[str, Daten]:
     """Die Metadaten des Dokuments (Titel, Bearbeiter, Sprache …), wie sie beim Öffnen gelesen wurden."""
     return fest(dict(_steuerung._sitzungen[kennung].meta))
+
+
+def metadatum_setzen(kennung: int, name: str, wert: Daten) -> None:
+    """Einen Eintrag der Metadaten des Dokuments setzen."""
+    _steuerung._sitzungen[kennung].meta[name] = wert
+
+
+def metadatum_entfernen(kennung: int, name: str) -> None:
+    """Einen Eintrag der Metadaten des Dokuments entfernen (fehlt er, geschieht nichts)."""
+    _steuerung._sitzungen[kennung].meta.pop(name, None)

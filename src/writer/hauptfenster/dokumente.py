@@ -64,7 +64,8 @@ def bei_anzeige(empfaenger: Callable[[int], None]) -> Callable[[], None]:
     def weiter(e: Ereignis) -> None:
         if e.text == ANZEIGE:
             empfaenger(int(e.daten.get("kennung", 0)))
-    return melder.abonnieren(Art.GEAENDERT, weiter)
+    nummer = melder.abonnieren(Art.GEAENDERT, weiter)
+    return lambda: melder.abmelden(nummer)
 
 
 def bei_aenderung(empfaenger: Callable[[int], None]) -> Callable[[], None]:
@@ -72,7 +73,8 @@ def bei_aenderung(empfaenger: Callable[[int], None]) -> Callable[[], None]:
     def weiter(e: Ereignis) -> None:
         if e.text == GEAENDERT:
             empfaenger(int(e.daten.get("kennung", 0)))
-    return melder.abonnieren(Art.GEAENDERT, weiter)
+    nummer = melder.abonnieren(Art.GEAENDERT, weiter)
+    return lambda: melder.abmelden(nummer)
 
 
 def bei_auswahl(empfaenger: Callable[[int], None]) -> Callable[[], None]:
@@ -80,4 +82,5 @@ def bei_auswahl(empfaenger: Callable[[int], None]) -> Callable[[], None]:
     def weiter(e: Ereignis) -> None:
         if e.text == AUSWAHL:
             empfaenger(int(e.daten.get("kennung", 0)))
-    return melder.abonnieren(Art.GEAENDERT, weiter)
+    nummer = melder.abonnieren(Art.GEAENDERT, weiter)
+    return lambda: melder.abmelden(nummer)

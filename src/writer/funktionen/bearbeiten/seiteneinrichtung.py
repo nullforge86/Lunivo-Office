@@ -90,8 +90,45 @@ def seite_des_abschnitts(kennung: int, index: int) -> Seiteneinrichtung:
     return Seiteneinrichtung(eigene_kopie(_bearbeiten.abbild_seite_felder(kennung, index)))
 
 
-def dokument_metadaten(kennung: int) -> dict:
-    """Die Metadaten des Dokuments als eigene Kopie der Oberfläche."""
-    from framework.befehle import bearbeiten as _bearbeiten
-    from writer.werte import eigene_kopie
-    return eigene_kopie(_bearbeiten.abbild_metadaten(kennung))
+class Metadaten(dict):
+    """Die Metadaten eines Dokuments für die Oberfläche: eine eigene Kopie, deren Änderungen sofort als Befehl an das Framework gehen."""
+
+    def __init__(self, kennung: int):
+        from framework.befehle import bearbeiten as _bearbeiten
+        from writer.werte import eigene_kopie
+        super().__init__(eigene_kopie(_bearbeiten.abbild_metadaten(kennung)))
+        self._kennung = kennung
+
+    def __setitem__(self, name, wert) -> None:
+        from framework.befehle import bearbeiten as _bearbeiten
+        super().__setitem__(name, wert)
+        _bearbeiten.abbild_metadatum_setzen(self._kennung, name, wert)
+
+    def __delitem__(self, name) -> None:
+        from framework.befehle import bearbeiten as _bearbeiten
+        super().__delitem__(name)
+        _bearbeiten.abbild_metadatum_entfernen(self._kennung, name)
+
+    def pop(self, name, *ersatz):
+        from framework.befehle import bearbeiten as _bearbeiten
+        wert = super().pop(name, *ersatz)
+        _bearbeiten.abbild_metadatum_entfernen(self._kennung, name)
+        return wert
+
+    def update(self, *quellen, **eintraege) -> None:
+        for name, wert in dict(*quellen, **eintraege).items():
+            self[name] = wert
+
+    def setdefault(self, name, ersatz=None):
+        if name not in self:
+            self[name] = ersatz
+        return self[name]
+
+    def clear(self) -> None:
+        for name in list(self):
+            del self[name]
+
+
+def dokument_metadaten(kennung: int) -> Metadaten:
+    """Die Metadaten des Dokuments für die Oberfläche; Änderungen daran gehen sofort an das Framework."""
+    return Metadaten(kennung)

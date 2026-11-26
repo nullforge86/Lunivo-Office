@@ -260,11 +260,11 @@ class SchreibhilfePanel(QWidget):
     # ---- Bereich „Formatierung“: ein Register für Texteffekte, Objekt (Bild, Form …) und Diagrammteil ---------------------------------
     # schluessel -> (Modul, Panel-Klasse, Menütext, Signale des Panels). Ein neues Panel = ein Eintrag hier.
     FORMATE = {
-        "texteffekte": ("formatierung.texteffekt_dialog", "TexteffektPanel", "Texteffekte formatieren", ("geaendert",)),
-        "objekt": ("formatierung.objektformat_panel", "ObjektFormatPanel", "Objekt formatieren", ("geaendert", "bild_gewuenscht")),
-        "diagramm": ("diagramme.diagramm_format_panel", "DiagrammFormatPanel", "Diagramm formatieren", ("geaendert", "alt_geaendert", "dekorativ_geaendert", "bild_gewuenscht", "teil_gewaehlt")),
-        "smartart": ("diagramme.smartart_format_panel", "SmartArtFormatPanel", "SmartArt formatieren", ("geaendert", "bild_gewuenscht")),
-        "bildalt": ("medien.bild_alternativtext_panel", "BildAlternativtextPanel", "Alternativtext", ("geaendert",)),
+        "texteffekte": ("vcl.qt.widgets.dialoge.formatierung.texteffekt_panel", "TexteffektPanel", "Texteffekte formatieren", ("geaendert",)),
+        "objekt": ("vcl.qt.widgets.dialoge.formatierung.objekt_format_panel", "ObjektFormatPanel", "Objekt formatieren", ("geaendert", "bild_gewuenscht")),
+        "diagramm": ("vcl.qt.widgets.objektwerkzeuge.diagramme.diagramm_format_panel", "DiagrammFormatPanel", "Diagramm formatieren", ("geaendert", "alt_geaendert", "dekorativ_geaendert", "bild_gewuenscht", "teil_gewaehlt")),
+        "smartart": ("vcl.qt.widgets.objektwerkzeuge.diagramme.smartart_format_panel", "SmartArtFormatPanel", "SmartArt formatieren", ("geaendert", "bild_gewuenscht")),
+        "bildalt": ("vcl.qt.widgets.bausteine.symbole.medien.bild_alternativtext_panel", "BildAlternativtextPanel", "Alternativtext", ("geaendert",)),
     }
 
     def _format_zustand(self) -> dict:
@@ -334,7 +334,7 @@ class SchreibhilfePanel(QWidget):
         modul, klasse, menue_text, signale = self.FORMATE[schluessel]
         zustand = self._format_zustand()
         if schluessel not in zustand:
-            panel_klasse = getattr(importlib.import_module(f"vcl.qt.widgets.bausteine.{modul}"), klasse)
+            panel_klasse = getattr(importlib.import_module(modul), klasse)
             host, panel, anheften = self._formatierung_host(panel_klasse, menue_text, werte)
             zustand[schluessel] = (panel, anheften, self.stapel.addWidget(host))
         else:

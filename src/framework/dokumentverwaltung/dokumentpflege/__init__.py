@@ -21,7 +21,6 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "beenden": ("vorlesen", "beenden"),
     "bloecke_von": ("bausteine", "bloecke_von"),
     "discard": ("wiederherstellung", "discard"),
-    "einfuegen": ("bausteine", "einfuegen"),
     "entfernen": ("bausteine", "entfernen"),
     "finde_kuerzel": ("bausteine", "finde_kuerzel"),
     "hinzufuegen": ("bausteine", "hinzufuegen"),

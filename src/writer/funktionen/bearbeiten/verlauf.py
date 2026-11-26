@@ -76,4 +76,5 @@ def dokument_beobachten(kennung: int, empfaenger):
     from framework.ereignisse import melder
     from framework.schnittstellen.datentypen import Art
     _befehle.verlauf_beobachten(kennung)
-    return melder.abonnieren(Art.GEAENDERT, lambda ereignis: empfaenger() if ereignis.daten.get("kennung") == kennung else None)
+    nummer = melder.abonnieren(Art.GEAENDERT, lambda ereignis: empfaenger() if ereignis.daten.get("kennung") == kennung else None)
+    return lambda: melder.abmelden(nummer)

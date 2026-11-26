@@ -210,7 +210,7 @@ class KernBefehle:
         anfang = _bearbeiten.stelle_von(self.kennung, von)
         for b in bloecke:
             if b["vorlage"]:
-                self._vorlage_abgleichen(b["vorlage"])
+                self.stil_neu_anwenden(b["vorlage"])
 
         return self.ansicht._befehl(lambda: _bearbeiten.aenderung_markdown_ersetzen(self.kennung, von, bis, bloecke, (anfang.absatz_id, anfang.versatz)))
 
