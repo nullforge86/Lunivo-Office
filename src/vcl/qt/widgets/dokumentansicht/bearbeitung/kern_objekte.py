@@ -16,6 +16,7 @@ from PySide6.QtGui import QImage
 from writer.funktionen import bearbeiten as ST
 from writer.funktionen import objekte as OW
 from writer.werte import Rechteck, Stelle
+from writer.funktionen import bearbeiten as _bearbeiten
 
 class _BildFormat:
     """Maße eines Bildes im Text (die Fenster fragen ``width()``, ``height()`` und ``name()``)."""
@@ -98,12 +99,7 @@ class KernObjekte:
         """Ändert ein Objekt im Text (Größe, Daten, Bild …); neue Bilder aus ``bild_ressource_neu`` kommen im selben Schritt ins Dokument."""
         wartend, self._wartende_bilder = dict(getattr(self, "_wartende_bilder", {})), {}
 
-        def f(s):
-            with s.gruppe("Objekt ändern"):
-                for name, daten in wartend.items():
-                    s.ressource_setzen(name, daten)
-                s.objekt_aendern(objekt_id, **felder)
-        return self.ansicht._aendern(f)
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_inline_aendern(self.kennung, objekt_id, wartend, felder))
 
     def bild_setzen(self, width: float | None = None, height: float | None = None, alt: str | None = None, dekor: bool | None = None) -> bool:
         """Größe, Alternativtext und „dekorativ“ des gewählten Bildes im Text."""
@@ -129,7 +125,7 @@ class KernObjekte:
             h, b = h * maxb / b, maxb
         d = {"daten": dict(daten)} if daten else {}
         png = self._png(img)
-        return self.ansicht._aendern(lambda s: s.objekt_einfuegen(art or "bild", b, h, bilddaten=png, daten=d, alt_text=alt))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_einfuegen(self.kennung, art or "bild", b, h, bilddaten=png, daten=d, alt_text=alt))
 
     def inline_daten(self, art: str | None = None) -> dict | None:
         """Die Parameter des gewählten Objekts im Text (Kopie); mit ``art`` nur, wenn es von dieser Art ist."""
@@ -223,14 +219,11 @@ class KernObjekte:
         if art == "textfluss":
             if o is None:
                 return False
-            return self.ansicht._aendern(lambda s: s.objekt_zu_inline(o.id))
+            return self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_zu_inline(self.kennung, o.id))
         if o is not None:
             return self.objekt_setzen(o.id, umbruch=art)
         if i is not None:
-            def f(s):
-                with s.gruppe("Textumbruch"):
-                    s.objekt_zu_frei(i.id, art)
-            ok = self.ansicht._aendern(f)
+            ok = self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_zu_frei(self.kennung, i.id, art))
             if ok:
                 self.ansicht.gewaehltes_objekt = i.id
                 self.freiAuswahlGeaendert.emit()

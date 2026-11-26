@@ -7,6 +7,7 @@ from __future__ import annotations
 from vcl.qt.fenster.befehle.kontextreiter.tabellen import TabellenBefehle
 from vcl.qt.fenster.befehle.kontextreiter.tabellen_format import TabellenFormatBefehle
 from vcl.qt.fenster.befehle.kontextreiter.zeichentools import ZeichenToolsBefehle
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 class KontextBefehle(TabellenBefehle, TabellenFormatBefehle, ZeichenToolsBefehle):
@@ -16,7 +17,7 @@ class KontextBefehle(TabellenBefehle, TabellenFormatBefehle, ZeichenToolsBefehle
         """Absatzformat (Blockformat) der Absätze an der Schreibmarke/Auswahl auf Standard; Zeichenformat bleibt. Ein Rückgängig-Schritt."""
         e = self.ed
         if e:
-            e.ansicht._aendern(lambda s: s.absatzformat_anwenden({}, ersetzen=True))
+            e.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(e.kennung, {}, ersetzen=True))
 
     def wortExtras(self, k=None):
         """Wort-Extras: Absätze aufräumen (Markierung, sonst das ganze Dokument)."""

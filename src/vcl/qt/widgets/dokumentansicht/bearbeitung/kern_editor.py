@@ -1,4 +1,5 @@
 from __future__ import annotations
+import dataclasses
 import logging
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QColor
@@ -283,7 +284,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def tabelle_sortieren(self, tabellen_id: int, spalte: int, aufsteigend: bool = True) -> None:
         """Sortiert die Zeilen der Tabelle nach einer Spalte (zentrale Bearbeitung ``tabelle_sortieren``)."""
-        self.ansicht._aendern(lambda s: s.tabelle_sortieren(tabellen_id, spalte, aufsteigend))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_sortieren(self.kennung, tabellen_id, spalte, aufsteigend))
 
     def liste_an_marke(self):
         a = self._absatz_an_marke()
@@ -335,7 +336,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     # ---- Zeichenformat ----------------------------------------------------------------------------------------------------------------------
     def _zf(self, aenderung: dict) -> None:
-        self.ansicht._aendern(lambda s: s.zeichenformat_anwenden(aenderung))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(self.kennung, aenderung))
 
     def toggle_bold(self, an: bool) -> None:
         self._zf({"fett": True if an else None, "gewicht": None})
@@ -377,7 +378,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self._zf({"zeichenabstand": float(px) if px else None, "zeichenabstand_art": 1 if px else None})
 
     def clear_formatting(self) -> None:
-        self.ansicht._aendern(lambda s: s.zeichenformat_anwenden({}, ersetzen=True))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(self.kennung, {}, ersetzen=True))
 
     def change_case(self, art) -> None:
         """Groß-/Kleinschreibung des markierten Textes ändern (``art``: „gross“, „klein“, „wortanfang“, „satzanfang“)."""
@@ -387,11 +388,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         text = s.text(s.auswahl)
         neu = {"gross": text.upper(), "klein": text.lower(), "wortanfang": text.title(), "satzanfang": text[:1].upper() + text[1:].lower()}.get(art)
         if neu is not None and neu != text:
-            self.ansicht._aendern(lambda s: s.ersetzen(neu))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_ersetzen(self.kennung, neu))
 
     # ---- Absatzformat -------------------------------------------------------------------------------------------------------------------------
     def _af(self, aenderung: dict) -> None:
-        self.ansicht._aendern(lambda s: s.absatzformat_anwenden(aenderung))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(self.kennung, aenderung))
 
     def set_alignment(self, al) -> None:
         wert = al if isinstance(al, str) else ("block" if al & Qt.AlignJustify else "mitte" if al & Qt.AlignHCenter else "rechts" if al & Qt.AlignRight else "links")
@@ -430,34 +431,23 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         gewuenscht = LISTEN_ART.get(art, "disc")
         liste = self.sitzung.dokument.listen.get(a.liste_id) if a.liste_id is not None else None
         if liste is not None and liste.ebenen and liste.ebenen[0].stil == gewuenscht:
-            self.ansicht._aendern(lambda s: s.liste_entfernen())
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_liste_entfernen(self.kennung))
             return
 
-        def neu(s):
-            with s.gruppe("Liste"):
-                s.liste_anwenden(s.liste_anlegen(gewuenscht))
-        self.ansicht._aendern(neu)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_liste_anlegen_anwenden(self.kennung, gewuenscht))
 
     def list_level(self, schritte: int) -> None:
-        self.ansicht._aendern(lambda s: s.listenebene_aendern(schritte))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_listenebene_aendern(self.kennung, schritte))
 
     # ---- Einfügen ---------------------------------------------------------------------------------------------------------------------------------
     def insert_table(self, zeilen: int, spalten: int) -> None:
-        self.ansicht._aendern(lambda s: s.tabelle_einfuegen(zeilen, spalten, format={"rahmen_breite": 1.0, "rahmen_farbe": TABELLENRAND_SCHWARZ}))      # wie in Word: Tabellenraster
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_einfuegen(self.kennung, zeilen, spalten, format={"rahmen_breite": 1.0, "rahmen_farbe": TABELLENRAND_SCHWARZ}))      # wie in Word: Tabellenraster
 
     def insert_page_break(self) -> None:
-        def f(s):
-            with s.gruppe("Seitenumbruch"):
-                s.absatz_teilen()
-                s.absatzformat_anwenden({"seitenumbruch_vor": True})
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_umbruch_einfuegen(self.kennung, "seite"))
 
     def insert_column_break(self) -> None:
-        def f(s):
-            with s.gruppe("Spaltenumbruch"):
-                s.absatz_teilen()
-                s.absatzformat_anwenden({"spaltenumbruch_vor": True})
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_umbruch_einfuegen(self.kennung, "spalte"))
 
     def insertPlainText(self, text: str) -> None:
         self.ansicht.einfuegen(text)
@@ -496,9 +486,13 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def page(self):
         return self.sitzung.dokument.abschnitte[min(self.abschnitt_nr(), len(self.sitzung.dokument.abschnitte) - 1)].seite
 
+    def _seite_ersetzen(self, index: int, seite) -> bool:
+        """Die Seiteneinrichtung des Abschnitts ersetzen: ihre Felder gehen als Wörterbuch an das Framework."""
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_seite_ersetzen(self.kennung, index, dataclasses.asdict(seite)))
+
     def page_settings_changed(self, seite) -> None:
         index = self.abschnitt_nr()
-        self.ansicht._aendern(lambda s: s.seite_ersetzen(index, seite))
+        self._seite_ersetzen(index, seite)
         self.pageApplied.emit()
 
     def kopffuss_zeile_setzen(self, zeile: str, text: str, ausrichtung: str) -> None:
@@ -514,11 +508,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         self.pageApplied.emit()
 
     def apply_page(self, seite) -> None:
-        self.ansicht._aendern(lambda s: s.seite_ersetzen(0, seite))
+        self._seite_ersetzen(0, seite)
         self.pageApplied.emit()
 
     def set_zeilennummern(self, an: bool, neu: str = "") -> None:
-        self.ansicht._aendern(lambda s: s.seite_setzen(self.abschnitt_nr(), zeilennummern=bool(an), zeilennummern_neu=neu))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_seite_setzen(self.kennung, self.abschnitt_nr(), zeilennummern=bool(an), zeilennummern_neu=neu))
 
     # ---- Vorlagen ---------------------------------------------------------------------------------------------------------------------------------
     def geruest_aufbauen(self, zeilen: list, benutzer: dict, heute: str) -> None:
@@ -546,12 +540,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def ersetze_roh(self, von: int, bis: int, neu: str, zeichen: dict | None = None, absatz: dict | None = None, vorlage: str | None = None) -> None:
         """Ersetzt eine Fundstelle; die Schreibmarke steht danach hinter dem eingesetzten Text."""
-        def f(s):
-            with s.gruppe("Ersetzen"):
-                ende = s.ersetzen_durch(von, bis, neu, zeichen, absatz)
-                if vorlage:
-                    s.vorlage_anwenden("Standard" if vorlage == "Fließtext" else vorlage, absatz_ids=[ende.absatz_id])
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_fundstelle_ersetzen(self.kennung, von, bis, neu, zeichen, absatz, vorlage))
 
     def alle_ersetzen_roh(self, auftrag, ersatz: str, von: int = 0, bis: int | None = None, zeichen: dict | None = None, absatz: dict | None = None,
                           vorlage: str | None = None, zwischenablage: str = "") -> int:
@@ -631,21 +620,27 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         """Kommentiert die Auswahl (ohne Auswahl das Wort an der Schreibmarke); gibt die Kommentar-Id zurück, ``None`` wenn es nicht geht."""
         angaben = self.autor() if callable(getattr(self, "autor", None)) else ("", "")
         ergebnis = []
-        if not self.ansicht._aendern(lambda s: ergebnis.append(s.kommentar_einfuegen(text, angaben[0] if angaben else "", angaben[1] if len(angaben) > 1 else ""))):
+
+        def f() -> bool:
+            kid = _bearbeiten.aenderung_kommentar_einfuegen(self.kennung, text, angaben[0] if angaben else "", angaben[1] if len(angaben) > 1 else "")
+            if kid is not None:
+                ergebnis.append(kid)
+            return kid is not None
+        if not self.ansicht._befehl(f):
             return None
         self.zusatzGeaendert.emit()
         return ergebnis[0] if ergebnis else None
 
     def kommentar_text_setzen(self, kid: int, text: str) -> None:
-        self.ansicht._aendern(lambda s: s.kommentar_aendern(kid, text=text))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_kommentar_aendern(self.kennung, kid, text=text))
         self.zusatzGeaendert.emit()
 
     def kommentar_geloest(self, kid: int, geloest: bool) -> None:
-        self.ansicht._aendern(lambda s: s.kommentar_aendern(kid, geloest=geloest))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_kommentar_aendern(self.kennung, kid, geloest=geloest))
         self.zusatzGeaendert.emit()
 
     def kommentar_loeschen(self, kid: int | None = None) -> None:
-        self.ansicht._aendern(lambda s: s.kommentar_loeschen(kid))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_kommentar_loeschen(self.kennung, kid))
         self.zusatzGeaendert.emit()
 
     def kommentare_alle_loeschen(self) -> None:
@@ -678,12 +673,12 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def aenderung_annehmen(self, b: dict, annehmen: bool = True) -> None:
         bereich = Bereich(_bearbeiten.stelle_von(self.kennung, b["von"]), _bearbeiten.stelle_von(self.kennung, b["bis"]))
-        self.ansicht._aendern(lambda s: (s.aenderungen_annehmen if annehmen else s.aenderungen_ablehnen)(bereich))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_aenderungen_entscheiden(self.kennung, annehmen, bereich))
         self.zusatzGeaendert.emit()
 
     def alle_aenderungen(self, annehmen: bool) -> int:
         n = len(self.aenderungen())
-        self.ansicht._aendern(lambda s: (s.aenderungen_annehmen if annehmen else s.aenderungen_ablehnen)(None))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_aenderungen_entscheiden(self.kennung, annehmen))
         self.zusatzGeaendert.emit()
         return n
 
@@ -714,7 +709,13 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def note_neu(self, art: str, text: str) -> int:
         ergebnis = []
-        self.ansicht._aendern(lambda s: ergebnis.append(s.note_einfuegen(text, art)))
+
+        def f() -> bool:
+            nid = _bearbeiten.aenderung_note_einfuegen(self.kennung, text, art)
+            if nid is not None:
+                ergebnis.append(nid)
+            return nid is not None
+        self.ansicht._befehl(f)
         self.zusatzGeaendert.emit()
         return ergebnis[0] if ergebnis else 0
 
@@ -724,7 +725,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     # ---- Anschluss ans Farmwork (``farmwork/editor/aenderungs_port.py``) ----------------------------------------------------------------------------
     def aendern(self, aenderung) -> bool:
         """Führt ``aenderung(sitzung)`` als eine Änderung aus (Rückgängig-Schritt, Neuzeichnen)."""
-        return self.ansicht._aendern(aenderung)
+        return self.ansicht.aendern(aenderung)
 
     def lesen(self, abfrage):
         """``abfrage(sitzung)``, ohne das Dokument zu ändern."""
@@ -736,7 +737,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def felder_aktualisieren(self) -> None:
         """Rechnet die Felder neu, deren Ergebnis das Dokument selbst bestimmt (Nummern der Beschriftungen)."""
-        self.ansicht._aendern(lambda s: s.beschriftungen_nummerieren())
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_beschriftungen_nummerieren(self.kennung))
 
     # ---- Tabellen ------------------------------------------------------------------------------------------------------------------------------------------
     def tabelle_aktion(self, art: str) -> bool:
@@ -745,14 +746,16 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         if t is None:
             return False
         z, sp, tid = t.zeile, t.spalte, t.id
-        wirkt = {"zeile_oben": lambda s: s.zeilen_einfuegen(tid, z), "zeile_unten": lambda s: s.zeilen_einfuegen(tid, z + t.tabelle.zellen[z][sp].zeilenspanne
-                                                                                                             if t.tabelle.zellen[z][sp].verdeckt_von is None else z + 1),
-                 "spalte_links": lambda s: s.spalten_einfuegen(tid, sp), "spalte_rechts": lambda s: s.spalten_einfuegen(tid, sp + 1),
-                 "zeile_loeschen": lambda s: s.zeilen_loeschen(tid, z), "spalte_loeschen": lambda s: s.spalten_loeschen(tid, sp),
-                 "tabelle_loeschen": lambda s: s.tabelle_loeschen(tid)}.get(art)
+        k, B = self.kennung, _bearbeiten
+        wirkt = {"zeile_oben": lambda: B.aenderung_zeilen_einfuegen(k, tid, z),
+                 "zeile_unten": lambda: B.aenderung_zeilen_einfuegen(k, tid, z + t.tabelle.zellen[z][sp].zeilenspanne
+                                                                     if t.tabelle.zellen[z][sp].verdeckt_von is None else z + 1),
+                 "spalte_links": lambda: B.aenderung_spalten_einfuegen(k, tid, sp), "spalte_rechts": lambda: B.aenderung_spalten_einfuegen(k, tid, sp + 1),
+                 "zeile_loeschen": lambda: B.aenderung_zeilen_loeschen(k, tid, z), "spalte_loeschen": lambda: B.aenderung_spalten_loeschen(k, tid, sp),
+                 "tabelle_loeschen": lambda: B.aenderung_tabelle_loeschen(k, tid)}.get(art)
         if wirkt is None:
             return False
-        return self.ansicht._aendern(wirkt)
+        return self.ansicht._befehl(wirkt)
 
     def zellen_im_bereich(self):
         """(Tabelle, [(Zeile, Spalte)]) der Zellen, die die Auswahl überstreicht; ohne Auswahl die Zelle der Schreibmarke."""
@@ -770,11 +773,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         tid, zellen = r
         z1, z2 = min(z for z, _ in zellen), max(z + self.sitzung._tabelle(tid).zellen[z][s].zeilenspanne - 1 for z, s in zellen)
         s1, s2 = min(s for _, s in zellen), max(s + self.sitzung._tabelle(tid).zellen[z][s].spaltenspanne - 1 for z, s in zellen)
-        return self.ansicht._aendern(lambda s: s.zellen_verbinden(tid, z1, s1, z2 - z1 + 1, s2 - s1 + 1))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_zellen_verbinden(self.kennung, tid, z1, s1, z2 - z1 + 1, s2 - s1 + 1))
 
     def zelle_teilen(self, spalten: int, zeilen: int) -> bool:
         t = self.tabelle_an_marke()
-        return t is not None and self.ansicht._aendern(lambda s: s.zelle_teilen(t.id, t.zeile, t.spalte, zeilen, spalten))
+        return t is not None and self.ansicht._befehl(lambda: _bearbeiten.aenderung_zelle_teilen(self.kennung, t.id, t.zeile, t.spalte, zeilen, spalten))
 
     def tabelle_teilen(self) -> bool:
         """Teilt die Tabelle oberhalb der Zeile der Schreibmarke: Die Zeilen ab hier bilden eine neue Tabelle darunter."""
@@ -786,11 +789,11 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def zellformat(self, aenderung: dict) -> bool:
         """Wendet ein Zellformat auf die überstrichenen Zellen (sonst die der Schreibmarke) an."""
         r = self.zellen_im_bereich()
-        return r is not None and self.ansicht._aendern(lambda s: s.zellformat_anwenden(r[0], aenderung, r[1]))
+        return r is not None and self.ansicht._befehl(lambda: _bearbeiten.aenderung_zellformat_anwenden(self.kennung, r[0], aenderung, r[1]))
 
     def tabellenformat(self, aenderung: dict) -> bool:
         t = self.tabelle_an_marke()
-        return t is not None and self.ansicht._aendern(lambda s: s.tabellenformat_anwenden(t.id, aenderung))
+        return t is not None and self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabellenformat_anwenden(self.kennung, t.id, aenderung))
 
     # ---- Objekte ---------------------------------------------------------------------------------------------------------------------------------------
     @staticmethod
@@ -813,8 +816,13 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
             hoehe, breite = hoehe * maxb / breite, maxb
         ergebnis: list = []
         png = self._png(bild)
-        ok = self.ansicht._aendern(lambda s: ergebnis.append(s.objekt_frei_einfuegen(art, breite, hoehe, None, bilddaten=png, daten=dict(daten or {}),
-                                                                                        alt_text=alt)))
+
+        def f() -> bool:
+            oid = _bearbeiten.aenderung_objekt_frei_einfuegen(self.kennung, art, breite, hoehe, png, dict(daten or {}), alt)
+            if oid is not None:
+                ergebnis.append(oid)
+            return oid is not None
+        ok = self.ansicht._befehl(f)
         if not ok or not ergebnis:
             return None
         self.ansicht.gewaehltes_objekt = ergebnis[0]
@@ -837,7 +845,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
         maxb = self.page.content_width_px
         if b > maxb:
             h, b = h * maxb / b, maxb
-        return self.ansicht._aendern(lambda s: s.objekt_einfuegen("bild", b, h, bilddaten=roh, alt_text=""))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_einfuegen(self.kennung, "bild", b, h, bilddaten=roh, alt_text=""))
 
     def objekt_gewaehlt(self):
         """Das gewählte frei positionierte Objekt (``FreiesObjekt``) oder ``None``."""
@@ -852,7 +860,7 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
 
     def objekt_setzen(self, objekt_id: int, **felder) -> bool:
         """Ändert Felder eines frei positionierten Objekts (``daten``, ``breite``, ``hoehe``, ``bilddaten`` …) in einem Schritt."""
-        return self.ansicht._aendern(lambda s: s.objekt_aendern(objekt_id, **felder))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_aendern(self.kennung, objekt_id, **felder))
 
     # ---- Freie Objekte: Rückrufe der Kerndaten (der Kern kennt die Zeichenfunktionen nicht) ------------------------------------------------------------
     def frei_daten_lesen(self, art: str) -> dict | None:
@@ -941,14 +949,14 @@ class KernEditor(KernBefehle, KernObjekte, FreieBilderKnoepfeMixin, FreieBilderK
     def objekt_ebene(self, wohin: str) -> bool:
         """Stapelreihenfolge des gewählten Objekts: ``vorn``, ``hinten``, ``vor``, ``zurueck``."""
         oid = self.ansicht.gewaehltes_objekt
-        return oid is not None and self.ansicht._aendern(lambda s: s.objekt_ebene(oid, wohin))
+        return oid is not None and self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_ebene(self.kennung, oid, wohin))
 
     def objekt_loeschen(self) -> bool:
         oid = self.ansicht.gewaehltes_objekt
         if oid is None:
             i = self.inline_gewaehlt()
-            return i is not None and self.ansicht._aendern(lambda s: s.objekt_entfernen(i.id))
-        ok = self.ansicht._aendern(lambda s: s.objekt_entfernen(oid))
+            return i is not None and self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_entfernen(self.kennung, i.id))
+        ok = self.ansicht._befehl(lambda: _bearbeiten.aenderung_objekt_entfernen(self.kennung, oid))
         self.ansicht.gewaehltes_objekt = None
         self.freiAuswahlGeaendert.emit()
         return ok

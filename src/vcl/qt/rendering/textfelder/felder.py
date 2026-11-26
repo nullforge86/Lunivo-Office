@@ -16,6 +16,7 @@ import math
 import re
 
 from PySide6.QtCore import QDateTime, QLocale
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 # Feldname (wie in der Vorlage) → (Beschreibung, Feldanweisung zu Beginn)
@@ -311,4 +312,4 @@ def kontext_sammeln(ed, autor: str = "", pfad: str = "") -> dict:
 
 def feld_einfuegen(ed, anweisung: str, text: str, versteckt: bool = False) -> None:
     """``versteckt``: ausgeblendeter Text (TC-Einträge stehen wie in Textprogrammen unsichtbar im Text)."""
-    ed.ansicht._aendern(lambda s: s.feld_einfuegen(anweisung, text, format={"versteckt": True} if versteckt else None))
+    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_feld_einfuegen(ed.kennung, anweisung, text, format={"versteckt": True} if versteckt else None))

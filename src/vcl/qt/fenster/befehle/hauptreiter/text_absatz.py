@@ -1,5 +1,6 @@
 """TextAbsatzBefehle: fachlich abgegrenzte Bandbefehle."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 from PySide6.QtCore import QSize, Qt  # noqa: F401
 from PySide6.QtGui import QColor, QFont  # noqa: F401
 from PySide6.QtWidgets import QMenu, QMessageBox  # noqa: F401
@@ -159,7 +160,7 @@ class TextAbsatzBefehle:
         if not ausfuehren(d):
             return
         ordnung = S.reihenfolge(texte, **d.werte())
-        e.ansicht._aendern(lambda sitz: sitz.absaetze_umstellen(ids, ordnung))
+        e.ansicht._befehl(lambda: _bearbeiten.aenderung_absaetze_umstellen(e.kennung, ids, ordnung))
 
     def menue_absatzSchattierung(self):
         def setze(c):

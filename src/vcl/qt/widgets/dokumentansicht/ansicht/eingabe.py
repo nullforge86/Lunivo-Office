@@ -12,10 +12,10 @@ from PySide6.QtCore import QMimeData, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QApplication
 
-from core.bearbeitung import BearbeitungsFehler
 from writer.funktionen import ansicht as AN
 from writer.funktionen import bearbeiten as ST
 from writer.werte import Bereich, Rechteck, Stelle
+from writer.funktionen import bearbeiten as _bearbeiten
 
 MIME_AUSSCHNITT = "application/x-lunivo-ausschnitt"
 ZEILENWECHSEL = " "                       # Umschalt+Eingabe: neue Zeile im selben Absatz
@@ -31,26 +31,12 @@ PFEILE = {Qt.Key_Left: (-1, 0), Qt.Key_Right: (1, 0), Qt.Key_Up: (0, -1), Qt.Key
 class EingabeTeil:
     # ---- Bearbeiten ------------------------------------------------------------------------------------------------------------
     def aendern(self, fn) -> bool:
-        """Anschluss für das Framework (``AenderungsPort``): ``fn(sitzung)`` als eine Änderung ausführen."""
-        return self._aendern(fn)
+        """Anschluss für das Framework (``AenderungsPort``): ``fn(sitzung)`` als eine Änderung ausführen; ``fn`` gibt ``False`` zurück, wenn der Kern ablehnt."""
+        return self._befehl(lambda: fn(self.sitzung) is not False)
 
     def lesen(self, abfrage):
         """Anschluss für das Framework (``AenderungsPort``): ``abfrage(sitzung)``, ohne das Dokument zu ändern."""
         return abfrage(self.sitzung)
-
-    def _aendern(self, fn) -> bool:
-        """Eine Änderung über die Sitzung ausführen; was die Sitzung ablehnt, lässt das Dokument unverändert."""
-        if self.nur_lesen:
-            return False
-        try:
-            if self.vor_aenderung is not None:
-                self.vor_aenderung(self.sitzung)
-            fn(self.sitzung)
-        except BearbeitungsFehler:
-            return False
-        self._x = None
-        self.nach_aenderung()
-        return True
 
     def _befehl(self, befehl) -> bool:
         """Einen Befehl des Frameworks als eine Änderung ausführen: ``befehl()`` → ``False``, wenn der Kern ablehnt (das Dokument bleibt unverändert)."""
@@ -65,13 +51,13 @@ class EingabeTeil:
         return True
 
     def einfuegen(self, text: str) -> bool:
-        return bool(text) and self._aendern(lambda s: s.text_einfuegen(text))
+        return bool(text) and self._befehl(lambda: _bearbeiten.aenderung_text_einfuegen(self.kennung, text))
 
     def entfernen(self, rueckwaerts: bool, wort: bool = False) -> bool:
         """Die Auswahl löschen, sonst das Zeichen (oder Wort) vor bzw. hinter der Schreibmarke."""
         kopf = ST.auswahl(self.kennung)
         if not kopf.leer:
-            return self._aendern(lambda s: s.loeschen())
+            return self._befehl(lambda: _bearbeiten.aenderung_loeschen(self.kennung))
         kopf = kopf.kopf
         if wort:
             art = "wort_links" if rueckwaerts else "wort_rechts"
@@ -79,8 +65,8 @@ class EingabeTeil:
             ziel, _x = AN.bewegen(self.kennung, kopf, art)
             if ziel == kopf:
                 return False
-            return self._aendern(lambda s: s.loeschen(Bereich(s.auswahl.kopf, ziel)))
-        return self._aendern(lambda s: s.zeichen_loeschen(vorwaerts=not rueckwaerts))
+            return self._befehl(lambda: _bearbeiten.aenderung_loeschen_bis(self.kennung, (ziel[0], ziel[1])))
+        return self._befehl(lambda: _bearbeiten.aenderung_zeichen_loeschen(self.kennung, vorwaerts=not rueckwaerts))
 
     def rueckgaengig(self) -> None:
         if not self.nur_lesen and self.sitzung.rueckgaengig():
@@ -97,7 +83,7 @@ class EingabeTeil:
         k = self.kennung
         start, _ende = ST.auswahl_bereich(k)
         an = bool(ST.zeichenformat_bei(k, start).get(name)) if ST.auswahl(k).leer else bool(ST.zeichenformat_bei(k, Stelle(start.absatz_id, min(start.versatz + 1, ST.absatz_laenge(k, start.absatz_id)))).get(name))
-        self._aendern(lambda s: s.zeichenformat_anwenden({name: not an}))
+        self._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(self.kennung, {name: not an}))
 
     # ---- Zwischenablage ----------------------------------------------------------------------------------------------------------
     def kopieren(self) -> None:
@@ -112,7 +98,7 @@ class EingabeTeil:
     def ausschneiden(self) -> None:
         if not ST.auswahl(self.kennung).leer and not self.nur_lesen:
             self.kopieren()
-            self._aendern(lambda s: s.loeschen())
+            self._befehl(lambda: _bearbeiten.aenderung_loeschen(self.kennung))
 
     def einsetzen(self) -> None:
         if self.nur_lesen:
@@ -163,7 +149,7 @@ class EingabeTeil:
         if i >= len(zellen):
             if self.nur_lesen:
                 return True
-            self._aendern(lambda s: s.zeilen_einfuegen(tid, zeilen))
+            self._befehl(lambda: _bearbeiten.aenderung_zeilen_einfuegen(self.kennung, tid, zeilen))
             zellen = ST.sichtbare_zellen(k, tid)
             i = min(i, len(zellen) - 1)
         ziel = ST.zelle_anfang(k, tid, *zellen[i])
@@ -206,7 +192,7 @@ class EingabeTeil:
             self.zeichenformat_umschalten({Qt.Key_B: "fett", Qt.Key_I: "kursiv", Qt.Key_U: "unterstrichen"}[taste])
         elif taste in (Qt.Key_Backspace, Qt.Key_Delete):
             if self.gewaehltes_objekt is not None and not self.nur_lesen:
-                self._aendern(lambda s: s.objekt_entfernen(self.gewaehltes_objekt))
+                self._befehl(lambda: _bearbeiten.aenderung_objekt_entfernen(self.kennung, self.gewaehltes_objekt))
                 self.gewaehltes_objekt = None
             else:
                 self.entfernen(taste == Qt.Key_Backspace, strg)

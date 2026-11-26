@@ -50,7 +50,7 @@ class DokumentAnsicht(EingabeTeil, ObjektBedienung, TabellenBedienung, BlasenBed
     ZOOM_MIN, ZOOM_MAX = 0.1, 5.0
 
     def __init__(self, kennung: int, sitzung=None, parent=None):
-        """``kennung``: das Dokument im Framework. ``sitzung``: der Änderungsanschluss des Editors (``_aendern``, ``lesen``); eine reine Vorschau hat keinen."""
+        """``kennung``: das Dokument im Framework. ``sitzung``: der Änderungsanschluss des Editors (``aendern``, ``lesen``); eine reine Vorschau hat keinen."""
         super().__init__(parent)
         self.kennung = kennung
         self.sitzung = sitzung

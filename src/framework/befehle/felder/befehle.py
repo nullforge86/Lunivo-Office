@@ -3,18 +3,19 @@ from __future__ import annotations
 
 from framework.schnittstellen.aenderungs_port import AenderungsPort
 from core.dokument import formularfelder
+from framework.befehle.felder.formular import _geschuetzt
 
 
 def form_textfeld(editor: AenderungsPort, text: str = "Text eingeben") -> None:
-    editor.aendern(lambda sitzung: formularfelder.form_textfeld(sitzung, text))
+    editor.aendern(_geschuetzt(lambda sitzung: formularfelder.form_textfeld(sitzung, text)))
 
 
 def form_kasten(editor: AenderungsPort, beschriftung: str = "Auswahl") -> None:
-    editor.aendern(lambda sitzung: formularfelder.form_kasten(sitzung, beschriftung))
+    editor.aendern(_geschuetzt(lambda sitzung: formularfelder.form_kasten(sitzung, beschriftung)))
 
 
 def form_knopf(editor: AenderungsPort, aufschrift: str) -> None:
-    editor.aendern(lambda sitzung: formularfelder.form_knopf(sitzung, aufschrift))
+    editor.aendern(_geschuetzt(lambda sitzung: formularfelder.form_knopf(sitzung, aufschrift)))
 
 
 def kasten_umschalten(editor: AenderungsPort, pos: int) -> bool:
@@ -23,4 +24,4 @@ def kasten_umschalten(editor: AenderungsPort, pos: int) -> bool:
     if ziel is None:
         return False
     auswahl, neu = ziel
-    return editor.aendern(lambda sitzung: sitzung.ersetzen(neu, auswahl))
+    return editor.aendern(_geschuetzt(lambda sitzung: sitzung.ersetzen(neu, auswahl)))

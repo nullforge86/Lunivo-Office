@@ -70,8 +70,7 @@ vcl.qt.widgets.bausteine.symbole.piktogramme.piktogramme
 
 vcl.qt.widgets.dialoge.lesen_hilfe.hilfe_dialoge
 vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam
-vcl.qt.widgets.dialoge.optionen_seiten.lunivo 
-vcl.qt.widgets.dokumentansicht.ansicht.eingabe
+vcl.qt.widgets.dialoge.optionen_seiten.lunivo
 
 
 

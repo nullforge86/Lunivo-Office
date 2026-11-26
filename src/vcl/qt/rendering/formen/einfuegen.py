@@ -60,25 +60,15 @@ def deckblatt_einfuegen(ed, vorlage: str, titel: str, untertitel: str, autor: st
     zentriert = vorlage in ("Zentriert", "Mit Linie")
     teile = [(titel, 30, True, 120), (untertitel, 16, False, 6), ("", 12, False, 160), (autor, 13, False, 4), (datum, 12, False, 4)]
 
-    def f(s):
-        with s.gruppe("Deckblatt"):
-            anfang = s.dokument.anfang()
-            texte = [t[0] for t in teile]
-            s.text_einfuegen("\n".join(texte) + "\n\n", anfang)
-            absaetze = list(s.dokument.absaetze())
-            for (text, pt, fett, abstand), a in zip(teile, absaetze):
-                af = {"abstand_vor": abstand / 0.75, "ausrichtung": "mitte" if zentriert else "links"}
-                zf = {"groesse_pt": float(pt), "fett": True if fett else None}
-                if vorlage == "Farbband" and fett:                  # Titel weiß auf farbigem Band über die ganze Breite
-                    af.update(hintergrund=Farbe.AKZENT, abstand_nach=18 / 0.75)
-                    zf["farbe"] = Farbe.WEISS
-                s.absatzformat_anwenden(af, absatz_ids=[a.id])
-                if a.laenge:
-                    s.zeichenformat_anwenden(zf, Bereich(Stelle(a.id, 0), Stelle(a.id, a.laenge)))
-                s.absatz_zeichenformat_anwenden(zf, absatz_ids=[a.id])
-            s.absatzformat_anwenden({"seitenumbruch_nach": True}, absatz_ids=[absaetze[len(teile)].id])
-            s.setze_auswahl(Stelle(absaetze[len(teile)].id, 0))
-    ed.ansicht._aendern(f)
+    zeilen = []
+    for text, pt, fett, abstand in teile:
+        af = {"abstand_vor": abstand / 0.75, "ausrichtung": "mitte" if zentriert else "links"}
+        zf = {"groesse_pt": float(pt), "fett": True if fett else None}
+        if vorlage == "Farbband" and fett:                  # Titel weiß auf farbigem Band über die ganze Breite
+            af.update(hintergrund=Farbe.AKZENT, abstand_nach=18 / 0.75)
+            zf["farbe"] = Farbe.WEISS
+        zeilen.append((text, af, zf))
+    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_titelblatt_einfuegen(ed.kennung, zeilen))
 
 
 # ---- Text aus Datei ---------------------------------------------------------------------------------------------------------------
@@ -132,14 +122,10 @@ def initiale(ed, zeilen: int = 3) -> bool:
     if not a.text.strip():
         return False
     pt = _bearbeiten.absatz_schriftgroesse(ed.kennung) * zeilen * 1.4
-    return ed.ansicht._aendern(lambda sitz: sitz.zeichenformat_anwenden({"groesse_pt": pt, "fett": True}, Bereich(Stelle(a.id, 0), Stelle(a.id, 1))))
+    return ed.ansicht._befehl(lambda: _bearbeiten.aenderung_zeichenformat_anwenden(ed.kennung, {"groesse_pt": pt, "fett": True}, ((a.id, 0), (a.id, 1))))
 
 
 def textfeld(ed, text: str = "Text hier eingeben", breite: int = 50) -> None:
     """Ein Textfeld als einzellige Tabelle mit Rahmen."""
-    def f(sitz):
-        with sitz.gruppe("Textfeld"):
-            tid = sitz.tabelle_einfuegen(1, 1, format={"rahmen_breite": 1.5, "rahmen_farbe": Farbe.FORM_LINIE, "rahmen_art": "einfach", "zellpolster": 8.0,
-                                                       "breite_art": "prozent", "breite": float(breite)})
-            sitz.text_einfuegen(text, sitz.zelle_anfang(tid, 0, 0))
-    ed.ansicht._aendern(f)
+    form = {"rahmen_breite": 1.5, "rahmen_farbe": Farbe.FORM_LINIE, "rahmen_art": "einfach", "zellpolster": 8.0, "breite_art": "prozent", "breite": float(breite)}
+    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_textfeld_einfuegen(ed.kennung, text, form))

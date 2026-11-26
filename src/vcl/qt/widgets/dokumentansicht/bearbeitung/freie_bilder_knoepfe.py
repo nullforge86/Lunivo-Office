@@ -8,6 +8,7 @@ from __future__ import annotations
 from PySide6.QtGui import QColor
 
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 class FreieBilderKnoepfeMixin:
@@ -69,7 +70,7 @@ class FreieBilderKnoepfeMixin:
         """Der Absatz, an dem das Objekt hängt, bekommt Ausrichtung, Einzüge und Abstände zurück (das Objekt bleibt)."""
         o = self.objekt_gewaehlt()
         if o is not None:
-            self.ansicht._aendern(lambda s: s.absatzformat_anwenden({}, absatz_ids=[o.anker], ersetzen=True))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(self.kennung, {}, absatz_ids=[o.anker], ersetzen=True))
 
     def _frei_wirken(self, **teile) -> None:
         from vcl.qt.rendering import formen as BL

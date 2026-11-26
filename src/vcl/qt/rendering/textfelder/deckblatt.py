@@ -1,4 +1,6 @@
 from __future__ import annotations
+import dataclasses
+from writer.funktionen import bearbeiten as _bearbeiten
 import copy
 from PySide6.QtGui import QImage
 from writer.werte import Bereich, Stelle
@@ -38,20 +40,7 @@ def einfuegen(ed, name: str, quer: bool = False) -> None:
 
     felder = deckblatt_felder(name, bw, bh, quer, mm_to_px(deck.margin_top_mm), links_px, rechts_px)        # Lage und Schrift je Feld rechnet der Kern
 
-    def f(s):
-        with s.gruppe("Deckblatt"):
-            s.text_einfuegen("\n".join(text for text, _af, _zf in felder) + "\n", s.dokument.anfang(), format={})
-            absaetze = list(s.dokument.absaetze())
-            for (_text, af, zf), a in zip(felder, absaetze):
-                s.absatzformat_anwenden(af, absatz_ids=[a.id])
-                s.absatz_zeichenformat_anwenden(zf, absatz_ids=[a.id])
-                if a.laenge:
-                    s.zeichenformat_anwenden(zf, Bereich(Stelle(a.id, 0), Stelle(a.id, a.laenge)))
-            erster_rest = absaetze[len(felder)]                                   # der bisherige Anfang (die Id des ersten Absatzes bleibt beim Deckblatt)
-            s.abschnitt_einfuegen(Stelle(erster_rest.id, 0), "naechste", rest)    # das Dokument beginnt hinter dem Deckblatt auf einem neuen Blatt
-            s.seite_ersetzen(0, deck)
-            s.setze_auswahl(Stelle(absaetze[0].id, 0))
-    ed.ansicht._aendern(f)
+    ed.ansicht._befehl(lambda: _bearbeiten.aenderung_deckblatt_einfuegen(ed.kennung, felder, dataclasses.asdict(deck), dataclasses.asdict(rest)))
 
 
 def _bild_text(img: QImage) -> str:

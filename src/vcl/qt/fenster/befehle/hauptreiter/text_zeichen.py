@@ -8,6 +8,7 @@ from vcl.qt.rendering.formen import Linie  # noqa: F401
 from vcl.qt.widgets.bausteine import FarbPalette, RahmenMenue, RasterAuswahl  # noqa: F401
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe  # noqa: F401
 from vcl.qt.widgets.bausteine.farben import farben as BF  # noqa: F401
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 class TextZeichenBefehle:
@@ -324,7 +325,7 @@ class TextZeichenBefehle:
         if not w["text"]:
             return
         zeichen = {"umschlossen": Z.umschlossen_text(w["form"], w["vorlage"])}
-        self.ed.ansicht._aendern(lambda s: s.text_einfuegen(w["text"], format=zeichen))                # ersetzt die Auswahl, ein Schritt
+        self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_text_einfuegen(self.ed.kennung, w["text"], format=zeichen))                # ersetzt die Auswahl, ein Schritt
 
     def phonetischesLeitzeichen(self, k=None):
         """Das Fenster „Phonetisches Leitzeichen“: Leittext über dem gewählten Text."""
@@ -343,13 +344,7 @@ class TextZeichenBefehle:
             return
         teile = d.zeilen()
 
-        def schreiben(s):
-            with s.gruppe("Phonetisches Leitzeichen"):
-                if not s.auswahl.leer:
-                    s.loeschen()
-                for basis, ruby, wie in teile:
-                    s.text_einfuegen(basis, format={"ruby": Z.ruby_text(ruby, wie["ausrichtung"], wie["abstand"], wie["groesse"])})
-        self.ed.ansicht._aendern(schreiben)
+        self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_leittext_setzen(self.ed.kennung, teile))
 
     def _farbmenue(self, setzen, ohne_text, vorschau=None, **opt):
         """Die gemeinsame Farbpalette; ``setzen`` bekommt eine QColor oder None („keine“)."""

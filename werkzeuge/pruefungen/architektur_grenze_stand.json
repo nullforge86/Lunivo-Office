@@ -623,9 +623,6 @@
  "richtung:vcl_basis->filter": {
   "src/vcl/rendering/seitenlayout/pdf_ausgabe.py": 1
  },
- "richtung:vcl_qt->core": {
-  "src/vcl/qt/widgets/dokumentansicht/ansicht/eingabe.py": 1
- },
  "schnittstelle_auftrag": {
   "src/framework/ereignisse/ereignissteuerung.py": 1
  },

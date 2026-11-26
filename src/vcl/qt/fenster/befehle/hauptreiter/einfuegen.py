@@ -1,5 +1,6 @@
 """Befehle: Einfügen."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
@@ -568,7 +569,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         d = TrennerDialog(self.w, zu_tabelle=True, texte=texte)
         if d.exec():
-            self.ed.ansicht._aendern(lambda sitz: sitz.text_zu_tabelle(None, d.trenner(), d.spalten()))
+            self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_text_zu_tabelle(self.ed.kennung, d.trenner(), d.spalten()))
 
 
     def tabelleInText(self, k=None):
@@ -581,7 +582,7 @@ class EinfuegenBefehle(EinfuegenObjektBefehle):
             return
         d = TrennerDialog(self.w, zu_tabelle=False)
         if d.exec():
-            self.ed.ansicht._aendern(lambda sitz: sitz.tabelle_zu_text(t.id, d.trenner(), d.geschachtelt.isChecked()))
+            self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_zu_text(self.ed.kennung, t.id, d.trenner(), d.geschachtelt.isChecked()))
 
 
     def inhaltsverzeichnis(self, k=None):

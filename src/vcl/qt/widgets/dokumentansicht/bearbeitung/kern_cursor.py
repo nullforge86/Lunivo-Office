@@ -1,5 +1,6 @@
 """Kern cursor: aus ``vcl.qt.widgets.dokumentansicht.bearbeitung.kern_editor`` herausgelöst."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 class KernCursor:
@@ -138,12 +139,12 @@ class KernCursor:
     def insertText(self, text: str, _format=None) -> None:
         """Fügt Text an dieser Stelle ein (eine Auswahl wird ersetzt); ein übergebenes Qt-Format bedeutet: ohne Zeichenformat des Umfelds."""
         self._uebernehmen()
-        self._e.ansicht._aendern(lambda s: s.text_einfuegen(text, format={} if _format is not None else None))
+        self._e.ansicht._befehl(lambda: _bearbeiten.aenderung_text_einfuegen(self._e.kennung, text, format={} if _format is not None else None))
         self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
 
     def removeSelectedText(self) -> None:
         self._uebernehmen()
-        self._e.ansicht._aendern(lambda s: s.loeschen())
+        self._e.ansicht._befehl(lambda: _bearbeiten.aenderung_loeschen(self._e.kennung))
         self._anker = self._kopf = self._e.position_im_text(self._e.sitzung.auswahl.kopf)
 
     def beginEditBlock(self) -> None:

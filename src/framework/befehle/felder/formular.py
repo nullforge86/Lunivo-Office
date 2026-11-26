@@ -39,10 +39,23 @@ def meta(art: str, name: str = "", platzhalter: str = "", beschriftung: str = ""
                             aktion=aktion)
 
 
+def _geschuetzt(aenderung):
+    """Die Änderung für den Anschluss des Editors: ``True``, wenn sie ausgeführt ist; ``False``, wenn der Kern sie ablehnt."""
+    from core.bearbeitung import BearbeitungsFehler
+
+    def tat(sitzung) -> bool:
+        try:
+            aenderung(sitzung)
+        except BearbeitungsFehler:
+            return False
+        return True
+    return tat
+
+
 def einfuegen(editor: AenderungsPort, m: Feldbeschreibung, wert: str | None = None) -> bool:
     """Das Feld an der Schreibmarke (oder anstelle der Markierung) einfügen."""
     daten = _zum_kern(m)
-    return editor.aendern(lambda sitzung: modell.einfuegen(sitzung, daten, wert))
+    return editor.aendern(_geschuetzt(lambda sitzung: modell.einfuegen(sitzung, daten, wert)))
 
 
 def feld_an(editor: AenderungsPort, pos: int) -> FeldTreffer | None:
@@ -64,19 +77,19 @@ def wert_von(editor: AenderungsPort, v: int, e: int) -> str:
 def ersetzen(editor: AenderungsPort, v: int, e: int, m: Feldbeschreibung, text: str, leer: bool = False) -> bool:
     """Den Text des Feldes ersetzen (``leer``: er zeigt dann nur den Platzhalter)."""
     daten = _zum_kern(m)
-    return editor.aendern(lambda sitzung: modell.ersetzen(sitzung, v, e, daten, text, leer))
+    return editor.aendern(_geschuetzt(lambda sitzung: modell.ersetzen(sitzung, v, e, daten, text, leer)))
 
 
 def kasten_umschalten(editor: AenderungsPort, v: int, e: int, m: Feldbeschreibung) -> bool:
     """Das Kontrollkästchen zwischen leer und angekreuzt wechseln."""
     daten = _zum_kern(m)
-    return editor.aendern(lambda sitzung: modell.kasten_umschalten(sitzung, v, e, daten))
+    return editor.aendern(_geschuetzt(lambda sitzung: modell.kasten_umschalten(sitzung, v, e, daten)))
 
 
 def alle_zuruecksetzen(editor: AenderungsPort) -> int:
     """Alle Felder auf ihren Anfangswert zurücksetzen. → Zahl der zurückgesetzten Felder."""
     zaehler = [0]
-    editor.aendern(lambda sitzung: zaehler.__setitem__(0, modell.alle_zuruecksetzen(sitzung)))
+    editor.aendern(_geschuetzt(lambda sitzung: zaehler.__setitem__(0, modell.alle_zuruecksetzen(sitzung))))
     return zaehler[0]
 
 

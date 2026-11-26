@@ -1,5 +1,6 @@
 """Einfügen-Befehle für Illustrationen, Text, Symbole und Seiten."""
 from __future__ import annotations
+from writer.funktionen import bearbeiten as _bearbeiten
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
@@ -465,7 +466,7 @@ class EinfuegenObjektBefehle:
             b = bausteine.finde_kuerzel(m_.group(1)) if m_ else None
             if b is not None:
                 start = s.auswahl.kopf.versatz - len(m_.group(1))
-                self.ed.ansicht._aendern(lambda sitz: sitz.loeschen(Bereich(Stelle(a.id, start), s.auswahl.kopf)))
+                self.ed.ansicht._befehl(lambda: _bearbeiten.aenderung_loeschen_von(self.ed.kennung, (a.id, start)))
                 self.ed.ansicht._befehl(lambda: bausteine.einfuegen(self.ed.kennung, b))
                 return
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe

@@ -47,14 +47,7 @@ class KernBefehle:
 
     def format_uebertragen(self, probe: dict) -> None:
         """Das aufgenommene Format auf die Auswahl legen (Zeichen) — bei leerer Auswahl auf den Absatz."""
-        def f(s):
-            with s.gruppe("Format übertragen"):
-                alle = {k: probe["zeichen"].get(k) for k in ("schrift", "groesse_pt", "fett", "kursiv", "unterstrichen", "durchgestrichen", "farbe", "marker",
-                                                              "hoch_tief", "kapitaelchen", "grossbuchstaben", "zeichenabstand", "effekt")}
-                s.zeichenformat_anwenden(alle)
-                if s.auswahl.leer:
-                    s.absatzformat_anwenden({k: v for k, v in probe["absatz"].items() if k not in ("seitenumbruch_vor", "seitenumbruch_nach")}, ersetzen=True)
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_format_uebertragen(self.kennung, probe["zeichen"], probe["absatz"]))
 
     # ---- Absatz ----------------------------------------------------------------------------------------------------------------------------
     def set_indents(self, links_mm: float, rechts_mm: float, erste_mm: float) -> None:
@@ -85,7 +78,7 @@ class KernBefehle:
         return round(px_to_mm(_bearbeiten.tab_abstand(self.kennung)), 2)
 
     def set_standard_tab_mm(self, mm: float) -> None:
-        self.ansicht._aendern(lambda s: s.eigenschaft_setzen("tab_abstand", mm_to_px(mm)))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_eigenschaft_setzen(self.kennung, "tab_abstand", mm_to_px(mm)))
 
     def toggle_rtl(self) -> None:
         a = _bearbeiten.wirksames_absatzformat(self.kennung)
@@ -115,13 +108,13 @@ class KernBefehle:
     def set_liste(self, spec) -> None:
         """Wendet die Liste auf die Absätze der Auswahl an (``None``: Liste entfernen). Folgt sie unmittelbar auf eine gleiche Liste, zählt sie weiter."""
         if not spec:
-            self.ansicht._aendern(lambda s: s.liste_entfernen())
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_liste_entfernen(self.kennung))
             return
         self.ansicht._befehl(lambda: _bearbeiten.liste_setzen(self.kennung, spec))
 
     def liste_neu_beginnen(self, start: int = 1) -> None:
         a = self._absatz_an_marke()
-        self.ansicht._aendern(lambda s: s.liste_neu_beginnen(a.id, start))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_liste_neu_beginnen(self.kennung, a.id, start))
 
     # ---- Formatvorlagen -----------------------------------------------------------------------------------------------------------------
     def stil_aus_auswahl(self) -> dict:
@@ -139,7 +132,7 @@ class KernBefehle:
 
     def stil_entfernen(self, name: str) -> None:
         if name in self.sitzung.dokument.vorlagen:
-            self.ansicht._aendern(lambda s: s.vorlage_loeschen(name))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_vorlage_loeschen(self.kennung, name))
 
     def stil_tasten(self) -> None:
         """Tastenkombinationen der Formatvorlagen (``taste`` im Katalog) auf der Zeichenfläche setzen."""
@@ -159,34 +152,23 @@ class KernBefehle:
     # ---- Abschnitte -------------------------------------------------------------------------------------------------------------------------
     def apply_design(self, text_schrift: str | None, kopf_schrift: str | None, farbe: str | None) -> None:
         """Dokumentdesign (Entwurf ▸ Design): Schrift des Fließtextes, Schrift und Farbe der Überschriften — über die Formatvorlagen des Dokuments."""
-        def f(s):
-            with s.gruppe("Design"):
-                for name, v in list(s.dokument.vorlagen.items()):
-                    z = dict(v.zeichen)
-                    if v.ebene > 0:
-                        if kopf_schrift:
-                            z["schrift"] = kopf_schrift
-                        if farbe:
-                            z["farbe"] = farbe
-                    elif text_schrift and name == "Standard":
-                        z["schrift"] = text_schrift
-                    if z != v.zeichen:
-                        s.vorlage_setzen(dataclasses.replace(v, zeichen=z))
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_design_anwenden(self.kennung, text_schrift, kopf_schrift, farbe))
 
     def abschnitt_einfuegen(self, art: str = "naechste") -> int:
         nr = [0]
 
-        def f(s):
-            nr[0] = s.abschnitt_einfuegen(beginn=art)
-        self.ansicht._aendern(f)
+        def f() -> bool:
+            neu = _bearbeiten.aenderung_abschnitt_einfuegen(self.kennung, art)
+            nr[0] = neu if neu is not None else 0
+            return neu is not None
+        self.ansicht._befehl(f)
         return nr[0]
 
     def abschnitt_entfernen(self) -> bool:
         n = self.abschnitt_nr()
         if n < 1:
             return False
-        return self.ansicht._aendern(lambda s: s.abschnitt_entfernen(n, "vorher"))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_abschnitt_entfernen(self.kennung, n, "vorher"))
 
     def abschnitt_gehe(self, n: int) -> None:
         d = self.sitzung.dokument
@@ -203,19 +185,11 @@ class KernBefehle:
     # ---- Verknüpfung ---------------------------------------------------------------------------------------------------------------------
     def insert_link(self, href: str, text: str | None = None, tipp: str = "") -> None:
         """Verknüpfung auf die Auswahl; ohne Auswahl und mit ``text`` wird der Text eingefügt, sonst gilt sie für das Wort an der Schreibmarke."""
-        def f(s):
-            with s.gruppe("Hyperlink"):
-                if s.auswahl.leer and text:
-                    s.link_setzen(href, None, text)
-                else:
-                    s.link_setzen(href)
-                if tipp:
-                    s.zeichenformat_anwenden({"tooltip": tipp}, s.auswahl if not s.auswahl.leer else None)
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_link_setzen(self.kennung, href, text, tipp))
 
     # ---- Noten -------------------------------------------------------------------------------------------------------------------------------
     def note_loeschen(self, art: str, note_id: int) -> None:
-        self.ansicht._aendern(lambda s: s.note_loeschen(art, note_id))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_note_loeschen(self.kennung, art, note_id))
 
     # ---- Ersetzen im Rohtext ---------------------------------------------------------------------------------------------------------------
     def rohtext(self) -> str:
@@ -240,32 +214,11 @@ class KernBefehle:
             if b["vorlage"]:
                 self._vorlage_abgleichen(b["vorlage"])
 
-        def f(s):
-            with s.gruppe("Ersetzen"):
-                ende = s.ersetzen_durch(von, bis, "\u2029".join(b["text"] for b in bloecke), None, None)
-                absaetze = list(s.dokument.absaetze())
-                letzter = next(k for k, a in enumerate(absaetze) if a.id == ende.absatz_id)
-                ziele = absaetze[letzter - len(bloecke) + 1:letzter + 1]
-                for k, (b, a) in enumerate(zip(bloecke, ziele)):
-                    basis = anfang.versatz if k == 0 and a.id == anfang.absatz_id else 0
-                    if b["vorlage"] and basis == 0:
-                        s.vorlage_anwenden(b["vorlage"], absatz_ids=[a.id])
-                    if b["liste"] and basis == 0:
-                        s.liste_anwenden(s.liste_anlegen(b["liste"]), absatz_ids=[a.id])
-                    for st, en, fmt in b["laeufe"]:
-                        s.zeichenformat_anwenden(fmt, Bereich(Stelle(a.id, basis + st), Stelle(a.id, basis + en)))
-        return self.ansicht._aendern(f)
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_markdown_ersetzen(self.kennung, von, bis, bloecke, (anfang.absatz_id, anfang.versatz)))
 
     def ersetze_verfolgt(self, von: int, bis: int, neu: str, autor: str = "") -> bool:
         """Wie ``replace_range``, aber als nachverfolgte Änderung des Bearbeiters ``autor``."""
-        s = self.sitzung
-        vorher = (s.nachverfolgen, getattr(s, "autor", ""))
-        s.nachverfolgen = True
-        try:
-            ok = self.ansicht._aendern(lambda sitz: (setattr(sitz, "autor", autor or sitz.autor), sitz.ersetzen_durch(von, bis, neu, None, None)))
-        finally:
-            s.nachverfolgen = vorher[0]
-        return ok
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_ersetzen_verfolgt(self.kennung, von, bis, neu, autor))
 
     # ---- Tabellen: Gestaltung ---------------------------------------------------------------------------------------------------------------
     def _zellen_der_auswahl(self):
@@ -322,30 +275,8 @@ class KernBefehle:
         t = self.tabelle_an_marke()
         if t is None or name not in _tabellenstil.vorlagen():
             return False
-        kopf_fill, kopf_schrift, streifen_fill, rahmen = _tabellenstil.vorlagen()[name]
         tid = t.id
-
-        def f(s):
-            with s.gruppe("Tabellenformatvorlage"):
-                tab = s._tabelle(tid)
-                s.tabellenformat_anwenden(tid, {"vorlage": name, "optionen": (1 if kopf else 0) | (2 if streifen else 0) | (4 if spalte else 0) or None,
-                                                "kopfzeilen": 1 if kopf else None, "rahmen_breite": 1.0 if rahmen else None,
-                                                "rahmen_farbe": TABELLENRAND_STANDARD if rahmen else None, "rahmen_art": "einfach" if rahmen else None})
-                for z in range(tab.zeilen):
-                    for sp in range(tab.spalten):
-                        zelle = tab.zellen[z][sp]
-                        if zelle.verdeckt_von is not None:
-                            continue
-                        grund = _tabellenstil.zeilengrund(z, kopf, kopf_fill, streifen_fill if streifen else "") or None
-                        s.zellformat_anwenden(tid, {"hintergrund": grund}, [(z, sp)])
-                        ist_kopf = kopf and z == 0
-                        fett = ist_kopf or (spalte and sp == 0)
-                        ids = self._absaetze_der_zelle(zelle)
-                        if ids and (fett or sp == 0 or z == 0):
-                            farbe = kopf_schrift if ist_kopf and kopf_fill else None
-                            ende = s._absatz(ids[-1]).laenge
-                            s.zeichenformat_anwenden({"fett": True if fett else None, "farbe": farbe}, Bereich(Stelle(ids[0], 0), Stelle(ids[-1], ende)))
-        return self.ansicht._aendern(f)
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabellenvorlage_anwenden(self.kennung, tid, name, kopf, streifen, spalte, TABELLENRAND_STANDARD))
 
     def tabelle_option_umschalten(self, schluessel: str) -> None:
         o = self.tabelle_optionen()
@@ -364,7 +295,7 @@ class KernBefehle:
         if r is None:
             return False
         ids = [i for z, s in r[1] for i in self._absaetze_der_zelle(r[0].zellen[z][s])]
-        return bool(ids) and self.ansicht._aendern(lambda s: s.absatzformat_anwenden({"ausrichtung": ausrichtung}, absatz_ids=ids))
+        return bool(ids) and self.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(self.kennung, {"ausrichtung": ausrichtung}, absatz_ids=ids))
 
     def zell_richtung(self, richtung: str) -> bool:
         r = self._zellen_der_auswahl()
@@ -372,12 +303,7 @@ class KernBefehle:
             return False
         ids = [i for z, s in r[1] for i in self._absaetze_der_zelle(r[0].zellen[z][s])]
 
-        def f(s):
-            with s.gruppe("Textrichtung"):
-                s.zellformat_anwenden(r[0].id, {"textrichtung": richtung}, r[1])
-                if ids:
-                    s.absatzformat_anwenden({"richtung": richtung}, absatz_ids=ids)
-        return self.ansicht._aendern(f)
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_zell_richtung(self.kennung, r[0].id, r[1], ids, richtung))
 
     def tabelle_gitternetz_an(self) -> bool:
         t = self.tabelle_an_marke()
@@ -390,7 +316,7 @@ class KernBefehle:
         an = not self.tabelle_gitternetz_an()
         kante = f"{GITTER_FARBE}|0.75|gestrichelt" if an else None
         alle = [(z, s) for z in range(t.tabelle.zeilen) for s in range(t.tabelle.spalten) if t.tabelle.zellen[z][s].verdeckt_von is None]
-        return self.ansicht._aendern(lambda s: s.zellformat_anwenden(t.id, {f"rahmen_{k}": kante for k in ("oben", "unten", "links", "rechts")}, alle))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_zellformat_anwenden(self.kennung, t.id, {f"rahmen_{k}": kante for k in ("oben", "unten", "links", "rechts")}, alle))
 
     def zellmasse(self):
         """(Breite, Höhe) der Zelle an der Schreibmarke in Bildpunkten, wie sie das Layout setzt; ``None`` außerhalb einer Tabelle."""
@@ -410,13 +336,13 @@ class KernBefehle:
         sp = t.tabelle.anker(t.zeile, t.spalte)[1]
         breiten = self._spaltenbreiten_gemessen(t)
         breiten[sp] = mm_to_px(mm)
-        return self.ansicht._aendern(lambda s: s.spaltenbreiten_setzen(t.id, breiten))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_spaltenbreiten_setzen(self.kennung, t.id, breiten))
 
     def zeile_hoehe_setzen(self, mm: float) -> bool:
         t = self.tabelle_an_marke()
         if t is None or mm <= 0:
             return False
-        return self.ansicht._aendern(lambda s: s.zeilenhoehen_setzen(t.id, {t.tabelle.anker(t.zeile, t.spalte)[0]: mm_to_px(mm)}))
+        return self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeilenhoehen_setzen(self.kennung, t.id, {t.tabelle.anker(t.zeile, t.spalte)[0]: mm_to_px(mm)}))
 
     def _spaltenbreiten_gemessen(self, t) -> list:
         """Breiten aller Spalten: die gesetzten, sonst die vom Layout gemessenen."""
@@ -437,21 +363,20 @@ class KernBefehle:
             return False
         n = t.tabelle.spalten
         if art == "inhalt":
-            return self.ansicht._aendern(lambda s: (s.spaltenbreiten_setzen(t.id, [0.0] * n), s.zeilenhoehen_setzen(t.id, [0.0] * t.tabelle.zeilen),
-                                                    s.tabellenformat_anwenden(t.id, {"breite_art": "auto", "breite": None})))
+            return self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_an_inhalt(self.kennung, t.id, n, t.tabelle.zeilen))
         if art == "fenster":
             breite = self.page.content_width_px
-            return self.ansicht._aendern(lambda s: (s.spaltenbreiten_setzen(t.id, [breite / n] * n), s.tabellenformat_anwenden(t.id, {"breite_art": "prozent", "breite": 100.0})))
+            return self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_an_fenster(self.kennung, t.id, n, breite))
         if art == "spalten_gleich":
             breiten = self._spaltenbreiten_gemessen(t)
-            return self.ansicht._aendern(lambda s: s.spaltenbreiten_setzen(t.id, [sum(breiten) / n] * n))
+            return self.ansicht._befehl(lambda: _bearbeiten.aenderung_spaltenbreiten_setzen(self.kennung, t.id, [sum(breiten) / n] * n))
         if art == "zeilen_gleich":
             hoehen = [p.rect.height for seite in self.ansicht.ergebnis().seiten for p in seite.plaetze
                       if p.art == "zelle" and p.block_id == t.id and not p.kopie and p.spalte == 0]
-            return bool(hoehen) and self.ansicht._aendern(lambda s: s.zeilen_gleich(t.id, max(hoehen)))
+            return bool(hoehen) and self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeilen_gleich(self.kennung, t.id, max(hoehen)))
         if art == "fest":
             breiten = self._spaltenbreiten_gemessen(t)
-            return self.ansicht._aendern(lambda s: s.spaltenbreiten_setzen(t.id, breiten))
+            return self.ansicht._befehl(lambda: _bearbeiten.aenderung_spaltenbreiten_setzen(self.kennung, t.id, breiten))
         return False
 
     # ---- Menüs, Minileiste, Verknüpfungen ---------------------------------------------------------------------------------------------------
@@ -528,11 +453,11 @@ class KernBefehle:
     def tabelle_maus_aendern(self, art: str, tid: int, wert) -> None:
         t = self.sitzung._tabelle(tid)
         if art == "spalte_plus":
-            self.ansicht._aendern(lambda s: s.spalten_einfuegen(tid, t.spalten))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_spalten_einfuegen(self.kennung, tid, t.spalten))
         elif art == "zeile_plus":
-            self.ansicht._aendern(lambda s: s.zeilen_einfuegen(tid, t.zeilen))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeilen_einfuegen(self.kennung, tid, t.zeilen))
         elif art == "skalieren":
-            self.ansicht._aendern(lambda s: s.tabelle_skalieren(tid, wert[0], wert[1]))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_skalieren(self.kennung, tid, wert[0], wert[1]))
         elif art == "spalte":                               # Rand rechts der Spalte ``index`` um ``delta`` verschieben: die Nachbarspalte gibt ab oder bekommt
             index, delta = wert
             breiten = self._spaltenbreiten_gemessen(self.tabelle_an_marke() if self.tabelle_an_marke() and self.tabelle_an_marke().id == tid else _TabellenRef(t))
@@ -542,11 +467,11 @@ class KernBefehle:
                 breiten[index + 1] -= delta
             else:
                 breiten[index] = max(12.0, breiten[index] + delta)
-            self.ansicht._aendern(lambda s: s.spaltenbreiten_setzen(tid, breiten))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_spaltenbreiten_setzen(self.kennung, tid, breiten))
         elif art == "zeile":
             index, delta = wert
             aktuell = t.zeilenhoehen[index] or self._zeilenhoehe_gemessen(tid, index)
-            self.ansicht._aendern(lambda s: s.zeilenhoehen_setzen(tid, {index: max(8.0, aktuell + delta)}))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeilenhoehen_setzen(self.kennung, tid, {index: max(8.0, aktuell + delta)}))
 
     def _zeilenhoehe_gemessen(self, tid: int, zeile: int) -> float:
         for seite in self.ansicht.ergebnis().seiten:
@@ -557,11 +482,7 @@ class KernBefehle:
 
     def tabelle_zeichnen_an(self, stelle, zeilen: int, spalten: int) -> None:
         """Tabelle mit dem Stift gezeichnet: sie entsteht an der Stelle, an der das Ziehen begann."""
-        def f(s):
-            with s.gruppe("Tabelle zeichnen"):
-                s.setze_auswahl(stelle)
-                s.tabelle_einfuegen(zeilen, spalten)
-        self.ansicht._aendern(f)
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_einfuegen(self.kennung, zeilen, spalten, None, (stelle[0], stelle[1])))
 
     def tabelle_zellen_vereinen(self, tid: int, a: tuple, b: tuple) -> None:
         """Radiergummi: die Zellen ``a`` und ``b`` (Anker) werden zu einer Zelle verbunden, wenn sie ein Rechteck bilden."""
@@ -573,7 +494,7 @@ class KernBefehle:
         flaeche = za.zeilenspanne * za.spaltenspanne + zb.zeilenspanne * zb.spaltenspanne
         if flaeche != (z2 - z1) * (s2 - s1):
             return
-        self.ansicht._aendern(lambda s: s.zellen_verbinden(tid, z1, s1, z2 - z1, s2 - s1))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_zellen_verbinden(self.kennung, tid, z1, s1, z2 - z1, s2 - s1))
 
 
     # ---- Quellen, Zitierweise, Seitenzahlen ------------------------------------------------------------------------------------------
@@ -588,13 +509,13 @@ class KernBefehle:
 
     @zitierweise.setter
     def zitierweise(self, name: str) -> None:
-        self.ansicht._aendern(lambda s: s.eigenschaft_setzen("zitierweise", name))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_eigenschaft_setzen(self.kennung, "zitierweise", name))
 
     def quelle_hinzufuegen(self, q: dict) -> None:
-        self.ansicht._aendern(lambda s: s.quelle_setzen(q))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_quelle_setzen(self.kennung, q))
 
     def quelle_entfernen(self, tag: str) -> None:
-        self.ansicht._aendern(lambda s: s.quelle_loeschen(tag))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_quelle_loeschen(self.kennung, tag))
 
     def seiten_von(self, offsets: list) -> list:
         """Die angezeigten Seitenzahlen der Stellen im Rohtext (``"?"``, wenn eine Stelle nirgends steht)."""
@@ -619,7 +540,7 @@ class KernBefehle:
         return self.sitzung.dokument.abschnitte[n].seite.copy()
 
     def abschnitt_seite_setzen(self, nr: int, seite) -> None:
-        self.ansicht._aendern(lambda s: s.seite_ersetzen(nr, seite))
+        self._seite_ersetzen(nr, seite)
         self.pageApplied.emit()
 
     def abschnitte_anzahl(self) -> int:
@@ -629,7 +550,7 @@ class KernBefehle:
         return self.sitzung.dokument.abschnitte[nr].beginn
 
     def abschnitt_beginn_setzen(self, nr: int, art: str) -> None:
-        self.ansicht._aendern(lambda s: s.abschnitt_beginn_setzen(nr, art))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_abschnitt_beginn_setzen(self.kennung, nr, art))
 
     def seitenzahl_anwenden(self, w: dict) -> None:
         """Seitenzahl nach den Werten des Fensters: für das ganze Dokument, ab der aktuellen Seite (neuer Abschnitt) oder den aktuellen Abschnitt."""
@@ -661,26 +582,18 @@ class KernBefehle:
         einrichtung = self.abschnitt_seite()
         eigene = quer is not None and bool(quer) != einrichtung.landscape
 
-        def f(s):
-            with s.gruppe("Leere Seite"):
-                letzter = self.seite_letzter_block()
-                absaetze = list(s.dokument.absaetze())
-                nach = next((absaetze[i + 1] for i, a in enumerate(absaetze) if a.id == letzter.id and i + 1 < len(absaetze)), None)
-                neu = s.absatz_teilen(Stelle(letzter.id, letzter.laenge))
-                s.absatzformat_anwenden({"seitenumbruch_vor": True, "seitenumbruch_nach": True}, absatz_ids=[neu.absatz_id])
-                if eigene:
-                    blatt = einrichtung.copy()
-                    blatt.set_orientation(bool(quer))
-                    s.abschnitt_einfuegen(Stelle(neu.absatz_id, 0), "naechste", blatt)
-                    if nach is not None:
-                        s.abschnitt_einfuegen(Stelle(nach.id, 0), "naechste", einrichtung)
-                s.setze_auswahl(Stelle(neu.absatz_id, 0))
-        self.ansicht._aendern(f)
+        letzter = self.seite_letzter_block().id
+        blatt = None
+        if eigene:
+            blatt = einrichtung.copy()
+            blatt.set_orientation(bool(quer))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_leere_seite(self.kennung, letzter, None if blatt is None else dataclasses.asdict(blatt),
+                                                                       dataclasses.asdict(einrichtung)))
 
 
     def note_text_setzen(self, art: str, note_id: int, text: str) -> None:
         """Ändert den Text einer Fuß- oder Endnote (tippt das Feld „Noten“, ein Rückgängig-Schritt je Pause)."""
-        self.ansicht._aendern(lambda s: s.note_aendern(art, note_id, text))
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_note_aendern(self.kennung, art, note_id, text))
         self.zusatzGeaendert.emit()
 
 

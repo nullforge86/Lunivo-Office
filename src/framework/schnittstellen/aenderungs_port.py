@@ -10,7 +10,8 @@ from typing import Protocol
 
 class AenderungsPort(Protocol):
     def aendern(self, aenderung: Callable[[object], object]) -> bool:
-        """Führt ``aenderung(sitzung)`` als eine Änderung des Dokuments aus (Rückgängig-Schritt, Neuzeichnen); ``False``, wenn sie abgelehnt wird."""
+        """Führt ``aenderung(sitzung)`` als eine Änderung des Dokuments aus (Rückgängig-Schritt, Neuzeichnen). Die Änderung fängt Ablehnungen des
+        Kerns selbst ab und gibt dann ``False`` zurück; ``aendern`` reicht das als ``False`` weiter."""
 
     def lesen(self, abfrage: Callable[[object], object]):
         """Gibt ``abfrage(sitzung)`` zurück, ohne das Dokument zu ändern."""

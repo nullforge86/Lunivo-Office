@@ -7,6 +7,7 @@ from vcl.qt.widgets.dialoge.dokument.eingabe_fenster import EingabeFenster
 from PySide6.QtWidgets import QMenu
 from writer.anbindung import ansicht_einstellungen as ansicht_einstellungen
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
+from writer.funktionen import bearbeiten as _bearbeiten
 
 
 _UNVERAENDERT = object()
@@ -395,7 +396,7 @@ class SeiteBefehle:
         e = self.ed
         if e.sitzung.auswahl.leer:                                   # ohne Markierung: ganzes Dokument
             ids = [a.id for a in e.sitzung.dokument.absaetze()]
-            e.ansicht._aendern(lambda s: s.absatzformat_anwenden({"abstand_vor": vor / 0.75 or None, "abstand_nach": nach / 0.75 or None}, absatz_ids=ids))
+            e.ansicht._befehl(lambda: _bearbeiten.aenderung_absatzformat_anwenden(e.kennung, {"abstand_vor": vor / 0.75 or None, "abstand_nach": nach / 0.75 or None}, absatz_ids=ids))
         else:
             e.set_paragraph_spacing(vor, nach)
 
