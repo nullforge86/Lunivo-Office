@@ -142,8 +142,13 @@ def aenderung_tabelle_sortieren(kennung, tabellen_id, spalte, aufsteigend=True):
     return _befehle.aenderung_tabelle_sortieren(kennung, tabellen_id, spalte, aufsteigend)
 
 
-def aenderung_tabelle_skalieren(kennung, tabellen_id, faktor_breite, faktor_hoehe):
-    return _befehle.aenderung_tabelle_skalieren(kennung, tabellen_id, faktor_breite, faktor_hoehe)
+def aenderung_tabelle_frei_setzen(kennung, tabellen_id, x, y, vor_absatz_id=None):
+    """Die Tabelle frei platzieren (obere linke Ecke ab der oberen linken Ecke des Satzspiegels); ihr Anker wandert vor den Absatz ``vor_absatz_id``."""
+    return _befehle.aenderung_tabelle_frei_setzen(kennung, tabellen_id, x, y, vor_absatz_id)
+
+
+def aenderung_tabelle_skalieren(kennung, tabellen_id, faktor_breite, faktor_hoehe, breiten=(), hoehen=()):
+    return _befehle.aenderung_tabelle_skalieren(kennung, tabellen_id, faktor_breite, faktor_hoehe, breiten, hoehen)
 
 
 def aenderung_tabellenformat_anwenden(kennung, tabellen_id, aenderung):

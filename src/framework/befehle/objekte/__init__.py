@@ -61,6 +61,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "reflektion_vorgaben": ("wordart", "reflektion_vorgaben"),
     "schatten_vorgaben": ("wordart", "schatten_vorgaben"),
     "strich_schluessel": ("diagrammformat", "strich_schluessel"),
+    "ganze_tabelle_gewaehlt": ("tabellenzustand", "ganze_tabelle_gewaehlt"),
     "tabellen_zustand": ("tabellenzustand", "tabellen_zustand"),
     "tabellenmodus": ("tabellenzustand", "tabellenmodus"),
     "text_aus_knoten": ("smartart", "text_aus_knoten"),

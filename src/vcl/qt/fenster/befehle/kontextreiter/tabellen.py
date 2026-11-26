@@ -80,6 +80,14 @@ class TabellenBefehle:
         if not e.tabelle_teilen():
             self.w.lbl_msg.setText("Die Schreibmarke muss unterhalb der ersten Zeile stehen, damit die Tabelle geteilt werden kann.")
 
+    def tabelleImFluss(self, k=None):
+        """Eine frei platzierte (am Verschiebegriff versetzte) Tabelle wieder in den Textfluss setzen."""
+        e, c, t = self._tab()
+        if not t:
+            return
+        if not e.tabelle_in_textfluss():
+            self.w.lbl_msg.setText("Die Tabelle steht bereits im Textfluss.")
+
     def tabelleEigenschaften(self, k=None):
         e, c, t = self._tab()
         if not t:

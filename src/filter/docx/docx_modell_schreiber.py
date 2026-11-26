@@ -26,6 +26,7 @@ from core.dokument.abschnitte.seite import HeaderFooter, PageSettings
 PT_JE_PX = 0.75
 EMU_JE_PX = 9525
 TWIP_JE_PX = 15
+TWIP_FREIE_TABELLE = 120              # Abstand zwischen einer frei platzierten Tabelle und dem Text daneben (8 px, wie ``FREIE_TABELLE_ABSTAND`` im Layout)
 
 _STIL = {"Standard": "Normal", "Titel": "Title", "Untertitel": "Subtitle", "Zitat": "Quote", "Kein Abstand": "No Spacing",
          **{f"Überschrift {n}": f"Heading {n}" for n in range(1, 10)}}
@@ -1057,7 +1058,7 @@ class _Schreiber:
         f = t.format
         for k in f:
             if k not in {"rahmen_breite", "rahmen_farbe", "rahmen_art", "kopfzeilen", "zeilenhoehe_exakt", "zellabstand", "zellpolster", "breite", "breite_art", "alt_text", "alt_titel", "vorlage",
-                         "docx_roh", "docx_roh_zeilen"}:
+                         "frei_x", "frei_y", "docx_roh", "docx_roh_zeilen"}:
                 raise _Nicht(f"Tabellenformat {k}")
         tpr = tab._tbl.tblPr
         if f.get("vorlage") and self._tabellenstil(str(f["vorlage"])):
@@ -1076,8 +1077,17 @@ class _Schreiber:
             beschr = OxmlElement("w:tblDescription")
             beschr.set(qn("w:val"), str(f["alt_text"]))
             _einfuegen(tpr, beschr, ("w:tblPrChange",))
-        if f.get(E.ROH):
-            E.einsetzen(tpr, f[E.ROH], "tblPr")
+        frei = "frei_x" in f or "frei_y" in f
+        roh = [x for x in f.get(E.ROH) or () if not (frei and "tblpPr" in x)]             # die Lage aus dem Modell ersetzt eine erhaltene Lage der Datei
+        if roh:
+            E.einsetzen(tpr, roh, "tblPr")
+        if frei:                                                                           # frei platzierte Tabelle: Lage ab dem Satzspiegel, der Text läuft darum herum
+            lage = OxmlElement("w:tblpPr")
+            for name, wert in (("leftFromText", TWIP_FREIE_TABELLE), ("rightFromText", TWIP_FREIE_TABELLE), ("vertAnchor", "margin"), ("horzAnchor", "margin"),
+                               ("tblpX", round(float(f.get("frei_x") or 0.0) * TWIP_JE_PX)), ("tblpY", round(float(f.get("frei_y") or 0.0) * TWIP_JE_PX))):
+                lage.set(qn(f"w:{name}"), str(wert))
+            tpr.append(lage)
+            E.ordnen(tpr, "tblPr")
         if t.spaltenbreiten and len(t.spaltenbreiten) == spalten and all(b > 0 for b in t.spaltenbreiten):
             breiten = [float(b) for b in t.spaltenbreiten]
         else:

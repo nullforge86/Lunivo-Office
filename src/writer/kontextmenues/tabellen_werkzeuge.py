@@ -11,6 +11,7 @@ TABELLENTOOLS = {"name": "Tabellentools", "kontext": "tabelle", "gruppen": [
         _k("tabelleGitternetz", "Gitternetzlinien anzeigen", "tabelleGitternetz", haken=True, text=True),
         _k("tabelleZeichnen", "Tabelle zeichnen", "tabelleZeichnen", text=True),
         _k("tabelleRadierer", "Radiergummi", "tabelleRadierer", text=True),
+        _k("umbruch", "In den Textfluss", "tabelleImFluss", text=True),
         _k("tabelleLoeschen", "Löschen", klappe="tabelleLoeschenAktionen", gross=True)]},
     {"name": "Zeilen und Spalten", "reihenfolge": True, "knoepfe": [        # je ein Knopf mit den beiden Einfügeseiten im Menü (statt vier Einzelknöpfen)
         _k("tabelleZeileUnten", "Zeile einfügen", gross=True, menue=[

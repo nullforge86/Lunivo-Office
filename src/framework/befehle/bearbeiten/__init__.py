@@ -103,6 +103,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "aenderung_tabelle_loeschen": ("aenderungen", "tabelle_loeschen"),
     "aenderung_tabelle_sortieren": ("aenderungen", "tabelle_sortieren"),
     "aenderung_tabelle_skalieren": ("aenderungen", "tabelle_skalieren"),
+    "aenderung_tabelle_frei_setzen": ("aenderungen", "tabelle_frei_setzen"),
     "aenderung_tabellenformat_anwenden": ("aenderungen", "tabellenformat_anwenden"),
     "aenderung_zellformat_anwenden": ("aenderungen", "zellformat_anwenden"),
     "aenderung_zell_richtung": ("aenderungen", "zell_richtung"),

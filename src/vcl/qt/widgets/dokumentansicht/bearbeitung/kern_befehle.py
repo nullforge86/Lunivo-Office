@@ -19,7 +19,7 @@ from writer.anbindung import formatwerte as _formatwerte
 
 PUNKTE = ("disc", "circle", "square")
 ZAHLEN_TIEFER = ("dezimal", "klein", "roem_klein")
-from vcl.qt.widgets.bausteine.farben.farben import GITTER_FARBE, TABELLENRAND_STANDARD  # noqa: E402
+from vcl.qt.widgets.bausteine.farben.farben import GITTER_FARBE, TABELLENRAND_SCHWARZ, TABELLENRAND_STANDARD  # noqa: E402
 
 
 from writer.anbindung.ki_markdown import markdown_bloecke  # noqa: E402,F401  (Qt-freie Zerlegung, hier weiter erreichbar)
@@ -242,6 +242,15 @@ class KernBefehle:
         t = self.tabelle_an_marke()
         return t is not None and float(t.tabelle.format.get("rahmen_breite") or 0) > 0
 
+    def tabelle_ist_frei(self) -> bool:
+        """Ob die Tabelle an der Schreibmarke frei platziert ist (am Verschiebegriff versetzt)."""
+        t = self.tabelle_an_marke()
+        return t is not None and ("frei_x" in t.tabelle.format or "frei_y" in t.tabelle.format)
+
+    def tabelle_in_textfluss(self) -> bool:
+        """Die frei platzierte Tabelle steht wieder im Textfluss, an der Stelle ihres Ankers."""
+        return self.tabelle_ist_frei() and self.tabellenformat({"frei_x": None, "frei_y": None})
+
     def tabelle_rahmen_linie(self, linie) -> bool:
         """Rahmen der Tabelle aus einer ``Linie`` (``None`` = ohne Rahmen)."""
         if linie is None:
@@ -452,8 +461,17 @@ class KernBefehle:
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_spalten_einfuegen(self.kennung, tid, t.spalten))
         elif art == "zeile_plus":
             self.ansicht._befehl(lambda: _bearbeiten.aenderung_zeilen_einfuegen(self.kennung, tid, t.zeilen))
+        elif art == "loeschen":
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_loeschen(self.kennung, tid))
+        elif art == "versetzen":                         # frei platzieren: Blattkoordinaten → Lage ab der oberen linken Ecke des Satzspiegels
+            seite, x, y, absatz_id = wert
+            e = self.ansicht.ergebnis().seiten[seite].einrichtung
+            links, oben = (mm_to_px(e.margin_left_mm), mm_to_px(e.margin_top_mm)) if e is not None else (0.0, 0.0)
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_frei_setzen(self.kennung, tid, x - links, y - oben, absatz_id))
         elif art == "skalieren":
-            self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_skalieren(self.kennung, tid, wert[0], wert[1]))
+            breiten = tuple(self._spaltenbreiten_gemessen(_TabellenRef(t)))          # automatische Spalten und Zeilen haben keine Vorgabe: Ausgangswert ist das gemessene Maß
+            hoehen = tuple(self._zeilenhoehe_gemessen(tid, z) for z in range(t.zeilen))
+            self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_skalieren(self.kennung, tid, wert[0], wert[1], breiten, hoehen))
         elif art == "spalte":                               # Rand rechts der Spalte ``index`` um ``delta`` verschieben: die Nachbarspalte gibt ab oder bekommt
             index, delta = wert
             breiten = self._spaltenbreiten_gemessen(self.tabelle_an_marke() if self.tabelle_an_marke() and self.tabelle_an_marke().id == tid else _TabellenRef(t))
@@ -476,9 +494,13 @@ class KernBefehle:
                     return p.rect.height
         return 20.0
 
-    def tabelle_zeichnen_an(self, stelle, zeilen: int, spalten: int) -> None:
-        """Tabelle mit dem Stift gezeichnet: sie entsteht an der Stelle, an der das Ziehen begann."""
-        self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_einfuegen(self.kennung, zeilen, spalten, None, (stelle[0], stelle[1])))
+    def tabelle_zeichnen_an(self, stelle, zeilen: int, spalten: int, breite: float = 0.0) -> None:
+        """Tabelle mit dem Stift gezeichnet: sie entsteht an der Stelle, an der das Ziehen begann, mit Tabellenraster (wie ``insert_table``) und der
+        aufgezogenen Breite (Bildpunkte bei 100 %)."""
+        form = {"rahmen_breite": 1.0, "rahmen_farbe": TABELLENRAND_SCHWARZ}
+        if breite > 0:
+            form.update({"breite": float(breite), "breite_art": "fest"})
+        self.ansicht._befehl(lambda: _bearbeiten.aenderung_tabelle_einfuegen(self.kennung, zeilen, spalten, form, (stelle[0], stelle[1])))
 
     def tabelle_zellen_vereinen(self, tid: int, a: tuple, b: tuple) -> None:
         """Radiergummi: die Zellen ``a`` und ``b`` (Anker) werden zu einer Zelle verbunden, wenn sie ein Rechteck bilden."""

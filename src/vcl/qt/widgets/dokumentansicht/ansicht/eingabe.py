@@ -188,7 +188,7 @@ class EingabeTeil:
             if self.gewaehltes_objekt is not None and not self.nur_lesen:
                 self._befehl(lambda: _bearbeiten.aenderung_objekt_entfernen(self.kennung, self.gewaehltes_objekt))
                 self.gewaehltes_objekt = None
-            else:
+            elif not self.tabelle_taste_loeschen(taste == Qt.Key_Backspace):
                 self.entfernen(taste == Qt.Key_Backspace, strg)
         elif taste in (Qt.Key_Return, Qt.Key_Enter):
             self.einfuegen(ZEILENWECHSEL if umschalt else "\n")

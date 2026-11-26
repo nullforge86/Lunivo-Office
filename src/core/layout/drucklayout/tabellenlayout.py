@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from core.dokument.dokument import Tabelle
-from core.geometrie import Rect
+from core.geometrie import Rect, mm_to_px
 from core.layout.drucklayout import formatwerte as F
 from core.layout.drucklayout.ergebnis import Platz, Seite
-from core.layout.drucklayout.geometrie import ZELLEN_POLSTER, ZELLEN_ZWISCHENRAUM, MIN_TEILHOEHE, MIN_TABELLENBREITE, MIN_SPALTENBREITE, _Z
+from core.layout.drucklayout.geometrie import ZELLEN_POLSTER, ZELLEN_ZWISCHENRAUM, MIN_TEILHOEHE, MIN_TABELLENBREITE, MIN_SPALTENBREITE, FREIE_TABELLE_ABSTAND, UMFLUSS_MINDESTBREITE, _Z
 
 
 class TabellenLayout:
@@ -46,6 +46,9 @@ class TabellenLayout:
         if not t.spalten or not t.zeilen:
             return
         eig = t.format
+        if ("frei_x" in eig or "frei_y" in eig) and self.seite.index >= 0 and not self.opt.get("web"):
+            self.tabelle_frei(t)
+            return
         luecke = max(0.0, F._zahl(eig.get("zellabstand"), ZELLEN_ZWISCHENRAUM))
         polster = max(0.0, F._zahl(eig.get("zellpolster"), ZELLEN_POLSTER))
         rand = max(0.0, F._zahl(eig.get("rahmen_breite")))
@@ -147,6 +150,26 @@ class TabellenLayout:
                     self.auf_seite_setzen(inhalt[(c.z, c.s)][1], zr.x + rand / 2 + l, zr.y + rand / 2 + o, seite, kopie=True)
         self.unten = rand
         self.y += self.unten
+
+    def tabelle_frei(self, t: Tabelle) -> None:
+        """Eine frei platzierte Tabelle (``frei_x``/``frei_y`` ab der oberen linken Ecke des Satzspiegels): sie steht auf der Seite, auf der ihr Anker im
+        Fluss liegt, braucht dort keinen Platz im Fluss, und der folgende Text läuft um sie herum. Sie bleibt auf dem Blatt und wird nicht geteilt."""
+        eig = t.format
+        _h, plaetze = self.teilfluss([t], self.breite())
+        zellen = [p.rect for p in plaetze if p.art == "zelle" and p.block_id == t.id]
+        if not zellen:
+            return
+        x1, y1 = min(r.x for r in zellen), min(r.y for r in zellen)
+        b, h = max(r.right for r in zellen) - x1, max(r.bottom for r in zellen) - y1
+        blatt_b = mm_to_px(self.einr.width_mm)
+        x = min(max(0.0, self.rand_links + F._zahl(eig.get("frei_x"))), max(0.0, blatt_b - b))
+        y = self.rand_oben + min(max(0.0, F._zahl(eig.get("frei_y"))), max(0.0, self.frei() - h))
+        self.auf_seite_setzen(plaetze, x - x1, y - y1)
+        a = FREIE_TABELLE_ABSTAND
+        links_x, breite = self.links(), self.breite()
+        platz_links, platz_rechts = x - a - links_x, links_x + breite - (x + b + a)
+        art = "voll" if max(platz_links, platz_rechts) < UMFLUSS_MINDESTBREITE else "links" if platz_rechts >= platz_links else "rechts"
+        self.ausschluesse.append((self.seite.index, self.spalte, Rect(x - a, y - a, b + 2 * a, h + 2 * a), art))
 
     def zeile_teilen(self, zellen: list, inhalt: dict, innen, zelle_platz, rand: float, luecke: float) -> None:
         """Eine Tabellenzeile, die höher ist als eine ganze Seite, über mehrere Seiten setzen: je Seite so viele Zeilen jeder Zelle, wie passen."""

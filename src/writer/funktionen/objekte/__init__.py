@@ -66,6 +66,7 @@ _NAMEN: dict[str, tuple[str, str]] = {
     "schnelltabelle_einfuegen": ("schnelltabelle", "einfuegen"),
     "schnelltabellen_namen": ("schnelltabelle", "schnelltabellen_namen"),
     "strich_schluessel": ("diagrammformat", "strich_schluessel"),
+    "ganze_tabelle_gewaehlt": ("tabellenzustand", "ganze_tabelle_gewaehlt"),
     "tabelle_gewaehlt_zustaende": ("tabellenzustand", "tabelle_gewaehlt_zustaende"),
     "tabellen_zustand": ("tabellenzustand", "tabellen_zustand"),
     "tabellenmodus": ("tabellenzustand", "tabellenmodus"),

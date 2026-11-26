@@ -52,6 +52,7 @@ TABELLE: dict[str, tuple] = {
     "zellabstand": ZAHL, "zellpolster": ZAHL, "hintergrund": (str,),
     "optionen": (int,), "vorlage": (str,), "kopfzeilen": (int,), "alt_text": (str,), "alt_titel": (str,),
     "umbruch": (str,), "abstand_vor": ZAHL, "abstand_nach": ZAHL,
+    "frei_x": ZAHL, "frei_y": ZAHL,                                                                     # frei platzierte Tabelle: obere linke Ecke in Bildpunkten ab der oberen linken Ecke des Satzspiegels ihrer Seite; der Text läuft darum herum
     "spaltenlaengen": (list,), "rahmen_zusammen": (bool,), "rahmen_stil": (int,), "querbreite": ZAHL,
     "zeilenhoehe_exakt": (list,),                                                                       # Zeilen (ab 0), deren Höhe genau gilt (DOCX ``w:hRule="exact"``); sonst gilt sie als Mindesthöhe
     "docx_roh": (list,), "docx_roh_zeilen": (dict,),                                                    # erhaltene Eigenschaften der Tabelle und ihrer Zeilen (Zeilennummer → XML-Texte)

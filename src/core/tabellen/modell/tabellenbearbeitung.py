@@ -340,14 +340,41 @@ class TabellenTeil:
         self._beruehrt(t.id)
 
     @schritt("Tabelle skalieren", "tabelle")
-    def tabelle_skalieren(self, tabellen_id: int, faktor_breite: float = 1.0, faktor_hoehe: float = 1.0) -> None:
+    def tabelle_skalieren(self, tabellen_id: int, faktor_breite: float = 1.0, faktor_hoehe: float = 1.0, breiten=(), hoehen=()) -> None:
+        """Skaliert Spaltenbreiten und Zeilenhöhen. ``breiten``/``hoehen``: die vom Layout gemessenen Maße je Spalte bzw. Zeile; sie gelten als Ausgangswert,
+        wo im Modell keine Vorgabe steht (0 = automatisch). Mit gemessenen Breiten bekommt die Tabelle die neue Gesamtbreite als feste Breite."""
         t = self._tabelle(tabellen_id)
         if faktor_breite <= 0 or faktor_hoehe <= 0:
             raise BearbeitungsFehler("Der Faktor muss größer als 0 sein")
-        self._attr(t, "spaltenbreiten", [b * faktor_breite for b in t.spaltenbreiten])
-        self._attr(t, "zeilenhoehen", [h * faktor_hoehe for h in t.zeilenhoehen])
-        if "breite" in t.format and t.format.get("breite_art", "fest") == "fest":
-            self._attr(t, "format", verschmelze(t.format, {"breite": t.format["breite"] * faktor_breite}))
+
+        def basis(vorgaben, gemessen) -> list:
+            return [v if v > 0 else (float(gemessen[i]) if i < len(gemessen) and gemessen[i] > 0 else 0.0) for i, v in enumerate(vorgaben)]
+
+        if faktor_breite != 1.0:
+            neu = [b * faktor_breite for b in basis(t.spaltenbreiten, breiten)]
+            self._attr(t, "spaltenbreiten", neu)
+            if breiten and all(b > 0 for b in neu):
+                luecke = max(0.0, float(t.format.get("zellabstand") or 0.0))
+                self._attr(t, "format", verschmelze(t.format, {"breite": sum(neu) + luecke * (len(neu) + 1), "breite_art": "fest"}))
+            elif "breite" in t.format and t.format.get("breite_art", "fest") == "fest":
+                self._attr(t, "format", verschmelze(t.format, {"breite": t.format["breite"] * faktor_breite}))
+        if faktor_hoehe != 1.0:
+            self._attr(t, "zeilenhoehen", [h * faktor_hoehe for h in basis(t.zeilenhoehen, hoehen)])
+        self._beruehrt(t.id)
+
+    @schritt("Tabelle versetzen", "tabelle")
+    def tabelle_frei_setzen(self, tabellen_id: int, x: float, y: float, vor_absatz_id: int | None = None) -> None:
+        """Platziert die Tabelle frei: obere linke Ecke bei (``x``, ``y``) ab der oberen linken Ecke des Satzspiegels ihrer Seite; der Text läuft darum
+        herum. Mit ``vor_absatz_id`` wandert sie im Textfluss vor diesen Absatz (ihr Anker: Seite und Beginn des Umflusses), wenn er im selben Textfluss
+        steht."""
+        t = self._tabelle(tabellen_id)
+        _bes, bloecke, i, _t = self.dokument.finde(tabellen_id)
+        ziel = self.dokument.finde(vor_absatz_id) if vor_absatz_id is not None else None
+        if ziel is not None and ziel[1] is bloecke and ziel[2] not in (i, i + 1):
+            j = ziel[2]
+            self._liste(bloecke, i, 1, [])
+            self._liste(bloecke, j - 1 if j > i else j, 0, [t])
+        self._attr(t, "format", verschmelze(t.format, {"frei_x": float(x), "frei_y": float(y)}))
         self._beruehrt(t.id)
 
     # ---- Tabelle ↔ Text ----------------------------------------------------------------------------------------------------

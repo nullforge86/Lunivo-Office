@@ -952,7 +952,13 @@ class _Leser:
             oben = mar.find(_W + "top")
             if oben is not None and _zahl(oben.get(_W + "w")) is not None:
                 format["zellpolster"] = _zahl(oben.get(_W + "w")) * PX_JE_TWIP
-        roh = self._roh(tblpr, "tblPr", {"tblW", "tblLayout"}, set() if bd is None or self._sechs_gleich(bd) else {"tblBorders"})
+        lage = tblpr.find(_W + "tblpPr") if tblpr is not None else None                     # frei platzierte Tabelle: das Modell fasst die Lage ab dem Satzspiegel
+        lage_gelesen = (lage is not None and lage.get(_W + "horzAnchor") == "margin" and lage.get(_W + "vertAnchor") == "margin"
+                        and lage.get(_W + "tblpXSpec") is None and lage.get(_W + "tblpYSpec") is None)
+        if lage_gelesen:
+            format["frei_x"] = (_zahl(lage.get(_W + "tblpX"), 0.0) or 0.0) * PX_JE_TWIP
+            format["frei_y"] = (_zahl(lage.get(_W + "tblpY"), 0.0) or 0.0) * PX_JE_TWIP
+        roh = self._roh(tblpr, "tblPr", {"tblW", "tblLayout"} | ({"tblpPr"} if lage_gelesen else set()), set() if bd is None or self._sechs_gleich(bd) else {"tblBorders"})
         if roh:
             format[E.ROH] = roh
         vorlage = self._tabellenvorlage(stil_id)

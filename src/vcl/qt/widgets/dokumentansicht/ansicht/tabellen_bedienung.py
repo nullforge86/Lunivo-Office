@@ -3,7 +3,7 @@
 Die Mischklasse ``TabellenBedienung`` gehört zur Zeichenfläche (``dokument_ansicht.py``). Lage und Maße der Zellen kommen aus dem Layoutergebnis (Plätze der Art
 ``zelle``). Die Zeichenfläche ändert das Dokument nie selbst: Sie ruft die Rückrufe auf, die der Editor mit Operationen der Bearbeitungssitzung belegt.
 
-* Verschiebegriff oben links: Klick wählt die ganze Tabelle (Minileiste), „+“ rechts und unten hängt eine Spalte bzw. Zeile an, der Aufziehgriff unten rechts
+* Verschiebegriff oben links: Klick wählt die ganze Tabelle (Minileiste), Ziehen versetzt sie frei auf dem Blatt (der Text läuft darum herum), „+“ rechts und unten hängt eine Spalte bzw. Zeile an, der Aufziehgriff unten rechts
   ändert die Größe der ganzen Tabelle.
 * Ränder zwischen Spalten und Zeilen lassen sich mit der Maus ziehen.
 * Stift: ein Rechteck aufziehen, dort entsteht eine Tabelle; Radiergummi: ein Klick auf eine Zellenlinie verbindet die beiden Zellen daneben.
@@ -13,7 +13,10 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QPointF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
+from PySide6.QtWidgets import QApplication
+
 from writer.funktionen import bearbeiten as ST
+from writer.funktionen.objekte import ganze_tabelle_gewaehlt, tabelle_gewaehlt_zustaende, tabellen_zustand
 from vcl.qt.widgets.bausteine.farben.farben import GRIFF_FLAECHE, KNOPF_SYMBOLFARBE, TABELLE_AKZENT, TABELLE_AKZENT_FLAECHE, TABELLE_GRIFF_RAND
 from vcl.qt.widgets.bausteine.abstaende.mass import RADIUS_ZEICHNUNG, STIFT_AUSWAHL, STIFT_BILDCHEN
 
@@ -21,6 +24,7 @@ GRIFF = 14.0                    # Seitenlänge der Griffe (Bildpunkte der Ansich
 RAND_TREFFER = 4.0              # Abstand zu einem Zellenrand, bis zu dem er getroffen wird
 ZELLE_B, ZELLE_H = 56.0, 20.0   # Zellengröße beim Zeichnen mit dem Stift (Bildpunkte bei 100 %)
 BLAU = QColor(*TABELLE_AKZENT)
+GRIFF_SYMBOLE = {"move": "move", "spalte_plus": "plus", "zeile_plus": "plus", "aufziehen": "move-diagonal-2"}      # Griff → Symbol (Lucide-Katalog)
 
 
 class TabellenBedienung:
@@ -28,10 +32,24 @@ class TabellenBedienung:
         self.tabelle_aktiv = lambda: None            # Rückruf: Id der Tabelle an der Schreibmarke (sonst ``None``)
         self.tabelle_aendern = None                  # Rückruf(Art, Tabellen-Id, Wert) nach dem Ziehen oder Klicken
         self.tabelle_waehlen = None                  # Rückruf(Tabellen-Id) beim Klick auf den Verschiebegriff
-        self.tabelle_zeichnen = None                 # Rückruf(Stelle, Zeilen, Spalten) beim Loslassen des Stifts
+        self.tabelle_zeichnen = None                 # Rückruf(Stelle, Zeilen, Spalten, Breite bei 100 %) beim Loslassen des Stifts
         self.tabelle_linie_loeschen = None           # Rückruf(Tabellen-Id, (Zeile, Spalte), (Zeile, Spalte)) beim Klick des Radiergummis
         self.tabellen_modus = None                   # None | "stift" | "radierer"
         self._tab_zug = None
+        self._tab_per_griff = None                   # Id der Tabelle, die zuletzt über den Verschiebegriff gewählt wurde (bis zum nächsten Mausklick)
+
+    def tabelle_taste_loeschen(self, rueckwaerts: bool) -> bool:
+        """Rücktaste bei ganz gewählter Tabelle und Entf nach der Wahl über den Verschiebegriff löschen die Tabelle als Ganzes; sonst ``False`` (Entf leert
+        dann wie gewohnt nur die Zellen)."""
+        if self.nur_lesen or self.tabelle_aendern is None or tabellen_zustand(self.kennung) not in tabelle_gewaehlt_zustaende():
+            return False
+        zellen = ST.dok_zellen_im_bereich(self.kennung)
+        per_griff = zellen is not None and zellen[0] == self._tab_per_griff          # über den Griff gewählt: auch eine Tabelle mit nur einer Zelle
+        if zellen is None or not (per_griff or (rueckwaerts and ganze_tabelle_gewaehlt(self.kennung))):
+            return False
+        self._tab_per_griff = None
+        self.tabelle_aendern("loeschen", zellen[0], None)
+        return True
 
     # ---- Geometrie -------------------------------------------------------------------------------------------------------------------
     def _zellplaetze(self, tid: int) -> list:
@@ -68,7 +86,7 @@ class TabellenBedienung:
         return {"move": QRectF(a.left() - g - 4, a.top() - g - 4, g, g),
                 "spalte_plus": QRectF(a.right() + 4, a.center().y() - g / 2, g, g),
                 "zeile_plus": QRectF(a.center().x() - g / 2, a.bottom() + 4, g, g),
-                "aufziehen": QRectF(a.right() + 2, a.bottom() + 2, g * 0.7, g * 0.7)}
+                "aufziehen": QRectF(a.right() + 4, a.bottom() + 4, g, g)}
 
     @staticmethod
     def _spanne(zelle, breit: bool) -> int:
@@ -99,14 +117,19 @@ class TabellenBedienung:
         from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
+        if tabellen_zustand(self.kennung) in tabelle_gewaehlt_zustaende():            # als Ganzes gewählte Zellen: die ganze Zellfläche getönt (auch leere Zellen)
+            zellen = ST.dok_zellen_im_bereich(self.kennung)
+            if zellen is not None:
+                gewaehlt = set(zellen[1])
+                for seite, platz in self._zellplaetze(zellen[0]):
+                    if (platz.zeile, platz.spalte) in gewaehlt:
+                        r = platz.rect
+                        p.fillRect(self._ansicht_rect(seite, QRectF(r.x, r.y, r.width, r.height)), QColor(*TABELLE_AKZENT_FLAECHE))
         for name, rc in self.tabellen_griffe().items():
             p.setPen(QPen(QColor(*TABELLE_GRIFF_RAND), 1))
             p.setBrush(QColor(*GRIFF_FLAECHE))
-            if name == "aufziehen":
-                p.drawRect(rc)
-                continue
             p.drawRoundedRect(rc, RADIUS_ZEICHNUNG, RADIUS_ZEICHNUNG)
-            symbole.in_rechteck(p, "move" if name == "move" else "plus", rc, KNOPF_SYMBOLFARBE, rand=2)      # Lucide statt Schriftzeichen ✥/+
+            symbole.in_rechteck(p, GRIFF_SYMBOLE[name], rc, KNOPF_SYMBOLFARBE, rand=2)      # Lucide statt Schriftzeichen ✥/+
         z = self._tab_zug
         if z is not None and z.get("vorschau") is not None:
             p.setPen(QPen(BLAU, STIFT_BILDCHEN, Qt.DashLine))
@@ -126,6 +149,7 @@ class TabellenBedienung:
     # ---- Maus ------------------------------------------------------------------------------------------------------------------------
     def tabellen_maus_druecken(self, ev) -> bool:
         pos = ev.position()
+        self._tab_per_griff = None
         if self.tabellen_modus == "stift":
             stelle = self.stelle(pos)
             if stelle is not None:
@@ -140,8 +164,9 @@ class TabellenBedienung:
             if not rc.contains(pos):
                 continue
             tid = self.tabelle_aktiv()
-            if name == "move" and self.tabelle_waehlen is not None:
-                self.tabelle_waehlen(tid)
+            if name == "move":                               # Klick wählt die Tabelle, Ziehen versetzt sie frei (entschieden beim Loslassen)
+                seite, r = self._tabellen_rahmen(tid)
+                self._tab_zug = {"art": "versetzen", "start": pos, "tid": tid, "seite": seite, "rect0": r, "vorschau": None}
             elif name in ("spalte_plus", "zeile_plus") and self.tabelle_aendern is not None:
                 self.tabelle_aendern(name, tid, None)
             elif name == "aufziehen":
@@ -184,6 +209,11 @@ class TabellenBedienung:
             fh = max(0.1, (r0.height() + (pos.y() - z["start"].y()) / self.zoom) / max(1.0, r0.height()))
             z["faktor"] = (fb, fh)
             z["vorschau"] = self._ansicht_rect(z["seite"], QRectF(r0.x(), r0.y(), r0.width() * fb, r0.height() * fh))
+        elif z["art"] == "versetzen":
+            weg = pos - z["start"]
+            if z["vorschau"] is not None or weg.manhattanLength() > QApplication.startDragDistance():      # erst ab der Ziehschwelle des Systems: ein Klick mit leichtem Zittern wählt nur
+                self.setCursor(Qt.SizeAllCursor)
+                z["vorschau"] = self._ansicht_rect(z["seite"], z["rect0"]).translated(weg)
         else:
             z["delta"] = ((pos.x() - z["start"].x()) if z["art"] == "spalte" else (pos.y() - z["start"].y())) / self.zoom
         self.update()
@@ -195,8 +225,21 @@ class TabellenBedienung:
             return False
         if z["art"] == "stift":
             if self.tabelle_zeichnen is not None and z["vorschau"].width() > 6 and z["vorschau"].height() > 6:
-                self.tabelle_zeichnen(z["stelle"], z["zeilen"], z["spalten"])
+                self.tabelle_zeichnen(z["stelle"], z["zeilen"], z["spalten"], z["vorschau"].width() / self.zoom)
             self.tabellen_modus_setzen(None)
+        elif z["art"] == "versetzen":
+            if z["vorschau"] is None:
+                if self.tabelle_waehlen is not None:
+                    self.tabelle_waehlen(z["tid"])
+                    self._tab_per_griff = z["tid"]
+            elif self.tabelle_aendern is not None:                 # neue obere linke Ecke auf dem Blatt unter der Vorschau; Anker: der Absatz an dieser Stelle
+                ecke = z["vorschau"].topLeft()
+                seite = self._naechstes_blatt(ecke)
+                blatt = self.blatt(seite)
+                stelle = self.stelle(ecke)
+                self.tabelle_aendern("versetzen", z["tid"], (seite, (ecke.x() - blatt.left()) / self.zoom, (ecke.y() - blatt.top()) / self.zoom,
+                                                             stelle[0] if stelle is not None else None))
+            self.unsetCursor()
         elif z["art"] == "aufziehen":
             if self.tabelle_aendern is not None and z["faktor"] != (1.0, 1.0):
                 self.tabelle_aendern("skalieren", z["tid"], z["faktor"])

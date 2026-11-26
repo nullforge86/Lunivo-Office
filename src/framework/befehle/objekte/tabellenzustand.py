@@ -18,6 +18,11 @@ def tabellen_zustand(kennung: int) -> str:
     return lesen(kennung, lambda s: _kern_zustand(s, nur_lesen)) or AUSSEN
 
 
+def ganze_tabelle_gewaehlt(kennung: int) -> bool:
+    """``True``, wenn die Auswahl alle Zellen der Tabelle an der Schreibmarke umfasst."""
+    return tabellen_zustand(kennung) == GANZE_TABELLE
+
+
 def tabellenmodus(kennung: int, rechtsklick: bool = False, per_griff: bool = False) -> bool:
     """``True``, wenn Tabellenfunktionen (Einfügen/Löschen, Rahmen, Schattierung …) angeboten werden."""
     nur_lesen = _steuerung.ist_nur_lesen(kennung)

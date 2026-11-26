@@ -286,8 +286,15 @@ def tabelle_sortieren(kennung: int, tabellen_id: int, spalte: int, aufsteigend: 
     return _tun(kennung, lambda s: s.tabelle_sortieren(tabellen_id, spalte, aufsteigend))
 
 
-def tabelle_skalieren(kennung: int, tabellen_id: int, faktor_breite: float, faktor_hoehe: float) -> bool:
-    return _tun(kennung, lambda s: s.tabelle_skalieren(tabellen_id, faktor_breite, faktor_hoehe))
+def tabelle_frei_setzen(kennung: int, tabellen_id: int, x: float, y: float, vor_absatz_id: int | None = None) -> bool:
+    """Die Tabelle frei platzieren: obere linke Ecke bei (``x``, ``y``) ab der oberen linken Ecke des Satzspiegels; mit ``vor_absatz_id`` wandert ihr Anker
+    im Textfluss vor diesen Absatz."""
+    return _tun(kennung, lambda s: s.tabelle_frei_setzen(tabellen_id, float(x), float(y), vor_absatz_id))
+
+
+def tabelle_skalieren(kennung: int, tabellen_id: int, faktor_breite: float, faktor_hoehe: float, breiten: tuple[float, ...] = (), hoehen: tuple[float, ...] = ()) -> bool:
+    """``breiten``/``hoehen``: die vom Layout gemessenen Maße je Spalte bzw. Zeile (Ausgangswert für automatische Spalten und Zeilen)."""
+    return _tun(kennung, lambda s: s.tabelle_skalieren(tabellen_id, faktor_breite, faktor_hoehe, tuple(breiten), tuple(hoehen)))
 
 
 def tabellenformat_anwenden(kennung: int, tabellen_id: int, aenderung: Mapping[str, Daten]) -> bool:
