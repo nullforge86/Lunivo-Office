@@ -8,7 +8,3 @@ Die Offline-Übersetzung (Argos, mit CPU-torch) und die Sprachpakete Deutsch↔E
 Das Modul `system.pfade` ist der eine Eingang für alle Orte: Es erkennt Benutzerordner je Betriebssystem (Linux XDG, Windows `%APPDATA%`/`%LOCALAPPDATA%`, macOS `~/Library`) und sucht jedes Zusatzpaket im Benutzerordner (`lunivo-office/<paket>`), beim Programm (`<paket>/` neben dem Programm) und in den Ordnern der Umgebungsvariablen `LUNIVO_ZUSATZPAKETE`.
 Folge: Pakete sind groß (lokal: Linux-`.deb` ca. 760 MB, entpackt ca. 1,5 GB). Weitere Sprachen lädt das Programm bei Bedarf nach.
 Nicht enthalten: Piper-Stimmen und nachladbare Schriften (`skripte/stimme-holen.sh`, `schrift-holen.sh` sind Linux-Shellskripte).
-
-## Teststand
-Lokal geprüft (Linux, 27.11.2026, nach dem Umbau auf die Schichten unter `src/`): PyInstaller-Build, `.deb`-Bau (Metadaten, Menüeintrag `lunivo-writer.desktop`, Icons, Symlink), Argos im Paket (Dateien vorhanden), Start des gepackten Programms offscreen ohne Absturz und ohne Fehlermeldung.
-**Nicht getestet:** Übersetzung im gepackten Programm tatsächlich ausgeführt, Lage des Ordners `argos/` unter Windows/macOS (macOS-Signatur könnte `Contents/argos` beanstanden), Installation/Deinstallation der `.deb`, Windows-Installer (Inno Setup), macOS-`.dmg`, Signierung/Notarisierung, der GitHub-Actions-Workflow selbst (YAML nur syntaktisch gelesen), Intel-Mac-Build.

@@ -21,4 +21,4 @@ Ohne Apple-Developer-Konto (99 USD/Jahr) wird die App nur ad-hoc signiert; Gatek
 Für Weitergabe ohne Warnung:
 1. Zertifikat „Developer ID Application“ erzeugen, als `.p12` exportieren und in der CI in eine Keychain importieren.
 2. Umgebungsvariablen bzw. GitHub-Secrets setzen: `APPLE_SIGN_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` (app-spezifisches Passwort). `dmg-bauen.sh` signiert dann mit Hardened Runtime, notarisiert per `notarytool` und heftet das Ticket an (`stapler`).
-3. Der Workflow enthält den Keychain-Import **nicht**; er muss mit dem eigenen Zertifikat ergänzt werden. Eventuell sind Entitlements nötig (nicht getestet).
+3. Der Workflow enthält den Keychain-Import **nicht**; er muss mit dem eigenen Zertifikat ergänzt werden. Eventuell sind Entitlements nötig.

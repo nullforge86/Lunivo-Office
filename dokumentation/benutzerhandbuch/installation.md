@@ -9,9 +9,6 @@ Lunivo Writer läuft unter Linux, Windows und macOS. Es gibt je Betriebssystem d
 | Aus dem Quellcode starten | `./skripte/starten-qt.sh` | `python main.py` | `python3 main.py` |
 
 Die Pakete und portablen Archive bringen Python und alle Bibliotheken mit; auf dem Rechner muss dafür nichts vorinstalliert sein. Sie entstehen in GitHub Actions (Artefakte des Laufs „Installationspakete bauen“, bei einem Release als Release-Dateien). Wie sie gebaut werden, steht in `installationspakete/README.md`.
-
-**Stand der Erprobung:** Linux ist getestet. Die Pakete für Windows und macOS sind vorbereitet, aber noch nicht auf echten Rechnern erprobt.
-
 ## Linux (Debian, Ubuntu, Mint)
 
 ### Installieren
@@ -146,11 +143,3 @@ Weitere optionale Erweiterungen:
 | Online-KI | Unterstützter Anbieter und eigener API-Schlüssel | Schlüssel in Lunivos Benutzerbereich |
 
 Ohne diese Erweiterungen startet die Anwendung; die zugehörigen Funktionen bleiben optional.
-
-## Tests für die Entwicklung
-
-Gezielte Tests laufen ohne Bildschirm:
-
-```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/dokument/formate/test_formate.py
-```

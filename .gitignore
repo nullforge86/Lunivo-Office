@@ -5,6 +5,9 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 
+# Tests bleiben lokal (Commit-Haken), liegen aber nicht im Repository
+/tests/
+
 # Installationspakete: Build-Zwischenstände und Ergebnisse
 /build/
 /dist/

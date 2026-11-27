@@ -20,8 +20,6 @@ Denn Schwierigkeiten mit der Rechtschreibung bedeuten nicht, weniger Ideen, Fant
 
 ## Installation und Start
 
-Linux ist getestet (Linux Mint). Die Pakete für Windows und macOS sind vorbereitet, aber noch nicht auf echten Rechnern erprobt.
-
 | Weg | Linux | Windows | macOS |
 |---|---|---|---|
 | Installieren | `sudo apt install ./Lunivo-Office_0.1.0_amd64.deb` | `Lunivo-Office_0.1.0_Setup.exe` ausführen | `.dmg` öffnen, App nach „Programme“ ziehen |
