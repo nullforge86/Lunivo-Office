@@ -10,5 +10,5 @@ Folge: Pakete sind groß (lokal: Linux-`.deb` ca. 760 MB, entpackt ca. 1,5 GB). 
 Nicht enthalten: Piper-Stimmen und nachladbare Schriften (`skripte/stimme-holen.sh`, `schrift-holen.sh` sind Linux-Shellskripte).
 
 ## Teststand
-Lokal geprüft (Linux): PyInstaller-Build, `.deb`-Bau (Metadaten, Menüeintrag `lunivo-writer.desktop`, Icons, Symlink), Argos im Paket (Dateien vorhanden), Programmstart offscreen ohne Absturz (Konsole zeigt Fehlermeldungen im Lineal-Code `lineal.py`, nicht Teil der Pakete).
+Lokal geprüft (Linux, 27.11.2026, nach dem Umbau auf die Schichten unter `src/`): PyInstaller-Build, `.deb`-Bau (Metadaten, Menüeintrag `lunivo-writer.desktop`, Icons, Symlink), Argos im Paket (Dateien vorhanden), Start des gepackten Programms offscreen ohne Absturz und ohne Fehlermeldung.
 **Nicht getestet:** Übersetzung im gepackten Programm tatsächlich ausgeführt, Lage des Ordners `argos/` unter Windows/macOS (macOS-Signatur könnte `Contents/argos` beanstanden), Installation/Deinstallation der `.deb`, Windows-Installer (Inno Setup), macOS-`.dmg`, Signierung/Notarisierung, der GitHub-Actions-Workflow selbst (YAML nur syntaktisch gelesen), Intel-Mac-Build.
