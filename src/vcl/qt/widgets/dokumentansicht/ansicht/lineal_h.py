@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from writer.werte import px_zu_mm as px_to_mm, px_je_mm
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
+from vcl.qt.widgets.bausteine.abstaende import LINEAL_MARKE_RAND, LINEAL_MARKE_SPITZE
 from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE, _Lineal
 from vcl.qt.widgets.dokumentansicht.ansicht.lineal_tabs import LinealTabs
 
@@ -80,15 +81,19 @@ class LinealH(LinealTabs, _Lineal):
         p.end()
 
     def _treffer(self, x, y):
+        """Die Marke unter der Maus. Die Dreiecke greifen nur in ihrer eigenen Höhe (oben die erste Zeile, unten die Einzüge); das Band
+        dazwischen gehört den Seitenrändern – sonst verdecken die Dreiecke, die ohne Einzug genau auf dem Rand sitzen, die Randgrenze."""
         m = self._marken()
-        if y < HOEHE / 2 - 1 and abs(x - m["einzug_erste"]) <= FANG:
+        dreieck = LINEAL_MARKE_RAND + LINEAL_MARKE_SPITZE
+        if y <= dreieck and abs(x - m["einzug_erste"]) <= FANG:
             return "einzug_erste"
-        if y >= HOEHE / 2:
+        if y >= HOEHE - dreieck:
             for n in ("einzug_links", "einzug_rechts"):
                 if abs(x - m[n]) <= FANG:
                     return n
+        mitte = dreieck < y < HOEHE - dreieck
         for n in ("links", "rechts"):
-            if abs(x - m[n]) <= 2.5:
+            if abs(x - m[n]) <= (FANG if mitte else 2.5):
                 return n
         return None
 
