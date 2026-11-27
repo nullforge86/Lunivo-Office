@@ -72,7 +72,7 @@ Unter Windows heißt der Pfad `.venv\Scripts\python`. Alle Schritte je Betriebss
 | Öffnen und Speichern | DOCX, ODT, FODT, RTF, TXT |
 | Nur exportieren | PDF, PNG |
 
-PDF kann Lunivo nicht öffnen. XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Grenzen der Formatunterstützung: [Speichern und Dateiformate](docs/SPEICHERN.md).
+PDF kann Lunivo nicht öffnen. XLSX, XLS, PPTX, PPT sowie die alten DOC/DOT-Formate werden nicht unterstützt. Grenzen der Formatunterstützung: [Dateiformate](dokumentation/benutzerhandbuch/formate.md) und [Speichern](dokumentation/benutzerhandbuch/speichern.md).
 
 ## Offline und online
 
@@ -95,28 +95,40 @@ Dokumente bleiben am gewählten Speicherort. Einstellungen und Anwendungsdaten l
 
 Im Programm: **☰ Menü → Hilfe → Handbuch**.
 
-- [Lies mich](docs/LIESMICH.md)
-- [Installation](docs/INSTALLATION.md)
-- [Lesen und Schreiben](docs/lesen-und-schreiben.md)
-- [Prüfung, Vorhersage und KI](docs/pruefung-und-ki.md)
-- [KI-Handbuch: Funktionen, Bedienung und Einstellungen](docs/HANDBUCH-KI.md)
-- [Schreiben und Dokumente](docs/schreiben-und-dokumente.md)
-- [Einstellungen](docs/einstellungen.md)
-- [Speichern, Formate und Datensicherheit](docs/SPEICHERN.md)
-- [Oberfläche](docs/oberflaeche.md)
-- [Projektaufbau](docs/README.md)
-- [Aufbau: Registerband](docs/aufbau-band.md)
-- [Aufbau: Ist-Stand](docs/aufbau-ist-stand.md)
-- [Aufbau: Optionen](docs/aufbau-optionen.md)
-- [Baukasten](docs/baukasten.md)
-- [Konzept: Optionen](docs/konzept-optionen.md)
-- [Tabellen und Steuerung](docs/tabellen-und-steuerung.md)
-- [UI-Technologie](docs/ui-technologie.md)
-- [Interne Funktionen (Inventar)](docs/interne-funktionen.md)
-- [Erweiterungen](docs/erweiterungen.md)
-- [Entstehung](docs/ENTSTEHUNG.md)
-- [Wohin Lunivo gehen soll](docs/RICHTUNG.md)
-- [Mitwirken](.github/CONTRIBUTING.md)
+**Benutzerhandbuch**
+
+- [Lies mich](dokumentation/benutzerhandbuch/liesmich.md)
+- [Installation](dokumentation/benutzerhandbuch/installation.md)
+- [Oberfläche](dokumentation/benutzerhandbuch/oberflaeche.md)
+- [Lesen und Schreiben](dokumentation/benutzerhandbuch/lesen-und-schreiben.md)
+- [Schreiben und Dokumente](dokumentation/benutzerhandbuch/schreiben-und-dokumente.md)
+- [Tabellen und Steuerung](dokumentation/benutzerhandbuch/tabellen-und-steuerung.md)
+- [Prüfung, Vorhersage und KI](dokumentation/benutzerhandbuch/pruefung-und-ki.md)
+- [Einstellungen](dokumentation/benutzerhandbuch/einstellungen.md)
+- [Speichern und Datensicherheit](dokumentation/benutzerhandbuch/speichern.md)
+- [Dateiformate](dokumentation/benutzerhandbuch/formate.md)
+
+**Aufbau des Programms**
+
+- [Projektaufbau](dokumentation/README.md)
+- [Aufbau: Registerband](dokumentation/architektur/aufbau-band.md)
+- [Aufbau: Ist-Stand](dokumentation/architektur/aufbau-ist-stand.md)
+- [Aufbau: Optionen](dokumentation/architektur/aufbau-optionen.md)
+- [Aufbau: Dropdown-Menüs](dokumentation/architektur/dropdown-architektur.md)
+- [Layout-Schicht](dokumentation/architektur/layout-schicht.md)
+- [UI-Technologie](dokumentation/architektur/ui-technologie.md)
+- [Baukasten](dokumentation/entwicklung/baukasten.md)
+- [Plattformen](dokumentation/entwicklung/plattformen.md)
+- [Erweiterungen](dokumentation/entwicklung/erweiterungen.md)
+- [Interne Funktionen (Inventar)](dokumentation/entwicklung/interne-funktionen.md)
+- [Installationspakete](installationspakete/README.md)
+
+**Hintergrund**
+
+- [Entstehung](dokumentation/entwicklung/entstehung.md)
+- [Wohin Lunivo gehen soll](dokumentation/konzepte/richtung.md)
+- [Konzept: Optionen](dokumentation/konzepte/konzept-optionen.md)
+- [Konzept: Symbolsystem](dokumentation/konzepte/symbolsystem/konzept.md)
 
 ## Mitmachen
 
@@ -126,8 +138,8 @@ Ich möchte Lunivo aber nicht nur für mich entwickeln. Erfahrungen, Fragen und 
 
 Du musst kein Entwickler sein und keine perfekte Rechtschreibung haben, um dich einzubringen. **Rechtschreibung muss dabei keine Rolle spielen.**
 
-Nutze dafür die [GitHub Discussions](../../discussions) oder melde einen [Fehler](../../issues/new?template=fehler.yml) beziehungsweise einen [Funktionswunsch](../../issues/new?template=wunsch.yml).
+Nutze dafür die [GitHub Discussions](../../discussions) oder melde einen Fehler oder einen Funktionswunsch als [Issue](../../issues/new).
 
 ## Lizenz
 
-Lunivo steht unter der [MIT-Lizenz](LICENSE). Die mitgelieferten Lucide-Zeichnungen stehen unter ISC; der Lizenztext liegt in [docs/LIZENZ-LUCIDE.txt](docs/LIZENZ-LUCIDE.txt).
+Lunivo steht unter der [MIT-Lizenz](LICENSE). Die mitgelieferten Lucide-Zeichnungen stehen unter ISC; der Lizenztext liegt in [dokumentation/LIZENZ-LUCIDE.txt](dokumentation/LIZENZ-LUCIDE.txt).
