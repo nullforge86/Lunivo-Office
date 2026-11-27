@@ -33,15 +33,20 @@ def bauen(register: dict) -> dict:
     fenster_menue = list(kn["Anordnen"]["menue"]) + [{"trenner": True}] + eintraege("Fensterliste")
     for n in ("Nebeneinander", "Untereinander", "Kacheln", "Fensterliste", "Anordnen", "Steuerzeichen", "Weblayout", "Gliederung", "Vertikales Lineal", "Textbegrenzungen", "Ausgeblendeter Text"):
         benutzt.add(n)
+    # „Lineal“: beide Lineale hinter einem Knopf, jedes als Schalter mit Haken (das senkrechte steht nicht mehr unter „Weitere Anzeigen“)
+    benutzt.add("Lineal")
+    lineal = {"symbol": kn["Lineal"]["symbol"], "name": "Lineal", "text": True, "menue": [
+        {"name": "Horizontales Lineal", "tun": kn["Lineal"]["tun"], "haken": True},
+        {"name": "Vertikales Lineal", "tun": kn["Vertikales Lineal"]["tun"], "haken": True}]}
     gruppen = [
         {"name": "Dokumentansichten", "reihenfolge": True, "knoepfe": [
             nimm("Drucklayout", gross=True), nimm("Lesemodus", gross=True),
             {"symbol": "fortlaufend", "name": "Weitere Ansichten", "gross": True,
              "menue": [{"name": "Vollbild", "tun": "vollbild", "haken": True}] + eintraege("Weblayout", "Gliederung")}]},
         {"name": "Anzeigen", "pfeil": anz.get("pfeil"), "reihenfolge": True, "knoepfe": [
-            nimm("Navigationsbereich", gross=True), nimm("Lineal", text=True), nimm("Gitternetzlinien", text=True),
+            nimm("Navigationsbereich", gross=True), lineal, nimm("Gitternetzlinien", text=True),
             {"symbol": "ecken", "name": "Weitere Anzeigen", "text": True,
-             "menue": eintraege("Vertikales Lineal", "Textbegrenzungen", "Steuerzeichen", "Ausgeblendeter Text")}]},
+             "menue": eintraege("Textbegrenzungen", "Steuerzeichen", "Ausgeblendeter Text")}]},
         {"name": "Zoom", "pfeil": "zoomStufe", "reihenfolge": True, "knoepfe": [
             nimm("Zoom", gross=True), klein("100 %"), klein("Seitenbreite"), klein("Eine Seite"),
             klein("Zwei Seiten"), klein("Vergrößern"), klein("Verkleinern")]},

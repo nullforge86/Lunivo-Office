@@ -33,13 +33,7 @@ TABELLENTOOLS = {"name": "Tabellentools", "kontext": "tabelle", "gruppen": [
         _k("mitte", "Zentriert im Feld", "zelleZentriert"),
         _k("rechts", "Rechts im Feld", "zelleRechts"),
         _k("tabelleTextrichtung", "Textrichtung", klappe="tabelleTextrichtung")]},
-    {"name": "Schrift", "felder": "tab_zeile", "knoepfe": [
-        _k("groesserA", "Schrift vergrößern", "schriftGroesser"),
-        _k("kleinerA", "Schrift verkleinern", "schriftKleiner"),
-        {"zeilenumbruch": True},
-        _k("F", "Fett", "fett", haken=True),
-        _k("K", "Kursiv", "kursiv", haken=True),
-        _k("U", "Unterstrichen", "unter", haken=True)]},
+    # Keine Gruppe „Schrift“: Schriftart, Größe, Fett, Kursiv und Unterstrichen stehen im Reiter „Start“ (bleibt in der Tabelle offen) und in der Mini-Leiste
 ]}
 
 

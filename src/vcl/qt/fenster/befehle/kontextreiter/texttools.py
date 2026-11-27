@@ -65,15 +65,6 @@ class TextToolsBefehle:
             self._wa_set(pt=pt)
 
 
-    # ---- Tabellentools: Schrift der Schreibmarke / markierten Zellen (Felder tab_font, tab_groesse) ----
-    def tabSchriftart(self, name):
-        self.w.schrift_anwenden(name)
-
-
-    def tabGroesse(self, pt):
-        self.w.groesse_anwenden(pt)
-
-
     def _tt_pt(self, delta):
         pt = float(self._wa().get("pt", 36 if self.tt_art() == "wordart" else 11))
         self._wa_set(pt=max(1.0, min(400.0, pt + delta)))

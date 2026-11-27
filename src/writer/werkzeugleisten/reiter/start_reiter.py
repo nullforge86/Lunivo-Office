@@ -23,5 +23,7 @@ def bauen(start: dict) -> dict:
         _k("wortextras", "Wort-Extras", text=True, klappe="wortExtrasKlappe"),
         _k("zahnrad", "Einstellungen", text=True, klappe="einstellungenKlappe")]}
     gruppen = [ablage, schrift, absatz, dict(alt["Stile"], spalten=2), bearbeiten]
-    return dict(start, gruppen=gruppen, arbeitsleiste=arbeitsleiste(gruppen))     # das Band zeigt die Arbeitsleiste; die Gruppen bleiben die Vorlage für Menüs und Symbolleisten
+    # Das Band zeigt die Arbeitsleiste; die Gruppen bleiben die Vorlage für Menüs und Symbolleisten. „Ausschneiden“, „Kopieren“, „Suchen oder ersetzen“,
+    # „Wort-Extras“ und „Einstellungen“ stehen an anderer Stelle (siehe ``start_leiste.VERLEGT``).
+    return dict(start, gruppen=gruppen, arbeitsleiste=arbeitsleiste(gruppen))
 

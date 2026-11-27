@@ -17,7 +17,7 @@ from vcl.qt.widgets.bausteine.abstaende.raster import RasterZeile
 from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe, spalte
 from vcl.qt.widgets.bausteine.farben.thema.thema import kopf_symbolfarbe
 from vcl.qt.widgets.bausteine.symbole.bauteile import symbole
-from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
+from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from writer.kontextmenues.text_werkzeuge import TEXTTOOLS
 from writer.kontextmenues.tabellen_werkzeuge import TABELLENTOOLS
 from vcl.qt.widgets.ribbon.band_leiste import NICHT_DA, STILE_KATALOG
@@ -67,7 +67,7 @@ BUCHSTABEN = {"F": ("F", "bold"), "K": ("K", "italic"), "U": ("U", "underline"),
 
 
 # Name des Kontexts → Plan seiner Leiste
-_KONTEXT_PLAENE = {"tabelle": TABELLENTOOLS, "bild": BILDTOOLS, "form": FORMTOOLS, "smartart": SMARTARTTOOLS, "zeichen": ZEICHENTOOLS, "text": TEXTTOOLS}
+_KONTEXT_PLAENE = {"tabelle": TABELLENTOOLS, "bild": BILDTOOLS, "smartart": SMARTARTTOOLS, "zeichen": ZEICHENTOOLS, "text": TEXTTOOLS}
 
 
 class Symbolleisten(QWidget):

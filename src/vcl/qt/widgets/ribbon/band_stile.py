@@ -99,6 +99,7 @@ class BandStileBaustein:
         m.aktion("Neue Formatvorlage …", lambda: self.b.neueFormatvorlage(), symbole.icon("pinsel", ICON_GROSS))
         m.aktion("Stil löschen", lambda: self.b.formatvorlageLoeschen(aktuell), symbole.icon("radierer", ICON_GROSS),
                  aktiv=bool(aktuell) and stile.ist_eigen(aktuell))
+        m.aktion("Formatvorlagen und Formatierung …", lambda: self.b.formatvorlagenBereich(), symbole.icon("pinsel", ICON_GROSS))
         m.aktion("Weitere Stile anzeigen", lambda an: w.settings.set("ui/stile_mehr", an), haken=mehr)
 
         def kontext(name, pos):

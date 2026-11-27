@@ -83,6 +83,12 @@ class FormToolsBefehle:
     def kann_formPunkteBearbeiten(self) -> bool:
         return self._form() is not None
 
+    def kann_formText(self) -> bool:
+        return self._form() is not None
+
+    def kann_klappe_formVorlagen(self) -> bool:
+        return self._form() is not None
+
     # ---- Form-Menüs, Vorlagen, Text in der Form, Gruppieren (aus dem Kontext-Reiter) ---------------------------------------------------
     # ---- Form- und WordArt-Tools --------------------------------------------------------------------------------------------
     FARBEN = Farbe.FORMFARBEN

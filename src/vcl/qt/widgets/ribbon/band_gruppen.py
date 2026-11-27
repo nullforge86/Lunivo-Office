@@ -186,22 +186,14 @@ class BandGruppenBaustein:
         v.addStretch(1)
         inhalt.addLayout(v)
 
-    def _knoepfe_tt_schrift(self, g: dict, inhalt: RasterZeile, art: str = "tt"):
-        """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start.
-        ``art="tab"`` (Tabellentools): dieselben Felder, aber sie wirken auf den Text der Schreibmarke / der markierten Zellen (Felder ``tab_font``, ``tab_groesse``)."""
+    def _knoepfe_tt_schrift(self, g: dict, inhalt: RasterZeile):
+        """Texttools: Schriftname und -größe oben (wirken auf das markierte WordArt/Textfeld), darunter die Zeichenformate — wie bei Start."""
         font = schrift_feld(Schriftauswahl())
         groesse = groesse_feld()
-        if art == "tab":
-            def pt_setzen(*_):
-                self.b.tabGroesse(groesse.currentText())
-            font.activated.connect(lambda _i: self.b.tabSchriftart(font.currentFont().family()))
-            groesse.activated.connect(pt_setzen)
-            groesse.lineEdit().editingFinished.connect(pt_setzen)
-        else:
-            font.activated.connect(lambda _i: self.b.ttSchriftart(font.currentText()))
-            groesse.activated.connect(lambda _i: self.b.ttGroesse(groesse.currentText()))
-            groesse.lineEdit().returnPressed.connect(lambda: self.b.ttGroesse(groesse.currentText()))
-        self.felder.update({art + "_font": font, art + "_groesse": groesse})
+        font.activated.connect(lambda _i: self.b.ttSchriftart(font.currentText()))
+        groesse.activated.connect(lambda _i: self.b.ttGroesse(groesse.currentText()))
+        groesse.lineEdit().returnPressed.connect(lambda: self.b.ttGroesse(groesse.currentText()))
+        self.felder.update(tt_font=font, tt_groesse=groesse)
         zeilen, aktuell = [], []
         for e in g["knoepfe"]:
             if e.get("zeilenumbruch"):
@@ -363,8 +355,6 @@ class BandGruppenBaustein:
         art = g.get("felder")
         if art in self._FELDER_BAUER:
             return getattr(self, self._FELDER_BAUER[art])(g, inhalt)
-        if art == "tab_zeile":
-            return self._knoepfe_tt_schrift(g, inhalt, "tab")
         if g.get("galerie"):
             return self._knoepfe_galerie(g, inhalt)
         if g.get("reihenfolge"):

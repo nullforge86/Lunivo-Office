@@ -129,6 +129,11 @@ class TextZeichenBefehle:
         m.eintrag("Formatvorlagen und Formatierung …", self.formatvorlagenBereich, symbol=symbole.icon("pinsel", 16))
         return m
 
+    def stileGalerie(self, k=None):
+        """Knopf „Stile“ der Arbeitsleiste: die Galerie aller Formatvorlagen (mit Anlegen, Ändern und Löschen) unter dem Knopf."""
+        band = self.w.band
+        band._stile_popup(k or band.arbeitsleiste)
+
     def formatvorlagenBereich(self, k=None):
         """„Formatvorlagen und Formatierung“: die Liste aller Formatvorlagen in der rechten Seitenleiste (wie der Bereich der Vorlage)."""
         if not self.ed:

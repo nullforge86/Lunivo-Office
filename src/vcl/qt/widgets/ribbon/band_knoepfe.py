@@ -45,7 +45,8 @@ class BandKnopfBaustein:
             k.setProperty("fehlt", True)
             k.setEnabled(False)
             k.setToolTip(NICHT_DA.format(name))
-        self.knoepfe.append((k, tun, True))
+        # Ausgrauen: ein Knopf mit Befehl fragt ``kann_<Befehl>``, ein reiner Menüknopf ``kann_klappe_<Klappe>``
+        self.knoepfe.append((k, tun or ("klappe_" + klappe if klappe else None), True))
         return k
 
     def _knopf_aktion(self, k: QToolButton, akt: QAction, name: str, sym: str, gross: bool) -> None:

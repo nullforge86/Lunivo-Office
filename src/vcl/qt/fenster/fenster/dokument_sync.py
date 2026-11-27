@@ -62,10 +62,6 @@ class DokumentSyncMixin:
             _feld_setzen(f["tt_font"], "setCurrentFont", QFont(d.get("schrift", "Liberation Sans")))
             if not f["tt_groesse"].hasFocus():
                 _feld_setzen(f["tt_groesse"], "setEditText", f"{float(d.get('pt', 36 if text_art == 'wordart' else 11)):g}")
-        if e.textCursor().currentTable() is not None and "tab_font" in f:       # Schrift und Größe der Tabellentools
-            _feld_setzen(f["tab_font"], "setCurrentFont", QFont(fam))
-            if not f["tab_groesse"].hasFocus():
-                _feld_setzen(f["tab_groesse"], "setEditText", f"{size:g}")
         st = e.current_style()
         stil_feld = f.get("stil")
         if stil_feld is not None:
@@ -77,7 +73,6 @@ class DokumentSyncMixin:
         text_art = art if art in ("wordart", "textfeld") else None
         frei_bild = art in ("bild", "piktogramm")
         self.band.kontext("bild", frei_bild)
-        self.band.kontext("form", art == "form")
         self.band.kontext("smartart", art == "smartart")
         self.band.kontext("zeichen", art is not None and not frei_bild)
         self.band.kontext("text", text_art is not None)             # Texttools: nur WordArt und Textfeld

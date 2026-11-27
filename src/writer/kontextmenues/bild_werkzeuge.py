@@ -1,4 +1,4 @@
-"""Kontext-Reiter „Bildtools“ und „Zeichentools“ (für Formen im Text: ``form``; für freie Objekte inkl. WordArt/Textfeld: ``zeichen``)."""
+"""Kontext-Reiter „Bildtools“, „Zeichentools“ (alle freien Objekte außer Bildern: ``zeichen``) und „SmartArt-Design“."""
 from __future__ import annotations
 
 from writer.werkzeugleisten.reiter.baustein import anordnen_gruppe as _gruppe, anordnen_knopf as _a, k as _k
@@ -42,22 +42,15 @@ BILDTOOLS = {"name": "Bildtools", "kontext": "bild", "gruppen": [
             _a("umbruch", gross=True), _a("vorn", text=True), _a("hinten", text=True)),
 ]}
 
-FORMTOOLS = {"name": "Zeichentools", "kontext": "form", "gruppen": [
-    {"name": "Formvorlagen", "knoepfe": [_k("stift", "Formvorlagen", klappe="formVorlagen", gross=True)]},
-    {"name": "Formenstile", "knoepfe": [_k("toenung", "Formfüllung", klappe="formFuellung", text=True),
-                                         _k("linie", "Formkontur", klappe="formKontur", text=True),
-                                         _k("notiz", "Text in der Form …", "formText", text=True)]},
-    {"name": "Anordnen", "knoepfe": [_k("gruppieren", "Gruppieren", "gruppieren", text=True),
-                                     _k("gruppieren", "Gruppierung aufheben", "gruppeAufheben", text=True),
-                                     _k("textflussumbruch", "Textumbruch / Position", "anordnen", text=True),
-                                     _a("vorn", text=True), _a("hinten", text=True)]}]}
-
-
+# Ein einziger Reiter „Zeichentools“ für alle freien Objekte. „Formvorlagen“ und „Text in der Form …“ gelten nur für Formen (sonst grau);
+# Füllung, Kontur, Gruppieren, Textumbruch und Ebene der Form stehen in „Formen formatieren“ und „Anordnen“.
 ZEICHENTOOLS = {"name": "Zeichentools", "kontext": "zeichen", "gruppen": [
     {"name": "Linien", "ohne_titel": True, "galerie": "zeichenLinien", "zeilen": 2, "kacheln": 10, "knoepfe": []},
     {"name": "Formen", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         _k("textrahmen", "Textfeld", None, text=True, klappe="textfeldKlappe"),
-        _k("stift", "Form bearbeiten", None, text=True, klappe="formBearbeiten")]},
+        _k("stift", "Form bearbeiten", None, text=True, klappe="formBearbeiten"),
+        _k("stift", "Formvorlagen", None, text=True, klappe="formVorlagen"),
+        _k("notiz", "Text in der Form …", "formText", text=True)]},
     {"name": "Formstile", "ohne_titel": True, "galerie": "zeichenFormstile", "kacheln": 6, "knoepfe": []},
     {"name": "Formen formatieren", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         _k("toenung", "Formfüllung", klappe="zeichenFuellung", text=True),
@@ -84,6 +77,6 @@ SMARTARTTOOLS = {"name": "SmartArt-Design", "kontext": "smartart", "gruppen": [
         _k("layout-template", "Layout ändern", None, True, klappe="smartartLayout"),
         _k("palette", "Farben ändern", None, True, klappe="smartartFarben")]},
     {"name": "SmartArt-Stile", "ohne_titel": True, "galerie": "smartartStile", "knoepfe": []},
-    _gruppe(_a("umbruch", "Textfluss", text=True), _a("ausrichten", text=True), _a("auswahlbereich", text=True), _a("ebene", text=True)),
+    # „Anordnen“ steht im Reiter „Zeichentools“ daneben; „Größe“ bleibt hier, weil sie bei gewähltem Knoten dessen Maße zeigt
     {"name": "Größe", "felder": "masse", "praefix": "sa_", "pfeil": "zeichenLayout", "knoepfe": []},
 ]}

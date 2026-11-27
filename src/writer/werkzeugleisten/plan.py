@@ -13,7 +13,7 @@ from writer.serienbriefwerkzeuge.band import reiter as sendungen_reiter
 from writer.ueberpruefung.band import reiter as ueberpruefen_reiter
 from writer.referenzwerkzeuge.band import reiter as verweise_reiter
 from writer.serienbriefwerkzeuge.band.kontext_reiter import SERIENDRUCK
-from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
+from writer.kontextmenues.bild_werkzeuge import BILDTOOLS, SMARTARTTOOLS, ZEICHENTOOLS
 from writer.kontextmenues.tabellen_werkzeuge import TABELLENSTIL, TABELLENTOOLS
 from writer.kontextmenues.text_werkzeuge import TEXTTOOLS
 from writer.werkzeugleisten.reiter import ki_reiter, datei_reiter, start_reiter, einfuegen_reiter, layout_reiter, abschnitt_reiter
@@ -25,4 +25,4 @@ def plan(register: dict) -> list[dict]:
     reiter = [datei_reiter.bauen(register), start, einfuegen_reiter.bauen(register), layout_reiter.bauen(register),
               verweise_reiter.bauen(register), ueberpruefen_reiter.bauen(register), ki_reiter.bauen(register), ansicht_reiter.bauen(register),
               abschnitt_reiter.bauen(register), sendungen_reiter.bauen(register)]
-    return reiter + [TABELLENTOOLS, TABELLENSTIL, BILDTOOLS, FORMTOOLS, SMARTARTTOOLS, DIAGRAMMTOOLS, ZEICHENTOOLS, TEXTTOOLS, KOPFFUSS, SERIENDRUCK]
+    return reiter + [TABELLENTOOLS, TABELLENSTIL, BILDTOOLS, SMARTARTTOOLS, DIAGRAMMTOOLS, ZEICHENTOOLS, TEXTTOOLS, KOPFFUSS, SERIENDRUCK]

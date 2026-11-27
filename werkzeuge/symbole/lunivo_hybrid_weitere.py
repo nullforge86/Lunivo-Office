@@ -39,6 +39,9 @@ def weitere(s, G):
     I["tiefgestellt"] = pf(s, "M5 20l11-14M16 20L5 6", sw=2.600) + pf(s, "M20 22a3 3 0 0 1 6 .2c0 2-6 3.800-6 6.300h6.200", stroke="purple", sw=2)
     I["ohne_format"] = pf(s, "M5 25L11 9l6 16M7 20h8", sw=2.400) + pf(s, "M20 12l8 12M28 12l-8 12", stroke="red", sw=2.600)
     I["absatzmarke"] = pf(s, "M20 5v22M14.500 5v22M20 5h-6.500a5.800 5.800 0 0 0 0 11.600", stroke="blue", sw=2.800)
+    # Stile (Formatvorlagen): Schrift mit abgestuften Ebenen – die Überschrift als farbiger Balken, darunter zwei kürzere Zeilen
+    I["stile"] = (pf(s, "M3.500 25L10 6.500l6.500 18.500M6 18.500h8", sw=2.400) + rc(s, 20, 6, 9.500, 4.200, 2.100, "blue", "blue", 1)
+                  + pf(s, "M20.500 17H27", stroke="purple", sw=2.400) + pf(s, "M20.500 24.500H24.500", sw=1.900))
     I["schreibweise"] = pf(s, "M3.500 24L9 10l5.500 14M5.500 20h7", sw=2.400) + pf(s, "M25 17.500a4 4 0 1 0 0 5.500M25 16.500v8", stroke="purple", sw=2.400)
     I["silben"] = pf(s, "M4 16h5M13 16h6M23 16h5", sw=2.400) + kr(s, 11, 16, 1.200, "blue", "blue", 1) + kr(s, 21, 16, 1.200, "blue", "blue", 1) + pf(s, "M6 9h4M14 9h8M6 23h8M18 23h8", stroke="purple", sw=2)
     I["sprache"] = kr(s, 16, 16, 12, "paper") + pf(s, "M4 16h24M16 4c-4 4-4 20 0 24M16 4c4 4 4 20 0 24", stroke="blue", sw=1.900)
@@ -205,7 +208,7 @@ ZUORDNUNG_WEITERE = {
     "ebenen": "ebenen", "ebeneHoch": "ebene_hoch", "ebeneTief": "ebene_tief", "umriss": "umriss", "texteffekt": "texteffekt", "wordart": "texteffekt",
     "superscript": "hochgestellt", "hoch": "hochgestellt", "subscript": "tiefgestellt", "tief": "tiefgestellt",
     "remove-formatting": "ohne_format", "ohneformat": "ohne_format", "steuerzeichen": "absatzmarke", "pilcrow": "absatzmarke", "pilcrow-left": "absatzmarke", "markupzeigen": "absatzmarke",
-    "schreibweise": "schreibweise", "Stil": "schreibweise", "silben": "silben", "phonetisch": "silben", "trennung": "silben",
+    "schreibweise": "schreibweise", "Stil": "schreibweise", "stile": "stile", "silben": "silben", "phonetisch": "silben", "trennung": "silben",
     "sprache": "sprache", "globe": "sprache", "uebersetzen": "uebersetzen", "woerterbuch": "buch", "thesaurus": "buch", "buch": "buch",
     "handbuch": "buch", "indexbuch": "buch", "Duden": "buch", "Prozent": "prozent", "zahl": "zahl", "woerter": "woerter", "wortextras": "woerter",
     "Vorhersage": "vorhersage", "autokorr": "autokorr", "barrierefrei": "barrierefrei", "gruendlich": "gruendlich",

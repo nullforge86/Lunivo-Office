@@ -27,6 +27,11 @@ class ZeichenToolsBefehle:
     def menue_zeichenGliederung(self):
         return FreiMenue.kontur(self)
 
+    # ---- Zustand zum Ausgrauen: die Formfüllung wirkt auf ein Diagramm nicht (dessen Füllung: Diagrammtools und Seitenleiste).
+    # Formstile und Gliederung bleiben frei: sie setzen und färben den Rahmen um das Diagramm.
+    def kann_klappe_zeichenFuellung(self) -> bool:
+        return bool(self.ed) and self.ed.objekt_art() != "diagramm"
+
     def menue_zeichenAusrichten(self):
         from vcl.qt.widgets.menues.dropdown.menue_liste import MenueListe
         m = MenueListe()

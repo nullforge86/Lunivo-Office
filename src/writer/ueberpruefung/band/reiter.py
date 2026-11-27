@@ -13,7 +13,8 @@ def bauen(register: dict) -> dict:
     gruppen = [
         {"name": "Dokumentprüfung", "reihenfolge": True, "knoepfe": [
             _k("rechtschreibpruefung", "Rechtschreibprüfung", "rechtschreibung", True, klappe="rechtschreibKlappe"),
-            _k("woerter", "Wörter zählen", "woerterZaehlen", True)]},
+            _k("woerter", "Wörter zählen", "woerterZaehlen", True),
+            _k("wortextras", "Wort-Extras", gross=True, klappe="wortExtrasKlappe")]},
         {"name": "Kommentare", "reihenfolge": True, "knoepfe": [
             _k("kommentarneu", "Kommentar einfügen", "kommentar", True),
             _k("kommentarloeschen", "Löschen", "kommentarWeg", True, klappe="kommentarLoeschenKlappe"),

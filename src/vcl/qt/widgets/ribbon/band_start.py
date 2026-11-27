@@ -1,13 +1,13 @@
 """Kompakte Arbeitsleiste des Reiters „Start“: eine Zeile aus den vorhandenen Knöpfen und Feldern.
 
-Reicht die Breite nicht, wird die Leiste nicht höher und nicht gerollt: die Knöpfe am rechten Ende werden ausgeblendet und stehen dann im Menü „Mehr“."""
+Reicht die Breite nicht, wird die Leiste nicht höher und nicht gerollt: die Knöpfe am rechten Ende werden ausgeblendet und stehen dann im Menü „Mehr“.
+Passt alles, ist „Mehr“ nicht zu sehen."""
 from __future__ import annotations
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QWidget
 
-from vcl.qt.widgets.bausteine.interaktion.knopf import werkzeugknopf
 from vcl.qt.widgets.bausteine.zustaende.geruest import reihe
 from vcl.qt.widgets.ribbon.band_bausteine import _GruppenTrenner
 
@@ -20,6 +20,7 @@ class _Arbeitsleiste(QWidget):
         self.zeile = reihe("leiste", self)
         self.teile: list[QWidget] = []
         self.mehr: QWidget | None = None
+        self.mehr_immer = False                                # „Mehr“ enthält auch bei voller Breite Befehle
 
     def teil(self, w: QWidget) -> QWidget:
         self.teile.append(w)
@@ -48,12 +49,17 @@ class _Arbeitsleiste(QWidget):
         if self.mehr is None:
             return
         rand, abstand = self.zeile.contentsMargins(), self.zeile.spacing()
-        frei = self.width() - rand.left() - rand.right() - self._breite(self.mehr)
+        frei = self.width() - rand.left() - rand.right()
+        alles = sum(self._breite(w) + abstand for w in self.teile) <= frei
+        zeigen = self.mehr_immer or not alles              # „Mehr“ nur, wenn es etwas enthält
+        if zeigen:
+            frei -= self._breite(self.mehr)
         belegt, passt = 0, True
         for w in self.teile:
             belegt += self._breite(w) + abstand
             passt = passt and belegt <= frei
             w.setVisible(passt)
+        self.mehr.setVisible(zeigen)
 
 
 class BandStartBaustein:
@@ -62,16 +68,18 @@ class BandStartBaustein:
     def _start_bauen(self, zeile, r: dict) -> None:
         plan = r["arbeitsleiste"]
         leiste = _Arbeitsleiste()
+        leiste.mehr_immer = plan["mehr_immer"]
         stil, font, groesse = self._formatfelder()
         felder = {"stil": stil, "font": font, "groesse": groesse}
+        in_zeile = {e["feld"] for e in plan["zeile"] if e.get("feld")}
+        for name in [n for n in felder if n not in in_zeile]:  # ein Feld, das die Zeile nicht zeigt, gibt es im Band nicht
+            self.felder.pop(name).deleteLater()
         im_menue: list[tuple[QWidget, list[str]]] = []          # (Knopf der Zeile, Namen seiner Zeilen im Menü „Mehr“)
         for e in plan["zeile"]:
             if e.get("trenner"):
                 leiste.teil(_GruppenTrenner())
             elif e.get("feld"):
                 leiste.teil(felder[e["feld"]])
-            elif e.get("stile"):
-                leiste.teil(self._stile_pfeil())
             else:
                 im_menue.append((leiste.teil(self._knopf(e, False)), [z["name"] for z in e["im_menue"]]))
         mehr = self._knopf(plan["mehr"], False)
@@ -80,12 +88,6 @@ class BandStartBaustein:
         leiste.abschliessen(mehr)
         zeile.addWidget(leiste, 1)
         self.arbeitsleiste = leiste
-
-    def _stile_pfeil(self) -> QWidget:
-        """Der Pfeil neben der Formatvorlage: öffnet die Auswahl aller Formatvorlagen (mit Anlegen, Ändern und Löschen)."""
-        pfeil = werkzeugknopf("standard", symbol="klappe", symbolgroesse="klein", symbol_einpassen=True, tooltip="Alle Formatvorlagen",
-                              aktion=lambda: self._stile_popup(pfeil))
-        return pfeil
 
     @staticmethod
     def _mehr_abgleichen(aktionen: list[QAction], im_menue: list[tuple[QWidget, list[str]]]) -> None:
