@@ -5,8 +5,13 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 
-# Tests bleiben lokal (Commit-Haken), liegen aber nicht im Repository
+# Bleiben lokal, liegen aber nicht im Repository: Tests, Arbeitsregeln und Haken der Entwicklungsumgebung
 /tests/
+/CLAUDE.md
+/AGENTS.md
+/.claude/
+/.githooks/
+/werkzeuge/pruefungen/architektursperre_hook.py
 
 # Installationspakete: Build-Zwischenstände und Ergebnisse
 /build/
