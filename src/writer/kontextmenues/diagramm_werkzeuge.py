@@ -9,13 +9,17 @@ from __future__ import annotations
 
 from writer.werkzeugleisten.reiter.baustein import k as _k
 
-# (Symbol, Name) der kleinen Typ-Knöpfe; zeilenweise gelesen: obere Reihe Säule, Balken, Linie, Netz, Kurs — untere Reihe Kombination, Fläche, Kreis, Ring, Punkt
-_TYPEN = (("saeule", "Säule"), ("kombination", "Kombination"), ("balkenquer", "Balken"), ("flaeche", "Fläche"), ("linie", "Linie"),
+# (Symbol, Name) der kleinen Typ-Knöpfe; zeilenweise gelesen wie in der Vorlage: obere Reihe Säule, Balken, Linie, Netz, Kurs — untere Reihe
+# Fläche, Kombination, Kreis, Ring, Punkt. Ein Klick öffnet nur die Untertypen der Gruppe; geändert wird die Diagrammart erst mit der Wahl darin.
+_TYPEN = (("saeule", "Säule"), ("flaeche", "Fläche"), ("balkenquer", "Balken"), ("kombination", "Kombination"), ("linie", "Linie"),
           ("kreis", "Kreis"), ("netz", "Netz"), ("donut", "Ring"), ("kurs", "Kurs"), ("punktwolke", "Punkt (XY)"))
 
-# Untertyp, den der Klick auf den Knopf selbst setzt (der Pfeil daneben öffnet die Untertypen der Gruppe)
-_STANDARD = {"saeule": "saeule_gruppiert", "kombination": "kombination", "balkenquer": "balken_gruppiert", "flaeche": "flaeche", "linie": "linie",
-             "kreis": "kreis", "netz": "netz", "donut": "ring", "kurs": "kurs_hts", "punktwolke": "punkte"}
+
+def _typ_knopf(sym: str, name: str) -> dict:
+    """Ein Typ-Knopf: die Klappe seiner Gruppe. „Ring“ hat keine Untertypen und setzt die Diagrammart deshalb selbst."""
+    if sym == "donut":
+        return _k(sym, "Diagrammtyp: " + name, 'diagrammTypAendern:["ring"]')
+    return _k(sym, "Diagrammtyp: " + name, None, klappe="diagrammTyp_" + sym)
 
 DIAGRAMMTOOLS = {"name": "Diagrammtools", "kontext": "diagramm", "gruppen": [
     {"name": "Elemente", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
@@ -25,9 +29,9 @@ DIAGRAMMTOOLS = {"name": "Diagrammtools", "kontext": "diagramm", "gruppen": [
     {"name": "Diagrammstile", "ohne_titel": True, "galerie": "diagrammStile", "knoepfe": []},
     {"name": "Diagrammtyp", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         _k("chart-no-axes-combined", "Diagrammtyp ändern", "diagrammTypAendern", True)]
-        + [_k(sym, "Diagrammtyp: " + name, 'diagrammTypAendern:["%s"]' % _STANDARD[sym],
-              klappe=None if sym == "donut" else "diagrammTyp_" + sym) for sym, name in _TYPEN]},
+        + [_typ_knopf(sym, name) for sym, name in _TYPEN]},
     {"name": "Daten", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
+        _k("tabelleWahl", "Daten auswählen", None, True, klappe="diagrammFilter"),      # welche Reihen und Rubriken das Diagramm zeigt, und ihre Namen
         _k("square-pen", "Daten bearbeiten", "diagrammDatenBearbeiten", True)]},
     {"name": "Bereich", "reihenfolge": True, "ohne_titel": True, "knoepfe": [
         {"feld": "diagrammBereich"}]},

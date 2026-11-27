@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import threading
 
-from system.plattform.pfade import data_dir
+from system.pfade import data_dir
 from writer.funktionen import ki as KD
 
 from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal

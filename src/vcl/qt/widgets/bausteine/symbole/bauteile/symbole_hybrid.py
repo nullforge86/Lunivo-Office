@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from system.plattform import ressourcen_pfade as paths
+from system import pfade as paths
 
 ORDNER = os.path.join(paths.SYMBOLE, "lunivo-hybrid")
 

@@ -16,7 +16,7 @@ from vcl.qt.widgets.bausteine.farben.thema.thema import apply_theme
 def programm_symbol() -> QIcon:
     """Lunivos Programmsymbol (ressourcen/symbole/varianten/Abstrakt) in allen vorhandenen Größen."""
     import os
-    from system.plattform.ressourcen_pfade import ASSETS
+    from system.pfade import ASSETS
     ordner = os.path.join(ASSETS, "symbole", "varianten", "Abstrakt")
     ic = QIcon()
     for px in (16, 24, 32, 48, 128, 256):

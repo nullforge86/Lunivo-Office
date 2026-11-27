@@ -5,7 +5,7 @@ import json
 import os
 from vcl.qt.widgets.bausteine.abstaende.raster import RasterSpalte, RasterZeile
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil, trennlinie
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 
 from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QColor, QFont, QIcon, QPainter

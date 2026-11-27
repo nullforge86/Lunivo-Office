@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 from core.dokument import orte
-from system.plattform import pfade, ressourcen_pfade
-from system.plattform.schriften import schrift_ordner
+from system import pfade
 
 
 def anmelden() -> None:
-    orte.anmelden(ressourcen_pfade.RESSOURCEN, pfade.vorlagen_dir, schrift_ordner)
+    orte.anmelden(pfade.RESSOURCEN, pfade.vorlagen_dir, pfade.schrift_ordner)

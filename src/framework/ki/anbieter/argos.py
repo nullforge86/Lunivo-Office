@@ -70,7 +70,7 @@ def _fehler(text: str) -> dict:
 def _bibliothek():
     """(package, translate) oder None, wenn argostranslate fehlt. Speicherort der Pakete vorher auf einen beschreibbaren Ordner legen."""
     try:
-        from system.plattform import pfade
+        from system import pfade
         os.environ.setdefault("ARGOS_PACKAGES_DIR", pfade.argos_pakete_dir())
         import argostranslate.package as package
         import argostranslate.translate as translate
@@ -79,7 +79,7 @@ def _bibliothek():
     try:
         import argostranslate.settings as einst
         from pathlib import Path
-        from system.plattform import pfade
+        from system import pfade
         einst.package_data_dir = Path(pfade.argos_pakete_dir())
     except Exception:
         pass
@@ -98,7 +98,7 @@ def _mitgelieferte_installieren(package) -> None:
             return
     except Exception:
         pass
-    from system.plattform import pfade
+    from system import pfade
     for ordner in pfade.argos_dirs():
         for datei in sorted(glob.glob(os.path.join(ordner, "*.argosmodel"))):
             try:

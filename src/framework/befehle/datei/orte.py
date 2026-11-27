@@ -1,7 +1,7 @@
 """Orte (Ordner) für die Oberfläche: Programmdaten und nachgeladene Schriften. Die Oberfläche fragt Pfade nur hier und nie bei der Infrastruktur."""
 from __future__ import annotations
 
-from system.plattform import pfade
+from system import pfade
 
 
 def data_dir() -> str:

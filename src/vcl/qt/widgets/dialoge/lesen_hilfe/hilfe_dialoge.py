@@ -17,7 +17,7 @@ from vcl.qt.widgets.bausteine.skalierung.daten import text as _t
 import os
 from vcl.qt.widgets.bausteine.symbole.bauteile.textfeld_fragmente import absatz_fragmente
 from vcl.qt.widgets.bausteine.schrift.texte import hinweis_stil
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFrame, QLabel, QLineEdit, QPushButton, QTextBrowser, QWidget

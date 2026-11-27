@@ -12,7 +12,7 @@ from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 
 STRICH = 1.05         # schlanke Kontur bei typischen Symbolgrößen von 16–20 px
 _KATALOG: dict | None = None

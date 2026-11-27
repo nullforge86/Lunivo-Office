@@ -5,7 +5,7 @@ import json
 import os
 import re
 import tempfile
-from system.plattform import ressourcen_pfade as paths
+from system import pfade as paths
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 
 from PySide6.QtCore import QByteArray, QRectF, Qt

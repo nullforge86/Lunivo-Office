@@ -22,7 +22,7 @@ import re
 import sys
 import threading
 
-from system.plattform import pfade
+from system import pfade
 
 NAME = "lunivo"
 DATEI = "lunivo.log"

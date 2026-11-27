@@ -8,7 +8,7 @@ import os
 import subprocess
 import threading
 
-from system.plattform import pfade
+from system import pfade
 from system.plattform import prozess
 from system.plattform import sprachausgabe
 

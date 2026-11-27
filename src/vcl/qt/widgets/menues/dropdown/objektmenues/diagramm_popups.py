@@ -173,7 +173,8 @@ class DiagrammPopup(MenueListe):
 
     SEITEN = {"elemente": ("Diagrammelement", "Schnelllayout"), "stile": ("Formatvorlagen", "Farben"), "filter": ("Wert", "Name")}
 
-    def __init__(self, b, art: str = "elemente", reiter: int = 0, parent=None):
+    def __init__(self, b, art: str = "elemente", reiter: int = 0, parent=None, einzeln: bool = False):
+        """``einzeln``: nur die Seite ``reiter`` ohne Reiterkopf – so öffnet sie ein Knopf des Bandes, der genau für diese Seite steht."""
         super().__init__(parent or getattr(b, "w", None))
         self.b, self.art, self._start = b, art, reiter
         self._wid = QWidget()
@@ -183,7 +184,11 @@ class DiagrammPopup(MenueListe):
         for i, t in enumerate(self.SEITEN[art]):
             kopf.addWidget(_kopfknopf(t, i, self.gruppe))
         kopf.addStretch(1)
-        v.addLayout(kopf); v.addWidget(_linie())
+        linie = _linie()
+        v.addLayout(kopf); v.addWidget(linie)
+        if einzeln:
+            for teil in (*self.gruppe.buttons(), linie):
+                teil.hide()
         self.stapel = QStackedWidget(); v.addWidget(self.stapel)
         self._seiten: list[QWidget] = []
         for _ in self.SEITEN[art]:
@@ -372,20 +377,22 @@ class DiagrammPopup(MenueListe):
 
 
 # ---- Klappen des Bandes und der Schnellleiste ----------------------------------------------------------------------------------------
-def elemente_popup(b) -> DiagrammPopup:
-    return DiagrammPopup(b, "elemente", 0)
+# Die Schnellleiste am Diagramm zeigt je zwei Seiten hinter Reitern. Im Band hat jede Seite ihren eigenen Knopf: dort öffnet er nur
+# seine Seite (``einzeln``), ohne Reiter zur Seite des Nachbarknopfs.
+def elemente_popup(b, einzeln: bool = False) -> DiagrammPopup:
+    return DiagrammPopup(b, "elemente", 0, einzeln=einzeln)
 
 
-def schnelllayout_popup(b) -> DiagrammPopup:
-    return DiagrammPopup(b, "elemente", 1)
+def schnelllayout_popup(b, einzeln: bool = False) -> DiagrammPopup:
+    return DiagrammPopup(b, "elemente", 1, einzeln=einzeln)
 
 
-def stile_popup(b) -> DiagrammPopup:
-    return DiagrammPopup(b, "stile", 0)
+def stile_popup(b, einzeln: bool = False) -> DiagrammPopup:
+    return DiagrammPopup(b, "stile", 0, einzeln=einzeln)
 
 
-def farben_popup(b) -> DiagrammPopup:
-    return DiagrammPopup(b, "stile", 1)
+def farben_popup(b, einzeln: bool = False) -> DiagrammPopup:
+    return DiagrammPopup(b, "stile", 1, einzeln=einzeln)
 
 
 def filter_popup(b) -> DiagrammPopup:
@@ -405,7 +412,7 @@ def diagramm_bereich_feld(b) -> QWidget:
     v.addLayout(zeile)
     for text, sym, f in (("Formatieren", "pinsel", lambda: getattr(b.w, "diagrammformat_seitenleiste", lambda: None)()),
                          ("Formatvorlage zurücksetzen", "undo-2", lambda: b.diagrammZuruecksetzen())):
-        k = werkzeugknopf("standard"); k.setIcon(symbole.icon(sym, ICON_NORMAL)); k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); k.setText("Stil zurück" if text.startswith("Formatvorlage") else text); k.setToolTip(text); k.setAccessibleName(text)
+        k = werkzeugknopf("standard"); k.setIcon(symbole.icon(sym, ICON_NORMAL)); k.setIconSize(QSize(ICON_NORMAL, ICON_NORMAL)); k.setText(text);k.setToolTip(text); k.setAccessibleName(text)
         k.setToolButtonStyle(Qt.ToolButtonTextBesideIcon); k.setMinimumHeight(FELDHOEHE)
         k.clicked.connect(lambda _=False, f=f: f())
         zeile.addWidget(k)
@@ -445,6 +452,6 @@ def diagramm_bereich_feld(b) -> QWidget:
     return host
 
 
-KLAPPEN = {"diagrammElement": elemente_popup, "diagrammSchnelllayout": schnelllayout_popup, "diagrammFarben": farben_popup,
-           "diagrammStilKlappe": stile_popup, "diagrammFilter": filter_popup}
+KLAPPEN = {"diagrammElement": lambda b: elemente_popup(b, True), "diagrammSchnelllayout": lambda b: schnelllayout_popup(b, True),
+           "diagrammFarben": lambda b: farben_popup(b, True), "diagrammStilKlappe": lambda b: stile_popup(b, True), "diagrammFilter": filter_popup}
 FELDER = {"diagrammBereich": diagramm_bereich_feld}

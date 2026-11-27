@@ -8,7 +8,7 @@ import json
 import os
 import threading
 
-from system.plattform import pfade
+from system import pfade
 
 DATEINAME = "einstellungen.json"
 

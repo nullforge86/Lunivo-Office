@@ -9,7 +9,7 @@ from vcl.qt.widgets.bausteine.zustaende.geruest.rollen import reihe as _reihe, s
 import json
 import os
 
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 from vcl.qt.widgets.bausteine.schrift.texte import trennlinie
 
 from PySide6.QtCore import QSize, QTimer, Qt, Signal

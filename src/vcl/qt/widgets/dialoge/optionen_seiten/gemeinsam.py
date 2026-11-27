@@ -15,7 +15,7 @@ import json
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QGroupBox, QLabel, QLineEdit, QPushButton, QSpinBox, QWidget
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 from vcl.qt.widgets.bausteine.skalierung import daten
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from vcl.qt.widgets.bausteine.zustaende.geruest.einklappgruppe import EinklappGruppe

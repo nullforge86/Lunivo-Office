@@ -8,7 +8,7 @@ import os
 
 from framework.schnittstellen.datentypen.einstellungsdaten import Wert
 from system.konfiguration.speicher import JsonSpeicher, gemeinsamer_speicher
-from system.plattform.pfade import ORGANISATION, PROGRAMM  # noqa: F401  (Namen des Programms für Oberfläche und Übernahme)
+from system.pfade import ORGANISATION, PROGRAMM  # noqa: F401  (Namen des Programms für Oberfläche und Übernahme)
 
 MAX_ZULETZT = 12
 ERSTSTART_MARKE = "_qsettings_uebernommen"

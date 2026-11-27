@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit
 from vcl.qt.widgets.bausteine.schrift.beschriftung import text_label
 from writer.funktionen import ki as KD
 from writer.anbindung import vorlesen
-from system.plattform import pfade
+from system import pfade
 from writer.anbindung.vorhersage import empfaenger
 from vcl.qt.widgets.dialoge.optionen_seiten.gemeinsam import LESESCHRIFTEN, _Seite
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe

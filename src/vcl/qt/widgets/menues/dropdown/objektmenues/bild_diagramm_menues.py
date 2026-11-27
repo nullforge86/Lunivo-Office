@@ -172,7 +172,7 @@ def diagramm_stile_galerie(b) -> dict:
     from vcl.qt.rendering import diagramme as D
     kacheln = [(_stilname(i), stil_bild(i), lambda i=i: b.diagrammStil(None, i)) for i in range(BAND_STILE)]      # wie in der Vorlage vier im Band, alle im Popup
     from vcl.qt.widgets.menues.dropdown.objektmenues.diagramm_popups import stile_popup
-    return {"kacheln": kacheln, "menue": stile_popup(b), "name": "Diagrammstile"}                  # der Pfeil öffnet dasselbe Popup wie die Schnellleiste
+    return {"kacheln": kacheln, "menue": stile_popup(b, True), "name": "Diagrammstile"}            # der Pfeil zeigt alle Formatvorlagen (die Farben hat „Farbe ändern“)
 
 
 # Dem Band bekannt: Name im Plan → Baustein. Sie gehen vor die gleichnamigen ``menue_…``/``galerie_…`` des Befehlsbausteins.

@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import os
 
-from system.plattform import ressourcen_pfade as pfade
+from system import pfade
 
 _ZWISCHENSPEICHER: dict[str, dict] = {}
 

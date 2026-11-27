@@ -2,7 +2,7 @@ name: Installationspakete bauen
 
 on:
   push:
-    branches: [aufgeraeumt]
+    branches: [main]
     paths: ["src/**", "ressourcen/**", "main.py", "pyproject.toml", "requirements.txt", "installationspakete/**", ".github/workflows/build-installers.yml"]
   pull_request:
     paths: ["installationspakete/**", ".github/workflows/build-installers.yml"]
