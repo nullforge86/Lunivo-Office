@@ -4,6 +4,8 @@ Tür des Pakets: Aufrufer außerhalb importieren die hier genannten Farben von h
 from __future__ import annotations
 
 _NAMEN: dict[str, tuple[str, str]] = {
+    "Farbe": ("grundfarben", "Farbe"),
+    "ABDUNKELUNG": ("farben", "ABDUNKELUNG"),
     "BLATTSCHATTEN_DECKKRAFT_DUNKEL": ("farben", "BLATTSCHATTEN_DECKKRAFT_DUNKEL"),
     "BLATTSCHATTEN_DECKKRAFT_HELL": ("farben", "BLATTSCHATTEN_DECKKRAFT_HELL"),
     "SCHWARZ_RGB": ("farben", "SCHWARZ_RGB"),
@@ -35,6 +37,8 @@ def __getattr__(name: str):
         from . import farben as _datei
     elif datei == "darstellung":
         from . import darstellung as _datei
+    elif datei == "grundfarben":
+        from . import grundfarben as _datei
     else:
         raise AttributeError(f"Das Paket {__name__!r} hat keinen Namen {name!r}")
     wert = getattr(_datei, original)

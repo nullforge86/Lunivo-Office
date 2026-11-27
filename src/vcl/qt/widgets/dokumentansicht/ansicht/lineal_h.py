@@ -6,6 +6,7 @@ from writer.werte import px_zu_mm as px_to_mm, px_je_mm
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.farben.farben import ABDUNKELUNG
 from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfen import HOEHE, _Lineal
+from vcl.qt.widgets.dokumentansicht.ansicht.lineal_tabs import LinealTabs
 
 
 FANG = 6            # so nahe (Bildpunkte) muss die Maus an einer Marke sein
@@ -14,9 +15,10 @@ FANG = 6            # so nahe (Bildpunkte) muss die Maus an einer Marke sein
 AKZENT = QColor(Farbe.AKZENT_DUNKEL)
 
 
-class LinealH(_Lineal):
+class LinealH(LinealTabs, _Lineal):
     randGeaendert = Signal(str, float)             # "links"|"rechts", neuer Rand in mm
     einzugGeaendert = Signal(float, float, float)  # links, rechts, erste Zeile (mm)
+    tabsGeaendert = Signal(list)                   # Tabstopps des Absatzes: [(mm ab der linken Textkante, Ausrichtung, Füllzeichen), …]
 
     def _einzuege(self):
         from writer.anbindung.formatwerte import einzuege
@@ -74,6 +76,7 @@ class LinealH(_Lineal):
         for n in ("einzug_links", "einzug_rechts"):
             x = m[n]
             p.drawPolygon(QPolygonF([QPointF(x - 5, HOEHE - 1.5), QPointF(x + 5, HOEHE - 1.5), QPointF(x, HOEHE - 8.5)]))
+        self.tabs_zeichnen(p, m, c)
         p.end()
 
     def _treffer(self, x, y):
@@ -90,8 +93,13 @@ class LinealH(_Lineal):
         return None
 
     def mouseMoveEvent(self, ev):
+        if self._tab_zieh is not None:
+            self.tab_ziehen(ev.position().x(), ev.position().y(), self._marken())
+            return
+        self.setToolTip(self.tab_hinweis(ev.position().x(), ev.position().y()))
         if self._zieh:
             self._wert = self._mm(ev.position().x(), self._zieh)
+            self.hilfslinie.zeigen(self._marken()[self._zieh])       # die Stelle der gezogenen Marke quer über das Dokument
             self.update()
             return
         self.setCursor(Qt.SizeHorCursor if self._treffer(ev.position().x(), ev.position().y()) else Qt.ArrowCursor)
@@ -116,10 +124,18 @@ class LinealH(_Lineal):
         if ev.button() == Qt.LeftButton:
             self._zieh = self._treffer(ev.position().x(), ev.position().y())
             self._wert = None
+            if self._zieh:
+                self.hilfslinie.zeigen(self._marken()[self._zieh])
+            else:                                              # keine Rand- oder Einzugsmarke: Wahlfeld, vorhandener oder neuer Tabstopp
+                self.tab_druecken(ev.position().x(), ev.position().y(), self._marken())
 
     def mouseReleaseEvent(self, ev):
+        if self._tab_zieh is not None:
+            self.tabsGeaendert.emit(self.tab_loslassen())
+            return
         n, w = self._zieh, self._wert
         self._zieh = self._wert = None
+        self.hilfslinie.weg()
         if n and w is not None:
             if n in ("links", "rechts"):
                 self.randGeaendert.emit(n, round(w, 1))

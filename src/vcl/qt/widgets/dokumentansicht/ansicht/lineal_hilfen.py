@@ -7,18 +7,22 @@ from writer.werte import px_je_mm
 from vcl.qt.widgets.bausteine.farben import LINEAL_HELLER_RAND, LINEAL_HELLER_RAND_HELL, LINEAL_HELLER_TEXT
 from vcl.qt.widgets.bausteine.farben.grundfarben import Farbe
 from vcl.qt.widgets.bausteine.abstaende.mass import LINEAL_ALPHA_STRICH, LINEAL_ALPHA_ZAHL, RADIUS_LINEAL, SCHRIFT_LINEAL_PX
+from vcl.qt.widgets.dokumentansicht.ansicht.lineal_hilfslinie import Hilfslinie
 
 
 HOEHE = 26          # Dicke des Lineals
 
 
 class _Lineal(QWidget):
+    LINIE_SENKRECHT = True                             # das waagerechte Lineal zieht eine senkrechte Hilfslinie; das senkrechte stellt es um
+
     def __init__(self, tab):
         super().__init__(tab)
         self.tab = tab
         self.e = tab.editor
         self._zieh = None
         self._wert = None
+        self.hilfslinie = Hilfslinie(tab, self.LINIE_SENKRECHT)        # nur während des Ziehens einer Marke sichtbar
         self.setMouseTracking(True)
         self.e.zoomChanged.connect(lambda *_: self.update())
         self.e.pageApplied.connect(self.update)

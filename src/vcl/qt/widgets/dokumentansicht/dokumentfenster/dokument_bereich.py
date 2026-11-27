@@ -34,6 +34,7 @@ class DocumentTab(QScrollArea):
         self.lineal_h.randGeaendert.connect(self._rand)
         self.lineal_v.randGeaendert.connect(self._rand)
         self.lineal_h.einzugGeaendert.connect(lambda l, r, f: self.editor.set_indents(l, r, f))
+        self.lineal_h.tabsGeaendert.connect(self.editor.set_tabstopps)
         for leiste in (self.horizontalScrollBar(), self.verticalScrollBar()):
             leiste.valueChanged.connect(self._lineale_neu_zeichnen)
             leiste.rangeChanged.connect(self._lineale_neu_zeichnen)            # Zoom oder Seitenformat: das Blatt steht woanders
